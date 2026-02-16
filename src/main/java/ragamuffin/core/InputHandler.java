@@ -13,8 +13,12 @@ public class InputHandler implements InputProcessor {
     private boolean escapePressed;
     private boolean inventoryPressed;
     private boolean helpPressed;
+    private boolean craftingPressed;
     private boolean punchPressed;
+    private boolean placePressed;
+    private boolean enterPressed;
     private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
+    private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
     private float mouseDeltaX, mouseDeltaY;
     private int lastX = -1, lastY = -1;
 
@@ -55,8 +59,12 @@ public class InputHandler implements InputProcessor {
     public boolean isEscapePressed() { return escapePressed; }
     public boolean isInventoryPressed() { return inventoryPressed; }
     public boolean isHelpPressed() { return helpPressed; }
+    public boolean isCraftingPressed() { return craftingPressed; }
     public boolean isPunchPressed() { return punchPressed; }
+    public boolean isPlacePressed() { return placePressed; }
+    public boolean isEnterPressed() { return enterPressed; }
     public int getHotbarSlotPressed() { return hotbarSlotPressed; }
+    public int getCraftingSlotPressed() { return craftingSlotPressed; }
 
     public float getMouseDeltaX() { return mouseDeltaX; }
     public float getMouseDeltaY() { return mouseDeltaY; }
@@ -64,8 +72,12 @@ public class InputHandler implements InputProcessor {
     public void resetEscape() { escapePressed = false; }
     public void resetInventory() { inventoryPressed = false; }
     public void resetHelp() { helpPressed = false; }
+    public void resetCrafting() { craftingPressed = false; }
     public void resetPunch() { punchPressed = false; }
+    public void resetPlace() { placePressed = false; }
+    public void resetEnter() { enterPressed = false; }
     public void resetHotbarSlot() { hotbarSlotPressed = -1; }
+    public void resetCraftingSlot() { craftingSlotPressed = -1; }
 
     @Override
     public boolean keyDown(int keycode) {
@@ -75,24 +87,37 @@ public class InputHandler implements InputProcessor {
             inventoryPressed = true;
         } else if (keycode == Input.Keys.H) {
             helpPressed = true;
+        } else if (keycode == Input.Keys.C) {
+            craftingPressed = true;
+        } else if (keycode == Input.Keys.ENTER) {
+            enterPressed = true;
         } else if (keycode == Input.Keys.NUM_1) {
             hotbarSlotPressed = 0;
+            craftingSlotPressed = 0;
         } else if (keycode == Input.Keys.NUM_2) {
             hotbarSlotPressed = 1;
+            craftingSlotPressed = 1;
         } else if (keycode == Input.Keys.NUM_3) {
             hotbarSlotPressed = 2;
+            craftingSlotPressed = 2;
         } else if (keycode == Input.Keys.NUM_4) {
             hotbarSlotPressed = 3;
+            craftingSlotPressed = 3;
         } else if (keycode == Input.Keys.NUM_5) {
             hotbarSlotPressed = 4;
+            craftingSlotPressed = 4;
         } else if (keycode == Input.Keys.NUM_6) {
             hotbarSlotPressed = 5;
+            craftingSlotPressed = 5;
         } else if (keycode == Input.Keys.NUM_7) {
             hotbarSlotPressed = 6;
+            craftingSlotPressed = 6;
         } else if (keycode == Input.Keys.NUM_8) {
             hotbarSlotPressed = 7;
+            craftingSlotPressed = 7;
         } else if (keycode == Input.Keys.NUM_9) {
             hotbarSlotPressed = 8;
+            craftingSlotPressed = 8;
         }
         return true;
     }
@@ -111,6 +136,8 @@ public class InputHandler implements InputProcessor {
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
             punchPressed = true;
+        } else if (button == Input.Buttons.RIGHT) {
+            placePressed = true;
         }
         return true;
     }

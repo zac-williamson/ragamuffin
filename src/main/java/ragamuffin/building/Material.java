@@ -16,7 +16,13 @@ public enum Material {
     GRASS_TURF("Grass Turf"),
     DIRT("Dirt"),
     PAVEMENT_SLAB("Pavement Slab"),
-    ROAD_ASPHALT("Road Asphalt");
+    ROAD_ASPHALT("Road Asphalt"),
+    PLANKS("Planks"),
+    SHELTER_WALL("Shelter Wall"),
+    SHELTER_FLOOR("Shelter Floor"),
+    SHELTER_ROOF("Shelter Roof"),
+    BRICK_WALL("Brick Wall"),
+    WINDOW("Window");
 
     private final String displayName;
 

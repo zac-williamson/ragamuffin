@@ -20,7 +20,7 @@ import ragamuffin.ui.*;
 import ragamuffin.world.*;
 
 /**
- * Main game class - handles the 3D core engine and Phase 3 systems.
+ * Main game class - handles the 3D core engine and game systems.
  */
 public class RagamuffinGame extends ApplicationAdapter {
 
@@ -41,6 +41,10 @@ public class RagamuffinGame extends ApplicationAdapter {
     private BlockDropTable dropTable;
     private TooltipSystem tooltipSystem;
 
+    // Phase 4: Crafting & Building
+    private CraftingSystem craftingSystem;
+    private BlockPlacer blockPlacer;
+
     // UI
     private SpriteBatch spriteBatch;
     private ShapeRenderer shapeRenderer;
@@ -48,9 +52,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     private InventoryUI inventoryUI;
     private HelpUI helpUI;
     private HotbarUI hotbarUI;
+    private CraftingUI craftingUI;
 
     private static final float MOUSE_SENSITIVITY = 0.15f;
     private static final float PUNCH_REACH = 5.0f;
+    private static final float PLACE_REACH = 5.0f;
 
     @Override
     public void create() {
@@ -105,10 +111,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         dropTable = new BlockDropTable();
         tooltipSystem = new TooltipSystem();
 
+        // Phase 4: Initialize crafting and building systems
+        craftingSystem = new CraftingSystem();
+        blockPlacer = new BlockPlacer();
+
         // Initialize UI
         inventoryUI = new InventoryUI(inventory);
         helpUI = new HelpUI();
         hotbarUI = new HotbarUI(inventory);
+        craftingUI = new CraftingUI(craftingSystem, inventory);
 
         // Setup input
         inputHandler = new InputHandler();
@@ -171,16 +182,38 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetHelp();
         }
 
+        // Crafting toggle
+        if (inputHandler.isCraftingPressed()) {
+            craftingUI.toggle();
+            inputHandler.resetCrafting();
+        }
+
         // Hotbar selection
         int hotbarSlot = inputHandler.getHotbarSlotPressed();
         if (hotbarSlot >= 0) {
-            hotbarUI.selectSlot(hotbarSlot);
+            if (!craftingUI.isVisible()) {
+                hotbarUI.selectSlot(hotbarSlot);
+            }
             inputHandler.resetHotbarSlot();
+        }
+
+        // Crafting menu controls
+        if (craftingUI.isVisible()) {
+            int craftingSlot = inputHandler.getCraftingSlotPressed();
+            if (craftingSlot >= 0) {
+                craftingUI.selectRecipe(craftingSlot);
+                inputHandler.resetCraftingSlot();
+            }
+
+            if (inputHandler.isEnterPressed()) {
+                craftingUI.craftSelected();
+                inputHandler.resetEnter();
+            }
         }
     }
 
     private boolean isUIBlocking() {
-        return inventoryUI.isVisible() || helpUI.isVisible();
+        return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible();
     }
 
     private void updatePlaying(float delta) {
@@ -188,6 +221,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (inputHandler.isPunchPressed()) {
             handlePunch();
             inputHandler.resetPunch();
+        }
+
+        // Handle block placement
+        if (inputHandler.isPlacePressed()) {
+            handlePlace();
+            inputHandler.resetPlace();
         }
 
         // Calculate movement direction
@@ -277,6 +316,26 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
     }
 
+    private void handlePlace() {
+        // Get selected material from hotbar
+        int selectedSlot = hotbarUI.getSelectedSlot();
+        Material material = inventory.getItemInSlot(selectedSlot);
+
+        if (material == null) {
+            return;
+        }
+
+        Vector3 cameraPos = new Vector3(camera.position);
+        Vector3 direction = new Vector3(camera.direction);
+
+        boolean placed = blockPlacer.placeBlock(world, inventory, material, cameraPos, direction, PLACE_REACH);
+
+        if (placed) {
+            // Update chunk mesh
+            updateChunkRenderers();
+        }
+    }
+
     private void renderUI() {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
@@ -292,6 +351,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Render help if visible
         if (helpUI.isVisible()) {
             helpUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Render crafting if visible
+        if (craftingUI.isVisible()) {
+            craftingUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
 
         // Render tooltip if active
@@ -319,6 +383,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             inventoryUI.hide();
         } else if (helpUI.isVisible()) {
             helpUI.hide();
+        } else if (craftingUI.isVisible()) {
+            craftingUI.hide();
         } else if (state == GameState.PLAYING) {
             transitionToPaused();
         } else if (state == GameState.PAUSED) {
@@ -374,6 +440,22 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public HotbarUI getHotbarUI() {
         return hotbarUI;
+    }
+
+    public CraftingUI getCraftingUI() {
+        return craftingUI;
+    }
+
+    public CraftingSystem getCraftingSystem() {
+        return craftingSystem;
+    }
+
+    public BlockPlacer getBlockPlacer() {
+        return blockPlacer;
+    }
+
+    public PerspectiveCamera getCamera() {
+        return camera;
     }
 
     @Override
