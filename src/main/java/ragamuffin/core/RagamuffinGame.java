@@ -12,8 +12,8 @@ import com.badlogic.gdx.math.Vector3;
 import ragamuffin.entity.Player;
 import ragamuffin.render.ChunkMeshBuilder;
 import ragamuffin.render.ChunkRenderer;
-import ragamuffin.world.BlockType;
 import ragamuffin.world.Chunk;
+import ragamuffin.world.World;
 
 /**
  * Main game class - handles the 3D core engine.
@@ -27,7 +27,7 @@ public class RagamuffinGame extends ApplicationAdapter {
     private InputHandler inputHandler;
 
     private Player player;
-    private Chunk testChunk;
+    private World world;
     private ChunkRenderer chunkRenderer;
     private ChunkMeshBuilder meshBuilder;
 
@@ -53,22 +53,26 @@ public class RagamuffinGame extends ApplicationAdapter {
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
         environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
 
-        // Create player
-        player = new Player(10, 5, 10);
+        // Generate the world (Phase 2)
+        Gdx.app.log("Ragamuffin", "Generating British town...");
+        world = new World(System.currentTimeMillis());
+        world.generate();
+
+        // Create player at the park (world center)
+        player = new Player(0, 5, 0);
         camera.position.set(player.getPosition());
         camera.position.y += Player.EYE_HEIGHT;
         camera.lookAt(player.getPosition().x, player.getPosition().y + Player.EYE_HEIGHT,
                      player.getPosition().z - 1);
         camera.update();
 
-        // Create test chunk with some blocks
-        testChunk = new Chunk(0, 0, 0);
-        createTestWorld(testChunk);
-
         // Setup chunk rendering
         meshBuilder = new ChunkMeshBuilder();
         chunkRenderer = new ChunkRenderer();
-        chunkRenderer.updateChunk(testChunk, meshBuilder);
+
+        // Load initial chunks around player
+        world.updateLoadedChunks(player.getPosition());
+        updateChunkRenderers();
 
         // Setup input
         inputHandler = new InputHandler();
@@ -76,20 +80,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         Gdx.input.setCursorCatched(true);
     }
 
-    private void createTestWorld(Chunk chunk) {
-        // Create a simple ground plane
-        for (int x = 0; x < Chunk.SIZE; x++) {
-            for (int z = 0; z < Chunk.SIZE; z++) {
-                chunk.setBlock(x, 0, z, BlockType.GRASS);
-                chunk.setBlock(x, -1, z, BlockType.DIRT);
-            }
+    /**
+     * Update chunk renderers for all loaded chunks.
+     */
+    private void updateChunkRenderers() {
+        for (Chunk chunk : world.getLoadedChunks()) {
+            chunkRenderer.updateChunk(chunk, meshBuilder);
         }
-
-        // Add a few test structures
-        for (int y = 1; y <= 3; y++) {
-            chunk.setBlock(5, y, 5, BlockType.BRICK);
-        }
-        chunk.setBlock(8, 1, 8, BlockType.STONE);
     }
 
     @Override
@@ -141,8 +138,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Move player with collision
         if (moveDir.len2() > 0) {
             moveDir.nor();
-            player.moveWithCollision(moveDir.x, 0, moveDir.z, delta, testChunk);
+            world.moveWithCollision(player, moveDir.x, 0, moveDir.z, delta);
         }
+
+        // Update loaded chunks based on player position
+        world.updateLoadedChunks(player.getPosition());
 
         // Update camera to follow player
         camera.position.set(player.getPosition());

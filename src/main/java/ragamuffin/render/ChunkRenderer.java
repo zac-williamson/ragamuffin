@@ -14,26 +14,46 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import ragamuffin.world.Chunk;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Renders chunk meshes using LibGDX ModelBatch.
  */
 public class ChunkRenderer {
 
-    private final List<ModelInstance> chunkModels;
-    private final List<Model> models;
+    private final Map<String, ChunkModel> chunkModels;
 
     public ChunkRenderer() {
-        this.chunkModels = new ArrayList<>();
-        this.models = new ArrayList<>();
+        this.chunkModels = new HashMap<>();
+    }
+
+    private static class ChunkModel {
+        Model model;
+        ModelInstance instance;
+
+        ChunkModel(Model model, ModelInstance instance) {
+            this.model = model;
+            this.instance = instance;
+        }
+
+        void dispose() {
+            model.dispose();
+        }
     }
 
     /**
      * Update/rebuild the mesh for a chunk.
      */
     public void updateChunk(Chunk chunk, ChunkMeshBuilder builder) {
+        String key = getChunkKey(chunk);
+
+        // Remove old model if it exists
+        ChunkModel oldModel = chunkModels.remove(key);
+        if (oldModel != null) {
+            oldModel.dispose();
+        }
+
         MeshData meshData = builder.build(chunk);
 
         if (meshData.getFaceCount() == 0) {
@@ -65,24 +85,44 @@ public class ChunkRenderer {
         Model model = modelBuilder.end();
 
         ModelInstance instance = new ModelInstance(model);
-        chunkModels.add(instance);
-        models.add(model);
+
+        // Position the model instance at the chunk's world position
+        float worldX = chunk.getChunkX() * Chunk.SIZE;
+        float worldY = chunk.getChunkY() * Chunk.HEIGHT;
+        float worldZ = chunk.getChunkZ() * Chunk.SIZE;
+        instance.transform.setToTranslation(worldX, worldY, worldZ);
+
+        chunkModels.put(key, new ChunkModel(model, instance));
+    }
+
+    /**
+     * Remove a chunk from rendering.
+     */
+    public void removeChunk(Chunk chunk) {
+        String key = getChunkKey(chunk);
+        ChunkModel model = chunkModels.remove(key);
+        if (model != null) {
+            model.dispose();
+        }
+    }
+
+    private String getChunkKey(Chunk chunk) {
+        return chunk.getChunkX() + "," + chunk.getChunkY() + "," + chunk.getChunkZ();
     }
 
     /**
      * Render all chunk models.
      */
     public void render(ModelBatch modelBatch, Environment environment) {
-        for (ModelInstance instance : chunkModels) {
-            modelBatch.render(instance, environment);
+        for (ChunkModel chunkModel : chunkModels.values()) {
+            modelBatch.render(chunkModel.instance, environment);
         }
     }
 
     public void dispose() {
-        for (Model model : models) {
-            model.dispose();
+        for (ChunkModel chunkModel : chunkModels.values()) {
+            chunkModel.dispose();
         }
-        models.clear();
         chunkModels.clear();
     }
 }
