@@ -27,7 +27,16 @@ public class WorldGenerator {
         // Clear random state
         random.setSeed(seed);
 
-        // Generate the park at the center
+        // FIRST: Fill entire world with base terrain layer to prevent gaps
+        int halfWorld = WORLD_SIZE / 2;
+        for (int x = -halfWorld; x < halfWorld; x++) {
+            for (int z = -halfWorld; z < halfWorld; z++) {
+                world.setBlock(x, -1, z, BlockType.STONE); // Bedrock layer
+                world.setBlock(x, 0, z, BlockType.GRASS);  // Surface layer
+            }
+        }
+
+        // Generate the park at the center (will overwrite base layer)
         generatePark(world);
 
         // Generate street grid

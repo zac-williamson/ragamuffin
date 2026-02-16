@@ -565,7 +565,72 @@ Create a new branch from the current branch:
 - Third iteration: `git checkout -b critic3` (from `critic2`)
 - And so on: `criticN` always branches from `critic(N-1)`
 
-#### Step 2: CRITIC Review
+#### Step 2: BUGHUNT
+
+**Before any new features, assume EVERYTHING is broken.** You are now a QA tester, not
+a developer. Your job is to find bugs, not add features. The previous phases may compile
+and pass unit tests, but that does NOT mean they actually work when the game runs.
+
+**The BUGHUNT process:**
+
+1. **Read every file** in src/main/java/ragamuffin/ systematically. Do not skim. Read
+   every class, every method, every line.
+
+2. **Trace the wiring**: For each system (world gen, rendering, player, NPCs, HUD, etc.),
+   trace the call chain from RagamuffinGame.create() and render()/update() all the way
+   through. Ask: "Is this system actually called? Is it wired into the game loop? Does
+   the data flow from creation to rendering?"
+
+3. **Check cross-phase integration**: Each phase was likely developed in isolation. Check
+   that Phase N's code actually works with Phase 1's renderer. Specifically:
+   - Does the ChunkMeshBuilder use the correct colours/textures for ALL block types?
+   - Does the WorldGenerator actually fill the terrain solidly (no air gaps in ground)?
+   - Does the Player have gravity applied every frame?
+   - Are NPCs actually rendered in the 3D world (added to scene, positioned correctly)?
+   - Does the HUD actually draw on screen (SpriteBatch begin/end called, font loaded)?
+   - Are inventory/crafting UIs wired to keyboard input (I key, C key)?
+
+4. **Write regression tests**: For every bug found, write a specific integration test
+   that would have caught it. The test should:
+   - Set up the exact conditions that expose the bug
+   - Assert the correct behaviour (not the buggy behaviour)
+   - Go in src/test/java/ragamuffin/integration/BughuntNIntegrationTest.java
+     (where N matches the critic iteration number)
+
+5. **Fix all bugs found** before proceeding to the CRITIC review. Run ./gradlew clean test
+   and ./gradlew build. ALL tests must pass.
+
+**Common bugs to hunt for (from playtesting):**
+- Player floating (no gravity applied in update loop)
+- All blocks same colour (BlockType colours not used by mesh builder)
+- Terrain has holes/gaps (WorldGenerator not filling solid ground)
+- Buildings/structures invisible (not added to chunk or mesh not rebuilt after placement)
+- HUD elements not visible (SpriteBatch not configured, font not loaded, wrong coordinates)
+- NPCs invisible or not moving (not added to render pass, AI not ticked)
+- Keyboard input not working (InputHandler not registered or key mappings wrong)
+- Systems created but never called from game loop (orphaned code)
+
+**Commit bughunt fixes before proceeding to Step 3.**
+
+#### Step 3: BUG REPORTS
+
+Check the `bugs/` directory for .txt files. Each file is a bug report from a playtester.
+
+**Process:**
+1. Read every .txt file in the `bugs/` directory.
+2. For each bug report:
+   - Investigate the root cause by reading the relevant source code
+   - Write an integration test that reproduces the bug
+   - Fix the bug
+   - Verify the fix with ./gradlew clean test
+3. Once the bug is fixed, rename the file from `NNN-description.txt` to
+   `NNN-description.fixed.txt` so it is not processed again.
+4. Commit all bug fixes with message "Fix bug reports: [list of bug numbers]"
+
+**Bug reports are high priority.** Fix all open bug reports before proceeding to the
+CRITIC review. A playtester took the time to report these — respect that.
+
+#### Step 4: CRITIC Review
 
 Put on a different hat. You are no longer the PM — you are a **game critic** and
 **player advocate**. You are reviewing a playable build of Ragamuffin. Consider:
@@ -595,7 +660,7 @@ Put on a different hat. You are no longer the PM — you are a **game critic** a
 - Are there emergent gameplay possibilities that could be unlocked with
   small additions?
 
-#### Step 3: Write Improvement Phase
+#### Step 5: Write Improvement Phase
 
 Based on the CRITIC review, append a new phase to SPEC.md:
 
@@ -614,12 +679,12 @@ This phase must include:
 
 **Remember: you may only ADD to SPEC.md, never remove or weaken existing specs.**
 
-#### Step 4: Implement
+#### Step 6: Implement
 
 Implement the improvement phase using TDD, exactly as with Phases 1-8.
 Delegate all coding to the coding agent. Verify all tests pass.
 
-#### Step 5: Code Review
+#### Step 7: Code Review
 
 Run a mini code review on the changes made in this iteration:
 - All new tests pass
@@ -629,7 +694,7 @@ Run a mini code review on the changes made in this iteration:
 
 Commit all work on the current `criticN` branch.
 
-#### Step 6: Loop
+#### Step 8: Loop
 
 Go back to Step 1. Create `critic(N+1)` from `criticN`. Run the CRITIC again.
 Find the next set of improvements. Implement them. Review. Commit. Repeat.

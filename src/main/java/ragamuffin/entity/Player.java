@@ -13,6 +13,7 @@ public class Player {
     public static final float DEPTH = 0.6f;
     public static final float EYE_HEIGHT = 1.62f; // Eye level for camera
     public static final float MOVE_SPEED = 5.0f;
+    public static final float GRAVITY = 9.8f; // Gravity acceleration (m/s^2)
 
     // Phase 8: Survival stats
     public static final float MAX_HEALTH = 100f;
@@ -30,6 +31,7 @@ public class Player {
     private float hunger;
     private float energy;
     private boolean isDead;
+    private float verticalVelocity; // Separate vertical velocity for gravity
 
     public Player(float x, float y, float z) {
         this.position = new Vector3(x, y, z);
@@ -39,6 +41,7 @@ public class Player {
         this.hunger = MAX_HUNGER;
         this.energy = MAX_ENERGY;
         this.isDead = false;
+        this.verticalVelocity = 0f;
     }
 
     public Vector3 getPosition() {
@@ -233,5 +236,33 @@ public class Player {
      */
     public void setEnergy(float energy) {
         this.energy = Math.max(0, Math.min(MAX_ENERGY, energy));
+    }
+
+    /**
+     * Get vertical velocity (for gravity).
+     */
+    public float getVerticalVelocity() {
+        return verticalVelocity;
+    }
+
+    /**
+     * Set vertical velocity (for gravity/testing).
+     */
+    public void setVerticalVelocity(float verticalVelocity) {
+        this.verticalVelocity = verticalVelocity;
+    }
+
+    /**
+     * Apply gravity to vertical velocity.
+     */
+    public void applyGravity(float delta) {
+        verticalVelocity -= GRAVITY * delta;
+    }
+
+    /**
+     * Reset vertical velocity (when landing on ground).
+     */
+    public void resetVerticalVelocity() {
+        verticalVelocity = 0f;
     }
 }

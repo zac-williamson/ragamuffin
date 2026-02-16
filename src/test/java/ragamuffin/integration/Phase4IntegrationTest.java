@@ -143,11 +143,19 @@ class Phase4IntegrationTest {
      */
     @Test
     void testPlacedBlockHasCollision() {
+        // Add ground so player doesn't fall with gravity
+        for (int x = 10; x < 20; x++) {
+            for (int z = 10; z < 20; z++) {
+                world.setBlock(x, 0, z, BlockType.GRASS);
+            }
+        }
+
         // Place a WOOD block at (15, 1, 15) directly
         world.setBlock(15, 1, 15, BlockType.WOOD);
 
-        // Position player at (15, 1, 17) facing the block
+        // Position player at (15, 1, 17) facing the block (standing on ground at y=1)
         player.getPosition().set(15, 1, 17);
+        player.setVerticalVelocity(0); // Reset vertical velocity
         Vector3 playerPos = player.getPosition();
 
         // Simulate moving forward for 60 frames

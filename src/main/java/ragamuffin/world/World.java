@@ -197,13 +197,22 @@ public class World {
     /**
      * Move player with collision detection against the world.
      * This is a helper method that checks collision across multiple chunks.
+     * Includes gravity and Y-axis collision handling.
      */
     public Vector3 moveWithCollision(Player player, float dx, float dy, float dz, float delta) {
-        Vector3 desiredMove = new Vector3(dx, dy, dz).nor().scl(Player.MOVE_SPEED * delta);
         Vector3 originalPos = new Vector3(player.getPosition());
 
-        // Try full movement
-        player.getPosition().add(desiredMove);
+        // Apply gravity to vertical velocity
+        player.applyGravity(delta);
+
+        // Horizontal movement (X and Z)
+        Vector3 desiredMove = new Vector3(0, 0, 0);
+        if (dx != 0 || dz != 0) {
+            desiredMove.set(dx, 0, dz).nor().scl(Player.MOVE_SPEED * delta);
+        }
+
+        // Try horizontal movement with sliding
+        player.getPosition().add(desiredMove.x, 0, desiredMove.z);
         player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
 
         if (checkWorldCollision(player)) {
@@ -225,6 +234,26 @@ public class World {
                 player.getPosition().set(zOnlyPos);
             }
 
+            player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
+        }
+
+        // Vertical movement (gravity)
+        float verticalMove = player.getVerticalVelocity() * delta;
+        player.getPosition().y += verticalMove;
+        player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
+
+        // Check for vertical collision
+        if (checkWorldCollision(player)) {
+            // Landed on ground or hit ceiling
+            if (verticalMove < 0) {
+                // Falling down - snap to ground
+                player.getPosition().y = (float) Math.floor(player.getPosition().y) + 1.0f;
+                player.resetVerticalVelocity();
+            } else {
+                // Moving up - hit ceiling
+                player.getPosition().y = (float) Math.floor(player.getPosition().y + Player.HEIGHT) - Player.HEIGHT;
+                player.resetVerticalVelocity();
+            }
             player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
         }
 

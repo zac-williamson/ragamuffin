@@ -1,0 +1,9 @@
+BUG: Main menu UI broken
+
+The opening game UI only shows "New Game" and "Quit". I cannot navigate to "Quit" — 
+keyboard/mouse input does not allow selecting it. Both options appear on the screen at 
+arbitrary locations rather than being centred or laid out in a proper vertical menu.
+
+Expected: A centred vertical menu with "New Game" and "Quit" (and potentially other 
+options). Arrow keys or mouse should allow navigating between options. Selected option 
+should be visually highlighted. Enter/click should activate the selected option.

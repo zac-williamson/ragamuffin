@@ -113,8 +113,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         world = new World(System.currentTimeMillis());
         world.generate();
 
-        // Create player at the park (world center)
-        player = new Player(0, 5, 0);
+        // Create player at the park (world center) - calculate spawn Y based on terrain
+        float spawnY = calculateSpawnHeight(world, 0, 0) + 1.0f;
+        player = new Player(0, spawnY, 0);
         camera.position.set(player.getPosition());
         camera.position.y += Player.EYE_HEIGHT;
         camera.lookAt(player.getPosition().x, player.getPosition().y + Player.EYE_HEIGHT,
@@ -173,6 +174,20 @@ public class RagamuffinGame extends ApplicationAdapter {
         Gdx.input.setInputProcessor(inputHandler);
         // Don't catch cursor in menu
         Gdx.input.setCursorCatched(false);
+    }
+
+    /**
+     * Calculate spawn height at given X,Z coordinates by finding the highest solid block.
+     */
+    private float calculateSpawnHeight(World world, int x, int z) {
+        // Search upward from y=0 to find highest solid block
+        for (int y = 64; y >= -10; y--) {
+            BlockType block = world.getBlock(x, y, z);
+            if (block.isSolid()) {
+                return y + 1.0f; // Spawn one block above the solid block
+            }
+        }
+        return 1.0f; // Default if no solid block found
     }
 
     /**

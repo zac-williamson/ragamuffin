@@ -60,13 +60,14 @@ public class ChunkRenderer {
             return; // Empty chunk, nothing to render
         }
 
-        // Create LibGDX mesh
+        // Create LibGDX mesh with color support
         Mesh mesh = new Mesh(true,
-            meshData.getVerticesArray().length / 8, // 8 floats per vertex
+            meshData.getVerticesArray().length / 12, // 12 floats per vertex (pos+normal+uv+color)
             meshData.getIndicesArray().length,
             new VertexAttribute(VertexAttributes.Usage.Position, 3, "a_position"),
             new VertexAttribute(VertexAttributes.Usage.Normal, 3, "a_normal"),
-            new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 2, "a_texCoord0")
+            new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 2, "a_texCoord0"),
+            new VertexAttribute(VertexAttributes.Usage.ColorPacked, 4, "a_color")
         );
 
         mesh.setVertices(meshData.getVerticesArray());
@@ -76,9 +77,9 @@ public class ChunkRenderer {
         ModelBuilder modelBuilder = new ModelBuilder();
         modelBuilder.begin();
 
-        // Simple colored material for now (Phase 1)
+        // Material that uses vertex colors
         Material material = new Material(
-            ColorAttribute.createDiffuse(new Color(0.4f, 0.8f, 0.3f, 1f))
+            ColorAttribute.createDiffuse(Color.WHITE) // Base white - vertex colors will override
         );
 
         modelBuilder.part("chunk", mesh, GL20.GL_TRIANGLES, material);
