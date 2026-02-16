@@ -22,7 +22,9 @@ public enum Material {
     SHELTER_FLOOR("Shelter Floor"),
     SHELTER_ROOF("Shelter Roof"),
     BRICK_WALL("Brick Wall"),
-    WINDOW("Window");
+    WINDOW("Window"),
+    SAUSAGE_ROLL("Sausage Roll"),
+    STEAK_BAKE("Steak Bake");
 
     private final String displayName;
 

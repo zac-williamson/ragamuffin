@@ -9,7 +9,12 @@ public enum TooltipTrigger {
     JEWELLER_DIAMOND("Jewellers can be a good source of diamond"),
     YOUTH_THEFT("Oi! That's mine!"),
     FIRST_POLICE_ENCOUNTER("Evening officer. Lovely night for it."),
-    FIRST_COUNCIL_ENCOUNTER("Dodge to avoid the attacks of stronger enemies");
+    FIRST_COUNCIL_ENCOUNTER("Dodge to avoid the attacks of stronger enemies"),
+    FIRST_BLOCK_PLACE("That's... structurally ambitious."),
+    FIRST_DEATH("Council tax doesn't pay itself. Get up."),
+    FIRST_GREGGS("Ah, Greggs. The backbone of British cuisine."),
+    HUNGER_LOW("Your stomach growls. Even the pigeons look appetising."),
+    FIRST_CRAFT("Crafting with materials of questionable provenance.");
 
     private final String message;
 

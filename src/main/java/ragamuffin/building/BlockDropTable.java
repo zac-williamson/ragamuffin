@@ -64,6 +64,11 @@ public class BlockDropTable {
             } else if (blockType == BlockType.GLASS) {
                 return Material.OFFICE_CHAIR;
             }
+        } else if (landmark == LandmarkType.GREGGS) {
+            // Greggs blocks drop food (50/50 chance between sausage roll and steak bake)
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Math.random() < 0.5 ? Material.SAUSAGE_ROLL : Material.STEAK_BAKE;
+            }
         }
 
         // If no special landmark drop, fall back to standard drop

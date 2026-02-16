@@ -179,6 +179,21 @@ public class NPCManager {
     private void updateNPC(NPC npc, float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
         npc.update(delta);
 
+        // Phase 11: PUBLIC NPCs randomly speak when near player
+        if (npc.getType() == NPCType.PUBLIC && !npc.isSpeaking() && npc.isNear(player.getPosition(), 10.0f)) {
+            // Random chance to speak (about 1% per frame = ~every 1-2 seconds near player)
+            if (random.nextFloat() < 0.01f) {
+                String[] publicSpeech = {
+                    "Is that... legal?",
+                    "My council tax pays for this?",
+                    "I'm calling the council.",
+                    "Bit rough, innit?",
+                    "You alright, love?"
+                };
+                npc.setSpeechText(publicSpeech[random.nextInt(publicSpeech.length)], 3.0f);
+            }
+        }
+
         // Handle police separately
         if (npc.getType() == NPCType.POLICE) {
             updatePolice(npc, delta, world, player, tooltipSystem);

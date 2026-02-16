@@ -71,6 +71,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     private MainMenuScreen mainMenuScreen;
     private OpeningSequence openingSequence;
 
+    // Phase 11: CRITIC 1 Improvements
+    private InteractionSystem interactionSystem;
+    private HealingSystem healingSystem;
+    private RespawnSystem respawnSystem;
+
     private static final float MOUSE_SENSITIVITY = 0.15f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
@@ -152,6 +157,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         mainMenuScreen = new MainMenuScreen();
         openingSequence = new OpeningSequence();
 
+        // Phase 11: Initialize CRITIC 1 systems
+        interactionSystem = new InteractionSystem();
+        healingSystem = new HealingSystem();
+        respawnSystem = new RespawnSystem();
+
         // Setup input
         inputHandler = new InputHandler();
         Gdx.input.setInputProcessor(inputHandler);
@@ -232,6 +242,18 @@ public class RagamuffinGame extends ApplicationAdapter {
                 player.updateHunger(delta);
                 if (!isUIBlocking()) {
                     player.recoverEnergy(delta);
+                }
+
+                // Phase 11: Update healing system
+                healingSystem.update(delta, player);
+
+                // Phase 11: Check for death and respawn
+                respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);
+                respawnSystem.update(delta, player);
+
+                // Phase 11: Trigger hunger warning tooltip
+                if (player.getHunger() <= 25 && !tooltipSystem.hasShown(TooltipTrigger.HUNGER_LOW)) {
+                    tooltipSystem.trigger(TooltipTrigger.HUNGER_LOW);
                 }
             }
 
@@ -330,6 +352,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetHotbarSlot();
         }
 
+        // Phase 11: E key interaction
+        if (inputHandler.isInteractPressed()) {
+            handleInteraction();
+            inputHandler.resetInteract();
+        }
+
         // Crafting menu controls
         if (craftingUI.isVisible()) {
             int craftingSlot = inputHandler.getCraftingSlotPressed();
@@ -339,7 +367,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
 
             if (inputHandler.isEnterPressed()) {
-                craftingUI.craftSelected();
+                boolean crafted = craftingUI.craftSelected();
+                // Phase 11: Trigger first craft tooltip
+                if (crafted && !tooltipSystem.hasShown(TooltipTrigger.FIRST_CRAFT)) {
+                    tooltipSystem.trigger(TooltipTrigger.FIRST_CRAFT);
+                }
                 inputHandler.resetEnter();
             }
         }
@@ -457,6 +489,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                     if (drop == Material.DIAMOND && landmark == LandmarkType.JEWELLER) {
                         tooltipSystem.trigger(TooltipTrigger.JEWELLER_DIAMOND);
                     }
+
+                    // Phase 11: Trigger Greggs tooltip if applicable
+                    if ((drop == Material.SAUSAGE_ROLL || drop == Material.STEAK_BAKE) &&
+                        landmark == LandmarkType.GREGGS) {
+                        tooltipSystem.trigger(TooltipTrigger.FIRST_GREGGS);
+                    }
                 }
 
                 // Update chunk mesh
@@ -474,14 +512,45 @@ public class RagamuffinGame extends ApplicationAdapter {
             return;
         }
 
+        // Phase 11: Check if material is food - eat instead of placing
+        if (interactionSystem.isFood(material)) {
+            boolean consumed = interactionSystem.consumeFood(material, player, inventory);
+            if (consumed) {
+                // Food was eaten successfully
+                return;
+            }
+        }
+
         Vector3 cameraPos = new Vector3(camera.position);
         Vector3 direction = new Vector3(camera.direction);
 
         boolean placed = blockPlacer.placeBlock(world, inventory, material, cameraPos, direction, PLACE_REACH);
 
         if (placed) {
+            // Phase 11: Trigger first block place tooltip
+            if (!tooltipSystem.hasShown(TooltipTrigger.FIRST_BLOCK_PLACE)) {
+                tooltipSystem.trigger(TooltipTrigger.FIRST_BLOCK_PLACE);
+            }
+
             // Update chunk mesh
             updateChunkRenderers();
+        }
+    }
+
+    /**
+     * Phase 11: Handle E key interaction with NPCs.
+     */
+    private void handleInteraction() {
+        Vector3 cameraPos = new Vector3(camera.position);
+        Vector3 direction = new Vector3(camera.direction);
+
+        // Find NPC in interaction range
+        NPC targetNPC = interactionSystem.findNPCInRange(player.getPosition(), direction, npcManager.getNPCs());
+
+        if (targetNPC != null) {
+            // Interact with the NPC
+            String dialogue = interactionSystem.interactWithNPC(targetNPC);
+            // The dialogue is set on the NPC, which will be rendered as a speech bubble
         }
     }
 

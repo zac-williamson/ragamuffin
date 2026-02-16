@@ -638,3 +638,72 @@ Find the next set of improvements. Implement them. Review. Commit. Repeat.
 genuinely cannot think of a single improvement, you are not thinking hard enough.
 Play the game (mentally simulate a play session), read the code, re-read the spec,
 consider the player experience. Something can always be better.
+
+---
+
+## Phase 11: CRITIC 1 Improvements — Survival Depth & Player Feedback
+
+### CRITIC Findings
+
+**Gameplay feel:**
+- Hunger drains but there's no way to restore it — the player is guaranteed to die. This isn't dark humour, it's just broken.
+- No healing mechanic. Once damaged, you're damaged forever. That's not fun, that's nihilism without the laughs.
+- No death/respawn cycle. The game just... ends. A British survival game should have you wake up on a park bench, not stare at a black screen.
+- Block breaking gives zero visual feedback — you punch 5 times and have to count in your head.
+
+**Tone and humour:**
+- Only 5 tooltips in the entire game. Needs at least 10 more sardonic observations about British life.
+- NPC speech is listed as a feature but no NPCs actually say anything. Members of the public should mutter things.
+
+**Polish:**
+- No visual feedback for block breaking progress (crack overlay or progress bar)
+- No feedback when items are picked up
+- No interaction system (E key does nothing)
+
+### Improvements to Implement
+
+1. **Food system**: Greggs sells food items. Punching Greggs blocks yields SAUSAGE_ROLL and STEAK_BAKE. Eating food (right-click food in hotbar) restores hunger. Add SAUSAGE_ROLL and STEAK_BAKE materials.
+
+2. **Healing**: Resting (standing still for 5 seconds with hunger > 50) slowly regenerates health. Rate: 5 HP per second while resting.
+
+3. **Respawn on death**: When health hits 0, display "You wake up on a park bench. Again." for 3 seconds, then respawn at park centre with 50% health, 50% hunger, 100% energy. Inventory is kept. This is not Dark Souls.
+
+4. **Block breaking progress**: Track break progress (0-5 hits). Display a progress indicator (e.g. 5 crack stages). The BlockBreaker already tracks hits — expose this to the UI.
+
+5. **More tooltips**: Add these first-time tooltips:
+   - On first block place: "That's... structurally ambitious."
+   - On first death: "Council tax doesn't pay itself. Get up."
+   - On first Greggs encounter: "Ah, Greggs. The backbone of British cuisine."
+   - On hunger reaching 25%: "Your stomach growls. Even the pigeons look appetising."
+   - On first crafting: "Crafting with materials of questionable provenance."
+
+6. **NPC speech bubbles**: Members of the public randomly say things when near the player:
+   - "Is that... legal?"
+   - "My council tax pays for this?"
+   - "I'm calling the council."
+   - "Bit rough, innit?"
+   - "You alright, love?"
+
+7. **E key interaction**: Press E when facing an NPC to get a response. Public NPCs respond with random dialogue. Police say "Move along." Council builders say "Planning permission denied."
+
+### Integration Tests
+
+1. **Eating food restores hunger**: Set hunger to 50. Give player 1 SAUSAGE_ROLL in hotbar. Select it. Right-click (eat). Verify hunger increased by 30 (to 80). Verify SAUSAGE_ROLL removed from inventory.
+
+2. **Greggs yields food**: Place player adjacent to a Greggs building block. Punch 5 times. Verify inventory contains either SAUSAGE_ROLL or STEAK_BAKE.
+
+3. **Resting regenerates health**: Set health to 50, hunger to 100. Player stands still (no input). Advance 300 frames (5 seconds). Verify health > 50 (should be ~75).
+
+4. **Resting does NOT heal when hungry**: Set health to 50, hunger to 20. Stand still 300 frames. Verify health is still 50 (hunger too low to heal).
+
+5. **Death triggers respawn**: Set health to 10. Apply 10 damage. Verify death state triggered. Verify respawn message "You wake up on a park bench. Again." displayed. Advance 180 frames. Verify player respawned at park centre with health 50, hunger 50, energy 100. Verify inventory preserved.
+
+6. **Block breaking progress exposed**: Start breaking a TREE_TRUNK. After 1 punch, verify break progress is 1/5 (0.2). After 3 punches, verify 3/5 (0.6). After 5, block broken.
+
+7. **New tooltips fire correctly**: Place a block for first time — verify tooltip "That's... structurally ambitious." First craft — verify "Crafting with materials of questionable provenance." Set hunger to 25 — verify "Your stomach growls. Even the pigeons look appetising."
+
+8. **NPC speech near player**: Spawn PUBLIC NPC within 5 blocks of player. Advance 300 frames. Verify the NPC has emitted at least one speech bubble (speech text is non-null and from the expected list).
+
+9. **E key interaction with NPC**: Spawn PUBLIC NPC adjacent to player. Player faces NPC. Press E. Verify interaction dialogue is triggered (NPC response text is non-null). Verify the response is from the expected PUBLIC NPC dialogue list.
+
+10. **E key when not facing NPC does nothing**: No NPC nearby. Press E. Verify no interaction triggered. No errors.
