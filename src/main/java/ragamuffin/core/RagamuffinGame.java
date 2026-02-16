@@ -51,6 +51,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 5: NPC System & AI
     private NPCManager npcManager;
 
+    // Phase 6: Day/Night Cycle & Police
+    private TimeSystem timeSystem;
+    private LightingSystem lightingSystem;
+    private ClockHUD clockHUD;
+
     // UI
     private SpriteBatch spriteBatch;
     private ShapeRenderer shapeRenderer;
@@ -125,6 +130,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         npcManager = new NPCManager();
         spawnInitialNPCs();
 
+        // Phase 6: Initialize day/night cycle and lighting
+        timeSystem = new TimeSystem(8.0f); // Start at 8:00 AM
+        lightingSystem = new LightingSystem(environment);
+        clockHUD = new ClockHUD();
+
         // Initialize UI
         inventoryUI = new InventoryUI(inventory);
         helpUI = new HelpUI();
@@ -185,6 +195,16 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update game logic if playing and UI not blocking
         if (state == GameState.PLAYING && !isUIBlocking()) {
             updatePlaying(delta);
+        }
+
+        // Update time system (always runs, even when paused in UI)
+        if (state == GameState.PLAYING) {
+            timeSystem.update(delta);
+            lightingSystem.updateLighting(timeSystem.getTime());
+            clockHUD.update(timeSystem.getTime());
+
+            // Update police spawning based on time
+            npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
         }
 
         // Render 3D world
@@ -412,6 +432,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Always render hotbar
         hotbarUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
 
+        // Render clock
+        clockHUD.render(spriteBatch, font, screenWidth, screenHeight);
+
         // Render inventory if visible
         if (inventoryUI.isVisible()) {
             inventoryUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
@@ -529,6 +552,22 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public NPCManager getNPCManager() {
         return npcManager;
+    }
+
+    public TimeSystem getTimeSystem() {
+        return timeSystem;
+    }
+
+    public LightingSystem getLightingSystem() {
+        return lightingSystem;
+    }
+
+    public ClockHUD getClockHUD() {
+        return clockHUD;
+    }
+
+    public Environment getEnvironment() {
+        return environment;
     }
 
     @Override

@@ -33,12 +33,20 @@ public class NPCManager {
     // Structure detection
     private Map<Vector3, Integer> playerStructures; // Position -> block count
 
+    // Police system
+    private boolean policeSpawned; // Track if police are currently spawned
+    private Map<NPC, Float> policeWarningTimers; // Track warning duration for each police
+    private Map<NPC, Vector3> policeTargetStructures; // Track which structure each police is investigating
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
         this.random = new Random();
         this.gameTime = 8.0f; // Start at 8:00 AM
         this.playerStructures = new HashMap<>();
+        this.policeSpawned = false;
+        this.policeWarningTimers = new HashMap<>();
+        this.policeTargetStructures = new HashMap<>();
     }
 
     /**
@@ -131,7 +139,9 @@ public class NPCManager {
      * Update all NPCs.
      */
     public void update(float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
-        for (NPC npc : npcs) {
+        // Use indexed loop to avoid ConcurrentModificationException when spawning new NPCs
+        for (int i = 0; i < npcs.size(); i++) {
+            NPC npc = npcs.get(i);
             updateNPC(npc, delta, world, player, inventory, tooltipSystem);
         }
     }
@@ -142,24 +152,29 @@ public class NPCManager {
     private void updateNPC(NPC npc, float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
         npc.update(delta);
 
-        switch (npc.getState()) {
-            case WANDERING:
-                updateWandering(npc, delta, world);
-                break;
-            case GOING_TO_WORK:
-            case GOING_HOME:
-            case AT_PUB:
-            case AT_HOME:
-                updateDailyRoutine(npc, delta, world);
-                break;
-            case STARING:
-            case PHOTOGRAPHING:
-            case COMPLAINING:
-                updateReactingToStructure(npc, delta, world);
-                break;
-            case STEALING:
-                updateStealing(npc, delta, player, inventory, tooltipSystem);
-                break;
+        // Handle police separately
+        if (npc.getType() == NPCType.POLICE) {
+            updatePolice(npc, delta, world, player, tooltipSystem);
+        } else {
+            switch (npc.getState()) {
+                case WANDERING:
+                    updateWandering(npc, delta, world);
+                    break;
+                case GOING_TO_WORK:
+                case GOING_HOME:
+                case AT_PUB:
+                case AT_HOME:
+                    updateDailyRoutine(npc, delta, world);
+                    break;
+                case STARING:
+                case PHOTOGRAPHING:
+                case COMPLAINING:
+                    updateReactingToStructure(npc, delta, world);
+                    break;
+                case STEALING:
+                    updateStealing(npc, delta, player, inventory, tooltipSystem);
+                    break;
+            }
         }
 
         // Check for player structures nearby
@@ -415,5 +430,245 @@ public class NPCManager {
     public void notifyBlockPlaced(Vector3 position) {
         // Track placed blocks for structure detection
         // This is a simplified version - real implementation would maintain a set
+    }
+
+    /**
+     * Update police spawning based on time of day.
+     * Police spawn at night (20:00-06:00) and despawn during day.
+     */
+    public void updatePoliceSpawning(float time, World world, Player player) {
+        boolean isNight = time >= 20.0f || time < 6.0f;
+
+        if (isNight && !policeSpawned) {
+            // Spawn police at night
+            spawnPolice(player, world);
+            policeSpawned = true;
+        } else if (!isNight && policeSpawned) {
+            // Despawn police during day
+            despawnPolice();
+            policeSpawned = false;
+        }
+    }
+
+    /**
+     * Spawn police NPCs around the player.
+     */
+    private void spawnPolice(Player player, World world) {
+        // Spawn 2-3 police around the player
+        int policeCount = 2 + random.nextInt(2);
+
+        for (int i = 0; i < policeCount; i++) {
+            // Spawn police 15-25 blocks away from player
+            float angle = random.nextFloat() * (float) Math.PI * 2;
+            float distance = 15 + random.nextFloat() * 10;
+
+            float x = player.getPosition().x + (float) Math.cos(angle) * distance;
+            float z = player.getPosition().z + (float) Math.sin(angle) * distance;
+
+            NPC police = spawnNPC(NPCType.POLICE, x, 1, z);
+            police.setState(NPCState.PATROLLING);
+        }
+    }
+
+    /**
+     * Despawn all police NPCs.
+     */
+    private void despawnPolice() {
+        List<NPC> policeToRemove = new ArrayList<>();
+
+        for (NPC npc : npcs) {
+            if (npc.getType() == NPCType.POLICE) {
+                policeToRemove.add(npc);
+            }
+        }
+
+        for (NPC police : policeToRemove) {
+            npcs.remove(police);
+            policeWarningTimers.remove(police);
+            policeTargetStructures.remove(police);
+        }
+    }
+
+    /**
+     * Update police behavior.
+     */
+    private void updatePolice(NPC police, float delta, World world, Player player, TooltipSystem tooltipSystem) {
+        switch (police.getState()) {
+            case PATROLLING:
+                updatePolicePatrolling(police, delta, world, player, tooltipSystem);
+                break;
+            case WARNING:
+                updatePoliceWarning(police, delta, world, player);
+                break;
+            case AGGRESSIVE:
+            case ARRESTING:
+                updatePoliceAggressive(police, delta, world, player);
+                break;
+        }
+    }
+
+    /**
+     * Update police patrolling behavior.
+     */
+    private void updatePolicePatrolling(NPC police, float delta, World world, Player player, TooltipSystem tooltipSystem) {
+        // Scan for player structures around police
+        Vector3 structure = scanForStructures(world, police.getPosition(), 40);
+
+        if (structure != null) {
+            // Found a structure - investigate
+            policeTargetStructures.put(police, structure);
+            setNPCTarget(police, structure, world);
+
+            // If police reaches the structure, apply tape immediately
+            if (police.isNear(structure, 3.0f)) {
+                applyPoliceTapeToStructure(world, structure);
+            }
+        } else {
+            // Approach player
+            setNPCTarget(police, player.getPosition(), world);
+        }
+
+        // Check if adjacent to player - issue warning
+        if (police.isNear(player.getPosition(), 2.0f)) {
+            police.setState(NPCState.WARNING);
+            police.setSpeechText("Move along, nothing to see here.", 3.0f);
+            policeWarningTimers.put(police, 0.0f);
+
+            // Record structure near player if any
+            if (structure != null) {
+                policeTargetStructures.put(police, structure);
+            }
+
+            // Trigger first police encounter tooltip
+            if (tooltipSystem != null) {
+                tooltipSystem.trigger(TooltipTrigger.FIRST_POLICE_ENCOUNTER);
+            }
+        }
+    }
+
+    /**
+     * Update police warning behavior.
+     */
+    private void updatePoliceWarning(NPC police, float delta, World world, Player player) {
+        // Increment warning timer
+        float timer = policeWarningTimers.getOrDefault(police, 0.0f);
+        timer += delta;
+        policeWarningTimers.put(police, timer);
+
+        // Check if player is near a structure
+        Vector3 targetStructure = policeTargetStructures.get(police);
+
+        // If no target structure, scan for one near the police/player
+        if (targetStructure == null) {
+            targetStructure = scanForStructures(world, police.getPosition(), 20);
+            if (targetStructure == null) {
+                targetStructure = scanForStructures(world, player.getPosition(), 20);
+            }
+            if (targetStructure != null) {
+                policeTargetStructures.put(police, targetStructure);
+            }
+        }
+
+        boolean playerNearStructure = false;
+        if (targetStructure != null) {
+            playerNearStructure = player.getPosition().dst(targetStructure) < 10.0f;
+        }
+
+        // Escalate after 2 seconds if player stays near structure
+        if (timer >= 2.0f && playerNearStructure) {
+            police.setState(NPCState.AGGRESSIVE);
+            police.setSpeechText("Right, you're nicked!", 2.0f);
+
+            // Apply police tape to structure
+            if (targetStructure != null) {
+                applyPoliceTapeToStructure(world, targetStructure);
+            }
+
+            // Spawn additional police
+            spawnNPC(NPCType.POLICE, police.getPosition().x + 3, police.getPosition().y, police.getPosition().z);
+        } else if (timer >= 3.0f) {
+            // Go back to patrolling after warning expires
+            police.setState(NPCState.PATROLLING);
+            policeWarningTimers.remove(police);
+        }
+    }
+
+    /**
+     * Update police aggressive/arresting behavior.
+     */
+    private void updatePoliceAggressive(NPC police, float delta, World world, Player player) {
+        // Move toward player
+        setNPCTarget(police, player.getPosition(), world);
+
+        // If very close, teleport player away
+        if (police.isNear(player.getPosition(), 1.5f)) {
+            // Teleport player 50 blocks away
+            Vector3 escapePos = player.getPosition().cpy();
+            escapePos.x += (random.nextBoolean() ? 50 : -50);
+            escapePos.z += (random.nextBoolean() ? 50 : -50);
+            player.getPosition().set(escapePos);
+
+            // Police goes back to patrolling
+            police.setState(NPCState.PATROLLING);
+        }
+    }
+
+    /**
+     * Scan for player-built structures around a position.
+     * @return position of structure center, or null if none found
+     */
+    private Vector3 scanForStructures(World world, Vector3 center, int radius) {
+        int playerBlockCount = 0;
+        Vector3 structureCenter = null;
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                int x = (int) (center.x + dx);
+                int z = (int) (center.z + dz);
+
+                for (int y = 1; y < 10; y++) {
+                    BlockType block = world.getBlock(x, y, z);
+                    // Check for placed blocks (wood, brick)
+                    if (block == BlockType.WOOD || block == BlockType.BRICK) {
+                        playerBlockCount++;
+                        if (structureCenter == null) {
+                            structureCenter = new Vector3(x, y, z);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Need at least 5 blocks to be considered a structure
+        if (playerBlockCount >= 5 && structureCenter != null) {
+            return structureCenter;
+        }
+
+        return null;
+    }
+
+    /**
+     * Apply police tape to blocks in a structure.
+     */
+    private void applyPoliceTapeToStructure(World world, Vector3 structureCenter) {
+        // Tape a few blocks around the structure center
+        int tapeRadius = 2;
+        int tapedCount = 0;
+
+        for (int dx = -tapeRadius; dx <= tapeRadius && tapedCount < 5; dx++) {
+            for (int dz = -tapeRadius; dz <= tapeRadius && tapedCount < 5; dz++) {
+                for (int dy = 0; dy < 3 && tapedCount < 5; dy++) {
+                    int x = (int) structureCenter.x + dx;
+                    int y = (int) structureCenter.y + dy;
+                    int z = (int) structureCenter.z + dz;
+
+                    BlockType block = world.getBlock(x, y, z);
+                    if (block == BlockType.WOOD || block == BlockType.BRICK) {
+                        world.addPoliceTape(x, y, z);
+                        tapedCount++;
+                    }
+                }
+            }
+        }
     }
 }

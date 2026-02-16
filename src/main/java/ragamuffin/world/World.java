@@ -16,11 +16,15 @@ public class World {
     private final Map<String, Chunk> loadedChunks;
     private final Map<LandmarkType, Landmark> landmarks;
     private WorldGenerator generator;
+    private final Set<String> policeTapedBlocks; // Blocks with police tape
+    private final Set<String> protectedBlocks; // Blocks protected from breaking
 
     public World(long seed) {
         this.seed = seed;
         this.loadedChunks = new HashMap<>();
         this.landmarks = new HashMap<>();
+        this.policeTapedBlocks = new HashSet<>();
+        this.protectedBlocks = new HashSet<>();
     }
 
     /**
@@ -252,5 +256,46 @@ public class World {
             }
         }
         return false;
+    }
+
+    /**
+     * Add police tape to a block.
+     */
+    public void addPoliceTape(int x, int y, int z) {
+        String key = getBlockKey(x, y, z);
+        policeTapedBlocks.add(key);
+        protectedBlocks.add(key); // Taped blocks are also protected
+    }
+
+    /**
+     * Check if a block has police tape.
+     */
+    public boolean hasPoliceTape(int x, int y, int z) {
+        String key = getBlockKey(x, y, z);
+        return policeTapedBlocks.contains(key);
+    }
+
+    /**
+     * Check if a block is protected from breaking.
+     */
+    public boolean isProtected(int x, int y, int z) {
+        String key = getBlockKey(x, y, z);
+        return protectedBlocks.contains(key);
+    }
+
+    /**
+     * Remove police tape from a block.
+     */
+    public void removePoliceTape(int x, int y, int z) {
+        String key = getBlockKey(x, y, z);
+        policeTapedBlocks.remove(key);
+        protectedBlocks.remove(key);
+    }
+
+    /**
+     * Get block key for storage.
+     */
+    private String getBlockKey(int x, int y, int z) {
+        return x + "," + y + "," + z;
     }
 }
