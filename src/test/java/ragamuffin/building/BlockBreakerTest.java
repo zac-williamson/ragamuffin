@@ -81,13 +81,29 @@ class BlockBreakerTest {
 
     @Test
     void testDifferentBlockTypesRequire5Hits() {
-        BlockType[] types = {BlockType.TREE_TRUNK, BlockType.BRICK, BlockType.STONE, BlockType.GRASS};
+        // Soft blocks require 5 hits
+        BlockType[] softTypes = {BlockType.TREE_TRUNK, BlockType.GRASS};
 
-        for (BlockType type : types) {
+        for (BlockType type : softTypes) {
             world.setBlock(0, 1, 0, type);
             blockBreaker.resetHits();
 
             for (int i = 0; i < 4; i++) {
+                assertFalse(blockBreaker.punchBlock(world, 0, 1, 0));
+            }
+
+            assertTrue(blockBreaker.punchBlock(world, 0, 1, 0));
+            assertEquals(BlockType.AIR, world.getBlock(0, 1, 0));
+        }
+
+        // Hard blocks require 8 hits
+        BlockType[] hardTypes = {BlockType.BRICK, BlockType.STONE};
+
+        for (BlockType type : hardTypes) {
+            world.setBlock(0, 1, 0, type);
+            blockBreaker.resetHits();
+
+            for (int i = 0; i < 7; i++) {
                 assertFalse(blockBreaker.punchBlock(world, 0, 1, 0));
             }
 

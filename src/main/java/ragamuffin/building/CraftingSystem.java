@@ -48,6 +48,23 @@ public class CraftingSystem {
             Map.of(Material.GLASS, 4),
             Map.of(Material.WINDOW, 1)
         ));
+
+        // Tools
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 2, Material.STONE, 1),
+            Map.of(Material.IMPROVISED_TOOL, 1)
+        ));
+
+        recipes.add(new Recipe(
+            Map.of(Material.STONE, 4, Material.WOOD, 2),
+            Map.of(Material.STONE_TOOL, 1)
+        ));
+
+        // Cardboard shelter
+        recipes.add(new Recipe(
+            Map.of(Material.CARDBOARD, 6),
+            Map.of(Material.CARDBOARD, 1) // Creates a cardboard box block
+        ));
     }
 
     /**

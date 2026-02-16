@@ -10,11 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Handles block breaking mechanics - blocks require 5 hits to break.
+ * Handles block breaking mechanics - blocks require varying hits to break based on hardness and tool.
  */
 public class BlockBreaker {
-    private static final int HITS_TO_BREAK = 5;
-
     private final Map<String, Integer> blockHits;
 
     public BlockBreaker() {
@@ -22,10 +20,48 @@ public class BlockBreaker {
     }
 
     /**
-     * Punch a block at the given position.
+     * Get the base hit count required to break a block type.
+     */
+    private int getBlockHardness(BlockType blockType) {
+        switch (blockType) {
+            case TREE_TRUNK:
+            case LEAVES:
+            case GRASS:
+                return 5; // soft blocks
+            case BRICK:
+            case STONE:
+            case PAVEMENT:
+                return 8; // hard blocks
+            case GLASS:
+                return 2; // fragile blocks
+            default:
+                return 5; // default
+        }
+    }
+
+    /**
+     * Calculate the actual hits needed to break a block with the given tool.
+     */
+    private int getHitsToBreak(BlockType blockType, Material tool) {
+        int baseHardness = getBlockHardness(blockType);
+        float toolMultiplier = Tool.getHitsMultiplier(tool);
+        return Math.max(1, Math.round(baseHardness * toolMultiplier));
+    }
+
+    /**
+     * Punch a block at the given position with bare fist.
      * @return true if the block was broken on this punch
      */
     public boolean punchBlock(World world, int x, int y, int z) {
+        return punchBlock(world, x, y, z, null);
+    }
+
+    /**
+     * Punch a block at the given position with a tool.
+     * @param tool the tool material being used, or null for bare fist
+     * @return true if the block was broken on this punch
+     */
+    public boolean punchBlock(World world, int x, int y, int z, Material tool) {
         BlockType blockType = world.getBlock(x, y, z);
 
         // Can't punch air
@@ -35,8 +71,9 @@ public class BlockBreaker {
 
         String key = getBlockKey(x, y, z);
         int hits = blockHits.getOrDefault(key, 0) + 1;
+        int hitsToBreak = getHitsToBreak(blockType, tool);
 
-        if (hits >= HITS_TO_BREAK) {
+        if (hits >= hitsToBreak) {
             // Break the block
             world.setBlock(x, y, z, BlockType.AIR);
             blockHits.remove(key);
@@ -54,6 +91,20 @@ public class BlockBreaker {
     public int getHitCount(int x, int y, int z) {
         String key = getBlockKey(x, y, z);
         return blockHits.getOrDefault(key, 0);
+    }
+
+    /**
+     * Get the break progress for a block as a fraction (0.0 to 1.0).
+     * @param tool the tool being used, or null for bare fist
+     */
+    public float getBreakProgress(World world, int x, int y, int z, Material tool) {
+        BlockType blockType = world.getBlock(x, y, z);
+        if (blockType == BlockType.AIR) {
+            return 0.0f;
+        }
+        int hits = getHitCount(x, y, z);
+        int hitsToBreak = getHitsToBreak(blockType, tool);
+        return (float) hits / (float) hitsToBreak;
     }
 
     /**

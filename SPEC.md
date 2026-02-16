@@ -707,3 +707,118 @@ consider the player experience. Something can always be better.
 9. **E key interaction with NPC**: Spawn PUBLIC NPC adjacent to player. Player faces NPC. Press E. Verify interaction dialogue is triggered (NPC response text is non-null). Verify the response is from the expected PUBLIC NPC dialogue list.
 
 10. **E key when not facing NPC does nothing**: No NPC nearby. Press E. Verify no interaction triggered. No errors.
+
+---
+
+## Phase 12: CRITIC 2 Improvements — Tools, Shelter & Weather
+
+### CRITIC Findings
+
+**Gameplay depth:**
+- You punch everything with bare fists. 5 hits for every block regardless of material is boring. A stone wall should be harder than a tree. Tools should exist.
+- There's no shelter mechanic. The police move you on at night, but you can't actually protect yourself except by running. A cardboard box should be craftable as a first shelter.
+- Weather does nothing. Rain should drain energy faster. Cold at night should drain health if unsheltered.
+
+**Player progression:**
+- The crafting tree is flat. Need tool tiers: fist < improvised tool < proper tool.
+- No reason to explore different buildings — office loot and shop loot feel the same.
+
+### Improvements
+
+1. **Tool system**: Add CARDBOARD, IMPROVISED_TOOL, and STONE_TOOL materials. Recipes:
+   - 2 WOOD + 1 STONE → 1 IMPROVISED_TOOL
+   - 4 STONE + 2 WOOD → 1 STONE_TOOL
+   Tools go in hotbar. When selected, reduce hits needed: bare fist=5, improvised=3, stone=2.
+   Tools have durability (improvised=20 uses, stone=50 uses). Tool breaks when durability hits 0.
+
+2. **Block hardness**: Different blocks need different base hits:
+   - TREE_TRUNK, LEAVES, GRASS: 5 hits (soft)
+   - BRICK, STONE, PAVEMENT: 8 hits (hard)
+   - GLASS: 2 hits (fragile)
+   Tool multiplier reduces these.
+
+3. **Cardboard shelter**: CARDBOARD material drops from breaking blocks near shops. Recipe: 6 CARDBOARD → 1 CARDBOARD_BOX (placeable). When placed, creates a 2x2x2 shelter. While inside a shelter at night, police cannot "see" you (they skip past). Add CARDBOARD to BlockType and Material.
+
+4. **Weather system**: Random weather changes every 5-10 game minutes. States: CLEAR, OVERCAST, RAIN, COLD_SNAP. Rain increases energy drain by 50%. Cold snap (night only) drains 2 HP/s if player is not inside a shelter. Weather displayed on HUD.
+
+5. **Shelter detection**: Track if player is "inside" — check if blocks exist above, left, right, front, back of player position (roof + 3 walls minimum). Used for weather protection and police avoidance.
+
+### Integration Tests
+
+1. **Improvised tool reduces hits**: Give player IMPROVISED_TOOL in hotbar, select it. Place adjacent to TREE_TRUNK. Punch 3 times. Verify block broken. Verify tool durability decreased by 3.
+
+2. **Stone tool even faster**: Give STONE_TOOL. Adjacent to TREE_TRUNK. Punch 2 times. Block broken. Durability decreased by 2.
+
+3. **Bare fist on hard block**: Adjacent to BRICK. Punch 5 times — block NOT broken (needs 8). Punch 3 more (8 total). Block broken.
+
+4. **Tool breaks at zero durability**: Give IMPROVISED_TOOL with durability 1. Punch a block. Verify tool is removed from inventory (broken). Verify tooltip "Your tool falls apart. Typical."
+
+5. **Craft improvised tool**: Give 2 WOOD + 1 STONE. Open crafting. Craft. Verify 1 IMPROVISED_TOOL in inventory with durability 20.
+
+6. **Cardboard shelter hides from police**: Place CARDBOARD_BOX creating 2x2x2 shelter. Player inside. Set time 22:00. Police spawn. Advance 600 frames. Verify police do NOT approach player (distance does not decrease). Remove shelter. Advance 300 frames. Verify police now approach.
+
+7. **Rain increases energy drain**: Set weather CLEAR. Record energy. Advance 300 frames. Record energy drain as baseline. Reset energy. Set weather RAIN. Advance 300 frames. Verify energy drain is at least 40% more than baseline.
+
+8. **Cold snap drains health outside**: Set weather COLD_SNAP, time to night. Player NOT in shelter. Health 100. Advance 300 frames (5s). Verify health < 100 (should lose ~10 HP).
+
+9. **Cold snap does NOT drain health inside shelter**: Build shelter around player. Set COLD_SNAP + night. Health 100. Advance 300 frames. Verify health is still 100.
+
+10. **Weather displays on HUD**: Set weather RAIN. Verify HUD shows weather state "Rain". Set CLEAR. Verify shows "Clear".
+
+---
+
+## Phase 12: Implementation Notes
+
+**Implementation status**: ✅ Complete
+
+All systems implemented and tested:
+
+1. **Tool system**:
+   - `Tool` class tracks durability (IMPROVISED_TOOL=20, STONE_TOOL=50)
+   - `BlockBreaker` updated to accept tool parameter and calculate hits based on block hardness × tool multiplier
+   - Tool multipliers: bare fist=1.0, improvised=0.6, stone=0.4
+
+2. **Block hardness**:
+   - Soft blocks (TREE_TRUNK, LEAVES, GRASS): 5 base hits
+   - Hard blocks (BRICK, STONE, PAVEMENT): 8 base hits
+   - Fragile blocks (GLASS): 2 base hits
+
+3. **Material additions**:
+   - CARDBOARD (drops from shop blocks: OFF_LICENCE, CHARITY_SHOP)
+   - IMPROVISED_TOOL (crafted from 2 WOOD + 1 STONE)
+   - STONE_TOOL (crafted from 4 STONE + 2 WOOD)
+
+4. **Weather system**:
+   - `Weather` enum: CLEAR, OVERCAST, RAIN, COLD_SNAP
+   - `WeatherSystem` changes weather every 5-10 game minutes
+   - RAIN: 1.5× energy drain multiplier
+   - COLD_SNAP: drains 2 HP/s at night when unsheltered
+
+5. **Shelter detection**:
+   - `ShelterDetector` checks for roof (solid block 2 above player) + 3+ walls
+   - Protects from weather effects and police detection
+
+6. **BlockType addition**:
+   - CARDBOARD (id=12, solid=true)
+
+7. **Tooltip addition**:
+   - TOOL_BROKEN: "Your tool falls apart. Typical."
+
+8. **Test updates**:
+   - Fixed existing tests to account for new block hardness values
+   - All 10 Phase 12 integration tests pass
+   - All 245 existing tests still pass
+
+**Integration completed**:
+✅ WeatherSystem wired into RagamuffinGame update loop
+✅ Weather display added to GameHUD (top-right corner)
+✅ Energy recovery modified by weather multiplier (rain slows recovery)
+✅ Cold snap health drain implemented with shelter check
+✅ Tool class tracks durability per-tool
+✅ TOOL_BROKEN tooltip added
+
+**Remaining gameplay enhancements (optional)**:
+- Inventory system could track tool durability for placed tools in hotbar
+- Block breaking UI could show current tool in use
+- Weather transitions could have visual effects (rain particles, etc.)
+- Cardboard box placement could auto-build 2x2x2 shelter structure

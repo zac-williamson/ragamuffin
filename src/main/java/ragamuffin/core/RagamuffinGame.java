@@ -76,6 +76,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     private HealingSystem healingSystem;
     private RespawnSystem respawnSystem;
 
+    // Phase 12: CRITIC 2 Improvements
+    private WeatherSystem weatherSystem;
+
     private static final float MOUSE_SENSITIVITY = 0.15f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
@@ -162,6 +165,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         healingSystem = new HealingSystem();
         respawnSystem = new RespawnSystem();
 
+        // Phase 12: Initialize CRITIC 2 systems
+        weatherSystem = new WeatherSystem();
+
         // Setup input
         inputHandler = new InputHandler();
         Gdx.input.setInputProcessor(inputHandler);
@@ -231,9 +237,16 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Update time system (only when not paused in opening sequence)
             if (!openingSequence.isActive()) {
+                // Convert delta (real seconds) to game time seconds
+                // Assuming 1 real second = 1 game second for now
+                float gameTimeDelta = delta;
+
                 timeSystem.update(delta);
                 lightingSystem.updateLighting(timeSystem.getTime());
                 clockHUD.update(timeSystem.getTime());
+
+                // Phase 12: Update weather system
+                weatherSystem.update(gameTimeDelta);
 
                 // Update police spawning based on time
                 npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
@@ -241,7 +254,21 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Update player survival stats
                 player.updateHunger(delta);
                 if (!isUIBlocking()) {
-                    player.recoverEnergy(delta);
+                    // Phase 12: Apply weather energy drain multiplier
+                    float energyRecovery = Player.ENERGY_RECOVERY_PER_SECOND * delta;
+                    float weatherMultiplier = weatherSystem.getCurrentWeather().getEnergyDrainMultiplier();
+                    // Weather affects recovery rate inversely - worse weather = slower recovery
+                    player.recoverEnergy(energyRecovery / weatherMultiplier);
+                }
+
+                // Phase 12: Cold snap health drain at night when unsheltered
+                Weather currentWeather = weatherSystem.getCurrentWeather();
+                if (currentWeather.drainsHealthAtNight() && timeSystem.isNight()) {
+                    boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition());
+                    if (!sheltered) {
+                        float healthDrain = currentWeather.getHealthDrainRate() * delta;
+                        player.damage(healthDrain);
+                    }
                 }
 
                 // Phase 11: Update healing system
@@ -587,6 +614,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 8: Render GameHUD (health/hunger/energy bars + crosshair)
         if (!openingSequence.isActive()) {
+            // Phase 12: Update weather display
+            gameHUD.setWeather(weatherSystem.getCurrentWeather());
             gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
 

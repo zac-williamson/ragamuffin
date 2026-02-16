@@ -16,7 +16,8 @@ public enum BlockType {
     WOOD(8, true),
     WATER(9, false),
     TREE_TRUNK(10, true),
-    LEAVES(11, true);
+    LEAVES(11, true),
+    CARDBOARD(12, true);
 
     private final int id;
     private final boolean solid;

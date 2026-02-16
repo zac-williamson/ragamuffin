@@ -4,10 +4,11 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import ragamuffin.core.Weather;
 import ragamuffin.entity.Player;
 
 /**
- * Game HUD displaying health, hunger, energy bars and crosshair.
+ * Game HUD displaying health, hunger, energy bars, weather, and crosshair.
  */
 public class GameHUD {
     private static final float BAR_WIDTH = 200f;
@@ -21,10 +22,12 @@ public class GameHUD {
 
     private final Player player;
     private boolean visible;
+    private Weather currentWeather;
 
     public GameHUD(Player player) {
         this.player = player;
         this.visible = true;
+        this.currentWeather = Weather.CLEAR;
     }
 
     /**
@@ -38,6 +41,9 @@ public class GameHUD {
 
         // Render status bars
         renderStatusBars(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+
+        // Render weather display
+        renderWeather(spriteBatch, font, screenWidth, screenHeight);
 
         // Render crosshair
         renderCrosshair(shapeRenderer, screenWidth, screenHeight);
@@ -128,5 +134,24 @@ public class GameHUD {
 
     public void hide() {
         visible = false;
+    }
+
+    /**
+     * Update the current weather to display.
+     */
+    public void setWeather(Weather weather) {
+        this.currentWeather = weather;
+    }
+
+    /**
+     * Render the weather display in the top-right corner.
+     */
+    private void renderWeather(SpriteBatch spriteBatch, BitmapFont font,
+                               int screenWidth, int screenHeight) {
+        spriteBatch.begin();
+        font.setColor(Color.WHITE);
+        String weatherText = "Weather: " + currentWeather.getDisplayName();
+        font.draw(spriteBatch, weatherText, screenWidth - 200, screenHeight - 20);
+        spriteBatch.end();
     }
 }

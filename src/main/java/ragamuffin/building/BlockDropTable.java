@@ -40,6 +40,8 @@ public class BlockDropTable {
                 return Material.ROAD_ASPHALT;
             case WOOD:
                 return Material.WOOD;
+            case CARDBOARD:
+                return Material.CARDBOARD;
             case AIR:
             case WATER:
             case LEAVES:
@@ -68,6 +70,12 @@ public class BlockDropTable {
             // Greggs blocks drop food (50/50 chance between sausage roll and steak bake)
             if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
                 return Math.random() < 0.5 ? Material.SAUSAGE_ROLL : Material.STEAK_BAKE;
+            }
+        } else if (landmark == LandmarkType.OFF_LICENCE ||
+                   landmark == LandmarkType.CHARITY_SHOP) {
+            // Shop blocks near shops drop cardboard
+            if (blockType == BlockType.BRICK || blockType == BlockType.WOOD) {
+                return Material.CARDBOARD;
             }
         }
 

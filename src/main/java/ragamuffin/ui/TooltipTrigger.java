@@ -14,7 +14,8 @@ public enum TooltipTrigger {
     FIRST_DEATH("Council tax doesn't pay itself. Get up."),
     FIRST_GREGGS("Ah, Greggs. The backbone of British cuisine."),
     HUNGER_LOW("Your stomach growls. Even the pigeons look appetising."),
-    FIRST_CRAFT("Crafting with materials of questionable provenance.");
+    FIRST_CRAFT("Crafting with materials of questionable provenance."),
+    TOOL_BROKEN("Your tool falls apart. Typical.");
 
     private final String message;
 

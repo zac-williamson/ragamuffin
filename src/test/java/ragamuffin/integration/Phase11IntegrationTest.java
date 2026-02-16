@@ -75,8 +75,8 @@ class Phase11IntegrationTest {
         world.setBlock(0, 1, 1, BlockType.BRICK);
         player.getPosition().set(0, 1, 0);
 
-        // Punch 5 times to break the block
-        for (int i = 0; i < 5; i++) {
+        // Punch 8 times to break the brick block (hard blocks require 8 hits)
+        for (int i = 0; i < 8; i++) {
             blockBreaker.punchBlock(world, 0, 1, 1);
         }
 

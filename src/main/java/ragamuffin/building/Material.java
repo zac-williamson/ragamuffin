@@ -24,7 +24,10 @@ public enum Material {
     BRICK_WALL("Brick Wall"),
     WINDOW("Window"),
     SAUSAGE_ROLL("Sausage Roll"),
-    STEAK_BAKE("Steak Bake");
+    STEAK_BAKE("Steak Bake"),
+    CARDBOARD("Cardboard"),
+    IMPROVISED_TOOL("Improvised Tool"),
+    STONE_TOOL("Stone Tool");
 
     private final String displayName;
 

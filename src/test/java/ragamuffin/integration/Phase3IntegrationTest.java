@@ -134,8 +134,8 @@ class Phase3IntegrationTest {
         world.setBlock(0, 1, 1, BlockType.BRICK);
         player.getPosition().set(0, 1, 0);
 
-        // Punch 5 times
-        for (int i = 0; i < 5; i++) {
+        // Punch 8 times (brick blocks are hard and require 8 hits)
+        for (int i = 0; i < 8; i++) {
             blockBreaker.punchBlock(world, 0, 1, 1);
         }
 
