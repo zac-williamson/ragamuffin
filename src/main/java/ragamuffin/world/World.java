@@ -162,6 +162,19 @@ public class World {
     }
 
     /**
+     * Get the landmark at a specific block position, if any.
+     * @return the landmark, or null if the block is not part of a landmark
+     */
+    public LandmarkType getLandmarkAt(int x, int y, int z) {
+        for (Landmark landmark : landmarks.values()) {
+            if (landmark.contains(x, y, z)) {
+                return landmark.getType();
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get the render distance in chunks.
      */
     public int getRenderDistance() {

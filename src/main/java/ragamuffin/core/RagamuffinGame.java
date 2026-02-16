@@ -4,19 +4,23 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.building.*;
 import ragamuffin.entity.Player;
 import ragamuffin.render.ChunkMeshBuilder;
 import ragamuffin.render.ChunkRenderer;
-import ragamuffin.world.Chunk;
-import ragamuffin.world.World;
+import ragamuffin.ui.*;
+import ragamuffin.world.*;
 
 /**
- * Main game class - handles the 3D core engine.
+ * Main game class - handles the 3D core engine and Phase 3 systems.
  */
 public class RagamuffinGame extends ApplicationAdapter {
 
@@ -31,7 +35,22 @@ public class RagamuffinGame extends ApplicationAdapter {
     private ChunkRenderer chunkRenderer;
     private ChunkMeshBuilder meshBuilder;
 
+    // Phase 3: Resource & Inventory System
+    private Inventory inventory;
+    private BlockBreaker blockBreaker;
+    private BlockDropTable dropTable;
+    private TooltipSystem tooltipSystem;
+
+    // UI
+    private SpriteBatch spriteBatch;
+    private ShapeRenderer shapeRenderer;
+    private BitmapFont font;
+    private InventoryUI inventoryUI;
+    private HelpUI helpUI;
+    private HotbarUI hotbarUI;
+
     private static final float MOUSE_SENSITIVITY = 0.15f;
+    private static final float PUNCH_REACH = 5.0f;
 
     @Override
     public void create() {
@@ -53,6 +72,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
         environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
 
+        // Setup 2D UI rendering
+        spriteBatch = new SpriteBatch();
+        shapeRenderer = new ShapeRenderer();
+        font = new BitmapFont(); // Default LibGDX font
+        font.getData().setScale(1.2f);
+
         // Generate the world (Phase 2)
         Gdx.app.log("Ragamuffin", "Generating British town...");
         world = new World(System.currentTimeMillis());
@@ -73,6 +98,17 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Load initial chunks around player
         world.updateLoadedChunks(player.getPosition());
         updateChunkRenderers();
+
+        // Phase 3: Initialize inventory and resource systems
+        inventory = new Inventory(36);
+        blockBreaker = new BlockBreaker();
+        dropTable = new BlockDropTable();
+        tooltipSystem = new TooltipSystem();
+
+        // Initialize UI
+        inventoryUI = new InventoryUI(inventory);
+        helpUI = new HelpUI();
+        hotbarUI = new HotbarUI(inventory);
 
         // Setup input
         inputHandler = new InputHandler();
@@ -96,14 +132,17 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update input
         inputHandler.update();
 
+        // Handle UI toggles
+        handleUIInput();
+
         // Handle state transitions
         if (inputHandler.isEscapePressed()) {
             handleEscapePress();
             inputHandler.resetEscape();
         }
 
-        // Update game logic if playing
-        if (state == GameState.PLAYING) {
+        // Update game logic if playing and UI not blocking
+        if (state == GameState.PLAYING && !isUIBlocking()) {
             updatePlaying(delta);
         }
 
@@ -114,9 +153,43 @@ public class RagamuffinGame extends ApplicationAdapter {
         modelBatch.begin(camera);
         chunkRenderer.render(modelBatch, environment);
         modelBatch.end();
+
+        // Render 2D UI overlay
+        renderUI();
+    }
+
+    private void handleUIInput() {
+        // Inventory toggle
+        if (inputHandler.isInventoryPressed()) {
+            inventoryUI.toggle();
+            inputHandler.resetInventory();
+        }
+
+        // Help toggle
+        if (inputHandler.isHelpPressed()) {
+            helpUI.toggle();
+            inputHandler.resetHelp();
+        }
+
+        // Hotbar selection
+        int hotbarSlot = inputHandler.getHotbarSlotPressed();
+        if (hotbarSlot >= 0) {
+            hotbarUI.selectSlot(hotbarSlot);
+            inputHandler.resetHotbarSlot();
+        }
+    }
+
+    private boolean isUIBlocking() {
+        return inventoryUI.isVisible() || helpUI.isVisible();
     }
 
     private void updatePlaying(float delta) {
+        // Handle punching
+        if (inputHandler.isPunchPressed()) {
+            handlePunch();
+            inputHandler.resetPunch();
+        }
+
         // Calculate movement direction
         Vector3 forward = new Vector3(camera.direction.x, 0, camera.direction.z).nor();
         Vector3 right = new Vector3(camera.direction).crs(Vector3.Y).nor();
@@ -164,8 +237,89 @@ public class RagamuffinGame extends ApplicationAdapter {
         camera.update();
     }
 
+    private void handlePunch() {
+        // Raycast to find target block
+        Vector3 cameraPos = new Vector3(camera.position);
+        Vector3 direction = new Vector3(camera.direction);
+
+        RaycastResult result = blockBreaker.getTargetBlock(world, cameraPos, direction, PUNCH_REACH);
+        if (result != null) {
+            int x = result.getBlockX();
+            int y = result.getBlockY();
+            int z = result.getBlockZ();
+            BlockType blockType = result.getBlockType();
+
+            // Check if it's a tree - trigger tooltip on first punch
+            if (blockType == BlockType.TREE_TRUNK && blockBreaker.getHitCount(x, y, z) == 0) {
+                tooltipSystem.trigger(TooltipTrigger.FIRST_TREE_PUNCH);
+            }
+
+            // Punch the block
+            boolean broken = blockBreaker.punchBlock(world, x, y, z);
+
+            if (broken) {
+                // Block was broken - determine drop
+                LandmarkType landmark = world.getLandmarkAt(x, y, z);
+                Material drop = dropTable.getDrop(blockType, landmark);
+
+                if (drop != null) {
+                    inventory.addItem(drop, 1);
+
+                    // Trigger jeweller tooltip if applicable
+                    if (drop == Material.DIAMOND && landmark == LandmarkType.JEWELLER) {
+                        tooltipSystem.trigger(TooltipTrigger.JEWELLER_DIAMOND);
+                    }
+                }
+
+                // Update chunk mesh
+                updateChunkRenderers();
+            }
+        }
+    }
+
+    private void renderUI() {
+        int screenWidth = Gdx.graphics.getWidth();
+        int screenHeight = Gdx.graphics.getHeight();
+
+        // Always render hotbar
+        hotbarUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+
+        // Render inventory if visible
+        if (inventoryUI.isVisible()) {
+            inventoryUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Render help if visible
+        if (helpUI.isVisible()) {
+            helpUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Render tooltip if active
+        if (tooltipSystem.isActive()) {
+            renderTooltip();
+        }
+    }
+
+    private void renderTooltip() {
+        String message = tooltipSystem.getCurrentTooltip();
+        if (message != null) {
+            int screenWidth = Gdx.graphics.getWidth();
+            int screenHeight = Gdx.graphics.getHeight();
+
+            // Render tooltip at bottom center
+            spriteBatch.begin();
+            font.draw(spriteBatch, message, screenWidth / 2 - 100, 100);
+            spriteBatch.end();
+        }
+    }
+
     private void handleEscapePress() {
-        if (state == GameState.PLAYING) {
+        // Close any open UI first
+        if (inventoryUI.isVisible()) {
+            inventoryUI.hide();
+        } else if (helpUI.isVisible()) {
+            helpUI.hide();
+        } else if (state == GameState.PLAYING) {
             transitionToPaused();
         } else if (state == GameState.PAUSED) {
             transitionToPlaying();
@@ -190,9 +344,44 @@ public class RagamuffinGame extends ApplicationAdapter {
         this.state = newState;
     }
 
+    public Player getPlayer() {
+        return player;
+    }
+
+    public World getWorld() {
+        return world;
+    }
+
+    public Inventory getInventory() {
+        return inventory;
+    }
+
+    public BlockBreaker getBlockBreaker() {
+        return blockBreaker;
+    }
+
+    public TooltipSystem getTooltipSystem() {
+        return tooltipSystem;
+    }
+
+    public InventoryUI getInventoryUI() {
+        return inventoryUI;
+    }
+
+    public HelpUI getHelpUI() {
+        return helpUI;
+    }
+
+    public HotbarUI getHotbarUI() {
+        return hotbarUI;
+    }
+
     @Override
     public void dispose() {
         modelBatch.dispose();
         chunkRenderer.dispose();
+        spriteBatch.dispose();
+        shapeRenderer.dispose();
+        font.dispose();
     }
 }

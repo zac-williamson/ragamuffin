@@ -11,6 +11,10 @@ public class InputHandler implements InputProcessor {
 
     private boolean forward, backward, left, right;
     private boolean escapePressed;
+    private boolean inventoryPressed;
+    private boolean helpPressed;
+    private boolean punchPressed;
+    private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
     private float mouseDeltaX, mouseDeltaY;
     private int lastX = -1, lastY = -1;
 
@@ -49,16 +53,46 @@ public class InputHandler implements InputProcessor {
     public boolean isLeft() { return left; }
     public boolean isRight() { return right; }
     public boolean isEscapePressed() { return escapePressed; }
+    public boolean isInventoryPressed() { return inventoryPressed; }
+    public boolean isHelpPressed() { return helpPressed; }
+    public boolean isPunchPressed() { return punchPressed; }
+    public int getHotbarSlotPressed() { return hotbarSlotPressed; }
 
     public float getMouseDeltaX() { return mouseDeltaX; }
     public float getMouseDeltaY() { return mouseDeltaY; }
 
     public void resetEscape() { escapePressed = false; }
+    public void resetInventory() { inventoryPressed = false; }
+    public void resetHelp() { helpPressed = false; }
+    public void resetPunch() { punchPressed = false; }
+    public void resetHotbarSlot() { hotbarSlotPressed = -1; }
 
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.ESCAPE) {
             escapePressed = true;
+        } else if (keycode == Input.Keys.I) {
+            inventoryPressed = true;
+        } else if (keycode == Input.Keys.H) {
+            helpPressed = true;
+        } else if (keycode == Input.Keys.NUM_1) {
+            hotbarSlotPressed = 0;
+        } else if (keycode == Input.Keys.NUM_2) {
+            hotbarSlotPressed = 1;
+        } else if (keycode == Input.Keys.NUM_3) {
+            hotbarSlotPressed = 2;
+        } else if (keycode == Input.Keys.NUM_4) {
+            hotbarSlotPressed = 3;
+        } else if (keycode == Input.Keys.NUM_5) {
+            hotbarSlotPressed = 4;
+        } else if (keycode == Input.Keys.NUM_6) {
+            hotbarSlotPressed = 5;
+        } else if (keycode == Input.Keys.NUM_7) {
+            hotbarSlotPressed = 6;
+        } else if (keycode == Input.Keys.NUM_8) {
+            hotbarSlotPressed = 7;
+        } else if (keycode == Input.Keys.NUM_9) {
+            hotbarSlotPressed = 8;
         }
         return true;
     }
@@ -75,7 +109,10 @@ public class InputHandler implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        return false;
+        if (button == Input.Buttons.LEFT) {
+            punchPressed = true;
+        }
+        return true;
     }
 
     @Override
