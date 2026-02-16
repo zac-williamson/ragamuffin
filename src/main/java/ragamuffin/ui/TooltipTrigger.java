@@ -6,7 +6,8 @@ package ragamuffin.ui;
  */
 public enum TooltipTrigger {
     FIRST_TREE_PUNCH("Punch a tree to get wood"),
-    JEWELLER_DIAMOND("Jewellers can be a good source of diamond");
+    JEWELLER_DIAMOND("Jewellers can be a good source of diamond"),
+    YOUTH_THEFT("Oi! That's mine!");
 
     private final String message;
 

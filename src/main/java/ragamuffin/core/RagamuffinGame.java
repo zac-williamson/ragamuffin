@@ -12,7 +12,10 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.ai.NPCManager;
 import ragamuffin.building.*;
+import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
 import ragamuffin.render.ChunkMeshBuilder;
 import ragamuffin.render.ChunkRenderer;
@@ -44,6 +47,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 4: Crafting & Building
     private CraftingSystem craftingSystem;
     private BlockPlacer blockPlacer;
+
+    // Phase 5: NPC System & AI
+    private NPCManager npcManager;
 
     // UI
     private SpriteBatch spriteBatch;
@@ -115,6 +121,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         craftingSystem = new CraftingSystem();
         blockPlacer = new BlockPlacer();
 
+        // Phase 5: Initialize NPC system
+        npcManager = new NPCManager();
+        spawnInitialNPCs();
+
         // Initialize UI
         inventoryUI = new InventoryUI(inventory);
         helpUI = new HelpUI();
@@ -125,6 +135,26 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler = new InputHandler();
         Gdx.input.setInputProcessor(inputHandler);
         Gdx.input.setCursorCatched(true);
+    }
+
+    /**
+     * Spawn initial NPCs in the world.
+     */
+    private void spawnInitialNPCs() {
+        // Spawn some members of the public
+        npcManager.spawnNPC(NPCType.PUBLIC, 10, 1, 10);
+        npcManager.spawnNPC(NPCType.PUBLIC, -15, 1, 8);
+        npcManager.spawnNPC(NPCType.PUBLIC, 5, 1, -12);
+
+        // Spawn dogs in the park
+        npcManager.spawnNPC(NPCType.DOG, -5, 1, -5);
+        npcManager.spawnNPC(NPCType.DOG, 8, 1, 3);
+
+        // Spawn a youth gang
+        npcManager.spawnNPC(NPCType.YOUTH_GANG, -10, 1, -10);
+
+        // Spawn a council member
+        npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, 20, 1, 20);
     }
 
     /**
@@ -256,6 +286,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());
 
+        // Phase 5: Update NPCs
+        npcManager.update(delta, world, player, inventory, tooltipSystem);
+
         // Update camera to follow player
         camera.position.set(player.getPosition());
         camera.position.y += Player.EYE_HEIGHT;
@@ -277,10 +310,19 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void handlePunch() {
-        // Raycast to find target block
+        // Check if punching an NPC first
         Vector3 cameraPos = new Vector3(camera.position);
         Vector3 direction = new Vector3(camera.direction);
 
+        // Check for nearby NPCs in punch range
+        NPC targetNPC = findNPCInReach(cameraPos, direction, PUNCH_REACH);
+        if (targetNPC != null) {
+            // Punch the NPC (knockback)
+            npcManager.punchNPC(targetNPC, direction);
+            return; // Don't punch blocks if we hit an NPC
+        }
+
+        // Raycast to find target block
         RaycastResult result = blockBreaker.getTargetBlock(world, cameraPos, direction, PUNCH_REACH);
         if (result != null) {
             int x = result.getBlockX();
@@ -334,6 +376,33 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Update chunk mesh
             updateChunkRenderers();
         }
+    }
+
+    /**
+     * Find an NPC within punch reach.
+     */
+    private NPC findNPCInReach(Vector3 cameraPos, Vector3 direction, float reach) {
+        NPC closestNPC = null;
+        float closestDistance = reach;
+
+        for (NPC npc : npcManager.getNPCs()) {
+            // Calculate distance to NPC
+            Vector3 toNPC = npc.getPosition().cpy().sub(cameraPos);
+            float distance = toNPC.len();
+
+            if (distance > reach) {
+                continue; // Too far
+            }
+
+            // Check if NPC is in front of camera (dot product with direction)
+            float dot = toNPC.nor().dot(direction);
+            if (dot > 0.8f && distance < closestDistance) { // Must be facing NPC
+                closestNPC = npc;
+                closestDistance = distance;
+            }
+        }
+
+        return closestNPC;
     }
 
     private void renderUI() {
@@ -456,6 +525,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public PerspectiveCamera getCamera() {
         return camera;
+    }
+
+    public NPCManager getNPCManager() {
+        return npcManager;
     }
 
     @Override

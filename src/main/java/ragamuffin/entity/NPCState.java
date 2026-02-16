@@ -1,0 +1,17 @@
+package ragamuffin.entity;
+
+/**
+ * States for NPC behavior state machines.
+ */
+public enum NPCState {
+    IDLE,           // Standing still
+    WANDERING,      // Random wandering
+    GOING_TO_WORK,  // Daily routine: heading to work
+    GOING_HOME,     // Daily routine: heading home
+    AT_PUB,         // Daily routine: at the pub
+    AT_HOME,        // Daily routine: at home
+    STARING,        // Reacting to player structure
+    PHOTOGRAPHING,  // Taking photos of player structure
+    COMPLAINING,    // Complaining about player structure
+    STEALING        // Youth gang stealing from player
+}
