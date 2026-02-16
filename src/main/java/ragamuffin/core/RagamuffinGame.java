@@ -65,6 +65,12 @@ public class RagamuffinGame extends ApplicationAdapter {
     private HotbarUI hotbarUI;
     private CraftingUI craftingUI;
 
+    // Phase 8: HUD, Menus & Sequences
+    private GameHUD gameHUD;
+    private PauseMenu pauseMenu;
+    private MainMenuScreen mainMenuScreen;
+    private OpeningSequence openingSequence;
+
     private static final float MOUSE_SENSITIVITY = 0.15f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
@@ -73,9 +79,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     public void create() {
         Gdx.app.log("Ragamuffin", "Welcome to the real world, kid.");
 
-        // Start in MENU state (later phases will add actual menu)
+        // Phase 8: Start in MENU state with main menu
         state = GameState.MENU;
-        transitionToPlaying(); // For Phase 1, jump straight to playing
 
         // Setup 3D camera
         camera = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
@@ -141,10 +146,17 @@ public class RagamuffinGame extends ApplicationAdapter {
         hotbarUI = new HotbarUI(inventory);
         craftingUI = new CraftingUI(craftingSystem, inventory);
 
+        // Phase 8: Initialize HUD, menus, and sequences
+        gameHUD = new GameHUD(player);
+        pauseMenu = new PauseMenu();
+        mainMenuScreen = new MainMenuScreen();
+        openingSequence = new OpeningSequence();
+
         // Setup input
         inputHandler = new InputHandler();
         Gdx.input.setInputProcessor(inputHandler);
-        Gdx.input.setCursorCatched(true);
+        // Don't catch cursor in menu
+        Gdx.input.setCursorCatched(false);
     }
 
     /**
@@ -183,40 +195,111 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update input
         inputHandler.update();
 
-        // Handle UI toggles
-        handleUIInput();
+        // Handle state-specific input and updates
+        if (state == GameState.MENU) {
+            handleMenuInput();
+            renderMenu();
+        } else if (state == GameState.PLAYING) {
+            // Update opening sequence if active
+            if (openingSequence.isActive()) {
+                openingSequence.update(delta);
+            }
 
-        // Handle state transitions
-        if (inputHandler.isEscapePressed()) {
-            handleEscapePress();
-            inputHandler.resetEscape();
+            // Handle UI toggles
+            handleUIInput();
+
+            // Handle state transitions
+            if (inputHandler.isEscapePressed()) {
+                handleEscapePress();
+                inputHandler.resetEscape();
+            }
+
+            // Update game logic if not blocked by UI or opening sequence
+            if (!isUIBlocking() && !openingSequence.isActive()) {
+                updatePlaying(delta);
+            }
+
+            // Update time system (only when not paused in opening sequence)
+            if (!openingSequence.isActive()) {
+                timeSystem.update(delta);
+                lightingSystem.updateLighting(timeSystem.getTime());
+                clockHUD.update(timeSystem.getTime());
+
+                // Update police spawning based on time
+                npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+
+                // Update player survival stats
+                player.updateHunger(delta);
+                if (!isUIBlocking()) {
+                    player.recoverEnergy(delta);
+                }
+            }
+
+            // Update tooltip system
+            tooltipSystem.update(delta);
+
+            // Render 3D world
+            Gdx.gl.glClearColor(0.53f, 0.81f, 0.92f, 1f); // Sky blue
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
+            modelBatch.begin(camera);
+            chunkRenderer.render(modelBatch, environment);
+            modelBatch.end();
+
+            // Render 2D UI overlay
+            renderUI();
+
+            // Render opening sequence overlay
+            if (openingSequence.isActive()) {
+                openingSequence.render(spriteBatch, shapeRenderer, font,
+                                      Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            }
+        } else if (state == GameState.PAUSED) {
+            // Paused - still render world but frozen
+            Gdx.gl.glClearColor(0.53f, 0.81f, 0.92f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
+            modelBatch.begin(camera);
+            chunkRenderer.render(modelBatch, environment);
+            modelBatch.end();
+
+            // Render UI and pause menu
+            renderUI();
+            pauseMenu.render(spriteBatch, shapeRenderer, font,
+                           Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+
+            // Handle pause menu input
+            if (inputHandler.isEscapePressed()) {
+                handleEscapePress();
+                inputHandler.resetEscape();
+            }
         }
+    }
 
-        // Update game logic if playing and UI not blocking
-        if (state == GameState.PLAYING && !isUIBlocking()) {
-            updatePlaying(delta);
+    private void handleMenuInput() {
+        // Handle main menu input
+        if (inputHandler.isEnterPressed()) {
+            if (mainMenuScreen.isNewGameSelected()) {
+                startNewGame();
+            } else if (mainMenuScreen.isQuitSelected()) {
+                Gdx.app.exit();
+            }
+            inputHandler.resetEnter();
         }
+    }
 
-        // Update time system (always runs, even when paused in UI)
-        if (state == GameState.PLAYING) {
-            timeSystem.update(delta);
-            lightingSystem.updateLighting(timeSystem.getTime());
-            clockHUD.update(timeSystem.getTime());
+    private void startNewGame() {
+        // Transition to playing and start opening sequence
+        state = GameState.PLAYING;
+        openingSequence.start();
+        Gdx.input.setCursorCatched(true);
+    }
 
-            // Update police spawning based on time
-            npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
-        }
+    private void renderMenu() {
+        int screenWidth = Gdx.graphics.getWidth();
+        int screenHeight = Gdx.graphics.getHeight();
 
-        // Render 3D world
-        Gdx.gl.glClearColor(0.53f, 0.81f, 0.92f, 1f); // Sky blue
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
-
-        modelBatch.begin(camera);
-        chunkRenderer.render(modelBatch, environment);
-        modelBatch.end();
-
-        // Render 2D UI overlay
-        renderUI();
+        mainMenuScreen.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
     }
 
     private void handleUIInput() {
@@ -330,6 +413,10 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void handlePunch() {
+        // Consume energy for punching
+        player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
+
+        // Rest of the punching logic
         // Check if punching an NPC first
         Vector3 cameraPos = new Vector3(camera.position);
         Vector3 direction = new Vector3(camera.direction);
@@ -429,8 +516,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
 
-        // Always render hotbar
-        hotbarUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        // Phase 8: Render GameHUD (health/hunger/energy bars + crosshair)
+        if (!openingSequence.isActive()) {
+            gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Always render hotbar (unless opening sequence active)
+        if (!openingSequence.isActive()) {
+            hotbarUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
 
         // Render clock
         clockHUD.render(spriteBatch, font, screenWidth, screenHeight);
@@ -568,6 +662,23 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public Environment getEnvironment() {
         return environment;
+    }
+
+    // Phase 8 getters
+    public GameHUD getGameHUD() {
+        return gameHUD;
+    }
+
+    public PauseMenu getPauseMenu() {
+        return pauseMenu;
+    }
+
+    public MainMenuScreen getMainMenuScreen() {
+        return mainMenuScreen;
+    }
+
+    public OpeningSequence getOpeningSequence() {
+        return openingSequence;
     }
 
     @Override

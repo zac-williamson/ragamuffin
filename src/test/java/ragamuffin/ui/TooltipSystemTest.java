@@ -17,6 +17,7 @@ class TooltipSystemTest {
     @Test
     void testTriggerTooltip_FirstTime() {
         assertTrue(tooltipSystem.trigger(TooltipTrigger.FIRST_TREE_PUNCH));
+        tooltipSystem.update(0.016f); // Update to activate queued tooltip
         assertEquals("Punch a tree to get wood", tooltipSystem.getCurrentTooltip());
     }
 
@@ -32,15 +33,18 @@ class TooltipSystemTest {
     @Test
     void testMultipleDifferentTooltips() {
         assertTrue(tooltipSystem.trigger(TooltipTrigger.FIRST_TREE_PUNCH));
+        tooltipSystem.update(0.016f); // Activate first
         tooltipSystem.clearCurrent();
 
         assertTrue(tooltipSystem.trigger(TooltipTrigger.JEWELLER_DIAMOND));
+        tooltipSystem.update(0.016f); // Activate second
         assertEquals("Jewellers can be a good source of diamond", tooltipSystem.getCurrentTooltip());
     }
 
     @Test
     void testClearCurrent() {
         tooltipSystem.trigger(TooltipTrigger.FIRST_TREE_PUNCH);
+        tooltipSystem.update(0.016f); // Activate
         assertNotNull(tooltipSystem.getCurrentTooltip());
 
         tooltipSystem.clearCurrent();
@@ -71,6 +75,7 @@ class TooltipSystemTest {
         for (TooltipTrigger trigger : TooltipTrigger.values()) {
             tooltipSystem.reset();
             tooltipSystem.trigger(trigger);
+            tooltipSystem.update(0.016f); // Activate
             assertNotNull(tooltipSystem.getCurrentTooltip(),
                          "Trigger " + trigger + " should have a message");
             assertFalse(tooltipSystem.getCurrentTooltip().isEmpty(),
@@ -83,6 +88,7 @@ class TooltipSystemTest {
         assertFalse(tooltipSystem.isActive());
 
         tooltipSystem.trigger(TooltipTrigger.FIRST_TREE_PUNCH);
+        tooltipSystem.update(0.016f); // Activate
         assertTrue(tooltipSystem.isActive());
 
         tooltipSystem.clearCurrent();

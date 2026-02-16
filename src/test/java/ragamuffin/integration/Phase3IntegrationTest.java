@@ -186,6 +186,7 @@ class Phase3IntegrationTest {
         // Trigger tooltip
         boolean triggered = tooltipSystem.trigger(TooltipTrigger.JEWELLER_DIAMOND);
         assertTrue(triggered);
+        tooltipSystem.update(0.016f); // Activate queued tooltip
         assertEquals("Jewellers can be a good source of diamond", tooltipSystem.getCurrentTooltip());
     }
 
@@ -207,6 +208,7 @@ class Phase3IntegrationTest {
         // Trigger tooltip
         boolean triggered = tooltipSystem.trigger(TooltipTrigger.FIRST_TREE_PUNCH);
         assertTrue(triggered);
+        tooltipSystem.update(0.016f); // Activate queued tooltip
         assertEquals("Punch a tree to get wood", tooltipSystem.getCurrentTooltip());
 
         // Clear tooltip

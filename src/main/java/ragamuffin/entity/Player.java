@@ -14,14 +14,31 @@ public class Player {
     public static final float EYE_HEIGHT = 1.62f; // Eye level for camera
     public static final float MOVE_SPEED = 5.0f;
 
+    // Phase 8: Survival stats
+    public static final float MAX_HEALTH = 100f;
+    public static final float MAX_HUNGER = 100f;
+    public static final float MAX_ENERGY = 100f;
+    public static final float HUNGER_DRAIN_PER_MINUTE = 2f; // 50 minutes to starve
+    public static final float ENERGY_DRAIN_PER_ACTION = 1f;
+    public static final float ENERGY_RECOVERY_PER_SECOND = 5f; // 20 seconds to full recovery
+
     private final Vector3 position;
     private final Vector3 velocity;
     private final AABB aabb;
+
+    private float health;
+    private float hunger;
+    private float energy;
+    private boolean isDead;
 
     public Player(float x, float y, float z) {
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
         this.aabb = new AABB(position, WIDTH, HEIGHT, DEPTH);
+        this.health = MAX_HEALTH;
+        this.hunger = MAX_HUNGER;
+        this.energy = MAX_ENERGY;
+        this.isDead = false;
     }
 
     public Vector3 getPosition() {
@@ -129,5 +146,92 @@ public class Player {
         }
 
         return new Vector3(position).sub(originalPos);
+    }
+
+    // Phase 8: Health/Hunger/Energy management
+
+    public float getHealth() {
+        return health;
+    }
+
+    public float getHunger() {
+        return hunger;
+    }
+
+    public float getEnergy() {
+        return energy;
+    }
+
+    public boolean isDead() {
+        return isDead;
+    }
+
+    /**
+     * Apply damage to the player.
+     */
+    public void damage(float amount) {
+        health = Math.max(0, health - amount);
+        if (health <= 0) {
+            isDead = true;
+        }
+    }
+
+    /**
+     * Heal the player.
+     */
+    public void heal(float amount) {
+        health = Math.min(MAX_HEALTH, health + amount);
+    }
+
+    /**
+     * Decrease hunger over time (called every frame).
+     */
+    public void updateHunger(float deltaSeconds) {
+        hunger = Math.max(0, hunger - (HUNGER_DRAIN_PER_MINUTE / 60f) * deltaSeconds);
+    }
+
+    /**
+     * Feed the player to restore hunger.
+     */
+    public void eat(float amount) {
+        hunger = Math.min(MAX_HUNGER, hunger + amount);
+    }
+
+    /**
+     * Consume energy for an action (punching, placing, etc.).
+     */
+    public void consumeEnergy(float amount) {
+        energy = Math.max(0, energy - amount);
+    }
+
+    /**
+     * Recover energy over time when not performing actions.
+     */
+    public void recoverEnergy(float deltaSeconds) {
+        energy = Math.min(MAX_ENERGY, energy + ENERGY_RECOVERY_PER_SECOND * deltaSeconds);
+    }
+
+    /**
+     * Set health directly (for testing).
+     */
+    public void setHealth(float health) {
+        this.health = Math.max(0, Math.min(MAX_HEALTH, health));
+        if (this.health <= 0) {
+            isDead = true;
+        }
+    }
+
+    /**
+     * Set hunger directly (for testing).
+     */
+    public void setHunger(float hunger) {
+        this.hunger = Math.max(0, Math.min(MAX_HUNGER, hunger));
+    }
+
+    /**
+     * Set energy directly (for testing).
+     */
+    public void setEnergy(float energy) {
+        this.energy = Math.max(0, Math.min(MAX_ENERGY, energy));
     }
 }
