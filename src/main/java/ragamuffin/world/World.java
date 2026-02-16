@@ -18,6 +18,7 @@ public class World {
     private WorldGenerator generator;
     private final Set<String> policeTapedBlocks; // Blocks with police tape
     private final Set<String> protectedBlocks; // Blocks protected from breaking
+    private final Set<String> planningNoticeBlocks; // Blocks with planning notices (Phase 7)
 
     public World(long seed) {
         this.seed = seed;
@@ -25,6 +26,7 @@ public class World {
         this.landmarks = new HashMap<>();
         this.policeTapedBlocks = new HashSet<>();
         this.protectedBlocks = new HashSet<>();
+        this.planningNoticeBlocks = new HashSet<>();
     }
 
     /**
@@ -290,6 +292,30 @@ public class World {
         String key = getBlockKey(x, y, z);
         policeTapedBlocks.remove(key);
         protectedBlocks.remove(key);
+    }
+
+    /**
+     * Add planning notice to a block (Phase 7).
+     */
+    public void addPlanningNotice(int x, int y, int z) {
+        String key = getBlockKey(x, y, z);
+        planningNoticeBlocks.add(key);
+    }
+
+    /**
+     * Check if a block has a planning notice (Phase 7).
+     */
+    public boolean hasPlanningNotice(int x, int y, int z) {
+        String key = getBlockKey(x, y, z);
+        return planningNoticeBlocks.contains(key);
+    }
+
+    /**
+     * Remove planning notice from a block (Phase 7).
+     */
+    public void removePlanningNotice(int x, int y, int z) {
+        String key = getBlockKey(x, y, z);
+        planningNoticeBlocks.remove(key);
     }
 
     /**

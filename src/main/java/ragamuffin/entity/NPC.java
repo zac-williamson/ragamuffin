@@ -11,6 +11,7 @@ public class NPC {
     public static final float HEIGHT = 1.8f;
     public static final float DEPTH = 0.6f;
     public static final float MOVE_SPEED = 2.0f; // Slower than player
+    public static final float DOG_SPEED = 5.0f; // Dogs move faster when roaming
 
     private final NPCType type;
     private final Vector3 position;

@@ -17,5 +17,7 @@ public enum NPCState {
     PATROLLING,     // Police patrolling
     WARNING,        // Police issuing warning to player
     AGGRESSIVE,     // Police escalated state
-    ARRESTING       // Police arresting player
+    ARRESTING,      // Police arresting player
+    DEMOLISHING,    // Council builder demolishing structure
+    KNOCKED_BACK    // Council builder knocked back (Phase 7)
 }

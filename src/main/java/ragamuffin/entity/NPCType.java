@@ -8,5 +8,6 @@ public enum NPCType {
     DOG,            // Dogs that roam the park
     YOUTH_GANG,     // Gangs of youths who steal and vandalize
     COUNCIL_MEMBER, // Bureaucratic antagonists
-    POLICE          // Patrol at night (Phase 6)
+    POLICE,         // Patrol at night (Phase 6)
+    COUNCIL_BUILDER // Council builders who demolish structures (Phase 7)
 }

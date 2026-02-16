@@ -3,6 +3,7 @@ package ragamuffin.ai;
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
+import ragamuffin.building.StructureTracker;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
@@ -38,6 +39,15 @@ public class NPCManager {
     private Map<NPC, Float> policeWarningTimers; // Track warning duration for each police
     private Map<NPC, Vector3> policeTargetStructures; // Track which structure each police is investigating
 
+    // Council builder system (Phase 7)
+    private StructureTracker structureTracker;
+    private Map<StructureTracker.Structure, Integer> structureBuilderCount; // Track builders per structure
+    private Map<NPC, StructureTracker.Structure> builderTargets; // Track which structure each builder is targeting
+    private Map<NPC, Float> builderKnockbackTimers; // Track knockback delay per builder
+    private Map<NPC, Float> builderDemolishTimers; // Track demolition cooldown per builder
+    private float structureScanTimer; // Periodic structure scanning
+    private Set<Vector3> notifiedStructures; // Track which structure positions already have notices
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
@@ -47,6 +57,15 @@ public class NPCManager {
         this.policeSpawned = false;
         this.policeWarningTimers = new HashMap<>();
         this.policeTargetStructures = new HashMap<>();
+
+        // Phase 7: Council builder system
+        this.structureTracker = new StructureTracker();
+        this.structureBuilderCount = new HashMap<>();
+        this.builderTargets = new HashMap<>();
+        this.builderKnockbackTimers = new HashMap<>();
+        this.builderDemolishTimers = new HashMap<>();
+        this.structureScanTimer = 0;
+        this.notifiedStructures = new HashSet<>();
     }
 
     /**
@@ -139,6 +158,14 @@ public class NPCManager {
      * Update all NPCs.
      */
     public void update(float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
+        // Update structure tracking (Phase 7)
+        structureScanTimer += delta;
+        if (structureScanTimer >= 2.0f) { // Scan every 2 seconds
+            structureTracker.scanForStructures(world);
+            updateCouncilBuilders(world, tooltipSystem);
+            structureScanTimer = 0;
+        }
+
         // Use indexed loop to avoid ConcurrentModificationException when spawning new NPCs
         for (int i = 0; i < npcs.size(); i++) {
             NPC npc = npcs.get(i);
@@ -155,6 +182,8 @@ public class NPCManager {
         // Handle police separately
         if (npc.getType() == NPCType.POLICE) {
             updatePolice(npc, delta, world, player, tooltipSystem);
+        } else if (npc.getType() == NPCType.COUNCIL_BUILDER) {
+            updateCouncilBuilder(npc, delta, world, tooltipSystem);
         } else {
             switch (npc.getState()) {
                 case WANDERING:
@@ -211,9 +240,23 @@ public class NPCManager {
      * Update wandering behavior.
      */
     private void updateWandering(NPC npc, float delta, World world) {
-        // If no target or reached target, pick a new random target
-        if (npc.getTargetPosition() == null || npc.isNear(npc.getTargetPosition(), 1.0f)) {
-            Vector3 randomTarget = getRandomNearbyPosition(npc.getPosition(), 10.0f);
+        // If no target, no path, or reached target, pick a new random target
+        // Dogs wander more aggressively with a larger radius and minimum distance
+        float wanderRadius = (npc.getType() == NPCType.DOG) ? 15.0f : 10.0f;
+        float minWanderDistance = (npc.getType() == NPCType.DOG) ? 5.0f : 0.0f;
+
+        boolean needsNewTarget = npc.getTargetPosition() == null ||
+                                 npc.getPath() == null ||
+                                 npc.getPath().isEmpty() ||
+                                 npc.isNear(npc.getTargetPosition(), 1.0f);
+
+        if (needsNewTarget) {
+            Vector3 randomTarget;
+            int attempts = 0;
+            do {
+                randomTarget = getRandomWalkablePosition(npc.getPosition(), world, wanderRadius);
+                attempts++;
+            } while (minWanderDistance > 0 && randomTarget.dst(npc.getPosition()) < minWanderDistance && attempts < 10);
             setNPCTarget(npc, randomTarget, world);
         }
     }
@@ -342,7 +385,14 @@ public class NPCManager {
 
         // Find path
         List<Vector3> path = pathfinder.findPath(world, npc.getPosition(), target);
-        npc.setPath(path);
+
+        // If pathfinding fails and this is a wandering NPC (dog/youth), use direct movement
+        // by setting an empty path - the NPC will use moveTowardTarget instead
+        if (path == null && (npc.getType() == NPCType.DOG || npc.getType() == NPCType.YOUTH_GANG)) {
+            npc.setPath(new ArrayList<>()); // Empty path triggers direct movement
+        } else {
+            npc.setPath(path);
+        }
     }
 
     /**
@@ -355,7 +405,8 @@ public class NPCManager {
         }
 
         Vector3 direction = target.cpy().sub(npc.getPosition()).nor();
-        npc.setVelocity(direction.x * NPC.MOVE_SPEED, 0, direction.z * NPC.MOVE_SPEED);
+        float speed = (npc.getType() == NPCType.DOG) ? NPC.DOG_SPEED : NPC.MOVE_SPEED;
+        npc.setVelocity(direction.x * speed, 0, direction.z * speed);
     }
 
     /**
@@ -389,7 +440,8 @@ public class NPCManager {
 
         // Move toward waypoint
         Vector3 direction = waypoint.cpy().sub(npc.getPosition()).nor();
-        npc.setVelocity(direction.x * NPC.MOVE_SPEED, 0, direction.z * NPC.MOVE_SPEED);
+        float speed = (npc.getType() == NPCType.DOG) ? NPC.DOG_SPEED : NPC.MOVE_SPEED;
+        npc.setVelocity(direction.x * speed, 0, direction.z * speed);
     }
 
     /**
@@ -403,6 +455,37 @@ public class NPCManager {
         float z = center.z + (float) Math.sin(angle) * distance;
 
         return new Vector3(x, center.y, z);
+    }
+
+    /**
+     * Get random walkable position near a point.
+     * Tries multiple times to find a valid walkable position.
+     */
+    private Vector3 getRandomWalkablePosition(Vector3 center, World world, float radius) {
+        // Try up to 10 times to find a walkable position
+        for (int attempt = 0; attempt < 10; attempt++) {
+            float angle = random.nextFloat() * (float) Math.PI * 2;
+            float distance = random.nextFloat() * radius;
+
+            float x = center.x + (float) Math.cos(angle) * distance;
+            float z = center.z + (float) Math.sin(angle) * distance;
+
+            int blockX = (int) Math.floor(x);
+            int blockY = (int) Math.floor(center.y);
+            int blockZ = (int) Math.floor(z);
+
+            // Check if position is walkable (air above solid ground)
+            BlockType below = world.getBlock(blockX, blockY - 1, blockZ);
+            BlockType atPos = world.getBlock(blockX, blockY, blockZ);
+            BlockType above = world.getBlock(blockX, blockY + 1, blockZ);
+
+            if (below.isSolid() && !atPos.isSolid() && !above.isSolid()) {
+                return new Vector3(x, center.y, z);
+            }
+        }
+
+        // Fallback to nearby position if no walkable position found
+        return getRandomNearbyPosition(center, radius);
     }
 
     /**
@@ -422,6 +505,11 @@ public class NPCManager {
      */
     public void punchNPC(NPC npc, Vector3 punchDirection) {
         npc.applyKnockback(punchDirection, 2.0f); // 2 blocks of knockback
+
+        // Special handling for council builders
+        if (npc.getType() == NPCType.COUNCIL_BUILDER) {
+            punchCouncilBuilder(npc);
+        }
     }
 
     /**
@@ -670,5 +758,173 @@ public class NPCManager {
                 }
             }
         }
+    }
+
+    // ========== Phase 7: Council Builder System ==========
+
+    /**
+     * Update council builders based on detected structures.
+     */
+    private void updateCouncilBuilders(World world, TooltipSystem tooltipSystem) {
+        List<StructureTracker.Structure> largeStructures = structureTracker.getLargeStructures();
+
+        for (StructureTracker.Structure structure : largeStructures) {
+            int requiredBuilders = structureTracker.calculateBuilderCount(structure);
+            Vector3 structureCenter = structure.getCenter();
+
+            // Check if this structure already has a notice (by position)
+            boolean alreadyNotified = notifiedStructures.contains(structureCenter);
+
+            // Add planning notice after structure is detected (first time only)
+            if (!alreadyNotified && requiredBuilders > 0) {
+                applyPlanningNotice(world, structure);
+                notifiedStructures.add(structureCenter);
+                structure.setHasNotice(true);
+            } else if (alreadyNotified) {
+                structure.setHasNotice(true); // Mark as having notice
+            }
+
+            int currentBuilders = structureBuilderCount.getOrDefault(structure, 0);
+
+            // Spawn builders after planning notice has been up for a bit
+            // Only spawn if structure has notice
+            if (structure.hasNotice() && currentBuilders < requiredBuilders) {
+                spawnCouncilBuilder(structure);
+                structureBuilderCount.put(structure, currentBuilders + 1);
+            }
+        }
+    }
+
+    /**
+     * Spawn a council builder to demolish a structure.
+     */
+    private void spawnCouncilBuilder(StructureTracker.Structure structure) {
+        Vector3 center = structure.getCenter();
+
+        // Spawn builder 10-20 blocks away from structure
+        float angle = random.nextFloat() * (float) Math.PI * 2;
+        float distance = 10 + random.nextFloat() * 10;
+
+        float x = center.x + (float) Math.cos(angle) * distance;
+        float z = center.z + (float) Math.sin(angle) * distance;
+
+        NPC builder = spawnNPC(NPCType.COUNCIL_BUILDER, x, 1, z);
+        builder.setState(NPCState.IDLE);
+        builderTargets.put(builder, structure);
+        builderDemolishTimers.put(builder, 0.0f);
+    }
+
+    /**
+     * Apply planning notice to a structure.
+     */
+    private void applyPlanningNotice(World world, StructureTracker.Structure structure) {
+        // Add planning notice to a few blocks on the structure
+        Set<Vector3> blocks = structure.getBlocks();
+        int noticeCount = 0;
+
+        for (Vector3 block : blocks) {
+            if (noticeCount >= 3) {
+                break; // Only add notices to 3 blocks
+            }
+            world.addPlanningNotice((int)block.x, (int)block.y, (int)block.z);
+            noticeCount++;
+        }
+    }
+
+    /**
+     * Update a council builder's behavior.
+     */
+    private void updateCouncilBuilder(NPC builder, float delta, World world, TooltipSystem tooltipSystem) {
+        // Update knockback timer
+        Float knockbackTimer = builderKnockbackTimers.get(builder);
+        if (knockbackTimer != null && knockbackTimer > 0) {
+            builderKnockbackTimers.put(builder, knockbackTimer - delta);
+            if (knockbackTimer - delta <= 0) {
+                builder.setState(NPCState.IDLE); // Return to normal
+            }
+            builder.setVelocity(0, 0, 0);
+            return; // Don't demolish while knocked back
+        }
+
+        StructureTracker.Structure target = builderTargets.get(builder);
+        if (target == null || target.isEmpty()) {
+            // No target or structure demolished - remove builder
+            npcs.remove(builder);
+            builderTargets.remove(builder);
+            builderKnockbackTimers.remove(builder);
+            builderDemolishTimers.remove(builder);
+            return;
+        }
+
+        Vector3 targetPos = target.getCenter();
+
+        // Move toward structure
+        if (!builder.isNear(targetPos, 3.0f)) {
+            setNPCTarget(builder, targetPos, world);
+        } else {
+            // Adjacent to structure - start demolishing
+            builder.setState(NPCState.DEMOLISHING);
+            builder.setVelocity(0, 0, 0);
+
+            // Demolish blocks periodically
+            float demolishTimer = builderDemolishTimers.getOrDefault(builder, 0.0f);
+            demolishTimer += delta;
+            builderDemolishTimers.put(builder, demolishTimer);
+
+            if (demolishTimer >= 1.0f) { // Demolish one block per second
+                demolishBlock(world, target, tooltipSystem);
+                builderDemolishTimers.put(builder, 0.0f);
+            }
+        }
+    }
+
+    /**
+     * Demolish a block from a structure.
+     */
+    private void demolishBlock(World world, StructureTracker.Structure structure, TooltipSystem tooltipSystem) {
+        if (structure.getBlocks().isEmpty()) {
+            return;
+        }
+
+        // Pick a random block from the structure
+        List<Vector3> blockList = new ArrayList<>(structure.getBlocks());
+        Vector3 blockToRemove = blockList.get(random.nextInt(blockList.size()));
+
+        int x = (int) blockToRemove.x;
+        int y = (int) blockToRemove.y;
+        int z = (int) blockToRemove.z;
+
+        // Remove the block
+        world.setBlock(x, y, z, BlockType.AIR);
+        structure.removeBlock(blockToRemove);
+        structureTracker.removeBlock(x, y, z);
+
+        // Remove planning notice if present
+        world.removePlanningNotice(x, y, z);
+
+        // Trigger tooltip on first demolition
+        if (tooltipSystem != null) {
+            tooltipSystem.trigger(TooltipTrigger.FIRST_COUNCIL_ENCOUNTER);
+        }
+    }
+
+    /**
+     * Handle punching a council builder - applies knockback and delays demolition.
+     */
+    public void punchCouncilBuilder(NPC builder) {
+        if (builder.getType() != NPCType.COUNCIL_BUILDER) {
+            return;
+        }
+
+        // Set knockback timer (delays demolition for 1 second)
+        builderKnockbackTimers.put(builder, 1.0f);
+        builder.setState(NPCState.KNOCKED_BACK);
+    }
+
+    /**
+     * Get structure tracker (for testing).
+     */
+    public StructureTracker getStructureTracker() {
+        return structureTracker;
     }
 }
