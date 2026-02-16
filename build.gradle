@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.ragamuffin'
+version = '0.1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+def gdxVersion = '1.12.1'
+
+dependencies {
+    // LibGDX core
+    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+    
+    // LibGDX LWJGL3 backend (desktop)
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    
+    // LibGDX native platform binaries
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+    
+    // LibGDX FreeType font support
+    implementation "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop"
+
+    // Testing
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.11.0'
+    
+    // LibGDX headless backend for testing
+    testImplementation "com.badlogicgames.gdx:gdx-backend-headless:$gdxVersion"
+}
+
+application {
+    mainClass = 'ragamuffin.core.RagamuffinLauncher'
+    applicationDefaultJvmArgs = org.gradle.internal.os.OperatingSystem.current().isMacOsX() ?
+        ['-XstartOnFirstThread'] : []
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'ragamuffin.core.RagamuffinLauncher'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
