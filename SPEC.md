@@ -508,3 +508,133 @@ transitions, health/hunger/energy drain rates.
     Verify NO null pointer exceptions, no crashes, and the game state is consistent
     throughout (health/hunger/energy are valid numbers, player position is valid,
     all UI elements respond correctly).
+
+---
+---
+
+## Phase 9: CODE REVIEW
+
+**Goal**: Comprehensive code review of the entire codebase. This phase runs after
+all 8 implementation phases are complete.
+
+Review the entire codebase file by file and assess the following:
+
+1. **Correctness**: Does the code implement what SPEC.md describes? Walk through
+   every integration test scenario in Phases 1-8 and verify that the test code
+   actually tests what the scenario describes (not a watered-down version of it).
+   If any test is too lenient, too vague, or doesn't match the spec, fix it.
+
+2. **Wiring**: Are all systems actually connected? Trace the path from game start
+   to gameplay. Verify that: the main menu leads to gameplay, the HUD renders over
+   the 3D scene, the inventory UI opens and closes, tooltips fire, NPCs spawn and
+   behave, police appear at night, council builders arrive for large structures.
+   If any system is implemented but not wired into the game loop, wire it up.
+
+3. **Dead code**: Remove any code that is never called, any stub implementations
+   that were never filled in, any TODO comments that were never addressed.
+
+4. **Error handling**: Ensure there are no swallowed exceptions, no silent failures.
+   If something goes wrong the game should log it clearly, not crash silently.
+
+5. **Test coverage**: Run `./gradlew test`. If any tests fail, fix them. If any
+   phase's integration tests are missing or incomplete compared to the spec, add
+   them. Every single integration test scenario listed in Phases 1-8 must have a
+   corresponding test that passes.
+
+6. **Build cleanliness**: Run `./gradlew build`. Fix any warnings. Ensure the
+   build is clean with zero warnings and zero errors.
+
+**Commit all fixes from this phase on the `main` branch before proceeding.**
+
+---
+
+## Phase 10: CRITIC (Infinite Loop)
+
+**This phase loops forever. The game is never complete. The CRITIC always has
+something to say.**
+
+### How the CRITIC works
+
+After CODE REVIEW is complete on `main`, enter the CRITIC loop:
+
+#### Step 1: Branch
+
+Create a new branch from the current branch:
+- First iteration: `git checkout -b critic1` (from `main`)
+- Second iteration: `git checkout -b critic2` (from `critic1`)
+- Third iteration: `git checkout -b critic3` (from `critic2`)
+- And so on: `criticN` always branches from `critic(N-1)`
+
+#### Step 2: CRITIC Review
+
+Put on a different hat. You are no longer the PM — you are a **game critic** and
+**player advocate**. You are reviewing a playable build of Ragamuffin. Consider:
+
+**Gameplay feel:**
+- Is the game actually fun to play? Or is it technically correct but boring?
+- Is the pacing right? Does the player have enough to do in the first 5 minutes?
+- Are the survival mechanics (health, hunger, energy) interesting or just annoying?
+- Is the difficulty curve fair? Does the player have a fighting chance against
+  police and council builders?
+
+**Tone and humour:**
+- Do the tooltips actually land? Are they funny or just informational?
+- Does the world feel like a real British town or a generic game level?
+- Are the NPC interactions memorable? Do they have personality?
+- Is the overall vibe "darkly funny" or just "dark"?
+
+**Polish and juice:**
+- Does the game feel responsive? Do actions have satisfying feedback?
+- Are there visual or audio cues that make the world feel alive?
+- Is the UI intuitive? Would a new player understand what to do?
+- Are there any moments of delight or surprise?
+
+**Missing features:**
+- What obvious features are missing that would make the game better?
+- What would make a player want to keep playing for another 30 minutes?
+- Are there emergent gameplay possibilities that could be unlocked with
+  small additions?
+
+#### Step 3: Write Improvement Phase
+
+Based on the CRITIC review, append a new phase to SPEC.md:
+
+```
+## Phase 11: CRITIC 1 Improvements — [Title]
+(or Phase 12, 13, etc. for subsequent iterations)
+```
+
+This phase must include:
+- A summary of the CRITIC's findings
+- Specific, concrete improvements to implement
+- Explicit integration test scenarios for each improvement (same format as
+  Phases 1-8: exact setup, actions, expected outcomes)
+- The improvements should be scoped to be achievable in a single development
+  session — don't try to rewrite the entire game
+
+**Remember: you may only ADD to SPEC.md, never remove or weaken existing specs.**
+
+#### Step 4: Implement
+
+Implement the improvement phase using TDD, exactly as with Phases 1-8.
+Delegate all coding to the coding agent. Verify all tests pass.
+
+#### Step 5: Code Review
+
+Run a mini code review on the changes made in this iteration:
+- All new tests pass
+- No existing tests broken
+- `./gradlew build` is clean
+- New code is wired into the game loop (not orphaned)
+
+Commit all work on the current `criticN` branch.
+
+#### Step 6: Loop
+
+Go back to Step 1. Create `critic(N+1)` from `criticN`. Run the CRITIC again.
+Find the next set of improvements. Implement them. Review. Commit. Repeat.
+
+**This loop never terminates.** There is always something to improve. If you
+genuinely cannot think of a single improvement, you are not thinking hard enough.
+Play the game (mentally simulate a play session), read the code, re-read the spec,
+consider the player experience. Something can always be better.
