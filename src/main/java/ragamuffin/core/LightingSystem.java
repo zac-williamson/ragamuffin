@@ -46,6 +46,7 @@ public class LightingSystem {
      * Note: LibGDX doesn't expose directionalLights directly, so we need to
      * iterate through all attributes to find it.
      */
+    @SuppressWarnings("unchecked")
     private DirectionalLight getDirectionalLightFromEnvironment(Environment env) {
         // Use reflection or iterate through attributes
         // For now, we'll assume there's at least one directional light
