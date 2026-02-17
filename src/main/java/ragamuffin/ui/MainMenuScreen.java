@@ -2,6 +2,7 @@ package ragamuffin.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
@@ -40,21 +41,22 @@ public class MainMenuScreen {
         shapeRenderer.rect(0, 0, screenWidth, screenHeight);
         shapeRenderer.end();
 
-        // Draw title
+        // Draw title and options
         spriteBatch.begin();
+        GlyphLayout layout = new GlyphLayout();
+
+        // Title
         font.setColor(Color.WHITE);
         font.getData().setScale(3.0f);
         String title = "RAGAMUFFIN";
-        float titleWidth = font.getRegion().getRegionWidth() * 3.0f * title.length() / 4;
-        font.draw(spriteBatch, title, screenWidth / 2f - titleWidth / 2, screenHeight * 0.7f);
-        font.getData().setScale(1.2f);
+        layout.setText(font, title);
+        font.draw(spriteBatch, title, (screenWidth - layout.width) / 2f, screenHeight * 0.7f);
 
         // Subtitle
         font.getData().setScale(1.5f);
         String subtitle = "Survival in Modern Britain";
-        float subtitleWidth = font.getRegion().getRegionWidth() * 1.5f * subtitle.length() / 4;
-        font.draw(spriteBatch, subtitle, screenWidth / 2f - subtitleWidth / 2, screenHeight * 0.6f);
-        font.getData().setScale(1.2f);
+        layout.setText(font, subtitle);
+        font.draw(spriteBatch, subtitle, (screenWidth - layout.width) / 2f, screenHeight * 0.6f);
 
         // Draw options
         float optionY = screenHeight * 0.4f;
@@ -66,15 +68,15 @@ public class MainMenuScreen {
                 font.setColor(Color.YELLOW);
                 option = "> " + option + " <";
             } else {
-                font.setColor(Color.WHITE);
+                font.setColor(Color.GRAY);
             }
 
             font.getData().setScale(1.5f);
-            float optionWidth = font.getRegion().getRegionWidth() * 1.5f * option.length() / 4;
-            font.draw(spriteBatch, option, screenWidth / 2f - optionWidth / 2, optionY - i * optionSpacing);
-            font.getData().setScale(1.2f);
+            layout.setText(font, option);
+            font.draw(spriteBatch, option, (screenWidth - layout.width) / 2f, optionY - i * optionSpacing);
         }
 
+        font.getData().setScale(1.0f);
         spriteBatch.end();
     }
 

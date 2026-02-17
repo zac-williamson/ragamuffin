@@ -341,7 +341,16 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void handleMenuInput() {
-        // Handle main menu input
+        // Handle menu navigation with arrow keys
+        if (inputHandler.isUpPressed()) {
+            mainMenuScreen.selectPrevious();
+            inputHandler.resetUp();
+        }
+        if (inputHandler.isDownPressed()) {
+            mainMenuScreen.selectNext();
+            inputHandler.resetDown();
+        }
+        // Handle menu selection
         if (inputHandler.isEnterPressed()) {
             if (mainMenuScreen.isNewGameSelected()) {
                 startNewGame();

@@ -10,7 +10,7 @@ import java.util.*;
  * Manages the voxel world - chunk loading/unloading and world data access.
  */
 public class World {
-    private static final int RENDER_DISTANCE = 4; // Chunks to load around player
+    private static final int RENDER_DISTANCE = 13; // Chunks to load around player (covers 200x200 world)
 
     private final long seed;
     private final Map<String, Chunk> loadedChunks;
@@ -246,8 +246,26 @@ public class World {
         if (checkWorldCollision(player)) {
             // Landed on ground or hit ceiling
             if (verticalMove < 0) {
-                // Falling down - snap to ground
-                player.getPosition().y = (float) Math.floor(player.getPosition().y) + 1.0f;
+                // Falling down - find the highest solid block under the player and snap to its top
+                int highestSolidY = (int) Math.floor(player.getPosition().y) - 1;
+                AABB aabb = player.getAABB();
+                int minX = (int) Math.floor(aabb.getMinX());
+                int maxX = (int) Math.floor(aabb.getMaxX());
+                int minZ = (int) Math.floor(aabb.getMinZ());
+                int maxZ = (int) Math.floor(aabb.getMaxZ());
+                int checkMinY = (int) Math.floor(aabb.getMinY());
+                int checkMaxY = (int) Math.ceil(aabb.getMaxY());
+                for (int bx = minX; bx <= maxX; bx++) {
+                    for (int bz = minZ; bz <= maxZ; bz++) {
+                        for (int by = checkMaxY; by >= checkMinY; by--) {
+                            if (getBlock(bx, by, bz).isSolid()) {
+                                highestSolidY = Math.max(highestSolidY, by);
+                                break;
+                            }
+                        }
+                    }
+                }
+                player.getPosition().y = highestSolidY + 1.0f;
                 player.resetVerticalVelocity();
             } else {
                 // Moving up - hit ceiling

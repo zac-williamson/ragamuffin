@@ -75,7 +75,7 @@ public class ChunkMeshBuilder {
             x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE,  0, 1, 0,    1, 1,   color.r, color.g, color.b, color.a,
             x, y + BLOCK_SIZE, z + BLOCK_SIZE,  0, 1, 0,    0, 1,   color.r, color.g, color.b, color.a
         };
-        short[] indices = {0, 1, 2, 2, 3, 0};
+        short[] indices = {0, 3, 2, 2, 1, 0};
         meshData.addQuad(vertices, indices, baseIndex);
         return (short)(baseIndex + 4);
     }
@@ -87,7 +87,7 @@ public class ChunkMeshBuilder {
             x + BLOCK_SIZE, y, z + BLOCK_SIZE,  0, -1, 0,   1, 1,   color.r, color.g, color.b, color.a,
             x + BLOCK_SIZE, y, z,  0, -1, 0,   1, 0,   color.r, color.g, color.b, color.a
         };
-        short[] indices = {0, 1, 2, 2, 3, 0};
+        short[] indices = {0, 3, 2, 2, 1, 0};
         meshData.addQuad(vertices, indices, baseIndex);
         return (short)(baseIndex + 4);
     }
@@ -99,7 +99,7 @@ public class ChunkMeshBuilder {
             x + BLOCK_SIZE, y + BLOCK_SIZE, z,  0, 0, -1,   1, 1,   color.r, color.g, color.b, color.a,
             x, y + BLOCK_SIZE, z,  0, 0, -1,   0, 1,   color.r, color.g, color.b, color.a
         };
-        short[] indices = {0, 1, 2, 2, 3, 0};
+        short[] indices = {0, 3, 2, 2, 1, 0};
         meshData.addQuad(vertices, indices, baseIndex);
         return (short)(baseIndex + 4);
     }
@@ -111,7 +111,7 @@ public class ChunkMeshBuilder {
             x, y + BLOCK_SIZE, z + BLOCK_SIZE,  0, 0, 1,   1, 1,   color.r, color.g, color.b, color.a,
             x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE,  0, 0, 1,   0, 1,   color.r, color.g, color.b, color.a
         };
-        short[] indices = {0, 1, 2, 2, 3, 0};
+        short[] indices = {0, 3, 2, 2, 1, 0};
         meshData.addQuad(vertices, indices, baseIndex);
         return (short)(baseIndex + 4);
     }
@@ -123,7 +123,7 @@ public class ChunkMeshBuilder {
             x, y + BLOCK_SIZE, z,  -1, 0, 0,   1, 1,   color.r, color.g, color.b, color.a,
             x, y + BLOCK_SIZE, z + BLOCK_SIZE,  -1, 0, 0,   0, 1,   color.r, color.g, color.b, color.a
         };
-        short[] indices = {0, 1, 2, 2, 3, 0};
+        short[] indices = {0, 3, 2, 2, 1, 0};
         meshData.addQuad(vertices, indices, baseIndex);
         return (short)(baseIndex + 4);
     }
@@ -135,7 +135,7 @@ public class ChunkMeshBuilder {
             x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE,  1, 0, 0,   1, 1,   color.r, color.g, color.b, color.a,
             x + BLOCK_SIZE, y + BLOCK_SIZE, z,  1, 0, 0,   0, 1,   color.r, color.g, color.b, color.a
         };
-        short[] indices = {0, 1, 2, 2, 3, 0};
+        short[] indices = {0, 3, 2, 2, 1, 0};
         meshData.addQuad(vertices, indices, baseIndex);
         return (short)(baseIndex + 4);
     }

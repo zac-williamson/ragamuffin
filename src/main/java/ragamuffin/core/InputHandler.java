@@ -17,6 +17,8 @@ public class InputHandler implements InputProcessor {
     private boolean punchPressed;
     private boolean placePressed;
     private boolean enterPressed;
+    private boolean upPressed;
+    private boolean downPressed;
     private boolean interactPressed; // E key for interaction
     private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
     private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
@@ -64,6 +66,8 @@ public class InputHandler implements InputProcessor {
     public boolean isPunchPressed() { return punchPressed; }
     public boolean isPlacePressed() { return placePressed; }
     public boolean isEnterPressed() { return enterPressed; }
+    public boolean isUpPressed() { return upPressed; }
+    public boolean isDownPressed() { return downPressed; }
     public boolean isInteractPressed() { return interactPressed; }
     public int getHotbarSlotPressed() { return hotbarSlotPressed; }
     public int getCraftingSlotPressed() { return craftingSlotPressed; }
@@ -78,6 +82,8 @@ public class InputHandler implements InputProcessor {
     public void resetPunch() { punchPressed = false; }
     public void resetPlace() { placePressed = false; }
     public void resetEnter() { enterPressed = false; }
+    public void resetUp() { upPressed = false; }
+    public void resetDown() { downPressed = false; }
     public void resetInteract() { interactPressed = false; }
     public void resetHotbarSlot() { hotbarSlotPressed = -1; }
     public void resetCraftingSlot() { craftingSlotPressed = -1; }
@@ -96,6 +102,10 @@ public class InputHandler implements InputProcessor {
             interactPressed = true;
         } else if (keycode == Input.Keys.ENTER) {
             enterPressed = true;
+        } else if (keycode == Input.Keys.UP) {
+            upPressed = true;
+        } else if (keycode == Input.Keys.DOWN) {
+            downPressed = true;
         } else if (keycode == Input.Keys.NUM_1) {
             hotbarSlotPressed = 0;
             craftingSlotPressed = 0;

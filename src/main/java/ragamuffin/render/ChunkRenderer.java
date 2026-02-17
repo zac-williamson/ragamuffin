@@ -67,7 +67,7 @@ public class ChunkRenderer {
             new VertexAttribute(VertexAttributes.Usage.Position, 3, "a_position"),
             new VertexAttribute(VertexAttributes.Usage.Normal, 3, "a_normal"),
             new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 2, "a_texCoord0"),
-            new VertexAttribute(VertexAttributes.Usage.ColorPacked, 4, "a_color")
+            new VertexAttribute(VertexAttributes.Usage.ColorUnpacked, 4, "a_color")
         );
 
         mesh.setVertices(meshData.getVerticesArray());
