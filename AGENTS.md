@@ -27,5 +27,5 @@ When asked to do code work:
 2. Use the **coding-agent** skill to delegate the implementation
 3. After coding-agent finishes, run `./gradlew test` and `./gradlew build`
 4. Commit with a descriptive message
-5. Push: `git push origin master`
+5. Push: `git push origin main`
 6. Reply to WhatsApp with a summary of what was done
