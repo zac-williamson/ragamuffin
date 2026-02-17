@@ -1,6 +1,7 @@
 package ragamuffin.building;
 
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.entity.AABB;
 import ragamuffin.world.BlockType;
 import ragamuffin.world.Raycast;
 import ragamuffin.world.RaycastResult;
@@ -65,6 +66,15 @@ public class BlockPlacer {
      * @return true if the block was placed successfully
      */
     public boolean placeBlock(World world, Inventory inventory, Material material, Vector3 origin, Vector3 direction, float maxDistance) {
+        return placeBlock(world, inventory, material, origin, direction, maxDistance, null);
+    }
+
+    /**
+     * Attempt to place a block from the inventory, checking against player AABB.
+     * @param playerAABB if non-null, prevents placement inside the player's bounding box
+     * @return true if the block was placed successfully
+     */
+    public boolean placeBlock(World world, Inventory inventory, Material material, Vector3 origin, Vector3 direction, float maxDistance, AABB playerAABB) {
         if (material == null) {
             return false;
         }
@@ -76,6 +86,17 @@ public class BlockPlacer {
         Vector3 placement = getPlacementPosition(world, origin, direction, maxDistance);
         if (placement == null) {
             return false;
+        }
+
+        // Prevent placing a block inside the player
+        if (playerAABB != null) {
+            AABB blockAABB = new AABB(
+                (int) placement.x, (int) placement.y, (int) placement.z,
+                (int) placement.x + 1, (int) placement.y + 1, (int) placement.z + 1
+            );
+            if (playerAABB.intersects(blockAABB)) {
+                return false;
+            }
         }
 
         // Convert material to block type

@@ -82,6 +82,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 12: CRITIC 2 Improvements
     private WeatherSystem weatherSystem;
 
+    // Hover tooltip system
+    private HoverTooltipSystem hoverTooltipSystem;
+
     // NPC rendering
     private NPCRenderer npcRenderer;
 
@@ -182,6 +185,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 12: Initialize CRITIC 2 systems
         weatherSystem = new WeatherSystem();
+
+        // Initialize hover tooltip system
+        hoverTooltipSystem = new HoverTooltipSystem();
 
         // Setup input
         inputHandler = new InputHandler();
@@ -623,7 +629,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         Vector3 cameraPos = new Vector3(camera.position);
         Vector3 direction = new Vector3(camera.direction);
 
-        boolean placed = blockPlacer.placeBlock(world, inventory, material, cameraPos, direction, PLACE_REACH);
+        boolean placed = blockPlacer.placeBlock(world, inventory, material, cameraPos, direction, PLACE_REACH, player.getAABB());
 
         if (placed) {
             // Phase 11: Trigger first block place tooltip
@@ -684,6 +690,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
 
+        // Clear and update hover tooltip zones each frame
+        hoverTooltipSystem.clear();
+        float delta = Gdx.graphics.getDeltaTime();
+
         // Render first-person arm (always visible in gameplay)
         if (!openingSequence.isActive()) {
             firstPersonArm.render(shapeRenderer, screenWidth, screenHeight);
@@ -693,12 +703,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (!openingSequence.isActive()) {
             // Phase 12: Update weather display
             gameHUD.setWeather(weatherSystem.getCurrentWeather());
-            gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+            gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
         // Always render hotbar (unless opening sequence active)
         if (!openingSequence.isActive()) {
-            hotbarUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+            hotbarUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
         // Render clock
@@ -706,7 +716,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Render inventory if visible
         if (inventoryUI.isVisible()) {
-            inventoryUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+            inventoryUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
         // Render help if visible
@@ -716,13 +726,17 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Render crafting if visible
         if (craftingUI.isVisible()) {
-            craftingUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+            craftingUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
         // Render tooltip if active
         if (tooltipSystem.isActive()) {
             renderTooltip();
         }
+
+        // Update and render hover tooltips last (on top of everything)
+        hoverTooltipSystem.update(delta);
+        hoverTooltipSystem.render(spriteBatch, shapeRenderer, font);
     }
 
     private void renderTooltip() {
@@ -866,6 +880,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public FirstPersonArm getFirstPersonArm() {
         return firstPersonArm;
+    }
+
+    public HoverTooltipSystem getHoverTooltipSystem() {
+        return hoverTooltipSystem;
     }
 
     @Override

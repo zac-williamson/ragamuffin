@@ -54,7 +54,7 @@ public class GameHUD {
         renderWeather(spriteBatch, font, screenWidth, screenHeight);
 
         // Render crosshair
-        renderCrosshair(shapeRenderer, screenWidth, screenHeight);
+        renderCrosshair(shapeRenderer, screenWidth, screenHeight, hoverTooltips);
     }
 
     private void renderStatusBars(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
@@ -118,7 +118,8 @@ public class GameHUD {
         spriteBatch.end();
     }
 
-    private void renderCrosshair(ShapeRenderer shapeRenderer, int screenWidth, int screenHeight) {
+    private void renderCrosshair(ShapeRenderer shapeRenderer, int screenWidth, int screenHeight,
+                                 HoverTooltipSystem hoverTooltips) {
         float centerX = screenWidth / 2f;
         float centerY = screenHeight / 2f;
 
@@ -138,6 +139,13 @@ public class GameHUD {
                           CROSSHAIR_THICKNESS, CROSSHAIR_SIZE);
 
         shapeRenderer.end();
+
+        // Register crosshair hover tooltip zone
+        if (hoverTooltips != null) {
+            float zoneSize = (CROSSHAIR_SIZE + CROSSHAIR_GAP) * 2;
+            hoverTooltips.addZone(centerX - zoneSize / 2, centerY - zoneSize / 2,
+                    zoneSize, zoneSize, "Aim here, mate");
+        }
     }
 
     public boolean isVisible() {
