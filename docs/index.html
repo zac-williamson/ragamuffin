@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ragamuffin - Survival Sandbox</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        h1 {
+            font-size: 3em;
+            color: #e94560;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+        .tagline {
+            font-size: 1.2em;
+            color: #7a7a9e;
+            margin-bottom: 40px;
+            font-style: italic;
+        }
+        .description {
+            background: #16213e;
+            border-left: 4px solid #e94560;
+            padding: 20px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+        .feature {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .feature h3 {
+            color: #e94560;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .feature p {
+            font-size: 0.85em;
+            color: #a0a0b8;
+        }
+        .download-section {
+            text-align: center;
+            margin: 40px 0;
+            padding: 30px;
+            background: #16213e;
+            border-radius: 8px;
+        }
+        .download-btn {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #e94560;
+            color: white;
+            text-decoration: none;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .download-btn:hover { background: #c73652; }
+        .requirements {
+            margin-top: 15px;
+            font-size: 0.85em;
+            color: #7a7a9e;
+        }
+        .tooltip {
+            background: #0f3460;
+            padding: 10px 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-style: italic;
+            color: #a0a0b8;
+        }
+        .tooltip::before {
+            content: '> ';
+            color: #e94560;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            color: #4a4a6a;
+            font-size: 0.8em;
+        }
+        @media (max-width: 600px) {
+            .features { grid-template-columns: 1fr; }
+            h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ragamuffin</h1>
+        <p class="tagline">"It's time to learn to survive on your own."</p>
+
+        <div class="description">
+            A 3D voxel survival-sandbox game set in modern-day Britain. Your parents have kicked you out.
+            You start in a local park with nothing. Punch trees, gather resources, build shelter,
+            and try to survive the night — all while dodging police, council builders, and gangs of youths
+            in a grimly comedic British town.
+        </div>
+
+        <div class="tooltip">Punch a tree to get wood.</div>
+
+        <div class="features">
+            <div class="feature">
+                <h3>VOXEL WORLD</h3>
+                <p>Break and place blocks in a 3D urban environment. Greggs, charity shops, off-licences — it's all here.</p>
+            </div>
+            <div class="feature">
+                <h3>SURVIVAL</h3>
+                <p>Manage health, hunger, and energy. Build shelter before the police arrive at night.</p>
+            </div>
+            <div class="feature">
+                <h3>CRAFTING</h3>
+                <p>Craft tools and items from scavenged materials. Cardboard never looked so useful.</p>
+            </div>
+            <div class="feature">
+                <h3>NPCS</h3>
+                <p>Police, council builders, members of the public, dogs, and gangs of youths roam the streets.</p>
+            </div>
+        </div>
+
+        <div class="tooltip">Jewellers can be a good source of diamond.</div>
+
+        <div class="download-section">
+            <a href="ragamuffin.jar" class="download-btn">Download Latest Build</a>
+            <p class="requirements">Requires Java 17+. Run with: <code>java -jar ragamuffin.jar</code><br>
+            macOS: <code>java -XstartOnFirstThread -jar ragamuffin.jar</code></p>
+        </div>
+
+        <div class="tooltip">Dodge to avoid the attacks of stronger enemies.</div>
+
+        <div class="footer">
+            <p>Built with LibGDX. Dark humour included at no extra charge.</p>
+            <p style="margin-top: 10px;">
+                <a href="https://github.com/zac-williamson/ragamuffin" style="color: #e94560;">Source on GitHub</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

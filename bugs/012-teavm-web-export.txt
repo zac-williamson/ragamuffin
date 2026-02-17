@@ -1,0 +1,33 @@
+BUG 012: Add TeaVM web backend for browser deployment
+
+SEVERITY: Feature
+PRIORITY: Medium (after bugs 007-011)
+
+DESCRIPTION:
+The game needs to run in a web browser so users can play from a static web page.
+LibGDX supports web deployment via the gdx-teavm project (https://github.com/xpenatan/gdx-teavm).
+
+TeaVM compiles Java bytecode to JavaScript, so it works with Java 17 (unlike GWT which is limited to Java 11).
+
+REQUIREMENTS:
+1. Add a `teavm` subproject to the Gradle build
+2. Use gdx-teavm version compatible with LibGDX 1.12.1 (check https://github.com/xpenatan/gdx-teavm for version matrix)
+3. Maven coordinates: com.github.xpenatan.gdx-teavm:backend-web (on Maven Central)
+4. Create a TeaVM launcher class that boots RagamuffinGame in a browser canvas
+5. Create webapp/index.html for the browser shell
+6. The TeaVM build should output static HTML/JS files to build/teavm/dist or similar
+7. Remove the gdx-freetype dependency from the shared code path (FreeType is not supported in TeaVM)
+   - BitmapFont (default) works fine, just don't use FreeTypeFontGenerator
+8. Ensure the game renders correctly in WebGL (ModelBatch, PerspectiveCamera, Environment should all work)
+9. Update the GitHub Actions workflow (.github/workflows/build-deploy.yml) to build the TeaVM output
+   and deploy it to GitHub Pages instead of the JAR download
+
+NOTES:
+- The examples directory in the gdx-teavm repo has working 3D examples
+- MonstrousSoftware has a working 3D LibGDX game deployed via TeaVM (google "monstroussoftware libgdx teavm 3d")
+- Do NOT restructure the existing desktop project - add TeaVM as a separate subproject
+- Test by running the TeaVM dev server locally before committing
+
+STEPS TO REPRODUCE: N/A (feature request)
+EXPECTED: Game playable in browser at the GitHub Pages URL
+ACTUAL: Game only available as desktop JAR download
