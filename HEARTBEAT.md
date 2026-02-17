@@ -1,10 +1,10 @@
 # Current Priorities
 
 ## Active Bug
-- Bug 012: Add TeaVM web backend for browser deployment (see bugs/012-teavm-web-export.txt)
-  - This is the BIG remaining task — make the game playable in a browser
-  - See the bug file for detailed requirements and references
-  - After implementing, update .github/workflows/build-deploy.yml to deploy the web build
+- None — Bug 012 (TeaVM web export) is DONE
+  - Game compiles to JavaScript via gdx-teavm 1.0.5 (1204 classes, 764KB JS)
+  - CI/CD deploys web build to GitHub Pages automatically
+  - Custom landing page with "Play in Browser" button and fullscreen support
 
 ## WhatsApp Feedback Loop
 When you receive messages via WhatsApp from users:
