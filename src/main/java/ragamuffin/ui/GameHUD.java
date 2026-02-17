@@ -35,12 +35,20 @@ public class GameHUD {
      */
     public void render(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
                        int screenWidth, int screenHeight) {
+        render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, null);
+    }
+
+    /**
+     * Render the HUD overlay and register hover tooltip zones.
+     */
+    public void render(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
+                       int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips) {
         if (!visible) {
             return;
         }
 
         // Render status bars
-        renderStatusBars(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        renderStatusBars(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltips);
 
         // Render weather display
         renderWeather(spriteBatch, font, screenWidth, screenHeight);
@@ -50,23 +58,35 @@ public class GameHUD {
     }
 
     private void renderStatusBars(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
-                                  int screenWidth, int screenHeight) {
+                                  int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips) {
         float x = BAR_MARGIN;
         float y = screenHeight - BAR_MARGIN - BAR_HEIGHT;
 
         // Health bar
-        renderBar(spriteBatch, shapeRenderer, font, "Health", player.getHealth() / Player.MAX_HEALTH,
-                  Color.RED, x, y);
+        float healthPct = player.getHealth() / Player.MAX_HEALTH;
+        renderBar(spriteBatch, shapeRenderer, font, "Health", healthPct, Color.RED, x, y);
+        if (hoverTooltips != null) {
+            hoverTooltips.addZone(x, y, BAR_WIDTH, BAR_HEIGHT,
+                    "Health: " + (int)(healthPct * 100) + "%");
+        }
 
         // Hunger bar
         y -= BAR_SPACING;
-        renderBar(spriteBatch, shapeRenderer, font, "Hunger", player.getHunger() / Player.MAX_HUNGER,
-                  Color.ORANGE, x, y);
+        float hungerPct = player.getHunger() / Player.MAX_HUNGER;
+        renderBar(spriteBatch, shapeRenderer, font, "Hunger", hungerPct, Color.ORANGE, x, y);
+        if (hoverTooltips != null) {
+            hoverTooltips.addZone(x, y, BAR_WIDTH, BAR_HEIGHT,
+                    "Hunger: " + (int)(hungerPct * 100) + "%");
+        }
 
         // Energy bar
         y -= BAR_SPACING;
-        renderBar(spriteBatch, shapeRenderer, font, "Energy", player.getEnergy() / Player.MAX_ENERGY,
-                  Color.YELLOW, x, y);
+        float energyPct = player.getEnergy() / Player.MAX_ENERGY;
+        renderBar(spriteBatch, shapeRenderer, font, "Energy", energyPct, Color.YELLOW, x, y);
+        if (hoverTooltips != null) {
+            hoverTooltips.addZone(x, y, BAR_WIDTH, BAR_HEIGHT,
+                    "Energy: " + (int)(energyPct * 100) + "%");
+        }
     }
 
     private void renderBar(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,

@@ -82,6 +82,13 @@ public class CraftingUI {
      * Render the crafting UI.
      */
     public void render(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font, int screenWidth, int screenHeight) {
+        render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, null);
+    }
+
+    /**
+     * Render the crafting UI and register hover tooltip zones.
+     */
+    public void render(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font, int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips) {
         if (!visible) {
             return;
         }
@@ -135,6 +142,12 @@ public class CraftingUI {
             String prefix = isSelected ? "> " : "  ";
             String recipeText = prefix + (i + 1) + ". " + recipe.getDisplayName();
             font.draw(spriteBatch, recipeText, panelX + 40, y);
+
+            // Register tooltip zone for this recipe row
+            if (hoverTooltips != null) {
+                String status = canCraft ? "Ready to craft" : "Missing materials";
+                hoverTooltips.addZone(panelX + 40, y - 20, panelWidth - 80, 25, recipe.getDisplayName() + " - " + status);
+            }
 
             y -= 30;
         }

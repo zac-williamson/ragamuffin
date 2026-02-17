@@ -9,12 +9,25 @@
 - `./gradlew build` — compile and package
 - `./gradlew test` — run all tests (unit + integration)
 - `./gradlew clean test` — clean build and run all tests
-- `./gradlew run` — launch the game (requires display; headless server won't render)
 
 ## How to Code
-Delegate ALL coding work to Claude Code via the **coding-agent** skill.
-You are the PM — you review, direct, and verify. You do not write code yourself.
-Use the coding-agent skill to write tests, implement features, and fix bugs.
+
+Write code DIRECTLY using your built-in tools:
+- **file_read** to read source files
+- **file_edit** to make targeted edits (find-and-replace)
+- **file_write** to create or overwrite files
+- **exec** to run shell commands (gradle, git, etc.)
+
+Do NOT delegate to any external tool, skill, or subprocess.
+
+## Git Workflow
+After every code change:
+```
+git add -A
+git commit -m "descriptive message"
+git push origin main
+```
+This triggers GitHub Actions deployment to GitHub Pages.
 
 ## Exec Tool
 Use the exec tool to run shell commands like `./gradlew test` and `git commit`.

@@ -62,6 +62,13 @@ public class InventoryUI {
      * Render the inventory UI.
      */
     public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, int screenWidth, int screenHeight) {
+        render(batch, shapeRenderer, font, screenWidth, screenHeight, null);
+    }
+
+    /**
+     * Render the inventory UI and register hover tooltip zones.
+     */
+    public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips) {
         if (!visible) {
             return;
         }
@@ -91,23 +98,31 @@ public class InventoryUI {
         }
         shapeRenderer.end();
 
-        // Render item text
+        // Render item text and register tooltip zones
         batch.begin();
         for (int slot = 0; slot < Math.min(inventory.getSize(), GRID_COLS * GRID_ROWS); slot++) {
+            int col = slot % GRID_COLS;
+            int row = slot / GRID_COLS;
+            int slotX = startX + col * (SLOT_SIZE + SLOT_PADDING);
+            int slotY = startY + row * (SLOT_SIZE + SLOT_PADDING);
             Material material = inventory.getItemInSlot(slot);
             if (material != null) {
                 int count = inventory.getCountInSlot(slot);
-                int col = slot % GRID_COLS;
-                int row = slot / GRID_COLS;
-                int x = startX + col * (SLOT_SIZE + SLOT_PADDING) + 5;
-                int y = startY + row * (SLOT_SIZE + SLOT_PADDING) + SLOT_SIZE - 10;
+                int textX = slotX + 5;
+                int textY = slotY + SLOT_SIZE - 10;
 
                 // Draw material name (abbreviated)
                 String name = getMaterialAbbreviation(material);
-                font.draw(batch, name, x, y);
+                font.draw(batch, name, textX, textY);
 
                 // Draw count
-                font.draw(batch, String.valueOf(count), x + 30, y - 15);
+                font.draw(batch, String.valueOf(count), textX + 30, textY - 15);
+
+                // Register tooltip zone
+                if (hoverTooltips != null) {
+                    String tooltip = material.getDisplayName() + " x" + count;
+                    hoverTooltips.addZone(slotX, slotY, SLOT_SIZE, SLOT_SIZE, tooltip);
+                }
             }
         }
         batch.end();

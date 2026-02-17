@@ -56,6 +56,13 @@ public class HotbarUI {
      * Render the hotbar UI.
      */
     public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, int screenWidth, int screenHeight) {
+        render(batch, shapeRenderer, font, screenWidth, screenHeight, null);
+    }
+
+    /**
+     * Render the hotbar UI and register hover tooltip zones.
+     */
+    public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips) {
         int hotbarWidth = HOTBAR_SLOTS * (SLOT_SIZE + SLOT_PADDING);
         int startX = (screenWidth - hotbarWidth) / 2;
         int startY = 20; // Bottom of screen
@@ -82,21 +89,30 @@ public class HotbarUI {
         }
         shapeRenderer.end();
 
-        // Render item text
+        // Render item text and register tooltip zones
         batch.begin();
         for (int i = 0; i < HOTBAR_SLOTS; i++) {
+            int x = startX + i * (SLOT_SIZE + SLOT_PADDING);
             Material material = inventory.getItemInSlot(i);
             if (material != null) {
                 int count = inventory.getCountInSlot(i);
-                int x = startX + i * (SLOT_SIZE + SLOT_PADDING) + 5;
-                int y = startY + SLOT_SIZE - 10;
+                int textX = x + 5;
+                int textY = startY + SLOT_SIZE - 10;
 
                 // Draw material abbreviation
                 String name = getMaterialAbbreviation(material);
-                font.draw(batch, name, x, y);
+                font.draw(batch, name, textX, textY);
 
                 // Draw count
-                font.draw(batch, String.valueOf(count), x + 30, y - 15);
+                font.draw(batch, String.valueOf(count), textX + 30, textY - 15);
+
+                // Register tooltip zone
+                if (hoverTooltips != null) {
+                    String tooltip = material.getDisplayName() + " x" + count;
+                    hoverTooltips.addZone(x, startY, SLOT_SIZE, SLOT_SIZE, tooltip);
+                }
+            } else if (hoverTooltips != null) {
+                hoverTooltips.addZone(x, startY, SLOT_SIZE, SLOT_SIZE, "Empty slot " + (i + 1));
             }
         }
         batch.end();
