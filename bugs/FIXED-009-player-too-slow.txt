@@ -1,0 +1,3 @@
+BUG: Player movement speed is too slow
+
+The player character moves far too slowly. Walking around the world is tedious. Increase MOVE_SPEED significantly (at least 2x, possibly 3x the current value). The game should feel responsive and snappy to move around in.
