@@ -23,7 +23,6 @@ public class InputHandler implements InputProcessor {
     private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
     private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
     private float mouseDeltaX, mouseDeltaY;
-    private int lastX = -1, lastY = -1;
 
     public void update() {
         // Update movement keys
@@ -32,26 +31,13 @@ public class InputHandler implements InputProcessor {
         left = Gdx.input.isKeyPressed(Input.Keys.A);
         right = Gdx.input.isKeyPressed(Input.Keys.D);
 
-        // Mouse delta for look
+        // Mouse delta for look - use LibGDX's built-in delta tracking
         if (Gdx.input.isCursorCatched()) {
-            int currentX = Gdx.input.getX();
-            int currentY = Gdx.input.getY();
-
-            if (lastX == -1) {
-                lastX = currentX;
-                lastY = currentY;
-            }
-
-            mouseDeltaX = currentX - lastX;
-            mouseDeltaY = currentY - lastY;
-
-            lastX = currentX;
-            lastY = currentY;
+            mouseDeltaX = Gdx.input.getDeltaX();
+            mouseDeltaY = Gdx.input.getDeltaY();
         } else {
             mouseDeltaX = 0;
             mouseDeltaY = 0;
-            lastX = -1;
-            lastY = -1;
         }
     }
 

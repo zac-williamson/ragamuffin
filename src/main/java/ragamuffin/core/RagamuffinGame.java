@@ -93,6 +93,7 @@ public class RagamuffinGame extends ApplicationAdapter {
     private static final float PLACE_REACH = 5.0f;
     private static final float MAX_PITCH = 89.0f;
     private float cameraPitch = 0f;
+    private float cameraYaw = 0f; // 0 = facing -Z
 
     @Override
     public void create() {
@@ -516,26 +517,25 @@ public class RagamuffinGame extends ApplicationAdapter {
         camera.position.set(player.getPosition());
         camera.position.y += Player.EYE_HEIGHT;
 
-        // Mouse look
+        // Mouse look - recompute direction from yaw/pitch to avoid rotation drift
         float mouseDX = inputHandler.getMouseDeltaX();
         float mouseDY = inputHandler.getMouseDeltaY();
 
         if (mouseDX != 0 || mouseDY != 0) {
-            // Rotate camera based on mouse
-            camera.rotate(Vector3.Y, -mouseDX * MOUSE_SENSITIVITY);
-
-            // Pitch (up/down) - clamp to prevent flipping
-            float pitchChange = -mouseDY * MOUSE_SENSITIVITY;
-            float newPitch = cameraPitch + pitchChange;
-            newPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, newPitch));
-            pitchChange = newPitch - cameraPitch;
-            cameraPitch = newPitch;
-
-            if (pitchChange != 0) {
-                Vector3 rightAxis = new Vector3(camera.direction).crs(Vector3.Y).nor();
-                camera.rotate(rightAxis, pitchChange);
-            }
+            cameraYaw += mouseDX * MOUSE_SENSITIVITY;
+            cameraPitch += -mouseDY * MOUSE_SENSITIVITY;
+            cameraPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cameraPitch));
         }
+
+        // Rebuild camera direction from angles (avoids accumulated rotation errors)
+        float pitchRad = (float) Math.toRadians(cameraPitch);
+        float yawRad = (float) Math.toRadians(cameraYaw);
+        camera.direction.set(
+            -(float) Math.sin(yawRad) * (float) Math.cos(pitchRad),
+            (float) Math.sin(pitchRad),
+            -(float) Math.cos(yawRad) * (float) Math.cos(pitchRad)
+        );
+        camera.up.set(Vector3.Y);
 
         camera.update();
     }
