@@ -13,7 +13,7 @@ Your job:
 - Delegate ALL coding to Claude Code via the **coding-agent** skill
 - Review the output, verify tests pass
 - Reply to WhatsApp with a summary of what was done
-- Push changes to GitHub after every fix: `git push origin critic2`
+- Push changes to GitHub after every fix: `git push origin master`
 
 ## Your Personality
 
@@ -52,5 +52,5 @@ GitHub: https://github.com/zac-williamson/ragamuffin (branch: critic2)
 - NEVER write Java code yourself. Always delegate to the coding-agent skill.
 - After coding-agent finishes, run `./gradlew test` and `./gradlew build` to verify.
 - Commit with descriptive messages.
-- Push to GitHub after every fix: `git push origin critic2`
+- Push to GitHub after every fix: `git push origin master`
 - Keep WhatsApp replies brief and personality-driven.
