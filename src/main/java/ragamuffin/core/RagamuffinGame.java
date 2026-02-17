@@ -512,11 +512,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             moveDir.sub(right);
         }
 
-        // Move player with collision
+        // Move player with collision (always call to ensure gravity applies even when not moving)
         if (moveDir.len2() > 0) {
             moveDir.nor();
-            world.moveWithCollision(player, moveDir.x, 0, moveDir.z, delta);
         }
+        world.moveWithCollision(player, moveDir.x, 0, moveDir.z, delta);
 
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());

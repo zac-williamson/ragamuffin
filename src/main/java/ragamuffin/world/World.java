@@ -223,11 +223,40 @@ public class World {
      * This is a helper method that checks collision across multiple chunks.
      * Includes gravity and Y-axis collision handling.
      */
+    /**
+     * Check if the player is standing on solid ground.
+     */
+    public boolean isOnGround(Player player) {
+        AABB aabb = player.getAABB();
+        int minX = (int) Math.floor(aabb.getMinX());
+        int maxX = (int) Math.floor(aabb.getMaxX());
+        int minZ = (int) Math.floor(aabb.getMinZ());
+        int maxZ = (int) Math.floor(aabb.getMaxZ());
+        int belowFeetY = (int) Math.floor(aabb.getMinY()) - 1;
+
+        for (int bx = minX; bx <= maxX; bx++) {
+            for (int bz = minZ; bz <= maxZ; bz++) {
+                if (getBlock(bx, belowFeetY, bz).isSolid()) {
+                    float blockTop = belowFeetY + 1.0f;
+                    if (Math.abs(aabb.getMinY() - blockTop) < 0.05f) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public Vector3 moveWithCollision(Player player, float dx, float dy, float dz, float delta) {
         Vector3 originalPos = new Vector3(player.getPosition());
 
-        // Apply gravity to vertical velocity
-        player.applyGravity(delta);
+        // Only apply gravity if not standing on solid ground
+        boolean onGround = isOnGround(player);
+        if (onGround && player.getVerticalVelocity() <= 0) {
+            player.resetVerticalVelocity();
+        } else {
+            player.applyGravity(delta);
+        }
 
         // Horizontal movement (X and Z)
         Vector3 desiredMove = new Vector3(0, 0, 0);
@@ -270,18 +299,18 @@ public class World {
         if (checkWorldCollision(player)) {
             // Landed on ground or hit ceiling
             if (verticalMove < 0) {
-                // Falling down - find the highest solid block under the player and snap to its top
-                int highestSolidY = (int) Math.floor(player.getPosition().y) - 1;
+                // Falling down - find ground below player's feet within XZ footprint
                 AABB aabb = player.getAABB();
                 int minX = (int) Math.floor(aabb.getMinX());
                 int maxX = (int) Math.floor(aabb.getMaxX());
                 int minZ = (int) Math.floor(aabb.getMinZ());
                 int maxZ = (int) Math.floor(aabb.getMaxZ());
-                int checkMinY = (int) Math.floor(aabb.getMinY());
-                int checkMaxY = (int) Math.ceil(aabb.getMaxY());
+                int feetY = (int) Math.floor(aabb.getMinY());
+
+                int highestSolidY = -64;
                 for (int bx = minX; bx <= maxX; bx++) {
                     for (int bz = minZ; bz <= maxZ; bz++) {
-                        for (int by = checkMaxY; by >= checkMinY; by--) {
+                        for (int by = feetY; by >= feetY - 3; by--) {
                             if (getBlock(bx, by, bz).isSolid()) {
                                 highestSolidY = Math.max(highestSolidY, by);
                                 break;
@@ -289,7 +318,9 @@ public class World {
                         }
                     }
                 }
-                player.getPosition().y = highestSolidY + 1.0f;
+                if (highestSolidY > -64) {
+                    player.getPosition().y = highestSolidY + 1.0f;
+                }
                 player.resetVerticalVelocity();
             } else {
                 // Moving up - hit ceiling
