@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+def gdxVersion = rootProject.ext.gdxVersion
+def gdxTeaVMVersion = '1.0.5'
+
+dependencies {
+    implementation "com.github.xpenatan.gdx-teavm:backend-teavm:$gdxTeaVMVersion"
+    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+    implementation project(':')
+}
+
+project.ext.mainClassName = 'ragamuffin.teavm.TeaVMBuilder'
+
+task buildJavaScript(dependsOn: classes, type: JavaExec) {
+    description = 'Transpile bytecode to JavaScript via TeaVM'
+    mainClass.set(project.ext.mainClassName)
+    classpath = sourceSets.main.runtimeClasspath
+}

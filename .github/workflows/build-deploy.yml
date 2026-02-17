@@ -27,7 +27,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew build -x :teavm:buildJavaScript
 
       - name: Run tests
         run: ./gradlew test
@@ -61,14 +61,16 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build fat JAR
-        run: ./gradlew jar
+      - name: Build TeaVM web export
+        run: ./gradlew :teavm:buildJavaScript
 
       - name: Prepare Pages site
         run: |
           mkdir -p _site
+          # Copy the TeaVM-compiled game files
+          cp -r teavm/build/dist/webapp/webapp/* _site/
+          # Replace the default index.html with our custom one
           cp docs/index.html _site/index.html
-          cp build/libs/*.jar _site/ragamuffin.jar
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

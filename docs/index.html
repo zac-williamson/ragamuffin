@@ -8,155 +8,218 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Courier New', monospace;
-            background: #1a1a2e;
+            background: #000;
             color: #e0e0e0;
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
+        #header {
+            background: #1a1a2e;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 2px solid #e94560;
+            z-index: 10;
+            flex-shrink: 0;
         }
-        h1 {
-            font-size: 3em;
+        #header h1 {
+            font-size: 1.2em;
             color: #e94560;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+        #header .tagline {
+            font-size: 0.8em;
+            color: #7a7a9e;
+            font-style: italic;
+        }
+        #header .controls {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #fullscreen-btn {
+            padding: 5px 15px;
+            background: #e94560;
+            color: white;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #fullscreen-btn:hover { background: #c73652; }
+        #game-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: #000;
+        }
+        #canvas {
+            display: none;
+        }
+        #loading {
+            position: absolute;
+            text-align: center;
+            z-index: 5;
+        }
+        #loading h2 {
+            color: #e94560;
+            font-size: 2em;
             margin-bottom: 10px;
             text-transform: uppercase;
             letter-spacing: 4px;
         }
-        .tagline {
+        #loading p {
+            color: #7a7a9e;
+            margin-bottom: 20px;
+        }
+        #progress-box {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid #e94560;
+            height: 30px;
+            width: 400px;
+            margin: 0 auto;
+        }
+        #progress-bar {
+            background: #e94560;
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        #splash {
+            position: absolute;
+            text-align: center;
+            z-index: 5;
+        }
+        #splash h2 {
+            font-size: 3em;
+            color: #e94560;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+        #splash .tagline {
             font-size: 1.2em;
             color: #7a7a9e;
-            margin-bottom: 40px;
             font-style: italic;
-        }
-        .description {
-            background: #16213e;
-            border-left: 4px solid #e94560;
-            padding: 20px;
             margin-bottom: 30px;
+        }
+        #splash .description {
+            max-width: 600px;
+            margin: 0 auto 30px;
             line-height: 1.6;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 40px;
-        }
-        .feature {
-            background: #16213e;
-            padding: 15px;
-            border-radius: 4px;
-        }
-        .feature h3 {
-            color: #e94560;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-        }
-        .feature p {
-            font-size: 0.85em;
             color: #a0a0b8;
         }
-        .download-section {
-            text-align: center;
-            margin: 40px 0;
-            padding: 30px;
-            background: #16213e;
-            border-radius: 8px;
-        }
-        .download-btn {
+        #play-btn {
             display: inline-block;
-            padding: 15px 40px;
+            padding: 15px 50px;
             background: #e94560;
             color: white;
-            text-decoration: none;
+            border: none;
             font-family: 'Courier New', monospace;
-            font-size: 1.1em;
+            font-size: 1.2em;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 4px;
-            transition: background 0.3s;
+            letter-spacing: 3px;
+            cursor: pointer;
+            margin-bottom: 20px;
         }
-        .download-btn:hover { background: #c73652; }
-        .requirements {
-            margin-top: 15px;
-            font-size: 0.85em;
+        #play-btn:hover { background: #c73652; }
+        #splash .tooltip {
             color: #7a7a9e;
-        }
-        .tooltip {
-            background: #0f3460;
-            padding: 10px 15px;
-            margin: 20px 0;
-            border-radius: 4px;
             font-style: italic;
-            color: #a0a0b8;
+            font-size: 0.9em;
+            margin-top: 15px;
         }
-        .tooltip::before {
+        #splash .tooltip::before {
             content: '> ';
             color: #e94560;
         }
-        .footer {
-            text-align: center;
-            margin-top: 60px;
-            color: #4a4a6a;
-            font-size: 0.8em;
+        .footer-link {
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.7em;
+            z-index: 10;
         }
-        @media (max-width: 600px) {
-            .features { grid-template-columns: 1fr; }
-            h1 { font-size: 2em; }
-        }
+        .footer-link a { color: #4a4a6a; text-decoration: none; }
+        .footer-link a:hover { color: #e94560; }
     </style>
 </head>
-<body>
-    <div class="container">
+<body oncontextmenu="return false">
+    <div id="header">
         <h1>Ragamuffin</h1>
-        <p class="tagline">"It's time to learn to survive on your own."</p>
-
-        <div class="description">
-            A 3D voxel survival-sandbox game set in modern-day Britain. Your parents have kicked you out.
-            You start in a local park with nothing. Punch trees, gather resources, build shelter,
-            and try to survive the night — all while dodging police, council builders, and gangs of youths
-            in a grimly comedic British town.
-        </div>
-
-        <div class="tooltip">Punch a tree to get wood.</div>
-
-        <div class="features">
-            <div class="feature">
-                <h3>VOXEL WORLD</h3>
-                <p>Break and place blocks in a 3D urban environment. Greggs, charity shops, off-licences — it's all here.</p>
-            </div>
-            <div class="feature">
-                <h3>SURVIVAL</h3>
-                <p>Manage health, hunger, and energy. Build shelter before the police arrive at night.</p>
-            </div>
-            <div class="feature">
-                <h3>CRAFTING</h3>
-                <p>Craft tools and items from scavenged materials. Cardboard never looked so useful.</p>
-            </div>
-            <div class="feature">
-                <h3>NPCS</h3>
-                <p>Police, council builders, members of the public, dogs, and gangs of youths roam the streets.</p>
-            </div>
-        </div>
-
-        <div class="tooltip">Jewellers can be a good source of diamond.</div>
-
-        <div class="download-section">
-            <a href="ragamuffin.jar" class="download-btn">Download Latest Build</a>
-            <p class="requirements">Requires Java 17+. Run with: <code>java -jar ragamuffin.jar</code><br>
-            macOS: <code>java -XstartOnFirstThread -jar ragamuffin.jar</code></p>
-        </div>
-
-        <div class="tooltip">Dodge to avoid the attacks of stronger enemies.</div>
-
-        <div class="footer">
-            <p>Built with LibGDX. Dark humour included at no extra charge.</p>
-            <p style="margin-top: 10px;">
-                <a href="https://github.com/zac-williamson/ragamuffin" style="color: #e94560;">Source on GitHub</a>
-            </p>
+        <span class="tagline">"It's time to learn to survive on your own."</span>
+        <div class="controls">
+            <button id="fullscreen-btn" onclick="goFullscreen()" style="display:none;">Fullscreen</button>
         </div>
     </div>
+
+    <div id="game-container">
+        <div id="splash">
+            <h2>Ragamuffin</h2>
+            <p class="tagline">"It's time to learn to survive on your own."</p>
+            <p class="description">
+                A 3D voxel survival-sandbox set in modern-day Britain. Your parents have kicked you out.
+                Punch trees, gather resources, build shelter, and dodge police in a grimly comedic British town.
+            </p>
+            <button id="play-btn" onclick="startGame()">Play in Browser</button>
+            <p class="tooltip">Punch a tree to get wood.</p>
+        </div>
+
+        <div id="loading" style="display:none;">
+            <h2>Loading...</h2>
+            <p>Generating British town...</p>
+            <div id="progress-box"><div id="progress-bar"></div></div>
+        </div>
+
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+
+    <div class="footer-link">
+        <a href="https://github.com/zac-williamson/ragamuffin">Source on GitHub</a>
+    </div>
+
+    <script src="teavm/app.js" defer></script>
+    <script src="scripts/gdx.wasm.js" defer></script>
+    <script>
+        function startGame() {
+            document.getElementById('splash').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('fullscreen-btn').style.display = 'inline-block';
+
+            // Animate progress bar while loading
+            var bar = document.getElementById('progress-bar');
+            var pct = 0;
+            var interval = setInterval(function() {
+                if (pct < 90) { pct += 2; bar.style.width = pct + '%'; }
+            }, 100);
+
+            // Start the game
+            setTimeout(function() {
+                document.getElementById('canvas').style.display = 'block';
+                try { main(); } catch(e) { console.error('Game start error:', e); }
+                clearInterval(interval);
+                bar.style.width = '100%';
+                setTimeout(function() {
+                    document.getElementById('loading').style.display = 'none';
+                }, 500);
+            }, 200);
+        }
+
+        function goFullscreen() {
+            var container = document.getElementById('game-container');
+            if (container.requestFullscreen) container.requestFullscreen();
+            else if (container.webkitRequestFullscreen) container.webkitRequestFullscreen();
+        }
+    </script>
 </body>
 </html>
