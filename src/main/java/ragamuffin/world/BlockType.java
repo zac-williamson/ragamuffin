@@ -19,7 +19,8 @@ public enum BlockType {
     WATER(9, false),
     TREE_TRUNK(10, true),
     LEAVES(11, true),
-    CARDBOARD(12, true);
+    CARDBOARD(12, true),
+    IRON_FENCE(13, true);
 
     private final int id;
     private final boolean solid;
@@ -64,6 +65,7 @@ public enum BlockType {
             case TREE_TRUNK: return new Color(0.4f, 0.25f, 0.1f, 1f); // Dark brown
             case LEAVES: return new Color(0.2f, 0.5f, 0.1f, 1f); // Dark green
             case CARDBOARD: return new Color(0.7f, 0.6f, 0.4f, 1f); // Tan
+            case IRON_FENCE: return new Color(0.2f, 0.2f, 0.2f, 1f); // Dark iron grey
             default: return new Color(1f, 1f, 1f, 1f); // White fallback
         }
     }

@@ -113,6 +113,39 @@ public class WorldGeneratorTest {
         }
     }
 
+    @Test
+    public void testParkHasFence() {
+        generator.generateWorld(world);
+
+        int parkStart = -15; // -PARK_SIZE/2
+        int parkEnd = 15;    // PARK_SIZE/2
+
+        // Check that fence blocks exist at the park boundary (2 blocks high)
+        int fenceCount = 0;
+        for (int x = parkStart; x < parkEnd; x++) {
+            for (int y = 1; y <= 2; y++) {
+                if (world.getBlock(x, y, parkStart) == BlockType.IRON_FENCE) fenceCount++;
+                if (world.getBlock(x, y, parkEnd - 1) == BlockType.IRON_FENCE) fenceCount++;
+            }
+        }
+        for (int z = parkStart; z < parkEnd; z++) {
+            for (int y = 1; y <= 2; y++) {
+                if (world.getBlock(parkStart, y, z) == BlockType.IRON_FENCE) fenceCount++;
+                if (world.getBlock(parkEnd - 1, y, z) == BlockType.IRON_FENCE) fenceCount++;
+            }
+        }
+
+        // Should have many fence blocks (minus the entry gaps)
+        assertTrue(fenceCount > 200,
+            "Park should have a substantial iron fence around its perimeter, found " + fenceCount);
+
+        // Check entry gaps exist (at centre of each side)
+        assertEquals(BlockType.AIR, world.getBlock(0, 1, parkStart),
+            "Should have entry gap at south side of park");
+        assertEquals(BlockType.AIR, world.getBlock(parkStart, 1, 0),
+            "Should have entry gap at west side of park");
+    }
+
     private boolean landmarksOverlap(Landmark a, Landmark b) {
         Vector3 posA = a.getPosition();
         Vector3 posB = b.getPosition();

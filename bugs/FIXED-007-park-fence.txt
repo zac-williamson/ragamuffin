@@ -1,0 +1,3 @@
+FEATURE: Park needs a boundary fence
+
+The park has no visible boundary. Add a 2-block high fence around the perimeter of the park so players can clearly see where the park ends and the town begins. Use a distinct block type or color (e.g. dark wood or iron-style blocks).

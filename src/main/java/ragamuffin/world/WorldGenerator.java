@@ -135,6 +135,31 @@ public class WorldGenerator {
             }
         }
 
+        // 2-block high iron fence around park perimeter
+        for (int x = parkStart; x < parkEnd; x++) {
+            for (int y = 1; y <= 2; y++) {
+                world.setBlock(x, y, parkStart, BlockType.IRON_FENCE); // South edge
+                world.setBlock(x, y, parkEnd - 1, BlockType.IRON_FENCE); // North edge
+            }
+        }
+        for (int z = parkStart; z < parkEnd; z++) {
+            for (int y = 1; y <= 2; y++) {
+                world.setBlock(parkStart, y, z, BlockType.IRON_FENCE); // West edge
+                world.setBlock(parkEnd - 1, y, z, BlockType.IRON_FENCE); // East edge
+            }
+        }
+        // Leave a 2-block gap at the centre of each side for entry
+        for (int y = 1; y <= 2; y++) {
+            world.setBlock(0, y, parkStart, BlockType.AIR);
+            world.setBlock(-1, y, parkStart, BlockType.AIR);
+            world.setBlock(0, y, parkEnd - 1, BlockType.AIR);
+            world.setBlock(-1, y, parkEnd - 1, BlockType.AIR);
+            world.setBlock(parkStart, y, 0, BlockType.AIR);
+            world.setBlock(parkStart, y, -1, BlockType.AIR);
+            world.setBlock(parkEnd - 1, y, 0, BlockType.AIR);
+            world.setBlock(parkEnd - 1, y, -1, BlockType.AIR);
+        }
+
         // Register park landmark
         world.addLandmark(new Landmark(LandmarkType.PARK, 0, 0, 0, PARK_SIZE, 1, PARK_SIZE));
     }
