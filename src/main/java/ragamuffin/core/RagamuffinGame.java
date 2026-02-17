@@ -474,7 +474,27 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetPlace();
         }
 
-        // Calculate movement direction
+        // Mouse look - recompute direction from yaw/pitch BEFORE movement calculation
+        float mouseDX = inputHandler.getMouseDeltaX();
+        float mouseDY = inputHandler.getMouseDeltaY();
+
+        if (mouseDX != 0 || mouseDY != 0) {
+            cameraYaw += mouseDX * MOUSE_SENSITIVITY;
+            cameraPitch += -mouseDY * MOUSE_SENSITIVITY;
+            cameraPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cameraPitch));
+        }
+
+        // Rebuild camera direction from angles (avoids accumulated rotation errors)
+        float pitchRad = (float) Math.toRadians(cameraPitch);
+        float yawRad = (float) Math.toRadians(cameraYaw);
+        camera.direction.set(
+            (float) Math.sin(yawRad) * (float) Math.cos(pitchRad),
+            (float) Math.sin(pitchRad),
+            -(float) Math.cos(yawRad) * (float) Math.cos(pitchRad)
+        );
+        camera.up.set(Vector3.Y);
+
+        // Calculate movement direction (uses fresh camera direction from above)
         Vector3 forward = new Vector3(camera.direction.x, 0, camera.direction.z).nor();
         Vector3 right = new Vector3(camera.direction).crs(Vector3.Y).nor();
         Vector3 moveDir = new Vector3();
@@ -516,26 +536,6 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update camera to follow player
         camera.position.set(player.getPosition());
         camera.position.y += Player.EYE_HEIGHT;
-
-        // Mouse look - recompute direction from yaw/pitch to avoid rotation drift
-        float mouseDX = inputHandler.getMouseDeltaX();
-        float mouseDY = inputHandler.getMouseDeltaY();
-
-        if (mouseDX != 0 || mouseDY != 0) {
-            cameraYaw += mouseDX * MOUSE_SENSITIVITY;
-            cameraPitch += -mouseDY * MOUSE_SENSITIVITY;
-            cameraPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cameraPitch));
-        }
-
-        // Rebuild camera direction from angles (avoids accumulated rotation errors)
-        float pitchRad = (float) Math.toRadians(cameraPitch);
-        float yawRad = (float) Math.toRadians(cameraYaw);
-        camera.direction.set(
-            -(float) Math.sin(yawRad) * (float) Math.cos(pitchRad),
-            (float) Math.sin(pitchRad),
-            -(float) Math.cos(yawRad) * (float) Math.cos(pitchRad)
-        );
-        camera.up.set(Vector3.Y);
 
         camera.update();
     }
