@@ -20,7 +20,13 @@ public enum BlockType {
     TREE_TRUNK(10, true),
     LEAVES(11, true),
     CARDBOARD(12, true),
-    IRON_FENCE(13, true);
+    IRON_FENCE(13, true),
+    SIGN_WHITE(14, true),
+    SIGN_RED(15, true),
+    SIGN_BLUE(16, true),
+    SIGN_GREEN(17, true),
+    SIGN_YELLOW(18, true),
+    GARDEN_WALL(19, true);
 
     private final int id;
     private final boolean solid;
@@ -66,6 +72,12 @@ public enum BlockType {
             case LEAVES: return new Color(0.2f, 0.5f, 0.1f, 1f); // Dark green
             case CARDBOARD: return new Color(0.7f, 0.6f, 0.4f, 1f); // Tan
             case IRON_FENCE: return new Color(0.2f, 0.2f, 0.2f, 1f); // Dark iron grey
+            case SIGN_WHITE: return new Color(0.95f, 0.95f, 0.95f, 1f); // White sign
+            case SIGN_RED: return new Color(0.9f, 0.1f, 0.1f, 1f); // Red sign
+            case SIGN_BLUE: return new Color(0.1f, 0.2f, 0.7f, 1f); // Blue sign
+            case SIGN_GREEN: return new Color(0.1f, 0.6f, 0.2f, 1f); // Green sign
+            case SIGN_YELLOW: return new Color(0.9f, 0.8f, 0.1f, 1f); // Yellow sign
+            case GARDEN_WALL: return new Color(0.5f, 0.45f, 0.4f, 1f); // Grey-brown garden wall
             default: return new Color(1f, 1f, 1f, 1f); // White fallback
         }
     }

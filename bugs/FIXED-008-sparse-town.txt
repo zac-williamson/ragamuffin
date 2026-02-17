@@ -1,0 +1,21 @@
+BUG: Urban environment beyond the park is far too sparse
+
+The town currently has only a handful of buildings scattered across a massive empty grass field. This looks nothing like a British town. It should be a dense, small grid-based town with:
+
+- Streets forming a proper grid pattern with buildings on BOTH sides of every street
+- Terraced houses lining residential streets (rows of 6-10 houses, not just 5)
+- Multiple rows of terraced houses, not just one
+- A proper high street / parade of shops with buildings directly adjacent to each other
+- More shop types: bookies, kebab shop, launderette, Tesco Express, pub
+- Buildings should have SIGN TEXTURES describing their function using colored blocks or text-like patterns on the front face. Examples:
+  - "Andrews Diamonds" on the jeweller
+  - "Bobs Builders" on a builders merchant  
+  - "Petes Pawn Shop" as a new shop
+  - "Greggs" on the Greggs
+  - "JobCentre Plus" on the JobCentre
+  - "The Kings Arms" on a pub
+- The industrial estate should have warehouse-style buildings
+- Fill in gaps between buildings with garden walls, bins, fences
+- Overall density should feel like walking through Croydon or Slough, not an empty field with 5 buildings
+
+This is the single biggest issue with the game right now. The world needs to feel LIVED IN.

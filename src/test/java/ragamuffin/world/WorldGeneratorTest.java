@@ -146,6 +146,61 @@ public class WorldGeneratorTest {
             "Should have entry gap at west side of park");
     }
 
+    @Test
+    public void testDenseTownHasNewShopTypes() {
+        generator.generateWorld(world);
+
+        // Verify the new shop types from bug 008 exist
+        assertNotNull(world.getLandmark(LandmarkType.BOOKIES), "Town should have a bookies");
+        assertNotNull(world.getLandmark(LandmarkType.KEBAB_SHOP), "Town should have a kebab shop");
+        assertNotNull(world.getLandmark(LandmarkType.LAUNDERETTE), "Town should have a launderette");
+        assertNotNull(world.getLandmark(LandmarkType.TESCO_EXPRESS), "Town should have a Tesco Express");
+        assertNotNull(world.getLandmark(LandmarkType.PUB), "Town should have a pub");
+        assertNotNull(world.getLandmark(LandmarkType.PAWN_SHOP), "Town should have a pawn shop");
+        assertNotNull(world.getLandmark(LandmarkType.BUILDERS_MERCHANT), "Town should have a builders merchant");
+        assertNotNull(world.getLandmark(LandmarkType.WAREHOUSE), "Town should have a warehouse");
+    }
+
+    @Test
+    public void testBuildingsHaveSignBlocks() {
+        generator.generateWorld(world);
+
+        // Check that the Greggs has a sign (yellow sign blocks at top of building front)
+        Landmark greggs = world.getLandmark(LandmarkType.GREGGS);
+        assertNotNull(greggs);
+        Vector3 pos = greggs.getPosition();
+        int signY = greggs.getHeight(); // Sign is at top of building
+        BlockType signBlock = world.getBlock((int) pos.x, signY, (int) pos.z);
+        assertTrue(signBlock == BlockType.SIGN_YELLOW || signBlock == BlockType.SIGN_RED ||
+                   signBlock == BlockType.SIGN_BLUE || signBlock == BlockType.SIGN_WHITE ||
+                   signBlock == BlockType.SIGN_GREEN,
+            "Greggs should have a coloured sign block, found " + signBlock);
+    }
+
+    @Test
+    public void testMultipleTerracedHouseRows() {
+        generator.generateWorld(world);
+
+        // Count terraced house buildings by scanning for brick walls
+        // Check that there are houses in at least 3 different Z-row areas
+        int rowsWithHouses = 0;
+        int[] zPositions = {-25, -41, -55, -30, 30, 46}; // Expected terraced row Z positions
+        for (int rowZ : zPositions) {
+            int houseCount = 0;
+            for (int x = -70; x < 20; x++) {
+                BlockType block = world.getBlock(x, 1, rowZ);
+                if (block == BlockType.BRICK || block == BlockType.GLASS) {
+                    houseCount++;
+                }
+            }
+            if (houseCount > 20) { // At least some wall blocks
+                rowsWithHouses++;
+            }
+        }
+        assertTrue(rowsWithHouses >= 3,
+            "Should have at least 3 rows of terraced houses, found " + rowsWithHouses);
+    }
+
     private boolean landmarksOverlap(Landmark a, Landmark b) {
         Vector3 posA = a.getPosition();
         Vector3 posB = b.getPosition();

@@ -122,8 +122,8 @@ public class Phase2IntegrationTest {
 
         // Verify there's a solid block at the wall
         BlockType wallBlock = world.getBlock(wallX, 1, wallZ);
-        assertTrue(wallBlock == BlockType.BRICK || wallBlock == BlockType.GLASS,
-            "Building wall should be BRICK or GLASS, but is " + wallBlock);
+        assertTrue(wallBlock.isSolid(),
+            "Building wall should be solid, but is " + wallBlock);
 
         // Place player 2 blocks south of the wall, facing north (toward the wall)
         player = new Player(wallX, 1, wallZ + 2);
