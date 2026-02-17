@@ -82,6 +82,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private static final float MOUSE_SENSITIVITY = 0.15f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
+    private static final float MAX_PITCH = 89.0f;
+    private float cameraPitch = 0f;
 
     @Override
     public void create() {
@@ -369,8 +371,18 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void renderMenu() {
+        // Clear the screen before rendering menu
+        Gdx.gl.glClearColor(0.1f, 0.1f, 0.1f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
+
+        // Set up orthographic projection for 2D menu rendering
+        com.badlogic.gdx.math.Matrix4 projection = new com.badlogic.gdx.math.Matrix4();
+        projection.setToOrtho2D(0, 0, screenWidth, screenHeight);
+        spriteBatch.setProjectionMatrix(projection);
+        shapeRenderer.setProjectionMatrix(projection);
 
         mainMenuScreen.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
     }
@@ -488,8 +500,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             camera.rotate(Vector3.Y, -mouseDX * MOUSE_SENSITIVITY);
 
             // Pitch (up/down) - clamp to prevent flipping
-            Vector3 rightAxis = new Vector3(camera.direction).crs(Vector3.Y).nor();
-            camera.rotate(rightAxis, -mouseDY * MOUSE_SENSITIVITY);
+            float pitchChange = -mouseDY * MOUSE_SENSITIVITY;
+            float newPitch = cameraPitch + pitchChange;
+            newPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, newPitch));
+            pitchChange = newPitch - cameraPitch;
+            cameraPitch = newPitch;
+
+            if (pitchChange != 0) {
+                Vector3 rightAxis = new Vector3(camera.direction).crs(Vector3.Y).nor();
+                camera.rotate(rightAxis, pitchChange);
+            }
         }
 
         camera.update();
@@ -801,6 +821,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public OpeningSequence getOpeningSequence() {
         return openingSequence;
+    }
+
+    public float getCameraPitch() {
+        return cameraPitch;
     }
 
     @Override

@@ -422,11 +422,9 @@ class Phase8IntegrationTest {
             assertNotNull(player.getPosition(), "Player position should not be null");
         }
 
-        // Simulate breaking 3 blocks
-        Chunk chunk = world.getLoadedChunks().iterator().next();
-        if (chunk != null) {
-            // Find 3 non-AIR blocks and break them
-            int blocksBreak = 0;
+        // Simulate breaking 3 blocks - find a chunk that has terrain
+        int blocksBreak = 0;
+        for (Chunk chunk : world.getLoadedChunks()) {
             for (int x = 0; x < 16 && blocksBreak < 3; x++) {
                 for (int y = 0; y < 64 && blocksBreak < 3; y++) {
                     for (int z = 0; z < 16 && blocksBreak < 3; z++) {
@@ -438,8 +436,9 @@ class Phase8IntegrationTest {
                     }
                 }
             }
-            assertEquals(3, blocksBreak, "Should have broken 3 blocks");
+            if (blocksBreak >= 3) break;
         }
+        assertEquals(3, blocksBreak, "Should have broken 3 blocks");
 
         // Open and close inventory
         inventoryUI.show();

@@ -57,11 +57,35 @@ public class WorldGenerator {
 
     /**
      * Generate a single chunk (called when chunk is loaded dynamically).
+     * Populates the chunk with base terrain matching generateWorld().
      */
     public void generateChunk(Chunk chunk, World world) {
-        // Chunk generation is now handled by generateWorld
-        // This method can be used for dynamic terrain if needed
-        // For now, we pre-generate the whole world
+        int halfWorld = WORLD_SIZE / 2;
+        int startX = chunk.getChunkX() * Chunk.SIZE;
+        int startZ = chunk.getChunkZ() * Chunk.SIZE;
+        int startY = chunk.getChunkY() * Chunk.HEIGHT;
+
+        for (int localX = 0; localX < Chunk.SIZE; localX++) {
+            for (int localZ = 0; localZ < Chunk.SIZE; localZ++) {
+                int worldX = startX + localX;
+                int worldZ = startZ + localZ;
+
+                // Only generate terrain within world bounds
+                if (worldX >= -halfWorld && worldX < halfWorld &&
+                    worldZ >= -halfWorld && worldZ < halfWorld) {
+                    // Place stone at world y=-1 if it falls in this chunk's Y range
+                    int stoneLocalY = -1 - startY;
+                    if (stoneLocalY >= 0 && stoneLocalY < Chunk.HEIGHT) {
+                        chunk.setBlock(localX, stoneLocalY, localZ, BlockType.STONE);
+                    }
+                    // Place grass at world y=0 if it falls in this chunk's Y range
+                    int grassLocalY = 0 - startY;
+                    if (grassLocalY >= 0 && grassLocalY < Chunk.HEIGHT) {
+                        chunk.setBlock(localX, grassLocalY, localZ, BlockType.GRASS);
+                    }
+                }
+            }
+        }
     }
 
     /**

@@ -1,0 +1,15 @@
+BUG: Camera can be turned upside down
+
+The player can rotate the camera beyond vertical limits by moving the mouse up or down
+continuously. This allows the camera to flip completely upside down, which is disorienting
+and breaks gameplay. There are no pitch limits on the first-person camera.
+
+Expected: The camera pitch should be clamped so the player cannot look further than
+straight up (90 degrees) or straight down (-90 degrees). This is standard FPS camera
+behaviour — the camera should stop at the vertical limits and not flip over.
+
+Steps to reproduce:
+1. Start a new game
+2. Move the mouse upward continuously
+3. The camera rotates past looking straight up and flips upside down
+4. Same happens when looking down — no limit on pitch rotation

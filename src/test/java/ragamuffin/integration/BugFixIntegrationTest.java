@@ -141,9 +141,15 @@ class BugFixIntegrationTest {
         assertEquals(1, inventory.getItemCount(Material.WOOD),
             "Inventory should contain 1 WOOD after harvesting tree");
 
-        // Final verification: Player Y is still at ground level
+        // Move player away from tree back to clear ground
+        for (int step = 0; step < 120; step++) {
+            float delta2 = 1.0f / 60.0f;
+            world.moveWithCollision(player, -1, 0, -1, delta2);
+        }
+
+        // Final verification: Player Y is at ground level (gravity has settled)
         assertEquals(1.0f, player.getPosition().y, 0.1f,
-            "Player Y should still be ~1.0 (on ground) after all actions");
+            "Player Y should be ~1.0 (on ground) after moving to clear area");
     }
 
     /**

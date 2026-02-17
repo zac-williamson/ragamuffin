@@ -116,16 +116,16 @@ public class Phase2IntegrationTest {
         int buildingX = (int) buildingPos.x;
         int buildingZ = (int) buildingPos.z;
 
-        // Find the southern wall (front of building)
+        // Find the southern wall (front of building) - use middle of wall for reliable collision
         int wallZ = buildingZ;
-        int wallX = buildingX;
+        int wallX = buildingX + 7; // Middle of the building width
 
         // Verify there's a solid block at the wall
         BlockType wallBlock = world.getBlock(wallX, 1, wallZ);
         assertTrue(wallBlock == BlockType.BRICK || wallBlock == BlockType.GLASS,
             "Building wall should be BRICK or GLASS, but is " + wallBlock);
 
-        // Place player 1 block south of the wall, facing north (toward the wall)
+        // Place player 2 blocks south of the wall, facing north (toward the wall)
         player = new Player(wallX, 1, wallZ + 2);
         float startZ = player.getPosition().z;
 

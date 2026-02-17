@@ -1,0 +1,15 @@
+BUG: Large parts of the ground have no chunk data loaded
+
+When playing the game, large sections of the terrain are missing — empty voids where
+ground should be. Every chunk that has data in it appears to be surrounded by empty
+chunks with no block data. This creates a checkerboard-like pattern where roughly half
+the world is just missing.
+
+Expected: All chunks in the world should be fully populated with terrain data. The 
+ground should be continuous with no gaps. Walking around, you should see solid terrain
+in every direction, not alternating loaded/empty chunks.
+
+Steps to reproduce:
+1. Start a new game
+2. Look around — large patches of the ground are just missing
+3. Walk around and observe the pattern: loaded chunks alternate with empty ones
