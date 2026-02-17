@@ -13,9 +13,9 @@
 ## How to Code
 
 Write code DIRECTLY using your built-in tools:
-- **file_read** to read source files
-- **file_edit** to make targeted edits (find-and-replace)
-- **file_write** to create or overwrite files
+- **read** to read source files
+- **edit** to make targeted edits (find-and-replace)
+- **write** to create or overwrite files
 - **exec** to run shell commands (gradle, git, etc.)
 
 Do NOT delegate to any external tool, skill, or subprocess.
