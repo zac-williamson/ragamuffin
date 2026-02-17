@@ -176,6 +176,27 @@ public class Inventory {
     }
 
     /**
+     * Swap the contents of two inventory slots.
+     */
+    public void swapSlots(int slotA, int slotB) {
+        if (slotA < 0 || slotA >= size || slotB < 0 || slotB >= size || slotA == slotB) {
+            return;
+        }
+        Material tempMat = slots[slotA].getMaterial();
+        int tempCount = slots[slotA].getCount();
+        slots[slotA].setMaterial(slots[slotB].getMaterial());
+        slots[slotA].setCount(slots[slotB].getCount());
+        if (slots[slotA].getMaterial() == null) {
+            slots[slotA].clear();
+        }
+        slots[slotB].setMaterial(tempMat);
+        slots[slotB].setCount(tempCount);
+        if (slots[slotB].getMaterial() == null) {
+            slots[slotB].clear();
+        }
+    }
+
+    /**
      * Inner class representing a single inventory slot.
      */
     private static class InventorySlot {

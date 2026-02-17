@@ -10,7 +10,7 @@ import java.util.*;
  * Manages the voxel world - chunk loading/unloading and world data access.
  */
 public class World {
-    private static final int RENDER_DISTANCE = 13; // Chunks to load around player (covers 200x200 world)
+    private static final int RENDER_DISTANCE = 16; // Chunks to load around player (covers 480x480 world)
 
     private final long seed;
     private final Map<String, Chunk> loadedChunks;

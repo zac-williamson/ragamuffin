@@ -426,6 +426,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetCrafting();
         }
 
+        // Release cursor when any overlay UI is open, re-catch when all closed
+        boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible();
+        Gdx.input.setCursorCatched(!uiOpen);
+
         // Hotbar selection
         int hotbarSlot = inputHandler.getHotbarSlotPressed();
         if (hotbarSlot >= 0) {
@@ -756,10 +760,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Close any open UI first
         if (inventoryUI.isVisible()) {
             inventoryUI.hide();
+            Gdx.input.setCursorCatched(true);
         } else if (helpUI.isVisible()) {
             helpUI.hide();
+            Gdx.input.setCursorCatched(true);
         } else if (craftingUI.isVisible()) {
             craftingUI.hide();
+            Gdx.input.setCursorCatched(true);
         } else if (state == GameState.PLAYING) {
             transitionToPaused();
         } else if (state == GameState.PAUSED) {

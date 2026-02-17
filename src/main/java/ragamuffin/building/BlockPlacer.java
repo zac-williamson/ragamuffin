@@ -90,11 +90,21 @@ public class BlockPlacer {
 
         // Prevent placing a block inside the player
         if (playerAABB != null) {
-            AABB blockAABB = new AABB(
-                (int) placement.x, (int) placement.y, (int) placement.z,
-                (int) placement.x + 1, (int) placement.y + 1, (int) placement.z + 1
-            );
+            int bx = (int) Math.floor(placement.x);
+            int by = (int) Math.floor(placement.y);
+            int bz = (int) Math.floor(placement.z);
+            AABB blockAABB = new AABB(bx, by, bz, bx + 1, by + 1, bz + 1);
             if (playerAABB.intersects(blockAABB)) {
+                return false;
+            }
+            // Extra safety: check if block overlaps any grid cell the player occupies
+            int pMinX = (int) Math.floor(playerAABB.getMinX());
+            int pMaxX = (int) Math.floor(playerAABB.getMaxX());
+            int pMinY = (int) Math.floor(playerAABB.getMinY());
+            int pMaxY = (int) Math.ceil(playerAABB.getMaxY());
+            int pMinZ = (int) Math.floor(playerAABB.getMinZ());
+            int pMaxZ = (int) Math.floor(playerAABB.getMaxZ());
+            if (bx >= pMinX && bx <= pMaxX && by >= pMinY && by <= pMaxY && bz >= pMinZ && bz <= pMaxZ) {
                 return false;
             }
         }
@@ -103,7 +113,7 @@ public class BlockPlacer {
         BlockType blockType = materialToBlockType(material);
 
         // Place the block
-        world.setBlock((int) placement.x, (int) placement.y, (int) placement.z, blockType);
+        world.setBlock((int) Math.floor(placement.x), (int) Math.floor(placement.y), (int) Math.floor(placement.z), blockType);
 
         // Remove from inventory
         inventory.removeItem(material, 1);
@@ -139,6 +149,8 @@ public class BlockPlacer {
                 return BlockType.PAVEMENT;
             case ROAD_ASPHALT:
                 return BlockType.ROAD;
+            case CARDBOARD:
+                return BlockType.CARDBOARD;
             default:
                 return BlockType.STONE; // Default fallback
         }

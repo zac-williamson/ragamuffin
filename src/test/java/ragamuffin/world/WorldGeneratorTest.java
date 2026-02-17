@@ -159,6 +159,18 @@ public class WorldGeneratorTest {
         assertNotNull(world.getLandmark(LandmarkType.PAWN_SHOP), "Town should have a pawn shop");
         assertNotNull(world.getLandmark(LandmarkType.BUILDERS_MERCHANT), "Town should have a builders merchant");
         assertNotNull(world.getLandmark(LandmarkType.WAREHOUSE), "Town should have a warehouse");
+
+        // Verify new building types
+        assertNotNull(world.getLandmark(LandmarkType.NANDOS), "Town should have a Nando's");
+        assertNotNull(world.getLandmark(LandmarkType.BARBER), "Town should have a barber");
+        assertNotNull(world.getLandmark(LandmarkType.NAIL_SALON), "Town should have a nail salon");
+        assertNotNull(world.getLandmark(LandmarkType.WETHERSPOONS), "Town should have a Wetherspoons");
+        assertNotNull(world.getLandmark(LandmarkType.CORNER_SHOP), "Town should have a corner shop");
+        assertNotNull(world.getLandmark(LandmarkType.BETTING_SHOP), "Town should have a betting shop");
+        assertNotNull(world.getLandmark(LandmarkType.PHONE_REPAIR), "Town should have a phone repair shop");
+        assertNotNull(world.getLandmark(LandmarkType.CASH_CONVERTER), "Town should have a Cash Converter");
+        assertNotNull(world.getLandmark(LandmarkType.LIBRARY), "Town should have a library");
+        assertNotNull(world.getLandmark(LandmarkType.FIRE_STATION), "Town should have a fire station");
     }
 
     @Test
