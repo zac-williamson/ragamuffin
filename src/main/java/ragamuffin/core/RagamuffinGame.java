@@ -20,6 +20,7 @@ import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
 import ragamuffin.render.ChunkMeshBuilder;
 import ragamuffin.render.ChunkRenderer;
+import ragamuffin.render.NPCRenderer;
 import ragamuffin.ui.*;
 import ragamuffin.world.*;
 
@@ -80,6 +81,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 12: CRITIC 2 Improvements
     private WeatherSystem weatherSystem;
 
+    // NPC rendering
+    private NPCRenderer npcRenderer;
+
     private static final float MOUSE_SENSITIVITY = 0.15f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
@@ -128,6 +132,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Setup chunk rendering
         meshBuilder = new ChunkMeshBuilder();
         chunkRenderer = new ChunkRenderer();
+        npcRenderer = new NPCRenderer();
 
         // Load initial chunks around player
         world.updateLoadedChunks(player.getPosition());
@@ -197,20 +202,20 @@ public class RagamuffinGame extends ApplicationAdapter {
      * Spawn initial NPCs in the world.
      */
     private void spawnInitialNPCs() {
-        // Spawn some members of the public
-        npcManager.spawnNPC(NPCType.PUBLIC, 10, 1, 10);
-        npcManager.spawnNPC(NPCType.PUBLIC, -15, 1, 8);
-        npcManager.spawnNPC(NPCType.PUBLIC, 5, 1, -12);
+        // Spawn one of EVERY NPC type in a line in front of player start for visibility testing
+        // Player starts at (0, ~1, 0) facing -Z, so place them at positive Z in a line along X
+        npcManager.spawnNPC(NPCType.PUBLIC, -4, 2, 5);
+        npcManager.spawnNPC(NPCType.DOG, -2, 2, 5);
+        npcManager.spawnNPC(NPCType.YOUTH_GANG, 0, 2, 5);
+        npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, 2, 2, 5);
+        npcManager.spawnNPC(NPCType.POLICE, 4, 2, 5);
 
-        // Spawn dogs in the park
-        npcManager.spawnNPC(NPCType.DOG, -5, 1, -5);
-        npcManager.spawnNPC(NPCType.DOG, 8, 1, 3);
-
-        // Spawn a youth gang
-        npcManager.spawnNPC(NPCType.YOUTH_GANG, -10, 1, -10);
-
-        // Spawn a council member
-        npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, 20, 1, 20);
+        // Also spawn additional ambient NPCs around the park
+        npcManager.spawnNPC(NPCType.PUBLIC, 10, 2, 10);
+        npcManager.spawnNPC(NPCType.PUBLIC, -12, 2, 8);
+        npcManager.spawnNPC(NPCType.DOG, -5, 2, -5);
+        npcManager.spawnNPC(NPCType.DOG, 8, 2, 3);
+        npcManager.spawnNPC(NPCType.YOUTH_GANG, -10, 2, -10);
     }
 
     /**
@@ -311,6 +316,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             modelBatch.begin(camera);
             chunkRenderer.render(modelBatch, environment);
+            npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
 
             // Render 2D UI overlay
@@ -328,6 +334,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             modelBatch.begin(camera);
             chunkRenderer.render(modelBatch, environment);
+            npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
 
             // Render UI and pause menu
@@ -837,10 +844,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         return cameraPitch;
     }
 
+    public NPCRenderer getNPCRenderer() {
+        return npcRenderer;
+    }
+
     @Override
     public void dispose() {
         modelBatch.dispose();
         chunkRenderer.dispose();
+        npcRenderer.dispose();
         spriteBatch.dispose();
         shapeRenderer.dispose();
         font.dispose();

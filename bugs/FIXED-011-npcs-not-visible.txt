@@ -1,0 +1,5 @@
+BUG: NPCs are not visible in the game world
+
+Despite NPCs being spawned in the code, none are visible when playing the game. Either they are not being rendered, or they are spawning underground/inside blocks, or the NPC rendering system is broken.
+
+For testing purposes: spawn one NPC of EVERY type (PUBLIC, DOG, YOUTH_GANG, COUNCIL_MEMBER, POLICE) within 10 blocks of the player start position at y=2 (above ground level) so they are immediately visible and testable when the game starts. Place them in a line in front of the player so they are all in view.
