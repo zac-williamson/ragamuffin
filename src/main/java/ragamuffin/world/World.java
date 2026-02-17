@@ -19,6 +19,7 @@ public class World {
     private final Set<String> policeTapedBlocks; // Blocks with police tape
     private final Set<String> protectedBlocks; // Blocks protected from breaking
     private final Set<String> planningNoticeBlocks; // Blocks with planning notices (Phase 7)
+    private final Set<String> dirtyChunks; // Chunks needing mesh rebuild
 
     public World(long seed) {
         this.seed = seed;
@@ -27,6 +28,7 @@ public class World {
         this.policeTapedBlocks = new HashSet<>();
         this.protectedBlocks = new HashSet<>();
         this.planningNoticeBlocks = new HashSet<>();
+        this.dirtyChunks = new HashSet<>();
     }
 
     /**
@@ -124,6 +126,7 @@ public class World {
                         generator.generateChunk(chunk, this);
                     }
                     loadedChunks.put(key, chunk);
+                    dirtyChunks.add(key);
                 }
             }
         }
@@ -144,6 +147,27 @@ public class World {
      */
     public Collection<Chunk> getLoadedChunks() {
         return loadedChunks.values();
+    }
+
+    /**
+     * Get chunks that have been loaded or modified since last cleared.
+     */
+    public List<Chunk> getDirtyChunks() {
+        List<Chunk> dirty = new ArrayList<>();
+        for (String key : dirtyChunks) {
+            Chunk chunk = loadedChunks.get(key);
+            if (chunk != null) {
+                dirty.add(chunk);
+            }
+        }
+        return dirty;
+    }
+
+    /**
+     * Clear the dirty chunks set (after meshes have been rebuilt).
+     */
+    public void clearDirtyChunks() {
+        dirtyChunks.clear();
     }
 
     /**

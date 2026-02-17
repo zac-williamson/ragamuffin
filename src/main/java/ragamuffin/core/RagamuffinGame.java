@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
+import java.util.List;
 import ragamuffin.ai.NPCManager;
 import ragamuffin.building.*;
 import ragamuffin.entity.NPC;
@@ -483,6 +484,15 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());
+
+        // Rebuild meshes for newly loaded chunks
+        List<Chunk> dirtyChunks = world.getDirtyChunks();
+        if (!dirtyChunks.isEmpty()) {
+            for (Chunk chunk : dirtyChunks) {
+                chunkRenderer.updateChunk(chunk, meshBuilder);
+            }
+            world.clearDirtyChunks();
+        }
 
         // Phase 5: Update NPCs
         npcManager.update(delta, world, player, inventory, tooltipSystem);

@@ -24,41 +24,41 @@ public class ChunkMeshBuilder {
                         continue;
                     }
 
-                    float worldX = chunk.getChunkX() * Chunk.SIZE + x;
-                    float worldY = y;
-                    float worldZ = chunk.getChunkZ() * Chunk.SIZE + z;
+                    float localX = x;
+                    float localY = y;
+                    float localZ = z;
 
                     Color color = block.getColor();
 
                     // Check each face and add if exposed
                     // Top face (+Y)
                     if (!chunk.getBlock(x, y + 1, z).isSolid()) {
-                        vertexIndex = addTopFace(meshData, worldX, worldY, worldZ, color, vertexIndex);
+                        vertexIndex = addTopFace(meshData, localX, localY, localZ, color, vertexIndex);
                     }
 
                     // Bottom face (-Y)
                     if (!chunk.getBlock(x, y - 1, z).isSolid()) {
-                        vertexIndex = addBottomFace(meshData, worldX, worldY, worldZ, color, vertexIndex);
+                        vertexIndex = addBottomFace(meshData, localX, localY, localZ, color, vertexIndex);
                     }
 
                     // North face (-Z)
                     if (!chunk.getBlock(x, y, z - 1).isSolid()) {
-                        vertexIndex = addNorthFace(meshData, worldX, worldY, worldZ, color, vertexIndex);
+                        vertexIndex = addNorthFace(meshData, localX, localY, localZ, color, vertexIndex);
                     }
 
                     // South face (+Z)
                     if (!chunk.getBlock(x, y, z + 1).isSolid()) {
-                        vertexIndex = addSouthFace(meshData, worldX, worldY, worldZ, color, vertexIndex);
+                        vertexIndex = addSouthFace(meshData, localX, localY, localZ, color, vertexIndex);
                     }
 
                     // West face (-X)
                     if (!chunk.getBlock(x - 1, y, z).isSolid()) {
-                        vertexIndex = addWestFace(meshData, worldX, worldY, worldZ, color, vertexIndex);
+                        vertexIndex = addWestFace(meshData, localX, localY, localZ, color, vertexIndex);
                     }
 
                     // East face (+X)
                     if (!chunk.getBlock(x + 1, y, z).isSolid()) {
-                        vertexIndex = addEastFace(meshData, worldX, worldY, worldZ, color, vertexIndex);
+                        vertexIndex = addEastFace(meshData, localX, localY, localZ, color, vertexIndex);
                     }
                 }
             }

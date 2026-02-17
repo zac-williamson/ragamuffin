@@ -105,7 +105,7 @@ public class HotbarUI {
     /**
      * Get abbreviated material name for UI display.
      */
-    private String getMaterialAbbreviation(Material material) {
+    public String getMaterialAbbreviation(Material material) {
         switch (material) {
             case WOOD: return "WD";
             case BRICK: return "BR";
@@ -119,6 +119,17 @@ public class HotbarUI {
             case DIRT: return "DT";
             case PAVEMENT_SLAB: return "PV";
             case ROAD_ASPHALT: return "RD";
+            case PLANKS: return "PL";
+            case SHELTER_WALL: return "SW";
+            case SHELTER_FLOOR: return "SF";
+            case SHELTER_ROOF: return "SR";
+            case BRICK_WALL: return "BW";
+            case WINDOW: return "WN";
+            case SAUSAGE_ROLL: return "SG";
+            case STEAK_BAKE: return "SB";
+            case CARDBOARD: return "CB";
+            case IMPROVISED_TOOL: return "IT";
+            case STONE_TOOL: return "TL";
             default: return "??";
         }
     }

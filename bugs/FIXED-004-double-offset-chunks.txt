@@ -1,0 +1,14 @@
+BUG: Chunk meshes are double-offset causing checkerboard gaps
+
+ChunkMeshBuilder.build() computes WORLD coordinates for each vertex (lines 27-29):
+    float worldX = chunk.getChunkX() * Chunk.SIZE + x;
+    float worldZ = chunk.getChunkZ() * Chunk.SIZE + z;
+
+But ChunkRenderer.updateChunk() ALSO translates the ModelInstance by the chunk world position (lines 91-94):
+    instance.transform.setToTranslation(worldX, worldY, worldZ);
+
+This means every chunk is double-offset. Chunk (0,0,0) renders correctly (0+0=0), but chunk (1,0,0) has vertices at x=16..31 and then gets translated ANOTHER +16, so it renders at x=32..47 instead of x=16..31. The space where it should be is empty.
+
+This creates the checkerboard pattern: chunks spread apart with gaps between them.
+
+Fix: Either make ChunkMeshBuilder use LOCAL coordinates (0..15) since ChunkRenderer already applies the world transform, OR remove the transform.setToTranslation from ChunkRenderer since the mesh already has world coordinates. The first option (local coords in mesh builder) is the standard approach.

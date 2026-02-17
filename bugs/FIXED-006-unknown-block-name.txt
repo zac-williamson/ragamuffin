@@ -1,0 +1,7 @@
+BUG: Mining certain blocks gives item named "???"
+
+When mining invisible ground blocks, at least one block type shows as "???" in the inventory/hotbar. This means the block type from the world does not have a proper display name or Material mapping in the drop table.
+
+This likely affects STONE or DIRT blocks (the base terrain layers) which may not have a corresponding entry in BlockDropTable or the Material enum.
+
+Expected: All mineable block types should produce a properly named item in the inventory.

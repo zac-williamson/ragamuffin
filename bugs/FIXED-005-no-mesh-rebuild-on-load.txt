@@ -1,0 +1,12 @@
+BUG: Newly loaded chunks never get their meshes built
+
+In RagamuffinGame.updatePlaying() (line 485), world.updateLoadedChunks() is called every frame as the player moves. This correctly loads new chunk data. However, updateChunkRenderers() is NOT called afterwards during normal gameplay.
+
+updateChunkRenderers() is only called:
+- Once during create() (line 133) — initial load
+- When a block is broken (line 572)
+- When a block is placed (line 607)
+
+So as the player walks around, new chunks get loaded with block data (you can mine them) but their meshes are never built, making them invisible.
+
+Fix: Call updateChunkRenderers() after world.updateLoadedChunks() in updatePlaying(), or better yet, track which chunks are new/dirty and only rebuild those.
