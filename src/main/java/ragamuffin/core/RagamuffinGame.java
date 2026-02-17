@@ -20,6 +20,7 @@ import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
 import ragamuffin.render.ChunkMeshBuilder;
 import ragamuffin.render.ChunkRenderer;
+import ragamuffin.render.FirstPersonArm;
 import ragamuffin.render.NPCRenderer;
 import ragamuffin.ui.*;
 import ragamuffin.world.*;
@@ -84,6 +85,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // NPC rendering
     private NPCRenderer npcRenderer;
 
+    // First-person arm
+    private FirstPersonArm firstPersonArm;
+
     private static final float MOUSE_SENSITIVITY = 0.15f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
@@ -133,6 +137,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         meshBuilder = new ChunkMeshBuilder();
         chunkRenderer = new ChunkRenderer();
         npcRenderer = new NPCRenderer();
+        firstPersonArm = new FirstPersonArm();
 
         // Load initial chunks around player
         world.updateLoadedChunks(player.getPosition());
@@ -453,6 +458,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void updatePlaying(float delta) {
+        // Update first-person arm animation
+        firstPersonArm.update(delta);
+
         // Handle punching
         if (inputHandler.isPunchPressed()) {
             handlePunch();
@@ -533,6 +541,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void handlePunch() {
+        // Trigger arm swing animation
+        firstPersonArm.punch();
+
         // Consume energy for punching
         player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
 
@@ -672,6 +683,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     private void renderUI() {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
+
+        // Render first-person arm (always visible in gameplay)
+        if (!openingSequence.isActive()) {
+            firstPersonArm.render(shapeRenderer, screenWidth, screenHeight);
+        }
 
         // Phase 8: Render GameHUD (health/hunger/energy bars + crosshair)
         if (!openingSequence.isActive()) {
@@ -846,6 +862,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public NPCRenderer getNPCRenderer() {
         return npcRenderer;
+    }
+
+    public FirstPersonArm getFirstPersonArm() {
+        return firstPersonArm;
     }
 
     @Override

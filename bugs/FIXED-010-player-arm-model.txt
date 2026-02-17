@@ -1,0 +1,5 @@
+FEATURE: Player needs a visible arm/hand model with punch animation
+
+Currently there is no visible player model. The player should have a first-person arm/hand visible at the bottom-right of the screen (like Minecraft). When the player punches (left click), the arm should animate a swinging motion. This gives essential visual feedback that an action is happening.
+
+Implementation: Render a simple block-style arm using a few colored quads in screen space. Animate it swinging forward when punching. The arm should be visible at all times in first-person view.
