@@ -12,11 +12,13 @@ public class PauseMenu {
     private boolean visible;
     private int selectedOption;
     private static final int OPTION_RESUME = 0;
-    private static final int OPTION_QUIT = 1;
-    private static final int NUM_OPTIONS = 2;
+    private static final int OPTION_RESTART = 1;
+    private static final int OPTION_QUIT = 2;
+    private static final int NUM_OPTIONS = 3;
 
     private static final String[] OPTIONS = {
         "Resume",
+        "Restart",
         "Quit"
     };
 
@@ -112,6 +114,10 @@ public class PauseMenu {
 
     public boolean isResumeSelected() {
         return selectedOption == OPTION_RESUME;
+    }
+
+    public boolean isRestartSelected() {
+        return selectedOption == OPTION_RESTART;
     }
 
     public boolean isQuitSelected() {

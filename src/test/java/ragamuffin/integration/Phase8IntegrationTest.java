@@ -223,6 +223,35 @@ class Phase8IntegrationTest {
     }
 
     /**
+     * Integration Test: Pause menu has restart option.
+     * Verify the pause menu has Resume, Restart, and Quit options.
+     * Navigate to Restart and verify it is selected.
+     */
+    @Test
+    void pauseMenuHasRestartOption() {
+        PauseMenu pauseMenu = new PauseMenu();
+
+        // Default selection is Resume
+        pauseMenu.show();
+        assertTrue(pauseMenu.isResumeSelected(), "Default selection should be Resume");
+        assertFalse(pauseMenu.isRestartSelected(), "Restart should not be selected initially");
+        assertFalse(pauseMenu.isQuitSelected(), "Quit should not be selected initially");
+
+        // Navigate down to Restart
+        pauseMenu.selectNext();
+        assertFalse(pauseMenu.isResumeSelected(), "Resume should not be selected after one down");
+        assertTrue(pauseMenu.isRestartSelected(), "Restart should be selected after one down");
+
+        // Navigate down to Quit
+        pauseMenu.selectNext();
+        assertTrue(pauseMenu.isQuitSelected(), "Quit should be selected after two downs");
+
+        // Wrap around back to Resume
+        pauseMenu.selectNext();
+        assertTrue(pauseMenu.isResumeSelected(), "Should wrap around to Resume");
+    }
+
+    /**
      * Integration Test 7: Help UI shows all controls
      * Press H during gameplay. Verify the help UI is visible. Verify it contains text
      * for ALL of the following keys: W, A, S, D, I, H, C, E, ESC, left click, right click,

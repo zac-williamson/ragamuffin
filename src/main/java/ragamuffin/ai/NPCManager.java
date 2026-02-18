@@ -242,7 +242,11 @@ public class NPCManager {
      * Update a single NPC's behavior.
      */
     private void updateNPC(NPC npc, float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
-        npc.update(delta);
+        // Update timers and facing (but NOT position — we handle movement with collision)
+        npc.updateTimers(delta);
+
+        // Apply velocity with world collision
+        applyNPCCollision(npc, delta, world);
 
         // NPCs randomly speak when near player
         if (!npc.isSpeaking() && npc.isNear(player.getPosition(), 10.0f)) {
@@ -484,7 +488,7 @@ public class NPCManager {
     }
 
     /**
-     * Move NPC directly toward a target position.
+     * Move NPC directly toward a target position with world collision.
      */
     private void moveTowardTarget(NPC npc, Vector3 target, float delta) {
         if (npc.isNear(target, 0.5f)) {
@@ -495,6 +499,69 @@ public class NPCManager {
         Vector3 direction = target.cpy().sub(npc.getPosition()).nor();
         float speed = (npc.getType() == NPCType.DOG) ? NPC.DOG_SPEED : NPC.MOVE_SPEED;
         npc.setVelocity(direction.x * speed, 0, direction.z * speed);
+    }
+
+    /**
+     * Apply world collision to NPC movement after velocity has been set.
+     * Called from updateNPC after movement/path following.
+     */
+    private void applyNPCCollision(NPC npc, float delta, World world) {
+        Vector3 pos = npc.getPosition();
+        Vector3 vel = npc.getVelocity();
+        float moveX = vel.x * delta;
+        float moveZ = vel.z * delta;
+
+        if (moveX == 0 && moveZ == 0) return;
+
+        // Save original position
+        float origX = pos.x;
+        float origZ = pos.z;
+
+        // Try full horizontal movement
+        pos.x += moveX;
+        pos.z += moveZ;
+        npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+
+        if (world.checkAABBCollision(npc.getAABB())) {
+            // Collision — try sliding on each axis
+            pos.x = origX;
+            pos.z = origZ;
+
+            // Try X only
+            pos.x += moveX;
+            npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+            if (world.checkAABBCollision(npc.getAABB())) {
+                pos.x = origX;
+            }
+
+            // Try Z only
+            float afterX = pos.x;
+            pos.z += moveZ;
+            npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+            if (world.checkAABBCollision(npc.getAABB())) {
+                pos.z = origZ;
+            }
+
+            npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+        }
+
+        // Apply gravity — check if on ground
+        int blockBelow = (int) Math.floor(pos.y - 0.1f);
+        int bx = (int) Math.floor(pos.x);
+        int bz = (int) Math.floor(pos.z);
+        boolean onGround = world.getBlock(bx, blockBelow, bz).isSolid();
+
+        if (!onGround) {
+            // Fall
+            pos.y -= 9.8f * delta;
+            npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+
+            if (world.checkAABBCollision(npc.getAABB())) {
+                // Hit ground — snap to top of block
+                pos.y = (float) Math.ceil(pos.y);
+                npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+            }
+        }
     }
 
     /**

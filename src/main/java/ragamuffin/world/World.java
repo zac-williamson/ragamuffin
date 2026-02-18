@@ -10,7 +10,7 @@ import java.util.*;
  * Manages the voxel world - chunk loading/unloading and world data access.
  */
 public class World {
-    private static final int RENDER_DISTANCE = 6; // Chunks to load around player
+    private static final int RENDER_DISTANCE = 12; // Chunks to load around player
 
     private final long seed;
     private final Map<String, Chunk> loadedChunks;
@@ -365,6 +365,38 @@ public class World {
                 for (int z = minZ; z <= maxZ; z++) {
                     if (getBlock(x, y, z).isSolid()) {
                         // Inline AABB intersection: block occupies [x, x+1] x [y, y+1] x [z, z+1]
+                        if (aMinX < x + 1 && aMaxX > x &&
+                            aMinY < y + 1 && aMaxY > y &&
+                            aMinZ < z + 1 && aMaxZ > z) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Check if an AABB collides with any solid blocks in the world.
+     * Public version for NPC collision.
+     */
+    public boolean checkAABBCollision(AABB aabb) {
+        float aMinX = aabb.getMinX(), aMaxX = aabb.getMaxX();
+        float aMinY = aabb.getMinY(), aMaxY = aabb.getMaxY();
+        float aMinZ = aabb.getMinZ(), aMaxZ = aabb.getMaxZ();
+
+        int minX = (int) Math.floor(aMinX);
+        int maxX = (int) Math.ceil(aMaxX);
+        int minY = (int) Math.floor(aMinY);
+        int maxY = (int) Math.ceil(aMaxY);
+        int minZ = (int) Math.floor(aMinZ);
+        int maxZ = (int) Math.ceil(aMaxZ);
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (getBlock(x, y, z).isSolid()) {
                         if (aMinX < x + 1 && aMaxX > x &&
                             aMinY < y + 1 && aMaxY > y &&
                             aMinZ < z + 1 && aMaxZ > z) {

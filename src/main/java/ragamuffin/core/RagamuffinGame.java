@@ -476,6 +476,24 @@ public class RagamuffinGame extends ApplicationAdapter {
                 handleEscapePress();
                 inputHandler.resetEscape();
             }
+            if (inputHandler.isUpPressed()) {
+                pauseMenu.selectPrevious();
+                inputHandler.resetUp();
+            }
+            if (inputHandler.isDownPressed()) {
+                pauseMenu.selectNext();
+                inputHandler.resetDown();
+            }
+            if (inputHandler.isEnterPressed()) {
+                if (pauseMenu.isResumeSelected()) {
+                    transitionToPlaying();
+                } else if (pauseMenu.isRestartSelected()) {
+                    restartGame();
+                } else if (pauseMenu.isQuitSelected()) {
+                    Gdx.app.exit();
+                }
+                inputHandler.resetEnter();
+            }
         }
     }
 
@@ -961,6 +979,59 @@ public class RagamuffinGame extends ApplicationAdapter {
         } else if (state == GameState.PAUSED) {
             transitionToPlaying();
         }
+    }
+
+    private void restartGame() {
+        // Dispose old chunk renderer meshes
+        chunkRenderer.dispose();
+
+        // Regenerate world with a new seed
+        world = new World(System.currentTimeMillis());
+        world.generate();
+
+        // Reset player at the park centre
+        float spawnY = calculateSpawnHeight(world, 0, 0) + 1.0f;
+        player = new Player(0, spawnY, 0);
+        camera.position.set(player.getPosition());
+        camera.position.y += Player.EYE_HEIGHT;
+        cameraPitch = 0f;
+        cameraYaw = 0f;
+
+        // Rebuild chunk rendering
+        chunkRenderer = new ChunkRenderer();
+        world.updateLoadedChunks(player.getPosition());
+        updateChunkRenderers();
+
+        // Reset inventory
+        inventory = new Inventory(36);
+        inventoryUI = new InventoryUI(inventory);
+        hotbarUI = new HotbarUI(inventory);
+        craftingUI = new CraftingUI(craftingSystem, inventory);
+
+        // Reset NPCs
+        npcManager = new NPCManager();
+        spawnInitialNPCs();
+
+        // Reset time and lighting
+        timeSystem = new TimeSystem(8.0f);
+        lightingSystem = new LightingSystem(environment);
+        clockHUD = new ClockHUD();
+
+        // Reset game systems
+        blockBreaker = new BlockBreaker();
+        tooltipSystem = new TooltipSystem();
+        interactionSystem = new InteractionSystem();
+        healingSystem = new HealingSystem();
+        respawnSystem = new RespawnSystem();
+        weatherSystem = new WeatherSystem();
+        gameHUD = new GameHUD(player);
+        openingSequence = new OpeningSequence();
+        deathMessage = null;
+
+        // Transition to playing with opening sequence
+        state = GameState.PLAYING;
+        openingSequence.start();
+        Gdx.input.setCursorCatched(true);
     }
 
     private void transitionToPlaying() {

@@ -115,6 +115,18 @@ public class NPC {
      * Update NPC state and behavior.
      */
     public void update(float delta) {
+        updateTimers(delta);
+
+        // Update position with velocity
+        position.add(velocity.x * delta, velocity.y * delta, velocity.z * delta);
+        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+    }
+
+    /**
+     * Update timers, facing angle, and animation — but NOT position.
+     * Used by NPCManager which handles movement with world collision separately.
+     */
+    public void updateTimers(float delta) {
         // Update speech timer
         if (speechTimer > 0) {
             speechTimer -= delta;
@@ -134,10 +146,6 @@ public class NPC {
             facingAngle = (float) Math.toDegrees(Math.atan2(velocity.x, velocity.z));
             animTime += delta;
         }
-
-        // Update position with velocity
-        position.add(velocity.x * delta, velocity.y * delta, velocity.z * delta);
-        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
     }
 
     public float getFacingAngle() {
