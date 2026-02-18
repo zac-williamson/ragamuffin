@@ -12,6 +12,8 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.math.collision.BoundingBox;
 import ragamuffin.world.Chunk;
 
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ import java.util.Map;
 /**
  * Renders chunk meshes using LibGDX ModelBatch.
  * Supports multiple sub-meshes per chunk to handle large vertex counts.
+ * Uses frustum culling to skip chunks outside the camera view.
  */
 public class ChunkRenderer {
 
@@ -34,10 +37,16 @@ public class ChunkRenderer {
     private static class ChunkModel {
         List<Model> models;
         List<ModelInstance> instances;
+        BoundingBox bounds;
 
-        ChunkModel() {
+        ChunkModel(float worldX, float worldY, float worldZ) {
             this.models = new ArrayList<>();
             this.instances = new ArrayList<>();
+            // Bounding box for frustum culling
+            this.bounds = new BoundingBox(
+                new Vector3(worldX, worldY, worldZ),
+                new Vector3(worldX + Chunk.SIZE, worldY + Chunk.HEIGHT, worldZ + Chunk.SIZE)
+            );
         }
 
         void add(Model model, ModelInstance instance) {
@@ -76,7 +85,7 @@ public class ChunkRenderer {
         float worldY = chunk.getChunkY() * Chunk.HEIGHT;
         float worldZ = chunk.getChunkZ() * Chunk.SIZE;
 
-        ChunkModel chunkModel = new ChunkModel();
+        ChunkModel chunkModel = new ChunkModel(worldX, worldY, worldZ);
         int meshCount = meshData.getMeshCount();
 
         for (int batch = 0; batch < meshCount; batch++) {
@@ -134,10 +143,15 @@ public class ChunkRenderer {
     }
 
     /**
-     * Render all chunk models.
+     * Render all chunk models with frustum culling.
      */
     public void render(ModelBatch modelBatch, Environment environment) {
         for (ChunkModel chunkModel : chunkModels.values()) {
+            // Frustum culling: skip chunks outside the camera's view
+            if (modelBatch.getCamera() != null &&
+                !modelBatch.getCamera().frustum.boundsInFrustum(chunkModel.bounds)) {
+                continue;
+            }
             for (ModelInstance instance : chunkModel.instances) {
                 modelBatch.render(instance, environment);
             }

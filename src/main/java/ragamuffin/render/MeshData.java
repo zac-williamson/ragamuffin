@@ -7,24 +7,31 @@ import java.util.List;
  * Holds mesh data for a chunk (vertices, indices, etc.)
  * Automatically splits into sub-meshes when vertex count approaches
  * the unsigned short index limit (65535).
+ * Uses primitive arrays internally to avoid boxing overhead.
  */
 public class MeshData {
     private static final int MAX_VERTICES_PER_MESH = 65532; // Leave room for a full quad (4 verts)
     private static final int FLOATS_PER_VERTEX = 12;
+    private static final int INITIAL_CAPACITY = 4096; // quads
 
     private List<float[]> vertexBatches;
     private List<short[]> indexBatches;
 
-    private List<Float> currentVertices;
-    private List<Short> currentIndices;
-    private int currentVertexCount;
+    // Current batch — primitive arrays with manual length tracking
+    private float[] currentVertices;
+    private short[] currentIndices;
+    private int vertexFloatCount;  // number of floats written
+    private int indexCount;        // number of indices written
+    private int currentVertexCount; // number of vertices (floats / 12)
     private int totalFaceCount;
 
     public MeshData() {
         this.vertexBatches = new ArrayList<>();
         this.indexBatches = new ArrayList<>();
-        this.currentVertices = new ArrayList<>();
-        this.currentIndices = new ArrayList<>();
+        this.currentVertices = new float[INITIAL_CAPACITY * 4 * FLOATS_PER_VERTEX];
+        this.currentIndices = new short[INITIAL_CAPACITY * 6];
+        this.vertexFloatCount = 0;
+        this.indexCount = 0;
         this.currentVertexCount = 0;
         this.totalFaceCount = 0;
     }
@@ -33,18 +40,35 @@ public class MeshData {
         // If adding this quad would exceed the limit, flush current batch and start new one
         if (currentVertexCount + 4 > MAX_VERTICES_PER_MESH) {
             flushCurrentBatch();
-            // Reset baseIndex for the new batch — caller tracks global index,
-            // but we need local indices within this batch
             baseIndex = 0;
         }
 
-        // Use local vertex index within current batch
-        int localBase = currentVertexCount;
-        for (float v : quadVertices) {
-            currentVertices.add(v);
+        // Ensure capacity for vertices
+        int neededFloats = vertexFloatCount + quadVertices.length;
+        if (neededFloats > currentVertices.length) {
+            int newLen = Math.max(currentVertices.length * 2, neededFloats);
+            float[] bigger = new float[newLen];
+            System.arraycopy(currentVertices, 0, bigger, 0, vertexFloatCount);
+            currentVertices = bigger;
         }
-        for (short i : quadIndices) {
-            currentIndices.add((short)(i + localBase));
+
+        // Ensure capacity for indices
+        int neededIndices = indexCount + quadIndices.length;
+        if (neededIndices > currentIndices.length) {
+            int newLen = Math.max(currentIndices.length * 2, neededIndices);
+            short[] bigger = new short[newLen];
+            System.arraycopy(currentIndices, 0, bigger, 0, indexCount);
+            currentIndices = bigger;
+        }
+
+        // Copy vertex data
+        System.arraycopy(quadVertices, 0, currentVertices, vertexFloatCount, quadVertices.length);
+        vertexFloatCount += quadVertices.length;
+
+        // Copy index data with local base offset
+        int localBase = currentVertexCount;
+        for (int i = 0; i < quadIndices.length; i++) {
+            currentIndices[indexCount++] = (short)(quadIndices[i] + localBase);
         }
         currentVertexCount += 4;
         totalFaceCount++;
@@ -52,19 +76,16 @@ public class MeshData {
 
     private void flushCurrentBatch() {
         if (currentVertexCount > 0) {
-            float[] verts = new float[currentVertices.size()];
-            for (int i = 0; i < currentVertices.size(); i++) {
-                verts[i] = currentVertices.get(i);
-            }
-            short[] inds = new short[currentIndices.size()];
-            for (int i = 0; i < currentIndices.size(); i++) {
-                inds[i] = currentIndices.get(i);
-            }
+            float[] verts = new float[vertexFloatCount];
+            System.arraycopy(currentVertices, 0, verts, 0, vertexFloatCount);
+            short[] inds = new short[indexCount];
+            System.arraycopy(currentIndices, 0, inds, 0, indexCount);
             vertexBatches.add(verts);
             indexBatches.add(inds);
         }
-        currentVertices = new ArrayList<>();
-        currentIndices = new ArrayList<>();
+        // Reset for next batch — reuse arrays
+        vertexFloatCount = 0;
+        indexCount = 0;
         currentVertexCount = 0;
     }
 
