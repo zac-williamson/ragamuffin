@@ -1,7 +1,11 @@
 package ragamuffin.world;
 
 import com.badlogic.gdx.math.Vector3;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Procedurally generates a dense British town with landmarks.
@@ -14,12 +18,226 @@ public class WorldGenerator {
     private static final int PARK_SIZE = 30;   // Park is 30x30 blocks
     private static final int STREET_WIDTH = 4;
 
+    // Terrain height parameters
+    private static final int BASE_HEIGHT = 0;  // Sea level / flat area height
+    private static final int MAX_TERRAIN_HEIGHT = 8; // Maximum hill height above base
+
     private final Random random;
     private final long seed;
+
+    // Heightmap cache for performance — maps (x,z) to terrain height
+    private final Map<Long, Integer> heightCache = new HashMap<>();
+
+    // Flat zones — areas that must stay at BASE_HEIGHT (buildings, roads)
+    private final Set<Long> flatZones = new HashSet<>();
 
     public WorldGenerator(long seed) {
         this.seed = seed;
         this.random = new Random(seed);
+    }
+
+    /**
+     * Get terrain height at a given (x, z) position.
+     * Uses value noise with multiple octaves for natural-looking hills.
+     * Areas marked as flat zones return BASE_HEIGHT.
+     */
+    public int getTerrainHeight(int x, int z) {
+        long key = packCoord(x, z);
+
+        // Check flat zone first
+        if (flatZones.contains(key)) {
+            return BASE_HEIGHT;
+        }
+
+        Integer cached = heightCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+
+        // Multi-octave value noise for natural terrain
+        float height = 0;
+        height += valueNoise(x * 0.015f, z * 0.015f) * 5.0f;  // Large rolling hills
+        height += valueNoise(x * 0.04f, z * 0.04f) * 2.5f;     // Medium bumps
+        height += valueNoise(x * 0.1f, z * 0.1f) * 1.0f;       // Small detail
+
+        // Distance from origin — flatten toward centre where the town is
+        float distFromCentre = (float) Math.sqrt(x * x + z * z);
+        float flatteningFactor = Math.min(1.0f, distFromCentre / 80.0f); // Fully flat within 80 blocks
+        height *= flatteningFactor;
+
+        int terrainY = BASE_HEIGHT + Math.max(0, Math.round(height));
+        terrainY = Math.min(terrainY, BASE_HEIGHT + MAX_TERRAIN_HEIGHT);
+
+        heightCache.put(key, terrainY);
+        return terrainY;
+    }
+
+    /**
+     * Simple value noise function (deterministic from seed).
+     */
+    private float valueNoise(float x, float z) {
+        int ix = (int) Math.floor(x);
+        int iz = (int) Math.floor(z);
+        float fx = x - ix;
+        float fz = z - iz;
+
+        // Smooth interpolation curve
+        fx = fx * fx * (3 - 2 * fx);
+        fz = fz * fz * (3 - 2 * fz);
+
+        float v00 = hashFloat(ix, iz);
+        float v10 = hashFloat(ix + 1, iz);
+        float v01 = hashFloat(ix, iz + 1);
+        float v11 = hashFloat(ix + 1, iz + 1);
+
+        float v0 = v00 + fx * (v10 - v00);
+        float v1 = v01 + fx * (v11 - v01);
+        return v0 + fz * (v1 - v0);
+    }
+
+    /**
+     * Deterministic hash function that returns a float in [-1, 1].
+     */
+    private float hashFloat(int x, int z) {
+        long h = seed * 6364136223846793005L + 1442695040888963407L;
+        h ^= x * 2654435761L;
+        h ^= z * 2246822519L;
+        h ^= (h >>> 16);
+        h *= 2246822519L;
+        h ^= (h >>> 13);
+        return ((h & 0xFFFFFFL) / (float) 0xFFFFFFL) * 2.0f - 1.0f;
+    }
+
+    /**
+     * Mark a rectangular area as a flat zone (must stay at BASE_HEIGHT).
+     */
+    private void markFlatZone(int x, int z, int width, int depth) {
+        // Include a 2-block margin around buildings for smooth transitions
+        for (int dx = -2; dx < width + 2; dx++) {
+            for (int dz = -2; dz < depth + 2; dz++) {
+                flatZones.add(packCoord(x + dx, z + dz));
+            }
+        }
+    }
+
+    private long packCoord(int x, int z) {
+        return ((long) x << 32) | (z & 0xFFFFFFFFL);
+    }
+
+    /**
+     * Pre-mark all areas that must remain flat (buildings, roads, park, streets).
+     */
+    private void markAllFlatZones() {
+        int halfWorld = WORLD_SIZE / 2;
+
+        // Park area
+        int parkStart = -PARK_SIZE / 2;
+        markFlatZone(parkStart, parkStart, PARK_SIZE, PARK_SIZE);
+
+        // Streets — horizontal and vertical every 20 blocks
+        int streetSpacing = 20;
+        for (int z = -halfWorld; z <= halfWorld; z += streetSpacing) {
+            for (int x = -halfWorld; x <= halfWorld; x++) {
+                for (int w = 0; w < STREET_WIDTH; w++) {
+                    flatZones.add(packCoord(x, z + w));
+                }
+            }
+        }
+        for (int x = -halfWorld; x <= halfWorld; x += streetSpacing) {
+            for (int z = -halfWorld; z <= halfWorld; z++) {
+                for (int w = 0; w < STREET_WIDTH; w++) {
+                    flatZones.add(packCoord(x + w, z));
+                }
+            }
+        }
+
+        // High street buildings — south side
+        markFlatZone(20, 25, 7, 8);   // Greggs
+        markFlatZone(28, 25, 6, 8);   // Off-licence
+        markFlatZone(35, 25, 7, 8);   // Charity shop
+        markFlatZone(43, 25, 6, 8);   // Jeweller
+        markFlatZone(50, 25, 7, 8);   // Bookies
+        markFlatZone(58, 25, 7, 8);   // Kebab shop
+
+        // High street — north side
+        markFlatZone(20, 8, 7, 8);    // Tesco Express
+        markFlatZone(28, 8, 8, 8);    // Launderette
+        markFlatZone(37, 8, 8, 8);    // Pub
+        markFlatZone(46, 8, 7, 8);    // Pawn shop
+        markFlatZone(54, 8, 8, 8);    // Builders merchant
+
+        // Office building
+        markFlatZone(70, 20, 15, 15);
+
+        // JobCentre
+        markFlatZone(-60, 25, 12, 12);
+
+        // Terraced rows
+        markFlatZone(-70, -25, 80, 8);
+        markFlatZone(-70, -41, 80, 8);
+        markFlatZone(-70, -55, 80, 8);
+        markFlatZone(20, -25, 64, 8);
+        markFlatZone(-70, 30, 64, 8);
+        markFlatZone(-70, 46, 64, 8);
+
+        // Industrial estate
+        markFlatZone(60, -40, 20, 15);
+        markFlatZone(60, -60, 18, 12);
+        markFlatZone(82, -40, 16, 14);
+        markFlatZone(82, -58, 14, 12);
+
+        // Extended shops
+        markFlatZone(66, 25, 7, 8);   // Chippy
+        markFlatZone(63, 8, 7, 8);    // Newsagent
+        markFlatZone(-60, 10, 14, 10); // GP Surgery
+        markFlatZone(60, -80, 36, 16); // Primary school + playground
+
+        // Community centre, church, taxi rank, car wash
+        markFlatZone(-90, -25, 18, 14);
+        markFlatZone(30, -50, 12, 18);
+        markFlatZone(74, 20, 6, 11);
+        markFlatZone(100, -40, 10, 8);
+
+        // Council flats
+        markFlatZone(-95, 50, 12, 12);
+        markFlatZone(-110, 50, 12, 12);
+
+        // Petrol station
+        markFlatZone(100, 20, 14, 10);
+
+        // Extended high street
+        markFlatZone(90, 25, 8, 10);   // Nando's
+        markFlatZone(99, 25, 6, 8);    // Barber
+        markFlatZone(106, 25, 7, 8);   // Nail salon
+        markFlatZone(72, 8, 7, 8);     // Corner shop
+        markFlatZone(80, 8, 7, 8);     // Betting shop
+        markFlatZone(88, 8, 6, 8);     // Phone repair
+        markFlatZone(95, 8, 8, 8);     // Cash converter
+
+        // Wetherspoons, library, fire station
+        markFlatZone(115, 25, 16, 14);
+        markFlatZone(-80, 10, 16, 12);
+        markFlatZone(100, -65, 16, 14);
+
+        // Additional terraced rows
+        markFlatZone(-110, -25, 40, 8);
+        markFlatZone(-110, -41, 40, 8);
+        markFlatZone(-110, 30, 40, 8);
+        markFlatZone(90, -25, 32, 8);
+        markFlatZone(90, -41, 32, 8);
+        markFlatZone(-150, -25, 40, 8);
+        markFlatZone(-150, -41, 40, 8);
+        markFlatZone(-150, 30, 40, 8);
+        markFlatZone(-150, 46, 40, 8);
+        markFlatZone(130, -25, 40, 8);
+        markFlatZone(130, -41, 40, 8);
+        markFlatZone(130, 30, 32, 8);
+        markFlatZone(-150, -60, 40, 8);
+        markFlatZone(-150, -76, 40, 8);
+
+        // Additional council flats
+        markFlatZone(-150, 60, 12, 12);
+        markFlatZone(140, -70, 12, 12);
     }
 
     /**
@@ -29,12 +247,20 @@ public class WorldGenerator {
         // Clear random state
         random.setSeed(seed);
 
-        // FIRST: Fill entire world with base terrain layer to prevent gaps
+        // Mark flat zones BEFORE generating terrain, so buildings sit on flat ground
+        markAllFlatZones();
+
+        // Fill entire world with terrain using heightmap
         int halfWorld = WORLD_SIZE / 2;
         for (int x = -halfWorld; x < halfWorld; x++) {
             for (int z = -halfWorld; z < halfWorld; z++) {
+                int terrainHeight = getTerrainHeight(x, z);
                 world.setBlock(x, -1, z, BlockType.STONE); // Bedrock layer
-                world.setBlock(x, 0, z, BlockType.GRASS);  // Surface layer
+                // Fill dirt from y=0 up to terrainHeight-1, grass on top
+                for (int y = 0; y < terrainHeight; y++) {
+                    world.setBlock(x, y, z, BlockType.DIRT);
+                }
+                world.setBlock(x, terrainHeight, z, BlockType.GRASS); // Surface layer
             }
         }
 
@@ -256,6 +482,9 @@ public class WorldGenerator {
         // ===== PARK FURNITURE =====
         generateParkFurniture(world);
 
+        // ===== SCATTERED TREES on hills outside town =====
+        generateOutskirtsVegetation(world);
+
         // Load initial chunks around origin
         world.updateLoadedChunks(new Vector3(0, 0, 0));
     }
@@ -276,11 +505,22 @@ public class WorldGenerator {
 
                 if (worldX >= -halfWorld && worldX < halfWorld &&
                     worldZ >= -halfWorld && worldZ < halfWorld) {
+                    int terrainHeight = getTerrainHeight(worldX, worldZ);
+
+                    // Bedrock at y=-1
                     int stoneLocalY = -1 - startY;
                     if (stoneLocalY >= 0 && stoneLocalY < Chunk.HEIGHT) {
                         chunk.setBlock(localX, stoneLocalY, localZ, BlockType.STONE);
                     }
-                    int grassLocalY = 0 - startY;
+
+                    // Fill dirt from y=0 to terrainHeight-1, grass on top
+                    for (int y = 0; y < terrainHeight; y++) {
+                        int localY = y - startY;
+                        if (localY >= 0 && localY < Chunk.HEIGHT) {
+                            chunk.setBlock(localX, localY, localZ, BlockType.DIRT);
+                        }
+                    }
+                    int grassLocalY = terrainHeight - startY;
                     if (grassLocalY >= 0 && grassLocalY < Chunk.HEIGHT) {
                         chunk.setBlock(localX, grassLocalY, localZ, BlockType.GRASS);
                     }
@@ -1162,5 +1402,43 @@ public class WorldGenerator {
         // Royal Mail post box: 1x1, 2 tall, red metal
         world.setBlock(x, 1, z, BlockType.METAL_RED);
         world.setBlock(x, 2, z, BlockType.METAL_RED);
+    }
+
+    // ==================== OUTSKIRTS VEGETATION ====================
+
+    private void generateOutskirtsVegetation(World world) {
+        int halfWorld = WORLD_SIZE / 2;
+        Random treeRng = new Random(seed + 7777);
+
+        // Scatter trees in areas outside the town centre that have terrain height > 0
+        for (int attempt = 0; attempt < 200; attempt++) {
+            int x = treeRng.nextInt(WORLD_SIZE) - halfWorld;
+            int z = treeRng.nextInt(WORLD_SIZE) - halfWorld;
+
+            int terrainHeight = getTerrainHeight(x, z);
+
+            // Only place trees on elevated terrain (hills)
+            if (terrainHeight <= BASE_HEIGHT) continue;
+
+            // Check there's nothing already here (no building on top)
+            if (world.getBlock(x, terrainHeight + 1, z) != BlockType.AIR) continue;
+            if (world.getBlock(x, terrainHeight, z) != BlockType.GRASS) continue;
+
+            // Place a tree on the hill
+            int treeHeight = 3 + treeRng.nextInt(3); // 3-5 block trunk
+            for (int y = terrainHeight + 1; y <= terrainHeight + treeHeight; y++) {
+                world.setBlock(x, y, z, BlockType.TREE_TRUNK);
+            }
+            // Leaf canopy
+            int canopyBase = terrainHeight + treeHeight - 1;
+            for (int y = canopyBase; y <= canopyBase + 2; y++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if (dx == 0 && dz == 0 && y < canopyBase + 2) continue;
+                        world.setBlock(x + dx, y, z + dz, BlockType.LEAVES);
+                    }
+                }
+            }
+        }
     }
 }
