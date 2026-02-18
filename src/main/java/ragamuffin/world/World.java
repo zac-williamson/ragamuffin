@@ -4,13 +4,26 @@ import com.badlogic.gdx.math.Vector3;
 import ragamuffin.entity.AABB;
 import ragamuffin.entity.Player;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Application;
 import java.util.*;
 
 /**
  * Manages the voxel world - chunk loading/unloading and world data access.
  */
 public class World {
-    private static final int RENDER_DISTANCE = 12; // Chunks to load around player
+    private static final int RENDER_DISTANCE_DESKTOP = 12;
+    private static final int RENDER_DISTANCE_WEB = 6;
+    private static final int RENDER_DISTANCE = detectRenderDistance();
+
+    private static int detectRenderDistance() {
+        try {
+            if (Gdx.app != null && Gdx.app.getType() == Application.ApplicationType.WebGL) {
+                return RENDER_DISTANCE_WEB;
+            }
+        } catch (Exception ignored) {}
+        return RENDER_DISTANCE_DESKTOP;
+    }
 
     private final long seed;
     private final Map<String, Chunk> loadedChunks;

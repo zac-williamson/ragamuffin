@@ -79,6 +79,7 @@ public class NPCManager {
     private Map<NPC, Float> builderKnockbackTimers; // Track knockback delay per builder
     private Map<NPC, Float> builderDemolishTimers; // Track demolition cooldown per builder
     private float structureScanTimer; // Periodic structure scanning
+    private float npcStructureScanTimer; // Throttle per-NPC structure checks
     private Set<Vector3> notifiedStructures; // Track which structure positions already have notices
 
     // NPC idle timers — pause between wanders
@@ -101,6 +102,7 @@ public class NPCManager {
         this.builderKnockbackTimers = new HashMap<>();
         this.builderDemolishTimers = new HashMap<>();
         this.structureScanTimer = 0;
+        this.npcStructureScanTimer = 0;
         this.notifiedStructures = new HashSet<>();
         this.npcIdleTimers = new HashMap<>();
     }
@@ -206,6 +208,12 @@ public class NPCManager {
             structureTracker.scanForStructures(world);
             updateCouncilBuilders(world, tooltipSystem);
             structureScanTimer = 0;
+        }
+
+        // Throttle per-NPC structure checks (expensive block scanning)
+        npcStructureScanTimer += delta;
+        if (npcStructureScanTimer >= 2.0f) {
+            npcStructureScanTimer = 0;
         }
 
         // Remove dead NPCs (speech timer expired)
@@ -316,8 +324,10 @@ public class NPCManager {
             }
         }
 
-        // Check for player structures nearby
-        checkForPlayerStructures(npc, world);
+        // Check for player structures nearby (throttled — expensive block scanning)
+        if (npcStructureScanTimer < 0.05f) {
+            checkForPlayerStructures(npc, world);
+        }
 
         // Youth gangs try to steal
         if (npc.getType() == NPCType.YOUTH_GANG && npc.getState() != NPCState.STEALING) {
@@ -866,8 +876,11 @@ public class NPCManager {
      * Update police patrolling behavior.
      */
     private void updatePolicePatrolling(NPC police, float delta, World world, Player player, TooltipSystem tooltipSystem) {
-        // Scan for player structures around police
-        Vector3 structure = scanForStructures(world, police.getPosition(), 40);
+        // Scan for player structures around police (use cached result to avoid expensive scan every frame)
+        Vector3 structure = policeTargetStructures.get(police);
+        if (structure == null && npcStructureScanTimer < 0.05f) {
+            structure = scanForStructures(world, police.getPosition(), 40);
+        }
 
         if (structure != null) {
             // Found a structure - investigate
@@ -913,8 +926,8 @@ public class NPCManager {
         // Check if player is near a structure
         Vector3 targetStructure = policeTargetStructures.get(police);
 
-        // If no target structure, scan for one near the police/player
-        if (targetStructure == null) {
+        // If no target structure, scan for one near the police/player (throttled)
+        if (targetStructure == null && npcStructureScanTimer < 0.05f) {
             targetStructure = scanForStructures(world, police.getPosition(), 20);
             if (targetStructure == null) {
                 targetStructure = scanForStructures(world, player.getPosition(), 20);
