@@ -567,6 +567,41 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetInteract();
         }
 
+        // Handle mouse clicks on UI overlays
+        int screenHeight = Gdx.graphics.getHeight();
+        if (inputHandler.isLeftClickPressed()) {
+            if (inventoryUI.isVisible()) {
+                inventoryUI.handleClick(inputHandler.getMouseX(), inputHandler.getMouseY(), screenHeight);
+            }
+            if (craftingUI.isVisible()) {
+                craftingUI.handleClick(inputHandler.getMouseX(), inputHandler.getMouseY(), screenHeight);
+            }
+            inputHandler.resetLeftClick();
+        }
+
+        // Handle drag position update
+        if (inventoryUI.isDragging()) {
+            inventoryUI.updateDragPosition(inputHandler.getMouseX(), inputHandler.getMouseY());
+        }
+
+        // Handle mouse release (drop)
+        if (inputHandler.isLeftClickReleased()) {
+            if (inventoryUI.isDragging()) {
+                int uiY = screenHeight - inputHandler.getMouseY();
+                // Check if dropping onto hotbar
+                int hotbarTarget = hotbarUI.getSlotAt(inputHandler.getMouseX(), uiY);
+                if (hotbarTarget >= 0) {
+                    int sourceSlot = inventoryUI.getDragSlotForHotbarDrop();
+                    if (sourceSlot >= 0) {
+                        inventory.swapSlots(sourceSlot, hotbarTarget);
+                    }
+                } else {
+                    inventoryUI.handleRelease(inputHandler.getMouseX(), inputHandler.getMouseY(), screenHeight);
+                }
+            }
+            inputHandler.resetLeftClickReleased();
+        }
+
         // Crafting menu controls
         if (craftingUI.isVisible()) {
             int craftingSlot = inputHandler.getCraftingSlotPressed();

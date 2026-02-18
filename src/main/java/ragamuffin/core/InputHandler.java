@@ -26,6 +26,12 @@ public class InputHandler implements InputProcessor {
     private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
     private float mouseDeltaX, mouseDeltaY;
 
+    // Mouse position and click tracking for UI interaction
+    private int mouseX, mouseY;
+    private boolean leftClickPressed;
+    private boolean leftClickReleased;
+    private boolean rightClickPressed;
+
     public void update() {
         // Update movement keys
         forward = Gdx.input.isKeyPressed(Input.Keys.W);
@@ -65,6 +71,15 @@ public class InputHandler implements InputProcessor {
 
     public float getMouseDeltaX() { return mouseDeltaX; }
     public float getMouseDeltaY() { return mouseDeltaY; }
+    public int getMouseX() { return mouseX; }
+    public int getMouseY() { return mouseY; }
+    public boolean isLeftClickPressed() { return leftClickPressed; }
+    public boolean isLeftClickReleased() { return leftClickReleased; }
+    public boolean isRightClickPressed() { return rightClickPressed; }
+
+    public void resetLeftClick() { leftClickPressed = false; }
+    public void resetLeftClickReleased() { leftClickReleased = false; }
+    public void resetRightClick() { rightClickPressed = false; }
 
     public void resetEscape() { escapePressed = false; }
     public void resetInventory() { inventoryPressed = false; }
@@ -143,17 +158,32 @@ public class InputHandler implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        mouseX = screenX;
+        mouseY = screenY;
         if (button == Input.Buttons.LEFT) {
-            punchPressed = true;
+            if (Gdx.input.isCursorCatched()) {
+                punchPressed = true;
+            } else {
+                leftClickPressed = true;
+            }
         } else if (button == Input.Buttons.RIGHT) {
-            placePressed = true;
+            if (Gdx.input.isCursorCatched()) {
+                placePressed = true;
+            } else {
+                rightClickPressed = true;
+            }
         }
         return true;
     }
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
-        return false;
+        mouseX = screenX;
+        mouseY = screenY;
+        if (button == Input.Buttons.LEFT) {
+            leftClickReleased = true;
+        }
+        return true;
     }
 
     @Override
@@ -163,6 +193,8 @@ public class InputHandler implements InputProcessor {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
+        mouseX = screenX;
+        mouseY = screenY;
         return false;
     }
 

@@ -11,13 +11,19 @@ import ragamuffin.building.Recipe;
 import java.util.List;
 
 /**
- * Crafting menu UI overlay.
+ * Crafting menu UI overlay with mouse click support.
  */
 public class CraftingUI {
+    private static final int RECIPE_ROW_HEIGHT = 35;
+
     private final CraftingSystem craftingSystem;
     private final Inventory inventory;
     private boolean visible;
     private int selectedRecipeIndex = -1;
+
+    // Cached layout
+    private int panelX, panelY, panelWidth, panelHeight;
+    private int recipeStartY;
 
     public CraftingUI(CraftingSystem craftingSystem, Inventory inventory) {
         this.craftingSystem = craftingSystem;
@@ -51,6 +57,44 @@ public class CraftingUI {
 
     public int getSelectedRecipeIndex() {
         return selectedRecipeIndex;
+    }
+
+    /**
+     * Handle mouse click. Returns true if consumed.
+     */
+    public boolean handleClick(int screenX, int screenY, int screenHeight) {
+        if (!visible) return false;
+
+        int uiY = screenHeight - screenY;
+        List<Recipe> recipes = craftingSystem.getAllRecipes();
+
+        // Check if click is within the panel
+        if (screenX < panelX || screenX > panelX + panelWidth) return false;
+
+        // Check recipe rows
+        for (int i = 0; i < recipes.size(); i++) {
+            int rowY = recipeStartY - (i * RECIPE_ROW_HEIGHT);
+            if (uiY >= rowY - RECIPE_ROW_HEIGHT && uiY <= rowY) {
+                if (selectedRecipeIndex == i) {
+                    // Double-click to craft
+                    craftSelected();
+                } else {
+                    selectedRecipeIndex = i;
+                }
+                return true;
+            }
+        }
+
+        // Check "Craft" button area (bottom of panel)
+        int craftBtnY = panelY + 55;
+        int craftBtnH = 30;
+        if (uiY >= craftBtnY && uiY <= craftBtnY + craftBtnH &&
+            screenX >= panelX + 20 && screenX <= panelX + 200) {
+            craftSelected();
+            return true;
+        }
+
+        return true; // Consume click if within panel
     }
 
     /**
@@ -100,10 +144,10 @@ public class CraftingUI {
         shapeRenderer.end();
 
         // Draw crafting panel
-        int panelWidth = 600;
-        int panelHeight = 500;
-        int panelX = (screenWidth - panelWidth) / 2;
-        int panelY = (screenHeight - panelHeight) / 2;
+        panelWidth = 600;
+        panelHeight = 500;
+        panelX = (screenWidth - panelWidth) / 2;
+        panelY = (screenHeight - panelHeight) / 2;
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -115,16 +159,28 @@ public class CraftingUI {
         shapeRenderer.rect(panelX, panelY, panelWidth, panelHeight);
         shapeRenderer.end();
 
+        // Draw recipes with clickable rows
+        List<Recipe> recipes = craftingSystem.getAllRecipes();
+        recipeStartY = panelY + panelHeight - 100;
+
+        // Highlight selected recipe row
+        if (selectedRecipeIndex >= 0 && selectedRecipeIndex < recipes.size()) {
+            int rowY = recipeStartY - (selectedRecipeIndex * RECIPE_ROW_HEIGHT);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(0.3f, 0.3f, 0.1f, 0.5f);
+            shapeRenderer.rect(panelX + 20, rowY - RECIPE_ROW_HEIGHT + 5, panelWidth - 40, RECIPE_ROW_HEIGHT);
+            shapeRenderer.end();
+        }
+
         // Draw text
         spriteBatch.begin();
 
         font.setColor(Color.WHITE);
-        font.draw(spriteBatch, "Crafting Menu", panelX + 20, panelY + panelHeight - 20);
-        font.draw(spriteBatch, "Press C to close", panelX + 20, panelY + panelHeight - 50);
+        font.draw(spriteBatch, "Crafting Menu (click recipe, then click Craft)", panelX + 20, panelY + panelHeight - 20);
+        font.setColor(Color.GRAY);
+        font.draw(spriteBatch, "Press C to close | Number keys 1-9 also work", panelX + 20, panelY + panelHeight - 50);
 
-        // Draw recipes
-        List<Recipe> recipes = craftingSystem.getAllRecipes();
-        int y = panelY + panelHeight - 100;
+        int y = recipeStartY;
 
         for (int i = 0; i < recipes.size(); i++) {
             Recipe recipe = recipes.get(i);
@@ -143,19 +199,24 @@ public class CraftingUI {
             String recipeText = prefix + (i + 1) + ". " + recipe.getDisplayName();
             font.draw(spriteBatch, recipeText, panelX + 40, y);
 
-            // Register tooltip zone for this recipe row
             if (hoverTooltips != null) {
-                String status = canCraft ? "Ready to craft" : "Missing materials";
+                String status = canCraft ? "Click to select, then Craft" : "Missing materials";
                 hoverTooltips.addZone(panelX + 40, y - 20, panelWidth - 80, 25, recipe.getDisplayName() + " - " + status);
             }
 
-            y -= 30;
+            y -= RECIPE_ROW_HEIGHT;
         }
+
+        // Draw Craft button
+        boolean canCraftSelected = selectedRecipeIndex >= 0 && selectedRecipeIndex < recipes.size() &&
+            craftingSystem.canCraft(recipes.get(selectedRecipeIndex), inventory);
+
+        font.setColor(canCraftSelected ? Color.GREEN : Color.DARK_GRAY);
+        font.draw(spriteBatch, "[CRAFT]", panelX + 40, panelY + 75);
 
         // Draw instructions
         font.setColor(Color.WHITE);
-        font.draw(spriteBatch, "Use number keys (1-9) to select recipe", panelX + 20, panelY + 60);
-        font.draw(spriteBatch, "Press ENTER to craft selected recipe", panelX + 20, panelY + 30);
+        font.draw(spriteBatch, "Click a recipe then click [CRAFT] or press ENTER", panelX + 20, panelY + 30);
 
         spriteBatch.end();
     }

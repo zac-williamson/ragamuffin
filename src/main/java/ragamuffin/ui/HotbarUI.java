@@ -18,6 +18,9 @@ public class HotbarUI {
     private final Inventory inventory;
     private int selectedSlot;
 
+    // Cached layout for click detection
+    private int barStartX, barStartY;
+
     public HotbarUI(Inventory inventory) {
         this.inventory = inventory;
         this.selectedSlot = 0;
@@ -53,6 +56,24 @@ public class HotbarUI {
     }
 
     /**
+     * Get the hotbar slot at the given UI coordinates (0 = bottom).
+     * Returns -1 if not over any slot.
+     */
+    public int getSlotAt(int x, int y) {
+        int relX = x - barStartX;
+        int relY = y - barStartY;
+        if (relX < 0 || relY < 0 || relY > SLOT_SIZE) return -1;
+
+        int slot = relX / (SLOT_SIZE + SLOT_PADDING);
+        if (slot >= HOTBAR_SLOTS) return -1;
+
+        int withinSlotX = relX % (SLOT_SIZE + SLOT_PADDING);
+        if (withinSlotX > SLOT_SIZE) return -1;
+
+        return slot;
+    }
+
+    /**
      * Render the hotbar UI.
      */
     public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font, int screenWidth, int screenHeight) {
@@ -66,6 +87,8 @@ public class HotbarUI {
         int hotbarWidth = HOTBAR_SLOTS * (SLOT_SIZE + SLOT_PADDING);
         int startX = (screenWidth - hotbarWidth) / 2;
         int startY = 20; // Bottom of screen
+        barStartX = startX;
+        barStartY = startY;
 
         // Render hotbar background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
