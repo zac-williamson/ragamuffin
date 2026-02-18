@@ -4,7 +4,7 @@ package ragamuffin.core;
  * Manages the day/night cycle and game time.
  * Time is measured in hours (0.0 to 24.0).
  * Seasons affect sunrise/sunset times based on realistic British daylight hours.
- * Each in-game month = 30 days. Year = 360 days.
+ * Year = 365 days with real month lengths.
  * Game starts on Day 1 = 1st June (summer, long days).
  */
 public class TimeSystem {
@@ -16,8 +16,16 @@ public class TimeSystem {
     // Time constants
     private static final float DEFAULT_TIME_SPEED = 0.1f; // 1 real second = 6 in-game minutes
     private static final float HOURS_PER_DAY = 24.0f;
-    private static final int DAYS_PER_YEAR = 360; // 12 months × 30 days
-    private static final int START_DAY_OF_YEAR = 151; // June 1st (Jan=0-29, Feb=30-59, ... Jun=150-179)
+    private static final int DAYS_PER_YEAR = 365;
+    private static final int START_DAY_OF_YEAR = 152; // June 1st (Jan=31, Feb=28, Mar=31, Apr=30, May=31 = 151, so June 1 = day 152, 0-indexed = 151)
+
+    // Cumulative days at start of each month (0-indexed: Jan=0..30, Feb=31..58, etc.)
+    private static final int[] MONTH_START_DAY = {
+        0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+    };
+    private static final int[] MONTH_LENGTHS = {
+        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+    };
 
     // British sunrise/sunset extremes (approximate, London latitude ~51.5°N)
     // Summer solstice (June 21): sunrise ~04:43, sunset ~21:21
@@ -101,7 +109,7 @@ public class TimeSystem {
     }
 
     /**
-     * Get the day of the year (0-359) accounting for game start date.
+     * Get the day of the year (0-364) accounting for game start date.
      */
     public int getDayOfYear() {
         return (START_DAY_OF_YEAR + dayCount - 1) % DAYS_PER_YEAR;
@@ -109,13 +117,13 @@ public class TimeSystem {
 
     /**
      * Get seasonal factor (0.0 = winter solstice, 1.0 = summer solstice).
-     * Uses cosine curve peaking at summer solstice (June 21 = day 171).
+     * Uses cosine curve peaking at summer solstice (June 21 = day 172).
      */
     public float getSeasonalFactor() {
         int dayOfYear = getDayOfYear();
-        // Summer solstice at day 171 (June 21), winter solstice at day 351 (Dec 21)
+        // Summer solstice at day 172 (June 21), winter solstice at day 355 (Dec 21)
         // Cosine curve: 1.0 at summer solstice, 0.0 at winter solstice
-        double angle = 2.0 * Math.PI * (dayOfYear - 171.0) / DAYS_PER_YEAR;
+        double angle = 2.0 * Math.PI * (dayOfYear - 172.0) / DAYS_PER_YEAR;
         return (float) (0.5 + 0.5 * Math.cos(angle));
     }
 
@@ -181,7 +189,13 @@ public class TimeSystem {
      * Get the current month (0-11, January=0).
      */
     public int getMonth() {
-        return getDayOfYear() / 30;
+        int day = getDayOfYear();
+        for (int m = 11; m >= 0; m--) {
+            if (day >= MONTH_START_DAY[m]) {
+                return m;
+            }
+        }
+        return 0;
     }
 
     /**
@@ -199,10 +213,12 @@ public class TimeSystem {
     }
 
     /**
-     * Get the day of the current month (1-30).
+     * Get the day of the current month (1-28/29/30/31).
      */
     public int getDayOfMonth() {
-        return (getDayOfYear() % 30) + 1;
+        int day = getDayOfYear();
+        int month = getMonth();
+        return day - MONTH_START_DAY[month] + 1;
     }
 
     /**
