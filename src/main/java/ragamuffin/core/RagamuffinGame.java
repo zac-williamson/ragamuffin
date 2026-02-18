@@ -108,6 +108,10 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Sky colour components (reused each frame)
     private float skyR = 0.53f, skyG = 0.81f, skyB = 0.92f;
 
+    // Rain animation
+    private float rainTimer = 0f;
+    private final java.util.Random rainRng = new java.util.Random(42);
+
     @Override
     public void create() {
         Gdx.app.log("Ragamuffin", "Welcome to the real world, kid.");
@@ -224,20 +228,33 @@ public class RagamuffinGame extends ApplicationAdapter {
      * Spawn initial NPCs in the world.
      */
     private void spawnInitialNPCs() {
-        // Spawn one of EVERY NPC type in a line in front of player start for visibility testing
-        // Player starts at (0, ~1, 0) facing -Z, so place them at positive Z in a line along X
-        npcManager.spawnNPC(NPCType.PUBLIC, -4, 2, 5);
-        npcManager.spawnNPC(NPCType.DOG, -2, 2, 5);
-        npcManager.spawnNPC(NPCType.YOUTH_GANG, 0, 2, 5);
-        npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, 2, 2, 5);
-        npcManager.spawnNPC(NPCType.POLICE, 4, 2, 5);
-
-        // Also spawn additional ambient NPCs around the park
-        npcManager.spawnNPC(NPCType.PUBLIC, 10, 2, 10);
-        npcManager.spawnNPC(NPCType.PUBLIC, -12, 2, 8);
+        // Park area — dog walkers and dogs
+        npcManager.spawnNPC(NPCType.PUBLIC, -5, 2, 5);
+        npcManager.spawnNPC(NPCType.PUBLIC, 8, 2, -3);
         npcManager.spawnNPC(NPCType.DOG, -5, 2, -5);
         npcManager.spawnNPC(NPCType.DOG, 8, 2, 3);
+        npcManager.spawnNPC(NPCType.DOG, -2, 2, 10);
+
+        // High street shoppers and pedestrians
+        npcManager.spawnNPC(NPCType.PUBLIC, 25, 2, 20);
+        npcManager.spawnNPC(NPCType.PUBLIC, 35, 2, 22);
+        npcManager.spawnNPC(NPCType.PUBLIC, 50, 2, 18);
+        npcManager.spawnNPC(NPCType.PUBLIC, 65, 2, 20);
+        npcManager.spawnNPC(NPCType.PUBLIC, 42, 2, 15);
+        npcManager.spawnNPC(NPCType.PUBLIC, 55, 2, 25);
+
+        // Youth gangs lurking around residential/industrial areas
+        npcManager.spawnNPC(NPCType.YOUTH_GANG, -50, 2, -30);
+        npcManager.spawnNPC(NPCType.YOUTH_GANG, -55, 2, -35);
+        npcManager.spawnNPC(NPCType.YOUTH_GANG, 70, 2, -45);
         npcManager.spawnNPC(NPCType.YOUTH_GANG, -10, 2, -10);
+
+        // Council members near the JobCentre
+        npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, -55, 2, 28);
+        npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, -50, 2, 30);
+
+        // Resident dog in residential area
+        npcManager.spawnNPC(NPCType.DOG, -60, 2, -28);
     }
 
     /**
@@ -338,7 +355,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                 timeSystem.update(delta);
                 lightingSystem.updateLighting(timeSystem.getTime());
                 updateSkyColour(timeSystem.getTime());
-                clockHUD.update(timeSystem.getTime());
+                clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount());
 
                 // Phase 12: Update weather system
                 weatherSystem.update(gameTimeDelta);
@@ -347,7 +364,15 @@ public class RagamuffinGame extends ApplicationAdapter {
                 npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
 
                 // Update player survival stats
-                player.updateHunger(delta);
+                // Sprint drains hunger 3x faster
+                float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
+                player.updateHunger(delta * hungerMultiplier);
+
+                // Starvation: zero hunger drains health at 5 HP/s
+                if (player.getHunger() <= 0) {
+                    player.damage(5.0f * delta);
+                }
+
                 if (!isUIBlocking()) {
                     // Phase 12: Apply weather energy drain multiplier
                     float energyRecovery = Player.ENERGY_RECOVERY_PER_SECOND * delta;
@@ -393,6 +418,11 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Render NPC speech bubbles (2D overlay projected from 3D)
             renderSpeechBubbles();
+
+            // Render rain overlay if raining
+            if (weatherSystem.getCurrentWeather() == Weather.RAIN) {
+                renderRain(delta);
+            }
 
             // Render 2D UI overlay
             renderUI();
@@ -765,6 +795,19 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (!openingSequence.isActive()) {
             // Phase 12: Update weather display
             gameHUD.setWeather(weatherSystem.getCurrentWeather());
+
+            // Update block break progress on crosshair
+            tmpCameraPos.set(camera.position);
+            tmpDirection.set(camera.direction);
+            RaycastResult targetBlock = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
+            if (targetBlock != null) {
+                float progress = blockBreaker.getBreakProgress(world, targetBlock.getBlockX(),
+                    targetBlock.getBlockY(), targetBlock.getBlockZ(), null);
+                gameHUD.setBlockBreakProgress(progress);
+            } else {
+                gameHUD.setBlockBreakProgress(0f);
+            }
+
             gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
@@ -1034,6 +1077,33 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private static float lerp(float a, float b, float t) {
         return a + (b - a) * t;
+    }
+
+    /**
+     * Render rain overlay effect.
+     */
+    private void renderRain(float delta) {
+        rainTimer += delta;
+        int screenWidth = Gdx.graphics.getWidth();
+        int screenHeight = Gdx.graphics.getHeight();
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(0.7f, 0.7f, 0.85f, 0.4f);
+
+        // Draw rain streaks
+        int numDrops = 80;
+        for (int i = 0; i < numDrops; i++) {
+            float seed = i * 137.5f + rainTimer * 400f;
+            float rx = ((seed * 1.3f) % screenWidth + screenWidth) % screenWidth;
+            float ry = ((seed * 0.7f) % screenHeight + screenHeight) % screenHeight;
+            shapeRenderer.line(rx, ry, rx - 2f, ry + 15f);
+        }
+
+        shapeRenderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     @Override

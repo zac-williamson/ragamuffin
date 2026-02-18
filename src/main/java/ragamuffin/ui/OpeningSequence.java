@@ -10,8 +10,14 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
  * Shows "it's time to learn to survive on your own" for 3 seconds.
  */
 public class OpeningSequence {
-    private static final float DURATION = 3.0f; // 3 seconds = 180 frames at 60fps
-    private static final String MESSAGE = "It's time to learn to survive on your own";
+    private static final float DURATION = 12.0f;
+    private static final String[] LINES = {
+        "\"You're eighteen now. Time to stand on your own two feet.\"",
+        "Your parents lock the door behind you.",
+        "No money. No phone. No plan.",
+        "Just you and the streets of a town that doesn't care."
+    };
+    private static final float[] LINE_TIMES = {0.0f, 3.5f, 6.5f, 9.0f};
 
     private boolean active;
     private float timer;
@@ -56,28 +62,40 @@ public class OpeningSequence {
             return;
         }
 
-        // Draw semi-transparent background
+        // Draw black background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 0.8f);
+        shapeRenderer.setColor(0, 0, 0, 0.9f);
         shapeRenderer.rect(0, 0, screenWidth, screenHeight);
         shapeRenderer.end();
 
-        // Calculate fade effect
-        float alpha = 1.0f;
-        if (timer < 0.5f) {
-            // Fade in
-            alpha = timer / 0.5f;
-        } else if (timer > DURATION - 0.5f) {
-            // Fade out
-            alpha = (DURATION - timer) / 0.5f;
+        // Draw lines sequentially with fade-in
+        spriteBatch.begin();
+        font.getData().setScale(1.6f);
+
+        float yOffset = screenHeight / 2f + 60;
+
+        for (int i = 0; i < LINES.length; i++) {
+            if (timer < LINE_TIMES[i]) continue;
+
+            float lineAge = timer - LINE_TIMES[i];
+            float alpha = Math.min(1.0f, lineAge / 0.8f); // Fade in over 0.8s
+
+            // Fade out everything in the last second
+            if (timer > DURATION - 1.0f) {
+                alpha *= (DURATION - timer);
+            }
+
+            // First line in italic yellow (parent's voice), rest in white
+            if (i == 0) {
+                font.setColor(0.9f, 0.8f, 0.4f, alpha);
+            } else {
+                font.setColor(0.8f, 0.8f, 0.8f, alpha);
+            }
+
+            float textWidth = LINES[i].length() * 8f; // Approximate
+            font.draw(spriteBatch, LINES[i], screenWidth / 2f - textWidth / 2f, yOffset - i * 40);
         }
 
-        // Draw message
-        spriteBatch.begin();
-        font.setColor(1, 1, 1, alpha);
-        font.getData().setScale(2.0f);
-        float messageWidth = font.getRegion().getRegionWidth() * 2.0f * MESSAGE.length() / 4;
-        font.draw(spriteBatch, MESSAGE, screenWidth / 2f - messageWidth / 2, screenHeight / 2f);
         font.getData().setScale(1.2f);
         font.setColor(Color.WHITE);
         spriteBatch.end();

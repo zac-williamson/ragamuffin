@@ -27,7 +27,12 @@ public enum Material {
     STEAK_BAKE("Steak Bake"),
     CARDBOARD("Cardboard"),
     IMPROVISED_TOOL("Improvised Tool"),
-    STONE_TOOL("Stone Tool");
+    STONE_TOOL("Stone Tool"),
+    CHIPS("Chips"),
+    KEBAB("Kebab"),
+    ENERGY_DRINK("Energy Drink"),
+    CRISPS("Crisps"),
+    TIN_OF_BEANS("Tin of Beans");
 
     private final String displayName;
 

@@ -146,6 +146,11 @@ public class HotbarUI {
             case CARDBOARD: return "CB";
             case IMPROVISED_TOOL: return "IT";
             case STONE_TOOL: return "TL";
+            case CHIPS: return "CP";
+            case KEBAB: return "KB";
+            case ENERGY_DRINK: return "ED";
+            case CRISPS: return "CR";
+            case TIN_OF_BEANS: return "TB";
             default: return "??";
         }
     }

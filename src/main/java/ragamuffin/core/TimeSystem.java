@@ -8,6 +8,7 @@ public class TimeSystem {
 
     private float time; // Current time in hours (0-24)
     private float timeSpeed; // How fast time passes (hours per real second)
+    private int dayCount; // Number of days survived
 
     // Time constants
     private static final float DEFAULT_TIME_SPEED = 0.1f; // 1 real second = 6 in-game minutes
@@ -20,11 +21,13 @@ public class TimeSystem {
     public TimeSystem() {
         this.time = 8.0f; // Start at 8:00 AM
         this.timeSpeed = DEFAULT_TIME_SPEED;
+        this.dayCount = 1;
     }
 
     public TimeSystem(float startTime) {
         this.time = startTime % HOURS_PER_DAY;
         this.timeSpeed = DEFAULT_TIME_SPEED;
+        this.dayCount = 1;
     }
 
     /**
@@ -36,6 +39,7 @@ public class TimeSystem {
         // Wrap around at 24 hours
         if (time >= HOURS_PER_DAY) {
             time -= HOURS_PER_DAY;
+            dayCount++;
         }
     }
 
@@ -112,6 +116,13 @@ public class TimeSystem {
 
         // Map distance from noon (0-12) to sun height (1.0-0.0)
         return 1.0f - (distanceFromNoon / 12.0f);
+    }
+
+    /**
+     * Get the number of days survived.
+     */
+    public int getDayCount() {
+        return dayCount;
     }
 
     /**

@@ -117,20 +117,20 @@ public class ChunkMeshBuilder {
                     float fw = w;
 
                     if (positive) {
-                        // East face (+X normal)
+                        // East face (+X normal) — CCW winding viewed from +X
                         vertexIndex = addFace(meshData, vertexIndex, color,
-                            fx, fy, fz,
                             fx, fy, fz + fw,
-                            fx, fy + fh, fz + fw,
+                            fx, fy, fz,
                             fx, fy + fh, fz,
+                            fx, fy + fh, fz + fw,
                             1, 0, 0, fw, fh);
                     } else {
-                        // West face (-X normal)
+                        // West face (-X normal) — CCW winding viewed from -X
                         vertexIndex = addFace(meshData, vertexIndex, color,
-                            fx, fy, fz + fw,
                             fx, fy, fz,
-                            fx, fy + fh, fz,
+                            fx, fy, fz + fw,
                             fx, fy + fh, fz + fw,
+                            fx, fy + fh, fz,
                             -1, 0, 0, fw, fh);
                     }
                 }
@@ -216,20 +216,20 @@ public class ChunkMeshBuilder {
                     float fw = w;  // z extent
 
                     if (positive) {
-                        // Top face (+Y normal)
+                        // Top face (+Y normal) — CCW winding viewed from +Y
                         vertexIndex = addFace(meshData, vertexIndex, color,
-                            fx, fy, fz,
-                            fx + fh, fy, fz,
-                            fx + fh, fy, fz + fw,
                             fx, fy, fz + fw,
+                            fx + fh, fy, fz + fw,
+                            fx + fh, fy, fz,
+                            fx, fy, fz,
                             0, 1, 0, fh, fw);
                     } else {
-                        // Bottom face (-Y normal)
+                        // Bottom face (-Y normal) — CCW winding viewed from -Y
                         vertexIndex = addFace(meshData, vertexIndex, color,
                             fx, fy, fz,
-                            fx, fy, fz + fw,
-                            fx + fh, fy, fz + fw,
                             fx + fh, fy, fz,
+                            fx + fh, fy, fz + fw,
+                            fx, fy, fz + fw,
                             0, -1, 0, fh, fw);
                     }
                 }
@@ -315,20 +315,20 @@ public class ChunkMeshBuilder {
                     float fw = w;  // x extent
 
                     if (positive) {
-                        // South face (+Z normal)
+                        // South face (+Z normal) — CCW winding viewed from +Z
                         vertexIndex = addFace(meshData, vertexIndex, color,
-                            fx + fw, fy, fz,
                             fx, fy, fz,
-                            fx, fy + fh, fz,
+                            fx + fw, fy, fz,
                             fx + fw, fy + fh, fz,
+                            fx, fy + fh, fz,
                             0, 0, 1, fw, fh);
                     } else {
-                        // North face (-Z normal)
+                        // North face (-Z normal) — CCW winding viewed from -Z
                         vertexIndex = addFace(meshData, vertexIndex, color,
-                            fx, fy, fz,
                             fx + fw, fy, fz,
-                            fx + fw, fy + fh, fz,
+                            fx, fy, fz,
                             fx, fy + fh, fz,
+                            fx + fw, fy + fh, fz,
                             0, 0, -1, fw, fh);
                     }
                 }

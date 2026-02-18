@@ -77,7 +77,18 @@ public class InteractionSystem {
         if (food == Material.SAUSAGE_ROLL) {
             hungerRestored = 30;
         } else if (food == Material.STEAK_BAKE) {
-            hungerRestored = 30;
+            hungerRestored = 35;
+        } else if (food == Material.CHIPS) {
+            hungerRestored = 25;
+        } else if (food == Material.KEBAB) {
+            hungerRestored = 40;
+        } else if (food == Material.CRISPS) {
+            hungerRestored = 10;
+        } else if (food == Material.TIN_OF_BEANS) {
+            hungerRestored = 35;
+        } else if (food == Material.ENERGY_DRINK) {
+            hungerRestored = 5;
+            player.recoverEnergy(30); // Energy drink restores energy too
         } else {
             // Not a food item
             return false;
@@ -93,7 +104,10 @@ public class InteractionSystem {
      * Check if a material is food.
      */
     public boolean isFood(Material material) {
-        return material == Material.SAUSAGE_ROLL || material == Material.STEAK_BAKE;
+        return material == Material.SAUSAGE_ROLL || material == Material.STEAK_BAKE
+            || material == Material.CHIPS || material == Material.KEBAB
+            || material == Material.CRISPS || material == Material.TIN_OF_BEANS
+            || material == Material.ENERGY_DRINK;
     }
 
     /**

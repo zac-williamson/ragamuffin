@@ -162,16 +162,16 @@ class Phase8IntegrationTest {
         assertTrue(openingSequence.isActive(), "Opening sequence should be active");
         assertFalse(openingSequence.isCompleted(), "Opening sequence should not be completed yet");
 
-        // Advance 181 frames (just over 3 seconds at 60fps to ensure completion)
+        // Advance 721 frames (just over 12 seconds at 60fps to ensure completion)
         float delta = 1.0f / 60.0f;
-        for (int i = 0; i < 181; i++) {
+        for (int i = 0; i < 721; i++) {
             openingSequence.update(delta);
         }
 
         // Sequence should be completed
         assertFalse(openingSequence.isActive(), "Opening sequence should no longer be active");
         assertTrue(openingSequence.isCompleted(), "Opening sequence should be completed");
-        assertTrue(openingSequence.getTimer() >= 3.0f, "Timer should be >= 3 seconds");
+        assertTrue(openingSequence.getTimer() >= 12.0f, "Timer should be >= 12 seconds");
     }
 
     /**
@@ -399,7 +399,7 @@ class Phase8IntegrationTest {
 
         // Start opening sequence
         openingSequence.start();
-        for (int i = 0; i < 181; i++) {
+        for (int i = 0; i < 721; i++) {
             openingSequence.update(delta);
         }
         assertTrue(openingSequence.isCompleted(), "Opening sequence should complete");

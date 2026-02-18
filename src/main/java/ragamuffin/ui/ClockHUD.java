@@ -11,10 +11,12 @@ public class ClockHUD {
 
     private String timeString;
     private int fps;
+    private int dayCount;
 
     public ClockHUD() {
         this.timeString = "08:00";
         this.fps = 0;
+        this.dayCount = 1;
     }
 
     /**
@@ -26,6 +28,14 @@ public class ClockHUD {
         int minutes = (int) ((time - hours) * 60);
         this.timeString = String.format("%02d:%02d", hours, minutes);
         this.fps = Gdx.graphics.getFramesPerSecond();
+    }
+
+    /**
+     * Update the clock with current game time and day count.
+     */
+    public void update(float time, int dayCount) {
+        update(time);
+        this.dayCount = dayCount;
     }
 
     /**
@@ -48,13 +58,16 @@ public class ClockHUD {
     public void render(SpriteBatch batch, BitmapFont font, int screenWidth, int screenHeight) {
         batch.begin();
 
-        // Draw time in top-right corner, below the weather text
+        // Draw day counter in top-right corner, below the weather text
         float x = screenWidth - 100;
         float y = screenHeight - 45;
-        font.draw(batch, timeString, x, y);
+        font.draw(batch, "Day " + dayCount, x, y);
+
+        // Draw time below day counter
+        font.draw(batch, timeString, x, y - 20);
 
         // Draw FPS below the time
-        font.draw(batch, "FPS: " + fps, x, y - 25);
+        font.draw(batch, "FPS: " + fps, x, y - 40);
 
         batch.end();
     }

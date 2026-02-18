@@ -23,11 +23,13 @@ public class GameHUD {
     private final Player player;
     private boolean visible;
     private Weather currentWeather;
+    private float blockBreakProgress; // 0.0 to 1.0
 
     public GameHUD(Player player) {
         this.player = player;
         this.visible = true;
         this.currentWeather = Weather.CLEAR;
+        this.blockBreakProgress = 0f;
     }
 
     /**
@@ -122,6 +124,23 @@ public class GameHUD {
         shapeRenderer.rect(centerX - CROSSHAIR_THICKNESS / 2, centerY + CROSSHAIR_GAP,
                           CROSSHAIR_THICKNESS, CROSSHAIR_SIZE);
 
+        // Block break progress indicator — arc around crosshair
+        if (blockBreakProgress > 0f) {
+            float arcRadius = CROSSHAIR_SIZE + CROSSHAIR_GAP + 4;
+            float arcThickness = 3f;
+            int segments = (int) (blockBreakProgress * 24); // 24 segments for full circle
+            shapeRenderer.setColor(1f, 0.4f, 0.1f, 0.9f); // Orange glow
+            for (int i = 0; i < segments; i++) {
+                float angle1 = (float) (i * Math.PI * 2 / 24);
+                float angle2 = (float) ((i + 1) * Math.PI * 2 / 24);
+                float x1 = centerX + (float) Math.cos(angle1) * arcRadius;
+                float y1 = centerY + (float) Math.sin(angle1) * arcRadius;
+                float x2 = centerX + (float) Math.cos(angle2) * arcRadius;
+                float y2 = centerY + (float) Math.sin(angle2) * arcRadius;
+                shapeRenderer.rectLine(x1, y1, x2, y2, arcThickness);
+            }
+        }
+
         shapeRenderer.end();
 
         // Register crosshair hover tooltip zone
@@ -153,6 +172,13 @@ public class GameHUD {
      */
     public void setWeather(Weather weather) {
         this.currentWeather = weather;
+    }
+
+    /**
+     * Set block break progress for crosshair indicator.
+     */
+    public void setBlockBreakProgress(float progress) {
+        this.blockBreakProgress = Math.max(0f, Math.min(1f, progress));
     }
 
     /**

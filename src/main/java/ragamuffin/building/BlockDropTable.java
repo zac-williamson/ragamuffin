@@ -71,9 +71,31 @@ public class BlockDropTable {
             if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
                 return Math.random() < 0.5 ? Material.SAUSAGE_ROLL : Material.STEAK_BAKE;
             }
-        } else if (landmark == LandmarkType.OFF_LICENCE ||
-                   landmark == LandmarkType.CHARITY_SHOP) {
-            // Shop blocks near shops drop cardboard
+        } else if (landmark == LandmarkType.CHIPPY) {
+            // Chippy drops chips
+            if (blockType == BlockType.STONE || blockType == BlockType.BRICK) {
+                return Material.CHIPS;
+            }
+        } else if (landmark == LandmarkType.KEBAB_SHOP) {
+            // Kebab shop drops kebabs
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.KEBAB;
+            }
+        } else if (landmark == LandmarkType.OFF_LICENCE) {
+            // Off-licence drops energy drinks and crisps
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Math.random() < 0.5 ? Material.ENERGY_DRINK : Material.CRISPS;
+            }
+        } else if (landmark == LandmarkType.TESCO_EXPRESS || landmark == LandmarkType.CORNER_SHOP) {
+            // Supermarket/corner shop drops tinned food
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                double roll = Math.random();
+                if (roll < 0.3) return Material.TIN_OF_BEANS;
+                else if (roll < 0.6) return Material.CRISPS;
+                else return Material.ENERGY_DRINK;
+            }
+        } else if (landmark == LandmarkType.CHARITY_SHOP) {
+            // Charity shop drops cardboard
             if (blockType == BlockType.BRICK || blockType == BlockType.WOOD) {
                 return Material.CARDBOARD;
             }
