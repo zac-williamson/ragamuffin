@@ -91,7 +91,7 @@ public class RagamuffinGame extends ApplicationAdapter {
     // First-person arm
     private FirstPersonArm firstPersonArm;
 
-    private static final float MOUSE_SENSITIVITY = 0.15f;
+    private static final float MOUSE_SENSITIVITY = 0.2f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
     private static final float MAX_PITCH = 89.0f;
@@ -279,6 +279,27 @@ public class RagamuffinGame extends ApplicationAdapter {
             handleMenuInput();
             renderMenu();
         } else if (state == GameState.PLAYING) {
+            // Apply mouse look FIRST — before any game logic — to eliminate perceived lag.
+            // This ensures the camera direction is always up-to-date when the frame renders.
+            if (Gdx.input.isCursorCatched()) {
+                float mouseDX = inputHandler.getMouseDeltaX();
+                float mouseDY = inputHandler.getMouseDeltaY();
+                if (mouseDX != 0 || mouseDY != 0) {
+                    cameraYaw += mouseDX * MOUSE_SENSITIVITY;
+                    cameraPitch -= mouseDY * MOUSE_SENSITIVITY;
+                    cameraPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cameraPitch));
+                }
+            }
+            // Rebuild camera direction from yaw/pitch angles
+            float pitchRad = (float) Math.toRadians(cameraPitch);
+            float yawRad = (float) Math.toRadians(cameraYaw);
+            camera.direction.set(
+                (float) Math.sin(yawRad) * (float) Math.cos(pitchRad),
+                (float) Math.sin(pitchRad),
+                -(float) Math.cos(yawRad) * (float) Math.cos(pitchRad)
+            );
+            camera.up.set(Vector3.Y);
+
             // Update opening sequence if active
             if (openingSequence.isActive()) {
                 openingSequence.update(delta);
@@ -512,27 +533,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetPlace();
         }
 
-        // Mouse look - recompute direction from yaw/pitch BEFORE movement calculation
-        float mouseDX = inputHandler.getMouseDeltaX();
-        float mouseDY = inputHandler.getMouseDeltaY();
-
-        if (mouseDX != 0 || mouseDY != 0) {
-            cameraYaw += mouseDX * MOUSE_SENSITIVITY;
-            cameraPitch += -mouseDY * MOUSE_SENSITIVITY;
-            cameraPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cameraPitch));
-        }
-
-        // Rebuild camera direction from angles (avoids accumulated rotation errors)
-        float pitchRad = (float) Math.toRadians(cameraPitch);
-        float yawRad = (float) Math.toRadians(cameraYaw);
-        camera.direction.set(
-            (float) Math.sin(yawRad) * (float) Math.cos(pitchRad),
-            (float) Math.sin(pitchRad),
-            -(float) Math.cos(yawRad) * (float) Math.cos(pitchRad)
-        );
-        camera.up.set(Vector3.Y);
-
-        // Calculate movement direction (uses fresh camera direction from above)
+        // Camera direction is already up-to-date (applied at top of frame)
+        // Calculate movement direction from current camera facing
         Vector3 forward = new Vector3(camera.direction.x, 0, camera.direction.z).nor();
         Vector3 right = new Vector3(camera.direction).crs(Vector3.Y).nor();
         Vector3 moveDir = new Vector3();
