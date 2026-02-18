@@ -9,7 +9,15 @@ public enum NPCType {
     YOUTH_GANG(30f, 8f, 1.5f, true),       // Gangs - aggressive, steal and punch
     COUNCIL_MEMBER(25f, 0f, 0f, false),    // Bureaucratic - passive
     POLICE(50f, 10f, 1.0f, true),          // Police - tough, hit hard
-    COUNCIL_BUILDER(40f, 5f, 2.0f, false); // Builders - defensive only
+    COUNCIL_BUILDER(40f, 5f, 2.0f, false), // Builders - defensive only
+    SHOPKEEPER(20f, 0f, 0f, false),        // Stand near shops, comment on player
+    POSTMAN(20f, 0f, 0f, false),           // Walk routes between buildings
+    JOGGER(20f, 0f, 0f, false),            // Run through the park
+    DRUNK(15f, 3f, 3.0f, false),           // Stumble around at night, mildly aggressive
+    BUSKER(20f, 0f, 0f, false),            // Stand on high street, play music
+    DELIVERY_DRIVER(20f, 0f, 0f, false),   // Amazon/JustEat driver rushing about
+    PENSIONER(10f, 0f, 0f, false),         // Slow elderly person, complains a lot
+    SCHOOL_KID(15f, 2f, 3.0f, false);      // Noisy school kids in groups
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

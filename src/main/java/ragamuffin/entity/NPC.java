@@ -194,6 +194,8 @@ public class NPC {
     }
 
     private float knockbackTimer = 0f;
+    private float stuckTimer = 0f;     // time spent stuck against obstacle
+    private Vector3 lastPosition = null; // position last frame for stuck detection
 
     public boolean isKnockedBack() {
         return knockbackTimer > 0f;
@@ -222,6 +224,42 @@ public class NPC {
     public boolean isWithinBounds(float minX, float minZ, float maxX, float maxZ) {
         return position.x >= minX && position.x <= maxX &&
                position.z >= minZ && position.z <= maxZ;
+    }
+
+    /**
+     * Update stuck detection — call after collision-resolved movement.
+     * Returns true if NPC has been stuck for a significant time.
+     */
+    public boolean updateStuckDetection(float delta) {
+        float hSpeedSq = velocity.x * velocity.x + velocity.z * velocity.z;
+        if (hSpeedSq < 0.001f) {
+            // Not trying to move — not stuck
+            stuckTimer = 0f;
+            lastPosition = null;
+            return false;
+        }
+
+        if (lastPosition == null) {
+            lastPosition = position.cpy();
+            stuckTimer = 0f;
+            return false;
+        }
+
+        // Check if we've barely moved despite having velocity
+        float distMoved = position.dst2(lastPosition); // squared distance
+        if (distMoved < 0.01f) { // moved less than 0.1 blocks
+            stuckTimer += delta;
+        } else {
+            stuckTimer = 0f;
+        }
+        lastPosition.set(position);
+
+        return stuckTimer > 0.5f; // stuck for more than 0.5 seconds
+    }
+
+    public void resetStuckTimer() {
+        stuckTimer = 0f;
+        lastPosition = null;
     }
 
     // Combat methods

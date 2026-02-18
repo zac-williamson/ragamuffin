@@ -239,6 +239,18 @@ public class WorldGenerator {
         // Additional council flats
         markFlatZone(-150, 60, 12, 12);
         markFlatZone(140, -70, 12, 12);
+
+        // Allotments (south-east, between residential and industrial)
+        markFlatZone(60, -100, 30, 20);
+
+        // Canal (runs east-west along southern edge of town)
+        markFlatZone(-120, -90, 240, 8);
+
+        // Skate park (near park, south-west)
+        markFlatZone(-50, -65, 18, 14);
+
+        // Cemetery (near church, south-east)
+        markFlatZone(45, -72, 20, 18);
     }
 
     /**
@@ -464,6 +476,22 @@ public class WorldGenerator {
         generateCouncilFlats(world, -150, 60, 12, 12, 14);
         world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, -150, 0, 60, 12, 14, 12));
         generateCouncilFlats(world, 140, -70, 12, 12, 16);
+
+        // ===== ALLOTMENTS (south-east) =====
+        generateAllotments(world, 60, -100, 30, 20);
+        world.addLandmark(new Landmark(LandmarkType.ALLOTMENTS, 60, 0, -100, 30, 3, 20));
+
+        // ===== CANAL (east-west along southern edge) =====
+        generateCanal(world, -120, -90, 240, 8);
+        world.addLandmark(new Landmark(LandmarkType.CANAL, -120, 0, -90, 240, 1, 8));
+
+        // ===== SKATE PARK (south-west, near park) =====
+        generateSkatePark(world, -50, -65, 18, 14);
+        world.addLandmark(new Landmark(LandmarkType.SKATE_PARK, -50, 0, -65, 18, 3, 14));
+
+        // ===== CEMETERY (near church, south-east) =====
+        generateCemetery(world, 45, -72, 20, 18);
+        world.addLandmark(new Landmark(LandmarkType.CEMETERY, 45, 0, -72, 20, 3, 18));
 
         // Additional garden walls for new rows
         generateGardenWalls(world, -110, -33, 40, 1);
@@ -701,7 +729,7 @@ public class WorldGenerator {
         }
         for (int dx = 0; dx < width; dx++) {
             for (int dz = 0; dz < depth; dz++) {
-                world.setBlock(x + dx, height + 1, z + dz, BlockType.STONE);
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CONCRETE); // Flat office roof
                 world.setBlock(x + dx, 0, z + dz, BlockType.STONE);
             }
         }
@@ -728,14 +756,14 @@ public class WorldGenerator {
                 for (int dz = 0; dz < depth; dz++) {
                     boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
                     if (isWall) {
-                        world.setBlock(x + dx, y, z + dz, BlockType.STONE);
+                        world.setBlock(x + dx, y, z + dz, BlockType.CORRUGATED_METAL);
                     }
                 }
             }
         }
         for (int dx = 0; dx < width; dx++) {
             for (int dz = 0; dz < depth; dz++) {
-                world.setBlock(x + dx, height + 1, z + dz, BlockType.STONE);
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CORRUGATED_METAL); // Metal warehouse roof
                 world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
             }
         }
@@ -1075,6 +1103,258 @@ public class WorldGenerator {
         }
     }
 
+    // ==================== ALLOTMENTS ====================
+
+    private void generateAllotments(World world, int x, int z, int width, int depth) {
+        // Council allotments — fenced plots with sheds, dirt beds, and paths
+        // Grass base
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.GRASS);
+            }
+        }
+
+        // Perimeter fence (wooden, 2 blocks high)
+        for (int dx = 0; dx < width; dx++) {
+            for (int y = 1; y <= 2; y++) {
+                world.setBlock(x + dx, y, z, BlockType.WOOD);
+                world.setBlock(x + dx, y, z + depth - 1, BlockType.WOOD);
+            }
+        }
+        for (int dz = 0; dz < depth; dz++) {
+            for (int y = 1; y <= 2; y++) {
+                world.setBlock(x, y, z + dz, BlockType.WOOD);
+                world.setBlock(x + width - 1, y, z + dz, BlockType.WOOD);
+            }
+        }
+
+        // Gate entrance
+        world.setBlock(x + width / 2, 1, z, BlockType.AIR);
+        world.setBlock(x + width / 2, 2, z, BlockType.AIR);
+
+        // Central path (gravel/pavement strip down the middle)
+        int pathZ = z + depth / 2;
+        for (int dx = 1; dx < width - 1; dx++) {
+            world.setBlock(x + dx, 0, pathZ, BlockType.PAVEMENT);
+        }
+
+        // Allotment plots — alternating dirt beds and grass paths on each side
+        for (int plotX = 2; plotX < width - 4; plotX += 6) {
+            // North plots (above path)
+            for (int dz = 2; dz < depth / 2 - 1; dz++) {
+                for (int dx = plotX; dx < plotX + 4 && (x + dx) < x + width - 2; dx++) {
+                    world.setBlock(x + dx, 0, z + dz, BlockType.DIRT);
+                }
+            }
+            // South plots (below path)
+            for (int dz = depth / 2 + 1; dz < depth - 2; dz++) {
+                for (int dx = plotX; dx < plotX + 4 && (x + dx) < x + width - 2; dx++) {
+                    world.setBlock(x + dx, 0, z + dz, BlockType.DIRT);
+                }
+            }
+        }
+
+        // Small wooden sheds (2x2, 2 tall) — one per side
+        buildShed(world, x + 2, z + 2, 2, 2, 2);
+        buildShed(world, x + width - 5, z + depth - 5, 2, 2, 2);
+
+        // Water butt (stone block next to shed)
+        world.setBlock(x + 4, 1, z + 2, BlockType.STONE);
+    }
+
+    private void buildShed(World world, int x, int z, int width, int depth, int height) {
+        for (int y = 1; y <= height; y++) {
+            for (int dx = 0; dx < width; dx++) {
+                for (int dz = 0; dz < depth; dz++) {
+                    boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                    if (isWall) {
+                        world.setBlock(x + dx, y, z + dz, BlockType.WOOD);
+                    }
+                }
+            }
+        }
+        // Corrugated roof
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CORRUGATED_METAL);
+            }
+        }
+        // Door
+        world.setBlock(x, 1, z, BlockType.AIR);
+    }
+
+    // ==================== CANAL ====================
+
+    private void generateCanal(World world, int x, int z, int width, int depth) {
+        // Industrial canal running east-west: towpath, water channel, stone walls
+        for (int dx = 0; dx < width; dx++) {
+            int wx = x + dx;
+            // South towpath (3 blocks wide, pavement)
+            for (int dz = 0; dz < 2; dz++) {
+                world.setBlock(wx, 0, z + dz, BlockType.PAVEMENT);
+            }
+            // South canal wall (stone, drops down 2 blocks)
+            world.setBlock(wx, 0, z + 2, BlockType.STONE);
+            world.setBlock(wx, -1, z + 2, BlockType.STONE);
+            // Water channel (4 blocks wide, 2 blocks deep)
+            for (int dz = 3; dz < depth - 2; dz++) {
+                world.setBlock(wx, -1, z + dz, BlockType.STONE);  // Canal bed
+                world.setBlock(wx, 0, z + dz, BlockType.WATER);   // Water surface
+            }
+            // North canal wall
+            world.setBlock(wx, 0, z + depth - 2, BlockType.STONE);
+            world.setBlock(wx, -1, z + depth - 2, BlockType.STONE);
+            // North towpath
+            world.setBlock(wx, 0, z + depth - 1, BlockType.PAVEMENT);
+        }
+
+        // Iron railings along towpath edges (every 3 blocks for visual variety)
+        for (int dx = 0; dx < width; dx += 3) {
+            world.setBlock(x + dx, 1, z + 2, BlockType.IRON_FENCE);
+            world.setBlock(x + dx, 1, z + depth - 2, BlockType.IRON_FENCE);
+        }
+
+        // A footbridge across the canal (stone arch at midpoint)
+        int bridgeX = x + width / 2;
+        for (int dz = 2; dz < depth - 1; dz++) {
+            world.setBlock(bridgeX, 1, z + dz, BlockType.STONE);
+            world.setBlock(bridgeX + 1, 1, z + dz, BlockType.STONE);
+        }
+        // Bridge railings
+        for (int dz = 2; dz < depth - 1; dz++) {
+            world.setBlock(bridgeX, 2, z + dz, BlockType.IRON_FENCE);
+            world.setBlock(bridgeX + 1, 2, z + dz, BlockType.IRON_FENCE);
+        }
+
+        // Benches along south towpath
+        generateBench(world, x + 20, z);
+        generateBench(world, x + 80, z);
+        generateBench(world, x + 150, z);
+    }
+
+    // ==================== SKATE PARK ====================
+
+    private void generateSkatePark(World world, int x, int z, int width, int depth) {
+        // Concrete surface
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.CONCRETE);
+            }
+        }
+
+        // Low perimeter wall (1 block)
+        for (int dx = 0; dx < width; dx++) {
+            world.setBlock(x + dx, 1, z, BlockType.CONCRETE);
+            world.setBlock(x + dx, 1, z + depth - 1, BlockType.CONCRETE);
+        }
+        for (int dz = 0; dz < depth; dz++) {
+            world.setBlock(x, 1, z + dz, BlockType.CONCRETE);
+            world.setBlock(x + width - 1, 1, z + dz, BlockType.CONCRETE);
+        }
+
+        // Entrance gap
+        world.setBlock(x + width / 2, 1, z, BlockType.AIR);
+        world.setBlock(x + width / 2 + 1, 1, z, BlockType.AIR);
+
+        // Half-pipe (raised concrete walls, 3 blocks tall, at the back)
+        for (int dx = 3; dx < width - 3; dx++) {
+            for (int y = 1; y <= 3; y++) {
+                world.setBlock(x + dx, y, z + depth - 2, BlockType.CONCRETE);
+            }
+        }
+
+        // Quarter-pipe (left side, 2 blocks tall)
+        for (int dz = 3; dz < depth - 4; dz++) {
+            for (int y = 1; y <= 2; y++) {
+                world.setBlock(x + 1, y, z + dz, BlockType.CONCRETE);
+            }
+        }
+
+        // Grind rail (iron fence, centre of park)
+        for (int dx = 4; dx < width - 4; dx++) {
+            world.setBlock(x + dx, 1, z + depth / 2, BlockType.IRON_FENCE);
+        }
+
+        // Flat box / ledge (2 wide, raised concrete in middle area)
+        for (int dx = 7; dx < 11 && dx < width - 2; dx++) {
+            world.setBlock(x + dx, 1, z + 4, BlockType.CONCRETE);
+            world.setBlock(x + dx, 1, z + 5, BlockType.CONCRETE);
+        }
+
+        // Bin near entrance
+        generateBin(world, x + width / 2 + 3, z + 1);
+    }
+
+    // ==================== CEMETERY ====================
+
+    private void generateCemetery(World world, int x, int z, int width, int depth) {
+        // Grass base
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.GRASS);
+            }
+        }
+
+        // Iron fence perimeter (2 blocks high)
+        for (int dx = 0; dx < width; dx++) {
+            for (int y = 1; y <= 2; y++) {
+                world.setBlock(x + dx, y, z, BlockType.IRON_FENCE);
+                world.setBlock(x + dx, y, z + depth - 1, BlockType.IRON_FENCE);
+            }
+        }
+        for (int dz = 0; dz < depth; dz++) {
+            for (int y = 1; y <= 2; y++) {
+                world.setBlock(x, y, z + dz, BlockType.IRON_FENCE);
+                world.setBlock(x + width - 1, y, z + dz, BlockType.IRON_FENCE);
+            }
+        }
+
+        // Gate entrance
+        for (int y = 1; y <= 2; y++) {
+            world.setBlock(x + width / 2, y, z, BlockType.AIR);
+            world.setBlock(x + width / 2 + 1, y, z, BlockType.AIR);
+        }
+
+        // Central gravel path
+        for (int dz = 1; dz < depth - 1; dz++) {
+            world.setBlock(x + width / 2, 0, z + dz, BlockType.PAVEMENT);
+            world.setBlock(x + width / 2 + 1, 0, z + dz, BlockType.PAVEMENT);
+        }
+
+        // Headstones — rows of stone blocks on each side of the path
+        for (int row = 3; row < depth - 3; row += 3) {
+            // West side headstones
+            for (int col = 2; col < width / 2 - 1; col += 3) {
+                world.setBlock(x + col, 1, z + row, BlockType.STONE);
+            }
+            // East side headstones
+            for (int col = width / 2 + 3; col < width - 2; col += 3) {
+                world.setBlock(x + col, 1, z + row, BlockType.STONE);
+            }
+        }
+
+        // A few larger monuments (2 blocks tall)
+        world.setBlock(x + 3, 1, z + 3, BlockType.STONE);
+        world.setBlock(x + 3, 2, z + 3, BlockType.STONE);
+        world.setBlock(x + width - 4, 1, z + depth - 4, BlockType.STONE);
+        world.setBlock(x + width - 4, 2, z + depth - 4, BlockType.STONE);
+
+        // Old yew tree near the back
+        int treeX = x + width / 2;
+        int treeZ = z + depth - 5;
+        for (int y = 1; y <= 4; y++) {
+            world.setBlock(treeX, y, treeZ, BlockType.TREE_TRUNK);
+        }
+        for (int y = 3; y <= 5; y++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx == 0 && dz == 0 && y < 5) continue;
+                    world.setBlock(treeX + dx, y, treeZ + dz, BlockType.LEAVES);
+                }
+            }
+        }
+    }
+
     // ==================== BUILDING HELPERS ====================
 
     private void buildShop(World world, int x, int z, int width, int depth, int height, BlockType wallType) {
@@ -1090,7 +1370,7 @@ public class WorldGenerator {
         }
         for (int dx = 0; dx < width; dx++) {
             for (int dz = 0; dz < depth; dz++) {
-                world.setBlock(x + dx, height + 1, z + dz, BlockType.BRICK);
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CONCRETE); // Flat shop roof
                 world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
             }
         }
@@ -1117,7 +1397,7 @@ public class WorldGenerator {
         }
         for (int dx = 0; dx < width; dx++) {
             for (int dz = 0; dz < depth; dz++) {
-                world.setBlock(x + dx, height + 1, z + dz, BlockType.STONE);
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CONCRETE); // Flat concrete roof
                 world.setBlock(x + dx, 0, z + dz, floorType);
             }
         }
@@ -1140,7 +1420,7 @@ public class WorldGenerator {
         }
         for (int dx = 0; dx < width; dx++) {
             for (int dz = 0; dz < depth; dz++) {
-                world.setBlock(x + dx, height + 1, z + dz, BlockType.BRICK);
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.SLATE); // Slate house roof
                 world.setBlock(x + dx, 0, z + dz, BlockType.WOOD);
             }
         }

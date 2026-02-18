@@ -16,6 +16,7 @@ import java.util.List;
 import ragamuffin.ai.NPCManager;
 import ragamuffin.building.*;
 import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
 import ragamuffin.render.ChunkMeshBuilder;
@@ -241,23 +242,70 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
+     * Spawn an NPC at terrain height for the given X,Z position.
+     */
+    private NPC spawnNPCAtTerrain(NPCType type, float x, float z) {
+        float y = calculateSpawnHeight(world, (int) x, (int) z);
+        return npcManager.spawnNPC(type, x, y, z);
+    }
+
+    /**
      * Spawn initial NPCs in the world.
      */
     private void spawnInitialNPCs() {
-        // Park area — one dog walker with dog
-        npcManager.spawnNPC(NPCType.PUBLIC, -5, 2, 5);
-        npcManager.spawnNPC(NPCType.DOG, -2, 2, 7);
+        // Park area — dog walkers with dogs, joggers
+        spawnNPCAtTerrain(NPCType.PUBLIC, -5, 5);
+        spawnNPCAtTerrain(NPCType.DOG, -2, 7);
+        spawnNPCAtTerrain(NPCType.JOGGER, 5, -5);
+        spawnNPCAtTerrain(NPCType.JOGGER, -8, -8);
+        spawnNPCAtTerrain(NPCType.DOG, 10, 3);
 
-        // High street — a couple of shoppers
-        npcManager.spawnNPC(NPCType.PUBLIC, 35, 2, 22);
-        npcManager.spawnNPC(NPCType.PUBLIC, 55, 2, 20);
+        // High street — shoppers, shopkeepers, busker, postman
+        spawnNPCAtTerrain(NPCType.PUBLIC, 35, 22);
+        spawnNPCAtTerrain(NPCType.PUBLIC, 55, 20);
+        spawnNPCAtTerrain(NPCType.SHOPKEEPER, 40, 18);
+        spawnNPCAtTerrain(NPCType.SHOPKEEPER, 60, 22);
+        spawnNPCAtTerrain(NPCType.BUSKER, 45, 25);
+        spawnNPCAtTerrain(NPCType.POSTMAN, 30, 15);
 
-        // Youth gang — small group lurking
-        npcManager.spawnNPC(NPCType.YOUTH_GANG, -50, 2, -30);
-        npcManager.spawnNPC(NPCType.YOUTH_GANG, -55, 2, -35);
+        // Youth gang — small group lurking near the rough area
+        spawnNPCAtTerrain(NPCType.YOUTH_GANG, -50, -30);
+        spawnNPCAtTerrain(NPCType.YOUTH_GANG, -55, -35);
+        spawnNPCAtTerrain(NPCType.YOUTH_GANG, -45, -28);
 
         // Council member near the JobCentre
-        npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, -55, 2, 28);
+        spawnNPCAtTerrain(NPCType.COUNCIL_MEMBER, -55, 28);
+
+        // Police patrol — always present on the streets
+        NPC police1 = spawnNPCAtTerrain(NPCType.POLICE, 20, 10);
+        if (police1 != null) police1.setState(NPCState.PATROLLING);
+        NPC police2 = spawnNPCAtTerrain(NPCType.POLICE, -30, 20);
+        if (police2 != null) police2.setState(NPCState.PATROLLING);
+        NPC police3 = spawnNPCAtTerrain(NPCType.POLICE, 50, -10);
+        if (police3 != null) police3.setState(NPCState.PATROLLING);
+
+        // Drunk near the off-licence
+        spawnNPCAtTerrain(NPCType.DRUNK, -65, 15);
+        spawnNPCAtTerrain(NPCType.DRUNK, -60, 18);
+
+        // Additional public wandering around the town
+        spawnNPCAtTerrain(NPCType.PUBLIC, -20, 30);
+        spawnNPCAtTerrain(NPCType.PUBLIC, 15, -10);
+        spawnNPCAtTerrain(NPCType.PUBLIC, 0, 35);
+        spawnNPCAtTerrain(NPCType.PUBLIC, -40, 10);
+
+        // Pensioners near the community centre and church
+        spawnNPCAtTerrain(NPCType.PENSIONER, -25, -40);
+        spawnNPCAtTerrain(NPCType.PENSIONER, 25, 35);
+
+        // Delivery driver rushing about
+        spawnNPCAtTerrain(NPCType.DELIVERY_DRIVER, 70, 25);
+        spawnNPCAtTerrain(NPCType.DELIVERY_DRIVER, -40, -15);
+
+        // School kids near the primary school
+        spawnNPCAtTerrain(NPCType.SCHOOL_KID, -30, -45);
+        spawnNPCAtTerrain(NPCType.SCHOOL_KID, -28, -43);
+        spawnNPCAtTerrain(NPCType.SCHOOL_KID, -32, -47);
     }
 
     /**

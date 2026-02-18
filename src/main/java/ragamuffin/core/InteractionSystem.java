@@ -63,6 +63,82 @@ public class InteractionSystem {
         "You want some, yeah?"
     };
 
+    private static final String[] SHOPKEEPER_DIALOGUE = {
+        "Browse all you like, love.",
+        "We're closing in ten minutes.",
+        "Two for one on crisps.",
+        "Got your Clubcard?",
+        "Self-service is broken again.",
+        "No, we don't do cashback."
+    };
+
+    private static final String[] POSTMAN_DIALOGUE = {
+        "Another parcel for number 12.",
+        "Dog nearly had me leg.",
+        "This rain'll ruin these letters.",
+        "I'm on my third round.",
+        "Sign here, please."
+    };
+
+    private static final String[] JOGGER_DIALOGUE = {
+        "On your left!",
+        "Morning!",
+        "Just five more k...",
+        "Can't stop, Strava's running!",
+        "*panting intensifies*"
+    };
+
+    private static final String[] DRUNK_DIALOGUE = {
+        "You're my best mate, you are.",
+        "I love you, man.",
+        "Who moved the pavement?",
+        "I'm not drunk, you're drunk.",
+        "This town's gone to the dogs.",
+        "Buy us a pint?"
+    };
+
+    private static final String[] BUSKER_DIALOGUE = {
+        "Any requests? Quid each.",
+        "I was on X Factor, you know.",
+        "Any spare change?",
+        "This is me best Oasis.",
+        "I take contactless, actually."
+    };
+
+    private static final String[] DELIVERY_DRIVER_DIALOGUE = {
+        "Where's number 42?",
+        "Parcel for... can't read this.",
+        "Left it behind the bin.",
+        "That's my third missed delivery.",
+        "Just leave it with a neighbour."
+    };
+
+    private static final String[] PENSIONER_DIALOGUE = {
+        "In my day, this was all fields.",
+        "These prices are criminal.",
+        "Nobody says hello anymore.",
+        "Young people today, honestly.",
+        "Is this the queue?",
+        "I remember proper winters."
+    };
+
+    private static final String[] SCHOOL_KID_DIALOGUE = {
+        "Have you got games on your phone?",
+        "That's well peak!",
+        "Can I have a quid?",
+        "Bruv, look at the state of him!",
+        "Safe, yeah?",
+        "Are you someone's dad?"
+    };
+
+    private static final String[] COUNCIL_MEMBER_DIALOGUE = {
+        "Have you filled in form 27B?",
+        "This area is under review.",
+        "Budget cuts, I'm afraid.",
+        "We'll look into it. Eventually.",
+        "Not my department."
+    };
+
     /**
      * Handle food consumption (right-click with food in hotbar).
      * @return true if food was consumed
@@ -137,6 +213,33 @@ public class InteractionSystem {
                 break;
             case DOG:
                 dialogue = "*bark*";
+                break;
+            case SHOPKEEPER:
+                dialogue = SHOPKEEPER_DIALOGUE[RANDOM.nextInt(SHOPKEEPER_DIALOGUE.length)];
+                break;
+            case POSTMAN:
+                dialogue = POSTMAN_DIALOGUE[RANDOM.nextInt(POSTMAN_DIALOGUE.length)];
+                break;
+            case JOGGER:
+                dialogue = JOGGER_DIALOGUE[RANDOM.nextInt(JOGGER_DIALOGUE.length)];
+                break;
+            case DRUNK:
+                dialogue = DRUNK_DIALOGUE[RANDOM.nextInt(DRUNK_DIALOGUE.length)];
+                break;
+            case BUSKER:
+                dialogue = BUSKER_DIALOGUE[RANDOM.nextInt(BUSKER_DIALOGUE.length)];
+                break;
+            case DELIVERY_DRIVER:
+                dialogue = DELIVERY_DRIVER_DIALOGUE[RANDOM.nextInt(DELIVERY_DRIVER_DIALOGUE.length)];
+                break;
+            case PENSIONER:
+                dialogue = PENSIONER_DIALOGUE[RANDOM.nextInt(PENSIONER_DIALOGUE.length)];
+                break;
+            case SCHOOL_KID:
+                dialogue = SCHOOL_KID_DIALOGUE[RANDOM.nextInt(SCHOOL_KID_DIALOGUE.length)];
+                break;
+            case COUNCIL_MEMBER:
+                dialogue = COUNCIL_MEMBER_DIALOGUE[RANDOM.nextInt(COUNCIL_MEMBER_DIALOGUE.length)];
                 break;
             default:
                 break;

@@ -51,6 +51,40 @@ public class NPCManager {
     private static final String[] RANDOM_POLICE_SPEECH = {
         "Move along.", "Evening.", "Keep it civil."
     };
+    private static final String[] RANDOM_SHOPKEEPER_SPEECH = {
+        "Browse all you like, love.", "We're closing in ten minutes.",
+        "Two for one on crisps.", "Got your Clubcard?", "Self-service is broken again."
+    };
+    private static final String[] RANDOM_POSTMAN_SPEECH = {
+        "Another parcel for number 12.", "Dog nearly had me leg.",
+        "This rain'll ruin these letters.", "I'm on my third round."
+    };
+    private static final String[] RANDOM_JOGGER_SPEECH = {
+        "*panting*", "Morning!", "On your left!", "Just five more k..."
+    };
+    private static final String[] RANDOM_DRUNK_SPEECH = {
+        "You're my best mate, you are.", "I love you, man.", "*hic*",
+        "This town's gone to the dogs.", "Who moved the pavement?",
+        "I'm not drunk, you're drunk."
+    };
+    private static final String[] RANDOM_BUSKER_SPEECH = {
+        "♪ Wonderwall ♪", "♪ No Woman No Cry ♪", "Any spare change?",
+        "♪ Hey Jude ♪", "Requests cost a quid."
+    };
+    private static final String[] RANDOM_DELIVERY_SPEECH = {
+        "Where's number 42?", "Parcel for... can't read this.", "Left it behind the bin.",
+        "That's my third missed delivery.", "Just leave it with a neighbour."
+    };
+    private static final String[] RANDOM_PENSIONER_SPEECH = {
+        "In my day...", "These prices!", "Nobody says hello anymore.",
+        "I remember when this was all fields.", "Shocking behaviour.",
+        "Young people today, honestly.", "Is this the queue?"
+    };
+    private static final String[] RANDOM_SCHOOL_KID_SPEECH = {
+        "Bruv!", "That's well peak!", "Safe, yeah?",
+        "Can I have a quid?", "Have you got games on your phone?",
+        "Oi, look at that!", "That's bare jokes!"
+    };
     private static final String[] HIT_SPEECH_PUBLIC = {
         "Oi! What was that for?!", "Help! I'm being assaulted!", "Right, I'm ringing 999!",
         "Are you mental?!", "That's ABH, that is!"
@@ -121,15 +155,23 @@ public class NPCManager {
         // Set initial state based on type
         switch (type) {
             case DOG:
+            case YOUTH_GANG:
+            case JOGGER:
+            case POSTMAN:
+            case DRUNK:
+            case DELIVERY_DRIVER:
+            case SCHOOL_KID:
                 npc.setState(NPCState.WANDERING);
                 break;
             case PUBLIC:
             case COUNCIL_MEMBER:
+            case PENSIONER:
                 npc.setState(NPCState.IDLE);
                 updateDailyRoutine(npc); // Set based on time
                 break;
-            case YOUTH_GANG:
-                npc.setState(NPCState.WANDERING);
+            case SHOPKEEPER:
+            case BUSKER:
+                npc.setState(NPCState.WANDERING); // Wander in small area near spawn
                 break;
             default:
                 npc.setState(NPCState.IDLE);
@@ -269,6 +311,22 @@ public class NPCManager {
         // Apply velocity with world collision (includes knockback velocity)
         applyNPCCollision(npc, delta, world);
 
+        // Stuck detection — if NPC has been pushing against a wall, turn around
+        if (npc.updateStuckDetection(delta)) {
+            npc.resetStuckTimer();
+            npc.setPath(null);
+            npc.setTargetPosition(null);
+            npc.setVelocity(0, 0, 0);
+
+            // Turn roughly 180 degrees from current facing direction and walk away
+            float facingRad = (float) Math.toRadians(npc.getFacingAngle() + 180 + (random.nextFloat() - 0.5f) * 90);
+            float turnDist = 5.0f + random.nextFloat() * 5.0f;
+            float newX = npc.getPosition().x + (float) Math.sin(facingRad) * turnDist;
+            float newZ = npc.getPosition().z + (float) Math.cos(facingRad) * turnDist;
+            float newY = findGroundHeight(world, newX, newZ);
+            setNPCTarget(npc, new Vector3(newX, newY, newZ), world);
+        }
+
         // Skip AI movement while being knocked back — let the impulse play out
         if (npc.isKnockedBack()) {
             return;
@@ -277,20 +335,7 @@ public class NPCManager {
         // NPCs randomly speak when near player
         if (!npc.isSpeaking() && npc.isNear(player.getPosition(), 10.0f)) {
             if (random.nextFloat() < 0.005f) {
-                String speech = null;
-                switch (npc.getType()) {
-                    case PUBLIC:
-                        speech = RANDOM_PUBLIC_SPEECH[random.nextInt(RANDOM_PUBLIC_SPEECH.length)];
-                        break;
-                    case YOUTH_GANG:
-                        speech = RANDOM_YOUTH_SPEECH[random.nextInt(RANDOM_YOUTH_SPEECH.length)];
-                        break;
-                    case POLICE:
-                        speech = RANDOM_POLICE_SPEECH[random.nextInt(RANDOM_POLICE_SPEECH.length)];
-                        break;
-                    default:
-                        break;
-                }
+                String speech = getRandomSpeech(npc.getType());
                 if (speech != null) {
                     npc.setSpeechText(speech, 3.0f);
                 }
@@ -320,6 +365,9 @@ public class NPCManager {
                     break;
                 case STEALING:
                     updateStealing(npc, delta, player, inventory, tooltipSystem);
+                    break;
+                default:
+                    updateWandering(npc, delta, world);
                     break;
             }
         }
@@ -368,9 +416,21 @@ public class NPCManager {
             return;
         }
 
-        // Dogs wander more aggressively with a larger radius and minimum distance
-        float wanderRadius = (npc.getType() == NPCType.DOG) ? 15.0f : 10.0f;
-        float minWanderDistance = (npc.getType() == NPCType.DOG) ? 5.0f : 0.0f;
+        // Different wander characteristics per NPC type
+        float wanderRadius;
+        float minWanderDistance;
+        switch (npc.getType()) {
+            case DOG: wanderRadius = 15.0f; minWanderDistance = 5.0f; break;
+            case JOGGER: wanderRadius = 25.0f; minWanderDistance = 10.0f; break;
+            case POSTMAN: wanderRadius = 30.0f; minWanderDistance = 8.0f; break;
+            case SHOPKEEPER: wanderRadius = 5.0f; minWanderDistance = 0.0f; break;
+            case BUSKER: wanderRadius = 3.0f; minWanderDistance = 0.0f; break;
+            case DRUNK: wanderRadius = 8.0f; minWanderDistance = 0.0f; break;
+            case DELIVERY_DRIVER: wanderRadius = 30.0f; minWanderDistance = 8.0f; break;
+            case PENSIONER: wanderRadius = 5.0f; minWanderDistance = 0.0f; break;
+            case SCHOOL_KID: wanderRadius = 15.0f; minWanderDistance = 3.0f; break;
+            default: wanderRadius = 10.0f; minWanderDistance = 0.0f; break;
+        }
 
         boolean needsNewTarget = npc.getTargetPosition() == null ||
                                  npc.getPath() == null ||
@@ -385,12 +445,32 @@ public class NPCManager {
             if (!justFinishedIdle) {
                 // Chance to pause before walking to next point
                 float idlePause = 0f;
-                if (npc.getType() == NPCType.PUBLIC || npc.getType() == NPCType.COUNCIL_MEMBER) {
-                    idlePause = 1.0f + random.nextFloat() * 4.0f;
-                } else if (npc.getType() == NPCType.DOG) {
-                    idlePause = 0.5f + random.nextFloat() * 2.0f;
-                } else if (npc.getType() == NPCType.YOUTH_GANG) {
-                    idlePause = 2.0f + random.nextFloat() * 5.0f;
+                switch (npc.getType()) {
+                    case PUBLIC:
+                    case COUNCIL_MEMBER:
+                        idlePause = 1.0f + random.nextFloat() * 4.0f; break;
+                    case DOG:
+                        idlePause = 0.5f + random.nextFloat() * 2.0f; break;
+                    case YOUTH_GANG:
+                        idlePause = 2.0f + random.nextFloat() * 5.0f; break;
+                    case JOGGER:
+                        idlePause = 0.2f + random.nextFloat() * 0.5f; break; // brief pauses
+                    case SHOPKEEPER:
+                        idlePause = 3.0f + random.nextFloat() * 6.0f; break; // lingers near shop
+                    case BUSKER:
+                        idlePause = 5.0f + random.nextFloat() * 10.0f; break; // plays for ages
+                    case DRUNK:
+                        idlePause = 2.0f + random.nextFloat() * 8.0f; break; // slow and confused
+                    case POSTMAN:
+                        idlePause = 0.5f + random.nextFloat() * 1.0f; break; // brisk deliveries
+                    case DELIVERY_DRIVER:
+                        idlePause = 0.3f + random.nextFloat() * 0.5f; break; // always rushing
+                    case PENSIONER:
+                        idlePause = 4.0f + random.nextFloat() * 8.0f; break; // long pauses, staring at nothing
+                    case SCHOOL_KID:
+                        idlePause = 0.5f + random.nextFloat() * 2.0f; break; // hyperactive bursts
+                    default:
+                        idlePause = 1.0f + random.nextFloat() * 3.0f; break;
                 }
 
                 if (idlePause > 0) {
@@ -528,34 +608,74 @@ public class NPCManager {
 
     /**
      * Set NPC target and find path.
+     * If pathfinding fails, tries a closer target rather than walking blindly.
      */
     private void setNPCTarget(NPC npc, Vector3 target, World world) {
-        npc.setTargetPosition(target);
+        // Ensure target Y is at ground level
+        float targetY = findGroundHeight(world, target.x, target.z);
+        Vector3 adjustedTarget = new Vector3(target.x, targetY, target.z);
+        npc.setTargetPosition(adjustedTarget);
 
         // Find path
-        List<Vector3> path = pathfinder.findPath(world, npc.getPosition(), target);
+        List<Vector3> path = pathfinder.findPath(world, npc.getPosition(), adjustedTarget);
 
-        // If pathfinding fails and this is a wandering NPC (dog/youth), use direct movement
-        // by setting an empty path - the NPC will use moveTowardTarget instead
-        if (path == null && (npc.getType() == NPCType.DOG || npc.getType() == NPCType.YOUTH_GANG)) {
-            npc.setPath(new ArrayList<>()); // Empty path triggers direct movement
-        } else {
+        if (path != null) {
             npc.setPath(path);
+        } else {
+            // Pathfinding failed — try a closer waypoint on the line toward the target
+            Vector3 dir = adjustedTarget.cpy().sub(npc.getPosition()).nor();
+            for (float dist = 5.0f; dist >= 2.0f; dist -= 1.5f) {
+                Vector3 closer = npc.getPosition().cpy().add(dir.x * dist, 0, dir.z * dist);
+                closer.y = findGroundHeight(world, closer.x, closer.z);
+                path = pathfinder.findPath(world, npc.getPosition(), closer);
+                if (path != null) {
+                    npc.setPath(path);
+                    npc.setTargetPosition(closer);
+                    return;
+                }
+            }
+            // All pathfinding failed — clear target so NPC picks a new random one
+            npc.setPath(null);
+            npc.setTargetPosition(null);
         }
     }
 
     /**
-     * Move NPC directly toward a target position with world collision.
+     * Move NPC directly toward a target position.
+     * If destination is reached, clear the target.
      */
     private void moveTowardTarget(NPC npc, Vector3 target, float delta) {
-        if (npc.isNear(target, 0.5f)) {
+        if (npc.isNear(target, 1.0f)) {
             npc.setVelocity(0, 0, 0);
+            npc.setTargetPosition(null); // Reached target, will pick a new one next frame
             return;
         }
 
         Vector3 direction = target.cpy().sub(npc.getPosition()).nor();
-        float speed = (npc.getType() == NPCType.DOG) ? NPC.DOG_SPEED : NPC.MOVE_SPEED;
+        float speed = getNPCSpeed(npc.getType());
+
+        // Drunks stumble — add random wobble to direction
+        if (npc.getType() == NPCType.DRUNK) {
+            direction.x += (random.nextFloat() - 0.5f) * 0.5f;
+            direction.z += (random.nextFloat() - 0.5f) * 0.5f;
+            direction.nor();
+        }
+
         npc.setVelocity(direction.x * speed, 0, direction.z * speed);
+    }
+
+    private float getNPCSpeed(NPCType type) {
+        switch (type) {
+            case DOG: return NPC.DOG_SPEED;
+            case JOGGER: return NPC.MOVE_SPEED * 2.5f;  // Fast runners
+            case DRUNK: return NPC.MOVE_SPEED * 0.6f;   // Slow stumble
+            case POSTMAN: return NPC.MOVE_SPEED * 1.3f;  // Brisk walk
+            case POLICE: return NPC.MOVE_SPEED * 1.4f;   // Quick patrol
+            case DELIVERY_DRIVER: return NPC.MOVE_SPEED * 1.8f; // Always rushing
+            case PENSIONER: return NPC.MOVE_SPEED * 0.4f;       // Very slow shuffle
+            case SCHOOL_KID: return NPC.MOVE_SPEED * 1.6f;      // Hyper kids
+            default: return NPC.MOVE_SPEED;
+        }
     }
 
     /**
@@ -664,18 +784,20 @@ public class NPCManager {
 
         int currentIndex = npc.getCurrentPathIndex();
         if (currentIndex >= path.size()) {
-            npc.setPath(null); // Path complete
+            npc.setPath(null);
+            npc.setTargetPosition(null);
             npc.setVelocity(0, 0, 0);
             return;
         }
 
         Vector3 waypoint = path.get(currentIndex);
 
-        // Check if reached current waypoint
-        if (npc.isNear(waypoint, 0.5f)) {
+        // Skip waypoints that are close — allows NPCs to advance past several at once
+        while (npc.isNear(waypoint, 1.0f)) {
             npc.advancePathIndex();
             if (npc.getCurrentPathIndex() >= path.size()) {
                 npc.setPath(null);
+                npc.setTargetPosition(null);
                 npc.setVelocity(0, 0, 0);
                 return;
             }
@@ -684,7 +806,7 @@ public class NPCManager {
 
         // Move toward waypoint
         Vector3 direction = waypoint.cpy().sub(npc.getPosition()).nor();
-        float speed = (npc.getType() == NPCType.DOG) ? NPC.DOG_SPEED : NPC.MOVE_SPEED;
+        float speed = getNPCSpeed(npc.getType());
         npc.setVelocity(direction.x * speed, 0, direction.z * speed);
     }
 
@@ -703,33 +825,35 @@ public class NPCManager {
 
     /**
      * Get random walkable position near a point.
-     * Tries multiple times to find a valid walkable position.
+     * Searches for actual ground height at each candidate to handle terrain variation.
      */
     private Vector3 getRandomWalkablePosition(Vector3 center, World world, float radius) {
-        // Try up to 10 times to find a walkable position
         for (int attempt = 0; attempt < 10; attempt++) {
             float angle = random.nextFloat() * (float) Math.PI * 2;
-            float distance = random.nextFloat() * radius;
+            float distance = 2.0f + random.nextFloat() * (radius - 2.0f); // At least 2 blocks away
 
             float x = center.x + (float) Math.cos(angle) * distance;
             float z = center.z + (float) Math.sin(angle) * distance;
 
+            float groundY = findGroundHeight(world, x, z);
             int blockX = (int) Math.floor(x);
-            int blockY = (int) Math.floor(center.y);
-            int blockZ = (int) Math.floor(z);
+            int groundInt = (int) groundY;
 
-            // Check if position is walkable (air above solid ground)
-            BlockType below = world.getBlock(blockX, blockY - 1, blockZ);
-            BlockType atPos = world.getBlock(blockX, blockY, blockZ);
-            BlockType above = world.getBlock(blockX, blockY + 1, blockZ);
+            // Check that there's actually headroom (2 blocks of air above ground)
+            BlockType atPos = world.getBlock(blockX, groundInt, (int) Math.floor(z));
+            BlockType above = world.getBlock(blockX, groundInt + 1, (int) Math.floor(z));
 
-            if (below.isSolid() && !atPos.isSolid() && !above.isSolid()) {
-                return new Vector3(x, center.y, z);
+            if (!atPos.isSolid() && !above.isSolid()) {
+                return new Vector3(x, groundY, z);
             }
         }
 
-        // Fallback to nearby position if no walkable position found
-        return getRandomNearbyPosition(center, radius);
+        // Fallback: try directly near the NPC with a small offset
+        float fallbackAngle = random.nextFloat() * (float) Math.PI * 2;
+        float fx = center.x + (float) Math.cos(fallbackAngle) * 3f;
+        float fz = center.z + (float) Math.sin(fallbackAngle) * 3f;
+        float fy = findGroundHeight(world, fx, fz);
+        return new Vector3(fx, fy, fz);
     }
 
     /**
@@ -766,6 +890,23 @@ public class NPCManager {
         }
     }
 
+    private String getRandomSpeech(NPCType type) {
+        switch (type) {
+            case PUBLIC: return RANDOM_PUBLIC_SPEECH[random.nextInt(RANDOM_PUBLIC_SPEECH.length)];
+            case YOUTH_GANG: return RANDOM_YOUTH_SPEECH[random.nextInt(RANDOM_YOUTH_SPEECH.length)];
+            case POLICE: return RANDOM_POLICE_SPEECH[random.nextInt(RANDOM_POLICE_SPEECH.length)];
+            case SHOPKEEPER: return RANDOM_SHOPKEEPER_SPEECH[random.nextInt(RANDOM_SHOPKEEPER_SPEECH.length)];
+            case POSTMAN: return RANDOM_POSTMAN_SPEECH[random.nextInt(RANDOM_POSTMAN_SPEECH.length)];
+            case JOGGER: return RANDOM_JOGGER_SPEECH[random.nextInt(RANDOM_JOGGER_SPEECH.length)];
+            case DRUNK: return RANDOM_DRUNK_SPEECH[random.nextInt(RANDOM_DRUNK_SPEECH.length)];
+            case BUSKER: return RANDOM_BUSKER_SPEECH[random.nextInt(RANDOM_BUSKER_SPEECH.length)];
+            case DELIVERY_DRIVER: return RANDOM_DELIVERY_SPEECH[random.nextInt(RANDOM_DELIVERY_SPEECH.length)];
+            case PENSIONER: return RANDOM_PENSIONER_SPEECH[random.nextInt(RANDOM_PENSIONER_SPEECH.length)];
+            case SCHOOL_KID: return RANDOM_SCHOOL_KID_SPEECH[random.nextInt(RANDOM_SCHOOL_KID_SPEECH.length)];
+            default: return null;
+        }
+    }
+
     private String getHitSpeech(NPCType type) {
         switch (type) {
             case PUBLIC: return HIT_SPEECH_PUBLIC[random.nextInt(HIT_SPEECH_PUBLIC.length)];
@@ -773,6 +914,14 @@ public class NPCManager {
             case POLICE: return HIT_SPEECH_POLICE[random.nextInt(HIT_SPEECH_POLICE.length)];
             case DOG: return "*yelp!*";
             case COUNCIL_BUILDER: return "Assaulting a council worker!";
+            case SHOPKEEPER: return "I'm calling the police!";
+            case POSTMAN: return "That's a federal offence!";
+            case JOGGER: return "What the— I'll sue!";
+            case DRUNK: return "Oi! Buy me a pint first!";
+            case BUSKER: return "That's me guitar arm!";
+            case DELIVERY_DRIVER: return "I'm on a schedule!";
+            case PENSIONER: return "I'll tell your mother!";
+            case SCHOOL_KID: return "I'm telling sir!";
             default: return "Ow!";
         }
     }
@@ -784,6 +933,14 @@ public class NPCManager {
             case POLICE: return "Officer down!";
             case DOG: return "*whimper*";
             case COUNCIL_BUILDER: return "Health and safety violation!";
+            case SHOPKEEPER: return "You're barred for life!";
+            case POSTMAN: return "Me parcels...";
+            case JOGGER: return "Strava... won't... log this...";
+            case DRUNK: return "*passes out*";
+            case BUSKER: return "Final... encore...";
+            case DELIVERY_DRIVER: return "The parcel... it's fragile...";
+            case PENSIONER: return "Me hip...";
+            case SCHOOL_KID: return "I want me mum!";
             default: return "...";
         }
     }
@@ -798,19 +955,20 @@ public class NPCManager {
 
     /**
      * Update police spawning based on time of day.
-     * Police spawn at night (20:00-06:00) and despawn during day.
+     * Police only spawn at night (22:00-06:00) and despawn at dawn.
      */
     public void updatePoliceSpawning(float time, World world, Player player) {
-        boolean isNight = time >= 20.0f || time < 6.0f;
+        boolean isNight = time >= 22.0f || time < 6.0f;
 
-        if (isNight && !policeSpawned) {
+        // Count current police
+        long policeCount = npcs.stream().filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
+
+        if (isNight && policeCount < 4) {
             // Spawn police at night
             spawnPolice(player, world);
-            policeSpawned = true;
-        } else if (!isNight && policeSpawned) {
-            // Despawn police during day
+        } else if (!isNight && policeCount > 0) {
+            // Despawn all police during the day
             despawnPolice();
-            policeSpawned = false;
         }
     }
 
@@ -828,11 +986,26 @@ public class NPCManager {
 
             float x = player.getPosition().x + (float) Math.cos(angle) * distance;
             float z = player.getPosition().z + (float) Math.sin(angle) * distance;
+            float y = findGroundHeight(world, x, z);
 
-            NPC police = spawnNPC(NPCType.POLICE, x, 1, z);
+            NPC police = spawnNPC(NPCType.POLICE, x, y, z);
             if (police == null) break;
             police.setState(NPCState.PATROLLING);
         }
+    }
+
+    /**
+     * Find the ground height at a world position — searches down from y=64 for the first solid block.
+     */
+    private float findGroundHeight(World world, float x, float z) {
+        int bx = (int) Math.floor(x);
+        int bz = (int) Math.floor(z);
+        for (int y = 64; y >= -10; y--) {
+            if (world.getBlock(bx, y, bz).isSolid()) {
+                return y + 1.0f;
+            }
+        }
+        return 1.0f; // fallback
     }
 
     /**
@@ -1089,7 +1262,7 @@ public class NPCManager {
         float x = center.x + (float) Math.cos(angle) * distance;
         float z = center.z + (float) Math.sin(angle) * distance;
 
-        NPC builder = spawnNPC(NPCType.COUNCIL_BUILDER, x, 1, z);
+        NPC builder = spawnNPC(NPCType.COUNCIL_BUILDER, x, center.y, z);
         if (builder == null) return;
         builder.setState(NPCState.IDLE);
         builderTargets.put(builder, structure);

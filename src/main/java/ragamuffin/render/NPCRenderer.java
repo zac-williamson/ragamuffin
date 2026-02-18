@@ -121,6 +121,70 @@ public class NPCRenderer {
             new Color(0.10f, 0.10f, 0.10f, 1f),
             false);
 
+        // SHOPKEEPER - Apron brown over white
+        buildAndCacheHumanoid(NPCType.SHOPKEEPER,
+            new Color(0.55f, 0.35f, 0.18f, 1f),
+            new Color(0.25f, 0.25f, 0.30f, 1f),
+            new Color(0.85f, 0.70f, 0.60f, 1f),
+            new Color(0.10f, 0.10f, 0.10f, 1f),
+            false);
+
+        // POSTMAN - Royal Mail red
+        buildAndCacheHumanoid(NPCType.POSTMAN,
+            new Color(0.85f, 0.10f, 0.10f, 1f),
+            new Color(0.20f, 0.20f, 0.25f, 1f),
+            new Color(0.85f, 0.70f, 0.60f, 1f),
+            new Color(0.10f, 0.10f, 0.10f, 1f),
+            false);
+
+        // JOGGER - Bright neon green activewear
+        buildAndCacheHumanoid(NPCType.JOGGER,
+            new Color(0.20f, 0.90f, 0.20f, 1f),
+            new Color(0.15f, 0.15f, 0.15f, 1f),
+            new Color(0.85f, 0.70f, 0.60f, 1f),
+            new Color(0.10f, 0.10f, 0.10f, 1f),
+            false);
+
+        // DRUNK - Tatty brown jacket
+        buildAndCacheHumanoid(NPCType.DRUNK,
+            new Color(0.40f, 0.30f, 0.20f, 1f),
+            new Color(0.30f, 0.30f, 0.25f, 1f),
+            new Color(0.80f, 0.60f, 0.55f, 1f),
+            new Color(0.10f, 0.10f, 0.10f, 1f),
+            false);
+
+        // BUSKER - Purple/patchwork bohemian
+        buildAndCacheHumanoid(NPCType.BUSKER,
+            new Color(0.50f, 0.20f, 0.60f, 1f),
+            new Color(0.25f, 0.25f, 0.30f, 1f),
+            new Color(0.85f, 0.70f, 0.60f, 1f),
+            new Color(0.10f, 0.10f, 0.10f, 1f),
+            false);
+
+        // DELIVERY_DRIVER - Black/grey with hi-vis vest
+        buildAndCacheHumanoid(NPCType.DELIVERY_DRIVER,
+            new Color(0.15f, 0.15f, 0.15f, 1f),  // Dark uniform
+            new Color(0.10f, 0.10f, 0.10f, 1f),   // Dark trousers
+            new Color(0.85f, 0.70f, 0.60f, 1f),
+            new Color(0.10f, 0.10f, 0.10f, 1f),
+            false);
+
+        // PENSIONER - Beige/cream cardigan
+        buildAndCacheHumanoid(NPCType.PENSIONER,
+            new Color(0.82f, 0.76f, 0.65f, 1f),  // Beige cardy
+            new Color(0.50f, 0.48f, 0.42f, 1f),   // Brown trousers
+            new Color(0.80f, 0.68f, 0.58f, 1f),   // Slightly paler skin
+            new Color(0.10f, 0.10f, 0.10f, 1f),
+            false);
+
+        // SCHOOL_KID - Black blazer, grey trousers
+        buildAndCacheHumanoid(NPCType.SCHOOL_KID,
+            new Color(0.10f, 0.10f, 0.12f, 1f),  // Black blazer
+            new Color(0.40f, 0.40f, 0.42f, 1f),   // Grey trousers
+            new Color(0.85f, 0.70f, 0.60f, 1f),
+            new Color(0.10f, 0.10f, 0.10f, 1f),
+            false);
+
         // DOG - Brown quadruped
         Model[] dParts = buildDogParts(
             new Color(0.55f, 0.35f, 0.18f, 1f),

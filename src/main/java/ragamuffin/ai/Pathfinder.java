@@ -12,7 +12,7 @@ import java.util.*;
  */
 public class Pathfinder {
 
-    private static final int MAX_SEARCH_NODES = 1000; // Prevent infinite loops
+    private static final int MAX_SEARCH_NODES = 2000; // Allow larger search area for buildings
     private static final float DIAGONAL_COST = 1.414f;
     private static final float STRAIGHT_COST = 1.0f;
 
