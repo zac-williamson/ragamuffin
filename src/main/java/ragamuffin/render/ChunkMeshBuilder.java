@@ -3,11 +3,14 @@ package ragamuffin.render;
 import com.badlogic.gdx.graphics.Color;
 import ragamuffin.world.BlockType;
 import ragamuffin.world.Chunk;
+import ragamuffin.world.World;
 
 /**
  * Builds 3D meshes from chunk data using greedy meshing.
  * Merges adjacent coplanar faces of the same block type into larger quads
  * to dramatically reduce vertex/triangle count.
+ * Optionally uses World reference for cross-chunk neighbour queries to eliminate
+ * visible seams at chunk boundaries.
  */
 public class ChunkMeshBuilder {
 
@@ -18,6 +21,39 @@ public class ChunkMeshBuilder {
     private static final int MAX_SLICE = Chunk.SIZE * Chunk.HEIGHT;
     private final BlockType[] mask = new BlockType[MAX_SLICE];
     private final boolean[] merged = new boolean[MAX_SLICE];
+
+    // Optional world reference for cross-chunk queries
+    private World world;
+
+    /**
+     * Set the world reference for cross-chunk neighbour queries.
+     * When set, faces at chunk boundaries are only emitted if the adjacent
+     * block in the neighbouring chunk is non-solid.
+     */
+    public void setWorld(World world) {
+        this.world = world;
+    }
+
+    /**
+     * Get the block at a world position, using the world reference if available.
+     * Falls back to AIR for out-of-chunk blocks when no world is set.
+     */
+    private BlockType getWorldBlock(Chunk chunk, int localX, int localY, int localZ) {
+        // Within chunk bounds — use chunk directly
+        if (localX >= 0 && localX < Chunk.SIZE &&
+            localY >= 0 && localY < Chunk.HEIGHT &&
+            localZ >= 0 && localZ < Chunk.SIZE) {
+            return chunk.getBlock(localX, localY, localZ);
+        }
+        // Outside chunk bounds — use world reference if available
+        if (world != null) {
+            int worldX = chunk.getChunkX() * Chunk.SIZE + localX;
+            int worldY = chunk.getChunkY() * Chunk.HEIGHT + localY;
+            int worldZ = chunk.getChunkZ() * Chunk.SIZE + localZ;
+            return world.getBlock(worldX, worldY, worldZ);
+        }
+        return BlockType.AIR;
+    }
 
     public MeshData build(Chunk chunk) {
         MeshData meshData = new MeshData();
@@ -58,12 +94,12 @@ public class ChunkMeshBuilder {
 
                     if (positive) {
                         // East face: block at x-1 with no solid block at x
-                        current = (x > 0) ? chunk.getBlock(x - 1, y, z) : BlockType.AIR;
-                        neighbour = (x < Chunk.SIZE) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                        current = getWorldBlock(chunk, x - 1, y, z);
+                        neighbour = getWorldBlock(chunk, x, y, z);
                     } else {
                         // West face: block at x with no solid block at x-1
-                        current = (x < Chunk.SIZE) ? chunk.getBlock(x, y, z) : BlockType.AIR;
-                        neighbour = (x > 0) ? chunk.getBlock(x - 1, y, z) : BlockType.AIR;
+                        current = getWorldBlock(chunk, x, y, z);
+                        neighbour = getWorldBlock(chunk, x - 1, y, z);
                     }
 
                     if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
@@ -83,22 +119,25 @@ public class ChunkMeshBuilder {
                     if (mask[idx] == null || merged[idx]) continue;
 
                     BlockType type = mask[idx];
+                    boolean textured = type.hasTextureDetail();
 
-                    // Expand width (z direction)
+                    // Don't merge textured blocks — each gets unique colour
                     int w = 1;
-                    while (z + w < sliceW && mask[y * sliceW + z + w] == type && !merged[y * sliceW + z + w]) {
-                        w++;
-                    }
-
-                    // Expand height (y direction)
                     int h = 1;
-                    outer:
-                    while (y + h < sliceH) {
-                        for (int dz = 0; dz < w; dz++) {
-                            int checkIdx = (y + h) * sliceW + z + dz;
-                            if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                    if (!textured) {
+                        // Expand width (z direction)
+                        while (z + w < sliceW && mask[y * sliceW + z + w] == type && !merged[y * sliceW + z + w]) {
+                            w++;
                         }
-                        h++;
+                        // Expand height (y direction)
+                        outer:
+                        while (y + h < sliceH) {
+                            for (int dz = 0; dz < w; dz++) {
+                                int checkIdx = (y + h) * sliceW + z + dz;
+                                if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                            }
+                            h++;
+                        }
                     }
 
                     // Mark merged
@@ -108,8 +147,12 @@ public class ChunkMeshBuilder {
                         }
                     }
 
-                    // Emit quad
-                    Color color = type.getColor();
+                    // Get colour — textured blocks use position-dependent colour
+                    int worldX = chunk.getChunkX() * Chunk.SIZE + (positive ? x - 1 : x);
+                    int worldY = chunk.getChunkY() * Chunk.HEIGHT + y;
+                    int worldZ = chunk.getChunkZ() * Chunk.SIZE + z;
+                    Color color = textured ? type.getTexturedColor(worldX, worldY, worldZ, false) : type.getColor();
+
                     float fx = x;
                     float fy = y;
                     float fz = z;
@@ -117,7 +160,6 @@ public class ChunkMeshBuilder {
                     float fw = w;
 
                     if (positive) {
-                        // East face (+X normal) — CCW winding viewed from +X
                         vertexIndex = addFace(meshData, vertexIndex, color,
                             fx, fy, fz + fw,
                             fx, fy, fz,
@@ -125,7 +167,6 @@ public class ChunkMeshBuilder {
                             fx, fy + fh, fz + fw,
                             1, 0, 0, fw, fh);
                     } else {
-                        // West face (-X normal) — CCW winding viewed from -X
                         vertexIndex = addFace(meshData, vertexIndex, color,
                             fx, fy, fz,
                             fx, fy, fz + fw,
@@ -157,12 +198,12 @@ public class ChunkMeshBuilder {
 
                     if (positive) {
                         // Top face: block at y-1 with no solid block at y
-                        current = (y > 0) ? chunk.getBlock(x, y - 1, z) : BlockType.AIR;
-                        neighbour = (y < Chunk.HEIGHT) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                        current = getWorldBlock(chunk, x, y - 1, z);
+                        neighbour = getWorldBlock(chunk, x, y, z);
                     } else {
                         // Bottom face: block at y with no solid block at y-1
-                        current = (y < Chunk.HEIGHT) ? chunk.getBlock(x, y, z) : BlockType.AIR;
-                        neighbour = (y > 0) ? chunk.getBlock(x, y - 1, z) : BlockType.AIR;
+                        current = getWorldBlock(chunk, x, y, z);
+                        neighbour = getWorldBlock(chunk, x, y - 1, z);
                     }
 
                     if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
@@ -182,22 +223,24 @@ public class ChunkMeshBuilder {
                     if (mask[idx] == null || merged[idx]) continue;
 
                     BlockType type = mask[idx];
+                    boolean textured = type.hasTextureDetail();
 
-                    // Expand width (z direction)
                     int w = 1;
-                    while (z + w < sliceW && mask[x * sliceW + z + w] == type && !merged[x * sliceW + z + w]) {
-                        w++;
-                    }
-
-                    // Expand height (x direction)
                     int h = 1;
-                    outer:
-                    while (x + h < sliceH) {
-                        for (int dz = 0; dz < w; dz++) {
-                            int checkIdx = (x + h) * sliceW + z + dz;
-                            if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                    if (!textured) {
+                        // Expand width (z direction)
+                        while (z + w < sliceW && mask[x * sliceW + z + w] == type && !merged[x * sliceW + z + w]) {
+                            w++;
                         }
-                        h++;
+                        // Expand height (x direction)
+                        outer:
+                        while (x + h < sliceH) {
+                            for (int dz = 0; dz < w; dz++) {
+                                int checkIdx = (x + h) * sliceW + z + dz;
+                                if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                            }
+                            h++;
+                        }
                     }
 
                     // Mark merged
@@ -207,25 +250,28 @@ public class ChunkMeshBuilder {
                         }
                     }
 
-                    // Emit quad
-                    Color color = type.getColor();
+                    // Get colour — textured blocks use position-dependent colour
+                    int worldX = chunk.getChunkX() * Chunk.SIZE + x;
+                    int worldY = chunk.getChunkY() * Chunk.HEIGHT + (positive ? y - 1 : y);
+                    int worldZ = chunk.getChunkZ() * Chunk.SIZE + z;
+
                     float fx = x;
                     float fy = y;
                     float fz = z;
-                    float fh = h;  // x extent
-                    float fw = w;  // z extent
+                    float fh = h;
+                    float fw = w;
 
                     if (positive) {
-                        // Top face (+Y normal) — CCW winding viewed from +Y
-                        vertexIndex = addFace(meshData, vertexIndex, color,
+                        Color topColor = textured ? type.getTexturedColor(worldX, worldY, worldZ, true) : type.getTopColor();
+                        vertexIndex = addFace(meshData, vertexIndex, topColor,
                             fx, fy, fz + fw,
                             fx + fh, fy, fz + fw,
                             fx + fh, fy, fz,
                             fx, fy, fz,
                             0, 1, 0, fh, fw);
                     } else {
-                        // Bottom face (-Y normal) — CCW winding viewed from -Y
-                        vertexIndex = addFace(meshData, vertexIndex, color,
+                        Color bottomColor = textured ? type.getTexturedColor(worldX, worldY, worldZ, false) : type.getBottomColor();
+                        vertexIndex = addFace(meshData, vertexIndex, bottomColor,
                             fx, fy, fz,
                             fx + fh, fy, fz,
                             fx + fh, fy, fz + fw,
@@ -256,12 +302,12 @@ public class ChunkMeshBuilder {
 
                     if (positive) {
                         // South face: block at z-1 with no solid at z
-                        current = (z > 0) ? chunk.getBlock(x, y, z - 1) : BlockType.AIR;
-                        neighbour = (z < Chunk.SIZE) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                        current = getWorldBlock(chunk, x, y, z - 1);
+                        neighbour = getWorldBlock(chunk, x, y, z);
                     } else {
                         // North face: block at z with no solid at z-1
-                        current = (z < Chunk.SIZE) ? chunk.getBlock(x, y, z) : BlockType.AIR;
-                        neighbour = (z > 0) ? chunk.getBlock(x, y, z - 1) : BlockType.AIR;
+                        current = getWorldBlock(chunk, x, y, z);
+                        neighbour = getWorldBlock(chunk, x, y, z - 1);
                     }
 
                     if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
@@ -281,22 +327,24 @@ public class ChunkMeshBuilder {
                     if (mask[idx] == null || merged[idx]) continue;
 
                     BlockType type = mask[idx];
+                    boolean textured = type.hasTextureDetail();
 
-                    // Expand width (x direction)
                     int w = 1;
-                    while (x + w < sliceW && mask[y * sliceW + x + w] == type && !merged[y * sliceW + x + w]) {
-                        w++;
-                    }
-
-                    // Expand height (y direction)
                     int h = 1;
-                    outer:
-                    while (y + h < sliceH) {
-                        for (int dx = 0; dx < w; dx++) {
-                            int checkIdx = (y + h) * sliceW + x + dx;
-                            if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                    if (!textured) {
+                        // Expand width (x direction)
+                        while (x + w < sliceW && mask[y * sliceW + x + w] == type && !merged[y * sliceW + x + w]) {
+                            w++;
                         }
-                        h++;
+                        // Expand height (y direction)
+                        outer:
+                        while (y + h < sliceH) {
+                            for (int dx = 0; dx < w; dx++) {
+                                int checkIdx = (y + h) * sliceW + x + dx;
+                                if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                            }
+                            h++;
+                        }
                     }
 
                     // Mark merged
@@ -306,16 +354,19 @@ public class ChunkMeshBuilder {
                         }
                     }
 
-                    // Emit quad
-                    Color color = type.getColor();
+                    // Get colour — textured blocks use position-dependent colour
+                    int worldX = chunk.getChunkX() * Chunk.SIZE + x;
+                    int worldY = chunk.getChunkY() * Chunk.HEIGHT + y;
+                    int worldZ = chunk.getChunkZ() * Chunk.SIZE + (positive ? z - 1 : z);
+                    Color color = textured ? type.getTexturedColor(worldX, worldY, worldZ, false) : type.getColor();
+
                     float fx = x;
                     float fy = y;
                     float fz = z;
-                    float fh = h;  // y extent
-                    float fw = w;  // x extent
+                    float fh = h;
+                    float fw = w;
 
                     if (positive) {
-                        // South face (+Z normal) — CCW winding viewed from +Z
                         vertexIndex = addFace(meshData, vertexIndex, color,
                             fx, fy, fz,
                             fx + fw, fy, fz,
@@ -323,7 +374,6 @@ public class ChunkMeshBuilder {
                             fx, fy + fh, fz,
                             0, 0, 1, fw, fh);
                     } else {
-                        // North face (-Z normal) — CCW winding viewed from -Z
                         vertexIndex = addFace(meshData, vertexIndex, color,
                             fx + fw, fy, fz,
                             fx, fy, fz,

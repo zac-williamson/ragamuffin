@@ -47,7 +47,8 @@ public enum BlockType {
     TABLE(37, true),       // Pub/cafe table
     CARPET(38, true),      // Floor carpet
     LINO_GREEN(39, true),  // Cheap lino flooring
-    BOOKSHELF(40, true);   // Library bookshelf
+    BOOKSHELF(40, true),   // Library bookshelf
+    BEDROCK(41, true);     // Indestructible bottom layer
 
     private final int id;
     private final boolean solid;
@@ -76,54 +77,236 @@ public enum BlockType {
     }
 
     /**
-     * Get the color for this block type. Cached to avoid allocation.
+     * Get the color for this block type (side faces). Cached to avoid allocation.
      */
     public Color getColor() {
         if (cachedColor != null) return cachedColor;
-        switch (this) {
-            case AIR: cachedColor = new Color(0, 0, 0, 0); break;
-            case GRASS: cachedColor = new Color(0.3f, 0.7f, 0.2f, 1f); break;
-            case DIRT: cachedColor = new Color(0.6f, 0.4f, 0.2f, 1f); break;
-            case STONE: cachedColor = new Color(0.6f, 0.6f, 0.6f, 1f); break;
-            case PAVEMENT: cachedColor = new Color(0.7f, 0.7f, 0.7f, 1f); break;
-            case ROAD: cachedColor = new Color(0.3f, 0.3f, 0.3f, 1f); break;
-            case BRICK: cachedColor = new Color(0.7f, 0.3f, 0.2f, 1f); break;
-            case GLASS: cachedColor = new Color(0.6f, 0.8f, 0.95f, 0.5f); break;
-            case WOOD: cachedColor = new Color(0.7f, 0.5f, 0.3f, 1f); break;
-            case WATER: cachedColor = new Color(0.2f, 0.3f, 0.8f, 0.7f); break;
-            case TREE_TRUNK: cachedColor = new Color(0.4f, 0.25f, 0.1f, 1f); break;
-            case LEAVES: cachedColor = new Color(0.2f, 0.5f, 0.1f, 1f); break;
-            case CARDBOARD: cachedColor = new Color(0.7f, 0.6f, 0.4f, 1f); break;
-            case IRON_FENCE: cachedColor = new Color(0.2f, 0.2f, 0.2f, 1f); break;
-            case SIGN_WHITE: cachedColor = new Color(0.95f, 0.95f, 0.95f, 1f); break;
-            case SIGN_RED: cachedColor = new Color(0.9f, 0.1f, 0.1f, 1f); break;
-            case SIGN_BLUE: cachedColor = new Color(0.1f, 0.2f, 0.7f, 1f); break;
-            case SIGN_GREEN: cachedColor = new Color(0.1f, 0.6f, 0.2f, 1f); break;
-            case SIGN_YELLOW: cachedColor = new Color(0.9f, 0.8f, 0.1f, 1f); break;
-            case GARDEN_WALL: cachedColor = new Color(0.5f, 0.45f, 0.4f, 1f); break;
-            case CONCRETE: cachedColor = new Color(0.75f, 0.75f, 0.73f, 1f); break;
-            case ROOF_TILE: cachedColor = new Color(0.55f, 0.2f, 0.15f, 1f); break;
-            case TARMAC: cachedColor = new Color(0.22f, 0.22f, 0.22f, 1f); break;
-            case CORRUGATED_METAL: cachedColor = new Color(0.55f, 0.58f, 0.6f, 1f); break;
-            case RENDER_WHITE: cachedColor = new Color(0.92f, 0.9f, 0.88f, 1f); break;
-            case RENDER_CREAM: cachedColor = new Color(0.9f, 0.85f, 0.7f, 1f); break;
-            case SLATE: cachedColor = new Color(0.35f, 0.38f, 0.42f, 1f); break;
-            case PEBBLEDASH: cachedColor = new Color(0.78f, 0.75f, 0.7f, 1f); break;
-            case DOOR_WOOD: cachedColor = new Color(0.45f, 0.28f, 0.12f, 1f); break;
-            case LINOLEUM: cachedColor = new Color(0.6f, 0.55f, 0.45f, 1f); break;
-            case YELLOW_BRICK: cachedColor = new Color(0.85f, 0.75f, 0.4f, 1f); break;
-            case TILE_WHITE: cachedColor = new Color(0.95f, 0.95f, 0.95f, 1f); break;
-            case TILE_BLACK: cachedColor = new Color(0.15f, 0.15f, 0.15f, 1f); break;
-            case RENDER_PINK: cachedColor = new Color(0.9f, 0.7f, 0.75f, 1f); break;
-            case METAL_RED: cachedColor = new Color(0.8f, 0.15f, 0.1f, 1f); break;
-            case COUNTER: cachedColor = new Color(0.65f, 0.55f, 0.4f, 1f); break;
-            case SHELF: cachedColor = new Color(0.55f, 0.4f, 0.25f, 1f); break;
-            case TABLE: cachedColor = new Color(0.5f, 0.35f, 0.2f, 1f); break;
-            case CARPET: cachedColor = new Color(0.5f, 0.2f, 0.2f, 1f); break;
-            case LINO_GREEN: cachedColor = new Color(0.4f, 0.55f, 0.35f, 1f); break;
-            case BOOKSHELF: cachedColor = new Color(0.4f, 0.3f, 0.15f, 1f); break;
-            default: cachedColor = new Color(1f, 1f, 1f, 1f); break;
-        }
+        cachedColor = buildSideColor();
         return cachedColor;
+    }
+
+    private Color cachedTopColor;
+    private Color cachedBottomColor;
+
+    /**
+     * Get the top face colour (may differ from sides for visual variety).
+     */
+    public Color getTopColor() {
+        if (cachedTopColor != null) return cachedTopColor;
+        cachedTopColor = buildTopColor();
+        return cachedTopColor;
+    }
+
+    /**
+     * Get the bottom face colour.
+     */
+    public Color getBottomColor() {
+        if (cachedBottomColor != null) return cachedBottomColor;
+        cachedBottomColor = buildBottomColor();
+        return cachedBottomColor;
+    }
+
+    /**
+     * Whether this block type needs per-block colour variation (skips greedy merge).
+     * Used for blocks like brick that need mortar lines / individual texture.
+     */
+    public boolean hasTextureDetail() {
+        switch (this) {
+            case BRICK:
+            case YELLOW_BRICK:
+            case STONE:
+            case PEBBLEDASH:
+            case ROOF_TILE:
+            case SLATE:
+            case WOOD:
+            case TREE_TRUNK:
+            case BOOKSHELF:
+            case CARDBOARD:
+            case GARDEN_WALL:
+            case TILE_WHITE:
+            case TILE_BLACK:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Get a position-dependent colour variation for textured blocks.
+     * Creates mortar lines, grain, speckle patterns based on world position.
+     */
+    public Color getTexturedColor(int worldX, int worldY, int worldZ, boolean isTop) {
+        Color base = isTop ? getTopColor() : getColor();
+
+        // Use position hash for deterministic variation
+        int hash = worldX * 73856093 ^ worldY * 19349663 ^ worldZ * 83492791;
+        float variation = ((hash & 0xFF) / 255.0f - 0.5f) * 0.08f; // ±4% variation
+
+        switch (this) {
+            case BRICK:
+            case YELLOW_BRICK:
+                // Mortar lines: slightly lighter colour at y-boundaries and every 4th x
+                boolean isMortarY = (worldY % 3 == 0);
+                boolean isMortarX = ((worldX + (worldY % 2 == 0 ? 0 : 2)) % 4 == 0);
+                if (isMortarY || isMortarX) {
+                    return new Color(
+                        Math.min(1, base.r + 0.15f),
+                        Math.min(1, base.g + 0.12f),
+                        Math.min(1, base.b + 0.08f), base.a);
+                }
+                return new Color(base.r + variation, base.g + variation * 0.8f, base.b + variation * 0.6f, base.a);
+
+            case STONE:
+            case GARDEN_WALL:
+                // Speckled stone
+                return new Color(
+                    clamp01(base.r + variation * 1.5f),
+                    clamp01(base.g + variation * 1.5f),
+                    clamp01(base.b + variation * 1.2f), base.a);
+
+            case PEBBLEDASH:
+                // Rough speckle
+                float pebbleVar = ((hash & 0xFFF) / 4095.0f - 0.5f) * 0.12f;
+                return new Color(
+                    clamp01(base.r + pebbleVar),
+                    clamp01(base.g + pebbleVar * 0.9f),
+                    clamp01(base.b + pebbleVar * 0.7f), base.a);
+
+            case ROOF_TILE:
+            case SLATE:
+                // Subtle tile variation
+                return new Color(
+                    clamp01(base.r + variation),
+                    clamp01(base.g + variation * 0.7f),
+                    clamp01(base.b + variation * 0.5f), base.a);
+
+            case WOOD:
+            case TREE_TRUNK:
+                // Wood grain — darken every other row
+                boolean isGrainLine = (worldY % 2 == 0);
+                float grainDarken = isGrainLine ? -0.05f : 0.02f;
+                return new Color(
+                    clamp01(base.r + grainDarken + variation),
+                    clamp01(base.g + grainDarken * 0.8f + variation * 0.6f),
+                    clamp01(base.b + grainDarken * 0.5f + variation * 0.3f), base.a);
+
+            case TILE_WHITE:
+            case TILE_BLACK:
+                // Grid lines (grout)
+                boolean isGrout = (worldX % 2 == 0) || (worldZ % 2 == 0);
+                if (isGrout && isTop) {
+                    return new Color(
+                        clamp01(base.r + 0.08f),
+                        clamp01(base.g + 0.08f),
+                        clamp01(base.b + 0.08f), base.a);
+                }
+                return base;
+
+            case BOOKSHELF:
+                // Individual book colours
+                float bookVar = ((hash & 0x1FF) / 511.0f - 0.5f) * 0.2f;
+                return new Color(
+                    clamp01(base.r + bookVar),
+                    clamp01(base.g + bookVar * 0.5f),
+                    clamp01(base.b - bookVar * 0.3f), base.a);
+
+            case CARDBOARD:
+                // Corrugation lines
+                boolean isFold = (worldY % 2 == 0);
+                float foldVar = isFold ? -0.04f : 0.03f;
+                return new Color(
+                    clamp01(base.r + foldVar + variation),
+                    clamp01(base.g + foldVar * 0.8f + variation * 0.7f),
+                    clamp01(base.b + foldVar * 0.5f + variation * 0.4f), base.a);
+
+            default:
+                return base;
+        }
+    }
+
+    private static float clamp01(float v) {
+        return Math.max(0, Math.min(1, v));
+    }
+
+    private Color buildSideColor() {
+        switch (this) {
+            case AIR: return new Color(0, 0, 0, 0);
+            case GRASS: return new Color(0.45f, 0.35f, 0.2f, 1f);       // Brown dirt sides
+            case DIRT: return new Color(0.55f, 0.38f, 0.18f, 1f);       // Warm brown
+            case STONE: return new Color(0.52f, 0.52f, 0.50f, 1f);      // Cool mid-grey
+            case PAVEMENT: return new Color(0.68f, 0.68f, 0.65f, 1f);   // Light warm grey
+            case ROAD: return new Color(0.25f, 0.25f, 0.27f, 1f);       // Near-black asphalt
+            case BRICK: return new Color(0.72f, 0.28f, 0.18f, 1f);      // Strong terracotta red
+            case GLASS: return new Color(0.55f, 0.78f, 0.92f, 0.45f);   // Light blue tint
+            case WOOD: return new Color(0.72f, 0.52f, 0.28f, 1f);       // Warm pine
+            case WATER: return new Color(0.15f, 0.30f, 0.75f, 0.7f);    // Deep blue
+            case TREE_TRUNK: return new Color(0.35f, 0.22f, 0.08f, 1f); // Dark bark brown
+            case LEAVES: return new Color(0.18f, 0.48f, 0.12f, 1f);     // Forest green
+            case CARDBOARD: return new Color(0.75f, 0.62f, 0.38f, 1f);  // Tan corrugated
+            case IRON_FENCE: return new Color(0.18f, 0.18f, 0.20f, 1f); // Almost black iron
+            case SIGN_WHITE: return new Color(0.95f, 0.95f, 0.92f, 1f);
+            case SIGN_RED: return new Color(0.88f, 0.10f, 0.10f, 1f);
+            case SIGN_BLUE: return new Color(0.10f, 0.18f, 0.68f, 1f);
+            case SIGN_GREEN: return new Color(0.10f, 0.58f, 0.18f, 1f);
+            case SIGN_YELLOW: return new Color(0.92f, 0.82f, 0.12f, 1f);
+            case GARDEN_WALL: return new Color(0.58f, 0.50f, 0.42f, 1f); // Sandstone warm
+            case CONCRETE: return new Color(0.62f, 0.62f, 0.58f, 1f);    // Cool grey, greenish tint
+            case ROOF_TILE: return new Color(0.60f, 0.18f, 0.12f, 1f);   // Deep terracotta
+            case TARMAC: return new Color(0.18f, 0.18f, 0.18f, 1f);      // Very dark
+            case CORRUGATED_METAL: return new Color(0.48f, 0.52f, 0.55f, 1f); // Blue-grey steel
+            case RENDER_WHITE: return new Color(0.92f, 0.90f, 0.86f, 1f);
+            case RENDER_CREAM: return new Color(0.88f, 0.82f, 0.62f, 1f); // Warmer cream
+            case SLATE: return new Color(0.30f, 0.32f, 0.38f, 1f);       // Dark blue-grey
+            case PEBBLEDASH: return new Color(0.72f, 0.70f, 0.62f, 1f);  // Sandy/speckled
+            case DOOR_WOOD: return new Color(0.42f, 0.25f, 0.10f, 1f);   // Dark oak
+            case LINOLEUM: return new Color(0.58f, 0.52f, 0.42f, 1f);    // Beige floor
+            case YELLOW_BRICK: return new Color(0.82f, 0.72f, 0.35f, 1f); // London stock brick
+            case TILE_WHITE: return new Color(0.92f, 0.92f, 0.90f, 1f);  // Clean white
+            case TILE_BLACK: return new Color(0.12f, 0.12f, 0.12f, 1f);  // Jet black
+            case RENDER_PINK: return new Color(0.88f, 0.65f, 0.70f, 1f); // Rosy pink
+            case METAL_RED: return new Color(0.78f, 0.12f, 0.08f, 1f);   // Pillar box red
+            case COUNTER: return new Color(0.62f, 0.52f, 0.38f, 1f);     // Laminate brown
+            case SHELF: return new Color(0.52f, 0.38f, 0.22f, 1f);       // Plywood brown
+            case TABLE: return new Color(0.48f, 0.32f, 0.18f, 1f);       // Dark stained
+            case CARPET: return new Color(0.52f, 0.18f, 0.18f, 1f);      // Deep burgundy
+            case LINO_GREEN: return new Color(0.35f, 0.52f, 0.30f, 1f);  // Hospital green
+            case BOOKSHELF: return new Color(0.38f, 0.28f, 0.12f, 1f);   // Dark walnut
+            case BEDROCK: return new Color(0.15f, 0.15f, 0.15f, 1f);   // Very dark grey
+            default: return new Color(1f, 1f, 1f, 1f);
+        }
+    }
+
+    private Color buildTopColor() {
+        switch (this) {
+            case GRASS: return new Color(0.28f, 0.68f, 0.18f, 1f);       // Bright green top
+            case DIRT: return new Color(0.52f, 0.35f, 0.15f, 1f);        // Dry earth
+            case TREE_TRUNK: return new Color(0.48f, 0.32f, 0.12f, 1f);  // Wood rings
+            case BRICK: return new Color(0.62f, 0.52f, 0.42f, 1f);       // Mortar top
+            case YELLOW_BRICK: return new Color(0.78f, 0.70f, 0.45f, 1f);// Mortar top
+            case STONE: return new Color(0.55f, 0.55f, 0.52f, 1f);       // Lighter stone top
+            case CONCRETE: return new Color(0.65f, 0.65f, 0.60f, 1f);    // Lighter concrete
+            case COUNTER: return new Color(0.72f, 0.68f, 0.58f, 1f);     // Lighter worktop
+            case TABLE: return new Color(0.55f, 0.40f, 0.22f, 1f);       // Polished top
+            case BOOKSHELF: return new Color(0.32f, 0.22f, 0.08f, 1f);   // Darker top
+            case SHELF: return new Color(0.58f, 0.42f, 0.28f, 1f);       // Lighter shelf top
+            case ROAD: return new Color(0.22f, 0.22f, 0.24f, 1f);        // Slightly lighter
+            case PAVEMENT: return new Color(0.70f, 0.70f, 0.68f, 1f);    // Slightly lighter
+            case ROOF_TILE: return new Color(0.55f, 0.15f, 0.10f, 1f);   // Darker ridge
+            case SLATE: return new Color(0.28f, 0.30f, 0.35f, 1f);       // Darker slate top
+            case CORRUGATED_METAL: return new Color(0.45f, 0.48f, 0.52f, 1f); // Weathered top
+            case GARDEN_WALL: return new Color(0.55f, 0.48f, 0.38f, 1f); // Coping stone
+            case CARPET: return new Color(0.48f, 0.15f, 0.15f, 1f);      // Slightly different pile
+            case WOOD: return new Color(0.68f, 0.50f, 0.25f, 1f);        // End grain
+            case CARDBOARD: return new Color(0.72f, 0.60f, 0.35f, 1f);   // Flap edge
+            default: return buildSideColor();
+        }
+    }
+
+    private Color buildBottomColor() {
+        switch (this) {
+            case GRASS: return new Color(0.5f, 0.35f, 0.18f, 1f); // Earth
+            case DIRT: return new Color(0.5f, 0.35f, 0.18f, 1f); // Darker earth
+            default: return buildSideColor(); // Same as side
+        }
     }
 }

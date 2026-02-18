@@ -134,17 +134,18 @@ public class WorldGenerator {
         int parkStart = -PARK_SIZE / 2;
         markFlatZone(parkStart, parkStart, PARK_SIZE, PARK_SIZE);
 
-        // Streets — horizontal and vertical every 20 blocks
+        // Streets — horizontal and vertical every 20 blocks (built-up area only)
         int streetSpacing = 20;
-        for (int z = -halfWorld; z <= halfWorld; z += streetSpacing) {
-            for (int x = -halfWorld; x <= halfWorld; x++) {
+        int streetExtent = 170;
+        for (int z = -streetExtent; z <= streetExtent; z += streetSpacing) {
+            for (int x = -streetExtent; x <= streetExtent; x++) {
                 for (int w = 0; w < STREET_WIDTH; w++) {
                     flatZones.add(packCoord(x, z + w));
                 }
             }
         }
-        for (int x = -halfWorld; x <= halfWorld; x += streetSpacing) {
-            for (int z = -halfWorld; z <= halfWorld; z++) {
+        for (int x = -streetExtent; x <= streetExtent; x += streetSpacing) {
+            for (int z = -streetExtent; z <= streetExtent; z++) {
                 for (int w = 0; w < STREET_WIDTH; w++) {
                     flatZones.add(packCoord(x + w, z));
                 }
@@ -251,11 +252,17 @@ public class WorldGenerator {
         markAllFlatZones();
 
         // Fill entire world with terrain using heightmap
+        // Deep terrain: bedrock at y=-6, stone from y=-5 to y=-1, dirt/grass on surface
         int halfWorld = WORLD_SIZE / 2;
         for (int x = -halfWorld; x < halfWorld; x++) {
             for (int z = -halfWorld; z < halfWorld; z++) {
                 int terrainHeight = getTerrainHeight(x, z);
-                world.setBlock(x, -1, z, BlockType.STONE); // Bedrock layer
+                // Bedrock (indestructible bottom)
+                world.setBlock(x, -6, z, BlockType.BEDROCK);
+                // Stone layers
+                for (int y = -5; y <= -1; y++) {
+                    world.setBlock(x, y, z, BlockType.STONE);
+                }
                 // Fill dirt from y=0 up to terrainHeight-1, grass on top
                 for (int y = 0; y < terrainHeight; y++) {
                     world.setBlock(x, y, z, BlockType.DIRT);
@@ -507,10 +514,18 @@ public class WorldGenerator {
                     worldZ >= -halfWorld && worldZ < halfWorld) {
                     int terrainHeight = getTerrainHeight(worldX, worldZ);
 
-                    // Bedrock at y=-1
-                    int stoneLocalY = -1 - startY;
-                    if (stoneLocalY >= 0 && stoneLocalY < Chunk.HEIGHT) {
-                        chunk.setBlock(localX, stoneLocalY, localZ, BlockType.STONE);
+                    // Bedrock at y=-6
+                    int bedrockLocalY = -6 - startY;
+                    if (bedrockLocalY >= 0 && bedrockLocalY < Chunk.HEIGHT) {
+                        chunk.setBlock(localX, bedrockLocalY, localZ, BlockType.BEDROCK);
+                    }
+
+                    // Stone from y=-5 to y=-1
+                    for (int y = -5; y <= -1; y++) {
+                        int localY = y - startY;
+                        if (localY >= 0 && localY < Chunk.HEIGHT) {
+                            chunk.setBlock(localX, localY, localZ, BlockType.STONE);
+                        }
                     }
 
                     // Fill dirt from y=0 to terrainHeight-1, grass on top
@@ -602,12 +617,13 @@ public class WorldGenerator {
     // ==================== STREETS ====================
 
     private void generateStreets(World world) {
-        int halfWorld = WORLD_SIZE / 2;
+        // Only generate streets within the built-up area, not the whole world
+        int streetExtent = 170; // Streets cover -170 to +170 (where buildings are)
         int streetSpacing = 20;
 
         // Horizontal streets
-        for (int z = -halfWorld; z <= halfWorld; z += streetSpacing) {
-            for (int x = -halfWorld; x <= halfWorld; x++) {
+        for (int z = -streetExtent; z <= streetExtent; z += streetSpacing) {
+            for (int x = -streetExtent; x <= streetExtent; x++) {
                 if (Math.abs(x) < PARK_SIZE / 2 && Math.abs(z) < PARK_SIZE / 2) {
                     continue;
                 }
@@ -624,8 +640,8 @@ public class WorldGenerator {
         }
 
         // Vertical streets
-        for (int x = -halfWorld; x <= halfWorld; x += streetSpacing) {
-            for (int z = -halfWorld; z <= halfWorld; z++) {
+        for (int x = -streetExtent; x <= streetExtent; x += streetSpacing) {
+            for (int z = -streetExtent; z <= streetExtent; z++) {
                 if (Math.abs(x) < PARK_SIZE / 2 && Math.abs(z) < PARK_SIZE / 2) {
                     continue;
                 }

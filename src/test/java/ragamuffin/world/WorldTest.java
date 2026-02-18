@@ -58,16 +58,17 @@ public class WorldTest {
 
     @Test
     public void testChunkUnloading() {
-        // Load chunks at origin
+        // Load chunks far outside the generated world bounds
+        int farChunk = 20; // Well beyond WORLD_CHUNK_RADIUS of 15
+        int farPos = farChunk * Chunk.SIZE;
+        world.updateLoadedChunks(new Vector3(farPos, 0, 0));
+        assertTrue(world.isChunkLoaded(farChunk, 0, 0));
+
+        // Move back to origin — the far chunk is outside world bounds and render distance
         world.updateLoadedChunks(new Vector3(0, 0, 0));
-        assertTrue(world.isChunkLoaded(0, 0, 0));
 
-        // Move far away
-        int farDistance = (world.getRenderDistance() + 2) * Chunk.SIZE;
-        world.updateLoadedChunks(new Vector3(farDistance, 0, 0));
-
-        // Origin chunk should be unloaded
-        assertFalse(world.isChunkLoaded(0, 0, 0));
+        // Far chunk should be unloaded (it's outside the world bounds)
+        assertFalse(world.isChunkLoaded(farChunk, 0, 0));
     }
 
     @Test

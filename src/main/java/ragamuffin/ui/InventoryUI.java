@@ -251,10 +251,10 @@ public class InventoryUI {
                 int textX = slotX + 5;
                 int textY = slotY + SLOT_SIZE - 10;
 
-                String name = getMaterialAbbreviation(material);
+                String name = material.getDisplayName();
                 font.setColor(Color.WHITE);
                 font.draw(batch, name, textX, textY);
-                font.draw(batch, String.valueOf(count), textX + 30, textY - 15);
+                font.draw(batch, "x" + count, textX, textY - 15);
 
                 if (hoverTooltips != null) {
                     String tooltip = material.getDisplayName() + " x" + count;
@@ -285,8 +285,8 @@ public class InventoryUI {
 
                 batch.begin();
                 font.setColor(Color.YELLOW);
-                font.draw(batch, getMaterialAbbreviation(dragMat), cursorUiX + 5, cursorUiY + SLOT_SIZE - 10);
-                font.draw(batch, String.valueOf(count), cursorUiX + 35, cursorUiY + SLOT_SIZE - 25);
+                font.draw(batch, dragMat.getDisplayName(), cursorUiX + 5, cursorUiY + SLOT_SIZE - 10);
+                font.draw(batch, "x" + count, cursorUiX + 5, cursorUiY + SLOT_SIZE - 25);
                 batch.end();
             }
         }
@@ -330,20 +330,29 @@ public class InventoryUI {
             case TARMAC: return "TM";
             case SCRAP_METAL: return "SM";
             case RENDER: return "RN";
+            case RENDER_CREAM: return "RC";
+            case RENDER_PINK: return "RP";
             case SLATE: return "SL";
             case PEBBLEDASH: return "PB";
             case DOOR: return "DR";
             case LINOLEUM: return "LN";
+            case LINO_GREEN: return "LG";
             case YELLOW_BRICK: return "YB";
             case TILE: return "TI";
+            case TILE_BLACK: return "BT";
             case COUNTER: return "CT";
             case SHELF: return "SH";
             case TABLE: return "TA";
             case CARPET: return "CA";
             case FENCE: return "FN";
             case SIGN: return "SI";
+            case SIGN_RED: return "rS";
+            case SIGN_BLUE: return "bS";
+            case SIGN_GREEN: return "gS";
+            case SIGN_YELLOW: return "SY";
             case GARDEN_WALL: return "GW";
             case BOOKSHELF: return "BK";
+            case METAL_RED: return "MR";
             default: return "??";
         }
     }

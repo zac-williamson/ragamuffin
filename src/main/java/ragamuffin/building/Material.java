@@ -38,20 +38,29 @@ public enum Material {
     TARMAC("Tarmac"),
     SCRAP_METAL("Scrap Metal"),
     RENDER("Render"),
+    RENDER_CREAM("Cream Render"),
+    RENDER_PINK("Pink Render"),
     SLATE("Slate"),
     PEBBLEDASH("Pebbledash"),
     DOOR("Door"),
     LINOLEUM("Linoleum"),
+    LINO_GREEN("Green Lino"),
     YELLOW_BRICK("Yellow Brick"),
     TILE("Tile"),
+    TILE_BLACK("Black Tile"),
     COUNTER("Counter"),
     SHELF("Shelf"),
     TABLE("Table"),
     CARPET("Carpet"),
     FENCE("Fence"),
     SIGN("Sign"),
+    SIGN_RED("Red Sign"),
+    SIGN_BLUE("Blue Sign"),
+    SIGN_GREEN("Green Sign"),
+    SIGN_YELLOW("Yellow Sign"),
     GARDEN_WALL("Garden Wall"),
-    BOOKSHELF("Bookshelf");
+    BOOKSHELF("Bookshelf"),
+    METAL_RED("Red Metal");
 
     private final String displayName;
 

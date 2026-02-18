@@ -12,9 +12,10 @@ import java.util.*;
  * Manages the voxel world - chunk loading/unloading and world data access.
  */
 public class World {
-    private static final int RENDER_DISTANCE_DESKTOP = 12;
+    private static final int RENDER_DISTANCE_DESKTOP = 15;
     private static final int RENDER_DISTANCE_WEB = 6;
     private static final int RENDER_DISTANCE = detectRenderDistance();
+    private static final int WORLD_CHUNK_RADIUS = 15; // Half world size in chunks (480/2/16=15)
 
     private static int detectRenderDistance() {
         try {
@@ -122,30 +123,49 @@ public class World {
 
         Set<String> chunksToKeep = new HashSet<>();
 
-        // Load chunks within render distance
+        // Load chunks within render distance (both ground-level and underground)
         for (int dx = -RENDER_DISTANCE; dx <= RENDER_DISTANCE; dx++) {
             for (int dz = -RENDER_DISTANCE; dz <= RENDER_DISTANCE; dz++) {
                 int chunkX = playerChunkX + dx;
                 int chunkZ = playerChunkZ + dz;
 
-                // Only load ground-level chunks for now (chunkY = 0)
-                String key = getChunkKey(chunkX, 0, chunkZ);
-                chunksToKeep.add(key);
+                // Load ground-level chunk (chunkY = 0) and underground chunk (chunkY = -1)
+                for (int cy = -1; cy <= 0; cy++) {
+                    String key = getChunkKey(chunkX, cy, chunkZ);
+                    chunksToKeep.add(key);
 
-                // Generate chunk if not already loaded
-                if (!loadedChunks.containsKey(key)) {
-                    Chunk chunk = new Chunk(chunkX, 0, chunkZ);
-                    if (generator != null) {
-                        generator.generateChunk(chunk, this);
+                    // Generate chunk if not already loaded
+                    if (!loadedChunks.containsKey(key)) {
+                        Chunk chunk = new Chunk(chunkX, cy, chunkZ);
+                        if (generator != null) {
+                            generator.generateChunk(chunk, this);
+                        }
+                        loadedChunks.put(key, chunk);
+                        dirtyChunks.add(key);
                     }
-                    loadedChunks.put(key, chunk);
-                    dirtyChunks.add(key);
                 }
             }
         }
 
-        // Unload chunks beyond render distance
-        loadedChunks.keySet().removeIf(key -> !chunksToKeep.contains(key));
+        // Never unload chunks within the generated world bounds (they contain buildings)
+        // World is 480 blocks = 30 chunks across, from chunk -15 to +14
+        int worldChunkMin = -WORLD_CHUNK_RADIUS;
+        int worldChunkMax = WORLD_CHUNK_RADIUS - 1;
+        loadedChunks.keySet().removeIf(key -> {
+            if (!chunksToKeep.contains(key)) {
+                // Parse chunk coords from key
+                String[] parts = key.split(",");
+                int cx = Integer.parseInt(parts[0]);
+                int cy = Integer.parseInt(parts[1]);
+                int cz = Integer.parseInt(parts[2]);
+                // Keep chunks within the generated world (surface and underground)
+                boolean inWorldBounds = cx >= worldChunkMin && cx <= worldChunkMax &&
+                       cz >= worldChunkMin && cz <= worldChunkMax &&
+                       cy >= -1 && cy <= 0;
+                return !inWorldBounds;
+            }
+            return false;
+        });
     }
 
     /**

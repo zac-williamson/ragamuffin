@@ -168,6 +168,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Setup chunk rendering
         meshBuilder = new ChunkMeshBuilder();
+        meshBuilder.setWorld(world);
         chunkRenderer = new ChunkRenderer();
         npcRenderer = new NPCRenderer();
         firstPersonArm = new FirstPersonArm();
@@ -481,6 +482,20 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
                 inputHandler.resetEnter();
             }
+            // Mouse click support for pause menu
+            if (inputHandler.isLeftClickPressed()) {
+                int sw = Gdx.graphics.getWidth();
+                int sh = Gdx.graphics.getHeight();
+                int clicked = pauseMenu.handleClick(inputHandler.getMouseX(), inputHandler.getMouseY(), sw, sh);
+                if (clicked == 0) {
+                    transitionToPlaying();
+                } else if (clicked == 1) {
+                    restartGame();
+                } else if (clicked == 2) {
+                    Gdx.app.exit();
+                }
+                inputHandler.resetLeftClick();
+            }
         }
     }
 
@@ -502,6 +517,18 @@ public class RagamuffinGame extends ApplicationAdapter {
                 Gdx.app.exit();
             }
             inputHandler.resetEnter();
+        }
+        // Mouse click support for main menu
+        if (inputHandler.isLeftClickPressed()) {
+            int sw = Gdx.graphics.getWidth();
+            int sh = Gdx.graphics.getHeight();
+            int clicked = mainMenuScreen.handleClick(inputHandler.getMouseX(), inputHandler.getMouseY(), sw, sh);
+            if (clicked == 0) {
+                startNewGame();
+            } else if (clicked == 1) {
+                Gdx.app.exit();
+            }
+            inputHandler.resetLeftClick();
         }
     }
 
@@ -1030,6 +1057,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Rebuild chunk rendering
         chunkRenderer = new ChunkRenderer();
+        meshBuilder.setWorld(world);
         world.updateLoadedChunks(player.getPosition());
         updateChunkRenderers();
 

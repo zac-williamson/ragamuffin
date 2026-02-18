@@ -64,8 +64,8 @@ public class BlockBreaker {
     public boolean punchBlock(World world, int x, int y, int z, Material tool) {
         BlockType blockType = world.getBlock(x, y, z);
 
-        // Can't punch air
-        if (blockType == BlockType.AIR || !blockType.isSolid()) {
+        // Can't punch air or bedrock
+        if (blockType == BlockType.AIR || !blockType.isSolid() || blockType == BlockType.BEDROCK) {
             return false;
         }
 

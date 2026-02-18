@@ -123,4 +123,33 @@ public class PauseMenu {
     public boolean isQuitSelected() {
         return selectedOption == OPTION_QUIT;
     }
+
+    /**
+     * Handle mouse click. Returns the selected option index (0=Resume, 1=Restart, 2=Quit)
+     * or -1 if click was not on any option.
+     * screenX/screenY are in LibGDX screen coords (0,0 = top-left).
+     */
+    public int handleClick(int screenX, int screenY, int screenWidth, int screenHeight) {
+        if (!visible) return -1;
+
+        float optionStartY = screenHeight * 0.5f;
+        float optionSpacing = 50f;
+        float optionHeight = 30f;
+        float optionHalfWidth = 120f;
+        float centerX = screenWidth / 2f;
+
+        for (int i = 0; i < NUM_OPTIONS; i++) {
+            // Option Y in UI coords (0=bottom): optionStartY - i * optionSpacing
+            // Convert to screen coords (0=top): screenHeight - (optionStartY - i * optionSpacing)
+            float optionTopScreen = screenHeight - (optionStartY - i * optionSpacing);
+            float optionBottomScreen = optionTopScreen + optionHeight;
+
+            if (screenX >= centerX - optionHalfWidth && screenX <= centerX + optionHalfWidth
+                && screenY >= optionTopScreen - optionHeight && screenY <= optionBottomScreen) {
+                selectedOption = i;
+                return i;
+            }
+        }
+        return -1;
+    }
 }

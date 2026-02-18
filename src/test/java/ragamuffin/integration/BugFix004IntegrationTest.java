@@ -149,18 +149,13 @@ class BugFix004IntegrationTest {
      * This test verifies every Material has a proper abbreviation (not "??").
      */
     @Test
-    void allMaterials_haveProperAbbreviations() {
-        Inventory inventory = new Inventory(36);
-        ragamuffin.ui.HotbarUI hotbarUI = new ragamuffin.ui.HotbarUI(inventory);
-
-        // Add every material to inventory and verify none show as "??"
+    void allMaterials_haveDisplayNames() {
+        // Every material should have a non-empty display name for rendering
         for (Material material : Material.values()) {
-            String abbr = hotbarUI.getMaterialAbbreviation(material);
-            assertNotNull(abbr, "Material " + material.name() + " should have an abbreviation");
-            assertNotEquals("??", abbr,
-                "Material " + material.name() + " should not show as '??'");
-            assertTrue(abbr.length() >= 2 && abbr.length() <= 3,
-                "Abbreviation for " + material.name() + " should be 2-3 chars, got: '" + abbr + "'");
+            String name = material.getDisplayName();
+            assertNotNull(name, "Material " + material.name() + " should have a display name");
+            assertTrue(name.length() >= 2,
+                "Display name for " + material.name() + " should be at least 2 chars, got: '" + name + "'");
         }
     }
 

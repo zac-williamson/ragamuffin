@@ -122,12 +122,12 @@ public class HotbarUI {
                 int textX = x + 5;
                 int textY = startY + SLOT_SIZE - 10;
 
-                // Draw material abbreviation
-                String name = getMaterialAbbreviation(material);
+                // Draw material name
+                String name = material.getDisplayName();
                 font.draw(batch, name, textX, textY);
 
                 // Draw count
-                font.draw(batch, String.valueOf(count), textX + 30, textY - 15);
+                font.draw(batch, "x" + count, textX, textY - 15);
 
                 // Register tooltip zone
                 if (hoverTooltips != null) {
@@ -179,20 +179,29 @@ public class HotbarUI {
             case TARMAC: return "TM";
             case SCRAP_METAL: return "SM";
             case RENDER: return "RN";
+            case RENDER_CREAM: return "RC";
+            case RENDER_PINK: return "RP";
             case SLATE: return "SL";
             case PEBBLEDASH: return "PB";
             case DOOR: return "DR";
             case LINOLEUM: return "LN";
+            case LINO_GREEN: return "LG";
             case YELLOW_BRICK: return "YB";
             case TILE: return "TI";
+            case TILE_BLACK: return "BT";
             case COUNTER: return "CT";
             case SHELF: return "SH";
             case TABLE: return "TA";
             case CARPET: return "CA";
             case FENCE: return "FN";
             case SIGN: return "SI";
+            case SIGN_RED: return "rS";
+            case SIGN_BLUE: return "bS";
+            case SIGN_GREEN: return "gS";
+            case SIGN_YELLOW: return "SY";
             case GARDEN_WALL: return "GW";
             case BOOKSHELF: return "BK";
+            case METAL_RED: return "MR";
             default: return "??";
         }
     }

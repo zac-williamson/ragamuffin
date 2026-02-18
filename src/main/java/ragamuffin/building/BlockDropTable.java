@@ -49,12 +49,15 @@ public class BlockDropTable {
             case TARMAC:
                 return Material.TARMAC;
             case CORRUGATED_METAL:
-            case METAL_RED:
                 return Material.SCRAP_METAL;
+            case METAL_RED:
+                return Material.METAL_RED;
             case RENDER_WHITE:
-            case RENDER_CREAM:
-            case RENDER_PINK:
                 return Material.RENDER;
+            case RENDER_CREAM:
+                return Material.RENDER_CREAM;
+            case RENDER_PINK:
+                return Material.RENDER_PINK;
             case SLATE:
                 return Material.SLATE;
             case PEBBLEDASH:
@@ -62,18 +65,21 @@ public class BlockDropTable {
             case DOOR_WOOD:
                 return Material.DOOR;
             case LINOLEUM:
-            case LINO_GREEN:
                 return Material.LINOLEUM;
+            case LINO_GREEN:
+                return Material.LINO_GREEN;
             case YELLOW_BRICK:
                 return Material.YELLOW_BRICK;
             case TILE_WHITE:
-            case TILE_BLACK:
                 return Material.TILE;
+            case TILE_BLACK:
+                return Material.TILE_BLACK;
             case COUNTER:
                 return Material.COUNTER;
             case SHELF:
-            case BOOKSHELF:
                 return Material.SHELF;
+            case BOOKSHELF:
+                return Material.BOOKSHELF;
             case TABLE:
                 return Material.TABLE;
             case CARPET:
@@ -81,11 +87,15 @@ public class BlockDropTable {
             case IRON_FENCE:
                 return Material.FENCE;
             case SIGN_WHITE:
-            case SIGN_RED:
-            case SIGN_BLUE:
-            case SIGN_GREEN:
-            case SIGN_YELLOW:
                 return Material.SIGN;
+            case SIGN_RED:
+                return Material.SIGN_RED;
+            case SIGN_BLUE:
+                return Material.SIGN_BLUE;
+            case SIGN_GREEN:
+                return Material.SIGN_GREEN;
+            case SIGN_YELLOW:
+                return Material.SIGN_YELLOW;
             case GARDEN_WALL:
                 return Material.GARDEN_WALL;
             case AIR:

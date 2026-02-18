@@ -33,14 +33,35 @@ public class NPCRenderer {
     private static final float WALK_SPEED = 6.0f; // animation cycle speed
     private static final float WALK_AMPLITUDE = 45f; // max limb swing in degrees
 
-    // Humanoid proportions (Minecraft-style, slightly less blocky)
-    private static final float HEAD_W = 0.4f, HEAD_H = 0.4f, HEAD_D = 0.4f;
-    private static final float TORSO_W = 0.5f, TORSO_H = 0.6f, TORSO_D = 0.25f;
-    private static final float ARM_W = 0.2f, ARM_H = 0.6f, ARM_D = 0.2f;
-    private static final float LEG_W = 0.2f, LEG_H = 0.6f, LEG_D = 0.2f;
+    // Humanoid proportions — detailed multi-polygon parts
+    private static final float HEAD_W = 0.38f, HEAD_H = 0.38f, HEAD_D = 0.38f;
+    private static final float NECK_W = 0.15f, NECK_H = 0.08f, NECK_D = 0.15f;
+    private static final float SHOULDER_W = 0.60f, SHOULDER_H = 0.08f, SHOULDER_D = 0.25f;
+    private static final float TORSO_W = 0.48f, TORSO_H = 0.52f, TORSO_D = 0.24f;
+    private static final float UPPER_ARM_W = 0.16f, UPPER_ARM_H = 0.32f, UPPER_ARM_D = 0.16f;
+    private static final float FOREARM_W = 0.14f, FOREARM_H = 0.28f, FOREARM_D = 0.14f;
+    private static final float HAND_W = 0.12f, HAND_H = 0.10f, HAND_D = 0.08f;
+    private static final float UPPER_LEG_W = 0.20f, UPPER_LEG_H = 0.32f, UPPER_LEG_D = 0.20f;
+    private static final float LOWER_LEG_W = 0.18f, LOWER_LEG_H = 0.30f, LOWER_LEG_D = 0.18f;
+    private static final float FOOT_W = 0.20f, FOOT_H = 0.08f, FOOT_D = 0.28f;
 
     // Per-type part models and cached instances
-    // Humanoid: [head, torso, leftArm, rightArm, leftLeg, rightLeg, face, helmet(opt)]
+    // Humanoid parts: head, neck, shoulders, torso, leftUpperArm, rightUpperArm,
+    //   leftForearm, rightForearm, leftHand, rightHand, leftUpperLeg, rightUpperLeg,
+    //   leftLowerLeg, rightLowerLeg, leftFoot, rightFoot, face, helmet(opt)
+    // Indices: 0=head, 1=neck, 2=shoulders, 3=torso, 4=LUA, 5=RUA, 6=LFA, 7=RFA,
+    //          8=LH, 9=RH, 10=LUL, 11=RUL, 12=LLL, 13=RLL, 14=LF, 15=RF, 16=face, 17=helmet
+    private static final int PART_HEAD=0, PART_NECK=1, PART_SHOULDERS=2, PART_TORSO=3;
+    private static final int PART_L_UPPER_ARM=4, PART_R_UPPER_ARM=5;
+    private static final int PART_L_FOREARM=6, PART_R_FOREARM=7;
+    private static final int PART_L_HAND=8, PART_R_HAND=9;
+    private static final int PART_L_UPPER_LEG=10, PART_R_UPPER_LEG=11;
+    private static final int PART_L_LOWER_LEG=12, PART_R_LOWER_LEG=13;
+    private static final int PART_L_FOOT=14, PART_R_FOOT=15;
+    private static final int PART_FACE=16, PART_HELMET=17;
+    private static final int NUM_PARTS_NO_HELMET = 17;
+    private static final int NUM_PARTS_WITH_HELMET = 18;
+
     private final Map<NPCType, Model[]> humanoidParts;
     private final Map<NPCType, ModelInstance[]> humanoidInstances;
     private final Map<NPCType, Model[]> dogParts;
@@ -123,25 +144,43 @@ public class NPCRenderer {
     }
 
     /**
-     * Build the separate models for a humanoid NPC.
-     * Index: 0=head, 1=torso, 2=leftArm, 3=rightArm, 4=leftLeg, 5=rightLeg, 6=face
-     * If hasHelmet: 7=helmet
+     * Build the separate models for a humanoid NPC with detailed body parts.
      */
     private Model[] buildHumanoidParts(Color shirtColor, Color trouserColor,
                                         Color skinColor, Color eyeColor, boolean hasHelmet) {
-        int count = hasHelmet ? 8 : 7;
+        int count = hasHelmet ? NUM_PARTS_WITH_HELMET : NUM_PARTS_NO_HELMET;
         Model[] parts = new Model[count];
 
-        parts[0] = buildBox(HEAD_W, HEAD_H, HEAD_D, skinColor);
-        parts[1] = buildBox(TORSO_W, TORSO_H, TORSO_D, shirtColor);
-        parts[2] = buildBox(ARM_W, ARM_H, ARM_D, skinColor);
-        parts[3] = buildBox(ARM_W, ARM_H, ARM_D, skinColor);
-        parts[4] = buildBox(LEG_W, LEG_H, LEG_D, trouserColor);
-        parts[5] = buildBox(LEG_W, LEG_H, LEG_D, trouserColor);
-        parts[6] = buildFace(eyeColor);
+        // Head and neck
+        parts[PART_HEAD] = buildBox(HEAD_W, HEAD_H, HEAD_D, skinColor);
+        parts[PART_NECK] = buildBox(NECK_W, NECK_H, NECK_D, skinColor);
+
+        // Shoulders and torso (shirt coloured)
+        parts[PART_SHOULDERS] = buildBox(SHOULDER_W, SHOULDER_H, SHOULDER_D, shirtColor);
+        parts[PART_TORSO] = buildBox(TORSO_W, TORSO_H, TORSO_D, shirtColor);
+
+        // Arms: upper arms in shirt colour, forearms in skin, hands in skin
+        parts[PART_L_UPPER_ARM] = buildBox(UPPER_ARM_W, UPPER_ARM_H, UPPER_ARM_D, shirtColor);
+        parts[PART_R_UPPER_ARM] = buildBox(UPPER_ARM_W, UPPER_ARM_H, UPPER_ARM_D, shirtColor);
+        parts[PART_L_FOREARM] = buildBox(FOREARM_W, FOREARM_H, FOREARM_D, skinColor);
+        parts[PART_R_FOREARM] = buildBox(FOREARM_W, FOREARM_H, FOREARM_D, skinColor);
+        parts[PART_L_HAND] = buildBox(HAND_W, HAND_H, HAND_D, skinColor);
+        parts[PART_R_HAND] = buildBox(HAND_W, HAND_H, HAND_D, skinColor);
+
+        // Legs: upper legs and lower legs in trouser colour, feet darker
+        parts[PART_L_UPPER_LEG] = buildBox(UPPER_LEG_W, UPPER_LEG_H, UPPER_LEG_D, trouserColor);
+        parts[PART_R_UPPER_LEG] = buildBox(UPPER_LEG_W, UPPER_LEG_H, UPPER_LEG_D, trouserColor);
+        Color shoeColor = new Color(trouserColor).lerp(Color.BLACK, 0.4f);
+        parts[PART_L_LOWER_LEG] = buildBox(LOWER_LEG_W, LOWER_LEG_H, LOWER_LEG_D, trouserColor);
+        parts[PART_R_LOWER_LEG] = buildBox(LOWER_LEG_W, LOWER_LEG_H, LOWER_LEG_D, trouserColor);
+        parts[PART_L_FOOT] = buildBox(FOOT_W, FOOT_H, FOOT_D, shoeColor);
+        parts[PART_R_FOOT] = buildBox(FOOT_W, FOOT_H, FOOT_D, shoeColor);
+
+        // Face
+        parts[PART_FACE] = buildFace(eyeColor);
 
         if (hasHelmet) {
-            parts[7] = buildCustodianHelmet();
+            parts[PART_HELMET] = buildCustodianHelmet();
         }
 
         return parts;
@@ -263,8 +302,8 @@ public class NPCRenderer {
     }
 
     private void renderHumanoid(ModelBatch modelBatch, Environment environment, NPC npc) {
-        ModelInstance[] instances = humanoidInstances.get(npc.getType());
-        if (instances == null) return;
+        ModelInstance[] inst = humanoidInstances.get(npc.getType());
+        if (inst == null) return;
 
         Vector3 pos = npc.getPosition();
         float yaw = npc.getFacingAngle();
@@ -272,59 +311,101 @@ public class NPCRenderer {
 
         float swing = (float) Math.sin(animT * WALK_SPEED) * WALK_AMPLITUDE;
         float speed = npc.getVelocity().len();
-        if (speed < 0.01f) {
-            swing = 0;
-        }
+        if (speed < 0.01f) swing = 0;
         float swingRad = (float) Math.toRadians(swing);
+        float halfSwingRad = swingRad * 0.5f; // Forearms bend less
 
-        float legTop = LEG_H;
-        float torsoBottom = legTop;
+        // Vertical layout from ground up
+        float footH = FOOT_H;
+        float lowerLegTop = footH + LOWER_LEG_H;
+        float upperLegTop = lowerLegTop + UPPER_LEG_H;
+        float torsoBottom = upperLegTop;
         float torsoTop = torsoBottom + TORSO_H;
-        float headCentre = torsoTop + HEAD_H / 2f;
+        float shoulderY = torsoTop;
+        float neckY = shoulderY + SHOULDER_H;
+        float headCentre = neckY + NECK_H + HEAD_H / 2f;
         float torsoCentre = torsoBottom + TORSO_H / 2f;
-        float armPivotY = torsoTop - 0.05f;
-        float legPivotY = torsoBottom;
 
         float yawRad = (float) Math.toRadians(yaw);
 
-        // 1 - Torso
-        setPartTransform(instances[1], pos, yawRad, 0f, torsoCentre, 0f);
-        modelBatch.render(instances[1], environment);
+        // Torso (static)
+        setPartTransform(inst[PART_TORSO], pos, yawRad, 0f, torsoCentre, 0f);
+        modelBatch.render(inst[PART_TORSO], environment);
 
-        // 0 - Head
-        setPartTransform(instances[0], pos, yawRad, 0f, headCentre, 0f);
-        modelBatch.render(instances[0], environment);
+        // Shoulders (static, wider than torso)
+        setPartTransform(inst[PART_SHOULDERS], pos, yawRad, 0f, shoulderY, 0f);
+        modelBatch.render(inst[PART_SHOULDERS], environment);
 
-        // 6 - Face (on the +Z side of the head, which is the front at yaw 0)
-        setPartTransform(instances[6], pos, yawRad, 0f, headCentre, (HEAD_D / 2f + 0.011f));
-        modelBatch.render(instances[6], environment);
+        // Neck (static)
+        setPartTransform(inst[PART_NECK], pos, yawRad, 0f, neckY + NECK_H / 2f, 0f);
+        modelBatch.render(inst[PART_NECK], environment);
 
-        // 7 - Helmet (police only)
-        if (instances.length > 7) {
-            float helmetY = torsoTop + HEAD_H + 0.02f; // sits on top of head
-            setPartTransform(instances[7], pos, yawRad, 0f, helmetY, 0f);
-            modelBatch.render(instances[7], environment);
+        // Head (static)
+        setPartTransform(inst[PART_HEAD], pos, yawRad, 0f, headCentre, 0f);
+        modelBatch.render(inst[PART_HEAD], environment);
+
+        // Face (front of head at +Z)
+        setPartTransform(inst[PART_FACE], pos, yawRad, 0f, headCentre, (HEAD_D / 2f + 0.011f));
+        modelBatch.render(inst[PART_FACE], environment);
+
+        // Helmet (police only)
+        if (inst.length > PART_HELMET) {
+            float helmetY = headCentre + HEAD_H / 2f + 0.02f;
+            setPartTransform(inst[PART_HELMET], pos, yawRad, 0f, helmetY, 0f);
+            modelBatch.render(inst[PART_HELMET], environment);
         }
 
-        // 2 - Left arm (swings opposite to left leg for natural gait)
-        setLimbTransform(instances[2], pos, yawRad,
-            -(TORSO_W / 2f + ARM_W / 2f), armPivotY, 0f, swingRad, ARM_H);
-        modelBatch.render(instances[2], environment);
+        // Arms — upper arms swing from shoulder, forearms and hands follow
+        float armOffsetX = SHOULDER_W / 2f;
+        float armPivotY = shoulderY;
 
-        // 3 - Right arm
-        setLimbTransform(instances[3], pos, yawRad,
-            (TORSO_W / 2f + ARM_W / 2f), armPivotY, 0f, -swingRad, ARM_H);
-        modelBatch.render(instances[3], environment);
+        // Left arm chain (swings with +swingRad for natural gait: left arm forward when right leg forward)
+        setLimbTransform(inst[PART_L_UPPER_ARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H);
+        modelBatch.render(inst[PART_L_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_L_FOREARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H, halfSwingRad, FOREARM_H);
+        modelBatch.render(inst[PART_L_FOREARM], environment);
+        setLimbChainTransform(inst[PART_L_HAND], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H + FOREARM_H, halfSwingRad, HAND_H);
+        modelBatch.render(inst[PART_L_HAND], environment);
 
-        // 4 - Left leg
-        setLimbTransform(instances[4], pos, yawRad,
-            -(TORSO_W / 2f - LEG_W / 2f), legPivotY, 0f, -swingRad, LEG_H);
-        modelBatch.render(instances[4], environment);
+        // Right arm chain
+        setLimbTransform(inst[PART_R_UPPER_ARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H);
+        modelBatch.render(inst[PART_R_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_R_FOREARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H, -halfSwingRad, FOREARM_H);
+        modelBatch.render(inst[PART_R_FOREARM], environment);
+        setLimbChainTransform(inst[PART_R_HAND], pos, yawRad,
+            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H + FOREARM_H, -halfSwingRad, HAND_H);
+        modelBatch.render(inst[PART_R_HAND], environment);
 
-        // 5 - Right leg
-        setLimbTransform(instances[5], pos, yawRad,
-            (TORSO_W / 2f - LEG_W / 2f), legPivotY, 0f, swingRad, LEG_H);
-        modelBatch.render(instances[5], environment);
+        // Legs — upper legs swing from hip, lower legs and feet follow
+        float legOffsetX = TORSO_W / 2f - UPPER_LEG_W / 2f;
+        float legPivotY = torsoBottom;
+
+        // Left leg chain
+        setLimbTransform(inst[PART_L_UPPER_LEG], pos, yawRad,
+            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H);
+        modelBatch.render(inst[PART_L_UPPER_LEG], environment);
+        setLimbChainTransform(inst[PART_L_LOWER_LEG], pos, yawRad,
+            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H, -halfSwingRad, LOWER_LEG_H);
+        modelBatch.render(inst[PART_L_LOWER_LEG], environment);
+        setLimbChainTransform(inst[PART_L_FOOT], pos, yawRad,
+            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H + LOWER_LEG_H, -halfSwingRad, FOOT_H);
+        modelBatch.render(inst[PART_L_FOOT], environment);
+
+        // Right leg chain
+        setLimbTransform(inst[PART_R_UPPER_LEG], pos, yawRad,
+            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H);
+        modelBatch.render(inst[PART_R_UPPER_LEG], environment);
+        setLimbChainTransform(inst[PART_R_LOWER_LEG], pos, yawRad,
+            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H, halfSwingRad, LOWER_LEG_H);
+        modelBatch.render(inst[PART_R_LOWER_LEG], environment);
+        setLimbChainTransform(inst[PART_R_FOOT], pos, yawRad,
+            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H + LOWER_LEG_H, halfSwingRad, FOOT_H);
+        modelBatch.render(inst[PART_R_FOOT], environment);
     }
 
     /**
@@ -342,6 +423,34 @@ public class NPCRenderer {
         tmpTransform.idt();
         tmpTransform.setToTranslation(worldX, worldY, worldZ);
         tmpTransform.rotate(Vector3.Y, (float) Math.toDegrees(yawRad));
+
+        instance.transform.set(tmpTransform);
+    }
+
+    /**
+     * Set transform for a child limb segment chained to a parent limb.
+     * The child hangs from the end of the parent, adding its own swing rotation.
+     */
+    private void setLimbChainTransform(ModelInstance instance, Vector3 npcPos, float yawRad,
+                                        float localX, float pivotY, float localZ,
+                                        float parentSwingRad, float parentLength,
+                                        float childSwingRad, float childLength) {
+        float cosY = (float) Math.cos(yawRad);
+        float sinY = (float) Math.sin(yawRad);
+
+        float pivotWorldX = npcPos.x + localX * cosY + localZ * sinY;
+        float pivotWorldY = npcPos.y + pivotY;
+        float pivotWorldZ = npcPos.z - localX * sinY + localZ * cosY;
+
+        tmpTransform.idt();
+        tmpTransform.setToTranslation(pivotWorldX, pivotWorldY, pivotWorldZ);
+        tmpTransform.rotate(Vector3.Y, (float) Math.toDegrees(yawRad));
+        // Apply parent swing first to reach end of parent limb
+        tmpTransform.rotate(Vector3.X, (float) Math.toDegrees(parentSwingRad));
+        tmpTransform.translate(0, -parentLength, 0);
+        // Apply child's own swing
+        tmpTransform.rotate(Vector3.X, (float) Math.toDegrees(childSwingRad));
+        tmpTransform.translate(0, -childLength / 2f, 0);
 
         instance.transform.set(tmpTransform);
     }

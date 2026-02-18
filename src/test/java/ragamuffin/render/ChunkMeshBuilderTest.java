@@ -59,10 +59,11 @@ class ChunkMeshBuilderTest {
     void hiddenFacesAreNotRendered() {
         Chunk chunk = new Chunk(0, 0, 0);
         // Create a 2x2x2 cube - only outer faces should be visible
+        // Use DIRT (not STONE) because STONE has hasTextureDetail=true which prevents greedy merge
         for (int x = 0; x < 2; x++) {
             for (int y = 0; y < 2; y++) {
                 for (int z = 0; z < 2; z++) {
-                    chunk.setBlock(x, y, z, BlockType.STONE);
+                    chunk.setBlock(x, y, z, BlockType.DIRT);
                 }
             }
         }

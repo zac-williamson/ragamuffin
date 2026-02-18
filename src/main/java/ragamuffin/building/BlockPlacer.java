@@ -109,8 +109,11 @@ public class BlockPlacer {
             }
         }
 
-        // Convert material to block type
+        // Convert material to block type — non-placeable items return null
         BlockType blockType = materialToBlockType(material);
+        if (blockType == null) {
+            return false;
+        }
 
         // Place the block
         world.setBlock((int) Math.floor(placement.x), (int) Math.floor(placement.y), (int) Math.floor(placement.z), blockType);
@@ -140,7 +143,7 @@ public class BlockPlacer {
             case STONE:
                 return BlockType.STONE;
             case WOOD:
-                return BlockType.TREE_TRUNK;
+                return BlockType.WOOD;
             case DIRT:
                 return BlockType.DIRT;
             case GRASS_TURF:
@@ -151,8 +154,64 @@ public class BlockPlacer {
                 return BlockType.ROAD;
             case CARDBOARD:
                 return BlockType.CARDBOARD;
+            case CONCRETE:
+                return BlockType.CONCRETE;
+            case ROOF_TILE:
+                return BlockType.ROOF_TILE;
+            case TARMAC:
+                return BlockType.TARMAC;
+            case SCRAP_METAL:
+                return BlockType.CORRUGATED_METAL;
+            case RENDER:
+                return BlockType.RENDER_WHITE;
+            case RENDER_CREAM:
+                return BlockType.RENDER_CREAM;
+            case RENDER_PINK:
+                return BlockType.RENDER_PINK;
+            case SLATE:
+                return BlockType.SLATE;
+            case PEBBLEDASH:
+                return BlockType.PEBBLEDASH;
+            case DOOR:
+                return BlockType.DOOR_WOOD;
+            case LINOLEUM:
+                return BlockType.LINOLEUM;
+            case LINO_GREEN:
+                return BlockType.LINO_GREEN;
+            case YELLOW_BRICK:
+                return BlockType.YELLOW_BRICK;
+            case TILE:
+                return BlockType.TILE_WHITE;
+            case TILE_BLACK:
+                return BlockType.TILE_BLACK;
+            case COUNTER:
+                return BlockType.COUNTER;
+            case SHELF:
+                return BlockType.SHELF;
+            case BOOKSHELF:
+                return BlockType.BOOKSHELF;
+            case TABLE:
+                return BlockType.TABLE;
+            case CARPET:
+                return BlockType.CARPET;
+            case FENCE:
+                return BlockType.IRON_FENCE;
+            case SIGN:
+                return BlockType.SIGN_WHITE;
+            case SIGN_RED:
+                return BlockType.SIGN_RED;
+            case SIGN_BLUE:
+                return BlockType.SIGN_BLUE;
+            case SIGN_GREEN:
+                return BlockType.SIGN_GREEN;
+            case SIGN_YELLOW:
+                return BlockType.SIGN_YELLOW;
+            case METAL_RED:
+                return BlockType.METAL_RED;
+            case GARDEN_WALL:
+                return BlockType.GARDEN_WALL;
             default:
-                return BlockType.STONE; // Default fallback
+                return null; // Non-placeable items (food, tools, etc.)
         }
     }
 }
