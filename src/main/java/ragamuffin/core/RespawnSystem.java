@@ -65,14 +65,13 @@ public class RespawnSystem {
     private void performRespawn(Player player) {
         // Respawn at park centre
         player.getPosition().set(PARK_CENTRE);
+        player.setVerticalVelocity(0f);
 
-        // Restore stats (50/50/100)
+        // Restore stats and revive
         player.setHealth(50);
         player.setHunger(50);
         player.setEnergy(100);
-
-        // Note: In a real implementation, we'd also reset the isDead flag
-        // For now, the player health being above 0 effectively "revives" them
+        player.revive();
     }
 
     public boolean isRespawning() {

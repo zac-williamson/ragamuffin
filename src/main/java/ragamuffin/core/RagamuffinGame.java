@@ -112,6 +112,21 @@ public class RagamuffinGame extends ApplicationAdapter {
     private float rainTimer = 0f;
     private final java.util.Random rainRng = new java.util.Random(42);
 
+    // Death screen messages
+    private static final String[] DEATH_MESSAGES = {
+        "You died. On a council estate. How original.",
+        "Game over. The JobCentre will miss you.",
+        "Dead. Your parents were right to kick you out.",
+        "You have perished. The local paper won't report it.",
+        "Deceased. At least you won't need to pay council tax.",
+        "You died. Nobody noticed.",
+        "Game over. Even the pigeons are unimpressed.",
+        "Dead as a Greggs after midnight.",
+        "You shuffled off this mortal coil. In a car park.",
+        "Expired. Like the milk in your cardboard shelter."
+    };
+    private String deathMessage = null;
+
     @Override
     public void create() {
         Gdx.app.log("Ragamuffin", "Welcome to the real world, kid.");
@@ -396,7 +411,11 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                 // Phase 11: Check for death and respawn
                 respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);
+                boolean wasRespawning = respawnSystem.isRespawning();
                 respawnSystem.update(delta, player);
+                if (wasRespawning && !respawnSystem.isRespawning()) {
+                    deathMessage = null; // Reset for next death
+                }
 
                 // Phase 11: Trigger hunger warning tooltip
                 if (player.getHunger() <= 25 && !tooltipSystem.hasShown(TooltipTrigger.HUNGER_LOW)) {
@@ -426,6 +445,11 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Render 2D UI overlay
             renderUI();
+
+            // Render death screen overlay
+            if (respawnSystem.isRespawning()) {
+                renderDeathScreen();
+            }
 
             // Render opening sequence overlay
             if (openingSequence.isActive()) {
@@ -611,6 +635,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         float moveSpeed = inputHandler.isSprintHeld() ? Player.SPRINT_SPEED : Player.MOVE_SPEED;
         world.moveWithCollision(player, tmpMoveDir.x, 0, tmpMoveDir.z, delta, moveSpeed);
 
+        // Push player out of any NPC they're overlapping
+        resolveNPCCollisions();
+
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());
 
@@ -748,6 +775,27 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Interact with the NPC
             String dialogue = interactionSystem.interactWithNPC(targetNPC);
             // The dialogue is set on the NPC, which will be rendered as a speech bubble
+        }
+    }
+
+    /**
+     * Resolve player-NPC collisions by pushing the player out.
+     */
+    private void resolveNPCCollisions() {
+        for (NPC npc : npcManager.getNPCs()) {
+            if (player.getAABB().intersects(npc.getAABB())) {
+                // Push player away from NPC along XZ plane
+                float dx = player.getPosition().x - npc.getPosition().x;
+                float dz = player.getPosition().z - npc.getPosition().z;
+                float len = (float) Math.sqrt(dx * dx + dz * dz);
+                if (len < 0.01f) {
+                    dx = 1f; dz = 0f; len = 1f;
+                }
+                float pushDist = 0.1f;
+                player.getPosition().x += (dx / len) * pushDist;
+                player.getPosition().z += (dz / len) * pushDist;
+                player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
+            }
         }
     }
 
@@ -1077,6 +1125,40 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private static float lerp(float a, float b, float t) {
         return a + (b - a) * t;
+    }
+
+    /**
+     * Render death screen overlay with sardonic message.
+     */
+    private void renderDeathScreen() {
+        int screenWidth = Gdx.graphics.getWidth();
+        int screenHeight = Gdx.graphics.getHeight();
+
+        // Pick a death message if we haven't yet
+        if (deathMessage == null) {
+            deathMessage = DEATH_MESSAGES[(int)(Math.random() * DEATH_MESSAGES.length)];
+        }
+
+        // Dark red overlay
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.3f, 0f, 0f, 0.7f);
+        shapeRenderer.rect(0, 0, screenWidth, screenHeight);
+        shapeRenderer.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
+        // Death message centred on screen
+        spriteBatch.begin();
+        font.setColor(1f, 0.2f, 0.2f, 1f);
+        float textWidth = deathMessage.length() * 7f; // Approximate
+        font.draw(spriteBatch, deathMessage, screenWidth / 2f - textWidth / 2f, screenHeight / 2f + 20);
+        font.setColor(0.8f, 0.8f, 0.8f, 1f);
+        font.draw(spriteBatch, "Respawning...", screenWidth / 2f - 40, screenHeight / 2f - 20);
+        font.setColor(1f, 1f, 1f, 1f);
+        spriteBatch.end();
     }
 
     /**

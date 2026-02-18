@@ -41,7 +41,13 @@ public enum BlockType {
     TILE_WHITE(31, true),
     TILE_BLACK(32, true),
     RENDER_PINK(33, true),
-    METAL_RED(34, true);
+    METAL_RED(34, true),
+    COUNTER(35, true),     // Shop counter
+    SHELF(36, true),       // Shop shelf
+    TABLE(37, true),       // Pub/cafe table
+    CARPET(38, true),      // Floor carpet
+    LINO_GREEN(39, true),  // Cheap lino flooring
+    BOOKSHELF(40, true);   // Library bookshelf
 
     private final int id;
     private final boolean solid;
@@ -110,6 +116,12 @@ public enum BlockType {
             case TILE_BLACK: cachedColor = new Color(0.15f, 0.15f, 0.15f, 1f); break;
             case RENDER_PINK: cachedColor = new Color(0.9f, 0.7f, 0.75f, 1f); break;
             case METAL_RED: cachedColor = new Color(0.8f, 0.15f, 0.1f, 1f); break;
+            case COUNTER: cachedColor = new Color(0.65f, 0.55f, 0.4f, 1f); break;
+            case SHELF: cachedColor = new Color(0.55f, 0.4f, 0.25f, 1f); break;
+            case TABLE: cachedColor = new Color(0.5f, 0.35f, 0.2f, 1f); break;
+            case CARPET: cachedColor = new Color(0.5f, 0.2f, 0.2f, 1f); break;
+            case LINO_GREEN: cachedColor = new Color(0.4f, 0.55f, 0.35f, 1f); break;
+            case BOOKSHELF: cachedColor = new Color(0.4f, 0.3f, 0.15f, 1f); break;
             default: cachedColor = new Color(1f, 1f, 1f, 1f); break;
         }
         return cachedColor;

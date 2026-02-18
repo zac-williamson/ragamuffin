@@ -217,12 +217,21 @@ public class Player {
     }
 
     /**
+     * Revive the player (reset dead state).
+     */
+    public void revive() {
+        isDead = false;
+    }
+
+    /**
      * Set health directly (for testing).
      */
     public void setHealth(float health) {
         this.health = Math.max(0, Math.min(MAX_HEALTH, health));
         if (this.health <= 0) {
             isDead = true;
+        } else {
+            isDead = false;
         }
     }
 

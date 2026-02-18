@@ -247,6 +247,9 @@ public class WorldGenerator {
         generateGardenWalls(world, -150, -20, 170, 1);
         generateGardenWalls(world, 20, -20, 120, 1);
 
+        // ===== BUILDING INTERIORS =====
+        generateBuildingInteriors(world);
+
         // ===== STREET FURNITURE =====
         generateStreetFurniture(world);
 
@@ -888,6 +891,157 @@ public class WorldGenerator {
         // Front door
         world.setBlock(x + width / 2, 1, z, BlockType.AIR);
         world.setBlock(x + width / 2, 2, z, BlockType.AIR);
+    }
+
+    // ==================== BUILDING INTERIORS ====================
+
+    private void generateBuildingInteriors(World world) {
+        // GREGGS — counter with display case
+        generateShopInterior(world, 20, 25, 7, 8, BlockType.LINO_GREEN, BlockType.COUNTER);
+
+        // OFF-LICENCE — shelves along walls
+        generateShopInterior(world, 28, 25, 6, 8, BlockType.LINO_GREEN, BlockType.SHELF);
+
+        // CHARITY SHOP — cluttered shelves
+        generateShopInterior(world, 35, 25, 7, 8, BlockType.CARPET, BlockType.SHELF);
+
+        // JEWELLER — glass counter
+        generateShopInterior(world, 43, 25, 6, 8, BlockType.CARPET, BlockType.COUNTER);
+
+        // BOOKIES — counter at back
+        generateShopInterior(world, 50, 25, 7, 8, BlockType.CARPET, BlockType.COUNTER);
+
+        // KEBAB SHOP — counter
+        generateShopInterior(world, 58, 25, 7, 8, BlockType.LINO_GREEN, BlockType.COUNTER);
+
+        // TESCO EXPRESS — shelves
+        generateShopInterior(world, 20, 8, 7, 8, BlockType.LINO_GREEN, BlockType.SHELF);
+
+        // LAUNDERETTE — machines (stone blocks as washers)
+        generateShopInterior(world, 28, 8, 8, 8, BlockType.LINO_GREEN, BlockType.STONE);
+
+        // PUB — tables
+        generatePubInterior(world, 37, 8, 8, 8);
+
+        // PAWN SHOP — shelves
+        generateShopInterior(world, 46, 8, 7, 8, BlockType.CARPET, BlockType.SHELF);
+
+        // CHIPPY
+        generateShopInterior(world, 66, 25, 7, 8, BlockType.LINO_GREEN, BlockType.COUNTER);
+
+        // NEWSAGENT — shelves
+        generateShopInterior(world, 63, 8, 7, 8, BlockType.LINO_GREEN, BlockType.SHELF);
+
+        // Nando's — tables
+        generatePubInterior(world, 90, 25, 8, 10);
+
+        // Corner shop — shelves
+        generateShopInterior(world, 72, 8, 7, 8, BlockType.LINO_GREEN, BlockType.SHELF);
+
+        // WETHERSPOONS — pub interior
+        generatePubInterior(world, 115, 25, 16, 14);
+
+        // LIBRARY — bookshelves
+        generateLibraryInterior(world, -80, 10, 16, 12);
+
+        // JOBCENTRE — desks
+        generateOfficeInterior(world, -60, 25, 12, 12);
+
+        // GP SURGERY — waiting room
+        generateOfficeInterior(world, -60, 10, 14, 10);
+    }
+
+    private void generateShopInterior(World world, int x, int z, int width, int depth,
+                                       BlockType floorType, BlockType furnitureType) {
+        // Floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, floorType);
+            }
+        }
+
+        // Counter at the back (2 blocks from back wall)
+        int counterZ = z + depth - 3;
+        for (int dx = 1; dx < width - 1; dx++) {
+            world.setBlock(x + dx, 1, counterZ, furnitureType);
+        }
+
+        // Shelves along side walls (every other block for variety)
+        for (int dz = 2; dz < depth - 3; dz += 2) {
+            world.setBlock(x + 1, 1, z + dz, BlockType.SHELF);
+            world.setBlock(x + 1, 2, z + dz, BlockType.SHELF);
+            world.setBlock(x + width - 2, 1, z + dz, BlockType.SHELF);
+            world.setBlock(x + width - 2, 2, z + dz, BlockType.SHELF);
+        }
+    }
+
+    private void generatePubInterior(World world, int x, int z, int width, int depth) {
+        // Carpet floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.CARPET);
+            }
+        }
+
+        // Bar counter along back wall
+        int barZ = z + depth - 3;
+        for (int dx = 1; dx < width - 1; dx++) {
+            world.setBlock(x + dx, 1, barZ, BlockType.COUNTER);
+        }
+        // Shelves behind bar
+        for (int dx = 1; dx < width - 1; dx++) {
+            world.setBlock(x + dx, 1, z + depth - 2, BlockType.SHELF);
+            world.setBlock(x + dx, 2, z + depth - 2, BlockType.SHELF);
+        }
+
+        // Tables scattered in the middle
+        for (int dx = 3; dx < width - 3; dx += 4) {
+            for (int dz = 2; dz < depth - 4; dz += 4) {
+                world.setBlock(x + dx, 1, z + dz, BlockType.TABLE);
+            }
+        }
+    }
+
+    private void generateLibraryInterior(World world, int x, int z, int width, int depth) {
+        // Floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.CARPET);
+            }
+        }
+
+        // Rows of bookshelves
+        for (int dx = 2; dx < width - 2; dx += 3) {
+            for (int dz = 2; dz < depth - 2; dz++) {
+                world.setBlock(x + dx, 1, z + dz, BlockType.BOOKSHELF);
+                world.setBlock(x + dx, 2, z + dz, BlockType.BOOKSHELF);
+            }
+        }
+
+        // Front desk
+        world.setBlock(x + width / 2, 1, z + 1, BlockType.COUNTER);
+        world.setBlock(x + width / 2 + 1, 1, z + 1, BlockType.COUNTER);
+    }
+
+    private void generateOfficeInterior(World world, int x, int z, int width, int depth) {
+        // Lino floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.LINO_GREEN);
+            }
+        }
+
+        // Rows of desks
+        for (int dx = 2; dx < width - 2; dx += 3) {
+            for (int dz = 3; dz < depth - 2; dz += 3) {
+                world.setBlock(x + dx, 1, z + dz, BlockType.TABLE);
+            }
+        }
+
+        // Reception counter at front
+        for (int dx = 2; dx < width - 2; dx++) {
+            world.setBlock(x + dx, 1, z + 1, BlockType.COUNTER);
+        }
     }
 
     // ==================== STREET FURNITURE ====================
