@@ -426,10 +426,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                 if (!isUIBlocking()) {
                     // Phase 12: Apply weather energy drain multiplier
-                    float energyRecovery = Player.ENERGY_RECOVERY_PER_SECOND * delta;
                     float weatherMultiplier = weatherSystem.getCurrentWeather().getEnergyDrainMultiplier();
                     // Weather affects recovery rate inversely - worse weather = slower recovery
-                    player.recoverEnergy(energyRecovery / weatherMultiplier);
+                    player.recoverEnergy(delta / weatherMultiplier);
                 }
 
                 // Phase 12: Cold snap health drain at night when unsheltered
