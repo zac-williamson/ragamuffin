@@ -20,6 +20,7 @@ public class InputHandler implements InputProcessor {
     private boolean upPressed;
     private boolean downPressed;
     private boolean interactPressed; // E key for interaction
+    private boolean jumpPressed; // Spacebar for jumping
     private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
     private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
     private float mouseDeltaX, mouseDeltaY;
@@ -55,6 +56,7 @@ public class InputHandler implements InputProcessor {
     public boolean isUpPressed() { return upPressed; }
     public boolean isDownPressed() { return downPressed; }
     public boolean isInteractPressed() { return interactPressed; }
+    public boolean isJumpPressed() { return jumpPressed; }
     public int getHotbarSlotPressed() { return hotbarSlotPressed; }
     public int getCraftingSlotPressed() { return craftingSlotPressed; }
 
@@ -71,6 +73,7 @@ public class InputHandler implements InputProcessor {
     public void resetUp() { upPressed = false; }
     public void resetDown() { downPressed = false; }
     public void resetInteract() { interactPressed = false; }
+    public void resetJump() { jumpPressed = false; }
     public void resetHotbarSlot() { hotbarSlotPressed = -1; }
     public void resetCraftingSlot() { craftingSlotPressed = -1; }
 
@@ -86,6 +89,8 @@ public class InputHandler implements InputProcessor {
             craftingPressed = true;
         } else if (keycode == Input.Keys.E) {
             interactPressed = true;
+        } else if (keycode == Input.Keys.SPACE) {
+            jumpPressed = true;
         } else if (keycode == Input.Keys.ENTER) {
             enterPressed = true;
         } else if (keycode == Input.Keys.UP) {

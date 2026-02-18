@@ -14,6 +14,7 @@ public class Player {
     public static final float EYE_HEIGHT = 1.62f; // Eye level for camera
     public static final float MOVE_SPEED = 12.0f;
     public static final float GRAVITY = 9.8f; // Gravity acceleration (m/s^2)
+    public static final float JUMP_VELOCITY = 6.0f; // Initial upward velocity when jumping
 
     // Phase 8: Survival stats
     public static final float MAX_HEALTH = 100f;
@@ -264,5 +265,14 @@ public class Player {
      */
     public void resetVerticalVelocity() {
         verticalVelocity = 0f;
+    }
+
+    /**
+     * Jump if on ground (sets upward velocity).
+     */
+    public void jump() {
+        if (verticalVelocity == 0f) {
+            verticalVelocity = JUMP_VELOCITY;
+        }
     }
 }

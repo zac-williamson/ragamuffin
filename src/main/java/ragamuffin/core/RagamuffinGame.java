@@ -105,6 +105,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     private final Vector3 tmpCameraPos = new Vector3();
     private final Vector3 tmpDirection = new Vector3();
 
+    // Sky colour components (reused each frame)
+    private float skyR = 0.53f, skyG = 0.81f, skyB = 0.92f;
+
     @Override
     public void create() {
         Gdx.app.log("Ragamuffin", "Welcome to the real world, kid.");
@@ -334,6 +337,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                 timeSystem.update(delta);
                 lightingSystem.updateLighting(timeSystem.getTime());
+                updateSkyColour(timeSystem.getTime());
                 clockHUD.update(timeSystem.getTime());
 
                 // Phase 12: Update weather system
@@ -379,7 +383,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             tooltipSystem.update(delta);
 
             // Render 3D world
-            Gdx.gl.glClearColor(0.53f, 0.81f, 0.92f, 1f); // Sky blue
+            Gdx.gl.glClearColor(skyR, skyG, skyB, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
             modelBatch.begin(camera);
@@ -557,6 +561,14 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
         if (inputHandler.isLeft()) {
             tmpMoveDir.sub(tmpRight);
+        }
+
+        // Jump
+        if (inputHandler.isJumpPressed()) {
+            if (world.isOnGround(player)) {
+                player.jump();
+            }
+            inputHandler.resetJump();
         }
 
         // Move player with collision (always call to ensure gravity applies even when not moving)
@@ -933,6 +945,51 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public HoverTooltipSystem getHoverTooltipSystem() {
         return hoverTooltipSystem;
+    }
+
+    /**
+     * Update sky colour based on time of day.
+     */
+    private void updateSkyColour(float time) {
+        if (time >= 6.0f && time < 7.0f) {
+            // Dawn — dark blue to orange/pink
+            float t = (time - 6.0f);
+            skyR = lerp(0.05f, 0.85f, t);
+            skyG = lerp(0.05f, 0.50f, t);
+            skyB = lerp(0.15f, 0.45f, t);
+        } else if (time >= 7.0f && time < 8.0f) {
+            // Sunrise — orange to daytime blue
+            float t = (time - 7.0f);
+            skyR = lerp(0.85f, 0.53f, t);
+            skyG = lerp(0.50f, 0.81f, t);
+            skyB = lerp(0.45f, 0.92f, t);
+        } else if (time >= 8.0f && time < 17.0f) {
+            // Day — clear blue sky
+            skyR = 0.53f;
+            skyG = 0.81f;
+            skyB = 0.92f;
+        } else if (time >= 17.0f && time < 18.5f) {
+            // Late afternoon — blue to golden
+            float t = (time - 17.0f) / 1.5f;
+            skyR = lerp(0.53f, 0.90f, t);
+            skyG = lerp(0.81f, 0.55f, t);
+            skyB = lerp(0.92f, 0.35f, t);
+        } else if (time >= 18.5f && time < 20.0f) {
+            // Sunset — golden to deep blue
+            float t = (time - 18.5f) / 1.5f;
+            skyR = lerp(0.90f, 0.10f, t);
+            skyG = lerp(0.55f, 0.08f, t);
+            skyB = lerp(0.35f, 0.25f, t);
+        } else {
+            // Night — dark blue/black
+            skyR = 0.05f;
+            skyG = 0.05f;
+            skyB = 0.15f;
+        }
+    }
+
+    private static float lerp(float a, float b, float t) {
+        return a + (b - a) * t;
     }
 
     @Override
