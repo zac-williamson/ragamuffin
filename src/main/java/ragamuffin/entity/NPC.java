@@ -25,6 +25,9 @@ public class NPC {
     private java.util.List<Vector3> path;
     private float facingAngle; // degrees, 0 = +Z, 90 = +X
     private float animTime;    // accumulated animation time for walk cycle
+    private float health;      // NPC health points
+    private float attackCooldown; // time until NPC can attack again
+    private boolean alive;
 
     public NPC(NPCType type, float x, float y, float z) {
         this.type = type;
@@ -39,6 +42,9 @@ public class NPC {
         this.path = null;
         this.facingAngle = 0f;
         this.animTime = 0f;
+        this.health = type.getMaxHealth();
+        this.attackCooldown = 0f;
+        this.alive = true;
     }
 
     public NPCType getType() {
@@ -117,6 +123,11 @@ public class NPC {
             }
         }
 
+        // Update attack cooldown
+        if (attackCooldown > 0) {
+            attackCooldown -= delta;
+        }
+
         // Update facing angle from velocity
         float hSpeedSq = velocity.x * velocity.x + velocity.z * velocity.z;
         if (hSpeedSq > 0.001f) {
@@ -183,5 +194,50 @@ public class NPC {
     public boolean isWithinBounds(float minX, float minZ, float maxX, float maxZ) {
         return position.x >= minX && position.x <= maxX &&
                position.z >= minZ && position.z <= maxZ;
+    }
+
+    // Combat methods
+
+    public float getHealth() {
+        return health;
+    }
+
+    public void setHealth(float health) {
+        this.health = health;
+    }
+
+    public boolean isAlive() {
+        return alive;
+    }
+
+    /**
+     * Apply damage to this NPC. Returns true if the NPC died.
+     */
+    public boolean takeDamage(float amount) {
+        health -= amount;
+        if (health <= 0) {
+            health = 0;
+            alive = false;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if this NPC can attack (cooldown expired).
+     */
+    public boolean canAttack() {
+        return attackCooldown <= 0 && alive;
+    }
+
+    /**
+     * Reset attack cooldown after attacking.
+     */
+    public void resetAttackCooldown() {
+        attackCooldown = type.getAttackCooldown();
+    }
+
+    public float getAttackCooldown() {
+        return attackCooldown;
     }
 }

@@ -3,6 +3,9 @@ package ragamuffin.core;
 /**
  * Manages the day/night cycle and game time.
  * Time is measured in hours (0.0 to 24.0).
+ * Seasons affect sunrise/sunset times based on realistic British daylight hours.
+ * Each in-game month = 30 days. Year = 360 days.
+ * Game starts on Day 1 = 1st June (summer, long days).
  */
 public class TimeSystem {
 
@@ -13,10 +16,27 @@ public class TimeSystem {
     // Time constants
     private static final float DEFAULT_TIME_SPEED = 0.1f; // 1 real second = 6 in-game minutes
     private static final float HOURS_PER_DAY = 24.0f;
+    private static final int DAYS_PER_YEAR = 360; // 12 months × 30 days
+    private static final int START_DAY_OF_YEAR = 151; // June 1st (Jan=0-29, Feb=30-59, ... Jun=150-179)
 
-    // Day/night thresholds
-    public static final float NIGHT_START = 20.0f; // 20:00 (8 PM)
-    public static final float NIGHT_END = 6.0f;    // 06:00 (6 AM)
+    // British sunrise/sunset extremes (approximate, London latitude ~51.5°N)
+    // Summer solstice (June 21): sunrise ~04:43, sunset ~21:21
+    // Winter solstice (Dec 21): sunrise ~08:04, sunset ~15:53
+    private static final float SUMMER_SUNRISE = 4.72f;   // ~04:43
+    private static final float WINTER_SUNRISE = 8.07f;   // ~08:04
+    private static final float SUMMER_SUNSET = 21.35f;   // ~21:21
+    private static final float WINTER_SUNSET = 15.88f;   // ~15:53
+
+    // Month names for display
+    private static final String[] MONTH_NAMES = {
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    };
+
+    private static final String[] SEASON_NAMES = {
+        "Winter", "Winter", "Spring", "Spring", "Spring", "Summer",
+        "Summer", "Summer", "Autumn", "Autumn", "Autumn", "Winter"
+    };
 
     public TimeSystem() {
         this.time = 8.0f; // Start at 8:00 AM
@@ -81,10 +101,47 @@ public class TimeSystem {
     }
 
     /**
-     * Check if it's currently night time.
+     * Get the day of the year (0-359) accounting for game start date.
+     */
+    public int getDayOfYear() {
+        return (START_DAY_OF_YEAR + dayCount - 1) % DAYS_PER_YEAR;
+    }
+
+    /**
+     * Get seasonal factor (0.0 = winter solstice, 1.0 = summer solstice).
+     * Uses cosine curve peaking at summer solstice (June 21 = day 171).
+     */
+    public float getSeasonalFactor() {
+        int dayOfYear = getDayOfYear();
+        // Summer solstice at day 171 (June 21), winter solstice at day 351 (Dec 21)
+        // Cosine curve: 1.0 at summer solstice, 0.0 at winter solstice
+        double angle = 2.0 * Math.PI * (dayOfYear - 171.0) / DAYS_PER_YEAR;
+        return (float) (0.5 + 0.5 * Math.cos(angle));
+    }
+
+    /**
+     * Get today's sunrise time in hours, based on season.
+     */
+    public float getSunriseTime() {
+        float factor = getSeasonalFactor();
+        // Lerp between winter and summer sunrise
+        return WINTER_SUNRISE + (SUMMER_SUNRISE - WINTER_SUNRISE) * factor;
+    }
+
+    /**
+     * Get today's sunset time in hours, based on season.
+     */
+    public float getSunsetTime() {
+        float factor = getSeasonalFactor();
+        // Lerp between winter and summer sunset
+        return WINTER_SUNSET + (SUMMER_SUNSET - WINTER_SUNSET) * factor;
+    }
+
+    /**
+     * Check if it's currently night time (before sunrise or after sunset).
      */
     public boolean isNight() {
-        return time >= NIGHT_START || time < NIGHT_END;
+        return time >= getSunsetTime() || time < getSunriseTime();
     }
 
     /**
@@ -99,23 +156,60 @@ public class TimeSystem {
      * Useful for lighting calculations.
      */
     public float getNormalizedTime() {
-        // Map 0-24 hours to 0-1, where 0/1 = midnight, 0.5 = noon
         return time / HOURS_PER_DAY;
     }
 
     /**
-     * Get sun position factor (0.0 = lowest/midnight, 1.0 = highest/noon).
+     * Get sun position factor (0.0 = below horizon, 1.0 = highest/noon).
+     * Accounts for seasonal sunrise/sunset.
      */
     public float getSunPosition() {
-        // Calculate sun height based on time
-        // Noon (12:00) = 1.0 (highest)
-        // Midnight (0:00/24:00) = 0.0 (lowest)
+        float sunrise = getSunriseTime();
+        float sunset = getSunsetTime();
+        float noon = (sunrise + sunset) / 2.0f;
 
-        float noon = 12.0f;
+        if (time < sunrise || time > sunset) {
+            return 0.0f; // Below horizon
+        }
+
         float distanceFromNoon = Math.abs(time - noon);
+        float halfDay = (sunset - sunrise) / 2.0f;
+        return 1.0f - (distanceFromNoon / halfDay);
+    }
 
-        // Map distance from noon (0-12) to sun height (1.0-0.0)
-        return 1.0f - (distanceFromNoon / 12.0f);
+    /**
+     * Get the current month (0-11, January=0).
+     */
+    public int getMonth() {
+        return getDayOfYear() / 30;
+    }
+
+    /**
+     * Get the current month name.
+     */
+    public String getMonthName() {
+        return MONTH_NAMES[getMonth()];
+    }
+
+    /**
+     * Get the current season name.
+     */
+    public String getSeasonName() {
+        return SEASON_NAMES[getMonth()];
+    }
+
+    /**
+     * Get the day of the current month (1-30).
+     */
+    public int getDayOfMonth() {
+        return (getDayOfYear() % 30) + 1;
+    }
+
+    /**
+     * Get daylight hours for today.
+     */
+    public float getDaylightHours() {
+        return getSunsetTime() - getSunriseTime();
     }
 
     /**
@@ -143,6 +237,7 @@ public class TimeSystem {
         time += hours;
         if (time >= HOURS_PER_DAY) {
             time -= HOURS_PER_DAY;
+            dayCount++;
         }
     }
 }

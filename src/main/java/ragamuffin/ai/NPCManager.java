@@ -48,6 +48,18 @@ public class NPCManager {
     private static final String[] RANDOM_POLICE_SPEECH = {
         "Move along.", "Evening.", "Keep it civil."
     };
+    private static final String[] HIT_SPEECH_PUBLIC = {
+        "Oi! What was that for?!", "Help! I'm being assaulted!", "Right, I'm ringing 999!",
+        "Are you mental?!", "That's ABH, that is!"
+    };
+    private static final String[] HIT_SPEECH_YOUTH = {
+        "You're dead, bruv!", "Big mistake, fam!", "That all you got?",
+        "Come on then!", "I'll shank ya!"
+    };
+    private static final String[] HIT_SPEECH_POLICE = {
+        "That's assaulting an officer!", "Right, you're nicked!", "Backup requested!",
+        "Resisting arrest!", "I'll taser you!"
+    };
 
     // Structure detection
     private Map<Vector3, Integer> playerStructures; // Position -> block count
@@ -184,10 +196,45 @@ public class NPCManager {
             structureScanTimer = 0;
         }
 
+        // Remove dead NPCs (speech timer expired)
+        npcs.removeIf(npc -> !npc.isAlive() && !npc.isSpeaking());
+
         // Use indexed loop to avoid ConcurrentModificationException when spawning new NPCs
         for (int i = 0; i < npcs.size(); i++) {
             NPC npc = npcs.get(i);
+            if (!npc.isAlive()) continue; // Skip dead NPCs awaiting removal
             updateNPC(npc, delta, world, player, inventory, tooltipSystem);
+
+            // NPC attacks player if in range and hostile/aggressive
+            if (npc.canAttack() && npc.getType().getAttackDamage() > 0 && !player.isDead()) {
+                boolean shouldAttack = false;
+                float attackRange = 1.8f;
+
+                if (npc.getType().isHostile() && npc.isNear(player.getPosition(), attackRange)) {
+                    shouldAttack = true;
+                } else if (npc.getState() == NPCState.AGGRESSIVE && npc.isNear(player.getPosition(), attackRange)) {
+                    shouldAttack = true;
+                }
+
+                if (shouldAttack) {
+                    player.damage(npc.getType().getAttackDamage());
+                    npc.resetAttackCooldown();
+
+                    // Attack speech
+                    if (!npc.isSpeaking()) {
+                        switch (npc.getType()) {
+                            case YOUTH_GANG:
+                                npc.setSpeechText("Take that!", 1.0f);
+                                break;
+                            case POLICE:
+                                npc.setSpeechText("Stop resisting!", 1.0f);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -542,14 +589,46 @@ public class NPCManager {
     }
 
     /**
-     * Handle punching an NPC - applies knockback.
+     * Handle punching an NPC - applies knockback and damage.
      */
     public void punchNPC(NPC npc, Vector3 punchDirection) {
         npc.applyKnockback(punchDirection, 2.0f); // 2 blocks of knockback
 
+        // Deal damage (10 HP per punch)
+        boolean killed = npc.takeDamage(10f);
+        if (killed) {
+            // NPC defeated - show speech and schedule removal
+            npc.setSpeechText(getDeathSpeech(npc.getType()), 2.0f);
+        } else {
+            // NPC reacts to being hit
+            npc.setSpeechText(getHitSpeech(npc.getType()), 2.0f);
+        }
+
         // Special handling for council builders
         if (npc.getType() == NPCType.COUNCIL_BUILDER) {
             punchCouncilBuilder(npc);
+        }
+    }
+
+    private String getHitSpeech(NPCType type) {
+        switch (type) {
+            case PUBLIC: return HIT_SPEECH_PUBLIC[random.nextInt(HIT_SPEECH_PUBLIC.length)];
+            case YOUTH_GANG: return HIT_SPEECH_YOUTH[random.nextInt(HIT_SPEECH_YOUTH.length)];
+            case POLICE: return HIT_SPEECH_POLICE[random.nextInt(HIT_SPEECH_POLICE.length)];
+            case DOG: return "*yelp!*";
+            case COUNCIL_BUILDER: return "Assaulting a council worker!";
+            default: return "Ow!";
+        }
+    }
+
+    private String getDeathSpeech(NPCType type) {
+        switch (type) {
+            case PUBLIC: return "I'm calling an ambulance...";
+            case YOUTH_GANG: return "I'm done, I'm done!";
+            case POLICE: return "Officer down!";
+            case DOG: return "*whimper*";
+            case COUNCIL_BUILDER: return "Health and safety violation!";
+            default: return "...";
         }
     }
 

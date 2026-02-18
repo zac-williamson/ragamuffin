@@ -1,13 +1,41 @@
 package ragamuffin.entity;
 
 /**
- * Types of NPCs in the game.
+ * Types of NPCs in the game, with combat stats.
  */
 public enum NPCType {
-    PUBLIC,          // Members of the public who wander streets
-    DOG,            // Dogs that roam the park
-    YOUTH_GANG,     // Gangs of youths who steal and vandalize
-    COUNCIL_MEMBER, // Bureaucratic antagonists
-    POLICE,         // Patrol at night (Phase 6)
-    COUNCIL_BUILDER // Council builders who demolish structures (Phase 7)
+    PUBLIC(20f, 0f, 0f, false),            // Members of the public - passive
+    DOG(15f, 5f, 2.0f, false),             // Dogs - bite if provoked
+    YOUTH_GANG(30f, 8f, 1.5f, true),       // Gangs - aggressive, steal and punch
+    COUNCIL_MEMBER(25f, 0f, 0f, false),    // Bureaucratic - passive
+    POLICE(50f, 10f, 1.0f, true),          // Police - tough, hit hard
+    COUNCIL_BUILDER(40f, 5f, 2.0f, false); // Builders - defensive only
+
+    private final float maxHealth;
+    private final float attackDamage;   // Damage per hit to player
+    private final float attackCooldown; // Seconds between attacks
+    private final boolean hostile;      // Will actively seek and attack player
+
+    NPCType(float maxHealth, float attackDamage, float attackCooldown, boolean hostile) {
+        this.maxHealth = maxHealth;
+        this.attackDamage = attackDamage;
+        this.attackCooldown = attackCooldown;
+        this.hostile = hostile;
+    }
+
+    public float getMaxHealth() {
+        return maxHealth;
+    }
+
+    public float getAttackDamage() {
+        return attackDamage;
+    }
+
+    public float getAttackCooldown() {
+        return attackCooldown;
+    }
+
+    public boolean isHostile() {
+        return hostile;
+    }
 }

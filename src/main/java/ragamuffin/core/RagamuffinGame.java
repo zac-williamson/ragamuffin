@@ -368,9 +368,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 float gameTimeDelta = delta;
 
                 timeSystem.update(delta);
-                lightingSystem.updateLighting(timeSystem.getTime());
+                lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
                 updateSkyColour(timeSystem.getTime());
-                clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount());
+                clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
 
                 // Phase 12: Update weather system
                 weatherSystem.update(gameTimeDelta);
@@ -1083,35 +1083,49 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
-     * Update sky colour based on time of day.
+     * Update sky colour based on time of day and season.
+     * Uses seasonal sunrise/sunset from TimeSystem.
      */
     private void updateSkyColour(float time) {
-        if (time >= 6.0f && time < 7.0f) {
-            // Dawn — dark blue to orange/pink
-            float t = (time - 6.0f);
+        float sunrise = timeSystem.getSunriseTime();
+        float sunset = timeSystem.getSunsetTime();
+
+        // Dawn: from 0.5h before sunrise to 1h after
+        float dawnStart = sunrise - 0.5f;
+        float dawnMid = sunrise;
+        float dawnEnd = sunrise + 1.0f;
+
+        // Dusk: from 1h before sunset to 0.5h after
+        float duskStart = sunset - 1.0f;
+        float duskMid = sunset;
+        float duskEnd = sunset + 0.5f;
+
+        if (time >= dawnStart && time < dawnMid) {
+            // Pre-dawn — dark blue to orange/pink
+            float t = (time - dawnStart) / (dawnMid - dawnStart);
             skyR = lerp(0.05f, 0.85f, t);
             skyG = lerp(0.05f, 0.50f, t);
             skyB = lerp(0.15f, 0.45f, t);
-        } else if (time >= 7.0f && time < 8.0f) {
+        } else if (time >= dawnMid && time < dawnEnd) {
             // Sunrise — orange to daytime blue
-            float t = (time - 7.0f);
+            float t = (time - dawnMid) / (dawnEnd - dawnMid);
             skyR = lerp(0.85f, 0.53f, t);
             skyG = lerp(0.50f, 0.81f, t);
             skyB = lerp(0.45f, 0.92f, t);
-        } else if (time >= 8.0f && time < 17.0f) {
+        } else if (time >= dawnEnd && time < duskStart) {
             // Day — clear blue sky
             skyR = 0.53f;
             skyG = 0.81f;
             skyB = 0.92f;
-        } else if (time >= 17.0f && time < 18.5f) {
+        } else if (time >= duskStart && time < duskMid) {
             // Late afternoon — blue to golden
-            float t = (time - 17.0f) / 1.5f;
+            float t = (time - duskStart) / (duskMid - duskStart);
             skyR = lerp(0.53f, 0.90f, t);
             skyG = lerp(0.81f, 0.55f, t);
             skyB = lerp(0.92f, 0.35f, t);
-        } else if (time >= 18.5f && time < 20.0f) {
+        } else if (time >= duskMid && time < duskEnd) {
             // Sunset — golden to deep blue
-            float t = (time - 18.5f) / 1.5f;
+            float t = (time - duskMid) / (duskEnd - duskMid);
             skyR = lerp(0.90f, 0.10f, t);
             skyG = lerp(0.55f, 0.08f, t);
             skyB = lerp(0.35f, 0.25f, t);

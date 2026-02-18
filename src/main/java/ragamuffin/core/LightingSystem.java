@@ -71,109 +71,104 @@ public class LightingSystem {
     }
 
     /**
-     * Update lighting based on current time (0-24 hours).
+     * Update lighting based on current time (0-24 hours) with seasonal sunrise/sunset.
      */
     public void updateLighting(float time) {
-        // Normalize time to 0-1
-        float normalizedTime = time / 24.0f;
-
-        // Update directional light color and direction
-        updateDirectionalLight(time);
-
-        // Update ambient light
-        updateAmbientLight(time);
+        updateLighting(time, 4.72f, 21.35f); // Default summer times
     }
 
     /**
-     * Update the directional light (sun/moon) based on time.
+     * Update lighting based on current time with explicit sunrise/sunset times.
      */
-    private void updateDirectionalLight(float time) {
+    public void updateLighting(float time, float sunrise, float sunset) {
+        updateDirectionalLight(time, sunrise, sunset);
+        updateAmbientLight(time, sunrise, sunset);
+    }
+
+    /**
+     * Update the directional light (sun/moon) based on time and season.
+     */
+    private void updateDirectionalLight(float time, float sunrise, float sunset) {
         Color targetColor = new Color();
         Vector3 targetDirection = new Vector3();
 
-        if (time >= 6.0f && time < 8.0f) {
-            // Sunrise (6:00 - 8:00)
-            float t = (time - 6.0f) / 2.0f; // 0 to 1
-            targetColor.set(SUNRISE_DIRECTIONAL).lerp(DAY_DIRECTIONAL, t);
+        // Dawn transition: 1 hour before sunrise to 1 hour after
+        float dawnStart = sunrise - 0.5f;
+        float dawnEnd = sunrise + 1.0f;
+        // Dusk transition: 1 hour before sunset to 1 hour after
+        float duskStart = sunset - 1.0f;
+        float duskEnd = sunset + 0.5f;
 
-            // Rotate from night to day direction
+        if (time >= dawnStart && time < dawnEnd) {
+            // Sunrise
+            float t = (time - dawnStart) / (dawnEnd - dawnStart);
+            targetColor.set(SUNRISE_DIRECTIONAL).lerp(DAY_DIRECTIONAL, t);
             targetDirection.set(MIDNIGHT_DIRECTION).lerp(NOON_DIRECTION, t);
 
-        } else if (time >= 8.0f && time < 18.0f) {
-            // Daytime (8:00 - 18:00)
+        } else if (time >= dawnEnd && time < duskStart) {
+            // Daytime — sun arcs east to west
             targetColor.set(DAY_DIRECTIONAL);
-
-            // Sun moves from east to west
-            float dayProgress = (time - 8.0f) / 10.0f; // 0 to 1
-            float angle = dayProgress * (float) Math.PI; // 0 to PI
-
+            float dayProgress = (time - dawnEnd) / (duskStart - dawnEnd);
+            float angle = dayProgress * (float) Math.PI;
             targetDirection.set(
                     (float) Math.sin(angle) * -0.3f,
                     -1.0f,
                     (float) Math.cos(angle) * -0.2f
             ).nor();
 
-        } else if (time >= 18.0f && time < 20.0f) {
-            // Sunset (18:00 - 20:00)
-            float t = (time - 18.0f) / 2.0f; // 0 to 1
+        } else if (time >= duskStart && time < duskEnd) {
+            // Sunset
+            float t = (time - duskStart) / (duskEnd - duskStart);
             targetColor.set(DAY_DIRECTIONAL).lerp(SUNSET_DIRECTIONAL, t);
-
-            // Rotate from day to night direction
             targetDirection.set(NOON_DIRECTION).lerp(MIDNIGHT_DIRECTION, t);
 
         } else {
-            // Nighttime (20:00 - 6:00)
+            // Night
             targetColor.set(NIGHT_DIRECTIONAL);
-
-            // Moon is up (opposite of sun)
             targetDirection.set(MIDNIGHT_DIRECTION);
         }
 
-        // Apply color and direction
         directionalLight.color.set(targetColor);
         directionalLight.direction.set(targetDirection);
     }
 
     /**
-     * Update ambient lighting based on time.
+     * Update ambient lighting based on time and season.
      */
-    private void updateAmbientLight(float time) {
+    private void updateAmbientLight(float time, float sunrise, float sunset) {
         ColorAttribute ambientAttr = (ColorAttribute) environment.get(ColorAttribute.AmbientLight);
         if (ambientAttr == null) {
-            // Create ambient light if it doesn't exist
             ambientAttr = new ColorAttribute(ColorAttribute.AmbientLight, DAY_AMBIENT);
             environment.set(ambientAttr);
         }
 
         Color targetColor = new Color();
 
-        if (time >= 6.0f && time < 8.0f) {
+        float dawnStart = sunrise - 0.5f;
+        float dawnEnd = sunrise + 1.0f;
+        float duskStart = sunset - 1.0f;
+        float duskEnd = sunset + 0.5f;
+
+        if (time >= dawnStart && time < dawnEnd) {
             // Dawn
-            float t = (time - 6.0f) / 2.0f;
+            float t = (time - dawnStart) / (dawnEnd - dawnStart);
             targetColor.set(NIGHT_AMBIENT).lerp(DAY_AMBIENT, t);
 
-        } else if (time >= 8.0f && time < 18.0f) {
+        } else if (time >= dawnEnd && time < duskStart) {
             // Day
             targetColor.set(DAY_AMBIENT);
 
-        } else if (time >= 18.0f && time < 20.0f) {
+        } else if (time >= duskStart && time < duskEnd) {
             // Dusk
-            float t = (time - 18.0f) / 2.0f;
+            float t = (time - duskStart) / (duskEnd - duskStart);
             targetColor.set(DAY_AMBIENT).lerp(DUSK_AMBIENT, t);
 
-        } else if (time >= 20.0f || time < 2.0f) {
-            // Evening to midnight
-            float t;
-            if (time >= 20.0f) {
-                t = (time - 20.0f) / 4.0f; // 20:00 - 24:00
-            } else {
-                t = 1.0f + (time / 2.0f); // 00:00 - 02:00
-            }
-            t = Math.min(t, 1.0f);
-            targetColor.set(DUSK_AMBIENT).lerp(NIGHT_AMBIENT, t);
+        } else if (time >= duskEnd || time < (dawnStart > 2.0f ? dawnStart - 2.0f : dawnStart)) {
+            // Deep night
+            targetColor.set(NIGHT_AMBIENT);
 
         } else {
-            // Deep night (2:00 - 6:00)
+            // Pre-dawn
             targetColor.set(NIGHT_AMBIENT);
         }
 

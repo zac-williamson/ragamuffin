@@ -12,11 +12,13 @@ public class ClockHUD {
     private String timeString;
     private int fps;
     private int dayCount;
+    private String dateString;
 
     public ClockHUD() {
         this.timeString = "08:00";
         this.fps = 0;
         this.dayCount = 1;
+        this.dateString = "1 June";
     }
 
     /**
@@ -31,11 +33,19 @@ public class ClockHUD {
     }
 
     /**
-     * Update the clock with current game time and day count.
+     * Update the clock with current game time, day count, and date info.
      */
     public void update(float time, int dayCount) {
         update(time);
         this.dayCount = dayCount;
+    }
+
+    /**
+     * Update with full seasonal info.
+     */
+    public void update(float time, int dayCount, int dayOfMonth, String monthName) {
+        update(time, dayCount);
+        this.dateString = dayOfMonth + " " + monthName;
     }
 
     /**
@@ -58,12 +68,12 @@ public class ClockHUD {
     public void render(SpriteBatch batch, BitmapFont font, int screenWidth, int screenHeight) {
         batch.begin();
 
-        // Draw day counter in top-right corner, below the weather text
-        float x = screenWidth - 100;
+        // Draw date and day counter in top-right corner, below the weather text
+        float x = screenWidth - 130;
         float y = screenHeight - 45;
-        font.draw(batch, "Day " + dayCount, x, y);
+        font.draw(batch, dateString + " (Day " + dayCount + ")", x, y);
 
-        // Draw time below day counter
+        // Draw time below date
         font.draw(batch, timeString, x, y - 20);
 
         // Draw FPS below the time
