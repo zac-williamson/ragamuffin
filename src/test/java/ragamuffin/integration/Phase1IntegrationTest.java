@@ -96,7 +96,7 @@ class Phase1IntegrationTest {
      * Integration Test 3: Chunk mesh generation
      * Create a chunk. Set block (8, 0, 8) to GRASS and all surrounding blocks to AIR. Build the chunk mesh.
      * Verify the mesh has exactly 6 faces (one per exposed side). Now set block (8, 1, 8) to GRASS as well.
-     * Rebuild. Verify the mesh now has 10 faces (6+6 minus 2 shared faces).
+     * Rebuild. With greedy meshing, same-type adjacent faces merge into larger quads.
      */
     @Test
     void chunkMeshGeneration() {
@@ -112,10 +112,9 @@ class Phase1IntegrationTest {
         chunk.setBlock(8, 1, 8, BlockType.GRASS);
         meshData = builder.build(chunk);
 
-        // Bottom block: 5 faces (top hidden by upper block)
-        // Top block: 5 faces (bottom hidden by lower block)
-        // Total: 10 faces
-        assertEquals(10, meshData.getFaceCount(), "Two stacked GRASS blocks should have exactly 10 faces");
+        // With greedy meshing, same-type adjacent side faces merge:
+        // 4 side faces (1 quad each, merged from 2) + top + bottom = 6
+        assertEquals(6, meshData.getFaceCount(), "Two stacked same-type blocks should have 6 greedy-merged faces");
     }
 
     /**

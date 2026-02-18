@@ -5,137 +5,355 @@ import ragamuffin.world.BlockType;
 import ragamuffin.world.Chunk;
 
 /**
- * Builds 3D meshes from chunk data.
- * Only renders exposed faces (greedy meshing can be added later).
+ * Builds 3D meshes from chunk data using greedy meshing.
+ * Merges adjacent coplanar faces of the same block type into larger quads
+ * to dramatically reduce vertex/triangle count.
  */
 public class ChunkMeshBuilder {
 
     private static final float BLOCK_SIZE = 1.0f;
 
+    // Reusable mask arrays to avoid per-build allocation
+    // Max slice is SIZE x HEIGHT (16 x 64 = 1024)
+    private static final int MAX_SLICE = Chunk.SIZE * Chunk.HEIGHT;
+    private final BlockType[] mask = new BlockType[MAX_SLICE];
+    private final boolean[] merged = new boolean[MAX_SLICE];
+
     public MeshData build(Chunk chunk) {
         MeshData meshData = new MeshData();
         int vertexIndex = 0;
 
-        for (int x = 0; x < Chunk.SIZE; x++) {
-            for (int y = 0; y < Chunk.HEIGHT; y++) {
-                for (int z = 0; z < Chunk.SIZE; z++) {
-                    BlockType block = chunk.getBlock(x, y, z);
-                    if (block == BlockType.AIR) {
-                        continue;
-                    }
+        // Greedy mesh each axis/direction
+        // X-axis faces (West -X and East +X)
+        vertexIndex = greedyMeshX(chunk, meshData, vertexIndex, false); // West
+        vertexIndex = greedyMeshX(chunk, meshData, vertexIndex, true);  // East
 
-                    float localX = x;
-                    float localY = y;
-                    float localZ = z;
+        // Y-axis faces (Bottom -Y and Top +Y)
+        vertexIndex = greedyMeshY(chunk, meshData, vertexIndex, false); // Bottom
+        vertexIndex = greedyMeshY(chunk, meshData, vertexIndex, true);  // Top
 
-                    Color color = block.getColor();
-
-                    // Check each face and add if exposed
-                    // Top face (+Y)
-                    if (!chunk.getBlock(x, y + 1, z).isSolid()) {
-                        vertexIndex = addTopFace(meshData, localX, localY, localZ, color, vertexIndex);
-                    }
-
-                    // Bottom face (-Y)
-                    if (!chunk.getBlock(x, y - 1, z).isSolid()) {
-                        vertexIndex = addBottomFace(meshData, localX, localY, localZ, color, vertexIndex);
-                    }
-
-                    // North face (-Z)
-                    if (!chunk.getBlock(x, y, z - 1).isSolid()) {
-                        vertexIndex = addNorthFace(meshData, localX, localY, localZ, color, vertexIndex);
-                    }
-
-                    // South face (+Z)
-                    if (!chunk.getBlock(x, y, z + 1).isSolid()) {
-                        vertexIndex = addSouthFace(meshData, localX, localY, localZ, color, vertexIndex);
-                    }
-
-                    // West face (-X)
-                    if (!chunk.getBlock(x - 1, y, z).isSolid()) {
-                        vertexIndex = addWestFace(meshData, localX, localY, localZ, color, vertexIndex);
-                    }
-
-                    // East face (+X)
-                    if (!chunk.getBlock(x + 1, y, z).isSolid()) {
-                        vertexIndex = addEastFace(meshData, localX, localY, localZ, color, vertexIndex);
-                    }
-                }
-            }
-        }
+        // Z-axis faces (North -Z and South +Z)
+        vertexIndex = greedyMeshZ(chunk, meshData, vertexIndex, false); // North
+        vertexIndex = greedyMeshZ(chunk, meshData, vertexIndex, true);  // South
 
         return meshData;
     }
 
-    private int addTopFace(MeshData meshData, float x, float y, float z, Color color, int baseIndex) {
-        float[] vertices = {
-            // Position (3), Normal (3), UV (2), Color (4) - total 12 floats per vertex
-            x, y + BLOCK_SIZE, z,               0, 1, 0,    0, 0,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y + BLOCK_SIZE, z,  0, 1, 0,    1, 0,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE,  0, 1, 0,    1, 1,   color.r, color.g, color.b, color.a,
-            x, y + BLOCK_SIZE, z + BLOCK_SIZE,  0, 1, 0,    0, 1,   color.r, color.g, color.b, color.a
-        };
-        short[] indices = {0, 3, 2, 2, 1, 0};
-        meshData.addQuad(vertices, indices, baseIndex);
-        return baseIndex + 4;
+    /**
+     * Greedy mesh for X-normal faces (West/East walls).
+     * Slices along X; each slice is a YZ plane of size HEIGHT x SIZE.
+     */
+    private int greedyMeshX(Chunk chunk, MeshData meshData, int vertexIndex, boolean positive) {
+        int sliceW = Chunk.SIZE;  // z dimension
+        int sliceH = Chunk.HEIGHT; // y dimension
+
+        for (int x = 0; x <= Chunk.SIZE; x++) {
+            // Build mask for this slice
+            int maskSize = 0;
+            for (int y = 0; y < sliceH; y++) {
+                for (int z = 0; z < sliceW; z++) {
+                    int idx = y * sliceW + z;
+                    BlockType current;
+                    BlockType neighbour;
+
+                    if (positive) {
+                        // East face: block at x-1 with no solid block at x
+                        current = (x > 0) ? chunk.getBlock(x - 1, y, z) : BlockType.AIR;
+                        neighbour = (x < Chunk.SIZE) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                    } else {
+                        // West face: block at x with no solid block at x-1
+                        current = (x < Chunk.SIZE) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                        neighbour = (x > 0) ? chunk.getBlock(x - 1, y, z) : BlockType.AIR;
+                    }
+
+                    if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
+                        mask[idx] = current;
+                    } else {
+                        mask[idx] = null;
+                    }
+                }
+            }
+
+            // Greedy merge the mask
+            java.util.Arrays.fill(merged, 0, sliceW * sliceH, false);
+
+            for (int y = 0; y < sliceH; y++) {
+                for (int z = 0; z < sliceW; z++) {
+                    int idx = y * sliceW + z;
+                    if (mask[idx] == null || merged[idx]) continue;
+
+                    BlockType type = mask[idx];
+
+                    // Expand width (z direction)
+                    int w = 1;
+                    while (z + w < sliceW && mask[y * sliceW + z + w] == type && !merged[y * sliceW + z + w]) {
+                        w++;
+                    }
+
+                    // Expand height (y direction)
+                    int h = 1;
+                    outer:
+                    while (y + h < sliceH) {
+                        for (int dz = 0; dz < w; dz++) {
+                            int checkIdx = (y + h) * sliceW + z + dz;
+                            if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                        }
+                        h++;
+                    }
+
+                    // Mark merged
+                    for (int dy = 0; dy < h; dy++) {
+                        for (int dz = 0; dz < w; dz++) {
+                            merged[(y + dy) * sliceW + z + dz] = true;
+                        }
+                    }
+
+                    // Emit quad
+                    Color color = type.getColor();
+                    float fx = x;
+                    float fy = y;
+                    float fz = z;
+                    float fh = h;
+                    float fw = w;
+
+                    if (positive) {
+                        // East face (+X normal)
+                        vertexIndex = addFace(meshData, vertexIndex, color,
+                            fx, fy, fz,
+                            fx, fy, fz + fw,
+                            fx, fy + fh, fz + fw,
+                            fx, fy + fh, fz,
+                            1, 0, 0, fw, fh);
+                    } else {
+                        // West face (-X normal)
+                        vertexIndex = addFace(meshData, vertexIndex, color,
+                            fx, fy, fz + fw,
+                            fx, fy, fz,
+                            fx, fy + fh, fz,
+                            fx, fy + fh, fz + fw,
+                            -1, 0, 0, fw, fh);
+                    }
+                }
+            }
+        }
+        return vertexIndex;
     }
 
-    private int addBottomFace(MeshData meshData, float x, float y, float z, Color color, int baseIndex) {
-        float[] vertices = {
-            x, y, z,               0, -1, 0,   0, 0,   color.r, color.g, color.b, color.a,
-            x, y, z + BLOCK_SIZE,  0, -1, 0,   0, 1,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y, z + BLOCK_SIZE,  0, -1, 0,   1, 1,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y, z,  0, -1, 0,   1, 0,   color.r, color.g, color.b, color.a
-        };
-        short[] indices = {0, 3, 2, 2, 1, 0};
-        meshData.addQuad(vertices, indices, baseIndex);
-        return baseIndex + 4;
+    /**
+     * Greedy mesh for Y-normal faces (Top/Bottom).
+     * Slices along Y; each slice is an XZ plane of size SIZE x SIZE.
+     */
+    private int greedyMeshY(Chunk chunk, MeshData meshData, int vertexIndex, boolean positive) {
+        int sliceW = Chunk.SIZE;  // z dimension
+        int sliceH = Chunk.SIZE;  // x dimension
+
+        for (int y = 0; y <= Chunk.HEIGHT; y++) {
+            // Build mask
+            for (int x = 0; x < sliceH; x++) {
+                for (int z = 0; z < sliceW; z++) {
+                    int idx = x * sliceW + z;
+                    BlockType current;
+                    BlockType neighbour;
+
+                    if (positive) {
+                        // Top face: block at y-1 with no solid block at y
+                        current = (y > 0) ? chunk.getBlock(x, y - 1, z) : BlockType.AIR;
+                        neighbour = (y < Chunk.HEIGHT) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                    } else {
+                        // Bottom face: block at y with no solid block at y-1
+                        current = (y < Chunk.HEIGHT) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                        neighbour = (y > 0) ? chunk.getBlock(x, y - 1, z) : BlockType.AIR;
+                    }
+
+                    if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
+                        mask[idx] = current;
+                    } else {
+                        mask[idx] = null;
+                    }
+                }
+            }
+
+            // Greedy merge
+            java.util.Arrays.fill(merged, 0, sliceW * sliceH, false);
+
+            for (int x = 0; x < sliceH; x++) {
+                for (int z = 0; z < sliceW; z++) {
+                    int idx = x * sliceW + z;
+                    if (mask[idx] == null || merged[idx]) continue;
+
+                    BlockType type = mask[idx];
+
+                    // Expand width (z direction)
+                    int w = 1;
+                    while (z + w < sliceW && mask[x * sliceW + z + w] == type && !merged[x * sliceW + z + w]) {
+                        w++;
+                    }
+
+                    // Expand height (x direction)
+                    int h = 1;
+                    outer:
+                    while (x + h < sliceH) {
+                        for (int dz = 0; dz < w; dz++) {
+                            int checkIdx = (x + h) * sliceW + z + dz;
+                            if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                        }
+                        h++;
+                    }
+
+                    // Mark merged
+                    for (int dx = 0; dx < h; dx++) {
+                        for (int dz = 0; dz < w; dz++) {
+                            merged[(x + dx) * sliceW + z + dz] = true;
+                        }
+                    }
+
+                    // Emit quad
+                    Color color = type.getColor();
+                    float fx = x;
+                    float fy = y;
+                    float fz = z;
+                    float fh = h;  // x extent
+                    float fw = w;  // z extent
+
+                    if (positive) {
+                        // Top face (+Y normal)
+                        vertexIndex = addFace(meshData, vertexIndex, color,
+                            fx, fy, fz,
+                            fx + fh, fy, fz,
+                            fx + fh, fy, fz + fw,
+                            fx, fy, fz + fw,
+                            0, 1, 0, fh, fw);
+                    } else {
+                        // Bottom face (-Y normal)
+                        vertexIndex = addFace(meshData, vertexIndex, color,
+                            fx, fy, fz,
+                            fx, fy, fz + fw,
+                            fx + fh, fy, fz + fw,
+                            fx + fh, fy, fz,
+                            0, -1, 0, fh, fw);
+                    }
+                }
+            }
+        }
+        return vertexIndex;
     }
 
-    private int addNorthFace(MeshData meshData, float x, float y, float z, Color color, int baseIndex) {
-        float[] vertices = {
-            x, y, z,               0, 0, -1,   0, 0,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y, z,  0, 0, -1,   1, 0,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y + BLOCK_SIZE, z,  0, 0, -1,   1, 1,   color.r, color.g, color.b, color.a,
-            x, y + BLOCK_SIZE, z,  0, 0, -1,   0, 1,   color.r, color.g, color.b, color.a
-        };
-        short[] indices = {0, 3, 2, 2, 1, 0};
-        meshData.addQuad(vertices, indices, baseIndex);
-        return baseIndex + 4;
+    /**
+     * Greedy mesh for Z-normal faces (North/South walls).
+     * Slices along Z; each slice is an XY plane of size SIZE x HEIGHT.
+     */
+    private int greedyMeshZ(Chunk chunk, MeshData meshData, int vertexIndex, boolean positive) {
+        int sliceW = Chunk.SIZE;   // x dimension
+        int sliceH = Chunk.HEIGHT; // y dimension
+
+        for (int z = 0; z <= Chunk.SIZE; z++) {
+            // Build mask
+            for (int y = 0; y < sliceH; y++) {
+                for (int x = 0; x < sliceW; x++) {
+                    int idx = y * sliceW + x;
+                    BlockType current;
+                    BlockType neighbour;
+
+                    if (positive) {
+                        // South face: block at z-1 with no solid at z
+                        current = (z > 0) ? chunk.getBlock(x, y, z - 1) : BlockType.AIR;
+                        neighbour = (z < Chunk.SIZE) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                    } else {
+                        // North face: block at z with no solid at z-1
+                        current = (z < Chunk.SIZE) ? chunk.getBlock(x, y, z) : BlockType.AIR;
+                        neighbour = (z > 0) ? chunk.getBlock(x, y, z - 1) : BlockType.AIR;
+                    }
+
+                    if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
+                        mask[idx] = current;
+                    } else {
+                        mask[idx] = null;
+                    }
+                }
+            }
+
+            // Greedy merge
+            java.util.Arrays.fill(merged, 0, sliceW * sliceH, false);
+
+            for (int y = 0; y < sliceH; y++) {
+                for (int x = 0; x < sliceW; x++) {
+                    int idx = y * sliceW + x;
+                    if (mask[idx] == null || merged[idx]) continue;
+
+                    BlockType type = mask[idx];
+
+                    // Expand width (x direction)
+                    int w = 1;
+                    while (x + w < sliceW && mask[y * sliceW + x + w] == type && !merged[y * sliceW + x + w]) {
+                        w++;
+                    }
+
+                    // Expand height (y direction)
+                    int h = 1;
+                    outer:
+                    while (y + h < sliceH) {
+                        for (int dx = 0; dx < w; dx++) {
+                            int checkIdx = (y + h) * sliceW + x + dx;
+                            if (mask[checkIdx] != type || merged[checkIdx]) break outer;
+                        }
+                        h++;
+                    }
+
+                    // Mark merged
+                    for (int dy = 0; dy < h; dy++) {
+                        for (int dx = 0; dx < w; dx++) {
+                            merged[(y + dy) * sliceW + x + dx] = true;
+                        }
+                    }
+
+                    // Emit quad
+                    Color color = type.getColor();
+                    float fx = x;
+                    float fy = y;
+                    float fz = z;
+                    float fh = h;  // y extent
+                    float fw = w;  // x extent
+
+                    if (positive) {
+                        // South face (+Z normal)
+                        vertexIndex = addFace(meshData, vertexIndex, color,
+                            fx + fw, fy, fz,
+                            fx, fy, fz,
+                            fx, fy + fh, fz,
+                            fx + fw, fy + fh, fz,
+                            0, 0, 1, fw, fh);
+                    } else {
+                        // North face (-Z normal)
+                        vertexIndex = addFace(meshData, vertexIndex, color,
+                            fx, fy, fz,
+                            fx + fw, fy, fz,
+                            fx + fw, fy + fh, fz,
+                            fx, fy + fh, fz,
+                            0, 0, -1, fw, fh);
+                    }
+                }
+            }
+        }
+        return vertexIndex;
     }
 
-    private int addSouthFace(MeshData meshData, float x, float y, float z, Color color, int baseIndex) {
+    /**
+     * Add a single quad face to the mesh data.
+     */
+    private int addFace(MeshData meshData, int baseIndex, Color color,
+                        float x0, float y0, float z0,
+                        float x1, float y1, float z1,
+                        float x2, float y2, float z2,
+                        float x3, float y3, float z3,
+                        float nx, float ny, float nz,
+                        float uScale, float vScale) {
         float[] vertices = {
-            x + BLOCK_SIZE, y, z + BLOCK_SIZE,  0, 0, 1,   0, 0,   color.r, color.g, color.b, color.a,
-            x, y, z + BLOCK_SIZE,               0, 0, 1,   1, 0,   color.r, color.g, color.b, color.a,
-            x, y + BLOCK_SIZE, z + BLOCK_SIZE,  0, 0, 1,   1, 1,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE,  0, 0, 1,   0, 1,   color.r, color.g, color.b, color.a
+            x0, y0, z0,  nx, ny, nz,  0, 0,       color.r, color.g, color.b, color.a,
+            x1, y1, z1,  nx, ny, nz,  uScale, 0,  color.r, color.g, color.b, color.a,
+            x2, y2, z2,  nx, ny, nz,  uScale, vScale, color.r, color.g, color.b, color.a,
+            x3, y3, z3,  nx, ny, nz,  0, vScale,  color.r, color.g, color.b, color.a
         };
-        short[] indices = {0, 3, 2, 2, 1, 0};
-        meshData.addQuad(vertices, indices, baseIndex);
-        return baseIndex + 4;
-    }
-
-    private int addWestFace(MeshData meshData, float x, float y, float z, Color color, int baseIndex) {
-        float[] vertices = {
-            x, y, z + BLOCK_SIZE,  -1, 0, 0,   0, 0,   color.r, color.g, color.b, color.a,
-            x, y, z,               -1, 0, 0,   1, 0,   color.r, color.g, color.b, color.a,
-            x, y + BLOCK_SIZE, z,  -1, 0, 0,   1, 1,   color.r, color.g, color.b, color.a,
-            x, y + BLOCK_SIZE, z + BLOCK_SIZE,  -1, 0, 0,   0, 1,   color.r, color.g, color.b, color.a
-        };
-        short[] indices = {0, 3, 2, 2, 1, 0};
-        meshData.addQuad(vertices, indices, baseIndex);
-        return baseIndex + 4;
-    }
-
-    private int addEastFace(MeshData meshData, float x, float y, float z, Color color, int baseIndex) {
-        float[] vertices = {
-            x + BLOCK_SIZE, y, z,  1, 0, 0,   0, 0,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y, z + BLOCK_SIZE,  1, 0, 0,   1, 0,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y + BLOCK_SIZE, z + BLOCK_SIZE,  1, 0, 0,   1, 1,   color.r, color.g, color.b, color.a,
-            x + BLOCK_SIZE, y + BLOCK_SIZE, z,  1, 0, 0,   0, 1,   color.r, color.g, color.b, color.a
-        };
-        short[] indices = {0, 3, 2, 2, 1, 0};
+        short[] indices = {0, 1, 2, 2, 3, 0};
         meshData.addQuad(vertices, indices, baseIndex);
         return baseIndex + 4;
     }

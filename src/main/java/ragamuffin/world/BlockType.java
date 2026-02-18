@@ -45,6 +45,7 @@ public enum BlockType {
 
     private final int id;
     private final boolean solid;
+    private Color cachedColor;
 
     BlockType(int id, boolean solid) {
         this.id = id;
@@ -69,46 +70,48 @@ public enum BlockType {
     }
 
     /**
-     * Get the color for this block type.
+     * Get the color for this block type. Cached to avoid allocation.
      */
     public Color getColor() {
+        if (cachedColor != null) return cachedColor;
         switch (this) {
-            case AIR: return new Color(0, 0, 0, 0); // Transparent
-            case GRASS: return new Color(0.3f, 0.7f, 0.2f, 1f); // Green
-            case DIRT: return new Color(0.6f, 0.4f, 0.2f, 1f); // Brown
-            case STONE: return new Color(0.6f, 0.6f, 0.6f, 1f); // Grey
-            case PAVEMENT: return new Color(0.7f, 0.7f, 0.7f, 1f); // Light grey
-            case ROAD: return new Color(0.3f, 0.3f, 0.3f, 1f); // Dark grey
-            case BRICK: return new Color(0.7f, 0.3f, 0.2f, 1f); // Red-brown
-            case GLASS: return new Color(0.6f, 0.8f, 0.95f, 0.5f); // Light blue, semi-transparent
-            case WOOD: return new Color(0.7f, 0.5f, 0.3f, 1f); // Light brown
-            case WATER: return new Color(0.2f, 0.3f, 0.8f, 0.7f); // Blue
-            case TREE_TRUNK: return new Color(0.4f, 0.25f, 0.1f, 1f); // Dark brown
-            case LEAVES: return new Color(0.2f, 0.5f, 0.1f, 1f); // Dark green
-            case CARDBOARD: return new Color(0.7f, 0.6f, 0.4f, 1f); // Tan
-            case IRON_FENCE: return new Color(0.2f, 0.2f, 0.2f, 1f); // Dark iron grey
-            case SIGN_WHITE: return new Color(0.95f, 0.95f, 0.95f, 1f); // White sign
-            case SIGN_RED: return new Color(0.9f, 0.1f, 0.1f, 1f); // Red sign
-            case SIGN_BLUE: return new Color(0.1f, 0.2f, 0.7f, 1f); // Blue sign
-            case SIGN_GREEN: return new Color(0.1f, 0.6f, 0.2f, 1f); // Green sign
-            case SIGN_YELLOW: return new Color(0.9f, 0.8f, 0.1f, 1f); // Yellow sign
-            case GARDEN_WALL: return new Color(0.5f, 0.45f, 0.4f, 1f); // Grey-brown garden wall
-            case CONCRETE: return new Color(0.75f, 0.75f, 0.73f, 1f); // Pale concrete
-            case ROOF_TILE: return new Color(0.55f, 0.2f, 0.15f, 1f); // Terracotta roof
-            case TARMAC: return new Color(0.22f, 0.22f, 0.22f, 1f); // Near-black tarmac
-            case CORRUGATED_METAL: return new Color(0.55f, 0.58f, 0.6f, 1f); // Silver-grey metal
-            case RENDER_WHITE: return new Color(0.92f, 0.9f, 0.88f, 1f); // Off-white render
-            case RENDER_CREAM: return new Color(0.9f, 0.85f, 0.7f, 1f); // Cream render
-            case SLATE: return new Color(0.35f, 0.38f, 0.42f, 1f); // Dark blue-grey slate
-            case PEBBLEDASH: return new Color(0.78f, 0.75f, 0.7f, 1f); // Greyish pebbledash
-            case DOOR_WOOD: return new Color(0.45f, 0.28f, 0.12f, 1f); // Dark brown door
-            case LINOLEUM: return new Color(0.6f, 0.55f, 0.45f, 1f); // Beige lino floor
-            case YELLOW_BRICK: return new Color(0.85f, 0.75f, 0.4f, 1f); // London stock yellow brick
-            case TILE_WHITE: return new Color(0.95f, 0.95f, 0.95f, 1f); // Clean white tile
-            case TILE_BLACK: return new Color(0.15f, 0.15f, 0.15f, 1f); // Black tile
-            case RENDER_PINK: return new Color(0.9f, 0.7f, 0.75f, 1f); // Pink rendered wall
-            case METAL_RED: return new Color(0.8f, 0.15f, 0.1f, 1f); // Red painted metal
-            default: return new Color(1f, 1f, 1f, 1f); // White fallback
+            case AIR: cachedColor = new Color(0, 0, 0, 0); break;
+            case GRASS: cachedColor = new Color(0.3f, 0.7f, 0.2f, 1f); break;
+            case DIRT: cachedColor = new Color(0.6f, 0.4f, 0.2f, 1f); break;
+            case STONE: cachedColor = new Color(0.6f, 0.6f, 0.6f, 1f); break;
+            case PAVEMENT: cachedColor = new Color(0.7f, 0.7f, 0.7f, 1f); break;
+            case ROAD: cachedColor = new Color(0.3f, 0.3f, 0.3f, 1f); break;
+            case BRICK: cachedColor = new Color(0.7f, 0.3f, 0.2f, 1f); break;
+            case GLASS: cachedColor = new Color(0.6f, 0.8f, 0.95f, 0.5f); break;
+            case WOOD: cachedColor = new Color(0.7f, 0.5f, 0.3f, 1f); break;
+            case WATER: cachedColor = new Color(0.2f, 0.3f, 0.8f, 0.7f); break;
+            case TREE_TRUNK: cachedColor = new Color(0.4f, 0.25f, 0.1f, 1f); break;
+            case LEAVES: cachedColor = new Color(0.2f, 0.5f, 0.1f, 1f); break;
+            case CARDBOARD: cachedColor = new Color(0.7f, 0.6f, 0.4f, 1f); break;
+            case IRON_FENCE: cachedColor = new Color(0.2f, 0.2f, 0.2f, 1f); break;
+            case SIGN_WHITE: cachedColor = new Color(0.95f, 0.95f, 0.95f, 1f); break;
+            case SIGN_RED: cachedColor = new Color(0.9f, 0.1f, 0.1f, 1f); break;
+            case SIGN_BLUE: cachedColor = new Color(0.1f, 0.2f, 0.7f, 1f); break;
+            case SIGN_GREEN: cachedColor = new Color(0.1f, 0.6f, 0.2f, 1f); break;
+            case SIGN_YELLOW: cachedColor = new Color(0.9f, 0.8f, 0.1f, 1f); break;
+            case GARDEN_WALL: cachedColor = new Color(0.5f, 0.45f, 0.4f, 1f); break;
+            case CONCRETE: cachedColor = new Color(0.75f, 0.75f, 0.73f, 1f); break;
+            case ROOF_TILE: cachedColor = new Color(0.55f, 0.2f, 0.15f, 1f); break;
+            case TARMAC: cachedColor = new Color(0.22f, 0.22f, 0.22f, 1f); break;
+            case CORRUGATED_METAL: cachedColor = new Color(0.55f, 0.58f, 0.6f, 1f); break;
+            case RENDER_WHITE: cachedColor = new Color(0.92f, 0.9f, 0.88f, 1f); break;
+            case RENDER_CREAM: cachedColor = new Color(0.9f, 0.85f, 0.7f, 1f); break;
+            case SLATE: cachedColor = new Color(0.35f, 0.38f, 0.42f, 1f); break;
+            case PEBBLEDASH: cachedColor = new Color(0.78f, 0.75f, 0.7f, 1f); break;
+            case DOOR_WOOD: cachedColor = new Color(0.45f, 0.28f, 0.12f, 1f); break;
+            case LINOLEUM: cachedColor = new Color(0.6f, 0.55f, 0.45f, 1f); break;
+            case YELLOW_BRICK: cachedColor = new Color(0.85f, 0.75f, 0.4f, 1f); break;
+            case TILE_WHITE: cachedColor = new Color(0.95f, 0.95f, 0.95f, 1f); break;
+            case TILE_BLACK: cachedColor = new Color(0.15f, 0.15f, 0.15f, 1f); break;
+            case RENDER_PINK: cachedColor = new Color(0.9f, 0.7f, 0.75f, 1f); break;
+            case METAL_RED: cachedColor = new Color(0.8f, 0.15f, 0.1f, 1f); break;
+            default: cachedColor = new Color(1f, 1f, 1f, 1f); break;
         }
+        return cachedColor;
     }
 }

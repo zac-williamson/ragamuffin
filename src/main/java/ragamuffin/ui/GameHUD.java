@@ -60,62 +60,46 @@ public class GameHUD {
     private void renderStatusBars(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
                                   int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips) {
         float x = BAR_MARGIN;
-        float y = screenHeight - BAR_MARGIN - BAR_HEIGHT;
+        float y1 = screenHeight - BAR_MARGIN - BAR_HEIGHT;
+        float y2 = y1 - BAR_SPACING;
+        float y3 = y2 - BAR_SPACING;
 
-        // Health bar
         float healthPct = player.getHealth() / Player.MAX_HEALTH;
-        renderBar(spriteBatch, shapeRenderer, font, "Health", healthPct, Color.RED, x, y);
-        if (hoverTooltips != null) {
-            hoverTooltips.addZone(x, y, BAR_WIDTH, BAR_HEIGHT,
-                    "Health: " + (int)(healthPct * 100) + "%");
-        }
-
-        // Hunger bar
-        y -= BAR_SPACING;
         float hungerPct = player.getHunger() / Player.MAX_HUNGER;
-        renderBar(spriteBatch, shapeRenderer, font, "Hunger", hungerPct, Color.ORANGE, x, y);
-        if (hoverTooltips != null) {
-            hoverTooltips.addZone(x, y, BAR_WIDTH, BAR_HEIGHT,
-                    "Hunger: " + (int)(hungerPct * 100) + "%");
-        }
-
-        // Energy bar
-        y -= BAR_SPACING;
         float energyPct = player.getEnergy() / Player.MAX_ENERGY;
-        renderBar(spriteBatch, shapeRenderer, font, "Energy", energyPct, Color.YELLOW, x, y);
-        if (hoverTooltips != null) {
-            hoverTooltips.addZone(x, y, BAR_WIDTH, BAR_HEIGHT,
-                    "Energy: " + (int)(energyPct * 100) + "%");
-        }
-    }
 
-    private void renderBar(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
-                           String label, float percentage, Color color, float x, float y) {
-        // Draw bar background
+        // All filled shapes in one batch (backgrounds + fills)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 0.8f);
-        shapeRenderer.rect(x, y, BAR_WIDTH, BAR_HEIGHT);
+        shapeRenderer.rect(x, y1, BAR_WIDTH, BAR_HEIGHT);
+        shapeRenderer.rect(x, y2, BAR_WIDTH, BAR_HEIGHT);
+        shapeRenderer.rect(x, y3, BAR_WIDTH, BAR_HEIGHT);
+        if (healthPct > 0) { shapeRenderer.setColor(Color.RED); shapeRenderer.rect(x, y1, BAR_WIDTH * healthPct, BAR_HEIGHT); }
+        if (hungerPct > 0) { shapeRenderer.setColor(Color.ORANGE); shapeRenderer.rect(x, y2, BAR_WIDTH * hungerPct, BAR_HEIGHT); }
+        if (energyPct > 0) { shapeRenderer.setColor(Color.YELLOW); shapeRenderer.rect(x, y3, BAR_WIDTH * energyPct, BAR_HEIGHT); }
         shapeRenderer.end();
 
-        // Draw bar fill
-        if (percentage > 0) {
-            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-            shapeRenderer.setColor(color);
-            shapeRenderer.rect(x, y, BAR_WIDTH * percentage, BAR_HEIGHT);
-            shapeRenderer.end();
-        }
-
-        // Draw bar border
+        // All borders in one batch
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
         shapeRenderer.setColor(Color.WHITE);
-        shapeRenderer.rect(x, y, BAR_WIDTH, BAR_HEIGHT);
+        shapeRenderer.rect(x, y1, BAR_WIDTH, BAR_HEIGHT);
+        shapeRenderer.rect(x, y2, BAR_WIDTH, BAR_HEIGHT);
+        shapeRenderer.rect(x, y3, BAR_WIDTH, BAR_HEIGHT);
         shapeRenderer.end();
 
-        // Draw label and percentage
+        // All text in one batch
         spriteBatch.begin();
         font.setColor(Color.WHITE);
-        font.draw(spriteBatch, label + ": " + (int)(percentage * 100) + "%", x + 5, y + BAR_HEIGHT - 5);
+        font.draw(spriteBatch, "HP: " + (int)(healthPct * 100) + "%", x + 5, y1 + BAR_HEIGHT - 5);
+        font.draw(spriteBatch, "Food: " + (int)(hungerPct * 100) + "%", x + 5, y2 + BAR_HEIGHT - 5);
+        font.draw(spriteBatch, "Energy: " + (int)(energyPct * 100) + "%", x + 5, y3 + BAR_HEIGHT - 5);
         spriteBatch.end();
+
+        if (hoverTooltips != null) {
+            hoverTooltips.addZone(x, y1, BAR_WIDTH, BAR_HEIGHT, "Health: " + (int)(healthPct * 100) + "%");
+            hoverTooltips.addZone(x, y2, BAR_WIDTH, BAR_HEIGHT, "Hunger: " + (int)(hungerPct * 100) + "%");
+            hoverTooltips.addZone(x, y3, BAR_WIDTH, BAR_HEIGHT, "Energy: " + (int)(energyPct * 100) + "%");
+        }
     }
 
     private void renderCrosshair(ShapeRenderer shapeRenderer, int screenWidth, int screenHeight,

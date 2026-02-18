@@ -33,16 +33,17 @@ class ChunkMeshBuilderTest {
     }
 
     @Test
-    void twoAdjacentBlocksHaveTenFaces() {
+    void twoAdjacentBlocksMergedFaces() {
         Chunk chunk = new Chunk(0, 0, 0);
         chunk.setBlock(8, 0, 8, BlockType.GRASS);
         chunk.setBlock(8, 1, 8, BlockType.GRASS); // Stacked vertically
         ChunkMeshBuilder builder = new ChunkMeshBuilder();
         MeshData meshData = builder.build(chunk);
-        // Bottom block: 5 faces (top is hidden)
-        // Top block: 5 faces (bottom is hidden)
-        // Total: 10 faces
-        assertEquals(10, meshData.getFaceCount(), "Two stacked blocks should have 10 faces (6+6-2)");
+        // Greedy meshing merges same-type adjacent faces:
+        // 4 side faces merge from 2 quads each to 1 quad each = 4
+        // 1 top face + 1 bottom face = 2
+        // Total: 6 faces
+        assertEquals(6, meshData.getFaceCount(), "Two stacked same-type blocks should have 6 greedy-merged faces");
     }
 
     @Test
@@ -67,8 +68,9 @@ class ChunkMeshBuilderTest {
         }
         ChunkMeshBuilder builder = new ChunkMeshBuilder();
         MeshData meshData = builder.build(chunk);
-        // A 2x2x2 cube has 24 outer faces
-        // Each face of the cube: 2x2 = 4 quads per face, 6 faces = 24
-        assertEquals(24, meshData.getFaceCount());
+        // With greedy meshing, each of the 6 cube faces merges into 1 quad
+        // Internal faces between adjacent blocks are hidden (not rendered)
+        assertEquals(6, meshData.getFaceCount(),
+            "A 2x2x2 same-type cube should have 6 greedy-merged faces (one per cube face)");
     }
 }

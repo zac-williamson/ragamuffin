@@ -98,6 +98,13 @@ public class RagamuffinGame extends ApplicationAdapter {
     private float cameraPitch = 0f;
     private float cameraYaw = 0f; // 0 = facing -Z
 
+    // Reusable vectors to avoid per-frame allocation
+    private final Vector3 tmpForward = new Vector3();
+    private final Vector3 tmpRight = new Vector3();
+    private final Vector3 tmpMoveDir = new Vector3();
+    private final Vector3 tmpCameraPos = new Vector3();
+    private final Vector3 tmpDirection = new Vector3();
+
     @Override
     public void create() {
         Gdx.app.log("Ragamuffin", "Welcome to the real world, kid.");
@@ -534,29 +541,29 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
 
         // Camera direction is already up-to-date (applied at top of frame)
-        // Calculate movement direction from current camera facing
-        Vector3 forward = new Vector3(camera.direction.x, 0, camera.direction.z).nor();
-        Vector3 right = new Vector3(camera.direction).crs(Vector3.Y).nor();
-        Vector3 moveDir = new Vector3();
+        // Calculate movement direction from current camera facing (reuse vectors)
+        tmpForward.set(camera.direction.x, 0, camera.direction.z).nor();
+        tmpRight.set(camera.direction).crs(Vector3.Y).nor();
+        tmpMoveDir.set(0, 0, 0);
 
         if (inputHandler.isForward()) {
-            moveDir.add(forward);
+            tmpMoveDir.add(tmpForward);
         }
         if (inputHandler.isBackward()) {
-            moveDir.sub(forward);
+            tmpMoveDir.sub(tmpForward);
         }
         if (inputHandler.isRight()) {
-            moveDir.add(right);
+            tmpMoveDir.add(tmpRight);
         }
         if (inputHandler.isLeft()) {
-            moveDir.sub(right);
+            tmpMoveDir.sub(tmpRight);
         }
 
         // Move player with collision (always call to ensure gravity applies even when not moving)
-        if (moveDir.len2() > 0) {
-            moveDir.nor();
+        if (tmpMoveDir.len2() > 0) {
+            tmpMoveDir.nor();
         }
-        world.moveWithCollision(player, moveDir.x, 0, moveDir.z, delta);
+        world.moveWithCollision(player, tmpMoveDir.x, 0, tmpMoveDir.z, delta);
 
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());
@@ -588,20 +595,20 @@ public class RagamuffinGame extends ApplicationAdapter {
         player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
 
         // Rest of the punching logic
-        // Check if punching an NPC first
-        Vector3 cameraPos = new Vector3(camera.position);
-        Vector3 direction = new Vector3(camera.direction);
+        // Check if punching an NPC first (reuse vectors)
+        tmpCameraPos.set(camera.position);
+        tmpDirection.set(camera.direction);
 
         // Check for nearby NPCs in punch range
-        NPC targetNPC = findNPCInReach(cameraPos, direction, PUNCH_REACH);
+        NPC targetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
         if (targetNPC != null) {
             // Punch the NPC (knockback)
-            npcManager.punchNPC(targetNPC, direction);
+            npcManager.punchNPC(targetNPC, tmpDirection);
             return; // Don't punch blocks if we hit an NPC
         }
 
         // Raycast to find target block
-        RaycastResult result = blockBreaker.getTargetBlock(world, cameraPos, direction, PUNCH_REACH);
+        RaycastResult result = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
         if (result != null) {
             int x = result.getBlockX();
             int y = result.getBlockY();
@@ -660,13 +667,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
-        Vector3 cameraPos = new Vector3(camera.position);
-        Vector3 direction = new Vector3(camera.direction);
+        tmpCameraPos.set(camera.position);
+        tmpDirection.set(camera.direction);
 
         // Get placement position before placing so we know which chunk to rebuild
-        Vector3 placementPos = blockPlacer.getPlacementPosition(world, cameraPos, direction, PLACE_REACH);
+        Vector3 placementPos = blockPlacer.getPlacementPosition(world, tmpCameraPos, tmpDirection, PLACE_REACH);
 
-        boolean placed = blockPlacer.placeBlock(world, inventory, material, cameraPos, direction, PLACE_REACH, player.getAABB());
+        boolean placed = blockPlacer.placeBlock(world, inventory, material, tmpCameraPos, tmpDirection, PLACE_REACH, player.getAABB());
 
         if (placed) {
             // Phase 11: Trigger first block place tooltip
@@ -685,11 +692,11 @@ public class RagamuffinGame extends ApplicationAdapter {
      * Phase 11: Handle E key interaction with NPCs.
      */
     private void handleInteraction() {
-        Vector3 cameraPos = new Vector3(camera.position);
-        Vector3 direction = new Vector3(camera.direction);
+        tmpCameraPos.set(camera.position);
+        tmpDirection.set(camera.direction);
 
         // Find NPC in interaction range
-        NPC targetNPC = interactionSystem.findNPCInRange(player.getPosition(), direction, npcManager.getNPCs());
+        NPC targetNPC = interactionSystem.findNPCInRange(player.getPosition(), tmpDirection, npcManager.getNPCs());
 
         if (targetNPC != null) {
             // Interact with the NPC

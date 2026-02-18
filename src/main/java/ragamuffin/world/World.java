@@ -247,8 +247,14 @@ public class World {
         return false;
     }
 
+    // Reusable vectors to avoid per-frame allocation in physics
+    private final Vector3 tmpOriginalPos = new Vector3();
+    private final Vector3 tmpDesiredMove = new Vector3();
+    private final Vector3 tmpZOnlyPos = new Vector3();
+    private final Vector3 tmpResult = new Vector3();
+
     public Vector3 moveWithCollision(Player player, float dx, float dy, float dz, float delta) {
-        Vector3 originalPos = new Vector3(player.getPosition());
+        tmpOriginalPos.set(player.getPosition());
 
         // Only apply gravity if not standing on solid ground
         boolean onGround = isOnGround(player);
@@ -259,32 +265,32 @@ public class World {
         }
 
         // Horizontal movement (X and Z)
-        Vector3 desiredMove = new Vector3(0, 0, 0);
+        tmpDesiredMove.set(0, 0, 0);
         if (dx != 0 || dz != 0) {
-            desiredMove.set(dx, 0, dz).nor().scl(Player.MOVE_SPEED * delta);
+            tmpDesiredMove.set(dx, 0, dz).nor().scl(Player.MOVE_SPEED * delta);
         }
 
         // Try horizontal movement with sliding
-        player.getPosition().add(desiredMove.x, 0, desiredMove.z);
+        player.getPosition().add(tmpDesiredMove.x, 0, tmpDesiredMove.z);
         player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
 
         if (checkWorldCollision(player)) {
             // Collision - revert and try sliding
-            player.getPosition().set(originalPos);
+            player.getPosition().set(tmpOriginalPos);
 
             // Try X only
-            player.getPosition().add(desiredMove.x, 0, 0);
+            player.getPosition().add(tmpDesiredMove.x, 0, 0);
             player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
             if (checkWorldCollision(player)) {
-                player.getPosition().set(originalPos);
+                player.getPosition().set(tmpOriginalPos);
             }
 
             // Try Z only
-            Vector3 zOnlyPos = new Vector3(player.getPosition());
-            player.getPosition().add(0, 0, desiredMove.z);
+            tmpZOnlyPos.set(player.getPosition());
+            player.getPosition().add(0, 0, tmpDesiredMove.z);
             player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
             if (checkWorldCollision(player)) {
-                player.getPosition().set(zOnlyPos);
+                player.getPosition().set(tmpZOnlyPos);
             }
 
             player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
@@ -330,29 +336,34 @@ public class World {
             player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
         }
 
-        return new Vector3(player.getPosition()).sub(originalPos);
+        return tmpResult.set(player.getPosition()).sub(tmpOriginalPos);
     }
 
     /**
      * Check if the player's AABB collides with any solid blocks in the world.
+     * Inlines intersection test to avoid per-block AABB allocation.
      */
     private boolean checkWorldCollision(Player player) {
         AABB aabb = player.getAABB();
+        float aMinX = aabb.getMinX(), aMaxX = aabb.getMaxX();
+        float aMinY = aabb.getMinY(), aMaxY = aabb.getMaxY();
+        float aMinZ = aabb.getMinZ(), aMaxZ = aabb.getMaxZ();
 
-        int minX = (int) Math.floor(aabb.getMinX());
-        int maxX = (int) Math.ceil(aabb.getMaxX());
-        int minY = (int) Math.floor(aabb.getMinY());
-        int maxY = (int) Math.ceil(aabb.getMaxY());
-        int minZ = (int) Math.floor(aabb.getMinZ());
-        int maxZ = (int) Math.ceil(aabb.getMaxZ());
+        int minX = (int) Math.floor(aMinX);
+        int maxX = (int) Math.ceil(aMaxX);
+        int minY = (int) Math.floor(aMinY);
+        int maxY = (int) Math.ceil(aMaxY);
+        int minZ = (int) Math.floor(aMinZ);
+        int maxZ = (int) Math.ceil(aMaxZ);
 
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    BlockType block = getBlock(x, y, z);
-                    if (block.isSolid()) {
-                        AABB blockBox = new AABB(x, y, z, x + 1, y + 1, z + 1);
-                        if (aabb.intersects(blockBox)) {
+                    if (getBlock(x, y, z).isSolid()) {
+                        // Inline AABB intersection: block occupies [x, x+1] x [y, y+1] x [z, z+1]
+                        if (aMinX < x + 1 && aMaxX > x &&
+                            aMinY < y + 1 && aMaxY > y &&
+                            aMinZ < z + 1 && aMaxZ > z) {
                             return true;
                         }
                     }
