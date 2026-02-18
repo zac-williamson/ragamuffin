@@ -23,6 +23,8 @@ public class NPC {
     private float speechTimer;
     private int currentPathIndex;
     private java.util.List<Vector3> path;
+    private float facingAngle; // degrees, 0 = +Z, 90 = +X
+    private float animTime;    // accumulated animation time for walk cycle
 
     public NPC(NPCType type, float x, float y, float z) {
         this.type = type;
@@ -35,6 +37,8 @@ public class NPC {
         this.speechTimer = 0;
         this.currentPathIndex = 0;
         this.path = null;
+        this.facingAngle = 0f;
+        this.animTime = 0f;
     }
 
     public NPCType getType() {
@@ -113,9 +117,28 @@ public class NPC {
             }
         }
 
+        // Update facing angle from velocity
+        float hSpeedSq = velocity.x * velocity.x + velocity.z * velocity.z;
+        if (hSpeedSq > 0.001f) {
+            facingAngle = (float) Math.toDegrees(Math.atan2(velocity.x, velocity.z));
+            animTime += delta;
+        }
+
         // Update position with velocity
         position.add(velocity.x * delta, velocity.y * delta, velocity.z * delta);
         aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+    }
+
+    public float getFacingAngle() {
+        return facingAngle;
+    }
+
+    public void setFacingAngle(float angle) {
+        this.facingAngle = angle;
+    }
+
+    public float getAnimTime() {
+        return animTime;
     }
 
     /**
@@ -125,6 +148,10 @@ public class NPC {
         velocity.set(dx, dy, dz).nor().scl(MOVE_SPEED * delta);
         position.add(velocity);
         aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+        // Update facing angle based on horizontal movement
+        if (dx != 0 || dz != 0) {
+            facingAngle = (float) Math.toDegrees(Math.atan2(dx, dz));
+        }
     }
 
     /**

@@ -239,6 +239,34 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
     }
 
+    /**
+     * Rebuild only the chunk containing the given world coordinates,
+     * plus any neighbouring chunks if the block is on a chunk boundary.
+     */
+    private void rebuildChunkAt(int worldX, int worldY, int worldZ) {
+        int chunkX = Math.floorDiv(worldX, Chunk.SIZE);
+        int chunkY = Math.floorDiv(worldY, Chunk.HEIGHT);
+        int chunkZ = Math.floorDiv(worldZ, Chunk.SIZE);
+
+        // Rebuild the primary chunk
+        rebuildChunkIfLoaded(chunkX, chunkY, chunkZ);
+
+        // If on a chunk boundary, rebuild neighbours so exposed faces update
+        int localX = Math.floorMod(worldX, Chunk.SIZE);
+        int localZ = Math.floorMod(worldZ, Chunk.SIZE);
+        if (localX == 0) rebuildChunkIfLoaded(chunkX - 1, chunkY, chunkZ);
+        if (localX == Chunk.SIZE - 1) rebuildChunkIfLoaded(chunkX + 1, chunkY, chunkZ);
+        if (localZ == 0) rebuildChunkIfLoaded(chunkX, chunkY, chunkZ - 1);
+        if (localZ == Chunk.SIZE - 1) rebuildChunkIfLoaded(chunkX, chunkY, chunkZ + 1);
+    }
+
+    private void rebuildChunkIfLoaded(int chunkX, int chunkY, int chunkZ) {
+        Chunk chunk = world.getChunk(chunkX, chunkY, chunkZ);
+        if (chunk != null) {
+            chunkRenderer.updateChunk(chunk, meshBuilder);
+        }
+    }
+
     @Override
     public void render() {
         float delta = Gdx.graphics.getDeltaTime();
@@ -606,8 +634,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                     }
                 }
 
-                // Update chunk mesh
-                updateChunkRenderers();
+                // Only rebuild the affected chunk (and neighbours if on a boundary)
+                rebuildChunkAt(x, y, z);
             }
         }
     }
@@ -633,6 +661,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         Vector3 cameraPos = new Vector3(camera.position);
         Vector3 direction = new Vector3(camera.direction);
 
+        // Get placement position before placing so we know which chunk to rebuild
+        Vector3 placementPos = blockPlacer.getPlacementPosition(world, cameraPos, direction, PLACE_REACH);
+
         boolean placed = blockPlacer.placeBlock(world, inventory, material, cameraPos, direction, PLACE_REACH, player.getAABB());
 
         if (placed) {
@@ -641,8 +672,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                 tooltipSystem.trigger(TooltipTrigger.FIRST_BLOCK_PLACE);
             }
 
-            // Update chunk mesh
-            updateChunkRenderers();
+            // Only rebuild the affected chunk
+            if (placementPos != null) {
+                rebuildChunkAt((int) placementPos.x, (int) placementPos.y, (int) placementPos.z);
+            }
         }
     }
 

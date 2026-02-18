@@ -14,11 +14,14 @@ import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import ragamuffin.world.Chunk;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Renders chunk meshes using LibGDX ModelBatch.
+ * Supports multiple sub-meshes per chunk to handle large vertex counts.
  */
 public class ChunkRenderer {
 
@@ -29,16 +32,25 @@ public class ChunkRenderer {
     }
 
     private static class ChunkModel {
-        Model model;
-        ModelInstance instance;
+        List<Model> models;
+        List<ModelInstance> instances;
 
-        ChunkModel(Model model, ModelInstance instance) {
-            this.model = model;
-            this.instance = instance;
+        ChunkModel() {
+            this.models = new ArrayList<>();
+            this.instances = new ArrayList<>();
+        }
+
+        void add(Model model, ModelInstance instance) {
+            models.add(model);
+            instances.add(instance);
         }
 
         void dispose() {
-            model.dispose();
+            for (Model m : models) {
+                m.dispose();
+            }
+            models.clear();
+            instances.clear();
         }
     }
 
@@ -60,40 +72,50 @@ public class ChunkRenderer {
             return; // Empty chunk, nothing to render
         }
 
-        // Create LibGDX mesh with color support
-        Mesh mesh = new Mesh(true,
-            meshData.getVerticesArray().length / 12, // 12 floats per vertex (pos+normal+uv+color)
-            meshData.getIndicesArray().length,
-            new VertexAttribute(VertexAttributes.Usage.Position, 3, "a_position"),
-            new VertexAttribute(VertexAttributes.Usage.Normal, 3, "a_normal"),
-            new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 2, "a_texCoord0"),
-            new VertexAttribute(VertexAttributes.Usage.ColorUnpacked, 4, "a_color")
-        );
-
-        mesh.setVertices(meshData.getVerticesArray());
-        mesh.setIndices(meshData.getIndicesArray());
-
-        // Create model
-        ModelBuilder modelBuilder = new ModelBuilder();
-        modelBuilder.begin();
-
-        // Material that uses vertex colors
-        Material material = new Material(
-            ColorAttribute.createDiffuse(Color.WHITE) // Base white - vertex colors will override
-        );
-
-        modelBuilder.part("chunk", mesh, GL20.GL_TRIANGLES, material);
-        Model model = modelBuilder.end();
-
-        ModelInstance instance = new ModelInstance(model);
-
-        // Position the model instance at the chunk's world position
         float worldX = chunk.getChunkX() * Chunk.SIZE;
         float worldY = chunk.getChunkY() * Chunk.HEIGHT;
         float worldZ = chunk.getChunkZ() * Chunk.SIZE;
-        instance.transform.setToTranslation(worldX, worldY, worldZ);
 
-        chunkModels.put(key, new ChunkModel(model, instance));
+        ChunkModel chunkModel = new ChunkModel();
+        int meshCount = meshData.getMeshCount();
+
+        for (int batch = 0; batch < meshCount; batch++) {
+            float[] verts = meshData.getVerticesArray(batch);
+            short[] inds = meshData.getIndicesArray(batch);
+
+            if (verts.length == 0 || inds.length == 0) continue;
+
+            Mesh mesh = new Mesh(true,
+                verts.length / 12,
+                inds.length,
+                new VertexAttribute(VertexAttributes.Usage.Position, 3, "a_position"),
+                new VertexAttribute(VertexAttributes.Usage.Normal, 3, "a_normal"),
+                new VertexAttribute(VertexAttributes.Usage.TextureCoordinates, 2, "a_texCoord0"),
+                new VertexAttribute(VertexAttributes.Usage.ColorUnpacked, 4, "a_color")
+            );
+
+            mesh.setVertices(verts);
+            mesh.setIndices(inds);
+
+            ModelBuilder modelBuilder = new ModelBuilder();
+            modelBuilder.begin();
+
+            Material material = new Material(
+                ColorAttribute.createDiffuse(Color.WHITE)
+            );
+
+            modelBuilder.part("chunk_" + batch, mesh, GL20.GL_TRIANGLES, material);
+            Model model = modelBuilder.end();
+
+            ModelInstance instance = new ModelInstance(model);
+            instance.transform.setToTranslation(worldX, worldY, worldZ);
+
+            chunkModel.add(model, instance);
+        }
+
+        if (!chunkModel.instances.isEmpty()) {
+            chunkModels.put(key, chunkModel);
+        }
     }
 
     /**
@@ -116,7 +138,9 @@ public class ChunkRenderer {
      */
     public void render(ModelBatch modelBatch, Environment environment) {
         for (ChunkModel chunkModel : chunkModels.values()) {
-            modelBatch.render(chunkModel.instance, environment);
+            for (ModelInstance instance : chunkModel.instances) {
+                modelBatch.render(instance, environment);
+            }
         }
     }
 

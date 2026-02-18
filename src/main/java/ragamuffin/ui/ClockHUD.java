@@ -37,9 +37,9 @@ public class ClockHUD {
     public void render(SpriteBatch batch, BitmapFont font, int screenWidth, int screenHeight) {
         batch.begin();
 
-        // Draw time in top-right corner
+        // Draw time in top-right corner, below the weather text
         float x = screenWidth - 100;
-        float y = screenHeight - 20;
+        float y = screenHeight - 45;
 
         font.draw(batch, timeString, x, y);
 
