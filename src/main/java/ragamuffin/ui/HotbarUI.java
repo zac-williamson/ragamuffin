@@ -151,6 +151,25 @@ public class HotbarUI {
             case ENERGY_DRINK: return "ED";
             case CRISPS: return "CR";
             case TIN_OF_BEANS: return "TB";
+            case CONCRETE: return "CN";
+            case ROOF_TILE: return "RT";
+            case TARMAC: return "TM";
+            case SCRAP_METAL: return "SM";
+            case RENDER: return "RN";
+            case SLATE: return "SL";
+            case PEBBLEDASH: return "PB";
+            case DOOR: return "DR";
+            case LINOLEUM: return "LN";
+            case YELLOW_BRICK: return "YB";
+            case TILE: return "TI";
+            case COUNTER: return "CT";
+            case SHELF: return "SH";
+            case TABLE: return "TA";
+            case CARPET: return "CA";
+            case FENCE: return "FN";
+            case SIGN: return "SI";
+            case GARDEN_WALL: return "GW";
+            case BOOKSHELF: return "BK";
             default: return "??";
         }
     }

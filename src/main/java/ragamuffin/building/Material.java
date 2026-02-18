@@ -32,7 +32,26 @@ public enum Material {
     KEBAB("Kebab"),
     ENERGY_DRINK("Energy Drink"),
     CRISPS("Crisps"),
-    TIN_OF_BEANS("Tin of Beans");
+    TIN_OF_BEANS("Tin of Beans"),
+    CONCRETE("Concrete"),
+    ROOF_TILE("Roof Tile"),
+    TARMAC("Tarmac"),
+    SCRAP_METAL("Scrap Metal"),
+    RENDER("Render"),
+    SLATE("Slate"),
+    PEBBLEDASH("Pebbledash"),
+    DOOR("Door"),
+    LINOLEUM("Linoleum"),
+    YELLOW_BRICK("Yellow Brick"),
+    TILE("Tile"),
+    COUNTER("Counter"),
+    SHELF("Shelf"),
+    TABLE("Table"),
+    CARPET("Carpet"),
+    FENCE("Fence"),
+    SIGN("Sign"),
+    GARDEN_WALL("Garden Wall"),
+    BOOKSHELF("Bookshelf");
 
     private final String displayName;
 

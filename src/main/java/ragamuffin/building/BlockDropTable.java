@@ -42,6 +42,52 @@ public class BlockDropTable {
                 return Material.WOOD;
             case CARDBOARD:
                 return Material.CARDBOARD;
+            case CONCRETE:
+                return Material.CONCRETE;
+            case ROOF_TILE:
+                return Material.ROOF_TILE;
+            case TARMAC:
+                return Material.TARMAC;
+            case CORRUGATED_METAL:
+            case METAL_RED:
+                return Material.SCRAP_METAL;
+            case RENDER_WHITE:
+            case RENDER_CREAM:
+            case RENDER_PINK:
+                return Material.RENDER;
+            case SLATE:
+                return Material.SLATE;
+            case PEBBLEDASH:
+                return Material.PEBBLEDASH;
+            case DOOR_WOOD:
+                return Material.DOOR;
+            case LINOLEUM:
+            case LINO_GREEN:
+                return Material.LINOLEUM;
+            case YELLOW_BRICK:
+                return Material.YELLOW_BRICK;
+            case TILE_WHITE:
+            case TILE_BLACK:
+                return Material.TILE;
+            case COUNTER:
+                return Material.COUNTER;
+            case SHELF:
+            case BOOKSHELF:
+                return Material.SHELF;
+            case TABLE:
+                return Material.TABLE;
+            case CARPET:
+                return Material.CARPET;
+            case IRON_FENCE:
+                return Material.FENCE;
+            case SIGN_WHITE:
+            case SIGN_RED:
+            case SIGN_BLUE:
+            case SIGN_GREEN:
+            case SIGN_YELLOW:
+                return Material.SIGN;
+            case GARDEN_WALL:
+                return Material.GARDEN_WALL;
             case AIR:
             case WATER:
             case LEAVES:
