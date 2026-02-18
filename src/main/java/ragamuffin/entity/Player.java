@@ -13,6 +13,7 @@ public class Player {
     public static final float DEPTH = 0.6f;
     public static final float EYE_HEIGHT = 1.62f; // Eye level for camera
     public static final float MOVE_SPEED = 12.0f;
+    public static final float SPRINT_SPEED = 20.0f;
     public static final float GRAVITY = 9.8f; // Gravity acceleration (m/s^2)
     public static final float JUMP_VELOCITY = 6.0f; // Initial upward velocity when jumping
 

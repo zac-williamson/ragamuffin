@@ -24,11 +24,44 @@ public class InteractionSystem {
         "My council tax pays for this?",
         "I'm calling the council.",
         "Bit rough, innit?",
-        "You alright, love?"
+        "You alright, love?",
+        "State of this place.",
+        "Have you tried the JobCentre?",
+        "Mind yourself, yeah?",
+        "This used to be a nice area.",
+        "You look like you need a Greggs.",
+        "My nan wouldn't stand for this.",
+        "Shocking, absolutely shocking.",
+        "Are you sleeping rough?",
+        "Can't get a GP appointment for weeks.",
+        "The bins haven't been collected again."
     };
 
-    private static final String POLICE_DIALOGUE = "Move along.";
-    private static final String COUNCIL_BUILDER_DIALOGUE = "Planning permission denied.";
+    private static final String[] POLICE_DIALOGUE_OPTIONS = {
+        "Move along.",
+        "Evening. What are you up to then?",
+        "This is a dispersal zone.",
+        "Have you got ID?",
+        "Don't make me radio for backup.",
+        "Right, what's going on here?"
+    };
+
+    private static final String[] COUNCIL_BUILDER_DIALOGUE_OPTIONS = {
+        "Planning permission denied.",
+        "This is an unauthorised structure.",
+        "Health and safety, mate.",
+        "Got a notice of demolition here.",
+        "We'll have this down by Tuesday."
+    };
+
+    private static final String[] YOUTH_GANG_DIALOGUE = {
+        "Got any change, bruv?",
+        "Nice phone, that.",
+        "What you looking at?",
+        "This is our patch.",
+        "Run your pockets.",
+        "You want some, yeah?"
+    };
 
     /**
      * Handle food consumption (right-click with food in hotbar).
@@ -80,10 +113,16 @@ public class InteractionSystem {
                 dialogue = PUBLIC_DIALOGUE[RANDOM.nextInt(PUBLIC_DIALOGUE.length)];
                 break;
             case POLICE:
-                dialogue = POLICE_DIALOGUE;
+                dialogue = POLICE_DIALOGUE_OPTIONS[RANDOM.nextInt(POLICE_DIALOGUE_OPTIONS.length)];
                 break;
             case COUNCIL_BUILDER:
-                dialogue = COUNCIL_BUILDER_DIALOGUE;
+                dialogue = COUNCIL_BUILDER_DIALOGUE_OPTIONS[RANDOM.nextInt(COUNCIL_BUILDER_DIALOGUE_OPTIONS.length)];
+                break;
+            case YOUTH_GANG:
+                dialogue = YOUTH_GANG_DIALOGUE[RANDOM.nextInt(YOUTH_GANG_DIALOGUE.length)];
+                break;
+            case DOG:
+                dialogue = "*bark*";
                 break;
             default:
                 break;

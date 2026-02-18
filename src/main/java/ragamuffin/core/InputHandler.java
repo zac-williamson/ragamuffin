@@ -21,6 +21,7 @@ public class InputHandler implements InputProcessor {
     private boolean downPressed;
     private boolean interactPressed; // E key for interaction
     private boolean jumpPressed; // Spacebar for jumping
+    private boolean sprintHeld; // Left Shift for sprinting
     private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
     private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
     private float mouseDeltaX, mouseDeltaY;
@@ -31,6 +32,7 @@ public class InputHandler implements InputProcessor {
         backward = Gdx.input.isKeyPressed(Input.Keys.S);
         left = Gdx.input.isKeyPressed(Input.Keys.A);
         right = Gdx.input.isKeyPressed(Input.Keys.D);
+        sprintHeld = Gdx.input.isKeyPressed(Input.Keys.SHIFT_LEFT);
 
         // Mouse delta for look - use LibGDX's built-in delta tracking
         if (Gdx.input.isCursorCatched()) {
@@ -57,6 +59,7 @@ public class InputHandler implements InputProcessor {
     public boolean isDownPressed() { return downPressed; }
     public boolean isInteractPressed() { return interactPressed; }
     public boolean isJumpPressed() { return jumpPressed; }
+    public boolean isSprintHeld() { return sprintHeld; }
     public int getHotbarSlotPressed() { return hotbarSlotPressed; }
     public int getCraftingSlotPressed() { return craftingSlotPressed; }
 

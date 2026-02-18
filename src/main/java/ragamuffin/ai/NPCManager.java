@@ -31,6 +31,24 @@ public class NPCManager {
     private static final float PARK_MIN_Z = -20;
     private static final float PARK_MAX_Z = 20;
 
+    // Random ambient speech lines
+    private static final String[] RANDOM_PUBLIC_SPEECH = {
+        "Is that... legal?", "My council tax pays for this?", "I'm calling the council.",
+        "Bit rough, innit?", "You alright, love?", "State of this place.",
+        "Have you tried the JobCentre?", "Mind yourself, yeah?",
+        "This used to be a nice area.", "You look like you need a Greggs.",
+        "Shocking, absolutely shocking.", "Can't get a GP appointment for weeks.",
+        "The bins haven't been collected again.", "Nice day for it."
+    };
+    private static final String[] RANDOM_YOUTH_SPEECH = {
+        "Oi!", "What you looking at?", "This is our patch.",
+        "Got any change?", "Nice phone, that.", "Bare wasteman.",
+        "You want some, yeah?"
+    };
+    private static final String[] RANDOM_POLICE_SPEECH = {
+        "Move along.", "Evening.", "Keep it civil."
+    };
+
     // Structure detection
     private Map<Vector3, Integer> playerStructures; // Position -> block count
 
@@ -179,18 +197,26 @@ public class NPCManager {
     private void updateNPC(NPC npc, float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
         npc.update(delta);
 
-        // Phase 11: PUBLIC NPCs randomly speak when near player
-        if (npc.getType() == NPCType.PUBLIC && !npc.isSpeaking() && npc.isNear(player.getPosition(), 10.0f)) {
-            // Random chance to speak (about 1% per frame = ~every 1-2 seconds near player)
-            if (random.nextFloat() < 0.01f) {
-                String[] publicSpeech = {
-                    "Is that... legal?",
-                    "My council tax pays for this?",
-                    "I'm calling the council.",
-                    "Bit rough, innit?",
-                    "You alright, love?"
-                };
-                npc.setSpeechText(publicSpeech[random.nextInt(publicSpeech.length)], 3.0f);
+        // NPCs randomly speak when near player
+        if (!npc.isSpeaking() && npc.isNear(player.getPosition(), 10.0f)) {
+            if (random.nextFloat() < 0.005f) {
+                String speech = null;
+                switch (npc.getType()) {
+                    case PUBLIC:
+                        speech = RANDOM_PUBLIC_SPEECH[random.nextInt(RANDOM_PUBLIC_SPEECH.length)];
+                        break;
+                    case YOUTH_GANG:
+                        speech = RANDOM_YOUTH_SPEECH[random.nextInt(RANDOM_YOUTH_SPEECH.length)];
+                        break;
+                    case POLICE:
+                        speech = RANDOM_POLICE_SPEECH[random.nextInt(RANDOM_POLICE_SPEECH.length)];
+                        break;
+                    default:
+                        break;
+                }
+                if (speech != null) {
+                    npc.setSpeechText(speech, 3.0f);
+                }
             }
         }
 

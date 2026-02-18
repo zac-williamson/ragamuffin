@@ -247,6 +247,12 @@ public class WorldGenerator {
         generateGardenWalls(world, -150, -20, 170, 1);
         generateGardenWalls(world, 20, -20, 120, 1);
 
+        // ===== STREET FURNITURE =====
+        generateStreetFurniture(world);
+
+        // ===== PARK FURNITURE =====
+        generateParkFurniture(world);
+
         // Load initial chunks around origin
         world.updateLoadedChunks(new Vector3(0, 0, 0));
     }
@@ -882,5 +888,125 @@ public class WorldGenerator {
         // Front door
         world.setBlock(x + width / 2, 1, z, BlockType.AIR);
         world.setBlock(x + width / 2, 2, z, BlockType.AIR);
+    }
+
+    // ==================== STREET FURNITURE ====================
+
+    private void generateStreetFurniture(World world) {
+        // Lamp posts along the main high street (every 10 blocks on pavement)
+        for (int x = 20; x < 130; x += 10) {
+            generateLampPost(world, x, 24); // South pavement
+            generateLampPost(world, x, 13); // North pavement
+        }
+
+        // Bins outside shops
+        generateBin(world, 22, 24);
+        generateBin(world, 36, 24);
+        generateBin(world, 52, 24);
+        generateBin(world, 70, 24);
+        generateBin(world, 95, 24);
+        generateBin(world, 115, 24);
+
+        // Benches along high street
+        generateBench(world, 30, 13);
+        generateBench(world, 50, 13);
+        generateBench(world, 75, 13);
+        generateBench(world, 100, 13);
+
+        // Bus shelter near the taxi rank area
+        generateBusShelter(world, 85, 24);
+
+        // Bollards at street junctions
+        for (int z = 20; z <= 23; z++) {
+            generateBollard(world, 19, z);
+        }
+        for (int z = 20; z <= 23; z++) {
+            generateBollard(world, 65, z);
+        }
+
+        // Phone box near the park entrance
+        generatePhoneBox(world, 16, -16);
+
+        // Post box outside newsagent
+        generatePostBox(world, 64, 7);
+    }
+
+    private void generateParkFurniture(World world) {
+        int parkStart = -PARK_SIZE / 2;
+
+        // Park benches
+        generateBench(world, parkStart + 5, parkStart + 5);
+        generateBench(world, parkStart + 5, parkStart + PARK_SIZE - 7);
+        generateBench(world, parkStart + PARK_SIZE - 7, parkStart + 5);
+        generateBench(world, parkStart + PARK_SIZE - 7, parkStart + PARK_SIZE - 7);
+
+        // Park bins
+        generateBin(world, parkStart + 3, parkStart + 3);
+        generateBin(world, parkStart + PARK_SIZE - 5, parkStart + PARK_SIZE - 5);
+    }
+
+    private void generateLampPost(World world, int x, int z) {
+        // 4-block tall iron pole with a stone cap
+        for (int y = 1; y <= 4; y++) {
+            world.setBlock(x, y, z, BlockType.IRON_FENCE);
+        }
+        world.setBlock(x, 5, z, BlockType.SIGN_YELLOW); // Light at top
+    }
+
+    private void generateBin(World world, int x, int z) {
+        // Single block bin — dark stone
+        world.setBlock(x, 1, z, BlockType.STONE);
+    }
+
+    private void generateBench(World world, int x, int z) {
+        // 3-block wide wooden bench, 1 block tall
+        world.setBlock(x, 1, z, BlockType.WOOD);
+        world.setBlock(x + 1, 1, z, BlockType.WOOD);
+        world.setBlock(x + 2, 1, z, BlockType.WOOD);
+    }
+
+    private void generateBusShelter(World world, int x, int z) {
+        // Glass and metal shelter: 4 wide, 2 deep, 3 tall
+        // Back wall (glass)
+        for (int dx = 0; dx < 4; dx++) {
+            for (int y = 1; y <= 3; y++) {
+                world.setBlock(x + dx, y, z + 1, BlockType.GLASS);
+            }
+        }
+        // Side walls
+        for (int y = 1; y <= 3; y++) {
+            world.setBlock(x, y, z, BlockType.GLASS);
+            world.setBlock(x + 3, y, z, BlockType.GLASS);
+        }
+        // Roof
+        for (int dx = 0; dx < 4; dx++) {
+            world.setBlock(x + dx, 4, z, BlockType.CORRUGATED_METAL);
+            world.setBlock(x + dx, 4, z + 1, BlockType.CORRUGATED_METAL);
+        }
+        // Bench inside
+        world.setBlock(x + 1, 1, z + 1, BlockType.WOOD);
+        world.setBlock(x + 2, 1, z + 1, BlockType.WOOD);
+        // Concrete floor
+        for (int dx = 0; dx < 4; dx++) {
+            world.setBlock(x + dx, 0, z, BlockType.CONCRETE);
+            world.setBlock(x + dx, 0, z + 1, BlockType.CONCRETE);
+        }
+    }
+
+    private void generateBollard(World world, int x, int z) {
+        world.setBlock(x, 1, z, BlockType.CONCRETE);
+    }
+
+    private void generatePhoneBox(World world, int x, int z) {
+        // Classic red phone box: 1x1, 3 tall, red metal with glass
+        world.setBlock(x, 1, z, BlockType.METAL_RED);
+        world.setBlock(x, 2, z, BlockType.GLASS);
+        world.setBlock(x, 3, z, BlockType.METAL_RED);
+    }
+
+    private void generatePostBox(World world, int x, int z) {
+        // Royal Mail post box: 1x1, 2 tall, red metal
+        world.setBlock(x, 1, z, BlockType.METAL_RED);
+        world.setBlock(x, 2, z, BlockType.METAL_RED);
     }
 }

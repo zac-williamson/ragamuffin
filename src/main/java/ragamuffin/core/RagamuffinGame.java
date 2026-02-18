@@ -391,6 +391,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
 
+            // Render NPC speech bubbles (2D overlay projected from 3D)
+            renderSpeechBubbles();
+
             // Render 2D UI overlay
             renderUI();
 
@@ -575,7 +578,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (tmpMoveDir.len2() > 0) {
             tmpMoveDir.nor();
         }
-        world.moveWithCollision(player, tmpMoveDir.x, 0, tmpMoveDir.z, delta);
+        float moveSpeed = inputHandler.isSprintHeld() ? Player.SPRINT_SPEED : Player.MOVE_SPEED;
+        world.moveWithCollision(player, tmpMoveDir.x, 0, tmpMoveDir.z, delta, moveSpeed);
 
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());
@@ -806,6 +810,46 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Render tooltip at bottom center
             spriteBatch.begin();
             font.draw(spriteBatch, message, screenWidth / 2 - 100, 100);
+            spriteBatch.end();
+        }
+    }
+
+    private void renderSpeechBubbles() {
+        int screenWidth = Gdx.graphics.getWidth();
+        int screenHeight = Gdx.graphics.getHeight();
+
+        for (NPC npc : npcManager.getNPCs()) {
+            if (!npc.isSpeaking()) continue;
+
+            // Project NPC head position to screen coordinates
+            tmpCameraPos.set(npc.getPosition());
+            tmpCameraPos.y += 2.2f; // Above head
+
+            camera.project(tmpCameraPos, 0, 0, screenWidth, screenHeight);
+
+            // Skip if behind camera
+            if (tmpCameraPos.z > 1.0f || tmpCameraPos.z < 0f) continue;
+
+            float sx = tmpCameraPos.x;
+            float sy = tmpCameraPos.y;
+
+            String text = npc.getSpeechText();
+            float textWidth = text.length() * 7f; // Approximate
+            float bubbleW = textWidth + 16;
+            float bubbleH = 28;
+            float bubbleX = sx - bubbleW / 2f;
+            float bubbleY = sy;
+
+            // Draw speech bubble background
+            shapeRenderer.begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(0f, 0f, 0f, 0.7f);
+            shapeRenderer.rect(bubbleX, bubbleY, bubbleW, bubbleH);
+            shapeRenderer.end();
+
+            // Draw text
+            spriteBatch.begin();
+            font.setColor(1f, 1f, 1f, 1f);
+            font.draw(spriteBatch, text, bubbleX + 8, bubbleY + bubbleH - 6);
             spriteBatch.end();
         }
     }

@@ -254,6 +254,10 @@ public class World {
     private final Vector3 tmpResult = new Vector3();
 
     public Vector3 moveWithCollision(Player player, float dx, float dy, float dz, float delta) {
+        return moveWithCollision(player, dx, dy, dz, delta, Player.MOVE_SPEED);
+    }
+
+    public Vector3 moveWithCollision(Player player, float dx, float dy, float dz, float delta, float speed) {
         tmpOriginalPos.set(player.getPosition());
 
         // Only apply gravity if not standing on solid ground
@@ -267,7 +271,7 @@ public class World {
         // Horizontal movement (X and Z)
         tmpDesiredMove.set(0, 0, 0);
         if (dx != 0 || dz != 0) {
-            tmpDesiredMove.set(dx, 0, dz).nor().scl(Player.MOVE_SPEED * delta);
+            tmpDesiredMove.set(dx, 0, dz).nor().scl(speed * delta);
         }
 
         // Try horizontal movement with sliding
