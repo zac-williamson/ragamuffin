@@ -40,5 +40,9 @@ public enum LandmarkType {
     PHONE_REPAIR,
     CASH_CONVERTER,
     LIBRARY,
-    FIRE_STATION
+    FIRE_STATION,
+    ALLOTMENTS,
+    CANAL,
+    SKATE_PARK,
+    CEMETERY
 }
