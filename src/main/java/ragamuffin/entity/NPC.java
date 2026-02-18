@@ -141,6 +141,8 @@ public class NPC {
         }
 
         // Update facing angle from velocity
+        // atan2(vx, vz) gives the angle from +Z axis toward +X axis
+        // The model's face is now at +Z local, so yaw 0 = face toward +Z
         float hSpeedSq = velocity.x * velocity.x + velocity.z * velocity.z;
         if (hSpeedSq > 0.001f) {
             facingAngle = (float) Math.toDegrees(Math.atan2(velocity.x, velocity.z));
@@ -181,12 +183,30 @@ public class NPC {
     }
 
     /**
-     * Apply knockback to the NPC.
+     * Apply knockback to the NPC as a velocity impulse rather than
+     * teleporting through terrain. The knockback force is applied as
+     * a large velocity that gets collision-checked each frame.
      */
     public void applyKnockback(Vector3 direction, float force) {
-        Vector3 knockback = direction.cpy().nor().scl(force);
-        position.add(knockback);
-        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+        Vector3 kb = direction.cpy().nor().scl(force * 6f); // moderate velocity impulse
+        velocity.set(kb.x, 2f, kb.z); // slight upward pop
+        knockbackTimer = 0.2f; // maintain knockback velocity for 0.2 seconds
+    }
+
+    private float knockbackTimer = 0f;
+
+    public boolean isKnockedBack() {
+        return knockbackTimer > 0f;
+    }
+
+    public void updateKnockback(float delta) {
+        if (knockbackTimer > 0f) {
+            knockbackTimer -= delta;
+            if (knockbackTimer <= 0f) {
+                knockbackTimer = 0f;
+                velocity.set(0, 0, 0);
+            }
+        }
     }
 
     /**

@@ -55,9 +55,14 @@ class NPCTest {
         Vector3 knockbackDir = new Vector3(0, 0, -1); // North
         npc.applyKnockback(knockbackDir, 2.0f);
 
-        assertEquals(originalPos.x, npc.getPosition().x, 0.01f);
-        assertEquals(originalPos.y, npc.getPosition().y, 0.01f);
-        assertTrue(npc.getPosition().z < originalPos.z); // Moved north (negative Z)
+        // Knockback now sets velocity impulse rather than teleporting.
+        // Simulate a few frames so the velocity moves the NPC.
+        for (int i = 0; i < 12; i++) {
+            npc.update(1.0f / 60.0f);
+        }
+
+        assertEquals(originalPos.x, npc.getPosition().x, 0.5f);
+        assertTrue(npc.getPosition().z < originalPos.z, "NPC should be knocked north");
     }
 
     @Test

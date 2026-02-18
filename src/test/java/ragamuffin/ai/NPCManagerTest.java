@@ -122,9 +122,12 @@ class NPCManagerTest {
         Vector3 punchDir = new Vector3(0, 0, -1); // North
         manager.punchNPC(npc, punchDir);
 
-        assertTrue(npc.getPosition().z < originalPos.z); // Knocked back north
-        float knockbackDistance = originalPos.dst(npc.getPosition());
-        assertTrue(knockbackDistance >= 1.8f); // At least ~2 blocks
+        // Knockback is now velocity-based — simulate frames to see movement
+        for (int i = 0; i < 12; i++) {
+            npc.update(1.0f / 60.0f);
+        }
+
+        assertTrue(npc.getPosition().z < originalPos.z, "NPC should be knocked north");
     }
 
     @Test

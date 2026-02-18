@@ -34,6 +34,8 @@ public class Player {
     private float energy;
     private boolean isDead;
     private float verticalVelocity; // Separate vertical velocity for gravity
+    private float fallStartY; // Y position when the player started falling
+    private boolean isFalling; // Whether the player is currently falling
 
     public Player(float x, float y, float z) {
         this.position = new Vector3(x, y, z);
@@ -44,6 +46,8 @@ public class Player {
         this.energy = MAX_ENERGY;
         this.isDead = false;
         this.verticalVelocity = 0f;
+        this.fallStartY = y;
+        this.isFalling = false;
     }
 
     public Vector3 getPosition() {
@@ -284,5 +288,35 @@ public class Player {
         if (verticalVelocity == 0f) {
             verticalVelocity = JUMP_VELOCITY;
         }
+    }
+
+    /**
+     * Start tracking a fall from the current Y position.
+     */
+    public void startFalling() {
+        if (!isFalling) {
+            fallStartY = position.y;
+            isFalling = true;
+        }
+    }
+
+    /**
+     * Called when the player lands. Returns fall damage based on distance fallen.
+     * Falls greater than 10 blocks deal 10 damage per block over 10.
+     */
+    public float landAndGetFallDamage() {
+        if (!isFalling) return 0f;
+        isFalling = false;
+
+        float fallDistance = fallStartY - position.y;
+        if (fallDistance > 10f) {
+            float damageBlocks = fallDistance - 10f;
+            return damageBlocks * 10f; // 10 HP per block over the threshold
+        }
+        return 0f;
+    }
+
+    public boolean isFalling() {
+        return isFalling;
     }
 }

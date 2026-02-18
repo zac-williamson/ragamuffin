@@ -263,8 +263,17 @@ public class World {
         // Only apply gravity if not standing on solid ground
         boolean onGround = isOnGround(player);
         if (onGround && player.getVerticalVelocity() <= 0) {
+            // Landing — check for fall damage
+            float fallDamage = player.landAndGetFallDamage();
+            if (fallDamage > 0) {
+                player.damage(fallDamage);
+            }
             player.resetVerticalVelocity();
         } else {
+            // Airborne — track fall start
+            if (player.getVerticalVelocity() < 0) {
+                player.startFalling();
+            }
             player.applyGravity(delta);
         }
 
@@ -330,6 +339,11 @@ public class World {
                 }
                 if (highestSolidY > -64) {
                     player.getPosition().y = highestSolidY + 1.0f;
+                }
+                // Fall damage on landing
+                float fallDmg = player.landAndGetFallDamage();
+                if (fallDmg > 0) {
+                    player.damage(fallDmg);
                 }
                 player.resetVerticalVelocity();
             } else {

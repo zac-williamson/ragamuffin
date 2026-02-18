@@ -205,7 +205,7 @@ public class NPCRenderer {
         // Badge — small silver box on the front
         Material badgeMat = new Material(ColorAttribute.createDiffuse(new Color(0.75f, 0.75f, 0.80f, 1f)));
         MeshPartBuilder badge = mb.part("badge", GL20.GL_TRIANGLES, ATTRS, badgeMat);
-        badge.setVertexTransform(new Matrix4().setToTranslation(0f, 0.10f, -0.20f));
+        badge.setVertexTransform(new Matrix4().setToTranslation(0f, 0.10f, 0.20f));
         badge.box(0.08f, 0.08f, 0.02f);
 
         return mb.end();
@@ -295,8 +295,8 @@ public class NPCRenderer {
         setPartTransform(instances[0], pos, yawRad, 0f, headCentre, 0f);
         modelBatch.render(instances[0], environment);
 
-        // 6 - Face
-        setPartTransform(instances[6], pos, yawRad, 0f, headCentre, -(HEAD_D / 2f + 0.011f));
+        // 6 - Face (on the +Z side of the head, which is the front at yaw 0)
+        setPartTransform(instances[6], pos, yawRad, 0f, headCentre, (HEAD_D / 2f + 0.011f));
         modelBatch.render(instances[6], environment);
 
         // 7 - Helmet (police only)
@@ -306,24 +306,24 @@ public class NPCRenderer {
             modelBatch.render(instances[7], environment);
         }
 
-        // 2 - Left arm
+        // 2 - Left arm (swings opposite to left leg for natural gait)
         setLimbTransform(instances[2], pos, yawRad,
-            -(TORSO_W / 2f + ARM_W / 2f), armPivotY, 0f, -swingRad, ARM_H);
+            -(TORSO_W / 2f + ARM_W / 2f), armPivotY, 0f, swingRad, ARM_H);
         modelBatch.render(instances[2], environment);
 
         // 3 - Right arm
         setLimbTransform(instances[3], pos, yawRad,
-            (TORSO_W / 2f + ARM_W / 2f), armPivotY, 0f, swingRad, ARM_H);
+            (TORSO_W / 2f + ARM_W / 2f), armPivotY, 0f, -swingRad, ARM_H);
         modelBatch.render(instances[3], environment);
 
         // 4 - Left leg
         setLimbTransform(instances[4], pos, yawRad,
-            -(TORSO_W / 2f - LEG_W / 2f), legPivotY, 0f, swingRad, LEG_H);
+            -(TORSO_W / 2f - LEG_W / 2f), legPivotY, 0f, -swingRad, LEG_H);
         modelBatch.render(instances[4], environment);
 
         // 5 - Right leg
         setLimbTransform(instances[5], pos, yawRad,
-            (TORSO_W / 2f - LEG_W / 2f), legPivotY, 0f, -swingRad, LEG_H);
+            (TORSO_W / 2f - LEG_W / 2f), legPivotY, 0f, swingRad, LEG_H);
         modelBatch.render(instances[5], environment);
     }
 
@@ -391,29 +391,29 @@ public class NPCRenderer {
         setPartTransform(dogInstances[0], pos, yawRad, 0f, bodyCentreY, 0f);
         modelBatch.render(dogInstances[0], environment);
 
-        // 1 - Head
-        float headZ = -(0.65f / 2f + 0.26f / 2f - 0.04f);
+        // 1 - Head (at +Z, the front of the dog)
+        float headZ = (0.65f / 2f + 0.26f / 2f - 0.04f);
         setPartTransform(dogInstances[1], pos, yawRad, 0f, bodyCentreY + 0.06f, headZ);
         modelBatch.render(dogInstances[1], environment);
 
         // 2 - Snout
         setPartTransform(dogInstances[2], pos, yawRad,
-            0f, bodyCentreY, headZ - 0.26f / 2f - 0.06f);
+            0f, bodyCentreY, headZ + 0.26f / 2f + 0.06f);
         modelBatch.render(dogInstances[2], environment);
 
         // 8 - Eyes
         setPartTransform(dogInstances[8], pos, yawRad,
-            0f, bodyCentreY + 0.10f, headZ - 0.26f / 2f - 0.011f);
+            0f, bodyCentreY + 0.10f, headZ + 0.26f / 2f + 0.011f);
         modelBatch.render(dogInstances[8], environment);
 
-        // 3 - Tail
-        float tailZ = 0.65f / 2f + 0.03f;
+        // 3 - Tail (at -Z, the back of the dog)
+        float tailZ = -(0.65f / 2f + 0.03f);
         setPartTransform(dogInstances[3], pos, yawRad, 0f, bodyCentreY + 0.15f, tailZ);
         modelBatch.render(dogInstances[3], environment);
 
-        // 4-7: Legs with walk animation
-        float frontLegZ = -0.65f / 2f + 0.10f;
-        float backLegZ = 0.65f / 2f - 0.10f;
+        // 4-7: Legs with walk animation (front at +Z, back at -Z)
+        float frontLegZ = 0.65f / 2f - 0.10f;
+        float backLegZ = -(0.65f / 2f - 0.10f);
         float legPivotY = bodyCentreY - bodyH / 2f;
         float legSpreadX = 0.12f;
 

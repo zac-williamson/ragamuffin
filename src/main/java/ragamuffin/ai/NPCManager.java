@@ -25,6 +25,9 @@ public class NPCManager {
     private final Random random;
     private float gameTime; // Game time in hours (0-24)
 
+    // Maximum NPC count to prevent lag
+    private static final int MAX_NPCS = 100;
+
     // Park boundaries (assumed centered at 0,0)
     private static final float PARK_MIN_X = -20;
     private static final float PARK_MAX_X = 20;
@@ -78,6 +81,9 @@ public class NPCManager {
     private float structureScanTimer; // Periodic structure scanning
     private Set<Vector3> notifiedStructures; // Track which structure positions already have notices
 
+    // NPC idle timers — pause between wanders
+    private Map<NPC, Float> npcIdleTimers;
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
@@ -96,12 +102,18 @@ public class NPCManager {
         this.builderDemolishTimers = new HashMap<>();
         this.structureScanTimer = 0;
         this.notifiedStructures = new HashSet<>();
+        this.npcIdleTimers = new HashMap<>();
     }
 
     /**
      * Spawn an NPC at a specific position.
      */
     public NPC spawnNPC(NPCType type, float x, float y, float z) {
+        // Enforce maximum NPC cap
+        if (npcs.size() >= MAX_NPCS) {
+            return null;
+        }
+
         NPC npc = new NPC(type, x, y, z);
 
         // Set initial state based on type
@@ -244,9 +256,15 @@ public class NPCManager {
     private void updateNPC(NPC npc, float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
         // Update timers and facing (but NOT position — we handle movement with collision)
         npc.updateTimers(delta);
+        npc.updateKnockback(delta);
 
-        // Apply velocity with world collision
+        // Apply velocity with world collision (includes knockback velocity)
         applyNPCCollision(npc, delta, world);
+
+        // Skip AI movement while being knocked back — let the impulse play out
+        if (npc.isKnockedBack()) {
+            return;
+        }
 
         // NPCs randomly speak when near player
         if (!npc.isSpeaking() && npc.isNear(player.getPosition(), 10.0f)) {
@@ -329,10 +347,17 @@ public class NPCManager {
     }
 
     /**
-     * Update wandering behavior.
+     * Update wandering behavior with idle pauses and varied behaviour.
      */
     private void updateWandering(NPC npc, float delta, World world) {
-        // If no target, no path, or reached target, pick a new random target
+        // Check if NPC should pause (idle for a bit between walks)
+        Float idleTimer = npcIdleTimers.get(npc);
+        if (idleTimer != null && idleTimer > 0) {
+            npcIdleTimers.put(npc, idleTimer - delta);
+            npc.setVelocity(0, 0, 0);
+            return;
+        }
+
         // Dogs wander more aggressively with a larger radius and minimum distance
         float wanderRadius = (npc.getType() == NPCType.DOG) ? 15.0f : 10.0f;
         float minWanderDistance = (npc.getType() == NPCType.DOG) ? 5.0f : 0.0f;
@@ -343,6 +368,28 @@ public class NPCManager {
                                  npc.isNear(npc.getTargetPosition(), 1.0f);
 
         if (needsNewTarget) {
+            // If we just finished an idle pause, go straight to picking a new target
+            boolean justFinishedIdle = (idleTimer != null && idleTimer <= 0);
+            npcIdleTimers.remove(npc);
+
+            if (!justFinishedIdle) {
+                // Chance to pause before walking to next point
+                float idlePause = 0f;
+                if (npc.getType() == NPCType.PUBLIC || npc.getType() == NPCType.COUNCIL_MEMBER) {
+                    idlePause = 1.0f + random.nextFloat() * 4.0f;
+                } else if (npc.getType() == NPCType.DOG) {
+                    idlePause = 0.5f + random.nextFloat() * 2.0f;
+                } else if (npc.getType() == NPCType.YOUTH_GANG) {
+                    idlePause = 2.0f + random.nextFloat() * 5.0f;
+                }
+
+                if (idlePause > 0) {
+                    npcIdleTimers.put(npc, idlePause);
+                    npc.setVelocity(0, 0, 0);
+                    return;
+                }
+            }
+
             Vector3 randomTarget;
             int attempts = 0;
             do {
@@ -508,58 +555,90 @@ public class NPCManager {
     private void applyNPCCollision(NPC npc, float delta, World world) {
         Vector3 pos = npc.getPosition();
         Vector3 vel = npc.getVelocity();
+
+        // Clamp velocity to prevent single-frame terrain clipping
+        float maxHorizontalSpeed = 20f;
+        float hSpeed = (float) Math.sqrt(vel.x * vel.x + vel.z * vel.z);
+        if (hSpeed > maxHorizontalSpeed) {
+            float scale = maxHorizontalSpeed / hSpeed;
+            vel.x *= scale;
+            vel.z *= scale;
+        }
+
         float moveX = vel.x * delta;
         float moveZ = vel.z * delta;
 
-        if (moveX == 0 && moveZ == 0) return;
+        // Horizontal movement with collision sliding
+        if (moveX != 0 || moveZ != 0) {
+            float origX = pos.x;
+            float origZ = pos.z;
 
-        // Save original position
-        float origX = pos.x;
-        float origZ = pos.z;
-
-        // Try full horizontal movement
-        pos.x += moveX;
-        pos.z += moveZ;
-        npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
-
-        if (world.checkAABBCollision(npc.getAABB())) {
-            // Collision — try sliding on each axis
-            pos.x = origX;
-            pos.z = origZ;
-
-            // Try X only
+            // Try full horizontal movement
             pos.x += moveX;
-            npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
-            if (world.checkAABBCollision(npc.getAABB())) {
-                pos.x = origX;
-            }
-
-            // Try Z only
-            float afterX = pos.x;
             pos.z += moveZ;
             npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
-            if (world.checkAABBCollision(npc.getAABB())) {
-                pos.z = origZ;
-            }
 
-            npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+            if (world.checkAABBCollision(npc.getAABB())) {
+                // Collision — try sliding on each axis
+                pos.x = origX;
+                pos.z = origZ;
+
+                // Try X only
+                pos.x += moveX;
+                npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+                if (world.checkAABBCollision(npc.getAABB())) {
+                    pos.x = origX;
+                }
+
+                // Try Z only
+                pos.z += moveZ;
+                npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+                if (world.checkAABBCollision(npc.getAABB())) {
+                    pos.z = origZ;
+                }
+
+                npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+
+                // If knocked back and fully blocked, kill the knockback velocity
+                if (npc.isKnockedBack()) {
+                    vel.x = 0;
+                    vel.z = 0;
+                }
+            }
         }
 
-        // Apply gravity — check if on ground
-        int blockBelow = (int) Math.floor(pos.y - 0.1f);
-        int bx = (int) Math.floor(pos.x);
-        int bz = (int) Math.floor(pos.z);
-        boolean onGround = world.getBlock(bx, blockBelow, bz).isSolid();
-
-        if (!onGround) {
-            // Fall
-            pos.y -= 9.8f * delta;
+        // Vertical movement — apply gravity and handle upward knockback velocity
+        float verticalMove = vel.y * delta;
+        if (verticalMove > 0) {
+            // Moving upward (knockback pop)
+            pos.y += verticalMove;
             npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
-
             if (world.checkAABBCollision(npc.getAABB())) {
-                // Hit ground — snap to top of block
-                pos.y = (float) Math.ceil(pos.y);
+                pos.y -= verticalMove;
+                vel.y = 0;
                 npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+            }
+            // Apply gravity to slow the upward movement
+            vel.y = vel.y - 9.8f * delta;
+        } else {
+            // Falling or stationary — check ground
+            int blockBelow = (int) Math.floor(pos.y - 0.1f);
+            int bx = (int) Math.floor(pos.x);
+            int bz = (int) Math.floor(pos.z);
+            boolean onGround = world.getBlock(bx, blockBelow, bz).isSolid();
+
+            if (!onGround) {
+                vel.y = vel.y - 9.8f * delta;
+                pos.y += vel.y * delta;
+                npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+
+                if (world.checkAABBCollision(npc.getAABB())) {
+                    pos.y = (float) Math.ceil(pos.y);
+                    vel.y = 0;
+                    npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
+                }
+            } else {
+                vel.y = 0;
             }
         }
     }
@@ -741,6 +820,7 @@ public class NPCManager {
             float z = player.getPosition().z + (float) Math.sin(angle) * distance;
 
             NPC police = spawnNPC(NPCType.POLICE, x, 1, z);
+            if (police == null) break;
             police.setState(NPCState.PATROLLING);
         }
     }
@@ -860,7 +940,8 @@ public class NPCManager {
             }
 
             // Spawn additional police
-            spawnNPC(NPCType.POLICE, police.getPosition().x + 3, police.getPosition().y, police.getPosition().z);
+            NPC extraPolice = spawnNPC(NPCType.POLICE, police.getPosition().x + 3, police.getPosition().y, police.getPosition().z);
+            if (extraPolice != null) extraPolice.setState(NPCState.AGGRESSIVE);
         } else if (timer >= 3.0f) {
             // Go back to patrolling after warning expires
             police.setState(NPCState.PATROLLING);
@@ -996,6 +1077,7 @@ public class NPCManager {
         float z = center.z + (float) Math.sin(angle) * distance;
 
         NPC builder = spawnNPC(NPCType.COUNCIL_BUILDER, x, 1, z);
+        if (builder == null) return;
         builder.setState(NPCState.IDLE);
         builderTargets.put(builder, structure);
         builderDemolishTimers.put(builder, 0.0f);

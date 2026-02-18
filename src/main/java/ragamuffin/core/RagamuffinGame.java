@@ -243,33 +243,20 @@ public class RagamuffinGame extends ApplicationAdapter {
      * Spawn initial NPCs in the world.
      */
     private void spawnInitialNPCs() {
-        // Park area — dog walkers and dogs
+        // Park area — one dog walker with dog
         npcManager.spawnNPC(NPCType.PUBLIC, -5, 2, 5);
-        npcManager.spawnNPC(NPCType.PUBLIC, 8, 2, -3);
-        npcManager.spawnNPC(NPCType.DOG, -5, 2, -5);
-        npcManager.spawnNPC(NPCType.DOG, 8, 2, 3);
-        npcManager.spawnNPC(NPCType.DOG, -2, 2, 10);
+        npcManager.spawnNPC(NPCType.DOG, -2, 2, 7);
 
-        // High street shoppers and pedestrians
-        npcManager.spawnNPC(NPCType.PUBLIC, 25, 2, 20);
+        // High street — a couple of shoppers
         npcManager.spawnNPC(NPCType.PUBLIC, 35, 2, 22);
-        npcManager.spawnNPC(NPCType.PUBLIC, 50, 2, 18);
-        npcManager.spawnNPC(NPCType.PUBLIC, 65, 2, 20);
-        npcManager.spawnNPC(NPCType.PUBLIC, 42, 2, 15);
-        npcManager.spawnNPC(NPCType.PUBLIC, 55, 2, 25);
+        npcManager.spawnNPC(NPCType.PUBLIC, 55, 2, 20);
 
-        // Youth gangs lurking around residential/industrial areas
+        // Youth gang — small group lurking
         npcManager.spawnNPC(NPCType.YOUTH_GANG, -50, 2, -30);
         npcManager.spawnNPC(NPCType.YOUTH_GANG, -55, 2, -35);
-        npcManager.spawnNPC(NPCType.YOUTH_GANG, 70, 2, -45);
-        npcManager.spawnNPC(NPCType.YOUTH_GANG, -10, 2, -10);
 
-        // Council members near the JobCentre
+        // Council member near the JobCentre
         npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, -55, 2, 28);
-        npcManager.spawnNPC(NPCType.COUNCIL_MEMBER, -50, 2, 30);
-
-        // Resident dog in residential area
-        npcManager.spawnNPC(NPCType.DOG, -60, 2, -28);
     }
 
     /**
@@ -824,18 +811,27 @@ public class RagamuffinGame extends ApplicationAdapter {
         NPC closestNPC = null;
         float closestDistance = reach;
 
-        for (NPC npc : npcManager.getNPCs()) {
-            // Calculate distance to NPC
-            Vector3 toNPC = npc.getPosition().cpy().sub(cameraPos);
-            float distance = toNPC.len();
+        // First, find the nearest solid block along the ray — can't punch NPCs behind walls
+        RaycastResult blockHit = blockBreaker.getTargetBlock(world, cameraPos, direction, reach);
+        float blockDistance = (blockHit != null) ? cameraPos.dst(blockHit.getBlockX() + 0.5f,
+            blockHit.getBlockY() + 0.5f, blockHit.getBlockZ() + 0.5f) : reach;
 
-            if (distance > reach) {
-                continue; // Too far
+        for (NPC npc : npcManager.getNPCs()) {
+            // Calculate distance to NPC centre (at chest height)
+            float npcCentreY = npc.getPosition().y + NPC.HEIGHT * 0.5f;
+            float dx = npc.getPosition().x - cameraPos.x;
+            float dy = npcCentreY - cameraPos.y;
+            float dz = npc.getPosition().z - cameraPos.z;
+            float distance = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (distance > reach || distance > blockDistance) {
+                continue; // Too far or behind a block
             }
 
-            // Check if NPC is in front of camera (dot product with direction)
-            float dot = toNPC.nor().dot(direction);
-            if (dot > 0.8f && distance < closestDistance) { // Must be facing NPC
+            // Check if NPC is in front of camera (tight cone — ~10 degrees)
+            float invDist = 1f / distance;
+            float dot = (dx * invDist) * direction.x + (dy * invDist) * direction.y + (dz * invDist) * direction.z;
+            if (dot > 0.985f && distance < closestDistance) {
                 closestNPC = npc;
                 closestDistance = distance;
             }
