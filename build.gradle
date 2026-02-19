@@ -50,9 +50,17 @@ application {
 }
 
 test {
-    systemProperty "junit.jupiter.execution.timeout.default", "60s"
-    jvmArgs "-Djava.awt.headless=true"
     useJUnitPlatform()
+    jvmArgs '-Djava.awt.headless=true'
+
+    // JUnit-level timeout for tests that respect thread interruption
+    systemProperty 'junit.jupiter.execution.timeout.default', '60s'
+
+    // Fork a new JVM for each test class so a hanging test cannot block others
+    forkEvery = 1
+
+    // Hard timeout: kill the entire test task if it runs longer than 4 minutes
+    timeout = java.time.Duration.ofMinutes(4)
 }
 
 jar {
