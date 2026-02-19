@@ -86,9 +86,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     // CRITIC 5: Arrest system — applies penalties when police catch the player
     private ArrestSystem arrestSystem;
 
-    // CRITIC 3: Greggs Raid mechanic - counts how many Greggs blocks player has broken
-    private int greggRaidBlockCount = 0;
-    private static final int GREGGS_RAID_THRESHOLD = 3; // police alert after this many blocks
+    // CRITIC 3: Greggs Raid mechanic — dedicated system for raid state management
+    private GreggsRaidSystem greggsRaidSystem;
 
     // Hover tooltip system
     private HoverTooltipSystem hoverTooltipSystem;
@@ -254,6 +253,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // CRITIC 5: Initialize arrest system
         arrestSystem = new ArrestSystem();
+
+        // CRITIC 3: Initialize Greggs raid system
+        greggsRaidSystem = new GreggsRaidSystem();
 
         // Initialize hover tooltip system
         hoverTooltipSystem = new HoverTooltipSystem();
@@ -636,7 +638,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         openingSequence.start();
         Gdx.input.setCursorCatched(true);
         // Reset per-session counters
-        greggRaidBlockCount = 0;
+        if (greggsRaidSystem != null) {
+            greggsRaidSystem.reset();
+        }
     }
 
     private void renderLoadingScreen() {
@@ -878,6 +882,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             String arrestMsg = ArrestSystem.buildArrestMessage(confiscated);
             tooltipSystem.showMessage(arrestMsg, 4.0f);
             npcManager.clearArrestPending();
+            // CRITIC 3: Arrest clears the active Greggs raid — police have resolved the incident
+            greggsRaidSystem.reset();
         }
 
         // Update camera to follow player
@@ -965,16 +971,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                     }
                 }
 
-                // CRITIC 3: Greggs Raid mechanic — track blocks broken in Greggs
+                // CRITIC 3: Greggs Raid mechanic — delegate to dedicated system
                 if (landmark == LandmarkType.GREGGS) {
-                    greggRaidBlockCount++;
-                    if (greggRaidBlockCount == 1) {
-                        tooltipSystem.trigger(TooltipTrigger.GREGGS_RAID_ALERT);
-                    } else if (greggRaidBlockCount == GREGGS_RAID_THRESHOLD) {
-                        // Police are now mobilised
-                        tooltipSystem.trigger(TooltipTrigger.GREGGS_RAID_ESCALATION);
-                        npcManager.alertPoliceToGreggRaid(player, world);
-                    }
+                    greggsRaidSystem.onGreggBlockBroken(tooltipSystem, npcManager, player, world);
                 }
 
                 // Only rebuild the affected chunk (and neighbours if on a boundary)
@@ -1334,6 +1333,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         respawnSystem = new RespawnSystem();
         weatherSystem = new WeatherSystem();
         arrestSystem = new ArrestSystem();
+        greggsRaidSystem = new GreggsRaidSystem();
         gameHUD = new GameHUD(player);
         openingSequence = new OpeningSequence();
         deathMessage = null;
