@@ -254,7 +254,7 @@ public class NPC {
         }
         lastPosition.set(position);
 
-        return stuckTimer > 0.5f; // stuck for more than 0.5 seconds
+        return stuckTimer > 0.3f; // stuck for more than 0.3 seconds
     }
 
     public void resetStuckTimer() {

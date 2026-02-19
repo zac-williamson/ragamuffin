@@ -113,6 +113,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private float rainTimer = 0f;
     private final java.util.Random rainRng = new java.util.Random(42);
 
+    // Tool durability is now tracked per inventory slot via Inventory.getToolInSlot()
+
     // Death screen messages
     private static final String[] DEATH_MESSAGES = {
         "You died. On a council estate. How original.",
@@ -174,9 +176,16 @@ public class RagamuffinGame extends ApplicationAdapter {
         npcRenderer = new NPCRenderer();
         firstPersonArm = new FirstPersonArm();
 
-        // Load initial chunks around player
+        // Load initial chunks around player — meshes built lazily in render loop
         world.updateLoadedChunks(player.getPosition());
-        updateChunkRenderers();
+        // Build a small set of nearby chunks immediately so the world isn't invisible
+        int immediateCount = 0;
+        for (Chunk chunk : world.getDirtyChunks()) {
+            if (immediateCount >= 50) break; // Budget for startup — rest built lazily
+            chunkRenderer.updateChunk(chunk, meshBuilder);
+            world.markChunkClean(chunk);
+            immediateCount++;
+        }
 
         // Phase 3: Initialize inventory and resource systems
         inventory = new Inventory(36);
@@ -742,11 +751,30 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetJump();
         }
 
-        // Move player with collision (always call to ensure gravity applies even when not moving)
-        if (tmpMoveDir.len2() > 0) {
-            tmpMoveDir.nor();
+        // Dodge/roll (Left Ctrl while moving)
+        if (inputHandler.isDodgePressed()) {
+            if (tmpMoveDir.len2() > 0) {
+                Vector3 dodgeDir = tmpMoveDir.cpy().nor();
+                player.dodge(dodgeDir.x, dodgeDir.z);
+            }
+            inputHandler.resetDodge();
         }
-        float moveSpeed = inputHandler.isSprintHeld() ? Player.SPRINT_SPEED : Player.MOVE_SPEED;
+
+        // Update dodge timers
+        player.updateDodge(delta);
+
+        // Move player with collision (always call to ensure gravity applies even when not moving)
+        float moveSpeed;
+        if (player.isDodging()) {
+            // During dodge, override direction and speed
+            tmpMoveDir.set(player.getDodgeDirX(), 0, player.getDodgeDirZ());
+            moveSpeed = Player.DODGE_SPEED;
+        } else {
+            if (tmpMoveDir.len2() > 0) {
+                tmpMoveDir.nor();
+            }
+            moveSpeed = inputHandler.isSprintHeld() ? Player.SPRINT_SPEED : Player.MOVE_SPEED;
+        }
         world.moveWithCollision(player, tmpMoveDir.x, 0, tmpMoveDir.z, delta, moveSpeed);
 
         // Push player out of any NPC they're overlapping
@@ -755,13 +783,18 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());
 
-        // Rebuild meshes for newly loaded chunks
+        // Rebuild meshes for newly loaded chunks (budget: max 4 per frame to prevent freezes)
         List<Chunk> dirtyChunks = world.getDirtyChunks();
         if (!dirtyChunks.isEmpty()) {
-            for (Chunk chunk : dirtyChunks) {
+            int meshBudget = 4;
+            int built = 0;
+            java.util.Iterator<Chunk> it = dirtyChunks.iterator();
+            while (it.hasNext() && built < meshBudget) {
+                Chunk chunk = it.next();
                 chunkRenderer.updateChunk(chunk, meshBuilder);
+                world.markChunkClean(chunk);
+                built++;
             }
-            world.clearDirtyChunks();
         }
 
         // Phase 5: Update NPCs
@@ -781,6 +814,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Consume energy for punching
         player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
 
+        // Determine equipped tool from hotbar
+        int selectedSlot = hotbarUI.getSelectedSlot();
+        Material equippedMaterial = inventory.getItemInSlot(selectedSlot);
+        Material toolMaterial = (equippedMaterial != null && Tool.isTool(equippedMaterial)) ? equippedMaterial : null;
+
         // Rest of the punching logic
         // Check if punching an NPC first (reuse vectors)
         tmpCameraPos.set(camera.position);
@@ -789,8 +827,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Check for nearby NPCs in punch range
         NPC targetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
         if (targetNPC != null) {
-            // Punch the NPC (knockback)
-            npcManager.punchNPC(targetNPC, tmpDirection);
+            // Punch the NPC (knockback + loot on kill)
+            npcManager.punchNPC(targetNPC, tmpDirection, inventory, tooltipSystem);
             return; // Don't punch blocks if we hit an NPC
         }
 
@@ -807,8 +845,25 @@ public class RagamuffinGame extends ApplicationAdapter {
                 tooltipSystem.trigger(TooltipTrigger.FIRST_TREE_PUNCH);
             }
 
-            // Punch the block
-            boolean broken = blockBreaker.punchBlock(world, x, y, z);
+            // Punch the block with tool if equipped
+            boolean broken = blockBreaker.punchBlock(world, x, y, z, toolMaterial);
+
+            // Consume tool durability if a tool was used
+            if (toolMaterial != null) {
+                Tool tool = inventory.getToolInSlot(selectedSlot);
+                if (tool == null) {
+                    // First use of this tool — create a Tool instance on the slot
+                    tool = new Tool(toolMaterial, Tool.getMaxDurability(toolMaterial));
+                    inventory.setToolInSlot(selectedSlot, tool);
+                }
+                boolean toolBroke = tool.use();
+                if (toolBroke) {
+                    // Tool is destroyed — remove from inventory slot
+                    inventory.removeItem(toolMaterial, 1);
+                    inventory.setToolInSlot(selectedSlot, null);
+                    tooltipSystem.trigger(TooltipTrigger.TOOL_BROKEN);
+                }
+            }
 
             if (broken) {
                 // Block was broken - determine drop
@@ -967,13 +1022,19 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Phase 12: Update weather display
             gameHUD.setWeather(weatherSystem.getCurrentWeather());
 
-            // Update block break progress on crosshair
+            // Phase 14: Update night status for police warning banner and dodge indicator
+            gameHUD.setNight(timeSystem.isNight());
+
+            // Update block break progress on crosshair (account for equipped tool)
             tmpCameraPos.set(camera.position);
             tmpDirection.set(camera.direction);
+            int hudSelectedSlot = hotbarUI.getSelectedSlot();
+            Material hudEquipped = inventory.getItemInSlot(hudSelectedSlot);
+            Material hudTool = (hudEquipped != null && Tool.isTool(hudEquipped)) ? hudEquipped : null;
             RaycastResult targetBlock = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
             if (targetBlock != null) {
                 float progress = blockBreaker.getBreakProgress(world, targetBlock.getBlockX(),
-                    targetBlock.getBlockY(), targetBlock.getBlockZ(), null);
+                    targetBlock.getBlockY(), targetBlock.getBlockZ(), hudTool);
                 gameHUD.setBlockBreakProgress(progress);
             } else {
                 gameHUD.setBlockBreakProgress(0f);
@@ -1102,11 +1163,18 @@ public class RagamuffinGame extends ApplicationAdapter {
         cameraPitch = 0f;
         cameraYaw = 0f;
 
-        // Rebuild chunk rendering
+        // Rebuild chunk rendering — meshes built lazily in render loop
         chunkRenderer = new ChunkRenderer();
         meshBuilder.setWorld(world);
         world.updateLoadedChunks(player.getPosition());
-        updateChunkRenderers();
+        // Build a small set immediately, rest lazily
+        int restartCount = 0;
+        for (Chunk chunk : world.getDirtyChunks()) {
+            if (restartCount >= 50) break;
+            chunkRenderer.updateChunk(chunk, meshBuilder);
+            world.markChunkClean(chunk);
+            restartCount++;
+        }
 
         // Reset inventory
         inventory = new Inventory(36);

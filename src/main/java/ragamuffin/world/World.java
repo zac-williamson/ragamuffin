@@ -12,7 +12,7 @@ import java.util.*;
  * Manages the voxel world - chunk loading/unloading and world data access.
  */
 public class World {
-    private static final int RENDER_DISTANCE_DESKTOP = 15;
+    private static final int RENDER_DISTANCE_DESKTOP = 8;
     private static final int RENDER_DISTANCE_WEB = 6;
     private static final int RENDER_DISTANCE = detectRenderDistance();
     private static final int WORLD_CHUNK_RADIUS = 15; // Half world size in chunks (480/2/16=15)
@@ -201,6 +201,14 @@ public class World {
      */
     public void clearDirtyChunks() {
         dirtyChunks.clear();
+    }
+
+    /**
+     * Mark a single chunk as clean (mesh rebuilt).
+     */
+    public void markChunkClean(Chunk chunk) {
+        String key = getChunkKey(chunk.getChunkX(), chunk.getChunkY(), chunk.getChunkZ());
+        dirtyChunks.remove(key);
     }
 
     /**

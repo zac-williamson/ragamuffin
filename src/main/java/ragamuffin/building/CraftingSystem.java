@@ -60,10 +60,70 @@ public class CraftingSystem {
             Map.of(Material.STONE_TOOL, 1)
         ));
 
-        // Cardboard shelter
+        // Cardboard shelter: 4 cardboard → 6 shelter walls (enough for a basic shelter)
         recipes.add(new Recipe(
-            Map.of(Material.CARDBOARD, 6),
-            Map.of(Material.CARDBOARD, 1) // Creates a cardboard box block
+            Map.of(Material.CARDBOARD, 4),
+            Map.of(Material.SHELTER_WALL, 3, Material.SHELTER_ROOF, 1)
+        ));
+
+        // Scrap metal recipes — loot from industrial estate / builders merchant
+        recipes.add(new Recipe(
+            Map.of(Material.SCRAP_METAL, 3, Material.PLYWOOD, 2),
+            Map.of(Material.SHELTER_WALL, 2, Material.SHELTER_ROOF, 2)
+        ));
+
+        // Pipe + scrap metal → improvised tool (alternative recipe)
+        recipes.add(new Recipe(
+            Map.of(Material.PIPE, 1, Material.SCRAP_METAL, 1),
+            Map.of(Material.IMPROVISED_TOOL, 1)
+        ));
+
+        // Plywood boards → planks (alternative to punching trees)
+        recipes.add(new Recipe(
+            Map.of(Material.PLYWOOD, 2),
+            Map.of(Material.PLANKS, 6)
+        ));
+
+        // Broken phone + computer → stone tool (electronics scavenging)
+        recipes.add(new Recipe(
+            Map.of(Material.BROKEN_PHONE, 2, Material.COMPUTER, 1),
+            Map.of(Material.STONE_TOOL, 1)
+        ));
+
+        // Newspaper → cardboard (recycle the press)
+        recipes.add(new Recipe(
+            Map.of(Material.NEWSPAPER, 4),
+            Map.of(Material.CARDBOARD, 2)
+        ));
+
+        // Petrol can + wood → improvised tool (better quality)
+        recipes.add(new Recipe(
+            Map.of(Material.PETROL_CAN, 1, Material.WOOD, 3),
+            Map.of(Material.STONE_TOOL, 1)
+        ));
+
+        // Dodgy DVDs + broken phone → diamond (fence the goods)
+        recipes.add(new Recipe(
+            Map.of(Material.DODGY_DVD, 2, Material.BROKEN_PHONE, 1),
+            Map.of(Material.DIAMOND, 1)
+        ));
+
+        // Textbooks + newspaper → cardboard (academic recycling)
+        recipes.add(new Recipe(
+            Map.of(Material.TEXTBOOK, 2, Material.NEWSPAPER, 2),
+            Map.of(Material.CARDBOARD, 4)
+        ));
+
+        // Hymn book + wood → shelter wall + door (spiritual construction)
+        recipes.add(new Recipe(
+            Map.of(Material.HYMN_BOOK, 1, Material.WOOD, 3),
+            Map.of(Material.SHELTER_WALL, 1, Material.DOOR, 1)
+        ));
+
+        // Hair clippers + nail polish + scrap metal → stone tool (salon armoury)
+        recipes.add(new Recipe(
+            Map.of(Material.HAIR_CLIPPERS, 1, Material.NAIL_POLISH, 1, Material.SCRAP_METAL, 1),
+            Map.of(Material.STONE_TOOL, 1)
         ));
     }
 

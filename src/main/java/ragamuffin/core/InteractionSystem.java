@@ -140,8 +140,8 @@ public class InteractionSystem {
     };
 
     /**
-     * Handle food consumption (right-click with food in hotbar).
-     * @return true if food was consumed
+     * Handle food/consumable use (right-click with item in hotbar).
+     * @return true if item was consumed
      */
     public boolean consumeFood(Material food, Player player, Inventory inventory) {
         if (food == null) {
@@ -165,25 +165,66 @@ public class InteractionSystem {
         } else if (food == Material.ENERGY_DRINK) {
             hungerRestored = 5;
             player.recoverEnergy(30); // Energy drink restores energy too
+        } else if (food == Material.PINT) {
+            hungerRestored = 15;
+            player.recoverEnergy(20); // Liquid courage
+        } else if (food == Material.PERI_PERI_CHICKEN) {
+            hungerRestored = 45; // Cheeky Nandos is top-tier sustenance
+        } else if (food == Material.PARACETAMOL) {
+            hungerRestored = 0;
+            player.heal(25); // Direct health restoration
+        } else if (food == Material.FIRE_EXTINGUISHER) {
+            hungerRestored = 0;
+            player.heal(20); // Blast of cold foam soothes the wounds
+        } else if (food == Material.WASHING_POWDER) {
+            hungerRestored = 0;
+            player.recoverEnergy(15); // Clean laundry scent is invigorating
+        } else if (food == Material.SCRATCH_CARD) {
+            hungerRestored = 0;
+            inventory.removeItem(food, 1);
+            // 1 in 5 chance of winning a diamond
+            if (RANDOM.nextInt(5) == 0) {
+                inventory.addItem(Material.DIAMOND, 1);
+                lastScratchCardWon = true;
+            } else {
+                lastScratchCardWon = false;
+            }
+            return true; // Already removed, skip the removal below
         } else {
-            // Not a food item
+            // Not a consumable item
             return false;
         }
 
-        // Eat the food
+        // Consume the item
         player.eat(hungerRestored);
         inventory.removeItem(food, 1);
         return true;
     }
 
     /**
-     * Check if a material is food.
+     * Whether the last scratch card scratched was a winner.
+     * Reset after each scratch card use.
+     */
+    private boolean lastScratchCardWon = false;
+
+    /**
+     * Check if the last scratch card was a winner.
+     */
+    public boolean didLastScratchCardWin() {
+        return lastScratchCardWon;
+    }
+
+    /**
+     * Check if a material is food or consumable.
      */
     public boolean isFood(Material material) {
         return material == Material.SAUSAGE_ROLL || material == Material.STEAK_BAKE
             || material == Material.CHIPS || material == Material.KEBAB
             || material == Material.CRISPS || material == Material.TIN_OF_BEANS
-            || material == Material.ENERGY_DRINK;
+            || material == Material.ENERGY_DRINK || material == Material.PINT
+            || material == Material.PERI_PERI_CHICKEN || material == Material.PARACETAMOL
+            || material == Material.FIRE_EXTINGUISHER || material == Material.WASHING_POWDER
+            || material == Material.SCRATCH_CARD;
     }
 
     /**

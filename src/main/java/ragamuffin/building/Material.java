@@ -60,7 +60,23 @@ public enum Material {
     SIGN_YELLOW("Yellow Sign"),
     GARDEN_WALL("Garden Wall"),
     BOOKSHELF("Bookshelf"),
-    METAL_RED("Red Metal");
+    METAL_RED("Red Metal"),
+    PINT("Pint"),
+    PERI_PERI_CHICKEN("Peri-Peri Chicken"),
+    SCRATCH_CARD("Scratch Card"),
+    NEWSPAPER("Newspaper"),
+    WASHING_POWDER("Washing Powder"),
+    PARACETAMOL("Paracetamol"),
+    TEXTBOOK("Textbook"),
+    HYMN_BOOK("Hymn Book"),
+    PETROL_CAN("Petrol Can"),
+    HAIR_CLIPPERS("Hair Clippers"),
+    NAIL_POLISH("Nail Polish"),
+    BROKEN_PHONE("Broken Phone"),
+    DODGY_DVD("Dodgy DVD"),
+    FIRE_EXTINGUISHER("Fire Extinguisher"),
+    PLYWOOD("Plywood"),
+    PIPE("Pipe");
 
     private final String displayName;
 

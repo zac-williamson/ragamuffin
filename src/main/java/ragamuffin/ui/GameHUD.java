@@ -8,7 +8,8 @@ import ragamuffin.core.Weather;
 import ragamuffin.entity.Player;
 
 /**
- * Game HUD displaying health, hunger, energy bars, weather, and crosshair.
+ * Game HUD displaying health, hunger, energy bars, weather, crosshair,
+ * dodge cooldown indicator, and night warning.
  */
 public class GameHUD {
     private static final float BAR_WIDTH = 200f;
@@ -20,16 +21,22 @@ public class GameHUD {
     private static final float CROSSHAIR_THICKNESS = 2f;
     private static final float CROSSHAIR_GAP = 3f;
 
+    // Dodge bar is narrower — it's a readiness indicator not a resource
+    private static final float DODGE_BAR_WIDTH = 100f;
+    private static final float DODGE_BAR_HEIGHT = 12f;
+
     private final Player player;
     private boolean visible;
     private Weather currentWeather;
     private float blockBreakProgress; // 0.0 to 1.0
+    private boolean isNight; // Whether it is currently night (police active)
 
     public GameHUD(Player player) {
         this.player = player;
         this.visible = true;
         this.currentWeather = Weather.CLEAR;
         this.blockBreakProgress = 0f;
+        this.isNight = false;
     }
 
     /**
@@ -55,6 +62,11 @@ public class GameHUD {
         // Render weather display
         renderWeather(spriteBatch, font, screenWidth, screenHeight);
 
+        // Render night warning if applicable
+        if (isNight) {
+            renderNightWarning(spriteBatch, font, screenWidth, screenHeight);
+        }
+
         // Render crosshair
         renderCrosshair(shapeRenderer, screenWidth, screenHeight, hoverTooltips);
     }
@@ -65,10 +77,15 @@ public class GameHUD {
         float y1 = screenHeight - BAR_MARGIN - BAR_HEIGHT;
         float y2 = y1 - BAR_SPACING;
         float y3 = y2 - BAR_SPACING;
+        float y4 = y3 - BAR_SPACING; // Dodge indicator row
 
         float healthPct = player.getHealth() / Player.MAX_HEALTH;
         float hungerPct = player.getHunger() / Player.MAX_HUNGER;
         float energyPct = player.getEnergy() / Player.MAX_ENERGY;
+
+        // Dodge readiness: 1.0 when ready, filling as cooldown expires
+        float dodgePct = player.canDodge() ? 1.0f : computeDodgePct();
+        boolean dodgeReady = player.canDodge();
 
         // All filled shapes in one batch (backgrounds + fills)
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
@@ -76,9 +93,20 @@ public class GameHUD {
         shapeRenderer.rect(x, y1, BAR_WIDTH, BAR_HEIGHT);
         shapeRenderer.rect(x, y2, BAR_WIDTH, BAR_HEIGHT);
         shapeRenderer.rect(x, y3, BAR_WIDTH, BAR_HEIGHT);
+        // Dodge bar background (narrower)
+        shapeRenderer.rect(x, y4, DODGE_BAR_WIDTH, DODGE_BAR_HEIGHT);
         if (healthPct > 0) { shapeRenderer.setColor(Color.RED); shapeRenderer.rect(x, y1, BAR_WIDTH * healthPct, BAR_HEIGHT); }
         if (hungerPct > 0) { shapeRenderer.setColor(Color.ORANGE); shapeRenderer.rect(x, y2, BAR_WIDTH * hungerPct, BAR_HEIGHT); }
         if (energyPct > 0) { shapeRenderer.setColor(Color.YELLOW); shapeRenderer.rect(x, y3, BAR_WIDTH * energyPct, BAR_HEIGHT); }
+        // Dodge bar: cyan when ready, grey-blue when cooling down
+        if (dodgePct > 0) {
+            if (dodgeReady) {
+                shapeRenderer.setColor(0f, 0.9f, 0.9f, 1f); // Cyan = ready
+            } else {
+                shapeRenderer.setColor(0.2f, 0.4f, 0.6f, 1f); // Blue-grey = cooling
+            }
+            shapeRenderer.rect(x, y4, DODGE_BAR_WIDTH * dodgePct, DODGE_BAR_HEIGHT);
+        }
         shapeRenderer.end();
 
         // All borders in one batch
@@ -87,6 +115,7 @@ public class GameHUD {
         shapeRenderer.rect(x, y1, BAR_WIDTH, BAR_HEIGHT);
         shapeRenderer.rect(x, y2, BAR_WIDTH, BAR_HEIGHT);
         shapeRenderer.rect(x, y3, BAR_WIDTH, BAR_HEIGHT);
+        shapeRenderer.rect(x, y4, DODGE_BAR_WIDTH, DODGE_BAR_HEIGHT);
         shapeRenderer.end();
 
         // All text in one batch
@@ -95,13 +124,30 @@ public class GameHUD {
         font.draw(spriteBatch, "HP: " + (int)(healthPct * 100) + "%", x + 5, y1 + BAR_HEIGHT - 5);
         font.draw(spriteBatch, "Food: " + (int)(hungerPct * 100) + "%", x + 5, y2 + BAR_HEIGHT - 5);
         font.draw(spriteBatch, "Energy: " + (int)(energyPct * 100) + "%", x + 5, y3 + BAR_HEIGHT - 5);
+        // Dodge label beside the bar
+        String dodgeLabel = dodgeReady ? "DODGE [Ctrl]" : "DODGE: wait";
+        font.draw(spriteBatch, dodgeLabel, x + DODGE_BAR_WIDTH + 6, y4 + DODGE_BAR_HEIGHT - 1);
         spriteBatch.end();
 
         if (hoverTooltips != null) {
             hoverTooltips.addZone(x, y1, BAR_WIDTH, BAR_HEIGHT, "Health: " + (int)(healthPct * 100) + "%");
             hoverTooltips.addZone(x, y2, BAR_WIDTH, BAR_HEIGHT, "Hunger: " + (int)(hungerPct * 100) + "%");
             hoverTooltips.addZone(x, y3, BAR_WIDTH, BAR_HEIGHT, "Energy: " + (int)(energyPct * 100) + "%");
+            hoverTooltips.addZone(x, y4, DODGE_BAR_WIDTH, DODGE_BAR_HEIGHT,
+                    dodgeReady ? "Dodge ready — press Ctrl while moving" : "Dodge on cooldown");
         }
+    }
+
+    /**
+     * Compute dodge fill percentage from cooldown timer.
+     * 0.0 = just dodged (full cooldown), 1.0 = ready.
+     */
+    private float computeDodgePct() {
+        float cooldown = player.getDodgeCooldownTimer();
+        float maxCooldown = Player.DODGE_COOLDOWN;
+        if (maxCooldown <= 0) return 1.0f;
+        float remaining = Math.max(0f, cooldown);
+        return 1.0f - (remaining / maxCooldown);
     }
 
     private void renderCrosshair(ShapeRenderer shapeRenderer, int screenWidth, int screenHeight,
@@ -175,6 +221,20 @@ public class GameHUD {
     }
 
     /**
+     * Set whether it is currently night (triggers police warning banner).
+     */
+    public void setNight(boolean night) {
+        this.isNight = night;
+    }
+
+    /**
+     * Whether night mode is currently active.
+     */
+    public boolean isNight() {
+        return isNight;
+    }
+
+    /**
      * Set block break progress for crosshair indicator.
      */
     public void setBlockBreakProgress(float progress) {
@@ -190,6 +250,20 @@ public class GameHUD {
         font.setColor(Color.WHITE);
         String weatherText = "Weather: " + currentWeather.getDisplayName();
         font.draw(spriteBatch, weatherText, screenWidth - 200, screenHeight - 20);
+        spriteBatch.end();
+    }
+
+    /**
+     * Render a night warning banner at the bottom of the screen.
+     * Helps players know police are active.
+     */
+    private void renderNightWarning(SpriteBatch spriteBatch, BitmapFont font,
+                                    int screenWidth, int screenHeight) {
+        spriteBatch.begin();
+        font.setColor(0.9f, 0.3f, 0.3f, 1f); // Red warning text
+        String nightText = "NIGHT — POLICE ACTIVE";
+        font.draw(spriteBatch, nightText, screenWidth / 2f - 80, 40);
+        font.setColor(Color.WHITE);
         spriteBatch.end();
     }
 }

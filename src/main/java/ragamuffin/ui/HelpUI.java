@@ -16,6 +16,9 @@ public class HelpUI {
             "Mouse - Look around\n" +
             "Left click / Punch - Break block (5 hits)\n" +
             "Right click - Place block\n" +
+            "Left Ctrl - Dodge roll (while moving)\n" +
+            "Space - Jump\n" +
+            "Left Shift - Sprint\n" +
             "I - Open/close Inventory\n" +
             "H - Open/close Help\n" +
             "C - Open/close Crafting menu\n" +

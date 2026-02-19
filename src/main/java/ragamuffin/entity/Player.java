@@ -17,6 +17,12 @@ public class Player {
     public static final float GRAVITY = 9.8f; // Gravity acceleration (m/s^2)
     public static final float JUMP_VELOCITY = 6.0f; // Initial upward velocity when jumping
 
+    // Dodge/roll constants
+    public static final float DODGE_SPEED = 25.0f;   // Burst speed during dodge
+    public static final float DODGE_DURATION = 0.3f;  // How long the dodge lasts (seconds)
+    public static final float DODGE_COOLDOWN = 1.0f;  // Cooldown between dodges (seconds)
+    public static final float DODGE_ENERGY_COST = 15f; // Energy cost per dodge
+
     // Phase 8: Survival stats
     public static final float MAX_HEALTH = 100f;
     public static final float MAX_HUNGER = 100f;
@@ -37,6 +43,13 @@ public class Player {
     private float fallStartY; // Y position when the player started falling
     private boolean isFalling; // Whether the player is currently falling
 
+    // Dodge state
+    private boolean isDodging;
+    private float dodgeTimer;       // Time remaining in current dodge
+    private float dodgeCooldownTimer; // Time until dodge is available again
+    private float dodgeDirX;        // Dodge direction X
+    private float dodgeDirZ;        // Dodge direction Z
+
     public Player(float x, float y, float z) {
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
@@ -48,6 +61,11 @@ public class Player {
         this.verticalVelocity = 0f;
         this.fallStartY = y;
         this.isFalling = false;
+        this.isDodging = false;
+        this.dodgeTimer = 0f;
+        this.dodgeCooldownTimer = 0f;
+        this.dodgeDirX = 0f;
+        this.dodgeDirZ = 0f;
     }
 
     public Vector3 getPosition() {
@@ -318,5 +336,85 @@ public class Player {
 
     public boolean isFalling() {
         return isFalling;
+    }
+
+    // ========== Dodge/Roll System ==========
+
+    /**
+     * Attempt to start a dodge roll in the given direction.
+     * Returns true if the dodge was initiated.
+     * @param dirX horizontal X direction (normalised)
+     * @param dirZ horizontal Z direction (normalised)
+     */
+    public boolean dodge(float dirX, float dirZ) {
+        if (isDodging || dodgeCooldownTimer > 0 || energy < DODGE_ENERGY_COST) {
+            return false;
+        }
+        // Need a movement direction
+        float len = (float) Math.sqrt(dirX * dirX + dirZ * dirZ);
+        if (len < 0.01f) {
+            return false;
+        }
+        isDodging = true;
+        dodgeTimer = DODGE_DURATION;
+        dodgeCooldownTimer = DODGE_COOLDOWN;
+        dodgeDirX = dirX / len;
+        dodgeDirZ = dirZ / len;
+        consumeEnergy(DODGE_ENERGY_COST);
+        return true;
+    }
+
+    /**
+     * Update dodge timers each frame.
+     */
+    public void updateDodge(float delta) {
+        if (isDodging) {
+            dodgeTimer -= delta;
+            if (dodgeTimer <= 0) {
+                isDodging = false;
+                dodgeTimer = 0f;
+            }
+        }
+        if (dodgeCooldownTimer > 0) {
+            dodgeCooldownTimer -= delta;
+            if (dodgeCooldownTimer < 0) {
+                dodgeCooldownTimer = 0f;
+            }
+        }
+    }
+
+    /**
+     * Whether the player is currently mid-dodge (invincible).
+     */
+    public boolean isDodging() {
+        return isDodging;
+    }
+
+    /**
+     * Get the dodge movement direction X.
+     */
+    public float getDodgeDirX() {
+        return dodgeDirX;
+    }
+
+    /**
+     * Get the dodge movement direction Z.
+     */
+    public float getDodgeDirZ() {
+        return dodgeDirZ;
+    }
+
+    /**
+     * Whether the dodge cooldown has expired and a new dodge is available.
+     */
+    public boolean canDodge() {
+        return !isDodging && dodgeCooldownTimer <= 0 && energy >= DODGE_ENERGY_COST;
+    }
+
+    /**
+     * Get remaining dodge cooldown (for UI).
+     */
+    public float getDodgeCooldownTimer() {
+        return dodgeCooldownTimer;
     }
 }

@@ -15,7 +15,8 @@ public enum TooltipTrigger {
     FIRST_GREGGS("Ah, Greggs. The backbone of British cuisine."),
     HUNGER_LOW("Your stomach growls. Even the pigeons look appetising."),
     FIRST_CRAFT("Crafting with materials of questionable provenance."),
-    TOOL_BROKEN("Your tool falls apart. Typical.");
+    TOOL_BROKEN("Your tool falls apart. Typical."),
+    FIRST_NPC_LOOT("Spoils of war. Or mugging. Same thing round here.");
 
     private final String message;
 

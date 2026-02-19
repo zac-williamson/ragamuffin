@@ -176,6 +176,25 @@ public class Inventory {
     }
 
     /**
+     * Get the tool in a specific slot, or null if no tool is stored.
+     */
+    public Tool getToolInSlot(int slot) {
+        if (slot < 0 || slot >= size) {
+            return null;
+        }
+        return slots[slot].getTool();
+    }
+
+    /**
+     * Set the tool in a specific slot.
+     */
+    public void setToolInSlot(int slot, Tool tool) {
+        if (slot >= 0 && slot < size) {
+            slots[slot].setTool(tool);
+        }
+    }
+
+    /**
      * Swap the contents of two inventory slots.
      */
     public void swapSlots(int slotA, int slotB) {
@@ -184,13 +203,16 @@ public class Inventory {
         }
         Material tempMat = slots[slotA].getMaterial();
         int tempCount = slots[slotA].getCount();
+        Tool tempTool = slots[slotA].getTool();
         slots[slotA].setMaterial(slots[slotB].getMaterial());
         slots[slotA].setCount(slots[slotB].getCount());
+        slots[slotA].setTool(slots[slotB].getTool());
         if (slots[slotA].getMaterial() == null) {
             slots[slotA].clear();
         }
         slots[slotB].setMaterial(tempMat);
         slots[slotB].setCount(tempCount);
+        slots[slotB].setTool(tempTool);
         if (slots[slotB].getMaterial() == null) {
             slots[slotB].clear();
         }
@@ -202,10 +224,12 @@ public class Inventory {
     private static class InventorySlot {
         private Material material;
         private int count;
+        private Tool tool; // Non-null when holding a tool item
 
         public InventorySlot() {
             this.material = null;
             this.count = 0;
+            this.tool = null;
         }
 
         public Material getMaterial() {
@@ -224,6 +248,14 @@ public class Inventory {
             this.count = count;
         }
 
+        public Tool getTool() {
+            return tool;
+        }
+
+        public void setTool(Tool tool) {
+            this.tool = tool;
+        }
+
         public boolean isEmpty() {
             return material == null || count == 0;
         }
@@ -231,6 +263,7 @@ public class Inventory {
         public void clear() {
             material = null;
             count = 0;
+            tool = null;
         }
     }
 }

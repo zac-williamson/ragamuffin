@@ -155,6 +155,96 @@ public class BlockDropTable {
             if (blockType == BlockType.BRICK || blockType == BlockType.WOOD) {
                 return Material.CARDBOARD;
             }
+        } else if (landmark == LandmarkType.PUB || landmark == LandmarkType.WETHERSPOONS) {
+            // Pub/Spoons drops pints
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.PINT;
+            }
+        } else if (landmark == LandmarkType.NANDOS) {
+            // Nandos drops peri-peri chicken
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.PERI_PERI_CHICKEN;
+            }
+        } else if (landmark == LandmarkType.BOOKIES || landmark == LandmarkType.BETTING_SHOP) {
+            // Bookies drops scratch cards
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.SCRATCH_CARD;
+            }
+        } else if (landmark == LandmarkType.NEWSAGENT) {
+            // Newsagent drops newspapers and crisps
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Math.random() < 0.5 ? Material.NEWSPAPER : Material.CRISPS;
+            }
+        } else if (landmark == LandmarkType.LAUNDERETTE) {
+            // Launderette drops washing powder
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.WASHING_POWDER;
+            }
+        } else if (landmark == LandmarkType.GP_SURGERY) {
+            // GP surgery drops paracetamol
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.PARACETAMOL;
+            }
+        } else if (landmark == LandmarkType.PRIMARY_SCHOOL || landmark == LandmarkType.LIBRARY) {
+            // School/library drops textbooks
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.TEXTBOOK;
+            }
+        } else if (landmark == LandmarkType.CHURCH) {
+            // Church drops hymn books
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.HYMN_BOOK;
+            }
+        } else if (landmark == LandmarkType.PETROL_STATION) {
+            // Petrol station drops petrol cans and energy drinks
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Math.random() < 0.5 ? Material.PETROL_CAN : Material.ENERGY_DRINK;
+            }
+        } else if (landmark == LandmarkType.BARBER) {
+            // Barber drops hair clippers
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.HAIR_CLIPPERS;
+            }
+        } else if (landmark == LandmarkType.NAIL_SALON) {
+            // Nail salon drops nail polish
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.NAIL_POLISH;
+            }
+        } else if (landmark == LandmarkType.PHONE_REPAIR) {
+            // Phone repair drops broken phones
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.BROKEN_PHONE;
+            }
+        } else if (landmark == LandmarkType.CASH_CONVERTER || landmark == LandmarkType.PAWN_SHOP) {
+            // Cash Converter/pawn shop drops dodgy DVDs and broken phones
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Math.random() < 0.5 ? Material.DODGY_DVD : Material.BROKEN_PHONE;
+            }
+        } else if (landmark == LandmarkType.FIRE_STATION) {
+            // Fire station drops fire extinguishers
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Material.FIRE_EXTINGUISHER;
+            }
+        } else if (landmark == LandmarkType.BUILDERS_MERCHANT || landmark == LandmarkType.WAREHOUSE) {
+            // Builders merchant/warehouse drops plywood and pipe
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Math.random() < 0.5 ? Material.PLYWOOD : Material.PIPE;
+            }
+        } else if (landmark == LandmarkType.INDUSTRIAL_ESTATE) {
+            // Industrial estate drops scrap metal and plywood
+            if (blockType == BlockType.BRICK || blockType == BlockType.CORRUGATED_METAL) {
+                return Math.random() < 0.5 ? Material.SCRAP_METAL : Material.PLYWOOD;
+            }
+        } else if (landmark == LandmarkType.COMMUNITY_CENTRE) {
+            // Community centre drops cardboard and chairs
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Math.random() < 0.5 ? Material.CARDBOARD : Material.OFFICE_CHAIR;
+            }
+        } else if (landmark == LandmarkType.JOB_CENTRE) {
+            // Job centre drops staplers and computers
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
+                return Math.random() < 0.5 ? Material.STAPLER : Material.COMPUTER;
+            }
         }
 
         // If no special landmark drop, fall back to standard drop

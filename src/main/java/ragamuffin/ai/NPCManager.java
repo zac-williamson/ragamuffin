@@ -278,6 +278,11 @@ public class NPCManager {
                     shouldAttack = true;
                 }
 
+                // Player is invincible while dodging (i-frames)
+                if (shouldAttack && player.isDodging()) {
+                    shouldAttack = false;
+                }
+
                 if (shouldAttack) {
                     player.damage(npc.getType().getAttackDamage());
                     npc.resetAttackCooldown();
@@ -311,20 +316,32 @@ public class NPCManager {
         // Apply velocity with world collision (includes knockback velocity)
         applyNPCCollision(npc, delta, world);
 
-        // Stuck detection — if NPC has been pushing against a wall, turn around
+        // Stuck detection — if NPC has been pushing against a wall, try multiple escape directions
         if (npc.updateStuckDetection(delta)) {
             npc.resetStuckTimer();
             npc.setPath(null);
             npc.setTargetPosition(null);
             npc.setVelocity(0, 0, 0);
 
-            // Turn roughly 180 degrees from current facing direction and walk away
-            float facingRad = (float) Math.toRadians(npc.getFacingAngle() + 180 + (random.nextFloat() - 0.5f) * 90);
-            float turnDist = 5.0f + random.nextFloat() * 5.0f;
-            float newX = npc.getPosition().x + (float) Math.sin(facingRad) * turnDist;
-            float newZ = npc.getPosition().z + (float) Math.cos(facingRad) * turnDist;
-            float newY = findGroundHeight(world, newX, newZ);
-            setNPCTarget(npc, new Vector3(newX, newY, newZ), world);
+            // Try multiple random directions to escape (not just 180°)
+            boolean escaped = false;
+            for (int attempt = 0; attempt < 6; attempt++) {
+                float escapeAngle = random.nextFloat() * (float) Math.PI * 2;
+                float escapeDist = 3.0f + random.nextFloat() * 5.0f;
+                float newX = npc.getPosition().x + (float) Math.sin(escapeAngle) * escapeDist;
+                float newZ = npc.getPosition().z + (float) Math.cos(escapeAngle) * escapeDist;
+                float newY = findGroundHeight(world, newX, newZ);
+                setNPCTarget(npc, new Vector3(newX, newY, newZ), world);
+                if (npc.getPath() != null && !npc.getPath().isEmpty()) {
+                    escaped = true;
+                    break;
+                }
+            }
+            if (!escaped) {
+                // All pathfinding failed — just give a velocity push away from the wall
+                float pushAngle = (float) Math.toRadians(npc.getFacingAngle() + 180);
+                npc.setVelocity((float) Math.sin(pushAngle) * 2.0f, 0, (float) Math.cos(pushAngle) * 2.0f);
+            }
         }
 
         // Skip AI movement while being knocked back — let the impulse play out
@@ -872,6 +889,13 @@ public class NPCManager {
      * Handle punching an NPC - applies knockback and damage.
      */
     public void punchNPC(NPC npc, Vector3 punchDirection) {
+        punchNPC(npc, punchDirection, null, null);
+    }
+
+    /**
+     * Handle punching an NPC - applies knockback, damage, and loot drops on kill.
+     */
+    public void punchNPC(NPC npc, Vector3 punchDirection, Inventory inventory, TooltipSystem tooltipSystem) {
         npc.applyKnockback(punchDirection, 2.0f); // 2 blocks of knockback
 
         // Deal damage (10 HP per punch)
@@ -879,6 +903,11 @@ public class NPCManager {
         if (killed) {
             // NPC defeated - show speech and schedule removal
             npc.setSpeechText(getDeathSpeech(npc.getType()), 2.0f);
+
+            // Award loot drops
+            if (inventory != null) {
+                awardNPCLoot(npc.getType(), inventory, tooltipSystem);
+            }
         } else {
             // NPC reacts to being hit
             npc.setSpeechText(getHitSpeech(npc.getType()), 2.0f);
@@ -887,6 +916,115 @@ public class NPCManager {
         // Special handling for council builders
         if (npc.getType() == NPCType.COUNCIL_BUILDER) {
             punchCouncilBuilder(npc);
+        }
+    }
+
+    /**
+     * Award loot when an NPC is defeated.
+     * Each NPC type drops thematic items — shopkeepers drop food,
+     * youth gangs drop whatever they nicked, delivery drivers drop parcels, etc.
+     */
+    private void awardNPCLoot(NPCType type, Inventory inventory, TooltipSystem tooltipSystem) {
+        switch (type) {
+            case YOUTH_GANG:
+                // They had your stuff (or someone else's)
+                inventory.addItem(Material.WOOD, 2 + random.nextInt(3));
+                if (random.nextFloat() < 0.3f) {
+                    inventory.addItem(Material.SCRAP_METAL, 1);
+                }
+                break;
+            case SHOPKEEPER:
+                // Raiding the till and shelves
+                inventory.addItem(Material.CRISPS, 1 + random.nextInt(3));
+                inventory.addItem(Material.ENERGY_DRINK, 1);
+                if (random.nextFloat() < 0.5f) {
+                    inventory.addItem(Material.TIN_OF_BEANS, 1 + random.nextInt(2));
+                }
+                break;
+            case DELIVERY_DRIVER:
+                // Whatever's in the van
+                double deliveryRoll = random.nextDouble();
+                if (deliveryRoll < 0.25) {
+                    inventory.addItem(Material.KEBAB, 1 + random.nextInt(2));
+                } else if (deliveryRoll < 0.5) {
+                    inventory.addItem(Material.CHIPS, 2);
+                } else if (deliveryRoll < 0.75) {
+                    inventory.addItem(Material.CARDBOARD, 2 + random.nextInt(3));
+                } else {
+                    inventory.addItem(Material.ENERGY_DRINK, 2);
+                }
+                break;
+            case POSTMAN:
+                // Letters and parcels
+                inventory.addItem(Material.CARDBOARD, 1 + random.nextInt(3));
+                if (random.nextFloat() < 0.3f) {
+                    inventory.addItem(Material.SCRAP_METAL, 1);
+                }
+                break;
+            case DRUNK:
+                // Empties and kebab remnants
+                if (random.nextFloat() < 0.5f) {
+                    inventory.addItem(Material.KEBAB, 1);
+                }
+                inventory.addItem(Material.GLASS, 1);
+                break;
+            case BUSKER:
+                // Guitar parts and loose change
+                inventory.addItem(Material.WOOD, 1 + random.nextInt(2));
+                inventory.addItem(Material.SCRAP_METAL, 1);
+                break;
+            case POLICE:
+                // Confiscated goods
+                inventory.addItem(Material.SCRAP_METAL, 1 + random.nextInt(2));
+                if (random.nextFloat() < 0.4f) {
+                    inventory.addItem(Material.ENERGY_DRINK, 1);
+                }
+                break;
+            case JOGGER:
+                // Sports nutrition
+                inventory.addItem(Material.ENERGY_DRINK, 1 + random.nextInt(2));
+                break;
+            case PENSIONER:
+                // Shopping bag contents
+                inventory.addItem(Material.TIN_OF_BEANS, 1 + random.nextInt(2));
+                if (random.nextFloat() < 0.4f) {
+                    inventory.addItem(Material.CRISPS, 1);
+                }
+                break;
+            case SCHOOL_KID:
+                // Lunch money equivalent
+                inventory.addItem(Material.CRISPS, 1 + random.nextInt(2));
+                if (random.nextFloat() < 0.3f) {
+                    inventory.addItem(Material.ENERGY_DRINK, 1);
+                }
+                break;
+            case COUNCIL_MEMBER:
+                // Paperwork and office supplies
+                inventory.addItem(Material.CARDBOARD, 2 + random.nextInt(2));
+                break;
+            case COUNCIL_BUILDER:
+                // Building materials
+                inventory.addItem(Material.BRICK, 2 + random.nextInt(3));
+                inventory.addItem(Material.STONE, 1 + random.nextInt(2));
+                break;
+            case PUBLIC:
+                // Random shopping
+                if (random.nextFloat() < 0.5f) {
+                    inventory.addItem(Material.SAUSAGE_ROLL, 1);
+                } else {
+                    inventory.addItem(Material.CRISPS, 1);
+                }
+                break;
+            case DOG:
+                // Dogs don't carry loot
+                break;
+            default:
+                break;
+        }
+
+        // Trigger first loot tooltip
+        if (tooltipSystem != null) {
+            tooltipSystem.trigger(TooltipTrigger.FIRST_NPC_LOOT);
         }
     }
 
@@ -954,21 +1092,18 @@ public class NPCManager {
     }
 
     /**
-     * Update police spawning based on time of day.
-     * Police only spawn at night (22:00-06:00) and despawn at dawn.
+     * Update police spawning — police are always present (it's Britain, they're everywhere).
+     * More police at night (up to 4), fewer during the day (up to 2).
      */
     public void updatePoliceSpawning(float time, World world, Player player) {
         boolean isNight = time >= 22.0f || time < 6.0f;
+        int maxPolice = isNight ? 4 : 2;
 
         // Count current police
         long policeCount = npcs.stream().filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
 
-        if (isNight && policeCount < 4) {
-            // Spawn police at night
+        if (policeCount < maxPolice) {
             spawnPolice(player, world);
-        } else if (!isNight && policeCount > 0) {
-            // Despawn all police during the day
-            despawnPolice();
         }
     }
 

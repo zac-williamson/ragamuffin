@@ -72,4 +72,89 @@ class PlayerTest {
             assertTrue(true, "Collision was detected");
         }
     }
+
+    // ========== Dodge/Roll Tests ==========
+
+    @Test
+    void dodgeInitiatesWhenMovingWithEnergy() {
+        Player player = new Player(0, 0, 0);
+        assertTrue(player.canDodge(), "Should be able to dodge with full energy");
+
+        boolean dodged = player.dodge(1, 0);
+        assertTrue(dodged, "Dodge should initiate when moving with energy");
+        assertTrue(player.isDodging(), "Player should be in dodging state");
+    }
+
+    @Test
+    void dodgeFailsWhenStationary() {
+        Player player = new Player(0, 0, 0);
+        boolean dodged = player.dodge(0, 0);
+        assertFalse(dodged, "Dodge should fail with no direction");
+        assertFalse(player.isDodging(), "Player should not be dodging");
+    }
+
+    @Test
+    void dodgeConsumesEnergy() {
+        Player player = new Player(0, 0, 0);
+        float energyBefore = player.getEnergy();
+
+        player.dodge(1, 0);
+
+        assertEquals(energyBefore - Player.DODGE_ENERGY_COST, player.getEnergy(), 0.01f,
+            "Dodge should consume energy");
+    }
+
+    @Test
+    void dodgeFailsWithInsufficientEnergy() {
+        Player player = new Player(0, 0, 0);
+        player.setEnergy(5); // Less than DODGE_ENERGY_COST
+
+        boolean dodged = player.dodge(1, 0);
+        assertFalse(dodged, "Dodge should fail with insufficient energy");
+    }
+
+    @Test
+    void dodgeCooldownPreventsRepeatDodge() {
+        Player player = new Player(0, 0, 0);
+
+        player.dodge(1, 0);
+        // Finish the dodge
+        player.updateDodge(Player.DODGE_DURATION + 0.01f);
+        assertFalse(player.isDodging(), "Dodge should have ended");
+
+        // Try to dodge again — should fail due to cooldown
+        boolean dodgedAgain = player.dodge(1, 0);
+        assertFalse(dodgedAgain, "Should not dodge during cooldown");
+    }
+
+    @Test
+    void dodgeCooldownExpiresAfterDuration() {
+        Player player = new Player(0, 0, 0);
+
+        player.dodge(1, 0);
+        // Wait out both dodge and cooldown
+        player.updateDodge(Player.DODGE_COOLDOWN + Player.DODGE_DURATION + 0.1f);
+
+        assertTrue(player.canDodge(), "Should be able to dodge after cooldown expires");
+    }
+
+    @Test
+    void dodgeEndsAfterDuration() {
+        Player player = new Player(0, 0, 0);
+        player.dodge(0, 1);
+        assertTrue(player.isDodging());
+
+        player.updateDodge(Player.DODGE_DURATION + 0.01f);
+        assertFalse(player.isDodging(), "Dodge should end after duration");
+    }
+
+    @Test
+    void dodgeDirectionIsNormalised() {
+        Player player = new Player(0, 0, 0);
+        player.dodge(3, 4); // Not normalised input
+
+        float len = (float) Math.sqrt(player.getDodgeDirX() * player.getDodgeDirX()
+            + player.getDodgeDirZ() * player.getDodgeDirZ());
+        assertEquals(1.0f, len, 0.01f, "Dodge direction should be normalised");
+    }
 }

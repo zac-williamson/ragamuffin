@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
+import ragamuffin.building.Tool;
 
 /**
  * Renders the hotbar at the bottom of the screen.
@@ -131,7 +132,13 @@ public class HotbarUI {
 
                 // Register tooltip zone
                 if (hoverTooltips != null) {
-                    String tooltip = material.getDisplayName() + " x" + count;
+                    Tool tool = inventory.getToolInSlot(i);
+                    String tooltip;
+                    if (tool != null) {
+                        tooltip = material.getDisplayName() + " (" + tool.getDurability() + "/" + tool.getMaxDurability() + ")";
+                    } else {
+                        tooltip = material.getDisplayName() + " x" + count;
+                    }
                     hoverTooltips.addZone(x, startY, SLOT_SIZE, SLOT_SIZE, tooltip);
                 }
             } else if (hoverTooltips != null) {
@@ -139,6 +146,34 @@ public class HotbarUI {
             }
         }
         batch.end();
+
+        // Render tool durability bars (drawn after text so they're visible)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (int i = 0; i < HOTBAR_SLOTS; i++) {
+            Tool tool = inventory.getToolInSlot(i);
+            if (tool != null && !tool.isBroken()) {
+                int x = startX + i * (SLOT_SIZE + SLOT_PADDING);
+                int barY = startY + 2;
+                int barWidth = SLOT_SIZE - 4;
+                int barHeight = 4;
+
+                // Background (dark)
+                shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 1f);
+                shapeRenderer.rect(x + 2, barY, barWidth, barHeight);
+
+                // Durability fill: green > yellow > red
+                float ratio = (float) tool.getDurability() / tool.getMaxDurability();
+                if (ratio > 0.5f) {
+                    shapeRenderer.setColor(0.2f, 0.8f, 0.2f, 1f); // Green
+                } else if (ratio > 0.25f) {
+                    shapeRenderer.setColor(0.9f, 0.8f, 0.1f, 1f); // Yellow
+                } else {
+                    shapeRenderer.setColor(0.9f, 0.2f, 0.1f, 1f); // Red
+                }
+                shapeRenderer.rect(x + 2, barY, barWidth * ratio, barHeight);
+            }
+        }
+        shapeRenderer.end();
     }
 
     /**

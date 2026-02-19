@@ -2,7 +2,7 @@
 
 **Reported by:** Zac (WhatsApp)
 **Date:** 2026-02-17
-**Status:** In Progress
+**Status:** FIXED (commit 8a76d38 — camera direction rebuild moved to top of frame, yaw sign corrected)
 
 ## Symptoms
 1. Mouse look behaviour still not working correctly (yaw appears inverted)
