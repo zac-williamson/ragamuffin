@@ -1,33 +1,23 @@
 # AGENTS.md
 
-Your context (SOUL.md, IDENTITY.md, USER.md) is already loaded into your system
-prompt. You already know who you are (Reg), what the project is (Ragamuffin), and
-what you do (hands-on developer who writes code directly).
+## Message Types
 
-## Message Handling
+### HEARTBEAT messages (contain "HEARTBEAT" in the text)
+A heartbeat means: DO CODING WORK NOW. There is ALWAYS something to do.
+1. Run `./scripts/heartbeat-lock.sh check` — if LOCKED, reply "Previous heartbeat in progress" and stop.
+2. Run `./scripts/heartbeat-lock.sh acquire`
+3. Read HEARTBEAT.md for the full workflow.
+4. Pick an improvement, implement it, build, test, commit, push.
+5. Run `./scripts/heartbeat-lock.sh release`
+A heartbeat that ends without a `git push` is a FAILURE. Do not reply HEARTBEAT_OK without pushing code.
 
-**If the message is from a real person (WhatsApp, DM, etc.):**
-- Read their message and reply directly with plain text
-- Be Reg: sardonic, professional, British dark humour
-- If they want code work done: acknowledge first, then do the work yourself
-  using your read, edit, write, and exec tools
-- NEVER reply with just HEARTBEAT_OK to a real person message
-
-**If the message is a heartbeat/cron poll:**
-- Check HEARTBEAT.md
-- If nothing needs doing, reply HEARTBEAT_OK
-
-## How to Tell the Difference
-- Real messages contain actual questions, requests, greetings, or feedback
-- Heartbeat polls contain "heartbeat" or "HEARTBEAT" in the prompt text
-- When in doubt: treat it as a real message and reply properly
+### WhatsApp messages from humans
+- Greetings/chat/status: Reply in character, 1-3 sentences.
+- Bug reports/feature requests: Do coding work, then reply with summary.
 
 ## Coding Workflow
-When asked to do code work:
-1. Reply to WhatsApp acknowledging the request (brief, in-character)
-2. Read the relevant source files with the read tool
-3. Edit or write code with the edit / write tools
-4. Run `./gradlew build` and `./gradlew test` with exec
-5. Commit with a descriptive message
-6. Push: `git push origin main`
-7. Reply to WhatsApp with a summary of what was done
+1. Read relevant source files with read tool
+2. Edit or write code with edit/write tools
+3. Run `./gradlew build` with exec (compiles + tests with 4min timeout)
+4. If tests fail, fix them. Failing tests are bugs.
+5. `git add -A && git commit -m "message" && git push origin main`
