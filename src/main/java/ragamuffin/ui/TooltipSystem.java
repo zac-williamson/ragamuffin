@@ -104,6 +104,19 @@ public class TooltipSystem {
     }
 
     /**
+     * Show a free-form message immediately (bypasses the trigger deduplication).
+     * Used for dynamic messages like arrest notices that include item names.
+     * The duration parameter is accepted but the display time is still governed by
+     * TOOLTIP_DISPLAY_TIME for consistency; it is kept for API clarity.
+     *
+     * @param message the text to show
+     * @param duration ignored — present for API symmetry
+     */
+    public void showMessage(String message, float duration) {
+        tooltipQueue.add(message);
+    }
+
+    /**
      * Reset all tooltips (for testing or new game).
      */
     public void reset() {

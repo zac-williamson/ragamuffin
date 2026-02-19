@@ -16,7 +16,10 @@ public enum TooltipTrigger {
     HUNGER_LOW("Your stomach growls. Even the pigeons look appetising."),
     FIRST_CRAFT("Crafting with materials of questionable provenance."),
     TOOL_BROKEN("Your tool falls apart. Typical."),
-    FIRST_NPC_LOOT("Spoils of war. Or mugging. Same thing round here.");
+    FIRST_NPC_LOOT("Spoils of war. Or mugging. Same thing round here."),
+    CARDBOARD_BOX_SHELTER("Home sweet home. Well, cardboard home. Home-adjacent."),
+    GREGGS_RAID_ALERT("Raiding Greggs? Bold. The police take a dim view of sausage roll crime."),
+    GREGGS_RAID_ESCALATION("Someone's called it in. Police are on their way to avenge the pastries.");
 
     private final String message;
 

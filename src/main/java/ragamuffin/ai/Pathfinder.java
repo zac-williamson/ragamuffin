@@ -30,6 +30,24 @@ public class Pathfinder {
         int endY = (int) Math.floor(end.y);
         int endZ = (int) Math.floor(end.z);
 
+        // Fast path: if start == end (already there), return trivial path
+        if (startX == endX && startY == endY && startZ == endZ) {
+            List<Vector3> trivial = new ArrayList<>();
+            trivial.add(new Vector3(endX + 0.5f, endY, endZ + 0.5f));
+            return trivial;
+        }
+
+        // Fast path: line-of-sight check for short distances on flat ground
+        // If the two points are within 20 blocks and have clear straight-line walkability, skip A*
+        int dx = Math.abs(endX - startX);
+        int dz = Math.abs(endZ - startZ);
+        if (Math.abs(endY - startY) <= 1 && dx + dz <= 20) {
+            List<Vector3> losPath = tryLineOfSightPath(world, startX, startY, startZ, endX, endY, endZ);
+            if (losPath != null) {
+                return losPath;
+            }
+        }
+
         // Check if start and end are walkable
         if (!isWalkable(world, startX, startY, startZ) || !isWalkable(world, endX, endY, endZ)) {
             return null;
@@ -92,6 +110,52 @@ public class Pathfinder {
 
         // No path found
         return null;
+    }
+
+    /**
+     * Attempt to find a direct line-of-sight path between two nearby points.
+     * Uses Bresenham's line algorithm to check each block along the line.
+     * Returns the path if clear, or null if any block is not walkable.
+     */
+    private List<Vector3> tryLineOfSightPath(World world, int x0, int y0, int z0, int x1, int y1, int z1) {
+        List<Vector3> path = new ArrayList<>();
+        path.add(new Vector3(x0 + 0.5f, y0, z0 + 0.5f));
+
+        // Bresenham's line in XZ, checking walkability at each step
+        int dx = Math.abs(x1 - x0);
+        int dz = Math.abs(z1 - z0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sz = z0 < z1 ? 1 : -1;
+        int err = dx - dz;
+        int cx = x0;
+        int cz = z0;
+        int cy = y0;
+
+        while (cx != x1 || cz != z1) {
+            int e2 = 2 * err;
+            if (e2 > -dz) {
+                err -= dz;
+                cx += sx;
+            } else {
+                err += dx;
+                cz += sz;
+            }
+
+            // Allow one step up or down
+            if (!isWalkable(world, cx, cy, cz)) {
+                if (isWalkable(world, cx, cy + 1, cz)) {
+                    cy += 1;
+                } else if (isWalkable(world, cx, cy - 1, cz)) {
+                    cy -= 1;
+                } else {
+                    return null; // Obstacle in the way
+                }
+            }
+
+            path.add(new Vector3(cx + 0.5f, cy, cz + 0.5f));
+        }
+
+        return path;
     }
 
     /**

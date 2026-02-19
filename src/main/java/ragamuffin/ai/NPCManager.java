@@ -119,6 +119,19 @@ public class NPCManager {
     // NPC idle timers — pause between wanders
     private Map<NPC, Float> npcIdleTimers;
 
+    // Path recalculation timers — avoid calling pathfinding every frame
+    private Map<NPC, Float> npcPathRecalcTimers;
+
+    // Police spawn cooldown — prevent mass spawning every frame
+    private float policeSpawnCooldown = 0f;
+    private static final float POLICE_SPAWN_INTERVAL = 10.0f; // seconds between spawn checks
+
+    // Per-NPC structure scan stagger — spread checks over time
+    private Map<NPC, Float> npcStructureCheckTimers;
+
+    // Arrest system — set when police catches player so game loop can apply penalties
+    private boolean arrestPending = false;
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
@@ -139,6 +152,8 @@ public class NPCManager {
         this.npcStructureScanTimer = 0;
         this.notifiedStructures = new HashSet<>();
         this.npcIdleTimers = new HashMap<>();
+        this.npcPathRecalcTimers = new HashMap<>();
+        this.npcStructureCheckTimers = new HashMap<>();
     }
 
     /**
@@ -244,6 +259,11 @@ public class NPCManager {
      * Update all NPCs.
      */
     public void update(float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
+        // Tick police spawn cooldown
+        if (policeSpawnCooldown > 0) {
+            policeSpawnCooldown -= delta;
+        }
+
         // Update structure tracking (Phase 7)
         structureScanTimer += delta;
         if (structureScanTimer >= 2.0f) { // Scan every 2 seconds
@@ -258,8 +278,14 @@ public class NPCManager {
             npcStructureScanTimer = 0;
         }
 
-        // Remove dead NPCs (speech timer expired)
-        npcs.removeIf(npc -> !npc.isAlive() && !npc.isSpeaking());
+        // Remove dead NPCs (speech timer expired) and clean up associated state
+        npcs.removeIf(npc -> {
+            if (!npc.isAlive() && !npc.isSpeaking()) {
+                npcPathRecalcTimers.remove(npc);
+                return true;
+            }
+            return false;
+        });
 
         // Use indexed loop to avoid ConcurrentModificationException when spawning new NPCs
         for (int i = 0; i < npcs.size(); i++) {
@@ -309,6 +335,12 @@ public class NPCManager {
      * Update a single NPC's behavior.
      */
     private void updateNPC(NPC npc, float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
+        // Advance path recalculation timer
+        npcPathRecalcTimers.merge(npc, delta, Float::sum);
+
+        // Tick per-NPC structure check timer (count down toward 0 when a scan is due)
+        npcStructureCheckTimers.computeIfPresent(npc, (k, v) -> Math.max(0f, v - delta));
+
         // Update timers and facing (but NOT position — we handle movement with collision)
         npc.updateTimers(delta);
         npc.updateKnockback(delta);
@@ -389,10 +421,8 @@ public class NPCManager {
             }
         }
 
-        // Check for player structures nearby (throttled — expensive block scanning)
-        if (npcStructureScanTimer < 0.05f) {
-            checkForPlayerStructures(npc, world);
-        }
+        // Check for player structures nearby (each NPC throttled independently)
+        checkForPlayerStructures(npc, world);
 
         // Youth gangs try to steal
         if (npc.getType() == NPCType.YOUTH_GANG && npc.getState() != NPCState.STEALING) {
@@ -564,8 +594,16 @@ public class NPCManager {
             return;
         }
 
-        // Scan for placed blocks nearby (simplified - in real implementation would track placed blocks)
-        int scanRadius = 20;
+        // Stagger per-NPC checks: each NPC runs this at most once every 5 seconds,
+        // with a random initial offset so they don't all fire in the same frame.
+        float checkTimer = npcStructureCheckTimers.getOrDefault(npc, random.nextFloat() * 5.0f);
+        if (checkTimer > 0) {
+            return;
+        }
+        npcStructureCheckTimers.put(npc, 5.0f);
+
+        // Reduced scan radius (21×21 = 441 columns vs previous 41×41 = 1681)
+        int scanRadius = 10;
         int playerBlockCount = 0;
         Vector3 structureCenter = null;
 
@@ -623,8 +661,12 @@ public class NPCManager {
         return nearest;
     }
 
+    // How often (in seconds) to recalculate an NPC path
+    private static final float PATH_RECALC_INTERVAL = 0.5f;
+
     /**
      * Set NPC target and find path.
+     * Throttled: only recalculates the path at most every PATH_RECALC_INTERVAL seconds.
      * If pathfinding fails, tries a closer target rather than walking blindly.
      */
     private void setNPCTarget(NPC npc, Vector3 target, World world) {
@@ -632,6 +674,13 @@ public class NPCManager {
         float targetY = findGroundHeight(world, target.x, target.z);
         Vector3 adjustedTarget = new Vector3(target.x, targetY, target.z);
         npc.setTargetPosition(adjustedTarget);
+
+        // Throttle: if NPC already has a path and recalc timer hasn't expired, skip pathfinding
+        float recalcTimer = npcPathRecalcTimers.getOrDefault(npc, PATH_RECALC_INTERVAL);
+        if (npc.getPath() != null && !npc.getPath().isEmpty() && recalcTimer < PATH_RECALC_INTERVAL) {
+            return; // Keep using existing path
+        }
+        npcPathRecalcTimers.put(npc, 0.0f);
 
         // Find path
         List<Vector3> path = pathfinder.findPath(world, npc.getPosition(), adjustedTarget);
@@ -1092,10 +1141,46 @@ public class NPCManager {
     }
 
     /**
+     * Alert all nearby police to a Greggs raid and send them toward the player.
+     * Any existing patrolling police within 40 blocks go aggressive immediately.
+     * If there are no police nearby, spawn a fresh unit.
+     */
+    public void alertPoliceToGreggRaid(Player player, World world) {
+        for (NPC npc : npcs) {
+            if (npc.getType() == NPCType.POLICE && npc.isAlive()
+                    && npc.getState() != NPCState.AGGRESSIVE) {
+                float dist = npc.getPosition().dst(player.getPosition());
+                if (dist < 40.0f) {
+                    npc.setState(NPCState.AGGRESSIVE);
+                    npc.setSpeechText("Oi! Put the pasty down!", 3.0f);
+                    setNPCTarget(npc, player.getPosition(), world);
+                }
+            }
+        }
+        // Spawn an additional police unit homing in on the player
+        float angle = random.nextFloat() * (float) Math.PI * 2;
+        float spawnDist = 20 + random.nextFloat() * 10;
+        float sx = player.getPosition().x + (float) Math.cos(angle) * spawnDist;
+        float sz = player.getPosition().z + (float) Math.sin(angle) * spawnDist;
+        float sy = findGroundHeight(world, sx, sz);
+        NPC responder = spawnNPC(NPCType.POLICE, sx, sy, sz);
+        if (responder != null) {
+            responder.setState(NPCState.AGGRESSIVE);
+            responder.setSpeechText("999 call - sausage roll theft!", 3.0f);
+            setNPCTarget(responder, player.getPosition(), world);
+        }
+    }
+
+    /**
      * Update police spawning — police are always present (it's Britain, they're everywhere).
      * More police at night (up to 4), fewer during the day (up to 2).
      */
     public void updatePoliceSpawning(float time, World world, Player player) {
+        // Throttle to avoid spawning (and triggering A* pathfinding) every frame
+        if (policeSpawnCooldown > 0) {
+            return;
+        }
+
         boolean isNight = time >= 22.0f || time < 6.0f;
         int maxPolice = isNight ? 4 : 2;
 
@@ -1105,6 +1190,7 @@ public class NPCManager {
         if (policeCount < maxPolice) {
             spawnPolice(player, world);
         }
+        policeSpawnCooldown = POLICE_SPAWN_INTERVAL;
     }
 
     /**
@@ -1272,22 +1358,36 @@ public class NPCManager {
 
     /**
      * Update police aggressive/arresting behavior.
+     * When police closes in, signals arrest to the game loop via arrestPending flag.
+     * The game loop applies inventory confiscation and health/hunger penalties via ArrestSystem.
      */
     private void updatePoliceAggressive(NPC police, float delta, World world, Player player) {
         // Move toward player
         setNPCTarget(police, player.getPosition(), world);
 
-        // If very close, teleport player away
-        if (police.isNear(player.getPosition(), 1.5f)) {
-            // Teleport player 50 blocks away
-            Vector3 escapePos = player.getPosition().cpy();
-            escapePos.x += (random.nextBoolean() ? 50 : -50);
-            escapePos.z += (random.nextBoolean() ? 50 : -50);
-            player.getPosition().set(escapePos);
+        // If very close, make the arrest — signal game loop
+        if (police.isNear(player.getPosition(), 1.5f) && !arrestPending) {
+            arrestPending = true;
+            police.setSpeechText("You're coming with me!", 2.0f);
 
-            // Police goes back to patrolling
+            // Police goes back to patrolling after making the arrest
             police.setState(NPCState.PATROLLING);
         }
+    }
+
+    /**
+     * Whether police have caught the player this frame.
+     * The game loop should call this, apply ArrestSystem.arrest(), then clearArrestPending().
+     */
+    public boolean isArrestPending() {
+        return arrestPending;
+    }
+
+    /**
+     * Clear the arrest-pending flag after the game loop has handled it.
+     */
+    public void clearArrestPending() {
+        arrestPending = false;
     }
 
     /**

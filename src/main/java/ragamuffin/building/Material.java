@@ -76,7 +76,8 @@ public enum Material {
     DODGY_DVD("Dodgy DVD"),
     FIRE_EXTINGUISHER("Fire Extinguisher"),
     PLYWOOD("Plywood"),
-    PIPE("Pipe");
+    PIPE("Pipe"),
+    CARDBOARD_BOX("Cardboard Box");
 
     private final String displayName;
 

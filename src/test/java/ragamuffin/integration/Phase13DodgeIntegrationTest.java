@@ -29,7 +29,12 @@ class Phase13DodgeIntegrationTest {
     @BeforeEach
     void setUp() {
         world = new World(12345);
-        world.generate();
+        // Minimal flat ground — no need for full world generation in unit tests
+        for (int x = -10; x <= 10; x++) {
+            for (int z = -10; z <= 10; z++) {
+                world.setBlock(x, 4, z, ragamuffin.world.BlockType.GRASS);
+            }
+        }
         player = new Player(0, 5, 0);
         inventory = new Inventory(36);
         npcManager = new NPCManager();

@@ -83,6 +83,13 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 12: CRITIC 2 Improvements
     private WeatherSystem weatherSystem;
 
+    // CRITIC 5: Arrest system — applies penalties when police catch the player
+    private ArrestSystem arrestSystem;
+
+    // CRITIC 3: Greggs Raid mechanic - counts how many Greggs blocks player has broken
+    private int greggRaidBlockCount = 0;
+    private static final int GREGGS_RAID_THRESHOLD = 3; // police alert after this many blocks
+
     // Hover tooltip system
     private HoverTooltipSystem hoverTooltipSystem;
 
@@ -109,6 +116,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Sky colour components (reused each frame)
     private float skyR = 0.53f, skyG = 0.81f, skyB = 0.92f;
 
+    // Loading state — true until heavy init is complete
+    private boolean loadingComplete = false;
+
     // Rain animation
     private float rainTimer = 0f;
     private final java.util.Random rainRng = new java.util.Random(42);
@@ -134,27 +144,43 @@ public class RagamuffinGame extends ApplicationAdapter {
     public void create() {
         Gdx.app.log("Ragamuffin", "Welcome to the real world, kid.");
 
-        // Phase 8: Start in MENU state with main menu
-        state = GameState.MENU;
+        // Start in LOADING state — heavy init deferred to first render frame
+        // so the browser can paint the loading screen before freezing on world-gen.
+        state = GameState.LOADING;
 
-        // Setup 3D camera
+        // Setup 3D camera (lightweight)
         camera = new PerspectiveCamera(67, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.near = 0.1f;
         camera.far = 300f;
         camera.update();
 
-        // Setup rendering
+        // Setup rendering infrastructure (lightweight)
         modelBatch = new ModelBatch();
         environment = new Environment();
         environment.set(new ColorAttribute(ColorAttribute.AmbientLight, 0.4f, 0.4f, 0.4f, 1f));
         environment.add(new DirectionalLight().set(0.8f, 0.8f, 0.8f, -1f, -0.8f, -0.2f));
 
-        // Setup 2D UI rendering
+        // Setup 2D UI rendering (lightweight)
         spriteBatch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
-        font = new BitmapFont(); // Default LibGDX font
+        font = new BitmapFont();
         font.getData().setScale(1.2f);
 
+        // Setup input (so user can interact with the loading screen)
+        inputHandler = new InputHandler();
+        Gdx.input.setInputProcessor(inputHandler);
+        Gdx.input.setCursorCatched(false);
+
+        // Heavy world-gen + system init happens in initGame(), called from render()
+        // after the loading screen has had at least one frame to paint.
+    }
+
+    /**
+     * Heavy initialisation: world generation, chunk mesh building, NPC spawning,
+     * and all game systems. Called once from render() after the loading screen
+     * has had a frame to paint, so the browser doesn't appear frozen.
+     */
+    private void initGame() {
         // Generate the world (Phase 2)
         Gdx.app.log("Ragamuffin", "Generating British town...");
         world = new World(System.currentTimeMillis());
@@ -226,14 +252,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Phase 12: Initialize CRITIC 2 systems
         weatherSystem = new WeatherSystem();
 
+        // CRITIC 5: Initialize arrest system
+        arrestSystem = new ArrestSystem();
+
         // Initialize hover tooltip system
         hoverTooltipSystem = new HoverTooltipSystem();
 
-        // Setup input
-        inputHandler = new InputHandler();
-        Gdx.input.setInputProcessor(inputHandler);
-        // Don't catch cursor in menu
-        Gdx.input.setCursorCatched(false);
+        loadingComplete = true;
+        state = GameState.MENU;
+        Gdx.app.log("Ragamuffin", "Loading complete.");
     }
 
     /**
@@ -362,7 +389,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.update();
 
         // Handle state-specific input and updates
-        if (state == GameState.MENU) {
+        if (state == GameState.LOADING) {
+            if (!loadingComplete) {
+                renderLoadingScreen();
+                // Trigger heavy init on the next frame so the loading screen gets a chance to paint
+                if (delta > 0) {
+                    initGame();
+                }
+            }
+        } else if (state == GameState.MENU) {
             handleMenuInput();
             renderMenu();
         } else if (state == GameState.PLAYING) {
@@ -390,6 +425,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Update opening sequence if active
             if (openingSequence.isActive()) {
                 openingSequence.update(delta);
+                // Allow skipping with Enter, Space (jump), or left-click
+                if (inputHandler.isEnterPressed() || inputHandler.isJumpPressed() || inputHandler.isLeftClickPressed()) {
+                    openingSequence.skip();
+                    inputHandler.resetEnter();
+                    inputHandler.resetJump();
+                    inputHandler.resetLeftClick();
+                }
             }
 
             // Handle UI toggles
@@ -593,6 +635,35 @@ public class RagamuffinGame extends ApplicationAdapter {
         state = GameState.PLAYING;
         openingSequence.start();
         Gdx.input.setCursorCatched(true);
+        // Reset per-session counters
+        greggRaidBlockCount = 0;
+    }
+
+    private void renderLoadingScreen() {
+        int screenWidth = Gdx.graphics.getWidth();
+        int screenHeight = Gdx.graphics.getHeight();
+
+        Gdx.gl.glClearColor(0.05f, 0.05f, 0.05f, 1f);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
+        com.badlogic.gdx.math.Matrix4 proj = new com.badlogic.gdx.math.Matrix4();
+        proj.setToOrtho2D(0, 0, screenWidth, screenHeight);
+        spriteBatch.setProjectionMatrix(proj);
+
+        spriteBatch.begin();
+        font.getData().setScale(2.0f);
+        font.setColor(0.8f, 0.8f, 0.8f, 1f);
+        String msg = "Loading...";
+        com.badlogic.gdx.graphics.g2d.GlyphLayout layout = new com.badlogic.gdx.graphics.g2d.GlyphLayout(font, msg);
+        font.draw(spriteBatch, msg, (screenWidth - layout.width) / 2f, screenHeight / 2f + 20);
+        font.getData().setScale(1.0f);
+        font.setColor(0.5f, 0.5f, 0.5f, 1f);
+        String sub = "Generating British town...";
+        com.badlogic.gdx.graphics.g2d.GlyphLayout subLayout = new com.badlogic.gdx.graphics.g2d.GlyphLayout(font, sub);
+        font.draw(spriteBatch, sub, (screenWidth - subLayout.width) / 2f, screenHeight / 2f - 20);
+        font.getData().setScale(1.2f);
+        font.setColor(1f, 1f, 1f, 1f);
+        spriteBatch.end();
     }
 
     private void renderMenu() {
@@ -760,8 +831,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetDodge();
         }
 
-        // Update dodge timers
+        // Update dodge timers and damage flash
         player.updateDodge(delta);
+        player.updateFlash(delta);
 
         // Move player with collision (always call to ensure gravity applies even when not moving)
         float moveSpeed;
@@ -799,6 +871,14 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 5: Update NPCs
         npcManager.update(delta, world, player, inventory, tooltipSystem);
+
+        // CRITIC 5: Handle police arrest — apply penalties if player was caught
+        if (npcManager.isArrestPending() && !player.isDead()) {
+            java.util.List<String> confiscated = arrestSystem.arrest(player, inventory);
+            String arrestMsg = ArrestSystem.buildArrestMessage(confiscated);
+            tooltipSystem.showMessage(arrestMsg, 4.0f);
+            npcManager.clearArrestPending();
+        }
 
         // Update camera to follow player
         camera.position.set(player.getPosition());
@@ -885,6 +965,18 @@ public class RagamuffinGame extends ApplicationAdapter {
                     }
                 }
 
+                // CRITIC 3: Greggs Raid mechanic — track blocks broken in Greggs
+                if (landmark == LandmarkType.GREGGS) {
+                    greggRaidBlockCount++;
+                    if (greggRaidBlockCount == 1) {
+                        tooltipSystem.trigger(TooltipTrigger.GREGGS_RAID_ALERT);
+                    } else if (greggRaidBlockCount == GREGGS_RAID_THRESHOLD) {
+                        // Police are now mobilised
+                        tooltipSystem.trigger(TooltipTrigger.GREGGS_RAID_ESCALATION);
+                        npcManager.alertPoliceToGreggRaid(player, world);
+                    }
+                }
+
                 // Only rebuild the affected chunk (and neighbours if on a boundary)
                 rebuildChunkAt(x, y, z);
             }
@@ -923,9 +1015,20 @@ public class RagamuffinGame extends ApplicationAdapter {
                 tooltipSystem.trigger(TooltipTrigger.FIRST_BLOCK_PLACE);
             }
 
+            // Critic 4: Trigger cardboard box shelter tooltip
+            if (material == Material.CARDBOARD_BOX && !tooltipSystem.hasShown(TooltipTrigger.CARDBOARD_BOX_SHELTER)) {
+                tooltipSystem.trigger(TooltipTrigger.CARDBOARD_BOX_SHELTER);
+            }
+
             // Only rebuild the affected chunk
             if (placementPos != null) {
                 rebuildChunkAt((int) placementPos.x, (int) placementPos.y, (int) placementPos.z);
+                // Cardboard box builds a 2x2x2 structure — rebuild adjacent chunks too
+                if (material == Material.CARDBOARD_BOX) {
+                    rebuildChunkAt((int) placementPos.x + 2, (int) placementPos.y, (int) placementPos.z);
+                    rebuildChunkAt((int) placementPos.x, (int) placementPos.y, (int) placementPos.z + 2);
+                    rebuildChunkAt((int) placementPos.x, (int) placementPos.y + 3, (int) placementPos.z);
+                }
             }
         }
     }
@@ -1066,6 +1169,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             craftingUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
+        // Render damage flash overlay
+        float flashIntensity = player.getDamageFlashIntensity();
+        if (flashIntensity > 0f) {
+            renderDamageFlash(flashIntensity, screenWidth, screenHeight);
+        }
+
         // Render tooltip if active
         if (tooltipSystem.isActive()) {
             renderTooltip();
@@ -1082,9 +1191,35 @@ public class RagamuffinGame extends ApplicationAdapter {
             int screenWidth = Gdx.graphics.getWidth();
             int screenHeight = Gdx.graphics.getHeight();
 
-            // Render tooltip at bottom center
+            // Measure text width for a centred background box
+            com.badlogic.gdx.graphics.g2d.GlyphLayout layout =
+                    new com.badlogic.gdx.graphics.g2d.GlyphLayout(font, message);
+            float textW = layout.width;
+            float textH = layout.height;
+            float padding = 10f;
+            float boxW = textW + padding * 2;
+            float boxH = textH + padding * 2;
+            float boxX = (screenWidth - boxW) / 2f;
+            float boxY = 70f;
+
+            // Dark semi-transparent background
+            com.badlogic.gdx.math.Matrix4 tooltipProj = new com.badlogic.gdx.math.Matrix4();
+            tooltipProj.setToOrtho2D(0, 0, screenWidth, screenHeight);
+            shapeRenderer.setProjectionMatrix(tooltipProj);
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(0f, 0f, 0f, 0.75f);
+            shapeRenderer.rect(boxX, boxY, boxW, boxH);
+            shapeRenderer.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+
+            // Text centred in the box
+            spriteBatch.setProjectionMatrix(tooltipProj);
             spriteBatch.begin();
-            font.draw(spriteBatch, message, screenWidth / 2 - 100, 100);
+            font.setColor(1f, 1f, 1f, 1f);
+            font.draw(spriteBatch, message, boxX + padding, boxY + boxH - padding);
+            font.setColor(1f, 1f, 1f, 1f);
             spriteBatch.end();
         }
     }
@@ -1198,6 +1333,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         healingSystem = new HealingSystem();
         respawnSystem = new RespawnSystem();
         weatherSystem = new WeatherSystem();
+        arrestSystem = new ArrestSystem();
         gameHUD = new GameHUD(player);
         openingSequence = new OpeningSequence();
         deathMessage = null;
@@ -1384,6 +1520,26 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private static float lerp(float a, float b, float t) {
         return a + (b - a) * t;
+    }
+
+    /**
+     * Render a brief red flash overlay when the player takes damage.
+     * Intensity fades from 1.0 (full hit) to 0.0 over DAMAGE_FLASH_DURATION.
+     */
+    private void renderDamageFlash(float intensity, int screenWidth, int screenHeight) {
+        com.badlogic.gdx.math.Matrix4 flashProj = new com.badlogic.gdx.math.Matrix4();
+        flashProj.setToOrtho2D(0, 0, screenWidth, screenHeight);
+        shapeRenderer.setProjectionMatrix(flashProj);
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.9f, 0f, 0f, intensity * 0.45f);
+        shapeRenderer.rect(0, 0, screenWidth, screenHeight);
+        shapeRenderer.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     /**

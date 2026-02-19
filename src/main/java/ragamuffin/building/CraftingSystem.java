@@ -66,6 +66,12 @@ public class CraftingSystem {
             Map.of(Material.SHELTER_WALL, 3, Material.SHELTER_ROOF, 1)
         ));
 
+        // Cardboard box: 6 cardboard → 1 cardboard box (place to auto-build 2x2x2 shelter)
+        recipes.add(new Recipe(
+            Map.of(Material.CARDBOARD, 6),
+            Map.of(Material.CARDBOARD_BOX, 1)
+        ));
+
         // Scrap metal recipes — loot from industrial estate / builders merchant
         recipes.add(new Recipe(
             Map.of(Material.SCRAP_METAL, 3, Material.PLYWOOD, 2),

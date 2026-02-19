@@ -50,6 +50,10 @@ public class Player {
     private float dodgeDirX;        // Dodge direction X
     private float dodgeDirZ;        // Dodge direction Z
 
+    // Damage flash
+    private float damageFlashTimer; // > 0 when recently damaged
+    private static final float DAMAGE_FLASH_DURATION = 0.35f;
+
     public Player(float x, float y, float z) {
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
@@ -66,6 +70,7 @@ public class Player {
         this.dodgeCooldownTimer = 0f;
         this.dodgeDirX = 0f;
         this.dodgeDirZ = 0f;
+        this.damageFlashTimer = 0f;
     }
 
     public Vector3 getPosition() {
@@ -201,6 +206,23 @@ public class Player {
         if (health <= 0) {
             isDead = true;
         }
+        damageFlashTimer = DAMAGE_FLASH_DURATION;
+    }
+
+    /**
+     * Tick the damage flash timer. Call once per frame.
+     */
+    public void updateFlash(float delta) {
+        if (damageFlashTimer > 0) {
+            damageFlashTimer = Math.max(0, damageFlashTimer - delta);
+        }
+    }
+
+    /**
+     * Get damage flash intensity (0.0 = no flash, 1.0 = full flash).
+     */
+    public float getDamageFlashIntensity() {
+        return damageFlashTimer / DAMAGE_FLASH_DURATION;
     }
 
     /**

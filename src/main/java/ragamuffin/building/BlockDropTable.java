@@ -123,9 +123,13 @@ public class BlockDropTable {
                 return Material.OFFICE_CHAIR;
             }
         } else if (landmark == LandmarkType.GREGGS) {
-            // Greggs blocks drop food (50/50 chance between sausage roll and steak bake)
-            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
-                return Math.random() < 0.5 ? Material.SAUSAGE_ROLL : Material.STEAK_BAKE;
+            // Greggs blocks drop a varied haul of fine British bakery goods
+            if (blockType == BlockType.BRICK || blockType == BlockType.GLASS
+                    || blockType == BlockType.COUNTER || blockType == BlockType.SHELF) {
+                double roll = Math.random();
+                if (roll < 0.35) return Material.SAUSAGE_ROLL;
+                else if (roll < 0.65) return Material.STEAK_BAKE;
+                else return Material.ENERGY_DRINK; // chilled from the fridge
             }
         } else if (landmark == LandmarkType.CHIPPY) {
             // Chippy drops chips

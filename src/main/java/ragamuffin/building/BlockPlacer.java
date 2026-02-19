@@ -109,6 +109,16 @@ public class BlockPlacer {
             }
         }
 
+        // Special case: CARDBOARD_BOX auto-builds a 2x2x2 shelter structure
+        if (material == Material.CARDBOARD_BOX) {
+            int ox = (int) Math.floor(placement.x);
+            int oy = (int) Math.floor(placement.y);
+            int oz = (int) Math.floor(placement.z);
+            buildCardboardShelter(world, ox, oy, oz);
+            inventory.removeItem(material, 1);
+            return true;
+        }
+
         // Convert material to block type — non-placeable items return null
         BlockType blockType = materialToBlockType(material);
         if (blockType == null) {
@@ -122,6 +132,54 @@ public class BlockPlacer {
         inventory.removeItem(material, 1);
 
         return true;
+    }
+
+    /**
+     * Build a 2x2x2 cardboard shelter structure at the given origin position.
+     * Structure layout (2 wide, 2 tall, 2 deep):
+     *  - Floor: 2x2 cardboard at y=oy
+     *  - Walls: 4 sides at y=oy and y=oy+1
+     *  - Roof: 2x2 cardboard at y=oy+2
+     * The front face (z+1) is left open as an entrance.
+     */
+    public void buildCardboardShelter(World world, int ox, int oy, int oz) {
+        // Floor (2x2 at ground level)
+        for (int dx = 0; dx <= 1; dx++) {
+            for (int dz = 0; dz <= 1; dz++) {
+                setIfAir(world, ox + dx, oy, oz + dz, BlockType.CARDBOARD);
+            }
+        }
+
+        // Walls — two height levels
+        for (int dy = 1; dy <= 2; dy++) {
+            // Back wall (z side, dz=0)
+            setIfAir(world, ox,     oy + dy, oz,     BlockType.CARDBOARD);
+            setIfAir(world, ox + 1, oy + dy, oz,     BlockType.CARDBOARD);
+            // Left wall (x side, dx=0)
+            setIfAir(world, ox,     oy + dy, oz,     BlockType.CARDBOARD);
+            setIfAir(world, ox,     oy + dy, oz + 1, BlockType.CARDBOARD);
+            // Right wall (x side, dx=1)
+            setIfAir(world, ox + 1, oy + dy, oz,     BlockType.CARDBOARD);
+            setIfAir(world, ox + 1, oy + dy, oz + 1, BlockType.CARDBOARD);
+            // Front wall lower half only (dx=0 and dx=1 at dz=1) — leave open as entrance at dy=1
+            if (dy == 2) {
+                setIfAir(world, ox,     oy + dy, oz + 1, BlockType.CARDBOARD);
+                setIfAir(world, ox + 1, oy + dy, oz + 1, BlockType.CARDBOARD);
+            }
+        }
+
+        // Roof (2x2 at y=oy+3)
+        for (int dx = 0; dx <= 1; dx++) {
+            for (int dz = 0; dz <= 1; dz++) {
+                setIfAir(world, ox + dx, oy + 3, oz + dz, BlockType.CARDBOARD);
+            }
+        }
+    }
+
+    private void setIfAir(World world, int x, int y, int z, BlockType type) {
+        if (world.getBlock(x, y, z) == BlockType.AIR) {
+            world.setBlock(x, y, z, type);
+        }
     }
 
     /**

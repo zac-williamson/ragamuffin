@@ -4,6 +4,7 @@ package ragamuffin.core;
  * Game state machine states.
  */
 public enum GameState {
+    LOADING(false),
     MENU(false),
     PLAYING(true),
     PAUSED(false);

@@ -53,7 +53,6 @@ test {
     systemProperty "junit.jupiter.execution.timeout.default", "60s"
     jvmArgs "-Djava.awt.headless=true"
     useJUnitPlatform()
-    exclude "**/Phase6IntegrationTest.class"
 }
 
 jar {
