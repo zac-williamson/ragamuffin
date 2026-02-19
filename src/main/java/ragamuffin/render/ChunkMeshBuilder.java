@@ -35,8 +35,9 @@ public class ChunkMeshBuilder {
     }
 
     /**
-     * Get the block at a world position, using the world reference if available.
-     * Falls back to AIR for out-of-chunk blocks when no world is set.
+     * Get the block at a local position within the chunk.
+     * Returns AIR for out-of-bounds positions (assumed to be neighbouring chunks).
+     * PERFORMANCE: Removed cross-chunk World queries to prevent browser freeze.
      */
     private BlockType getWorldBlock(Chunk chunk, int localX, int localY, int localZ) {
         // Within chunk bounds — use chunk directly
@@ -45,13 +46,8 @@ public class ChunkMeshBuilder {
             localZ >= 0 && localZ < Chunk.SIZE) {
             return chunk.getBlock(localX, localY, localZ);
         }
-        // Outside chunk bounds — use world reference if available
-        if (world != null) {
-            int worldX = chunk.getChunkX() * Chunk.SIZE + localX;
-            int worldY = chunk.getChunkY() * Chunk.HEIGHT + localY;
-            int worldZ = chunk.getChunkZ() * Chunk.SIZE + localZ;
-            return world.getBlock(worldX, worldY, worldZ);
-        }
+        // Outside chunk bounds — treat as AIR to avoid expensive World lookups
+        // This may cause minor visual seams at chunk boundaries, but prevents freezing
         return BlockType.AIR;
     }
 

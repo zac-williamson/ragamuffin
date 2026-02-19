@@ -859,10 +859,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());
 
-        // Rebuild meshes for newly loaded chunks (budget: max 8 per frame to prevent freezes)
+        // Rebuild meshes for newly loaded chunks (budget: max 16 per frame to prevent freezes)
         List<Chunk> dirtyChunks = world.getDirtyChunks();
         if (!dirtyChunks.isEmpty()) {
-            int meshBudget = 8;
+            int meshBudget = 16;
             int built = 0;
             java.util.Iterator<Chunk> it = dirtyChunks.iterator();
             while (it.hasNext() && built < meshBudget) {
