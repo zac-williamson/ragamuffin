@@ -261,6 +261,13 @@ public class Player {
     }
 
     /**
+     * Restore energy by a fixed amount (for consumables).
+     */
+    public void restoreEnergy(float amount) {
+        energy = Math.min(MAX_ENERGY, energy + amount);
+    }
+
+    /**
      * Revive the player (reset dead state).
      */
     public void revive() {

@@ -164,10 +164,10 @@ public class InteractionSystem {
             hungerRestored = 35;
         } else if (food == Material.ENERGY_DRINK) {
             hungerRestored = 5;
-            player.recoverEnergy(30); // Energy drink restores energy too
+            player.restoreEnergy(30); // Energy drink restores energy too
         } else if (food == Material.PINT) {
             hungerRestored = 15;
-            player.recoverEnergy(20); // Liquid courage
+            player.restoreEnergy(20); // Liquid courage
         } else if (food == Material.PERI_PERI_CHICKEN) {
             hungerRestored = 45; // Cheeky Nandos is top-tier sustenance
         } else if (food == Material.PARACETAMOL) {
@@ -178,7 +178,7 @@ public class InteractionSystem {
             player.heal(20); // Blast of cold foam soothes the wounds
         } else if (food == Material.WASHING_POWDER) {
             hungerRestored = 0;
-            player.recoverEnergy(15); // Clean laundry scent is invigorating
+            player.restoreEnergy(15); // Clean laundry scent is invigorating
         } else if (food == Material.SCRATCH_CARD) {
             hungerRestored = 0;
             inventory.removeItem(food, 1);
