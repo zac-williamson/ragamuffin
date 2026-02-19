@@ -265,8 +265,9 @@ public class NPCManager {
         }
 
         // Update structure tracking (Phase 7)
+        // Scanned at a long interval — the 200x200x19 block scan is expensive
         structureScanTimer += delta;
-        if (structureScanTimer >= 2.0f) { // Scan every 2 seconds
+        if (structureScanTimer >= 30.0f) { // Scan every 30 seconds, not 2
             structureTracker.scanForStructures(world);
             updateCouncilBuilders(world, tooltipSystem);
             structureScanTimer = 0;
@@ -274,7 +275,7 @@ public class NPCManager {
 
         // Throttle per-NPC structure checks (expensive block scanning)
         npcStructureScanTimer += delta;
-        if (npcStructureScanTimer >= 2.0f) {
+        if (npcStructureScanTimer >= 30.0f) { // Match the structure scan interval
             npcStructureScanTimer = 0;
         }
 
@@ -1273,7 +1274,7 @@ public class NPCManager {
         // Scan for player structures around police (use cached result to avoid expensive scan every frame)
         Vector3 structure = policeTargetStructures.get(police);
         if (structure == null && npcStructureScanTimer < 0.05f) {
-            structure = scanForStructures(world, police.getPosition(), 40);
+            structure = scanForStructures(world, police.getPosition(), 20); // radius 20, not 40
         }
 
         if (structure != null) {

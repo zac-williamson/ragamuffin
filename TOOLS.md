@@ -1,34 +1,22 @@
-# TOOLS.md - Local Notes
+# TOOLS.md - How to Code
 
-## Environment
-- **Platform:** Amazon Linux 2023 (EC2, eu-west-2)
-- **Java:** Amazon Corretto 17
-- **Build:** Gradle 9.3.1
+## Your Tools
+- **Read** — read source files before editing
+- **Edit** — targeted find-and-replace edits in existing files
+- **Write** — create new files or overwrite existing ones
+- **Bash** — run shell commands (gradle, git, etc.)
 
 ## Build Commands
-- `./gradlew build` — compile and package
-- `./gradlew test` — run all tests (unit + integration)
-- `./gradlew clean test` — clean build and run all tests
-
-## How to Code
-
-Write code DIRECTLY using your built-in tools:
-- **read** to read source files
-- **edit** to make targeted edits (find-and-replace)
-- **write** to create or overwrite files
-- **exec** to run shell commands (gradle, git, etc.)
-
-Do NOT delegate to any external tool, skill, or subprocess.
+- `./gradlew build` — compile, test, and package (tests have 4-min timeout)
+- `./gradlew build -x test` — compile only (skip tests) — only if you need a quick check
 
 ## Git Workflow
 After every code change:
-```
-git add -A
-git commit -m "descriptive message"
-git push origin main
+```bash
+git add -A && git commit -m "descriptive message" && git push origin main
 ```
 This triggers GitHub Actions deployment to GitHub Pages.
 
-## Exec Tool
-Use the exec tool to run shell commands like `./gradlew test` and `git commit`.
-The exec tool has full access to run any command in this workspace.
+## Environment
+- Amazon Linux 2023 (EC2, eu-west-2)
+- Java 17 (Amazon Corretto), Gradle 9.3.1, LibGDX 1.12.1

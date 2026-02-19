@@ -51,6 +51,8 @@ public class World {
     public void generate() {
         generator = new WorldGenerator(seed);
         generator.generateWorld(this);
+        // Mark all generated chunks dirty so the mesh builder processes them on startup
+        dirtyChunks.addAll(loadedChunks.keySet());
     }
 
     /**

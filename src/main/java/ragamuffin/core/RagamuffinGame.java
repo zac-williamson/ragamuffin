@@ -204,10 +204,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Load initial chunks around player — meshes built lazily in render loop
         world.updateLoadedChunks(player.getPosition());
-        // Build a small set of nearby chunks immediately so the world isn't invisible
+        // Build immediate chunks so the world isn't invisible on first frame
         int immediateCount = 0;
         for (Chunk chunk : world.getDirtyChunks()) {
-            if (immediateCount >= 50) break; // Budget for startup — rest built lazily
+            if (immediateCount >= 150) break; // More pre-built chunks for a visible world on start
             chunkRenderer.updateChunk(chunk, meshBuilder);
             world.markChunkClean(chunk);
             immediateCount++;
@@ -855,10 +855,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update loaded chunks based on player position
         world.updateLoadedChunks(player.getPosition());
 
-        // Rebuild meshes for newly loaded chunks (budget: max 4 per frame to prevent freezes)
+        // Rebuild meshes for newly loaded chunks (budget: max 8 per frame to prevent freezes)
         List<Chunk> dirtyChunks = world.getDirtyChunks();
         if (!dirtyChunks.isEmpty()) {
-            int meshBudget = 4;
+            int meshBudget = 8;
             int built = 0;
             java.util.Iterator<Chunk> it = dirtyChunks.iterator();
             while (it.hasNext() && built < meshBudget) {
