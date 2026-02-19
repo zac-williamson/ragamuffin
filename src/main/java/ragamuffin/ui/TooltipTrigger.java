@@ -19,7 +19,9 @@ public enum TooltipTrigger {
     FIRST_NPC_LOOT("Spoils of war. Or mugging. Same thing round here."),
     CARDBOARD_BOX_SHELTER("Home sweet home. Well, cardboard home. Home-adjacent."),
     GREGGS_RAID_ALERT("Raiding Greggs? Bold. The police take a dim view of sausage roll crime."),
-    GREGGS_RAID_ESCALATION("Someone's called it in. Police are on their way to avenge the pastries.");
+    GREGGS_RAID_ESCALATION("Someone's called it in. Police are on their way to avenge the pastries."),
+    GANG_TERRITORY_ENTERED("You've wandered into their patch. They've noticed."),
+    GANG_TERRITORY_HOSTILE("Wrong postcode, mate. They're not happy about that.");
 
     private final String message;
 
