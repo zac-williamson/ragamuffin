@@ -48,8 +48,8 @@ class NPCManagerStructureTest {
             }
         }
 
-        // Update for more than 2 seconds to trigger scan
-        for (int i = 0; i < 150; i++) {
+        // Update for more than 30 seconds to trigger scan
+        for (int i = 0; i < 1850; i++) {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
 

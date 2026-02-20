@@ -154,8 +154,8 @@ class Critic4CardboardShelterTest {
         // Build the shelter
         blockPlacer.buildCardboardShelter(world, ox, oy, oz);
 
-        // Player stands inside the shelter (floor+1, roughly centered in x, towards back in z)
-        Vector3 playerPos = new Vector3(ox, oy + 1, oz);
+        // Player stands in the center (1x1 interior) at (ox+1, oy+1, oz+1)
+        Vector3 playerPos = new Vector3(ox + 1, oy + 1, oz + 1);
 
         boolean sheltered = ShelterDetector.isSheltered(world, playerPos);
         assertTrue(sheltered, "Player inside cardboard shelter should be considered sheltered");
