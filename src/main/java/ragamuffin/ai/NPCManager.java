@@ -595,9 +595,9 @@ public class NPCManager {
             return;
         }
 
-        // Stagger per-NPC checks: each NPC runs this at most once every 5 seconds,
-        // with a random initial offset so they don't all fire in the same frame.
-        float checkTimer = npcStructureCheckTimers.getOrDefault(npc, random.nextFloat() * 5.0f);
+        // Stagger per-NPC checks: each NPC runs this at most once every 5 seconds.
+        // Initialize timer for new NPCs with small random offset to stagger checks.
+        float checkTimer = npcStructureCheckTimers.computeIfAbsent(npc, k -> random.nextFloat() * 0.5f);
         if (checkTimer > 0) {
             return;
         }
@@ -615,8 +615,9 @@ public class NPCManager {
 
                 for (int y = 0; y < 10; y++) {
                     BlockType block = world.getBlock(x, y, z);
-                    // Check for placed blocks (planks, etc.)
-                    if (block == BlockType.WOOD || block == BlockType.BRICK) {
+                    // Check for player-placed blocks (wood planks only)
+                    // BRICK is excluded since it's used for town buildings/walls
+                    if (block == BlockType.WOOD) {
                         playerBlockCount++;
                         if (structureCenter == null) {
                             structureCenter = new Vector3(x, y, z);
