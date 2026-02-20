@@ -98,6 +98,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // First-person arm
     private FirstPersonArm firstPersonArm;
 
+    // Audio system
+    private ragamuffin.audio.SoundSystem soundSystem;
+
     private static final float MOUSE_SENSITIVITY = 0.2f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
@@ -259,6 +262,12 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Initialize hover tooltip system
         hoverTooltipSystem = new HoverTooltipSystem();
+
+        // Initialize audio system
+        soundSystem = new ragamuffin.audio.SoundSystem();
+
+        // Wire up tooltip sound effect
+        tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
 
         loadingComplete = true;
         state = GameState.MENU;
@@ -690,19 +699,25 @@ public class RagamuffinGame extends ApplicationAdapter {
     private void handleUIInput() {
         // Inventory toggle
         if (inputHandler.isInventoryPressed()) {
+            boolean wasVisible = inventoryUI.isVisible();
             inventoryUI.toggle();
+            soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
             inputHandler.resetInventory();
         }
 
         // Help toggle
         if (inputHandler.isHelpPressed()) {
+            boolean wasVisible = helpUI.isVisible();
             helpUI.toggle();
+            soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
             inputHandler.resetHelp();
         }
 
         // Crafting toggle
         if (inputHandler.isCraftingPressed()) {
+            boolean wasVisible = craftingUI.isVisible();
             craftingUI.toggle();
+            soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
             inputHandler.resetCrafting();
         }
 
@@ -831,6 +846,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (tmpMoveDir.len2() > 0) {
                 Vector3 dodgeDir = tmpMoveDir.cpy().nor();
                 player.dodge(dodgeDir.x, dodgeDir.z);
+                soundSystem.play(ragamuffin.audio.SoundEffect.PLAYER_DODGE);
             }
             inputHandler.resetDodge();
         }
@@ -852,6 +868,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             moveSpeed = inputHandler.isSprintHeld() ? Player.SPRINT_SPEED : Player.MOVE_SPEED;
         }
         world.moveWithCollision(player, tmpMoveDir.x, 0, tmpMoveDir.z, delta, moveSpeed);
+
+        // Update footstep sounds based on movement
+        boolean isMoving = tmpMoveDir.len2() > 0;
+        BlockType blockUnderfoot = world.getBlockUnderPlayer(player);
+        soundSystem.updateFootsteps(delta, isMoving, blockUnderfoot);
 
         // Push player out of any NPC they're overlapping
         resolveNPCCollisions();
@@ -915,6 +936,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (targetNPC != null) {
             // Punch the NPC (knockback + loot on kill)
             npcManager.punchNPC(targetNPC, tmpDirection, inventory, tooltipSystem);
+            soundSystem.play(ragamuffin.audio.SoundEffect.NPC_HIT);
             // Clear block break progress when punching NPCs
             gameHUD.setBlockBreakProgress(0f);
             // Award street reputation for fighting (major crime)
@@ -938,6 +960,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Punch the block with tool if equipped
             boolean broken = blockBreaker.punchBlock(world, x, y, z, toolMaterial);
 
+            // Play punch sound on every hit
+            soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PUNCH);
+
             // Update HUD with break progress after the punch
             if (!broken) {
                 float progress = blockBreaker.getBreakProgress(world, x, y, z, toolMaterial);
@@ -945,6 +970,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             } else {
                 // Block was broken - reset progress
                 gameHUD.setBlockBreakProgress(0f);
+                // Play block break sound based on material
+                soundSystem.playBlockBreak(blockType);
                 // Award street reputation for breaking blocks (minor crime)
                 player.getStreetReputation().addPoints(1);
             }
@@ -973,6 +1000,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                 if (drop != null) {
                     inventory.addItem(drop, 1);
+                    soundSystem.play(ragamuffin.audio.SoundEffect.INVENTORY_PICKUP);
 
                     // Trigger jeweller tooltip if applicable
                     if (drop == Material.DIAMOND && landmark == LandmarkType.JEWELLER) {
@@ -1027,6 +1055,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         boolean placed = blockPlacer.placeBlock(world, inventory, material, tmpCameraPos, tmpDirection, PLACE_REACH, player.getAABB());
 
         if (placed) {
+            // Play block place sound
+            soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+
             // Phase 11: Trigger first block place tooltip
             if (!tooltipSystem.hasShown(TooltipTrigger.FIRST_BLOCK_PLACE)) {
                 tooltipSystem.trigger(TooltipTrigger.FIRST_BLOCK_PLACE);
@@ -1629,5 +1660,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         spriteBatch.dispose();
         shapeRenderer.dispose();
         font.dispose();
+        if (soundSystem != null) {
+            soundSystem.dispose();
+        }
     }
 }

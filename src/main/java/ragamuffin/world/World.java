@@ -290,6 +290,17 @@ public class World {
         return false;
     }
 
+    /**
+     * Get the block type directly under the player's feet for footstep sounds.
+     */
+    public BlockType getBlockUnderPlayer(Player player) {
+        Vector3 pos = player.getPosition();
+        int x = (int) Math.floor(pos.x);
+        int z = (int) Math.floor(pos.z);
+        int y = (int) Math.floor(pos.y) - 1; // Block below feet
+        return getBlock(x, y, z);
+    }
+
     // Reusable vectors to avoid per-frame allocation in physics
     private final Vector3 tmpOriginalPos = new Vector3();
     private final Vector3 tmpDesiredMove = new Vector3();

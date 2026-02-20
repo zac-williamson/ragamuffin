@@ -17,12 +17,21 @@ public class TooltipSystem {
     private final Queue<String> tooltipQueue;
     private String currentTooltip;
     private float currentDisplayTime;
+    private Runnable onTooltipShow; // Callback when a new tooltip is shown (for sound)
 
     public TooltipSystem() {
         this.shownTooltips = new HashSet<>();
         this.tooltipQueue = new LinkedList<>();
         this.currentTooltip = null;
         this.currentDisplayTime = 0;
+        this.onTooltipShow = null;
+    }
+
+    /**
+     * Set a callback to be invoked when a new tooltip is shown (for sound effects).
+     */
+    public void setOnTooltipShow(Runnable callback) {
+        this.onTooltipShow = callback;
     }
 
     /**
@@ -56,6 +65,10 @@ public class TooltipSystem {
         if (currentTooltip == null && !tooltipQueue.isEmpty()) {
             currentTooltip = tooltipQueue.poll();
             currentDisplayTime = 0;
+            // Trigger sound callback when new tooltip appears
+            if (onTooltipShow != null) {
+                onTooltipShow.run();
+            }
         }
     }
 
