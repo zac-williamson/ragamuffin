@@ -59,8 +59,9 @@ test {
     // Fork a new JVM for each test class so a hanging test cannot block others
     forkEvery = 1
 
-    // Hard timeout: kill the entire test task if it runs longer than 4 minutes
-    timeout = java.time.Duration.ofMinutes(4)
+    // Hard timeout: kill the entire test task if it runs longer than 10 minutes
+    // With 51 test classes and forkEvery=1, we need more time for JVM spawning
+    timeout = java.time.Duration.ofMinutes(10)
 }
 
 jar {
