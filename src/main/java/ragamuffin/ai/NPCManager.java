@@ -1618,4 +1618,13 @@ public class NPCManager {
     public StructureTracker getStructureTracker() {
         return structureTracker;
     }
+
+    /**
+     * Force an immediate structure scan (for testing).
+     * In production, scans happen automatically every 30 seconds.
+     */
+    public void forceStructureScan(World world, TooltipSystem tooltipSystem) {
+        structureTracker.scanForStructures(world);
+        updateCouncilBuilders(world, tooltipSystem);
+    }
 }

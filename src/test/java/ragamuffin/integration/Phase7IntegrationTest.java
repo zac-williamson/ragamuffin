@@ -66,6 +66,9 @@ class Phase7IntegrationTest {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
 
+        // Force structure scan (production scans every 30s, too long for tests)
+        npcManager.forceStructureScan(world, tooltipSystem);
+
         // Count COUNCIL_BUILDER NPCs
         long builderCount = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.COUNCIL_BUILDER)
@@ -115,6 +118,9 @@ class Phase7IntegrationTest {
         for (int i = 0; i < 300; i++) {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
+
+        // Force structure scan (production scans every 30s, too long for tests)
+        npcManager.forceStructureScan(world, tooltipSystem);
 
         // Check for planning notice
         boolean noticeFound = false;
@@ -195,6 +201,9 @@ class Phase7IntegrationTest {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
 
+        // Force structure scan (production scans every 30s, too long for tests)
+        npcManager.forceStructureScan(world, tooltipSystem);
+
         // Position builders close to structure to speed up test
         for (NPC npc : npcManager.getNPCs()) {
             if (npc.getType() == NPCType.COUNCIL_BUILDER) {
@@ -255,6 +264,9 @@ class Phase7IntegrationTest {
         for (int i = 0; i < 300; i++) {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
+
+        // Force structure scan (production scans every 30s, too long for tests)
+        npcManager.forceStructureScan(world, tooltipSystem);
 
         // Get a builder
         NPC builder = npcManager.getNPCs().stream()
@@ -339,6 +351,9 @@ class Phase7IntegrationTest {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
 
+        // Force structure scan (production scans every 30s, too long for tests)
+        npcManager.forceStructureScan(world, tooltipSystem);
+
         long smallStructureBuilders = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.COUNCIL_BUILDER)
                 .count();
@@ -359,6 +374,9 @@ class Phase7IntegrationTest {
         for (int i = 0; i < 600; i++) {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
+
+        // Force structure scan (production scans every 30s, too long for tests)
+        npcManager.forceStructureScan(world, tooltipSystem);
 
         long largeStructureBuilders = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.COUNCIL_BUILDER)
@@ -395,6 +413,9 @@ class Phase7IntegrationTest {
         for (int i = 0; i < 500; i++) {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
+
+        // Force structure scan (production scans every 30s, too long for tests)
+        npcManager.forceStructureScan(world, tooltipSystem);
 
         // Position builders adjacent to structure
         for (NPC npc : npcManager.getNPCs()) {
@@ -449,6 +470,9 @@ class Phase7IntegrationTest {
         for (int i = 0; i < 120; i++) {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
+
+        // Force structure scan (production scans every 30s, too long for tests)
+        npcManager.forceStructureScan(world, tooltipSystem);
 
         // At this point, the first scan has happened
 

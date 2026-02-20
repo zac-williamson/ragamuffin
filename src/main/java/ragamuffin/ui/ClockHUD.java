@@ -29,7 +29,10 @@ public class ClockHUD {
         int hours = (int) time;
         int minutes = (int) ((time - hours) * 60);
         this.timeString = String.format("%02d:%02d", hours, minutes);
-        this.fps = Gdx.graphics.getFramesPerSecond();
+        // Only update FPS if Gdx is available (not in headless tests)
+        if (Gdx.graphics != null) {
+            this.fps = Gdx.graphics.getFramesPerSecond();
+        }
     }
 
     /**
