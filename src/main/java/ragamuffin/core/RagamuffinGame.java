@@ -915,6 +915,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (targetNPC != null) {
             // Punch the NPC (knockback + loot on kill)
             npcManager.punchNPC(targetNPC, tmpDirection, inventory, tooltipSystem);
+            // Clear block break progress when punching NPCs
+            gameHUD.setBlockBreakProgress(0f);
+            // Award street reputation for fighting (major crime)
+            player.getStreetReputation().addPoints(2);
             return; // Don't punch blocks if we hit an NPC
         }
 
@@ -933,6 +937,17 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Punch the block with tool if equipped
             boolean broken = blockBreaker.punchBlock(world, x, y, z, toolMaterial);
+
+            // Update HUD with break progress after the punch
+            if (!broken) {
+                float progress = blockBreaker.getBreakProgress(world, x, y, z, toolMaterial);
+                gameHUD.setBlockBreakProgress(progress);
+            } else {
+                // Block was broken - reset progress
+                gameHUD.setBlockBreakProgress(0f);
+                // Award street reputation for breaking blocks (minor crime)
+                player.getStreetReputation().addPoints(1);
+            }
 
             // Consume tool durability if a tool was used
             if (toolMaterial != null) {
@@ -979,6 +994,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Only rebuild the affected chunk (and neighbours if on a boundary)
                 rebuildChunkAt(x, y, z);
             }
+        } else {
+            // Not looking at any block - reset progress indicator
+            gameHUD.setBlockBreakProgress(0f);
         }
     }
 

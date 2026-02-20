@@ -1,6 +1,7 @@
 package ragamuffin.entity;
 
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.core.StreetReputation;
 import ragamuffin.world.BlockType;
 import ragamuffin.world.Chunk;
 
@@ -54,6 +55,9 @@ public class Player {
     private float damageFlashTimer; // > 0 when recently damaged
     private static final float DAMAGE_FLASH_DURATION = 0.35f;
 
+    // Street reputation
+    private StreetReputation streetReputation;
+
     public Player(float x, float y, float z) {
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
@@ -71,6 +75,7 @@ public class Player {
         this.dodgeDirX = 0f;
         this.dodgeDirZ = 0f;
         this.damageFlashTimer = 0f;
+        this.streetReputation = new StreetReputation();
     }
 
     public Vector3 getPosition() {
@@ -445,5 +450,12 @@ public class Player {
      */
     public float getDodgeCooldownTimer() {
         return dodgeCooldownTimer;
+    }
+
+    /**
+     * Get the player's street reputation.
+     */
+    public StreetReputation getStreetReputation() {
+        return streetReputation;
     }
 }

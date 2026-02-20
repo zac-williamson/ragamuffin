@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
 import ragamuffin.entity.Player;
 
@@ -61,6 +62,9 @@ public class GameHUD {
 
         // Render weather display
         renderWeather(spriteBatch, font, screenWidth, screenHeight);
+
+        // Render street reputation
+        renderReputation(spriteBatch, font, screenWidth, screenHeight);
 
         // Render night warning if applicable
         if (isNight) {
@@ -250,6 +254,33 @@ public class GameHUD {
         font.setColor(Color.WHITE);
         String weatherText = "Weather: " + currentWeather.getDisplayName();
         font.draw(spriteBatch, weatherText, screenWidth - 200, screenHeight - 20);
+        spriteBatch.end();
+    }
+
+    /**
+     * Render street reputation below the weather display.
+     */
+    private void renderReputation(SpriteBatch spriteBatch, BitmapFont font,
+                                  int screenWidth, int screenHeight) {
+        StreetReputation rep = player.getStreetReputation();
+        spriteBatch.begin();
+
+        // Choose color based on reputation level
+        switch (rep.getLevel()) {
+            case NOBODY:
+                font.setColor(0.7f, 0.7f, 0.7f, 1f); // Grey
+                break;
+            case KNOWN:
+                font.setColor(1f, 0.8f, 0.2f, 1f); // Yellow
+                break;
+            case NOTORIOUS:
+                font.setColor(1f, 0.2f, 0.2f, 1f); // Red
+                break;
+        }
+
+        String repText = "Rep: " + rep.getLevel().name() + " (" + rep.getPoints() + ")";
+        font.draw(spriteBatch, repText, screenWidth - 200, screenHeight - 45);
+        font.setColor(Color.WHITE);
         spriteBatch.end();
     }
 
