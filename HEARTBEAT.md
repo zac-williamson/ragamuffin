@@ -1,14 +1,20 @@
 # HEARTBEAT.md
 
 ## What To Do
-Critically examine the Ragamuffin codebase. Pick the most impactful improvement, implement it, build, test, commit, push. Focus areas:
+If you receive a message with a specific request - execute it.
+If there are no messages from humans - Critically examine the Ragamuffin codebase. Pick the most impactful improvement, implement it, build, test, commit, push. Focus areas:
 - Gameplay mechanics (punching trees, dodging police, building shelters)
 - World detail (British town, terraced houses, Greggs, charity shops)
 - UI polish (HUD, tooltips, inventory)
 - Missing features from the game spec
 - Failing tests (broken tests are bugs -- fix them)
 
-## Workflow (Be Efficient!)
+## Workflow if there are messages to handle
+1. Execute the request
+2. Provide status updates
+3. Your messages should be brief and to the point
+
+## Workflow if no messages to handle (Be Efficient!)
 1. Check lock: run ./scripts/heartbeat-lock.sh check -- if LOCKED, reply and STOP.
 2. Acquire lock: run ./scripts/heartbeat-lock.sh acquire
 3. Check status: run git status and git log --oneline -5 (combine in one shell command)
