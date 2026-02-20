@@ -87,17 +87,18 @@ class Phase11IntegrationTest {
         Material drop = dropTable.getDrop(BlockType.BRICK, LandmarkType.GREGGS);
         assertNotNull(drop, "Greggs blocks should drop something");
 
-        // Verify it's either SAUSAGE_ROLL or STEAK_BAKE
-        assertTrue(drop == Material.SAUSAGE_ROLL || drop == Material.STEAK_BAKE,
-                "Greggs should drop food items");
+        // Verify it's either SAUSAGE_ROLL, STEAK_BAKE, or ENERGY_DRINK
+        assertTrue(drop == Material.SAUSAGE_ROLL || drop == Material.STEAK_BAKE || drop == Material.ENERGY_DRINK,
+                "Greggs should drop food/drink items (sausage roll, steak bake, or energy drink)");
 
         // Add to inventory
         inventory.addItem(drop, 1);
 
-        // Verify we have food in inventory
+        // Verify we have food/drink in inventory
         int foodCount = inventory.getItemCount(Material.SAUSAGE_ROLL) +
-                       inventory.getItemCount(Material.STEAK_BAKE);
-        assertEquals(1, foodCount, "Should have 1 food item from Greggs");
+                       inventory.getItemCount(Material.STEAK_BAKE) +
+                       inventory.getItemCount(Material.ENERGY_DRINK);
+        assertEquals(1, foodCount, "Should have 1 food/drink item from Greggs");
     }
 
     /**
