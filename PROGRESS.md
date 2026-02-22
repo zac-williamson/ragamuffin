@@ -51,7 +51,22 @@ This session verified everything works correctly and documented the completion.
 
 ## What's Left
 
-**Nothing** - Issue #14 is complete and ready to close.
+**Nothing code-wise** - Issue #14 is complete and ready to close.
+
+### PR Creation Status
+
+The code is complete, tested, committed, and pushed to the `issue-14` branch. However, creating a PR via `gh pr create` has failed in previous sessions with:
+```
+GraphQL: Resource not accessible by personal access token (createPullRequest)
+```
+
+This indicates the GitHub personal access token lacks the `repo` scope needed to create pull requests programmatically.
+
+**Options to complete the PR:**
+1. **Manual PR creation**: Visit https://github.com/zac-williamson/ragamuffin/compare/main...issue-14 to create the PR via the GitHub web UI
+2. **Update token permissions**: Regenerate the token with the `repo` scope at https://github.com/settings/tokens
+
+The branch is ready to merge - all code changes are complete and tested.
 
 ---
 _Completed: 2026-02-22_
