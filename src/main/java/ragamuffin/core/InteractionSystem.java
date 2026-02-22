@@ -190,6 +190,9 @@ public class InteractionSystem {
                 lastScratchCardWon = false;
             }
             return true; // Already removed, skip the removal below
+        } else if (food == Material.ANTIDEPRESSANTS) {
+            hungerRestored = 0;
+            // Inert item - nothing happens when consumed
         } else {
             // Not a consumable item
             return false;
@@ -224,7 +227,7 @@ public class InteractionSystem {
             || material == Material.ENERGY_DRINK || material == Material.PINT
             || material == Material.PERI_PERI_CHICKEN || material == Material.PARACETAMOL
             || material == Material.FIRE_EXTINGUISHER || material == Material.WASHING_POWDER
-            || material == Material.SCRATCH_CARD;
+            || material == Material.SCRATCH_CARD || material == Material.ANTIDEPRESSANTS;
     }
 
     /**

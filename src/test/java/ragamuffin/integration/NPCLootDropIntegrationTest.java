@@ -195,4 +195,39 @@ class NPCLootDropIntegrationTest {
         assertTrue(inventory.getItemCount(Material.TIN_OF_BEANS) >= 1,
                 "Should have received at least 1 tin of beans from pensioner");
     }
+
+    /**
+     * Test 8: NPCs have a rare chance to drop antidepressants (statistical test).
+     * Defeat 100 NPCs and verify at least some drop antidepressants.
+     */
+    @Test
+    void test8_AntidepressantsRareDrop() {
+        int killCount = 100;
+        int antidepressantsDropped = 0;
+
+        for (int i = 0; i < killCount; i++) {
+            NPC npc = npcManager.spawnNPC(NPCType.PUBLIC, 5, 1, 5);
+            assertNotNull(npc);
+
+            int beforeCount = inventory.getItemCount(Material.ANTIDEPRESSANTS);
+
+            // Public has 20 HP, 10 per punch = 2 punches
+            Vector3 direction = new Vector3(1, 0, 0);
+            npcManager.punchNPC(npc, direction, inventory, tooltipSystem);
+            npcManager.punchNPC(npc, direction, inventory, tooltipSystem);
+            assertFalse(npc.isAlive(), "NPC should be dead");
+
+            int afterCount = inventory.getItemCount(Material.ANTIDEPRESSANTS);
+            if (afterCount > beforeCount) {
+                antidepressantsDropped++;
+            }
+        }
+
+        // With 5% drop rate, expect approximately 5 drops out of 100 kills
+        // Use a generous range to account for randomness (at least 1, at most 15)
+        assertTrue(antidepressantsDropped >= 1,
+                "Expected at least 1 antidepressant drop from 100 kills, got " + antidepressantsDropped);
+        assertTrue(antidepressantsDropped <= 15,
+                "Expected at most 15 antidepressant drops from 100 kills, got " + antidepressantsDropped);
+    }
 }

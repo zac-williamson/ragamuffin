@@ -77,7 +77,8 @@ public enum Material {
     FIRE_EXTINGUISHER("Fire Extinguisher"),
     PLYWOOD("Plywood"),
     PIPE("Pipe"),
-    CARDBOARD_BOX("Cardboard Box");
+    CARDBOARD_BOX("Cardboard Box"),
+    ANTIDEPRESSANTS("Antidepressants");
 
     private final String displayName;
 

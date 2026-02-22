@@ -97,6 +97,35 @@ class ConsumablesAndCraftingIntegrationTest {
         assertFalse(interactionSystem.isFood(Material.NEWSPAPER));
     }
 
+    @Test
+    void testAntidepressantsIsRecognisedAsConsumable() {
+        assertTrue(interactionSystem.isFood(Material.ANTIDEPRESSANTS),
+            "ANTIDEPRESSANTS should be recognised as a consumable item");
+    }
+
+    @Test
+    void testConsumeAntidepressantsDoesNothing() {
+        // Set up player with low health and hunger
+        player.setHealth(50);
+        player.setHunger(50);
+        float energyBefore = player.getEnergy();
+        inventory.addItem(Material.ANTIDEPRESSANTS, 1);
+
+        boolean consumed = interactionSystem.consumeFood(Material.ANTIDEPRESSANTS, player, inventory);
+
+        assertTrue(consumed, "ANTIDEPRESSANTS should be consumed successfully");
+        // Verify item was consumed
+        assertEquals(0, inventory.getItemCount(Material.ANTIDEPRESSANTS),
+            "ANTIDEPRESSANTS should be removed from inventory");
+        // Verify no effects (inert item)
+        assertEquals(50, player.getHealth(), 0.01,
+            "ANTIDEPRESSANTS should not affect health");
+        assertEquals(50, player.getHunger(), 0.01,
+            "ANTIDEPRESSANTS should not affect hunger");
+        assertEquals(energyBefore, player.getEnergy(), 0.01,
+            "ANTIDEPRESSANTS should not affect energy");
+    }
+
     // === New crafting recipes ===
 
     @Test

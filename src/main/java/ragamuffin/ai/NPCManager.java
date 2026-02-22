@@ -983,6 +983,11 @@ public class NPCManager {
      * youth gangs drop whatever they nicked, delivery drivers drop parcels, etc.
      */
     private void awardNPCLoot(NPCType type, Inventory inventory, TooltipSystem tooltipSystem) {
+        // Rare chance for any NPC to drop antidepressants (5% chance)
+        if (type != NPCType.DOG && random.nextFloat() < 0.05f) {
+            inventory.addItem(Material.ANTIDEPRESSANTS, 1);
+        }
+
         switch (type) {
             case YOUTH_GANG:
                 // They had your stuff (or someone else's)
