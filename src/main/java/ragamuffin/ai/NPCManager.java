@@ -283,6 +283,13 @@ public class NPCManager {
         npcs.removeIf(npc -> {
             if (!npc.isAlive() && !npc.isSpeaking()) {
                 npcPathRecalcTimers.remove(npc);
+                npcIdleTimers.remove(npc);
+                npcStructureCheckTimers.remove(npc);
+                policeWarningTimers.remove(npc);
+                policeTargetStructures.remove(npc);
+                builderTargets.remove(npc);
+                builderKnockbackTimers.remove(npc);
+                builderDemolishTimers.remove(npc);
                 return true;
             }
             return false;
@@ -1174,17 +1181,24 @@ public class NPCManager {
     }
 
     /**
-     * Update police spawning — police are always present (it's Britain, they're everywhere).
-     * More police at night (up to 4), fewer during the day (up to 2).
+     * Update police spawning — police patrol at night only (22:00-06:00), up to 4.
+     * During daytime any remaining police are despawned.
      */
     public void updatePoliceSpawning(float time, World world, Player player) {
-        // Throttle to avoid spawning (and triggering A* pathfinding) every frame
+        boolean isNight = time >= 22.0f || time < 6.0f;
+
+        // Despawn police during daytime (always, regardless of cooldown)
+        if (!isNight) {
+            despawnPolice();
+            return;
+        }
+
+        // Throttle spawning to avoid spawning (and triggering A* pathfinding) every frame
         if (policeSpawnCooldown > 0) {
             return;
         }
 
-        boolean isNight = time >= 22.0f || time < 6.0f;
-        int maxPolice = isNight ? 4 : 2;
+        int maxPolice = 4;
 
         // Count current police
         long policeCount = npcs.stream().filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();

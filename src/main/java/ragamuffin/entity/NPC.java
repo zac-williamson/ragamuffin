@@ -106,7 +106,7 @@ public class NPC {
     }
 
     public void advancePathIndex() {
-        if (path != null && currentPathIndex < path.size() - 1) {
+        if (path != null) {
             currentPathIndex++;
         }
     }

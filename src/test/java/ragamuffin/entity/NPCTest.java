@@ -124,7 +124,7 @@ class NPCTest {
         assertEquals(2, npc.getCurrentPathIndex());
 
         npc.advancePathIndex();
-        assertEquals(2, npc.getCurrentPathIndex()); // Shouldn't exceed bounds
+        assertEquals(3, npc.getCurrentPathIndex()); // Allowed to go past end; followPath checks bounds
     }
 
     @Test
