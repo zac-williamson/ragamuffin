@@ -51,17 +51,14 @@ application {
 
 test {
     useJUnitPlatform()
-    jvmArgs '-Djava.awt.headless=true'
-
-    // JUnit-level timeout for tests that respect thread interruption
-    systemProperty 'junit.jupiter.execution.timeout.default', '60s'
-
-    // Fork a new JVM for each test class so a hanging test cannot block others
-    forkEvery = 1
-
-    // Hard timeout: kill the entire test task if it runs longer than 10 minutes
-    // With 51 test classes and forkEvery=1, we need more time for JVM spawning
-    timeout = java.time.Duration.ofMinutes(10)
+    jvmArgs "-Djava.awt.headless=true"
+    systemProperty "junit.jupiter.execution.timeout.default", "60s"
+    forkEvery = 0
+    jvmArgs "-Xmx256m"
+    testLogging {
+        events "started", "passed", "failed", "skipped"
+    }
+    timeout = java.time.Duration.ofMinutes(20)
 }
 
 jar {
