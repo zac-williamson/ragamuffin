@@ -214,6 +214,14 @@ public class World {
     }
 
     /**
+     * Mark a specific chunk dirty by chunk coordinates (needs mesh rebuild).
+     */
+    public void markChunkDirty(int chunkX, int chunkY, int chunkZ) {
+        String key = getChunkKey(chunkX, chunkY, chunkZ);
+        dirtyChunks.add(key);
+    }
+
+    /**
      * Register a landmark in the world.
      */
     public void addLandmark(Landmark landmark) {
