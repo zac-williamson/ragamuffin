@@ -2741,3 +2741,58 @@ public void updatePoliceSpawning(boolean isNight, World world, Player player) {
    Verify police have spawned (call `updatePoliceSpawning` with `isNight = true`).
    All three should agree that it is night. Previously only the HUD and isNight agreed;
    police waited until 22:00.
+
+---
+
+## Bug: Greggs raid state persists across player death — respawn does not reset the raid
+
+**Date:** 2026-02-23
+**Status:** Open
+
+**Symptom:** If a player escalates a Greggs raid (breaks blocks, triggers ALERT → ESCALATED
+state), is overwhelmed by aggressive police, and dies, they respawn at the park bench with
+the raid still fully ESCALATED. Police mobilised by the raid remain in AGGRESSIVE state and
+immediately pursue the freshly-respawned player. There is no recovery window; the player
+cannot de-escalate the raid without being arrested (which carries health/hunger penalties)
+or restarting the game.
+
+**Root cause:** `GreggsRaidSystem.reset()` is called in only two places in
+`RagamuffinGame.java`:
+
+```java
+// Line ~946 — inside the arrest handler
+greggsRaidSystem.reset();
+
+// Line ~1471 — inside restartGame()
+greggsRaidSystem = new GreggsRaidSystem();
+```
+
+The respawn path (`RespawnSystem.performRespawn()` and the respawn-completion block in
+`render()` around lines 529–535) never calls `greggsRaidSystem.reset()`. Death is intended
+as a soft reset — the player loses held items and respawns fresh — but the raid lingers.
+
+**Required fix:** In `RagamuffinGame.render()`, in the block that handles respawn completion
+(where `respawnSystem.isRespawnComplete()` triggers the fade-back-in and player revival),
+add a call to `greggsRaidSystem.reset()`. This mirrors the existing arrest-handler reset
+and gives the player the same clean slate that arrest provides, without the arrest penalties.
+
+```java
+if (respawnSystem.isRespawnComplete()) {
+    greggsRaidSystem.reset();   // ← add this line
+    // ... existing respawn completion logic
+}
+```
+
+**Integration tests** (add to GreggsRaidSystemTest or Phase12IntegrationTest):
+
+1. **Raid resets on respawn**: Escalate the raid to `RaidState.ESCALATED`. Simulate player
+   death by calling `respawnSystem.triggerRespawn()` followed by
+   `respawnSystem.update(4.0f)` (past the 3-second countdown). Verify
+   `greggsRaidSystem.getRaidState() == RaidState.NONE`.
+
+2. **Police de-escalate after respawn reset**: After the above, call
+   `npcManager.updatePoliceSpawning(isNight, world, player)`. Verify that no police
+   remain in AGGRESSIVE state targeting the player.
+
+3. **Arrest still resets raid**: Confirm the existing arrest path still calls `reset()` —
+   `greggsRaidSystem.getRaidState()` is `NONE` after `arrestSystem.arrest(player)`.
