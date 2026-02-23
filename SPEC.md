@@ -1626,3 +1626,72 @@ protection.
 3. **Shelter still provides weather protection after fix**: Build shelter. Walk player inside
    (via movement, not teleport). Set weather to COLD_SNAP, time to night. Health=100. Advance
    300 frames. Verify health is still 100 (shelter blocks cold snap damage).
+
+---
+
+## Bug Fix: ShelterDetector.isSheltered() uses Math.round() — snaps player to wrong grid cell
+
+**Status**: ❌ Broken — `ShelterDetector.isSheltered()` uses `Math.round()` to convert the
+player's continuous float position to integer block coordinates before checking for walls and
+roof. This is incorrect: `Math.round(x)` rounds to the *nearest* integer, which is the block
+whose center is closest — not the block the player is physically standing in.
+
+**Problem**: Consider a player at position `(ox+1.5, oy+1.0, oz+1.0)` inside a cardboard
+shelter (walls at `x=ox` and `x=ox+2`, interior gap at `x=ox+1..ox+2`):
+
+```java
+int x = Math.round(playerPosition.x); // Math.round(ox+1.5) = ox+2  ← WRONG
+```
+
+`Math.round(ox+1.5)` returns `ox+2` — the right wall block — not `ox+1`, the interior. The
+detector then checks:
+- left:  `(ox+1, oy+1, oz+1)` = AIR (interior) — no wall
+- right: `(ox+3, oy+1, oz+1)` = AIR (exterior) — no wall
+
+Only the back and possibly front wall are detected, giving `wallCount < 3`. The method returns
+`false` even though the player is physically inside the shelter.
+
+**Why this matters**: The cardboard shelter (the game's only early-game survival mechanic) has
+a 1-block-wide interior gap at `x=ox+1..ox+2`. A player walking in via the entrance naturally
+centres around `x=ox+1.5`. `Math.round(ox+1.5) = ox+2`, snapping to the right wall. The
+shelter detector then fails, and cold-snap damage continues to drain the player's health even
+while inside. The shelter is useless for weather protection.
+
+**Root cause**: The player occupies block `floor(x)` for collision purposes (which the rest of
+the engine uses via `Math.floor()`). `ShelterDetector` should use `Math.floor()` (or equivalently
+`(int) Math.floor(x)`) to identify which block cell the player is standing in.
+
+**Required fix in `ShelterDetector.isSheltered()`**:
+
+Replace `Math.round()` with `Math.floor()`:
+
+```java
+int x = (int) Math.floor(playerPosition.x);
+int y = (int) Math.floor(playerPosition.y);
+int z = (int) Math.floor(playerPosition.z);
+```
+
+With this fix, a player at `(ox+1.5, oy+1.0, oz+1.0)` maps to cell `(ox+1, oy+1, oz+1)`:
+- left:  `(ox+0, oy+1, oz+1)` = CARDBOARD ✓
+- right: `(ox+2, oy+1, oz+1)` = CARDBOARD ✓
+- back:  `(ox+1, oy+1, oz+0)` = CARDBOARD ✓
+- roof:  `(ox+1, oy+3, oz+1)` = CARDBOARD ✓ (at y+2 from floor y=oy+1, so oy+3)
+
+`wallCount = 3`, shelter detected correctly.
+
+**Integration tests** (add to Critic4CardboardShelterTest):
+
+1. **Player at x=ox+1.5 (centre of 1-block gap) is detected as sheltered**: Build cardboard
+   shelter at (20, 5, 20). Set player position to `(21.5f, 6.0f, 21.0f)` — this is exactly
+   the horizontal centre of the entrance gap, one block inside the shelter. Call
+   `ShelterDetector.isSheltered(world, player.getPosition())`. Verify it returns `true`.
+   (Previously returned `false` due to `Math.round(21.5) = 22` snapping to the right wall.)
+
+2. **Cold-snap damage does NOT apply when player is centred in shelter interior**: Build
+   shelter at (20, 5, 20). Set player position to `(21.5f, 6.0f, 21.0f)`. Set
+   `WeatherSystem` to COLD_SNAP. Set health to 100. Simulate 300 frames (5 seconds) of
+   cold-snap logic: `if (!ShelterDetector.isSheltered(world, pos)) player.damage(rate*delta)`.
+   Verify health is still 100.
+
+3. **Player outside shelter IS damaged by cold snap**: Place player at `(21.5f, 6.0f, 24.0f)`
+   — outside the shelter. Same cold-snap simulation. Verify health < 100 (damage applied).
