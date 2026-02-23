@@ -101,7 +101,7 @@ public class NPCManager {
     };
 
     // Structure detection
-    private Map<Vector3, Integer> playerStructures; // Position -> block count
+    private Map<String, Integer> playerStructures; // "x,y,z" key -> block count
 
     // Police system
     private boolean policeSpawned; // Track if police are currently spawned
@@ -116,7 +116,7 @@ public class NPCManager {
     private Map<NPC, Float> builderDemolishTimers; // Track demolition cooldown per builder
     private float structureScanTimer; // Periodic structure scanning
     private float npcStructureScanTimer; // Throttle per-NPC structure checks
-    private Set<Vector3> notifiedStructures; // Track which structure positions already have notices
+    private Set<String> notifiedStructures; // Track which structure positions already have notices ("x,y,z")
 
     // NPC idle timers — pause between wanders
     private Map<NPC, Float> npcIdleTimers;
@@ -809,9 +809,11 @@ public class NPCManager {
                     case 2: npc.setState(NPCState.COMPLAINING); break;
                 }
 
-                // Track this structure (cap to prevent unbounded growth)
+                // Track this structure using string key to avoid Vector3 identity issues
+                // (cap to prevent unbounded growth)
                 if (playerStructures.size() < 64) {
-                    playerStructures.put(structureCenter, playerBlockCount);
+                    String key = (int)structureCenter.x + "," + (int)structureCenter.y + "," + (int)structureCenter.z;
+                    playerStructures.put(key, playerBlockCount);
                 }
             }
         }
@@ -824,11 +826,15 @@ public class NPCManager {
         Vector3 nearest = null;
         float nearestDist = Float.MAX_VALUE;
 
-        for (Vector3 structurePos : playerStructures.keySet()) {
-            float dist = position.dst(structurePos);
+        for (String key : playerStructures.keySet()) {
+            String[] parts = key.split(",");
+            float sx = Float.parseFloat(parts[0]);
+            float sy = Float.parseFloat(parts[1]);
+            float sz = Float.parseFloat(parts[2]);
+            float dist = position.dst(sx, sy, sz);
             if (dist < nearestDist) {
                 nearestDist = dist;
-                nearest = structurePos;
+                nearest = new Vector3(sx, sy, sz);
             }
         }
 
@@ -1694,13 +1700,17 @@ public class NPCManager {
             int requiredBuilders = structureTracker.calculateBuilderCount(structure);
             Vector3 structureCenter = structure.getCenter();
 
-            // Check if this structure already has a notice (by position)
-            boolean alreadyNotified = notifiedStructures.contains(structureCenter);
+            // Check if this structure already has a notice (by position).
+            // Use a "x,y,z" string key to avoid Vector3 identity-equality pitfalls —
+            // LibGDX's Vector3 does not override hashCode()/equals(), so two Vector3
+            // instances with the same coordinates are NOT equal under HashSet.contains().
+            String structureKey = (int)structureCenter.x + "," + (int)structureCenter.y + "," + (int)structureCenter.z;
+            boolean alreadyNotified = notifiedStructures.contains(structureKey);
 
             // Add planning notice after structure is detected (first time only)
             if (!alreadyNotified && requiredBuilders > 0) {
                 applyPlanningNotice(world, structure);
-                notifiedStructures.add(structureCenter);
+                notifiedStructures.add(structureKey);
                 structure.setHasNotice(true);
             } else if (alreadyNotified) {
                 structure.setHasNotice(true); // Mark as having notice
