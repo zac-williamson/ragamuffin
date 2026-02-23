@@ -258,7 +258,8 @@ public class GameHUD {
     }
 
     /**
-     * Render street reputation below the weather display.
+     * Render street reputation below the clock/weather display area.
+     * Positioned at screenHeight - 105 to avoid overlapping the date and time lines.
      */
     private void renderReputation(SpriteBatch spriteBatch, BitmapFont font,
                                   int screenWidth, int screenHeight) {
@@ -279,7 +280,7 @@ public class GameHUD {
         }
 
         String repText = "Rep: " + rep.getLevel().name() + " (" + rep.getPoints() + ")";
-        font.draw(spriteBatch, repText, screenWidth - 200, screenHeight - 45);
+        font.draw(spriteBatch, repText, screenWidth - 200, screenHeight - 105);
         font.setColor(Color.WHITE);
         spriteBatch.end();
     }

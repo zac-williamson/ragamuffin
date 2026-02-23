@@ -37,6 +37,46 @@ _Completed: 2026-02-23_
 
 ---
 
+# Issue #6: Fix reputation display overlapping with date on screen
+
+## Status: COMPLETE ✓
+
+## Summary
+
+The street reputation indicator (`Rep: LEVEL (points)`) was being drawn at
+`screenHeight - 45`, the exact same y-coordinate as the date/day-counter line
+from `ClockHUD` (`screenWidth - 130, screenHeight - 45`). This caused the two
+strings to overlap and become illegible.
+
+The fix repositions the reputation text to `screenHeight - 105`, placing it
+below the entire clock block:
+
+| y offset | element |
+|---|---|
+| screenHeight - 20 | Weather (GameHUD) |
+| screenHeight - 45 | Date / Day counter (ClockHUD) |
+| screenHeight - 65 | Time (ClockHUD) |
+| screenHeight - 85 | FPS (ClockHUD) |
+| **screenHeight - 105** | **Rep (GameHUD) ← moved here** |
+
+## Files Changed
+
+- `src/main/java/ragamuffin/ui/GameHUD.java` — changed y position of
+  `renderReputation()` draw call from `screenHeight - 45` to `screenHeight - 105`
+
+## Test Results
+
+All existing tests pass: **BUILD SUCCESSFUL**
+
+## What's Left
+
+Nothing.
+
+---
+_Completed: 2026-02-23_
+
+---
+
 # Issue #3: Fix FPS drop when digging down multiple layers
 
 ## Status: COMPLETE ✓
