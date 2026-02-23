@@ -102,6 +102,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // NPC rendering
     private NPCRenderer npcRenderer;
 
+    // Issue #171: Particle effects for combat and movement
+    private ragamuffin.render.ParticleSystem particleSystem;
+
     // Issue #10: Building signage renderer
     private ragamuffin.render.SignageRenderer signageRenderer;
 
@@ -134,6 +137,10 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Rain animation
     private float rainTimer = 0f;
     private final java.util.Random rainRng = new java.util.Random(42);
+
+    // Issue #171: Footstep dust timer — emit a puff every FOOTSTEP_DUST_INTERVAL seconds of movement
+    private float footstepDustTimer = 0f;
+    private static final float FOOTSTEP_DUST_INTERVAL = 0.3f;
 
     // Tool durability is now tracked per inventory slot via Inventory.getToolInSlot()
 
@@ -290,6 +297,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Initialize audio system
         soundSystem = new ragamuffin.audio.SoundSystem();
+
+        // Issue #171: Initialize particle system
+        particleSystem = new ragamuffin.render.ParticleSystem();
 
         // Wire up tooltip sound effect
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
@@ -577,6 +587,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Render rain overlay if raining
             if (weatherSystem.getCurrentWeather() == Weather.RAIN) {
                 renderRain(delta);
+            }
+
+            // Issue #171: Render particle effects (screen-space, before HUD)
+            {
+                int sw = Gdx.graphics.getWidth();
+                int sh = Gdx.graphics.getHeight();
+                com.badlogic.gdx.math.Matrix4 particleOrtho = new com.badlogic.gdx.math.Matrix4();
+                particleOrtho.setToOrtho2D(0, 0, sw, sh);
+                shapeRenderer.setProjectionMatrix(particleOrtho);
+                particleSystem.render(shapeRenderer, camera, sw, sh);
             }
 
             // Render 2D UI overlay
@@ -928,6 +948,28 @@ public class RagamuffinGame extends ApplicationAdapter {
         BlockType blockUnderfoot = world.getBlockUnderPlayer(player);
         soundSystem.updateFootsteps(delta, isMoving, blockUnderfoot);
 
+        // Issue #171: Footstep dust particles while moving on the ground
+        if (isMoving && world.isOnGround(player)) {
+            footstepDustTimer += delta;
+            if (footstepDustTimer >= FOOTSTEP_DUST_INTERVAL) {
+                footstepDustTimer = 0f;
+                particleSystem.emitFootstepDust(
+                    player.getPosition().x,
+                    player.getPosition().y,
+                    player.getPosition().z);
+            }
+        } else {
+            footstepDustTimer = 0f;
+        }
+
+        // Issue #171: Dodge trail particles while dodge-rolling
+        if (player.isDodging()) {
+            particleSystem.emitDodgeTrail(
+                player.getPosition().x,
+                player.getPosition().y,
+                player.getPosition().z);
+        }
+
         // Push player out of any NPC they're overlapping
         resolveNPCCollisions();
 
@@ -975,6 +1017,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #48: Passive reputation decay — "lying low" reduces reputation over time
         player.getStreetReputation().update(delta);
 
+        // Issue #171: Update particle system
+        particleSystem.update(delta);
+
         // Update camera to follow player
         camera.position.set(player.getPosition());
         camera.position.y += Player.EYE_HEIGHT;
@@ -1005,6 +1050,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Punch the NPC (knockback + loot on kill)
             npcManager.punchNPC(targetNPC, tmpDirection, inventory, tooltipSystem);
             soundSystem.play(ragamuffin.audio.SoundEffect.NPC_HIT);
+            // Issue #171: Emit combat-hit sparks at the NPC's chest height
+            particleSystem.emitCombatHit(
+                targetNPC.getPosition().x,
+                targetNPC.getPosition().y + NPC.HEIGHT * 0.5f,
+                targetNPC.getPosition().z);
             // Clear block break progress when punching NPCs
             gameHUD.setBlockBreakProgress(0f);
             // Award street reputation for fighting (major crime)
@@ -1035,6 +1085,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Play punch sound on every hit
             soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PUNCH);
 
+            // Issue #171: Emit combat-hit sparks at the hit block face
+            particleSystem.emitCombatHit(x + 0.5f, y + 0.5f, z + 0.5f);
+
             // Update HUD with break progress after the punch
             if (!broken) {
                 float progress = blockBreaker.getBreakProgress(world, x, y, z, toolMaterial);
@@ -1064,6 +1117,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
 
             if (broken) {
+                // Issue #171: Emit block-break debris using the block's colour
+                com.badlogic.gdx.graphics.Color blockColour = blockType.getColor();
+                particleSystem.emitBlockBreak(x + 0.5f, y + 0.5f, z + 0.5f,
+                    blockColour.r, blockColour.g, blockColour.b);
+
                 // Block was broken - determine drop
                 LandmarkType landmark = world.getLandmarkAt(x, y, z);
                 Material drop = dropTable.getDrop(blockType, landmark);
@@ -1567,6 +1625,14 @@ public class RagamuffinGame extends ApplicationAdapter {
         speechLogUI = new SpeechLogUI();
         deathMessage = null;
 
+        // Issue #171: Reset particle system
+        if (particleSystem != null) {
+            particleSystem.clear();
+        } else {
+            particleSystem = new ragamuffin.render.ParticleSystem();
+        }
+        footstepDustTimer = 0f;
+
         // Transition to playing with opening sequence
         state = GameState.PLAYING;
         openingSequence.start();
@@ -1694,6 +1760,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public GangTerritorySystem getGangTerritorySystem() {
         return gangTerritorySystem;
+    }
+
+    public ragamuffin.render.ParticleSystem getParticleSystem() {
+        return particleSystem;
     }
 
     /**
