@@ -269,13 +269,16 @@ public class GameHUD {
         StreetReputation rep = player.getStreetReputation();
         int stars = rep.getStarCount();
 
-        // Choose colour based on star count
+        // Only render when the player has earned at least one star
         if (stars == 0) {
-            font.setColor(0.7f, 0.7f, 0.7f, 1f); // Grey — nobody cares
-        } else if (stars <= 2) {
-            font.setColor(1f, 0.8f, 0.2f, 1f);   // Yellow — people are talking
-        } else {
+            return;
+        }
+
+        // Tint stars based on ReputationLevel: gold for KNOWN, red for NOTORIOUS
+        if (rep.isNotorious()) {
             font.setColor(1f, 0.2f, 0.2f, 1f);   // Red — notorious
+        } else {
+            font.setColor(1f, 0.8f, 0.2f, 1f);   // Gold — known
         }
 
         StringBuilder sb = new StringBuilder();

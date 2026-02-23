@@ -2,6 +2,7 @@ package ragamuffin.ui;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
 import ragamuffin.entity.Player;
 
@@ -103,5 +104,48 @@ class GameHUDTest {
         assertFalse(hud.isVisible());
         hud.show();
         assertTrue(hud.isVisible());
+    }
+
+    // ====== Street reputation star count (Issue #160) ======
+
+    @Test
+    void testStarCountZeroAtZeroPoints() {
+        StreetReputation rep = player.getStreetReputation();
+        assertEquals(0, rep.getStarCount(), "0 points should yield 0 stars");
+    }
+
+    @Test
+    void testStarCountOneAtTenPoints() {
+        StreetReputation rep = player.getStreetReputation();
+        rep.addPoints(10);
+        assertEquals(1, rep.getStarCount(), "10 points (KNOWN threshold) should yield 1 star");
+    }
+
+    @Test
+    void testStarCountTwoAtTwentyPoints() {
+        StreetReputation rep = player.getStreetReputation();
+        rep.addPoints(20);
+        assertEquals(2, rep.getStarCount(), "20 points should yield 2 stars");
+    }
+
+    @Test
+    void testStarCountThreeAtThirtyPoints() {
+        StreetReputation rep = player.getStreetReputation();
+        rep.addPoints(30);
+        assertEquals(3, rep.getStarCount(), "30 points (NOTORIOUS threshold) should yield 3 stars");
+    }
+
+    @Test
+    void testStarCountFourAtFortyFivePoints() {
+        StreetReputation rep = player.getStreetReputation();
+        rep.addPoints(45);
+        assertEquals(4, rep.getStarCount(), "45 points should yield 4 stars");
+    }
+
+    @Test
+    void testStarCountFiveAtSixtyPoints() {
+        StreetReputation rep = player.getStreetReputation();
+        rep.addPoints(60);
+        assertEquals(5, rep.getStarCount(), "60 points should yield 5 stars (maximum)");
     }
 }
