@@ -17,9 +17,9 @@ public class ShelterDetector {
      * - At least 3 solid blocks around (left, right, front, back)
      */
     public static boolean isSheltered(World world, Vector3 playerPosition) {
-        int x = Math.round(playerPosition.x);
-        int y = Math.round(playerPosition.y);
-        int z = Math.round(playerPosition.z);
+        int x = (int) Math.floor(playerPosition.x);
+        int y = (int) Math.floor(playerPosition.y);
+        int z = (int) Math.floor(playerPosition.z);
 
         // Check for roof (block above)
         BlockType above = world.getBlock(x, y + 2, z); // 2 blocks up (player height)

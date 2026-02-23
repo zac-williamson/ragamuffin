@@ -344,6 +344,110 @@ class Critic4CardboardShelterTest {
     }
 
     /**
+     * Test 11: Player at x=ox+1.5 (centre of 1-block gap) is detected as sheltered.
+     * Build cardboard shelter at (20, 5, 20). Set player position to (21.5, 6.0, 21.0)
+     * — horizontal centre of the interior. Verify isSheltered() returns true.
+     * (Previously returned false due to Math.round(21.5) = 22 snapping to the right wall.)
+     */
+    @Test
+    void test11_PlayerCentredInInteriorIsDetectedAsSheltered() {
+        int ox = 20, oy = 5, oz = 20;
+
+        // Clear a space for the shelter
+        for (int dx = -1; dx <= 3; dx++) {
+            for (int dy = 0; dy <= 5; dy++) {
+                for (int dz = -1; dz <= 4; dz++) {
+                    world.setBlock(ox + dx, oy + dy, oz + dz, BlockType.AIR);
+                }
+            }
+        }
+
+        blockPlacer.buildCardboardShelter(world, ox, oy, oz);
+
+        // Player at x=ox+1.5 (centre of the 1-block-wide interior gap)
+        // With Math.round this would snap to ox+2 (the right wall) — wrong.
+        // With Math.floor this maps to ox+1 (the interior cell) — correct.
+        Vector3 pos = new Vector3(ox + 1.5f, oy + 1.0f, oz + 1.0f);
+        assertTrue(ShelterDetector.isSheltered(world, pos),
+            "Player centred at x=ox+1.5 inside shelter should be detected as sheltered");
+    }
+
+    /**
+     * Test 12: Cold-snap damage does NOT apply when player is centred in shelter interior.
+     * Build shelter at (20, 5, 20). Set player to (21.5, 6.0, 21.0). Set weather to COLD_SNAP.
+     * Simulate 300 frames. Verify health remains 100.
+     */
+    @Test
+    void test12_ColdSnapDamageDoesNotApplyInsideShelter() {
+        int ox = 20, oy = 5, oz = 20;
+
+        for (int dx = -1; dx <= 3; dx++) {
+            for (int dy = 0; dy <= 5; dy++) {
+                for (int dz = -1; dz <= 4; dz++) {
+                    world.setBlock(ox + dx, oy + dy, oz + dz, BlockType.AIR);
+                }
+            }
+        }
+
+        blockPlacer.buildCardboardShelter(world, ox, oy, oz);
+
+        Player player = new Player(ox + 1.5f, oy + 1.0f, oz + 1.0f);
+        player.setHealth(100f);
+
+        WeatherSystem weatherSystem = new WeatherSystem();
+        weatherSystem.setWeather(Weather.COLD_SNAP);
+
+        float delta = 1.0f / 60.0f;
+        Vector3 pos = player.getPosition();
+        for (int i = 0; i < 300; i++) {
+            if (!ShelterDetector.isSheltered(world, pos)) {
+                player.damage(Weather.COLD_SNAP.getHealthDrainRate() * delta);
+            }
+        }
+
+        assertEquals(100f, player.getHealth(), 0.01f,
+            "Health should remain 100 — shelter protects against cold-snap damage");
+    }
+
+    /**
+     * Test 13: Player outside shelter IS damaged by cold snap.
+     * Place player at (21.5, 6.0, 24.0) — outside the shelter.
+     * Simulate 300 frames of cold-snap. Verify health < 100.
+     */
+    @Test
+    void test13_ColdSnapDamageAppliesOutsideShelter() {
+        int ox = 20, oy = 5, oz = 20;
+
+        for (int dx = -1; dx <= 3; dx++) {
+            for (int dy = 0; dy <= 5; dy++) {
+                for (int dz = -1; dz <= 4; dz++) {
+                    world.setBlock(ox + dx, oy + dy, oz + dz, BlockType.AIR);
+                }
+            }
+        }
+
+        blockPlacer.buildCardboardShelter(world, ox, oy, oz);
+
+        // Player is outside the shelter (z=24 is beyond the entrance at z=22)
+        Player player = new Player(ox + 1.5f, oy + 1.0f, oz + 4.0f);
+        player.setHealth(100f);
+
+        WeatherSystem weatherSystem = new WeatherSystem();
+        weatherSystem.setWeather(Weather.COLD_SNAP);
+
+        float delta = 1.0f / 60.0f;
+        Vector3 pos = player.getPosition();
+        for (int i = 0; i < 300; i++) {
+            if (!ShelterDetector.isSheltered(world, pos)) {
+                player.damage(Weather.COLD_SNAP.getHealthDrainRate() * delta);
+            }
+        }
+
+        assertTrue(player.getHealth() < 100f,
+            "Health should be below 100 — player outside shelter takes cold-snap damage");
+    }
+
+    /**
      * Test 8: TooltipSystem correctly marks CARDBOARD_BOX_SHELTER as shown.
      */
     @Test
