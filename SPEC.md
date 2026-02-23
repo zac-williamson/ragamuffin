@@ -1555,3 +1555,74 @@ if (!isUIBlocking()) {
 
 4. **Hunger drains normally with UI closed**: Give the player hunger = 100. With no UI open,
    advance the game for 10 real seconds. Verify hunger has decreased (normal drain is active).
+
+---
+
+## Bug Fix: Cardboard shelter entrance is only 1 block tall — player cannot enter
+
+**Status**: ❌ Broken — the cardboard shelter's entrance opening is 1 block tall, but the
+player is 1.8 blocks tall. The player cannot physically enter the shelter, rendering the
+entire cardboard box mechanic (the game's primary early-game survival tool) useless.
+
+**Problem**: `BlockPlacer.buildCardboardShelter()` builds a 3×3×4 structure (width×depth×height
+including roof). The front face (z=oz+2) is left open at dy=1 (y=oy+1) to form an entrance,
+but the front wall blocks at dy=2 (y=oy+2) are placed across the entire front:
+
+```java
+// Front wall (z=oz+2) - only at dy=2, leaving entrance at dy=1
+if (dy == 2) {
+    setIfAir(world, ox,     oy + dy, oz + 2, BlockType.CARDBOARD);  // corner
+    setIfAir(world, ox + 1, oy + dy, oz + 2, BlockType.CARDBOARD);  // centre — BLOCKS ENTRY
+    setIfAir(world, ox + 2, oy + dy, oz + 2, BlockType.CARDBOARD);  // corner
+}
+```
+
+The left wall (x=ox) and right wall (x=ox+2) also place blocks at y=oy+2, z=oz+2, further
+blocking the two corner positions at head height. The result: the entire front face at head
+height (y=oy+2) is solid cardboard, making the "entrance" only 1 block tall. A player with
+HEIGHT=1.8 blocks and EYE_HEIGHT=1.62 blocks cannot crouch (no crouch mechanic exists), so
+they physically cannot enter.
+
+**The test that should have caught this (test5_ShelterDetectorRecognisesCardboardShelter)
+is a false pass**: it teleports the player directly into the interior at `(ox+1, oy+1, oz+1)`
+without simulating movement through the entrance. `ShelterDetector.isSheltered()` then
+correctly detects 3 walls + roof and returns true. But the player could never reach that
+interior position in actual gameplay.
+
+**Root cause**: The Javadoc comment for `buildCardboardShelter` says "2 wide, 2 tall, 2 deep"
+but the actual structure is 3×3×4 (floor + 2 wall heights + roof). The entrance was designed
+with wall height dy=1 (1 block), which is insufficient for a 1.8-block-tall player.
+
+**Required fix in `BlockPlacer.buildCardboardShelter()`**:
+
+The entrance must be at least 2 blocks tall. Remove the centre block from the dy=2 front wall
+to create a 1-wide, 2-tall entrance:
+
+```java
+// Front wall (z=oz+2) — corners only at both heights; centre left open for 2-block entrance
+setIfAir(world, ox,     oy + 1, oz + 2, BlockType.CARDBOARD);  // corner, dy=1 -- was open, stays open
+setIfAir(world, ox + 2, oy + 1, oz + 2, BlockType.CARDBOARD);  // corner, dy=1
+setIfAir(world, ox,     oy + 2, oz + 2, BlockType.CARDBOARD);  // corner, dy=2
+// ox+1, oy+2, oz+2 is left as AIR — the top of the 2-block entrance
+setIfAir(world, ox + 2, oy + 2, oz + 2, BlockType.CARDBOARD);  // corner, dy=2
+```
+
+This makes the entrance 1 block wide and 2 blocks tall at x=ox+1 — sufficient for the player
+to walk in. The shelter still has 3 solid walls (back, left, right) + roof for weather
+protection.
+
+**Integration test** (fix test5 and add a walkthrough test):
+
+1. **ShelterDetector recognises player inside cardboard shelter**: Build shelter at (20, 5, 20).
+   Use collision-based movement to walk the player from z=oz+3 (outside) through z=oz+2
+   (entrance) to z=oz+1 (inside), at x=ox+1, y=oy (floor level). Verify `isSheltered()`
+   returns true once the player is at (ox+1, oy, oz+1). This tests actual entry, not teleport.
+
+2. **Player can walk through entrance without collision**: Build shelter at (20, 5, 20). Place
+   player at (21, 6, 23) facing north (toward z=22, the open entrance face). Simulate pressing
+   W for 60 frames. Verify the player's Z coordinate has decreased below oz+2 — i.e., the
+   player has entered the shelter (not been blocked by head-height wall blocks).
+
+3. **Shelter still provides weather protection after fix**: Build shelter. Walk player inside
+   (via movement, not teleport). Set weather to COLD_SNAP, time to night. Health=100. Advance
+   300 frames. Verify health is still 100 (shelter blocks cold snap damage).
