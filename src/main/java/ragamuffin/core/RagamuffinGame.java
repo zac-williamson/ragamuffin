@@ -16,6 +16,7 @@ import java.util.List;
 import ragamuffin.ai.GangTerritorySystem;
 import ragamuffin.ai.NPCManager;
 import ragamuffin.building.*;
+import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
@@ -72,6 +73,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     // Phase 8: HUD, Menus & Sequences
     private GameHUD gameHUD;
+    private float prevDamageFlashIntensity; // Used to detect new damage events for HUD
     private PauseMenu pauseMenu;
     private MainMenuScreen mainMenuScreen;
     private OpeningSequence openingSequence;
@@ -532,7 +534,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                     // Starvation: zero hunger drains health at 5 HP/s
                     if (player.getHunger() <= 0) {
-                        player.damage(5.0f * delta);
+                        player.damage(5.0f * delta, DamageReason.STARVATION);
                     }
 
                     // Phase 12: Apply weather energy drain multiplier
@@ -546,7 +548,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                         boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition());
                         if (!sheltered) {
                             float healthDrain = currentWeather.getHealthDrainRate() * delta;
-                            player.damage(healthDrain);
+                            player.damage(healthDrain, DamageReason.WEATHER);
                         }
                     }
 
@@ -1053,7 +1055,14 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Update dodge timers and damage flash
         player.updateDodge(delta);
+        // Detect new damage event: flash was at full intensity this frame (just applied)
+        float flashNow = player.getDamageFlashIntensity();
+        if (flashNow >= 1.0f && prevDamageFlashIntensity < 1.0f) {
+            gameHUD.showDamageReason(player.getLastDamageReason());
+        }
+        prevDamageFlashIntensity = flashNow;
         player.updateFlash(delta);
+        gameHUD.update(delta);
 
         // Move player with collision (always call to ensure gravity applies even when not moving)
         float moveSpeed;

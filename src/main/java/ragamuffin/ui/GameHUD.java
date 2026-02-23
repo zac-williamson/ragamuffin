@@ -2,10 +2,12 @@ package ragamuffin.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
+import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.Player;
 
 /**
@@ -33,6 +35,11 @@ public class GameHUD {
     private boolean isNight; // Whether it is currently night (police active)
     private String targetName; // Name of the block or NPC currently targeted (null = nothing)
 
+    // Damage reason display
+    private float damageReasonTimer; // > 0 while reason banner is visible
+    private static final float DAMAGE_REASON_DURATION = 2.5f;
+    private String damageReasonText; // Text to display (null = nothing)
+
     public GameHUD(Player player) {
         this.player = player;
         this.visible = true;
@@ -40,6 +47,40 @@ public class GameHUD {
         this.blockBreakProgress = 0f;
         this.isNight = false;
         this.targetName = null;
+        this.damageReasonTimer = 0f;
+        this.damageReasonText = null;
+    }
+
+    /**
+     * Update HUD timers. Call once per frame.
+     */
+    public void update(float delta) {
+        if (damageReasonTimer > 0) {
+            damageReasonTimer = Math.max(0, damageReasonTimer - delta);
+        }
+    }
+
+    /**
+     * Show a damage reason banner on screen for a fixed duration.
+     * Call this whenever the player takes damage.
+     */
+    public void showDamageReason(DamageReason reason) {
+        damageReasonText = reason.getDisplayName();
+        damageReasonTimer = DAMAGE_REASON_DURATION;
+    }
+
+    /**
+     * Get current damage reason text (null if not displaying).
+     */
+    public String getDamageReasonText() {
+        return damageReasonTimer > 0 ? damageReasonText : null;
+    }
+
+    /**
+     * Get the remaining time the damage reason banner will display.
+     */
+    public float getDamageReasonTimer() {
+        return damageReasonTimer;
     }
 
     /**
@@ -75,6 +116,11 @@ public class GameHUD {
 
         // Render crosshair and target name
         renderCrosshair(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltips);
+
+        // Render damage reason banner
+        if (damageReasonTimer > 0 && damageReasonText != null) {
+            renderDamageReason(spriteBatch, font, screenWidth, screenHeight);
+        }
     }
 
     private void renderStatusBars(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
@@ -332,6 +378,23 @@ public class GameHUD {
         font.setColor(0.9f, 0.3f, 0.3f, 1f); // Red warning text
         String nightText = "NIGHT — POLICE ACTIVE";
         font.draw(spriteBatch, nightText, screenWidth / 2f - 80, 40);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
+    }
+
+    /**
+     * Render the damage reason banner near the top-centre of the screen.
+     * Fades out as the timer expires.
+     */
+    private void renderDamageReason(SpriteBatch spriteBatch, BitmapFont font,
+                                    int screenWidth, int screenHeight) {
+        float alpha = Math.min(1f, damageReasonTimer / (DAMAGE_REASON_DURATION * 0.3f));
+        spriteBatch.begin();
+        font.setColor(1f, 0.3f, 0.3f, alpha);
+        GlyphLayout layout = new GlyphLayout(font, damageReasonText);
+        float textX = screenWidth / 2f - layout.width / 2f;
+        float textY = screenHeight * 0.72f;
+        font.draw(spriteBatch, layout, textX, textY);
         font.setColor(Color.WHITE);
         spriteBatch.end();
     }

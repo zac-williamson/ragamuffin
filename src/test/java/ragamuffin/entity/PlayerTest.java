@@ -316,4 +316,55 @@ class PlayerTest {
 
         assertTrue(player.getEnergy() > depletedEnergy, "Energy should recover after stopping sprint");
     }
+
+    // ========== Damage Reason Tests (Issue #216) ==========
+
+    @Test
+    void damageWithReasonStoresReason() {
+        Player player = new Player(0, 5, 0);
+        player.damage(10f, DamageReason.FALL);
+        assertEquals(DamageReason.FALL, player.getLastDamageReason(),
+            "Last damage reason should be FALL after fall damage");
+    }
+
+    @Test
+    void damageWithNPCAttackReason() {
+        Player player = new Player(0, 5, 0);
+        player.damage(8f, DamageReason.NPC_ATTACK);
+        assertEquals(DamageReason.NPC_ATTACK, player.getLastDamageReason(),
+            "Last damage reason should be NPC_ATTACK after NPC attack");
+    }
+
+    @Test
+    void damageWithStarvationReason() {
+        Player player = new Player(0, 5, 0);
+        player.damage(5f, DamageReason.STARVATION);
+        assertEquals(DamageReason.STARVATION, player.getLastDamageReason(),
+            "Last damage reason should be STARVATION");
+    }
+
+    @Test
+    void damageWithWeatherReason() {
+        Player player = new Player(0, 5, 0);
+        player.damage(3f, DamageReason.WEATHER);
+        assertEquals(DamageReason.WEATHER, player.getLastDamageReason(),
+            "Last damage reason should be WEATHER after exposure damage");
+    }
+
+    @Test
+    void damageWithoutReasonDefaultsToUnknown() {
+        Player player = new Player(0, 5, 0);
+        player.damage(10f);
+        assertEquals(DamageReason.UNKNOWN, player.getLastDamageReason(),
+            "Damage without explicit reason should default to UNKNOWN");
+    }
+
+    @Test
+    void damageReasonUpdatesOnConsecutiveDamage() {
+        Player player = new Player(0, 5, 0);
+        player.damage(5f, DamageReason.FALL);
+        player.damage(5f, DamageReason.NPC_ATTACK);
+        assertEquals(DamageReason.NPC_ATTACK, player.getLastDamageReason(),
+            "Last damage reason should reflect the most recent damage");
+    }
 }

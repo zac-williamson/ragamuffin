@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
+import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.Player;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -128,6 +129,68 @@ class GameHUDTest {
         hud.setBlockBreakProgress(1.5f);
         // No getter, but ensure no exception; rendering would use clamped value
         hud.setBlockBreakProgress(-0.5f);
+    }
+
+    // ====== Damage reason banner (Issue #216) ======
+
+    @Test
+    void testDamageReasonNullByDefault() {
+        assertNull(hud.getDamageReasonText(), "No damage reason should show by default");
+    }
+
+    @Test
+    void testShowDamageReasonDisplaysText() {
+        hud.showDamageReason(DamageReason.FALL);
+        assertEquals("Fall damage", hud.getDamageReasonText(),
+            "Should display FALL damage reason text");
+    }
+
+    @Test
+    void testShowDamageReasonNPCAttack() {
+        hud.showDamageReason(DamageReason.NPC_ATTACK);
+        assertEquals("Attacked", hud.getDamageReasonText());
+    }
+
+    @Test
+    void testShowDamageReasonStarvation() {
+        hud.showDamageReason(DamageReason.STARVATION);
+        assertEquals("Starving", hud.getDamageReasonText());
+    }
+
+    @Test
+    void testShowDamageReasonWeather() {
+        hud.showDamageReason(DamageReason.WEATHER);
+        assertEquals("Exposure", hud.getDamageReasonText());
+    }
+
+    @Test
+    void testDamageReasonTimerSetOnShow() {
+        hud.showDamageReason(DamageReason.FALL);
+        assertTrue(hud.getDamageReasonTimer() > 0, "Timer should be positive after showDamageReason");
+    }
+
+    @Test
+    void testDamageReasonTimerDecreases() {
+        hud.showDamageReason(DamageReason.FALL);
+        float timerBefore = hud.getDamageReasonTimer();
+        hud.update(0.5f);
+        assertTrue(hud.getDamageReasonTimer() < timerBefore, "Timer should decrease after update");
+    }
+
+    @Test
+    void testDamageReasonTextClearsAfterTimer() {
+        hud.showDamageReason(DamageReason.FALL);
+        // Advance past full duration
+        hud.update(10f);
+        assertNull(hud.getDamageReasonText(), "Damage reason text should clear after timer expires");
+    }
+
+    @Test
+    void testDamageReasonCanBeUpdated() {
+        hud.showDamageReason(DamageReason.FALL);
+        hud.showDamageReason(DamageReason.NPC_ATTACK);
+        assertEquals("Attacked", hud.getDamageReasonText(),
+            "Newer damage reason should overwrite the previous one");
     }
 
     @Test

@@ -2,6 +2,7 @@ package ragamuffin.world;
 
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.entity.AABB;
+import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.Player;
 
 import com.badlogic.gdx.Gdx;
@@ -395,7 +396,7 @@ public class World {
             // Landing — check for fall damage
             float fallDamage = player.landAndGetFallDamage();
             if (fallDamage > 0) {
-                player.damage(fallDamage);
+                player.damage(fallDamage, DamageReason.FALL);
             }
             player.resetVerticalVelocity();
         } else {
@@ -440,7 +441,7 @@ public class World {
                 // Fall damage on landing
                 float fallDmg = player.landAndGetFallDamage();
                 if (fallDmg > 0) {
-                    player.damage(fallDmg);
+                    player.damage(fallDmg, DamageReason.FALL);
                 }
                 player.resetVerticalVelocity();
             } else {
