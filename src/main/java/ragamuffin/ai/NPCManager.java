@@ -110,7 +110,7 @@ public class NPCManager {
 
     // Council builder system (Phase 7)
     private StructureTracker structureTracker;
-    private Map<StructureTracker.Structure, Integer> structureBuilderCount; // Track builders per structure
+    private Map<String, Integer> structureBuilderCount; // Track builders per structure (keyed by "x,y,z" of centre)
     private Map<NPC, StructureTracker.Structure> builderTargets; // Track which structure each builder is targeting
     private Map<NPC, Float> builderKnockbackTimers; // Track knockback delay per builder
     private Map<NPC, Float> builderDemolishTimers; // Track demolition cooldown per builder
@@ -1721,13 +1721,13 @@ public class NPCManager {
                 structure.setHasNotice(true); // Mark as having notice
             }
 
-            int currentBuilders = structureBuilderCount.getOrDefault(structure, 0);
+            int currentBuilders = structureBuilderCount.getOrDefault(structureKey, 0);
 
             // Spawn builders after planning notice has been up for a bit
             // Only spawn if structure has notice
             if (structure.hasNotice() && currentBuilders < requiredBuilders) {
                 spawnCouncilBuilder(structure);
-                structureBuilderCount.put(structure, currentBuilders + 1);
+                structureBuilderCount.put(structureKey, currentBuilders + 1);
             }
         }
     }
