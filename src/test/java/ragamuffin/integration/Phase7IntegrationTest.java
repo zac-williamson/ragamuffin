@@ -162,9 +162,13 @@ class Phase7IntegrationTest {
 
         assertNotNull(builder, "Builder should exist");
 
-        // Builder should be targeting the structure
-        assertNotNull(builder.getTargetPosition(),
-                "Builder should have a target position");
+        // Builder should be targeting the structure or already demolishing it.
+        // After 300 frames the builder may have reached the structure (DEMOLISHING)
+        // or may still be en-route (targetPosition != null). Either state is correct.
+        boolean isEngaged = builder.getTargetPosition() != null
+                || builder.getState() == ragamuffin.entity.NPCState.DEMOLISHING;
+        assertTrue(isEngaged,
+                "Builder should have a target position or be demolishing the structure");
     }
 
     /**
