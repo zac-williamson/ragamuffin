@@ -541,6 +541,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                     greggsRaidSystem.reset();
                     // Issue #154: Reset street reputation on death — the streets forget you while you were dead
                     player.getStreetReputation().reset();
+                    // Issue #166: Sync HealingSystem position after teleport so the next update()
+                    // does not compute a spurious speed from the respawn distance.
+                    healingSystem.resetPosition(player.getPosition());
                 }
 
                 // Phase 11: Trigger hunger warning tooltip
@@ -964,6 +967,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             greggsRaidSystem.reset();
             // Issue #7: Arrest reduces reputation — the streets forget when you're locked up
             player.getStreetReputation().removePoints(15);
+            // Issue #166: Sync HealingSystem position after teleport so the next update()
+            // does not compute a spurious speed from the arrest teleport distance.
+            healingSystem.resetPosition(player.getPosition());
         }
 
         // Issue #48: Passive reputation decay — "lying low" reduces reputation over time

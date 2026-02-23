@@ -54,6 +54,16 @@ public class HealingSystem {
         restingTime = 0;
     }
 
+    /**
+     * Reset resting timer and update lastPosition to the given position.
+     * Call this after any teleport (respawn, arrest) so the next update()
+     * does not compute a spurious speed from the teleport distance.
+     */
+    public void resetPosition(Vector3 newPosition) {
+        restingTime = 0;
+        lastPosition.set(newPosition);
+    }
+
     public float getRestingTime() {
         return restingTime;
     }
