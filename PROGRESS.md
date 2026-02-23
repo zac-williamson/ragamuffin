@@ -1,3 +1,47 @@
+# Issue #8: Add star-based reputation system like GTA
+
+## Status: COMPLETE ✓
+
+## Summary
+
+Replaced the text-based reputation display (`Rep: NOTORIOUS (35)`) with a
+GTA-style five-star system. Stars scale with reputation points and change colour
+as the player's notoriety grows.
+
+| Stars | Points | Level | Colour |
+|---|---|---|---|
+| ☆☆☆☆☆ (0) | 0–9 | NOBODY | Grey |
+| ★☆☆☆☆ (1) | 10–19 | KNOWN | Yellow |
+| ★★☆☆☆ (2) | 20–29 | KNOWN | Yellow |
+| ★★★☆☆ (3) | 30–44 | NOTORIOUS | Red |
+| ★★★★☆ (4) | 45–59 | NOTORIOUS | Red |
+| ★★★★★ (5) | 60+ | NOTORIOUS | Red |
+
+## Files Changed
+
+- `src/main/java/ragamuffin/core/StreetReputation.java` — added `getStarCount()`
+  method returning 0–5 stars based on current points
+- `src/main/java/ragamuffin/ui/GameHUD.java` — `renderReputation()` now draws
+  five ★/☆ Unicode characters instead of a text label; colour scales with stars
+- `src/test/java/ragamuffin/integration/Critic8StreetReputationTest.java` — added
+  9 new tests (13–21) verifying star counts at all thresholds and edge cases
+
+## Test Results
+
+All new star-count tests pass. Two pre-existing NPC movement tests
+(`Phase5IntegrationTest.test3`, `Phase6IntegrationTest.test4`) are flaky under
+the full suite due to timing sensitivity — they pass individually and were
+failing on the unmodified baseline as well. Build is clean.
+
+## What's Left
+
+Nothing. Star display is live in the HUD.
+
+---
+_Completed: 2026-02-23_
+
+---
+
 # Issue #5: Display inventory items as graphics instead of text
 
 ## Status: COMPLETE ✓
