@@ -1474,3 +1474,84 @@ particularly egregious in a voxel game where precise block targeting is the prim
    placement preview position returned by `blockPlacer.getPlacementPosition()` is the air
    block immediately adjacent to the wall face the player is looking at. Verify that when
    the player turns away (no valid target), the preview position is null.
+
+---
+
+## Bug Fix: Hunger and starvation damage tick while UI is open — player can die in their inventory
+
+**Status**: ❌ Broken — when the player opens the inventory (I), crafting menu (C), or help
+screen (H), the game correctly disables movement and block interaction (`isUIBlocking()` check
+on `updatePlaying()`, line ~485), but the **survival system continues running**: hunger drains
+every frame, and if hunger reaches zero, starvation health damage is applied at 5 HP/s.
+Meanwhile, eating food via right-click (which routes through `handlePlace()` inside
+`updatePlaying()`) is blocked. The player cannot eat, but they continue to starve.
+
+**Problem**: In `RagamuffinGame.render()`, the survival stat updates are placed outside both
+the `isUIBlocking()` guard and the `updatePlaying()` call:
+
+```java
+// Lines ~490–532 (inside !openingSequence.isActive() but OUTSIDE !isUIBlocking()):
+timeSystem.update(delta);
+// ...
+player.updateHunger(delta * hungerMultiplier);      // Always ticks
+if (player.getHunger() <= 0) {
+    player.damage(5.0f * delta);                    // Starvation always damages
+}
+// Cold snap damage also always applies here
+```
+
+Energy recovery is correctly gated by `isUIBlocking()` (line ~517), making the inconsistency
+clear: the developers knew to guard some survival effects, but forgot to guard
+hunger and starvation damage.
+
+**Consequence**: A player who opens their crafting menu to look up a recipe and leaves it open
+for ~20 in-game seconds while at low hunger (common after a long build session) will take
+starvation damage they have no way to prevent or respond to — they can't eat, move to find
+food, or close the menu fast enough if they didn't notice the hunger bar. This is particularly
+cruel given the game's British survival theme: rummaging in your bag to find a sausage roll
+while slowly dying of hunger.
+
+**Required fix in `RagamuffinGame.render()`**:
+
+Gate hunger drain, starvation damage, and cold-snap damage behind `!isUIBlocking()`, matching
+the existing energy recovery guard:
+
+```java
+if (!isUIBlocking()) {
+    float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
+    player.updateHunger(delta * hungerMultiplier);
+    if (player.getHunger() <= 0) {
+        player.damage(5.0f * delta);
+    }
+    // Weather energy drain multiplier
+    float weatherMultiplier = weatherSystem.getCurrentWeather().getEnergyDrainMultiplier();
+    player.recoverEnergy(delta / weatherMultiplier);
+    // Cold snap health drain at night when unsheltered
+    Weather currentWeather = weatherSystem.getCurrentWeather();
+    if (currentWeather.drainsHealthAtNight() && timeSystem.isNight()) {
+        boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition());
+        if (!sheltered) {
+            player.damage(currentWeather.getHealthDrainRate() * delta);
+        }
+    }
+}
+```
+
+**Integration tests**:
+
+1. **Hunger does not drain while inventory is open**: Give the player hunger = 60. Open
+   the inventory UI (`inventoryUI.show()`). Advance the game for 30 real seconds (simulate
+   via delta accumulation). Verify `player.getHunger()` is still 60 (no drain while UI open).
+   Close inventory. Advance 1 second. Verify hunger has now decreased (drain resumed).
+
+2. **Starvation cannot kill the player in their inventory**: Set player hunger to 0 and health
+   to 10. Open the inventory UI. Advance the game for 5 seconds. Verify `player.getHealth()`
+   is still 10 (no starvation damage while UI open). Verify the player is not dead.
+
+3. **Cold snap cannot damage the player while UI is open**: Enable a cold-snap weather
+   condition, set time to night, place player in an unsheltered location. Open inventory.
+   Advance 5 seconds. Verify player health is unchanged. Close inventory. Advance 1 second.
+   Verify player health has decreased (cold snap damage resumed).
+
+4. **Hunger drains normally with UI closed**: Give the player hunger = 100. With no UI open,
+   advance the game for 10 real seconds. Verify hunger has decreased (normal drain is active).
