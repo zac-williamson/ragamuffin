@@ -146,6 +146,11 @@ public class NPCManager {
     // Arrest system — set when police catches player so game loop can apply penalties
     private boolean arrestPending = false;
 
+    // Issue #218: Post-arrest cooldown — prevents police from re-arresting the player immediately
+    // after they have been teleported back to the park. Gives the player a short grace period.
+    private float postArrestCooldown = 0f;
+    private static final float POST_ARREST_COOLDOWN_DURATION = 10.0f; // seconds of immunity after arrest
+
     // Alerted police — NPCs explicitly flagged by crime events (Greggs raid, block-break near landmark).
     // Only alerted police (or police near a KNOWN/NOTORIOUS player) actively pursue the player.
     private Set<NPC> alertedPoliceNPCs;
@@ -350,6 +355,11 @@ public class NPCManager {
         // Tick police spawn cooldown
         if (policeSpawnCooldown > 0) {
             policeSpawnCooldown -= delta;
+        }
+
+        // Issue #218: Tick post-arrest cooldown — prevents immediate re-arrest after teleport
+        if (postArrestCooldown > 0) {
+            postArrestCooldown = Math.max(0f, postArrestCooldown - delta);
         }
 
         // Update structure tracking (Phase 7)
@@ -1717,7 +1727,8 @@ public class NPCManager {
         // If very close, make the arrest — signal game loop.
         // Transition to PATROLLING immediately so the police does not keep chasing;
         // the game loop handles the arrest via isArrestPending()/clearArrestPending().
-        if (police.isNear(player.getPosition(), 1.5f) && !arrestPending) {
+        // Issue #218: Guard against re-arrest during the post-arrest grace period
+        if (police.isNear(player.getPosition(), 1.5f) && !arrestPending && postArrestCooldown <= 0) {
             arrestPending = true;
             police.setSpeechText("You're coming with me!", 2.0f);
             police.setState(NPCState.PATROLLING);
@@ -1780,9 +1791,19 @@ public class NPCManager {
 
     /**
      * Clear the arrest-pending flag after the game loop has handled it.
+     * Also starts the post-arrest cooldown (Issue #218) to prevent immediate re-arrest.
      */
     public void clearArrestPending() {
         arrestPending = false;
+        postArrestCooldown = POST_ARREST_COOLDOWN_DURATION;
+    }
+
+    /**
+     * Returns the remaining post-arrest cooldown in seconds (Issue #218).
+     * Zero means the player can be arrested again.
+     */
+    public float getPostArrestCooldown() {
+        return postArrestCooldown;
     }
 
     /**

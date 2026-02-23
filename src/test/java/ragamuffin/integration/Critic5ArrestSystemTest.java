@@ -263,4 +263,36 @@ class Critic5ArrestSystemTest {
         assertTrue(solidBlock.isSolid(),
             "Block at solidBlockY=" + solidBlockY + " should be solid, got " + solidBlock);
     }
+
+    /**
+     * Test 14 (Issue #218): Post-arrest cooldown prevents immediate re-arrest.
+     *
+     * After clearArrestPending() is called (as the game loop does after applying arrest),
+     * the NPCManager must not allow another arrest to be signalled until the cooldown expires.
+     */
+    @Test
+    void test14_PostArrestCooldownPreventsImmediateReArrest() {
+        // Cooldown starts at zero — no immunity on a fresh NPCManager
+        assertEquals(0f, npcManager.getPostArrestCooldown(), 0.001f,
+            "Post-arrest cooldown should start at zero");
+
+        // Simulate the game loop clearing the arrest (this starts the cooldown)
+        npcManager.clearArrestPending();
+
+        // Cooldown should now be active
+        assertTrue(npcManager.getPostArrestCooldown() > 0f,
+            "Post-arrest cooldown should be positive immediately after clearArrestPending()");
+
+        // Advance time by 5 seconds — cooldown should still be partially remaining
+        npcManager.update(5f, world, player, inventory, tooltipSystem);
+        assertTrue(npcManager.getPostArrestCooldown() > 0f,
+            "Post-arrest cooldown should still be active after 5 seconds");
+        assertFalse(npcManager.isArrestPending(),
+            "Arrest should not be pending during cooldown");
+
+        // Advance enough time to exhaust the cooldown entirely
+        npcManager.update(20f, world, player, inventory, tooltipSystem);
+        assertEquals(0f, npcManager.getPostArrestCooldown(), 0.001f,
+            "Post-arrest cooldown should reach zero after enough time has passed");
+    }
 }
