@@ -30,7 +30,7 @@ public class HealingSystem {
         Vector3 currentPos = player.getPosition();
         float distanceMoved = currentPos.dst(lastPosition);
 
-        if (distanceMoved < MOVEMENT_THRESHOLD * delta) {
+        if (distanceMoved < MOVEMENT_THRESHOLD) {
             // Player is resting
             restingTime += delta;
         } else {

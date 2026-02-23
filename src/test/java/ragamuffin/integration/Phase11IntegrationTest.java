@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Vector3;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.building.*;
+import ragamuffin.core.HealingSystem;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
@@ -111,25 +112,28 @@ class Phase11IntegrationTest {
         // Set health to 50, hunger to 100
         player.setHealth(50);
         player.setHunger(100);
+        // Place player at a fixed position — stays still the whole test
+        player.getPosition().set(0, 1, 0);
 
         float initialHealth = player.getHealth();
         assertEquals(50, initialHealth, 0.01);
 
-        // Simulate 5 seconds of resting (300 frames at 60fps)
-        // Healing rate: 5 HP/s = 25 HP over 5 seconds
+        HealingSystem healingSystem = new HealingSystem();
+
+        // Simulate 10 seconds of resting (601 frames at 60fps).
+        // The first frame the system sees the player move from lastPosition=(0,0,0) to (0,1,0),
+        // so restingTime resets. After that the player is stationary.
+        // 5 seconds to accumulate RESTING_DURATION_REQUIRED, then 5 seconds of healing at 5 HP/s = 25 HP.
         float deltaPerFrame = 1.0f / 60.0f;
-        for (int i = 0; i < 300; i++) {
-            // Player is resting: no velocity, hunger > 50
-            // The healing system should add 5 HP/s
-            if (player.getHunger() > 50) {
-                player.heal(5 * deltaPerFrame);  // 5 HP/s
-            }
+        for (int i = 0; i < 601; i++) {
+            // Player position does not change — distanceMoved == 0 < MOVEMENT_THRESHOLD
+            healingSystem.update(deltaPerFrame, player);
         }
 
-        // Verify health increased (should be ~75)
+        // Verify health increased (should be ~75: 50 + 25 HP from 5 seconds of healing)
         float finalHealth = player.getHealth();
         assertTrue(finalHealth > initialHealth, "Health should increase while resting");
-        assertEquals(75, finalHealth, 1.0, "Should heal ~25 HP over 5 seconds");
+        assertEquals(75, finalHealth, 1.0, "Should heal ~25 HP over 5 seconds at 5 HP/s");
     }
 
     /**
@@ -142,17 +146,19 @@ class Phase11IntegrationTest {
         // Set health to 50, hunger to 20 (below threshold)
         player.setHealth(50);
         player.setHunger(20);
+        // Place player at a fixed position — stays still the whole test
+        player.getPosition().set(0, 1, 0);
 
         float initialHealth = player.getHealth();
         assertEquals(50, initialHealth, 0.01);
 
-        // Simulate 5 seconds of resting
+        HealingSystem healingSystem = new HealingSystem();
+
+        // Simulate 10 seconds of resting (same duration as test3) — hunger is too low to heal
         float deltaPerFrame = 1.0f / 60.0f;
-        for (int i = 0; i < 300; i++) {
-            // Player is resting but hunger is too low
-            if (player.getHunger() > 50) {
-                player.heal(5 * deltaPerFrame);  // Should NOT heal
-            }
+        for (int i = 0; i < 601; i++) {
+            // Player is stationary but hunger is too low — HealingSystem must NOT heal
+            healingSystem.update(deltaPerFrame, player);
         }
 
         // Verify health is unchanged
