@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector3;
 import java.util.List;
+import ragamuffin.ai.GangTerritorySystem;
 import ragamuffin.ai.NPCManager;
 import ragamuffin.building.*;
 import ragamuffin.entity.NPC;
@@ -88,6 +89,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     // CRITIC 3: Greggs Raid mechanic — dedicated system for raid state management
     private GreggsRaidSystem greggsRaidSystem;
+
+    // Issue #26: Gang Territory System
+    private GangTerritorySystem gangTerritorySystem;
 
     // Hover tooltip system
     private HoverTooltipSystem hoverTooltipSystem;
@@ -269,6 +273,11 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // CRITIC 3: Initialize Greggs raid system
         greggsRaidSystem = new GreggsRaidSystem();
+
+        // Issue #26: Initialize gang territory system and register territories
+        gangTerritorySystem = new GangTerritorySystem();
+        gangTerritorySystem.addTerritory("Bricky Estate", -50f, -30f, 20f);
+        gangTerritorySystem.addTerritory("South Patch", -45f, -45f, 20f);
 
         // Initialize hover tooltip system
         hoverTooltipSystem = new HoverTooltipSystem();
@@ -927,6 +936,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Phase 5: Update NPCs
         npcManager.update(delta, world, player, inventory, tooltipSystem);
 
+        // Issue #26: Update gang territory system
+        gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
+
         // CRITIC 5: Handle police arrest — apply penalties if player was caught
         if (npcManager.isArrestPending() && !player.isDead()) {
             java.util.List<String> confiscated = arrestSystem.arrest(player, inventory);
@@ -973,6 +985,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             gameHUD.setBlockBreakProgress(0f);
             // Award street reputation for fighting (major crime)
             player.getStreetReputation().addPoints(2);
+            // Issue #26: If a YOUTH_GANG member was punched, escalate territory to hostile
+            if (targetNPC.getType() == ragamuffin.entity.NPCType.YOUTH_GANG) {
+                gangTerritorySystem.onPlayerAttacksGang(tooltipSystem, npcManager, player, world);
+            }
             return; // Don't punch blocks if we hit an NPC
         }
 
@@ -1427,6 +1443,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         weatherSystem = new WeatherSystem();
         arrestSystem = new ArrestSystem();
         greggsRaidSystem = new GreggsRaidSystem();
+        gangTerritorySystem.reset();
         gameHUD = new GameHUD(player);
         openingSequence = new OpeningSequence();
         speechLogUI = new SpeechLogUI();
@@ -1555,6 +1572,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public HoverTooltipSystem getHoverTooltipSystem() {
         return hoverTooltipSystem;
+    }
+
+    public GangTerritorySystem getGangTerritorySystem() {
+        return gangTerritorySystem;
     }
 
     /**
