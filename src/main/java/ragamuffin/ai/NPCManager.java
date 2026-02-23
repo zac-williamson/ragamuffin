@@ -140,6 +140,10 @@ public class NPCManager {
     // Arrest system — set when police catches player so game loop can apply penalties
     private boolean arrestPending = false;
 
+    // Alerted police — NPCs explicitly flagged by crime events (Greggs raid, block-break near landmark).
+    // Only alerted police (or police near a KNOWN/NOTORIOUS player) actively pursue the player.
+    private Set<NPC> alertedPoliceNPCs;
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
@@ -162,6 +166,7 @@ public class NPCManager {
         this.npcIdleTimers = new HashMap<>();
         this.npcPathRecalcTimers = new HashMap<>();
         this.npcStructureCheckTimers = new HashMap<>();
+        this.alertedPoliceNPCs = new HashSet<>();
     }
 
     /**
@@ -1334,6 +1339,7 @@ public class NPCManager {
                 if (dist < 40.0f) {
                     npc.setState(NPCState.AGGRESSIVE);
                     npc.setSpeechText("Oi! Put the pasty down!", 3.0f);
+                    alertedPoliceNPCs.add(npc);
                     setNPCTarget(npc, player.getPosition(), world);
                 }
             }
@@ -1348,6 +1354,7 @@ public class NPCManager {
         if (responder != null) {
             responder.setState(NPCState.AGGRESSIVE);
             responder.setSpeechText("999 call - sausage roll theft!", 3.0f);
+            alertedPoliceNPCs.add(responder);
             setNPCTarget(responder, player.getPosition(), world);
         }
     }
@@ -1439,6 +1446,7 @@ public class NPCManager {
             npcs.remove(police);
             policeWarningTimers.remove(police);
             policeTargetStructures.remove(police);
+            alertedPoliceNPCs.remove(police);
         }
     }
 
@@ -1485,9 +1493,14 @@ public class NPCManager {
             if (police.isNear(structure, 3.0f)) {
                 applyPoliceTapeToStructure(world, structure);
             }
-        } else {
-            // Approach player
+        } else if (player.getStreetReputation().isKnown() || alertedPoliceNPCs.contains(police)) {
+            // Only pursue the player when they are KNOWN/NOTORIOUS or this officer was explicitly
+            // alerted by a crime event (Greggs raid, block-break near landmark).
+            // NOBODY-reputation players should not be hunted unconditionally.
             setNPCTarget(police, player.getPosition(), world);
+        } else {
+            // Player is innocent (NOBODY reputation, no active crime alert) — patrol randomly
+            updateWandering(police, delta, world);
         }
 
         // Check if adjacent to player - issue warning (or go straight to aggressive if notorious)
