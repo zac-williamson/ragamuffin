@@ -304,6 +304,9 @@ public class InteractionSystem {
         float closestDistance = INTERACTION_RANGE;
 
         for (NPC npc : npcs) {
+            // Dead NPCs cannot be interacted with
+            if (!npc.isAlive()) continue;
+
             // Check if NPC is within interaction range
             float distance = playerPos.dst(npc.getPosition());
             if (distance <= INTERACTION_RANGE) {
