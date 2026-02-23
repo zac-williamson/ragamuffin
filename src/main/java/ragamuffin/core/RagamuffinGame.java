@@ -493,8 +493,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 float gameTimeDeltaSeconds = delta * timeSystem.getTimeSpeed() * 3600f;
                 weatherSystem.update(gameTimeDeltaSeconds);
 
-                // Update police spawning based on time
-                npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+                // Update police spawning based on seasonal night (TimeSystem.isNight())
+                npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
                 // Update player survival stats (gated: no hunger/starvation/cold-snap while UI is open)
                 if (!isUIBlocking()) {

@@ -145,10 +145,9 @@ class Issue46BlockBreakingReputationTest {
         assertEquals(4, maxPolice,
             "Police cap should be 4 (not 8) when player is not notorious after breaking blocks");
 
-        // Simulate multiple police spawn cycles at night (22:00)
-        float nightTime = 23.0f;
+        // Simulate multiple police spawn cycles at night (isNight=true)
         for (int cycle = 0; cycle < 10; cycle++) {
-            npcManager.updatePoliceSpawning(nightTime, world, player);
+            npcManager.updatePoliceSpawning(true, world, player);
         }
 
         long policeCount = npcManager.getNPCs().stream()
