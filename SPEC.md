@@ -2673,3 +2673,71 @@ detection with no further changes needed.
 
 3. **Regression — sheds not detected at game start**: Generate world. Force structure scan
    immediately. Verify `structureTracker.getStructures()` is empty (no shed or fence detected).
+
+---
+
+## Bug Fix: Police night window hardcoded to 22:00–06:00 but HUD/survival systems use seasonal `TimeSystem.isNight()`
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — Two different "night" definitions coexist, producing a confusing and
+inaccurate player experience.
+
+- `NPCManager.updatePoliceSpawning()` hardcodes night as `time >= 22.0f || time < 6.0f`.
+- Every other system — cold snap health drain, shelter check, and the "NIGHT — POLICE ACTIVE"
+  HUD banner — uses `TimeSystem.isNight()`, which returns true based on the **seasonal sunrise
+  and sunset times** (British daylight hours, ranging from ~04:43/21:21 in summer to
+  ~08:04/15:53 in winter).
+
+**Consequence by season**:
+
+| Season | `TimeSystem.isNight()` starts | Police spawn at |
+|--------|------------------------------|----------------|
+| Summer (game start, June) | ~21:21 | 22:00 (+39 min gap) |
+| Winter (December) | ~15:53 (4pm!) | 22:00 (+6 hr gap) |
+
+In winter, the HUD shows "NIGHT — POLICE ACTIVE" starting at 4pm, cold snap begins draining
+the player's health at 4pm, but no police actually spawn for another 6 hours. A player who
+builds a cardboard shelter and hides inside at 5pm is burning health from cold snap unnecessarily,
+while the HUD falsely assures them that the police are the primary threat.
+
+**Root cause**: `updatePoliceSpawning()` was written with a fixed 22:00 cutoff matching the
+original Phase 6 spec ("police patrol at night, 22:00–06:00"), but all survival systems later
+adopted `TimeSystem.isNight()` which became seasonal in the Phase 12 weather/seasons update.
+The two definitions were never reconciled.
+
+**Required fix**: Change `NPCManager.updatePoliceSpawning()` to use `TimeSystem.isNight()` by
+accepting the `TimeSystem` as a parameter (or pre-computing a boolean). Pass `timeSystem.isNight()`
+from `RagamuffinGame.render()` instead of the raw `time` float:
+
+```java
+// RagamuffinGame.render() — pass isNight instead of raw time
+npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
+
+// NPCManager.updatePoliceSpawning() — accept boolean, drop hardcoded cutoff
+public void updatePoliceSpawning(boolean isNight, World world, Player player) {
+    if (wasNight && !isNight) {
+        despawnPolice();
+    }
+    wasNight = isNight;
+    if (!isNight) return;
+    // ... rest unchanged
+}
+```
+
+**Integration tests** (add to Phase6IntegrationTest or Phase12IntegrationTest):
+
+1. **Police spawn window matches `TimeSystem.isNight()`**: Set time to the seasonal sunset
+   (e.g., `timeSystem.getSunsetTime() + 0.1f`). Verify `timeSystem.isNight()` is `true`.
+   Call `npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player)`. Advance 12
+   seconds (past `POLICE_SPAWN_INTERVAL`). Call again. Verify at least 1 POLICE NPC exists.
+
+2. **No police during seasonal day (pre-22:00 but after summer sunset)**: Set time to 21:00
+   in summer (after `timeSystem.getSunsetTime()` ≈ 21.35 is NOT yet reached, so `isNight()`
+   is `false`). Call `updatePoliceSpawning(false, world, player)`. Verify no police spawn.
+
+3. **HUD banner and police spawn agree**: Set time to winter sunset + 0.1h (~16:00).
+   Verify `timeSystem.isNight()` is `true`. Verify `gameHUD.isNight()` is `true`.
+   Verify police have spawned (call `updatePoliceSpawning` with `isNight = true`).
+   All three should agree that it is night. Previously only the HUD and isNight agreed;
+   police waited until 22:00.
