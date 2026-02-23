@@ -1144,6 +1144,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             blockHit.getBlockY() + 0.5f, blockHit.getBlockZ() + 0.5f) : reach;
 
         for (NPC npc : npcManager.getNPCs()) {
+            // Dead NPCs cannot be punched
+            if (!npc.isAlive()) continue;
+
             // Calculate distance to NPC centre (at chest height)
             float npcCentreY = npc.getPosition().y + NPC.HEIGHT * 0.5f;
             float dx = npc.getPosition().x - cameraPos.x;
