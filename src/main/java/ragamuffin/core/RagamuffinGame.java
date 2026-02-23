@@ -1641,11 +1641,13 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private void transitionToPlaying() {
         state = GameState.PLAYING;
+        pauseMenu.hide();
         Gdx.input.setCursorCatched(true);
     }
 
     private void transitionToPaused() {
         state = GameState.PAUSED;
+        pauseMenu.show();
         Gdx.input.setCursorCatched(false);
     }
 
