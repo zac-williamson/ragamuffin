@@ -867,6 +867,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 craftingUI.handleScroll(scrollY);
                 inputHandler.resetScroll();
             }
+        } else if (inventoryUI.isVisible() || helpUI.isVisible()) {
+            // Discard scroll when inventory or help UI is open so it doesn't carry over to the hotbar
+            inputHandler.resetScroll();
         } else if (!isUIBlocking()) {
             // Scroll wheel cycles hotbar slot when no UI overlay is open
             float scrollY = inputHandler.getScrollAmountY();
