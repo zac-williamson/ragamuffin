@@ -466,8 +466,8 @@ class Phase6IntegrationTest {
             }
         }
 
-        // Position player near structure
-        player.getPosition().set(11, 1, 11);
+        // Position player near (but outside) the structure so shelter check does not apply
+        player.getPosition().set(9, 1, 11);
 
         // Set to 22:00
         timeSystem.setTime(22.0f);
