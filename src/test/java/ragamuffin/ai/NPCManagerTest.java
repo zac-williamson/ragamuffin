@@ -445,6 +445,130 @@ class NPCManagerTest {
     }
 
     /**
+     * Fix #186: removeNPC() must clean up all per-NPC map entries.
+     * After removal the NPC list must be empty and subsequent update() calls
+     * must not process or reference the removed NPC in any per-NPC map.
+     * We verify this indirectly: spawn an NPC, trigger map population by running
+     * an update, call removeNPC, then run many more updates and assert no exceptions
+     * and that the NPC list remains empty.
+     */
+    @Test
+    void testRemoveNPCCleansUpPerNPCMaps() {
+        // Spawn several NPC types whose maps will be populated on first update
+        NPC youth = manager.spawnNPC(NPCType.YOUTH_GANG, 5, 1, 5);
+        NPC police = manager.spawnNPC(NPCType.POLICE, 10, 1, 10);
+        NPC builder = manager.spawnNPC(NPCType.COUNCIL_BUILDER, 20, 1, 20);
+        NPC pub = manager.spawnNPC(NPCType.PUBLIC, 15, 1, 15);
+
+        assertNotNull(youth);
+        assertNotNull(police);
+        assertNotNull(builder);
+        assertNotNull(pub);
+
+        // Run a few frames to populate per-NPC maps (path recalc timers, idle timers, etc.)
+        for (int i = 0; i < 5; i++) {
+            manager.update(0.1f, world, player, inventory, tooltipSystem);
+        }
+
+        // Remove each NPC via removeNPC()
+        manager.removeNPC(youth);
+        manager.removeNPC(police);
+        manager.removeNPC(builder);
+        manager.removeNPC(pub);
+
+        assertEquals(0, manager.getNPCs().size(), "All NPCs should be removed");
+
+        // Running more updates must not throw and list must stay empty
+        for (int i = 0; i < 10; i++) {
+            manager.update(0.1f, world, player, inventory, tooltipSystem);
+        }
+
+        assertEquals(0, manager.getNPCs().size(), "NPC list must remain empty after removeNPC cleanup");
+    }
+
+    /**
+     * Fix #186: dead NPCs removed by the removeIf in update() must also have their
+     * per-NPC map entries cleaned up (including npcStealCooldownTimers which was
+     * previously missing from the removeIf cleanup block).
+     * We verify by killing an NPC directly (via takeDamage, no speech set) so it is
+     * removed in the next removeIf pass, then confirming further updates work cleanly.
+     * The NPC is placed far from the player (30 blocks) so random speech cannot fire
+     * during setup frames (speech only fires within 10 blocks of the player).
+     */
+    @Test
+    void testDeadNPCRemovedByUpdateCleansUpAllMaps() {
+        // Place inventory item so steal cooldown can be set
+        inventory.addItem(Material.WOOD, 5);
+
+        // Spawn NPC far from player so random speech does not fire (speech range = 10 blocks)
+        NPC youth = manager.spawnNPC(NPCType.YOUTH_GANG, 30, 1, 30);
+        assertNotNull(youth);
+
+        // Run a few frames to populate per-NPC maps (path recalc timers etc.)
+        for (int i = 0; i < 10; i++) {
+            manager.update(0.1f, world, player, inventory, tooltipSystem);
+        }
+
+        // Confirm NPC is still alive and in the list
+        assertTrue(youth.isAlive(), "Youth NPC should be alive before damage");
+        assertTrue(manager.getNPCs().contains(youth), "Youth NPC should be in the list");
+
+        // Kill the NPC directly without speech (so isSpeaking()=false and removeIf fires next frame)
+        youth.takeDamage(Float.MAX_VALUE);
+        assertFalse(youth.isAlive(), "Youth NPC should be dead after lethal damage");
+        assertFalse(youth.isSpeaking(), "Youth NPC should not be speaking (no speech was set)");
+
+        // Run one update frame — removeIf at the top of update() should remove the dead NPC
+        manager.update(0.1f, world, player, inventory, tooltipSystem);
+
+        // NPC should have been removed from the main list
+        assertFalse(manager.getNPCs().contains(youth),
+                "Dead youth gang NPC (no speech) should be removed from the NPC list by removeIf");
+
+        // Further updates must not throw due to stale map entries (issue #186 regression)
+        assertDoesNotThrow(() -> {
+            for (int i = 0; i < 10; i++) {
+                manager.update(0.1f, world, player, inventory, tooltipSystem);
+            }
+        }, "update() threw after dead NPC removal — stale map references may exist (issue #186)");
+    }
+
+    /**
+     * Fix #186: despawnPolice() must also clean up all per-NPC maps for each
+     * police NPC it removes, not just policeWarningTimers and policeTargetStructures.
+     */
+    @Test
+    void testDespawnPoliceCleansUpAllMaps() {
+        // Simulate night → day transition to trigger despawnPolice()
+        // First call with isNight=true to set wasNight=true and spawn police
+        manager.updatePoliceSpawning(true, world, player);
+
+        long policeCount = manager.getNPCs().stream()
+                .filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
+        assertTrue(policeCount > 0, "Police should have been spawned during night");
+
+        // Run a few update frames to populate per-NPC maps for the police NPCs
+        for (int i = 0; i < 5; i++) {
+            manager.update(0.1f, world, player, inventory, tooltipSystem);
+        }
+
+        // Dawn transition: isNight goes false → despawnPolice() is called
+        manager.updatePoliceSpawning(false, world, player);
+
+        long policeAfterDawn = manager.getNPCs().stream()
+                .filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
+        assertEquals(0, policeAfterDawn,
+                "All police should be despawned at dawn");
+
+        // Further updates must not throw due to stale map entries
+        assertDoesNotThrow(() -> {
+            for (int i = 0; i < 10; i++) {
+                manager.update(0.1f, world, player, inventory, tooltipSystem);
+            }
+        }, "update() threw after dawn police despawn — stale map references may exist (issue #186)");
+    }
+
+    /**
      * Integration test for issue #120: Multiple council builders removed in the same
      * frame must not corrupt the NPC list or orphan subsequent NPCs.
      *
