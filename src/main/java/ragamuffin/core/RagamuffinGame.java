@@ -485,9 +485,15 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetEscape();
             }
 
-            // Update game logic if not blocked by UI or opening sequence
+            // Update world simulation (NPCs, environment systems) — always runs regardless of UI state.
+            // Fix #198: NPCs/gang/arrest must not freeze when inventory/crafting/help UI is open.
+            if (!openingSequence.isActive()) {
+                updatePlayingSimulation(delta);
+            }
+
+            // Update player-input logic (movement, punch, placement) — gated behind UI check.
             if (!isUIBlocking() && !openingSequence.isActive()) {
-                updatePlaying(delta);
+                updatePlayingInput(delta);
             }
 
             // Update time system (only when not paused in opening sequence)
@@ -886,10 +892,78 @@ public class RagamuffinGame extends ApplicationAdapter {
         return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible();
     }
 
-    private void updatePlaying(float delta) {
+    /**
+     * Fix #198: World-simulation update — runs every frame regardless of UI state.
+     * NPCs, gang territory, arrest system, reputation decay, particles, and chunk
+     * loading must not freeze when the player has a UI overlay (inventory/crafting/help) open.
+     */
+    private void updatePlayingSimulation(float delta) {
         // Decay partially-damaged blocks that have not been hit recently
         blockBreaker.tickDecay(delta);
 
+        // Update loaded chunks based on player position; remove renderer models for unloaded chunks
+        java.util.Set<String> unloadedChunkKeys = world.updateLoadedChunks(player.getPosition());
+        for (String key : unloadedChunkKeys) {
+            chunkRenderer.removeChunkByKey(key);
+        }
+
+        // Rebuild meshes for newly loaded chunks (budget: max 16 per frame to prevent freezes)
+        List<Chunk> dirtyChunks = world.getDirtyChunks();
+        if (!dirtyChunks.isEmpty()) {
+            int meshBudget = 16;
+            int built = 0;
+            java.util.Iterator<Chunk> it = dirtyChunks.iterator();
+            while (it.hasNext() && built < meshBudget) {
+                Chunk chunk = it.next();
+                chunkRenderer.updateChunk(chunk, meshBuilder);
+                world.markChunkClean(chunk);
+                built++;
+            }
+        }
+
+        // Phase 5: Update NPCs
+        npcManager.update(delta, world, player, inventory, tooltipSystem);
+
+        // Fix #196: update speech log after NPC speech is set for this frame
+        speechLogUI.update(npcManager.getNPCs(), delta);
+
+        // Issue #26: Update gang territory system
+        gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
+
+        // CRITIC 5: Handle police arrest — apply penalties if player was caught
+        if (npcManager.isArrestPending() && !player.isDead()) {
+            java.util.List<String> confiscated = arrestSystem.arrest(player, inventory);
+            String arrestMsg = ArrestSystem.buildArrestMessage(confiscated);
+            tooltipSystem.showMessage(arrestMsg, 4.0f);
+            npcManager.clearArrestPending();
+            // CRITIC 3: Arrest clears the active Greggs raid — police have resolved the incident
+            greggsRaidSystem.reset();
+            // Issue #7: Arrest reduces reputation — the streets forget when you're locked up
+            player.getStreetReputation().removePoints(15);
+            // Issue #166: Sync HealingSystem position after teleport so the next update()
+            // does not compute a spurious speed from the arrest teleport distance.
+            healingSystem.resetPosition(player.getPosition());
+        }
+
+        // Issue #48: Passive reputation decay — "lying low" reduces reputation over time
+        player.getStreetReputation().update(delta);
+
+        // Issue #171: Update particle system
+        particleSystem.update(delta);
+
+        // Update camera to follow player
+        camera.position.set(player.getPosition());
+        camera.position.y += Player.EYE_HEIGHT;
+
+        camera.update();
+    }
+
+    /**
+     * Fix #198: Player-input update — gated behind !isUIBlocking().
+     * Movement, jump, dodge, punch, and block placement are suppressed while a UI
+     * overlay is open so the player cannot accidentally act while using menus.
+     */
+    private void updatePlayingInput(float delta) {
         // Update first-person arm animation
         firstPersonArm.update(delta);
 
@@ -989,62 +1063,6 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Push player out of any NPC they're overlapping
         resolveNPCCollisions();
-
-        // Update loaded chunks based on player position; remove renderer models for unloaded chunks
-        java.util.Set<String> unloadedChunkKeys = world.updateLoadedChunks(player.getPosition());
-        for (String key : unloadedChunkKeys) {
-            chunkRenderer.removeChunkByKey(key);
-        }
-
-        // Rebuild meshes for newly loaded chunks (budget: max 16 per frame to prevent freezes)
-        List<Chunk> dirtyChunks = world.getDirtyChunks();
-        if (!dirtyChunks.isEmpty()) {
-            int meshBudget = 16;
-            int built = 0;
-            java.util.Iterator<Chunk> it = dirtyChunks.iterator();
-            while (it.hasNext() && built < meshBudget) {
-                Chunk chunk = it.next();
-                chunkRenderer.updateChunk(chunk, meshBuilder);
-                world.markChunkClean(chunk);
-                built++;
-            }
-        }
-
-        // Phase 5: Update NPCs
-        npcManager.update(delta, world, player, inventory, tooltipSystem);
-
-        // Fix #196: update speech log after NPC speech is set for this frame
-        speechLogUI.update(npcManager.getNPCs(), delta);
-
-        // Issue #26: Update gang territory system
-        gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
-
-        // CRITIC 5: Handle police arrest — apply penalties if player was caught
-        if (npcManager.isArrestPending() && !player.isDead()) {
-            java.util.List<String> confiscated = arrestSystem.arrest(player, inventory);
-            String arrestMsg = ArrestSystem.buildArrestMessage(confiscated);
-            tooltipSystem.showMessage(arrestMsg, 4.0f);
-            npcManager.clearArrestPending();
-            // CRITIC 3: Arrest clears the active Greggs raid — police have resolved the incident
-            greggsRaidSystem.reset();
-            // Issue #7: Arrest reduces reputation — the streets forget when you're locked up
-            player.getStreetReputation().removePoints(15);
-            // Issue #166: Sync HealingSystem position after teleport so the next update()
-            // does not compute a spurious speed from the arrest teleport distance.
-            healingSystem.resetPosition(player.getPosition());
-        }
-
-        // Issue #48: Passive reputation decay — "lying low" reduces reputation over time
-        player.getStreetReputation().update(delta);
-
-        // Issue #171: Update particle system
-        particleSystem.update(delta);
-
-        // Update camera to follow player
-        camera.position.set(player.getPosition());
-        camera.position.y += Player.EYE_HEIGHT;
-
-        camera.update();
     }
 
     private void handlePunch() {
