@@ -8,6 +8,7 @@ import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 
 // Note: item icons are drawn as coloured block graphics using Material.getIconColors()
+// Non-block items (tools, food, shop goods) use distinctive custom shapes for visual clarity.
 
 /**
  * Renders the inventory UI overlay with click and drag-and-drop support.
@@ -303,12 +304,12 @@ public class InventoryUI {
     }
 
     /**
-     * Draw a block-style icon for the given material inside the slot rectangle.
+     * Draw an icon for the given material inside the slot rectangle.
      * Must be called while a Filled ShapeRenderer is active.
-     * For single-color materials the whole icon is filled.
-     * For two-color materials the top half uses color[0] (representing the top face)
-     * and the bottom half uses color[1] (representing the side face), mimicking how
-     * blocks look when viewed from a slight angle.
+     *
+     * Block items are drawn as coloured rectangles (1 or 2 colours for top/side face).
+     * Non-block items (tools, food, shop goods) use distinctive custom shapes so they
+     * are visually distinct from construction blocks at a glance.
      */
     private void drawItemIcon(ShapeRenderer shapeRenderer, Material material, int x, int y, int size) {
         int padding = 4;
@@ -317,16 +318,155 @@ public class InventoryUI {
         int iconSize = size - padding * 2;
 
         Color[] colors = material.getIconColors();
-        if (colors.length == 1) {
-            shapeRenderer.setColor(colors[0]);
-            shapeRenderer.rect(iconX, iconY, iconSize, iconSize);
+
+        if (material.isBlockItem()) {
+            // Block materials: coloured square (1 or 2 colours)
+            if (colors.length == 1) {
+                shapeRenderer.setColor(colors[0]);
+                shapeRenderer.rect(iconX, iconY, iconSize, iconSize);
+            } else {
+                // Two-color: top half = colors[0] (top face), bottom half = colors[1] (side face)
+                int half = iconSize / 2;
+                shapeRenderer.setColor(colors[1]);
+                shapeRenderer.rect(iconX, iconY, iconSize, half);
+                shapeRenderer.setColor(colors[0]);
+                shapeRenderer.rect(iconX, iconY + half, iconSize, iconSize - half);
+            }
         } else {
-            // Two-color: top half = colors[0] (top face), bottom half = colors[1] (side face)
-            int half = iconSize / 2;
-            shapeRenderer.setColor(colors[1]);
-            shapeRenderer.rect(iconX, iconY, iconSize, half);
-            shapeRenderer.setColor(colors[0]);
-            shapeRenderer.rect(iconX, iconY + half, iconSize, iconSize - half);
+            drawNonBlockIcon(shapeRenderer, material, iconX, iconY, iconSize, colors);
+        }
+    }
+
+    /**
+     * Draw a custom shaped icon for a non-block item.
+     * Uses ShapeRenderer primitives to produce recognisable silhouettes.
+     */
+    private void drawNonBlockIcon(ShapeRenderer shapeRenderer, Material material, int x, int y, int size, Color[] colors) {
+        Color primary = colors[0];
+        Color secondary = colors.length > 1 ? colors[1] : primary;
+        int cx = x + size / 2;
+        int cy = y + size / 2;
+
+        switch (material.getIconShape()) {
+            case TOOL: {
+                // Diagonal handle (lower-left to upper-right) + rectangular head at top-right
+                int handleW = size / 5;
+                int handleH = (int)(size * 0.65f);
+                // Handle — drawn as a rotated bar approximated by a thin tall rect slightly off-centre
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(x + size / 5, y + size / 8, handleW, handleH);
+                // Head — square at the top-right of the handle
+                int headSize = size / 3;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(x + size / 2, y + size / 2, headSize, headSize);
+                break;
+            }
+            case FLAT_PAPER: {
+                // Rectangle representing a flat sheet/book with a fold line
+                int w = (int)(size * 0.75f);
+                int h = (int)(size * 0.80f);
+                int px = x + (size - w) / 2;
+                int py = y + (size - h) / 2;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(px, py, w, h);
+                // Darker strip at top to suggest lines of text / cover
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(px + 2, py + h - h / 5, w - 4, h / 5 - 1);
+                break;
+            }
+            case BOTTLE: {
+                // Tall thin rectangle (body) + small cap at top
+                int bodyW = size / 3;
+                int bodyH = (int)(size * 0.70f);
+                int bx = cx - bodyW / 2;
+                int by = y + size / 8;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(bx, by, bodyW, bodyH);
+                // Cap
+                int capW = bodyW - 4;
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(bx + 2, by + bodyH, capW, size / 8);
+                break;
+            }
+            case FOOD: {
+                // Wide oval/ellipse sitting on a thin base line
+                int foodW = (int)(size * 0.80f);
+                int foodH = (int)(size * 0.50f);
+                int fx = x + (size - foodW) / 2;
+                int fy = cy - foodH / 2 + size / 10;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(fx, fy, foodW, foodH);
+                // Container/plate — thin dark strip at bottom
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(fx + 2, y + size / 8, foodW - 4, size / 8);
+                break;
+            }
+            case CARD: {
+                // Landscape rectangle (card/phone), slightly rounded look via inset
+                int cardW = (int)(size * 0.80f);
+                int cardH = (int)(size * 0.55f);
+                int kx = x + (size - cardW) / 2;
+                int ky = cy - cardH / 2;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(kx, ky, cardW, cardH);
+                // Screen/label — inset lighter rect
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(kx + 3, ky + 3, cardW - 6, cardH - 6);
+                break;
+            }
+            case GEM: {
+                // Diamond/rhombus shape using two triangles
+                shapeRenderer.setColor(primary);
+                // Top triangle: apex at top-centre, base across the middle
+                shapeRenderer.triangle(
+                    cx, y + size - 2,                // top apex
+                    x + 2, cy,                        // middle-left
+                    x + size - 2, cy                  // middle-right
+                );
+                // Bottom triangle: base across the middle, apex at bottom-centre
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.triangle(
+                    x + 2, cy,                        // middle-left
+                    x + size - 2, cy,                 // middle-right
+                    cx, y + 2                          // bottom apex
+                );
+                break;
+            }
+            case BOX: {
+                // Front face of a box + top strip for 3D look
+                int boxSize = (int)(size * 0.70f);
+                int bx = x + (size - boxSize) / 2;
+                int by = y + size / 10;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(bx, by, boxSize, boxSize);
+                // Top strip (lighter, simulates top face)
+                int topH = size / 6;
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(bx, by + boxSize, boxSize, topH);
+                break;
+            }
+            case CYLINDER: {
+                // Tall narrow rect with oval cap suggestion at top
+                int cylW = size / 3;
+                int cylH = (int)(size * 0.72f);
+                int cx2 = x + (size - cylW) / 2;
+                int cy2 = y + size / 10;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(cx2, cy2, cylW, cylH);
+                // "Ellipse" cap at top — approximated with a wider rect
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(cx2 - 2, cy2 + cylH - size / 10, cylW + 4, size / 8);
+                // Handle / nozzle on side (small rect)
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(cx2 + cylW, cy2 + cylH / 2, size / 6, size / 8);
+                break;
+            }
+            default: {
+                // Fallback: coloured square
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(x, y, size, size);
+                break;
+            }
         }
     }
 

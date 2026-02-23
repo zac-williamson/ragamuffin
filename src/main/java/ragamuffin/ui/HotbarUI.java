@@ -1,5 +1,6 @@
 package ragamuffin.ui;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -181,8 +182,10 @@ public class HotbarUI {
     }
 
     /**
-     * Draw a block-style icon for the given material inside the slot rectangle.
+     * Draw an icon for the given material inside the slot rectangle.
      * Must be called while a Filled ShapeRenderer is active.
+     *
+     * Block items are drawn as coloured rectangles. Non-block items use custom shapes.
      */
     private void drawItemIcon(ShapeRenderer shapeRenderer, Material material, int x, int y, int size) {
         int padding = 4;
@@ -190,16 +193,132 @@ public class HotbarUI {
         int iconY = y + padding;
         int iconSize = size - padding * 2;
 
-        com.badlogic.gdx.graphics.Color[] colors = material.getIconColors();
-        if (colors.length == 1) {
-            shapeRenderer.setColor(colors[0]);
-            shapeRenderer.rect(iconX, iconY, iconSize, iconSize);
+        Color[] colors = material.getIconColors();
+
+        if (material.isBlockItem()) {
+            if (colors.length == 1) {
+                shapeRenderer.setColor(colors[0]);
+                shapeRenderer.rect(iconX, iconY, iconSize, iconSize);
+            } else {
+                int half = iconSize / 2;
+                shapeRenderer.setColor(colors[1]);
+                shapeRenderer.rect(iconX, iconY, iconSize, half);
+                shapeRenderer.setColor(colors[0]);
+                shapeRenderer.rect(iconX, iconY + half, iconSize, iconSize - half);
+            }
         } else {
-            int half = iconSize / 2;
-            shapeRenderer.setColor(colors[1]);
-            shapeRenderer.rect(iconX, iconY, iconSize, half);
-            shapeRenderer.setColor(colors[0]);
-            shapeRenderer.rect(iconX, iconY + half, iconSize, iconSize - half);
+            drawNonBlockIcon(shapeRenderer, material, iconX, iconY, iconSize, colors);
+        }
+    }
+
+    /**
+     * Draw a custom shaped icon for a non-block item.
+     */
+    private void drawNonBlockIcon(ShapeRenderer shapeRenderer, Material material, int x, int y, int size, Color[] colors) {
+        Color primary = colors[0];
+        Color secondary = colors.length > 1 ? colors[1] : primary;
+        int cx = x + size / 2;
+        int cy = y + size / 2;
+
+        switch (material.getIconShape()) {
+            case TOOL: {
+                int handleW = size / 5;
+                int handleH = (int)(size * 0.65f);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(x + size / 5, y + size / 8, handleW, handleH);
+                int headSize = size / 3;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(x + size / 2, y + size / 2, headSize, headSize);
+                break;
+            }
+            case FLAT_PAPER: {
+                int w = (int)(size * 0.75f);
+                int h = (int)(size * 0.80f);
+                int px = x + (size - w) / 2;
+                int py = y + (size - h) / 2;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(px, py, w, h);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(px + 2, py + h - h / 5, w - 4, h / 5 - 1);
+                break;
+            }
+            case BOTTLE: {
+                int bodyW = size / 3;
+                int bodyH = (int)(size * 0.70f);
+                int bx = cx - bodyW / 2;
+                int by = y + size / 8;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(bx, by, bodyW, bodyH);
+                int capW = bodyW - 4;
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(bx + 2, by + bodyH, capW, size / 8);
+                break;
+            }
+            case FOOD: {
+                int foodW = (int)(size * 0.80f);
+                int foodH = (int)(size * 0.50f);
+                int fx = x + (size - foodW) / 2;
+                int fy = cy - foodH / 2 + size / 10;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(fx, fy, foodW, foodH);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(fx + 2, y + size / 8, foodW - 4, size / 8);
+                break;
+            }
+            case CARD: {
+                int cardW = (int)(size * 0.80f);
+                int cardH = (int)(size * 0.55f);
+                int kx = x + (size - cardW) / 2;
+                int ky = cy - cardH / 2;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(kx, ky, cardW, cardH);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(kx + 3, ky + 3, cardW - 6, cardH - 6);
+                break;
+            }
+            case GEM: {
+                shapeRenderer.setColor(primary);
+                shapeRenderer.triangle(
+                    cx, y + size - 2,
+                    x + 2, cy,
+                    x + size - 2, cy
+                );
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.triangle(
+                    x + 2, cy,
+                    x + size - 2, cy,
+                    cx, y + 2
+                );
+                break;
+            }
+            case BOX: {
+                int boxSize = (int)(size * 0.70f);
+                int bx = x + (size - boxSize) / 2;
+                int by = y + size / 10;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(bx, by, boxSize, boxSize);
+                int topH = size / 6;
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(bx, by + boxSize, boxSize, topH);
+                break;
+            }
+            case CYLINDER: {
+                int cylW = size / 3;
+                int cylH = (int)(size * 0.72f);
+                int cx2 = x + (size - cylW) / 2;
+                int cy2 = y + size / 10;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(cx2, cy2, cylW, cylH);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(cx2 - 2, cy2 + cylH - size / 10, cylW + 4, size / 8);
+                shapeRenderer.rect(cx2 + cylW, cy2 + cylH / 2, size / 6, size / 8);
+                break;
+            }
+            default: {
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(x, y, size, size);
+                break;
+            }
         }
     }
 
