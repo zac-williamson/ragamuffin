@@ -31,6 +31,7 @@ public class Player {
     public static final float HUNGER_DRAIN_PER_MINUTE = 2f; // 50 minutes to starve
     public static final float ENERGY_DRAIN_PER_ACTION = 1f;
     public static final float ENERGY_RECOVERY_PER_SECOND = 5f; // 20 seconds to full recovery
+    public static final float SPRINT_ENERGY_DRAIN = 8.0f; // Energy/s drained while sprinting and moving
 
     private final Vector3 position;
     private final Vector3 velocity;

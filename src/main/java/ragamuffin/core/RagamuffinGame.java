@@ -502,6 +502,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                     float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
                     player.updateHunger(delta * hungerMultiplier);
 
+                    // Sprint drains energy while moving
+                    if (inputHandler.isSprintHeld() && tmpMoveDir.len2() > 0) {
+                        player.consumeEnergy(Player.SPRINT_ENERGY_DRAIN * delta);
+                    }
+
                     // Starvation: zero hunger drains health at 5 HP/s
                     if (player.getHunger() <= 0) {
                         player.damage(5.0f * delta);

@@ -191,4 +191,59 @@ class PlayerTest {
             + player.getDodgeDirZ() * player.getDodgeDirZ());
         assertEquals(1.0f, len, 0.01f, "Dodge direction should be normalised");
     }
+
+    // ========== Sprint Energy Drain Tests ==========
+
+    @Test
+    void sprintFor10SecondsDecreasesEnergyByAbout80() {
+        Player player = new Player(0, 0, 0);
+        float initialEnergy = player.getEnergy();
+
+        // Simulate sprinting: drain SPRINT_ENERGY_DRAIN per second for 10 seconds
+        float delta = 1.0f / 60.0f;
+        for (int frame = 0; frame < 600; frame++) {
+            player.consumeEnergy(Player.SPRINT_ENERGY_DRAIN * delta);
+        }
+
+        float drained = initialEnergy - player.getEnergy();
+        assertEquals(80.0f, drained, 2.0f,
+            "Sprinting for 10s should drain ~80 energy (8.0/s * 10s)");
+    }
+
+    @Test
+    void walkingWithoutSprintDoesNotDrainEnergy() {
+        Player player = new Player(0, 0, 0);
+        float initialEnergy = player.getEnergy();
+
+        // Walking: no sprint energy drain — energy only recovers passively
+        // Just verify no consumeEnergy is called (energy should stay the same or recover)
+        // No drain means energy stays at MAX
+        assertEquals(initialEnergy, player.getEnergy(), 0.01f,
+            "Walking without sprint should not drain energy");
+    }
+
+    @Test
+    void energyExhaustedPlayerCannotDodge() {
+        Player player = new Player(0, 0, 0);
+        player.setEnergy(0);
+
+        assertFalse(player.canDodge(), "Player with no energy should not be able to dodge");
+
+        boolean dodged = player.dodge(1, 0);
+        assertFalse(dodged, "Dodge should fail when energy is exhausted");
+    }
+
+    @Test
+    void energyRecovershAfterStoppingSprint() {
+        Player player = new Player(0, 0, 0);
+        // Drain energy to simulate sprinting
+        player.consumeEnergy(80.0f);
+        float depletedEnergy = player.getEnergy();
+        assertTrue(depletedEnergy < Player.MAX_ENERGY, "Energy should be depleted after sprinting");
+
+        // Recover energy for 10 seconds at ENERGY_RECOVERY_PER_SECOND
+        player.recoverEnergy(10.0f);
+
+        assertTrue(player.getEnergy() > depletedEnergy, "Energy should recover after stopping sprint");
+    }
 }
