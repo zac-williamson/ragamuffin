@@ -80,6 +80,11 @@ public class SignageRenderer {
                        int screenWidth,
                        int screenHeight) {
 
+        com.badlogic.gdx.math.Matrix4 ortho = new com.badlogic.gdx.math.Matrix4();
+        ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
+        shapeRenderer.setProjectionMatrix(ortho);
+        spriteBatch.setProjectionMatrix(ortho);
+
         for (BuildingSign sign : signs) {
             tmpPos.set(sign.getWorldX(), sign.getWorldY(), sign.getWorldZ());
 
