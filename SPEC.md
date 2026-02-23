@@ -887,3 +887,40 @@ All systems implemented and tested:
 - Block breaking UI could show current tool in use
 - Weather transitions could have visual effects (rain particles, etc.)
 - Cardboard box placement could auto-build 2x2x2 shelter structure
+
+---
+
+## Bug Fix: Wire GangTerritorySystem into RagamuffinGame
+
+**Status**: ❌ Not wired — `GangTerritorySystem` is fully implemented but never connected to the game loop.
+
+**Problem**: `GangTerritorySystem` exists as a complete, tested class but is never instantiated in
+`RagamuffinGame`. No territories are registered, `update()` is never called, and `onPlayerAttacksGang()`
+is never invoked when hitting a youth gang NPC. The gang territory mechanic is silently absent from
+actual gameplay despite all integration tests passing (they test the class in isolation).
+
+**Required changes to `RagamuffinGame`**:
+
+1. Add a `private GangTerritorySystem gangTerritorySystem;` field.
+
+2. In `initGame()`, after the NPC manager is set up, instantiate and register territories matching
+   the youth gang spawn locations:
+   ```
+   gangTerritorySystem = new GangTerritorySystem();
+   gangTerritorySystem.addTerritory("Bricky Estate",  -50f, -30f, 18f);
+   gangTerritorySystem.addTerritory("South Patch",    -45f, -45f, 15f);
+   ```
+
+3. In `updatePlaying()`, call `gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world)`
+   every frame (only while not UI-blocked, same as other game systems).
+
+4. In `handlePunch()`, when a YOUTH_GANG NPC is punched, call
+   `gangTerritorySystem.onPlayerAttacksGang(tooltipSystem, npcManager, player, world)`.
+
+5. In `restartGame()`, reset the system: `gangTerritorySystem.reset()`.
+
+**Integration test** (add to Phase 13 / Critic 7 suite as a true end-to-end test via `RagamuffinGame`):
+
+- Create a `RagamuffinGame` (headless), transition to PLAYING, move player into a registered
+  gang territory at `(-50, 1, -30)`. Simulate ticks for `LINGER_THRESHOLD_SECONDS + 1` seconds.
+  Verify that at least one nearby `YOUTH_GANG` NPC has state `AGGRESSIVE`.
