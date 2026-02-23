@@ -110,7 +110,7 @@ public class StructureTracker {
                     }
 
                     BlockType block = world.getBlock(x, y, z);
-                    if (block == BlockType.WOOD || block == BlockType.BRICK) {
+                    if (block == BlockType.WOOD) {
                         // Found a placed block - trace the structure
                         Set<Vector3> structureBlocks = traceStructure(world, x, y, z, visited);
                         if (structureBlocks.size() >= SMALL_STRUCTURE_THRESHOLD) {
@@ -146,7 +146,7 @@ public class StructureTracker {
                 if (!visited.contains(key)) {
                     visited.add(key);
                     BlockType block = world.getBlock(x, y, z);
-                    if (block == BlockType.WOOD || block == BlockType.BRICK) {
+                    if (block == BlockType.WOOD) {
                         queue.add(new Vector3(x, y, z));
                     }
                 }
