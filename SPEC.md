@@ -1425,3 +1425,52 @@ matches the "lying low" description in the code's own documentation.
    civilians flee. Advance `DECAY_INTERVAL_SECONDS * 21 + 1` seconds with no crimes. Verify
    reputation is now 9 (KNOWN, not NOTORIOUS). Verify `isNotorious()` is false. Verify that in
    the next simulation frame, civilian NPCs do NOT enter FLEEING state when the player approaches.
+
+---
+
+## Bug Fix: Block targeting highlight and placement preview are unimplemented
+
+**Status**: ❌ Missing — Phase 3 and Phase 4 both specify visual targeting feedback,
+but neither feature is implemented in the codebase.
+
+**Problem**: The spec requires (Phase 3, line 135) "Block highlight/outline showing which block
+the player is targeting (raycasting)" and (Phase 4, line 218) "Block placement preview (ghost
+block showing where it will be placed)". The raycasting infrastructure already exists and is
+used internally for break/place logic, but there is zero visual rendering of these affordances.
+The player has no indication which block they are about to break or where a placed block will
+land — they must guess based on crosshair position alone.
+
+**Impact**: Core gameplay loop (breaking and placing blocks) lacks fundamental visual feedback.
+Players cannot reliably target specific blocks in dense urban environments (terraced houses,
+multi-storey buildings), and block placement is imprecise without a preview. This is
+particularly egregious in a voxel game where precise block targeting is the primary interaction.
+
+**Implementation**:
+
+1. **Block targeting outline** (Phase 3): After `modelBatch.end()` each frame, render a
+   wireframe cube around the targeted block using `ShapeRenderer.ShapeType.Line`. Use the
+   existing `blockBreaker.getTargetBlock()` raycast result. The outline should be a thin
+   (1px) white/black wireframe with slight transparency so it works against all block colours.
+   The cube should be 1.0×1.0×1.0 world units at the block's integer position. Disable
+   depth testing so the outline is always visible even when the block face is flush with
+   adjacent blocks.
+
+2. **Block placement preview** (Phase 4): When the player has a placeable block in the
+   selected hotbar slot, compute the placement position each frame (reuse
+   `blockPlacer.getPlacementPosition()`) and render a semi-transparent ghost block there.
+   The ghost should use the same colour as the block type but with alpha 0.4f. It should
+   not be rendered if there is no valid placement target.
+
+**Integration tests** (add to Phase 3 / Phase 4 test suite):
+
+1. **Targeting outline renders for targeted block**: Place the player adjacent to a STONE
+   block, facing it. Verify `blockBreaker.getTargetBlock()` returns a non-null result for
+   that block. Verify the `BlockHighlightRenderer` (or equivalent) has a non-null highlight
+   position matching the block's coordinates. Verify that when no block is targeted (open
+   area), the highlight position is null.
+
+2. **Placement preview position is correct**: Give the player 1 PLANKS in hotbar slot 1.
+   Select slot 1. Place the player 1 block away from a STONE wall, facing it. Verify the
+   placement preview position returned by `blockPlacer.getPlacementPosition()` is the air
+   block immediately adjacent to the wall face the player is looking at. Verify that when
+   the player turns away (no valid target), the preview position is null.
