@@ -77,8 +77,10 @@ public class RespawnSystem {
      * Inventory is preserved.
      */
     private void performRespawn(Player player) {
-        // Respawn at park centre using terrain-aware Y to avoid spawning inside solid blocks
-        player.getPosition().set(PARK_CENTRE.x, spawnY, PARK_CENTRE.z);
+        // Respawn at park centre using terrain-aware Y to avoid spawning inside solid blocks.
+        // Use teleport() to atomically sync the AABB to the new position so collision
+        // detection is correct on the very first frame after respawn (fixes #184).
+        player.teleport(PARK_CENTRE.x, spawnY, PARK_CENTRE.z);
         player.setVerticalVelocity(0f);
 
         // Restore stats and revive

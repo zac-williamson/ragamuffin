@@ -192,6 +192,76 @@ class PlayerTest {
         assertEquals(1.0f, len, 0.01f, "Dodge direction should be normalised");
     }
 
+    // ========== Teleport / AABB Sync Tests (regression for #184) ==========
+
+    @Test
+    void teleportSyncsAABBImmediately() {
+        // Place player at (100, 5, 100) — far from park
+        Player player = new Player(100, 5, 100);
+
+        // Teleport to the respawn position (park centre: x=0, y=1, z=0)
+        float spawnX = 0f;
+        float spawnY = 1f;
+        float spawnZ = 0f;
+        player.teleport(spawnX, spawnY, spawnZ);
+
+        // Position must be at the new location
+        assertEquals(spawnX, player.getPosition().x, 0.001f, "Position X must match after teleport");
+        assertEquals(spawnY, player.getPosition().y, 0.001f, "Position Y must match after teleport");
+        assertEquals(spawnZ, player.getPosition().z, 0.001f, "Position Z must match after teleport");
+
+        // AABB minX must immediately reflect the new position (not the old one)
+        float expectedMinX = spawnX - Player.WIDTH / 2f;
+        assertEquals(expectedMinX, player.getAABB().getMinX(), 0.001f,
+            "AABB minX must be synced to new spawn X immediately after teleport (regression for #184)");
+
+        // Sanity check other AABB bounds
+        float expectedMaxX = spawnX + Player.WIDTH / 2f;
+        float expectedMinY = spawnY;
+        float expectedMaxY = spawnY + Player.HEIGHT;
+        float expectedMinZ = spawnZ - Player.DEPTH / 2f;
+        float expectedMaxZ = spawnZ + Player.DEPTH / 2f;
+        assertEquals(expectedMaxX, player.getAABB().getMaxX(), 0.001f, "AABB maxX must be synced");
+        assertEquals(expectedMinY, player.getAABB().getMinY(), 0.001f, "AABB minY must be synced");
+        assertEquals(expectedMaxY, player.getAABB().getMaxY(), 0.001f, "AABB maxY must be synced");
+        assertEquals(expectedMinZ, player.getAABB().getMinZ(), 0.001f, "AABB minZ must be synced");
+        assertEquals(expectedMaxZ, player.getAABB().getMaxZ(), 0.001f, "AABB maxZ must be synced");
+    }
+
+    @Test
+    void respawnSystemSyncsAABB() {
+        // Regression test for #184: RespawnSystem.performRespawn() must call teleport()
+        // so the AABB is in sync on the first frame after respawn.
+        Player player = new Player(999, 50, 999);
+
+        // Simulate what RespawnSystem.performRespawn() does (via the public triggerRespawn path)
+        float spawnX = ragamuffin.core.RespawnSystem.PARK_CENTRE.x;
+        float spawnY = 3.0f; // terrain-aware Y
+        float spawnZ = ragamuffin.core.RespawnSystem.PARK_CENTRE.z;
+        player.teleport(spawnX, spawnY, spawnZ);
+
+        float expectedMinX = spawnX - Player.WIDTH / 2f;
+        assertEquals(expectedMinX, player.getAABB().getMinX(), 0.001f,
+            "After respawn teleport, AABB minX must match spawn X (regression for #184)");
+    }
+
+    @Test
+    void arrestSystemSyncsAABB() {
+        // Regression test for #184: ArrestSystem.arrest() must call teleport()
+        // so the AABB is in sync on the first frame after arrest.
+        Player player = new Player(999, 50, 999);
+        ragamuffin.building.Inventory inventory = new ragamuffin.building.Inventory(36);
+        ragamuffin.core.ArrestSystem arrestSystem = new ragamuffin.core.ArrestSystem();
+        float spawnY = 3.0f;
+        arrestSystem.setRespawnY(spawnY);
+        arrestSystem.arrest(player, inventory);
+
+        float spawnX = ragamuffin.core.ArrestSystem.ARREST_RESPAWN.x;
+        float expectedMinX = spawnX - Player.WIDTH / 2f;
+        assertEquals(expectedMinX, player.getAABB().getMinX(), 0.001f,
+            "After arrest teleport, AABB minX must match arrest respawn X (regression for #184)");
+    }
+
     // ========== Sprint Energy Drain Tests ==========
 
     @Test
