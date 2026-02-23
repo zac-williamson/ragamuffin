@@ -4,16 +4,21 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 
 /**
- * Renders sky elements — sun disk and clouds — as 2D screen-space overlays.
+ * Renders sky elements — sun disk and clouds — as part of the skybox.
  *
  * The sun is drawn as a filled circle near the top of the screen, positioned
  * horizontally based on the time of day and vertically based on the sun's
  * elevation above the horizon.  Its colour transitions through dawn/day/dusk
  * colours matching the sky colour system.
  *
- * Clouds are drawn as clusters of overlapping filled circles at fixed world
- * positions that scroll slowly over time, giving a sense of atmospheric depth
- * without expensive 3D geometry.
+ * Clouds are drawn as clusters of overlapping filled circles that scroll slowly
+ * over time, giving a sense of atmospheric depth without expensive 3D geometry.
+ *
+ * Both elements are rendered into the skybox layer (before the 3D world geometry)
+ * so that 3D objects naturally occlude them.  Use {@link #renderSkybox} each frame
+ * immediately after clearing the colour buffer and before starting the 3D
+ * model batch.  The caller must clear the depth buffer after this call so that
+ * 3D geometry renders correctly on top.
  *
  * Both elements are rendered using ShapeRenderer so no extra textures are needed.
  */
@@ -42,11 +47,12 @@ public class SkyRenderer {
     }
 
     /**
-     * Render sun and clouds into the sky region of the screen.
+     * Render sun and clouds as part of the skybox background.
      *
-     * Must be called AFTER the 3D world has been rendered (modelBatch.end()) so
-     * the sky elements appear on top of the solid-colour background but BEFORE
-     * the 3D highlight/bubble overlays and the 2D HUD.
+     * Must be called BEFORE the 3D world is rendered (before modelBatch.begin())
+     * so that 3D geometry naturally appears in front of sky elements.  The caller
+     * is responsible for clearing the depth buffer after this call (but before
+     * the model batch) so that 3D objects render correctly on top of the sky.
      *
      * @param shapeRenderer shared ShapeRenderer (not currently between begin/end)
      * @param time          current game time in hours (0–24)
@@ -56,7 +62,7 @@ public class SkyRenderer {
      * @param screenHeight  current screen height in pixels
      * @param isNight       true when it is currently night-time
      */
-    public void render(ShapeRenderer shapeRenderer,
+    public void renderSkybox(ShapeRenderer shapeRenderer,
                        float time, float sunrise, float sunset,
                        int screenWidth, int screenHeight,
                        boolean isNight) {

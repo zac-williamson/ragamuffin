@@ -587,20 +587,23 @@ public class RagamuffinGame extends ApplicationAdapter {
             Gdx.gl.glClearColor(skyR, skyG, skyB, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-            modelBatch.begin(camera);
-            chunkRenderer.render(modelBatch, environment);
-            npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
-            modelBatch.end();
-
-            // Issue #209: Render sun and clouds on top of the sky background
+            // Fix #227: Render sun and clouds as part of the skybox — before 3D geometry
+            // so that buildings and terrain naturally occlude them.  After drawing the
+            // sky elements we clear only the depth buffer so the 3D world renders on top.
             {
                 float ts = timeSystem.getTime();
                 float sr = timeSystem.getSunriseTime();
                 float ss = timeSystem.getSunsetTime();
-                skyRenderer.render(shapeRenderer, ts, sr, ss,
-                                   Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
-                                   timeSystem.isNight());
+                skyRenderer.renderSkybox(shapeRenderer, ts, sr, ss,
+                                         Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
+                                         timeSystem.isNight());
             }
+            Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
+
+            modelBatch.begin(camera);
+            chunkRenderer.render(modelBatch, environment);
+            npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
+            modelBatch.end();
 
             // Issue #54: Render block targeting outline and placement ghost block
             // Issue #192: Skip when a UI overlay is open to avoid drawing on top of inventory/crafting/help screens
@@ -648,20 +651,21 @@ public class RagamuffinGame extends ApplicationAdapter {
             Gdx.gl.glClearColor(0.53f, 0.81f, 0.92f, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-            modelBatch.begin(camera);
-            chunkRenderer.render(modelBatch, environment);
-            npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
-            modelBatch.end();
-
-            // Issue #209: Render sun and clouds in paused state too
+            // Fix #227: Render sun and clouds as part of the skybox — before 3D geometry
             {
                 float ts = timeSystem.getTime();
                 float sr = timeSystem.getSunriseTime();
                 float ss = timeSystem.getSunsetTime();
-                skyRenderer.render(shapeRenderer, ts, sr, ss,
-                                   Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
-                                   timeSystem.isNight());
+                skyRenderer.renderSkybox(shapeRenderer, ts, sr, ss,
+                                         Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
+                                         timeSystem.isNight());
             }
+            Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
+
+            modelBatch.begin(camera);
+            chunkRenderer.render(modelBatch, environment);
+            npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
+            modelBatch.end();
 
             // Render UI and pause menu
             renderUI();
