@@ -405,7 +405,21 @@ public class NPCManager {
         } else if (npc.getType() == NPCType.COUNCIL_BUILDER) {
             updateCouncilBuilder(npc, delta, world, tooltipSystem);
         } else {
+            // Notorious players cause civilians to flee on sight
+            if (player.getStreetReputation().isNotorious()
+                    && isCivilianType(npc.getType())
+                    && npc.getState() != NPCState.FLEEING
+                    && npc.isNear(player.getPosition(), 10.0f)) {
+                npc.setState(NPCState.FLEEING);
+                if (!npc.isSpeaking()) {
+                    npc.setSpeechText(getFlightSpeech(npc.getType()), 2.5f);
+                }
+            }
+
             switch (npc.getState()) {
+                case FLEEING:
+                    updateFleeing(npc, delta, world, player);
+                    break;
                 case WANDERING:
                     updateWandering(npc, delta, world);
                     break;
@@ -542,6 +556,80 @@ public class NPCManager {
                 attempts++;
             } while (minWanderDistance > 0 && randomTarget.dst(npc.getPosition()) < minWanderDistance && attempts < 10);
             setNPCTarget(npc, randomTarget, world);
+        }
+    }
+
+    /**
+     * Update fleeing behavior — civilian runs away from notorious player.
+     * Once far enough away, returns to wandering.
+     */
+    private void updateFleeing(NPC npc, float delta, World world, Player player) {
+        float distToPlayer = npc.getPosition().dst(player.getPosition());
+
+        if (distToPlayer > 20.0f) {
+            // Far enough — stop fleeing
+            npc.setState(NPCState.WANDERING);
+            npc.setPath(null);
+            npc.setTargetPosition(null);
+            return;
+        }
+
+        // Move directly away from player at increased speed
+        Vector3 awayDir = npc.getPosition().cpy().sub(player.getPosition()).nor();
+        float fleeSpeed = getNPCSpeed(npc.getType()) * 2.0f;
+        float fleeX = npc.getPosition().x + awayDir.x * 10f;
+        float fleeZ = npc.getPosition().z + awayDir.z * 10f;
+        float fleeY = findGroundHeight(world, fleeX, fleeZ);
+        Vector3 fleeTarget = new Vector3(fleeX, fleeY, fleeZ);
+
+        // Only recalculate path if we don't have one or are close to the current target
+        if (npc.getTargetPosition() == null || npc.isNear(npc.getTargetPosition(), 2.0f)) {
+            setNPCTarget(npc, fleeTarget, world);
+        }
+
+        // Override speed — flee faster than normal
+        if (npc.getPath() != null && !npc.getPath().isEmpty()) {
+            List<Vector3> path = npc.getPath();
+            int idx = npc.getCurrentPathIndex();
+            if (idx < path.size()) {
+                Vector3 wp = path.get(idx);
+                Vector3 dir = wp.cpy().sub(npc.getPosition()).nor();
+                npc.setVelocity(dir.x * fleeSpeed, 0, dir.z * fleeSpeed);
+            }
+        } else {
+            npc.setVelocity(awayDir.x * fleeSpeed, 0, awayDir.z * fleeSpeed);
+        }
+    }
+
+    /**
+     * Whether an NPC type is a civilian who flees from notorious players.
+     */
+    private boolean isCivilianType(NPCType type) {
+        switch (type) {
+            case PUBLIC:
+            case PENSIONER:
+            case SCHOOL_KID:
+            case JOGGER:
+            case BUSKER:
+            case POSTMAN:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Get panic speech when a civilian flees from the notorious player.
+     */
+    private String getFlightSpeech(NPCType type) {
+        switch (type) {
+            case PUBLIC: return "It's that notorious one — run!";
+            case PENSIONER: return "Me hip! Help!";
+            case SCHOOL_KID: return "Mum! MUM!";
+            case JOGGER: return "Abort! Abort!";
+            case BUSKER: return "I'm just a musician!";
+            case POSTMAN: return "I've got letters!";
+            default: return "Get away from me!";
         }
     }
 
@@ -1203,7 +1291,8 @@ public class NPCManager {
             return;
         }
 
-        int maxPolice = 4;
+        // Notorious players attract more police attention
+        int maxPolice = player.getStreetReputation().isNotorious() ? 8 : 4;
 
         // Count current police
         long policeCount = npcs.stream().filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
@@ -1311,11 +1400,17 @@ public class NPCManager {
             setNPCTarget(police, player.getPosition(), world);
         }
 
-        // Check if adjacent to player - issue warning
+        // Check if adjacent to player - issue warning (or go straight to aggressive if notorious)
         if (police.isNear(player.getPosition(), 2.0f)) {
-            police.setState(NPCState.WARNING);
-            police.setSpeechText("Move along, nothing to see here.", 3.0f);
-            policeWarningTimers.put(police, 0.0f);
+            if (player.getStreetReputation().isNotorious()) {
+                // Notorious players get no warning — police go straight to aggressive
+                police.setState(NPCState.AGGRESSIVE);
+                police.setSpeechText("I know you. You're coming with me!", 3.0f);
+            } else {
+                police.setState(NPCState.WARNING);
+                police.setSpeechText("Move along, nothing to see here.", 3.0f);
+                policeWarningTimers.put(police, 0.0f);
+            }
 
             // Record structure near player if any
             if (structure != null) {

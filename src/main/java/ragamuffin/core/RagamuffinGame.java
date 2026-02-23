@@ -915,6 +915,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             npcManager.clearArrestPending();
             // CRITIC 3: Arrest clears the active Greggs raid — police have resolved the incident
             greggsRaidSystem.reset();
+            // Issue #7: Arrest reduces reputation — the streets forget when you're locked up
+            player.getStreetReputation().removePoints(15);
         }
 
         // Update camera to follow player
