@@ -504,30 +504,30 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Update police spawning based on time
                 npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
 
-                // Update player survival stats
-                // Sprint drains hunger 3x faster
-                float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
-                player.updateHunger(delta * hungerMultiplier);
-
-                // Starvation: zero hunger drains health at 5 HP/s
-                if (player.getHunger() <= 0) {
-                    player.damage(5.0f * delta);
-                }
-
+                // Update player survival stats (gated: no hunger/starvation/cold-snap while UI is open)
                 if (!isUIBlocking()) {
+                    // Sprint drains hunger 3x faster
+                    float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
+                    player.updateHunger(delta * hungerMultiplier);
+
+                    // Starvation: zero hunger drains health at 5 HP/s
+                    if (player.getHunger() <= 0) {
+                        player.damage(5.0f * delta);
+                    }
+
                     // Phase 12: Apply weather energy drain multiplier
                     float weatherMultiplier = weatherSystem.getCurrentWeather().getEnergyDrainMultiplier();
                     // Weather affects recovery rate inversely - worse weather = slower recovery
                     player.recoverEnergy(delta / weatherMultiplier);
-                }
 
-                // Phase 12: Cold snap health drain at night when unsheltered
-                Weather currentWeather = weatherSystem.getCurrentWeather();
-                if (currentWeather.drainsHealthAtNight() && timeSystem.isNight()) {
-                    boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition());
-                    if (!sheltered) {
-                        float healthDrain = currentWeather.getHealthDrainRate() * delta;
-                        player.damage(healthDrain);
+                    // Phase 12: Cold snap health drain at night when unsheltered
+                    Weather currentWeather = weatherSystem.getCurrentWeather();
+                    if (currentWeather.drainsHealthAtNight() && timeSystem.isNight()) {
+                        boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition());
+                        if (!sheltered) {
+                            float healthDrain = currentWeather.getHealthDrainRate() * delta;
+                            player.damage(healthDrain);
+                        }
                     }
                 }
 
