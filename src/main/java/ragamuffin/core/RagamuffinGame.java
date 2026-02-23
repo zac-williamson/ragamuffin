@@ -1333,6 +1333,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
 
+        // Fix #32: set orthographic projection so pixel-space coordinates from
+        // camera.project() are interpreted correctly by shapeRenderer and spriteBatch.
+        // Without this, the stale 3D perspective matrix from modelBatch.end() is used,
+        // causing all speech bubbles to be invisible or drawn at nonsense coordinates.
+        com.badlogic.gdx.math.Matrix4 ortho = new com.badlogic.gdx.math.Matrix4();
+        ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
+        shapeRenderer.setProjectionMatrix(ortho);
+        spriteBatch.setProjectionMatrix(ortho);
+
         // Issue #13: update speech log with current NPC speech
         speechLogUI.update(npcManager.getNPCs(), delta);
 
