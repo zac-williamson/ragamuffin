@@ -3127,3 +3127,87 @@ if (broken && blockType == BlockType.TREE_TRUNK) {
    (5, 4, 6). Break the bottom trunk (5, 1, 5). Verify none of the leaves have decayed
    (they are all within 4 blocks of the remaining trunks). Break all remaining trunks.
    Verify all leaves are now AIR.
+
+---
+
+## Bug #136 — renderRain() missing orthographic projection: rain overlay is invisible
+
+**Status: ❌ Broken**
+
+`renderRain()` in `RagamuffinGame` renders 80 rain-streak lines using screen-pixel
+coordinates (`0..screenWidth`, `0..screenHeight`), but draws them through the stale 3D
+perspective projection matrix left by the immediately-preceding `renderBlockHighlight()`
+call. Under the perspective matrix those pixel-space coordinates map to a vanishingly
+small region of NDC space, so all streaks are clipped and nothing is visible on screen.
+Rain gameplay effects (energy drain, NPC shelter-seeking) work correctly, but the player
+never sees any rain.
+
+**Root cause**
+
+The render sequence in `RagamuffinGame.render()` (PLAYING state, lines 563-578):
+
+```
+modelBatch.end();
+renderBlockHighlight();          // sets shapeRenderer.setProjectionMatrix(camera.combined)  ← 3D perspective
+renderSpeechBubbles();           // resets to its own ortho ✅
+signageRenderer.render(...);
+if (weather == RAIN) renderRain(delta);  // NO setProjectionMatrix — inherits stale 3D matrix ❌
+renderUI();                      // resets to its own ortho ✅
+```
+
+`renderBlockHighlight()` (line 1831):
+```java
+shapeRenderer.setProjectionMatrix(camera.combined);  // perspective matrix
+```
+
+`renderRain()` (lines 1796-1817) — calls `shapeRenderer.begin()` with no prior
+`setProjectionMatrix`:
+```java
+private void renderRain(float delta) {
+    // ...
+    shapeRenderer.begin(ShapeRenderer.ShapeType.Line);  // stale 3D matrix still bound!
+    for (int i = 0; i < numDrops; i++) {
+        float rx = ...; // screen pixel coords, e.g. 0–1920
+        float ry = ...; // screen pixel coords, e.g. 0–1080
+        shapeRenderer.line(rx, ry, rx - 2f, ry + 15f);  // invisible under perspective
+    }
+    shapeRenderer.end();
+}
+```
+
+**Required fix** — add an orthographic setup at the top of `renderRain()`, before the
+`shapeRenderer.begin()` call:
+
+```java
+private void renderRain(float delta) {
+    rainTimer += delta;
+    int screenWidth  = Gdx.graphics.getWidth();
+    int screenHeight = Gdx.graphics.getHeight();
+    com.badlogic.gdx.math.Matrix4 rainOrtho = new com.badlogic.gdx.math.Matrix4();
+    rainOrtho.setToOrtho2D(0, 0, screenWidth, screenHeight);
+    shapeRenderer.setProjectionMatrix(rainOrtho);   // ← add this line
+    Gdx.gl.glEnable(GL20.GL_BLEND);
+    // ... rest of method unchanged ...
+}
+```
+
+**Integration tests** (add to a new `Issue136RainRenderTest`):
+
+1. **Rain lines fall within screen bounds**: Trigger RAIN weather. Capture the set of
+   `shapeRenderer.line()` calls made during one `renderRain()` invocation. Verify every
+   start-point and end-point has `x` in `[0, screenWidth]` and `y` in `[0, screenHeight]`
+   after the projection matrix is set to `setToOrtho2D(0, 0, screenWidth, screenHeight)`.
+
+2. **Projection matrix is orthographic before begin()**: Spy on `shapeRenderer`. Assert
+   that `setProjectionMatrix()` is called with an orthographic (not perspective) matrix
+   before the first `begin()` call inside `renderRain()`. Orthographic can be detected by
+   checking `matrix.val[Matrix4.M22]` equals `-(2f / screenHeight)` (the standard
+   `setToOrtho2D` z-scale).
+
+3. **Rain not rendered when weather is CLEAR**: Set `WeatherSystem` to CLEAR. Call the
+   render loop once. Assert `shapeRenderer.begin()` is not called inside `renderRain()`
+   (the RAIN branch is skipped).
+
+4. **Rain rendered when weather is RAIN**: Set `WeatherSystem` to RAIN. Call the render
+   loop once. Assert `shapeRenderer.begin()` is called exactly once inside `renderRain()`
+   and that exactly 80 `line()` calls are made (matching `numDrops = 80`).
