@@ -108,6 +108,15 @@ public class BlockBreaker {
     }
 
     /**
+     * Clear the hit counter for a specific block position.
+     * Call this when a block is removed externally (e.g. by an NPC) so stale
+     * hit counts don't carry over to a newly-placed block at the same position.
+     */
+    public void clearHits(int x, int y, int z) {
+        blockHits.remove(getBlockKey(x, y, z));
+    }
+
+    /**
      * Reset all hit counters.
      */
     public void resetHits() {

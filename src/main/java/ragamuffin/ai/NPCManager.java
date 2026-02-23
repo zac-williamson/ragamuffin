@@ -1,6 +1,7 @@
 package ragamuffin.ai;
 
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.building.BlockBreaker;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.building.StructureTracker;
@@ -128,6 +129,9 @@ public class NPCManager {
 
     // Per-NPC structure scan stagger — spread checks over time
     private Map<NPC, Float> npcStructureCheckTimers;
+
+    // BlockBreaker reference — used to clear stale hit counters when demolishing blocks
+    private BlockBreaker blockBreaker;
 
     // Arrest system — set when police catches player so game loop can apply penalties
     private boolean arrestPending = false;
@@ -1715,6 +1719,12 @@ public class NPCManager {
         structure.removeBlock(blockToRemove);
         structureTracker.removeBlock(x, y, z);
 
+        // Clear any stale hit counter so a newly-placed block at this position
+        // starts fresh and requires the full number of hits to break.
+        if (blockBreaker != null) {
+            blockBreaker.clearHits(x, y, z);
+        }
+
         // Remove planning notice if present
         world.removePlanningNotice(x, y, z);
 
@@ -1735,6 +1745,13 @@ public class NPCManager {
         // Set knockback timer (delays demolition for 1 second)
         builderKnockbackTimers.put(builder, 1.0f);
         builder.setState(NPCState.KNOCKED_BACK);
+    }
+
+    /**
+     * Set the BlockBreaker so demolishBlock() can clear stale hit counters.
+     */
+    public void setBlockBreaker(BlockBreaker blockBreaker) {
+        this.blockBreaker = blockBreaker;
     }
 
     /**
