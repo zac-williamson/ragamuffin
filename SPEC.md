@@ -2374,3 +2374,67 @@ if (npc.getType() == NPCType.POLICE) {
 3. **WARNING police does not attack player**: Spawn a POLICE NPC in WARNING state 1.0
    blocks from the player. Simulate 60 frames. Verify the player's health is unchanged
    (warning-phase police should not deal damage).
+
+---
+
+## Bug Fix: Police-taped blocks can still be broken — `BlockBreaker` never checks `world.isProtected()`
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — `BlockBreaker.punchBlock()` does not call `world.isProtected(x, y, z)`
+before processing a hit. When police apply tape to a player's structure, the blocks are added
+to `World.protectedBlocks` (via `world.addPoliceTape()`), but the block breaker reads only
+`blockType.isSolid()` and `BlockType.BEDROCK`. A player can punch through a taped block in
+the normal number of hits and remove it as if the tape were never there.
+
+**Problem**: In `BlockBreaker.punchBlock()`:
+
+```java
+public boolean punchBlock(World world, int x, int y, int z, Material tool) {
+    BlockType blockType = world.getBlock(x, y, z);
+
+    // Can't punch air or bedrock
+    if (blockType == BlockType.AIR || !blockType.isSolid() || blockType == BlockType.BEDROCK) {
+        return false;
+    }
+    // ← no check for world.isProtected(x, y, z) here
+    ...
+}
+```
+
+`world.isProtected()` exists and correctly returns `true` for taped blocks, but is never
+consulted. The Phase 6 integration test (`test5_PoliceTapePlayerStructure`) only verifies
+`world.isProtected()` returns `true` — it does NOT call `punchBlock()` on the taped block
+and verify the break is refused. The protection is therefore a data illusion with no gameplay
+effect: the player can punch straight through police tape.
+
+**Required fix**: Add an `isProtected` guard at the top of `BlockBreaker.punchBlock()`:
+
+```java
+public boolean punchBlock(World world, int x, int y, int z, Material tool) {
+    BlockType blockType = world.getBlock(x, y, z);
+
+    // Can't punch air, non-solid, bedrock, or police-taped blocks
+    if (blockType == BlockType.AIR || !blockType.isSolid() || blockType == BlockType.BEDROCK
+            || world.isProtected(x, y, z)) {
+        return false;
+    }
+    ...
+}
+```
+
+**Integration tests**:
+
+1. **Taped block cannot be broken by the player**: Place a WOOD block at (5, 1, 5). Call
+   `world.addPoliceTape(5, 1, 5)`. Verify `world.isProtected(5, 1, 5)` returns `true`.
+   Call `blockBreaker.punchBlock(world, 5, 1, 5, null)` 10 times (more than the 5 hits
+   normally required). Verify the block at (5, 1, 5) is still WOOD (not AIR). Verify
+   `punchBlock()` returned `false` on every call.
+
+2. **Untaped block at same position CAN be broken normally**: Place a WOOD block at (5, 1, 5)
+   without taping it. Punch it 5 times. Verify it is now AIR (normal break behaviour).
+
+3. **Removing tape restores breakability**: Place and tape a WOOD block at (5, 1, 5). Punch
+   it 3 times (returns false each time — protection active). Call `world.removePoliceTape(5, 1, 5)`.
+   Punch it 5 more times. Verify the block breaks on the 5th punch (hit counter reset to 0
+   by the protection guard, now normal 5-hit break from fresh state).
