@@ -122,6 +122,10 @@ public class NPCManager {
     // NPC idle timers — pause between wanders
     private Map<NPC, Float> npcIdleTimers;
 
+    // Per-NPC steal cooldown — prevents the same NPC from stealing too frequently
+    private Map<NPC, Float> npcStealCooldownTimers;
+    private static final float STEAL_COOLDOWN = 60.0f; // seconds between steals per NPC
+
     // Path recalculation timers — avoid calling pathfinding every frame
     private Map<NPC, Float> npcPathRecalcTimers;
 
@@ -168,6 +172,7 @@ public class NPCManager {
         this.npcPathRecalcTimers = new HashMap<>();
         this.npcStructureCheckTimers = new HashMap<>();
         this.alertedPoliceNPCs = new HashSet<>();
+        this.npcStealCooldownTimers = new HashMap<>();
     }
 
     /**
@@ -412,6 +417,9 @@ public class NPCManager {
         // Tick per-NPC structure check timer (count down toward 0 when a scan is due)
         npcStructureCheckTimers.computeIfPresent(npc, (k, v) -> Math.max(0f, v - delta));
 
+        // Tick per-NPC steal cooldown timer
+        npcStealCooldownTimers.computeIfPresent(npc, (k, v) -> Math.max(0f, v - delta));
+
         // Update timers and facing (but NOT position — we handle movement with collision)
         npc.updateTimers(delta);
         npc.updateKnockback(delta);
@@ -512,11 +520,12 @@ public class NPCManager {
         // Check for player structures nearby (each NPC throttled independently)
         checkForPlayerStructures(npc, world);
 
-        // Youth gangs try to steal
+        // Youth gangs try to steal (only if steal cooldown has expired)
         if (npc.getType() == NPCType.YOUTH_GANG && npc.getState() != NPCState.STEALING
                 && npc.getState() != NPCState.AGGRESSIVE
                 && npc.getState() != NPCState.FLEEING) {
-            if (npc.isNear(player.getPosition(), 2.0f)) {
+            float stealCooldown = npcStealCooldownTimers.getOrDefault(npc, 0f);
+            if (stealCooldown <= 0f && npc.isNear(player.getPosition(), 2.0f)) {
                 npc.setState(NPCState.STEALING);
             } else if (npc.isNear(player.getPosition(), 20.0f)) {
                 // Move toward player
@@ -744,7 +753,9 @@ public class NPCManager {
     private void updateStealing(NPC npc, float delta, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
         if (npc.isNear(player.getPosition(), 1.5f)) {
             // Adjacent to player - steal!
-            attemptTheft(inventory, tooltipSystem);
+            attemptTheft(npc, inventory, tooltipSystem);
+            // Apply cooldown so this NPC can't steal again immediately
+            npcStealCooldownTimers.put(npc, STEAL_COOLDOWN);
             npc.setState(NPCState.WANDERING); // Go back to wandering after theft
         }
     }
@@ -754,8 +765,9 @@ public class NPCManager {
      * Steals the most valuable item available, using priority order:
      * DIAMOND > SCRAP_METAL > BRICK > WOOD > food items.
      * Falls back to a random non-empty slot if no priority item is found.
+     * The stolen item is recorded on the NPC so the player can recover it by defeating them.
      */
-    private void attemptTheft(Inventory inventory, TooltipSystem tooltipSystem) {
+    private void attemptTheft(NPC npc, Inventory inventory, TooltipSystem tooltipSystem) {
         // Priority order: most valuable first
         Material[] priority = {
             Material.DIAMOND,
@@ -777,6 +789,7 @@ public class NPCManager {
         for (Material m : priority) {
             if (inventory.getItemCount(m) > 0) {
                 inventory.removeItem(m, 1);
+                npc.addStolenItem(m);
                 if (tooltipSystem != null) {
                     tooltipSystem.trigger(TooltipTrigger.YOUTH_THEFT);
                 }
@@ -792,6 +805,7 @@ public class NPCManager {
             Material m = inventory.getItemInSlot(slot);
             if (m != null && inventory.getItemCount(m) > 0) {
                 inventory.removeItem(m, 1);
+                npc.addStolenItem(m);
                 if (tooltipSystem != null) {
                     tooltipSystem.trigger(TooltipTrigger.YOUTH_THEFT);
                 }
@@ -1186,9 +1200,9 @@ public class NPCManager {
             npc.setState(NPCState.KNOCKED_OUT);
             npc.setSpeechText(getDeathSpeech(npc.getType()), 2.0f);
 
-            // Award loot drops
+            // Award loot drops (including any stolen items recovered from this NPC)
             if (inventory != null) {
-                awardNPCLoot(npc.getType(), inventory, tooltipSystem);
+                awardNPCLoot(npc, inventory, tooltipSystem);
             }
         } else {
             // NPC reacts to being hit
@@ -1205,8 +1219,11 @@ public class NPCManager {
      * Award loot when an NPC is defeated.
      * Each NPC type drops thematic items — shopkeepers drop food,
      * youth gangs drop whatever they nicked, delivery drivers drop parcels, etc.
+     * YOUTH_GANG NPCs also return any items they stole from the player.
      */
-    private void awardNPCLoot(NPCType type, Inventory inventory, TooltipSystem tooltipSystem) {
+    private void awardNPCLoot(NPC npc, Inventory inventory, TooltipSystem tooltipSystem) {
+        NPCType type = npc.getType();
+
         // Rare chance for any NPC to drop antidepressants (5% chance)
         if (type != NPCType.DOG && random.nextFloat() < 0.05f) {
             inventory.addItem(Material.ANTIDEPRESSANTS, 1);
@@ -1214,7 +1231,11 @@ public class NPCManager {
 
         switch (type) {
             case YOUTH_GANG:
-                // They had your stuff (or someone else's)
+                // Return any items stolen from the player
+                for (ragamuffin.building.Material stolen : npc.claimStolenItems()) {
+                    inventory.addItem(stolen, 1);
+                }
+                // They may also have had generic loot
                 inventory.addItem(Material.WOOD, 2 + random.nextInt(3));
                 if (random.nextFloat() < 0.3f) {
                     inventory.addItem(Material.SCRAP_METAL, 1);

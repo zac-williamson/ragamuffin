@@ -1,6 +1,10 @@
 package ragamuffin.entity;
 
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.building.Material;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Non-player character with AI behavior.
@@ -203,6 +207,9 @@ public class NPC {
     private float stuckTimer = 0f;     // time spent stuck against obstacle
     private Vector3 lastPosition = null; // position last frame for stuck detection
 
+    // Stolen items — tracks what this NPC has stolen from the player so it can be recovered
+    private final List<Material> stolenItems = new ArrayList<>();
+
     public boolean isKnockedBack() {
         return knockbackTimer > 0f;
     }
@@ -319,5 +326,28 @@ public class NPC {
 
     public float getAttackCooldown() {
         return attackCooldown;
+    }
+
+    /**
+     * Record an item stolen by this NPC so the player can recover it.
+     */
+    public void addStolenItem(Material material) {
+        stolenItems.add(material);
+    }
+
+    /**
+     * Return and clear all items stolen by this NPC.
+     */
+    public List<Material> claimStolenItems() {
+        List<Material> items = new ArrayList<>(stolenItems);
+        stolenItems.clear();
+        return items;
+    }
+
+    /**
+     * How many items this NPC has stolen.
+     */
+    public int getStolenItemCount() {
+        return stolenItems.size();
     }
 }
