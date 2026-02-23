@@ -209,4 +209,127 @@ public enum Material {
     private static Color[] cs(float r1, float g1, float b1, float r2, float g2, float b2) {
         return new Color[]{new Color(r1, g1, b1, 1f), new Color(r2, g2, b2, 1f)};
     }
+
+    /**
+     * Returns true if this material is a block/construction material (drawn as a
+     * coloured square in the inventory). Returns false for tools, food, and shop goods,
+     * which use custom shapes for better visual clarity.
+     */
+    public boolean isBlockItem() {
+        switch (this) {
+            // Tools
+            case IMPROVISED_TOOL:
+            case STONE_TOOL:
+            // Food & drink
+            case SAUSAGE_ROLL:
+            case STEAK_BAKE:
+            case CHIPS:
+            case KEBAB:
+            case ENERGY_DRINK:
+            case CRISPS:
+            case TIN_OF_BEANS:
+            case PINT:
+            case PERI_PERI_CHICKEN:
+            // Shop goods & other non-block items
+            case SCRATCH_CARD:
+            case NEWSPAPER:
+            case WASHING_POWDER:
+            case PARACETAMOL:
+            case TEXTBOOK:
+            case HYMN_BOOK:
+            case PETROL_CAN:
+            case HAIR_CLIPPERS:
+            case NAIL_POLISH:
+            case BROKEN_PHONE:
+            case DODGY_DVD:
+            case FIRE_EXTINGUISHER:
+            case ANTIDEPRESSANTS:
+            // Office non-block items
+            case COMPUTER:
+            case OFFICE_CHAIR:
+            case STAPLER:
+            // Diamond is a gem, not a block
+            case DIAMOND:
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    /**
+     * Describes the shape style used when rendering this material's icon.
+     * Only meaningful when isBlockItem() returns false.
+     */
+    public enum IconShape {
+        /** A pickaxe/tool silhouette (handle + head) */
+        TOOL,
+        /** A folded rectangle (newspaper/book) */
+        FLAT_PAPER,
+        /** A tall thin rectangle (bottle/can) */
+        BOTTLE,
+        /** A wide flat oval/rectangle (food on a surface) */
+        FOOD,
+        /** A rounded rectangle (card/phone/disc) */
+        CARD,
+        /** A diamond/gem shape */
+        GEM,
+        /** A box/cube outline */
+        BOX,
+        /** A cylinder silhouette (extinguisher/petrol can) */
+        CYLINDER
+    }
+
+    /**
+     * Returns the shape style to use when drawing this item's icon.
+     */
+    public IconShape getIconShape() {
+        switch (this) {
+            case IMPROVISED_TOOL:
+            case STONE_TOOL:
+                return IconShape.TOOL;
+
+            case NEWSPAPER:
+            case TEXTBOOK:
+            case HYMN_BOOK:
+            case PARACETAMOL:
+            case WASHING_POWDER:
+            case ANTIDEPRESSANTS:
+                return IconShape.FLAT_PAPER;
+
+            case ENERGY_DRINK:
+            case PINT:
+            case NAIL_POLISH:
+                return IconShape.BOTTLE;
+
+            case SAUSAGE_ROLL:
+            case STEAK_BAKE:
+            case CHIPS:
+            case KEBAB:
+            case PERI_PERI_CHICKEN:
+            case CRISPS:
+                return IconShape.FOOD;
+
+            case SCRATCH_CARD:
+            case BROKEN_PHONE:
+            case DODGY_DVD:
+                return IconShape.CARD;
+
+            case DIAMOND:
+                return IconShape.GEM;
+
+            case TIN_OF_BEANS:
+            case COMPUTER:
+            case OFFICE_CHAIR:
+            case STAPLER:
+                return IconShape.BOX;
+
+            case PETROL_CAN:
+            case FIRE_EXTINGUISHER:
+            case HAIR_CLIPPERS:
+                return IconShape.CYLINDER;
+
+            default:
+                return IconShape.BOX;
+        }
+    }
 }
