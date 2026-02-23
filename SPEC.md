@@ -1150,3 +1150,137 @@ has speed ≥ 12. Any value between 0 and 12 works correctly regardless of frame
 6. **Healing triggers correctly at high frame rate**: Set health to 50, hunger to 100. Player
    stands still. Simulate 300 frames at `delta = 1f/240f`. Verify `restingTime` accumulates
    to ≥ 5 seconds. Verify health > 50.
+
+---
+
+## Bug Fix: StructureTracker scans BRICK blocks, causing council builders to demolish the generated town
+
+**Status**: ❌ Broken — council builders are immediately dispatched to demolish every brick
+building in the generated world (terraced houses, shops, office building, JobCentre, etc.),
+systematically destroying the procedurally generated town 30 seconds after the game starts.
+
+**Problem**: `StructureTracker.scanForStructures()` treats both `BlockType.WOOD` and
+`BlockType.BRICK` as player-built structure blocks:
+
+```java
+if (block == BlockType.WOOD || block == BlockType.BRICK) {
+    // Found a placed block - trace the structure
+    Set<Vector3> structureBlocks = traceStructure(world, x, y, z, visited);
+```
+
+And `traceStructure()` flood-fills through both types:
+
+```java
+if (block == BlockType.WOOD || block == BlockType.BRICK) {
+    queue.add(new Vector3(x, y, z));
+}
+```
+
+The entire procedurally generated world is built from BRICK — every terraced house, shop,
+office building, JobCentre, and landmark facade is BRICK. The scanner runs every 30 seconds
+over a 200×200 block area. Every BRICK structure above the 10-block threshold (which is
+nearly every building in the world) is added to the structure list.
+
+`updateCouncilBuilders()` then calls `calculateBuilderCount()` for each detected structure
+and spawns COUNCIL_BUILDER NPCs. Each builder NPC demolishes one block per second. Within
+minutes of gameplay, council builders converge on all town buildings and systematically
+remove them block by block. This is not a subtle bug — the entire generated world is
+destroyed by the council on a 30-second timer from the moment the game loads.
+
+Note that the police's own `scanForStructures()` (a separate private method in `NPCManager`)
+was previously affected by the same BRICK false-positive bug and has already been fixed to
+check only `BlockType.WOOD`. `StructureTracker` was not updated in that fix pass.
+
+**Root cause**: BRICK was included in `StructureTracker` to detect player-placed BRICK blocks
+(Phase 3 lets players break and re-place BRICK), but world-generated BRICK is
+indistinguishable from player-placed BRICK at the block-type level. The fix is to limit
+structure detection to `BlockType.WOOD` only, matching the police `scanForStructures()` fix
+and the civilian `checkForPlayerStructures()` check.
+
+**Required fix in `StructureTracker.scanForStructures()` and `traceStructure()`**:
+
+In `scanForStructures()`, change:
+```java
+if (block == BlockType.WOOD || block == BlockType.BRICK) {
+```
+to:
+```java
+if (block == BlockType.WOOD) {
+```
+
+In `traceStructure()`, change:
+```java
+if (block == BlockType.WOOD || block == BlockType.BRICK) {
+```
+to:
+```java
+if (block == BlockType.WOOD) {
+```
+
+**Integration tests**:
+
+1. **Council builders do NOT demolish world-generated buildings**: Generate the world. Do NOT
+   place any blocks. Call `npcManager.forceStructureScan(world, tooltipSystem)`. Verify that
+   `npcManager.getStructureTracker().getStructures()` is empty (no structures detected).
+   Verify that no COUNCIL_BUILDER NPCs have been spawned.
+
+2. **Council builders DO detect player-built WOOD structures**: Generate the world. Place 15
+   WOOD blocks in a connected cluster at (10, 1, 10). Call `npcManager.forceStructureScan(world,
+   tooltipSystem)`. Verify that `structureTracker.getStructures()` has exactly one entry.
+   Verify that a COUNCIL_BUILDER NPC has been spawned targeting that structure.
+
+---
+
+## Bug Fix: NPCManager.gameTime never updated — NPC daily routines permanently stuck at 8:00 AM
+
+**Status**: ❌ Broken — NPCs never transition through their daily routine. PUBLIC and COUNCIL_MEMBER
+NPCs are permanently in `GOING_TO_WORK` state regardless of the actual in-game time.
+
+**Problem**: `NPCManager` maintains its own `gameTime` field (initialised to `8.0f`). The method
+`updateDailyRoutine(NPC)` decides an NPC's routine state (`GOING_TO_WORK`, `GOING_HOME`,
+`AT_PUB`, `AT_HOME`) entirely from this field:
+
+```java
+private float gameTime; // Game time in hours (0-24)
+// ...
+this.gameTime = 8.0f; // Start at 8:00 AM
+```
+
+`NPCManager.setGameTime(float)` exists to update this field, and it also re-evaluates every
+PUBLIC/COUNCIL_MEMBER NPC's routine. However, **`RagamuffinGame` never calls `setGameTime()`**.
+The `TimeSystem` advances time every frame and supplies the current hour to
+`npcManager.updatePoliceSpawning(timeSystem.getTime(), ...)`, but the NPCManager's internal
+`gameTime` clock is never synchronised.
+
+Result: `updateDailyRoutine()` always evaluates `gameTime == 8.0`, which satisfies
+`8 >= 8 && 8 < 17`, so every PUBLIC and COUNCIL_MEMBER NPC is permanently locked in
+`GOING_TO_WORK` state. They never go home at 17:00, never visit the pub at night, and the
+day/night population rhythm described in Phase 5 (and the Phase 5 integration test #7) is
+completely absent from actual gameplay.
+
+The police spawning system is **not** affected — it correctly receives time from
+`TimeSystem` each frame via `updatePoliceSpawning()` — but the civilian NPC daily routine
+system is broken.
+
+**Required fix in `RagamuffinGame.render()` / `updatePlaying()`**:
+
+After `timeSystem.update(delta)` is called (line ~495), synchronise the NPC manager's clock:
+
+```java
+npcManager.setGameTime(timeSystem.getTime());
+```
+
+This single call gates the existing `updateDailyRoutine()` logic correctly, immediately
+restoring the full day/night NPC population cycle.
+
+**Integration tests**:
+
+1. **NPC daily routine driven by TimeSystem**: Create a `RagamuffinGame` (headless). Transition
+   to PLAYING. Spawn a PUBLIC NPC. Advance the game with `timeSystem` at 08:00 — verify the NPC
+   state is `GOING_TO_WORK`. Advance `timeSystem` to 17:00 and call
+   `npcManager.setGameTime(17.0f)`. Verify the NPC state is `GOING_HOME`. Advance to 20:00.
+   Verify the NPC state is `AT_PUB` or `AT_HOME`.
+
+2. **Regression — setGameTime is called each frame**: Run the game loop for 60 frames with
+   `TimeSystem` advancing normally. Call `npcManager.getGameTime()`. Verify it is approximately
+   equal to `timeSystem.getTime()` (within 0.1 hours), confirming the wiring is live.
