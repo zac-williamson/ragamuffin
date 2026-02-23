@@ -131,7 +131,11 @@ each zone.
 
 **Goal**: Player can break blocks, collect resources, and manage inventory.
 
-- Block breaking: look at a block, left click/punch to hit it (5 hits to break)
+- Block breaking: look at a block, left click/punch to hit it. Hits required vary by material hardness:
+  - **Soft** (TREE_TRUNK, LEAVES, GRASS): 5 hits
+  - **Hard** (BRICK, STONE, PAVEMENT): 8 hits
+  - **Fragile** (GLASS): 2 hits
+  - Default for unlisted types: 5 hits
 - Block highlight/outline showing which block the player is targeting (raycasting)
 - Blocks drop items when broken (wood from trees, brick from houses, etc.)
 - Different materials from different block sources
@@ -164,8 +168,8 @@ drop tables, tooltip trigger conditions.
    counts).
 
 4. **Punching a BRICK block yields BRICK material**: Place the player adjacent to
-   a BRICK block. Simulate 5 punch actions. Verify the block is removed and the
-   inventory contains exactly 1 BRICK item.
+   a BRICK block. Simulate 8 punch actions (BRICK is a hard block requiring 8 hits).
+   Verify the block is removed and the inventory contains exactly 1 BRICK item.
 
 5. **Punching a jeweller block yields diamond**: Place the player adjacent to a
    block that is part of the jeweller shop (e.g. a GLASS block tagged as jeweller
