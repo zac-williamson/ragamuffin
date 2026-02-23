@@ -2796,3 +2796,64 @@ if (respawnSystem.isRespawnComplete()) {
 
 3. **Arrest still resets raid**: Confirm the existing arrest path still calls `reset()` —
    `greggsRaidSystem.getRaidState()` is `NONE` after `arrestSystem.arrest(player)`.
+
+---
+
+## Bug: Sprinting never drains energy — energy system is irrelevant to movement
+
+**Date:** 2026-02-23
+**Status:** Open
+
+**Symptom:** The player can sprint indefinitely without the energy bar dropping.
+Sprinting currently multiplies hunger drain by 3× (correct), but does **not** drain the
+energy stat at all. Since energy only depletes on explicit actions (punching: 1 pt,
+dodging: 15 pts) and recovers at 5 pts/s passively, a player who avoids combat can run
+flat-out for the entire session without ever watching the energy bar. The energy/dodge
+tradeoff the game intends — do you sprint and exhaust yourself, or save energy for a
+dodge-roll escape? — never materialises.
+
+**Root cause:** In `RagamuffinGame.updatePlaying()`:
+
+```java
+// Sprint drains hunger 3x faster
+float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
+player.updateHunger(delta * hungerMultiplier);
+```
+
+There is no corresponding energy drain for sprint. The `Player.ENERGY_DRAIN_PER_ACTION`
+constant (1 HP) is only used on punch. Sprinting calls `world.moveWithCollision()` with
+`Player.SPRINT_SPEED` (20 m/s) but never touches `player.consumeEnergy()`.
+
+**Required fix:** Add a per-second energy drain while sprinting, scaled so that a player
+at full energy (100 HP) can sprint for roughly 20 seconds before energy is exhausted.
+A drain of `5.0f` energy/s (matching the passive recovery rate) means sprinting is
+energy-neutral when stationary, but any burst of movement depletes the bar if the player
+hasn't been resting. A tighter value of `8.0f` energy/s means the player must rest
+between sprints — recommend the tighter value for survival tension.
+
+```java
+// In updatePlaying(), in the !isUIBlocking() block, after hunger update:
+if (inputHandler.isSprintHeld() && tmpMoveDir.len2() > 0) {
+    player.consumeEnergy(8.0f * delta); // Sprint drains energy at 8 HP/s
+}
+```
+
+Add `Player.SPRINT_ENERGY_DRAIN = 8.0f` as a named constant.
+
+**Integration tests** (add to Phase8IntegrationTest or a new SprintEnergyTest):
+
+1. **Sprint drains energy**: Set player energy to 100. Simulate holding sprint + W for
+   10 seconds (600 frames at 60fps). Verify `player.getEnergy() < 100` (energy has
+   decreased). Verify the decrease is approximately `80f` (10s × 8 HP/s), within ±5.
+
+2. **Walking does not drain energy**: Set player energy to 100. Simulate holding W
+   (no sprint) for 10 seconds. Verify `player.getEnergy()` is >= 100 (energy has
+   recovered or stayed flat — no sprint drain applies).
+
+3. **Exhausted player cannot dodge**: Set player energy to 0. Simulate sprint + W for
+   5 seconds. Verify `player.getEnergy()` remains at 0. Verify `player.canDodge()` is
+   false (no energy for dodge).
+
+4. **Energy recovers after stopping sprint**: Set player energy to 20. Stop all movement
+   for 4 seconds. Verify `player.getEnergy()` >= 40 (recovery at 5 HP/s = 20 pts over
+   4s, plus starting 20 = 40).
