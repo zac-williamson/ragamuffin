@@ -44,5 +44,47 @@ public enum LandmarkType {
     ALLOTMENTS,
     CANAL,
     SKATE_PARK,
-    CEMETERY
+    CEMETERY;
+
+    /**
+     * Returns the display name shown on the building's sign.
+     * Returns null for landmarks that don't have named signage (e.g. houses, park).
+     */
+    public String getDisplayName() {
+        switch (this) {
+            case GREGGS:            return "Greggs";
+            case OFF_LICENCE:       return "Khan's Off-Licence";
+            case CHARITY_SHOP:      return "Hearts & Minds Charity";
+            case JEWELLER:          return "Andre's Diamonds";
+            case OFFICE_BUILDING:   return "Meridian House";
+            case JOB_CENTRE:        return "Jobcentre Plus";
+            case BOOKIES:           return "Coral Betting";
+            case KEBAB_SHOP:        return "Sultan's Kebab";
+            case LAUNDERETTE:       return "Spotless Launderette";
+            case TESCO_EXPRESS:     return "Tesco Express";
+            case PUB:               return "The King's Head";
+            case PAWN_SHOP:         return "Cash4Gold Pawnbrokers";
+            case BUILDERS_MERCHANT: return "Handy Builders";
+            case CHIPPY:            return "Tony's Chip Shop";
+            case NEWSAGENT:         return "Patel's News";
+            case GP_SURGERY:        return "Northfield Surgery";
+            case PRIMARY_SCHOOL:    return "St. Aidan's C.E. School";
+            case COMMUNITY_CENTRE:  return "Northfield Community Ctr";
+            case CHURCH:            return "St. Mary's Church";
+            case TAXI_RANK:         return "A1 Taxis";
+            case CAR_WASH:          return "Sparkle Car Wash";
+            case PETROL_STATION:    return "BP Petrol Station";
+            case NANDOS:            return "Nando's";
+            case BARBER:            return "Kev's Barber Shop";
+            case NAIL_SALON:        return "Angel Nails & Beauty";
+            case WETHERSPOONS:      return "The Rusty Anchor";
+            case CORNER_SHOP:       return "Happy Shopper";
+            case BETTING_SHOP:      return "Ladbrokes";
+            case PHONE_REPAIR:      return "Fix My Phone";
+            case CASH_CONVERTER:    return "Cash Converters";
+            case LIBRARY:           return "Northfield Library";
+            case FIRE_STATION:      return "Northfield Fire Station";
+            default:                return null; // No sign for parks, houses, etc.
+        }
+    }
 }
