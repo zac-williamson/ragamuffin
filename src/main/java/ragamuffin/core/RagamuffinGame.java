@@ -1022,8 +1022,6 @@ public class RagamuffinGame extends ApplicationAdapter {
                 gameHUD.setBlockBreakProgress(0f);
                 // Play block break sound based on material
                 soundSystem.playBlockBreak(blockType);
-                // Award street reputation for breaking blocks (minor crime)
-                player.getStreetReputation().addPoints(1);
             }
 
             // Consume tool durability if a tool was used
