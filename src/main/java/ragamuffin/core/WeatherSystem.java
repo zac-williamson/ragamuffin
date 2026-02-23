@@ -4,7 +4,7 @@ import java.util.Random;
 
 /**
  * Manages weather changes and effects.
- * Weather changes at most once per game day (every 12-24 game hours).
+ * Weather changes every 5-10 game minutes (2-6 transitions per in-game day).
  */
 public class WeatherSystem {
     private Weather currentWeather;
@@ -12,8 +12,8 @@ public class WeatherSystem {
     private float nextChangeTime;
     private final Random random;
 
-    private static final float MIN_WEATHER_DURATION = 12.0f * 3600.0f; // 12 game hours in seconds
-    private static final float MAX_WEATHER_DURATION = 24.0f * 3600.0f; // 24 game hours in seconds
+    private static final float MIN_WEATHER_DURATION = 5.0f * 60.0f;  // 5 game minutes
+    private static final float MAX_WEATHER_DURATION = 10.0f * 60.0f; // 10 game minutes
 
     public WeatherSystem() {
         this.random = new Random();

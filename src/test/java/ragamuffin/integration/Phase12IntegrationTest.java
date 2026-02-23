@@ -318,12 +318,12 @@ public class Phase12IntegrationTest {
     }
 
     /**
-     * Test 11: Weather transitions occur approximately once per game day.
-     * Fix #122: Weather should change at most once per day, not multiple times per second.
+     * Test 11: Weather transitions occur every 5-10 game minutes.
+     * Fix #124: Weather should change every 5-10 game minutes (not 12-24 hours).
      *
-     * Pass a large game-time delta equivalent to 6 game hours and verify no change yet.
-     * Then pass enough total game-time (2 full days = 48 game hours) and verify at least
-     * 1 transition has occurred.
+     * Advance 4 game minutes (less than 5-minute minimum) and verify no change yet.
+     * Then advance enough total game-time (30 game minutes) and verify at least
+     * 2 transitions have occurred.
      */
     @Test
     public void testWeatherTransitionsApproximatelyOncePerDay() {
@@ -331,19 +331,18 @@ public class Phase12IntegrationTest {
 
         Weather initial = ws.getCurrentWeather();
 
-        // 6 game hours = 6 * 3600 = 21600 game-seconds — less than the 12h minimum
-        float sixGameHours = 6.0f * 3600.0f;
-        ws.update(sixGameHours);
+        // 4 game minutes = 4 * 60 = 240 game-seconds — less than the 5-minute minimum
+        float fourGameMinutes = 4.0f * 60.0f;
+        ws.update(fourGameMinutes);
         assertEquals(initial, ws.getCurrentWeather(),
-            "Weather should NOT change after only 6 game hours (minimum duration is 12h)");
+            "Weather should NOT change after only 4 game minutes (minimum duration is 5 minutes)");
 
-        // Now advance by another 42 game hours (total = 48h = 2 game days).
-        // The minimum duration is 12h so at least 1 change must have occurred by 48h.
+        // Now advance in 1-minute steps to detect transitions (26 more minutes = 30 total).
+        // The minimum duration is 5 minutes so at least 2 changes must occur by 30 minutes.
         int transitions = 0;
         Weather last = ws.getCurrentWeather();
-        // Advance in 1-hour steps to detect transitions
-        for (int h = 0; h < 42; h++) {
-            ws.update(3600.0f);
+        for (int m = 0; m < 26; m++) {
+            ws.update(60.0f);
             Weather current = ws.getCurrentWeather();
             if (current != last) {
                 transitions++;
@@ -351,10 +350,41 @@ public class Phase12IntegrationTest {
             }
         }
 
-        assertTrue(transitions >= 1,
-            "Expected at least 1 weather transition in 2 game days, got: " + transitions);
-        assertTrue(transitions <= 4,
-            "Weather should change at most ~once per 12 game hours — got suspiciously many: " + transitions);
+        assertTrue(transitions >= 2,
+            "Expected at least 2 weather transitions in 30 game minutes, got: " + transitions);
+        assertTrue(transitions <= 8,
+            "Weather should change at most ~once per 5 game minutes — got suspiciously many: " + transitions);
+    }
+
+    /**
+     * Test 12: Weather changes within one game-day (Fix #124).
+     * Simulates 300 real seconds at 60fps using the TimeSystem update contract.
+     * Verifies at least 2 weather changes occur (weather changes every 5-10 game minutes,
+     * and 300 real seconds covers ~30 in-game hours).
+     */
+    @Test
+    public void testWeatherChangesWithinOneGameDay() {
+        WeatherSystem ws = new WeatherSystem();
+        TimeSystem ts = new TimeSystem();
+
+        int transitions = 0;
+        Weather last = ws.getCurrentWeather();
+
+        // Simulate 300 real seconds at 60fps
+        int totalFrames = 300 * 60;
+        for (int i = 0; i < totalFrames; i++) {
+            float delta = 1.0f / 60.0f;
+            ts.update(delta);
+            ws.update(delta * ts.getTimeSpeed() * 3600f);
+            Weather current = ws.getCurrentWeather();
+            if (current != last) {
+                transitions++;
+                last = current;
+            }
+        }
+
+        assertTrue(transitions >= 2,
+            "Expected at least 2 weather changes in 300 real seconds, got: " + transitions);
     }
 
     /**
