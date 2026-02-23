@@ -1913,8 +1913,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
-     * Render a brief red flash overlay when the player takes damage.
+     * Render a brief red flash ring around the reticule/crosshair when the player takes damage.
      * Intensity fades from 1.0 (full hit) to 0.0 over DAMAGE_FLASH_DURATION.
+     * The effect is confined to the crosshair area rather than the entire screen.
      */
     private void renderDamageFlash(float intensity, int screenWidth, int screenHeight) {
         com.badlogic.gdx.math.Matrix4 flashProj = new com.badlogic.gdx.math.Matrix4();
@@ -1924,9 +1925,36 @@ public class RagamuffinGame extends ApplicationAdapter {
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
+        float centerX = screenWidth / 2f;
+        float centerY = screenHeight / 2f;
+
+        // Draw a red ring around the crosshair using line segments
+        float innerRadius = 18f; // just beyond the crosshair tips (size=10 + gap=3 + margin=5)
+        float outerRadius = 30f;
+        int segments = 32;
+        float alpha = intensity * 0.85f;
+
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0.9f, 0f, 0f, intensity * 0.45f);
-        shapeRenderer.rect(0, 0, screenWidth, screenHeight);
+        shapeRenderer.setColor(0.9f, 0f, 0f, alpha);
+        for (int i = 0; i < segments; i++) {
+            float angle1 = (float) (i * Math.PI * 2 / segments);
+            float angle2 = (float) ((i + 1) * Math.PI * 2 / segments);
+            float cos1 = (float) Math.cos(angle1);
+            float sin1 = (float) Math.sin(angle1);
+            float cos2 = (float) Math.cos(angle2);
+            float sin2 = (float) Math.sin(angle2);
+            // Draw a filled quad for each ring segment
+            shapeRenderer.triangle(
+                centerX + cos1 * innerRadius, centerY + sin1 * innerRadius,
+                centerX + cos1 * outerRadius, centerY + sin1 * outerRadius,
+                centerX + cos2 * innerRadius, centerY + sin2 * innerRadius
+            );
+            shapeRenderer.triangle(
+                centerX + cos1 * outerRadius, centerY + sin1 * outerRadius,
+                centerX + cos2 * outerRadius, centerY + sin2 * outerRadius,
+                centerX + cos2 * innerRadius, centerY + sin2 * innerRadius
+            );
+        }
         shapeRenderer.end();
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
