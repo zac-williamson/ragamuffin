@@ -890,6 +890,65 @@ All systems implemented and tested:
 
 ---
 
+## Bug Fix: Police scanForStructures includes world-generated BRICK as player structures
+
+**Status**: ❌ Broken — police immediately treat every building in the generated town as a
+player-built structure, issuing warnings and arrests from the first second of gameplay.
+
+**Problem**: `NPCManager.scanForStructures()` (used by `updatePolicePatrolling` and
+`updatePoliceWarning`) checks for both `BlockType.WOOD` and `BlockType.BRICK` as indicators
+of player-built structures:
+
+```java
+if (block == BlockType.WOOD || block == BlockType.BRICK) {
+    playerBlockCount++;
+    ...
+}
+```
+
+However, **the entire procedurally generated world is built from BRICK** — every terraced
+house, shop, office building, and landmark facade is BRICK. With a scan radius of 20 blocks
+and a threshold of just 5 blocks, any police NPC standing near any building in town will
+immediately detect dozens of "player structures" and enter WARNING → AGGRESSIVE → ARRESTING
+state. The player is arrested on the first frame of gameplay, without having placed a single
+block.
+
+By contrast, `checkForPlayerStructures` (used by civilian NPCs to react to builds) correctly
+scans only for `BlockType.WOOD`:
+
+```java
+if (block == BlockType.WOOD) {
+    playerBlockCount++;
+```
+
+The inconsistency means civilians correctly ignore world buildings while police do not.
+
+**Root cause**: BRICK was included in `scanForStructures` to detect player-placed BRICK
+blocks (Phase 3 lets players break and re-place BRICK), but this is indistinguishable from
+the world's existing BRICK. The fix is to limit police structure detection to only
+`BlockType.WOOD` (the primary player-placeable building material), matching the civilian
+check.
+
+**Required fix in `NPCManager.scanForStructures()`**: Change the block check to:
+
+```java
+if (block == BlockType.WOOD) {
+```
+
+**Integration test** (regression — verify police do not arrest player near world buildings):
+
+1. Generate the world. Do NOT place any blocks. Player stands at (40, 1, 20) — near the
+   high street (a BRICK-heavy area). Set time to 22:00 to allow police spawning. Advance
+   600 frames. Verify the `arrestPending` flag is NOT set (police did not arrest player
+   for simply being near world-generated BRICK buildings). Verify no police NPC has state
+   AGGRESSIVE targeting the player without the player having built anything.
+
+2. Place 10 WOOD blocks nearby. Set time to 22:00. Advance 600 frames. Verify police DO
+   detect the WOOD structure, enter WARNING state, and eventually set `arrestPending = true`.
+   This confirms the detection still works for actual player builds.
+
+---
+
 ## Bug Fix: Wire GangTerritorySystem into RagamuffinGame
 
 **Status**: ❌ Not wired — `GangTerritorySystem` is fully implemented but never connected to the game loop.
@@ -961,3 +1020,58 @@ spriteBatch.setProjectionMatrix(ortho);
    `MAX_RENDER_DISTANCE`. Call `render()`. Verify that `shapeRenderer.setProjectionMatrix()` was
    called with an orthographic matrix (not the camera's perspective projection). Verify the sign
    panel's X coordinate lands within screen bounds (0..screenWidth) and Y within (0..screenHeight).
+
+---
+
+## Bug Fix: renderSpeechBubbles missing orthographic projection matrix
+
+**Status**: ❌ Broken — NPC speech bubbles (the core communication channel between NPCs and the
+player) render at completely wrong positions or are invisible in every frame of gameplay.
+
+**Problem**: `RagamuffinGame.renderSpeechBubbles()` calls `shapeRenderer.begin()` and
+`spriteBatch.begin()` without first calling `setProjectionMatrix(ortho)` on either renderer.
+This method is called immediately after `modelBatch.end()` (the 3D world render), so the last
+projection matrix bound to the GL state is the ModelBatch's 3D perspective matrix.
+
+Every other 2D rendering method in `RagamuffinGame` correctly sets an orthographic projection first:
+- `renderLoadingScreen()` — sets `spriteBatch.setProjectionMatrix(proj)` before drawing
+- `renderMenu()` — sets both `spriteBatch` and `shapeRenderer` projection matrices
+- `renderTooltip()` — sets `shapeRenderer.setProjectionMatrix(tooltipProj)` then `spriteBatch.setProjectionMatrix(tooltipProj)`
+- `renderDamageFlash()` — sets `shapeRenderer.setProjectionMatrix(flashProj)`
+
+But `renderSpeechBubbles()` (lines 1331–1373) calls `shapeRenderer.begin()` at line 1362 and
+`spriteBatch.begin()` at line 1368 with no projection matrix set — they both use the stale 3D
+perspective matrix left by `modelBatch.end()`.
+
+The impact is total: `camera.project()` correctly computes screen-space pixel coordinates (sx, sy)
+for each NPC's head position, but the shape renderer and sprite batch interpret those pixel coords
+through the perspective matrix — resulting in the background box and text being drawn at completely
+wrong on-screen positions. Since `camera.project()` returns values in the range [0..screenWidth] for
+X and [0..screenHeight] for Y in pixel space, but the perspective matrix expects NDC/world units,
+the resulting draw calls either go off-screen entirely or land at nonsense coordinates.
+
+The same root cause previously broke `SignageRenderer` (see above). Speech bubbles are more impactful
+because they are the primary feedback loop for NPC reactions: police warnings, gang threats, civilian
+complaints, shopkeeper dialogue, and death speech all go through this path. A player watching a police
+NPC walk toward them would see no speech bubble warning before arrest, depriving them of the key
+gameplay signal that action is needed.
+
+**Required fix in `RagamuffinGame.renderSpeechBubbles()`**:
+
+At the top of the method body (before the NPC loop), set orthographic projection on both renderers:
+
+```java
+com.badlogic.gdx.math.Matrix4 ortho = new com.badlogic.gdx.math.Matrix4();
+ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
+shapeRenderer.setProjectionMatrix(ortho);
+spriteBatch.setProjectionMatrix(ortho);
+```
+
+**Integration test** (add to the next Critic integration test suite):
+
+1. Create a headless `RagamuffinGame`. Transition to PLAYING. Spawn an NPC within 10 blocks of
+   the player and call `npc.setSpeechText("Test", 3.0f)`. Advance one frame. Verify that
+   `renderSpeechBubbles()` was called. Verify `shapeRenderer` was given an orthographic
+   projection matrix (not the perspective one) before the bubble background was drawn.
+   Verify the bubble's computed screen X is within `[0, screenWidth]` and Y within
+   `[0, screenHeight]`.
