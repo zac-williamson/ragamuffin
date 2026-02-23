@@ -953,6 +953,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             player.getStreetReputation().removePoints(15);
         }
 
+        // Issue #48: Passive reputation decay — "lying low" reduces reputation over time
+        player.getStreetReputation().update(delta);
+
         // Update camera to follow player
         camera.position.set(player.getPosition());
         camera.position.y += Player.EYE_HEIGHT;
