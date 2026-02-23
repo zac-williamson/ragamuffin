@@ -200,6 +200,10 @@ class Phase6IntegrationTest {
      */
     @Test
     void test4_PoliceApproachAndInteractWithPlayer() {
+        // Give player KNOWN reputation — with fix #138, patrolling police only pursue
+        // KNOWN/NOTORIOUS players; NOBODY-rep players are not stalked unconditionally.
+        player.getStreetReputation().addPoints(10); // reach KNOWN threshold
+
         // Spawn police at a known position 8 blocks from the player.
         // Police move at ~2.8 blocks/sec; 20 seconds (1200 frames) gives ample time
         // even with path-recalculation throttle and brief stalls.

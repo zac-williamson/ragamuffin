@@ -130,11 +130,17 @@ class Issue76ShelterAggressivePoliceTest {
      * Test 3: Aggressive police resume chase when player leaves shelter.
      *
      * Spawn AGGRESSIVE police with player inside shelter — police reverts to PATROLLING.
-     * Player then steps outside (unsheltered). Verify ShelterDetector confirms player is
-     * now unsheltered, and that after advancing frames, police is no longer ignoring the player.
+     * Player then steps outside (unsheltered). Player has KNOWN reputation (which is why
+     * police was AGGRESSIVE in the first place). Verify police detects the unsheltered,
+     * known-reputation player and escalates out of PATROLLING state.
      */
     @Test
     void test3_AggressivePoliceResumeChaseWhenPlayerLeavesShelter() {
+        // Give player KNOWN reputation — police was AGGRESSIVE because the player is known.
+        // With fix #138, police only actively pursues KNOWN/NOTORIOUS players; NOBODY-rep
+        // players are not stalked (they are safe until police happens to wander close).
+        player.getStreetReputation().addPoints(10); // KNOWN threshold
+
         // Spawn police outside the shelter in AGGRESSIVE state
         NPC police = npcManager.spawnNPC(NPCType.POLICE, OX + 1.5f, OY + 1, OZ + 6f);
         assertNotNull(police, "Police NPC should spawn");
