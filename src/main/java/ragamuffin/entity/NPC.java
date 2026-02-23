@@ -245,9 +245,13 @@ public class NPC {
             return false;
         }
 
-        // Check if we've barely moved despite having velocity
+        // Check if we've barely moved despite having velocity.
+        // Compare actual movement to 10% of the expected movement this frame;
+        // this avoids false positives at high frame rates where per-frame
+        // displacement is much smaller than the 0.1-block absolute threshold.
         float distMoved = position.dst2(lastPosition); // squared distance
-        if (distMoved < 0.01f) { // moved less than 0.1 blocks
+        float minExpectedMoveSq = hSpeedSq * delta * delta * 0.1f; // 10% of (speed * delta)^2
+        if (distMoved < minExpectedMoveSq) {
             stuckTimer += delta;
         } else {
             stuckTimer = 0f;

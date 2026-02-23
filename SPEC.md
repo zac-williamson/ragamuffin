@@ -13,7 +13,7 @@ marking any phase complete.
 ## Key Controls Reference
 - **WASD**: Move player
 - **Mouse**: Look around (first-person)
-- **Left click / punch**: Break block or hit NPC (hold for 5 hits to break a block)
+- **Left click / punch**: Break block or hit NPC (hits required vary by material: soft=5, hard=8, fragile=2)
 - **Right click**: Place block from hotbar
 - **I**: Open/close inventory UI
 - **H**: Open/close help UI (displays full list of controls and commands)
@@ -746,7 +746,7 @@ consider the player experience. Something can always be better.
 
 3. **Respawn on death**: When health hits 0, display "You wake up on a park bench. Again." for 3 seconds, then respawn at park centre with 50% health, 50% hunger, 100% energy. Inventory is kept. This is not Dark Souls.
 
-4. **Block breaking progress**: Track break progress (0-5 hits). Display a progress indicator (e.g. 5 crack stages). The BlockBreaker already tracks hits — expose this to the UI.
+4. **Block breaking progress**: Track break progress (0 to N hits, where N varies by block hardness). Display a progress indicator (e.g. crack stages proportional to hits required). The BlockBreaker already tracks hits — expose this to the UI.
 
 5. **More tooltips**: Add these first-time tooltips:
    - On first block place: "That's... structurally ambitious."
