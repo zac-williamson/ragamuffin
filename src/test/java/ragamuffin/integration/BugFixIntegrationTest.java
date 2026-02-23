@@ -84,9 +84,12 @@ class BugFixIntegrationTest {
         assertEquals(1.0f, player.getPosition().y, 0.1f,
             "Player should spawn at y=1.0 (on ground), not floating");
 
-        // Apply gravity for several frames to verify player stays on ground
+        // Apply gravity for several frames to verify player stays on ground.
+        // Fix #202: gravity is now applied via applyGravityAndVerticalCollision()
+        // separately from horizontal movement, mirroring the game loop.
         for (int frame = 0; frame < 60; frame++) {
             float delta = 1.0f / 60.0f; // 60 FPS
+            world.applyGravityAndVerticalCollision(player, delta);
             world.moveWithCollision(player, 0, 0, 0, delta);
         }
 
@@ -99,6 +102,7 @@ class BugFixIntegrationTest {
         int stepsToTree = (int) (5.0f / (Player.MOVE_SPEED / 60.0f));
         for (int step = 0; step < stepsToTree; step++) {
             float delta = 1.0f / 60.0f;
+            world.applyGravityAndVerticalCollision(player, delta);
             world.moveWithCollision(player, 1, 0, 0, delta); // Move right (+X)
         }
 
@@ -109,6 +113,7 @@ class BugFixIntegrationTest {
         // Now move in +Z direction to get to z=5
         for (int step = 0; step < stepsToTree; step++) {
             float delta = 1.0f / 60.0f;
+            world.applyGravityAndVerticalCollision(player, delta);
             world.moveWithCollision(player, 0, 0, 1, delta); // Move forward (+Z)
         }
 
@@ -145,17 +150,59 @@ class BugFixIntegrationTest {
         // Move player away from tree back to clear ground
         for (int step = 0; step < 30; step++) {
             float delta2 = 1.0f / 60.0f;
+            world.applyGravityAndVerticalCollision(player, delta2);
             world.moveWithCollision(player, -1, 0, -1, delta2);
         }
 
         // Settle gravity
         for (int frame = 0; frame < 30; frame++) {
-            world.moveWithCollision(player, 0, 0, 0, 1.0f / 60.0f);
+            float delta3 = 1.0f / 60.0f;
+            world.applyGravityAndVerticalCollision(player, delta3);
         }
 
         // Final verification: Player Y is at ground level (gravity has settled)
         assertEquals(1.0f, player.getPosition().y, 0.5f,
             "Player Y should be ~1.0 (on ground) after moving to clear area");
+    }
+
+    /**
+     * Fix #202: Gravity applies even when UI overlay is open.
+     *
+     * Setup: Create a flat world with ground at y=0. Spawn the player at y=5 (floating).
+     * Simulate 60 frames using ONLY applyGravityAndVerticalCollision() (no horizontal input),
+     * which mirrors the path taken when a UI overlay is open (updatePlayingSimulation() runs
+     * but updatePlayingInput() does not). Verify the player lands at y=1 (ground level).
+     */
+    @Test
+    void gravityAppliesWhileUIIsOpen() {
+        // Ground layer
+        for (int x = -5; x <= 5; x++) {
+            for (int z = -5; z <= 5; z++) {
+                world.setBlock(x, -1, z, BlockType.DIRT);
+                world.setBlock(x, 0, z, BlockType.GRASS);
+            }
+        }
+
+        // Spawn player floating 4 blocks above the ground
+        player = new Player(0, 5, 0);
+        assertEquals(5.0f, player.getPosition().y, 0.01f,
+            "Player should start floating at y=5");
+
+        // Simulate 120 frames using only applyGravityAndVerticalCollision(), which is
+        // the code path taken when a UI overlay is blocking input (issue #202).
+        for (int frame = 0; frame < 120; frame++) {
+            float delta = 1.0f / 60.0f;
+            world.applyGravityAndVerticalCollision(player, delta);
+            // Note: world.moveWithCollision() is intentionally NOT called here —
+            // that represents the UI-blocking path where horizontal input is suppressed.
+        }
+
+        // Player must have landed on the ground (y=1, standing on GRASS at y=0)
+        assertEquals(1.0f, player.getPosition().y, 0.1f,
+            "Player should have fallen to ground (y=1) even without horizontal input, "
+            + "simulating gravity continuing while a UI overlay is open");
+        assertEquals(0f, player.getVerticalVelocity(), 0.01f,
+            "Vertical velocity should be reset to 0 after landing");
     }
 
     /**
