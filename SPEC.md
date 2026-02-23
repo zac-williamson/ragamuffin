@@ -2149,3 +2149,78 @@ and the police should revert to PATROLLING.
    adjacent to player. Move the player into a shelter. Advance 120 frames. Verify police
    state has reverted to PATROLLING (warning cancelled) and police distance is not
    decreasing.
+
+## Bug Fix: Shelter provides no protection against already-aggressive police
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — `NPCManager.updatePoliceAggressive()` has no shelter check. Police
+that transition to AGGRESSIVE state (from a Greggs raid alert, notorious-player detection, or
+from WARNING escalation) continue to chase and arrest the player even after the player enters a
+cardboard shelter. The shelter mechanic only works against PATROLLING and WARNING police, which
+means the moment any police officer escalates to AGGRESSIVE the shelter is entirely useless.
+
+**Problem**: The fix in commit d65c870 added `ShelterDetector.isSheltered()` checks to
+`updatePolicePatrolling()` and `updatePoliceWarning()` but left `updatePoliceAggressive()`
+unguarded:
+
+```java
+private void updatePoliceAggressive(NPC police, float delta, World world, Player player) {
+    // Move toward player — NO shelter check here
+    setNPCTarget(police, player.getPosition(), world);
+
+    if (police.isNear(player.getPosition(), 1.5f) && !arrestPending) {
+        arrestPending = true;  // Arrests player even inside shelter
+        ...
+    }
+}
+```
+
+**How aggressive police are triggered**:
+1. `alertPoliceToGreggRaid()` — called when the player smashes a Greggs block; sets
+   nearby police directly to AGGRESSIVE with no shelter pre-check.
+2. `updatePolicePatrolling()` notorious branch — but this is now guarded, so shelter is
+   respected here. However, if the police was already AGGRESSIVE before the player entered
+   the shelter, there is no route back out.
+3. `updatePoliceWarning()` escalation — if the player fails to comply, police goes
+   AGGRESSIVE. The WARNING→shelter cancel was fixed, but once AGGRESSIVE the shelter is
+   ignored.
+
+**Impact**: The cardboard shelter is the player's only early-game protection from police
+harassment at night. A Greggs raid or any prior confrontation that escalates police to
+AGGRESSIVE permanently negates the shelter. The player's only option is to keep running
+indefinitely — crafting and hiding in a shelter does nothing once the situation heats up.
+
+**Required fix**: Add a `ShelterDetector.isSheltered()` check at the top of
+`updatePoliceAggressive()`. If the player is sheltered, the police NPC should abandon the
+chase and revert to PATROLLING (not WANDERING — they should still be on duty, just unable
+to see the player):
+
+```java
+private void updatePoliceAggressive(NPC police, float delta, World world, Player player) {
+    // Phase 12: Player inside shelter — police lose sight and return to patrol
+    if (ShelterDetector.isSheltered(world, player.getPosition())) {
+        police.setState(NPCState.PATROLLING);
+        return;
+    }
+    // ... existing chase/arrest logic
+}
+```
+
+**Integration tests** (regression — aggressive police lose target when player shelters):
+
+1. **Aggressive police abandon chase when player enters shelter**: Build a 2×2×2 shelter
+   at world position (20, 5, 20). Spawn a police NPC 5 blocks away in AGGRESSIVE state
+   with target set to the player's unsheltered position. Move the player inside the shelter.
+   Simulate 120 frames. Verify the police NPC's state has reverted to PATROLLING and
+   `arrestPending` is false.
+
+2. **Greggs-raid police cannot arrest sheltered player**: Set up a shelter at (20, 5, 20).
+   Place player inside. Call `npcManager.alertPoliceToGreggRaid(player, world)` to spawn
+   an AGGRESSIVE police unit. Simulate 600 frames. Verify `arrestPending` remains false
+   and the player's inventory is unchanged (no confiscation occurred).
+
+3. **Aggressive police resume chase when player leaves shelter**: Aggressive police, player
+   inside shelter — police reverts to PATROLLING (test 1). Player then steps out. Advance
+   60 frames. Verify police transitions back to AGGRESSIVE (or WARNING) and begins
+   approaching the player again.
