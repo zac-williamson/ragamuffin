@@ -1698,7 +1698,7 @@ public class NPCManager {
             // Spawn builders after planning notice has been up for a bit
             // Only spawn if structure has notice
             if (structure.hasNotice() && currentBuilders < requiredBuilders) {
-                spawnCouncilBuilder(structure);
+                spawnCouncilBuilder(structure, world);
                 structureBuilderCount.put(structure, currentBuilders + 1);
             }
         }
