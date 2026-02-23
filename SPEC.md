@@ -197,6 +197,15 @@ drop tables, tooltip trigger conditions.
     3 TREE_TRUNK blocks. Break all 3 (5 punches each, repositioning between them).
     Verify the inventory contains exactly 3 WOOD items (stacked).
 
+11. **Block hit counter resets when block is replaced**: Place a TREE_TRUNK block
+    at position (5, 1, 5). Punch it 3 times (not enough to break it — it requires
+    5). Simulate an external removal of the block via `world.setBlock(5, 1, 5,
+    BlockType.AIR)` (as done by council builder NPCs via `demolishBlock()`).
+    Place a new TREE_TRUNK block at (5, 1, 5). Punch it 4 times. Verify the block
+    is still present (it has NOT broken — the old hit counter must not have carried
+    over). Punch it a 5th time. Verify the block is now broken and the inventory
+    contains exactly 1 WOOD item.
+
 ---
 
 ## Phase 4: Crafting & Building
