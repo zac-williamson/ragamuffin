@@ -681,6 +681,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (inputHandler.isEnterPressed()) {
             if (mainMenuScreen.isNewGameSelected()) {
                 startNewGame();
+            } else if (mainMenuScreen.isSkipIntroSelected()) {
+                mainMenuScreen.toggleSkipIntro();
             } else if (mainMenuScreen.isQuitSelected()) {
                 Gdx.app.exit();
             }
@@ -694,6 +696,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (clicked == 0) {
                 startNewGame();
             } else if (clicked == 1) {
+                mainMenuScreen.toggleSkipIntro();
+            } else if (clicked == 2) {
                 Gdx.app.exit();
             }
             inputHandler.resetLeftClick();
@@ -704,6 +708,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Transition to playing and start opening sequence
         state = GameState.PLAYING;
         openingSequence.start();
+        if (mainMenuScreen.isSkipIntroEnabled()) {
+            openingSequence.skip();
+        }
         Gdx.input.setCursorCatched(true);
         // Reset per-session counters
         if (greggsRaidSystem != null) {

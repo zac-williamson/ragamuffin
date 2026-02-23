@@ -7,23 +7,21 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 /**
- * Main menu screen with "New Game" and "Quit" options.
+ * Main menu screen with "New Game", "Skip Intro" toggle, and "Quit" options.
  */
 public class MainMenuScreen {
     private boolean visible;
     private int selectedOption;
+    private boolean skipIntro;
     private static final int OPTION_NEW_GAME = 0;
-    private static final int OPTION_QUIT = 1;
-    private static final int NUM_OPTIONS = 2;
-
-    private static final String[] OPTIONS = {
-        "New Game",
-        "Quit"
-    };
+    private static final int OPTION_SKIP_INTRO = 1;
+    private static final int OPTION_QUIT = 2;
+    private static final int NUM_OPTIONS = 3;
 
     public MainMenuScreen() {
         this.visible = true;
         this.selectedOption = OPTION_NEW_GAME;
+        this.skipIntro = false;
     }
 
     /**
@@ -62,8 +60,14 @@ public class MainMenuScreen {
         float optionY = screenHeight * 0.4f;
         float optionSpacing = 60f;
 
-        for (int i = 0; i < OPTIONS.length; i++) {
-            String option = OPTIONS[i];
+        String[] options = {
+            "New Game",
+            "Skip Intro: " + (skipIntro ? "ON" : "OFF"),
+            "Quit"
+        };
+
+        for (int i = 0; i < options.length; i++) {
+            String option = options[i];
             if (i == selectedOption) {
                 font.setColor(Color.YELLOW);
                 option = "> " + option + " <";
@@ -118,12 +122,30 @@ public class MainMenuScreen {
         return selectedOption == OPTION_NEW_GAME;
     }
 
+    public boolean isSkipIntroSelected() {
+        return selectedOption == OPTION_SKIP_INTRO;
+    }
+
     public boolean isQuitSelected() {
         return selectedOption == OPTION_QUIT;
     }
 
     /**
-     * Handle mouse click. Returns the selected option index (0=New Game, 1=Quit)
+     * Toggle the skip intro flag on/off.
+     */
+    public void toggleSkipIntro() {
+        skipIntro = !skipIntro;
+    }
+
+    /**
+     * Returns true if skip intro is enabled.
+     */
+    public boolean isSkipIntroEnabled() {
+        return skipIntro;
+    }
+
+    /**
+     * Handle mouse click. Returns the selected option index (0=New Game, 1=Skip Intro toggle, 2=Quit)
      * or -1 if click was not on any option.
      * screenX/screenY are in LibGDX screen coords (0,0 = top-left).
      */
@@ -133,7 +155,7 @@ public class MainMenuScreen {
         float optionStartY = screenHeight * 0.4f;
         float optionSpacing = 60f;
         float optionHeight = 40f;
-        float optionHalfWidth = 150f;
+        float optionHalfWidth = 200f;
         float centerX = screenWidth / 2f;
 
         for (int i = 0; i < NUM_OPTIONS; i++) {
