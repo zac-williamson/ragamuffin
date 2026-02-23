@@ -455,7 +455,9 @@ public class NPCManager {
         checkForPlayerStructures(npc, world);
 
         // Youth gangs try to steal
-        if (npc.getType() == NPCType.YOUTH_GANG && npc.getState() != NPCState.STEALING) {
+        if (npc.getType() == NPCType.YOUTH_GANG && npc.getState() != NPCState.STEALING
+                && npc.getState() != NPCState.AGGRESSIVE
+                && npc.getState() != NPCState.FLEEING) {
             if (npc.isNear(player.getPosition(), 2.0f)) {
                 npc.setState(NPCState.STEALING);
             } else if (npc.isNear(player.getPosition(), 20.0f)) {
