@@ -1309,25 +1309,25 @@ public class NPCManager {
     }
 
     /**
-     * Update police spawning — police patrol at night only (22:00-06:00), up to 4.
-     * During daytime any remaining police are despawned.
+     * Update police spawning — police patrol day and night. At night (22:00-06:00)
+     * additional officers are spawned up to a higher cap. Police are never bulk-despawned
+     * by time-of-day; they are only removed when killed or out of range.
      */
     public void updatePoliceSpawning(float time, World world, Player player) {
         boolean isNight = time >= 22.0f || time < 6.0f;
-
-        // Despawn police during daytime (always, regardless of cooldown)
-        if (!isNight) {
-            despawnPolice();
-            return;
-        }
 
         // Throttle spawning to avoid spawning (and triggering A* pathfinding) every frame
         if (policeSpawnCooldown > 0) {
             return;
         }
 
-        // Notorious players attract more police attention
-        int maxPolice = player.getStreetReputation().isNotorious() ? 8 : 4;
+        // Notorious players attract more police attention; night raises the cap
+        int maxPolice;
+        if (player.getStreetReputation().isNotorious()) {
+            maxPolice = isNight ? 8 : 6;
+        } else {
+            maxPolice = isNight ? 4 : 3;
+        }
 
         // Count current police
         long policeCount = npcs.stream().filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
