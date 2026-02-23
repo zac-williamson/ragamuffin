@@ -383,9 +383,12 @@ public class World {
         return moveWithCollision(player, dx, dy, dz, delta, Player.MOVE_SPEED);
     }
 
-    public Vector3 moveWithCollision(Player player, float dx, float dy, float dz, float delta, float speed) {
-        tmpOriginalPos.set(player.getPosition());
-
+    /**
+     * Fix #202: Apply gravity and vertical collision independently of horizontal input.
+     * Called unconditionally every frame from updatePlayingSimulation() so that gravity
+     * continues to act even when a UI overlay (inventory/help/crafting) is open.
+     */
+    public void applyGravityAndVerticalCollision(Player player, float delta) {
         // Only apply gravity if not standing on solid ground
         boolean onGround = isOnGround(player);
         if (onGround && player.getVerticalVelocity() <= 0) {
@@ -401,38 +404,6 @@ public class World {
                 player.startFalling();
             }
             player.applyGravity(delta);
-        }
-
-        // Horizontal movement (X and Z)
-        tmpDesiredMove.set(0, 0, 0);
-        if (dx != 0 || dz != 0) {
-            tmpDesiredMove.set(dx, 0, dz).nor().scl(speed * delta);
-        }
-
-        // Try horizontal movement with sliding
-        player.getPosition().add(tmpDesiredMove.x, 0, tmpDesiredMove.z);
-        player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
-
-        if (checkWorldCollision(player)) {
-            // Collision - revert and try sliding
-            player.getPosition().set(tmpOriginalPos);
-
-            // Try X only
-            player.getPosition().add(tmpDesiredMove.x, 0, 0);
-            player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
-            if (checkWorldCollision(player)) {
-                player.getPosition().set(tmpOriginalPos);
-            }
-
-            // Try Z only
-            tmpZOnlyPos.set(player.getPosition());
-            player.getPosition().add(0, 0, tmpDesiredMove.z);
-            player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
-            if (checkWorldCollision(player)) {
-                player.getPosition().set(tmpZOnlyPos);
-            }
-
-            player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
         }
 
         // Vertical movement (gravity)
@@ -477,6 +448,43 @@ public class World {
                 player.getPosition().y = (float) Math.floor(player.getPosition().y + Player.HEIGHT) - Player.HEIGHT;
                 player.resetVerticalVelocity();
             }
+            player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
+        }
+    }
+
+    public Vector3 moveWithCollision(Player player, float dx, float dy, float dz, float delta, float speed) {
+        tmpOriginalPos.set(player.getPosition());
+
+        // Horizontal movement (X and Z) only — gravity and vertical collision are
+        // applied separately via applyGravityAndVerticalCollision() every frame.
+        tmpDesiredMove.set(0, 0, 0);
+        if (dx != 0 || dz != 0) {
+            tmpDesiredMove.set(dx, 0, dz).nor().scl(speed * delta);
+        }
+
+        // Try horizontal movement with sliding
+        player.getPosition().add(tmpDesiredMove.x, 0, tmpDesiredMove.z);
+        player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
+
+        if (checkWorldCollision(player)) {
+            // Collision - revert and try sliding
+            player.getPosition().set(tmpOriginalPos);
+
+            // Try X only
+            player.getPosition().add(tmpDesiredMove.x, 0, 0);
+            player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
+            if (checkWorldCollision(player)) {
+                player.getPosition().set(tmpOriginalPos);
+            }
+
+            // Try Z only
+            tmpZOnlyPos.set(player.getPosition());
+            player.getPosition().add(0, 0, tmpDesiredMove.z);
+            player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
+            if (checkWorldCollision(player)) {
+                player.getPosition().set(tmpZOnlyPos);
+            }
+
             player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
         }
 

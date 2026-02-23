@@ -900,6 +900,10 @@ public class RagamuffinGame extends ApplicationAdapter {
      * loading must not freeze when the player has a UI overlay (inventory/crafting/help) open.
      */
     private void updatePlayingSimulation(float delta) {
+        // Fix #202: Apply gravity and vertical collision unconditionally so the player
+        // does not float mid-air when a UI overlay (inventory/help/crafting) is open.
+        world.applyGravityAndVerticalCollision(player, delta);
+
         // Decay partially-damaged blocks that have not been hit recently
         blockBreaker.tickDecay(delta);
 
