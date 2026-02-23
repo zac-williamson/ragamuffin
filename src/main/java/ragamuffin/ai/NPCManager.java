@@ -1731,7 +1731,9 @@ public class NPCManager {
                     int z = (int) structureCenter.z + dz;
 
                     BlockType block = world.getBlock(x, y, z);
-                    if (block == BlockType.WOOD) {
+                    if (block == BlockType.WOOD || block == BlockType.BRICK
+                        || block == BlockType.STONE || block == BlockType.GLASS
+                        || block == BlockType.CARDBOARD) {
                         world.addPoliceTape(x, y, z);
                         tapedCount++;
                     }
@@ -1937,5 +1939,12 @@ public class NPCManager {
     public void forceStructureScan(World world, TooltipSystem tooltipSystem) {
         structureTracker.scanForStructures(world);
         updateCouncilBuilders(world, tooltipSystem);
+    }
+
+    /**
+     * Force police tape to be applied to a structure at the given center (for testing).
+     */
+    public void forceApplyPoliceTape(World world, Vector3 structureCenter) {
+        applyPoliceTapeToStructure(world, structureCenter);
     }
 }

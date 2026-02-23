@@ -1,5 +1,6 @@
 package ragamuffin.ai;
 
+import com.badlogic.gdx.math.Vector3;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.building.Inventory;
@@ -130,5 +131,32 @@ class NPCManagerStructureTest {
         assertTrue(builderCount <= 5,
                 "Council builder count should not grow unboundedly — found " + builderCount +
                 " builders after 5 scan cycles (suggests infinite spawning, bug #145 not fixed)");
+    }
+
+    /**
+     * Regression test for Issue #168: applyPoliceTapeToStructure previously only taped
+     * WOOD blocks. BRICK (and other player-placed materials) must also receive police tape.
+     */
+    @Test
+    void testIssue168_applyPoliceTapeToBrickStructure() {
+        // Build a 5-block BRICK structure
+        int cx = 20, cy = 1, cz = 20;
+        for (int i = 0; i < 5; i++) {
+            world.setBlock(cx + i, cy, cz, BlockType.BRICK);
+        }
+
+        // Trigger applyPoliceTapeToStructure via the test helper, centered on the structure
+        npcManager.forceApplyPoliceTape(world, new Vector3(cx + 2, cy, cz));
+
+        // At least one BRICK block must now have police tape
+        boolean tapeFound = false;
+        for (int i = 0; i < 5; i++) {
+            if (world.hasPoliceTape(cx + i, cy, cz)) {
+                tapeFound = true;
+                break;
+            }
+        }
+        assertTrue(tapeFound,
+                "Police tape should be applied to at least one BRICK block (issue #168 not fixed)");
     }
 }
