@@ -1238,6 +1238,8 @@ public class RagamuffinGame extends ApplicationAdapter {
      */
     private void resolveNPCCollisions() {
         for (NPC npc : npcManager.getNPCs()) {
+            // Knocked-out NPCs are lying on the ground; player can walk over them freely
+            if (npc.getState() == NPCState.KNOCKED_OUT) continue;
             if (player.getAABB().intersects(npc.getAABB())) {
                 // Push player away from NPC along XZ plane
                 float dx = player.getPosition().x - npc.getPosition().x;
