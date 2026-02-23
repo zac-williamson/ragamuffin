@@ -1767,6 +1767,9 @@ public class NPCManager {
             blockBreaker.clearHits(x, y, z);
         }
 
+        // Remove police tape protection if present
+        world.removePoliceTape(x, y, z);
+
         // Remove planning notice if present
         world.removePlanningNotice(x, y, z);
 
