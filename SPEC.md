@@ -1284,3 +1284,64 @@ restoring the full day/night NPC population cycle.
 2. **Regression — setGameTime is called each frame**: Run the game loop for 60 frames with
    `TimeSystem` advancing normally. Call `npcManager.getGameTime()`. Verify it is approximately
    equal to `timeSystem.getTime()` (within 0.1 hours), confirming the wiring is live.
+
+---
+
+## Bug Fix: Block-breaking awards reputation points, making the player Notorious after ~30 blocks
+
+**Status**: ❌ Broken — normal resource-gathering (the core gameplay loop) rapidly escalates the
+player to NOTORIOUS status, causing civilian NPCs to flee on sight and doubling the police force
+at night, making the town feel hostile and unplayable from the first in-game evening.
+
+**Problem**: `RagamuffinGame.handlePunch()` awards 1 street reputation point every time a block
+is broken (line ~1026):
+
+```java
+// Award street reputation for breaking blocks (minor crime)
+player.getStreetReputation().addPoints(1);
+```
+
+`NOTORIOUS_THRESHOLD` is 30 points. Breaking just 30 blocks reaches NOTORIOUS status. A player
+gathering the 4 WOOD needed to craft planks (5 punches × 4 trees = 20 break events) plus a
+handful of additional resource blocks hits notorious in the first 10-15 minutes of play.
+
+Once NOTORIOUS:
+- `updatePoliceSpawning()` raises the active police cap from 4 to **8** officers
+- `isCivilianType()` NPCs flee the player on sight (PUBLIC, PENSIONER, SCHOOL_KID, JOGGER,
+  BUSKER, POSTMAN)
+- Police skip the warning phase and go straight to AGGRESSIVE
+
+The reputation system was designed to punish *criminal* behaviour — punching NPCs (2 pts),
+raiding Greggs, fighting police. Routine resource collection (breaking trees) was never intended
+to be a crime. The comment in the code even says "minor crime" — but 30 such "minor crimes"
+triggers the maximum escalation response.
+
+**Root cause**: Block breaking should not award reputation points at all. Reputation should
+only increase from actions that are genuinely antisocial: attacking NPCs, being arrested, or
+demolishing structures that belong to the world. Breaking a tree in the park is not a crime;
+punching a pensioner is.
+
+**Required fix in `RagamuffinGame.handlePunch()`**:
+
+Remove the reputation gain on block break entirely:
+
+```java
+// REMOVED: player.getStreetReputation().addPoints(1);
+```
+
+Reputation gain on NPC punch (2 points) and arrest-related events should remain unchanged.
+
+**Integration tests** (add to Phase 10 / Critic regression suite):
+
+1. **Breaking blocks does NOT increase reputation**: Start a new game. Break 50 blocks (TREE_TRUNK,
+   BRICK, GLASS — any combination). Verify `player.getStreetReputation().getPoints()` is still 0.
+   Verify `player.getStreetReputation().isNotorious()` is false. Verify no civilians are in
+   FLEEING state.
+
+2. **Punching an NPC still increases reputation**: Spawn a PUBLIC NPC adjacent to the player.
+   Punch it once. Verify `player.getStreetReputation().getPoints()` is 2 (unchanged from before
+   this fix). Verify the reputation system still works for legitimate crime events.
+
+3. **Player can gather resources extensively without becoming notorious**: Break 100 blocks over
+   the course of simulated gameplay. Advance time to night. Verify the number of police NPCs
+   spawned is at most 4 (the non-notorious cap), not 8. Verify civilians do not flee.
