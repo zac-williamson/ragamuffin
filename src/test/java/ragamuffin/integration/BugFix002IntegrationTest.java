@@ -19,7 +19,7 @@ class BugFix002IntegrationTest {
     /**
      * Bug 001: Verify main menu navigation works correctly.
      * The menu should start with "New Game" selected, allow navigating
-     * to "Quit" and back, and correctly report which option is selected.
+     * through all options, and correctly report which option is selected.
      */
     @Test
     void mainMenuNavigationWorks() {
@@ -31,11 +31,20 @@ class BugFix002IntegrationTest {
         assertTrue(menu.isNewGameSelected(), "New Game should be selected initially");
         assertFalse(menu.isQuitSelected(), "Quit should not be selected initially");
 
+        // Navigate down to Skip Intro
+        menu.selectNext();
+        assertEquals(1, menu.getSelectedOption(), "Should be on Skip Intro (option 1) after selectNext");
+        assertFalse(menu.isNewGameSelected(), "New Game should not be selected");
+        assertTrue(menu.isSkipIntroSelected(), "Skip Intro should be selected after one selectNext");
+
         // Navigate down to Quit
         menu.selectNext();
-        assertEquals(1, menu.getSelectedOption(), "Should be on Quit (option 1) after selectNext");
-        assertFalse(menu.isNewGameSelected(), "New Game should not be selected");
-        assertTrue(menu.isQuitSelected(), "Quit should be selected after navigating down");
+        assertEquals(2, menu.getSelectedOption(), "Should be on Quit (option 2) after second selectNext");
+        assertTrue(menu.isQuitSelected(), "Quit should be selected after navigating down twice");
+
+        // Navigate back up to Skip Intro
+        menu.selectPrevious();
+        assertTrue(menu.isSkipIntroSelected(), "Should be on Skip Intro after selectPrevious");
 
         // Navigate back up to New Game
         menu.selectPrevious();
@@ -58,7 +67,8 @@ class BugFix002IntegrationTest {
     void mainMenuShowResetsSelection() {
         MainMenuScreen menu = new MainMenuScreen();
 
-        // Navigate to Quit
+        // Navigate to Quit (option 2)
+        menu.selectNext();
         menu.selectNext();
         assertTrue(menu.isQuitSelected());
 
@@ -79,15 +89,17 @@ class BugFix002IntegrationTest {
     void mainMenuOptionsCentredLayout() {
         MainMenuScreen menu = new MainMenuScreen();
 
-        // Verify menu has exactly 2 options
-        assertTrue(menu.isNewGameSelected() || menu.isQuitSelected(),
-            "Menu should have New Game and Quit options");
+        // Verify menu has New Game, Skip Intro, and Quit options
+        assertTrue(menu.isNewGameSelected(),
+            "Menu should start on New Game");
 
         // Navigate through all options to verify they all exist
+        menu.selectNext(); // Go to Skip Intro
+        assertTrue(menu.isSkipIntroSelected(), "Skip Intro option should exist");
         menu.selectNext(); // Go to Quit
-        assertTrue(menu.isQuitSelected());
+        assertTrue(menu.isQuitSelected(), "Quit option should exist");
         menu.selectNext(); // Wrap to New Game
-        assertTrue(menu.isNewGameSelected());
+        assertTrue(menu.isNewGameSelected(), "Should wrap back to New Game");
     }
 
     // --- Bug 002: Empty Chunks ---
