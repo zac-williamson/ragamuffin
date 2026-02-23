@@ -1536,13 +1536,12 @@ public class NPCManager {
         setNPCTarget(police, player.getPosition(), world);
 
         // If very close, make the arrest — signal game loop.
-        // Transition to ARRESTING (not PATROLLING) so the attack code can still
-        // deal damage this frame; the game loop returns police to PATROLLING after
-        // processing the arrest via clearArrestPending().
+        // Transition to PATROLLING immediately so the police does not keep chasing;
+        // the game loop handles the arrest via isArrestPending()/clearArrestPending().
         if (police.isNear(player.getPosition(), 1.5f) && !arrestPending) {
             arrestPending = true;
             police.setSpeechText("You're coming with me!", 2.0f);
-            police.setState(NPCState.ARRESTING);
+            police.setState(NPCState.PATROLLING);
         }
     }
 
