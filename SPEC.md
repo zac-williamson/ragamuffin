@@ -1075,3 +1075,69 @@ spriteBatch.setProjectionMatrix(ortho);
    projection matrix (not the perspective one) before the bubble background was drawn.
    Verify the bubble's computed screen X is within `[0, screenWidth]` and Y within
    `[0, screenHeight]`.
+
+---
+
+## Bug Fix: HealingSystem movement detection is frame-rate dependent
+
+**Status**: ❌ Broken — on high-refresh-rate displays (120Hz, 144Hz, 240Hz) the player heals
+continuously while walking, breaking the "rest to heal" survival mechanic entirely.
+
+**Problem**: `HealingSystem.update()` detects movement by comparing the player's per-frame
+displacement against a fixed threshold:
+
+```java
+float distanceMoved = currentPos.dst(lastPosition); // distance moved in ONE frame
+if (distanceMoved < MOVEMENT_THRESHOLD) {            // MOVEMENT_THRESHOLD = 0.1f
+    restingTime += delta;
+```
+
+The threshold `0.1f` is a hard-coded absolute distance, not scaled by delta. At 60fps
+(`delta ≈ 0.0167s`), a player moving at `MOVE_SPEED = 12 blocks/s` travels
+`12 × 0.0167 = 0.20f` blocks per frame — correctly above the threshold.
+
+But at **120fps** (`delta ≈ 0.0083s`), the same player travels `12 × 0.0083 = 0.10f` per frame —
+right at the boundary. At **144fps** (`delta ≈ 0.0069s`): `12 × 0.0069 = 0.083f` — below the
+threshold. At **240fps** (`delta ≈ 0.0042s`): `12 × 0.0042 = 0.050f` — well below the threshold.
+
+The result: on any display running faster than ~100fps, the healing system classifies the player
+as "resting" even while sprinting. The `restingTime` accumulates to `RESTING_DURATION_REQUIRED`
+(5 seconds) and the player heals at 5 HP/s indefinitely while moving. This makes combat and cold
+snaps trivially survivable, gutting the entire survival mechanic.
+
+**Root cause**: the threshold should scale with `delta` (i.e., be a *speed* threshold, not a
+*distance* threshold), or the check should use the player's horizontal velocity magnitude directly.
+
+**Required fix in `HealingSystem.update()`**:
+
+Replace the per-frame distance comparison with a velocity-scaled comparison:
+
+```java
+// Compute speed from per-frame displacement (blocks/second)
+float speed = (delta > 0) ? currentPos.dst(lastPosition) / delta : 0f;
+if (speed < MOVEMENT_THRESHOLD) {   // MOVEMENT_THRESHOLD is now a speed (blocks/s)
+    restingTime += delta;
+} else {
+    restingTime = 0;
+}
+```
+
+And update the constant's documentation to reflect it is a speed threshold:
+
+```java
+public static final float MOVEMENT_THRESHOLD = 0.5f; // Below this speed (blocks/s) = resting
+```
+
+The value `0.5f` gives a clear separation: a stationary player has speed 0, a walking player
+has speed ≥ 12. Any value between 0 and 12 works correctly regardless of frame rate.
+
+**Integration tests** (add to Phase 11 suite):
+
+5. **Healing does NOT trigger while moving (any frame rate)**: Set health to 50, hunger to 100.
+   Simulate the player moving forward (non-zero displacement each frame) for 300 frames using
+   `delta = 1f/240f` (240fps simulation). Verify `restingTime` never exceeds 0.1 seconds.
+   Verify health remains at 50 (no healing occurred).
+
+6. **Healing triggers correctly at high frame rate**: Set health to 50, hunger to 100. Player
+   stands still. Simulate 300 frames at `delta = 1f/240f`. Verify `restingTime` accumulates
+   to ≥ 5 seconds. Verify health > 50.
