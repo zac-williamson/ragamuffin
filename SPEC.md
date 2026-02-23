@@ -2224,3 +2224,79 @@ private void updatePoliceAggressive(NPC police, float delta, World world, Player
    inside shelter — police reverts to PATROLLING (test 1). Player then steps out. Advance
    60 frames. Verify police transitions back to AGGRESSIVE (or WARNING) and begins
    approaching the player again.
+
+---
+
+## Bug Fix: YOUTH_GANG stealing logic overrides AGGRESSIVE chase state
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — in `NPCManager.updateNPC()`, the stealing check for YOUTH_GANG NPCs
+runs after `updateAggressive()` but does not exclude AGGRESSIVE state. When an AGGRESSIVE
+gang member closes to within 2.0 blocks of the player (attack range), the steal block
+overrides the state to STEALING, which immediately steals one item and returns to
+WANDERING — cancelling the chase entirely after a single hit.
+
+**Problem**: In `NPCManager.updateNPC()`, after the main state switch, this block runs:
+
+```java
+// Youth gangs try to steal
+if (npc.getType() == NPCType.YOUTH_GANG && npc.getState() != NPCState.STEALING) {
+    if (npc.isNear(player.getPosition(), 2.0f)) {
+        npc.setState(NPCState.STEALING);   // ← fires even when AGGRESSIVE
+    } else if (npc.isNear(player.getPosition(), 20.0f)) {
+        setNPCTarget(npc, player.getPosition(), world);
+    }
+}
+```
+
+`npc.getState() != NPCState.STEALING` does not guard against AGGRESSIVE. When an
+AGGRESSIVE NPC reaches 2.0 blocks — the distance needed to deliver its 8-damage attack —
+it is immediately redirected to STEALING mode. `updateStealing()` takes one item and then
+calls `npc.setState(NPCState.WANDERING)`, so the NPC stops pursuing on the very next tick.
+
+The attack code in `NPCManager.update()` runs OUTSIDE the state switch (based on
+`npc.getType().isHostile()` and proximity), so the gang member may land one hit at the
+moment of range crossing, but after that tick it is WANDERING and the chase is over.
+
+**Impact**: The gang territory mechanic (Phase 14) relies on YOUTH_GANG members actually
+chasing and threatening the player once escalated to AGGRESSIVE. With this bug, an
+aggressive gang member closes to attack range, pickpockets one WOOD item, and wanders
+away. The player receives one hit and loses one resource — but not the sustained pressure
+of a pursuing enemy. Gangs feel like passive thieves rather than a genuine territorial
+threat. This also makes the dodge/roll mechanic pointless against gangs.
+
+**Required fix**: Exclude `NPCState.AGGRESSIVE` (and `NPCState.FLEEING`) from the stealing
+override so that gangs in combat or flight mode do not switch to pickpocket mode:
+
+```java
+if (npc.getType() == NPCType.YOUTH_GANG
+        && npc.getState() != NPCState.STEALING
+        && npc.getState() != NPCState.AGGRESSIVE
+        && npc.getState() != NPCState.FLEEING) {
+    if (npc.isNear(player.getPosition(), 2.0f)) {
+        npc.setState(NPCState.STEALING);
+    } else if (npc.isNear(player.getPosition(), 20.0f)) {
+        setNPCTarget(npc, player.getPosition(), world);
+    }
+}
+```
+
+**Integration tests**:
+
+1. **AGGRESSIVE gang member does not switch to STEALING at attack range**: Spawn a
+   YOUTH_GANG NPC at (−50, 1, −30). Place the player at (−50, 1, −29) (1 block away).
+   Set the NPC to `NPCState.AGGRESSIVE`. Give the player 5 WOOD items. Simulate 10 frames.
+   Verify the NPC's state remains AGGRESSIVE (not STEALING or WANDERING). Verify the
+   player still has 5 WOOD items (no theft occurred while chasing).
+
+2. **AGGRESSIVE gang member continues chasing after reaching attack range**: Spawn a
+   YOUTH_GANG NPC at (−50, 1, −35). Place the player at (−50, 1, −30) (5 blocks away).
+   Set the NPC to AGGRESSIVE. Simulate 120 frames (2 seconds). Verify the NPC has moved
+   significantly closer to the player (distance decreased by at least 2 blocks). Verify
+   the NPC state is still AGGRESSIVE (not WANDERING) when the player is within range.
+
+3. **Gang still steals when WANDERING and adjacent**: Spawn a YOUTH_GANG NPC in
+   WANDERING state adjacent to the player. Give the player 3 WOOD. Advance until the NPC
+   is within 2 blocks. Simulate 30 frames. Verify the NPC switched to STEALING and the
+   player lost 1 WOOD item (stealing still works in non-combat state).
