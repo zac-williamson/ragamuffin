@@ -1812,3 +1812,91 @@ if (!isUIBlocking()) {
 3. **Hunger is required for healing even without the exploit**: Player health 50, hunger 40
    (below the 50 threshold). UI closed. Simulate 400 frames stationary. Verify health is
    still 50 — hunger requirement prevents healing regardless of UI state.
+
+---
+
+## Bug Fix: Council builder demolishBlock() never rebuilds chunk mesh — demolished blocks remain visible as ghost geometry
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — when a council builder NPC demolishes a block via `NPCManager.demolishBlock()`,
+the block is removed from the world data (`world.setBlock(x, y, z, BlockType.AIR)`) but the chunk mesh
+is never marked dirty and never rebuilt. The demolished block disappears from the collision system (the
+player can walk through it) but remains fully visible in the 3D scene as solid geometry. The player
+experiences ghost blocks — solid-looking voxels they can pass through — wherever council builders have
+demolished their shelter.
+
+**Problem**: `World.setBlock()` intentionally does NOT auto-dirty chunks (callers are responsible for
+triggering mesh rebuilds). Every other block removal in the game correctly schedules a rebuild:
+
+- `RagamuffinGame.handlePunch()` calls `rebuildChunkAt(x, y, z)` after every block break
+- `RagamuffinGame.handlePlace()` calls `rebuildChunkAt(...)` after every block placement
+
+But `NPCManager.demolishBlock()` calls only:
+
+```java
+world.setBlock(x, y, z, BlockType.AIR);
+structure.removeBlock(blockToRemove);
+structureTracker.removeBlock(x, y, z);
+world.removePlanningNotice(x, y, z);
+```
+
+There is no call to mark the chunk dirty. `NPCManager` holds no reference to `RagamuffinGame` (correct
+separation of concerns), so it cannot call `rebuildChunkAt()` directly. `World` would need to expose
+a `markChunkDirtyAt(int x, int y, int z)` helper, or `demolishBlock()` needs to be called from the
+game loop where the rebuild can be scheduled.
+
+**Consequence**: The council builder system (the Phase 7 antagonist, the game's primary threat after
+the player establishes a shelter) is visually broken. Players see their shelter standing intact while
+simultaneously being able to walk through the walls — a deeply confusing experience that undermines
+the entire survival loop. The effect looks like a rendering bug rather than intentional gameplay,
+eroding player trust in the physics system.
+
+**Required fix**: Add a public `markBlockDirty(int x, int y, int z)` method to `World` that
+translates world coordinates to chunk coordinates and marks that chunk (and any boundary neighbours)
+dirty:
+
+```java
+// World.java
+public void markBlockDirty(int x, int y, int z) {
+    int chunkX = Math.floorDiv(x, Chunk.SIZE);
+    int chunkY = Math.floorDiv(y, Chunk.HEIGHT);
+    int chunkZ = Math.floorDiv(z, Chunk.SIZE);
+    markChunkDirty(chunkX, chunkY, chunkZ);
+    // Also dirty neighbours if on chunk boundary
+    int localX = Math.floorMod(x, Chunk.SIZE);
+    int localY = Math.floorMod(y, Chunk.HEIGHT);
+    int localZ = Math.floorMod(z, Chunk.SIZE);
+    if (localX == 0) markChunkDirty(chunkX - 1, chunkY, chunkZ);
+    if (localX == Chunk.SIZE - 1) markChunkDirty(chunkX + 1, chunkY, chunkZ);
+    if (localY == 0) markChunkDirty(chunkX, chunkY - 1, chunkZ);
+    if (localY == Chunk.HEIGHT - 1) markChunkDirty(chunkX, chunkY + 1, chunkZ);
+    if (localZ == 0) markChunkDirty(chunkX, chunkY, chunkZ - 1);
+    if (localZ == Chunk.SIZE - 1) markChunkDirty(chunkX, chunkY, chunkZ + 1);
+}
+```
+
+Then call it in `NPCManager.demolishBlock()` immediately after `world.setBlock(x, y, z, BlockType.AIR)`:
+
+```java
+world.setBlock(x, y, z, BlockType.AIR);
+world.markBlockDirty(x, y, z);  // Trigger mesh rebuild so demolished block disappears visually
+```
+
+**Integration tests** (add to next Critic integration test suite):
+
+1. **Demolished block disappears from chunk mesh**: Build a 6-block WOOD structure. Force a
+   structure scan (`npcManager.forceStructureScan(world, tooltipSystem)`). Advance 60 frames
+   (1 second) to let a builder reach and demolish one block. Call `world.getDirtyChunks()`.
+   Verify the chunk containing the demolished block is in the dirty set — confirming a mesh
+   rebuild has been scheduled.
+
+2. **Ghost block regression**: Build a WOOD structure at (10, 2, 10). Run the full council
+   builder pipeline until one block is demolished (track via `structureTracker.getStructures()`
+   block count decreasing by 1). Call `world.getBlock(demolishedX, demolishedY, demolishedZ)`.
+   Verify it returns `BlockType.AIR`. Verify the chunk containing that position is in
+   `world.getDirtyChunks()` — not clean — so the renderer will update on the next frame.
+
+3. **Player can no longer collide with demolished block**: After demolition and mesh rebuild,
+   place the player adjacent to the demolished position. Simulate pressing W for 30 frames.
+   Verify the player moves into the space where the block was (no collision barrier remains).
