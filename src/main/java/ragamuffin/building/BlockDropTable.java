@@ -86,6 +86,9 @@ public class BlockDropTable {
                 return Material.CARPET;
             case IRON_FENCE:
                 return Material.FENCE;
+            case WOOD_FENCE:
+            case WOOD_WALL:
+                return Material.WOOD;
             case SIGN_WHITE:
                 return Material.SIGN;
             case SIGN_RED:
