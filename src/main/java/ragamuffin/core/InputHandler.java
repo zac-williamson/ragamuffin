@@ -26,6 +26,7 @@ public class InputHandler implements InputProcessor {
     private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
     private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
     private float mouseDeltaX, mouseDeltaY;
+    private float scrollAmountY;
 
     // Mouse position and click tracking for UI interaction
     private int mouseX, mouseY;
@@ -78,10 +79,12 @@ public class InputHandler implements InputProcessor {
     public boolean isLeftClickPressed() { return leftClickPressed; }
     public boolean isLeftClickReleased() { return leftClickReleased; }
     public boolean isRightClickPressed() { return rightClickPressed; }
+    public float getScrollAmountY() { return scrollAmountY; }
 
     public void resetLeftClick() { leftClickPressed = false; }
     public void resetLeftClickReleased() { leftClickReleased = false; }
     public void resetRightClick() { rightClickPressed = false; }
+    public void resetScroll() { scrollAmountY = 0; }
 
     public void resetEscape() { escapePressed = false; }
     public void resetInventory() { inventoryPressed = false; }
@@ -205,6 +208,7 @@ public class InputHandler implements InputProcessor {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
+        scrollAmountY = amountY;
         return false;
     }
 

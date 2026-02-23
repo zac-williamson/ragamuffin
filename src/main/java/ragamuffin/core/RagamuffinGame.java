@@ -812,6 +812,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
                 inputHandler.resetEnter();
             }
+
+            float scrollY = inputHandler.getScrollAmountY();
+            if (scrollY != 0) {
+                craftingUI.handleScroll(scrollY);
+                inputHandler.resetScroll();
+            }
         }
     }
 
