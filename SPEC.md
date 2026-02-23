@@ -2916,3 +2916,107 @@ or add a dedicated `pendingRemoval` flag) and let the existing `removeIf` at the
    update). Spawn 5 civilian NPCs after them. After one `update()` call, verify that all
    5 civilian NPCs are present in `npcManager.getNPCs()` and have had their timers ticked
    (none were orphaned or skipped).
+
+---
+
+## Bug: Landmark crimes award zero reputation — the reputation system is effectively inert during normal gameplay
+
+**Date:** 2026-02-23
+**Status:** Open
+
+**Symptom:** A player can raid Greggs (break blocks, steal sausage rolls, trigger a full
+police response), loot the jeweller (steal diamonds, trigger a tooltip), and smash up
+every shop on the high street — all without earning a single reputation point. The
+reputation → consequence cascade (civilians flee at NOTORIOUS, police cap doubles from 4
+to 8, police skip the warning phase) is permanently stuck at its lowest tier for any
+player who doesn't specifically pick fights with NPCs.
+
+**Root cause:** After fixing Issue #46 (block-breaking awarding too much reputation),
+the fix correctly removed the per-block `addPoints(1)` call, but the design intent in
+the SPEC was that *genuinely criminal* block-breaking — specifically raiding named
+landmarks like Greggs and the jeweller — should award reputation. No targeted
+replacement was added to `GreggsRaidSystem` or the Greggs/jeweller block-break path in
+`RagamuffinGame.handlePunch()`.
+
+Currently, `addPoints()` is called in exactly **one** place in the entire codebase:
+line 994 of `RagamuffinGame.java`, when punching an NPC (+2 pts). This is the only
+way to build reputation, making the system nearly inert during the core loop of
+resource gathering and landmark looting.
+
+The SPEC text from the Issue #46 bug fix section explicitly states:
+
+> "The reputation system was designed to punish *criminal* behaviour — punching NPCs
+> (2 pts), **raiding Greggs**, fighting police. Routine resource collection (breaking
+> trees) was never intended to be a crime."
+
+This confirms raiding Greggs and other landmark crimes were always intended to award
+reputation. The fix removed all block-breaking reputation but never added the
+targeted landmark-crime replacement.
+
+**Affected systems:**
+- `GreggsRaidSystem.onGreggBlockBroken()` — escalates police but never calls `addPoints()`
+- `RagamuffinGame.handlePunch()` — drops the Greggs block, calls `greggsRaidSystem.onGreggBlockBroken()`,
+  but no reputation is awarded to the player
+- The jeweller diamond theft path — triggers `TooltipTrigger.JEWELLER_DIAMOND` but awards
+  zero reputation despite being explicitly named in the SPEC as a major crime
+
+**Required fix in `RagamuffinGame.handlePunch()`:**
+
+When a block from a named landmark is broken and yields a drop (i.e. a crime has been
+committed against that landmark), award reputation points proportional to the severity:
+
+```java
+// After: Material drop = dropTable.getDrop(blockType, landmark);
+if (broken && landmark != null) {
+    switch (landmark) {
+        case GREGGS:
+            // Stealing from Greggs — minor crime, but it adds up
+            player.getStreetReputation().addPoints(1);
+            break;
+        case JEWELLER:
+            // Diamond theft — serious crime
+            player.getStreetReputation().addPoints(3);
+            break;
+        case OFF_LICENCE:
+        case CHARITY_SHOP:
+        case BOOKIES:
+            // Smashing up shops — antisocial behaviour
+            player.getStreetReputation().addPoints(1);
+            break;
+        case OFFICE_BUILDING:
+            // Corporate vandalism
+            player.getStreetReputation().addPoints(1);
+            break;
+        default:
+            break; // Parks, streets, houses — no reputation for normal world interaction
+    }
+}
+```
+
+Note: Breaking non-landmark blocks (trees, park grass, random bricks) should still award
+zero reputation, consistent with Issue #46's fix.
+
+**Integration tests** (add to a new `Issue130LandmarkCrimeReputationTest`):
+
+1. **Greggs raid awards reputation**: Place a GLASS block tagged as GREGGS landmark.
+   Simulate breaking it (2 hits for GLASS). Verify `player.getStreetReputation().getPoints()`
+   increases by 1. Verify breaking 3 Greggs blocks brings the player to 3 points (not 0).
+
+2. **Jeweller theft awards 3 reputation**: Place a GLASS block tagged as JEWELLER. Break it
+   (2 hits). Verify reputation increases by 3.
+
+3. **Breaking non-landmark blocks still awards zero reputation**: Place a TREE_TRUNK (no
+   landmark tag). Break it (5 hits). Verify reputation stays at 0. Verify no civilians flee.
+
+4. **Reputation accumulates across landmark crimes**: Break 10 Greggs blocks and steal a
+   diamond from the jeweller. Verify reputation is at least 13 points (10×1 + 1×3). Verify
+   player has reached KNOWN status (≥10 pts).
+
+5. **NOTORIOUS status reachable through landmark crimes alone**: Break enough landmark blocks
+   (e.g. 30 Greggs blocks or a combination) without punching any NPC. Verify player reaches
+   NOTORIOUS status. Verify a PUBLIC civilian enters FLEEING state on the next NPCManager
+   update tick.
+
+6. **Non-criminal block breaks remain at zero reputation**: Break 50 TREE_TRUNK blocks and
+   50 GRASS blocks (none tagged to landmarks). Verify reputation is exactly 0 throughout.
+   This is the Issue #46 regression guard.
