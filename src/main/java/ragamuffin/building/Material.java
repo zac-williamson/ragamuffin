@@ -80,7 +80,8 @@ public enum Material {
     PLYWOOD("Plywood"),
     PIPE("Pipe"),
     CARDBOARD_BOX("Cardboard Box"),
-    ANTIDEPRESSANTS("Antidepressants");
+    ANTIDEPRESSANTS("Antidepressants"),
+    STAIRS("Stairs");
 
     private final String displayName;
 
@@ -148,6 +149,8 @@ public enum Material {
             case SHELTER_ROOF:   return c(0.48f, 0.52f, 0.55f);
             case PLYWOOD:        return c(0.80f, 0.68f, 0.40f);   // Light plywood
             case PIPE:           return c(0.55f, 0.55f, 0.60f);   // Metal pipe
+            case STAIRS:         return cs(0.70f, 0.55f, 0.28f,   // Light tread top
+                                           0.60f, 0.45f, 0.22f);  // Darker riser side
 
             // Diamond — cyan/white sparkle
             case DIAMOND:        return cs(0.65f, 0.95f, 1.00f,
