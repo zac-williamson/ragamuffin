@@ -185,7 +185,8 @@ public class HotbarUI {
      * Draw an icon for the given material inside the slot rectangle.
      * Must be called while a Filled ShapeRenderer is active.
      *
-     * Block items are drawn as coloured rectangles. Non-block items use custom shapes.
+     * Block items are drawn as 3D isometric voxel-art (top + left + right faces).
+     * Non-block items use custom shapes for visual clarity.
      */
     private void drawItemIcon(ShapeRenderer shapeRenderer, Material material, int x, int y, int size) {
         int padding = 4;
@@ -196,19 +197,63 @@ public class HotbarUI {
         Color[] colors = material.getIconColors();
 
         if (material.isBlockItem()) {
-            if (colors.length == 1) {
-                shapeRenderer.setColor(colors[0]);
-                shapeRenderer.rect(iconX, iconY, iconSize, iconSize);
-            } else {
-                int half = iconSize / 2;
-                shapeRenderer.setColor(colors[1]);
-                shapeRenderer.rect(iconX, iconY, iconSize, half);
-                shapeRenderer.setColor(colors[0]);
-                shapeRenderer.rect(iconX, iconY + half, iconSize, iconSize - half);
-            }
+            drawIsometricBlock(shapeRenderer, colors, iconX, iconY, iconSize);
         } else {
             drawNonBlockIcon(shapeRenderer, material, iconX, iconY, iconSize, colors);
         }
+    }
+
+    /**
+     * Draw a 3D isometric voxel cube using three visible faces (top, left, right).
+     *
+     * Vertices in screen space (y increases upward):
+     *   A = top-centre apex
+     *   B = mid-left (top face left corner / left face top)
+     *   C = mid-right (top face right corner / right face top)
+     *   D = bottom-left
+     *   E = bottom-centre
+     *   F = bottom-right
+     *
+     *   Top face  : A-B-E-C  (rhombus, two triangles)
+     *   Left face : B-D-E    (triangle)
+     *   Right face: C-E-F    (triangle, darkened for shadow)
+     */
+    private void drawIsometricBlock(ShapeRenderer shapeRenderer, Color[] colors, int x, int y, int size) {
+        Color topColor   = colors[0];
+        Color leftColor  = colors.length > 1 ? colors[1] : darken(colors[0], 0.80f);
+        Color rightColor = darken(leftColor, 0.70f);
+
+        float cx    = x + size / 2f;
+        float xLeft = x;
+        float xRight= x + size;
+        float yTop  = y + size;
+        float yMid  = y + size * 0.40f;
+        float yBot  = y;
+
+        float ax = cx,     ay = yTop;
+        float bx = xLeft,  by = yMid;
+        float c2x= xRight, c2y= yMid;
+        float dx = xLeft,  dy = yBot;
+        float ex = cx,     ey = yBot;
+        float fx = xRight, fy = yBot;
+
+        // Top face (rhombus)
+        shapeRenderer.setColor(topColor);
+        shapeRenderer.triangle(ax, ay, bx, by, c2x, c2y);
+        shapeRenderer.triangle(bx, by, ex, ey, c2x, c2y);
+
+        // Left face
+        shapeRenderer.setColor(leftColor);
+        shapeRenderer.triangle(bx, by, dx, dy, ex, ey);
+
+        // Right face (shadow side)
+        shapeRenderer.setColor(rightColor);
+        shapeRenderer.triangle(c2x, c2y, ex, ey, fx, fy);
+    }
+
+    /** Return a darker version of the given color (factor in 0..1). */
+    private static Color darken(Color c, float factor) {
+        return new Color(c.r * factor, c.g * factor, c.b * factor, c.a);
     }
 
     /**

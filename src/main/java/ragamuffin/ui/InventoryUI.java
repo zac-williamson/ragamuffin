@@ -307,7 +307,7 @@ public class InventoryUI {
      * Draw an icon for the given material inside the slot rectangle.
      * Must be called while a Filled ShapeRenderer is active.
      *
-     * Block items are drawn as coloured rectangles (1 or 2 colours for top/side face).
+     * Block items are drawn as 3D isometric voxel-art (top face + left face + right face).
      * Non-block items (tools, food, shop goods) use distinctive custom shapes so they
      * are visually distinct from construction blocks at a glance.
      */
@@ -320,21 +320,80 @@ public class InventoryUI {
         Color[] colors = material.getIconColors();
 
         if (material.isBlockItem()) {
-            // Block materials: coloured square (1 or 2 colours)
-            if (colors.length == 1) {
-                shapeRenderer.setColor(colors[0]);
-                shapeRenderer.rect(iconX, iconY, iconSize, iconSize);
-            } else {
-                // Two-color: top half = colors[0] (top face), bottom half = colors[1] (side face)
-                int half = iconSize / 2;
-                shapeRenderer.setColor(colors[1]);
-                shapeRenderer.rect(iconX, iconY, iconSize, half);
-                shapeRenderer.setColor(colors[0]);
-                shapeRenderer.rect(iconX, iconY + half, iconSize, iconSize - half);
-            }
+            drawIsometricBlock(shapeRenderer, colors, iconX, iconY, iconSize);
         } else {
             drawNonBlockIcon(shapeRenderer, material, iconX, iconY, iconSize, colors);
         }
+    }
+
+    /**
+     * Draw a 3D isometric voxel cube using three visible faces (top, left, right).
+     *
+     * The cube is drawn using a dimetric projection where the top face is a
+     * rhombus and the two side faces are parallelograms.  All six vertices:
+     *
+     *           A (top-centre)
+     *          / \
+     *         B   C
+     *        /|   |\
+     *       D |   | F
+     *        \|   |/
+     *         E (bottom-centre)
+     *
+     *   Top face  : A-B-E-C  (rhombus)
+     *   Left face : B-D-E-E  (parallelogram B->D->E->midpoint)
+     *   Right face: C-E-F-C  (parallelogram C->E->F)
+     *
+     * In screen coords (y increases upward):
+     *   A = (cx, yTop)
+     *   B = (xLeft,  yMid)
+     *   C = (xRight, yMid)
+     *   D = (xLeft,  yBot)
+     *   E = (cx,     yBot)
+     *   F = (xRight, yBot)
+     */
+    private void drawIsometricBlock(ShapeRenderer shapeRenderer, Color[] colors, int x, int y, int size) {
+        // colors[0] = primary/top color, colors[1] = side color (if present)
+        Color topColor   = colors[0];
+        Color leftColor  = colors.length > 1 ? colors[1] : darken(colors[0], 0.80f);
+        Color rightColor = darken(leftColor, 0.70f);
+
+        float cx    = x + size / 2f;
+        float xLeft = x;
+        float xRight= x + size;
+
+        // yMid is the height where the top face diamond meets the side faces.
+        // Placing it at 60% gives a good 1:2 aspect ratio for the top face.
+        float yTop = y + size;
+        float yMid = y + size * 0.40f;
+        float yBot = y;
+
+        float ax = cx,     ay = yTop;
+        float bx = xLeft,  by = yMid;
+        float cx2= xRight, cy2= yMid;
+        float dx = xLeft,  dy = yBot;
+        float ex = cx,     ey = yBot;
+        float fx = xRight, fy = yBot;
+
+        // Top face (rhombus A-B-E-C) = two triangles
+        shapeRenderer.setColor(topColor);
+        shapeRenderer.triangle(ax, ay, bx, by, cx2, cy2);
+        shapeRenderer.triangle(bx, by, ex, ey, cx2, cy2);
+
+        // Left face (parallelogram B-D-E) = one triangle
+        // (B is top-left, D is bottom-left, E is bottom-centre)
+        shapeRenderer.setColor(leftColor);
+        shapeRenderer.triangle(bx, by, dx, dy, ex, ey);
+
+        // Right face (parallelogram C-E-F) = one triangle
+        // (C is top-right, E is bottom-centre, F is bottom-right)
+        shapeRenderer.setColor(rightColor);
+        shapeRenderer.triangle(cx2, cy2, ex, ey, fx, fy);
+    }
+
+    /** Return a new Color that is a darker version of the given color by the given factor (0..1). */
+    private static Color darken(Color c, float factor) {
+        return new Color(c.r * factor, c.g * factor, c.b * factor, c.a);
     }
 
     /**
