@@ -532,6 +532,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 respawnSystem.update(delta, player);
                 if (wasRespawning && !respawnSystem.isRespawning()) {
                     deathMessage = null; // Reset for next death
+                    // Issue #114: Reset Greggs raid on respawn — mirrors the arrest-handler reset
+                    greggsRaidSystem.reset();
                 }
 
                 // Phase 11: Trigger hunger warning tooltip
