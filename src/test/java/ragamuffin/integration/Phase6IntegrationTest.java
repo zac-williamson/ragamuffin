@@ -213,6 +213,7 @@ class Phase6IntegrationTest {
         // even with path-recalculation throttle and brief stalls.
         NPC police = npcManager.spawnNPC(NPCType.POLICE, player.getPosition().x + 8, 1, player.getPosition().z);
         assertNotNull(police, "Police should have spawned");
+        police.setState(NPCState.PATROLLING); // Must be PATROLLING for police AI to activate
 
         // Set to night so police behavior activates
         timeSystem.setTime(22.0f);
