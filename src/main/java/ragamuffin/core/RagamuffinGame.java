@@ -1398,6 +1398,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         world = new World(System.currentTimeMillis());
         world.generate();
 
+        // Rebuild signage from the new world's landmarks
+        signageRenderer = new ragamuffin.render.SignageRenderer();
+        signageRenderer.buildFromLandmarks(world.getAllLandmarks());
+
         // Reset player at the park centre
         float spawnY = calculateSpawnHeight(world, 0, 0) + 1.0f;
         player = new Player(0, spawnY, 0);
@@ -1437,6 +1441,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Reset game systems
         blockBreaker = new BlockBreaker();
         tooltipSystem = new TooltipSystem();
+        tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
         interactionSystem = new InteractionSystem();
         healingSystem = new HealingSystem();
         respawnSystem = new RespawnSystem();
