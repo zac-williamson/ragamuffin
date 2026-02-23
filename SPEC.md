@@ -1978,3 +1978,98 @@ Either approach ensures the respawn Y matches the actual terrain surface.
 3. **Respawn is consistent across multiple deaths**: Kill the player twice in the same
    session. Verify both respawns place the player at the same correct Y coordinate.
    Verify no terrain clipping occurs on either respawn.
+
+---
+
+## Bug Fix: AGGRESSIVE NPCs don't chase the player — missing movement case in updateNPC()
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — when any non-police, non-council-builder NPC (specifically
+`YOUTH_GANG`) is set to `NPCState.AGGRESSIVE`, the `updateNPC()` method's state
+switch has no `case AGGRESSIVE:` branch. The NPC falls through to `default:
+updateWandering()` and wanders randomly instead of chasing the player.
+
+**Problem**: In `NPCManager.updateNPC()` (the per-NPC switch at the bottom of the
+method), the handled cases are:
+
+```java
+switch (npc.getState()) {
+    case FLEEING:             updateFleeing(...); break;
+    case WANDERING:           updateWandering(...); break;
+    case GOING_TO_WORK:
+    case GOING_HOME:
+    case AT_PUB:
+    case AT_HOME:             updateDailyRoutine(...); break;
+    case STARING:
+    case PHOTOGRAPHING:
+    case COMPLAINING:         updateReactingToStructure(...); break;
+    case STEALING:            updateStealing(...); break;
+    default:                  updateWandering(...); break;  // ← AGGRESSIVE lands here
+}
+```
+
+`NPCState.AGGRESSIVE` is never listed. AGGRESSIVE NPCs wander randomly.
+
+**How it's triggered**: Two code paths set non-police NPCs to AGGRESSIVE:
+
+1. `GangTerritorySystem.makeNearbyGangsAggressive()` — called when the player
+   lingers in a gang territory for `LINGER_THRESHOLD_SECONDS` (5 seconds) or
+   attacks a gang member. All `YOUTH_GANG` NPCs within 30 blocks become AGGRESSIVE.
+
+2. `GangTerritorySystem.onPlayerAttacksGang()` — called directly from
+   `RagamuffinGame.handlePunch()` when the player punches a `YOUTH_GANG` NPC.
+
+Both paths work correctly to set the state, but the movement never changes.
+
+**Note on the attack mechanic**: The NPC attack code in `NPCManager.update()` runs
+OUTSIDE the state switch and DOES correctly trigger for `YOUTH_GANG` because
+`YOUTH_GANG.isHostile() == true`. So hostile gang members CAN damage the player if
+they happen to wander within 1.8 blocks. However, they don't pursue the player
+after becoming AGGRESSIVE — they just drift randomly, making the territorial
+hostility feel like a bug rather than a threat.
+
+**Impact**: The gang territory system (Phase 14) is the primary environmental
+hazard on the south side of the map. When the player enters "Bricky Estate" or
+"South Patch", the tooltip fires correctly, the linger timer counts down correctly,
+and the AGGRESSIVE state is set correctly — but then nothing changes. Gang members
+continue their lazy wander. The player can stand in a gang territory indefinitely
+without any escalating threat. The entire mechanic is cosmetic.
+
+**Required fix**: Add `case AGGRESSIVE:` to the switch in `NPCManager.updateNPC()`
+that calls a new `updateAggressive(npc, delta, world, player)` helper:
+
+```java
+case AGGRESSIVE:
+    updateAggressive(npc, delta, world, player);
+    break;
+```
+
+```java
+private void updateAggressive(NPC npc, float delta, World world, Player player) {
+    // Chase the player directly
+    setNPCTarget(npc, player.getPosition(), world);
+    // If the player escapes beyond a generous range, de-escalate back to WANDERING
+    if (npc.getPosition().dst(player.getPosition()) > 40.0f) {
+        npc.setState(NPCState.WANDERING);
+    }
+}
+```
+
+**Integration tests** (add to the gang territory test suite):
+
+1. **AGGRESSIVE gang member moves toward player, not randomly**: Spawn a YOUTH_GANG
+   NPC at (−50, 1, −30). Place the player at (−48, 1, −30) (2 blocks away). Set the
+   NPC state to AGGRESSIVE. Simulate 60 frames (1 second at 60fps). Verify the NPC's
+   position has moved closer to the player (distance to player has decreased compared
+   to its starting distance of 2 blocks), not drifted away.
+
+2. **Territory-triggered hostility causes gangs to chase**: Use the headless game.
+   Move the player into the "Bricky Estate" territory (−50, 1, −30). Simulate
+   `LINGER_THRESHOLD_SECONDS + 2` seconds. Verify at least one nearby YOUTH_GANG NPC
+   is in `NPCState.AGGRESSIVE`. Simulate an additional 60 frames. Verify that
+   AGGRESSIVE NPC's distance to the player has decreased (it is chasing).
+
+3. **De-escalation when player escapes**: Set a YOUTH_GANG NPC to AGGRESSIVE at
+   (−50, 1, −30). Move the player to (10, 1, 10) (far away, >40 blocks). Simulate
+   60 frames. Verify the NPC reverts to `NPCState.WANDERING` (no longer AGGRESSIVE).
