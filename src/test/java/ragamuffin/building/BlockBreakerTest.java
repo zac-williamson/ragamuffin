@@ -152,4 +152,81 @@ class BlockBreakerTest {
         assertEquals(3, blockBreaker.getHitCount(0, 1, 0));
         assertEquals(1, blockBreaker.getHitCount(1, 1, 0));
     }
+
+    // --- Issue #182: Block hit decay tests ---
+
+    @Test
+    void testTickDecay_RetainsHitsBeforeTimeout() {
+        world.setBlock(0, 1, 0, BlockType.TREE_TRUNK);
+
+        blockBreaker.punchBlock(world, 0, 1, 0);
+        blockBreaker.punchBlock(world, 0, 1, 0);
+        assertEquals(2, blockBreaker.getHitCount(0, 1, 0));
+
+        // Tick with a very small delta — hits should still be present
+        blockBreaker.tickDecay(0.016f);
+
+        assertEquals(2, blockBreaker.getHitCount(0, 1, 0));
+        // Block must still be intact
+        assertEquals(BlockType.TREE_TRUNK, world.getBlock(0, 1, 0));
+    }
+
+    @Test
+    void testTickDecay_ClearsHitsAfterTimeout() throws Exception {
+        // Use a subclass that reports the current time so we can simulate the passage
+        // of BLOCK_REGEN_SECONDS without actually sleeping.
+        //
+        // We achieve this by punching a block and then manually invoking tickDecay
+        // via a reflective timestamp override is not possible with the private inner
+        // class, so instead we use a concrete trick: call punchBlock, then call
+        // clearHits (which exists) and verify it, then separately verify that
+        // tickDecay removes entries whose timestamp is old enough.
+        //
+        // The cleanest test-friendly approach: expose a package-private helper that
+        // back-dates the timestamp of a hit record, then call tickDecay.
+
+        world.setBlock(0, 1, 0, BlockType.TREE_TRUNK);
+        blockBreaker.punchBlock(world, 0, 1, 0);
+        assertEquals(1, blockBreaker.getHitCount(0, 1, 0));
+
+        // Back-date the timestamp via the package-private helper
+        blockBreaker.backdateHitsForTesting(0, 1, 0,
+                (long) (BlockBreaker.BLOCK_REGEN_SECONDS * 1000L) + 1L);
+
+        blockBreaker.tickDecay(0.016f);
+
+        // Hits should have been cleared
+        assertEquals(0, blockBreaker.getHitCount(0, 1, 0));
+        // Block must still exist — tickDecay only removes hit records, not blocks
+        assertEquals(BlockType.TREE_TRUNK, world.getBlock(0, 1, 0));
+    }
+
+    @Test
+    void testTickDecay_DoesNotClearFreshHits() {
+        world.setBlock(0, 1, 0, BlockType.TREE_TRUNK);
+        blockBreaker.punchBlock(world, 0, 1, 0);
+
+        // Tick immediately — timestamp is fresh, nothing should be removed
+        blockBreaker.tickDecay(0.016f);
+
+        assertEquals(1, blockBreaker.getHitCount(0, 1, 0));
+    }
+
+    @Test
+    void testTickDecay_OnlyRemovesStaleEntries() throws Exception {
+        world.setBlock(0, 1, 0, BlockType.TREE_TRUNK);
+        world.setBlock(1, 1, 0, BlockType.BRICK);
+
+        blockBreaker.punchBlock(world, 0, 1, 0);  // will be back-dated (stale)
+        blockBreaker.punchBlock(world, 1, 1, 0);  // fresh — should survive
+
+        // Back-date only the first block
+        blockBreaker.backdateHitsForTesting(0, 1, 0,
+                (long) (BlockBreaker.BLOCK_REGEN_SECONDS * 1000L) + 1L);
+
+        blockBreaker.tickDecay(0.016f);
+
+        assertEquals(0, blockBreaker.getHitCount(0, 1, 0), "Stale block should have 0 hits after decay");
+        assertEquals(1, blockBreaker.getHitCount(1, 1, 0), "Fresh block should retain its hit count");
+    }
 }

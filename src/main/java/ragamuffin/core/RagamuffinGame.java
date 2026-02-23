@@ -880,6 +880,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void updatePlaying(float delta) {
+        // Decay partially-damaged blocks that have not been hit recently
+        blockBreaker.tickDecay(delta);
+
         // Update first-person arm animation
         firstPersonArm.update(delta);
 

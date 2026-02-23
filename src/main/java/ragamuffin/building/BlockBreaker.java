@@ -7,16 +7,50 @@ import ragamuffin.world.RaycastResult;
 import ragamuffin.world.World;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Handles block breaking mechanics - blocks require varying hits to break based on hardness and tool.
  */
 public class BlockBreaker {
-    private final Map<String, Integer> blockHits;
+
+    /** Seconds of inactivity before a partially-damaged block fully regenerates. */
+    static final float BLOCK_REGEN_SECONDS = 10f;
+
+    /** Holds hit count and the real-time millisecond timestamp of the last hit. */
+    private static final class HitRecord {
+        int hits;
+        long lastHitTime;
+
+        HitRecord(int hits, long lastHitTime) {
+            this.hits = hits;
+            this.lastHitTime = lastHitTime;
+        }
+    }
+
+    private final Map<String, HitRecord> blockHits;
 
     public BlockBreaker() {
         this.blockHits = new HashMap<>();
+    }
+
+    /**
+     * Remove stale hit entries for blocks that have not been punched within
+     * {@link #BLOCK_REGEN_SECONDS}. Call this once per frame from the game loop.
+     *
+     * @param delta frame delta time in seconds (unused — decay is wall-clock based)
+     */
+    public void tickDecay(@SuppressWarnings("unused") float delta) {
+        long now = System.currentTimeMillis();
+        long thresholdMs = (long) (BLOCK_REGEN_SECONDS * 1000L);
+        Iterator<Map.Entry<String, HitRecord>> it = blockHits.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, HitRecord> entry = it.next();
+            if (now - entry.getValue().lastHitTime > thresholdMs) {
+                it.remove();
+            }
+        }
     }
 
     /**
@@ -71,7 +105,8 @@ public class BlockBreaker {
         }
 
         String key = getBlockKey(x, y, z);
-        int hits = blockHits.getOrDefault(key, 0) + 1;
+        HitRecord record = blockHits.get(key);
+        int hits = (record != null ? record.hits : 0) + 1;
         int hitsToBreak = getHitsToBreak(blockType, tool);
 
         if (hits >= hitsToBreak) {
@@ -80,8 +115,8 @@ public class BlockBreaker {
             blockHits.remove(key);
             return true;
         } else {
-            // Increment hit counter
-            blockHits.put(key, hits);
+            // Increment hit counter, refresh timestamp
+            blockHits.put(key, new HitRecord(hits, System.currentTimeMillis()));
             return false;
         }
     }
@@ -91,7 +126,8 @@ public class BlockBreaker {
      */
     public int getHitCount(int x, int y, int z) {
         String key = getBlockKey(x, y, z);
-        return blockHits.getOrDefault(key, 0);
+        HitRecord record = blockHits.get(key);
+        return record != null ? record.hits : 0;
     }
 
     /**
@@ -137,5 +173,18 @@ public class BlockBreaker {
      */
     private String getBlockKey(int x, int y, int z) {
         return x + "," + y + "," + z;
+    }
+
+    /**
+     * Test-only helper: subtract {@code ageMs} milliseconds from the last-hit timestamp
+     * of the block at (x, y, z), making it appear older to {@link #tickDecay}.
+     * Only has an effect if a HitRecord exists for that block.
+     */
+    void backdateHitsForTesting(int x, int y, int z, long ageMs) {
+        String key = getBlockKey(x, y, z);
+        HitRecord record = blockHits.get(key);
+        if (record != null) {
+            record.lastHitTime -= ageMs;
+        }
     }
 }
