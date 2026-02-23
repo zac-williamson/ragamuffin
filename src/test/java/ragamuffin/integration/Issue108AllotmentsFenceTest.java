@@ -82,9 +82,10 @@ class Issue108AllotmentsFenceTest {
     @Test
     void playerBuiltWoodStructureStillTriggersCouncilBuilders() {
         // Place 15 WOOD blocks in a connected cluster (3x5x1), far from allotments
+        // Use setPlayerBlock() to mark them as player-placed
         for (int x = 10; x < 13; x++) {
             for (int y = 1; y < 6; y++) {
-                world.setBlock(x, y, 10, BlockType.WOOD);
+                world.setPlayerBlock(x, y, 10, BlockType.WOOD);
             }
         }
         // That's 3*5 = 15 WOOD blocks — above the 10-block threshold

@@ -157,6 +157,53 @@ public enum BlockType {
     }
 
     /**
+     * Whether this block can be placed by a player when building a shelter.
+     * Used by StructureTracker to detect player-built structures.
+     * Excludes natural world-gen blocks (GRASS, DIRT, PAVEMENT, ROAD, LEAVES,
+     * TREE_TRUNK, WATER, TARMAC) and indestructible/special blocks (BEDROCK,
+     * WOOD_FENCE, WOOD_WALL, FENCE_THIN, DOOR_LOWER, DOOR_UPPER).
+     */
+    public boolean isPlayerPlaceable() {
+        switch (this) {
+            case WOOD:
+            case BRICK:
+            case STONE:
+            case GLASS:
+            case CARDBOARD:
+            case CONCRETE:
+            case ROOF_TILE:
+            case CORRUGATED_METAL:
+            case DOOR_WOOD:
+            case IRON_FENCE:
+            case RENDER_WHITE:
+            case RENDER_CREAM:
+            case RENDER_PINK:
+            case SLATE:
+            case PEBBLEDASH:
+            case YELLOW_BRICK:
+            case GARDEN_WALL:
+            case LINOLEUM:
+            case TILE_WHITE:
+            case TILE_BLACK:
+            case CARPET:
+            case LINO_GREEN:
+            case COUNTER:
+            case SHELF:
+            case TABLE:
+            case BOOKSHELF:
+            case METAL_RED:
+            case SIGN_WHITE:
+            case SIGN_RED:
+            case SIGN_BLUE:
+            case SIGN_GREEN:
+            case SIGN_YELLOW:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Whether this block type needs per-block colour variation (skips greedy merge).
      * Used for blocks like brick that need mortar lines / individual texture.
      */

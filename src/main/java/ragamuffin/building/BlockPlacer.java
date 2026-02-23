@@ -138,11 +138,11 @@ public class BlockPlacer {
             return false;
         }
 
-        // Place the block
+        // Place the block, recording it as player-placed for council enforcement
         int bx = (int) Math.floor(placement.x);
         int by = (int) Math.floor(placement.y);
         int bz = (int) Math.floor(placement.z);
-        world.setBlock(bx, by, bz, blockType);
+        world.setPlayerBlock(bx, by, bz, blockType);
         if (blockBreaker != null) {
             blockBreaker.clearHits(bx, by, bz);
         }
@@ -199,7 +199,7 @@ public class BlockPlacer {
 
     private void setIfAir(World world, int x, int y, int z, BlockType type) {
         if (world.getBlock(x, y, z) == BlockType.AIR) {
-            world.setBlock(x, y, z, type);
+            world.setPlayerBlock(x, y, z, type);
             if (blockBreaker != null) {
                 blockBreaker.clearHits(x, y, z);
             }

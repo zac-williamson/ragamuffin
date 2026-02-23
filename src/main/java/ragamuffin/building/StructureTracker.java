@@ -8,7 +8,8 @@ import java.util.*;
 
 /**
  * Tracks player-built structures for council detection.
- * A structure is a connected group of placed blocks (WOOD, BRICK).
+ * A structure is a connected group of player-placeable blocks (WOOD, BRICK, STONE,
+ * GLASS, CARDBOARD, CONCRETE, ROOF_TILE, CORRUGATED_METAL, DOOR_WOOD, and others).
  */
 public class StructureTracker {
 
@@ -110,8 +111,8 @@ public class StructureTracker {
                     }
 
                     BlockType block = world.getBlock(x, y, z);
-                    if (block == BlockType.WOOD) {
-                        // Found a placed block - trace the structure
+                    if (block.isPlayerPlaceable() && world.isPlayerPlaced(x, y, z)) {
+                        // Found a player-placed block - trace the structure
                         Set<Vector3> structureBlocks = traceStructure(world, x, y, z, visited);
                         if (structureBlocks.size() >= SMALL_STRUCTURE_THRESHOLD) {
                             structures.add(new Structure(structureBlocks));
@@ -146,7 +147,7 @@ public class StructureTracker {
                 if (!visited.contains(key)) {
                     visited.add(key);
                     BlockType block = world.getBlock(x, y, z);
-                    if (block == BlockType.WOOD) {
+                    if (block.isPlayerPlaceable() && world.isPlayerPlaced(x, y, z)) {
                         queue.add(new Vector3(x, y, z));
                     }
                 }
