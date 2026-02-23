@@ -337,9 +337,7 @@ public class Player {
      * Jump if on ground (sets upward velocity).
      */
     public void jump() {
-        if (verticalVelocity == 0f) {
-            verticalVelocity = JUMP_VELOCITY;
-        }
+        verticalVelocity = JUMP_VELOCITY;
     }
 
     /**

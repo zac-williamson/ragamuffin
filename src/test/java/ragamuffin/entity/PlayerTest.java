@@ -75,6 +75,40 @@ class PlayerTest {
 
     // ========== Dodge/Roll Tests ==========
 
+    // ========== Jump Tests ==========
+
+    @Test
+    void jumpSetsVerticalVelocity() {
+        Player player = new Player(0, 0, 0);
+        player.jump();
+        assertTrue(player.getVerticalVelocity() > 0, "Jump should set positive vertical velocity");
+    }
+
+    @Test
+    void jumpWorksEvenWhenVerticalVelocityIsNonZero() {
+        // Regression test for #50: jump() used to silently fail when verticalVelocity != 0
+        Player player = new Player(0, 0, 0);
+        // Simulate a residual positive velocity (as can happen after a quick jump-then-land)
+        player.resetVerticalVelocity(); // set to 0 first
+        player.jump();                  // now vv = JUMP_VELOCITY
+        float vv1 = player.getVerticalVelocity();
+        // Call jump again while vv is non-zero — must still set JUMP_VELOCITY
+        player.jump();
+        assertEquals(vv1, player.getVerticalVelocity(), 0.001f,
+            "jump() must unconditionally set JUMP_VELOCITY regardless of current vertical velocity");
+    }
+
+    @Test
+    void jumpOverridesNegativeVerticalVelocity() {
+        Player player = new Player(0, 0, 0);
+        // Apply some gravity so vv is negative
+        player.applyGravity(0.5f);
+        assertTrue(player.getVerticalVelocity() < 0, "Gravity should make vv negative");
+        player.jump();
+        assertTrue(player.getVerticalVelocity() > 0,
+            "jump() must set positive JUMP_VELOCITY even when falling");
+    }
+
     @Test
     void dodgeInitiatesWhenMovingWithEnergy() {
         Player player = new Player(0, 0, 0);
