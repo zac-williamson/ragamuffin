@@ -146,9 +146,11 @@ class Phase7IntegrationTest {
         // Force another structure scan to ensure builders have been assigned targets
         npcManager.forceStructureScan(world, tooltipSystem);
 
-        // Run a few more frames so updateCouncilBuilder() assigns a targetPosition to
-        // any newly-spawned builders (forceStructureScan spawns but does not tick NPCs)
-        for (int i = 0; i < 5; i++) {
+        // Run enough frames so updateCouncilBuilder() assigns a targetPosition to
+        // any newly-spawned builders (forceStructureScan spawns but does not tick NPCs).
+        // 60 frames (1 second) gives the AI loop time to process the new builder and
+        // either set a targetPosition or transition to DEMOLISHING if already adjacent.
+        for (int i = 0; i < 60; i++) {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
 

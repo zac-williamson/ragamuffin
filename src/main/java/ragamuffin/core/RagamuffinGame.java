@@ -114,6 +114,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Audio system
     private ragamuffin.audio.SoundSystem soundSystem;
 
+    // Issue #209: Sky renderer — sun and clouds
+    private ragamuffin.render.SkyRenderer skyRenderer;
+
     private static final float MOUSE_SENSITIVITY = 0.2f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
@@ -300,6 +303,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #171: Initialize particle system
         particleSystem = new ragamuffin.render.ParticleSystem();
+
+        // Issue #209: Initialize sky renderer (sun and clouds)
+        skyRenderer = new ragamuffin.render.SkyRenderer();
 
         // Wire up tooltip sound effect
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
@@ -572,6 +578,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Update tooltip system
             tooltipSystem.update(delta);
 
+            // Issue #209: Update sky renderer (cloud animation)
+            skyRenderer.update(delta);
+
             // Render 3D world
             Gdx.gl.glClearColor(skyR, skyG, skyB, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
@@ -580,6 +589,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             chunkRenderer.render(modelBatch, environment);
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
+
+            // Issue #209: Render sun and clouds on top of the sky background
+            {
+                float ts = timeSystem.getTime();
+                float sr = timeSystem.getSunriseTime();
+                float ss = timeSystem.getSunsetTime();
+                skyRenderer.render(shapeRenderer, ts, sr, ss,
+                                   Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
+                                   timeSystem.isNight());
+            }
 
             // Issue #54: Render block targeting outline and placement ghost block
             // Issue #192: Skip when a UI overlay is open to avoid drawing on top of inventory/crafting/help screens
@@ -631,6 +650,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             chunkRenderer.render(modelBatch, environment);
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
+
+            // Issue #209: Render sun and clouds in paused state too
+            {
+                float ts = timeSystem.getTime();
+                float sr = timeSystem.getSunriseTime();
+                float ss = timeSystem.getSunsetTime();
+                skyRenderer.render(shapeRenderer, ts, sr, ss,
+                                   Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
+                                   timeSystem.isNight());
+            }
 
             // Render UI and pause menu
             renderUI();
@@ -1851,6 +1880,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public ragamuffin.render.ParticleSystem getParticleSystem() {
         return particleSystem;
+    }
+
+    public ragamuffin.render.SkyRenderer getSkyRenderer() {
+        return skyRenderer;
     }
 
     /**
