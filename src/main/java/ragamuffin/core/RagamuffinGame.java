@@ -493,6 +493,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                 float gameTimeDelta = delta;
 
                 timeSystem.update(delta);
+                npcManager.setGameTime(timeSystem.getTime());
                 lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
                 updateSkyColour(timeSystem.getTime());
                 clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
