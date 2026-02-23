@@ -1345,3 +1345,83 @@ Reputation gain on NPC punch (2 points) and arrest-related events should remain 
 3. **Player can gather resources extensively without becoming notorious**: Break 100 blocks over
    the course of simulated gameplay. Advance time to night. Verify the number of police NPCs
    spawned is at most 4 (the non-notorious cap), not 8. Verify civilians do not flee.
+
+---
+
+## Bug Fix: StreetReputation has no time-based decay — reaching NOTORIOUS is a permanent one-way ratchet
+
+**Status**: ❌ Broken — once the player reaches NOTORIOUS status (by punching ~15 NPCs over the
+course of a play session), the world permanently locks into a hostile state with no recovery path
+other than being arrested twice in rapid succession. The `StreetReputation` class documentation
+explicitly states "lying low" is a recovery mechanism, but no such mechanic exists in the code.
+
+**Problem**: The reputation system is a one-way ratchet with no passive decay:
+
+- `addPoints(2)` is called on every NPC punch — 15 fights reaches NOTORIOUS (30 pts)
+- `removePoints(15)` is called only on arrest — requires **two arrests** just to reach NOBODY from minimum NOTORIOUS
+- Each arrest sets health to 30 and hunger to 20, making two consecutive arrests potentially lethal
+- There is no time-based decay, no "lying low" penalty reduction, no grace period
+- Once NOTORIOUS:
+  - All civilian NPC types flee the player on sight within 10 blocks (PUBLIC, PENSIONER, SCHOOL_KID, JOGGER, BUSKER, POSTMAN)
+  - Police skip warnings and go straight to AGGRESSIVE on first contact
+  - Police cap doubles from 4 to 8 officers at night
+
+The `StreetReputation` Javadoc explicitly lists "lying low" as a decay mechanism ("Getting arrested,
+dying, or lying low"), but no call site ever reduces reputation except for the arrest handler. The
+`reset()` method exists but is only called on full game restart. There is no partial decay path.
+
+**Root cause**: The decay mechanic described in the class documentation was never implemented.
+The reputation system was designed as a two-way dynamic (crimes earn points, time/good behaviour
+spends them), but only one direction was ever coded.
+
+**Required fix in `StreetReputation`**:
+
+Add a time-based passive decay that slowly reduces reputation when the player avoids criminal
+activity. Suggested implementation:
+
+```java
+// In StreetReputation:
+public static final float DECAY_INTERVAL_SECONDS = 60f; // One point lost per real minute of non-crime
+private float decayTimer = 0f;
+
+/**
+ * Tick the reputation decay timer. Call once per frame with real delta time.
+ * Removes 1 point every DECAY_INTERVAL_SECONDS of non-criminal behaviour.
+ */
+public void update(float delta) {
+    if (points <= 0) return; // Nothing to decay
+    decayTimer += delta;
+    if (decayTimer >= DECAY_INTERVAL_SECONDS) {
+        decayTimer -= DECAY_INTERVAL_SECONDS;
+        removePoints(1);
+    }
+}
+```
+
+Wire `player.getStreetReputation().update(delta)` into `RagamuffinGame.updatePlaying()` each frame.
+
+With this fix: a NOTORIOUS player (30 pts) who stops fighting will decay to KNOWN (9 pts) in
+21 real minutes and reach NOBODY (0 pts) in 30 real minutes — a meaningful cooldown that
+matches the "lying low" description in the code's own documentation.
+
+**Integration tests** (add to Phase 10 / Critic regression suite):
+
+1. **Reputation decays passively over time**: Give the player 30 reputation points (NOTORIOUS).
+   Advance the simulation for `DECAY_INTERVAL_SECONDS * 30 + 1` seconds without any criminal
+   actions. Verify `player.getStreetReputation().getPoints()` is 0. Verify
+   `player.getStreetReputation().isNotorious()` is false.
+
+2. **Decay does not go below zero**: Give the player 5 reputation points. Advance for
+   `DECAY_INTERVAL_SECONDS * 10` seconds. Verify points are clamped at 0 (not negative).
+
+3. **Criminal activity resets decay progress**: Give the player 10 reputation points. Advance
+   for `DECAY_INTERVAL_SECONDS * 0.9` seconds (just below one decay tick). Punch an NPC
+   (+2 pts). Verify points are now 12. Advance another `DECAY_INTERVAL_SECONDS * 0.9` seconds.
+   Verify points are still 12 (crime didn't accelerate decay — the timer just continues running
+   regardless). After a full interval total of `DECAY_INTERVAL_SECONDS * 1.8` from the start,
+   verify points have decreased by 1 from peak.
+
+4. **Player can recover from NOTORIOUS by lying low**: Set reputation to 30 (NOTORIOUS). Verify
+   civilians flee. Advance `DECAY_INTERVAL_SECONDS * 21 + 1` seconds with no crimes. Verify
+   reputation is now 9 (KNOWN, not NOTORIOUS). Verify `isNotorious()` is false. Verify that in
+   the next simulation frame, civilian NPCs do NOT enter FLEEING state when the player approaches.
