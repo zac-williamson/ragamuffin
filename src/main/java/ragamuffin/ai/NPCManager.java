@@ -311,7 +311,12 @@ public class NPCManager {
                 boolean shouldAttack = false;
                 float attackRange = 1.8f;
 
-                if (npc.getType().isHostile() && npc.isNear(player.getPosition(), attackRange)) {
+                if (npc.getType() == NPCType.POLICE) {
+                    if ((npc.getState() == NPCState.AGGRESSIVE || npc.getState() == NPCState.ARRESTING)
+                            && npc.isNear(player.getPosition(), attackRange)) {
+                        shouldAttack = true;
+                    }
+                } else if (npc.getType().isHostile() && npc.isNear(player.getPosition(), attackRange)) {
                     shouldAttack = true;
                 } else if (npc.getState() == NPCState.AGGRESSIVE && npc.isNear(player.getPosition(), attackRange)) {
                     shouldAttack = true;
