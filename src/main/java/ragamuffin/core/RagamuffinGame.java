@@ -1326,6 +1326,40 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
+     * Format an NPCType for display in the targeting reticule.
+     * e.g. YOUTH_GANG -> "Youth Gang"
+     */
+    private String formatNPCName(ragamuffin.entity.NPCType type) {
+        String raw = type.name().replace('_', ' ');
+        StringBuilder sb = new StringBuilder();
+        for (String word : raw.split(" ")) {
+            if (sb.length() > 0) sb.append(' ');
+            if (!word.isEmpty()) {
+                sb.append(Character.toUpperCase(word.charAt(0)));
+                sb.append(word.substring(1).toLowerCase());
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Format a BlockType for display in the targeting reticule.
+     * e.g. TREE_TRUNK -> "Tree Trunk"
+     */
+    private String formatBlockName(ragamuffin.world.BlockType blockType) {
+        String raw = blockType.name().replace('_', ' ');
+        StringBuilder sb = new StringBuilder();
+        for (String word : raw.split(" ")) {
+            if (sb.length() > 0) sb.append(' ');
+            if (!word.isEmpty()) {
+                sb.append(Character.toUpperCase(word.charAt(0)));
+                sb.append(word.substring(1).toLowerCase());
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * Find an NPC within punch reach.
      */
     private NPC findNPCInReach(Vector3 cameraPos, Vector3 direction, float reach) {
@@ -1408,6 +1442,16 @@ public class RagamuffinGame extends ApplicationAdapter {
                 gameHUD.setBlockBreakProgress(progress);
             } else {
                 gameHUD.setBlockBreakProgress(0f);
+            }
+
+            // Issue #189: Update target reticule label — NPC takes priority over block
+            NPC hudTargetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
+            if (hudTargetNPC != null) {
+                gameHUD.setTargetName(formatNPCName(hudTargetNPC.getType()));
+            } else if (targetBlock != null) {
+                gameHUD.setTargetName(formatBlockName(targetBlock.getBlockType()));
+            } else {
+                gameHUD.setTargetName(null);
             }
 
             gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);

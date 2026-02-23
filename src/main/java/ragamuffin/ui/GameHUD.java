@@ -31,6 +31,7 @@ public class GameHUD {
     private Weather currentWeather;
     private float blockBreakProgress; // 0.0 to 1.0
     private boolean isNight; // Whether it is currently night (police active)
+    private String targetName; // Name of the block or NPC currently targeted (null = nothing)
 
     public GameHUD(Player player) {
         this.player = player;
@@ -38,6 +39,7 @@ public class GameHUD {
         this.currentWeather = Weather.CLEAR;
         this.blockBreakProgress = 0f;
         this.isNight = false;
+        this.targetName = null;
     }
 
     /**
@@ -71,8 +73,8 @@ public class GameHUD {
             renderNightWarning(spriteBatch, font, screenWidth, screenHeight);
         }
 
-        // Render crosshair
-        renderCrosshair(shapeRenderer, screenWidth, screenHeight, hoverTooltips);
+        // Render crosshair and target name
+        renderCrosshair(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltips);
     }
 
     private void renderStatusBars(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
@@ -154,8 +156,8 @@ public class GameHUD {
         return 1.0f - (remaining / maxCooldown);
     }
 
-    private void renderCrosshair(ShapeRenderer shapeRenderer, int screenWidth, int screenHeight,
-                                 HoverTooltipSystem hoverTooltips) {
+    private void renderCrosshair(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
+                                 int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips) {
         float centerX = screenWidth / 2f;
         float centerY = screenHeight / 2f;
 
@@ -192,6 +194,19 @@ public class GameHUD {
         }
 
         shapeRenderer.end();
+
+        // Draw target name label below the crosshair
+        if (targetName != null) {
+            spriteBatch.begin();
+            font.setColor(1f, 1f, 1f, 0.9f);
+            com.badlogic.gdx.graphics.g2d.GlyphLayout layout =
+                    new com.badlogic.gdx.graphics.g2d.GlyphLayout(font, targetName);
+            float textX = centerX - layout.width / 2f;
+            float textY = centerY - CROSSHAIR_SIZE - CROSSHAIR_GAP - 8f;
+            font.draw(spriteBatch, layout, textX, textY);
+            font.setColor(Color.WHITE);
+            spriteBatch.end();
+        }
 
         // Register crosshair hover tooltip zone
         if (hoverTooltips != null) {
@@ -236,6 +251,21 @@ public class GameHUD {
      */
     public boolean isNight() {
         return isNight;
+    }
+
+    /**
+     * Set the name of the object currently under the crosshair.
+     * Pass null (or empty string) to clear the label.
+     */
+    public void setTargetName(String name) {
+        this.targetName = (name != null && !name.isEmpty()) ? name : null;
+    }
+
+    /**
+     * Get the current target name shown below the crosshair.
+     */
+    public String getTargetName() {
+        return targetName;
     }
 
     /**
