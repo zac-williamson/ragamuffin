@@ -527,10 +527,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                             player.damage(healthDrain);
                         }
                     }
-                }
 
-                // Phase 11: Update healing system
-                healingSystem.update(delta, player);
+                    // Phase 11: Update healing system (gated: no healing while UI is open)
+                    healingSystem.update(delta, player);
+                }
 
                 // Phase 11: Check for death and respawn
                 respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);

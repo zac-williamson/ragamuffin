@@ -3,6 +3,7 @@ package ragamuffin.integration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.building.Inventory;
+import ragamuffin.core.HealingSystem;
 import ragamuffin.core.ShelterDetector;
 import ragamuffin.core.Weather;
 import ragamuffin.core.WeatherSystem;
@@ -26,6 +27,7 @@ class Issue58IntegrationTest {
     private InventoryUI inventoryUI;
     private HelpUI helpUI;
     private WeatherSystem weatherSystem;
+    private HealingSystem healingSystem;
 
     @BeforeEach
     void setUp() {
@@ -36,6 +38,7 @@ class Issue58IntegrationTest {
         inventoryUI = new InventoryUI(inventory);
         helpUI = new HelpUI();
         weatherSystem = new WeatherSystem();
+        healingSystem = new HealingSystem();
     }
 
     /**
@@ -180,6 +183,94 @@ class Issue58IntegrationTest {
 
         assertTrue(player.getHunger() < 100f,
                 "Hunger should have decreased over 10 seconds with no UI open");
+    }
+
+    /**
+     * Test 5 (Issue #66): Healing does NOT occur while inventory is open.
+     *
+     * Set health to 50, hunger to 100. Open inventory. Simulate 300 frames gated by
+     * !isUIBlocking(). Verify health is still 50 and healingSystem.getRestingTime() is 0.
+     */
+    @Test
+    void test5_HealingDoesNotOccurWhileInventoryOpen() {
+        player.setHealth(50f);
+        player.setHunger(100f);
+        inventoryUI.show();
+        assertTrue(inventoryUI.isVisible(), "Inventory should be visible");
+
+        float delta = 1.0f / 60.0f;
+        for (int i = 0; i < 300; i++) {
+            if (!isUIBlocking()) {
+                healingSystem.update(delta, player);
+            }
+        }
+
+        assertEquals(50f, player.getHealth(), 0.01f,
+                "Health should not increase while inventory is open");
+        assertEquals(0f, healingSystem.getRestingTime(), 0.01f,
+                "Resting time should not accumulate while inventory is open");
+    }
+
+    /**
+     * Test 6 (Issue #66): Healing resumes once UI is closed.
+     *
+     * Health 50, hunger 100. Open inventory for 300 frames (no healing). Close inventory.
+     * Simulate 400 more frames stationary. Verify health > 50.
+     */
+    @Test
+    void test6_HealingResumesOncUIIsClosed() {
+        player.setHealth(50f);
+        player.setHunger(100f);
+        inventoryUI.show();
+        assertTrue(inventoryUI.isVisible(), "Inventory should be visible");
+
+        float delta = 1.0f / 60.0f;
+        // 300 frames with UI open — no healing
+        for (int i = 0; i < 300; i++) {
+            if (!isUIBlocking()) {
+                healingSystem.update(delta, player);
+            }
+        }
+
+        assertEquals(50f, player.getHealth(), 0.01f,
+                "Health should not increase while inventory is open");
+
+        // Close inventory and simulate 400 more frames — healing should resume
+        inventoryUI.hide();
+        assertFalse(inventoryUI.isVisible(), "Inventory should be closed");
+
+        for (int i = 0; i < 400; i++) {
+            if (!isUIBlocking()) {
+                healingSystem.update(delta, player);
+            }
+        }
+
+        assertTrue(player.getHealth() > 50f,
+                "Health should increase after inventory is closed and player rests");
+    }
+
+    /**
+     * Test 7 (Issue #66): Hunger requirement still prevents healing (UI closed).
+     *
+     * Health 50, hunger 40 (below MIN_HUNGER_FOR_HEALING=50). Simulate 400 frames
+     * stationary, UI closed. Verify health still 50.
+     */
+    @Test
+    void test7_HungerRequirementPreventsHealingWhenUIclosed() {
+        player.setHealth(50f);
+        player.setHunger(40f);
+        assertFalse(inventoryUI.isVisible(), "Inventory should not be visible");
+        assertFalse(helpUI.isVisible(), "Help UI should not be visible");
+
+        float delta = 1.0f / 60.0f;
+        for (int i = 0; i < 400; i++) {
+            if (!isUIBlocking()) {
+                healingSystem.update(delta, player);
+            }
+        }
+
+        assertEquals(50f, player.getHealth(), 0.01f,
+                "Health should not increase when hunger is below threshold");
     }
 
     /** Mirrors RagamuffinGame.isUIBlocking() using the local UI instances. */
