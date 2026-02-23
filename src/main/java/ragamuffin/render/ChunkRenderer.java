@@ -138,6 +138,17 @@ public class ChunkRenderer {
         }
     }
 
+    /**
+     * Remove a chunk from rendering by its string key (e.g. "1,0,2").
+     * Used when chunks are unloaded and only the key is available.
+     */
+    public void removeChunkByKey(String key) {
+        ChunkModel model = chunkModels.remove(key);
+        if (model != null) {
+            model.dispose();
+        }
+    }
+
     private String getChunkKey(Chunk chunk) {
         return chunk.getChunkX() + "," + chunk.getChunkY() + "," + chunk.getChunkZ();
     }

@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.test.HeadlessTestHelper;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -87,5 +89,36 @@ public class WorldTest {
         // Don't load any chunks
         BlockType block = world.getBlock(1000, 0, 1000);
         assertEquals(BlockType.AIR, block);
+    }
+
+    @Test
+    public void testUpdateLoadedChunksReturnsUnloadedKeys() {
+        // Load chunks far outside the generated world bounds
+        int farChunk = 20; // Well beyond WORLD_CHUNK_RADIUS of 15
+        int farPos = farChunk * Chunk.SIZE;
+        world.updateLoadedChunks(new Vector3(farPos, 0, 0));
+        assertTrue(world.isChunkLoaded(farChunk, 0, 0));
+
+        // Move back to origin — the far chunk should be unloaded and its key returned
+        Set<String> unloaded = world.updateLoadedChunks(new Vector3(0, 0, 0));
+
+        // The far chunk was outside world bounds so it should appear in the unloaded set
+        assertFalse(world.isChunkLoaded(farChunk, 0, 0),
+            "Far chunk should be unloaded after player moves away");
+        assertFalse(unloaded.isEmpty(),
+            "updateLoadedChunks should return the set of unloaded chunk keys");
+        // The unloaded keys should be well-formed "x,y,z" strings
+        for (String key : unloaded) {
+            String[] parts = key.split(",");
+            assertEquals(3, parts.length, "Each key should be in 'x,y,z' format");
+        }
+    }
+
+    @Test
+    public void testUpdateLoadedChunksReturnsEmptyWhenNothingUnloaded() {
+        // Load chunks at origin — nothing should be unloaded on first call
+        Set<String> unloaded = world.updateLoadedChunks(new Vector3(0, 0, 0));
+        assertTrue(unloaded.isEmpty(),
+            "No chunks should be unloaded on first updateLoadedChunks call");
     }
 }

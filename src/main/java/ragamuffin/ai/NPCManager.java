@@ -735,8 +735,10 @@ public class NPCManager {
                     case 2: npc.setState(NPCState.COMPLAINING); break;
                 }
 
-                // Track this structure
-                playerStructures.put(structureCenter, playerBlockCount);
+                // Track this structure (cap to prevent unbounded growth)
+                if (playerStructures.size() < 64) {
+                    playerStructures.put(structureCenter, playerBlockCount);
+                }
             }
         }
     }
