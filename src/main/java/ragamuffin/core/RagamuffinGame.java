@@ -265,6 +265,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         interactionSystem = new InteractionSystem();
         healingSystem = new HealingSystem();
         respawnSystem = new RespawnSystem();
+        respawnSystem.setSpawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
 
         // Phase 12: Initialize CRITIC 2 systems
         weatherSystem = new WeatherSystem();
@@ -1469,6 +1470,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         interactionSystem = new InteractionSystem();
         healingSystem = new HealingSystem();
         respawnSystem = new RespawnSystem();
+        respawnSystem.setSpawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         weatherSystem = new WeatherSystem();
         arrestSystem = new ArrestSystem();
         greggsRaidSystem = new GreggsRaidSystem();
