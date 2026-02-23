@@ -1118,14 +1118,14 @@ public class WorldGenerator {
         // Perimeter fence (wooden, 2 blocks high)
         for (int dx = 0; dx < width; dx++) {
             for (int y = 1; y <= 2; y++) {
-                world.setBlock(x + dx, y, z, BlockType.WOOD);
-                world.setBlock(x + dx, y, z + depth - 1, BlockType.WOOD);
+                world.setBlock(x + dx, y, z, BlockType.WOOD_FENCE);
+                world.setBlock(x + dx, y, z + depth - 1, BlockType.WOOD_FENCE);
             }
         }
         for (int dz = 0; dz < depth; dz++) {
             for (int y = 1; y <= 2; y++) {
-                world.setBlock(x, y, z + dz, BlockType.WOOD);
-                world.setBlock(x + width - 1, y, z + dz, BlockType.WOOD);
+                world.setBlock(x, y, z + dz, BlockType.WOOD_FENCE);
+                world.setBlock(x + width - 1, y, z + dz, BlockType.WOOD_FENCE);
             }
         }
 
@@ -1169,7 +1169,7 @@ public class WorldGenerator {
                 for (int dz = 0; dz < depth; dz++) {
                     boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
                     if (isWall) {
-                        world.setBlock(x + dx, y, z + dz, BlockType.WOOD);
+                        world.setBlock(x + dx, y, z + dz, BlockType.WOOD_WALL);
                     }
                 }
             }
