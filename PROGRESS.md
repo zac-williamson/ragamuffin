@@ -1,3 +1,50 @@
+# Issue #10: Add Building Signage to Visually Differentiate Stores
+
+## Status: COMPLETE ✓
+
+## Summary
+
+Created named building signs that visually differentiate stores by displaying
+store-specific names above their entrances (e.g. "Andre's Diamonds" for the
+Jeweller, "Greggs" for Greggs, etc.).
+
+Signs are rendered as screen-projected 2D panels so the text is always legible
+from any angle. Each sign has store-appropriate branding colours (Greggs blue,
+NHS green for the GP surgery, pillar-box red for the fire station, etc.).
+Signs are distance-culled beyond 40 blocks and scale in size with distance.
+
+The existing 1-block-high coloured sign strip at the top of each shop (in voxel
+blocks) remains as the in-world physical sign; the new system adds readable
+text displayed above it.
+
+## Files Changed
+
+- `src/main/java/ragamuffin/world/LandmarkType.java` — added `getDisplayName()`
+  returning a named label for 32 commercial/civic landmarks; returns `null` for
+  non-commercial areas (parks, houses, canal, etc.)
+- `src/main/java/ragamuffin/world/BuildingSign.java` _(new)_ — data class holding
+  sign text, world position, background colour, and text colour
+- `src/main/java/ragamuffin/render/SignageRenderer.java` _(new)_ — builds signs
+  from world landmarks after world generation; renders distance-scaled sign panels
+  using camera projection into screen-space
+- `src/main/java/ragamuffin/core/RagamuffinGame.java` — wire in SignageRenderer
+  (field + init + render call after speech bubbles)
+- `src/test/java/ragamuffin/world/BuildingSignageTest.java` _(new)_ — 8 tests
+  covering display names, sign positions, uniqueness, and world integration
+
+## Test Results
+
+All tests pass: **BUILD SUCCESSFUL**
+
+## What's Left
+
+Nothing. Signs are live.
+
+---
+_Completed: 2026-02-23_
+
+---
+
 # Issue #8: Add star-based reputation system like GTA
 
 ## Status: COMPLETE ✓
