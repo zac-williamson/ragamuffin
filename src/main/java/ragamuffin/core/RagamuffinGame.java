@@ -92,6 +92,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Hover tooltip system
     private HoverTooltipSystem hoverTooltipSystem;
 
+    // Issue #13: on-screen NPC speech log
+    private SpeechLogUI speechLogUI;
+
     // NPC rendering
     private NPCRenderer npcRenderer;
 
@@ -263,6 +266,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Initialize hover tooltip system
         hoverTooltipSystem = new HoverTooltipSystem();
 
+        // Issue #13: Initialize NPC speech log
+        speechLogUI = new SpeechLogUI();
+
         // Initialize audio system
         soundSystem = new ragamuffin.audio.SoundSystem();
 
@@ -365,30 +371,34 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
-     * Rebuild only the chunk containing the given world coordinates,
+     * Mark the chunk containing the given world coordinates dirty for rebuild,
      * plus any neighbouring chunks if the block is on a chunk boundary.
+     * Chunks are rebuilt by the budget-limited dirty chunk system in the main loop
+     * to avoid per-block synchronous mesh rebuilds that cause FPS drops.
      */
     private void rebuildChunkAt(int worldX, int worldY, int worldZ) {
         int chunkX = Math.floorDiv(worldX, Chunk.SIZE);
         int chunkY = Math.floorDiv(worldY, Chunk.HEIGHT);
         int chunkZ = Math.floorDiv(worldZ, Chunk.SIZE);
 
-        // Rebuild the primary chunk
-        rebuildChunkIfLoaded(chunkX, chunkY, chunkZ);
+        // Mark the primary chunk dirty
+        markChunkDirty(chunkX, chunkY, chunkZ);
 
-        // If on a chunk boundary, rebuild neighbours so exposed faces update
+        // If on a chunk boundary, mark neighbours dirty so exposed faces update
         int localX = Math.floorMod(worldX, Chunk.SIZE);
+        int localY = Math.floorMod(worldY, Chunk.HEIGHT);
         int localZ = Math.floorMod(worldZ, Chunk.SIZE);
-        if (localX == 0) rebuildChunkIfLoaded(chunkX - 1, chunkY, chunkZ);
-        if (localX == Chunk.SIZE - 1) rebuildChunkIfLoaded(chunkX + 1, chunkY, chunkZ);
-        if (localZ == 0) rebuildChunkIfLoaded(chunkX, chunkY, chunkZ - 1);
-        if (localZ == Chunk.SIZE - 1) rebuildChunkIfLoaded(chunkX, chunkY, chunkZ + 1);
+        if (localX == 0) markChunkDirty(chunkX - 1, chunkY, chunkZ);
+        if (localX == Chunk.SIZE - 1) markChunkDirty(chunkX + 1, chunkY, chunkZ);
+        if (localY == 0) markChunkDirty(chunkX, chunkY - 1, chunkZ);
+        if (localY == Chunk.HEIGHT - 1) markChunkDirty(chunkX, chunkY + 1, chunkZ);
+        if (localZ == 0) markChunkDirty(chunkX, chunkY, chunkZ - 1);
+        if (localZ == Chunk.SIZE - 1) markChunkDirty(chunkX, chunkY, chunkZ + 1);
     }
 
-    private void rebuildChunkIfLoaded(int chunkX, int chunkY, int chunkZ) {
-        Chunk chunk = world.getChunk(chunkX, chunkY, chunkZ);
-        if (chunk != null) {
-            chunkRenderer.updateChunk(chunk, meshBuilder);
+    private void markChunkDirty(int chunkX, int chunkY, int chunkZ) {
+        if (world.isChunkLoaded(chunkX, chunkY, chunkZ)) {
+            world.markChunkDirty(chunkX, chunkY, chunkZ);
         }
     }
 
@@ -1223,6 +1233,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             renderDamageFlash(flashIntensity, screenWidth, screenHeight);
         }
 
+        // Issue #13: render NPC speech log (bottom-right corner)
+        if (!openingSequence.isActive()) {
+            speechLogUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
         // Render tooltip if active
         if (tooltipSystem.isActive()) {
             renderTooltip();
@@ -1273,8 +1288,12 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void renderSpeechBubbles() {
+        float delta = Gdx.graphics.getDeltaTime();
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
+
+        // Issue #13: update speech log with current NPC speech
+        speechLogUI.update(npcManager.getNPCs(), delta);
 
         for (NPC npc : npcManager.getNPCs()) {
             if (!npc.isSpeaking()) continue;
@@ -1385,6 +1404,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         greggsRaidSystem = new GreggsRaidSystem();
         gameHUD = new GameHUD(player);
         openingSequence = new OpeningSequence();
+        speechLogUI = new SpeechLogUI();
         deathMessage = null;
 
         // Transition to playing with opening sequence

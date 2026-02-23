@@ -1,89 +1,61 @@
-# Issue #14: Add antidepressants item drop from NPCs
+# Issue #3: Fix FPS drop when digging down multiple layers
 
 ## Status: COMPLETE ✓
 
 ## Summary
 
-Successfully implemented antidepressants as a rare loot drop from NPCs. When NPCs are defeated, there is a 5% chance they will drop an antidepressants item. This item can be consumed by the player but has no effect (inert item).
+Fixed the FPS drop (60→10 FPS) that occurred when breaking blocks by eliminating
+synchronous per-block chunk mesh rebuilds and adding missing vertical neighbour
+dirty-marking at chunk Y boundaries.
 
-## Implementation Details
+## Root Causes Found
 
-### Changes Made
+### 1. Synchronous chunk rebuild on every block break
 
-1. **Material.java** (line 81)
-   - Added `ANTIDEPRESSANTS("Antidepressants")` enum value
+`rebuildChunkIfLoaded()` was calling `chunkRenderer.updateChunk()` **immediately
+and synchronously** inside the frame whenever a block was broken. This bypassed the
+existing budget-limited dirty chunk system (max 16 chunks/frame in the main loop)
+and caused expensive work — greedy mesh generation, `Mesh` creation, `ModelBuilder`
+operations, GPU vertex uploads, and old model disposal — to all happen in the same
+frame as the block break. When digging fast through multiple layers, several chunks
+could be rebuilt synchronously per frame, pushing frame time well above 16ms.
 
-2. **NPCManager.java** (lines 986-989)
-   - Added 5% chance for any non-dog NPC to drop antidepressants when defeated
-   - Implemented in `awardNPCLoot()` method
+### 2. Missing vertical neighbour rebuild at chunk Y boundaries
 
-3. **InteractionSystem.java** (lines 193-196, 230)
-   - Added antidepressants to consumables list in `isFood()` method
-   - Added consumption handler that removes item but applies no effects (inert)
+`rebuildChunkAt()` checked X and Z chunk boundaries but not Y. Breaking a block at
+y=0 (the seam between chunkY=0 and chunkY=-1) left exposed faces in the adjacent
+vertical chunk unrendered, causing visual seams and requiring an extra rebuild later.
 
-### Tests Added
+## Fix
 
-1. **NPCLootDropIntegrationTest.java** (test8_AntidepressantsRareDrop)
-   - Statistical test: defeats 100 NPCs and verifies 1-15 antidepressant drops (5% ± variance)
-   - Confirms the rare drop mechanic works correctly
+**`RagamuffinGame.java`** — `rebuildChunkAt()` and `rebuildChunkIfLoaded()`:
+- Changed `rebuildChunkIfLoaded()` to `markChunkDirty()`: marks the chunk dirty
+  in the world's dirty set instead of synchronously calling `updateChunk()`.
+- Added Y-boundary checks: if the broken block is at `localY == 0`, mark `chunkY-1`
+  dirty; if at `localY == HEIGHT-1`, mark `chunkY+1` dirty.
+- All chunk mesh rebuilds now flow through the existing budget-limited system
+  (max 16 per frame) in the main render loop, capping the rebuild cost per frame.
 
-2. **ConsumablesAndCraftingIntegrationTest.java** (2 tests)
-   - `testAntidepressantsIsRecognisedAsConsumable()`: Verifies antidepressants are recognized as a consumable
-   - `testConsumeAntidepressantsDoesNothing()`: Confirms consuming antidepressants has no effect on health, hunger, or energy
+**`World.java`** — added `markChunkDirty(int chunkX, int chunkY, int chunkZ)`:
+- Public method to add a chunk key to the dirty set by chunk coordinates,
+  complementing the existing `markChunkClean()`.
+
+## Files Changed
+
+- `src/main/java/ragamuffin/core/RagamuffinGame.java` — `rebuildChunkAt`, `markChunkDirty`
+- `src/main/java/ragamuffin/world/World.java` — added `markChunkDirty(int,int,int)`
 
 ## Test Results
 
-All tests pass successfully:
-- **418 tests completed, 0 failures** ✓
-- Build: **SUCCESSFUL** ✓
-- NPCLootDropIntegrationTest: **8/8 tests passed** ✓
-- ConsumablesAndCraftingIntegrationTest: **17/17 tests passed** ✓
-
-## What Was Already Done (Prior Sessions)
-
-The previous session (2026-02-22T23:46:17.045Z) completed all the implementation work:
-- Added ANTIDEPRESSANTS material enum
-- Implemented 5% drop rate in NPCManager
-- Made antidepressants consumable with no effect
-- Created comprehensive integration tests
-
-This session verified everything works correctly and documented the completion.
+- All existing tests pass: **BUILD SUCCESSFUL**
+- No new tests required (performance fix; existing integration tests cover chunk
+  dirty/rebuild behaviour through block-break scenarios).
 
 ## What's Left
 
-**Nothing code-wise** - Issue #14 is complete and ready to close.
-
-### PR Creation Status
-
-The code is complete, tested, committed, and pushed to the `issue-14` branch. However, creating a PR via `gh pr create` has failed in previous sessions with:
-```
-GraphQL: Resource not accessible by personal access token (createPullRequest)
-```
-
-This indicates the GitHub personal access token lacks the `repo` scope needed to create pull requests programmatically.
-
-**Options to complete the PR:**
-1. **Manual PR creation**: Visit https://github.com/zac-williamson/ragamuffin/compare/main...issue-14 to create the PR via the GitHub web UI
-2. **Update token permissions**: Regenerate the token with the `repo` scope at https://github.com/settings/tokens
-
-The branch is ready to merge - all code changes are complete and tested.
+Nothing — the fix is complete. The FPS drop when digging down is resolved.
+Chunk rebuilds are now deferred and budget-limited regardless of how many blocks
+are broken in a single frame.
 
 ---
-
-## Session 2026-02-22T23:XX:XX (Current Session) - Verification
-
-**Purpose**: Diagnosed why previous sessions appeared to fail and verified the implementation.
-
-**Findings**:
-- ✅ All code changes are complete and correct
-- ✅ Tests still passing (418/418)
-- ✅ Build successful
-- ✅ Branch properly pushed to `origin/issue-14`
-- ✅ No PR exists yet (verified with `gh pr list`)
-
-**Root Cause of "Failures"**: Previous sessions didn't fail - they successfully completed all implementation work. The only "failure" was the inability to automate PR creation due to GitHub token permissions. This is purely an administrative issue, not a code issue.
-
-**Recommendation**: Create the PR manually via the GitHub web UI at the link above. All technical work for issue #14 is complete.
-
----
-_Completed: 2026-02-22_
+_Completed: 2026-02-23_
