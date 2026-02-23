@@ -40,11 +40,12 @@ class NPCManagerStructureTest {
 
     @Test
     void testStructureScanning() {
-        // Build a large structure
+        // Build a large player-placed structure (setPlayerBlock marks blocks as
+        // player-placed so StructureTracker.scanForStructures() can detect them)
         for (int x = 10; x < 15; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 10; z < 15; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }

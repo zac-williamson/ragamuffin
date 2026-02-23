@@ -76,15 +76,104 @@ class NPCManagerTest {
     void testDailyRoutineWorkHours() {
         NPC npc = manager.spawnNPC(NPCType.PUBLIC, 10, 1, 10);
 
-        manager.setGameTime(8.0f); // 8:00 AM
+        manager.setGameTime(8.0f); // 8:00 AM — band transition: night→work
         manager.update(0.1f, world, player, inventory, tooltipSystem);
 
         assertEquals(NPCState.GOING_TO_WORK, npc.getState());
 
-        manager.setGameTime(12.0f); // Noon
-        // State should still be work-related unless interrupted
+        manager.setGameTime(12.0f); // Noon — same band (work), no transition
+        // State should still be work-related (no thrash) unless update() changed it
         assertTrue(npc.getState() == NPCState.GOING_TO_WORK ||
                    npc.getState() == NPCState.WANDERING); // May be wandering during work
+    }
+
+    /**
+     * Fix #158: setGameTime() called repeatedly within the same time band must NOT
+     * invoke updateDailyRoutine(), so reaction states are not clobbered every frame.
+     */
+    @Test
+    void testDailyRoutineDoesNotClobberReactionStateWithinSameBand() {
+        NPC npc = manager.spawnNPC(NPCType.PUBLIC, 10, 1, 10);
+
+        // Transition into work-hours band so daily routine sets GOING_TO_WORK
+        manager.setGameTime(8.0f);
+        assertEquals(NPCState.GOING_TO_WORK, npc.getState());
+
+        // Simulate AI setting a reaction state (e.g. NPC fleeing from player)
+        npc.setState(NPCState.FLEEING);
+
+        // Subsequent per-frame calls in the SAME band must NOT clobber FLEEING
+        manager.setGameTime(9.0f);
+        manager.setGameTime(10.5f);
+        manager.setGameTime(12.0f);
+        manager.setGameTime(16.9f);
+        assertEquals(NPCState.FLEEING, npc.getState(),
+                "Reaction state FLEEING was overwritten by per-frame setGameTime calls (issue #158)");
+    }
+
+    /**
+     * Fix #158: a genuine band transition (work → evening) must still apply the
+     * daily routine, but only if the NPC is not in an active-reaction state.
+     */
+    @Test
+    void testDailyRoutineAppliedOnBandTransition() {
+        NPC npc = manager.spawnNPC(NPCType.PUBLIC, 10, 1, 10);
+
+        // Start in night band so first transition is to work-hours
+        manager.setGameTime(6.0f); // night
+        // Transition to work
+        manager.setGameTime(8.0f);
+        assertEquals(NPCState.GOING_TO_WORK, npc.getState());
+
+        // Transition to evening
+        manager.setGameTime(17.0f);
+        assertEquals(NPCState.GOING_HOME, npc.getState());
+
+        // Transition to night
+        manager.setGameTime(20.0f);
+        assertTrue(npc.getState() == NPCState.AT_PUB || npc.getState() == NPCState.AT_HOME,
+                "Expected AT_PUB or AT_HOME after night transition");
+    }
+
+    /**
+     * Fix #158: active-reaction states (FLEEING, AGGRESSIVE, ARRESTING, etc.) must
+     * be preserved even across genuine band transitions.
+     */
+    @Test
+    void testReactionStatePreservedAcrossBandTransition() {
+        NPC npc = manager.spawnNPC(NPCType.PUBLIC, 10, 1, 10);
+
+        manager.setGameTime(8.0f); // work band
+        npc.setState(NPCState.FLEEING);
+
+        // Genuine transition to evening — reaction state must still be preserved
+        manager.setGameTime(17.0f);
+        assertEquals(NPCState.FLEEING, npc.getState(),
+                "FLEEING state was overwritten during band transition (issue #158)");
+
+        // Transition to night — still preserved
+        manager.setGameTime(20.0f);
+        assertEquals(NPCState.FLEEING, npc.getState(),
+                "FLEEING state was overwritten during night band transition (issue #158)");
+    }
+
+    /**
+     * Fix #158: COUNCIL_MEMBER NPCs should also be protected from thrashing.
+     */
+    @Test
+    void testCouncilMemberReactionStateNotClobbered() {
+        NPC npc = manager.spawnNPC(NPCType.COUNCIL_MEMBER, 10, 1, 10);
+
+        manager.setGameTime(8.0f); // work band
+        assertEquals(NPCState.GOING_TO_WORK, npc.getState());
+
+        npc.setState(NPCState.AGGRESSIVE);
+
+        // Repeated same-band calls must not overwrite AGGRESSIVE
+        manager.setGameTime(9.0f);
+        manager.setGameTime(14.0f);
+        assertEquals(NPCState.AGGRESSIVE, npc.getState(),
+                "COUNCIL_MEMBER AGGRESSIVE state was clobbered by same-band setGameTime (issue #158)");
     }
 
     @Test

@@ -26,6 +26,7 @@ public class NPCManager {
     private final Pathfinder pathfinder;
     private final Random random;
     private float gameTime; // Game time in hours (0-24)
+    private int previousTimeBand = -1; // -1 = uninitialised; 0=night, 1=work, 2=evening
 
     // Maximum NPC count to prevent lag
     private static final int MAX_NPCS = 100;
@@ -225,16 +226,34 @@ public class NPCManager {
 
     /**
      * Set the current game time in hours (0-24).
+     * Daily routines are only applied when the time-of-day band changes (night →
+     * work-hours → evening) so that per-frame calls do not thrash NPC reaction
+     * states such as FLEEING or AGGRESSIVE.
      */
     public void setGameTime(float hours) {
         this.gameTime = hours % 24;
 
-        // Update daily routines for all NPCs
-        for (NPC npc : npcs) {
-            if (npc.getType() == NPCType.PUBLIC || npc.getType() == NPCType.COUNCIL_MEMBER) {
-                updateDailyRoutine(npc);
+        int currentBand = getTimeBand(this.gameTime);
+        if (currentBand != previousTimeBand) {
+            previousTimeBand = currentBand;
+            for (NPC npc : npcs) {
+                if (npc.getType() == NPCType.PUBLIC || npc.getType() == NPCType.COUNCIL_MEMBER) {
+                    updateDailyRoutine(npc);
+                }
             }
         }
+    }
+
+    /**
+     * Returns the time-of-day band for the given hour:
+     *   1 = work hours (08:00-17:00)
+     *   2 = evening   (17:00-20:00)
+     *   0 = night     (all other times)
+     */
+    private int getTimeBand(float h) {
+        if (h >= 8 && h < 17) return 1;
+        if (h >= 17 && h < 20) return 2;
+        return 0;
     }
 
     public float getGameTime() {
@@ -242,26 +261,51 @@ public class NPCManager {
     }
 
     /**
+     * Returns true when the NPC is in an active-reaction state that must not be
+     * overwritten by the daily routine (e.g. being punched, fleeing, under arrest).
+     */
+    private boolean isActiveReactionState(NPCState state) {
+        switch (state) {
+            case FLEEING:
+            case AGGRESSIVE:
+            case ARRESTING:
+            case WARNING:
+            case KNOCKED_OUT:
+            case KNOCKED_BACK:
+            case STEALING:
+            case DEMOLISHING:
+            case PATROLLING:
+            case STARING:
+            case PHOTOGRAPHING:
+            case COMPLAINING:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Update daily routine based on time.
+     * Only called when the time-of-day band transitions; never called every frame.
+     * Active-reaction states are preserved so AI behaviour is not overwritten.
      */
     private void updateDailyRoutine(NPC npc) {
+        if (isActiveReactionState(npc.getState())) {
+            return;
+        }
         if (gameTime >= 8 && gameTime < 17) {
             // Work hours (8:00 - 17:00)
-            if (npc.getState() != NPCState.GOING_TO_WORK && npc.getState() != NPCState.STARING
-                && npc.getState() != NPCState.PHOTOGRAPHING && npc.getState() != NPCState.COMPLAINING) {
+            if (npc.getState() != NPCState.GOING_TO_WORK) {
                 npc.setState(NPCState.GOING_TO_WORK);
             }
         } else if (gameTime >= 17 && gameTime < 20) {
             // Evening (17:00 - 20:00)
-            if (npc.getState() != NPCState.GOING_HOME && npc.getState() != NPCState.STARING
-                && npc.getState() != NPCState.PHOTOGRAPHING && npc.getState() != NPCState.COMPLAINING) {
+            if (npc.getState() != NPCState.GOING_HOME) {
                 npc.setState(NPCState.GOING_HOME);
             }
         } else {
             // Night (20:00+) or early morning
-            if (npc.getState() != NPCState.AT_PUB && npc.getState() != NPCState.AT_HOME
-                && npc.getState() != NPCState.STARING && npc.getState() != NPCState.PHOTOGRAPHING
-                && npc.getState() != NPCState.COMPLAINING) {
+            if (npc.getState() != NPCState.AT_PUB && npc.getState() != NPCState.AT_HOME) {
                 // Randomly choose pub or home
                 npc.setState(random.nextBoolean() ? NPCState.AT_PUB : NPCState.AT_HOME);
             }
