@@ -1333,17 +1333,18 @@ public class NPCManager {
         long policeCount = npcs.stream().filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
 
         if (policeCount < maxPolice) {
-            spawnPolice(player, world);
+            int remainingSlots = (int) (maxPolice - policeCount);
+            spawnPolice(player, world, remainingSlots);
         }
         policeSpawnCooldown = POLICE_SPAWN_INTERVAL;
     }
 
     /**
-     * Spawn police NPCs around the player.
+     * Spawn police NPCs around the player, capped to remainingSlots.
      */
-    private void spawnPolice(Player player, World world) {
-        // Spawn 2-3 police around the player
-        int policeCount = 2 + random.nextInt(2);
+    private void spawnPolice(Player player, World world, int remainingSlots) {
+        // Spawn 2-3 police around the player, but never exceed the cap
+        int policeCount = Math.min(2 + random.nextInt(2), remainingSlots);
 
         for (int i = 0; i < policeCount; i++) {
             // Spawn police 15-25 blocks away from player
