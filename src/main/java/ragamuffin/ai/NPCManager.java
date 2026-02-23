@@ -1324,18 +1324,16 @@ public class NPCManager {
         }
         wasNight = isNight;
 
+        // Police are a night-only threat — no spawning during daytime
+        if (!isNight) return;
+
         // Throttle spawning to avoid spawning (and triggering A* pathfinding) every frame
         if (policeSpawnCooldown > 0) {
             return;
         }
 
-        // Notorious players attract more police attention; night raises the cap
-        int maxPolice;
-        if (player.getStreetReputation().isNotorious()) {
-            maxPolice = isNight ? 8 : 6;
-        } else {
-            maxPolice = isNight ? 4 : 3;
-        }
+        // Notorious players attract more police attention
+        int maxPolice = player.getStreetReputation().isNotorious() ? 8 : 4;
 
         // Count current police
         long policeCount = npcs.stream().filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
