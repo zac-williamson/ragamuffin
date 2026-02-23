@@ -701,15 +701,55 @@ public class NPCManager {
 
     /**
      * Attempt to steal from player inventory.
+     * Steals the most valuable item available, using priority order:
+     * DIAMOND > SCRAP_METAL > BRICK > WOOD > food items.
+     * Falls back to a random non-empty slot if no priority item is found.
      */
     private void attemptTheft(Inventory inventory, TooltipSystem tooltipSystem) {
-        // Try to steal wood first
-        if (inventory.getItemCount(Material.WOOD) > 0) {
-            inventory.removeItem(Material.WOOD, 1);
-            if (tooltipSystem != null) {
-                tooltipSystem.trigger(TooltipTrigger.YOUTH_THEFT);
+        // Priority order: most valuable first
+        Material[] priority = {
+            Material.DIAMOND,
+            Material.SCRAP_METAL,
+            Material.BRICK,
+            Material.WOOD,
+            Material.SAUSAGE_ROLL,
+            Material.STEAK_BAKE,
+            Material.CRISPS,
+            Material.CHIPS,
+            Material.KEBAB,
+            Material.ENERGY_DRINK,
+            Material.TIN_OF_BEANS,
+            Material.PINT,
+            Material.PERI_PERI_CHICKEN
+        };
+
+        // Try to steal highest-priority item first
+        for (Material m : priority) {
+            if (inventory.getItemCount(m) > 0) {
+                inventory.removeItem(m, 1);
+                if (tooltipSystem != null) {
+                    tooltipSystem.trigger(TooltipTrigger.YOUTH_THEFT);
+                }
+                return;
             }
         }
+
+        // Fall back to a random non-empty slot
+        int size = inventory.getSize();
+        int startSlot = random.nextInt(size);
+        for (int i = 0; i < size; i++) {
+            int slot = (startSlot + i) % size;
+            Material m = inventory.getItemInSlot(slot);
+            if (m != null && inventory.getItemCount(m) > 0) {
+                inventory.removeItem(m, 1);
+                if (tooltipSystem != null) {
+                    tooltipSystem.trigger(TooltipTrigger.YOUTH_THEFT);
+                }
+                return;
+            }
+        }
+
+        // Inventory is completely empty — do nothing
     }
 
     /**
