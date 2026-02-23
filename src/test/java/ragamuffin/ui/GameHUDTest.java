@@ -81,6 +81,39 @@ class GameHUDTest {
         assertFalse(player.canDodge(), "Dodge should not be available when energy is below cost");
     }
 
+    // ====== Target reticule label (Issue #189) ======
+
+    @Test
+    void testTargetNameNullByDefault() {
+        assertNull(hud.getTargetName(), "Target name should be null by default (nothing targeted)");
+    }
+
+    @Test
+    void testSetTargetNameBlock() {
+        hud.setTargetName("Tree Trunk");
+        assertEquals("Tree Trunk", hud.getTargetName());
+    }
+
+    @Test
+    void testSetTargetNameNPC() {
+        hud.setTargetName("Youth Gang");
+        assertEquals("Youth Gang", hud.getTargetName());
+    }
+
+    @Test
+    void testSetTargetNameNull() {
+        hud.setTargetName("Brick");
+        hud.setTargetName(null);
+        assertNull(hud.getTargetName(), "Setting null should clear the target name");
+    }
+
+    @Test
+    void testSetTargetNameEmpty() {
+        hud.setTargetName("Brick");
+        hud.setTargetName("");
+        assertNull(hud.getTargetName(), "Setting empty string should clear the target name");
+    }
+
     // ====== Weather / existing HUD ======
 
     @Test
