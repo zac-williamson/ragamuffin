@@ -79,32 +79,35 @@ class Issue80PatrollingPoliceDamageTest {
     }
 
     /**
-     * Test 2: AGGRESSIVE police does attack player in range.
+     * Test 2: AGGRESSIVE police arrests player when in range.
      *
-     * Spawn a POLICE NPC at (1.0, 1, 0) — within 1.8 blocks of the player.
-     * Set its state to AGGRESSIVE. Simulate 60 frames (1 second).
-     * Verify the player's HP has decreased (police attacked).
+     * Spawn a POLICE NPC at (1.0, 1, 0) — within 1.5 blocks of the player.
+     * Set its state to AGGRESSIVE. Simulate frames until arrest triggers.
+     * Aggressive police trigger an arrest (not direct HP damage) — verify
+     * that arrestPending is set and the police returns to PATROLLING.
      */
     @Test
-    void test2_AggressivePoliceAttacksPlayerInRange() {
-        // Place police within 1.8-block attack range
+    void test2_AggressivePoliceArrestsPlayerInRange() {
+        // Place police within arrest range (1.5 blocks)
         NPC police = npcManager.spawnNPC(NPCType.POLICE, 1.0f, 1f, 0f);
         assertNotNull(police, "POLICE NPC should spawn");
         police.setState(NPCState.AGGRESSIVE);
 
-        float initialDist = police.getPosition().dst(player.getPosition());
-        assertTrue(initialDist <= 1.8f, "Police must start within 1.8 blocks for this test. Dist: " + initialDist);
-
-        assertEquals(100f, player.getHealth(), "Player should start with 100 HP");
-
         float delta = 1f / 60f;
+        boolean arrested = false;
         for (int i = 0; i < 60; i++) {
             npcManager.update(delta, world, player, inventory, tooltipSystem);
+            if (npcManager.isArrestPending()) {
+                arrested = true;
+                npcManager.clearArrestPending();
+                break;
+            }
         }
 
-        assertTrue(player.getHealth() < 100f,
-            "AGGRESSIVE police should attack and damage the player. " +
-            "Player HP: " + player.getHealth());
+        assertTrue(arrested,
+            "AGGRESSIVE police should trigger arrest when near the player");
+        assertEquals(NPCState.PATROLLING, police.getState(),
+            "Police should return to PATROLLING after making arrest");
     }
 
     /**

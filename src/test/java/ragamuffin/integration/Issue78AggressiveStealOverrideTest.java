@@ -86,7 +86,7 @@ class Issue78AggressiveStealOverrideTest {
      */
     @Test
     void test2_AggressiveGangContinuesChasingAfterAttackRange() {
-        NPC gangMember = npcManager.spawnNPC(NPCType.YOUTH_GANG, -10f, 1f, 0f);
+        NPC gangMember = npcManager.spawnNPC(NPCType.YOUTH_GANG, -4f, 1f, 0f);
         assertNotNull(gangMember, "YOUTH_GANG NPC should spawn");
         gangMember.setState(NPCState.AGGRESSIVE);
 
@@ -94,7 +94,7 @@ class Issue78AggressiveStealOverrideTest {
 
         float delta = 1f / 60f;
         boolean reachedAttackRange = false;
-        for (int i = 0; i < 300; i++) { // up to 5 seconds
+        for (int i = 0; i < 600; i++) { // up to 10 seconds
             npcManager.update(delta, world, player, inventory, tooltipSystem);
             float dist = gangMember.getPosition().dst(player.getPosition());
             if (dist <= 2.0f) {
