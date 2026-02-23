@@ -108,6 +108,9 @@ public class ChunkMeshBuilder {
                         case DOOR_UPPER:
                             vertexIndex = buildDoorPanel(meshData, vertexIndex, type, x, y, z, worldX, worldY, worldZ);
                             break;
+                        case STAIR_STEP:
+                            vertexIndex = buildStairStep(meshData, vertexIndex, type, x, y, z, worldX, worldY, worldZ);
+                            break;
                         default:
                             break;
                     }
@@ -204,6 +207,78 @@ public class ChunkMeshBuilder {
         vertexIndex = addFace(meshData, vertexIndex, color,
             x0, y0, z0,  x1, y0, z0,  x1, y0, z1,  x0, y0, z1,
             0, -1, 0, 1.0f, DOOR_THICKNESS);
+
+        return vertexIndex;
+    }
+
+    /**
+     * Build an L-shaped stair step geometry.
+     * The stair occupies the full block footprint (x to x+1, z to z+1) and consists of:
+     *   - Lower slab: full width (x to x+1), full depth (z to z+1), height y to y+0.5
+     *   - Upper step: full width (x to x+1), back half (z+0.5 to z+1), height y+0.5 to y+1.0
+     *
+     * This produces an ascending step when approached from the south (+Z direction).
+     * 10 faces total: slab bottom (1) + step riser front (1) + step top (1) + slab top (1) +
+     *                 west (2) + east (2) + north (1) + south (1) = 10
+     */
+    private int buildStairStep(MeshData meshData, int vertexIndex, BlockType type,
+                               int lx, int ly, int lz,
+                               int worldX, int worldY, int worldZ) {
+        Color color = type.getColor();
+        Color topColor = type.getTopColor();
+        float x0 = lx,        x1 = lx + 1.0f;
+        float y0 = ly,        yMid = ly + 0.5f, y1 = ly + 1.0f;
+        float z0 = lz,        zMid = lz + 0.5f, z1 = lz + 1.0f;
+
+        // ── Bottom face of lower slab ──────────────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z0,  x1, y0, z0,  x1, y0, z1,  x0, y0, z1,
+            0, -1, 0, 1.0f, 1.0f);
+
+        // ── Top face of lower slab (forward half — in front of the step riser) ─
+        vertexIndex = addFace(meshData, vertexIndex, topColor,
+            x0, yMid, z0,  x1, yMid, z0,  x1, yMid, zMid,  x0, yMid, zMid,
+            0, 1, 0, 1.0f, 0.5f);
+
+        // ── Step riser face (facing south, +Z) ────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, yMid, zMid,  x1, yMid, zMid,  x1, y1, zMid,  x0, y1, zMid,
+            0, 0, 1, 1.0f, 0.5f);
+
+        // ── Top face of upper step ─────────────────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, topColor,
+            x0, y1, zMid,  x1, y1, zMid,  x1, y1, z1,  x0, y1, z1,
+            0, 1, 0, 1.0f, 0.5f);
+
+        // ── South face of upper step (full height of upper step, back wall) ────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, y0, z1,  x0, y0, z1,  x0, y1, z1,  x1, y1, z1,
+            0, 0, -1, 1.0f, 1.0f);
+
+        // ── North face (front of lower slab) ──────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z0,  x1, y0, z0,  x1, yMid, z0,  x0, yMid, z0,
+            0, 0, -1, 1.0f, 0.5f);
+
+        // ── West face (full L-shape profile) ──────────────────────────────────
+        // Lower slab portion
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z1,  x0, y0, z0,  x0, yMid, z0,  x0, yMid, z1,
+            -1, 0, 0, 1.0f, 0.5f);
+        // Upper step portion
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, yMid, z1,  x0, yMid, zMid,  x0, y1, zMid,  x0, y1, z1,
+            -1, 0, 0, 0.5f, 0.5f);
+
+        // ── East face (full L-shape profile) ──────────────────────────────────
+        // Lower slab portion
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, y0, z0,  x1, y0, z1,  x1, yMid, z1,  x1, yMid, z0,
+            1, 0, 0, 1.0f, 0.5f);
+        // Upper step portion
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, yMid, zMid,  x1, yMid, z1,  x1, y1, z1,  x1, y1, zMid,
+            1, 0, 0, 0.5f, 0.5f);
 
         return vertexIndex;
     }

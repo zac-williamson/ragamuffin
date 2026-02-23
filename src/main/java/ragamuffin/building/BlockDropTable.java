@@ -42,6 +42,8 @@ public class BlockDropTable {
                 return Material.WOOD;
             case WOOD_PLANKS:
                 return Material.PLANKS;
+            case STAIRS:
+                return Material.STAIRS;
             case CARDBOARD:
                 return Material.CARDBOARD;
             case CONCRETE:
