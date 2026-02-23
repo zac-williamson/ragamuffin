@@ -318,28 +318,32 @@ public class Phase12IntegrationTest {
     }
 
     /**
-     * Test 11: Weather transitions occur within 300 real seconds using game-time delta.
-     * Simulate 300 real seconds at 60fps, calling timeSystem.update(1/60f) and
-     * weatherSystem.update(1/60f * timeSystem.getTimeSpeed() * 3600f) each frame.
-     * Verify at least 2 weather transitions occurred.
+     * Test 11: Weather transitions occur approximately once per game day.
+     * Fix #122: Weather should change at most once per day, not multiple times per second.
+     *
+     * Pass a large game-time delta equivalent to 6 game hours and verify no change yet.
+     * Then pass enough total game-time (2 full days = 48 game hours) and verify at least
+     * 1 transition has occurred.
      */
     @Test
-    public void testWeatherTransitionsWithGameTimeDelta() {
-        TimeSystem timeSystem = new TimeSystem();
+    public void testWeatherTransitionsApproximatelyOncePerDay() {
         WeatherSystem ws = new WeatherSystem();
 
         Weather initial = ws.getCurrentWeather();
+
+        // 6 game hours = 6 * 3600 = 21600 game-seconds — less than the 12h minimum
+        float sixGameHours = 6.0f * 3600.0f;
+        ws.update(sixGameHours);
+        assertEquals(initial, ws.getCurrentWeather(),
+            "Weather should NOT change after only 6 game hours (minimum duration is 12h)");
+
+        // Now advance by another 42 game hours (total = 48h = 2 game days).
+        // The minimum duration is 12h so at least 1 change must have occurred by 48h.
         int transitions = 0;
-        Weather last = initial;
-
-        // Simulate 300 real seconds at 60 fps
-        int totalFrames = 300 * 60;
-        for (int i = 0; i < totalFrames; i++) {
-            float realDelta = 1.0f / 60.0f;
-            timeSystem.update(realDelta);
-            float gameTimeDeltaSeconds = realDelta * timeSystem.getTimeSpeed() * 3600f;
-            ws.update(gameTimeDeltaSeconds);
-
+        Weather last = ws.getCurrentWeather();
+        // Advance in 1-hour steps to detect transitions
+        for (int h = 0; h < 42; h++) {
+            ws.update(3600.0f);
             Weather current = ws.getCurrentWeather();
             if (current != last) {
                 transitions++;
@@ -347,8 +351,10 @@ public class Phase12IntegrationTest {
             }
         }
 
-        assertTrue(transitions >= 2,
-            "Expected at least 2 weather transitions in 300 real seconds, got: " + transitions);
+        assertTrue(transitions >= 1,
+            "Expected at least 1 weather transition in 2 game days, got: " + transitions);
+        assertTrue(transitions <= 4,
+            "Weather should change at most ~once per 12 game hours — got suspiciously many: " + transitions);
     }
 
     /**
