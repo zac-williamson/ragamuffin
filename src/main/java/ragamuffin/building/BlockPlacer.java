@@ -164,12 +164,10 @@ public class BlockPlacer {
             setIfAir(world, ox + 2, oy + dy, oz,     BlockType.CARDBOARD);
             setIfAir(world, ox + 2, oy + dy, oz + 1, BlockType.CARDBOARD);
             setIfAir(world, ox + 2, oy + dy, oz + 2, BlockType.CARDBOARD);
-            // Front wall (z=oz+2) - only at dy=2, leaving entrance at dy=1
-            if (dy == 2) {
-                setIfAir(world, ox,     oy + dy, oz + 2, BlockType.CARDBOARD);
-                setIfAir(world, ox + 1, oy + dy, oz + 2, BlockType.CARDBOARD);
-                setIfAir(world, ox + 2, oy + dy, oz + 2, BlockType.CARDBOARD);
-            }
+            // Front wall (z=oz+2) - corners only at both heights, leaving ox+1 open for 2-block entrance
+            setIfAir(world, ox,     oy + dy, oz + 2, BlockType.CARDBOARD);
+            // ox+1, oy+dy, oz+2 intentionally left as AIR (entrance — 2 blocks tall)
+            setIfAir(world, ox + 2, oy + dy, oz + 2, BlockType.CARDBOARD);
         }
 
         // Roof (3x3 at y=oy+3)
