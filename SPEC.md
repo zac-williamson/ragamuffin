@@ -2073,3 +2073,79 @@ private void updateAggressive(NPC npc, float delta, World world, Player player) 
 3. **De-escalation when player escapes**: Set a YOUTH_GANG NPC to AGGRESSIVE at
    (−50, 1, −30). Move the player to (10, 1, 10) (far away, >40 blocks). Simulate
    60 frames. Verify the NPC reverts to `NPCState.WANDERING` (no longer AGGRESSIVE).
+
+---
+
+## Bug Fix: Police ignore shelter — ShelterDetector never called in police patrol AI
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — police approach and arrest the player even when they are inside
+a cardboard shelter. The `ShelterDetector` class is implemented and correctly used for
+weather effects, but is never consulted by the police AI. The core Phase 12 mechanic —
+"inside a shelter at night, police cannot see you" — is completely non-functional.
+
+**Problem**: `NPCManager.updatePolicePatrolling()` chases the player and issues warnings
+with no shelter check:
+
+```java
+private void updatePolicePatrolling(NPC police, float delta, World world, Player player, ...) {
+    // ...
+    // Approach player — no shelter check here
+    setNPCTarget(police, player.getPosition(), world);
+
+    // Check if adjacent to player - issue warning or go aggressive
+    if (police.isNear(player.getPosition(), 2.0f)) {
+        // ... warn or arrest — still no shelter check
+    }
+}
+```
+
+`ShelterDetector.isSheltered(world, playerPosition)` already exists and works correctly
+— it checks for a solid roof block 2 above the player plus at least 3 solid wall blocks
+on the cardinal sides. It is called from `RagamuffinGame.render()` for cold snap health
+drain, but is never imported or called from `NPCManager`.
+
+**Impact**: The cardboard shelter (crafted from 6 CARDBOARD, placed as a 2×2×2 structure)
+is the player's primary early-game protection mechanic. Without the shelter bypass, the
+only survival strategy at night is to run — crafting a shelter and hiding inside it does
+nothing. The Phase 12 integration test ("Cardboard shelter hides from police") will always
+fail because police walk straight through the shelter roof to arrest the player.
+
+**Required fix**: In `NPCManager.updatePolicePatrolling()`, check `ShelterDetector.isSheltered()`
+before chasing or warning the player. If the player is sheltered, the police NPC should
+skip past (continue wandering/patrolling) rather than approaching:
+
+```java
+private void updatePolicePatrolling(NPC police, float delta, World world, Player player, ...) {
+    // Phase 12: Police cannot detect sheltered player
+    if (ShelterDetector.isSheltered(world, player.getPosition())) {
+        // Player is hiding — police wander past without noticing
+        updateWandering(police, delta, world);
+        return;
+    }
+    // ... rest of existing patrol logic
+}
+```
+
+The same check should also apply at the start of `updatePoliceWarning()` — if the player
+ducks into a shelter while police are in WARNING state, the warning should be cancelled
+and the police should revert to PATROLLING.
+
+**Integration tests** (regression — verify shelter provides police protection):
+
+1. **Sheltered player is not approached by police**: Place a CARDBOARD_BOX shelter
+   (2×2×2 of solid blocks with a roof). Put the player inside. Set time to 22:00 to
+   allow police spawning. Spawn a police NPC 15 blocks away and set it to PATROLLING.
+   Simulate 600 frames. Verify the police NPC's distance to the player has NOT decreased
+   (it did not approach). Verify `arrestPending` is false.
+
+2. **Unsheltered player IS approached by police**: Same setup but player is outside the
+   shelter (or shelter is removed). Set time to 22:00. Advance 600 frames. Verify the
+   police NPC has moved closer to the player. Verify `arrestPending` eventually becomes
+   true (or police enters WARNING state).
+
+3. **Player ducks into shelter cancels police warning**: Spawn police in WARNING state
+   adjacent to player. Move the player into a shelter. Advance 120 frames. Verify police
+   state has reverted to PATROLLING (warning cancelled) and police distance is not
+   decreasing.
