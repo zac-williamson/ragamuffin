@@ -17,11 +17,25 @@ public class RespawnSystem {
     private boolean isRespawning;
     private float respawnTimer;
     private String currentMessage;
+    private float spawnY = PARK_CENTRE.y;
 
     public RespawnSystem() {
         this.isRespawning = false;
         this.respawnTimer = 0;
         this.currentMessage = null;
+    }
+
+    /**
+     * Set the terrain-aware Y coordinate for respawn.
+     * Must be called after world generation so respawn places the player
+     * above solid ground rather than inside it.
+     */
+    public void setSpawnY(float y) {
+        this.spawnY = y;
+    }
+
+    public float getSpawnY() {
+        return spawnY;
     }
 
     /**
@@ -63,8 +77,8 @@ public class RespawnSystem {
      * Inventory is preserved.
      */
     private void performRespawn(Player player) {
-        // Respawn at park centre
-        player.getPosition().set(PARK_CENTRE);
+        // Respawn at park centre using terrain-aware Y to avoid spawning inside solid blocks
+        player.getPosition().set(PARK_CENTRE.x, spawnY, PARK_CENTRE.z);
         player.setVerticalVelocity(0f);
 
         // Restore stats and revive
