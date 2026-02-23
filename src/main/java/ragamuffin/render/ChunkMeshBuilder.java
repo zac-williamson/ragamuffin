@@ -36,18 +36,27 @@ public class ChunkMeshBuilder {
 
     /**
      * Get the block at a local position within the chunk.
-     * Returns AIR for out-of-bounds positions (assumed to be neighbouring chunks).
-     * PERFORMANCE: Removed cross-chunk World queries to prevent browser freeze.
+     * For positions within chunk bounds, queries the chunk directly.
+     * For out-of-bounds positions (chunk boundary faces), delegates to the World
+     * so that cross-chunk neighbour blocks are correctly considered for face culling.
+     * Falls back to AIR if no World is set (e.g. unit tests).
      */
     private BlockType getWorldBlock(Chunk chunk, int localX, int localY, int localZ) {
-        // Within chunk bounds — use chunk directly
+        // Within chunk bounds — use chunk directly (fast path)
         if (localX >= 0 && localX < Chunk.SIZE &&
             localY >= 0 && localY < Chunk.HEIGHT &&
             localZ >= 0 && localZ < Chunk.SIZE) {
             return chunk.getBlock(localX, localY, localZ);
         }
-        // Outside chunk bounds — treat as AIR to avoid expensive World lookups
-        // This may cause minor visual seams at chunk boundaries, but prevents freezing
+        // Outside chunk bounds — query the neighbouring chunk via World to avoid seams.
+        // Only performed for boundary faces (one axis out-of-bounds at a time), so this
+        // adds at most one World lookup per boundary voxel rather than for interior voxels.
+        if (world != null) {
+            int worldX = chunk.getChunkX() * Chunk.SIZE + localX;
+            int worldY = chunk.getChunkY() * Chunk.HEIGHT + localY;
+            int worldZ = chunk.getChunkZ() * Chunk.SIZE + localZ;
+            return world.getBlock(worldX, worldY, worldZ);
+        }
         return BlockType.AIR;
     }
 
