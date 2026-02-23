@@ -1213,6 +1213,16 @@ public class RagamuffinGame extends ApplicationAdapter {
         int screenWidth = Gdx.graphics.getWidth();
         int screenHeight = Gdx.graphics.getHeight();
 
+        // Fix #52: establish 2D orthographic projection before any ShapeRenderer or
+        // SpriteBatch calls.  Without this, the stale 3D perspective matrix left over
+        // from modelBatch.end() is used, causing all HUD elements to be drawn in
+        // 3D world-space coordinates and become invisible to the player.  Setting it
+        // here makes renderUI() self-contained and correct in every game state.
+        com.badlogic.gdx.math.Matrix4 ortho = new com.badlogic.gdx.math.Matrix4();
+        ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
+        shapeRenderer.setProjectionMatrix(ortho);
+        spriteBatch.setProjectionMatrix(ortho);
+
         // Clear and update hover tooltip zones each frame
         hoverTooltipSystem.clear();
         float delta = Gdx.graphics.getDeltaTime();
