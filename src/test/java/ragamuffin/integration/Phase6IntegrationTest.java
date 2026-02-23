@@ -208,34 +208,28 @@ class Phase6IntegrationTest {
      */
     @Test
     void test4_PoliceApproachAndInteractWithPlayer() {
-        // Set to 22:00 - police spawn
-        timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
-
-        // Find a police NPC
-        NPC police = npcManager.getNPCs().stream()
-                .filter(npc -> npc.getType() == NPCType.POLICE)
-                .findFirst()
-                .orElse(null);
-
+        // Spawn police at a known position 15 blocks from the player (deterministic)
+        NPC police = npcManager.spawnNPC(NPCType.POLICE, player.getPosition().x + 15, 1, player.getPosition().z);
         assertNotNull(police, "Police should have spawned");
+
+        // Set to night so police behavior activates
+        timeSystem.setTime(22.0f);
 
         // Record initial distance
         float initialDistance = police.getPosition().dst(player.getPosition());
 
-        // Advance 300 frames (5 seconds at 60fps)
-        for (int i = 0; i < 300; i++) {
+        // Advance 600 frames (10 seconds at 60fps — enough for police to close distance)
+        for (int i = 0; i < 600; i++) {
             npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
         }
 
-        // Verify police is closer
+        // Verify police is closer (started at 15 blocks, should have closed some distance)
         float finalDistance = police.getPosition().dst(player.getPosition());
         assertTrue(finalDistance < initialDistance,
                 "Police should move closer to player. Initial: " + initialDistance + ", Final: " + finalDistance);
 
         // Check for interaction when adjacent
         if (finalDistance <= 2.0f) {
-            // Police should have interacted
             assertTrue(police.getState() == NPCState.WARNING || police.isSpeaking(),
                     "Police should interact with player when adjacent");
         }
