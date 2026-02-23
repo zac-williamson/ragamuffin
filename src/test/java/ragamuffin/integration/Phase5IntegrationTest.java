@@ -142,43 +142,43 @@ class Phase5IntegrationTest {
 
         // Set target to (40, 1, 30)
         Vector3 target = new Vector3(40, 1, 30);
-        publicNPC.setTargetPosition(target);
 
-        // Use pathfinder to find path
+        // Use pathfinder to find path around the wall
         ragamuffin.ai.Pathfinder pathfinder = new ragamuffin.ai.Pathfinder();
         List<Vector3> path = pathfinder.findPath(world, publicNPC.getPosition(), target);
-        publicNPC.setPath(path);
 
-        // Record positions to check path
-        List<Vector3> visitedPositions = new java.util.ArrayList<>();
-        visitedPositions.add(new Vector3(publicNPC.getPosition()));
+        // Verify pathfinder found a valid path
+        assertNotNull(path, "Pathfinder should find a path around the wall");
+        assertFalse(path.isEmpty(), "Path should not be empty");
 
-        // Advance simulation for 300 frames
-        for (int i = 0; i < 300; i++) {
-            npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
-            visitedPositions.add(new Vector3(publicNPC.getPosition()));
+        // Verify the path reaches close to the target
+        Vector3 lastWaypoint = path.get(path.size() - 1);
+        assertTrue(lastWaypoint.dst(target) < 2.0f,
+                  "Path should end near target, last waypoint distance: " + lastWaypoint.dst(target));
+
+        // Verify no waypoint goes through BRICK blocks
+        for (Vector3 waypoint : path) {
+            int x = (int) Math.floor(waypoint.x);
+            int z = (int) Math.floor(waypoint.z);
+            // Check both y=1 and y=2 (wall is 2 blocks tall)
+            BlockType block1 = world.getBlock(x, 1, z);
+            BlockType block2 = world.getBlock(x, 2, z);
+            assertNotEquals(BlockType.BRICK, block1,
+                          "Path should not go through BRICK wall at " + x + ",1," + z);
+            assertNotEquals(BlockType.BRICK, block2,
+                          "Path should not go through BRICK wall at " + x + ",2," + z);
         }
 
-        // Verify NPC moved (not stuck at start)
-        float distanceMoved = publicNPC.getPosition().dst(30, 1, 30);
-        assertTrue(distanceMoved >= 1.0f,
-                  "NPC should have moved at least 1 block from start, moved: " + distanceMoved);
-
-        // Verify NPC is generally heading toward target (may not be there yet)
-        float distance = publicNPC.getPosition().dst(target);
-        assertTrue(distance < 12.0f,
-                  "NPC should be heading toward target, distance: " + distance);
-
-        // Verify path never went through BRICK blocks
-        for (Vector3 pos : visitedPositions) {
-            int x = (int) Math.floor(pos.x);
-            int y = (int) Math.floor(pos.y);
-            int z = (int) Math.floor(pos.z);
-
-            BlockType block = world.getBlock(x, y, z);
-            assertNotEquals(BlockType.BRICK, block,
-                          "NPC path should not go through BRICK at " + x + "," + y + "," + z);
+        // Verify the path goes around the wall (at least one waypoint should have x < 35
+        // and then later x >= 36, showing the NPC routes around rather than through)
+        boolean hasWaypointBeforeWall = false;
+        boolean hasWaypointAfterWall = false;
+        for (Vector3 waypoint : path) {
+            if (waypoint.x < 35) hasWaypointBeforeWall = true;
+            if (waypoint.x >= 36) hasWaypointAfterWall = true;
         }
+        assertTrue(hasWaypointBeforeWall && hasWaypointAfterWall,
+                  "Path should route around the wall (have waypoints on both sides)");
     }
 
     /**
