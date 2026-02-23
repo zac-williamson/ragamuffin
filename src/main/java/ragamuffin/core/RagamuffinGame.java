@@ -1072,6 +1072,27 @@ public class RagamuffinGame extends ApplicationAdapter {
                     greggsRaidSystem.onGreggBlockBroken(tooltipSystem, npcManager, player, world);
                 }
 
+                // Issue #130: Award reputation for landmark crimes proportional to severity.
+                // Non-landmark block-breaking (trees, park grass) awards zero — Issue #46 preserved.
+                if (landmark != null) {
+                    switch (landmark) {
+                        case GREGGS:
+                            player.getStreetReputation().addPoints(1);
+                            break;
+                        case JEWELLER:
+                            player.getStreetReputation().addPoints(3);
+                            break;
+                        case OFF_LICENCE:
+                        case CHARITY_SHOP:
+                        case BOOKIES:
+                        case OFFICE_BUILDING:
+                            player.getStreetReputation().addPoints(1);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
                 // Only rebuild the affected chunk (and neighbours if on a boundary)
                 rebuildChunkAt(x, y, z);
             }
