@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.Vector3;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.ai.NPCManager;
+import ragamuffin.building.BlockBreaker;
 import ragamuffin.building.Inventory;
 import ragamuffin.core.LightingSystem;
 import ragamuffin.core.TimeSystem;
@@ -299,14 +300,29 @@ class Phase6IntegrationTest {
                 "At least one block should have police tape");
 
         // Verify taped blocks cannot be broken
-        // Find a taped block
+        // Find a taped block and try to punch through it
+        BlockBreaker blockBreaker = new BlockBreaker();
         for (int x = 5; x < 8; x++) {
             for (int y = 1; y < 4; y++) {
                 for (int z = 5; z < 8; z++) {
                     if (world.hasPoliceTape(x, y, z)) {
-                        // Verify it's protected
+                        // Verify it's marked as protected
                         assertTrue(world.isProtected(x, y, z),
                                 "Taped block should be protected from breaking");
+
+                        // Punch it far more than enough times to break it normally
+                        BlockType blockTypeBefore = world.getBlock(x, y, z);
+                        for (int punch = 0; punch < 20; punch++) {
+                            boolean broken = blockBreaker.punchBlock(world, x, y, z);
+                            assertFalse(broken,
+                                    "punchBlock() must return false for a police-taped block (punch " + (punch + 1) + ")");
+                        }
+
+                        // Block must still be present
+                        assertEquals(blockTypeBefore, world.getBlock(x, y, z),
+                                "Police-taped block must remain intact after punching");
+                        assertTrue(world.hasPoliceTape(x, y, z),
+                                "Police tape must still be present after failed punches");
                         return;
                     }
                 }
