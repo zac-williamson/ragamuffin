@@ -31,6 +31,13 @@ public class WorldGenerator {
     // Flat zones — areas that must stay at BASE_HEIGHT (buildings, roads)
     private final Set<Long> flatZones = new HashSet<>();
 
+    // Near-building zones — areas within BUILDING_BLEND_RADIUS blocks of a flat zone.
+    // Value is the Chebyshev distance to the nearest flat zone edge (1 = adjacent).
+    private final Map<Long, Integer> nearBuildingZones = new HashMap<>();
+
+    // Number of blocks beyond the flat zone over which terrain blends back to natural height.
+    private static final int BUILDING_BLEND_RADIUS = 8;
+
     public WorldGenerator(long seed) {
         this.seed = seed;
         this.random = new Random(seed);
@@ -40,6 +47,7 @@ public class WorldGenerator {
      * Get terrain height at a given (x, z) position.
      * Uses value noise with multiple octaves for natural-looking hills.
      * Areas marked as flat zones return BASE_HEIGHT.
+     * Areas near buildings are blended smoothly from BASE_HEIGHT to natural height.
      */
     public int getTerrainHeight(int x, int z) {
         long key = packCoord(x, z);
@@ -64,6 +72,14 @@ public class WorldGenerator {
         float distFromCentre = (float) Math.sqrt(x * x + z * z);
         float flatteningFactor = Math.min(1.0f, distFromCentre / 80.0f); // Fully flat within 80 blocks
         height *= flatteningFactor;
+
+        // Blend terrain down near buildings for smooth visual integration
+        Integer nearDist = nearBuildingZones.get(key);
+        if (nearDist != null) {
+            // Scale height linearly from 0 (at flat zone edge) to natural (at BUILDING_BLEND_RADIUS)
+            float blendFactor = (float) nearDist / BUILDING_BLEND_RADIUS;
+            height *= blendFactor;
+        }
 
         int terrainY = BASE_HEIGHT + Math.max(0, Math.round(height));
         terrainY = Math.min(terrainY, BASE_HEIGHT + MAX_TERRAIN_HEIGHT);
@@ -110,12 +126,37 @@ public class WorldGenerator {
 
     /**
      * Mark a rectangular area as a flat zone (must stay at BASE_HEIGHT).
+     * Also marks a wider transition zone around the building where terrain
+     * height is gradually blended back to natural height.
      */
     private void markFlatZone(int x, int z, int width, int depth) {
-        // Include a 2-block margin around buildings for smooth transitions
+        // Core flat zone: building footprint plus a 2-block hard margin
         for (int dx = -2; dx < width + 2; dx++) {
             for (int dz = -2; dz < depth + 2; dz++) {
                 flatZones.add(packCoord(x + dx, z + dz));
+            }
+        }
+
+        // Transition zone: BUILDING_BLEND_RADIUS blocks beyond the hard margin,
+        // terrain height is scaled by (dist / BUILDING_BLEND_RADIUS) so it rises
+        // smoothly from zero at the building edge to natural height at the limit.
+        int outerMargin = 2 + BUILDING_BLEND_RADIUS;
+        for (int dx = -outerMargin; dx < width + outerMargin; dx++) {
+            for (int dz = -outerMargin; dz < depth + outerMargin; dz++) {
+                long key = packCoord(x + dx, z + dz);
+                if (!flatZones.contains(key)) {
+                    // Chebyshev distance to the nearest hard-flat boundary
+                    int distX = Math.max(0, Math.max(-dx - 2, dx - (width + 1)));
+                    int distZ = Math.max(0, Math.max(-dz - 2, dz - (depth + 1)));
+                    int dist = Math.max(distX, distZ); // Chebyshev distance
+                    if (dist > 0 && dist <= BUILDING_BLEND_RADIUS) {
+                        // Keep the minimum distance (closest building wins)
+                        Integer existing = nearBuildingZones.get(key);
+                        if (existing == null || dist < existing) {
+                            nearBuildingZones.put(key, dist);
+                        }
+                    }
+                }
             }
         }
     }

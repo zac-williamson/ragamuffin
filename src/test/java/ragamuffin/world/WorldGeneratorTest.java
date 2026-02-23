@@ -220,6 +220,36 @@ public class WorldGeneratorTest {
             "Should have at least 3 rows of terraced houses, found " + rowsWithHouses);
     }
 
+    /**
+     * Issue #210: Terrain near buildings should be flatter than terrain far away.
+     * Checks that blocks immediately outside building footprints are at ground level (y=0),
+     * and confirms the blended transition means heights rise gradually beyond that.
+     */
+    @Test
+    public void testTerrainIsFlatterNearBuildings() {
+        generator.generateWorld(world);
+
+        // The Greggs shop is at x=20, z=25, size 7x8.
+        // The flat zone margin extends 2 blocks beyond the footprint, so the hard-flat area
+        // runs from x=18..28, z=23..34.  Blocks just inside those edges must be at y=0.
+        // Check several points 1 block inside the hard-flat boundary.
+        assertEquals(0, generator.getTerrainHeight(19, 25),
+            "Terrain 1 block inside Greggs hard-flat margin (west) must be at base height");
+        assertEquals(0, generator.getTerrainHeight(20, 24),
+            "Terrain 1 block inside Greggs hard-flat margin (south) must be at base height");
+
+        // Blocks 4 blocks beyond the hard-flat edge should be lower than blocks 8 blocks beyond,
+        // demonstrating a rising gradient in the blending zone.
+        // We check along the north side (z = 25 + 8 + 2 = 35 is flat edge; blend from z=36 onward).
+        int heightAt4 = generator.getTerrainHeight(20, 38); // 3 blocks into blend zone
+        int heightAt8 = generator.getTerrainHeight(20, 45); // 10 blocks into blend zone (past blend, natural)
+
+        // The height at 3 blocks into the blend zone must not exceed the height 10 blocks out
+        // (which is at full natural height). This ensures gradient rises, not falls.
+        assertTrue(heightAt4 <= heightAt8,
+            "Terrain height should be <= natural height in the blending zone (heightAt4=" + heightAt4 + ", heightAt8=" + heightAt8 + ")");
+    }
+
     private boolean landmarksOverlap(Landmark a, Landmark b) {
         Vector3 posA = a.getPosition();
         Vector3 posB = b.getPosition();
