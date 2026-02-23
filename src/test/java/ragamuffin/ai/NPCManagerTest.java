@@ -222,6 +222,24 @@ class NPCManagerTest {
     }
 
     @Test
+    void testPoliceCapNotExceededBySpawnPolice() {
+        // Regression test for issue #100: spawnPolice() spawns 2-3 NPCs per call,
+        // which used to bypass the maxPolice cap. With 2 existing police and a daytime
+        // cap of 3 (non-notorious player, daytime), only 1 slot remains. The call must
+        // not push the total above 3.
+        manager.spawnNPC(NPCType.POLICE, 5, 1, 5);
+        manager.spawnNPC(NPCType.POLICE, 10, 1, 5);
+
+        // Fresh manager: cooldown is 0, so updatePoliceSpawning will execute immediately.
+        manager.updatePoliceSpawning(8.0f, world, player); // daytime, cap=3, have 2 → 1 slot
+
+        long policeCount = manager.getNPCs().stream()
+                .filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
+        assertTrue(policeCount <= 3,
+                "Police count exceeded cap: expected <= 3 but got " + policeCount);
+    }
+
+    @Test
     void testYouthGangStealing() {
         NPC youth = manager.spawnNPC(NPCType.YOUTH_GANG, 0.5f, 1, 0.5f);
         player.getPosition().set(0, 1, 0);
