@@ -149,6 +149,11 @@ public class NPCManager {
     // Only alerted police (or police near a KNOWN/NOTORIOUS player) actively pursue the player.
     private Set<NPC> alertedPoliceNPCs;
 
+    // Line-of-sight chase: track how long each aggressive police officer has lost sight of the player.
+    // When this exceeds POLICE_LOST_SIGHT_TIMEOUT the officer gives up and reverts to PATROLLING.
+    private Map<NPC, Float> policeLostSightTimers;
+    private static final float POLICE_LOST_SIGHT_TIMEOUT = 3.0f; // seconds before giving up chase
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
@@ -173,6 +178,7 @@ public class NPCManager {
         this.npcStructureCheckTimers = new HashMap<>();
         this.alertedPoliceNPCs = new HashSet<>();
         this.npcStealCooldownTimers = new HashMap<>();
+        this.policeLostSightTimers = new HashMap<>();
     }
 
     /**
@@ -245,6 +251,7 @@ public class NPCManager {
         npcPathRecalcTimers.remove(npc);
         npcStructureCheckTimers.remove(npc);
         alertedPoliceNPCs.remove(npc);
+        policeLostSightTimers.remove(npc);
     }
 
     /**
@@ -1677,7 +1684,25 @@ public class NPCManager {
         // If player is sheltered, police back off and resume patrolling
         if (ShelterDetector.isSheltered(world, player.getPosition())) {
             police.setState(NPCState.PATROLLING);
+            policeLostSightTimers.remove(police);
             return;
+        }
+
+        // Line-of-sight check: if the officer cannot see the player (blocked by solid blocks),
+        // accumulate lost-sight time. After POLICE_LOST_SIGHT_TIMEOUT seconds the officer
+        // gives up the chase and returns to PATROLLING.
+        if (!hasLineOfSight(world, police.getPosition(), player.getPosition())) {
+            float lostTime = policeLostSightTimers.getOrDefault(police, 0.0f) + delta;
+            policeLostSightTimers.put(police, lostTime);
+            if (lostTime >= POLICE_LOST_SIGHT_TIMEOUT) {
+                police.setState(NPCState.PATROLLING);
+                policeLostSightTimers.remove(police);
+                return;
+            }
+            // Keep moving toward last known position even while sight is lost
+        } else {
+            // Player is visible — reset the lost-sight timer
+            policeLostSightTimers.remove(police);
         }
 
         // Move toward player
@@ -1690,7 +1715,53 @@ public class NPCManager {
             arrestPending = true;
             police.setSpeechText("You're coming with me!", 2.0f);
             police.setState(NPCState.PATROLLING);
+            policeLostSightTimers.remove(police);
         }
+    }
+
+    /**
+     * Check whether a police officer has an unobstructed line of sight to the player.
+     * Uses a 3D DDA ray march through the voxel grid from the officer's eye position
+     * to the player's eye position. Returns false if any solid, non-transparent block
+     * intersects the ray.
+     */
+    public static boolean hasLineOfSight(World world, Vector3 from, Vector3 to) {
+        // Eye-level offsets (NPCs/player are approximately 1 block tall)
+        float eyeHeight = 1.0f;
+        float fx = from.x, fy = from.y + eyeHeight, fz = from.z;
+        float tx = to.x,   ty = to.y   + eyeHeight, tz = to.z;
+
+        float dx = tx - fx;
+        float dy = ty - fy;
+        float dz = tz - fz;
+        float dist = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (dist < 0.001f) return true; // Same position — trivially in sight
+
+        // Normalise direction
+        float ndx = dx / dist;
+        float ndy = dy / dist;
+        float ndz = dz / dist;
+
+        // Step through blocks along the ray using small steps (0.4 block increments)
+        float step = 0.4f;
+        int steps = (int) (dist / step) + 1;
+        for (int i = 1; i <= steps; i++) {
+            float t = Math.min(i * step, dist);
+            int bx = (int) Math.floor(fx + ndx * t);
+            int by = (int) Math.floor(fy + ndy * t);
+            int bz = (int) Math.floor(fz + ndz * t);
+
+            // Skip the exact start/end blocks
+            if (bx == (int) Math.floor(fx) && by == (int) Math.floor(fy) && bz == (int) Math.floor(fz)) continue;
+            if (bx == (int) Math.floor(tx) && by == (int) Math.floor(ty) && bz == (int) Math.floor(tz)) break;
+
+            BlockType block = world.getBlock(bx, by, bz);
+            // Glass and air don't block LOS; all other solid blocks do
+            if (block.isSolid() && block != BlockType.GLASS) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
