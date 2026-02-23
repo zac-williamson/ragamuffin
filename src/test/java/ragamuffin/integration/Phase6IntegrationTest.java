@@ -158,46 +158,54 @@ class Phase6IntegrationTest {
     }
 
     /**
-     * Integration Test 3: Police spawn at night, not during day.
-     * Set time to 14:00 (daytime). Verify no POLICE NPCs exist in the world.
-     * Advance time to 22:00 (night). Verify at least 1 POLICE NPC has spawned.
-     * Advance time to 06:00 (morning). Verify all POLICE NPCs have despawned.
+     * Integration Test 3: Police patrol day and night; more spawn at night.
+     * Fix #90: police must NOT be despawned during daytime. At night the cap rises,
+     * allowing additional officers to spawn. Police are never bulk-despawned by
+     * time-of-day; they only leave when killed or out of range.
+     *
+     * Scenario:
+     *  - At 14:00 (daytime), updatePoliceSpawning should fill up to the daytime cap (3).
+     *  - At 22:00 (night), the cap rises to 4, so more can spawn.
+     *  - At 06:00 (morning), police already present are NOT removed.
      */
     @Test
     void test3_PoliceSpawnAtNightNotDay() {
-        // Set to 14:00 (daytime)
+        // Set to 14:00 (daytime) — police should spawn up to the daytime cap
         timeSystem.setTime(14.0f);
         npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
 
-        // Count POLICE NPCs
-        long policeCount = npcManager.getNPCs().stream()
-                .filter(npc -> npc.getType() == NPCType.POLICE)
+        // Count POLICE NPCs — at least some should exist now (daytime cap = 3)
+        long policeCountDay = npcManager.getNPCs().stream()
+                .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
                 .count();
 
-        assertEquals(0, policeCount,
-                "No police should spawn during daytime (14:00)");
+        assertTrue(policeCountDay >= 1,
+                "At least 1 police should be present during daytime (14:00)");
 
-        // Advance to 22:00 (night)
+        // Advance to 22:00 (night) — cap rises, more police can spawn
+        // Reset cooldown by clearing the manager's NPCs is not possible, so we just
+        // verify the nighttime call does not reduce the police count.
+        long policeBeforeNight = policeCountDay;
         timeSystem.setTime(22.0f);
         npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
 
-        policeCount = npcManager.getNPCs().stream()
-                .filter(npc -> npc.getType() == NPCType.POLICE)
+        long policeCountNight = npcManager.getNPCs().stream()
+                .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
                 .count();
 
-        assertTrue(policeCount >= 1,
-                "At least 1 police should spawn at night (22:00)");
+        assertTrue(policeCountNight >= policeBeforeNight,
+                "Night transition must not reduce police count");
 
-        // Advance to 06:00 (morning)
+        // Advance to 06:00 (morning) — police must NOT be bulk-despawned
         timeSystem.setTime(6.0f);
         npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
 
-        policeCount = npcManager.getNPCs().stream()
-                .filter(npc -> npc.getType() == NPCType.POLICE)
+        long policeCountMorning = npcManager.getNPCs().stream()
+                .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
                 .count();
 
-        assertEquals(0, policeCount,
-                "All police should despawn in the morning (06:00)");
+        assertTrue(policeCountMorning >= 1,
+                "Police must NOT be despawned at dawn (06:00) — fix #90");
     }
 
     /**
