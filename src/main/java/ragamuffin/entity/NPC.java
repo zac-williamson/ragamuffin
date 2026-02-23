@@ -140,6 +140,11 @@ public class NPC {
             attackCooldown -= delta;
         }
 
+        // Update knocked out timer
+        if (state == NPCState.KNOCKED_OUT) {
+            knockedOutTimer += delta;
+        }
+
         // Update facing angle from velocity
         // atan2(vx, vz) gives the angle from +Z axis toward +X axis
         // The model's face is now at +Z local, so yaw 0 = face toward +Z
@@ -194,11 +199,16 @@ public class NPC {
     }
 
     private float knockbackTimer = 0f;
+    private float knockedOutTimer = 0f; // how long NPC has been in KNOCKED_OUT state
     private float stuckTimer = 0f;     // time spent stuck against obstacle
     private Vector3 lastPosition = null; // position last frame for stuck detection
 
     public boolean isKnockedBack() {
         return knockbackTimer > 0f;
+    }
+
+    public float getKnockedOutTimer() {
+        return knockedOutTimer;
     }
 
     public void updateKnockback(float delta) {

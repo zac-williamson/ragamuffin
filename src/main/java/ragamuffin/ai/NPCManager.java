@@ -1085,7 +1085,8 @@ public class NPCManager {
         // Deal damage (10 HP per punch)
         boolean killed = npc.takeDamage(10f);
         if (killed) {
-            // NPC defeated - show speech and schedule removal
+            // NPC defeated - enter knocked out animation state, show speech, schedule removal
+            npc.setState(NPCState.KNOCKED_OUT);
             npc.setSpeechText(getDeathSpeech(npc.getType()), 2.0f);
 
             // Award loot drops

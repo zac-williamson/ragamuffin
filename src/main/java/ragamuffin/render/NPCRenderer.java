@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 
 import java.util.HashMap;
@@ -369,6 +370,12 @@ public class NPCRenderer {
         ModelInstance[] inst = humanoidInstances.get(npc.getType());
         if (inst == null) return;
 
+        // Knocked out: render NPC lying flat on the ground
+        if (npc.getState() == NPCState.KNOCKED_OUT) {
+            renderHumanoidKnockedOut(modelBatch, environment, npc, inst);
+            return;
+        }
+
         Vector3 pos = npc.getPosition();
         float yaw = npc.getFacingAngle();
         float animT = npc.getAnimTime();
@@ -473,6 +480,105 @@ public class NPCRenderer {
     }
 
     /**
+     * Render a humanoid NPC in the knocked out (lying flat on ground) pose.
+     * All body parts are rotated 90 degrees around the X axis so the NPC
+     * appears to have fallen forward flat on the ground.
+     */
+    private void renderHumanoidKnockedOut(ModelBatch modelBatch, Environment environment,
+                                           NPC npc, ModelInstance[] inst) {
+        Vector3 pos = npc.getPosition();
+        float yaw = npc.getFacingAngle();
+        float yawRad = (float) Math.toRadians(yaw);
+
+        // Lie flat: pitch the NPC 90 degrees forward around X axis.
+        // The body pivots around the hip so the torso/head extend forward along Z.
+        float pitchRad = (float) Math.toRadians(90f);
+
+        // Centre of the lying body — slightly above ground to avoid z-fighting
+        float groundY = 0.05f;
+
+        // Torso lies flat; centre is at half-torso-height along Z (now horizontal)
+        setKnockedOutPartTransform(inst[PART_TORSO],    pos, yawRad, pitchRad, 0f,   groundY + TORSO_W / 2f,   TORSO_H / 2f);
+        modelBatch.render(inst[PART_TORSO], environment);
+
+        setKnockedOutPartTransform(inst[PART_SHOULDERS], pos, yawRad, pitchRad, 0f,  groundY + SHOULDER_W / 2f, TORSO_H + SHOULDER_H / 2f);
+        modelBatch.render(inst[PART_SHOULDERS], environment);
+
+        setKnockedOutPartTransform(inst[PART_NECK],     pos, yawRad, pitchRad, 0f,   groundY + NECK_W / 2f,   TORSO_H + SHOULDER_H + NECK_H / 2f);
+        modelBatch.render(inst[PART_NECK], environment);
+
+        setKnockedOutPartTransform(inst[PART_HEAD],     pos, yawRad, pitchRad, 0f,   groundY + HEAD_W / 2f,   TORSO_H + SHOULDER_H + NECK_H + HEAD_H / 2f);
+        modelBatch.render(inst[PART_HEAD], environment);
+
+        setKnockedOutPartTransform(inst[PART_FACE],     pos, yawRad, pitchRad, 0f,   groundY + HEAD_D / 2f + 0.011f, TORSO_H + SHOULDER_H + NECK_H + HEAD_H / 2f);
+        modelBatch.render(inst[PART_FACE], environment);
+
+        if (inst.length > PART_HELMET) {
+            setKnockedOutPartTransform(inst[PART_HELMET], pos, yawRad, pitchRad, 0f, groundY + HEAD_W / 2f + 0.02f, TORSO_H + SHOULDER_H + NECK_H + HEAD_H + 0.02f);
+            modelBatch.render(inst[PART_HELMET], environment);
+        }
+
+        // Arms hang flat beside the torso
+        float armOffsetX = SHOULDER_W / 2f;
+        setKnockedOutPartTransform(inst[PART_L_UPPER_ARM], pos, yawRad, pitchRad, -armOffsetX, groundY + UPPER_ARM_W / 2f, TORSO_H + UPPER_ARM_H / 2f);
+        modelBatch.render(inst[PART_L_UPPER_ARM], environment);
+        setKnockedOutPartTransform(inst[PART_L_FOREARM],   pos, yawRad, pitchRad, -armOffsetX, groundY + FOREARM_W / 2f,   TORSO_H + UPPER_ARM_H + FOREARM_H / 2f);
+        modelBatch.render(inst[PART_L_FOREARM], environment);
+        setKnockedOutPartTransform(inst[PART_L_HAND],      pos, yawRad, pitchRad, -armOffsetX, groundY + HAND_W / 2f,      TORSO_H + UPPER_ARM_H + FOREARM_H + HAND_H / 2f);
+        modelBatch.render(inst[PART_L_HAND], environment);
+
+        setKnockedOutPartTransform(inst[PART_R_UPPER_ARM], pos, yawRad, pitchRad,  armOffsetX, groundY + UPPER_ARM_W / 2f, TORSO_H + UPPER_ARM_H / 2f);
+        modelBatch.render(inst[PART_R_UPPER_ARM], environment);
+        setKnockedOutPartTransform(inst[PART_R_FOREARM],   pos, yawRad, pitchRad,  armOffsetX, groundY + FOREARM_W / 2f,   TORSO_H + UPPER_ARM_H + FOREARM_H / 2f);
+        modelBatch.render(inst[PART_R_FOREARM], environment);
+        setKnockedOutPartTransform(inst[PART_R_HAND],      pos, yawRad, pitchRad,  armOffsetX, groundY + HAND_W / 2f,      TORSO_H + UPPER_ARM_H + FOREARM_H + HAND_H / 2f);
+        modelBatch.render(inst[PART_R_HAND], environment);
+
+        // Legs extend behind (toward -Z in local space, now upward when lying flat)
+        float legOffsetX = TORSO_W / 2f - UPPER_LEG_W / 2f;
+        setKnockedOutPartTransform(inst[PART_L_UPPER_LEG], pos, yawRad, pitchRad, -legOffsetX, groundY + UPPER_LEG_W / 2f, -(UPPER_LEG_H / 2f));
+        modelBatch.render(inst[PART_L_UPPER_LEG], environment);
+        setKnockedOutPartTransform(inst[PART_L_LOWER_LEG], pos, yawRad, pitchRad, -legOffsetX, groundY + LOWER_LEG_W / 2f, -(UPPER_LEG_H + LOWER_LEG_H / 2f));
+        modelBatch.render(inst[PART_L_LOWER_LEG], environment);
+        setKnockedOutPartTransform(inst[PART_L_FOOT],      pos, yawRad, pitchRad, -legOffsetX, groundY + FOOT_H / 2f,      -(UPPER_LEG_H + LOWER_LEG_H + FOOT_H / 2f));
+        modelBatch.render(inst[PART_L_FOOT], environment);
+
+        setKnockedOutPartTransform(inst[PART_R_UPPER_LEG], pos, yawRad, pitchRad,  legOffsetX, groundY + UPPER_LEG_W / 2f, -(UPPER_LEG_H / 2f));
+        modelBatch.render(inst[PART_R_UPPER_LEG], environment);
+        setKnockedOutPartTransform(inst[PART_R_LOWER_LEG], pos, yawRad, pitchRad,  legOffsetX, groundY + LOWER_LEG_W / 2f, -(UPPER_LEG_H + LOWER_LEG_H / 2f));
+        modelBatch.render(inst[PART_R_LOWER_LEG], environment);
+        setKnockedOutPartTransform(inst[PART_R_FOOT],      pos, yawRad, pitchRad,  legOffsetX, groundY + FOOT_H / 2f,      -(UPPER_LEG_H + LOWER_LEG_H + FOOT_H / 2f));
+        modelBatch.render(inst[PART_R_FOOT], environment);
+    }
+
+    /**
+     * Set transform for a body part in the knocked out (lying flat) pose.
+     * The NPC is rotated 90 degrees around the X axis relative to its yaw.
+     * localX/localY/localZ are in the NPC's lying-flat local space:
+     *   X = left/right, Y = up from ground, Z = along body (+ = head direction)
+     */
+    private void setKnockedOutPartTransform(ModelInstance instance, Vector3 npcPos, float yawRad,
+                                             float pitchRad, float localX, float localY, float localZ) {
+        float cosY = (float) Math.cos(yawRad);
+        float sinY = (float) Math.sin(yawRad);
+
+        // Rotate local position by yaw around Y axis
+        float rotX = localX * cosY + localZ * sinY;
+        float rotZ = -localX * sinY + localZ * cosY;
+
+        float worldX = npcPos.x + rotX;
+        float worldY = npcPos.y + localY;
+        float worldZ = npcPos.z + rotZ;
+
+        tmpTransform.idt();
+        tmpTransform.setToTranslation(worldX, worldY, worldZ);
+        tmpTransform.rotate(Vector3.Y, (float) Math.toDegrees(yawRad));
+        tmpTransform.rotate(Vector3.X, (float) Math.toDegrees(pitchRad));
+
+        instance.transform.set(tmpTransform);
+    }
+
+    /**
      * Set transform for a static body part.
      */
     private void setPartTransform(ModelInstance instance, Vector3 npcPos, float yawRad,
@@ -541,9 +647,68 @@ public class NPCRenderer {
         instance.transform.set(tmpTransform);
     }
 
+    /**
+     * Render a dog NPC in the knocked out (lying on side) pose.
+     */
+    private void renderDogKnockedOut(ModelBatch modelBatch, Environment environment, NPC npc) {
+        Vector3 pos = npc.getPosition();
+        float yaw = npc.getFacingAngle();
+        float yawRad = (float) Math.toRadians(yaw);
+
+        float bodyH = 0.30f;
+        float legH = 0.30f;
+
+        // Roll 90 degrees to the side — dog lies on its left side
+        float rollRad = (float) Math.toRadians(90f);
+
+        // Body centre: body lies on its side at ground level
+        float groundY = bodyH / 2f + 0.05f;
+
+        // Body
+        setKnockedOutPartTransform(dogInstances[0], pos, yawRad, rollRad, 0f, groundY, 0f);
+        modelBatch.render(dogInstances[0], environment);
+
+        // Head (front of body)
+        float headZ = (0.65f / 2f + 0.26f / 2f - 0.04f);
+        setKnockedOutPartTransform(dogInstances[1], pos, yawRad, rollRad, 0f, groundY + 0.06f, headZ);
+        modelBatch.render(dogInstances[1], environment);
+
+        // Snout
+        setKnockedOutPartTransform(dogInstances[2], pos, yawRad, rollRad, 0f, groundY, headZ + 0.26f / 2f + 0.06f);
+        modelBatch.render(dogInstances[2], environment);
+
+        // Eyes
+        setKnockedOutPartTransform(dogInstances[8], pos, yawRad, rollRad, 0f, groundY + 0.10f, headZ + 0.26f / 2f + 0.011f);
+        modelBatch.render(dogInstances[8], environment);
+
+        // Tail (back of body)
+        float tailZ = -(0.65f / 2f + 0.03f);
+        setKnockedOutPartTransform(dogInstances[3], pos, yawRad, rollRad, 0f, groundY + 0.15f, tailZ);
+        modelBatch.render(dogInstances[3], environment);
+
+        // Legs (all pointing up/sideways when lying)
+        float frontLegZ = 0.65f / 2f - 0.10f;
+        float backLegZ = -(0.65f / 2f - 0.10f);
+        float legSpreadX = 0.12f;
+        setKnockedOutPartTransform(dogInstances[4], pos, yawRad, rollRad, -legSpreadX, groundY, frontLegZ);
+        modelBatch.render(dogInstances[4], environment);
+        setKnockedOutPartTransform(dogInstances[5], pos, yawRad, rollRad,  legSpreadX, groundY, frontLegZ);
+        modelBatch.render(dogInstances[5], environment);
+        setKnockedOutPartTransform(dogInstances[6], pos, yawRad, rollRad, -legSpreadX, groundY, backLegZ);
+        modelBatch.render(dogInstances[6], environment);
+        setKnockedOutPartTransform(dogInstances[7], pos, yawRad, rollRad,  legSpreadX, groundY, backLegZ);
+        modelBatch.render(dogInstances[7], environment);
+    }
+
     private void renderDog(ModelBatch modelBatch, Environment environment, NPC npc) {
         Model[] parts = dogParts.get(NPCType.DOG);
         if (parts == null) return;
+
+        // Knocked out: dog lies on its side
+        if (npc.getState() == NPCState.KNOCKED_OUT) {
+            renderDogKnockedOut(modelBatch, environment, npc);
+            return;
+        }
 
         Vector3 pos = npc.getPosition();
         float yaw = npc.getFacingAngle();

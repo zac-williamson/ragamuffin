@@ -141,4 +141,53 @@ class NPCTest {
         assertEquals(1, npc.getTargetPosition().y, 0.01f);
         assertEquals(10, npc.getTargetPosition().z, 0.01f);
     }
+
+    @Test
+    void testKnockedOutStateTransition() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+
+        // Initially alive and not knocked out
+        assertTrue(npc.isAlive());
+        assertNotEquals(NPCState.KNOCKED_OUT, npc.getState());
+        assertEquals(0f, npc.getKnockedOutTimer(), 0.001f);
+
+        // Transition to KNOCKED_OUT
+        npc.setState(NPCState.KNOCKED_OUT);
+        assertEquals(NPCState.KNOCKED_OUT, npc.getState());
+
+        // Timer accumulates while in KNOCKED_OUT state
+        npc.updateTimers(0.5f);
+        assertEquals(0.5f, npc.getKnockedOutTimer(), 0.001f);
+
+        npc.updateTimers(0.5f);
+        assertEquals(1.0f, npc.getKnockedOutTimer(), 0.001f);
+    }
+
+    @Test
+    void testKnockedOutTimerDoesNotAccumulateInOtherStates() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+
+        // In IDLE state, timer should not accumulate
+        npc.updateTimers(1.0f);
+        assertEquals(0f, npc.getKnockedOutTimer(), 0.001f);
+
+        // Switch to WANDERING, still no accumulation
+        npc.setState(NPCState.WANDERING);
+        npc.updateTimers(1.0f);
+        assertEquals(0f, npc.getKnockedOutTimer(), 0.001f);
+    }
+
+    @Test
+    void testNPCDefeatedByDamage() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+
+        // PUBLIC has 20 HP — 2 punches of 10 damage each should kill
+        assertFalse(npc.takeDamage(10f));
+        assertTrue(npc.isAlive());
+        boolean killed = npc.takeDamage(10f);
+
+        assertTrue(killed, "NPC should be killed by second hit");
+        assertFalse(npc.isAlive());
+        assertEquals(0f, npc.getHealth(), 0.001f);
+    }
 }
