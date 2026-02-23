@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import ragamuffin.test.HeadlessTestHelper;
 import ragamuffin.world.BlockType;
 import ragamuffin.world.Chunk;
+import ragamuffin.world.World;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -73,5 +74,30 @@ class ChunkMeshBuilderTest {
         // Internal faces between adjacent blocks are hidden (not rendered)
         assertEquals(6, meshData.getFaceCount(),
             "A 2x2x2 same-type cube should have 6 greedy-merged faces (one per cube face)");
+    }
+
+    @Test
+    void crossChunkBoundaryFaceIsCulledWhenNeighbourIsSolid() {
+        // Place a DIRT block at the east edge of chunk (0,0,0) at local x=15
+        // and a DIRT block at the west edge of chunk (1,0,0) at local x=0.
+        // The shared face between them should NOT be rendered by either chunk.
+        World world = new World(42L);
+        world.setBlock(15, 0, 0, BlockType.DIRT); // east edge of chunk 0
+        world.setBlock(16, 0, 0, BlockType.DIRT); // west edge of chunk 1
+
+        ChunkMeshBuilder builder = new ChunkMeshBuilder();
+        builder.setWorld(world);
+
+        Chunk chunk0 = world.getChunk(0, 0, 0);
+        assertNotNull(chunk0, "Chunk (0,0,0) should exist after setBlock");
+
+        MeshData meshData = builder.build(chunk0);
+
+        // The block at local (15,0,0) has a solid neighbour in chunk 1 on its east side.
+        // Without cross-chunk culling: 6 faces (all sides of the isolated boundary block
+        // appear exposed because the neighbour returns AIR).
+        // With correct cross-chunk culling: 5 faces (east face toward solid neighbour is hidden).
+        assertEquals(5, meshData.getFaceCount(),
+            "East face of boundary block should be culled because neighbouring chunk has a solid block flush against it");
     }
 }
