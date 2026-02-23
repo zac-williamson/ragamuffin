@@ -34,6 +34,7 @@ public class World {
     private final Set<String> protectedBlocks; // Blocks protected from breaking
     private final Set<String> planningNoticeBlocks; // Blocks with planning notices (Phase 7)
     private final Set<String> dirtyChunks; // Chunks needing mesh rebuild
+    private final Set<String> openDoors; // Open door positions (world coords of DOOR_LOWER)
 
     public World(long seed) {
         this.seed = seed;
@@ -43,6 +44,7 @@ public class World {
         this.protectedBlocks = new HashSet<>();
         this.planningNoticeBlocks = new HashSet<>();
         this.dirtyChunks = new HashSet<>();
+        this.openDoors = new HashSet<>();
     }
 
     /**
@@ -578,5 +580,48 @@ public class World {
      */
     private String getBlockKey(int x, int y, int z) {
         return x + "," + y + "," + z;
+    }
+
+    /**
+     * Toggle a 2-block tall door at the given position.
+     * The position should be the DOOR_LOWER block.
+     * Toggling swaps DOOR_LOWER/DOOR_UPPER with AIR (open) or restores them (close).
+     * Marks the affected chunk(s) dirty for mesh rebuild.
+     *
+     * @param x world X of the DOOR_LOWER block
+     * @param y world Y of the DOOR_LOWER block
+     * @param z world Z of the DOOR_LOWER block
+     */
+    public void toggleDoor(int x, int y, int z) {
+        String key = getBlockKey(x, y, z);
+        if (openDoors.contains(key)) {
+            // Close: restore DOOR_LOWER and DOOR_UPPER
+            setBlock(x, y, z, BlockType.DOOR_LOWER);
+            setBlock(x, y + 1, z, BlockType.DOOR_UPPER);
+            openDoors.remove(key);
+        } else {
+            // Open: replace both halves with AIR
+            setBlock(x, y, z, BlockType.AIR);
+            setBlock(x, y + 1, z, BlockType.AIR);
+            openDoors.add(key);
+        }
+        markBlockDirty(x, y, z);
+        markBlockDirty(x, y + 1, z);
+    }
+
+    /**
+     * Check whether the door at the given DOOR_LOWER position is currently open.
+     */
+    public boolean isDoorOpen(int x, int y, int z) {
+        return openDoors.contains(getBlockKey(x, y, z));
+    }
+
+    /**
+     * Check whether the block at the given position is part of a 2-block door
+     * (either DOOR_LOWER or DOOR_UPPER).
+     */
+    public boolean isDoorBlock(int x, int y, int z) {
+        BlockType type = getBlock(x, y, z);
+        return type == BlockType.DOOR_LOWER || type == BlockType.DOOR_UPPER;
     }
 }

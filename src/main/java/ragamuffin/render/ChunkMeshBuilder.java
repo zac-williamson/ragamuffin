@@ -64,7 +64,7 @@ public class ChunkMeshBuilder {
         MeshData meshData = new MeshData();
         int vertexIndex = 0;
 
-        // Greedy mesh each axis/direction
+        // Greedy mesh each axis/direction (full-cube blocks only)
         // X-axis faces (West -X and East +X)
         vertexIndex = greedyMeshX(chunk, meshData, vertexIndex, false); // West
         vertexIndex = greedyMeshX(chunk, meshData, vertexIndex, true);  // East
@@ -77,7 +77,135 @@ public class ChunkMeshBuilder {
         vertexIndex = greedyMeshZ(chunk, meshData, vertexIndex, false); // North
         vertexIndex = greedyMeshZ(chunk, meshData, vertexIndex, true);  // South
 
+        // Shaped blocks: thin fences, doors — emit custom geometry
+        vertexIndex = buildShapedBlocks(chunk, meshData, vertexIndex);
+
         return meshData;
+    }
+
+    /**
+     * Emit custom geometry for blocks that are not full cubes (FENCE_POST, DOOR_LOWER/UPPER).
+     * These bypass greedy meshing and are rendered as thin quads.
+     */
+    private int buildShapedBlocks(Chunk chunk, MeshData meshData, int vertexIndex) {
+        for (int y = 0; y < Chunk.HEIGHT; y++) {
+            for (int z = 0; z < Chunk.SIZE; z++) {
+                for (int x = 0; x < Chunk.SIZE; x++) {
+                    BlockType type = chunk.getBlock(x, y, z);
+                    if (type == BlockType.AIR) continue;
+                    BlockType.BlockShape shape = type.getBlockShape();
+                    if (shape == BlockType.BlockShape.FULL_CUBE) continue;
+
+                    int worldX = chunk.getChunkX() * Chunk.SIZE + x;
+                    int worldY = chunk.getChunkY() * Chunk.HEIGHT + y;
+                    int worldZ = chunk.getChunkZ() * Chunk.SIZE + z;
+
+                    switch (shape) {
+                        case FENCE_POST:
+                            vertexIndex = buildFencePost(meshData, vertexIndex, type, x, y, z, worldX, worldY, worldZ);
+                            break;
+                        case DOOR_LOWER:
+                        case DOOR_UPPER:
+                            vertexIndex = buildDoorPanel(meshData, vertexIndex, type, x, y, z, worldX, worldY, worldZ);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        return vertexIndex;
+    }
+
+    /**
+     * Build a thin vertical fence post centred in the block cell.
+     * The post is FENCE_THICKNESS wide on both X and Z axes, full height (1 block).
+     * Rendered as a cross (+) shape when viewed from above, like standard fence posts.
+     */
+    private static final float FENCE_THICKNESS = 0.125f; // 1/8 block
+    private static final float FENCE_HALF = FENCE_THICKNESS / 2.0f;
+
+    private int buildFencePost(MeshData meshData, int vertexIndex, BlockType type,
+                               int lx, int ly, int lz,
+                               int worldX, int worldY, int worldZ) {
+        Color color = type.getColor();
+        float x = lx, y = ly, z = lz;
+        float cx = x + 0.5f, cz = z + 0.5f; // centre of block cell
+        float x0 = cx - FENCE_HALF, x1 = cx + FENCE_HALF;
+        float z0 = cz - FENCE_HALF, z1 = cz + FENCE_HALF;
+        float y0 = y, y1 = y + 1.0f;
+
+        // North face (z0, facing -Z)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, y0, z0,  x0, y0, z0,  x0, y1, z0,  x1, y1, z0,
+            0, 0, -1, FENCE_THICKNESS, 1.0f);
+        // South face (z1, facing +Z)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z1,  x1, y0, z1,  x1, y1, z1,  x0, y1, z1,
+            0, 0, 1, FENCE_THICKNESS, 1.0f);
+        // West face (x0, facing -X)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z0,  x0, y0, z1,  x0, y1, z1,  x0, y1, z0,
+            -1, 0, 0, FENCE_THICKNESS, 1.0f);
+        // East face (x1, facing +X)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, y0, z1,  x1, y0, z0,  x1, y1, z0,  x1, y1, z1,
+            1, 0, 0, FENCE_THICKNESS, 1.0f);
+        // Top face
+        Color topColor = type.getTopColor();
+        vertexIndex = addFace(meshData, vertexIndex, topColor,
+            x0, y1, z1,  x1, y1, z1,  x1, y1, z0,  x0, y1, z0,
+            0, 1, 0, FENCE_THICKNESS, FENCE_THICKNESS);
+        // Bottom face
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z0,  x1, y0, z0,  x1, y0, z1,  x0, y0, z1,
+            0, -1, 0, FENCE_THICKNESS, FENCE_THICKNESS);
+
+        return vertexIndex;
+    }
+
+    /**
+     * Build a thin door panel. The door is 0.125 blocks thick along Z, full width (1 block) on X.
+     * DOOR_LOWER covers y to y+1, DOOR_UPPER covers y to y+1 (together they form a 2-block door).
+     * The panel sits flush against the north face of the block (z = lz).
+     */
+    private static final float DOOR_THICKNESS = 0.125f;
+
+    private int buildDoorPanel(MeshData meshData, int vertexIndex, BlockType type,
+                               int lx, int ly, int lz,
+                               int worldX, int worldY, int worldZ) {
+        Color color = type.getColor();
+        Color topColor = type.getTopColor();
+        float x0 = lx, x1 = lx + 1.0f;
+        float y0 = ly, y1 = ly + 1.0f;
+        float z0 = lz, z1 = lz + DOOR_THICKNESS;
+
+        // South face (z1, facing +Z)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z1,  x1, y0, z1,  x1, y1, z1,  x0, y1, z1,
+            0, 0, 1, 1.0f, 1.0f);
+        // North face (z0, facing -Z)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, y0, z0,  x0, y0, z0,  x0, y1, z0,  x1, y1, z0,
+            0, 0, -1, 1.0f, 1.0f);
+        // East face (x1, facing +X)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, y0, z1,  x1, y0, z0,  x1, y1, z0,  x1, y1, z1,
+            1, 0, 0, DOOR_THICKNESS, 1.0f);
+        // West face (x0, facing -X)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z0,  x0, y0, z1,  x0, y1, z1,  x0, y1, z0,
+            -1, 0, 0, DOOR_THICKNESS, 1.0f);
+        // Top face (only for DOOR_UPPER or single-block door)
+        vertexIndex = addFace(meshData, vertexIndex, topColor,
+            x0, y1, z1,  x1, y1, z1,  x1, y1, z0,  x0, y1, z0,
+            0, 1, 0, 1.0f, DOOR_THICKNESS);
+        // Bottom face
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z0,  x1, y0, z0,  x1, y0, z1,  x0, y0, z1,
+            0, -1, 0, 1.0f, DOOR_THICKNESS);
+
+        return vertexIndex;
     }
 
     /**
@@ -107,7 +235,7 @@ public class ChunkMeshBuilder {
                         neighbour = getWorldBlock(chunk, x - 1, y, z);
                     }
 
-                    if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
+                    if (current != BlockType.AIR && current.isOpaque() && !neighbour.isOpaque()) {
                         mask[idx] = current;
                     } else {
                         mask[idx] = null;
@@ -211,7 +339,7 @@ public class ChunkMeshBuilder {
                         neighbour = getWorldBlock(chunk, x, y - 1, z);
                     }
 
-                    if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
+                    if (current != BlockType.AIR && current.isOpaque() && !neighbour.isOpaque()) {
                         mask[idx] = current;
                     } else {
                         mask[idx] = null;
@@ -315,7 +443,7 @@ public class ChunkMeshBuilder {
                         neighbour = getWorldBlock(chunk, x, y, z - 1);
                     }
 
-                    if (current != BlockType.AIR && current.isSolid() && !neighbour.isSolid()) {
+                    if (current != BlockType.AIR && current.isOpaque() && !neighbour.isOpaque()) {
                         mask[idx] = current;
                     } else {
                         mask[idx] = null;

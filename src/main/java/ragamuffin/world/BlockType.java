@@ -50,7 +50,10 @@ public enum BlockType {
     BOOKSHELF(40, true),   // Library bookshelf
     BEDROCK(41, true),     // Indestructible bottom layer
     WOOD_FENCE(42, true),  // World-generated wooden fence (not player-placeable)
-    WOOD_WALL(43, true);   // World-generated wooden wall/shed (not player-placeable)
+    WOOD_WALL(43, true),   // World-generated wooden wall/shed (not player-placeable)
+    FENCE_THIN(44, true),  // Thin vertical iron fence post (shaped, not full cube)
+    DOOR_LOWER(45, false), // Lower half of a 2-block tall door (not solid for collision — door frame is solid)
+    DOOR_UPPER(46, false); // Upper half of a 2-block tall door
 
     private final int id;
     private final boolean solid;
@@ -67,6 +70,23 @@ public enum BlockType {
 
     public boolean isSolid() {
         return solid;
+    }
+
+    /**
+     * Whether this block is visually opaque (fills its full 1x1x1 cell).
+     * Opaque blocks cause adjacent faces to be culled during mesh building.
+     * Non-opaque solid blocks (e.g. thin fences) are solid for collision but
+     * do not hide neighbouring block faces.
+     */
+    public boolean isOpaque() {
+        switch (this) {
+            case FENCE_THIN:
+            case DOOR_LOWER:
+            case DOOR_UPPER:
+                return false;
+            default:
+                return solid; // All other solid blocks are opaque; AIR/WATER are not
+        }
     }
 
     public static BlockType fromId(int id) {
@@ -106,6 +126,32 @@ public enum BlockType {
         if (cachedBottomColor != null) return cachedBottomColor;
         cachedBottomColor = buildBottomColor();
         return cachedBottomColor;
+    }
+
+    /**
+     * Shape variants for non-full-cube block types.
+     * FULL_CUBE: standard 1x1x1 block (default).
+     * FENCE_POST: thin 0.125-wide vertical post centred in the block, full height.
+     * DOOR_LOWER: lower half of a 2-block tall door panel (full width, 1 block tall).
+     * DOOR_UPPER: upper half of a 2-block tall door panel (full width, 1 block tall).
+     */
+    public enum BlockShape {
+        FULL_CUBE,
+        FENCE_POST,
+        DOOR_LOWER,
+        DOOR_UPPER
+    }
+
+    /**
+     * Get the geometric shape of this block for mesh building.
+     */
+    public BlockShape getBlockShape() {
+        switch (this) {
+            case FENCE_THIN: return BlockShape.FENCE_POST;
+            case DOOR_LOWER: return BlockShape.DOOR_LOWER;
+            case DOOR_UPPER: return BlockShape.DOOR_UPPER;
+            default: return BlockShape.FULL_CUBE;
+        }
     }
 
     /**
@@ -280,6 +326,9 @@ public enum BlockType {
             case BEDROCK: return new Color(0.15f, 0.15f, 0.15f, 1f);   // Very dark grey
             case WOOD_FENCE: return new Color(0.72f, 0.52f, 0.28f, 1f); // Same as WOOD
             case WOOD_WALL: return new Color(0.72f, 0.52f, 0.28f, 1f);  // Same as WOOD
+            case FENCE_THIN: return new Color(0.18f, 0.18f, 0.20f, 1f); // Dark iron, same as IRON_FENCE
+            case DOOR_LOWER: return new Color(0.42f, 0.25f, 0.10f, 1f); // Dark oak, same as DOOR_WOOD
+            case DOOR_UPPER: return new Color(0.42f, 0.25f, 0.10f, 1f); // Dark oak, same as DOOR_WOOD
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }
@@ -308,6 +357,9 @@ public enum BlockType {
             case CARDBOARD: return new Color(0.72f, 0.60f, 0.35f, 1f);   // Flap edge
             case WOOD_FENCE: return new Color(0.68f, 0.50f, 0.25f, 1f);  // End grain
             case WOOD_WALL: return new Color(0.68f, 0.50f, 0.25f, 1f);   // End grain
+            case FENCE_THIN: return new Color(0.22f, 0.22f, 0.24f, 1f);  // Dark iron top
+            case DOOR_LOWER: return new Color(0.48f, 0.30f, 0.14f, 1f);  // Door top
+            case DOOR_UPPER: return new Color(0.48f, 0.30f, 0.14f, 1f);  // Door top
             default: return buildSideColor();
         }
     }
