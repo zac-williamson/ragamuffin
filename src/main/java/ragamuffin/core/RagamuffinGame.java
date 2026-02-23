@@ -1013,6 +1013,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Phase 5: Update NPCs
         npcManager.update(delta, world, player, inventory, tooltipSystem);
 
+        // Fix #196: update speech log after NPC speech is set for this frame
+        speechLogUI.update(npcManager.getNPCs(), delta);
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -1559,9 +1562,6 @@ public class RagamuffinGame extends ApplicationAdapter {
         ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
         shapeRenderer.setProjectionMatrix(ortho);
         spriteBatch.setProjectionMatrix(ortho);
-
-        // Issue #13: update speech log with current NPC speech
-        speechLogUI.update(npcManager.getNPCs(), delta);
 
         for (NPC npc : npcManager.getNPCs()) {
             if (!npc.isSpeaking()) continue;
