@@ -441,6 +441,9 @@ public class NPCManager {
                 case STEALING:
                     updateStealing(npc, delta, player, inventory, tooltipSystem);
                     break;
+                case AGGRESSIVE:
+                    updateAggressive(npc, delta, world, player);
+                    break;
                 default:
                     updateWandering(npc, delta, world);
                     break;
@@ -603,6 +606,17 @@ public class NPCManager {
             }
         } else {
             npc.setVelocity(awayDir.x * fleeSpeed, curVelY, awayDir.z * fleeSpeed);
+        }
+    }
+
+    /**
+     * Update aggressive behavior — non-police NPC (e.g. YOUTH_GANG) chases the player.
+     * De-escalates back to WANDERING if the player escapes beyond 40 blocks.
+     */
+    private void updateAggressive(NPC npc, float delta, World world, Player player) {
+        setNPCTarget(npc, player.getPosition(), world);
+        if (npc.getPosition().dst(player.getPosition()) > 40.0f) {
+            npc.setState(NPCState.WANDERING);
         }
     }
 
