@@ -48,7 +48,9 @@ public enum BlockType {
     CARPET(38, true),      // Floor carpet
     LINO_GREEN(39, true),  // Cheap lino flooring
     BOOKSHELF(40, true),   // Library bookshelf
-    BEDROCK(41, true);     // Indestructible bottom layer
+    BEDROCK(41, true),     // Indestructible bottom layer
+    WOOD_FENCE(42, true),  // World-generated wooden fence (not player-placeable)
+    WOOD_WALL(43, true);   // World-generated wooden wall/shed (not player-placeable)
 
     private final int id;
     private final boolean solid;
@@ -119,6 +121,8 @@ public enum BlockType {
             case ROOF_TILE:
             case SLATE:
             case WOOD:
+            case WOOD_FENCE:
+            case WOOD_WALL:
             case TREE_TRUNK:
             case BOOKSHELF:
             case CARDBOARD:
@@ -181,6 +185,8 @@ public enum BlockType {
                     clamp01(base.b + variation * 0.5f), base.a);
 
             case WOOD:
+            case WOOD_FENCE:
+            case WOOD_WALL:
             case TREE_TRUNK:
                 // Wood grain — darken every other row
                 boolean isGrainLine = (worldY % 2 == 0);
@@ -272,6 +278,8 @@ public enum BlockType {
             case LINO_GREEN: return new Color(0.35f, 0.52f, 0.30f, 1f);  // Hospital green
             case BOOKSHELF: return new Color(0.38f, 0.28f, 0.12f, 1f);   // Dark walnut
             case BEDROCK: return new Color(0.15f, 0.15f, 0.15f, 1f);   // Very dark grey
+            case WOOD_FENCE: return new Color(0.72f, 0.52f, 0.28f, 1f); // Same as WOOD
+            case WOOD_WALL: return new Color(0.72f, 0.52f, 0.28f, 1f);  // Same as WOOD
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }
@@ -298,6 +306,8 @@ public enum BlockType {
             case CARPET: return new Color(0.48f, 0.15f, 0.15f, 1f);      // Slightly different pile
             case WOOD: return new Color(0.68f, 0.50f, 0.25f, 1f);        // End grain
             case CARDBOARD: return new Color(0.72f, 0.60f, 0.35f, 1f);   // Flap edge
+            case WOOD_FENCE: return new Color(0.68f, 0.50f, 0.25f, 1f);  // End grain
+            case WOOD_WALL: return new Color(0.68f, 0.50f, 0.25f, 1f);   // End grain
             default: return buildSideColor();
         }
     }
