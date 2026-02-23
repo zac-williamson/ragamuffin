@@ -260,6 +260,50 @@ class NPCManagerTest {
     }
 
     /**
+     * Fix #126: Youth gang steals highest-priority item (DIAMOND over WOOD).
+     */
+    @Test
+    void testYouthGangStealsDiamondOverWood() {
+        NPC youth = manager.spawnNPC(NPCType.YOUTH_GANG, 0.5f, 1, 0.5f);
+        player.getPosition().set(0, 1, 0);
+        inventory.addItem(Material.WOOD, 5);
+        inventory.addItem(Material.DIAMOND, 3);
+
+        // Update until theft occurs
+        for (int i = 0; i < 100; i++) {
+            manager.update(0.1f, world, player, inventory, tooltipSystem);
+            if (inventory.getItemCount(Material.DIAMOND) < 3 || inventory.getItemCount(Material.WOOD) < 5) {
+                break;
+            }
+        }
+
+        // Gang should have stolen DIAMOND (highest priority), not WOOD
+        assertTrue(inventory.getItemCount(Material.DIAMOND) < 3, "Gang should steal DIAMOND first");
+        assertEquals(5, inventory.getItemCount(Material.WOOD), "WOOD should be untouched when DIAMOND is present");
+    }
+
+    /**
+     * Fix #126: Youth gang steals from non-WOOD inventory when no WOOD is present.
+     */
+    @Test
+    void testYouthGangStealsWhenNoWood() {
+        NPC youth = manager.spawnNPC(NPCType.YOUTH_GANG, 0.5f, 1, 0.5f);
+        player.getPosition().set(0, 1, 0);
+        inventory.addItem(Material.SCRAP_METAL, 4);
+
+        // Update until theft occurs
+        for (int i = 0; i < 100; i++) {
+            manager.update(0.1f, world, player, inventory, tooltipSystem);
+            if (inventory.getItemCount(Material.SCRAP_METAL) < 4) {
+                break;
+            }
+        }
+
+        // Gang should have stolen SCRAP_METAL even though there's no WOOD
+        assertTrue(inventory.getItemCount(Material.SCRAP_METAL) < 4, "Gang should steal SCRAP_METAL when no WOOD present");
+    }
+
+    /**
      * Integration test for issue #120: NPC immediately after a council builder that
      * finishes demolishing must not be skipped when the builder is removed.
      *
