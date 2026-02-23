@@ -539,6 +539,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                     deathMessage = null; // Reset for next death
                     // Issue #114: Reset Greggs raid on respawn — mirrors the arrest-handler reset
                     greggsRaidSystem.reset();
+                    // Issue #154: Reset street reputation on death — the streets forget you while you were dead
+                    player.getStreetReputation().reset();
                 }
 
                 // Phase 11: Trigger hunger warning tooltip
