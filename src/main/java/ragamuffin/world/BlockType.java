@@ -80,6 +80,7 @@ public enum BlockType {
      */
     public boolean isOpaque() {
         switch (this) {
+            case IRON_FENCE:
             case FENCE_THIN:
             case DOOR_LOWER:
             case DOOR_UPPER:
@@ -147,6 +148,7 @@ public enum BlockType {
      */
     public BlockShape getBlockShape() {
         switch (this) {
+            case IRON_FENCE:
             case FENCE_THIN: return BlockShape.FENCE_POST;
             case DOOR_LOWER: return BlockShape.DOOR_LOWER;
             case DOOR_UPPER: return BlockShape.DOOR_UPPER;
@@ -378,6 +380,7 @@ public enum BlockType {
             case CARDBOARD: return new Color(0.72f, 0.60f, 0.35f, 1f);   // Flap edge
             case WOOD_FENCE: return new Color(0.68f, 0.50f, 0.25f, 1f);  // End grain
             case WOOD_WALL: return new Color(0.68f, 0.50f, 0.25f, 1f);   // End grain
+            case IRON_FENCE: return new Color(0.22f, 0.22f, 0.24f, 1f);  // Dark iron top
             case FENCE_THIN: return new Color(0.22f, 0.22f, 0.24f, 1f);  // Dark iron top
             case DOOR_LOWER: return new Color(0.48f, 0.30f, 0.14f, 1f);  // Door top
             case DOOR_UPPER: return new Color(0.48f, 0.30f, 0.14f, 1f);  // Door top
