@@ -272,6 +272,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // CRITIC 5: Initialize arrest system
         arrestSystem = new ArrestSystem();
+        arrestSystem.setRespawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
 
         // CRITIC 3: Initialize Greggs raid system
         greggsRaidSystem = new GreggsRaidSystem();
@@ -1453,8 +1454,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         hotbarUI = new HotbarUI(inventory);
         craftingUI = new CraftingUI(craftingSystem, inventory);
 
-        // Reset NPCs (blockBreaker wired below after it is re-created)
+        // Reset NPCs — wire blockBreaker first (matches initGame order) so demolishBlock
+        // hit-counter clears work from the start of the restarted game
+        blockBreaker = new BlockBreaker();
         npcManager = new NPCManager();
+        npcManager.setBlockBreaker(blockBreaker);
         spawnInitialNPCs();
 
         // Reset time and lighting
@@ -1462,9 +1466,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         lightingSystem = new LightingSystem(environment);
         clockHUD = new ClockHUD();
 
-        // Reset game systems
-        blockBreaker = new BlockBreaker();
-        npcManager.setBlockBreaker(blockBreaker);
+        // Reset game systems (blockBreaker already created above)
         tooltipSystem = new TooltipSystem();
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
         interactionSystem = new InteractionSystem();
@@ -1473,6 +1475,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         respawnSystem.setSpawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         weatherSystem = new WeatherSystem();
         arrestSystem = new ArrestSystem();
+        arrestSystem.setRespawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         greggsRaidSystem = new GreggsRaidSystem();
         gangTerritorySystem.reset();
         gameHUD = new GameHUD(player);
