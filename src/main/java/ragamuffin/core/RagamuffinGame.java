@@ -560,6 +560,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
 
+            // Issue #54: Render block targeting outline and placement ghost block
+            renderBlockHighlight();
+
             // Render NPC speech bubbles (2D overlay projected from 3D)
             renderSpeechBubbles();
 
@@ -1744,6 +1747,110 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         shapeRenderer.end();
         Gdx.gl.glDisable(GL20.GL_BLEND);
+    }
+
+    /**
+     * Issue #54: Render block targeting outline (Phase 3) and placement ghost block (Phase 4).
+     * Uses ShapeRenderer in 3D world-space (camera.combined matrix) to draw directly in the scene.
+     * Called after modelBatch.end() so it renders on top of the 3D world but before 2D UI.
+     */
+    private void renderBlockHighlight() {
+        tmpCameraPos.set(camera.position);
+        tmpDirection.set(camera.direction);
+
+        RaycastResult targetBlock = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
+
+        // Use the camera's combined (perspective) matrix so coordinates match the 3D world
+        shapeRenderer.setProjectionMatrix(camera.combined);
+
+        // --- Phase 3: Block targeting outline ---
+        if (targetBlock != null) {
+            int bx = targetBlock.getBlockX();
+            int by = targetBlock.getBlockY();
+            int bz = targetBlock.getBlockZ();
+
+            // Disable depth test so outline shows through block edges
+            Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+            shapeRenderer.setColor(0f, 0f, 0f, 0.9f);
+
+            // Draw all 12 edges of the unit cube at block position
+            float x0 = bx, y0 = by, z0 = bz;
+            float x1 = bx + 1f, y1 = by + 1f, z1 = bz + 1f;
+            // Bottom face
+            shapeRenderer.line(x0, y0, z0,  x1, y0, z0);
+            shapeRenderer.line(x1, y0, z0,  x1, y0, z1);
+            shapeRenderer.line(x1, y0, z1,  x0, y0, z1);
+            shapeRenderer.line(x0, y0, z1,  x0, y0, z0);
+            // Top face
+            shapeRenderer.line(x0, y1, z0,  x1, y1, z0);
+            shapeRenderer.line(x1, y1, z0,  x1, y1, z1);
+            shapeRenderer.line(x1, y1, z1,  x0, y1, z1);
+            shapeRenderer.line(x0, y1, z1,  x0, y1, z0);
+            // Vertical edges
+            shapeRenderer.line(x0, y0, z0,  x0, y1, z0);
+            shapeRenderer.line(x1, y0, z0,  x1, y1, z0);
+            shapeRenderer.line(x1, y0, z1,  x1, y1, z1);
+            shapeRenderer.line(x0, y0, z1,  x0, y1, z1);
+
+            shapeRenderer.end();
+
+            Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+        }
+
+        // --- Phase 4: Block placement ghost block ---
+        int selectedSlot = hotbarUI.getSelectedSlot();
+        Material equippedMaterial = inventory.getItemInSlot(selectedSlot);
+        if (equippedMaterial != null) {
+            BlockType ghostBlockType = blockPlacer.materialToBlockType(equippedMaterial);
+            if (ghostBlockType != null) {
+                Vector3 placement = blockPlacer.getPlacementPosition(world, tmpCameraPos, tmpDirection, PLACE_REACH);
+                if (placement != null) {
+                    int px = (int) Math.floor(placement.x);
+                    int py = (int) Math.floor(placement.y);
+                    int pz = (int) Math.floor(placement.z);
+
+                    com.badlogic.gdx.graphics.Color blockColor = ghostBlockType.getColor();
+
+                    Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+                    Gdx.gl.glEnable(GL20.GL_BLEND);
+                    Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+                    // Render ghost as a semi-transparent wireframe cube in the block's colour.
+                    // ShapeRenderer has no 3D filled-triangle API, so we use Line mode which
+                    // gives clear visual feedback of the placement preview.
+                    shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+                    shapeRenderer.setColor(blockColor.r, blockColor.g, blockColor.b, 0.55f);
+
+                    float gx0 = px, gy0 = py, gz0 = pz;
+                    float gx1 = px + 1f, gy1 = py + 1f, gz1 = pz + 1f;
+                    // Bottom face
+                    shapeRenderer.line(gx0, gy0, gz0,  gx1, gy0, gz0);
+                    shapeRenderer.line(gx1, gy0, gz0,  gx1, gy0, gz1);
+                    shapeRenderer.line(gx1, gy0, gz1,  gx0, gy0, gz1);
+                    shapeRenderer.line(gx0, gy0, gz1,  gx0, gy0, gz0);
+                    // Top face
+                    shapeRenderer.line(gx0, gy1, gz0,  gx1, gy1, gz0);
+                    shapeRenderer.line(gx1, gy1, gz0,  gx1, gy1, gz1);
+                    shapeRenderer.line(gx1, gy1, gz1,  gx0, gy1, gz1);
+                    shapeRenderer.line(gx0, gy1, gz1,  gx0, gy1, gz0);
+                    // Vertical edges
+                    shapeRenderer.line(gx0, gy0, gz0,  gx0, gy1, gz0);
+                    shapeRenderer.line(gx1, gy0, gz0,  gx1, gy1, gz0);
+                    shapeRenderer.line(gx1, gy0, gz1,  gx1, gy1, gz1);
+                    shapeRenderer.line(gx0, gy0, gz1,  gx0, gy1, gz1);
+
+                    shapeRenderer.end();
+
+                    Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+                    Gdx.gl.glDisable(GL20.GL_BLEND);
+                }
+            }
+        }
     }
 
     @Override
