@@ -348,14 +348,6 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Council member near the JobCentre
         spawnNPCAtTerrain(NPCType.COUNCIL_MEMBER, -55, 28);
 
-        // Police patrol — always present on the streets
-        NPC police1 = spawnNPCAtTerrain(NPCType.POLICE, 20, 10);
-        if (police1 != null) police1.setState(NPCState.PATROLLING);
-        NPC police2 = spawnNPCAtTerrain(NPCType.POLICE, -30, 20);
-        if (police2 != null) police2.setState(NPCState.PATROLLING);
-        NPC police3 = spawnNPCAtTerrain(NPCType.POLICE, 50, -10);
-        if (police3 != null) police3.setState(NPCState.PATROLLING);
-
         // Drunk near the off-licence
         spawnNPCAtTerrain(NPCType.DRUNK, -65, 15);
         spawnNPCAtTerrain(NPCType.DRUNK, -60, 18);
