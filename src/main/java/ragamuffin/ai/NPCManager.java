@@ -303,6 +303,7 @@ public class NPCManager {
                 builderTargets.remove(npc);
                 builderKnockbackTimers.remove(npc);
                 builderDemolishTimers.remove(npc);
+                alertedPoliceNPCs.remove(npc);
                 return true;
             }
             return false;
@@ -1452,8 +1453,12 @@ public class NPCManager {
             npcs.remove(police);
             policeWarningTimers.remove(police);
             policeTargetStructures.remove(police);
-            alertedPoliceNPCs.remove(police);
         }
+
+        // Clear the entire alerted set on dawn despawn — all police are gone, so any
+        // previously-alerted NPC references would be stale. Alerted state should not
+        // persist across night cycles into the next spawned cohort.
+        alertedPoliceNPCs.clear();
     }
 
     /**
