@@ -1695,3 +1695,36 @@ With this fix, a player at `(ox+1.5, oy+1.0, oz+1.0)` maps to cell `(ox+1, oy+1,
 
 3. **Player outside shelter IS damaged by cold snap**: Place player at `(21.5f, 6.0f, 24.0f)`
    — outside the shelter. Same cold-snap simulation. Verify health < 100 (damage applied).
+
+---
+
+## Bug: WeatherSystem timer runs on real time, not game time
+
+**Discovered**: 2026-02-23
+
+**Problem**: `WeatherSystem.update()` is called with real-world `delta` (seconds), and its
+duration constants are `MIN_WEATHER_DURATION = 300f` / `MAX_WEATHER_DURATION = 600f` real
+seconds. The spec says weather changes every "5-10 game minutes."
+
+With `TimeSystem.DEFAULT_TIME_SPEED = 0.1f` hours/real-second, one in-game day takes
+`24 / 0.1 = 240` real seconds ≈ 4 real minutes. So 300–600 real seconds = roughly 1.25–2.5
+in-game days between weather changes. Players can experience many in-game days — and entire
+play sessions — without the weather ever changing.
+
+**Fix**: `WeatherSystem.update()` should receive game-time seconds (i.e., `delta *
+timeSystem.getTimeSpeed() * 3600f`), and the duration constants should use game-minutes
+(e.g., 5 game-minutes = 300 game-seconds). Alternatively, adjust the constants from 300–600
+real-seconds to a value appropriate for the intended player-facing pacing: approximately
+30–60 real seconds (≈ 3–6 game-minutes at 0.1 hours/s time speed).
+
+**Desired behaviour**: Weather state changes approximately every 5-10 in-game minutes of
+elapsed game-world time — meaning within a single in-game day (4 real minutes) the player
+should expect to see 2–6 weather transitions.
+
+**Integration test** (add to Phase12IntegrationTest):
+
+**Weather changes within one game-day**: Create `WeatherSystem`. Create `TimeSystem`.
+Advance time by simulating frames at 60fps for 300 real seconds (`timeSystem.update(1/60f)`
+each frame, `weatherSystem.update(1/60f * timeSystem.getTimeSpeed() * 3600f)` each frame).
+Record the number of weather changes that occurred. Verify at least 2 weather changes
+happened (weather should change multiple times per in-game day, not once every 1-2 days).
