@@ -1093,6 +1093,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                     }
                 }
 
+                // Leaf decay: remove floating LEAVES when a trunk is destroyed
+                if (blockType == BlockType.TREE_TRUNK) {
+                    decayFloatingLeaves(x, y, z);
+                }
+
                 // Only rebuild the affected chunk (and neighbours if on a boundary)
                 rebuildChunkAt(x, y, z);
             }
@@ -1100,6 +1105,45 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Not looking at any block - reset progress indicator
             gameHUD.setBlockBreakProgress(0f);
         }
+    }
+
+    /**
+     * Remove floating LEAVES blocks that are no longer connected to any TREE_TRUNK.
+     * Called after a TREE_TRUNK block is broken. Checks all LEAVES within radius 4
+     * using Manhattan distance and removes unsupported ones.
+     */
+    private void decayFloatingLeaves(int brokenX, int brokenY, int brokenZ) {
+        int radius = 4;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > radius) continue;
+                    int lx = brokenX + dx;
+                    int ly = brokenY + dy;
+                    int lz = brokenZ + dz;
+                    if (world.getBlock(lx, ly, lz) != BlockType.LEAVES) continue;
+                    if (!hasNearbyTrunk(lx, ly, lz, radius)) {
+                        world.setBlock(lx, ly, lz, BlockType.AIR);
+                        blockBreaker.clearHits(lx, ly, lz);
+                        rebuildChunkAt(lx, ly, lz);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean hasNearbyTrunk(int lx, int ly, int lz, int radius) {
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > radius) continue;
+                    if (world.getBlock(lx + dx, ly + dy, lz + dz) == BlockType.TREE_TRUNK) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private void handlePlace() {
