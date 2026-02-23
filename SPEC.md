@@ -319,6 +319,12 @@ machines, daily routine transitions.
    to the player (max 300 frames). Verify the player's WOOD count has decreased by
    at least 1. Verify the theft triggers a tooltip or notification.
 
+   Additionally: give the player only DIAMOND (no WOOD). Advance the simulation until
+   the youth is adjacent (max 300 frames). Verify the player's DIAMOND count has
+   decreased by at least 1 — the theft system must not be hard-coded to only steal WOOD.
+   The gang should steal the most valuable item available (priority: DIAMOND > SCRAP_METAL >
+   WOOD > food), or a random item from the non-empty inventory if no priority item is found.
+
 7. **NPC daily routine changes over time**: Spawn a PUBLIC NPC. Set the game time
    to 08:00 (morning). Verify the NPC's routine state is GOING_TO_WORK. Advance
    time to 17:00 (evening). Verify the NPC's routine state is GOING_HOME. Advance
