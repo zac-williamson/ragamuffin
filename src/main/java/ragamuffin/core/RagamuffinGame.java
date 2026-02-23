@@ -576,7 +576,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             modelBatch.end();
 
             // Issue #54: Render block targeting outline and placement ghost block
-            renderBlockHighlight();
+            // Issue #192: Skip when a UI overlay is open to avoid drawing on top of inventory/crafting/help screens
+            if (!isUIBlocking()) {
+                renderBlockHighlight();
+            }
 
             // Render NPC speech bubbles (2D overlay projected from 3D)
             renderSpeechBubbles();
