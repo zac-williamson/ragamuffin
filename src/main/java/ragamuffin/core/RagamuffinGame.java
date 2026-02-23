@@ -237,7 +237,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 4: Initialize crafting and building systems
         craftingSystem = new CraftingSystem();
-        blockPlacer = new BlockPlacer();
+        blockPlacer = new BlockPlacer(blockBreaker);
 
         // Phase 5: Initialize NPC system
         npcManager = new NPCManager();
@@ -1456,6 +1456,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Reset NPCs — wire blockBreaker first (matches initGame order) so demolishBlock
         // hit-counter clears work from the start of the restarted game
         blockBreaker = new BlockBreaker();
+        blockPlacer.setBlockBreaker(blockBreaker);
         npcManager = new NPCManager();
         npcManager.setBlockBreaker(blockBreaker);
         spawnInitialNPCs();
