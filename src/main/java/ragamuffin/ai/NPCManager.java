@@ -830,9 +830,10 @@ public class NPCManager {
 
                 for (int y = 0; y < 10; y++) {
                     BlockType block = world.getBlock(x, y, z);
-                    // Check for player-placed blocks (wood planks only)
-                    // BRICK is excluded since it's used for town buildings/walls
-                    if (block == BlockType.WOOD) {
+                    // Check for player-placed blocks
+                    if (block == BlockType.WOOD || block == BlockType.BRICK
+                        || block == BlockType.STONE || block == BlockType.GLASS
+                        || block == BlockType.CARDBOARD) {
                         playerBlockCount++;
                         if (structureCenter == null) {
                             structureCenter = new Vector3(x, y, z);
@@ -1692,9 +1693,11 @@ public class NPCManager {
 
                 for (int y = 1; y < 10; y++) {
                     BlockType block = world.getBlock(x, y, z);
-                    // Check for placed blocks (wood only — BRICK is excluded because
-                    // world-generated buildings are made of BRICK and would cause false positives)
-                    if (block == BlockType.WOOD) {
+                    // Check for player-placed blocks; the >= 5 threshold mitigates false
+                    // positives from incidental world-generated BRICK blocks
+                    if (block == BlockType.WOOD || block == BlockType.BRICK
+                        || block == BlockType.STONE || block == BlockType.GLASS
+                        || block == BlockType.CARDBOARD) {
                         playerBlockCount++;
                         if (structureCenter == null) {
                             structureCenter = new Vector3(x, y, z);
@@ -1770,7 +1773,7 @@ public class NPCManager {
             // Spawn builders after planning notice has been up for a bit
             // Only spawn if structure has notice
             if (structure.hasNotice() && currentBuilders < requiredBuilders) {
-                spawnCouncilBuilder(structure);
+                spawnCouncilBuilder(structure, world);
                 structureBuilderCount.put(structureKey, currentBuilders + 1);
             }
         }
@@ -1779,7 +1782,7 @@ public class NPCManager {
     /**
      * Spawn a council builder to demolish a structure.
      */
-    private void spawnCouncilBuilder(StructureTracker.Structure structure) {
+    private void spawnCouncilBuilder(StructureTracker.Structure structure, World world) {
         Vector3 center = structure.getCenter();
 
         // Spawn builder 10-20 blocks away from structure
@@ -1788,8 +1791,9 @@ public class NPCManager {
 
         float x = center.x + (float) Math.cos(angle) * distance;
         float z = center.z + (float) Math.sin(angle) * distance;
+        float y = findGroundHeight(world, x, z);
 
-        NPC builder = spawnNPC(NPCType.COUNCIL_BUILDER, x, center.y, z);
+        NPC builder = spawnNPC(NPCType.COUNCIL_BUILDER, x, y, z);
         if (builder == null) return;
         builder.setState(NPCState.IDLE);
         builderTargets.put(builder, structure);

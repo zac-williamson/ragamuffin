@@ -146,6 +146,12 @@ class Phase7IntegrationTest {
         // Force another structure scan to ensure builders have been assigned targets
         npcManager.forceStructureScan(world, tooltipSystem);
 
+        // Run a few more frames so updateCouncilBuilder() assigns a targetPosition to
+        // any newly-spawned builders (forceStructureScan spawns but does not tick NPCs)
+        for (int i = 0; i < 5; i++) {
+            npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+        }
+
         // Check for council builders
         long builderCount = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.COUNCIL_BUILDER)
