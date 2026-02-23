@@ -810,9 +810,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetHotbarSlot();
         }
 
-        // Phase 11: E key interaction
+        // Phase 11: E key interaction — only when no UI overlay is open
         if (inputHandler.isInteractPressed()) {
-            handleInteraction();
+            if (!isUIBlocking()) {
+                handleInteraction();
+            }
             inputHandler.resetInteract();
         }
 
