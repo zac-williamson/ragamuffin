@@ -1728,3 +1728,87 @@ Advance time by simulating frames at 60fps for 300 real seconds (`timeSystem.upd
 each frame, `weatherSystem.update(1/60f * timeSystem.getTimeSpeed() * 3600f)` each frame).
 Record the number of weather changes that occurred. Verify at least 2 weather changes
 happened (weather should change multiple times per in-game day, not once every 1-2 days).
+
+---
+
+## Bug Fix: HealingSystem ticks while UI is open — free healing exploit
+
+**Discovered**: 2026-02-23
+
+**Problem**: `RagamuffinGame.render()` correctly gates hunger drain, starvation damage,
+cold-snap damage, and energy recovery behind `!isUIBlocking()` (lines ~506–530). However,
+`healingSystem.update(delta, player)` sits immediately after that guarded block (line ~533)
+and runs unconditionally — every frame, regardless of whether the inventory, crafting menu,
+or help screen is open.
+
+When a UI is open, `updatePlaying()` is also skipped (no input is processed, the player
+cannot move). `HealingSystem` checks whether the player has been stationary for ≥ 5 seconds
+before healing begins. Because the player cannot move while the inventory is open, the resting
+timer accumulates trivially, and within 5 seconds the player begins healing at 5 HP/s.
+
+Simultaneously, hunger drain is **paused** (correctly gated). The result: a player can open
+their inventory at low health, do nothing for a few seconds, and heal fully — with zero
+hunger cost. The hunger mechanic (the primary survival pressure) is completely bypassed.
+
+**Exploit scenario**:
+1. Player is at 10 HP, 90 hunger.
+2. Player opens inventory (I key).
+3. After 5 seconds, healing begins: 5 HP/s. Full heal to 100 HP in ~18 seconds.
+4. Hunger remains at 90 throughout — no cost incurred.
+5. Player closes inventory and resumes play, fully healed for free.
+
+**Root cause**: `healingSystem.update()` was placed outside the `if (!isUIBlocking())` guard
+in `RagamuffinGame.render()`. The guard at line ~506 already correctly patterns the other
+survival-stat updates. The healing call just needs to be moved inside the same guard.
+
+**Required fix in `RagamuffinGame.render()`**:
+
+Move `healingSystem.update(delta, player)` inside the `if (!isUIBlocking())` block:
+
+```java
+// Update player survival stats (gated: no hunger/starvation/cold-snap/healing while UI is open)
+if (!isUIBlocking()) {
+    // Sprint drains hunger 3x faster
+    float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
+    player.updateHunger(delta * hungerMultiplier);
+
+    // Starvation: zero hunger drains health at 5 HP/s
+    if (player.getHunger() <= 0) {
+        player.damage(5.0f * delta);
+    }
+
+    // Phase 12: Apply weather energy drain multiplier
+    float weatherMultiplier = weatherSystem.getCurrentWeather().getEnergyDrainMultiplier();
+    player.recoverEnergy(delta / weatherMultiplier);
+
+    // Phase 12: Cold snap health drain at night when unsheltered
+    Weather currentWeather = weatherSystem.getCurrentWeather();
+    if (currentWeather.drainsHealthAtNight() && timeSystem.isNight()) {
+        boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition());
+        if (!sheltered) {
+            float healthDrain = currentWeather.getHealthDrainRate() * delta;
+            player.damage(healthDrain);
+        }
+    }
+
+    // Phase 11: Update healing system (must be inside UI guard — healing while menu open is an exploit)
+    healingSystem.update(delta, player);
+}
+```
+
+**Integration tests** (add to Issue58IntegrationTest or Phase11IntegrationTest):
+
+1. **Healing does NOT occur while inventory is open**: Set player health to 50, hunger to
+   100. Open the inventory UI. Simulate 300 frames (5 seconds at 60fps) using the gated
+   update pattern: `if (!isUIBlocking()) { healingSystem.update(delta, player); }`. Verify
+   `player.getHealth()` is still 50. Verify `healingSystem.getRestingTime()` is 0 (timer
+   must not accumulate while UI is open).
+
+2. **Healing resumes normally once UI is closed**: Player health 50, hunger 100. Open
+   inventory. Simulate 300 frames (UI open — no healing). Close inventory. Simulate 400
+   more frames (6.7 seconds stationary). Verify `player.getHealth() > 50` (healing has
+   begun after the 5-second resting requirement is met).
+
+3. **Hunger is required for healing even without the exploit**: Player health 50, hunger 40
+   (below the 50 threshold). UI closed. Simulate 400 frames stationary. Verify health is
+   still 50 — hunger requirement prevents healing regardless of UI state.
