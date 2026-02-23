@@ -113,22 +113,26 @@ public class HotbarUI {
         }
         shapeRenderer.end();
 
-        // Render item text and register tooltip zones
+        // Render item icons (coloured block graphics)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (int i = 0; i < HOTBAR_SLOTS; i++) {
+            int x = startX + i * (SLOT_SIZE + SLOT_PADDING);
+            Material material = inventory.getItemInSlot(i);
+            if (material != null) {
+                drawItemIcon(shapeRenderer, material, x, startY, SLOT_SIZE);
+            }
+        }
+        shapeRenderer.end();
+
+        // Render item count badges and register tooltip zones
         batch.begin();
         for (int i = 0; i < HOTBAR_SLOTS; i++) {
             int x = startX + i * (SLOT_SIZE + SLOT_PADDING);
             Material material = inventory.getItemInSlot(i);
             if (material != null) {
                 int count = inventory.getCountInSlot(i);
-                int textX = x + 5;
-                int textY = startY + SLOT_SIZE - 10;
-
-                // Draw material name
-                String name = material.getDisplayName();
-                font.draw(batch, name, textX, textY);
-
-                // Draw count
-                font.draw(batch, "x" + count, textX, textY - 15);
+                font.setColor(com.badlogic.gdx.graphics.Color.WHITE);
+                font.draw(batch, String.valueOf(count), x + 3, startY + 14);
 
                 // Register tooltip zone
                 if (hoverTooltips != null) {
@@ -174,6 +178,29 @@ public class HotbarUI {
             }
         }
         shapeRenderer.end();
+    }
+
+    /**
+     * Draw a block-style icon for the given material inside the slot rectangle.
+     * Must be called while a Filled ShapeRenderer is active.
+     */
+    private void drawItemIcon(ShapeRenderer shapeRenderer, Material material, int x, int y, int size) {
+        int padding = 4;
+        int iconX = x + padding;
+        int iconY = y + padding;
+        int iconSize = size - padding * 2;
+
+        com.badlogic.gdx.graphics.Color[] colors = material.getIconColors();
+        if (colors.length == 1) {
+            shapeRenderer.setColor(colors[0]);
+            shapeRenderer.rect(iconX, iconY, iconSize, iconSize);
+        } else {
+            int half = iconSize / 2;
+            shapeRenderer.setColor(colors[1]);
+            shapeRenderer.rect(iconX, iconY, iconSize, half);
+            shapeRenderer.setColor(colors[0]);
+            shapeRenderer.rect(iconX, iconY + half, iconSize, iconSize - half);
+        }
     }
 
     /**
