@@ -98,6 +98,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // NPC rendering
     private NPCRenderer npcRenderer;
 
+    // Issue #10: Building signage renderer
+    private ragamuffin.render.SignageRenderer signageRenderer;
+
     // First-person arm
     private FirstPersonArm firstPersonArm;
 
@@ -206,6 +209,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         chunkRenderer = new ChunkRenderer();
         npcRenderer = new NPCRenderer();
         firstPersonArm = new FirstPersonArm();
+
+        // Issue #10: Build sign list from all world landmarks
+        signageRenderer = new ragamuffin.render.SignageRenderer();
+        signageRenderer.buildFromLandmarks(world.getAllLandmarks());
 
         // Load initial chunks around player — meshes built lazily in render loop
         world.updateLoadedChunks(player.getPosition());
@@ -544,6 +551,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Render NPC speech bubbles (2D overlay projected from 3D)
             renderSpeechBubbles();
+
+            // Issue #10: Render building signs as world-projected overlays
+            signageRenderer.render(camera, spriteBatch, shapeRenderer, font,
+                                   Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
             // Render rain overlay if raining
             if (weatherSystem.getCurrentWeather() == Weather.RAIN) {
