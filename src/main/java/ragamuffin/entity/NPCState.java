@@ -19,5 +19,6 @@ public enum NPCState {
     AGGRESSIVE,     // Police escalated state
     ARRESTING,      // Police arresting player
     DEMOLISHING,    // Council builder demolishing structure
-    KNOCKED_BACK    // Council builder knocked back (Phase 7)
+    KNOCKED_BACK,   // Council builder knocked back (Phase 7)
+    FLEEING         // Civilian fleeing from notorious player
 }
