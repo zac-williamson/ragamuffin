@@ -365,6 +365,89 @@ class Phase6IntegrationTest {
     }
 
     /**
+     * Regression Test for Issue #34: Police do NOT arrest player standing near
+     * world-generated BRICK buildings at night.
+     * Player stands at (40, 1, 20) near the high street (BRICK-heavy). Set time to
+     * 22:00. Advance 600 frames. Verify arrestPending is NOT set.
+     */
+    @Test
+    void test8_NoBrickFalsePositiveArrestNearWorldBuildings() {
+        // Place a cluster of BRICK blocks simulating a world-generated building
+        for (int x = 38; x < 45; x++) {
+            for (int y = 1; y < 6; y++) {
+                for (int z = 18; z < 25; z++) {
+                    world.setBlock(x, y, z, BlockType.BRICK);
+                }
+            }
+        }
+
+        // Player stands near the BRICK building, having placed no blocks
+        player.getPosition().set(40, 1, 20);
+
+        // Set to 22:00 (night) and spawn police
+        timeSystem.setTime(22.0f);
+        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+
+        // Position police near player
+        for (NPC npc : npcManager.getNPCs()) {
+            if (npc.getType() == NPCType.POLICE) {
+                npc.getPosition().set(42, 1, 20);
+                npc.setState(NPCState.PATROLLING);
+            }
+        }
+
+        // Advance 600 frames (~10 seconds)
+        for (int i = 0; i < 600; i++) {
+            npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+        }
+
+        // arrestPending must NOT be set — BRICK is a world-generated material
+        assertFalse(npcManager.isArrestPending(),
+                "Police should NOT arrest player for standing near world-generated BRICK buildings");
+    }
+
+    /**
+     * Regression Test for Issue #34: Police DO detect player-placed WOOD structures
+     * and eventually set arrestPending.
+     * Place 10 WOOD blocks. Set time to 22:00. Advance 600 frames. Verify police
+     * detect the structure and eventually set arrestPending = true.
+     */
+    @Test
+    void test9_WoodStructureTriggersPoliceArrest() {
+        // Player places a WOOD column in open air (not enclosing the player)
+        // 10 blocks stacked at (20, 1..10, 20)
+        for (int y = 1; y <= 10; y++) {
+            world.setBlock(20, y, 20, BlockType.WOOD);
+        }
+
+        // Player stands OUTSIDE the structure, 3 blocks away in open air
+        player.getPosition().set(20, 1, 17);
+
+        // Set to 22:00 (night) and spawn police
+        timeSystem.setTime(22.0f);
+        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+
+        // Position police right next to the player (within 2 blocks) so WARNING
+        // triggers immediately on frame 1, and the structure is within 20 blocks.
+        for (NPC npc : npcManager.getNPCs()) {
+            if (npc.getType() == NPCType.POLICE) {
+                // Place police 1.5 blocks from player, within scan radius of structure
+                npc.getPosition().set(21, 1, 17);
+                npc.setState(NPCState.PATROLLING);
+            }
+        }
+
+        // Advance 600 frames (~10 seconds): enough for WARNING (2s) + AGGRESSIVE + arrest
+        for (int i = 0; i < 600; i++) {
+            npcManager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+        }
+
+        // Police should have detected the WOOD structure and set arrestPending
+        assertTrue(npcManager.isArrestPending(),
+                "Police should detect player-placed WOOD structure and set arrestPending");
+    }
+
+    /**
      * Integration Test 7: Police escalation.
      * Build a structure. Set time to 22:00. Police approach and issue a "move along"
      * warning. Player remains near structure (don't move). Advance 120 frames. Verify

@@ -1530,8 +1530,9 @@ public class NPCManager {
 
                 for (int y = 1; y < 10; y++) {
                     BlockType block = world.getBlock(x, y, z);
-                    // Check for placed blocks (wood, brick)
-                    if (block == BlockType.WOOD || block == BlockType.BRICK) {
+                    // Check for placed blocks (wood only — BRICK is excluded because
+                    // world-generated buildings are made of BRICK and would cause false positives)
+                    if (block == BlockType.WOOD) {
                         playerBlockCount++;
                         if (structureCenter == null) {
                             structureCenter = new Vector3(x, y, z);
@@ -1565,7 +1566,7 @@ public class NPCManager {
                     int z = (int) structureCenter.z + dz;
 
                     BlockType block = world.getBlock(x, y, z);
-                    if (block == BlockType.WOOD || block == BlockType.BRICK) {
+                    if (block == BlockType.WOOD) {
                         world.addPoliceTape(x, y, z);
                         tapedCount++;
                     }
