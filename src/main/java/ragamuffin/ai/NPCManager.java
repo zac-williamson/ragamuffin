@@ -587,17 +587,18 @@ public class NPCManager {
             setNPCTarget(npc, fleeTarget, world);
         }
 
-        // Override speed — flee faster than normal
+        // Override speed — flee faster than normal. Preserve vertical velocity for gravity.
+        float curVelY = npc.getVelocity().y;
         if (npc.getPath() != null && !npc.getPath().isEmpty()) {
             List<Vector3> path = npc.getPath();
             int idx = npc.getCurrentPathIndex();
             if (idx < path.size()) {
                 Vector3 wp = path.get(idx);
                 Vector3 dir = wp.cpy().sub(npc.getPosition()).nor();
-                npc.setVelocity(dir.x * fleeSpeed, 0, dir.z * fleeSpeed);
+                npc.setVelocity(dir.x * fleeSpeed, curVelY, dir.z * fleeSpeed);
             }
         } else {
-            npc.setVelocity(awayDir.x * fleeSpeed, 0, awayDir.z * fleeSpeed);
+            npc.setVelocity(awayDir.x * fleeSpeed, curVelY, awayDir.z * fleeSpeed);
         }
     }
 
@@ -824,7 +825,8 @@ public class NPCManager {
             direction.nor();
         }
 
-        npc.setVelocity(direction.x * speed, 0, direction.z * speed);
+        // Preserve vertical velocity so gravity is not cancelled by horizontal movement.
+        npc.setVelocity(direction.x * speed, npc.getVelocity().y, direction.z * speed);
     }
 
     private float getNPCSpeed(NPCType type) {
@@ -926,7 +928,12 @@ public class NPCManager {
                 npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
 
                 if (world.checkAABBCollision(npc.getAABB())) {
-                    pos.y = (float) Math.ceil(pos.y);
+                    // Snap feet to the top of the floor block to avoid sinking into it.
+                    // Math.ceil can place the NPC at y=N which is the top of block N-1 but
+                    // also the bottom face of block N — meaning the NPC is inside the block
+                    // when pos.y is exactly an integer. Using floor+1 reliably places the
+                    // NPC's foot on the top surface of the solid block below.
+                    pos.y = (float) Math.floor(pos.y) + 1.0f;
                     vel.y = 0;
                     npc.getAABB().setPosition(pos, NPC.WIDTH, NPC.HEIGHT, NPC.DEPTH);
                 }
@@ -967,10 +974,10 @@ public class NPCManager {
             waypoint = path.get(npc.getCurrentPathIndex());
         }
 
-        // Move toward waypoint
+        // Move toward waypoint — preserve vertical velocity so gravity is not cancelled.
         Vector3 direction = waypoint.cpy().sub(npc.getPosition()).nor();
         float speed = getNPCSpeed(npc.getType());
-        npc.setVelocity(direction.x * speed, 0, direction.z * speed);
+        npc.setVelocity(direction.x * speed, npc.getVelocity().y, direction.z * speed);
     }
 
     /**

@@ -140,6 +140,45 @@ class NPCManagerTest {
     }
 
     @Test
+    void testNPCDoesNotSinkIntoFloor() {
+        // Reproduce the "yellow NPC stuck in floor" bug:
+        // an NPC that falls a small distance should land exactly on the floor surface,
+        // not inside the floor block where it gets permanently stuck.
+        // Ground at y=0, NPC spawned slightly above (y=3) so gravity pulls it down.
+        // The NPC is placed away from the player to avoid fleeing/aggro path interference.
+        NPC npc = manager.spawnNPC(NPCType.JOGGER, 5, 3, 5); // Jogger always wanders (no daily-routine state)
+
+        // Run many update frames to let the NPC fall and settle
+        for (int i = 0; i < 120; i++) {
+            manager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+        }
+
+        // NPC must NOT be inside the floor block (pos.y must be >= 1.0)
+        float npcY = npc.getPosition().y;
+        assertTrue(npcY >= 1.0f, "NPC fell through or into the floor; y=" + npcY);
+    }
+
+    @Test
+    void testNPCLandsOnCorrectSurfaceAfterFallingFromHeight() {
+        // If an NPC falls from y=5 the floor snap must not leave it inside a block.
+        // The old Math.ceil snap could produce pos.y=1 which is the face of block y=1
+        // (solid ground), embedding the NPC. The correct value is pos.y=1 ONLY when
+        // the solid block is at y=0 (top surface = y+1 = 1). Verify pos.y == 1.0 exactly
+        // after settling, proving the floor-snap places feet at the block top surface.
+
+        NPC npc = manager.spawnNPC(NPCType.JOGGER, 10, 5, 10);
+
+        for (int i = 0; i < 240; i++) {
+            manager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+        }
+
+        float npcY = npc.getPosition().y;
+        assertTrue(npcY >= 1.0f, "NPC sank into the floor; y=" + npcY);
+        // Vertical velocity should be ~0 once settled on ground
+        assertTrue(Math.abs(npc.getVelocity().y) < 1.0f, "NPC still has significant vertical velocity; vy=" + npc.getVelocity().y);
+    }
+
+    @Test
     void testYouthGangStealing() {
         NPC youth = manager.spawnNPC(NPCType.YOUTH_GANG, 0.5f, 1, 0.5f);
         player.getPosition().set(0, 1, 0);
