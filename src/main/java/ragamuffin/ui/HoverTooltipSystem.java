@@ -28,7 +28,7 @@ public class HoverTooltipSystem {
     private final List<TooltipZone> zones = new ArrayList<>();
     private float hoverTime;
     private String activeTooltip;
-    private int lastHoverZoneHash;
+    private String lastHoverZoneKey;
 
     /**
      * A rectangular screen region with associated tooltip text.
@@ -74,12 +74,26 @@ public class HoverTooltipSystem {
     }
 
     /**
+     * Returns the current mouse X in screen coords. Overrideable for testing.
+     */
+    protected float getMouseX() {
+        return Gdx.input.getX();
+    }
+
+    /**
+     * Returns the current mouse Y in LibGDX screen coords (Y flipped). Overrideable for testing.
+     */
+    protected float getMouseY() {
+        return Gdx.graphics.getHeight() - Gdx.input.getY();
+    }
+
+    /**
      * Update hover tracking. Call once per frame.
      */
     public void update(float delta) {
         // Get mouse position in LibGDX screen coords (flip Y)
-        float mouseX = Gdx.input.getX();
-        float mouseY = Gdx.graphics.getHeight() - Gdx.input.getY();
+        float mouseX = getMouseX();
+        float mouseY = getMouseY();
 
         // Find which zone the cursor is in
         TooltipZone hoveredZone = null;
@@ -91,11 +105,11 @@ public class HoverTooltipSystem {
         }
 
         if (hoveredZone != null) {
-            int zoneHash = System.identityHashCode(hoveredZone);
-            if (zoneHash != lastHoverZoneHash) {
+            String zoneKey = hoveredZone.text;
+            if (!zoneKey.equals(lastHoverZoneKey)) {
                 // Moved to a new zone — reset timer
                 hoverTime = 0;
-                lastHoverZoneHash = zoneHash;
+                lastHoverZoneKey = zoneKey;
                 activeTooltip = null;
             }
             hoverTime += delta;
@@ -104,7 +118,7 @@ public class HoverTooltipSystem {
             }
         } else {
             hoverTime = 0;
-            lastHoverZoneHash = 0;
+            lastHoverZoneKey = null;
             activeTooltip = null;
         }
     }
