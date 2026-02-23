@@ -9,6 +9,7 @@ import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
+import ragamuffin.core.ShelterDetector;
 import ragamuffin.ui.TooltipSystem;
 import ragamuffin.ui.TooltipTrigger;
 import ragamuffin.world.BlockType;
@@ -1407,6 +1408,12 @@ public class NPCManager {
      * Update police patrolling behavior.
      */
     private void updatePolicePatrolling(NPC police, float delta, World world, Player player, TooltipSystem tooltipSystem) {
+        // If player is sheltered, police cannot detect them — wander instead
+        if (ShelterDetector.isSheltered(world, player.getPosition())) {
+            updateWandering(police, delta, world);
+            return;
+        }
+
         // Scan for player structures around police (use cached result to avoid expensive scan every frame)
         Vector3 structure = policeTargetStructures.get(police);
         if (structure == null && npcStructureScanTimer < 0.05f) {
@@ -1455,6 +1462,13 @@ public class NPCManager {
      * Update police warning behavior.
      */
     private void updatePoliceWarning(NPC police, float delta, World world, Player player) {
+        // If player ducks into a shelter mid-warning, cancel the warning
+        if (ShelterDetector.isSheltered(world, player.getPosition())) {
+            police.setState(NPCState.PATROLLING);
+            policeWarningTimers.remove(police);
+            return;
+        }
+
         // Increment warning timer
         float timer = policeWarningTimers.getOrDefault(police, 0.0f);
         timer += delta;
