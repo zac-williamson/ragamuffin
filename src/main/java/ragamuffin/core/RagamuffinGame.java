@@ -904,8 +904,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Push player out of any NPC they're overlapping
         resolveNPCCollisions();
 
-        // Update loaded chunks based on player position
-        world.updateLoadedChunks(player.getPosition());
+        // Update loaded chunks based on player position; remove renderer models for unloaded chunks
+        java.util.Set<String> unloadedChunkKeys = world.updateLoadedChunks(player.getPosition());
+        for (String key : unloadedChunkKeys) {
+            chunkRenderer.removeChunkByKey(key);
+        }
 
         // Rebuild meshes for newly loaded chunks (budget: max 16 per frame to prevent freezes)
         List<Chunk> dirtyChunks = world.getDirtyChunks();

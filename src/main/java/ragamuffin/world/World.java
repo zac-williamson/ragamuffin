@@ -118,8 +118,10 @@ public class World {
 
     /**
      * Update which chunks are loaded based on player position.
+     * Returns the set of chunk keys that were unloaded, so callers can
+     * dispose any associated renderer resources (e.g. GPU mesh models).
      */
-    public void updateLoadedChunks(Vector3 playerPos) {
+    public Set<String> updateLoadedChunks(Vector3 playerPos) {
         int playerChunkX = Math.floorDiv((int) playerPos.x, Chunk.SIZE);
         int playerChunkZ = Math.floorDiv((int) playerPos.z, Chunk.SIZE);
 
@@ -153,6 +155,7 @@ public class World {
         // World is 480 blocks = 30 chunks across, from chunk -15 to +14
         int worldChunkMin = -WORLD_CHUNK_RADIUS;
         int worldChunkMax = WORLD_CHUNK_RADIUS - 1;
+        Set<String> unloadedKeys = new HashSet<>();
         loadedChunks.keySet().removeIf(key -> {
             if (!chunksToKeep.contains(key)) {
                 // Parse chunk coords from key
@@ -164,10 +167,16 @@ public class World {
                 boolean inWorldBounds = cx >= worldChunkMin && cx <= worldChunkMax &&
                        cz >= worldChunkMin && cz <= worldChunkMax &&
                        cy >= -1 && cy <= 0;
-                return !inWorldBounds;
+                if (!inWorldBounds) {
+                    unloadedKeys.add(key);
+                    return true;
+                }
             }
             return false;
         });
+        // Also remove from dirtyChunks so we don't try to build meshes for unloaded chunks
+        dirtyChunks.removeAll(unloadedKeys);
+        return unloadedKeys;
     }
 
     /**
