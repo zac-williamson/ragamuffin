@@ -452,6 +452,19 @@ public class Player {
     }
 
     /**
+     * Teleport the player to the given position, atomically updating both the
+     * position vector and the AABB so collision detection is correct immediately.
+     *
+     * @param x new X coordinate
+     * @param y new Y coordinate
+     * @param z new Z coordinate
+     */
+    public void teleport(float x, float y, float z) {
+        position.set(x, y, z);
+        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+    }
+
+    /**
      * Get the player's street reputation.
      */
     public StreetReputation getStreetReputation() {

@@ -66,8 +66,10 @@ public class ArrestSystem {
         player.setHealth(HEALTH_AFTER_ARREST);
         player.setHunger(HUNGER_AFTER_ARREST);
 
-        // Dumped back at the park using terrain-aware Y to avoid spawning inside solid blocks
-        player.getPosition().set(ARREST_RESPAWN.x, respawnY, ARREST_RESPAWN.z);
+        // Dumped back at the park using terrain-aware Y to avoid spawning inside solid blocks.
+        // Use teleport() to atomically sync the AABB to the new position so collision
+        // detection is correct on the very first frame after arrest (fixes #184).
+        player.teleport(ARREST_RESPAWN.x, respawnY, ARREST_RESPAWN.z);
         player.setVerticalVelocity(0f);
 
         return confiscated;
