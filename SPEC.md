@@ -2516,3 +2516,88 @@ world.removePlanningNotice(x, y, z);
    call only `world.setBlock(5, 1, 5, BlockType.AIR)` without `removePoliceTape`. Verify
    `world.isProtected(5, 1, 5)` is still `true`. Place a new WOOD block. Punch it 10 times.
    Verify it is still WOOD (ghost protection blocks all punches).
+
+---
+
+## Bug Fix: `despawnPolice()` is dead code — police accumulate indefinitely across day-night cycles
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — `NPCManager.despawnPolice()` is defined but never called anywhere in the
+codebase. Police NPCs spawned at night are never removed at dawn. Every complete day-night cycle
+adds 2–8 police units that persist indefinitely, consuming NPC slots and polluting the world.
+
+**Problem**: `NPCManager.updatePoliceSpawning()` is called from `RagamuffinGame.render()` on every
+frame and correctly throttles spawning. However it only ever **adds** police — it never removes
+them. The `despawnPolice()` method at line 1381 is `private` and has exactly one definition, zero
+call sites:
+
+```java
+// NPCManager.java — defined but never called
+private void despawnPolice() {
+    List<NPC> policeToRemove = new ArrayList<>();
+    for (NPC npc : npcs) {
+        if (npc.getType() == NPCType.POLICE) {
+            policeToRemove.add(npc);
+        }
+    }
+    for (NPC police : policeToRemove) {
+        npcs.remove(police);
+        policeWarningTimers.remove(police);
+        policeTargetStructures.remove(police);
+    }
+}
+```
+
+**Consequence across a single day-night cycle**:
+
+1. Night begins (22:00): `updatePoliceSpawning()` spawns 3 police units (non-notorious player,
+   non-night cap of 3).
+2. Morning arrives (06:00): no despawn call fires. All 3 police remain.
+3. Night begins again (22:00): cap check finds 3 alive police, cap is still 3 — no new spawns.
+   BUT if any police were killed by the player, more spawn to refill the cap. Over multiple nights
+   with combat, the count fluctuates but never drops to 0 at dawn as the spec requires.
+4. Phase 6 integration test 3 — "Advance time to 06:00 (morning). Verify all POLICE NPCs have
+   despawned or left the map" — always fails because `despawnPolice()` is never triggered.
+
+**Additional impact on NPC cap**: With MAX_NPCS = 100 and police never being removed, after enough
+nights police accumulate toward the cap, blocking spawning of other NPC types (shopkeepers,
+joggers, etc.) and reducing world variety.
+
+**Required fix**: Call `despawnPolice()` from `updatePoliceSpawning()` when transitioning from
+night to day (time crossing 06:00):
+
+```java
+// NPCManager.java — add dawn tracking field
+private boolean wasNight = false;
+
+public void updatePoliceSpawning(float time, World world, Player player) {
+    boolean isNight = time >= 22.0f || time < 6.0f;
+
+    // Despawn police at dawn (night → day transition)
+    if (wasNight && !isNight) {
+        despawnPolice();
+    }
+    wasNight = isNight;
+
+    // ... existing spawn throttle and cap logic unchanged
+}
+```
+
+This ensures police disappear when the sun rises, matching the Phase 6 spec and the intuition that
+police "patrol at night" rather than living permanently in the world.
+
+**Integration tests** (add to Phase6IntegrationTest):
+
+1. **Police despawn at dawn**: Set time to 22:00. Call `updatePoliceSpawning()` to spawn police.
+   Verify at least 1 POLICE NPC exists. Advance time past 06:00 (morning). Call
+   `updatePoliceSpawning()` once more. Verify the count of alive POLICE NPCs is 0.
+
+2. **Police do not accumulate across multiple nights**: Simulate two full day-night cycles (48
+   in-game hours). After each dawn, verify police count returns to 0. After each night's peak,
+   verify police count does not exceed `maxPolice` (3 for a non-notorious player during the day cap).
+
+3. **Police cap is respected and resets correctly**: Kill 1 of the 3 spawned police mid-night.
+   Verify a replacement spawns to refill the cap. Advance to dawn. Verify all remaining police
+   (the 2 surviving + 1 replacement) despawn. Advance to the next night. Verify exactly 3 (or
+   the applicable night cap) fresh police spawn — not 0, not 6.
