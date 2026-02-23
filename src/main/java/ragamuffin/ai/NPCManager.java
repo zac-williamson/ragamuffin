@@ -1878,6 +1878,11 @@ public class NPCManager {
         // Move toward structure
         if (!builder.isNear(targetPos, 3.0f)) {
             setNPCTarget(builder, targetPos, world);
+            // If pathfinding failed and cleared the target, keep the destination so the
+            // builder still has a goal (it will move directly toward the structure).
+            if (builder.getTargetPosition() == null) {
+                builder.setTargetPosition(targetPos);
+            }
         } else {
             // Adjacent to structure - start demolishing
             builder.setState(NPCState.DEMOLISHING);

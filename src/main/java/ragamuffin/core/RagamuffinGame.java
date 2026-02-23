@@ -513,7 +513,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                     player.updateHunger(delta * hungerMultiplier);
 
                     // Sprint drains energy while moving
-                    if (inputHandler.isSprintHeld() && tmpMoveDir.len2() > 0) {
+                    boolean isMovingNow = inputHandler.isForward() || inputHandler.isBackward() || inputHandler.isLeft() || inputHandler.isRight();
+                    if (inputHandler.isSprintHeld() && isMovingNow) {
                         player.consumeEnergy(Player.SPRINT_ENERGY_DRAIN * delta);
                     }
 
