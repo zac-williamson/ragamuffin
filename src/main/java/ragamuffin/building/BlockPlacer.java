@@ -12,6 +12,19 @@ import ragamuffin.world.World;
  */
 public class BlockPlacer {
 
+    private BlockBreaker blockBreaker;
+
+    public BlockPlacer() {
+    }
+
+    public BlockPlacer(BlockBreaker blockBreaker) {
+        this.blockBreaker = blockBreaker;
+    }
+
+    public void setBlockBreaker(BlockBreaker blockBreaker) {
+        this.blockBreaker = blockBreaker;
+    }
+
     /**
      * Get the position where a block should be placed based on raycasting.
      * Returns the position adjacent to the hit block face.
@@ -126,7 +139,13 @@ public class BlockPlacer {
         }
 
         // Place the block
-        world.setBlock((int) Math.floor(placement.x), (int) Math.floor(placement.y), (int) Math.floor(placement.z), blockType);
+        int bx = (int) Math.floor(placement.x);
+        int by = (int) Math.floor(placement.y);
+        int bz = (int) Math.floor(placement.z);
+        world.setBlock(bx, by, bz, blockType);
+        if (blockBreaker != null) {
+            blockBreaker.clearHits(bx, by, bz);
+        }
 
         // Remove from inventory
         inventory.removeItem(material, 1);
@@ -181,6 +200,9 @@ public class BlockPlacer {
     private void setIfAir(World world, int x, int y, int z, BlockType type) {
         if (world.getBlock(x, y, z) == BlockType.AIR) {
             world.setBlock(x, y, z, type);
+            if (blockBreaker != null) {
+                blockBreaker.clearHits(x, y, z);
+            }
         }
     }
 

@@ -35,7 +35,7 @@ class Phase4IntegrationTest {
         craftingUI = new CraftingUI(craftingSystem, inventory);
         blockBreaker = new BlockBreaker();
         dropTable = new BlockDropTable();
-        blockPlacer = new BlockPlacer();
+        blockPlacer = new BlockPlacer(blockBreaker);
     }
 
     /**
@@ -315,5 +315,76 @@ class Phase4IntegrationTest {
             assertFalse(craftingSystem.canCraft(recipe, inventory),
                        "Recipe " + recipe.getDisplayName() + " should not be craftable");
         }
+    }
+
+    /**
+     * Scenario 8: Player-placed block resets stale hit counter.
+     * Punch a TREE_TRUNK block N-1 times (not breaking it). Place a new TREE_TRUNK
+     * at the same position via blockPlacer.placeBlock(). Verify the new block requires
+     * the full N hits to break (hit counter was reset by the placement).
+     *
+     * This tests the fix for Issue #94: player-placed blocks inheriting stale hit
+     * counters from previously-punched blocks at the same position.
+     */
+    @Test
+    void testPlacedBlockResetsStaleHitCounter() {
+        // Place a TREE_TRUNK block at a known position (requires 5 hits to break)
+        world.setBlock(5, 1, 5, BlockType.TREE_TRUNK);
+
+        // Punch it 4 times — not enough to break (needs 5)
+        for (int i = 0; i < 4; i++) {
+            boolean broken = blockBreaker.punchBlock(world, 5, 1, 5);
+            assertFalse(broken, "Block should not break on hit " + (i + 1));
+        }
+        assertEquals(4, blockBreaker.getHitCount(5, 1, 5), "Should have 4 stale hits");
+        assertEquals(BlockType.TREE_TRUNK, world.getBlock(5, 1, 5), "Block should still be present");
+
+        // Remove the block externally (e.g. admin command) without clearing hits —
+        // this leaves a stale hit counter at (5, 1, 5)
+        world.setBlock(5, 1, 5, BlockType.AIR);
+        // NOTE: we do NOT call blockBreaker.clearHits() here, simulating the bug scenario
+
+        // Add WOOD to inventory so player can place a block
+        inventory.addItem(Material.WOOD, 1);
+
+        // Place a new TREE_TRUNK-equivalent (WOOD material -> WOOD block type) at the same
+        // position using blockPlacer. BlockPlacer must call clearHits() internally.
+        // Position player above looking down at (5, 0, 5) where GRASS is present for raycast.
+        // Instead, place the block directly to avoid raycast complexity in headless tests.
+        // We test the clearHits behaviour by calling the underlying placement path directly.
+
+        // Place block directly via world (simulating blockPlacer.placeBlock internal effect)
+        // and then call clearHits as blockPlacer should now do.
+        // To properly test the fix, we use placeBlock with a known placement target.
+
+        // Set up a ground block so raycast can find a placement target
+        world.setBlock(5, 0, 5, BlockType.GRASS);
+
+        // Position player above the target, looking down
+        Vector3 origin = new Vector3(5.5f, 3.0f, 5.5f);
+        Vector3 direction = new Vector3(0, -1, 0);
+
+        // Place a WOOD block via blockPlacer (which should clear the stale hit counter at (5,1,5))
+        boolean placed = blockPlacer.placeBlock(world, inventory, Material.WOOD, origin, direction, 5.0f);
+        assertTrue(placed, "Block should be placed successfully");
+
+        // Verify the block was placed at (5, 1, 5) (adjacent to ground block at (5, 0, 5))
+        assertEquals(BlockType.WOOD, world.getBlock(5, 1, 5), "WOOD block should be at (5,1,5)");
+
+        // Verify stale hit counter was cleared — should be 0 now
+        assertEquals(0, blockBreaker.getHitCount(5, 1, 5),
+                "Hit counter should be 0 after block placement (stale count cleared)");
+
+        // Punch the newly-placed block 4 times — WOOD is soft (5 hits), should NOT break
+        for (int i = 0; i < 4; i++) {
+            boolean broken = blockBreaker.punchBlock(world, 5, 1, 5);
+            assertFalse(broken, "New block should not break on hit " + (i + 1) + " (requires full 5 hits)");
+        }
+        assertEquals(BlockType.WOOD, world.getBlock(5, 1, 5), "Block should still be present after 4 hits");
+
+        // 5th punch — should break
+        boolean broken = blockBreaker.punchBlock(world, 5, 1, 5);
+        assertTrue(broken, "New block should break on 5th hit");
+        assertEquals(BlockType.AIR, world.getBlock(5, 1, 5), "Block should be AIR after breaking");
     }
 }
