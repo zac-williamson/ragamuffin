@@ -385,6 +385,15 @@ spawn timing, escalation state machine, police tape placement logic.
    (e.g. player is forcibly teleported away from the structure, or more police
    spawn).
 
+8. **Arrest respawn places player above solid terrain**: Generate a world. Record the
+   terrain-aware spawn height at (0, 0) via `calculateSpawnHeight(world, 0, 0)`.
+   Call `ArrestSystem.arrest(player, inventory)`. Verify the player's Y coordinate
+   after arrest is greater than or equal to `calculateSpawnHeight(world, 0, 0)`.
+   Verify the block directly below the player's feet (at `floor(player.y - 0.01)`)
+   is solid, not AIR — i.e. the player is standing on solid ground, not floating
+   inside the terrain or in the void. A hardcoded y=1 fails this test when the park
+   centre terrain is higher than y=1.
+
 ---
 
 ## Phase 7: Council & Demolition
