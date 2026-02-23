@@ -11,19 +11,23 @@ import ragamuffin.building.Recipe;
 import java.util.List;
 
 /**
- * Crafting menu UI overlay with mouse click support.
+ * Crafting menu UI overlay with mouse click support and scrolling.
  */
 public class CraftingUI {
     private static final int RECIPE_ROW_HEIGHT = 35;
+    private static final int HEADER_HEIGHT = 80;
+    private static final int FOOTER_HEIGHT = 90;
 
     private final CraftingSystem craftingSystem;
     private final Inventory inventory;
     private boolean visible;
     private int selectedRecipeIndex = -1;
+    private int scrollOffset = 0;
 
     // Cached layout
     private int panelX, panelY, panelWidth, panelHeight;
     private int recipeStartY;
+    private int visibleRecipeCount = 9; // default; updated each render
 
     public CraftingUI(CraftingSystem craftingSystem, Inventory inventory) {
         this.craftingSystem = craftingSystem;
@@ -35,6 +39,7 @@ public class CraftingUI {
         visible = !visible;
         if (!visible) {
             selectedRecipeIndex = -1;
+            scrollOffset = 0;
         }
     }
 
@@ -45,6 +50,7 @@ public class CraftingUI {
     public void hide() {
         visible = false;
         selectedRecipeIndex = -1;
+        scrollOffset = 0;
     }
 
     public boolean isVisible() {
@@ -60,6 +66,31 @@ public class CraftingUI {
     }
 
     /**
+     * Scroll the recipe list up (towards lower indices).
+     */
+    public void scrollUp() {
+        if (scrollOffset > 0) scrollOffset--;
+    }
+
+    /**
+     * Scroll the recipe list down (towards higher indices).
+     */
+    public void scrollDown() {
+        int totalRecipes = craftingSystem.getAllRecipes().size();
+        if (scrollOffset < totalRecipes - visibleRecipeCount) scrollOffset++;
+    }
+
+    /**
+     * Handle mouse scroll. Returns true if consumed.
+     */
+    public boolean handleScroll(float amountY) {
+        if (!visible) return false;
+        if (amountY > 0) scrollDown();
+        else scrollUp();
+        return true;
+    }
+
+    /**
      * Handle mouse click. Returns true if consumed.
      */
     public boolean handleClick(int screenX, int screenY, int screenHeight) {
@@ -71,9 +102,11 @@ public class CraftingUI {
         // Check if click is within the panel
         if (screenX < panelX || screenX > panelX + panelWidth) return false;
 
-        // Check recipe rows
-        for (int i = 0; i < recipes.size(); i++) {
-            int rowY = recipeStartY - (i * RECIPE_ROW_HEIGHT);
+        // Check recipe rows (only visible ones)
+        int endIndex = Math.min(scrollOffset + visibleRecipeCount, recipes.size());
+        for (int i = scrollOffset; i < endIndex; i++) {
+            int visibleRow = i - scrollOffset;
+            int rowY = recipeStartY - (visibleRow * RECIPE_ROW_HEIGHT);
             if (uiY >= rowY - RECIPE_ROW_HEIGHT && uiY <= rowY) {
                 if (selectedRecipeIndex == i) {
                     // Double-click to craft
@@ -143,9 +176,9 @@ public class CraftingUI {
         shapeRenderer.rect(0, 0, screenWidth, screenHeight);
         shapeRenderer.end();
 
-        // Draw crafting panel
-        panelWidth = 600;
-        panelHeight = 500;
+        // Draw crafting panel — sized to fit within the screen
+        panelWidth = Math.min(600, screenWidth - 40);
+        panelHeight = Math.min(500, screenHeight - 40);
         panelX = (screenWidth - panelWidth) / 2;
         panelY = (screenHeight - panelHeight) / 2;
 
@@ -159,13 +192,21 @@ public class CraftingUI {
         shapeRenderer.rect(panelX, panelY, panelWidth, panelHeight);
         shapeRenderer.end();
 
-        // Draw recipes with clickable rows
+        // Draw recipes with clickable rows and scroll support
         List<Recipe> recipes = craftingSystem.getAllRecipes();
-        recipeStartY = panelY + panelHeight - 100;
+        int recipeAreaHeight = panelHeight - HEADER_HEIGHT - FOOTER_HEIGHT;
+        visibleRecipeCount = Math.max(1, recipeAreaHeight / RECIPE_ROW_HEIGHT);
+        recipeStartY = panelY + panelHeight - HEADER_HEIGHT;
 
-        // Highlight selected recipe row
-        if (selectedRecipeIndex >= 0 && selectedRecipeIndex < recipes.size()) {
-            int rowY = recipeStartY - (selectedRecipeIndex * RECIPE_ROW_HEIGHT);
+        // Clamp scroll offset so we never scroll past the end
+        int maxScroll = Math.max(0, recipes.size() - visibleRecipeCount);
+        if (scrollOffset > maxScroll) scrollOffset = maxScroll;
+
+        // Highlight selected recipe row (if it's visible)
+        if (selectedRecipeIndex >= scrollOffset && selectedRecipeIndex < scrollOffset + visibleRecipeCount
+                && selectedRecipeIndex < recipes.size()) {
+            int visibleRow = selectedRecipeIndex - scrollOffset;
+            int rowY = recipeStartY - (visibleRow * RECIPE_ROW_HEIGHT);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(0.3f, 0.3f, 0.1f, 0.5f);
             shapeRenderer.rect(panelX + 20, rowY - RECIPE_ROW_HEIGHT + 5, panelWidth - 40, RECIPE_ROW_HEIGHT);
@@ -178,11 +219,12 @@ public class CraftingUI {
         font.setColor(Color.WHITE);
         font.draw(spriteBatch, "Crafting Menu (click recipe, then click Craft)", panelX + 20, panelY + panelHeight - 20);
         font.setColor(Color.GRAY);
-        font.draw(spriteBatch, "Press C to close | Number keys 1-9 also work", panelX + 20, panelY + panelHeight - 50);
+        font.draw(spriteBatch, "Press C to close | Scroll to see more recipes", panelX + 20, panelY + panelHeight - 50);
 
+        // Draw visible recipes
+        int endIndex = Math.min(scrollOffset + visibleRecipeCount, recipes.size());
         int y = recipeStartY;
-
-        for (int i = 0; i < recipes.size(); i++) {
+        for (int i = scrollOffset; i < endIndex; i++) {
             Recipe recipe = recipes.get(i);
             boolean canCraft = craftingSystem.canCraft(recipe, inventory);
             boolean isSelected = (i == selectedRecipeIndex);
@@ -205,6 +247,16 @@ public class CraftingUI {
             }
 
             y -= RECIPE_ROW_HEIGHT;
+        }
+
+        // Draw scroll indicators if needed
+        if (scrollOffset > 0) {
+            font.setColor(Color.LIGHT_GRAY);
+            font.draw(spriteBatch, "^ scroll up ^", panelX + panelWidth / 2 - 40, recipeStartY + 15);
+        }
+        if (scrollOffset < maxScroll) {
+            font.setColor(Color.LIGHT_GRAY);
+            font.draw(spriteBatch, "v scroll down v", panelX + panelWidth / 2 - 50, panelY + FOOTER_HEIGHT + 5);
         }
 
         // Draw Craft button
