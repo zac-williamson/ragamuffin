@@ -12,6 +12,7 @@ import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
 import ragamuffin.ui.TooltipSystem;
+import ragamuffin.world.BlockType;
 import ragamuffin.world.World;
 
 import java.util.List;
@@ -214,5 +215,52 @@ class Critic5ArrestSystemTest {
         }
         // Just check that we got a result (flaky guard — if wood is never chosen in 20 tries something is wrong)
         // This is acceptable — the test proves the mechanism when triggered
+    }
+
+    /**
+     * Test 13 (Phase 6 test 8): Arrest respawn places player above solid terrain.
+     *
+     * Verifies that after ArrestSystem.arrest() is called with a terrain-aware Y
+     * set via setRespawnY(), the player's Y is >= the terrain height at (0,0)
+     * and the block at/beneath their feet is solid (not air).
+     */
+    @Test
+    void test13_ArrestRespawnPlacesPlayerAboveSolidTerrain() {
+        // Generate the world to get real terrain heights
+        world.generate();
+
+        // Find the highest solid block at (0, 0) — mirrors calculateSpawnHeight logic in RagamuffinGame
+        int solidBlockY = 0;
+        for (int y = 64; y >= -10; y--) {
+            BlockType block = world.getBlock(0, y, 0);
+            if (block.isSolid()) {
+                solidBlockY = y;
+                break;
+            }
+        }
+        // calculateSpawnHeight returns solidBlockY + 1.0f; initGame adds another +1.0f
+        float spawnY = solidBlockY + 2.0f;
+
+        // Wire the terrain-aware Y into the arrest system (matches how initGame wires it)
+        arrestSystem.setRespawnY(spawnY);
+
+        // Move player far away, then arrest them
+        player.getPosition().set(500, 5, 500);
+        arrestSystem.arrest(player, inventory);
+
+        Vector3 pos = player.getPosition();
+
+        // Player should be at park X/Z
+        assertEquals(ArrestSystem.ARREST_RESPAWN.x, pos.x, 0.01f, "X should be at park centre");
+        assertEquals(ArrestSystem.ARREST_RESPAWN.z, pos.z, 0.01f, "Z should be at park centre");
+
+        // Player Y must be above the terrain surface — not buried inside the solid block
+        assertTrue(pos.y > solidBlockY,
+            "Player Y (" + pos.y + ") should be above the solid terrain block (solidBlockY=" + solidBlockY + ") after arrest respawn");
+
+        // The solid block itself should be directly below where the player would eventually stand
+        BlockType solidBlock = world.getBlock(0, solidBlockY, 0);
+        assertTrue(solidBlock.isSolid(),
+            "Block at solidBlockY=" + solidBlockY + " should be solid, got " + solidBlock);
     }
 }

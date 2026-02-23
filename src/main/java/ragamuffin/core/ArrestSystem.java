@@ -26,13 +26,27 @@ public class ArrestSystem {
     /** Hunger after arrest — skipped a meal sitting in a cell. */
     private static final float HUNGER_AFTER_ARREST = 20f;
 
-    /** Respawn position — dumped back on the park bench. */
+    /** Respawn position X/Z — dumped back on the park bench. */
     public static final Vector3 ARREST_RESPAWN = new Vector3(0, 1, 0);
 
     private final Random random;
+    private float respawnY = ARREST_RESPAWN.y;
 
     public ArrestSystem() {
         this.random = new Random();
+    }
+
+    /**
+     * Set the terrain-aware Y coordinate for arrest respawn.
+     * Must be called after world generation so arrest places the player
+     * above solid ground rather than inside it.
+     */
+    public void setRespawnY(float y) {
+        this.respawnY = y;
+    }
+
+    public float getRespawnY() {
+        return respawnY;
     }
 
     /**
@@ -52,8 +66,8 @@ public class ArrestSystem {
         player.setHealth(HEALTH_AFTER_ARREST);
         player.setHunger(HUNGER_AFTER_ARREST);
 
-        // Dumped back at the park
-        player.getPosition().set(ARREST_RESPAWN);
+        // Dumped back at the park using terrain-aware Y to avoid spawning inside solid blocks
+        player.getPosition().set(ARREST_RESPAWN.x, respawnY, ARREST_RESPAWN.z);
         player.setVerticalVelocity(0f);
 
         return confiscated;
