@@ -378,7 +378,12 @@ public class NPCManager {
         // Use indexed loop to avoid ConcurrentModificationException when spawning new NPCs
         for (int i = 0; i < npcs.size(); i++) {
             NPC npc = npcs.get(i);
-            if (!npc.isAlive()) continue; // Skip dead NPCs awaiting removal
+            if (!npc.isAlive()) {
+                // Still tick timers for dead NPCs so their speech timer counts down
+                // and they can be removed once isSpeaking() returns false.
+                npc.updateTimers(delta);
+                continue;
+            }
             updateNPC(npc, delta, world, player, inventory, tooltipSystem);
 
             // NPC attacks player if in range and hostile/aggressive

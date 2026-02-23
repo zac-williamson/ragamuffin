@@ -622,4 +622,49 @@ class NPCManagerTest {
         assertEquals(3, aliveCount,
                 "Expected exactly 3 alive NPCs (canaries) after all builders cleaned up");
     }
+
+    /**
+     * Fix #215: Knocked-out NPC last words must disappear over time.
+     *
+     * When an NPC is defeated (knocked out), punchNPC() sets its speech text with a
+     * 2-second duration. Dead NPCs must still have their timers ticked each frame so
+     * that isSpeaking() eventually returns false and the NPC can be removed from the
+     * list. Before the fix, dead NPCs skipped updateTimers() entirely, so the speech
+     * timer never decremented and the NPC (and its speech bubble) persisted forever.
+     */
+    @Test
+    void testKnockedOutNPCLastWordsDisappearOverTime() {
+        // Spawn NPC far from player so random speech/flee logic doesn't interfere
+        NPC npc = manager.spawnNPC(NPCType.PUBLIC, 30, 1, 30);
+        assertNotNull(npc);
+
+        // Kill via punchNPC — this sets KNOCKED_OUT state and a 2-second speech timer
+        Vector3 punchDir = new Vector3(0, 0, 1);
+        for (int i = 0; i < 10; i++) {
+            manager.punchNPC(npc, punchDir, inventory, tooltipSystem);
+        }
+
+        assertFalse(npc.isAlive(), "NPC should be dead after enough punches");
+        assertEquals(NPCState.KNOCKED_OUT, npc.getState(), "NPC should be in KNOCKED_OUT state");
+        assertTrue(npc.isSpeaking(), "NPC should have last-words speech set");
+
+        // NPC must not be removed yet (still speaking)
+        manager.update(0.01f, world, player, inventory, tooltipSystem);
+        assertTrue(manager.getNPCs().contains(npc), "Dead speaking NPC should still be in list");
+        assertTrue(npc.isSpeaking(), "Speech should still be active after 0.01s");
+
+        // Advance time past the speech duration (2 seconds) — speech timer must count down
+        for (int i = 0; i < 30; i++) {
+            manager.update(0.1f, world, player, inventory, tooltipSystem);
+        }
+
+        // After 3 seconds the speech timer (2s) has expired
+        assertFalse(npc.isSpeaking(),
+                "Fix #215: knocked-out NPC speech must expire — dead NPCs were not ticking their timers");
+
+        // And on the next update the NPC should be removed from the list
+        manager.update(0.01f, world, player, inventory, tooltipSystem);
+        assertFalse(manager.getNPCs().contains(npc),
+                "Fix #215: knocked-out NPC should be removed from list once speech expires");
+    }
 }
