@@ -56,6 +56,9 @@ public class Player {
     private float damageFlashTimer; // > 0 when recently damaged
     private static final float DAMAGE_FLASH_DURATION = 0.35f;
 
+    // Damage reason (for HUD display)
+    private DamageReason lastDamageReason = DamageReason.UNKNOWN;
+
     // Street reputation
     private StreetReputation streetReputation;
 
@@ -205,14 +208,29 @@ public class Player {
     }
 
     /**
-     * Apply damage to the player.
+     * Apply damage to the player with a reason for on-screen feedback.
      */
-    public void damage(float amount) {
+    public void damage(float amount, DamageReason reason) {
         health = Math.max(0, health - amount);
         if (health <= 0) {
             isDead = true;
         }
         damageFlashTimer = DAMAGE_FLASH_DURATION;
+        lastDamageReason = reason != null ? reason : DamageReason.UNKNOWN;
+    }
+
+    /**
+     * Apply damage to the player.
+     */
+    public void damage(float amount) {
+        damage(amount, DamageReason.UNKNOWN);
+    }
+
+    /**
+     * Get the reason for the most recent damage taken (for HUD display).
+     */
+    public DamageReason getLastDamageReason() {
+        return lastDamageReason;
     }
 
     /**

@@ -5,6 +5,7 @@ import ragamuffin.building.BlockBreaker;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.building.StructureTracker;
+import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
@@ -408,7 +409,7 @@ public class NPCManager {
                 }
 
                 if (shouldAttack) {
-                    player.damage(npc.getType().getAttackDamage());
+                    player.damage(npc.getType().getAttackDamage(), DamageReason.NPC_ATTACK);
                     npc.resetAttackCooldown();
 
                     // Attack speech
