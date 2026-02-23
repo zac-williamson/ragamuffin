@@ -3020,3 +3020,110 @@ zero reputation, consistent with Issue #46's fix.
 6. **Non-criminal block breaks remain at zero reputation**: Break 50 TREE_TRUNK blocks and
    50 GRASS blocks (none tagged to landmarks). Verify reputation is exactly 0 throughout.
    This is the Issue #46 regression guard.
+
+---
+
+## Bug Fix: Leaf blocks float permanently after tree trunk is removed
+
+**Discovered**: 2026-02-23
+**Status**: ❌ Broken — when a player breaks a TREE_TRUNK block, the surrounding LEAVES
+blocks remain floating in place indefinitely. There is no leaf decay mechanic.
+
+**Problem**: `BlockBreaker.punchBlock()` removes the broken block and returns `true`, but
+the game never checks whether adjacent LEAVES blocks have lost their trunk support and
+should collapse. The world ends up cluttered with floating leaf cubes as players chop
+trees, which looks wrong and permanently fills the world with unsupported foliage.
+
+In a voxel game, leaves should decay (be removed automatically) when no TREE_TRUNK block
+exists within a Manhattan distance of ~4 blocks. Minecraft does this; many voxel engines
+do. Without it, every tree the player harvests leaves a permanent floating cloud of LEAVES
+blocks — visually broken and inconsistent with the block-physics the game otherwise implies.
+
+**Affected systems:**
+- `RagamuffinGame.handlePunch()` — calls `blockBreaker.punchBlock()` and `rebuildChunkAt()`
+  but never triggers leaf decay
+- `World.setBlock()` — no adjacency/support check when a block is set to AIR
+- `BlockBreaker` — pure block-destruction logic, no knowledge of structural support
+
+**Required fix in `RagamuffinGame.handlePunch()`**: After a TREE_TRUNK block is broken,
+schedule a leaf-decay pass on all LEAVES blocks within a radius of 4 blocks. Any LEAVES
+block that has no TREE_TRUNK within Manhattan distance 4 should be removed (set to AIR)
+and its chunk marked dirty.
+
+Implement a helper method:
+
+```java
+/**
+ * Remove floating LEAVES blocks that are no longer connected to any TREE_TRUNK.
+ * Called after a TREE_TRUNK block is broken. Checks all LEAVES within radius 4
+ * using Manhattan distance and removes unsupported ones.
+ */
+private void decayFloatingLeaves(int brokenX, int brokenY, int brokenZ) {
+    int radius = 4;
+    for (int dx = -radius; dx <= radius; dx++) {
+        for (int dy = -radius; dy <= radius; dy++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > radius) continue;
+                int lx = brokenX + dx;
+                int ly = brokenY + dy;
+                int lz = brokenZ + dz;
+                if (world.getBlock(lx, ly, lz) != BlockType.LEAVES) continue;
+                if (!hasNearbyTrunk(lx, ly, lz, radius)) {
+                    world.setBlock(lx, ly, lz, BlockType.AIR);
+                    blockBreaker.clearHits(lx, ly, lz);
+                    rebuildChunkAt(lx, ly, lz);
+                }
+            }
+        }
+    }
+}
+
+private boolean hasNearbyTrunk(int lx, int ly, int lz, int radius) {
+    for (int dx = -radius; dx <= radius; dx++) {
+        for (int dy = -radius; dy <= radius; dy++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > radius) continue;
+                if (world.getBlock(lx + dx, ly + dy, lz + dz) == BlockType.TREE_TRUNK) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+```
+
+Call `decayFloatingLeaves(x, y, z)` in `handlePunch()` when a TREE_TRUNK block is broken:
+
+```java
+if (broken && blockType == BlockType.TREE_TRUNK) {
+    decayFloatingLeaves(x, y, z);
+}
+```
+
+**Integration tests** (add to a new `Issue132LeafDecayTest`):
+
+1. **Leaves decay when last trunk is removed**: Place a single TREE_TRUNK at (5, 1, 5)
+   with LEAVES blocks at (5, 2, 5), (5, 2, 6), (6, 2, 5) (all within 4 blocks). Break
+   the trunk. Verify all three LEAVES blocks are now AIR. Verify the chunks have been
+   rebuilt (dirty chunk count >= 1).
+
+2. **Leaves survive when adjacent trunk still exists**: Place TREE_TRUNK at (5, 1, 5)
+   and (5, 2, 5). Place LEAVES at (5, 3, 5) (supported by upper trunk). Break the lower
+   trunk at (5, 1, 5). Verify the LEAVES at (5, 3, 5) are still present (the upper trunk
+   still supports them). Break the upper trunk at (5, 2, 5). Verify the LEAVES at
+   (5, 3, 5) are now AIR.
+
+3. **Leaves more than 4 blocks from trunk are not affected**: Place TREE_TRUNK at (5, 1, 5).
+   Place LEAVES at (10, 1, 5) (5 blocks away — beyond decay radius). Break the trunk.
+   Verify the LEAVES at (10, 1, 5) are still present (out of decay range).
+
+4. **Non-trunk block removal does not trigger leaf decay**: Place a BRICK block at
+   (5, 1, 5) and LEAVES at (5, 2, 5). Break the BRICK (8 hits). Verify the LEAVES remain.
+   Leaf decay is only triggered by TREE_TRUNK removal.
+
+5. **Multi-trunk tree: partial harvesting leaves other leaves intact**: Build a 3-trunk-tall
+   tree at (5, 1, 5), (5, 2, 5), (5, 3, 5) with LEAVES at (5, 4, 5), (6, 4, 5),
+   (5, 4, 6). Break the bottom trunk (5, 1, 5). Verify none of the leaves have decayed
+   (they are all within 4 blocks of the remaining trunks). Break all remaining trunks.
+   Verify all leaves are now AIR.
