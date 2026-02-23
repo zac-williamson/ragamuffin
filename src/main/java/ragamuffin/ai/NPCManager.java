@@ -223,10 +223,28 @@ public class NPCManager {
     }
 
     /**
-     * Remove an NPC.
+     * Remove an NPC and clean up all per-NPC map entries to prevent memory leaks.
      */
     public void removeNPC(NPC npc) {
+        cleanupNPC(npc);
         npcs.remove(npc);
+    }
+
+    /**
+     * Remove all per-NPC state from every supporting map/set.
+     * Must be called before removing an NPC from the main {@code npcs} list.
+     */
+    private void cleanupNPC(NPC npc) {
+        policeWarningTimers.remove(npc);
+        policeTargetStructures.remove(npc);
+        builderTargets.remove(npc);
+        builderKnockbackTimers.remove(npc);
+        builderDemolishTimers.remove(npc);
+        npcIdleTimers.remove(npc);
+        npcStealCooldownTimers.remove(npc);
+        npcPathRecalcTimers.remove(npc);
+        npcStructureCheckTimers.remove(npc);
+        alertedPoliceNPCs.remove(npc);
     }
 
     /**
@@ -344,15 +362,7 @@ public class NPCManager {
         // Remove dead NPCs (speech timer expired) and clean up associated state
         npcs.removeIf(npc -> {
             if (!npc.isAlive() && !npc.isSpeaking()) {
-                npcPathRecalcTimers.remove(npc);
-                npcIdleTimers.remove(npc);
-                npcStructureCheckTimers.remove(npc);
-                policeWarningTimers.remove(npc);
-                policeTargetStructures.remove(npc);
-                builderTargets.remove(npc);
-                builderKnockbackTimers.remove(npc);
-                builderDemolishTimers.remove(npc);
-                alertedPoliceNPCs.remove(npc);
+                cleanupNPC(npc);
                 return true;
             }
             return false;
@@ -1516,9 +1526,8 @@ public class NPCManager {
         }
 
         for (NPC police : policeToRemove) {
+            cleanupNPC(police);
             npcs.remove(police);
-            policeWarningTimers.remove(police);
-            policeTargetStructures.remove(police);
         }
 
         // Clear the entire alerted set on dawn despawn — all police are gone, so any
