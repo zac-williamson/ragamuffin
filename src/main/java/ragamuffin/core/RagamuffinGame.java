@@ -496,8 +496,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Update police spawning based on seasonal night (TimeSystem.isNight())
                 npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
-                // Update player survival stats (gated: no hunger/starvation/cold-snap while UI is open)
-                if (!isUIBlocking()) {
+                // Update player survival stats (gated: no hunger/starvation/cold-snap while UI is open or during respawn)
+                if (!isUIBlocking() && !respawnSystem.isRespawning()) {
                     // Sprint drains hunger 3x faster
                     float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
                     player.updateHunger(delta * hungerMultiplier);
