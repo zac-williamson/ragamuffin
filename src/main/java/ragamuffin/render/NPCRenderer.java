@@ -438,7 +438,7 @@ public class NPCRenderer {
             -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H, halfSwingRad, FOREARM_H);
         modelBatch.render(inst[PART_L_FOREARM], environment);
         setLimbChainTransform(inst[PART_L_HAND], pos, yawRad,
-            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H + FOREARM_H, halfSwingRad, HAND_H);
+            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H + FOREARM_H, -halfSwingRad, HAND_H);
         modelBatch.render(inst[PART_L_HAND], environment);
 
         // Right arm chain
@@ -449,7 +449,7 @@ public class NPCRenderer {
             armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H, -halfSwingRad, FOREARM_H);
         modelBatch.render(inst[PART_R_FOREARM], environment);
         setLimbChainTransform(inst[PART_R_HAND], pos, yawRad,
-            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H + FOREARM_H, -halfSwingRad, HAND_H);
+            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H + FOREARM_H, halfSwingRad, HAND_H);
         modelBatch.render(inst[PART_R_HAND], environment);
 
         // Legs — upper legs swing from hip, lower legs and feet follow
@@ -464,7 +464,7 @@ public class NPCRenderer {
             -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H, -halfSwingRad, LOWER_LEG_H);
         modelBatch.render(inst[PART_L_LOWER_LEG], environment);
         setLimbChainTransform(inst[PART_L_FOOT], pos, yawRad,
-            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H + LOWER_LEG_H, -halfSwingRad, FOOT_H);
+            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H + LOWER_LEG_H, halfSwingRad, FOOT_H);
         modelBatch.render(inst[PART_L_FOOT], environment);
 
         // Right leg chain
@@ -475,7 +475,7 @@ public class NPCRenderer {
             legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H, halfSwingRad, LOWER_LEG_H);
         modelBatch.render(inst[PART_R_LOWER_LEG], environment);
         setLimbChainTransform(inst[PART_R_FOOT], pos, yawRad,
-            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H + LOWER_LEG_H, halfSwingRad, FOOT_H);
+            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H + LOWER_LEG_H, -halfSwingRad, FOOT_H);
         modelBatch.render(inst[PART_R_FOOT], environment);
     }
 
