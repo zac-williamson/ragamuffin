@@ -924,3 +924,40 @@ actual gameplay despite all integration tests passing (they test the class in is
 - Create a `RagamuffinGame` (headless), transition to PLAYING, move player into a registered
   gang territory at `(-50, 1, -30)`. Simulate ticks for `LINGER_THRESHOLD_SECONDS + 1` seconds.
   Verify that at least one nearby `YOUTH_GANG` NPC has state `AGGRESSIVE`.
+
+---
+
+## Bug Fix: SignageRenderer missing orthographic projection matrix
+
+**Status**: ❌ Broken — building signs render at wrong screen positions (or are invisible) in all frames.
+
+**Problem**: `SignageRenderer.render()` calls `shapeRenderer.begin()` and `spriteBatch.begin()` without
+ever calling `setProjectionMatrix(ortho)` on either renderer first. All other 2D rendering in the
+codebase explicitly sets an orthographic projection via `matrix.setToOrtho2D(0, 0, screenWidth, screenHeight)`.
+Without this, both renderers use whatever stale 3D (or previous frame's 2D) projection matrix is
+currently bound — causing sign panels and text to be drawn at completely wrong coordinates.
+
+The `camera.project()` call correctly maps the sign's world position to screen space, but the
+shape renderer and sprite batch then interpret those screen-space pixel coordinates through the
+wrong matrix, so the result is either off-screen or scrambled.
+
+**Required fix in `SignageRenderer.render()`**:
+
+At the top of the `render()` method, before the loop begins, set the orthographic projection on
+both the `shapeRenderer` and `spriteBatch`:
+
+```java
+com.badlogic.gdx.math.Matrix4 ortho = new com.badlogic.gdx.math.Matrix4();
+ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
+shapeRenderer.setProjectionMatrix(ortho);
+spriteBatch.setProjectionMatrix(ortho);
+```
+
+**Integration test** (regression — add to the next Critic integration test suite):
+
+1. Create a headless LibGDX context. Build a `SignageRenderer`. Call `buildFromLandmarks()` with
+   at least one landmark (e.g. GREGGS at position (40, 4, 20)). Create a `PerspectiveCamera` at
+   (40, 5, 25) looking at (40, 4, 20) — so the sign is directly in front of the camera and within
+   `MAX_RENDER_DISTANCE`. Call `render()`. Verify that `shapeRenderer.setProjectionMatrix()` was
+   called with an orthographic matrix (not the camera's perspective projection). Verify the sign
+   panel's X coordinate lands within screen bounds (0..screenWidth) and Y within (0..screenHeight).
