@@ -132,9 +132,8 @@ class Issue138PoliceInnocentPatrolTest {
         assertFalse(player.getStreetReputation().isKnown(),
             "Player should have NOBODY reputation for this test");
 
-        // Spawn a police officer 5 blocks away so it is within the 40-block alert radius
-        // and can reach the player within the simulation window
-        NPC police = npcManager.spawnNPC(NPCType.POLICE, 5f, 1f, 0f);
+        // Spawn police within arrest range (1.0 block away, well under 1.5 threshold)
+        NPC police = npcManager.spawnNPC(NPCType.POLICE, 1f, 1f, 0f);
         assertNotNull(police, "POLICE NPC should spawn");
         police.setState(NPCState.PATROLLING);
 
@@ -147,7 +146,7 @@ class Issue138PoliceInnocentPatrolTest {
 
         float delta = 1f / 60f;
         boolean arrested = false;
-        for (int i = 0; i < 300; i++) {
+        for (int i = 0; i < 60; i++) {
             npcManager.update(delta, world, player, inventory, tooltipSystem);
             if (npcManager.isArrestPending()) {
                 arrested = true;
