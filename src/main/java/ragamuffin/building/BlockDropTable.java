@@ -40,6 +40,8 @@ public class BlockDropTable {
                 return Material.ROAD_ASPHALT;
             case WOOD:
                 return Material.WOOD;
+            case WOOD_PLANKS:
+                return Material.PLANKS;
             case CARDBOARD:
                 return Material.CARDBOARD;
             case CONCRETE:

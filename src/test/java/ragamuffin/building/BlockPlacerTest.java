@@ -133,7 +133,8 @@ class BlockPlacerTest {
 
     @Test
     void testMaterialToBlockType() {
-        assertEquals(BlockType.WOOD, blockPlacer.materialToBlockType(Material.PLANKS));
+        // PLANKS places as WOOD_PLANKS (distinct from WOOD) to prevent infinite resource loop
+        assertEquals(BlockType.WOOD_PLANKS, blockPlacer.materialToBlockType(Material.PLANKS));
         assertEquals(BlockType.BRICK, blockPlacer.materialToBlockType(Material.SHELTER_WALL));
         assertEquals(BlockType.BRICK, blockPlacer.materialToBlockType(Material.BRICK_WALL));
         assertEquals(BlockType.GLASS, blockPlacer.materialToBlockType(Material.WINDOW));

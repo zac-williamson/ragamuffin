@@ -115,4 +115,22 @@ class BlockDropTableTest {
         Material drop = dropTable.getDrop(BlockType.BRICK, null);
         assertEquals(Material.BRICK, drop);
     }
+
+    // --- Regression tests for Issue #211: wood planks infinite loop ---
+
+    @Test
+    void testWoodPlanksBlockDropsPlanks() {
+        // WOOD_PLANKS (player-placed plank block) must drop PLANKS, not WOOD.
+        // If it dropped WOOD, players could craft WOOD->PLANKS, place, break, get WOOD again
+        // — an infinite duplication loop.
+        Material drop = dropTable.getDrop(BlockType.WOOD_PLANKS, null);
+        assertEquals(Material.PLANKS, drop, "WOOD_PLANKS block must drop PLANKS to prevent infinite loop");
+    }
+
+    @Test
+    void testWoodBlockDropsWood() {
+        // World-generated WOOD blocks (e.g. from logs) still drop WOOD as before
+        Material drop = dropTable.getDrop(BlockType.WOOD, null);
+        assertEquals(Material.WOOD, drop, "World-generated WOOD block should still drop WOOD");
+    }
 }

@@ -121,13 +121,13 @@ class Phase4IntegrationTest {
         // Verify PLANKS count decreased
         assertEquals(0, inventory.getItemCount(Material.PLANKS));
 
-        // Verify block exists in world (should be WOOD block type for PLANKS material)
+        // Verify block exists in world (should be WOOD_PLANKS block type for PLANKS material)
         // Check a few possible adjacent positions
         boolean foundBlock = false;
         for (int dy = 0; dy <= 2; dy++) {
             for (int dz = 9; dz <= 11; dz++) {
                 BlockType block = world.getBlock(10, dy, dz);
-                if (block == BlockType.WOOD) {
+                if (block == BlockType.WOOD_PLANKS) {
                     foundBlock = true;
                     break;
                 }
@@ -192,17 +192,18 @@ class Phase4IntegrationTest {
         assertFalse(placed, "Should not place block when material is null");
 
         // Verify no new blocks were placed (only the ground block should exist)
-        int woodBlockCount = 0;
+        int plankBlockCount = 0;
         for (int x = 9; x <= 11; x++) {
             for (int y = 0; y <= 3; y++) {
                 for (int z = 9; z <= 11; z++) {
-                    if (world.getBlock(x, y, z) == BlockType.WOOD) {
-                        woodBlockCount++;
+                    BlockType bt = world.getBlock(x, y, z);
+                    if (bt == BlockType.WOOD || bt == BlockType.WOOD_PLANKS) {
+                        plankBlockCount++;
                     }
                 }
             }
         }
-        assertEquals(0, woodBlockCount, "No WOOD blocks should have been placed");
+        assertEquals(0, plankBlockCount, "No plank blocks should have been placed");
     }
 
     /**
@@ -315,6 +316,54 @@ class Phase4IntegrationTest {
             assertFalse(craftingSystem.canCraft(recipe, inventory),
                        "Recipe " + recipe.getDisplayName() + " should not be craftable");
         }
+    }
+
+    /**
+     * Regression test for Issue #211: wood planks infinite loop.
+     * PLANKS material must place as WOOD_PLANKS (not WOOD), so breaking it yields PLANKS
+     * rather than WOOD — preventing the craft WOOD->PLANKS, place, break, get WOOD loop.
+     */
+    @Test
+    void testPlacedPlankBlockDropsPlanksNotWood() {
+        // Start with 4 WOOD; craft into 8 PLANKS
+        inventory.addItem(Material.WOOD, 4);
+        craftingUI.show();
+        craftingUI.selectRecipe(0);
+        craftingUI.craftSelected();
+        craftingUI.hide();
+        assertEquals(8, inventory.getItemCount(Material.PLANKS));
+        assertEquals(0, inventory.getItemCount(Material.WOOD));
+
+        // Place a PLANKS block in the world
+        world.setBlock(10, 0, 10, BlockType.GRASS);
+        player.getPosition().set(10, 2, 12);
+        Vector3 direction = new Vector3(0, -1, -1).nor();
+        boolean placed = blockPlacer.placeBlock(world, inventory, Material.PLANKS,
+                player.getPosition(), direction, 5.0f);
+        assertTrue(placed, "Should be able to place PLANKS");
+        assertEquals(7, inventory.getItemCount(Material.PLANKS));
+
+        // Find the placed block and verify it is WOOD_PLANKS, not WOOD
+        int px = -1, py = -1, pz = -1;
+        outer:
+        for (int dy = 0; dy <= 2; dy++) {
+            for (int dz = 9; dz <= 11; dz++) {
+                if (world.getBlock(10, dy, dz) == BlockType.WOOD_PLANKS) {
+                    px = 10; py = dy; pz = dz;
+                    break outer;
+                }
+            }
+        }
+        assertTrue(px >= 0, "Placed block should be WOOD_PLANKS");
+
+        // Verify the drop: WOOD_PLANKS should yield PLANKS, not WOOD
+        Material drop = dropTable.getDrop(BlockType.WOOD_PLANKS, null);
+        assertEquals(Material.PLANKS, drop,
+                "Breaking a player-placed plank block must return PLANKS, not WOOD (Issue #211)");
+
+        // Explicitly verify no WOOD drop occurs (would enable the infinite loop)
+        assertNotEquals(Material.WOOD, drop,
+                "WOOD_PLANKS must NOT drop WOOD — that would allow infinite wood generation");
     }
 
     /**

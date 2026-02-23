@@ -212,6 +212,7 @@ public class BlockPlacer {
     public BlockType materialToBlockType(Material material) {
         switch (material) {
             case PLANKS:
+                return BlockType.WOOD_PLANKS;
             case SHELTER_FLOOR:
             case SHELTER_ROOF:
                 return BlockType.WOOD;

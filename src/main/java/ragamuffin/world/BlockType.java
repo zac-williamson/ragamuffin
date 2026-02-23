@@ -53,7 +53,8 @@ public enum BlockType {
     WOOD_WALL(43, true),   // World-generated wooden wall/shed (not player-placeable)
     FENCE_THIN(44, true),  // Thin vertical iron fence post (shaped, not full cube)
     DOOR_LOWER(45, false), // Lower half of a 2-block tall door (not solid for collision — door frame is solid)
-    DOOR_UPPER(46, false); // Upper half of a 2-block tall door
+    DOOR_UPPER(46, false), // Upper half of a 2-block tall door
+    WOOD_PLANKS(47, true); // Player-placed plank block (distinct from world-gen WOOD; drops PLANKS not WOOD)
 
     private final int id;
     private final boolean solid;
@@ -166,6 +167,7 @@ public enum BlockType {
     public boolean isPlayerPlaceable() {
         switch (this) {
             case WOOD:
+            case WOOD_PLANKS:
             case BRICK:
             case STONE:
             case GLASS:
@@ -216,6 +218,7 @@ public enum BlockType {
             case ROOF_TILE:
             case SLATE:
             case WOOD:
+            case WOOD_PLANKS:
             case WOOD_FENCE:
             case WOOD_WALL:
             case TREE_TRUNK:
@@ -283,6 +286,7 @@ public enum BlockType {
                     clamp01(base.b + variation * 0.5f), base.a);
 
             case WOOD:
+            case WOOD_PLANKS:
             case WOOD_FENCE:
             case WOOD_WALL:
             case TREE_TRUNK:
@@ -422,6 +426,7 @@ public enum BlockType {
             case LINO_GREEN: return new Color(0.35f, 0.52f, 0.30f, 1f);  // Hospital green
             case BOOKSHELF: return new Color(0.38f, 0.28f, 0.12f, 1f);   // Dark walnut
             case BEDROCK: return new Color(0.15f, 0.15f, 0.15f, 1f);   // Very dark grey
+            case WOOD_PLANKS: return new Color(0.80f, 0.62f, 0.36f, 1f); // Lighter sawn plank
             case WOOD_FENCE: return new Color(0.72f, 0.52f, 0.28f, 1f); // Same as WOOD
             case WOOD_WALL: return new Color(0.72f, 0.52f, 0.28f, 1f);  // Same as WOOD
             case FENCE_THIN: return new Color(0.18f, 0.18f, 0.20f, 1f); // Dark iron, same as IRON_FENCE
@@ -453,6 +458,7 @@ public enum BlockType {
             case CARPET: return new Color(0.48f, 0.15f, 0.15f, 1f);      // Slightly different pile
             case WOOD: return new Color(0.68f, 0.50f, 0.25f, 1f);        // End grain
             case CARDBOARD: return new Color(0.72f, 0.60f, 0.35f, 1f);   // Flap edge
+            case WOOD_PLANKS: return new Color(0.78f, 0.60f, 0.32f, 1f);  // Sawn plank top
             case WOOD_FENCE: return new Color(0.68f, 0.50f, 0.25f, 1f);  // End grain
             case WOOD_WALL: return new Color(0.68f, 0.50f, 0.25f, 1f);   // End grain
             case IRON_FENCE: return new Color(0.22f, 0.22f, 0.24f, 1f);  // Dark iron top
