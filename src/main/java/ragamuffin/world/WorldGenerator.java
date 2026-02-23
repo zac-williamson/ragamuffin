@@ -307,11 +307,11 @@ public class WorldGenerator {
 
         // ===== OFFICE BUILDING (tall, near high street) =====
         generateOfficeBuilding(world, 70, 20, 15, 15, 12);
-        world.addLandmark(new Landmark(LandmarkType.OFFICE_BUILDING, 70, 0, 20, 15, 12, 15));
+        world.addLandmark(new Landmark(LandmarkType.OFFICE_BUILDING, 70, 0, 20, 15, 13, 15)); // roof at y=13
 
         // ===== JOBCENTRE (west of park) =====
         generateJobCentre(world, -60, 25, 12, 12, 5);
-        world.addLandmark(new Landmark(LandmarkType.JOB_CENTRE, -60, 0, 25, 12, 5, 12));
+        world.addLandmark(new Landmark(LandmarkType.JOB_CENTRE, -60, 0, 25, 12, 6, 12)); // roof at y=6
 
         // ===== TERRACED HOUSES — multiple rows =====
         // Row 1: south of park, south side
@@ -334,7 +334,7 @@ public class WorldGenerator {
 
         // ===== INDUSTRIAL ESTATE (northeast corner) =====
         generateWarehouse(world, 60, -40, 20, 15, 8);
-        world.addLandmark(new Landmark(LandmarkType.WAREHOUSE, 60, 0, -40, 20, 8, 15));
+        world.addLandmark(new Landmark(LandmarkType.WAREHOUSE, 60, 0, -40, 20, 9, 15)); // roof at y=9
         generateWarehouse(world, 60, -60, 18, 12, 7);
         generateWarehouse(world, 82, -40, 16, 14, 8);
         generateWarehouse(world, 82, -58, 14, 12, 7);
@@ -352,7 +352,7 @@ public class WorldGenerator {
         for (int dx = 0; dx < 14; dx++) {
             world.setBlock(-60 + dx, 5, 10, BlockType.SIGN_BLUE);
         }
-        world.addLandmark(new Landmark(LandmarkType.GP_SURGERY, -60, 0, 10, 14, 5, 10));
+        world.addLandmark(new Landmark(LandmarkType.GP_SURGERY, -60, 0, 10, 14, 6, 10)); // roof at y=6
 
         // ===== PRIMARY SCHOOL (south of industrial estate) =====
         buildBuilding(world, 60, -80, 20, 16, 6, BlockType.BRICK, BlockType.PAVEMENT);
@@ -377,7 +377,7 @@ public class WorldGenerator {
                 world.setBlock(95, y, z, BlockType.IRON_FENCE);
             }
         }
-        world.addLandmark(new Landmark(LandmarkType.PRIMARY_SCHOOL, 60, 0, -80, 20, 6, 16));
+        world.addLandmark(new Landmark(LandmarkType.PRIMARY_SCHOOL, 60, 0, -80, 20, 7, 16)); // roof at y=7
 
         // ===== COMMUNITY CENTRE (west residential area) =====
         buildBuilding(world, -90, -25, 18, 14, 5, BlockType.BRICK, BlockType.PAVEMENT);
@@ -389,11 +389,11 @@ public class WorldGenerator {
         world.setBlock(-90 + 9, 1, -25, BlockType.AIR);
         world.setBlock(-90 + 8, 2, -25, BlockType.AIR);
         world.setBlock(-90 + 9, 2, -25, BlockType.AIR);
-        world.addLandmark(new Landmark(LandmarkType.COMMUNITY_CENTRE, -90, 0, -25, 18, 5, 14));
+        world.addLandmark(new Landmark(LandmarkType.COMMUNITY_CENTRE, -90, 0, -25, 18, 6, 14)); // roof at y=6
 
         // ===== CHURCH (northeast residential area) =====
         generateChurch(world, 30, -50, 12, 18, 10);
-        world.addLandmark(new Landmark(LandmarkType.CHURCH, 30, 0, -50, 12, 10, 18));
+        world.addLandmark(new Landmark(LandmarkType.CHURCH, 30, 0, -50, 12, 17, 18)); // bell tower cap at y=16
 
         // ===== TAXI RANK (near high street) =====
         buildBuilding(world, 74, 25, 6, 6, 3, BlockType.BRICK, BlockType.PAVEMENT);
@@ -406,23 +406,23 @@ public class WorldGenerator {
                 world.setBlock(x, 0, z, BlockType.PAVEMENT);
             }
         }
-        world.addLandmark(new Landmark(LandmarkType.TAXI_RANK, 74, 0, 25, 6, 3, 6));
+        world.addLandmark(new Landmark(LandmarkType.TAXI_RANK, 74, 0, 25, 6, 4, 6)); // roof at y=4
 
         // ===== CAR WASH (near industrial estate) =====
         generateCarWash(world, 100, -40, 10, 8, 5);
-        world.addLandmark(new Landmark(LandmarkType.CAR_WASH, 100, 0, -40, 10, 5, 8));
+        world.addLandmark(new Landmark(LandmarkType.CAR_WASH, 100, 0, -40, 10, 6, 8)); // roof at y=6
 
         // ===== COUNCIL FLATS — tower block (west side) =====
         generateCouncilFlats(world, -95, 50, 12, 12, 18);
-        world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, -95, 0, 50, 12, 18, 12));
+        world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, -95, 0, 50, 12, 19, 12)); // roof at y=19
 
         // ===== SECOND TOWER BLOCK (further west) =====
         generateCouncilFlats(world, -110, 50, 12, 12, 15);
-        world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, -110, 0, 50, 12, 15, 12));
+        world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, -110, 0, 50, 12, 16, 12)); // roof at y=16
 
         // ===== PETROL STATION (east side) =====
         generatePetrolStation(world, 100, 20, 14, 10, 4);
-        world.addLandmark(new Landmark(LandmarkType.PETROL_STATION, 100, 0, 20, 14, 4, 10));
+        world.addLandmark(new Landmark(LandmarkType.PETROL_STATION, 100, 0, 20, 14, 5, 10)); // roof/canopy at y=5
 
         // ===== NEW HIGH STREET EXTENSION (south side, further east) =====
         // Nando's — yellow brick with red sign
@@ -444,15 +444,15 @@ public class WorldGenerator {
 
         // ===== WETHERSPOONS — large pub (south of high street, new area) =====
         generateWetherspoons(world, 115, 25, 16, 14, 6);
-        world.addLandmark(new Landmark(LandmarkType.WETHERSPOONS, 115, 0, 25, 16, 6, 14));
+        world.addLandmark(new Landmark(LandmarkType.WETHERSPOONS, 115, 0, 25, 16, 7, 14)); // roof at y=7
 
         // ===== LIBRARY — west side civic area =====
         generateLibrary(world, -80, 10, 16, 12, 6);
-        world.addLandmark(new Landmark(LandmarkType.LIBRARY, -80, 0, 10, 16, 6, 12));
+        world.addLandmark(new Landmark(LandmarkType.LIBRARY, -80, 0, 10, 16, 7, 12)); // roof at y=7
 
         // ===== FIRE STATION — east side, near industrial estate =====
         generateFireStation(world, 100, -65, 16, 14, 7);
-        world.addLandmark(new Landmark(LandmarkType.FIRE_STATION, 100, 0, -65, 16, 7, 14));
+        world.addLandmark(new Landmark(LandmarkType.FIRE_STATION, 100, 0, -65, 16, 8, 14)); // roof at y=8
 
         // ===== ADDITIONAL TERRACED ROWS for bigger world =====
         generateTerracedRow(world, -110, -25, 8, 8, 6, 5);
@@ -474,7 +474,7 @@ public class WorldGenerator {
 
         // ===== ADDITIONAL COUNCIL FLATS — outer edges =====
         generateCouncilFlats(world, -150, 60, 12, 12, 14);
-        world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, -150, 0, 60, 12, 14, 12));
+        world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, -150, 0, 60, 12, 15, 12)); // roof at y=15
         generateCouncilFlats(world, 140, -70, 12, 12, 16);
 
         // ===== ALLOTMENTS (south-east) =====
@@ -698,7 +698,8 @@ public class WorldGenerator {
             world.setBlock(x + dx, height, z, signColor);
         }
 
-        world.addLandmark(new Landmark(landmarkType, x, 0, z, width, height, depth));
+        // height + 2: walls go up to y=height inclusive, roof sits at y=height+1
+        world.addLandmark(new Landmark(landmarkType, x, 0, z, width, height + 2, depth));
     }
 
     // ==================== TERRACED HOUSES ====================
