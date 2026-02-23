@@ -220,6 +220,7 @@ public enum BlockType {
             case WOOD_WALL:
             case TREE_TRUNK:
             case BOOKSHELF:
+            case SHELF:
             case CARDBOARD:
             case GARDEN_WALL:
             case TILE_WHITE:
@@ -304,6 +305,33 @@ public enum BlockType {
                         clamp01(base.b + 0.08f), base.a);
                 }
                 return base;
+
+            case SHELF: {
+                // Shelf appearance: dark vertical uprights at X edges, lighter horizontal
+                // shelf board at mid-height, product colour variation between uprights.
+                boolean isUpright = (worldX % 2 == 0); // dark side panels every 2 blocks
+                boolean isShelfBoard = (worldY % 2 == 0); // horizontal board stripe
+                if (isUpright) {
+                    // Dark wooden upright panel
+                    return new Color(
+                        clamp01(base.r - 0.12f),
+                        clamp01(base.g - 0.10f),
+                        clamp01(base.b - 0.07f), base.a);
+                } else if (isShelfBoard) {
+                    // Lighter horizontal shelf surface
+                    return new Color(
+                        clamp01(base.r + 0.10f),
+                        clamp01(base.g + 0.08f),
+                        clamp01(base.b + 0.06f), base.a);
+                } else {
+                    // Products/merchandise — subtle colour variation
+                    float itemVar = ((hash & 0x3FF) / 1023.0f - 0.5f) * 0.18f;
+                    return new Color(
+                        clamp01(base.r + itemVar),
+                        clamp01(base.g + itemVar * 0.6f),
+                        clamp01(base.b + itemVar * 0.3f), base.a);
+                }
+            }
 
             case BOOKSHELF:
                 // Individual book colours
