@@ -194,4 +194,90 @@ class Critic8StreetReputationTest {
         assertEquals(StreetReputation.ReputationLevel.KNOWN, reputation.getLevel(),
             "Should be KNOWN at NOTORIOUS threshold - 1");
     }
+
+    // ====== Star count tests (Issue #8: GTA-style star display) ======
+
+    /**
+     * Test 13: Zero points yields zero stars.
+     */
+    @Test
+    void test13_ZeroPointsYieldsZeroStars() {
+        assertEquals(0, reputation.getStarCount(), "No points should give 0 stars");
+    }
+
+    /**
+     * Test 14: Just below KNOWN threshold still gives zero stars.
+     */
+    @Test
+    void test14_BelowKnownThresholdYieldsZeroStars() {
+        reputation.addPoints(StreetReputation.KNOWN_THRESHOLD - 1);
+        assertEquals(0, reputation.getStarCount(), "Below KNOWN threshold should still be 0 stars");
+    }
+
+    /**
+     * Test 15: Exactly at KNOWN threshold gives 1 star.
+     */
+    @Test
+    void test15_AtKnownThresholdYieldsOneStar() {
+        reputation.addPoints(StreetReputation.KNOWN_THRESHOLD); // 10 pts
+        assertEquals(1, reputation.getStarCount(), "10 points should give 1 star");
+    }
+
+    /**
+     * Test 16: 20 points gives 2 stars.
+     */
+    @Test
+    void test16_TwentyPointsYieldsTwoStars() {
+        reputation.addPoints(20);
+        assertEquals(2, reputation.getStarCount(), "20 points should give 2 stars");
+    }
+
+    /**
+     * Test 17: At NOTORIOUS threshold (30 pts) gives 3 stars.
+     */
+    @Test
+    void test17_AtNotoriousThresholdYieldsThreeStars() {
+        reputation.addPoints(StreetReputation.NOTORIOUS_THRESHOLD); // 30 pts
+        assertEquals(3, reputation.getStarCount(), "30 points should give 3 stars");
+    }
+
+    /**
+     * Test 18: 45 points gives 4 stars.
+     */
+    @Test
+    void test18_FortyFivePointsYieldsFourStars() {
+        reputation.addPoints(45);
+        assertEquals(4, reputation.getStarCount(), "45 points should give 4 stars");
+    }
+
+    /**
+     * Test 19: 60 points gives 5 stars (maximum).
+     */
+    @Test
+    void test19_SixtyPointsYieldsFiveStars() {
+        reputation.addPoints(60);
+        assertEquals(5, reputation.getStarCount(), "60 points should give 5 stars");
+    }
+
+    /**
+     * Test 20: Far above 60 still caps at 5 stars.
+     */
+    @Test
+    void test20_MassivePointsCapAtFiveStars() {
+        reputation.addPoints(1000);
+        assertEquals(5, reputation.getStarCount(), "Star count should never exceed 5");
+    }
+
+    /**
+     * Test 21: Star count decreases when points are removed.
+     */
+    @Test
+    void test21_StarCountDecreasesWhenPointsRemoved() {
+        reputation.addPoints(45);
+        assertEquals(4, reputation.getStarCount());
+
+        reputation.removePoints(20); // Drop to 25 pts — still KNOWN, 2 stars
+        assertEquals(2, reputation.getStarCount(),
+            "Star count should decrease when reputation points are lost");
+    }
 }

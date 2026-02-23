@@ -258,29 +258,33 @@ public class GameHUD {
     }
 
     /**
-     * Render street reputation below the clock/weather display area.
+     * Render street reputation as a GTA-style star display.
      * Positioned at screenHeight - 105 to avoid overlapping the date and time lines.
+     *
+     * Filled stars (★) are shown for earned reputation; empty stars (☆) for remaining.
+     * Colour scales from grey (0 stars) through yellow (1–2) to red (3–5).
      */
     private void renderReputation(SpriteBatch spriteBatch, BitmapFont font,
                                   int screenWidth, int screenHeight) {
         StreetReputation rep = player.getStreetReputation();
-        spriteBatch.begin();
+        int stars = rep.getStarCount();
 
-        // Choose color based on reputation level
-        switch (rep.getLevel()) {
-            case NOBODY:
-                font.setColor(0.7f, 0.7f, 0.7f, 1f); // Grey
-                break;
-            case KNOWN:
-                font.setColor(1f, 0.8f, 0.2f, 1f); // Yellow
-                break;
-            case NOTORIOUS:
-                font.setColor(1f, 0.2f, 0.2f, 1f); // Red
-                break;
+        // Choose colour based on star count
+        if (stars == 0) {
+            font.setColor(0.7f, 0.7f, 0.7f, 1f); // Grey — nobody cares
+        } else if (stars <= 2) {
+            font.setColor(1f, 0.8f, 0.2f, 1f);   // Yellow — people are talking
+        } else {
+            font.setColor(1f, 0.2f, 0.2f, 1f);   // Red — notorious
         }
 
-        String repText = "Rep: " + rep.getLevel().name() + " (" + rep.getPoints() + ")";
-        font.draw(spriteBatch, repText, screenWidth - 200, screenHeight - 105);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            sb.append(i < stars ? "\u2605" : "\u2606"); // ★ / ☆
+        }
+
+        spriteBatch.begin();
+        font.draw(spriteBatch, sb.toString(), screenWidth - 200, screenHeight - 105);
         font.setColor(Color.WHITE);
         spriteBatch.end();
     }
