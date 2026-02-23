@@ -280,4 +280,126 @@ class Critic8StreetReputationTest {
         assertEquals(2, reputation.getStarCount(),
             "Star count should decrease when reputation points are lost");
     }
+
+    // ====== Issue #48: Passive decay tests ======
+
+    /**
+     * Test 22: Reputation decays passively over time.
+     *
+     * Give the player 30 reputation points (NOTORIOUS). Advance the simulation for
+     * DECAY_INTERVAL_SECONDS * 30 + 1 seconds without any criminal actions.
+     * Verify points are 0 and isNotorious() is false.
+     */
+    @Test
+    void test22_ReputationDecaysPassivelyOverTime() {
+        reputation.addPoints(StreetReputation.NOTORIOUS_THRESHOLD); // 30 pts
+        assertTrue(reputation.isNotorious(), "Should start NOTORIOUS");
+
+        // Simulate DECAY_INTERVAL_SECONDS * 30 + 1 seconds of non-criminal time
+        float totalTime = StreetReputation.DECAY_INTERVAL_SECONDS * 30 + 1f;
+        // Advance in 1-second steps
+        for (float elapsed = 0; elapsed < totalTime; elapsed += 1f) {
+            reputation.update(1f);
+        }
+
+        assertEquals(0, reputation.getPoints(),
+            "Reputation should have decayed to 0 after 30 minutes of non-criminal play");
+        assertFalse(reputation.isNotorious(),
+            "Player should no longer be NOTORIOUS after decay");
+    }
+
+    /**
+     * Test 23: Decay does not go below zero.
+     *
+     * Give the player 5 reputation points. Advance for DECAY_INTERVAL_SECONDS * 10 seconds.
+     * Verify points are clamped at 0 (not negative).
+     */
+    @Test
+    void test23_DecayDoesNotGoBelowZero() {
+        reputation.addPoints(5);
+        assertEquals(5, reputation.getPoints());
+
+        // Advance far more time than needed to decay 5 points
+        float totalTime = StreetReputation.DECAY_INTERVAL_SECONDS * 10;
+        for (float elapsed = 0; elapsed < totalTime; elapsed += 1f) {
+            reputation.update(1f);
+        }
+
+        assertEquals(0, reputation.getPoints(),
+            "Reputation points should be clamped at 0, never go negative");
+        assertFalse(reputation.isKnown(), "Should be NOBODY at 0 points");
+    }
+
+    /**
+     * Test 24: Criminal activity does not reset decay timer — timer continues running.
+     *
+     * Give the player 10 reputation points. Advance for DECAY_INTERVAL_SECONDS * 0.9
+     * seconds (just below one decay tick). Add 2 more points (simulating punching an NPC).
+     * Verify points are now 12. Advance another DECAY_INTERVAL_SECONDS * 0.9 seconds.
+     * After a full interval total of DECAY_INTERVAL_SECONDS * 1.8 from the start,
+     * verify points have decreased by 1 from peak (now 11).
+     */
+    @Test
+    void test24_CriminalActivityDoesNotResetDecayTimer() {
+        reputation.addPoints(10);
+        assertEquals(10, reputation.getPoints());
+
+        // Advance 0.9 intervals — just under one decay tick
+        float interval = StreetReputation.DECAY_INTERVAL_SECONDS;
+        float step = interval * 0.9f;
+
+        // Advance in small increments
+        float elapsed = 0;
+        while (elapsed < step) {
+            float tick = Math.min(1f, step - elapsed);
+            reputation.update(tick);
+            elapsed += tick;
+        }
+
+        // Verify no decay yet
+        assertEquals(10, reputation.getPoints(), "No decay tick should have fired yet");
+
+        // Commit a crime: punch an NPC (+2 pts)
+        reputation.addPoints(2);
+        assertEquals(12, reputation.getPoints(), "Points should now be 12 after crime");
+
+        // Advance another 0.9 intervals — the cumulative timer now exceeds one interval
+        elapsed = 0;
+        while (elapsed < step) {
+            float tick = Math.min(1f, step - elapsed);
+            reputation.update(tick);
+            elapsed += tick;
+        }
+
+        // The timer has now accumulated 1.8 intervals total — one decay tick fired
+        assertEquals(11, reputation.getPoints(),
+            "One decay tick should have fired (12 - 1 = 11)");
+    }
+
+    /**
+     * Test 25: Player can recover from NOTORIOUS by lying low — points reach KNOWN level.
+     *
+     * Set reputation to 30 (NOTORIOUS). Advance DECAY_INTERVAL_SECONDS * 21 + 1 seconds
+     * with no crimes. Verify reputation is now 9 (KNOWN, not NOTORIOUS).
+     * Verify isNotorious() is false.
+     */
+    @Test
+    void test25_PlayerCanRecoverFromNotoriousByLyingLow() {
+        reputation.addPoints(StreetReputation.NOTORIOUS_THRESHOLD); // 30 pts
+        assertTrue(reputation.isNotorious(), "Should start NOTORIOUS");
+
+        // Advance 21 full decay intervals + 1 second
+        float totalTime = StreetReputation.DECAY_INTERVAL_SECONDS * 21 + 1f;
+        for (float elapsed = 0; elapsed < totalTime; elapsed += 1f) {
+            reputation.update(1f);
+        }
+
+        assertEquals(9, reputation.getPoints(),
+            "Reputation should be 9 after 21 decay ticks (30 - 21 = 9)");
+        assertFalse(reputation.isNotorious(),
+            "Player should no longer be NOTORIOUS");
+        // 9 pts is below KNOWN_THRESHOLD (10), so level is NOBODY
+        assertFalse(reputation.isKnown(),
+            "Player at 9 pts is below KNOWN threshold — should be NOBODY");
+    }
 }

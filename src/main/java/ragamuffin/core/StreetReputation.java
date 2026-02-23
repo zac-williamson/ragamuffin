@@ -27,8 +27,12 @@ public class StreetReputation {
         NOTORIOUS    // Everyone knows your name (coppers especially)
     }
 
+    /** How long (in real seconds) between each passive decay tick. */
+    public static final float DECAY_INTERVAL_SECONDS = 60f;
+
     private int points;
     private ReputationLevel level;
+    private float decayTimer = 0f;
 
     public StreetReputation() {
         this.points = 0;
@@ -116,6 +120,19 @@ public class StreetReputation {
         if (points >= 20) return 2;
         if (points >= KNOWN_THRESHOLD) return 1;
         return 0;
+    }
+
+    /**
+     * Tick the reputation decay timer. Call once per frame with real delta time.
+     * Removes 1 point every DECAY_INTERVAL_SECONDS of non-criminal behaviour.
+     */
+    public void update(float delta) {
+        if (points <= 0) return; // Nothing to decay
+        decayTimer += delta;
+        if (decayTimer >= DECAY_INTERVAL_SECONDS) {
+            decayTimer -= DECAY_INTERVAL_SECONDS;
+            removePoints(1);
+        }
     }
 
     /**
