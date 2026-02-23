@@ -15,24 +15,31 @@ import ragamuffin.world.LandmarkType;
 /**
  * Renders building signage as world-projected 2D overlays.
  *
- * Each sign is a coloured panel with the store name, positioned above the building
- * entrance and rendered in screen-space so the text is always legible regardless of
- * viewing angle.  Signs are only shown when the camera is within a reasonable distance
+ * Each sign is a coloured panel with the store name rendered in pixel-art style
+ * (using {@link PixelFont}), positioned above the building entrance and rendered
+ * in screen-space so the text is always legible regardless of viewing angle.
+ * Signs are only shown when the camera is within a reasonable distance
  * (MAX_RENDER_DISTANCE) to avoid clutter.
  *
- * The sign panel is sized to a 2x3 block equivalent in screen pixels, matching the
- * spec of a "2×3 block area" sign above the entrance.
+ * The sign panel is larger than the old text-based panel to better showcase the
+ * pixel-art lettering: a minimum of 120 px wide and 36 px tall at full scale.
  */
 public class SignageRenderer {
 
     /** Maximum distance (blocks) at which signs are visible. */
     private static final float MAX_RENDER_DISTANCE = 40f;
-    /** Sign panel height in screen pixels (represents ~3 blocks). */
-    private static final float PANEL_HEIGHT = 22f;
-    /** Horizontal padding inside the sign panel. */
-    private static final float PANEL_PADDING = 10f;
-    /** Minimum panel width (represents ~2 blocks of width). */
-    private static final float MIN_PANEL_WIDTH = 60f;
+
+    // ---- Sign panel geometry (full-scale, screen pixels) ----
+    /** Pixel size (screen px per font pixel) at full scale. */
+    private static final float BASE_PIXEL_SIZE = 3f;
+    /** Vertical padding above and below the pixel-art text inside the panel. */
+    private static final float PANEL_V_PADDING = 8f;
+    /** Horizontal padding left and right of the pixel-art text. */
+    private static final float PANEL_H_PADDING = 12f;
+    /** Minimum panel width in screen pixels at full scale. */
+    private static final float MIN_PANEL_WIDTH = 120f;
+    /** Border thickness in screen pixels. */
+    private static final float BORDER = 2f;
 
     private final List<BuildingSign> signs = new ArrayList<>();
     private final Vector3 tmpPos = new Vector3();
@@ -63,13 +70,14 @@ public class SignageRenderer {
     }
 
     /**
-     * Render all visible signs.  Call after the 3D modelBatch.end() but before
-     * the main UI is drawn.
+     * Render all visible signs using pixel-art lettering.
+     *
+     * Call after the 3D modelBatch.end() but before the main UI is drawn.
      *
      * @param camera        the perspective camera used for projection
-     * @param spriteBatch   2D sprite batch (must NOT already be active)
+     * @param spriteBatch   2D sprite batch (unused directly; kept for API compatibility)
      * @param shapeRenderer shape renderer (must NOT already be active)
-     * @param font          bitmap font to draw text with
+     * @param font          bitmap font (unused — pixel art rendering replaces it)
      * @param screenWidth   current screen width in pixels
      * @param screenHeight  current screen height in pixels
      */
@@ -96,11 +104,16 @@ public class SignageRenderer {
             float sx = tmpPos.x;
             float sy = tmpPos.y;
 
-            // Scale panel size by distance so distant signs are smaller
+            // Scale everything by distance so distant signs appear smaller
             float scale = Math.max(0.4f, 1.0f - dist / MAX_RENDER_DISTANCE);
-            float textWidth = sign.getText().length() * 7f * scale;
-            float panelW = Math.max(MIN_PANEL_WIDTH * scale, textWidth + PANEL_PADDING * 2 * scale);
-            float panelH = PANEL_HEIGHT * scale;
+            float pixelSize = BASE_PIXEL_SIZE * scale;
+
+            // Panel dimensions derived from pixel-art text size
+            float textW = PixelFont.stringWidth(sign.getText(), pixelSize);
+            float textH = PixelFont.glyphHeight(pixelSize);
+            float panelW = Math.max(MIN_PANEL_WIDTH * scale, textW + PANEL_H_PADDING * 2 * scale);
+            float panelH = textH + PANEL_V_PADDING * 2 * scale;
+
             float panelX = sx - panelW / 2f;
             float panelY = sy;
 
@@ -108,29 +121,41 @@ public class SignageRenderer {
             if (panelX + panelW < 0 || panelX > screenWidth) continue;
             if (panelY + panelH < 0 || panelY > screenHeight) continue;
 
-            // Draw sign background
+            // ---- Draw sign background ----------------------------------------
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(sign.getBackgroundColor());
             shapeRenderer.rect(panelX, panelY, panelW, panelH);
             shapeRenderer.end();
 
-            // Draw a thin border
+            // ---- Draw border (two-tone: light top-left, dark bottom-right) -----
+            com.badlogic.gdx.graphics.Color bg = sign.getBackgroundColor();
+            float border = Math.max(1f, BORDER * scale);
+
+            // Dark border (full rect outline)
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-            shapeRenderer.setColor(0f, 0f, 0f, 0.8f);
+            shapeRenderer.setColor(0f, 0f, 0f, 0.9f);
             shapeRenderer.rect(panelX, panelY, panelW, panelH);
             shapeRenderer.end();
 
-            // Draw text centred on the panel
-            spriteBatch.begin();
-            font.getData().setScale(Math.max(0.6f, scale));
-            font.setColor(sign.getTextColor());
-            font.draw(spriteBatch, sign.getText(),
-                      panelX + PANEL_PADDING * scale,
-                      panelY + panelH - 4 * scale);
-            spriteBatch.end();
+            // Bright inner highlight on top and left edges (retro sign feel)
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(
+                Math.min(1f, bg.r + 0.35f),
+                Math.min(1f, bg.g + 0.35f),
+                Math.min(1f, bg.b + 0.35f),
+                0.8f);
+            // Top highlight strip
+            shapeRenderer.rect(panelX, panelY + panelH - border, panelW, border);
+            // Left highlight strip
+            shapeRenderer.rect(panelX, panelY, border, panelH);
+            shapeRenderer.end();
+
+            // ---- Draw pixel-art text centred on the panel --------------------
+            float textX = panelX + (panelW - textW) / 2f;
+            float textY = panelY + PANEL_V_PADDING * scale;
+            PixelFont.drawString(shapeRenderer, sign.getText(), textX, textY, pixelSize,
+                                 sign.getTextColor());
         }
-        // Reset font scale
-        font.getData().setScale(1.2f);
     }
 
     /** Returns all registered signs (for testing). */
