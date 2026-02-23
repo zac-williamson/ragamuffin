@@ -128,6 +128,9 @@ public class NPCManager {
     private float policeSpawnCooldown = 0f;
     private static final float POLICE_SPAWN_INTERVAL = 10.0f; // seconds between spawn checks
 
+    // Dawn despawn tracking — detect night→day transition
+    private boolean wasNight = false;
+
     // Per-NPC structure scan stagger — spread checks over time
     private Map<NPC, Float> npcStructureCheckTimers;
 
@@ -1309,12 +1312,17 @@ public class NPCManager {
     }
 
     /**
-     * Update police spawning — police patrol day and night. At night (22:00-06:00)
-     * additional officers are spawned up to a higher cap. Police are never bulk-despawned
-     * by time-of-day; they are only removed when killed or out of range.
+     * Update police spawning — police patrol at night (22:00-06:00). At dawn, all police
+     * are despawned. At night, officers are spawned up to the cap based on player notoriety.
      */
     public void updatePoliceSpawning(float time, World world, Player player) {
         boolean isNight = time >= 22.0f || time < 6.0f;
+
+        // Despawn police at dawn (night → day transition)
+        if (wasNight && !isNight) {
+            despawnPolice();
+        }
+        wasNight = isNight;
 
         // Throttle spawning to avoid spawning (and triggering A* pathfinding) every frame
         if (policeSpawnCooldown > 0) {
