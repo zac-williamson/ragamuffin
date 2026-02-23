@@ -1716,6 +1716,7 @@ public class NPCManager {
 
         // Remove the block
         world.setBlock(x, y, z, BlockType.AIR);
+        world.markBlockDirty(x, y, z);  // Trigger mesh rebuild so demolished block disappears visually
         structure.removeBlock(blockToRemove);
         structureTracker.removeBlock(x, y, z);
 
