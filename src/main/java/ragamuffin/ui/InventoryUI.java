@@ -7,6 +7,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 
+// Note: item icons are drawn as coloured block graphics using Material.getIconColors()
+
 /**
  * Renders the inventory UI overlay with click and drag-and-drop support.
  */
@@ -235,10 +237,25 @@ public class InventoryUI {
         }
         shapeRenderer.end();
 
-        // Render item text and register tooltip zones
+        // Render item icons (coloured block graphics) and register tooltip zones
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (int slot = 0; slot < Math.min(inventory.getSize(), GRID_COLS * GRID_ROWS); slot++) {
+            if (dragging && slot == dragSourceSlot) continue;
+
+            int col = slot % GRID_COLS;
+            int row = slot / GRID_COLS;
+            int slotX = gridStartX + col * (SLOT_SIZE + SLOT_PADDING);
+            int slotY = gridStartY + row * (SLOT_SIZE + SLOT_PADDING);
+            Material material = inventory.getItemInSlot(slot);
+            if (material != null) {
+                drawItemIcon(shapeRenderer, material, slotX, slotY, SLOT_SIZE);
+            }
+        }
+        shapeRenderer.end();
+
+        // Render item count badges and register tooltip zones
         batch.begin();
         for (int slot = 0; slot < Math.min(inventory.getSize(), GRID_COLS * GRID_ROWS); slot++) {
-            // Skip rendering the dragged item in its source slot
             if (dragging && slot == dragSourceSlot) continue;
 
             int col = slot % GRID_COLS;
@@ -248,13 +265,8 @@ public class InventoryUI {
             Material material = inventory.getItemInSlot(slot);
             if (material != null) {
                 int count = inventory.getCountInSlot(slot);
-                int textX = slotX + 5;
-                int textY = slotY + SLOT_SIZE - 10;
-
-                String name = material.getDisplayName();
                 font.setColor(Color.WHITE);
-                font.draw(batch, name, textX, textY);
-                font.draw(batch, "x" + count, textX, textY - 15);
+                font.draw(batch, String.valueOf(count), slotX + 3, slotY + 14);
 
                 if (hoverTooltips != null) {
                     String tooltip = material.getDisplayName() + " x" + count;
@@ -274,8 +286,7 @@ public class InventoryUI {
                 int cursorUiY = (screenHeight - dragMouseY) - SLOT_SIZE / 2;
 
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                shapeRenderer.setColor(0.3f, 0.3f, 0.1f, 0.8f);
-                shapeRenderer.rect(cursorUiX, cursorUiY, SLOT_SIZE, SLOT_SIZE);
+                drawItemIcon(shapeRenderer, dragMat, cursorUiX, cursorUiY, SLOT_SIZE);
                 shapeRenderer.end();
 
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
@@ -284,11 +295,38 @@ public class InventoryUI {
                 shapeRenderer.end();
 
                 batch.begin();
-                font.setColor(Color.YELLOW);
-                font.draw(batch, dragMat.getDisplayName(), cursorUiX + 5, cursorUiY + SLOT_SIZE - 10);
-                font.draw(batch, "x" + count, cursorUiX + 5, cursorUiY + SLOT_SIZE - 25);
+                font.setColor(Color.WHITE);
+                font.draw(batch, String.valueOf(count), cursorUiX + 3, cursorUiY + 14);
                 batch.end();
             }
+        }
+    }
+
+    /**
+     * Draw a block-style icon for the given material inside the slot rectangle.
+     * Must be called while a Filled ShapeRenderer is active.
+     * For single-color materials the whole icon is filled.
+     * For two-color materials the top half uses color[0] (representing the top face)
+     * and the bottom half uses color[1] (representing the side face), mimicking how
+     * blocks look when viewed from a slight angle.
+     */
+    private void drawItemIcon(ShapeRenderer shapeRenderer, Material material, int x, int y, int size) {
+        int padding = 4;
+        int iconX = x + padding;
+        int iconY = y + padding;
+        int iconSize = size - padding * 2;
+
+        Color[] colors = material.getIconColors();
+        if (colors.length == 1) {
+            shapeRenderer.setColor(colors[0]);
+            shapeRenderer.rect(iconX, iconY, iconSize, iconSize);
+        } else {
+            // Two-color: top half = colors[0] (top face), bottom half = colors[1] (side face)
+            int half = iconSize / 2;
+            shapeRenderer.setColor(colors[1]);
+            shapeRenderer.rect(iconX, iconY, iconSize, half);
+            shapeRenderer.setColor(colors[0]);
+            shapeRenderer.rect(iconX, iconY + half, iconSize, iconSize - half);
         }
     }
 

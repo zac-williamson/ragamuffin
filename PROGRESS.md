@@ -1,3 +1,42 @@
+# Issue #5: Display inventory items as graphics instead of text
+
+## Status: COMPLETE ✓
+
+## Summary
+
+Inventory slots in both the inventory panel (I key) and the hotbar now display
+coloured block-style icons instead of text labels. Each item has a representative
+colour derived from the matching `BlockType` colour, or a custom colour for
+non-block items (food, tools, shop goods, etc.). Two-colour items (e.g. Grass Turf,
+Diamond, Stone Tool) show their top-face colour in the upper half and their side
+colour in the lower half, mimicking how blocks look in 3D. Item names still appear
+as hover tooltips, and a compact count badge sits in the bottom-left corner of each
+slot. Drag-and-drop in the inventory panel also shows the coloured icon while
+dragging.
+
+## Files Changed
+
+- `src/main/java/ragamuffin/building/Material.java` — added `getIconColors()` method
+  returning a 1- or 2-element `Color[]` for every material (81 materials covered)
+- `src/main/java/ragamuffin/ui/InventoryUI.java` — replaced text label rendering with
+  coloured-icon rendering; added `drawItemIcon()` helper; item count shown as badge
+- `src/main/java/ragamuffin/ui/HotbarUI.java` — same changes as InventoryUI
+
+## Test Results
+
+All existing tests pass: **BUILD SUCCESSFUL** (58 s test run, 11 s compile)
+
+## What's Left
+
+Nothing. Icons are procedurally coloured; actual pixel-art textures could be
+added in a future phase once a texture atlas is introduced (currently the engine
+is entirely colour-based with no texture atlas).
+
+---
+_Completed: 2026-02-23_
+
+---
+
 # Issue #3: Fix FPS drop when digging down multiple layers
 
 ## Status: COMPLETE ✓
