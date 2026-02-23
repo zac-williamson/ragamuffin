@@ -831,6 +831,15 @@ public class RagamuffinGame extends ApplicationAdapter {
                 craftingUI.handleScroll(scrollY);
                 inputHandler.resetScroll();
             }
+        } else if (!isUIBlocking()) {
+            // Scroll wheel cycles hotbar slot when no UI overlay is open
+            float scrollY = inputHandler.getScrollAmountY();
+            if (scrollY != 0) {
+                int current = hotbarUI.getSelectedSlot();
+                int next = (int) ((current + Math.signum(scrollY) + HotbarUI.HOTBAR_SLOTS) % HotbarUI.HOTBAR_SLOTS);
+                hotbarUI.selectSlot(next);
+                inputHandler.resetScroll();
+            }
         }
     }
 
