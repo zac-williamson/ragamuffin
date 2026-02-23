@@ -17,8 +17,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * StructureTracker scans BRICK blocks, causing council builders to demolish
  * world-generated buildings.
  *
- * Fix: scanForStructures() and traceStructure() now check for WOOD only,
- * not WOOD || BRICK.
+ * Fix: World tracks player-placed block positions via setPlayerBlock(). Only
+ * blocks recorded as player-placed are considered for structure detection, so
+ * world-generated BRICK buildings are never treated as player structures.
+ * Issue #156 extended detection to all player-placeable materials (BRICK, STONE,
+ * GLASS, CARDBOARD, CONCRETE, etc.) — the player-placed tracking ensures
+ * world-gen buildings with those materials are still excluded.
  */
 class BugFix044IntegrationTest {
 
@@ -83,15 +87,15 @@ class BugFix044IntegrationTest {
 
     /**
      * Integration Test 2: Council builders DO detect player-built WOOD structures.
-     * Place 15 WOOD blocks in a connected cluster at (10, 1, 10). Force scan.
-     * Verify exactly one structure is detected and a COUNCIL_BUILDER has spawned.
+     * Place 15 WOOD blocks (as player-placed) in a connected cluster at (10, 1, 10).
+     * Force scan. Verify exactly one structure is detected and a COUNCIL_BUILDER has spawned.
      */
     @Test
     void playerBuiltWoodStructureTriggersCouncilBuilders() {
-        // Place 15 WOOD blocks in a connected cluster (3x5x1)
+        // Place 15 WOOD blocks in a connected cluster (3x5x1) as player-placed
         for (int x = 10; x < 13; x++) {
             for (int y = 1; y < 6; y++) {
-                world.setBlock(x, y, 10, BlockType.WOOD);
+                world.setPlayerBlock(x, y, 10, BlockType.WOOD);
             }
         }
         // That's 3*5 = 15 WOOD blocks — above the 10-block threshold

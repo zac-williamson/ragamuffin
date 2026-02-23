@@ -20,12 +20,146 @@ class StructureTrackerTest {
         world = new World(12345);
         tracker = new StructureTracker();
 
-        // Create ground
-        for (int x = -50; x < 50; x++) {
-            for (int z = -50; z < 50; z++) {
+        // Create ground (world-generated, not player-placed)
+        for (int x = -100; x < 100; x++) {
+            for (int z = -100; z < 100; z++) {
                 world.setBlock(x, 0, z, BlockType.GRASS);
             }
         }
+    }
+
+    @Test
+    void testBrickStructureDetected() {
+        // Build 5x5x5 (125 blocks) from BRICK - should be detected as player-placed
+        for (int x = 20; x < 25; x++) {
+            for (int y = 1; y < 6; y++) {
+                for (int z = 20; z < 25; z++) {
+                    world.setPlayerBlock(x, y, z, BlockType.BRICK);
+                }
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        assertTrue(tracker.getLargeStructures().size() >= 1,
+                "BRICK structure should be detected");
+        assertEquals(125, tracker.getLargeStructures().get(0).getComplexity(),
+                "BRICK structure should have 125 blocks");
+    }
+
+    @Test
+    void testStoneStructureDetected() {
+        // Build 5x5x5 (125 blocks) from STONE - should be detected as player-placed
+        for (int x = 30; x < 35; x++) {
+            for (int y = 1; y < 6; y++) {
+                for (int z = 30; z < 35; z++) {
+                    world.setPlayerBlock(x, y, z, BlockType.STONE);
+                }
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        assertTrue(tracker.getLargeStructures().size() >= 1,
+                "STONE structure should be detected");
+    }
+
+    @Test
+    void testMixedMaterialStructureDetected() {
+        // Build a mixed WOOD + GLASS + BRICK structure (125 blocks total)
+        // WOOD frame + GLASS windows + BRICK base - all connected
+        for (int x = 40; x < 45; x++) {
+            for (int y = 1; y < 6; y++) {
+                for (int z = 40; z < 45; z++) {
+                    BlockType material;
+                    if (y == 1) {
+                        material = BlockType.BRICK; // base
+                    } else if (x == 40 || x == 44 || z == 40 || z == 44) {
+                        material = BlockType.WOOD; // frame walls
+                    } else {
+                        material = BlockType.GLASS; // windows/interior
+                    }
+                    world.setPlayerBlock(x, y, z, material);
+                }
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        assertTrue(tracker.getLargeStructures().size() >= 1,
+                "Mixed-material structure should be detected");
+        assertEquals(125, tracker.getLargeStructures().get(0).getComplexity(),
+                "Mixed-material structure should count all 125 blocks");
+    }
+
+    @Test
+    void testNaturalBlocksNotTriggerStructure() {
+        // Place many natural blocks using setBlock (world-gen, not player-placed)
+        // They should NOT trigger structure detection
+        for (int x = -50; x < 50; x++) {
+            for (int z = -50; z < 50; z++) {
+                world.setBlock(x, 1, z, BlockType.PAVEMENT);
+                world.setBlock(x, 2, z, BlockType.TREE_TRUNK);
+                world.setBlock(x, 3, z, BlockType.LEAVES);
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        assertEquals(0, tracker.getLargeStructures().size(),
+                "Natural blocks (PAVEMENT, TREE_TRUNK, LEAVES) should not trigger structure detection");
+    }
+
+    @Test
+    void testWorldGenBrickDoesNotTriggerStructure() {
+        // Place BRICK blocks via setBlock() to simulate world-generated buildings
+        // These should NOT be detected as player structures
+        for (int x = 10; x < 15; x++) {
+            for (int y = 1; y < 6; y++) {
+                for (int z = 10; z < 15; z++) {
+                    world.setBlock(x, y, z, BlockType.BRICK); // world-gen, not player-placed
+                }
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        assertEquals(0, tracker.getLargeStructures().size(),
+                "World-generated BRICK blocks should NOT trigger structure detection");
+    }
+
+    @Test
+    void testCardboardStructureDetected() {
+        // CARDBOARD shelter (10x2x7 = 140 blocks) - above threshold
+        for (int x = 60; x < 70; x++) {
+            for (int y = 1; y < 3; y++) {
+                for (int z = 60; z < 67; z++) {
+                    world.setPlayerBlock(x, y, z, BlockType.CARDBOARD);
+                }
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        assertTrue(tracker.getLargeStructures().size() >= 1,
+                "CARDBOARD structure should be detected");
+    }
+
+    @Test
+    void testConcreteStructureDetected() {
+        // CONCRETE structure (5x5x5 = 125 blocks)
+        for (int x = 70; x < 75; x++) {
+            for (int y = 1; y < 6; y++) {
+                for (int z = 70; z < 75; z++) {
+                    world.setPlayerBlock(x, y, z, BlockType.CONCRETE);
+                }
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        assertTrue(tracker.getLargeStructures().size() >= 1,
+                "CONCRETE structure should be detected");
     }
 
     @Test
@@ -34,7 +168,7 @@ class StructureTrackerTest {
         for (int x = 10; x < 12; x++) {
             for (int y = 1; y < 3; y++) {
                 for (int z = 10; z < 12; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -51,7 +185,7 @@ class StructureTrackerTest {
         for (int x = 20; x < 25; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 20; z < 25; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -70,7 +204,7 @@ class StructureTrackerTest {
         for (int x = 30; x < 35; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 30; z < 35; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -85,7 +219,7 @@ class StructureTrackerTest {
         for (int x = 30; x < 35; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 30; z < 35; z++) {
-                    world.setBlock(x, y, z, BlockType.AIR);
+                    world.setPlayerBlock(x, y, z, BlockType.AIR);
                 }
             }
         }
@@ -94,7 +228,7 @@ class StructureTrackerTest {
         for (int x = 40; x < 50; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 40; z < 45; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }

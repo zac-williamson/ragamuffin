@@ -56,7 +56,7 @@ class Phase7IntegrationTest {
         for (int x = 10; x < 12; x++) {
             for (int y = 1; y < 3; y++) {
                 for (int z = 10; z < 12; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -107,7 +107,7 @@ class Phase7IntegrationTest {
         for (int x = 20; x < 25; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 20; z < 25; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -184,7 +184,7 @@ class Phase7IntegrationTest {
         for (int x = 30; x < 35; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 30; z < 35; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -260,7 +260,7 @@ class Phase7IntegrationTest {
         for (int x = 40; x < 45; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 40; z < 45; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -348,7 +348,7 @@ class Phase7IntegrationTest {
         for (int x = 50; x < 55; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 50; z < 55; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -372,7 +372,7 @@ class Phase7IntegrationTest {
         for (int x = 60; x < 70; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 60; z < 65; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -411,7 +411,7 @@ class Phase7IntegrationTest {
         for (int x = 70; x < 75; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 70; z < 75; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -461,7 +461,7 @@ class Phase7IntegrationTest {
         for (int x = 10; x < 15; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 10; z < 15; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }
@@ -551,7 +551,7 @@ class Phase7IntegrationTest {
         for (int x = 60; x < 65; x++) {
             for (int y = 1; y < 6; y++) {
                 for (int z = 60; z < 65; z++) {
-                    world.setBlock(x, y, z, BlockType.WOOD);
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
                 }
             }
         }

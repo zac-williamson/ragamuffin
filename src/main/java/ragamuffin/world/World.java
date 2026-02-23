@@ -35,6 +35,7 @@ public class World {
     private final Set<String> planningNoticeBlocks; // Blocks with planning notices (Phase 7)
     private final Set<String> dirtyChunks; // Chunks needing mesh rebuild
     private final Set<String> openDoors; // Open door positions (world coords of DOOR_LOWER)
+    private final Set<String> playerPlacedBlocks; // Positions where player has placed blocks
 
     public World(long seed) {
         this.seed = seed;
@@ -45,6 +46,7 @@ public class World {
         this.planningNoticeBlocks = new HashSet<>();
         this.dirtyChunks = new HashSet<>();
         this.openDoors = new HashSet<>();
+        this.playerPlacedBlocks = new HashSet<>();
     }
 
     /**
@@ -92,6 +94,36 @@ public class World {
         int localZ = Math.floorMod(z, Chunk.SIZE);
 
         chunk.setBlock(localX, localY, localZ, type);
+    }
+
+    /**
+     * Set a block at world coordinates, recording it as player-placed.
+     * Player-placed blocks are tracked so the council enforcement system can
+     * distinguish between player shelters and world-generated buildings.
+     * If type is AIR, the block is removed from the player-placed set.
+     */
+    public void setPlayerBlock(int x, int y, int z, BlockType type) {
+        setBlock(x, y, z, type);
+        String key = x + "," + y + "," + z;
+        if (type == BlockType.AIR) {
+            playerPlacedBlocks.remove(key);
+        } else {
+            playerPlacedBlocks.add(key);
+        }
+    }
+
+    /**
+     * Check if a block position was placed by the player (not world-generated).
+     */
+    public boolean isPlayerPlaced(int x, int y, int z) {
+        return playerPlacedBlocks.contains(x + "," + y + "," + z);
+    }
+
+    /**
+     * Get the set of all player-placed block positions (as "x,y,z" keys).
+     */
+    public Set<String> getPlayerPlacedBlocks() {
+        return playerPlacedBlocks;
     }
 
     /**
