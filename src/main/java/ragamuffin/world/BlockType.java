@@ -175,6 +175,8 @@ public enum BlockType {
             case GARDEN_WALL:
             case TILE_WHITE:
             case TILE_BLACK:
+            case LEAVES:
+            case CORRUGATED_METAL:
                 return true;
             default:
                 return false;
@@ -270,6 +272,25 @@ public enum BlockType {
                     clamp01(base.r + foldVar + variation),
                     clamp01(base.g + foldVar * 0.8f + variation * 0.7f),
                     clamp01(base.b + foldVar * 0.5f + variation * 0.4f), base.a);
+
+            case LEAVES:
+                // Foliage dappling — light and dark patches to break up uniform green
+                float leafVar = ((hash & 0x3FF) / 1023.0f - 0.5f) * 0.14f;
+                boolean isDark = ((hash >> 10) & 3) == 0; // ~25% darker patches
+                float leafShift = isDark ? -0.06f : leafVar;
+                return new Color(
+                    clamp01(base.r + leafShift * 0.5f + variation),
+                    clamp01(base.g + leafShift + variation * 0.8f),
+                    clamp01(base.b + leafShift * 0.3f), base.a);
+
+            case CORRUGATED_METAL:
+                // Horizontal corrugation ridges — darker valleys, lighter peaks
+                boolean isRidge = (worldY % 2 == 0);
+                float ridgeShift = isRidge ? 0.06f : -0.06f;
+                return new Color(
+                    clamp01(base.r + ridgeShift + variation * 0.5f),
+                    clamp01(base.g + ridgeShift + variation * 0.5f),
+                    clamp01(base.b + ridgeShift * 0.8f + variation * 0.4f), base.a);
 
             default:
                 return base;
