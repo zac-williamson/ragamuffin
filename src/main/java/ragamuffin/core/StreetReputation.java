@@ -97,6 +97,28 @@ public class StreetReputation {
     }
 
     /**
+     * Get the reputation as a star count (0–5), GTA-style.
+     *
+     * Stars scale with points:
+     *   0 stars  — NOBODY (0–9 pts)
+     *   1 star   — KNOWN, early (10–19 pts)
+     *   2 stars  — KNOWN, established (20–29 pts)
+     *   3 stars  — NOTORIOUS, fresh (30–44 pts)
+     *   4 stars  — NOTORIOUS, feared (45–59 pts)
+     *   5 stars  — NOTORIOUS, legend (60+ pts)
+     *
+     * @return star count 0 to 5 inclusive
+     */
+    public int getStarCount() {
+        if (points >= 60) return 5;
+        if (points >= 45) return 4;
+        if (points >= NOTORIOUS_THRESHOLD) return 3;
+        if (points >= 20) return 2;
+        if (points >= KNOWN_THRESHOLD) return 1;
+        return 0;
+    }
+
+    /**
      * Reset reputation to zero — called on arrest or player reset.
      * The streets forget quickly when you're locked up.
      */
