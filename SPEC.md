@@ -2438,3 +2438,68 @@ public boolean punchBlock(World world, int x, int y, int z, Material tool) {
    it 3 times (returns false each time — protection active). Call `world.removePoliceTape(5, 1, 5)`.
    Punch it 5 more times. Verify the block breaks on the 5th punch (hit counter reset to 0
    by the protection guard, now normal 5-hit break from fresh state).
+
+---
+
+## Bug Fix: `demolishBlock()` does not clear police tape — demolished blocks leave ghost protection entries
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — when a council builder demolishes a police-taped block via
+`NPCManager.demolishBlock()`, the position is removed from the world and from `StructureTracker`,
+but it is **not** removed from `World.protectedBlocks`. Any new block placed at that position by
+the player is then permanently protected (unbreakable by the player), because `BlockBreaker.punchBlock()`
+checks `world.isProtected()` and returns `false` unconditionally.
+
+**Problem**: In `NPCManager.demolishBlock()`:
+
+```java
+world.setBlock(x, y, z, BlockType.AIR);
+world.markBlockDirty(x, y, z);
+structure.removeBlock(blockToRemove);
+structureTracker.removeBlock(x, y, z);
+if (blockBreaker != null) {
+    blockBreaker.clearHits(x, y, z);
+}
+world.removePlanningNotice(x, y, z);
+// ← world.removePoliceTape(x, y, z) is MISSING here
+```
+
+`world.removePlanningNotice()` is correctly called, but `world.removePoliceTape()` is not.
+The `protectedBlocks` set in `World` is populated by `world.addPoliceTape()` (called from
+`applyPoliceTapeToStructure()` in `NPCManager`) and only cleared by `world.removePoliceTape()`.
+Since `demolishBlock()` never calls `removePoliceTape()`, the position stays in `protectedBlocks`
+indefinitely — a ghost entry for a block that no longer exists.
+
+The consequence: if the player rebuilds at the same location (likely, since it was their structure),
+the new block is permanently shielded from the player's own punches. The player cannot reclaim
+the position they themselves built on.
+
+**Required fix**: Add `world.removePoliceTape(x, y, z)` to `demolishBlock()` after setting the block
+to AIR:
+
+```java
+world.setBlock(x, y, z, BlockType.AIR);
+world.markBlockDirty(x, y, z);
+world.removePoliceTape(x, y, z);   // ← clear ghost protection entry
+structure.removeBlock(blockToRemove);
+structureTracker.removeBlock(x, y, z);
+if (blockBreaker != null) {
+    blockBreaker.clearHits(x, y, z);
+}
+world.removePlanningNotice(x, y, z);
+```
+
+**Integration tests**:
+
+1. **Demolished taped block does not permanently protect future placements**: Place a WOOD block
+   at (5, 1, 5). Call `world.addPoliceTape(5, 1, 5)`. Verify `world.isProtected(5, 1, 5)` is
+   `true`. Simulate a council builder demolishing the block by calling `world.setBlock(5, 1, 5,
+   BlockType.AIR)` and `world.removePoliceTape(5, 1, 5)` (the fixed path). Verify
+   `world.isProtected(5, 1, 5)` is now `false`. Place a new WOOD block at (5, 1, 5). Punch it
+   5 times. Verify it is now AIR (the new block was breakable — no ghost protection).
+
+2. **Ghost protection regression (unfixed path)**: Reproduce without the fix — place, tape, then
+   call only `world.setBlock(5, 1, 5, BlockType.AIR)` without `removePoliceTape`. Verify
+   `world.isProtected(5, 1, 5)` is still `true`. Place a new WOOD block. Punch it 10 times.
+   Verify it is still WOOD (ghost protection blocks all punches).
