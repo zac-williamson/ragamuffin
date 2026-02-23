@@ -310,6 +310,55 @@ class Phase3IntegrationTest {
     }
 
     /**
+     * Integration Test 11: Block hit counter resets when block is replaced.
+     * Place a TREE_TRUNK block at (5, 1, 5). Punch it 3 times (not enough to break).
+     * Simulate external removal via world.setBlock(..., AIR) and clearHits (as done
+     * by council builder NPCs). Place a new TREE_TRUNK block at (5, 1, 5). Punch it
+     * 4 times — verify it is still present. Punch a 5th time — verify it breaks and
+     * inventory contains exactly 1 WOOD item.
+     */
+    @Test
+    void test11_HitCounterResetsWhenBlockReplaced() {
+        // Place TREE_TRUNK at (5, 1, 5)
+        world.setBlock(5, 1, 5, BlockType.TREE_TRUNK);
+
+        // Punch it 3 times — not enough to break
+        for (int i = 0; i < 3; i++) {
+            assertFalse(blockBreaker.punchBlock(world, 5, 1, 5));
+        }
+        assertEquals(3, blockBreaker.getHitCount(5, 1, 5));
+        assertEquals(BlockType.TREE_TRUNK, world.getBlock(5, 1, 5));
+
+        // External removal (simulating NPC demolishBlock behaviour)
+        world.setBlock(5, 1, 5, BlockType.AIR);
+        blockBreaker.clearHits(5, 1, 5);
+
+        // Verify hit count is cleared
+        assertEquals(0, blockBreaker.getHitCount(5, 1, 5));
+
+        // Place a new TREE_TRUNK at the same position
+        world.setBlock(5, 1, 5, BlockType.TREE_TRUNK);
+
+        // Punch 4 times — should NOT break (requires 5 hits from fresh)
+        for (int i = 0; i < 4; i++) {
+            assertFalse(blockBreaker.punchBlock(world, 5, 1, 5),
+                    "Block should not break on hit " + (i + 1) + " of the new block");
+        }
+        assertEquals(BlockType.TREE_TRUNK, world.getBlock(5, 1, 5),
+                "Block should still be present after 4 hits");
+
+        // 5th punch — should break
+        boolean broken = blockBreaker.punchBlock(world, 5, 1, 5);
+        assertTrue(broken, "Block should break on 5th hit");
+        assertEquals(BlockType.AIR, world.getBlock(5, 1, 5));
+
+        // Collect drop and verify inventory
+        Material drop = dropTable.getDrop(BlockType.TREE_TRUNK, null);
+        inventory.addItem(drop, 1);
+        assertEquals(1, inventory.getItemCount(Material.WOOD));
+    }
+
+    /**
      * Integration Test 10: Multiple block breaks accumulate in inventory.
      * Place the player adjacent to 3 TREE_TRUNK blocks. Break all 3 (5 punches
      * each, repositioning between them). Verify the inventory contains exactly

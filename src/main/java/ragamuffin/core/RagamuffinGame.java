@@ -241,6 +241,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 5: Initialize NPC system
         npcManager = new NPCManager();
+        npcManager.setBlockBreaker(blockBreaker);
         spawnInitialNPCs();
 
         // Phase 6: Initialize day/night cycle and lighting
@@ -1438,7 +1439,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         hotbarUI = new HotbarUI(inventory);
         craftingUI = new CraftingUI(craftingSystem, inventory);
 
-        // Reset NPCs
+        // Reset NPCs (blockBreaker wired below after it is re-created)
         npcManager = new NPCManager();
         spawnInitialNPCs();
 
@@ -1449,6 +1450,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Reset game systems
         blockBreaker = new BlockBreaker();
+        npcManager.setBlockBreaker(blockBreaker);
         tooltipSystem = new TooltipSystem();
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
         interactionSystem = new InteractionSystem();
