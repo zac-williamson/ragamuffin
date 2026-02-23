@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.building.*;
 import ragamuffin.core.ShelterDetector;
+import ragamuffin.core.TimeSystem;
 import ragamuffin.core.Weather;
 import ragamuffin.core.WeatherSystem;
 import ragamuffin.entity.Player;
@@ -314,6 +315,40 @@ public class Phase12IntegrationTest {
 
         // Verify health unchanged
         assertEquals(100, player.getHealth(), 0.01f, "Health should remain 100 when sheltered");
+    }
+
+    /**
+     * Test 11: Weather transitions occur within 300 real seconds using game-time delta.
+     * Simulate 300 real seconds at 60fps, calling timeSystem.update(1/60f) and
+     * weatherSystem.update(1/60f * timeSystem.getTimeSpeed() * 3600f) each frame.
+     * Verify at least 2 weather transitions occurred.
+     */
+    @Test
+    public void testWeatherTransitionsWithGameTimeDelta() {
+        TimeSystem timeSystem = new TimeSystem();
+        WeatherSystem ws = new WeatherSystem();
+
+        Weather initial = ws.getCurrentWeather();
+        int transitions = 0;
+        Weather last = initial;
+
+        // Simulate 300 real seconds at 60 fps
+        int totalFrames = 300 * 60;
+        for (int i = 0; i < totalFrames; i++) {
+            float realDelta = 1.0f / 60.0f;
+            timeSystem.update(realDelta);
+            float gameTimeDeltaSeconds = realDelta * timeSystem.getTimeSpeed() * 3600f;
+            ws.update(gameTimeDeltaSeconds);
+
+            Weather current = ws.getCurrentWeather();
+            if (current != last) {
+                transitions++;
+                last = current;
+            }
+        }
+
+        assertTrue(transitions >= 2,
+            "Expected at least 2 weather transitions in 300 real seconds, got: " + transitions);
     }
 
     /**

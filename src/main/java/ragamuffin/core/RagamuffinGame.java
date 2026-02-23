@@ -488,18 +488,16 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Update time system (only when not paused in opening sequence)
             if (!openingSequence.isActive()) {
-                // Convert delta (real seconds) to game time seconds
-                // Assuming 1 real second = 1 game second for now
-                float gameTimeDelta = delta;
-
                 timeSystem.update(delta);
                 npcManager.setGameTime(timeSystem.getTime());
                 lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
                 updateSkyColour(timeSystem.getTime());
                 clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
 
-                // Phase 12: Update weather system
-                weatherSystem.update(gameTimeDelta);
+                // Phase 12: Update weather system with game-time seconds
+                // timeSpeed (hours/real-second) * 3600 = game-seconds per real-second
+                float gameTimeDeltaSeconds = delta * timeSystem.getTimeSpeed() * 3600f;
+                weatherSystem.update(gameTimeDeltaSeconds);
 
                 // Update police spawning based on time
                 npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
