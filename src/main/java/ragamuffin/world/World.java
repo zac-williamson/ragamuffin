@@ -231,6 +231,27 @@ public class World {
     }
 
     /**
+     * Mark the chunk containing world block (x, y, z) dirty, plus any neighbouring
+     * chunks if the block sits on a chunk boundary. Use this when a block is changed
+     * by a system that does not have access to RagamuffinGame.rebuildChunkAt().
+     */
+    public void markBlockDirty(int x, int y, int z) {
+        int chunkX = Math.floorDiv(x, Chunk.SIZE);
+        int chunkY = Math.floorDiv(y, Chunk.HEIGHT);
+        int chunkZ = Math.floorDiv(z, Chunk.SIZE);
+        markChunkDirty(chunkX, chunkY, chunkZ);
+        int localX = Math.floorMod(x, Chunk.SIZE);
+        int localY = Math.floorMod(y, Chunk.HEIGHT);
+        int localZ = Math.floorMod(z, Chunk.SIZE);
+        if (localX == 0) markChunkDirty(chunkX - 1, chunkY, chunkZ);
+        if (localX == Chunk.SIZE - 1) markChunkDirty(chunkX + 1, chunkY, chunkZ);
+        if (localY == 0) markChunkDirty(chunkX, chunkY - 1, chunkZ);
+        if (localY == Chunk.HEIGHT - 1) markChunkDirty(chunkX, chunkY + 1, chunkZ);
+        if (localZ == 0) markChunkDirty(chunkX, chunkY, chunkZ - 1);
+        if (localZ == Chunk.SIZE - 1) markChunkDirty(chunkX, chunkY, chunkZ + 1);
+    }
+
+    /**
      * Register a landmark in the world.
      */
     public void addLandmark(Landmark landmark) {
