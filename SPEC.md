@@ -2300,3 +2300,77 @@ if (npc.getType() == NPCType.YOUTH_GANG
    WANDERING state adjacent to the player. Give the player 3 WOOD. Advance until the NPC
    is within 2 blocks. Simulate 30 frames. Verify the NPC switched to STEALING and the
    player lost 1 WOOD item (stealing still works in non-combat state).
+
+---
+
+## Bug Fix: Patrolling police attack player unconditionally due to `isHostile()` flag
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — in `NPCManager.update()`, the NPC attack check uses
+`npc.getType().isHostile()` as the primary condition for POLICE to attack. Because
+`NPCType.POLICE` is declared with `hostile = true`, a police NPC in **any** state
+(PATROLLING, WARNING, IDLE) will punch the player for 10 HP every second whenever
+the player walks within 1.8 blocks — regardless of reputation or prior behaviour.
+
+**Problem**: In `NPCManager.update()`:
+
+```java
+if (npc.getType().isHostile() && npc.isNear(player.getPosition(), attackRange)) {
+    shouldAttack = true;
+}
+```
+
+`isHostile()` returns `true` for POLICE unconditionally. A PATROLLING officer strolling
+through the park will deal 10 HP/s to any player who stands within 1.8 blocks. With a
+1-second attack cooldown and the player having 100 HP, the player dies in 10 seconds of
+casual proximity — before any warning is issued.
+
+The `isHostile` flag was intended to mean "will seek out and fight the player" (like
+YOUTH_GANG), but for POLICE it should mean "will escalate when warranted." The attack
+logic should only fire when the police NPC is in AGGRESSIVE or ARRESTING state, not
+during PATROLLING or WARNING.
+
+**Required fix**: Gate the `isHostile()` attack path on combat-active states so that
+passive police (PATROLLING, WARNING) only deal damage when AGGRESSIVE or ARRESTING:
+
+```java
+boolean inCombatState = npc.getState() == NPCState.AGGRESSIVE
+    || npc.getState() == NPCState.ARRESTING;
+if ((npc.getType().isHostile() && inCombatState && npc.isNear(player.getPosition(), attackRange))
+        || (npc.getState() == NPCState.AGGRESSIVE && npc.isNear(player.getPosition(), attackRange))) {
+    shouldAttack = true;
+}
+```
+
+Or more cleanly: only treat non-POLICE hostile types (YOUTH_GANG) as always-attacking
+based on the flag; gate POLICE attacks behind state:
+
+```java
+if (npc.getType() == NPCType.POLICE) {
+    // Police only attack when actively pursuing/arresting
+    if ((npc.getState() == NPCState.AGGRESSIVE || npc.getState() == NPCState.ARRESTING)
+            && npc.isNear(player.getPosition(), attackRange)) {
+        shouldAttack = true;
+    }
+} else if (npc.getType().isHostile() && npc.isNear(player.getPosition(), attackRange)) {
+    shouldAttack = true;
+} else if (npc.getState() == NPCState.AGGRESSIVE && npc.isNear(player.getPosition(), attackRange)) {
+    shouldAttack = true;
+}
+```
+
+**Integration tests**:
+
+1. **Patrolling police does not attack player**: Spawn a POLICE NPC in PATROLLING state
+   1.0 blocks from the player (within attack range 1.8). Give the player 100 HP. Simulate
+   60 frames (1 second). Verify the player's health is still 100 HP (no damage from
+   patrolling police).
+
+2. **AGGRESSIVE police attacks player in range**: Spawn a POLICE NPC in AGGRESSIVE state
+   1.0 blocks from the player. Simulate 10 frames. Verify the player's health has
+   decreased (police in AGGRESSIVE state should deal damage).
+
+3. **WARNING police does not attack player**: Spawn a POLICE NPC in WARNING state 1.0
+   blocks from the player. Simulate 60 frames. Verify the player's health is unchanged
+   (warning-phase police should not deal damage).
