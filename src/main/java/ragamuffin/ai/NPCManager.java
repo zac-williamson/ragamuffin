@@ -1312,12 +1312,13 @@ public class NPCManager {
     }
 
     /**
-     * Update police spawning — police patrol at night (22:00-06:00). At dawn, all police
-     * are despawned. At night, officers are spawned up to the cap based on player notoriety.
+     * Update police spawning — police patrol at night (seasonal: after sunset, before sunrise).
+     * At dawn, all police are despawned. At night, officers are spawned up to the cap based on
+     * player notoriety.
+     *
+     * @param isNight true if it is currently night (from TimeSystem.isNight())
      */
-    public void updatePoliceSpawning(float time, World world, Player player) {
-        boolean isNight = time >= 22.0f || time < 6.0f;
-
+    public void updatePoliceSpawning(boolean isNight, World world, Player player) {
         // Despawn police at dawn (night → day transition)
         if (wasNight && !isNight) {
             despawnPolice();

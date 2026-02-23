@@ -194,8 +194,8 @@ class NPCManagerTest {
                 .filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
         assertEquals(3, beforeCount, "Expected 3 police before daytime update");
 
-        // Simulate a daytime frame at 8:00 AM — police must NOT be despawned
-        manager.updatePoliceSpawning(8.0f, world, player);
+        // Simulate a daytime frame (isNight=false) — police must NOT be despawned
+        manager.updatePoliceSpawning(false, world, player);
 
         long afterCount = manager.getNPCs().stream()
                 .filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
@@ -215,7 +215,7 @@ class NPCManagerTest {
         // Call at night — the cap is 4, so a 4th officer should eventually be spawned.
         // Reset cooldown by direct inspection isn't possible, but we can verify the
         // daytime call with exactly-cap police does NOT add more.
-        manager.updatePoliceSpawning(8.0f, world, player); // daytime, cap=3, already have 3 → no spawn
+        manager.updatePoliceSpawning(false, world, player); // daytime, cap=3, already have 3 → no spawn
         long countAfterDay = manager.getNPCs().stream()
                 .filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();
         assertEquals(3, countAfterDay, "Daytime should not spawn extra police beyond cap of 3");
@@ -231,7 +231,7 @@ class NPCManagerTest {
         manager.spawnNPC(NPCType.POLICE, 10, 1, 5);
 
         // Fresh manager: cooldown is 0, so updatePoliceSpawning will execute immediately.
-        manager.updatePoliceSpawning(8.0f, world, player); // daytime, cap=3, have 2 → 1 slot
+        manager.updatePoliceSpawning(false, world, player); // daytime, cap=3, have 2 → 1 slot
 
         long policeCount = manager.getNPCs().stream()
                 .filter(n -> n.getType() == NPCType.POLICE && n.isAlive()).count();

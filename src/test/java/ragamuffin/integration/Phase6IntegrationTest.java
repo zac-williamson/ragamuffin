@@ -169,7 +169,7 @@ class Phase6IntegrationTest {
     void test3_PoliceSpawnAtNightDespawnAtDawn() {
         // Set to 22:00 (night) — police should spawn
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         // Count POLICE NPCs — at least some should exist now
         long policeCountNight = npcManager.getNPCs().stream()
@@ -181,7 +181,7 @@ class Phase6IntegrationTest {
 
         // Advance to 06:00 (morning / dawn) — police must be despawned
         timeSystem.setTime(6.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeCountMorning = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -260,7 +260,7 @@ class Phase6IntegrationTest {
 
         // Set to 22:00
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         // Position police close to structure
         for (NPC npc : npcManager.getNPCs()) {
@@ -336,7 +336,7 @@ class Phase6IntegrationTest {
 
         // Set to 22:00
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         // Get police NPC
         NPC police = npcManager.getNPCs().stream()
@@ -393,7 +393,7 @@ class Phase6IntegrationTest {
 
         // Set to 22:00 (night) and spawn police
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         // Position police near player
         for (NPC npc : npcManager.getNPCs()) {
@@ -432,7 +432,7 @@ class Phase6IntegrationTest {
 
         // Set to 22:00 (night) and spawn police
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         // Position police right next to the player (within 2 blocks) so WARNING
         // triggers immediately on frame 1, and the structure is within 20 blocks.
@@ -478,7 +478,7 @@ class Phase6IntegrationTest {
 
         // Set to 22:00
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         // Get police
         NPC police = npcManager.getNPCs().stream()
@@ -539,7 +539,7 @@ class Phase6IntegrationTest {
     void testIssue102_PoliceDespawnAtDawn() {
         // Night: spawn police
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeAtNight = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -548,7 +548,7 @@ class Phase6IntegrationTest {
 
         // Dawn transition: despawn police
         timeSystem.setTime(6.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeAtDawn = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -566,7 +566,7 @@ class Phase6IntegrationTest {
         // --- Cycle 1 ---
         // Night 1: spawn police
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeNight1 = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -576,7 +576,7 @@ class Phase6IntegrationTest {
 
         // Dawn 1: despawn
         timeSystem.setTime(6.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeDawn1 = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -589,7 +589,7 @@ class Phase6IntegrationTest {
         // --- Cycle 2 ---
         // Night 2: spawn police
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeNight2 = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -599,7 +599,7 @@ class Phase6IntegrationTest {
 
         // Dawn 2: despawn
         timeSystem.setTime(6.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeDawn2 = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -616,7 +616,7 @@ class Phase6IntegrationTest {
     void testIssue102_FreshPoliceSpawnAfterDawnDespawn() {
         // Night 1: spawn police
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         List<NPC> policeList = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -629,7 +629,7 @@ class Phase6IntegrationTest {
 
         // Dawn: despawn all remaining police
         timeSystem.setTime(6.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeDawn = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
@@ -641,7 +641,7 @@ class Phase6IntegrationTest {
 
         // Night 2: fresh police should spawn
         timeSystem.setTime(22.0f);
-        npcManager.updatePoliceSpawning(timeSystem.getTime(), world, player);
+        npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
         long policeNight2 = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.POLICE && npc.isAlive())
