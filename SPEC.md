@@ -2857,3 +2857,56 @@ Add `Player.SPRINT_ENERGY_DRAIN = 8.0f` as a named constant.
 4. **Energy recovers after stopping sprint**: Set player energy to 20. Stop all movement
    for 4 seconds. Verify `player.getEnergy()` >= 40 (recovery at 5 HP/s = 20 pts over
    4s, plus starting 20 = 40).
+
+---
+
+## Bug: Council builder removal inside indexed NPC loop skips the following NPC each frame
+
+**Date:** 2026-02-23
+**Status:** Open
+
+**Symptom:** Whenever a council builder finishes demolishing a structure and is removed,
+the NPC that immediately follows it in the `npcs` list is silently skipped for that
+entire game-logic frame. In scenes with multiple NPCs this means police may fail to
+pursue the player, youth gangs freeze mid-theft, and speech timers don't tick — for
+exactly one frame per builder dismissal. With several builders cycling through over a
+session this adds up to observable hitches in NPC behaviour.
+
+**Root cause:** `NPCManager.update()` iterates over `npcs` with an indexed `for` loop
+(line 307) specifically to avoid `ConcurrentModificationException` from spawning new
+NPCs during iteration. However, `updateCouncilBuilder()` (called from within that loop)
+calls `npcs.remove(builder)` directly at line 1722 when the builder's target structure
+is demolished. Removing an element at index `i` shifts every subsequent element one
+position left. The loop then increments `i` to `i+1`, which now points to what was
+previously `i+2` — so the NPC originally at `i+1` is never processed this frame.
+
+```java
+// In NPCManager.updateCouncilBuilder() — WRONG
+if (target == null || target.isEmpty()) {
+    npcs.remove(builder);   // ← shifts the list, next element skipped
+    ...
+    return;
+}
+```
+
+The `removeIf` guard at line 291 only removes NPCs where `!isAlive()` — council builders
+are alive when they finish their job, so they bypass that path entirely.
+
+**Required fix:** Do not call `npcs.remove()` inside `updateCouncilBuilder()`. Instead,
+mark the builder for deferred removal (e.g. set `alive = false` via `builder.takeDamage(9999f)`
+or add a dedicated `pendingRemoval` flag) and let the existing `removeIf` at the top of
+`update()` handle the cleanup at the start of the next frame, before the `for` loop runs.
+
+**Integration tests** (add to Phase7IntegrationTest or a new CouncilBuilderRemovalTest):
+
+1. **NPC after builder is not skipped on builder removal**: Spawn a council builder
+   targeting a structure. Spawn a second NPC (e.g. PUBLIC) immediately after the builder
+   in the NPC list. Tick the manager until the builder's structure target is empty (trigger
+   removal). Verify that on the same frame, the PUBLIC NPC's state/timers have been
+   updated (e.g. its speech timer decreased) — demonstrating it was not skipped.
+
+2. **Multiple builders removed in one frame do not corrupt NPC list**: Spawn 3 council
+   builders all targeting already-empty structures (so they are all removed on the first
+   update). Spawn 5 civilian NPCs after them. After one `update()` call, verify that all
+   5 civilian NPCs are present in `npcManager.getNPCs()` and have had their timers ticked
+   (none were orphaned or skipped).
