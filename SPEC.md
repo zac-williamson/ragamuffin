@@ -1900,3 +1900,81 @@ world.markBlockDirty(x, y, z);  // Trigger mesh rebuild so demolished block disa
 3. **Player can no longer collide with demolished block**: After demolition and mesh rebuild,
    place the player adjacent to the demolished position. Simulate pressing W for 30 frames.
    Verify the player moves into the space where the block was (no collision barrier remains).
+
+---
+
+## Bug Fix: RespawnSystem hardcodes Y=1 — player respawns inside terrain
+
+**Discovered**: 2026-02-23
+
+**Problem**: `RespawnSystem.PARK_CENTRE` is `new Vector3(0, 1, 0)`. On death,
+`performRespawn()` teleports the player to Y=1 unconditionally. But the terrain height at
+(0, 0) is determined dynamically by `RagamuffinGame.calculateSpawnHeight()`, which scans
+from Y=64 downward and returns `y + 1` for the first solid block found.
+
+The park is generated with grass blocks. If those blocks sit at Y=1 (a common outcome
+depending on the world generator's terrain offset), the top face of those blocks is at
+Y=2.0. Respawning the player at Y=1 places them **inside** the solid block — feet at 1.0,
+block occupying [1, 2]. The collision system immediately detects the overlap, but the
+resolution is undefined: the player may be flung upward, pushed sideways, or fall through
+the floor depending on which collision axes are resolved first.
+
+Even when the terrain is at Y=0, `calculateSpawnHeight` returns 1 and `spawnY = 2`, but
+`PARK_CENTRE.y = 1` puts the respawn 1 block below the initial spawn height — meaning the
+player respawns 1 block inside the ground, not on top of it.
+
+**Root cause**: `PARK_CENTRE.y` was set to 1 as a placeholder and never linked to the
+actual terrain-aware spawn calculation that `initGame()` and `restartGame()` both use
+correctly via `calculateSpawnHeight(world, 0, 0) + 1.0f`.
+
+**Impact**: Every player death causes a broken respawn. Since survival games frequently
+end in death — especially in the early game when the player is learning the mechanics —
+this is triggered constantly. A respawn that drops the player into solid geometry or
+causes erratic physics immediately destroys player confidence and makes the game feel
+broken.
+
+**Required fix in `RespawnSystem.java`**:
+
+Remove the hardcoded `PARK_CENTRE` constant. Instead, pass the computed terrain height
+into the respawn method, or compute it inside `performRespawn()`:
+
+Option A — pass spawn Y from the game loop (preferred, keeps `RespawnSystem` world-agnostic):
+
+```java
+// RagamuffinGame.java — inside the respawn completion callback / update block:
+if (wasRespawning && !respawnSystem.isRespawning()) {
+    float respawnY = calculateSpawnHeight(world, 0, 0) + 1.0f;
+    respawnSystem.setRespawnY(respawnY);
+    deathMessage = null;
+}
+```
+
+Option B — calculate inside `RespawnSystem` (simpler but couples it to `World`):
+
+```java
+private void performRespawn(Player player, World world) {
+    float groundY = /* world.calculateSpawnHeight(0, 0) */ + 1.0f;
+    player.getPosition().set(0, groundY, 0);
+    ...
+}
+```
+
+Either approach ensures the respawn Y matches the actual terrain surface.
+
+**Integration tests** (add to Phase11IntegrationTest or a new RespawnSystemTest):
+
+1. **Player does not respawn inside terrain**: Generate the world. Kill the player (set
+   health to 0). Advance respawn timer to completion. Verify `player.getPosition().y` is
+   greater than the Y-coordinate of the solid ground block at (0, z) — i.e., the player's
+   feet are above, not inside, the terrain surface. Verify `world.getBlock(0,
+   (int) player.getPosition().y - 1, 0).isSolid()` is true (player is standing on solid
+   ground) and `world.getBlock(0, (int) player.getPosition().y, 0) == BlockType.AIR`
+   (player's foot block is air, not inside a solid block).
+
+2. **Player respawns at park centre (0, 0)**: After respawn, verify X and Z coordinates
+   are 0 (park centre). Verify health is 50, hunger is 50, energy is 100, and `isDead()`
+   is false.
+
+3. **Respawn is consistent across multiple deaths**: Kill the player twice in the same
+   session. Verify both respawns place the player at the same correct Y coordinate.
+   Verify no terrain clipping occurs on either respawn.
