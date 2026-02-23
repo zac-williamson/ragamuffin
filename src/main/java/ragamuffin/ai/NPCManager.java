@@ -1519,6 +1519,12 @@ public class NPCManager {
      * The game loop applies inventory confiscation and health/hunger penalties via ArrestSystem.
      */
     private void updatePoliceAggressive(NPC police, float delta, World world, Player player) {
+        // If player is sheltered, police back off and resume patrolling
+        if (ShelterDetector.isSheltered(world, player.getPosition())) {
+            police.setState(NPCState.PATROLLING);
+            return;
+        }
+
         // Move toward player
         setNPCTarget(police, player.getPosition(), world);
 
