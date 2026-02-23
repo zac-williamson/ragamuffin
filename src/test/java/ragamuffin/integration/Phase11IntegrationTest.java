@@ -399,4 +399,64 @@ class Phase11IntegrationTest {
         assertFalse(interactionTriggered, "No interaction should occur without NPC");
         // Test passes if no exception is thrown
     }
+
+    /**
+     * Integration Test 11: Healing does NOT trigger while moving at 240fps.
+     * Set health to 50, hunger to 100. Simulate player moving forward (non-zero displacement
+     * each frame) for 300 frames at delta=1/240. Verify restingTime never exceeds 0.1s
+     * and health stays at 50.
+     */
+    @Test
+    void test11_HealingDoesNotTriggerWhileMovingAt240fps() {
+        player.setHealth(50);
+        player.setHunger(100);
+        player.getPosition().set(0, 1, 0);
+
+        HealingSystem healingSystem = new HealingSystem();
+
+        float deltaPerFrame = 1.0f / 240.0f;
+        // MOVE_SPEED = 12 blocks/s, so displacement per frame = 12 * (1/240) = 0.05 blocks
+        float displacementPerFrame = 12.0f * deltaPerFrame;
+
+        for (int i = 0; i < 300; i++) {
+            // Move player forward each frame (simulating walking at MOVE_SPEED = 12 blocks/s)
+            player.getPosition().z -= displacementPerFrame;
+            healingSystem.update(deltaPerFrame, player);
+
+            assertTrue(healingSystem.getRestingTime() <= 0.1f,
+                    "restingTime should never exceed 0.1s while moving (frame " + i + ")");
+        }
+
+        assertEquals(50, player.getHealth(), 0.01, "Health should not change while moving");
+    }
+
+    /**
+     * Integration Test 12: Healing triggers correctly at high frame rate (240fps).
+     * Set health to 50, hunger to 100. Player stands still. Simulate 300 frames at
+     * delta=1/240 (~1.25s). Then simulate enough additional frames to accumulate 5s resting
+     * and receive healing. Verify restingTime >= 5s and health > 50.
+     */
+    @Test
+    void test12_HealingTriggersAtHighFrameRate() {
+        player.setHealth(50);
+        player.setHunger(100);
+        player.getPosition().set(0, 1, 0);
+
+        HealingSystem healingSystem = new HealingSystem();
+
+        float deltaPerFrame = 1.0f / 240.0f;
+        // Simulate enough frames to pass the 5s resting requirement and accumulate healing:
+        // 5s rest + 5s healing = 10s total = 2400 frames at 240fps, plus 1 initial frame
+        // to reset from lastPosition=(0,0,0) to (0,1,0).
+        // Use 2401 frames to ensure restingTime >= 5s and healing occurs.
+        for (int i = 0; i < 2401; i++) {
+            // Player does not move — position stays constant
+            healingSystem.update(deltaPerFrame, player);
+        }
+
+        assertTrue(healingSystem.getRestingTime() >= 5.0f,
+                "restingTime should accumulate to >= 5s when standing still at 240fps");
+        assertTrue(player.getHealth() > 50,
+                "Health should increase after resting 5+ seconds with sufficient hunger");
+    }
 }

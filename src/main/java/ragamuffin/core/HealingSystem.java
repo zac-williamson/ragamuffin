@@ -11,7 +11,7 @@ public class HealingSystem {
 
     public static final float HEAL_RATE_PER_SECOND = 5.0f;
     public static final float MIN_HUNGER_FOR_HEALING = 50.0f;
-    public static final float MOVEMENT_THRESHOLD = 0.1f; // Below this velocity = resting
+    public static final float MOVEMENT_THRESHOLD = 0.5f; // Below this speed (blocks/s) = resting
     public static final float RESTING_DURATION_REQUIRED = 5.0f; // Must rest for 5 seconds
 
     private float restingTime;
@@ -28,9 +28,9 @@ public class HealingSystem {
     public void update(float delta, Player player) {
         // Check if player is resting (not moving significantly)
         Vector3 currentPos = player.getPosition();
-        float distanceMoved = currentPos.dst(lastPosition);
+        float speed = (delta > 0) ? currentPos.dst(lastPosition) / delta : 0f;
 
-        if (distanceMoved < MOVEMENT_THRESHOLD) {
+        if (speed < MOVEMENT_THRESHOLD) {
             // Player is resting
             restingTime += delta;
         } else {
