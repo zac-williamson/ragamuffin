@@ -2601,3 +2601,75 @@ police "patrol at night" rather than living permanently in the world.
    Verify a replacement spawns to refill the cap. Advance to dawn. Verify all remaining police
    (the 2 surviving + 1 replacement) despawn. Advance to the next night. Verify exactly 3 (or
    the applicable night cap) fresh police spawn — not 0, not 6.
+
+---
+
+## Bug Fix: `StructureTracker` treats world-generated WOOD (allotments fence, sheds) as player structures
+
+**Discovered**: 2026-02-23
+
+**Status**: ❌ Broken — `StructureTracker.scanForStructures()` detects `BlockType.WOOD` blocks
+to identify player-built structures, but `WorldGenerator` also uses `BlockType.WOOD` for
+world-generated structures: the allotments perimeter fence and the allotment sheds. The allotments
+fence alone is 200 connected WOOD blocks (30-wide × 20-deep perimeter at 2 block height), far
+exceeding the `SMALL_STRUCTURE_THRESHOLD = 10`. As a result, council builders are dispatched to
+demolish the world-generated allotments fence ~30 seconds after game start — before the player
+has built anything.
+
+**Root cause**: A previous fix (documented above) correctly removed `BlockType.BRICK` from
+`StructureTracker.scanForStructures()` to prevent council builders from demolishing the entire
+generated town. However the fix left `BlockType.WOOD` as the sole detection target. The
+`WorldGenerator.generateAllotments()` method places `BlockType.WOOD` for the perimeter fence
+(2 heights × full perimeter = ~200 connected blocks) and the `buildShed()` helper also uses
+`BlockType.WOOD` for shed walls. The allotments fence and the shed network both exceed the
+10-block threshold:
+
+```
+generateAllotments(world, 60, -100, 30, 20)
+  → perimeter fence at y=1 and y=2: 2 × (30 + 20) × 2 = 200 WOOD blocks, all connected
+  → two sheds at y=1..2: ~8 WOOD blocks each (below threshold individually,
+    but connected to the fence if adjacent)
+```
+
+`StructureTracker.traceStructure()` does a flood-fill from any discovered WOOD block,
+so the entire 200-block fence is detected as a single player structure. The council builder
+system then dispatches 1+ builders to demolish it one block per second — erasing the allotments
+within ~3 minutes. This happens on every new game and every world reset, regardless of what the
+player builds.
+
+**Required fix**: The `WorldGenerator` should use a distinct `BlockType` (e.g. `BlockType.FENCE`
+or `BlockType.WOOD_FENCE`) for world-generated wooden fences and sheds so they are not mistaken
+for player structures. Alternatively, `StructureTracker` should maintain a set of
+world-generated block positions that are excluded from player-structure detection. The simplest
+approach is to add `BlockType.WOOD_FENCE` and `BlockType.WOOD_WALL` to the `BlockType` enum
+and use them in `generateAllotments()` and `buildShed()`, leaving `BlockType.WOOD` exclusively
+for player-placed blocks:
+
+In `WorldGenerator.generateAllotments()` and `buildShed()`, replace `BlockType.WOOD` with
+`BlockType.WOOD_FENCE` for the perimeter fence and `BlockType.WOOD_WALL` for shed walls.
+In `BlockType`, add:
+```java
+WOOD_FENCE(solid=true, colour=#8B4513, placeable=false),
+WOOD_WALL(solid=true, colour=#8B4513, placeable=false),
+```
+These types are solid (for collision/rendering) but `placeable=false` so the player cannot
+craft or select them. `StructureTracker.scanForStructures()` and `traceStructure()` already
+only look for `BlockType.WOOD`, so world-generated fences and sheds would no longer trigger
+detection with no further changes needed.
+
+**Integration tests**:
+
+1. **Council builders do NOT demolish allotments fence**: Generate the world (which creates the
+   allotments). Do NOT place any player blocks. Wait 35 seconds (or call
+   `npcManager.forceStructureScan(world, tooltipSystem)`). Verify
+   `npcManager.getStructureTracker().getStructures()` is empty. Verify no COUNCIL_BUILDER NPCs
+   have been spawned. Verify the allotments fence blocks (e.g., `world.getBlock(60, 1, -100)`)
+   are still WOOD_FENCE (or equivalent non-AIR type), not AIR.
+
+2. **Player-placed WOOD IS still detected**: Place 15 `BlockType.WOOD` blocks in a connected
+   cluster at (10, 1, 10) (simulating a player-built structure). Call
+   `npcManager.forceStructureScan(world, tooltipSystem)`. Verify exactly one structure is
+   detected. Verify a COUNCIL_BUILDER NPC has been spawned.
+
+3. **Regression — sheds not detected at game start**: Generate world. Force structure scan
+   immediately. Verify `structureTracker.getStructures()` is empty (no shed or fence detected).
