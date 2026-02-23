@@ -1718,11 +1718,10 @@ public class NPCManager {
 
         StructureTracker.Structure target = builderTargets.get(builder);
         if (target == null || target.isEmpty()) {
-            // No target or structure demolished - remove builder
-            npcs.remove(builder);
-            builderTargets.remove(builder);
-            builderKnockbackTimers.remove(builder);
-            builderDemolishTimers.remove(builder);
+            // No target or structure demolished - mark builder dead so removeIf at the
+            // top of update() handles cleanup next frame. Direct npcs.remove() here would
+            // shift the indexed loop's elements and silently skip the next NPC (#120).
+            builder.takeDamage(Float.MAX_VALUE);
             return;
         }
 

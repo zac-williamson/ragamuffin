@@ -258,4 +258,111 @@ class NPCManagerTest {
         // Should have stolen at least 1 wood
         assertTrue(inventory.getItemCount(Material.WOOD) < 5);
     }
+
+    /**
+     * Integration test for issue #120: NPC immediately after a council builder that
+     * finishes demolishing must not be skipped when the builder is removed.
+     *
+     * A COUNCIL_BUILDER with no assigned target triggers the removal path inside
+     * updateCouncilBuilder(). Before the fix, npcs.remove(builder) at index i would
+     * shift all subsequent elements left so the loop's i+1 pointed past the next NPC.
+     * After the fix, the builder is marked dead via takeDamage and removed by the
+     * removeIf at the top of the next update() call — the indexed loop is never
+     * disturbed.
+     *
+     * Canary: a YOUTH_GANG placed right next to the player should switch to STEALING
+     * state in the very first update frame (it is within 2.0f of the player). If the
+     * canary NPC is skipped that frame, its state stays at WANDERING.
+     */
+    @Test
+    void testNPCAfterBuilderNotSkippedOnBuilderRemoval() {
+        // Place player with items to steal
+        player.getPosition().set(0, 1, 0);
+        inventory.addItem(Material.WOOD, 5);
+
+        // Spawn a COUNCIL_BUILDER first (index 0). It has no builderTargets entry,
+        // so target == null and it will trigger the removal path immediately.
+        NPC builder = manager.spawnNPC(NPCType.COUNCIL_BUILDER, 30, 1, 30);
+        assertNotNull(builder);
+
+        // Spawn the canary NPC at index 1 — directly next to the player so it should
+        // switch to STEALING state in the first update frame if it is not skipped.
+        NPC canary = manager.spawnNPC(NPCType.YOUTH_GANG, 0.5f, 1, 0.5f);
+        assertNotNull(canary);
+
+        assertEquals(2, manager.getNPCs().size(), "Expected builder + canary before update");
+
+        // Single update frame — canary must be processed even though builder is removed
+        manager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+
+        // The builder should have been marked dead (alive == false) during this frame
+        assertFalse(builder.isAlive(),
+                "Builder should be marked dead after update (no target assigned)");
+
+        // The canary must have been updated: it was within 0.5 units of the player so
+        // the YOUTH_GANG logic should have set it to STEALING.
+        assertEquals(NPCState.STEALING, canary.getState(),
+                "Canary NPC was skipped — builder removal corrupted the indexed loop (issue #120)");
+
+        // Next frame: removeIf cleans up the dead builder; only canary remains
+        manager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+        long aliveCount = manager.getNPCs().stream().filter(NPC::isAlive).count();
+        assertEquals(1, aliveCount,
+                "Expected exactly 1 alive NPC (canary) after builder is cleaned up");
+    }
+
+    /**
+     * Integration test for issue #120: Multiple council builders removed in the same
+     * frame must not corrupt the NPC list or orphan subsequent NPCs.
+     *
+     * Three builders (indices 0, 1, 2) are followed by three canary NPCs (indices 3, 4, 5).
+     * Each builder has no target, so all three trigger the removal path in the same
+     * update() call. After the fix all three canaries must still receive their update.
+     */
+    @Test
+    void testMultipleBuildersRemovedSameFrameDoNotOrphanSubsequentNPCs() {
+        player.getPosition().set(0, 1, 0);
+        inventory.addItem(Material.WOOD, 10);
+
+        // Spawn three builders with no target (trigger removal path for each)
+        NPC builder1 = manager.spawnNPC(NPCType.COUNCIL_BUILDER, 30, 1, 30);
+        NPC builder2 = manager.spawnNPC(NPCType.COUNCIL_BUILDER, 31, 1, 30);
+        NPC builder3 = manager.spawnNPC(NPCType.COUNCIL_BUILDER, 32, 1, 30);
+        assertNotNull(builder1);
+        assertNotNull(builder2);
+        assertNotNull(builder3);
+
+        // Spawn three canary youth gangs immediately next to player (within 2.0f)
+        NPC canary1 = manager.spawnNPC(NPCType.YOUTH_GANG, 0.3f, 1, 0.3f);
+        NPC canary2 = manager.spawnNPC(NPCType.YOUTH_GANG, 0.5f, 1, 0.5f);
+        NPC canary3 = manager.spawnNPC(NPCType.YOUTH_GANG, 0.7f, 1, 0.7f);
+        assertNotNull(canary1);
+        assertNotNull(canary2);
+        assertNotNull(canary3);
+
+        assertEquals(6, manager.getNPCs().size(), "Expected 3 builders + 3 canaries");
+
+        // Single update frame — all three canaries must be processed
+        manager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+
+        // All builders must be dead (marked via takeDamage)
+        assertFalse(builder1.isAlive(), "Builder 1 should be dead after update");
+        assertFalse(builder2.isAlive(), "Builder 2 should be dead after update");
+        assertFalse(builder3.isAlive(), "Builder 3 should be dead after update");
+
+        // All canaries must have been updated — each should be STEALING because
+        // they are within 2.0f of the player's position.
+        assertEquals(NPCState.STEALING, canary1.getState(),
+                "Canary 1 was skipped — multiple builder removals corrupted the loop (issue #120)");
+        assertEquals(NPCState.STEALING, canary2.getState(),
+                "Canary 2 was skipped — multiple builder removals corrupted the loop (issue #120)");
+        assertEquals(NPCState.STEALING, canary3.getState(),
+                "Canary 3 was skipped — multiple builder removals corrupted the loop (issue #120)");
+
+        // After the next frame's removeIf only the three living canaries remain
+        manager.update(1.0f / 60.0f, world, player, inventory, tooltipSystem);
+        long aliveCount = manager.getNPCs().stream().filter(NPC::isAlive).count();
+        assertEquals(3, aliveCount,
+                "Expected exactly 3 alive NPCs (canaries) after all builders cleaned up");
+    }
 }
