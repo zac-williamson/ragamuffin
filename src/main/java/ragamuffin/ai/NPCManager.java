@@ -1708,6 +1708,17 @@ public class NPCManager {
     }
 
     /**
+     * Tick speech timers for all NPCs by delta seconds.
+     * Called in the PAUSED branch so speech bubbles continue to count down while paused,
+     * preventing them from persisting through the pause then expiring instantly on resume (Fix #397).
+     */
+    public void tickSpeechTimers(float delta) {
+        for (NPC npc : npcs) {
+            npc.updateTimers(delta);
+        }
+    }
+
+    /**
      * Update police spawning — police patrol at night (seasonal: after sunset, before sunrise).
      * At dawn, all police are despawned. At night, officers are spawned up to the cap based on
      * player notoriety.
