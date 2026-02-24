@@ -534,6 +534,35 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
             }
 
+            // Fix #435: Advance healing resting timer during the cinematic so the
+            // 5-second resting threshold continues to accumulate — mirrors Fix #381
+            // (the PAUSED branch, line ~933).  Without this the entire 8-second
+            // fly-through freezes the timer and any accumulated resting progress is
+            // discarded on the first PLAYING frame.
+            healingSystem.update(delta, player);
+
+            // Fix #435: Check for player death and advance the respawn countdown
+            // during the cinematic.  starvation damage and weather health drain
+            // (added in Fix #433) can reduce the player's health to zero during the
+            // fly-through; without this guard the game would transition to PLAYING
+            // with a dead player and only then trigger the respawn sequence —
+            // causing a one-frame soft-lock.  Mirrors the PAUSED branch (line ~882)
+            // and the PLAYING branch respawn block.
+            boolean cinematicJustDied = respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);
+            if (cinematicJustDied) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
+            boolean cinematicWasRespawning = respawnSystem.isRespawning();
+            respawnSystem.update(delta, player);
+            if (cinematicWasRespawning && !respawnSystem.isRespawning()) {
+                deathMessage = null;
+                greggsRaidSystem.reset();
+                player.getStreetReputation().reset();
+                healingSystem.resetPosition(player.getPosition());
+            }
+
             // Fix #427: Continue loading and meshing chunks during the cinematic so that
             // the world is fully built before the player takes control.  The cinematic
             // camera sweeps across a large area; without this, many chunks remain as bare
@@ -597,6 +626,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                 cinematicCamera.render(spriteBatch, shapeRenderer, font, sw, sh);
                 // Fix #428: Render opening sequence text overlaid on the cinematic (no black background).
                 openingSequence.renderTextOnly(spriteBatch, font, sw, sh);
+                // Fix #435: Overlay the death screen if the player died during the
+                // cinematic (e.g. from starvation or weather damage on a cold-snap
+                // night).  Mirrors the PAUSED branch (line ~893).
+                if (respawnSystem.isRespawning()) {
+                    renderDeathScreen();
+                }
             }
         } else if (state == GameState.PLAYING) {
             // Apply mouse look FIRST — before any game logic — to eliminate perceived lag.
