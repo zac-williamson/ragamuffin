@@ -6,6 +6,7 @@ package ragamuffin.core;
 public enum GameState {
     LOADING(false),
     MENU(false),
+    CINEMATIC(false),
     PLAYING(true),
     PAUSED(false);
 
