@@ -1697,6 +1697,17 @@ public class NPCManager {
     }
 
     /**
+     * Tick the police spawn cooldown by delta seconds.
+     * Called in the PAUSED branch so the cooldown continues to drain while the game is paused,
+     * preventing the swarm-spawn that would otherwise occur on resume (Fix #393).
+     */
+    public void tickSpawnCooldown(float delta) {
+        if (policeSpawnCooldown > 0) {
+            policeSpawnCooldown -= delta;
+        }
+    }
+
+    /**
      * Update police spawning — police patrol at night (seasonal: after sunset, before sunrise).
      * At dawn, all police are despawned. At night, officers are spawned up to the cap based on
      * player notoriety.
