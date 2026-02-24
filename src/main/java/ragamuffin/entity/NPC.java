@@ -130,6 +130,20 @@ public class NPC {
     }
 
     /**
+     * Advance only the speech timer by delta seconds.
+     * Called in the PAUSED branch so speech bubbles count down while the game is paused
+     * without advancing attack cooldowns, blink cycles, or animation timers (Fix #423).
+     */
+    public void tickSpeechOnly(float delta) {
+        if (speechTimer > 0) {
+            speechTimer -= delta;
+            if (speechTimer <= 0) {
+                speechText = null;
+            }
+        }
+    }
+
+    /**
      * Update timers, facing angle, and animation — but NOT position.
      * Used by NPCManager which handles movement with world collision separately.
      */
@@ -413,6 +427,14 @@ public class NPC {
             default:
                 return FacialExpression.NEUTRAL;
         }
+    }
+
+    /**
+     * Returns the current value of the blink timer (counts up between blink cycles).
+     * Used in tests to verify the blink cycle does not advance while paused (Fix #423).
+     */
+    public float getBlinkTimer() {
+        return blinkTimer;
     }
 
     /**

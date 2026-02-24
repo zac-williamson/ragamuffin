@@ -761,6 +761,48 @@ class NPCManagerTest {
     }
 
     /**
+     * Fix #423: tickSpeechTimers() must NOT advance attackCooldown or blinkTimer while paused.
+     *
+     * Scenario: spawn an NPC, give it a speech bubble and a non-zero attack cooldown,
+     * then simulate 5 seconds of PAUSED-state ticking via tickSpeechTimers(). The speech
+     * timer must expire (bubble gone) but attackCooldown and blinkTimer must be unchanged.
+     */
+    @Test
+    void tickSpeechTimersDoesNotDrainAttackCooldownOrBlinkTimerWhilePaused() {
+        NPC npc = manager.spawnNPC(NPCType.YOUTH_GANG, 10, 1, 10);
+
+        // Give the NPC a speech bubble
+        npc.setSpeechText("Watch it!", 3.0f);
+        assertTrue(npc.isSpeaking(), "NPC must be speaking before test starts");
+
+        // Set a non-zero attack cooldown
+        npc.resetAttackCooldown();
+        float initialCooldown = npc.getAttackCooldown();
+        assertTrue(initialCooldown > 0f, "attackCooldown must be > 0 after resetAttackCooldown()");
+
+        float initialBlinkTimer = npc.getBlinkTimer();
+
+        // Simulate 5 seconds of PAUSED-state ticking (> speech duration of 3s)
+        float delta = 1.0f / 60.0f;
+        int frames = (int) (5.0f / delta);
+        for (int i = 0; i < frames; i++) {
+            manager.tickSpeechTimers(delta);
+        }
+
+        // Speech bubble must have expired
+        assertFalse(npc.isSpeaking(),
+                "Fix #423: speech bubble must expire after 5 s of tickSpeechTimers()");
+
+        // attackCooldown must NOT have drained
+        assertEquals(initialCooldown, npc.getAttackCooldown(), 0.001f,
+                "Fix #423: attackCooldown must not drain during tickSpeechTimers() while paused");
+
+        // blinkTimer must NOT have advanced
+        assertEquals(initialBlinkTimer, npc.getBlinkTimer(), 0.001f,
+                "Fix #423: blinkTimer must not advance during tickSpeechTimers() while paused");
+    }
+
+    /**
      * Fix #407: tickRecoveryTimers() must revive a KNOCKED_OUT NPC even while the game is paused.
      *
      * Scenario: knock out an NPC, then simulate enough PAUSED-state frames via

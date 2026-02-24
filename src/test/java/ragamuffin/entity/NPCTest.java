@@ -242,6 +242,46 @@ class NPCTest {
         assertEquals(0f, npc.getKnockedOutTimer(), 0.001f);
     }
 
+    /**
+     * Fix #423: tickSpeechOnly() must advance the speech timer without touching
+     * attackCooldown, blinkTimer, or animTime.
+     */
+    @Test
+    void testTickSpeechOnlyDoesNotAdvanceOtherTimers() {
+        NPC npc = new NPC(NPCType.YOUTH_GANG, 0, 0, 0);
+
+        // Give the NPC a speech bubble and a non-zero attack cooldown
+        npc.setSpeechText("Oi!", 5.0f);
+        npc.resetAttackCooldown(); // sets attackCooldown to type's value (> 0)
+        float initialCooldown = npc.getAttackCooldown();
+        assertTrue(initialCooldown > 0f, "attackCooldown must be > 0 after resetAttackCooldown()");
+
+        // Set velocity so that a full updateTimers() would advance animTime
+        npc.setVelocity(1.0f, 0f, 0f);
+
+        float initialAnimTime = npc.getAnimTime();
+        float initialBlinkTimer = npc.getBlinkTimer();
+
+        // Simulate 5 seconds via tickSpeechOnly() (the PAUSED-branch-safe path)
+        npc.tickSpeechOnly(5.0f);
+
+        // Speech should now be expired
+        assertFalse(npc.isSpeaking(),
+                "Fix #423: speech must expire after tickSpeechOnly() advances past its duration");
+
+        // attackCooldown must NOT have changed
+        assertEquals(initialCooldown, npc.getAttackCooldown(), 0.001f,
+                "Fix #423: attackCooldown must not drain during tickSpeechOnly()");
+
+        // animTime must NOT have changed
+        assertEquals(initialAnimTime, npc.getAnimTime(), 0.001f,
+                "Fix #423: animTime must not advance during tickSpeechOnly()");
+
+        // blinkTimer must NOT have changed
+        assertEquals(initialBlinkTimer, npc.getBlinkTimer(), 0.001f,
+                "Fix #423: blinkTimer must not advance during tickSpeechOnly()");
+    }
+
     @Test
     void testNPCDefeatedByDamage() {
         NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);

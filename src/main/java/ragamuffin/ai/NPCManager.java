@@ -1732,10 +1732,12 @@ public class NPCManager {
      * Tick speech timers for all NPCs by delta seconds.
      * Called in the PAUSED branch so speech bubbles continue to count down while paused,
      * preventing them from persisting through the pause then expiring instantly on resume (Fix #397).
+     * Only the speech timer is advanced — attack cooldowns, blink cycles, and animation
+     * timers remain frozen until the normal update() resumes in PLAYING state (Fix #423).
      */
     public void tickSpeechTimers(float delta) {
         for (NPC npc : npcs) {
-            npc.updateTimers(delta);
+            npc.tickSpeechOnly(delta);
         }
     }
 
