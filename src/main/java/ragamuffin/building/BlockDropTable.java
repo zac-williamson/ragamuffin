@@ -67,6 +67,8 @@ public class BlockDropTable {
             case PEBBLEDASH:
                 return Material.PEBBLEDASH;
             case DOOR_WOOD:
+            case DOOR_LOWER:
+            case DOOR_UPPER:
                 return Material.DOOR;
             case LINOLEUM:
                 return Material.LINOLEUM;

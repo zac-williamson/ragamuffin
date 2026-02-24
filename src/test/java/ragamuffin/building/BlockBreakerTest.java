@@ -212,6 +212,46 @@ class BlockBreakerTest {
         assertEquals(1, blockBreaker.getHitCount(0, 1, 0));
     }
 
+    // --- Issue #255: Door block breaking tests ---
+
+    @Test
+    void testPunchDoorLower_BreaksAfter2HitsAndDropsDoor() {
+        world.setBlock(0, 1, 0, BlockType.DOOR_LOWER);
+        BlockDropTable dropTable = new BlockDropTable();
+
+        // First punch — should not break
+        boolean broken = blockBreaker.punchBlock(world, 0, 1, 0);
+        assertFalse(broken, "DOOR_LOWER should not break on first punch");
+        assertEquals(BlockType.DOOR_LOWER, world.getBlock(0, 1, 0));
+        assertEquals(1, blockBreaker.getHitCount(0, 1, 0));
+
+        // Second punch — should break
+        broken = blockBreaker.punchBlock(world, 0, 1, 0);
+        assertTrue(broken, "DOOR_LOWER should break on second punch");
+        assertEquals(BlockType.AIR, world.getBlock(0, 1, 0));
+        assertEquals(0, blockBreaker.getHitCount(0, 1, 0));
+
+        // Verify drop
+        Material drop = dropTable.getDrop(BlockType.DOOR_LOWER, null);
+        assertEquals(Material.DOOR, drop, "Breaking DOOR_LOWER should yield Material.DOOR");
+    }
+
+    @Test
+    void testPunchDoorUpper_BreaksAfter2Hits() {
+        world.setBlock(0, 2, 0, BlockType.DOOR_UPPER);
+
+        assertFalse(blockBreaker.punchBlock(world, 0, 2, 0));
+        assertTrue(blockBreaker.punchBlock(world, 0, 2, 0));
+        assertEquals(BlockType.AIR, world.getBlock(0, 2, 0));
+    }
+
+    @Test
+    void testDoorUpper_DropsDoor() {
+        BlockDropTable dropTable = new BlockDropTable();
+        Material drop = dropTable.getDrop(BlockType.DOOR_UPPER, null);
+        assertEquals(Material.DOOR, drop, "Breaking DOOR_UPPER should yield Material.DOOR");
+    }
+
     @Test
     void testTickDecay_OnlyRemovesStaleEntries() throws Exception {
         world.setBlock(0, 1, 0, BlockType.TREE_TRUNK);
