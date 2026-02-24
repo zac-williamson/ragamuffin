@@ -711,6 +711,19 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #343: Advance speech log entry timers while paused so entries fade out
             // rather than freezing on-screen for the entire duration of the pause.
             speechLogUI.update(npcManager.getNPCs(), delta);
+            // Fix #347: Advance respawn countdown while paused so the player is revived
+            // even if they opened the pause menu during the death-screen countdown.
+            if (respawnSystem.isRespawning()) {
+                boolean wasRespawning = true;
+                respawnSystem.update(delta, player);
+                if (!respawnSystem.isRespawning()) {
+                    deathMessage = null;
+                    greggsRaidSystem.reset();
+                    player.getStreetReputation().reset();
+                    healingSystem.resetPosition(player.getPosition());
+                }
+                renderDeathScreen();
+            }
 
             // Render UI and pause menu
             renderUI();
