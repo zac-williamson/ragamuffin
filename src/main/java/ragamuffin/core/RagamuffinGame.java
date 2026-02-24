@@ -1331,7 +1331,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (interactionSystem.isFood(material)) {
             boolean consumed = interactionSystem.consumeFood(material, player, inventory);
             if (consumed) {
-                // Food was eaten successfully
+                // Show any feedback message from the consumable
+                String consumeMsg = interactionSystem.getLastConsumeMessage();
+                if (consumeMsg != null) {
+                    tooltipSystem.showMessage(consumeMsg, 3.0f);
+                }
                 return;
             }
         }

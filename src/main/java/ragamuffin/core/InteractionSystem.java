@@ -148,6 +148,7 @@ public class InteractionSystem {
             return false;
         }
 
+        lastConsumeMessage = null;
         float hungerRestored = 0;
 
         if (food == Material.SAUSAGE_ROLL) {
@@ -192,7 +193,8 @@ public class InteractionSystem {
             return true; // Already removed, skip the removal below
         } else if (food == Material.ANTIDEPRESSANTS) {
             hungerRestored = 0;
-            // Inert item - nothing happens when consumed
+            player.restoreEnergy(20); // Steadies the nerves
+            lastConsumeMessage = "You take one. Does anything feel different? Hard to say.";
         } else {
             // Not a consumable item
             return false;
@@ -211,10 +213,24 @@ public class InteractionSystem {
     private boolean lastScratchCardWon = false;
 
     /**
+     * Optional tooltip message set by the last consumeFood() call.
+     * May be null if no message was generated.
+     */
+    private String lastConsumeMessage = null;
+
+    /**
      * Check if the last scratch card was a winner.
      */
     public boolean didLastScratchCardWin() {
         return lastScratchCardWon;
+    }
+
+    /**
+     * Get the tooltip message set by the last consumeFood() call, if any.
+     * Returns null if no message was generated.
+     */
+    public String getLastConsumeMessage() {
+        return lastConsumeMessage;
     }
 
     /**
