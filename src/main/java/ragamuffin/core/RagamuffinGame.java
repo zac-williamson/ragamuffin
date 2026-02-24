@@ -602,6 +602,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #437: Advance damage flash vignette and dodge cooldown during the
             // cinematic so they expire at their intended rate rather than freezing for
             // the entire fly-through duration.
+            // Fix #455: Detect new damage events during CINEMATIC so the damage-reason
+            // banner fires correctly (starvation/weather damage from fix #433).
+            float flashNow = player.getDamageFlashIntensity();
+            if (flashNow >= 1.0f && prevDamageFlashIntensity < 1.0f) {
+                gameHUD.showDamageReason(player.getLastDamageReason());
+            }
+            prevDamageFlashIntensity = flashNow;
             player.updateFlash(delta);
             // Fix #443: Advance HUD timers (damage-reason banner) during the cinematic
             // so the banner counts down rather than freezing for the entire fly-through.
@@ -942,6 +949,13 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Fix #321: Advance damage flash and HUD timers while paused so the
             // red vignette fades out and the damage-reason banner counts down.
+            // Fix #455: Detect new damage events during PAUSED so the damage-reason
+            // banner fires correctly (starvation/weather damage from fix #399).
+            float flashNow = player.getDamageFlashIntensity();
+            if (flashNow >= 1.0f && prevDamageFlashIntensity < 1.0f) {
+                gameHUD.showDamageReason(player.getLastDamageReason());
+            }
+            prevDamageFlashIntensity = flashNow;
             player.updateFlash(delta);
             gameHUD.update(delta);
             // Fix #331: Advance tooltip countdown while paused so active tooltips
