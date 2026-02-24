@@ -282,6 +282,39 @@ class NPCTest {
                 "Fix #423: blinkTimer must not advance during tickSpeechOnly()");
     }
 
+    /**
+     * Fix #515: NPC.move() with delta=1.0 should move exactly MOVE_SPEED units in Z over 1 second.
+     */
+    @Test
+    void testMoveOneSecondDisplacementEqualsMovespeed() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+        float startZ = npc.getPosition().z;
+
+        npc.move(0, 0, -1, 1.0f);
+
+        float movedZ = startZ - npc.getPosition().z;
+        assertEquals(NPC.MOVE_SPEED, movedZ, 0.001f,
+                "Fix #515: move(0,0,-1,1.0) should displace exactly MOVE_SPEED units in Z");
+    }
+
+    /**
+     * Fix #515: Calling NPC.move() 60 times with delta=1/60 should give total Z displacement ~MOVE_SPEED.
+     */
+    @Test
+    void testMove60FramesDisplacementEqualsMovespeed() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+        float startZ = npc.getPosition().z;
+        float delta = 1.0f / 60.0f;
+
+        for (int i = 0; i < 60; i++) {
+            npc.move(0, 0, -1, delta);
+        }
+
+        float movedZ = startZ - npc.getPosition().z;
+        assertEquals(NPC.MOVE_SPEED, movedZ, 0.01f,
+                "Fix #515: 60 calls to move(0,0,-1,1/60) should total ~MOVE_SPEED units in Z");
+    }
+
     @Test
     void testNPCDefeatedByDamage() {
         NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
