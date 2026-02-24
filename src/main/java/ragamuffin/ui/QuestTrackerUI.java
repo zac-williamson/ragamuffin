@@ -138,7 +138,7 @@ public class QuestTrackerUI {
                 GlyphLayout progLayout = new GlyphLayout(font, progress);
                 font.draw(spriteBatch, progress,
                         panelX + PANEL_WIDTH - PADDING - progLayout.width,
-                        rowY - 30f);
+                        rowY - 36f);
             }
         }
 
@@ -166,7 +166,14 @@ public class QuestTrackerUI {
     String buildObjectiveString(Quest quest) {
         if (quest.getType() == Quest.ObjectiveType.COLLECT && quest.getRequiredMaterial() != null) {
             String mat = quest.getRequiredMaterial().name().toLowerCase().replace('_', ' ');
-            return "Collect " + quest.getRequiredCount() + "x " + mat;
+            int count;
+            if (inventory != null) {
+                int current = inventory.getItemCount(quest.getRequiredMaterial());
+                count = Math.max(0, quest.getRequiredCount() - current);
+            } else {
+                count = quest.getRequiredCount();
+            }
+            return "Collect " + count + "x " + mat;
         }
         String desc = quest.getDescription();
         if (desc != null && desc.length() > 35) {

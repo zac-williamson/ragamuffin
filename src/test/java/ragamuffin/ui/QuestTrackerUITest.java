@@ -139,6 +139,61 @@ class QuestTrackerUITest {
                 "Tracker must not show the full NPC dialogue as the objective");
     }
 
+    // --- Objective string remaining count (Fix #527) ---
+
+    @Test
+    void objectiveStringShowsRemainingCountWhenInventoryHasSome() {
+        Inventory inv = new Inventory(36);
+        inv.addItem(Material.TIN_OF_BEANS, 2);
+        QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
+
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+
+        String obj = uiWithInv.buildObjectiveString(tesco);
+        assertEquals("Collect 1x tin of beans", obj,
+                "Objective must show remaining count (3-2=1) when inventory is available");
+    }
+
+    @Test
+    void objectiveStringShowsZeroRemainingWhenInventoryFull() {
+        Inventory inv = new Inventory(36);
+        inv.addItem(Material.TIN_OF_BEANS, 3);
+        QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
+
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+
+        String obj = uiWithInv.buildObjectiveString(tesco);
+        assertEquals("Collect 0x tin of beans", obj,
+                "Objective must show 0 remaining when inventory already has required count");
+    }
+
+    @Test
+    void objectiveStringNeverNegativeWhenInventoryExceedsRequired() {
+        Inventory inv = new Inventory(36);
+        inv.addItem(Material.TIN_OF_BEANS, 5);
+        QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
+
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+
+        String obj = uiWithInv.buildObjectiveString(tesco);
+        assertEquals("Collect 0x tin of beans", obj,
+                "Objective remaining count must not go below 0");
+    }
+
+    @Test
+    void objectiveStringFallsBackToTotalWhenInventoryNull() {
+        // ui was constructed with null inventory in @BeforeEach
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+
+        String obj = ui.buildObjectiveString(tesco);
+        assertEquals("Collect 3x tin of beans", obj,
+                "Without inventory, objective must fall back to showing total required count");
+    }
+
     // --- Progress string (Fix #511) ---
 
     @Test
