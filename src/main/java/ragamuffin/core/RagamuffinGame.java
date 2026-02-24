@@ -1032,6 +1032,17 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #171: Update particle system
         particleSystem.update(delta);
 
+        // Fix #305: Update damage flash timer and HUD unconditionally so the red vignette
+        // and damage-reason banner always advance regardless of UI state or death.
+        // Detect new damage event: flash was at full intensity this frame (just applied)
+        float flashNow = player.getDamageFlashIntensity();
+        if (flashNow >= 1.0f && prevDamageFlashIntensity < 1.0f) {
+            gameHUD.showDamageReason(player.getLastDamageReason());
+        }
+        prevDamageFlashIntensity = flashNow;
+        player.updateFlash(delta);
+        gameHUD.update(delta);
+
         // Update camera to follow player
         camera.position.set(player.getPosition());
         camera.position.y += Player.EYE_HEIGHT;
@@ -1134,16 +1145,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetDodge();
         }
 
-        // Update dodge timers and damage flash
+        // Update dodge timers
         player.updateDodge(delta);
-        // Detect new damage event: flash was at full intensity this frame (just applied)
-        float flashNow = player.getDamageFlashIntensity();
-        if (flashNow >= 1.0f && prevDamageFlashIntensity < 1.0f) {
-            gameHUD.showDamageReason(player.getLastDamageReason());
-        }
-        prevDamageFlashIntensity = flashNow;
-        player.updateFlash(delta);
-        gameHUD.update(delta);
 
         // Move player with collision (always call to ensure gravity applies even when not moving)
         float moveSpeed;
