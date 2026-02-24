@@ -5,6 +5,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.test.HeadlessTestHelper;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -94,21 +97,41 @@ public class WorldGeneratorTest {
     public void testLandmarksDoNotOverlap() {
         generator.generateWorld(world);
 
-        Landmark[] landmarks = {
-            world.getLandmark(LandmarkType.PARK),
-            world.getLandmark(LandmarkType.GREGGS),
-            world.getLandmark(LandmarkType.OFF_LICENCE),
-            world.getLandmark(LandmarkType.CHARITY_SHOP),
-            world.getLandmark(LandmarkType.JEWELLER),
-            world.getLandmark(LandmarkType.OFFICE_BUILDING),
-            world.getLandmark(LandmarkType.JOB_CENTRE)
+        // Include all named landmarks to ensure no building is placed inside another
+        LandmarkType[] types = {
+            LandmarkType.PARK,
+            LandmarkType.GREGGS,
+            LandmarkType.OFF_LICENCE,
+            LandmarkType.CHARITY_SHOP,
+            LandmarkType.JEWELLER,
+            LandmarkType.OFFICE_BUILDING,
+            LandmarkType.JOB_CENTRE,
+            LandmarkType.WAREHOUSE,
+            LandmarkType.GP_SURGERY,
+            LandmarkType.PRIMARY_SCHOOL,
+            LandmarkType.COMMUNITY_CENTRE,
+            LandmarkType.CHURCH,
+            LandmarkType.TAXI_RANK,
+            LandmarkType.CAR_WASH,
+            LandmarkType.PETROL_STATION,
+            LandmarkType.LIBRARY,
+            LandmarkType.FIRE_STATION,
+            LandmarkType.WETHERSPOONS,
         };
 
+        List<Landmark> landmarks = new ArrayList<>();
+        for (LandmarkType type : types) {
+            Landmark lm = world.getLandmark(type);
+            if (lm != null) {
+                landmarks.add(lm);
+            }
+        }
+
         // Check each pair for overlap
-        for (int i = 0; i < landmarks.length; i++) {
-            for (int j = i + 1; j < landmarks.length; j++) {
-                assertFalse(landmarksOverlap(landmarks[i], landmarks[j]),
-                    landmarks[i].getType() + " overlaps with " + landmarks[j].getType());
+        for (int i = 0; i < landmarks.size(); i++) {
+            for (int j = i + 1; j < landmarks.size(); j++) {
+                assertFalse(landmarksOverlap(landmarks.get(i), landmarks.get(j)),
+                    landmarks.get(i).getType() + " overlaps with " + landmarks.get(j).getType());
             }
         }
     }
