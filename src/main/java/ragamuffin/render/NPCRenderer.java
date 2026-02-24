@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.entity.FacialExpression;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
@@ -70,10 +71,16 @@ public class NPCRenderer {
     private final Map<NPCType, Model[]> humanoidParts;
     private final Map<NPCType, Model[]> dogParts;
 
+    // Expression face models per NPC type: index = FacialExpression.ordinal()
+    private final Map<NPCType, Model[]> expressionFaceParts;
+
     // Per-NPC ModelInstance arrays — keyed by NPC object identity so each NPC
     // has its own transform state even when multiple NPCs share the same type.
     private final Map<NPC, ModelInstance[]> humanoidInstances;
     private final Map<NPC, ModelInstance[]> dogInstances;
+
+    // Per-NPC expression face instances (one per FacialExpression)
+    private final Map<NPC, ModelInstance[]> expressionFaceInstances;
 
     private final ModelBuilder mb;
 
@@ -86,6 +93,8 @@ public class NPCRenderer {
         humanoidInstances = new IdentityHashMap<>();
         dogParts = new HashMap<>();
         dogInstances = new IdentityHashMap<>();
+        expressionFaceParts = new HashMap<>();
+        expressionFaceInstances = new IdentityHashMap<>();
         buildAllModels();
     }
 
@@ -206,6 +215,13 @@ public class NPCRenderer {
                                         Color skinColor, Color eyeColor, boolean hasHelmet) {
         Model[] parts = buildHumanoidParts(shirtColor, trouserColor, skinColor, eyeColor, hasHelmet);
         humanoidParts.put(type, parts);
+        // Build one face model per FacialExpression for this type
+        FacialExpression[] expressions = FacialExpression.values();
+        Model[] exprFaces = new Model[expressions.length];
+        for (FacialExpression expr : expressions) {
+            exprFaces[expr.ordinal()] = buildExpressionFace(eyeColor, expr);
+        }
+        expressionFaceParts.put(type, exprFaces);
         // ModelInstances are created per-NPC on demand in getOrCreateHumanoidInstances()
     }
 
@@ -235,6 +251,110 @@ public class NPCRenderer {
         }
         dogInstances.put(npc, inst);
         return inst;
+    }
+
+    /**
+     * Returns the per-NPC expression face ModelInstance array (one per FacialExpression),
+     * creating it if needed.
+     */
+    private ModelInstance[] getOrCreateExpressionFaceInstances(NPC npc) {
+        ModelInstance[] inst = expressionFaceInstances.get(npc);
+        if (inst != null) return inst;
+        Model[] exprFaces = expressionFaceParts.get(npc.getType());
+        if (exprFaces == null) return null;
+        inst = new ModelInstance[exprFaces.length];
+        for (int i = 0; i < exprFaces.length; i++) {
+            inst[i] = new ModelInstance(exprFaces[i]);
+        }
+        expressionFaceInstances.put(npc, inst);
+        return inst;
+    }
+
+    /**
+     * Build a face model for the given expression. Each expression has distinct
+     * eye and mouth geometry to convey emotion on the voxel character's face.
+     *
+     * <ul>
+     *   <li>NEUTRAL  — standard square eyes, thin straight mouth</li>
+     *   <li>ANGRY    — narrowed (shorter) eyes, pressed thin mouth shifted down</li>
+     *   <li>SCARED   — tall wide eyes, open round mouth</li>
+     *   <li>HAPPY    — normal eyes, wider smile mouth</li>
+     *   <li>SURPRISED — taller eyes, larger open mouth</li>
+     * </ul>
+     */
+    private Model buildExpressionFace(Color eyeColor, FacialExpression expression) {
+        mb.begin();
+        Material mat = new Material(ColorAttribute.createDiffuse(eyeColor));
+
+        switch (expression) {
+            case ANGRY: {
+                // Narrowed eyes (shorter height), mouth pressed into thin line
+                MeshPartBuilder le = mb.part("leftEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                le.setVertexTransform(new Matrix4().setToTranslation(-0.09f, 0.04f, 0f));
+                le.box(0.07f, 0.03f, 0.02f); // narrowed
+                MeshPartBuilder re = mb.part("rightEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                re.setVertexTransform(new Matrix4().setToTranslation(0.09f, 0.04f, 0f));
+                re.box(0.07f, 0.03f, 0.02f); // narrowed
+                MeshPartBuilder mo = mb.part("mouth", GL20.GL_TRIANGLES, ATTRS, mat);
+                mo.setVertexTransform(new Matrix4().setToTranslation(0f, -0.10f, 0f));
+                mo.box(0.12f, 0.02f, 0.02f); // thin, lower
+                break;
+            }
+            case SCARED: {
+                // Wide tall eyes, open wider mouth
+                MeshPartBuilder le = mb.part("leftEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                le.setVertexTransform(new Matrix4().setToTranslation(-0.09f, 0.04f, 0f));
+                le.box(0.08f, 0.10f, 0.02f); // taller
+                MeshPartBuilder re = mb.part("rightEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                re.setVertexTransform(new Matrix4().setToTranslation(0.09f, 0.04f, 0f));
+                re.box(0.08f, 0.10f, 0.02f); // taller
+                MeshPartBuilder mo = mb.part("mouth", GL20.GL_TRIANGLES, ATTRS, mat);
+                mo.setVertexTransform(new Matrix4().setToTranslation(0f, -0.09f, 0f));
+                mo.box(0.10f, 0.07f, 0.02f); // open mouth
+                break;
+            }
+            case HAPPY: {
+                // Normal eyes, wider mouth
+                MeshPartBuilder le = mb.part("leftEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                le.setVertexTransform(new Matrix4().setToTranslation(-0.09f, 0.04f, 0f));
+                le.box(0.07f, 0.07f, 0.02f);
+                MeshPartBuilder re = mb.part("rightEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                re.setVertexTransform(new Matrix4().setToTranslation(0.09f, 0.04f, 0f));
+                re.box(0.07f, 0.07f, 0.02f);
+                MeshPartBuilder mo = mb.part("mouth", GL20.GL_TRIANGLES, ATTRS, mat);
+                mo.setVertexTransform(new Matrix4().setToTranslation(0f, -0.08f, 0f));
+                mo.box(0.18f, 0.04f, 0.02f); // wider smile
+                break;
+            }
+            case SURPRISED: {
+                // Raised, taller eyes; larger round mouth
+                MeshPartBuilder le = mb.part("leftEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                le.setVertexTransform(new Matrix4().setToTranslation(-0.09f, 0.06f, 0f));
+                le.box(0.08f, 0.09f, 0.02f); // taller, raised
+                MeshPartBuilder re = mb.part("rightEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                re.setVertexTransform(new Matrix4().setToTranslation(0.09f, 0.06f, 0f));
+                re.box(0.08f, 0.09f, 0.02f); // taller, raised
+                MeshPartBuilder mo = mb.part("mouth", GL20.GL_TRIANGLES, ATTRS, mat);
+                mo.setVertexTransform(new Matrix4().setToTranslation(0f, -0.09f, 0f));
+                mo.box(0.09f, 0.08f, 0.02f); // larger open circle
+                break;
+            }
+            default: {
+                // NEUTRAL — same as original buildFace
+                MeshPartBuilder le = mb.part("leftEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                le.setVertexTransform(new Matrix4().setToTranslation(-0.09f, 0.04f, 0f));
+                le.box(0.07f, 0.07f, 0.02f);
+                MeshPartBuilder re = mb.part("rightEye", GL20.GL_TRIANGLES, ATTRS, mat);
+                re.setVertexTransform(new Matrix4().setToTranslation(0.09f, 0.04f, 0f));
+                re.box(0.07f, 0.07f, 0.02f);
+                MeshPartBuilder mo = mb.part("mouth", GL20.GL_TRIANGLES, ATTRS, mat);
+                mo.setVertexTransform(new Matrix4().setToTranslation(0f, -0.08f, 0f));
+                mo.box(0.14f, 0.04f, 0.02f);
+                break;
+            }
+        }
+
+        return mb.end();
     }
 
     /**
@@ -444,9 +564,16 @@ public class NPCRenderer {
         setPartTransform(inst[PART_HEAD], pos, yawRad, 0f, headCentre, 0f);
         modelBatch.render(inst[PART_HEAD], environment);
 
-        // Face (front of head at +Z)
-        setPartTransform(inst[PART_FACE], pos, yawRad, 0f, headCentre, (HEAD_D / 2f + 0.011f));
-        modelBatch.render(inst[PART_FACE], environment);
+        // Face (front of head at +Z) — select model based on current expression
+        ModelInstance[] exprInst = getOrCreateExpressionFaceInstances(npc);
+        if (exprInst != null) {
+            int exprIdx = npc.getFacialExpression().ordinal();
+            setPartTransform(exprInst[exprIdx], pos, yawRad, 0f, headCentre, (HEAD_D / 2f + 0.011f));
+            modelBatch.render(exprInst[exprIdx], environment);
+        } else {
+            setPartTransform(inst[PART_FACE], pos, yawRad, 0f, headCentre, (HEAD_D / 2f + 0.011f));
+            modelBatch.render(inst[PART_FACE], environment);
+        }
 
         // Helmet (police only)
         if (inst.length > PART_HELMET) {
@@ -539,8 +666,15 @@ public class NPCRenderer {
         setKnockedOutPartTransform(inst[PART_HEAD],     pos, yawRad, pitchRad, 0f,   groundY + HEAD_W / 2f,   TORSO_H + SHOULDER_H + NECK_H + HEAD_H / 2f);
         modelBatch.render(inst[PART_HEAD], environment);
 
-        setKnockedOutPartTransform(inst[PART_FACE],     pos, yawRad, pitchRad, 0f,   groundY + HEAD_D / 2f + 0.011f, TORSO_H + SHOULDER_H + NECK_H + HEAD_H / 2f);
-        modelBatch.render(inst[PART_FACE], environment);
+        ModelInstance[] exprInstKO = getOrCreateExpressionFaceInstances(npc);
+        if (exprInstKO != null) {
+            int exprIdxKO = npc.getFacialExpression().ordinal();
+            setKnockedOutPartTransform(exprInstKO[exprIdxKO], pos, yawRad, pitchRad, 0f, groundY + HEAD_D / 2f + 0.011f, TORSO_H + SHOULDER_H + NECK_H + HEAD_H / 2f);
+            modelBatch.render(exprInstKO[exprIdxKO], environment);
+        } else {
+            setKnockedOutPartTransform(inst[PART_FACE], pos, yawRad, pitchRad, 0f, groundY + HEAD_D / 2f + 0.011f, TORSO_H + SHOULDER_H + NECK_H + HEAD_H / 2f);
+            modelBatch.render(inst[PART_FACE], environment);
+        }
 
         if (inst.length > PART_HELMET) {
             setKnockedOutPartTransform(inst[PART_HELMET], pos, yawRad, pitchRad, 0f, groundY + HEAD_W / 2f + 0.02f, TORSO_H + SHOULDER_H + NECK_H + HEAD_H + 0.02f);
@@ -836,6 +970,14 @@ public class NPCRenderer {
         }
         humanoidParts.clear();
         humanoidInstances.clear();
+
+        for (Model[] faces : expressionFaceParts.values()) {
+            for (Model m : faces) {
+                if (m != null) m.dispose();
+            }
+        }
+        expressionFaceParts.clear();
+        expressionFaceInstances.clear();
 
         for (Model[] parts : dogParts.values()) {
             for (Model m : parts) {
