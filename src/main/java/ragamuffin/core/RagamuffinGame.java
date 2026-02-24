@@ -821,6 +821,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #371: Call updatePoliceSpawning() while paused so the police spawn/despawn logic
             // stays in sync with the day/night cycle even when the game is paused around dusk or dawn.
             npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
+            // Fix #393: Tick the police spawn cooldown while paused so it continues to drain.
+            // Without this, policeSpawnCooldown freezes for the entire pause duration, and on
+            // resume the cooldown expires almost immediately — flooding the player with police.
+            npcManager.tickSpawnCooldown(delta);
 
             // Fix #381: Advance healing resting timer while paused so the 5-second threshold
             // continues to accumulate and healing is not artificially delayed on resume.
