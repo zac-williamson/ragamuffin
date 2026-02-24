@@ -1918,6 +1918,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Transition to playing with opening sequence
         state = GameState.PLAYING;
         openingSequence.start();
+        if (mainMenuScreen.isSkipIntroEnabled()) {
+            openingSequence.skip();
+        }
         Gdx.input.setCursorCatched(true);
     }
 
