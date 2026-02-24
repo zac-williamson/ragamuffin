@@ -86,6 +86,10 @@ public class RagamuffinGame extends ApplicationAdapter {
     private HealingSystem healingSystem;
     private RespawnSystem respawnSystem;
 
+    // Issue #541: track the shopkeeper whose shop menu is currently open so that
+    // 1/2/3 key presses can be routed to selectShopItem() instead of hotbar selection.
+    private ragamuffin.entity.NPC activeShopkeeperNPC = null;
+
     // Phase 12: CRITIC 2 Improvements
     private WeatherSystem weatherSystem;
 
@@ -1428,7 +1432,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Hotbar selection
         int hotbarSlot = inputHandler.getHotbarSlotPressed();
         if (hotbarSlot >= 0) {
-            if (!craftingUI.isVisible()) {
+            // Issue #541: if a shopkeeper shop menu is open, intercept keys 1-3 (slots 0-2)
+            // and route them to item selection instead of changing the hotbar.
+            if (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen() && hotbarSlot <= 2) {
+                interactionSystem.selectShopItem(activeShopkeeperNPC, hotbarSlot + 1, inventory);
+            } else if (!craftingUI.isVisible()) {
                 hotbarUI.selectSlot(hotbarSlot);
             }
             inputHandler.resetHotbarSlot();
@@ -2128,6 +2136,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (targetNPC != null) {
             // Interact with the NPC — pass inventory so quest NPCs can complete quests
             String dialogue = interactionSystem.interactWithNPC(targetNPC, inventory);
+            // Issue #541: track the shopkeeper whose menu is open so 1/2/3 can select items
+            if (targetNPC.isShopMenuOpen()) {
+                activeShopkeeperNPC = targetNPC;
+            } else {
+                // Menu was closed (second E-press confirms purchase or cancels)
+                activeShopkeeperNPC = null;
+            }
             // Show quest completion tooltip if a quest was just completed
             Quest completed = interactionSystem.pollLastQuestCompleted();
             if (completed != null) {
