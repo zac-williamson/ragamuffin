@@ -437,8 +437,8 @@ public class NPCRenderer {
         setLimbChainTransform(inst[PART_L_FOREARM], pos, yawRad,
             -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H, halfSwingRad, FOREARM_H);
         modelBatch.render(inst[PART_L_FOREARM], environment);
-        setLimbChainTransform(inst[PART_L_HAND], pos, yawRad,
-            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H + FOREARM_H, -halfSwingRad, HAND_H);
+        setLimb3ChainTransform(inst[PART_L_HAND], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H, halfSwingRad, FOREARM_H, -halfSwingRad, HAND_H);
         modelBatch.render(inst[PART_L_HAND], environment);
 
         // Right arm chain
@@ -448,8 +448,8 @@ public class NPCRenderer {
         setLimbChainTransform(inst[PART_R_FOREARM], pos, yawRad,
             armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H, -halfSwingRad, FOREARM_H);
         modelBatch.render(inst[PART_R_FOREARM], environment);
-        setLimbChainTransform(inst[PART_R_HAND], pos, yawRad,
-            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H + FOREARM_H, halfSwingRad, HAND_H);
+        setLimb3ChainTransform(inst[PART_R_HAND], pos, yawRad,
+            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H, -halfSwingRad, FOREARM_H, halfSwingRad, HAND_H);
         modelBatch.render(inst[PART_R_HAND], environment);
 
         // Legs — upper legs swing from hip, lower legs and feet follow
@@ -463,8 +463,8 @@ public class NPCRenderer {
         setLimbChainTransform(inst[PART_L_LOWER_LEG], pos, yawRad,
             -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H, -halfSwingRad, LOWER_LEG_H);
         modelBatch.render(inst[PART_L_LOWER_LEG], environment);
-        setLimbChainTransform(inst[PART_L_FOOT], pos, yawRad,
-            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H + LOWER_LEG_H, halfSwingRad, FOOT_H);
+        setLimb3ChainTransform(inst[PART_L_FOOT], pos, yawRad,
+            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H, -halfSwingRad, LOWER_LEG_H, halfSwingRad, FOOT_H);
         modelBatch.render(inst[PART_L_FOOT], environment);
 
         // Right leg chain
@@ -474,8 +474,8 @@ public class NPCRenderer {
         setLimbChainTransform(inst[PART_R_LOWER_LEG], pos, yawRad,
             legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H, halfSwingRad, LOWER_LEG_H);
         modelBatch.render(inst[PART_R_LOWER_LEG], environment);
-        setLimbChainTransform(inst[PART_R_FOOT], pos, yawRad,
-            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H + LOWER_LEG_H, -halfSwingRad, FOOT_H);
+        setLimb3ChainTransform(inst[PART_R_FOOT], pos, yawRad,
+            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H, halfSwingRad, LOWER_LEG_H, -halfSwingRad, FOOT_H);
         modelBatch.render(inst[PART_R_FOOT], environment);
     }
 
@@ -621,6 +621,39 @@ public class NPCRenderer {
         // Apply child's own swing
         tmpTransform.rotate(Vector3.X, (float) Math.toDegrees(childSwingRad));
         tmpTransform.translate(0, -childLength / 2f, 0);
+
+        instance.transform.set(tmpTransform);
+    }
+
+    /**
+     * Set transform for a 3-segment limb chain (e.g. upper arm → forearm → hand).
+     * Properly applies each joint's rotation in sequence so the third segment is
+     * positioned at the true end of the second segment after both rotations.
+     */
+    private void setLimb3ChainTransform(ModelInstance instance, Vector3 npcPos, float yawRad,
+                                         float localX, float pivotY, float localZ,
+                                         float seg1SwingRad, float seg1Length,
+                                         float seg2SwingRad, float seg2Length,
+                                         float seg3SwingRad, float seg3Length) {
+        float cosY = (float) Math.cos(yawRad);
+        float sinY = (float) Math.sin(yawRad);
+
+        float pivotWorldX = npcPos.x + localX * cosY + localZ * sinY;
+        float pivotWorldY = npcPos.y + pivotY;
+        float pivotWorldZ = npcPos.z - localX * sinY + localZ * cosY;
+
+        tmpTransform.idt();
+        tmpTransform.setToTranslation(pivotWorldX, pivotWorldY, pivotWorldZ);
+        tmpTransform.rotate(Vector3.Y, (float) Math.toDegrees(yawRad));
+        // Segment 1 (e.g. upper arm) swings from root pivot
+        tmpTransform.rotate(Vector3.X, (float) Math.toDegrees(seg1SwingRad));
+        tmpTransform.translate(0, -seg1Length, 0);
+        // Segment 2 (e.g. forearm) swings from end of segment 1
+        tmpTransform.rotate(Vector3.X, (float) Math.toDegrees(seg2SwingRad));
+        tmpTransform.translate(0, -seg2Length, 0);
+        // Segment 3 (e.g. hand) swings from end of segment 2
+        tmpTransform.rotate(Vector3.X, (float) Math.toDegrees(seg3SwingRad));
+        tmpTransform.translate(0, -seg3Length / 2f, 0);
 
         instance.transform.set(tmpTransform);
     }

@@ -460,8 +460,10 @@ public class NPCManager {
         // Apply velocity with world collision (includes knockback velocity)
         applyNPCCollision(npc, delta, world);
 
-        // Stuck detection — if NPC has been pushing against a wall, try multiple escape directions
-        if (npc.updateStuckDetection(delta)) {
+        // Stuck detection — if NPC has been pushing against a wall, try multiple escape directions.
+        // Council builders deliberately walk into structures to demolish them, so skip stuck
+        // detection for them — they are not lost, just blocked by the structure they're working on.
+        if (npc.getType() != NPCType.COUNCIL_BUILDER && npc.updateStuckDetection(delta)) {
             npc.resetStuckTimer();
             npc.setPath(null);
             npc.setTargetPosition(null);
@@ -1973,14 +1975,30 @@ public class NPCManager {
 
         Vector3 targetPos = target.getCenter();
 
+        // Use 2D (XZ-plane) distance to check proximity — builders walk on the ground
+        // so the Y component of the structure centre (mid-height) would inflate the 3D
+        // distance and prevent the builder from ever triggering demolition when standing
+        // next to a tall structure.  The proximity threshold is 4.0 XZ blocks so the
+        // builder triggers demolition while standing adjacent to the exterior wall of
+        // even a large structure (e.g. a 5-block-wide structure has walls ~2.5 blocks
+        // from its centre).
+        Vector3 builderPos = builder.getPosition();
+        float dx = builderPos.x - targetPos.x;
+        float dz = builderPos.z - targetPos.z;
+        float distXZ = (float) Math.sqrt(dx * dx + dz * dz);
+
         // Move toward structure
-        if (!builder.isNear(targetPos, 3.0f)) {
-            setNPCTarget(builder, targetPos, world);
-            // If pathfinding failed and cleared the target, keep the destination so the
-            // builder still has a goal (it will move directly toward the structure).
-            if (builder.getTargetPosition() == null) {
-                builder.setTargetPosition(targetPos);
-            }
+        if (distXZ > 4.0f) {
+            // Walk directly toward the structure centre in XZ.  We skip pathfinding and
+            // set the target at the structure centre adjusted to the builder's own Y level,
+            // so the builder advances steadily toward the wall without being rerouted up
+            // and over the structure.  Collision stops the builder at the exterior wall,
+            // which is fine — stuck detection is disabled for builders so they persist.
+            Vector3 groundLevelTarget = new Vector3(targetPos.x, builderPos.y, targetPos.z);
+            // Clear any stale path so followPath is not used (it would clear targetPosition
+            // when done and leave the builder with no goal between frames).
+            builder.setPath(null);
+            builder.setTargetPosition(groundLevelTarget);
         } else {
             // Adjacent to structure - start demolishing
             builder.setState(NPCState.DEMOLISHING);

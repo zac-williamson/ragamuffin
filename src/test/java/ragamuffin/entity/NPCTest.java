@@ -143,6 +143,68 @@ class NPCTest {
     }
 
     @Test
+    void testAnimTimeAdvancesWhenMoving() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+
+        // Set a horizontal velocity so the NPC is "moving"
+        npc.setVelocity(2.0f, 0f, 0f);
+
+        float initialAnimTime = npc.getAnimTime();
+        assertEquals(0f, initialAnimTime, 0.001f);
+
+        npc.updateTimers(0.5f);
+        assertTrue(npc.getAnimTime() > 0f, "animTime should advance when NPC is moving");
+        assertEquals(0.5f, npc.getAnimTime(), 0.001f);
+
+        npc.updateTimers(0.5f);
+        assertEquals(1.0f, npc.getAnimTime(), 0.001f);
+    }
+
+    @Test
+    void testAnimTimeDoesNotAdvanceWhenStopped() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+
+        // NPC is stationary (velocity = 0)
+        npc.setVelocity(0f, 0f, 0f);
+        npc.updateTimers(1.0f);
+
+        assertEquals(0f, npc.getAnimTime(), 0.001f,
+            "animTime should NOT advance when NPC is stationary");
+    }
+
+    @Test
+    void testFacingAngleUpdatesFromVelocity() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+
+        // Move in +X direction: facing angle should be 90 degrees
+        npc.setVelocity(2.0f, 0f, 0f);
+        npc.updateTimers(0.1f);
+        assertEquals(90f, npc.getFacingAngle(), 0.1f,
+            "Facing angle should be ~90 degrees when moving in +X direction");
+
+        // Move in +Z direction: facing angle should be 0 degrees
+        npc.setVelocity(0f, 0f, 2.0f);
+        npc.updateTimers(0.1f);
+        assertEquals(0f, npc.getFacingAngle(), 0.1f,
+            "Facing angle should be ~0 degrees when moving in +Z direction");
+    }
+
+    @Test
+    void testAnimTimeAccumulatesCorrectlyOverMultipleUpdates() {
+        NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
+        npc.setVelocity(1.0f, 0f, 1.0f); // Moving diagonally
+
+        // Simulate 60 frames at 60fps
+        float delta = 1.0f / 60.0f;
+        for (int i = 0; i < 60; i++) {
+            npc.updateTimers(delta);
+        }
+
+        assertEquals(1.0f, npc.getAnimTime(), 0.01f,
+            "animTime should accumulate to ~1 second after 60 frames at 60fps");
+    }
+
+    @Test
     void testKnockedOutStateTransition() {
         NPC npc = new NPC(NPCType.PUBLIC, 0, 0, 0);
 
