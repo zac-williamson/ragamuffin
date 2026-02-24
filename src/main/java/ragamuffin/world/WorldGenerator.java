@@ -310,7 +310,7 @@ public class WorldGenerator {
         // Community centre, church, taxi rank, car wash
         markFlatZone(rx - 20, rz1, 18, 14);
         markFlatZone(30,      rz2, 12, 18);
-        markFlatZone(offX + 4, offZ, 6, 11);
+        markFlatZone(offX + 16, offZ, 6, 11);
         markFlatZone(indX + 40, indZ, 10, 8);
 
         // Council flats (west side)
@@ -527,7 +527,7 @@ public class WorldGenerator {
         world.addLandmark(new Landmark(LandmarkType.CHURCH, churchX, 0, churchZ, 12, 17, 18));
 
         // ===== TAXI RANK =====
-        int taxiX = offX + 4;
+        int taxiX = offX + 16;
         int taxiZ = offZ;
         buildBuilding(world, taxiX, taxiZ + 5, 6, 6, 3, BlockType.BRICK, BlockType.PAVEMENT);
         for (int dx = 0; dx < 6; dx++) {
