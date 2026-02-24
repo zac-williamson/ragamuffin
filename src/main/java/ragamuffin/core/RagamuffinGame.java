@@ -688,6 +688,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
 
+            // Fix #333: Render rain overlay while paused so the rain effect persists
+            // visually when the player opens the pause menu during rain — mirrors the
+            // same guard in the PLAYING render path (lines 639-641).
+            if (weatherSystem.getCurrentWeather() == Weather.RAIN) {
+                renderRain(delta);
+            }
+
             // Fix #321: Advance damage flash and HUD timers while paused so the
             // red vignette fades out and the damage-reason banner counts down.
             player.updateFlash(delta);
