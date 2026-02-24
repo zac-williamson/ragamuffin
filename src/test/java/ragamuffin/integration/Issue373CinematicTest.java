@@ -145,21 +145,35 @@ class Issue373CinematicTest {
     }
 
     /**
-     * Test 8: When the cinematic completes, the text opening sequence can begin normally.
-     * Simulates the finishCinematic() flow in RagamuffinGame.
+     * Test 8: Cinematic and text opening sequence run simultaneously (Fix #428).
+     * Both start together; the text is active while the cinematic plays, and continues
+     * into PLAYING state after the cinematic ends.
      */
     @Test
-    void textSequenceStartsAfterCinematicCompletes() {
-        // Run full cinematic
+    void textSequenceRunsSimultaneouslyWithCinematic() {
+        // Simulate startNewGame(): start both together
         cinematicCamera.start();
-        cinematicCamera.update(CinematicCamera.DURATION + 0.1f);
-        assertTrue(cinematicCamera.isCompleted(), "Cinematic must complete before text sequence");
-
-        // finishCinematic() then calls openingSequence.start()
         openingSequence.start();
 
-        assertTrue(openingSequence.isActive(), "Text opening sequence must be active after cinematic finishes");
-        assertFalse(openingSequence.isCompleted(), "Text opening sequence must not be immediately completed");
+        // Both must be active immediately
+        assertTrue(cinematicCamera.isActive(), "Cinematic must be active after start");
+        assertTrue(openingSequence.isActive(), "Text opening sequence must be active from the start of the cinematic");
+
+        // Advance through the cinematic duration (8 s)
+        float delta = 1.0f / 60.0f;
+        float elapsed = 0f;
+        while (elapsed < CinematicCamera.DURATION + 0.1f) {
+            cinematicCamera.update(delta);
+            openingSequence.update(delta);
+            elapsed += delta;
+        }
+
+        // Cinematic must be done; text sequence (12 s total) must still be running
+        assertTrue(cinematicCamera.isCompleted(), "Cinematic must complete after its duration");
+        assertTrue(openingSequence.isActive(),
+                "Text opening sequence must still be active after cinematic ends (it runs for 12 s total)");
+        assertFalse(openingSequence.isCompleted(),
+                "Text opening sequence must not have completed yet (only ~8 s have passed of 12)");
     }
 
     /**

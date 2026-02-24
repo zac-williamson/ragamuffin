@@ -469,12 +469,15 @@ public class RagamuffinGame extends ApplicationAdapter {
             renderMenu();
         } else if (state == GameState.CINEMATIC) {
             // Issue #373: City fly-through cinematic cut-scene
+            // Fix #428: Opening sequence text runs simultaneously (overlaid) with the cinematic.
             cinematicCamera.update(delta);
+            openingSequence.update(delta);
 
             // Allow any key / click to skip
             if (inputHandler.isEnterPressed() || inputHandler.isJumpPressed()
                     || inputHandler.isLeftClickPressed() || inputHandler.isEscapePressed()) {
                 cinematicCamera.skip();
+                openingSequence.skip();
                 inputHandler.resetEnter();
                 inputHandler.resetJump();
                 inputHandler.resetLeftClick();
@@ -570,6 +573,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 spriteBatch.setProjectionMatrix(proj);
                 shapeRenderer.setProjectionMatrix(proj);
                 cinematicCamera.render(spriteBatch, shapeRenderer, font, sw, sh);
+                // Fix #428: Render opening sequence text overlaid on the cinematic (no black background).
+                openingSequence.renderTextOnly(spriteBatch, font, sw, sh);
             }
         } else if (state == GameState.PLAYING) {
             // Apply mouse look FIRST — before any game logic — to eliminate perceived lag.
@@ -1039,17 +1044,18 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void startNewGame() {
-        // Issue #373: Play city fly-through cinematic before the text opening sequence,
-        // unless the player has enabled "Skip Intro" in the menu.
+        // Issue #428: Cinematic and text opening sequence run simultaneously (overlaid).
+        // Previously they played sequentially; now the text fades in over the fly-through.
         if (mainMenuScreen.isSkipIntroEnabled()) {
             // Skip both cinematic and text sequence — jump straight into gameplay
             state = GameState.PLAYING;
             openingSequence.start();
             openingSequence.skip();
         } else {
-            // Start the cinematic fly-through first; gameplay begins when it finishes
+            // Start both the cinematic fly-through and the text sequence together
             state = GameState.CINEMATIC;
             cinematicCamera.start();
+            openingSequence.start();
         }
         Gdx.input.setCursorCatched(false); // Free cursor during cinematic; re-catch when playing starts
         // Reset per-session counters
@@ -1060,11 +1066,12 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     /**
      * Called when the cinematic fly-through finishes (or is skipped).
-     * Transitions to PLAYING and starts the text-based opening sequence.
+     * Transitions to PLAYING; the text opening sequence is already running (started
+     * alongside the cinematic in startNewGame() — Fix #428).
      */
     private void finishCinematic() {
         state = GameState.PLAYING;
-        openingSequence.start();
+        // Opening sequence was already started in startNewGame(); do not restart it.
         Gdx.input.setCursorCatched(true);
     }
 
@@ -2263,7 +2270,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #373: Reset cinematic camera for the new session
         cinematicCamera = new ragamuffin.ui.CinematicCamera();
 
-        // Transition: cinematic fly-through first (unless skip intro is on)
+        // Transition: cinematic fly-through and text sequence run simultaneously (Fix #428)
         if (mainMenuScreen.isSkipIntroEnabled()) {
             state = GameState.PLAYING;
             openingSequence.start();
@@ -2272,6 +2279,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         } else {
             state = GameState.CINEMATIC;
             cinematicCamera.start();
+            openingSequence.start();
             Gdx.input.setCursorCatched(false);
         }
     }

@@ -54,7 +54,7 @@ public class OpeningSequence {
     }
 
     /**
-     * Render the opening sequence.
+     * Render the opening sequence with a black background overlay.
      */
     public void render(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
                        int screenWidth, int screenHeight) {
@@ -68,6 +68,22 @@ public class OpeningSequence {
         shapeRenderer.rect(0, 0, screenWidth, screenHeight);
         shapeRenderer.end();
 
+        renderText(spriteBatch, font, screenWidth, screenHeight);
+    }
+
+    /**
+     * Render only the text lines (no black background), for overlaying on top of the cinematic.
+     */
+    public void renderTextOnly(SpriteBatch spriteBatch, BitmapFont font,
+                               int screenWidth, int screenHeight) {
+        if (!active) {
+            return;
+        }
+        renderText(spriteBatch, font, screenWidth, screenHeight);
+    }
+
+    private void renderText(SpriteBatch spriteBatch, BitmapFont font,
+                            int screenWidth, int screenHeight) {
         // Draw lines sequentially with fade-in
         spriteBatch.begin();
         font.getData().setScale(1.6f);
