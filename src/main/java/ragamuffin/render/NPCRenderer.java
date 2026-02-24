@@ -14,6 +14,7 @@ import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +27,9 @@ import java.util.Map;
  * Dogs get a quadruped model with body, head, snout, tail, and four legs.
  * Police get a custodian helmet (traditional British bobby helmet).
  *
- * ModelInstances are cached per-model to avoid GC pressure.
+ * ModelInstances are allocated per-NPC (keyed by NPC identity) so that
+ * multiple NPCs of the same type each have their own transform state.
+ * The underlying Model objects (geometry/materials) are still shared per type.
  */
 public class NPCRenderer {
 
@@ -63,10 +66,15 @@ public class NPCRenderer {
     private static final int NUM_PARTS_NO_HELMET = 17;
     private static final int NUM_PARTS_WITH_HELMET = 18;
 
+    // Shared geometry/material models per type (not per NPC)
     private final Map<NPCType, Model[]> humanoidParts;
-    private final Map<NPCType, ModelInstance[]> humanoidInstances;
     private final Map<NPCType, Model[]> dogParts;
-    private final ModelInstance[] dogInstances;
+
+    // Per-NPC ModelInstance arrays — keyed by NPC object identity so each NPC
+    // has its own transform state even when multiple NPCs share the same type.
+    private final Map<NPC, ModelInstance[]> humanoidInstances;
+    private final Map<NPC, ModelInstance[]> dogInstances;
+
     private final ModelBuilder mb;
 
     // Reusable transform to avoid GC pressure
@@ -75,9 +83,9 @@ public class NPCRenderer {
     public NPCRenderer() {
         mb = new ModelBuilder();
         humanoidParts = new HashMap<>();
-        humanoidInstances = new HashMap<>();
+        humanoidInstances = new IdentityHashMap<>();
         dogParts = new HashMap<>();
-        dogInstances = new ModelInstance[9];
+        dogInstances = new IdentityHashMap<>();
         buildAllModels();
     }
 
@@ -186,26 +194,47 @@ public class NPCRenderer {
             new Color(0.10f, 0.10f, 0.10f, 1f),
             false);
 
-        // DOG - Brown quadruped
+        // DOG - Brown quadruped (models only; instances created per-NPC on demand)
         Model[] dParts = buildDogParts(
             new Color(0.55f, 0.35f, 0.18f, 1f),
             new Color(0.45f, 0.28f, 0.12f, 1f),
             new Color(0.05f, 0.05f, 0.05f, 1f));
         dogParts.put(NPCType.DOG, dParts);
-        for (int i = 0; i < dParts.length; i++) {
-            dogInstances[i] = new ModelInstance(dParts[i]);
-        }
     }
 
     private void buildAndCacheHumanoid(NPCType type, Color shirtColor, Color trouserColor,
                                         Color skinColor, Color eyeColor, boolean hasHelmet) {
         Model[] parts = buildHumanoidParts(shirtColor, trouserColor, skinColor, eyeColor, hasHelmet);
         humanoidParts.put(type, parts);
-        ModelInstance[] instances = new ModelInstance[parts.length];
+        // ModelInstances are created per-NPC on demand in getOrCreateHumanoidInstances()
+    }
+
+    /** Returns the per-NPC ModelInstance array for a humanoid NPC, creating it if needed. */
+    private ModelInstance[] getOrCreateHumanoidInstances(NPC npc) {
+        ModelInstance[] inst = humanoidInstances.get(npc);
+        if (inst != null) return inst;
+        Model[] parts = humanoidParts.get(npc.getType());
+        if (parts == null) return null;
+        inst = new ModelInstance[parts.length];
         for (int i = 0; i < parts.length; i++) {
-            instances[i] = new ModelInstance(parts[i]);
+            inst[i] = new ModelInstance(parts[i]);
         }
-        humanoidInstances.put(type, instances);
+        humanoidInstances.put(npc, inst);
+        return inst;
+    }
+
+    /** Returns the per-NPC ModelInstance array for a dog NPC, creating it if needed. */
+    private ModelInstance[] getOrCreateDogInstances(NPC npc) {
+        ModelInstance[] inst = dogInstances.get(npc);
+        if (inst != null) return inst;
+        Model[] parts = dogParts.get(NPCType.DOG);
+        if (parts == null) return null;
+        inst = new ModelInstance[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            inst[i] = new ModelInstance(parts[i]);
+        }
+        dogInstances.put(npc, inst);
+        return inst;
     }
 
     /**
@@ -367,7 +396,7 @@ public class NPCRenderer {
     }
 
     private void renderHumanoid(ModelBatch modelBatch, Environment environment, NPC npc) {
-        ModelInstance[] inst = humanoidInstances.get(npc.getType());
+        ModelInstance[] inst = getOrCreateHumanoidInstances(npc);
         if (inst == null) return;
 
         // Knocked out: render NPC lying flat on the ground
@@ -683,7 +712,8 @@ public class NPCRenderer {
     /**
      * Render a dog NPC in the knocked out (lying on side) pose.
      */
-    private void renderDogKnockedOut(ModelBatch modelBatch, Environment environment, NPC npc) {
+    private void renderDogKnockedOut(ModelBatch modelBatch, Environment environment,
+                                      NPC npc, ModelInstance[] inst) {
         Vector3 pos = npc.getPosition();
         float yaw = npc.getFacingAngle();
         float yawRad = (float) Math.toRadians(yaw);
@@ -698,48 +728,48 @@ public class NPCRenderer {
         float groundY = bodyH / 2f + 0.05f;
 
         // Body
-        setKnockedOutPartTransform(dogInstances[0], pos, yawRad, rollRad, 0f, groundY, 0f);
-        modelBatch.render(dogInstances[0], environment);
+        setKnockedOutPartTransform(inst[0], pos, yawRad, rollRad, 0f, groundY, 0f);
+        modelBatch.render(inst[0], environment);
 
         // Head (front of body)
         float headZ = (0.65f / 2f + 0.26f / 2f - 0.04f);
-        setKnockedOutPartTransform(dogInstances[1], pos, yawRad, rollRad, 0f, groundY + 0.06f, headZ);
-        modelBatch.render(dogInstances[1], environment);
+        setKnockedOutPartTransform(inst[1], pos, yawRad, rollRad, 0f, groundY + 0.06f, headZ);
+        modelBatch.render(inst[1], environment);
 
         // Snout
-        setKnockedOutPartTransform(dogInstances[2], pos, yawRad, rollRad, 0f, groundY, headZ + 0.26f / 2f + 0.06f);
-        modelBatch.render(dogInstances[2], environment);
+        setKnockedOutPartTransform(inst[2], pos, yawRad, rollRad, 0f, groundY, headZ + 0.26f / 2f + 0.06f);
+        modelBatch.render(inst[2], environment);
 
         // Eyes
-        setKnockedOutPartTransform(dogInstances[8], pos, yawRad, rollRad, 0f, groundY + 0.10f, headZ + 0.26f / 2f + 0.011f);
-        modelBatch.render(dogInstances[8], environment);
+        setKnockedOutPartTransform(inst[8], pos, yawRad, rollRad, 0f, groundY + 0.10f, headZ + 0.26f / 2f + 0.011f);
+        modelBatch.render(inst[8], environment);
 
         // Tail (back of body)
         float tailZ = -(0.65f / 2f + 0.03f);
-        setKnockedOutPartTransform(dogInstances[3], pos, yawRad, rollRad, 0f, groundY + 0.15f, tailZ);
-        modelBatch.render(dogInstances[3], environment);
+        setKnockedOutPartTransform(inst[3], pos, yawRad, rollRad, 0f, groundY + 0.15f, tailZ);
+        modelBatch.render(inst[3], environment);
 
         // Legs (all pointing up/sideways when lying)
         float frontLegZ = 0.65f / 2f - 0.10f;
         float backLegZ = -(0.65f / 2f - 0.10f);
         float legSpreadX = 0.12f;
-        setKnockedOutPartTransform(dogInstances[4], pos, yawRad, rollRad, -legSpreadX, groundY, frontLegZ);
-        modelBatch.render(dogInstances[4], environment);
-        setKnockedOutPartTransform(dogInstances[5], pos, yawRad, rollRad,  legSpreadX, groundY, frontLegZ);
-        modelBatch.render(dogInstances[5], environment);
-        setKnockedOutPartTransform(dogInstances[6], pos, yawRad, rollRad, -legSpreadX, groundY, backLegZ);
-        modelBatch.render(dogInstances[6], environment);
-        setKnockedOutPartTransform(dogInstances[7], pos, yawRad, rollRad,  legSpreadX, groundY, backLegZ);
-        modelBatch.render(dogInstances[7], environment);
+        setKnockedOutPartTransform(inst[4], pos, yawRad, rollRad, -legSpreadX, groundY, frontLegZ);
+        modelBatch.render(inst[4], environment);
+        setKnockedOutPartTransform(inst[5], pos, yawRad, rollRad,  legSpreadX, groundY, frontLegZ);
+        modelBatch.render(inst[5], environment);
+        setKnockedOutPartTransform(inst[6], pos, yawRad, rollRad, -legSpreadX, groundY, backLegZ);
+        modelBatch.render(inst[6], environment);
+        setKnockedOutPartTransform(inst[7], pos, yawRad, rollRad,  legSpreadX, groundY, backLegZ);
+        modelBatch.render(inst[7], environment);
     }
 
     private void renderDog(ModelBatch modelBatch, Environment environment, NPC npc) {
-        Model[] parts = dogParts.get(NPCType.DOG);
-        if (parts == null) return;
+        ModelInstance[] inst = getOrCreateDogInstances(npc);
+        if (inst == null) return;
 
         // Knocked out: dog lies on its side
         if (npc.getState() == NPCState.KNOCKED_OUT) {
-            renderDogKnockedOut(modelBatch, environment, npc);
+            renderDogKnockedOut(modelBatch, environment, npc, inst);
             return;
         }
 
@@ -759,28 +789,28 @@ public class NPCRenderer {
         float bodyCentreY = legH + bodyH / 2f;
 
         // 0 - Body
-        setPartTransform(dogInstances[0], pos, yawRad, 0f, bodyCentreY, 0f);
-        modelBatch.render(dogInstances[0], environment);
+        setPartTransform(inst[0], pos, yawRad, 0f, bodyCentreY, 0f);
+        modelBatch.render(inst[0], environment);
 
         // 1 - Head (at +Z, the front of the dog)
         float headZ = (0.65f / 2f + 0.26f / 2f - 0.04f);
-        setPartTransform(dogInstances[1], pos, yawRad, 0f, bodyCentreY + 0.06f, headZ);
-        modelBatch.render(dogInstances[1], environment);
+        setPartTransform(inst[1], pos, yawRad, 0f, bodyCentreY + 0.06f, headZ);
+        modelBatch.render(inst[1], environment);
 
         // 2 - Snout
-        setPartTransform(dogInstances[2], pos, yawRad,
+        setPartTransform(inst[2], pos, yawRad,
             0f, bodyCentreY, headZ + 0.26f / 2f + 0.06f);
-        modelBatch.render(dogInstances[2], environment);
+        modelBatch.render(inst[2], environment);
 
         // 8 - Eyes
-        setPartTransform(dogInstances[8], pos, yawRad,
+        setPartTransform(inst[8], pos, yawRad,
             0f, bodyCentreY + 0.10f, headZ + 0.26f / 2f + 0.011f);
-        modelBatch.render(dogInstances[8], environment);
+        modelBatch.render(inst[8], environment);
 
         // 3 - Tail (at -Z, the back of the dog)
         float tailZ = -(0.65f / 2f + 0.03f);
-        setPartTransform(dogInstances[3], pos, yawRad, 0f, bodyCentreY + 0.15f, tailZ);
-        modelBatch.render(dogInstances[3], environment);
+        setPartTransform(inst[3], pos, yawRad, 0f, bodyCentreY + 0.15f, tailZ);
+        modelBatch.render(inst[3], environment);
 
         // 4-7: Legs with walk animation (front at +Z, back at -Z)
         float frontLegZ = 0.65f / 2f - 0.10f;
@@ -788,14 +818,14 @@ public class NPCRenderer {
         float legPivotY = bodyCentreY - bodyH / 2f;
         float legSpreadX = 0.12f;
 
-        setLimbTransform(dogInstances[4], pos, yawRad, -legSpreadX, legPivotY, frontLegZ, swingRad, legH);
-        modelBatch.render(dogInstances[4], environment);
-        setLimbTransform(dogInstances[5], pos, yawRad, legSpreadX, legPivotY, frontLegZ, -swingRad, legH);
-        modelBatch.render(dogInstances[5], environment);
-        setLimbTransform(dogInstances[6], pos, yawRad, -legSpreadX, legPivotY, backLegZ, -swingRad, legH);
-        modelBatch.render(dogInstances[6], environment);
-        setLimbTransform(dogInstances[7], pos, yawRad, legSpreadX, legPivotY, backLegZ, swingRad, legH);
-        modelBatch.render(dogInstances[7], environment);
+        setLimbTransform(inst[4], pos, yawRad, -legSpreadX, legPivotY, frontLegZ, swingRad, legH);
+        modelBatch.render(inst[4], environment);
+        setLimbTransform(inst[5], pos, yawRad, legSpreadX, legPivotY, frontLegZ, -swingRad, legH);
+        modelBatch.render(inst[5], environment);
+        setLimbTransform(inst[6], pos, yawRad, -legSpreadX, legPivotY, backLegZ, -swingRad, legH);
+        modelBatch.render(inst[6], environment);
+        setLimbTransform(inst[7], pos, yawRad, legSpreadX, legPivotY, backLegZ, swingRad, legH);
+        modelBatch.render(inst[7], environment);
     }
 
     public void dispose() {
@@ -813,5 +843,6 @@ public class NPCRenderer {
             }
         }
         dogParts.clear();
+        dogInstances.clear();
     }
 }
