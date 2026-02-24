@@ -121,4 +121,38 @@ class RaycastTest {
         assertEquals(1, result.getBlockY()); // Should hit nearest block first
         assertEquals(BlockType.GRASS, result.getBlockType());
     }
+
+    @Test
+    void testRaycastHitsDoorLower() {
+        World world = new World(12345);
+        world.setBlock(0, 0, 0, BlockType.DOOR_LOWER);
+
+        Vector3 origin = new Vector3(0.5f, 5f, 0.5f);
+        Vector3 direction = new Vector3(0, -1, 0);
+
+        RaycastResult result = Raycast.cast(world, origin, direction, 10f);
+
+        assertNotNull(result, "Raycast should hit DOOR_LOWER even though it is non-solid");
+        assertEquals(0, result.getBlockX());
+        assertEquals(0, result.getBlockY());
+        assertEquals(0, result.getBlockZ());
+        assertEquals(BlockType.DOOR_LOWER, result.getBlockType());
+    }
+
+    @Test
+    void testRaycastHitsDoorUpper() {
+        World world = new World(12345);
+        world.setBlock(0, 1, 0, BlockType.DOOR_UPPER);
+
+        Vector3 origin = new Vector3(0.5f, 5f, 0.5f);
+        Vector3 direction = new Vector3(0, -1, 0);
+
+        RaycastResult result = Raycast.cast(world, origin, direction, 10f);
+
+        assertNotNull(result, "Raycast should hit DOOR_UPPER even though it is non-solid");
+        assertEquals(0, result.getBlockX());
+        assertEquals(1, result.getBlockY());
+        assertEquals(0, result.getBlockZ());
+        assertEquals(BlockType.DOOR_UPPER, result.getBlockType());
+    }
 }

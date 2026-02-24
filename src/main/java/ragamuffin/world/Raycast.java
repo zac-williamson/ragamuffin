@@ -46,9 +46,10 @@ public class Raycast {
 
         // Traverse voxels along the ray
         while (distance < maxDistance) {
-            // Check if current voxel is solid
+            // Check if current voxel is solid or a door block (non-solid but targetable/breakable)
             BlockType block = world.getBlock(x, y, z);
-            if (block != BlockType.AIR && block.isSolid()) {
+            boolean isDoorBlock = block == BlockType.DOOR_LOWER || block == BlockType.DOOR_UPPER;
+            if (block != BlockType.AIR && (block.isSolid() || isDoorBlock)) {
                 Vector3 hitPos = new Vector3(origin).add(new Vector3(dir).scl(distance));
                 return new RaycastResult(x, y, z, block, hitPos, distance);
             }
