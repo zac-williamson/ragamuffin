@@ -203,6 +203,17 @@ class AchievementSystemTest {
     }
 
     @Test
+    void resetClearsUnlockedState() {
+        // Fix #489: after unlock + reset, the achievement must no longer be unlocked
+        system.unlock(AchievementType.FIRST_PUNCH);
+        assertTrue(system.isUnlocked(AchievementType.FIRST_PUNCH),
+                "Achievement must be unlocked before reset");
+        system.reset();
+        assertFalse(system.isUnlocked(AchievementType.FIRST_PUNCH),
+                "Achievement must not be unlocked after reset");
+    }
+
+    @Test
     void incrementToTargetUnlocksAndQueuesNotification() {
         AchievementType type = AchievementType.BRAWLER; // progressTarget > 1
         int target = type.getProgressTarget();
