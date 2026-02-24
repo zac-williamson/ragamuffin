@@ -1057,15 +1057,23 @@ public class RagamuffinGame extends ApplicationAdapter {
             RaycastResult _initTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
             lastPunchTargetKey = (_initTarget != null) ? (_initTarget.getBlockX() + "," + _initTarget.getBlockY() + "," + _initTarget.getBlockZ()) : null;
         } else if (inputHandler.isPunchHeld()) {
-            // Determine current target
+            // Fix #279: Check for both block and NPC targets so hold-to-punch fires for NPCs too.
             RaycastResult heldTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
             String currentTargetKey = (heldTarget != null) ? (heldTarget.getBlockX() + "," + heldTarget.getBlockY() + "," + heldTarget.getBlockZ()) : null;
-            // Reset timer if target changed
-            if (currentTargetKey == null || !currentTargetKey.equals(lastPunchTargetKey)) {
+            boolean hasNPCTarget = findNPCInReach(camera.position, camera.direction, PUNCH_REACH) != null;
+            // Reset timer only when the block target changes (switched block or block→NPC/none).
+            // Do NOT reset if an NPC is the target and currentTargetKey is null — that would
+            // zero the timer every frame and prevent repeat hits on NPCs (the bug in #279).
+            if (!hasNPCTarget && (currentTargetKey == null || !currentTargetKey.equals(lastPunchTargetKey))) {
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = currentTargetKey;
+            } else if (currentTargetKey != null && !currentTargetKey.equals(lastPunchTargetKey)) {
+                // Block target changed (even while also facing an NPC — unlikely but correct)
                 punchHeldTimer = 0f;
                 lastPunchTargetKey = currentTargetKey;
             }
-            if (currentTargetKey != null) {
+            // Any valid target — block OR NPC — should tick the repeat timer
+            if (currentTargetKey != null || hasNPCTarget) {
                 punchHeldTimer += delta;
                 if (punchHeldTimer >= PUNCH_REPEAT_INTERVAL) {
                     punchHeldTimer -= PUNCH_REPEAT_INTERVAL;
