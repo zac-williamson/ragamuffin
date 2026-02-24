@@ -592,17 +592,23 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Update police spawning based on seasonal night (TimeSystem.isNight())
             npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
-            // Update player survival stats (gated: no hunger/starvation/cold-snap while UI is open or during respawn)
-            // Opening sequence is treated as a non-blocking overlay — survival stats still tick behind it.
-            if (!isUIBlocking() && !respawnSystem.isRespawning()) {
-                // Sprint drains hunger 3x faster
-                float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
+            // Fix #411: Hunger, starvation, and weather effects tick unconditionally —
+            // opening a UI overlay (inventory/help/crafting) must not freeze time-based
+            // survival simulation. Only the sprint multiplier falls back to ×1 while UI
+            // is open since the player is not moving. The healingSystem remains gated
+            // (intentional: you cannot rest while rummaging through your inventory).
+            if (!respawnSystem.isRespawning()) {
+                // Sprint drains hunger 3x faster, but only when the player is actually
+                // controlling movement (UI not blocking input).
+                float hungerMultiplier = (!isUIBlocking() && inputHandler.isSprintHeld()) ? 3.0f : 1.0f;
                 player.updateHunger(delta * hungerMultiplier);
 
-                // Sprint drains energy while moving
-                boolean isMovingNow = inputHandler.isForward() || inputHandler.isBackward() || inputHandler.isLeft() || inputHandler.isRight();
-                if (inputHandler.isSprintHeld() && isMovingNow) {
-                    player.consumeEnergy(Player.SPRINT_ENERGY_DRAIN * delta);
+                // Sprint drains energy while moving — only applicable when UI is not open
+                if (!isUIBlocking()) {
+                    boolean isMovingNow = inputHandler.isForward() || inputHandler.isBackward() || inputHandler.isLeft() || inputHandler.isRight();
+                    if (inputHandler.isSprintHeld() && isMovingNow) {
+                        player.consumeEnergy(Player.SPRINT_ENERGY_DRAIN * delta);
+                    }
                 }
 
                 // Starvation: zero hunger drains health at 5 HP/s
@@ -623,8 +629,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                     player.damage(healthDrain, DamageReason.WEATHER);
                 }
 
-                // Phase 11: Update healing system (gated: no healing while UI is open)
-                healingSystem.update(delta, player);
+                // Phase 11: Update healing system (gated: no healing while UI is open —
+                // intentional design: you cannot rest while rummaging through your inventory)
+                if (!isUIBlocking()) {
+                    healingSystem.update(delta, player);
+                }
             }
 
             // Phase 11: Check for death and respawn
