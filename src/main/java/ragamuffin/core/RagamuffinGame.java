@@ -1414,6 +1414,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (interactionSystem.isFood(material)) {
             boolean consumed = interactionSystem.consumeFood(material, player, inventory);
             if (consumed) {
+                soundSystem.play(ragamuffin.audio.SoundEffect.ITEM_EAT);
                 // Show any feedback message from the consumable
                 String consumeMsg = interactionSystem.getLastConsumeMessage();
                 if (consumeMsg != null) {
@@ -1426,6 +1427,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #257: Check if material has a non-food, non-placeable use action
         if (interactionSystem.canUseItem(material)) {
             String message = interactionSystem.useItem(material, player, inventory);
+            soundSystem.play(ragamuffin.audio.SoundEffect.ITEM_USE);
             if (message != null) {
                 tooltipSystem.showMessage(message, 3.0f);
             }
