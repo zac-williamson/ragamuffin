@@ -678,6 +678,32 @@ class NPCManagerTest {
      * to spawn police again (i.e. the cooldown is no longer blocking).
      */
     @Test
+    void testTickPostArrestCooldownDrainsIndependentlyOfUpdate() {
+        // Calling with zero cooldown must be a no-op (no negative drift)
+        manager.tickPostArrestCooldown(5.0f);
+        assertEquals(0f, manager.getPostArrestCooldown(), 0.001f,
+                "Fix #403: tickPostArrestCooldown() must not go below zero");
+
+        // Simulate an arrest clearing: sets postArrestCooldown = POST_ARREST_COOLDOWN_DURATION (10 s)
+        manager.clearArrestPending();
+        float initial = manager.getPostArrestCooldown();
+        assertTrue(initial > 0f, "Fix #403: clearArrestPending() must set a positive postArrestCooldown");
+
+        // Drain partially without calling update() — mirrors the PAUSED branch
+        manager.tickPostArrestCooldown(3.0f);
+        float afterPartial = manager.getPostArrestCooldown();
+        assertTrue(afterPartial < initial,
+                "Fix #403: tickPostArrestCooldown() must reduce the cooldown");
+        assertTrue(afterPartial > 0f,
+                "Fix #403: partial tick must not fully drain the cooldown");
+
+        // Drain well past the full duration — must clamp to zero, never negative
+        manager.tickPostArrestCooldown(20.0f);
+        assertEquals(0f, manager.getPostArrestCooldown(), 0.001f,
+                "Fix #403: tickPostArrestCooldown() must clamp to zero, never go negative");
+    }
+
+    @Test
     void testTickSpawnCooldownDrainsIndependentlyOfUpdate() {
         // Tick spawn cooldown when it is already zero — must be a no-op (no negative drift)
         manager.tickSpawnCooldown(5.0f);

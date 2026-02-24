@@ -1708,6 +1708,17 @@ public class NPCManager {
     }
 
     /**
+     * Tick the post-arrest cooldown by delta seconds.
+     * Called in the PAUSED branch so the cooldown continues to drain while the game is paused,
+     * preventing the player from exploiting pause to extend re-arrest immunity indefinitely (Fix #403).
+     */
+    public void tickPostArrestCooldown(float delta) {
+        if (postArrestCooldown > 0) {
+            postArrestCooldown = Math.max(0f, postArrestCooldown - delta);
+        }
+    }
+
+    /**
      * Tick speech timers for all NPCs by delta seconds.
      * Called in the PAUSED branch so speech bubbles continue to count down while paused,
      * preventing them from persisting through the pause then expiring instantly on resume (Fix #397).

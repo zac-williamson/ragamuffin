@@ -824,6 +824,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Without this, policeSpawnCooldown freezes for the entire pause duration, and on
             // resume the cooldown expires almost immediately — flooding the player with police.
             npcManager.tickSpawnCooldown(delta);
+            // Fix #403: Tick post-arrest cooldown while paused so the player cannot exploit
+            // pause to extend re-arrest immunity indefinitely.
+            npcManager.tickPostArrestCooldown(delta);
 
             // Fix #397: Tick NPC speech timers while paused so speech bubbles continue to count
             // down. Without this, any active speech bubble freezes for the entire pause duration
