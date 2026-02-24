@@ -150,6 +150,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     private float footstepDustTimer = 0f;
     private static final float FOOTSTEP_DUST_INTERVAL = 0.3f;
 
+    // Issue #265: Hold-to-break repeat-fire timer
+    private float punchHeldTimer = 0f;
+    private static final float PUNCH_REPEAT_INTERVAL = 0.25f;
+    private String lastPunchTargetKey = null; // reset timer when target block changes
+
     // Tool durability is now tracked per inventory slot via Inventory.getToolInSlot()
 
     // Death screen messages
@@ -1014,10 +1019,34 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Update first-person arm animation
         firstPersonArm.update(delta);
 
-        // Handle punching
+        // Handle punching — single click fires immediately; holding repeats every PUNCH_REPEAT_INTERVAL
         if (inputHandler.isPunchPressed()) {
             handlePunch();
             inputHandler.resetPunch();
+            punchHeldTimer = 0f; // reset repeat timer on fresh click
+            // Capture current target so we can detect target changes
+            RaycastResult _initTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
+            lastPunchTargetKey = (_initTarget != null) ? (_initTarget.getBlockX() + "," + _initTarget.getBlockY() + "," + _initTarget.getBlockZ()) : null;
+        } else if (inputHandler.isPunchHeld()) {
+            // Determine current target
+            RaycastResult heldTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
+            String currentTargetKey = (heldTarget != null) ? (heldTarget.getBlockX() + "," + heldTarget.getBlockY() + "," + heldTarget.getBlockZ()) : null;
+            // Reset timer if target changed
+            if (currentTargetKey == null || !currentTargetKey.equals(lastPunchTargetKey)) {
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = currentTargetKey;
+            }
+            if (currentTargetKey != null) {
+                punchHeldTimer += delta;
+                if (punchHeldTimer >= PUNCH_REPEAT_INTERVAL) {
+                    punchHeldTimer -= PUNCH_REPEAT_INTERVAL;
+                    handlePunch();
+                }
+            }
+        } else {
+            // Button released — reset timer and last target
+            punchHeldTimer = 0f;
+            lastPunchTargetKey = null;
         }
 
         // Handle block placement

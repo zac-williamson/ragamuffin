@@ -15,6 +15,7 @@ public class InputHandler implements InputProcessor {
     private boolean helpPressed;
     private boolean craftingPressed;
     private boolean punchPressed;
+    private boolean punchHeld; // true while left mouse button is held down
     private boolean placePressed;
     private boolean enterPressed;
     private boolean upPressed;
@@ -61,6 +62,7 @@ public class InputHandler implements InputProcessor {
     public boolean isHelpPressed() { return helpPressed; }
     public boolean isCraftingPressed() { return craftingPressed; }
     public boolean isPunchPressed() { return punchPressed; }
+    public boolean isPunchHeld() { return punchHeld; }
     public boolean isPlacePressed() { return placePressed; }
     public boolean isEnterPressed() { return enterPressed; }
     public boolean isUpPressed() { return upPressed; }
@@ -171,6 +173,7 @@ public class InputHandler implements InputProcessor {
         if (button == Input.Buttons.LEFT) {
             if (Gdx.input.isCursorCatched()) {
                 punchPressed = true;
+                punchHeld = true;
             } else {
                 leftClickPressed = true;
             }
@@ -189,6 +192,7 @@ public class InputHandler implements InputProcessor {
         mouseX = screenX;
         mouseY = screenY;
         if (button == Input.Buttons.LEFT) {
+            punchHeld = false;
             leftClickReleased = true;
         }
         return true;
