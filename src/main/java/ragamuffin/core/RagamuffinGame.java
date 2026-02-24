@@ -512,6 +512,28 @@ public class RagamuffinGame extends ApplicationAdapter {
             // flag transition must not be skipped — mirrors the PAUSED branch (line ~852).
             npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
+            // Fix #433: Advance hunger, starvation, energy recovery, and weather exposure
+            // during the cinematic so the player cannot exploit the opening fly-through to
+            // avoid starving, halt cold-snap health drain, or prevent energy recovery.
+            // Mirrors the equivalent block in the PAUSED branch (~lines 932-948).
+            if (!respawnSystem.isRespawning()) {
+                player.updateHunger(delta);
+
+                if (player.getHunger() <= 0) {
+                    player.damage(5.0f * delta, DamageReason.STARVATION);
+                }
+
+                Weather cinematicWeather = weatherSystem.getCurrentWeather();
+                float cinematicWeatherMultiplier = exposureSystem.getEffectiveEnergyDrainMultiplier(
+                        cinematicWeather, world, player.getPosition());
+                player.recoverEnergy(delta / cinematicWeatherMultiplier);
+
+                if (exposureSystem.isExposedToWeatherDamage(cinematicWeather, timeSystem.isNight(), world, player.getPosition())) {
+                    float cinematicHealthDrain = cinematicWeather.getHealthDrainRate() * delta;
+                    player.damage(cinematicHealthDrain, DamageReason.WEATHER);
+                }
+            }
+
             // Fix #427: Continue loading and meshing chunks during the cinematic so that
             // the world is fully built before the player takes control.  The cinematic
             // camera sweeps across a large area; without this, many chunks remain as bare
