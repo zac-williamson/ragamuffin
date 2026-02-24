@@ -1211,7 +1211,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Mouse click support for pause menu — Fix #499: skip when achievements
             // overlay is open to prevent clicks on the overlay from passing through
             // to the pause menu hit-boxes underneath (which could trigger Quit).
-            if (inputHandler.isLeftClickPressed() && !achievementsUI.isVisible()) {
+            // Fix #529: also skip when quest log overlay is open for the same reason.
+            if (inputHandler.isLeftClickPressed() && !achievementsUI.isVisible() && !questLogUI.isVisible()) {
                 int sw = Gdx.graphics.getWidth();
                 int sh = Gdx.graphics.getHeight();
                 int clicked = pauseMenu.handleClick(inputHandler.getMouseX(), inputHandler.getMouseY(), sw, sh);
@@ -1227,6 +1228,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetLeftClick();
             } else if (inputHandler.isLeftClickPressed() && achievementsUI.isVisible()) {
                 // Consume the click so it doesn't carry over to subsequent frames.
+                inputHandler.resetLeftClick();
+            } else if (inputHandler.isLeftClickPressed() && questLogUI.isVisible()) {
+                // Fix #529: consume the click so it doesn't carry over to subsequent frames.
                 inputHandler.resetLeftClick();
             }
         }
