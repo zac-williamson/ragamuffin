@@ -565,93 +565,92 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetEscape();
             }
 
-            // Update world simulation (NPCs, environment systems) — always runs regardless of UI state.
+            // Fix #401: Update world simulation unconditionally — the opening sequence is a 2D overlay;
+            // the 3D world should keep simulating (NPCs, gravity, chunk loading, etc.) behind it.
             // Fix #198: NPCs/gang/arrest must not freeze when inventory/crafting/help UI is open.
-            if (!openingSequence.isActive()) {
-                updatePlayingSimulation(delta);
-            }
+            updatePlayingSimulation(delta);
 
             // Update player-input logic (movement, punch, placement) — gated behind UI check.
             // Fix #269: suppress input while player is dead or during the respawn countdown.
+            // Opening sequence also suppresses player input (it is a non-blocking overlay only).
             if (!isUIBlocking() && !openingSequence.isActive() && !respawnSystem.isRespawning() && !player.isDead()) {
                 updatePlayingInput(delta);
             }
 
-            // Update time system (only when not paused in opening sequence)
-            if (!openingSequence.isActive()) {
-                timeSystem.update(delta);
-                npcManager.setGameTime(timeSystem.getTime());
-                lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
-                updateSkyColour(timeSystem.getTime());
-                clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
+            // Update time system — runs unconditionally (Fix #401: must tick during opening sequence too)
+            timeSystem.update(delta);
+            npcManager.setGameTime(timeSystem.getTime());
+            lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
+            updateSkyColour(timeSystem.getTime());
+            clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
 
-                // Phase 12: Update weather system with game-time seconds
-                // timeSpeed (hours/real-second) * 3600 = game-seconds per real-second
-                float gameTimeDeltaSeconds = delta * timeSystem.getTimeSpeed() * 3600f;
-                weatherSystem.update(gameTimeDeltaSeconds);
+            // Phase 12: Update weather system with game-time seconds
+            // timeSpeed (hours/real-second) * 3600 = game-seconds per real-second
+            float gameTimeDeltaSeconds = delta * timeSystem.getTimeSpeed() * 3600f;
+            weatherSystem.update(gameTimeDeltaSeconds);
 
-                // Update police spawning based on seasonal night (TimeSystem.isNight())
-                npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
+            // Update police spawning based on seasonal night (TimeSystem.isNight())
+            npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
-                // Update player survival stats (gated: no hunger/starvation/cold-snap while UI is open or during respawn)
-                if (!isUIBlocking() && !respawnSystem.isRespawning()) {
-                    // Sprint drains hunger 3x faster
-                    float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
-                    player.updateHunger(delta * hungerMultiplier);
+            // Update player survival stats (gated: no hunger/starvation/cold-snap while UI is open or during respawn)
+            // Opening sequence is treated as a non-blocking overlay — survival stats still tick behind it.
+            if (!isUIBlocking() && !respawnSystem.isRespawning()) {
+                // Sprint drains hunger 3x faster
+                float hungerMultiplier = inputHandler.isSprintHeld() ? 3.0f : 1.0f;
+                player.updateHunger(delta * hungerMultiplier);
 
-                    // Sprint drains energy while moving
-                    boolean isMovingNow = inputHandler.isForward() || inputHandler.isBackward() || inputHandler.isLeft() || inputHandler.isRight();
-                    if (inputHandler.isSprintHeld() && isMovingNow) {
-                        player.consumeEnergy(Player.SPRINT_ENERGY_DRAIN * delta);
-                    }
-
-                    // Starvation: zero hunger drains health at 5 HP/s
-                    if (player.getHunger() <= 0) {
-                        player.damage(5.0f * delta, DamageReason.STARVATION);
-                    }
-
-                    // Issue #234: Apply weather energy drain multiplier, shielded by indoor shelter
-                    Weather currentWeather = weatherSystem.getCurrentWeather();
-                    float weatherMultiplier = exposureSystem.getEffectiveEnergyDrainMultiplier(
-                            currentWeather, world, player.getPosition());
-                    // Weather affects recovery rate inversely - worse weather = slower recovery
-                    player.recoverEnergy(delta / weatherMultiplier);
-
-                    // Issue #234: Cold snap health drain at night — shielded by indoor shelter
-                    if (exposureSystem.isExposedToWeatherDamage(currentWeather, timeSystem.isNight(), world, player.getPosition())) {
-                        float healthDrain = currentWeather.getHealthDrainRate() * delta;
-                        player.damage(healthDrain, DamageReason.WEATHER);
-                    }
-
-                    // Phase 11: Update healing system (gated: no healing while UI is open)
-                    healingSystem.update(delta, player);
+                // Sprint drains energy while moving
+                boolean isMovingNow = inputHandler.isForward() || inputHandler.isBackward() || inputHandler.isLeft() || inputHandler.isRight();
+                if (inputHandler.isSprintHeld() && isMovingNow) {
+                    player.consumeEnergy(Player.SPRINT_ENERGY_DRAIN * delta);
                 }
 
-                // Phase 11: Check for death and respawn
-                boolean justDied = respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);
-                // Fix #275: Clear sticky punch state on death so auto-punch doesn't fire on respawn
-                if (justDied) {
-                    inputHandler.resetPunchHeld();
-                    punchHeldTimer = 0f;
-                    lastPunchTargetKey = null;
-                }
-                boolean wasRespawning = respawnSystem.isRespawning();
-                respawnSystem.update(delta, player);
-                if (wasRespawning && !respawnSystem.isRespawning()) {
-                    deathMessage = null; // Reset for next death
-                    // Issue #114: Reset Greggs raid on respawn — mirrors the arrest-handler reset
-                    greggsRaidSystem.reset();
-                    // Issue #154: Reset street reputation on death — the streets forget you while you were dead
-                    player.getStreetReputation().reset();
-                    // Issue #166: Sync HealingSystem position after teleport so the next update()
-                    // does not compute a spurious speed from the respawn distance.
-                    healingSystem.resetPosition(player.getPosition());
+                // Starvation: zero hunger drains health at 5 HP/s
+                if (player.getHunger() <= 0) {
+                    player.damage(5.0f * delta, DamageReason.STARVATION);
                 }
 
-                // Phase 11: Trigger hunger warning tooltip
-                if (player.getHunger() <= 25 && !tooltipSystem.hasShown(TooltipTrigger.HUNGER_LOW)) {
-                    tooltipSystem.trigger(TooltipTrigger.HUNGER_LOW);
+                // Issue #234: Apply weather energy drain multiplier, shielded by indoor shelter
+                Weather currentWeather = weatherSystem.getCurrentWeather();
+                float weatherMultiplier = exposureSystem.getEffectiveEnergyDrainMultiplier(
+                        currentWeather, world, player.getPosition());
+                // Weather affects recovery rate inversely - worse weather = slower recovery
+                player.recoverEnergy(delta / weatherMultiplier);
+
+                // Issue #234: Cold snap health drain at night — shielded by indoor shelter
+                if (exposureSystem.isExposedToWeatherDamage(currentWeather, timeSystem.isNight(), world, player.getPosition())) {
+                    float healthDrain = currentWeather.getHealthDrainRate() * delta;
+                    player.damage(healthDrain, DamageReason.WEATHER);
                 }
+
+                // Phase 11: Update healing system (gated: no healing while UI is open)
+                healingSystem.update(delta, player);
+            }
+
+            // Phase 11: Check for death and respawn
+            boolean justDied = respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);
+            // Fix #275: Clear sticky punch state on death so auto-punch doesn't fire on respawn
+            if (justDied) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
+            boolean wasRespawning = respawnSystem.isRespawning();
+            respawnSystem.update(delta, player);
+            if (wasRespawning && !respawnSystem.isRespawning()) {
+                deathMessage = null; // Reset for next death
+                // Issue #114: Reset Greggs raid on respawn — mirrors the arrest-handler reset
+                greggsRaidSystem.reset();
+                // Issue #154: Reset street reputation on death — the streets forget you while you were dead
+                player.getStreetReputation().reset();
+                // Issue #166: Sync HealingSystem position after teleport so the next update()
+                // does not compute a spurious speed from the respawn distance.
+                healingSystem.resetPosition(player.getPosition());
+            }
+
+            // Phase 11: Trigger hunger warning tooltip
+            if (player.getHunger() <= 25 && !tooltipSystem.hasShown(TooltipTrigger.HUNGER_LOW)) {
+                tooltipSystem.trigger(TooltipTrigger.HUNGER_LOW);
             }
 
             // Update tooltip system
