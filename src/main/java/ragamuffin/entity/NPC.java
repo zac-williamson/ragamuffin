@@ -338,14 +338,18 @@ public class NPC {
             case ARRESTING:
             case DEMOLISHING:
             case WARNING:
+            case ATTACKING:
                 return FacialExpression.ANGRY;
             case FLEEING:
                 return FacialExpression.SCARED;
             case AT_PUB:
             case AT_HOME:
+            case WAVING:
+            case DANCING:
                 return FacialExpression.HAPPY;
             case STARING:
             case PHOTOGRAPHING:
+            case POINTING:
                 return FacialExpression.SURPRISED;
             default:
                 return FacialExpression.NEUTRAL;

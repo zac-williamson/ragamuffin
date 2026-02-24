@@ -525,6 +525,25 @@ public class NPCRenderer {
             return;
         }
 
+        // Special pose animations
+        NPCState state = npc.getState();
+        if (state == NPCState.ATTACKING) {
+            renderHumanoidAttacking(modelBatch, environment, npc, inst);
+            return;
+        }
+        if (state == NPCState.WAVING) {
+            renderHumanoidWaving(modelBatch, environment, npc, inst);
+            return;
+        }
+        if (state == NPCState.DANCING) {
+            renderHumanoidDancing(modelBatch, environment, npc, inst);
+            return;
+        }
+        if (state == NPCState.POINTING) {
+            renderHumanoidPointing(modelBatch, environment, npc, inst);
+            return;
+        }
+
         Vector3 pos = npc.getPosition();
         float yaw = npc.getFacingAngle();
         float animT = npc.getAnimTime();
@@ -636,7 +655,327 @@ public class NPCRenderer {
     }
 
     /**
+     * Helper to render the static body parts shared by all special-pose animations
+     * (torso, shoulders, neck, head, face, helmet, legs at rest).
+     */
+    private void renderStaticBody(ModelBatch modelBatch, Environment environment,
+                                   NPC npc, ModelInstance[] inst,
+                                   Vector3 pos, float yawRad,
+                                   float torsoCentre, float shoulderY, float neckY,
+                                   float headCentre) {
+        setPartTransform(inst[PART_TORSO], pos, yawRad, 0f, torsoCentre, 0f);
+        modelBatch.render(inst[PART_TORSO], environment);
+        setPartTransform(inst[PART_SHOULDERS], pos, yawRad, 0f, shoulderY, 0f);
+        modelBatch.render(inst[PART_SHOULDERS], environment);
+        setPartTransform(inst[PART_NECK], pos, yawRad, 0f, neckY + NECK_H / 2f, 0f);
+        modelBatch.render(inst[PART_NECK], environment);
+        setPartTransform(inst[PART_HEAD], pos, yawRad, 0f, headCentre, 0f);
+        modelBatch.render(inst[PART_HEAD], environment);
+
+        ModelInstance[] exprInst = getOrCreateExpressionFaceInstances(npc);
+        if (exprInst != null) {
+            int exprIdx = npc.getFacialExpression().ordinal();
+            setPartTransform(exprInst[exprIdx], pos, yawRad, 0f, headCentre, (HEAD_D / 2f + 0.011f));
+            modelBatch.render(exprInst[exprIdx], environment);
+        } else {
+            setPartTransform(inst[PART_FACE], pos, yawRad, 0f, headCentre, (HEAD_D / 2f + 0.011f));
+            modelBatch.render(inst[PART_FACE], environment);
+        }
+
+        if (inst.length > PART_HELMET) {
+            float helmetY = headCentre + HEAD_H / 2f + 0.02f;
+            setPartTransform(inst[PART_HELMET], pos, yawRad, 0f, helmetY, 0f);
+            modelBatch.render(inst[PART_HELMET], environment);
+        }
+
+        // Legs at rest (no swing)
+        float legOffsetX = TORSO_W / 2f - UPPER_LEG_W / 2f;
+        float torsoBottom = (FOOT_H + LOWER_LEG_H + UPPER_LEG_H);
+        float legPivotY = torsoBottom;
+        setLimbTransform(inst[PART_L_UPPER_LEG], pos, yawRad, -legOffsetX, legPivotY, 0f, 0f, UPPER_LEG_H);
+        modelBatch.render(inst[PART_L_UPPER_LEG], environment);
+        setLimbChainTransform(inst[PART_L_LOWER_LEG], pos, yawRad,
+            -legOffsetX, legPivotY, 0f, 0f, UPPER_LEG_H, 0f, LOWER_LEG_H);
+        modelBatch.render(inst[PART_L_LOWER_LEG], environment);
+        setLimb3ChainTransform(inst[PART_L_FOOT], pos, yawRad,
+            -legOffsetX, legPivotY, 0f, 0f, UPPER_LEG_H, 0f, LOWER_LEG_H, 0f, FOOT_H);
+        modelBatch.render(inst[PART_L_FOOT], environment);
+        setLimbTransform(inst[PART_R_UPPER_LEG], pos, yawRad, legOffsetX, legPivotY, 0f, 0f, UPPER_LEG_H);
+        modelBatch.render(inst[PART_R_UPPER_LEG], environment);
+        setLimbChainTransform(inst[PART_R_LOWER_LEG], pos, yawRad,
+            legOffsetX, legPivotY, 0f, 0f, UPPER_LEG_H, 0f, LOWER_LEG_H);
+        modelBatch.render(inst[PART_R_LOWER_LEG], environment);
+        setLimb3ChainTransform(inst[PART_R_FOOT], pos, yawRad,
+            legOffsetX, legPivotY, 0f, 0f, UPPER_LEG_H, 0f, LOWER_LEG_H, 0f, FOOT_H);
+        modelBatch.render(inst[PART_R_FOOT], environment);
+    }
+
+    /**
+     * Attack animation: right arm swings forward aggressively (punch pose).
+     * Left arm is held back at the side. animTime drives the swing oscillation.
+     */
+    private void renderHumanoidAttacking(ModelBatch modelBatch, Environment environment,
+                                          NPC npc, ModelInstance[] inst) {
+        Vector3 pos = npc.getPosition();
+        float yaw = npc.getFacingAngle();
+        float animT = npc.getAnimTime();
+        float yawRad = (float) Math.toRadians(yaw);
+
+        float footH = FOOT_H;
+        float lowerLegTop = footH + LOWER_LEG_H;
+        float upperLegTop = lowerLegTop + UPPER_LEG_H;
+        float torsoBottom = upperLegTop;
+        float torsoTop = torsoBottom + TORSO_H;
+        float shoulderY = torsoTop;
+        float neckY = shoulderY + SHOULDER_H;
+        float headCentre = neckY + NECK_H + HEAD_H / 2f;
+        float torsoCentre = torsoBottom + TORSO_H / 2f;
+
+        renderStaticBody(modelBatch, environment, npc, inst, pos, yawRad,
+            torsoCentre, shoulderY, neckY, headCentre);
+
+        // Right arm punches forward — oscillates between -90° and +30° for a snappy punch
+        float armOffsetX = SHOULDER_W / 2f;
+        float armPivotY = shoulderY;
+        // Punch: fast forward swing (negative = forward in local X-axis rotation)
+        float punchAngle = -(float) Math.toRadians(60f + 30f * Math.sin(animT * 8.0f));
+        setLimbTransform(inst[PART_R_UPPER_ARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, punchAngle, UPPER_ARM_H);
+        modelBatch.render(inst[PART_R_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_R_FOREARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, punchAngle, UPPER_ARM_H, punchAngle * 0.5f, FOREARM_H);
+        modelBatch.render(inst[PART_R_FOREARM], environment);
+        setLimb3ChainTransform(inst[PART_R_HAND], pos, yawRad,
+            armOffsetX, armPivotY, 0f, punchAngle, UPPER_ARM_H, punchAngle * 0.5f, FOREARM_H,
+            0f, HAND_H);
+        modelBatch.render(inst[PART_R_HAND], environment);
+
+        // Left arm held back slightly
+        float guardAngle = (float) Math.toRadians(20f);
+        setLimbTransform(inst[PART_L_UPPER_ARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, guardAngle, UPPER_ARM_H);
+        modelBatch.render(inst[PART_L_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_L_FOREARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, guardAngle, UPPER_ARM_H, -guardAngle * 0.5f, FOREARM_H);
+        modelBatch.render(inst[PART_L_FOREARM], environment);
+        setLimb3ChainTransform(inst[PART_L_HAND], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, guardAngle, UPPER_ARM_H, -guardAngle * 0.5f, FOREARM_H,
+            0f, HAND_H);
+        modelBatch.render(inst[PART_L_HAND], environment);
+    }
+
+    /**
+     * Wave animation: right arm raised and oscillated left-right (waving gesture).
+     * Left arm stays at side. animTime drives the wave oscillation.
+     */
+    private void renderHumanoidWaving(ModelBatch modelBatch, Environment environment,
+                                       NPC npc, ModelInstance[] inst) {
+        Vector3 pos = npc.getPosition();
+        float yaw = npc.getFacingAngle();
+        float animT = npc.getAnimTime();
+        float yawRad = (float) Math.toRadians(yaw);
+
+        float footH = FOOT_H;
+        float lowerLegTop = footH + LOWER_LEG_H;
+        float upperLegTop = lowerLegTop + UPPER_LEG_H;
+        float torsoBottom = upperLegTop;
+        float torsoTop = torsoBottom + TORSO_H;
+        float shoulderY = torsoTop;
+        float neckY = shoulderY + SHOULDER_H;
+        float headCentre = neckY + NECK_H + HEAD_H / 2f;
+        float torsoCentre = torsoBottom + TORSO_H / 2f;
+
+        renderStaticBody(modelBatch, environment, npc, inst, pos, yawRad,
+            torsoCentre, shoulderY, neckY, headCentre);
+
+        float armOffsetX = SHOULDER_W / 2f;
+        float armPivotY = shoulderY;
+
+        // Right arm raised up (shoulder rotated ~-150°) and forearm waves side to side
+        float raiseAngle = (float) Math.toRadians(-150f);
+        float waveAngle = (float) Math.toRadians(30f * Math.sin(animT * 5.0f));
+        setLimbTransform(inst[PART_R_UPPER_ARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, raiseAngle, UPPER_ARM_H);
+        modelBatch.render(inst[PART_R_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_R_FOREARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, raiseAngle, UPPER_ARM_H, waveAngle, FOREARM_H);
+        modelBatch.render(inst[PART_R_FOREARM], environment);
+        setLimb3ChainTransform(inst[PART_R_HAND], pos, yawRad,
+            armOffsetX, armPivotY, 0f, raiseAngle, UPPER_ARM_H, waveAngle, FOREARM_H,
+            waveAngle * 0.5f, HAND_H);
+        modelBatch.render(inst[PART_R_HAND], environment);
+
+        // Left arm at rest
+        setLimbTransform(inst[PART_L_UPPER_ARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, 0f, UPPER_ARM_H);
+        modelBatch.render(inst[PART_L_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_L_FOREARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, 0f, UPPER_ARM_H, 0f, FOREARM_H);
+        modelBatch.render(inst[PART_L_FOREARM], environment);
+        setLimb3ChainTransform(inst[PART_L_HAND], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, 0f, UPPER_ARM_H, 0f, FOREARM_H, 0f, HAND_H);
+        modelBatch.render(inst[PART_L_HAND], environment);
+    }
+
+    /**
+     * Dance animation: both arms swing rhythmically, torso bobs, legs alternate.
+     * animTime drives the full-body dance rhythm.
+     */
+    private void renderHumanoidDancing(ModelBatch modelBatch, Environment environment,
+                                        NPC npc, ModelInstance[] inst) {
+        Vector3 pos = npc.getPosition();
+        float yaw = npc.getFacingAngle();
+        float animT = npc.getAnimTime();
+        float yawRad = (float) Math.toRadians(yaw);
+
+        float footH = FOOT_H;
+        float lowerLegTop = footH + LOWER_LEG_H;
+        float upperLegTop = lowerLegTop + UPPER_LEG_H;
+        float torsoBottom = upperLegTop;
+        float torsoTop = torsoBottom + TORSO_H;
+        float shoulderY = torsoTop;
+        float neckY = shoulderY + SHOULDER_H;
+        float headCentre = neckY + NECK_H + HEAD_H / 2f;
+        float torsoCentre = torsoBottom + TORSO_H / 2f;
+
+        // Dance beat: 4 Hz rhythm
+        float beat = (float) Math.sin(animT * 4.0f * (float) Math.PI);
+
+        // Torso and head bob slightly with the beat
+        float bobOffset = 0.04f * Math.abs(beat);
+
+        // Static body parts with vertical bob
+        setPartTransform(inst[PART_TORSO], pos, yawRad, 0f, torsoCentre + bobOffset, 0f);
+        modelBatch.render(inst[PART_TORSO], environment);
+        setPartTransform(inst[PART_SHOULDERS], pos, yawRad, 0f, shoulderY + bobOffset, 0f);
+        modelBatch.render(inst[PART_SHOULDERS], environment);
+        setPartTransform(inst[PART_NECK], pos, yawRad, 0f, neckY + NECK_H / 2f + bobOffset, 0f);
+        modelBatch.render(inst[PART_NECK], environment);
+        setPartTransform(inst[PART_HEAD], pos, yawRad, 0f, headCentre + bobOffset, 0f);
+        modelBatch.render(inst[PART_HEAD], environment);
+
+        ModelInstance[] exprInst = getOrCreateExpressionFaceInstances(npc);
+        if (exprInst != null) {
+            int exprIdx = npc.getFacialExpression().ordinal();
+            setPartTransform(exprInst[exprIdx], pos, yawRad, 0f, headCentre + bobOffset, (HEAD_D / 2f + 0.011f));
+            modelBatch.render(exprInst[exprIdx], environment);
+        } else {
+            setPartTransform(inst[PART_FACE], pos, yawRad, 0f, headCentre + bobOffset, (HEAD_D / 2f + 0.011f));
+            modelBatch.render(inst[PART_FACE], environment);
+        }
+        if (inst.length > PART_HELMET) {
+            float helmetY = headCentre + bobOffset + HEAD_H / 2f + 0.02f;
+            setPartTransform(inst[PART_HELMET], pos, yawRad, 0f, helmetY, 0f);
+            modelBatch.render(inst[PART_HELMET], environment);
+        }
+
+        // Arms: both swing rhythmically in opposite directions
+        float armOffsetX = SHOULDER_W / 2f;
+        float armPivotY = shoulderY + bobOffset;
+        float armSwing = (float) Math.toRadians(60f * beat);
+        setLimbTransform(inst[PART_L_UPPER_ARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, armSwing, UPPER_ARM_H);
+        modelBatch.render(inst[PART_L_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_L_FOREARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, armSwing, UPPER_ARM_H, armSwing * 0.5f, FOREARM_H);
+        modelBatch.render(inst[PART_L_FOREARM], environment);
+        setLimb3ChainTransform(inst[PART_L_HAND], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, armSwing, UPPER_ARM_H, armSwing * 0.5f, FOREARM_H,
+            0f, HAND_H);
+        modelBatch.render(inst[PART_L_HAND], environment);
+
+        setLimbTransform(inst[PART_R_UPPER_ARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, -armSwing, UPPER_ARM_H);
+        modelBatch.render(inst[PART_R_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_R_FOREARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, -armSwing, UPPER_ARM_H, -armSwing * 0.5f, FOREARM_H);
+        modelBatch.render(inst[PART_R_FOREARM], environment);
+        setLimb3ChainTransform(inst[PART_R_HAND], pos, yawRad,
+            armOffsetX, armPivotY, 0f, -armSwing, UPPER_ARM_H, -armSwing * 0.5f, FOREARM_H,
+            0f, HAND_H);
+        modelBatch.render(inst[PART_R_HAND], environment);
+
+        // Legs: alternate stepping with the beat
+        float legOffsetX = TORSO_W / 2f - UPPER_LEG_W / 2f;
+        float legPivotY = torsoBottom + bobOffset;
+        float legSwing = (float) Math.toRadians(25f * beat);
+        setLimbTransform(inst[PART_L_UPPER_LEG], pos, yawRad, -legOffsetX, legPivotY, 0f, legSwing, UPPER_LEG_H);
+        modelBatch.render(inst[PART_L_UPPER_LEG], environment);
+        setLimbChainTransform(inst[PART_L_LOWER_LEG], pos, yawRad,
+            -legOffsetX, legPivotY, 0f, legSwing, UPPER_LEG_H, legSwing * 0.5f, LOWER_LEG_H);
+        modelBatch.render(inst[PART_L_LOWER_LEG], environment);
+        setLimb3ChainTransform(inst[PART_L_FOOT], pos, yawRad,
+            -legOffsetX, legPivotY, 0f, legSwing, UPPER_LEG_H, legSwing * 0.5f, LOWER_LEG_H, 0f, FOOT_H);
+        modelBatch.render(inst[PART_L_FOOT], environment);
+
+        setLimbTransform(inst[PART_R_UPPER_LEG], pos, yawRad, legOffsetX, legPivotY, 0f, -legSwing, UPPER_LEG_H);
+        modelBatch.render(inst[PART_R_UPPER_LEG], environment);
+        setLimbChainTransform(inst[PART_R_LOWER_LEG], pos, yawRad,
+            legOffsetX, legPivotY, 0f, -legSwing, UPPER_LEG_H, -legSwing * 0.5f, LOWER_LEG_H);
+        modelBatch.render(inst[PART_R_LOWER_LEG], environment);
+        setLimb3ChainTransform(inst[PART_R_FOOT], pos, yawRad,
+            legOffsetX, legPivotY, 0f, -legSwing, UPPER_LEG_H, -legSwing * 0.5f, LOWER_LEG_H, 0f, FOOT_H);
+        modelBatch.render(inst[PART_R_FOOT], environment);
+    }
+
+    /**
+     * Point animation: right arm extended forward and slightly upward (pointing gesture).
+     * Left arm stays at side. A gentle oscillation keeps the gesture alive.
+     */
+    private void renderHumanoidPointing(ModelBatch modelBatch, Environment environment,
+                                         NPC npc, ModelInstance[] inst) {
+        Vector3 pos = npc.getPosition();
+        float yaw = npc.getFacingAngle();
+        float animT = npc.getAnimTime();
+        float yawRad = (float) Math.toRadians(yaw);
+
+        float footH = FOOT_H;
+        float lowerLegTop = footH + LOWER_LEG_H;
+        float upperLegTop = lowerLegTop + UPPER_LEG_H;
+        float torsoBottom = upperLegTop;
+        float torsoTop = torsoBottom + TORSO_H;
+        float shoulderY = torsoTop;
+        float neckY = shoulderY + SHOULDER_H;
+        float headCentre = neckY + NECK_H + HEAD_H / 2f;
+        float torsoCentre = torsoBottom + TORSO_H / 2f;
+
+        renderStaticBody(modelBatch, environment, npc, inst, pos, yawRad,
+            torsoCentre, shoulderY, neckY, headCentre);
+
+        float armOffsetX = SHOULDER_W / 2f;
+        float armPivotY = shoulderY;
+
+        // Right arm extended forward (rotated ~-70° forward), with slight oscillation
+        float pointBase = (float) Math.toRadians(-70f);
+        float pointOscillation = (float) Math.toRadians(5f * Math.sin(animT * 2.0f));
+        float pointAngle = pointBase + pointOscillation;
+        setLimbTransform(inst[PART_R_UPPER_ARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, pointAngle, UPPER_ARM_H);
+        modelBatch.render(inst[PART_R_UPPER_ARM], environment);
+        // Forearm fully extended (no additional bend)
+        setLimbChainTransform(inst[PART_R_FOREARM], pos, yawRad,
+            armOffsetX, armPivotY, 0f, pointAngle, UPPER_ARM_H, 0f, FOREARM_H);
+        modelBatch.render(inst[PART_R_FOREARM], environment);
+        setLimb3ChainTransform(inst[PART_R_HAND], pos, yawRad,
+            armOffsetX, armPivotY, 0f, pointAngle, UPPER_ARM_H, 0f, FOREARM_H, 0f, HAND_H);
+        modelBatch.render(inst[PART_R_HAND], environment);
+
+        // Left arm at rest
+        setLimbTransform(inst[PART_L_UPPER_ARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, 0f, UPPER_ARM_H);
+        modelBatch.render(inst[PART_L_UPPER_ARM], environment);
+        setLimbChainTransform(inst[PART_L_FOREARM], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, 0f, UPPER_ARM_H, 0f, FOREARM_H);
+        modelBatch.render(inst[PART_L_FOREARM], environment);
+        setLimb3ChainTransform(inst[PART_L_HAND], pos, yawRad,
+            -armOffsetX, armPivotY, 0f, 0f, UPPER_ARM_H, 0f, FOREARM_H, 0f, HAND_H);
+        modelBatch.render(inst[PART_L_HAND], environment);
+    }
+
+    /**
      * Render a humanoid NPC in the knocked out (lying flat on ground) pose.
+     * All body parts are rotated 90 degrees around the X axis so the NPC
+     * appears to have fallen forward flat on the ground.
      * All body parts are rotated 90 degrees around the X axis so the NPC
      * appears to have fallen forward flat on the ground.
      */
