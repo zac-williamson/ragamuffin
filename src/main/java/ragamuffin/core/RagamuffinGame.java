@@ -125,6 +125,12 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #209: Sky renderer — sun and clouds
     private ragamuffin.render.SkyRenderer skyRenderer;
 
+    // Issue #450: Achievement system
+    private ragamuffin.ui.AchievementSystem achievementSystem;
+    private ragamuffin.ui.AchievementsUI achievementsUI;
+    private float distanceTravelledAchievement = 0f; // accumulated metres walked
+    private com.badlogic.gdx.math.Vector3 lastPlayerPosForDistance = null;
+
     private static final float MOUSE_SENSITIVITY = 0.2f;
     private static final float PUNCH_REACH = 5.0f;
     private static final float PLACE_REACH = 5.0f;
@@ -328,6 +334,13 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Wire up tooltip sound effect
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
+
+        // Issue #450: Initialize achievement system
+        achievementSystem = new ragamuffin.ui.AchievementSystem();
+        achievementsUI = new ragamuffin.ui.AchievementsUI(achievementSystem);
+        achievementSystem.setOnNotificationShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
+        distanceTravelledAchievement = 0f;
+        lastPlayerPosForDistance = new com.badlogic.gdx.math.Vector3(player.getPosition());
 
         loadingComplete = true;
         state = GameState.MENU;
@@ -1597,9 +1610,14 @@ public class RagamuffinGame extends ApplicationAdapter {
             gameHUD.setBlockBreakProgress(0f);
             // Award street reputation for fighting (major crime)
             player.getStreetReputation().addPoints(2);
+            // Issue #450: Achievement tracking — punching NPCs
+            achievementSystem.unlock(ragamuffin.ui.AchievementType.FIRST_PUNCH);
+            achievementSystem.increment(ragamuffin.ui.AchievementType.BRAWLER);
             // Issue #26: If a YOUTH_GANG member was punched, escalate territory to hostile
             if (targetNPC.getType() == ragamuffin.entity.NPCType.YOUTH_GANG) {
                 gangTerritorySystem.onPlayerAttacksGang(tooltipSystem, npcManager, player, world);
+                // Issue #450: gang aggro achievement
+                achievementSystem.unlock(ragamuffin.ui.AchievementType.GANG_AGGRO);
             }
             return; // Don't punch blocks if we hit an NPC
         }
@@ -1655,6 +1673,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                     inventory.removeItem(toolMaterial, 1);
                     inventory.setToolInSlot(selectedSlot, null);
                     tooltipSystem.trigger(TooltipTrigger.TOOL_BROKEN);
+                    // Issue #450: achievement for breaking tools
+                    achievementSystem.increment(ragamuffin.ui.AchievementType.TOOL_BREAKER);
                 }
             }
 
@@ -1687,6 +1707,24 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // CRITIC 3: Greggs Raid mechanic — delegate to dedicated system
                 if (landmark == LandmarkType.GREGGS) {
                     greggsRaidSystem.onGreggBlockBroken(tooltipSystem, npcManager, player, world);
+                    // Issue #450: Greggs raid achievement — first break triggers it
+                    achievementSystem.unlock(ragamuffin.ui.AchievementType.GREGGS_RAID);
+                }
+
+                // Issue #450: Block breaking achievements
+                achievementSystem.unlock(ragamuffin.ui.AchievementType.FIRST_BLOCK);
+                switch (blockType) {
+                    case TREE_TRUNK:
+                        achievementSystem.increment(ragamuffin.ui.AchievementType.LUMBERJACK);
+                        break;
+                    case BRICK:
+                        achievementSystem.increment(ragamuffin.ui.AchievementType.BRICK_BY_BRICK);
+                        break;
+                    case GLASS:
+                        achievementSystem.increment(ragamuffin.ui.AchievementType.GLAZIER);
+                        break;
+                    default:
+                        break;
                 }
 
                 // Issue #130: Award reputation for landmark crimes proportional to severity.
@@ -1843,6 +1881,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Critic 4: Trigger cardboard box shelter tooltip
         if (material == Material.CARDBOARD_BOX && !tooltipSystem.hasShown(TooltipTrigger.CARDBOARD_BOX_SHELTER)) {
             tooltipSystem.trigger(TooltipTrigger.CARDBOARD_BOX_SHELTER);
+        }
+
+        // Issue #450: Block building achievements
+        achievementSystem.increment(ragamuffin.ui.AchievementType.BUILDER);
+        if (material == Material.CARDBOARD_BOX) {
+            achievementSystem.unlock(ragamuffin.ui.AchievementType.CARDBOARD_CASTLE);
         }
 
         // Only rebuild the affected chunk
