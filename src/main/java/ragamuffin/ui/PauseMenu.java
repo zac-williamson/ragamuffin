@@ -2,6 +2,7 @@ package ragamuffin.ui;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
@@ -49,8 +50,8 @@ public class PauseMenu {
         font.setColor(Color.WHITE);
         font.getData().setScale(2.0f);
         String title = "PAUSED";
-        float titleWidth = font.getRegion().getRegionWidth() * 2.0f * title.length() / 4;
-        font.draw(spriteBatch, title, screenWidth / 2f - titleWidth / 2, screenHeight * 0.7f);
+        GlyphLayout titleLayout = new GlyphLayout(font, title);
+        font.draw(spriteBatch, title, screenWidth / 2f - titleLayout.width / 2, screenHeight * 0.7f);
         font.getData().setScale(1.2f);
 
         // Draw options
@@ -66,8 +67,8 @@ public class PauseMenu {
                 font.setColor(Color.WHITE);
             }
 
-            float optionWidth = font.getRegion().getRegionWidth() * 1.2f * option.length() / 4;
-            font.draw(spriteBatch, option, screenWidth / 2f - optionWidth / 2, optionY - i * optionSpacing);
+            GlyphLayout optionLayout = new GlyphLayout(font, option);
+            font.draw(spriteBatch, option, screenWidth / 2f - optionLayout.width / 2, optionY - i * optionSpacing);
         }
 
         spriteBatch.end();
