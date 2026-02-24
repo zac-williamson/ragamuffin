@@ -1871,6 +1871,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // helpUI.isVisible() remains true in the new session, causing isUIBlocking()
         // to return true and suppressing all player input indefinitely.
         helpUI = new HelpUI();
+        // Fix #329: Recreate pauseMenu so visible and selectedOption reset to their defaults
+        // (visible=false, selectedOption=OPTION_RESUME). Without this, if the player opened the
+        // pause menu and selected "Restart", visible stays true and selectedOption stays at index 1
+        // ("Restart") instead of the default "Resume" — mirroring the pattern used for helpUI (#325).
+        pauseMenu = new PauseMenu();
         // Fix #317: Recreate hoverTooltipSystem so dwell timers from the previous session
         // do not bleed into the new game (mirrors the pattern used for all other UI systems).
         hoverTooltipSystem = new HoverTooltipSystem();
