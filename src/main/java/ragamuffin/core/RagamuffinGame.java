@@ -1572,37 +1572,49 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Phase 14: Update night status for police warning banner and dodge indicator
             gameHUD.setNight(timeSystem.isNight());
 
-            // Update block break progress on crosshair (account for equipped tool)
-            tmpCameraPos.set(camera.position);
-            tmpDirection.set(camera.direction);
-            int hudSelectedSlot = hotbarUI.getSelectedSlot();
-            Material hudEquipped = inventory.getItemInSlot(hudSelectedSlot);
-            Material hudTool = (hudEquipped != null && Tool.isTool(hudEquipped)) ? hudEquipped : null;
-            RaycastResult targetBlock = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
+            // Issue #289: Only update crosshair-related state when no UI overlay is open.
+            // The status bars (health/hunger/energy) are always rendered, but the crosshair
+            // and block-break progress arc must be hidden when inventory/crafting/help is open,
+            // mirroring the guard already applied to renderBlockHighlight().
+            boolean showCrosshair = !isUIBlocking();
+            if (showCrosshair) {
+                // Update block break progress on crosshair (account for equipped tool)
+                tmpCameraPos.set(camera.position);
+                tmpDirection.set(camera.direction);
+                int hudSelectedSlot = hotbarUI.getSelectedSlot();
+                Material hudEquipped = inventory.getItemInSlot(hudSelectedSlot);
+                Material hudTool = (hudEquipped != null && Tool.isTool(hudEquipped)) ? hudEquipped : null;
+                RaycastResult targetBlock = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
 
-            // Issue #287: Check NPC target first — NPC takes priority over block for both
-            // block break progress and target name (avoids two separate findNPCInReach calls)
-            NPC hudTargetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
-            if (hudTargetNPC != null) {
-                gameHUD.setBlockBreakProgress(0f); // NPC target — don't show block damage
-            } else if (targetBlock != null) {
-                float progress = blockBreaker.getBreakProgress(world, targetBlock.getBlockX(),
-                    targetBlock.getBlockY(), targetBlock.getBlockZ(), hudTool);
-                gameHUD.setBlockBreakProgress(progress);
+                // Issue #287: Check NPC target first — NPC takes priority over block for both
+                // block break progress and target name (avoids two separate findNPCInReach calls)
+                NPC hudTargetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
+                if (hudTargetNPC != null) {
+                    gameHUD.setBlockBreakProgress(0f); // NPC target — don't show block damage
+                } else if (targetBlock != null) {
+                    float progress = blockBreaker.getBreakProgress(world, targetBlock.getBlockX(),
+                        targetBlock.getBlockY(), targetBlock.getBlockZ(), hudTool);
+                    gameHUD.setBlockBreakProgress(progress);
+                } else {
+                    gameHUD.setBlockBreakProgress(0f);
+                }
+
+                // Issue #189: Update target reticule label — NPC takes priority over block
+                if (hudTargetNPC != null) {
+                    gameHUD.setTargetName(formatNPCName(hudTargetNPC.getType()));
+                } else if (targetBlock != null) {
+                    gameHUD.setTargetName(formatBlockName(targetBlock.getBlockType()));
+                } else {
+                    gameHUD.setTargetName(null);
+                }
             } else {
+                // UI overlay is open — clear crosshair state so stale values don't
+                // linger when the overlay is closed
                 gameHUD.setBlockBreakProgress(0f);
-            }
-
-            // Issue #189: Update target reticule label — NPC takes priority over block
-            if (hudTargetNPC != null) {
-                gameHUD.setTargetName(formatNPCName(hudTargetNPC.getType()));
-            } else if (targetBlock != null) {
-                gameHUD.setTargetName(formatBlockName(targetBlock.getBlockType()));
-            } else {
                 gameHUD.setTargetName(null);
             }
 
-            gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
+            gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem, showCrosshair);
         }
 
         // Always render hotbar (unless opening sequence active)
