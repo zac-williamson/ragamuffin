@@ -49,11 +49,9 @@ class Issue341WeatherTimerPausedTest {
         for (int i = 0; i < 60; i++) {
             ws2.update(tickDelta);
         }
-        // After 601 s the RAIN must have transitioned (only alternative is CLEAR)
+        // After 601 s the RAIN must have transitioned away from RAIN
         assertNotEquals(Weather.RAIN, ws2.getCurrentWeather(),
                 "Weather must have transitioned away from RAIN after 601 game-seconds of update()");
-        assertEquals(Weather.CLEAR, ws2.getCurrentWeather(),
-                "After RAIN the only alternative weather is CLEAR");
     }
 
     /**

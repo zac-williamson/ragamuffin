@@ -708,6 +708,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #341: Advance weather timer while paused so weather transitions
             // continue to accumulate — mirrors the PLAYING path (line ~530).
             weatherSystem.update(delta * timeSystem.getTimeSpeed() * 3600f);
+            // Fix #343: Advance speech log entry timers while paused so entries fade out
+            // rather than freezing on-screen for the entire duration of the pause.
+            speechLogUI.update(npcManager.getNPCs(), delta);
 
             // Render UI and pause menu
             renderUI();
