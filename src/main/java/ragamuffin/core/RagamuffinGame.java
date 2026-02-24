@@ -685,6 +685,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
 
+            // Fix #321: Advance damage flash and HUD timers while paused so the
+            // red vignette fades out and the damage-reason banner counts down.
+            player.updateFlash(delta);
+            gameHUD.update(delta);
+
             // Render UI and pause menu
             renderUI();
             pauseMenu.render(spriteBatch, shapeRenderer, font,
