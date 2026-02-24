@@ -848,6 +848,29 @@ public class RagamuffinGame extends ApplicationAdapter {
             // still at the same damage level — bypassing the decay mechanic entirely.
             blockBreaker.tickDecay(delta);
 
+            // Fix #399: Advance hunger, starvation, energy recovery, and weather exposure
+            // while paused so the player cannot exploit the pause menu to avoid starving,
+            // halt cold-snap health drain, or prevent energy recovery.
+            // Sprint multiplier (3×) is NOT applied — the player is not moving while paused.
+            // Mirrors the equivalent block in the PLAYING branch (~lines 596-628).
+            if (!respawnSystem.isRespawning()) {
+                player.updateHunger(delta);
+
+                if (player.getHunger() <= 0) {
+                    player.damage(5.0f * delta, DamageReason.STARVATION);
+                }
+
+                Weather pausedWeather = weatherSystem.getCurrentWeather();
+                float pausedWeatherMultiplier = exposureSystem.getEffectiveEnergyDrainMultiplier(
+                        pausedWeather, world, player.getPosition());
+                player.recoverEnergy(delta / pausedWeatherMultiplier);
+
+                if (exposureSystem.isExposedToWeatherDamage(pausedWeather, timeSystem.isNight(), world, player.getPosition())) {
+                    float pausedHealthDrain = pausedWeather.getHealthDrainRate() * delta;
+                    player.damage(pausedHealthDrain, DamageReason.WEATHER);
+                }
+            }
+
             // Fix #367: Process pending arrest even while paused so the flag doesn't persist as a ghost.
             // Without this, if police set arrestPending=true on the same frame the player opens ESC,
             // the flag is never evaluated until the game unpauses — causing an invisible "ghost arrest"
