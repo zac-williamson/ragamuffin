@@ -23,13 +23,15 @@ class Issue227SkyboxRenderOrderTest {
 
     @Test
     void skyRenderer_exposesRenderSkyboxMethod() throws NoSuchMethodException {
-        // renderSkybox must exist with the correct parameter types
+        // renderSkybox must exist with the correct parameter types.
+        // Fix #235 added cameraYawDeg (float) as the last parameter so the skybox
+        // remains stationary relative to the world when the player looks around.
         Method m = SkyRenderer.class.getMethod(
                 "renderSkybox",
                 com.badlogic.gdx.graphics.glutils.ShapeRenderer.class,
                 float.class, float.class, float.class,
                 int.class, int.class,
-                boolean.class);
+                boolean.class, float.class);
         assertNotNull(m, "SkyRenderer must have a public renderSkybox() method");
     }
 

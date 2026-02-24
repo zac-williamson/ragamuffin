@@ -54,18 +54,23 @@ public class SkyRenderer {
      * is responsible for clearing the depth buffer after this call (but before
      * the model batch) so that 3D objects render correctly on top of the sky.
      *
-     * @param shapeRenderer shared ShapeRenderer (not currently between begin/end)
-     * @param time          current game time in hours (0–24)
-     * @param sunrise       today's sunrise time in hours
-     * @param sunset        today's sunset time in hours
-     * @param screenWidth   current screen width in pixels
-     * @param screenHeight  current screen height in pixels
-     * @param isNight       true when it is currently night-time
+     * The camera yaw is used to keep the skybox stationary relative to the world:
+     * the sun and clouds are offset on screen based on which direction the player
+     * is facing, so they do not appear to move when the player looks around.
+     *
+     * @param shapeRenderer  shared ShapeRenderer (not currently between begin/end)
+     * @param time           current game time in hours (0–24)
+     * @param sunrise        today's sunrise time in hours
+     * @param sunset         today's sunset time in hours
+     * @param screenWidth    current screen width in pixels
+     * @param screenHeight   current screen height in pixels
+     * @param isNight        true when it is currently night-time
+     * @param cameraYawDeg   camera yaw in degrees (0 = facing -Z/north, 90 = east, 180 = south)
      */
     public void renderSkybox(ShapeRenderer shapeRenderer,
                        float time, float sunrise, float sunset,
                        int screenWidth, int screenHeight,
-                       boolean isNight) {
+                       boolean isNight, float cameraYawDeg) {
 
         Matrix4 ortho = new Matrix4();
         ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
@@ -79,11 +84,11 @@ public class SkyRenderer {
 
         // Draw sun only during the day
         if (!isNight) {
-            renderSun(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight);
+            renderSun(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight, cameraYawDeg);
         }
 
         // Draw clouds (visible day and night, but faded at night)
-        renderClouds(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight, isNight);
+        renderClouds(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight, isNight, cameraYawDeg);
 
         com.badlogic.gdx.Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
     }
@@ -94,17 +99,27 @@ public class SkyRenderer {
 
     private void renderSun(ShapeRenderer shapeRenderer,
                            float time, float sunrise, float sunset,
-                           int screenWidth, int screenHeight) {
-
-        float noon = (sunrise + sunset) / 2f;
-        float halfDay = (sunset - sunrise) / 2f;
+                           int screenWidth, int screenHeight,
+                           float cameraYawDeg) {
 
         // Normalised position along the day arc (0 at sunrise, 0.5 at noon, 1 at sunset)
         float dayFraction = (time - sunrise) / (sunset - sunrise);
         dayFraction = clamp(dayFraction, 0f, 1f);
 
-        // Horizontal: arc left (east) to right (west) across the upper screen
-        float sunX = dayFraction * screenWidth;
+        // The sun's world yaw: rises in the east (90°), crosses south (180°) at noon,
+        // sets in the west (270°).
+        float sunWorldYaw = 90f + dayFraction * 180f;
+
+        // Angular difference between camera yaw and sun yaw, in degrees.
+        // Positive offset = sun is to the right of screen centre.
+        float yawDiff = sunWorldYaw - cameraYawDeg;
+        // Normalise to [-180, 180]
+        while (yawDiff >  180f) yawDiff -= 360f;
+        while (yawDiff < -180f) yawDiff += 360f;
+
+        // Map yaw difference to screen offset.  A 90° difference puts the sun
+        // exactly one screen-width off centre (so it disappears off the edge).
+        float sunX = screenWidth * 0.5f + (yawDiff / 90f) * screenWidth;
 
         // Vertical: parabolic arc — highest at noon, lower near horizon at dawn/dusk.
         // sunElevation goes 0→1→0 over the day.
@@ -164,7 +179,7 @@ public class SkyRenderer {
     private void renderClouds(ShapeRenderer shapeRenderer,
                               float time, float sunrise, float sunset,
                               int screenWidth, int screenHeight,
-                              boolean isNight) {
+                              boolean isNight, float cameraYawDeg) {
 
         // Cloud brightness: full white during day, faint grey at night
         float brightness = isNight ? 0.45f : 0.95f;
@@ -180,10 +195,18 @@ public class SkyRenderer {
             float seedX = (i * 137.508f) % 1.0f; // golden ratio spread
             float seedY = (i * 73.111f) % 1.0f;
 
+            // Clouds have a fixed world yaw position (0–360°) that scrolls slowly over time
+            float cloudWorldYaw = (seedX * 360f + cloudTime * CLOUD_SCROLL_SPEED * 360f) % 360f;
+
+            // Angular difference between camera yaw and cloud yaw — same projection as sun
+            float yawDiff = cloudWorldYaw - cameraYawDeg;
+            while (yawDiff >  180f) yawDiff -= 360f;
+            while (yawDiff < -180f) yawDiff += 360f;
+
             // Clouds occupy the upper 35 % of the screen
-            float cloudBaseX = ((seedX + cloudTime * CLOUD_SCROLL_SPEED) % 1.0f) * screenWidth;
-            // Wrap around so clouds re-enter from the left
-            if (cloudBaseX < 0) cloudBaseX += screenWidth;
+            float cloudBaseX = screenWidth * 0.5f + (yawDiff / 90f) * screenWidth;
+            // Wrap around so clouds tile across the sky
+            cloudBaseX = ((cloudBaseX % screenWidth) + screenWidth) % screenWidth;
             float cloudBaseY = screenHeight * (0.78f + seedY * 0.17f); // 78 %–95 % up
 
             // Each cloud is made of 5–7 overlapping circles

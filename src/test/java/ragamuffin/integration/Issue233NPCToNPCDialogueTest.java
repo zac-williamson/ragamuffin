@@ -181,19 +181,17 @@ class Issue233NPCToNPCDialogueTest {
         assertNotNull(aggressor);
         assertNotNull(bystander);
 
+        // Place player close enough to keep the aggressor in AGGRESSIVE state
+        // (updateAggressive de-escalates to WANDERING when player is > 40 blocks away)
+        Player nearPlayer = new Player(5, 1, 5);
         aggressor.setState(NPCState.AGGRESSIVE);
 
         // Run many frames
         for (int i = 0; i < 500; i++) {
-            manager.update(1f / 60f, world, player, inventory, tooltipSystem);
-            // The bystander must not have been given a reply (aggressor can't initiate)
-            if (bystander.isSpeaking()) {
-                // If bystander speaks it should be because bystander initiated, not aggressor
-                // So aggressor should NOT be speaking as the responder
-                assertFalse(aggressor.isSpeaking(),
-                        "Aggressive NPC must not be the responder in an exchange it could not have initiated");
-                break;
-            }
+            manager.update(1f / 60f, world, nearPlayer, inventory, tooltipSystem);
+            // The aggressor is AGGRESSIVE throughout — it must never be pulled into dialogue.
+            assertFalse(aggressor.isSpeaking(),
+                    "Aggressive NPC must not speak — it cannot initiate or be pulled into dialogue");
         }
     }
 
