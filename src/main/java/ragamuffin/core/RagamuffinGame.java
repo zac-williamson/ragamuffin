@@ -587,6 +587,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // cinematic so they expire at their intended rate rather than freezing for
             // the entire fly-through duration.
             player.updateFlash(delta);
+            // Fix #443: Advance HUD timers (damage-reason banner) during the cinematic
+            // so the banner counts down rather than freezing for the entire fly-through.
+            gameHUD.update(delta);
             player.updateDodge(delta);
             // Fix #437: Advance speech log entry timers during the cinematic so NPC
             // speech bubbles fade out rather than freezing on-screen.
