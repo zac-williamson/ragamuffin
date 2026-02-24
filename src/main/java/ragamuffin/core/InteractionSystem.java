@@ -408,6 +408,14 @@ public class InteractionSystem {
         NPC closest = null;
         float closestDistance = INTERACTION_RANGE;
 
+        // Project look direction onto horizontal plane so vertical aim does not affect facing check
+        Vector3 horizLook = new Vector3(lookDirection.x, 0, lookDirection.z);
+        if (horizLook.len2() < 0.0001f) {
+            // Player is looking straight up or down — use full direction as fallback
+            horizLook.set(lookDirection);
+        }
+        horizLook.nor();
+
         for (NPC npc : npcs) {
             // Dead NPCs cannot be interacted with
             if (!npc.isAlive()) continue;
@@ -415,9 +423,15 @@ public class InteractionSystem {
             // Check if NPC is within interaction range
             float distance = playerPos.dst(npc.getPosition());
             if (distance <= INTERACTION_RANGE) {
-                // Check if player is roughly facing the NPC
-                Vector3 toNPC = new Vector3(npc.getPosition()).sub(playerPos).nor();
-                float dot = lookDirection.dot(toNPC);
+                // Check if player is roughly facing the NPC (horizontal plane only)
+                Vector3 toNPC = new Vector3(npc.getPosition().x - playerPos.x, 0,
+                        npc.getPosition().z - playerPos.z);
+                if (toNPC.len2() < 0.0001f) {
+                    // NPC is directly above/below — treat as facing
+                    toNPC.set(horizLook);
+                }
+                toNPC.nor();
+                float dot = horizLook.dot(toNPC);
 
                 // Player must be facing the NPC (dot > 0.5 means within ~60 degrees)
                 if (dot > 0.5f && distance < closestDistance) {
