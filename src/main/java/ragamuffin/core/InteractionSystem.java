@@ -403,12 +403,15 @@ public class InteractionSystem {
         switch (material) {
             case NEWSPAPER:
                 player.restoreEnergy(5);
+                inventory.removeItem(material, 1);
                 return "You skim the headlines. Grim reading, but oddly soothing.";
             case TEXTBOOK:
                 player.restoreEnergy(8);
+                inventory.removeItem(material, 1);
                 return "Dense prose, no pictures. Your brain hurts slightly less than before.";
             case HYMN_BOOK:
                 player.restoreEnergy(5);
+                inventory.removeItem(material, 1);
                 return "You hum a verse. It doesn't help much, but it's something.";
             case PETROL_CAN:
                 return "Smells like trouble. Useful as a crafting ingredient.";
