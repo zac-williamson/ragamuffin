@@ -88,7 +88,7 @@ public class GameHUD {
      */
     public void render(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
                        int screenWidth, int screenHeight) {
-        render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, null);
+        render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, null, true);
     }
 
     /**
@@ -96,6 +96,17 @@ public class GameHUD {
      */
     public void render(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
                        int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips) {
+        render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltips, true);
+    }
+
+    /**
+     * Render the HUD overlay. When {@code showCrosshair} is false, the crosshair
+     * and block-break progress arc are omitted (e.g. when an inventory/crafting/help
+     * overlay is open) while status bars, weather, and reputation still render.
+     */
+    public void render(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,
+                       int screenWidth, int screenHeight, HoverTooltipSystem hoverTooltips,
+                       boolean showCrosshair) {
         if (!visible) {
             return;
         }
@@ -114,8 +125,10 @@ public class GameHUD {
             renderNightWarning(spriteBatch, font, screenWidth, screenHeight);
         }
 
-        // Render crosshair and target name
-        renderCrosshair(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltips);
+        // Render crosshair and target name only when no UI overlay is blocking
+        if (showCrosshair) {
+            renderCrosshair(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltips);
+        }
 
         // Render damage reason banner
         if (damageReasonTimer > 0 && damageReasonText != null) {
