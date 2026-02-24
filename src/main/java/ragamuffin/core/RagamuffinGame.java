@@ -1853,6 +1853,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
         interactionSystem = new InteractionSystem();
         healingSystem = new HealingSystem();
+        // Issue #166: Sync HealingSystem position after teleport so the next update()
+        // does not compute a spurious speed from the restart spawn distance.
+        healingSystem.resetPosition(player.getPosition());
         respawnSystem = new RespawnSystem();
         respawnSystem.setSpawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         weatherSystem = new WeatherSystem();
@@ -1873,6 +1876,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             particleSystem = new ragamuffin.render.ParticleSystem();
         }
         footstepDustTimer = 0f;
+
+        // Fix #299: Clear sticky punch state so auto-punch doesn't fire in the first frame
+        // of the new game session (mirrors the same reset in transitionToPaused() and on death).
+        punchHeldTimer = 0f;
+        lastPunchTargetKey = null;
+        inputHandler.resetPunchHeld();
 
         // Transition to playing with opening sequence
         state = GameState.PLAYING;
