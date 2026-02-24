@@ -692,6 +692,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // red vignette fades out and the damage-reason banner counts down.
             player.updateFlash(delta);
             gameHUD.update(delta);
+            // Fix #331: Advance tooltip countdown while paused so active tooltips
+            // fade out and queued tooltips advance rather than freezing on-screen.
+            tooltipSystem.update(delta);
 
             // Render UI and pause menu
             renderUI();
@@ -1936,6 +1939,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         punchHeldTimer = 0f;
         lastPunchTargetKey = null;
         inputHandler.resetPunchHeld();
+        // Fix #331: Recreate firstPersonArm so swinging and swingTimer reset to their defaults
+        // (swinging=false, swingTimer=0). Without this, a mid-punch animation from the previous
+        // session leaks into the new game, showing the arm in a partially-extended position.
+        firstPersonArm = new FirstPersonArm();
 
         // Fix #307: Reset prevDamageFlashIntensity so the rising-edge detector fires correctly
         // on the first hit of a new session (prevents banner from being suppressed).
