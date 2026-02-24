@@ -563,6 +563,22 @@ public class RagamuffinGame extends ApplicationAdapter {
                 healingSystem.resetPosition(player.getPosition());
             }
 
+            // Fix #437: Advance tooltip timers during the cinematic so queued tooltips
+            // (e.g. FIRST_DEATH from respawnSystem, gang-territory warnings) count down
+            // at the correct rate rather than freezing for the ~8-second fly-through.
+            tooltipSystem.update(delta);
+            // Fix #437: Advance clock HUD during the cinematic so the display stays in
+            // sync with timeSystem (which is ticked above).
+            clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
+            // Fix #437: Advance damage flash vignette and dodge cooldown during the
+            // cinematic so they expire at their intended rate rather than freezing for
+            // the entire fly-through duration.
+            player.updateFlash(delta);
+            player.updateDodge(delta);
+            // Fix #437: Advance speech log entry timers during the cinematic so NPC
+            // speech bubbles fade out rather than freezing on-screen.
+            speechLogUI.update(npcManager.getNPCs(), delta);
+
             // Fix #427: Continue loading and meshing chunks during the cinematic so that
             // the world is fully built before the player takes control.  The cinematic
             // camera sweeps across a large area; without this, many chunks remain as bare
