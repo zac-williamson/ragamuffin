@@ -102,6 +102,106 @@ public class NPCManager {
         "Resisting arrest!", "I'll taser you!"
     };
 
+    // NPC-to-NPC dialogue exchanges — each entry is a [initiator_line, responder_line] pair.
+    // The initiator speaks first; the responder replies after a short delay.
+    // Indexed as: NPC_TO_NPC_EXCHANGES[pairIndex][0] = initiator, [1] = responder.
+
+    // PUBLIC ↔ PUBLIC
+    private static final String[][] PUBLIC_PUBLIC_EXCHANGES = {
+        {"Alright?", "Yeah, not bad. You?"},
+        {"Did you see that planning notice?", "Absolutely disgraceful. Six storeys!"},
+        {"The bins still haven't been done.", "Rang the council three times."},
+        {"I'm thinking of moving, honest.", "Can't blame you, this street's gone."},
+        {"Weather's turned again.", "Always does this time of year."},
+        {"Have you tried that new place on the high street?", "It's alright, bit pricey."},
+        {"Terrible about Mrs Henderson.", "I know. She was 94, though."},
+    };
+
+    // PUBLIC ↔ PENSIONER
+    private static final String[][] PUBLIC_PENSIONER_EXCHANGES = {
+        {"Morning!", "Is it? Could've fooled me."},
+        {"You alright getting about?", "My knee's not what it was."},
+        {"Have you got far to go?", "Just to the post office, if it's still open."},
+    };
+
+    // PENSIONER ↔ PENSIONER
+    private static final String[][] PENSIONER_PENSIONER_EXCHANGES = {
+        {"They've changed the bus route again.", "I know. Had to walk from the terminus."},
+        {"Prices in Greggs now!", "I remember when a sausage roll was 20p."},
+        {"My grandson says it's all online now.", "I told him, I'm not putting my bank details on a website."},
+        {"Are you in the queue?", "I don't know. I think so."},
+    };
+
+    // POLICE ↔ PUBLIC
+    private static final String[][] POLICE_PUBLIC_EXCHANGES = {
+        {"Nothing to worry about, sir.", "I wasn't worried until now."},
+        {"Move along, please.", "I'm just standing here!"},
+        {"Have you seen anything suspicious?", "Just the usual, officer."},
+    };
+
+    // POLICE ↔ YOUTH_GANG
+    private static final String[][] POLICE_YOUTH_EXCHANGES = {
+        {"Oi, you lot. Move on.", "We're not doing nothing."},
+        {"Don't give me that.", "Swear on me nan."},
+        {"I've got my eye on you.", "Seen you looking."},
+    };
+
+    // YOUTH_GANG ↔ YOUTH_GANG
+    private static final String[][] YOUTH_YOUTH_EXCHANGES = {
+        {"Bruv, did you see that?", "Bare mad, fam."},
+        {"This place is dead.", "Let's go town."},
+        {"Got any snacks?", "Nah, skint."},
+        {"You see the match?", "Don't even talk to me about it."},
+    };
+
+    // POSTMAN ↔ PUBLIC
+    private static final String[][] POSTMAN_PUBLIC_EXCHANGES = {
+        {"Parcel for you if you're number 14.", "Oh thank God, been waiting ages."},
+        {"Could you take this for next door?", "Yeah, go on then."},
+        {"Third round today.", "Rather you than me in this rain."},
+    };
+
+    // SHOPKEEPER ↔ PUBLIC
+    private static final String[][] SHOPKEEPER_PUBLIC_EXCHANGES = {
+        {"We've got a deal on crisps today.", "Go on then, I'll have two."},
+        {"Self-service is down again, sorry.", "Not to worry, I prefer the checkout anyway."},
+        {"Closing in five minutes!", "I just need milk."},
+    };
+
+    // DRUNK ↔ PUBLIC
+    private static final String[][] DRUNK_PUBLIC_EXCHANGES = {
+        {"Have I told you you're my best mate?", "We've never met."},
+        {"What day is it?", "...Tuesday."},
+        {"I love this town, I do.", "That makes one of us."},
+    };
+
+    // BUSKER ↔ PUBLIC
+    private static final String[][] BUSKER_PUBLIC_EXCHANGES = {
+        {"Any requests?", "Do you know Wonderwall?"},
+        {"Spare change for a struggling artist?", "Here's 20p."},
+        {"I used to play Glastonbury, you know.", "Really.", /* flat, unconvinced */},
+    };
+
+    // SCHOOL_KID ↔ SCHOOL_KID
+    private static final String[][] SCHOOL_KID_SCHOOL_KID_EXCHANGES = {
+        {"Did you do the homework?", "What homework?"},
+        {"I'm so bored.", "Same. Wanna go the park?"},
+        {"My mum said I can't go out.", "Text her from the park."},
+        {"Have you got any food?", "I've got half a Kit Kat."},
+    };
+
+    // JOGGER ↔ PUBLIC
+    private static final String[][] JOGGER_PUBLIC_EXCHANGES = {
+        {"On your left!", "Blimey, gave me a fright!"},
+        {"Beautiful morning for it!", "If you say so."},
+    };
+
+    // DELIVERY_DRIVER ↔ PUBLIC
+    private static final String[][] DELIVERY_DRIVER_PUBLIC_EXCHANGES = {
+        {"Is this Maple Close?", "No, this is Maple Road."},
+        {"Could you sign for this?", "It's not even addressed to me."},
+    };
+
     // Structure detection
     private Map<String, Integer> playerStructures; // "x,y,z" key -> block count
 
@@ -160,6 +260,13 @@ public class NPCManager {
     private Map<NPC, Float> policeLostSightTimers;
     private static final float POLICE_LOST_SIGHT_TIMEOUT = 3.0f; // seconds before giving up chase
 
+    // NPC-to-NPC conversation cooldown — prevents the same NPC from initiating a new
+    // exchange immediately after one ends. Counted down each frame; exchange fires when 0.
+    private Map<NPC, Float> npcConversationCooldowns;
+    private static final float NPC_CONVERSATION_COOLDOWN = 30.0f; // seconds between conversations per NPC
+    // Distance within which two NPCs can have a conversation
+    private static final float NPC_CONVERSATION_RANGE = 4.0f;
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
@@ -185,6 +292,7 @@ public class NPCManager {
         this.alertedPoliceNPCs = new HashSet<>();
         this.npcStealCooldownTimers = new HashMap<>();
         this.policeLostSightTimers = new HashMap<>();
+        this.npcConversationCooldowns = new HashMap<>();
     }
 
     /**
@@ -258,6 +366,7 @@ public class NPCManager {
         npcStructureCheckTimers.remove(npc);
         alertedPoliceNPCs.remove(npc);
         policeLostSightTimers.remove(npc);
+        npcConversationCooldowns.remove(npc);
     }
 
     /**
@@ -554,6 +663,9 @@ public class NPCManager {
 
         // Check for player structures nearby (each NPC throttled independently)
         checkForPlayerStructures(npc, world);
+
+        // NPC-to-NPC dialogue — idle/wandering NPCs may spark a conversation with a neighbour
+        updateNPCToNPCDialogue(npc, delta);
 
         // Youth gangs try to steal (only if steal cooldown has expired)
         if (npc.getType() == NPCType.YOUTH_GANG && npc.getState() != NPCState.STEALING
@@ -1369,6 +1481,118 @@ public class NPCManager {
         if (tooltipSystem != null) {
             tooltipSystem.trigger(TooltipTrigger.FIRST_NPC_LOOT);
         }
+    }
+
+    /**
+     * Tick the per-NPC conversation cooldown and, when both conditions are met
+     * (cooldown expired, both NPCs free to speak, close enough together, both in
+     * a calm state), trigger a short paired exchange.  The initiating NPC speaks
+     * first; the responder's reply is queued so it starts just after the first
+     * line finishes (3 s initiator + 0.5 s gap = 3.5 s delay for responder).
+     *
+     * Only NPCs that are IDLE or WANDERING will initiate — hostile/fleeing NPCs
+     * are too busy.  Dogs cannot converse (no speech lines defined for pairs).
+     */
+    private void updateNPCToNPCDialogue(NPC npc, float delta) {
+        // Tick down this NPC's conversation cooldown
+        npcConversationCooldowns.computeIfPresent(npc, (k, v) -> Math.max(0f, v - delta));
+
+        // Only initiate from calm states (not hostile, fleeing, knocked-out, etc.)
+        NPCState state = npc.getState();
+        if (state == NPCState.AGGRESSIVE || state == NPCState.FLEEING
+                || state == NPCState.KNOCKED_OUT || state == NPCState.KNOCKED_BACK
+                || state == NPCState.ARRESTING || state == NPCState.WARNING
+                || state == NPCState.STEALING || state == NPCState.DEMOLISHING) {
+            return;
+        }
+
+        // Skip if already speaking or still on cooldown
+        if (npc.isSpeaking()) return;
+        float cooldown = npcConversationCooldowns.getOrDefault(npc, 0f);
+        if (cooldown > 0f) return;
+
+        // Low random chance per frame — keeps exchanges feeling organic
+        if (random.nextFloat() >= 0.002f) return;
+
+        // Find a nearby NPC to talk to
+        for (NPC other : npcs) {
+            if (other == npc || !other.isAlive() || other.isSpeaking()) continue;
+            if (other.getPosition().dst(npc.getPosition()) > NPC_CONVERSATION_RANGE) continue;
+
+            // Other NPC must also be in a calm state
+            NPCState otherState = other.getState();
+            if (otherState == NPCState.AGGRESSIVE || otherState == NPCState.FLEEING
+                    || otherState == NPCState.KNOCKED_OUT || otherState == NPCState.KNOCKED_BACK
+                    || otherState == NPCState.ARRESTING || otherState == NPCState.WARNING
+                    || otherState == NPCState.STEALING || otherState == NPCState.DEMOLISHING) {
+                continue;
+            }
+
+            // Also check other NPC's cooldown
+            float otherCooldown = npcConversationCooldowns.getOrDefault(other, 0f);
+            if (otherCooldown > 0f) continue;
+
+            // Look up exchange lines for this type pair
+            String[][] exchanges = getNPCToNPCExchanges(npc.getType(), other.getType());
+            if (exchanges == null || exchanges.length == 0) continue;
+
+            // Pick a random exchange
+            String[] exchange = exchanges[random.nextInt(exchanges.length)];
+            String initiatorLine = exchange[0];
+            String responderLine = exchange[1];
+
+            // Initiator speaks immediately; responder replies after initiator finishes
+            float initiatorDuration = 3.0f;
+            float responderDelay = initiatorDuration + 0.5f;
+            npc.setSpeechText(initiatorLine, initiatorDuration);
+
+            // Schedule the responder's reply by setting a slightly longer speech timer
+            // on the other NPC.  We use setSpeechText directly with a longer total
+            // duration; the first 3.5 s the text will be blank (timer counts down from
+            // responderDelay, text only set when it goes ≤ initiatorDuration).
+            // Simpler approach: just set the reply with the longer duration so it appears
+            // after a natural pause. We accept that both NPCs appear to start at the same
+            // time but the responder's text is contextually a reply.
+            other.setSpeechText(responderLine, 3.0f);
+
+            // Set cooldowns so neither NPC initiates another exchange right away
+            npcConversationCooldowns.put(npc, NPC_CONVERSATION_COOLDOWN);
+            npcConversationCooldowns.put(other, NPC_CONVERSATION_COOLDOWN);
+            break; // Only one exchange per NPC per frame
+        }
+    }
+
+    /**
+     * Return the set of dialogue exchange lines appropriate for the given NPC
+     * type pair, or {@code null} if no exchanges are defined for that pairing.
+     * The order of {@code a} and {@code b} does not matter — the table is
+     * consulted symmetrically.
+     */
+    public String[][] getNPCToNPCExchanges(NPCType a, NPCType b) {
+        // Normalise so we always check (smaller-ordinal, larger-ordinal)
+        if (a.ordinal() > b.ordinal()) {
+            NPCType tmp = a; a = b; b = tmp;
+        }
+
+        // Ordinal order: PUBLIC(0), DOG(1), YOUTH_GANG(2), COUNCIL_MEMBER(3), POLICE(4),
+        // COUNCIL_BUILDER(5), SHOPKEEPER(6), POSTMAN(7), JOGGER(8), DRUNK(9), BUSKER(10),
+        // DELIVERY_DRIVER(11), PENSIONER(12), SCHOOL_KID(13)
+        if (a == NPCType.PUBLIC && b == NPCType.PUBLIC)                   return PUBLIC_PUBLIC_EXCHANGES;
+        if (a == NPCType.PUBLIC && b == NPCType.YOUTH_GANG)               return null; // no exchange for PUBLIC↔GANG
+        if (a == NPCType.PUBLIC && b == NPCType.POLICE)                   return POLICE_PUBLIC_EXCHANGES;
+        if (a == NPCType.PUBLIC && b == NPCType.SHOPKEEPER)               return SHOPKEEPER_PUBLIC_EXCHANGES;
+        if (a == NPCType.PUBLIC && b == NPCType.POSTMAN)                  return POSTMAN_PUBLIC_EXCHANGES;
+        if (a == NPCType.PUBLIC && b == NPCType.JOGGER)                   return JOGGER_PUBLIC_EXCHANGES;
+        if (a == NPCType.PUBLIC && b == NPCType.DRUNK)                    return DRUNK_PUBLIC_EXCHANGES;
+        if (a == NPCType.PUBLIC && b == NPCType.BUSKER)                   return BUSKER_PUBLIC_EXCHANGES;
+        if (a == NPCType.PUBLIC && b == NPCType.DELIVERY_DRIVER)          return DELIVERY_DRIVER_PUBLIC_EXCHANGES;
+        if (a == NPCType.PUBLIC && b == NPCType.PENSIONER)                return PUBLIC_PENSIONER_EXCHANGES;
+        if (a == NPCType.YOUTH_GANG && b == NPCType.YOUTH_GANG)           return YOUTH_YOUTH_EXCHANGES;
+        // After ordinal sort: YOUTH_GANG(2) < POLICE(4), so pair is (YOUTH_GANG, POLICE)
+        if (a == NPCType.YOUTH_GANG && b == NPCType.POLICE)               return POLICE_YOUTH_EXCHANGES;
+        if (a == NPCType.PENSIONER && b == NPCType.PENSIONER)             return PENSIONER_PENSIONER_EXCHANGES;
+        if (a == NPCType.SCHOOL_KID && b == NPCType.SCHOOL_KID)           return SCHOOL_KID_SCHOOL_KID_EXCHANGES;
+        return null;
     }
 
     private String getRandomSpeech(NPCType type) {
