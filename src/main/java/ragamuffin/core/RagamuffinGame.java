@@ -2054,6 +2054,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             Quest completed = interactionSystem.pollLastQuestCompleted();
             if (completed != null) {
                 tooltipSystem.showMessage("Quest complete! " + completed.getGiver() + " is pleased.", 4.0f);
+                achievementSystem.unlock(AchievementType.FIRST_QUEST);
+                achievementSystem.increment(AchievementType.QUEST_MASTER);
             }
             // The dialogue is set on the NPC, which will be rendered as a speech bubble
             return;

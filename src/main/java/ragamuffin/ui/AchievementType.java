@@ -158,6 +158,18 @@ public enum AchievementType {
         "Haven't Got a Bus Pass",
         "Walked the equivalent of a marathon. The 68 wasn't running again.",
         1000
+    ),
+
+    // --- Quests ---
+    FIRST_QUEST(
+        "Community Spirit",
+        "Completed your first quest. Helping people? In this economy?",
+        1
+    ),
+    QUEST_MASTER(
+        "Odd Job Alan",
+        "Completed ten quests. Everyone on the estate knows you can get things done.",
+        10
     );
 
     private final String name;
