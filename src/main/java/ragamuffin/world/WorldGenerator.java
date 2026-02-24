@@ -26,6 +26,16 @@ public class WorldGenerator {
     // Terrain height parameters
     private static final int BASE_HEIGHT = 0;  // Sea level / flat area height
     private static final int MAX_TERRAIN_HEIGHT = 8; // Maximum hill height above base
+    /** Y coordinate of the bedrock layer (increased depth for underground exploration). */
+    public static final int BEDROCK_DEPTH = -32;
+    /** Y coordinate of the top of the sewer tunnels. */
+    public static final int SEWER_CEILING_Y = -3;
+    /** Y coordinate of the floor of the sewer tunnels. */
+    public static final int SEWER_FLOOR_Y = -5;
+    /** Y coordinate of the top of the underground bunker. */
+    public static final int BUNKER_TOP_Y = -8;
+    /** Y coordinate of the floor of the underground bunker. */
+    public static final int BUNKER_FLOOR_Y = -14;
 
     private final Random random;
     private final long seed;
@@ -381,15 +391,15 @@ public class WorldGenerator {
         markAllFlatZones();
 
         // Fill entire world with terrain using heightmap
-        // Deep terrain: bedrock at y=-6, stone from y=-5 to y=-1, dirt/grass on surface
+        // Deep terrain: bedrock at y=-32, stone from y=-31 to y=-1, dirt/grass on surface
         int halfWorld = WORLD_SIZE / 2;
         for (int x = -halfWorld; x < halfWorld; x++) {
             for (int z = -halfWorld; z < halfWorld; z++) {
                 int terrainHeight = getTerrainHeight(x, z);
-                // Bedrock (indestructible bottom)
-                world.setBlock(x, -6, z, BlockType.BEDROCK);
-                // Stone layers
-                for (int y = -5; y <= -1; y++) {
+                // Bedrock (indestructible bottom layer at increased depth)
+                world.setBlock(x, BEDROCK_DEPTH, z, BlockType.BEDROCK);
+                // Stone layers from bedrock+1 up to -1
+                for (int y = BEDROCK_DEPTH + 1; y <= -1; y++) {
                     world.setBlock(x, y, z, BlockType.STONE);
                 }
                 // Fill dirt from y=0 up to terrainHeight-1, grass on top
@@ -663,6 +673,10 @@ public class WorldGenerator {
         // ===== SCATTERED TREES on hills outside town =====
         generateOutskirtsVegetation(world);
 
+        // ===== UNDERGROUND STRUCTURES =====
+        generateSewerTunnels(world, sx, sz, nx, nz);
+        generateUndergroundBunker(world);
+
         // Load initial chunks around origin
         world.updateLoadedChunks(new Vector3(0, 0, 0));
     }
@@ -685,14 +699,14 @@ public class WorldGenerator {
                     worldZ >= -halfWorld && worldZ < halfWorld) {
                     int terrainHeight = getTerrainHeight(worldX, worldZ);
 
-                    // Bedrock at y=-6
-                    int bedrockLocalY = -6 - startY;
+                    // Bedrock at BEDROCK_DEPTH (increased depth)
+                    int bedrockLocalY = BEDROCK_DEPTH - startY;
                     if (bedrockLocalY >= 0 && bedrockLocalY < Chunk.HEIGHT) {
                         chunk.setBlock(localX, bedrockLocalY, localZ, BlockType.BEDROCK);
                     }
 
-                    // Stone from y=-5 to y=-1
-                    for (int y = -5; y <= -1; y++) {
+                    // Stone from BEDROCK_DEPTH+1 to y=-1
+                    for (int y = BEDROCK_DEPTH + 1; y <= -1; y++) {
                         int localY = y - startY;
                         if (localY >= 0 && localY < Chunk.HEIGHT) {
                             chunk.setBlock(localX, localY, localZ, BlockType.STONE);
@@ -1962,6 +1976,186 @@ public class WorldGenerator {
                     }
                 }
             }
+        }
+    }
+
+    // ==================== UNDERGROUND STRUCTURES ====================
+
+    /**
+     * Generate sewer tunnels running beneath the main streets.
+     * Tunnels are 2 blocks tall (SEWER_FLOOR_Y to SEWER_CEILING_Y) carved from stone,
+     * with concrete floors and brick walls. They run along the major street grid.
+     */
+    private void generateSewerTunnels(World world, int sx, int sz, int nx, int nz) {
+        int streetSpacing = 20;
+        int streetExtent = 120; // Sewers only under the built-up area
+
+        // Tunnels running east-west (below z-direction streets)
+        for (int z = -streetExtent; z <= streetExtent; z += streetSpacing) {
+            for (int x = -streetExtent; x <= streetExtent; x++) {
+                carveTunnelSegment(world, x, z);
+            }
+        }
+
+        // Tunnels running north-south (below x-direction streets)
+        for (int x = -streetExtent; x <= streetExtent; x += streetSpacing) {
+            for (int z = -streetExtent; z <= streetExtent; z++) {
+                carveTunnelSegment(world, x, z);
+            }
+        }
+
+        // Register sewer tunnel as a landmark (approximate centre of tunnel network)
+        world.addLandmark(new Landmark(LandmarkType.SEWER_TUNNEL, -streetExtent, SEWER_FLOOR_Y,
+                -streetExtent, streetExtent * 2, SEWER_CEILING_Y - SEWER_FLOOR_Y + 1, streetExtent * 2));
+    }
+
+    /**
+     * Carve a single segment of sewer tunnel at (x, z) from SEWER_FLOOR_Y to SEWER_CEILING_Y.
+     * Floor is concrete, walls are brick, ceiling and interior are air.
+     */
+    private void carveTunnelSegment(World world, int x, int z) {
+        // Floor
+        world.setBlock(x, SEWER_FLOOR_Y, z, BlockType.CONCRETE);
+        // Carved interior (air)
+        for (int y = SEWER_FLOOR_Y + 1; y <= SEWER_CEILING_Y; y++) {
+            world.setBlock(x, y, z, BlockType.AIR);
+        }
+        // Brick ceiling
+        world.setBlock(x, SEWER_CEILING_Y + 1, z, BlockType.BRICK);
+    }
+
+    /**
+     * Generate an underground bunker beneath the park.
+     * The bunker is a large concrete-walled room with brick floors and interior rooms,
+     * located at BUNKER_FLOOR_Y to BUNKER_TOP_Y directly beneath the park.
+     * Access is via ladders from the surface.
+     */
+    private void generateUndergroundBunker(World world) {
+        // Bunker extends from -20 to +20 in X and Z (beneath and around the park)
+        int bunkerHalfWidth = 20;
+        int bunkerStartX = -bunkerHalfWidth;
+        int bunkerEndX   = bunkerHalfWidth;
+        int bunkerStartZ = -bunkerHalfWidth;
+        int bunkerEndZ   = bunkerHalfWidth;
+        int bunkerWidth  = bunkerEndX - bunkerStartX;
+        int bunkerDepth  = bunkerEndZ - bunkerStartZ;
+        int bunkerHeight = BUNKER_TOP_Y - BUNKER_FLOOR_Y + 1;
+
+        // Carve out the bunker interior (air)
+        for (int x = bunkerStartX; x < bunkerEndX; x++) {
+            for (int z = bunkerStartZ; z < bunkerEndZ; z++) {
+                for (int y = BUNKER_FLOOR_Y; y <= BUNKER_TOP_Y; y++) {
+                    world.setBlock(x, y, z, BlockType.AIR);
+                }
+                // Concrete floor
+                world.setBlock(x, BUNKER_FLOOR_Y - 1, z, BlockType.CONCRETE);
+            }
+        }
+
+        // Build bunker walls (concrete outer shell, brick inner lining)
+        for (int x = bunkerStartX - 1; x <= bunkerEndX; x++) {
+            for (int z = bunkerStartZ - 1; z <= bunkerEndZ; z++) {
+                for (int y = BUNKER_FLOOR_Y - 1; y <= BUNKER_TOP_Y + 1; y++) {
+                    // Only set wall blocks on the perimeter
+                    boolean isEdgeX = (x == bunkerStartX - 1 || x == bunkerEndX);
+                    boolean isEdgeZ = (z == bunkerStartZ - 1 || z == bunkerEndZ);
+                    boolean isEdgeY = (y == BUNKER_FLOOR_Y - 1 || y == BUNKER_TOP_Y + 1);
+                    if (isEdgeX || isEdgeZ || isEdgeY) {
+                        world.setBlock(x, y, z, BlockType.CONCRETE);
+                    }
+                }
+            }
+        }
+
+        // Internal dividing walls to create rooms
+        // Main corridor running east-west
+        int corridorZ = 0;
+        // North room divider
+        for (int x = bunkerStartX; x < bunkerEndX; x++) {
+            for (int y = BUNKER_FLOOR_Y; y <= BUNKER_TOP_Y; y++) {
+                world.setBlock(x, y, -8, BlockType.BRICK);
+            }
+        }
+        // South room divider
+        for (int x = bunkerStartX; x < bunkerEndX; x++) {
+            for (int y = BUNKER_FLOOR_Y; y <= BUNKER_TOP_Y; y++) {
+                world.setBlock(x, y, 8, BlockType.BRICK);
+            }
+        }
+        // Door gaps in north divider
+        world.setBlock(-2, BUNKER_FLOOR_Y, -8, BlockType.AIR);
+        world.setBlock(-1, BUNKER_FLOOR_Y, -8, BlockType.AIR);
+        world.setBlock(-2, BUNKER_FLOOR_Y + 1, -8, BlockType.AIR);
+        world.setBlock(-1, BUNKER_FLOOR_Y + 1, -8, BlockType.AIR);
+        // Door gaps in south divider
+        world.setBlock(-2, BUNKER_FLOOR_Y, 8, BlockType.AIR);
+        world.setBlock(-1, BUNKER_FLOOR_Y, 8, BlockType.AIR);
+        world.setBlock(-2, BUNKER_FLOOR_Y + 1, 8, BlockType.AIR);
+        world.setBlock(-1, BUNKER_FLOOR_Y + 1, 8, BlockType.AIR);
+
+        // West room divider
+        for (int z = bunkerStartZ; z < bunkerEndZ; z++) {
+            for (int y = BUNKER_FLOOR_Y; y <= BUNKER_TOP_Y; y++) {
+                world.setBlock(-10, y, z, BlockType.BRICK);
+            }
+        }
+        // Door gap in west divider
+        world.setBlock(-10, BUNKER_FLOOR_Y, -2, BlockType.AIR);
+        world.setBlock(-10, BUNKER_FLOOR_Y, -1, BlockType.AIR);
+        world.setBlock(-10, BUNKER_FLOOR_Y + 1, -2, BlockType.AIR);
+        world.setBlock(-10, BUNKER_FLOOR_Y + 1, -1, BlockType.AIR);
+
+        // Bunker floor furniture: tables, shelves, counters
+        // Central room tables
+        for (int x = -8; x <= -3; x += 3) {
+            world.setBlock(x, BUNKER_FLOOR_Y, -5, BlockType.TABLE);
+            world.setBlock(x, BUNKER_FLOOR_Y, -4, BlockType.TABLE);
+        }
+        // West room shelves
+        for (int z = bunkerStartZ + 2; z < -8; z += 3) {
+            world.setBlock(bunkerStartX + 1, BUNKER_FLOOR_Y, z, BlockType.SHELF);
+            world.setBlock(bunkerStartX + 2, BUNKER_FLOOR_Y, z, BlockType.SHELF);
+        }
+        // Lino floor in central corridor
+        for (int x = -9; x < bunkerEndX; x++) {
+            for (int z = -7; z <= 7; z++) {
+                if (world.getBlock(x, BUNKER_FLOOR_Y - 1, z) == BlockType.CONCRETE) {
+                    world.setBlock(x, BUNKER_FLOOR_Y - 1, z, BlockType.LINOLEUM);
+                }
+            }
+        }
+
+        // Ladder access shafts from surface to bunker
+        // Shaft 1: at (5, 0) — inside the park fence
+        generateBunkerAccessShaft(world, 5, 5);
+        // Shaft 2: at (-5, 0) — inside the park fence
+        generateBunkerAccessShaft(world, -5, 5);
+
+        // Register bunker as a landmark
+        world.addLandmark(new Landmark(LandmarkType.UNDERGROUND_BUNKER,
+                bunkerStartX, BUNKER_FLOOR_Y - 1, bunkerStartZ,
+                bunkerWidth, bunkerHeight + 2, bunkerDepth));
+    }
+
+    /**
+     * Generate a vertical access shaft from the surface (y=0) down to the bunker ceiling.
+     * The shaft is lined with brick and has ladders.
+     */
+    private void generateBunkerAccessShaft(World world, int x, int z) {
+        // Carve the shaft from surface down to bunker top
+        for (int y = BUNKER_TOP_Y; y <= 0; y++) {
+            world.setBlock(x, y, z, BlockType.AIR);
+        }
+        // Brick lining on sides (not all sides, just marker blocks)
+        for (int y = BUNKER_TOP_Y + 1; y <= -1; y++) {
+            world.setBlock(x - 1, y, z, BlockType.BRICK);
+            world.setBlock(x + 1, y, z, BlockType.BRICK);
+            world.setBlock(x, y, z - 1, BlockType.BRICK);
+            world.setBlock(x, y, z + 1, BlockType.BRICK);
+        }
+        // Ladders down the shaft
+        for (int y = BUNKER_TOP_Y + 1; y <= -1; y++) {
+            world.setBlock(x, y, z, BlockType.LADDER);
         }
     }
 }

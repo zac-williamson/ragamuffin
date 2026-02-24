@@ -44,7 +44,9 @@ public enum LandmarkType {
     ALLOTMENTS,
     CANAL,
     SKATE_PARK,
-    CEMETERY;
+    CEMETERY,
+    UNDERGROUND_BUNKER,
+    SEWER_TUNNEL;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -84,6 +86,8 @@ public enum LandmarkType {
             case CASH_CONVERTER:    return "Cash Converters";
             case LIBRARY:           return "Northfield Library";
             case FIRE_STATION:      return "Northfield Fire Station";
+            case UNDERGROUND_BUNKER: return "Civil Defence Bunker";
+            case SEWER_TUNNEL:      return "Sewer System";
             default:                return null; // No sign for parks, houses, etc.
         }
     }
