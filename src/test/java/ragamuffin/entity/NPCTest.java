@@ -217,11 +217,14 @@ class NPCTest {
         npc.setState(NPCState.KNOCKED_OUT);
         assertEquals(NPCState.KNOCKED_OUT, npc.getState());
 
-        // Timer accumulates while in KNOCKED_OUT state
+        // Timer accumulates while in KNOCKED_OUT state (updateTimers + tickKnockedOutTimer,
+        // mirroring what NPCManager.update() does for dead/knocked-out NPCs).
         npc.updateTimers(0.5f);
+        npc.tickKnockedOutTimer(0.5f);
         assertEquals(0.5f, npc.getKnockedOutTimer(), 0.001f);
 
         npc.updateTimers(0.5f);
+        npc.tickKnockedOutTimer(0.5f);
         assertEquals(1.0f, npc.getKnockedOutTimer(), 0.001f);
     }
 

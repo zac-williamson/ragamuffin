@@ -833,6 +833,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             // exploit pause to keep NPCs permanently staggered by repeatedly pausing mid-knockback.
             npcManager.tickKnockbackTimers(delta);
 
+            // Fix #407: Tick KNOCKED_OUT recovery timers while paused so NPCs cannot be kept
+            // permanently incapacitated by holding the pause menu open.
+            npcManager.tickRecoveryTimers(delta);
+
             // Fix #397: Tick NPC speech timers while paused so speech bubbles continue to count
             // down. Without this, any active speech bubble freezes for the entire pause duration
             // and then expires instantly on resume — the same pattern fixed for block decay (#391)

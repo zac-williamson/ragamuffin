@@ -133,12 +133,14 @@ class Issue228NPCAnimationTest {
         npc.setVelocity(0f, 0f, 0f);
 
         npc.updateTimers(1.0f);
+        npc.tickKnockedOutTimer(1.0f);
 
         // animTime should NOT advance (no horizontal speed)
         assertEquals(animTimeBeforeKO, npc.getAnimTime(), 0.001f,
             "animTime must not advance while NPC is KNOCKED_OUT and stationary");
 
-        // knockedOutTimer should accumulate
+        // knockedOutTimer should accumulate (ticked via tickKnockedOutTimer,
+        // mirroring what NPCManager.update() does for knocked-out NPCs).
         assertEquals(1.0f, npc.getKnockedOutTimer(), 0.001f,
             "knockedOutTimer must accumulate while NPC is in KNOCKED_OUT state");
     }
