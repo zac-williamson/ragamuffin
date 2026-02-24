@@ -1293,6 +1293,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                         world.setBlock(lx, ly, lz, BlockType.AIR);
                         blockBreaker.clearHits(lx, ly, lz);
                         rebuildChunkAt(lx, ly, lz);
+                        Material drop = dropTable.getDrop(BlockType.LEAVES, null);
+                        if (drop != null) {
+                            inventory.addItem(drop, 1);
+                            soundSystem.play(ragamuffin.audio.SoundEffect.INVENTORY_PICKUP);
+                        }
                     }
                 }
             }
