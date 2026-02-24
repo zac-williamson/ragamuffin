@@ -329,6 +329,30 @@ public class NPC {
     }
 
     /**
+     * Derive the facial expression from the NPC's current behavioral state.
+     * This is used by the renderer to select the correct face geometry.
+     */
+    public FacialExpression getFacialExpression() {
+        switch (state) {
+            case AGGRESSIVE:
+            case ARRESTING:
+            case DEMOLISHING:
+            case WARNING:
+                return FacialExpression.ANGRY;
+            case FLEEING:
+                return FacialExpression.SCARED;
+            case AT_PUB:
+            case AT_HOME:
+                return FacialExpression.HAPPY;
+            case STARING:
+            case PHOTOGRAPHING:
+                return FacialExpression.SURPRISED;
+            default:
+                return FacialExpression.NEUTRAL;
+        }
+    }
+
+    /**
      * Record an item stolen by this NPC so the player can recover it.
      */
     public void addStolenItem(Material material) {
