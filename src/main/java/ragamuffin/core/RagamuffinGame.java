@@ -1896,12 +1896,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             renderTooltip();
         }
 
-        // Fix #357: Suppress hover tooltip advancement and rendering while paused so
+        // Fix #357/#395: Suppress hover tooltip advancement and rendering while paused so
         // dwell timers do not accumulate and tooltip bubbles do not appear on top of
-        // the pause menu.  Call clear() so any registered zones are discarded and
-        // dwell state is reset each paused frame; skip update()/render() entirely.
+        // the pause menu.  Call reset() to discard registered zones AND reset all dwell
+        // state (hoverTime, lastHoverZoneKey, activeTooltip) so that on resume the full
+        // 0.3 s dwell is required before a tooltip fires again.
         if (state == GameState.PAUSED) {
-            hoverTooltipSystem.clear();
+            hoverTooltipSystem.reset();
         } else {
             // Update and render hover tooltips last (on top of everything)
             hoverTooltipSystem.update(delta);

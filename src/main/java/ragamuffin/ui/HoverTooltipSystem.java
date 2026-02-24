@@ -74,6 +74,18 @@ public class HoverTooltipSystem {
     }
 
     /**
+     * Full dwell-state reset. Clears zones and resets hoverTime, lastHoverZoneKey, and
+     * activeTooltip. Call when the UI context changes (e.g. on resume from pause) so that
+     * hover dwell timing starts fresh and no stale tooltip is rendered for one frame.
+     */
+    public void reset() {
+        zones.clear();
+        hoverTime = 0f;
+        lastHoverZoneKey = null;
+        activeTooltip = null;
+    }
+
+    /**
      * Returns the current mouse X in screen coords. Overrideable for testing.
      */
     protected float getMouseX() {
