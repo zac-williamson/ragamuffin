@@ -2014,6 +2014,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         punchHeldTimer = 0f;
         lastPunchTargetKey = null;
         inputHandler.resetPunchHeld();
+        // Fix #363: Clear stale toggle-key state so UI overlays (inventory, help, crafting)
+        // don't open on frame 1 of the new session if those keys were pressed on the same
+        // frame the Restart button was activated (mirrors the pattern used for resetPunchHeld).
+        inputHandler.resetInventory();
+        inputHandler.resetHelp();
+        inputHandler.resetCrafting();
+        inputHandler.resetInteract();
         // Fix #331: Recreate firstPersonArm so swinging and swingTimer reset to their defaults
         // (swinging=false, swingTimer=0). Without this, a mid-punch animation from the previous
         // session leaks into the new game, showing the arm in a partially-extended position.
