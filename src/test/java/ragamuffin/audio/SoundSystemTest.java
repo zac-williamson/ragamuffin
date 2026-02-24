@@ -163,6 +163,26 @@ public class SoundSystemTest {
     }
 
     @Test
+    public void testMunchSoundEffectExists() {
+        // MUNCH must be present in the enum for crisp consumption
+        boolean found = false;
+        for (SoundEffect effect : SoundEffect.values()) {
+            if (effect == SoundEffect.MUNCH) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue(found, "MUNCH sound effect must exist in SoundEffect enum");
+    }
+
+    @Test
+    public void testPlayMunchSound() {
+        // Playing MUNCH should not throw even with no loaded sounds
+        assertDoesNotThrow(() -> soundSystem.play(SoundEffect.MUNCH),
+                "Playing MUNCH sound should not throw");
+    }
+
+    @Test
     public void testDispose() {
         // Should not throw even with no loaded sounds
         assertDoesNotThrow(() -> soundSystem.dispose());

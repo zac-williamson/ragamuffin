@@ -35,5 +35,6 @@ public enum SoundEffect {
 
     // Item use sounds
     ITEM_EAT,
-    ITEM_USE
+    ITEM_USE,
+    MUNCH      // Large munching sound for crisp consumption
 }
