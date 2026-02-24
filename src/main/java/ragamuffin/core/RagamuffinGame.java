@@ -702,6 +702,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #331: Advance tooltip countdown while paused so active tooltips
             // fade out and queued tooltips advance rather than freezing on-screen.
             tooltipSystem.update(delta);
+            // Fix #339: Advance arm swing animation while paused so a mid-punch
+            // swing completes rather than freezing in the extended position.
+            firstPersonArm.update(delta);
 
             // Render UI and pause menu
             renderUI();

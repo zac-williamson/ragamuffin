@@ -72,4 +72,23 @@ class FirstPersonArmTest {
         arm.update(0.24f);
         assertTrue(arm.isSwinging()); // Should still be swinging
     }
+
+    /**
+     * Fix #339: Arm swing animation must advance when update() is called regardless
+     * of game state. The PAUSED render path now calls firstPersonArm.update(delta)
+     * so a mid-punch swing completes rather than freezing in the extended position.
+     */
+    @Test
+    void swingAdvancesWhenUpdateCalledWhilePaused() {
+        arm.punch();
+        arm.update(0.05f); // Advance partway into the swing
+        float progressMidSwing = arm.getSwingProgress();
+        assertTrue(progressMidSwing > 0f, "Arm should be mid-swing after update");
+        assertTrue(arm.isSwinging(), "Arm should still be swinging");
+
+        // Simulate the PAUSED path calling update() — animation must continue to advance
+        arm.update(0.22f); // Advance past the remaining duration
+        assertFalse(arm.isSwinging(), "Arm should have completed swing after enough update time");
+        assertEquals(0f, arm.getSwingProgress(), 0.01f, "Arm should return to rest after swing completes");
+    }
 }
