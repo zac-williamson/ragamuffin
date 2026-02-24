@@ -208,7 +208,7 @@ public class InputHandler implements InputProcessor {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
-        scrollAmountY = amountY;
+        scrollAmountY += amountY;
         return false;
     }
 
