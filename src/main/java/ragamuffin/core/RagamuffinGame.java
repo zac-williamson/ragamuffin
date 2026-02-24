@@ -594,13 +594,14 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #227: Render sun and clouds as part of the skybox — before 3D geometry
             // so that buildings and terrain naturally occlude them.  After drawing the
             // sky elements we clear only the depth buffer so the 3D world renders on top.
+            // Fix #235: Pass cameraYaw so the skybox remains stationary relative to the world.
             {
                 float ts = timeSystem.getTime();
                 float sr = timeSystem.getSunriseTime();
                 float ss = timeSystem.getSunsetTime();
                 skyRenderer.renderSkybox(shapeRenderer, ts, sr, ss,
                                          Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
-                                         timeSystem.isNight());
+                                         timeSystem.isNight(), cameraYaw);
             }
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
 
@@ -656,13 +657,14 @@ public class RagamuffinGame extends ApplicationAdapter {
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
             // Fix #227: Render sun and clouds as part of the skybox — before 3D geometry
+            // Fix #235: Pass cameraYaw so the skybox remains stationary relative to the world.
             {
                 float ts = timeSystem.getTime();
                 float sr = timeSystem.getSunriseTime();
                 float ss = timeSystem.getSunsetTime();
                 skyRenderer.renderSkybox(shapeRenderer, ts, sr, ss,
                                          Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
-                                         timeSystem.isNight());
+                                         timeSystem.isNight(), cameraYaw);
             }
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
 
