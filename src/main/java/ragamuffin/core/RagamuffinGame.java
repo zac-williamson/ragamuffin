@@ -1858,6 +1858,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inventoryUI = new InventoryUI(inventory);
         hotbarUI = new HotbarUI(inventory);
         craftingUI = new CraftingUI(craftingSystem, inventory);
+        // Fix #317: Recreate hoverTooltipSystem so dwell timers from the previous session
+        // do not bleed into the new game (mirrors the pattern used for all other UI systems).
+        hoverTooltipSystem = new HoverTooltipSystem();
 
         // Reset NPCs — wire blockBreaker first (matches initGame order) so demolishBlock
         // hit-counter clears work from the start of the restarted game
