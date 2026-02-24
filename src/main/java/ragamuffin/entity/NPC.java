@@ -214,8 +214,8 @@ public class NPC {
      * Move the NPC in the given direction.
      */
     public void move(float dx, float dy, float dz, float delta) {
-        velocity.set(dx, dy, dz).nor().scl(MOVE_SPEED * delta);
-        position.add(velocity);
+        velocity.set(dx, dy, dz).nor().scl(MOVE_SPEED);
+        position.add(velocity.x * delta, velocity.y * delta, velocity.z * delta);
         aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
         // Update facing angle based on horizontal movement
         if (dx != 0 || dz != 0) {
