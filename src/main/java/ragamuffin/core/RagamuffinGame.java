@@ -1209,6 +1209,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #171: Update particle system
         particleSystem.update(delta);
 
+        // Fix #387: Advance arm swing animation unconditionally so a mid-punch swing
+        // completes rather than freezing in the extended position while a UI overlay
+        // (inventory/help/crafting) is open. Mirrors the same fix already applied to
+        // the PAUSED branch (Fix #339).
+        firstPersonArm.update(delta);
+
         // Fix #305: Update damage flash timer and HUD unconditionally so the red vignette
         // and damage-reason banner always advance regardless of UI state or death.
         // Detect new damage event: flash was at full intensity this frame (just applied)
@@ -1233,9 +1239,6 @@ public class RagamuffinGame extends ApplicationAdapter {
      * overlay is open so the player cannot accidentally act while using menus.
      */
     private void updatePlayingInput(float delta) {
-        // Update first-person arm animation
-        firstPersonArm.update(delta);
-
         // Handle punching — single click fires immediately; holding repeats every PUNCH_REPEAT_INTERVAL
         if (inputHandler.isPunchPressed()) {
             handlePunch();
