@@ -2036,7 +2036,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (interactionSystem.isFood(material)) {
             boolean consumed = interactionSystem.consumeFood(material, player, inventory);
             if (consumed) {
-                soundSystem.play(ragamuffin.audio.SoundEffect.ITEM_EAT);
+                if (material == ragamuffin.building.Material.CRISPS) {
+                    soundSystem.play(ragamuffin.audio.SoundEffect.MUNCH);
+                } else {
+                    soundSystem.play(ragamuffin.audio.SoundEffect.ITEM_EAT);
+                }
                 // Show any feedback message from the consumable
                 String consumeMsg = interactionSystem.getLastConsumeMessage();
                 if (consumeMsg != null) {

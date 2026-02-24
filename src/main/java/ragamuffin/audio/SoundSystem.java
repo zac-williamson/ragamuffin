@@ -23,6 +23,7 @@ public class SoundSystem {
     private static final float VOLUME_AMBIENT = 0.3f;
     private static final float VOLUME_EFFECTS = 0.7f;
     private static final float VOLUME_FOOTSTEPS = 0.2f;
+    private static final float VOLUME_MUNCH = 1.0f; // Large munching sound for crisps
 
     // Footstep timing
     private float footstepTimer;
@@ -183,6 +184,8 @@ public class SoundSystem {
             case FOOTSTEP_PAVEMENT:
             case FOOTSTEP_GRASS:
                 return VOLUME_FOOTSTEPS;
+            case MUNCH:
+                return VOLUME_MUNCH;
             default:
                 return VOLUME_EFFECTS;
         }
