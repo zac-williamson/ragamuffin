@@ -153,33 +153,45 @@ public class InteractionSystem {
 
         if (food == Material.SAUSAGE_ROLL) {
             hungerRestored = 30;
+            lastConsumeMessage = "You eat the sausage roll. Warm, flaky, perfect.";
         } else if (food == Material.STEAK_BAKE) {
             hungerRestored = 35;
+            lastConsumeMessage = "You wolf down the steak bake. Greggs delivers again.";
         } else if (food == Material.CHIPS) {
             hungerRestored = 25;
+            lastConsumeMessage = "You eat the chips. Slightly soggy, but beggars can't be choosers.";
         } else if (food == Material.KEBAB) {
             hungerRestored = 40;
+            lastConsumeMessage = "You demolish the kebab. Mysterious meat, no questions asked.";
         } else if (food == Material.CRISPS) {
             hungerRestored = 10;
+            lastConsumeMessage = "You crunch through the crisps. Ready salted. Classic.";
         } else if (food == Material.TIN_OF_BEANS) {
             hungerRestored = 35;
+            lastConsumeMessage = "You eat the beans cold from the tin. Desperate times.";
         } else if (food == Material.ENERGY_DRINK) {
             hungerRestored = 5;
             player.restoreEnergy(30); // Energy drink restores energy too
+            lastConsumeMessage = "You neck the energy drink. Your heart is now vibrating.";
         } else if (food == Material.PINT) {
             hungerRestored = 15;
             player.restoreEnergy(20); // Liquid courage
+            lastConsumeMessage = "You down the pint. Dutch courage, British problems.";
         } else if (food == Material.PERI_PERI_CHICKEN) {
             hungerRestored = 45; // Cheeky Nandos is top-tier sustenance
+            lastConsumeMessage = "Cheeky Nandos. Even out here, it hits different.";
         } else if (food == Material.PARACETAMOL) {
             hungerRestored = 0;
             player.heal(25); // Direct health restoration
+            lastConsumeMessage = "You take two paracetamol. That should help.";
         } else if (food == Material.FIRE_EXTINGUISHER) {
             hungerRestored = 0;
             player.heal(20); // Blast of cold foam soothes the wounds
+            lastConsumeMessage = "You blast yourself with foam. Oddly soothing.";
         } else if (food == Material.WASHING_POWDER) {
             hungerRestored = 0;
             player.restoreEnergy(15); // Clean laundry scent is invigorating
+            lastConsumeMessage = "You sniff the washing powder. Invigorating.";
         } else if (food == Material.SCRATCH_CARD) {
             hungerRestored = 0;
             inventory.removeItem(food, 1);
