@@ -111,6 +111,9 @@ public class ChunkMeshBuilder {
                         case STAIR_STEP:
                             vertexIndex = buildStairStep(meshData, vertexIndex, type, x, y, z, worldX, worldY, worldZ);
                             break;
+                        case LADDER_RUNGS:
+                            vertexIndex = buildLadder(meshData, vertexIndex, type, x, y, z, worldX, worldY, worldZ);
+                            break;
                         default:
                             break;
                     }
@@ -279,6 +282,77 @@ public class ChunkMeshBuilder {
         vertexIndex = addFace(meshData, vertexIndex, color,
             x1, yMid, zMid,  x1, yMid, z1,  x1, y1, z1,  x1, y1, zMid,
             1, 0, 0, 0.5f, 0.5f);
+
+        return vertexIndex;
+    }
+
+    /**
+     * Build a ladder geometry: two vertical side rails plus four horizontal rungs,
+     * rendered as a flat panel flush against the north face of the block (z = lz).
+     *
+     * Structure (viewed from the front, facing +Z):
+     *   Left rail:  x0..x0+RAIL_WIDTH, y0..y1
+     *   Right rail: x1-RAIL_WIDTH..x1, y0..y1
+     *   4 rungs evenly spaced across x0+RAIL_WIDTH to x1-RAIL_WIDTH
+     *
+     * Face count: 2 rails × 2 faces (front+back) = 4
+     *           + 4 rungs × 2 faces (front+back) = 8
+     *           Total = 12 faces
+     */
+    private static final float LADDER_THICKNESS = 0.075f;
+    private static final float LADDER_RAIL_WIDTH = 0.1f;
+    private static final float LADDER_RUNG_HEIGHT = 0.075f;
+    private static final int   LADDER_RUNG_COUNT  = 4;
+
+    private int buildLadder(MeshData meshData, int vertexIndex, BlockType type,
+                            int lx, int ly, int lz,
+                            int worldX, int worldY, int worldZ) {
+        Color color = type.getColor();
+        float x0 = lx, x1 = lx + 1.0f;
+        float y0 = ly, y1 = ly + 1.0f;
+        float z0 = lz, z1 = lz + LADDER_THICKNESS;
+
+        float lRailX0 = x0;
+        float lRailX1 = x0 + LADDER_RAIL_WIDTH;
+        float rRailX0 = x1 - LADDER_RAIL_WIDTH;
+        float rRailX1 = x1;
+
+        // ── Left vertical rail ─────────────────────────────────────────────────
+        // Front face (+Z)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            lRailX0, y0, z1,  lRailX1, y0, z1,  lRailX1, y1, z1,  lRailX0, y1, z1,
+            0, 0, 1, LADDER_RAIL_WIDTH, 1.0f);
+        // Back face (-Z)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            lRailX1, y0, z0,  lRailX0, y0, z0,  lRailX0, y1, z0,  lRailX1, y1, z0,
+            0, 0, -1, LADDER_RAIL_WIDTH, 1.0f);
+
+        // ── Right vertical rail ────────────────────────────────────────────────
+        // Front face (+Z)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            rRailX0, y0, z1,  rRailX1, y0, z1,  rRailX1, y1, z1,  rRailX0, y1, z1,
+            0, 0, 1, LADDER_RAIL_WIDTH, 1.0f);
+        // Back face (-Z)
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            rRailX1, y0, z0,  rRailX0, y0, z0,  rRailX0, y1, z0,  rRailX1, y1, z0,
+            0, 0, -1, LADDER_RAIL_WIDTH, 1.0f);
+
+        // ── Horizontal rungs ───────────────────────────────────────────────────
+        float rungX0 = lRailX1;
+        float rungX1 = rRailX0;
+        float rungSpacing = 1.0f / (LADDER_RUNG_COUNT + 1);
+        for (int i = 1; i <= LADDER_RUNG_COUNT; i++) {
+            float rungBaseY = y0 + i * rungSpacing;
+            float rungTopY  = rungBaseY + LADDER_RUNG_HEIGHT;
+            // Front face (+Z)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                rungX0, rungBaseY, z1,  rungX1, rungBaseY, z1,  rungX1, rungTopY, z1,  rungX0, rungTopY, z1,
+                0, 0, 1, rungX1 - rungX0, LADDER_RUNG_HEIGHT);
+            // Back face (-Z)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                rungX1, rungBaseY, z0,  rungX0, rungBaseY, z0,  rungX0, rungTopY, z0,  rungX1, rungTopY, z0,
+                0, 0, -1, rungX1 - rungX0, LADDER_RUNG_HEIGHT);
+        }
 
         return vertexIndex;
     }
