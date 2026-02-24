@@ -229,8 +229,7 @@ public class QuestLogUI {
                 String reqMat = quest.getRequiredMaterial().name().toLowerCase().replace('_', ' ');
                 int required = quest.getRequiredCount();
                 int current = inventory != null ? inventory.getItemCount(quest.getRequiredMaterial()) : 0;
-                int remaining = Math.max(0, required - current);
-                String objStr = "Have: " + current + " / Need: " + remaining + "x " + reqMat;
+                String objStr = "Have: " + current + "/" + required + "x " + reqMat;
                 font.setColor(1f, 0.7f, 0.3f, 1f);
                 GlyphLayout objLayout = new GlyphLayout(font, objStr);
                 font.draw(spriteBatch, objStr,
