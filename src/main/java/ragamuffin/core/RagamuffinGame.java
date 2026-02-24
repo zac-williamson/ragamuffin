@@ -1436,6 +1436,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             // and route them to item selection instead of changing the hotbar.
             if (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen() && hotbarSlot <= 2) {
                 interactionSystem.selectShopItem(activeShopkeeperNPC, hotbarSlot + 1, inventory);
+                inputHandler.resetCraftingSlot(); // Issue #543: prevent stale craftingSlotPressed
             } else if (!craftingUI.isVisible()) {
                 hotbarUI.selectSlot(hotbarSlot);
             }
