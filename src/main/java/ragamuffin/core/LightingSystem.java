@@ -176,6 +176,15 @@ public class LightingSystem {
     }
 
     /**
+     * Remove this system's directional light from the environment.
+     * Call this before discarding the LightingSystem to avoid accumulating
+     * duplicate lights in the shared Environment across restarts.
+     */
+    public void dispose() {
+        environment.remove(directionalLight);
+    }
+
+    /**
      * Get the directional light for testing/inspection.
      */
     public DirectionalLight getDirectionalLight() {
