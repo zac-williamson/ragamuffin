@@ -1396,6 +1396,15 @@ public class NPCManager {
         if (npc.getType() == NPCType.COUNCIL_BUILDER) {
             punchCouncilBuilder(npc);
         }
+
+        // Police become aggressive when attacked by the player
+        if (npc.getType() == NPCType.POLICE && !killed
+                && npc.getState() != NPCState.AGGRESSIVE
+                && npc.getState() != NPCState.ARRESTING
+                && npc.getState() != NPCState.KNOCKED_OUT) {
+            npc.setState(NPCState.AGGRESSIVE);
+            npc.setSpeechText("That's assault! You're nicked!", 3.0f);
+        }
     }
 
     /**
