@@ -826,6 +826,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             // continues to accumulate and healing is not artificially delayed on resume.
             healingSystem.update(delta, player);
 
+            // Fix #382: Advance gang territory linger timer while paused so the player cannot
+            // exploit the pause menu to freeze the 5-second hostility escalation countdown.
+            // Mirrors the pattern used for healing (#381), dodge (#379), reputation (#359),
+            // weather (#341), and other timer-based systems in the PAUSED branch.
+            gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
+
             // Fix #367: Process pending arrest even while paused so the flag doesn't persist as a ghost.
             // Without this, if police set arrestPending=true on the same frame the player opens ESC,
             // the flag is never evaluated until the game unpauses — causing an invisible "ghost arrest"
