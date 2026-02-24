@@ -1440,33 +1440,43 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         boolean placed = blockPlacer.placeBlock(world, inventory, material, tmpCameraPos, tmpDirection, PLACE_REACH, player.getAABB());
 
-        if (placed) {
-            // Play block place sound
-            soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
-
-            // Phase 11: Trigger first block place tooltip
-            if (!tooltipSystem.hasShown(TooltipTrigger.FIRST_BLOCK_PLACE)) {
-                tooltipSystem.trigger(TooltipTrigger.FIRST_BLOCK_PLACE);
+        if (!placed) {
+            // Fix #297: Give feedback when placement fails for a valid placeable material
+            boolean isPlaceable = material == Material.DOOR
+                    || material == Material.CARDBOARD_BOX
+                    || blockPlacer.materialToBlockType(material) != null;
+            if (isPlaceable) {
+                tooltipSystem.showMessage("Can't place block here.", 2.0f);
+                soundSystem.play(ragamuffin.audio.SoundEffect.UI_CLOSE);
             }
+            return;
+        }
 
-            // Critic 4: Trigger cardboard box shelter tooltip
-            if (material == Material.CARDBOARD_BOX && !tooltipSystem.hasShown(TooltipTrigger.CARDBOARD_BOX_SHELTER)) {
-                tooltipSystem.trigger(TooltipTrigger.CARDBOARD_BOX_SHELTER);
+        // Play block place sound
+        soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+
+        // Phase 11: Trigger first block place tooltip
+        if (!tooltipSystem.hasShown(TooltipTrigger.FIRST_BLOCK_PLACE)) {
+            tooltipSystem.trigger(TooltipTrigger.FIRST_BLOCK_PLACE);
+        }
+
+        // Critic 4: Trigger cardboard box shelter tooltip
+        if (material == Material.CARDBOARD_BOX && !tooltipSystem.hasShown(TooltipTrigger.CARDBOARD_BOX_SHELTER)) {
+            tooltipSystem.trigger(TooltipTrigger.CARDBOARD_BOX_SHELTER);
+        }
+
+        // Only rebuild the affected chunk
+        if (placementPos != null) {
+            rebuildChunkAt((int) placementPos.x, (int) placementPos.y, (int) placementPos.z);
+            // Issue #295: door placement sets DOOR_LOWER + DOOR_UPPER — rebuild chunk for y+1 too
+            if (material == Material.DOOR) {
+                rebuildChunkAt((int) placementPos.x, (int) placementPos.y + 1, (int) placementPos.z);
             }
-
-            // Only rebuild the affected chunk
-            if (placementPos != null) {
-                rebuildChunkAt((int) placementPos.x, (int) placementPos.y, (int) placementPos.z);
-                // Issue #295: door placement sets DOOR_LOWER + DOOR_UPPER — rebuild chunk for y+1 too
-                if (material == Material.DOOR) {
-                    rebuildChunkAt((int) placementPos.x, (int) placementPos.y + 1, (int) placementPos.z);
-                }
-                // Cardboard box builds a 2x2x2 structure — rebuild adjacent chunks too
-                if (material == Material.CARDBOARD_BOX) {
-                    rebuildChunkAt((int) placementPos.x + 2, (int) placementPos.y, (int) placementPos.z);
-                    rebuildChunkAt((int) placementPos.x, (int) placementPos.y, (int) placementPos.z + 2);
-                    rebuildChunkAt((int) placementPos.x, (int) placementPos.y + 3, (int) placementPos.z);
-                }
+            // Cardboard box builds a 2x2x2 structure — rebuild adjacent chunks too
+            if (material == Material.CARDBOARD_BOX) {
+                rebuildChunkAt((int) placementPos.x + 2, (int) placementPos.y, (int) placementPos.z);
+                rebuildChunkAt((int) placementPos.x, (int) placementPos.y, (int) placementPos.z + 2);
+                rebuildChunkAt((int) placementPos.x, (int) placementPos.y + 3, (int) placementPos.z);
             }
         }
     }
