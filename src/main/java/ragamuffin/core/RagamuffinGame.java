@@ -2021,6 +2021,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetHelp();
         inputHandler.resetCrafting();
         inputHandler.resetInteract();
+        // Fix #365: Clear stale leftClickReleased flag so the inventory drag-and-drop
+        // subsystem is not in an inconsistent state on frame 1 of the new session.
+        // When the player mouse-clicks "Restart", touchUp() sets leftClickReleased=true
+        // before restartGame() runs; without this reset, handleUIInput() sees a phantom
+        // release event before any real mouse activity occurs.
+        inputHandler.resetLeftClickReleased();
         // Fix #331: Recreate firstPersonArm so swinging and swingTimer reset to their defaults
         // (swinging=false, swingTimer=0). Without this, a mid-punch animation from the previous
         // session leaks into the new game, showing the arm in a partially-extended position.
