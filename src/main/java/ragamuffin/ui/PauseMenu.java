@@ -139,13 +139,16 @@ public class PauseMenu {
         float centerX = screenWidth / 2f;
 
         for (int i = 0; i < NUM_OPTIONS; i++) {
-            // Option Y in UI coords (0=bottom): optionStartY - i * optionSpacing
-            // Convert to screen coords (0=top): screenHeight - (optionStartY - i * optionSpacing)
-            float optionTopScreen = screenHeight - (optionStartY - i * optionSpacing);
-            float optionBottomScreen = optionTopScreen + optionHeight;
+            // Option baseline Y in UI/OpenGL coords (0=bottom): optionStartY - i * optionSpacing
+            // Convert baseline to screen coords (0=top): screenHeight - (optionStartY - i * optionSpacing)
+            // Text renders above its baseline, so in screen coords the text occupies
+            // [baselineScreen - optionHeight, baselineScreen] (smaller Y = higher on screen).
+            float baselineScreen = screenHeight - (optionStartY - i * optionSpacing);
+            float optionTopScreen = baselineScreen - optionHeight;
+            float optionBottomScreen = baselineScreen;
 
             if (screenX >= centerX - optionHalfWidth && screenX <= centerX + optionHalfWidth
-                && screenY >= optionTopScreen - optionHeight && screenY <= optionBottomScreen) {
+                && screenY >= optionTopScreen && screenY <= optionBottomScreen) {
                 selectedOption = i;
                 return i;
             }
