@@ -2501,19 +2501,19 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Close any open UI first
         if (achievementsUI.isVisible()) {
             achievementsUI.hide();
-            Gdx.input.setCursorCatched(true);
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (inventoryUI.isVisible()) {
             inventoryUI.hide();
-            Gdx.input.setCursorCatched(true);
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (helpUI.isVisible()) {
             helpUI.hide();
-            Gdx.input.setCursorCatched(true);
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (craftingUI.isVisible()) {
             craftingUI.hide();
-            Gdx.input.setCursorCatched(true);
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (questLogUI.isVisible()) {
             questLogUI.hide();
-            Gdx.input.setCursorCatched(true);
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (state == GameState.PLAYING) {
             transitionToPaused();
         } else if (state == GameState.PAUSED) {
