@@ -2620,6 +2620,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetQuestLog(); // Fix #479: prevent stale Q-key from re-opening log on frame 1
         // Fix #461: Hide achievements overlay so it does not persist across game restarts.
         achievementsUI.hide();
+        // Fix #489: Reset achievement system so previous session's unlocks and progress
+        // do not carry over into the new game.
+        achievementSystem.reset();
         // Fix #365: Clear stale leftClickReleased flag so the inventory drag-and-drop
         // subsystem is not in an inconsistent state on frame 1 of the new session.
         // When the player mouse-clicks "Restart", touchUp() sets leftClickReleased=true
