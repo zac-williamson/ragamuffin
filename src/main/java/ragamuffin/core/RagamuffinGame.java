@@ -2116,6 +2116,101 @@ public class RagamuffinGame extends ApplicationAdapter {
             Gdx.gl.glDisable(GL20.GL_BLEND);
         }
 
+        // --- Issue #259: Crack/damage overlay on all partially-damaged blocks ---
+        // Draw diagonal crack lines on all 6 faces of each damaged block.
+        // ShapeRenderer only exposes 2D triangle variants, so we use Line mode to
+        // render X-shaped cracks on each face — visually appropriate for a "crack"
+        // effect and consistent with the wireframe outline already drawn above.
+        // Opacity and line count increase with break progress across 4 stages.
+        java.util.Set<String> damagedKeys = blockBreaker.getDamagedBlockKeys();
+        if (!damagedKeys.isEmpty()) {
+            // Determine equipped tool for progress calculation (same logic as HUD update)
+            int crackSlot = hotbarUI.getSelectedSlot();
+            Material crackEquipped = inventory.getItemInSlot(crackSlot);
+            Material crackTool = (crackEquipped != null && ragamuffin.building.Tool.isTool(crackEquipped)) ? crackEquipped : null;
+
+            Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+
+            for (String key : damagedKeys) {
+                int[] coords = ragamuffin.building.BlockBreaker.parseBlockKey(key);
+                int dx = coords[0], dy = coords[1], dz = coords[2];
+
+                float progress = blockBreaker.getBreakProgress(world, dx, dy, dz, crackTool);
+                if (progress <= 0f) continue;
+
+                // Map progress to 4 stages: increasing opacity and crack density
+                float alpha;
+                int stage;
+                if (progress < 0.25f) {
+                    alpha = 0.35f; stage = 1;
+                } else if (progress < 0.50f) {
+                    alpha = 0.55f; stage = 2;
+                } else if (progress < 0.75f) {
+                    alpha = 0.70f; stage = 3;
+                } else {
+                    alpha = 0.85f; stage = 4;
+                }
+                shapeRenderer.setColor(0f, 0f, 0f, alpha);
+
+                float cx0 = dx, cy0 = dy, cz0 = dz;
+                float cx1 = dx + 1f, cy1 = dy + 1f, cz1 = dz + 1f;
+                float cmx = dx + 0.5f, cmy = dy + 0.5f, cmz = dz + 0.5f;
+
+                // Draw X cracks on each face (stage 1+: corners; stage 3+: mid-edge lines)
+                // Top face (y = cy1): cracks in XZ plane
+                shapeRenderer.line(cx0, cy1, cz0,  cx1, cy1, cz1);
+                shapeRenderer.line(cx1, cy1, cz0,  cx0, cy1, cz1);
+                if (stage >= 3) {
+                    shapeRenderer.line(cmx, cy1, cz0,  cmx, cy1, cz1);
+                    shapeRenderer.line(cx0, cy1, cmz,  cx1, cy1, cmz);
+                }
+                // Bottom face (y = cy0): cracks in XZ plane
+                shapeRenderer.line(cx0, cy0, cz0,  cx1, cy0, cz1);
+                shapeRenderer.line(cx1, cy0, cz0,  cx0, cy0, cz1);
+                if (stage >= 3) {
+                    shapeRenderer.line(cmx, cy0, cz0,  cmx, cy0, cz1);
+                    shapeRenderer.line(cx0, cy0, cmz,  cx1, cy0, cmz);
+                }
+                // North face (z = cz0): cracks in XY plane
+                shapeRenderer.line(cx0, cy0, cz0,  cx1, cy1, cz0);
+                shapeRenderer.line(cx1, cy0, cz0,  cx0, cy1, cz0);
+                if (stage >= 3) {
+                    shapeRenderer.line(cmx, cy0, cz0,  cmx, cy1, cz0);
+                    shapeRenderer.line(cx0, cmy, cz0,  cx1, cmy, cz0);
+                }
+                // South face (z = cz1): cracks in XY plane
+                shapeRenderer.line(cx0, cy0, cz1,  cx1, cy1, cz1);
+                shapeRenderer.line(cx1, cy0, cz1,  cx0, cy1, cz1);
+                if (stage >= 3) {
+                    shapeRenderer.line(cmx, cy0, cz1,  cmx, cy1, cz1);
+                    shapeRenderer.line(cx0, cmy, cz1,  cx1, cmy, cz1);
+                }
+                // West face (x = cx0): cracks in YZ plane
+                shapeRenderer.line(cx0, cy0, cz0,  cx0, cy1, cz1);
+                shapeRenderer.line(cx0, cy1, cz0,  cx0, cy0, cz1);
+                if (stage >= 3) {
+                    shapeRenderer.line(cx0, cmy, cz0,  cx0, cmy, cz1);
+                    shapeRenderer.line(cx0, cy0, cmz,  cx0, cy1, cmz);
+                }
+                // East face (x = cx1): cracks in YZ plane
+                shapeRenderer.line(cx1, cy0, cz0,  cx1, cy1, cz1);
+                shapeRenderer.line(cx1, cy1, cz0,  cx1, cy0, cz1);
+                if (stage >= 3) {
+                    shapeRenderer.line(cx1, cmy, cz0,  cx1, cmy, cz1);
+                    shapeRenderer.line(cx1, cy0, cmz,  cx1, cy1, cmz);
+                }
+            }
+
+            shapeRenderer.end();
+
+            Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+        }
+
         // --- Phase 4: Block placement ghost block ---
         int selectedSlot = hotbarUI.getSelectedSlot();
         Material equippedMaterial = inventory.getItemInSlot(selectedSlot);
