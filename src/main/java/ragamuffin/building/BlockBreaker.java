@@ -68,6 +68,8 @@ public class BlockBreaker {
             case PAVEMENT:
                 return 8; // hard blocks
             case GLASS:
+            case DOOR_LOWER:
+            case DOOR_UPPER:
                 return 2; // fragile blocks
             default:
                 return 5; // default
@@ -99,8 +101,10 @@ public class BlockBreaker {
     public boolean punchBlock(World world, int x, int y, int z, Material tool) {
         BlockType blockType = world.getBlock(x, y, z);
 
-        // Can't punch air or bedrock, or police-taped (protected) blocks
-        if (blockType == BlockType.AIR || !blockType.isSolid() || blockType == BlockType.BEDROCK
+        // Can't punch air or bedrock, or police-taped (protected) blocks.
+        // DOOR_LOWER and DOOR_UPPER are non-solid (passable) but must still be breakable.
+        boolean isDoorBlock = blockType == BlockType.DOOR_LOWER || blockType == BlockType.DOOR_UPPER;
+        if (blockType == BlockType.AIR || (!blockType.isSolid() && !isDoorBlock) || blockType == BlockType.BEDROCK
                 || world.isProtected(x, y, z)) {
             return false;
         }
