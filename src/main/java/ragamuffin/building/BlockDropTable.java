@@ -105,9 +105,10 @@ public class BlockDropTable {
                 return Material.SIGN_YELLOW;
             case GARDEN_WALL:
                 return Material.GARDEN_WALL;
+            case LEAVES:
+                return (Math.random() < 0.3) ? Material.WOOD : null;
             case AIR:
             case WATER:
-            case LEAVES:
             default:
                 return null; // No drop
         }
