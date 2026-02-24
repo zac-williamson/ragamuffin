@@ -1154,6 +1154,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // damage-flash strobing on the death screen and corpse drift during respawn countdown.
         if (!player.isDead()) {
             world.applyGravityAndVerticalCollision(player, delta);
+            // Fix #389: advance dodge timers unconditionally so opening a UI overlay
+            // (inventory, help, crafting) cannot freeze the dodge timer or cooldown,
+            // preventing invincibility extension and cooldown bypass exploits.
+            player.updateDodge(delta);
         }
 
         // Decay partially-damaged blocks that have not been hit recently
@@ -1324,9 +1328,6 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
             inputHandler.resetDodge();
         }
-
-        // Update dodge timers
-        player.updateDodge(delta);
 
         // Move player with collision (always call to ensure gravity applies even when not moving)
         float moveSpeed;
