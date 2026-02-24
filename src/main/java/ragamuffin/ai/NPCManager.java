@@ -1367,13 +1367,21 @@ public class NPCManager {
      * Handle punching an NPC - applies knockback and damage.
      */
     public void punchNPC(NPC npc, Vector3 punchDirection) {
-        punchNPC(npc, punchDirection, null, null);
+        punchNPC(npc, punchDirection, null, null, null, null);
+    }
+
+    public void punchNPC(NPC npc, Vector3 punchDirection, Inventory inventory, TooltipSystem tooltipSystem) {
+        punchNPC(npc, punchDirection, inventory, tooltipSystem, null, null);
     }
 
     /**
      * Handle punching an NPC - applies knockback, damage, and loot drops on kill.
+     * When playerPos and world are provided, punching a POLICE NPC also adds them to
+     * alertedPoliceNPCs and alerts nearby officers (within 20 blocks) — matching the
+     * pattern used in alertPoliceToGreggRaid().
      */
-    public void punchNPC(NPC npc, Vector3 punchDirection, Inventory inventory, TooltipSystem tooltipSystem) {
+    public void punchNPC(NPC npc, Vector3 punchDirection, Inventory inventory, TooltipSystem tooltipSystem,
+                         Vector3 playerPos, World world) {
         npc.applyKnockback(punchDirection, 2.0f); // 2 blocks of knockback
 
         // Deal damage (10 HP per punch)
@@ -1404,6 +1412,33 @@ public class NPCManager {
                 && npc.getState() != NPCState.KNOCKED_OUT) {
             npc.setState(NPCState.AGGRESSIVE);
             npc.setSpeechText("That's assault! You're nicked!", 3.0f);
+            alertedPoliceNPCs.add(npc);
+            if (playerPos != null && world != null) {
+                setNPCTarget(npc, playerPos, world);
+                // Alert nearby police officers (within 20 blocks) — backup arrives
+                alertNearbyPoliceToPlayerAttack(npc, playerPos, world);
+            }
+        }
+    }
+
+    /**
+     * Alert nearby police officers (within 20 blocks of the attacked officer) to the
+     * player's position so backup arrives immediately. Matches the pattern used in
+     * alertPoliceToGreggRaid().
+     */
+    private void alertNearbyPoliceToPlayerAttack(NPC attackedOfficer, Vector3 playerPos, World world) {
+        for (NPC npc : npcs) {
+            if (npc == attackedOfficer) continue;
+            if (npc.getType() != NPCType.POLICE || !npc.isAlive()) continue;
+            if (npc.getState() == NPCState.AGGRESSIVE || npc.getState() == NPCState.ARRESTING
+                    || npc.getState() == NPCState.KNOCKED_OUT) continue;
+            float dist = npc.getPosition().dst(attackedOfficer.getPosition());
+            if (dist <= 20.0f) {
+                npc.setState(NPCState.AGGRESSIVE);
+                npc.setSpeechText("Oi! Assaulting an officer!", 3.0f);
+                alertedPoliceNPCs.add(npc);
+                setNPCTarget(npc, playerPos, world);
+            }
         }
     }
 
@@ -1734,6 +1769,14 @@ public class NPCManager {
             alertedPoliceNPCs.add(responder);
             setNPCTarget(responder, player.getPosition(), world);
         }
+    }
+
+    /**
+     * Returns true if the given police NPC is in the alertedPoliceNPCs set.
+     * Used by tests to verify Fix #487 — punched officers are properly alerted.
+     */
+    public boolean isAlertedPolice(NPC npc) {
+        return alertedPoliceNPCs.contains(npc);
     }
 
     /**
