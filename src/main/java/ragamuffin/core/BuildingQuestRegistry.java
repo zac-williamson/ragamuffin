@@ -216,8 +216,9 @@ public class BuildingQuestRegistry {
         if (quest.getType() == Quest.ObjectiveType.COLLECT && quest.getRequiredMaterial() != null) {
             if (inventory != null) {
                 int current = inventory.getItemCount(quest.getRequiredMaterial());
-                return "You've got " + current + " — still need " + quest.getRequiredCount() + " "
-                    + materialName(quest.getRequiredMaterial()) + " total. Don't let me down.";
+                int remaining = Math.max(0, quest.getRequiredCount() - current);
+                return "You've got " + current + " — need " + remaining + " more "
+                    + materialName(quest.getRequiredMaterial()) + ". Don't let me down.";
             }
             return "Still waiting on those " + quest.getRequiredCount() + " "
                 + materialName(quest.getRequiredMaterial()) + ". Don't let me down.";

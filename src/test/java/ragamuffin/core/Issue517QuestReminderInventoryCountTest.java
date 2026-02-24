@@ -15,10 +15,10 @@ class Issue517QuestReminderInventoryCountTest {
 
     /**
      * When the player has partial items and an inventory is provided,
-     * the reminder line should contain both the current count and the required count.
+     * the reminder line should contain the current count and the remaining count (not total required).
      */
     @Test
-    void getQuestReminderLine_withInventory_includesCurrentAndRequiredCount() {
+    void getQuestReminderLine_withInventory_includesCurrentAndRemainingCount() {
         Quest quest = new Quest("test_quest", "Test NPC",
                 "Bring me 3 tins of beans.",
                 ObjectiveType.COLLECT, Material.TIN_OF_BEANS, 3,
@@ -33,8 +33,11 @@ class Issue517QuestReminderInventoryCountTest {
         assertNotNull(reminder);
         assertTrue(reminder.contains("1"),
                 "Reminder should contain the current count (1), got: " + reminder);
-        assertTrue(reminder.contains("3"),
-                "Reminder should contain the required count (3), got: " + reminder);
+        // remaining = 3 - 1 = 2; the message should say "need 2 more", not "still need 3 total"
+        assertTrue(reminder.contains("2"),
+                "Reminder should contain the remaining count (2), got: " + reminder);
+        assertFalse(reminder.contains("total"),
+                "Reminder should not say 'total' (misleading phrasing), got: " + reminder);
     }
 
     /**
