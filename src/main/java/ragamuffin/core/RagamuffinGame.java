@@ -439,7 +439,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                 ragamuffin.world.Landmark lm = landmark;
                 float x = lm.getPosition().x + lm.getWidth() / 2.0f;
                 float z = lm.getPosition().z + lm.getDepth() / 2.0f;
-                float y = calculateSpawnHeight(world, (int) x, (int) z);
+                // Fix #491: use the landmark's ground-floor Y position instead of
+                // calculateSpawnHeight(), which returns the highest solid block (the roof)
+                // and causes the shopkeeper to spawn on top of the building, outside it.
+                float y = lm.getPosition().y + 1.0f;
                 npcManager.spawnBuildingNPC(type, x, y, z);
             }
         }
