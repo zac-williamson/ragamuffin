@@ -484,17 +484,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetEscape();
             }
 
-            // Fix #425: Tick all simulation timers during the cinematic so that
-            // timer-based systems do not freeze for the 8-second fly-through duration.
-            // Mirrors the equivalent block in the PAUSED branch — the same class of
-            // exploit that required fixes #391–#423 for PAUSED was never addressed for
-            // CINEMATIC.  All tickX() methods already exist on NPCManager (added for
-            // the PAUSED fix series) so no new API surface is required.
-            npcManager.tickSpawnCooldown(delta);
-            npcManager.tickPostArrestCooldown(delta);
-            npcManager.tickKnockbackTimers(delta);
-            npcManager.tickRecoveryTimers(delta);
-            npcManager.tickSpeechTimers(delta);
+            // Fix #447: Call full npcManager.update() during the cinematic so NPCs
+            // continue walking patrol routes and reacting to the world during the
+            // fly-through.  This replaces the individual tickX() calls added by Fix
+            // #425 — those methods are already called inside update(), so keeping both
+            // would double-tick every timer.  The cinematic is a live simulation with
+            // only the camera detached from the player; NPCs must not freeze.
+            npcManager.update(delta, world, player, inventory, tooltipSystem);
+            // Fix #447: Update speech log immediately after npcManager.update() so
+            // any speech set during this frame's NPC tick is reflected right away —
+            // mirrors the ordering in the PLAYING path (updatePlayingSimulation).
+            speechLogUI.update(npcManager.getNPCs(), delta);
             blockBreaker.tickDecay(delta);
             player.getStreetReputation().update(delta);
             weatherSystem.update(delta * timeSystem.getTimeSpeed() * 3600f);
@@ -595,9 +595,6 @@ public class RagamuffinGame extends ApplicationAdapter {
             // idleTimer continues accumulating and the arm is in the correct phase
             // when PLAYING starts.
             firstPersonArm.update(delta);
-            // Fix #437: Advance speech log entry timers during the cinematic so NPC
-            // speech bubbles fade out rather than freezing on-screen.
-            speechLogUI.update(npcManager.getNPCs(), delta);
 
             // Fix #427: Continue loading and meshing chunks during the cinematic so that
             // the world is fully built before the player takes control.  The cinematic
