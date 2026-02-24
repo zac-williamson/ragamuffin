@@ -107,6 +107,38 @@ class QuestTrackerUITest {
                 "MAX_VISIBLE must be at least 1 so at least one quest can be shown");
     }
 
+    // --- Objective string (Fix #519) ---
+
+    @Test
+    void objectiveStringForCollectQuestShowsCollectPrefix() {
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+        // Tesco quest: COLLECT 3x TIN_OF_BEANS
+        String obj = ui.buildObjectiveString(tesco);
+        assertEquals("Collect 3x tin of beans", obj,
+                "COLLECT quest objective must read 'Collect Nx material'");
+    }
+
+    @Test
+    void objectiveStringDoesNotExceed35Chars() {
+        // The Tesco description is much longer than 35 chars, but buildObjectiveString
+        // for COLLECT quests uses the auto-generated form which is always short.
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+        String obj = ui.buildObjectiveString(tesco);
+        assertTrue(obj.length() <= 35,
+                "Objective string must not exceed 35 characters to fit the tracker panel");
+    }
+
+    @Test
+    void objectiveStringNeverReturnsFullNPCDialogue() {
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+        String obj = ui.buildObjectiveString(tesco);
+        assertNotEquals(tesco.getDescription(), obj,
+                "Tracker must not show the full NPC dialogue as the objective");
+    }
+
     // --- Progress string (Fix #511) ---
 
     @Test
