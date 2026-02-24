@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import ragamuffin.building.Inventory;
 import ragamuffin.core.BuildingQuestRegistry;
 import ragamuffin.core.Quest;
 import ragamuffin.world.LandmarkType;
@@ -30,15 +31,22 @@ public class QuestLogUI {
     private static final int   VISIBLE_ROWS   = 7;
 
     private final BuildingQuestRegistry questRegistry;
+    private final Inventory inventory;
     private boolean visible;
 
     /** Top-most row index in the visible window. */
     private int scrollOffset;
 
-    public QuestLogUI(BuildingQuestRegistry questRegistry) {
+    public QuestLogUI(BuildingQuestRegistry questRegistry, Inventory inventory) {
         this.questRegistry = questRegistry;
+        this.inventory = inventory;
         this.visible = false;
         this.scrollOffset = 0;
+    }
+
+    /** Convenience constructor for tests or contexts without an inventory reference. */
+    public QuestLogUI(BuildingQuestRegistry questRegistry) {
+        this(questRegistry, null);
     }
 
     public boolean isVisible() {
@@ -219,7 +227,10 @@ public class QuestLogUI {
             if (quest.isActive() && !quest.isCompleted() && quest.getRequiredMaterial() != null) {
                 font.getData().setScale(DESC_SCALE);
                 String reqMat = quest.getRequiredMaterial().name().toLowerCase().replace('_', ' ');
-                String objStr = "Need: " + quest.getRequiredCount() + "x " + reqMat;
+                int required = quest.getRequiredCount();
+                int current = inventory != null ? inventory.getItemCount(quest.getRequiredMaterial()) : 0;
+                int remaining = Math.max(0, required - current);
+                String objStr = "Have: " + current + " / Need: " + remaining + "x " + reqMat;
                 font.setColor(1f, 0.7f, 0.3f, 1f);
                 GlyphLayout objLayout = new GlyphLayout(font, objStr);
                 font.draw(spriteBatch, objStr,

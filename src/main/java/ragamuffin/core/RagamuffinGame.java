@@ -351,7 +351,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         lastPlayerPosForDistance = new com.badlogic.gdx.math.Vector3(player.getPosition());
 
         // Issue #464: Initialize quest log UI
-        questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
+        // Fix #523: Pass inventory so quest log can show remaining count
+        questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry(), inventory);
         // Issue #497: Initialize quest tracker UI (compact always-visible panel)
         // Fix #511: Pass inventory so tracker can show current/required counts
         questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry(), inventory);
@@ -2608,7 +2609,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         tooltipSystem = new TooltipSystem();
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
         // Fix #479: Recreate questLogUI bound to the fresh registry so old quests don't bleed in
-        questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
+        // Fix #523: Pass inventory so quest log can show remaining count
+        questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry(), inventory);
         // Issue #497: Recreate questTrackerUI bound to the fresh registry
         // Fix #511: Pass inventory so tracker can show current/required counts
         questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry(), inventory);
