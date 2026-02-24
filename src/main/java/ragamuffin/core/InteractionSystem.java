@@ -6,17 +6,21 @@ import ragamuffin.building.Material;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
+import ragamuffin.world.LandmarkType;
 
 import java.util.List;
 import java.util.Random;
 
 /**
  * Phase 11: Handles player interactions including food consumption and NPC dialogue.
+ * Issue #440: Extended to support quest NPCs in labelled buildings.
  */
 public class InteractionSystem {
 
     private static final float INTERACTION_RANGE = 2.0f;
     private static final Random RANDOM = new Random();
+
+    private final BuildingQuestRegistry questRegistry = new BuildingQuestRegistry();
 
     // NPC dialogue lines
     private static final String[] PUBLIC_DIALOGUE = {
@@ -266,8 +270,29 @@ public class InteractionSystem {
      * @return The dialogue text, or null if no interaction
      */
     public String interactWithNPC(NPC npc) {
+        return interactWithNPC(npc, null);
+    }
+
+    /**
+     * Interact with an NPC (E key), with optional inventory for quest completion.
+     * If the NPC is a building quest NPC, handles quest offer/progress/completion.
+     * @param npc The NPC to interact with
+     * @param inventory Player inventory (may be null for non-quest interactions)
+     * @return The dialogue text, or null if no interaction
+     */
+    public String interactWithNPC(NPC npc, Inventory inventory) {
         if (npc == null) {
             return null;
+        }
+
+        // Building quest NPC — check if this NPC has a building association with a quest
+        LandmarkType buildingType = npc.getBuildingType();
+        if (buildingType != null && questRegistry.hasQuest(buildingType)) {
+            String questDialogue = handleQuestInteraction(buildingType, inventory);
+            if (questDialogue != null) {
+                npc.setSpeechText(questDialogue, 5.0f);
+                return questDialogue;
+            }
         }
 
         String dialogue = null;
@@ -324,6 +349,56 @@ public class InteractionSystem {
         }
 
         return dialogue;
+    }
+
+    /**
+     * Handle a quest interaction with a building NPC.
+     * Returns the dialogue line to show, or null if no special quest handling.
+     */
+    private String handleQuestInteraction(LandmarkType buildingType, Inventory inventory) {
+        Quest quest = questRegistry.getQuest(buildingType);
+        if (quest == null) return null;
+
+        if (quest.isCompleted()) {
+            return "Thanks again. You did right by me.";
+        }
+
+        if (!quest.isActive()) {
+            // Offer the quest
+            quest.setActive(true);
+            return BuildingQuestRegistry.getQuestOfferLine(quest);
+        }
+
+        // Quest is active — check if player can complete it
+        if (inventory != null && quest.checkCompletion(inventory)) {
+            boolean success = quest.complete(inventory);
+            if (success) {
+                lastQuestCompleted = quest;
+                return BuildingQuestRegistry.getQuestCompletionLine(quest);
+            }
+        }
+
+        // Remind the player of the objective
+        return BuildingQuestRegistry.getQuestReminderLine(quest);
+    }
+
+    /** The last quest that was completed (for UI feedback). */
+    private Quest lastQuestCompleted = null;
+
+    /**
+     * Get the last quest completed and clear it.
+     */
+    public Quest pollLastQuestCompleted() {
+        Quest q = lastQuestCompleted;
+        lastQuestCompleted = null;
+        return q;
+    }
+
+    /**
+     * Get the quest registry (for tests and UI).
+     */
+    public BuildingQuestRegistry getQuestRegistry() {
+        return questRegistry;
     }
 
     /**
