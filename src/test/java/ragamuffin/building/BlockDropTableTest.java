@@ -71,9 +71,21 @@ class BlockDropTableTest {
     }
 
     @Test
-    void testLeavesDropNothing() {
-        Material drop = dropTable.getDrop(BlockType.LEAVES, null);
-        assertNull(drop); // Leaves don't drop items
+    void testLeavesDropWoodOrNothing() {
+        // LEAVES have a 30% chance to drop WOOD (twigs/branches); run enough trials
+        // to ensure the result is always either WOOD or null, never anything else.
+        boolean sawWood = false;
+        boolean sawNull = false;
+        for (int i = 0; i < 200; i++) {
+            Material drop = dropTable.getDrop(BlockType.LEAVES, null);
+            assertTrue(drop == null || drop == Material.WOOD,
+                    "LEAVES should drop WOOD or null, but got: " + drop);
+            if (drop == Material.WOOD) sawWood = true;
+            if (drop == null) sawNull = true;
+        }
+        // With 200 trials and 30% probability, the chance of never seeing WOOD is ~1e-31
+        assertTrue(sawWood, "LEAVES should occasionally drop WOOD");
+        assertTrue(sawNull, "LEAVES should sometimes drop nothing");
     }
 
     @Test
