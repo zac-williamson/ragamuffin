@@ -194,7 +194,12 @@ class Issue533CurrencySpendingTest {
         assertEquals(8, inv.getItemCount(Material.PENNY),
             "Pennies unchanged after first E-press");
 
-        // Second E-press: completes purchase
+        // Player selects crisps (item 3) since they only have pennies
+        system.selectShopItem(shopkeeper, 3, inv);
+        assertEquals(3, shopkeeper.getSelectedShopItem(),
+            "Selected item should be 3 (crisps) after pressing 3");
+
+        // Second E-press: completes purchase for the selected item (crisps)
         String secondDialogue = system.interactWithNPC(shopkeeper, inv);
         assertNotNull(secondDialogue);
         assertEquals(1, inv.getItemCount(Material.CRISPS),

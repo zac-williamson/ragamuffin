@@ -315,23 +315,24 @@ public class InteractionSystem {
                 dialogue = "*bark*";
                 break;
             case SHOPKEEPER:
-                // Two-step purchase flow (Fix #535):
-                // First E-press: open the shop menu and list available items (only if player has currency).
-                // Second E-press (while menu is open): execute the purchase.
+                // Two-step purchase flow (Fix #535, extended in Fix #539):
+                // First E-press: open the shop menu listing available items (only if player has currency).
+                //   Player can press 1/2/3 to highlight an item; selection defaults to 1.
+                // Second E-press (while menu is open): execute the purchase for the selected item.
                 if (inventory != null) {
                     int shillingsHeld = inventory.getItemCount(Material.SHILLING);
                     int penniesHeld = inventory.getItemCount(Material.PENNY);
                     if (npc.isShopMenuOpen()) {
-                        // Second press — complete the purchase
+                        // Second press — complete the purchase for the selected item
                         npc.setShopMenuOpen(false);
-                        dialogue = handleShopkeeperPurchase(inventory);
+                        dialogue = handleShopkeeperPurchase(npc, inventory);
                         if (dialogue == null) {
                             dialogue = "We don't seem to have what you need right now.";
                         }
                     } else if (shillingsHeld > 0 || penniesHeld > 0) {
                         // First press and player has currency — open the shop menu
-                        npc.setShopMenuOpen(true);
-                        dialogue = "What'll it be? Sausage roll (2s), energy drink (1s), crisps (6p). Press E again to buy.";
+                        npc.setShopMenuOpen(true); // also resets selection to 1
+                        dialogue = buildShopMenuDialogue(npc, inventory);
                     } else {
                         // No currency — fall through to generic dialogue
                         dialogue = SHOPKEEPER_DIALOGUE[RANDOM.nextInt(SHOPKEEPER_DIALOGUE.length)];
@@ -407,41 +408,77 @@ public class InteractionSystem {
     }
 
     /**
-     * Handle a shopkeeper merchant purchase using the player's currency.
-     * Tries to sell a sausage roll for 2 shillings, then an energy drink for 1 shilling,
-     * then crisps for 6 pennies.
-     * Returns the purchase dialogue if a transaction occurred (or was attempted),
-     * or null if the player has no currency at all.
+     * Handle a shopkeeper merchant purchase using the player's currency and the
+     * item they have selected in the shop menu (Fix #539).
+     * Attempts to buy the item at {@code npc.getSelectedShopItem()} (1=sausage roll,
+     * 2=energy drink, 3=crisps).  If the player cannot afford the selected item the
+     * shopkeeper says so rather than silently switching to a cheaper item.
+     * Returns the purchase dialogue, or null if the player has no currency at all.
      */
-    private String handleShopkeeperPurchase(Inventory inventory) {
+    private String handleShopkeeperPurchase(NPC npc, Inventory inventory) {
         int shillings = inventory.getItemCount(Material.SHILLING);
         int pennies = inventory.getItemCount(Material.PENNY);
 
         if (shillings == 0 && pennies == 0) {
-            // No currency — fall through to generic shopkeeper dialogue
             return null;
         }
 
-        // Try best purchase first: sausage roll for 2 shillings
-        if (shillings >= SAUSAGE_ROLL_COST_SHILLINGS) {
-            PurchaseResult result = buySausageRoll(inventory);
-            return lastPurchaseMessage;
-        }
+        int selection = npc.getSelectedShopItem();
 
-        // Try energy drink for 1 shilling
-        if (shillings >= ENERGY_DRINK_COST_SHILLINGS) {
-            PurchaseResult result = buyEnergyDrink(inventory);
-            return lastPurchaseMessage;
+        switch (selection) {
+            case 1: // Sausage roll — 2 shillings
+                buySausageRoll(inventory);
+                return lastPurchaseMessage;
+            case 2: // Energy drink — 1 shilling
+                buyEnergyDrink(inventory);
+                return lastPurchaseMessage;
+            case 3: // Crisps — 6 pennies
+                buyCrisps(inventory);
+                return lastPurchaseMessage;
+            default:
+                return "Got coins, have you? Sausage roll's 2 shillings, energy drink's 1 shilling, crisps are 6 pennies.";
         }
+    }
 
-        // Try crisps for 6 pennies
-        if (pennies >= CRISPS_COST_PENNIES) {
-            PurchaseResult result = buyCrisps(inventory);
-            return lastPurchaseMessage;
+    /**
+     * Build the shop menu dialogue string, marking the currently selected item.
+     * Called on the first E-press and whenever the player changes selection (Fix #539).
+     */
+    public String buildShopMenuDialogue(NPC npc, Inventory inventory) {
+        int sel = npc.getSelectedShopItem();
+        int shillings = inventory.getItemCount(Material.SHILLING);
+        int pennies = inventory.getItemCount(Material.PENNY);
+
+        String sausageRoll  = (sel == 1 ? "> " : "  ") + "1. sausage roll (2s)"
+            + (shillings >= SAUSAGE_ROLL_COST_SHILLINGS ? "" : " [can't afford]");
+        String energyDrink  = (sel == 2 ? "> " : "  ") + "2. energy drink (1s)"
+            + (shillings >= ENERGY_DRINK_COST_SHILLINGS ? "" : " [can't afford]");
+        String crisps       = (sel == 3 ? "> " : "  ") + "3. crisps (6p)"
+            + (pennies >= CRISPS_COST_PENNIES ? "" : " [can't afford]");
+
+        return "What'll it be?\n" + sausageRoll + "\n" + energyDrink + "\n" + crisps
+            + "\nPress 1/2/3 to select, E to buy.";
+    }
+
+    /**
+     * Select a shop item for an open shop menu (Fix #539).
+     * Called when the player presses 1, 2, or 3 while the shop menu is open.
+     * Updates the NPC's selected item and refreshes the speech bubble to reflect
+     * the new selection.
+     *
+     * @param npc   the shopkeeper NPC whose menu is open
+     * @param index item index 1-3 (1=sausage roll, 2=energy drink, 3=crisps)
+     * @param inventory player inventory (used to show affordability)
+     * @return the updated shop menu dialogue, or null if the menu is not open
+     */
+    public String selectShopItem(NPC npc, int index, Inventory inventory) {
+        if (npc == null || !npc.isShopMenuOpen()) {
+            return null;
         }
-
-        // Player has some currency but not enough for anything
-        return "Got coins, have you? Sausage roll's 2 shillings, energy drink's 1 shilling, crisps are 6 pennies.";
+        npc.setSelectedShopItem(index);
+        String dialogue = buildShopMenuDialogue(npc, inventory);
+        npc.setSpeechText(dialogue, 3.0f);
+        return dialogue;
     }
 
     /** The last quest that was completed (for UI feedback). */

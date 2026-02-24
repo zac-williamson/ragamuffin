@@ -141,6 +141,7 @@ public class NPC {
             if (speechTimer <= 0) {
                 speechText = null;
                 shopMenuOpen = false;
+                selectedShopItem = 1;
             }
         }
     }
@@ -158,6 +159,7 @@ public class NPC {
                 // Shop menu expires with the speech bubble so a player who walks
                 // away does not find the menu still open on return.
                 shopMenuOpen = false;
+                selectedShopItem = 1;
             }
         }
 
@@ -266,6 +268,11 @@ public class NPC {
     // Shop interaction state — true when the player has opened the shop menu (first E-press)
     // and a purchase is awaited on the next E-press.
     private boolean shopMenuOpen = false;
+
+    // The item index (1-3) the player has highlighted in the shop menu.
+    // 1 = sausage roll, 2 = energy drink, 3 = crisps.
+    // Defaults to 1 when the menu opens. Only meaningful while shopMenuOpen is true.
+    private int selectedShopItem = 1;
 
     public boolean isKnockedBack() {
         return knockbackTimer > 0f;
@@ -489,9 +496,32 @@ public class NPC {
 
     /**
      * Open or close the shop menu for this shopkeeper NPC.
+     * Opening the menu resets the selection to item 1 (sausage roll).
      */
     public void setShopMenuOpen(boolean open) {
         this.shopMenuOpen = open;
+        if (open) {
+            selectedShopItem = 1;
+        }
+    }
+
+    /**
+     * Returns the currently highlighted shop item index (1-3).
+     * 1 = sausage roll, 2 = energy drink, 3 = crisps.
+     * Only meaningful while the shop menu is open.
+     */
+    public int getSelectedShopItem() {
+        return selectedShopItem;
+    }
+
+    /**
+     * Set the highlighted shop item index (1-3).
+     * Clamped to the valid range [1, 3].
+     */
+    public void setSelectedShopItem(int index) {
+        if (index >= 1 && index <= 3) {
+            this.selectedShopItem = index;
+        }
     }
 
     /**
