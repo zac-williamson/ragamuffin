@@ -25,9 +25,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class Issue207WoodFenceInventoryTest {
 
-    // Allotments are placed at (60, 0, -100), width=30, depth=20 by WorldGenerator
-    private static final int ALLOTMENTS_X = 60;
-    private static final int ALLOTMENTS_Z = -100;
+    // Allotments position is seed-derived; look it up from the landmark at runtime.
+    private int ALLOTMENTS_X;
+    private int ALLOTMENTS_Z;
 
     private World world;
     private Inventory inventory;
@@ -42,6 +42,11 @@ class Issue207WoodFenceInventoryTest {
         inventory = new Inventory(36);
         blockBreaker = new BlockBreaker();
         dropTable = new BlockDropTable();
+
+        Landmark allotments = world.getLandmark(LandmarkType.ALLOTMENTS);
+        assertNotNull(allotments, "ALLOTMENTS landmark must exist after world generation");
+        ALLOTMENTS_X = (int) allotments.getPosition().x;
+        ALLOTMENTS_Z = (int) allotments.getPosition().z;
     }
 
     /**
