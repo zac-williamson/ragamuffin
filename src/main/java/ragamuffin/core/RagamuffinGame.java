@@ -645,6 +645,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (!player.isDead()) {
                 world.applyGravityAndVerticalCollision(player, delta);
             }
+            // Fix #471: Keep lastPlayerPosForDistance in sync with the player position
+            // so that when PLAYING resumes the first-frame distance delta is not inflated
+            // by any gravity-driven movement that occurred during the cinematic.
+            if (lastPlayerPosForDistance != null) {
+                lastPlayerPosForDistance.set(player.getPosition());
+            }
             // Fix #445: Advance arm swing/bob animation during cinematic so the
             // idleTimer continues accumulating and the arm is in the correct phase
             // when PLAYING starts.
@@ -1016,6 +1022,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             // in updatePlayingSimulation.
             if (!player.isDead()) {
                 world.applyGravityAndVerticalCollision(player, delta);
+            }
+            // Fix #471: Keep lastPlayerPosForDistance in sync with the player position
+            // so that when PLAYING resumes the first-frame distance delta is not inflated
+            // by any gravity-driven movement that occurred while paused.
+            if (lastPlayerPosForDistance != null) {
+                lastPlayerPosForDistance.set(player.getPosition());
             }
             // Fix #341: Advance weather timer while paused so weather transitions
             // continue to accumulate — mirrors the PLAYING path (line ~530).
