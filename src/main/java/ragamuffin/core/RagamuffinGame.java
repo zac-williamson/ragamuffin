@@ -742,6 +742,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
                 renderDeathScreen();
             }
+            // Fix #359: Advance reputation decay timer while paused — mirrors the PLAYING path (line ~1088).
+            // Without this the player can exploit the pause menu to halt reputation decay indefinitely.
+            player.getStreetReputation().update(delta);
 
             // Render UI and pause menu
             renderUI();
@@ -1923,6 +1926,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inventory = new Inventory(36);
         inventoryUI = new InventoryUI(inventory);
         hotbarUI = new HotbarUI(inventory);
+        // Fix #359: Recreate craftingSystem so any in-progress crafting state (selected recipe,
+        // scroll offset) from the previous session does not leak into the new game.
+        craftingSystem = new CraftingSystem();
         craftingUI = new CraftingUI(craftingSystem, inventory);
         // Fix #325: Recreate helpUI so its isVisible() state resets to false.
         // Without this, if the player had the help screen open before restarting,
