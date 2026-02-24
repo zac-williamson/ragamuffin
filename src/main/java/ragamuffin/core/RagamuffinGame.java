@@ -2573,6 +2573,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #166: Sync HealingSystem position after teleport so the next update()
         // does not compute a spurious speed from the restart spawn distance.
         healingSystem.resetPosition(player.getPosition());
+        // Fix #485: Reset distance-tracking vector to the new spawn position so the first
+        // updatePlayingSimulation() frame does not measure the full distance between the
+        // previous session's last position and the new spawn (mirrors the within-session
+        // respawn reset at lines 865-866).
+        distanceTravelledAchievement = 0f;
+        lastPlayerPosForDistance.set(player.getPosition());
         respawnSystem = new RespawnSystem();
         respawnSystem.setSpawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         weatherSystem = new WeatherSystem();
