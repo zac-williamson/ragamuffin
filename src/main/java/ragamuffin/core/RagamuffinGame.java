@@ -830,6 +830,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Issue #166: Sync HealingSystem position after teleport so the next update()
                 // does not compute a spurious speed from the respawn distance.
                 healingSystem.resetPosition(player.getPosition());
+                // Fix #459: Reset distance tracking on respawn so distance doesn't carry across deaths.
+                distanceTravelledAchievement = 0f;
+                lastPlayerPosForDistance.set(player.getPosition());
             }
 
             // Phase 11: Trigger hunger warning tooltip
@@ -1005,6 +1008,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                     greggsRaidSystem.reset();
                     player.getStreetReputation().reset();
                     healingSystem.resetPosition(player.getPosition());
+                    // Fix #459: Reset distance tracking on respawn so distance doesn't carry across deaths.
+                    distanceTravelledAchievement = 0f;
+                    lastPlayerPosForDistance.set(player.getPosition());
                 }
                 if (respawnSystem.isRespawning()) {
                     renderDeathScreen();
@@ -1471,6 +1477,20 @@ public class RagamuffinGame extends ApplicationAdapter {
         prevDamageFlashIntensity = flashNow;
         player.updateFlash(delta);
         gameHUD.update(delta);
+
+        // Fix #459: Accumulate distance travelled for MARATHON_MAN achievement.
+        // Measure displacement since last frame, accumulate in metres, and award
+        // one increment per whole metre so the 1000-increment target is reached
+        // after 1000 metres walked.
+        if (lastPlayerPosForDistance != null) {
+            float dist = player.getPosition().dst(lastPlayerPosForDistance);
+            distanceTravelledAchievement += dist;
+            while (distanceTravelledAchievement >= 1.0f) {
+                achievementSystem.increment(ragamuffin.ui.AchievementType.MARATHON_MAN);
+                distanceTravelledAchievement -= 1.0f;
+            }
+        }
+        lastPlayerPosForDistance.set(player.getPosition());
 
         // Update camera to follow player
         camera.position.set(player.getPosition());

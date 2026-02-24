@@ -171,6 +171,22 @@ class AchievementSystemTest {
     }
 
     @Test
+    void marathonManUnlockedAfter1000MetresWalked() {
+        // Simulate the distance-accumulation logic: 1000 increments (one per metre)
+        // mirrors what RagamuffinGame.updatePlayingSimulation() does.
+        AchievementType type = AchievementType.MARATHON_MAN;
+        assertFalse(system.isUnlocked(type), "MARATHON_MAN must not be unlocked before 1000 metres");
+
+        for (int metre = 0; metre < 999; metre++) {
+            system.increment(type);
+        }
+        assertFalse(system.isUnlocked(type), "MARATHON_MAN must not be unlocked at 999 metres");
+
+        system.increment(type); // 1000th metre
+        assertTrue(system.isUnlocked(type), "MARATHON_MAN must be unlocked after 1000 metres walked");
+    }
+
+    @Test
     void unlockSameAchievementTwiceDoesNotQueueTwice() {
         system.unlock(AchievementType.FIRST_PUNCH);
         system.unlock(AchievementType.FIRST_PUNCH); // Second call must be ignored
