@@ -81,7 +81,8 @@ public enum Material {
     PIPE("Pipe"),
     CARDBOARD_BOX("Cardboard Box"),
     ANTIDEPRESSANTS("Antidepressants"),
-    STAIRS("Stairs");
+    STAIRS("Stairs"),
+    LADDER("Ladder");
 
     private final String displayName;
 
@@ -151,6 +152,8 @@ public enum Material {
             case PIPE:           return c(0.55f, 0.55f, 0.60f);   // Metal pipe
             case STAIRS:         return cs(0.70f, 0.55f, 0.28f,   // Light tread top
                                            0.60f, 0.45f, 0.22f);  // Darker riser side
+            case LADDER:         return cs(0.58f, 0.40f, 0.18f,   // Rung front
+                                           0.45f, 0.30f, 0.12f);  // Darker rail
 
             // Diamond — cyan/white sparkle
             case DIAMOND:        return cs(0.65f, 0.95f, 1.00f,

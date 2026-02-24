@@ -131,6 +131,12 @@ public class CraftingSystem {
             Map.of(Material.HAIR_CLIPPERS, 1, Material.NAIL_POLISH, 1, Material.SCRAP_METAL, 1),
             Map.of(Material.STONE_TOOL, 1)
         ));
+
+        // Ladder: 2 wood (rails) + 4 planks (rungs) → 2 ladders
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 2, Material.PLANKS, 4),
+            Map.of(Material.LADDER, 2)
+        ));
     }
 
     /**

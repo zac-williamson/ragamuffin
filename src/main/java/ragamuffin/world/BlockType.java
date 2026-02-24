@@ -55,7 +55,8 @@ public enum BlockType {
     DOOR_LOWER(45, true),  // Lower half of a 2-block tall door (solid when closed; toggleDoor() writes AIR when open)
     DOOR_UPPER(46, true),  // Upper half of a 2-block tall door (solid when closed; toggleDoor() writes AIR when open)
     WOOD_PLANKS(47, true), // Player-placed plank block (distinct from world-gen WOOD; drops PLANKS not WOOD)
-    STAIRS(48, true);      // Stair block: half-height step for ascending/descending between layers
+    STAIRS(48, true),      // Stair block: half-height step for ascending/descending between layers
+    LADDER(49, false);     // Ladder block: climbable thin rungs against a wall face
 
     private final int id;
     private final boolean solid;
@@ -87,6 +88,7 @@ public enum BlockType {
             case DOOR_LOWER:
             case DOOR_UPPER:
             case STAIRS:
+            case LADDER:
                 return false;
             default:
                 return solid; // All other solid blocks are opaque; AIR/WATER are not
@@ -145,7 +147,8 @@ public enum BlockType {
         FENCE_POST,
         DOOR_LOWER,
         DOOR_UPPER,
-        STAIR_STEP
+        STAIR_STEP,
+        LADDER_RUNGS
     }
 
     /**
@@ -158,6 +161,7 @@ public enum BlockType {
             case DOOR_LOWER: return BlockShape.DOOR_LOWER;
             case DOOR_UPPER: return BlockShape.DOOR_UPPER;
             case STAIRS:     return BlockShape.STAIR_STEP;
+            case LADDER:     return BlockShape.LADDER_RUNGS;
             default: return BlockShape.FULL_CUBE;
         }
     }
@@ -205,6 +209,7 @@ public enum BlockType {
             case SIGN_GREEN:
             case SIGN_YELLOW:
             case STAIRS:
+            case LADDER:
                 return true;
             default:
                 return false;
@@ -439,6 +444,7 @@ public enum BlockType {
             case DOOR_LOWER: return new Color(0.42f, 0.25f, 0.10f, 1f); // Dark oak, same as DOOR_WOOD
             case DOOR_UPPER: return new Color(0.42f, 0.25f, 0.10f, 1f); // Dark oak, same as DOOR_WOOD
             case STAIRS:     return new Color(0.60f, 0.45f, 0.22f, 1f); // Warm wood stair sides
+            case LADDER:     return new Color(0.58f, 0.40f, 0.18f, 1f); // Weathered wood rung
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }
@@ -473,6 +479,7 @@ public enum BlockType {
             case DOOR_LOWER: return new Color(0.48f, 0.30f, 0.14f, 1f);  // Door top
             case DOOR_UPPER: return new Color(0.48f, 0.30f, 0.14f, 1f);  // Door top
             case STAIRS:     return new Color(0.70f, 0.55f, 0.28f, 1f);  // Lighter stair tread
+            case LADDER:     return new Color(0.65f, 0.48f, 0.22f, 1f);  // Top of rung
             default: return buildSideColor();
         }
     }
