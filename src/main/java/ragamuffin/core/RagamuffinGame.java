@@ -500,6 +500,14 @@ public class RagamuffinGame extends ApplicationAdapter {
             lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
             updateSkyColour(timeSystem.getTime());
             particleSystem.update(delta);
+            // Fix #429: Advance gang territory linger timer during cinematic so the player
+            // cannot exploit the city fly-through to freeze the 5-second hostility escalation
+            // countdown.  Mirrors the equivalent call in the PAUSED branch (line ~884).
+            gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
+            // Fix #429: Keep police spawn/despawn logic in sync with the day/night cycle
+            // during the cinematic.  If the fly-through straddles dusk or dawn the wasNight
+            // flag transition must not be skipped — mirrors the PAUSED branch (line ~852).
+            npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
             // Transition to PLAYING once cinematic completes
             if (cinematicCamera.isCompleted()) {
