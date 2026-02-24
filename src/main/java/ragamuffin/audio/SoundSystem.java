@@ -167,6 +167,7 @@ public class SoundSystem {
             case UI_OPEN:
             case UI_CLOSE:
             case TOOLTIP:
+            case ITEM_USE:
                 return VOLUME_UI;
             case AMBIENT_PARK:
             case AMBIENT_STREET:

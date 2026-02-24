@@ -31,5 +31,9 @@ public enum SoundEffect {
 
     // Special events
     POLICE_SIREN,
-    TOOLTIP
+    TOOLTIP,
+
+    // Item use sounds
+    ITEM_EAT,
+    ITEM_USE
 }
