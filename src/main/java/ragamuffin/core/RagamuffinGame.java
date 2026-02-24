@@ -1293,8 +1293,22 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Achievements toggle (Tab key)
+        if (inputHandler.isAchievementsPressed()) {
+            boolean wasVisible = achievementsUI.isVisible();
+            achievementsUI.toggle();
+            soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
+            inputHandler.resetAchievements();
+            // Clear sticky punch state when the achievements overlay opens
+            if (!wasVisible) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
+        }
+
         // Release cursor when any overlay UI is open, re-catch when all closed
-        boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible();
+        boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible() || achievementsUI.isVisible();
         Gdx.input.setCursorCatched(!uiOpen);
 
         // Hotbar selection
@@ -1371,6 +1385,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                 craftingUI.handleScroll(scrollY);
                 inputHandler.resetScroll();
             }
+        } else if (achievementsUI.isVisible()) {
+            // Forward UP/DOWN to achievements scroll; discard scroll wheel
+            if (inputHandler.isUpPressed()) {
+                achievementsUI.scrollUp();
+                inputHandler.resetUp();
+            }
+            if (inputHandler.isDownPressed()) {
+                achievementsUI.scrollDown();
+                inputHandler.resetDown();
+            }
+            inputHandler.resetScroll();
         } else if (inventoryUI.isVisible() || helpUI.isVisible()) {
             // Discard scroll when inventory or help UI is open so it doesn't carry over to the hotbar
             inputHandler.resetScroll();
@@ -1387,7 +1412,7 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private boolean isUIBlocking() {
-        return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible();
+        return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible() || achievementsUI.isVisible();
     }
 
     /**
@@ -2168,6 +2193,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             craftingUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
+        // Render achievements overlay if visible
+        if (achievementsUI.isVisible()) {
+            achievementsUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
         // Render damage flash overlay
         float flashIntensity = player.getDamageFlashIntensity();
         if (flashIntensity > 0f) {
@@ -2335,7 +2365,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private void handleEscapePress() {
         // Close any open UI first
-        if (inventoryUI.isVisible()) {
+        if (achievementsUI.isVisible()) {
+            achievementsUI.hide();
+            Gdx.input.setCursorCatched(true);
+        } else if (inventoryUI.isVisible()) {
             inventoryUI.hide();
             Gdx.input.setCursorCatched(true);
         } else if (helpUI.isVisible()) {
@@ -2475,7 +2508,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetInventory();
         inputHandler.resetHelp();
         inputHandler.resetCrafting();
+        inputHandler.resetAchievements();
         inputHandler.resetInteract();
+        // Fix #461: Hide achievements overlay so it does not persist across game restarts.
+        achievementsUI.hide();
         // Fix #365: Clear stale leftClickReleased flag so the inventory drag-and-drop
         // subsystem is not in an inconsistent state on frame 1 of the new session.
         // When the player mouse-clicks "Restart", touchUp() sets leftClickReleased=true
@@ -2511,6 +2547,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private void transitionToPlaying() {
         state = GameState.PLAYING;
         pauseMenu.hide();
+        // Fix #461: Hide achievements overlay on state transition so it doesn't persist
+        achievementsUI.hide();
         Gdx.input.setCursorCatched(true);
     }
 
@@ -2643,6 +2681,14 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public ragamuffin.render.SkyRenderer getSkyRenderer() {
         return skyRenderer;
+    }
+
+    public ragamuffin.ui.AchievementsUI getAchievementsUI() {
+        return achievementsUI;
+    }
+
+    public ragamuffin.ui.AchievementSystem getAchievementSystem() {
+        return achievementSystem;
     }
 
     /**
