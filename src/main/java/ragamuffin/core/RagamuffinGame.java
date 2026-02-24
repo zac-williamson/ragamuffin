@@ -614,6 +614,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             // so the banner counts down rather than freezing for the entire fly-through.
             gameHUD.update(delta);
             player.updateDodge(delta);
+            // Fix #457: Apply gravity during CINEMATIC so the player cannot exploit
+            // the cinematic to avoid fall damage — mirrors applyGravityAndVerticalCollision
+            // in updatePlayingSimulation.
+            if (!player.isDead()) {
+                world.applyGravityAndVerticalCollision(player, delta);
+            }
             // Fix #445: Advance arm swing/bob animation during cinematic so the
             // idleTimer continues accumulating and the arm is in the correct phase
             // when PLAYING starts.
@@ -977,6 +983,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             // freezing for the entire pause duration (which would allow the player to
             // exploit pause to extend dodge invincibility indefinitely).
             player.updateDodge(delta);
+            // Fix #457: Apply gravity during PAUSED so the player cannot exploit
+            // the pause menu to avoid fall damage — mirrors applyGravityAndVerticalCollision
+            // in updatePlayingSimulation.
+            if (!player.isDead()) {
+                world.applyGravityAndVerticalCollision(player, delta);
+            }
             // Fix #341: Advance weather timer while paused so weather transitions
             // continue to accumulate — mirrors the PLAYING path (line ~530).
             weatherSystem.update(delta * timeSystem.getTimeSpeed() * 3600f);
