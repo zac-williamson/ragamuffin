@@ -52,8 +52,8 @@ public enum BlockType {
     WOOD_FENCE(42, true),  // World-generated wooden fence (not player-placeable)
     WOOD_WALL(43, true),   // World-generated wooden wall/shed (not player-placeable)
     FENCE_THIN(44, true),  // Thin vertical iron fence post (shaped, not full cube)
-    DOOR_LOWER(45, false), // Lower half of a 2-block tall door (not solid for collision — door frame is solid)
-    DOOR_UPPER(46, false), // Upper half of a 2-block tall door
+    DOOR_LOWER(45, true),  // Lower half of a 2-block tall door (solid when closed; toggleDoor() writes AIR when open)
+    DOOR_UPPER(46, true),  // Upper half of a 2-block tall door (solid when closed; toggleDoor() writes AIR when open)
     WOOD_PLANKS(47, true), // Player-placed plank block (distinct from world-gen WOOD; drops PLANKS not WOOD)
     STAIRS(48, true);      // Stair block: half-height step for ascending/descending between layers
 

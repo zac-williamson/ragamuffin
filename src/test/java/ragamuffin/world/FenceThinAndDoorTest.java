@@ -42,14 +42,14 @@ class FenceThinAndDoorTest {
     }
 
     @Test
-    void doorLowerIsNotSolid() {
-        // Door panels are not solid — the surrounding frame provides collision
-        assertFalse(BlockType.DOOR_LOWER.isSolid());
+    void doorLowerIsSolid() {
+        // Closed door blocks are solid — toggleDoor() writes AIR when open so open doors are passable
+        assertTrue(BlockType.DOOR_LOWER.isSolid());
     }
 
     @Test
-    void doorUpperIsNotSolid() {
-        assertFalse(BlockType.DOOR_UPPER.isSolid());
+    void doorUpperIsSolid() {
+        assertTrue(BlockType.DOOR_UPPER.isSolid());
     }
 
     @Test
