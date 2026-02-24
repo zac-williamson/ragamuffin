@@ -733,4 +733,30 @@ class NPCManagerTest {
         assertTrue(afterCooldownDrained >= afterSecondCall,
                 "Fix #393: after tickSpawnCooldown() drains the timer, police spawning must be re-allowed");
     }
+
+    /**
+     * Fix #405: tickKnockbackTimers() must clear NPC knockback even while the game is paused.
+     *
+     * Scenario: punch an NPC so it is in mid-knockback, then simulate 30 frames (0.5 s) of
+     * PAUSED state via tickKnockbackTimers(). The knockback timer (0.2 s) must have expired
+     * well within 0.5 s, so isKnockedBack() must return false.
+     */
+    @Test
+    void tickKnockbackTimersClearsKnockbackWhilePaused() {
+        NPC npc = manager.spawnNPC(NPCType.YOUTH_GANG, 10, 1, 10);
+
+        // Apply knockback — sets knockbackTimer = 0.2 s
+        npc.applyKnockback(new Vector3(0, 0, -1), 2.0f);
+        assertTrue(npc.isKnockedBack(), "NPC must be in knockback state immediately after applyKnockback()");
+
+        // Simulate 30 frames at 1/60 s each (= 0.5 s total) via the PAUSED-branch method.
+        // 0.5 s >> 0.2 s timer, so knockback must have expired.
+        float delta = 1.0f / 60.0f;
+        for (int i = 0; i < 30; i++) {
+            manager.tickKnockbackTimers(delta);
+        }
+
+        assertFalse(npc.isKnockedBack(),
+                "Fix #405: knockbackTimer must expire via tickKnockbackTimers() even while paused");
+    }
 }

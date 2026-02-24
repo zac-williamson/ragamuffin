@@ -828,6 +828,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             // pause to extend re-arrest immunity indefinitely.
             npcManager.tickPostArrestCooldown(delta);
 
+            // Fix #405: Tick NPC knockback recovery timers while paused so knockback velocity
+            // is cleared on schedule even when the game is paused. Without this, the player can
+            // exploit pause to keep NPCs permanently staggered by repeatedly pausing mid-knockback.
+            npcManager.tickKnockbackTimers(delta);
+
             // Fix #397: Tick NPC speech timers while paused so speech bubbles continue to count
             // down. Without this, any active speech bubble freezes for the entire pause duration
             // and then expires instantly on resume — the same pattern fixed for block decay (#391)
