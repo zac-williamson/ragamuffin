@@ -511,7 +511,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
 
             // Update player-input logic (movement, punch, placement) — gated behind UI check.
-            if (!isUIBlocking() && !openingSequence.isActive()) {
+            // Fix #269: suppress input while player is dead or during the respawn countdown.
+            if (!isUIBlocking() && !openingSequence.isActive() && !respawnSystem.isRespawning() && !player.isDead()) {
                 updatePlayingInput(delta);
             }
 
