@@ -670,7 +670,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Fix #227: Render sun and clouds as part of the skybox — before 3D geometry
             // Fix #235: Pass cameraYaw so the skybox remains stationary relative to the world.
+            // Fix #323: Advance cloud animation while paused so clouds continue scrolling
+            // (sky is atmospheric background and should not freeze during pause).
             {
+                skyRenderer.update(delta);
                 float ts = timeSystem.getTime();
                 float sr = timeSystem.getSunriseTime();
                 float ss = timeSystem.getSunsetTime();
@@ -1883,6 +1886,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         timeSystem = new TimeSystem(8.0f);
         lightingSystem = new LightingSystem(environment);
         clockHUD = new ClockHUD();
+
+        // Fix #323: Recreate SkyRenderer so cloudTime resets to 0 and clouds start
+        // from their initial positions rather than carrying over from the previous session.
+        skyRenderer = new ragamuffin.render.SkyRenderer();
 
         // Reset game systems (blockBreaker already created above)
         tooltipSystem = new TooltipSystem();
