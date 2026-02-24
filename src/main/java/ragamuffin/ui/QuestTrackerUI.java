@@ -25,7 +25,7 @@ public class QuestTrackerUI {
     static final int MAX_VISIBLE = 3;
 
     private static final float PANEL_WIDTH   = 260f;
-    private static final float ROW_HEIGHT    = 44f;
+    private static final float ROW_HEIGHT    = 54f;
     private static final float HEADER_HEIGHT = 24f;
     private static final float PADDING       = 8f;
     private static final float MARGIN_RIGHT  = 14f;
@@ -124,13 +124,13 @@ public class QuestTrackerUI {
             String giverStr = "\u25CF " + quest.getGiver();
             font.draw(spriteBatch, giverStr, panelX + PADDING, rowY);
 
-            // Objective (truncated if needed)
+            // Objective (short summary, not the full NPC dialogue)
             font.getData().setScale(DESC_SCALE);
             font.setColor(0.78f, 0.78f, 0.78f, 1f);
-            String desc = quest.getDescription();
+            String desc = buildObjectiveString(quest);
             font.draw(spriteBatch, desc, panelX + PADDING + 6f, rowY - 18f);
 
-            // Progress hint for COLLECT quests
+            // Progress hint for COLLECT quests (rendered on its own line below the objective)
             if (quest.getRequiredMaterial() != null) {
                 font.getData().setScale(DESC_SCALE);
                 font.setColor(1f, 0.65f, 0.2f, 1f);
@@ -138,7 +138,7 @@ public class QuestTrackerUI {
                 GlyphLayout progLayout = new GlyphLayout(font, progress);
                 font.draw(spriteBatch, progress,
                         panelX + PANEL_WIDTH - PADDING - progLayout.width,
-                        rowY - 18f);
+                        rowY - 30f);
             }
         }
 
@@ -156,6 +156,23 @@ public class QuestTrackerUI {
         font.getData().setScale(1.2f); // restore default
         font.setColor(Color.WHITE);
         spriteBatch.end();
+    }
+
+    /**
+     * Builds a short at-a-glance objective string for the tracker panel.
+     * For COLLECT quests this is "Collect Nx material"; for other types the
+     * full description is truncated to 35 characters with an ellipsis.
+     */
+    String buildObjectiveString(Quest quest) {
+        if (quest.getType() == Quest.ObjectiveType.COLLECT && quest.getRequiredMaterial() != null) {
+            String mat = quest.getRequiredMaterial().name().toLowerCase().replace('_', ' ');
+            return "Collect " + quest.getRequiredCount() + "x " + mat;
+        }
+        String desc = quest.getDescription();
+        if (desc != null && desc.length() > 35) {
+            return desc.substring(0, 35) + "\u2026";
+        }
+        return desc != null ? desc : "";
     }
 
     /**
