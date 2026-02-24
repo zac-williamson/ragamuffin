@@ -826,6 +826,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             // resume the cooldown expires almost immediately — flooding the player with police.
             npcManager.tickSpawnCooldown(delta);
 
+            // Fix #397: Tick NPC speech timers while paused so speech bubbles continue to count
+            // down. Without this, any active speech bubble freezes for the entire pause duration
+            // and then expires instantly on resume — the same pattern fixed for block decay (#391)
+            // and police spawn cooldown (#393).
+            npcManager.tickSpeechTimers(delta);
+
             // Fix #381: Advance healing resting timer while paused so the 5-second threshold
             // continues to accumulate and healing is not artificially delayed on resume.
             healingSystem.update(delta, player);
