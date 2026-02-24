@@ -1579,7 +1579,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             Material hudEquipped = inventory.getItemInSlot(hudSelectedSlot);
             Material hudTool = (hudEquipped != null && Tool.isTool(hudEquipped)) ? hudEquipped : null;
             RaycastResult targetBlock = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
-            if (targetBlock != null) {
+
+            // Issue #287: Check NPC target first — NPC takes priority over block for both
+            // block break progress and target name (avoids two separate findNPCInReach calls)
+            NPC hudTargetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
+            if (hudTargetNPC != null) {
+                gameHUD.setBlockBreakProgress(0f); // NPC target — don't show block damage
+            } else if (targetBlock != null) {
                 float progress = blockBreaker.getBreakProgress(world, targetBlock.getBlockX(),
                     targetBlock.getBlockY(), targetBlock.getBlockZ(), hudTool);
                 gameHUD.setBlockBreakProgress(progress);
@@ -1588,7 +1594,6 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
 
             // Issue #189: Update target reticule label — NPC takes priority over block
-            NPC hudTargetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
             if (hudTargetNPC != null) {
                 gameHUD.setTargetName(formatNPCName(hudTargetNPC.getType()));
             } else if (targetBlock != null) {
