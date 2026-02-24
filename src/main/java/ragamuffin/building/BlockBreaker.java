@@ -7,8 +7,10 @@ import ragamuffin.world.RaycastResult;
 import ragamuffin.world.World;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Handles block breaking mechanics - blocks require varying hits to break based on hardness and tool.
@@ -171,6 +173,23 @@ public class BlockBreaker {
      */
     public RaycastResult getTargetBlock(World world, Vector3 origin, Vector3 direction, float maxDistance) {
         return Raycast.cast(world, origin, direction, maxDistance);
+    }
+
+    /**
+     * Return the set of block positions (as "x,y,z" keys) that have at least one hit recorded.
+     * Used by the renderer to draw crack overlays on all partially-damaged blocks.
+     */
+    public Set<String> getDamagedBlockKeys() {
+        return new HashSet<>(blockHits.keySet());
+    }
+
+    /**
+     * Parse a block key produced by {@link #getBlockKey} back into integer coordinates.
+     * Returns an int[3] of {x, y, z}.
+     */
+    public static int[] parseBlockKey(String key) {
+        String[] parts = key.split(",");
+        return new int[]{ Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]) };
     }
 
     /**
