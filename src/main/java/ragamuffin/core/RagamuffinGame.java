@@ -563,6 +563,19 @@ public class RagamuffinGame extends ApplicationAdapter {
                 healingSystem.resetPosition(player.getPosition());
             }
 
+            // Fix #439: Process pending arrest during cinematic so the flag does not persist as a ghost.
+            // Mirrors Fix #367 (the PAUSED branch) — if police set arrestPending=true on the same frame
+            // the cinematic starts the flag must be evaluated here, not deferred to the first PLAYING frame.
+            if (npcManager.isArrestPending() && !player.isDead()) {
+                java.util.List<String> confiscated = arrestSystem.arrest(player, inventory);
+                String arrestMsg = ArrestSystem.buildArrestMessage(confiscated);
+                tooltipSystem.showMessage(arrestMsg, 4.0f);
+                npcManager.clearArrestPending();
+                greggsRaidSystem.reset();
+                player.getStreetReputation().removePoints(15);
+                healingSystem.resetPosition(player.getPosition());
+            }
+
             // Fix #437: Advance tooltip timers during the cinematic so queued tooltips
             // (e.g. FIRST_DEATH from respawnSystem, gang-territory warnings) count down
             // at the correct rate rather than freezing for the ~8-second fly-through.
