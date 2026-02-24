@@ -1888,6 +1888,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         lastPunchTargetKey = null;
         inputHandler.resetPunchHeld();
 
+        // Fix #307: Reset prevDamageFlashIntensity so the rising-edge detector fires correctly
+        // on the first hit of a new session (prevents banner from being suppressed).
+        prevDamageFlashIntensity = 0f;
+
         // Transition to playing with opening sequence
         state = GameState.PLAYING;
         openingSequence.start();
