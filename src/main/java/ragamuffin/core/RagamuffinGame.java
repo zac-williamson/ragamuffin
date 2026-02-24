@@ -1487,7 +1487,7 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
-     * Phase 11: Handle E key interaction with NPCs.
+     * Phase 11: Handle E key interaction with NPCs and doors.
      */
     private void handleInteraction() {
         tmpCameraPos.set(camera.position);
@@ -1500,6 +1500,25 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Interact with the NPC
             String dialogue = interactionSystem.interactWithNPC(targetNPC);
             // The dialogue is set on the NPC, which will be rendered as a speech bubble
+            return;
+        }
+
+        // Check for door interaction via short raycast (≤3 blocks)
+        ragamuffin.world.RaycastResult doorResult =
+                blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, 3.0f);
+        if (doorResult != null) {
+            int x = doorResult.getBlockX();
+            int y = doorResult.getBlockY();
+            int z = doorResult.getBlockZ();
+            ragamuffin.world.BlockType hitBlock = world.getBlock(x, y, z);
+            if (hitBlock == ragamuffin.world.BlockType.DOOR_LOWER || hitBlock == ragamuffin.world.BlockType.DOOR_UPPER) {
+                // Normalise to DOOR_LOWER position
+                int lowerY = (hitBlock == ragamuffin.world.BlockType.DOOR_UPPER) ? y - 1 : y;
+                world.toggleDoor(x, lowerY, z);
+                rebuildChunkAt(x, lowerY, z);
+                rebuildChunkAt(x, lowerY + 1, z);
+                soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+            }
         }
     }
 
