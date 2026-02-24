@@ -272,6 +272,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         npcManager = new NPCManager();
         npcManager.setBlockBreaker(blockBreaker);
         spawnInitialNPCs();
+        spawnBuildingNPCs(); // Issue #462: spawn static quest-giver NPCs inside buildings
 
         // Phase 6: Initialize day/night cycle and lighting
         timeSystem = new TimeSystem(8.0f); // Start at 8:00 AM
@@ -418,6 +419,24 @@ public class RagamuffinGame extends ApplicationAdapter {
         spawnNPCAtTerrain(NPCType.SCHOOL_KID, -30, -45);
         spawnNPCAtTerrain(NPCType.SCHOOL_KID, -28, -43);
         spawnNPCAtTerrain(NPCType.SCHOOL_KID, -32, -47);
+    }
+
+    /**
+     * Spawn static quest-giver NPCs inside buildings that have a registered quest.
+     * Each NPC is stationed at the centre of its building's ground floor (Issue #462).
+     */
+    private void spawnBuildingNPCs() {
+        BuildingQuestRegistry registry = new BuildingQuestRegistry();
+        for (ragamuffin.world.Landmark landmark : world.getAllLandmarks()) {
+            LandmarkType type = landmark.getType();
+            if (registry.hasQuest(type)) {
+                ragamuffin.world.Landmark lm = landmark;
+                float x = lm.getPosition().x + lm.getWidth() / 2.0f;
+                float z = lm.getPosition().z + lm.getDepth() / 2.0f;
+                float y = calculateSpawnHeight(world, (int) x, (int) z);
+                npcManager.spawnBuildingNPC(type, x, y, z);
+            }
+        }
     }
 
     /**
