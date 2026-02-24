@@ -753,6 +753,20 @@ public class RagamuffinGame extends ApplicationAdapter {
             updateSkyColour(timeSystem.getTime());
             clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
 
+            // Fix #367: Process pending arrest even while paused so the flag doesn't persist as a ghost.
+            // Without this, if police set arrestPending=true on the same frame the player opens ESC,
+            // the flag is never evaluated until the game unpauses — causing an invisible "ghost arrest"
+            // on the first PLAYING frame with no police NPC visible nearby.
+            if (npcManager.isArrestPending() && !player.isDead()) {
+                java.util.List<String> confiscated = arrestSystem.arrest(player, inventory);
+                String arrestMsg = ArrestSystem.buildArrestMessage(confiscated);
+                tooltipSystem.showMessage(arrestMsg, 4.0f);
+                npcManager.clearArrestPending();
+                greggsRaidSystem.reset();
+                player.getStreetReputation().removePoints(15);
+                healingSystem.resetPosition(player.getPosition());
+            }
+
             // Render UI and pause menu
             renderUI();
             pauseMenu.render(spriteBatch, shapeRenderer, font,
