@@ -187,8 +187,10 @@ public class InteractionSystem {
             if (RANDOM.nextInt(5) == 0) {
                 inventory.addItem(Material.DIAMOND, 1);
                 lastScratchCardWon = true;
+                lastConsumeMessage = "You scratch the card. YOU HAVE WON! A diamond falls out.";
             } else {
                 lastScratchCardWon = false;
+                lastConsumeMessage = "You scratch the card. Not a winner. Gutted.";
             }
             return true; // Already removed, skip the removal below
         } else if (food == Material.ANTIDEPRESSANTS) {

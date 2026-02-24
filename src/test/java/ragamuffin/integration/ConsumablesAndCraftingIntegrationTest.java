@@ -104,6 +104,96 @@ class ConsumablesAndCraftingIntegrationTest {
     }
 
     @Test
+    void testScratchCardIsRecognisedAsConsumable() {
+        assertTrue(interactionSystem.isFood(Material.SCRATCH_CARD),
+            "SCRATCH_CARD should be recognised as a consumable item");
+    }
+
+    @Test
+    void testScratchCardAlwaysSetsFeedbackMessage() {
+        // Run multiple times to cover both win and loss branches
+        boolean sawWinMessage = false;
+        boolean sawLoseMessage = false;
+        for (int i = 0; i < 50; i++) {
+            inventory.addItem(Material.SCRATCH_CARD, 1);
+            boolean consumed = interactionSystem.consumeFood(Material.SCRATCH_CARD, player, inventory);
+            assertTrue(consumed, "SCRATCH_CARD should be consumed successfully");
+            String msg = interactionSystem.getLastConsumeMessage();
+            assertNotNull(msg, "Scratch card should always set a feedback message");
+            assertFalse(msg.isEmpty(), "Scratch card feedback message should not be empty");
+            if (msg.contains("YOU HAVE WON")) {
+                sawWinMessage = true;
+            } else if (msg.contains("Not a winner")) {
+                sawLoseMessage = true;
+            }
+            if (sawWinMessage && sawLoseMessage) break;
+        }
+        assertTrue(sawWinMessage || sawLoseMessage,
+            "Scratch card should produce either a win or loss message");
+    }
+
+    @Test
+    void testScratchCardWinMessageMatchesSpec() {
+        // Force a win scenario by running enough times
+        boolean foundWin = false;
+        for (int i = 0; i < 100; i++) {
+            inventory.addItem(Material.SCRATCH_CARD, 1);
+            interactionSystem.consumeFood(Material.SCRATCH_CARD, player, inventory);
+            if (interactionSystem.didLastScratchCardWin()) {
+                assertEquals("You scratch the card. YOU HAVE WON! A diamond falls out.",
+                    interactionSystem.getLastConsumeMessage(),
+                    "Win message must match the exact spec string");
+                foundWin = true;
+                break;
+            }
+        }
+        assertTrue(foundWin, "Should have seen at least one win in 100 attempts");
+    }
+
+    @Test
+    void testScratchCardLoseMessageMatchesSpec() {
+        // Force a loss scenario by running enough times
+        boolean foundLoss = false;
+        for (int i = 0; i < 100; i++) {
+            inventory.addItem(Material.SCRATCH_CARD, 1);
+            interactionSystem.consumeFood(Material.SCRATCH_CARD, player, inventory);
+            if (!interactionSystem.didLastScratchCardWin()) {
+                assertEquals("You scratch the card. Not a winner. Gutted.",
+                    interactionSystem.getLastConsumeMessage(),
+                    "Loss message must match the exact spec string");
+                foundLoss = true;
+                break;
+            }
+        }
+        assertTrue(foundLoss, "Should have seen at least one loss in 100 attempts");
+    }
+
+    @Test
+    void testScratchCardConsumedFromInventory() {
+        inventory.addItem(Material.SCRATCH_CARD, 1);
+        interactionSystem.consumeFood(Material.SCRATCH_CARD, player, inventory);
+        assertEquals(0, inventory.getItemCount(Material.SCRATCH_CARD),
+            "Scratch card should be removed from inventory after use");
+    }
+
+    @Test
+    void testScratchCardWinAddsOneDiamond() {
+        boolean foundWin = false;
+        for (int i = 0; i < 100; i++) {
+            inventory.addItem(Material.SCRATCH_CARD, 1);
+            int diamondsBefore = inventory.getItemCount(Material.DIAMOND);
+            interactionSystem.consumeFood(Material.SCRATCH_CARD, player, inventory);
+            if (interactionSystem.didLastScratchCardWin()) {
+                assertEquals(diamondsBefore + 1, inventory.getItemCount(Material.DIAMOND),
+                    "Winning scratch card should add exactly 1 diamond to inventory");
+                foundWin = true;
+                break;
+            }
+        }
+        assertTrue(foundWin, "Should have seen at least one win in 100 attempts");
+    }
+
+    @Test
     void testConsumeAntidepressantsRestoresEnergyAndShowsMessage() {
         // Set up player with low stats to verify effects
         player.setHealth(50);
