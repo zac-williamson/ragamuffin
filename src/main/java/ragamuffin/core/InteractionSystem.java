@@ -331,4 +331,79 @@ public class InteractionSystem {
     public String getRandomPublicSpeech() {
         return PUBLIC_DIALOGUE[RANDOM.nextInt(PUBLIC_DIALOGUE.length)];
     }
+
+    /**
+     * Check if a material has a non-food, non-placeable use action (right-click).
+     * These items are not consumed but may restore stats or show a tooltip message.
+     */
+    public boolean canUseItem(Material material) {
+        switch (material) {
+            case NEWSPAPER:
+            case TEXTBOOK:
+            case HYMN_BOOK:
+            case HAIR_CLIPPERS:
+            case NAIL_POLISH:
+            case BROKEN_PHONE:
+            case DODGY_DVD:
+            case PLYWOOD:
+            case PIPE:
+            case COMPUTER:
+            case OFFICE_CHAIR:
+            case STAPLER:
+            case PETROL_CAN:
+            case DIAMOND:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Use a non-food, non-placeable item.
+     * Reading material (NEWSPAPER, TEXTBOOK, HYMN_BOOK) restores a small amount of energy.
+     * Other items show a contextual tooltip message.
+     *
+     * @return a tooltip message to display, or null if nothing to show
+     */
+    public String useItem(Material material, Player player, Inventory inventory) {
+        if (material == null) {
+            return null;
+        }
+
+        switch (material) {
+            case NEWSPAPER:
+                player.restoreEnergy(5);
+                return "You skim the headlines. Grim reading, but oddly soothing.";
+            case TEXTBOOK:
+                player.restoreEnergy(8);
+                return "Dense prose, no pictures. Your brain hurts slightly less than before.";
+            case HYMN_BOOK:
+                player.restoreEnergy(5);
+                return "You hum a verse. It doesn't help much, but it's something.";
+            case PETROL_CAN:
+                return "Smells like trouble. Useful as a crafting ingredient.";
+            case DIAMOND:
+                return "Jewellers can be a good source of diamond. This one's worth a fortune.";
+            case HAIR_CLIPPERS:
+                return "A quick trim? Not the time or place.";
+            case NAIL_POLISH:
+                return "Not really the moment for a manicure.";
+            case BROKEN_PHONE:
+                return "The screen's cracked. Still, someone might want the parts.";
+            case DODGY_DVD:
+                return "You don't want to know what's on this. Could be worth something to the right person.";
+            case PLYWOOD:
+                return "Flat and sturdy. Craft it into planks or use it to build a shelter.";
+            case PIPE:
+                return "A solid length of pipe. Useful for crafting an improvised tool.";
+            case COMPUTER:
+                return "A bulky desktop. Someone might pay good money for the components.";
+            case OFFICE_CHAIR:
+                return "On wheels, but not exactly portable. Leave it.";
+            case STAPLER:
+                return "Satisfying click. Utterly useless out here.";
+            default:
+                return null;
+        }
+    }
 }

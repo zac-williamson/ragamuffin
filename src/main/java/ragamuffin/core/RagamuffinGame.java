@@ -1336,6 +1336,15 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Fix #257: Check if material has a non-food, non-placeable use action
+        if (interactionSystem.canUseItem(material)) {
+            String message = interactionSystem.useItem(material, player, inventory);
+            if (message != null) {
+                tooltipSystem.showMessage(message, 3.0f);
+            }
+            return;
+        }
+
         tmpCameraPos.set(camera.position);
         tmpDirection.set(camera.direction);
 
