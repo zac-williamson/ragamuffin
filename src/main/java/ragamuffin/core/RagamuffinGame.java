@@ -732,15 +732,17 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #347: Advance respawn countdown while paused so the player is revived
             // even if they opened the pause menu during the death-screen countdown.
             if (respawnSystem.isRespawning()) {
-                boolean wasRespawning = true;
+                boolean wasRespawning = respawnSystem.isRespawning();
                 respawnSystem.update(delta, player);
-                if (!respawnSystem.isRespawning()) {
+                if (wasRespawning && !respawnSystem.isRespawning()) {
                     deathMessage = null;
                     greggsRaidSystem.reset();
                     player.getStreetReputation().reset();
                     healingSystem.resetPosition(player.getPosition());
                 }
-                renderDeathScreen();
+                if (respawnSystem.isRespawning()) {
+                    renderDeathScreen();
+                }
             }
             // Fix #359: Advance reputation decay timer while paused — mirrors the PLAYING path (line ~1088).
             // Without this the player can exploit the pause menu to halt reputation decay indefinitely.
