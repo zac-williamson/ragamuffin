@@ -106,6 +106,14 @@ public class SoundSystem {
     }
 
     /**
+     * Reset the footstep timer to zero. Call this when starting a new game session
+     * so the first footstep sound is not fired early due to a carried-over timer value.
+     */
+    public void resetFootstepTimer() {
+        footstepTimer = 0f;
+    }
+
+    /**
      * Update footstep timer and play footstep sounds when moving.
      * @param delta frame delta time in seconds
      * @param isMoving whether the player is currently moving
