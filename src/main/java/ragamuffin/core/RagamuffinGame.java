@@ -695,6 +695,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                 renderRain(delta);
             }
 
+            // Fix #351: Render particles while paused so active particles are visible
+            // during the pause (not just updated) — mirrors the PLAYING render path.
+            {
+                int sw = Gdx.graphics.getWidth();
+                int sh = Gdx.graphics.getHeight();
+                com.badlogic.gdx.math.Matrix4 particleOrtho = new com.badlogic.gdx.math.Matrix4();
+                particleOrtho.setToOrtho2D(0, 0, sw, sh);
+                shapeRenderer.setProjectionMatrix(particleOrtho);
+                particleSystem.render(shapeRenderer, camera, sw, sh);
+            }
+
             // Fix #321: Advance damage flash and HUD timers while paused so the
             // red vignette fades out and the damage-reason banner counts down.
             player.updateFlash(delta);
@@ -705,6 +716,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #339: Advance arm swing animation while paused so a mid-punch
             // swing completes rather than freezing in the extended position.
             firstPersonArm.update(delta);
+            // Fix #351: Advance particle simulation while paused so active particles
+            // (combat sparks, block-break debris, footstep dust, dodge trail streaks)
+            // expire naturally rather than hanging frozen in world-space for the entire
+            // pause duration and all expiring simultaneously on resume.
+            particleSystem.update(delta);
             // Fix #341: Advance weather timer while paused so weather transitions
             // continue to accumulate — mirrors the PLAYING path (line ~530).
             weatherSystem.update(delta * timeSystem.getTimeSpeed() * 3600f);
