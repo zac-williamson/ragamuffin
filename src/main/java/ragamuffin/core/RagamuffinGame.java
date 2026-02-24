@@ -705,6 +705,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #339: Advance arm swing animation while paused so a mid-punch
             // swing completes rather than freezing in the extended position.
             firstPersonArm.update(delta);
+            // Fix #341: Advance weather timer while paused so weather transitions
+            // continue to accumulate — mirrors the PLAYING path (line ~530).
+            weatherSystem.update(delta * timeSystem.getTimeSpeed() * 3600f);
 
             // Render UI and pause menu
             renderUI();
