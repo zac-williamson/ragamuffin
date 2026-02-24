@@ -754,6 +754,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
             updateSkyColour(timeSystem.getTime());
             clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
+            // Fix #371: Call updatePoliceSpawning() while paused so the police spawn/despawn logic
+            // stays in sync with the day/night cycle even when the game is paused around dusk or dawn.
+            npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
             // Fix #367: Process pending arrest even while paused so the flag doesn't persist as a ghost.
             // Without this, if police set arrestPending=true on the same frame the player opens ESC,
