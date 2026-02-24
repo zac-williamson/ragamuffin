@@ -1178,18 +1178,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void handlePunch() {
-        // Trigger arm swing animation
-        firstPersonArm.punch();
-
-        // Consume energy for punching
-        player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
-
         // Determine equipped tool from hotbar
         int selectedSlot = hotbarUI.getSelectedSlot();
         Material equippedMaterial = inventory.getItemInSlot(selectedSlot);
         Material toolMaterial = (equippedMaterial != null && Tool.isTool(equippedMaterial)) ? equippedMaterial : null;
 
-        // Rest of the punching logic
         // Check if punching an NPC first (reuse vectors)
         tmpCameraPos.set(camera.position);
         tmpDirection.set(camera.direction);
@@ -1197,6 +1190,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Check for nearby NPCs in punch range
         NPC targetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
         if (targetNPC != null) {
+            // Punch connects — animate, drain energy
+            firstPersonArm.punch();
+            player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
+
             // Punch the NPC (knockback + loot on kill)
             npcManager.punchNPC(targetNPC, tmpDirection, inventory, tooltipSystem);
             soundSystem.play(ragamuffin.audio.SoundEffect.NPC_HIT);
@@ -1219,6 +1216,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Raycast to find target block
         RaycastResult result = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
         if (result != null) {
+            // Punch connects — animate, drain energy
+            firstPersonArm.punch();
+            player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
+
             int x = result.getBlockX();
             int y = result.getBlockY();
             int z = result.getBlockZ();
