@@ -144,11 +144,6 @@ public class NPC {
             attackCooldown -= delta;
         }
 
-        // Update knocked out timer
-        if (state == NPCState.KNOCKED_OUT) {
-            knockedOutTimer += delta;
-        }
-
         // Update facing angle from velocity
         // atan2(vx, vz) gives the angle from +Z axis toward +X axis
         // The model's face is now at +Z local, so yaw 0 = face toward +Z
@@ -216,6 +211,18 @@ public class NPC {
 
     public float getKnockedOutTimer() {
         return knockedOutTimer;
+    }
+
+    /**
+     * Advance the KNOCKED_OUT timer by delta seconds.
+     * Separated from {@link #updateTimers(float)} so that NPCManager can tick it
+     * independently (both during the normal update loop and in the PAUSED branch via
+     * {@code tickRecoveryTimers}) without double-advancing other per-NPC timers.
+     */
+    public void tickKnockedOutTimer(float delta) {
+        if (state == NPCState.KNOCKED_OUT) {
+            knockedOutTimer += delta;
+        }
     }
 
     public void updateKnockback(float delta) {
@@ -308,6 +315,19 @@ public class NPC {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Revive this NPC after being knocked out.
+     * Restores health to half maximum, resets the knocked-out timer,
+     * and transitions the NPC back to WANDERING so it resumes normal behaviour.
+     * Called by NPCManager.tickRecoveryTimers() when the recovery duration expires.
+     */
+    public void revive() {
+        alive = true;
+        health = type.getMaxHealth() * 0.5f;
+        knockedOutTimer = 0f;
+        state = NPCState.WANDERING;
     }
 
     /**

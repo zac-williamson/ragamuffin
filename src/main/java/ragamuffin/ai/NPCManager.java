@@ -251,6 +251,10 @@ public class NPCManager {
     private float postArrestCooldown = 0f;
     private static final float POST_ARREST_COOLDOWN_DURATION = 10.0f; // seconds of immunity after arrest
 
+    // Issue #407: KNOCKED_OUT recovery duration — how long an NPC lies on the ground before
+    // getting back up. Must be ticked in both the normal update loop and the PAUSED branch.
+    static final float KNOCKED_OUT_RECOVERY_DURATION = 10.0f; // seconds before NPC recovers
+
     // Alerted police — NPCs explicitly flagged by crime events (Greggs raid, block-break near landmark).
     // Only alerted police (or police near a KNOWN/NOTORIOUS player) actively pursue the player.
     private Set<NPC> alertedPoliceNPCs;
@@ -502,6 +506,12 @@ public class NPCManager {
                 // Still tick timers for dead NPCs so their speech timer counts down
                 // and they can be removed once isSpeaking() returns false.
                 npc.updateTimers(delta);
+                // Issue #407: Advance KNOCKED_OUT recovery — NPC gets up after the recovery duration.
+                npc.tickKnockedOutTimer(delta);
+                if (npc.getState() == NPCState.KNOCKED_OUT
+                        && npc.getKnockedOutTimer() >= KNOCKED_OUT_RECOVERY_DURATION) {
+                    npc.revive();
+                }
                 continue;
             }
             updateNPC(npc, delta, world, player, inventory, tooltipSystem);
@@ -1738,6 +1748,28 @@ public class NPCManager {
     public void tickKnockbackTimers(float delta) {
         for (NPC npc : npcs) {
             npc.updateKnockback(delta);
+        }
+    }
+
+    /**
+     * Tick KNOCKED_OUT recovery timers for all NPCs by delta seconds.
+     * Called in the PAUSED branch so the NPC's recovery countdown continues to advance
+     * while the game is paused, preventing the player from exploiting pause to keep NPCs
+     * permanently incapacitated (Fix #407).
+     *
+     * <p>This method advances the knocked-out timer for each incapacitated NPC and revives
+     * the NPC (restoring it to half health and WANDERING state) once {@link #KNOCKED_OUT_RECOVERY_DURATION}
+     * has elapsed. It is intentionally limited to recovery logic only — NPC movement and AI
+     * remain frozen while paused.
+     */
+    public void tickRecoveryTimers(float delta) {
+        for (NPC npc : npcs) {
+            if (!npc.isAlive() && npc.getState() == NPCState.KNOCKED_OUT) {
+                npc.tickKnockedOutTimer(delta);
+                if (npc.getKnockedOutTimer() >= KNOCKED_OUT_RECOVERY_DURATION) {
+                    npc.revive();
+                }
+            }
         }
     }
 
