@@ -277,6 +277,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         npcManager = new NPCManager();
         npcManager.setBlockBreaker(blockBreaker);
         spawnInitialNPCs();
+        // Fix #509: Initialize interactionSystem before spawnBuildingNPCs() so the live
+        // quest registry is available when deciding which buildings get a quest-giver NPC.
+        interactionSystem = new InteractionSystem();
         spawnBuildingNPCs(); // Issue #462: spawn static quest-giver NPCs inside buildings
 
         // Phase 6: Initialize day/night cycle and lighting
@@ -299,8 +302,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #373: Initialize cinematic camera for city fly-through
         cinematicCamera = new ragamuffin.ui.CinematicCamera();
 
-        // Phase 11: Initialize CRITIC 1 systems
-        interactionSystem = new InteractionSystem();
+        // Phase 11: Initialize CRITIC 1 systems (interactionSystem already created above)
         healingSystem = new HealingSystem();
         respawnSystem = new RespawnSystem();
         respawnSystem.setSpawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
@@ -436,7 +438,7 @@ public class RagamuffinGame extends ApplicationAdapter {
      * Each NPC is stationed at the centre of its building's ground floor (Issue #462).
      */
     private void spawnBuildingNPCs() {
-        BuildingQuestRegistry registry = new BuildingQuestRegistry();
+        BuildingQuestRegistry registry = interactionSystem.getQuestRegistry();
         for (ragamuffin.world.Landmark landmark : world.getAllLandmarks()) {
             LandmarkType type = landmark.getType();
             if (registry.hasQuest(type)) {
@@ -2583,6 +2585,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         npcManager = new NPCManager();
         npcManager.setBlockBreaker(blockBreaker);
         spawnInitialNPCs();
+        // Fix #509: Recreate interactionSystem before spawnBuildingNPCs() so the live
+        // quest registry is available when deciding which buildings get a quest-giver NPC.
+        interactionSystem = new InteractionSystem();
         spawnBuildingNPCs(); // Fix #479: spawn quest-giver NPCs inside buildings on restart
 
         // Reset time and lighting
@@ -2601,7 +2606,6 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Reset game systems (blockBreaker already created above)
         tooltipSystem = new TooltipSystem();
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
-        interactionSystem = new InteractionSystem();
         // Fix #479: Recreate questLogUI bound to the fresh registry so old quests don't bleed in
         questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
         // Issue #497: Recreate questTrackerUI bound to the fresh registry
