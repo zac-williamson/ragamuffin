@@ -782,6 +782,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             // expire naturally rather than hanging frozen in world-space for the entire
             // pause duration and all expiring simultaneously on resume.
             particleSystem.update(delta);
+            // Fix #379: Advance dodge timer while paused so mid-roll invincibility
+            // windows and dodge cooldowns expire at their intended rate rather than
+            // freezing for the entire pause duration (which would allow the player to
+            // exploit pause to extend dodge invincibility indefinitely).
+            player.updateDodge(delta);
             // Fix #341: Advance weather timer while paused so weather transitions
             // continue to accumulate — mirrors the PLAYING path (line ~530).
             weatherSystem.update(delta * timeSystem.getTimeSpeed() * 3600f);
