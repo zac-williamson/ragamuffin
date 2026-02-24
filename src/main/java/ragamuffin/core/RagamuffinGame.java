@@ -509,6 +509,28 @@ public class RagamuffinGame extends ApplicationAdapter {
             // flag transition must not be skipped — mirrors the PAUSED branch (line ~852).
             npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
+            // Fix #427: Continue loading and meshing chunks during the cinematic so that
+            // the world is fully built before the player takes control.  The cinematic
+            // camera sweeps across a large area; without this, many chunks remain as bare
+            // dirty-queue entries and pop in visibly when PLAYING begins.
+            // Use the player's spawn position as the centre for chunk-load decisions —
+            // all cinematic waypoints are within render distance of the origin.
+            java.util.Set<String> cinematicUnloaded = world.updateLoadedChunks(player.getPosition());
+            for (String key : cinematicUnloaded) {
+                chunkRenderer.removeChunkByKey(key);
+            }
+            List<Chunk> cinematicDirty = world.getDirtyChunks();
+            if (!cinematicDirty.isEmpty()) {
+                int built = 0;
+                java.util.Iterator<Chunk> cit = cinematicDirty.iterator();
+                while (cit.hasNext() && built < 16) {
+                    Chunk chunk = cit.next();
+                    chunkRenderer.updateChunk(chunk, meshBuilder);
+                    world.markChunkClean(chunk);
+                    built++;
+                }
+            }
+
             // Transition to PLAYING once cinematic completes
             if (cinematicCamera.isCompleted()) {
                 finishCinematic();
