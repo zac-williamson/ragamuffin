@@ -822,6 +822,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             // stays in sync with the day/night cycle even when the game is paused around dusk or dawn.
             npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
 
+            // Fix #381: Advance healing resting timer while paused so the 5-second threshold
+            // continues to accumulate and healing is not artificially delayed on resume.
+            healingSystem.update(delta, player);
+
             // Fix #367: Process pending arrest even while paused so the flag doesn't persist as a ghost.
             // Without this, if police set arrestPending=true on the same frame the player opens ESC,
             // the flag is never evaluated until the game unpauses — causing an invisible "ghost arrest"
