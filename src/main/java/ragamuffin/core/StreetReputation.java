@@ -142,5 +142,6 @@ public class StreetReputation {
     public void reset() {
         points = 0;
         level = ReputationLevel.NOBODY;
+        decayTimer = 0f;  // prevent premature decay after respawn/arrest
     }
 }
