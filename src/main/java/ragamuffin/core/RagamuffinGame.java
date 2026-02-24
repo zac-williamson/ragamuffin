@@ -1151,9 +1151,25 @@ public class RagamuffinGame extends ApplicationAdapter {
                 questLogUI.toggle();
                 inputHandler.resetQuestLog();
             }
+            // Fix #499: If the achievements overlay is visible, forward UP/DOWN to
+            // the achievements list and swallow ENTER so it doesn't trigger a pause
+            // menu action.  Mirrors the identical guard added for questLogUI by Fix #481.
+            if (achievementsUI.isVisible()) {
+                if (inputHandler.isUpPressed()) {
+                    achievementsUI.scrollUp();
+                    inputHandler.resetUp();
+                }
+                if (inputHandler.isDownPressed()) {
+                    achievementsUI.scrollDown();
+                    inputHandler.resetDown();
+                }
+                // Swallow ENTER so it doesn't trigger a pause menu action
+                if (inputHandler.isEnterPressed()) {
+                    inputHandler.resetEnter();
+                }
             // Fix #481: If the quest log overlay is visible, forward UP/DOWN/ENTER
             // to the quest log instead of the pause menu so scroll input works correctly.
-            if (questLogUI.isVisible()) {
+            } else if (questLogUI.isVisible()) {
                 if (inputHandler.isUpPressed()) {
                     questLogUI.scrollUp();
                     inputHandler.resetUp();
@@ -1178,6 +1194,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 if (inputHandler.isEnterPressed()) {
                     if (pauseMenu.isResumeSelected()) {
                         transitionToPlaying();
+                    } else if (pauseMenu.isAchievementsSelected()) {
+                        achievementsUI.toggle();
                     } else if (pauseMenu.isRestartSelected()) {
                         restartGame();
                     } else if (pauseMenu.isQuitSelected()) {
@@ -1186,8 +1204,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                     inputHandler.resetEnter();
                 }
             }
-            // Mouse click support for pause menu
-            if (inputHandler.isLeftClickPressed()) {
+            // Mouse click support for pause menu — Fix #499: skip when achievements
+            // overlay is open to prevent clicks on the overlay from passing through
+            // to the pause menu hit-boxes underneath (which could trigger Quit).
+            if (inputHandler.isLeftClickPressed() && !achievementsUI.isVisible()) {
                 int sw = Gdx.graphics.getWidth();
                 int sh = Gdx.graphics.getHeight();
                 int clicked = pauseMenu.handleClick(inputHandler.getMouseX(), inputHandler.getMouseY(), sw, sh);
@@ -1200,6 +1220,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 } else if (clicked == 3) {
                     Gdx.app.exit();
                 }
+                inputHandler.resetLeftClick();
+            } else if (inputHandler.isLeftClickPressed() && achievementsUI.isVisible()) {
+                // Consume the click so it doesn't carry over to subsequent frames.
                 inputHandler.resetLeftClick();
             }
         }
