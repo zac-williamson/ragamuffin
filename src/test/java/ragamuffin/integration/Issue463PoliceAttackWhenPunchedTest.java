@@ -147,4 +147,55 @@ class Issue463PoliceAttackWhenPunchedTest {
         assertTrue(arrested,
             "Police made AGGRESSIVE by player punch should eventually arrest the player.");
     }
+
+    /**
+     * Test 5: Fix #487 — Punched police NPC is added to alertedPoliceNPCs.
+     *
+     * Before the fix, the punched officer was set AGGRESSIVE but never added to
+     * alertedPoliceNPCs, so a NOBODY-reputation player would not be pursued.
+     * This test verifies the officer is in alertedPoliceNPCs after the punch.
+     */
+    @Test
+    void test5_PunchedPoliceAddedToAlertedSet() {
+        NPC police = npcManager.spawnNPC(NPCType.POLICE, 1.5f, 1f, 0f);
+        assertNotNull(police, "POLICE NPC should spawn");
+        police.setState(NPCState.PATROLLING);
+
+        Vector3 punchDir = new Vector3(1f, 0f, 0f).nor();
+        npcManager.punchNPC(police, punchDir, inventory, tooltipSystem, player.getPosition(), world);
+
+        assertEquals(NPCState.AGGRESSIVE, police.getState(),
+            "Punched police should be AGGRESSIVE");
+        assertTrue(npcManager.isAlertedPolice(police),
+            "Punched police NPC must be added to alertedPoliceNPCs so they pursue " +
+            "NOBODY-reputation players (Fix #487).");
+    }
+
+    /**
+     * Test 6: Fix #487 — Nearby police officers are alerted when one colleague is punched.
+     *
+     * Spawn a second POLICE officer within 20 blocks of the attacked officer.
+     * After punching the first officer, the nearby backup officer should also become
+     * AGGRESSIVE and be added to alertedPoliceNPCs.
+     */
+    @Test
+    void test6_NearbyPoliceAlertedWhenColleaguePunched() {
+        // First officer — will be punched
+        NPC officer1 = npcManager.spawnNPC(NPCType.POLICE, 1.5f, 1f, 0f);
+        assertNotNull(officer1, "Officer 1 should spawn");
+        officer1.setState(NPCState.PATROLLING);
+
+        // Second officer nearby (within 20 blocks) — should be alerted as backup
+        NPC officer2 = npcManager.spawnNPC(NPCType.POLICE, 10f, 1f, 0f);
+        assertNotNull(officer2, "Officer 2 should spawn");
+        officer2.setState(NPCState.PATROLLING);
+
+        Vector3 punchDir = new Vector3(1f, 0f, 0f).nor();
+        npcManager.punchNPC(officer1, punchDir, inventory, tooltipSystem, player.getPosition(), world);
+
+        assertEquals(NPCState.AGGRESSIVE, officer2.getState(),
+            "Nearby police officer should become AGGRESSIVE when colleague is attacked (backup alert).");
+        assertTrue(npcManager.isAlertedPolice(officer2),
+            "Nearby backup officer should be added to alertedPoliceNPCs.");
+    }
 }

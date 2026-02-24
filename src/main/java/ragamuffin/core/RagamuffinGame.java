@@ -1767,7 +1767,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
 
             // Punch the NPC (knockback + loot on kill)
-            npcManager.punchNPC(targetNPC, tmpDirection, inventory, tooltipSystem);
+            npcManager.punchNPC(targetNPC, tmpDirection, inventory, tooltipSystem, player.getPosition(), world);
             soundSystem.play(ragamuffin.audio.SoundEffect.NPC_HIT);
             // Issue #171: Emit combat-hit sparks at the NPC's chest height
             particleSystem.emitCombatHit(
