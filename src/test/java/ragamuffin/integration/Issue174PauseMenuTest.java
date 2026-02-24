@@ -56,6 +56,7 @@ class Issue174PauseMenuTest {
         // Default is Resume; navigate to Quit
         assertFalse(pauseMenu.isQuitSelected(), "Quit should not be selected by default");
 
+        pauseMenu.selectNext(); // -> Achievements
         pauseMenu.selectNext(); // -> Restart
         pauseMenu.selectNext(); // -> Quit
 
@@ -93,6 +94,7 @@ class Issue174PauseMenuTest {
     @Test
     void pauseMenuResetsToResumeOnShow() {
         pauseMenu.show();
+        pauseMenu.selectNext(); // -> Achievements
         pauseMenu.selectNext(); // -> Restart
         pauseMenu.selectNext(); // -> Quit
         assertTrue(pauseMenu.isQuitSelected(), "Quit should be selected before hide");
@@ -105,8 +107,8 @@ class Issue174PauseMenuTest {
     }
 
     /**
-     * Test 5: All three options are accessible and wrap correctly.
-     * Navigates down through Resume → Restart → Quit → Resume (wrap).
+     * Test 5: All four options are accessible and wrap correctly.
+     * Navigates down through Resume → Achievements → Restart → Quit → Resume (wrap).
      */
     @Test
     void pauseMenuOptionsWrapCorrectly() {
@@ -115,10 +117,13 @@ class Issue174PauseMenuTest {
         assertTrue(pauseMenu.isResumeSelected(), "Default must be Resume");
 
         pauseMenu.selectNext();
-        assertTrue(pauseMenu.isRestartSelected(), "After one down: Restart");
+        assertTrue(pauseMenu.isAchievementsSelected(), "After one down: Achievements");
 
         pauseMenu.selectNext();
-        assertTrue(pauseMenu.isQuitSelected(), "After two down: Quit");
+        assertTrue(pauseMenu.isRestartSelected(), "After two down: Restart");
+
+        pauseMenu.selectNext();
+        assertTrue(pauseMenu.isQuitSelected(), "After three down: Quit");
 
         pauseMenu.selectNext(); // wrap around
         assertTrue(pauseMenu.isResumeSelected(), "After wrap: Resume");
