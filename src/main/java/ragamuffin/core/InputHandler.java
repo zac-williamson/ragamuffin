@@ -93,6 +93,7 @@ public class InputHandler implements InputProcessor {
     public void resetHelp() { helpPressed = false; }
     public void resetCrafting() { craftingPressed = false; }
     public void resetPunch() { punchPressed = false; }
+    public void resetPunchHeld() { punchHeld = false; }
     public void resetPlace() { placePressed = false; }
     public void resetEnter() { enterPressed = false; }
     public void resetUp() { upPressed = false; }

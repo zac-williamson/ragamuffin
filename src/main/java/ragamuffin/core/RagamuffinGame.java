@@ -567,7 +567,13 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
 
                 // Phase 11: Check for death and respawn
-                respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);
+                boolean justDied = respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);
+                // Fix #275: Clear sticky punch state on death so auto-punch doesn't fire on respawn
+                if (justDied) {
+                    inputHandler.resetPunchHeld();
+                    punchHeldTimer = 0f;
+                    lastPunchTargetKey = null;
+                }
                 boolean wasRespawning = respawnSystem.isRespawning();
                 respawnSystem.update(delta, player);
                 if (wasRespawning && !respawnSystem.isRespawning()) {
@@ -826,6 +832,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             inventoryUI.toggle();
             soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
             inputHandler.resetInventory();
+            // Fix #275: Clear sticky punch state when a UI overlay opens
+            if (!wasVisible) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
         }
 
         // Help toggle
@@ -834,6 +846,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             helpUI.toggle();
             soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
             inputHandler.resetHelp();
+            // Fix #275: Clear sticky punch state when a UI overlay opens
+            if (!wasVisible) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
         }
 
         // Crafting toggle
@@ -842,6 +860,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             craftingUI.toggle();
             soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
             inputHandler.resetCrafting();
+            // Fix #275: Clear sticky punch state when a UI overlay opens
+            if (!wasVisible) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
         }
 
         // Release cursor when any overlay UI is open, re-catch when all closed
@@ -1807,6 +1831,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         state = GameState.PAUSED;
         pauseMenu.show();
         Gdx.input.setCursorCatched(false);
+        // Fix #275: Clear sticky punch state so auto-punch doesn't fire on resume
+        inputHandler.resetPunchHeld();
+        punchHeldTimer = 0f;
+        lastPunchTargetKey = null;
     }
 
     public GameState getState() {
