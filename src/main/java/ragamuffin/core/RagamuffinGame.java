@@ -975,28 +975,15 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #371: Call updatePoliceSpawning() while paused so the police spawn/despawn logic
             // stays in sync with the day/night cycle even when the game is paused around dusk or dawn.
             npcManager.updatePoliceSpawning(timeSystem.isNight(), world, player);
-            // Fix #393: Tick the police spawn cooldown while paused so it continues to drain.
-            // Without this, policeSpawnCooldown freezes for the entire pause duration, and on
-            // resume the cooldown expires almost immediately — flooding the player with police.
-            npcManager.tickSpawnCooldown(delta);
-            // Fix #403: Tick post-arrest cooldown while paused so the player cannot exploit
-            // pause to extend re-arrest immunity indefinitely.
-            npcManager.tickPostArrestCooldown(delta);
-
-            // Fix #405: Tick NPC knockback recovery timers while paused so knockback velocity
-            // is cleared on schedule even when the game is paused. Without this, the player can
-            // exploit pause to keep NPCs permanently staggered by repeatedly pausing mid-knockback.
-            npcManager.tickKnockbackTimers(delta);
-
-            // Fix #407: Tick KNOCKED_OUT recovery timers while paused so NPCs cannot be kept
-            // permanently incapacitated by holding the pause menu open.
-            npcManager.tickRecoveryTimers(delta);
-
-            // Fix #397: Tick NPC speech timers while paused so speech bubbles continue to count
-            // down. Without this, any active speech bubble freezes for the entire pause duration
-            // and then expires instantly on resume — the same pattern fixed for block decay (#391)
-            // and police spawn cooldown (#393).
-            npcManager.tickSpeechTimers(delta);
+            // Fix #449: Call full npcManager.update() during the paused state so NPCs
+            // continue walking patrol routes, police pursue the player, and all NPC
+            // subsystems (spawn cooldown, post-arrest cooldown, knockback recovery,
+            // KNOCKED_OUT recovery, speech timers) advance at the correct rate.
+            // This replaces the five individual tickX() shim calls added by fixes
+            // #393, #403, #405, #407, #423 — those methods are already called inside
+            // update(), so keeping both would double-tick every timer.
+            // Mirrors the approach taken for the CINEMATIC state in Fix #447.
+            npcManager.update(delta, world, player, inventory, tooltipSystem);
 
             // Fix #381: Advance healing resting timer while paused so the 5-second threshold
             // continues to accumulate and healing is not artificially delayed on resume.
