@@ -131,6 +131,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     // Issue #464: Quest log UI
     private ragamuffin.ui.QuestLogUI questLogUI;
+    // Issue #497: Quest tracker UI (always-visible compact panel)
+    private ragamuffin.ui.QuestTrackerUI questTrackerUI;
     private float distanceTravelledAchievement = 0f; // accumulated metres walked
     private com.badlogic.gdx.math.Vector3 lastPlayerPosForDistance = null;
 
@@ -348,6 +350,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #464: Initialize quest log UI
         questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
+        // Issue #497: Initialize quest tracker UI (compact always-visible panel)
+        questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry());
 
         loadingComplete = true;
         state = GameState.MENU;
@@ -2302,6 +2306,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             renderDamageFlash(flashIntensity, screenWidth, screenHeight);
         }
 
+        // Issue #497: Render quest tracker (top-right corner, always visible during gameplay)
+        if (!openingSequence.isActive() && !questLogUI.isVisible()) {
+            questTrackerUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
         // Issue #13: render NPC speech log (bottom-right corner)
         if (!openingSequence.isActive()) {
             speechLogUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
@@ -2572,6 +2581,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         interactionSystem = new InteractionSystem();
         // Fix #479: Recreate questLogUI bound to the fresh registry so old quests don't bleed in
         questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
+        // Issue #497: Recreate questTrackerUI bound to the fresh registry
+        questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry());
         healingSystem = new HealingSystem();
         // Issue #166: Sync HealingSystem position after teleport so the next update()
         // does not compute a spurious speed from the restart spawn distance.
