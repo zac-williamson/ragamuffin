@@ -237,14 +237,17 @@ class Phase8IntegrationTest {
         assertFalse(pauseMenu.isRestartSelected(), "Restart should not be selected initially");
         assertFalse(pauseMenu.isQuitSelected(), "Quit should not be selected initially");
 
-        // Navigate down to Restart
+        // Navigate down to Achievements, then Restart
         pauseMenu.selectNext();
         assertFalse(pauseMenu.isResumeSelected(), "Resume should not be selected after one down");
-        assertTrue(pauseMenu.isRestartSelected(), "Restart should be selected after one down");
+        assertTrue(pauseMenu.isAchievementsSelected(), "Achievements should be selected after one down");
+
+        pauseMenu.selectNext();
+        assertTrue(pauseMenu.isRestartSelected(), "Restart should be selected after two downs");
 
         // Navigate down to Quit
         pauseMenu.selectNext();
-        assertTrue(pauseMenu.isQuitSelected(), "Quit should be selected after two downs");
+        assertTrue(pauseMenu.isQuitSelected(), "Quit should be selected after three downs");
 
         // Wrap around back to Resume
         pauseMenu.selectNext();

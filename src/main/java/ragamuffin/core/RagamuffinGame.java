@@ -593,6 +593,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // (e.g. FIRST_DEATH from respawnSystem, gang-territory warnings) count down
             // at the correct rate rather than freezing for the ~8-second fly-through.
             tooltipSystem.update(delta);
+            // Fix #453: Advance achievement notification countdown during CINEMATIC so banners
+            // queued during the opening sequence count down rather than freezing.
+            achievementSystem.update(delta);
             // Fix #437: Advance clock HUD during the cinematic so the display stays in
             // sync with timeSystem (which is ticked above).
             clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
@@ -823,6 +826,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Update tooltip system
             tooltipSystem.update(delta);
+            // Fix #453: Advance achievement notification countdown during PLAYING so banners
+            // are shown and cleared at the correct rate.
+            achievementSystem.update(delta);
 
             // Issue #209: Update sky renderer (cloud animation)
             skyRenderer.update(delta);
@@ -941,6 +947,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #331: Advance tooltip countdown while paused so active tooltips
             // fade out and queued tooltips advance rather than freezing on-screen.
             tooltipSystem.update(delta);
+            // Fix #453: Advance achievement notification countdown while paused so banners
+            // count down rather than freezing for the entire pause duration.
+            achievementSystem.update(delta);
             // Fix #339: Advance arm swing animation while paused so a mid-punch
             // swing completes rather than freezing in the extended position.
             firstPersonArm.update(delta);
@@ -2129,6 +2138,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             renderTooltip();
         }
 
+        // Fix #453: Render achievement notification banner if one is active
+        if (achievementSystem.isNotificationActive()) {
+            renderAchievementNotification();
+        }
+
         // Fix #357/#395: Suppress hover tooltip advancement and rendering while paused so
         // dwell timers do not accumulate and tooltip bubbles do not appear on top of
         // the pause menu.  Call reset() to discard registered zones AND reset all dwell
@@ -2176,6 +2190,44 @@ public class RagamuffinGame extends ApplicationAdapter {
             spriteBatch.setProjectionMatrix(tooltipProj);
             spriteBatch.begin();
             font.setColor(1f, 1f, 1f, 1f);
+            font.draw(spriteBatch, message, boxX + padding, boxY + boxH - padding);
+            font.setColor(1f, 1f, 1f, 1f);
+            spriteBatch.end();
+        }
+    }
+
+    private void renderAchievementNotification() {
+        String message = achievementSystem.getCurrentNotification();
+        if (message != null) {
+            int screenWidth = Gdx.graphics.getWidth();
+            int screenHeight = Gdx.graphics.getHeight();
+            float alpha = achievementSystem.getNotificationAlpha();
+
+            // Measure text for a centred banner near the top of the screen
+            com.badlogic.gdx.graphics.g2d.GlyphLayout layout =
+                    new com.badlogic.gdx.graphics.g2d.GlyphLayout(font, message);
+            float textW = layout.width;
+            float textH = layout.height;
+            float padding = 12f;
+            float boxW = textW + padding * 2;
+            float boxH = textH + padding * 2;
+            float boxX = (screenWidth - boxW) / 2f;
+            float boxY = screenHeight - boxH - 40f;
+
+            com.badlogic.gdx.math.Matrix4 proj = new com.badlogic.gdx.math.Matrix4();
+            proj.setToOrtho2D(0, 0, screenWidth, screenHeight);
+            shapeRenderer.setProjectionMatrix(proj);
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(0f, 0f, 0f, 0.8f * alpha);
+            shapeRenderer.rect(boxX, boxY, boxW, boxH);
+            shapeRenderer.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
+
+            spriteBatch.setProjectionMatrix(proj);
+            spriteBatch.begin();
+            font.setColor(1f, 0.85f, 0.2f, alpha);
             font.draw(spriteBatch, message, boxX + padding, boxY + boxH - padding);
             font.setColor(1f, 1f, 1f, 1f);
             spriteBatch.end();

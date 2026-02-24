@@ -51,7 +51,8 @@ class Issue329PauseMenuRestartTest {
         // Session 1: player opens pause menu and moves cursor to "Restart"
         PauseMenu pauseMenu = new PauseMenu();
         pauseMenu.show();
-        pauseMenu.selectNext(); // moves from Resume (0) → Restart (1)
+        pauseMenu.selectNext(); // moves from Resume (0) → Achievements (1)
+        pauseMenu.selectNext(); // moves from Achievements (1) → Restart (2)
         assertTrue(pauseMenu.isRestartSelected(), "Restart option should be selected");
 
         // restartGame() — THE FIX: recreate pauseMenu
@@ -93,7 +94,8 @@ class Issue329PauseMenuRestartTest {
     void withoutResetSelectedOptionStaysOnRestart() {
         PauseMenu pauseMenu = new PauseMenu();
         pauseMenu.show();
-        pauseMenu.selectNext(); // cursor moves to Restart (index 1)
+        pauseMenu.selectNext(); // cursor moves to Achievements (index 1)
+        pauseMenu.selectNext(); // cursor moves to Restart (index 2)
         assertTrue(pauseMenu.isRestartSelected(), "Restart selected before restart");
 
         // BUG: no recreation — selectedOption stays at 1
