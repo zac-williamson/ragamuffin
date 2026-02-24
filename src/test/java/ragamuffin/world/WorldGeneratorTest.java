@@ -85,12 +85,13 @@ public class WorldGeneratorTest {
         BlockType groundBlock = world.getBlock((int) parkPos.x, 0, (int) parkPos.z);
         assertEquals(BlockType.GRASS, groundBlock, "Park ground should be grass");
 
-        // Office building should have glass or stone walls
+        // Office building should have glass, stone or concrete walls
         Landmark office = world.getLandmark(LandmarkType.OFFICE_BUILDING);
         Vector3 officePos = office.getPosition();
         BlockType wallBlock = world.getBlock((int) officePos.x, 1, (int) officePos.z);
-        assertTrue(wallBlock == BlockType.GLASS || wallBlock == BlockType.STONE,
-            "Office walls should be glass or stone");
+        assertTrue(wallBlock == BlockType.GLASS || wallBlock == BlockType.STONE
+                || wallBlock == BlockType.CONCRETE,
+            "Office walls should be glass, stone or concrete");
     }
 
     @Test
@@ -228,11 +229,14 @@ public class WorldGeneratorTest {
         // rather than checking hardcoded coordinates.
         int rowsWithHouses = 0;
         // Scan Z from -120 to +80 in 4-block steps, covering the full residential belt.
+        // Count any residential wall material (houses now use varied facades).
         for (int rowZ = -120; rowZ <= 80; rowZ += 4) {
             int houseCount = 0;
             for (int x = -160; x < 140; x++) {
                 BlockType block = world.getBlock(x, 1, rowZ);
-                if (block == BlockType.BRICK || block == BlockType.GLASS) {
+                if (block == BlockType.BRICK || block == BlockType.GLASS
+                        || block == BlockType.YELLOW_BRICK || block == BlockType.PEBBLEDASH
+                        || block == BlockType.RENDER_WHITE || block == BlockType.RENDER_CREAM) {
                     houseCount++;
                 }
             }

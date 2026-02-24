@@ -957,27 +957,140 @@ public class WorldGenerator {
 
     // ==================== TERRACED HOUSES ====================
 
+    /**
+     * Facade material palettes for terraced houses.
+     * Each array is a set of block types that can appear as the main wall material.
+     */
+    private static final BlockType[] HOUSE_WALL_PALETTE = {
+        BlockType.BRICK,
+        BlockType.YELLOW_BRICK,
+        BlockType.PEBBLEDASH,
+        BlockType.RENDER_WHITE,
+        BlockType.RENDER_CREAM,
+    };
+
+    /** Roof materials matched to wall palette entries. */
+    private static final BlockType[] HOUSE_ROOF_PALETTE = {
+        BlockType.SLATE,
+        BlockType.SLATE,
+        BlockType.ROOF_TILE,
+        BlockType.ROOF_TILE,
+        BlockType.SLATE,
+    };
+
     private void generateTerracedRow(World world, int startX, int startZ,
                                       int houseWidth, int houseDepth, int houseHeight, int count) {
+        // Use a deterministic RNG seeded from position so the same row always looks the same
+        // across generation passes, but differs from other rows.
+        Random rowRng = new Random(seed ^ ((long) startX * 0x9E3779B97F4A7C15L + startZ * 0x6C62272E07BB0142L));
+        int cursorX = startX;
         for (int i = 0; i < count; i++) {
-            buildHouse(world, startX + i * houseWidth, startZ, houseWidth, houseDepth, houseHeight);
+            // Vary width slightly: ±1 block, keeping minimum of 5
+            int w = houseWidth + (rowRng.nextInt(3) - 1); // -1, 0, +1
+            if (w < 5) w = 5;
+            // Vary height slightly: ±1 block
+            int h = houseHeight + (rowRng.nextInt(3) - 1);
+            if (h < 4) h = 4;
+            buildHouseVariant(world, cursorX, startZ, w, houseDepth, h, rowRng);
+            cursorX += w;
+        }
+    }
+
+    /**
+     * Build a terraced house with varied facade, windows, roof and optional chimney.
+     * Each house picks from the palette deterministically based on the provided RNG.
+     */
+    private void buildHouseVariant(World world, int x, int z, int width, int depth,
+                                    int height, Random rng) {
+        // Pick facade style
+        int styleIdx = rng.nextInt(HOUSE_WALL_PALETTE.length);
+        BlockType wallType = HOUSE_WALL_PALETTE[styleIdx];
+        BlockType roofType = HOUSE_ROOF_PALETTE[styleIdx];
+
+        // Determine window row heights (glass rows)
+        // Standard British terrace: windows at y=2 (ground floor) and y=4 (first floor)
+        // Some variants skip y=2 (e.g. pebbledash often has smaller windows)
+        boolean doubleGlazed = rng.nextBoolean(); // wider window opening
+        int windowRowA = 2;
+        int windowRowB = (height >= 5) ? 4 : -1; // no second row for shorter houses
+
+        for (int y = 1; y <= height; y++) {
+            for (int dx = 0; dx < width; dx++) {
+                for (int dz = 0; dz < depth; dz++) {
+                    boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                    if (!isWall) continue;
+                    if (y == windowRowA || y == windowRowB) {
+                        // Front and back walls get windows; side walls stay solid
+                        boolean isFrontOrBack = (dz == 0 || dz == depth - 1);
+                        boolean inWindowZone;
+                        if (doubleGlazed) {
+                            // Window spans from dx=1 to dx=width-2
+                            inWindowZone = isFrontOrBack && dx >= 1 && dx <= width - 2;
+                        } else {
+                            // Narrower window in the centre
+                            inWindowZone = isFrontOrBack && dx >= 1 && dx <= width - 2
+                                && dx != width / 2; // leave a centre mullion
+                        }
+                        world.setBlock(x + dx, y, z + dz,
+                            inWindowZone ? BlockType.GLASS : wallType);
+                    } else {
+                        world.setBlock(x + dx, y, z + dz, wallType);
+                    }
+                }
+            }
+        }
+
+        // Roof
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, height + 1, z + dz, roofType);
+                world.setBlock(x + dx, 0, z + dz, BlockType.WOOD);
+            }
+        }
+
+        // Front door (centred, cleared to height 2)
+        int doorX = x + width / 2;
+        world.setBlock(doorX, 1, z, BlockType.AIR);
+        world.setBlock(doorX, 2, z, BlockType.AIR);
+
+        // Occasional chimney stack (30% chance) on the ridge
+        if (rng.nextInt(10) < 3 && width >= 6) {
+            int chimneyDx = rng.nextBoolean() ? 1 : width - 2;
+            world.setBlock(x + chimneyDx, height + 2, z + depth / 2, BlockType.BRICK);
+            world.setBlock(x + chimneyDx, height + 3, z + depth / 2, BlockType.BRICK);
         }
     }
 
     // ==================== OFFICE BUILDING ====================
 
     private void generateOfficeBuilding(World world, int x, int z, int width, int depth, int height) {
+        // Vary the facade style: curtain-wall glass, stone-and-glass bands, or concrete-and-glass
+        Random offRng = new Random(seed ^ 0xABCD_EF01_2345_6789L);
+        int officeStyle = offRng.nextInt(3); // 0=full curtain wall, 1=stone bands, 2=concrete frame
+
         for (int y = 1; y <= height; y++) {
             for (int dx = 0; dx < width; dx++) {
                 for (int dz = 0; dz < depth; dz++) {
                     boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
-                    if (isWall) {
-                        if (y % 2 == 0) {
-                            world.setBlock(x + dx, y, z + dz, BlockType.GLASS);
-                        } else {
-                            world.setBlock(x + dx, y, z + dz, BlockType.STONE);
-                        }
+                    if (!isWall) continue;
+                    boolean isCorner = (dx == 0 || dx == width - 1) && (dz == 0 || dz == depth - 1);
+                    BlockType block;
+                    switch (officeStyle) {
+                        case 0:
+                            // Full curtain-wall: glass everywhere except corners
+                            block = isCorner ? BlockType.CONCRETE : BlockType.GLASS;
+                            break;
+                        case 1:
+                            // Stone-and-glass bands: alternating full-height stone and glass rows
+                            block = (y % 3 == 1) ? BlockType.STONE : BlockType.GLASS;
+                            break;
+                        default:
+                            // Concrete frame with glass infill: concrete at corners + every 4th col
+                            boolean isFrame = isCorner || (dx % 4 == 0) || (y == 1) || (y == height);
+                            block = isFrame ? BlockType.CONCRETE : BlockType.GLASS;
+                            break;
                     }
+                    world.setBlock(x + dx, y, z + dz, block);
                 }
             }
         }
@@ -990,6 +1103,16 @@ public class WorldGenerator {
         // Sign
         for (int dx = 0; dx < width; dx++) {
             world.setBlock(x + dx, height, z, BlockType.SIGN_BLUE);
+        }
+        // Rooftop plant room / lift shaft (small concrete block on roof)
+        int plantW = Math.max(3, width / 4);
+        int plantD = Math.max(3, depth / 4);
+        int plantX = x + width / 2 - plantW / 2;
+        int plantZ = z + depth / 2 - plantD / 2;
+        for (int dx = 0; dx < plantW; dx++) {
+            for (int dz = 0; dz < plantD; dz++) {
+                world.setBlock(plantX + dx, height + 2, plantZ + dz, BlockType.CONCRETE);
+            }
         }
     }
 
@@ -1005,13 +1128,27 @@ public class WorldGenerator {
     // ==================== WAREHOUSES ====================
 
     private void generateWarehouse(World world, int x, int z, int width, int depth, int height) {
+        // Vary warehouse style: all-metal, brick-base + metal upper, or concrete block
+        int whStyle = Math.abs((x * 379 + z * 613) ^ (int)(seed & 0xFFFF)) % 3;
+        BlockType lowerWall = (whStyle == 1) ? BlockType.BRICK : BlockType.CORRUGATED_METAL;
+        BlockType upperWall = BlockType.CORRUGATED_METAL;
+        // Some warehouses have a concrete base course (bottom 2 rows)
+        boolean hasBrickBase = (whStyle == 2);
+
         for (int y = 1; y <= height; y++) {
             for (int dx = 0; dx < width; dx++) {
                 for (int dz = 0; dz < depth; dz++) {
                     boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
-                    if (isWall) {
-                        world.setBlock(x + dx, y, z + dz, BlockType.CORRUGATED_METAL);
+                    if (!isWall) continue;
+                    BlockType block;
+                    if (hasBrickBase && y <= 2) {
+                        block = BlockType.CONCRETE;
+                    } else if (y <= height / 2) {
+                        block = lowerWall;
+                    } else {
+                        block = upperWall;
                     }
+                    world.setBlock(x + dx, y, z + dz, block);
                 }
             }
         }
@@ -1021,10 +1158,17 @@ public class WorldGenerator {
                 world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
             }
         }
-        // Roller door
-        for (int dx = 1; dx < Math.min(5, width - 1); dx++) {
+        // Roller door (variable width based on building size)
+        int doorWidth = Math.min(4, width / 3);
+        for (int dx = 1; dx <= doorWidth && dx < width - 1; dx++) {
             for (int y = 1; y <= 3; y++) {
                 world.setBlock(x + dx, y, z, BlockType.AIR);
+            }
+        }
+        // Some warehouses have a loading bay sign
+        if (whStyle == 0) {
+            for (int dx = 0; dx < width; dx++) {
+                world.setBlock(x + dx, height, z, BlockType.SIGN_WHITE);
             }
         }
     }
@@ -1612,13 +1756,51 @@ public class WorldGenerator {
     // ==================== BUILDING HELPERS ====================
 
     private void buildShop(World world, int x, int z, int width, int depth, int height, BlockType wallType) {
+        // Use a positional hash for deterministic per-shop variation
+        int shopHash = (x * 1049 + z * 757) ^ (int)(seed & 0xFFFFFFL);
+        // Shop style: 0 = large display window, 1 = narrow display window, 2 = solid lower half
+        int shopStyle = Math.abs(shopHash) % 3;
+        // Upper floor material may differ: some shops have render or yellow brick upper floors
+        BlockType upperWall = ((Math.abs(shopHash) >> 4) % 3 == 0 && wallType == BlockType.BRICK)
+            ? BlockType.RENDER_WHITE : wallType;
+
         for (int y = 1; y <= height; y++) {
             for (int dx = 0; dx < width; dx++) {
                 for (int dz = 0; dz < depth; dz++) {
                     boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
-                    if (isWall) {
-                        world.setBlock(x + dx, y, z + dz, wallType);
+                    if (!isWall) continue;
+
+                    boolean isFront = (dz == 0);
+                    BlockType block;
+
+                    if (isFront && (y == 1 || y == 2)) {
+                        // Ground floor front — display window area
+                        boolean isCornerPillar = (dx == 0 || dx == width - 1);
+                        if (isCornerPillar) {
+                            block = wallType; // structural pillars always solid
+                        } else if (shopStyle == 0) {
+                            // Large display window: glass across nearly the whole front
+                            block = BlockType.GLASS;
+                        } else if (shopStyle == 1) {
+                            // Narrow: glass only in centre half
+                            boolean inCentre = dx >= width / 4 && dx < (width * 3 / 4);
+                            block = inCentre ? BlockType.GLASS : wallType;
+                        } else {
+                            // Solid lower half (e.g. a bookies or pawn shop with opaque frontage)
+                            block = wallType;
+                        }
+                    } else if (y > 2) {
+                        // Upper floors: use potentially varied material
+                        block = (y == height && !isFront) ? upperWall : wallType;
+                        // Occasional upper-floor window on front
+                        if (isFront && y == 3 && width >= 6) {
+                            boolean inWindowBand = dx >= 1 && dx <= width - 2;
+                            if (inWindowBand) block = BlockType.GLASS;
+                        }
+                    } else {
+                        block = wallType;
                     }
+                    world.setBlock(x + dx, y, z + dz, block);
                 }
             }
         }
@@ -1628,7 +1810,7 @@ public class WorldGenerator {
                 world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
             }
         }
-        // Door
+        // Door (cleared into display window area)
         world.setBlock(x + width / 2, 1, z, BlockType.AIR);
         world.setBlock(x + width / 2, 2, z, BlockType.AIR);
     }
