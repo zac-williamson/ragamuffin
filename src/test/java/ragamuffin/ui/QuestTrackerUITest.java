@@ -2,6 +2,8 @@ package ragamuffin.ui;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ragamuffin.building.Inventory;
+import ragamuffin.building.Material;
 import ragamuffin.core.BuildingQuestRegistry;
 import ragamuffin.core.Quest;
 import ragamuffin.world.LandmarkType;
@@ -21,7 +23,7 @@ class QuestTrackerUITest {
     @BeforeEach
     void setUp() {
         registry = new BuildingQuestRegistry();
-        ui = new QuestTrackerUI(registry);
+        ui = new QuestTrackerUI(registry, null);
     }
 
     // --- Visibility ---
@@ -103,5 +105,45 @@ class QuestTrackerUITest {
     void maxVisibleConstantIsAtLeastOne() {
         assertTrue(QuestTrackerUI.MAX_VISIBLE >= 1,
                 "MAX_VISIBLE must be at least 1 so at least one quest can be shown");
+    }
+
+    // --- Progress string (Fix #511) ---
+
+    @Test
+    void progressStringWithoutInventoryShowsRequiredOnly() {
+        // ui has null inventory (set up in @BeforeEach)
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+        // Tesco quest: 3x tin of beans
+        String progress = ui.buildProgressString(tesco);
+        assertEquals("3x tin of beans", progress,
+                "Without inventory, progress must show 'required x material'");
+    }
+
+    @Test
+    void progressStringWithInventoryShowsCurrentAndRequired() {
+        Inventory inv = new Inventory(36);
+        inv.addItem(Material.TIN_OF_BEANS, 1);
+        QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
+
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+
+        String progress = uiWithInv.buildProgressString(tesco);
+        assertEquals("1/3x tin of beans", progress,
+                "With inventory, progress must show 'current/required x material'");
+    }
+
+    @Test
+    void progressStringShowsZeroWhenInventoryEmpty() {
+        Inventory inv = new Inventory(36);
+        QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
+
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco);
+
+        String progress = uiWithInv.buildProgressString(tesco);
+        assertEquals("0/3x tin of beans", progress,
+                "With empty inventory, current count must be 0");
     }
 }

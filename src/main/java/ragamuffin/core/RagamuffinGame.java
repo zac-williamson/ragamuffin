@@ -353,7 +353,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #464: Initialize quest log UI
         questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
         // Issue #497: Initialize quest tracker UI (compact always-visible panel)
-        questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry());
+        // Fix #511: Pass inventory so tracker can show current/required counts
+        questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry(), inventory);
 
         loadingComplete = true;
         state = GameState.MENU;
@@ -2609,7 +2610,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #479: Recreate questLogUI bound to the fresh registry so old quests don't bleed in
         questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
         // Issue #497: Recreate questTrackerUI bound to the fresh registry
-        questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry());
+        // Fix #511: Pass inventory so tracker can show current/required counts
+        questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry(), inventory);
         healingSystem = new HealingSystem();
         // Issue #166: Sync HealingSystem position after teleport so the next update()
         // does not compute a spurious speed from the restart spawn distance.
