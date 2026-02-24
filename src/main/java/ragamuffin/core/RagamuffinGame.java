@@ -1072,6 +1072,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                 punchHeldTimer = 0f;
                 lastPunchTargetKey = currentTargetKey;
             }
+            // Fix #285: When aiming at an NPC with no block target, clear any residual
+            // block break progress immediately (not just on the next repeat tick).
+            if (hasNPCTarget && currentTargetKey == null) {
+                gameHUD.setBlockBreakProgress(0f);
+            }
             // Any valid target — block OR NPC — should tick the repeat timer
             if (currentTargetKey != null || hasNPCTarget) {
                 punchHeldTimer += delta;

@@ -322,6 +322,13 @@ public class GameHUD {
     }
 
     /**
+     * Get current block break progress (0.0 to 1.0).
+     */
+    public float getBlockBreakProgress() {
+        return blockBreakProgress;
+    }
+
+    /**
      * Render the weather display in the top-right corner.
      */
     private void renderWeather(SpriteBatch spriteBatch, BitmapFont font,
