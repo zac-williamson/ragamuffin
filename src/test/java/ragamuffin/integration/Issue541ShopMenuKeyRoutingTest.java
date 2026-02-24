@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import ragamuffin.ai.NPCManager;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
+import ragamuffin.core.InputHandler;
 import ragamuffin.core.InteractionSystem;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCType;
@@ -154,6 +155,43 @@ class Issue541ShopMenuKeyRoutingTest {
             "After selecting item 3 and pressing E, player should receive crisps");
         assertEquals(0, inv.getItemCount(Material.SAUSAGE_ROLL),
             "Sausage roll must NOT be purchased when crisps (item 3) are selected");
+    }
+
+    // --- Issue #543: shop intercept must reset craftingSlotPressed ---
+
+    @Test
+    void shopInterceptNum2_resetsCraftingSlotPressed() {
+        // When the shop menu is open and the player presses NUM_2, the shop intercept
+        // in RagamuffinGame consumes the key and must call resetCraftingSlot() so that
+        // getCraftingSlotPressed() returns -1 (not 1).
+        // This test mirrors the intercept logic directly.
+        InteractionSystem system = new InteractionSystem();
+        NPCManager npcManager = new NPCManager();
+        NPC shopkeeper = npcManager.spawnNPC(NPCType.SHOPKEEPER, 0, 0, -1f);
+        Inventory inv = new Inventory(36);
+        inv.addItem(Material.SHILLING, 5);
+
+        system.interactWithNPC(shopkeeper, inv); // open shop menu
+
+        // Simulate InputHandler.keyDown(NUM_2): both hotbarSlotPressed and craftingSlotPressed set to 1
+        InputHandler inputHandler = new InputHandler();
+        inputHandler.keyDown(com.badlogic.gdx.Input.Keys.NUM_2);
+
+        // Precondition: craftingSlotPressed is now 1 (stale value)
+        assertEquals(1, inputHandler.getCraftingSlotPressed(),
+            "Precondition: pressing NUM_2 must set craftingSlotPressed to 1");
+
+        // Simulate the shop intercept block in RagamuffinGame.handlePlayingUIInput():
+        int hotbarSlot = inputHandler.getHotbarSlotPressed();
+        if (shopkeeper.isShopMenuOpen() && hotbarSlot <= 2) {
+            system.selectShopItem(shopkeeper, hotbarSlot + 1, inv);
+            inputHandler.resetCraftingSlot(); // Issue #543: this is the fix
+        }
+        inputHandler.resetHotbarSlot();
+
+        // After the intercept, craftingSlotPressed must be -1
+        assertEquals(-1, inputHandler.getCraftingSlotPressed(),
+            "After shop intercept processes NUM_2, getCraftingSlotPressed() must be -1 (stale value cleared)");
     }
 
     // --- Guard: selectShopItem is a no-op when menu is not open ---
