@@ -1139,23 +1139,45 @@ public class RagamuffinGame extends ApplicationAdapter {
                 handleEscapePress();
                 inputHandler.resetEscape();
             }
-            if (inputHandler.isUpPressed()) {
-                pauseMenu.selectPrevious();
-                inputHandler.resetUp();
+            // Fix #481: Allow Q to toggle quest log while paused
+            if (inputHandler.isQuestLogPressed()) {
+                questLogUI.toggle();
+                inputHandler.resetQuestLog();
             }
-            if (inputHandler.isDownPressed()) {
-                pauseMenu.selectNext();
-                inputHandler.resetDown();
-            }
-            if (inputHandler.isEnterPressed()) {
-                if (pauseMenu.isResumeSelected()) {
-                    transitionToPlaying();
-                } else if (pauseMenu.isRestartSelected()) {
-                    restartGame();
-                } else if (pauseMenu.isQuitSelected()) {
-                    Gdx.app.exit();
+            // Fix #481: If the quest log overlay is visible, forward UP/DOWN/ENTER
+            // to the quest log instead of the pause menu so scroll input works correctly.
+            if (questLogUI.isVisible()) {
+                if (inputHandler.isUpPressed()) {
+                    questLogUI.scrollUp();
+                    inputHandler.resetUp();
                 }
-                inputHandler.resetEnter();
+                if (inputHandler.isDownPressed()) {
+                    questLogUI.scrollDown();
+                    inputHandler.resetDown();
+                }
+                // Swallow ENTER so it doesn't trigger a pause menu action
+                if (inputHandler.isEnterPressed()) {
+                    inputHandler.resetEnter();
+                }
+            } else {
+                if (inputHandler.isUpPressed()) {
+                    pauseMenu.selectPrevious();
+                    inputHandler.resetUp();
+                }
+                if (inputHandler.isDownPressed()) {
+                    pauseMenu.selectNext();
+                    inputHandler.resetDown();
+                }
+                if (inputHandler.isEnterPressed()) {
+                    if (pauseMenu.isResumeSelected()) {
+                        transitionToPlaying();
+                    } else if (pauseMenu.isRestartSelected()) {
+                        restartGame();
+                    } else if (pauseMenu.isQuitSelected()) {
+                        Gdx.app.exit();
+                    }
+                    inputHandler.resetEnter();
+                }
             }
             // Mouse click support for pause menu
             if (inputHandler.isLeftClickPressed()) {
