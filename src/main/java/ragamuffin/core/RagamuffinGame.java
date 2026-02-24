@@ -1844,6 +1844,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // hit-counter clears work from the start of the restarted game
         blockBreaker = new BlockBreaker();
         blockPlacer.setBlockBreaker(blockBreaker);
+        // Fix #309: Dispose old NPCRenderer to release per-NPC ModelInstance arrays and
+        // native GPU resources (Mesh/Material) before creating new NPCManager/NPCs.
+        npcRenderer.dispose();
+        npcRenderer = new NPCRenderer();
         npcManager = new NPCManager();
         npcManager.setBlockBreaker(blockBreaker);
         spawnInitialNPCs();
