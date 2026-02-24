@@ -104,10 +104,11 @@ class ConsumablesAndCraftingIntegrationTest {
     }
 
     @Test
-    void testConsumeAntidepressantsDoesNothing() {
-        // Set up player with low health and hunger
+    void testConsumeAntidepressantsRestoresEnergyAndShowsMessage() {
+        // Set up player with low stats to verify effects
         player.setHealth(50);
         player.setHunger(50);
+        player.setEnergy(50);
         float energyBefore = player.getEnergy();
         inventory.addItem(Material.ANTIDEPRESSANTS, 1);
 
@@ -117,13 +118,19 @@ class ConsumablesAndCraftingIntegrationTest {
         // Verify item was consumed
         assertEquals(0, inventory.getItemCount(Material.ANTIDEPRESSANTS),
             "ANTIDEPRESSANTS should be removed from inventory");
-        // Verify no effects (inert item)
+        // Verify no health or hunger effect
         assertEquals(50, player.getHealth(), 0.01,
             "ANTIDEPRESSANTS should not affect health");
         assertEquals(50, player.getHunger(), 0.01,
             "ANTIDEPRESSANTS should not affect hunger");
-        assertEquals(energyBefore, player.getEnergy(), 0.01,
-            "ANTIDEPRESSANTS should not affect energy");
+        // Verify energy is restored (meaningful gameplay effect)
+        assertTrue(player.getEnergy() > energyBefore,
+            "ANTIDEPRESSANTS should restore energy");
+        // Verify a flavour message is set
+        assertNotNull(interactionSystem.getLastConsumeMessage(),
+            "ANTIDEPRESSANTS should produce a feedback message");
+        assertFalse(interactionSystem.getLastConsumeMessage().isEmpty(),
+            "ANTIDEPRESSANTS feedback message should not be empty");
     }
 
     // === New crafting recipes ===
