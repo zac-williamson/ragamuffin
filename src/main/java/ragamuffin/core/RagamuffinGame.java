@@ -745,6 +745,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #359: Advance reputation decay timer while paused — mirrors the PLAYING path (line ~1088).
             // Without this the player can exploit the pause menu to halt reputation decay indefinitely.
             player.getStreetReputation().update(delta);
+            // Fix #361: Advance time system while paused so the clock, lighting, and day/night cycle
+            // continue to progress — mirrors the equivalent block in the PLAYING branch.
+            timeSystem.update(delta);
+            npcManager.setGameTime(timeSystem.getTime());
+            lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
+            updateSkyColour(timeSystem.getTime());
+            clockHUD.update(timeSystem.getTime(), timeSystem.getDayCount(), timeSystem.getDayOfMonth(), timeSystem.getMonthName());
 
             // Render UI and pause menu
             renderUI();
