@@ -481,6 +481,26 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetEscape();
             }
 
+            // Fix #425: Tick all simulation timers during the cinematic so that
+            // timer-based systems do not freeze for the 8-second fly-through duration.
+            // Mirrors the equivalent block in the PAUSED branch — the same class of
+            // exploit that required fixes #391–#423 for PAUSED was never addressed for
+            // CINEMATIC.  All tickX() methods already exist on NPCManager (added for
+            // the PAUSED fix series) so no new API surface is required.
+            npcManager.tickSpawnCooldown(delta);
+            npcManager.tickPostArrestCooldown(delta);
+            npcManager.tickKnockbackTimers(delta);
+            npcManager.tickRecoveryTimers(delta);
+            npcManager.tickSpeechTimers(delta);
+            blockBreaker.tickDecay(delta);
+            player.getStreetReputation().update(delta);
+            weatherSystem.update(delta * timeSystem.getTimeSpeed() * 3600f);
+            timeSystem.update(delta);
+            npcManager.setGameTime(timeSystem.getTime());
+            lightingSystem.updateLighting(timeSystem.getTime(), timeSystem.getSunriseTime(), timeSystem.getSunsetTime());
+            updateSkyColour(timeSystem.getTime());
+            particleSystem.update(delta);
+
             // Transition to PLAYING once cinematic completes
             if (cinematicCamera.isCompleted()) {
                 finishCinematic();
@@ -495,7 +515,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 Gdx.gl.glClearColor(skyR, skyG, skyB, 1f);
                 Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
-                // Render skybox (sun/clouds) without advancing time
+                // Render skybox (sun/clouds) — skyRenderer.update() advances cloud
+                // animation; time is pinned to 10.0f (mid-morning) for the cinematic.
                 skyRenderer.update(delta);
                 {
                     float ts = 10.0f; // Fixed time: mid-morning for the cinematic
