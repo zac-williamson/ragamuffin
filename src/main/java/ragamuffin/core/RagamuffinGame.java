@@ -1715,10 +1715,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             float bubbleY = sy;
 
             // Draw speech bubble background
+            Gdx.gl.glEnable(GL20.GL_BLEND);
+            Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
             shapeRenderer.begin(com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(0f, 0f, 0f, 0.7f);
             shapeRenderer.rect(bubbleX, bubbleY, bubbleW, bubbleH);
             shapeRenderer.end();
+            Gdx.gl.glDisable(GL20.GL_BLEND);
 
             // Draw text
             spriteBatch.begin();
