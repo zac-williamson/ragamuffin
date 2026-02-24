@@ -665,7 +665,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         } else if (state == GameState.PAUSED) {
             // Paused - still render world but frozen
-            Gdx.gl.glClearColor(0.53f, 0.81f, 0.92f, 1f);
+            Gdx.gl.glClearColor(skyR, skyG, skyB, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
 
             // Fix #227: Render sun and clouds as part of the skybox — before 3D geometry
