@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import ragamuffin.building.Inventory;
 import ragamuffin.core.BuildingQuestRegistry;
 import ragamuffin.core.Quest;
 import ragamuffin.world.LandmarkType;
@@ -35,10 +36,12 @@ public class QuestTrackerUI {
     private static final float DESC_SCALE  = 0.75f;
 
     private final BuildingQuestRegistry questRegistry;
+    private final Inventory inventory;
     private boolean visible;
 
-    public QuestTrackerUI(BuildingQuestRegistry questRegistry) {
+    public QuestTrackerUI(BuildingQuestRegistry questRegistry, Inventory inventory) {
         this.questRegistry = questRegistry;
+        this.inventory = inventory;
         this.visible = true;
     }
 
@@ -131,8 +134,7 @@ public class QuestTrackerUI {
             if (quest.getRequiredMaterial() != null) {
                 font.getData().setScale(DESC_SCALE);
                 font.setColor(1f, 0.65f, 0.2f, 1f);
-                String mat = quest.getRequiredMaterial().name().toLowerCase().replace('_', ' ');
-                String progress = quest.getRequiredCount() + "x " + mat;
+                String progress = buildProgressString(quest);
                 GlyphLayout progLayout = new GlyphLayout(font, progress);
                 font.draw(spriteBatch, progress,
                         panelX + PANEL_WIDTH - PADDING - progLayout.width,
@@ -154,5 +156,19 @@ public class QuestTrackerUI {
         font.getData().setScale(1.2f); // restore default
         font.setColor(Color.WHITE);
         spriteBatch.end();
+    }
+
+    /**
+     * Builds the progress string for a COLLECT quest.
+     * Shows "current/requiredx material" when an inventory is available,
+     * or "requiredx material" otherwise.
+     */
+    String buildProgressString(Quest quest) {
+        String mat = quest.getRequiredMaterial().name().toLowerCase().replace('_', ' ');
+        if (inventory != null) {
+            int current = inventory.getItemCount(quest.getRequiredMaterial());
+            return current + "/" + quest.getRequiredCount() + "x " + mat;
+        }
+        return quest.getRequiredCount() + "x " + mat;
     }
 }
