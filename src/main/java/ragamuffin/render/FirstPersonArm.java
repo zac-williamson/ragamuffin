@@ -55,6 +55,15 @@ public class FirstPersonArm {
     }
 
     /**
+     * Returns the current idle bob timer value (seconds elapsed since construction
+     * or last reset). Used by tests to verify the timer advances during all game
+     * states (PLAYING, PAUSED, CINEMATIC).
+     */
+    public float getIdleTimer() {
+        return idleTimer;
+    }
+
+    /**
      * Get the current swing progress (0 = resting, 1 = fully extended).
      * Uses a smooth ease-in/ease-out curve for more natural motion.
      */

@@ -91,4 +91,31 @@ class FirstPersonArmTest {
         assertFalse(arm.isSwinging(), "Arm should have completed swing after enough update time");
         assertEquals(0f, arm.getSwingProgress(), 0.01f, "Arm should return to rest after swing completes");
     }
+
+    /**
+     * Fix #445: The CINEMATIC render path must call firstPersonArm.update(delta)
+     * so that the idleTimer advances during the ~8-second fly-through. Without
+     * this call the idleTimer freezes at 0, causing the idle bob animation to
+     * start from the wrong phase on the very first PLAYING frame.
+     *
+     * <p>Simulates 300 frames at 60 fps (5 seconds) to verify:
+     * <ul>
+     *   <li>swingProgress is 0 (arm is not frozen mid-swing)</li>
+     *   <li>idleTimer has advanced by approximately 5 seconds</li>
+     * </ul>
+     */
+    @Test
+    void idleTimerAdvancesDuringCinematic() {
+        // Simulate 300 frames at 60 fps (5 seconds) as the CINEMATIC path would do.
+        float delta = 1f / 60f;
+        for (int frame = 0; frame < 300; frame++) {
+            arm.update(delta);
+        }
+
+        float expectedElapsed = 300 * delta; // ~5.0 seconds
+        assertEquals(0f, arm.getSwingProgress(), 0.01f,
+                "Arm should not be mid-swing after cinematic frames (no punch was triggered)");
+        assertEquals(expectedElapsed, arm.getIdleTimer(), 0.1f,
+                "idleTimer should have advanced by ~5 seconds during the simulated cinematic");
+    }
 }

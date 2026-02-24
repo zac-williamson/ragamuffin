@@ -591,6 +591,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             // so the banner counts down rather than freezing for the entire fly-through.
             gameHUD.update(delta);
             player.updateDodge(delta);
+            // Fix #445: Advance arm swing/bob animation during cinematic so the
+            // idleTimer continues accumulating and the arm is in the correct phase
+            // when PLAYING starts.
+            firstPersonArm.update(delta);
             // Fix #437: Advance speech log entry timers during the cinematic so NPC
             // speech bubbles fade out rather than freezing on-screen.
             speechLogUI.update(npcManager.getNPCs(), delta);
