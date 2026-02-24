@@ -139,4 +139,45 @@ class BlockPlacerTest {
         assertEquals(BlockType.BRICK, blockPlacer.materialToBlockType(Material.BRICK_WALL));
         assertEquals(BlockType.GLASS, blockPlacer.materialToBlockType(Material.WINDOW));
     }
+
+    @Test
+    void testPlaceDoor_PlacesTwoBlockDoor() {
+        // Use high altitude to avoid generated terrain interference
+        world.setBlock(50, 500, 50, BlockType.GRASS);
+        // Target position for door is (50, 501, 50); (50, 502, 50) must be AIR
+        inventory.addItem(Material.DOOR, 1);
+
+        // Look straight down at the top of the ground block — places at y=501
+        Vector3 cameraPos = new Vector3(50.5f, 503f, 50.5f);
+        Vector3 direction = new Vector3(0, -1, 0);
+
+        boolean placed = blockPlacer.placeBlock(world, inventory, Material.DOOR, cameraPos, direction, 5.0f);
+        assertTrue(placed, "DOOR placement should succeed when both target and above are AIR");
+
+        assertEquals(BlockType.DOOR_LOWER, world.getBlock(50, 501, 50), "Lower block should be DOOR_LOWER");
+        assertEquals(BlockType.DOOR_UPPER, world.getBlock(50, 502, 50), "Upper block should be DOOR_UPPER");
+        assertEquals(0, inventory.getItemCount(Material.DOOR), "DOOR should be consumed from inventory");
+    }
+
+    @Test
+    void testPlaceDoor_FailsWhenAboveBlocked() {
+        // Use high altitude to avoid generated terrain interference.
+        // Place a wall block at (50, 500, 53) and aim at its side face so the
+        // placement target lands at (50, 500, 52). Then put STONE at (50, 501, 52)
+        // so the DOOR_UPPER slot is occupied.
+        world.setBlock(50, 500, 53, BlockType.GRASS);
+        world.setBlock(50, 501, 52, BlockType.STONE);
+        inventory.addItem(Material.DOOR, 1);
+
+        // Look from z=50 toward z=53, slightly downward, hit the front face of
+        // the block and place at (50, 500, 52)
+        Vector3 cameraPos = new Vector3(50.5f, 500.5f, 50.0f);
+        Vector3 direction = new Vector3(0, 0, 1);
+
+        boolean placed = blockPlacer.placeBlock(world, inventory, Material.DOOR, cameraPos, direction, 5.0f);
+        assertFalse(placed, "DOOR placement should fail when block above target is not AIR");
+
+        assertEquals(BlockType.AIR, world.getBlock(50, 500, 52), "Lower slot should remain AIR");
+        assertEquals(1, inventory.getItemCount(Material.DOOR), "DOOR should not be consumed when placement fails");
+    }
 }

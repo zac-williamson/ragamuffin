@@ -132,6 +132,25 @@ public class BlockPlacer {
             return true;
         }
 
+        // Special case: DOOR places a two-block-tall door (DOOR_LOWER + DOOR_UPPER)
+        if (material == Material.DOOR) {
+            int dx = (int) Math.floor(placement.x);
+            int dy = (int) Math.floor(placement.y);
+            int dz = (int) Math.floor(placement.z);
+            // Require the block above to also be AIR
+            if (world.getBlock(dx, dy + 1, dz) != BlockType.AIR) {
+                return false;
+            }
+            world.setPlayerBlock(dx, dy, dz, BlockType.DOOR_LOWER);
+            world.setPlayerBlock(dx, dy + 1, dz, BlockType.DOOR_UPPER);
+            if (blockBreaker != null) {
+                blockBreaker.clearHits(dx, dy, dz);
+                blockBreaker.clearHits(dx, dy + 1, dz);
+            }
+            inventory.removeItem(material, 1);
+            return true;
+        }
+
         // Convert material to block type — non-placeable items return null
         BlockType blockType = materialToBlockType(material);
         if (blockType == null) {
@@ -255,8 +274,6 @@ public class BlockPlacer {
                 return BlockType.SLATE;
             case PEBBLEDASH:
                 return BlockType.PEBBLEDASH;
-            case DOOR:
-                return BlockType.DOOR_WOOD;
             case LINOLEUM:
                 return BlockType.LINOLEUM;
             case LINO_GREEN:
