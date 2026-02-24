@@ -1,8 +1,12 @@
 package ragamuffin.world;
 
 import com.badlogic.gdx.math.Vector3;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -331,20 +335,8 @@ public class WorldGenerator {
         generateStreets(world);
 
         // ===== HIGH STREET (along positive X from park, z=20 street) =====
-        // South side of high street (z=25, buildings face north toward street)
-        generateShopWithSign(world, 20, 25, 7, 8, 4, BlockType.BRICK, BlockType.SIGN_YELLOW, LandmarkType.GREGGS);
-        generateShopWithSign(world, 28, 25, 6, 8, 4, BlockType.BRICK, BlockType.SIGN_RED, LandmarkType.OFF_LICENCE);
-        generateShopWithSign(world, 35, 25, 7, 8, 4, BlockType.BRICK, BlockType.SIGN_GREEN, LandmarkType.CHARITY_SHOP);
-        generateShopWithSign(world, 43, 25, 6, 8, 4, BlockType.GLASS, BlockType.SIGN_WHITE, LandmarkType.JEWELLER);
-        generateShopWithSign(world, 50, 25, 7, 8, 4, BlockType.BRICK, BlockType.SIGN_GREEN, LandmarkType.BOOKIES);
-        generateShopWithSign(world, 58, 25, 7, 8, 4, BlockType.BRICK, BlockType.SIGN_RED, LandmarkType.KEBAB_SHOP);
-
-        // North side of high street (z=8, buildings face south toward street)
-        generateShopWithSign(world, 20, 8, 7, 8, 4, BlockType.BRICK, BlockType.SIGN_BLUE, LandmarkType.TESCO_EXPRESS);
-        generateShopWithSign(world, 28, 8, 8, 8, 4, BlockType.BRICK, BlockType.SIGN_WHITE, LandmarkType.LAUNDERETTE);
-        generateShopWithSign(world, 37, 8, 8, 8, 5, BlockType.BRICK, BlockType.SIGN_RED, LandmarkType.PUB);
-        generateShopWithSign(world, 46, 8, 7, 8, 4, BlockType.BRICK, BlockType.SIGN_YELLOW, LandmarkType.PAWN_SHOP);
-        generateShopWithSign(world, 54, 8, 8, 8, 4, BlockType.BRICK, BlockType.SIGN_YELLOW, LandmarkType.BUILDERS_MERCHANT);
+        // Shop type assignments are shuffled per seed for layout variety.
+        generateHighStreet(world);
 
         // ===== OFFICE BUILDING (tall, near high street) =====
         generateOfficeBuilding(world, 70, 20, 15, 15, 12);
@@ -355,18 +347,28 @@ public class WorldGenerator {
         world.addLandmark(new Landmark(LandmarkType.JOB_CENTRE, -60, 0, 25, 12, 6, 12)); // roof at y=6
 
         // ===== TERRACED HOUSES — multiple rows =====
+        // Heights vary per seed for layout variety (base 6, varies by ±1).
+        Random rowRng = new Random(seed ^ 0xBEEF1234L);
+        int[] rowHeights = {
+            5 + rowRng.nextInt(3),  // Row 1: 5-7
+            5 + rowRng.nextInt(3),  // Row 2: 5-7
+            5 + rowRng.nextInt(3),  // Row 3: 5-7
+            5 + rowRng.nextInt(3),  // Row 4: 5-7
+            5 + rowRng.nextInt(3),  // Row 5: 5-7
+            5 + rowRng.nextInt(3),  // Row 6: 5-7
+        };
         // Row 1: south of park, south side
-        generateTerracedRow(world, -70, -25, 8, 8, 6, 10);
+        generateTerracedRow(world, -70, -25, 8, 8, rowHeights[0], 10);
         // Row 2: south of park, north side (across the street)
-        generateTerracedRow(world, -70, -41, 8, 8, 6, 10);
+        generateTerracedRow(world, -70, -41, 8, 8, rowHeights[1], 10);
         // Row 3: further south
-        generateTerracedRow(world, -70, -55, 8, 8, 6, 10);
+        generateTerracedRow(world, -70, -55, 8, 8, rowHeights[2], 10);
         // Row 4: east of park
-        generateTerracedRow(world, 20, -25, 8, 8, 6, 8);
+        generateTerracedRow(world, 20, -25, 8, 8, rowHeights[3], 8);
         // Row 5: west residential area
-        generateTerracedRow(world, -70, 30, 8, 8, 6, 8);
+        generateTerracedRow(world, -70, 30, 8, 8, rowHeights[4], 8);
         // Row 6: another row facing opposite way
-        generateTerracedRow(world, -70, 46, 8, 8, 6, 8);
+        generateTerracedRow(world, -70, 46, 8, 8, rowHeights[5], 8);
 
         // Garden walls between terraced rows
         generateGardenWalls(world, -70, -33, 80, 1);
@@ -374,11 +376,17 @@ public class WorldGenerator {
         generateGardenWalls(world, -70, 38, 64, 1);
 
         // ===== INDUSTRIAL ESTATE (northeast corner) =====
-        generateWarehouse(world, 60, -40, 20, 15, 8);
-        world.addLandmark(new Landmark(LandmarkType.WAREHOUSE, 60, 0, -40, 20, 9, 15)); // roof at y=9
-        generateWarehouse(world, 60, -60, 18, 12, 7);
-        generateWarehouse(world, 82, -40, 16, 14, 8);
-        generateWarehouse(world, 82, -58, 14, 12, 7);
+        // Warehouse heights vary per seed.
+        Random warehouseRng = new Random(seed ^ 0xCAFE5678L);
+        int wh1 = 7 + warehouseRng.nextInt(3); // 7-9
+        int wh2 = 6 + warehouseRng.nextInt(3); // 6-8
+        int wh3 = 7 + warehouseRng.nextInt(3); // 7-9
+        int wh4 = 6 + warehouseRng.nextInt(3); // 6-8
+        generateWarehouse(world, 60, -40, 20, 15, wh1);
+        world.addLandmark(new Landmark(LandmarkType.WAREHOUSE, 60, 0, -40, 20, wh1 + 1, 15));
+        generateWarehouse(world, 60, -60, 18, 12, wh2);
+        generateWarehouse(world, 82, -40, 16, 14, wh3);
+        generateWarehouse(world, 82, -58, 14, 12, wh4);
         // Industrial fence
         generateGardenWalls(world, 58, -65, 44, 2);
 
@@ -724,6 +732,102 @@ public class WorldGenerator {
                     world.setBlock(streetX, -1, z, BlockType.STONE);
                 }
             }
+        }
+    }
+
+    // ==================== HIGH STREET ====================
+
+    /**
+     * Generate the high street with seed-shuffled shop assignments.
+     * Building footprints and positions are fixed (required for terrain/collision tests),
+     * but which shop occupies each slot varies by seed to increase replayability.
+     */
+    private void generateHighStreet(World world) {
+        Random layoutRng = new Random(seed ^ 0xDEADBEEFL);
+
+        // --- South side slots (z=25) ---
+        // Each slot: {x, width, depth}
+        int[][] southSlots = {
+            {20, 7, 8},
+            {28, 6, 8},
+            {35, 7, 8},
+            {43, 6, 8},
+            {50, 7, 8},
+            {58, 7, 8},
+        };
+        // Shop assignments for south side (shuffled per seed)
+        List<LandmarkType> southShops = new ArrayList<>(Arrays.asList(
+            LandmarkType.GREGGS,
+            LandmarkType.OFF_LICENCE,
+            LandmarkType.CHARITY_SHOP,
+            LandmarkType.JEWELLER,
+            LandmarkType.BOOKIES,
+            LandmarkType.KEBAB_SHOP
+        ));
+        Collections.shuffle(southShops, layoutRng);
+
+        // Wall materials and sign colours mapped to landmark type for thematic consistency
+        for (int i = 0; i < southSlots.length; i++) {
+            int[] slot = southSlots[i];
+            LandmarkType type = southShops.get(i);
+            BlockType wall = wallForShop(type);
+            BlockType sign = signForShop(type);
+            generateShopWithSign(world, slot[0], 25, slot[1], slot[2], 4, wall, sign, type);
+        }
+
+        // --- North side slots (z=8) ---
+        int[][] northSlots = {
+            {20, 7, 8},
+            {28, 8, 8},
+            {37, 8, 8},
+            {46, 7, 8},
+            {54, 8, 8},
+        };
+        List<LandmarkType> northShops = new ArrayList<>(Arrays.asList(
+            LandmarkType.TESCO_EXPRESS,
+            LandmarkType.LAUNDERETTE,
+            LandmarkType.PUB,
+            LandmarkType.PAWN_SHOP,
+            LandmarkType.BUILDERS_MERCHANT
+        ));
+        Collections.shuffle(northShops, layoutRng);
+
+        int[] northHeights = {4, 4, 5, 4, 4};
+        for (int i = 0; i < northSlots.length; i++) {
+            int[] slot = northSlots[i];
+            LandmarkType type = northShops.get(i);
+            BlockType wall = wallForShop(type);
+            BlockType sign = signForShop(type);
+            generateShopWithSign(world, slot[0], 8, slot[1], slot[2], northHeights[i], wall, sign, type);
+        }
+    }
+
+    /** Returns the wall block type appropriate for a given shop landmark. */
+    private BlockType wallForShop(LandmarkType type) {
+        switch (type) {
+            case JEWELLER: return BlockType.GLASS;
+            case TESCO_EXPRESS: return BlockType.BRICK;
+            case PUB: return BlockType.BRICK;
+            case LAUNDERETTE: return BlockType.BRICK;
+            default: return BlockType.BRICK;
+        }
+    }
+
+    /** Returns the sign colour appropriate for a given shop landmark. */
+    private BlockType signForShop(LandmarkType type) {
+        switch (type) {
+            case GREGGS: return BlockType.SIGN_YELLOW;
+            case OFF_LICENCE: return BlockType.SIGN_RED;
+            case CHARITY_SHOP: return BlockType.SIGN_GREEN;
+            case JEWELLER: return BlockType.SIGN_WHITE;
+            case BOOKIES: return BlockType.SIGN_GREEN;
+            case KEBAB_SHOP: return BlockType.SIGN_RED;
+            case TESCO_EXPRESS: return BlockType.SIGN_BLUE;
+            case LAUNDERETTE: return BlockType.SIGN_WHITE;
+            case PUB: return BlockType.SIGN_RED;
+            case PAWN_SHOP: return BlockType.SIGN_YELLOW;
+            case BUILDERS_MERCHANT: return BlockType.SIGN_YELLOW;
+            default: return BlockType.SIGN_BLUE;
         }
     }
 
