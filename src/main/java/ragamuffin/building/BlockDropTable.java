@@ -232,9 +232,12 @@ public class BlockDropTable {
                 return Material.BROKEN_PHONE;
             }
         } else if (landmark == LandmarkType.CASH_CONVERTER || landmark == LandmarkType.PAWN_SHOP) {
-            // Cash Converter/pawn shop drops dodgy DVDs and broken phones
+            // Cash Converter/pawn shop drops dodgy DVDs, broken phones, and loose change
             if (blockType == BlockType.BRICK || blockType == BlockType.GLASS) {
-                return Math.random() < 0.5 ? Material.DODGY_DVD : Material.BROKEN_PHONE;
+                double roll = Math.random();
+                if (roll < 0.33) return Material.DODGY_DVD;
+                else if (roll < 0.66) return Material.BROKEN_PHONE;
+                else return Math.random() < 0.5 ? Material.SHILLING : Material.PENNY;
             }
         } else if (landmark == LandmarkType.FIRE_STATION) {
             // Fire station drops fire extinguishers
