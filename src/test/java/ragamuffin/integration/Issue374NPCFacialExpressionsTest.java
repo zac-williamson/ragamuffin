@@ -97,9 +97,9 @@ class Issue374NPCFacialExpressionsTest {
         npc.setState(NPCState.FLEEING);
         assertEquals(FacialExpression.SCARED, npc.getFacialExpression());
 
-        // Police approach — they return to neutral (complaining)
+        // Police approach — they complain (disgusted expression)
         npc.setState(NPCState.COMPLAINING);
-        assertEquals(FacialExpression.NEUTRAL, npc.getFacialExpression());
+        assertEquals(FacialExpression.DISGUSTED, npc.getFacialExpression());
     }
 
     @Test

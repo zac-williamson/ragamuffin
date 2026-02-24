@@ -49,6 +49,9 @@ public class NPC {
         this.health = type.getMaxHealth();
         this.attackCooldown = 0f;
         this.alive = true;
+        // Stagger initial blink timer so nearby NPCs don't all blink simultaneously.
+        // Use a deterministic offset based on position so it's consistent across frames.
+        this.blinkTimer = (Math.abs(x * 7.3f + z * 3.1f) % blinkInterval);
     }
 
     public NPCType getType() {
@@ -152,6 +155,21 @@ public class NPC {
             facingAngle = (float) Math.toDegrees(Math.atan2(velocity.x, velocity.z));
             animTime += delta;
         }
+
+        // Update blink cycle — NPCs blink periodically
+        if (state != NPCState.KNOCKED_OUT) {
+            blinkTimer += delta;
+            if (!blinking && blinkTimer >= blinkInterval) {
+                blinking = true;
+                blinkTimer = 0f;
+            } else if (blinking && blinkTimer >= blinkDuration) {
+                blinking = false;
+                blinkTimer = 0f;
+            }
+        } else {
+            // Knocked-out NPCs have eyes closed
+            blinking = true;
+        }
     }
 
     public float getFacingAngle() {
@@ -201,6 +219,12 @@ public class NPC {
     private float knockedOutTimer = 0f; // how long NPC has been in KNOCKED_OUT state
     private float stuckTimer = 0f;     // time spent stuck against obstacle
     private Vector3 lastPosition = null; // position last frame for stuck detection
+
+    // Blink animation state
+    private float blinkTimer = 0f;       // counts up; resets after each blink cycle
+    private float blinkInterval = 3.5f;  // seconds between blinks (varies per NPC)
+    private float blinkDuration = 0.12f; // seconds the eyes stay shut
+    private boolean blinking = false;    // true while eyes are shut
 
     // Stolen items — tracks what this NPC has stolen from the player so it can be recovered
     private final List<Material> stolenItems = new ArrayList<>();
@@ -371,9 +395,28 @@ public class NPC {
             case PHOTOGRAPHING:
             case POINTING:
                 return FacialExpression.SURPRISED;
+            case COMPLAINING:
+            case STEALING:
+                return FacialExpression.DISGUSTED;
             default:
                 return FacialExpression.NEUTRAL;
         }
+    }
+
+    /**
+     * Returns true while the NPC's eyes are shut (mid-blink).
+     * Used by the renderer to substitute a closed-eye face.
+     */
+    public boolean isBlinking() {
+        return blinking;
+    }
+
+    /**
+     * Returns true when the NPC's mouth should appear open — i.e. while speaking.
+     * The renderer uses this to animate the mouth for speech.
+     */
+    public boolean isMouthOpen() {
+        return isSpeaking();
     }
 
     /**
