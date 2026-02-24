@@ -495,8 +495,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
             }
 
-            // Handle UI toggles
-            handleUIInput();
+            // Handle UI toggles — suppress while opening cinematic is playing
+            if (!openingSequence.isActive()) {
+                handleUIInput();
+            }
 
             // Handle state transitions
             if (inputHandler.isEscapePressed()) {
