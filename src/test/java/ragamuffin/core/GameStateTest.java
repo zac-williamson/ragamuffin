@@ -10,6 +10,12 @@ class GameStateTest {
         assertNotNull(GameState.MENU);
         assertNotNull(GameState.PLAYING);
         assertNotNull(GameState.PAUSED);
+        assertNotNull(GameState.CINEMATIC);
+    }
+
+    @Test
+    void cinematicStateDoesNotAcceptInput() {
+        assertFalse(GameState.CINEMATIC.acceptsInput());
     }
 
     @Test

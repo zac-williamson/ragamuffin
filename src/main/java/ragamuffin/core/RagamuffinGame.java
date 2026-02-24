@@ -78,6 +78,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     private MainMenuScreen mainMenuScreen;
     private OpeningSequence openingSequence;
 
+    // Issue #373: Opening cinematic cut-scene (city fly-through)
+    private ragamuffin.ui.CinematicCamera cinematicCamera;
+
     // Phase 11: CRITIC 1 Improvements
     private InteractionSystem interactionSystem;
     private HealingSystem healingSystem;
@@ -281,6 +284,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         mainMenuScreen = new MainMenuScreen();
         openingSequence = new OpeningSequence();
 
+        // Issue #373: Initialize cinematic camera for city fly-through
+        cinematicCamera = new ragamuffin.ui.CinematicCamera();
+
         // Phase 11: Initialize CRITIC 1 systems
         interactionSystem = new InteractionSystem();
         healingSystem = new HealingSystem();
@@ -461,6 +467,59 @@ public class RagamuffinGame extends ApplicationAdapter {
         } else if (state == GameState.MENU) {
             handleMenuInput();
             renderMenu();
+        } else if (state == GameState.CINEMATIC) {
+            // Issue #373: City fly-through cinematic cut-scene
+            cinematicCamera.update(delta);
+
+            // Allow any key / click to skip
+            if (inputHandler.isEnterPressed() || inputHandler.isJumpPressed()
+                    || inputHandler.isLeftClickPressed() || inputHandler.isEscapePressed()) {
+                cinematicCamera.skip();
+                inputHandler.resetEnter();
+                inputHandler.resetJump();
+                inputHandler.resetLeftClick();
+                inputHandler.resetEscape();
+            }
+
+            // Transition to PLAYING once cinematic completes
+            if (cinematicCamera.isCompleted()) {
+                finishCinematic();
+            } else {
+                // Position main camera at the cinematic camera's interpolated location
+                camera.position.set(cinematicCamera.getPosition());
+                camera.lookAt(cinematicCamera.getLookAt());
+                camera.up.set(com.badlogic.gdx.math.Vector3.Y);
+                camera.update();
+
+                // Render the 3D world from the cinematic camera viewpoint
+                Gdx.gl.glClearColor(skyR, skyG, skyB, 1f);
+                Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
+
+                // Render skybox (sun/clouds) without advancing time
+                skyRenderer.update(delta);
+                {
+                    float ts = 10.0f; // Fixed time: mid-morning for the cinematic
+                    float sr = timeSystem.getSunriseTime();
+                    float ss = timeSystem.getSunsetTime();
+                    skyRenderer.renderSkybox(shapeRenderer, ts, sr, ss,
+                                             Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
+                                             false, 0f);
+                }
+                Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
+
+                modelBatch.begin(camera);
+                chunkRenderer.render(modelBatch, environment);
+                modelBatch.end();
+
+                // Render letterbox and skip hint overlay
+                int sw = Gdx.graphics.getWidth();
+                int sh = Gdx.graphics.getHeight();
+                com.badlogic.gdx.math.Matrix4 proj = new com.badlogic.gdx.math.Matrix4();
+                proj.setToOrtho2D(0, 0, sw, sh);
+                spriteBatch.setProjectionMatrix(proj);
+                shapeRenderer.setProjectionMatrix(proj);
+                cinematicCamera.render(spriteBatch, shapeRenderer, font, sw, sh);
+            }
         } else if (state == GameState.PLAYING) {
             // Apply mouse look FIRST — before any game logic — to eliminate perceived lag.
             // This ensures the camera direction is always up-to-date when the frame renders.
@@ -855,17 +914,33 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private void startNewGame() {
-        // Transition to playing and start opening sequence
-        state = GameState.PLAYING;
-        openingSequence.start();
+        // Issue #373: Play city fly-through cinematic before the text opening sequence,
+        // unless the player has enabled "Skip Intro" in the menu.
         if (mainMenuScreen.isSkipIntroEnabled()) {
+            // Skip both cinematic and text sequence — jump straight into gameplay
+            state = GameState.PLAYING;
+            openingSequence.start();
             openingSequence.skip();
+        } else {
+            // Start the cinematic fly-through first; gameplay begins when it finishes
+            state = GameState.CINEMATIC;
+            cinematicCamera.start();
         }
-        Gdx.input.setCursorCatched(true);
+        Gdx.input.setCursorCatched(false); // Free cursor during cinematic; re-catch when playing starts
         // Reset per-session counters
         if (greggsRaidSystem != null) {
             greggsRaidSystem.reset();
         }
+    }
+
+    /**
+     * Called when the cinematic fly-through finishes (or is skipped).
+     * Transitions to PLAYING and starts the text-based opening sequence.
+     */
+    private void finishCinematic() {
+        state = GameState.PLAYING;
+        openingSequence.start();
+        Gdx.input.setCursorCatched(true);
     }
 
     private void renderLoadingScreen() {
@@ -2055,13 +2130,20 @@ public class RagamuffinGame extends ApplicationAdapter {
         // on the first hit of a new session (prevents banner from being suppressed).
         prevDamageFlashIntensity = 0f;
 
-        // Transition to playing with opening sequence
-        state = GameState.PLAYING;
-        openingSequence.start();
+        // Issue #373: Reset cinematic camera for the new session
+        cinematicCamera = new ragamuffin.ui.CinematicCamera();
+
+        // Transition: cinematic fly-through first (unless skip intro is on)
         if (mainMenuScreen.isSkipIntroEnabled()) {
+            state = GameState.PLAYING;
+            openingSequence.start();
             openingSequence.skip();
+            Gdx.input.setCursorCatched(true);
+        } else {
+            state = GameState.CINEMATIC;
+            cinematicCamera.start();
+            Gdx.input.setCursorCatched(false);
         }
-        Gdx.input.setCursorCatched(true);
     }
 
     private void transitionToPlaying() {
