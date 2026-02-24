@@ -21,5 +21,9 @@ public enum NPCState {
     DEMOLISHING,    // Council builder demolishing structure
     KNOCKED_BACK,   // Council builder knocked back (Phase 7)
     FLEEING,        // Civilian fleeing from notorious player
-    KNOCKED_OUT     // NPC defeated/incapacitated in combat
+    KNOCKED_OUT,    // NPC defeated/incapacitated in combat
+    ATTACKING,      // NPC performing an attack animation
+    WAVING,         // NPC waving at the player
+    DANCING,        // NPC doing a dance animation
+    POINTING        // NPC pointing at something
 }
