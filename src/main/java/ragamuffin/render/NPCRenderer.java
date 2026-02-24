@@ -675,28 +675,37 @@ public class NPCRenderer {
 
         float yawRad = (float) Math.toRadians(yaw);
 
-        // Torso (static)
-        setPartTransform(inst[PART_TORSO], pos, yawRad, 0f, torsoCentre, 0f);
+        // Idle breathing sway — subtle vertical torso shift when stationary
+        float idleBreath = (speed < 0.01f)
+            ? 0.008f * (float) Math.sin(npc.getIdleTime() * 1.2f)
+            : 0f;
+
+        // Torso (with idle breath offset)
+        setPartTransform(inst[PART_TORSO], pos, yawRad, 0f, torsoCentre + idleBreath, 0f);
         modelBatch.render(inst[PART_TORSO], environment);
 
-        // Shoulders (static, wider than torso)
-        setPartTransform(inst[PART_SHOULDERS], pos, yawRad, 0f, shoulderY, 0f);
+        // Shoulders (with idle breath offset)
+        setPartTransform(inst[PART_SHOULDERS], pos, yawRad, 0f, shoulderY + idleBreath, 0f);
         modelBatch.render(inst[PART_SHOULDERS], environment);
 
-        // Neck (static)
-        setPartTransform(inst[PART_NECK], pos, yawRad, 0f, neckY + NECK_H / 2f, 0f);
+        // Head — bobs slightly with the walk cycle for a more natural gait;
+        // also rises slightly with the idle breath
+        float headBob = (speed < 0.01f) ? idleBreath
+            : 0.025f * Math.abs((float) Math.sin(animT * WALK_SPEED));
+
+        // Neck follows head bob
+        setPartTransform(inst[PART_NECK], pos, yawRad, 0f, neckY + NECK_H / 2f + headBob * 0.5f, 0f);
         modelBatch.render(inst[PART_NECK], environment);
 
-        // Head (static)
-        setPartTransform(inst[PART_HEAD], pos, yawRad, 0f, headCentre, 0f);
+        setPartTransform(inst[PART_HEAD], pos, yawRad, 0f, headCentre + headBob, 0f);
         modelBatch.render(inst[PART_HEAD], environment);
 
         // Face (front of head at +Z) — select model based on current expression and blink/speak state
-        renderFace(modelBatch, environment, npc, pos, yawRad, headCentre, HEAD_D / 2f + 0.011f);
+        renderFace(modelBatch, environment, npc, pos, yawRad, headCentre + headBob, HEAD_D / 2f + 0.011f);
 
-        // Helmet (police only)
+        // Helmet (police only) — follows head bob
         if (inst.length > PART_HELMET) {
-            float helmetY = headCentre + HEAD_H / 2f + 0.02f;
+            float helmetY = headCentre + headBob + HEAD_H / 2f + 0.02f;
             setPartTransform(inst[PART_HELMET], pos, yawRad, 0f, helmetY, 0f);
             modelBatch.render(inst[PART_HELMET], environment);
         }
@@ -1365,9 +1374,21 @@ public class NPCRenderer {
             0f, bodyCentreY + 0.10f, headZ + 0.26f / 2f + 0.011f);
         modelBatch.render(inst[8], environment);
 
-        // 3 - Tail (at -Z, the back of the dog)
+        // 3 - Tail (at -Z, the back of the dog) — wags when moving, slow idle wag otherwise
         float tailZ = -(0.65f / 2f + 0.03f);
-        setPartTransform(inst[3], pos, yawRad, 0f, bodyCentreY + 0.15f, tailZ);
+        float wagTime = (speed >= 0.01f) ? animT * WALK_SPEED * 1.5f : npc.getIdleTime() * 0.8f;
+        float tailWagAngle = (float) Math.sin(wagTime) * (speed >= 0.01f ? 35f : 12f);
+        float tailWagRad = (float) Math.toRadians(tailWagAngle);
+        // Tail pivots from the rear of the body and wags side-to-side (around Y axis)
+        float cosW = (float) Math.cos(yawRad + tailWagRad);
+        float sinW = (float) Math.sin(yawRad + tailWagRad);
+        float tailWagZ = -tailZ; // distance from origin to tail along body axis
+        float tailWorldX = pos.x + (-tailWagZ) * sinW;
+        float tailWorldZ = pos.z + (-tailWagZ) * cosW;
+        tmpTransform.idt();
+        tmpTransform.setToTranslation(tailWorldX, pos.y + bodyCentreY + 0.15f, tailWorldZ);
+        tmpTransform.rotate(Vector3.Y, (float) Math.toDegrees(yawRad + tailWagRad));
+        inst[3].transform.set(tmpTransform);
         modelBatch.render(inst[3], environment);
 
         // 4-7: Legs with walk animation (front at +Z, back at -Z)

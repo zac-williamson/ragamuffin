@@ -154,6 +154,9 @@ public class NPC {
         if (hSpeedSq > 0.001f) {
             facingAngle = (float) Math.toDegrees(Math.atan2(velocity.x, velocity.z));
             animTime += delta;
+            idleTime = 0f;
+        } else {
+            idleTime += delta;
         }
 
         // Update blink cycle — NPCs blink periodically
@@ -182,6 +185,14 @@ public class NPC {
 
     public float getAnimTime() {
         return animTime;
+    }
+
+    /**
+     * Returns how long (in seconds) the NPC has been continuously stationary.
+     * Resets to zero whenever the NPC starts moving. Used for idle animations.
+     */
+    public float getIdleTime() {
+        return idleTime;
     }
 
     /**
@@ -219,6 +230,7 @@ public class NPC {
     private float knockedOutTimer = 0f; // how long NPC has been in KNOCKED_OUT state
     private float stuckTimer = 0f;     // time spent stuck against obstacle
     private Vector3 lastPosition = null; // position last frame for stuck detection
+    private float idleTime = 0f;       // accumulated time the NPC has been stationary (for idle animations)
 
     // Blink animation state
     private float blinkTimer = 0f;       // counts up; resets after each blink cycle
