@@ -128,6 +128,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #450: Achievement system
     private ragamuffin.ui.AchievementSystem achievementSystem;
     private ragamuffin.ui.AchievementsUI achievementsUI;
+
+    // Issue #464: Quest log UI
+    private ragamuffin.ui.QuestLogUI questLogUI;
     private float distanceTravelledAchievement = 0f; // accumulated metres walked
     private com.badlogic.gdx.math.Vector3 lastPlayerPosForDistance = null;
 
@@ -342,6 +345,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         achievementSystem.setOnNotificationShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
         distanceTravelledAchievement = 0f;
         lastPlayerPosForDistance = new com.badlogic.gdx.math.Vector3(player.getPosition());
+
+        // Issue #464: Initialize quest log UI
+        questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
 
         loadingComplete = true;
         state = GameState.MENU;
@@ -1326,8 +1332,23 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Quest log toggle (Q key)
+        if (inputHandler.isQuestLogPressed()) {
+            boolean wasVisible = questLogUI.isVisible();
+            questLogUI.toggle();
+            soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
+            inputHandler.resetQuestLog();
+            // Clear sticky punch state when the quest log overlay opens
+            if (!wasVisible) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
+        }
+
         // Release cursor when any overlay UI is open, re-catch when all closed
-        boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible() || achievementsUI.isVisible();
+        boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
+                || achievementsUI.isVisible() || questLogUI.isVisible();
         Gdx.input.setCursorCatched(!uiOpen);
 
         // Hotbar selection
@@ -1415,6 +1436,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetDown();
             }
             inputHandler.resetScroll();
+        } else if (questLogUI.isVisible()) {
+            // Forward UP/DOWN to quest log scroll; discard scroll wheel
+            if (inputHandler.isUpPressed()) {
+                questLogUI.scrollUp();
+                inputHandler.resetUp();
+            }
+            if (inputHandler.isDownPressed()) {
+                questLogUI.scrollDown();
+                inputHandler.resetDown();
+            }
+            inputHandler.resetScroll();
         } else if (inventoryUI.isVisible() || helpUI.isVisible()) {
             // Discard scroll when inventory or help UI is open so it doesn't carry over to the hotbar
             inputHandler.resetScroll();
@@ -1431,7 +1463,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     private boolean isUIBlocking() {
-        return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible() || achievementsUI.isVisible();
+        return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
+                || achievementsUI.isVisible() || questLogUI.isVisible();
     }
 
     /**
@@ -2215,6 +2248,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Render achievements overlay if visible
         if (achievementsUI.isVisible()) {
             achievementsUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Issue #464: Render quest log overlay if visible
+        if (questLogUI.isVisible()) {
+            questLogUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
 
         // Render damage flash overlay

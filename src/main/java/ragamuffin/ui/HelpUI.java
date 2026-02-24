@@ -22,6 +22,7 @@ public class HelpUI {
             "I - Open/close Inventory\n" +
             "H - Open/close Help\n" +
             "C - Open/close Crafting menu\n" +
+            "Q - Open/close Quest Log\n" +
             "E - Interact with objects/NPCs\n" +
             "1-9 - Select hotbar slot\n" +
             "ESC - Pause menu\n\n" +
