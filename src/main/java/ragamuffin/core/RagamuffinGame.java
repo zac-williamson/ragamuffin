@@ -1187,8 +1187,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                 if (clicked == 0) {
                     transitionToPlaying();
                 } else if (clicked == 1) {
-                    restartGame();
+                    achievementsUI.toggle();
                 } else if (clicked == 2) {
+                    restartGame();
+                } else if (clicked == 3) {
                     Gdx.app.exit();
                 }
                 inputHandler.resetLeftClick();
