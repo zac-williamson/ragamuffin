@@ -1442,41 +1442,13 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     /**
      * Find an NPC within punch reach.
+     *
+     * <p>Fix #242: Delegates to {@link NPCHitDetector#findNPCInReach} which uses a
+     * widened hit cone (~26° instead of the old ~10°) for more forgiving aim.
      */
     private NPC findNPCInReach(Vector3 cameraPos, Vector3 direction, float reach) {
-        NPC closestNPC = null;
-        float closestDistance = reach;
-
-        // First, find the nearest solid block along the ray — can't punch NPCs behind walls
-        RaycastResult blockHit = blockBreaker.getTargetBlock(world, cameraPos, direction, reach);
-        float blockDistance = (blockHit != null) ? cameraPos.dst(blockHit.getBlockX() + 0.5f,
-            blockHit.getBlockY() + 0.5f, blockHit.getBlockZ() + 0.5f) : reach;
-
-        for (NPC npc : npcManager.getNPCs()) {
-            // Dead NPCs cannot be punched
-            if (!npc.isAlive()) continue;
-
-            // Calculate distance to NPC centre (at chest height)
-            float npcCentreY = npc.getPosition().y + NPC.HEIGHT * 0.5f;
-            float dx = npc.getPosition().x - cameraPos.x;
-            float dy = npcCentreY - cameraPos.y;
-            float dz = npc.getPosition().z - cameraPos.z;
-            float distance = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-            if (distance > reach || distance > blockDistance) {
-                continue; // Too far or behind a block
-            }
-
-            // Check if NPC is in front of camera (tight cone — ~10 degrees)
-            float invDist = 1f / distance;
-            float dot = (dx * invDist) * direction.x + (dy * invDist) * direction.y + (dz * invDist) * direction.z;
-            if (dot > 0.985f && distance < closestDistance) {
-                closestNPC = npc;
-                closestDistance = distance;
-            }
-        }
-
-        return closestNPC;
+        return NPCHitDetector.findNPCInReach(cameraPos, direction, reach,
+                npcManager.getNPCs(), blockBreaker, world);
     }
 
     private void renderUI() {
