@@ -2133,6 +2133,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         flashProj.setToOrtho2D(0, 0, screenWidth, screenHeight);
         shapeRenderer.setProjectionMatrix(flashProj);
 
+        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
@@ -2169,6 +2170,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         shapeRenderer.end();
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
+        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
     }
 
     /**
@@ -2184,6 +2186,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
 
         // Dark red overlay
+        Gdx.gl.glDisable(GL20.GL_DEPTH_TEST);
         Gdx.gl.glEnable(GL20.GL_BLEND);
         Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
 
@@ -2193,6 +2196,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         shapeRenderer.end();
 
         Gdx.gl.glDisable(GL20.GL_BLEND);
+        Gdx.gl.glEnable(GL20.GL_DEPTH_TEST);
 
         // Death message centred on screen
         spriteBatch.begin();
