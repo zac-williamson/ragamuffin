@@ -182,8 +182,10 @@ class Issue233NPCToNPCDialogueTest {
         assertNotNull(bystander);
 
         // Place player close enough to keep the aggressor in AGGRESSIVE state
-        // (updateAggressive de-escalates to WANDERING when player is > 40 blocks away)
-        Player nearPlayer = new Player(5, 1, 5);
+        // (updateAggressive de-escalates to WANDERING when player is > 40 blocks away).
+        // Position is far enough that the NPC cannot close within melee range in 500 frames
+        // (2 blocks/s × 8.3 s = ~16.7 blocks, leaving >20 blocks gap), so no attack speech fires.
+        Player nearPlayer = new Player(39, 1, 0);
         aggressor.setState(NPCState.AGGRESSIVE);
 
         // Run many frames

@@ -61,6 +61,7 @@ public class BlockBreaker {
             case TREE_TRUNK:
             case LEAVES:
             case GRASS:
+            case STAIRS:
                 return 5; // soft blocks
             case BRICK:
             case STONE:
