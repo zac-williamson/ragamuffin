@@ -2448,6 +2448,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         } else if (craftingUI.isVisible()) {
             craftingUI.hide();
             Gdx.input.setCursorCatched(true);
+        } else if (questLogUI.isVisible()) {
+            questLogUI.hide();
+            Gdx.input.setCursorCatched(true);
         } else if (state == GameState.PLAYING) {
             transitionToPaused();
         } else if (state == GameState.PAUSED) {
