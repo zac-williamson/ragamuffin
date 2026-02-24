@@ -832,6 +832,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             // weather (#341), and other timer-based systems in the PAUSED branch.
             gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
+            // Fix #391: Advance block damage decay timer while paused so partially-damaged
+            // blocks continue decaying toward zero. Without this, the player can exploit
+            // the pause menu to freeze block decay indefinitely and resume with blocks
+            // still at the same damage level — bypassing the decay mechanic entirely.
+            blockBreaker.tickDecay(delta);
+
             // Fix #367: Process pending arrest even while paused so the flag doesn't persist as a ghost.
             // Without this, if police set arrestPending=true on the same frame the player opens ESC,
             // the flag is never evaluated until the game unpauses — causing an invisible "ghost arrest"
