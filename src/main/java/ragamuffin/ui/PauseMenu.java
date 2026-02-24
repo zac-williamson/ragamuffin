@@ -12,12 +12,14 @@ public class PauseMenu {
     private boolean visible;
     private int selectedOption;
     private static final int OPTION_RESUME = 0;
-    private static final int OPTION_RESTART = 1;
-    private static final int OPTION_QUIT = 2;
-    private static final int NUM_OPTIONS = 3;
+    private static final int OPTION_ACHIEVEMENTS = 1;
+    private static final int OPTION_RESTART = 2;
+    private static final int OPTION_QUIT = 3;
+    private static final int NUM_OPTIONS = 4;
 
     private static final String[] OPTIONS = {
         "Resume",
+        "Achievements",
         "Restart",
         "Quit"
     };
@@ -116,6 +118,10 @@ public class PauseMenu {
         return selectedOption == OPTION_RESUME;
     }
 
+    public boolean isAchievementsSelected() {
+        return selectedOption == OPTION_ACHIEVEMENTS;
+    }
+
     public boolean isRestartSelected() {
         return selectedOption == OPTION_RESTART;
     }
@@ -125,7 +131,7 @@ public class PauseMenu {
     }
 
     /**
-     * Handle mouse click. Returns the selected option index (0=Resume, 1=Restart, 2=Quit)
+     * Handle mouse click. Returns the selected option index (0=Resume, 1=Achievements, 2=Restart, 3=Quit)
      * or -1 if click was not on any option.
      * screenX/screenY are in LibGDX screen coords (0,0 = top-left).
      */
