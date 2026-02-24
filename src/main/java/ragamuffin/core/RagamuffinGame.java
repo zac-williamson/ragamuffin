@@ -1903,6 +1903,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         spawnInitialNPCs();
 
         // Reset time and lighting
+        // Fix #337: Remove old directional light from environment before creating new
+        // LightingSystem, so the catch-block fallback in getDirectionalLightFromEnvironment
+        // does not accumulate an extra DirectionalLight on every restart.
+        lightingSystem.dispose();
         timeSystem = new TimeSystem(8.0f);
         lightingSystem = new LightingSystem(environment);
         clockHUD = new ClockHUD();
