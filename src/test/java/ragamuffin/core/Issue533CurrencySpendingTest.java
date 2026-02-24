@@ -150,7 +150,7 @@ class Issue533CurrencySpendingTest {
     // --- Shopkeeper NPC interaction with currency ---
 
     @Test
-    void shopkeeperInteraction_withShillings_triggersPurchase() {
+    void shopkeeperInteraction_withShillings_firstPressSHowsMenu_secondPressBuys() {
         InteractionSystem system = new InteractionSystem();
         NPCManager npcManager = new NPCManager();
         NPC shopkeeper = npcManager.spawnNPC(NPCType.SHOPKEEPER, 0, 0, -1f);
@@ -158,18 +158,27 @@ class Issue533CurrencySpendingTest {
         Inventory inv = new Inventory(36);
         inv.addItem(Material.SHILLING, 5);
 
-        String dialogue = system.interactWithNPC(shopkeeper, inv);
+        // First E-press: should open the shop menu, NOT purchase anything
+        String firstDialogue = system.interactWithNPC(shopkeeper, inv);
+        assertNotNull(firstDialogue, "First E-press should return shop menu dialogue");
+        assertEquals(0, inv.getItemCount(Material.SAUSAGE_ROLL),
+            "No purchase should happen on first E-press");
+        assertEquals(5, inv.getItemCount(Material.SHILLING),
+            "Shillings should be unchanged after first E-press");
+        assertTrue(shopkeeper.isShopMenuOpen(), "Shop menu should be open after first E-press");
 
-        assertNotNull(dialogue, "Shopkeeper should return dialogue when player has shillings");
-        // After interaction, player should have a food item (sausage roll costs 2 shillings)
-        int sausageRolls = inv.getItemCount(Material.SAUSAGE_ROLL);
-        int remainingShillings = inv.getItemCount(Material.SHILLING);
-        assertEquals(1, sausageRolls, "Player should receive a sausage roll");
-        assertEquals(3, remainingShillings, "Player should have 3 shillings remaining");
+        // Second E-press: should complete the purchase
+        String secondDialogue = system.interactWithNPC(shopkeeper, inv);
+        assertNotNull(secondDialogue, "Second E-press should return purchase dialogue");
+        assertEquals(1, inv.getItemCount(Material.SAUSAGE_ROLL),
+            "Player should receive a sausage roll after second E-press");
+        assertEquals(3, inv.getItemCount(Material.SHILLING),
+            "Player should have 3 shillings remaining after purchase");
+        assertFalse(shopkeeper.isShopMenuOpen(), "Shop menu should be closed after purchase");
     }
 
     @Test
-    void shopkeeperInteraction_withPenniesOnly_buysCrisps() {
+    void shopkeeperInteraction_withPenniesOnly_twoStepBuysCrisps() {
         InteractionSystem system = new InteractionSystem();
         NPCManager npcManager = new NPCManager();
         NPC shopkeeper = npcManager.spawnNPC(NPCType.SHOPKEEPER, 0, 0, -1f);
@@ -177,11 +186,19 @@ class Issue533CurrencySpendingTest {
         Inventory inv = new Inventory(36);
         inv.addItem(Material.PENNY, 8);
 
-        String dialogue = system.interactWithNPC(shopkeeper, inv);
+        // First E-press: opens shop menu
+        String firstDialogue = system.interactWithNPC(shopkeeper, inv);
+        assertNotNull(firstDialogue);
+        assertEquals(0, inv.getItemCount(Material.CRISPS),
+            "No purchase on first E-press");
+        assertEquals(8, inv.getItemCount(Material.PENNY),
+            "Pennies unchanged after first E-press");
 
-        assertNotNull(dialogue);
+        // Second E-press: completes purchase
+        String secondDialogue = system.interactWithNPC(shopkeeper, inv);
+        assertNotNull(secondDialogue);
         assertEquals(1, inv.getItemCount(Material.CRISPS),
-            "Player should receive crisps for pennies");
+            "Player should receive crisps for pennies on second E-press");
         assertEquals(2, inv.getItemCount(Material.PENNY),
             "Player should have 2 pennies remaining");
     }
