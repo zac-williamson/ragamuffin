@@ -46,7 +46,7 @@ public class BuildingQuestRegistry {
             new Quest("jeweller_diamond", "Andre",
                 "Someone nicked a diamond from my display. Bring it back and I'll reward you handsomely.",
                 ObjectiveType.COLLECT, Material.DIAMOND, 1,
-                Material.SCRATCH_CARD, 3));
+                Material.SHILLING, 5));
 
         register(LandmarkType.JOB_CENTRE,
             new Quest("jobcentre_form", "Jobcentre Advisor",
@@ -82,7 +82,7 @@ public class BuildingQuestRegistry {
             new Quest("pawnshop_electronics", "Cash4Gold Manager",
                 "Got a punter after a computer. Find me one and I'll cut you in.",
                 ObjectiveType.COLLECT, Material.COMPUTER, 1,
-                Material.DIAMOND, 1));
+                Material.SHILLING, 3));
 
         register(LandmarkType.CHIPPY,
             new Quest("chippy_chips", "Tony",
@@ -94,7 +94,7 @@ public class BuildingQuestRegistry {
             new Quest("newsagent_paper", "Patel",
                 "My newspaper delivery never showed. Bring me 3 newspapers and I'll see you right.",
                 ObjectiveType.COLLECT, Material.NEWSPAPER, 3,
-                Material.SCRATCH_CARD, 2));
+                Material.PENNY, 6));
 
         register(LandmarkType.GP_SURGERY,
             new Quest("surgery_meds", "Northfield Surgery Receptionist",
@@ -148,7 +148,7 @@ public class BuildingQuestRegistry {
             new Quest("cashconverter_dvd", "Cash Converters Manager",
                 "Customer wants a dodgy DVD — don't ask. Bring one in and I'll pay over the odds.",
                 ObjectiveType.COLLECT, Material.DODGY_DVD, 1,
-                Material.SCRATCH_CARD, 3));
+                Material.PENNY, 12));
 
         register(LandmarkType.LIBRARY,
             new Quest("library_textbook", "Northfield Library",

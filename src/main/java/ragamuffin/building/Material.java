@@ -82,7 +82,9 @@ public enum Material {
     CARDBOARD_BOX("Cardboard Box"),
     ANTIDEPRESSANTS("Antidepressants"),
     STAIRS("Stairs"),
-    LADDER("Ladder");
+    LADDER("Ladder"),
+    SHILLING("Shilling"),
+    PENNY("Penny");
 
     private final String displayName;
 
@@ -154,6 +156,12 @@ public enum Material {
                                            0.60f, 0.45f, 0.22f);  // Darker riser side
             case LADDER:         return cs(0.58f, 0.40f, 0.18f,   // Rung front
                                            0.45f, 0.30f, 0.12f);  // Darker rail
+
+            // Currency
+            case SHILLING:       return cs(0.78f, 0.72f, 0.35f,   // Silver-gold shilling
+                                           0.60f, 0.55f, 0.22f);
+            case PENNY:          return cs(0.72f, 0.38f, 0.15f,   // Copper penny
+                                           0.55f, 0.28f, 0.08f);
 
             // Diamond — cyan/white sparkle
             case DIAMOND:        return cs(0.65f, 0.95f, 1.00f,
@@ -256,6 +264,9 @@ public enum Material {
             case STAPLER:
             // Diamond is a gem, not a block
             case DIAMOND:
+            // Currency coins
+            case SHILLING:
+            case PENNY:
                 return false;
             default:
                 return true;
@@ -318,6 +329,8 @@ public enum Material {
             case SCRATCH_CARD:
             case BROKEN_PHONE:
             case DODGY_DVD:
+            case SHILLING:
+            case PENNY:
                 return IconShape.CARD;
 
             case DIAMOND:
