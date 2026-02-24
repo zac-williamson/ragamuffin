@@ -1730,6 +1730,18 @@ public class NPCManager {
     }
 
     /**
+     * Tick knockback recovery timers for all NPCs by delta seconds.
+     * Called in the PAUSED branch so knockback velocity is cleared on schedule even while
+     * the game is paused, preventing the player from exploiting pause to extend NPC stagger
+     * indefinitely (Fix #405).
+     */
+    public void tickKnockbackTimers(float delta) {
+        for (NPC npc : npcs) {
+            npc.updateKnockback(delta);
+        }
+    }
+
+    /**
      * Update police spawning — police patrol at night (seasonal: after sunset, before sunrise).
      * At dawn, all police are despawned. At night, officers are spawned up to the cap based on
      * player notoriety.
