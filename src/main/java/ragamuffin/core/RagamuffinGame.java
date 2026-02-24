@@ -1953,6 +1953,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
         footstepDustTimer = 0f;
         rainTimer = 0f;
+        // Fix #345: Reset SoundSystem footstep timer so the first footstep of the new session
+        // is not fired early due to a mid-cycle timer value carried over from the previous session.
+        soundSystem.resetFootstepTimer();
 
         // Fix #299: Clear sticky punch state so auto-punch doesn't fire in the first frame
         // of the new game session (mirrors the same reset in transitionToPaused() and on death).
