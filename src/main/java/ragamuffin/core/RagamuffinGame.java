@@ -2524,6 +2524,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         npcManager = new NPCManager();
         npcManager.setBlockBreaker(blockBreaker);
         spawnInitialNPCs();
+        spawnBuildingNPCs(); // Fix #479: spawn quest-giver NPCs inside buildings on restart
 
         // Reset time and lighting
         // Fix #337: Remove old directional light from environment before creating new
@@ -2542,6 +2543,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         tooltipSystem = new TooltipSystem();
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
         interactionSystem = new InteractionSystem();
+        // Fix #479: Recreate questLogUI bound to the fresh registry so old quests don't bleed in
+        questLogUI = new ragamuffin.ui.QuestLogUI(interactionSystem.getQuestRegistry());
         healingSystem = new HealingSystem();
         // Issue #166: Sync HealingSystem position after teleport so the next update()
         // does not compute a spurious speed from the restart spawn distance.
@@ -2584,6 +2587,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetCrafting();
         inputHandler.resetAchievements();
         inputHandler.resetInteract();
+        inputHandler.resetQuestLog(); // Fix #479: prevent stale Q-key from re-opening log on frame 1
         // Fix #461: Hide achievements overlay so it does not persist across game restarts.
         achievementsUI.hide();
         // Fix #365: Clear stale leftClickReleased flag so the inventory drag-and-drop
