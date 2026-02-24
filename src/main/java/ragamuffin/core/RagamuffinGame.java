@@ -86,6 +86,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 12: CRITIC 2 Improvements
     private WeatherSystem weatherSystem;
 
+    // Issue #234: Exposure system — shelter protection from weather effects
+    private ExposureSystem exposureSystem;
+
     // CRITIC 5: Arrest system — applies penalties when police catch the player
     private ArrestSystem arrestSystem;
 
@@ -281,6 +284,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 12: Initialize CRITIC 2 systems
         weatherSystem = new WeatherSystem();
+
+        // Issue #234: Initialize exposure system
+        exposureSystem = new ExposureSystem();
 
         // CRITIC 5: Initialize arrest system
         arrestSystem = new ArrestSystem();
@@ -537,19 +543,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                         player.damage(5.0f * delta, DamageReason.STARVATION);
                     }
 
-                    // Phase 12: Apply weather energy drain multiplier
-                    float weatherMultiplier = weatherSystem.getCurrentWeather().getEnergyDrainMultiplier();
+                    // Issue #234: Apply weather energy drain multiplier, shielded by indoor shelter
+                    Weather currentWeather = weatherSystem.getCurrentWeather();
+                    float weatherMultiplier = exposureSystem.getEffectiveEnergyDrainMultiplier(
+                            currentWeather, world, player.getPosition());
                     // Weather affects recovery rate inversely - worse weather = slower recovery
                     player.recoverEnergy(delta / weatherMultiplier);
 
-                    // Phase 12: Cold snap health drain at night when unsheltered
-                    Weather currentWeather = weatherSystem.getCurrentWeather();
-                    if (currentWeather.drainsHealthAtNight() && timeSystem.isNight()) {
-                        boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition());
-                        if (!sheltered) {
-                            float healthDrain = currentWeather.getHealthDrainRate() * delta;
-                            player.damage(healthDrain, DamageReason.WEATHER);
-                        }
+                    // Issue #234: Cold snap health drain at night — shielded by indoor shelter
+                    if (exposureSystem.isExposedToWeatherDamage(currentWeather, timeSystem.isNight(), world, player.getPosition())) {
+                        float healthDrain = currentWeather.getHealthDrainRate() * delta;
+                        player.damage(healthDrain, DamageReason.WEATHER);
                     }
 
                     // Phase 11: Update healing system (gated: no healing while UI is open)
@@ -1743,6 +1747,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         respawnSystem = new RespawnSystem();
         respawnSystem.setSpawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         weatherSystem = new WeatherSystem();
+        exposureSystem = new ExposureSystem();
         arrestSystem = new ArrestSystem();
         arrestSystem.setRespawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         greggsRaidSystem = new GreggsRaidSystem();
