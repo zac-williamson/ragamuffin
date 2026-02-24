@@ -379,7 +379,7 @@ public class InteractionSystem {
         }
 
         // Remind the player of the objective
-        return BuildingQuestRegistry.getQuestReminderLine(quest);
+        return BuildingQuestRegistry.getQuestReminderLine(quest, inventory);
     }
 
     /** The last quest that was completed (for UI feedback). */

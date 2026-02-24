@@ -205,7 +205,20 @@ public class BuildingQuestRegistry {
      * Get the NPC's response when the quest is already active but not completed.
      */
     public static String getQuestReminderLine(Quest quest) {
+        return getQuestReminderLine(quest, null);
+    }
+
+    /**
+     * Get the NPC's response when the quest is already active but not completed.
+     * When an inventory is provided, includes the player's current item count.
+     */
+    public static String getQuestReminderLine(Quest quest, ragamuffin.building.Inventory inventory) {
         if (quest.getType() == Quest.ObjectiveType.COLLECT && quest.getRequiredMaterial() != null) {
+            if (inventory != null) {
+                int current = inventory.getItemCount(quest.getRequiredMaterial());
+                return "You've got " + current + " — still need " + quest.getRequiredCount() + " "
+                    + materialName(quest.getRequiredMaterial()) + " total. Don't let me down.";
+            }
             return "Still waiting on those " + quest.getRequiredCount() + " "
                 + materialName(quest.getRequiredMaterial()) + ". Don't let me down.";
         }
