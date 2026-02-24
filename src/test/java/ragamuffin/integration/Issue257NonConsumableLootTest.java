@@ -147,9 +147,9 @@ class Issue257NonConsumableLootTest {
         assertFalse(message.isEmpty(), "NEWSPAPER tooltip message should not be empty");
         assertTrue(player.getEnergy() > energyBefore,
             "Reading NEWSPAPER should restore some energy");
-        // Item is NOT consumed by useItem (stays in inventory)
-        assertEquals(1, inventory.getItemCount(Material.NEWSPAPER),
-            "NEWSPAPER should NOT be removed from inventory by useItem()");
+        // Item IS consumed by useItem (fix #291)
+        assertEquals(0, inventory.getItemCount(Material.NEWSPAPER),
+            "NEWSPAPER should be removed from inventory by useItem()");
     }
 
     @Test
