@@ -1924,6 +1924,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             particleSystem = new ragamuffin.render.ParticleSystem();
         }
         footstepDustTimer = 0f;
+        rainTimer = 0f;
 
         // Fix #299: Clear sticky punch state so auto-punch doesn't fire in the first frame
         // of the new game session (mirrors the same reset in transitionToPaused() and on death).
