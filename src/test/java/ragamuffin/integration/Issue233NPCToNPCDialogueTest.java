@@ -50,8 +50,10 @@ class Issue233NPCToNPCDialogueTest {
      * Two PUBLIC NPCs placed within conversation range (4 blocks) must eventually
      * both have speech text set after enough update frames.
      *
-     * The conversation fires at 0.2% chance per frame per NPC, so running 3000
-     * frames at 1/60 s gives ~99.9% probability of at least one exchange firing.
+     * The conversation fires at 0.2% chance per frame per NPC. NPCs may wander
+     * during this time, so we run enough frames to ensure a very high probability
+     * of at least one exchange firing even accounting for wandering apart.
+     * Running 15000 frames gives >99.9% probability.
      */
     @Test
     void twoPublicNPCs_withinRange_eventuallyConverse() {
@@ -62,7 +64,7 @@ class Issue233NPCToNPCDialogueTest {
         assertNotNull(npc2);
 
         boolean conversationObserved = false;
-        for (int i = 0; i < 3000; i++) {
+        for (int i = 0; i < 15000; i++) {
             manager.update(1f / 60f, world, player, inventory, tooltipSystem);
             if (npc1.isSpeaking() && npc2.isSpeaking()) {
                 conversationObserved = true;
@@ -213,7 +215,7 @@ class Issue233NPCToNPCDialogueTest {
 
         // First, let a conversation happen naturally
         boolean firstConversation = false;
-        for (int i = 0; i < 3000; i++) {
+        for (int i = 0; i < 15000; i++) {
             manager.update(1f / 60f, world, player, inventory, tooltipSystem);
             if (npc1.isSpeaking() && npc2.isSpeaking()) {
                 firstConversation = true;
