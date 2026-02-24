@@ -194,7 +194,8 @@ public class GangTerritorySystem {
     // Internal helpers
     // -------------------------------------------------------------------------
 
-    /** Set nearby YOUTH_GANG NPCs to AGGRESSIVE and give them something to say. */
+    /** Set nearby YOUTH_GANG NPCs to AGGRESSIVE and give them something to say.
+     *  Also spawns additional attackers so the player always faces a response. */
     private void makeNearbyGangsAggressive(Player player, NPCManager npcManager, World world) {
         Vector3 playerPos = player.getPosition();
         for (NPC npc : npcManager.getNPCs()) {
@@ -207,5 +208,8 @@ public class GangTerritorySystem {
                 }
             }
         }
+        // Spawn additional attackers so the player always faces a gang response,
+        // even if no YOUTH_GANG NPCs happen to be nearby (fixes Issue #493).
+        npcManager.spawnGangAttackers(player, world);
     }
 }

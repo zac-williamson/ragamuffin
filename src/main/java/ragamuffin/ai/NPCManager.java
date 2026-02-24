@@ -1906,6 +1906,30 @@ public class NPCManager {
     }
 
     /**
+     * Spawn 2-3 YOUTH_GANG NPCs near the player in AGGRESSIVE state.
+     * Called by GangTerritorySystem when territory turns hostile to ensure the
+     * player faces attackers even if no gang NPCs happen to be nearby.
+     *
+     * @param player the player (attackers spawn 8-15 blocks away)
+     * @param world  used to find ground height for spawn positions
+     */
+    public void spawnGangAttackers(Player player, World world) {
+        int count = 2 + random.nextInt(2); // 2 or 3
+        for (int i = 0; i < count; i++) {
+            float angle = random.nextFloat() * (float) Math.PI * 2;
+            float distance = 8 + random.nextFloat() * 7;
+            float x = player.getPosition().x + (float) Math.cos(angle) * distance;
+            float z = player.getPosition().z + (float) Math.sin(angle) * distance;
+            float y = findGroundHeight(world, x, z);
+            NPC attacker = spawnNPC(NPCType.YOUTH_GANG, x, y, z);
+            if (attacker == null) break;
+            attacker.setState(NPCState.AGGRESSIVE);
+            attacker.setSpeechText("Wrong ends, bruv!", 3.0f);
+            setNPCTarget(attacker, player.getPosition(), world);
+        }
+    }
+
+    /**
      * Find the ground height at a world position — searches down from y=64 for the first solid block.
      */
     private float findGroundHeight(World world, float x, float z) {
