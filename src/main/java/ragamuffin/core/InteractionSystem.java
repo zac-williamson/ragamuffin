@@ -315,11 +315,28 @@ public class InteractionSystem {
                 dialogue = "*bark*";
                 break;
             case SHOPKEEPER:
-                // If the player has currency, attempt a merchant purchase
+                // Two-step purchase flow (Fix #535):
+                // First E-press: open the shop menu and list available items (only if player has currency).
+                // Second E-press (while menu is open): execute the purchase.
                 if (inventory != null) {
-                    dialogue = handleShopkeeperPurchase(inventory);
-                }
-                if (dialogue == null) {
+                    int shillingsHeld = inventory.getItemCount(Material.SHILLING);
+                    int penniesHeld = inventory.getItemCount(Material.PENNY);
+                    if (npc.isShopMenuOpen()) {
+                        // Second press — complete the purchase
+                        npc.setShopMenuOpen(false);
+                        dialogue = handleShopkeeperPurchase(inventory);
+                        if (dialogue == null) {
+                            dialogue = "We don't seem to have what you need right now.";
+                        }
+                    } else if (shillingsHeld > 0 || penniesHeld > 0) {
+                        // First press and player has currency — open the shop menu
+                        npc.setShopMenuOpen(true);
+                        dialogue = "What'll it be? Sausage roll (2s), energy drink (1s), crisps (6p). Press E again to buy.";
+                    } else {
+                        // No currency — fall through to generic dialogue
+                        dialogue = SHOPKEEPER_DIALOGUE[RANDOM.nextInt(SHOPKEEPER_DIALOGUE.length)];
+                    }
+                } else {
                     dialogue = SHOPKEEPER_DIALOGUE[RANDOM.nextInt(SHOPKEEPER_DIALOGUE.length)];
                 }
                 break;

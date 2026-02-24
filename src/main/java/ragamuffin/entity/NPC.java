@@ -140,6 +140,7 @@ public class NPC {
             speechTimer -= delta;
             if (speechTimer <= 0) {
                 speechText = null;
+                shopMenuOpen = false;
             }
         }
     }
@@ -154,6 +155,9 @@ public class NPC {
             speechTimer -= delta;
             if (speechTimer <= 0) {
                 speechText = null;
+                // Shop menu expires with the speech bubble so a player who walks
+                // away does not find the menu still open on return.
+                shopMenuOpen = false;
             }
         }
 
@@ -258,6 +262,10 @@ public class NPC {
 
     // Building association — set for static quest NPCs stationed inside labelled buildings
     private LandmarkType buildingType = null;
+
+    // Shop interaction state — true when the player has opened the shop menu (first E-press)
+    // and a purchase is awaited on the next E-press.
+    private boolean shopMenuOpen = false;
 
     public boolean isKnockedBack() {
         return knockbackTimer > 0f;
@@ -469,6 +477,21 @@ public class NPC {
      */
     public void setBuildingType(LandmarkType buildingType) {
         this.buildingType = buildingType;
+    }
+
+    /**
+     * Returns true when the shop menu is currently open for this shopkeeper
+     * (the player has pressed E once and is now being shown available items).
+     */
+    public boolean isShopMenuOpen() {
+        return shopMenuOpen;
+    }
+
+    /**
+     * Open or close the shop menu for this shopkeeper NPC.
+     */
+    public void setShopMenuOpen(boolean open) {
+        this.shopMenuOpen = open;
     }
 
     /**
