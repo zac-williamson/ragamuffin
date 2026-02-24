@@ -87,12 +87,16 @@ class Issue263AntidepressantsTest {
         // Consume antidepressants first to set the message
         inventory.addItem(Material.ANTIDEPRESSANTS, 1);
         interactionSystem.consumeFood(Material.ANTIDEPRESSANTS, player, inventory);
-        assertNotNull(interactionSystem.getLastConsumeMessage());
+        String antidepressantsMsg = interactionSystem.getLastConsumeMessage();
+        assertNotNull(antidepressantsMsg);
 
-        // Consume a regular food item — message should be cleared (null for items with no message)
+        // Consume another food item — each consumable now sets its own distinct message
         inventory.addItem(Material.SAUSAGE_ROLL, 1);
         interactionSystem.consumeFood(Material.SAUSAGE_ROLL, player, inventory);
-        assertNull(interactionSystem.getLastConsumeMessage(),
-            "lastConsumeMessage should be null after consuming an item that sets no message");
+        String sausageRollMsg = interactionSystem.getLastConsumeMessage();
+        assertNotNull(sausageRollMsg,
+            "lastConsumeMessage should be set after consuming SAUSAGE_ROLL (Issue #271 fix)");
+        assertNotEquals(antidepressantsMsg, sausageRollMsg,
+            "Each consumable should have its own distinct feedback message");
     }
 }
