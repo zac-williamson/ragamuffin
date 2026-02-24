@@ -200,19 +200,20 @@ public class WorldGeneratorTest {
     public void testMultipleTerracedHouseRows() {
         generator.generateWorld(world);
 
-        // Count terraced house buildings by scanning for brick walls
-        // Check that there are houses in at least 3 different Z-row areas
+        // Count terraced house rows by scanning a wide area south and north of the park.
+        // Building positions are seed-derived, so we search a broad range of Z values
+        // rather than checking hardcoded coordinates.
         int rowsWithHouses = 0;
-        int[] zPositions = {-25, -41, -55, -30, 30, 46}; // Expected terraced row Z positions
-        for (int rowZ : zPositions) {
+        // Scan Z from -120 to +80 in 4-block steps, covering the full residential belt.
+        for (int rowZ = -120; rowZ <= 80; rowZ += 4) {
             int houseCount = 0;
-            for (int x = -70; x < 20; x++) {
+            for (int x = -160; x < 140; x++) {
                 BlockType block = world.getBlock(x, 1, rowZ);
                 if (block == BlockType.BRICK || block == BlockType.GLASS) {
                     houseCount++;
                 }
             }
-            if (houseCount > 20) { // At least some wall blocks
+            if (houseCount > 20) {
                 rowsWithHouses++;
             }
         }
@@ -222,32 +223,39 @@ public class WorldGeneratorTest {
 
     /**
      * Issue #210: Terrain near buildings should be flatter than terrain far away.
-     * Checks that blocks immediately outside building footprints are at ground level (y=0),
-     * and confirms the blended transition means heights rise gradually beyond that.
+     * Uses the Greggs landmark position (which is seed-derived) rather than hardcoded
+     * coordinates, so the test remains valid regardless of the world layout.
      */
     @Test
     public void testTerrainIsFlatterNearBuildings() {
         generator.generateWorld(world);
 
-        // The Greggs shop is at x=20, z=25, size 7x8.
-        // The flat zone margin extends 2 blocks beyond the footprint, so the hard-flat area
-        // runs from x=18..28, z=23..34.  Blocks just inside those edges must be at y=0.
-        // Check several points 1 block inside the hard-flat boundary.
-        assertEquals(0, generator.getTerrainHeight(19, 25),
-            "Terrain 1 block inside Greggs hard-flat margin (west) must be at base height");
-        assertEquals(0, generator.getTerrainHeight(20, 24),
-            "Terrain 1 block inside Greggs hard-flat margin (south) must be at base height");
+        // Find the Greggs landmark — its position is procedurally placed per seed.
+        Landmark greggs = world.getLandmark(LandmarkType.GREGGS);
+        assertNotNull(greggs, "Greggs must exist before terrain test");
+        int gx = (int) greggs.getPosition().x;
+        int gz = (int) greggs.getPosition().z;
+        int gw = greggs.getWidth();
+        int gd = greggs.getDepth();
 
-        // Blocks 4 blocks beyond the hard-flat edge should be lower than blocks 8 blocks beyond,
-        // demonstrating a rising gradient in the blending zone.
-        // We check along the north side (z = 25 + 8 + 2 = 35 is flat edge; blend from z=36 onward).
-        int heightAt4 = generator.getTerrainHeight(20, 38); // 3 blocks into blend zone
-        int heightAt8 = generator.getTerrainHeight(20, 45); // 10 blocks into blend zone (past blend, natural)
+        // The flat zone margin extends 2 blocks beyond the footprint on every side.
+        // A point 1 block inside the hard-flat boundary (i.e. the building footprint itself)
+        // must be at base terrain height (y=0).
+        assertEquals(0, generator.getTerrainHeight(gx, gz),
+            "Terrain at Greggs position must be at base height (inside flat zone)");
+        assertEquals(0, generator.getTerrainHeight(gx - 1, gz),
+            "Terrain 1 block west of Greggs (inside hard-flat margin) must be at base height");
 
-        // The height at 3 blocks into the blend zone must not exceed the height 10 blocks out
-        // (which is at full natural height). This ensures gradient rises, not falls.
-        assertTrue(heightAt4 <= heightAt8,
-            "Terrain height should be <= natural height in the blending zone (heightAt4=" + heightAt4 + ", heightAt8=" + heightAt8 + ")");
+        // Blocks well beyond the building (past the blend zone) may be elevated.
+        // Verify the gradient: a point just past the flat margin should be <= a point
+        // further out (natural terrain rises with distance from town centre).
+        // Check along the north side: flatEdge = gz + gd + 2, blend ends 8 blocks out.
+        int flatEdgeZ = gz + gd + 2;
+        int heightNearEdge = generator.getTerrainHeight(gx, flatEdgeZ + 3);
+        int heightFarEdge  = generator.getTerrainHeight(gx, flatEdgeZ + 11);
+
+        assertTrue(heightNearEdge <= heightFarEdge,
+            "Terrain in blend zone should be <= natural terrain further out (near=" + heightNearEdge + ", far=" + heightFarEdge + ")");
     }
 
     private boolean landmarksOverlap(Landmark a, Landmark b) {

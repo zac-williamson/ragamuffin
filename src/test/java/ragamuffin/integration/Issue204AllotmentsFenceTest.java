@@ -9,6 +9,8 @@ import ragamuffin.entity.NPCType;
 import ragamuffin.test.HeadlessTestHelper;
 import ragamuffin.ui.TooltipSystem;
 import ragamuffin.world.BlockType;
+import ragamuffin.world.Landmark;
+import ragamuffin.world.LandmarkType;
 import ragamuffin.world.World;
 import ragamuffin.entity.Player;
 
@@ -28,9 +30,9 @@ class Issue204AllotmentsFenceTest {
     private NPCManager npcManager;
     private TooltipSystem tooltipSystem;
 
-    // Allotments are placed at (60, 0, -100), width=30, depth=20 by WorldGenerator
-    private static final int ALLOTMENTS_X = 60;
-    private static final int ALLOTMENTS_Z = -100;
+    // Allotments position is seed-derived; look it up from the landmark at runtime.
+    private int ALLOTMENTS_X;
+    private int ALLOTMENTS_Z;
 
     @BeforeEach
     void setUp() {
@@ -40,6 +42,11 @@ class Issue204AllotmentsFenceTest {
         player = new Player(0, 1, 0);
         npcManager = new NPCManager();
         tooltipSystem = new TooltipSystem();
+
+        Landmark allotments = world.getLandmark(LandmarkType.ALLOTMENTS);
+        assertNotNull(allotments, "ALLOTMENTS landmark must exist after world generation");
+        ALLOTMENTS_X = (int) allotments.getPosition().x;
+        ALLOTMENTS_Z = (int) allotments.getPosition().z;
     }
 
     /**
