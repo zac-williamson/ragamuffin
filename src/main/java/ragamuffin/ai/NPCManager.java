@@ -604,8 +604,13 @@ public class NPCManager {
             return;
         }
 
-        // NPCs randomly speak when near player
-        if (!npc.isSpeaking() && npc.isNear(player.getPosition(), 10.0f)) {
+        // NPCs randomly speak when near player — only in calm states
+        NPCState currentState = npc.getState();
+        boolean calmState = currentState != NPCState.AGGRESSIVE && currentState != NPCState.FLEEING
+                && currentState != NPCState.KNOCKED_OUT && currentState != NPCState.KNOCKED_BACK
+                && currentState != NPCState.ARRESTING && currentState != NPCState.WARNING
+                && currentState != NPCState.STEALING && currentState != NPCState.DEMOLISHING;
+        if (calmState && !npc.isSpeaking() && npc.isNear(player.getPosition(), 10.0f)) {
             if (random.nextFloat() < 0.005f) {
                 String speech = getRandomSpeech(npc.getType());
                 if (speech != null) {
