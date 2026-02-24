@@ -1337,6 +1337,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                     decayFloatingLeaves(x, y, z);
                 }
 
+                // Issue #295: remove the companion door half when either door block is broken
+                if (blockType == BlockType.DOOR_LOWER) {
+                    world.setBlock(x, y + 1, z, BlockType.AIR);
+                    blockBreaker.clearHits(x, y + 1, z);
+                    rebuildChunkAt(x, y + 1, z);
+                } else if (blockType == BlockType.DOOR_UPPER) {
+                    world.setBlock(x, y - 1, z, BlockType.AIR);
+                    blockBreaker.clearHits(x, y - 1, z);
+                    rebuildChunkAt(x, y - 1, z);
+                }
+
                 // Only rebuild the affected chunk (and neighbours if on a boundary)
                 rebuildChunkAt(x, y, z);
             }
@@ -1446,6 +1457,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Only rebuild the affected chunk
             if (placementPos != null) {
                 rebuildChunkAt((int) placementPos.x, (int) placementPos.y, (int) placementPos.z);
+                // Issue #295: door placement sets DOOR_LOWER + DOOR_UPPER — rebuild chunk for y+1 too
+                if (material == Material.DOOR) {
+                    rebuildChunkAt((int) placementPos.x, (int) placementPos.y + 1, (int) placementPos.z);
+                }
                 // Cardboard box builds a 2x2x2 structure — rebuild adjacent chunks too
                 if (material == Material.CARDBOARD_BOX) {
                     rebuildChunkAt((int) placementPos.x + 2, (int) placementPos.y, (int) placementPos.z);
