@@ -1881,8 +1881,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         NPC targetNPC = interactionSystem.findNPCInRange(player.getPosition(), tmpDirection, npcManager.getNPCs());
 
         if (targetNPC != null) {
-            // Interact with the NPC
-            String dialogue = interactionSystem.interactWithNPC(targetNPC);
+            // Interact with the NPC — pass inventory so quest NPCs can complete quests
+            String dialogue = interactionSystem.interactWithNPC(targetNPC, inventory);
+            // Show quest completion tooltip if a quest was just completed
+            Quest completed = interactionSystem.pollLastQuestCompleted();
+            if (completed != null) {
+                tooltipSystem.showMessage("Quest complete! " + completed.getGiver() + " is pleased.", 4.0f);
+            }
             // The dialogue is set on the NPC, which will be rendered as a speech bubble
             return;
         }

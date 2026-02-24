@@ -14,6 +14,7 @@ import ragamuffin.core.ShelterDetector;
 import ragamuffin.ui.TooltipSystem;
 import ragamuffin.ui.TooltipTrigger;
 import ragamuffin.world.BlockType;
+import ragamuffin.world.LandmarkType;
 import ragamuffin.world.World;
 
 import java.util.*;
@@ -336,6 +337,26 @@ public class NPCManager {
         }
 
         npcs.add(npc);
+        return npc;
+    }
+
+    /**
+     * Spawn a static building NPC — a SHOPKEEPER stationed inside a labelled building.
+     * The NPC stays near its post (IDLE state, minimal wander) and offers a quest
+     * when the player interacts with it (Issue #440).
+     *
+     * @param buildingType The landmark type this NPC represents
+     * @param x            Interior X position (inside the building)
+     * @param y            Y position (ground level)
+     * @param z            Interior Z position (inside the building)
+     * @return The spawned NPC, or null if the cap is reached
+     */
+    public NPC spawnBuildingNPC(ragamuffin.world.LandmarkType buildingType, float x, float y, float z) {
+        NPC npc = spawnNPC(NPCType.SHOPKEEPER, x, y, z);
+        if (npc != null) {
+            npc.setBuildingType(buildingType);
+            npc.setState(NPCState.IDLE); // Stand still at their post
+        }
         return npc;
     }
 

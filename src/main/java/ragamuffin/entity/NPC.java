@@ -2,6 +2,7 @@ package ragamuffin.entity;
 
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.building.Material;
+import ragamuffin.world.LandmarkType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -255,6 +256,9 @@ public class NPC {
     // Stolen items — tracks what this NPC has stolen from the player so it can be recovered
     private final List<Material> stolenItems = new ArrayList<>();
 
+    // Building association — set for static quest NPCs stationed inside labelled buildings
+    private LandmarkType buildingType = null;
+
     public boolean isKnockedBack() {
         return knockbackTimer > 0f;
     }
@@ -451,6 +455,20 @@ public class NPC {
      */
     public boolean isMouthOpen() {
         return isSpeaking();
+    }
+
+    /**
+     * Get the building type this NPC is associated with, or null if not a building NPC.
+     */
+    public LandmarkType getBuildingType() {
+        return buildingType;
+    }
+
+    /**
+     * Associate this NPC with a labelled building (marks it as a static quest NPC).
+     */
+    public void setBuildingType(LandmarkType buildingType) {
+        this.buildingType = buildingType;
     }
 
     /**
