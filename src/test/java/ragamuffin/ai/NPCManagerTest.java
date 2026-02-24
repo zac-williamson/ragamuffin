@@ -759,4 +759,37 @@ class NPCManagerTest {
         assertFalse(npc.isKnockedBack(),
                 "Fix #405: knockbackTimer must expire via tickKnockbackTimers() even while paused");
     }
+
+    /**
+     * Fix #407: tickRecoveryTimers() must revive a KNOCKED_OUT NPC even while the game is paused.
+     *
+     * Scenario: knock out an NPC, then simulate enough PAUSED-state frames via
+     * tickRecoveryTimers() to exceed KNOCKED_OUT_RECOVERY_DURATION (10 s). The NPC must
+     * be alive and back in WANDERING state once the timer expires.
+     */
+    @Test
+    void tickRecoveryTimersRevivesKnockedOutNPCWhilePaused() {
+        NPC npc = manager.spawnNPC(NPCType.YOUTH_GANG, 10, 1, 10);
+
+        // Punch the NPC until it is knocked out
+        Vector3 punchDir = new Vector3(0, 0, 1);
+        for (int i = 0; i < 10; i++) {
+            manager.punchNPC(npc, punchDir, inventory, tooltipSystem);
+        }
+
+        assertFalse(npc.isAlive(), "NPC must be dead after enough punches");
+        assertEquals(NPCState.KNOCKED_OUT, npc.getState(), "NPC must be in KNOCKED_OUT state");
+
+        // Simulate PAUSED-state ticking for 11 seconds (> 10 s recovery duration).
+        float delta = 1.0f / 60.0f;
+        int frames = (int) (11.0f / delta); // ~660 frames
+        for (int i = 0; i < frames; i++) {
+            manager.tickRecoveryTimers(delta);
+        }
+
+        assertTrue(npc.isAlive(),
+                "Fix #407: NPC must be revived via tickRecoveryTimers() after recovery duration elapses while paused");
+        assertEquals(NPCState.WANDERING, npc.getState(),
+                "Fix #407: revived NPC must return to WANDERING state");
+    }
 }
