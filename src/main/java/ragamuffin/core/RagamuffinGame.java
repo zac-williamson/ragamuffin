@@ -1683,52 +1683,66 @@ public class RagamuffinGame extends ApplicationAdapter {
      * overlay is open so the player cannot accidentally act while using menus.
      */
     private void updatePlayingInput(float delta) {
+        // Fix #553: Suppress punch and place while the shop menu is open so the player
+        // cannot hit the shopkeeper or consume food mid-transaction.
+        boolean shopMenuOpen = activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen();
+
         // Handle punching — single click fires immediately; holding repeats every PUNCH_REPEAT_INTERVAL
-        if (inputHandler.isPunchPressed()) {
-            handlePunch();
-            inputHandler.resetPunch();
-            punchHeldTimer = 0f; // reset repeat timer on fresh click
-            // Capture current target so we can detect target changes
-            RaycastResult _initTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
-            lastPunchTargetKey = (_initTarget != null) ? (_initTarget.getBlockX() + "," + _initTarget.getBlockY() + "," + _initTarget.getBlockZ()) : null;
-        } else if (inputHandler.isPunchHeld()) {
-            // Fix #279: Check for both block and NPC targets so hold-to-punch fires for NPCs too.
-            RaycastResult heldTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
-            String currentTargetKey = (heldTarget != null) ? (heldTarget.getBlockX() + "," + heldTarget.getBlockY() + "," + heldTarget.getBlockZ()) : null;
-            boolean hasNPCTarget = findNPCInReach(camera.position, camera.direction, PUNCH_REACH) != null;
-            // Reset timer only when the block target changes (switched block or block→NPC/none).
-            // Do NOT reset if an NPC is the target and currentTargetKey is null — that would
-            // zero the timer every frame and prevent repeat hits on NPCs (the bug in #279).
-            if (!hasNPCTarget && (currentTargetKey == null || !currentTargetKey.equals(lastPunchTargetKey))) {
-                punchHeldTimer = 0f;
-                lastPunchTargetKey = currentTargetKey;
-            } else if (currentTargetKey != null && !currentTargetKey.equals(lastPunchTargetKey)) {
-                // Block target changed (even while also facing an NPC — unlikely but correct)
-                punchHeldTimer = 0f;
-                lastPunchTargetKey = currentTargetKey;
-            }
-            // Fix #285: When aiming at an NPC with no block target, clear any residual
-            // block break progress immediately (not just on the next repeat tick).
-            if (hasNPCTarget && currentTargetKey == null) {
-                gameHUD.setBlockBreakProgress(0f);
-            }
-            // Any valid target — block OR NPC — should tick the repeat timer
-            if (currentTargetKey != null || hasNPCTarget) {
-                punchHeldTimer += delta;
-                if (punchHeldTimer >= PUNCH_REPEAT_INTERVAL) {
-                    punchHeldTimer -= PUNCH_REPEAT_INTERVAL;
-                    handlePunch();
+        if (!shopMenuOpen) {
+            if (inputHandler.isPunchPressed()) {
+                handlePunch();
+                inputHandler.resetPunch();
+                punchHeldTimer = 0f; // reset repeat timer on fresh click
+                // Capture current target so we can detect target changes
+                RaycastResult _initTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
+                lastPunchTargetKey = (_initTarget != null) ? (_initTarget.getBlockX() + "," + _initTarget.getBlockY() + "," + _initTarget.getBlockZ()) : null;
+            } else if (inputHandler.isPunchHeld()) {
+                // Fix #279: Check for both block and NPC targets so hold-to-punch fires for NPCs too.
+                RaycastResult heldTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
+                String currentTargetKey = (heldTarget != null) ? (heldTarget.getBlockX() + "," + heldTarget.getBlockY() + "," + heldTarget.getBlockZ()) : null;
+                boolean hasNPCTarget = findNPCInReach(camera.position, camera.direction, PUNCH_REACH) != null;
+                // Reset timer only when the block target changes (switched block or block→NPC/none).
+                // Do NOT reset if an NPC is the target and currentTargetKey is null — that would
+                // zero the timer every frame and prevent repeat hits on NPCs (the bug in #279).
+                if (!hasNPCTarget && (currentTargetKey == null || !currentTargetKey.equals(lastPunchTargetKey))) {
+                    punchHeldTimer = 0f;
+                    lastPunchTargetKey = currentTargetKey;
+                } else if (currentTargetKey != null && !currentTargetKey.equals(lastPunchTargetKey)) {
+                    // Block target changed (even while also facing an NPC — unlikely but correct)
+                    punchHeldTimer = 0f;
+                    lastPunchTargetKey = currentTargetKey;
                 }
+                // Fix #285: When aiming at an NPC with no block target, clear any residual
+                // block break progress immediately (not just on the next repeat tick).
+                if (hasNPCTarget && currentTargetKey == null) {
+                    gameHUD.setBlockBreakProgress(0f);
+                }
+                // Any valid target — block OR NPC — should tick the repeat timer
+                if (currentTargetKey != null || hasNPCTarget) {
+                    punchHeldTimer += delta;
+                    if (punchHeldTimer >= PUNCH_REPEAT_INTERVAL) {
+                        punchHeldTimer -= PUNCH_REPEAT_INTERVAL;
+                        handlePunch();
+                    }
+                }
+            } else {
+                // Button released — reset timer and last target
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
             }
         } else {
-            // Button released — reset timer and last target
+            // Shop menu is open — consume and discard any buffered punch/place inputs,
+            // and reset the repeat timer so there is no burst when the menu closes.
+            inputHandler.resetPunch();
             punchHeldTimer = 0f;
             lastPunchTargetKey = null;
         }
 
         // Handle block placement
-        if (inputHandler.isPlacePressed()) {
+        if (!shopMenuOpen && inputHandler.isPlacePressed()) {
             handlePlace();
+            inputHandler.resetPlace();
+        } else if (shopMenuOpen && inputHandler.isPlacePressed()) {
             inputHandler.resetPlace();
         }
 
