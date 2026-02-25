@@ -2396,6 +2396,36 @@ public class WorldGenerator {
         // Park bins
         generateBin(world, parkStart + 3, parkStart + 3);
         generateBin(world, parkStart + PARK_SIZE - 5, parkStart + PARK_SIZE - 5);
+
+        // Statue near the centre of the park (offset slightly from 0,0 to avoid conflicts)
+        generateStatue(world, 4, 4);
+        world.addLandmark(new Landmark(LandmarkType.STATUE, 4, 0, 4, 3, 5, 3));
+    }
+
+    /**
+     * Generate a stone statue — a 3x3 plinth topped by a human-like figure.
+     * The statue is 5 blocks tall: a 1-block-tall plinth base (3x3), a 1-block
+     * pedestal (1x1), and a 3-block-tall stylised figure (1x1 legs, 1x1 torso,
+     * 1x1 head) all made of STATUE blocks.
+     *
+     * @param x western edge of the 3x3 plinth base
+     * @param z northern edge of the 3x3 plinth base
+     */
+    private void generateStatue(World world, int x, int z) {
+        // Plinth base: 3x3, 1 block tall at ground level (y=1)
+        for (int dx = 0; dx < 3; dx++) {
+            for (int dz = 0; dz < 3; dz++) {
+                world.setBlock(x + dx, 1, z + dz, BlockType.STATUE);
+            }
+        }
+        // Pedestal: 1x1, 1 block tall at y=2 (centre of plinth)
+        world.setBlock(x + 1, 2, z + 1, BlockType.STATUE);
+        // Figure legs: y=3
+        world.setBlock(x + 1, 3, z + 1, BlockType.STATUE);
+        // Figure torso: y=4
+        world.setBlock(x + 1, 4, z + 1, BlockType.STATUE);
+        // Figure head: y=5
+        world.setBlock(x + 1, 5, z + 1, BlockType.STATUE);
     }
 
     private void generateLampPost(World world, int x, int z) {

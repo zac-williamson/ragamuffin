@@ -57,7 +57,8 @@ public enum BlockType {
     WOOD_PLANKS(47, true), // Player-placed plank block (distinct from world-gen WOOD; drops PLANKS not WOOD)
     STAIRS(48, true),      // Stair block: half-height step for ascending/descending between layers
     LADDER(49, false),     // Ladder block: climbable thin rungs against a wall face
-    HALF_BLOCK(50, true);  // Half-block slab: a flat 0.5-height slab occupying the lower half of the cell
+    HALF_BLOCK(50, true),  // Half-block slab: a flat 0.5-height slab occupying the lower half of the cell
+    STATUE(51, true);      // Stone statue block: used for park statues and decorative monuments
 
     private final int id;
     private final boolean solid;
@@ -246,6 +247,7 @@ public enum BlockType {
             case TILE_BLACK:
             case LEAVES:
             case CORRUGATED_METAL:
+            case STATUE:
                 return true;
             default:
                 return false;
@@ -279,6 +281,7 @@ public enum BlockType {
 
             case STONE:
             case GARDEN_WALL:
+            case STATUE:
                 // Speckled stone
                 return new Color(
                     clamp01(base.r + variation * 1.5f),
@@ -451,6 +454,7 @@ public enum BlockType {
             case STAIRS:      return new Color(0.60f, 0.45f, 0.22f, 1f); // Warm wood stair sides
             case LADDER:      return new Color(0.58f, 0.40f, 0.18f, 1f); // Weathered wood rung
             case HALF_BLOCK:  return new Color(0.62f, 0.62f, 0.58f, 1f); // Smooth concrete slab
+            case STATUE:      return new Color(0.68f, 0.66f, 0.62f, 1f); // Pale stone grey
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }
@@ -487,6 +491,7 @@ public enum BlockType {
             case STAIRS:      return new Color(0.70f, 0.55f, 0.28f, 1f);  // Lighter stair tread
             case LADDER:      return new Color(0.65f, 0.48f, 0.22f, 1f);  // Top of rung
             case HALF_BLOCK:  return new Color(0.68f, 0.68f, 0.65f, 1f);  // Lighter slab top
+            case STATUE:      return new Color(0.72f, 0.70f, 0.66f, 1f);  // Slightly lighter stone top
             default: return buildSideColor();
         }
     }
