@@ -221,6 +221,22 @@ public class NPCRenderer {
             new Color(0.10f, 0.10f, 0.10f, 1f),
             false);
 
+        // STREET_PREACHER - Dark purple robes with white collar (named NPC: Brother Desmond)
+        buildAndCacheHumanoid(NPCType.STREET_PREACHER,
+            new Color(0.28f, 0.10f, 0.42f, 1f),  // Deep purple robe
+            new Color(0.22f, 0.08f, 0.35f, 1f),  // Darker purple lower robe
+            new Color(0.72f, 0.55f, 0.45f, 1f),  // Darker skin tone
+            new Color(0.08f, 0.08f, 0.08f, 1f),  // Dark eyes
+            false);
+
+        // LOLLIPOP_LADY - Bright yellow hi-vis coat with white hat (named NPC: Maureen)
+        buildAndCacheHumanoid(NPCType.LOLLIPOP_LADY,
+            new Color(0.95f, 0.90f, 0.10f, 1f),  // Bright yellow hi-vis
+            new Color(0.12f, 0.12f, 0.14f, 1f),  // Dark trousers
+            new Color(0.90f, 0.75f, 0.65f, 1f),  // Light peach skin
+            new Color(0.15f, 0.10f, 0.08f, 1f),  // Brown eyes
+            false);
+
         // DOG - Brown quadruped (models only; instances created per-NPC on demand)
         Model[] dParts = buildDogParts(
             new Color(0.55f, 0.35f, 0.18f, 1f),
