@@ -1,8 +1,10 @@
 package ragamuffin.integration;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ragamuffin.core.InputHandler;
+import ragamuffin.test.HeadlessTestHelper;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,6 +23,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class Issue593FinishCinematicStaleInputTest {
 
     private InputHandler inputHandler;
+
+    @BeforeAll
+    static void initGdx() {
+        HeadlessTestHelper.initHeadless();
+    }
 
     @BeforeEach
     void setUp() {

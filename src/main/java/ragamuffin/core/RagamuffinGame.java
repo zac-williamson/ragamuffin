@@ -738,6 +738,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                     activeShopkeeperNPC.setShopMenuOpen(false);
                     activeShopkeeperNPC = null;
                 }
+                // Fix #649: Transition to PLAYING after arrest so the player is not left
+                // stuck in the cinematic fly-through. Mirrors the PAUSED arrest branch
+                // (Fix #627) which calls transitionToPlaying() for the same reason.
+                finishCinematic();
             }
 
             // Fix #437: Advance tooltip timers during the cinematic so queued tooltips
