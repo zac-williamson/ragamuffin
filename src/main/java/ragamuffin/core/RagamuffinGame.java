@@ -3182,6 +3182,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #599: Clear stale enterPressed so Enter-to-resume does not fire crafting confirmation
         // on the first PLAYING frame (mirrors the identical call in transitionToPaused(), finishCinematic(), restartGame())
         inputHandler.resetEnter();
+        // Fix #633: Close and clear any active shop menu so isUIBlocking() returns false
+        // after resume — mirrors the CINEMATIC branch (Fix #623) and the justDied paths (Fix #601/#621).
+        if (activeShopkeeperNPC != null) {
+            activeShopkeeperNPC.setShopMenuOpen(false);
+            activeShopkeeperNPC = null;
+        }
         Gdx.input.setCursorCatched(true);
     }
 
@@ -3233,6 +3239,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #591: Clear stale escapePressed so the first PAUSED frame does not immediately
         // call handleEscapePress() again and bounce back to PLAYING
         inputHandler.resetEscape();
+        // Fix #633: Close and clear any active shop menu so isUIBlocking() returns false
+        // if the player resumes — mirrors the identical guard in transitionToPlaying() and
+        // the CINEMATIC branch (Fix #623). Belt-and-suspenders: ESC normally closes the menu
+        // via handleEscapePress() first, but this guard handles any path that calls
+        // transitionToPaused() directly (e.g. arrest blocks).
+        if (activeShopkeeperNPC != null) {
+            activeShopkeeperNPC.setShopMenuOpen(false);
+            activeShopkeeperNPC = null;
+        }
     }
 
     public GameState getState() {
