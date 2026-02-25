@@ -661,6 +661,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetLeftClickReleased();
                 inputHandler.resetRightClick();
                 inputHandler.resetScroll();
+                // Fix #643: Clear polled movement flags so a held WASD/sprint key does not
+                // cause immediate unwanted movement on the first post-respawn PLAYING frame.
+                inputHandler.resetMovement();
                 // Fix #623: Close any UI overlays left open at the time of death so the player
                 // does not resume with inventory/crafting/help still showing (isUIBlocking() true).
                 // Mirrors the PLAYING (Fix #609) and PAUSED (Fix #617) branches.
@@ -718,6 +721,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetLeftClickReleased();
                 inputHandler.resetRightClick();
                 inputHandler.resetScroll();
+                // Fix #643: Clear polled movement flags so a held WASD/sprint key does not
+                // cause immediate unwanted movement on the first post-arrest PLAYING frame.
+                inputHandler.resetMovement();
                 // Fix #615: Close any UI overlays left open at the time of arrest so
                 // isUIBlocking() returns false on the first PLAYING frame post-arrest.
                 // Mirrors the identical hide() calls in the respawn-completion block.
@@ -1019,6 +1025,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetLeftClickReleased();
                 inputHandler.resetRightClick();
                 inputHandler.resetScroll();
+                // Fix #643: Clear polled movement flags so a held WASD/sprint key does not
+                // cause immediate unwanted movement on the first post-respawn PLAYING frame.
+                inputHandler.resetMovement();
                 // Fix #609: Close any UI overlays left open at the time of death so the player
                 // does not respawn with inventory/crafting/help still showing.
                 inventoryUI.hide();
@@ -1245,6 +1254,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                     inputHandler.resetLeftClickReleased();
                     inputHandler.resetRightClick();
                     inputHandler.resetScroll();
+                    // Fix #643: Clear polled movement flags so a held WASD/sprint key does not
+                    // cause immediate unwanted movement on the first post-respawn PLAYING frame.
+                    inputHandler.resetMovement();
                     // Fix #617: Close any UI overlays left open at the time of death so the player
                     // does not resume with inventory/crafting/help still showing (isUIBlocking() true).
                     inventoryUI.hide();
@@ -1390,6 +1402,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetLeftClickReleased();
                 inputHandler.resetRightClick();
                 inputHandler.resetScroll();
+                // Fix #643: Clear polled movement flags so a held WASD/sprint key does not
+                // cause immediate unwanted movement on the first post-arrest PLAYING frame.
+                inputHandler.resetMovement();
                 // Fix #615: Close any UI overlays left open at the time of arrest so
                 // isUIBlocking() returns false on the first PLAYING frame post-arrest.
                 // Mirrors the identical hide() calls in the respawn-completion block.
@@ -1604,6 +1619,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetRightClick();
         inputHandler.resetEscape();
         inputHandler.resetEnter();
+        // Fix #643: Clear polled movement flags so a held WASD/sprint key does not cause
+        // immediate unwanted movement on the first PLAYING frame after the cinematic ends.
+        inputHandler.resetMovement();
         Gdx.input.setCursorCatched(true);
     }
 
@@ -1964,6 +1982,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetLeftClickReleased();
             inputHandler.resetRightClick();
             inputHandler.resetScroll();
+            // Fix #643: Clear polled movement flags so a held WASD/sprint key does not
+            // cause immediate unwanted movement on the first post-arrest PLAYING frame.
+            inputHandler.resetMovement();
             // Fix #615: Close any UI overlays left open at the time of arrest so
             // isUIBlocking() returns false on the first PLAYING frame post-arrest.
             // Mirrors the identical hide() calls in the respawn-completion block.
@@ -3123,6 +3144,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #585: Clear stale ESC so frame 1 of the new session does not trigger
         // transitionToPaused() (consistent with resetEscape() calls in sibling methods).
         inputHandler.resetEscape();
+        // Fix #643: Clear polled movement flags so a held WASD/sprint key does not cause
+        // immediate unwanted movement on frame 1 of the new session.
+        inputHandler.resetMovement();
         // Fix #331: Recreate firstPersonArm so swinging and swingTimer reset to their defaults
         // (swinging=false, swingTimer=0). Without this, a mid-punch animation from the previous
         // session leaks into the new game, showing the arm in a partially-extended position.
@@ -3205,6 +3229,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #599: Clear stale enterPressed so Enter-to-resume does not fire crafting confirmation
         // on the first PLAYING frame (mirrors the identical call in transitionToPaused(), finishCinematic(), restartGame())
         inputHandler.resetEnter();
+        // Fix #643: Clear polled movement flags so a held WASD/sprint key does not cause
+        // immediate unwanted movement on the first PLAYING frame after transitioning.
+        inputHandler.resetMovement();
         // Fix #633: Close and clear any active shop menu so isUIBlocking() returns false
         // after resume — mirrors the CINEMATIC branch (Fix #623) and the justDied paths (Fix #601/#621).
         if (activeShopkeeperNPC != null) {
@@ -3262,6 +3289,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #591: Clear stale escapePressed so the first PAUSED frame does not immediately
         // call handleEscapePress() again and bounce back to PLAYING
         inputHandler.resetEscape();
+        // Fix #643: Clear polled movement flags so a held WASD/sprint key does not cause
+        // immediate unwanted movement on the first PLAYING frame after resuming from pause.
+        inputHandler.resetMovement();
         // Fix #633: Close and clear any active shop menu so isUIBlocking() returns false
         // if the player resumes — mirrors the identical guard in transitionToPlaying() and
         // the CINEMATIC branch (Fix #623). Belt-and-suspenders: ESC normally closes the menu
