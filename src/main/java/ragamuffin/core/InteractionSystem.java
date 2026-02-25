@@ -330,9 +330,13 @@ public class InteractionSystem {
                             dialogue = "We don't seem to have what you need right now.";
                         }
                     } else if (shillingsHeld > 0 || penniesHeld > 0) {
-                        // First press and player has currency — open the shop menu
+                        // First press and player has currency — open the shop menu.
+                        // Use a longer duration (10 s) so the player has time to read,
+                        // select an item with 1/2/3, and confirm with E. (Fix #551)
                         npc.setShopMenuOpen(true); // also resets selection to 1
                         dialogue = buildShopMenuDialogue(npc, inventory);
+                        npc.setSpeechText(dialogue, 10.0f); // set directly so the generic fallback below is skipped
+                        return dialogue; // return early to skip the generic 3-second setSpeechText call
                     } else {
                         // No currency — fall through to generic dialogue
                         dialogue = SHOPKEEPER_DIALOGUE[RANDOM.nextInt(SHOPKEEPER_DIALOGUE.length)];
@@ -477,7 +481,7 @@ public class InteractionSystem {
         }
         npc.setSelectedShopItem(index);
         String dialogue = buildShopMenuDialogue(npc, inventory);
-        npc.setSpeechText(dialogue, 3.0f);
+        npc.setSpeechText(dialogue, 10.0f); // Fix #551: give player time to confirm with E
         return dialogue;
     }
 
