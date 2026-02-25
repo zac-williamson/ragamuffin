@@ -2789,6 +2789,14 @@ public class RagamuffinGame extends ApplicationAdapter {
         achievementsUI.hide();
         // Fix #565: Hide quest log overlay on state transition (mirrors achievementsUI fix)
         questLogUI.hide();
+        // Fix #567: Defensively hide overlays that should not persist across a pause/resume cycle
+        inventoryUI.hide();
+        craftingUI.hide();
+        helpUI.hide();
+        // Fix #567: Clear stale crafting/hotbar slot so a number key pressed on the same frame
+        // as Resume does not auto-select a recipe on the first PLAYING frame
+        inputHandler.resetCraftingSlot();
+        inputHandler.resetHotbarSlot();
         Gdx.input.setCursorCatched(true);
     }
 
