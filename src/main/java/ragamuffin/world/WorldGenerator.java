@@ -376,6 +376,24 @@ public class WorldGenerator {
 
         // Cemetery
         markFlatZone(45, rz2 - 22, 20, 18);
+
+        // Leisure centre
+        markFlatZone(indX - 30, indZ + 20, 22, 14);
+
+        // Mosque
+        markFlatZone(rx - 20, nrz2 + 20, 14, 12);
+
+        // Estate agent
+        markFlatZone(nx + 43 + 40, hsNorthZ, 8, 8);
+
+        // Supermarket
+        markFlatZone(indX - 30, indZ - 60, 24, 16);
+
+        // Police station
+        markFlatZone(-60 + jobOffX - 20, 25 + jobOffZ + 16, 14, 12);
+
+        // Food bank
+        markFlatZone(rx - 20, rz3 - 20, 12, 10);
     }
 
     /**
@@ -641,6 +659,42 @@ public class WorldGenerator {
         int cemZ = rz2 - 22;
         generateCemetery(world, cemX, cemZ, 20, 18);
         world.addLandmark(new Landmark(LandmarkType.CEMETERY, cemX, 0, cemZ, 20, 3, 18));
+
+        // ===== LEISURE CENTRE =====
+        int lcX = indX - 30;
+        int lcZ = indZ + 20;
+        generateLeisureCentre(world, lcX, lcZ, 22, 14, 6);
+        world.addLandmark(new Landmark(LandmarkType.LEISURE_CENTRE, lcX, 0, lcZ, 22, 8, 14));
+
+        // ===== MOSQUE =====
+        int mosqueX = rx - 20;
+        int mosqueZ = nrz2 + 20;
+        generateMosque(world, mosqueX, mosqueZ, 14, 12, 6);
+        world.addLandmark(new Landmark(LandmarkType.MOSQUE, mosqueX, 0, mosqueZ, 14, 14, 12));
+
+        // ===== ESTATE AGENT =====
+        int eaX = enz + 40;
+        int eaZ = nz;
+        generateEstateAgent(world, eaX, eaZ, 8, 8, 4);
+        world.addLandmark(new Landmark(LandmarkType.ESTATE_AGENT, eaX, 0, eaZ, 8, 6, 8));
+
+        // ===== SUPERMARKET =====
+        int smX = indX - 30;
+        int smZ = indZ - 60;
+        generateSupermarket(world, smX, smZ, 24, 16, 5);
+        world.addLandmark(new Landmark(LandmarkType.SUPERMARKET, smX, 0, smZ, 24, 7, 16));
+
+        // ===== POLICE STATION =====
+        int pstnX = jobX - 20;
+        int pstnZ = jobZ + 16;
+        generatePoliceStation(world, pstnX, pstnZ, 14, 12, 7);
+        world.addLandmark(new Landmark(LandmarkType.POLICE_STATION, pstnX, 0, pstnZ, 14, 9, 12));
+
+        // ===== FOOD BANK =====
+        int fbX = rx - 20;
+        int fbZ = rz3 - 20;
+        generateFoodBank(world, fbX, fbZ, 12, 10, 4);
+        world.addLandmark(new Landmark(LandmarkType.FOOD_BANK, fbX, 0, fbZ, 12, 6, 10));
 
         // Garden walls for extra rows
         generateGardenWalls(world, rx - 40, rz2 + 8, 40, 1);
@@ -1751,6 +1805,292 @@ public class WorldGenerator {
                 }
             }
         }
+    }
+
+    // ==================== LEISURE CENTRE ====================
+
+    /**
+     * Generate a leisure centre — a large flat-roofed brick and concrete building with
+     * wide glass frontage and an attached car park.
+     */
+    private void generateLeisureCentre(World world, int x, int z, int width, int depth, int height) {
+        // Main block: brick lower half, concrete upper half
+        for (int y = 1; y <= height; y++) {
+            for (int dx = 0; dx < width; dx++) {
+                for (int dz = 0; dz < depth; dz++) {
+                    boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                    if (!isWall) continue;
+                    BlockType block;
+                    if (y <= height / 2) {
+                        block = BlockType.BRICK;
+                    } else {
+                        block = BlockType.CONCRETE;
+                    }
+                    // Wide glass frontage on ground and first floor
+                    if (dz == 0 && (y == 1 || y == 2) && dx >= 1 && dx <= width - 2) {
+                        block = BlockType.GLASS;
+                    }
+                    // Clerestory windows near top on side walls
+                    if ((dx == 0 || dx == width - 1) && y == height - 1) {
+                        block = BlockType.GLASS;
+                    }
+                    world.setBlock(x + dx, y, z + dz, block);
+                }
+            }
+        }
+        // Flat concrete roof
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CONCRETE);
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Sign strip across front
+        for (int dx = 0; dx < width; dx++) {
+            world.setBlock(x + dx, height, z, BlockType.SIGN_BLUE);
+        }
+        // Main entrance doors (cleared)
+        world.setBlock(x + width / 2 - 1, 1, z, BlockType.AIR);
+        world.setBlock(x + width / 2,     1, z, BlockType.AIR);
+        world.setBlock(x + width / 2 - 1, 2, z, BlockType.AIR);
+        world.setBlock(x + width / 2,     2, z, BlockType.AIR);
+    }
+
+    // ==================== MOSQUE ====================
+
+    /**
+     * Generate a mosque — rendered white walls with a central dome (stone hemisphere)
+     * and a minaret tower at one corner.
+     */
+    private void generateMosque(World world, int x, int z, int width, int depth, int height) {
+        // Main prayer hall: render white walls
+        for (int y = 1; y <= height; y++) {
+            for (int dx = 0; dx < width; dx++) {
+                for (int dz = 0; dz < depth; dz++) {
+                    boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                    if (!isWall) continue;
+                    BlockType block;
+                    // Arched windows at y=2, y=4
+                    if (y == 2 || y == 4) {
+                        boolean isFrontOrBack = (dz == 0 || dz == depth - 1);
+                        boolean isWindowPos = dx >= 2 && dx <= width - 3 && (dx % 3 == 2);
+                        block = (isFrontOrBack && isWindowPos) ? BlockType.GLASS : BlockType.RENDER_WHITE;
+                    } else {
+                        block = BlockType.RENDER_WHITE;
+                    }
+                    world.setBlock(x + dx, y, z + dz, block);
+                }
+            }
+        }
+        // Flat roof base
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.RENDER_WHITE);
+                world.setBlock(x + dx, 0, z + dz, BlockType.STONE);
+            }
+        }
+        // Central dome — 3x3 stone hemisphere above roof centre
+        int domeX = x + width / 2 - 1;
+        int domeZ = z + depth / 2 - 1;
+        int domeBase = height + 2;
+        // Bottom ring of dome
+        for (int dx = 0; dx < 3; dx++) {
+            for (int dz = 0; dz < 3; dz++) {
+                world.setBlock(domeX + dx, domeBase, domeZ + dz, BlockType.STONE);
+            }
+        }
+        // Top of dome
+        world.setBlock(domeX + 1, domeBase + 1, domeZ + 1, BlockType.STONE);
+        // Sign strip across front
+        for (int dx = 0; dx < width; dx++) {
+            world.setBlock(x + dx, height, z, BlockType.SIGN_GREEN);
+        }
+        // Minaret at front-left corner (narrow tower)
+        int minaretX = x;
+        int minaretZ = z;
+        for (int y = 1; y <= height + 6; y++) {
+            world.setBlock(minaretX, y, minaretZ, BlockType.RENDER_WHITE);
+        }
+        // Minaret cap
+        world.setBlock(minaretX, height + 7, minaretZ, BlockType.STONE);
+        // Entrance door
+        world.setBlock(x + width / 2, 1, z, BlockType.AIR);
+        world.setBlock(x + width / 2, 2, z, BlockType.AIR);
+    }
+
+    // ==================== ESTATE AGENT ====================
+
+    /**
+     * Generate an estate agent — a neat shop-front with a tile-white or render facade,
+     * large display windows showing property listings.
+     */
+    private void generateEstateAgent(World world, int x, int z, int width, int depth, int height) {
+        // Tile white facade
+        for (int y = 1; y <= height; y++) {
+            for (int dx = 0; dx < width; dx++) {
+                for (int dz = 0; dz < depth; dz++) {
+                    boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                    if (!isWall) continue;
+                    BlockType block;
+                    // Full-width display window on ground floor front
+                    if (dz == 0 && y == 1 && dx >= 1 && dx <= width - 2) {
+                        block = BlockType.GLASS;
+                    } else if (dz == 0 && y == 2 && dx >= 1 && dx <= width - 2) {
+                        block = BlockType.GLASS;
+                    } else {
+                        block = BlockType.TILE_WHITE;
+                    }
+                    world.setBlock(x + dx, y, z + dz, block);
+                }
+            }
+        }
+        // Flat concrete roof
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CONCRETE);
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Sign strip
+        for (int dx = 0; dx < width; dx++) {
+            world.setBlock(x + dx, height, z, BlockType.SIGN_RED);
+        }
+        // Door (cleared from display window)
+        world.setBlock(x + width / 2, 1, z, BlockType.AIR);
+        world.setBlock(x + width / 2, 2, z, BlockType.AIR);
+    }
+
+    // ==================== SUPERMARKET ====================
+
+    /**
+     * Generate a supermarket — a large single-storey building with a flat corrugated-metal
+     * roof and wide glass frontage, surrounded by a concrete car park.
+     */
+    private void generateSupermarket(World world, int x, int z, int width, int depth, int height) {
+        // Walls: concrete lower, brick upper
+        for (int y = 1; y <= height; y++) {
+            for (int dx = 0; dx < width; dx++) {
+                for (int dz = 0; dz < depth; dz++) {
+                    boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                    if (!isWall) continue;
+                    BlockType block;
+                    // Large glass frontage spanning most of the front wall
+                    if (dz == 0 && y <= 2 && dx >= 2 && dx <= width - 3) {
+                        block = BlockType.GLASS;
+                    } else {
+                        block = (y <= 2) ? BlockType.CONCRETE : BlockType.BRICK;
+                    }
+                    world.setBlock(x + dx, y, z + dz, block);
+                }
+            }
+        }
+        // Corrugated metal roof
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CORRUGATED_METAL);
+                // Concrete car park floor
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Extended concrete car park in front
+        for (int dx = -2; dx < width + 2; dx++) {
+            for (int dz = -4; dz < 0; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Sign strip
+        for (int dx = 0; dx < width; dx++) {
+            world.setBlock(x + dx, height, z, BlockType.SIGN_RED);
+        }
+        // Entrance doors (wide double doors)
+        for (int dx = width / 2 - 1; dx <= width / 2 + 1; dx++) {
+            world.setBlock(x + dx, 1, z, BlockType.AIR);
+            world.setBlock(x + dx, 2, z, BlockType.AIR);
+        }
+    }
+
+    // ==================== POLICE STATION ====================
+
+    /**
+     * Generate a police station — an imposing stone-and-brick building with barred
+     * windows and a distinctive blue sign.
+     */
+    private void generatePoliceStation(World world, int x, int z, int width, int depth, int height) {
+        // Stone facade — authoritative look
+        for (int y = 1; y <= height; y++) {
+            for (int dx = 0; dx < width; dx++) {
+                for (int dz = 0; dz < depth; dz++) {
+                    boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                    if (!isWall) continue;
+                    BlockType block;
+                    // Small windows (narrow, at y=2 and y=4) — police stations have restricted windows
+                    boolean isFrontOrBack = (dz == 0 || dz == depth - 1);
+                    boolean isNarrowWindow = isFrontOrBack && (y == 2 || y == 4)
+                        && dx >= 2 && dx <= width - 3 && (dx % 4 == 2);
+                    block = isNarrowWindow ? BlockType.GLASS : BlockType.STONE;
+                    world.setBlock(x + dx, y, z + dz, block);
+                }
+            }
+        }
+        // Flat roof
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CONCRETE);
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Blue sign strip
+        for (int dx = 0; dx < width; dx++) {
+            world.setBlock(x + dx, height, z, BlockType.SIGN_BLUE);
+        }
+        // Imposing entrance with wider door opening
+        world.setBlock(x + width / 2 - 1, 1, z, BlockType.AIR);
+        world.setBlock(x + width / 2,     1, z, BlockType.AIR);
+        world.setBlock(x + width / 2 - 1, 2, z, BlockType.AIR);
+        world.setBlock(x + width / 2,     2, z, BlockType.AIR);
+        world.setBlock(x + width / 2 - 1, 3, z, BlockType.AIR);
+        world.setBlock(x + width / 2,     3, z, BlockType.AIR);
+    }
+
+    // ==================== FOOD BANK ====================
+
+    /**
+     * Generate a food bank — a modest converted warehouse or community hall,
+     * brick-built with a flat roof and a prominent sign.
+     */
+    private void generateFoodBank(World world, int x, int z, int width, int depth, int height) {
+        // Simple brick construction — a converted building
+        for (int y = 1; y <= height; y++) {
+            for (int dx = 0; dx < width; dx++) {
+                for (int dz = 0; dz < depth; dz++) {
+                    boolean isWall = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                    if (!isWall) continue;
+                    BlockType block;
+                    // Basic windows at y=2 on front
+                    boolean isFront = (dz == 0);
+                    if (isFront && y == 2 && dx >= 1 && dx <= width - 2) {
+                        block = BlockType.GLASS;
+                    } else {
+                        block = BlockType.BRICK;
+                    }
+                    world.setBlock(x + dx, y, z + dz, block);
+                }
+            }
+        }
+        // Flat concrete roof
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, height + 1, z + dz, BlockType.CONCRETE);
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Green sign strip
+        for (int dx = 0; dx < width; dx++) {
+            world.setBlock(x + dx, height, z, BlockType.SIGN_GREEN);
+        }
+        // Entrance
+        world.setBlock(x + width / 2, 1, z, BlockType.AIR);
+        world.setBlock(x + width / 2, 2, z, BlockType.AIR);
     }
 
     // ==================== BUILDING HELPERS ====================

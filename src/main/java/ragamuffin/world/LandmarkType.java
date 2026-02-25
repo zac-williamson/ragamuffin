@@ -46,7 +46,13 @@ public enum LandmarkType {
     SKATE_PARK,
     CEMETERY,
     UNDERGROUND_BUNKER,
-    SEWER_TUNNEL;
+    SEWER_TUNNEL,
+    LEISURE_CENTRE,
+    MOSQUE,
+    ESTATE_AGENT,
+    SUPERMARKET,
+    POLICE_STATION,
+    FOOD_BANK;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -88,6 +94,12 @@ public enum LandmarkType {
             case FIRE_STATION:      return "Northfield Fire Station";
             case UNDERGROUND_BUNKER: return "Civil Defence Bunker";
             case SEWER_TUNNEL:      return "Sewer System";
+            case LEISURE_CENTRE:    return "Northfield Leisure Centre";
+            case MOSQUE:            return "Al-Noor Mosque";
+            case ESTATE_AGENT:      return "Baxter's Estate Agents";
+            case SUPERMARKET:       return "Aldi";
+            case POLICE_STATION:    return "Northfield Police Station";
+            case FOOD_BANK:         return "Northfield Food Bank";
             default:                return null; // No sign for parks, houses, etc.
         }
     }
