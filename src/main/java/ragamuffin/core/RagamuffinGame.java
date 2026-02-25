@@ -864,6 +864,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetPunchHeld();
                 punchHeldTimer = 0f;
                 lastPunchTargetKey = null;
+                // Fix #601: Close and clear any active shop menu on death so isUIBlocking()
+                // returns false after respawn and player input is not permanently suppressed.
+                if (activeShopkeeperNPC != null) {
+                    activeShopkeeperNPC.setShopMenuOpen(false);
+                    activeShopkeeperNPC = null;
+                }
             }
             boolean wasRespawning = respawnSystem.isRespawning();
             respawnSystem.update(delta, player);
