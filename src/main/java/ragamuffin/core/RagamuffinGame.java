@@ -2864,6 +2864,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // during the pause transition does not fire a spurious UI action on the first PLAYING frame
         inputHandler.resetLeftClick();
         inputHandler.resetLeftClickReleased();
+        // Fix #595: Clear stale escapePressed so ESC-to-resume does not immediately re-pause
+        // on the first PLAYING frame (mirrors the identical call in transitionToPaused() #591)
+        inputHandler.resetEscape();
         Gdx.input.setCursorCatched(true);
     }
 
