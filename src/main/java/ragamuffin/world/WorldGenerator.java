@@ -1056,6 +1056,8 @@ public class WorldGenerator {
             int h = houseHeight + (rowRng.nextInt(3) - 1);
             if (h < 4) h = 4;
             buildHouseVariant(world, cursorX, startZ, w, houseDepth, h, rowRng);
+            // Register each house as a TERRACED_HOUSE landmark (height includes roof + chimney allowance)
+            world.addLandmark(new Landmark(LandmarkType.TERRACED_HOUSE, cursorX, 0, startZ, w, h + 3, houseDepth));
             cursorX += w;
         }
     }
