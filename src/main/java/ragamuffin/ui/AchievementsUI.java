@@ -130,6 +130,7 @@ public class AchievementsUI {
 
             // Alternating row background
             if ((i % 2) == 0) {
+                spriteBatch.end(); // Fix #667: must end spriteBatch before starting shapeRenderer
                 com.badlogic.gdx.Gdx.gl.glEnable(GL20.GL_BLEND);
                 com.badlogic.gdx.Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
