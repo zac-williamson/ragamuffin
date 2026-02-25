@@ -1426,7 +1426,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Release cursor when any overlay UI is open, re-catch when all closed
         boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
-                || achievementsUI.isVisible() || questLogUI.isVisible();
+                || achievementsUI.isVisible() || questLogUI.isVisible()
+                || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen());
         Gdx.input.setCursorCatched(!uiOpen);
 
         // Hotbar selection
