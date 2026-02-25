@@ -179,6 +179,52 @@ class StructureTrackerTest {
                 "Small structure should not be detected");
     }
 
+    /**
+     * Regression test for Issue #646: getLargeStructures() must use LARGE_STRUCTURE_THRESHOLD (50),
+     * not SMALL_STRUCTURE_THRESHOLD (10). Structures with 10–49 blocks must be excluded.
+     */
+    @Test
+    void testGetLargeStructuresExcludesMediumSizedStructures() {
+        // Build a medium structure: 3x2x3 = 18 blocks (>= SMALL_STRUCTURE_THRESHOLD=10, < LARGE_STRUCTURE_THRESHOLD=50)
+        // scanForStructures will add it (>=10 blocks), but getLargeStructures() must exclude it (<50 blocks)
+        for (int x = 10; x < 13; x++) {
+            for (int y = 1; y < 3; y++) {
+                for (int z = 10; z < 13; z++) {
+                    world.setPlayerBlock(x, y, z, BlockType.WOOD);
+                }
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        // getStructures() should include the medium structure (>=10 blocks)
+        assertEquals(1, tracker.getStructures().size(),
+                "Medium structure (18 blocks) should appear in getStructures()");
+
+        // getLargeStructures() must NOT include structures below LARGE_STRUCTURE_THRESHOLD (50)
+        assertEquals(0, tracker.getLargeStructures().size(),
+                "Medium structure (18 blocks) must NOT appear in getLargeStructures() — only structures >=50 blocks qualify");
+    }
+
+    @Test
+    void testGetLargeStructuresIncludesStructuresAtExactThreshold() {
+        // Build exactly 50 blocks (5x2x5 = 50) — should appear in getLargeStructures()
+        for (int x = 50; x < 55; x++) {
+            for (int y = 1; y < 3; y++) {
+                for (int z = 50; z < 55; z++) {
+                    world.setPlayerBlock(x, y, z, BlockType.BRICK);
+                }
+            }
+        }
+
+        tracker.scanForStructures(world);
+
+        assertEquals(1, tracker.getLargeStructures().size(),
+                "Structure with exactly 50 blocks should appear in getLargeStructures()");
+        assertEquals(50, tracker.getLargeStructures().get(0).getComplexity(),
+                "Structure at threshold should have 50 blocks");
+    }
+
     @Test
     void testLargeStructureDetected() {
         // Build 5x5x5 (125 blocks) - above threshold

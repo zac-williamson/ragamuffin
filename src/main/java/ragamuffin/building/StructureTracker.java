@@ -170,7 +170,7 @@ public class StructureTracker {
     public List<Structure> getLargeStructures() {
         List<Structure> large = new ArrayList<>();
         for (Structure s : structures) {
-            if (s.getComplexity() >= SMALL_STRUCTURE_THRESHOLD) {
+            if (s.getComplexity() >= LARGE_STRUCTURE_THRESHOLD) {
                 large.add(s);
             }
         }
