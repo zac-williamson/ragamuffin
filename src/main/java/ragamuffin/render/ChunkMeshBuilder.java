@@ -114,6 +114,9 @@ public class ChunkMeshBuilder {
                         case LADDER_RUNGS:
                             vertexIndex = buildLadder(meshData, vertexIndex, type, x, y, z, worldX, worldY, worldZ);
                             break;
+                        case HALF_SLAB:
+                            vertexIndex = buildHalfSlab(meshData, vertexIndex, type, x, y, z, worldX, worldY, worldZ);
+                            break;
                         default:
                             break;
                     }
@@ -353,6 +356,56 @@ public class ChunkMeshBuilder {
                 rungX1, rungBaseY, z0,  rungX0, rungBaseY, z0,  rungX0, rungTopY, z0,  rungX1, rungTopY, z0,
                 0, 0, -1, rungX1 - rungX0, LADDER_RUNG_HEIGHT);
         }
+
+        return vertexIndex;
+    }
+
+    /**
+     * Build a half-slab geometry.
+     * The slab occupies the full block footprint (x to x+1, z to z+1) at the lower
+     * half of the cell (y to y+0.5). It has a flat top at mid-height, a bottom face,
+     * and four side faces of half height.
+     *
+     * Face count: 6 (bottom + top + north + south + west + east)
+     */
+    private int buildHalfSlab(MeshData meshData, int vertexIndex, BlockType type,
+                              int lx, int ly, int lz,
+                              int worldX, int worldY, int worldZ) {
+        Color color = type.getColor();
+        Color topColor = type.getTopColor();
+        float x0 = lx, x1 = lx + 1.0f;
+        float y0 = ly, yTop = ly + 0.5f;
+        float z0 = lz, z1 = lz + 1.0f;
+
+        // ── Bottom face ────────────────────────────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z0,  x1, y0, z0,  x1, y0, z1,  x0, y0, z1,
+            0, -1, 0, 1.0f, 1.0f);
+
+        // ── Top face (at half height) ──────────────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, topColor,
+            x0, yTop, z1,  x1, yTop, z1,  x1, yTop, z0,  x0, yTop, z0,
+            0, 1, 0, 1.0f, 1.0f);
+
+        // ── North face (z0, facing -Z) ─────────────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, y0, z0,  x0, y0, z0,  x0, yTop, z0,  x1, yTop, z0,
+            0, 0, -1, 1.0f, 0.5f);
+
+        // ── South face (z1, facing +Z) ─────────────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z1,  x1, y0, z1,  x1, yTop, z1,  x0, yTop, z1,
+            0, 0, 1, 1.0f, 0.5f);
+
+        // ── West face (x0, facing -X) ──────────────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x0, y0, z1,  x0, y0, z0,  x0, yTop, z0,  x0, yTop, z1,
+            -1, 0, 0, 1.0f, 0.5f);
+
+        // ── East face (x1, facing +X) ──────────────────────────────────────────
+        vertexIndex = addFace(meshData, vertexIndex, color,
+            x1, y0, z0,  x1, y0, z1,  x1, yTop, z1,  x1, yTop, z0,
+            1, 0, 0, 1.0f, 0.5f);
 
         return vertexIndex;
     }

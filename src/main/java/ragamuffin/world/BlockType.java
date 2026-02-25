@@ -56,7 +56,8 @@ public enum BlockType {
     DOOR_UPPER(46, true),  // Upper half of a 2-block tall door (solid when closed; toggleDoor() writes AIR when open)
     WOOD_PLANKS(47, true), // Player-placed plank block (distinct from world-gen WOOD; drops PLANKS not WOOD)
     STAIRS(48, true),      // Stair block: half-height step for ascending/descending between layers
-    LADDER(49, false);     // Ladder block: climbable thin rungs against a wall face
+    LADDER(49, false),     // Ladder block: climbable thin rungs against a wall face
+    HALF_BLOCK(50, true);  // Half-block slab: a flat 0.5-height slab occupying the lower half of the cell
 
     private final int id;
     private final boolean solid;
@@ -89,6 +90,7 @@ public enum BlockType {
             case DOOR_UPPER:
             case STAIRS:
             case LADDER:
+            case HALF_BLOCK:
                 return false;
             default:
                 return solid; // All other solid blocks are opaque; AIR/WATER are not
@@ -148,7 +150,8 @@ public enum BlockType {
         DOOR_LOWER,
         DOOR_UPPER,
         STAIR_STEP,
-        LADDER_RUNGS
+        LADDER_RUNGS,
+        HALF_SLAB
     }
 
     /**
@@ -160,8 +163,9 @@ public enum BlockType {
             case FENCE_THIN: return BlockShape.FENCE_POST;
             case DOOR_LOWER: return BlockShape.DOOR_LOWER;
             case DOOR_UPPER: return BlockShape.DOOR_UPPER;
-            case STAIRS:     return BlockShape.STAIR_STEP;
-            case LADDER:     return BlockShape.LADDER_RUNGS;
+            case STAIRS:      return BlockShape.STAIR_STEP;
+            case LADDER:      return BlockShape.LADDER_RUNGS;
+            case HALF_BLOCK:  return BlockShape.HALF_SLAB;
             default: return BlockShape.FULL_CUBE;
         }
     }
@@ -210,6 +214,7 @@ public enum BlockType {
             case SIGN_YELLOW:
             case STAIRS:
             case LADDER:
+            case HALF_BLOCK:
                 return true;
             default:
                 return false;
@@ -443,8 +448,9 @@ public enum BlockType {
             case FENCE_THIN: return new Color(0.18f, 0.18f, 0.20f, 1f); // Dark iron, same as IRON_FENCE
             case DOOR_LOWER: return new Color(0.42f, 0.25f, 0.10f, 1f); // Dark oak, same as DOOR_WOOD
             case DOOR_UPPER: return new Color(0.42f, 0.25f, 0.10f, 1f); // Dark oak, same as DOOR_WOOD
-            case STAIRS:     return new Color(0.60f, 0.45f, 0.22f, 1f); // Warm wood stair sides
-            case LADDER:     return new Color(0.58f, 0.40f, 0.18f, 1f); // Weathered wood rung
+            case STAIRS:      return new Color(0.60f, 0.45f, 0.22f, 1f); // Warm wood stair sides
+            case LADDER:      return new Color(0.58f, 0.40f, 0.18f, 1f); // Weathered wood rung
+            case HALF_BLOCK:  return new Color(0.62f, 0.62f, 0.58f, 1f); // Smooth concrete slab
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }
@@ -478,8 +484,9 @@ public enum BlockType {
             case FENCE_THIN: return new Color(0.22f, 0.22f, 0.24f, 1f);  // Dark iron top
             case DOOR_LOWER: return new Color(0.48f, 0.30f, 0.14f, 1f);  // Door top
             case DOOR_UPPER: return new Color(0.48f, 0.30f, 0.14f, 1f);  // Door top
-            case STAIRS:     return new Color(0.70f, 0.55f, 0.28f, 1f);  // Lighter stair tread
-            case LADDER:     return new Color(0.65f, 0.48f, 0.22f, 1f);  // Top of rung
+            case STAIRS:      return new Color(0.70f, 0.55f, 0.28f, 1f);  // Lighter stair tread
+            case LADDER:      return new Color(0.65f, 0.48f, 0.22f, 1f);  // Top of rung
+            case HALF_BLOCK:  return new Color(0.68f, 0.68f, 0.65f, 1f);  // Lighter slab top
             default: return buildSideColor();
         }
     }

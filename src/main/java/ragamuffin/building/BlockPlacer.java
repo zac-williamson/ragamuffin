@@ -376,6 +376,8 @@ public class BlockPlacer {
                 return BlockType.GARDEN_WALL;
             case STAIRS:
                 return BlockType.STAIRS;
+            case HALF_BLOCK:
+                return BlockType.HALF_BLOCK;
             default:
                 return null; // Non-placeable items (food, tools, etc.)
         }

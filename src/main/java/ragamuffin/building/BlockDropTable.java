@@ -54,6 +54,8 @@ public class BlockDropTable {
                 return Material.STAIRS;
             case LADDER:
                 return Material.LADDER;
+            case HALF_BLOCK:
+                return Material.HALF_BLOCK;
             case CARDBOARD:
                 return Material.CARDBOARD;
             case CONCRETE:
