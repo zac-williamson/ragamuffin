@@ -1254,6 +1254,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                 greggsRaidSystem.reset();
                 player.getStreetReputation().removePoints(15);
                 healingSystem.resetPosition(player.getPosition());
+                // Fix #619: Sync distance tracking after arrest teleport so the teleport distance
+                // is not counted as walked distance — mirrors the identical resets in the
+                // respawn-completion block (Fix #459).
+                distanceTravelledAchievement = 0f;
+                lastPlayerPosForDistance.set(player.getPosition());
                 // Fix #613: Reset all event-driven input flags after arrest teleport so stale flags
                 // do not fire as phantom actions on the first PLAYING frame post-arrest.
                 // Mirrors the identical reset in the respawn path and PLAYING arrest branch.
@@ -1819,6 +1824,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Issue #166: Sync HealingSystem position after teleport so the next update()
             // does not compute a spurious speed from the arrest teleport distance.
             healingSystem.resetPosition(player.getPosition());
+            // Fix #619: Sync distance tracking after arrest teleport so the teleport distance
+            // is not counted as walked distance — mirrors the identical resets in the
+            // respawn-completion block (Fix #459).
+            distanceTravelledAchievement = 0f;
+            lastPlayerPosForDistance.set(player.getPosition());
             // Fix #613: Reset all event-driven input flags after arrest teleport so stale flags
             // (e.g. punchHeld=true, leftClickPressed) do not fire as phantom actions on the
             // first PLAYING frame post-arrest. Mirrors the identical reset in the respawn path.
