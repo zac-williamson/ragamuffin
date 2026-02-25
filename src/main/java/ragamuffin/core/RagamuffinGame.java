@@ -2510,9 +2510,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             float sy = tmpCameraPos.y;
 
             String text = npc.getSpeechText();
-            float textWidth = text.length() * 7f; // Approximate
-            float bubbleW = textWidth + 16;
-            float bubbleH = 28;
+            String[] lines = text.split("\n", -1);
+            float lineHeight = 16f;
+            float padding = 12f;
+            float maxLineWidth = 0f;
+            for (String line : lines) {
+                float lw = line.length() * 7f;
+                if (lw > maxLineWidth) maxLineWidth = lw;
+            }
+            float bubbleW = maxLineWidth + padding * 2;
+            float bubbleH = lines.length * lineHeight + padding;
             float bubbleX = sx - bubbleW / 2f;
             float bubbleY = sy;
 
@@ -2525,10 +2532,14 @@ public class RagamuffinGame extends ApplicationAdapter {
             shapeRenderer.end();
             Gdx.gl.glDisable(GL20.GL_BLEND);
 
-            // Draw text
+            // Draw text line by line
             spriteBatch.begin();
             font.setColor(1f, 1f, 1f, 1f);
-            font.draw(spriteBatch, text, bubbleX + 8, bubbleY + bubbleH - 6);
+            float textY = bubbleY + bubbleH - (padding / 2f);
+            for (String line : lines) {
+                font.draw(spriteBatch, line, bubbleX + padding, textY);
+                textY -= lineHeight;
+            }
             spriteBatch.end();
         }
     }
