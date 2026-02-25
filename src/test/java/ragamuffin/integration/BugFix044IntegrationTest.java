@@ -87,18 +87,19 @@ class BugFix044IntegrationTest {
 
     /**
      * Integration Test 2: Council builders DO detect player-built WOOD structures.
-     * Place 15 WOOD blocks (as player-placed) in a connected cluster at (10, 1, 10).
+     * Place 50 WOOD blocks (as player-placed) in a connected cluster at (10, 1, 10).
      * Force scan. Verify exactly one structure is detected and a COUNCIL_BUILDER has spawned.
      */
     @Test
     void playerBuiltWoodStructureTriggersCouncilBuilders() {
-        // Place 15 WOOD blocks in a connected cluster (3x5x1) as player-placed
-        for (int x = 10; x < 13; x++) {
-            for (int y = 1; y < 6; y++) {
+        // Place 50 WOOD blocks in a connected cluster (5x10x1) as player-placed
+        // — above the LARGE_STRUCTURE_THRESHOLD of 50 which triggers COUNCIL_BUILDER spawning
+        for (int x = 10; x < 15; x++) {
+            for (int y = 1; y < 11; y++) {
                 world.setPlayerBlock(x, y, 10, BlockType.WOOD);
             }
         }
-        // That's 3*5 = 15 WOOD blocks — above the 10-block threshold
+        // That's 5*10 = 50 WOOD blocks — meets the large structure threshold
 
         // Force structure scan
         npcManager.forceStructureScan(world, tooltipSystem);

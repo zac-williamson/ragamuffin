@@ -83,6 +83,7 @@ public enum Material {
     ANTIDEPRESSANTS("Antidepressants"),
     STAIRS("Stairs"),
     LADDER("Ladder"),
+    HALF_BLOCK("Half Block"),
     SHILLING("Shilling"),
     PENNY("Penny");
 
@@ -156,6 +157,8 @@ public enum Material {
                                            0.60f, 0.45f, 0.22f);  // Darker riser side
             case LADDER:         return cs(0.58f, 0.40f, 0.18f,   // Rung front
                                            0.45f, 0.30f, 0.12f);  // Darker rail
+            case HALF_BLOCK:     return cs(0.68f, 0.68f, 0.65f,   // Lighter slab top
+                                           0.62f, 0.62f, 0.58f);  // Concrete side
 
             // Currency
             case SHILLING:       return cs(0.78f, 0.72f, 0.35f,   // Silver-gold shilling

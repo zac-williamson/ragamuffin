@@ -68,6 +68,7 @@ public class BlockBreaker {
             case BRICK:
             case STONE:
             case PAVEMENT:
+            case HALF_BLOCK:
                 return 8; // hard blocks
             case GLASS:
             case DOOR_LOWER:
