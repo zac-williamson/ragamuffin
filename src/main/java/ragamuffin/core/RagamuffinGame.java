@@ -2808,6 +2808,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetPunchHeld();
         punchHeldTimer = 0f;
         lastPunchTargetKey = null;
+        // Fix #569: Clear stale interact (E key) so it doesn't fire on first PLAYING frame after resume
+        inputHandler.resetInteract();
+        // Clear stale jump/dodge so they don't fire on first PLAYING frame after resume
+        inputHandler.resetJump();
+        inputHandler.resetDodge();
     }
 
     public GameState getState() {
