@@ -132,6 +132,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #658: Animated flag renderer
     private ragamuffin.render.FlagRenderer flagRenderer;
 
+    // Issue #669: Non-block-based 3D prop renderer
+    private ragamuffin.render.PropRenderer propRenderer;
+
     // Issue #450: Achievement system
     private ragamuffin.ui.AchievementSystem achievementSystem;
     private ragamuffin.ui.AchievementsUI achievementsUI;
@@ -356,6 +359,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #658: Initialize animated flag renderer
         flagRenderer = new ragamuffin.render.FlagRenderer();
         flagRenderer.setFlags(world.getFlagPositions());
+
+        // Issue #669: Initialize non-block 3D prop renderer
+        propRenderer = new ragamuffin.render.PropRenderer();
+        propRenderer.setProps(world.getPropPositions());
 
         // Wire up tooltip sound effect
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
@@ -857,6 +864,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                 modelBatch.begin(camera);
                 chunkRenderer.render(modelBatch, environment);
+                // Issue #669: Render non-block-based 3D props during cinematic
+                propRenderer.render(modelBatch, environment);
                 modelBatch.end();
 
                 // Render letterbox and skip hint overlay
@@ -1102,6 +1111,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             modelBatch.begin(camera);
             chunkRenderer.render(modelBatch, environment);
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
+            // Issue #669: Render non-block-based 3D props
+            propRenderer.render(modelBatch, environment);
             modelBatch.end();
 
             // Issue #54: Render block targeting outline and placement ghost block
@@ -1178,6 +1189,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             modelBatch.begin(camera);
             chunkRenderer.render(modelBatch, environment);
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
+            // Issue #669: Render non-block-based 3D props
+            propRenderer.render(modelBatch, environment);
             modelBatch.end();
 
             // Fix #333: Render rain overlay while paused so the rain effect persists
@@ -3917,6 +3930,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         modelBatch.dispose();
         chunkRenderer.dispose();
         npcRenderer.dispose();
+        if (propRenderer != null) {
+            propRenderer.dispose();
+        }
         spriteBatch.dispose();
         shapeRenderer.dispose();
         font.dispose();
