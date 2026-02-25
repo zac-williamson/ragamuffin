@@ -2787,6 +2787,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         pauseMenu.hide();
         // Fix #461: Hide achievements overlay on state transition so it doesn't persist
         achievementsUI.hide();
+        // Fix #565: Hide quest log overlay on state transition (mirrors achievementsUI fix)
+        questLogUI.hide();
         Gdx.input.setCursorCatched(true);
     }
 
