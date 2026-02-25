@@ -3,6 +3,7 @@ package ragamuffin.render;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import ragamuffin.building.Material;
 import ragamuffin.test.HeadlessTestHelper;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -117,5 +118,43 @@ class FirstPersonArmTest {
                 "Arm should not be mid-swing after cinematic frames (no punch was triggered)");
         assertEquals(expectedElapsed, arm.getIdleTimer(), 0.1f,
                 "idleTimer should have advanced by ~5 seconds during the simulated cinematic");
+    }
+
+    /**
+     * Fix #652: Arm starts with no held item (empty hand by default).
+     */
+    @Test
+    void heldItemIsNullByDefault() {
+        assertNull(arm.getHeldItem(), "Arm should start with no held item");
+    }
+
+    /**
+     * Fix #652: setHeldItem stores the material and getHeldItem returns it.
+     */
+    @Test
+    void setHeldItemIsRetrievable() {
+        arm.setHeldItem(Material.WOOD);
+        assertEquals(Material.WOOD, arm.getHeldItem(), "getHeldItem should return the material set by setHeldItem");
+    }
+
+    /**
+     * Fix #652: setHeldItem(null) clears the held item (empty hand).
+     */
+    @Test
+    void setHeldItemNullClearsItem() {
+        arm.setHeldItem(Material.BRICK);
+        arm.setHeldItem(null);
+        assertNull(arm.getHeldItem(), "setHeldItem(null) should result in empty hand");
+    }
+
+    /**
+     * Fix #652: Held item changes when setHeldItem is called with a different material.
+     */
+    @Test
+    void heldItemCanBeChanged() {
+        arm.setHeldItem(Material.STONE);
+        assertEquals(Material.STONE, arm.getHeldItem());
+        arm.setHeldItem(Material.DIAMOND);
+        assertEquals(Material.DIAMOND, arm.getHeldItem(), "Held item should update to new material");
     }
 }

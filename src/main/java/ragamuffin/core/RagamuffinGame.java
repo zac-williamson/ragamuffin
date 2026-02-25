@@ -2016,6 +2016,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // (inventory/help/crafting) is open. Mirrors the same fix already applied to
         // the PAUSED branch (Fix #339).
         firstPersonArm.update(delta);
+        // Fix #652: Keep the arm's held-item display in sync with the hotbar selection.
+        firstPersonArm.setHeldItem(hotbarUI.getSelectedItem());
 
         // Fix #305: Update damage flash timer and HUD unconditionally so the red vignette
         // and damage-reason banner always advance regardless of UI state or death.
