@@ -6,10 +6,13 @@ package ragamuffin.entity;
 public enum NPCState {
     IDLE,           // Standing still
     WANDERING,      // Random wandering
-    GOING_TO_WORK,  // Daily routine: heading to work
-    GOING_HOME,     // Daily routine: heading home
-    AT_PUB,         // Daily routine: at the pub
-    AT_HOME,        // Daily routine: at home
+    GOING_TO_WORK,   // Daily routine: heading to work
+    GOING_HOME,      // Daily routine: heading home
+    AT_PUB,          // Daily routine: at the pub
+    AT_HOME,         // Daily routine: at home
+    GOING_TO_SCHOOL, // Daily routine: school kid heading to school
+    AT_SCHOOL,       // Daily routine: school kid attending school
+    LEAVING_SCHOOL,  // Daily routine: school kid leaving at end of day
     STARING,        // Reacting to player structure
     PHOTOGRAPHING,  // Taking photos of player structure
     COMPLAINING,    // Complaining about player structure

@@ -85,8 +85,8 @@ class Issue108AllotmentsFenceTest {
 
     /**
      * Test 2: Place 15 WOOD blocks in a connected cluster, force scan, verify:
-     * - exactly one structure detected
-     * - a council builder spawned
+     * - exactly one structure detected (15 blocks >= SMALL_STRUCTURE_THRESHOLD of 10)
+     * - no council builders spawn (requires >= 50 blocks per issue #646)
      */
     @Test
     void playerBuiltWoodStructureStillTriggersCouncilBuilders() {
@@ -97,21 +97,22 @@ class Issue108AllotmentsFenceTest {
                 world.setPlayerBlock(x, y, 10, BlockType.WOOD);
             }
         }
-        // That's 3*5 = 15 WOOD blocks — above the 10-block threshold
+        // That's 3*5 = 15 WOOD blocks — above the 10-block small-structure threshold
 
         // Force structure scan
         npcManager.forceStructureScan(world, tooltipSystem);
 
-        // Verify exactly one structure detected
+        // Verify exactly one structure detected (15 >= SMALL_STRUCTURE_THRESHOLD=10)
         assertEquals(1, npcManager.getStructureTracker().getStructures().size(),
-                "Exactly one WOOD structure should be detected");
+                "Exactly one WOOD structure should be detected (15 blocks >= small threshold of 10)");
 
-        // Verify a COUNCIL_BUILDER NPC has been spawned
+        // Per issue #646, council builders only spawn for structures >= 50 blocks.
+        // A 15-block structure must NOT spawn builders.
         long builderCount = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.COUNCIL_BUILDER)
                 .count();
-        assertTrue(builderCount >= 1,
-                "At least 1 COUNCIL_BUILDER NPC should spawn for a large WOOD structure");
+        assertEquals(0, builderCount,
+                "A 15-block WOOD structure must NOT spawn council builders (requires >= 50 blocks per issue #646)");
     }
 
     /**
