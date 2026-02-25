@@ -2769,6 +2769,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetEnter();
         inputHandler.resetUp();
         inputHandler.resetDown();
+        // Fix #585: Clear stale ESC so frame 1 of the new session does not trigger
+        // transitionToPaused() (consistent with resetEscape() calls in sibling methods).
+        inputHandler.resetEscape();
         // Fix #331: Recreate firstPersonArm so swinging and swingTimer reset to their defaults
         // (swinging=false, swingTimer=0). Without this, a mid-punch animation from the previous
         // session leaks into the new game, showing the arm in a partially-extended position.
