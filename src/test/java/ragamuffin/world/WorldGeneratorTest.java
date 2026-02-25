@@ -281,6 +281,20 @@ public class WorldGeneratorTest {
     }
 
     @Test
+    public void testTerracedHousesRegisteredAsLandmarks() {
+        generator.generateWorld(world);
+
+        // Verify that terraced houses are registered as landmarks (issue #661)
+        Landmark house = world.getLandmark(LandmarkType.TERRACED_HOUSE);
+        assertNotNull(house, "Town should have at least one TERRACED_HOUSE landmark registered");
+
+        // The house landmark should have reasonable dimensions
+        assertTrue(house.getWidth() >= 4, "House width should be at least 4 blocks");
+        assertTrue(house.getHeight() >= 4, "House height should be at least 4 blocks");
+        assertTrue(house.getDepth() >= 6, "House depth should be at least 6 blocks");
+    }
+
+    @Test
     public void testMultipleTerracedHouseRows() {
         generator.generateWorld(world);
 
