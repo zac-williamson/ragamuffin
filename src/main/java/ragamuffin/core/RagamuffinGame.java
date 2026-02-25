@@ -2885,6 +2885,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // same frame as ESC does not activate a pause-menu option the player did not intend
         inputHandler.resetLeftClick();
         inputHandler.resetLeftClickReleased();
+        // Fix #591: Clear stale escapePressed so the first PAUSED frame does not immediately
+        // call handleEscapePress() again and bounce back to PLAYING
+        inputHandler.resetEscape();
     }
 
     public GameState getState() {
