@@ -2847,6 +2847,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #575: Clear stale scroll so hotbar doesn't cycle on the first PLAYING frame
         // after resume if the player scrolled while the pause menu was open
         inputHandler.resetScroll();
+        // Fix #579: Clear stale enterPressed/hotbarSlotPressed/craftingSlotPressed so a
+        // simultaneous ENTER or number key press on the same frame as ESC does not
+        // immediately fire a pause-menu action or leave hotbar/crafting in an inconsistent state
+        inputHandler.resetEnter();
+        inputHandler.resetHotbarSlot();
+        inputHandler.resetCraftingSlot();
     }
 
     public GameState getState() {
