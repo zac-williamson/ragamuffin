@@ -80,9 +80,9 @@ class Issue204AllotmentsFenceTest {
     }
 
     /**
-     * Test 2: Player-placed WOOD IS still detected.
+     * Test 2: Player-placed WOOD IS still detected by the structure tracker.
      * Place 15 WOOD blocks in a connected cluster. Force scan.
-     * Verify exactly one structure is detected and a COUNCIL_BUILDER has spawned.
+     * Verify exactly one structure is detected. No builders spawn for < 50 blocks (issue #646).
      */
     @Test
     void playerPlacedWoodIsStillDetected() {
@@ -96,16 +96,17 @@ class Issue204AllotmentsFenceTest {
 
         npcManager.forceStructureScan(world, tooltipSystem);
 
-        // Exactly one structure should be detected
+        // Exactly one structure should be detected (15 >= SMALL_STRUCTURE_THRESHOLD=10)
         assertEquals(1, npcManager.getStructureTracker().getStructures().size(),
                 "Exactly one player-placed WOOD structure should be detected");
 
-        // At least one COUNCIL_BUILDER should have been spawned
+        // Per issue #646, council builders only spawn for structures >= 50 blocks.
+        // A 15-block structure must NOT spawn builders.
         long builderCount = npcManager.getNPCs().stream()
                 .filter(npc -> npc.getType() == NPCType.COUNCIL_BUILDER)
                 .count();
-        assertTrue(builderCount >= 1,
-                "At least 1 COUNCIL_BUILDER NPC should spawn for a large player-placed WOOD structure");
+        assertEquals(0, builderCount,
+                "A 15-block player-placed WOOD structure must NOT spawn council builders (requires >= 50 blocks per issue #646)");
     }
 
     /**

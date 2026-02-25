@@ -29,6 +29,7 @@ public class NPCManager {
     private final Random random;
     private float gameTime; // Game time in hours (0-24)
     private int previousTimeBand = -1; // -1 = uninitialised; 0=night, 1=work, 2=evening
+    private int previousSchoolBand = -1; // -1 = uninitialised; 0=out-of-school, 1=going-to-school, 2=at-school, 3=leaving-school
 
     // Maximum NPC count to prevent lag
     private static final int MAX_NPCS = 100;
@@ -329,8 +330,11 @@ public class NPCManager {
             case POSTMAN:
             case DRUNK:
             case DELIVERY_DRIVER:
+                npc.setState(NPCState.WANDERING);
+                break;
             case SCHOOL_KID:
                 npc.setState(NPCState.WANDERING);
+                updateSchoolKidRoutine(npc); // Set based on current time
                 break;
             case PUBLIC:
             case COUNCIL_MEMBER:
@@ -441,6 +445,16 @@ public class NPCManager {
                 }
             }
         }
+
+        int currentSchoolBand = getSchoolTimeBand(this.gameTime);
+        if (currentSchoolBand != previousSchoolBand) {
+            previousSchoolBand = currentSchoolBand;
+            for (NPC npc : npcs) {
+                if (npc.getType() == NPCType.SCHOOL_KID) {
+                    updateSchoolKidRoutine(npc);
+                }
+            }
+        }
     }
 
     /**
@@ -452,6 +466,20 @@ public class NPCManager {
     private int getTimeBand(float h) {
         if (h >= 8 && h < 17) return 1;
         if (h >= 17 && h < 20) return 2;
+        return 0;
+    }
+
+    /**
+     * Returns the school time band for the given hour:
+     *   1 = going to school (08:00-09:00) — morning commute
+     *   2 = at school       (09:00-15:30) — school hours
+     *   3 = leaving school  (15:30-17:00) — end of school day
+     *   0 = out of school   (all other times)
+     */
+    private int getSchoolTimeBand(float h) {
+        if (h >= 8 && h < 9) return 1;
+        if (h >= 9 && h < 15.5f) return 2;
+        if (h >= 15.5f && h < 17) return 3;
         return 0;
     }
 
@@ -507,6 +535,43 @@ public class NPCManager {
             if (npc.getState() != NPCState.AT_PUB && npc.getState() != NPCState.AT_HOME) {
                 // Randomly choose pub or home
                 npc.setState(random.nextBoolean() ? NPCState.AT_PUB : NPCState.AT_HOME);
+            }
+        }
+    }
+
+    /**
+     * Update school kid daily routine based on time band.
+     * Only called when the school time band transitions.
+     * Active-reaction states are preserved.
+     *
+     * Schedule:
+     *   08:00–09:00 — GOING_TO_SCHOOL (morning commute to school)
+     *   09:00–15:30 — AT_SCHOOL (attending school; minimal wandering)
+     *   15:30–17:00 — LEAVING_SCHOOL (heading home after school)
+     *   other times — WANDERING (evenings/nights: free time, hanging about)
+     */
+    private void updateSchoolKidRoutine(NPC npc) {
+        if (isActiveReactionState(npc.getState())) {
+            return;
+        }
+        if (gameTime >= 8 && gameTime < 9) {
+            if (npc.getState() != NPCState.GOING_TO_SCHOOL) {
+                npc.setState(NPCState.GOING_TO_SCHOOL);
+            }
+        } else if (gameTime >= 9 && gameTime < 15.5f) {
+            if (npc.getState() != NPCState.AT_SCHOOL) {
+                npc.setState(NPCState.AT_SCHOOL);
+            }
+        } else if (gameTime >= 15.5f && gameTime < 17) {
+            if (npc.getState() != NPCState.LEAVING_SCHOOL) {
+                npc.setState(NPCState.LEAVING_SCHOOL);
+            }
+        } else {
+            // Evening/night — school kids wander freely
+            if (npc.getState() == NPCState.GOING_TO_SCHOOL
+                    || npc.getState() == NPCState.AT_SCHOOL
+                    || npc.getState() == NPCState.LEAVING_SCHOOL) {
+                npc.setState(NPCState.WANDERING);
             }
         }
     }
@@ -708,6 +773,14 @@ public class NPCManager {
                 case AT_PUB:
                 case AT_HOME:
                     updateDailyRoutine(npc, delta, world);
+                    break;
+                case GOING_TO_SCHOOL:
+                case LEAVING_SCHOOL:
+                    updateWandering(npc, delta, world); // Walk to/from school
+                    break;
+                case AT_SCHOOL:
+                    // School kids mostly stay put during school hours — minimal wander
+                    updateWandering(npc, delta, world);
                     break;
                 case STARING:
                 case PHOTOGRAPHING:
