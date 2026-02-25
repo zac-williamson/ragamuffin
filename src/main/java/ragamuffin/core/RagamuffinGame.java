@@ -614,6 +614,50 @@ public class RagamuffinGame extends ApplicationAdapter {
                 greggsRaidSystem.reset();
                 player.getStreetReputation().reset();
                 healingSystem.resetPosition(player.getPosition());
+                // Fix #623: Reset distance tracking on respawn so the teleport distance is not
+                // counted as walked distance — mirrors the PLAYING (Fix #459) and PAUSED branches.
+                distanceTravelledAchievement = 0f;
+                lastPlayerPosForDistance.set(player.getPosition());
+                // Fix #623: Reset all stale input flags so any key/mouse event buffered during
+                // the respawn countdown does not fire as a phantom action on the first PLAYING frame.
+                // Mirrors the identical resets in the PLAYING (Fix #609) and PAUSED (Fix #617) branches.
+                inputHandler.resetEscape();
+                inputHandler.resetPunch();
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+                inputHandler.resetPlace();
+                inputHandler.resetInventory();
+                inputHandler.resetHelp();
+                inputHandler.resetCrafting();
+                inputHandler.resetAchievements();
+                inputHandler.resetQuestLog();
+                inputHandler.resetInteract();
+                inputHandler.resetJump();
+                inputHandler.resetDodge();
+                inputHandler.resetEnter();
+                inputHandler.resetUp();
+                inputHandler.resetDown();
+                inputHandler.resetHotbarSlot();
+                inputHandler.resetCraftingSlot();
+                inputHandler.resetLeftClick();
+                inputHandler.resetLeftClickReleased();
+                inputHandler.resetRightClick();
+                inputHandler.resetScroll();
+                // Fix #623: Close any UI overlays left open at the time of death so the player
+                // does not resume with inventory/crafting/help still showing (isUIBlocking() true).
+                // Mirrors the PLAYING (Fix #609) and PAUSED (Fix #617) branches.
+                inventoryUI.hide();
+                craftingUI.hide();
+                helpUI.hide();
+                achievementsUI.hide();
+                questLogUI.hide();
+                // Fix #623: Close and clear any active shop menu so isUIBlocking() returns false
+                // after respawn — mirrors the PLAYING branch (Fix #601) and PAUSED branch (Fix #621).
+                if (activeShopkeeperNPC != null) {
+                    activeShopkeeperNPC.setShopMenuOpen(false);
+                    activeShopkeeperNPC = null;
+                }
             }
 
             // Fix #439: Process pending arrest during cinematic so the flag does not persist as a ghost.
