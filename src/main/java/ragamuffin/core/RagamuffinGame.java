@@ -2797,6 +2797,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // as Resume does not auto-select a recipe on the first PLAYING frame
         inputHandler.resetCraftingSlot();
         inputHandler.resetHotbarSlot();
+        // Fix #571: Clear stale punch/place so left-click or right-click buffered during the
+        // pause transition does not fire on the first PLAYING frame after resume
+        inputHandler.resetPunch();
+        inputHandler.resetPlace();
         Gdx.input.setCursorCatched(true);
     }
 
@@ -2808,6 +2812,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetPunchHeld();
         punchHeldTimer = 0f;
         lastPunchTargetKey = null;
+        // Fix #571: Clear stale punchPressed so a left-click on the same frame as ESC does not
+        // fire a punch on the first PLAYING frame after resume (mirrors resetPunchHeld fix above)
+        inputHandler.resetPunch();
         // Fix #569: Clear stale interact (E key) so it doesn't fire on first PLAYING frame after resume
         inputHandler.resetInteract();
         // Clear stale jump/dodge so they don't fire on first PLAYING frame after resume
