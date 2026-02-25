@@ -2801,6 +2801,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         // pause transition does not fire on the first PLAYING frame after resume
         inputHandler.resetPunch();
         inputHandler.resetPlace();
+        // Fix #573: Clear stale UI-toggle keys so I/H/C/Tab/Q pressed on the same frame as
+        // ESC-to-resume do not re-open their panels on the first PLAYING frame
+        inputHandler.resetInventory();
+        inputHandler.resetHelp();
+        inputHandler.resetCrafting();
+        inputHandler.resetAchievements();
+        inputHandler.resetQuestLog();
         Gdx.input.setCursorCatched(true);
     }
 
@@ -2820,6 +2827,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Clear stale jump/dodge so they don't fire on first PLAYING frame after resume
         inputHandler.resetJump();
         inputHandler.resetDodge();
+        // Fix #573: Clear stale UI-toggle keys so I/H/C/Tab/Q pressed on the same frame as
+        // ESC-to-pause do not fire on the first PLAYING frame after resume
+        inputHandler.resetInventory();
+        inputHandler.resetHelp();
+        inputHandler.resetCrafting();
+        inputHandler.resetAchievements();
+        inputHandler.resetQuestLog();
     }
 
     public GameState getState() {
