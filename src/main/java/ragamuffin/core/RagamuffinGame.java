@@ -1439,6 +1439,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetCraftingSlot(); // Issue #543: prevent stale craftingSlotPressed
             } else if (!craftingUI.isVisible()) {
                 hotbarUI.selectSlot(hotbarSlot);
+                inputHandler.resetCraftingSlot(); // Issue #545: discard stale craftingSlotPressed when crafting UI is not open
             }
             inputHandler.resetHotbarSlot();
         }
