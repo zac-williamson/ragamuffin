@@ -2472,6 +2472,18 @@ public class RagamuffinGame extends ApplicationAdapter {
         tmpCameraPos.set(camera.position);
         tmpDirection.set(camera.direction);
 
+        // Issue #645: Small items are placed directly on the block surface without grid snapping
+        if (material.isSmallItem()) {
+            boolean placed = blockPlacer.placeSmallItem(world, inventory, material, tmpCameraPos, tmpDirection, PLACE_REACH, player.getAABB());
+            if (!placed) {
+                tooltipSystem.showMessage("Can't place item here.", 2.0f);
+                soundSystem.play(ragamuffin.audio.SoundEffect.UI_CLOSE);
+            } else {
+                soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+            }
+            return;
+        }
+
         // Get placement position before placing so we know which chunk to rebuild
         Vector3 placementPos = blockPlacer.getPlacementPosition(world, tmpCameraPos, tmpDirection, PLACE_REACH);
 

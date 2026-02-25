@@ -1,6 +1,7 @@
 package ragamuffin.world;
 
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.building.SmallItem;
 import ragamuffin.entity.AABB;
 import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.Player;
@@ -37,6 +38,7 @@ public class World {
     private final Set<String> dirtyChunks; // Chunks needing mesh rebuild
     private final Set<String> openDoors; // Open door positions (world coords of DOOR_LOWER)
     private final Set<String> playerPlacedBlocks; // Positions where player has placed blocks
+    private final List<SmallItem> smallItems; // Small items placed without grid snapping
 
     public World(long seed) {
         this.seed = seed;
@@ -48,6 +50,7 @@ public class World {
         this.dirtyChunks = new HashSet<>();
         this.openDoors = new HashSet<>();
         this.playerPlacedBlocks = new HashSet<>();
+        this.smallItems = new ArrayList<>();
     }
 
     /**
@@ -125,6 +128,21 @@ public class World {
      */
     public Set<String> getPlayerPlacedBlocks() {
         return playerPlacedBlocks;
+    }
+
+    /**
+     * Place a small item at an exact world-space position (no grid snapping).
+     * Small items sit on the surface of blocks rather than occupying a full voxel.
+     */
+    public void placeSmallItem(SmallItem item) {
+        smallItems.add(item);
+    }
+
+    /**
+     * Get all small items placed in the world.
+     */
+    public List<SmallItem> getSmallItems() {
+        return Collections.unmodifiableList(smallItems);
     }
 
     /**
