@@ -198,6 +198,66 @@ public class WorldGeneratorTest {
     }
 
     @Test
+    public void testNewBuildingTypesExist() {
+        generator.generateWorld(world);
+
+        // Verify the 6 new building types added in issue #638
+        assertNotNull(world.getLandmark(LandmarkType.LEISURE_CENTRE), "Town should have a leisure centre");
+        assertNotNull(world.getLandmark(LandmarkType.MOSQUE), "Town should have a mosque");
+        assertNotNull(world.getLandmark(LandmarkType.ESTATE_AGENT), "Town should have an estate agent");
+        assertNotNull(world.getLandmark(LandmarkType.SUPERMARKET), "Town should have a supermarket");
+        assertNotNull(world.getLandmark(LandmarkType.POLICE_STATION), "Town should have a police station");
+        assertNotNull(world.getLandmark(LandmarkType.FOOD_BANK), "Town should have a food bank");
+    }
+
+    @Test
+    public void testNewBuildingTypesHaveDisplayNames() {
+        assertEquals("Northfield Leisure Centre", LandmarkType.LEISURE_CENTRE.getDisplayName());
+        assertEquals("Al-Noor Mosque", LandmarkType.MOSQUE.getDisplayName());
+        assertEquals("Baxter's Estate Agents", LandmarkType.ESTATE_AGENT.getDisplayName());
+        assertEquals("Aldi", LandmarkType.SUPERMARKET.getDisplayName());
+        assertEquals("Northfield Police Station", LandmarkType.POLICE_STATION.getDisplayName());
+        assertEquals("Northfield Food Bank", LandmarkType.FOOD_BANK.getDisplayName());
+    }
+
+    @Test
+    public void testNewBuildingsHaveSignBlocks() {
+        generator.generateWorld(world);
+
+        // Leisure centre has a blue sign
+        Landmark lc = world.getLandmark(LandmarkType.LEISURE_CENTRE);
+        assertNotNull(lc);
+        Vector3 lcPos = lc.getPosition();
+        boolean lcHasSign = false;
+        for (int y = 1; y < lc.getHeight(); y++) {
+            BlockType block = world.getBlock((int) lcPos.x, y, (int) lcPos.z);
+            if (block == BlockType.SIGN_BLUE || block == BlockType.SIGN_RED ||
+                    block == BlockType.SIGN_GREEN || block == BlockType.SIGN_WHITE ||
+                    block == BlockType.SIGN_YELLOW) {
+                lcHasSign = true;
+                break;
+            }
+        }
+        assertTrue(lcHasSign, "Leisure centre should have a sign block on its front face");
+
+        // Police station has a blue sign
+        Landmark ps = world.getLandmark(LandmarkType.POLICE_STATION);
+        assertNotNull(ps);
+        Vector3 psPos = ps.getPosition();
+        boolean psHasSign = false;
+        for (int y = 1; y < ps.getHeight(); y++) {
+            BlockType block = world.getBlock((int) psPos.x, y, (int) psPos.z);
+            if (block == BlockType.SIGN_BLUE || block == BlockType.SIGN_RED ||
+                    block == BlockType.SIGN_GREEN || block == BlockType.SIGN_WHITE ||
+                    block == BlockType.SIGN_YELLOW) {
+                psHasSign = true;
+                break;
+            }
+        }
+        assertTrue(psHasSign, "Police station should have a sign block on its front face");
+    }
+
+    @Test
     public void testBuildingsHaveSignBlocks() {
         generator.generateWorld(world);
 
