@@ -1353,6 +1353,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetHotbarSlot();
         inputHandler.resetPunch();
         inputHandler.resetPunchHeld();
+        // Fix #611: Reset punchHeldTimer and lastPunchTargetKey alongside resetPunchHeld(),
+        // mirroring the identical pattern in transitionToPlaying(), transitionToPaused(), and
+        // the justDied block — prevents phantom hold-punch on first PLAYING frame after cinematic
+        punchHeldTimer = 0f;
+        lastPunchTargetKey = null;
         inputHandler.resetPlace();
         inputHandler.resetInventory();
         inputHandler.resetHelp();
