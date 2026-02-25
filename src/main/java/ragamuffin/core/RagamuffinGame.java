@@ -2756,6 +2756,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // before restartGame() runs; without this reset, handleUIInput() sees a phantom
         // release event before any real mouse activity occurs.
         inputHandler.resetLeftClickReleased();
+        // Fix #575: Clear stale scroll so hotbar doesn't cycle on frame 1 of the new session
+        inputHandler.resetScroll();
         // Fix #331: Recreate firstPersonArm so swinging and swingTimer reset to their defaults
         // (swinging=false, swingTimer=0). Without this, a mid-punch animation from the previous
         // session leaks into the new game, showing the arm in a partially-extended position.
@@ -2808,6 +2810,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetCrafting();
         inputHandler.resetAchievements();
         inputHandler.resetQuestLog();
+        // Fix #575: Clear stale scroll so hotbar doesn't cycle on the first PLAYING frame
+        // after resume if the player scrolled while the pause menu was open
+        inputHandler.resetScroll();
         Gdx.input.setCursorCatched(true);
     }
 
@@ -2834,6 +2839,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetCrafting();
         inputHandler.resetAchievements();
         inputHandler.resetQuestLog();
+        // Fix #575: Clear stale scroll so hotbar doesn't cycle on the first PLAYING frame
+        // after resume if the player scrolled while the pause menu was open
+        inputHandler.resetScroll();
     }
 
     public GameState getState() {
