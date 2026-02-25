@@ -1592,6 +1592,17 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #547: If the player has walked out of interaction range of the active
+        // shopkeeper, close the shop menu and clear the reference so that 1/2/3 keys
+        // are no longer intercepted for item selection.
+        if (activeShopkeeperNPC != null) {
+            float distToShopkeeper = player.getPosition().dst(activeShopkeeperNPC.getPosition());
+            if (distToShopkeeper > InteractionSystem.INTERACTION_RANGE) {
+                activeShopkeeperNPC.setShopMenuOpen(false);
+                activeShopkeeperNPC = null;
+            }
+        }
+
         // Phase 5: Update NPCs
         npcManager.update(delta, world, player, inventory, tooltipSystem);
 
@@ -2870,6 +2881,11 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     public ragamuffin.ui.AchievementSystem getAchievementSystem() {
         return achievementSystem;
+    }
+
+    /** Issue #547: Returns the shopkeeper whose shop menu is currently open, or null. */
+    public ragamuffin.entity.NPC getActiveShopkeeperNPC() {
+        return activeShopkeeperNPC;
     }
 
     /**
