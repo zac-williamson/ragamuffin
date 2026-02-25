@@ -1602,6 +1602,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                 activeShopkeeperNPC = null;
             }
         }
+        // Fix #551: If the NPC's own speech timer expired and closed the shop menu,
+        // clear the stale reference so that the next E-press is treated as a first
+        // press (reopening the menu) rather than erroneously executing a purchase.
+        if (activeShopkeeperNPC != null && !activeShopkeeperNPC.isShopMenuOpen()) {
+            activeShopkeeperNPC = null;
+        }
 
         // Phase 5: Update NPCs
         npcManager.update(delta, world, player, inventory, tooltipSystem);
