@@ -110,6 +110,19 @@ public class InputHandler implements InputProcessor {
     public void resetHotbarSlot() { hotbarSlotPressed = -1; }
     public void resetCraftingSlot() { craftingSlotPressed = -1; }
 
+    /** Fix #643: Clear polled movement flags so a held WASD key does not cause
+     *  immediate unwanted movement on the first frame after arrest or respawn.
+     *  Must be called after {@link #update()} has already run for the current frame
+     *  so the cleared values are read by {@code updatePlayingInput()} before the
+     *  next frame's {@code update()} call overwrites them. */
+    public void resetMovement() {
+        forward = false;
+        backward = false;
+        left = false;
+        right = false;
+        sprintHeld = false;
+    }
+
     @Override
     public boolean keyDown(int keycode) {
         if (keycode == Input.Keys.ESCAPE) {
