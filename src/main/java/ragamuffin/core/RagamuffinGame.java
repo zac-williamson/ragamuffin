@@ -1235,6 +1235,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                         activeShopkeeperNPC.setShopMenuOpen(false);
                         activeShopkeeperNPC = null;
                     }
+                    // Fix #631: Transition to PLAYING so the player is not left on the pause menu
+                    // after the respawn countdown completes — mirrors the PAUSED arrest block (Fix #627)
+                    // and the CINEMATIC respawn-completion block (Fix #623).
+                    transitionToPlaying();
                 }
                 if (respawnSystem.isRespawning()) {
                     renderDeathScreen();
