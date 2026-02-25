@@ -2813,6 +2813,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #575: Clear stale scroll so hotbar doesn't cycle on the first PLAYING frame
         // after resume if the player scrolled while the pause menu was open
         inputHandler.resetScroll();
+        // Fix #577: Clear stale interact/jump/dodge so Space/Ctrl/E pressed on the same frame
+        // as Resume do not fire on the first PLAYING frame after resume
+        inputHandler.resetInteract();
+        inputHandler.resetJump();
+        inputHandler.resetDodge();
         Gdx.input.setCursorCatched(true);
     }
 
