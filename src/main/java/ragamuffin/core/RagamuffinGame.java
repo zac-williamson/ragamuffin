@@ -627,6 +627,32 @@ public class RagamuffinGame extends ApplicationAdapter {
                 greggsRaidSystem.reset();
                 player.getStreetReputation().removePoints(15);
                 healingSystem.resetPosition(player.getPosition());
+                // Fix #613: Reset all event-driven input flags after arrest teleport so stale flags
+                // do not fire as phantom actions on the first PLAYING frame post-arrest.
+                // Mirrors the identical reset in the respawn path and PLAYING/PAUSED arrest branches.
+                inputHandler.resetEscape();
+                inputHandler.resetPunch();
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+                inputHandler.resetPlace();
+                inputHandler.resetInventory();
+                inputHandler.resetHelp();
+                inputHandler.resetCrafting();
+                inputHandler.resetAchievements();
+                inputHandler.resetQuestLog();
+                inputHandler.resetInteract();
+                inputHandler.resetJump();
+                inputHandler.resetDodge();
+                inputHandler.resetEnter();
+                inputHandler.resetUp();
+                inputHandler.resetDown();
+                inputHandler.resetHotbarSlot();
+                inputHandler.resetCraftingSlot();
+                inputHandler.resetLeftClick();
+                inputHandler.resetLeftClickReleased();
+                inputHandler.resetRightClick();
+                inputHandler.resetScroll();
             }
 
             // Fix #437: Advance tooltip timers during the cinematic so queued tooltips
@@ -1181,6 +1207,32 @@ public class RagamuffinGame extends ApplicationAdapter {
                 greggsRaidSystem.reset();
                 player.getStreetReputation().removePoints(15);
                 healingSystem.resetPosition(player.getPosition());
+                // Fix #613: Reset all event-driven input flags after arrest teleport so stale flags
+                // do not fire as phantom actions on the first PLAYING frame post-arrest.
+                // Mirrors the identical reset in the respawn path and PLAYING arrest branch.
+                inputHandler.resetEscape();
+                inputHandler.resetPunch();
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+                inputHandler.resetPlace();
+                inputHandler.resetInventory();
+                inputHandler.resetHelp();
+                inputHandler.resetCrafting();
+                inputHandler.resetAchievements();
+                inputHandler.resetQuestLog();
+                inputHandler.resetInteract();
+                inputHandler.resetJump();
+                inputHandler.resetDodge();
+                inputHandler.resetEnter();
+                inputHandler.resetUp();
+                inputHandler.resetDown();
+                inputHandler.resetHotbarSlot();
+                inputHandler.resetCraftingSlot();
+                inputHandler.resetLeftClick();
+                inputHandler.resetLeftClickReleased();
+                inputHandler.resetRightClick();
+                inputHandler.resetScroll();
             }
 
             // Render UI and pause menu
@@ -1706,6 +1758,32 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Issue #166: Sync HealingSystem position after teleport so the next update()
             // does not compute a spurious speed from the arrest teleport distance.
             healingSystem.resetPosition(player.getPosition());
+            // Fix #613: Reset all event-driven input flags after arrest teleport so stale flags
+            // (e.g. punchHeld=true, leftClickPressed) do not fire as phantom actions on the
+            // first PLAYING frame post-arrest. Mirrors the identical reset in the respawn path.
+            inputHandler.resetEscape();
+            inputHandler.resetPunch();
+            inputHandler.resetPunchHeld();
+            punchHeldTimer = 0f;
+            lastPunchTargetKey = null;
+            inputHandler.resetPlace();
+            inputHandler.resetInventory();
+            inputHandler.resetHelp();
+            inputHandler.resetCrafting();
+            inputHandler.resetAchievements();
+            inputHandler.resetQuestLog();
+            inputHandler.resetInteract();
+            inputHandler.resetJump();
+            inputHandler.resetDodge();
+            inputHandler.resetEnter();
+            inputHandler.resetUp();
+            inputHandler.resetDown();
+            inputHandler.resetHotbarSlot();
+            inputHandler.resetCraftingSlot();
+            inputHandler.resetLeftClick();
+            inputHandler.resetLeftClickReleased();
+            inputHandler.resetRightClick();
+            inputHandler.resetScroll();
         }
 
         // Issue #48: Passive reputation decay — "lying low" reduces reputation over time
