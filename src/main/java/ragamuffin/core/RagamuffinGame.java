@@ -1002,6 +1002,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                 helpUI.hide();
                 achievementsUI.hide();
                 questLogUI.hide();
+                // Fix #625: Close and clear any active shop menu so isUIBlocking() returns false
+                // after respawn — mirrors the CINEMATIC branch (Fix #623) and PAUSED branch (Fix #621).
+                if (activeShopkeeperNPC != null) {
+                    activeShopkeeperNPC.setShopMenuOpen(false);
+                    activeShopkeeperNPC = null;
+                }
             }
 
             // Phase 11: Trigger hunger warning tooltip
@@ -1219,6 +1225,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                     helpUI.hide();
                     achievementsUI.hide();
                     questLogUI.hide();
+                    // Fix #625: Close and clear any active shop menu so isUIBlocking() returns false
+                    // after respawn — mirrors the CINEMATIC branch (Fix #623) and PLAYING branch (Fix #601).
+                    if (activeShopkeeperNPC != null) {
+                        activeShopkeeperNPC.setShopMenuOpen(false);
+                        activeShopkeeperNPC = null;
+                    }
                 }
                 if (respawnSystem.isRespawning()) {
                     renderDeathScreen();
