@@ -274,6 +274,39 @@ public enum Material {
     }
 
     /**
+     * Returns true if this material is a small item that can be placed on top of
+     * a block without grid snapping. Small items use precise float coordinates so
+     * they can sit freely on any block surface (e.g. a can on a counter, a book
+     * on a shelf). They do not occupy a voxel grid cell.
+     */
+    public boolean isSmallItem() {
+        switch (this) {
+            case TIN_OF_BEANS:
+            case ENERGY_DRINK:
+            case PINT:
+            case SAUSAGE_ROLL:
+            case STEAK_BAKE:
+            case CHIPS:
+            case KEBAB:
+            case PERI_PERI_CHICKEN:
+            case CRISPS:
+            case NEWSPAPER:
+            case TEXTBOOK:
+            case HYMN_BOOK:
+            case SCRATCH_CARD:
+            case BROKEN_PHONE:
+            case DODGY_DVD:
+            case STAPLER:
+            case PARACETAMOL:
+            case ANTIDEPRESSANTS:
+            case NAIL_POLISH:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
      * Describes the shape style used when rendering this material's icon.
      * Only meaningful when isBlockItem() returns false.
      */

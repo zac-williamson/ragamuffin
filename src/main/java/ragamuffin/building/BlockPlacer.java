@@ -226,6 +226,70 @@ public class BlockPlacer {
     }
 
     /**
+     * Place a small item on the surface of a block at the exact hit position,
+     * without snapping to the voxel grid. The item lands on top of whichever
+     * face of the block the ray hits.
+     *
+     * @param playerAABB if non-null, prevents placement within the player's bounding box
+     * @return true if the small item was successfully placed
+     */
+    public boolean placeSmallItem(World world, Inventory inventory, Material material,
+                                   Vector3 origin, Vector3 direction, float maxDistance,
+                                   AABB playerAABB) {
+        if (material == null || !material.isSmallItem()) {
+            return false;
+        }
+
+        if (!inventory.hasItem(material)) {
+            return false;
+        }
+
+        RaycastResult result = ragamuffin.world.Raycast.cast(world, origin, direction, maxDistance);
+        if (result == null) {
+            return false;
+        }
+
+        // Use the exact hit position on the block surface (no grid snapping).
+        // Snap the Y axis to the top face of the block so the item sits flat on it.
+        int blockY = result.getBlockY();
+        Vector3 hitPos = result.getHitPosition();
+
+        // Determine which face was hit
+        Vector3 blockCenter = new Vector3(result.getBlockX() + 0.5f, blockY + 0.5f, result.getBlockZ() + 0.5f);
+        Vector3 toHit = new Vector3(hitPos).sub(blockCenter);
+
+        float absX = Math.abs(toHit.x);
+        float absY = Math.abs(toHit.y);
+        float absZ = Math.abs(toHit.z);
+
+        // Only allow placement on the top face (Y dominant and positive)
+        if (!(absY >= absX && absY >= absZ && toHit.y > 0)) {
+            return false;
+        }
+
+        // Place item at the exact X/Z hit position, on top of the block's surface (Y = blockY + 1)
+        float itemX = hitPos.x;
+        float itemY = blockY + 1.0f;
+        float itemZ = hitPos.z;
+
+        // Clamp X/Z within the block boundaries to prevent floating off the edge
+        itemX = Math.max(result.getBlockX() + 0.05f, Math.min(result.getBlockX() + 0.95f, itemX));
+        itemZ = Math.max(result.getBlockZ() + 0.05f, Math.min(result.getBlockZ() + 0.95f, itemZ));
+
+        // Prevent placing inside the player's bounding box
+        if (playerAABB != null &&
+                itemX >= playerAABB.getMinX() && itemX <= playerAABB.getMaxX() &&
+                itemY >= playerAABB.getMinY() && itemY <= playerAABB.getMaxY() &&
+                itemZ >= playerAABB.getMinZ() && itemZ <= playerAABB.getMaxZ()) {
+            return false;
+        }
+
+        world.placeSmallItem(new SmallItem(material, new Vector3(itemX, itemY, itemZ)));
+        inventory.removeItem(material, 1);
+        return true;
+    }
+
+    /**
      * Convert a material to a block type for placement.
      */
     public BlockType materialToBlockType(Material material) {
