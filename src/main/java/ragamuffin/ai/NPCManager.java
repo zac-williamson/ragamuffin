@@ -1475,6 +1475,8 @@ public class NPCManager {
                 if (random.nextFloat() < 0.5f) {
                     inventory.addItem(Material.TIN_OF_BEANS, 1 + random.nextInt(2));
                 }
+                // Till float — always carries shillings
+                inventory.addItem(Material.SHILLING, 1 + random.nextInt(2));
                 break;
             case DELIVERY_DRIVER:
                 // Whatever's in the van
@@ -1495,6 +1497,10 @@ public class NPCManager {
                 if (random.nextFloat() < 0.3f) {
                     inventory.addItem(Material.SCRAP_METAL, 1);
                 }
+                // Small chance of loose change from their pocket
+                if (random.nextFloat() < 0.2f) {
+                    inventory.addItem(Material.PENNY, 1);
+                }
                 break;
             case DRUNK:
                 // Empties and kebab remnants
@@ -1502,11 +1508,17 @@ public class NPCManager {
                     inventory.addItem(Material.KEBAB, 1);
                 }
                 inventory.addItem(Material.GLASS, 1);
+                // Coin that fell out of their pocket
+                if (random.nextFloat() < 0.25f) {
+                    inventory.addItem(random.nextFloat() < 0.5f ? Material.PENNY : Material.SHILLING, 1);
+                }
                 break;
             case BUSKER:
-                // Guitar parts and loose change
+                // Guitar parts and busking money
                 inventory.addItem(Material.WOOD, 1 + random.nextInt(2));
                 inventory.addItem(Material.SCRAP_METAL, 1);
+                // Busking money — always has some pennies
+                inventory.addItem(Material.PENNY, 1 + random.nextInt(3));
                 break;
             case POLICE:
                 // Confiscated goods
@@ -1525,6 +1537,10 @@ public class NPCManager {
                 if (random.nextFloat() < 0.4f) {
                     inventory.addItem(Material.CRISPS, 1);
                 }
+                // Small chance of loose pennies from their purse
+                if (random.nextFloat() < 0.3f) {
+                    inventory.addItem(Material.PENNY, 1 + random.nextInt(2));
+                }
                 break;
             case SCHOOL_KID:
                 // Lunch money equivalent
@@ -1536,6 +1552,10 @@ public class NPCManager {
             case COUNCIL_MEMBER:
                 // Paperwork and office supplies
                 inventory.addItem(Material.CARDBOARD, 2 + random.nextInt(2));
+                // Small chance of a shilling — expenses money
+                if (random.nextFloat() < 0.3f) {
+                    inventory.addItem(Material.SHILLING, 1);
+                }
                 break;
             case COUNCIL_BUILDER:
                 // Building materials
