@@ -731,6 +731,16 @@ public class WorldGenerator {
         generateSewerTunnels(world, sx, sz, nx, nz);
         generateUndergroundBunker(world);
 
+        // ===== ANIMATED FLAG POLES — Issue #658 =====
+        // Place flags on roofs of key civic buildings.  Each flag pole is a
+        // 3-block IRON_FENCE pillar; the top block is where the flag renders.
+        generateFlagPoles(world, offX, offZ, 12,
+                          jobX, jobZ, 5,
+                          pstnX, pstnZ, 7,
+                          fsX, fsZ, 7,
+                          schoolX, schoolZ, 6,
+                          cf1X, cf1Z, 14);
+
         // Load initial chunks around origin
         world.updateLoadedChunks(new Vector3(0, 0, 0));
     }
@@ -2709,5 +2719,101 @@ public class WorldGenerator {
         for (int y = BUNKER_TOP_Y + 1; y <= -1; y++) {
             world.setBlock(x, y, z, BlockType.LADDER);
         }
+    }
+
+    // ==================== FLAG POLES — Issue #658 ====================
+
+    /**
+     * Place animated flag poles on the roofs of the six key civic buildings.
+     *
+     * Parameters come in (x, z, roofHeight) triples for each building.
+     * A 3-block IRON_FENCE pillar is placed on the roof, and the flag position
+     * is registered at the top of the pillar so FlagRenderer can animate it.
+     *
+     * Flag colour schemes chosen to suggest British civic identity:
+     *   Office     — navy/white (corporate colours)
+     *   JobCentre  — government blue/white
+     *   Police     — police blue/silver
+     *   Fire       — fire-engine red/yellow
+     *   School     — royal blue/sunshine yellow
+     *   Council    — deep red/white
+     */
+    private void generateFlagPoles(World world,
+                                   int offX,    int offZ,    int offH,
+                                   int jobX,    int jobZ,    int jobH,
+                                   int pstnX,   int pstnZ,   int pstnH,
+                                   int fsX,     int fsZ,     int fsH,
+                                   int schoolX, int schoolZ, int schoolH,
+                                   int cf1X,    int cf1Z,    int cf1H) {
+        // Office building — navy / white
+        generateFlagPole(world,
+            offX + 2,  offH, offZ + 2,
+            0.05f, 0.10f, 0.45f,   1.00f, 1.00f, 1.00f,
+            0.0f);
+
+        // JobCentre — government blue / white
+        generateFlagPole(world,
+            jobX + 2,  jobH, jobZ + 2,
+            0.00f, 0.30f, 0.60f,   0.95f, 0.95f, 0.95f,
+            1.05f);
+
+        // Police station — police blue / silver
+        generateFlagPole(world,
+            pstnX + 2, pstnH, pstnZ + 2,
+            0.08f, 0.22f, 0.58f,   0.78f, 0.80f, 0.85f,
+            2.10f);
+
+        // Fire station — red / yellow
+        generateFlagPole(world,
+            fsX + 2,   fsH, fsZ + 2,
+            0.88f, 0.10f, 0.08f,   0.98f, 0.82f, 0.10f,
+            3.14f);
+
+        // Primary school — royal blue / yellow
+        generateFlagPole(world,
+            schoolX + 2, schoolH, schoolZ + 2,
+            0.10f, 0.30f, 0.75f,   0.95f, 0.80f, 0.05f,
+            4.19f);
+
+        // Council flats — deep red / white
+        generateFlagPole(world,
+            cf1X + 2,  cf1H, cf1Z + 2,
+            0.70f, 0.05f, 0.05f,   0.95f, 0.95f, 0.95f,
+            5.24f);
+    }
+
+    /**
+     * Place a single flag pole: a 3-block IRON_FENCE pillar on top of a building,
+     * and register the flag attachment position with the world.
+     *
+     * @param world  the world to place blocks in
+     * @param x      X of the pole base (on the building roof)
+     * @param roofY  Y of the building roof surface
+     * @param z      Z of the pole base
+     * @param r1     red component of hoist colour (0–1)
+     * @param g1     green component of hoist colour
+     * @param b1     blue component of hoist colour
+     * @param r2     red component of fly colour (0–1)
+     * @param g2     green component of fly colour
+     * @param b2     blue component of fly colour
+     * @param phase  phase offset in radians for the wave animation
+     */
+    private void generateFlagPole(World world,
+                                  int x, int roofY, int z,
+                                  float r1, float g1, float b1,
+                                  float r2, float g2, float b2,
+                                  float phase) {
+        // 3-block tall IRON_FENCE pole above the roof
+        int poleHeight = 3;
+        for (int dy = 1; dy <= poleHeight; dy++) {
+            world.setBlock(x, roofY + dy, z, BlockType.IRON_FENCE);
+        }
+        // Register the flag at the top of the pole
+        float flagY = roofY + poleHeight + 0.5f;
+        world.addFlagPosition(new FlagPosition(
+            x + 0.5f, flagY, z + 0.5f,
+            r1, g1, b1,
+            r2, g2, b2,
+            phase));
     }
 }

@@ -129,6 +129,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #209: Sky renderer — sun and clouds
     private ragamuffin.render.SkyRenderer skyRenderer;
 
+    // Issue #658: Animated flag renderer
+    private ragamuffin.render.FlagRenderer flagRenderer;
+
     // Issue #450: Achievement system
     private ragamuffin.ui.AchievementSystem achievementSystem;
     private ragamuffin.ui.AchievementsUI achievementsUI;
@@ -343,6 +346,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #209: Initialize sky renderer (sun and clouds)
         skyRenderer = new ragamuffin.render.SkyRenderer();
+
+        // Issue #658: Initialize animated flag renderer
+        flagRenderer = new ragamuffin.render.FlagRenderer();
+        flagRenderer.setFlags(world.getFlagPositions());
 
         // Wire up tooltip sound effect
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
@@ -1097,6 +1104,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             signageRenderer.render(camera, spriteBatch, shapeRenderer, font,
                                    Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
+            // Issue #658: Render animated flags
+            {
+                int sw = Gdx.graphics.getWidth();
+                int sh = Gdx.graphics.getHeight();
+                com.badlogic.gdx.math.Matrix4 flagOrtho = new com.badlogic.gdx.math.Matrix4();
+                flagOrtho.setToOrtho2D(0, 0, sw, sh);
+                shapeRenderer.setProjectionMatrix(flagOrtho);
+                flagRenderer.render(shapeRenderer, camera, sw, sh);
+            }
+
             // Render rain overlay if raining
             if (weatherSystem.getCurrentWeather() == Weather.RAIN) {
                 renderRain(delta);
@@ -1168,6 +1185,16 @@ public class RagamuffinGame extends ApplicationAdapter {
                 particleSystem.render(shapeRenderer, camera, sw, sh);
             }
 
+            // Issue #658: Render animated flags while paused — mirrors the PLAYING path.
+            {
+                int sw = Gdx.graphics.getWidth();
+                int sh = Gdx.graphics.getHeight();
+                com.badlogic.gdx.math.Matrix4 flagOrtho = new com.badlogic.gdx.math.Matrix4();
+                flagOrtho.setToOrtho2D(0, 0, sw, sh);
+                shapeRenderer.setProjectionMatrix(flagOrtho);
+                flagRenderer.render(shapeRenderer, camera, sw, sh);
+            }
+
             // Fix #321: Advance damage flash and HUD timers while paused so the
             // red vignette fades out and the damage-reason banner counts down.
             // Fix #455: Detect new damage events during PAUSED so the damage-reason
@@ -1193,6 +1220,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // expire naturally rather than hanging frozen in world-space for the entire
             // pause duration and all expiring simultaneously on resume.
             particleSystem.update(delta);
+            // Issue #658: Advance flag wave animation while paused so flags continue
+            // rippling in the background when the pause menu is open.
+            flagRenderer.update(delta);
             // Fix #379: Advance dodge timer while paused so mid-roll invincibility
             // windows and dodge cooldowns expire at their intended rate rather than
             // freezing for the entire pause duration (which would allow the player to
@@ -2010,6 +2040,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #171: Update particle system
         particleSystem.update(delta);
+
+        // Issue #658: Advance flag wave animation
+        flagRenderer.update(delta);
 
         // Fix #387: Advance arm swing animation unconditionally so a mid-punch swing
         // completes rather than freezing in the extended position while a UI overlay

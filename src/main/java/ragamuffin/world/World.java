@@ -39,6 +39,7 @@ public class World {
     private final Set<String> openDoors; // Open door positions (world coords of DOOR_LOWER)
     private final Set<String> playerPlacedBlocks; // Positions where player has placed blocks
     private final List<SmallItem> smallItems; // Small items placed without grid snapping
+    private final List<FlagPosition> flagPositions; // Issue #658: animated flag poles
 
     public World(long seed) {
         this.seed = seed;
@@ -51,6 +52,7 @@ public class World {
         this.openDoors = new HashSet<>();
         this.playerPlacedBlocks = new HashSet<>();
         this.smallItems = new ArrayList<>();
+        this.flagPositions = new ArrayList<>();
     }
 
     /**
@@ -143,6 +145,21 @@ public class World {
      */
     public List<SmallItem> getSmallItems() {
         return Collections.unmodifiableList(smallItems);
+    }
+
+    /**
+     * Register an animated flag pole position.
+     * Called by WorldGenerator when placing flag poles on buildings.
+     */
+    public void addFlagPosition(FlagPosition flag) {
+        flagPositions.add(flag);
+    }
+
+    /**
+     * Get all animated flag positions in the world.
+     */
+    public List<FlagPosition> getFlagPositions() {
+        return Collections.unmodifiableList(flagPositions);
     }
 
     /**
