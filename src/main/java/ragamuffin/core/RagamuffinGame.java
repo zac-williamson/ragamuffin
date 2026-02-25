@@ -1242,6 +1242,24 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
             }
 
+            // Fix #621: Check for player death triggered by starvation or weather damage above.
+            // The PAUSED branch previously applied lethal damage but never called
+            // checkAndTriggerRespawn(), so player.isDead() could become true while
+            // isRespawning stayed false — permanently soft-locking the game.
+            // Mirrors the PLAYING branch (line ~901) and CINEMATIC branch (line ~604).
+            boolean pausedJustDied = respawnSystem.checkAndTriggerRespawn(player, tooltipSystem);
+            if (pausedJustDied) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+                // Fix #621: Close and clear any active shop menu on death so isUIBlocking()
+                // returns false after respawn — mirrors the identical block in the PLAYING branch (Fix #601).
+                if (activeShopkeeperNPC != null) {
+                    activeShopkeeperNPC.setShopMenuOpen(false);
+                    activeShopkeeperNPC = null;
+                }
+            }
+
             // Fix #367: Process pending arrest even while paused so the flag doesn't persist as a ghost.
             // Without this, if police set arrestPending=true on the same frame the player opens ESC,
             // the flag is never evaluated until the game unpauses — causing an invisible "ghost arrest"
