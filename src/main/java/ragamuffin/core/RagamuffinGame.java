@@ -2836,6 +2836,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // PLAYING frame after resume (mirrors the identical pair in transitionToPaused())
         inputHandler.resetUp();
         inputHandler.resetDown();
+        // Fix #589: Clear stale leftClickPressed/leftClickReleased so a mouse-click buffered
+        // during the pause transition does not fire a spurious UI action on the first PLAYING frame
+        inputHandler.resetLeftClick();
+        inputHandler.resetLeftClickReleased();
         Gdx.input.setCursorCatched(true);
     }
 
@@ -2877,6 +2881,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetPlace();
         inputHandler.resetUp();
         inputHandler.resetDown();
+        // Fix #589: Clear stale leftClickPressed/leftClickReleased so a mouse-click on the
+        // same frame as ESC does not activate a pause-menu option the player did not intend
+        inputHandler.resetLeftClick();
+        inputHandler.resetLeftClickReleased();
     }
 
     public GameState getState() {
