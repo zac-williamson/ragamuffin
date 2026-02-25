@@ -52,7 +52,8 @@ public enum LandmarkType {
     ESTATE_AGENT,
     SUPERMARKET,
     POLICE_STATION,
-    FOOD_BANK;
+    FOOD_BANK,
+    STATUE;
 
     /**
      * Returns the display name shown on the building's sign.
