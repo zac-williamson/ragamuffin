@@ -53,15 +53,37 @@ class BlockDropTableTest {
     }
 
     @Test
-    void testPavementDropsPavementSlab() {
-        Material drop = dropTable.getDrop(BlockType.PAVEMENT, null);
-        assertEquals(Material.PAVEMENT_SLAB, drop);
+    void testPavementDropsPavementSlabOrCurrency() {
+        // PAVEMENT has a 5% chance to drop a coin (PENNY or SHILLING); otherwise PAVEMENT_SLAB.
+        // Run enough trials to confirm the result is always one of the three valid materials.
+        boolean sawSlab = false;
+        boolean sawCurrency = false;
+        for (int i = 0; i < 300; i++) {
+            Material drop = dropTable.getDrop(BlockType.PAVEMENT, null);
+            assertTrue(drop == Material.PAVEMENT_SLAB || drop == Material.PENNY || drop == Material.SHILLING,
+                    "PAVEMENT should drop PAVEMENT_SLAB, PENNY, or SHILLING, but got: " + drop);
+            if (drop == Material.PAVEMENT_SLAB) sawSlab = true;
+            if (drop == Material.PENNY || drop == Material.SHILLING) sawCurrency = true;
+        }
+        assertTrue(sawSlab, "PAVEMENT should usually drop PAVEMENT_SLAB");
+        assertTrue(sawCurrency, "PAVEMENT should occasionally drop a coin (PENNY or SHILLING)");
     }
 
     @Test
-    void testRoadDropsRoadAsphalt() {
-        Material drop = dropTable.getDrop(BlockType.ROAD, null);
-        assertEquals(Material.ROAD_ASPHALT, drop);
+    void testRoadDropsRoadAsphaltOrCurrency() {
+        // ROAD has a 5% chance to drop a coin (PENNY or SHILLING); otherwise ROAD_ASPHALT.
+        // Run enough trials to confirm the result is always one of the three valid materials.
+        boolean sawAsphalt = false;
+        boolean sawCurrency = false;
+        for (int i = 0; i < 300; i++) {
+            Material drop = dropTable.getDrop(BlockType.ROAD, null);
+            assertTrue(drop == Material.ROAD_ASPHALT || drop == Material.PENNY || drop == Material.SHILLING,
+                    "ROAD should drop ROAD_ASPHALT, PENNY, or SHILLING, but got: " + drop);
+            if (drop == Material.ROAD_ASPHALT) sawAsphalt = true;
+            if (drop == Material.PENNY || drop == Material.SHILLING) sawCurrency = true;
+        }
+        assertTrue(sawAsphalt, "ROAD should usually drop ROAD_ASPHALT");
+        assertTrue(sawCurrency, "ROAD should occasionally drop a coin (PENNY or SHILLING)");
     }
 
     @Test

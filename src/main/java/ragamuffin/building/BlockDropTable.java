@@ -35,8 +35,16 @@ public class BlockDropTable {
             case DIRT:
                 return Material.DIRT;
             case PAVEMENT:
+                // 5% chance of a dropped coin found in the cracks
+                if (Math.random() < 0.05) {
+                    return Math.random() < 0.7 ? Material.PENNY : Material.SHILLING;
+                }
                 return Material.PAVEMENT_SLAB;
             case ROAD:
+                // 5% chance of a dropped coin on the road
+                if (Math.random() < 0.05) {
+                    return Math.random() < 0.7 ? Material.PENNY : Material.SHILLING;
+                }
                 return Material.ROAD_ASPHALT;
             case WOOD:
                 return Material.WOOD;
