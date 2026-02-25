@@ -40,6 +40,7 @@ public class World {
     private final Set<String> playerPlacedBlocks; // Positions where player has placed blocks
     private final List<SmallItem> smallItems; // Small items placed without grid snapping
     private final List<FlagPosition> flagPositions; // Issue #658: animated flag poles
+    private final List<PropPosition> propPositions; // Issue #669: non-block 3D props
 
     public World(long seed) {
         this.seed = seed;
@@ -53,6 +54,7 @@ public class World {
         this.playerPlacedBlocks = new HashSet<>();
         this.smallItems = new ArrayList<>();
         this.flagPositions = new ArrayList<>();
+        this.propPositions = new ArrayList<>();
     }
 
     /**
@@ -160,6 +162,25 @@ public class World {
      */
     public List<FlagPosition> getFlagPositions() {
         return Collections.unmodifiableList(flagPositions);
+    }
+
+    /**
+     * Register a non-block-based 3D prop position.
+     * Called by WorldGenerator when placing props in the world.
+     *
+     * Issue #669: Add unique non-block-based 3D models to the world.
+     */
+    public void addPropPosition(PropPosition prop) {
+        propPositions.add(prop);
+    }
+
+    /**
+     * Get all non-block-based 3D prop positions in the world.
+     *
+     * Issue #669: Add unique non-block-based 3D models to the world.
+     */
+    public List<PropPosition> getPropPositions() {
+        return Collections.unmodifiableList(propPositions);
     }
 
     /**

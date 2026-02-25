@@ -741,6 +741,14 @@ public class WorldGenerator {
                           schoolX, schoolZ, 6,
                           cf1X, cf1Z, 14);
 
+        // ===== NON-BLOCK 3D PROPS — Issue #669 =====
+        // Place unique decorative objects throughout the world to add visual
+        // variety: phone boxes, post boxes, benches, bus shelters, bollards,
+        // street lamps, litter bins, market stalls, picnic tables, bike racks,
+        // shopping trolleys, and a park statue.
+        generateProps(world, sx, sz, nx, nz, offX, offZ, jobX, jobZ, pstnX, pstnZ,
+                      rx, rz1, rz2, indX, indZ, smX, smZ);
+
         // Load initial chunks around origin
         world.updateLoadedChunks(new Vector3(0, 0, 0));
     }
@@ -2817,5 +2825,179 @@ public class WorldGenerator {
             r1, g1, b1,
             r2, g2, b2,
             phase));
+    }
+
+    // ==================== NON-BLOCK 3D PROPS — Issue #669 ====================
+
+    /**
+     * Place all unique non-block-based 3D decorative props throughout the world.
+     *
+     * Props are registered with the world so {@link PropRenderer} can render them.
+     * They are positioned at ground level (y = 1) unless the building has raised the
+     * ground slightly — in those cases y = 0 is fine because the prop sits on the
+     * pavement surface.
+     *
+     * @param world   the world to register props in
+     * @param sx      high-street south X start
+     * @param sz      high-street south Z
+     * @param nx      high-street north X start
+     * @param nz      high-street north Z
+     * @param offX    office building X
+     * @param offZ    office building Z
+     * @param jobX    JobCentre X
+     * @param jobZ    JobCentre Z
+     * @param pstnX   police station X
+     * @param pstnZ   police station Z
+     * @param rx      residential row X start
+     * @param rz1     residential row 1 Z
+     * @param rz2     residential row 2 Z
+     * @param indX    industrial estate X
+     * @param indZ    industrial estate Z
+     * @param smX     supermarket X
+     * @param smZ     supermarket Z
+     */
+    private void generateProps(World world,
+                               int sx, int sz, int nx, int nz,
+                               int offX, int offZ,
+                               int jobX, int jobZ,
+                               int pstnX, int pstnZ,
+                               int rx, int rz1, int rz2,
+                               int indX, int indZ,
+                               int smX, int smZ) {
+        float y = 1.0f; // props sit at ground / pavement level
+
+        // ── Phone boxes ──────────────────────────────────────────────────────
+        // High street south — outside the off-licence / Greggs end
+        addProp(world, sx + 3,  y, sz - 1,  PropType.PHONE_BOX, 0f);
+        // High street north — near the newsagent
+        addProp(world, nx + 44, y, nz - 1,  PropType.PHONE_BOX, 180f);
+        // Near JobCentre entrance
+        addProp(world, jobX - 2, y, jobZ + 5, PropType.PHONE_BOX, 90f);
+        // Near police station
+        addProp(world, pstnX - 2, y, pstnZ + 4, PropType.PHONE_BOX, 270f);
+
+        // ── Post boxes ───────────────────────────────────────────────────────
+        // High street south pavement
+        addProp(world, sx + 12, y, sz - 1,  PropType.POST_BOX, 0f);
+        // High street north pavement
+        addProp(world, nx + 20, y, nz - 1,  PropType.POST_BOX, 0f);
+        // Residential row 1 — pavement end
+        addProp(world, rx + 5,  y, rz1 - 1, PropType.POST_BOX, 180f);
+        // Outside supermarket
+        addProp(world, smX + 2, y, smZ - 1, PropType.POST_BOX, 0f);
+
+        // ── Park benches ─────────────────────────────────────────────────────
+        // Two benches on the south side of the park path
+        addProp(world,  5f, y,  8f, PropType.PARK_BENCH, 0f);
+        addProp(world, -5f, y,  8f, PropType.PARK_BENCH, 0f);
+        // Two benches on the north side
+        addProp(world,  5f, y, -8f, PropType.PARK_BENCH, 180f);
+        addProp(world, -5f, y, -8f, PropType.PARK_BENCH, 180f);
+        // One bench near the pond (east side)
+        addProp(world, 10f, y,  2f, PropType.PARK_BENCH, 90f);
+
+        // ── Bus shelters ─────────────────────────────────────────────────────
+        // High street south bus stop
+        addProp(world, sx + 20, y, sz - 2, PropType.BUS_SHELTER, 180f);
+        // High street north bus stop
+        addProp(world, nx + 30, y, nz + 9, PropType.BUS_SHELTER, 0f);
+        // Near JobCentre road
+        addProp(world, jobX + 5, y, jobZ - 3, PropType.BUS_SHELTER, 180f);
+        // Near residential row
+        addProp(world, rx + 20, y, rz1 - 2, PropType.BUS_SHELTER, 180f);
+
+        // ── Bollards ─────────────────────────────────────────────────────────
+        // Office building entrance — a row of 3 bollards
+        for (int i = 0; i < 3; i++) {
+            addProp(world, offX + 2 + i * 2, y, offZ - 1, PropType.BOLLARD, 0f);
+        }
+        // JobCentre entrance
+        for (int i = 0; i < 3; i++) {
+            addProp(world, jobX + 2 + i * 2, y, jobZ - 1, PropType.BOLLARD, 0f);
+        }
+        // Police station front
+        for (int i = 0; i < 3; i++) {
+            addProp(world, pstnX + 1 + i * 2, y, pstnZ - 1, PropType.BOLLARD, 0f);
+        }
+        // High street pedestrian zone — scattered bollards
+        addProp(world, sx + 2,  y, sz + 8,  PropType.BOLLARD, 0f);
+        addProp(world, sx + 14, y, sz + 8,  PropType.BOLLARD, 0f);
+
+        // ── Street lamps ─────────────────────────────────────────────────────
+        // High street south — every ~10 blocks
+        for (int i = 0; i < 5; i++) {
+            addProp(world, sx + 2 + i * 10, y, sz - 1, PropType.STREET_LAMP, 0f);
+        }
+        // High street north — every ~10 blocks
+        for (int i = 0; i < 4; i++) {
+            addProp(world, nx + 2 + i * 10, y, nz + 8, PropType.STREET_LAMP, 180f);
+        }
+        // Park perimeter — 4 lamps at corners
+        addProp(world, -12f, y,  12f, PropType.STREET_LAMP, 0f);
+        addProp(world,  12f, y,  12f, PropType.STREET_LAMP, 0f);
+        addProp(world, -12f, y, -12f, PropType.STREET_LAMP, 0f);
+        addProp(world,  12f, y, -12f, PropType.STREET_LAMP, 0f);
+
+        // ── Litter bins ──────────────────────────────────────────────────────
+        // High street — pair near each bus stop
+        addProp(world, sx + 18, y, sz - 1, PropType.LITTER_BIN, 0f);
+        addProp(world, sx + 35, y, sz - 1, PropType.LITTER_BIN, 0f);
+        addProp(world, nx + 25, y, nz + 8, PropType.LITTER_BIN, 180f);
+        // Park entrance
+        addProp(world, -14f, y, 0f,  PropType.LITTER_BIN, 90f);
+        addProp(world,  14f, y, 0f,  PropType.LITTER_BIN, 270f);
+        // Near supermarket entrance
+        addProp(world, smX + 5, y, smZ - 1, PropType.LITTER_BIN, 0f);
+
+        // ── Market stalls ────────────────────────────────────────────────────
+        // Market area between the high street rows — a cluster of 4 stalls
+        addProp(world, sx + 5,  y + 0.1f, sz + 12, PropType.MARKET_STALL, 0f);
+        addProp(world, sx + 12, y + 0.1f, sz + 12, PropType.MARKET_STALL, 0f);
+        addProp(world, sx + 19, y + 0.1f, sz + 12, PropType.MARKET_STALL, 0f);
+        addProp(world, sx + 26, y + 0.1f, sz + 12, PropType.MARKET_STALL, 180f);
+
+        // ── Picnic tables ────────────────────────────────────────────────────
+        // Park area — 2 picnic tables near the pond
+        addProp(world, -3f, y, -3f, PropType.PICNIC_TABLE, 0f);
+        addProp(world,  4f, y, -4f, PropType.PICNIC_TABLE, 45f);
+        // Near the community centre
+        addProp(world, rx - 12f, y, rz1 + 14f, PropType.PICNIC_TABLE, 0f);
+
+        // ── Bike racks ───────────────────────────────────────────────────────
+        // Outside the library
+        addProp(world, jobX - 18f, y, jobZ - 15f, PropType.BIKE_RACK, 0f);
+        addProp(world, jobX - 14f, y, jobZ - 15f, PropType.BIKE_RACK, 0f);
+        // Outside the supermarket
+        addProp(world, smX + 8f, y, smZ - 1f, PropType.BIKE_RACK, 90f);
+        addProp(world, smX + 8f, y, smZ + 3f, PropType.BIKE_RACK, 90f);
+        // Outside the primary school
+        addProp(world, indX + 2f, y, indZ - 41f, PropType.BIKE_RACK, 0f);
+        addProp(world, indX + 6f, y, indZ - 41f, PropType.BIKE_RACK, 0f);
+
+        // ── Shopping trolleys ────────────────────────────────────────────────
+        // Abandoned near the supermarket car park
+        addProp(world, smX + 18f, y, smZ + 5f,  PropType.SHOPPING_TROLLEY, 15f);
+        addProp(world, smX + 20f, y, smZ + 2f,  PropType.SHOPPING_TROLLEY, 195f);
+        // One dumped in the canal-adjacent area (very British)
+        addProp(world, -8f, y, rz2 - 30f,       PropType.SHOPPING_TROLLEY, 42f);
+
+        // ── Statue ───────────────────────────────────────────────────────────
+        // Heroic monument at the centre of the park
+        addProp(world, 0f, y, 0f, PropType.STATUE, 0f);
+    }
+
+    /**
+     * Helper: register a single prop placement with the world.
+     *
+     * @param world      the world to register the prop in
+     * @param x          world-space X position of prop base
+     * @param y          world-space Y position of prop base (ground level)
+     * @param z          world-space Z position of prop base
+     * @param type       which prop type to place
+     * @param rotationY  Y-axis rotation in degrees
+     */
+    private void addProp(World world, float x, float y, float z,
+                         PropType type, float rotationY) {
+        world.addPropPosition(new PropPosition(x, y, z, type, rotationY));
     }
 }
