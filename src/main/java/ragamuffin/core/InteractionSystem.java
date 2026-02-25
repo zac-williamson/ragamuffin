@@ -17,7 +17,7 @@ import java.util.Random;
  */
 public class InteractionSystem {
 
-    private static final float INTERACTION_RANGE = 2.0f;
+    public static final float INTERACTION_RANGE = 2.0f;
     private static final Random RANDOM = new Random();
 
     private final BuildingQuestRegistry questRegistry = new BuildingQuestRegistry();
