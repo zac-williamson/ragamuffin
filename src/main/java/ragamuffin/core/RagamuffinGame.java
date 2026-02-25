@@ -1334,6 +1334,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetDown();
         inputHandler.resetLeftClick();
         inputHandler.resetLeftClickReleased();
+        // Fix #603: Clear stale rightClickPressed so a right-click buffered during the
+        // cinematic does not fire a phantom right-click event on the first PLAYING frame
+        inputHandler.resetRightClick();
         inputHandler.resetEscape();
         inputHandler.resetEnter();
         Gdx.input.setCursorCatched(true);
@@ -2786,6 +2789,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // before restartGame() runs; without this reset, handleUIInput() sees a phantom
         // release event before any real mouse activity occurs.
         inputHandler.resetLeftClickReleased();
+        // Fix #603: Clear stale rightClickPressed so a right-click buffered during the menu
+        // does not fire a phantom right-click event on frame 1 of the new session
+        inputHandler.resetRightClick();
         // Fix #575: Clear stale scroll so hotbar doesn't cycle on frame 1 of the new session
         inputHandler.resetScroll();
         // Fix #581: Clear stale action inputs so frame 1 of the new session does not fire
@@ -2875,6 +2881,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // during the pause transition does not fire a spurious UI action on the first PLAYING frame
         inputHandler.resetLeftClick();
         inputHandler.resetLeftClickReleased();
+        // Fix #603: Clear stale rightClickPressed so a right-click buffered during the pause
+        // transition does not fire a phantom right-click event on the first PLAYING frame
+        inputHandler.resetRightClick();
         // Fix #595: Clear stale escapePressed so ESC-to-resume does not immediately re-pause
         // on the first PLAYING frame (mirrors the identical call in transitionToPaused() #591)
         inputHandler.resetEscape();
@@ -2926,6 +2935,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // same frame as ESC does not activate a pause-menu option the player did not intend
         inputHandler.resetLeftClick();
         inputHandler.resetLeftClickReleased();
+        // Fix #603: Clear stale rightClickPressed so a right-click buffered on the same frame
+        // as ESC does not fire a phantom right-click event on the first PAUSED frame
+        inputHandler.resetRightClick();
         // Fix #591: Clear stale escapePressed so the first PAUSED frame does not immediately
         // call handleEscapePress() again and bounce back to PLAYING
         inputHandler.resetEscape();
