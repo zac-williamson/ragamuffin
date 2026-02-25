@@ -2832,6 +2832,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetInteract();
         inputHandler.resetJump();
         inputHandler.resetDodge();
+        // Fix #587: Clear stale up/down arrow-key flags so they don't leak into the first
+        // PLAYING frame after resume (mirrors the identical pair in transitionToPaused())
+        inputHandler.resetUp();
+        inputHandler.resetDown();
         Gdx.input.setCursorCatched(true);
     }
 
