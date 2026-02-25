@@ -80,19 +80,21 @@ class Issue204AllotmentsFenceTest {
     }
 
     /**
-     * Test 2: Player-placed WOOD IS still detected.
-     * Place 15 WOOD blocks in a connected cluster. Force scan.
+     * Test 2: Player-placed WOOD IS still detected and triggers council builders.
+     * Place 55 WOOD blocks in a connected cluster. Force scan.
      * Verify exactly one structure is detected and a COUNCIL_BUILDER has spawned.
+     * (Fix #646: COUNCIL_BUILDER spawning now requires LARGE_STRUCTURE_THRESHOLD = 50 blocks.)
      */
     @Test
     void playerPlacedWoodIsStillDetected() {
-        // Place 15 WOOD blocks (3x5x1) as player-placed, far from allotments
-        for (int x = 10; x < 13; x++) {
-            for (int y = 1; y < 6; y++) {
+        // Place 55 WOOD blocks (5x11x1) as player-placed, far from allotments.
+        // Must be >= LARGE_STRUCTURE_THRESHOLD (50) to trigger COUNCIL_BUILDER spawning.
+        for (int x = 10; x < 15; x++) {
+            for (int y = 1; y < 12; y++) {
                 world.setPlayerBlock(x, y, 10, BlockType.WOOD);
             }
         }
-        // 3*5 = 15 blocks — above the SMALL_STRUCTURE_THRESHOLD of 10
+        // 5*11 = 55 blocks — above the LARGE_STRUCTURE_THRESHOLD of 50
 
         npcManager.forceStructureScan(world, tooltipSystem);
 

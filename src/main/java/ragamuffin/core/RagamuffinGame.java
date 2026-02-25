@@ -839,6 +839,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 chunkRenderer.render(modelBatch, environment);
                 modelBatch.end();
 
+                // Fix #651: Render small items placed in the world (after 3D pass, before 2D UI)
+                renderSmallItems();
+
                 // Render letterbox and skip hint overlay
                 int sw = Gdx.graphics.getWidth();
                 int sh = Gdx.graphics.getHeight();
@@ -1084,6 +1087,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
 
+            // Fix #651: Render small items placed in the world (after 3D pass, before 2D UI)
+            renderSmallItems();
+
             // Issue #54: Render block targeting outline and placement ghost block
             // Issue #192: Skip when a UI overlay is open to avoid drawing on top of inventory/crafting/help screens
             if (!isUIBlocking()) {
@@ -1149,6 +1155,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             chunkRenderer.render(modelBatch, environment);
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
             modelBatch.end();
+
+            // Fix #651: Render small items placed in the world (after 3D pass, before 2D UI)
+            renderSmallItems();
 
             // Fix #333: Render rain overlay while paused so the rain effect persists
             // visually when the player opens the pause menu during rain — mirrors the
@@ -3825,6 +3834,57 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
             }
         }
+    }
+
+    /**
+     * Fix #651: Render all small items placed in the world as screen-space billboard quads.
+     * Each SmallItem's 3D world position is projected through the perspective camera to
+     * obtain screen-space coordinates; a 0.3×0.3 unit (≈ 20px) coloured filled rectangle
+     * is then drawn at that screen location.  The billboard is sized proportionally to
+     * distance so nearby items appear larger.  This pass runs after modelBatch.end() and
+     * before the 2D UI overlay so items appear embedded in the 3D scene.
+     */
+    private void renderSmallItems() {
+        java.util.List<ragamuffin.building.SmallItem> items = world.getSmallItems();
+        if (items.isEmpty()) {
+            return;
+        }
+
+        int sw = Gdx.graphics.getWidth();
+        int sh = Gdx.graphics.getHeight();
+
+        com.badlogic.gdx.math.Matrix4 ortho = new com.badlogic.gdx.math.Matrix4();
+        ortho.setToOrtho2D(0, 0, sw, sh);
+
+        Gdx.gl.glEnable(GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA);
+
+        shapeRenderer.setProjectionMatrix(ortho);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        for (ragamuffin.building.SmallItem item : items) {
+            com.badlogic.gdx.math.Vector3 worldPos = item.getPosition();
+
+            // Project world position to screen coordinates using camera.project()
+            com.badlogic.gdx.math.Vector3 screenPos = new com.badlogic.gdx.math.Vector3(worldPos);
+            camera.project(screenPos, 0, 0, sw, sh);
+
+            // Skip items behind the camera (negative z after projection)
+            if (screenPos.z >= 1f) continue;
+
+            // Scale billboard size with distance: base size 20px at 5 units
+            float dist = camera.position.dst(worldPos);
+            float size = Math.max(4f, Math.min(30f, 100f / (dist + 1f)));
+            float half = size * 0.5f;
+
+            com.badlogic.gdx.graphics.Color[] colors = item.getMaterial().getIconColors();
+            com.badlogic.gdx.graphics.Color col = colors[0];
+            shapeRenderer.setColor(col.r, col.g, col.b, 0.95f);
+            shapeRenderer.rect(screenPos.x - half, screenPos.y - half, size, size);
+        }
+
+        shapeRenderer.end();
+        Gdx.gl.glDisable(GL20.GL_BLEND);
     }
 
     @Override
