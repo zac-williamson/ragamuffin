@@ -1373,6 +1373,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                     activeShopkeeperNPC.setShopMenuOpen(false);
                     activeShopkeeperNPC = null;
                 }
+                // Fix #627: Transition to PLAYING after arrest so the player is not
+                // left stranded on the pause menu. Mirrors the CINEMATIC and PLAYING
+                // arrest branches which both leave the player in an interactive state.
+                transitionToPlaying();
             }
 
             // Render UI and pause menu
