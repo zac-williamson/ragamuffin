@@ -2788,6 +2788,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // When the player mouse-clicks "Restart", touchUp() sets leftClickReleased=true
         // before restartGame() runs; without this reset, handleUIInput() sees a phantom
         // release event before any real mouse activity occurs.
+        // Fix #605: Also clear leftClickPressed so the touchDown() event from clicking
+        // "Restart" does not fire a phantom left-click on frame 1 of the new session.
+        // This mirrors the pattern in transitionToPlaying() and transitionToPaused()
+        // where both resetLeftClick() and resetLeftClickReleased() are always called together.
+        inputHandler.resetLeftClick();
         inputHandler.resetLeftClickReleased();
         // Fix #603: Clear stale rightClickPressed so a right-click buffered during the menu
         // does not fire a phantom right-click event on frame 1 of the new session
