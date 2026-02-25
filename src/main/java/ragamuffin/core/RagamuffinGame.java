@@ -2570,7 +2570,11 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private void handleEscapePress() {
         // Close any open UI first
-        if (achievementsUI.isVisible()) {
+        if (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen()) {
+            activeShopkeeperNPC.setShopMenuOpen(false);
+            activeShopkeeperNPC = null;
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
+        } else if (achievementsUI.isVisible()) {
             achievementsUI.hide();
             Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (inventoryUI.isVisible()) {
