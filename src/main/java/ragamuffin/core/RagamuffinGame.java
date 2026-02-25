@@ -2872,6 +2872,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #595: Clear stale escapePressed so ESC-to-resume does not immediately re-pause
         // on the first PLAYING frame (mirrors the identical call in transitionToPaused() #591)
         inputHandler.resetEscape();
+        // Fix #599: Clear stale enterPressed so Enter-to-resume does not fire crafting confirmation
+        // on the first PLAYING frame (mirrors the identical call in transitionToPaused(), finishCinematic(), restartGame())
+        inputHandler.resetEnter();
         Gdx.input.setCursorCatched(true);
     }
 
