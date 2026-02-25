@@ -2758,6 +2758,17 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetLeftClickReleased();
         // Fix #575: Clear stale scroll so hotbar doesn't cycle on frame 1 of the new session
         inputHandler.resetScroll();
+        // Fix #581: Clear stale action inputs so frame 1 of the new session does not fire
+        // spurious punches, jumps, dodges, hotbar/crafting slot changes, or menu navigation.
+        inputHandler.resetPunch();
+        inputHandler.resetPlace();
+        inputHandler.resetJump();
+        inputHandler.resetDodge();
+        inputHandler.resetHotbarSlot();
+        inputHandler.resetCraftingSlot();
+        inputHandler.resetEnter();
+        inputHandler.resetUp();
+        inputHandler.resetDown();
         // Fix #331: Recreate firstPersonArm so swinging and swingTimer reset to their defaults
         // (swinging=false, swingTimer=0). Without this, a mid-punch animation from the previous
         // session leaks into the new game, showing the arm in a partially-extended position.
