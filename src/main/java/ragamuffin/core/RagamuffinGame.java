@@ -653,6 +653,20 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetLeftClickReleased();
                 inputHandler.resetRightClick();
                 inputHandler.resetScroll();
+                // Fix #615: Close any UI overlays left open at the time of arrest so
+                // isUIBlocking() returns false on the first PLAYING frame post-arrest.
+                // Mirrors the identical hide() calls in the respawn-completion block.
+                inventoryUI.hide();
+                craftingUI.hide();
+                helpUI.hide();
+                achievementsUI.hide();
+                questLogUI.hide();
+                // Fix #615: Close and clear any active shop menu so isUIBlocking() returns
+                // false after arrest. Mirrors the justDied path (fix #601).
+                if (activeShopkeeperNPC != null) {
+                    activeShopkeeperNPC.setShopMenuOpen(false);
+                    activeShopkeeperNPC = null;
+                }
             }
 
             // Fix #437: Advance tooltip timers during the cinematic so queued tooltips
@@ -1233,6 +1247,20 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inputHandler.resetLeftClickReleased();
                 inputHandler.resetRightClick();
                 inputHandler.resetScroll();
+                // Fix #615: Close any UI overlays left open at the time of arrest so
+                // isUIBlocking() returns false on the first PLAYING frame post-arrest.
+                // Mirrors the identical hide() calls in the respawn-completion block.
+                inventoryUI.hide();
+                craftingUI.hide();
+                helpUI.hide();
+                achievementsUI.hide();
+                questLogUI.hide();
+                // Fix #615: Close and clear any active shop menu so isUIBlocking() returns
+                // false after arrest. Mirrors the justDied path (fix #601).
+                if (activeShopkeeperNPC != null) {
+                    activeShopkeeperNPC.setShopMenuOpen(false);
+                    activeShopkeeperNPC = null;
+                }
             }
 
             // Render UI and pause menu
@@ -1784,6 +1812,20 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetLeftClickReleased();
             inputHandler.resetRightClick();
             inputHandler.resetScroll();
+            // Fix #615: Close any UI overlays left open at the time of arrest so
+            // isUIBlocking() returns false on the first PLAYING frame post-arrest.
+            // Mirrors the identical hide() calls in the respawn-completion block.
+            inventoryUI.hide();
+            craftingUI.hide();
+            helpUI.hide();
+            achievementsUI.hide();
+            questLogUI.hide();
+            // Fix #615: Close and clear any active shop menu so isUIBlocking() returns
+            // false after arrest. Mirrors the justDied path (fix #601).
+            if (activeShopkeeperNPC != null) {
+                activeShopkeeperNPC.setShopMenuOpen(false);
+                activeShopkeeperNPC = null;
+            }
         }
 
         // Issue #48: Passive reputation decay — "lying low" reduces reputation over time
