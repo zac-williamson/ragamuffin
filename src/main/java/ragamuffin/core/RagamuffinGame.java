@@ -140,6 +140,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     private ragamuffin.ui.QuestLogUI questLogUI;
     // Issue #497: Quest tracker UI (always-visible compact panel)
     private ragamuffin.ui.QuestTrackerUI questTrackerUI;
+
+    // Issue #659: Criminal record log
+    private ragamuffin.ui.CriminalRecordUI criminalRecordUI;
     private float distanceTravelledAchievement = 0f; // accumulated metres walked
     private com.badlogic.gdx.math.Vector3 lastPlayerPosForDistance = null;
 
@@ -367,6 +370,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #497: Initialize quest tracker UI (compact always-visible panel)
         // Fix #511: Pass inventory so tracker can show current/required counts
         questTrackerUI = new ragamuffin.ui.QuestTrackerUI(interactionSystem.getQuestRegistry(), inventory);
+
+        // Issue #659: Initialize criminal record UI
+        criminalRecordUI = new ragamuffin.ui.CriminalRecordUI(player.getCriminalRecord());
 
         loadingComplete = true;
         state = GameState.MENU;
@@ -1774,9 +1780,22 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Criminal record toggle (R key)
+        if (inputHandler.isCriminalRecordPressed()) {
+            boolean wasVisible = criminalRecordUI.isVisible();
+            criminalRecordUI.toggle();
+            soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
+            inputHandler.resetCriminalRecord();
+            if (!wasVisible) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
+        }
+
         // Release cursor when any overlay UI is open, re-catch when all closed
         boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
-                || achievementsUI.isVisible() || questLogUI.isVisible()
+                || achievementsUI.isVisible() || questLogUI.isVisible() || criminalRecordUI.isVisible()
                 || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen());
         Gdx.input.setCursorCatched(!uiOpen);
 
@@ -2253,6 +2272,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
 
             // Punch the NPC (knockback + loot on kill)
+            boolean npcWasAlive = targetNPC.isAlive();
             npcManager.punchNPC(targetNPC, tmpDirection, inventory, tooltipSystem, player.getPosition(), world);
             soundSystem.play(ragamuffin.audio.SoundEffect.NPC_HIT);
             // Issue #171: Emit combat-hit sparks at the NPC's chest height
@@ -2267,6 +2287,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Issue #450: Achievement tracking — punching NPCs
             achievementSystem.unlock(ragamuffin.ui.AchievementType.FIRST_PUNCH);
             achievementSystem.increment(ragamuffin.ui.AchievementType.BRAWLER);
+            // Issue #659: Criminal record — record NPC punch by type
+            if (targetNPC.getType() == ragamuffin.entity.NPCType.PENSIONER) {
+                player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.PENSIONERS_PUNCHED);
+            } else if (targetNPC.getType() == ragamuffin.entity.NPCType.PUBLIC) {
+                player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.MEMBERS_OF_PUBLIC_PUNCHED);
+            }
+            // Issue #659: Record NPC kill if the punch was lethal
+            if (npcWasAlive && !targetNPC.isAlive()) {
+                player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.NPCS_KILLED);
+            }
             // Issue #26: If a YOUTH_GANG member was punched, escalate territory to hostile
             if (targetNPC.getType() == ragamuffin.entity.NPCType.YOUTH_GANG) {
                 gangTerritorySystem.onPlayerAttacksGang(tooltipSystem, npcManager, player, world);
@@ -2333,6 +2363,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
 
             if (broken) {
+                // Issue #659: Track block destruction in criminal record
+                player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.BLOCKS_DESTROYED);
+
                 // Issue #171: Emit block-break debris using the block's colour
                 com.badlogic.gdx.graphics.Color blockColour = blockType.getColor();
                 particleSystem.emitBlockBreak(x + 0.5f, y + 0.5f, z + 0.5f,
@@ -2363,6 +2396,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                     greggsRaidSystem.onGreggBlockBroken(tooltipSystem, npcManager, player, world);
                     // Issue #450: Greggs raid achievement — first break triggers it
                     achievementSystem.unlock(ragamuffin.ui.AchievementType.GREGGS_RAID);
+                    // Issue #659: Record shop raid in criminal record
+                    player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.SHOPS_RAIDED);
                 }
 
                 // Issue #450: Block breaking achievements
@@ -3003,6 +3038,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (questLogUI.isVisible()) {
             questLogUI.hide();
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
+        } else if (criminalRecordUI.isVisible()) {
+            criminalRecordUI.hide();
             Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (state == GameState.PLAYING) {
             transitionToPaused();

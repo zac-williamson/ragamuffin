@@ -16,6 +16,7 @@ public class InputHandler implements InputProcessor {
     private boolean craftingPressed;
     private boolean achievementsPressed;
     private boolean questLogPressed;
+    private boolean criminalRecordPressed;
     private boolean punchPressed;
     private boolean punchHeld; // true while left mouse button is held down
     private boolean placePressed;
@@ -65,6 +66,7 @@ public class InputHandler implements InputProcessor {
     public boolean isCraftingPressed() { return craftingPressed; }
     public boolean isAchievementsPressed() { return achievementsPressed; }
     public boolean isQuestLogPressed() { return questLogPressed; }
+    public boolean isCriminalRecordPressed() { return criminalRecordPressed; }
     public boolean isPunchPressed() { return punchPressed; }
     public boolean isPunchHeld() { return punchHeld; }
     public boolean isPlacePressed() { return placePressed; }
@@ -98,6 +100,7 @@ public class InputHandler implements InputProcessor {
     public void resetCrafting() { craftingPressed = false; }
     public void resetAchievements() { achievementsPressed = false; }
     public void resetQuestLog() { questLogPressed = false; }
+    public void resetCriminalRecord() { criminalRecordPressed = false; }
     public void resetPunch() { punchPressed = false; }
     public void resetPunchHeld() { punchHeld = false; }
     public void resetPlace() { placePressed = false; }
@@ -137,6 +140,8 @@ public class InputHandler implements InputProcessor {
             achievementsPressed = true;
         } else if (keycode == Input.Keys.Q) {
             questLogPressed = true;
+        } else if (keycode == Input.Keys.R) {
+            criminalRecordPressed = true;
         } else if (keycode == Input.Keys.E) {
             interactPressed = true;
         } else if (keycode == Input.Keys.SPACE) {
