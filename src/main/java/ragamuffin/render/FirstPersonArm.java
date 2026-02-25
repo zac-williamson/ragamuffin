@@ -2,11 +2,13 @@ package ragamuffin.render;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import ragamuffin.building.Material;
 
 /**
  * Renders a first-person block-style arm at the bottom-right of the screen.
  * When punching, the arm swings forward with a simple animation.
  * The arm features idle bob animation and improved visual detail.
+ * When the player holds an item it is drawn above the fist.
  */
 public class FirstPersonArm {
 
@@ -16,6 +18,9 @@ public class FirstPersonArm {
     private static final Color SLEEVE_DARK_COLOR = new Color(0.20f, 0.20f, 0.50f, 1f);
     private static final Color KNUCKLE_COLOR     = new Color(0.72f, 0.57f, 0.42f, 1f);
     private static final Color OUTLINE_COLOR     = new Color(0.10f, 0.07f, 0.05f, 0.55f);
+
+    /** The item currently held in this hand, or null for empty hand. */
+    private Material heldItem = null;
 
     private static final float SWING_DURATION = 0.25f; // seconds for full punch swing
     private static final float BOB_SPEED      = 3.0f;  // idle bob frequency (radians/sec)
@@ -61,6 +66,21 @@ public class FirstPersonArm {
      */
     public float getIdleTimer() {
         return idleTimer;
+    }
+
+    /**
+     * Set the item currently held in the player's hand.
+     * Pass null to show an empty hand.
+     */
+    public void setHeldItem(Material item) {
+        this.heldItem = item;
+    }
+
+    /**
+     * Returns the item currently held, or null if empty-handed.
+     */
+    public Material getHeldItem() {
+        return heldItem;
     }
 
     /**
@@ -175,6 +195,172 @@ public class FirstPersonArm {
         float cuffH = sleeveH * 0.10f;
         shapeRenderer.rect(sleeveX, sleeveY + sleeveH - cuffH, sleeveW, cuffH);
 
+        // Draw held item above the fist
+        if (heldItem != null) {
+            float itemSize = armWidth * 1.4f;
+            float itemX = handX + (handW - itemSize) / 2f;
+            float itemY = handY + handH + screenHeight * 0.01f;
+            drawHeldItemIcon(shapeRenderer, heldItem, itemX, itemY, itemSize);
+        }
+
         shapeRenderer.end();
+    }
+
+    /**
+     * Draw a small item icon above the fist representing the held item.
+     * Block items render as an isometric voxel cube; non-block items render
+     * using a simplified shape based on the material's icon shape.
+     */
+    private void drawHeldItemIcon(ShapeRenderer shapeRenderer, Material material, float x, float y, float size) {
+        Color[] colors = material.getIconColors();
+        if (material.isBlockItem()) {
+            drawIsometricBlock(shapeRenderer, colors, x, y, size);
+        } else {
+            drawSimpleItemShape(shapeRenderer, material, x, y, size, colors);
+        }
+    }
+
+    /**
+     * Draw a 3D isometric voxel cube for a block-type held item.
+     */
+    private void drawIsometricBlock(ShapeRenderer shapeRenderer, Color[] colors, float x, float y, float size) {
+        Color topColor   = colors[0];
+        Color leftColor  = colors.length > 1 ? colors[1] : darken(colors[0], 0.80f);
+        Color rightColor = darken(leftColor, 0.70f);
+
+        float cx    = x + size / 2f;
+        float xLeft = x;
+        float xRight= x + size;
+        float yTop  = y + size;
+        float yMid  = y + size * 0.40f;
+        float yBot  = y;
+
+        float ax = cx,      ay = yTop;
+        float bx = xLeft,   by = yMid;
+        float c2x= xRight,  c2y= yMid;
+        float dx = xLeft,   dy = yBot;
+        float ex = cx,      ey = yBot;
+        float fx = xRight,  fy = yBot;
+
+        // Top face (rhombus)
+        shapeRenderer.setColor(topColor);
+        shapeRenderer.triangle(ax, ay, bx, by, c2x, c2y);
+        shapeRenderer.triangle(bx, by, ex, ey, c2x, c2y);
+
+        // Left face
+        shapeRenderer.setColor(leftColor);
+        shapeRenderer.triangle(bx, by, dx, dy, ex, ey);
+
+        // Right face (shadow side)
+        shapeRenderer.setColor(rightColor);
+        shapeRenderer.triangle(c2x, c2y, ex, ey, fx, fy);
+    }
+
+    /**
+     * Draw a simple shape for non-block items (tool, gem, bottle, flat paper, etc.).
+     */
+    private void drawSimpleItemShape(ShapeRenderer shapeRenderer, Material material, float x, float y, float size, Color[] colors) {
+        Color primary   = colors[0];
+        Color secondary = colors.length > 1 ? colors[1] : primary;
+        float cx = x + size / 2f;
+        float cy = y + size / 2f;
+
+        switch (material.getIconShape()) {
+            case TOOL: {
+                float handleW = size / 5f;
+                float handleH = size * 0.65f;
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(x + size / 5f, y + size / 8f, handleW, handleH);
+                float headSize = size / 3f;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(x + size / 2f, y + size / 2f, headSize, headSize);
+                break;
+            }
+            case FLAT_PAPER: {
+                float w = size * 0.75f;
+                float h = size * 0.80f;
+                float px = x + (size - w) / 2f;
+                float py = y + (size - h) / 2f;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(px, py, w, h);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(px + 2, py + h - h / 5f, w - 4, h / 5f - 1);
+                break;
+            }
+            case BOTTLE: {
+                float bodyW = size / 3f;
+                float bodyH = size * 0.70f;
+                float bx2 = cx - bodyW / 2f;
+                float by2 = y + size / 8f;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(bx2, by2, bodyW, bodyH);
+                float capW = bodyW - 4f;
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(bx2 + 2f, by2 + bodyH, capW, size / 8f);
+                break;
+            }
+            case FOOD: {
+                float foodW = size * 0.80f;
+                float foodH = size * 0.50f;
+                float fx2 = x + (size - foodW) / 2f;
+                float fy2 = cy - foodH / 2f + size / 10f;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(fx2, fy2, foodW, foodH);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(fx2 + 2f, y + size / 8f, foodW - 4f, size / 8f);
+                break;
+            }
+            case CARD: {
+                float cardW = size * 0.80f;
+                float cardH = size * 0.55f;
+                float kx = x + (size - cardW) / 2f;
+                float ky = cy - cardH / 2f;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(kx, ky, cardW, cardH);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(kx + 3f, ky + 3f, cardW - 6f, cardH - 6f);
+                break;
+            }
+            case GEM: {
+                shapeRenderer.setColor(primary);
+                shapeRenderer.triangle(cx, y + size - 2f, x + 2f, cy, x + size - 2f, cy);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.triangle(x + 2f, cy, x + size - 2f, cy, cx, y + 2f);
+                break;
+            }
+            case BOX: {
+                float boxSize = size * 0.70f;
+                float bx2 = x + (size - boxSize) / 2f;
+                float by2 = y + size / 10f;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(bx2, by2, boxSize, boxSize);
+                float topH = size / 6f;
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(bx2, by2 + boxSize, boxSize, topH);
+                break;
+            }
+            case CYLINDER: {
+                float cylW = size / 3f;
+                float cylH = size * 0.72f;
+                float cx2 = x + (size - cylW) / 2f;
+                float cy2 = y + size / 10f;
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(cx2, cy2, cylW, cylH);
+                shapeRenderer.setColor(secondary);
+                shapeRenderer.rect(cx2 - 2f, cy2 + cylH - size / 10f, cylW + 4f, size / 8f);
+                shapeRenderer.rect(cx2 + cylW, cy2 + cylH / 2f, size / 6f, size / 8f);
+                break;
+            }
+            default: {
+                shapeRenderer.setColor(primary);
+                shapeRenderer.rect(x, y, size, size);
+                break;
+            }
+        }
+    }
+
+    /** Return a darker version of the given color (factor in 0..1). */
+    private static Color darken(Color c, float factor) {
+        return new Color(c.r * factor, c.g * factor, c.b * factor, c.a);
     }
 }
