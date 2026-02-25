@@ -1,6 +1,7 @@
 package ragamuffin.entity;
 
 import com.badlogic.gdx.math.Vector3;
+import ragamuffin.core.CriminalRecord;
 import ragamuffin.core.StreetReputation;
 import ragamuffin.world.BlockType;
 import ragamuffin.world.Chunk;
@@ -62,6 +63,9 @@ public class Player {
     // Street reputation
     private StreetReputation streetReputation;
 
+    // Criminal record — tracks crime statistics
+    private CriminalRecord criminalRecord;
+
     public Player(float x, float y, float z) {
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
@@ -80,6 +84,7 @@ public class Player {
         this.dodgeDirZ = 0f;
         this.damageFlashTimer = 0f;
         this.streetReputation = new StreetReputation();
+        this.criminalRecord = new CriminalRecord();
     }
 
     public Vector3 getPosition() {
@@ -487,5 +492,12 @@ public class Player {
      */
     public StreetReputation getStreetReputation() {
         return streetReputation;
+    }
+
+    /**
+     * Get the player's criminal record.
+     */
+    public CriminalRecord getCriminalRecord() {
+        return criminalRecord;
     }
 }
