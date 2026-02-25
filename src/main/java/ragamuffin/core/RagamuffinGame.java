@@ -1445,9 +1445,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetHotbarSlot();
         }
 
-        // Phase 11: E key interaction — only when no UI overlay is open
+        // Phase 11: E key interaction — only when no UI overlay is open,
+        // but allow E through when the shop menu is open so the purchase confirmation works.
         if (inputHandler.isInteractPressed()) {
-            if (!isUIBlocking()) {
+            boolean shopMenuOpen = activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen();
+            if (!isUIBlocking() || shopMenuOpen) {
                 handleInteraction();
             }
             inputHandler.resetInteract();
@@ -1549,7 +1551,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private boolean isUIBlocking() {
         return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
-                || achievementsUI.isVisible() || questLogUI.isVisible();
+                || achievementsUI.isVisible() || questLogUI.isVisible()
+                || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen());
     }
 
     /**
