@@ -204,7 +204,9 @@ public class InputHandler implements InputProcessor {
         mouseY = screenY;
         if (button == Input.Buttons.LEFT) {
             punchHeld = false;
-            leftClickReleased = true;
+            if (!Gdx.input.isCursorCatched()) {
+                leftClickReleased = true;
+            }
         }
         return true;
     }
@@ -231,7 +233,9 @@ public class InputHandler implements InputProcessor {
     public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
         if (button == Input.Buttons.LEFT) {
             punchHeld = false;
-            leftClickReleased = true;
+            if (!Gdx.input.isCursorCatched()) {
+                leftClickReleased = true;
+            }
         }
         return false;
     }
