@@ -8,6 +8,7 @@ public enum DamageReason {
     NPC_ATTACK("Attacked"),
     STARVATION("Starving"),
     WEATHER("Exposure"),
+    CAR_HIT("Hit by car"),
     UNKNOWN("Damaged");
 
     private final String displayName;

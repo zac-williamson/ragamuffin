@@ -143,6 +143,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     // Issue #659: Criminal record log
     private ragamuffin.ui.CriminalRecordUI criminalRecordUI;
+
+    // Issue #662: Car traffic system
+    private ragamuffin.ai.CarManager carManager;
     private float distanceTravelledAchievement = 0f; // accumulated metres walked
     private com.badlogic.gdx.math.Vector3 lastPlayerPosForDistance = null;
 
@@ -373,6 +376,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #659: Initialize criminal record UI
         criminalRecordUI = new ragamuffin.ui.CriminalRecordUI(player.getCriminalRecord());
+
+        // Issue #662: Initialize car traffic system
+        carManager = new ragamuffin.ai.CarManager();
+        carManager.spawnInitialCars(world);
 
         loadingComplete = true;
         state = GameState.MENU;
@@ -1980,6 +1987,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // press (reopening the menu) rather than erroneously executing a purchase.
         if (activeShopkeeperNPC != null && !activeShopkeeperNPC.isShopMenuOpen()) {
             activeShopkeeperNPC = null;
+        }
+
+        // Issue #662: Update car traffic
+        if (!player.isDead()) {
+            carManager.update(delta, player);
         }
 
         // Phase 5: Update NPCs
