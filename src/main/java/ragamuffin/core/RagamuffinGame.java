@@ -885,6 +885,39 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Fix #459: Reset distance tracking on respawn so distance doesn't carry across deaths.
                 distanceTravelledAchievement = 0f;
                 lastPlayerPosForDistance.set(player.getPosition());
+                // Fix #609: Reset all stale input flags so any key/mouse event buffered during
+                // the respawn countdown does not fire as a phantom action on the first live frame.
+                // Mirrors the identical resets in transitionToPlaying().
+                inputHandler.resetEscape();
+                inputHandler.resetPunch();
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+                inputHandler.resetPlace();
+                inputHandler.resetInventory();
+                inputHandler.resetHelp();
+                inputHandler.resetCrafting();
+                inputHandler.resetAchievements();
+                inputHandler.resetQuestLog();
+                inputHandler.resetInteract();
+                inputHandler.resetJump();
+                inputHandler.resetDodge();
+                inputHandler.resetEnter();
+                inputHandler.resetUp();
+                inputHandler.resetDown();
+                inputHandler.resetHotbarSlot();
+                inputHandler.resetCraftingSlot();
+                inputHandler.resetLeftClick();
+                inputHandler.resetLeftClickReleased();
+                inputHandler.resetRightClick();
+                inputHandler.resetScroll();
+                // Fix #609: Close any UI overlays left open at the time of death so the player
+                // does not respawn with inventory/crafting/help still showing.
+                inventoryUI.hide();
+                craftingUI.hide();
+                helpUI.hide();
+                achievementsUI.hide();
+                questLogUI.hide();
             }
 
             // Phase 11: Trigger hunger warning tooltip
