@@ -2840,6 +2840,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #571: Clear stale punch/place so left-click or right-click buffered during the
         // pause transition does not fire on the first PLAYING frame after resume
         inputHandler.resetPunch();
+        // Fix #597: Clear stale punchHeld so hold-punch auto-repeat does not fire on the
+        // first PLAYING frame after resume (mirrors the identical call in transitionToPaused())
+        inputHandler.resetPunchHeld();
+        punchHeldTimer = 0f;
+        lastPunchTargetKey = null;
         inputHandler.resetPlace();
         // Fix #573: Clear stale UI-toggle keys so I/H/C/Tab/Q pressed on the same frame as
         // ESC-to-resume do not re-open their panels on the first PLAYING frame
