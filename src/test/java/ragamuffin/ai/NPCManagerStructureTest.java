@@ -134,6 +134,82 @@ class NPCManagerStructureTest {
     }
 
     /**
+     * Integration test for Issue #646: A 15-block player-built structure must NOT trigger
+     * a council planning notice. Only structures with >=50 blocks should trigger notices.
+     */
+    @Test
+    void testIssue646_smallStructureDoesNotTriggerCouncilNotice() {
+        // Build a 3x1x5 = 15-block structure (>= SMALL_STRUCTURE_THRESHOLD=10, < LARGE_STRUCTURE_THRESHOLD=50)
+        for (int x = 20; x < 23; x++) {
+            for (int z = 20; z < 25; z++) {
+                world.setPlayerBlock(x, 1, z, BlockType.WOOD);
+            }
+        }
+
+        npcManager.forceStructureScan(world, tooltipSystem);
+
+        // No planning notices should be placed on this 15-block structure
+        boolean noticeFound = false;
+        for (int x = 20; x < 23; x++) {
+            for (int z = 20; z < 25; z++) {
+                if (world.hasPlanningNotice(x, 1, z)) {
+                    noticeFound = true;
+                    break;
+                }
+            }
+            if (noticeFound) break;
+        }
+
+        assertFalse(noticeFound,
+                "A 15-block structure must NOT trigger a council planning notice (issue #646: only >=50 blocks should)");
+
+        // No COUNCIL_BUILDER NPCs should have spawned
+        long builderCount = npcManager.getNPCs().stream()
+                .filter(n -> n.getType() == NPCType.COUNCIL_BUILDER && n.isAlive())
+                .count();
+        assertEquals(0, builderCount,
+                "A 15-block structure must NOT spawn council builder NPCs (issue #646)");
+    }
+
+    /**
+     * Integration test for Issue #646: A 55-block player-built structure MUST trigger
+     * a council planning notice and spawn at least one builder NPC.
+     */
+    @Test
+    void testIssue646_largeStructureTriggersCouncilNoticeAndBuilders() {
+        // Build a 5x11x1 = 55-block structure (>= LARGE_STRUCTURE_THRESHOLD=50)
+        for (int x = 30; x < 35; x++) {
+            for (int y = 1; y < 12; y++) {
+                world.setPlayerBlock(x, y, 30, BlockType.BRICK);
+            }
+        }
+
+        npcManager.forceStructureScan(world, tooltipSystem);
+
+        // At least one planning notice should be placed on or near this structure
+        boolean noticeFound = false;
+        for (int x = 30; x < 35; x++) {
+            for (int y = 1; y < 12; y++) {
+                if (world.hasPlanningNotice(x, y, 30)) {
+                    noticeFound = true;
+                    break;
+                }
+            }
+            if (noticeFound) break;
+        }
+
+        assertTrue(noticeFound,
+                "A 55-block structure MUST trigger a council planning notice (issue #646)");
+
+        // At least one COUNCIL_BUILDER NPC should have spawned
+        long builderCount = npcManager.getNPCs().stream()
+                .filter(n -> n.getType() == NPCType.COUNCIL_BUILDER && n.isAlive())
+                .count();
+        assertTrue(builderCount >= 1,
+                "A 55-block structure MUST spawn at least one council builder NPC (issue #646)");
+    }
+
+    /**
      * Regression test for Issue #168: applyPoliceTapeToStructure previously only taped
      * WOOD blocks. BRICK (and other player-placed materials) must also receive police tape.
      */
