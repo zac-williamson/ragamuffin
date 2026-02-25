@@ -229,6 +229,10 @@ public class InputHandler implements InputProcessor {
 
     @Override
     public boolean touchCancelled(int screenX, int screenY, int pointer, int button) {
+        if (button == Input.Buttons.LEFT) {
+            punchHeld = false;
+            leftClickReleased = true;
+        }
         return false;
     }
 }
