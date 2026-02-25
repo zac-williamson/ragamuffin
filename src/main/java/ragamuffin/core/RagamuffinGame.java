@@ -2724,6 +2724,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         // is not fired early due to a mid-cycle timer value carried over from the previous session.
         soundSystem.resetFootstepTimer();
 
+        // Fix #563: Close and clear any active shop menu so isUIBlocking() returns false
+        // in the new session and player input is not permanently suppressed.
+        if (activeShopkeeperNPC != null) {
+            activeShopkeeperNPC.setShopMenuOpen(false);
+            activeShopkeeperNPC = null;
+        }
+
         // Fix #299: Clear sticky punch state so auto-punch doesn't fire in the first frame
         // of the new game session (mirrors the same reset in transitionToPaused() and on death).
         punchHeldTimer = 0f;
