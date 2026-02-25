@@ -2864,6 +2864,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         inputHandler.resetEnter();
         inputHandler.resetHotbarSlot();
         inputHandler.resetCraftingSlot();
+        // Fix #583: Clear stale placePressed/upPressed/downPressed so a right-click or
+        // arrow key press on the same frame as ESC does not fire spurious block placement
+        // or pause-menu navigation on the first frame after transition
+        inputHandler.resetPlace();
+        inputHandler.resetUp();
+        inputHandler.resetDown();
     }
 
     public GameState getState() {
