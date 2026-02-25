@@ -1306,6 +1306,30 @@ public class RagamuffinGame extends ApplicationAdapter {
     private void finishCinematic() {
         state = GameState.PLAYING;
         // Opening sequence was already started in startNewGame(); do not restart it.
+        // Fix #593: Reset all input state so any key/mouse event buffered during the
+        // ~8-second cinematic does not fire on the first PLAYING frame.
+        // This mirrors the identical resets already applied in transitionToPlaying()
+        // and restartGame() (fixes #567–#591).
+        inputHandler.resetCraftingSlot();
+        inputHandler.resetHotbarSlot();
+        inputHandler.resetPunch();
+        inputHandler.resetPunchHeld();
+        inputHandler.resetPlace();
+        inputHandler.resetInventory();
+        inputHandler.resetHelp();
+        inputHandler.resetCrafting();
+        inputHandler.resetAchievements();
+        inputHandler.resetQuestLog();
+        inputHandler.resetScroll();
+        inputHandler.resetInteract();
+        inputHandler.resetJump();
+        inputHandler.resetDodge();
+        inputHandler.resetUp();
+        inputHandler.resetDown();
+        inputHandler.resetLeftClick();
+        inputHandler.resetLeftClickReleased();
+        inputHandler.resetEscape();
+        inputHandler.resetEnter();
         Gdx.input.setCursorCatched(true);
     }
 
