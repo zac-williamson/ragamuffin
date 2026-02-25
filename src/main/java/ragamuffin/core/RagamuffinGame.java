@@ -611,6 +611,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             respawnSystem.update(delta, player);
             if (cinematicWasRespawning && !respawnSystem.isRespawning()) {
                 deathMessage = null;
+                // Fix #635: Clear any pending arrest — the player just died, so any in-flight
+                // arrest is moot; leaving it set would cause a ghost arrest on the next frame.
+                npcManager.clearArrestPending();
                 greggsRaidSystem.reset();
                 player.getStreetReputation().reset();
                 healingSystem.resetPosition(player.getPosition());
@@ -963,6 +966,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             respawnSystem.update(delta, player);
             if (wasRespawning && !respawnSystem.isRespawning()) {
                 deathMessage = null; // Reset for next death
+                // Fix #635: Clear any pending arrest — the player just died, so any in-flight
+                // arrest is moot; leaving it set would cause a ghost arrest on the next frame.
+                npcManager.clearArrestPending();
                 // Issue #114: Reset Greggs raid on respawn — mirrors the arrest-handler reset
                 greggsRaidSystem.reset();
                 // Issue #154: Reset street reputation on death — the streets forget you while you were dead
@@ -1190,6 +1196,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 respawnSystem.update(delta, player);
                 if (wasRespawning && !respawnSystem.isRespawning()) {
                     deathMessage = null;
+                    // Fix #635: Clear any pending arrest — the player just died, so any in-flight
+                    // arrest is moot; leaving it set would cause a ghost arrest on the next frame.
+                    npcManager.clearArrestPending();
                     greggsRaidSystem.reset();
                     player.getStreetReputation().reset();
                     healingSystem.resetPosition(player.getPosition());
