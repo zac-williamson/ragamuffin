@@ -19,6 +19,7 @@ public class NPC {
     public static final float DOG_SPEED = 5.0f; // Dogs move faster when roaming
 
     private final NPCType type;
+    private String name; // Optional unique name (null = anonymous NPC)
     private final Vector3 position;
     private final Vector3 velocity;
     private final AABB aabb;
@@ -35,7 +36,12 @@ public class NPC {
     private boolean alive;
 
     public NPC(NPCType type, float x, float y, float z) {
+        this(type, null, x, y, z);
+    }
+
+    public NPC(NPCType type, String name, float x, float y, float z) {
         this.type = type;
+        this.name = name;
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
         this.aabb = new AABB(position, WIDTH, HEIGHT, DEPTH);
@@ -57,6 +63,27 @@ public class NPC {
 
     public NPCType getType() {
         return type;
+    }
+
+    /**
+     * Returns this NPC's unique name, or null if anonymous.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * Set a unique name for this NPC.
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    /**
+     * Returns true if this NPC has a unique name assigned.
+     */
+    public boolean isNamed() {
+        return name != null && !name.isEmpty();
     }
 
     public Vector3 getPosition() {

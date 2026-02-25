@@ -16,8 +16,10 @@ public enum NPCType {
     DRUNK(15f, 3f, 3.0f, false),           // Stumble around at night, mildly aggressive
     BUSKER(20f, 0f, 0f, false),            // Stand on high street, play music
     DELIVERY_DRIVER(20f, 0f, 0f, false),   // Amazon/JustEat driver rushing about
-    PENSIONER(10f, 0f, 0f, false),         // Slow elderly person, complains a lot
-    SCHOOL_KID(15f, 2f, 3.0f, false);      // Noisy school kids in groups
+    PENSIONER(10f, 0f, 0f, false),          // Slow elderly person, complains a lot
+    SCHOOL_KID(15f, 2f, 3.0f, false),      // Noisy school kids in groups
+    STREET_PREACHER(20f, 0f, 0f, false),   // Named NPC: preacher with distinctive robes
+    LOLLIPOP_LADY(20f, 0f, 0f, false);     // Named NPC: crossing patrol warden with hi-vis
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

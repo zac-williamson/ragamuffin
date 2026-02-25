@@ -389,6 +389,14 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
+     * Spawn a named NPC at terrain height for the given X,Z position.
+     */
+    private NPC spawnNamedNPCAtTerrain(NPCType type, String name, float x, float z) {
+        float y = calculateSpawnHeight(world, (int) x, (int) z);
+        return npcManager.spawnNamedNPC(type, name, x, y, z);
+    }
+
+    /**
      * Spawn initial NPCs in the world.
      */
     private void spawnInitialNPCs() {
@@ -437,6 +445,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         spawnNPCAtTerrain(NPCType.SCHOOL_KID, -30, -45);
         spawnNPCAtTerrain(NPCType.SCHOOL_KID, -28, -43);
         spawnNPCAtTerrain(NPCType.SCHOOL_KID, -32, -47);
+
+        // Named NPCs — unique characters with distinctive appearances (Fix #639)
+        // Brother Desmond: street preacher in deep purple robes near the park entrance
+        spawnNamedNPCAtTerrain(NPCType.STREET_PREACHER, "Brother Desmond", 12, 22);
+        // Maureen: lollipop lady in bright yellow hi-vis near the primary school crossing
+        spawnNamedNPCAtTerrain(NPCType.LOLLIPOP_LADY, "Maureen", -26, -50);
     }
 
     /**

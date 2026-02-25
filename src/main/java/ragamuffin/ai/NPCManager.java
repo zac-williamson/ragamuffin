@@ -90,6 +90,16 @@ public class NPCManager {
         "Can I have a quid?", "Have you got games on your phone?",
         "Oi, look at that!", "That's bare jokes!"
     };
+    private static final String[] RANDOM_STREET_PREACHER_SPEECH = {
+        "Repent, for the end is nigh!", "The Lord sees all!", "Have you found salvation?",
+        "Turn away from your wicked ways!", "Praise be!", "The kingdom of heaven is at hand.",
+        "God bless you, friend.", "Have you accepted Jesus into your heart?"
+    };
+    private static final String[] RANDOM_LOLLIPOP_LADY_SPEECH = {
+        "Mind how you go, love!", "Wait for the gap, children!", "Lovely day, isn't it?",
+        "Stop for the little ones!", "All clear, off you go!", "Keep left on the pavement!",
+        "Bless them, they're in such a rush."
+    };
     private static final String[] HIT_SPEECH_PUBLIC = {
         "Oi! What was that for?!", "Help! I'm being assaulted!", "Right, I'm ringing 999!",
         "Are you mental?!", "That's ABH, that is!"
@@ -356,6 +366,25 @@ public class NPCManager {
         if (npc != null) {
             npc.setBuildingType(buildingType);
             npc.setState(NPCState.IDLE); // Stand still at their post
+        }
+        return npc;
+    }
+
+    /**
+     * Spawn a named NPC with a unique name and distinctive appearance.
+     * Named NPCs are unique characters with their own identity in the game world.
+     *
+     * @param type The NPC type defining appearance and behaviour
+     * @param name The unique name for this NPC (displayed above their head)
+     * @param x    X position in the world
+     * @param y    Y position in the world
+     * @param z    Z position in the world
+     * @return The spawned NPC, or null if the cap is reached
+     */
+    public NPC spawnNamedNPC(NPCType type, String name, float x, float y, float z) {
+        NPC npc = spawnNPC(type, x, y, z);
+        if (npc != null) {
+            npc.setName(name);
         }
         return npc;
     }
@@ -884,6 +913,8 @@ public class NPCManager {
             case JOGGER:
             case BUSKER:
             case POSTMAN:
+            case STREET_PREACHER:
+            case LOLLIPOP_LADY:
                 return true;
             default:
                 return false;
@@ -901,6 +932,8 @@ public class NPCManager {
             case JOGGER: return "Abort! Abort!";
             case BUSKER: return "I'm just a musician!";
             case POSTMAN: return "I've got letters!";
+            case STREET_PREACHER: return "God will protect me!";
+            case LOLLIPOP_LADY: return "Someone call the police!";
             default: return "Get away from me!";
         }
     }
@@ -1708,6 +1741,8 @@ public class NPCManager {
             case DELIVERY_DRIVER: return RANDOM_DELIVERY_SPEECH[random.nextInt(RANDOM_DELIVERY_SPEECH.length)];
             case PENSIONER: return RANDOM_PENSIONER_SPEECH[random.nextInt(RANDOM_PENSIONER_SPEECH.length)];
             case SCHOOL_KID: return RANDOM_SCHOOL_KID_SPEECH[random.nextInt(RANDOM_SCHOOL_KID_SPEECH.length)];
+            case STREET_PREACHER: return RANDOM_STREET_PREACHER_SPEECH[random.nextInt(RANDOM_STREET_PREACHER_SPEECH.length)];
+            case LOLLIPOP_LADY: return RANDOM_LOLLIPOP_LADY_SPEECH[random.nextInt(RANDOM_LOLLIPOP_LADY_SPEECH.length)];
             default: return null;
         }
     }
@@ -1727,6 +1762,8 @@ public class NPCManager {
             case DELIVERY_DRIVER: return "I'm on a schedule!";
             case PENSIONER: return "I'll tell your mother!";
             case SCHOOL_KID: return "I'm telling sir!";
+            case STREET_PREACHER: return "The Lord will judge you!";
+            case LOLLIPOP_LADY: return "Children are watching!";
             default: return "Ow!";
         }
     }
