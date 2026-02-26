@@ -315,11 +315,16 @@ public class InteractionSystem {
 
         // Building quest NPC — check if this NPC has a building association with a quest
         LandmarkType buildingType = npc.getBuildingType();
-        if (buildingType != null && questRegistry.hasQuest(buildingType)) {
-            String questDialogue = handleQuestInteraction(buildingType, inventory);
-            if (questDialogue != null) {
-                npc.setSpeechText(questDialogue, 5.0f);
-                return questDialogue;
+        if (buildingType != null) {
+            // Speaking to an NPC inside a building counts as visiting that landmark.
+            // This allows EXPLORE quests that target this building to progress (Fix #718).
+            onPlayerEntersLandmark(buildingType);
+            if (questRegistry.hasQuest(buildingType)) {
+                String questDialogue = handleQuestInteraction(buildingType, inventory);
+                if (questDialogue != null) {
+                    npc.setSpeechText(questDialogue, 5.0f);
+                    return questDialogue;
+                }
             }
         }
 
