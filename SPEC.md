@@ -4628,3 +4628,204 @@ Condition restored correctly per material.
    Verify the purchase is rejected. Verify the tooltip "You're not Thatcher. Five
    properties is enough." fires. Verify the player's coin balance is unchanged after
    the failed 6th purchase.
+
+---
+
+## Phase Q: Player Squat — Base Building, Defence & Social Prestige
+
+**Goal**: The player can claim a derelict building as a personal squat, customise
+its interior by placing blocks and props, fortify it against NPC incursions, invite
+NPCs as lodgers (generating income and social buffs), and use it as a persistent
+crafting hub. The squat becomes the player's home base — a tangible expression of
+progression that ties together crafting, factions, property, notoriety, and the
+social economy into a single compelling loop.
+
+### Claiming & Upgrading the Squat
+
+- Any derelict building in the world (no owner, Condition ≤ 10) can be claimed as
+  a squat by pressing **E** while standing inside it with a WOOD block in hand.
+  Claiming costs 5 WOOD and is free of coin — this is squatting, not buying.
+- Only ONE squat can be active at a time (separate from the 5-building property
+  limit of the `PropertySystem`). The squat is tagged in the world as
+  `LandmarkType.SQUAT`.
+- The squat has a **Vibe score** (0–100) — the interior equivalent of Condition.
+  Vibe starts at 0 and increases as the player places furnishing blocks/props and
+  invites lodgers. Vibe decays by 2 points per in-game day without maintenance.
+- Vibe tiers and their gameplay effects:
+
+| Vibe | Label | Effects |
+|------|-------|---------|
+| 0–19 | Absolute Hovel | No effects. Just a roof over your head. |
+| 20–39 | Barely Liveable | Player health regenerates +1/min while inside |
+| 40–59 | Decent Gaff | Energy regenerates at 2× rate while sleeping (inside at night). Barman will mention the squat in rumours: "They've got a proper little setup going." |
+| 60–79 | Proper Nice | Unlock the Lodger system (see below). One faction's Respect +5 for owning a Proper Nice squat on their turf. |
+| 80–100 | Legendary Squat | Notoriety +10 awarded once. NPCs on the street comment: "Heard your gaff is well posh." Unlocks `LEGENDARY_SQUAT` achievement. |
+
+### Furnishing the Squat
+
+The player raises Vibe by placing interior props and blocks inside the squat's
+bounding box. Each placement contributes points (one-time, tracked by
+`SquatFurnishingTracker`):
+
+| Item placed | Vibe gain | Tooltip on first placement |
+|-------------|-----------|--------------------------|
+| BED prop | +10 | "At least you've got somewhere to kip." |
+| TABLE prop | +5 | — |
+| CHAIR prop | +3 | — |
+| Campfire block (CAMPFIRE) | +8 | "Tea won't make itself." |
+| CARPET block (new block type `CARPET`) | +2 per block, max +20 | "Coming up in the world." |
+| BOOKSHELF prop | +5 | — |
+| DARTBOARD prop | +7 | "The British way." |
+| Any block of BRICK placed as interior wall | +1 per block, max +10 | — |
+| WOOD floor (WOOD blocks as floor layer) | +1 per block, max +10 | — |
+
+Removing a furnishing block reduces Vibe by the same amount it added.
+
+### Lodger System
+
+At Vibe ≥ 60, the player can invite NPCs to live in the squat:
+
+- Pressing **E** on a `PUBLIC` or `STREET_LAD` NPC (when Vibe ≥ 60) offers them
+  lodgings. If they accept (70% base chance, +15% if the player bought them a
+  drink in the pub within 10 minutes), they follow the player home and are assigned
+  a bed prop. Acceptance quote: "I suppose it beats sleeping in the bus shelter."
+- Max lodgers = floor(Vibe / 20), capped at 4. A fifth lodger is always rejected:
+  "It's a squat, not a hotel."
+- Each lodger generates **2 coins per in-game day**, tracked separately from
+  `PropertySystem` income.
+- Lodgers can be evicted by pressing **E** on them inside the squat. They leave
+  with: "Fair enough, I'll go back to me mum's."
+- If the squat Vibe drops below 20, all lodgers leave voluntarily: "This place has
+  gone downhill. I'm off."
+
+### Defence System
+
+Rival factions and opportunistic thugs will periodically try to ransack the squat
+(steal props, reduce Vibe) if the player's notoriety is Tier 2 or above:
+
+- Every 3 in-game days, roll a **Raid check** (25% base chance, +10% per notoriety
+  tier above 1). If a raid triggers, 1–3 `THUG` NPCs from the faction with lowest
+  Respect spawn at the squat entrance.
+- Thugs that successfully enter (i.e. the player does not stop them within 60 real
+  seconds) destroy the highest-Vibe prop they can reach (Vibe −5 per destroyed prop).
+- The player can place **BARRICADE blocks** (new block type, crafted from 2 WOOD +
+  1 BRICK) on doorways. Barricades absorb 3 hits before breaking. Thugs attempt to
+  break barricades before entering. Placing a barricade grants tooltip:
+  "Boarding up the windows. Getting paranoid or getting smart?"
+- Lodgers defend: each lodger has a 50% chance per raid to punch a thug (dealing 1
+  hit). A lodger who wins a punch exchange shouts: "Oi! This is our gaff!"
+- The `BOUNCER` NPC (from the pub) can be hired for 5 coins/day to guard the squat
+  entrance permanently. He will not follow the player elsewhere.
+
+### Crafting Hub Upgrade
+
+- Placing a `WORKBENCH` prop (new prop type) inside the squat unlocks **advanced
+  crafting recipes** that are not available from the basic crafting menu:
+  - **Barricade** — 2 WOOD + 1 BRICK → 1 BARRICADE block
+  - **Molotov** (flavour only, not destructive) — 1 WOOD + 1 COIN → prop item
+    "Molotov Cocktail" that can be placed as decoration. Tooltip: "Don't actually
+    light it."
+  - **Lockpick** — 2 BRICK → 1 LOCKPICK tool. Reduces heist safe-crack time by 3s
+    when held during a heist (stacks with accomplice bonus).
+  - **Fake ID** — 3 WOOD + 2 COIN → 1 FAKE_ID item. Reduces criminal record
+    severity by 1 offence when used at the police station (press **E** on duty
+    sergeant). Single use. Tooltip: "Not your finest photographic work."
+- The workbench crafting menu is a new UI panel (press **C** while inside the squat
+  and near the WORKBENCH prop).
+
+### New Block Types
+
+| Block | Notes |
+|-------|-------|
+| `CARPET` | Soft, coloured floor block. No structural strength. |
+| `BARRICADE` | Placed on doorways. 3 hits to break. Opaque. |
+
+### New Prop Types
+
+| Prop | Vibe gain | Notes |
+|------|-----------|-------|
+| `BED` | +10 | Required for lodgers |
+| `WORKBENCH` | 0 | Enables advanced crafting |
+| `BOOKSHELF` | +5 | Purely decorative |
+
+### New Achievements
+
+| Achievement | Trigger | Flavour |
+|---|---|---|
+| `SQUATTER` | Claim your first squat | "Home is where you hang your hoody." |
+| `LEGENDARY_SQUAT` | Reach Vibe 80+ | "They don't make them like this in Kensington." |
+| `RUNNING_A_HOUSE` | Have 4 lodgers simultaneously | "You're basically a housing association." |
+| `BOUNCER_ON_DOOR` | Hire the Bouncer to guard your squat | "Very professional." |
+| `BARRICADED_IN` | Survive 3 raids without Vibe dropping below 60 | "Castle doctrine, British edition." |
+
+### New `SquatSystem` class
+
+Implement in `ragamuffin.core.SquatSystem`. It holds:
+- `LandmarkType squatLocation` — which building is the current squat (null if none).
+- `int vibe` — current Vibe score (0–100).
+- `List<NPC> lodgers` — NPCs currently living in the squat.
+- `float dayIncomeAccumulator` — lodger income accumulator.
+- `float raidCheckTimer` — countdown to next raid roll.
+- `NPC guardBouncer` — the hired bouncer NPC (null if none).
+- `SquatFurnishingTracker furnishings` — tracks which props/blocks have been placed.
+- `update(float delta, Player player, Inventory inv, NotorietySystem notoriety,
+  FactionSystem factions, NPCManager npcManager, AchievementSystem achievements)`.
+- `claimSquat(LandmarkType building, Inventory inv, World world)` — validates and
+  executes a claim.
+- `furnish(PropType prop, World world)` — registers a furnishing and adjusts Vibe.
+- `evictLodger(NPC lodger)` — removes a lodger.
+- `triggerRaid(FactionSystem factions, NPCManager npcManager)` — spawns raid thugs.
+
+**Unit tests**: Vibe calculation per furnishing combination, lodger capacity formula,
+raid probability per notoriety tier, barricade durability, income per lodger per day,
+Vibe decay per day, lodger acceptance chance formula, squat claim validation.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Claim a squat and raise Vibe**: Find a derelict building (Condition ≤ 10).
+   Give the player 5 WOOD. Stand inside the building. Press **E**. Verify 5 WOOD
+   consumed. Verify building tagged as SQUAT. Verify Vibe = 0. Place a BED prop
+   inside the squat. Verify Vibe = 10. Place a DARTBOARD prop. Verify Vibe = 17.
+   Place a CAMPFIRE block. Verify Vibe = 25. Verify health regenerates +1/min
+   while inside (advance 60 seconds inside squat, verify health increased by 1).
+
+2. **Invite a lodger at Vibe ≥ 60**: Set squat Vibe to 65. Find a PUBLIC NPC.
+   Press **E** on them. Verify lodger prompt appears. Accept (simulate 70% pass).
+   Verify lodger NPC moves to the squat. Verify lodger count is 1. Advance 1
+   in-game day. Verify player coin count increased by 2. Press **E** on lodger
+   inside squat. Verify eviction dialogue. Confirm eviction. Verify lodger count
+   is 0 and lodger NPC is wandering freely.
+
+3. **Lodger capacity enforced**: Set Vibe to 100 (capacity 4 lodgers). Invite 4
+   lodgers. Attempt to invite a 5th. Verify the 5th invitation is rejected with
+   "It's a squat, not a hotel." Verify lodger count remains 4.
+
+4. **Raid triggers and thugs enter**: Own a squat. Set notoriety to Tier 2. Force
+   a raid check to succeed (override raid timer to 0, raid chance to 100%).
+   Verify 1–3 THUG NPCs spawn at the squat entrance. Do NOT fight them. Wait 60
+   real seconds (simulate frames). Verify Vibe has decreased by at least 5 (prop
+   destroyed). Verify at least one THUG entered the squat.
+
+5. **Barricade blocks thug entry**: Own a squat with Vibe 60. Place a BARRICADE
+   block in the doorway. Force a raid. Verify thugs attack the barricade first.
+   Punch the BARRICADE 3 times. Verify it breaks and becomes AIR. Verify the
+   thug enters only after the barricade is broken.
+
+6. **Workbench unlocks advanced recipes**: Place a WORKBENCH prop inside the squat.
+   Press **C** while standing near the workbench. Verify the advanced crafting menu
+   opens. Verify it contains the BARRICADE, LOCKPICK, and FAKE_ID recipes. Verify
+   these recipes are NOT available in the standard crafting menu (press **C**
+   outside the squat and verify their absence).
+
+7. **Lodgers flee when Vibe drops below 20**: Set squat Vibe to 25 with 2 lodgers.
+   Advance simulation 3 in-game days without any furnishing (Vibe decays 2/day).
+   Verify Vibe has dropped to 19 or below. Verify both lodgers have left the squat
+   (lodger list is empty). Verify each lodger NPC is in WANDERING state with speech
+   "This place has gone downhill. I'm off."
+
+8. **Hire bouncer to guard squat**: Set player coins to 10. Press **E** on the
+   BOUNCER NPC at the pub entrance. Verify hire prompt appears (cost: 5 coins/day).
+   Confirm hire. Verify 5 coins deducted. Verify BOUNCER NPC moves to squat
+   entrance and enters GUARDING state. Force a raid. Verify the BOUNCER attacks
+   the first THUG. Verify the raid is repelled (thugs flee or are defeated) without
+   Vibe loss.
