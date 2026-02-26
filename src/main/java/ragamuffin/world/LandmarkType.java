@@ -53,7 +53,11 @@ public enum LandmarkType {
     SUPERMARKET,
     POLICE_STATION,
     FOOD_BANK,
-    STATUE;
+    STATUE,
+
+    // ── Issue #714: Player Squat system ─────────────────────────────────────
+    /** A derelict building claimed by the player as a personal squat. */
+    SQUAT;
 
     /**
      * Returns the display name shown on the building's sign.

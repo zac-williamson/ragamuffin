@@ -253,6 +253,34 @@ public enum AchievementType {
         "Rates Dodger",
         "Ignored the council rates for a full week. Bold. Reckless. Very on-brand.",
         1
+    ),
+
+    // ── Issue #714: Player Squat system ──────────────────────────────────────
+
+    SQUATTER(
+        "Home is Where You Hang Your Hoody",
+        "Claimed a derelict building as your own. Castle doctrine, British edition.",
+        1
+    ),
+    LEGENDARY_SQUAT(
+        "They Don't Make Them Like This in Kensington",
+        "Reached Vibe 80+. Your gaff is a local institution. NPCs are talking.",
+        1
+    ),
+    RUNNING_A_HOUSE(
+        "You're Basically a Housing Association",
+        "Four lodgers simultaneously. Someone's got to manage this place.",
+        1
+    ),
+    BOUNCER_ON_DOOR(
+        "Very Professional",
+        "Hired the pub bouncer to guard your squat door. That's class, that.",
+        1
+    ),
+    BARRICADED_IN(
+        "Castle Doctrine, British Edition",
+        "Survived three raids without Vibe dropping below 60. Proper fortified.",
+        1
     );
 
     private final String name;

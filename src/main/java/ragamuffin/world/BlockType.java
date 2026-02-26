@@ -62,7 +62,11 @@ public enum BlockType {
     COAL_ORE(52, true),    // Coal ore embedded in underground stone
     IRON_ORE(53, true),    // Iron ore seam in underground stone
     FLINT(54, true),       // Flint nodule found in deep stone layers
-    CAMPFIRE(55, true);    // Campfire block: crafted from WOOD, warms nearby player, extinguished by rain, attracts police
+    CAMPFIRE(55, true),    // Campfire block: crafted from WOOD, warms nearby player, extinguished by rain, attracts police
+
+    // ── Issue #714: Player Squat system ─────────────────────────────────────
+    /** Barricade block: crafted from 2 WOOD + 1 BRICK. Absorbs 3 hits before breaking. Placed on doorways. */
+    BARRICADE(56, true);
 
     private final int id;
     private final boolean solid;
@@ -220,6 +224,7 @@ public enum BlockType {
             case STAIRS:
             case LADDER:
             case HALF_BLOCK:
+            case BARRICADE:
                 return true;
             default:
                 return false;
@@ -498,6 +503,7 @@ public enum BlockType {
             case COAL_ORE:    return new Color(0.30f, 0.30f, 0.30f, 1f); // Dark grey stone with black flecks
             case IRON_ORE:    return new Color(0.55f, 0.40f, 0.28f, 1f); // Rusty brown stone
             case FLINT:       return new Color(0.20f, 0.22f, 0.25f, 1f); // Very dark blue-grey
+            case BARRICADE:   return new Color(0.45f, 0.30f, 0.15f, 1f); // Rough planks nailed together
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }
