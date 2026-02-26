@@ -17,8 +17,101 @@ import java.util.Set;
  * that remains fixed across all playthroughs.  All other building zones
  * (high street, office, JobCentre, industrial estate, residential rows) are
  * offset by a seed-derived amount so each world feels unique.
+ *
+ * <p>World generation proceeds through five explicit stages:</p>
+ * <ol>
+ *   <li>TERRAIN — bedrock, stone, dirt, and grass heightmap</li>
+ *   <li>ROADS — pavement and road surface blocks</li>
+ *   <li>PLOT_IDENTIFICATION — above-ground and underground building plots are catalogued</li>
+ *   <li>BUILDING_PLACEMENT — buildings are selected from the catalogue and placed on plots</li>
+ *   <li>NPC_SPAWNING — shopkeeper and other landmark-specific NPC spawn points are registered</li>
+ * </ol>
  */
 public class WorldGenerator {
+
+    /**
+     * The five sequential stages of world generation.
+     * {@link #getCurrentStage()} reflects which stage is currently executing
+     * (or the last completed stage once {@link #generateWorld(World)} returns).
+     */
+    public enum GenerationStage {
+        /** Initial state before generation starts. */
+        NOT_STARTED,
+        /** Stage 1: terrain heightmap — bedrock, stone, dirt, grass. */
+        TERRAIN,
+        /** Stage 2: road and pavement surface blocks. */
+        ROADS,
+        /** Stage 3: building plot identification (above-ground and underground). */
+        PLOT_IDENTIFICATION,
+        /** Stage 4: building selection from catalogue and block placement. */
+        BUILDING_PLACEMENT,
+        /** Stage 5: NPC spawn-point registration for shopkeepers and landmark NPCs. */
+        NPC_SPAWNING,
+        /** All stages complete. */
+        COMPLETE
+    }
+
+    /**
+     * Represents an identified building plot — a rectangular area reserved for a
+     * structure during {@link GenerationStage#PLOT_IDENTIFICATION}.
+     */
+    public static final class BuildingPlot {
+        private final int x;
+        private final int z;
+        private final int width;
+        private final int depth;
+        private final boolean underground;
+
+        public BuildingPlot(int x, int z, int width, int depth, boolean underground) {
+            this.x = x;
+            this.z = z;
+            this.width = width;
+            this.depth = depth;
+            this.underground = underground;
+        }
+
+        public int getX() { return x; }
+        public int getZ() { return z; }
+        public int getWidth() { return width; }
+        public int getDepth() { return depth; }
+        /** Returns {@code true} if this plot is for an underground structure (sewer, bunker). */
+        public boolean isUnderground() { return underground; }
+
+        @Override
+        public String toString() {
+            return "BuildingPlot{x=" + x + ",z=" + z + ",w=" + width + ",d=" + depth
+                    + (underground ? ",underground" : "") + "}";
+        }
+    }
+
+    /**
+     * An NPC spawn point registered during {@link GenerationStage#NPC_SPAWNING}.
+     * The game engine reads these after world generation to place shopkeepers and
+     * other landmark-specific NPCs at the correct locations.
+     */
+    public static final class NpcSpawnPoint {
+        private final LandmarkType landmarkType;
+        private final float x;
+        private final float y;
+        private final float z;
+
+        public NpcSpawnPoint(LandmarkType landmarkType, float x, float y, float z) {
+            this.landmarkType = landmarkType;
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+
+        public LandmarkType getLandmarkType() { return landmarkType; }
+        public float getX() { return x; }
+        public float getY() { return y; }
+        public float getZ() { return z; }
+
+        @Override
+        public String toString() {
+            return "NpcSpawnPoint{" + landmarkType + " @ (" + x + "," + y + "," + z + ")}";
+        }
+    }
     private static final int WORLD_SIZE = 480; // World is 480x480 blocks
     private static final int PARK_SIZE = 30;   // Park is 30x30 blocks
     private static final int STREET_WIDTH = 6;
@@ -49,6 +142,23 @@ public class WorldGenerator {
     // Near-building zones — areas within BUILDING_BLEND_RADIUS blocks of a flat zone.
     // Value is the Chebyshev distance to the nearest flat zone edge (1 = adjacent).
     private final Map<Long, Integer> nearBuildingZones = new HashMap<>();
+
+    // ── Staged generation state ───────────────────────────────────────────────
+
+    /** Tracks which generation stage is currently executing (or last completed). */
+    private GenerationStage currentStage = GenerationStage.NOT_STARTED;
+
+    /**
+     * All building plots identified during {@link GenerationStage#PLOT_IDENTIFICATION}.
+     * Populated by {@link #stage3IdentifyPlots()}.
+     */
+    private final List<BuildingPlot> buildingPlots = new ArrayList<>();
+
+    /**
+     * NPC spawn points registered during {@link GenerationStage#NPC_SPAWNING}.
+     * The game engine reads these after world generation to place NPCs.
+     */
+    private final List<NpcSpawnPoint> npcSpawnPoints = new ArrayList<>();
 
     // Number of blocks beyond the flat zone over which terrain blends back to natural height.
     private static final int BUILDING_BLEND_RADIUS = 8;
@@ -396,8 +506,36 @@ public class WorldGenerator {
         markFlatZone(rx - 20, rz3 - 20, 12, 10);
     }
 
+    // ── Staged generation public API ─────────────────────────────────────────
+
     /**
-     * Generate the entire world - landmarks and structure.
+     * Returns the generation stage that is currently executing, or the last
+     * completed stage once {@link #generateWorld(World)} has returned.
+     */
+    public GenerationStage getCurrentStage() {
+        return currentStage;
+    }
+
+    /**
+     * Returns all building plots identified during
+     * {@link GenerationStage#PLOT_IDENTIFICATION}.  The list is populated by
+     * {@link #stage3IdentifyPlots()} and is immutable after that stage completes.
+     */
+    public List<BuildingPlot> getBuildingPlots() {
+        return Collections.unmodifiableList(buildingPlots);
+    }
+
+    /**
+     * Returns the NPC spawn points registered during
+     * {@link GenerationStage#NPC_SPAWNING}.  The game engine reads this list
+     * after world generation to place shopkeepers and landmark-specific NPCs.
+     */
+    public List<NpcSpawnPoint> getNpcSpawnPoints() {
+        return Collections.unmodifiableList(npcSpawnPoints);
+    }
+
+    /**
+     * Generate the entire world using five sequential stages.
      * The park is always at the world centre.  Every other zone position is
      * offset by the seed-derived values computed in the constructor.
      */
@@ -408,8 +546,35 @@ public class WorldGenerator {
         // Mark flat zones BEFORE generating terrain, so buildings sit on flat ground
         markAllFlatZones();
 
-        // Fill entire world with terrain using heightmap
-        // Deep terrain: bedrock at y=-32, stone from y=-31 to y=-1, dirt/grass on surface
+        // ── Stage 1: Terrain ──────────────────────────────────────────────────
+        currentStage = GenerationStage.TERRAIN;
+        stage1Terrain(world);
+
+        // ── Stage 2: Roads ────────────────────────────────────────────────────
+        currentStage = GenerationStage.ROADS;
+        stage2Roads(world);
+
+        // ── Stage 3: Plot identification ──────────────────────────────────────
+        currentStage = GenerationStage.PLOT_IDENTIFICATION;
+        stage3IdentifyPlots();
+
+        // ── Stage 4: Building placement ───────────────────────────────────────
+        currentStage = GenerationStage.BUILDING_PLACEMENT;
+        stage4PlaceBuildings(world);
+
+        // ── Stage 5: NPC spawn-point registration ─────────────────────────────
+        currentStage = GenerationStage.NPC_SPAWNING;
+        stage5RegisterNpcSpawnPoints(world);
+
+        currentStage = GenerationStage.COMPLETE;
+
+        // Load initial chunks around origin
+        world.updateLoadedChunks(new Vector3(0, 0, 0));
+    }
+
+    // ── Stage 1: Terrain ──────────────────────────────────────────────────────
+
+    private void stage1Terrain(World world) {
         int halfWorld = WORLD_SIZE / 2;
         for (int x = -halfWorld; x < halfWorld; x++) {
             for (int z = -halfWorld; z < halfWorld; z++) {
@@ -427,9 +592,143 @@ public class WorldGenerator {
                 world.setBlock(x, terrainHeight, z, BlockType.GRASS); // Surface layer
             }
         }
+    }
 
-        // Generate dense street grid
+    // ── Stage 2: Roads ────────────────────────────────────────────────────────
+
+    private void stage2Roads(World world) {
         generateStreets(world);
+    }
+
+    // ── Stage 3: Plot identification ──────────────────────────────────────────
+
+    private void stage3IdentifyPlots() {
+        buildingPlots.clear();
+
+        int sx   = 20 + hsStartX;
+        int sz   = hsSouthZ;
+        int nx   = 20 + hsStartX;
+        int nz   = hsNorthZ;
+        int offX = 70 + officeOffX;
+        int offZ = 20 + officeOffZ;
+        int jobX = -60 + jobOffX;
+        int jobZ = 25 + jobOffZ;
+        int indX = 60 + indOffX;
+        int indZ = -40 + indOffZ;
+        int rz1  = -25 + resOffZ;
+        int rz2  = rz1 - 16;
+        int rz3  = rz2 - 14;
+        int rx   = -70 + resOffX;
+        int nrz1 = 30 - resOffZ;
+        int nrz2 = nrz1 + 16;
+        int esx  = sx + 46;
+        int enz  = nx + 43;
+        int gpX  = jobX;
+        int gpZ  = jobZ - 15;
+        int schoolX = indX;
+        int schoolZ = indZ - 40;
+        int ccX  = rx - 20;
+        int lcX  = indX - 30;
+        int lcZ  = indZ + 20;
+        int mosqueX = rx - 20;
+        int mosqueZ = nrz2 + 20;
+        int eaX  = enz + 40;
+        int smX  = indX - 30;
+        int smZ  = indZ - 60;
+        int pstnX = jobX - 20;
+        int pstnZ = jobZ + 16;
+        int fbX  = rx - 20;
+        int fbZ  = rz3 - 20;
+        int wsX  = esx + 49;
+        int libX = jobX - 20;
+        int libZ = gpZ;
+        int cwX  = indX + 40;
+        int fsX  = cwX + 40;
+        int fsZ  = indZ - 25;
+
+        // High street south side
+        addAboveGroundPlot(sx,       sz, 7, 8);
+        addAboveGroundPlot(sx + 8,   sz, 6, 8);
+        addAboveGroundPlot(sx + 15,  sz, 7, 8);
+        addAboveGroundPlot(sx + 23,  sz, 6, 8);
+        addAboveGroundPlot(sx + 30,  sz, 7, 8);
+        addAboveGroundPlot(sx + 38,  sz, 7, 8);
+        // High street north side
+        addAboveGroundPlot(nx,       nz, 7, 8);
+        addAboveGroundPlot(nx + 8,   nz, 8, 8);
+        addAboveGroundPlot(nx + 17,  nz, 8, 8);
+        addAboveGroundPlot(nx + 26,  nz, 7, 8);
+        addAboveGroundPlot(nx + 34,  nz, 8, 8);
+        // Civic / commercial
+        addAboveGroundPlot(offX, offZ, 15, 15);
+        addAboveGroundPlot(jobX, jobZ, 12, 12);
+        addAboveGroundPlot(indX,      indZ,      20, 15);
+        addAboveGroundPlot(indX,      indZ - 20, 18, 12);
+        addAboveGroundPlot(indX + 22, indZ,      16, 14);
+        addAboveGroundPlot(indX + 22, indZ - 18, 14, 12);
+        addAboveGroundPlot(esx,  sz, 7, 8);
+        addAboveGroundPlot(enz,  nz, 7, 8);
+        addAboveGroundPlot(gpX,  gpZ, 14, 10);
+        addAboveGroundPlot(schoolX, schoolZ, 36, 16);
+        addAboveGroundPlot(ccX, rz1, 18, 14);
+        addAboveGroundPlot(30,  rz2, 12, 18);
+        addAboveGroundPlot(offX + 16, offZ, 6, 11);
+        addAboveGroundPlot(cwX, indZ, 10, 8);
+        addAboveGroundPlot(rx - 25, nrz2 + 4, 12, 12);
+        addAboveGroundPlot(rx - 40, nrz2 + 4, 12, 12);
+        addAboveGroundPlot(cwX, offZ, 14, 10);
+        addAboveGroundPlot(esx + 24, sz, 8, 10);
+        addAboveGroundPlot(esx + 33, sz, 6, 8);
+        addAboveGroundPlot(esx + 40, sz, 7, 8);
+        addAboveGroundPlot(enz + 9,  nz, 7, 8);
+        addAboveGroundPlot(enz + 17, nz, 7, 8);
+        addAboveGroundPlot(enz + 25, nz, 6, 8);
+        addAboveGroundPlot(enz + 32, nz, 8, 8);
+        addAboveGroundPlot(wsX, sz, 16, 14);
+        addAboveGroundPlot(libX, libZ, 16, 12);
+        addAboveGroundPlot(fsX, fsZ, 16, 14);
+        addAboveGroundPlot(lcX, lcZ, 22, 14);
+        addAboveGroundPlot(mosqueX, mosqueZ, 14, 12);
+        addAboveGroundPlot(eaX, nz, 8, 8);
+        addAboveGroundPlot(smX, smZ, 24, 16);
+        addAboveGroundPlot(pstnX, pstnZ, 14, 12);
+        addAboveGroundPlot(fbX, fbZ, 12, 10);
+
+        // Residential rows
+        addAboveGroundPlot(rx,       rz1,  80, 8);
+        addAboveGroundPlot(rx,       rz2,  80, 8);
+        addAboveGroundPlot(rx,       rz3,  80, 8);
+        addAboveGroundPlot(rx,       nrz1, 64, 8);
+        addAboveGroundPlot(rx,       nrz2, 64, 8);
+        addAboveGroundPlot(rx - 40,  rz1,  40, 8);
+        addAboveGroundPlot(rx - 40,  rz2,  40, 8);
+        addAboveGroundPlot(rx - 40,  nrz1, 40, 8);
+        addAboveGroundPlot(offX + 20, rz1, 32, 8);
+        addAboveGroundPlot(offX + 20, rz2, 32, 8);
+        addAboveGroundPlot(rx - 80,  rz1,  40, 8);
+        addAboveGroundPlot(rx - 80,  rz2,  40, 8);
+        addAboveGroundPlot(rx - 80,  nrz1, 40, 8);
+        addAboveGroundPlot(rx - 80,  nrz2, 40, 8);
+        addAboveGroundPlot(offX + 60, rz1, 40, 8);
+        addAboveGroundPlot(offX + 60, rz2, 40, 8);
+        addAboveGroundPlot(offX + 60, nrz1, 32, 8);
+        addAboveGroundPlot(rx - 80,  rz3,       40, 8);
+        addAboveGroundPlot(rx - 80,  rz3 - 16,  40, 8);
+        addAboveGroundPlot(rx - 80, nrz2 + 4, 12, 12);
+        addAboveGroundPlot(offX + 70, rz3 - 4, 12, 12);
+
+        // Underground plots
+        buildingPlots.add(new BuildingPlot(-120, SEWER_FLOOR_Y, 240, 240, true));
+        buildingPlots.add(new BuildingPlot(-10, BUNKER_FLOOR_Y, 20, 20, true));
+    }
+
+    private void addAboveGroundPlot(int x, int z, int width, int depth) {
+        buildingPlots.add(new BuildingPlot(x, 0, width, depth, false));
+    }
+
+    // ── Stage 4: Building placement ───────────────────────────────────────────
+
+    private void stage4PlaceBuildings(World world) {
 
         // ===== HIGH STREET — positions derived from seed =====
         generateHighStreet(world);
@@ -751,9 +1050,51 @@ public class WorldGenerator {
         // shopping trolleys, and a park statue.
         generateProps(world, sx, sz, nx, nz, offX, offZ, jobX, jobZ, pstnX, pstnZ,
                       rx, rz1, rz2, indX, indZ, smX, smZ);
+    }
 
-        // Load initial chunks around origin
-        world.updateLoadedChunks(new Vector3(0, 0, 0));
+    // ── Stage 5: NPC spawn-point registration ─────────────────────────────────
+
+    private void stage5RegisterNpcSpawnPoints(World world) {
+        npcSpawnPoints.clear();
+
+        Set<LandmarkType> shopTypes = new HashSet<>(Arrays.asList(
+            LandmarkType.GREGGS,
+            LandmarkType.OFF_LICENCE,
+            LandmarkType.CHARITY_SHOP,
+            LandmarkType.JEWELLER,
+            LandmarkType.BOOKIES,
+            LandmarkType.KEBAB_SHOP,
+            LandmarkType.LAUNDERETTE,
+            LandmarkType.TESCO_EXPRESS,
+            LandmarkType.PUB,
+            LandmarkType.PAWN_SHOP,
+            LandmarkType.BUILDERS_MERCHANT,
+            LandmarkType.CHIPPY,
+            LandmarkType.NEWSAGENT,
+            LandmarkType.NANDOS,
+            LandmarkType.BARBER,
+            LandmarkType.NAIL_SALON,
+            LandmarkType.CORNER_SHOP,
+            LandmarkType.BETTING_SHOP,
+            LandmarkType.PHONE_REPAIR,
+            LandmarkType.CASH_CONVERTER,
+            LandmarkType.WETHERSPOONS,
+            LandmarkType.ESTATE_AGENT,
+            LandmarkType.SUPERMARKET,
+            LandmarkType.GP_SURGERY,
+            LandmarkType.JOB_CENTRE,
+            LandmarkType.LIBRARY,
+            LandmarkType.FOOD_BANK
+        ));
+
+        for (Landmark landmark : world.getAllLandmarks()) {
+            if (shopTypes.contains(landmark.getType())) {
+                float spawnX = landmark.getPosition().x + landmark.getWidth() / 2.0f;
+                float spawnY = landmark.getPosition().y + 1.0f;
+                float spawnZ = landmark.getPosition().z + landmark.getDepth() / 2.0f;
+                npcSpawnPoints.add(new NpcSpawnPoint(landmark.getType(), spawnX, spawnY, spawnZ));
+            }
+        }
     }
 
     /**
@@ -2778,7 +3119,7 @@ public class WorldGenerator {
         for (int i = 0; i < flintVeinCount; i++) {
             int vx = mineralRng.nextInt(extent * 2) - extent;
             int vz = mineralRng.nextInt(extent * 2) - extent;
-            int vy = -(15 + mineralRng.nextInt(BEDROCK_DEPTH + 15 - 2)); // y=-15 down to BEDROCK_DEPTH+2
+            int vy = -(15 + mineralRng.nextInt(Math.max(1, Math.abs(BEDROCK_DEPTH) - 15 - 2))); // y=-15 down to BEDROCK_DEPTH+2
             if (vy <= BEDROCK_DEPTH + 1) vy = BEDROCK_DEPTH + 2; // clamp above bedrock
             placeOreVein(world, vx, vy, vz, BlockType.FLINT, 2 + mineralRng.nextInt(2), mineralRng);
         }
