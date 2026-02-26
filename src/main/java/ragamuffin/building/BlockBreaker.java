@@ -83,7 +83,25 @@ public class BlockBreaker {
      * Calculate the actual hits needed to break a block with the given tool.
      */
     private int getHitsToBreak(BlockType blockType, Material tool) {
+        // BOLT_CUTTERS: breaks glass-type blocks in 1 hit (Fix #687)
+        if (tool == Material.BOLT_CUTTERS) {
+            if (blockType == BlockType.GLASS || blockType == BlockType.DOOR_LOWER
+                    || blockType == BlockType.DOOR_UPPER) {
+                return 1;
+            }
+        }
+
         int baseHardness = getBlockHardness(blockType);
+
+        // CROWBAR: reduces hard block hits from 8 to 6 (Fix #687)
+        if (tool == Material.CROWBAR) {
+            if (baseHardness >= 8) {
+                // Apply crowbar reduction: 8 -> 6, keeping proportional for higher hardness
+                return Math.max(1, (int) Math.round(baseHardness * 0.75));
+            }
+            return baseHardness; // no benefit on soft or fragile blocks
+        }
+
         float toolMultiplier = Tool.getHitsMultiplier(tool);
         return Math.max(1, Math.round(baseHardness * toolMultiplier));
     }

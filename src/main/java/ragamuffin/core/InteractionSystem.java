@@ -8,6 +8,7 @@ import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
 import ragamuffin.world.LandmarkType;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -21,6 +22,9 @@ public class InteractionSystem {
     private static final Random RANDOM = new Random();
 
     private final BuildingQuestRegistry questRegistry = new BuildingQuestRegistry();
+
+    /** The Fence system, injected by the game loop. May be null if not yet initialised. */
+    private FenceSystem fenceSystem;
 
     // NPC dialogue lines
     private static final String[] PUBLIC_DIALOGUE = {
@@ -143,6 +147,12 @@ public class InteractionSystem {
         "Not my department."
     };
 
+    private static final String[] FENCE_DIALOGUE_NOBODY = {
+        // Fence ignores nobody-rep players — these are internal fallbacks only
+        "*looks through you*",
+        "*doesn't make eye contact*"
+    };
+
     /**
      * Handle food/consumable use (right-click with item in hotbar).
      * @return true if item was consumed
@@ -213,6 +223,10 @@ public class InteractionSystem {
             hungerRestored = 0;
             player.restoreEnergy(20); // Steadies the nerves
             lastConsumeMessage = "You take one. Does anything feel different? Hard to say.";
+        } else if (food == Material.DODGY_PASTY) {
+            hungerRestored = 20; // Some nourishment
+            player.heal(50); // Dodgy Pasty restores 50 HP (Fix #687)
+            lastConsumeMessage = "You scoff the dodgy pasty. Questionable provenance, undeniable results.";
         } else {
             // Not a consumable item
             return false;
@@ -261,7 +275,8 @@ public class InteractionSystem {
             || material == Material.ENERGY_DRINK || material == Material.PINT
             || material == Material.PERI_PERI_CHICKEN || material == Material.PARACETAMOL
             || material == Material.FIRE_EXTINGUISHER || material == Material.WASHING_POWDER
-            || material == Material.SCRATCH_CARD || material == Material.ANTIDEPRESSANTS;
+            || material == Material.SCRATCH_CARD || material == Material.ANTIDEPRESSANTS
+            || material == Material.DODGY_PASTY;
     }
 
     /**
@@ -270,7 +285,7 @@ public class InteractionSystem {
      * @return The dialogue text, or null if no interaction
      */
     public String interactWithNPC(NPC npc) {
-        return interactWithNPC(npc, null);
+        return interactWithNPC(npc, null, null, Collections.emptyList());
     }
 
     /**
@@ -282,6 +297,18 @@ public class InteractionSystem {
      * @return The dialogue text, or null if no interaction
      */
     public String interactWithNPC(NPC npc, Inventory inventory) {
+        return interactWithNPC(npc, inventory, null, Collections.emptyList());
+    }
+
+    /**
+     * Interact with an NPC (E key), including player and all NPCs for Fence interactions.
+     * @param npc       The NPC to interact with
+     * @param inventory Player inventory (may be null for non-quest interactions)
+     * @param player    The player (required for Fence rep check; may be null)
+     * @param allNpcs   All active NPCs (required for Fence police-avoidance; may be empty)
+     * @return The dialogue text, or null if no interaction
+     */
+    public String interactWithNPC(NPC npc, Inventory inventory, Player player, List<NPC> allNpcs) {
         if (npc == null) {
             return null;
         }
@@ -368,6 +395,24 @@ public class InteractionSystem {
                 break;
             case COUNCIL_MEMBER:
                 dialogue = COUNCIL_MEMBER_DIALOGUE[RANDOM.nextInt(COUNCIL_MEMBER_DIALOGUE.length)];
+                break;
+            case FENCE:
+                // Fix #687: Delegate Fence interactions to FenceSystem
+                if (fenceSystem != null && player != null && inventory != null) {
+                    String fenceResponse = fenceSystem.onPlayerInteract(player, inventory, allNpcs);
+                    if (fenceResponse != null) {
+                        npc.setSpeechText(fenceResponse, 4.0f);
+                        return fenceResponse;
+                    }
+                    // null means either: trade UI opened (no speech needed), or player ignored
+                    // Check rep to decide if we should show "ignored" feedback
+                    if (player.getStreetReputation().getPoints() < ragamuffin.core.StreetReputation.KNOWN_THRESHOLD) {
+                        // Fence ignores nobody-rep players — no dialogue
+                        return null;
+                    }
+                    // Trade UI opened — return null (caller handles UI)
+                    return null;
+                }
                 break;
             default:
                 break;
@@ -503,6 +548,20 @@ public class InteractionSystem {
      */
     public BuildingQuestRegistry getQuestRegistry() {
         return questRegistry;
+    }
+
+    /**
+     * Set the Fence system (injected by the game loop).
+     */
+    public void setFenceSystem(FenceSystem fenceSystem) {
+        this.fenceSystem = fenceSystem;
+    }
+
+    /**
+     * Get the Fence system.
+     */
+    public FenceSystem getFenceSystem() {
+        return fenceSystem;
     }
 
     /**

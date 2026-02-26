@@ -190,6 +190,18 @@ public class GangTerritorySystem {
         lingerTimer = 0f;
     }
 
+    /**
+     * Reset the gang linger timer — called when the player activates a BALACLAVA (Fix #687).
+     * This gives the player another {@link #LINGER_THRESHOLD_SECONDS} seconds before gangs
+     * turn hostile, as if they just entered the territory for the first time.
+     * Only has effect when the player is WARNED (not already HOSTILE).
+     */
+    public void resetLingerTimer() {
+        if (state == TerritoryState.WARNED) {
+            lingerTimer = 0f;
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------

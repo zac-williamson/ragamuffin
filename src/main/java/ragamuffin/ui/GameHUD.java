@@ -383,7 +383,15 @@ public class GameHUD {
         }
 
         spriteBatch.begin();
+        // Top-right star display (existing)
         font.draw(spriteBatch, sb.toString(), screenWidth - 200, screenHeight - 105);
+
+        // Fix #687: Bottom-right rep indicator
+        font.getData().setScale(0.8f);
+        String repLabel = "REP: " + rep.getPoints() + " (" + rep.getLevel().name() + ")";
+        font.draw(spriteBatch, repLabel, screenWidth - 200, BAR_MARGIN + BAR_HEIGHT);
+        font.getData().setScale(1.0f);
+
         font.setColor(Color.WHITE);
         spriteBatch.end();
     }
