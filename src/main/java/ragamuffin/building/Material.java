@@ -119,7 +119,18 @@ public enum Material {
     COUNCIL_ID("Council ID"),
 
     /** Food loot from Greggs raid. */
-    PASTY("Pasty");
+    PASTY("Pasty"),
+
+    // ── Issue #712: Slumlord property system ──────────────────────────────────
+
+    /** Proof of property ownership — issued by the ESTATE_AGENT on purchase. */
+    DEED("Deed"),
+
+    /** Paint tin — used to repair buildings and raise their Condition score. */
+    PAINT_TIN("Paint Tin"),
+
+    /** Eviction notice — removes a THUG NPC from a player-owned building. */
+    EVICTION_NOTICE("Eviction Notice");
 
     private final String displayName;
 
@@ -278,6 +289,13 @@ public enum Material {
             case PASTY:          return c(0.82f, 0.60f, 0.25f);  // Greggs golden pastry
             case LEAVES:         return c(0.28f, 0.62f, 0.18f);  // Green leaf bundle
 
+            // Slumlord items (Issue #712)
+            case DEED:           return cs(0.92f, 0.88f, 0.62f,  // Parchment front
+                                            0.72f, 0.65f, 0.35f); // Darker back
+            case PAINT_TIN:      return cs(0.82f, 0.18f, 0.18f,  // Red tin
+                                            0.62f, 0.62f, 0.65f); // Grey lid
+            case EVICTION_NOTICE: return c(0.88f, 0.12f, 0.12f); // Bold red paper
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -360,6 +378,10 @@ public enum Material {
             case COUNCIL_ID:
             case PASTY:
             case LEAVES:
+            // Slumlord items (Issue #712)
+            case DEED:
+            case PAINT_TIN:
+            case EVICTION_NOTICE:
                 return false;
             default:
                 return true;
@@ -507,6 +529,13 @@ public enum Material {
                 return IconShape.FOOD;
             case LEAVES:
                 return IconShape.FLAT_PAPER; // flat leaf bundle
+            // Slumlord items (Issue #712)
+            case DEED:
+                return IconShape.FLAT_PAPER; // legal document
+            case PAINT_TIN:
+                return IconShape.CYLINDER;   // paint tin
+            case EVICTION_NOTICE:
+                return IconShape.FLAT_PAPER; // official notice paper
 
             default:
                 return IconShape.BOX;

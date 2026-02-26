@@ -225,6 +225,34 @@ public enum AchievementType {
         "Two-Man Job",
         "Completed a heist with an accomplice. Don't get attached.",
         1
+    ),
+
+    // ── Issue #712: Slumlord property system ──────────────────────────────────
+
+    FIRST_PROPERTY(
+        "Foot on the Ladder",
+        "Bought your first property. Thatcher would be proud. Probably.",
+        1
+    ),
+    ARMCHAIR_LANDLORD(
+        "Armchair Landlord",
+        "You own five properties and haven't lifted a paintbrush in weeks. Nice.",
+        1
+    ),
+    SLUM_CLEARANCE(
+        "Slum Clearance",
+        "Repaired a building to full condition. The tenants are cautiously optimistic.",
+        1
+    ),
+    THATCHER_WOULDNT(
+        "Thatcher Wouldn't",
+        "You're not Thatcher. Five properties is enough.",
+        1
+    ),
+    RATES_DODGER(
+        "Rates Dodger",
+        "Ignored the council rates for a full week. Bold. Reckless. Very on-brand.",
+        1
     );
 
     private final String name;

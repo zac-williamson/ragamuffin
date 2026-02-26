@@ -43,7 +43,15 @@ public enum NPCType {
     // ── Issue #708: Birds ─────────────────────────────────────────────────────
 
     /** Ambient bird (pigeon/seagull) — flaps about the park and rooftops. Passive. */
-    BIRD(3f, 0f, 0f, false);
+    BIRD(3f, 0f, 0f, false),
+
+    // ── Issue #712: Slumlord property system ──────────────────────────────────
+
+    /** Estate agent — weekday-only NPC who sells properties to the player. */
+    ESTATE_AGENT(20f, 0f, 0f, false),
+
+    /** Thug — sent by rival factions to intimidate/take over player-owned buildings. */
+    THUG(35f, 8f, 1.5f, true);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
