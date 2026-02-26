@@ -99,7 +99,27 @@ public enum Material {
     COAT("Coat"),              // Clothing: reduces warmth drain outdoors
     UMBRELLA("Umbrella"),      // Clothing: blocks wetness accumulation in rain
     WOOLLY_HAT("Woolly Hat"),  // Clothing: reduces warmth drain from cold/frost
-    FLASK_OF_TEA("Flask of Tea"); // Consumable: restores warmth instantly
+    FLASK_OF_TEA("Flask of Tea"), // Consumable: restores warmth instantly
+
+    // ── Heist tools & loot (Phase O / Issue #704) ──────────────────────────────
+
+    /** Crafted from DIAMOND×1 + WOOD×1. Removes GLASS silently in 1 hit (zero noise). */
+    GLASS_CUTTER("Glass Cutter"),
+
+    /** Crafted from WOOD×4 + LEAVES×2. Deployable ladder on vertical surface for 60 seconds. */
+    ROPE_LADDER("Rope Ladder"),
+
+    /** Leaf bundle — drops from LEAVES blocks, used in ROPE_LADDER recipe. */
+    LEAVES("Leaves"),
+
+    /** Jewellery loot from jeweller safe. */
+    GOLD_RING("Gold Ring"),
+
+    /** Document loot from JobCentre. */
+    COUNCIL_ID("Council ID"),
+
+    /** Food loot from Greggs raid. */
+    PASTY("Pasty");
 
     private final String displayName;
 
@@ -247,6 +267,17 @@ public enum Material {
             case FLASK_OF_TEA:    return cs(0.62f, 0.52f, 0.38f,  // Metal flask body
                                             0.88f, 0.72f, 0.32f); // Tea-coloured cap
 
+            // Heist tools & loot (Issue #704)
+            case GLASS_CUTTER:   return cs(0.65f, 0.95f, 1.00f,  // Diamond tip cyan
+                                            0.58f, 0.40f, 0.18f); // Wood handle
+            case ROPE_LADDER:    return cs(0.58f, 0.40f, 0.18f,  // Rope brown
+                                            0.45f, 0.30f, 0.12f); // Darker rope
+            case GOLD_RING:      return cs(0.95f, 0.80f, 0.15f,  // Gold ring face
+                                            0.75f, 0.60f, 0.08f); // Darker gold edge
+            case COUNCIL_ID:     return c(0.20f, 0.38f, 0.68f);  // Official blue card
+            case PASTY:          return c(0.82f, 0.60f, 0.25f);  // Greggs golden pastry
+            case LEAVES:         return c(0.28f, 0.62f, 0.18f);  // Green leaf bundle
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -322,6 +353,13 @@ public enum Material {
             case UMBRELLA:
             case WOOLLY_HAT:
             case FLASK_OF_TEA:
+            // Heist tools & loot (Issue #704)
+            case GLASS_CUTTER:
+            case ROPE_LADDER:
+            case GOLD_RING:
+            case COUNCIL_ID:
+            case PASTY:
+            case LEAVES:
                 return false;
             default:
                 return true;
@@ -456,6 +494,19 @@ public enum Material {
                 return IconShape.CARD;       // hat shape
             case FLASK_OF_TEA:
                 return IconShape.CYLINDER;   // flask cylinder
+            // Heist tools & loot (Issue #704)
+            case GLASS_CUTTER:
+                return IconShape.TOOL;
+            case ROPE_LADDER:
+                return IconShape.TOOL;
+            case GOLD_RING:
+                return IconShape.CARD;
+            case COUNCIL_ID:
+                return IconShape.CARD;
+            case PASTY:
+                return IconShape.FOOD;
+            case LEAVES:
+                return IconShape.FLAT_PAPER; // flat leaf bundle
 
             default:
                 return IconShape.BOX;
