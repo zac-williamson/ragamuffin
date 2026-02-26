@@ -11,6 +11,7 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.entity.FacialExpression;
 import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCModelVariant;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 
@@ -96,6 +97,11 @@ public class NPCRenderer {
     // Per-NPC speaking face instances (one per FacialExpression, mouth open)
     private final Map<NPC, ModelInstance[]> speakFaceInstances;
 
+    // Long-hair model (shared geometry, one block behind the head)
+    private Model longHairModel;
+    // Per-NPC long-hair ModelInstance (only allocated for LONG_HAIR variant NPCs)
+    private final Map<NPC, ModelInstance> longHairInstances;
+
     private final ModelBuilder mb;
 
     // Reusable transform to avoid GC pressure
@@ -113,6 +119,7 @@ public class NPCRenderer {
         blinkFaceInstances = new IdentityHashMap<>();
         speakFaceParts = new HashMap<>();
         speakFaceInstances = new IdentityHashMap<>();
+        longHairInstances = new IdentityHashMap<>();
         buildAllModels();
     }
 
@@ -243,6 +250,10 @@ public class NPCRenderer {
             new Color(0.45f, 0.28f, 0.12f, 1f),
             new Color(0.05f, 0.05f, 0.05f, 1f));
         dogParts.put(NPCType.DOG, dParts);
+
+        // Long-hair block — shared by all LONG_HAIR variant NPCs regardless of type.
+        // Dark brown rectangle hanging behind the head.
+        longHairModel = buildLongHairBlock();
     }
 
     private void buildAndCacheHumanoid(NPCType type, Color shirtColor, Color trouserColor,
@@ -542,6 +553,29 @@ public class NPCRenderer {
         return parts;
     }
 
+    /**
+     * Build the long-hair block model.
+     * A wide, flat box rendered behind and below the head to simulate flowing hair.
+     */
+    private Model buildLongHairBlock() {
+        mb.begin();
+        Color hairColor = new Color(0.22f, 0.14f, 0.08f, 1f); // dark brown
+        Material mat = new Material(ColorAttribute.createDiffuse(hairColor));
+        MeshPartBuilder hair = mb.part("hair", GL20.GL_TRIANGLES, ATTRS, mat);
+        // Hair block: slightly wider than the head, tall enough to reach the shoulders
+        hair.box(HEAD_W + 0.06f, HEAD_H + 0.20f, HEAD_D * 0.3f);
+        return mb.end();
+    }
+
+    /** Returns the per-NPC long-hair ModelInstance, creating it if needed. */
+    private ModelInstance getOrCreateLongHairInstance(NPC npc) {
+        ModelInstance inst = longHairInstances.get(npc);
+        if (inst != null) return inst;
+        inst = new ModelInstance(longHairModel);
+        longHairInstances.put(npc, inst);
+        return inst;
+    }
+
     private Model buildBox(float w, float h, float d, Color color) {
         mb.begin();
         Material mat = new Material(ColorAttribute.createDiffuse(color));
@@ -678,16 +712,22 @@ public class NPCRenderer {
         float swingRad = (float) Math.toRadians(swing);
         float halfSwingRad = swingRad * 0.5f; // Forearms bend less
 
-        // Vertical layout from ground up
-        float footH = FOOT_H;
-        float lowerLegTop = footH + LOWER_LEG_H;
-        float upperLegTop = lowerLegTop + UPPER_LEG_H;
+        // Model variant scales — applied to vertical and horizontal offsets so the
+        // same model geometry renders at a different apparent size/proportion.
+        NPCModelVariant variant = npc.getModelVariant();
+        float hS = variant.getHeightScale(); // vertical scale
+        float wS = variant.getWidthScale();  // horizontal scale
+
+        // Vertical layout from ground up (scaled by heightScale)
+        float footH = FOOT_H * hS;
+        float lowerLegTop = footH + LOWER_LEG_H * hS;
+        float upperLegTop = lowerLegTop + UPPER_LEG_H * hS;
         float torsoBottom = upperLegTop;
-        float torsoTop = torsoBottom + TORSO_H;
+        float torsoTop = torsoBottom + TORSO_H * hS;
         float shoulderY = torsoTop;
-        float neckY = shoulderY + SHOULDER_H;
-        float headCentre = neckY + NECK_H + HEAD_H / 2f;
-        float torsoCentre = torsoBottom + TORSO_H / 2f;
+        float neckY = shoulderY + SHOULDER_H * hS;
+        float headCentre = neckY + NECK_H * hS + HEAD_H * hS / 2f;
+        float torsoCentre = torsoBottom + TORSO_H * hS / 2f;
 
         float yawRad = (float) Math.toRadians(yaw);
 
@@ -697,11 +737,11 @@ public class NPCRenderer {
             : 0f;
 
         // Torso (with idle breath offset)
-        setPartTransform(inst[PART_TORSO], pos, yawRad, 0f, torsoCentre + idleBreath, 0f);
+        setPartTransformScaled(inst[PART_TORSO], pos, yawRad, 0f, torsoCentre + idleBreath, 0f, wS, hS);
         modelBatch.render(inst[PART_TORSO], environment);
 
         // Shoulders (with idle breath offset)
-        setPartTransform(inst[PART_SHOULDERS], pos, yawRad, 0f, shoulderY + idleBreath, 0f);
+        setPartTransformScaled(inst[PART_SHOULDERS], pos, yawRad, 0f, shoulderY + idleBreath, 0f, wS, hS);
         modelBatch.render(inst[PART_SHOULDERS], environment);
 
         // Head — bobs slightly with the walk cycle for a more natural gait;
@@ -709,73 +749,82 @@ public class NPCRenderer {
         float headBob = (speed < 0.01f) ? idleBreath
             : 0.025f * Math.abs((float) Math.sin(animT * WALK_SPEED));
 
+        float headScale = variant.getHeadScale();
+
         // Neck follows head bob
-        setPartTransform(inst[PART_NECK], pos, yawRad, 0f, neckY + NECK_H / 2f + headBob * 0.5f, 0f);
+        setPartTransformScaled(inst[PART_NECK], pos, yawRad, 0f, neckY + NECK_H * hS / 2f + headBob * 0.5f, 0f, wS, hS);
         modelBatch.render(inst[PART_NECK], environment);
 
-        setPartTransform(inst[PART_HEAD], pos, yawRad, 0f, headCentre + headBob, 0f);
+        setPartTransformScaled(inst[PART_HEAD], pos, yawRad, 0f, headCentre + headBob, 0f, headScale, headScale);
         modelBatch.render(inst[PART_HEAD], environment);
 
         // Face (front of head at +Z) — select model based on current expression and blink/speak state
-        renderFace(modelBatch, environment, npc, pos, yawRad, headCentre + headBob, HEAD_D / 2f + 0.011f);
+        renderFace(modelBatch, environment, npc, pos, yawRad, headCentre + headBob, HEAD_D * headScale / 2f + 0.011f);
+
+        // Long hair (LONG_HAIR variant) — block rendered at the back of the head
+        if (variant.hasLongHair()) {
+            ModelInstance hairInst = getOrCreateLongHairInstance(npc);
+            setPartTransform(hairInst, pos, yawRad, 0f, headCentre + headBob - HEAD_H * 0.1f, -(HEAD_D / 2f + 0.01f));
+            modelBatch.render(hairInst, environment);
+        }
 
         // Helmet (police only) — follows head bob
         if (inst.length > PART_HELMET) {
-            float helmetY = headCentre + headBob + HEAD_H / 2f + 0.02f;
+            float helmetY = headCentre + headBob + HEAD_H * headScale / 2f + 0.02f;
             setPartTransform(inst[PART_HELMET], pos, yawRad, 0f, helmetY, 0f);
             modelBatch.render(inst[PART_HELMET], environment);
         }
 
         // Arms — upper arms swing from shoulder, forearms and hands follow
-        float armOffsetX = SHOULDER_W / 2f;
+        float armOffsetX = SHOULDER_W * wS / 2f;
         float armPivotY = shoulderY;
 
         // Left arm chain (swings with +swingRad for natural gait: left arm forward when right leg forward)
         setLimbTransform(inst[PART_L_UPPER_ARM], pos, yawRad,
-            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H);
+            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H * hS);
         modelBatch.render(inst[PART_L_UPPER_ARM], environment);
         setLimbChainTransform(inst[PART_L_FOREARM], pos, yawRad,
-            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H, halfSwingRad, FOREARM_H);
+            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H * hS, halfSwingRad, FOREARM_H * hS);
         modelBatch.render(inst[PART_L_FOREARM], environment);
         setLimb3ChainTransform(inst[PART_L_HAND], pos, yawRad,
-            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H, halfSwingRad, FOREARM_H, -halfSwingRad, HAND_H);
+            -armOffsetX, armPivotY, 0f, swingRad, UPPER_ARM_H * hS, halfSwingRad, FOREARM_H * hS, -halfSwingRad, HAND_H * hS);
         modelBatch.render(inst[PART_L_HAND], environment);
 
         // Right arm chain
         setLimbTransform(inst[PART_R_UPPER_ARM], pos, yawRad,
-            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H);
+            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H * hS);
         modelBatch.render(inst[PART_R_UPPER_ARM], environment);
         setLimbChainTransform(inst[PART_R_FOREARM], pos, yawRad,
-            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H, -halfSwingRad, FOREARM_H);
+            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H * hS, -halfSwingRad, FOREARM_H * hS);
         modelBatch.render(inst[PART_R_FOREARM], environment);
         setLimb3ChainTransform(inst[PART_R_HAND], pos, yawRad,
-            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H, -halfSwingRad, FOREARM_H, halfSwingRad, HAND_H);
+            armOffsetX, armPivotY, 0f, -swingRad, UPPER_ARM_H * hS, -halfSwingRad, FOREARM_H * hS, halfSwingRad, HAND_H * hS);
         modelBatch.render(inst[PART_R_HAND], environment);
 
         // Legs — upper legs swing from hip, lower legs and feet follow
-        float legOffsetX = TORSO_W / 2f - UPPER_LEG_W / 2f;
+        float legOffsetX = (TORSO_W * wS / 2f - UPPER_LEG_W * wS / 2f);
         float legPivotY = torsoBottom;
 
         // Left leg chain
         setLimbTransform(inst[PART_L_UPPER_LEG], pos, yawRad,
-            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H);
+            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H * hS);
         modelBatch.render(inst[PART_L_UPPER_LEG], environment);
         setLimbChainTransform(inst[PART_L_LOWER_LEG], pos, yawRad,
-            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H, -halfSwingRad, LOWER_LEG_H);
+            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H * hS, -halfSwingRad, LOWER_LEG_H * hS);
         modelBatch.render(inst[PART_L_LOWER_LEG], environment);
         setLimb3ChainTransform(inst[PART_L_FOOT], pos, yawRad,
-            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H, -halfSwingRad, LOWER_LEG_H, halfSwingRad, FOOT_H);
+            -legOffsetX, legPivotY, 0f, -swingRad, UPPER_LEG_H * hS, -halfSwingRad, LOWER_LEG_H * hS, halfSwingRad, FOOT_H * hS);
         modelBatch.render(inst[PART_L_FOOT], environment);
 
         // Right leg chain
         setLimbTransform(inst[PART_R_UPPER_LEG], pos, yawRad,
-            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H);
+            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H * hS);
         modelBatch.render(inst[PART_R_UPPER_LEG], environment);
         setLimbChainTransform(inst[PART_R_LOWER_LEG], pos, yawRad,
-            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H, halfSwingRad, LOWER_LEG_H);
+            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H * hS, halfSwingRad, LOWER_LEG_H * hS);
         modelBatch.render(inst[PART_R_LOWER_LEG], environment);
         setLimb3ChainTransform(inst[PART_R_FOOT], pos, yawRad,
-            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H, halfSwingRad, LOWER_LEG_H, -halfSwingRad, FOOT_H);
+            legOffsetX, legPivotY, 0f, swingRad, UPPER_LEG_H * hS, halfSwingRad, LOWER_LEG_H * hS, -halfSwingRad, FOOT_H * hS);
         modelBatch.render(inst[PART_R_FOOT], environment);
     }
 
@@ -1210,6 +1259,32 @@ public class NPCRenderer {
     }
 
     /**
+     * Variant of {@link #setPartTransform} that also applies non-uniform scale to the
+     * model instance, allowing body parts to be rendered at a different size while
+     * keeping the same geometry. Used by the model-variant rendering path.
+     *
+     * @param scaleX horizontal scale (applied uniformly to X and Z)
+     * @param scaleY vertical scale (applied to Y)
+     */
+    private void setPartTransformScaled(ModelInstance instance, Vector3 npcPos, float yawRad,
+                                         float localX, float localY, float localZ,
+                                         float scaleX, float scaleY) {
+        float cosY = (float) Math.cos(yawRad);
+        float sinY = (float) Math.sin(yawRad);
+
+        float worldX = npcPos.x + localX * cosY + localZ * sinY;
+        float worldY = npcPos.y + localY;
+        float worldZ = npcPos.z - localX * sinY + localZ * cosY;
+
+        tmpTransform.idt();
+        tmpTransform.setToTranslation(worldX, worldY, worldZ);
+        tmpTransform.rotate(Vector3.Y, (float) Math.toDegrees(yawRad));
+        tmpTransform.scale(scaleX, scaleY, scaleX);
+
+        instance.transform.set(tmpTransform);
+    }
+
+    /**
      * Set transform for a child limb segment chained to a parent limb.
      * The child hangs from the end of the parent, adding its own swing rotation.
      */
@@ -1463,5 +1538,11 @@ public class NPCRenderer {
         }
         dogParts.clear();
         dogInstances.clear();
+
+        if (longHairModel != null) {
+            longHairModel.dispose();
+            longHairModel = null;
+        }
+        longHairInstances.clear();
     }
 }

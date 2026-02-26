@@ -30,6 +30,7 @@ public enum NPCState {
     WAVING,         // NPC waving at the player
     DANCING,        // NPC doing a dance animation
     POINTING,       // NPC pointing at something
-    SHELTERING,     // Issue #698: NPC sheltering under awning/indoors due to rain/thunderstorm
-    ATTACKING_PLAYER // Issue #702: Faction NPC actively attacking the player (hostile faction)
+    SHELTERING,      // Issue #698: NPC sheltering under awning/indoors due to rain/thunderstorm
+    ATTACKING_PLAYER, // Issue #702: Faction NPC actively attacking the player (hostile faction)
+    FOLLOWING        // Issue #706: NPC following the player (e.g. heist accomplice)
 }
