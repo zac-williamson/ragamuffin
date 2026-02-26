@@ -21,7 +21,9 @@ public enum NPCType {
     STREET_PREACHER(20f, 0f, 0f, false),   // Named NPC: preacher with distinctive robes
     LOLLIPOP_LADY(20f, 0f, 0f, false),    // Named NPC: crossing patrol warden with hi-vis
     FENCE(25f, 0f, 0f, false),            // Black market trader — operates at charity shop / industrial estate
-    TUNNEL_DWELLER(20f, 4f, 2.5f, false); // Underground inhabitant living in sewers/bunker — wary but not hostile
+    TUNNEL_DWELLER(20f, 4f, 2.5f, false), // Underground inhabitant living in sewers/bunker — wary but not hostile
+    BARMAN(20f, 0f, 0f, false),           // Stands behind the bar at the pub; rumour sink; sells drinks
+    BOUNCER(50f, 15f, 2.0f, false);       // Stands at pub entrance; blocks entry for criminals
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

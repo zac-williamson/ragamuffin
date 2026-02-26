@@ -575,6 +575,98 @@ public class Player {
         this.balaclavWorn = worn;
     }
 
+    // ========== Pub / Drink System (Issue #696) ==========
+
+    /**
+     * Seconds remaining for the "drunk" effect (bought a drink from the pub).
+     * While > 0 the player can extract rumours from NPCs.
+     * Pint of lager sets this to 60s; double whisky sets it to 60s and applies movement debuff.
+     */
+    private float drunkTimer = 0f;
+
+    /**
+     * True while the double-whisky movement speed debuff (20% reduction) is active.
+     */
+    private boolean whiskeyDebuff = false;
+
+    /**
+     * Timer for the whisky movement speed debuff (10 seconds).
+     */
+    private float whiskeyDebuffTimer = 0f;
+
+    /**
+     * Whether the player has bought their first pint (for tooltip).
+     */
+    private boolean firstPintPurchased = false;
+
+    /**
+     * Set the drunk timer (seconds the player can extract rumours from NPCs).
+     */
+    public void setDrunkTimer(float seconds) {
+        this.drunkTimer = seconds;
+    }
+
+    /**
+     * Get the current drunk timer in seconds.
+     */
+    public float getDrunkTimer() {
+        return drunkTimer;
+    }
+
+    /**
+     * Returns true if the player is currently "drunk" (can extract rumours from NPCs).
+     */
+    public boolean isDrunk() {
+        return drunkTimer > 0f;
+    }
+
+    /**
+     * Advance the drunk timer and whisky debuff timer by delta seconds.
+     * Called each frame by the game update loop.
+     */
+    public void updateDrunkTimer(float delta) {
+        if (drunkTimer > 0f) {
+            drunkTimer -= delta;
+            if (drunkTimer < 0f) drunkTimer = 0f;
+        }
+        if (whiskeyDebuffTimer > 0f) {
+            whiskeyDebuffTimer -= delta;
+            if (whiskeyDebuffTimer <= 0f) {
+                whiskeyDebuffTimer = 0f;
+                whiskeyDebuff = false;
+            }
+        }
+    }
+
+    /**
+     * Apply the double-whisky movement debuff (10 seconds, 20% speed reduction).
+     */
+    public void applyWhiskeyDebuff() {
+        this.whiskeyDebuff = true;
+        this.whiskeyDebuffTimer = 10f;
+    }
+
+    /**
+     * Returns true while the whisky movement debuff is active.
+     */
+    public boolean isWhiskeyDebuffActive() {
+        return whiskeyDebuff;
+    }
+
+    /**
+     * Record that the player has bought their first pint.
+     */
+    public void markFirstPintPurchased() {
+        this.firstPintPurchased = true;
+    }
+
+    /**
+     * Whether the player has bought their first pint (for tooltip trigger).
+     */
+    public boolean hasFirstPintPurchased() {
+        return firstPintPurchased;
+    }
+
     /**
      * Whether the player is currently wearing the BALACLAVA.
      */
