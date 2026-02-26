@@ -58,7 +58,10 @@ public enum BlockType {
     STAIRS(48, true),      // Stair block: half-height step for ascending/descending between layers
     LADDER(49, false),     // Ladder block: climbable thin rungs against a wall face
     HALF_BLOCK(50, true),  // Half-block slab: a flat 0.5-height slab occupying the lower half of the cell
-    STATUE(51, true);      // Stone statue block: used for park statues and decorative monuments
+    STATUE(51, true),      // Stone statue block: used for park statues and decorative monuments
+    COAL_ORE(52, true),    // Coal ore embedded in underground stone
+    IRON_ORE(53, true),    // Iron ore seam in underground stone
+    FLINT(54, true);       // Flint nodule found in deep stone layers
 
     private final int id;
     private final boolean solid;
@@ -248,6 +251,9 @@ public enum BlockType {
             case LEAVES:
             case CORRUGATED_METAL:
             case STATUE:
+            case COAL_ORE:
+            case IRON_ORE:
+            case FLINT:
                 return true;
             default:
                 return false;
@@ -392,6 +398,39 @@ public enum BlockType {
                     clamp01(base.g + ridgeShift + variation * 0.5f),
                     clamp01(base.b + ridgeShift * 0.8f + variation * 0.4f), base.a);
 
+            case COAL_ORE: {
+                // Dark speckle with black coal pockets
+                float coalVar = ((hash & 0x3FF) / 1023.0f - 0.5f) * 0.20f;
+                boolean isCoalPocket = ((hash >> 8) & 0x7) == 0; // ~12% chance of dark pocket
+                float pocketDarken = isCoalPocket ? -0.15f : 0f;
+                return new Color(
+                    clamp01(base.r + pocketDarken + coalVar * 0.8f),
+                    clamp01(base.g + pocketDarken + coalVar * 0.8f),
+                    clamp01(base.b + pocketDarken + coalVar * 0.8f), base.a);
+            }
+
+            case IRON_ORE: {
+                // Rusty orange-brown streaks in grey stone
+                float ironVar = ((hash & 0x3FF) / 1023.0f - 0.5f) * 0.16f;
+                boolean isVein = ((hash >> 6) & 0x5) == 0; // ~20% chance of orange vein
+                float veinShift = isVein ? 0.12f : 0f;
+                return new Color(
+                    clamp01(base.r + veinShift + ironVar),
+                    clamp01(base.g + ironVar * 0.6f),
+                    clamp01(base.b + ironVar * 0.3f), base.a);
+            }
+
+            case FLINT: {
+                // Very dark with sharp angular gleam
+                float flintVar = ((hash & 0xFF) / 255.0f - 0.5f) * 0.10f;
+                boolean isGleam = ((hash >> 4) & 0xF) == 0; // ~6% bright gleam
+                float gleamShift = isGleam ? 0.15f : 0f;
+                return new Color(
+                    clamp01(base.r + gleamShift + flintVar),
+                    clamp01(base.g + gleamShift + flintVar * 0.9f),
+                    clamp01(base.b + gleamShift * 1.2f + flintVar), base.a);
+            }
+
             default:
                 return base;
         }
@@ -455,6 +494,9 @@ public enum BlockType {
             case LADDER:      return new Color(0.58f, 0.40f, 0.18f, 1f); // Weathered wood rung
             case HALF_BLOCK:  return new Color(0.62f, 0.62f, 0.58f, 1f); // Smooth concrete slab
             case STATUE:      return new Color(0.68f, 0.66f, 0.62f, 1f); // Pale stone grey
+            case COAL_ORE:    return new Color(0.30f, 0.30f, 0.30f, 1f); // Dark grey stone with black flecks
+            case IRON_ORE:    return new Color(0.55f, 0.40f, 0.28f, 1f); // Rusty brown stone
+            case FLINT:       return new Color(0.20f, 0.22f, 0.25f, 1f); // Very dark blue-grey
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }

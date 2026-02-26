@@ -102,6 +102,12 @@ public class NPCManager {
         "Stop for the little ones!", "All clear, off you go!", "Keep left on the pavement!",
         "Bless them, they're in such a rush."
     };
+    private static final String[] RANDOM_TUNNEL_DWELLER_SPEECH = {
+        "You're not supposed to be down here.", "This is my patch.", "What do you want?",
+        "I've been down here... a while.", "It's quieter underground.", "Stay away from my stuff.",
+        "The surface is overrated.", "Council don't know I'm here.", "Got any food?",
+        "Light hurts me eyes.", "Don't touch nothing.", "I know every inch of these tunnels."
+    };
     private static final String[] HIT_SPEECH_PUBLIC = {
         "Oi! What was that for?!", "Help! I'm being assaulted!", "Right, I'm ringing 999!",
         "Are you mental?!", "That's ABH, that is!"
@@ -1844,6 +1850,7 @@ public class NPCManager {
             case SCHOOL_KID: return RANDOM_SCHOOL_KID_SPEECH[random.nextInt(RANDOM_SCHOOL_KID_SPEECH.length)];
             case STREET_PREACHER: return RANDOM_STREET_PREACHER_SPEECH[random.nextInt(RANDOM_STREET_PREACHER_SPEECH.length)];
             case LOLLIPOP_LADY: return RANDOM_LOLLIPOP_LADY_SPEECH[random.nextInt(RANDOM_LOLLIPOP_LADY_SPEECH.length)];
+            case TUNNEL_DWELLER: return RANDOM_TUNNEL_DWELLER_SPEECH[random.nextInt(RANDOM_TUNNEL_DWELLER_SPEECH.length)];
             default: return null;
         }
     }

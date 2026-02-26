@@ -91,7 +91,10 @@ public enum Material {
     BALACLAVA("Balaclava"),
     BOLT_CUTTERS("Bolt Cutters"),
     DODGY_PASTY("Dodgy Pasty"),
-    FOOD("Food");  // generic currency used by the Fence to pay for stolen goods
+    FOOD("Food"),  // generic currency used by the Fence to pay for stolen goods
+    COAL("Coal"),        // Mined from underground coal ore
+    IRON("Iron"),        // Mined from underground iron ore seams
+    FLINT("Flint");      // Knapped flint from deep stone, useful for improvised tools
 
     private final String displayName;
 
@@ -222,6 +225,12 @@ public enum Material {
                                             0.55f, 0.50f, 0.15f); // Orange grip
             case DODGY_PASTY:     return c(0.78f, 0.52f, 0.22f);  // Golden pastry
             case FOOD:            return c(0.88f, 0.62f, 0.18f);  // Generic food orange
+
+            // Underground minerals
+            case COAL:            return c(0.15f, 0.15f, 0.15f);  // Black coal chunk
+            case IRON:            return cs(0.55f, 0.40f, 0.28f,  // Rusty brown ore
+                                            0.35f, 0.35f, 0.38f); // Dark grey metal
+            case FLINT:           return c(0.20f, 0.22f, 0.25f);  // Very dark blue-grey flint
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
