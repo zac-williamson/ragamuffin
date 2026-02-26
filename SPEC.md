@@ -4445,3 +4445,186 @@ per in-game day (reset at 06:00).
     Player moves upward — verify the player can climb the ladder and reaches the
     rooftop (y > 7). Verify the ROPE_LADDER block disappears after 60 in-game
     seconds.
+
+---
+
+## Phase P: Slumlord — Property Ownership, Passive Income & Turf Investment
+
+**Goal**: Give the player a meaningful long-term money sink and power fantasy
+by letting them buy, renovate, and rent out buildings in the neighbourhood.
+Owning property intersects with every existing system: factions covet and
+contest your holdings, the council slaps you with rates, tenants generate
+passive coin income that funds bigger heists, and the Ragamuffin Arms barman
+gossips about your rising empire. This is the "getting on the property ladder"
+joke made playable.
+
+---
+
+### Property Purchase
+
+- Every non-player-owned building in the world (shops, terraced houses,
+  the off-licence, the bookies, charity shop, even the JobCentre) has a
+  `PropertyOwner` tag: `STATE`, `MARCHETTI_CREW`, `STREET_LADS`,
+  `THE_COUNCIL`, or `NONE` (derelict).
+- A new `ESTATE_AGENT` NPC (pinstripe suit, clipboard) stands outside the
+  JobCentre on weekdays (in-game time Mon–Fri 09:00–17:00). Pressing **E**
+  on him opens the **Property Market UI** — a scrollable list of available
+  buildings with purchase prices in COIN.
+- Purchase prices:
+  - Derelict / NONE-owned building: 50 coins (low risk, low income)
+  - State-owned (JobCentre, council housing): 80 coins
+  - Faction-owned: 120 coins (the faction's `Respect` toward the player drops
+    by 20 immediately — "You bought our gaff?")
+- After purchase the building's `PropertyOwner` changes to `PLAYER`.
+  A new `PLAYER PROPERTY` sign prop appears above the door (rendered by
+  `SignageRenderer`).
+- The player can own up to 5 buildings simultaneously. Trying to buy a 6th
+  displays tooltip: "You're not Thatcher. Five properties is enough."
+
+### Renovation & Rent Income
+
+- Each owned building has a **Condition** score (0–100, starting at 40 for
+  derelict, 70 for previously occupied). Condition decays by 1 point per
+  in-game day unless the player repairs it.
+- Repairing: stand inside the owned building and use **E** while holding
+  BRICK or WOOD in hand. Each BRICK spent restores 5 Condition; each WOOD
+  restores 3. Repairs update the `StructureTracker`.
+- Passive income per in-game day (collected automatically when player sleeps
+  or visits the building):
+  - Condition 80–100: 6 coins/day ("des res")
+  - Condition 50–79: 3 coins/day ("needs a lick of paint")
+  - Condition 20–49: 1 coin/day ("barely habitable")
+  - Condition 0–19: 0 coins/day; tenants leave and building becomes derelict
+    again, reverting to NONE-owned (you lose it).
+- A **TENANT** NPC (model variant: PENSIONER or WORKER) spawns inside each
+  occupied building. They wander inside, occasionally peer out the window
+  (idle animation), and react to noise/crime nearby.
+- If the player breaks blocks inside their own building the tenant shouts
+  "Oi, I pay rent here!" and Condition drops by 10 (you damaged the
+  property). If the player breaks blocks in someone *else's* faction-owned
+  building the owning faction's Respect drops by 5.
+
+### Rival Takeovers
+
+- Factions attempt to reclaim or buy out the player's properties.
+  Every 5 in-game days, each faction rolls an attempt on any player
+  property within their turf zone:
+  - If the player's Respect with that faction < 30: the faction sends
+    a THUG NPC to the building; after 60 real seconds of the THUG
+    standing adjacent to the building, the building transfers back to
+    that faction's ownership (player loses income, gets no refund).
+    Tooltip: "They've moved in on your property."
+  - If the player's Respect ≥ 30: no attempt is made.
+- The player can prevent a takeover by punching the THUG off the property
+  (knocking them back > 5 blocks) or by bribing them with 10 coins.
+- Turf system hook: player-owned buildings count as neutral turf in
+  `TurfMap` — they do not count toward any faction's turf percentage.
+  Owning 3+ buildings near the park awards the `ARMCHAIR LANDLORD`
+  achievement.
+
+### Council Rates
+
+- The council charges rates on owned properties: 2 coins per in-game week
+  per building. If the player cannot pay (insufficient coins), the council
+  places a **Planning Notice** on the building (Phase 7 mechanic) and sends
+  a council builder to assess it. If unpaid for 2 consecutive weeks, the
+  building is compulsorily purchased back by THE_COUNCIL at 0 refund.
+- Tooltip on first rates demand: "Even when you own it, the council wants
+  their cut."
+
+### Pub Economics Hook
+
+- When the player owns the off-licence, the Barman at the Ragamuffin Arms
+  comments: "Heard you bought the offy. Bet you're not passing any savings
+  on." (one-time speech line seeded as a `LOOT_TIP` rumour).
+- Owning the bookies disables the `FRUIT_MACHINE` random-loss mechanic
+  there (the house is now *you*) — all fruit machine plays in your bookies
+  pay out at cost-price (no loss, no jackpot).
+
+### New Materials & Items
+
+| Material | Source | Use |
+|---|---|---|
+| `DEED` | Received from ESTATE_AGENT on purchase | Represents property ownership; shown in inventory |
+| `PAINT_TIN` | Crafted from BRICK + WOOD (2+1) | Restores 10 Condition when used on own building |
+| `EVICTION_NOTICE` | Crafted at any workbench | Removes a faction THUG from your property without combat |
+
+### New Achievements
+
+| Achievement | Trigger | Flavour |
+|---|---|---|
+| `FIRST_PROPERTY` | Buy your first building | "Getting on the ladder at last." |
+| `ARMCHAIR_LANDLORD` | Own 3 or more buildings simultaneously | "You're basically a developer now." |
+| `SLUM_CLEARANCE` | Let all 5 owned buildings decay to 0 Condition | "Absolute slumlord." |
+| `THATCHER_WOULDNT` | Own 5 buildings simultaneously | "You're not Thatcher. But you're trying." |
+| `RATES_DODGER` | Go 3 in-game weeks without paying council rates | "Living off the grid." |
+
+### New `PropertySystem` class
+
+Implement in `ragamuffin.core.PropertySystem`. It holds:
+- `Map<LandmarkType, PropertyOwner> ownership` — current owner of each building.
+- `Map<LandmarkType, Integer> condition` — 0–100 Condition per building.
+- `List<LandmarkType> playerProperties` — ordered list of player holdings.
+- `float dayIncomeAccumulator` — accumulates fractional-day income.
+- `update(float delta, Player player, Inventory inv, FactionSystem factions,
+  AchievementSystem achievements)` — advances income, decay, faction takeover timers.
+- `attemptPurchase(LandmarkType building, Inventory inv, FactionSystem factions)` —
+  validates and executes a purchase.
+- `repair(LandmarkType building, Inventory inv)` — consumes BRICK/WOOD and raises Condition.
+- `collectRent(LandmarkType building, Inventory inv)` — transfers accumulated coins.
+
+**Unit tests**: Income calculation per Condition band, Condition decay rate,
+faction takeover trigger conditions, purchase price per ownership type,
+council rates deduction schedule, DEED item added to inventory on purchase,
+Condition restored correctly per material.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Purchase a derelict building and collect rent**: Give player 60 coins.
+   Find a NONE-owned landmark in the world. Interact (**E**) with the ESTATE_AGENT.
+   Purchase the derelict building (50 coins). Verify player now has 10 coins.
+   Verify the building's `PropertyOwner` is `PLAYER`. Verify a `DEED` item is
+   in the player's inventory. Advance simulation by 1 in-game day. Verify the
+   player's coin count has increased by at least 1 (income collected).
+
+2. **Condition decay reduces income tier**: Set a player-owned building to
+   Condition 55 (income tier "needs a lick of paint" = 3 coins/day). Advance
+   simulation by 30 in-game days WITHOUT repairing. Verify the building's Condition
+   has dropped below 50. Verify the daily income from that building is now 1 coin
+   (lower tier). Verify no WOOD or BRICK was consumed (decay is passive).
+
+3. **Repairing with BRICK raises Condition**: Own a building at Condition 40.
+   Give the player 5 BRICK. Stand inside the building. Press **E** while BRICK
+   is in hand. Verify 1 BRICK is consumed from inventory. Verify the building's
+   Condition has increased by 5 (to 45). Repeat until all 5 BRICK are used.
+   Verify Condition is 65 and inventory contains 0 BRICK.
+
+4. **Faction takeover attempt**: Own a building inside MARCHETTI_CREW turf.
+   Set player's Marchetti Crew Respect to 15 (below 30). Advance simulation
+   by 5 in-game days. Verify a THUG NPC has spawned adjacent to the building.
+   Let the THUG stand for 60 real seconds without interference. Verify the building's
+   `PropertyOwner` has reverted to `MARCHETTI_CREW`. Verify the player no longer
+   receives income from that building.
+
+5. **Punching a THUG off the property prevents takeover**: Own a building. Set
+   faction Respect below 30. Let a THUG spawn adjacent. Punch the THUG so that
+   they are knocked > 5 blocks from the building. Verify that after another 60 real
+   seconds, the building's `PropertyOwner` is still `PLAYER` (takeover was foiled).
+   Verify the player received the income for that day.
+
+6. **Council rates deducted weekly**: Own 2 buildings. Set player coins to 10.
+   Advance simulation by 7 in-game days. Verify player coins have decreased by 4
+   (2 coins × 2 buildings). Advance another 7 days without enough coins to pay.
+   Verify a `COUNCIL_NOTICE` rumour has been seeded. Verify at least 1 building
+   now has a Planning Notice placed on it.
+
+7. **ESTATE_AGENT available only on weekdays**: Set in-game time to Saturday 10:00.
+   Verify the ESTATE_AGENT NPC is NOT present outside the JobCentre (or is inactive).
+   Set time to Monday 10:00. Verify the ESTATE_AGENT NPC IS present and pressing
+   **E** opens the Property Market UI.
+
+8. **Player cannot own more than 5 buildings**: Give player enough coins to buy
+   6 buildings. Purchase 5 buildings sequentially. Attempt to purchase a 6th.
+   Verify the purchase is rejected. Verify the tooltip "You're not Thatcher. Five
+   properties is enough." fires. Verify the player's coin balance is unchanged after
+   the failed 6th purchase.
