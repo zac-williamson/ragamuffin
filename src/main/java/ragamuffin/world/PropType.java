@@ -71,4 +71,28 @@ public enum PropType {
      * as turf shifts between Marchetti Crew, Street Lads, and The Council.
      */
     GRAFFITI_TAG,
+
+    // ── Heist props (Phase O / Issue #704) ─────────────────────────────────────
+
+    /**
+     * A red wall-mounted alarm box on heistable buildings. While active, any block
+     * break within 8 blocks spikes noise to 1.0 and flags the player as wanted.
+     * Silenced by interacting (E) with BOLT_CUTTERS (1 second). Reactivates after
+     * 3 in-game minutes.
+     */
+    ALARM_BOX,
+
+    /**
+     * A heavy metal safe inside the jeweller and off-licence back rooms. Cannot be
+     * punched open. Requires CROWBAR + 8 seconds of hold-E interaction while
+     * undetected. Yields diamonds or coin.
+     */
+    SAFE,
+
+    /**
+     * A wall-mounted CCTV camera. If the player walks within its 6-block frontal
+     * cone (45°) without a BALACLAVA at night, they gain +1 criminal record per
+     * second and a GANG_ACTIVITY rumour is seeded.
+     */
+    CCTV,
 }

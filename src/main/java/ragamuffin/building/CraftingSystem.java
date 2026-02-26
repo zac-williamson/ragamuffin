@@ -137,6 +137,26 @@ public class CraftingSystem {
             Map.of(Material.WOOD, 2, Material.PLANKS, 4),
             Map.of(Material.LADDER, 2)
         ));
+
+        // ── Heist tools (Phase O / Issue #704) ──────────────────────────────────
+
+        // CROWBAR: BRICK×2 + WOOD×3 → CROWBAR×1 (cracks safes; reduces brick hits from 8 to 5)
+        recipes.add(new Recipe(
+            Map.of(Material.BRICK, 2, Material.WOOD, 3),
+            Map.of(Material.CROWBAR, 1)
+        ));
+
+        // GLASS_CUTTER: DIAMOND×1 + WOOD×1 → GLASS_CUTTER×1 (removes glass silently in 1 hit)
+        recipes.add(new Recipe(
+            Map.of(Material.DIAMOND, 1, Material.WOOD, 1),
+            Map.of(Material.GLASS_CUTTER, 1)
+        ));
+
+        // ROPE_LADDER: WOOD×4 + LEAVES×2 → ROPE_LADDER×1 (deployable ladder for 60 in-game seconds)
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 4, Material.LEAVES, 2),
+            Map.of(Material.ROPE_LADDER, 1)
+        ));
     }
 
     /**

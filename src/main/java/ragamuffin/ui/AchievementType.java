@@ -170,6 +170,28 @@ public enum AchievementType {
         "Odd Job Alan",
         "Completed ten quests. Everyone on the estate knows you can get things done.",
         10
+    ),
+
+    // --- Heist (Phase O / Issue #704) ---
+    MASTER_CRIMINAL(
+        "You Absolute Wrong'un",
+        "You absolute wrong'un. Completed a heist. Welcome to the big leagues.",
+        1
+    ),
+    SMOOTH_OPERATOR(
+        "In and Out. No Fuss.",
+        "Completed a heist without triggering a single alarm. Absolute professional.",
+        1
+    ),
+    FENCE_FRESH(
+        "Still Warm, Son",
+        "Fenced hot loot within 5 in-game minutes. The fence was impressed. Briefly.",
+        1
+    ),
+    SOLO_JOB(
+        "Trust No One",
+        "Completed a heist without an accomplice. Lone wolf. Or just paranoid.",
+        1
     );
 
     private final String name;
