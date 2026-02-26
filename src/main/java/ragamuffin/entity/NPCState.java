@@ -29,5 +29,6 @@ public enum NPCState {
     ATTACKING,      // NPC performing an attack animation
     WAVING,         // NPC waving at the player
     DANCING,        // NPC doing a dance animation
-    POINTING        // NPC pointing at something
+    POINTING,       // NPC pointing at something
+    SHELTERING      // Issue #698: NPC sheltering under awning/indoors due to rain/thunderstorm
 }

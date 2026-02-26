@@ -61,7 +61,8 @@ public enum BlockType {
     STATUE(51, true),      // Stone statue block: used for park statues and decorative monuments
     COAL_ORE(52, true),    // Coal ore embedded in underground stone
     IRON_ORE(53, true),    // Iron ore seam in underground stone
-    FLINT(54, true);       // Flint nodule found in deep stone layers
+    FLINT(54, true),       // Flint nodule found in deep stone layers
+    CAMPFIRE(55, true);    // Campfire block: crafted from WOOD, warms nearby player, extinguished by rain, attracts police
 
     private final int id;
     private final boolean solid;

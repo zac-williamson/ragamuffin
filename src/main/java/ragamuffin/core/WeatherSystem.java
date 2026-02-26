@@ -5,6 +5,7 @@ import java.util.Random;
 /**
  * Manages weather changes and effects.
  * Weather changes every 5-10 game minutes (2-6 transitions per in-game day).
+ * Transition probabilities reflect British weather patterns.
  */
 public class WeatherSystem {
     private Weather currentWeather;
@@ -14,6 +15,33 @@ public class WeatherSystem {
 
     private static final float MIN_WEATHER_DURATION = 5.0f * 60.0f;  // 5 game minutes
     private static final float MAX_WEATHER_DURATION = 10.0f * 60.0f; // 10 game minutes
+
+    /**
+     * British weather Markov transition matrix.
+     * Each row represents the current weather state (by ordinal).
+     * Each column represents the probability of transitioning to that new state.
+     * Row order: CLEAR, OVERCAST, DRIZZLE, RAIN, THUNDERSTORM, FOG, COLD_SNAP, FROST, HEATWAVE
+     */
+    private static final float[][] TRANSITION_MATRIX = {
+        // From CLEAR:       CLEAR   OCAST   DRIZ    RAIN    TSTORM  FOG     COLD    FROST   HEAT
+                            {0.00f,  0.35f,  0.20f,  0.15f,  0.05f,  0.10f,  0.05f,  0.05f,  0.05f},
+        // From OVERCAST:
+                            {0.15f,  0.00f,  0.25f,  0.30f,  0.10f,  0.10f,  0.05f,  0.05f,  0.00f},
+        // From DRIZZLE:
+                            {0.10f,  0.20f,  0.00f,  0.35f,  0.15f,  0.10f,  0.05f,  0.05f,  0.00f},
+        // From RAIN:
+                            {0.10f,  0.25f,  0.20f,  0.00f,  0.20f,  0.10f,  0.10f,  0.05f,  0.00f},
+        // From THUNDERSTORM:
+                            {0.05f,  0.20f,  0.30f,  0.30f,  0.00f,  0.05f,  0.05f,  0.05f,  0.00f},
+        // From FOG:
+                            {0.20f,  0.35f,  0.20f,  0.15f,  0.05f,  0.00f,  0.05f,  0.00f,  0.00f},
+        // From COLD_SNAP:
+                            {0.10f,  0.15f,  0.10f,  0.20f,  0.10f,  0.10f,  0.00f,  0.25f,  0.00f},
+        // From FROST:
+                            {0.10f,  0.20f,  0.10f,  0.15f,  0.05f,  0.15f,  0.25f,  0.00f,  0.00f},
+        // From HEATWAVE:
+                            {0.20f,  0.30f,  0.20f,  0.15f,  0.05f,  0.05f,  0.05f,  0.00f,  0.00f},
+    };
 
     public WeatherSystem() {
         this.random = new Random();
@@ -37,18 +65,30 @@ public class WeatherSystem {
     }
 
     /**
-     * Change to a random new weather state.
+     * Change to a new weather state using British weather transition probabilities.
      */
     private void changeWeather() {
         Weather[] weathers = Weather.values();
-        Weather newWeather;
+        int currentOrdinal = currentWeather.ordinal();
+        float[] transitions = TRANSITION_MATRIX[currentOrdinal];
 
-        // Pick a different weather than the current one
-        do {
-            newWeather = weathers[random.nextInt(weathers.length)];
-        } while (newWeather == currentWeather && weathers.length > 1);
-
-        currentWeather = newWeather;
+        // Weighted random selection
+        float roll = random.nextFloat();
+        float cumulative = 0.0f;
+        for (int i = 0; i < transitions.length; i++) {
+            cumulative += transitions[i];
+            if (roll < cumulative) {
+                currentWeather = weathers[i];
+                return;
+            }
+        }
+        // Fallback in case of floating point rounding: pick last non-zero option
+        for (int i = transitions.length - 1; i >= 0; i--) {
+            if (transitions[i] > 0.0f) {
+                currentWeather = weathers[i];
+                return;
+            }
+        }
     }
 
     /**
@@ -70,5 +110,12 @@ public class WeatherSystem {
      */
     public void setWeather(Weather weather) {
         this.currentWeather = weather;
+    }
+
+    /**
+     * Get the time since the last weather change (seconds).
+     */
+    public float getTimeSinceLastChange() {
+        return timeSinceLastChange;
     }
 }

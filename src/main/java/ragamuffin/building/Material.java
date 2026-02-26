@@ -95,7 +95,11 @@ public enum Material {
     COAL("Coal"),        // Mined from underground coal ore
     IRON("Iron"),        // Mined from underground iron ore seams
     FLINT("Flint"),      // Knapped flint from deep stone, useful for improvised tools
-    COIN("Coin");        // Currency dropped by hostile NPCs; used to buy drinks at the pub
+    COIN("Coin"),        // Currency dropped by hostile NPCs; used to buy drinks at the pub
+    COAT("Coat"),              // Clothing: reduces warmth drain outdoors
+    UMBRELLA("Umbrella"),      // Clothing: blocks wetness accumulation in rain
+    WOOLLY_HAT("Woolly Hat"),  // Clothing: reduces warmth drain from cold/frost
+    FLASK_OF_TEA("Flask of Tea"); // Consumable: restores warmth instantly
 
     private final String displayName;
 
@@ -235,6 +239,14 @@ public enum Material {
             case COIN:            return cs(0.85f, 0.72f, 0.20f,  // Gold coin face
                                             0.65f, 0.52f, 0.10f); // Darker gold edge
 
+            // Clothing items (Issue #698)
+            case COAT:            return c(0.22f, 0.32f, 0.48f);  // Dark blue coat
+            case UMBRELLA:        return cs(0.18f, 0.28f, 0.65f,  // Blue canopy
+                                            0.35f, 0.28f, 0.18f); // Brown handle
+            case WOOLLY_HAT:      return c(0.72f, 0.18f, 0.18f);  // Red woolly hat
+            case FLASK_OF_TEA:    return cs(0.62f, 0.52f, 0.38f,  // Metal flask body
+                                            0.88f, 0.72f, 0.32f); // Tea-coloured cap
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -305,6 +317,11 @@ public enum Material {
             case BOLT_CUTTERS:
             case DODGY_PASTY:
             case FOOD:
+            // Clothing items (Issue #698)
+            case COAT:
+            case UMBRELLA:
+            case WOOLLY_HAT:
+            case FLASK_OF_TEA:
                 return false;
             default:
                 return true;
@@ -430,6 +447,15 @@ public enum Material {
                 return IconShape.FOOD;
             case FOOD:
                 return IconShape.FOOD;
+            // Clothing items (Issue #698)
+            case COAT:
+                return IconShape.FLAT_PAPER; // coat silhouette
+            case UMBRELLA:
+                return IconShape.TOOL;       // umbrella handle shape
+            case WOOLLY_HAT:
+                return IconShape.CARD;       // hat shape
+            case FLASK_OF_TEA:
+                return IconShape.CYLINDER;   // flask cylinder
 
             default:
                 return IconShape.BOX;
