@@ -121,6 +121,12 @@ public class BlockDropTable {
                 return Material.GARDEN_WALL;
             case LEAVES:
                 return (Math.random() < 0.3) ? Material.WOOD : null;
+            case COAL_ORE:
+                return Material.COAL;
+            case IRON_ORE:
+                return Material.IRON;
+            case FLINT:
+                return Material.FLINT;
             case AIR:
             case WATER:
             default:

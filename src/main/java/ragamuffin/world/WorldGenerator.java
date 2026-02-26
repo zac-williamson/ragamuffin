@@ -731,6 +731,9 @@ public class WorldGenerator {
         generateSewerTunnels(world, sx, sz, nx, nz);
         generateUndergroundBunker(world);
 
+        // ===== UNDERGROUND MINERALS — Issue #691 =====
+        generateMineralVeins(world);
+
         // ===== ANIMATED FLAG POLES — Issue #658 =====
         // Place flags on roofs of key civic buildings.  Each flag pole is a
         // 3-block IRON_FENCE pillar; the top block is where the flag renders.
@@ -2729,6 +2732,75 @@ public class WorldGenerator {
         // Ladders down the shaft
         for (int y = BUNKER_TOP_Y + 1; y <= -1; y++) {
             world.setBlock(x, y, z, BlockType.LADDER);
+        }
+    }
+
+    // ==================== UNDERGROUND MINERALS — Issue #691 ====================
+
+    /**
+     * Generate mineral veins in the underground stone layers.
+     *
+     * Three mineral types are distributed through the underground:
+     *   - COAL_ORE: common, found from y=-4 down to y=-20 (relatively shallow)
+     *   - IRON_ORE: uncommon, found from y=-10 down to y=-28 (deeper)
+     *   - FLINT:    rare, found from y=-15 down to BEDROCK_DEPTH+2 (deepest)
+     *
+     * Each vein is a small cluster of ore blocks scattered in the stone layer.
+     * Veins only replace STONE blocks (not bedrock, sewer tunnels, or bunker blocks).
+     */
+    private void generateMineralVeins(World world) {
+        Random mineralRng = new Random(seed ^ 0x4D494E455F56454EL); // "MINE_VEN"
+
+        int halfWorld = WORLD_SIZE / 2;
+        // Limit vein placement to built-up area for performance (-200 to +200)
+        int extent = 200;
+
+        // Coal veins — common, shallow underground (below sewer but above bedrock)
+        int coalVeinCount = 800;
+        for (int i = 0; i < coalVeinCount; i++) {
+            int vx = mineralRng.nextInt(extent * 2) - extent;
+            int vz = mineralRng.nextInt(extent * 2) - extent;
+            int vy = -(4 + mineralRng.nextInt(17)); // y=-4 to y=-20
+            placeOreVein(world, vx, vy, vz, BlockType.COAL_ORE, 3 + mineralRng.nextInt(3), mineralRng);
+        }
+
+        // Iron ore veins — uncommon, deeper
+        int ironVeinCount = 400;
+        for (int i = 0; i < ironVeinCount; i++) {
+            int vx = mineralRng.nextInt(extent * 2) - extent;
+            int vz = mineralRng.nextInt(extent * 2) - extent;
+            int vy = -(10 + mineralRng.nextInt(19)); // y=-10 to y=-28
+            placeOreVein(world, vx, vy, vz, BlockType.IRON_ORE, 2 + mineralRng.nextInt(3), mineralRng);
+        }
+
+        // Flint nodules — rare, deepest layer
+        int flintVeinCount = 200;
+        for (int i = 0; i < flintVeinCount; i++) {
+            int vx = mineralRng.nextInt(extent * 2) - extent;
+            int vz = mineralRng.nextInt(extent * 2) - extent;
+            int vy = -(15 + mineralRng.nextInt(BEDROCK_DEPTH + 15 - 2)); // y=-15 down to BEDROCK_DEPTH+2
+            if (vy <= BEDROCK_DEPTH + 1) vy = BEDROCK_DEPTH + 2; // clamp above bedrock
+            placeOreVein(world, vx, vy, vz, BlockType.FLINT, 2 + mineralRng.nextInt(2), mineralRng);
+        }
+    }
+
+    /**
+     * Place a small cluster of ore blocks centred at (cx, cy, cz).
+     * Only replaces existing STONE blocks to avoid disturbing tunnels, the bunker,
+     * or other underground structures. Vein size controls cluster radius.
+     */
+    private void placeOreVein(World world, int cx, int cy, int cz, BlockType oreType, int size, Random rng) {
+        for (int i = 0; i < size * 3; i++) {
+            int dx = rng.nextInt(size * 2 + 1) - size;
+            int dy = rng.nextInt(3) - 1; // slight vertical spread
+            int dz = rng.nextInt(size * 2 + 1) - size;
+            int bx = cx + dx;
+            int by = cy + dy;
+            int bz = cz + dz;
+            // Only replace stone — preserve bedrock, air (tunnel/bunker interiors), etc.
+            if (world.getBlock(bx, by, bz) == BlockType.STONE) {
+                world.setBlock(bx, by, bz, oreType);
+            }
         }
     }
 
