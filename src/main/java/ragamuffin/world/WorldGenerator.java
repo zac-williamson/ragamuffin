@@ -834,11 +834,12 @@ public class WorldGenerator {
             treeCount++;
         }
 
-        // Sad pond
+        // Sad pond — dig a shallow depression and fill with water
         int pondX = parkStart + PARK_SIZE / 3;
         int pondZ = parkStart + PARK_SIZE / 3;
         for (int x = pondX; x < pondX + 4; x++) {
             for (int z = pondZ; z < pondZ + 4; z++) {
+                world.setBlock(x, -1, z, BlockType.WATER);
                 world.setBlock(x, 0, z, BlockType.WATER);
             }
         }
