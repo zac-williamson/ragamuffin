@@ -624,6 +624,28 @@ public class HeistSystem {
                                RumourNetwork rumourNetwork,
                                List<NPC> allNpcs,
                                AchievementCallback achievementSystem) {
+        completeHeist(player, inventory, factionSystem, rumourNetwork, allNpcs, achievementSystem, null);
+    }
+
+    /**
+     * Called when the player escapes (exits the building exclusion zone) before
+     * the timer expires. Completes the heist successfully.
+     *
+     * @param player          the player
+     * @param inventory       the player's inventory
+     * @param factionSystem   the faction system
+     * @param rumourNetwork   the rumour network
+     * @param allNpcs         all living NPCs
+     * @param achievementSystem the achievement callback (may be null)
+     * @param notorietySystem the notoriety system for Phase 8e notoriety gain (may be null)
+     */
+    public void completeHeist(Player player,
+                               Inventory inventory,
+                               FactionSystem factionSystem,
+                               RumourNetwork rumourNetwork,
+                               List<NPC> allNpcs,
+                               AchievementCallback achievementSystem,
+                               NotorietySystem notorietySystem) {
         if (phase != HeistPhase.EXECUTION) return;
 
         heistSucceeded = true;
@@ -659,6 +681,19 @@ public class HeistSystem {
 
         // Street rep
         player.getStreetReputation().addPoints(SUCCESS_STREET_REP);
+
+        // Phase 8e: notoriety gain
+        if (notorietySystem != null) {
+            boolean isJeweller = (target == LandmarkType.JEWELLER);
+            // Adapt HeistSystem.AchievementCallback to NotorietySystem.AchievementCallback
+            NotorietySystem.AchievementCallback notorietyCallback =
+                    (achievementSystem != null) ? achievementSystem::award : null;
+            notorietySystem.onHeistComplete(isJeweller, notorietyCallback);
+            // Award THE_CREW achievement if accomplice was present
+            if (accomplice != null) {
+                notorietySystem.onHeistSuccessWithAccomplice(notorietyCallback);
+            }
+        }
 
         // Seed rumour
         String targetName = target.getDisplayName();

@@ -24,7 +24,21 @@ public enum NPCType {
     TUNNEL_DWELLER(20f, 4f, 2.5f, false), // Underground inhabitant living in sewers/bunker — wary but not hostile
     BARMAN(20f, 0f, 0f, false),           // Stands behind the bar at the pub; rumour sink; sells drinks
     BOUNCER(50f, 15f, 2.0f, false),       // Stands at pub entrance; blocks entry for criminals
-    FACTION_LIEUTENANT(40f, 12f, 1.5f, false); // Phase 8d: named faction lieutenant who offers missions
+    FACTION_LIEUTENANT(40f, 12f, 1.5f, false), // Phase 8d: named faction lieutenant who offers missions
+
+    // ── Phase 8e: Notoriety system ────────────────────────────────────────────
+
+    /** Community Support Officer — slower, does NOT arrest; issues verbal warnings only. */
+    PCSO(25f, 0f, 0f, false),
+
+    /** Armed Response Unit — faster and harder hitting than regular POLICE; pursues indoors. */
+    ARMED_RESPONSE(60f, 15f, 0.8f, true),
+
+    /** A Street Lad NPC — recruitable as accomplice at Tier 4+. */
+    STREET_LAD(20f, 4f, 2.0f, false),
+
+    /** Permanent NPC accomplice recruited by the player at Tier 4+. */
+    ACCOMPLICE(30f, 5f, 1.5f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

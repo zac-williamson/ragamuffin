@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import ragamuffin.core.Faction;
 import ragamuffin.core.FactionSystem;
+import ragamuffin.core.NotorietySystem;
 import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
 import ragamuffin.entity.DamageReason;
@@ -37,6 +38,7 @@ public class GameHUD {
 
     private final Player player;
     private FactionSystem factionSystem; // may be null if not yet initialised
+    private NotorietySystem notorietySystem; // Phase 8e — may be null if not yet initialised
     private boolean visible;
     private Weather currentWeather;
     private float blockBreakProgress; // 0.0 to 1.0
@@ -71,6 +73,19 @@ public class GameHUD {
     /** Returns the attached FactionSystem, or null. */
     public FactionSystem getFactionSystem() {
         return factionSystem;
+    }
+
+    /**
+     * Attach the NotorietySystem so the HUD can render the notoriety star cluster (Phase 8e).
+     * Call once after the notoriety system is initialised.
+     */
+    public void setNotorietySystem(NotorietySystem notorietySystem) {
+        this.notorietySystem = notorietySystem;
+    }
+
+    /** Returns the attached NotorietySystem, or null. */
+    public NotorietySystem getNotorietySystem() {
+        return notorietySystem;
     }
 
     /**
@@ -141,6 +156,11 @@ public class GameHUD {
 
         // Render street reputation
         renderReputation(spriteBatch, font, screenWidth, screenHeight);
+
+        // Render notoriety star cluster (Phase 8e)
+        if (notorietySystem != null) {
+            renderNotoriety(spriteBatch, font, screenWidth, screenHeight);
+        }
 
         // Render night warning if applicable
         if (isNight) {
@@ -450,6 +470,59 @@ public class GameHUD {
         font.draw(spriteBatch, repLabel, screenWidth - 200, BAR_MARGIN + BAR_HEIGHT);
         font.getData().setScale(1.0f);
 
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
+    }
+
+    /**
+     * Render the notoriety star cluster in the top-right corner (Phase 8e / Issue #709).
+     *
+     * <p>Shows 0–5 filled stars corresponding to the current Street Legend Tier.
+     * Stars flash briefly when a tier-up occurs. At Tier 5 the stars pulse red permanently.
+     * Below the stars the player's Street Legend Title is displayed in small text.
+     */
+    private void renderNotoriety(SpriteBatch spriteBatch, BitmapFont font,
+                                  int screenWidth, int screenHeight) {
+        if (notorietySystem == null) return;
+        int tier = notorietySystem.getTier();
+
+        // Always render the notoriety cluster (even at Tier 0 — shows empty stars)
+        boolean isTierUp = notorietySystem.isTierUpPending();
+        boolean isTier5  = tier == 5;
+
+        // Choose star colour
+        if (isTier5) {
+            // Tier 5 pulses red — simple sine-based pulse
+            float pulse = (float) Math.abs(Math.sin(notorietySystem.getTierUpFlashTimer() * Math.PI));
+            font.setColor(1f, pulse * 0.3f, pulse * 0.3f, 1f);
+        } else if (isTierUp) {
+            font.setColor(1f, 1f, 0f, 1f); // Yellow flash on tier-up
+        } else if (tier >= 3) {
+            font.setColor(1f, 0.3f, 0.1f, 1f); // Orange-red for high tiers
+        } else if (tier >= 1) {
+            font.setColor(1f, 0.8f, 0.2f, 1f); // Gold for mid tiers
+        } else {
+            font.setColor(0.6f, 0.6f, 0.6f, 1f); // Grey for tier 0 (no stars)
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            sb.append(i < tier ? "\u2605" : "\u2606"); // ★ / ☆
+        }
+
+        // Position: below weather display (screenHeight - 50)
+        float starsY = screenHeight - 50f;
+        float starsX = screenWidth - 200f;
+
+        spriteBatch.begin();
+        font.draw(spriteBatch, sb.toString(), starsX, starsY);
+
+        // Street Legend title in smaller text below the stars
+        String title = "WANTED: " + notorietySystem.getTierTitle();
+        font.getData().setScale(0.7f);
+        font.setColor(0.9f, 0.9f, 0.9f, 1f);
+        font.draw(spriteBatch, title, starsX, starsY - 18f);
+        font.getData().setScale(1.0f);
         font.setColor(Color.WHITE);
         spriteBatch.end();
     }
