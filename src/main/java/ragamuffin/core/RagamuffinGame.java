@@ -135,6 +135,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #669: Non-block-based 3D prop renderer
     private ragamuffin.render.PropRenderer propRenderer;
 
+    // Issue #675: Small 3D object renderer — renders placed small items in the world
+    private ragamuffin.render.SmallItemRenderer smallItemRenderer;
+
     // Issue #450: Achievement system
     private ragamuffin.ui.AchievementSystem achievementSystem;
     private ragamuffin.ui.AchievementsUI achievementsUI;
@@ -365,6 +368,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #669: Initialize non-block 3D prop renderer
         propRenderer = new ragamuffin.render.PropRenderer();
         propRenderer.setProps(world.getPropPositions());
+
+        // Issue #675: Initialize small item renderer
+        smallItemRenderer = new ragamuffin.render.SmallItemRenderer();
+        smallItemRenderer.setItems(world.getSmallItems());
 
         // Wire up tooltip sound effect
         tooltipSystem.setOnTooltipShow(() -> soundSystem.play(ragamuffin.audio.SoundEffect.TOOLTIP));
@@ -874,6 +881,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
                 // Issue #669: Render non-block-based 3D props during cinematic
                 propRenderer.render(modelBatch, environment);
+                // Issue #675: Render small 3D items during cinematic
+                if (smallItemRenderer != null) {
+                    smallItemRenderer.render(modelBatch, environment);
+                }
                 modelBatch.end();
 
                 // Render letterbox and skip hint overlay
@@ -1125,6 +1136,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
             // Issue #669: Render non-block-based 3D props
             propRenderer.render(modelBatch, environment);
+            // Issue #675: Render small 3D items placed on block surfaces
+            if (smallItemRenderer != null) {
+                smallItemRenderer.render(modelBatch, environment);
+            }
             modelBatch.end();
 
             // Issue #54: Render block targeting outline and placement ghost block
@@ -1207,6 +1222,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
             // Issue #669: Render non-block-based 3D props
             propRenderer.render(modelBatch, environment);
+            // Issue #675: Render small 3D items while paused
+            if (smallItemRenderer != null) {
+                smallItemRenderer.render(modelBatch, environment);
+            }
             modelBatch.end();
 
             // Fix #333: Render rain overlay while paused so the rain effect persists
@@ -2595,6 +2614,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                 soundSystem.play(ragamuffin.audio.SoundEffect.UI_CLOSE);
             } else {
                 soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+                // Issue #675: Refresh the small item renderer so the newly placed item is visible
+                if (smallItemRenderer != null) {
+                    smallItemRenderer.setItems(world.getSmallItems());
+                }
             }
             return;
         }
@@ -3948,6 +3971,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         npcRenderer.dispose();
         if (propRenderer != null) {
             propRenderer.dispose();
+        }
+        if (smallItemRenderer != null) {
+            smallItemRenderer.dispose();
         }
         if (carRenderer != null) {
             carRenderer.dispose();
