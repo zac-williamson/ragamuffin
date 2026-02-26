@@ -149,6 +149,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
+    // Issue #672: Car renderer — makes cars visible in-game
+    private ragamuffin.render.CarRenderer carRenderer;
     private float distanceTravelledAchievement = 0f; // accumulated metres walked
     private com.badlogic.gdx.math.Vector3 lastPlayerPosForDistance = null;
 
@@ -387,6 +389,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
         carManager.spawnInitialCars(world);
+        // Issue #672: Initialize car renderer so cars are visible in-game
+        carRenderer = new ragamuffin.render.CarRenderer();
 
         loadingComplete = true;
         state = GameState.MENU;
@@ -864,6 +868,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                 modelBatch.begin(camera);
                 chunkRenderer.render(modelBatch, environment);
+                // Issue #672: Render car traffic during cinematic
+                if (carRenderer != null) {
+                    carRenderer.render(modelBatch, environment, carManager.getCars());
+                }
                 // Issue #669: Render non-block-based 3D props during cinematic
                 propRenderer.render(modelBatch, environment);
                 modelBatch.end();
@@ -1111,6 +1119,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             modelBatch.begin(camera);
             chunkRenderer.render(modelBatch, environment);
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
+            // Issue #672: Render car traffic so cars are visible in-game
+            if (carRenderer != null) {
+                carRenderer.render(modelBatch, environment, carManager.getCars());
+            }
             // Issue #669: Render non-block-based 3D props
             propRenderer.render(modelBatch, environment);
             modelBatch.end();
@@ -1189,6 +1201,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             modelBatch.begin(camera);
             chunkRenderer.render(modelBatch, environment);
             npcRenderer.render(modelBatch, environment, npcManager.getNPCs());
+            // Issue #672: Render car traffic so cars are visible while paused
+            if (carRenderer != null) {
+                carRenderer.render(modelBatch, environment, carManager.getCars());
+            }
             // Issue #669: Render non-block-based 3D props
             propRenderer.render(modelBatch, environment);
             modelBatch.end();
@@ -3932,6 +3948,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         npcRenderer.dispose();
         if (propRenderer != null) {
             propRenderer.dispose();
+        }
+        if (carRenderer != null) {
+            carRenderer.dispose();
         }
         spriteBatch.dispose();
         shapeRenderer.dispose();
