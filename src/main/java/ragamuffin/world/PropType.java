@@ -95,4 +95,24 @@ public enum PropType {
      * second and a GANG_ACTIVITY rumour is seeded.
      */
     CCTV,
+
+    // ── Issue #714: Player Squat system ─────────────────────────────────────
+
+    /**
+     * A bed inside the squat. Provides +10 Vibe and is required to host lodgers.
+     * Also enables 2× energy recovery when sleeping inside at night (Vibe ≥ 40).
+     */
+    BED,
+
+    /**
+     * A dartboard mounted on the squat wall. Provides +7 Vibe.
+     * (Named SQUAT_DARTBOARD to distinguish from the pub DARTBOARD prop.)
+     */
+    SQUAT_DARTBOARD,
+
+    /**
+     * A workbench inside the squat. Provides 0 Vibe but unlocks advanced crafting recipes:
+     * BARRICADE, LOCKPICK, and FAKE_ID.
+     */
+    WORKBENCH,
 }

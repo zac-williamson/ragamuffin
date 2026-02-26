@@ -130,7 +130,18 @@ public enum Material {
     PAINT_TIN("Paint Tin"),
 
     /** Eviction notice — removes a THUG NPC from a player-owned building. */
-    EVICTION_NOTICE("Eviction Notice");
+    EVICTION_NOTICE("Eviction Notice"),
+
+    // ── Issue #714: Player Squat system ──────────────────────────────────────
+
+    /** Barricade block material — crafted from 2 WOOD + 1 BRICK. Absorbs 3 hits. */
+    BARRICADE("Barricade"),
+
+    /** Lockpick — crafted at squat WORKBENCH. Reduces safe-crack time by 3 seconds. */
+    LOCKPICK("Lockpick"),
+
+    /** Fake ID — crafted at squat WORKBENCH. Removes 1 criminal record offence at police station. */
+    FAKE_ID("Fake ID");
 
     private final String displayName;
 
@@ -296,6 +307,13 @@ public enum Material {
                                             0.62f, 0.62f, 0.65f); // Grey lid
             case EVICTION_NOTICE: return c(0.88f, 0.12f, 0.12f); // Bold red paper
 
+            // Squat system items (Issue #714)
+            case BARRICADE:      return cs(0.45f, 0.30f, 0.15f,  // Rough planks
+                                            0.35f, 0.22f, 0.10f); // Darker wood
+            case LOCKPICK:       return cs(0.55f, 0.55f, 0.60f,  // Silver metal
+                                            0.40f, 0.40f, 0.45f); // Darker grip
+            case FAKE_ID:        return c(0.20f, 0.38f, 0.68f);  // Official-looking blue card
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -382,6 +400,9 @@ public enum Material {
             case DEED:
             case PAINT_TIN:
             case EVICTION_NOTICE:
+            // Squat system items (Issue #714)
+            case LOCKPICK:
+            case FAKE_ID:
                 return false;
             default:
                 return true;
@@ -536,6 +557,11 @@ public enum Material {
                 return IconShape.CYLINDER;   // paint tin
             case EVICTION_NOTICE:
                 return IconShape.FLAT_PAPER; // official notice paper
+            // Squat system items (Issue #714)
+            case LOCKPICK:
+                return IconShape.TOOL;       // thin metal pick
+            case FAKE_ID:
+                return IconShape.CARD;       // ID card
 
             default:
                 return IconShape.BOX;

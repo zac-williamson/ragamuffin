@@ -157,6 +157,26 @@ public class CraftingSystem {
             Map.of(Material.WOOD, 4, Material.LEAVES, 2),
             Map.of(Material.ROPE_LADDER, 1)
         ));
+
+        // ── Squat advanced recipes (Issue #714) — unlocked via WORKBENCH inside squat ──
+
+        // BARRICADE: WOOD×2 + BRICK×1 → BARRICADE×1 (doorway fortification, 3 hits to break)
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 2, Material.BRICK, 1),
+            Map.of(Material.BARRICADE, 1)
+        ));
+
+        // LOCKPICK: IRON×1 + FLINT×1 → LOCKPICK×1 (reduces safe-crack time by 3s)
+        recipes.add(new Recipe(
+            Map.of(Material.IRON, 1, Material.FLINT, 1),
+            Map.of(Material.LOCKPICK, 1)
+        ));
+
+        // FAKE_ID: COUNCIL_ID×1 + NEWSPAPER×2 → FAKE_ID×1 (removes 1 criminal record offence)
+        recipes.add(new Recipe(
+            Map.of(Material.COUNCIL_ID, 1, Material.NEWSPAPER, 2),
+            Map.of(Material.FAKE_ID, 1)
+        ));
     }
 
     /**
