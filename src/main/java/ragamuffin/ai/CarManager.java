@@ -18,8 +18,8 @@ import java.util.Random;
  * along their road segment. They deal damage to the player on collision.
  *
  * Street grid: roads run every 20 blocks in X and Z, from -170 to +170.
- * Each road is 2 blocks wide (ROAD blocks in the middle of a 4-block-wide street).
- * Cars drive on one of these two lanes.
+ * Each road is 4 blocks wide (ROAD blocks in the middle of a 6-block-wide street).
+ * Cars drive on one of these lanes.
  */
 public class CarManager {
 
@@ -60,15 +60,15 @@ public class CarManager {
         // Horizontal streets: fixed Z, varying X
         for (int z = -STREET_EXTENT; z <= STREET_EXTENT; z += STREET_SPACING) {
             if (Math.abs(z) < PARK_EXCLUSION) continue; // skip park area
-            // Road blocks are at z+1 and z+2 (inner 2 of the 4-block-wide street at z,z+1,z+2,z+3)
-            int roadZ = z + 1; // first ROAD lane
+            // Road blocks are at z+1 to z+4 (inner 4 of the 6-block-wide street at z..z+5)
+            int roadZ = z + 2; // centre ROAD lane
             hSegments.add(new int[]{roadZ, -STREET_EXTENT, STREET_EXTENT});
         }
 
         // Vertical streets: fixed X, varying Z
         for (int x = -STREET_EXTENT; x <= STREET_EXTENT; x += STREET_SPACING) {
             if (Math.abs(x) < PARK_EXCLUSION) continue;
-            int roadX = x + 1; // first ROAD lane
+            int roadX = x + 2; // centre ROAD lane
             vSegments.add(new int[]{roadX, -STREET_EXTENT, STREET_EXTENT});
         }
 

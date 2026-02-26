@@ -21,7 +21,7 @@ import java.util.Set;
 public class WorldGenerator {
     private static final int WORLD_SIZE = 480; // World is 480x480 blocks
     private static final int PARK_SIZE = 30;   // Park is 30x30 blocks
-    private static final int STREET_WIDTH = 4;
+    private static final int STREET_WIDTH = 6;
 
     // Terrain height parameters
     private static final int BASE_HEIGHT = 0;  // Sea level / flat area height
