@@ -281,6 +281,39 @@ public enum AchievementType {
         "Castle Doctrine, British Edition",
         "Survived three raids without Vibe dropping below 60. Proper fortified.",
         1
+    ),
+
+    // ── Issue #716: Underground Music Scene ──────────────────────────────────
+
+    FIRST_BARS(
+        "Spitting",
+        "Won your first MC Battle. They weren't expecting that, were they.",
+        1
+    ),
+    GRIME_GOD(
+        "The Don",
+        "Reached MC Rank 5. You are the grime scene. The grime scene is you.",
+        1
+    ),
+    ILLEGAL_RAVE(
+        "Police Don't Like It",
+        "Hosted your first illegal rave. Someone's neighbours are furious.",
+        1
+    ),
+    SWERVED_THE_FEDS(
+        "Gone Before They Arrived",
+        "Dispersed the rave before the police arrived. Not your first rodeo.",
+        1
+    ),
+    BODIED(
+        "Completely Bodied",
+        "Won all three MC Battles in a single career. Absolute scenes.",
+        1
+    ),
+    DOUBLE_LIFE(
+        "By Day, By Night",
+        "Reach MC Rank 3 while simultaneously owning a property. Legitimate. Sort of.",
+        1
     );
 
     private final String name;

@@ -51,7 +51,28 @@ public enum NPCType {
     ESTATE_AGENT(20f, 0f, 0f, false),
 
     /** Thug — sent by rival factions to intimidate/take over player-owned buildings. */
-    THUG(35f, 8f, 1.5f, true);
+    THUG(35f, 8f, 1.5f, true),
+
+    // ── Issue #716: Underground Music Scene ──────────────────────────────────
+
+    /**
+     * MC Champion — a named faction MC who can be challenged to a battle.
+     * Marchetti MC (off-licence), Street Lads MC (park), Council MC (JobCentre).
+     * Passive until challenged with a MICROPHONE; never hostile unprovoked.
+     */
+    MC_CHAMPION(30f, 0f, 0f, false),
+
+    /**
+     * Hype Man — permanent companion NPC unlocked at MC Rank 5.
+     * Follows the player near the squat, boosts rave income by +10% each.
+     */
+    HYPE_MAN(20f, 0f, 0f, false),
+
+    /**
+     * Rave Attendee — an NPC drawn to the squat by the RAVE_ANNOUNCEMENT rumour.
+     * Generates 1 COIN/in-game-minute while the rave is active.
+     */
+    RAVE_ATTENDEE(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -22,5 +22,8 @@ public enum RumourType {
     COUNCIL_NOTICE,
 
     /** "Heard it's going to [weather] later — dress warm / bring an umbrella" — seeded hourly by TimeSystem, accumulated by the barman. */
-    WEATHER_TIP;
+    WEATHER_TIP,
+
+    /** "There's a rave on at [location] tonight — should be mental" — seeded when the player uses a FLYER at their squat. Draws nearby NPCs toward the squat as rave attendees. */
+    RAVE_ANNOUNCEMENT;
 }
