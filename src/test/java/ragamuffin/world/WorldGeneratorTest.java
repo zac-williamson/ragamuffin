@@ -7,6 +7,7 @@ import ragamuffin.test.HeadlessTestHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -357,6 +358,98 @@ public class WorldGeneratorTest {
 
         assertTrue(heightNearEdge <= heightFarEdge,
             "Terrain in blend zone should be <= natural terrain further out (near=" + heightNearEdge + ", far=" + heightFarEdge + ")");
+    }
+
+    // ── Issue #693: Staged world generation ──────────────────────────────────
+
+    @Test
+    public void testGenerationStageIsCompleteAfterGenerateWorld() {
+        generator.generateWorld(world);
+
+        assertEquals(WorldGenerator.GenerationStage.COMPLETE, generator.getCurrentStage(),
+            "Generation stage should be COMPLETE after generateWorld() returns");
+    }
+
+    @Test
+    public void testStageIsNotStartedBeforeGenerateWorld() {
+        WorldGenerator freshGen = new WorldGenerator(12345);
+        assertEquals(WorldGenerator.GenerationStage.NOT_STARTED, freshGen.getCurrentStage(),
+            "Generation stage should be NOT_STARTED before generateWorld() is called");
+    }
+
+    @Test
+    public void testBuildingPlotsPopulatedAfterGeneration() {
+        generator.generateWorld(world);
+
+        List<WorldGenerator.BuildingPlot> plots = generator.getBuildingPlots();
+        assertFalse(plots.isEmpty(),
+            "Building plots list should be non-empty after generation");
+
+        boolean hasAboveGround = plots.stream().anyMatch(p -> !p.isUnderground());
+        boolean hasUnderground  = plots.stream().anyMatch(WorldGenerator.BuildingPlot::isUnderground);
+
+        assertTrue(hasAboveGround, "Should have at least one above-ground building plot");
+        assertTrue(hasUnderground, "Should have at least one underground building plot");
+    }
+
+    @Test
+    public void testBuildingPlotsHaveValidDimensions() {
+        generator.generateWorld(world);
+
+        for (WorldGenerator.BuildingPlot plot : generator.getBuildingPlots()) {
+            assertTrue(plot.getWidth() > 0,
+                "Plot width must be positive: " + plot);
+            assertTrue(plot.getDepth() > 0,
+                "Plot depth must be positive: " + plot);
+        }
+    }
+
+    @Test
+    public void testNpcSpawnPointsPopulatedAfterGeneration() {
+        generator.generateWorld(world);
+
+        List<WorldGenerator.NpcSpawnPoint> spawnPoints = generator.getNpcSpawnPoints();
+        assertFalse(spawnPoints.isEmpty(),
+            "NPC spawn points should be non-empty after generation (shops need shopkeepers)");
+    }
+
+    @Test
+    public void testNpcSpawnPointsHaveValidLandmarkTypes() {
+        generator.generateWorld(world);
+
+        for (WorldGenerator.NpcSpawnPoint sp : generator.getNpcSpawnPoints()) {
+            assertNotNull(sp.getLandmarkType(),
+                "NPC spawn point landmark type must not be null");
+        }
+    }
+
+    @Test
+    public void testNpcSpawnPointsIncludeGreggs() {
+        generator.generateWorld(world);
+
+        boolean hasGreggs = generator.getNpcSpawnPoints().stream()
+            .anyMatch(sp -> sp.getLandmarkType() == LandmarkType.GREGGS);
+        assertTrue(hasGreggs, "NPC spawn points should include a shopkeeper for Greggs");
+    }
+
+    @Test
+    public void testBuildingPlotsListIsUnmodifiable() {
+        generator.generateWorld(world);
+
+        List<WorldGenerator.BuildingPlot> plots = generator.getBuildingPlots();
+        assertThrows(UnsupportedOperationException.class,
+            () -> plots.add(new WorldGenerator.BuildingPlot(0, 0, 1, 1, false)),
+            "getBuildingPlots() should return an unmodifiable view");
+    }
+
+    @Test
+    public void testNpcSpawnPointsListIsUnmodifiable() {
+        generator.generateWorld(world);
+
+        List<WorldGenerator.NpcSpawnPoint> points = generator.getNpcSpawnPoints();
+        assertThrows(UnsupportedOperationException.class,
+            () -> points.add(new WorldGenerator.NpcSpawnPoint(LandmarkType.GREGGS, 0, 0, 0)),
+            "getNpcSpawnPoints() should return an unmodifiable view");
     }
 
     private boolean landmarksOverlap(Landmark a, Landmark b) {
