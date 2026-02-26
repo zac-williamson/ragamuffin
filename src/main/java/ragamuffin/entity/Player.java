@@ -16,6 +16,11 @@ public class Player {
     public static final float EYE_HEIGHT = 1.62f; // Eye level for camera
     public static final float MOVE_SPEED = 12.0f;
     public static final float SPRINT_SPEED = 20.0f;
+
+    // Crouch constants (Issue #689)
+    public static final float CROUCH_HEIGHT = 1.2f;       // Reduced AABB height while crouching (fits through 1.5-block gaps)
+    public static final float CROUCH_EYE_HEIGHT = 0.9f;   // Eye height while crouching
+    public static final float CROUCH_SPEED_MULTIPLIER = 0.5f; // Halves movement speed (3→1.5 blocks/s relative)
     public static final float GRAVITY = 9.8f; // Gravity acceleration (m/s^2)
     public static final float JUMP_VELOCITY = 6.0f; // Initial upward velocity when jumping
 
@@ -60,6 +65,15 @@ public class Player {
     // Damage reason (for HUD display)
     private DamageReason lastDamageReason = DamageReason.UNKNOWN;
 
+    // Crouch state (Issue #689)
+    private boolean isCrouching;
+
+    // Noise level 0.0–1.0 (managed by NoiseSystem, mirrored here for NPC queries)
+    private float noiseLevel;
+
+    // BALACLAVA toggle state (Issue #689)
+    private boolean balaclavWorn;
+
     // Street reputation
     private StreetReputation streetReputation;
 
@@ -83,6 +97,9 @@ public class Player {
         this.dodgeDirX = 0f;
         this.dodgeDirZ = 0f;
         this.damageFlashTimer = 0f;
+        this.isCrouching = false;
+        this.noiseLevel = 0.05f;
+        this.balaclavWorn = false;
         this.streetReputation = new StreetReputation();
         this.criminalRecord = new CriminalRecord();
     }
@@ -101,15 +118,18 @@ public class Player {
 
     /**
      * Move the player in the given direction.
+     * Crouching halves movement speed (Issue #689).
      * @param dx X direction
      * @param dy Y direction
      * @param dz Z direction
      * @param delta Delta time in seconds
      */
     public void move(float dx, float dy, float dz, float delta) {
-        velocity.set(dx, dy, dz).nor().scl(MOVE_SPEED * delta);
+        float speed = isCrouching ? MOVE_SPEED * CROUCH_SPEED_MULTIPLIER : MOVE_SPEED;
+        velocity.set(dx, dy, dz).nor().scl(speed * delta);
         position.add(velocity);
-        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+        float height = isCrouching ? CROUCH_HEIGHT : HEIGHT;
+        aabb.setPosition(position, WIDTH, height, DEPTH);
     }
 
     /**
@@ -162,12 +182,15 @@ public class Player {
      * Returns the actual distance moved.
      */
     public Vector3 moveWithCollision(float dx, float dy, float dz, float delta, Chunk chunk) {
-        Vector3 desiredMove = new Vector3(dx, dy, dz).nor().scl(MOVE_SPEED * delta);
+        float speed = isCrouching ? MOVE_SPEED * CROUCH_SPEED_MULTIPLIER : MOVE_SPEED;
+        Vector3 desiredMove = new Vector3(dx, dy, dz).nor().scl(speed * delta);
         Vector3 originalPos = new Vector3(position);
+
+        float height = isCrouching ? CROUCH_HEIGHT : HEIGHT;
 
         // Try full movement
         position.add(desiredMove);
-        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+        aabb.setPosition(position, WIDTH, height, DEPTH);
 
         if (checkCollision(chunk)) {
             // Collision - revert and try sliding
@@ -175,7 +198,7 @@ public class Player {
 
             // Try X only
             position.add(desiredMove.x, 0, 0);
-            aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+            aabb.setPosition(position, WIDTH, height, DEPTH);
             if (checkCollision(chunk)) {
                 position.set(originalPos);
             }
@@ -183,12 +206,12 @@ public class Player {
             // Try Z only
             Vector3 zOnlyPos = new Vector3(position);
             position.add(0, 0, desiredMove.z);
-            aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+            aabb.setPosition(position, WIDTH, height, DEPTH);
             if (checkCollision(chunk)) {
                 position.set(zOnlyPos);
             }
 
-            aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+            aabb.setPosition(position, WIDTH, height, DEPTH);
         }
 
         return new Vector3(position).sub(originalPos);
@@ -499,5 +522,63 @@ public class Player {
      */
     public CriminalRecord getCriminalRecord() {
         return criminalRecord;
+    }
+
+    // ========== Crouch System (Issue #689) ==========
+
+    /**
+     * Set the player's crouching state.
+     * Adjusts AABB height and eye height accordingly.
+     */
+    public void setCrouching(boolean crouching) {
+        this.isCrouching = crouching;
+        float height = crouching ? CROUCH_HEIGHT : HEIGHT;
+        aabb.setPosition(position, WIDTH, height, DEPTH);
+    }
+
+    /**
+     * Whether the player is currently crouching.
+     */
+    public boolean isCrouching() {
+        return isCrouching;
+    }
+
+    /**
+     * Get the current eye height based on crouch state.
+     */
+    public float getEyeHeight() {
+        return isCrouching ? CROUCH_EYE_HEIGHT : EYE_HEIGHT;
+    }
+
+    // ========== Noise Level (Issue #689) ==========
+
+    /**
+     * Set the current noise level (0.0–1.0). Called by NoiseSystem each frame.
+     */
+    public void setNoiseLevel(float level) {
+        this.noiseLevel = Math.max(0f, Math.min(1f, level));
+    }
+
+    /**
+     * Get the current noise level (0.0–1.0).
+     */
+    public float getNoiseLevel() {
+        return noiseLevel;
+    }
+
+    // ========== BALACLAVA toggle (Issue #689) ==========
+
+    /**
+     * Toggle the BALACLAVA worn state.
+     */
+    public void setBalaclavWorn(boolean worn) {
+        this.balaclavWorn = worn;
+    }
+
+    /**
+     * Whether the player is currently wearing the BALACLAVA.
+     */
+    public boolean isBalaclavWorn() {
+        return balaclavWorn;
     }
 }

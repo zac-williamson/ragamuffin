@@ -5,12 +5,13 @@ import ragamuffin.building.BlockBreaker;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.building.StructureTracker;
+import ragamuffin.core.NoiseSystem;
+import ragamuffin.core.ShelterDetector;
 import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
-import ragamuffin.core.ShelterDetector;
 import ragamuffin.ui.TooltipSystem;
 import ragamuffin.ui.TooltipTrigger;
 import ragamuffin.world.BlockType;
@@ -286,6 +287,23 @@ public class NPCManager {
     // Fix #687: Store player inventory for HIGH_VIS_JACKET police escalation delay
     private Inventory currentInventory;
 
+    // Issue #689: Stealth system — vision cone + hearing detection
+    // Vision cone: 70° half-angle, 20 blocks range (blocked by solid walls via DDA)
+    // Hearing: 360°, range = 5 + noiseLevel*15, night +25%, vision range night halved
+    private static final float VISION_CONE_HALF_ANGLE_DEG = 70f;
+    private static final float VISION_RANGE = 20f;
+    private static final float HEARING_RANGE_BASE = 5f;
+    private static final float HEARING_RANGE_NOISE_SCALE = 15f;
+    private static final float NIGHT_VISION_MULTIPLIER = 0.5f;
+    private static final float NIGHT_HEARING_MULTIPLIER = 1.25f;
+
+    // SUSPICIOUS state timers per NPC (counts up; NPC reverts to PATROL after 5s of no detection)
+    private Map<NPC, Float> policeSuspiciousTimers;
+    private static final float SUSPICIOUS_TIMEOUT = 5.0f;
+
+    // Game time stored for night detection calculations
+    private float currentGameTime = 8.0f; // hours, 0-24
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
@@ -312,6 +330,7 @@ public class NPCManager {
         this.npcStealCooldownTimers = new HashMap<>();
         this.policeLostSightTimers = new HashMap<>();
         this.npcConversationCooldowns = new HashMap<>();
+        this.policeSuspiciousTimers = new HashMap<>();
     }
 
     /**
@@ -428,6 +447,7 @@ public class NPCManager {
         alertedPoliceNPCs.remove(npc);
         policeLostSightTimers.remove(npc);
         npcConversationCooldowns.remove(npc);
+        policeSuspiciousTimers.remove(npc);
     }
 
     /**
@@ -438,6 +458,7 @@ public class NPCManager {
      */
     public void setGameTime(float hours) {
         this.gameTime = hours % 24;
+        this.currentGameTime = this.gameTime;
 
         int currentBand = getTimeBand(this.gameTime);
         if (currentBand != previousTimeBand) {
@@ -500,6 +521,7 @@ public class NPCManager {
             case AGGRESSIVE:
             case ARRESTING:
             case WARNING:
+            case SUSPICIOUS:
             case KNOCKED_OUT:
             case KNOCKED_BACK:
             case STEALING:
@@ -754,7 +776,7 @@ public class NPCManager {
         if (npc.getType() == NPCType.POLICE) {
             updatePolice(npc, delta, world, player, tooltipSystem);
         } else if (npc.getType() == NPCType.COUNCIL_BUILDER) {
-            updateCouncilBuilder(npc, delta, world, tooltipSystem);
+            updateCouncilBuilder(npc, delta, world, player, tooltipSystem);
         } else {
             // Notorious players cause civilians to flee on sight
             if (player.getStreetReputation().isNotorious()
@@ -2110,6 +2132,9 @@ public class NPCManager {
             case PATROLLING:
                 updatePolicePatrolling(police, delta, world, player, tooltipSystem);
                 break;
+            case SUSPICIOUS:
+                updatePoliceSuspicious(police, delta, world, player);
+                break;
             case WARNING:
                 updatePoliceWarning(police, delta, world, player);
                 break;
@@ -2122,6 +2147,7 @@ public class NPCManager {
 
     /**
      * Update police patrolling behavior.
+     * Issue #689: Uses cone+hearing detection instead of simple radius-based detection.
      */
     private void updatePolicePatrolling(NPC police, float delta, World world, Player player, TooltipSystem tooltipSystem) {
         // If player is sheltered, police cannot detect them — wander instead
@@ -2146,13 +2172,39 @@ public class NPCManager {
                 applyPoliceTapeToStructure(world, structure);
             }
         } else if (player.getStreetReputation().isKnown() || alertedPoliceNPCs.contains(police)) {
-            // Only pursue the player when they are KNOWN/NOTORIOUS or this officer was explicitly
-            // alerted by a crime event (Greggs raid, block-break near landmark).
-            // NOBODY-reputation players should not be hunted unconditionally.
-            setNPCTarget(police, player.getPosition(), world);
+            // KNOWN/NOTORIOUS players or explicitly alerted officers — use cone+hearing detection
+            boolean detected = isPlayerDetected(world, police, player);
+            if (detected) {
+                setNPCTarget(police, player.getPosition(), world);
+            } else {
+                // Check hearing-only detection → SUSPICIOUS
+                boolean heard = isPlayerHeard(police, player);
+                if (heard) {
+                    police.setState(NPCState.SUSPICIOUS);
+                    police.setSpeechText("What was that?", 3.0f);
+                    policeSuspiciousTimers.put(police, 0.0f);
+                    return;
+                }
+                // Otherwise patrol randomly
+                updateWandering(police, delta, world);
+            }
         } else {
-            // Player is innocent (NOBODY reputation, no active crime alert) — patrol randomly
-            updateWandering(police, delta, world);
+            // Issue #689: Innocent NOBODY-rep players detected purely by cone+hearing stealth model
+            boolean detected = isPlayerDetected(world, police, player);
+            if (detected) {
+                // Spotted — treat like KNOWN escalation
+                setNPCTarget(police, player.getPosition(), world);
+            } else {
+                boolean heard = isPlayerHeard(police, player);
+                if (heard) {
+                    police.setState(NPCState.SUSPICIOUS);
+                    police.setSpeechText("What was that?", 3.0f);
+                    policeSuspiciousTimers.put(police, 0.0f);
+                    return;
+                }
+                // Player is innocent and undetected — patrol randomly
+                updateWandering(police, delta, world);
+            }
         }
 
         // Check if adjacent to player - issue warning (or go straight to aggressive if notorious)
@@ -2177,6 +2229,141 @@ public class NPCManager {
                 tooltipSystem.trigger(TooltipTrigger.FIRST_POLICE_ENCOUNTER);
             }
         }
+    }
+
+    /**
+     * Update police in SUSPICIOUS state — heard the player but hasn't seen them.
+     * If player goes quiet and breaks LoS within 5s, NPC returns to PATROL ("Must've been nothing").
+     */
+    private void updatePoliceSuspicious(NPC police, float delta, World world, Player player) {
+        // If player is sheltered, cancel suspicion
+        if (ShelterDetector.isSheltered(world, player.getPosition())) {
+            police.setState(NPCState.PATROLLING);
+            policeSuspiciousTimers.remove(police);
+            return;
+        }
+
+        // Check if we can now see the player — escalate to WARNING
+        if (isPlayerDetected(world, police, player)) {
+            police.setState(NPCState.WARNING);
+            police.setSpeechText("Oi! Stay right there!", 3.0f);
+            policeWarningTimers.put(police, 0.0f);
+            policeSuspiciousTimers.remove(police);
+            return;
+        }
+
+        // Check contact
+        if (police.isNear(player.getPosition(), 2.0f)) {
+            police.setState(NPCState.WARNING);
+            police.setSpeechText("Move along, nothing to see here.", 3.0f);
+            policeWarningTimers.put(police, 0.0f);
+            policeSuspiciousTimers.remove(police);
+            return;
+        }
+
+        // Tick suspicious timer
+        float timer = policeSuspiciousTimers.getOrDefault(police, 0.0f) + delta;
+        policeSuspiciousTimers.put(police, timer);
+
+        // Check if player has gone quiet (noise < 0.3) — allow escape
+        boolean playerGoneQuiet = player.getNoiseLevel() < 0.3f;
+        boolean hasLoS = hasLineOfSight(world, police.getPosition(), player.getPosition());
+
+        if (timer >= SUSPICIOUS_TIMEOUT || (playerGoneQuiet && !hasLoS)) {
+            // Player escaped detection — return to patrol
+            police.setState(NPCState.PATROLLING);
+            police.setSpeechText("Must've been nothing.", 3.0f);
+            policeSuspiciousTimers.remove(police);
+            return;
+        }
+
+        // Move toward last known noise source (player position) to investigate
+        setNPCTarget(police, player.getPosition(), world);
+    }
+
+    /**
+     * Check if the police officer can see the player in their vision cone.
+     * Issue #689: Vision cone = 70° half-angle, 20 blocks range (halved at night),
+     * blocked by solid non-glass blocks via DDA raycast.
+     * BALACLAVA reduces cone range by 30% (20→14 blocks).
+     * HIGH_VIS_JACKET reduces cone angle by 20°.
+     */
+    private boolean isPlayerDetected(World world, NPC police, Player player) {
+        boolean isNightTime = isNight(currentGameTime);
+
+        // Calculate effective vision range
+        float visionRange = VISION_RANGE;
+        if (isNightTime) {
+            visionRange *= NIGHT_VISION_MULTIPLIER; // halved at night
+        }
+
+        // BALACLAVA reduces vision range by 30%
+        if (player.isBalaclavWorn()) {
+            visionRange *= 0.7f;
+        }
+
+        float dist = police.getPosition().dst(player.getPosition());
+        if (dist > visionRange) {
+            return false; // Out of vision range
+        }
+
+        // Vision cone check: is player within the angle of police's facing direction?
+        float halfAngle = VISION_CONE_HALF_ANGLE_DEG;
+        // HIGH_VIS_JACKET + crouching: reduce police cone angle by 20°
+        if (currentInventory != null && currentInventory.getItemCount(Material.HIGH_VIS_JACKET) > 0
+                && player.isCrouching()) {
+            halfAngle -= 20f;
+        }
+
+        // Police facing direction: NPC facingAngle is in degrees (0=+Z, 90=+X)
+        float dx = player.getPosition().x - police.getPosition().x;
+        float dz = player.getPosition().z - police.getPosition().z;
+
+        // Angle from police to player, in degrees (0=+Z, 90=+X) to match NPC convention
+        float toPlayerDeg = (float) Math.toDegrees(Math.atan2(dx, dz));
+        float policeFacingDeg = police.getFacingAngle();
+
+        float angleDiffDeg = Math.abs(normalizeDeg(toPlayerDeg - policeFacingDeg));
+
+        if (angleDiffDeg > halfAngle) {
+            return false; // Player outside vision cone
+        }
+
+        // Line-of-sight check: solid blocks block vision
+        return hasLineOfSight(world, police.getPosition(), player.getPosition());
+    }
+
+    /**
+     * Check if the police officer can hear the player.
+     * Issue #689: Hearing range = 5 + (noiseLevel × 15), 360°, +25% at night.
+     */
+    private boolean isPlayerHeard(NPC police, Player player) {
+        float noiseLevel = player.getNoiseLevel();
+        float hearingRange = NoiseSystem.getHearingRange(noiseLevel);
+
+        // Night multiplier
+        if (isNight(currentGameTime)) {
+            hearingRange *= NIGHT_HEARING_MULTIPLIER;
+        }
+
+        float dist = police.getPosition().dst(player.getPosition());
+        return dist <= hearingRange;
+    }
+
+    /**
+     * Returns true if the game time is within the night window (22:00–06:00).
+     */
+    private static boolean isNight(float hours) {
+        return hours >= 22.0f || hours < 6.0f;
+    }
+
+    /**
+     * Normalize a degree angle to the range [-180, 180].
+     */
+    private static float normalizeDeg(float angle) {
+        while (angle > 180f) angle -= 360f;
+        while (angle < -180f) angle += 360f;
+        return angle;
     }
 
     /**
