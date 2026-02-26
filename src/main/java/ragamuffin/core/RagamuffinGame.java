@@ -1140,6 +1140,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (smallItemRenderer != null) {
                 smallItemRenderer.render(modelBatch, environment);
             }
+            // Issue #676: Render flags as physical 3D objects
+            flagRenderer.render(modelBatch, environment);
             modelBatch.end();
 
             // Issue #54: Render block targeting outline and placement ghost block
@@ -1154,16 +1156,6 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Issue #10: Render building signs as world-projected overlays
             signageRenderer.render(camera, spriteBatch, shapeRenderer, font,
                                    Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-
-            // Issue #658: Render animated flags
-            {
-                int sw = Gdx.graphics.getWidth();
-                int sh = Gdx.graphics.getHeight();
-                com.badlogic.gdx.math.Matrix4 flagOrtho = new com.badlogic.gdx.math.Matrix4();
-                flagOrtho.setToOrtho2D(0, 0, sw, sh);
-                shapeRenderer.setProjectionMatrix(flagOrtho);
-                flagRenderer.render(shapeRenderer, camera, sw, sh);
-            }
 
             // Render rain overlay if raining
             if (weatherSystem.getCurrentWeather() == Weather.RAIN) {
@@ -1226,6 +1218,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (smallItemRenderer != null) {
                 smallItemRenderer.render(modelBatch, environment);
             }
+            // Issue #676: Render flags as physical 3D objects while paused
+            flagRenderer.render(modelBatch, environment);
             modelBatch.end();
 
             // Fix #333: Render rain overlay while paused so the rain effect persists
@@ -1244,16 +1238,6 @@ public class RagamuffinGame extends ApplicationAdapter {
                 particleOrtho.setToOrtho2D(0, 0, sw, sh);
                 shapeRenderer.setProjectionMatrix(particleOrtho);
                 particleSystem.render(shapeRenderer, camera, sw, sh);
-            }
-
-            // Issue #658: Render animated flags while paused — mirrors the PLAYING path.
-            {
-                int sw = Gdx.graphics.getWidth();
-                int sh = Gdx.graphics.getHeight();
-                com.badlogic.gdx.math.Matrix4 flagOrtho = new com.badlogic.gdx.math.Matrix4();
-                flagOrtho.setToOrtho2D(0, 0, sw, sh);
-                shapeRenderer.setProjectionMatrix(flagOrtho);
-                flagRenderer.render(shapeRenderer, camera, sw, sh);
             }
 
             // Fix #321: Advance damage flash and HUD timers while paused so the
