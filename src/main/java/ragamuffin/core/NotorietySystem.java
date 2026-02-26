@@ -389,7 +389,7 @@ public class NotorietySystem {
 
             // Criminal record offence
             if (criminalRecord != null) {
-                criminalRecord.record(CriminalRecord.CrimeType.ASSAULT); // closest existing type
+                criminalRecord.record(CriminalRecord.CrimeType.MEMBERS_OF_PUBLIC_PUNCHED);
             }
 
             // Notoriety gain (you tried)
