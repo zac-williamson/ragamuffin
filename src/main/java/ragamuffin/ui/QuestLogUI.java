@@ -85,12 +85,12 @@ public class QuestLogUI {
     }
 
     /**
-     * Build an ordered list of all quests from the registry.
+     * Build an ordered list of started quests from the registry.
+     * Only quests that have been started (active or completed) are shown.
      * Active and incomplete quests appear first, then completed quests.
      */
     List<Quest> getQuestList() {
         List<Quest> active = new ArrayList<>();
-        List<Quest> inactive = new ArrayList<>();
         List<Quest> completed = new ArrayList<>();
 
         for (LandmarkType type : LandmarkType.values()) {
@@ -100,14 +100,12 @@ public class QuestLogUI {
                 completed.add(q);
             } else if (q.isActive()) {
                 active.add(q);
-            } else {
-                inactive.add(q);
             }
+            // Not-yet-started quests (inactive and not completed) are hidden
         }
 
         List<Quest> all = new ArrayList<>();
         all.addAll(active);
-        all.addAll(inactive);
         all.addAll(completed);
         return all;
     }

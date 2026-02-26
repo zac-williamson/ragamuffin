@@ -57,6 +57,12 @@ class QuestLogUITest {
 
     @Test
     void showResetsScrollOffset() {
+        // Start enough quests so scrolling is possible (need more than VISIBLE_ROWS=7)
+        for (LandmarkType type : LandmarkType.values()) {
+            Quest q = registry.getQuest(type);
+            if (q != null) q.setActive(true);
+        }
+
         // Manually set a non-zero scroll offset by scrolling down
         ui.show();
         for (int i = 0; i < 5; i++) {
@@ -72,42 +78,68 @@ class QuestLogUITest {
     // --- Quest list contents ---
 
     @Test
-    void questListContainsAllRegisteredQuests() {
+    void questListIsEmptyWhenNoQuestsStarted() {
         List<Quest> quests = ui.getQuestList();
-        assertFalse(quests.isEmpty(), "Quest list must not be empty");
-
-        // Registry has one quest per LandmarkType that has a quest
-        long expected = 0;
-        for (LandmarkType type : LandmarkType.values()) {
-            if (registry.getQuest(type) != null) expected++;
-        }
-        assertEquals(expected, quests.size(),
-                "Quest list must contain exactly as many entries as the registry");
+        assertTrue(quests.isEmpty(),
+                "Quest list must be empty when no quests have been started");
     }
 
     @Test
-    void activeQuestsAppearBeforeInactiveOnes() {
-        // Activate one quest
+    void questListContainsOnlyStartedQuests() {
+        // Start two quests
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        Quest greggs = registry.getQuest(LandmarkType.GREGGS);
+        assertNotNull(tesco, "Tesco quest must exist");
+        assertNotNull(greggs, "Greggs quest must exist");
+        tesco.setActive(true);
+        greggs.setActive(true);
+
+        List<Quest> quests = ui.getQuestList();
+        assertEquals(2, quests.size(), "Quest list must contain only the 2 started quests");
+        assertTrue(quests.contains(tesco), "Active tesco quest must appear in the list");
+        assertTrue(quests.contains(greggs), "Active greggs quest must appear in the list");
+    }
+
+    @Test
+    void notStartedQuestsAreHiddenFromQuestList() {
+        // Leave quest inactive (not started)
         Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
         assertNotNull(tesco, "Tesco quest must exist");
+        assertFalse(tesco.isActive(), "Quest should start inactive");
+
+        List<Quest> quests = ui.getQuestList();
+        assertFalse(quests.contains(tesco),
+                "Not-yet-started quests must not appear in the quest list");
+    }
+
+    @Test
+    void activeQuestsAppearBeforeCompletedOnes() {
+        // Activate two quests, complete one
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        Quest greggs = registry.getQuest(LandmarkType.GREGGS);
+        assertNotNull(tesco, "Tesco quest must exist");
+        assertNotNull(greggs, "Greggs quest must exist");
         tesco.setActive(true);
+        greggs.setActive(true);
+        greggs.setCompleted(true);
 
         List<Quest> quests = ui.getQuestList();
         int activeIndex   = quests.indexOf(tesco);
+        int completedIndex = quests.indexOf(greggs);
         assertTrue(activeIndex >= 0, "Active quest must appear in the list");
-
-        // All inactive/not-yet-started quests must come after it
-        for (int i = 0; i < activeIndex; i++) {
-            assertTrue(quests.get(i).isActive() && !quests.get(i).isCompleted(),
-                    "All quests before the active quest must also be active");
-        }
+        assertTrue(completedIndex >= 0, "Completed quest must appear in the list");
+        assertTrue(activeIndex < completedIndex,
+                "Active quests must appear before completed quests");
     }
 
     @Test
     void completedQuestsAppearLast() {
-        // Complete one quest
+        // Start one active quest and one completed quest
         Quest greggs = registry.getQuest(LandmarkType.GREGGS);
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
         assertNotNull(greggs, "Greggs quest must exist");
+        assertNotNull(tesco, "Tesco quest must exist");
+        tesco.setActive(true);
         greggs.setActive(true);
         greggs.setCompleted(true);
 
@@ -121,15 +153,15 @@ class QuestLogUITest {
                     "All quests after the completed quest must also be completed");
         }
 
-        // At least one non-completed quest must appear before it
-        boolean foundNonCompleted = false;
+        // At least one active (non-completed) quest must appear before it
+        boolean foundActive = false;
         for (int i = 0; i < completedIndex; i++) {
             if (!quests.get(i).isCompleted()) {
-                foundNonCompleted = true;
+                foundActive = true;
                 break;
             }
         }
-        assertTrue(foundNonCompleted, "Non-completed quests must appear before completed quests");
+        assertTrue(foundActive, "Active quests must appear before completed quests");
     }
 
     // --- Scrolling ---
@@ -144,6 +176,11 @@ class QuestLogUITest {
 
     @Test
     void scrollDownIncreasesOffset() {
+        // Start enough quests so scrolling is possible (need more than VISIBLE_ROWS=7)
+        for (LandmarkType type : LandmarkType.values()) {
+            Quest q = registry.getQuest(type);
+            if (q != null) q.setActive(true);
+        }
         ui.show();
         ui.scrollDown();
         assertTrue(ui.getScrollOffset() > 0, "scrollDown() must increase scroll offset");
@@ -151,6 +188,11 @@ class QuestLogUITest {
 
     @Test
     void scrollDownDoesNotExceedMaximum() {
+        // Start all quests so the list is non-empty
+        for (LandmarkType type : LandmarkType.values()) {
+            Quest q = registry.getQuest(type);
+            if (q != null) q.setActive(true);
+        }
         ui.show();
         // Scroll down far beyond list size
         for (int i = 0; i < 1000; i++) {
@@ -164,6 +206,11 @@ class QuestLogUITest {
 
     @Test
     void scrollUpAfterScrollDownRestoresOffset() {
+        // Start enough quests so scrolling is possible (need more than VISIBLE_ROWS=7)
+        for (LandmarkType type : LandmarkType.values()) {
+            Quest q = registry.getQuest(type);
+            if (q != null) q.setActive(true);
+        }
         ui.show();
         ui.scrollDown();
         ui.scrollDown();
