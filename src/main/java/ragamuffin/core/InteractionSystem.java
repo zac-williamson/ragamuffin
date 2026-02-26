@@ -398,8 +398,9 @@ public class InteractionSystem {
             return BuildingQuestRegistry.getQuestOfferLine(quest);
         }
 
-        // Quest is active — check if player can complete it
-        if (inventory != null && quest.checkCompletion(inventory)) {
+        // Quest is active — check if player can complete it.
+        // EXPLORE quests don't need an inventory; COLLECT/DELIVER quests do.
+        if (quest.checkCompletion(inventory)) {
             boolean success = quest.complete(inventory);
             if (success) {
                 lastQuestCompleted = quest;
@@ -502,6 +503,26 @@ public class InteractionSystem {
      */
     public BuildingQuestRegistry getQuestRegistry() {
         return questRegistry;
+    }
+
+    /**
+     * Notify the quest system that the player has entered a landmark.
+     * Any active EXPLORE quests targeting this landmark will be marked as visited,
+     * making them completable when the player next speaks to the quest giver.
+     *
+     * @param landmarkType the landmark the player has just entered or reached
+     */
+    public void onPlayerEntersLandmark(ragamuffin.world.LandmarkType landmarkType) {
+        if (landmarkType == null) return;
+        for (ragamuffin.world.LandmarkType type : ragamuffin.world.LandmarkType.values()) {
+            Quest quest = questRegistry.getQuest(type);
+            if (quest == null) continue;
+            if (!quest.isActive() || quest.isCompleted()) continue;
+            if (quest.getType() == Quest.ObjectiveType.EXPLORE
+                    && landmarkType == quest.getTargetLandmark()) {
+                quest.markLocationVisited();
+            }
+        }
     }
 
     /**
