@@ -2,6 +2,7 @@ package ragamuffin.entity;
 
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.building.Material;
+import ragamuffin.core.Rumour;
 import ragamuffin.world.LandmarkType;
 
 import java.util.ArrayList;
@@ -289,6 +290,12 @@ public class NPC {
     // Stolen items — tracks what this NPC has stolen from the player so it can be recovered
     private final List<Material> stolenItems = new ArrayList<>();
 
+    // Rumour network — buffer of gossip this NPC carries
+    private final List<Rumour> rumours = new ArrayList<>();
+
+    // Index into barman's rumour buffer for cycling through rumours when the player talks to them
+    private int barmanRumourIndex = 0;
+
     // Building association — set for static quest NPCs stationed inside labelled buildings
     private LandmarkType buildingType = null;
 
@@ -572,5 +579,35 @@ public class NPC {
      */
     public int getStolenItemCount() {
         return stolenItems.size();
+    }
+
+    // ── Rumour network ──────────────────────────────────────────────────────────
+
+    /**
+     * Direct access to this NPC's rumour buffer (mutable).
+     * Used by RumourNetwork to add/remove rumours.
+     */
+    public List<Rumour> getRumours() {
+        return rumours;
+    }
+
+    /**
+     * Returns the top rumour (most recently added) this NPC holds, or null if empty.
+     */
+    public Rumour getTopRumour() {
+        if (rumours.isEmpty()) return null;
+        return rumours.get(rumours.size() - 1);
+    }
+
+    /**
+     * Returns the barman's current rumour to share with the player,
+     * cycling through all accumulated rumours on each call.
+     * Returns null if the barman has no rumours.
+     */
+    public Rumour cycleBarmanRumour() {
+        if (rumours.isEmpty()) return null;
+        Rumour r = rumours.get(barmanRumourIndex % rumours.size());
+        barmanRumourIndex = (barmanRumourIndex + 1) % rumours.size();
+        return r;
     }
 }

@@ -46,4 +46,21 @@ public enum PropType {
 
     /** A park statue / monument on a plinth. */
     STATUE,
+
+    // ── Pub props (Phase 8b / Issue #696) ──────────────────────────────────
+
+    /** A dartboard mounted on a pub wall. */
+    DARTBOARD,
+
+    /** A pub bar stool. */
+    BAR_STOOL,
+
+    /** A fruit machine (slot machine) — interactive, costs 1 coin to play. */
+    FRUIT_MACHINE,
+
+    /** A pub table. */
+    PUB_TABLE,
+
+    /** A pub chair. */
+    PUB_CHAIR,
 }

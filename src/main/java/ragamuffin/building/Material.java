@@ -94,7 +94,8 @@ public enum Material {
     FOOD("Food"),  // generic currency used by the Fence to pay for stolen goods
     COAL("Coal"),        // Mined from underground coal ore
     IRON("Iron"),        // Mined from underground iron ore seams
-    FLINT("Flint");      // Knapped flint from deep stone, useful for improvised tools
+    FLINT("Flint"),      // Knapped flint from deep stone, useful for improvised tools
+    COIN("Coin");        // Currency dropped by hostile NPCs; used to buy drinks at the pub
 
     private final String displayName;
 
@@ -231,6 +232,8 @@ public enum Material {
             case IRON:            return cs(0.55f, 0.40f, 0.28f,  // Rusty brown ore
                                             0.35f, 0.35f, 0.38f); // Dark grey metal
             case FLINT:           return c(0.20f, 0.22f, 0.25f);  // Very dark blue-grey flint
+            case COIN:            return cs(0.85f, 0.72f, 0.20f,  // Gold coin face
+                                            0.65f, 0.52f, 0.10f); // Darker gold edge
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -294,6 +297,7 @@ public enum Material {
             // Currency coins
             case SHILLING:
             case PENNY:
+            case COIN:
             // Fence stock items
             case HIGH_VIS_JACKET:
             case CROWBAR:
@@ -398,6 +402,7 @@ public enum Material {
             case DODGY_DVD:
             case SHILLING:
             case PENNY:
+            case COIN:
                 return IconShape.CARD;
 
             case DIAMOND:

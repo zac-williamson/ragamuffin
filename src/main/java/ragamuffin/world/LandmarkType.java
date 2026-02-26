@@ -71,7 +71,7 @@ public enum LandmarkType {
             case KEBAB_SHOP:        return "Sultan's Kebab";
             case LAUNDERETTE:       return "Spotless Launderette";
             case TESCO_EXPRESS:     return "Tesco Express";
-            case PUB:               return "The King's Head";
+            case PUB:               return "The Ragamuffin Arms";
             case PAWN_SHOP:         return "Cash4Gold Pawnbrokers";
             case BUILDERS_MERCHANT: return "Handy Builders";
             case CHIPPY:            return "Tony's Chip Shop";
