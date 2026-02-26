@@ -59,7 +59,7 @@ class PhaseOHeistIntegrationTest {
         allNpcs = new ArrayList<>(npcManager.getNPCs());
 
         // Set up faction system with a TurfMap and RumourNetwork
-        TurfMap turfMap = new TurfMap();
+        TurfMap turfMap = new TurfMap(200, 200);
         factionSystem = new FactionSystem(turfMap, rumourNetwork);
     }
 
@@ -86,47 +86,38 @@ class PhaseOHeistIntegrationTest {
         // Give player BOLT_CUTTERS
         inventory.addItem(Material.BOLT_CUTTERS, 1);
 
-        // Record police count before
+        // Silence BOTH alarm boxes before any block break so neither can trigger.
+        // Alarm 0 is at (centre.x-3, y+1, centre.z-4), alarm 1 at (centre.x+3, y+1, centre.z-4).
+        boolean silenced0 = heistSystem.silenceAlarmBox(0, noiseSystem);
+        boolean silenced1 = heistSystem.silenceAlarmBox(1, noiseSystem);
+        assertTrue(silenced0, "Alarm box 0 should be silenced successfully");
+        assertTrue(silenced1, "Alarm box 1 should be silenced successfully");
+        assertTrue(heistSystem.isAlarmBoxSilenced(0), "Alarm box 0 should report as silenced");
+        assertTrue(heistSystem.isAlarmBoxSilenced(1), "Alarm box 1 should report as silenced");
+
+        // Record police count after silencing (before any break)
         long policeBefore = npcManager.getNPCs().stream()
             .filter(n -> n.getType() == NPCType.POLICE && n.isAlive())
             .count();
 
-        // Silence the first alarm box (alarm index 0)
-        boolean silenced = heistSystem.silenceAlarmBox(0, noiseSystem);
-        assertTrue(silenced, "Alarm box 0 should be silenced successfully");
-        assertTrue(heistSystem.isAlarmBoxSilenced(0), "Alarm box 0 should report as silenced");
-
-        // Set noise to a normal walking level (not spiked)
-        noiseSystem.setNoiseLevel(0.6f);
-
-        // Break a block near the silenced alarm box (alarm 0 is at centre-3, y+1, z-4)
-        // Use a position close to the silenced alarm
+        // Break a block at centre (within range of both alarms) — should trigger nothing
         Vector3 breakPos = new Vector3(
-            buildingCentre.x - 3 + 1,
+            buildingCentre.x,
             buildingCentre.y,
             buildingCentre.z - 4
         );
 
-        // Trigger block break near the silenced alarm
-        boolean alarmTriggered = heistSystem.onBlockBreak(breakPos, noiseSystem, npcManager, player, world);
+        // With both alarms silenced, no flood
+        noiseSystem.setNoiseLevel(0.5f);
+        boolean triggered = heistSystem.onBlockBreak(breakPos, noiseSystem, npcManager, player, world);
 
-        // Alarm 0 was silenced, alarm 1 is at centre+3, z-4 — not within 8 blocks of breakPos
-        // Verify: noise should NOT have spiked to 1.0 due to alarm 0 being silenced
-        // (alarm 1 is at +3, 0 from break is -3+1 = -2 x, so dist to alarm1 at +3 is 5 blocks — within range)
-        // Let's actually silence BOTH alarms to properly test no police flood
-        heistSystem.silenceAlarmBox(1, noiseSystem);
-
-        // Now break a block — with both alarms silenced, no flood
-        noiseSystem.setNoiseLevel(0.5f); // reset
-        boolean triggered2 = heistSystem.onBlockBreak(breakPos, noiseSystem, npcManager, player, world);
-
-        assertFalse(triggered2, "No alarm should be triggered when all alarm boxes are silenced");
+        assertFalse(triggered, "No alarm should be triggered when all alarm boxes are silenced");
 
         long policeAfter = npcManager.getNPCs().stream()
             .filter(n -> n.getType() == NPCType.POLICE && n.isAlive())
             .count();
 
-        // With both alarms silenced, NO police should have been spawned by this break
+        // With both alarms silenced, NO police should have been spawned
         assertEquals(policeBefore, policeAfter,
             "No police NPCs should be spawned when all alarms are silenced before block break");
     }
@@ -269,9 +260,11 @@ class PhaseOHeistIntegrationTest {
         // so dx=0, dz=-2 → angle to camera-forward(0,-1) = 0° → in cone
         player.getPosition().set(10, 1, 3); // 2 blocks in front of CCTV (z=5)
 
-        // Advance 60 frames (1 second) at daytime (isNight=false)
-        float delta = 1f / 60f;
-        for (int frame = 0; frame < 60; frame++) {
+        // Advance enough frames to accumulate > 1 second of CCTV exposure.
+        // Use a fixed delta of 0.1s (10 frames = 1 second) to avoid float accumulation
+        // rounding errors that occur with 1f/60f × 60 = 0.9999... < 1.0.
+        float delta = 0.1f;
+        for (int frame = 0; frame < 12; frame++) {
             heistSystem.update(delta, player, noiseSystem, npcManager, factionSystem,
                 rumourNetwork, npcs, world, false); // false = daytime
         }

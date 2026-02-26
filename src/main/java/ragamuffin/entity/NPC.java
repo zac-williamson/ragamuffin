@@ -20,6 +20,7 @@ public class NPC {
     public static final float DOG_SPEED = 5.0f; // Dogs move faster when roaming
 
     private final NPCType type;
+    private NPCModelVariant modelVariant; // Physical appearance variant for 3D model rendering
     private String name; // Optional unique name (null = anonymous NPC)
     private final Vector3 position;
     private final Vector3 velocity;
@@ -43,6 +44,7 @@ public class NPC {
     public NPC(NPCType type, String name, float x, float y, float z) {
         this.type = type;
         this.name = name;
+        this.modelVariant = NPCModelVariant.DEFAULT;
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
         this.aabb = new AABB(position, WIDTH, HEIGHT, DEPTH);
@@ -85,6 +87,22 @@ public class NPC {
      */
     public boolean isNamed() {
         return name != null && !name.isEmpty();
+    }
+
+    /**
+     * Returns the physical appearance variant used when rendering this NPC's 3D model.
+     * Defaults to {@link NPCModelVariant#DEFAULT} on construction.
+     */
+    public NPCModelVariant getModelVariant() {
+        return modelVariant;
+    }
+
+    /**
+     * Set the physical appearance variant for this NPC's 3D model.
+     * The renderer reads this each frame to apply the appropriate scale factors.
+     */
+    public void setModelVariant(NPCModelVariant variant) {
+        this.modelVariant = (variant != null) ? variant : NPCModelVariant.DEFAULT;
     }
 
     public Vector3 getPosition() {

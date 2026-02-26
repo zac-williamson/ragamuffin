@@ -2163,6 +2163,26 @@ public class NPCManager {
             return;
         }
 
+        // Proximity contact: adjacent player is always detected regardless of vision cone or noise.
+        // Check this FIRST so the hearing-only SUSPICIOUS path cannot pre-empt direct contact.
+        if (police.isNear(player.getPosition(), 2.0f)) {
+            if (player.getStreetReputation().isNotorious()) {
+                // Notorious players get no warning — police go straight to aggressive
+                police.setState(NPCState.AGGRESSIVE);
+                police.setSpeechText("I know you. You're coming with me!", 3.0f);
+            } else {
+                police.setState(NPCState.WARNING);
+                police.setSpeechText("Move along, nothing to see here.", 3.0f);
+                policeWarningTimers.put(police, 0.0f);
+            }
+
+            // Trigger first police encounter tooltip
+            if (tooltipSystem != null) {
+                tooltipSystem.trigger(TooltipTrigger.FIRST_POLICE_ENCOUNTER);
+            }
+            return;
+        }
+
         // Scan for player structures around police (use cached result to avoid expensive scan every frame)
         Vector3 structure = policeTargetStructures.get(police);
         if (structure == null && npcStructureScanTimer < 0.05f) {
@@ -2211,29 +2231,6 @@ public class NPCManager {
                 }
                 // Player is innocent and undetected — patrol randomly
                 updateWandering(police, delta, world);
-            }
-        }
-
-        // Check if adjacent to player - issue warning (or go straight to aggressive if notorious)
-        if (police.isNear(player.getPosition(), 2.0f)) {
-            if (player.getStreetReputation().isNotorious()) {
-                // Notorious players get no warning — police go straight to aggressive
-                police.setState(NPCState.AGGRESSIVE);
-                police.setSpeechText("I know you. You're coming with me!", 3.0f);
-            } else {
-                police.setState(NPCState.WARNING);
-                police.setSpeechText("Move along, nothing to see here.", 3.0f);
-                policeWarningTimers.put(police, 0.0f);
-            }
-
-            // Record structure near player if any
-            if (structure != null) {
-                policeTargetStructures.put(police, structure);
-            }
-
-            // Trigger first police encounter tooltip
-            if (tooltipSystem != null) {
-                tooltipSystem.trigger(TooltipTrigger.FIRST_POLICE_ENCOUNTER);
             }
         }
     }

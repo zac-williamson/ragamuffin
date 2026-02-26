@@ -120,7 +120,8 @@ public class BlockDropTable {
             case GARDEN_WALL:
                 return Material.GARDEN_WALL;
             case LEAVES:
-                return Material.LEAVES; // Always drop leaf bundle (used for ROPE_LADDER recipe)
+                // 30% chance to drop WOOD (twigs/branches), 70% chance to drop nothing
+                return (Math.random() < 0.30) ? Material.WOOD : null;
             case COAL_ORE:
                 return Material.COAL;
             case IRON_ORE:
