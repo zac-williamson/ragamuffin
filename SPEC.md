@@ -4037,3 +4037,200 @@ that transforms the criminal economy from "run and hope" into a strategic, repla
     see the player (night vision = 10 blocks, player at 12). Now verify hearing range: player
     noise = 0.6, night hearing range = 1.25 × (5 + 0.6×15) = 17.5 blocks — player at 12 IS
     detectable by sound. Verify NPC enters SUSPICIOUS state from noise alone.
+
+---
+
+## Phase O: The Big Job — Planned Heist System
+
+**Goal**: A fully planned, multi-stage robbery mechanic. The player can case
+specific landmark buildings (jeweller, off-licence, Greggs cash drawer,
+JobCentre filing cabinets), acquire specialist tools, execute the heist under
+stealth constraints, and fence the loot — all while the police escalation and
+faction rumour network react dynamically to news of the crime. Ties together
+stealth, factions, crafting, fence economy, and rumour systems into one
+thrilling gameplay loop.
+
+### Overview
+
+A **heist** is a multi-stage operation with four distinct phases:
+
+1. **Casing** — the player investigates the target building, identifying
+   guard patrol routes, alarm boxes, and loot locations.
+2. **Planning** — the player acquires specialist equipment and bribes or
+   recruits an NPC accomplice.
+3. **Execution** — the player breaks in, neutralises alarms, grabs loot, and
+   escapes within a time limit before police arrive.
+4. **Fence** — the hot loot must be sold within an in-game hour or it
+   permanently becomes worthless ("the word's out").
+
+### New Buildings / Props
+
+- **Alarm box** (`PropType.ALARM_BOX`): a red wall-mounted prop placed on the
+  exterior walls of heistable buildings. While active, any block break within 8
+  blocks of the alarm box spikes noise to 1.0 AND immediately flags the player
+  to all police NPCs on the map (equivalent to pressing F for "wanted"). The
+  alarm box can be silenced by interacting (E) with it while holding BOLT_CUTTERS
+  (1 second action, noise = 0.1). Silenced alarm boxes turn grey; re-activate
+  after 3 in-game minutes.
+- **Safe** (`PropType.SAFE`): a heavy metal prop inside the jeweller and the
+  off-licence back room. Cannot be broken by punching. Requires CROWBAR (new
+  craftable tool) + 8 seconds of interaction (hold E) while undetected. Yields
+  3–6 DIAMOND (jeweller) or 20–40 COIN + 1 PETROL_CAN (off-licence). If the
+  player is detected while cracking the safe, the action is interrupted and
+  noise spikes to 1.0.
+- **CCTV camera** (`PropType.CCTV`): a wall-mounted camera prop. If the player
+  walks within its 6-block frontal cone (45°) while not wearing a BALACLAVA,
+  they receive a 1-point criminal record penalty per second of exposure, and a
+  GANG_ACTIVITY rumour is seeded into the RumourNetwork: "Someone had their face
+  all over the jeweller's CCTV." Wearing a BALACLAVA at night nullifies this.
+
+### New Craftable Tools
+
+| Tool | Recipe | Effect |
+|---|---|---|
+| `CROWBAR` | BRICK×2 + WOOD×3 | Cracks safes; breaks BRICK blocks in 5 hits instead of 8 |
+| `GLASS_CUTTER` | DIAMOND×1 + WOOD×1 | Removes a GLASS block silently in 1 hit with zero noise (quieter than BOLT_CUTTERS) |
+| `ROPE_LADDER` | WOOD×4 + LEAVES×2 | Deployable: places a climbable ladder block on any vertical surface for 60 seconds — useful for rooftop entry |
+
+### Heist Targets
+
+Each landmark has a designated heist type. Each heist can only be executed once
+per in-game day (reset at 06:00).
+
+| Target | Alarm Boxes | Safes | Key Loot | Time Limit | Faction Impact |
+|---|---|---|---|---|---|
+| **Jeweller** | 2 | 1 | DIAMOND ×3-6, GOLD_RING ×2 | 90 sec | Marchetti Crew –15 respect (they have a cut) |
+| **Off-licence** | 1 | 1 | COIN ×20-40, PETROL_CAN ×1 | 60 sec | Marchetti Crew –20 respect (it's their place) |
+| **Greggs** | 0 | 0 | PASTY ×10, COIN ×8 | 45 sec | Street Lads +5 respect ("feeding the lads") |
+| **JobCentre** | 2 | 0 | COUNCIL_ID ×1, COIN ×15 | 75 sec | The Council –25 respect (outrage) |
+
+### Casing Phase
+
+- The player enters the target building and presses **F** to "case" it (new
+  interaction). This opens a HUD overlay (`HeistPlanUI`) showing a simple 2D
+  schematic of the floor plan (derived from the building's block structure):
+  - Red squares = alarm boxes (with "ARMED" / "CUT" state).
+  - Yellow squares = CCTV camera cones.
+  - Green square = the safe location (if present).
+  - Blue arrows = NPC patrol waypoints (pulled from the NPCManager's active routes).
+- The player must observe each patrol guard for at least 5 seconds (stand within
+  6 blocks) before their waypoints appear on the schematic. Unobserved guards
+  show as a "?" marker.
+- Casing data is stored as a `HeistPlan` object (new class) and persists until
+  the heist is executed or the day resets.
+- Tooltip on first case action: "Knowledge is power. Or at least it's a start."
+
+### Planning Phase
+
+- The `HeistPlan` exposes a list of recommended items based on what was cased:
+  - Alarm boxes present → "You'll need BOLT_CUTTERS or GLASS_CUTTER."
+  - Safe present → "You'll need a CROWBAR."
+  - CCTV present → "You'll need a BALACLAVA (at night)."
+- **Accomplice recruitment**: The player can recruit an NPC with Rumour type
+  `GANG_ACTIVITY` by talking to them (E) and choosing "I've got a job" dialogue
+  option. The NPC joins as a temporary `NPCState.FOLLOWING` companion for the
+  heist duration. The accomplice:
+  - Acts as a **lookout**: while positioned outside the target building, the
+    accomplice speech-bubbles "All clear" or "Leg it!" (if they spot a patrol
+    coming). "Leg it!" sets the player noise level to 0.8 immediately as a
+    warning.
+  - Costs 10 COIN upfront. If the heist succeeds, they take 25% of COIN loot.
+  - If arrested during the heist, a GANG_ACTIVITY rumour is seeded: "Your mate
+    got nicked. Loose lips." Marchetti Crew lose 5 respect (amateur hour).
+- The player can skip the accomplice and go solo — harder but keeps 100% of loot.
+
+### Execution Phase
+
+- The player selects the heist target from the `HeistPlanUI` and presses **G**
+  ("Go") to start the timer.
+- A countdown HUD bar appears (top of screen, red) counting down from the time
+  limit. If the timer reaches zero, police flood the area: 4 POLICE NPCs spawn
+  at the building perimeter and the player is immediately wanted.
+- **Alarm activation**: any block break near an armed alarm box instantly starts
+  the police-flood countdown at 30 seconds (overriding the remaining time if
+  longer). Silencing the alarm box before breaking blocks prevents this.
+- **Loot collection**: loot items (DIAMOND, COIN, PASTY, etc.) are placed as
+  `SmallItem` drops inside the building at the safe location and on shelves
+  (specific PropType positions). The player picks them up as normal.
+- **Escape**: player must exit the building's perimeter (cross a 3-block exclusion
+  zone around the building) before the timer expires to successfully complete the
+  heist.
+- On success:
+  - `AchievementType.MASTER_CRIMINAL` awarded on first heist completion.
+  - Faction respect adjustments applied (see table above).
+  - GANG_ACTIVITY rumour seeded into 5 NPCs: "{Target} got done over last night.
+    Proper job." Street reputation increases by 3.
+  - All loot is marked **HOT** for 60 in-game minutes. The Fence offers 50% of
+    normal value for hot loot; after 60 minutes, it drops to 25% permanently.
+  - The Fence gives full value (100%) if the player arrives within 5 in-game
+    minutes of completing the heist ("still warm, son").
+- On failure (timer expired / arrested):
+  - All loot is confiscated.
+  - Criminal record gains 2 points.
+  - Faction that owns the building gains +10 respect (player failed their
+    territory).
+  - GANG_ACTIVITY rumour: "That one tried to do {Target} over. Pathetic."
+
+### New Achievement
+
+| Achievement | Trigger | Flavour |
+|---|---|---|
+| `MASTER_CRIMINAL` | Complete any heist successfully | "You absolute wrong'un." |
+| `SMOOTH_OPERATOR` | Complete a heist without triggering any alarm | "In and out. No fuss." |
+| `FENCE_FRESH` | Fence hot loot within 5 in-game minutes of the heist | "Still warm, son." |
+| `SOLO_JOB` | Complete a heist without an accomplice | "Trust no one." |
+
+### Integration Tests — implement these exact scenarios
+
+1. **Alarm box silencing prevents police flood**: Place player adjacent to a
+   JEWELLER building with 2 active ALARM_BOX props. Give player BOLT_CUTTERS.
+   Interact (E) with the first alarm box — verify it transitions to silenced state
+   after 1 second. Break a GLASS block on the jeweller wall. Verify noise does NOT
+   spike to 1.0, and NO police NPCs are spawned at the perimeter.
+
+2. **Unsilenced alarm triggers police**: Place player at the jeweller. Do NOT
+   silence alarm boxes. Break a BRICK block on the wall. Verify noise = 1.0
+   immediately. Verify at least 1 POLICE NPC spawns within 10 blocks of the
+   building within 30 frames.
+
+3. **Safe cracking requires CROWBAR and time**: Place player adjacent to a SAFE
+   prop inside the jeweller. Player holds CROWBAR. Begin hold-E interaction.
+   Advance 7 seconds (420 frames at 60fps) — verify safe is NOT yet open. Advance
+   1 more second (60 frames). Verify safe opens and DIAMOND items are spawned at
+   the safe's position.
+
+4. **CCTV penalty without BALACLAVA**: Place player in the CCTV camera cone (within
+   6 blocks, within 45° of camera facing). Set time to 12:00 (daytime). Advance 60
+   frames (1 second). Verify criminal record has increased by at least 1 point.
+   Verify a GANG_ACTIVITY rumour containing "CCTV" is present in at least one NPC's
+   rumour list.
+
+5. **CCTV nullified by BALACLAVA at night**: Set time to 23:00. Give player BALACLAVA
+   and activate it. Place player in CCTV cone at 4 blocks. Advance 60 frames. Verify
+   criminal record is unchanged. Verify no CCTV rumour is seeded.
+
+6. **Heist timer triggers police flood on expiry**: Start a jeweller heist (press G).
+   Do nothing (let timer expire). Verify that exactly at timer expiry, 4 POLICE NPCs
+   are spawned within 5 blocks of the jeweller perimeter.
+
+7. **Accomplice lookout warning**: Spawn an NPC accomplice in FOLLOWING state outside
+   the jeweller. Spawn a PATROL NPC walking toward the building entrance. When the
+   patrol NPC is within 8 blocks of the accomplice, verify the accomplice emits a
+   speech bubble containing "Leg it!" and the player noise level is set to at least
+   0.8.
+
+8. **Hot loot fence pricing**: Complete a jeweller heist. Immediately (within 5
+   in-game minutes) approach the Fence NPC. Verify loot is offered at 100% value
+   ("still warm"). Wait 60 in-game minutes (advance time). Verify loot is now
+   offered at 25% value.
+
+9. **Faction respect impact**: Record Marchetti Crew respect. Complete a jeweller
+   heist successfully. Verify Marchetti Crew respect has decreased by 15. Verify a
+   GANG_ACTIVITY rumour containing "Jeweller" has been seeded into at least 5 NPCs.
+
+10. **ROPE_LADDER enables rooftop entry**: Place player at the base of the jeweller
+    wall (height 8 blocks). Give player ROPE_LADDER. Activate (right-click on wall).
+    Verify a climbable LADDER block is placed at the player's position on the wall.
+    Player moves upward — verify the player can climb the ladder and reaches the
+    rooftop (y > 7). Verify the ROPE_LADDER block disappears after 60 in-game
+    seconds.
