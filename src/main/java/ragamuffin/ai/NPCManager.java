@@ -782,7 +782,7 @@ public class NPCManager {
         if (npc.getType() == NPCType.POLICE) {
             updatePolice(npc, delta, world, player, tooltipSystem);
         } else if (npc.getType() == NPCType.COUNCIL_BUILDER) {
-            updateCouncilBuilder(npc, delta, world, player, tooltipSystem);
+            updateCouncilBuilder(npc, delta, world, tooltipSystem);
         } else {
             // Notorious players cause civilians to flee on sight
             if (player.getStreetReputation().isNotorious()
