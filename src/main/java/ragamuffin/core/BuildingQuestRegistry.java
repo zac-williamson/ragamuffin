@@ -26,8 +26,8 @@ public class BuildingQuestRegistry {
 
         register(LandmarkType.GREGGS,
             new Quest("greggs_flour", "Greggs Baker",
-                "We've run out of pastry supplies. Get me 2 sausage rolls from anywhere and I'll owe you.",
-                ObjectiveType.COLLECT, Material.SAUSAGE_ROLL, 2,
+                "We're desperate — pop to Tesco and grab me 2 tins of beans. Baking emergency.",
+                ObjectiveType.COLLECT, Material.TIN_OF_BEANS, 2,
                 Material.STEAK_BAKE, 3));
 
         register(LandmarkType.OFF_LICENCE,
@@ -56,27 +56,27 @@ public class BuildingQuestRegistry {
 
         register(LandmarkType.BOOKIES,
             new Quest("bookies_scratchcard", "Coral Manager",
-                "Punters keep asking for scratch cards. Bring me 3 scratch cards and I'll split the winnings.",
-                ObjectiveType.COLLECT, Material.SCRATCH_CARD, 3,
+                "Punters keep asking for energy drinks. Grab me 3 from the off-licence and I'll sort you.",
+                ObjectiveType.COLLECT, Material.ENERGY_DRINK, 3,
                 Material.ENERGY_DRINK, 2));
 
         register(LandmarkType.KEBAB_SHOP,
             new Quest("sultan_kebab", "Sultan",
-                "We're out of kebab meat. Surprise me — bring me something edible.",
-                ObjectiveType.COLLECT, Material.CHIPS, 2,
+                "We're out of supplies. Grab me 2 tins of beans from the corner shop — improvising tonight.",
+                ObjectiveType.COLLECT, Material.TIN_OF_BEANS, 2,
                 Material.KEBAB, 2));
 
         register(LandmarkType.LAUNDERETTE,
             new Quest("launderette_powder", "Spotless Owner",
-                "I'm out of washing powder. Bring me some and I'll have your clothes fresh as a daisy.",
-                ObjectiveType.COLLECT, Material.WASHING_POWDER, 1,
-                Material.ANTIDEPRESSANTS, 1));
+                "Pipes are playing up. Pop to the fire station and make sure they know — I need a plumber.",
+                ObjectiveType.EXPLORE, null, 1,
+                LandmarkType.FIRE_STATION, Material.ANTIDEPRESSANTS, 1));
 
         register(LandmarkType.PUB,
             new Quest("pub_pint", "Barman",
-                "Landlord's doing a stock check. Bring in a couple of pints from the cellar, would you?",
-                ObjectiveType.COLLECT, Material.PINT, 2,
-                Material.CRISPS, 4));
+                "Need someone to check on my mate at the job centre. Go see if he's alright, would you?",
+                ObjectiveType.EXPLORE, null, 1,
+                LandmarkType.JOB_CENTRE, Material.CRISPS, 4));
 
         register(LandmarkType.PAWN_SHOP,
             new Quest("pawnshop_electronics", "Cash4Gold Manager",
@@ -86,27 +86,27 @@ public class BuildingQuestRegistry {
 
         register(LandmarkType.CHIPPY,
             new Quest("chippy_chips", "Tony",
-                "We've gone and run out of chips. Bring me 2 portions — yes, I know.",
-                ObjectiveType.COLLECT, Material.CHIPS, 2,
-                Material.KEBAB, 1));
+                "Oil delivery never showed. Pop to the builders merchant and see if they've got anything.",
+                ObjectiveType.EXPLORE, null, 1,
+                LandmarkType.BUILDERS_MERCHANT, Material.KEBAB, 1));
 
         register(LandmarkType.NEWSAGENT,
             new Quest("newsagent_paper", "Patel",
-                "My newspaper delivery never showed. Bring me 3 newspapers and I'll see you right.",
-                ObjectiveType.COLLECT, Material.NEWSPAPER, 3,
-                Material.PENNY, 6));
+                "My newspaper delivery never showed. Go check the library — might have some there.",
+                ObjectiveType.EXPLORE, null, 1,
+                LandmarkType.LIBRARY, Material.PENNY, 6));
 
         register(LandmarkType.GP_SURGERY,
             new Quest("surgery_meds", "Northfield Surgery Receptionist",
-                "We're running dangerously low on paracetamol. Can you bring some in?",
-                ObjectiveType.COLLECT, Material.PARACETAMOL, 2,
-                Material.ANTIDEPRESSANTS, 3));
+                "We need an emergency supply assessment. Can you check what the community centre has?",
+                ObjectiveType.EXPLORE, null, 1,
+                LandmarkType.COMMUNITY_CENTRE, Material.ANTIDEPRESSANTS, 3));
 
         register(LandmarkType.WETHERSPOONS,
             new Quest("spoons_pint", "Rusty Anchor Barman",
-                "Our pint deliveries are stuck in traffic. Bring 3 pints and drinks are on me.",
-                ObjectiveType.COLLECT, Material.PINT, 3,
-                Material.PERI_PERI_CHICKEN, 1));
+                "We've got a VIP punter asking for Nandos. Go check if they're open and come back.",
+                ObjectiveType.EXPLORE, null, 1,
+                LandmarkType.NANDOS, Material.PERI_PERI_CHICKEN, 1));
 
         register(LandmarkType.NANDOS,
             new Quest("nandos_chicken", "Nando's Manager",
@@ -116,15 +116,15 @@ public class BuildingQuestRegistry {
 
         register(LandmarkType.BARBER,
             new Quest("barber_clippers", "Kev",
-                "My clippers have gone walk-about. Find me a pair and I'll sort your hair for free.",
-                ObjectiveType.COLLECT, Material.HAIR_CLIPPERS, 1,
-                Material.PARACETAMOL, 2));
+                "Left me clippers at the pawn shop — the muppets took them. Go get 'em back.",
+                ObjectiveType.EXPLORE, null, 1,
+                LandmarkType.PAWN_SHOP, Material.PARACETAMOL, 2));
 
         register(LandmarkType.NAIL_SALON,
             new Quest("nails_polish", "Angel Nails",
-                "I'm out of my best colour — that deep red. Bring me a nail polish and I'll do your nails.",
-                ObjectiveType.COLLECT, Material.NAIL_POLISH, 1,
-                Material.ANTIDEPRESSANTS, 1));
+                "I'm waiting on a supplier. Pop to the cash converters and check if they've got anything.",
+                ObjectiveType.EXPLORE, null, 1,
+                LandmarkType.CASH_CONVERTER, Material.ANTIDEPRESSANTS, 1));
 
         register(LandmarkType.CORNER_SHOP,
             new Quest("cornershop_crisps", "Happy Shopper Owner",
@@ -222,6 +222,11 @@ public class BuildingQuestRegistry {
             }
             return "Still waiting on those " + quest.getRequiredCount() + " "
                 + materialName(quest.getRequiredMaterial()) + ". Don't let me down.";
+        }
+        if (quest.getType() == Quest.ObjectiveType.EXPLORE && quest.getTargetLandmark() != null) {
+            String name = quest.getTargetLandmark().getDisplayName();
+            if (name == null) name = quest.getTargetLandmark().name().toLowerCase().replace('_', ' ');
+            return "Not been yet? You need to head over to " + name + ". Off you go.";
         }
         return "You haven't finished the job yet.";
     }
