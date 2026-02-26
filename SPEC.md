@@ -689,6 +689,187 @@ RNG distribution.
 ---
 ---
 
+## Phase 8c: British Weather Survival
+
+**Goal**: Make the weather system matter. British weather isn't mere atmosphere —
+it's an active antagonist. Rain, biting cold, choking fog, and the occasional
+freakish heatwave impose real survival costs on the player and reshape NPC
+behaviour, forcing the player to scavenge clothing, build shelters, and read
+the social landscape of the street as conditions change.
+
+### Weather States (extend existing `Weather` enum)
+
+| Weather | Description |
+|---------|-------------|
+| `CLEAR` | Sunny; no penalty |
+| `OVERCAST` | Grey sky; mild cold |
+| `DRIZZLE` | Light rain; minor wetness accumulation |
+| `RAIN` | Heavy rain; fast wetness accumulation, cold drain |
+| `THUNDERSTORM` | Torrential rain + lightning; danger outdoors |
+| `FOG` | Visibility reduced to ~12 blocks (fog render distance clamp) |
+| `HEATWAVE` | Rare; causes dehydration instead of cold |
+| `FROST` | Early morning; ground icy (movement 15% slower outdoors) |
+
+Transition probabilities reflect British weather: CLEAR is rare, OVERCAST is
+the baseline, RAIN and DRIZZLE are frequent. THUNDERSTORM and HEATWAVE are
+uncommon; FROST only occurs between 00:00–08:00.
+
+### Player Survival Stats
+
+Two new survival bars on the HUD (alongside health/hunger/energy):
+
+- **Warmth** (0–100, starts at 80): drains when player is outdoors in cold/wet
+  weather; restored by shelter, fire, or warm clothing. Below 20: player takes 1
+  damage every 10 seconds and speed is reduced 20%. Tooltip on first drain:
+  "It's brass monkeys out here."
+- **Wetness** (0–100, starts at 0): rises in rain; dries gradually in shelter.
+  High wetness accelerates warmth drain. Above 80: screen edges show a subtle
+  water-drip vignette effect. Tooltip on first rain encounter: "Classic British
+  summer."
+
+### Clothing & Warmth Items
+
+New `Material` entries for clothing dropped by specific NPCs or found in the
+charity shop:
+
+| Item | Source | Warmth bonus | Notes |
+|------|--------|--------------|-------|
+| `COAT` | Charity shop loot, defeated COUNCIL_BUILDER | +25 warmth/min when worn | Equip via inventory; shown as worn in first-person arm |
+| `UMBRELLA` | Charity shop loot | Halves wetness gain while held | Held in off-hand; blocks can't be placed while open |
+| `WOOLLY_HAT` | Charity shop loot | +10 warmth/min | Stacks with coat |
+| `FLASK_OF_TEA` | Crafted (1 WOOD + 1 COIN via crafting menu) | +30 warmth, instant | Single use; tooltip: "Never underestimate a hot flask." |
+
+Clothing is equipped via the inventory screen (new "Worn" slots alongside
+hotbar). Worn items visibly change the first-person arm render colour.
+
+### Fire Building
+
+- New block type `CAMPFIRE` (crafted from 3 WOOD in the crafting menu).
+- Placing a CAMPFIRE block ignites it: it emits an orange-yellow flickering
+  point light (dynamic lighting, 6-block radius) rendered via LibGDX's
+  environment system.
+- Player within 4 blocks of a lit CAMPFIRE gains +40 warmth/min.
+- Fire spreads to adjacent WOOD blocks after 120 seconds (prevents accidental
+  building fires: only spreads to crafted WOOD items, not world WOOD blocks in
+  tree trunks or building frames).
+- Police treat an outdoor CAMPFIRE as a public nuisance after 60 seconds (same
+  escalation as large player structures).
+- Rain extinguishes a CAMPFIRE after 30 seconds of exposure.
+- Tooltip on first campfire placement: "Nothing like a fire in the park. Very
+  festive. Very illegal."
+
+### NPC Weather Reactions
+
+NPC behaviour changes based on current weather, making the world feel alive:
+
+- **DRIZZLE / RAIN**: Pedestrian NPCs reduce walking speed 20% and cluster
+  under awnings (a 1-block overhang of any solid block) and bus-shelter props.
+  Jogger NPCs leave the park entirely (return to nearest building).
+- **THUNDERSTORM**: All non-hostile NPCs run to the nearest building/doorway
+  and remain there until the storm ends. POLICE NPCs reduce patrol frequency
+  by 50% ("even coppers don't fancy it"). Hostile YOUTH NPCs become MORE
+  aggressive (they embrace the chaos).
+- **FOG**: Police NPCs' line-of-sight detection range halved. Stealth approach
+  distance also halved — good news for the player's criminal endeavours.
+- **HEATWAVE**: NPCs congregate in the park around the pond. DRUNK NPCs
+  multiply. The pub sees a 50% increase in NPC traffic. Player dehydration
+  replaces coldness: Warmth stat replaced by **Hydration** (drain rate doubled
+  when above 80 game-temperature).
+- **FROST**: NPCs walk slower. Black ice patches (invisible FROST_ICE block
+  variant) are placed on ROAD and PAVEMENT blocks at world-gen; players crossing
+  them have a 10% chance per step of slipping (brief movement direction
+  randomised for 0.5 seconds). NPC cars skid (Car velocity briefly deviates).
+
+### Weather Forecast Rumours
+
+The RumourNetwork gains weather-forecast rumours:
+- A new `RumourType.WEATHER_TIP` is seeded hourly by the TimeSystem: "Heard
+  there's a storm coming this afternoon" / "BBC says it'll clear up by teatime."
+- Barman always has the most current forecast rumour (flavour text only, no
+  gameplay effect beyond informing the player to prepare).
+
+### Visual Effects
+
+- **Rain particle system**: vertical streaks rendered as thin billboard quads,
+  density scales with weather state (DRIZZLE < RAIN < THUNDERSTORM). Rain
+  splashes on ground blocks (small circular ripple sprite, 0.3 second lifetime).
+- **Fog**: LinearFog applied to ModelBatch environment. Distance clamps to 12
+  blocks during FOG state; fades to normal over 5 seconds on transition.
+- **Lightning**: During THUNDERSTORM, random flashes of white ambient light
+  every 15–45 seconds (random duration 0.1–0.2 s). Accompanied by a delayed
+  thunder sound effect (1–3 seconds after flash, simulating distance).
+- **Frost sparkle**: PAVEMENT and ROAD blocks during FROST state shimmer with
+  a faint white specular highlight in the chunk texture.
+- **Campfire flicker**: point light intensity oscillates ±15% using a sine
+  wave at ~2 Hz, giving convincing flame flicker without a particle system.
+
+**Unit tests**: Warmth/wetness drain rates under each weather state, clothing
+warmth bonus calculations, campfire radius warmth gain, NPC weather behaviour
+state transitions, black ice slip probability, fire spread timer, fog distance
+clamp, rain particle count per weather tier.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Warmth drains outdoors in rain**: Set weather to RAIN. Place player
+   outdoors (no overhead solid block within 3 blocks above). Record warmth
+   (should be 80). Advance 300 frames (5 seconds). Verify warmth has decreased
+   below 80. Verify the warmth HUD bar is visible and reflects the new value.
+
+2. **Shelter stops warmth drain**: Set weather to RAIN. Place player in a
+   building interior (overhead solid blocks present). Set warmth to 50. Advance
+   300 frames. Verify warmth has NOT decreased (shelter prevents drain). Verify
+   warmth has increased slightly (passive recovery indoors).
+
+3. **Campfire restores warmth**: Craft a CAMPFIRE and place it outdoors. Set
+   weather to OVERCAST (no rain extinguishing). Set player warmth to 30. Place
+   player within 4 blocks of the campfire. Advance 120 frames (2 seconds). Verify
+   warmth has increased above 30. Verify the campfire block emits a light (the
+   environment's point lights list is non-empty).
+
+4. **Coat reduces warmth drain**: Give the player a COAT item and equip it.
+   Set weather to RAIN. Record warmth. Advance 300 frames outdoors. Verify warmth
+   has drained LESS than it would without a coat (compare against unequipped
+   baseline from test 1). Verify the HUD shows the coat as equipped.
+
+5. **Rain extinguishes campfire**: Place a CAMPFIRE block outdoors. Verify it
+   is lit (light emitting). Set weather to RAIN. Advance 1800 frames (30 seconds
+   at 60fps). Verify the campfire block is no longer lit (no longer emitting
+   light). Verify a tooltip or speech event indicates the fire was extinguished.
+
+6. **NPCs shelter under awnings in rain**: Generate the world. Set weather to
+   RAIN. Record NPC positions. Identify at least one awning structure (solid
+   block with air below, adjacent to a building). Advance 600 frames. Verify
+   at least 2 pedestrian NPCs are now positioned under the awning or inside a
+   building (not standing in open rain). Verify YOUTH NPCs have NOT sheltered
+   (they remain outdoors).
+
+7. **Fog reduces police LoS range**: Set weather to FOG. Get the police NPC's
+   normal sight range. Verify the police LoS detection range is halved compared
+   to CLEAR weather. Place player at exactly (normal_range - 1) blocks from
+   police. Verify police do NOT detect the player during fog. Set weather to
+   CLEAR. Verify the police now detect the player at the same distance.
+
+8. **Frost ice causes player slip**: Generate a world. Set weather to FROST.
+   Verify black ice patches are placed on at least 5 ROAD blocks. Place the
+   player on a black ice block. Simulate 60 step frames. Verify at least 1 slip
+   event occurred (player's actual movement direction deviated from input
+   direction for at least 1 frame).
+
+9. **Weather forecast rumour is seeded**: Advance the TimeSystem by 1 in-game
+   hour. Verify a `WEATHER_TIP` rumour has been added to at least one NPC's
+   rumour buffer. Advance to the pub. Press **E** on the barman. Verify his
+   speech includes a weather forecast string.
+
+10. **Full weather cycle stress test**: Start a new game. Force weather through
+    all 8 states in sequence (CLEAR → OVERCAST → DRIZZLE → RAIN → THUNDERSTORM
+    → FOG → HEATWAVE → FROST). For each state: advance 120 frames, verify no
+    null pointer exceptions, verify NPC count is unchanged from pre-transition,
+    verify player warmth/wetness are valid numbers (0–100), verify the HUD is
+    still rendering. After all 8 states, verify the game remains in PLAYING
+    state with no crashes.
+
+---
+
 ## Phase 9: CODE REVIEW
 
 **Goal**: Comprehensive code review of the entire codebase. This phase runs after
