@@ -3211,3 +3211,175 @@ private void renderRain(float delta) {
 4. **Rain rendered when weather is RAIN**: Set `WeatherSystem` to RAIN. Call the render
    loop once. Assert `shapeRenderer.begin()` is called exactly once inside `renderRain()`
    and that exactly 80 `line()` calls are made (matching `numDrops = 80`).
+
+---
+
+## Phase 12: Black Market & Underground Economy
+
+**Goal**: A secretive NPC-driven barter economy with a "Fence" character who buys
+stolen goods, commissions contraband runs, and gatekeeps access to rare items — all
+dripping with British street dark humour.
+
+### Core Concept
+
+The player can find a **Fence NPC** (`NPCType.FENCE`) who operates out of the back
+of the charity shop (or a lock-up on the industrial estate). The Fence is always
+present but only *accessible* once the player has accumulated enough **Street Rep**
+(tracked by the existing `StreetReputation` system). Until then, interacting with
+the Fence just yields: *"I'm just sorting donations, love. Move along."*
+
+### Street Reputation Gate
+
+- **Rep < 10**: Fence ignores the player entirely.
+- **Rep 10–29**: Fence will buy stolen goods (DIAMOND, SCRAP_METAL, STAPLER, COMPUTER)
+  at 50% of their base value, paid in FOOD items (the de facto currency of desperation).
+- **Rep 30+**: Fence unlocks **Contraband Runs** (see below) and sells rare items from
+  a rotating stock (e.g. a crowbar blueprint, a bolt cutter recipe, a high-vis jacket
+  that reduces police suspicion).
+
+### Selling Stolen Goods
+
+- The player walks up to the Fence NPC and presses **E** to open the Fence Trade UI
+  (a new UI panel distinct from the crafting/inventory UIs).
+- The UI shows two columns: player inventory on the left, Fence's offer on the right.
+- The Fence evaluates items using a `FenceValuationTable` (new class):
+  - `DIAMOND` → 8 FOOD
+  - `COMPUTER` → 5 FOOD
+  - `SCRAP_METAL` → 2 FOOD
+  - `STAPLER` → 1 FOOD
+  - `OFFICE_CHAIR` → 3 FOOD
+  - `PLANKS` → 1 FOOD (per 4)
+  - Any item not on the table → Fence says *"Can't shift that, mate."*
+- The player selects items to sell; pressing **Confirm** transfers the items to the
+  Fence and adds FOOD to the player's inventory. The transaction also increments
+  `StreetReputation` by 1 per sale (max once per in-game day).
+
+### Contraband Runs (Rep 30+)
+
+The Fence offers **timed delivery quests** using the existing `Quest` system
+(`ObjectiveType.DELIVER`). These are procedurally selected from a fixed pool:
+
+| Run Name | Objective | Time Limit (in-game minutes) | Reward |
+|---|---|---|---|
+| "The Parcel" | Deliver SCRAP_METAL (×5) to the industrial estate | 10 | 4 FOOD + Rep+3 |
+| "Diamond Geezer" | Deliver DIAMOND (×1) to the jeweller | 8 | 6 FOOD + Rep+5 |
+| "Office Clearance" | Deliver COMPUTER (×2) to the off-licence | 12 | 5 FOOD + Rep+2 |
+| "Biscuit Run" | Deliver FOOD (×3) to the Greggs | 5 | 8 FOOD + Rep+1 |
+
+- Only one Contraband Run is active at a time.
+- If the player fails to deliver within the time limit, the Fence's rep drops by 5
+  and the Fence goes cold for one in-game day (won't trade or offer runs).
+- A new run is available every in-game day.
+- Time-limit countdown is displayed on the `QuestTrackerUI`.
+
+### Fence Stock (Rep 30+)
+
+The Fence sells items from a daily rotating stock of 3 items (re-rolled each in-game
+day). Items purchasable with FOOD:
+
+- **High-Vis Jacket** (new `Material.HIGH_VIS_JACKET`, 6 FOOD): While in inventory,
+  reduces police WARNED→HOSTILE escalation timer from 5 s to 12 s (police assume
+  you're a council worker).
+- **Crowbar** (new `Material.CROWBAR`, 8 FOOD): Reduces block-breaking hits required
+  by 2 for HARD blocks (BRICK/STONE/PAVEMENT go from 8 to 6 hits).
+- **Balaclava** (new `Material.BALACLAVA`, 10 FOOD): While worn (toggle with **B**),
+  prevents `GangTerritorySystem` from identifying the player; gangs give a fresh 5 s
+  linger window even if previously HOSTILE. Tooltip on equip: *"You look like you're
+  about to rob a post office. Which you are."*
+- **Bolt Cutters** (new `Material.BOLT_CUTTERS`, 12 FOOD): Instantly breaks GLASS
+  in 1 hit instead of 2; flavour text: *"For legitimate purposes only."*
+- **Dodgy Pasty** (5 FOOD): Instantly restores 50 HP. Tooltip: *"Best not to ask
+  what's in it."*
+
+The stock is drawn randomly from this pool each in-game day with no duplicates.
+
+### Fence NPC Behaviour
+
+- The Fence NPC has a `FENCE` `NPCType` and uses `NPCState.IDLE` during the day.
+- At night (22:00–06:00) the Fence paces between the charity shop back door and
+  the industrial estate, muttering ambient lines:
+  - *"All legitimate, all above board."*
+  - *"Bit nippy for a handover."*
+  - *"Cash only. Obviously."*
+  - *"If anyone asks, I'm delivering leaflets."*
+- If police are nearby (within 15 blocks), the Fence immediately returns to IDLE
+  and the trade UI closes with the message: *"Not now. Bill's watching."*
+- The Fence cannot be attacked (has 999 HP and does not retaliate — *"I'm a
+  businessman, not a fighter"*).
+
+### New Materials
+
+Add to `Material` enum:
+- `HIGH_VIS_JACKET`
+- `CROWBAR`
+- `BALACLAVA`
+- `BOLT_CUTTERS`
+
+Add passive effect processing in `InputHandler` / `InteractionSystem`:
+- Check player inventory for `HIGH_VIS_JACKET` when police escalation threshold fires.
+- Check for `CROWBAR` when `BlockBreaker` calculates hits required.
+- Check for `BALACLAVA` when `GangTerritorySystem` evaluates linger time.
+- Check for `BOLT_CUTTERS` when `BlockBreaker` targets GLASS.
+
+### HUD / UI
+
+- New `FenceTradeUI` class (similar structure to `CraftingUI`) shown on pressing **E**
+  near the Fence.
+- `QuestTrackerUI` shows a countdown timer in red for active Contraband Runs.
+- A small **Rep indicator** (number + star icon) is added to the HUD bottom-right,
+  updated live from `StreetReputation`.
+
+**Unit tests**: `FenceValuationTable` returns correct FOOD amounts for all listed
+materials and returns -1 for unlisted items; `FenceStockGenerator` produces exactly
+3 distinct items per day and re-rolls each day; passive item effects apply correctly
+to block-breaking and police escalation; Contraband Run timer decrements correctly.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Fence ignores low-rep player**: Set `StreetReputation` to 0. Place the player
+   adjacent to the Fence NPC. Press **E**. Verify the `FenceTradeUI` does NOT open.
+   Verify the Fence emits the "sorting donations" dismissal line.
+
+2. **Selling stolen goods transfers items and awards FOOD**: Set `StreetReputation`
+   to 15. Give the player 1 DIAMOND. Open the Fence Trade UI via **E**. Select
+   DIAMOND and confirm. Verify the player's DIAMOND count is 0. Verify the player's
+   FOOD count has increased by 8. Verify `StreetReputation` has increased by 1.
+
+3. **Fence refuses unlisted item**: Set rep to 15. Give the player 5 LEAVES. Open
+   Fence Trade UI. Attempt to sell LEAVES. Verify the transaction is rejected and
+   the Fence emits the "can't shift that" line. Verify player still has 5 LEAVES.
+
+4. **Contraband Run completes within time limit**: Set rep to 30. Accept "The Parcel"
+   run (SCRAP_METAL ×5 to industrial estate). Give the player 5 SCRAP_METAL. Move
+   the player to the industrial estate landmark within the 10 in-game minute limit.
+   Verify the quest is marked completed. Verify the player received 4 FOOD and rep
+   increased by 3.
+
+5. **Failed Contraband Run penalises rep**: Accept a Contraband Run. Advance in-game
+   time past the time limit without delivering. Verify the Fence's availability flag
+   is set to cold (no trade UI for 1 in-game day). Verify `StreetReputation` decreased
+   by 5.
+
+6. **High-Vis Jacket delays police escalation**: Give the player a `HIGH_VIS_JACKET`.
+   Set time to 22:00. Let a police NPC approach. Record the escalation timer. Verify
+   the timer is 12 s, not the default 5 s. Remove the jacket from inventory. Verify
+   the timer reverts to 5 s.
+
+7. **Crowbar reduces break hits for HARD blocks**: Give the player a `CROWBAR`. Target
+   a BRICK block. Simulate punch actions. Verify the block breaks after exactly 6 hits
+   (not 8). Verify the block is replaced with AIR and drops BRICK material.
+
+8. **Balaclava resets gang linger timer**: Set rep to 0. Enter a gang territory until
+   state reaches HOSTILE (linger 5+ seconds). Give the player a `BALACLAVA` and
+   toggle it with **B**. Verify `GangTerritorySystem` resets the linger timer for the
+   current territory to 0 and state returns to WARNED.
+
+9. **Fence flees police**: Set time to 22:00. Let a police NPC spawn within 15 blocks
+   of the Fence. Verify the Fence's state is IDLE (not pacing). Open Fence Trade UI
+   (if it was open, verify it auto-closes). Verify the Fence emits the "Bill's
+   watching" dialogue.
+
+10. **Fence stock re-rolls each in-game day**: Record the Fence's 3-item stock at
+    day 1. Advance time by 24 in-game hours. Verify the Fence's stock has been
+    re-rolled (at least 1 item differs, or verify the RNG seed changed). Verify the
+    new stock still has exactly 3 distinct items from the valid pool.
