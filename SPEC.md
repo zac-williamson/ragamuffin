@@ -4829,3 +4829,226 @@ Vibe decay per day, lodger acceptance chance formula, squat claim validation.
    entrance and enters GUARDING state. Force a raid. Verify the BOUNCER attacks
    the first THUG. Verify the raid is repelled (thugs flee or are defeated) without
    Vibe loss.
+
+---
+
+## Phase 8r: Underground Music Scene — Street MC, Raves & MC Battles
+
+**Goal**: Give the player a parallel path to infamy through British street music culture.
+Instead of (or alongside) crime, the player can build a reputation as a grime/garage MC,
+host illegal raves in their squat, recruit DJs, and battle rival MCs tied to the three
+factions. MC Battles feed into the faction Respect and Notoriety systems, raves generate
+coins and vibe, and the rumour network spreads your legend across the estate.
+Very British. Very loud. Almost certainly in violation of several noise abatement orders.
+
+### The MC System
+
+A new `MCSystem` class tracks the player's music career alongside their criminal one.
+
+**MC Rank** (0–5, starting at 0):
+
+| Rank | Title | Unlock Condition | Perks |
+|------|-------|-----------------|-------|
+| 0 | **No Name** | Default | None |
+| 1 | **On the Mic** | Win first MC battle | Can host small raves (up to 8 NPC attendees) |
+| 2 | **Known MC** | Win 3 battles total | Rival faction MCs seek you out for battles; rave capacity 16 |
+| 3 | **Local Legend** | Win 5 battles + host 3 raves | NPCs on street greet you; Notoriety +50 one-time bonus |
+| 4 | **Scene Don** | Win 10 battles + factions offer exclusive music missions | All 3 factions offer rave-venue protection for 5 coins/day |
+| 5 | **Grime God** | Win 15 battles + host 10 raves | Achievement; wanted posters replaced with FAN_POSTER props; one NPC becomes permanent hype-man |
+
+### MC Battles
+
+MC Battles are structured one-on-one verbal combat encounters with NPC MCs.
+Each faction has a champion MC NPC that can be challenged:
+
+- **Marchetti MC** ("Vinnie Marche") — hangs around the off-licence, aggressive style
+- **Street Lads MC** ("Lil' Estate") — found in the park, rapid-fire flow
+- **Council MC** ("Councillor Bars") — wanders near the JobCentre, surprisingly devastating
+
+**How to start a battle:**
+Press **E** on a faction MC NPC while holding a `MICROPHONE` item (new `Material` entry,
+found in the charity shop or dropped by defeated Councillor NPCs at 5% chance).
+
+**Battle mechanics** — a timing mini-game:
+1. The NPC MC "spits bars" (a speech bubble with a randomly selected diss line appears).
+2. A `BattleBar` UI element renders: a left-to-right sliding cursor over a target zone
+   (width scales inversely with player MC Rank — harder at lower rank, easier as you improve).
+3. Player presses **SPACE** when the cursor is in the zone to land a bar. Missing = dropped bar.
+4. Three rounds. Most landed bars in three rounds wins.
+5. Ties go to the NPC (home crowd advantage).
+
+**Battle outcomes:**
+
+| Outcome | Effect |
+|---------|--------|
+| Player wins | MC Rank +1 progress; that faction's Respect +10; rival factions Respect −5; Notoriety +15; winner gets 3 coins from loser |
+| Player loses | MC Rank progress unchanged; that faction Respect −5 (they're not impressed); loser tooltip: "You got merked. Practice." |
+| Draw (tie goes to NPC) | No rank progress; NPC speech: "Come back when you've got something to say." |
+
+After winning, the defeated NPC MC acknowledges the player publicly — a `GANG_ACTIVITY`
+rumour is seeded: "[MC name] just got bodied by [player name] outside the [landmark]."
+This spreads through the rumour network like wildfire.
+
+**Diss lines** — a pool of British street-flavoured strings, randomly selected per round:
+- "Your bars are as empty as the JobCentre queue, mate."
+- "You rhyme like you filled in your own ASBO form."
+- "I've heard better flow from the estate's leaky radiators."
+- "Your lyrics got more holes than the industrial estate roof."
+- "You're out here spitting like a broken Greggs sausage roll."
+(Minimum pool of 10 per faction, flavoured to their character.)
+
+**Battle cooldown**: Each NPC MC can only be battled once per in-game day. A rematch
+is available the next day. The NPC MC will reference the previous result in their
+greeting speech line.
+
+### Raves
+
+The player can host illegal raves in their squat (requires Squat Vibe ≥ 40 and MC Rank ≥ 1).
+
+**Hosting a rave:**
+Press **E** on the squat entrance while holding a `FLYER` item (craftable: 1 WOOD + 1 COIN
+via crafting menu). The rave begins after a 60-second "word spreading" phase during which
+the rumour network seeds a `RAVE_ANNOUNCEMENT` rumour type (new entry) to all NPCs within
+50 blocks.
+
+**Rave mechanics:**
+- Eligible NPCs (PUBLIC, STREET_LAD, YOUTH_GANG) within 50 blocks migrate to the squat
+  over the next 120 seconds. Capacity = 8 × MC Rank (capped at 48).
+- Each attending NPC generates 1 COIN per in-game minute for the duration of the rave.
+- Rave duration = 3 in-game minutes (plus 1 additional minute per 5 attendees, capped at 10 minutes).
+- Squat Vibe increases by 1 per 4 attendees at the end of the rave (crowd enjoyed it).
+- A successful rave (10+ attendees) seeds a `PLAYER_SPOTTED` rumour: "There was a rave at
+  [squat location] last night. Proper mad one."
+
+**Police attention:**
+- Raves generate NOISE. The `NoiseSystem` receives a sustained high-noise event for the rave duration.
+- After 2 in-game minutes, police are alerted and 2 POLICE NPCs approach the squat.
+- If the player disperses the rave early (press **E** on squat while rave is active) before
+  police arrive, no arrest risk. Tooltip: "Swerved the feds. Professional."
+- If police arrive and the rave is still running, all attending NPCs flee and the player
+  receives a noise-offence on their criminal record.
+
+**Rave equipment** — new `PropType` entries that boost rave attendance and coin yield:
+
+| Prop | Source | Bonus |
+|------|--------|-------|
+| `SPEAKER_STACK` | Craftable: 2 WOOD + 2 SCRAP_METAL | +4 max attendees; rave income +50% |
+| `DISCO_BALL` | Looted from charity shop or jeweller | Vibe +5 at rave end; coin yield +25% |
+| `DJ_DECKS` | Craftable at WORKBENCH: 3 SCRAP_METAL + 1 COMPUTER | Unlocks DJ NPC recruitment (see below) |
+
+**DJ NPCs:**
+With DJ_DECKS placed and MC Rank ≥ 2, pressing **E** on a STREET_LAD NPC offers them
+the role of resident DJ (replaces their lodger invitation). A DJ NPC:
+- Stays in the squat (IDLE state near the DJ_DECKS prop).
+- Doubles the rave income coefficient.
+- Is also a legitimate target for the Marchetti Crew "Eviction Notice" mission —
+  evicting the DJ earns Marchetti Respect but reduces squat Vibe by 10 and seeds a
+  furious rumour: "They ran [DJ name] out of the squat. Disrespectful."
+
+### New RumourType
+
+- `RAVE_ANNOUNCEMENT` — "There's a rave at [landmark] tonight. Pass it on." — seeded
+  by the rave system; spreads NPCs toward the squat location. Expires after the rave ends.
+
+### New Materials / Props
+
+| Item | Type | Notes |
+|------|------|-------|
+| `MICROPHONE` | Material | Found in charity shop; enables MC battles |
+| `FLYER` | Material | Crafted (1 WOOD + 1 COIN); used to start raves |
+| `SPEAKER_STACK` | PropType | Rave equipment; see above |
+| `DISCO_BALL` | PropType | Rave equipment; see above |
+| `DJ_DECKS` | PropType | Rave equipment; enables DJ NPC |
+| `FAN_POSTER` | PropType | Appears at MC Rank 5 (replaces WANTED_POSTER near squat) |
+
+### New Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `FIRST_BARS` | Win your first MC battle |
+| `GRIME_GOD` | Reach MC Rank 5 |
+| `ILLEGAL_RAVE` | Host a rave with 20+ attendees |
+| `SWERVED_THE_FEDS` | Disperse a rave before police arrive 5 times |
+| `BODIED` | Get defeated in an MC battle (tutorial achievement — consolation prize) |
+| `DOUBLE_LIFE` | Reach MC Rank 3 AND Notoriety Tier 3 simultaneously |
+
+### HUD Integration
+
+- A small **MC Rank indicator** appears in the HUD alongside the Notoriety stars —
+  a microphone icon with 0–5 filled bars below it.
+- During an active MC battle, the `BattleBar` UI occupies the lower-centre of the screen.
+- During an active rave, a pulsing "RAVE ACTIVE" indicator appears top-right with an
+  attendee count and a police-timer countdown once police are alerted.
+
+**Unit tests**: MCSystem rank progression, battle outcome logic, BattleBar hit-zone
+calculation, rave attendee migration, coin yield per attendee-minute, noise system
+integration, RAVE_ANNOUNCEMENT rumour spreading and expiry, police alert timer,
+all new achievement triggers, DJ NPC state management.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **MC battle win increases rank progress and faction respect**: Give the player a
+   MICROPHONE. Place the Street Lads MC NPC ("Lil' Estate") adjacent to the player.
+   Press **E**. Simulate the battle: player lands 3 bars in round 1, 3 in round 2,
+   3 in round 3 (all hits). Verify the player wins. Verify Street Lads Respect has
+   increased by 10. Verify rival factions (Marchetti, Council) Respect decreased by 5
+   each. Verify Notoriety increased by 15. Verify a `GANG_ACTIVITY` rumour referencing
+   the battle has been seeded into the RumourNetwork.
+
+2. **MC battle loss applies correct penalties**: Give the player a MICROPHONE. Place
+   the Marchetti MC adjacent to the player. Simulate the battle: player misses all
+   bars in all 3 rounds (0 hits). Verify the player loses. Verify Marchetti Respect
+   decreased by 5. Verify MC Rank progress has NOT advanced. Verify the tooltip
+   "You got merked. Practice." fires.
+
+3. **Rave starts, attracts NPCs, and generates coins**: Set squat Vibe to 50 and MC
+   Rank to 1. Give the player a FLYER. Place 12 PUBLIC NPCs within 40 blocks of the
+   squat. Press **E** on the squat entrance. Verify a `RAVE_ANNOUNCEMENT` rumour has
+   been seeded. Advance the simulation by 200 frames (word-spreading + migration phase).
+   Verify at least 8 NPCs have moved to within 5 blocks of the squat. Advance 3
+   in-game minutes. Verify the player has received at least 8 COIN (1 per attendee
+   per minute × 3 minutes, minimum 8 attendees).
+
+4. **Police arrive after 2 minutes and disperse rave**: Start a rave with 10 attendees.
+   Advance the simulation by 2 in-game minutes. Verify at least 2 POLICE NPCs have
+   spawned and are moving toward the squat. Advance until police arrive (within 2
+   blocks of squat entrance). Verify all attending NPCs have fled (moved > 10 blocks
+   from squat). Verify player's criminal record has gained 1 noise offence.
+
+5. **Early dispersal avoids police charge**: Start a rave with 10 attendees. Advance
+   1.5 in-game minutes (police not yet alerted — under 2-minute threshold). Press **E**
+   on the squat entrance to disperse the rave. Verify all attending NPCs begin moving
+   away from the squat. Verify NO police NPC has spawned. Verify the tooltip
+   "Swerved the feds. Professional." fires. Verify the `SWERVED_THE_FEDS` achievement
+   progress increments by 1.
+
+6. **SPEAKER_STACK increases attendee capacity and income**: Place a SPEAKER_STACK prop
+   in the squat. Host a rave with 12 NPCs available. Advance migration phase. Verify
+   the attendee count is higher than it would be without SPEAKER_STACK (base capacity
+   for MC Rank 1 is 8; with SPEAKER_STACK it is 12). Verify total coin yield after
+   3 minutes reflects the +50% income bonus (at least 1.5× the baseline coin count).
+
+7. **DJ NPC doubles rave income**: Place DJ_DECKS prop. Set MC Rank to 2. Give player
+   a MICROPHONE (to confirm rank eligibility). Press **E** on a STREET_LAD NPC to
+   offer DJ role. Verify NPC type transitions to DJ or NPC state is IDLE near DJ_DECKS.
+   Host a rave with 10 attendees for 3 minutes. Verify coin yield is at least 60 COIN
+   (10 attendees × 3 minutes × 2× DJ multiplier = 60).
+
+8. **MC Rank 5 replaces wanted poster with fan poster**: Set MC Rank to 5 via direct
+   MCSystem setter (test helper). Advance 60 frames. Verify that any `WANTED_POSTER`
+   prop near the squat has been replaced with a `FAN_POSTER` prop. Verify the
+   `GRIME_GOD` achievement has been unlocked.
+
+9. **RAVE_ANNOUNCEMENT rumour expires after rave ends**: Seed a `RAVE_ANNOUNCEMENT`
+   rumour into the RumourNetwork. Start a rave and advance until it ends naturally
+   (3+ in-game minutes). Verify the `RAVE_ANNOUNCEMENT` rumour is no longer present
+   in any NPC's rumour buffer. Verify NPCs that were migrating toward the squat
+   have returned to their normal wandering state.
+
+10. **Full MC career arc stress test**: Start at MC Rank 0. Win 15 MC battles (simulate
+    across all 3 faction MCs, using the daily cooldown system — advance days as needed).
+    Host 10 raves without police interruption. Verify MC Rank reaches 5 at appropriate
+    milestones (Rank 1 after first win, Rank 3 after 5 wins + 3 raves, Rank 5 after
+    15 wins + 10 raves). Verify the `GRIME_GOD` achievement fires at Rank 5.
+    Verify `DOUBLE_LIFE` achievement fires if Notoriety Tier is also ≥ 3 at time of
+    Rank 3 unlock. Verify no NPEs, no crashes, game remains in PLAYING state throughout.
