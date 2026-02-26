@@ -143,10 +143,14 @@ public class GameHUD {
         float y2 = y1 - BAR_SPACING;
         float y3 = y2 - BAR_SPACING;
         float y4 = y3 - BAR_SPACING; // Dodge indicator row
+        float y5 = y4 - BAR_SPACING; // Warmth bar (Issue #698)
+        float y6 = y5 - BAR_SPACING; // Wetness bar (Issue #698)
 
         float healthPct = player.getHealth() / Player.MAX_HEALTH;
         float hungerPct = player.getHunger() / Player.MAX_HUNGER;
         float energyPct = player.getEnergy() / Player.MAX_ENERGY;
+        float warmthPct = player.getWarmth() / Player.MAX_WARMTH;   // Issue #698
+        float wetnessPct = player.getWetness() / Player.MAX_WETNESS; // Issue #698
 
         // Dodge readiness: 1.0 when ready, filling as cooldown expires
         float dodgePct = player.canDodge() ? 1.0f : computeDodgePct();
@@ -160,6 +164,9 @@ public class GameHUD {
         shapeRenderer.rect(x, y3, BAR_WIDTH, BAR_HEIGHT);
         // Dodge bar background (narrower)
         shapeRenderer.rect(x, y4, DODGE_BAR_WIDTH, DODGE_BAR_HEIGHT);
+        // Warmth and Wetness bar backgrounds (Issue #698)
+        shapeRenderer.rect(x, y5, BAR_WIDTH, BAR_HEIGHT);
+        shapeRenderer.rect(x, y6, BAR_WIDTH, BAR_HEIGHT);
         if (healthPct > 0) { shapeRenderer.setColor(Color.RED); shapeRenderer.rect(x, y1, BAR_WIDTH * healthPct, BAR_HEIGHT); }
         if (hungerPct > 0) { shapeRenderer.setColor(Color.ORANGE); shapeRenderer.rect(x, y2, BAR_WIDTH * hungerPct, BAR_HEIGHT); }
         if (energyPct > 0) { shapeRenderer.setColor(Color.YELLOW); shapeRenderer.rect(x, y3, BAR_WIDTH * energyPct, BAR_HEIGHT); }
@@ -172,6 +179,20 @@ public class GameHUD {
             }
             shapeRenderer.rect(x, y4, DODGE_BAR_WIDTH * dodgePct, DODGE_BAR_HEIGHT);
         }
+        // Warmth bar: orange-red gradient; red when dangerous (Issue #698)
+        if (warmthPct > 0) {
+            if (player.isWarmthDangerous()) {
+                shapeRenderer.setColor(0.9f, 0.1f, 0.1f, 1f); // Red = danger
+            } else {
+                shapeRenderer.setColor(1.0f, 0.5f, 0.1f, 1f); // Orange = ok
+            }
+            shapeRenderer.rect(x, y5, BAR_WIDTH * warmthPct, BAR_HEIGHT);
+        }
+        // Wetness bar: blue (Issue #698)
+        if (wetnessPct > 0) {
+            shapeRenderer.setColor(0.2f, 0.4f, 0.9f, 1f); // Blue
+            shapeRenderer.rect(x, y6, BAR_WIDTH * wetnessPct, BAR_HEIGHT);
+        }
         shapeRenderer.end();
 
         // All borders in one batch
@@ -181,6 +202,8 @@ public class GameHUD {
         shapeRenderer.rect(x, y2, BAR_WIDTH, BAR_HEIGHT);
         shapeRenderer.rect(x, y3, BAR_WIDTH, BAR_HEIGHT);
         shapeRenderer.rect(x, y4, DODGE_BAR_WIDTH, DODGE_BAR_HEIGHT);
+        shapeRenderer.rect(x, y5, BAR_WIDTH, BAR_HEIGHT); // Warmth border
+        shapeRenderer.rect(x, y6, BAR_WIDTH, BAR_HEIGHT); // Wetness border
         shapeRenderer.end();
 
         // All text in one batch
@@ -192,6 +215,10 @@ public class GameHUD {
         // Dodge label beside the bar
         String dodgeLabel = dodgeReady ? "DODGE [Ctrl]" : "DODGE: wait";
         font.draw(spriteBatch, dodgeLabel, x + DODGE_BAR_WIDTH + 6, y4 + DODGE_BAR_HEIGHT - 1);
+        // Warmth and Wetness labels (Issue #698)
+        String warmthLabel = player.isWarmthDangerous() ? "WARMTH: COLD!" : "Warmth: " + (int)(warmthPct * 100) + "%";
+        font.draw(spriteBatch, warmthLabel, x + 5, y5 + BAR_HEIGHT - 5);
+        font.draw(spriteBatch, "Wet: " + (int)(wetnessPct * 100) + "%", x + 5, y6 + BAR_HEIGHT - 5);
         spriteBatch.end();
 
         if (hoverTooltips != null) {
@@ -200,6 +227,10 @@ public class GameHUD {
             hoverTooltips.addZone(x, y3, BAR_WIDTH, BAR_HEIGHT, "Energy: " + (int)(energyPct * 100) + "%");
             hoverTooltips.addZone(x, y4, DODGE_BAR_WIDTH, DODGE_BAR_HEIGHT,
                     dodgeReady ? "Dodge ready — press Ctrl while moving" : "Dodge on cooldown");
+            hoverTooltips.addZone(x, y5, BAR_WIDTH, BAR_HEIGHT,
+                    "Warmth: " + (int)(warmthPct * 100) + "% — wear a coat or stand near a campfire");
+            hoverTooltips.addZone(x, y6, BAR_WIDTH, BAR_HEIGHT,
+                    "Wetness: " + (int)(wetnessPct * 100) + "% — use an umbrella to stay dry");
         }
     }
 

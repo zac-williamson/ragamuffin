@@ -39,6 +39,20 @@ public class Player {
     public static final float ENERGY_RECOVERY_PER_SECOND = 5f; // 20 seconds to full recovery
     public static final float SPRINT_ENERGY_DRAIN = 8.0f; // Energy/s drained while sprinting and moving
 
+    // Issue #698: Warmth and Wetness survival stats
+    public static final float MAX_WARMTH = 100f;
+    public static final float MAX_WETNESS = 100f;
+    /** Warmth below this threshold causes damage and speed penalty. */
+    public static final float WARMTH_DANGER_THRESHOLD = 20f;
+    /** Damage per second when warmth is below danger threshold. */
+    public static final float WARMTH_DAMAGE_PER_SECOND = 1.5f;
+    /** Speed multiplier when warmth is below danger threshold. */
+    public static final float WARMTH_SPEED_PENALTY = 0.7f;
+    /** Rate at which wetness accelerates warmth drain (extra drain per 100% wetness). */
+    public static final float WETNESS_WARMTH_DRAIN_MULTIPLIER = 2.0f;
+    /** Wetness dries off at this rate per second when sheltered/not raining. */
+    public static final float WETNESS_DRY_RATE = 1.0f;
+
     private final Vector3 position;
     private final Vector3 velocity;
     private final AABB aabb;
@@ -46,6 +60,8 @@ public class Player {
     private float health;
     private float hunger;
     private float energy;
+    private float warmth;   // Issue #698: 0-100, drains in cold/wet weather
+    private float wetness;  // Issue #698: 0-100, rises in rain
     private boolean isDead;
     private float verticalVelocity; // Separate vertical velocity for gravity
     private float fallStartY; // Y position when the player started falling
@@ -87,6 +103,8 @@ public class Player {
         this.health = MAX_HEALTH;
         this.hunger = MAX_HUNGER;
         this.energy = MAX_ENERGY;
+        this.warmth = MAX_WARMTH;
+        this.wetness = 0f;
         this.isDead = false;
         this.verticalVelocity = 0f;
         this.fallStartY = y;
@@ -350,6 +368,80 @@ public class Player {
      */
     public void setEnergy(float energy) {
         this.energy = Math.max(0, Math.min(MAX_ENERGY, energy));
+    }
+
+    // ========== Warmth and Wetness (Issue #698) ==========
+
+    /**
+     * Get current warmth (0-100). Below WARMTH_DANGER_THRESHOLD causes damage and speed penalty.
+     */
+    public float getWarmth() {
+        return warmth;
+    }
+
+    /**
+     * Get current wetness (0-100). Accelerates warmth drain.
+     */
+    public float getWetness() {
+        return wetness;
+    }
+
+    /**
+     * Set warmth directly (for testing or campfire effects).
+     */
+    public void setWarmth(float warmth) {
+        this.warmth = Math.max(0, Math.min(MAX_WARMTH, warmth));
+    }
+
+    /**
+     * Set wetness directly (for testing).
+     */
+    public void setWetness(float wetness) {
+        this.wetness = Math.max(0, Math.min(MAX_WETNESS, wetness));
+    }
+
+    /**
+     * Drain warmth by the given amount per second.
+     */
+    public void drainWarmth(float amount) {
+        warmth = Math.max(0, warmth - amount);
+    }
+
+    /**
+     * Restore warmth by the given amount (e.g. near campfire or drinking flask of tea).
+     */
+    public void restoreWarmth(float amount) {
+        warmth = Math.min(MAX_WARMTH, warmth + amount);
+    }
+
+    /**
+     * Increase wetness by the given amount.
+     */
+    public void increaseWetness(float amount) {
+        wetness = Math.min(MAX_WETNESS, wetness + amount);
+    }
+
+    /**
+     * Decrease wetness (drying off).
+     */
+    public void decreaseWetness(float amount) {
+        wetness = Math.max(0, wetness - amount);
+    }
+
+    /**
+     * Whether warmth is dangerously low (below WARMTH_DANGER_THRESHOLD).
+     * Causes damage and speed penalty when true.
+     */
+    public boolean isWarmthDangerous() {
+        return warmth < WARMTH_DANGER_THRESHOLD;
+    }
+
+    /**
+     * Get the movement speed multiplier accounting for warmth penalty.
+     * Returns WARMTH_SPEED_PENALTY when warmth is dangerous, 1.0 otherwise.
+     */
+    public float getWarmthSpeedMultiplier() {
+        return isWarmthDangerous() ? WARMTH_SPEED_PENALTY : 1.0f;
     }
 
     /**

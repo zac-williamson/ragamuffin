@@ -19,5 +19,8 @@ public enum RumourType {
     QUEST_LEAD,
 
     /** "The council's sending someone round about those buildings" — generated when demolition threshold crossed. */
-    COUNCIL_NOTICE;
+    COUNCIL_NOTICE,
+
+    /** "Heard it's going to [weather] later — dress warm / bring an umbrella" — seeded hourly by TimeSystem, accumulated by the barman. */
+    WEATHER_TIP;
 }
