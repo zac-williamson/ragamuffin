@@ -3383,3 +3383,135 @@ to block-breaking and police escalation; Contraband Run timer decrements correct
     day 1. Advance time by 24 in-game hours. Verify the Fence's stock has been
     re-rolled (at least 1 item differs, or verify the RNG seed changed). Verify the
     new stock still has exactly 3 distinct items from the valid pool.
+
+---
+
+## Phase N: Stealth System — Crouch, Noise & Line-of-Sight Evasion
+
+**Goal**: Give the player genuine tools to avoid detection. Police and council builders
+currently have omniscient awareness — they sense the player at a fixed radius regardless of
+obstacles, lighting, or player behaviour. The game already sells a BALACLAVA and HIGH_VIS_JACKET
+through the Fence, but these items do nothing. This phase makes stealth a first-class mechanic
+that transforms the criminal economy from "run and hope" into a strategic, replayable loop.
+
+### New Controls
+- **Left Ctrl (hold)**: Crouch — reduces movement speed to 1.5 blocks/s (half normal) but
+  dramatically lowers noise output and detection radius.
+
+### New Systems
+
+1. **NoiseSystem**: Tracks the player's current noise level (0.0 to 1.0) updated each frame.
+   Noise is driven by:
+   - Walking upright: 0.6 base noise
+   - Crouching: 0.2 base noise
+   - Sprinting (future): 1.0 base noise (reserved, not yet implemented)
+   - Breaking a block: instant spike to 1.0, decays back to movement noise over 2 seconds
+   - Placing a block: instant spike to 0.7, decays over 1 second
+   - Standing still: 0.05 ambient noise (breathing)
+   Noise decays linearly toward the movement baseline at a rate of 0.5/s.
+   The noise level is displayed as a small audio-waveform icon on the HUD (filled = loud, empty = silent).
+
+2. **Line-of-sight (LoS) detection**: Police and COUNCIL_BUILDER NPCs no longer use a pure
+   distance sphere. Instead detection works on a cone-plus-hearing model:
+   - **Vision cone**: 70-degree half-angle in front of the NPC, maximum range 20 blocks. If the
+     player is inside this cone AND there is no solid block (non-AIR, non-GLASS) between the NPC
+     and the player (DDA raycast), the NPC *sees* the player with probability 1.0. The existing
+     POLICE_FLEE_DISTANCE check (used by the Fence) is *not* affected by this change.
+   - **Peripheral awareness**: 360-degree hearing range, scaled by player noise level.
+     Detection range = `5 + (player.noiseLevel * 15)` blocks. At minimum noise (0.05) the
+     hearing range is 5.75 blocks. At maximum noise (1.0) it is 20 blocks (same as before).
+   - **Night multiplier**: Between 22:00 and 06:00 the vision range is halved (35 blocks → 10
+     blocks — harder to see) but hearing range is increased by 25% (darkness is quiet, sounds
+     carry). This makes crouching at night genuinely useful.
+   NPCs still detect the player immediately if the player punches them (direct contact always
+   triggers detection, bypassing LoS).
+
+3. **Crouch state**: Player gains a boolean `crouching` field. While crouching:
+   - Move speed = 1.5 blocks/s (down from 3.0 blocks/s).
+   - Eye height = 0.9 blocks (down from 1.7 blocks). Camera follows.
+   - Player AABB height shrinks to 1.1 blocks — the player can move through 1.5-block-tall gaps.
+   - First-person arm is hidden (no weapon displayed while crouched — you're being sneaky).
+   - HUD displays a crouch indicator icon (small downward-pointing chevron) in the bottom-left.
+   - Tooltip on first crouch: "Going under the radar. Literally."
+
+4. **Disguise items** (activating existing Fence stock items):
+   - **BALACLAVA** (toggle with **B**, already in Fence stock): When worn, the player's face is
+     masked. Police vision cone range reduced by 30% (from 20 to 14 blocks). Does not affect
+     hearing range. Cannot be worn in daylight (06:00–21:00) without an instant 2-point rep gain
+     (suspicious behaviour in broad daylight). HUD shows a balaclava silhouette icon when active.
+     Tooltip on first equip: "A balaclava in Britain. Nobody bats an eye."
+   - **HIGH_VIS_JACKET** (already in Fence stock, already has existing effects): Existing effects
+     unchanged. Additionally: wearing the HIGH_VIS_JACKET while crouching grants a "working
+     class invisibility" bonus — council builders completely ignore the player (they assume you're
+     a contractor). Police detection cone angle reduced by 20 degrees (police assume you belong
+     there). Tooltip on first use of combo: "High-vis and crouching. You're basically a ghost."
+   - **BOLT_CUTTERS** (already in Fence stock): Now enables the player to break GLASS blocks in
+     1 hit instead of 2, silently (no noise spike — cutting glass rather than smashing it).
+     Tooltip on first use: "Quietly does it."
+
+5. **Detection alert states**: Police NPC detection transitions become gradual when the player
+   is not in direct LoS:
+   - `SUSPICIOUS` (new sub-state): Police has heard the player but not seen them. Turns toward
+     noise source, increases movement speed to investigate. Speech bubble: "What was that?"
+     Duration: 5 seconds before escalating to WARNING if player remains detectable.
+   - `WARNING` (existing): Police has seen the player or investigated and confirmed. Existing
+     behaviour unchanged.
+   - If the player ducks into cover (breaks LoS and reduces noise below 0.3) during SUSPICIOUS,
+     the NPC returns to PATROL after 5 seconds: speech bubble "Must've been nothing."
+
+### Integration Tests — implement these exact scenarios
+
+1. **Crouching reduces noise level**: Player stands still — verify noise ≤ 0.1. Player walks
+   upright — verify noise ≥ 0.5. Player crouches and walks — verify noise ≤ 0.25. Verify
+   crouching reduces move speed to ≤ 1.6 blocks/s.
+
+2. **Block break spikes noise**: Player is crouching and stationary (noise ≈ 0.05). Player
+   punches a block, destroying it. Immediately after, verify noise = 1.0. Advance 1 second
+   (60 frames at 60fps). Verify noise has decayed below 0.6. Advance another 1 second. Verify
+   noise has decayed back toward 0.05 (below 0.2).
+
+3. **Line-of-sight blocks detection**: Place a solid BRICK wall (3 blocks tall) between the
+   player and a police NPC at distance 15 blocks. Player walks upright (high noise). Advance
+   300 frames. Verify the police NPC does NOT transition to WARNING or AGGRESSIVE (wall blocks
+   vision and noise range is 5 + 0.6*15 = 14 blocks, player is at 15 — just outside hearing
+   range). Remove one block from the wall to create a gap. Advance 60 frames. Verify the NPC
+   NOW detects the player (direct LoS restored).
+
+4. **Crouching past police undetected**: Place a police NPC at (0, 1, 0) facing +Z direction.
+   Place player at (-3, 1, 10) — outside the 70-degree vision cone (player is to the NPC's
+   left/behind). Player walks upright past the NPC (±X direction, staying outside cone). Verify
+   the NPC does NOT enter WARNING state during traversal. Repeat with player crouching — same
+   result, but verify noise is ≤ 0.25 throughout.
+
+5. **BALACLAVA reduces vision cone range**: Give player a BALACLAVA, activate it (press B),
+   set time to 22:00 (night — no daytime rep penalty). Place police NPC 16 blocks in front of
+   player, inside vision cone. Advance 60 frames. Verify NPC does NOT enter WARNING (balaclava
+   shrinks vision to 14 blocks; player is at 16 — outside range). Move player to 13 blocks.
+   Advance 60 frames. Verify NPC NOW enters WARNING.
+
+6. **BALACLAVA in daytime awards reputation**: Set time to 10:00 (daytime). Give player
+   BALACLAVA. Activate it (press B). Verify player reputation increases by 2 immediately.
+   Verify tooltip or speech event ("Bit suspicious, mate") is triggered.
+
+7. **HIGH_VIS_JACKET + crouch ignores council builders**: Spawn a COUNCIL_BUILDER NPC facing
+   the player at 8 blocks. Player wears HIGH_VIS_JACKET and is crouching. Advance 300 frames.
+   Verify the council builder does NOT approach the player and does NOT enter WARNING state.
+   Remove the jacket (un-equip from hotbar). Advance 60 frames. Verify the council builder NOW
+   detects the player and moves toward them.
+
+8. **BOLT_CUTTERS break glass silently**: Give player BOLT_CUTTERS in hotbar, select it.
+   Adjacent to GLASS block. Punch once. Verify the GLASS block is destroyed after exactly 1
+   hit. Verify noise spike does NOT occur (noise remains ≤ 0.3, not spiked to 1.0).
+
+9. **SUSPICIOUS state: heard but not seen**: Police NPC faces away from player (+Z). Player
+   is behind NPC at 6 blocks (outside vision cone, inside hearing range at noise 0.8). Break a
+   block (noise spike to 1.0). Verify NPC enters SUSPICIOUS state (turns toward player, speech
+   "What was that?"). Player immediately crouches and stands still (noise decays to 0.05).
+   Advance 300 frames (5 seconds). Verify NPC returns to PATROL (speech "Must've been nothing.").
+
+10. **Night multiplier: vision halved, hearing up**: Set time to 23:00. Place police NPC
+    facing the player at 12 blocks (inside normal 20-block day cone, but at night vision is
+    halved to 10 blocks). Player walks upright. Advance 60 frames. Verify police NPC does NOT
+    see the player (night vision = 10 blocks, player at 12). Now verify hearing range: player
+    noise = 0.6, night hearing range = 1.25 × (5 + 0.6×15) = 17.5 blocks — player at 12 IS
+    detectable by sound. Verify NPC enters SUSPICIOUS state from noise alone.
