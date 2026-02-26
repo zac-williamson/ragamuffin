@@ -5,6 +5,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import ragamuffin.core.Faction;
+import ragamuffin.core.FactionSystem;
 import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
 import ragamuffin.entity.DamageReason;
@@ -28,7 +30,13 @@ public class GameHUD {
     private static final float DODGE_BAR_WIDTH = 100f;
     private static final float DODGE_BAR_HEIGHT = 12f;
 
+    // Faction status strip (Phase 8d / Issue #702)
+    private static final float FACTION_BAR_WIDTH  = 80f;
+    private static final float FACTION_BAR_HEIGHT = 10f;
+    private static final float FACTION_BAR_GAP    = 4f;
+
     private final Player player;
+    private FactionSystem factionSystem; // may be null if not yet initialised
     private boolean visible;
     private Weather currentWeather;
     private float blockBreakProgress; // 0.0 to 1.0
@@ -49,6 +57,20 @@ public class GameHUD {
         this.targetName = null;
         this.damageReasonTimer = 0f;
         this.damageReasonText = null;
+        this.factionSystem = null;
+    }
+
+    /**
+     * Attach the FactionSystem so the HUD can render the faction status strip.
+     * Call once after the faction system is initialised.
+     */
+    public void setFactionSystem(FactionSystem factionSystem) {
+        this.factionSystem = factionSystem;
+    }
+
+    /** Returns the attached FactionSystem, or null. */
+    public FactionSystem getFactionSystem() {
+        return factionSystem;
     }
 
     /**
@@ -133,6 +155,11 @@ public class GameHUD {
         // Render damage reason banner
         if (damageReasonTimer > 0 && damageReasonText != null) {
             renderDamageReason(spriteBatch, font, screenWidth, screenHeight);
+        }
+
+        // Render faction status strip (Phase 8d)
+        if (factionSystem != null) {
+            renderFactionStrip(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
     }
 
@@ -454,6 +481,73 @@ public class GameHUD {
         float textX = screenWidth / 2f - layout.width / 2f;
         float textY = screenHeight * 0.72f;
         font.draw(spriteBatch, layout, textX, textY);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
+    }
+
+    /**
+     * Render the three-faction Respect bars below the hotbar (Phase 8d / Issue #702).
+     *
+     * <p>Each bar shows the faction's colour at its current Respect percentage.
+     * Bars pulse when Respect has just changed.
+     */
+    private void renderFactionStrip(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer,
+                                    BitmapFont font, int screenWidth, int screenHeight) {
+        Faction[] factions = Faction.values();
+        // Position the strip just below the hotbar area (bottom of screen)
+        float stripY = BAR_MARGIN + FACTION_BAR_HEIGHT + 2f;
+        float startX = BAR_MARGIN;
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (int i = 0; i < factions.length; i++) {
+            Faction f = factions[i];
+            float barX = startX + i * (FACTION_BAR_WIDTH + FACTION_BAR_GAP);
+
+            // Background
+            shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 0.85f);
+            shapeRenderer.rect(barX, stripY, FACTION_BAR_WIDTH, FACTION_BAR_HEIGHT);
+
+            // Filled portion
+            float pct = factionSystem.getRespect(f) / (float) FactionSystem.MAX_RESPECT;
+            Color base = f.getHudColor();
+            boolean pulsing = factionSystem.isHudPulsing(f);
+            if (pulsing) {
+                // Pulse: brighten the bar
+                shapeRenderer.setColor(
+                        Math.min(1f, base.r + 0.3f),
+                        Math.min(1f, base.g + 0.3f),
+                        Math.min(1f, base.b + 0.3f),
+                        1f);
+            } else {
+                shapeRenderer.setColor(base.r, base.g, base.b, 1f);
+            }
+            if (pct > 0f) {
+                shapeRenderer.rect(barX, stripY, FACTION_BAR_WIDTH * pct, FACTION_BAR_HEIGHT);
+            }
+        }
+        shapeRenderer.end();
+
+        // Borders + labels
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(Color.WHITE);
+        for (int i = 0; i < factions.length; i++) {
+            float barX = startX + i * (FACTION_BAR_WIDTH + FACTION_BAR_GAP);
+            shapeRenderer.rect(barX, stripY, FACTION_BAR_WIDTH, FACTION_BAR_HEIGHT);
+        }
+        shapeRenderer.end();
+
+        // Faction abbreviations
+        spriteBatch.begin();
+        font.getData().setScale(0.6f);
+        font.setColor(Color.WHITE);
+        for (int i = 0; i < factions.length; i++) {
+            Faction f = factions[i];
+            float barX = startX + i * (FACTION_BAR_WIDTH + FACTION_BAR_GAP);
+            String label = f.getDisplayName().substring(0, Math.min(3, f.getDisplayName().length()))
+                    + " " + factionSystem.getRespect(f);
+            font.draw(spriteBatch, label, barX + 2, stripY + FACTION_BAR_HEIGHT - 1);
+        }
+        font.getData().setScale(1.0f);
         font.setColor(Color.WHITE);
         spriteBatch.end();
     }

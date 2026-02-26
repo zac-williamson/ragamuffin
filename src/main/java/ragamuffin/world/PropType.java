@@ -63,4 +63,12 @@ public enum PropType {
 
     /** A pub chair. */
     PUB_CHAIR,
+
+    // ── Faction turf props (Phase 8d / Issue #702) ─────────────────────────
+
+    /**
+     * A spray-paint graffiti tag on a wall — faction-coloured, appears/disappears
+     * as turf shifts between Marchetti Crew, Street Lads, and The Council.
+     */
+    GRAFFITI_TAG,
 }
