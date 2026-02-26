@@ -7,7 +7,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import ragamuffin.core.Faction;
 import ragamuffin.core.FactionSystem;
+import ragamuffin.core.MCBattleSystem;
 import ragamuffin.core.NotorietySystem;
+import ragamuffin.core.RaveSystem;
 import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
 import ragamuffin.entity.DamageReason;
@@ -39,6 +41,8 @@ public class GameHUD {
     private final Player player;
     private FactionSystem factionSystem; // may be null if not yet initialised
     private NotorietySystem notorietySystem; // Phase 8e — may be null if not yet initialised
+    private MCBattleSystem mcBattleSystem;   // Issue #716 — may be null if not yet initialised
+    private RaveSystem raveSystem;           // Issue #716 — may be null if not yet initialised
     private boolean visible;
     private Weather currentWeather;
     private float blockBreakProgress; // 0.0 to 1.0
@@ -86,6 +90,32 @@ public class GameHUD {
     /** Returns the attached NotorietySystem, or null. */
     public NotorietySystem getNotorietySystem() {
         return notorietySystem;
+    }
+
+    /**
+     * Attach the MCBattleSystem so the HUD can render the MC Rank microphone icon (Issue #716).
+     * Call once after the system is initialised.
+     */
+    public void setMcBattleSystem(MCBattleSystem mcBattleSystem) {
+        this.mcBattleSystem = mcBattleSystem;
+    }
+
+    /** Returns the attached MCBattleSystem, or null. */
+    public MCBattleSystem getMcBattleSystem() {
+        return mcBattleSystem;
+    }
+
+    /**
+     * Attach the RaveSystem so the HUD can render the rave-active indicator (Issue #716).
+     * Call once after the system is initialised.
+     */
+    public void setRaveSystem(RaveSystem raveSystem) {
+        this.raveSystem = raveSystem;
+    }
+
+    /** Returns the attached RaveSystem, or null. */
+    public RaveSystem getRaveSystem() {
+        return raveSystem;
     }
 
     /**
@@ -180,6 +210,16 @@ public class GameHUD {
         // Render faction status strip (Phase 8d)
         if (factionSystem != null) {
             renderFactionStrip(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Render MC Rank microphone icon (Issue #716)
+        if (mcBattleSystem != null) {
+            renderMcRank(spriteBatch, font, screenWidth, screenHeight);
+        }
+
+        // Render rave-active indicator (Issue #716)
+        if (raveSystem != null && raveSystem.isRaveActive()) {
+            renderRaveIndicator(spriteBatch, font, screenWidth, screenHeight);
         }
     }
 
@@ -623,5 +663,89 @@ public class GameHUD {
         font.getData().setScale(1.0f);
         font.setColor(Color.WHITE);
         spriteBatch.end();
+    }
+
+    /**
+     * Render MC Rank microphone icon in the top-right corner below the notoriety display
+     * (Issue #716). Shows 0–5 microphone symbols (🎤 or unicode fallback) for current rank.
+     */
+    private void renderMcRank(SpriteBatch spriteBatch, BitmapFont font,
+                               int screenWidth, int screenHeight) {
+        if (mcBattleSystem == null) return;
+        int rank = mcBattleSystem.getMcRank();
+        if (rank == 0) return; // Only show once any rank is earned
+
+        // Position: top-right, below notoriety stars
+        float x = screenWidth - 200f;
+        float y = screenHeight - 75f;
+
+        spriteBatch.begin();
+        font.getData().setScale(0.8f);
+        // Use "mic" unicode marker; mic symbols may not render in bitmap font so use text
+        font.setColor(0.92f, 0.10f, 0.55f, 1f); // Hot pink — grime palette
+        StringBuilder sb = new StringBuilder("MC: ");
+        for (int i = 0; i < MCBattleSystem.MAX_MC_RANK; i++) {
+            sb.append(i < rank ? "\u25CF" : "\u25CB"); // ● / ○
+        }
+        font.draw(spriteBatch, sb.toString(), x, y);
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
+    }
+
+    /**
+     * Render the rave-active indicator in the bottom-centre of the screen (Issue #716).
+     * Shows attendee count, income rate, and a countdown timer until police arrive
+     * (or "FEDS COMING" once alerted).
+     *
+     * @param attendeeCountForRave  number of current attendees (injected by caller via
+     *                             {@link #setRaveAttendeeCount(int)})
+     */
+    private void renderRaveIndicator(SpriteBatch spriteBatch, BitmapFont font,
+                                     int screenWidth, int screenHeight) {
+        if (raveSystem == null || !raveSystem.isRaveActive()) return;
+
+        spriteBatch.begin();
+        font.getData().setScale(0.85f);
+
+        // Timer or alert text
+        String timerText;
+        if (raveSystem.isPoliceAlerted()) {
+            font.setColor(1f, 0.1f, 0.1f, 1f); // Red — feds alerted
+            timerText = "FEDS COMING! Disperse now (E)";
+        } else {
+            float secs = raveSystem.getSecondsUntilPolice();
+            int mins    = (int)(secs / 60f);
+            int remSecs = (int)(secs % 60f);
+            font.setColor(0.2f, 0.9f, 0.4f, 1f); // Green — safe
+            timerText = String.format("RAVE ACTIVE | Attendees: %d | Police in: %d:%02d",
+                    raveAttendeeCount, mins, remSecs);
+        }
+
+        GlyphLayout layout = new GlyphLayout(font, timerText);
+        float textX = screenWidth / 2f - layout.width / 2f;
+        float textY = 80f;
+        font.draw(spriteBatch, layout, textX, textY);
+
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
+    }
+
+    // ── Rave attendee count (injected by game logic each frame) ───────────────
+
+    private int raveAttendeeCount = 0;
+
+    /**
+     * Set the current rave attendee count for HUD display.
+     * Call each frame while a rave is active.
+     */
+    public void setRaveAttendeeCount(int count) {
+        this.raveAttendeeCount = count;
+    }
+
+    /** Returns the last set rave attendee count. */
+    public int getRaveAttendeeCount() {
+        return raveAttendeeCount;
     }
 }

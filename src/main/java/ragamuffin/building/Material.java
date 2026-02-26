@@ -141,7 +141,21 @@ public enum Material {
     LOCKPICK("Lockpick"),
 
     /** Fake ID — crafted at squat WORKBENCH. Removes 1 criminal record offence at police station. */
-    FAKE_ID("Fake ID");
+    FAKE_ID("Fake ID"),
+
+    // ── Issue #716: Underground Music Scene ──────────────────────────────────
+
+    /**
+     * Microphone — required to initiate an MC Battle against a faction champion.
+     * Crafted from 1 SCRAP_METAL + 1 WIRE (PIPE). Held item; consumed on battle start.
+     */
+    MICROPHONE("Microphone"),
+
+    /**
+     * Rave Flyer — used to announce an illegal rave at the player's squat.
+     * Crafted from 2 PAPER (NEWSPAPER) + 1 PAINT_TIN. Single use; triggers RAVE_ANNOUNCEMENT rumour.
+     */
+    FLYER("Flyer");
 
     private final String displayName;
 
@@ -314,6 +328,12 @@ public enum Material {
                                             0.40f, 0.40f, 0.45f); // Darker grip
             case FAKE_ID:        return c(0.20f, 0.38f, 0.68f);  // Official-looking blue card
 
+            // Underground music scene (Issue #716)
+            case MICROPHONE:     return cs(0.30f, 0.30f, 0.35f,  // Dark metal body
+                                            0.18f, 0.18f, 0.20f); // Darker grille
+            case FLYER:          return cs(0.92f, 0.10f, 0.55f,  // Hot pink flyer
+                                            0.88f, 0.82f, 0.15f); // Yellow accent
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -403,6 +423,9 @@ public enum Material {
             // Squat system items (Issue #714)
             case LOCKPICK:
             case FAKE_ID:
+            // Underground music scene (Issue #716)
+            case MICROPHONE:
+            case FLYER:
                 return false;
             default:
                 return true;
@@ -562,6 +585,12 @@ public enum Material {
                 return IconShape.TOOL;       // thin metal pick
             case FAKE_ID:
                 return IconShape.CARD;       // ID card
+
+            // Underground music scene (Issue #716)
+            case MICROPHONE:
+                return IconShape.CYLINDER;   // microphone body
+            case FLYER:
+                return IconShape.FLAT_PAPER; // paper flyer
 
             default:
                 return IconShape.BOX;

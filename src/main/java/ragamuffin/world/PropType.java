@@ -115,4 +115,36 @@ public enum PropType {
      * BARRICADE, LOCKPICK, and FAKE_ID.
      */
     WORKBENCH,
+
+    // ── Issue #716: Underground Music Scene ─────────────────────────────────
+
+    /**
+     * A large speaker stack — rave equipment prop. Increases rave capacity by 5
+     * and income by +1 COIN/attendee/minute. Provides +5 Vibe to the squat.
+     */
+    SPEAKER_STACK,
+
+    /**
+     * A mirror ball — rave equipment prop. Increases rave capacity by 3 and
+     * provides +3 Vibe to the squat.
+     */
+    DISCO_BALL,
+
+    /**
+     * DJ decks (turntables + mixer) — rave equipment prop. Enables recruiting a
+     * STREET_LAD NPC as resident DJ, which doubles rave income. Provides +8 Vibe.
+     */
+    DJ_DECKS,
+
+    /**
+     * A WANTED poster — appears on walls near the squat at Notoriety Tier 5.
+     * Replaced by FAN_POSTER once the player reaches MC Rank 5.
+     */
+    WANTED_POSTER,
+
+    /**
+     * A fan poster of the MC (player) — replaces WANTED_POSTERs near the squat
+     * upon reaching MC Rank 5, and attracts the permanent hype-man NPC.
+     */
+    FAN_POSTER,
 }
