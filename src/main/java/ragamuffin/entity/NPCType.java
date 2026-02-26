@@ -19,7 +19,8 @@ public enum NPCType {
     PENSIONER(10f, 0f, 0f, false),          // Slow elderly person, complains a lot
     SCHOOL_KID(15f, 2f, 3.0f, false),      // Noisy school kids in groups
     STREET_PREACHER(20f, 0f, 0f, false),   // Named NPC: preacher with distinctive robes
-    LOLLIPOP_LADY(20f, 0f, 0f, false);     // Named NPC: crossing patrol warden with hi-vis
+    LOLLIPOP_LADY(20f, 0f, 0f, false),    // Named NPC: crossing patrol warden with hi-vis
+    FENCE(25f, 0f, 0f, false);            // Black market trader — operates at charity shop / industrial estate
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

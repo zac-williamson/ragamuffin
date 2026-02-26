@@ -283,6 +283,9 @@ public class NPCManager {
     // Distance within which two NPCs can have a conversation
     private static final float NPC_CONVERSATION_RANGE = 4.0f;
 
+    // Fix #687: Store player inventory for HIGH_VIS_JACKET police escalation delay
+    private Inventory currentInventory;
+
     public NPCManager() {
         this.npcs = new ArrayList<>();
         this.pathfinder = new Pathfinder();
@@ -580,6 +583,9 @@ public class NPCManager {
      * Update all NPCs.
      */
     public void update(float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
+        // Fix #687: cache inventory for HIGH_VIS_JACKET police escalation delay
+        this.currentInventory = inventory;
+
         // Tick police spawn cooldown
         if (policeSpawnCooldown > 0) {
             policeSpawnCooldown -= delta;
@@ -2208,8 +2214,14 @@ public class NPCManager {
             playerNearStructure = player.getPosition().dst(targetStructure) < 10.0f;
         }
 
-        // Escalate after 2 seconds if player stays near structure
-        if (timer >= 2.0f && playerNearStructure) {
+        // Fix #687: HIGH_VIS_JACKET delays police escalation to 12 seconds instead of 2
+        boolean hasHighVis = currentInventory != null
+                && currentInventory.getItemCount(Material.HIGH_VIS_JACKET) > 0;
+        float escalateThreshold = hasHighVis ? 12.0f : 2.0f;
+        float patrolRevertThreshold = hasHighVis ? 14.0f : 3.0f;
+
+        // Escalate after threshold if player stays near structure
+        if (timer >= escalateThreshold && playerNearStructure) {
             police.setState(NPCState.AGGRESSIVE);
             police.setSpeechText("Right, you're nicked!", 2.0f);
 
@@ -2221,7 +2233,7 @@ public class NPCManager {
             // Spawn additional police
             NPC extraPolice = spawnNPC(NPCType.POLICE, police.getPosition().x + 3, police.getPosition().y, police.getPosition().z);
             if (extraPolice != null) extraPolice.setState(NPCState.AGGRESSIVE);
-        } else if (timer >= 3.0f) {
+        } else if (timer >= patrolRevertThreshold) {
             // Go back to patrolling after warning expires
             police.setState(NPCState.PATROLLING);
             policeWarningTimers.remove(police);

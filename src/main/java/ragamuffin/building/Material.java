@@ -85,7 +85,13 @@ public enum Material {
     LADDER("Ladder"),
     HALF_BLOCK("Half Block"),
     SHILLING("Shilling"),
-    PENNY("Penny");
+    PENNY("Penny"),
+    HIGH_VIS_JACKET("High-Vis Jacket"),
+    CROWBAR("Crowbar"),
+    BALACLAVA("Balaclava"),
+    BOLT_CUTTERS("Bolt Cutters"),
+    DODGY_PASTY("Dodgy Pasty"),
+    FOOD("Food");  // generic currency used by the Fence to pay for stolen goods
 
     private final String displayName;
 
@@ -208,6 +214,15 @@ public enum Material {
             case STONE_TOOL:     return cs(0.52f, 0.52f, 0.50f,   // Stone head
                                             0.45f, 0.35f, 0.20f); // Wood handle
 
+            // Fence stock items
+            case HIGH_VIS_JACKET: return c(0.95f, 0.75f, 0.05f);  // Bright yellow
+            case CROWBAR:         return c(0.25f, 0.25f, 0.30f);  // Dark steel
+            case BALACLAVA:       return c(0.10f, 0.10f, 0.10f);  // Black
+            case BOLT_CUTTERS:    return cs(0.30f, 0.30f, 0.35f,  // Dark metal handles
+                                            0.55f, 0.50f, 0.15f); // Orange grip
+            case DODGY_PASTY:     return c(0.78f, 0.52f, 0.22f);  // Golden pastry
+            case FOOD:            return c(0.88f, 0.62f, 0.18f);  // Generic food orange
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -270,6 +285,13 @@ public enum Material {
             // Currency coins
             case SHILLING:
             case PENNY:
+            // Fence stock items
+            case HIGH_VIS_JACKET:
+            case CROWBAR:
+            case BALACLAVA:
+            case BOLT_CUTTERS:
+            case DODGY_PASTY:
+            case FOOD:
                 return false;
             default:
                 return true;
@@ -382,6 +404,18 @@ public enum Material {
             case FIRE_EXTINGUISHER:
             case HAIR_CLIPPERS:
                 return IconShape.CYLINDER;
+
+            case HIGH_VIS_JACKET:
+                return IconShape.FLAT_PAPER; // vest-like shape
+            case CROWBAR:
+            case BOLT_CUTTERS:
+                return IconShape.TOOL;
+            case BALACLAVA:
+                return IconShape.CARD; // mask-like card shape
+            case DODGY_PASTY:
+                return IconShape.FOOD;
+            case FOOD:
+                return IconShape.FOOD;
 
             default:
                 return IconShape.BOX;
