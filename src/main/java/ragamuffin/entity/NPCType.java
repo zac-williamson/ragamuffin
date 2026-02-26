@@ -38,7 +38,12 @@ public enum NPCType {
     STREET_LAD(20f, 4f, 2.0f, false),
 
     /** Permanent NPC accomplice recruited by the player at Tier 4+. */
-    ACCOMPLICE(30f, 5f, 1.5f, false);
+    ACCOMPLICE(30f, 5f, 1.5f, false),
+
+    // ── Issue #708: Birds ─────────────────────────────────────────────────────
+
+    /** Ambient bird (pigeon/seagull) — flaps about the park and rooftops. Passive. */
+    BIRD(3f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

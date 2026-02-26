@@ -71,6 +71,8 @@ public class NPCRenderer {
     // Shared geometry/material models per type (not per NPC)
     private final Map<NPCType, Model[]> humanoidParts;
     private final Map<NPCType, Model[]> dogParts;
+    // Issue #708: Bird model parts and per-NPC instances
+    private final Map<NPCType, Model[]> birdParts;
 
     // Expression face models per NPC type: index = FacialExpression.ordinal()
     private final Map<NPCType, Model[]> expressionFaceParts;
@@ -87,6 +89,7 @@ public class NPCRenderer {
     // has its own transform state even when multiple NPCs share the same type.
     private final Map<NPC, ModelInstance[]> humanoidInstances;
     private final Map<NPC, ModelInstance[]> dogInstances;
+    private final Map<NPC, ModelInstance[]> birdInstances;
 
     // Per-NPC expression face instances (one per FacialExpression)
     private final Map<NPC, ModelInstance[]> expressionFaceInstances;
@@ -113,6 +116,8 @@ public class NPCRenderer {
         humanoidInstances = new IdentityHashMap<>();
         dogParts = new HashMap<>();
         dogInstances = new IdentityHashMap<>();
+        birdParts = new HashMap<>();
+        birdInstances = new IdentityHashMap<>();
         expressionFaceParts = new HashMap<>();
         expressionFaceInstances = new IdentityHashMap<>();
         blinkFaceParts = new HashMap<>();
@@ -251,6 +256,13 @@ public class NPCRenderer {
             new Color(0.05f, 0.05f, 0.05f, 1f));
         dogParts.put(NPCType.DOG, dParts);
 
+        // BIRD (Issue #708) — grey pigeon: body, head, beak, left wing, right wing, tail
+        Model[] bParts = buildBirdParts(
+            new Color(0.55f, 0.55f, 0.60f, 1f),  // grey body
+            new Color(0.45f, 0.45f, 0.50f, 1f),  // darker grey head
+            new Color(0.70f, 0.55f, 0.40f, 1f)); // orange-brown beak
+        birdParts.put(NPCType.BIRD, bParts);
+
         // Long-hair block — shared by all LONG_HAIR variant NPCs regardless of type.
         // Dark brown rectangle hanging behind the head.
         longHairModel = buildLongHairBlock();
@@ -301,6 +313,20 @@ public class NPCRenderer {
             inst[i] = new ModelInstance(parts[i]);
         }
         dogInstances.put(npc, inst);
+        return inst;
+    }
+
+    /** Returns the per-NPC ModelInstance array for a bird NPC, creating it if needed. */
+    private ModelInstance[] getOrCreateBirdInstances(NPC npc) {
+        ModelInstance[] inst = birdInstances.get(npc);
+        if (inst != null) return inst;
+        Model[] parts = birdParts.get(NPCType.BIRD);
+        if (parts == null) return null;
+        inst = new ModelInstance[parts.length];
+        for (int i = 0; i < parts.length; i++) {
+            inst[i] = new ModelInstance(parts[i]);
+        }
+        birdInstances.put(npc, inst);
         return inst;
     }
 
@@ -554,6 +580,80 @@ public class NPCRenderer {
     }
 
     /**
+     * Build the separate models for a bird (pigeon).
+     * Parts: 0=body, 1=head, 2=beak, 3=left wing, 4=right wing, 5=tail
+     */
+    private Model[] buildBirdParts(Color bodyColor, Color headColor, Color beakColor) {
+        Model[] parts = new Model[6];
+        // 0 - Body: compact oval-ish box
+        parts[0] = buildBox(0.18f, 0.12f, 0.28f, bodyColor);
+        // 1 - Head: small round box
+        parts[1] = buildBox(0.14f, 0.13f, 0.14f, headColor);
+        // 2 - Beak: tiny stub
+        parts[2] = buildBox(0.04f, 0.04f, 0.08f, beakColor);
+        // 3 - Left wing: flat elongated box
+        parts[3] = buildBox(0.22f, 0.04f, 0.18f, bodyColor);
+        // 4 - Right wing: mirror of left
+        parts[4] = buildBox(0.22f, 0.04f, 0.18f, bodyColor);
+        // 5 - Tail: small flat box at rear
+        parts[5] = buildBox(0.10f, 0.04f, 0.12f, new Color(bodyColor).lerp(Color.BLACK, 0.2f));
+        return parts;
+    }
+
+    /**
+     * Render a bird NPC — a small pigeon that bobs in flight with flapping wings.
+     * Birds fly at a fixed height above the ground (y offset applied in NPCManager).
+     */
+    private void renderBird(ModelBatch modelBatch, Environment environment, NPC npc) {
+        ModelInstance[] inst = getOrCreateBirdInstances(npc);
+        if (inst == null) return;
+
+        Vector3 pos = npc.getPosition();
+        float yaw = npc.getFacingAngle();
+        float animT = npc.getAnimTime();
+        float yawRad = (float) Math.toRadians(yaw);
+        float speed = npc.getVelocity().len();
+
+        // Wing flap — fast when moving, slow idle bob when perched
+        float flapSpeed = (speed > 0.1f) ? 8.0f : 1.5f;
+        float flapAmp   = (speed > 0.1f) ? 40f : 10f;
+        float flapAngle = (float) Math.sin(animT * flapSpeed) * flapAmp;
+        float flapRad   = (float) Math.toRadians(flapAngle);
+
+        // Vertical bob while flying
+        float bob = (speed > 0.1f) ? 0.03f * (float) Math.sin(animT * flapSpeed) : 0f;
+
+        float bodyY = 0.06f + bob; // body centre above NPC origin
+
+        // 0 - Body
+        setPartTransform(inst[0], pos, yawRad, 0f, bodyY, 0f);
+        modelBatch.render(inst[0], environment);
+
+        // 1 - Head (forward of body along +Z)
+        float headZ = 0.28f / 2f + 0.14f / 2f - 0.02f;
+        setPartTransform(inst[1], pos, yawRad, 0f, bodyY + 0.04f, headZ);
+        modelBatch.render(inst[1], environment);
+
+        // 2 - Beak (forward of head)
+        setPartTransform(inst[2], pos, yawRad, 0f, bodyY + 0.02f, headZ + 0.14f / 2f + 0.04f);
+        modelBatch.render(inst[2], environment);
+
+        // 3 - Left wing — flaps around the body's left side (pivot at body edge)
+        float wingOffsetX = 0.18f / 2f + 0.22f / 2f - 0.02f;
+        setLimbTransform(inst[3], pos, yawRad, -wingOffsetX, bodyY, 0f, -flapRad, 0.04f);
+        modelBatch.render(inst[3], environment);
+
+        // 4 - Right wing (opposite flap)
+        setLimbTransform(inst[4], pos, yawRad, wingOffsetX, bodyY, 0f, flapRad, 0.04f);
+        modelBatch.render(inst[4], environment);
+
+        // 5 - Tail (behind body at -Z)
+        float tailZ = -(0.28f / 2f + 0.12f / 2f - 0.01f);
+        setPartTransform(inst[5], pos, yawRad, 0f, bodyY - 0.02f, tailZ);
+        modelBatch.render(inst[5], environment);
+    }
+
+    /**
      * Build the long-hair block model.
      * A wide, flat box rendered behind and below the head to simulate flowing hair.
      */
@@ -667,6 +767,8 @@ public class NPCRenderer {
         for (NPC npc : npcs) {
             if (npc.getType() == NPCType.DOG) {
                 renderDog(modelBatch, environment, npc);
+            } else if (npc.getType() == NPCType.BIRD) {
+                renderBird(modelBatch, environment, npc);
             } else {
                 renderHumanoid(modelBatch, environment, npc);
             }
@@ -1538,6 +1640,14 @@ public class NPCRenderer {
         }
         dogParts.clear();
         dogInstances.clear();
+
+        for (Model[] parts : birdParts.values()) {
+            for (Model m : parts) {
+                if (m != null) m.dispose();
+            }
+        }
+        birdParts.clear();
+        birdInstances.clear();
 
         if (longHairModel != null) {
             longHairModel.dispose();

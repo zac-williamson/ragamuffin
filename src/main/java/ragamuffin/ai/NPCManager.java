@@ -360,6 +360,9 @@ public class NPCManager {
             case DELIVERY_DRIVER:
                 npc.setState(NPCState.WANDERING);
                 break;
+            case BIRD:
+                npc.setState(NPCState.IDLE); // Start perched; will take flight when player approaches
+                break;
             case SCHOOL_KID:
                 npc.setState(NPCState.WANDERING);
                 updateSchoolKidRoutine(npc); // Set based on current time
@@ -712,6 +715,12 @@ public class NPCManager {
      * Update a single NPC's behavior.
      */
     private void updateNPC(NPC npc, float delta, World world, Player player, Inventory inventory, TooltipSystem tooltipSystem) {
+        // Issue #708: Birds use a separate lightweight update — they fly, ignore pathfinding and gravity.
+        if (npc.getType() == NPCType.BIRD) {
+            updateBird(npc, delta, world, player);
+            return;
+        }
+
         // Advance path recalculation timer
         npcPathRecalcTimers.merge(npc, delta, Float::sum);
 
@@ -995,6 +1004,96 @@ public class NPCManager {
             }
         } else {
             npc.setVelocity(awayDir.x * fleeSpeed, curVelY, awayDir.z * fleeSpeed);
+        }
+    }
+
+    // Issue #708: Bird flight height above ground
+    private static final float BIRD_FLY_HEIGHT = 5.0f;
+    // Issue #708: Scatter distance from player before birds take flight
+    private static final float BIRD_SCATTER_RANGE = 4.0f;
+    // Issue #708: Wander radius for birds
+    private static final float BIRD_WANDER_RADIUS = 30.0f;
+
+    /**
+     * Update a bird NPC — lightweight flying update that bypasses pathfinding and gravity.
+     * Birds perch at ground level (IDLE) and scatter into flight (WANDERING) when the player
+     * approaches within {@link #BIRD_SCATTER_RANGE} blocks.
+     */
+    private void updateBird(NPC npc, float delta, World world, Player player) {
+        npc.updateTimers(delta);
+
+        float groundY = findGroundHeight(world, npc.getPosition().x, npc.getPosition().z);
+        float distToPlayer = npc.getPosition().dst(player.getPosition());
+
+        if (npc.getState() == NPCState.IDLE) {
+            // Perching on the ground — snap to ground level
+            npc.getPosition().y = groundY;
+            npc.setVelocity(0, 0, 0);
+
+            // Scatter when player gets too close
+            if (distToPlayer < BIRD_SCATTER_RANGE) {
+                npc.setState(NPCState.WANDERING);
+                // Pick a random flee direction away from the player
+                float angle = (float) (Math.atan2(
+                    npc.getPosition().x - player.getPosition().x,
+                    npc.getPosition().z - player.getPosition().z
+                ) + (random.nextFloat() - 0.5f) * (float) Math.PI);
+                float dist = BIRD_WANDER_RADIUS * (0.5f + random.nextFloat() * 0.5f);
+                float tx = npc.getPosition().x + (float) Math.sin(angle) * dist;
+                float tz = npc.getPosition().z + (float) Math.cos(angle) * dist;
+                float ty = findGroundHeight(world, tx, tz) + BIRD_FLY_HEIGHT;
+                npc.setTargetPosition(new Vector3(tx, ty, tz));
+            }
+
+            // Occasional random idle movement — birds shuffle about on the ground
+            Float idleTimer = npcIdleTimers.get(npc);
+            if (idleTimer == null || idleTimer <= 0) {
+                npcIdleTimers.remove(npc);
+                if (random.nextFloat() < 0.002f) {
+                    // Shuffle a short distance
+                    float angle = random.nextFloat() * (float) Math.PI * 2;
+                    float dist = 2.0f + random.nextFloat() * 3.0f;
+                    float tx = npc.getPosition().x + (float) Math.sin(angle) * dist;
+                    float tz = npc.getPosition().z + (float) Math.cos(angle) * dist;
+                    npc.setTargetPosition(new Vector3(tx, groundY, tz));
+                }
+            } else {
+                npcIdleTimers.put(npc, idleTimer - delta);
+            }
+
+        } else {
+            // Flying — move directly toward target at flying height
+            float flyY = groundY + BIRD_FLY_HEIGHT;
+            if (npc.getTargetPosition() == null) {
+                // Pick a new random target to fly toward
+                float angle = random.nextFloat() * (float) Math.PI * 2;
+                float dist = BIRD_WANDER_RADIUS * (0.4f + random.nextFloat() * 0.6f);
+                float tx = npc.getPosition().x + (float) Math.sin(angle) * dist;
+                float tz = npc.getPosition().z + (float) Math.cos(angle) * dist;
+                npc.setTargetPosition(new Vector3(tx, flyY, tz));
+            }
+
+            Vector3 target = npc.getTargetPosition();
+            Vector3 pos = npc.getPosition();
+            float dx = target.x - pos.x;
+            float dy = target.y - pos.y;
+            float dz = target.z - pos.z;
+            float dist3d = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (dist3d < 1.5f) {
+                // Arrived — land and perch for a while
+                npc.setTargetPosition(null);
+                npc.setState(NPCState.IDLE);
+                npcIdleTimers.put(npc, 3.0f + random.nextFloat() * 8.0f);
+                npc.setVelocity(0, 0, 0);
+            } else {
+                float birdSpeed = NPC.MOVE_SPEED * 3.5f;
+                npc.setVelocity(dx / dist3d * birdSpeed, dy / dist3d * birdSpeed, dz / dist3d * birdSpeed);
+                pos.x += npc.getVelocity().x * delta;
+                pos.y += npc.getVelocity().y * delta;
+                pos.z += npc.getVelocity().z * delta;
+                // Facing angle and animTime are updated automatically by updateTimers (already called above)
+            }
         }
     }
 
@@ -1304,6 +1403,7 @@ public class NPCManager {
             case DELIVERY_DRIVER: return NPC.MOVE_SPEED * 1.8f; // Always rushing
             case PENSIONER: return NPC.MOVE_SPEED * 0.4f;       // Very slow shuffle
             case SCHOOL_KID: return NPC.MOVE_SPEED * 1.6f;      // Hyper kids
+            case BIRD: return NPC.MOVE_SPEED * 3.5f;            // Birds fly fast
             default: return NPC.MOVE_SPEED;
         }
     }

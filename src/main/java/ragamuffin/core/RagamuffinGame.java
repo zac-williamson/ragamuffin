@@ -445,6 +445,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         spawnNPCAtTerrain(NPCType.JOGGER, -8, -8);
         spawnNPCAtTerrain(NPCType.DOG, 10, 3);
 
+        // Issue #708: Birds (pigeons) perching around the park and nearby streets
+        spawnNPCAtTerrain(NPCType.BIRD, 3, 3);
+        spawnNPCAtTerrain(NPCType.BIRD, -6, -4);
+        spawnNPCAtTerrain(NPCType.BIRD, 8, 8);
+        spawnNPCAtTerrain(NPCType.BIRD, -12, 6);
+        spawnNPCAtTerrain(NPCType.BIRD, 15, -3);
+        spawnNPCAtTerrain(NPCType.BIRD, 0, -8);
+        spawnNPCAtTerrain(NPCType.BIRD, -4, 15);
+
         // High street — shoppers, shopkeepers, busker, postman
         spawnNPCAtTerrain(NPCType.PUBLIC, 35, 22);
         spawnNPCAtTerrain(NPCType.PUBLIC, 55, 20);
