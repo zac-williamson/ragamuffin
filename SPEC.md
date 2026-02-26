@@ -870,6 +870,198 @@ clamp, rain particle count per weather tier.
 
 ---
 
+## Phase 8d: Dynamic Faction War & Turf Economy
+
+**Goal**: Turn the gang territory system into a living, breathing turf war that
+the player can meaningfully influence — playing factions off against each other,
+running protection rackets, brokering truces, or simply watching the neighbourhood
+tear itself apart. Every decision has lasting consequences rumoured across the
+entire world. This is the glue that ties rumours, reputation, weather survival,
+the pub, and the black market into a single, emergent narrative engine.
+
+### Factions
+
+Three factions compete for control of the neighbourhood, each with distinct
+territory, personality, and economy. Faction state is tracked in a new
+`FactionSystem` class.
+
+| Faction | Territory | Tone | Primary income |
+|---------|-----------|------|----------------|
+| **The Marchetti Crew** | Industrial estate + off-licence | Organised, businesslike | Protection money from shopkeepers |
+| **Street Lads** | Park + housing estate | Chaotic, opportunistic | Petty theft, drug corners |
+| **The Council** | Town hall + office block | Bureaucratic, passive-aggressive | Demolition contracts, planning notices |
+
+Each faction has a **Respect** score (0–100) toward the player, starting at 50.
+Actions raise or lower it. Respect determines what interactions, missions, and
+trade bonuses are available.
+
+### Turf Blocks & Territory Map
+
+- Every ROAD and PAVEMENT block within a faction's territory has an invisible
+  `ownerFaction` tag tracked in a `TurfMap` (a parallel 2D int array over the
+  world grid, indexed by X/Z at ground level).
+- Contested turf (two factions both claim it) is visually indicated by a small
+  spray-paint prop (a `PropType.GRAFFITI_TAG`) placed on the nearest wall block.
+  Prop colours differ per faction.
+- When a faction's Respect toward the player drops below 20, they mark the
+  player as an enemy: their NPCs become hostile on sight.
+- When Respect is above 75, the faction marks the player as an ally: their NPCs
+  greet the player (press **E** to receive a faction-specific tooltip) and
+  offer faction-exclusive trade or mission.
+
+### Player Actions that Affect Turf
+
+| Action | Effect |
+|--------|--------|
+| Break blocks inside a rival faction's building | Rival faction Respect −10, owning faction Respect +5 |
+| Hit a faction NPC | That faction Respect −15 |
+| Complete a faction mission (see below) | Faction Respect +20, rival Respect −10 |
+| Buy a round at the pub (5 coins via barman) | All factions Respect +2 (neutral goodwill) |
+| Place graffiti block in rival territory | Rival Respect −5, "own" faction Respect +8 |
+| Get arrested near faction territory | Nearest faction Respect +3 ("not our problem, mate") |
+
+Turf ownership shifts when a faction's Respect advantage over a rival exceeds 30
+points: the `TurfMap` transfers 10% of contested blocks to the dominant faction,
+and new graffiti props appear/disappear accordingly.
+
+### Faction Missions
+
+Each faction offers one procedurally-selected mission at a time, picked from a
+small pool. Missions are surfaced through the rumour network (the BARMAN always
+knows what's going on) or by pressing **E** on a faction lieutenant NPC.
+
+**Marchetti Crew missions (pool of 3):**
+1. **Delivery Run** — Carry a PETROL_CAN from the industrial estate to a drop
+   point at the off-licence within 3 in-game minutes. Reward: 8 coins + Respect +20.
+2. **Eviction Notice** — Break 10 blocks of the Street Lads' park shelter.
+   Reward: 6 coins + Respect +25.
+3. **Quiet the Witness** — Hit a specific NPC (a WITNESS type spawned for this
+   mission) 3 times before they reach the police station (300 blocks away).
+   Reward: 10 coins + Respect +30.
+
+**Street Lads missions (pool of 3):**
+1. **Corner Defence** — Prevent any Marchetti NPC from crossing a specific road
+   intersection for 2 in-game minutes (block physically by standing there or
+   hitting any who approach). Reward: 5 coins + Respect +20.
+2. **Office Job** — Steal 3 COMPUTER items from the office building without
+   getting arrested. Reward: 8 coins + Respect +25 + stealth boost rumour seeded.
+3. **Tag the Turf** — Place 5 GRAFFITI blocks on Marchetti-owned walls.
+   Reward: 6 coins + Respect +20.
+
+**Council missions (pool of 3) — delivered via planning notice prop on player shelter:**
+1. **Voluntary Compliance** — Demolish your own structure (> 20 blocks) to avoid
+   a fine. Reward: avoid −20 Warmth penalty, Respect +15 with Council.
+2. **Report a Nuisance** — Press **E** near an active Street Lads drug corner NPC
+   to "report" them. Reward: Council Respect +20, Street Lads Respect −15.
+3. **Clear the Encampment** — Destroy 20 CARDBOARD blocks in the park area.
+   Reward: 10 coins + Council Respect +25.
+
+Missions expire after 5 in-game minutes (a new one is selected). Failing a
+mission (time out or getting caught) reduces Respect by 10.
+
+### Faction-State Broadcast via Rumour Network
+
+Every time turf ownership shifts or Respect crosses a threshold, a
+`RumourType.GANG_ACTIVITY` rumour is seeded into 3 random nearby NPCs:
+
+- Turf gain: "The [faction] are taking over [territory name] now."
+- Respect threshold 75 crossed: "I hear [faction] are looking for someone reliable."
+- Respect threshold 20 crossed: "You'd best avoid [faction] territory for a while."
+- Mission completed: "Someone sorted out [problem] for the [faction]."
+
+The barman always has the most current faction rumour. This means the player can
+walk into the pub and immediately get a read on the current state of the turf war.
+
+### Faction Endgame States
+
+If one faction reaches Respect 90+ with the player AND controls > 60% of the
+turf map, a **Faction Victory** event fires:
+
+- **Marchetti Victory**: The off-licence becomes a permanent shop (infinite
+  coins for sold items). Industrial estate produces double loot. Council leaves
+  player structures alone (Marchetti bribed them).
+- **Street Lads Victory**: Park becomes a permanent safe zone (no police patrols
+  inside). All drug-corner NPCs drop 2× coins. Youth NPCs stop attacking player.
+- **Council Victory**: All player structures auto-demolished. Police spawn rate
+  doubled. BUT: player receives a `COUNCIL_ID` item that lets them walk past
+  police undetected (diplomatic immunity, British-style).
+
+If all three factions drop below Respect 30 with the player simultaneously, a
+**Everyone Hates You** state fires: every NPC faction is hostile, but the black
+market fence increases buy prices by 50% (chaos is good for business). A rumour
+seeds: "That one's gone proper feral."
+
+### HUD Integration
+
+- A small **faction status strip** appears below the hotbar: three coloured
+  bars (one per faction) showing current Respect (0–100). Bars pulse briefly
+  when Respect changes.
+- Tooltip on first Respect change: "Choose your friends wisely round here."
+- Tooltip on first faction mission received: "Everyone wants something."
+
+**Unit tests**: Turf ownership transfer logic, Respect delta calculations per
+action, mission timer expiry, faction victory condition detection, graffiti prop
+placement/removal, rumour seeding on turf shift.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Respect decreases on NPC hit**: Set Marchetti Crew Respect to 50. Punch a
+   Marchetti NPC once. Verify Marchetti Respect is now 35. Verify a
+   `GANG_ACTIVITY` rumour has been seeded into at least one nearby NPC within
+   30 blocks.
+
+2. **Turf transfers when Respect gap exceeds 30**: Set Marchetti Respect to 80,
+   Street Lads Respect to 40. Verify a contested block currently owned by Street
+   Lads in a Marchetti zone transfers to Marchetti within 60 frames. Verify a
+   GRAFFITI_TAG prop appears on the nearest wall block of the transferred turf.
+
+3. **Faction mission delivery run succeeds**: Spawn a Marchetti lieutenant NPC.
+   Press **E** on the lieutenant to receive the Delivery Run mission. Give the
+   player a PETROL_CAN. Move player to the drop point within 3 in-game minutes.
+   Verify Marchetti Respect increased by 20. Verify the player received 8 coins.
+   Verify a mission-completion rumour was seeded.
+
+4. **Faction mission expires on timeout**: Spawn a Street Lads mission (Corner
+   Defence, 2 min timer). Advance the simulation by 3 in-game minutes without
+   completing the mission. Verify Street Lads Respect decreased by 10. Verify
+   the mission is no longer active (no active mission for Street Lads). Verify
+   a new mission from the pool has been selected.
+
+5. **Council Victory fires at 60% turf control**: Set Council Respect to 90.
+   Programmatically set the TurfMap so Council controls 61% of blocks. Advance
+   1 frame. Verify the Council Victory event has fired. Verify all player
+   structures are scheduled for demolition. Verify the player has received a
+   COUNCIL_ID item in their inventory.
+
+6. **Everyone Hates You state activates**: Set all three faction Respect values
+   to 25. Advance 1 frame. Verify all faction NPCs are hostile on sight (NPC
+   state switches to HOSTILE when player enters 10-block radius). Verify the
+   fence's buy price multiplier is 1.5 (50% increase). Verify the rumour "That
+   one's gone proper feral." is seeded into at least 3 NPCs.
+
+7. **Faction status HUD bars render correctly**: Set Marchetti Respect to 80,
+   Street Lads to 40, Council to 60. Render one frame. Verify the faction
+   status strip contains three coloured regions. Verify Marchetti bar width
+   is proportionally larger than Street Lads bar. Verify no NPE during render.
+
+8. **Buy a round raises all faction Respect**: Give player 5 coins. Place player
+   facing barman. Buy a round (5 coins via E → "Buy a round"). Verify all three
+   faction Respect values have increased by 2. Verify player now has 0 coins.
+
+9. **Hostile faction attacks on sight**: Set Street Lads Respect to 15 (below
+   20 threshold). Place a Street Lads NPC 8 blocks from the player. Advance
+   60 frames. Verify the NPC's state is ATTACKING_PLAYER. Record NPC position
+   at frame 0 and frame 60 — verify it has moved toward the player.
+
+10. **Full turf war stress test**: Start a new game. Run 3 complete faction
+    mission cycles (receive, complete, repeat for each faction). Force a turf
+    transfer event. Force an "Everyone Hates You" state. Force a Faction Victory.
+    Throughout: verify game remains in PLAYING state, no NPEs, NPC count is
+    non-zero, HUD faction bars are visible and contain valid values (0–100),
+    rumour network contains at least 1 active rumour at all times.
+
+---
+
 ## Phase 9: CODE REVIEW
 
 **Goal**: Comprehensive code review of the entire codebase. This phase runs after
