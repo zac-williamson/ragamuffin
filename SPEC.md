@@ -1062,6 +1062,217 @@ placement/removal, rumour seeding on turf shift.
 
 ---
 
+## Phase 8e: Street Legend — Notoriety, Criminal Career Progression & Escalating Police Response
+
+**Goal**: Give the player a persistent criminal career arc that ties together every
+existing system — factions, heists, rumours, the fence, the pub, the weather — into
+a single escalating narrative spine. The player starts as a nobody nicking pasties
+from Greggs and, through accumulated notoriety, can become the most dangerous
+(and most wanted) person in the neighbourhood. Or get bang to rights and spend a
+night in the cells. Very British. Very bleak.
+
+### Notoriety Score & Street Legend Tiers
+
+A new persistent `Notoriety` value (0–1000, starting at 0) accumulates from criminal
+acts and feeds into five **Street Legend Tiers**. It is separate from the faction
+Respect scores — Notoriety is about infamy, not loyalty.
+
+| Tier | Notoriety range | Title | Police Response | Perks Unlocked |
+|------|----------------|-------|-----------------|----------------|
+| 0 | 0–99 | **Nobody** | PCSOs ignore you | None |
+| 1 | 100–249 | **Local Nuisance** | PCSOs issue warnings; regular Police patrol your last known area | Fence offers 10% better prices |
+| 2 | 250–499 | **Neighbourhood Villain** | Police patrol actively; Armed Response spawns after heists | Access to Marchetti Crew's top-tier missions |
+| 3 | 500–749 | **Area Menace** | Armed Response Unit is always on patrol near player; helicopter flyover every 5 in-game minutes (noise, searchlight cone) | Black market sells CROWBAR, WIRE_CUTTERS; all factions will talk to you |
+| 4 | 750–999 | **Urban Legend** | MI5-style SURVEILLANCE_VAN parked near your last shelter; all 3 factions offer alliance; fence prices peak | Can recruit 1 permanent NPC accomplice |
+| 5 | 1000 | **The Ragamuffin** | Full lockdown: doubled police count, wanted posters appear as props on walls, the Barman dedicates a rumour slot permanently to your exploits | Achievement unlocked: "Ragamuffin" |
+
+Notoriety **never decreases** from criminal acts — it is a one-way ratchet. It can
+only be slightly reduced (−5 per tier) by bribing the fence with 20 coins ("keeping
+things quiet") or by spending a night in the police cells (arrest, see below).
+
+**Notoriety gain table:**
+
+| Act | Notoriety gained |
+|-----|-----------------|
+| Breaking a block in someone's building | +2 |
+| Pickpocketing an NPC (new interaction, see below) | +5 |
+| Completing a heist (any target) | +30 |
+| Completing a jeweller heist | +50 |
+| Hitting a POLICE NPC | +20 |
+| Getting arrested and escaping custody | +40 |
+| Completing a faction mission (any) | +15 |
+| Reaching a new faction Respect threshold (≥75) | +10 |
+| Being mentioned in a rumour that reaches the Barman | +5 (once per rumour) |
+
+### Escalating Police Response System
+
+The existing `CriminalRecord` and `ArrestSystem` are extended to reflect the player's
+Notoriety tier, making police behaviour meaningfully escalate.
+
+**Tier 0–1: PCSOs (Community Support Officers)**
+- Slow-walking NPCs with high-vis vests. They do NOT arrest the player — they issue
+  a verbal warning ("Oi! Pack it in!") and add 1 offence to the criminal record.
+  If ignored (player commits another offence within 60 seconds), they radio for Police.
+- PCSO spawns: 1–2 per crime, wander to last known crime location.
+
+**Tier 2: Regular Police**
+- Existing POLICE NPC behaviour (patrol, arrest on sight if wanted). Now additionally:
+  - After a heist alarm is tripped, 4 police converge on the heist target (as per
+    Phase 8e heist spec — this confirms the wiring).
+  - Police radios: when a Police NPC spots the player, all Police NPCs within 40
+    blocks enter CHASING state simultaneously (coordination).
+
+**Tier 3: Armed Response Unit (ARU)**
+- New `NPCType.ARMED_RESPONSE` — moves faster than regular police, hits harder
+  (3 hits to incapacitate player vs. 5 for regular police), and does NOT stop
+  chasing at building boundaries (pursues indoors).
+- ARU spawns only at Tier 3+ and only after a crime that triggers a wanted state.
+  They despawn after 3 in-game minutes if they cannot locate the player.
+- **Helicopter**: A non-physical audio + searchlight effect. Every 5 in-game
+  minutes at Tier 3+, a directional `PointLight` sweeps across the ground in a
+  cone pattern for 20 seconds (the "searchlight"). While the searchlight overlaps
+  the player's position, a distinct audio cue plays and nearby NPCs report the
+  player's position to the nearest ARU. Fog weather halves the searchlight range.
+
+**Tier 4–5: Surveillance**
+- `PropType.SURVEILLANCE_VAN` placed near the player's most-visited landmark
+  (tracked by `NotorietySystem` counting block interactions per landmark zone).
+  The van is a static prop — but pressing **E** on it reveals a tooltip:
+  "They know where you sleep. Probably best to keep moving."
+- **Wanted Posters**: At Tier 5, `PropType.WANTED_POSTER` props appear on walls
+  near police-patrolled areas. These are cosmetic but seeded as rumours
+  ("Have you seen the wanted poster by the off-licence?") in the `RumourNetwork`.
+
+### New Mechanic: Pickpocketing
+
+A new interaction unlocked at Tier 1. Press **F** while standing directly behind a
+non-hostile NPC (within 1.5 blocks, NPC must not be facing the player — checked by
+dot product of player-to-NPC vector against NPC facing direction).
+
+- Success chance: 70% base, −20% if `NoiseSystem.noiseLevel > 0.3`, −30% if any
+  other NPC is within 6 blocks (witness), +20% if weather is FOG.
+- On success: random COIN drop (1–4 coins) added directly to player inventory.
+  Notoriety +5. Tooltip on first success: "Easy money. For now."
+- On failure: NPC turns around, shouts "Oi!" (speech bubble), adds 1 offence to
+  criminal record, and enters FLEEING state (runs to nearest Police NPC). Notoriety
+  +2 (you tried). Tooltip on first failure: "Butter fingers."
+- Each NPC can only be successfully pickpocketed once per in-game hour (cooldown
+  tracked on the NPC instance). Attempting on cooldown always fails silently (no
+  offence added — the NPC just noticed nothing).
+
+**Key binding**: **F** — Pickpocket (added to Help UI and key reference).
+
+### NPC Accomplice Recruitment (Tier 4+)
+
+At Tier 4 (Urban Legend), the player can recruit one permanent NPC accomplice.
+The mechanic:
+
+1. Press **E** on any non-hostile `STREET_LAD` or `YOUTH` NPC when Tier ≥ 4 and
+   player has ≥ 10 coins. A dialogue option "Want to make some money?" appears.
+2. The NPC costs 10 coins to recruit. They become `NPCState.FOLLOWING_PLAYER` and
+   their `NPCType` changes to `ACCOMPLICE`.
+3. The accomplice follows the player (simple follow AI: move toward player if
+   distance > 3 blocks, stop if distance < 2).
+4. During a heist (while `HeistSystem` phase == EXECUTION): the accomplice
+   automatically moves toward the heist target's safe location and reduces the
+   safe-cracking hold-E time from 8 seconds to 5 seconds.
+5. If the accomplice is hit by police 3 times, they flee and are lost. A new one
+   can be recruited. Speech bubble on loss: "Every man for himself, mate!"
+6. Only 1 accomplice at a time. Tooltip on first recruitment: "Don't get attached."
+
+### Notoriety HUD Element
+
+A new HUD element: a small "WANTED" star-cluster in the top-right corner (inspired
+by the British tradition of tabloid front pages). It shows 0–5 filled stars
+corresponding to the current Tier. Stars fill up with a brief flash animation when
+Notoriety crosses a tier threshold. At Tier 5, the stars pulse red permanently.
+
+The HUD element also displays the player's current **Street Legend Title** in small
+text below the stars (e.g. "AREA MENACE").
+
+### Achievements Integration
+
+New achievements triggered by this system (added to `AchievementType`):
+
+| Achievement | Trigger |
+|-------------|---------|
+| `FIRST_PICKPOCKET` | Successfully pickpocket for the first time |
+| `LOCAL_NUISANCE` | Reach Notoriety Tier 1 |
+| `SURVIVED_ARU` | Escape from 3 consecutive ARU pursuits |
+| `RAGAMUFFIN` | Reach Notoriety Tier 5 (Notoriety = 1000) |
+| `KEEPING_IT_QUIET` | Bribe the fence to reduce notoriety 3 times |
+| `THE_CREW` | Successfully complete a heist with an accomplice |
+
+**Unit tests**: Notoriety gain per action, tier threshold transitions, pickpocket
+success/failure probability, accomplice follow AI, PCSO warning logic, ARU spawn
+conditions, wanted poster placement, HUD star rendering logic, notoriety bribe
+reduction, all new achievement triggers.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Notoriety accumulates across criminal acts**: Start a new game (Notoriety=0).
+   Break 5 blocks inside a building (+2 each = +10). Complete 1 heist (+30). Hit
+   1 Police NPC (+20). Verify total Notoriety is exactly 60. Verify the player is
+   still at Tier 0 (title "Nobody", PCSO response only).
+
+2. **Tier 1 unlock on crossing 100 Notoriety**: Set Notoriety to 98. Commit a
+   heist (+30). Verify Notoriety is now 128. Verify the player's tier is 1 (title
+   "Local Nuisance"). Verify the HUD shows 1 filled star. Verify the Fence's buy
+   price for any item has improved by 10% compared to Tier 0.
+
+3. **Pickpocket success adds coins and notoriety**: Place the player directly behind
+   a pedestrian NPC (within 1.5 blocks, player not in NPC's forward arc). Set noise
+   to 0.0. Ensure no other NPCs within 6 blocks. Press F. Verify on success: player
+   inventory contains 1–4 more COIN than before. Verify Notoriety increased by 5.
+   Verify the NPC's pickpocket cooldown is set. Verify tooltip "Easy money. For now."
+   fires on first success.
+
+4. **Pickpocket failure causes NPC to alert police**: Place a POLICE NPC 10 blocks
+   away. Place the target NPC facing the player (pickpocket will fail — NPC is
+   facing player). Press F. Verify the target NPC enters FLEEING state and moves
+   toward the Police NPC. Verify the player's criminal record gains 1 offence.
+   Verify Notoriety increased by 2. Verify no coins were added to inventory.
+
+5. **PCSO issues warning then calls police**: Set Notoriety to 50 (Tier 0–1 boundary,
+   PCSOs active). Commit a crime. Verify a PCSO NPC spawns and approaches the player.
+   Verify the PCSO's speech bubble contains "Oi! Pack it in!" (does NOT arrest).
+   Commit a second crime within 60 in-game seconds. Verify a regular POLICE NPC
+   now spawns (PCSO radioed for backup).
+
+6. **ARU spawns at Tier 3 after heist alarm**: Set Notoriety to 500 (Tier 3). Execute
+   a heist and trigger an alarm. Verify at least 1 `ARMED_RESPONSE` NPC spawns within
+   180 frames. Verify the ARU NPC moves faster than a regular Police NPC (compare
+   move speed values). Verify the ARU NPC pursues the player into a building interior
+   (does not stop at the doorway).
+
+7. **Helicopter searchlight detects player**: Set Notoriety to 500 (Tier 3). Advance
+   the simulation by 5 in-game minutes (trigger helicopter pass). Verify a sweeping
+   PointLight appears in the environment. Move the player into the searchlight cone.
+   Verify nearby ARU NPCs enter CHASING state. Move the player out of the cone.
+   Verify ARU NPCs return to PATROL state after 10 seconds without re-detection.
+
+8. **Accomplice follows player and speeds up safe crack**: Set Notoriety to 750 (Tier
+   4). Recruit an accomplice (give player 10 coins, press E on a STREET_LAD NPC).
+   Verify NPC type changes to ACCOMPLICE and NPCState is FOLLOWING_PLAYER. Move the
+   player 10 blocks; verify the accomplice has also moved to within 3 blocks of the
+   new position. Start a heist execution phase. Verify the safe-crack hold time is
+   5 seconds (reduced from 8) due to the accomplice's presence.
+
+9. **Wanted poster appears at Tier 5**: Set Notoriety to 1000 (Tier 5). Advance 60
+   frames. Verify at least 1 `WANTED_POSTER` prop has been placed on a wall block
+   near a police-patrolled area. Verify a `RumourType.PLAYER_SPOTTED`-family rumour
+   referencing the wanted poster has been seeded into the RumourNetwork. Verify the
+   HUD stars are all 5 filled and pulsing.
+
+10. **Full notoriety arc stress test**: Start at Notoriety=0. Progress through all 5
+    tiers by completing heists and committing crimes. At each tier transition: verify
+    the HUD star count updates, verify the correct police response type spawns on the
+    next crime, verify the player title text updates. At Tier 5: verify the
+    RAGAMUFFIN achievement fires. Verify the game remains in PLAYING state with no
+    crashes, no NPEs, all NPC counts valid, all HUD elements rendering correctly.
+
+---
+
 ## Phase 9: CODE REVIEW
 
 **Goal**: Comprehensive code review of the entire codebase. This phase runs after
