@@ -214,6 +214,11 @@ public class NPC {
             attackCooldown -= delta;
         }
 
+        // Update pickpocket cooldown (Issue #709)
+        if (pickpocketCooldown > 0) {
+            pickpocketCooldown -= delta;
+        }
+
         // Update facing angle from velocity
         // atan2(vx, vz) gives the angle from +Z axis toward +X axis
         // The model's face is now at +Z local, so yaw 0 = face toward +Z
@@ -316,6 +321,9 @@ public class NPC {
 
     // Building association — set for static quest NPCs stationed inside labelled buildings
     private LandmarkType buildingType = null;
+
+    // Pickpocket cooldown — set after a successful pickpocket; prevents re-picking the same NPC
+    private float pickpocketCooldown = 0f; // counts down to 0
 
     // Shop interaction state — true when the player has opened the shop menu (first E-press)
     // and a purchase is awaited on the next E-press.
@@ -597,6 +605,32 @@ public class NPC {
      */
     public int getStolenItemCount() {
         return stolenItems.size();
+    }
+
+    // ── Rumour network ──────────────────────────────────────────────────────────
+
+    // ── Pickpocket cooldown (Issue #709) ────────────────────────────────────────
+
+    /**
+     * Returns true if this NPC is currently on pickpocket cooldown
+     * (cannot be successfully pickpocketed again yet).
+     */
+    public boolean isPickpocketCooldown() {
+        return pickpocketCooldown > 0f;
+    }
+
+    /**
+     * Set the pickpocket cooldown timer in seconds.
+     */
+    public void setPickpocketCooldown(float seconds) {
+        this.pickpocketCooldown = seconds;
+    }
+
+    /**
+     * Returns the remaining pickpocket cooldown in seconds.
+     */
+    public float getPickpocketCooldown() {
+        return pickpocketCooldown;
     }
 
     // ── Rumour network ──────────────────────────────────────────────────────────

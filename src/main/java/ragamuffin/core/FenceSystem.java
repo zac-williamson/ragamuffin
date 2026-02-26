@@ -87,6 +87,9 @@ public class FenceSystem {
     private final FenceValuationTable valuationTable = new FenceValuationTable();
     private final Random random;
 
+    /** Phase 8e: notoriety system for pricing bonuses and bribery (may be null). */
+    private NotorietySystem notorietySystem;
+
     /** The Fence NPC, or null if not yet spawned. */
     private NPC fenceNpc;
 
@@ -257,6 +260,10 @@ public class FenceSystem {
         if (!valuationTable.accepts(material)) return 0;
         if (inventory.getItemCount(material) < 1) return 0;
         int payment = valuationTable.getValueFor(material);
+        // Phase 8e: apply notoriety tier bonus (Tier 1+ = 10% better prices)
+        if (notorietySystem != null) {
+            payment = notorietySystem.applyFencePriceBonus(payment);
+        }
         inventory.removeItem(material, 1);
         inventory.addItem(Material.FOOD, payment);
         return payment;
@@ -458,6 +465,32 @@ public class FenceSystem {
     /** The valuation table. */
     public FenceValuationTable getValuationTable() {
         return valuationTable;
+    }
+
+    /**
+     * Attach the NotorietySystem for Phase 8e pricing bonuses and bribery.
+     * Call once after the notoriety system is initialised.
+     */
+    public void setNotorietySystem(NotorietySystem notorietySystem) {
+        this.notorietySystem = notorietySystem;
+    }
+
+    /** Returns the attached NotorietySystem, or null. */
+    public NotorietySystem getNotorietySystem() {
+        return notorietySystem;
+    }
+
+    /**
+     * Bribe the fence to reduce notoriety by {@link NotorietySystem#BRIBE_REDUCTION} points.
+     * Costs {@link NotorietySystem#BRIBE_COST_COIN} COIN. Requires notoriety system attached.
+     *
+     * @param inventory         the player's inventory
+     * @param achievementCallback callback for achievements (may be null)
+     * @return true if the bribe succeeded
+     */
+    public boolean bribeFence(Inventory inventory, NotorietySystem.AchievementCallback achievementCallback) {
+        if (notorietySystem == null) return false;
+        return notorietySystem.bribeFence(inventory, achievementCallback);
     }
 
     /**

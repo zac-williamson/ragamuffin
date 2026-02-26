@@ -192,6 +192,39 @@ public enum AchievementType {
         "Trust No One",
         "Completed a heist without an accomplice. Lone wolf. Or just paranoid.",
         1
+    ),
+
+    // ── Phase 8e: Notoriety (Issue #709) ─────────────────────────────────────
+
+    FIRST_PICKPOCKET(
+        "Light Fingers",
+        "Your first successful dip. Easy money. For now.",
+        1
+    ),
+    LOCAL_NUISANCE(
+        "Bit of a Handful",
+        "You've become a Local Nuisance. The neighbourhood watch have your photo.",
+        1
+    ),
+    SURVIVED_ARU(
+        "Run That's Still Running",
+        "Escaped from three consecutive Armed Response Unit pursuits. Somehow.",
+        3
+    ),
+    RAGAMUFFIN(
+        "The Ragamuffin",
+        "Maximum notoriety. You are the most wanted person in the postcode. Probably in the borough.",
+        1
+    ),
+    KEEPING_IT_QUIET(
+        "Hush Money",
+        "Bribed the fence three times to keep your name out of it. Expensive habit.",
+        3
+    ),
+    THE_CREW(
+        "Two-Man Job",
+        "Completed a heist with an accomplice. Don't get attached.",
+        1
     );
 
     private final String name;
