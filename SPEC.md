@@ -5660,3 +5660,236 @@ calculation, counterfeit detection probability, supply/demand price updates.
     NPCs have need scores above 100 or below 0. Verify game remains in PLAYING state with no
     NPEs. Verify barman NPC's rumour log contains at least 4 distinct `TRADE_RUMOUR` entries
     (from NPC gossip about player activity).
+
+---
+
+## Phase S: Hot Pursuit — Wanted System, Police Chases & Getaway Mechanics
+
+**Goal**: Commit a crime, get spotted, and desperately leg it through British streets
+while the Old Bill closes in. Every criminal act now carries real, escalating
+consequences — and the sweet relief of losing your tail makes every close shave
+memorable.
+
+### Overview
+
+When the player commits a witnessed crime (assault, theft, breaking & entering,
+handling stolen goods, etc.), they accumulate a **Wanted Level** (0–5 stars). At
+each tier the police response escalates. The player must **lose their wanted level**
+by breaking line-of-sight, ducking into hiding spots, changing appearance via the
+Disguise System, or bribing a corrupt PCSO. Getting caught results in arrest,
+criminal record update, and a fine / confiscation.
+
+### Wanted Level Tiers
+
+| Stars | Name | Police Response |
+|-------|------|----------------|
+| 0 | Clean | No police interest |
+| 1 | Person of Interest | 1 PCSO investigates last-seen position |
+| 2 | Wanted | 2 POLICE NPCs actively chase the player |
+| 3 | Manhunt | 4 POLICE + patrol car circles the area |
+| 4 | Armed Response | 2 ARMED_RESPONSE NPCs, all police hostile on sight |
+| 5 | Full Lockdown | All police + armed response + Council dispatch; player movement slowed 30 % (kettled) |
+
+### Escalation Rules
+
+- **Crime witness** (`WitnessSystem`): each witnessed crime adds Wanted Level points
+  equal to its `CrimeType.severity` (MINOR=1, MODERATE=2, SEVERE=3, EXTREME=5).
+- **Radio chatter** (flavour): when Wanted Level rises, NPC police "radio in" — text
+  shown as speech bubble: *"Suspect on foot, heading [direction], over."*
+- **Decay**: Wanted Level decays by 1 star per 90 real seconds **only** if the player
+  is outside any police NPC's `LINE_OF_SIGHT_RANGE` (12 blocks). Entering LOS resets
+  the decay timer.
+- **Maximum escalation cap**: Wanted Level cannot exceed 5. Achieving 5 stars during
+  an active `COUNCIL_CRACKDOWN` market event immediately triggers a
+  `GangTerritorySystem` faction lockdown (all faction NPCs hostile).
+
+### Chase Mechanics
+
+Police NPCs in pursuit mode use `Pathfinder` to navigate toward the player's
+**last-known position** (LKP), updated each time a police NPC has LOS to the player.
+If the player breaks LOS, police continue to the LKP, then fan out for
+`SEARCH_DURATION_SECONDS` (30 s) before giving up and returning to patrol.
+
+**Chase speed**: pursuing POLICE NPCs move at `CHASE_SPEED_MULTIPLIER` (1.4×) normal
+NPC speed. ARMED_RESPONSE move at 1.2× (heavier kit).
+
+**Cornering**: if 2+ police NPCs are within 3 blocks of the player simultaneously, the
+player is considered **cornered** and arrested automatically (no further input needed).
+
+### Hiding Mechanics
+
+The player can duck into **hiding spots** — specific prop/block contexts:
+
+| Hiding Spot | Block/Prop | Concealment Duration | Notes |
+|-------------|-----------|---------------------|-------|
+| Wheelie Bin | `WHEELIE_BIN` prop | Until police pass | Cancelled if bin nudged by NPC |
+| Shop doorway | Any `DOOR` block in a `LANDMARK` | 20 s max | Police may enter if suspicion high |
+| Under stairwell | WOOD ceiling ≤ 2 blocks above, enclosed 3 sides | Indefinite | Must be still |
+| Charity Shop changing room | Inside `CHARITY_SHOP` landmark | 45 s | Police require Wanted ≥ 3 to enter |
+| Pub toilet | Inside `PUB` landmark, near `TOILET` prop | 60 s | Police require Wanted ≥ 4 to enter |
+
+While **hidden**, the player cannot move or attack. Press `SHIFT` (crouch/hide toggle)
+to enter/exit. A hiding progress bar shows remaining safe time. If police walk within
+2 blocks of a hiding spot at Wanted ≥ 4, a `SEARCH_DISCOVERED` event fires and
+concealment is broken.
+
+### Losing the Heat
+
+The player can drop their Wanted Level to 0 (without being arrested) via:
+
+1. **Disguise change**: Swap to a disguise the police haven't seen (using
+   `DisguiseSystem.equip()`). Each disguise change resets police description — but
+   only works **once per pursuit** at Wanted ≤ 3. The police description update is
+   announced as: *"Suspect has changed appearance — description updated."*
+
+2. **Bribe a PCSO**: If Wanted Level is 1–2, press `E` on a PCSO NPC and pay
+   `BRIBE_COST_PER_STAR × wantedLevel` COIN. The PCSO looks away, Wanted Level
+   drops to 0, and a `CORRUPTION` rumour is seeded. Only available if player
+   Notoriety < 60 (otherwise PCSO refuses: *"I know who you are, sunshine."*).
+
+3. **Safe house**: Enter the player's own squat (`SquatSystem`) with Wanted Level ≤ 3.
+   After `SAFE_HOUSE_COOLDOWN_SECONDS` (120 s) inside without police entering, Wanted
+   Level resets to 0. Police will not enter at Wanted ≤ 3 but will surround and wait
+   at Wanted 4–5.
+
+4. **Leg it far enough**: If the player travels > `FLEE_DISTANCE_BLOCKS` (80 blocks)
+   from the LKP and breaks LOS for `FULL_ESCAPE_LOS_BREAK_SECONDS` (60 s), Wanted
+   Level drops by 2 stars.
+
+### Arrest Sequence
+
+When cornered or caught in a search:
+
+1. Screen fades to black for 1 second (cinematic cut via `CinematicCamera`).
+2. Player is teleported to a fixed **Police Station** landmark.
+3. Items flagged as stolen/dodgy in inventory are **confiscated** (removed).
+4. A fine of `FINE_PER_WANTED_STAR × wantedLevel × 10` COIN is deducted. If the
+   player cannot pay, a `COMMUNITY_SERVICE` quest is added to their quest log.
+5. `CriminalRecord` is updated with `ARRESTED` entry plus all witnessed crimes in
+   the current session.
+6. Wanted Level resets to 0.
+7. `NotorietySystem` adds `NOTORIETY_PER_ARREST` (5) points.
+8. The barman NPC seeds a rumour: *"[PlayerName] got nicked again. Numpty."*
+
+### Corrupt PCSO & Informant Network
+
+At Notoriety < 40, the player can **cultivate a corrupt PCSO** (unique named NPC in
+the world) by buying them coffees (`FLASK_OF_TEA`, 3 interactions). Once cultivated:
+- Bribe cost halved.
+- PCSO tips off the player via speech bubble when a patrol is heading their way
+  (within 20 blocks): *"Heads up — Charlie's coming round the corner."*
+- If the player grasses on a rival faction member to the PCSO
+  (`WitnessSystem.reportCrime()`), Notoriety drops by 10 and a
+  `BETRAYAL` rumour is seeded naming the informant.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `LEG_IT` | Escape from Wanted Level 3+ without being arrested |
+| `BENT_COPPER` | Successfully bribe a PCSO |
+| `CLEAN_GETAWAY` | Complete a Faction mission at Wanted Level 2+ and lose the heat |
+| `FIVE_STAR_NIGHTMARE` | Reach Wanted Level 5 and survive for 60 seconds |
+| `WHEELIE_BIN_HERO` | Hide in a wheelie bin while 3+ police NPCs pass within 5 blocks |
+| `INNOCENT_FACE` | Use a disguise change to drop from Wanted 3 to 0 in a single pursuit |
+
+### New Constants (in `WantedSystem`)
+
+```
+CHASE_SPEED_MULTIPLIER          = 1.4f
+SEARCH_DURATION_SECONDS         = 30f
+LOS_RANGE_POLICE                = 12 blocks
+WANTED_DECAY_INTERVAL_SECONDS   = 90f
+BRIBE_COST_PER_STAR             = 8   (COIN)
+SAFE_HOUSE_COOLDOWN_SECONDS     = 120f
+FLEE_DISTANCE_BLOCKS            = 80
+FULL_ESCAPE_LOS_BREAK_SECONDS   = 60f
+FINE_PER_WANTED_STAR            = 10  (COIN × wantedLevel)
+NOTORIETY_PER_ARREST            = 5
+CORRUPT_PCSO_CULTIVATE_COUNT    = 3   (flask interactions)
+```
+
+### Integration with Existing Systems
+
+- **WitnessSystem**: `CrimeType.severity` directly feeds Wanted Level escalation.
+  All witnessed crimes are bundled into the arrest `CriminalRecord` entry.
+- **DisguiseSystem**: Disguise-change escape only works if the new disguise hasn't been
+  "burned" (seen by police) in the current session. Each `DisguiseSystem.equip()` call
+  is logged for the current wanted session.
+- **NotorietySystem**: Arrest adds `NOTORIETY_PER_ARREST`. Successful escape from ≥3
+  stars reduces Notoriety by 2 (street cred for swerving the feds).
+- **FactionSystem**: At Wanted 5 during `COUNCIL_CRACKDOWN`, all factions treat the
+  player as the enemy — even allied ones. Completing a Faction mission while wanted
+  grants +5 extra Respect ("you're dedicated, I'll give you that").
+- **SquatSystem / PropertySystem**: The player's squat is the designated safe house.
+  Enemies cannot mark the squat's interior blocks for destruction during a police siege.
+- **RaveSystem**: Hosting a rave while Wanted ≥ 2 immediately spikes police alert
+  to `POLICE_ALERT_SECONDS / 2` (rave draws extra attention).
+- **StreetEconomySystem**: Trading dodgy goods (stolen phone, counterfeit notes) at
+  Wanted ≥ 1 has a 50 % chance of the buyer refusing and calling the police instead,
+  raising Wanted Level by 1.
+- **TimeSystem / WeatherSystem**: Night-time pursuits are harder for police (LOS range
+  reduced to 8 blocks at night). Rain reduces LOS to 6 blocks. Fog reduces to 4 blocks.
+
+### New Key Bindings
+
+- **SHIFT**: Crouch / enter hiding spot (hold to crouch-walk at reduced noise)
+- **B**: Bribe nearby PCSO (context-sensitive, only active when valid PCSO in range and
+  conditions met)
+
+**Unit tests**: Wanted level escalation per crime severity, decay timer reset on LOS,
+chase LKP tracking, hiding spot concealment rules, bribe cost formula, arrest fine
+calculation, disguise-burn tracking, PCSO cultivation counter.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Crime witnessed raises wanted level**: Place player at (50, 1, 50). Place a
+   POLICE NPC with LOS to the player. Trigger `CrimeType.ASSAULT` (severity 2).
+   Verify Wanted Level is now 2. Verify a POLICE NPC enters chase mode targeting the
+   player's position. Verify a speech bubble appears on the POLICE NPC containing
+   "Suspect on foot".
+
+2. **Breaking LOS starts decay timer**: Set Wanted Level to 2. Move the player 15
+   blocks away from all police NPCs (beyond `LOS_RANGE_POLICE`). Advance 90 real
+   seconds. Verify Wanted Level is now 1. Advance another 90 seconds. Verify Wanted
+   Level is now 0.
+
+3. **LOS contact resets decay timer**: Set Wanted Level to 2. Move player outside LOS.
+   Advance 45 seconds (half decay interval). Move a POLICE NPC within 10 blocks of
+   player (re-establishing LOS). Advance another 60 seconds. Verify Wanted Level is
+   still 2 (timer was reset on LOS contact, not enough time has passed for a full cycle).
+
+4. **Player arrested when cornered**: Place the player at (50, 1, 50). Place 2 POLICE
+   NPCs at (52, 1, 50) and (48, 1, 50) (within 3 blocks on either side). Verify
+   arrest sequence fires: player position changes to the Police Station landmark
+   location, Wanted Level resets to 0, and `CriminalRecord` contains an `ARRESTED`
+   entry. Verify dodgy items are removed from inventory.
+
+5. **Hiding in wheelie bin conceals player**: Set Wanted Level to 3. Place a
+   `WHEELIE_BIN` prop at (50, 1, 52). Move player to (50, 1, 52) and press SHIFT.
+   Verify player enters hidden state. Move 4 POLICE NPCs to within 4 blocks. Verify
+   police do NOT detect the player (no arrest, no LOS update). Verify `WHEELIE_BIN_HERO`
+   achievement fires.
+
+6. **Disguise change drops wanted level**: Set Wanted Level to 3. Call
+   `DisguiseSystem.equip(GREGGS_APRON)` (a disguise the police haven't seen this
+   session). Verify Wanted Level drops to 0. Call `DisguiseSystem.equip(GREGGS_APRON)`
+   again (same disguise, now burned). Verify Wanted Level does NOT change.
+
+7. **Bribe PCSO drops wanted level**: Set Wanted Level to 2. Give player 20 COIN.
+   Place a PCSO NPC within 3 blocks. Set player Notoriety to 30. Press B (bribe).
+   Verify 16 COIN (2 stars × 8 COIN/star) is deducted. Verify Wanted Level drops to 0.
+   Verify a `CORRUPTION` rumour is seeded to at least 1 NPC.
+
+8. **Safe house escape**: Set Wanted Level to 2. Move player into the squat interior.
+   Advance 120 real seconds without any police NPC entering. Verify Wanted Level resets
+   to 0. Verify no `ARRESTED` entry was added to `CriminalRecord`.
+
+9. **Leg it escape — distance + LOS break**: Set Wanted Level to 3. Move player 85
+   blocks from the last-known-position. Break LOS with all police for 60 seconds.
+   Verify Wanted Level drops by 2 (to 1). Verify `LEG_IT` achievement fires.
+
+10. **Night reduces police LOS range**: Set `TimeSystem` to 22:00 (night). Spawn a
+    POLICE NPC. Place player 10 blocks away. Verify player is NOT within police LOS
+    (night LOS = 8 blocks). Move player to 7 blocks away. Verify player IS now within
+    LOS. Trigger a crime. Verify Wanted Level increases.
