@@ -1273,6 +1273,236 @@ reduction, all new achievement triggers.
 
 ---
 
+## Phase 8f: The Living Neighbourhood — Dynamic Gentrification, Decay & Reclamation
+
+**Goal**: Make the physical world itself a living, contested battleground that
+evolves based on player actions and faction dominance. Buildings decay over time,
+The Council rolls out gentrification (replacing crumbling blocks with sterile
+luxury flats), the Street Lads reclaim abandoned sites as impromptu parks, and
+the Marchetti Crew fortify their territory with shuttered metal-shutter facades.
+The player can accelerate, resist, or profit from these transformations — creating
+a neighbourhood that is visibly, permanently shaped by emergent choices.
+
+This phase ties together: the existing `FactionSystem`, `SquatSystem`,
+`GraffitiSystem`, `PropertySystem`, `WorldGenerator`, council demolition (Phase 7),
+and the `RumourNetwork` into a single emergent world-state engine.
+
+### Building Decay System
+
+Every player-reachable building in the world has a hidden **Condition** score
+(0–100, starting at 80). Condition degrades over time and from player damage:
+
+| Event | Condition change |
+|-------|-----------------|
+| Each real-time minute passes (building unoccupied) | −1 |
+| Player breaks a block in the building | −3 per block |
+| Player places graffiti on an exterior wall | −2 |
+| Player squats the building (moves in) | +5/minute (maintenance effect) |
+| Council sends a builder to repair (see below) | +20 (one-time) |
+| Fire spreads through building (from campfire) | −15 immediately |
+
+**Visible decay states** (applied by `PropertySystem` each in-game hour):
+
+| Condition | Visual / World change |
+|-----------|----------------------|
+| 70–100 | Normal — no change |
+| 50–69 | **Crumbling**: 10% of exterior BRICK blocks replaced with CRUMBLED_BRICK (new BlockType, dark grey, lower hardness=3 hits) |
+| 30–49 | **Derelict**: windows (GLASS blocks) shatter to AIR; a `CONDEMNED_NOTICE` prop appears on the front wall; `COUNCIL_NOTICE` rumour seeded |
+| 10–29 | **Ruin**: roof blocks (top-layer BRICK/WOOD) removed; partial wall collapses; `BOARDED_WOOD` blocks appear over windows |
+| 0–9 | **Demolition Ready**: entire building flagged for council clearance — council builders arrive within 2 in-game hours |
+
+Two new `BlockType` entries are required: `CRUMBLED_BRICK` (like BRICK, colour
+#5a5050, hardness 3) and `BOARDED_WOOD` (like WOOD, colour #8b7355, hardness 4).
+
+### Gentrification Wave
+
+When The Council's turf fraction (from `TurfMap`) exceeds **50%**, a
+**Gentrification Wave** begins. Every 3 in-game hours, the `PropertySystem`
+selects the most-decayed building in Council territory and commissions it for
+redevelopment:
+
+1. Council builders demolish all remaining blocks over 10 in-game minutes.
+2. A new **Luxury Flat** is generated on the same footprint: smooth GLASS and
+   CONCRETE_PANEL blocks (new BlockType `CONCRETE_PANEL`, colour #c8c8c8,
+   hardness 10 — very hard to break), with a `BUILDING_SIGN` prop reading
+   "Prestige Living — From £850/pcm".
+3. The area's **Base Property Value** doubles (tracked in `PropertySystem`),
+   which raises fence prices by 10% for goods fenced in that zone (integration
+   with `FenceSystem`).
+4. A `RumourType.GENTRIFICATION` rumour ("They're turning the old [name] into
+   luxury flats — proper taking the piss") is seeded into all nearby NPCs and
+   the barman.
+5. Street Lads NPCs in the area become Hostile for 5 in-game minutes
+   (Respect −15 toward The Council, +5 toward player if player attacks a
+   builder during this window).
+
+New `RumourType` entry: `GENTRIFICATION`.
+
+### Reclamation — Street Lads & Marchetti Responses
+
+Opposing factions react to gentrification with their own world changes:
+
+**Street Lads reclamation** (triggers when a Luxury Flat is built in Street Lads
+territory or adjacent): Within 1 in-game hour, 2–4 Street Lads NPCs arrive and
+begin placing GRAFFITI on the exterior walls (using existing `GraffitiSystem`).
+If the building's graffiti coverage reaches ≥ 4 tagged faces, its Condition
+score is permanently capped at 60 (Council won't redevelop graffitied buildings).
+A `RECLAIMED_SQUAT` prop sign is placed reading "NOT FOR SALE — THE LADS".
+
+**Marchetti fortification** (triggers when Marchetti turf fraction > 40%):
+Off-licence and industrial estate buildings gain `METAL_SHUTTER` blocks
+(new BlockType, colour #4a4a4a, hardness 12 — the hardest block in the game)
+over their door and window openings. Marchetti NPCs patrol the perimeter.
+Breaking a METAL_SHUTTER costs 12 hits and immediately triggers a
+`RumourType.GANG_ACTIVITY` rumour and a Respect −20 with Marchetti Crew.
+
+New `BlockType` entries: `CONCRETE_PANEL`, `METAL_SHUTTER`.
+
+### Player Agency — Reclaim or Profit
+
+The player has meaningful choices at every stage:
+
+| Action | Effect |
+|--------|--------|
+| **Squat a derelict building** (existing SquatSystem) before Council flags it | Prevents demolition; building Condition slowly recovers; player gets a free base |
+| **Accelerate decay** (punch blocks in occupied building) | Speeds up gentrification in that zone; The Council gains Respect +5 (they love the vacancy); Street Lads lose Respect −5 |
+| **Defend a building** (press E on a condemned notice to tear it down) | Condition +10; Council Respect −10; Street Lads Respect +10; `RESISTANCE` rumour seeded |
+| **Tip off the council** about a rival's squat (press E near council building with squat address) | Council sends builders in 30 in-game minutes; Marchetti Crew Respect +5 (they hate squatters too); Street Lads Respect −20 |
+| **Sell a building to developers** (press E on Luxury Flat sign with ≥ 50 coins) | Earns 30 coins; Property Value in zone +50%; player Notoriety +20 |
+| **Organise a community meeting** (place FLYER prop on condemned notice + ≥ 5 nearby NPCs present) | Condition +30; Council Respect −15; all non-Council NPCs in area gain Friendly status for 10 minutes; `COMMUNITY_WIN` rumour |
+
+### Neighbourhood Vibes Score (New HUD Element)
+
+A new aggregate stat: **Neighbourhood Vibes** (0–100, starting at 50), displayed
+as a small heart icon with fill bar in the bottom-right HUD corner. It represents
+the social health of the area and is computed each in-game minute:
+
+```
+Vibes = clamp(
+    (avg building Condition / 2)
+    + (Street Lads Respect / 10)
+    − (Council turf fraction × 20)
+    + (active graffiti tags × 2)
+    − (Luxury Flat count × 5)
+    + (active raves × 10)
+    − (Notoriety / 20)
+, 0, 100)
+```
+
+**Vibes thresholds** have gameplay effects:
+
+| Vibes | Effect |
+|-------|--------|
+| ≥ 80 | **Thriving**: NPCs wander further, drop bonus coins; music ambient track plays (pub jukebox sound piped to street via `SoundSystem`) |
+| 50–79 | **Normal**: baseline |
+| 30–49 | **Tense**: NPC wander radius reduced; police spawn rate +25%; rumour spread rate −20% (nobody's talking) |
+| 10–29 | **Hostile**: all non-faction NPCs have 30% chance to flee player on sight; fence buy prices −15% (desperate sellers) |
+| < 10 | **Dystopia**: ambient sound goes silent; fog distance permanently halved; random CRUMBLED_BRICK blocks appear on street-level structures overnight; Newspaper headline becomes "Local Area Declared Zone of Deprivation" |
+
+### Integration with Existing Systems
+
+- **PirateRadioSystem**: Broadcasting from a derelict building raises that
+  building's Condition by +5 per broadcast and temporarily boosts Vibes by +8.
+- **BootSaleSystem**: Boot sales held in high-Vibes areas (≥ 60) attract 2
+  extra buyer NPCs and raise auction prices by 15%.
+- **NewspaperSystem**: Gentrification events and Vibes threshold crossings
+  generate front-page headlines ("Ragamuffin Arms at Risk as Developers Move In",
+  "Local Vibes at All-Time Low — Council Blamed").
+- **StreetSkillSystem** INFLUENCE skill Tier 3 perk: "Community Organiser" —
+  the FLYER community meeting mechanic costs no Flyer item when INFLUENCE ≥ Expert.
+- **AchievementSystem**: New achievements:
+  - `LAST_OF_THE_LOCALS` — Prevent 3 gentrification events by squatting or
+    tearing down condemned notices.
+  - `PROPERTY_DEVELOPER` — Sell 2 buildings to developers.
+  - `DYSTOPIA_NOW` — Let Neighbourhood Vibes drop to 0.
+  - `COMMUNITY_HERO` — Raise Neighbourhood Vibes from below 20 to above 60
+    in a single session.
+
+**Unit tests**: Condition decay rates, gentrification trigger threshold,
+luxury flat block placement, Vibes score formula, decay visual state transitions,
+Marchetti fortification block placement, graffiti coverage cap.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Building condition decays over time**: Place the player 50 blocks from a
+   brick building. Record its Condition (should be 80). Advance the simulation
+   by 10 in-game minutes (fast-forward TimeSystem). Verify the building's
+   Condition has decreased to 70. Verify no visual changes have occurred yet
+   (Condition > 70 threshold).
+
+2. **Crumbled brick appears at Condition 65**: Set a building's Condition to 69.
+   Advance 1 in-game minute. Verify Condition drops to 68 (below 70 threshold).
+   Verify at least 10% of the building's exterior BRICK blocks have been
+   replaced with CRUMBLED_BRICK. Verify the CRUMBLED_BRICK blocks have hardness
+   3 (break in 3 hits instead of 8).
+
+3. **Condemned notice appears at Condition 45**: Set a building's Condition to
+   49. Advance 1 in-game minute (Condition → 48, within 30–49 range). Verify a
+   `CONDEMNED_NOTICE` prop has been placed on one of the building's front-facing
+   wall blocks. Verify a `COUNCIL_NOTICE` rumour has been seeded into at least
+   one nearby NPC. Verify at least one GLASS block in the building has been
+   replaced with AIR (shattered window).
+
+4. **Player tears down condemned notice**: Place the player adjacent to a
+   CONDEMNED_NOTICE prop on a Condition-45 building. Press E. Verify the
+   CONDEMNED_NOTICE prop is removed. Verify building Condition increases by 10
+   (to 55). Verify Council Respect decreases by 10. Verify Street Lads Respect
+   increases by 10. Verify a rumour containing "resistance" or "fighting back"
+   has been seeded into a nearby NPC.
+
+5. **Gentrification wave triggers at 50% Council turf**: Set Council turf
+   fraction to 0.51 in TurfMap. Identify the most-decayed building in Council
+   territory (set its Condition to 5). Advance the simulation by 3 in-game hours.
+   Verify council builders have demolished the old building (block count at that
+   footprint is near zero). Verify CONCRETE_PANEL and GLASS blocks now occupy
+   the footprint (Luxury Flat has been built). Verify a `GENTRIFICATION` rumour
+   exists in at least one NPC's rumour buffer and in the barman's buffer.
+
+6. **Street Lads reclaim a Luxury Flat**: After a Luxury Flat is built (from
+   test 5 or equivalent setup), advance 1 in-game hour. Verify 2–4 Street Lads
+   NPCs have moved to within 5 blocks of the Luxury Flat. Advance another 300
+   frames. Verify at least 1 graffiti tag exists on the exterior of the Luxury
+   Flat. Set graffiti coverage to 4 tagged faces. Verify the building's Condition
+   is now capped at 60 (calling `getCondition()` returns ≤ 60 even after
+   advancing time further).
+
+7. **Marchetti fortification activates at 40% turf**: Set Marchetti turf
+   fraction to 0.41. Find the off-licence building. Advance 60 frames.
+   Verify at least 1 METAL_SHUTTER block has been placed over a door or window
+   opening of the off-licence. Verify METAL_SHUTTER hardness is 12 (requires
+   12 hits to break). Place player adjacent to a METAL_SHUTTER. Punch it once.
+   Verify a `GANG_ACTIVITY` rumour was seeded. Verify Marchetti Respect decreased
+   by 20.
+
+8. **Neighbourhood Vibes HUD element visible and correct**: Start a new game.
+   Verify the Vibes HUD element (heart icon + bar) is visible in the bottom-right
+   of the screen. Set all building Conditions to 80, Street Lads Respect to 70,
+   Council turf to 0.1, graffiti tags to 0, Luxury Flat count to 0, Notoriety to 0.
+   Trigger a Vibes recalculation. Verify Vibes is above 50. Now set Council turf
+   to 0.9 and add 5 Luxury Flats. Trigger recalculation. Verify Vibes has
+   decreased significantly (below 40).
+
+9. **Dystopia state at Vibes < 10**: Set Vibes to 8. Advance 1 frame. Verify
+   ambient sound is silenced (SoundSystem ambient track is stopped). Verify fog
+   distance has been halved (check `WeatherSystem` fog distance parameter).
+   Advance 1 in-game night cycle. Verify at least 1 new CRUMBLED_BRICK block
+   has appeared on a street-level structure that was previously undamaged.
+   Verify the NewspaperSystem has generated a headline containing "Deprivation".
+
+10. **Full neighbourhood lifecycle stress test**: Start a new game. Run the
+    following sequence: (a) advance 5 in-game hours — verify at least 1 building
+    has decayed to Crumbling state; (b) complete a Council mission that demolishes
+    a building — verify a Luxury Flat appears; (c) have the Street Lads respond
+    by placing graffiti; (d) squat an adjacent derelict building as the player —
+    verify its Condition begins recovering; (e) trigger a rave in the squat —
+    verify Vibes increases; (f) force Vibes to 5 — verify Dystopia effects apply;
+    (g) organise a community meeting (FLYER on condemned notice) — verify Vibes
+    increases and Council Respect drops. Throughout the entire sequence: verify
+    no null pointer exceptions, no crashes, all HUD elements render correctly,
+    NPC count remains non-zero, all rumour buffers contain valid data.
+
+---
+
 ## Phase 9: CODE REVIEW
 
 **Goal**: Comprehensive code review of the entire codebase. This phase runs after
