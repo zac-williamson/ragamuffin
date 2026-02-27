@@ -155,7 +155,45 @@ public enum Material {
      * Rave Flyer — used to announce an illegal rave at the player's squat.
      * Crafted from 2 PAPER (NEWSPAPER) + 1 PAINT_TIN. Single use; triggers RAVE_ANNOUNCEMENT rumour.
      */
-    FLYER("Flyer");
+    FLYER("Flyer"),
+
+    // ── Issue #720: Craftable 3D prop items ──────────────────────────────────
+
+    /**
+     * Crafted bed prop — place inside the squat to provide +10 Vibe and enable
+     * lodger hosting. Crafted from 4 WOOD + 2 PLANKS.
+     */
+    PROP_BED("Bed"),
+
+    /**
+     * Crafted workbench prop — place inside the squat to unlock advanced crafting
+     * recipes (BARRICADE, LOCKPICK, FAKE_ID). Crafted from 6 PLANKS + 2 SCRAP_METAL.
+     */
+    PROP_WORKBENCH("Workbench"),
+
+    /**
+     * Crafted dartboard prop — place inside the squat for +7 Vibe.
+     * Crafted from 3 WOOD + 1 SCRAP_METAL.
+     */
+    PROP_DARTBOARD("Dartboard"),
+
+    /**
+     * Crafted speaker stack prop — rave equipment, +5 capacity and +1 COIN/attendee/min.
+     * Crafted from 4 SCRAP_METAL + 2 WOOD.
+     */
+    PROP_SPEAKER_STACK("Speaker Stack"),
+
+    /**
+     * Crafted disco ball prop — rave equipment, +3 rave capacity.
+     * Crafted from 2 GLASS + 1 SCRAP_METAL.
+     */
+    PROP_DISCO_BALL("Disco Ball"),
+
+    /**
+     * Crafted DJ decks prop — rave equipment, enables DJ recruitment (doubles income).
+     * Crafted from 3 SCRAP_METAL + 2 WIRE (PIPE).
+     */
+    PROP_DJ_DECKS("DJ Decks");
 
     private final String displayName;
 
@@ -334,6 +372,20 @@ public enum Material {
             case FLYER:          return cs(0.92f, 0.10f, 0.55f,  // Hot pink flyer
                                             0.88f, 0.82f, 0.15f); // Yellow accent
 
+            // Craftable 3D props (Issue #720)
+            case PROP_BED:           return cs(0.55f, 0.38f, 0.22f,  // Wooden frame
+                                               0.88f, 0.88f, 0.88f); // White pillow
+            case PROP_WORKBENCH:     return cs(0.62f, 0.45f, 0.22f,  // Plywood top
+                                               0.40f, 0.30f, 0.18f); // Darker legs
+            case PROP_DARTBOARD:     return cs(0.10f, 0.10f, 0.12f,  // Dark board
+                                               0.88f, 0.18f, 0.18f); // Red ring
+            case PROP_SPEAKER_STACK: return cs(0.15f, 0.15f, 0.18f,  // Black cabinet
+                                               0.30f, 0.30f, 0.35f); // Grey grille
+            case PROP_DISCO_BALL:    return cs(0.85f, 0.90f, 0.95f,  // Mirrored silver
+                                               0.65f, 0.72f, 0.80f); // Darker reflection
+            case PROP_DJ_DECKS:      return cs(0.15f, 0.15f, 0.18f,  // Black chassis
+                                               0.55f, 0.55f, 0.60f); // Silver controls
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -426,6 +478,13 @@ public enum Material {
             // Underground music scene (Issue #716)
             case MICROPHONE:
             case FLYER:
+            // Craftable 3D props (Issue #720)
+            case PROP_BED:
+            case PROP_WORKBENCH:
+            case PROP_DARTBOARD:
+            case PROP_SPEAKER_STACK:
+            case PROP_DISCO_BALL:
+            case PROP_DJ_DECKS:
                 return false;
             default:
                 return true;
@@ -591,6 +650,20 @@ public enum Material {
                 return IconShape.CYLINDER;   // microphone body
             case FLYER:
                 return IconShape.FLAT_PAPER; // paper flyer
+
+            // Craftable 3D props (Issue #720)
+            case PROP_BED:
+                return IconShape.BOX;        // bed frame box shape
+            case PROP_WORKBENCH:
+                return IconShape.BOX;        // workbench surface box
+            case PROP_DARTBOARD:
+                return IconShape.CARD;       // round flat board
+            case PROP_SPEAKER_STACK:
+                return IconShape.BOX;        // cabinet box shape
+            case PROP_DISCO_BALL:
+                return IconShape.GEM;        // spherical reflective shape
+            case PROP_DJ_DECKS:
+                return IconShape.BOX;        // flat console box
 
             default:
                 return IconShape.BOX;
