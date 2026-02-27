@@ -404,7 +404,22 @@ public enum Material {
      * Knock-Off Perfume — dodgy item sold at the stall.
      * High demand, moderate price, raises Notoriety slightly if caught.
      */
-    KNOCK_OFF_PERFUME("Knock-Off Perfume");
+    KNOCK_OFF_PERFUME("Knock-Off Perfume"),
+
+    // ── Issue #787: Street Skills & Character Progression ──────────────────────
+
+    /**
+     * Skeleton Key — crafted from 3 WIRE + 1 BRICK.
+     * Opens any locked door once; consumed on use.
+     */
+    SKELETON_KEY("Skeleton Key"),
+
+    /**
+     * Bitter Greens — LEAVES block eaten as emergency food.
+     * Requires GRAFTING Journeyman tier or above to consume.
+     * Restores 20 hunger; slightly unpleasant (no energy bonus).
+     */
+    BITTER_GREENS("Bitter Greens");
 
     private final String displayName;
 

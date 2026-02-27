@@ -109,7 +109,16 @@ public enum NPCType {
      * Can be bribed for 10 COIN (adds 5 Notoriety) or will confiscate all stock.
      * Passive until interacting; walks toward the stall when spawned.
      */
-    MARKET_INSPECTOR(25f, 0f, 0f, false);
+    MARKET_INSPECTOR(25f, 0f, 0f, false),
+
+    // ── Issue #787: Street Skills & Character Progression ────────────────────
+
+    /**
+     * Follower — a PUBLIC NPC rallied by the player via the RALLY mechanic (INFLUENCE Expert+).
+     * Follows the player; deters POLICE and GANG NPCs within 5 blocks.
+     * Disperses after 120 seconds or when the player is arrested.
+     */
+    FOLLOWER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

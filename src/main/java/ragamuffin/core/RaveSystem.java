@@ -377,4 +377,17 @@ public class RaveSystem {
 
     /** Number of DISCO_BALL props configured. */
     public int getDiscoBalls() { return discoBalls; }
+
+    /**
+     * Issue #787: Trigger a flash rave at the player's location (SURVIVAL Legend perk).
+     * Starts the rave immediately regardless of Vibe/MC Rank prerequisites.
+     */
+    public void setFlashRaveActive(boolean active) {
+        this.raveActive = active;
+        if (active) {
+            this.elapsedSeconds = 0f;
+            this.accumulatedIncome = 0f;
+            this.policeAlerted = false;
+        }
+    }
 }
