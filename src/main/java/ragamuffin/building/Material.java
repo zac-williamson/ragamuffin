@@ -352,7 +352,31 @@ public enum Material {
      * Newspaper — already exists; referenced here as black market rumour source.
      * Used by NPCs in BORED state; seeded by RUMOUR_NETWORK with LOOT_TIP.
      * NOTE: NEWSPAPER already exists above — this comment is for documentation only.
-     */;
+     */
+
+    // ── Issue #783: Pirate FM — Underground Radio Station ─────────────────────
+
+    /**
+     * Wire — crafted from 1 COIN + 1 WOOD.
+     * Used as a component for MICROPHONE, TRANSMITTER block, and DJ equipment.
+     * Tradeable commodity in the StreetEconomySystem.
+     */
+    WIRE("Wire"),
+
+    /**
+     * Broadcast Tape — crafted from 1 NEWSPAPER + 1 COIN.
+     * Right-click on a TRANSMITTER to pre-record a show. Tape auto-broadcasts
+     * the chosen action every 30 in-game seconds at half effectiveness while unattended.
+     */
+    BROADCAST_TAPE("Broadcast Tape"),
+
+    /**
+     * Transmitter (item) — crafted from 2 WIRE + 1 COMPUTER + 1 WOOD.
+     * Place it in the world (must be indoors with 3+ block roof) to place a
+     * TRANSMITTER block. Once placed, interact with it and press B while holding
+     * a MICROPHONE to broadcast.
+     */
+    TRANSMITTER_ITEM("Transmitter");
 
     private final String displayName;
 
@@ -569,6 +593,14 @@ public enum Material {
             case TOBACCO_POUCH:      return cs(0.52f, 0.35f, 0.18f,  // Brown leather
                                                0.35f, 0.22f, 0.08f); // Dark brown
 
+            // Issue #783: Pirate FM materials
+            case WIRE:              return cs(0.55f, 0.55f, 0.60f,  // Silver wire
+                                              0.38f, 0.38f, 0.42f); // Darker insulation
+            case BROADCAST_TAPE:    return cs(0.15f, 0.15f, 0.18f,  // Black cassette body
+                                              0.88f, 0.12f, 0.12f); // Red label
+            case TRANSMITTER_ITEM:  return cs(0.20f, 0.20f, 0.25f,  // Dark metal chassis
+                                              0.88f, 0.50f, 0.05f); // Orange antenna light
+
             // Issue #781: Graffiti materials
             case SPRAY_CAN_EMPTY:   return c(0.65f, 0.65f, 0.65f);  // Grey empty can
             case SPRAY_CAN:         return cs(0.85f, 0.18f, 0.18f,  // Red cap
@@ -720,6 +752,10 @@ public enum Material {
             case PAINT_PIGMENT_GOLD:
             case PAINT_PIGMENT_WHITE:
             case PAINT_PIGMENT_GREY:
+            // Issue #783: Pirate FM materials (not block items)
+            case WIRE:
+            case BROADCAST_TAPE:
+            case TRANSMITTER_ITEM:
                 return false;
             default:
                 return true;
@@ -946,6 +982,14 @@ public enum Material {
             case PAINT_PIGMENT_WHITE:
             case PAINT_PIGMENT_GREY:
                 return IconShape.BOTTLE;     // pigment bottle
+
+            // Issue #783: Pirate FM materials
+            case WIRE:
+                return IconShape.TOOL;       // coil of wire shape
+            case BROADCAST_TAPE:
+                return IconShape.CARD;       // cassette tape shape
+            case TRANSMITTER_ITEM:
+                return IconShape.BOX;        // transmitter unit box shape
 
             default:
                 return IconShape.BOX;

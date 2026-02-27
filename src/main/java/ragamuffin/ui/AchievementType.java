@@ -492,6 +492,39 @@ public enum AchievementType {
         "Clean Hands",
         "Completed a full in-game day without placing any tags, while holding a spray can. Suspicious restraint.",
         1
+    ),
+
+    // ── Issue #783: Pirate FM — Underground Radio Station ────────────────────
+
+    ON_AIR(
+        "On Air",
+        "Completed your first pirate broadcast. The community has spoken. Loudly.",
+        1
+    ),
+    PIRATE_FM(
+        "Pirate FM",
+        "Broadcast for ten cumulative in-game minutes. The airwaves belong to the people. Allegedly.",
+        10
+    ),
+    SIGNAL_JAM(
+        "Signal Jam",
+        "Destroyed a Council Signal Van. They're going to need a bigger budget.",
+        1
+    ),
+    THE_PEOPLE_S_DJ(
+        "The People's DJ",
+        "Had six Listener NPCs arrive at your transmitter simultaneously. You're famous. Sort of.",
+        1
+    ),
+    ENEMY_OF_THE_STATE(
+        "Enemy of the State",
+        "Your broadcast made the front page: 'RAGAMUFFIN FM: ENEMY OF THE STATE?' Brilliant.",
+        1
+    ),
+    OFF_AIR(
+        "Off Air",
+        "Had your transmitter confiscated by a Signal Van. Should've turned it off earlier, mate.",
+        1
     );
 
     private final String name;

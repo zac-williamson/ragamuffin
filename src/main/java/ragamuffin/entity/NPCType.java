@@ -88,7 +88,19 @@ public enum NPCType {
      * Council Cleaner — dispatched by THE_COUNCIL to scrub graffiti from civic areas
      * (near town hall, Greggs, park) after 2 in-game days. Carries a bucket. Passive.
      */
-    COUNCIL_CLEANER(20f, 0f, 0f, false);
+    COUNCIL_CLEANER(20f, 0f, 0f, false),
+
+    // ── Issue #783: Pirate FM — Underground Radio Station ────────────────────
+
+    /**
+     * Listener — a civilian drawn to the pirate radio transmitter's signal.
+     * Spawned by the "Black Market Shout-Out" broadcast action (up to 6 at once).
+     * Walks toward the transmitter; on arrival (within 4 blocks), enters IDLE and
+     * drops loot (CAN_OF_LAGER, CIGARETTE, COIN×3, TOBACCO_POUCH, SCRATCH_CARD,
+     * STOLEN_PHONE, NEWSPAPER, WOOLLY_HAT_ECONOMY, PRESCRIPTION_MEDS).
+     * Despawns after 60 in-game seconds at the transmitter.
+     */
+    LISTENER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

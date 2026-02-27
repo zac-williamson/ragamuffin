@@ -225,6 +225,34 @@ public class CraftingSystem {
             Map.of(Material.RUMOUR_NOTE, 1)
         ));
 
+        // ── Issue #783: Pirate FM — Underground Radio Station ────────────────────
+
+        // WIRE: COIN×1 + WOOD×1 → WIRE×1 (electrical wiring, used in MICROPHONE and TRANSMITTER)
+        recipes.add(new Recipe(
+            Map.of(Material.COIN, 1, Material.WOOD, 1),
+            Map.of(Material.WIRE, 1)
+        ));
+
+        // MICROPHONE: WIRE×1 + COIN×1 → MICROPHONE×1
+        // (Note: replaces old SCRAP_METAL+PIPE recipe from Issue #716 for pirate radio use)
+        recipes.add(new Recipe(
+            Map.of(Material.WIRE, 1, Material.COIN, 1),
+            Map.of(Material.MICROPHONE, 1)
+        ));
+
+        // BROADCAST_TAPE: NEWSPAPER×1 + COIN×1 → BROADCAST_TAPE×1 (pre-record a show)
+        recipes.add(new Recipe(
+            Map.of(Material.NEWSPAPER, 1, Material.COIN, 1),
+            Map.of(Material.BROADCAST_TAPE, 1)
+        ));
+
+        // TRANSMITTER: WIRE×2 + COMPUTER×1 + WOOD×1 → TRANSMITTER×1
+        // (Placed as BlockType.TRANSMITTER; must be placed indoors with 3+ block roof overhead)
+        recipes.add(new Recipe(
+            Map.of(Material.WIRE, 2, Material.COMPUTER, 1, Material.WOOD, 1),
+            Map.of(Material.TRANSMITTER_ITEM, 1)
+        ));
+
         // ── Issue #781: Graffiti & Territorial Marking ────────────────────────────
 
         // SPRAY_CAN: SPRAY_CAN_EMPTY×1 + any PAINT_PIGMENT → SPRAY_CAN×1 (20 uses)
