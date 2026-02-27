@@ -4,7 +4,8 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 
 /**
- * Renders sky elements — sun disk and clouds — as part of the skybox.
+ * Renders sky elements — sun disk, clouds, and at night: moon, stars, and
+ * planets — as part of the skybox.
  *
  * The sun is drawn as a filled circle near the top of the screen, positioned
  * horizontally based on the time of day and vertically based on the sun's
@@ -14,13 +15,19 @@ import com.badlogic.gdx.math.Matrix4;
  * Clouds are drawn as clusters of overlapping filled circles that scroll slowly
  * over time, giving a sense of atmospheric depth without expensive 3D geometry.
  *
- * Both elements are rendered into the skybox layer (before the 3D world geometry)
+ * At night, stars are rendered as small dots distributed across the sky dome,
+ * the moon is drawn with the correct phase for the day of year, and the five
+ * naked-eye planets are shown as brighter points whose positions shift with
+ * the season.  Star and planet positions change with the day of year so that
+ * the sky looks different across seasons.
+ *
+ * All elements are rendered into the skybox layer (before the 3D world geometry)
  * so that 3D objects naturally occlude them.  Use {@link #renderSkybox} each frame
  * immediately after clearing the colour buffer and before starting the 3D
  * model batch.  The caller must clear the depth buffer after this call so that
  * 3D geometry renders correctly on top.
  *
- * Both elements are rendered using ShapeRenderer so no extra textures are needed.
+ * All elements are rendered using ShapeRenderer so no extra textures are needed.
  */
 public class SkyRenderer {
 
@@ -29,6 +36,39 @@ public class SkyRenderer {
 
     // Horizontal scroll speed (fraction of screen width per second)
     private static final float CLOUD_SCROLL_SPEED = 0.004f;
+
+    // Number of stars in the night sky
+    private static final int STAR_COUNT = 200;
+
+    // Synodic period of the moon in days (new moon → new moon)
+    private static final float LUNAR_CYCLE_DAYS = 29.53059f;
+
+    // Reference new moon at day 0 of the year (day offset chosen so phases
+    // look plausible across seasons — not an exact ephemeris anchor).
+    private static final float NEW_MOON_REFERENCE_DAY = 5.0f;
+
+    // Names of the five naked-eye planets (for documentation; order matches
+    // the planet data arrays below).
+    public static final String[] PLANET_NAMES = {"Mercury", "Venus", "Mars", "Jupiter", "Saturn"};
+
+    // Orbital periods in Earth days (approximate, for visual position cycling)
+    private static final float[] PLANET_PERIODS = {87.97f, 224.70f, 686.97f, 4332.59f, 10759.22f};
+
+    // Base sky-position angles (degrees, 0-360) at day 0, spreading planets
+    // across the ecliptic so they appear at different parts of the sky.
+    private static final float[] PLANET_BASE_ANGLES = {30f, 110f, 200f, 290f, 60f};
+
+    // Visual sizes (relative) — Venus > Jupiter > Mars > Saturn > Mercury
+    private static final float[] PLANET_SIZES = {1.5f, 3.5f, 2.5f, 3.0f, 2.0f};
+
+    // Colours [r, g, b] — rough naked-eye hues
+    private static final float[][] PLANET_COLOURS = {
+        {0.9f, 0.85f, 0.75f},  // Mercury — pale yellowish
+        {1.0f, 1.0f, 0.80f},   // Venus   — brilliant white-yellow
+        {1.0f, 0.55f, 0.35f},  // Mars    — reddish-orange
+        {0.9f, 0.85f, 0.70f},  // Jupiter — cream/white
+        {0.9f, 0.85f, 0.60f},  // Saturn  — pale gold
+    };
 
     private float cloudTime = 0f;
 
@@ -71,6 +111,31 @@ public class SkyRenderer {
                        float time, float sunrise, float sunset,
                        int screenWidth, int screenHeight,
                        boolean isNight, float cameraYawDeg) {
+        renderSkybox(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight,
+                     isNight, cameraYawDeg, 0);
+    }
+
+    /**
+     * Render sun, clouds, and (at night) stars, moon, and planets.
+     *
+     * This overload accepts the day of year so that star/planet positions and
+     * moon phase are updated correctly as the in-game calendar advances.
+     *
+     * @param shapeRenderer  shared ShapeRenderer (not currently between begin/end)
+     * @param time           current game time in hours (0–24)
+     * @param sunrise        today's sunrise time in hours
+     * @param sunset         today's sunset time in hours
+     * @param screenWidth    current screen width in pixels
+     * @param screenHeight   current screen height in pixels
+     * @param isNight        true when it is currently night-time
+     * @param cameraYawDeg   camera yaw in degrees (0 = facing -Z/north, 90 = east, 180 = south)
+     * @param dayOfYear      day of the year (0–364) used for seasonal sky positions
+     */
+    public void renderSkybox(ShapeRenderer shapeRenderer,
+                       float time, float sunrise, float sunset,
+                       int screenWidth, int screenHeight,
+                       boolean isNight, float cameraYawDeg,
+                       int dayOfYear) {
 
         Matrix4 ortho = new Matrix4();
         ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
@@ -82,8 +147,14 @@ public class SkyRenderer {
                 com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA,
                 com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
 
-        // Draw sun only during the day
-        if (!isNight) {
+        if (isNight) {
+            // Night sky: stars first (furthest back), then planets, then moon
+            renderStars(shapeRenderer, screenWidth, screenHeight, cameraYawDeg, dayOfYear);
+            renderPlanets(shapeRenderer, screenWidth, screenHeight, cameraYawDeg, dayOfYear);
+            renderMoon(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight,
+                       cameraYawDeg, dayOfYear);
+        } else {
+            // Draw sun only during the day
             renderSun(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight, cameraYawDeg);
         }
 
@@ -233,6 +304,229 @@ public class SkyRenderer {
         }
 
         shapeRenderer.end();
+    }
+
+    // -----------------------------------------------------------------------
+    // Night sky: stars
+    // -----------------------------------------------------------------------
+
+    private void renderStars(ShapeRenderer shapeRenderer,
+                             int screenWidth, int screenHeight,
+                             float cameraYawDeg, int dayOfYear) {
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        for (int i = 0; i < STAR_COUNT; i++) {
+            // Each star has a fixed celestial longitude (world yaw 0–360°).
+            // The longitude drifts slightly with day of year — the ecliptic
+            // shifts ~1°/day — so the star field rotates slowly across seasons,
+            // placing different constellations overhead at different times of year.
+            float baseLon = (i * 137.508f) % 360f;           // golden-ratio spread
+            float seasonalShift = (dayOfYear * 0.9856f) % 360f; // ~1°/day sidereal drift
+            float starWorldYaw = (baseLon - seasonalShift + 360f) % 360f;
+
+            float yawDiff = starWorldYaw - cameraYawDeg;
+            while (yawDiff >  180f) yawDiff -= 360f;
+            while (yawDiff < -180f) yawDiff += 360f;
+
+            // Only draw stars within roughly 90° of the camera direction
+            if (Math.abs(yawDiff) > 95f) continue;
+
+            float starX = screenWidth * 0.5f + (yawDiff / 90f) * screenWidth;
+
+            // Distribute stars across the upper 60 % of the screen (the sky dome)
+            float seedY  = ((i * 53.7f + 17.3f) % 1000f) / 1000f;
+            float starY  = screenHeight * (0.40f + seedY * 0.55f);
+
+            // Twinkle: vary brightness slightly with a pseudo-random phase
+            float phase  = (i * 0.41f + cloudTime * (0.3f + (i % 7) * 0.05f)) % (2f * (float)Math.PI);
+            float twinkle = 0.75f + 0.25f * (float)Math.cos(phase);
+
+            // Vary star brightness: most are dim, a few are bright
+            float baseBrightness = ((i * 29.3f + 3.7f) % 10f < 1f) ? 0.95f :
+                                   ((i * 29.3f + 3.7f) % 10f < 3f) ? 0.75f : 0.55f;
+            float brightness = baseBrightness * twinkle;
+
+            // Slightly warm/cool tints for variety
+            float tintR = 1.0f, tintG = 1.0f, tintB = 1.0f;
+            int tintBucket = i % 6;
+            if (tintBucket == 0) { tintB = 1.0f; tintR = 0.80f; tintG = 0.85f; } // blue-white
+            else if (tintBucket == 1) { tintR = 1.0f; tintG = 0.85f; tintB = 0.75f; } // warm orange
+
+            float radius = (baseBrightness > 0.9f) ? 2.5f : (baseBrightness > 0.7f) ? 1.8f : 1.2f;
+
+            shapeRenderer.setColor(brightness * tintR, brightness * tintG, brightness * tintB, brightness);
+            shapeRenderer.circle(starX, starY, radius, 6);
+        }
+
+        shapeRenderer.end();
+    }
+
+    // -----------------------------------------------------------------------
+    // Night sky: moon
+    // -----------------------------------------------------------------------
+
+    private void renderMoon(ShapeRenderer shapeRenderer,
+                            float time, float sunrise, float sunset,
+                            int screenWidth, int screenHeight,
+                            float cameraYawDeg, int dayOfYear) {
+
+        // Moon rises in the east and sets in the west, roughly opposite the sun.
+        // During the night it moves from east (rise at sunset) to west (set at sunrise).
+        // We approximate: moon rises at sunset and sets at the next sunrise.
+
+        // Night fraction: 0 when the sun sets, 1 when the sun rises again.
+        float nightLength = (24f - sunset) + sunrise; // hours of darkness
+        float timeIntoNight;
+        if (time >= sunset) {
+            timeIntoNight = time - sunset;
+        } else {
+            // After midnight, before sunrise
+            timeIntoNight = (24f - sunset) + time;
+        }
+        float nightFraction = clamp(timeIntoNight / nightLength, 0f, 1f);
+
+        // Moon world yaw: rises east (90°), transits south (180°), sets west (270°)
+        float moonWorldYaw = 90f + nightFraction * 180f;
+
+        float yawDiff = moonWorldYaw - cameraYawDeg;
+        while (yawDiff >  180f) yawDiff -= 360f;
+        while (yawDiff < -180f) yawDiff += 360f;
+
+        float moonX = screenWidth * 0.5f + (yawDiff / 90f) * screenWidth;
+
+        // Vertical: arc across the sky
+        float moonElevation = (float) Math.sin(nightFraction * Math.PI);
+        float horizonY = screenHeight * 0.70f;
+        float peakY    = screenHeight * 0.85f;
+        float moonY = horizonY + (peakY - horizonY) * moonElevation;
+
+        float moonRadius = 14f;
+
+        // ---- Moon phase ----
+        // Phase angle in [0, 2π]: 0 = new moon, π = full moon
+        float daysSinceNewMoon = (dayOfYear - NEW_MOON_REFERENCE_DAY + LUNAR_CYCLE_DAYS * 10)
+                                  % LUNAR_CYCLE_DAYS;
+        float phaseAngle = (daysSinceNewMoon / LUNAR_CYCLE_DAYS) * 2f * (float) Math.PI;
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        // Draw the full lit moon disk (white-grey)
+        shapeRenderer.setColor(0.92f, 0.92f, 0.88f, 0.95f);
+        shapeRenderer.circle(moonX, moonY, moonRadius, 32);
+
+        // Draw the shadow overlay to create the phase illusion.
+        // The shadow is a semi-circular overlay: we approximate it by drawing
+        // a dark circle offset from the moon centre.  The amount of lit surface
+        // visible (illuminated fraction) is: (1 - cos(phaseAngle)) / 2.
+        float illuminatedFraction = (1f - (float) Math.cos(phaseAngle)) / 2f;
+
+        // Shadow coverage: 1 = fully dark (new moon), 0 = fully lit (full moon)
+        float shadowCoverage = 1f - illuminatedFraction;
+
+        if (shadowCoverage > 0.02f) {
+            // Shadow offset: negative (left/waxing) or positive (right/waning)
+            // Phase 0→π: waxing, shadow on left; phase π→2π: waning, shadow on right
+            float offsetSign = (phaseAngle < Math.PI) ? -1f : 1f;
+            // Shadow offset scales from moonRadius (new) to 0 (full) and back
+            float shadowOffset = offsetSign * (float) Math.cos(phaseAngle) * moonRadius;
+
+            shapeRenderer.setColor(0.05f, 0.05f, 0.12f, 0.95f);
+            shapeRenderer.circle(moonX + shadowOffset, moonY, moonRadius, 32);
+        }
+
+        shapeRenderer.end();
+    }
+
+    /**
+     * Returns the moon's illuminated fraction (0 = new moon, 1 = full moon)
+     * for the given day of the year.
+     */
+    public float getMoonPhase(int dayOfYear) {
+        float daysSinceNewMoon = (dayOfYear - NEW_MOON_REFERENCE_DAY + LUNAR_CYCLE_DAYS * 10)
+                                  % LUNAR_CYCLE_DAYS;
+        float phaseAngle = (daysSinceNewMoon / LUNAR_CYCLE_DAYS) * 2f * (float) Math.PI;
+        return (1f - (float) Math.cos(phaseAngle)) / 2f;
+    }
+
+    /**
+     * Returns the moon phase name for the given day of the year.
+     * One of: "new", "waxing crescent", "first quarter", "waxing gibbous",
+     * "full", "waning gibbous", "last quarter", "waning crescent".
+     */
+    public String getMoonPhaseName(int dayOfYear) {
+        float daysSinceNewMoon = (dayOfYear - NEW_MOON_REFERENCE_DAY + LUNAR_CYCLE_DAYS * 10)
+                                  % LUNAR_CYCLE_DAYS;
+        float fraction = daysSinceNewMoon / LUNAR_CYCLE_DAYS; // 0–1
+        if (fraction < 0.0625f || fraction >= 0.9375f) return "new";
+        if (fraction < 0.1875f)  return "waxing crescent";
+        if (fraction < 0.3125f)  return "first quarter";
+        if (fraction < 0.4375f)  return "waxing gibbous";
+        if (fraction < 0.5625f)  return "full";
+        if (fraction < 0.6875f)  return "waning gibbous";
+        if (fraction < 0.8125f)  return "last quarter";
+        return "waning crescent";
+    }
+
+    // -----------------------------------------------------------------------
+    // Night sky: planets
+    // -----------------------------------------------------------------------
+
+    private void renderPlanets(ShapeRenderer shapeRenderer,
+                               int screenWidth, int screenHeight,
+                               float cameraYawDeg, int dayOfYear) {
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+
+        for (int i = 0; i < PLANET_NAMES.length; i++) {
+            float planetWorldYaw = getPlanetWorldYaw(i, dayOfYear);
+
+            float yawDiff = planetWorldYaw - cameraYawDeg;
+            while (yawDiff >  180f) yawDiff -= 360f;
+            while (yawDiff < -180f) yawDiff += 360f;
+
+            if (Math.abs(yawDiff) > 95f) continue;
+
+            float px = screenWidth * 0.5f + (yawDiff / 90f) * screenWidth;
+
+            // Planets sit along the ecliptic band: upper-middle part of the sky
+            float eclipticSeed = ((i * 73.1f + 41.3f) % 100f) / 100f;
+            float py = screenHeight * (0.60f + eclipticSeed * 0.25f);
+
+            float[] col = PLANET_COLOURS[i];
+            float size  = PLANET_SIZES[i];
+
+            // Soft glow
+            shapeRenderer.setColor(col[0], col[1], col[2], 0.25f);
+            shapeRenderer.circle(px, py, size * 2.2f, 12);
+
+            // Main disk
+            shapeRenderer.setColor(col[0], col[1], col[2], 0.95f);
+            shapeRenderer.circle(px, py, size, 12);
+        }
+
+        shapeRenderer.end();
+    }
+
+    /**
+     * Returns the world yaw (0–360°) of planet {@code planetIndex} on the
+     * given day of the year.  Planets cycle around the sky with their
+     * approximate orbital period, starting from the base angle at day 0.
+     *
+     * @param planetIndex  index into PLANET_NAMES (0=Mercury … 4=Saturn)
+     * @param dayOfYear    0–364
+     * @return yaw in degrees [0, 360)
+     */
+    public float getPlanetWorldYaw(int planetIndex, int dayOfYear) {
+        float degreesPerDay = 360f / PLANET_PERIODS[planetIndex];
+        return (PLANET_BASE_ANGLES[planetIndex] + dayOfYear * degreesPerDay) % 360f;
+    }
+
+    /**
+     * Returns the number of planets rendered in the night sky.
+     */
+    public int getPlanetCount() {
+        return PLANET_NAMES.length;
     }
 
     // -----------------------------------------------------------------------
