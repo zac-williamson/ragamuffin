@@ -1030,7 +1030,9 @@ public class WorldGenerator {
         generateGardenWalls(world, sx, rz1 - 5, 120, 1);
 
         // ===== BUILDING INTERIORS =====
-        generateBuildingInteriors(world, sx, sz, nx, nz, esx, enz, jobX, jobZ, gpX, gpZ, libX, libZ);
+        generateBuildingInteriors(world, sx, sz, nx, nz, esx, enz, jobX, jobZ, gpX, gpZ, libX, libZ,
+                offX, offZ, churchX, churchZ, ccX, ccZ, indX, indZ, schoolX, schoolZ,
+                pstnX, pstnZ, fsX, fsZ, smX, smZ, lcX, lcZ);
 
         // ===== STREET FURNITURE =====
         generateStreetFurniture(world, sx, sz, nx, nz);
@@ -1081,6 +1083,7 @@ public class WorldGenerator {
     private void stage5RegisterNpcSpawnPoints(World world) {
         npcSpawnPoints.clear();
 
+        // Shopkeeper types — one shopkeeper NPC per shop
         Set<LandmarkType> shopTypes = new HashSet<>(Arrays.asList(
             LandmarkType.GREGGS,
             LandmarkType.OFF_LICENCE,
@@ -1112,11 +1115,107 @@ public class WorldGenerator {
         ));
 
         for (Landmark landmark : world.getAllLandmarks()) {
-            if (shopTypes.contains(landmark.getType())) {
-                float spawnX = landmark.getPosition().x + landmark.getWidth() / 2.0f;
-                float spawnY = landmark.getPosition().y + 1.0f;
-                float spawnZ = landmark.getPosition().z + landmark.getDepth() / 2.0f;
-                npcSpawnPoints.add(new NpcSpawnPoint(landmark.getType(), spawnX, spawnY, spawnZ));
+            LandmarkType type = landmark.getType();
+            float cx = landmark.getPosition().x + landmark.getWidth() / 2.0f;
+            float cy = landmark.getPosition().y + 1.0f;
+            float cz = landmark.getPosition().z + landmark.getDepth() / 2.0f;
+            float w  = landmark.getWidth();
+            float d  = landmark.getDepth();
+
+            if (shopTypes.contains(type)) {
+                // One shopkeeper at centre of each shop/service building
+                npcSpawnPoints.add(new NpcSpawnPoint(type, cx, cy, cz));
+
+                // Larger venues (pubs, supermarket, wetherspoons) get extra PUBLIC patrons
+                if (type == LandmarkType.PUB || type == LandmarkType.WETHERSPOONS) {
+                    npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.PUB,
+                        cx - w / 4f, cy, cz + d / 4f));
+                    npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.PUB,
+                        cx + w / 4f, cy, cz - d / 4f));
+                } else if (type == LandmarkType.SUPERMARKET) {
+                    // Extra shopkeeper + customers in the supermarket
+                    npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.SUPERMARKET,
+                        cx - w / 4f, cy, cz));
+                    npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.SUPERMARKET,
+                        cx + w / 4f, cy, cz));
+                }
+            }
+
+            // ── Issue #732: NPCs in buildings that were previously empty ──────────
+
+            // Office building — council members / office workers
+            else if (type == LandmarkType.OFFICE_BUILDING) {
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.OFFICE_BUILDING,
+                    cx, cy, cz));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.OFFICE_BUILDING,
+                    cx - w / 4f, cy, cz + d / 4f));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.OFFICE_BUILDING,
+                    cx + w / 4f, cy, cz - d / 4f));
+            }
+
+            // Church — street preacher / public
+            else if (type == LandmarkType.CHURCH) {
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.CHURCH,
+                    cx, cy, cz + d / 4f));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.CHURCH,
+                    cx - w / 5f, cy, cz));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.CHURCH,
+                    cx + w / 5f, cy, cz));
+            }
+
+            // Community centre — public attendees
+            else if (type == LandmarkType.COMMUNITY_CENTRE) {
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.COMMUNITY_CENTRE,
+                    cx, cy, cz));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.COMMUNITY_CENTRE,
+                    cx - w / 4f, cy, cz));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.COMMUNITY_CENTRE,
+                    cx + w / 4f, cy, cz));
+            }
+
+            // Warehouse — a thug / security guard
+            else if (type == LandmarkType.WAREHOUSE) {
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.WAREHOUSE,
+                    cx, cy, cz));
+            }
+
+            // Police station — police officers
+            else if (type == LandmarkType.POLICE_STATION) {
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.POLICE_STATION,
+                    cx, cy, cz));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.POLICE_STATION,
+                    cx - w / 4f, cy, cz + d / 4f));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.POLICE_STATION,
+                    cx + w / 4f, cy, cz - d / 4f));
+            }
+
+            // Fire station — firefighter NPCs (represented as PUBLIC workers)
+            else if (type == LandmarkType.FIRE_STATION) {
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.FIRE_STATION,
+                    cx, cy, cz));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.FIRE_STATION,
+                    cx - w / 4f, cy, cz));
+            }
+
+            // Primary school — school kids inside + lollipop lady outside
+            else if (type == LandmarkType.PRIMARY_SCHOOL) {
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.PRIMARY_SCHOOL,
+                    cx, cy, cz));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.PRIMARY_SCHOOL,
+                    cx - w / 4f, cy, cz + d / 4f));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.PRIMARY_SCHOOL,
+                    cx + w / 4f, cy, cz + d / 4f));
+                // Lollipop lady at entrance (outside building)
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.PRIMARY_SCHOOL,
+                    cx, cy, landmark.getPosition().z - 1.5f));
+            }
+
+            // Leisure centre — jogger/member
+            else if (type == LandmarkType.LEISURE_CENTRE) {
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.LEISURE_CENTRE,
+                    cx, cy, cz));
+                npcSpawnPoints.add(new NpcSpawnPoint(LandmarkType.LEISURE_CENTRE,
+                    cx - w / 4f, cy, cz + d / 4f));
             }
         }
     }
@@ -2625,7 +2724,16 @@ public class WorldGenerator {
                                             int esx, int enz,
                                             int jobX, int jobZ,
                                             int gpX, int gpZ,
-                                            int libX, int libZ) {
+                                            int libX, int libZ,
+                                            int offX, int offZ,
+                                            int churchX, int churchZ,
+                                            int ccX, int ccZ,
+                                            int indX, int indZ,
+                                            int schoolX, int schoolZ,
+                                            int pstnX, int pstnZ,
+                                            int fsX, int fsZ,
+                                            int smX, int smZ,
+                                            int lcX, int lcZ) {
         // South-side high street slots
         generateShopInterior(world, sx,      sz, 7, 8, BlockType.LINO_GREEN, BlockType.COUNTER);
         generateShopInterior(world, sx + 8,  sz, 6, 8, BlockType.LINO_GREEN, BlockType.SHELF);
@@ -2667,6 +2775,38 @@ public class WorldGenerator {
 
         // GP Surgery
         generateOfficeInterior(world, gpX, gpZ, 14, 10);
+
+        // ===== Issue #732: Populate buildings with content and NPCs =====
+
+        // Office building — open-plan floor with desks, meeting room, water cooler area
+        generateOfficeBuildingInterior(world, offX, offZ, 15, 15);
+
+        // Church — pews, altar, font
+        generateChurchInterior(world, churchX, churchZ, 12, 18);
+
+        // Community centre — hall with tables and chairs, small kitchen area
+        generateCommunityCentreInterior(world, ccX, ccZ, 18, 14);
+
+        // Warehouses — shelving units and crates
+        generateWarehouseInterior(world, indX,      indZ,      20, 15);
+        generateWarehouseInterior(world, indX,      indZ - 20, 18, 12);
+        generateWarehouseInterior(world, indX + 22, indZ,      16, 14);
+        generateWarehouseInterior(world, indX + 22, indZ - 18, 14, 12);
+
+        // Primary school — classroom desks and a whiteboard area
+        generateSchoolInterior(world, schoolX, schoolZ, 20, 16);
+
+        // Police station — custody desk and waiting area
+        generatePoliceStationInterior(world, pstnX, pstnZ, 14, 12);
+
+        // Fire station — vehicle bay floor markings, crew room tables
+        generateFireStationInterior(world, fsX, fsZ, 16, 14);
+
+        // Supermarket — aisles of shelves with shelf props
+        generateSupermarketInterior(world, smX, smZ, 24, 16);
+
+        // Leisure centre — reception counter and seating
+        generateLeisureCentreInterior(world, lcX, lcZ, 22, 14);
     }
 
     private void generateShopInterior(World world, int x, int z, int width, int depth,
@@ -2804,6 +2944,330 @@ public class WorldGenerator {
         // Reception counter at front
         for (int dx = 2; dx < width - 2; dx++) {
             world.setBlock(x + dx, 1, z + 1, BlockType.COUNTER);
+        }
+    }
+
+    // ==================== Issue #732: NEW BUILDING INTERIORS ====================
+
+    /**
+     * Office building interior — open-plan with desk clusters, a boardroom area,
+     * and a reception desk near the entrance.
+     */
+    private void generateOfficeBuildingInterior(World world, int x, int z, int width, int depth) {
+        // Tiled floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.LINO_GREEN);
+            }
+        }
+        // Reception counter near front entrance
+        for (int dx = 3; dx < width - 3; dx++) {
+            world.setBlock(x + dx, 1, z + 2, BlockType.COUNTER);
+        }
+        // Open-plan desk clusters (3x2 groups separated by aisles)
+        for (int dx = 2; dx < width - 3; dx += 4) {
+            for (int dz = 5; dz < depth - 4; dz += 4) {
+                world.setBlock(x + dx,     1, z + dz,     BlockType.TABLE);
+                world.setBlock(x + dx + 1, 1, z + dz,     BlockType.TABLE);
+                world.setBlock(x + dx,     1, z + dz + 1, BlockType.TABLE);
+                world.setBlock(x + dx + 1, 1, z + dz + 1, BlockType.TABLE);
+            }
+        }
+        // Boardroom table (long table at the back)
+        for (int dx = 3; dx < width - 3; dx++) {
+            world.setBlock(x + dx, 1, z + depth - 4, BlockType.TABLE);
+        }
+        // Shelving along side walls
+        for (int dz = 4; dz < depth - 4; dz += 3) {
+            world.setBlock(x + 1, 1, z + dz, BlockType.BOOKSHELF);
+            world.setBlock(x + width - 2, 1, z + dz, BlockType.BOOKSHELF);
+        }
+    }
+
+    /**
+     * Church interior — rows of wooden pews facing the altar, with a font near
+     * the entrance and an elevated altar platform at the back.
+     */
+    private void generateChurchInterior(World world, int x, int z, int width, int depth) {
+        // Stone floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.STONE);
+            }
+        }
+        // Central aisle — leave clear
+        int aisleX = x + width / 2;
+        // Pews on either side of the aisle (rows every 2 blocks)
+        for (int dz = 3; dz < depth - 6; dz += 2) {
+            // Left pews
+            for (int dx = 1; dx < width / 2 - 1; dx++) {
+                if (dx != 0) {
+                    world.setBlock(x + dx, 1, z + dz, BlockType.WOOD);
+                }
+            }
+            // Right pews
+            for (int dx = width / 2 + 1; dx < width - 1; dx++) {
+                world.setBlock(x + dx, 1, z + dz, BlockType.WOOD);
+            }
+        }
+        // Altar platform (raised stone slab at back)
+        for (int dx = 2; dx < width - 2; dx++) {
+            world.setBlock(x + dx, 0, z + depth - 4, BlockType.STONE);
+            world.setBlock(x + dx, 0, z + depth - 3, BlockType.STONE);
+            world.setBlock(x + dx, 0, z + depth - 2, BlockType.STONE);
+        }
+        // Altar table
+        for (int dx = 3; dx < width - 3; dx++) {
+            world.setBlock(x + dx, 1, z + depth - 3, BlockType.TABLE);
+        }
+        // Baptismal font near entrance (stone plinth)
+        world.setBlock(x + 2, 1, z + 2, BlockType.STONE);
+        world.setBlock(x + width - 3, 1, z + 2, BlockType.STONE);
+    }
+
+    /**
+     * Community centre interior — large hall with folding tables and chairs, a
+     * small kitchen/serving hatch at the back, and a notice board near the entrance.
+     */
+    private void generateCommunityCentreInterior(World world, int x, int z, int width, int depth) {
+        // Lino floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.LINO_GREEN);
+            }
+        }
+        // Tables scattered in the main hall (two rows)
+        for (int dx = 3; dx < width - 3; dx += 5) {
+            world.setBlock(x + dx, 1, z + 4,  BlockType.TABLE);
+            world.setBlock(x + dx, 1, z + 5,  BlockType.TABLE);
+            world.setBlock(x + dx, 1, z + 8,  BlockType.TABLE);
+            world.setBlock(x + dx, 1, z + 9,  BlockType.TABLE);
+        }
+        // Kitchen counter at back
+        for (int dx = 2; dx < width - 2; dx++) {
+            world.setBlock(x + dx, 1, z + depth - 3, BlockType.COUNTER);
+        }
+        // Shelves behind kitchen counter
+        for (int dx = 2; dx < width - 2; dx++) {
+            world.setBlock(x + dx, 1, z + depth - 2, BlockType.SHELF);
+            world.setBlock(x + dx, 2, z + depth - 2, BlockType.SHELF);
+        }
+        // Notice board shelves near entrance
+        world.setBlock(x + 1, 1, z + 2, BlockType.BOOKSHELF);
+        world.setBlock(x + 1, 2, z + 2, BlockType.BOOKSHELF);
+    }
+
+    /**
+     * Warehouse interior — metal shelving racks running the length of the building,
+     * with a clear aisle down the middle and a small office area at the back.
+     */
+    private void generateWarehouseInterior(World world, int x, int z, int width, int depth) {
+        // Concrete floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Shelving racks — two rows parallel to the long axis, leaving a central aisle
+        int aisleOffset = width / 4;
+        for (int dz = 2; dz < depth - 2; dz += 2) {
+            // Left rack
+            world.setBlock(x + aisleOffset, 1, z + dz, BlockType.SHELF);
+            world.setBlock(x + aisleOffset, 2, z + dz, BlockType.SHELF);
+            // Right rack
+            world.setBlock(x + width - 1 - aisleOffset, 1, z + dz, BlockType.SHELF);
+            world.setBlock(x + width - 1 - aisleOffset, 2, z + dz, BlockType.SHELF);
+        }
+        // Crates stacked at back (stone blocks)
+        for (int dx = 2; dx < Math.min(6, width - 2); dx++) {
+            world.setBlock(x + dx, 1, z + depth - 2, BlockType.STONE);
+        }
+        // Small office desk at back corner
+        world.setBlock(x + width - 3, 1, z + depth - 3, BlockType.TABLE);
+        world.setBlock(x + width - 3, 1, z + depth - 2, BlockType.COUNTER);
+    }
+
+    /**
+     * Primary school interior — rows of classroom desks, a teacher's desk at the
+     * front, and bookshelves along one wall.
+     */
+    private void generateSchoolInterior(World world, int x, int z, int width, int depth) {
+        // Lino floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.LINO_GREEN);
+            }
+        }
+        // Teacher's desk at front (near door)
+        world.setBlock(x + width / 2 - 1, 1, z + 2, BlockType.TABLE);
+        world.setBlock(x + width / 2,     1, z + 2, BlockType.TABLE);
+        // Classroom desks in rows
+        for (int dx = 2; dx < width - 2; dx += 3) {
+            for (int dz = 5; dz < depth - 2; dz += 3) {
+                world.setBlock(x + dx, 1, z + dz, BlockType.TABLE);
+            }
+        }
+        // Bookshelves along side wall
+        for (int dz = 3; dz < depth - 2; dz += 2) {
+            world.setBlock(x + 1, 1, z + dz, BlockType.BOOKSHELF);
+        }
+    }
+
+    /**
+     * Police station interior — a custody suite counter, rows of desks for officers,
+     * and a waiting area with benches near the entrance.
+     */
+    private void generatePoliceStationInterior(World world, int x, int z, int width, int depth) {
+        // Tiled floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Custody/reception counter divides the front from the back
+        for (int dx = 1; dx < width - 1; dx++) {
+            world.setBlock(x + dx, 1, z + 4, BlockType.COUNTER);
+        }
+        // Counter gap (access for officers)
+        world.setBlock(x + width - 2, 1, z + 4, BlockType.AIR);
+        // Waiting area benches in front of counter
+        world.setBlock(x + 2, 1, z + 2, BlockType.WOOD);
+        world.setBlock(x + 3, 1, z + 2, BlockType.WOOD);
+        world.setBlock(x + width - 4, 1, z + 2, BlockType.WOOD);
+        world.setBlock(x + width - 3, 1, z + 2, BlockType.WOOD);
+        // Officer desks behind counter
+        for (int dx = 2; dx < width - 2; dx += 3) {
+            for (int dz = 6; dz < depth - 2; dz += 3) {
+                world.setBlock(x + dx, 1, z + dz, BlockType.TABLE);
+            }
+        }
+        // Filing shelves at back
+        for (int dx = 1; dx < width - 1; dx++) {
+            world.setBlock(x + dx, 1, z + depth - 2, BlockType.BOOKSHELF);
+            world.setBlock(x + dx, 2, z + depth - 2, BlockType.BOOKSHELF);
+        }
+    }
+
+    /**
+     * Fire station interior — crew room with tables at the back, and an equipment
+     * wall with shelves and a locker area.
+     */
+    private void generateFireStationInterior(World world, int x, int z, int width, int depth) {
+        // Concrete floor in vehicle bay area (front half)
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth / 2; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.CONCRETE);
+            }
+        }
+        // Lino floor in crew room (back half)
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = depth / 2; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.LINO_GREEN);
+            }
+        }
+        // Partition wall between bay and crew room (with doorway)
+        for (int dx = 1; dx < width - 1; dx++) {
+            if (dx != width / 2 && dx != width / 2 + 1) {
+                world.setBlock(x + dx, 1, z + depth / 2, BlockType.BRICK);
+                world.setBlock(x + dx, 2, z + depth / 2, BlockType.BRICK);
+            }
+        }
+        // Crew room — tables and counter (kitchen area)
+        for (int dx = 2; dx < width - 2; dx += 4) {
+            world.setBlock(x + dx,     1, z + depth / 2 + 2, BlockType.TABLE);
+            world.setBlock(x + dx + 1, 1, z + depth / 2 + 2, BlockType.TABLE);
+        }
+        world.setBlock(x + 1, 1, z + depth - 2, BlockType.COUNTER);
+        world.setBlock(x + 2, 1, z + depth - 2, BlockType.COUNTER);
+        world.setBlock(x + 3, 1, z + depth - 2, BlockType.COUNTER);
+        // Equipment shelves on side wall
+        for (int dz = depth / 2 + 1; dz < depth - 1; dz += 2) {
+            world.setBlock(x + width - 2, 1, z + dz, BlockType.SHELF);
+            world.setBlock(x + width - 2, 2, z + dz, BlockType.SHELF);
+        }
+    }
+
+    /**
+     * Supermarket interior — long aisles of shelves running front-to-back,
+     * checkout counters near the entrance, and a cold aisle at the back.
+     */
+    private void generateSupermarketInterior(World world, int x, int z, int width, int depth) {
+        // Tiled floor
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.LINO_GREEN);
+            }
+        }
+        // Checkout counters near entrance
+        for (int dx = 2; dx < width - 2; dx += 4) {
+            world.setBlock(x + dx,     1, z + 2, BlockType.COUNTER);
+            world.setBlock(x + dx + 1, 1, z + 2, BlockType.COUNTER);
+        }
+        // Aisles of shelves (front-to-back runs, spaced every 4 blocks)
+        for (int dx = 3; dx < width - 2; dx += 4) {
+            for (int dz = 4; dz < depth - 3; dz++) {
+                world.setBlock(x + dx, 1, z + dz, BlockType.SHELF);
+                world.setBlock(x + dx, 2, z + dz, BlockType.SHELF);
+            }
+        }
+        // Shelf props on supermarket shelves
+        Random smRng = new Random((long)(x * 1049 + z * 757) ^ seed);
+        PropType[] itemTypes = { PropType.SHELF_CAN, PropType.SHELF_BOTTLE, PropType.SHELF_BOX };
+        for (int dx = 3; dx < width - 2; dx += 4) {
+            for (int dz = 4; dz < depth - 3; dz += 2) {
+                world.addPropPosition(new PropPosition(
+                    x + dx + 0.5f, 2f, z + dz + 0.5f,
+                    itemTypes[smRng.nextInt(itemTypes.length)], 0f));
+                world.addPropPosition(new PropPosition(
+                    x + dx + 0.5f, 3f, z + dz + 0.5f,
+                    itemTypes[smRng.nextInt(itemTypes.length)], 90f));
+            }
+        }
+        // Cold aisle at back (stone blocks to suggest refrigerators)
+        for (int dx = 1; dx < width - 1; dx++) {
+            world.setBlock(x + dx, 1, z + depth - 2, BlockType.STONE);
+        }
+        // Customer service desk
+        world.setBlock(x + width - 3, 1, z + 2, BlockType.COUNTER);
+        world.setBlock(x + width - 2, 1, z + 2, BlockType.COUNTER);
+    }
+
+    /**
+     * Leisure centre interior — reception counter, seating area, and a corridor
+     * leading to the sports hall (represented by open floor with lines).
+     */
+    private void generateLeisureCentreInterior(World world, int x, int z, int width, int depth) {
+        // Tiled floor in reception area
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth / 3; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.LINO_GREEN);
+            }
+        }
+        // Concrete floor in sports hall area
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = depth / 3; dz < depth - 1; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
+            }
+        }
+        // Reception counter near entrance
+        for (int dx = 3; dx < width - 3; dx++) {
+            world.setBlock(x + dx, 1, z + 2, BlockType.COUNTER);
+        }
+        // Seating area (benches)
+        world.setBlock(x + 2, 1, z + 1, BlockType.WOOD);
+        world.setBlock(x + 3, 1, z + 1, BlockType.WOOD);
+        world.setBlock(x + width - 4, 1, z + 1, BlockType.WOOD);
+        world.setBlock(x + width - 3, 1, z + 1, BlockType.WOOD);
+        // Partition corridor wall separating reception from sports hall
+        for (int dx = 1; dx < width - 1; dx++) {
+            if (dx != width / 2 - 1 && dx != width / 2) {
+                world.setBlock(x + dx, 1, z + depth / 3, BlockType.BRICK);
+                world.setBlock(x + dx, 2, z + depth / 3, BlockType.BRICK);
+            }
+        }
+        // Equipment storage shelves at back of sports hall
+        for (int dx = 2; dx < width - 2; dx += 3) {
+            world.setBlock(x + dx, 1, z + depth - 2, BlockType.SHELF);
         }
     }
 

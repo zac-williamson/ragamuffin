@@ -452,6 +452,261 @@ public class WorldGeneratorTest {
             "getNpcSpawnPoints() should return an unmodifiable view");
     }
 
+    // ── Issue #732: Buildings populated with content and NPCs ────────────────
+
+    @Test
+    public void testOfficeBuildingHasInteriorFurniture() {
+        generator.generateWorld(world);
+
+        Landmark office = world.getLandmark(LandmarkType.OFFICE_BUILDING);
+        assertNotNull(office, "Office building must exist");
+
+        int ox = (int) office.getPosition().x;
+        int oz = (int) office.getPosition().z;
+        int width = office.getWidth();
+        int depth = office.getDepth();
+
+        // Interior should have TABLE or COUNTER blocks
+        boolean hasFurniture = false;
+        for (int dx = 1; dx < width - 1 && !hasFurniture; dx++) {
+            for (int dz = 1; dz < depth - 1 && !hasFurniture; dz++) {
+                BlockType block = world.getBlock(ox + dx, 1, oz + dz);
+                if (block == BlockType.TABLE || block == BlockType.COUNTER
+                        || block == BlockType.BOOKSHELF) {
+                    hasFurniture = true;
+                }
+            }
+        }
+        assertTrue(hasFurniture, "Office building interior should contain desks, counters or shelves");
+    }
+
+    @Test
+    public void testChurchHasInteriorFurniture() {
+        generator.generateWorld(world);
+
+        Landmark church = world.getLandmark(LandmarkType.CHURCH);
+        assertNotNull(church, "Church must exist");
+
+        int cx = (int) church.getPosition().x;
+        int cz = (int) church.getPosition().z;
+        int width = church.getWidth();
+        int depth = church.getDepth();
+
+        // Church interior should have wooden pews (WOOD blocks) and an altar (TABLE)
+        boolean hasPew = false;
+        boolean hasAltar = false;
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                BlockType block = world.getBlock(cx + dx, 1, cz + dz);
+                if (block == BlockType.WOOD) hasPew = true;
+                if (block == BlockType.TABLE) hasAltar = true;
+            }
+        }
+        assertTrue(hasPew, "Church interior should have wooden pews");
+        assertTrue(hasAltar, "Church interior should have an altar table");
+    }
+
+    @Test
+    public void testWarehouseHasInteriorFurniture() {
+        generator.generateWorld(world);
+
+        Landmark warehouse = world.getLandmark(LandmarkType.WAREHOUSE);
+        assertNotNull(warehouse, "Warehouse must exist");
+
+        int wx = (int) warehouse.getPosition().x;
+        int wz = (int) warehouse.getPosition().z;
+        int width = warehouse.getWidth();
+        int depth = warehouse.getDepth();
+
+        // Warehouse interior should have SHELF blocks (shelving racks)
+        boolean hasShelf = false;
+        for (int dx = 1; dx < width - 1 && !hasShelf; dx++) {
+            for (int dz = 1; dz < depth - 1 && !hasShelf; dz++) {
+                BlockType block = world.getBlock(wx + dx, 1, wz + dz);
+                if (block == BlockType.SHELF) {
+                    hasShelf = true;
+                }
+            }
+        }
+        assertTrue(hasShelf, "Warehouse interior should contain shelving racks");
+    }
+
+    @Test
+    public void testPoliceStationHasInteriorFurniture() {
+        generator.generateWorld(world);
+
+        Landmark ps = world.getLandmark(LandmarkType.POLICE_STATION);
+        assertNotNull(ps, "Police station must exist");
+
+        int px = (int) ps.getPosition().x;
+        int pz = (int) ps.getPosition().z;
+        int width = ps.getWidth();
+        int depth = ps.getDepth();
+
+        // Police station interior should have a custody counter and desks
+        boolean hasCounter = false;
+        boolean hasDesk = false;
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                BlockType block = world.getBlock(px + dx, 1, pz + dz);
+                if (block == BlockType.COUNTER) hasCounter = true;
+                if (block == BlockType.TABLE) hasDesk = true;
+            }
+        }
+        assertTrue(hasCounter, "Police station interior should have a custody counter");
+        assertTrue(hasDesk, "Police station interior should have officer desks");
+    }
+
+    @Test
+    public void testFireStationHasInteriorFurniture() {
+        generator.generateWorld(world);
+
+        Landmark fs = world.getLandmark(LandmarkType.FIRE_STATION);
+        assertNotNull(fs, "Fire station must exist");
+
+        int fx = (int) fs.getPosition().x;
+        int fz = (int) fs.getPosition().z;
+        int width = fs.getWidth();
+        int depth = fs.getDepth();
+
+        // Fire station interior should have tables (crew room) or shelves (equipment)
+        boolean hasFurniture = false;
+        for (int dx = 1; dx < width - 1 && !hasFurniture; dx++) {
+            for (int dz = 1; dz < depth - 1 && !hasFurniture; dz++) {
+                BlockType block = world.getBlock(fx + dx, 1, fz + dz);
+                if (block == BlockType.TABLE || block == BlockType.COUNTER
+                        || block == BlockType.SHELF) {
+                    hasFurniture = true;
+                }
+            }
+        }
+        assertTrue(hasFurniture, "Fire station interior should contain crew room furniture");
+    }
+
+    @Test
+    public void testSupermarketHasInteriorFurniture() {
+        generator.generateWorld(world);
+
+        Landmark sm = world.getLandmark(LandmarkType.SUPERMARKET);
+        assertNotNull(sm, "Supermarket must exist");
+
+        int sx = (int) sm.getPosition().x;
+        int sz = (int) sm.getPosition().z;
+        int width = sm.getWidth();
+        int depth = sm.getDepth();
+
+        // Supermarket should have SHELF aisles and COUNTER checkouts
+        int shelfCount = 0;
+        boolean hasCheckout = false;
+        for (int dx = 1; dx < width - 1; dx++) {
+            for (int dz = 1; dz < depth - 1; dz++) {
+                BlockType block = world.getBlock(sx + dx, 1, sz + dz);
+                if (block == BlockType.SHELF) shelfCount++;
+                if (block == BlockType.COUNTER) hasCheckout = true;
+            }
+        }
+        assertTrue(shelfCount > 5,
+            "Supermarket interior should have multiple shelf blocks for aisles, found " + shelfCount);
+        assertTrue(hasCheckout, "Supermarket interior should have checkout counters");
+    }
+
+    @Test
+    public void testNpcSpawnPointsIncludeOfficeBuilding() {
+        generator.generateWorld(world);
+
+        boolean hasOffice = generator.getNpcSpawnPoints().stream()
+            .anyMatch(sp -> sp.getLandmarkType() == LandmarkType.OFFICE_BUILDING);
+        assertTrue(hasOffice,
+            "NPC spawn points should include office workers for the office building (#732)");
+    }
+
+    @Test
+    public void testNpcSpawnPointsIncludeChurch() {
+        generator.generateWorld(world);
+
+        boolean hasChurch = generator.getNpcSpawnPoints().stream()
+            .anyMatch(sp -> sp.getLandmarkType() == LandmarkType.CHURCH);
+        assertTrue(hasChurch,
+            "NPC spawn points should include NPCs for the church (#732)");
+    }
+
+    @Test
+    public void testNpcSpawnPointsIncludePoliceStation() {
+        generator.generateWorld(world);
+
+        boolean hasPoliceStation = generator.getNpcSpawnPoints().stream()
+            .anyMatch(sp -> sp.getLandmarkType() == LandmarkType.POLICE_STATION);
+        assertTrue(hasPoliceStation,
+            "NPC spawn points should include police officers for the police station (#732)");
+    }
+
+    @Test
+    public void testNpcSpawnPointsIncludeFireStation() {
+        generator.generateWorld(world);
+
+        boolean hasFireStation = generator.getNpcSpawnPoints().stream()
+            .anyMatch(sp -> sp.getLandmarkType() == LandmarkType.FIRE_STATION);
+        assertTrue(hasFireStation,
+            "NPC spawn points should include crew for the fire station (#732)");
+    }
+
+    @Test
+    public void testNpcSpawnPointsIncludePrimarySchool() {
+        generator.generateWorld(world);
+
+        boolean hasPrimarySchool = generator.getNpcSpawnPoints().stream()
+            .anyMatch(sp -> sp.getLandmarkType() == LandmarkType.PRIMARY_SCHOOL);
+        assertTrue(hasPrimarySchool,
+            "NPC spawn points should include pupils/staff for the primary school (#732)");
+    }
+
+    @Test
+    public void testNpcSpawnPointsIncludeWarehouse() {
+        generator.generateWorld(world);
+
+        boolean hasWarehouse = generator.getNpcSpawnPoints().stream()
+            .anyMatch(sp -> sp.getLandmarkType() == LandmarkType.WAREHOUSE);
+        assertTrue(hasWarehouse,
+            "NPC spawn points should include a guard for the warehouse (#732)");
+    }
+
+    @Test
+    public void testNpcSpawnPointsMoreThanBeforeIssue732() {
+        generator.generateWorld(world);
+
+        // The original implementation had exactly one spawn point per shop (27 shop types).
+        // After #732 we have additional NPCs in offices, church, police, fire, school,
+        // warehouse, community centre, leisure centre, and extra staff in pubs/supermarkets.
+        // So total spawn points should exceed 35.
+        int count = generator.getNpcSpawnPoints().size();
+        assertTrue(count > 35,
+            "After #732, total NPC spawn points should exceed 35 (found " + count + ")");
+    }
+
+    @Test
+    public void testCommunityCentreHasInteriorFurniture() {
+        generator.generateWorld(world);
+
+        Landmark cc = world.getLandmark(LandmarkType.COMMUNITY_CENTRE);
+        assertNotNull(cc, "Community centre must exist");
+
+        int cx = (int) cc.getPosition().x;
+        int cz = (int) cc.getPosition().z;
+        int width = cc.getWidth();
+        int depth = cc.getDepth();
+
+        // Community centre should have TABLE blocks for the hall
+        boolean hasTable = false;
+        for (int dx = 1; dx < width - 1 && !hasTable; dx++) {
+            for (int dz = 1; dz < depth - 1 && !hasTable; dz++) {
+                if (world.getBlock(cx + dx, 1, cz + dz) == BlockType.TABLE) {
+                    hasTable = true;
+                }
+            }
+        }
+        assertTrue(hasTable, "Community centre interior should contain tables for the hall");
+    }
+
     private boolean landmarksOverlap(Landmark a, Landmark b) {
         Vector3 posA = a.getPosition();
         Vector3 posB = b.getPosition();
