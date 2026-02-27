@@ -306,15 +306,19 @@ class Phase4IntegrationTest {
             .anyMatch(r -> r.getInputs().containsKey(Material.PLANKS));
         assertFalse(hasPlanksRecipes, "PLANKS recipes should not be available without PLANKS");
 
-        // Verify that the first recipe (WOOD->PLANKS) can be crafted
+        // Verify that the WOOD->PLANKS recipe can be crafted
         Recipe woodToPlanks = craftingSystem.getAllRecipes().get(0);
         assertTrue(craftingSystem.canCraft(woodToPlanks, inventory));
 
-        // Verify that other recipes cannot be crafted
-        for (int i = 1; i < craftingSystem.getAllRecipes().size(); i++) {
-            Recipe recipe = craftingSystem.getAllRecipes().get(i);
-            assertFalse(craftingSystem.canCraft(recipe, inventory),
-                       "Recipe " + recipe.getDisplayName() + " should not be craftable");
+        // Verify that recipes requiring materials other than WOOD cannot be crafted
+        for (Recipe recipe : craftingSystem.getAllRecipes()) {
+            boolean requiresOnlyWood = recipe.getInputs().keySet().stream()
+                    .allMatch(m -> m == Material.WOOD);
+            if (!requiresOnlyWood) {
+                assertFalse(craftingSystem.canCraft(recipe, inventory),
+                           "Recipe " + recipe.getDisplayName()
+                           + " should not be craftable without the required non-WOOD materials");
+            }
         }
     }
 

@@ -2614,6 +2614,35 @@ public class WorldGenerator {
         world.setBlock(x + width / 2, 2, z, BlockType.AIR);
     }
 
+    /** Issue #789: Boot Sale Venue — an open-air tarmac yard ringed with low
+     *  concrete walls and a few scaffold-style canopy posts.  16×16 footprint,
+     *  3 blocks tall at the perimeter.
+     */
+    private void generateBootSaleVenue(World world, int x, int z) {
+        int width = 16, depth = 16, height = 3;
+        // Tarmac floor
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                world.setBlock(x + dx, 0, z + dz, BlockType.TARMAC);
+            }
+        }
+        // Low concrete perimeter wall
+        for (int dx = 0; dx < width; dx++) {
+            for (int dz = 0; dz < depth; dz++) {
+                boolean isEdge = dx == 0 || dx == width - 1 || dz == 0 || dz == depth - 1;
+                if (!isEdge) continue;
+                for (int y = 1; y <= height; y++) {
+                    world.setBlock(x + dx, y, z + dz, BlockType.CONCRETE);
+                }
+            }
+        }
+        // Two open entrances on the south face (dz == 0)
+        for (int y = 1; y <= 2; y++) {
+            world.setBlock(x + 4,  y, z, BlockType.AIR);
+            world.setBlock(x + 11, y, z, BlockType.AIR);
+        }
+    }
+
     // ==================== BUILDING HELPERS ====================
 
     private void buildShop(World world, int x, int z, int width, int depth, int height, BlockType wallType) {
