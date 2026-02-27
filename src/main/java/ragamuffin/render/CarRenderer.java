@@ -81,13 +81,16 @@ public class CarRenderer {
             ModelInstance instance = new ModelInstance(model);
 
             // Position: car.position is the bottom-centre of the car body.
-            // Rotate 90° around Y if the car travels along the X axis so the
-            // car's length (DEPTH) aligns with its direction of travel.
+            // Rotate the model around Y so the car's DEPTH axis aligns with its
+            // heading.  The model is built along +Z; heading 0 = +Z needs no
+            // rotation, heading 90 = +X needs 90° CCW (negate for LibGDX's
+            // right-hand convention where positive Y rotation is CCW viewed from above).
             tmpMatrix.idt();
             tmpMatrix.setToTranslation(pos.x, pos.y, pos.z);
-            if (car.isTravellingAlongX()) {
-                tmpMatrix.rotate(Vector3.Y, 90f);
-            }
+            // LibGDX rotate(axis, degrees): positive = CCW from above.
+            // Car heading 0 = +Z (model forward), so rotation = -heading.
+            float rotDeg = -car.getHeading();
+            tmpMatrix.rotate(Vector3.Y, rotDeg);
             instance.transform.set(tmpMatrix);
 
             modelBatch.render(instance, environment);
