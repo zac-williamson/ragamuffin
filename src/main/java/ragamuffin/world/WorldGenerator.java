@@ -2581,26 +2581,32 @@ public class WorldGenerator {
         // South-side high street slots
         generateShopInterior(world, sx,      sz, 7, 8, BlockType.LINO_GREEN, BlockType.COUNTER);
         generateShopInterior(world, sx + 8,  sz, 6, 8, BlockType.LINO_GREEN, BlockType.SHELF);
+        generateShopShelfProps(world, sx + 8,  sz, 6, 8);
         generateShopInterior(world, sx + 15, sz, 7, 8, BlockType.CARPET,     BlockType.SHELF);
+        generateShopShelfProps(world, sx + 15, sz, 7, 8);
         generateShopInterior(world, sx + 23, sz, 6, 8, BlockType.CARPET,     BlockType.COUNTER);
         generateShopInterior(world, sx + 30, sz, 7, 8, BlockType.CARPET,     BlockType.COUNTER);
         generateShopInterior(world, sx + 38, sz, 7, 8, BlockType.LINO_GREEN, BlockType.COUNTER);
 
         // North-side high street slots
         generateShopInterior(world, nx,      nz, 7, 8, BlockType.LINO_GREEN, BlockType.SHELF);
+        generateShopShelfProps(world, nx,      nz, 7, 8);
         generateShopInterior(world, nx + 8,  nz, 8, 8, BlockType.LINO_GREEN, BlockType.STONE);
         generatePubInterior(world,  nx + 17, nz, 8, 8);
         generateShopInterior(world, nx + 26, nz, 7, 8, BlockType.CARPET,     BlockType.SHELF);
+        generateShopShelfProps(world, nx + 26, nz, 7, 8);
 
         // Extended south / north
         generateShopInterior(world, esx, sz, 7, 8, BlockType.LINO_GREEN, BlockType.COUNTER);
         generateShopInterior(world, enz, nz, 7, 8, BlockType.LINO_GREEN, BlockType.SHELF);
+        generateShopShelfProps(world, enz, nz, 7, 8);
 
         // Nando's
         generatePubInterior(world, esx + 24, sz, 8, 10);
 
         // Corner shop
         generateShopInterior(world, enz + 9, nz, 7, 8, BlockType.LINO_GREEN, BlockType.SHELF);
+        generateShopShelfProps(world, enz + 9, nz, 7, 8);
 
         // Wetherspoons
         generatePubInterior(world, esx + 49, sz, 16, 14);
@@ -2636,6 +2642,51 @@ public class WorldGenerator {
             world.setBlock(x + 1, 2, z + dz, BlockType.SHELF);
             world.setBlock(x + width - 2, 1, z + dz, BlockType.SHELF);
             world.setBlock(x + width - 2, 2, z + dz, BlockType.SHELF);
+        }
+    }
+
+    /**
+     * Place small 3D prop objects on top of the shelf blocks inside a shop.
+     *
+     * Shelf blocks are at y=1 and y=2 along the side walls.  Props sit on top,
+     * so they are placed at y=2 and y=3 respectively (one block above the shelf).
+     * A seeded RNG ensures each shelf position always gets the same item type,
+     * giving visual variety without random jitter between world loads.
+     *
+     * Issue #721: Add small 3D objects to shop shelves.
+     *
+     * @param world  the world to register props in
+     * @param x      shop X position (same as passed to {@link #generateShopInterior})
+     * @param z      shop Z position
+     * @param width  shop width
+     * @param depth  shop depth
+     */
+    private void generateShopShelfProps(World world, int x, int z, int width, int depth) {
+        // Deterministic per-shop RNG — same seed formula as buildShop()
+        Random shelfRng = new Random((long)(x * 1049 + z * 757) ^ seed);
+        PropType[] itemTypes = { PropType.SHELF_CAN, PropType.SHELF_BOTTLE, PropType.SHELF_BOX };
+
+        // Shelf positions: every other block along side walls (matches generateShopInterior)
+        for (int dz = 2; dz < depth - 3; dz += 2) {
+            // Left wall shelf (x+1) — bottom shelf level (y=2, on top of y=1 SHELF block)
+            world.addPropPosition(new PropPosition(
+                x + 1 + 0.5f, 2f, z + dz + 0.5f,
+                itemTypes[shelfRng.nextInt(itemTypes.length)], 0f));
+
+            // Left wall shelf — top shelf level (y=3, on top of y=2 SHELF block)
+            world.addPropPosition(new PropPosition(
+                x + 1 + 0.5f, 3f, z + dz + 0.5f,
+                itemTypes[shelfRng.nextInt(itemTypes.length)], 90f));
+
+            // Right wall shelf (x+width-2) — bottom shelf level
+            world.addPropPosition(new PropPosition(
+                x + width - 2 + 0.5f, 2f, z + dz + 0.5f,
+                itemTypes[shelfRng.nextInt(itemTypes.length)], 180f));
+
+            // Right wall shelf — top shelf level
+            world.addPropPosition(new PropPosition(
+                x + width - 2 + 0.5f, 3f, z + dz + 0.5f,
+                itemTypes[shelfRng.nextInt(itemTypes.length)], 270f));
         }
     }
 
