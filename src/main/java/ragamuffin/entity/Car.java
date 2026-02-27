@@ -164,4 +164,17 @@ public class Car {
     public boolean isMovingPositive() {
         return travelAlongX ? velocity.x > 0 : velocity.z > 0;
     }
+
+    /**
+     * Reverse the car's direction of travel.
+     * Called when the car collides with a solid block so it bounces back rather
+     * than driving through the obstacle.
+     */
+    public void reverseDirection() {
+        if (travelAlongX) {
+            velocity.set(-velocity.x, 0, 0);
+        } else {
+            velocity.set(0, 0, -velocity.z);
+        }
+    }
 }

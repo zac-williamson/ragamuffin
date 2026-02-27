@@ -40,6 +40,7 @@ public class CarManager {
 
     private final List<Car> cars;
     private final Random random;
+    private World world;
 
     public CarManager() {
         this.cars   = new ArrayList<>();
@@ -49,10 +50,12 @@ public class CarManager {
     /**
      * Spawn the initial set of cars spread across road segments.
      * Requires a World reference to verify ROAD blocks exist at spawn positions.
+     * Stores the world for use in block collision checks during update().
      *
-     * @param world the game world (used for ROAD block verification)
+     * @param world the game world (used for ROAD block verification and block collision)
      */
     public void spawnInitialCars(World world) {
+        this.world = world;
         // Collect all valid road segment centres
         List<int[]> hSegments = new ArrayList<>(); // Horizontal segments (Z-axis streets, cars move in Z)
         List<int[]> vSegments = new ArrayList<>(); // Vertical segments   (X-axis streets, cars move in X)
@@ -133,6 +136,8 @@ public class CarManager {
 
     /**
      * Update all cars and check for player collisions.
+     * Cars also collide with solid world blocks — when a car's AABB overlaps a
+     * solid block it reverses direction, so cars cannot drive through buildings.
      *
      * @param delta  seconds since last frame
      * @param player the player entity
@@ -140,6 +145,12 @@ public class CarManager {
     public void update(float delta, Player player) {
         for (Car car : cars) {
             car.update(delta);
+
+            // Block collision: reverse the car when it hits a solid block
+            if (world != null && world.checkAABBCollision(car.getAABB())) {
+                car.reverseDirection();
+            }
+
             // Check collision with player
             if (car.canDamagePlayer() && car.getAABB().intersects(player.getAABB())) {
                 player.damage(Car.COLLISION_DAMAGE, DamageReason.CAR_HIT);
