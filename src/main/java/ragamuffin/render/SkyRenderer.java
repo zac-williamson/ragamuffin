@@ -37,8 +37,102 @@ public class SkyRenderer {
     // Horizontal scroll speed (fraction of screen width per second)
     private static final float CLOUD_SCROLL_SPEED = 0.004f;
 
-    // Number of stars in the night sky
+    // Number of background (random) stars in the night sky
     private static final int STAR_COUNT = 200;
+
+    // -----------------------------------------------------------------------
+    // Constellation star data
+    // -----------------------------------------------------------------------
+
+    /**
+     * Represents a single named star within a constellation.
+     *
+     * worldYawAtEpoch is the celestial longitude in degrees [0, 360) derived
+     * from the star's right ascension (RA hours × 15°/h).  The position drifts
+     * with the day of year using the same sidereal rate as the background stars
+     * (~0.9856°/day).
+     *
+     * elevationFraction is the normalised sky elevation [0, 1] where 0 is the
+     * southern horizon and 1 is the zenith, derived from declination as seen
+     * from ~52° N latitude (Britain).
+     */
+    public static class ConstellationStar {
+        public final String constellation;
+        public final String starName;
+        public final float worldYawAtEpoch; // degrees [0, 360)
+        public final float elevationFraction; // [0, 1]
+        public final float magnitude;         // visual magnitude (lower = brighter)
+
+        public ConstellationStar(String constellation, String starName,
+                                 float worldYawAtEpoch, float elevationFraction,
+                                 float magnitude) {
+            this.constellation    = constellation;
+            this.starName         = starName;
+            this.worldYawAtEpoch  = worldYawAtEpoch;
+            this.elevationFraction = elevationFraction;
+            this.magnitude        = magnitude;
+        }
+    }
+
+    /**
+     * Convert right ascension (hours) to world yaw degrees.
+     * RA increases eastward; we map RA 0h → 0°, RA 12h → 180°, RA 24h → 360°.
+     */
+    private static float raToWorldYaw(float raHours) {
+        return (raHours / 24f) * 360f;
+    }
+
+    /**
+     * Convert declination (degrees) to elevation fraction visible from ~52° N.
+     * Stars with dec < -38° are never visible from Britain; dec +90° is the pole.
+     * We map the visible declination range [-38°, +90°] → elevation [0, 1].
+     */
+    private static float decToElevation(float decDeg) {
+        float minDec = -38f;
+        float maxDec = 90f;
+        return Math.max(0f, Math.min(1f, (decDeg - minDec) / (maxDec - minDec)));
+    }
+
+    /**
+     * All constellation stars, covering Orion, the Plough (Ursa Major),
+     * and Cassiopeia — the three most prominent and recognisable patterns
+     * visible from Britain.
+     *
+     * Positions are derived from J2000 catalogue coordinates.
+     */
+    public static final ConstellationStar[] CONSTELLATION_STARS = {
+        // -- Orion (winter constellation, prominent low in the south) -----------
+        // RA ~5h, Dec ~ -8° to +8°
+        new ConstellationStar("Orion", "Betelgeuse", raToWorldYaw(5.92f),  decToElevation( 7.4f),  0.42f),
+        new ConstellationStar("Orion", "Rigel",      raToWorldYaw(5.24f),  decToElevation(-8.2f),  0.12f),
+        new ConstellationStar("Orion", "Bellatrix",  raToWorldYaw(5.42f),  decToElevation( 6.3f),  1.64f),
+        new ConstellationStar("Orion", "Alnitak",    raToWorldYaw(5.68f),  decToElevation(-1.9f),  1.77f),
+        new ConstellationStar("Orion", "Alnilam",    raToWorldYaw(5.60f),  decToElevation(-1.2f),  1.69f),
+        new ConstellationStar("Orion", "Mintaka",    raToWorldYaw(5.53f),  decToElevation(-0.3f),  2.23f),
+        new ConstellationStar("Orion", "Saiph",      raToWorldYaw(5.80f),  decToElevation(-9.7f),  2.06f),
+        new ConstellationStar("Orion", "Meissa",     raToWorldYaw(5.58f),  decToElevation( 9.9f),  3.33f),
+
+        // -- Ursa Major / The Plough (circumpolar from Britain) ----------------
+        // RA ~11–14h, Dec ~49–62°
+        new ConstellationStar("Ursa Major", "Dubhe",   raToWorldYaw(11.06f), decToElevation(61.8f),  1.79f),
+        new ConstellationStar("Ursa Major", "Merak",   raToWorldYaw(11.03f), decToElevation(56.4f),  2.37f),
+        new ConstellationStar("Ursa Major", "Phecda",  raToWorldYaw(11.90f), decToElevation(53.7f),  2.44f),
+        new ConstellationStar("Ursa Major", "Megrez",  raToWorldYaw(12.26f), decToElevation(57.0f),  3.31f),
+        new ConstellationStar("Ursa Major", "Alioth",  raToWorldYaw(12.90f), decToElevation(55.9f),  1.76f),
+        new ConstellationStar("Ursa Major", "Mizar",   raToWorldYaw(13.40f), decToElevation(54.9f),  2.27f),
+        new ConstellationStar("Ursa Major", "Alkaid",  raToWorldYaw(13.79f), decToElevation(49.3f),  1.86f),
+
+        // -- Cassiopeia (circumpolar W/M shape, opposite Ursa Major) -----------
+        // RA ~0–2h, Dec ~56–64°
+        new ConstellationStar("Cassiopeia", "Schedar",   raToWorldYaw(0.68f),  decToElevation(56.5f), 2.23f),
+        new ConstellationStar("Cassiopeia", "Caph",      raToWorldYaw(0.15f),  decToElevation(59.1f), 2.27f),
+        new ConstellationStar("Cassiopeia", "Gamma Cas", raToWorldYaw(0.94f),  decToElevation(60.7f), 2.47f),
+        new ConstellationStar("Cassiopeia", "Ruchbah",   raToWorldYaw(1.43f),  decToElevation(60.2f), 2.68f),
+        new ConstellationStar("Cassiopeia", "Segin",     raToWorldYaw(1.91f),  decToElevation(63.7f), 3.38f),
+    };
+
+    /** Names of the constellations included in the star map. */
+    public static final String[] CONSTELLATION_NAMES = {"Orion", "Ursa Major", "Cassiopeia"};
 
     // Synodic period of the moon in days (new moon → new moon)
     private static final float LUNAR_CYCLE_DAYS = 29.53059f;
@@ -350,6 +444,7 @@ public class SkyRenderer {
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
+        // --- Background star field (random distribution) ---
         for (int i = 0; i < STAR_COUNT; i++) {
             // Each star has a fixed celestial longitude (world yaw 0–360°).
             // The longitude drifts slightly with day of year — the ecliptic
@@ -392,6 +487,52 @@ public class SkyRenderer {
 
             shapeRenderer.setColor(brightness * tintR, brightness * tintG, brightness * tintB, brightness);
             shapeRenderer.circle(starX, starY, radius, 6);
+        }
+
+        // --- Constellation stars (fixed catalogue positions, rendered on top) ---
+        // These use accurate celestial coordinates so that Orion, the Plough,
+        // and Cassiopeia appear in their correct relative positions each night.
+        for (int ci = 0; ci < CONSTELLATION_STARS.length; ci++) {
+            ConstellationStar cs = CONSTELLATION_STARS[ci];
+
+            float starWorldYaw = getConstellationStarWorldYaw(cs, dayOfYear);
+
+            float yawDiff = starWorldYaw - cameraYawDeg;
+            while (yawDiff >  180f) yawDiff -= 360f;
+            while (yawDiff < -180f) yawDiff += 360f;
+
+            if (Math.abs(yawDiff) > 95f) continue;
+
+            float starX = screenWidth * 0.5f + (yawDiff / 90f) * screenWidth;
+
+            // Map elevation fraction to screen Y.
+            // elevationFraction 0 → southern horizon (screenHeight * 0.40)
+            // elevationFraction 1 → zenith (screenHeight * 0.95)
+            // Fix #751: subtract pitchOffsetY so stars stay fixed when looking up/down.
+            float starY = screenHeight * (0.40f + cs.elevationFraction * 0.55f) - pitchOffsetY;
+
+            // Brightness based on visual magnitude (lower magnitude = brighter).
+            // Magnitude 0 → brightness 1.0; magnitude 4 → brightness 0.55.
+            float baseBrightness = Math.max(0.55f, 1.0f - cs.magnitude * 0.11f);
+
+            // Twinkle using constellation star index as seed
+            float phase   = (ci * 0.61f + cloudTime * (0.3f + (ci % 5) * 0.04f)) % (2f * (float)Math.PI);
+            float twinkle = 0.80f + 0.20f * (float)Math.cos(phase);
+            float brightness = baseBrightness * twinkle;
+
+            // Constellation stars are slightly larger and brighter than background stars
+            float radius = (cs.magnitude < 1.0f) ? 3.2f : (cs.magnitude < 2.5f) ? 2.4f : 1.8f;
+
+            // Slight warm tint for Betelgeuse (red supergiant), otherwise white-blue
+            float tintR = 1.0f, tintG = 1.0f, tintB = 1.0f;
+            if ("Betelgeuse".equals(cs.starName)) {
+                tintR = 1.0f; tintG = 0.70f; tintB = 0.50f; // orange-red
+            } else if ("Rigel".equals(cs.starName)) {
+                tintR = 0.85f; tintG = 0.90f; tintB = 1.0f; // blue-white
+            }
+
+            shapeRenderer.setColor(brightness * tintR, brightness * tintG, brightness * tintB, brightness);
+            shapeRenderer.circle(starX, starY, radius, 8);
         }
 
         shapeRenderer.end();
@@ -557,6 +698,21 @@ public class SkyRenderer {
     public float getPlanetWorldYaw(int planetIndex, int dayOfYear) {
         float degreesPerDay = 360f / PLANET_PERIODS[planetIndex];
         return (PLANET_BASE_ANGLES[planetIndex] + dayOfYear * degreesPerDay) % 360f;
+    }
+
+    /**
+     * Returns the world yaw (0–360°) of a constellation star on the given
+     * day of the year, applying the same sidereal drift (~0.9856°/day) used
+     * for the background star field so that constellations rise and set at
+     * astronomically correct times across the seasons.
+     *
+     * @param star       a {@link ConstellationStar} from {@link #CONSTELLATION_STARS}
+     * @param dayOfYear  day of the year (0–364)
+     * @return world yaw in degrees [0, 360)
+     */
+    public float getConstellationStarWorldYaw(ConstellationStar star, int dayOfYear) {
+        float seasonalShift = (dayOfYear * 0.9856f) % 360f;
+        return (star.worldYawAtEpoch - seasonalShift + 3600f) % 360f;
     }
 
     /**
