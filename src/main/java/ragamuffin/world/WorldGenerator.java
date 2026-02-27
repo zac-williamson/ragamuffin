@@ -2563,9 +2563,9 @@ public class WorldGenerator {
                 world.setBlock(x + dx, 0, z + dz, BlockType.PAVEMENT);
             }
         }
-        // Door (cleared into display window area)
-        world.setBlock(x + width / 2, 1, z, BlockType.AIR);
-        world.setBlock(x + width / 2, 2, z, BlockType.AIR);
+        // Door — use proper door blocks so fillGapsBetweenBuildings cannot overwrite with GARDEN_WALL
+        world.setBlock(x + width / 2, 1, z, BlockType.DOOR_LOWER);
+        world.setBlock(x + width / 2, 2, z, BlockType.DOOR_UPPER);
     }
 
     private void buildBuilding(World world, int x, int z, int width, int depth, int height,
