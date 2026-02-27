@@ -222,6 +222,30 @@ public class NPCManager {
         {"Could you sign for this?", "It's not even addressed to me."},
     };
 
+    // Issue #730: NPC name pools — British first names (male + female) and surnames
+    private static final String[] NPC_FIRST_NAMES = {
+        "Gary", "Sharon", "Dave", "Tracey", "Kevin", "Mandy", "Wayne", "Karen",
+        "Lee", "Donna", "Craig", "Debbie", "Scott", "Michelle", "Dean", "Lisa",
+        "Mark", "Sandra", "Paul", "Julie", "Steve", "Carol", "Andy", "Wendy",
+        "Darren", "Cheryl", "Jason", "Leanne", "Barry", "Dawn", "Terry", "Nicola",
+        "Tony", "Claire", "Phil", "Beverley", "Ray", "Stacey", "Colin", "Lorraine",
+        "Keith", "Janet", "Derek", "Shirley", "Clive", "Pauline", "Reg", "Pat",
+        "Norm", "Brenda", "Alf", "Hilda", "Bert", "Ethel", "Stan", "Doris",
+        "Liam", "Jade", "Tyler", "Chloe", "Jordan", "Kayleigh", "Kyle", "Chantelle",
+        "Connor", "Britney", "Ryan", "Destiny", "Brandon", "Amber", "Callum", "Tiffany"
+    };
+    private static final String[] NPC_SURNAMES = {
+        "Smith", "Jones", "Williams", "Brown", "Taylor", "Davies", "Evans", "Wilson",
+        "Thomas", "Roberts", "Johnson", "Lewis", "Walker", "Robinson", "Wood", "Thompson",
+        "White", "Watson", "Jackson", "Wright", "Green", "Harris", "Cooper", "King",
+        "Lee", "Martin", "Clarke", "James", "Morgan", "Hughes", "Edwards", "Hill",
+        "Moore", "Clark", "Harrison", "Ward", "Turner", "Collins", "Parker", "Bennett",
+        "Shaw", "Cook", "Price", "Barnes", "Campbell", "Phillips", "Mitchell", "Kelly",
+        "Fletcher", "Booth", "Pearson", "Barker", "Murray", "Sutton", "Atkinson", "Perkins"
+    };
+    // Track which full names have already been used to ensure each NPC is unique
+    private final Set<String> usedNpcNames = new HashSet<>();
+
     // Structure detection
     private Map<String, Integer> playerStructures; // "x,y,z" key -> block count
 
@@ -385,6 +409,23 @@ public class NPCManager {
         // Assign a model variant to give visual variety to NPCs (Issue #729).
         npc.setModelVariant(pickVariant(type));
 
+        // Assign a unique name to humanoid NPCs for immersion (Issue #730).
+        // Non-humanoid types (DOG, BIRD) and role-anonymous types that are always
+        // addressed by role (POLICE, PCSO, ARMED_RESPONSE, COUNCIL_BUILDER) do not
+        // get personal names.  All other human NPCs receive a randomly chosen
+        // British full name drawn from the name pool.
+        switch (type) {
+            case DOG:
+            case BIRD:
+            case POLICE:
+            case PCSO:
+            case ARMED_RESPONSE:
+            case COUNCIL_BUILDER:
+                break; // no personal name
+            default:
+                npc.setName(pickName());
+        }
+
         npcs.add(npc);
         return npc;
     }
@@ -443,6 +484,31 @@ public class NPCManager {
      */
     private NPCModelVariant randomFrom(NPCModelVariant... variants) {
         return variants[random.nextInt(variants.length)];
+    }
+
+    /**
+     * Generate a unique British name for an NPC (Issue #730).
+     * Combines a random first name with a random surname.
+     * Retries up to 20 times to avoid duplicates; falls back to an
+     * indexed name if the pool is exhausted.
+     *
+     * @return a unique full name string such as "Gary Smith"
+     */
+    String pickName() {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            String first = NPC_FIRST_NAMES[random.nextInt(NPC_FIRST_NAMES.length)];
+            String last  = NPC_SURNAMES[random.nextInt(NPC_SURNAMES.length)];
+            String full  = first + " " + last;
+            if (usedNpcNames.add(full)) {
+                return full;
+            }
+        }
+        // Fallback: append a number to guarantee uniqueness
+        String base = NPC_FIRST_NAMES[random.nextInt(NPC_FIRST_NAMES.length)]
+                    + " " + NPC_SURNAMES[random.nextInt(NPC_SURNAMES.length)];
+        String fallback = base + " " + (usedNpcNames.size() + 1);
+        usedNpcNames.add(fallback);
+        return fallback;
     }
 
     /**
