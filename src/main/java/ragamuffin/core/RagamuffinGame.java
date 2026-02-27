@@ -91,6 +91,10 @@ public class RagamuffinGame extends ApplicationAdapter {
     // 1/2/3 key presses can be routed to selectShopItem() instead of hotbar selection.
     private ragamuffin.entity.NPC activeShopkeeperNPC = null;
 
+    // Issue #733: Fence trade menu — currency trading with the Fence NPC
+    private FenceSystem fenceSystem;
+    private ragamuffin.ui.FenceTradeUI fenceTradeUI;
+
     // Phase 12: CRITIC 2 Improvements
     private WeatherSystem weatherSystem;
 
@@ -306,6 +310,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // quest registry is available when deciding which buildings get a quest-giver NPC.
         interactionSystem = new InteractionSystem();
         spawnBuildingNPCs(); // Issue #462: spawn static quest-giver NPCs inside buildings
+
+        // Issue #733: Initialize Fence trade system and inject into interaction system
+        fenceSystem = new FenceSystem();
+        interactionSystem.setFenceSystem(fenceSystem);
+        fenceTradeUI = new ragamuffin.ui.FenceTradeUI();
 
         // Phase 6: Initialize day/night cycle and lighting
         timeSystem = new TimeSystem(8.0f); // Start at 8:00 AM
@@ -1848,7 +1857,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Release cursor when any overlay UI is open, re-catch when all closed
         boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
                 || achievementsUI.isVisible() || questLogUI.isVisible() || criminalRecordUI.isVisible()
-                || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen());
+                || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen())
+                || fenceTradeUI.isVisible();
         Gdx.input.setCursorCatched(!uiOpen);
 
         // Hotbar selection
@@ -1973,7 +1983,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private boolean isUIBlocking() {
         return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
                 || achievementsUI.isVisible() || questLogUI.isVisible()
-                || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen());
+                || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen())
+                || fenceTradeUI.isVisible();
     }
 
     /**
@@ -2682,8 +2693,14 @@ public class RagamuffinGame extends ApplicationAdapter {
         NPC targetNPC = interactionSystem.findNPCInRange(player.getPosition(), tmpDirection, npcManager.getNPCs());
 
         if (targetNPC != null) {
-            // Interact with the NPC — pass inventory so quest NPCs can complete quests
-            String dialogue = interactionSystem.interactWithNPC(targetNPC, inventory);
+            // Interact with the NPC — pass inventory, player and all NPCs so Fence
+            // interactions work correctly (Issue #733).
+            String dialogue = interactionSystem.interactWithNPC(targetNPC, inventory, player,
+                    npcManager.getNPCs());
+            // Issue #733: if the fence trade UI was opened, update fenceTradeUI visibility
+            if (fenceSystem.isTradeUIOpen()) {
+                fenceTradeUI.show();
+            }
             // Issue #541: track the shopkeeper whose menu is open so 1/2/3 can select items
             if (targetNPC.isShopMenuOpen()) {
                 activeShopkeeperNPC = targetNPC;
@@ -3086,7 +3103,11 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private void handleEscapePress() {
         // Close any open UI first
-        if (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen()) {
+        if (fenceTradeUI.isVisible()) {
+            fenceTradeUI.hide();
+            fenceSystem.closeTradeUI();
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
+        } else if (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen()) {
             activeShopkeeperNPC.setShopMenuOpen(false);
             activeShopkeeperNPC = null;
             Gdx.input.setCursorCatched(state == GameState.PLAYING);
