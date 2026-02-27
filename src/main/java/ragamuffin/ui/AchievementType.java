@@ -342,6 +342,34 @@ public enum AchievementType {
         "Proper Stitch-Up",
         "Used a RUMOUR_NOTE to pin something on someone else. You're going places. Bad places.",
         1
+    ),
+
+    // ── Issue #767: Disguise & Social Engineering System ──────────────────────
+
+    UNDERCOVER(
+        "Undercover",
+        "Successfully used a disguise to infiltrate a restricted area. Method acting.",
+        1
+    ),
+    METHOD_ACTOR(
+        "Method Actor",
+        "Maintained cover integrity above 50 throughout an entire infiltration. Stay in character.",
+        1
+    ),
+    TURNCOAT(
+        "Turncoat",
+        "Wore a rival faction's colours and survived. Bold. Possibly stupid.",
+        1
+    ),
+    OBVIOUS_IN_HINDSIGHT(
+        "Obvious in Hindsight",
+        "Had your cover blown within 3 blocks. The Greggs apron didn't fool anyone up close.",
+        1
+    ),
+    INCOGNITO(
+        "Incognito",
+        "Completed a disguise infiltration without ever being scrutinised. Ghost mode.",
+        1
     );
 
     private final String name;
