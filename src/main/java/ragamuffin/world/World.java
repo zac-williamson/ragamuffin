@@ -421,7 +421,7 @@ public class World {
 
         for (int bx = minX; bx <= maxX; bx++) {
             for (int bz = minZ; bz <= maxZ; bz++) {
-                if (getBlock(bx, belowFeetY, bz).isSolid()) {
+                if (isBlockSolid(bx, belowFeetY, bz)) {
                     float blockTop = belowFeetY + 1.0f;
                     if (Math.abs(aabb.getMinY() - blockTop) < 0.05f) {
                         return true;
@@ -497,7 +497,7 @@ public class World {
                 for (int bx = minX; bx <= maxX; bx++) {
                     for (int bz = minZ; bz <= maxZ; bz++) {
                         for (int by = feetY; by >= feetY - 3; by--) {
-                            if (getBlock(bx, by, bz).isSolid()) {
+                            if (isBlockSolid(bx, by, bz)) {
                                 highestSolidY = Math.max(highestSolidY, by);
                                 break;
                             }
@@ -584,7 +584,7 @@ public class World {
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    if (getBlock(x, y, z).isSolid()) {
+                    if (isBlockSolid(x, y, z)) {
                         // Inline AABB intersection: block occupies [x, x+1] x [y, y+1] x [z, z+1]
                         if (aMinX < x + 1 && aMaxX > x &&
                             aMinY < y + 1 && aMaxY > y &&
@@ -626,7 +626,7 @@ public class World {
         for (int x = minX; x <= maxX; x++) {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
-                    if (getBlock(x, y, z).isSolid()) {
+                    if (isBlockSolid(x, y, z)) {
                         if (aMinX < x + 1 && aMaxX > x &&
                             aMinY < y + 1 && aMaxY > y &&
                             aMinZ < z + 1 && aMaxZ > z) {
@@ -717,14 +717,10 @@ public class World {
     public void toggleDoor(int x, int y, int z) {
         String key = getBlockKey(x, y, z);
         if (openDoors.contains(key)) {
-            // Close: restore DOOR_LOWER and DOOR_UPPER
-            setBlock(x, y, z, BlockType.DOOR_LOWER);
-            setBlock(x, y + 1, z, BlockType.DOOR_UPPER);
+            // Close: mark door as closed (blocks remain; collision restored)
             openDoors.remove(key);
         } else {
-            // Open: replace both halves with AIR
-            setBlock(x, y, z, BlockType.AIR);
-            setBlock(x, y + 1, z, BlockType.AIR);
+            // Open: mark door as open (blocks remain as thin panels; collision bypassed)
             openDoors.add(key);
         }
         markBlockDirty(x, y, z);
@@ -736,6 +732,24 @@ public class World {
      */
     public boolean isDoorOpen(int x, int y, int z) {
         return openDoors.contains(getBlockKey(x, y, z));
+    }
+
+    /**
+     * Check whether the block at the given position is solid for collision purposes.
+     * Open door blocks (DOOR_LOWER / DOOR_UPPER) are passable even though the block
+     * type itself is marked solid — the door panel has swung aside.
+     */
+    public boolean isBlockSolid(int x, int y, int z) {
+        BlockType type = getBlock(x, y, z);
+        if (!type.isSolid()) return false;
+        if (type == BlockType.DOOR_LOWER) {
+            return !openDoors.contains(getBlockKey(x, y, z));
+        }
+        if (type == BlockType.DOOR_UPPER) {
+            // Resolve to DOOR_LOWER position (one block below)
+            return !openDoors.contains(getBlockKey(x, y - 1, z));
+        }
+        return true;
     }
 
     /**

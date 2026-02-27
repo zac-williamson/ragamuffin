@@ -13,7 +13,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration tests for Issue #313: Closed doors have no collision — player walks through them.
  *
  * Verifies that DOOR_LOWER and DOOR_UPPER are solid (blocking player movement when closed),
- * and that open doors (replaced with AIR by toggleDoor()) are passable.
+ * and that open doors (swing aside via toggleDoor()) are passable.
+ * Fix #749: open doors keep their block type but are treated as non-solid for collision.
  */
 class Issue313DoorCollisionTest {
 
@@ -75,10 +76,11 @@ class Issue313DoorCollisionTest {
         // Place and immediately open the door
         world.setBlock(10, 1, 15, BlockType.DOOR_LOWER);
         world.setBlock(10, 2, 15, BlockType.DOOR_UPPER);
-        world.toggleDoor(10, 1, 15); // opens door — writes AIR at both positions
+        world.toggleDoor(10, 1, 15); // opens door — panel swings aside
         assertTrue(world.isDoorOpen(10, 1, 15), "Door should be open");
-        assertEquals(BlockType.AIR, world.getBlock(10, 1, 15), "DOOR_LOWER replaced by AIR when open");
-        assertEquals(BlockType.AIR, world.getBlock(10, 2, 15), "DOOR_UPPER replaced by AIR when open");
+        // Fix #749: blocks remain present but are passable (swung aside visually)
+        assertEquals(BlockType.DOOR_LOWER, world.getBlock(10, 1, 15), "DOOR_LOWER block remains when open");
+        assertEquals(BlockType.DOOR_UPPER, world.getBlock(10, 2, 15), "DOOR_UPPER block remains when open");
 
         player.getPosition().set(10.5f, 1, 17);
 

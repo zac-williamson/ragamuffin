@@ -174,9 +174,14 @@ public class ChunkMeshBuilder {
     }
 
     /**
-     * Build a thin door panel. The door is 0.125 blocks thick along Z, full width (1 block) on X.
+     * Build a thin door panel.
+     *
+     * Closed: panel is 0.125 blocks thick along Z, full width (1 block) on X,
+     *         sitting flush against the north face of the block (z = lz).
+     * Open:   panel is swung 90° — 0.125 blocks thick along X, full depth (1 block) on Z,
+     *         sitting flush against the west face of the block (x = lx).
+     *
      * DOOR_LOWER covers y to y+1, DOOR_UPPER covers y to y+1 (together they form a 2-block door).
-     * The panel sits flush against the north face of the block (z = lz).
      */
     private static final float DOOR_THICKNESS = 0.125f;
 
@@ -185,34 +190,74 @@ public class ChunkMeshBuilder {
                                int worldX, int worldY, int worldZ) {
         Color color = type.getColor();
         Color topColor = type.getTopColor();
-        float x0 = lx, x1 = lx + 1.0f;
         float y0 = ly, y1 = ly + 1.0f;
-        float z0 = lz, z1 = lz + DOOR_THICKNESS;
 
-        // South face (z1, facing +Z)
-        vertexIndex = addFace(meshData, vertexIndex, color,
-            x0, y0, z1,  x1, y0, z1,  x1, y1, z1,  x0, y1, z1,
-            0, 0, 1, 1.0f, 1.0f);
-        // North face (z0, facing -Z)
-        vertexIndex = addFace(meshData, vertexIndex, color,
-            x1, y0, z0,  x0, y0, z0,  x0, y1, z0,  x1, y1, z0,
-            0, 0, -1, 1.0f, 1.0f);
-        // East face (x1, facing +X)
-        vertexIndex = addFace(meshData, vertexIndex, color,
-            x1, y0, z1,  x1, y0, z0,  x1, y1, z0,  x1, y1, z1,
-            1, 0, 0, DOOR_THICKNESS, 1.0f);
-        // West face (x0, facing -X)
-        vertexIndex = addFace(meshData, vertexIndex, color,
-            x0, y0, z0,  x0, y0, z1,  x0, y1, z1,  x0, y1, z0,
-            -1, 0, 0, DOOR_THICKNESS, 1.0f);
-        // Top face (only for DOOR_UPPER or single-block door)
-        vertexIndex = addFace(meshData, vertexIndex, topColor,
-            x0, y1, z1,  x1, y1, z1,  x1, y1, z0,  x0, y1, z0,
-            0, 1, 0, 1.0f, DOOR_THICKNESS);
-        // Bottom face
-        vertexIndex = addFace(meshData, vertexIndex, color,
-            x0, y0, z0,  x1, y0, z0,  x1, y0, z1,  x0, y0, z1,
-            0, -1, 0, 1.0f, DOOR_THICKNESS);
+        // Determine if this door is open: check the DOOR_LOWER position in the world
+        boolean open = false;
+        if (world != null) {
+            int lowerWorldY = (type == BlockType.DOOR_UPPER) ? worldY - 1 : worldY;
+            open = world.isDoorOpen(worldX, lowerWorldY, worldZ);
+        }
+
+        if (!open) {
+            // Closed: panel along Z (north face)
+            float x0 = lx, x1 = lx + 1.0f;
+            float z0 = lz, z1 = lz + DOOR_THICKNESS;
+
+            // South face (z1, facing +Z)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x0, y0, z1,  x1, y0, z1,  x1, y1, z1,  x0, y1, z1,
+                0, 0, 1, 1.0f, 1.0f);
+            // North face (z0, facing -Z)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x1, y0, z0,  x0, y0, z0,  x0, y1, z0,  x1, y1, z0,
+                0, 0, -1, 1.0f, 1.0f);
+            // East face (x1, facing +X)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x1, y0, z1,  x1, y0, z0,  x1, y1, z0,  x1, y1, z1,
+                1, 0, 0, DOOR_THICKNESS, 1.0f);
+            // West face (x0, facing -X)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x0, y0, z0,  x0, y0, z1,  x0, y1, z1,  x0, y1, z0,
+                -1, 0, 0, DOOR_THICKNESS, 1.0f);
+            // Top face
+            vertexIndex = addFace(meshData, vertexIndex, topColor,
+                x0, y1, z1,  x1, y1, z1,  x1, y1, z0,  x0, y1, z0,
+                0, 1, 0, 1.0f, DOOR_THICKNESS);
+            // Bottom face
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x0, y0, z0,  x1, y0, z0,  x1, y0, z1,  x0, y0, z1,
+                0, -1, 0, 1.0f, DOOR_THICKNESS);
+        } else {
+            // Open: panel swung 90° along X (west face), spanning full Z depth
+            float x0 = lx, x1 = lx + DOOR_THICKNESS;
+            float z0 = lz, z1 = lz + 1.0f;
+
+            // South face (z1, facing +Z)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x0, y0, z1,  x1, y0, z1,  x1, y1, z1,  x0, y1, z1,
+                0, 0, 1, DOOR_THICKNESS, 1.0f);
+            // North face (z0, facing -Z)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x1, y0, z0,  x0, y0, z0,  x0, y1, z0,  x1, y1, z0,
+                0, 0, -1, DOOR_THICKNESS, 1.0f);
+            // East face (x1, facing +X)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x1, y0, z1,  x1, y0, z0,  x1, y1, z0,  x1, y1, z1,
+                1, 0, 0, 1.0f, 1.0f);
+            // West face (x0, facing -X)
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x0, y0, z0,  x0, y0, z1,  x0, y1, z1,  x0, y1, z0,
+                -1, 0, 0, 1.0f, 1.0f);
+            // Top face
+            vertexIndex = addFace(meshData, vertexIndex, topColor,
+                x0, y1, z1,  x1, y1, z1,  x1, y1, z0,  x0, y1, z0,
+                0, 1, 0, DOOR_THICKNESS, 1.0f);
+            // Bottom face
+            vertexIndex = addFace(meshData, vertexIndex, color,
+                x0, y0, z0,  x1, y0, z0,  x1, y0, z1,  x0, y0, z1,
+                0, -1, 0, DOOR_THICKNESS, 1.0f);
+        }
 
         return vertexIndex;
     }

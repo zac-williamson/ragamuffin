@@ -59,10 +59,11 @@ class Issue311DoorInteractionTest {
 
         assertTrue(world.isDoorOpen(result.getBlockX(), lowerY, result.getBlockZ()),
                 "Door should be open after toggle");
-        assertEquals(BlockType.AIR, world.getBlock(10, 1, 10),
-                "DOOR_LOWER should become AIR when door is open");
-        assertEquals(BlockType.AIR, world.getBlock(10, 2, 10),
-                "DOOR_UPPER should become AIR when door is open");
+        // Fix #749: door blocks remain present when open (they swing aside visually)
+        assertEquals(BlockType.DOOR_LOWER, world.getBlock(10, 1, 10),
+                "DOOR_LOWER block should still be present when door is open (swings aside)");
+        assertEquals(BlockType.DOOR_UPPER, world.getBlock(10, 2, 10),
+                "DOOR_UPPER block should still be present when door is open (swings aside)");
     }
 
     /**
@@ -104,8 +105,8 @@ class Issue311DoorInteractionTest {
         world.toggleDoor(10, 1, 10); // open
         assertTrue(world.isDoorOpen(10, 1, 10));
 
-        // After opening, both blocks are AIR — the raycast won't find the door.
-        // The second toggle should close it (restoring blocks).
+        // Fix #749: blocks remain present when open, so raycast can still find them.
+        // The second toggle closes the door (marks it non-open again).
         world.toggleDoor(10, 1, 10); // close
 
         assertFalse(world.isDoorOpen(10, 1, 10), "Door should be closed after second toggle");
