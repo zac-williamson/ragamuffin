@@ -129,6 +129,16 @@ public class WorldGenerator {
     public static final int BUNKER_TOP_Y = -8;
     /** Y coordinate of the floor of the underground bunker. */
     public static final int BUNKER_FLOOR_Y = -14;
+    /** Y coordinate of the top of the bunker lower level. */
+    public static final int BUNKER_LOWER_TOP_Y = -17;
+    /** Y coordinate of the floor of the bunker lower level. */
+    public static final int BUNKER_LOWER_FLOOR_Y = -22;
+    /** Y coordinate of the floor of sewer stash rooms (same level as sewers). */
+    public static final int SEWER_STASH_FLOOR_Y = SEWER_FLOOR_Y;
+    /** Y coordinate of the floor of the black market basement. */
+    public static final int BASEMENT_FLOOR_Y = -6;
+    /** Y coordinate of the ceiling of the black market basement. */
+    public static final int BASEMENT_CEILING_Y = -2;
 
     private final Random random;
     private final long seed;
@@ -1038,6 +1048,11 @@ public class WorldGenerator {
         // ===== UNDERGROUND STRUCTURES =====
         generateSewerTunnels(world, sx, sz, nx, nz);
         generateUndergroundBunker(world);
+
+        // ===== UNDERGROUND SECRETS — Issue #724 =====
+        generateSewerStashRooms(world);
+        generateBunkerLowerLevel(world);
+        generateBlackMarketBasement(world, sx, sz);
 
         // ===== UNDERGROUND MINERALS — Issue #691 =====
         generateMineralVeins(world);
@@ -3147,6 +3162,299 @@ public class WorldGenerator {
         for (int y = BUNKER_TOP_Y + 1; y <= -1; y++) {
             world.setBlock(x, y, z, BlockType.LADDER);
         }
+    }
+
+    // ==================== UNDERGROUND SECRETS — Issue #724 ====================
+
+    /**
+     * Generate hidden stash rooms branching off the sewer network.
+     *
+     * <p>Three stash rooms are placed at fixed offsets from the main sewer grid.
+     * Each room is a small sealed chamber (6x4 blocks) with shelves and tables
+     * hinting at contraband storage. The only entrance is a narrow tunnel off one
+     * of the primary sewer passages. A BOOKSHELF in the corner hides a secret
+     * alcove — the reward for thorough underground exploration.</p>
+     */
+    private void generateSewerStashRooms(World world) {
+        Random stashRng = new Random(seed ^ 0x5354415348_524F4FL); // "STASH_RO"
+
+        // Three stash rooms at distinct sewer-adjacent positions
+        int[][] stashPositions = {
+            {  40, -40 },
+            { -60,  20 },
+            {  20,  60 }
+        };
+
+        for (int i = 0; i < stashPositions.length; i++) {
+            int rx = stashPositions[i][0];
+            int rz = stashPositions[i][1];
+            generateSewerStashRoom(world, rx, rz, i);
+        }
+    }
+
+    /**
+     * Carve a single sewer stash room at (roomX, roomZ).
+     * The room is 6 wide × 4 deep × 2 tall (SEWER_FLOOR_Y to SEWER_CEILING_Y).
+     * A short connecting tunnel links it back to the nearest sewer main.
+     */
+    private void generateSewerStashRoom(World world, int roomX, int roomZ, int index) {
+        int roomW = 6;
+        int roomD = 4;
+
+        // Carve out the room interior
+        for (int x = roomX; x < roomX + roomW; x++) {
+            for (int z = roomZ; z < roomZ + roomD; z++) {
+                world.setBlock(x, SEWER_STASH_FLOOR_Y, z, BlockType.CONCRETE);
+                for (int y = SEWER_STASH_FLOOR_Y + 1; y <= SEWER_CEILING_Y; y++) {
+                    world.setBlock(x, y, z, BlockType.AIR);
+                }
+                // Brick ceiling above
+                world.setBlock(x, SEWER_CEILING_Y + 1, z, BlockType.BRICK);
+            }
+        }
+
+        // Brick walls around the room (perimeter)
+        for (int x = roomX - 1; x <= roomX + roomW; x++) {
+            for (int z = roomZ - 1; z <= roomZ + roomD; z++) {
+                boolean isEdgeX = (x == roomX - 1 || x == roomX + roomW);
+                boolean isEdgeZ = (z == roomZ - 1 || z == roomZ + roomD);
+                if (isEdgeX || isEdgeZ) {
+                    for (int y = SEWER_STASH_FLOOR_Y; y <= SEWER_CEILING_Y + 1; y++) {
+                        if (world.getBlock(x, y, z) == BlockType.AIR ||
+                            world.getBlock(x, y, z) == BlockType.STONE) {
+                            world.setBlock(x, y, z, BlockType.BRICK);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Connecting tunnel from nearest sewer main (snap to 20-block grid)
+        int nearestSewerX = (Math.round(roomX / 20f)) * 20;
+        int nearestSewerZ = (Math.round(roomZ / 20f)) * 20;
+
+        // Tunnel runs along Z toward the room
+        int tunnelX = roomX + roomW / 2;
+        int startZ = Math.min(nearestSewerZ, roomZ - 1);
+        int endZ   = Math.max(nearestSewerZ, roomZ - 1);
+        for (int z = startZ; z <= endZ; z++) {
+            world.setBlock(tunnelX, SEWER_STASH_FLOOR_Y, z, BlockType.CONCRETE);
+            for (int y = SEWER_STASH_FLOOR_Y + 1; y <= SEWER_CEILING_Y; y++) {
+                world.setBlock(tunnelX, y, z, BlockType.AIR);
+            }
+        }
+
+        // Doorway gap in south wall of room
+        int doorX = roomX + roomW / 2;
+        world.setBlock(doorX, SEWER_STASH_FLOOR_Y + 1, roomZ - 1, BlockType.AIR);
+        world.setBlock(doorX, SEWER_FLOOR_Y + 2, roomZ - 1, BlockType.AIR);
+
+        // Room contents: shelves along back wall, table in centre
+        for (int x = roomX + 1; x < roomX + roomW - 1; x++) {
+            world.setBlock(x, SEWER_STASH_FLOOR_Y + 1, roomZ + roomD - 1, BlockType.SHELF);
+        }
+        world.setBlock(roomX + 2, SEWER_STASH_FLOOR_Y + 1, roomZ + 1, BlockType.TABLE);
+        world.setBlock(roomX + 3, SEWER_STASH_FLOOR_Y + 1, roomZ + 1, BlockType.TABLE);
+
+        // Secret alcove in the corner behind a bookshelf
+        world.setBlock(roomX + 1, SEWER_STASH_FLOOR_Y + 1, roomZ + roomD - 2, BlockType.BOOKSHELF);
+
+        // Register as a landmark
+        world.addLandmark(new Landmark(LandmarkType.SEWER_STASH_ROOM,
+                roomX, SEWER_STASH_FLOOR_Y, roomZ, roomW, 3, roomD));
+    }
+
+    /**
+     * Generate a lower level beneath the main underground bunker.
+     *
+     * <p>The lower level is a smaller, more industrial space (16×12 blocks) at
+     * BUNKER_LOWER_FLOOR_Y to BUNKER_LOWER_TOP_Y. Access is via a ladder shaft in
+     * the central room of the upper bunker. The lower level has a generator room,
+     * a weapons cache alcove, and a narrow escape tunnel heading north-east.</p>
+     */
+    private void generateBunkerLowerLevel(World world) {
+        int llW = 16;
+        int llD = 12;
+        int llStartX = -llW / 2;   // -8
+        int llEndX   =  llW / 2;   //  8
+        int llStartZ = -llD / 2;   // -6
+        int llEndZ   =  llD / 2;   //  6
+
+        // Carve out lower level interior
+        for (int x = llStartX; x < llEndX; x++) {
+            for (int z = llStartZ; z < llEndZ; z++) {
+                for (int y = BUNKER_LOWER_FLOOR_Y; y <= BUNKER_LOWER_TOP_Y; y++) {
+                    world.setBlock(x, y, z, BlockType.AIR);
+                }
+                world.setBlock(x, BUNKER_LOWER_FLOOR_Y - 1, z, BlockType.CONCRETE);
+            }
+        }
+
+        // Concrete outer walls
+        for (int x = llStartX - 1; x <= llEndX; x++) {
+            for (int z = llStartZ - 1; z <= llEndZ; z++) {
+                for (int y = BUNKER_LOWER_FLOOR_Y - 1; y <= BUNKER_LOWER_TOP_Y + 1; y++) {
+                    boolean isEdgeX = (x == llStartX - 1 || x == llEndX);
+                    boolean isEdgeZ = (z == llStartZ - 1 || z == llEndZ);
+                    boolean isEdgeY = (y == BUNKER_LOWER_FLOOR_Y - 1 || y == BUNKER_LOWER_TOP_Y + 1);
+                    if (isEdgeX || isEdgeZ || isEdgeY) {
+                        world.setBlock(x, y, z, BlockType.CONCRETE);
+                    }
+                }
+            }
+        }
+
+        // Internal divider: east "generator room"
+        for (int z = llStartZ; z < llEndZ; z++) {
+            for (int y = BUNKER_LOWER_FLOOR_Y; y <= BUNKER_LOWER_TOP_Y; y++) {
+                world.setBlock(4, y, z, BlockType.BRICK);
+            }
+        }
+        // Door gap in east divider
+        world.setBlock(4, BUNKER_LOWER_FLOOR_Y, -1, BlockType.AIR);
+        world.setBlock(4, BUNKER_LOWER_FLOOR_Y, 0, BlockType.AIR);
+        world.setBlock(4, BUNKER_LOWER_FLOOR_Y + 1, -1, BlockType.AIR);
+        world.setBlock(4, BUNKER_LOWER_FLOOR_Y + 1, 0, BlockType.AIR);
+
+        // Lino floor in main corridor
+        for (int x = llStartX; x < 4; x++) {
+            for (int z = llStartZ; z < llEndZ; z++) {
+                if (world.getBlock(x, BUNKER_LOWER_FLOOR_Y - 1, z) == BlockType.CONCRETE) {
+                    world.setBlock(x, BUNKER_LOWER_FLOOR_Y - 1, z, BlockType.LINOLEUM);
+                }
+            }
+        }
+
+        // Generator room: counter + shelves (east section)
+        for (int x = 5; x < llEndX - 1; x++) {
+            world.setBlock(x, BUNKER_LOWER_FLOOR_Y, llStartZ + 1, BlockType.COUNTER);
+        }
+        for (int z = llStartZ + 2; z < llEndZ - 1; z += 2) {
+            world.setBlock(llEndX - 2, BUNKER_LOWER_FLOOR_Y, z, BlockType.SHELF);
+        }
+
+        // Weapons cache alcove: bookshelf + table in north-west corner
+        world.setBlock(llStartX + 1, BUNKER_LOWER_FLOOR_Y, llStartZ + 1, BlockType.TABLE);
+        world.setBlock(llStartX + 2, BUNKER_LOWER_FLOOR_Y, llStartZ + 1, BlockType.TABLE);
+        world.setBlock(llStartX + 1, BUNKER_LOWER_FLOOR_Y, llStartZ + 2, BlockType.BOOKSHELF);
+        world.setBlock(llStartX + 2, BUNKER_LOWER_FLOOR_Y, llStartZ + 2, BlockType.BOOKSHELF);
+
+        // Escape tunnel heading east out of generator room (6 blocks)
+        int tunnelStartX = llEndX + 1;
+        int tunnelEndX   = tunnelStartX + 6;
+        int tunnelZ = 0;
+        for (int x = tunnelStartX; x <= tunnelEndX; x++) {
+            world.setBlock(x, BUNKER_LOWER_FLOOR_Y - 1, tunnelZ, BlockType.CONCRETE);
+            world.setBlock(x, BUNKER_LOWER_FLOOR_Y, tunnelZ, BlockType.AIR);
+            world.setBlock(x, BUNKER_LOWER_FLOOR_Y + 1, tunnelZ, BlockType.AIR);
+        }
+
+        // Ladder connecting upper bunker floor to lower level
+        // Shaft from BUNKER_LOWER_TOP_Y+1 up to BUNKER_FLOOR_Y (the existing bunker)
+        int shaftX = 0;
+        int shaftZ = 3;
+        for (int y = BUNKER_LOWER_TOP_Y + 1; y < BUNKER_FLOOR_Y; y++) {
+            world.setBlock(shaftX, y, shaftZ, BlockType.AIR);
+        }
+        // Ladder rungs up the shaft
+        for (int y = BUNKER_LOWER_TOP_Y + 1; y < BUNKER_FLOOR_Y; y++) {
+            world.setBlock(shaftX, y, shaftZ, BlockType.LADDER);
+        }
+        // Hole in the upper bunker floor at (0, BUNKER_FLOOR_Y, 3)
+        world.setBlock(shaftX, BUNKER_FLOOR_Y, shaftZ, BlockType.AIR);
+        world.setBlock(shaftX, BUNKER_FLOOR_Y - 1, shaftZ, BlockType.AIR);
+
+        // Register as a landmark
+        int llHeight = BUNKER_LOWER_TOP_Y - BUNKER_LOWER_FLOOR_Y + 1;
+        world.addLandmark(new Landmark(LandmarkType.BUNKER_LOWER_LEVEL,
+                llStartX, BUNKER_LOWER_FLOOR_Y - 1, llStartZ,
+                llW, llHeight + 2, llD));
+    }
+
+    /**
+     * Generate a hidden black-market basement beneath the first high-street shop.
+     *
+     * <p>The basement is a 10×8 block room at BASEMENT_FLOOR_Y to BASEMENT_CEILING_Y,
+     * directly beneath the first high-street shop on the south side. Access is via a
+     * concealed staircase inside the back room of the shop. The basement contains
+     * counters with contraband goods and a locked safe (represented as a CHEST block
+     * colour via COUNTER). Wall signage warns "No Entry".</p>
+     */
+    private void generateBlackMarketBasement(World world, int shopStartX, int shopStartZ) {
+        int bmW = 10;
+        int bmD = 8;
+        // Position directly beneath first shop slot on south side
+        int bmX = shopStartX;
+        int bmZ = shopStartZ;
+
+        // Carve out the basement
+        for (int x = bmX; x < bmX + bmW; x++) {
+            for (int z = bmZ; z < bmZ + bmD; z++) {
+                for (int y = BASEMENT_FLOOR_Y; y <= BASEMENT_CEILING_Y; y++) {
+                    world.setBlock(x, y, z, BlockType.AIR);
+                }
+                world.setBlock(x, BASEMENT_FLOOR_Y - 1, z, BlockType.CONCRETE);
+            }
+        }
+
+        // Brick walls
+        for (int x = bmX - 1; x <= bmX + bmW; x++) {
+            for (int z = bmZ - 1; z <= bmZ + bmD; z++) {
+                for (int y = BASEMENT_FLOOR_Y - 1; y <= BASEMENT_CEILING_Y + 1; y++) {
+                    boolean isEdgeX = (x == bmX - 1 || x == bmX + bmW);
+                    boolean isEdgeZ = (z == bmZ - 1 || z == bmZ + bmD);
+                    boolean isEdgeY = (y == BASEMENT_FLOOR_Y - 1 || y == BASEMENT_CEILING_Y + 1);
+                    if (isEdgeX || isEdgeZ || isEdgeY) {
+                        if (world.getBlock(x, y, z) != BlockType.BEDROCK) {
+                            world.setBlock(x, y, z, BlockType.BRICK);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Tile floor in the basement
+        for (int x = bmX; x < bmX + bmW; x++) {
+            for (int z = bmZ; z < bmZ + bmD; z++) {
+                if (world.getBlock(x, BASEMENT_FLOOR_Y - 1, z) == BlockType.CONCRETE) {
+                    world.setBlock(x, BASEMENT_FLOOR_Y - 1, z, BlockType.TILE_BLACK);
+                }
+            }
+        }
+
+        // Counters along the south wall (goods display)
+        for (int x = bmX + 1; x < bmX + bmW - 1; x++) {
+            world.setBlock(x, BASEMENT_FLOOR_Y, bmZ + bmD - 2, BlockType.COUNTER);
+        }
+
+        // Shelves along the east wall
+        for (int z = bmZ + 1; z < bmZ + bmD - 1; z += 2) {
+            world.setBlock(bmX + bmW - 2, BASEMENT_FLOOR_Y, z, BlockType.SHELF);
+        }
+
+        // Tables in the centre
+        world.setBlock(bmX + 3, BASEMENT_FLOOR_Y, bmZ + 3, BlockType.TABLE);
+        world.setBlock(bmX + 4, BASEMENT_FLOOR_Y, bmZ + 3, BlockType.TABLE);
+        world.setBlock(bmX + 5, BASEMENT_FLOOR_Y, bmZ + 3, BlockType.TABLE);
+
+        // Staircase access: stairs descending from y=0 to BASEMENT_CEILING_Y
+        // Carved into the ground just inside the shop back wall
+        int stairX = bmX + bmW / 2;
+        // Simple ladder shaft access
+        for (int y = BASEMENT_CEILING_Y; y <= 0; y++) {
+            world.setBlock(stairX, y, bmZ - 1, BlockType.AIR);
+        }
+        for (int y = BASEMENT_CEILING_Y; y <= -1; y++) {
+            world.setBlock(stairX, y, bmZ - 1, BlockType.LADDER);
+        }
+        // Opening in basement ceiling
+        world.setBlock(stairX, BASEMENT_CEILING_Y, bmZ - 1, BlockType.AIR);
+        world.setBlock(stairX, BASEMENT_CEILING_Y + 1, bmZ - 1, BlockType.AIR);
+
+        // Register as a landmark
+        world.addLandmark(new Landmark(LandmarkType.BLACK_MARKET_BASEMENT,
+                bmX, BASEMENT_FLOOR_Y - 1, bmZ,
+                bmW, BASEMENT_CEILING_Y - BASEMENT_FLOOR_Y + 3, bmD));
     }
 
     // ==================== UNDERGROUND MINERALS — Issue #691 ====================
