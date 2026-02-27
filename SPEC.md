@@ -5052,3 +5052,212 @@ all new achievement triggers, DJ NPC state management.
     15 wins + 10 raves). Verify the `GRIME_GOD` achievement fires at Rank 5.
     Verify `DOUBLE_LIFE` achievement fires if Notoriety Tier is also ≥ 3 at time of
     Rank 3 unlock. Verify no NPEs, no crashes, game remains in PLAYING state throughout.
+
+---
+
+## Phase R: Witness & Evidence System — "The Word on the Street"
+
+**Goal**: Make the rumour network and NPC memory feel consequential by adding a
+procedural crime-evidence pipeline. Crimes leave physical evidence in the world;
+witnesses who saw them seed rumours; the player can silence witnesses, plant false
+evidence, bribe the barman, or "go legit" by tipping off the police — and all of
+this feeds back into factions, notoriety, and the criminal record.
+
+This phase transforms the existing `RumourNetwork`, `CriminalRecord`, and
+`NotorietySystem` from passive trackers into an active gameplay loop where information
+itself becomes a tradeable, destructible resource.
+
+---
+
+### Evidence Objects (new PropType entries)
+
+| PropType | Spawned by | Appearance | Destroyable? |
+|----------|-----------|------------|--------------|
+| `EVIDENCE_SMASHED_GLASS` | Breaking a GLASS block in a building | Glittery debris pile | Yes (1 punch) |
+| `EVIDENCE_CROWBAR_MARKS` | Using CROWBAR on a door/safe | Scratch marks on adjacent wall | Yes (1 punch) |
+| `EVIDENCE_BLOOD_SPATTER` | NPC reduced to 0 HP | Red splatter decal on floor | Yes (1 punch) |
+| `EVIDENCE_DROPPED_LOOT` | Running with hot loot when a POLICE NPC is within 8 blocks | Small bag prop | Yes (pick up = destroy) |
+| `EVIDENCE_CCTV_TAPE` | Exists inside office building and off-licence | VHS cassette prop | Yes (steal = destroy) |
+
+Each piece of evidence has a `crimeId` (UUID) linking it to a specific criminal act.
+Evidence within 20 blocks of a POLICE NPC is "discovered" — its `crimeId` is logged
+into the player's `CriminalRecord` as a WITNESSED_EVIDENCE entry, which permanently
+raises Notoriety by 5 per entry (capped at Tier 5).
+
+**Evidence decay**: Physical evidence props despawn after 10 in-game minutes if
+undiscovered and undestroyed. Each surviving piece seeds a fresh `GANG_ACTIVITY`
+rumour every 2 in-game minutes while it persists.
+
+---
+
+### Witnesses (NPC behaviour extension)
+
+Any NPC within 12 blocks who has line-of-sight to a crime event (block break in a
+building, NPC knockout, heist alarm trigger) becomes a **Witness** — flagged with
+`NPCState.WITNESS`. A Witness NPC:
+
+1. **Flees** toward the nearest landmark for 15 seconds (panicked walk/run).
+2. **Seeds a rumour** of type `WITNESS_SIGHTING` containing the player's position,
+   crime type, and in-game timestamp. The rumour spreads normally through the
+   `RumourNetwork`.
+3. **Reports to police** if they reach a POLICE NPC within 60 seconds — directly
+   grants the player a `WITNESSED_CRIME` entry in `CriminalRecord` and raises
+   Notoriety by 10.
+4. **Can be bribed**: Press **E** on a fleeing Witness NPC (requires 5 COIN) to
+   trigger the bribe dialogue. On success the NPC returns to IDLE, the
+   `WITNESS_SIGHTING` rumour is removed from their buffer, and the player gets the
+   tooltip "They won't say a word. Probably." On failure (if the NPC's bravery
+   stat > 60) the NPC shouts "Get away from me!" and their flee speed doubles.
+
+---
+
+### CCTV Tapes
+
+Two buildings (office block and off-licence) each contain a `EVIDENCE_CCTV_TAPE`
+prop that re-spawns every 10 in-game minutes. If the player commits any crime
+(heist break-in, NPC knockout, alarm trigger) while within 15 blocks of those
+buildings, the tape is "hot" — flagged as `tapeHot=true`.
+
+- **Steal the tape** (press **E** near the prop): removes the prop from the world,
+  cancels the associated pending WITNESSED_EVIDENCE entry, and gives the player
+  `CCTV_TAPE` in inventory. Tooltip: "Evidence sorted. You're getting good at this."
+- **Sell the tape to the Fence** (`FenceSystem`): earns 15 COIN regardless of
+  `tapeHot` status (fences love a good tape).
+- If the tape is NOT stolen within 3 in-game minutes of going hot, a POLICE NPC
+  automatically gains the `WITNESSED_CRIME` entry against the player (simulating
+  police reviewing footage), adding Notoriety +8.
+
+---
+
+### Informant Mechanic — "Grassing"
+
+The player can optionally **tip off police** (press **E** on a POLICE NPC while
+holding a rumour item — new `RUMOUR_NOTE` Material, see below) to provide intel
+about a rival faction's crime. This:
+
+- Clears one of the player's own pending `WITNESSED_CRIME` entries (the police owe
+  you one — for now).
+- Reduces the tipped faction's Respect by 20.
+- Seeds a `BETRAYAL` rumour into the network — if the tipped faction's NPCs hear
+  this rumour (3-hop spread) their Respect toward the player drops an additional 15.
+- Unlocks the hidden achievement `GRASS` (no tooltip — it just silently appears).
+
+The `RUMOUR_NOTE` is crafted from 1 COIN + 1 any rumour held in inventory
+(interaction: while the barman is sharing a rumour, press **E** to "write it down").
+Once used as a tip, it is consumed.
+
+---
+
+### New Material
+
+| Material | Source | Stack Size | Notes |
+|----------|--------|-----------|-------|
+| `RUMOUR_NOTE` | Crafted at WORKBENCH: 1 COIN after hearing a barman rumour | 3 | Used to tip off police or sell to rival faction for 8 COIN |
+| `CCTV_TAPE` | Stolen from office/off-licence CCTV prop | 1 | Sell to Fence for 15 COIN; destroys a Notoriety entry |
+
+---
+
+### New RumourTypes
+
+| Type | Trigger | Hops before expiry | Effect on hearers |
+|------|---------|--------------------|-------------------|
+| `WITNESS_SIGHTING` | NPC witnesses a crime | 4 | NPCs near barman gain ANXIOUS state for 30s |
+| `BETRAYAL` | Player tips off police | 5 (never expires in barman) | Target faction NPCs become hostile to player |
+
+---
+
+### New Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `CLEAN_GETAWAY` | Commit a heist with 0 evidence left behind (all evidence destroyed/stolen) |
+| `LEAVE_NO_TRACE` | Bribe 5 witnesses in a single session |
+| `GRASS` | Tip off police (hidden achievement — tooltip suppressed) |
+| `IN_BROAD_DAYLIGHT` | Commit a crime with 3+ witnesses watching simultaneously |
+| `STITCH_UP` | Use a `RUMOUR_NOTE` to frame a rival faction NPC |
+
+---
+
+### HUD Integration
+
+- A small **evidence counter** appears in the bottom-right corner when the player
+  has active evidence props linked to their actions in the world. Each piece shows
+  a countdown timer. Turns red when a POLICE NPC is within 20 blocks.
+- Witnesses in WITNESS state display a speech bubble with an eye emoji substitute
+  (`[!]`) over their head.
+- When a tape goes "hot", a brief screen-edge red flash (1-second vignette) pulses
+  once to warn the player.
+
+---
+
+**Unit tests**: Evidence prop spawning on crime events, evidence decay timer,
+witness state transition (idle → witness → flee → report), bribe success/failure
+by bravery threshold, CCTV tape hot-flag logic, tape steal cancels Notoriety entry,
+RUMOUR_NOTE craft recipe, tip-off clears one WITNESSED_CRIME entry, BETRAYAL rumour
+spread, all achievement trigger conditions, evidence counter HUD visibility logic.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Breaking glass spawns evidence and witness reacts**: Place the player inside the
+   office building adjacent to a GLASS block. Place a PUBLIC NPC 8 blocks away with
+   line-of-sight to the player. Break the GLASS block (simulate 2 punch actions).
+   Verify an `EVIDENCE_SMASHED_GLASS` prop has spawned at the broken block's position.
+   Verify the PUBLIC NPC has transitioned to `NPCState.WITNESS`. Verify a
+   `WITNESS_SIGHTING` rumour exists in the NPC's rumour buffer.
+
+2. **Witness reaches police and raises Notoriety**: Set up a Witness NPC 15 blocks
+   from a POLICE NPC. Simulate NPC movement for 120 frames (2 seconds at 60fps).
+   Verify the witness NPC has moved toward the POLICE NPC. When they come within
+   1 block, verify the player's `CriminalRecord` contains a `WITNESSED_CRIME` entry.
+   Verify player Notoriety has increased by 10.
+
+3. **Successful bribe silences witness**: Spawn a Witness NPC fleeing from a crime
+   scene. Give the player 10 COIN. Move the player adjacent to the fleeing NPC.
+   Press **E**. Set bravery < 60. Verify the bribe costs 5 COIN (player now has 5).
+   Verify the NPC returns to `NPCState.IDLE`. Verify the `WITNESS_SIGHTING` rumour
+   has been removed from the NPC's rumour buffer.
+
+4. **CCTV tape goes hot and triggers Notoriety if not stolen**: Trigger a crime within
+   15 blocks of the office building. Verify the office building's `EVIDENCE_CCTV_TAPE`
+   prop is flagged `tapeHot=true`. Advance the simulation by 3 in-game minutes without
+   stealing the tape. Verify the player's Notoriety has increased by 8. Verify a
+   `WITNESSED_CRIME` entry exists in the player's `CriminalRecord`.
+
+5. **Stealing CCTV tape cancels pending Notoriety entry**: Trigger a crime near the
+   office building (tape goes hot). Within 3 in-game minutes, move the player adjacent
+   to the `EVIDENCE_CCTV_TAPE` prop and press **E**. Verify the prop is removed from
+   the world. Verify the `CCTV_TAPE` item is in the player's inventory. Verify NO new
+   `WITNESSED_CRIME` entry was added to the player's `CriminalRecord` from this event.
+
+6. **Tipping off police clears one crime entry and seeds BETRAYAL rumour**: Add one
+   `WITNESSED_CRIME` entry to the player's `CriminalRecord`. Give the player a
+   `RUMOUR_NOTE`. Move the player adjacent to a POLICE NPC and press **E**. Verify
+   the `WITNESSED_CRIME` entry has been removed from `CriminalRecord`. Verify the
+   tipped faction's Respect has decreased by 20. Verify a `BETRAYAL` rumour has been
+   seeded into the `RumourNetwork`. After 3 hops of spread, verify the tipped faction's
+   NPCs that received the rumour have their hostility flag set toward the player.
+
+7. **CLEAN_GETAWAY achievement triggers**: Execute a heist (jeweller). Destroy all
+   spawned evidence props before leaving the building. Verify no POLICE NPC has
+   gained a `WITNESSED_CRIME` entry. Verify the `CLEAN_GETAWAY` achievement fires
+   when the player exits the building. Verify player Notoriety has not increased
+   from this heist.
+
+8. **Evidence decays after 10 in-game minutes**: Spawn an `EVIDENCE_SMASHED_GLASS`
+   prop. Do not destroy it. Advance the simulation by 10 in-game minutes. Verify the
+   prop has been automatically removed from the world. Verify no additional Notoriety
+   entry was created (it decayed undiscovered).
+
+9. **IN_BROAD_DAYLIGHT achievement with 3 simultaneous witnesses**: Place 3 PUBLIC
+   NPCs each within 12 blocks of the player with line-of-sight. Break a block inside
+   a building. Verify all 3 NPCs transition to `NPCState.WITNESS` simultaneously.
+   Verify the `IN_BROAD_DAYLIGHT` achievement fires. Verify 3 `WITNESS_SIGHTING`
+   rumours have been seeded into the `RumourNetwork` (one per witness).
+
+10. **Full evidence pipeline stress test**: Execute a heist with 2 witnesses, a hot
+    CCTV tape, and 3 evidence props. Bribe 1 witness. Steal the CCTV tape. Destroy
+    2 evidence props (leave 1). Let the 1 undestroyed witness reach police. Verify the
+    player has exactly 1 `WITNESSED_CRIME` entry (from the unbribed witness) and 0
+    from CCTV. Verify Notoriety increased by exactly 10 (1 witness reaching police).
+    Verify the leftover evidence prop seeds 1 `GANG_ACTIVITY` rumour within 2
+    in-game minutes. Verify no NPEs and game remains in PLAYING state throughout.
