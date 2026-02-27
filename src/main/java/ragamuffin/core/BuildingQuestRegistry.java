@@ -74,7 +74,7 @@ public class BuildingQuestRegistry {
 
         register(LandmarkType.PUB,
             new Quest("pub_pint", "Barman",
-                "Need someone to check on my mate at the job centre. Go see if he's alright, would you?",
+                "Need someone to check on my mate at the job centre. Just head over there and I'll know you've been.",
                 ObjectiveType.EXPLORE, null, 1,
                 LandmarkType.JOB_CENTRE, Material.CRISPS, 4));
 

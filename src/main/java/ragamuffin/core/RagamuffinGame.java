@@ -2019,6 +2019,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         blockBreaker.tickDecay(delta);
         propBreaker.tickDecay(delta);
 
+        // Fix #776: Check whether the player has stepped into a landmark area this frame.
+        // This allows EXPLORE quests to progress purely by walking into the target building
+        // without requiring the player to find and speak to an NPC inside it.
+        interactionSystem.checkPlayerPosition(player.getPosition(), world);
+
         // Update loaded chunks based on player position; remove renderer models for unloaded chunks
         java.util.Set<String> unloadedChunkKeys = world.updateLoadedChunks(player.getPosition());
         for (String key : unloadedChunkKeys) {
