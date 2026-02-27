@@ -65,7 +65,11 @@ public enum LandmarkType {
     /** A lower level of the civil defence bunker, deeper underground. */
     BUNKER_LOWER_LEVEL,
     /** A concealed basement beneath a shop on the high street — black market goods. */
-    BLACK_MARKET_BASEMENT;
+    BLACK_MARKET_BASEMENT,
+
+    // ── Issue #789: Boot Sale — Emergent Underground Auction Economy ─────────
+    /** Clandestine daily boot sale venue on wasteland at the south-east corner. */
+    BOOT_SALE;
 
     /**
      * Returns the display name shown on the building's sign.

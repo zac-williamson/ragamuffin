@@ -8,7 +8,9 @@ public enum GameState {
     MENU(false),
     CINEMATIC(false),
     PLAYING(true),
-    PAUSED(false);
+    PAUSED(false),
+    /** Issue #789: Boot sale auction overlay is open. */
+    BOOT_SALE_OPEN(true);
 
     private final boolean acceptsInput;
 

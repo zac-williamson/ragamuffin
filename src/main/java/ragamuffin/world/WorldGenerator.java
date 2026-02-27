@@ -1014,6 +1014,15 @@ public class WorldGenerator {
         generateFoodBank(world, fbX, fbZ, 12, 10, 4);
         world.addLandmark(new Landmark(LandmarkType.FOOD_BANK, fbX, 0, fbZ, 12, 6, 10));
 
+        // ===== BOOT SALE VENUE — Issue #789 (south-east wasteland) =====
+        // Place the boot sale in the south-east quadrant, away from JobCentre and
+        // industrial estate.  The world is 480x480, centred on origin, so
+        // "south-east" means positive X, positive Z (> 0).
+        int bsX = 100 + (seed % 20 == 0 ? 0 : (int)(Math.abs(seed % 30)));
+        int bsZ = 100 + (seed % 17 == 0 ? 0 : (int)(Math.abs(seed % 25)));
+        generateBootSaleVenue(world, bsX, bsZ);
+        world.addLandmark(new Landmark(LandmarkType.BOOT_SALE, bsX, 0, bsZ, 16, 3, 16));
+
         // Garden walls for extra rows
         generateGardenWalls(world, rx - 40, rz2 + 8, 40, 1);
         generateGardenWalls(world, offX + 20, rz2 + 8, 32, 1);
