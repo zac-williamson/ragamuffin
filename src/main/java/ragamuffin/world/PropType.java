@@ -149,7 +149,27 @@ public enum PropType {
      * A fan poster of the MC (player) — replaces WANTED_POSTERs near the squat
      * upon reaching MC Rank 5, and attracts the permanent hype-man NPC.
      */
-    FAN_POSTER(0.50f, 0.70f, 0.02f, 1, null);
+    FAN_POSTER(0.50f, 0.70f, 0.02f, 1, null),
+
+    // ── Issue #721: Small 3D objects on shop shelves ─────────────────────────
+
+    /**
+     * A small tin can — merchandise on a shop shelf.
+     * Yields SCRAP_METAL when broken.
+     */
+    SHELF_CAN(0.14f, 0.20f, 0.14f, 1, Material.SCRAP_METAL),
+
+    /**
+     * A small glass bottle — merchandise on a shop shelf (off-licence, Greggs, etc.).
+     * Yields GLASS when broken.
+     */
+    SHELF_BOTTLE(0.10f, 0.28f, 0.10f, 1, Material.GLASS),
+
+    /**
+     * A small cardboard box — merchandise on a shop shelf.
+     * Yields nothing (too small) when broken.
+     */
+    SHELF_BOX(0.18f, 0.16f, 0.14f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

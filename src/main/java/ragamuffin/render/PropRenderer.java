@@ -143,6 +143,11 @@ public class PropRenderer {
         if (!propModels.containsKey(PropType.BIKE_RACK))     propModels.put(PropType.BIKE_RACK,     buildBikeRack());
         if (!propModels.containsKey(PropType.SHOPPING_TROLLEY)) propModels.put(PropType.SHOPPING_TROLLEY, buildShoppingTrolley());
         if (!propModels.containsKey(PropType.STATUE))        propModels.put(PropType.STATUE,        buildStatue());
+
+        // ── Issue #721: Small 3D objects on shop shelves ──────────────────────
+        if (!propModels.containsKey(PropType.SHELF_CAN))    propModels.put(PropType.SHELF_CAN,    buildShelfCan());
+        if (!propModels.containsKey(PropType.SHELF_BOTTLE)) propModels.put(PropType.SHELF_BOTTLE, buildShelfBottle());
+        if (!propModels.containsKey(PropType.SHELF_BOX))    propModels.put(PropType.SHELF_BOX,    buildShelfBox());
     }
 
     /**
@@ -624,6 +629,101 @@ public class PropRenderer {
         MeshPartBuilder arm = mb.part("arm", GL20.GL_TRIANGLES, ATTRS, bronzeMat);
         arm.setVertexTransform(new Matrix4().setToTranslation(0.34f, 2.02f, 0f));
         arm.box(0.38f, 0.10f, 0.10f);
+
+        return mb.end();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #721: Small 3D objects on shop shelves
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * A small tin can sitting on a shop shelf — e.g. baked beans, soup, etc.
+     * Rendered as a short cylinder approximated by stacked boxes.
+     */
+    private Model buildShelfCan() {
+        mb.begin();
+        Color body  = new Color(0.75f, 0.72f, 0.68f, 1f); // tin silver
+        Color label = new Color(0.80f, 0.15f, 0.10f, 1f); // red label band
+        Color top   = new Color(0.85f, 0.82f, 0.78f, 1f); // lighter lid
+        Material bodyMat  = new Material(ColorAttribute.createDiffuse(body));
+        Material labelMat = new Material(ColorAttribute.createDiffuse(label));
+        Material topMat   = new Material(ColorAttribute.createDiffuse(top));
+
+        // Main cylindrical body
+        MeshPartBuilder canBody = mb.part("can_body", GL20.GL_TRIANGLES, ATTRS, bodyMat);
+        canBody.setVertexTransform(new Matrix4().setToTranslation(0f, 0.08f, 0f));
+        canBody.box(0.13f, 0.16f, 0.13f);
+
+        // Coloured label band
+        MeshPartBuilder labelPart = mb.part("can_label", GL20.GL_TRIANGLES, ATTRS, labelMat);
+        labelPart.setVertexTransform(new Matrix4().setToTranslation(0f, 0.09f, 0f));
+        labelPart.box(0.14f, 0.08f, 0.14f);
+
+        // Lid
+        MeshPartBuilder lid = mb.part("can_lid", GL20.GL_TRIANGLES, ATTRS, topMat);
+        lid.setVertexTransform(new Matrix4().setToTranslation(0f, 0.17f, 0f));
+        lid.box(0.12f, 0.02f, 0.12f);
+
+        return mb.end();
+    }
+
+    /**
+     * A small glass bottle on a shop shelf — e.g. wine, sauce, or a fizzy drink.
+     * Rendered as a narrow tall box with a bottle-neck cap.
+     */
+    private Model buildShelfBottle() {
+        mb.begin();
+        Color glass = new Color(0.40f, 0.65f, 0.35f, 1f); // green glass
+        Color cap   = new Color(0.15f, 0.14f, 0.12f, 1f); // dark metal cap
+        Material glassMat = new Material(ColorAttribute.createDiffuse(glass));
+        Material capMat   = new Material(ColorAttribute.createDiffuse(cap));
+
+        // Bottle body
+        MeshPartBuilder body = mb.part("bottle_body", GL20.GL_TRIANGLES, ATTRS, glassMat);
+        body.setVertexTransform(new Matrix4().setToTranslation(0f, 0.10f, 0f));
+        body.box(0.09f, 0.20f, 0.09f);
+
+        // Neck
+        MeshPartBuilder neck = mb.part("bottle_neck", GL20.GL_TRIANGLES, ATTRS, glassMat);
+        neck.setVertexTransform(new Matrix4().setToTranslation(0f, 0.23f, 0f));
+        neck.box(0.05f, 0.06f, 0.05f);
+
+        // Cap
+        MeshPartBuilder capPart = mb.part("bottle_cap", GL20.GL_TRIANGLES, ATTRS, capMat);
+        capPart.setVertexTransform(new Matrix4().setToTranslation(0f, 0.27f, 0f));
+        capPart.box(0.06f, 0.03f, 0.06f);
+
+        return mb.end();
+    }
+
+    /**
+     * A small cardboard box sitting on a shop shelf — generic merchandise packaging.
+     * Rendered as a flat rectangular box with a slightly darker top.
+     */
+    private Model buildShelfBox() {
+        mb.begin();
+        Color cardboard = new Color(0.78f, 0.62f, 0.38f, 1f); // cardboard brown
+        Color top       = new Color(0.68f, 0.54f, 0.30f, 1f); // slightly darker top
+        Color print     = new Color(0.30f, 0.45f, 0.70f, 1f); // blue print/logo stripe
+        Material cardMat  = new Material(ColorAttribute.createDiffuse(cardboard));
+        Material topMat   = new Material(ColorAttribute.createDiffuse(top));
+        Material printMat = new Material(ColorAttribute.createDiffuse(print));
+
+        // Box body
+        MeshPartBuilder body = mb.part("box_body", GL20.GL_TRIANGLES, ATTRS, cardMat);
+        body.setVertexTransform(new Matrix4().setToTranslation(0f, 0.07f, 0f));
+        body.box(0.17f, 0.14f, 0.13f);
+
+        // Top flap (slightly darker)
+        MeshPartBuilder topPart = mb.part("box_top", GL20.GL_TRIANGLES, ATTRS, topMat);
+        topPart.setVertexTransform(new Matrix4().setToTranslation(0f, 0.145f, 0f));
+        topPart.box(0.18f, 0.01f, 0.14f);
+
+        // Front label stripe
+        MeshPartBuilder label = mb.part("box_label", GL20.GL_TRIANGLES, ATTRS, printMat);
+        label.setVertexTransform(new Matrix4().setToTranslation(0f, 0.07f, 0.065f));
+        label.box(0.12f, 0.06f, 0.01f);
 
         return mb.end();
     }
