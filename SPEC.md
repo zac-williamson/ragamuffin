@@ -5438,3 +5438,225 @@ with police uniform, witness rumour generation with disguise context.
     Verify all 5 cover-blown events fire the correct faction dialogue. Verify after all 5
     blown covers: player Notoriety has increased by 50 (5 × 10). Verify no NPEs and game
     remains in PLAYING state. Verify the `UNDERCOVER` achievement fired on the first disguise.
+
+---
+
+## Phase 13: Dynamic NPC Needs & Black Market Economy — 'The Street Hustle'
+
+**Goal**: Give every NPC a living set of personal needs and fears that the player can exploit,
+satisfy, or manipulate for profit, information, or leverage. The world becomes a web of
+opportunity: corner markets, run protection rackets, supply shortages, or be undercut by
+rival dealers. Pure British dark comedy — everyone wants something, nobody has enough money,
+and the council is somehow making it worse.
+
+### NPC Need System
+
+Every NPC has a hidden **Need Score** (0–100) for up to 3 concurrent needs drawn from a
+typed pool. Needs accumulate over time and are satisfied by player interaction or world events.
+An unsatisfied need above 80 makes the NPC visibly distressed (speech bubble, agitated
+animations). A satisfied NPC pays a premium and seeds positive rumours. A chronically
+unsatisfied NPC eventually leaves the area (despawn/migrate) or turns hostile.
+
+**Need types** (`NeedType` enum):
+
+| Need | Accumulation rate | What satisfies it | Visual tell |
+|------|-------------------|-------------------|-------------|
+| `HUNGRY` | +10/min | Give `GREGGS_PASTRY`, `TINNED_FOOD`, or `SANDWICH` | Clutching stomach |
+| `THIRSTY` | +8/min | Give `CAN_OF_LAGER`, `CUP_OF_TEA`, or `WATER_BOTTLE` | Licking lips |
+| `BORED` | +5/min | Give `NEWSPAPER`, `CIGARETTE`, or start conversation | Kicking pebble |
+| `COLD` | +15/min (night/rain only) | Give `WOOLLY_HAT`, `SLEEPING_BAG`, or light nearby `CAMPFIRE` | Shivering |
+| `SCARED` | +20/min near crime | Give `RUMOUR_NOTE` (reassuring lie), or eliminate threat | Cowering |
+| `BROKE` | +3/min passively | Give `COIN` (any amount ≥ 3) | Checking empty wallet |
+| `DESPERATE` | +25/min if `BROKE` > 70 | Black market special job offer unlocked | Muttering to self |
+
+NPCs regenerate at the `NPC_NEED_DECAY_RATE` of −2/min when their need is satisfied. Each
+NPC can have at most 3 active needs at once. All need values persist as long as the NPC is
+loaded (chunk-resident).
+
+### Black Market Supply & Demand
+
+A new `StreetEconomySystem` tracks **global supply** of key contraband items and
+**adjustable prices** based on scarcity. Prices are published per-item in a floating ledger
+that all fence and NPC traders reference.
+
+**Price formula**: `price = baseCost × (1 + (demandUnits − supplyUnits) / 50)`
+- Clamped between `0.2 × baseCost` (floor — you can't sell a pastry for pennies even if
+  Greggs is giving them away) and `5 × baseCost` (ceiling — even in a drought, nobody pays
+  £50 for a can of Lager).
+- Supply increases when the player sells goods to fences or leaves items in world containers.
+- Supply decreases naturally at `SUPPLY_DECAY_RATE` of 2 units/min (items "consumed" by world).
+- Demand spikes +20 when a matching NPC need reaches 80+.
+- Demand falls −10 when player satisfies 5 matching needs within 10 in-game minutes.
+
+**Contraband tiers** for pricing:
+
+| Item | Base cost (COIN) | Primary need satisfied | Notes |
+|------|-----------------|----------------------|-------|
+| `GREGGS_PASTRY` | 2 | `HUNGRY` | Ubiquitous, low margin |
+| `CAN_OF_LAGER` | 3 | `THIRSTY` / `BORED` | Double need, decent margin |
+| `CIGARETTE` | 2 | `BORED` | Infinite restock if player has `TOBACCO_POUCH` |
+| `WOOLLY_HAT` | 5 | `COLD` | Seasonal price spikes at night/rain |
+| `SLEEPING_BAG` | 8 | `COLD` | Rare, high margin |
+| `STOLEN_PHONE` | 15 | `BROKE` (partial) | Risky — evidence if found on player |
+| `PRESCRIPTION_MEDS` | 20 | `DESPERATE` (special) | Marchetti supply chain item |
+| `COUNTERFEIT_NOTE` | 10 | `BROKE` | Fence won't take them; NPC 50% chance to notice |
+
+### Street Dealing Interaction
+
+When a player has items an NPC needs, pressing **E** on the NPC opens a contextual deal prompt
+(no full menu — a single line HUD overlay: `"Psst — got a [item]? I'll give you X coin."`).
+The player can:
+- **Accept** (press E again): trade completes, NPC need drops by 60, player gains coin.
+- **Haggle** (press H): random ±30% price shift, NPC may refuse entirely if Boredom > 60.
+- **Refuse** (ESC): NPC stays needy.
+
+**Dealer reputation** (`DealerReputation` int, 0–100, per NPC): Rises +5 per successful trade,
+falls −10 per refused deal when NPC is Desperate. High reputation (> 70) unlocks exclusive
+requests: NPCs offer jobs that aren't in the main faction mission pool. Low reputation
+(< 20) causes NPCs to refuse to deal and bad-mouth the player (`BETRAYAL` rumour seeds).
+
+### Protection Racket Mechanic
+
+Once the player controls ≥ 40 % of a faction's turf (via `TurfMap`), they unlock the ability
+to run a **protection racket** on up to 3 businesses (Greggs, off-licence, charity shop,
+bookies). Each protected business:
+- Pays `RACKET_WEEKLY_INCOME` of 15 COIN per in-game day automatically deposited to
+  the player's stash container.
+- Can be "taxed up" by interacting with the shopkeeper NPC while Notoriety < 40 (they
+  pay willingly). Above Notoriety 40, the shopkeeper calls police instead.
+- Rival factions can "move in" on the racket: if a rival's turf share of the same block
+  zone exceeds 50 %, they start collecting instead, and the player receives a hostile
+  warning rumour.
+
+### Market Disruption Events
+
+Every 5 in-game minutes, the `StreetEconomySystem` rolls one random disruption event from
+the `MarketEvent` enum:
+
+| Event | Effect | Duration |
+|-------|--------|----------|
+| `COUNCIL_CRACKDOWN` | All fence prices −30 %, police patrol frequency ×2 | 10 min |
+| `GREGGS_STRIKE` | `HUNGRY` need rate ×3, `GREGGS_PASTRY` price ×4 | 15 min |
+| `LAGER_SHORTAGE` | `CAN_OF_LAGER` price ×5, fights between YOUTH_GANG NPCs | 8 min |
+| `BENEFIT_DAY` | All NPC `BROKE` needs reset to 0, prices fall 20 % across board | 5 min |
+| `MARCHETTI_SHIPMENT` | `PRESCRIPTION_MEDS` supply +50, price halves temporarily | 10 min |
+| `COLD_SNAP` | `COLD` need rate ×4 regardless of weather, `WOOLLY_HAT` price ×6 | 20 min |
+
+The active event is announced via a rumour seeded into 3 random NPCs and visible in the
+barman's rumour log. The player can **exploit** disruptions: stocking up on lager before a
+shortage, buying hats in bulk before a cold snap, or triggering a `COUNCIL_CRACKDOWN` by
+calling in a tip (via the informant mechanic in WitnessSystem).
+
+### Integration with Existing Systems
+
+- **Faction System**: Buying exclusively from Marchetti-supplied goods raises Marchetti
+  Respect +2/trade. Refusing to supply Street Lads NPCs (with Boredom > 80 repeatedly)
+  causes Street Lads Respect −5.
+- **Rumour Network**: Successful deals seed `TRADE_RUMOUR` — other NPCs learn the player is
+  a reliable supplier, increasing deal request frequency. Failed deals or counter-feits seed
+  `BETRAYAL` rumours.
+- **Disguise System**: Dealing in `POLICE_UNIFORM` grants a 20 % price bonus (NPCs think
+  it's "official"). Wearing a `GREGGS_APRON` while selling `GREGGS_PASTRY` raises acceptance
+  rate to 100 % (within 3+ blocks, naturally).
+- **Weather System**: `COLD` need accumulates 4× faster during `RAIN` or at night.
+  `WeatherNPCBehaviour` triggers visible shivering at `COLD` > 60.
+- **Notoriety System**: Running a protection racket without disguise raises Notoriety +1/day.
+  Getting caught with `COUNTERFEIT_NOTE` raises Notoriety +15 immediately.
+- **Criminal Record**: Trading `STOLEN_PHONE` or `PRESCRIPTION_MEDS` adds a
+  `CrimeType.HANDLING_STOLEN_GOODS` entry if a police NPC witnesses the exchange within
+  `WITNESS_LOS_RANGE`.
+
+### New Materials
+
+- `GREGGS_PASTRY` — consumable, crafted from `FLOUR` + `BUTTER` at campfire, or looted from Greggs
+- `CAN_OF_LAGER` — consumable, looted from off-licence shelves or crafted at campfire
+- `CIGARETTE` — consumable, looted from shops or crafted from `TOBACCO_POUCH`
+- `WOOLLY_HAT` — wearable/tradeable, looted from charity shop or dropped by cold NPCs
+- `SLEEPING_BAG` — inventory item, found in squats, high trade value
+- `STOLEN_PHONE` — inventory item, dropped by pickpocket interactions (new mechanic)
+- `PRESCRIPTION_MEDS` — inventory item, from Marchetti supply crates or pharmacy raids
+- `COUNTERFEIT_NOTE` — inventory item, craftable from `PAPER` + `INK` at workbench (risky)
+- `TOBACCO_POUCH` — inventory item, looted from NPCs, used to craft CIGARETTE ×5
+- `NEWSPAPER` — inventory item, spawned daily on doorsteps, reduces `BORED` need
+
+### New Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `ENTREPRENEUR` | Complete 50 successful street deals |
+| `LOAN_SHARK` | Have 3 NPCs simultaneously in your debt (dealer reputation > 70 with each) |
+| `CORNERED_THE_MARKET` | Be the sole supplier of any item during a shortage event |
+| `BENEFIT_FRAUD` | Collect protection money from all 4 businesses on Benefit Day |
+| `COLD_SNAP_CAPITALIST` | Sell 10 `WOOLLY_HAT` during a single `COLD_SNAP` event |
+| `DODGY_AS_THEY_COME` | Successfully pass a counterfeit note without detection |
+
+### New Key Binding
+
+No new bindings required. Street deal prompt uses **E** (interact). Haggling uses **H**
+(already bound to Help UI, but only in non-UI context). Protection racket income is
+collected passively or on **E** interaction with shopkeeper NPC in racket mode.
+
+**Unit tests**: Need accumulation rates, price formula clamping, disruption event selection
+RNG, deal acceptance/refusal logic per NPC bravery, dealer reputation tracking, racket income
+calculation, counterfeit detection probability, supply/demand price updates.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **NPC need accumulates and triggers distress**: Spawn an NPC of type `PUBLIC` with all
+   needs at 0. Advance 10 in-game minutes (600 real frames at 1 min/60 frames scale). Verify
+   `HUNGRY` need score is ≥ 60 (rate: +10/min × 6 min assuming other needs consume slots).
+   Verify at 80+ need the NPC displays a clutching-stomach speech bubble. Verify the NPC is
+   visible distress state `NEED_DISTRESS`.
+
+2. **Player satisfies need and earns coin**: Spawn NPC with `HUNGRY` = 85. Ensure player has
+   1× `GREGGS_PASTRY` in inventory. Press **E** on NPC. Verify deal prompt appears: text
+   contains "Greggs" and a coin value ≥ 2. Press **E** again to accept. Verify player inventory
+   loses 1× `GREGGS_PASTRY`. Verify player `COIN` increases by expected amount (≥ baseCost).
+   Verify NPC `HUNGRY` drops to ≤ 25.
+
+3. **Price responds to supply shortage**: Set global `CAN_OF_LAGER` supply to 2 (scarce).
+   Set global demand to 50. Verify `StreetEconomySystem.getPrice(Material.CAN_OF_LAGER)`
+   returns a value > baseCost (3 COIN). Set supply to 200. Verify price drops below baseCost.
+   Verify price never falls below floor (0.2 × 3 = 0.6, rounds to 1 COIN minimum).
+
+4. **Disruption event: GREGGS_STRIKE spikes HUNGRY need and price**: Manually trigger
+   `MarketEvent.GREGGS_STRIKE`. Advance 2 in-game minutes. Verify all PUBLIC NPCs within
+   loaded chunks have `HUNGRY` accumulation rate active at 3× normal (30/min). Verify
+   `StreetEconomySystem.getPrice(Material.GREGGS_PASTRY)` is ≥ 4× baseCost. After 15
+   in-game minutes, verify event expires and rates return to normal.
+
+5. **Protection racket pays out**: Capture ≥ 40 % of a zone's turf for the player's aligned
+   faction. Interact with Greggs shopkeeper NPC with Notoriety < 40. Verify racket is
+   registered. Advance 1 in-game day (1440 in-game minutes). Verify player stash container
+   has received exactly 15 COIN. Verify rival faction has NOT collected instead (their turf
+   share < 50 % in zone).
+
+6. **Rival faction moves in on racket**: Establish racket on the off-licence. Manually set
+   rival faction turf share for that block zone to 60 %. Advance 1 in-game day. Verify player
+   stash does NOT receive income. Verify a hostile warning rumour of type `GANG_ACTIVITY` is
+   seeded to 3 NPCs containing text about the off-licence. Verify player receives a speech
+   notification "Someone's been collecting your cut."
+
+7. **Counterfeit note 50 % detection**: Give player 10× `COUNTERFEIT_NOTE`. Sell each to
+   a separate NPC (spawn 10 NPCs with `BROKE` > 70). Verify that between 3 and 7 NPCs detect
+   the fake (50 % ± reasonable variance from RNG seeded at fixed value). For each detected
+   fake: verify NPC enters `HOSTILE` state, player Notoriety +15, and
+   `CrimeType.HANDLING_STOLEN_GOODS` added to criminal record.
+
+8. **Dealer reputation progression**: Complete 15 successful trades with a single NPC.
+   Verify dealer reputation for that NPC is 75. Verify the NPC now offers an exclusive job
+   request (quest not in normal faction pool). Refuse 2 deals when NPC is `DESPERATE`.
+   Verify reputation drops to 55. Verify the NPC seeds a `BETRAYAL` rumour mentioning
+   the player by name.
+
+9. **Cold snap drives woolly hat sales**: Trigger `COLD_SNAP` disruption. Verify `COLD`
+   need accumulates on all outdoor NPCs at 4× rate. Give player 10× `WOOLLY_HAT`. Sell 10
+   hats to 10 separate NPCs. Verify `COLD_SNAP_CAPITALIST` achievement fires. Verify total
+   COIN earned is ≥ 10 × (6 × baseCost) — price at ×6 during cold snap.
+
+10. **Full economy stress test**: Trigger all 6 disruption events in sequence (each for their
+    full duration). After all events: verify supply/demand values for all tracked items are
+    within valid ranges (supply ≥ 0, demand ≥ 0, price between floor and ceiling). Verify no
+    NPCs have need scores above 100 or below 0. Verify game remains in PLAYING state with no
+    NPEs. Verify barman NPC's rumour log contains at least 4 distinct `TRADE_RUMOUR` entries
+    (from NPC gossip about player activity).
