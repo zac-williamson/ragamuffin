@@ -22,7 +22,9 @@ public class CriminalRecord {
         BLOCKS_DESTROYED("Blocks destroyed"),
         TIMES_ARRESTED("Times arrested"),
         SHOPS_RAIDED("Shops raided"),
-        NPCS_KILLED("NPCs killed");
+        NPCS_KILLED("NPCs killed"),
+        /** Issue #765: Added by police who find evidence or receive a WITNESS_SIGHTING rumour. */
+        WITNESSED_CRIMES("Witnessed crimes on record");
 
         private final String displayName;
 
@@ -79,6 +81,19 @@ public class CriminalRecord {
      */
     public Map<CrimeType, Integer> getCounts() {
         return Collections.unmodifiableMap(counts);
+    }
+
+    /**
+     * Decrement the count for a specific crime category by 1 (minimum 0).
+     * Used by the informant mechanic (grassing) to clear one witnessed crime entry.
+     *
+     * @param type the crime category to decrement
+     */
+    public void clearOne(CrimeType type) {
+        int current = counts.getOrDefault(type, 0);
+        if (current > 0) {
+            counts.put(type, current - 1);
+        }
     }
 
     /**

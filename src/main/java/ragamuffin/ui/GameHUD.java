@@ -12,6 +12,7 @@ import ragamuffin.core.NotorietySystem;
 import ragamuffin.core.RaveSystem;
 import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
+import ragamuffin.core.WitnessSystem;
 import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.Player;
 
@@ -43,6 +44,7 @@ public class GameHUD {
     private NotorietySystem notorietySystem; // Phase 8e — may be null if not yet initialised
     private MCBattleSystem mcBattleSystem;   // Issue #716 — may be null if not yet initialised
     private RaveSystem raveSystem;           // Issue #716 — may be null if not yet initialised
+    private WitnessSystem witnessSystem;     // Issue #765 — may be null if not yet initialised
     private boolean visible;
     private Weather currentWeather;
     private float blockBreakProgress; // 0.0 to 1.0
@@ -220,6 +222,11 @@ public class GameHUD {
         // Render rave-active indicator (Issue #716)
         if (raveSystem != null && raveSystem.isRaveActive()) {
             renderRaveIndicator(spriteBatch, font, screenWidth, screenHeight);
+        }
+
+        // Render evidence countdown counter and CCTV vignette (Issue #765)
+        if (witnessSystem != null) {
+            renderEvidenceHUD(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
     }
 
@@ -730,6 +737,62 @@ public class GameHUD {
         font.getData().setScale(1.0f);
         font.setColor(Color.WHITE);
         spriteBatch.end();
+    }
+
+    // ── Witness system (Issue #765) ────────────────────────────────────────────
+
+    /**
+     * Attach the WitnessSystem so the HUD can render the evidence countdown counter
+     * and CCTV vignette flash (Issue #765).
+     */
+    public void setWitnessSystem(WitnessSystem witnessSystem) {
+        this.witnessSystem = witnessSystem;
+    }
+
+    /** Returns the attached WitnessSystem, or null. */
+    public WitnessSystem getWitnessSystem() {
+        return witnessSystem;
+    }
+
+    /**
+     * Render the evidence countdown counter in the bottom-right corner.
+     * Shows the number of active evidence props that haven't been discovered yet.
+     * Also flashes a red vignette when a CCTV tape is hot.
+     */
+    private void renderEvidenceHUD(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer,
+                                   BitmapFont font, int screenWidth, int screenHeight) {
+        if (witnessSystem == null) return;
+
+        int evidenceCount = witnessSystem.getActiveEvidenceCount();
+        boolean cctvHot = witnessSystem.isCctvHot();
+
+        // Red vignette flash when CCTV tape is hot
+        if (cctvHot) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            // Semi-transparent red border vignette
+            shapeRenderer.setColor(0.9f, 0.05f, 0.05f, 0.25f);
+            float vw = 30f; // vignette width
+            shapeRenderer.rect(0, 0, screenWidth, vw);                          // bottom
+            shapeRenderer.rect(0, screenHeight - vw, screenWidth, vw);          // top
+            shapeRenderer.rect(0, 0, vw, screenHeight);                          // left
+            shapeRenderer.rect(screenWidth - vw, 0, vw, screenHeight);           // right
+            shapeRenderer.end();
+        }
+
+        // Evidence countdown counter — bottom-right
+        if (evidenceCount > 0) {
+            spriteBatch.begin();
+            font.getData().setScale(0.85f);
+            font.setColor(cctvHot ? new Color(1f, 0.2f, 0.2f, 1f) : new Color(1f, 0.85f, 0.2f, 1f));
+            String label = "EVIDENCE: " + evidenceCount;
+            GlyphLayout layout = new GlyphLayout(font, label);
+            font.draw(spriteBatch, layout,
+                    screenWidth - layout.width - BAR_MARGIN,
+                    BAR_MARGIN + 60f);
+            font.getData().setScale(1.0f);
+            font.setColor(Color.WHITE);
+            spriteBatch.end();
+        }
     }
 
     // ── Rave attendee count (injected by game logic each frame) ───────────────

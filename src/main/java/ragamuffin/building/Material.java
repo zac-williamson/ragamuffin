@@ -193,7 +193,25 @@ public enum Material {
      * Crafted DJ decks prop — rave equipment, enables DJ recruitment (doubles income).
      * Crafted from 3 SCRAP_METAL + 2 WIRE (PIPE).
      */
-    PROP_DJ_DECKS("DJ Decks");
+    PROP_DJ_DECKS("DJ Decks"),
+
+    // ── Issue #765: Witness & Evidence System ────────────────────────────────
+
+    /**
+     * Rumour note — crafted from 1 COIN + a barman interaction (buying a drink).
+     * Used to tip off police (press E on POLICE NPC while holding it): clears one
+     * of the player's own CriminalRecord entries but seeds a BETRAYAL rumour that
+     * turns the tipped faction hostile.
+     */
+    RUMOUR_NOTE("Rumour Note"),
+
+    /**
+     * CCTV Tape — a stealable prop found in office blocks and off-licences.
+     * If a crime happens nearby and the tape is not stolen within 3 in-game minutes,
+     * police automatically gain a WITNESSED_CRIME entry. Stolen tapes can be sold to
+     * the fence for 15 COIN.
+     */
+    CCTV_TAPE("CCTV Tape");
 
     private final String displayName;
 
@@ -372,6 +390,12 @@ public enum Material {
             case FLYER:          return cs(0.92f, 0.10f, 0.55f,  // Hot pink flyer
                                             0.88f, 0.82f, 0.15f); // Yellow accent
 
+            // Witness & Evidence items (Issue #765)
+            case RUMOUR_NOTE:        return cs(0.88f, 0.84f, 0.72f,  // Newsprint/paper
+                                               0.55f, 0.38f, 0.18f); // Brown ink
+            case CCTV_TAPE:          return cs(0.15f, 0.15f, 0.18f,  // Black cassette body
+                                               0.85f, 0.72f, 0.20f); // Gold label
+
             // Craftable 3D props (Issue #720)
             case PROP_BED:           return cs(0.55f, 0.38f, 0.22f,  // Wooden frame
                                                0.88f, 0.88f, 0.88f); // White pillow
@@ -485,6 +509,9 @@ public enum Material {
             case PROP_SPEAKER_STACK:
             case PROP_DISCO_BALL:
             case PROP_DJ_DECKS:
+            // Witness & Evidence items (Issue #765)
+            case RUMOUR_NOTE:
+            case CCTV_TAPE:
                 return false;
             default:
                 return true;
@@ -664,6 +691,12 @@ public enum Material {
                 return IconShape.GEM;        // spherical reflective shape
             case PROP_DJ_DECKS:
                 return IconShape.BOX;        // flat console box
+
+            // Witness & Evidence items (Issue #765)
+            case RUMOUR_NOTE:
+                return IconShape.FLAT_PAPER; // small folded note
+            case CCTV_TAPE:
+                return IconShape.CARD;       // cassette tape shape
 
             default:
                 return IconShape.BOX;

@@ -215,6 +215,15 @@ public class CraftingSystem {
             Map.of(Material.SCRAP_METAL, 3, Material.PIPE, 2),
             Map.of(Material.PROP_DJ_DECKS, 1)
         ));
+
+        // ── Issue #765: Witness & Evidence System ────────────────────────────────
+
+        // RUMOUR_NOTE: COIN×1 + NEWSPAPER×1 → RUMOUR_NOTE×1
+        // (tip off police to clear one criminal record entry, seeds BETRAYAL rumour)
+        recipes.add(new Recipe(
+            Map.of(Material.COIN, 1, Material.NEWSPAPER, 1),
+            Map.of(Material.RUMOUR_NOTE, 1)
+        ));
     }
 
     /**
