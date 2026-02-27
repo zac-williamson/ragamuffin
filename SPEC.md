@@ -7112,3 +7112,245 @@ when WANTED.
     by running out of bids). Skip 1 lot with ESC. Verify inventory updated for won
     lots only. Verify TRADING XP accumulated. Verify no null pointer exceptions.
     Press ESC after final lot. Verify state returns to `PLAYING`.
+
+---
+
+## Phase 8h: The JobCentre Gauntlet — Universal Credit, Sanctions & Bureaucratic Torment
+
+**Goal**: Turn the existing JobCentre landmark into a fully interactive satirical
+survival system. The player must periodically "sign on" to receive Universal Credit
+payments (coins) — but doing so means enduring soul-crushing bureaucratic missions,
+risking sanctions that cut their income, and constantly dodging the absurd conflict
+between their criminal career and their official claimant status. Dark British
+humour, systemic irony, and meaningful economic consequence.
+
+### Overview
+
+The `JobCentreSystem` runs on the in-game clock. Every **3 in-game days** the
+player must visit the JobCentre and "sign on" (press **E** on the `CASE_WORKER`
+NPC inside) to remain eligible for Universal Credit. Missing a sign-on triggers a
+**sanction** (income cut). Signing on while carrying stolen goods or having an
+active Wanted level creates comic-bureaucratic consequences. The system interfaces
+with `TimeSystem`, `NotorietySystem`, `CriminalRecord`, `FactionSystem`,
+`RumourNetwork`, `NewspaperSystem`, `StreetSkillSystem`, and `WantedSystem`.
+
+### Universal Credit & Sign-On Cycle
+
+- The player starts as a Universal Credit claimant. An initial claim letter prop
+  (`PropType.DWP_LETTER`) is placed at the player's starting position at game start.
+  Tooltip on first encounter: "Thirty-seven quid a week. The government's idea of
+  a helping hand."
+- Sign-on window: a 1 in-game hour window opens every 3 in-game days at 09:00.
+  The `CASE_WORKER` NPC is only interactable during this window.
+- **Successful sign-on**: Player receives a `UC_PAYMENT` of **8 COIN** per cycle.
+  The case worker delivers a new **Job Search Requirement** mission (see below).
+  A `JobCentreRecord` (new class) logs the date signed and clears any pending
+  sanction.
+- **Missed sign-on**: A `SANCTION_LEVEL` increments (0–3). Each level reduces the
+  UC_PAYMENT by 3 COIN (floor 0). Rumour seeded: "Heard someone got sanctioned
+  again down the JobCentre." At SANCTION_LEVEL 3: payment drops to 0 and the
+  `CASE_WORKER` spawns a `DEBT_COLLECTOR` NPC that pursues the player until paid
+  10 COIN or 3 in-game hours elapse.
+- Attending the sign-on resets SANCTION_LEVEL to 0 only if the player completes
+  the assigned Job Search Requirement.
+
+### Job Search Requirement Missions
+
+Each sign-on assigns one of 5 satirical Job Search Requirement missions. These are
+delivered as a `PropType.DWP_LETTER` dropped at the player's feet. The player has
+until the NEXT sign-on window (3 in-game days) to complete it:
+
+| Mission | Task | Satirical Twist |
+|---------|------|-----------------|
+| **CV Workshop** | Go to the JobCentre within 1 in-game day and press **E** on the `MOTIVATIONAL_POSTER` prop on the wall for 3 seconds | Tooltip: "How to write a CV when you've been unemployed for 6 years." |
+| **Apply for 3 Jobs** | Interact (**E**) with 3 different SHOP_SIGN props (Greggs, off-licence, charity shop) | Each shop sign NPC speech: "Sorry, we're not hiring." The third says "We'll keep your CV on file." |
+| **Mandatory Work Placement** | Pick up 10 pieces of litter (new `PropType.LITTER` scattered around the park at world-gen) within 2 in-game hours | Tooltip: "Unpaid, obviously." |
+| **Universal Jobmatch Profile** | Stand in front of the `COMMUNITY_NOTICE_BOARD` prop (placed near the park, new `PropType`) for 5 seconds | Tooltip: "The site crashes on Internet Explorer 6. Always." |
+| **Attend Work Capability Assessment** | Survive 2 in-game minutes inside the JobCentre while a `ASSESSOR` NPC follows and questions you with speech bubbles | The ASSESSOR asks: "Can you walk 50 metres?" Speech: "Yes." "Then you're fit for work." |
+
+**Completing a Job Search Requirement** resets `SANCTION_LEVEL` and awards +5
+`BUREAUCRACY` XP (new `StreetSkillSystem` skill track — see below).
+
+**Deliberately failing a mission** (staying away from the JobCentre for the full
+cycle) is a valid strategy if the player has enough criminal income — but
+accumulating SANCTION_LEVEL 3 summons the DEBT_COLLECTOR.
+
+### The Absurdity Engine — Criminal Record Complications
+
+When the player signs on, the `CASE_WORKER` NPC checks their `CriminalRecord`:
+
+- **0–2 offences**: Normal sign-on. Case worker says "Sign here. Next!"
+- **3–5 offences**: Case worker is suspicious. A mini-dialogue fires:
+  "You haven't been getting into trouble, have you?" Player can:
+  - **Lie** (always succeeds but adds 1 BUREAUCRACY XP and seeds a rumour:
+    "That one's got a right cheek, signing on after what they've been up to").
+  - **Admit it** (SANCTION_LEVEL +1 immediately but BUREAUCRACY XP +3 and
+    case worker respects honesty: UC_PAYMENT +2 this cycle only).
+- **6+ offences OR active Wanted level**: The case worker calls the police.
+  A `POLICE` NPC spawns at the JobCentre entrance. Player has 30 seconds to
+  exit before the NPC spots them. Tooltip: "Probably should have left the
+  balaclava at home."
+- **Notoriety Tier 3+**: The case worker has read the newspaper. They address
+  the player by their Street Legend Title: "Ah, the Area Menace. Fill in this
+  form. In triplicate." Job Search Requirement is automatically failed this
+  cycle (too infamous for honest work) — but the player still gets the UC_PAYMENT
+  as the case worker is too scared to sanction them.
+
+### The DEBT_COLLECTOR NPC
+
+A new `NPCType.DEBT_COLLECTOR` — a grey-suited man with a clipboard. He is
+NOT a police officer (cannot arrest) but is persistent and embarrassing:
+
+- Spawns at the JobCentre and pathfinds toward the player's last known position.
+- When within 4 blocks: speech bubble "Oi! You owe the DWP." Every 10 seconds
+  he repeats this. Nearby NPCs laugh (emote animation).
+- If the player pays 10 COIN (press **E** on the DEBT_COLLECTOR when adjacent):
+  he leaves. Speech: "Sorted. We'll be in touch."
+- If the player runs away for 3 in-game hours: he gives up and despawns. Rumour
+  seeded: "Someone's been dodging the debt collector all week."
+- If the player punches the DEBT_COLLECTOR: Notoriety +15, immediate Wanted
+  level, and `NewspaperSystem` generates headline: "Local Scrounger Assaults DWP
+  Official." DEBT_COLLECTOR enters FLEEING state.
+- The DEBT_COLLECTOR cannot be killed (health resets to full when fleeing, he
+  despawns off-screen). He is unkillable bureaucracy made flesh.
+
+### BUREAUCRACY Skill Track (new StreetSkillSystem track)
+
+A new skill track added to `StreetSkillSystem`:
+
+| Level | XP Required | Perk |
+|-------|------------|------|
+| 1 | 10 XP | **Form Filler**: sign-on window extended by 30 in-game minutes |
+| 2 | 25 XP | **Appeals Expert**: first sanction each cycle is automatically overturned |
+| 3 | 50 XP | **System Player**: UC_PAYMENT increased by 3 COIN per cycle permanently |
+| 4 | 80 XP | **Ghost in the Machine**: CriminalRecord offence count is treated as half its true value when the case worker checks |
+| 5 | 120 XP | **Off the Grid**: player is no longer tracked by `NotorietySystem` for SURVEILLANCE_VAN placement (Tier 4–5 perk nullified) |
+
+BUREAUCRACY XP is earned by: completing Job Search Requirements (+5), lying to
+the case worker (+1), successfully signing on without a criminal complication (+2),
+and attending 5 consecutive sign-ons without a missed window (+10 bonus).
+
+### Faction Cross-Pollination
+
+| Event | Effect |
+|-------|--------|
+| Sign on while carrying a PETROL_CAN (Marchetti mission item) | Case worker confiscates it; Marchetti Respect −10; rumour seeded |
+| Sign on with BUREAUCRACY Level 3+ | Council Respect +5 ("One of us, sort of") |
+| Miss 3 sign-ons in a row | Street Lads Respect +8 ("Proper anti-establishment, that") |
+| DEBT_COLLECTOR active while player completes a faction mission | Faction lieutenant speech: "Sort out your benefits before you talk to us." Mission reward coins reduced by 2 |
+| Notoriety Tier 5 ("The Ragamuffin") and attempting to sign on | Case worker flees the building. DWP_LETTER auto-deposited: "Due to exceptional circumstances, your claim has been permanently closed." UC payments end. Notoriety +10 |
+
+### JobCentre Building Enhancement
+
+The existing JobCentre landmark gains interior detail at world-gen time:
+
+- A `CASE_WORKER` NPC at a desk (does not wander; only present during sign-on
+  window, replaced by a `CLOSED_SIGN` prop outside the window).
+- A `MOTIVATIONAL_POSTER` prop on the wall ("WORKING TOGETHER FOR YOUR FUTURE"
+  in block-letter `PixelFont` rendering).
+- A `COMMUNITY_NOTICE_BOARD` prop near the entrance (exterior, always present).
+- Rows of plastic chairs (prop). Tooltip on sitting adjacent to them: "You've
+  been waiting 47 minutes. Your number is 312."
+- `PropType.LITTER` scattered in the immediate surrounding streets (10–15 pieces
+  at world-gen, respawn every in-game day).
+- An `ASSESSOR` NPC that only spawns during the Work Capability Assessment mission.
+
+### `JobCentreSystem` Class (new)
+
+```
+JobCentreSystem(TimeSystem, CriminalRecord, NotorietySystem,
+                FactionSystem, RumourNetwork, NewspaperSystem,
+                StreetSkillSystem, WantedSystem, NPCManager, Random)
+
+void update(float delta, Player player, List<NPC> allNpcs)
+boolean isSignOnWindowOpen()
+boolean trySignOn(Player player, List<NPC> allNpcs)   // returns success
+JobSearchMission getCurrentMission()                   // null if none assigned
+boolean tryCompleteMission(Player player, World world)
+int getSanctionLevel()
+int getCurrentUCPayment()                              // 0–8 COIN
+boolean isDebtCollectorActive()
+void onDebtCollectorPaid(Player player)
+```
+
+### `JobCentreUI` Screen (new)
+
+- Triggered by pressing **E** on the `CASE_WORKER` NPC during the sign-on window.
+- Transitions to `GameState.JOB_CENTRE_OPEN` (new enum value).
+- Displays: current UC payment amount, current Job Search Requirement mission,
+  sanction level (shown as a warning strip), a "Sign Here" button (confirm sign-on),
+  and a "Leave" button (**ESC** also works).
+- If criminal record complication: dialogue panel appears with "Lie" / "Admit it"
+  options before the sign-on is processed.
+
+**Unit tests**: UC payment calculation at each SANCTION_LEVEL, Job Search
+Requirement mission assignment (one per cycle, no repeats until pool exhausted),
+DEBT_COLLECTOR spawn condition and despawn timer, criminal record complication
+threshold checks, BUREAUCRACY XP gain per action, faction cross-pollination
+triggers, case worker flee on Tier 5 Notoriety.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Sign-on window opens every 3 in-game days**: Start a new game. Verify
+   `isSignOnWindowOpen()` is false. Advance `TimeSystem` by exactly 3 in-game days
+   to 09:00. Verify `isSignOnWindowOpen()` is true. Verify a `CASE_WORKER` NPC is
+   present inside the JobCentre. Advance 1 in-game hour. Verify the window is now
+   closed and the `CASE_WORKER` is replaced by a `CLOSED_SIGN` prop.
+
+2. **Successful sign-on awards coins and assigns mission**: Give the player 0 COIN.
+   Open the sign-on window. Press **E** on the `CASE_WORKER`. Verify `trySignOn()`
+   returns true. Verify the player's inventory now contains exactly 8 COIN (base
+   UC_PAYMENT, no sanctions). Verify `getCurrentMission()` returns a non-null
+   `JobSearchMission`. Verify `getSanctionLevel()` is 0.
+
+3. **Missed sign-on increments sanction and reduces payment**: Miss one sign-on
+   window (advance past it without visiting). Verify `getSanctionLevel()` is 1.
+   Open the next sign-on window. Sign on. Verify the player receives only 5 COIN
+   (8 − 3 for sanction level 1). Miss two more windows. Verify `getSanctionLevel()`
+   reaches 3 and `getCurrentUCPayment()` returns 0. Verify a `DEBT_COLLECTOR` NPC
+   has spawned and is pathfinding toward the player.
+
+4. **DEBT_COLLECTOR paid off with 10 coins**: Let DEBT_COLLECTOR spawn (SANCTION
+   LEVEL 3). Give the player 10 COIN. Move player adjacent to DEBT_COLLECTOR. Press
+   **E**. Verify the DEBT_COLLECTOR despawns. Verify player inventory has 0 COIN.
+   Verify `isDebtCollectorActive()` returns false.
+
+5. **Criminal record complication at 4 offences**: Set `CriminalRecord` to 4
+   offences. Open sign-on. Press **E** on CASE_WORKER. Verify the complication
+   dialogue fires (UI shows "Lie" / "Admit it" options). Select "Lie". Verify sign-on
+   completes, BUREAUCRACY XP increases by 1, and a rumour containing "signing on" is
+   seeded into at least 1 nearby NPC.
+
+6. **6+ offences triggers police spawn**: Set `CriminalRecord` to 6 offences.
+   Open sign-on window. Press **E** on CASE_WORKER. Verify a `POLICE` NPC spawns
+   at the JobCentre entrance within 5 frames. Verify the player has 30 in-game
+   seconds before the POLICE NPC enters CHASING state. Move player outside JobCentre
+   within the window. Verify POLICE NPC enters PATROL state once player is 20+ blocks
+   away.
+
+7. **CV Workshop mission completes on poster interaction**: Receive the CV_WORKSHOP
+   job search mission. Move player to the `MOTIVATIONAL_POSTER` prop inside the
+   JobCentre. Hold **E** for 3 seconds (simulate 180 frames at 60fps). Verify
+   `tryCompleteMission()` returns true. Verify BUREAUCRACY XP increased by 5. Verify
+   next sign-on SANCTION_LEVEL resets to 0.
+
+8. **Notoriety Tier 3 case worker addresses player by title**: Set Notoriety to 500
+   (Tier 3, "Area Menace"). Open sign-on window. Press **E** on CASE_WORKER. Verify
+   the CASE_WORKER speech bubble contains "Area Menace". Verify the Job Search
+   Requirement mission is auto-failed (mission status is FAILED immediately). Verify
+   the player still receives the UC_PAYMENT.
+
+9. **Notoriety Tier 5 case worker flees**: Set Notoriety to 1000 (Tier 5). Open
+   sign-on window. Move player inside the JobCentre. Verify the `CASE_WORKER` NPC
+   immediately transitions to FLEEING state upon player entry. Verify a
+   `PropType.DWP_LETTER` prop is placed at the player's feet within 5 frames.
+   Verify `getCurrentUCPayment()` returns 0 and no further sign-on windows open.
+   Verify Notoriety increased by 10.
+
+10. **Full benefit cycle stress test**: Start a new game. Complete 3 full sign-on
+    cycles: (a) complete a Job Search Requirement mission each cycle; (b) on cycle 2,
+    commit 4 offences and choose "Admit it" in the complication dialogue; (c) on
+    cycle 3, miss the window entirely. Verify after all 3 cycles: BUREAUCRACY XP ≥
+    12, SANCTION_LEVEL is 1, player received coins in cycles 1 and 2 but not cycle 3,
+    DEBT_COLLECTOR has NOT spawned (only 1 missed window, not 3). Verify no NPEs,
+    no crashes, `GameState` remained valid throughout.
