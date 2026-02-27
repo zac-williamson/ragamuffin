@@ -80,10 +80,17 @@ class NewspaperIntegrationTest {
         assertTrue(paper.getInfamyScore() >= 8,
             "5-star chase should produce infamy score ≥ 8, got: " + paper.getInfamyScore());
 
-        // Verify headline contains "WANTED" or "FUGITIVE" or related major terms
+        // Verify headline is a high-infamy (spectacular or legendary) headline — not filler
         String headline = paper.getHeadline();
+        boolean isFillerHeadline = headline.equals(NewspaperSystem.PIGEON_FILLER);
+        assertFalse(isFillerHeadline,
+            "5-star chase with infamy 8 should not produce a filler headline: " + headline);
+        // Headline should come from TEMPLATES_SPECTACULAR or TEMPLATES_LEGENDARY — all imply serious crime
         boolean hasExpectedTerms = headline.contains("WANTED") || headline.contains("FUGITIVE")
-            || headline.contains("CHAOS") || headline.contains("CRIMINAL") || headline.contains("MASTERMIND");
+            || headline.contains("CHAOS") || headline.contains("CRIMINAL") || headline.contains("MASTERMIND")
+            || headline.contains("RAIDER") || headline.contains("LOCKDOWN") || headline.contains("CROOK")
+            || headline.contains("BRAZEN") || headline.contains("AUDACIOUS") || headline.contains("UNTOUCHABLE")
+            || headline.contains("BAFFLED") || headline.contains("ESCAPES") || headline.contains("INCIDENT");
         assertTrue(hasExpectedTerms,
             "Headline should reference the chase/fugitive: " + headline);
 

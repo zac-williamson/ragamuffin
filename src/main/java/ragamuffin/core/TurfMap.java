@@ -18,6 +18,14 @@ public class TurfMap {
     private final int depth;
     private final byte[] ownership; // flat [x + z * width]
 
+    /** Default map dimensions covering the standard world extent (400×400). */
+    public static final int DEFAULT_DIMENSION = 400;
+
+    /** Create a TurfMap with the default size of 400×400. */
+    public TurfMap() {
+        this(DEFAULT_DIMENSION, DEFAULT_DIMENSION);
+    }
+
     public TurfMap(int width, int depth) {
         this.width    = width;
         this.depth    = depth;

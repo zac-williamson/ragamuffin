@@ -162,6 +162,11 @@ public class CarManager {
         for (int i = 0; i < cars.size(); i++) {
             Car car = cars.get(i);
 
+            // Issue #773: player-driven cars are controlled by CarDrivingSystem — skip AI
+            if (car.isDrivenByPlayer()) {
+                continue;
+            }
+
             // --- 1 & 2: look-ahead collision avoidance ---
             boolean pathBlocked = isPathAhead(car, i);
             if (pathBlocked && !car.isStopped()) {
