@@ -570,6 +570,27 @@ public class InteractionSystem {
     }
 
     /**
+     * Check the player's current position against all world landmarks and notify
+     * the quest system if the player has just stepped into a landmark for the first
+     * time.  Call this every game frame so that EXPLORE quests complete as soon as
+     * the player physically walks into the target area — no NPC interaction needed.
+     *
+     * @param playerPos the player's current world position
+     * @param world     the game world (used to look up landmark bounds)
+     */
+    public void checkPlayerPosition(com.badlogic.gdx.math.Vector3 playerPos,
+                                     ragamuffin.world.World world) {
+        if (playerPos == null || world == null) return;
+        int px = (int) Math.floor(playerPos.x);
+        int py = (int) Math.floor(playerPos.y);
+        int pz = (int) Math.floor(playerPos.z);
+        ragamuffin.world.LandmarkType current = world.getLandmarkAt(px, py, pz);
+        if (current != null) {
+            onPlayerEntersLandmark(current);
+        }
+    }
+
+    /**
      * Notify the quest system that the player has entered a landmark.
      * Any active EXPLORE quests targeting this landmark will be marked as visited,
      * making them completable when the player next speaks to the quest giver.
