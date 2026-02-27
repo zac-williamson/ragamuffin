@@ -12,6 +12,14 @@ public class Inventory {
     private final int size;
     private final InventorySlot[] slots;
 
+    /** Default inventory size (36 slots — same as the main game inventory). */
+    public static final int DEFAULT_SIZE = 36;
+
+    /** Create an inventory with the default size of {@value #DEFAULT_SIZE} slots. */
+    public Inventory() {
+        this(DEFAULT_SIZE);
+    }
+
     public Inventory(int size) {
         this.size = size;
         this.slots = new InventorySlot[size];

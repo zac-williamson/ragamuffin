@@ -59,6 +59,24 @@ public class Car {
     private float damageCooldown = 0f;
     private static final float DAMAGE_COOLDOWN_DURATION = 1.5f;
 
+    /** True when the player is currently driving this car. */
+    private boolean drivenByPlayer = false;
+
+    /** Maximum speed when driven by the player (blocks/sec). */
+    public static final float PLAYER_MAX_SPEED = 12.0f;
+
+    /** Acceleration rate when the player accelerates (blocks/sec²). */
+    public static final float PLAYER_ACCELERATION = 8.0f;
+
+    /** Deceleration / braking rate (blocks/sec²). */
+    public static final float PLAYER_DECELERATION = 10.0f;
+
+    /** Turning rate when driven by the player (degrees/sec). */
+    public static final float PLAYER_TURN_SPEED = 90.0f;
+
+    /** Current speed magnitude when driven by the player. */
+    private float driverSpeed = 0f;
+
     /**
      * Create a car on a road segment.
      *
@@ -222,5 +240,92 @@ public class Car {
     public void reverseDirection() {
         heading = (heading + 180f) % 360f;
         applyHeadingToVelocity();
+    }
+
+    // ── Player driving ────────────────────────────────────────────────────────
+
+    /**
+     * Whether this car is currently being driven by the player.
+     */
+    public boolean isDrivenByPlayer() {
+        return drivenByPlayer;
+    }
+
+    /**
+     * Mark this car as being driven by (or released from) the player.
+     * When released the car speed is zeroed so it does not fly away.
+     */
+    public void setDrivenByPlayer(boolean driven) {
+        this.drivenByPlayer = driven;
+        if (!driven) {
+            driverSpeed = 0f;
+            // Apply a gentle stop so the AI can resume from rest
+            velocity.set(0f, 0f, 0f);
+            stopped = false;
+        }
+    }
+
+    /**
+     * Get the current player-controlled speed (blocks/sec, signed positive = forward).
+     */
+    public float getDriverSpeed() {
+        return driverSpeed;
+    }
+
+    /**
+     * Update the car when driven by the player.
+     *
+     * @param delta      seconds since last frame
+     * @param accelerate true if the player is pressing the accelerate key
+     * @param braking    true if the player is pressing the brake/reverse key
+     * @param turnLeft   true if the player is steering left
+     * @param turnRight  true if the player is steering right
+     */
+    public void updatePlayerDriven(float delta, boolean accelerate, boolean braking,
+                                   boolean turnLeft, boolean turnRight) {
+        // Handle turning (only effective while moving)
+        if (Math.abs(driverSpeed) > 0.5f) {
+            float turnDir = 0f;
+            if (turnLeft)  turnDir -= 1f;
+            if (turnRight) turnDir += 1f;
+            if (turnDir != 0f) {
+                // Steer in the direction the player intends; reverse turns flip when reversing
+                float sign = driverSpeed > 0 ? 1f : -1f;
+                heading = (heading + turnDir * sign * PLAYER_TURN_SPEED * delta % 360f + 360f) % 360f;
+            }
+        }
+
+        // Handle acceleration / braking
+        if (accelerate && !braking) {
+            driverSpeed = Math.min(driverSpeed + PLAYER_ACCELERATION * delta, PLAYER_MAX_SPEED);
+        } else if (braking && !accelerate) {
+            if (driverSpeed > 0.1f) {
+                // Brake while moving forward
+                driverSpeed = Math.max(0f, driverSpeed - PLAYER_DECELERATION * delta);
+            } else {
+                // Reverse
+                driverSpeed = Math.max(-PLAYER_MAX_SPEED / 2f, driverSpeed - PLAYER_ACCELERATION * delta);
+            }
+        } else {
+            // Natural deceleration
+            if (driverSpeed > 0f) {
+                driverSpeed = Math.max(0f, driverSpeed - PLAYER_DECELERATION * delta * 0.5f);
+            } else if (driverSpeed < 0f) {
+                driverSpeed = Math.min(0f, driverSpeed + PLAYER_DECELERATION * delta * 0.5f);
+            }
+        }
+
+        // Apply velocity based on current heading and speed
+        double rad = Math.toRadians(heading);
+        velocity.set((float)(Math.sin(rad) * driverSpeed), 0f, (float)(Math.cos(rad) * driverSpeed));
+
+        // Move the car
+        position.add(velocity.x * delta, 0f, velocity.z * delta);
+        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+
+        // Tick damage cooldown
+        if (damageCooldown > 0f) {
+            damageCooldown -= delta;
+        }
     }
 }
