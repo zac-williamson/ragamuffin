@@ -61,8 +61,8 @@ class Issue795JobCentreGauntletTest {
         timeSystem       = new TimeSystem(9.0f); // Start at 09:00
         criminalRecord   = new CriminalRecord();
         notorietySystem  = new NotorietySystem(new Random(42));
-        factionSystem    = new FactionSystem(new TurfMap(), new RumourNetwork(), new Random(42));
-        rumourNetwork    = new RumourNetwork();
+        factionSystem    = new FactionSystem(new TurfMap(), new RumourNetwork(new Random(42)), new Random(42));
+        rumourNetwork    = new RumourNetwork(new Random(42));
         streetSkillSystem = new StreetSkillSystem(new Random(42));
         player           = new Player(100, 1, 100);
         inventory        = new Inventory(36);
@@ -167,7 +167,8 @@ class Issue795JobCentreGauntletTest {
 
         // ── Cycle 3: advance 3 days, miss sign-on ─────────────────────────────
         inventory.removeItem(Material.COIN, 8);
-        // Set the window as if it just opened and closed without signing on
+        // Advance to a new day so lastSignOnDay (from cycle 2) < nextSignOnDay
+        timeSystem.advanceTime(24.0f);
         jobCentreSystem.setNextSignOnDayForTesting(timeSystem.getDayCount());
         timeSystem.setTime(9.5f);
         // Simulate the window opening (windowWasOpen = true), then closing

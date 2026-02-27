@@ -465,7 +465,7 @@ class Issue793NeighbourhoodSystemTest {
         // Add enough NPCs near the building (need ≥5)
         List<NPC> nearbyNpcs = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
-            nearbyNpcs.add(new NPC(NPCType.PUBLIC, 55f + i, 1f, 55f));
+            nearbyNpcs.add(new NPC(NPCType.PUBLIC, 52f + i, 1f, 52f));
         }
         nearbyNpcs.add(npcs.get(0)); // barman
 
