@@ -293,6 +293,22 @@ class PlayerTest {
     }
 
     @Test
+    void energyExhaustedPlayerCannotSprint() {
+        Player player = new Player(0, 0, 0);
+        player.setEnergy(0);
+        assertFalse(player.canSprint(), "Player with 0 energy should not be able to sprint");
+    }
+
+    @Test
+    void playerWithEnergyCanSprint() {
+        Player player = new Player(0, 0, 0);
+        assertTrue(player.canSprint(), "Player with full energy should be able to sprint");
+
+        player.setEnergy(1);
+        assertTrue(player.canSprint(), "Player with exactly 1 energy should be able to sprint");
+    }
+
+    @Test
     void energyExhaustedPlayerCannotDodge() {
         Player player = new Player(0, 0, 0);
         player.setEnergy(0);
