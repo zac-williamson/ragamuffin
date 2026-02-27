@@ -6316,3 +6316,211 @@ trigger conditions.
     Broadcast until Signal Van spawns. Destroy van (hit it until HP = 0). Verify +20 Notoriety added.
     Verify `SIGNAL_JAM` achievement awarded. Verify `triangulationProgress` resets to 0. Verify game
     remains in PLAYING state with no NPEs and all HUD elements valid throughout.
+
+---
+
+## Phase 16: The Dodgy Market Stall — Underground Street Trade Empire
+
+**Goal**: Give the player a fully interactive street trading operation that starts as a one-man
+hustle (a knocked-together market stall flogging tat) and can grow into a sprawling black-market
+front. The stall is a physical object in the world, attracts NPC customers driven by their existing
+`NeedType` scores, generates passive income, and sits in permanent tension with the council, police,
+rival factions, and the `StreetEconomySystem`. It is the missing economic end-game: a reason to
+accumulate resources, manage territory, and care about faction relationships long after the player
+has done the heists and tagged the walls.
+
+The tone is quintessentially British: a fold-up table covered in knock-off perfume, counterfeit
+DVDs, and slightly warm energy drinks, run by someone who absolutely does not have a licence.
+
+### The Stall Structure
+
+The stall is a player-built prop assembled from crafted components:
+
+| Component | Recipe | Notes |
+|-----------|--------|-------|
+| `STALL_FRAME` | 4 WOOD → 1 STALL_FRAME | The fold-up table chassis |
+| `STALL_AWNING` | 2 WOOD + 2 CARDBOARD → 1 STALL_AWNING | Canopy; provides shelter rating; required to operate in rain |
+| `MARKET_LICENCE` | 20 COIN (buy from Council NPC via **E**) | Legitimate licence; reduces council aggro. Optional — operating without one is riskier and cheaper |
+
+The player places `STALL_FRAME` as a block (new `BlockType.STALL`). It occupies a 1×1 footprint
+and can only be placed on PAVEMENT or ROAD blocks. Once placed, pressing **E** opens the **Stall
+Management UI** (new screen, similar to crafting UI in style).
+
+### Stall Management UI
+
+Opened with **E** while facing a placed `STALL_FRAME` (within 2 blocks). Shows:
+
+- **Stock slots** (6 items): items the stall currently sells. Player drags from inventory to add
+  stock. Only sellable `Material` types are accepted (those with entries in
+  `StreetEconomySystem.BASE_PRICES` plus new `KNOCK_OFF_PERFUME`, `DODGY_DVD`, `CIGARETTE`,
+  `ENERGY_DRINK`, `CAN_OF_LAGER`, `SAUSAGE_ROLL`).
+- **Asking price per item**: player sets a per-unit COIN price (default = base market price).
+- **Licence slot**: optionally load a `MARKET_LICENCE` here to operate legally (reduces council
+  attention but costs 20 COIN upfront).
+- **Running total**: coins earned since last visit (passive income accumulated while player is
+  away).
+- **Status indicator**: OPEN / CLOSED (player toggles with **E** → "Open for Business" /
+  "Shut Up Shop"). Stall only sells when OPEN.
+
+### NPC Customer Behaviour
+
+While the stall is OPEN, it functions as a passive `StreetEconomySystem` node — NPCs with
+elevated `NeedType` scores are attracted to it automatically:
+
+- Every 30 in-game seconds, `StallSystem` (new class) scans NPCs within **25 blocks**. For each
+  NPC whose highest need (`StreetEconomySystem.getHighestNeed()`) is satisfied by any stall stock
+  item, the NPC enters a new `NPCState.WALKING_TO_STALL` state and pathfinds to the stall.
+- On arrival (within 2 blocks), the NPC "buys" one unit: item removed from stock, COIN added to
+  stall's running total, NPC's need zeroed for that type. NPC emits speech: *"Cheers mate, what
+  are you like."* / *"Lovely jubbly."* / *"Do you have a receipt for this?"*
+- Max 3 NPCs queued at stall simultaneously (prevents a permanent NPC pile-up). If queue full,
+  new potential customers wander off.
+- NPCs of type POLICE or PCSO who come within 8 blocks while the stall is OPEN check for a
+  `MARKET_LICENCE`. If none: 50% chance they issue a **Stall Fine** (confiscate all stock, add
+  1 offence to `CriminalRecord`, stall closes automatically). If licence present: police ignore
+  the stall entirely.
+
+### Faction Interactions
+
+The stall integrates deeply with the existing `FactionSystem`:
+
+| Situation | Faction effect |
+|-----------|---------------|
+| Stall placed in Marchetti territory (turf block owned by MARCHETTI_CREW) | Marchetti lieutenant NPC visits within 60s demanding "a percentage" — 20% of stall income goes to Marchetti automatically until player pays 15 coins to "sort it out" |
+| Stall placed in Street Lads territory | Street Lads add the stall to their protection (free), but rival factions will periodically "trash" the stall (remove 2 random stock items) unless player has Street Lads Respect ≥ 60 |
+| Stall placed in Council territory | Council sends a planning notice (same `PropType.PLANNING_NOTICE` as for player buildings) within 120 seconds of placement. If not moved within 5 in-game minutes, COUNCIL_BUILDER NPCs arrive and destroy the stall block |
+| All factions Respect ≥ 75 | All factions protect the stall — no trashing, no cut, council ignores it. Stall income multiplied ×1.5 |
+
+### Passive Income & Economy Balance
+
+Stall income accrues while the player is **away** (more than 25 blocks from the stall), simulating
+a running business. The income model:
+
+- Base rate: 1 COIN per NPC customer × item sale price.
+- Maximum stock per slot: 10 units. Stall closes automatically when all stock is exhausted.
+- Restock by returning to the stall, opening Management UI, and dragging items from inventory.
+- Stall income is separate from player inventory — coins sit in the stall until the player
+  returns to collect (press **E** → "Collect Takings").
+- Maximum coins holdable in stall at once: 50 (prevents exploit of infinite passive income;
+  stall closes when full).
+
+Weather effects on the stall:
+- RAIN without `STALL_AWNING`: stall closes automatically ("Your stock's getting soaked."),
+  loses 1 random item per 30 seconds.
+- FROST: NPC customer rate halved ("Nobody's coming out in this.").
+- HEATWAVE: NPC customer rate doubled, COLD need replaced by demand for ENERGY_DRINK and
+  CAN_OF_LAGER.
+
+### New Materials
+
+Add to `Material` enum:
+
+| Material | Source | Notes |
+|----------|--------|-------|
+| `KNOCK_OFF_PERFUME` | Charity shop loot (3 hits), or crafted (1 COIN + 1 PLASTIC) | Satisfies BORED need. Tooltips: *"Smells like ambition and regret."* |
+| `DODGY_DVD` | Industrial estate loot | Satisfies BORED need. Police treat as evidence if found in inventory. |
+| `STALL_FRAME` | Crafted (4 WOOD) | Placeable stall block |
+| `STALL_AWNING` | Crafted (2 WOOD + 2 CARDBOARD) | Equip to stall for weather protection |
+| `MARKET_LICENCE` | Buy from Council NPC for 20 COIN | Reduces police aggro at stall |
+
+### New NPC Type
+
+`NPCType.MARKET_INSPECTOR` — spawns from council territory when stall has been operating without
+a licence for more than 3 in-game minutes. Slow-moving, clipboard-carrying bureaucrat. On
+reaching the stall, issues a `STALL_FINE` (confiscates stock, adds offence). Can be bribed
+(10 COIN via **E** → "Have a think about it") to leave without fining. Bribing a Market Inspector
+adds 5 Notoriety. Speech: *"I'm going to need to see your trading permit."* /
+*"This pavement is not zoned for commercial activity."*
+
+### Stall Upgrade Path
+
+The stall has three upgrade tiers, unlocked by total lifetime sales:
+
+| Tier | Sales milestone | Upgrade | Effect |
+|------|----------------|---------|--------|
+| 1 | 0 (starting) | Fold-up table | 6 stock slots, attracts 1 NPC queue |
+| 2 | 50 coins earned | Second-hand trolley | +2 stock slots, attracts 2 NPC queue, 15% customer rate increase |
+| 3 | 200 coins earned | Proper stall (with sign) | +4 stock slots, 3 NPC queue, BuildingSign appears above stall reading "BARGAINS HERE", passive income tick even when player nearby, attracts `NPCType.TOURIST` (new type — drops more coins) |
+
+Upgrade is automatic — when the sales milestone is crossed, the stall's appearance upgrades
+(block texture variant) and the HUD briefly shows *"Stall upgraded. You're practically legitimate."*
+
+### New Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `MARKET_TRADER` | First successful NPC customer sale at stall |
+| `LICENSED_TO_SELL` | Operate stall with valid MARKET_LICENCE for 5 in-game minutes |
+| `BRIBED_THE_INSPECTOR` | Bribe a Market Inspector |
+| `SHUTIT_DOWN` | Have stall confiscated by police/council |
+| `EMPIRE_BUILDER` | Reach Tier 3 stall upgrade |
+| `TURF_VENDOR` | Operate stall in territory of all three factions (across multiple placements) |
+
+### Key Bindings
+
+- **E** (facing stall): open Stall Management UI / collect takings
+- **E** (facing COUNCIL_MEMBER NPC): buy `MARKET_LICENCE` for 20 COIN
+
+**Unit tests**: Stall placement validation (pavement/road only), NPC customer scan range and
+queue cap enforcement, faction territory detection at placement, passive income accumulation
+formula, weather stock-damage logic, Marchetti cut calculation, police licence check probability,
+Market Inspector spawn timer, bribe interaction, upgrade tier milestone detection, all achievement
+trigger conditions.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Stall places on pavement, rejected on grass**: Give player a STALL_FRAME in hotbar. Move to
+   a PAVEMENT block. Right-click to place. Verify `BlockType.STALL` appears in world at that
+   position. Move to a GRASS block. Right-click to place. Verify placement is rejected (world
+   block at that position remains GRASS, not STALL). Verify tooltip "You need a hard surface for
+   this." is shown.
+
+2. **NPC customer attracted by need and buys item**: Set up stall with 3 SAUSAGE_ROLL in stock,
+   asking price 2. Spawn a PUBLIC NPC 15 blocks away. Set their HUNGRY need to 80. Advance 120
+   frames (2 seconds, triggering at least one customer scan). Verify the NPC's state is
+   `WALKING_TO_STALL`. Advance 600 more frames. Verify the NPC reached the stall, SAUSAGE_ROLL
+   stock decreased to 2, stall running total increased by 2 coins, NPC's HUNGRY need is ≤ 0.
+
+3. **Police fine stall without licence**: Open stall without MARKET_LICENCE loaded. Spawn a
+   POLICE NPC 6 blocks away. Advance 120 frames. Verify there is a ≥ 50% probability the stall
+   was fined over 10 runs (statistical check: run scenario 10 times, at least 5 should result in
+   fine). On fine: verify all stock slots empty, CriminalRecord offence count increased by 1,
+   stall status is CLOSED.
+
+4. **Licence prevents police fine**: Load MARKET_LICENCE into stall licence slot. Open stall.
+   Spawn POLICE NPC 4 blocks away. Advance 300 frames. Verify CriminalRecord offence count is
+   unchanged. Verify stall status is still OPEN. Verify stock is intact.
+
+5. **Marchetti cut applies in their territory**: Set stall position inside a Marchetti-owned
+   turf block. Open stall with stock. Advance 60 in-game seconds. Verify a Marchetti lieutenant
+   NPC has visited. Verify the stall's income is reduced by 20% (a sale of 10 COIN results in
+   only 8 COIN in the running total). Verify paying 15 COIN to the lieutenant removes the cut.
+
+6. **Rain destroys stock without awning**: Place stall with 5 stock items and no STALL_AWNING.
+   Set weather to RAIN. Advance 1800 frames (30 seconds at 60fps). Verify stall status is
+   CLOSED. Verify at least 1 stock item has been removed. Verify tooltip
+   "Your stock's getting soaked." was shown.
+
+7. **Awning protects from rain**: Equip STALL_AWNING to stall. Set weather to RAIN. Advance
+   1800 frames. Verify stall remains OPEN. Verify stock count is unchanged.
+
+8. **Market Inspector spawns and can be bribed**: Open stall without licence. Advance
+   180 in-game seconds (3 minutes). Verify a `MARKET_INSPECTOR` NPC has spawned. Give player 10
+   COIN. Press **E** on inspector while within 2 blocks. Verify inspector state transitions to
+   LEAVING (walks away). Verify player coin count decreased by 10. Verify CriminalRecord offence
+   count did NOT increase. Verify Notoriety increased by 5.
+
+9. **Stall upgrade tier 2 at 50 coins**: Set stall lifetime sales to 49 COIN. Trigger one more
+   NPC sale of 2 COIN (total = 51). Verify stall upgrades to Tier 2. Verify stock slot count
+   increases to 8. Verify HUD briefly shows "Stall upgraded. You're practically legitimate."
+   Verify `EMPIRE_BUILDER` achievement is NOT yet awarded (that requires Tier 3).
+
+10. **Full market empire stress test**: Craft STALL_FRAME, STALL_AWNING, and buy MARKET_LICENCE.
+    Place stall in park pavement area. Stock with 5 each of SAUSAGE_ROLL, CAN_OF_LAGER,
+    ENERGY_DRINK (all 15 units). Set 6 PUBLIC NPCs within 25 blocks with high HUNGRY/BORED/COLD
+    needs. Open stall. Advance 10 in-game minutes. Verify at least 3 NPC customer sales occurred.
+    Verify stall running total > 0. Collect takings. Verify player inventory COIN increased.
+    Force weather to RAIN — verify awning prevents closure. Force police NPC 5 blocks away —
+    verify licence prevents fine. Advance until inspector spawns; bribe him. Verify game remains
+    in PLAYING state, no NPEs, all HUD elements valid, stall Management UI opens and closes
+    without errors throughout.
