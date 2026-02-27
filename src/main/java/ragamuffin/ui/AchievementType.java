@@ -606,6 +606,29 @@ public enum AchievementType {
         "Rally Cry",
         "Assembled a mob of followers using RALLY. Safety in numbers. Relative safety.",
         1
+    ),
+
+    // ── Issue #793: The Living Neighbourhood — Dynamic Gentrification ──────────
+
+    LAST_OF_THE_LOCALS(
+        "Last of the Locals",
+        "Organised a community meeting and kept the developers out. The estate remembers.",
+        1
+    ),
+    PROPERTY_DEVELOPER(
+        "Property Developer",
+        "Sold a building to developers. Thirty coins richer, thirty per cent less popular.",
+        1
+    ),
+    DYSTOPIA_NOW(
+        "Dystopia Now",
+        "The Neighbourhood Vibes hit rock bottom. It was all going so well. Sort of.",
+        1
+    ),
+    COMMUNITY_HERO(
+        "Community Hero",
+        "Tore down a condemned notice and gave the neighbourhood a fighting chance. Local legend.",
+        1
     );
 
     private final String name;
