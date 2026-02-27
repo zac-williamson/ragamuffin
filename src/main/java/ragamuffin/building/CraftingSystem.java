@@ -177,6 +177,44 @@ public class CraftingSystem {
             Map.of(Material.COUNCIL_ID, 1, Material.NEWSPAPER, 2),
             Map.of(Material.FAKE_ID, 1)
         ));
+
+        // ── Issue #720: Craftable 3D prop items ──────────────────────────────
+
+        // PROP_BED: WOOD×4 + PLANKS×2 → PROP_BED×1 (squat furnishing, +10 Vibe)
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 4, Material.PLANKS, 2),
+            Map.of(Material.PROP_BED, 1)
+        ));
+
+        // PROP_WORKBENCH: PLANKS×6 + SCRAP_METAL×2 → PROP_WORKBENCH×1 (unlocks advanced recipes)
+        recipes.add(new Recipe(
+            Map.of(Material.PLANKS, 6, Material.SCRAP_METAL, 2),
+            Map.of(Material.PROP_WORKBENCH, 1)
+        ));
+
+        // PROP_DARTBOARD: WOOD×3 + SCRAP_METAL×1 → PROP_DARTBOARD×1 (squat furnishing, +7 Vibe)
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 3, Material.SCRAP_METAL, 1),
+            Map.of(Material.PROP_DARTBOARD, 1)
+        ));
+
+        // PROP_SPEAKER_STACK: SCRAP_METAL×4 + WOOD×2 → PROP_SPEAKER_STACK×1 (rave equipment)
+        recipes.add(new Recipe(
+            Map.of(Material.SCRAP_METAL, 4, Material.WOOD, 2),
+            Map.of(Material.PROP_SPEAKER_STACK, 1)
+        ));
+
+        // PROP_DISCO_BALL: GLASS×2 + SCRAP_METAL×1 → PROP_DISCO_BALL×1 (rave equipment)
+        recipes.add(new Recipe(
+            Map.of(Material.GLASS, 2, Material.SCRAP_METAL, 1),
+            Map.of(Material.PROP_DISCO_BALL, 1)
+        ));
+
+        // PROP_DJ_DECKS: SCRAP_METAL×3 + PIPE×2 → PROP_DJ_DECKS×1 (rave equipment, enables DJ)
+        recipes.add(new Recipe(
+            Map.of(Material.SCRAP_METAL, 3, Material.PIPE, 2),
+            Map.of(Material.PROP_DJ_DECKS, 1)
+        ));
     }
 
     /**
