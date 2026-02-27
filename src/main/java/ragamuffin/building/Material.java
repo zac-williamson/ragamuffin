@@ -419,7 +419,24 @@ public enum Material {
      * Requires GRAFTING Journeyman tier or above to consume.
      * Restores 20 hunger; slightly unpleasant (no energy bonus).
      */
-    BITTER_GREENS("Bitter Greens");
+    BITTER_GREENS("Bitter Greens"),
+
+    // ── Issue #797: The Neighbourhood Watch ───────────────────────────────────
+
+    /**
+     * Neighbourhood Newsletter — crafted from 2 NEWSPAPER + 1 COIN.
+     * Use near a PETITION_BOARD to remove it and reduce WatchAnger by 8.
+     * Community diplomacy. Fragile diplomacy, but diplomacy nonetheless.
+     */
+    NEIGHBOURHOOD_NEWSLETTER("Neighbourhood Newsletter"),
+
+    /**
+     * Peace Offering — crafted from 1 SAUSAGE_ROLL + 1 COIN.
+     * Use on a WATCH_MEMBER NPC to convert them from aggressive patrol to
+     * neutral patrol mode and reduce WatchAnger by 5.
+     * A sausage roll has resolved more conflicts than you'd think.
+     */
+    PEACE_OFFERING("Peace Offering");
 
     private final String displayName;
 
@@ -678,6 +695,12 @@ public enum Material {
             case KNOCK_OFF_PERFUME: return cs(0.72f, 0.55f, 0.78f,  // Purple bottle
                                               0.88f, 0.82f, 0.55f); // Gold cap
 
+            // Issue #797: Neighbourhood Watch materials
+            case NEIGHBOURHOOD_NEWSLETTER: return cs(0.88f, 0.84f, 0.72f,  // Newsprint grey
+                                                     0.25f, 0.55f, 0.25f); // Green community tint
+            case PEACE_OFFERING:    return cs(0.80f, 0.55f, 0.20f,  // Sausage roll gold
+                                              0.85f, 0.72f, 0.20f); // Coin gold
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -814,6 +837,9 @@ public enum Material {
             case STALL_AWNING:
             case MARKET_LICENCE:
             case KNOCK_OFF_PERFUME:
+            // Issue #797: Neighbourhood Watch materials (not block items)
+            case NEIGHBOURHOOD_NEWSLETTER:
+            case PEACE_OFFERING:
                 return false;
             default:
                 return true;
@@ -1058,6 +1084,12 @@ public enum Material {
                 return IconShape.FLAT_PAPER; // official licence paper
             case KNOCK_OFF_PERFUME:
                 return IconShape.BOTTLE;     // perfume bottle
+
+            // Issue #797: Neighbourhood Watch materials
+            case NEIGHBOURHOOD_NEWSLETTER:
+                return IconShape.FLAT_PAPER; // folded community newsletter
+            case PEACE_OFFERING:
+                return IconShape.FOOD;       // sausage roll + coin bundle
 
             default:
                 return IconShape.BOX;

@@ -141,7 +141,19 @@ public enum NPCType {
      * Assessor — Work Capability Assessment NPC for the corresponding job search mission.
      * Passive; delivers absurdist verdict dialogue ("You're fit for work — you can walk 50 metres").
      */
-    ASSESSOR(20f, 0f, 0f, false);
+    ASSESSOR(20f, 0f, 0f, false),
+
+    // ── Issue #797: The Neighbourhood Watch ───────────────────────────────────
+
+    /**
+     * Watch Member — a tabard-wearing vigilante with a clipboard.
+     * Spawned by the NeighbourhoodWatchSystem at Tier 2+.
+     * At Tier 2–3: patrols and follows the player; issues speech (soft citizen's arrest).
+     * At Tier 4: coordinates with other Watch Members; brawls with gang NPCs.
+     * Can be converted to patrol mode via a PEACE_OFFERING.
+     * Passive until the player commits a visible crime nearby.
+     */
+    WATCH_MEMBER(30f, 6f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

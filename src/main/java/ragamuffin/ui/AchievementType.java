@@ -629,6 +629,39 @@ public enum AchievementType {
         "Community Hero",
         "Tore down a condemned notice and gave the neighbourhood a fighting chance. Local legend.",
         1
+    ),
+
+    // ── Issue #797: The Neighbourhood Watch ───────────────────────────────────
+
+    WATCHED(
+        "They've Got Their Eye on You",
+        "Triggered the Neighbourhood Watch for the first time. They've made a note.",
+        1
+    ),
+    PETITION_RECEIVED(
+        "Sign Here Please",
+        "A petition board appeared. Democracy in action. Mostly against you.",
+        1
+    ),
+    GROVELLED(
+        "Undignified But Effective",
+        "Grovelled successfully. Anger reduced. Dignity: also reduced.",
+        1
+    ),
+    UPRISING_SURVIVED(
+        "Against All Odds",
+        "Survived a Full Uprising. Every NPC in the postcode wanted a word with you.",
+        1
+    ),
+    PEACEMAKER(
+        "Sausage Roll Diplomacy",
+        "Converted a Watch Member with a peace offering. The power of pastry.",
+        1
+    ),
+    NEWSLETTER_PUBLISHED(
+        "Community Correspondent",
+        "Removed a petition board with a neighbourhood newsletter. Local hero. Sort of.",
+        1
     );
 
     private final String name;
