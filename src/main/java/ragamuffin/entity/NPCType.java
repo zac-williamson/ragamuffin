@@ -72,7 +72,15 @@ public enum NPCType {
      * Rave Attendee — an NPC drawn to the squat by the RAVE_ANNOUNCEMENT rumour.
      * Generates 1 COIN/in-game-minute while the rave is active.
      */
-    RAVE_ATTENDEE(20f, 0f, 0f, false);
+    RAVE_ATTENDEE(20f, 0f, 0f, false),
+
+    // ── Issue #774: The Daily Ragamuffin ──────────────────────────────────────
+
+    /**
+     * Journalist — spawns in the pub between 19:00–22:00.
+     * Player can interact (J key) to tip off, plant a lie, or buy out stories.
+     */
+    JOURNALIST(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

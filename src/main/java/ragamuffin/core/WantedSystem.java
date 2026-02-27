@@ -133,6 +133,14 @@ public class WantedSystem {
     /** Minimum wanted stars at which RaveSystem doubles police alert speed. */
     public static final int RAVE_DOUBLE_ALERT_MIN_STARS = 2;
 
+    // ── Issue #774: NewspaperSystem Heightened Alert ───────────────────────────
+
+    /** LOS range bonus (blocks) during Heightened Alert from a major newspaper story. */
+    public static final float HEIGHTENED_ALERT_LOS_BONUS = 4f;
+
+    /** Duration (seconds) of the Heightened Alert buff triggered by 7+ infamy stories. */
+    public static final float HEIGHTENED_ALERT_DURATION = 300f; // 5 in-game minutes
+
     // ── State ──────────────────────────────────────────────────────────────────
 
     /** Current wanted stars (0–5). */
@@ -207,6 +215,14 @@ public class WantedSystem {
     /** Whether the CLEAN_GETAWAY_PURSUIT achievement has been awarded this session. */
     private boolean cleanGetawayAwarded = false;
 
+    // ── Issue #774: Heightened Alert state ────────────────────────────────────
+
+    /** Whether the Heightened Alert buff is currently active. */
+    private boolean heightenedAlertActive = false;
+
+    /** Remaining duration of the Heightened Alert buff (seconds). */
+    private float heightenedAlertTimer = 0f;
+
     private final Random random;
 
     // ── Callbacks ──────────────────────────────────────────────────────────────
@@ -244,6 +260,16 @@ public class WantedSystem {
     public void update(float delta, Player player, List<NPC> npcs,
                        Weather weather, boolean isNight, boolean isRaveActive,
                        AchievementCallback achievementCallback) {
+
+        // Update heightened alert timer (from newspaper publication)
+        if (heightenedAlertActive) {
+            heightenedAlertTimer -= delta;
+            if (heightenedAlertTimer <= 0f) {
+                heightenedAlertActive = false;
+                heightenedAlertTimer = 0f;
+            }
+        }
+
         if (wantedStars == 0 && !inPursuit) {
             return; // nothing to do
         }
@@ -810,7 +836,40 @@ public class WantedSystem {
         if (isNight) range -= NIGHT_LOS_REDUCTION;
         if (weather == Weather.RAIN || weather == Weather.THUNDERSTORM) range -= RAIN_LOS_REDUCTION;
         if (weather == Weather.FOG) range -= FOG_LOS_REDUCTION;
+        if (heightenedAlertActive) range += HEIGHTENED_ALERT_LOS_BONUS;
         return Math.max(4f, range); // never less than 4 blocks
+    }
+
+    /**
+     * Trigger the Heightened Alert buff — called by {@link NewspaperSystem} when a 7+ infamy
+     * story is published. Increases police LOS range by {@link #HEIGHTENED_ALERT_LOS_BONUS}
+     * blocks for {@link #HEIGHTENED_ALERT_DURATION} seconds.
+     */
+    public void triggerHeightenedAlert() {
+        heightenedAlertActive = true;
+        heightenedAlertTimer = HEIGHTENED_ALERT_DURATION;
+    }
+
+    /** Returns true if the Heightened Alert buff is currently active. */
+    public boolean isHeightenedAlertActive() {
+        return heightenedAlertActive;
+    }
+
+    /** Remaining seconds of the Heightened Alert buff, or 0 if not active. */
+    public float getHeightenedAlertTimer() {
+        return heightenedAlertTimer;
+    }
+
+    /**
+     * Returns the effective LOS range under current conditions (including heightened alert).
+     * Exposed for the NewspaperSystem integration test.
+     *
+     * @param weather current weather (may be null = CLEAR)
+     * @param isNight whether it is currently night
+     * @return effective police LOS range in blocks
+     */
+    public float getEffectiveLosRange(Weather weather, boolean isNight) {
+        return computeLosRange(weather, isNight);
     }
 
     /**
