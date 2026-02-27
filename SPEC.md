@@ -6109,3 +6109,210 @@ A screen-space particle burst (3–5 paint-spray particles, colour-matched to th
 7. **ALL CITY achievement**: Place at least 1 living `PLAYER_TAG` in every 8×8 zone in the world. Verify `AchievementType.ALL_CITY` is awarded.
 
 8. **Spray can exhausted**: Give player a `SPRAY_CAN` with exactly 1 use remaining. Place a tag. Verify `SPRAY_CAN` is removed from inventory (replaced with `SPRAY_CAN_EMPTY`). Verify `SPRAY_CAN_EMPTY` can be re-crafted with a pigment into a fresh `SPRAY_CAN`.
+
+---
+
+## Phase 8h: Pirate FM — Underground Radio Station & Neighbourhood Propaganda Machine
+
+**Goal**: Let the player build and run an illegal pirate radio station from their squat. Broadcasting
+lets the player shape the narrative of the neighbourhood — boosting faction respect, spiking NPC
+moods, spreading disinformation, attracting listeners who bring loot, and making the Council
+increasingly furious. The mechanic is a direct counterpart to the newspaper system (which reports on
+you passively) — now the player gets to broadcast back. Very 90s. Very illegal. Very British.
+
+### The Transmitter — Crafting & Placement
+
+A new craftable block: **`TRANSMITTER`** (crafted from 2 WIRE + 1 COMPUTER + 1 WOOD in the crafting
+menu). The transmitter must be placed indoors (at least 3 solid blocks above it) to avoid instant
+police detection. Placing it outdoors triggers a `NoiseSystem` event at noise level 0.8 immediately.
+
+A second craftable item: **`MICROPHONE`** (crafted from 1 WIRE + 1 COIN), held in the hotbar.
+The player must be within 2 blocks of a placed TRANSMITTER and holding the MICROPHONE to broadcast.
+
+Signal range scales with the transmitter's **broadcast power** (upgradeable):
+
+| Power Level | Range (blocks) | How to upgrade |
+|-------------|---------------|----------------|
+| 1 (starter) | 30 | Default on craft |
+| 2 | 60 | Add 1 COMPUTER to transmitter (right-click) |
+| 3 | 100 | Add 1 STOLEN_PHONE + 1 COMPUTER (right-click) |
+| 4 (max) | 160 (whole map) | Add 2 COMPUTER + 1 PETROL_CAN (right-click) |
+
+A visual indicator — a faint animated `PointLight` (orange-red, pulsing at 1 Hz) — appears above
+the TRANSMITTER block while it is active. Range is shown as a tooltip when the player right-clicks
+the transmitter.
+
+New `Material` entries: `WIRE`, `MICROPHONE`, `BROADCAST_TAPE` (used for pre-recorded shows, see below).
+New `BlockType` entry: `TRANSMITTER`.
+
+### Broadcasting — The Broadcast Session
+
+Press **B** while holding the MICROPHONE within range of a powered TRANSMITTER to start/stop a
+broadcast session. The HUD shows a pulsing "ON AIR" indicator (red text, 2 Hz blink) while live.
+
+Every 10 in-game seconds of active broadcasting, the player chooses a **broadcast action** (via a
+small UI overlay, similar to the crafting menu — press 1-4 to select):
+
+| Key | Action | Effect |
+|-----|--------|--------|
+| 1 | **Big Up the Area** | All NPCs within range: BORED need −20. All three factions: Respect +3. Tooltip: "Nothing unites a community like a good tune." |
+| 2 | **Slag Off [Faction]** (cycles per use) | Targeted faction Respect −10 with player; rival factions Respect +5. Seeds `GANG_ACTIVITY` rumour: "[Faction] just got aired out live on the radio." NPC belonging to targeted faction enters FLEEING if within range. |
+| 3 | **Black Market Shout-Out** | Spawns 1–3 `NPC_TYPE.LISTENER` NPCs walking toward the transmitter location. Each LISTENER carries 2–6 COIN and a random item from the black market loot table. Police detection chance +5% per shout-out (cumulative, resets at broadcast end). |
+| 4 | **Council Diss Track** | Council Respect −15. Doubles the speed of Council Cleaners currently active. Triggers a `NewspaperSystem` potential headline: "PIRATE RADIO MENACE TARGETS COUNCIL — Authorities seek shutdown." Notoriety +10. |
+
+Broadcasting for more than 3 consecutive in-game minutes (without stopping) triggers the **Signal
+Triangulation** mechanic (see below). Tooltip on first broadcast: "You're live on the airwaves.
+Don't say anything they can trace back to you."
+
+### Listener NPCs
+
+`NPCType.LISTENER` is a new NPC type: civilian NPCs drawn to the transmitter's signal. They:
+- Walk toward the transmitter's last known position (pathfinding, ignoring faction hostility).
+- On arrival (within 4 blocks of transmitter), enter `NPCState.IDLE` and drop a random item from
+  the listener loot table onto the ground (as a `SmallItem`).
+- If the player talks to them (press **E**), they share a random rumour from `RumourNetwork` —
+  the radio attracts people who know things.
+- After 60 in-game seconds, despawn.
+
+**Listener loot table** (uniform random pick):
+`CAN_OF_LAGER`, `CIGARETTE`, `COIN` (×3), `TOBACCO_POUCH`, `SCRATCH_CARD`, `STOLEN_PHONE`,
+`NEWSPAPER`, `WOOLLY_HAT_ECONOMY`, `PRESCRIPTION_MEDS`.
+
+Maximum 6 LISTENER NPCs active at any time (to avoid world-spawning chaos).
+
+### Signal Triangulation — The Council Hunts You
+
+Each broadcast second accumulates a hidden `triangulationProgress` counter (0–100). It increases
+faster at higher broadcast power levels:
+
+| Power Level | Progress per second |
+|-------------|-------------------|
+| 1 | 0.3 |
+| 2 | 0.5 |
+| 3 | 0.8 |
+| 4 | 1.5 |
+
+When `triangulationProgress` reaches 100, a **`SIGNAL_VAN` NPC** (a `COUNCIL_BUILDER` variant in a
+white van — use the existing `Car` system, white colour, `NPCType.COUNCIL_BUILDER` driving) spawns
+at the nearest road block to the world edge and drives toward the transmitter block. If the Signal
+Van reaches within 6 blocks of the TRANSMITTER, it **confiscates it** (block removed from world,
+added to vehicle inventory — gone forever). The player receives a tooltip: "They found your station.
+You've got maybe ten seconds." (displayed when triangulationProgress hits 80).
+
+Stopping the broadcast resets `triangulationProgress` to 0. Destroying the Signal Van (reduce its
+HP to 0 using the existing car damage system) also resets triangulation and grants +20 Notoriety.
+Tooltip on first van appearance: "Council's got a scanner van. Of course they do."
+
+### Pre-Recorded Shows — `BROADCAST_TAPE`
+
+The `BROADCAST_TAPE` material (crafted from 1 NEWSPAPER + 1 COIN) lets the player "record" a
+broadcast action at the transmitter (right-click transmitter with tape in hotbar, then press 1–4).
+The tape stores the chosen action. Placing the tape back in the transmitter and walking away causes
+the transmitter to auto-broadcast that action once every 30 in-game seconds without the player
+present — but at half effectiveness and with `triangulationProgress` accumulating at double speed
+(unattended rigs are sloppy). Maximum 1 tape loaded per transmitter.
+
+### New Crafting Recipes (add to CraftingSystem)
+
+| Output | Ingredients | Description |
+|--------|------------|-------------|
+| `WIRE` | 1 COIN + 1 WOOD | Stripped wire (bodged) |
+| `MICROPHONE` | 1 WIRE + 1 COIN | Mic made from a fork and tape |
+| `TRANSMITTER` (block) | 2 WIRE + 1 COMPUTER + 1 WOOD | The heart of Pirate FM |
+| `BROADCAST_TAPE` | 1 NEWSPAPER + 1 COIN | Record your message |
+
+### System Integrations
+
+- **`RumourNetwork`**: Each broadcast action (1-4) seeds a `RumourType.GANG_ACTIVITY` or
+  `RumourType.LOOT_TIP` rumour (as appropriate) into all NPCs within broadcast range.
+- **`FactionSystem`**: Actions 1, 2, and 4 call the relevant `applyRespectDelta()` methods.
+- **`NewspaperSystem`**: Council Diss Track (action 4) feeds into the newspaper infamy system
+  (new `InfamyContribution.PIRATE_RADIO`, weight 3). A sufficiently famous pirate broadcaster
+  gets a front-page headline: "RAGAMUFFIN FM: ENEMY OF THE STATE?"
+- **`NotorietySystem`**: Each broadcast session (start) adds +5 Notoriety. Action 4 adds +10.
+  Signal Van destruction adds +20.
+- **`WantedSystem`**: If a POLICE NPC is within 10 blocks of the transmitter while it is active,
+  Wanted Level increments by 1 immediately (they can hear the music).
+- **`StreetEconomySystem`**: LISTENER NPCs count as "deal participants" — their loot drops satisfy
+  the `BROKE` need pathway without a formal deal (automatic). `WIRE` and `MICROPHONE` are added
+  to the tradeable commodity list (base prices: WIRE=2, MICROPHONE=4).
+- **`AchievementSystem`**: New achievements:
+
+| Achievement | Condition |
+|-------------|-----------|
+| `ON_AIR` | Complete first broadcast session (any action) |
+| `PIRATE_FM` | Broadcast for a cumulative 10 in-game minutes across all sessions |
+| `SIGNAL_JAM` | Destroy a Signal Van |
+| `THE_PEOPLE_S_DJ` | Have 6 LISTENER NPCs arrive at your transmitter simultaneously |
+| `ENEMY_OF_THE_STATE` | Receive the "RAGAMUFFIN FM: ENEMY OF THE STATE?" newspaper headline |
+| `OFF_AIR` | Have your transmitter confiscated by the Signal Van |
+
+### HUD Additions
+
+- **ON AIR indicator**: Pulsing red "● ON AIR" text in the top-right corner while broadcasting.
+- **Listener count**: Small counter "👥 N" below the ON AIR indicator showing current LISTENER NPCs
+  en route or present (rendered as a digit, no emoji in actual code — use PixelFont).
+- **Triangulation bar**: A thin horizontal bar below the listener count, fills red as
+  `triangulationProgress` approaches 100. Tooltip at 80%: "They found your station."
+
+### New Key Binding
+
+- **B**: Start/stop broadcast (only active when holding MICROPHONE within 2 blocks of TRANSMITTER)
+
+**Unit tests**: Transmitter crafting recipe validation, broadcast power level range calculation,
+triangulationProgress accumulation rate per power level, listener NPC spawn cap enforcement,
+BROADCAST_TAPE auto-broadcast interval and half-effectiveness, Signal Van spawn trigger at
+triangulationProgress=100, broadcast action 1–4 respect and need delta calculations, listener
+loot table distribution (uniform), wanted level increment when police nearby, all achievement
+trigger conditions.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Transmitter crafts and places**: Give player 2 WIRE, 1 COMPUTER, 1 WOOD. Open crafting menu.
+   Select TRANSMITTER recipe. Verify TRANSMITTER block is in hotbar. Place it indoors (3 solid blocks
+   above). Verify the block is present in the world chunk at placed position. Verify an orange pulsing
+   PointLight appears in the environment at the transmitter position.
+
+2. **Broadcast session activates and shows HUD**: Give player a MICROPHONE. Place TRANSMITTER. Move
+   player within 2 blocks. Press B. Verify game state has `broadcastActive = true`. Verify the HUD
+   shows the "ON AIR" indicator. Verify `triangulationProgress` is 0 at start. Advance 10 seconds.
+   Verify `triangulationProgress > 0`.
+
+3. **Big Up the Area satisfies BORED need for nearby NPCs**: Start broadcast. Place 3 PUBLIC NPCs
+   within 30 blocks, each with `BORED` need = 70. Press 1 (Big Up the Area). Verify each NPC's
+   BORED need has decreased to ≤ 50. Verify all three factions gained +3 Respect.
+
+4. **Slag Off faction decreases that faction's respect and seeds rumour**: Set MARCHETTI_CREW
+   Respect to 50. Start broadcast. Press 2 (Slag Off, targeting MARCHETTI_CREW). Verify Marchetti
+   Respect decreased to 40. Verify at least 1 nearby NPC has a `GANG_ACTIVITY` rumour containing
+   "aired out live on the radio". Verify rival factions each gained +5 Respect.
+
+5. **Black Market Shout-Out spawns LISTENER NPCs**: Start broadcast. Press 3 (Black Market
+   Shout-Out) 3 times (over 30 in-game seconds). Verify at least 1 `LISTENER` NPC has been spawned
+   and is pathfinding toward the transmitter. Verify LISTENER count on HUD is ≥ 1.
+
+6. **Signal Van spawns at triangulationProgress 100**: Set broadcast power to 4. Start broadcast.
+   Advance game simulation until `triangulationProgress >= 100`. Verify a `Car` entity with driver
+   of type `COUNCIL_BUILDER` has spawned at a road block near the world edge. Verify the car is
+   moving toward the transmitter position.
+
+7. **Signal Van confiscates transmitter on arrival**: Spawn a Signal Van at the transmitter's
+   location directly. Advance 60 frames. Verify the TRANSMITTER block has been removed from the
+   world (replaced with AIR). Verify `broadcastActive` is false. Verify tooltip "They found your
+   station." was displayed.
+
+8. **Stopping broadcast resets triangulation**: Set `triangulationProgress` to 80. Press B to stop
+   broadcast. Verify `triangulationProgress` is reset to 0. Verify "ON AIR" indicator is gone from
+   HUD. Verify no Signal Van spawns within the next 60 frames.
+
+9. **BROADCAST_TAPE auto-broadcasts without player**: Craft a BROADCAST_TAPE. Record action 1
+   (Big Up the Area) on the tape. Load tape into transmitter. Move player 10 blocks away (out of
+   range). Advance 30 in-game seconds. Verify at least 1 Big Up the Area effect has fired (faction
+   Respect increased). Verify `triangulationProgress` is accumulating at double the normal rate for
+   the current power level.
+
+10. **Full pirate radio stress test**: Craft transmitter (power 1). Broadcast all 4 actions in
+    sequence. Verify all NPC/faction/notoriety effects fire correctly. Upgrade transmitter to power 4.
+    Broadcast until Signal Van spawns. Destroy van (hit it until HP = 0). Verify +20 Notoriety added.
+    Verify `SIGNAL_JAM` achievement awarded. Verify `triangulationProgress` resets to 0. Verify game
+    remains in PLAYING state with no NPEs and all HUD elements valid throughout.
