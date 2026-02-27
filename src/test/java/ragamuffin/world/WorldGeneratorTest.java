@@ -707,6 +707,31 @@ public class WorldGeneratorTest {
         assertTrue(hasTable, "Community centre interior should contain tables for the hall");
     }
 
+    @Test
+    public void testPubPositionDebug() {
+        generator.generateWorld(world);
+
+        Landmark pub = world.getLandmark(LandmarkType.PUB);
+        assertNotNull(pub, "PUB must exist");
+
+        int px = (int) pub.getPosition().x;
+        int pz = (int) pub.getPosition().z;
+        int width = pub.getWidth();
+
+        System.out.println("PUB position: (" + px + ", " + pz + ") width=" + width + " depth=" + pub.getDepth());
+        System.out.println("Door expected at: (" + (px + width/2) + ", 1-2, " + pz + ")");
+        System.out.println("Block at door y=1: " + world.getBlock(px + width/2, 1, pz));
+        System.out.println("Block at door y=2: " + world.getBlock(px + width/2, 2, pz));
+
+        // Check all landmarks and their positions for overlap with PUB
+        for (Landmark lm : world.getAllLandmarks()) {
+            if (lm == pub) continue;
+            if (landmarksOverlap(pub, lm)) {
+                System.out.println("PUB OVERLAPS WITH: " + lm.getType() + " at " + lm.getPosition() + " w=" + lm.getWidth() + " d=" + lm.getDepth());
+            }
+        }
+    }
+
     private boolean landmarksOverlap(Landmark a, Landmark b) {
         Vector3 posA = a.getPosition();
         Vector3 posB = b.getPosition();
