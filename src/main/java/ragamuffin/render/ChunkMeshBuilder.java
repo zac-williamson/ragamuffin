@@ -532,6 +532,7 @@ public class ChunkMeshBuilder {
                     int worldY = chunk.getChunkY() * Chunk.HEIGHT + y;
                     int worldZ = chunk.getChunkZ() * Chunk.SIZE + z;
                     Color color = textured ? type.getTexturedColor(worldX, worldY, worldZ, false) : type.getColor();
+                    boolean isTransparent = type.isTransparent();
 
                     float fx = x;
                     float fy = y;
@@ -540,14 +541,14 @@ public class ChunkMeshBuilder {
                     float fw = w;
 
                     if (positive) {
-                        vertexIndex = addFace(meshData, vertexIndex, color,
+                        vertexIndex = addFace(meshData, vertexIndex, color, isTransparent,
                             fx, fy, fz + fw,
                             fx, fy, fz,
                             fx, fy + fh, fz,
                             fx, fy + fh, fz + fw,
                             1, 0, 0, fw, fh);
                     } else {
-                        vertexIndex = addFace(meshData, vertexIndex, color,
+                        vertexIndex = addFace(meshData, vertexIndex, color, isTransparent,
                             fx, fy, fz,
                             fx, fy, fz + fw,
                             fx, fy + fh, fz + fw,
@@ -634,6 +635,7 @@ public class ChunkMeshBuilder {
                     int worldX = chunk.getChunkX() * Chunk.SIZE + x;
                     int worldY = chunk.getChunkY() * Chunk.HEIGHT + (positive ? y - 1 : y);
                     int worldZ = chunk.getChunkZ() * Chunk.SIZE + z;
+                    boolean isTransparent = type.isTransparent();
 
                     float fx = x;
                     float fy = y;
@@ -643,7 +645,7 @@ public class ChunkMeshBuilder {
 
                     if (positive) {
                         Color topColor = textured ? type.getTexturedColor(worldX, worldY, worldZ, true) : type.getTopColor();
-                        vertexIndex = addFace(meshData, vertexIndex, topColor,
+                        vertexIndex = addFace(meshData, vertexIndex, topColor, isTransparent,
                             fx, fy, fz + fw,
                             fx + fh, fy, fz + fw,
                             fx + fh, fy, fz,
@@ -651,7 +653,7 @@ public class ChunkMeshBuilder {
                             0, 1, 0, fh, fw);
                     } else {
                         Color bottomColor = textured ? type.getTexturedColor(worldX, worldY, worldZ, false) : type.getBottomColor();
-                        vertexIndex = addFace(meshData, vertexIndex, bottomColor,
+                        vertexIndex = addFace(meshData, vertexIndex, bottomColor, isTransparent,
                             fx, fy, fz,
                             fx + fh, fy, fz,
                             fx + fh, fy, fz + fw,
@@ -739,6 +741,7 @@ public class ChunkMeshBuilder {
                     int worldY = chunk.getChunkY() * Chunk.HEIGHT + y;
                     int worldZ = chunk.getChunkZ() * Chunk.SIZE + (positive ? z - 1 : z);
                     Color color = textured ? type.getTexturedColor(worldX, worldY, worldZ, false) : type.getColor();
+                    boolean isTransparent = type.isTransparent();
 
                     float fx = x;
                     float fy = y;
@@ -747,14 +750,14 @@ public class ChunkMeshBuilder {
                     float fw = w;
 
                     if (positive) {
-                        vertexIndex = addFace(meshData, vertexIndex, color,
+                        vertexIndex = addFace(meshData, vertexIndex, color, isTransparent,
                             fx, fy, fz,
                             fx + fw, fy, fz,
                             fx + fw, fy + fh, fz,
                             fx, fy + fh, fz,
                             0, 0, 1, fw, fh);
                     } else {
-                        vertexIndex = addFace(meshData, vertexIndex, color,
+                        vertexIndex = addFace(meshData, vertexIndex, color, isTransparent,
                             fx + fw, fy, fz,
                             fx, fy, fz,
                             fx, fy + fh, fz,
@@ -769,8 +772,27 @@ public class ChunkMeshBuilder {
 
     /**
      * Add a single quad face to the mesh data.
+     * If the block type is transparent (alpha < 1), the face is added to the
+     * transparent sub-mesh so it can be rendered with alpha blending after
+     * all opaque geometry, preventing see-through artifacts.
      */
     private int addFace(MeshData meshData, int baseIndex, Color color,
+                        float x0, float y0, float z0,
+                        float x1, float y1, float z1,
+                        float x2, float y2, float z2,
+                        float x3, float y3, float z3,
+                        float nx, float ny, float nz,
+                        float uScale, float vScale) {
+        return addFace(meshData, baseIndex, color, false,
+            x0, y0, z0, x1, y1, z1, x2, y2, z2, x3, y3, z3,
+            nx, ny, nz, uScale, vScale);
+    }
+
+    /**
+     * Add a single quad face to the mesh data, with explicit transparency routing.
+     * Transparent faces (transparent=true) go to the alpha-blended sub-mesh.
+     */
+    private int addFace(MeshData meshData, int baseIndex, Color color, boolean transparent,
                         float x0, float y0, float z0,
                         float x1, float y1, float z1,
                         float x2, float y2, float z2,
@@ -784,7 +806,11 @@ public class ChunkMeshBuilder {
             x3, y3, z3,  nx, ny, nz,  0, vScale,  color.r, color.g, color.b, color.a
         };
         short[] indices = {0, 1, 2, 2, 3, 0};
-        meshData.addQuad(vertices, indices, baseIndex);
+        if (transparent) {
+            meshData.addQuadTransparent(vertices, indices, baseIndex);
+        } else {
+            meshData.addQuad(vertices, indices, baseIndex);
+        }
         return baseIndex + 4;
     }
 }
