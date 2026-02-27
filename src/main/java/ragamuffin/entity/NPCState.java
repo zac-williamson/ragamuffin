@@ -35,5 +35,6 @@ public enum NPCState {
     FOLLOWING,          // Issue #706: NPC following the player (e.g. heist accomplice)
     FOLLOWING_PLAYER,   // Issue #709: Permanent accomplice following the player
     WITNESS,            // Issue #765: NPC witnessed a crime — fleeing toward landmark, will report to police
-    REPORTING_TO_POLICE // Issue #765: NPC reporting to police after witnessing a crime
+    REPORTING_TO_POLICE, // Issue #765: NPC reporting to police after witnessing a crime
+    SCRUTINISING        // Issue #767: NPC is suspicious of player's disguise — freeze-stares for 3 seconds
 }

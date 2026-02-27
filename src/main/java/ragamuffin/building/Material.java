@@ -211,7 +211,45 @@ public enum Material {
      * police automatically gain a WITNESSED_CRIME entry. Stolen tapes can be sold to
      * the fence for 15 COIN.
      */
-    CCTV_TAPE("CCTV Tape");
+    CCTV_TAPE("CCTV Tape"),
+
+    // ── Issue #767: Disguise & Social Engineering System ─────────────────────
+
+    /**
+     * Police uniform — looted from a knocked-out POLICE NPC.
+     * Wearing it stops police chasing the player (until cover is blown).
+     */
+    POLICE_UNIFORM("Police Uniform"),
+
+    /**
+     * Council jacket — looted from a knocked-out COUNCIL_BUILDER or COUNCIL_MEMBER NPC.
+     * Wearing it lets the player demolish structures without triggering builders.
+     */
+    COUNCIL_JACKET("Council Jacket"),
+
+    /**
+     * Marchetti tracksuit — looted from a knocked-out MARCHETTI_CREW NPC.
+     * Wearing it grants safe passage through Marchetti-controlled territory.
+     */
+    MARCHETTI_TRACKSUIT("Marchetti Tracksuit"),
+
+    /**
+     * Street Lads hoodie — looted from a knocked-out STREET_LADS NPC.
+     * Wearing it grants safe passage through Street Lads territory.
+     */
+    STREET_LADS_HOODIE("Street Lads Hoodie"),
+
+    /**
+     * Hi-vis vest disguise — looted from a knocked-out worker NPC.
+     * Wearing it grants access to construction sites and service areas.
+     */
+    HI_VIS_VEST("Hi-Vis Vest"),
+
+    /**
+     * Greggs apron — looted from a knocked-out Greggs worker.
+     * Comedy gag: works perfectly beyond 3 blocks, immediately transparent within 3 blocks.
+     */
+    GREGGS_APRON("Greggs Apron");
 
     private final String displayName;
 
@@ -396,6 +434,20 @@ public enum Material {
             case CCTV_TAPE:          return cs(0.15f, 0.15f, 0.18f,  // Black cassette body
                                                0.85f, 0.72f, 0.20f); // Gold label
 
+            // Disguise items (Issue #767)
+            case POLICE_UNIFORM:     return cs(0.10f, 0.18f, 0.55f,  // Police navy
+                                               0.08f, 0.12f, 0.40f); // Darker navy
+            case COUNCIL_JACKET:     return cs(0.95f, 0.80f, 0.05f,  // Council hi-vis yellow
+                                               0.15f, 0.15f, 0.15f); // Dark logo
+            case MARCHETTI_TRACKSUIT: return cs(0.80f, 0.10f, 0.10f, // Marchetti red
+                                                0.55f, 0.05f, 0.05f); // Darker red stripe
+            case STREET_LADS_HOODIE: return cs(0.10f, 0.55f, 0.10f,  // Street Lads green
+                                               0.06f, 0.35f, 0.06f); // Darker green
+            case HI_VIS_VEST:        return cs(0.95f, 0.78f, 0.02f,  // Bright yellow
+                                               0.88f, 0.88f, 0.88f); // Silver reflective strip
+            case GREGGS_APRON:       return cs(0.82f, 0.10f, 0.15f,  // Greggs red
+                                               0.15f, 0.30f, 0.70f); // Blue Greggs logo
+
             // Craftable 3D props (Issue #720)
             case PROP_BED:           return cs(0.55f, 0.38f, 0.22f,  // Wooden frame
                                                0.88f, 0.88f, 0.88f); // White pillow
@@ -512,6 +564,13 @@ public enum Material {
             // Witness & Evidence items (Issue #765)
             case RUMOUR_NOTE:
             case CCTV_TAPE:
+            // Disguise items (Issue #767)
+            case POLICE_UNIFORM:
+            case COUNCIL_JACKET:
+            case MARCHETTI_TRACKSUIT:
+            case STREET_LADS_HOODIE:
+            case HI_VIS_VEST:
+            case GREGGS_APRON:
                 return false;
             default:
                 return true;
@@ -697,6 +756,15 @@ public enum Material {
                 return IconShape.FLAT_PAPER; // small folded note
             case CCTV_TAPE:
                 return IconShape.CARD;       // cassette tape shape
+
+            // Disguise items (Issue #767)
+            case POLICE_UNIFORM:
+            case COUNCIL_JACKET:
+            case MARCHETTI_TRACKSUIT:
+            case STREET_LADS_HOODIE:
+            case HI_VIS_VEST:
+            case GREGGS_APRON:
+                return IconShape.FLAT_PAPER; // clothing/vest shape
 
             default:
                 return IconShape.BOX;
