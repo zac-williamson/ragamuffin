@@ -437,7 +437,7 @@ public class ChunkMeshBuilder {
                         neighbour = getWorldBlock(chunk, x - 1, y, z);
                     }
 
-                    if (current != BlockType.AIR && current.isOpaque() && !neighbour.isOpaque()) {
+                    if (current != BlockType.AIR && (current.isOpaque() || current.isTransparent()) && !neighbour.isOpaque()) {
                         mask[idx] = current;
                     } else {
                         mask[idx] = null;
@@ -541,7 +541,7 @@ public class ChunkMeshBuilder {
                         neighbour = getWorldBlock(chunk, x, y - 1, z);
                     }
 
-                    if (current != BlockType.AIR && current.isOpaque() && !neighbour.isOpaque()) {
+                    if (current != BlockType.AIR && (current.isOpaque() || current.isTransparent()) && !neighbour.isOpaque()) {
                         mask[idx] = current;
                     } else {
                         mask[idx] = null;
@@ -645,7 +645,7 @@ public class ChunkMeshBuilder {
                         neighbour = getWorldBlock(chunk, x, y, z - 1);
                     }
 
-                    if (current != BlockType.AIR && current.isOpaque() && !neighbour.isOpaque()) {
+                    if (current != BlockType.AIR && (current.isOpaque() || current.isTransparent()) && !neighbour.isOpaque()) {
                         mask[idx] = current;
                     } else {
                         mask[idx] = null;

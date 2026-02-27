@@ -77,6 +77,38 @@ class ChunkMeshBuilderTest {
     }
 
     @Test
+    void glassBlockHasSixFaces() {
+        // Glass is non-opaque but transparent, so its faces should be emitted
+        Chunk chunk = new Chunk(0, 0, 0);
+        chunk.setBlock(8, 8, 8, BlockType.GLASS);
+        ChunkMeshBuilder builder = new ChunkMeshBuilder();
+        MeshData meshData = builder.build(chunk);
+        assertEquals(6, meshData.getFaceCount(), "A single glass block surrounded by air should have 6 faces");
+    }
+
+    @Test
+    void solidBlockFaceVisibleThroughGlass() {
+        // Place a GRASS block with a GLASS block adjacent — the face between them
+        // should be rendered (glass doesn't hide the grass face behind it).
+        Chunk chunk = new Chunk(0, 0, 0);
+        chunk.setBlock(8, 8, 8, BlockType.GRASS);
+        chunk.setBlock(9, 8, 8, BlockType.GLASS);
+        ChunkMeshBuilder builder = new ChunkMeshBuilder();
+        MeshData meshData = builder.build(chunk);
+        // GRASS: 5 outer faces + 1 face toward GLASS (not culled since glass is non-opaque)
+        // GLASS: 6 faces (all sides air or next to non-opaque blocks)
+        // But the shared face between GRASS and GLASS: GRASS east face should be emitted
+        // since GLASS is non-opaque. GLASS west face should also be emitted toward GRASS
+        // (since GRASS is opaque, wait... GLASS west neighbour is GRASS which IS opaque,
+        // so that face IS culled — only the outward glass faces are emitted).
+        // GRASS: 6 faces (east face not culled since GLASS is non-opaque)
+        // GLASS: 5 faces (west face toward GRASS is culled since GRASS is opaque)
+        // Total: 11
+        assertEquals(11, meshData.getFaceCount(),
+            "GRASS(6 faces) + GLASS(5 faces, west culled by opaque GRASS) = 11 faces");
+    }
+
+    @Test
     void crossChunkBoundaryFaceIsCulledWhenNeighbourIsSolid() {
         // Place a DIRT block at the east edge of chunk (0,0,0) at local x=15
         // and a DIRT block at the west edge of chunk (1,0,0) at local x=0.
