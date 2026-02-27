@@ -464,6 +464,34 @@ public enum AchievementType {
         "Pigeon Menace",
         "Kept your head down for five full in-game days. The pigeons got more column inches than you.",
         5
+    ),
+
+    // ── Issue #781: Graffiti & Territorial Marking ────────────────────────────
+
+    WRITER(
+        "Writer",
+        "Placed your first graffiti tag. Your name on the wall. Respect.",
+        1
+    ),
+    GETTING_UP(
+        "Getting Up",
+        "Fifty tags placed. You're making your presence known across the estate.",
+        50
+    ),
+    ALL_CITY(
+        "All City",
+        "Living tags in every zone simultaneously. This whole town is your gallery.",
+        1
+    ),
+    SCRUBBED(
+        "Scrubbed",
+        "Ten of your tags removed by Council Cleaners. You're famous enough to be a nuisance.",
+        10
+    ),
+    CLEAN_HANDS(
+        "Clean Hands",
+        "Completed a full in-game day without placing any tags, while holding a spray can. Suspicious restraint.",
+        1
     );
 
     private final String name;

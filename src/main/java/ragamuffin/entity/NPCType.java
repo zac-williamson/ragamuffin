@@ -80,7 +80,15 @@ public enum NPCType {
      * Journalist — spawns in the pub between 19:00–22:00.
      * Player can interact (J key) to tip off, plant a lie, or buy out stories.
      */
-    JOURNALIST(20f, 0f, 0f, false);
+    JOURNALIST(20f, 0f, 0f, false),
+
+    // ── Issue #781: Graffiti & Territorial Marking ────────────────────────────
+
+    /**
+     * Council Cleaner — dispatched by THE_COUNCIL to scrub graffiti from civic areas
+     * (near town hall, Greggs, park) after 2 in-game days. Carries a bucket. Passive.
+     */
+    COUNCIL_CLEANER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

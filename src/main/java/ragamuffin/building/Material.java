@@ -307,6 +307,47 @@ public enum Material {
      */
     TOBACCO_POUCH("Tobacco Pouch"),
 
+    // ── Issue #781: Graffiti & Territorial Marking ────────────────────────────
+
+    /**
+     * Empty spray can — drops from breaking shelving props in the industrial estate.
+     * Can be re-crafted with a PAINT_PIGMENT into a fresh SPRAY_CAN.
+     */
+    SPRAY_CAN_EMPTY("Empty Spray Can"),
+
+    /**
+     * Filled spray can — crafted from SPRAY_CAN_EMPTY + any PAINT_PIGMENT.
+     * Has 20 uses; press T to tag a block face. Becomes SPRAY_CAN_EMPTY when exhausted.
+     */
+    SPRAY_CAN("Spray Can"),
+
+    /**
+     * Red paint pigment — drops from art-supply/hardware props.
+     * Crafted with SPRAY_CAN_EMPTY to make a red SPRAY_CAN.
+     */
+    PAINT_PIGMENT_RED("Red Paint Pigment"),
+
+    /**
+     * Blue paint pigment — drops from art-supply/hardware props.
+     */
+    PAINT_PIGMENT_BLUE("Blue Paint Pigment"),
+
+    /**
+     * Gold paint pigment — drops from art-supply/hardware props.
+     * Required exclusively for CROWN_TAG (Marchetti Crew faction style).
+     */
+    PAINT_PIGMENT_GOLD("Gold Paint Pigment"),
+
+    /**
+     * White paint pigment — drops from art-supply/hardware props.
+     */
+    PAINT_PIGMENT_WHITE("White Paint Pigment"),
+
+    /**
+     * Grey paint pigment — drops from art-supply/hardware props.
+     */
+    PAINT_PIGMENT_GREY("Grey Paint Pigment"),
+
     /**
      * Newspaper — already exists; referenced here as black market rumour source.
      * Used by NPCs in BORED state; seeded by RUMOUR_NETWORK with LOOT_TIP.
@@ -528,6 +569,16 @@ public enum Material {
             case TOBACCO_POUCH:      return cs(0.52f, 0.35f, 0.18f,  // Brown leather
                                                0.35f, 0.22f, 0.08f); // Dark brown
 
+            // Issue #781: Graffiti materials
+            case SPRAY_CAN_EMPTY:   return c(0.65f, 0.65f, 0.65f);  // Grey empty can
+            case SPRAY_CAN:         return cs(0.85f, 0.18f, 0.18f,  // Red cap
+                                              0.72f, 0.72f, 0.72f); // Silver body
+            case PAINT_PIGMENT_RED:  return c(0.88f, 0.12f, 0.12f); // Vivid red
+            case PAINT_PIGMENT_BLUE: return c(0.12f, 0.22f, 0.88f); // Vivid blue
+            case PAINT_PIGMENT_GOLD: return c(0.88f, 0.72f, 0.10f); // Gold
+            case PAINT_PIGMENT_WHITE:return c(0.95f, 0.95f, 0.95f); // White
+            case PAINT_PIGMENT_GREY: return c(0.55f, 0.55f, 0.58f); // Mid grey
+
             // Craftable 3D props (Issue #720)
             case PROP_BED:           return cs(0.55f, 0.38f, 0.22f,  // Wooden frame
                                                0.88f, 0.88f, 0.88f); // White pillow
@@ -661,6 +712,14 @@ public enum Material {
             case PRESCRIPTION_MEDS:
             case COUNTERFEIT_NOTE:
             case TOBACCO_POUCH:
+            // Issue #781: Graffiti materials (not block items)
+            case SPRAY_CAN_EMPTY:
+            case SPRAY_CAN:
+            case PAINT_PIGMENT_RED:
+            case PAINT_PIGMENT_BLUE:
+            case PAINT_PIGMENT_GOLD:
+            case PAINT_PIGMENT_WHITE:
+            case PAINT_PIGMENT_GREY:
                 return false;
             default:
                 return true;
@@ -875,6 +934,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER; // banknote
             case TOBACCO_POUCH:
                 return IconShape.CARD;       // small pouch
+
+            // Issue #781: Graffiti materials
+            case SPRAY_CAN_EMPTY:
+                return IconShape.CYLINDER;   // empty can
+            case SPRAY_CAN:
+                return IconShape.CYLINDER;   // filled can
+            case PAINT_PIGMENT_RED:
+            case PAINT_PIGMENT_BLUE:
+            case PAINT_PIGMENT_GOLD:
+            case PAINT_PIGMENT_WHITE:
+            case PAINT_PIGMENT_GREY:
+                return IconShape.BOTTLE;     // pigment bottle
 
             default:
                 return IconShape.BOX;

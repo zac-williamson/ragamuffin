@@ -27,7 +27,13 @@ public class CriminalRecord {
         WITNESSED_CRIMES("Witnessed crimes on record"),
 
         /** Issue #774: Each time the player appears on the front page of The Daily Ragamuffin. */
-        PRESS_INFAMY("Front-page appearances");
+        PRESS_INFAMY("Front-page appearances"),
+
+        /**
+         * Issue #781: Logged after 3 graffiti arrests. Triggers a solicitor quest
+         * to secure a not-guilty plea.
+         */
+        CRIMINAL_DAMAGE("Criminal damage charges");
 
         private final String displayName;
 
