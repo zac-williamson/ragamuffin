@@ -6524,3 +6524,177 @@ trigger conditions.
     verify licence prevents fine. Advance until inspector spawns; bribe him. Verify game remains
     in PLAYING state, no NPEs, all HUD elements valid, stall Management UI opens and closes
     without errors throughout.
+
+---
+
+## Phase R: Street Skills & Character Progression — 'Learning the Hard Way'
+
+**Goal**: Give the player a persistent skill system that rewards specialisation and
+makes every playthrough feel different. Actions you do a lot, you get better at.
+No menus to grind — just play your way and watch the perks unlock.
+
+### Overview
+
+A new `StreetSkillSystem` tracks six **skills**, each with an XP counter (0–1000)
+and five **tiers** (Novice → Apprentice → Journeyman → Expert → Legend). XP is
+awarded automatically by existing systems whenever the player performs the
+associated action. Each tier unlocks a concrete passive or active **perk** that
+feeds back into gameplay, making the skill feel meaningful immediately.
+
+Skills are saved per-world (serialised alongside player position in the game
+state). The `SkillsUI` (new overlay, bound to **K** key) shows all six skills as
+vertical progress bars with current tier label, XP fraction, and the next locked
+perk grayed out below it. Tooltip on first open: "You're not born knowing this
+stuff."
+
+### The Six Skills
+
+| ID | Skill Name | XP Sources | Perk progression |
+|----|-----------|------------|-----------------|
+| `BRAWLING` | Bare-knuckle fighting | +5 XP per hit landed on NPC; +20 XP per NPC knocked out | **Apprentice**: hits deal +1 bonus damage · **Journeyman**: punching a block costs −1 energy · **Expert**: 20% chance to disarm NPC (drops their held item) · **Legend**: crowd-stagger — each punch knocks back all NPCs within 2 blocks |
+| `GRAFTING` | Manual labour / breaking things | +3 XP per block broken; +10 XP per crafted item | **Apprentice**: blocks require 1 fewer hit to break (min 1) · **Journeyman**: 10% chance to get double drops from a broken block · **Expert**: unlock `SKELETON_KEY` recipe (crafted from 3 WIRE + 1 BRICK, opens any door once) · **Legend**: break any block in a single punch (energy cost: 10) |
+| `TRADING` | Buying, selling, fencing | +5 XP per item sold at stall; +8 XP per fence sale; +3 XP per NPC purchase | **Apprentice**: fence pays 10% more for all items · **Journeyman**: NPC customer attraction range at stall +5 blocks · **Expert**: unlock `HAGGLE` dialogue option on all trade menus (one re-roll of offered price per conversation) · **Legend**: all faction protection cuts halved; Marchetti's 20% cut becomes 10% |
+| `STEALTH` | Not being seen doing bad things | +10 XP per successful crime unwitnessed; +5 XP per successful disguise use | **Apprentice**: detection radius of police NPCs reduced by 2 blocks · **Journeyman**: crouching (new `SHIFT` key toggle) reduces footstep noise radius by 50% · **Expert**: can pick pocket NPCs (press **E** from behind a non-hostile NPC — steals 1 random item from their inventory, 60% success) · **Legend**: player is never added to wanted list for block-breaking inside buildings at night |
+| `INFLUENCE` | Social manipulation & reputation | +5 XP per rumour extracted from NPC; +10 XP per quest completed; +15 XP per faction mission success | **Apprentice**: NPCs share rumours without needing player to buy a drink · **Journeyman**: `STREET_REP` passive aura — PUBLIC NPCs within 8 blocks have a 20% chance to volunteer rumours without being spoken to · **Expert**: unlock `RALLY` action (press **G** near 3+ PUBLIC NPCs — they follow the player for 60 seconds as a mob, deterring police and gang members) · **Legend**: once per day, trigger a `NEIGHBOURHOOD_EVENT` (flash rave, market flash-crowd, or mass brawl) at any location by pressing G there |
+| `SURVIVAL` | Staying alive and warm | +5 XP per in-game day survived; +10 XP each time player regen from critical health; +3 XP per food/drink item consumed | **Apprentice**: health regenerates 1 point/min passively (no shelter required) · **Journeyman**: hunger drains 25% slower · **Expert**: player can eat `RAW_MATERIALS` as improvised food (LEAVES → bitter greens, +5 hunger; WOOD → splinters, +1 hunger and "Tastes like desperation" tooltip) · **Legend**: spawn with a random bonus item at game start; respawn with 50% health instead of 10% |
+
+### Crouching (new mechanic, required by STEALTH Journeyman)
+
+`SHIFT` key toggles a crouched state. While crouched:
+- Movement speed reduced by 40%.
+- Player model height reduced by half a block (camera drops accordingly).
+- Footstep noise radius halved (affects `NoiseSystem`).
+- Cannot sprint (sprinting removed if previously planned; this is the first mention).
+At STEALTH Journeyman, crouching additionally suppresses the player's noise
+entry in `NoiseSystem` to 0 (completely silent movement).
+
+### Pick-pocketing (new mechanic, unlocked at STEALTH Expert)
+
+Press **E** from behind a non-hostile NPC who has not noticed the player. A `PickpocketAttempt`
+is resolved:
+- Base success rate: 60%.
+- +10% if player is crouched.
+- −20% if any other NPC is within 4 blocks (witnesses).
+- On success: one random `Material` is transferred from the NPC's inventory to the player's.
+  `INFLUENCE` XP +3, `STEALTH` XP +5. The NPC does not notice.
+- On failure: the NPC turns hostile immediately; `WantedSystem` registers a `THEFT` offence;
+  any witness NPCs within 8 blocks enter `ALARMED` state and seed a `PLAYER_SPOTTED` rumour.
+- Tooltip on first attempt: "Steady hands."
+
+### RALLY Action (new mechanic, unlocked at INFLUENCE Expert)
+
+Press **G** while at least 3 PUBLIC NPCs are within 6 blocks. All eligible PUBLIC NPCs within
+6 blocks enter `RALLY_FOLLOWER` state and follow the player for 60 seconds. During the rally:
+- POLICE NPCs will not approach a rallied group of 4+ (crowd intimidation).
+- GANG member NPCs will retreat from a rallied group of 5+.
+- If the player attacks, the rally immediately disperses.
+
+### NEIGHBOURHOOD_EVENT (unlocked at INFLUENCE Legend)
+
+Press **G** anywhere outside with no hostile NPCs nearby. A random event fires:
+- `FLASH_RAVE` (40%): `RaveSystem` triggers an impromptu rave at that location for 3 in-game
+  minutes. `PirateRadioSystem` auto-broadcasts it. Notoriety +5.
+- `FLASH_MARKET` (35%): 5–8 PUBLIC NPCs converge on the spot and set up temporary stalls
+  (cosmetic only) for 2 in-game minutes. Stall XP awarded passively.
+- `MASS_BRAWL` (25%): all NPCs within 12 blocks enter `BRAWLING` state against each other
+  (not the player) for 90 seconds. `WitnessSystem` blackout — no crimes recorded during brawl.
+
+### SkillsUI
+
+Bound to **K** key. Renders as a full-screen overlay (same pattern as `InventoryUI`):
+- Six columns, one per skill.
+- Each column shows: skill name, tier label, XP bar (filled fraction), XP number (e.g. "340/500"),
+  and the next locked perk below the bar (greyed out, with a padlock icon drawn with `PixelFont`).
+- Currently active perks listed below each column in green.
+- A single footer line: "Press K to close."
+
+### New Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `FIRST_BLOOD` | Reach Apprentice in BRAWLING |
+| `PROPER_HARD` | Reach Legend in BRAWLING |
+| `GRAFTER` | Break 500 blocks total |
+| `WHEELERDEALER` | Reach Expert in TRADING |
+| `GHOST` | Commit 10 crimes in one day with 0 witnesses (requires STEALTH) |
+| `WORDS_ON_THE_STREET` | Extract 50 rumours total |
+| `LEGEND_OF_THE_MANOR` | Reach Legend in all six skills |
+| `PICKPOCKET` | Successfully pick-pocket 20 NPCs |
+| `RALLY_CRY` | Use RALLY with 8+ followers simultaneously |
+
+### New Materials / Items
+
+| Material | Source | Use |
+|----------|--------|-----|
+| `WIRE` | Dropped by COUNCIL_BUILDER NPCs (1–2); found in industrial estate | `SKELETON_KEY` recipe |
+| `SKELETON_KEY` | Crafted: 3 WIRE + 1 BRICK | Opens any locked door once, consumed on use |
+| `BITTER_GREENS` | Break LEAVES block while GRAFTING ≥ Journeyman | Food item: +5 hunger |
+
+**Unit tests**: XP accumulation for each skill per action type, tier boundary
+detection, perk flag states, pick-pocket probability formula (base, crouch bonus,
+witness penalty), SkillsUI column rendering data, RALLY follower state transitions,
+NEIGHBOURHOOD_EVENT selection weights, SKELETON_KEY door interaction, crouch
+movement-speed reduction.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **BRAWLING XP accumulates and tier transitions**: Spawn a PUBLIC NPC adjacent to
+   the player. Record BRAWLING XP (expect 0). Simulate 10 punch actions on the NPC.
+   Verify BRAWLING XP = 50 (10 × 5). Now simulate enough additional punches to cross
+   the Apprentice threshold (200 XP). Verify skill tier is `APPRENTICE`. Verify the
+   perk flag `BRAWLING_BONUS_DAMAGE` is active. Simulate one more punch on the NPC
+   and verify the damage dealt is 1 higher than a punch without the perk.
+
+2. **GRAFTING reduces block hits at Apprentice**: Set GRAFTING to Apprentice tier.
+   Place a GRASS block (normally 5 hits). Simulate punch actions. Verify the block
+   is broken after exactly 4 hits (5 − 1 = 4). Set GRAFTING to Novice. Place another
+   GRASS block. Verify it requires the full 5 hits.
+
+3. **STEALTH XP granted for unwitnessed crime**: Clear all NPCs from a 20-block
+   radius. Player breaks a BRICK block (a crime). Verify STEALTH XP increased by 10.
+   Now place a PUBLIC NPC within 8 blocks of the player (within witness range). Player
+   breaks another BRICK block. Verify `WantedSystem` registers an offence AND verify
+   STEALTH XP did NOT increase (witnessed crime grants no stealth XP).
+
+4. **Pick-pocket succeeds when crouching behind NPC**: Give a PUBLIC NPC 1 COIN in
+   their inventory. Set player STEALTH to Expert tier. Set player crouching = true.
+   Position player directly behind the NPC (no other NPCs within 8 blocks). Press **E**.
+   Verify success probability = 70% (60% base + 10% crouch). Run the scenario 100
+   times (reset state each time). Verify success count is between 60 and 80 (statistical
+   tolerance). On each success, verify COIN transferred to player inventory, STEALTH
+   XP +5, NPC state unchanged (not hostile).
+
+5. **Pick-pocket failure triggers wanted offence**: Set STEALTH to Expert. Position
+   player behind NPC. Force pick-pocket to fail (seed RNG to guarantee failure).
+   Verify NPC state transitions to `HOSTILE`. Verify `WantedSystem` records a THEFT
+   offence. Verify `WitnessSystem` seeds a `PLAYER_SPOTTED` rumour.
+
+6. **RALLY assembles followers and deters police**: Set INFLUENCE to Expert tier.
+   Spawn 4 PUBLIC NPCs within 6 blocks of player. Press **G**. Verify all 4 NPCs
+   enter `RALLY_FOLLOWER` state within 2 frames. Spawn a POLICE NPC 5 blocks away.
+   Advance 60 frames. Verify the POLICE NPC has not moved within 3 blocks of the
+   player (crowd intimidation active). Advance 3600 frames (60 seconds). Verify all
+   followers revert to their previous state (rally expired).
+
+7. **TRADING perk increases fence payout**: Set TRADING to Apprentice. Give player 1
+   DIAMOND. Record the payout offered by `FenceSystem` for DIAMOND. Set TRADING to
+   Novice. Record the payout again. Verify Apprentice payout is exactly 10% higher
+   than Novice payout. Set TRADING to Legend. Verify the Marchetti cut applied to
+   stall income is 10% (half of the normal 20%).
+
+8. **SkillsUI opens on K and displays correct data**: Set BRAWLING to Journeyman
+   (400 XP). Open SkillsUI (press K). Verify the game state is `SKILLS_OPEN`.
+   Verify the BRAWLING column shows tier label "Journeyman", XP value 400, and the
+   Expert perk is shown greyed out. Press K again. Verify state returns to `PLAYING`.
+   Verify SkillsUI is no longer rendered.
+
+9. **SURVIVAL Legend respawn bonus**: Set SURVIVAL to Legend. Kill the player
+   (health to 0). Trigger respawn. Verify respawn health is ≥ 50% (not the default
+   10%). Verify the respawn tooltip "Right then. Back at it." fires.
+
+10. **SKELETON_KEY opens a locked door and is consumed**: Craft a SKELETON_KEY
+    (3 WIRE + 1 BRICK). Interact (**E**) with a closed door that would normally be
+    locked (building entrance during night hours). Verify the door opens. Verify
+    SKELETON_KEY is removed from player inventory. Verify GRAFTING XP +10 is awarded.
+    Attempt to use a second SKELETON_KEY on the same (now open) door. Verify the
+    item is NOT consumed and a tooltip "It's already open, mate." is shown.
