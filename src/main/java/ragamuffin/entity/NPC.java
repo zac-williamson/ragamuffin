@@ -62,6 +62,8 @@ public class NPC {
         // Stagger initial blink timer so nearby NPCs don't all blink simultaneously.
         // Use a deterministic offset based on position so it's consistent across frames.
         this.blinkTimer = (Math.abs(x * 7.3f + z * 3.1f) % blinkInterval);
+        // Issue #765: Deterministic bravery in [0,1] based on position hash.
+        this.bravery = Math.abs((x * 13.7f + z * 9.3f) % 1.0f);
     }
 
     public NPCType getType() {
@@ -329,6 +331,16 @@ public class NPC {
     // and a purchase is awaited on the next E-press.
     private boolean shopMenuOpen = false;
 
+    // Issue #765: Witness bravery — 0.0 (cowardly) to 1.0 (very brave).
+    // Determines success chance when the player tries to bribe this NPC to stay quiet.
+    // Bravery > 0.7 = NPC resists most bribes. Bravery < 0.3 = NPC accepts easily.
+    // Initialised deterministically from position so it's stable across updates.
+    private float bravery;
+
+    // Issue #765: Witness report timer — when this NPC is in WITNESS state, counts
+    // down from WITNESS_REPORT_DELAY to 0, after which the NPC reports to police.
+    private float witnessReportTimer = 0f;
+
     // The item index (1-3) the player has highlighted in the shop menu.
     // 1 = sausage roll, 2 = energy drink, 3 = crisps.
     // Defaults to 1 when the menu opens. Only meaningful while shopMenuOpen is true.
@@ -490,6 +502,8 @@ public class NPC {
             case ATTACKING:
                 return FacialExpression.ANGRY;
             case FLEEING:
+            case WITNESS:
+            case REPORTING_TO_POLICE:
                 return FacialExpression.SCARED;
             case AT_PUB:
             case AT_HOME:
@@ -649,6 +663,53 @@ public class NPC {
     public Rumour getTopRumour() {
         if (rumours.isEmpty()) return null;
         return rumours.get(rumours.size() - 1);
+    }
+
+    // ── Issue #765: Witness system ──────────────────────────────────────────────
+
+    /**
+     * Returns this NPC's bravery value in [0,1].
+     * Used by the witness bribery mechanic to determine success chance.
+     * High bravery means the NPC is harder to bribe into silence.
+     */
+    public float getBravery() {
+        return bravery;
+    }
+
+    /**
+     * Set this NPC's bravery value (clamped to [0,1]).
+     */
+    public void setBravery(float bravery) {
+        this.bravery = Math.max(0f, Math.min(1f, bravery));
+    }
+
+    /**
+     * Returns the remaining witness report timer in seconds.
+     * When &gt; 0 the NPC has witnessed a crime and will report to police when it reaches 0.
+     */
+    public float getWitnessReportTimer() {
+        return witnessReportTimer;
+    }
+
+    /**
+     * Set the witness report timer (seconds until the NPC reports to police).
+     */
+    public void setWitnessReportTimer(float seconds) {
+        this.witnessReportTimer = seconds;
+    }
+
+    /**
+     * Tick the witness report timer by delta seconds.
+     * Returns true if the timer just expired (NPC should now report to police).
+     */
+    public boolean tickWitnessTimer(float delta) {
+        if (witnessReportTimer <= 0f) return false;
+        witnessReportTimer -= delta;
+        if (witnessReportTimer <= 0f) {
+            witnessReportTimer = 0f;
+            return true;
+        }
+        return false;
     }
 
     /**

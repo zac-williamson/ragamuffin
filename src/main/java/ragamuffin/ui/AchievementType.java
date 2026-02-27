@@ -314,6 +314,34 @@ public enum AchievementType {
         "By Day, By Night",
         "Reach MC Rank 3 while simultaneously owning a property. Legitimate. Sort of.",
         1
+    ),
+
+    // ── Issue #765: Witness & Evidence System ──────────────────────────────────
+
+    CLEAN_GETAWAY(
+        "Clean Getaway",
+        "Committed a crime and left no evidence behind. Tidy.",
+        1
+    ),
+    LEAVE_NO_TRACE(
+        "Leave No Trace",
+        "Destroyed or avoided all evidence from five separate crime events. Nothing to see here.",
+        5
+    ),
+    GRASS(
+        "Grassing",
+        "Tipped off the police. Hidden achievement. Somebody's going to be very unhappy with you.",
+        1
+    ),
+    IN_BROAD_DAYLIGHT(
+        "In Broad Daylight",
+        "Committed a crime while three or more NPCs were watching. Ballsy. Stupid. Both.",
+        1
+    ),
+    STITCH_UP(
+        "Proper Stitch-Up",
+        "Used a RUMOUR_NOTE to pin something on someone else. You're going places. Bad places.",
+        1
     );
 
     private final String name;

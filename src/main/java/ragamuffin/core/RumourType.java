@@ -25,5 +25,11 @@ public enum RumourType {
     WEATHER_TIP,
 
     /** "There's a rave on at [location] tonight — should be mental" — seeded when the player uses a FLYER at their squat. Draws nearby NPCs toward the squat as rave attendees. */
-    RAVE_ANNOUNCEMENT;
+    RAVE_ANNOUNCEMENT,
+
+    /** "Saw someone doing [crime] near [location]" — seeded when an NPC witnesses a crime and flees. Causes police NPCs who receive it to investigate the crime location. */
+    WITNESS_SIGHTING,
+
+    /** "Someone grassed on [faction/person]" — seeded when the player tips off police with a RUMOUR_NOTE. Turns the tipped faction hostile toward the player. */
+    BETRAYAL;
 }

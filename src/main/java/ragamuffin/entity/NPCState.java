@@ -33,5 +33,7 @@ public enum NPCState {
     SHELTERING,      // Issue #698: NPC sheltering under awning/indoors due to rain/thunderstorm
     ATTACKING_PLAYER, // Issue #702: Faction NPC actively attacking the player (hostile faction)
     FOLLOWING,          // Issue #706: NPC following the player (e.g. heist accomplice)
-    FOLLOWING_PLAYER    // Issue #709: Permanent accomplice following the player
+    FOLLOWING_PLAYER,   // Issue #709: Permanent accomplice following the player
+    WITNESS,            // Issue #765: NPC witnessed a crime — fleeing toward landmark, will report to police
+    REPORTING_TO_POLICE // Issue #765: NPC reporting to police after witnessing a crime
 }
