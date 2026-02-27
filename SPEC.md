@@ -7582,3 +7582,298 @@ sausage roll peace offering, newsletter prop removal, all new achievement trigge
     (set Council turf > 40%), a gang brawl (Watch enters gang turf at Anger ≥ 75),
     and a grovel interaction. Verify game remains in PLAYING state, no NPEs, all NPC
     counts valid, Watch Anger HUD bar visible and rendering correctly throughout.
+
+---
+
+## Phase 11: The Corner Shop Economy — Dynamic Shopkeeping, Price Wars & Neighbourhood Hustle
+
+**Goal**: Let the player become a shopkeeper. They can squat or buy a derelict shop unit,
+stock it with looted or crafted goods, set their own prices, hire a runner NPC to make
+deliveries, and run a grey-to-black-market enterprise that competes directly with Marchetti's
+off-licence and The Council's approved traders. A corner shop transforms the player from
+a reactive scrapper into an active neighbourhood power — and gives the community something
+to defend, destroy, or tax.
+
+This phase builds on: `SquatSystem`, `FenceSystem`, `BootSaleSystem`, `FactionSystem`,
+`NeighbourhoodSystem`, `PropertySystem`, `NPCManager`, `RumourNetwork`, `NewspaperSystem`,
+`StreetSkillSystem`, and `Inventory`.
+
+---
+
+### Taking Over a Shop Unit
+
+Any landmark building tagged `LandmarkType.CHARITY_SHOP`, `LandmarkType.OFF_LICENCE`,
+or any world-generated **derelict shop** (Condition ≤ 49 per the `PropertySystem`) can
+be claimed by the player as a **Corner Shop**.
+
+**Claim mechanic**:
+1. The player presses **E** on the shop's front door (a `PropType.DOOR` within 2 blocks)
+   while the building's Condition is ≤ 49 OR while holding a `Material.SHOP_KEY` (obtainable
+   by completing a Street Lads "Office Job" mission — the key is among the looted items).
+2. If unclaimed: a `ShopUnit` record is created and associated with the building's landmark
+   footprint. A `PropType.SHOP_SIGN` is placed on the exterior wall. The claim is FREE for
+   derelict buildings; occupied buildings require 20 coins (back-pocket deal with the current
+   occupant — a single dialogue choice via the interaction system).
+3. Only **one shop** can be owned at a time. Attempting to claim a second shop prompts:
+   *"You can't run two shops. You're not Amazon."*
+4. Claiming a shop that is in Marchetti Crew territory (per `TurfMap`) immediately sets
+   Marchetti Respect −20 and seeds a rumour: *"Someone's muscling in on the Marchetti
+   patch — bold move."*
+
+New items: `Material.SHOP_KEY`, `PropType.SHOP_SIGN`.
+
+---
+
+### The Shop Inventory & Pricing System
+
+A new `ShopUnit` class tracks the state of a claimed shop:
+
+| Field | Description |
+|-------|-------------|
+| `stockMap` | `Map<Material, Integer>` — current stock levels |
+| `priceMap` | `Map<Material, Integer>` — player-set sell prices (in coins) |
+| `dailyRevenue` | Coins earned in the current in-game day |
+| `condition` | Linked to the building's `PropertySystem` Condition score |
+| `openForBusiness` | boolean — true when the shop is stocked and the sign is lit |
+| `heatLevel` | 0–100 — police/council attention on this shop (see below) |
+| `runnerNpc` | Reference to the hired runner NPC, or null |
+
+**Stocking the shop**: The player places items from their hotbar into the shop's stock by
+pressing **E** on the `SHOP_SIGN` prop, which opens a new **Shop Management UI** (key **M**
+while inside the shop). From this UI the player can:
+- Transfer items from their personal inventory into `stockMap`.
+- Set a sell price per item (default: `FenceSystem` buy price × 1.5 — a modest markup).
+- Toggle the shop open or closed.
+
+**NPC customers**: Once open, pedestrian NPCs (type `PUBLIC`, `WORKER`, `PENSIONER`) passing
+within 8 blocks of the shop have a **15% chance per in-game minute** of entering to buy one
+random in-stock item at the player's listed price. Each purchase:
+- Removes 1 unit from `stockMap`.
+- Adds the listed price in coins directly to a `ShopUnit.cashRegister` (collected by pressing
+  **E** on the shop sign — a satisfying "kerching" sound effect).
+- Seeds a `RumourType.SHOP_NEWS` rumour into the purchasing NPC: *"That new shop on [street]
+  is dead cheap / a right rip-off."* (depends on whether the price is below or above Fence
+  valuation).
+
+New `RumourType` entry: `SHOP_NEWS`.
+
+**Price psychology**: Each item has a `FenceValuationTable` base value. Player pricing
+affects customer traffic:
+- **Undercut** (price < 80% of base): +30% customer chance, but Marchetti Respect −5/day
+  (you're undercutting their patch).
+- **Fair** (80–120% of base): baseline traffic.
+- **Overpriced** (> 150% of base): −50% customer traffic; seeds rumour *"That shop's taking
+  the mick with those prices."*
+
+---
+
+### The Runner NPC
+
+At Notoriety Tier 1+, the player can hire a **Runner**: an NPC accomplice who restocks
+the shop and makes deliveries autonomously.
+
+**Hiring**: Press **E** on any `PUBLIC` or `YOUTH` NPC while inside the player's shop
+(the shop door must be within 5 blocks). Dialogue option: *"Want a job? Cash in hand."*
+Costs 5 coins/in-game day (deducted automatically from `cashRegister` at dawn). If the
+shop can't pay wages, the Runner quits: *"I'm not working for free, mate."*
+
+**Runner behaviour**:
+1. **Restocking run**: If any item in `stockMap` has quantity 0, the Runner pathfinds to
+   the nearest available source of that `Material` (boot sale stall, fence, or a `SmallItem`
+   drop in the world) and brings back up to 5 units. Travel time proportional to distance
+   (1 block/second walk speed). While restocking, the Runner carries the items visibly
+   (rendered via `SmallItemRenderer` attached to the NPC model).
+2. **Delivery run**: The player can manually queue a delivery from the Shop Management UI:
+   pick a target NPC by name (any NPC with a known `home` position from `NPCManager`) and a
+   set of items. The Runner delivers the package to the NPC's doorstep. Successful delivery
+   earns the listed price + a **delivery premium** of 2 coins per item (black-market home
+   delivery). Notoriety +3 per delivery (dodgy dealing on the street).
+3. **Runner heat**: Each delivery run increases `heatLevel` by 5. If the Runner is spotted
+   by a Police NPC during a delivery, `heatLevel` +20 and a `WitnessSystem` event fires
+   (as if the player committed the crime). The Runner does NOT fight police — they drop the
+   goods and run home.
+
+---
+
+### Heat Level & Police Raids
+
+The `ShopUnit.heatLevel` (0–100) represents how much police/council attention the shop is
+attracting. It increases from:
+
+| Event | Heat change |
+|-------|------------|
+| Runner delivery spotted by police | +20 |
+| Player sells a `Material` that is on the Fence's "hot list" (stolen goods) | +10/sale |
+| Newspaper mentions the shop | +5 |
+| Neighbourhood Watch patrols past the shop | +3/pass |
+| Day passes without incident | −5/day (decay) |
+| Shop closed for business | −10/day (going dark) |
+
+**Heat thresholds**:
+
+| Heat | Consequence |
+|------|------------|
+| 0–29 | Safe — no attention |
+| 30–59 | **Council Notice**: a `CONDEMNED_NOTICE`-style `INSPECTION_NOTICE` prop appears; +1 offence to criminal record if player doesn't close shop within 1 in-game day |
+| 60–79 | **Police Stakeout**: 1 plainclothes `PUBLIC` NPC (actually `NPCType.UNDERCOVER_POLICE`) loiters within 15 blocks, following the Runner on deliveries |
+| 80–99 | **Raid Warning**: a rumour *"Pigs are planning a raid on that shop"* seeds into 5 NPCs via the barman; player has 1 in-game hour to close or move stock |
+| 100 | **Police Raid**: 3 `POLICE` NPCs arrive, confiscate all `stockMap` contents (removed from the world), issue a `CriminalRecord` offence, and reset `heatLevel` to 0. Shop sign is removed (shop becomes unclaimed). Notoriety +25. |
+
+New `NPCType` entry: `UNDERCOVER_POLICE`.
+
+---
+
+### Competition: Marchetti's Off-Licence
+
+The off-licence (controlled by Marchetti Crew) is the player's primary commercial rival.
+It sells a fixed set of items at fixed prices. If the player's shop undercuts these prices:
+
+- After 2 in-game days of undercutting: Marchetti Respect −10/day (cumulative).
+- After Marchetti Respect drops to 35: a **Marchetti enforcer NPC** (`NPCType.FACTION_LIEUTENANT`)
+  visits the shop and delivers a warning via speech bubble: *"Nice little shop you've got here.
+  Be a shame if something happened to it."*
+- If the player continues undercutting (Marchetti Respect < 25): the enforcer returns and
+  smashes 5 random blocks in the shop building (block HP reduced to 0), reducing the building's
+  `Condition` by 15. Notoriety +10. A rumour seeds: *"Marchetti boys have wrecked that corner shop."*
+- The player can pre-empt this by paying the **Protection Racket**: press **E** on the enforcer
+  and select *"I'll pay the going rate."* Costs 10 coins/in-game day (deducted from cashRegister).
+  Marchetti Respect recovers at +3/day while protection is paid.
+
+---
+
+### Street Lads & Council Reactions
+
+**Street Lads** love the shop if it undercuts Marchetti and stocks items they want
+(`Material.CIDER`, `Material.TOBACCO`, `Material.ENERGY_DRINK` — new Materials):
+- Selling these three items at fair price gives Street Lads Respect +2/day.
+- Selling them at undercut price gives +5/day and seeds: *"That shop's got us sorted, proper."*
+- Street Lads will **defend the shop** against Marchetti enforcers if Street Lads Respect ≥ 70:
+  they intercept any approaching enforcer NPC and fight them (existing combat system) before
+  they reach the shop.
+
+**The Council** tolerates the shop at Heat < 30 but dislikes prosperity it didn't sanction:
+- When `dailyRevenue` exceeds 50 coins in a day: The Council issues a `BUSINESS_RATES_NOTICE`
+  prop on the exterior wall (cosmetic prop, new `PropType`). If not torn down within 1 day,
+  it adds 1 Council offence to the criminal record. Tearing it down: Council Respect −5,
+  Street Lads Respect +3.
+- Council Victory (from Phase 8d) now also commissions a **Licensed Trader NPC** who sets up a
+  competing stall within 10 blocks of the player's shop, selling the same items at −20% cost
+  (subsidised). The Licensed Trader cannot be robbed or attacked without triggering a police raid.
+
+New Materials: `CIDER`, `TOBACCO`, `ENERGY_DRINK`.
+New PropTypes: `SHOP_SIGN`, `INSPECTION_NOTICE`, `BUSINESS_RATES_NOTICE`.
+
+---
+
+### Shop Management UI (Key M)
+
+The new **Shop Management UI** (toggled with **M**, only accessible while inside the claimed
+shop) is a 2-panel overlay rendered via `SpriteBatch`:
+
+- **Left panel — Stock**: Grid of slots showing each stocked Material, quantity, and current
+  sell price. Player can click a slot to adjust the price (increment/decrement with arrow keys,
+  confirm with Enter). Transfer items from personal inventory by dragging (or pressing T to
+  transfer selected hotbar item).
+- **Right panel — Ledger**: Shows `dailyRevenue`, `cashRegister` balance, Runner status
+  (idle / on run / hired), Heat level bar (colour-coded: green/amber/red), and a 3-day
+  revenue history.
+- **Bottom bar**: Buttons for *"Collect cash"* (transfers `cashRegister` to player inventory),
+  *"Hire runner"* / *"Fire runner"*, *"Open / Close shop"*, *"Pay protection"* (if enforcer
+  has visited).
+
+**Key binding**: **M** — Shop Management (added to Help UI).
+
+---
+
+### Integration with Existing Systems
+
+- **StreetSkillSystem** HUSTLE Tier 3 perk *"Sales Patter"*: customer purchase chance +10%
+  and price tolerance +20% (customers will pay overpriced items more readily).
+- **BootSaleSystem**: Items unsold after 2 in-game days can be bulk-transferred to the next
+  boot sale auction with one press (T from Shop Management UI → Boot Sale queue).
+- **NewspaperSystem**: When `dailyRevenue` exceeds 30 coins in a day, the Ragamuffin may
+  run a headline: *"Mystery Shop Shakes Up Local Economy"* or *"Who Is The Corner Shop Kingpin?"*
+- **PirateRadioSystem**: Broadcasting from inside the shop building produces a 1-day +10%
+  customer traffic boost ("the radio ad effect") and seeds a `SHOP_NEWS` rumour in all
+  NPCs within earshot.
+- **AchievementSystem**: New achievements:
+
+| Achievement | Trigger |
+|-------------|---------|
+| `OPEN_FOR_BUSINESS` | Open a shop for the first time |
+| `KERCHING` | Earn 100 coins in a single in-game day from shop sales |
+| `PROTECTION_MONEY` | Pay the Marchetti protection racket 3 times |
+| `THE_NEIGHBOURHOOD_SHOP` | Keep a shop open for 7 in-game days without a raid |
+| `RAIDED` | Survive a police raid (shop reopened within 1 day after raid) |
+| `PRICE_WAR` | Undercut Marchetti for 3 consecutive in-game days |
+
+---
+
+**Unit tests**: `ShopUnit` stock management, price-to-traffic calculation, heat level accumulation
+and threshold transitions, Runner pathing target selection, wage deduction logic, Marchetti
+undercut detection, customer NPC purchase probability, cash register collect, raid confiscation,
+all new achievement triggers.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Claim a derelict shop**: Generate the world. Find a charity shop building with Condition ≤ 49.
+   Place the player at its front door. Press **E**. Verify a `ShopUnit` is created for that
+   building. Verify a `SHOP_SIGN` prop appears on the exterior wall. Verify the Shop Management
+   UI opens (key M accessible). Verify `openForBusiness` is false (not yet stocked).
+
+2. **Stock and open the shop, customer buys an item**: Create a `ShopUnit`. Transfer 5 units of
+   `Material.SAUSAGE_ROLL` from player inventory into `stockMap` via Shop Management UI. Set
+   price to 3 coins. Set `openForBusiness = true`. Spawn a `PUBLIC` NPC 6 blocks from the shop.
+   Advance simulation by 60 in-game seconds (enough for ≥1 purchase attempt at 15%/min chance —
+   seed RNG for determinism). Verify `stockMap` contains 4 SAUSAGE_ROLL (1 sold). Verify
+   `cashRegister` increased by 3. Verify the NPC has a `SHOP_NEWS` rumour in their buffer.
+
+3. **Underpriced goods boost traffic and anger Marchetti**: Give the shop 10 units of an item
+   with base fence value 10 coins. Set price to 7 coins (70% of base — undercut). Advance 2
+   in-game days. Verify the effective customer-purchase chance for that item is 45% (15% base
+   + 30% undercut bonus). Verify Marchetti Respect has decreased by at least 10 over the 2 days.
+
+4. **Runner restocks empty slot**: Hire a Runner NPC. Set `stockMap[SAUSAGE_ROLL] = 0`. Verify
+   the Runner pathfinds toward the nearest SAUSAGE_ROLL source (a boot sale stall or item drop
+   seeded in the world). Advance sufficient frames for the Runner to reach the source and return.
+   Verify `stockMap[SAUSAGE_ROLL]` is now ≥ 1.
+
+5. **Runner delivery earns premium**: Queue a delivery via Shop Management UI: 3 units of
+   `ENERGY_DRINK` at 5 coins each to an NPC named "Dave" at position (50, 1, 50). Hire the
+   Runner. Advance simulation until delivery completes. Verify `cashRegister` increased by
+   (3 × 5) + (3 × 2) = 21 coins. Verify `stockMap[ENERGY_DRINK]` decreased by 3. Verify
+   Notoriety increased by 9 (+3 per item delivered).
+
+6. **Police raid at Heat 100**: Set `heatLevel` to 99. Trigger one "hot goods" sale
+   (+10 heat → total 109, clamped to 100). Verify `heatLevel == 100`. Advance 1 frame.
+   Verify 3 `POLICE` NPC spawned near the shop. Advance until they reach the shop. Verify
+   all items in `stockMap` are removed (confiscated). Verify `SHOP_SIGN` prop removed.
+   Verify `openForBusiness == false`. Verify player CriminalRecord gained 1 offence.
+   Verify Notoriety increased by 25.
+
+7. **Marchetti enforcer visits after 2 days of undercutting**: Set Marchetti Respect to 36.
+   Undercut Marchetti's off-licence price for 2 in-game days (advance simulation). Verify
+   Marchetti Respect has dropped below 35. Verify a `FACTION_LIEUTENANT` NPC has been spawned
+   and pathfound to within 3 blocks of the shop. Verify the NPC's speech text contains
+   *"Be a shame if something happened to it."*
+
+8. **Street Lads defend shop against enforcer**: Set Street Lads Respect to 72. Stock the shop
+   with `CIDER` at fair price. Set Marchetti Respect to 24 (enforcer about to attack). Spawn a
+   Marchetti enforcer NPC approaching the shop. Advance simulation. Verify at least 1 Street Lads
+   NPC intercepts the enforcer (moves between enforcer and shop) before the enforcer reaches the
+   shop. Verify the enforcer enters `COMBAT` state against the Street Lad (not the shop).
+
+9. **Council issues business rates notice above 50 coin daily revenue**: Set `dailyRevenue` to 55.
+   Advance 1 in-game day tick. Verify a `BUSINESS_RATES_NOTICE` prop appears on the shop exterior.
+   Player presses **E** on the notice to tear it down. Verify prop removed. Verify Council Respect
+   −5. Verify Street Lads Respect +3.
+
+10. **Full shop lifecycle stress test**: Start a new game. Claim a derelict shop. Stock it with
+    5 different materials. Set fair prices. Open for business. Hire a Runner. Advance 3 in-game
+    days — verify daily revenue accumulates, Runner completes at least 1 restock run, at least
+    3 NPC customers make purchases, `SHOP_NEWS` rumours exist in the RumourNetwork. Then
+    trigger a Marchetti confrontation (drop Machetti Respect to 24). Trigger a police raid
+    (set Heat to 100). Verify raid fires correctly, shop is closed, items confiscated.
+    Immediately re-open the shop (re-claim building, re-stock). Verify the `RAIDED` achievement
+    fires. Throughout: verify game remains in PLAYING state, no NPEs, all HUD elements render,
+    NPC count non-zero, Shop Management UI opens/closes without error.
