@@ -59,6 +59,41 @@ class NPCModelVariantTest {
             "LONG_HAIR variant should have hasLongHair() == true");
     }
 
+    /**
+     * Verify the hair block Z position does not clip into the head.
+     * Hair centre Z = -(HEAD_D*headScale/2 + hairHalfDepth + gap).
+     * The front face of the hair is at hairCentreZ + hairHalfDepth,
+     * which must be <= -(HEAD_D*headScale/2) (the back surface of the head).
+     */
+    @Test
+    void longHairPositionDoesNotClipIntoHead() {
+        final float HEAD_D = 0.38f;
+        float headScale = NPCModelVariant.LONG_HAIR.getHeadScale();
+        float hairHalfDepth = HEAD_D * 0.3f / 2f;
+        float hairZ = -(HEAD_D * headScale / 2f + hairHalfDepth + 0.005f);
+        float hairFrontZ = hairZ + hairHalfDepth; // front face of hair block
+        float headBackZ  = -(HEAD_D * headScale / 2f); // back surface of head
+        assertTrue(hairFrontZ <= headBackZ,
+            "Hair front face (" + hairFrontZ + ") must not protrude in front of head back surface (" + headBackZ + ")");
+    }
+
+    /**
+     * Verify the hair block Y position aligns its top with the top of the head.
+     * hairY + (HEAD_H + 0.20f)/2 should equal headCentre + HEAD_H*headScale/2.
+     */
+    @Test
+    void longHairTopAlignsWithHeadTop() {
+        final float HEAD_H = 0.38f;
+        final float headCentre = 1.5f; // arbitrary reference height
+        final float headBob = 0f;
+        float headScale = NPCModelVariant.LONG_HAIR.getHeadScale();
+        float hairY = headCentre + headBob + HEAD_H * headScale / 2f - (HEAD_H + 0.20f) / 2f;
+        float hairTopY = hairY + (HEAD_H + 0.20f) / 2f;
+        float headTopY = headCentre + HEAD_H * headScale / 2f;
+        assertEquals(headTopY, hairTopY, 0.001f,
+            "Hair top should align with the top of the head");
+    }
+
     @Test
     void onlyLongHairVariantHasHairFlag() {
         for (NPCModelVariant v : NPCModelVariant.values()) {

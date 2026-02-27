@@ -863,10 +863,16 @@ public class NPCRenderer {
         // Face (front of head at +Z) — select model based on current expression and blink/speak state
         renderFace(modelBatch, environment, npc, pos, yawRad, headCentre + headBob, HEAD_D * headScale / 2f + 0.011f);
 
-        // Long hair (LONG_HAIR variant) — block rendered at the back of the head
+        // Long hair (LONG_HAIR variant) — block rendered at the back of the head.
+        // Z: position hair centre so its front face sits flush against the back of the head
+        //    (back-of-head at -(HEAD_D*headScale/2), hair half-depth = HEAD_D*0.3f/2 = 0.057f).
+        // Y: align hair top with head top so it hangs downward from the crown.
         if (variant.hasLongHair()) {
             ModelInstance hairInst = getOrCreateLongHairInstance(npc);
-            setPartTransform(hairInst, pos, yawRad, 0f, headCentre + headBob - HEAD_H * 0.1f, -(HEAD_D / 2f + 0.01f));
+            float hairHalfDepth = HEAD_D * 0.3f / 2f;
+            float hairZ = -(HEAD_D * headScale / 2f + hairHalfDepth + 0.005f);
+            float hairY = headCentre + headBob + HEAD_H * headScale / 2f - (HEAD_H + 0.20f) / 2f;
+            setPartTransform(hairInst, pos, yawRad, 0f, hairY, hairZ);
             modelBatch.render(hairInst, environment);
         }
 
