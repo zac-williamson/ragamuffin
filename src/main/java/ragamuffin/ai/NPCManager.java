@@ -9,6 +9,7 @@ import ragamuffin.core.NoiseSystem;
 import ragamuffin.core.ShelterDetector;
 import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCModelVariant;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
@@ -381,8 +382,67 @@ public class NPCManager {
                 npc.setState(NPCState.IDLE);
         }
 
+        // Assign a model variant to give visual variety to NPCs (Issue #729).
+        npc.setModelVariant(pickVariant(type));
+
         npcs.add(npc);
         return npc;
+    }
+
+    /**
+     * Pick an appropriate {@link NPCModelVariant} for the given NPC type.
+     * Non-humanoid types (DOG, BIRD) always use DEFAULT.
+     * Uniformed types (POLICE, ARMED_RESPONSE, COUNCIL_BUILDER, PCSO, LOLLIPOP_LADY)
+     * use DEFAULT so their distinctive outfit reads clearly.
+     * All other types get a weighted random pick suited to their archetype.
+     */
+    private NPCModelVariant pickVariant(NPCType type) {
+        switch (type) {
+            // Non-humanoid or uniform — fixed appearance
+            case DOG:
+            case BIRD:
+            case POLICE:
+            case ARMED_RESPONSE:
+            case COUNCIL_BUILDER:
+            case PCSO:
+            case LOLLIPOP_LADY:
+                return NPCModelVariant.DEFAULT;
+
+            // Imposing/heavy build
+            case BOUNCER:
+            case THUG:
+                return randomFrom(NPCModelVariant.STOCKY, NPCModelVariant.STOCKY, NPCModelVariant.DEFAULT);
+
+            // Athletic / slender
+            case JOGGER:
+                return randomFrom(NPCModelVariant.SLIM, NPCModelVariant.SLIM, NPCModelVariant.TALL);
+
+            // Elderly — shorter and stockier
+            case PENSIONER:
+                return randomFrom(NPCModelVariant.SHORT, NPCModelVariant.STOCKY, NPCModelVariant.SHORT);
+
+            // Children — shorter
+            case SCHOOL_KID:
+                return randomFrom(NPCModelVariant.SHORT, NPCModelVariant.SHORT, NPCModelVariant.SLIM);
+
+            // Street youth — tall or slim look
+            case YOUTH_GANG:
+            case STREET_LAD:
+                return randomFrom(NPCModelVariant.TALL, NPCModelVariant.SLIM, NPCModelVariant.DEFAULT);
+
+            // All remaining humanoid types get a fully random variant (including LONG_HAIR)
+            default: {
+                NPCModelVariant[] all = NPCModelVariant.values();
+                return all[random.nextInt(all.length)];
+            }
+        }
+    }
+
+    /**
+     * Pick one of the supplied variants at random with equal probability.
+     */
+    private NPCModelVariant randomFrom(NPCModelVariant... variants) {
+        return variants[random.nextInt(variants.length)];
     }
 
     /**

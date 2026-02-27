@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCModelVariant;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
@@ -833,5 +834,120 @@ class NPCManagerTest {
                 "Fix #407: NPC must be revived via tickRecoveryTimers() after recovery duration elapses while paused");
         assertEquals(NPCState.WANDERING, npc.getState(),
                 "Fix #407: revived NPC must return to WANDERING state");
+    }
+
+    // ── Issue #729: NPC variety — model variant assignment ──────────────────
+
+    /**
+     * Non-humanoid NPCs (DOG, BIRD) must always use the DEFAULT variant so that
+     * the renderer's quadruped/bird model paths are not broken by scale overrides.
+     */
+    @Test
+    void dogAndBirdAlwaysUseDefaultVariant() {
+        NPC dog = manager.spawnNPC(NPCType.DOG, 5, 1, 5);
+        NPC bird = manager.spawnNPC(NPCType.BIRD, 6, 1, 6);
+        assertEquals(NPCModelVariant.DEFAULT, dog.getModelVariant(),
+                "Issue #729: DOG must use DEFAULT variant (non-humanoid model)");
+        assertEquals(NPCModelVariant.DEFAULT, bird.getModelVariant(),
+                "Issue #729: BIRD must use DEFAULT variant (non-humanoid model)");
+    }
+
+    /**
+     * Uniformed NPCs (POLICE, PCSO, ARMED_RESPONSE, COUNCIL_BUILDER, LOLLIPOP_LADY)
+     * must use DEFAULT so their distinctive outfits render correctly.
+     */
+    @Test
+    void uniformedNPCsAlwaysUseDefaultVariant() {
+        NPC police = manager.spawnNPC(NPCType.POLICE, 5, 1, 5);
+        NPC pcso = manager.spawnNPC(NPCType.PCSO, 6, 1, 6);
+        NPC armed = manager.spawnNPC(NPCType.ARMED_RESPONSE, 7, 1, 7);
+        NPC builder = manager.spawnNPC(NPCType.COUNCIL_BUILDER, 8, 1, 8);
+        NPC lollipop = manager.spawnNPC(NPCType.LOLLIPOP_LADY, 9, 1, 9);
+        assertEquals(NPCModelVariant.DEFAULT, police.getModelVariant(),
+                "Issue #729: POLICE must use DEFAULT variant");
+        assertEquals(NPCModelVariant.DEFAULT, pcso.getModelVariant(),
+                "Issue #729: PCSO must use DEFAULT variant");
+        assertEquals(NPCModelVariant.DEFAULT, armed.getModelVariant(),
+                "Issue #729: ARMED_RESPONSE must use DEFAULT variant");
+        assertEquals(NPCModelVariant.DEFAULT, builder.getModelVariant(),
+                "Issue #729: COUNCIL_BUILDER must use DEFAULT variant");
+        assertEquals(NPCModelVariant.DEFAULT, lollipop.getModelVariant(),
+                "Issue #729: LOLLIPOP_LADY must use DEFAULT variant");
+    }
+
+    /**
+     * Bouncers and Thugs should always receive an imposing (STOCKY or DEFAULT) variant,
+     * never a SHORT or SLIM variant.
+     */
+    @Test
+    void bouncersAndThugGetImposingVariant() {
+        for (int i = 0; i < 20; i++) {
+            NPC bouncer = manager.spawnNPC(NPCType.BOUNCER, i, 1, 0);
+            assertNotEquals(NPCModelVariant.SHORT, bouncer.getModelVariant(),
+                    "Issue #729: BOUNCER must not be SHORT");
+            assertNotEquals(NPCModelVariant.SLIM, bouncer.getModelVariant(),
+                    "Issue #729: BOUNCER must not be SLIM");
+
+            NPC thug = manager.spawnNPC(NPCType.THUG, i, 1, 1);
+            assertNotEquals(NPCModelVariant.SHORT, thug.getModelVariant(),
+                    "Issue #729: THUG must not be SHORT");
+            assertNotEquals(NPCModelVariant.SLIM, thug.getModelVariant(),
+                    "Issue #729: THUG must not be SLIM");
+        }
+    }
+
+    /**
+     * School kids should always receive a SHORT or SLIM variant — never TALL or STOCKY.
+     */
+    @Test
+    void schoolKidsGetShortOrSlimVariant() {
+        for (int i = 0; i < 20; i++) {
+            NPC kid = manager.spawnNPC(NPCType.SCHOOL_KID, i, 1, 0);
+            NPCModelVariant v = kid.getModelVariant();
+            assertTrue(v == NPCModelVariant.SHORT || v == NPCModelVariant.SLIM,
+                    "Issue #729: SCHOOL_KID must be SHORT or SLIM, got " + v);
+        }
+    }
+
+    /**
+     * Joggers should always receive a SLIM or TALL variant — never STOCKY or SHORT.
+     */
+    @Test
+    void joggersGetSlimOrTallVariant() {
+        for (int i = 0; i < 20; i++) {
+            NPC jogger = manager.spawnNPC(NPCType.JOGGER, i, 1, 0);
+            NPCModelVariant v = jogger.getModelVariant();
+            assertTrue(v == NPCModelVariant.SLIM || v == NPCModelVariant.TALL,
+                    "Issue #729: JOGGER must be SLIM or TALL, got " + v);
+        }
+    }
+
+    /**
+     * Spawning many PUBLIC NPCs should produce at least two different variants,
+     * confirming that variety is actually being applied across the population.
+     */
+    @Test
+    void publicNPCsShowVarietyAcrossSpawns() {
+        java.util.Set<NPCModelVariant> seen = new java.util.HashSet<>();
+        for (int i = 0; i < 30; i++) {
+            NPC npc = manager.spawnNPC(NPCType.PUBLIC, i * 2, 1, 0);
+            if (npc != null) seen.add(npc.getModelVariant());
+        }
+        assertTrue(seen.size() >= 2,
+                "Issue #729: PUBLIC NPCs should have at least 2 different variants across 30 spawns; got " + seen);
+    }
+
+    /**
+     * Every spawned NPC must have a non-null variant — the variant is always set.
+     */
+    @Test
+    void allSpawnedNPCsHaveNonNullVariant() {
+        for (NPCType type : NPCType.values()) {
+            NPC npc = manager.spawnNPC(type, 0, 1, 0);
+            if (npc != null) {
+                assertNotNull(npc.getModelVariant(),
+                        "Issue #729: " + type + " must have a non-null model variant after spawning");
+            }
+        }
     }
 }
