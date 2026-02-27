@@ -43,7 +43,7 @@ class FenceThinAndDoorTest {
 
     @Test
     void doorLowerIsSolid() {
-        // Closed door blocks are solid — toggleDoor() writes AIR when open so open doors are passable
+        // Door blocks are solid by type — World.isBlockSolid() makes open doors passable
         assertTrue(BlockType.DOOR_LOWER.isSolid());
     }
 
@@ -214,17 +214,19 @@ class FenceThinAndDoorTest {
     }
 
     @Test
-    void openDoorBlocksReplacedWithAir() {
+    void openDoorBlocksRemainPresent() {
+        // Fix #749: door blocks stay in the world when open — they swing aside visually
+        // rather than disappearing. Collision is handled by World.isBlockSolid().
         World world = new World(42L);
         world.setBlock(10, 5, 10, BlockType.DOOR_LOWER);
         world.setBlock(10, 6, 10, BlockType.DOOR_UPPER);
 
         world.toggleDoor(10, 5, 10);
 
-        assertEquals(BlockType.AIR, world.getBlock(10, 5, 10),
-            "DOOR_LOWER should be replaced with AIR when open");
-        assertEquals(BlockType.AIR, world.getBlock(10, 6, 10),
-            "DOOR_UPPER should be replaced with AIR when open");
+        assertEquals(BlockType.DOOR_LOWER, world.getBlock(10, 5, 10),
+            "DOOR_LOWER should remain present when door is open (swings aside)");
+        assertEquals(BlockType.DOOR_UPPER, world.getBlock(10, 6, 10),
+            "DOOR_UPPER should remain present when door is open (swings aside)");
     }
 
     @Test
