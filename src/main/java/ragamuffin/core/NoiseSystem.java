@@ -25,6 +25,9 @@ public class NoiseSystem {
     public static final float NOISE_BLOCK_BREAK = 1.0f;
     public static final float NOISE_BLOCK_PLACE = 0.7f;
 
+    /** Issue #781: Noise added per outdoor graffiti tag placed. */
+    public static final float NOISE_GRAFFITI = 0.1f;
+
     // Decay rate per second (toward baseline)
     private static final float DECAY_RATE = 0.5f;
 
@@ -103,6 +106,16 @@ public class NoiseSystem {
             spikeLevel = NOISE_BLOCK_PLACE;
             spikeTimer = BLOCK_BREAK_SPIKE_DURATION;
         }
+    }
+
+    /**
+     * Add a small noise delta (e.g. for graffiti placement: NOISE_GRAFFITI = 0.1).
+     * Does not create a spike; noise decays normally after the call.
+     *
+     * @param amount amount to add (clamped to [0, 1])
+     */
+    public void addNoise(float amount) {
+        noiseLevel = Math.min(1f, noiseLevel + amount);
     }
 
     /**

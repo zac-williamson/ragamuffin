@@ -224,6 +224,30 @@ public class CraftingSystem {
             Map.of(Material.COIN, 1, Material.NEWSPAPER, 1),
             Map.of(Material.RUMOUR_NOTE, 1)
         ));
+
+        // ── Issue #781: Graffiti & Territorial Marking ────────────────────────────
+
+        // SPRAY_CAN: SPRAY_CAN_EMPTY×1 + any PAINT_PIGMENT → SPRAY_CAN×1 (20 uses)
+        recipes.add(new Recipe(
+            Map.of(Material.SPRAY_CAN_EMPTY, 1, Material.PAINT_PIGMENT_RED, 1),
+            Map.of(Material.SPRAY_CAN, 1)
+        ));
+        recipes.add(new Recipe(
+            Map.of(Material.SPRAY_CAN_EMPTY, 1, Material.PAINT_PIGMENT_BLUE, 1),
+            Map.of(Material.SPRAY_CAN, 1)
+        ));
+        recipes.add(new Recipe(
+            Map.of(Material.SPRAY_CAN_EMPTY, 1, Material.PAINT_PIGMENT_GOLD, 1),
+            Map.of(Material.SPRAY_CAN, 1)
+        ));
+        recipes.add(new Recipe(
+            Map.of(Material.SPRAY_CAN_EMPTY, 1, Material.PAINT_PIGMENT_WHITE, 1),
+            Map.of(Material.SPRAY_CAN, 1)
+        ));
+        recipes.add(new Recipe(
+            Map.of(Material.SPRAY_CAN_EMPTY, 1, Material.PAINT_PIGMENT_GREY, 1),
+            Map.of(Material.SPRAY_CAN, 1)
+        ));
     }
 
     /**
