@@ -5,6 +5,7 @@ import ragamuffin.building.Material;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
+import ragamuffin.entity.Player;
 import ragamuffin.ui.AchievementType;
 
 import java.util.ArrayList;
@@ -361,7 +362,7 @@ public class StallSystem {
         if (!achievementLicensedToSell) {
             achievementLicensedToSell = true;
             if (achievementCallback != null) {
-                achievementCallback.onAchievement(AchievementType.LICENSED_TO_SELL);
+                achievementCallback.award(AchievementType.LICENSED_TO_SELL);
             }
         }
 
@@ -599,14 +600,14 @@ public class StallSystem {
             if (!achievementTurfVendor) {
                 achievementTurfVendor = true;
                 if (achievementCallback != null) {
-                    achievementCallback.onAchievement(AchievementType.TURF_VENDOR);
+                    achievementCallback.award(AchievementType.TURF_VENDOR);
                 }
             }
         } else if (stallTerritory == Faction.STREET_LADS || stallTerritory == Faction.THE_COUNCIL) {
             if (!achievementTurfVendor) {
                 achievementTurfVendor = true;
                 if (achievementCallback != null) {
-                    achievementCallback.onAchievement(AchievementType.TURF_VENDOR);
+                    achievementCallback.award(AchievementType.TURF_VENDOR);
                 }
             }
         }
@@ -628,7 +629,7 @@ public class StallSystem {
         if (!achievementShutItDown) {
             achievementShutItDown = true;
             if (achievementCallback != null) {
-                achievementCallback.onAchievement(AchievementType.SHUTIT_DOWN);
+                achievementCallback.award(AchievementType.SHUTIT_DOWN);
             }
         }
     }
@@ -673,7 +674,7 @@ public class StallSystem {
         if (!achievementBribedInspector) {
             achievementBribedInspector = true;
             if (achievementCallback != null) {
-                achievementCallback.onAchievement(AchievementType.BRIBED_THE_INSPECTOR);
+                achievementCallback.award(AchievementType.BRIBED_THE_INSPECTOR);
             }
         }
 
@@ -705,7 +706,7 @@ public class StallSystem {
         if (stallTier == 2 && !achievementEmpireBuilder) {
             achievementEmpireBuilder = true;
             if (achievementCallback != null) {
-                achievementCallback.onAchievement(AchievementType.EMPIRE_BUILDER);
+                achievementCallback.award(AchievementType.EMPIRE_BUILDER);
             }
         }
     }
@@ -720,7 +721,7 @@ public class StallSystem {
         if (opened && !achievementMarketTrader) {
             achievementMarketTrader = true;
             if (achievementCallback != null) {
-                achievementCallback.onAchievement(AchievementType.MARKET_TRADER);
+                achievementCallback.award(AchievementType.MARKET_TRADER);
             }
         }
         return opened;
