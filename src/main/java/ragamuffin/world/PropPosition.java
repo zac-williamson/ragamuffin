@@ -1,5 +1,7 @@
 package ragamuffin.world;
 
+import ragamuffin.entity.AABB;
+
 /**
  * Describes a single non-block-based 3D prop in the world.
  *
@@ -18,6 +20,7 @@ package ragamuffin.world;
  * {@link World#getPropPositions()}.
  *
  * Issue #669: Add unique non-block-based 3D models to the world.
+ * Issue #719: Props now have collision via {@link #getAABB()}.
  */
 public class PropPosition {
 
@@ -49,4 +52,29 @@ public class PropPosition {
     public float getWorldZ()     { return worldZ; }
     public PropType getType()    { return type; }
     public float getRotationY()  { return rotationY; }
+
+    /**
+     * Build an AABB for collision detection against this prop.
+     *
+     * The box is axis-aligned regardless of the prop's visual Y-rotation —
+     * we use the larger of width/depth for both horizontal axes so the box
+     * is always a conservative fit even when the prop is rotated.
+     *
+     * Issue #719: Add collision and destructibility to 3D objects.
+     *
+     * @return a new AABB centred on (worldX, worldY, worldZ) horizontally and
+     *         extending upward by the prop's collision height.
+     */
+    public AABB getAABB() {
+        float w = type.getCollisionWidth();
+        float h = type.getCollisionHeight();
+        float d = type.getCollisionDepth();
+        // Use the larger horizontal dimension for both axes to stay conservative
+        // under rotation.
+        float halfW = w / 2f;
+        float halfD = d / 2f;
+        return new AABB(
+                worldX - halfW, worldY,     worldZ - halfD,
+                worldX + halfW, worldY + h, worldZ + halfD);
+    }
 }

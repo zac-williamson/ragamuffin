@@ -184,6 +184,19 @@ public class World {
     }
 
     /**
+     * Remove the prop at the given index from the world.
+     * Called by {@link ragamuffin.building.PropBreaker} when a prop is destroyed.
+     *
+     * Issue #719: Add collision and destructibility to 3D objects.
+     *
+     * @param propIndex index into {@link #getPropPositions()}
+     * @throws IndexOutOfBoundsException if the index is out of range
+     */
+    public void removeProp(int propIndex) {
+        propPositions.remove(propIndex);
+    }
+
+    /**
      * Get a chunk at chunk coordinates, or null if not loaded.
      */
     public Chunk getChunk(int chunkX, int chunkY, int chunkZ) {
@@ -549,8 +562,10 @@ public class World {
     }
 
     /**
-     * Check if the player's AABB collides with any solid blocks in the world.
+     * Check if the player's AABB collides with any solid blocks or props in the world.
      * Inlines intersection test to avoid per-block AABB allocation.
+     *
+     * Issue #719: prop collision added.
      */
     private boolean checkWorldCollision(Player player) {
         AABB aabb = player.getAABB();
@@ -558,6 +573,7 @@ public class World {
         float aMinY = aabb.getMinY(), aMaxY = aabb.getMaxY();
         float aMinZ = aabb.getMinZ(), aMaxZ = aabb.getMaxZ();
 
+        // ── Block collision ──────────────────────────────────────────────────
         int minX = (int) Math.floor(aMinX);
         int maxX = (int) Math.ceil(aMaxX);
         int minY = (int) Math.floor(aMinY);
@@ -579,6 +595,15 @@ public class World {
                 }
             }
         }
+
+        // ── Prop collision (Issue #719) ──────────────────────────────────────
+        for (PropPosition prop : propPositions) {
+            AABB propBox = prop.getAABB();
+            if (aabb.intersects(propBox)) {
+                return true;
+            }
+        }
+
         return false;
     }
 
