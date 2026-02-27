@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
 import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
+import com.badlogic.gdx.graphics.g3d.attributes.DepthTestAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
@@ -66,6 +67,8 @@ public class ChunkRenderer {
 
     /**
      * Update/rebuild the mesh for a chunk.
+     * Opaque and transparent faces are stored in separate models so they can
+     * be rendered with the correct material (no blending vs alpha blending).
      */
     public void updateChunk(Chunk chunk, ChunkMeshBuilder builder) {
         String key = getChunkKey(chunk);
@@ -77,8 +80,12 @@ public class ChunkRenderer {
         }
 
         MeshData meshData = builder.build(chunk);
+        MeshData transparentMeshData = meshData.getTransparentMeshData();
 
-        if (meshData.getFaceCount() == 0) {
+        boolean hasOpaque = meshData.getFaceCount() > 0;
+        boolean hasTransparent = transparentMeshData.getFaceCount() > 0;
+
+        if (!hasOpaque && !hasTransparent) {
             return; // Empty chunk, nothing to render
         }
 
@@ -87,8 +94,36 @@ public class ChunkRenderer {
         float worldZ = chunk.getChunkZ() * Chunk.SIZE;
 
         ChunkModel chunkModel = new ChunkModel(worldX, worldY, worldZ);
-        int meshCount = meshData.getMeshCount();
 
+        // Build opaque sub-meshes (no alpha blending — depth writes correct)
+        if (hasOpaque) {
+            Material opaqueMaterial = new Material(
+                ColorAttribute.createDiffuse(Color.WHITE)
+            );
+            buildModelBatches(meshData, chunkModel, opaqueMaterial, worldX, worldY, worldZ, "opaque");
+        }
+
+        // Build transparent sub-meshes (alpha blending, depth mask disabled so
+        // opaque geometry behind glass is not occluded by the glass depth write)
+        if (hasTransparent) {
+            Material transparentMaterial = new Material(
+                ColorAttribute.createDiffuse(Color.WHITE),
+                new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA),
+                new DepthTestAttribute(false) // disable depth writes for transparent geometry
+            );
+            buildModelBatches(transparentMeshData, chunkModel, transparentMaterial, worldX, worldY, worldZ, "transparent");
+        }
+
+        if (!chunkModel.instances.isEmpty()) {
+            chunkModels.put(key, chunkModel);
+        }
+    }
+
+    /** Build Model/ModelInstance objects from a MeshData into the given ChunkModel. */
+    private void buildModelBatches(MeshData meshData, ChunkModel chunkModel,
+                                   Material material, float worldX, float worldY, float worldZ,
+                                   String namePrefix) {
+        int meshCount = meshData.getMeshCount();
         for (int batch = 0; batch < meshCount; batch++) {
             float[] verts = meshData.getVerticesArray(batch);
             short[] inds = meshData.getIndicesArray(batch);
@@ -109,23 +144,13 @@ public class ChunkRenderer {
 
             ModelBuilder modelBuilder = new ModelBuilder();
             modelBuilder.begin();
-
-            Material material = new Material(
-                ColorAttribute.createDiffuse(Color.WHITE),
-                new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
-            );
-
-            modelBuilder.part("chunk_" + batch, mesh, GL20.GL_TRIANGLES, material);
+            modelBuilder.part(namePrefix + "_" + batch, mesh, GL20.GL_TRIANGLES, material);
             Model model = modelBuilder.end();
 
             ModelInstance instance = new ModelInstance(model);
             instance.transform.setToTranslation(worldX, worldY, worldZ);
 
             chunkModel.add(model, instance);
-        }
-
-        if (!chunkModel.instances.isEmpty()) {
-            chunkModels.put(key, chunkModel);
         }
     }
 

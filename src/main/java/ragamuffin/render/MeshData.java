@@ -8,6 +8,9 @@ import java.util.List;
  * Automatically splits into sub-meshes when vertex count approaches
  * the unsigned short index limit (65535).
  * Uses primitive arrays internally to avoid boxing overhead.
+ *
+ * Transparent faces (e.g. glass) are stored separately so they can be
+ * rendered after all opaque geometry with alpha blending enabled.
  */
 public class MeshData {
     private static final int MAX_VERTICES_PER_MESH = 65532; // Leave room for a full quad (4 verts)
@@ -25,6 +28,10 @@ public class MeshData {
     private int currentVertexCount; // number of vertices (floats / 12)
     private int totalFaceCount;
 
+    // Separate storage for transparent faces (rendered with alpha blending)
+    private final MeshData transparentData;
+    private final boolean isTransparentStore;
+
     public MeshData() {
         this.vertexBatches = new ArrayList<>();
         this.indexBatches = new ArrayList<>();
@@ -34,6 +41,40 @@ public class MeshData {
         this.indexCount = 0;
         this.currentVertexCount = 0;
         this.totalFaceCount = 0;
+        this.isTransparentStore = false;
+        this.transparentData = new MeshData(true);
+    }
+
+    /** Private constructor for the transparent sub-store (avoids infinite recursion). */
+    private MeshData(boolean isTransparentStore) {
+        this.vertexBatches = new ArrayList<>();
+        this.indexBatches = new ArrayList<>();
+        this.currentVertices = new float[256 * 4 * FLOATS_PER_VERTEX]; // smaller initial capacity for transparent
+        this.currentIndices = new short[256 * 6];
+        this.vertexFloatCount = 0;
+        this.indexCount = 0;
+        this.currentVertexCount = 0;
+        this.totalFaceCount = 0;
+        this.isTransparentStore = true;
+        this.transparentData = null;
+    }
+
+    /**
+     * Returns the transparent sub-mesh data (for GLASS and other alpha-blended blocks).
+     * Faces added via {@link #addQuadTransparent} are stored here.
+     */
+    public MeshData getTransparentMeshData() {
+        return transparentData;
+    }
+
+    /**
+     * Add a transparent quad (e.g. a glass face) to the separate transparent sub-mesh.
+     * These faces will be rendered after all opaque geometry with alpha blending.
+     */
+    public void addQuadTransparent(float[] quadVertices, short[] quadIndices, int baseIndex) {
+        if (transparentData != null) {
+            transparentData.addQuad(quadVertices, quadIndices, baseIndex);
+        }
     }
 
     public void addQuad(float[] quadVertices, short[] quadIndices, int baseIndex) {

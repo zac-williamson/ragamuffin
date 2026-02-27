@@ -78,12 +78,16 @@ class ChunkMeshBuilderTest {
 
     @Test
     void glassBlockHasSixFaces() {
-        // Glass is non-opaque but transparent, so its faces should be emitted
+        // Glass is non-opaque but transparent, so its faces should be emitted.
+        // Glass faces go to the transparent sub-mesh (alpha blended), not the opaque mesh.
         Chunk chunk = new Chunk(0, 0, 0);
         chunk.setBlock(8, 8, 8, BlockType.GLASS);
         ChunkMeshBuilder builder = new ChunkMeshBuilder();
         MeshData meshData = builder.build(chunk);
-        assertEquals(6, meshData.getFaceCount(), "A single glass block surrounded by air should have 6 faces");
+        int totalFaces = meshData.getFaceCount() + meshData.getTransparentMeshData().getFaceCount();
+        assertEquals(6, totalFaces, "A single glass block surrounded by air should have 6 faces total");
+        assertEquals(6, meshData.getTransparentMeshData().getFaceCount(),
+            "All 6 glass faces should be in the transparent sub-mesh");
     }
 
     @Test
@@ -95,17 +99,59 @@ class ChunkMeshBuilderTest {
         chunk.setBlock(9, 8, 8, BlockType.GLASS);
         ChunkMeshBuilder builder = new ChunkMeshBuilder();
         MeshData meshData = builder.build(chunk);
-        // GRASS: 5 outer faces + 1 face toward GLASS (not culled since glass is non-opaque)
-        // GLASS: 6 faces (all sides air or next to non-opaque blocks)
-        // But the shared face between GRASS and GLASS: GRASS east face should be emitted
-        // since GLASS is non-opaque. GLASS west face should also be emitted toward GRASS
-        // (since GRASS is opaque, wait... GLASS west neighbour is GRASS which IS opaque,
-        // so that face IS culled — only the outward glass faces are emitted).
         // GRASS: 6 faces (east face not culled since GLASS is non-opaque)
         // GLASS: 5 faces (west face toward GRASS is culled since GRASS is opaque)
-        // Total: 11
-        assertEquals(11, meshData.getFaceCount(),
-            "GRASS(6 faces) + GLASS(5 faces, west culled by opaque GRASS) = 11 faces");
+        // GRASS goes to opaque mesh, GLASS goes to transparent mesh
+        int totalFaces = meshData.getFaceCount() + meshData.getTransparentMeshData().getFaceCount();
+        assertEquals(11, totalFaces,
+            "GRASS(6 opaque faces) + GLASS(5 transparent faces, west culled by opaque GRASS) = 11 total faces");
+    }
+
+    @Test
+    void glassFacesGoToTransparentSubMesh() {
+        // Glass faces must be stored in the transparent sub-mesh, not the opaque mesh,
+        // so they can be rendered with alpha blending after all opaque geometry.
+        Chunk chunk = new Chunk(0, 0, 0);
+        chunk.setBlock(8, 8, 8, BlockType.GLASS);
+        ChunkMeshBuilder builder = new ChunkMeshBuilder();
+        MeshData meshData = builder.build(chunk);
+
+        assertEquals(0, meshData.getFaceCount(),
+            "Opaque mesh should have 0 faces when only a glass block is present");
+        assertEquals(6, meshData.getTransparentMeshData().getFaceCount(),
+            "Transparent mesh should have 6 faces for a single glass block surrounded by air");
+    }
+
+    @Test
+    void opaqueFacesGoToOpaqueMesh() {
+        // Opaque block faces must stay in the opaque mesh (no alpha blending).
+        Chunk chunk = new Chunk(0, 0, 0);
+        chunk.setBlock(8, 8, 8, BlockType.GRASS);
+        ChunkMeshBuilder builder = new ChunkMeshBuilder();
+        MeshData meshData = builder.build(chunk);
+
+        assertEquals(6, meshData.getFaceCount(),
+            "Opaque mesh should have 6 faces for a single grass block");
+        assertEquals(0, meshData.getTransparentMeshData().getFaceCount(),
+            "Transparent mesh should have 0 faces when only an opaque block is present");
+    }
+
+    @Test
+    void mixedSceneCorrectlyRoutesOpaqueAndTransparentFaces() {
+        // Place a GRASS block and a GLASS block adjacent to each other.
+        // GRASS faces should be in the opaque mesh, GLASS faces in the transparent mesh.
+        Chunk chunk = new Chunk(0, 0, 0);
+        chunk.setBlock(8, 8, 8, BlockType.GRASS);
+        chunk.setBlock(9, 8, 8, BlockType.GLASS);
+        ChunkMeshBuilder builder = new ChunkMeshBuilder();
+        MeshData meshData = builder.build(chunk);
+
+        // GRASS: 6 faces (east face NOT culled because GLASS is non-opaque)
+        assertEquals(6, meshData.getFaceCount(),
+            "Opaque mesh should have 6 GRASS faces (east face visible through non-opaque glass)");
+        // GLASS: 5 faces (west face toward opaque GRASS is culled)
+        assertEquals(5, meshData.getTransparentMeshData().getFaceCount(),
+            "Transparent mesh should have 5 GLASS faces (west face toward opaque GRASS is culled)");
     }
 
     @Test
