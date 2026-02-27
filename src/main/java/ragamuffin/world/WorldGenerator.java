@@ -1304,7 +1304,11 @@ public class WorldGenerator {
         int nz = hsNorthZ;
 
         // --- South side slots ---
-        // City block 1: offsets 0,7 (x=26..39); block 2: offsets 20,27 (x=46..59); block 3: offsets 40,47 (x=66..79)
+        // Primary slots: city blocks east of the road.
+        // Overflow slots: a second row further south (z + SOUTH_OVERFLOW_OFFSET), used if a
+        // primary slot is blocked by the office building footprint.  These positions are far
+        // enough south to be clear of all other landmarks (Fix #726).
+        final int SOUTH_OVERFLOW_OFFSET = 14;
         int[][] southSlots = {
             {sx,      7, 8},
             {sx + 7,  7, 8},
@@ -1312,6 +1316,11 @@ public class WorldGenerator {
             {sx + 27, 7, 8},
             {sx + 40, 7, 8},
             {sx + 47, 7, 8},
+            // overflow row (further south, same x positions as first four primary slots)
+            {sx,      7, 8, 1},   // flag=1 means use sz + SOUTH_OVERFLOW_OFFSET
+            {sx + 7,  7, 8, 1},
+            {sx + 20, 7, 8, 1},
+            {sx + 27, 7, 8, 1},
         };
         List<LandmarkType> southShops = new ArrayList<>(Arrays.asList(
             LandmarkType.GREGGS,
@@ -1328,14 +1337,16 @@ public class WorldGenerator {
         int offZ = 26 + officeOffZ;
 
         int shopIdx = 0;
-        for (int i = 0; i < southSlots.length && shopIdx < southShops.size(); i++) {
-            int[] slot = southSlots[i];
+        for (int[] slot : southSlots) {
+            if (shopIdx >= southShops.size()) break;
+            // Determine effective z (overflow slots use a row further south)
+            int slotZ = (slot.length > 3 && slot[3] == 1) ? sz + SOUTH_OVERFLOW_OFFSET : sz;
             // Skip this slot if it overlaps with the office building footprint
             boolean xOverlap = slot[0] < offX + 15 && slot[0] + slot[1] > offX;
-            boolean zOverlap = sz < offZ + 15 && sz + slot[2] > offZ;
+            boolean zOverlap = slotZ < offZ + 15 && slotZ + slot[2] > offZ;
             if (xOverlap && zOverlap) continue;
             LandmarkType type = southShops.get(shopIdx++);
-            generateShopWithSign(world, slot[0], sz, slot[1], slot[2], 4, wallForShop(type), signForShop(type), type);
+            generateShopWithSign(world, slot[0], slotZ, slot[1], slot[2], 4, wallForShop(type), signForShop(type), type);
         }
 
         // --- North side slots ---

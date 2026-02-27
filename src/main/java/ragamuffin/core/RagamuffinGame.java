@@ -2809,7 +2809,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
 
         // Phase 8: Render GameHUD (health/hunger/energy bars + crosshair)
-        if (!openingSequence.isActive()) {
+        // Fix #726: suppress GameHUD when quest log is open so it does not bleed around the panel edges
+        if (!openingSequence.isActive() && !questLogUI.isVisible()) {
             // Phase 12: Update weather display
             gameHUD.setWeather(weatherSystem.getCurrentWeather());
 
@@ -2861,13 +2862,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem, showCrosshair);
         }
 
-        // Always render hotbar (unless opening sequence active)
-        if (!openingSequence.isActive()) {
+        // Always render hotbar (unless opening sequence active or quest log is open)
+        // Fix #726: suppress hotbar when quest log is open so it does not show through the overlay
+        if (!openingSequence.isActive() && !questLogUI.isVisible()) {
             hotbarUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
-        // Render clock
-        clockHUD.render(spriteBatch, font, screenWidth, screenHeight);
+        // Render clock — suppressed when quest log is open to prevent overlap (#726)
+        if (!questLogUI.isVisible()) {
+            clockHUD.render(spriteBatch, font, screenWidth, screenHeight);
+        }
 
         // Render inventory if visible
         if (inventoryUI.isVisible()) {
@@ -2906,7 +2910,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
 
         // Issue #13: render NPC speech log (bottom-right corner)
-        if (!openingSequence.isActive()) {
+        // Fix #726: suppress speech log when quest log is open so it does not render on top of the overlay
+        if (!openingSequence.isActive() && !questLogUI.isVisible()) {
             speechLogUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
 
