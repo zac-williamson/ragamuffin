@@ -1139,13 +1139,15 @@ public class RagamuffinGame extends ApplicationAdapter {
             // so that buildings and terrain naturally occlude them.  After drawing the
             // sky elements we clear only the depth buffer so the 3D world renders on top.
             // Fix #235: Pass cameraYaw so the skybox remains stationary relative to the world.
+            // Fix #734: Pass dayOfYear so the night sky (stars, moon, planets) updates seasonally.
             {
                 float ts = timeSystem.getTime();
                 float sr = timeSystem.getSunriseTime();
                 float ss = timeSystem.getSunsetTime();
                 skyRenderer.renderSkybox(shapeRenderer, ts, sr, ss,
                                          Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
-                                         timeSystem.isNight(), cameraYaw);
+                                         timeSystem.isNight(), cameraYaw,
+                                         timeSystem.getDayOfYear());
             }
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
 
@@ -1216,6 +1218,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #235: Pass cameraYaw so the skybox remains stationary relative to the world.
             // Fix #323: Advance cloud animation while paused so clouds continue scrolling
             // (sky is atmospheric background and should not freeze during pause).
+            // Fix #734: Pass dayOfYear so the night sky updates seasonally.
             {
                 skyRenderer.update(delta);
                 float ts = timeSystem.getTime();
@@ -1223,7 +1226,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 float ss = timeSystem.getSunsetTime();
                 skyRenderer.renderSkybox(shapeRenderer, ts, sr, ss,
                                          Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
-                                         timeSystem.isNight(), cameraYaw);
+                                         timeSystem.isNight(), cameraYaw,
+                                         timeSystem.getDayOfYear());
             }
             Gdx.gl.glClear(GL20.GL_DEPTH_BUFFER_BIT);
 
