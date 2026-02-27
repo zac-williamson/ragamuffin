@@ -377,6 +377,39 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #771: Hot Pursuit — Wanted System ──────────────────────────────
+
+    LEG_IT(
+        "Leg It",
+        "Escaped police by running 80 blocks and breaking line of sight for 60 seconds. Pure bottle.",
+        1
+    ),
+    BENT_COPPER(
+        "Bent Copper",
+        "Cultivated a corrupt PCSO with three flasks of tea. Everyone has a price.",
+        1
+    ),
+    CLEAN_GETAWAY_PURSUIT(
+        "Clean Getaway",
+        "Lost the police and let your wanted level decay to zero. Not a trace.",
+        1
+    ),
+    FIVE_STAR_NIGHTMARE(
+        "Five Star Nightmare",
+        "Reached 5 wanted stars. The entire borough knows your face.",
+        1
+    ),
+    WHEELIE_BIN_HERO(
+        "Wheelie Bin Hero",
+        "Hid in a wheelie bin while police searched the area. British. Disgusting. Effective.",
+        1
+    ),
+    INNOCENT_FACE(
+        "Innocent Face",
+        "Used a disguise change to reset the police description mid-pursuit. Butter wouldn't melt.",
+        1
+    ),
+
     // ── Issue #767: Disguise & Social Engineering System ──────────────────────
 
     UNDERCOVER(
