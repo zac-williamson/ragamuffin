@@ -7354,3 +7354,231 @@ triggers, case worker flee on Tier 5 Notoriety.
     12, SANCTION_LEVEL is 1, player received coins in cycles 1 and 2 but not cycle 3,
     DEBT_COLLECTOR has NOT spawned (only 1 missed window, not 3). Verify no NPEs,
     no crashes, `GameState` remained valid throughout.
+
+---
+
+## Phase 20: The Neighbourhood Watch — Vigilante Mob Justice & Community Uprising
+
+**Goal**: When the player's criminal exploits become too visible and too frequent, the
+neighbourhood fights back — not through the police, but through ordinary residents
+who've simply had enough. A `NeighbourhoodWatchSystem` dynamically assembles mobs of
+enraged civilians (armed with mops, clipboards, and righteous indignation) that patrol
+the area, corner the player, and attempt a citizen's arrest. The Council secretly funds
+it. The Street Lads mock it. The Marchetti Crew use it as cover for their own operations.
+It is the most British possible threat: a passive-aggressive collective of curtain-twitchers
+who have finally snapped.
+
+This system ties together: `NotorietySystem`, `WitnessSystem`, `FactionSystem`,
+`WeatherSystem`, `RumourNetwork`, `NewspaperSystem`, `PropertySystem`, `CriminalRecord`,
+and the `NeighbourhoodSystem` (already tracking gentrification/decay) into a single
+emergent community-threat engine.
+
+### The Watch Anger Level
+
+A new persistent `WatchAnger` score (0–100, starting at 0) tracks how much the
+neighbourhood has collectively turned against the player. It is distinct from Notoriety
+(which measures criminal fame) and Faction Respect (which measures gang loyalty) — Watch
+Anger is about the ordinary people.
+
+**Watch Anger rises from:**
+
+| Event | Anger gained |
+|-------|-------------|
+| Player breaks a block on a publicly visible exterior wall | +3 |
+| Player punches a civilian (PUBLIC) NPC | +8 |
+| Player commits a crime witnessed by 2+ NPCs simultaneously | +5 |
+| Player's Notoriety tier crosses a new threshold | +10 (once per tier) |
+| A `WANTED_POSTER` prop is visible within 10 blocks of any civilian NPC | +2/in-game hour |
+| Player's squat or rave generates a police response (police alerted) | +7 |
+| Council Victory faction state is active | +15 (one-time, Council spreads pamphlets) |
+| Player destroys a `CONDEMNED_NOTICE` prop | +4 |
+
+**Watch Anger decays passively:**
+- −1 per in-game hour when player stays out of trouble (no crimes for 1 full hour)
+- −5 immediately when player buys a round at the pub for everyone (costs 10 coins; the
+  "keep your neighbours sweet" mechanic — separate from the faction Buy A Round)
+- −10 when player completes a Council mission (tidy neighbourhood = calmer residents)
+- Rain and fog weather: decay rate doubles (miserable weather keeps people indoors)
+
+Watch Anger **never decays below 0** and is stored in `NeighbourhoodWatchSystem`.
+
+### Watch Anger Thresholds & Escalation
+
+| Threshold | State | What Happens |
+|-----------|-------|-------------|
+| 0–24 | **Mutterings** | Occasional civilian NPCs stop and stare at the player. No mechanical effect. |
+| 25–49 | **Petitions** | A `PropType.PETITION_BOARD` prop appears outside the pub. Clicking it (E) shows the complaint list — a darkly comic catalogue of the player's crimes. Watch members (new `NPCType.WATCH_MEMBER`) spawn: 1–2 NPCs patrolling near the player's last known crime scene. They don't attack but do follow the player for up to 20 blocks, muttering. |
+| 50–74 | **Vigilante Patrol** | A `NeighbourhoodWatch` mob of 3–5 `WATCH_MEMBER` NPCs assembles near the highest-crime block and actively patrols. They perform a soft citizen's arrest: if they corner the player (all exits within 3 blocks occupied by Watch Members), the player is immobilised for 5 seconds while a Watch Member delivers a 2-line speech ("We know what you've been up to." / "The council has been notified.") then releases the player — but adds 2 offences to the criminal record. |
+| 75–89 | **Organised Mob** | The mob grows to 6–10 Watch Members. They now carry improvised weapons (prop: `MOPHANDLE`, functionally like a stick — 3 hits to incapacitate the player, same as ARU). The mob coordinates: one Watch Member calls to others when they spot the player, causing all Watch Members within 30 blocks to converge. If the player runs into faction territory, the faction NPCs and Watch Members briefly fight each other (Watch Members attack any non-Public NPC they encounter), creating a glorious multi-faction brawl. |
+| 90–100 | **Full Uprising** | The entire neighbourhood mobilises. Every PUBLIC NPC temporarily becomes a `WATCH_MEMBER`. The pub barman locks the door ("Not tonight — there's a mob outside"). The JobCentre CASE_WORKER calls the police proactively. A `RumourType.WATCH_UPRISING` rumour floods the network: "They've proper had enough of that one." The Newspaper generates a front page: "AREA RESIDENTS TAKE LAW INTO OWN HANDS". This state lasts 5 in-game minutes, then Anger resets to 60 (partially exhausted). |
+
+### Watch Members — NPC Behaviour
+
+New `NPCType.WATCH_MEMBER` with distinct visual variant (high-vis tabard over civilian
+clothing — reuse existing `NPCModelVariant` colour-override system with a fluorescent
+yellow tint).
+
+**AI states:**
+- `PATROLLING`: Walking between two waypoints near the last-known crime scene.
+- `MUTTERING`: Following the player at ≥ 3 block distance, occasionally emitting
+  speech bubbles from a pool of passive-aggressive British phrases (see below).
+- `CORNERING`: Moving to block the player's path (triggers at Anger ≥ 50 if player
+  is within 8 blocks and at least 2 Watch Members are present).
+- `CITIZEN_ARRESTING`: Delivering the soft-arrest speech when all exits blocked.
+- `BRAWLING`: Briefly attacking nearby non-Public NPCs (gang members, police — equal
+  opportunity outrage) when mob Anger ≥ 75. Watch Members do NOT attack the player
+  violently below Anger 75.
+- `FLEEING`: If the player has an accomplice NPC, Watch Members are 30% more likely
+  to flee (intimidated by numbers).
+
+**Passive-aggressive speech bubble pool** (displayed in `SpeechLogUI`):
+- "I've lived here thirty years."
+- "I'm on the committee, you know."
+- "There are children about."
+- "I will be writing to my MP."
+- "The CCTV is working, by the way."
+- "Some of us have jobs."
+- "I've taken a photo of you."
+- "The council will hear about this."
+- "Have you tried the JobCentre?"
+- "This used to be a nice area."
+
+### Faction Interactions with the Watch
+
+The Watch is officially neutral but factions exploit it:
+
+- **The Council** secretly funds Watch patrols when their turf fraction exceeds 40%:
+  Watch Member spawn rate doubles and they are equipped with clipboards (prop:
+  `CLIPBOARD`) that let them add offences to the criminal record at Anger ≥ 50.
+- **Street Lads** find Watch Members hilarious. When a Watch Member enters Street Lads
+  turf, a nearby Street Lad NPC catcalls them ("Oi! Neighbourhood Watch? More like
+  Neighbourhood Snitch!") — this reduces Watch Anger by 3 (banter diffuses tension)
+  but increases Street Lads vs Watch brawl probability.
+- **Marchetti Crew** use Watch commotion as a distraction: if a Watch Uprising is
+  active, the Marchetti Crew's mission cooldown resets early (they get a free mission
+  offer) because the police are distracted.
+
+### Newspaper Integration
+
+`NewspaperSystem` gains three new headline templates triggered by Watch state:
+
+1. **Anger 50 crossed**: "RESIDENTS START PETITION OVER 'ANTISOCIAL ELEMENT' ON HIGH STREET"
+2. **Anger 75 crossed**: "VIGILANTE GROUP PATROLS [STREET NAME] AFTER SPATE OF INCIDENTS"
+3. **Uprising (Anger 90+)**: "MOB JUSTICE RETURNS TO [NEIGHBOURHOOD NAME] — POLICE CALLED"
+
+Each headline seeds a `RumourType.WATCH_UPRISING` rumour into 5 random NPCs (via
+barman as primary vector), and the Newspaper prop updates with the new front page.
+
+### New Key Binding: **G** — Grovel
+
+At any Anger threshold, the player can press **G** while a Watch Member NPC is within
+3 blocks and not in BRAWLING state. This triggers a "grovel" interaction:
+- A 2-second hold (displayed as a progress bar overlay).
+- On completion: the Watch Member's speech changes to "Well... just don't let it happen
+  again." The Watch Member transitions to PATROLLING (disengages).
+- Reduces Watch Anger by 5. Costs nothing — just humiliating.
+- Tooltip on first grovel: "Dignity: traded. Temporarily."
+- Achievement: `GROVELLED` (grovel successfully 5 times in one session).
+
+### New Crafting Recipes
+
+Two new items help manage Watch Anger:
+
+- **NEIGHBOURHOOD_NEWSLETTER** (craftable: 3 PAPER + 1 COIN): A propaganda pamphlet.
+  Using it (right-click from hotbar) near a `PETITION_BOARD` prop removes the board
+  and reduces Anger by 8. Can only be used once per Anger-25 escalation.
+- **PEACE_OFFERING** (craftable: 1 SAUSAGE_ROLL + 1 COIN): Give to a Watch Member
+  (press E) to immediately convert them from MUTTERING/CORNERING to PATROLLING.
+  Reduces Anger by 3. Tooltip: "A sausage roll. The great British peacemaker."
+
+### HUD Integration
+
+A new **Watch Anger** indicator appears on the GameHUD: a small clipboard icon in
+the bottom-left corner with a fill bar (0–100). The icon pulses when Anger increases.
+At Anger ≥ 75, the bar glows orange. At Anger ≥ 90, it pulses red with an
+"UPRISING" text label. At Anger 0–24, the bar is greyed out.
+
+Tooltip on first Watch Anger increase: "The neighbours are watching."
+Tooltip on first Watch Member encounter: "They've got clipboards. Somehow more
+terrifying than the police."
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `CURTAIN_TWITCHER` | Have Watch Anger reach 50 for the first time |
+| `NEIGHBOURHOOD_MENACE` | Trigger a full Watch Uprising |
+| `GROVELLED` | Grovel successfully 5 times in one session |
+| `PEACE_OFFERING_ACCEPTED` | Successfully pacify a Watch Member with a sausage roll |
+| `THE_COMMITTEE` | Be citizen-arrested by the Watch 3 times |
+| `BRAWL_STARTER` | Cause a Watch vs. faction multi-brawl (Watch Anger ≥ 75, gang territory) |
+
+**Unit tests**: Watch Anger gain/decay calculations, threshold crossing detection,
+Watch Member NPC state machine transitions, citizen-arrest immobilisation logic,
+grovel interaction timer, faction Council funding multiplier, newspaper headline
+trigger conditions, uprising reset after 5 minutes, rain/fog decay rate doubling,
+sausage roll peace offering, newsletter prop removal, all new achievement triggers.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Watch Anger rises from witnessed crimes**: Start with Watch Anger 0. Commit 3
+   exterior block-break crimes in view of 2+ civilian NPCs each time. Verify Watch
+   Anger is at least 9 (3× block break = +3 each) plus 15 (3× 2-witness bonus = +5
+   each) = total ≥ 24. Verify no Watch Members have spawned yet (below threshold 25).
+
+2. **Petition Board spawns and shows complaint list at Anger 25**: Set Watch Anger to
+   25. Advance 1 frame. Verify a `PropType.PETITION_BOARD` prop exists near the last
+   crime scene. Press **E** on the prop. Verify the UI displays a non-empty list of
+   complaint strings matching the player's recent crimes.
+
+3. **Watch Member corners player and applies citizen's arrest**: Set Watch Anger to 55.
+   Spawn 3 Watch Member NPCs surrounding the player on 3 sides (player has 1 exit).
+   Advance 60 frames to allow CORNERING state. Block the last exit. Verify all 3 NPCs
+   enter `CITIZEN_ARRESTING` state. Verify player is immobilised for 5 seconds (position
+   unchanged over 300 frames). Verify criminal record gains 2 offences after the arrest.
+   Verify Watch Members return to `PATROLLING` after the speech.
+
+4. **Grovel reduces Watch Member engagement and Anger**: Set Watch Anger to 60. Spawn a
+   Watch Member in MUTTERING state within 3 blocks of player. Press and hold **G** for
+   2 in-game seconds (120 frames at 60fps). Verify Watch Member transitions to
+   `PATROLLING`. Verify Watch Anger decreased by 5 (to 55). Verify the tooltip
+   "Dignity: traded. Temporarily." fires on first grovel.
+
+5. **Uprising fires and resets at Anger 90**: Set Watch Anger to 89. Commit 1 crime
+   (+3 block break → Anger 92). Advance 1 frame. Verify all PUBLIC NPCs within the
+   loaded world have been converted to `WATCH_MEMBER` type. Verify the barman's pub
+   door is locked (player cannot enter pub AABB). Verify `RumourType.WATCH_UPRISING`
+   rumour exists in at least 5 NPCs. Advance 5 in-game minutes (300 frames ×
+   60fps). Verify Watch Anger has reset to exactly 60. Verify converted NPCs have
+   returned to `PUBLIC` type.
+
+6. **Council funding doubles Watch spawn rate**: Set Council turf fraction to 51%
+   (above 40% threshold). Set Watch Anger to 26. Verify Watch Member spawn rate is
+   2× the base rate (record spawns over 60 frames, compare to Watch Anger 26 with
+   Council fraction below 40%).
+
+7. **Weather doubles Anger decay rate**: Set Watch Anger to 50. Set weather to RAIN.
+   Advance 1 in-game hour of simulation. Verify Watch Anger decreased by 2 (double
+   the 1/hour base rate). Set weather to CLEAR. Advance 1 more in-game hour. Verify
+   Watch Anger decreased by only 1 (base rate).
+
+8. **Peace offering pacifies Watch Member**: Set Watch Anger to 55. Give player 1
+   PEACE_OFFERING in hotbar. Spawn a Watch Member NPC in CORNERING state within 3
+   blocks. Press **E** on the Watch Member (interact). Verify Watch Member transitions
+   to PATROLLING. Verify Watch Anger decreased by 3. Verify PEACE_OFFERING removed
+   from player inventory. Verify the `PEACE_OFFERING_ACCEPTED` achievement fires.
+
+9. **Newspaper headline fires at Anger 75**: Set Watch Anger to 74. Commit a crime that
+   raises Anger to 75. Advance 1 frame. Verify `NewspaperSystem` has generated a
+   headline containing "VIGILANTE GROUP PATROLS". Verify 5 NPCs in the world have a
+   `WATCH_UPRISING` rumour seeded. Verify the `NEIGHBOURHOOD_MENACE` achievement has
+   NOT yet fired (it requires the full 90+ uprising).
+
+10. **Full Watch arc stress test**: Start at Watch Anger 0. Progress through all four
+    thresholds by committing crimes: verify Petition Board spawns at 25, Watch Member
+    patrol at 50, organised mob with weapons at 75, full Uprising at 90. At each
+    threshold: verify correct number of Watch Members spawned, correct NPC states,
+    correct newspaper headline, correct rumour seeding. Trigger a Council-funded mob
+    (set Council turf > 40%), a gang brawl (Watch enters gang turf at Anger ≥ 75),
+    and a grovel interaction. Verify game remains in PLAYING state, no NPEs, all NPC
+    counts valid, Watch Anger HUD bar visible and rendering correctly throughout.
