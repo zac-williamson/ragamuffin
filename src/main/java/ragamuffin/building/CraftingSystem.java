@@ -292,6 +292,22 @@ public class CraftingSystem {
             Map.of(Material.WOOD, 2, Material.PLANKS, 1),
             Map.of(Material.STALL_AWNING, 1)
         ));
+
+        // ── Issue #797: The Neighbourhood Watch ────────────────────────────────
+
+        // NEIGHBOURHOOD_NEWSLETTER: NEWSPAPER×2 + COIN×1 → NEIGHBOURHOOD_NEWSLETTER×1
+        // (Use near a PETITION_BOARD to remove it; reduces WatchAnger by 8)
+        recipes.add(new Recipe(
+            Map.of(Material.NEWSPAPER, 2, Material.COIN, 1),
+            Map.of(Material.NEIGHBOURHOOD_NEWSLETTER, 1)
+        ));
+
+        // PEACE_OFFERING: SAUSAGE_ROLL×1 + COIN×1 → PEACE_OFFERING×1
+        // (Use on a WATCH_MEMBER NPC to convert them to neutral patrol; Anger −5)
+        recipes.add(new Recipe(
+            Map.of(Material.SAUSAGE_ROLL, 1, Material.COIN, 1),
+            Map.of(Material.PEACE_OFFERING, 1)
+        ));
     }
 
     /**

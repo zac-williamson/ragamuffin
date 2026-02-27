@@ -199,7 +199,17 @@ public enum PropType {
      * to simulate picking up rubbish. Player must "break" 3 LITTER props
      * within 30 seconds to complete the mission.
      */
-    LITTER(0.30f, 0.05f, 0.30f, 1, null);
+    LITTER(0.30f, 0.05f, 0.30f, 1, null),
+
+    // ── Issue #797: The Neighbourhood Watch ───────────────────────────────────
+
+    /**
+     * A petition board — spawned on a pavement at WatchAnger Tier 2 (Petitions).
+     * Displays a community petition against the player's behaviour.
+     * Can be removed by crafting and using a NEIGHBOURHOOD_NEWSLETTER (−8 Anger).
+     * Destroyed by 3 punches; yields nothing.
+     */
+    PETITION_BOARD(0.80f, 1.40f, 0.10f, 3, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

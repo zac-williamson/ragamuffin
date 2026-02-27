@@ -33,7 +33,13 @@ public class CriminalRecord {
          * Issue #781: Logged after 3 graffiti arrests. Triggers a solicitor quest
          * to secure a not-guilty plea.
          */
-        CRIMINAL_DAMAGE("Criminal damage charges");
+        CRIMINAL_DAMAGE("Criminal damage charges"),
+
+        /**
+         * Issue #797: Recorded by Watch Members during a soft citizen's arrest.
+         * Two counts added per citizen's arrest at Tier 3+.
+         */
+        ANTISOCIAL_BEHAVIOUR("Antisocial behaviour charges");
 
         private final String displayName;
 
