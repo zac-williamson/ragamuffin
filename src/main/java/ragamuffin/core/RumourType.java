@@ -31,5 +31,8 @@ public enum RumourType {
     WITNESS_SIGHTING,
 
     /** "Someone grassed on [faction/person]" — seeded when the player tips off police with a RUMOUR_NOTE. Turns the tipped faction hostile toward the player. */
-    BETRAYAL;
+    BETRAYAL,
+
+    /** "Developers are moving in — prices are going up round here" — seeded when a Luxury Flat is built by The Council's gentrification wave. */
+    GENTRIFICATION;
 }

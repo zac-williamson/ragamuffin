@@ -75,7 +75,17 @@ public enum BlockType {
      * Emits an orange pulsing light when broadcasting.
      * Upgradeable through 4 power levels by right-clicking with components.
      */
-    TRANSMITTER(57, true);
+    TRANSMITTER(57, true),
+
+    // ── Issue #793: The Living Neighbourhood — Dynamic Gentrification ─────────
+    /** Crumbled brick: decayed brick block. Colour #5a5050, hardness 3. */
+    CRUMBLED_BRICK(58, true),
+    /** Boarded wood: derelict building boards. Colour #8b7355, hardness 4. */
+    BOARDED_WOOD(59, true),
+    /** Concrete panel: luxury flat material placed by The Council. Colour #c8c8c8, hardness 10. */
+    CONCRETE_PANEL(60, true),
+    /** Metal shutter: Marchetti Crew fortification — hardest block in the game. Colour #4a4a4a, hardness 12. */
+    METAL_SHUTTER(61, true);
 
     private final int id;
     private final boolean solid;
@@ -529,8 +539,12 @@ public enum BlockType {
             case COAL_ORE:    return new Color(0.30f, 0.30f, 0.30f, 1f); // Dark grey stone with black flecks
             case IRON_ORE:    return new Color(0.55f, 0.40f, 0.28f, 1f); // Rusty brown stone
             case FLINT:       return new Color(0.20f, 0.22f, 0.25f, 1f); // Very dark blue-grey
-            case BARRICADE:   return new Color(0.45f, 0.30f, 0.15f, 1f); // Rough planks nailed together
-            case TRANSMITTER: return new Color(0.20f, 0.20f, 0.25f, 1f); // Dark metal chassis
+            case BARRICADE:      return new Color(0.45f, 0.30f, 0.15f, 1f); // Rough planks nailed together
+            case TRANSMITTER:    return new Color(0.20f, 0.20f, 0.25f, 1f); // Dark metal chassis
+            case CRUMBLED_BRICK: return new Color(0.353f, 0.314f, 0.314f, 1f); // #5a5050 dusty crumbled brick
+            case BOARDED_WOOD:   return new Color(0.545f, 0.451f, 0.333f, 1f); // #8b7355 weathered boarding
+            case CONCRETE_PANEL: return new Color(0.784f, 0.784f, 0.784f, 1f); // #c8c8c8 sterile luxury concrete
+            case METAL_SHUTTER:  return new Color(0.290f, 0.290f, 0.290f, 1f); // #4a4a4a Marchetti steel shutter
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }
