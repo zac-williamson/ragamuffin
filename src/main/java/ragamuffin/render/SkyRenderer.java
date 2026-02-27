@@ -112,7 +112,7 @@ public class SkyRenderer {
                        int screenWidth, int screenHeight,
                        boolean isNight, float cameraYawDeg) {
         renderSkybox(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight,
-                     isNight, cameraYawDeg, 0);
+                     isNight, cameraYawDeg, 0, 0f);
     }
 
     /**
@@ -136,6 +136,32 @@ public class SkyRenderer {
                        int screenWidth, int screenHeight,
                        boolean isNight, float cameraYawDeg,
                        int dayOfYear) {
+        renderSkybox(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight,
+                     isNight, cameraYawDeg, dayOfYear, 0f);
+    }
+
+    /**
+     * Render sun, clouds, and (at night) stars, moon, and planets.
+     *
+     * This overload also accepts the camera pitch so that the skybox remains
+     * stationary when the player looks up or down (Fix #751).
+     *
+     * @param shapeRenderer   shared ShapeRenderer (not currently between begin/end)
+     * @param time            current game time in hours (0–24)
+     * @param sunrise         today's sunrise time in hours
+     * @param sunset          today's sunset time in hours
+     * @param screenWidth     current screen width in pixels
+     * @param screenHeight    current screen height in pixels
+     * @param isNight         true when it is currently night-time
+     * @param cameraYawDeg    camera yaw in degrees (0 = facing -Z/north, 90 = east, 180 = south)
+     * @param dayOfYear       day of the year (0–364) used for seasonal sky positions
+     * @param cameraPitchDeg  camera pitch in degrees (positive = looking up, negative = looking down)
+     */
+    public void renderSkybox(ShapeRenderer shapeRenderer,
+                       float time, float sunrise, float sunset,
+                       int screenWidth, int screenHeight,
+                       boolean isNight, float cameraYawDeg,
+                       int dayOfYear, float cameraPitchDeg) {
 
         Matrix4 ortho = new Matrix4();
         ortho.setToOrtho2D(0, 0, screenWidth, screenHeight);
@@ -147,19 +173,25 @@ public class SkyRenderer {
                 com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA,
                 com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
 
+        // Fix #751: Compute vertical pitch offset so sky elements remain stationary
+        // when the player looks up or down.  A pitch of 90° maps to half the screen
+        // height (same proportional mapping used for yaw across screen width).
+        // Positive pitch (looking up) shifts sky elements downward on screen.
+        float pitchOffsetY = (cameraPitchDeg / 90f) * (screenHeight * 0.5f);
+
         if (isNight) {
             // Night sky: stars first (furthest back), then planets, then moon
-            renderStars(shapeRenderer, screenWidth, screenHeight, cameraYawDeg, dayOfYear);
-            renderPlanets(shapeRenderer, screenWidth, screenHeight, cameraYawDeg, dayOfYear);
+            renderStars(shapeRenderer, screenWidth, screenHeight, cameraYawDeg, dayOfYear, pitchOffsetY);
+            renderPlanets(shapeRenderer, screenWidth, screenHeight, cameraYawDeg, dayOfYear, pitchOffsetY);
             renderMoon(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight,
-                       cameraYawDeg, dayOfYear);
+                       cameraYawDeg, dayOfYear, pitchOffsetY);
         } else {
             // Draw sun only during the day
-            renderSun(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight, cameraYawDeg);
+            renderSun(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight, cameraYawDeg, pitchOffsetY);
         }
 
         // Draw clouds (visible day and night, but faded at night)
-        renderClouds(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight, isNight, cameraYawDeg);
+        renderClouds(shapeRenderer, time, sunrise, sunset, screenWidth, screenHeight, isNight, cameraYawDeg, pitchOffsetY);
 
         com.badlogic.gdx.Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
     }
@@ -171,7 +203,7 @@ public class SkyRenderer {
     private void renderSun(ShapeRenderer shapeRenderer,
                            float time, float sunrise, float sunset,
                            int screenWidth, int screenHeight,
-                           float cameraYawDeg) {
+                           float cameraYawDeg, float pitchOffsetY) {
 
         // Normalised position along the day arc (0 at sunrise, 0.5 at noon, 1 at sunset)
         float dayFraction = (time - sunrise) / (sunset - sunrise);
@@ -198,7 +230,8 @@ public class SkyRenderer {
         // Map to screen Y: horizon is ~30 % from top, peak is ~80 % from bottom = 20 % from top
         float horizonY = screenHeight * 0.70f; // where sun rises/sets
         float peakY    = screenHeight * 0.85f; // highest point (noon)
-        float sunY = horizonY + (peakY - horizonY) * sunElevation;
+        // Fix #751: subtract pitchOffsetY so the sun stays fixed when looking up/down.
+        float sunY = horizonY + (peakY - horizonY) * sunElevation - pitchOffsetY;
 
         // Sun colour: orange at dawn/dusk, bright yellow-white at midday
         float[] sunColour = getSunColour(time, sunrise, sunset);
@@ -250,7 +283,7 @@ public class SkyRenderer {
     private void renderClouds(ShapeRenderer shapeRenderer,
                               float time, float sunrise, float sunset,
                               int screenWidth, int screenHeight,
-                              boolean isNight, float cameraYawDeg) {
+                              boolean isNight, float cameraYawDeg, float pitchOffsetY) {
 
         // Cloud brightness: full white during day, faint grey at night
         float brightness = isNight ? 0.45f : 0.95f;
@@ -278,7 +311,8 @@ public class SkyRenderer {
             float cloudBaseX = screenWidth * 0.5f + (yawDiff / 90f) * screenWidth;
             // Wrap around so clouds tile across the sky
             cloudBaseX = ((cloudBaseX % screenWidth) + screenWidth) % screenWidth;
-            float cloudBaseY = screenHeight * (0.78f + seedY * 0.17f); // 78 %–95 % up
+            // Fix #751: subtract pitchOffsetY so clouds stay fixed when looking up/down.
+            float cloudBaseY = screenHeight * (0.78f + seedY * 0.17f) - pitchOffsetY; // 78 %–95 % up
 
             // Each cloud is made of 5–7 overlapping circles
             int puffs = 5 + (i % 3);
@@ -312,7 +346,7 @@ public class SkyRenderer {
 
     private void renderStars(ShapeRenderer shapeRenderer,
                              int screenWidth, int screenHeight,
-                             float cameraYawDeg, int dayOfYear) {
+                             float cameraYawDeg, int dayOfYear, float pitchOffsetY) {
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
@@ -336,7 +370,8 @@ public class SkyRenderer {
 
             // Distribute stars across the upper 60 % of the screen (the sky dome)
             float seedY  = ((i * 53.7f + 17.3f) % 1000f) / 1000f;
-            float starY  = screenHeight * (0.40f + seedY * 0.55f);
+            // Fix #751: subtract pitchOffsetY so stars stay fixed when looking up/down.
+            float starY  = screenHeight * (0.40f + seedY * 0.55f) - pitchOffsetY;
 
             // Twinkle: vary brightness slightly with a pseudo-random phase
             float phase  = (i * 0.41f + cloudTime * (0.3f + (i % 7) * 0.05f)) % (2f * (float)Math.PI);
@@ -369,7 +404,7 @@ public class SkyRenderer {
     private void renderMoon(ShapeRenderer shapeRenderer,
                             float time, float sunrise, float sunset,
                             int screenWidth, int screenHeight,
-                            float cameraYawDeg, int dayOfYear) {
+                            float cameraYawDeg, int dayOfYear, float pitchOffsetY) {
 
         // Moon rises in the east and sets in the west, roughly opposite the sun.
         // During the night it moves from east (rise at sunset) to west (set at sunrise).
@@ -399,7 +434,8 @@ public class SkyRenderer {
         float moonElevation = (float) Math.sin(nightFraction * Math.PI);
         float horizonY = screenHeight * 0.70f;
         float peakY    = screenHeight * 0.85f;
-        float moonY = horizonY + (peakY - horizonY) * moonElevation;
+        // Fix #751: subtract pitchOffsetY so the moon stays fixed when looking up/down.
+        float moonY = horizonY + (peakY - horizonY) * moonElevation - pitchOffsetY;
 
         float moonRadius = 14f;
 
@@ -474,7 +510,7 @@ public class SkyRenderer {
 
     private void renderPlanets(ShapeRenderer shapeRenderer,
                                int screenWidth, int screenHeight,
-                               float cameraYawDeg, int dayOfYear) {
+                               float cameraYawDeg, int dayOfYear, float pitchOffsetY) {
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
@@ -491,7 +527,8 @@ public class SkyRenderer {
 
             // Planets sit along the ecliptic band: upper-middle part of the sky
             float eclipticSeed = ((i * 73.1f + 41.3f) % 100f) / 100f;
-            float py = screenHeight * (0.60f + eclipticSeed * 0.25f);
+            // Fix #751: subtract pitchOffsetY so planets stay fixed when looking up/down.
+            float py = screenHeight * (0.60f + eclipticSeed * 0.25f) - pitchOffsetY;
 
             float[] col = PLANET_COLOURS[i];
             float size  = PLANET_SIZES[i];
