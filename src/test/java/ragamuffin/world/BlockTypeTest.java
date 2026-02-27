@@ -42,6 +42,35 @@ class BlockTypeTest {
     }
 
     @Test
+    void glassIsNotOpaque() {
+        assertFalse(BlockType.GLASS.isOpaque(), "Glass should be non-opaque to allow transparency");
+    }
+
+    @Test
+    void glassIsTransparent() {
+        assertTrue(BlockType.GLASS.isTransparent(), "Glass should be transparent");
+    }
+
+    @Test
+    void glassIsSolid() {
+        assertTrue(BlockType.GLASS.isSolid(), "Glass should remain solid for collision");
+    }
+
+    @Test
+    void glassColorHasAlpha() {
+        float alpha = BlockType.GLASS.getColor().a;
+        assertTrue(alpha < 1.0f, "Glass colour alpha should be less than 1 (semi-transparent)");
+        assertTrue(alpha > 0.0f, "Glass colour alpha should be greater than 0 (visible)");
+    }
+
+    @Test
+    void opaqueBlocksAreNotTransparent() {
+        assertFalse(BlockType.BRICK.isTransparent());
+        assertFalse(BlockType.STONE.isTransparent());
+        assertFalse(BlockType.GRASS.isTransparent());
+    }
+
+    @Test
     void blockTypesHaveUniqueIds() {
         BlockType[] types = BlockType.values();
         for (int i = 0; i < types.length; i++) {

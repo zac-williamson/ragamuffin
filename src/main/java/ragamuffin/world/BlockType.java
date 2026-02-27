@@ -100,9 +100,25 @@ public enum BlockType {
             case STAIRS:
             case LADDER:
             case HALF_BLOCK:
+            case GLASS:
                 return false;
             default:
                 return solid; // All other solid blocks are opaque; AIR/WATER are not
+        }
+    }
+
+    /**
+     * Whether this block is semi-transparent (has an alpha < 1 and should be
+     * rendered with alpha blending enabled). Transparent blocks are solid for
+     * collision but their faces are still emitted by the mesh builder so that
+     * the alpha colour is visible.
+     */
+    public boolean isTransparent() {
+        switch (this) {
+            case GLASS:
+                return true;
+            default:
+                return false;
         }
     }
 

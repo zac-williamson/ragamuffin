@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g3d.Material;
 import com.badlogic.gdx.graphics.g3d.Model;
 import com.badlogic.gdx.graphics.g3d.ModelBatch;
 import com.badlogic.gdx.graphics.g3d.ModelInstance;
+import com.badlogic.gdx.graphics.g3d.attributes.BlendingAttribute;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Vector3;
@@ -110,7 +111,8 @@ public class ChunkRenderer {
             modelBuilder.begin();
 
             Material material = new Material(
-                ColorAttribute.createDiffuse(Color.WHITE)
+                ColorAttribute.createDiffuse(Color.WHITE),
+                new BlendingAttribute(GL20.GL_SRC_ALPHA, GL20.GL_ONE_MINUS_SRC_ALPHA)
             );
 
             modelBuilder.part("chunk_" + batch, mesh, GL20.GL_TRIANGLES, material);
