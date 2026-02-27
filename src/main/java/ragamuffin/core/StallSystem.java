@@ -788,6 +788,18 @@ public class StallSystem {
         this.activeInspector = inspector;
     }
 
+    /**
+     * Issue #787: Trigger a flash market event (SURVIVAL Legend perk).
+     * Opens the stall immediately and resets the customer scan timer so
+     * NPCs are attracted immediately.
+     */
+    public void setFlashMarketActive(boolean active) {
+        if (active) {
+            this.stallOpen = true;
+            this.customerScanTimer = 0f; // force immediate customer scan
+        }
+    }
+
     // ── Inner class: StallSlot ─────────────────────────────────────────────────
 
     /**

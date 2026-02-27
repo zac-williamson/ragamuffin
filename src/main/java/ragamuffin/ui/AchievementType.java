@@ -558,6 +558,54 @@ public enum AchievementType {
         "Turf Vendor",
         "Set up a stall in faction territory and paid the protection cut. Business is business.",
         1
+    ),
+
+    // ── Issue #787: Street Skills & Character Progression ──────────────────────
+
+    FIRST_BLOOD(
+        "First Blood",
+        "Won your first fight. The blood washes out. Probably.",
+        1
+    ),
+    PROPER_HARD(
+        "Proper Hard",
+        "Reached BRAWLING Legend. The estate knows not to start on you.",
+        1
+    ),
+    GRAFTER(
+        "Grafter",
+        "Reached GRAFTING Legend. You could survive on a car park roof for a week.",
+        1
+    ),
+    WHEELERDEALER(
+        "Wheeler Dealer",
+        "Reached TRADING Legend. Del Boy's got nothing on you.",
+        1
+    ),
+    GHOST(
+        "Ghost",
+        "Reached STEALTH Legend. You were never here. Nobody saw nothing.",
+        1
+    ),
+    WORDS_ON_THE_STREET(
+        "Words on the Street",
+        "Reached INFLUENCE Legend. You've got a following. Whether that's good or bad is unclear.",
+        1
+    ),
+    LEGEND_OF_THE_MANOR(
+        "Legend of the Manor",
+        "Reached SURVIVAL Legend. You've outlasted everyone who said you wouldn't.",
+        1
+    ),
+    PICKPOCKET(
+        "Light Fingers, Heavy Pockets",
+        "Successfully pick-pocketed an NPC. They never felt a thing. Allegedly.",
+        1
+    ),
+    RALLY_CRY(
+        "Rally Cry",
+        "Assembled a mob of followers using RALLY. Safety in numbers. Relative safety.",
+        1
     );
 
     private final String name;
