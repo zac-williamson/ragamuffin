@@ -5997,3 +5997,115 @@ The player can interact with the newspaper system in two active ways:
 7. **No story = filler**: Advance a full in-game day with no player crimes. Verify the published newspaper headline contains "PIGEON" or a council planning notice. Verify infamy score is 0. Verify no police Heightened Alert is triggered.
 
 8. **REGULAR_READER achievement**: Collect `Material.NEWSPAPER` items on 7 consecutive in-game days (simulate via `pickUpNewspaper()` calls with incrementing edition dates). Verify `AchievementType.REGULAR_READER` is awarded on the 7th collection.
+
+---
+
+## Phase 20: Graffiti & Territorial Marking — 'Your Name on Every Wall'
+
+**Goal**: Give the player a spray can and let them physically paint the world. Graffiti tags are persistent voxel-surface overlays rendered as coloured decals on block faces. They serve as a living map of the turf war — factions spray their own tags, the player claims territory, police scrub it, and the whole urban canvas becomes a dynamic record of who runs what street.
+
+### Core Concept
+
+The player crafts a `Material.SPRAY_CAN` (empty tin + paint pigment from hardware store). Equip it to the hotbar, aim at any solid block face within 3 blocks, and press **T** to apply a graffiti tag. Tags are stored as `GraffitiMark` objects — block position + face direction + faction/style + colour + age — and rendered each frame as a flat quad drawn directly over the block face (using LibGDX's `DecalBatch` or a small shader overlay, depth-offset to avoid z-fighting).
+
+Each spray can has **20 uses**. Tags fade over in-game days (alpha decays at `FADE_RATE_PER_DAY`). The Council dispatches a `COUNCIL_CLEANER` NPC with a bucket who walks to high-visibility tags (near the town hall, Greggs, or park) and scrubs them after 2 in-game days.
+
+### Tag Styles & Faction Ownership
+
+The player chooses a tag style when crafting the spray can. Three styles correspond to the three factions — but the player can pick any, and using a rival faction's tag on their turf is an act of war:
+
+| Style | Faction | Visual | COIN cost to craft |
+|---|---|---|---|
+| `CROWN_TAG` | MARCHETTI_CREW | Gold crown glyph | 5 |
+| `LIGHTNING_TAG` | STREET_LADS | White lightning bolt | 3 |
+| `CLIPBOARD_TAG` | THE_COUNCIL | Grey clipboard glyph | 4 |
+| `PLAYER_TAG` | Player (neutral) | Customisable initials (up to 3 chars, entered at first craft) | 2 |
+
+Spraying your own `PLAYER_TAG` on a block surface claims that surface as player territory in `TurfMap`. Spraying a faction tag on surfaces already owned by a rival faction causes a `RumourType.GANG_ACTIVITY` rumour and adds +3 to that faction's Respect toward the player (you're doing their dirty work).
+
+### Territorial Mechanics
+
+`GraffitiSystem` tracks a **Tag Density** per 8×8 block zone: the number of living (non-faded) tags belonging to each faction in that zone. The faction with the majority of tags in a zone gains a passive **Turf Pressure** bonus applied to `FactionSystem`'s turf transfer logic — tag-heavy zones shift turf ownership faster. This means a player who systematically tags an area accelerates their own territorial dominance without needing direct combat.
+
+A zone where the player holds ≥ 5 `PLAYER_TAG` marks becomes a **Claimed Zone**. Claimed zones:
+- Earn the player `RACKET_PASSIVE_INCOME_COIN / 2` per in-game minute (graffiti protection fee — "This is my manor").
+- Make nearby hostile NPCs from rival factions **hesitate** for 1 second before attacking (home turf intimidation).
+- Display a subtle coloured tint on the minimap (if one is added later).
+
+### NPC Graffiti Crews
+
+Faction NPCs don't just stand around — they actively spray. Every 5 in-game minutes, `GraffitiSystem.update()` picks up to 2 NPCs per faction and dispatches them to walk to a random unclaimed or rival-tagged block face within their faction's zone, then spray their faction tag. This makes the turf war feel alive: leaving an area unattended lets rivals reclaim it visually and territorially.
+
+`STREET_LADS` spray fast (1 second per tag) but their tags fade twice as quickly. `MARCHETTI_CREW` spray slowly (3 seconds, they're deliberate) but their tags last twice as long. `THE_COUNCIL` don't spray; instead they dispatch a `COUNCIL_CLEANER` NPC who removes all non-Council graffiti in civic areas.
+
+### Spray Can Crafting & Pigments
+
+New `Material` entries:
+- `SPRAY_CAN_EMPTY` — drops from breaking shelving props in the industrial estate
+- `PAINT_PIGMENT_RED`, `PAINT_PIGMENT_BLUE`, `PAINT_PIGMENT_GOLD`, `PAINT_PIGMENT_WHITE`, `PAINT_PIGMENT_GREY` — drop from breaking art-supply/hardware props
+- `SPRAY_CAN` — crafted: 1 `SPRAY_CAN_EMPTY` + 1 `PAINT_PIGMENT_*` → determines tag colour
+
+Colour affects only visuals, not gameplay (except `PAINT_PIGMENT_GOLD` exclusively makes `CROWN_TAG` valid for Marchetti missions).
+
+### Wanted System Integration
+
+Spraying graffiti is a crime. Each tag placed outdoors (not in the player's own squat) adds `NOISE_GRAFFITI = 0.1f` to the noise system. A PCSO or POLICE NPC with LOS to the player during spraying immediately raises Wanted Level by 1. If the player is caught mid-spray, the can is confiscated (removed from inventory).
+
+Being caught spraying 3 times total adds `CrimeType.CRIMINAL_DAMAGE` to the criminal record, which unlocks a `BuildingQuestRegistry` quest from the solicitor NPC: "Secure a not-guilty plea — gather 3 alibi witnesses."
+
+### Rendering
+
+Each `GraffitiMark` renders as a 1×1 quad on the tagged block face, textured from a 16×16 graffiti glyph atlas (`graffiti_atlas.png`). The quad is drawn with a slight Z-offset (polygon offset in OpenGL) to avoid z-fighting. Alpha channel fades linearly from 1.0 to 0.0 over `FADE_DAYS` in-game days. Tags applied in covered/sheltered areas (indoors, under overhangs) fade at 20% of the outdoor rate — permanent markers if the player stays out of trouble.
+
+A screen-space particle burst (3–5 paint-spray particles, colour-matched to the can) plays for 0.3 seconds when a tag is placed, providing satisfying feedback.
+
+### New Source File
+
+`src/main/java/ragamuffin/core/GraffitiSystem.java`
+
+- `GraffitiSystem.update(float delta, List<NPC>, TurfMap, WantedSystem, NoiseSystem)` — advances fade timers, dispatches NPC graffiti crews, applies turf pressure
+- `GraffitiSystem.placeTag(Vector3 blockPos, BlockFace face, TagStyle style, Faction owner)` — validates range/LOS, deducts spray can use, creates `GraffitiMark`, fires noise event
+- `GraffitiSystem.scrubTag(GraffitiMark)` — called by Council Cleaner NPCs; removes mark from world and `TurfMap`
+- `GraffitiSystem.getTagDensity(int zoneX, int zoneZ, Faction)` — returns living tag count for turf pressure
+- `GraffitiSystem.getClaimedZones(Faction)` — returns list of zones with majority tags for that faction
+- `GraffitiMark` — value object: `blockPos`, `face`, `style`, `ownerFaction`, `colour`, `ageInGameDays` (float), `isScrubbed`
+- `TagStyle` — enum: `CROWN_TAG`, `LIGHTNING_TAG`, `CLIPBOARD_TAG`, `PLAYER_TAG`
+
+`src/main/java/ragamuffin/render/GraffitiRenderer.java`
+
+- `GraffitiRenderer.render(List<GraffitiMark>, Camera)` — draws all living marks as depth-offset quads from the graffiti glyph atlas, with alpha fade applied
+
+### Integration with Existing Systems
+
+- **TurfMap**: `placeTag` calls `TurfMap.setOwner(blockPos, faction)` for the tagged block surface. `scrubTag` calls `TurfMap.clearOwner(blockPos)`.
+- **FactionSystem**: Spraying a rival's tag on their turf costs −5 Respect with that faction. Spraying your ally's tag on rival turf gives +3 Respect. Completing 10 tags in a zone the player-faction wins hands the COUNCIL a "graffiti menace" rumour.
+- **WantedSystem / NoiseSystem**: Each outdoor tag adds noise 0.1. Being seen by police during spray → +1 Wanted immediately.
+- **CriminalRecord**: 3+ graffiti arrests → `CrimeType.CRIMINAL_DAMAGE` logged. Triggers solicitor quest.
+- **RumourNetwork**: When a zone flips faction-majority (tag density swings), a `RumourType.GANG_ACTIVITY` rumour is seeded at nearby NPCs ("Someone's been tagging the estate — Marchetti boys are spitting.").
+- **NewspaperSystem**: If the player tags 10+ surfaces in one in-game day, the next edition may feature a Local Brief: "GRAFFITI VANDAL STRIKES AGAIN — Council vows crackdown." Infamy score contribution: 2.
+- **AchievementSystem**: New achievements — `WRITER` (place first tag), `GETTING_UP` (place 50 tags), `ALL CITY` (have living tags in every zone simultaneously), `SCRUBBED` (have 10 of your tags removed by Council Cleaners — you're famous enough to be a nuisance), `CLEAN HANDS` (complete a full in-game day without placing any tags, while holding a spray can).
+- **StreetEconomySystem**: Spray can components (`SPRAY_CAN_EMPTY`, `PAINT_PIGMENT_*`) become tradeable commodities. `STREET_LADS` NPCs with high BORED need will pay 2 COIN for a filled spray can.
+
+### New Key Binding
+
+- **T**: Place graffiti tag on targeted block face (only active when spray can equipped in hotbar)
+
+**Unit tests**: Tag placement range validation (>3 blocks rejected), fade timer progression, tag density calculation per zone, turf pressure application to FactionSystem, noise event fired on outdoor tag, wanted level increment when seen, spray can use count decrement, NPC crew dispatch logic, Council Cleaner target selection.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Tag placed on block face**: Give player a `SPRAY_CAN` with `PLAYER_TAG`. Place player 2 blocks from a BRICK wall, facing it. Press **T**. Verify a `GraffitiMark` exists at that block face with `ownerFaction = PLAYER`. Verify spray can use count decremented by 1. Verify `TurfMap.getOwner(blockPos)` returns PLAYER faction.
+
+2. **Tag ownership shifts turf pressure**: Place 5 `PLAYER_TAG` marks in an 8×8 zone currently owned by `STREET_LADS`. Call `GraffitiSystem.getTagDensity(zoneX, zoneZ, PLAYER)`. Verify it returns 5. Call `FactionSystem.update()`. Verify that PLAYER's turf pressure in that zone causes the turf-transfer threshold to be reached sooner (turf transfer fires at a gap of 25 instead of 30).
+
+3. **Council Cleaner scrubs civic-area tag**: Place a `PLAYER_TAG` on a block adjacent to the town hall (landmark `THE_COUNCIL`). Advance 2 in-game days. Verify a `COUNCIL_CLEANER` NPC was dispatched and called `scrubTag`. Verify the `GraffitiMark.isScrubbed()` is true. Verify `TurfMap.getOwner(blockPos)` no longer returns PLAYER faction.
+
+4. **Caught spraying raises wanted level**: Place player outdoors. Spawn a `POLICE` NPC with LOS to the player. Give player a `SPRAY_CAN`. Press **T** to place a tag. Verify `WantedSystem.getWantedLevel()` incremented by 1. Verify the spray can is removed from inventory (confiscated).
+
+5. **NPC crew tags rival zone**: Advance game time by 5 in-game minutes. Verify that at least 1 `STREET_LADS` NPC has placed a `LIGHTNING_TAG` `GraffitiMark` on a block surface within the MARCHETTI_CREW zone. Verify a `RumourType.GANG_ACTIVITY` rumour was seeded if this caused a zone flip.
+
+6. **Claimed zone passive income**: Player places 5 `PLAYER_TAG` marks in one 8×8 zone. Verify `GraffitiSystem.getClaimedZones(PLAYER)` includes that zone. Advance 1 in-game minute. Verify player COIN increased by `RACKET_PASSIVE_INCOME_COIN / 2`.
+
+7. **ALL CITY achievement**: Place at least 1 living `PLAYER_TAG` in every 8×8 zone in the world. Verify `AchievementType.ALL_CITY` is awarded.
+
+8. **Spray can exhausted**: Give player a `SPRAY_CAN` with exactly 1 use remaining. Place a tag. Verify `SPRAY_CAN` is removed from inventory (replaced with `SPRAY_CAN_EMPTY`). Verify `SPRAY_CAN_EMPTY` can be re-crafted with a pigment into a fresh `SPRAY_CAN`.
