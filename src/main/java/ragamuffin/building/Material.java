@@ -249,7 +249,69 @@ public enum Material {
      * Greggs apron — looted from a knocked-out Greggs worker.
      * Comedy gag: works perfectly beyond 3 blocks, immediately transparent within 3 blocks.
      */
-    GREGGS_APRON("Greggs Apron");
+    GREGGS_APRON("Greggs Apron"),
+
+    // ── Issue #769: Dynamic NPC Needs & Black Market Economy ─────────────────
+
+    /**
+     * Greggs pastry — sold or given to hungry NPCs to satisfy HUNGRY need.
+     * Spikes in price during GREGGS_STRIKE market event.
+     */
+    GREGGS_PASTRY("Greggs Pastry"),
+
+    /**
+     * Can of lager — sold to NPCs to satisfy BORED/DESPERATE needs.
+     * Spikes in price during LAGER_SHORTAGE market event.
+     */
+    CAN_OF_LAGER("Can of Lager"),
+
+    /**
+     * Cigarette — sold to NPCs to satisfy DESPERATE need.
+     * Affected by COUNCIL_CRACKDOWN event (restricted supply).
+     */
+    CIGARETTE("Cigarette"),
+
+    /**
+     * Woolly hat — sold to cold NPCs to satisfy COLD need.
+     * High demand during COLD_SNAP market event.
+     */
+    WOOLLY_HAT_ECONOMY("Woolly Hat (Economy)"),
+
+    /**
+     * Sleeping bag — sold to desperate NPCs (SCARED/DESPERATE).
+     * Available at black market; not sold in shops.
+     */
+    SLEEPING_BAG("Sleeping Bag"),
+
+    /**
+     * Stolen phone — fenced item; handling adds WITNESSED_CRIMES to criminal record.
+     * Source of passive income; WitnessSystem penalises holding stolen goods.
+     */
+    STOLEN_PHONE("Stolen Phone"),
+
+    /**
+     * Prescription meds — sold to DESPERATE NPCs for high coin.
+     * Handling attracts police attention at Notoriety Tier 2+.
+     */
+    PRESCRIPTION_MEDS("Prescription Meds"),
+
+    /**
+     * Counterfeit note — acts as currency multiplier (×2 COIN value) but
+     * triggers WitnessSystem criminal record entry if a POLICE NPC is nearby.
+     */
+    COUNTERFEIT_NOTE("Counterfeit Note"),
+
+    /**
+     * Tobacco pouch — sold to DESPERATE NPCs; less scrutinised than CIGARETTE.
+     * Unaffected by COUNCIL_CRACKDOWN event.
+     */
+    TOBACCO_POUCH("Tobacco Pouch"),
+
+    /**
+     * Newspaper — already exists; referenced here as black market rumour source.
+     * Used by NPCs in BORED state; seeded by RUMOUR_NETWORK with LOOT_TIP.
+     * NOTE: NEWSPAPER already exists above — this comment is for documentation only.
+     */;
 
     private final String displayName;
 
@@ -448,6 +510,24 @@ public enum Material {
             case GREGGS_APRON:       return cs(0.82f, 0.10f, 0.15f,  // Greggs red
                                                0.15f, 0.30f, 0.70f); // Blue Greggs logo
 
+            // Issue #769: Black Market Economy items
+            case GREGGS_PASTRY:      return c(0.88f, 0.68f, 0.22f);  // Golden pastry
+            case CAN_OF_LAGER:       return cs(0.88f, 0.75f, 0.10f,  // Gold lager label
+                                               0.55f, 0.55f, 0.60f); // Silver can
+            case CIGARETTE:          return cs(0.95f, 0.95f, 0.90f,  // White paper
+                                               0.78f, 0.35f, 0.15f); // Orange filter
+            case WOOLLY_HAT_ECONOMY: return c(0.62f, 0.18f, 0.62f);  // Purple woolly hat
+            case SLEEPING_BAG:       return cs(0.22f, 0.45f, 0.68f,  // Blue outer
+                                               0.65f, 0.65f, 0.68f); // Grey inner
+            case STOLEN_PHONE:       return cs(0.12f, 0.12f, 0.15f,  // Dark screen
+                                               0.85f, 0.35f, 0.12f); // Orange stolen indicator
+            case PRESCRIPTION_MEDS:  return cs(0.88f, 0.88f, 0.95f,  // White packet
+                                               0.25f, 0.42f, 0.78f); // Blue cross
+            case COUNTERFEIT_NOTE:   return cs(0.55f, 0.72f, 0.35f,  // Fake green note
+                                               0.35f, 0.52f, 0.20f); // Darker fake green
+            case TOBACCO_POUCH:      return cs(0.52f, 0.35f, 0.18f,  // Brown leather
+                                               0.35f, 0.22f, 0.08f); // Dark brown
+
             // Craftable 3D props (Issue #720)
             case PROP_BED:           return cs(0.55f, 0.38f, 0.22f,  // Wooden frame
                                                0.88f, 0.88f, 0.88f); // White pillow
@@ -571,6 +651,16 @@ public enum Material {
             case STREET_LADS_HOODIE:
             case HI_VIS_VEST:
             case GREGGS_APRON:
+            // Issue #769: Black Market Economy items
+            case GREGGS_PASTRY:
+            case CAN_OF_LAGER:
+            case CIGARETTE:
+            case WOOLLY_HAT_ECONOMY:
+            case SLEEPING_BAG:
+            case STOLEN_PHONE:
+            case PRESCRIPTION_MEDS:
+            case COUNTERFEIT_NOTE:
+            case TOBACCO_POUCH:
                 return false;
             default:
                 return true;
@@ -765,6 +855,26 @@ public enum Material {
             case HI_VIS_VEST:
             case GREGGS_APRON:
                 return IconShape.FLAT_PAPER; // clothing/vest shape
+
+            // Issue #769: Black Market Economy items
+            case GREGGS_PASTRY:
+                return IconShape.FOOD;
+            case CAN_OF_LAGER:
+                return IconShape.BOTTLE;
+            case CIGARETTE:
+                return IconShape.TOOL;       // thin stick shape
+            case WOOLLY_HAT_ECONOMY:
+                return IconShape.CARD;       // hat shape
+            case SLEEPING_BAG:
+                return IconShape.BOX;        // rolled bag
+            case STOLEN_PHONE:
+                return IconShape.CARD;       // phone shape
+            case PRESCRIPTION_MEDS:
+                return IconShape.FLAT_PAPER; // medicine packet
+            case COUNTERFEIT_NOTE:
+                return IconShape.FLAT_PAPER; // banknote
+            case TOBACCO_POUCH:
+                return IconShape.CARD;       // small pouch
 
             default:
                 return IconShape.BOX;

@@ -344,6 +344,39 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #769: Dynamic NPC Needs & Black Market Economy ─────────────────
+
+    ENTREPRENEUR(
+        "Entrepreneur of the Year",
+        "Completed your first street deal. The Prince's Trust would not be proud.",
+        1
+    ),
+    LOAN_SHARK(
+        "Neither a Borrower Nor a Lender Be",
+        "Charged interest on a desperate NPC. Keynes would have thoughts.",
+        1
+    ),
+    CORNERED_THE_MARKET(
+        "Gordon Gekko of the High Street",
+        "Cornered the market on a single commodity. Greed is good, allegedly.",
+        1
+    ),
+    BENEFIT_FRAUD(
+        "The System Works for Me",
+        "Exploited the benefit day price spike for maximum profit. Entrepreneurial.",
+        1
+    ),
+    COLD_SNAP_CAPITALIST(
+        "Price Gouger",
+        "Sold woolly hats at double price during a cold snap. Opportunistic.",
+        1
+    ),
+    DODGY_AS_THEY_COME(
+        "Dodgy as They Come",
+        "Handled stolen goods, counterfeit notes, and prescription meds in a single session. Proper wrong 'un.",
+        1
+    ),
+
     // ── Issue #767: Disguise & Social Engineering System ──────────────────────
 
     UNDERCOVER(
