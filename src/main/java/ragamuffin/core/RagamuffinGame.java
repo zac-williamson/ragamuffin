@@ -48,6 +48,7 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 3: Resource & Inventory System
     private Inventory inventory;
     private BlockBreaker blockBreaker;
+    private PropBreaker propBreaker;
     private BlockDropTable dropTable;
     private TooltipSystem tooltipSystem;
 
@@ -295,6 +296,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Phase 3: Initialize inventory and resource systems
         inventory = new Inventory(36);
         blockBreaker = new BlockBreaker();
+        propBreaker = new PropBreaker();
         dropTable = new BlockDropTable();
         tooltipSystem = new TooltipSystem();
 
@@ -623,6 +625,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             // mirrors the ordering in the PLAYING path (updatePlayingSimulation).
             speechLogUI.update(npcManager.getNPCs(), delta);
             blockBreaker.tickDecay(delta);
+            propBreaker.tickDecay(delta);
             player.getStreetReputation().update(delta);
             weatherSystem.update(delta * timeSystem.getTimeSpeed() * 3600f);
             timeSystem.update(delta);
@@ -1419,11 +1422,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             // weather (#341), and other timer-based systems in the PAUSED branch.
             gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
-            // Fix #391: Advance block damage decay timer while paused so partially-damaged
-            // blocks continue decaying toward zero. Without this, the player can exploit
-            // the pause menu to freeze block decay indefinitely and resume with blocks
-            // still at the same damage level — bypassing the decay mechanic entirely.
+            // Fix #391: Advance block/prop damage decay timers while paused so partially-damaged
+            // blocks and props continue decaying toward zero. Without this, the player can exploit
+            // the pause menu to freeze decay indefinitely and resume with the same damage level —
+            // bypassing the decay mechanic entirely.
             blockBreaker.tickDecay(delta);
+            propBreaker.tickDecay(delta);
 
             // Fix #399: Advance hunger, starvation, energy recovery, and weather exposure
             // while paused so the player cannot exploit the pause menu to avoid starving,
@@ -2011,8 +2015,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             player.updateDodge(delta);
         }
 
-        // Decay partially-damaged blocks that have not been hit recently
+        // Decay partially-damaged blocks and props that have not been hit recently
         blockBreaker.tickDecay(delta);
+        propBreaker.tickDecay(delta);
 
         // Update loaded chunks based on player position; remove renderer models for unloaded chunks
         java.util.Set<String> unloadedChunkKeys = world.updateLoadedChunks(player.getPosition());
@@ -2195,29 +2200,54 @@ public class RagamuffinGame extends ApplicationAdapter {
                 punchHeldTimer = 0f; // reset repeat timer on fresh click
                 // Capture current target so we can detect target changes
                 RaycastResult _initTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
-                lastPunchTargetKey = (_initTarget != null) ? (_initTarget.getBlockX() + "," + _initTarget.getBlockY() + "," + _initTarget.getBlockZ()) : null;
+                int _initProp = findPropInReach(camera.position, camera.direction, PUNCH_REACH);
+                if (_initTarget != null) {
+                    lastPunchTargetKey = _initTarget.getBlockX() + "," + _initTarget.getBlockY() + "," + _initTarget.getBlockZ();
+                } else if (_initProp >= 0) {
+                    lastPunchTargetKey = "prop:" + _initProp;
+                } else {
+                    lastPunchTargetKey = null;
+                }
             } else if (inputHandler.isPunchHeld()) {
-                // Fix #279: Check for both block and NPC targets so hold-to-punch fires for NPCs too.
+                // Fix #279: Check for block, NPC, and prop targets so hold-to-punch fires for all.
+                // Issue #752: Props are now a valid hold target.
                 RaycastResult heldTarget = blockBreaker.getTargetBlock(world, camera.position, camera.direction, PUNCH_REACH);
                 String currentTargetKey = (heldTarget != null) ? (heldTarget.getBlockX() + "," + heldTarget.getBlockY() + "," + heldTarget.getBlockZ()) : null;
                 boolean hasNPCTarget = findNPCInReach(camera.position, camera.direction, PUNCH_REACH) != null;
-                // Reset timer only when the block target changes (switched block or block→NPC/none).
+                // Check for prop target (use prop index as key; prefix avoids collisions with block keys)
+                int heldPropIndex = findPropInReach(camera.position, camera.direction, PUNCH_REACH);
+                String propTargetKey = (heldPropIndex >= 0) ? ("prop:" + heldPropIndex) : null;
+                // Merge: prefer block key if block is closer, otherwise use prop key
+                if (currentTargetKey == null && propTargetKey != null) {
+                    currentTargetKey = propTargetKey;
+                } else if (currentTargetKey != null && propTargetKey != null) {
+                    // Both present — keep whichever is closer (same logic as handlePunch)
+                    float bd = heldTarget.getDistance();
+                    List<PropPosition> heldProps = world.getPropPositions();
+                    float pd = (heldPropIndex < heldProps.size()) ?
+                        rayAABBIntersect(camera.position, camera.direction, heldProps.get(heldPropIndex).getAABB()) :
+                        Float.MAX_VALUE;
+                    if (pd >= 0f && pd < bd) {
+                        currentTargetKey = propTargetKey;
+                    }
+                }
+                // Reset timer only when the block/prop target changes (switched target or target→NPC/none).
                 // Do NOT reset if an NPC is the target and currentTargetKey is null — that would
                 // zero the timer every frame and prevent repeat hits on NPCs (the bug in #279).
                 if (!hasNPCTarget && (currentTargetKey == null || !currentTargetKey.equals(lastPunchTargetKey))) {
                     punchHeldTimer = 0f;
                     lastPunchTargetKey = currentTargetKey;
                 } else if (currentTargetKey != null && !currentTargetKey.equals(lastPunchTargetKey)) {
-                    // Block target changed (even while also facing an NPC — unlikely but correct)
+                    // Target changed (even while also facing an NPC — unlikely but correct)
                     punchHeldTimer = 0f;
                     lastPunchTargetKey = currentTargetKey;
                 }
-                // Fix #285: When aiming at an NPC with no block target, clear any residual
+                // Fix #285: When aiming at an NPC with no block/prop target, clear any residual
                 // block break progress immediately (not just on the next repeat tick).
                 if (hasNPCTarget && currentTargetKey == null) {
                     gameHUD.setBlockBreakProgress(0f);
                 }
-                // Any valid target — block OR NPC — should tick the repeat timer
+                // Any valid target — block, prop, OR NPC — should tick the repeat timer
                 if (currentTargetKey != null || hasNPCTarget) {
                     punchHeldTimer += delta;
                     if (punchHeldTimer >= PUNCH_REPEAT_INTERVAL) {
@@ -2380,9 +2410,55 @@ public class RagamuffinGame extends ApplicationAdapter {
             return; // Don't punch blocks if we hit an NPC
         }
 
-        // Raycast to find target block
+        // Raycast to find target block and target prop; hit whichever is closer.
+        // Issue #752: Non-block 3D props were never checked here, so they could
+        // not be targeted or destroyed.
         RaycastResult result = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
-        if (result != null) {
+        int targetPropIndex = findPropInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
+
+        // Determine which target is closer
+        float blockDist = (result != null) ? result.getDistance() : Float.MAX_VALUE;
+        float propDist  = Float.MAX_VALUE;
+        if (targetPropIndex >= 0) {
+            List<PropPosition> props = world.getPropPositions();
+            if (targetPropIndex < props.size()) {
+                PropPosition pp = props.get(targetPropIndex);
+                propDist = rayAABBIntersect(tmpCameraPos, tmpDirection, pp.getAABB());
+                if (propDist < 0f) propDist = Float.MAX_VALUE;
+            }
+        }
+
+        boolean hitProp  = targetPropIndex >= 0 && propDist  <= blockDist;
+        boolean hitBlock = result != null       && blockDist  <  propDist;
+
+        if (hitProp) {
+            // Punch connects — animate, drain energy
+            firstPersonArm.punch();
+            player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
+
+            // Punch the prop
+            Material drop = propBreaker.punchProp(world, targetPropIndex);
+
+            // Play punch sound on every hit
+            soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PUNCH);
+
+            // Issue #171: Emit combat-hit sparks at the prop centre
+            if (targetPropIndex < world.getPropPositions().size()) {
+                PropPosition pp = world.getPropPositions().get(targetPropIndex);
+                particleSystem.emitCombatHit(pp.getWorldX(), pp.getWorldY() + pp.getType().getCollisionHeight() * 0.5f, pp.getWorldZ());
+            }
+
+            if (drop != null) {
+                // Prop was broken — collect the material drop
+                inventory.addItem(drop, 1);
+                soundSystem.play(ragamuffin.audio.SoundEffect.INVENTORY_PICKUP);
+                gameHUD.setBlockBreakProgress(0f);
+            } else {
+                // Prop partially damaged — show break progress
+                float progress = propBreaker.getBreakProgress(world, targetPropIndex);
+                gameHUD.setBlockBreakProgress(progress);
+            }
+        } else if (hitBlock) {
             // Punch connects — animate, drain energy
             firstPersonArm.punch();
             player.consumeEnergy(Player.ENERGY_DRAIN_PER_ACTION);
@@ -2531,7 +2607,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                 rebuildChunkAt(x, y, z);
             }
         } else {
-            // Not looking at any block - reset progress indicator
+            // Not looking at any block or prop - reset progress indicator
             gameHUD.setBlockBreakProgress(0f);
         }
     }
@@ -2802,6 +2878,25 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
+     * Format a PropType for display in the targeting reticule.
+     * e.g. PHONE_BOX -> "Phone Box"
+     *
+     * Issue #752: Non-block 3D objects can now be targeted; display their name.
+     */
+    private String formatPropName(ragamuffin.world.PropType propType) {
+        String raw = propType.name().replace('_', ' ');
+        StringBuilder sb = new StringBuilder();
+        for (String word : raw.split(" ")) {
+            if (sb.length() > 0) sb.append(' ');
+            if (!word.isEmpty()) {
+                sb.append(Character.toUpperCase(word.charAt(0)));
+                sb.append(word.substring(1).toLowerCase());
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
      * Find an NPC within punch reach.
      *
      * <p>Fix #242: Delegates to {@link NPCHitDetector#findNPCInReach} which uses a
@@ -2810,6 +2905,82 @@ public class RagamuffinGame extends ApplicationAdapter {
     private NPC findNPCInReach(Vector3 cameraPos, Vector3 direction, float reach) {
         return NPCHitDetector.findNPCInReach(cameraPos, direction, reach,
                 npcManager.getNPCs(), blockBreaker, world);
+    }
+
+    /**
+     * Find the nearest prop within punch reach using ray-AABB intersection.
+     *
+     * <p>Issue #752: Non-block 3D objects (props) could not be targeted or destroyed.
+     * This method casts a ray from the camera and tests it against each prop's AABB,
+     * returning the index of the nearest prop whose AABB is intersected within
+     * {@code reach} distance, or {@code -1} if none.
+     */
+    private int findPropInReach(Vector3 origin, Vector3 direction, float reach) {
+        List<PropPosition> props = world.getPropPositions();
+        int bestIndex = -1;
+        float bestDist = reach + 1f;
+        for (int i = 0; i < props.size(); i++) {
+            PropPosition prop = props.get(i);
+            ragamuffin.entity.AABB box = prop.getAABB();
+            float t = rayAABBIntersect(origin, direction, box);
+            if (t >= 0f && t < bestDist) {
+                bestDist = t;
+                bestIndex = i;
+            }
+        }
+        return bestIndex;
+    }
+
+    /**
+     * Ray-AABB intersection test (slab method).
+     *
+     * @return the entry distance along the ray, or {@code -1} if no intersection
+     *         within a positive distance.
+     */
+    private float rayAABBIntersect(Vector3 origin, Vector3 dir, ragamuffin.entity.AABB box) {
+        float tmin = 0f;
+        float tmax = Float.MAX_VALUE;
+
+        // X slab
+        if (Math.abs(dir.x) < 1e-8f) {
+            if (origin.x < box.getMinX() || origin.x > box.getMaxX()) return -1f;
+        } else {
+            float ood = 1f / dir.x;
+            float t1 = (box.getMinX() - origin.x) * ood;
+            float t2 = (box.getMaxX() - origin.x) * ood;
+            if (t1 > t2) { float tmp = t1; t1 = t2; t2 = tmp; }
+            tmin = Math.max(tmin, t1);
+            tmax = Math.min(tmax, t2);
+            if (tmin > tmax) return -1f;
+        }
+
+        // Y slab
+        if (Math.abs(dir.y) < 1e-8f) {
+            if (origin.y < box.getMinY() || origin.y > box.getMaxY()) return -1f;
+        } else {
+            float ood = 1f / dir.y;
+            float t1 = (box.getMinY() - origin.y) * ood;
+            float t2 = (box.getMaxY() - origin.y) * ood;
+            if (t1 > t2) { float tmp = t1; t1 = t2; t2 = tmp; }
+            tmin = Math.max(tmin, t1);
+            tmax = Math.min(tmax, t2);
+            if (tmin > tmax) return -1f;
+        }
+
+        // Z slab
+        if (Math.abs(dir.z) < 1e-8f) {
+            if (origin.z < box.getMinZ() || origin.z > box.getMaxZ()) return -1f;
+        } else {
+            float ood = 1f / dir.z;
+            float t1 = (box.getMinZ() - origin.z) * ood;
+            float t2 = (box.getMaxZ() - origin.z) * ood;
+            if (t1 > t2) { float tmp = t1; t1 = t2; t2 = tmp; }
+            tmin = Math.max(tmin, t1);
+            tmax = Math.min(tmax, t2);
+            if (tmin > tmax) return -1f;
+        }
+
+        return tmin >= 0f ? tmin : (tmax >= 0f ? 0f : -1f);
     }
 
     private void renderUI() {
@@ -2850,20 +3021,35 @@ public class RagamuffinGame extends ApplicationAdapter {
             // mirroring the guard already applied to renderBlockHighlight().
             boolean showCrosshair = !isUIBlocking();
             if (showCrosshair) {
-                // Update block break progress on crosshair (account for equipped tool)
+                // Update block/prop break progress on crosshair (account for equipped tool)
                 tmpCameraPos.set(camera.position);
                 tmpDirection.set(camera.direction);
                 int hudSelectedSlot = hotbarUI.getSelectedSlot();
                 Material hudEquipped = inventory.getItemInSlot(hudSelectedSlot);
                 Material hudTool = (hudEquipped != null && Tool.isTool(hudEquipped)) ? hudEquipped : null;
                 RaycastResult targetBlock = blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PUNCH_REACH);
+                // Issue #752: Also check for prop targets in HUD
+                int hudTargetPropIndex = findPropInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
 
-                // Issue #287: Check NPC target first — NPC takes priority over block for both
+                // Determine which (block or prop) is closer for HUD display
+                float hudBlockDist = (targetBlock != null) ? targetBlock.getDistance() : Float.MAX_VALUE;
+                float hudPropDist  = Float.MAX_VALUE;
+                if (hudTargetPropIndex >= 0 && hudTargetPropIndex < world.getPropPositions().size()) {
+                    float d = rayAABBIntersect(tmpCameraPos, tmpDirection, world.getPropPositions().get(hudTargetPropIndex).getAABB());
+                    if (d >= 0f) hudPropDist = d;
+                }
+                boolean hudShowProp  = hudTargetPropIndex >= 0 && hudPropDist  <= hudBlockDist;
+                boolean hudShowBlock = targetBlock != null        && hudBlockDist <  hudPropDist;
+
+                // Issue #287: Check NPC target first — NPC takes priority over block/prop for both
                 // block break progress and target name (avoids two separate findNPCInReach calls)
                 NPC hudTargetNPC = findNPCInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
                 if (hudTargetNPC != null) {
-                    gameHUD.setBlockBreakProgress(0f); // NPC target — don't show block damage
-                } else if (targetBlock != null) {
+                    gameHUD.setBlockBreakProgress(0f); // NPC target — don't show block/prop damage
+                } else if (hudShowProp) {
+                    float progress = propBreaker.getBreakProgress(world, hudTargetPropIndex);
+                    gameHUD.setBlockBreakProgress(progress);
+                } else if (hudShowBlock) {
                     float progress = blockBreaker.getBreakProgress(world, targetBlock.getBlockX(),
                         targetBlock.getBlockY(), targetBlock.getBlockZ(), hudTool);
                     gameHUD.setBlockBreakProgress(progress);
@@ -2871,10 +3057,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                     gameHUD.setBlockBreakProgress(0f);
                 }
 
-                // Issue #189: Update target reticule label — NPC takes priority over block
+                // Issue #189: Update target reticule label — NPC takes priority over block/prop
                 if (hudTargetNPC != null) {
                     gameHUD.setTargetName(formatNPCName(hudTargetNPC.getType()));
-                } else if (targetBlock != null) {
+                } else if (hudShowProp) {
+                    gameHUD.setTargetName(formatPropName(world.getPropPositions().get(hudTargetPropIndex).getType()));
+                } else if (hudShowBlock) {
                     gameHUD.setTargetName(formatBlockName(targetBlock.getBlockType()));
                 } else {
                     gameHUD.setTargetName(null);
