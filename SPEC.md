@@ -5261,3 +5261,180 @@ spread, all achievement trigger conditions, evidence counter HUD visibility logi
     from CCTV. Verify Notoriety increased by exactly 10 (1 witness reaching police).
     Verify the leftover evidence prop seeds 1 `GANG_ACTIVITY` rumour within 2
     in-game minutes. Verify no NPEs and game remains in PLAYING state throughout.
+
+---
+
+## Phase 14: Going Undercover — Disguise & Social Engineering System
+
+**Goal**: Let the player steal uniforms and clothing from NPCs, wear them as disguises,
+and temporarily infiltrate restricted areas, faction territories, and police patrols —
+until their cover is blown. Think very-budget Hitman set in a British market town. Deeply
+funny, strategically rich, and completely changes the approach to heists.
+
+### Disguise Mechanics
+
+A new `DisguiseSystem` class tracks the player's current disguise state. Disguises are
+obtained by knocking out an NPC (reduced to 0 HP) and pressing **E** to loot their
+clothing. The clothing becomes a wearable `Material` item. Equipping it via the inventory
+`Worn` slot activates the disguise.
+
+**Available disguises and their effects:**
+
+| Disguise Item | Source NPC | Restricted Access Granted | Cover Blown By |
+|---------------|-----------|--------------------------|----------------|
+| `POLICE_UNIFORM` | POLICE NPC | Police don't chase player; can enter police-patrolled zones freely | Walking near a PCSO or ARMED_RESPONSE NPC (they know their own); committing a crime while wearing it (+30 Notoriety) |
+| `COUNCIL_JACKET` | COUNCIL_BUILDER NPC | Council builders ignore player; can freely enter and demolish structures without triggering council response | Any faction NPC (they hate the council); being arrested |
+| `MARCHETTI_TRACKSUIT` | FACTION_LIEUTENANT (Marchetti) | Marchetti NPCs are friendly; player can enter Marchetti turf without Respect check | Street Lads NPCs attack on sight; POLICE NPCs become suspicious within 6 blocks (50% chance per 10 seconds to investigate) |
+| `STREETLADS_HOODIE` | YOUTH_GANG NPC | Street Lads territory treated as safe; can attend drug corners without triggering PCSO | Marchetti NPCs become hostile; police suspicion radius increases to 8 blocks |
+| `HI_VIS_VEST` | POSTMAN or BARMAN | Civilians and shopkeepers treat player as staff; can enter back rooms of shops; shop NPCs share loot tips freely | Any police NPC on Notoriety ≥ 2; bouncer lets player into pub without bribe |
+| `GREGGS_APRON` | Greggs interior NPC | Free SAUSAGE_ROLL per visit; Greggs NPCs don't call police for property damage nearby | Hilariously fools nobody past 3 blocks — all NPCs within 3 blocks see through it immediately |
+
+### Cover Integrity
+
+Each disguise has a `coverIntegrity` value (0–100, starting at 100). It decays based on:
+- Being within line-of-sight of a suspicious NPC: −2 per second
+- Running (not walking): −5 per second (running cops don't exist — suspicious behaviour)
+- Committing any crime while in disguise: −50 immediately
+- Buying a round at the pub while disguised: +10 (social normalisation)
+
+When `coverIntegrity` drops to 0, cover is blown:
+- The disguise item is removed from the `Worn` slot and destroyed (can't reuse a blown cover)
+- A `COVER_BLOWN` speech event fires from the nearest NPC: faction-appropriate dialogue
+  (e.g. Police: "Oi — that's not one of ours!", Marchetti: "You're not one of the crew, are ya.")
+- All NPCs of the relevant faction within 20 blocks enter `HOSTILE` state for 60 seconds
+- Notoriety +10
+
+`coverIntegrity` is displayed as a small coloured indicator on the HUD when disguised:
+green (75–100), amber (25–74), red (0–24), with a rapid pulse animation below 25.
+
+### Cover Suspicion Events
+
+Certain contextual events create tension without immediately blowing cover:
+
+- **Stop and Scrutinise**: A police NPC within 6 blocks notices something off. They stop,
+  face the player, and their speech bubble shows "Hold on..." for 3 seconds. If the player
+  stands still and does nothing, cover integrity loses only 15 points. If the player runs,
+  cover is blown immediately.
+- **Faction Recognition Check**: When entering a faction building in a rival's disguise,
+  a faction lieutenant NPC performs a recognition check (3-second animation, speech: "Do I
+  know you?"). Player can press **E** to bluff (RNG: 60% success, uses `RUMOUR_NOTE` if held
+  as supporting prop → 90% success). Failure blows cover instantly.
+- **Greggs Apron Transparency**: The `GREGGS_APRON` is played entirely for laughs. Within
+  3 blocks, any NPC immediately sees through it with the speech "That's not a Greggs worker."
+  Beyond 3 blocks, it works perfectly. Nobody at distance scrutinises a person in an apron.
+
+### Integration with Existing Systems
+
+- **Heists**: Wearing a `POLICE_UNIFORM` while executing a heist resets the alarm timer
+  by 30 seconds (police responding to the alarm hesitate before shooting "one of their own").
+  Blowing cover during a heist immediately triggers the full alarm.
+- **Witness System**: Witnesses who see the player committing a crime while in disguise
+  seed a `WITNESS_SIGHTING` rumour with the disguise type included: "Someone in a police
+  uniform was breaking into the jewellers!" — this rumour causes ALL police NPCs to enter
+  suspicious mode for 3 in-game minutes.
+- **Faction System**: Using a rival faction's disguise to complete missions earns Respect
+  from the disguised faction (+10 on success) but risks a permanent −20 if caught.
+  Completing a Marchetti mission dressed as Street Lads seeds a `BETRAYAL` rumour automatically.
+- **Notoriety**: Obtaining your first disguise item unlocks the `UNDERCOVER` achievement.
+  Reaching Notoriety Tier 3 (Area Menace) causes police to run a "uniform check" whenever
+  a player in `POLICE_UNIFORM` enters a police patrol zone (50% chance per entry to
+  trigger a Stop and Scrutinise check).
+
+### Tooltip Triggers
+
+- On first disguise equip: "You're not you when you're in uniform."
+- On cover blown for first time: "They always find out eventually."
+- On Greggs Apron equipped: "Nobody will suspect a thing. Nobody within 3 metres, anyway."
+- On first stop-and-scrutinise survive: "Brazened it out. Nice."
+- On committing crime while disguised: "That's going to complicate things."
+
+### New Materials
+
+- `POLICE_UNIFORM` — wearable, obtained from knocked-out POLICE NPCs
+- `COUNCIL_JACKET` — wearable, obtained from knocked-out COUNCIL_BUILDER NPCs
+- `MARCHETTI_TRACKSUIT` — wearable, obtained from knocked-out FACTION_LIEUTENANT (Marchetti) NPCs
+- `STREETLADS_HOODIE` — wearable, obtained from knocked-out YOUTH_GANG NPCs
+- `HI_VIS_VEST` — wearable, obtained from knocked-out POSTMAN or BARMAN NPCs
+- `GREGGS_APRON` — wearable, obtainable from Greggs interior; gag item
+
+### New Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `UNDERCOVER` | Equip any disguise for the first time |
+| `METHOD_ACTOR` | Successfully complete a heist while wearing a `POLICE_UNIFORM` |
+| `TURNCOAT` | Complete missions for two rival factions in the same session, each while wearing the other faction's disguise |
+| `OBVIOUS_IN_HINDSIGHT` | Have cover blown by the `GREGGS_APRON` (the only way it can happen is by walking within 3 blocks of someone) |
+| `INCOGNITO` | Maintain cover integrity above 50 for a full 10-minute session across all 3 faction zones |
+
+**Key binding**: No new bindings required. Disguise equip/unequip uses the existing inventory
+`Worn` slot system (**I** key). The `DisguiseSystem` integrates with the `InventoryUI`.
+
+**Unit tests**: Cover integrity decay rates under each suspicion event, faction recognition
+check RNG outcomes, stop-and-scrutinise timer, cover-blown faction hostility radius, disguise
+item loot logic from NPC knockout, Greggs apron 3-block transparency rule, heist alarm delay
+with police uniform, witness rumour generation with disguise context.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Looting and equipping a police uniform**: Knock out a POLICE NPC (reduce to 0 HP).
+   Press **E** on the downed NPC. Verify `POLICE_UNIFORM` is added to player inventory.
+   Open inventory and equip it in the `Worn` slot. Verify `disguiseSystem.isDisguised()` is
+   true. Verify `disguiseSystem.getCurrentDisguise()` is `Material.POLICE_UNIFORM`. Verify
+   cover integrity starts at 100.
+
+2. **Police ignore player wearing police uniform**: Give the player a `POLICE_UNIFORM` and
+   equip it. Set Notoriety to 0. Place a POLICE NPC 5 blocks from the player. Advance 120
+   frames. Verify the POLICE NPC does NOT enter `CHASING` or `ARRESTING` state. Verify the
+   NPC does not change direction toward the player. Remove the disguise. Advance 120 frames.
+   Verify the police NPC now patrols normally (this baseline confirms detection works without
+   disguise).
+
+3. **Cover integrity decays under police scrutiny**: Equip `POLICE_UNIFORM`. Place a PCSO NPC
+   within 4 blocks of the player (PCSO sees through police disguise). Advance 60 frames (1
+   second). Verify cover integrity has decreased from 100 (expected: approx. 88 after 6
+   seconds of −2/s). Verify the `COVER_BLOWN` event has NOT fired yet. Continue advancing
+   until integrity reaches 0. Verify cover blown event fires, `POLICE_UNIFORM` is removed
+   from worn slot, and all PCSO NPCs within 20 blocks enter `HOSTILE` state.
+
+4. **Stop-and-scrutinise: standing still preserves cover**: Equip `MARCHETTI_TRACKSUIT`.
+   Place a POLICE NPC 5 blocks away (within suspicion range). The NPC should enter the
+   "scrutinise" state (speech: "Hold on..."). Player performs no input for 3 seconds (180
+   frames). Verify after 3 seconds the police NPC resumes patrol (scrutiny passed). Verify
+   cover integrity lost exactly 15 points.
+
+5. **Running during scrutiny blows cover immediately**: Equip `MARCHETTI_TRACKSUIT`. Place
+   POLICE NPC 5 blocks away triggering scrutiny. Simulate pressing W (running) during the
+   3-second scrutiny window. Verify cover is blown immediately (within the same frame as
+   input). Verify `COVER_BLOWN` speech fires from the police NPC.
+
+6. **Committing crime while disguised costs heavy cover**: Equip `COUNCIL_JACKET`. Break a
+   block (crime committed). Verify cover integrity drops from 100 to 50 (−50 immediately).
+   Verify a `WITNESS_SIGHTING` rumour seeded by any witness includes the disguise context
+   string "council jacket".
+
+7. **Heist alarm delay with police uniform**: Set up a heist at the jeweller. Equip
+   `POLICE_UNIFORM`. Trigger the heist alarm (as per `HeistSystem` alarm conditions). Verify
+   the alarm-response timer is extended by 30 seconds compared to the baseline (unequipped)
+   alarm response time. Verify police NPCs responding to the alarm pause at the entrance for
+   at least 30 additional seconds before entering `CHASING` state.
+
+8. **Greggs apron fools nobody within 3 blocks**: Equip `GREGGS_APRON`. Place a PUBLIC NPC
+   4 blocks from the player (should be fooled). Advance 60 frames. Verify no hostile reaction.
+   Move player to within 2 blocks of the PUBLIC NPC. Verify the NPC immediately says "That's
+   not a Greggs worker." and cover integrity drops to 0 within 1 frame. Verify the tooltip
+   "Nobody will suspect a thing. Nobody within 3 metres, anyway." has already fired on
+   initial equip.
+
+9. **METHOD_ACTOR achievement**: Equip `POLICE_UNIFORM`. Execute a full heist (enter
+   jeweller, crack safe, exit). Verify the `METHOD_ACTOR` achievement fires on heist
+   completion. Verify cover integrity was above 0 throughout the heist (otherwise achievement
+   should NOT fire if cover was blown mid-heist).
+
+10. **Full disguise lifecycle stress test**: Obtain and equip all 5 serious disguises
+    (`POLICE_UNIFORM`, `COUNCIL_JACKET`, `MARCHETTI_TRACKSUIT`, `STREETLADS_HOODIE`,
+    `HI_VIS_VEST`) in sequence. For each: verify the appropriate faction NPCs react
+    correctly (allies don't attack, rivals become suspicious). Blow cover for each disguise.
+    Verify all 5 cover-blown events fire the correct faction dialogue. Verify after all 5
+    blown covers: player Notoriety has increased by 50 (5 × 10). Verify no NPEs and game
+    remains in PLAYING state. Verify the `UNDERCOVER` achievement fired on the first disguise.
