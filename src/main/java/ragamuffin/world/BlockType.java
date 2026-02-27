@@ -66,7 +66,16 @@ public enum BlockType {
 
     // ── Issue #714: Player Squat system ─────────────────────────────────────
     /** Barricade block: crafted from 2 WOOD + 1 BRICK. Absorbs 3 hits before breaking. Placed on doorways. */
-    BARRICADE(56, true);
+    BARRICADE(56, true),
+
+    // ── Issue #783: Pirate FM — Underground Radio Station ───────────────────
+    /**
+     * Transmitter block: crafted from 2 WIRE + 1 COMPUTER + 1 WOOD.
+     * Must be placed indoors (3+ blocks of roof overhead).
+     * Emits an orange pulsing light when broadcasting.
+     * Upgradeable through 4 power levels by right-clicking with components.
+     */
+    TRANSMITTER(57, true);
 
     private final int id;
     private final boolean solid;
@@ -241,6 +250,7 @@ public enum BlockType {
             case LADDER:
             case HALF_BLOCK:
             case BARRICADE:
+            case TRANSMITTER:
                 return true;
             default:
                 return false;
@@ -520,6 +530,7 @@ public enum BlockType {
             case IRON_ORE:    return new Color(0.55f, 0.40f, 0.28f, 1f); // Rusty brown stone
             case FLINT:       return new Color(0.20f, 0.22f, 0.25f, 1f); // Very dark blue-grey
             case BARRICADE:   return new Color(0.45f, 0.30f, 0.15f, 1f); // Rough planks nailed together
+            case TRANSMITTER: return new Color(0.20f, 0.20f, 0.25f, 1f); // Dark metal chassis
             default: return new Color(1f, 1f, 1f, 1f);
         }
     }

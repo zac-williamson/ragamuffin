@@ -45,6 +45,7 @@ public class GameHUD {
     private MCBattleSystem mcBattleSystem;   // Issue #716 — may be null if not yet initialised
     private RaveSystem raveSystem;           // Issue #716 — may be null if not yet initialised
     private WitnessSystem witnessSystem;     // Issue #765 — may be null if not yet initialised
+    private ragamuffin.core.PirateRadioSystem pirateRadioSystem; // Issue #783 — may be null
     private boolean visible;
     private Weather currentWeather;
     private float blockBreakProgress; // 0.0 to 1.0
@@ -66,6 +67,7 @@ public class GameHUD {
         this.damageReasonTimer = 0f;
         this.damageReasonText = null;
         this.factionSystem = null;
+        this.pirateRadioSystem = null;
     }
 
     /**
@@ -752,6 +754,21 @@ public class GameHUD {
     /** Returns the attached WitnessSystem, or null. */
     public WitnessSystem getWitnessSystem() {
         return witnessSystem;
+    }
+
+    // ── Pirate Radio system (Issue #783) ──────────────────────────────────────
+
+    /**
+     * Attach the PirateRadioSystem so the HUD can render the ON AIR indicator,
+     * listener count, and triangulation bar (Issue #783).
+     */
+    public void setPirateRadioSystem(ragamuffin.core.PirateRadioSystem pirateRadioSystem) {
+        this.pirateRadioSystem = pirateRadioSystem;
+    }
+
+    /** Returns the attached PirateRadioSystem, or null. */
+    public ragamuffin.core.PirateRadioSystem getPirateRadioSystem() {
+        return pirateRadioSystem;
     }
 
     /**
