@@ -5893,3 +5893,107 @@ calculation, disguise-burn tracking, PCSO cultivation counter.
     POLICE NPC. Place player 10 blocks away. Verify player is NOT within police LOS
     (night LOS = 8 blocks). Move player to 7 blocks away. Verify player IS now within
     LOS. Trigger a crime. Verify Wanted Level increases.
+
+---
+
+## Phase T: The Daily Ragamuffin — Living Tabloid Newspaper & Infamy Chronicle
+
+**Goal**: A dynamic, procedurally-generated British tabloid newspaper that chronicles the player's criminal exploits in lurid, sensationalist prose — turning every heist, chase, and faction war into tomorrow's front page. NPCs react to headlines they've read, police patrols intensify after major stories, and the player can manipulate their own press coverage by tipping off journalists or planting misinformation.
+
+### Core Concept
+
+Every evening at 18:00 game-time, a new edition of **The Daily Ragamuffin** is published. It is a physical collectible item that spawns in a stack outside the newsagent (off-licence), on park benches, and through letterboxes of terraced houses. The player can pick it up, read it in their inventory (press **R** with newspaper selected), and — crucially — so can NPCs. When an NPC reads a newspaper, their dialogue and behaviour updates to reflect the current headlines.
+
+The paper has three sections:
+- **Front Page**: The biggest crime/event from the last 24 hours (in-game). If the player committed a sufficiently dramatic act (5-star chase, jewellery heist, Greggs raid, turf war, etc.), they feature here under a sensationalist headline. No story → local filler ("PIGEON MENACE GRIPS TOWN CENTRE").
+- **Local Briefs**: 2–3 shorter items covering faction turf shifts, market events (Greggs Strike, Lager Shortage), NPC gang activity, and council announcements.
+- **Classified Ads**: Procedural in-world adverts — fences advertising dodgy goods, Job Centre notices, council planning applications for buildings the player has vandalised — providing gameplay hints and dark comedy.
+
+### Infamy Score & Headlines
+
+Each major player action generates an **Infamy Score** (1–10). The score determines whether an action makes the front page and how dramatic the headline is:
+
+| Infamy Score | Threshold Event | Example Headline |
+|---|---|---|
+| 1–3 | Minor crime (PCSO stop, 1-star chase) | "LOCAL MAN QUESTIONED BY POLICE" |
+| 4–5 | Notable crime (block break heist, protection racket exposed) | "BRAZEN RAIDERS TARGET JEWELLERS" |
+| 6–7 | Major crime (4-star chase, Greggs raid, gang war) | "WANTED FUGITIVE TERRORISES HIGH STREET" |
+| 8–9 | Spectacular crime (5-star lockdown, faction takeover) | "BOROUGH IN CHAOS: CRIMINAL MASTERMIND EVADES FEDS" |
+| 10 | Legendary (complete heist + escape + Greggs raid same day) | "RAGAMUFFIN: BRITAIN'S MOST WANTED — EXCLUSIVE" |
+
+Headlines are generated from a **template system** that fills in specific details: landmark names, item names, NPC names (witnesses), wanted star count, escape method used, faction involved. This creates unique, specific-feeling headlines rather than generic text.
+
+### NPC Reaction System
+
+NPCs that pick up (or overhear) a newspaper headline update their `speechText` and behaviour:
+
+- **Public NPCs** comment on the front page story ("Did you see what happened at the jewellers? Proper mad."). If the player is the subject, they may say "Here, aren't you that bloke from the paper?"
+- **Police NPCs** get a **Heightened Alert** buff for 5 in-game minutes after a 7+ infamy story: LOS range +4 blocks, patrol speed ×1.2, new NPCs spawned.
+- **Fence NPCs** offer a **10% premium** on stolen goods featured in the paper ("Hot right now, mate — everyone wants one.").
+- **Barman NPCs** seed the headline as a `RumourType.LOOT_TIP` or `GANG_ACTIVITY` rumour into the rumour network.
+- **Faction NPCs** react to faction-relevant stories: MARCHETTI_CREW NPCs become proud after a Marchetti story, give +5 Respect. COUNCIL NPCs become outraged, triggering a council demolition team response.
+
+### Press Manipulation
+
+The player can interact with the newspaper system in two active ways:
+
+1. **Tip-Off**: Find the journalist NPC (spawns in the pub between 19:00–22:00). Press E to interact. Pay 5 COIN. Choose a past action to "leak" to the press. Next edition features that story — even if it wouldn't have made it organically. Useful for spiking fence prices or building faction infamy deliberately.
+
+2. **Plant a Lie**: Pay 15 COIN to the journalist to publish a false story pinning a crime on a rival faction NPC by name. That NPC gets temporarily framed: police pursue them for 3 in-game minutes, Respect with the framed faction drops by 10 toward the player. Achievement: **TABLOID KINGPIN**.
+
+3. **Buy Out**: Pay 40 COIN to suppress a story. A damaging front page (that would trigger police Heightened Alert) is replaced with the pigeon filler story. Only works once per edition.
+
+### Physical Newspaper Item
+
+- `Material.NEWSPAPER` (already exists in the item system) gains a new read action.
+- Reading triggers a full-screen overlay UI in the style of a British tabloid: black-and-white pixel font, bold headline, 2–3 lines of body text, classified ads column.
+- The newspaper in the player's inventory shows the edition date (in-game date) as its tooltip.
+- Old newspapers (more than 2 in-game days old) still readable but NPCs don't react to them.
+- Collecting 7 consecutive daily editions triggers the **REGULAR READER** achievement.
+
+### New Source File
+
+`src/main/java/ragamuffin/core/NewspaperSystem.java`
+
+- `NewspaperSystem.update(float delta, TimeSystem, ...)` — advances the publication timer
+- `NewspaperSystem.publishEdition(List<InfamyEvent> events, ...)` — generates the day's paper
+- `NewspaperSystem.onNpcReadsNewspaper(NPC, Newspaper, ...)` — applies NPC reaction
+- `NewspaperSystem.tipOffJournalist(InfamyEvent, Inventory, ...)` — press manipulation
+- `Newspaper` — value object: headline (String), briefs (List<String>), classifieds (List<String>), infamyScore (int), editionDate (int)
+- `InfamyEvent` — captures: action type, location, items involved, NPCs named, wanted stars at time, escape method
+
+### Integration with Existing Systems
+
+- **NotorietySystem**: Infamy score ≥ 7 adds +3 Notoriety on publication. Helps accelerate Notoriety progression organically through play.
+- **WantedSystem**: Police Heightened Alert buff triggered by 7+ infamy stories modifies `POLICE_BASE_LOS_RANGE` and patrol density for 5 minutes.
+- **RumourNetwork**: Each edition's front page is seeded as a rumour from the Barman NPC, with `RumourType.LOOT_TIP` for heist/loot stories and `GANG_ACTIVITY` for faction/turf stories.
+- **FactionSystem**: Stories about faction crimes shift Respect ±5 for the named faction and the player. A story about the player helping MARCHETTI_CREW gives +5 Respect with them, −5 with THE_COUNCIL.
+- **FenceSystem**: Items named in front-page heist stories sell for +10% at fence NPCs for 1 in-game day.
+- **StreetEconomySystem**: `MarketEvent.GREGGS_STRIKE` is now also triggered when Greggs features in a front-page heist story (the raid caused a public health panic).
+- **CriminalRecord**: Each front-page appearance is logged in the CriminalRecord as `CrimeType.PRESS_INFAMY`.
+- **AchievementSystem**: New achievements — `TABLOID_KINGPIN` (plant a lie), `REGULAR_READER` (collect 7 editions), `FRONT_PAGE_VILLAIN` (reach infamy score 10), `NO_COMMENT` (suppress 3 stories via buyout), `PIGEON_MENACE` (go 5 in-game days without making the paper).
+
+### New Key Bindings
+
+- **R**: Read selected item (newspaper — opens tabloid overlay UI)
+- **J**: Interact with journalist NPC (context-sensitive, active only in pub during evening hours)
+
+**Unit tests**: Infamy score calculation per action type, headline template filling with correct details, NPC reaction state changes, police heightened alert duration, fence price bonus application, rumour seeding from barman, suppression cost deduction, tip-off payment flow.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Front page generated after 5-star chase**: Set player Wanted Level to 5. Run a pursuit (LOS maintained for 10 seconds). Reduce wanted to 0 via escape. Advance game time to next 18:00 publication. Verify a `Newspaper` object is created with infamy score ≥ 8. Verify the headline contains "WANTED" or "FUGITIVE". Verify a `Material.NEWSPAPER` item spawns at the newsagent landmark location.
+
+2. **NPC reacts to headline**: After publication of an infamy-8 paper, move a `PUBLIC` NPC within 3 blocks of the spawned newspaper. Simulate NPC picking it up (call `onNpcReadsNewspaper`). Verify the NPC's speech text contains a reference to the story (e.g. "Did you see the paper?"). Verify the Barman NPC has a new `GANG_ACTIVITY` rumour in the rumour network.
+
+3. **Police Heightened Alert from major story**: Publish a newspaper with infamy score 7. Verify `WantedSystem.POLICE_BASE_LOS_RANGE` is increased by 4 blocks. Advance 5 in-game minutes. Verify LOS range returns to the base value.
+
+4. **Fence price bonus for named item**: Publish a front-page story naming `Material.DIAMOND` as the stolen item (from jeweller heist). Approach a Fence NPC. Verify `FenceSystem.getSellPrice(Material.DIAMOND)` returns a value 10% higher than normal. Advance 1 in-game day. Verify the bonus has expired and price returns to normal.
+
+5. **Tip-off journalist publishes story**: Give player 5 COIN. Spawn journalist NPC in pub. Set game time to 20:00. Call `tipOffJournalist` with a previously untracked `InfamyEvent`. Advance to 18:00 next day. Verify the published newspaper's front page matches the tipped event. Verify 5 COIN was deducted from inventory.
+
+6. **Suppress story via buyout**: Create an infamy-7 event. Give player 40 COIN. Call `buyOutStory()`. Advance to 18:00. Verify published newspaper has the pigeon filler headline instead of the crime story. Verify police Heightened Alert is NOT triggered. Verify 40 COIN deducted.
+
+7. **No story = filler**: Advance a full in-game day with no player crimes. Verify the published newspaper headline contains "PIGEON" or a council planning notice. Verify infamy score is 0. Verify no police Heightened Alert is triggered.
+
+8. **REGULAR_READER achievement**: Collect `Material.NEWSPAPER` items on 7 consecutive in-game days (simulate via `pickUpNewspaper()` calls with incrementing edition dates). Verify `AchievementType.REGULAR_READER` is awarded on the 7th collection.
