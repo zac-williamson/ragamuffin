@@ -24,7 +24,10 @@ public class CriminalRecord {
         SHOPS_RAIDED("Shops raided"),
         NPCS_KILLED("NPCs killed"),
         /** Issue #765: Added by police who find evidence or receive a WITNESS_SIGHTING rumour. */
-        WITNESSED_CRIMES("Witnessed crimes on record");
+        WITNESSED_CRIMES("Witnessed crimes on record"),
+
+        /** Issue #774: Each time the player appears on the front page of The Daily Ragamuffin. */
+        PRESS_INFAMY("Front-page appearances");
 
         private final String displayName;
 

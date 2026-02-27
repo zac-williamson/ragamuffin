@@ -126,6 +126,20 @@ public class FenceSystem {
     /** Timer tracking how long the Fence has been hiding from police. */
     private float policeScareTimer = 0f;
 
+    // ── Issue #774: Newspaper headline price bonus ─────────────────────────────
+
+    /** Price bonus multiplier for items named in a front-page heist story. */
+    public static final float HEADLINE_PRICE_BONUS = 1.10f;
+
+    /** Duration (seconds) that a headline price bonus lasts (1 in-game day). */
+    public static final float HEADLINE_BONUS_DURATION = FenceSystem.IN_GAME_DAY_SECONDS;
+
+    /** Material whose sell price is currently boosted by a newspaper headline (or null). */
+    private Material headlineBonusMaterial = null;
+
+    /** Remaining seconds for the current headline price bonus. */
+    private float headlineBonusTimer = 0f;
+
     public FenceSystem() {
         this(new Random());
     }
@@ -194,6 +208,15 @@ public class FenceSystem {
                 failContrabandRun(player);
             }
         }
+
+        // Headline bonus countdown
+        if (headlineBonusMaterial != null) {
+            headlineBonusTimer -= delta;
+            if (headlineBonusTimer <= 0f) {
+                headlineBonusMaterial = null;
+                headlineBonusTimer = 0f;
+            }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -259,14 +282,52 @@ public class FenceSystem {
     public int sellToFence(Material material, Inventory inventory) {
         if (!valuationTable.accepts(material)) return 0;
         if (inventory.getItemCount(material) < 1) return 0;
+        int payment = getSellPrice(material);
+        inventory.removeItem(material, 1);
+        inventory.addItem(Material.FOOD, payment);
+        return payment;
+    }
+
+    /**
+     * Returns the sell price for the given material, applying any active
+     * notoriety bonus and newspaper headline bonus.
+     *
+     * @param material the material to price
+     * @return FOOD units the Fence will pay (0 if not accepted)
+     */
+    public int getSellPrice(Material material) {
+        if (!valuationTable.accepts(material)) return 0;
         int payment = valuationTable.getValueFor(material);
         // Phase 8e: apply notoriety tier bonus (Tier 1+ = 10% better prices)
         if (notorietySystem != null) {
             payment = notorietySystem.applyFencePriceBonus(payment);
         }
-        inventory.removeItem(material, 1);
-        inventory.addItem(Material.FOOD, payment);
+        // Issue #774: apply headline bonus for front-page items
+        if (headlineBonusMaterial != null && headlineBonusMaterial == material) {
+            payment = (int) Math.ceil(payment * HEADLINE_PRICE_BONUS);
+        }
         return payment;
+    }
+
+    /**
+     * Set a headline price bonus for the given material for 1 in-game day.
+     * Called by {@link NewspaperSystem} when a heist story features the material.
+     *
+     * @param material the stolen item featured in the headline
+     */
+    public void setHeadlinePriceBonus(Material material) {
+        this.headlineBonusMaterial = material;
+        this.headlineBonusTimer = HEADLINE_BONUS_DURATION;
+    }
+
+    /** Returns the material currently receiving a headline price bonus, or null. */
+    public Material getHeadlineBonusMaterial() {
+        return headlineBonusMaterial;
+    }
+
+    /** Returns remaining seconds for the headline price bonus. */
+    public float getHeadlineBonusTimer() {
+        return headlineBonusTimer;
     }
 
     /**

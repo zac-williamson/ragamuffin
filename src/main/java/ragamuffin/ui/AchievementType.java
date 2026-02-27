@@ -436,6 +436,34 @@ public enum AchievementType {
         "Incognito",
         "Completed a disguise infiltration without ever being scrutinised. Ghost mode.",
         1
+    ),
+
+    // ── Issue #774: The Daily Ragamuffin — Tabloid Newspaper System ───────────
+
+    TABLOID_KINGPIN(
+        "Tabloid Kingpin",
+        "Planted a lie in the press. A rival's doing the time for your crime.",
+        1
+    ),
+    REGULAR_READER(
+        "Regular Reader",
+        "Collected The Daily Ragamuffin seven days running. Keeping up with current events.",
+        7
+    ),
+    FRONT_PAGE_VILLAIN(
+        "Front Page Villain",
+        "Reached an infamy score of 10. You're Britain's most wanted, apparently.",
+        1
+    ),
+    NO_COMMENT(
+        "No Comment",
+        "Suppressed three damaging stories via buyout. The truth stays buried.",
+        3
+    ),
+    PIGEON_MENACE(
+        "Pigeon Menace",
+        "Kept your head down for five full in-game days. The pigeons got more column inches than you.",
+        5
     );
 
     private final String name;
