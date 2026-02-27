@@ -57,7 +57,15 @@ public enum LandmarkType {
 
     // ── Issue #714: Player Squat system ─────────────────────────────────────
     /** A derelict building claimed by the player as a personal squat. */
-    SQUAT;
+    SQUAT,
+
+    // ── Issue #724: Subterranean secrets ────────────────────────────────────
+    /** A hidden chamber off the sewer network, concealing stashed contraband. */
+    SEWER_STASH_ROOM,
+    /** A lower level of the civil defence bunker, deeper underground. */
+    BUNKER_LOWER_LEVEL,
+    /** A concealed basement beneath a shop on the high street — black market goods. */
+    BLACK_MARKET_BASEMENT;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -99,6 +107,9 @@ public enum LandmarkType {
             case FIRE_STATION:      return "Northfield Fire Station";
             case UNDERGROUND_BUNKER: return "Civil Defence Bunker";
             case SEWER_TUNNEL:      return "Sewer System";
+            case SEWER_STASH_ROOM:  return "Hidden Chamber";
+            case BUNKER_LOWER_LEVEL: return "Bunker Lower Level";
+            case BLACK_MARKET_BASEMENT: return "The Basement";
             case LEISURE_CENTRE:    return "Northfield Leisure Centre";
             case MOSQUE:            return "Al-Noor Mosque";
             case ESTATE_AGENT:      return "Baxter's Estate Agents";
