@@ -169,7 +169,37 @@ public enum PropType {
      * A small cardboard box — merchandise on a shop shelf.
      * Yields nothing (too small) when broken.
      */
-    SHELF_BOX(0.18f, 0.16f, 0.14f, 1, null);
+    SHELF_BOX(0.18f, 0.16f, 0.14f, 1, null),
+
+    // ── Issue #795: The JobCentre Gauntlet ────────────────────────────────────
+
+    /**
+     * A laminated DWP motivational poster on the JobCentre wall.
+     * "YOUR JOB IS OUT THERE" / "WORK SETS YOU FREE" etc.
+     * Destroyed by 1 punch; yields nothing. Standing in front for 3 seconds
+     * completes the CV_WORKSHOP job search mission.
+     */
+    MOTIVATIONAL_POSTER(0.60f, 0.80f, 0.02f, 1, null),
+
+    /**
+     * A community notice board covered in job listings and council leaflets.
+     * Interact (E) to trigger the UNIVERSAL_JOBMATCH_PROFILE mission dialogue.
+     */
+    COMMUNITY_NOTICE_BOARD(0.80f, 1.20f, 0.10f, 3, Material.WOOD),
+
+    /**
+     * A DWP official letter — prop item dropped or placed on the desk.
+     * Interacting reads the current sanction level / UC payment amount.
+     * Can be carried in inventory as DWP_LETTER material.
+     */
+    DWP_LETTER(0.20f, 0.02f, 0.28f, 1, null),
+
+    /**
+     * Litter on the floor — generated during a Mandatory Work Placement mission
+     * to simulate picking up rubbish. Player must "break" 3 LITTER props
+     * within 30 seconds to complete the mission.
+     */
+    LITTER(0.30f, 0.05f, 0.30f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
