@@ -2272,7 +2272,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (tmpMoveDir.len2() > 0) {
                 tmpMoveDir.nor();
             }
-            moveSpeed = inputHandler.isSprintHeld() ? Player.SPRINT_SPEED : Player.MOVE_SPEED;
+            moveSpeed = (inputHandler.isSprintHeld() && player.canSprint()) ? Player.SPRINT_SPEED : Player.MOVE_SPEED;
         }
         world.moveWithCollision(player, tmpMoveDir.x, 0, tmpMoveDir.z, delta, moveSpeed);
 

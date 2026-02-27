@@ -576,6 +576,14 @@ public class Player {
     }
 
     /**
+     * Whether the player has enough energy to sprint.
+     * Requires at least 1 energy to prevent sprinting on empty stamina.
+     */
+    public boolean canSprint() {
+        return energy > 0;
+    }
+
+    /**
      * Whether the dodge cooldown has expired and a new dodge is available.
      */
     public boolean canDodge() {
