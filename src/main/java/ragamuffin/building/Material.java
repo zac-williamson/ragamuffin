@@ -376,7 +376,35 @@ public enum Material {
      * TRANSMITTER block. Once placed, interact with it and press B while holding
      * a MICROPHONE to broadcast.
      */
-    TRANSMITTER_ITEM("Transmitter");
+    TRANSMITTER_ITEM("Transmitter"),
+
+    // ── Issue #785: The Dodgy Market Stall ────────────────────────────────────
+
+    /**
+     * Stall Frame — crafted from 4 WOOD.
+     * Place on any PAVEMENT or ROAD block to create a market stall.
+     * Press E to open the Stall Management UI.
+     */
+    STALL_FRAME("Stall Frame"),
+
+    /**
+     * Stall Awning — crafted from 2 WOOD + 1 PLANKS.
+     * Attach to a STALL_FRAME to provide weather protection.
+     * Prevents RAIN from closing the stall and destroying stock.
+     */
+    STALL_AWNING("Stall Awning"),
+
+    /**
+     * Market Licence — purchased from the Council NPC for 20 COIN.
+     * Prevents POLICE from fining the stall and MARKET_INSPECTOR penalties.
+     */
+    MARKET_LICENCE("Market Licence"),
+
+    /**
+     * Knock-Off Perfume — dodgy item sold at the stall.
+     * High demand, moderate price, raises Notoriety slightly if caught.
+     */
+    KNOCK_OFF_PERFUME("Knock-Off Perfume");
 
     private final String displayName;
 
@@ -625,6 +653,16 @@ public enum Material {
             case PROP_DJ_DECKS:      return cs(0.15f, 0.15f, 0.18f,  // Black chassis
                                                0.55f, 0.55f, 0.60f); // Silver controls
 
+            // Issue #785: The Dodgy Market Stall
+            case STALL_FRAME:       return cs(0.55f, 0.38f, 0.18f,  // Wooden frame brown
+                                              0.40f, 0.28f, 0.12f); // Darker wood
+            case STALL_AWNING:      return cs(0.88f, 0.18f, 0.18f,  // Red-and-white stripe
+                                              0.95f, 0.92f, 0.88f); // White stripe
+            case MARKET_LICENCE:    return cs(0.88f, 0.82f, 0.45f,  // Official cream paper
+                                              0.25f, 0.42f, 0.78f); // Blue council stamp
+            case KNOCK_OFF_PERFUME: return cs(0.72f, 0.55f, 0.78f,  // Purple bottle
+                                              0.88f, 0.82f, 0.55f); // Gold cap
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -756,6 +794,11 @@ public enum Material {
             case WIRE:
             case BROADCAST_TAPE:
             case TRANSMITTER_ITEM:
+            // Issue #785: Dodgy Market Stall materials (not block items)
+            case STALL_FRAME:
+            case STALL_AWNING:
+            case MARKET_LICENCE:
+            case KNOCK_OFF_PERFUME:
                 return false;
             default:
                 return true;
@@ -990,6 +1033,16 @@ public enum Material {
                 return IconShape.CARD;       // cassette tape shape
             case TRANSMITTER_ITEM:
                 return IconShape.BOX;        // transmitter unit box shape
+
+            // Issue #785: Dodgy Market Stall materials
+            case STALL_FRAME:
+                return IconShape.BOX;        // wooden frame structure
+            case STALL_AWNING:
+                return IconShape.FLAT_PAPER; // flat fabric canopy
+            case MARKET_LICENCE:
+                return IconShape.FLAT_PAPER; // official licence paper
+            case KNOCK_OFF_PERFUME:
+                return IconShape.BOTTLE;     // perfume bottle
 
             default:
                 return IconShape.BOX;

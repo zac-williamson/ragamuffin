@@ -100,7 +100,16 @@ public enum NPCType {
      * STOLEN_PHONE, NEWSPAPER, WOOLLY_HAT_ECONOMY, PRESCRIPTION_MEDS).
      * Despawns after 60 in-game seconds at the transmitter.
      */
-    LISTENER(20f, 0f, 0f, false);
+    LISTENER(20f, 0f, 0f, false),
+
+    // ── Issue #785: The Dodgy Market Stall ────────────────────────────────────
+
+    /**
+     * Market Inspector — spawns after 3 minutes of unlicensed trading.
+     * Can be bribed for 10 COIN (adds 5 Notoriety) or will confiscate all stock.
+     * Passive until interacting; walks toward the stall when spawned.
+     */
+    MARKET_INSPECTOR(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

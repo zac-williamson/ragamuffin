@@ -525,6 +525,39 @@ public enum AchievementType {
         "Off Air",
         "Had your transmitter confiscated by a Signal Van. Should've turned it off earlier, mate.",
         1
+    ),
+
+    // ── Issue #785: The Dodgy Market Stall ────────────────────────────────────
+
+    MARKET_TRADER(
+        "Market Trader",
+        "Opened your first dodgy market stall. Del Boy would be proud. Probably.",
+        1
+    ),
+    LICENSED_TO_SELL(
+        "Licensed to Sell",
+        "Got a Market Licence before the inspector turned up. Technically legal. For once.",
+        1
+    ),
+    BRIBED_THE_INSPECTOR(
+        "Bribed the Inspector",
+        "Slipped the Market Inspector a tenner to look the other way. Public service, really.",
+        1
+    ),
+    SHUTIT_DOWN(
+        "Shut It Down",
+        "Had your stall closed by police. All stock confiscated. Back to the day job.",
+        1
+    ),
+    EMPIRE_BUILDER(
+        "Empire Builder",
+        "Reached 200 COIN in lifetime stall sales. From a trestle table to a street empire.",
+        1
+    ),
+    TURF_VENDOR(
+        "Turf Vendor",
+        "Set up a stall in faction territory and paid the protection cut. Business is business.",
+        1
     );
 
     private final String name;

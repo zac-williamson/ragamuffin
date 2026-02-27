@@ -276,6 +276,22 @@ public class CraftingSystem {
             Map.of(Material.SPRAY_CAN_EMPTY, 1, Material.PAINT_PIGMENT_GREY, 1),
             Map.of(Material.SPRAY_CAN, 1)
         ));
+
+        // ── Issue #785: The Dodgy Market Stall ────────────────────────────────
+
+        // STALL_FRAME: WOOD×4 → STALL_FRAME×1
+        // (Place on any PAVEMENT or ROAD block to create a market stall)
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 4),
+            Map.of(Material.STALL_FRAME, 1)
+        ));
+
+        // STALL_AWNING: WOOD×2 + PLANKS×1 → STALL_AWNING×1
+        // (Attach to stall for weather protection; prevents rain damage)
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 2, Material.PLANKS, 1),
+            Map.of(Material.STALL_AWNING, 1)
+        ));
     }
 
     /**
