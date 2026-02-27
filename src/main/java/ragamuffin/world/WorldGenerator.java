@@ -196,7 +196,7 @@ public class WorldGenerator {
         // so buildings remain on the street grid.
         Random zoneRng = new Random(seed ^ 0xF00D_CAFE_DEAD_BEEFL);
         hsStartX  = snapToGrid(zoneRng.nextInt(17) - 8);    // high-street X start
-        hsSouthZ  = 25 + snapToGrid(zoneRng.nextInt(9) - 4); // high-street south Z
+        hsSouthZ  = 26 + snapToGrid(zoneRng.nextInt(9) - 4); // high-street south Z (26 = one block past road at z=20..25)
         hsNorthZ  = 8  + snapToGrid(zoneRng.nextInt(9) - 4); // high-street north Z
         officeOffX = snapToGrid(zoneRng.nextInt(17) - 8);
         officeOffZ = snapToGrid(zoneRng.nextInt(17) - 8);
@@ -363,33 +363,36 @@ public class WorldGenerator {
             }
         }
 
-        // High street south-side slots — positions shifted by hsStartX / hsSouthZ
-        int sx = 20 + hsStartX;
+        // High street south-side slots — positioned to fit within city blocks (clear of roads).
+        // sx starts at 26+hsStartX so the first slot begins one block past the road at x=20..25.
+        // Slot offsets 0,7 fit in block 26..39; offsets 20,27 fit in block 46..59;
+        // offsets 40,47 fit in block 66..79.  All slots are 7 blocks wide.
+        int sx = 26 + hsStartX;
         int sz = hsSouthZ;
         markFlatZone(sx,      sz, 7, 8);   // south slot 0
-        markFlatZone(sx + 8,  sz, 6, 8);   // south slot 1
-        markFlatZone(sx + 15, sz, 7, 8);   // south slot 2
-        markFlatZone(sx + 23, sz, 6, 8);   // south slot 3
-        markFlatZone(sx + 30, sz, 7, 8);   // south slot 4
-        markFlatZone(sx + 38, sz, 7, 8);   // south slot 5
+        markFlatZone(sx + 7,  sz, 7, 8);   // south slot 1
+        markFlatZone(sx + 20, sz, 7, 8);   // south slot 2  (skips road at +14..+19)
+        markFlatZone(sx + 27, sz, 7, 8);   // south slot 3
+        markFlatZone(sx + 40, sz, 7, 8);   // south slot 4  (skips road at +34..+39)
+        markFlatZone(sx + 47, sz, 7, 8);   // south slot 5
 
-        // High street north-side slots
-        int nx = 20 + hsStartX;
+        // High street north-side slots — same city-block layout.
+        int nx = 26 + hsStartX;
         int nz = hsNorthZ;
         markFlatZone(nx,      nz, 7, 8);   // north slot 0
-        markFlatZone(nx + 8,  nz, 8, 8);   // north slot 1
-        markFlatZone(nx + 17, nz, 8, 8);   // north slot 2
-        markFlatZone(nx + 26, nz, 7, 8);   // north slot 3
-        markFlatZone(nx + 34, nz, 8, 8);   // north slot 4
+        markFlatZone(nx + 7,  nz, 7, 8);   // north slot 1
+        markFlatZone(nx + 20, nz, 7, 8);   // north slot 2  (skips road at +14..+19)
+        markFlatZone(nx + 27, nz, 7, 8);   // north slot 3
+        markFlatZone(nx + 40, nz, 8, 8);   // north slot 4  (skips road at +34..+39)
 
-        // Office building
+        // Office building — offZ starts at 26 to clear road at z=20..25
         int offX = 70 + officeOffX;
-        int offZ = 20 + officeOffZ;
+        int offZ = 26 + officeOffZ;
         markFlatZone(offX, offZ, 15, 15);
 
-        // JobCentre
-        int jobX = -60 + jobOffX;
-        int jobZ = 25 + jobOffZ;
+        // JobCentre — jobX starts at -54 (clear of road at x=-60..-55); jobZ at 26 (clear of road z=20..25)
+        int jobX = -54 + jobOffX;
+        int jobZ = 26 + jobOffZ;
         markFlatZone(jobX, jobZ, 12, 12);
 
         // Terraced rows (south of park)
@@ -400,26 +403,27 @@ public class WorldGenerator {
         markFlatZone(rx,      rz1, 80, 8);
         markFlatZone(rx,      rz2, 80, 8);
         markFlatZone(rx,      rz3, 80, 8);
-        markFlatZone(20 + hsStartX, rz1, 64, 8);
+        markFlatZone(26 + hsStartX, rz1, 64, 8);
         // North of park
         int nrz1 = 30 - resOffZ;
         int nrz2 = nrz1 + 16;
         markFlatZone(rx,      nrz1, 64, 8);
         markFlatZone(rx,      nrz2, 64, 8);
 
-        // Industrial estate
-        int indX = 60 + indOffX;
-        int indZ = -40 + indOffZ;
+        // Industrial estate — indX starts at 66 (clear of road at x=60..65); indZ at -34 (clear of road z=-40..-35)
+        int indX = 66 + indOffX;
+        int indZ = -34 + indOffZ;
         markFlatZone(indX,      indZ,      20, 15);
         markFlatZone(indX,      indZ - 20, 18, 12);
         markFlatZone(indX + 22, indZ,      16, 14);
         markFlatZone(indX + 22, indZ - 18, 14, 12);
 
-        // Extended high street (south side)
-        int esx = sx + 46;
-        int enz = nx + 43;
-        markFlatZone(esx,      sz, 7, 8);   // Chippy
-        markFlatZone(enz,      nz, 7, 8);   // Newsagent
+        // Extended high street — esx/enz start at sx+60/nx+60 (one block past road at +54..+59).
+        // Offsets within the extension also skip roads every 20 blocks.
+        int esx = sx + 60;
+        int enz = nx + 60;
+        markFlatZone(esx,      sz, 7, 8);   // Chippy       (esx+0)
+        markFlatZone(enz,      nz, 7, 8);   // Newsagent    (enz+0)
 
         // GP Surgery (west, near JobCentre)
         markFlatZone(jobX, jobZ - 15, 14, 10);
@@ -433,25 +437,27 @@ public class WorldGenerator {
         markFlatZone(offX + 16, offZ, 6, 11);
         markFlatZone(indX + 40, indZ, 10, 8);
 
-        // Council flats (west side)
-        markFlatZone(rx - 25, nrz2 + 4, 12, 12);
+        // Council flats (west side) — cf1X at rx-24 to clear road at rx-25..-20 range
+        markFlatZone(rx - 24, nrz2 + 4, 12, 12);
         markFlatZone(rx - 40, nrz2 + 4, 12, 12);
 
         // Petrol station
         markFlatZone(indX + 40, offZ, 14, 10);
 
         // Extended high street (further east, south side)
-        markFlatZone(esx + 24, sz, 8, 10);  // Nando's
-        markFlatZone(esx + 33, sz, 6, 8);   // Barber
-        markFlatZone(esx + 40, sz, 7, 8);   // Nail salon
+        // Offsets skip roads at esx+14..+19 and esx+34..+39
+        markFlatZone(esx + 20, sz, 8, 10);  // Nando's      (esx+20, skips road at esx+14..+19)
+        markFlatZone(esx + 28, sz, 6, 8);   // Barber       (esx+28)
+        markFlatZone(esx + 40, sz, 7, 8);   // Nail salon   (esx+40, skips road at esx+34..+39)
         // North side extension
-        markFlatZone(enz + 9,  nz, 7, 8);   // Corner shop
-        markFlatZone(enz + 17, nz, 7, 8);   // Betting shop
-        markFlatZone(enz + 25, nz, 6, 8);   // Phone repair
-        markFlatZone(enz + 32, nz, 8, 8);   // Cash converter
+        markFlatZone(enz + 20, nz, 7, 8);   // Corner shop  (enz+20, skips road at enz+14..+19)
+        markFlatZone(enz + 27, nz, 7, 8);   // Betting shop (enz+27)
+        markFlatZone(enz + 40, nz, 6, 8);   // Phone repair (enz+40, skips road at enz+34..+39)
+        markFlatZone(enz + 46, nz, 7, 8);   // Cash converter (enz+46)
 
         // Wetherspoons, library, fire station
-        markFlatZone(esx + 49, sz, 16, 14);
+        // Wetherspoons at esx+60 (skips road at esx+54..+59)
+        markFlatZone(esx + 60, sz, 16, 14);
         markFlatZone(jobX - 20, jobZ - 15, 16, 12);
         markFlatZone(indX + 40, indZ - 25, 16, 14);
 
@@ -472,8 +478,9 @@ public class WorldGenerator {
         markFlatZone(rx - 80, rz3 - 16, 40, 8);
 
         // Additional council flats (outer edges)
+        // offX+70=140 is a road (x=140..145), shift to offX+76
         markFlatZone(rx - 80, nrz2 + 4, 12, 12);
-        markFlatZone(offX + 70, rz3 - 4, 12, 12);
+        markFlatZone(offX + 76, rz3 - 4, 12, 12);
 
         // Allotments
         markFlatZone(indX, indZ - 60, 30, 20);
@@ -493,14 +500,14 @@ public class WorldGenerator {
         // Mosque
         markFlatZone(rx - 20, nrz2 + 20, 14, 12);
 
-        // Estate agent
-        markFlatZone(nx + 43 + 40, hsNorthZ, 8, 8);
+        // Estate agent — at enz+60 = nx+60+60 = nx+120 (enz is nx+60)
+        markFlatZone(nx + 60 + 60, hsNorthZ, 8, 8);
 
         // Supermarket
         markFlatZone(indX - 30, indZ - 60, 24, 16);
 
-        // Police station
-        markFlatZone(-60 + jobOffX - 20, 25 + jobOffZ + 16, 14, 12);
+        // Police station — uses updated jobX/jobZ base values (-54, 26)
+        markFlatZone(-54 + jobOffX - 20, 26 + jobOffZ + 16, 14, 12);
 
         // Food bank
         markFlatZone(rx - 20, rz3 - 20, 12, 10);
@@ -605,24 +612,24 @@ public class WorldGenerator {
     private void stage3IdentifyPlots() {
         buildingPlots.clear();
 
-        int sx   = 20 + hsStartX;
+        int sx   = 26 + hsStartX;
         int sz   = hsSouthZ;
-        int nx   = 20 + hsStartX;
+        int nx   = 26 + hsStartX;
         int nz   = hsNorthZ;
         int offX = 70 + officeOffX;
-        int offZ = 20 + officeOffZ;
-        int jobX = -60 + jobOffX;
-        int jobZ = 25 + jobOffZ;
-        int indX = 60 + indOffX;
-        int indZ = -40 + indOffZ;
+        int offZ = 26 + officeOffZ;
+        int jobX = -54 + jobOffX;
+        int jobZ = 26 + jobOffZ;
+        int indX = 66 + indOffX;
+        int indZ = -34 + indOffZ;
         int rz1  = -25 + resOffZ;
         int rz2  = rz1 - 16;
         int rz3  = rz2 - 14;
         int rx   = -70 + resOffX;
         int nrz1 = 30 - resOffZ;
         int nrz2 = nrz1 + 16;
-        int esx  = sx + 46;
-        int enz  = nx + 43;
+        int esx  = sx + 60;
+        int enz  = nx + 60;
         int gpX  = jobX;
         int gpZ  = jobZ - 15;
         int schoolX = indX;
@@ -632,33 +639,33 @@ public class WorldGenerator {
         int lcZ  = indZ + 20;
         int mosqueX = rx - 20;
         int mosqueZ = nrz2 + 20;
-        int eaX  = enz + 40;
+        int eaX  = enz + 60;
         int smX  = indX - 30;
         int smZ  = indZ - 60;
         int pstnX = jobX - 20;
         int pstnZ = jobZ + 16;
         int fbX  = rx - 20;
         int fbZ  = rz3 - 20;
-        int wsX  = esx + 49;
+        int wsX  = esx + 60;
         int libX = jobX - 20;
         int libZ = gpZ;
         int cwX  = indX + 40;
         int fsX  = cwX + 40;
         int fsZ  = indZ - 25;
 
-        // High street south side
+        // High street south side — slot offsets skip roads at +14..+19 and +34..+39
         addAboveGroundPlot(sx,       sz, 7, 8);
-        addAboveGroundPlot(sx + 8,   sz, 6, 8);
-        addAboveGroundPlot(sx + 15,  sz, 7, 8);
-        addAboveGroundPlot(sx + 23,  sz, 6, 8);
-        addAboveGroundPlot(sx + 30,  sz, 7, 8);
-        addAboveGroundPlot(sx + 38,  sz, 7, 8);
-        // High street north side
+        addAboveGroundPlot(sx + 7,   sz, 7, 8);
+        addAboveGroundPlot(sx + 20,  sz, 7, 8);
+        addAboveGroundPlot(sx + 27,  sz, 7, 8);
+        addAboveGroundPlot(sx + 40,  sz, 7, 8);
+        addAboveGroundPlot(sx + 47,  sz, 7, 8);
+        // High street north side — same city-block layout
         addAboveGroundPlot(nx,       nz, 7, 8);
-        addAboveGroundPlot(nx + 8,   nz, 8, 8);
-        addAboveGroundPlot(nx + 17,  nz, 8, 8);
-        addAboveGroundPlot(nx + 26,  nz, 7, 8);
-        addAboveGroundPlot(nx + 34,  nz, 8, 8);
+        addAboveGroundPlot(nx + 7,   nz, 7, 8);
+        addAboveGroundPlot(nx + 20,  nz, 7, 8);
+        addAboveGroundPlot(nx + 27,  nz, 7, 8);
+        addAboveGroundPlot(nx + 40,  nz, 8, 8);
         // Civic / commercial
         addAboveGroundPlot(offX, offZ, 15, 15);
         addAboveGroundPlot(jobX, jobZ, 12, 12);
@@ -674,16 +681,16 @@ public class WorldGenerator {
         addAboveGroundPlot(30,  rz2, 12, 18);
         addAboveGroundPlot(offX + 16, offZ, 6, 11);
         addAboveGroundPlot(cwX, indZ, 10, 8);
-        addAboveGroundPlot(rx - 25, nrz2 + 4, 12, 12);
+        addAboveGroundPlot(rx - 24, nrz2 + 4, 12, 12);
         addAboveGroundPlot(rx - 40, nrz2 + 4, 12, 12);
         addAboveGroundPlot(cwX, offZ, 14, 10);
-        addAboveGroundPlot(esx + 24, sz, 8, 10);
-        addAboveGroundPlot(esx + 33, sz, 6, 8);
+        addAboveGroundPlot(esx + 20, sz, 8, 10);
+        addAboveGroundPlot(esx + 28, sz, 6, 8);
         addAboveGroundPlot(esx + 40, sz, 7, 8);
-        addAboveGroundPlot(enz + 9,  nz, 7, 8);
-        addAboveGroundPlot(enz + 17, nz, 7, 8);
-        addAboveGroundPlot(enz + 25, nz, 6, 8);
-        addAboveGroundPlot(enz + 32, nz, 8, 8);
+        addAboveGroundPlot(enz + 20, nz, 7, 8);
+        addAboveGroundPlot(enz + 27, nz, 7, 8);
+        addAboveGroundPlot(enz + 40, nz, 6, 8);
+        addAboveGroundPlot(enz + 46, nz, 7, 8);
         addAboveGroundPlot(wsX, sz, 16, 14);
         addAboveGroundPlot(libX, libZ, 16, 12);
         addAboveGroundPlot(fsX, fsZ, 16, 14);
@@ -715,7 +722,7 @@ public class WorldGenerator {
         addAboveGroundPlot(rx - 80,  rz3,       40, 8);
         addAboveGroundPlot(rx - 80,  rz3 - 16,  40, 8);
         addAboveGroundPlot(rx - 80, nrz2 + 4, 12, 12);
-        addAboveGroundPlot(offX + 70, rz3 - 4, 12, 12);
+        addAboveGroundPlot(offX + 76, rz3 - 4, 12, 12);
 
         // Underground plots
         buildingPlots.add(new BuildingPlot(-120, SEWER_FLOOR_Y, 240, 240, true));
@@ -734,16 +741,16 @@ public class WorldGenerator {
         generateHighStreet(world);
 
         // ===== Derived zone anchor points (mirror markAllFlatZones) =====
-        int sx   = 20 + hsStartX;
+        int sx   = 26 + hsStartX;
         int sz   = hsSouthZ;
-        int nx   = 20 + hsStartX;
+        int nx   = 26 + hsStartX;
         int nz   = hsNorthZ;
         int offX = 70 + officeOffX;
-        int offZ = 20 + officeOffZ;
-        int jobX = -60 + jobOffX;
-        int jobZ = 25 + jobOffZ;
-        int indX = 60 + indOffX;
-        int indZ = -40 + indOffZ;
+        int offZ = 26 + officeOffZ;
+        int jobX = -54 + jobOffX;
+        int jobZ = 26 + jobOffZ;
+        int indX = 66 + indOffX;
+        int indZ = -34 + indOffZ;
         int rz1  = -25 + resOffZ;
         int rz2  = rz1 - 16;
         int rz3  = rz2 - 14;
@@ -772,7 +779,7 @@ public class WorldGenerator {
         generateTerracedRow(world, rx,              rz1, 8, 8, rowHeights[0], 10);
         generateTerracedRow(world, rx,              rz2, 8, 8, rowHeights[1], 10);
         generateTerracedRow(world, rx,              rz3, 8, 8, rowHeights[2], 10);
-        generateTerracedRow(world, 20 + hsStartX,   rz1, 8, 8, rowHeights[3], 8);
+        generateTerracedRow(world, 26 + hsStartX,   rz1, 8, 8, rowHeights[3], 8);
         generateTerracedRow(world, rx,             nrz1, 8, 8, rowHeights[4], 8);
         generateTerracedRow(world, rx,             nrz2, 8, 8, rowHeights[5], 8);
 
@@ -794,8 +801,8 @@ public class WorldGenerator {
         generateGardenWalls(world, indX - 2, indZ - 25, 44, 2);
 
         // ===== EXTENDED HIGH STREET (south side) =====
-        int esx = sx + 46;
-        int enz = nx + 43;
+        int esx = sx + 60;
+        int enz = nx + 60;
         generateShopWithSign(world, esx, sz, 7, 8, 4, BlockType.STONE, BlockType.SIGN_WHITE, LandmarkType.CHIPPY);
         generateShopWithSign(world, enz, nz, 7, 8, 4, BlockType.BRICK, BlockType.SIGN_GREEN, LandmarkType.NEWSAGENT);
 
@@ -874,7 +881,7 @@ public class WorldGenerator {
         world.addLandmark(new Landmark(LandmarkType.CAR_WASH, cwX, 0, cwZ, 10, 6, 8));
 
         // ===== COUNCIL FLATS =====
-        int cf1X = rx - 25;
+        int cf1X = rx - 24;
         int cf1Z = nrz2 + 4;
         generateCouncilFlats(world, cf1X, cf1Z, 12, 12, 18);
         world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, cf1X, 0, cf1Z, 12, 19, 12));
@@ -889,17 +896,19 @@ public class WorldGenerator {
         world.addLandmark(new Landmark(LandmarkType.PETROL_STATION, psX, 0, psZ, 14, 5, 10));
 
         // ===== FURTHER HIGH STREET EXTENSION (south side) =====
-        generateShopWithSign(world, esx + 24, sz, 8, 10, 5, BlockType.YELLOW_BRICK, BlockType.SIGN_RED,   LandmarkType.NANDOS);
-        generateShopWithSign(world, esx + 33, sz, 6, 8,  4, BlockType.TILE_WHITE,   BlockType.SIGN_BLUE,  LandmarkType.BARBER);
+        // Offsets skip roads at esx+14..+19 and esx+34..+39 (roads every 20 blocks)
+        generateShopWithSign(world, esx + 20, sz, 8, 10, 5, BlockType.YELLOW_BRICK, BlockType.SIGN_RED,   LandmarkType.NANDOS);
+        generateShopWithSign(world, esx + 28, sz, 6, 8,  4, BlockType.TILE_WHITE,   BlockType.SIGN_BLUE,  LandmarkType.BARBER);
         generateShopWithSign(world, esx + 40, sz, 7, 8,  4, BlockType.RENDER_PINK,  BlockType.SIGN_WHITE, LandmarkType.NAIL_SALON);
-        // North side
-        generateShopWithSign(world, enz + 9,  nz, 7, 8,  4, BlockType.YELLOW_BRICK, BlockType.SIGN_GREEN, LandmarkType.CORNER_SHOP);
-        generateShopWithSign(world, enz + 17, nz, 7, 8,  4, BlockType.BRICK,         BlockType.SIGN_RED,   LandmarkType.BETTING_SHOP);
-        generateShopWithSign(world, enz + 25, nz, 6, 8,  4, BlockType.RENDER_WHITE,  BlockType.SIGN_YELLOW,LandmarkType.PHONE_REPAIR);
-        generateShopWithSign(world, enz + 32, nz, 8, 8,  4, BlockType.BRICK,         BlockType.SIGN_YELLOW,LandmarkType.CASH_CONVERTER);
+        // North side — offsets skip roads at enz+14..+19 and enz+34..+39
+        generateShopWithSign(world, enz + 20, nz, 7, 8,  4, BlockType.YELLOW_BRICK, BlockType.SIGN_GREEN, LandmarkType.CORNER_SHOP);
+        generateShopWithSign(world, enz + 27, nz, 7, 8,  4, BlockType.BRICK,         BlockType.SIGN_RED,   LandmarkType.BETTING_SHOP);
+        generateShopWithSign(world, enz + 40, nz, 6, 8,  4, BlockType.RENDER_WHITE,  BlockType.SIGN_YELLOW,LandmarkType.PHONE_REPAIR);
+        generateShopWithSign(world, enz + 46, nz, 7, 8,  4, BlockType.BRICK,         BlockType.SIGN_YELLOW,LandmarkType.CASH_CONVERTER);
 
         // ===== WETHERSPOONS =====
-        int wsX = esx + 49;
+        // wsX at esx+60 (skips road at esx+54..+59)
+        int wsX = esx + 60;
         generateWetherspoons(world, wsX, sz, 16, 14, 6);
         world.addLandmark(new Landmark(LandmarkType.WETHERSPOONS, wsX, 0, sz, 16, 7, 14));
 
@@ -934,7 +943,7 @@ public class WorldGenerator {
         // ===== ADDITIONAL COUNCIL FLATS =====
         generateCouncilFlats(world, rx - 80, nrz2 + 4, 12, 12, 14);
         world.addLandmark(new Landmark(LandmarkType.COUNCIL_FLATS, rx - 80, 0, nrz2 + 4, 12, 15, 12));
-        generateCouncilFlats(world, offX + 70, rz3 - 4, 12, 12, 16);
+        generateCouncilFlats(world, offX + 76, rz3 - 4, 12, 12, 16);
 
         // ===== ALLOTMENTS =====
         int alX = indX;
@@ -972,7 +981,7 @@ public class WorldGenerator {
         world.addLandmark(new Landmark(LandmarkType.MOSQUE, mosqueX, 0, mosqueZ, 14, 14, 12));
 
         // ===== ESTATE AGENT =====
-        int eaX = enz + 40;
+        int eaX = enz + 60;
         int eaZ = nz;
         generateEstateAgent(world, eaX, eaZ, 8, 8, 4);
         world.addLandmark(new Landmark(LandmarkType.ESTATE_AGENT, eaX, 0, eaZ, 8, 6, 8));
@@ -1271,20 +1280,23 @@ public class WorldGenerator {
     private void generateHighStreet(World world) {
         Random layoutRng = new Random(seed ^ 0xDEADBEEFL);
 
-        // Anchor X and Z from seed-derived fields
-        int sx = 20 + hsStartX;
+        // Anchor X and Z from seed-derived fields.
+        // sx/nx start at 26+hsStartX so the first slot clears the road at x=20..25.
+        // Slot offsets skip roads at +14..+19 and +34..+39 (roads every 20 blocks).
+        int sx = 26 + hsStartX;
         int sz = hsSouthZ;
-        int nx = 20 + hsStartX;
+        int nx = 26 + hsStartX;
         int nz = hsNorthZ;
 
         // --- South side slots ---
+        // City block 1: offsets 0,7 (x=26..39); block 2: offsets 20,27 (x=46..59); block 3: offsets 40,47 (x=66..79)
         int[][] southSlots = {
             {sx,      7, 8},
-            {sx + 8,  6, 8},
-            {sx + 15, 7, 8},
-            {sx + 23, 6, 8},
-            {sx + 30, 7, 8},
-            {sx + 38, 7, 8},
+            {sx + 7,  7, 8},
+            {sx + 20, 7, 8},
+            {sx + 27, 7, 8},
+            {sx + 40, 7, 8},
+            {sx + 47, 7, 8},
         };
         List<LandmarkType> southShops = new ArrayList<>(Arrays.asList(
             LandmarkType.GREGGS,
@@ -1303,12 +1315,13 @@ public class WorldGenerator {
         }
 
         // --- North side slots ---
+        // City block 1: offsets 0,7; block 2: offsets 20,27; block 3: offset 40
         int[][] northSlots = {
             {nx,      7, 8},
-            {nx + 8,  8, 8},
-            {nx + 17, 8, 8},
-            {nx + 26, 7, 8},
-            {nx + 34, 8, 8},
+            {nx + 7,  7, 8},
+            {nx + 20, 7, 8},
+            {nx + 27, 7, 8},
+            {nx + 40, 8, 8},
         };
         List<LandmarkType> northShops = new ArrayList<>(Arrays.asList(
             LandmarkType.TESCO_EXPRESS,
