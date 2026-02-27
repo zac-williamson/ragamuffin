@@ -10,7 +10,9 @@ public enum GameState {
     PLAYING(true),
     PAUSED(false),
     /** Issue #789: Boot sale auction overlay is open. */
-    BOOT_SALE_OPEN(true);
+    BOOT_SALE_OPEN(true),
+    /** Issue #795: JobCentre sign-on / job search mission UI is open. */
+    JOB_CENTRE_OPEN(true);
 
     private final boolean acceptsInput;
 

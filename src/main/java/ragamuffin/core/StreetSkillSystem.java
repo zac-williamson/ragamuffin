@@ -97,7 +97,9 @@ public class StreetSkillSystem {
     // ── Skill enum ────────────────────────────────────────────────────────────
 
     public enum Skill {
-        BRAWLING, GRAFTING, TRADING, STEALTH, INFLUENCE, SURVIVAL
+        BRAWLING, GRAFTING, TRADING, STEALTH, INFLUENCE, SURVIVAL,
+        /** Issue #795: Navigating bureaucratic systems — JobCentre, council, DWP. */
+        BUREAUCRACY
     }
 
     // ── Tier enum ─────────────────────────────────────────────────────────────

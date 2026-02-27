@@ -118,7 +118,30 @@ public enum NPCType {
      * Follows the player; deters POLICE and GANG NPCs within 5 blocks.
      * Disperses after 120 seconds or when the player is arrested.
      */
-    FOLLOWER(20f, 0f, 0f, false);
+    FOLLOWER(20f, 0f, 0f, false),
+
+    // ── Issue #795: The JobCentre Gauntlet ────────────────────────────────────
+
+    /**
+     * Case Worker — JobCentre Plus desk staff. Passive until spoken to.
+     * Reacts based on player's criminal record and notoriety tier during sign-on.
+     * At Notoriety Tier 5, flees and permanently closes the claim.
+     */
+    CASE_WORKER(20f, 0f, 0f, false),
+
+    /**
+     * Debt Collector — grey-suited embodiment of bureaucratic inevitability.
+     * Unkillable (infinite health); pathfinds to player when spawned.
+     * Broadcasts "Oi! You owe the DWP" every 10 seconds.
+     * Punching adds Notoriety +15 and triggers a newspaper headline.
+     */
+    DEBT_COLLECTOR(Float.MAX_VALUE, 0f, 0f, false),
+
+    /**
+     * Assessor — Work Capability Assessment NPC for the corresponding job search mission.
+     * Passive; delivers absurdist verdict dialogue ("You're fit for work — you can walk 50 metres").
+     */
+    ASSESSOR(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
