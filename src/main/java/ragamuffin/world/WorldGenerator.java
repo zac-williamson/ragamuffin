@@ -1308,9 +1308,18 @@ public class WorldGenerator {
         ));
         Collections.shuffle(southShops, layoutRng);
 
-        for (int i = 0; i < southSlots.length; i++) {
+        // Office building footprint (used to skip overlapping shop slots)
+        int offX = 70 + officeOffX;
+        int offZ = 26 + officeOffZ;
+
+        int shopIdx = 0;
+        for (int i = 0; i < southSlots.length && shopIdx < southShops.size(); i++) {
             int[] slot = southSlots[i];
-            LandmarkType type = southShops.get(i);
+            // Skip this slot if it overlaps with the office building footprint
+            boolean xOverlap = slot[0] < offX + 15 && slot[0] + slot[1] > offX;
+            boolean zOverlap = sz < offZ + 15 && sz + slot[2] > offZ;
+            if (xOverlap && zOverlap) continue;
+            LandmarkType type = southShops.get(shopIdx++);
             generateShopWithSign(world, slot[0], sz, slot[1], slot[2], 4, wallForShop(type), signForShop(type), type);
         }
 
