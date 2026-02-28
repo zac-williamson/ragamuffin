@@ -48,5 +48,13 @@ public enum RumourType {
     // ── Issue #916: Late-Night Kebab Van ─────────────────────────────────────
 
     /** "Someone half-inched a kebab from the van last night — they used a tin of beans" — seeded by KebabVanSystem when the player steals food via the TIN_OF_BEANS distraction. */
-    THEFT;
+    THEFT,
+
+    // ── Issue #926: Chippy System ─────────────────────────────────────────────
+
+    /** "Someone jumped the queue outside Tony's — reckons they're above waiting" — seeded by ChippySystem when the player queue-jumps during the post-pub queue (23:00–01:00). */
+    QUEUE_JUMP,
+
+    /** "Someone punched Biscuit outside Tony's — Tony's furious" — seeded town-wide by ChippySystem when the player punches the STRAY_CAT NPC. */
+    CAT_PUNCH;
 }

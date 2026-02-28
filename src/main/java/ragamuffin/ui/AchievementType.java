@@ -932,6 +932,39 @@ public enum AchievementType {
         "Peacekeeper of Sudworth",
         "Brokered peace during a machine theft dispute. Diplomacy. In a launderette.",
         1
+    ),
+
+    // ── Issue #926: Chippy System ──────────────────────────────────────────────
+
+    SALT_AND_VINEGAR(
+        "Salt & Vinegar",
+        "Seasoned your chips with salt and vinegar. A bold choice. A correct choice.",
+        1
+    ),
+    LAST_ORDERS_CHIPPY(
+        "Last Orders",
+        "Bought chips from Tony's within 10 minutes of closing. Midnight grease. The best grease.",
+        1
+    ),
+    FED_THE_CAT(
+        "Fed the Cat",
+        "Fed Biscuit three times. She didn't say thank you but she looked grateful. Sort of.",
+        3
+    ),
+    QUEUE_JUMPER(
+        "Queue Jumper",
+        "Jumped the post-pub queue at Tony's. Someone's kebab was delayed for this.",
+        1
+    ),
+    CAT_PUNCHER(
+        "Cat Puncher",
+        "You punched Biscuit. The whole town knows. Tony knows. Even the cat knows.",
+        1
+    ),
+    CHIPPY_REGULAR(
+        "Chippy Regular",
+        "Bought a fish supper from Tony's five times. Your arteries have filed a formal complaint.",
+        5
     );
 
     private final String name;

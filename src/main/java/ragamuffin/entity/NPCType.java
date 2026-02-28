@@ -260,7 +260,25 @@ public enum NPCType {
      * Sells drinks at half price; cycles through 10 flavourful speech lines.
      * Remembers if the player grassed and permanently ejects them.
      */
-    LANDLORD(30f, 5f, 2.0f, false);
+    LANDLORD(30f, 5f, 2.0f, false),
+
+    // ── Issue #926: Tony's Chip Shop ──────────────────────────────────────────
+
+    /**
+     * Chippy Owner — Tony, the proprietor of Tony's Chip Shop (CHIPPY landmark).
+     * Stands behind the CHIPPY_COUNTER during opening hours (11:00–00:00).
+     * Passive; serves food via the ChippyOrderUI. Refuses service to players
+     * wearing a BALACLAVA. Notoriety-aware dialogue. Ejects all customers at 00:00.
+     */
+    CHIPPY_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * Stray Cat — Biscuit, the resident cat of Tony's Chip Shop.
+     * Lives inside the chippy. Feeding Biscuit 3 times awards the FED_THE_CAT
+     * achievement. Punching Biscuit adds +3 Notoriety and seeds a CAT_PUNCH rumour
+     * town-wide. Passive and docile; never attacks.
+     */
+    STRAY_CAT(5f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
