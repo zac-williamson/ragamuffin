@@ -101,6 +101,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 12: CRITIC 2 Improvements
     private WeatherSystem weatherSystem;
 
+    // Issue #842: WeatherNPCBehaviour — weather-driven NPC state changes
+    private WeatherNPCBehaviour weatherNPCBehaviour;
+    private float weatherNPCTimer = 0f;
+    private final java.util.Random frostSlipRng = new java.util.Random();
+
     // Issue #807: WarmthSystem — hypothermia/wetness survival mechanics
     private WarmthSystem warmthSystem;
 
@@ -401,6 +406,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 12: Initialize CRITIC 2 systems
         weatherSystem = new WeatherSystem();
+
+        // Issue #842: Initialize weather NPC behaviour system
+        weatherNPCBehaviour = new WeatherNPCBehaviour(new java.util.Random());
+        weatherNPCTimer = 0f;
 
         // Issue #807: Initialize warmth/wetness and noise systems
         warmthSystem = new WarmthSystem();
@@ -2275,6 +2284,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Phase 5: Update NPCs
         npcManager.update(delta, world, player, inventory, tooltipSystem);
 
+        // Issue #842: Apply weather-driven NPC behaviour once per second
+        weatherNPCTimer += delta;
+        if (weatherNPCTimer >= 1.0f) {
+            weatherNPCBehaviour.applyWeatherBehaviour(npcManager.getNPCs(), weatherSystem.getCurrentWeather());
+            weatherNPCTimer = 0f;
+        }
+
         // Fix #196: update speech log after NPC speech is set for this frame
         speechLogUI.update(npcManager.getNPCs(), delta);
 
@@ -2466,6 +2482,24 @@ public class RagamuffinGame extends ApplicationAdapter {
             boolean nearCampfire = campfireSystem.isNearCampfire(player.getPosition());
             warmthSystem.update(player, weatherSystem.getCurrentWeather(), world,
                     delta, nearCampfire, inventory);
+        }
+
+        // Issue #842: Frost-slip — black ice on ROAD/PAVEMENT blocks during FROST
+        if (!player.isDead()) {
+            BlockType blockUnder = world.getBlockUnderPlayer(player);
+            boolean onRoad = blockUnder == BlockType.ROAD || blockUnder == BlockType.PAVEMENT;
+            float slipProb = WeatherNPCBehaviour.getFrostSlipProbabilityPerSecond(
+                    weatherSystem.getCurrentWeather(), onRoad);
+            if (slipProb > 0 && frostSlipRng.nextFloat() < slipProb * delta) {
+                // Apply a small random knockback to simulate slipping on ice
+                float angle = frostSlipRng.nextFloat() * (float) (2 * Math.PI);
+                float slipStrength = 1.5f;
+                player.getPosition().add(
+                        (float) Math.cos(angle) * slipStrength * delta,
+                        0,
+                        (float) Math.sin(angle) * slipStrength * delta);
+                tooltipSystem.showMessage("You slip on the icy road!", 2.0f);
+            }
         }
 
         // Issue #816: G key — Grovel mechanic (hold G to reduce Watch Anger)
