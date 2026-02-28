@@ -295,6 +295,19 @@ public class NotorietySystem {
     }
 
     /**
+     * Reduce notoriety by a fixed amount (e.g. from launderette wash scrub).
+     * Clamped to 0; tier is recomputed after reduction.
+     *
+     * @param amount positive number of points to subtract
+     * @param achievementSystem callback for achievements (may be null)
+     */
+    public void reduceNotoriety(int amount, AchievementCallback achievementSystem) {
+        if (amount <= 0) return;
+        notoriety = Math.max(0, notoriety - amount);
+        updateTier(achievementSystem);
+    }
+
+    /**
      * Attempt to bribe the Fence to reduce notoriety. Costs 20 COIN.
      *
      * @param inventory the player's inventory

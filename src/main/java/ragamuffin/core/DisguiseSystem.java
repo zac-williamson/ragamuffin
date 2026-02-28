@@ -318,6 +318,11 @@ public class DisguiseSystem {
                 // Handled separately (range-based), but general NPCs may scrutinise
                 return npc.getType() == NPCType.POLICE
                         || npc.getType() == NPCType.COUNCIL_MEMBER;
+            // Issue #924: Launderette disguises attract police scrutiny
+            case BLOODY_HOODIE:
+            case STOLEN_JACKET:
+                return npc.getType() == NPCType.POLICE
+                        || npc.getType() == NPCType.PCSO;
             default:
                 return false;
         }
@@ -624,6 +629,9 @@ public class DisguiseSystem {
             case STREET_LADS_HOODIE:
             case HI_VIS_VEST:
             case GREGGS_APRON:
+            // Issue #924: Launderette disguises
+            case BLOODY_HOODIE:
+            case STOLEN_JACKET:
                 return true;
             default:
                 return false;
@@ -657,6 +665,11 @@ public class DisguiseSystem {
                 return "You don't work here! Security!";
             case GREGGS_APRON:
                 return "That's just Dave in an apron!";
+            // Issue #924: Launderette disguises
+            case BLOODY_HOODIE:
+                return "Oi! Is that blood?! Get him!";
+            case STOLEN_JACKET:
+                return "That's a stolen jacket, that! Grab him!";
             default:
                 return "Oi! Who are you?!";
         }

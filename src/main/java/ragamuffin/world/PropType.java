@@ -284,7 +284,34 @@ public enum PropType {
      * by pressing E (granting Street Lads Respect +10, Council Respect −5) or
      * bribe the COUNCIL_MEMBER NPC for 8 COIN. Destroyed by 1 punch; yields nothing.
      */
-    CLOSURE_NOTICE(0.30f, 0.50f, 0.02f, 1, null);
+    CLOSURE_NOTICE(0.30f, 0.50f, 0.02f, 1, null),
+
+    // ── Issue #924: Launderette System ────────────────────────────────────────
+
+    /**
+     * A front-loading washing machine inside the Spotless Launderette.
+     * Interact (E) while holding 2 COIN to start a 90-second wash cycle.
+     * On completion the player receives CLEAN_CLOTHES. If wearing a BLOODY_HOODIE
+     * or STOLEN_JACKET, the wash also deducts 2 Notoriety and clears the
+     * COVERED_IN_BLOOD debuff. Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    WASHING_MACHINE(0.70f, 1.00f, 0.65f, 5, Material.SCRAP_METAL),
+
+    /**
+     * A changing cubicle curtain-prop inside the launderette.
+     * Interact (E) while holding CLEAN_CLOTHES to equip them and gain the
+     * FRESHLY_LAUNDERED buff (−20% NPC recognition chance for 3 in-game minutes).
+     * Destroyed by 2 punches; yields nothing.
+     */
+    CHANGING_CUBICLE(0.90f, 2.00f, 0.90f, 2, null),
+
+    /**
+     * A hand-painted CLOSED sign hung on the launderette door outside opening hours
+     * (22:00–07:00). Attempting to enter while this sign is visible triggers
+     * ANGER_VISIBLE_CRIME in the NeighbourhoodWatchSystem. Destroyed by 1 punch;
+     * yields nothing.
+     */
+    CLOSED_SIGN(0.40f, 0.60f, 0.02f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
