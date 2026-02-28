@@ -219,7 +219,7 @@ public class BuskingSystem {
      * @param weather      current weather (used for market event lookup only via activeEvent)
      * @param activeEvent  current active market event (may be null)
      */
-    public void update(float delta, List<NPC> npcs, Player player, ragamuffin.core.Weather weather, MarketEvent activeEvent) {
+    public void update(float delta, List<NPC> npcs, Player player, Inventory inventory, ragamuffin.core.Weather weather, MarketEvent activeEvent) {
         if (!busking) return;
 
         // Session-end check: player wandered too far
@@ -265,7 +265,7 @@ public class BuskingSystem {
             int wholeCoins = (int) pendingCoins;
             if (wholeCoins > 0) {
                 pendingCoins -= wholeCoins;
-                player.getInventory().addItem(Material.COIN, wholeCoins);
+                inventory.addItem(Material.COIN, wholeCoins);
                 totalCoinsEarned += wholeCoins;
 
                 // Reduce BORED need on contributing NPCs proportionally
@@ -307,7 +307,7 @@ public class BuskingSystem {
             licenceResponseTimer -= delta;
             if (licenceResponseTimer <= 0f) {
                 // No response — confiscate
-                onConfiscation(player, player.getInventory(), npcs);
+                onConfiscation(player, inventory, npcs);
             }
         }
     }
@@ -494,7 +494,7 @@ public class BuskingSystem {
         // Find the nearest POLICE or PCSO NPC
         NPC officer = findNearestOfficer(player, npcs);
         if (officer != null) {
-            officer.setState(NPCState.APPROACHING);
+            officer.setState(NPCState.WARNING);
             officer.setSpeechText("You got a busking licence, sunshine?", 6.0f);
             checkingOfficer = officer;
         }
