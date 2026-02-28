@@ -140,8 +140,6 @@ public class SkillsUI {
         float panelY = (screenH - PANEL_H) / 2f;
 
         // ── Background panel ─────────────────────────────────────────────────
-        batch.end();
-
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(0f, 0f, 0f, 0.82f);
         shapeRenderer.rect(panelX, panelY, PANEL_W, PANEL_H);
@@ -176,7 +174,6 @@ public class SkillsUI {
                            panelX + PADDING, rowY);
         }
 
-        batch.begin();
     }
 
     private void renderSkillRow(SpriteBatch batch, ShapeRenderer shapeRenderer,
