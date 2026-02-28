@@ -29,6 +29,9 @@ public class WarmthSystem {
     /** Warmth restored per second when sheltered indoors. */
     public static final float INDOOR_WARMTH_RATE = 5.0f;
 
+    /** Warmth restored per second when inside a car (engine heat, sheltered interior). */
+    public static final float CAR_WARMTH_RATE = 8.0f;
+
     /** Warmth restored by drinking a FLASK_OF_TEA. */
     public static final float FLASK_OF_TEA_WARMTH = 30.0f;
 
@@ -47,13 +50,29 @@ public class WarmthSystem {
      */
     public void update(Player player, Weather weather, World world, float delta,
                        boolean nearCampfire, Inventory inventory) {
-        boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition());
+        update(player, weather, world, delta, nearCampfire, false, inventory);
+    }
 
-        // Update wetness
+    /**
+     * Update warmth and wetness for the player based on current weather and shelter status.
+     *
+     * @param player        the player
+     * @param weather       current weather
+     * @param world         the voxel world
+     * @param delta         seconds since last frame
+     * @param nearCampfire  whether the player is within campfire warmth radius
+     * @param inCar         whether the player is currently inside a car
+     * @param inventory     player's inventory (to check clothing)
+     */
+    public void update(Player player, Weather weather, World world, float delta,
+                       boolean nearCampfire, boolean inCar, Inventory inventory) {
+        boolean sheltered = ShelterDetector.isSheltered(world, player.getPosition()) || inCar;
+
+        // Update wetness: car interior keeps player dry
         updateWetness(player, weather, sheltered, delta, inventory);
 
         // Update warmth
-        updateWarmth(player, weather, sheltered, nearCampfire, delta, inventory);
+        updateWarmth(player, weather, sheltered, nearCampfire, inCar, delta, inventory);
 
         // Apply damage if warmth is dangerously low
         if (player.isWarmthDangerous()) {
@@ -83,10 +102,16 @@ public class WarmthSystem {
      * Update warmth: drains outdoors in cold/wet weather, restored by campfire or indoors.
      */
     private void updateWarmth(Player player, Weather weather, boolean sheltered,
-                               boolean nearCampfire, float delta, Inventory inventory) {
+                               boolean nearCampfire, boolean inCar, float delta, Inventory inventory) {
         if (nearCampfire) {
             // Campfire warms the player
             player.restoreWarmth(CAMPFIRE_WARMTH_RATE * delta);
+            return;
+        }
+
+        if (inCar) {
+            // Car interior provides warmth (engine heat, enclosed space)
+            player.restoreWarmth(CAR_WARMTH_RATE * delta);
             return;
         }
 
