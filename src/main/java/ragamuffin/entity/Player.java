@@ -3,6 +3,7 @@ package ragamuffin.entity;
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.core.CriminalRecord;
 import ragamuffin.core.StreetReputation;
+import ragamuffin.core.StreetSkillSystem;
 import ragamuffin.world.BlockType;
 import ragamuffin.world.Chunk;
 
@@ -96,6 +97,9 @@ public class Player {
     // Criminal record — tracks crime statistics
     private CriminalRecord criminalRecord;
 
+    // Street skill system — tracks XP and skill tiers
+    private StreetSkillSystem streetSkillSystem;
+
     public Player(float x, float y, float z) {
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
@@ -120,6 +124,7 @@ public class Player {
         this.balaclavWorn = false;
         this.streetReputation = new StreetReputation();
         this.criminalRecord = new CriminalRecord();
+        this.streetSkillSystem = new StreetSkillSystem();
     }
 
     public Vector3 getPosition() {
@@ -622,6 +627,13 @@ public class Player {
      */
     public CriminalRecord getCriminalRecord() {
         return criminalRecord;
+    }
+
+    /**
+     * Get the player's street skill system.
+     */
+    public StreetSkillSystem getStreetSkillSystem() {
+        return streetSkillSystem;
     }
 
     // ========== Crouch System (Issue #689) ==========

@@ -4189,12 +4189,12 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Always render hotbar (unless opening sequence active or quest log is open)
         // Fix #726: suppress hotbar when quest log is open so it does not show through the overlay
-        if (!openingSequence.isActive() && !questLogUI.isVisible()) {
+        if (!openingSequence.isActive() && !questLogUI.isVisible() && !criminalRecordUI.isVisible()) {
             hotbarUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem);
         }
 
         // Render clock — suppressed when quest log is open to prevent overlap (#726)
-        if (!questLogUI.isVisible()) {
+        if (!questLogUI.isVisible() && !criminalRecordUI.isVisible()) {
             clockHUD.render(spriteBatch, font, screenWidth, screenHeight);
         }
 
@@ -4226,6 +4226,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #464: Render quest log overlay if visible
         if (questLogUI.isVisible()) {
             questLogUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Issue #659: Render criminal record overlay if visible
+        if (criminalRecordUI.isVisible()) {
+            criminalRecordUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
 
         // Issue #828: Render JobCentre UI if visible
