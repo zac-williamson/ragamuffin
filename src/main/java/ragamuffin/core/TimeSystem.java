@@ -236,6 +236,13 @@ public class TimeSystem {
     }
 
     /**
+     * Get the current day index (alias for getDayCount, used by SquatSystem daily tick).
+     */
+    public int getDayIndex() {
+        return dayCount;
+    }
+
+    /**
      * Set time speed multiplier.
      */
     public void setTimeSpeed(float speed) {
