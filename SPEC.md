@@ -9244,3 +9244,92 @@ inaccessible.
 6. **RaveSystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `raveSystem` field is non-null. Simulate 1 frame in PLAYING
    state. Verify no exception is thrown.
+
+## Wire StreetEconomySystem into the Game Loop
+
+`StreetEconomySystem` (860 lines, `ragamuffin.core.StreetEconomySystem`) is fully implemented
+but never instantiated in `RagamuffinGame`. Without it, NPCs have no needs, no street dealing
+occurs, no protection rackets run, and market disruption events never fire — the entire black
+market economy is dead code. All of its integration points (FactionSystem, WeatherSystem,
+NotorietySystem, RumourNetwork, DisguiseSystem) are already wired.
+
+### Changes required in `RagamuffinGame.java`
+
+1. **Declare the field** (alongside other system fields, after `graffitiSystem`):
+   ```java
+   // Issue #XXX: Street economy — NPC needs, black market dealing, protection rackets
+   private StreetEconomySystem streetEconomySystem;
+   ```
+
+2. **Instantiate in `initGame()`** (after `rumourNetwork` and `notorietySystem` are created):
+   ```java
+   streetEconomySystem = new StreetEconomySystem();
+   ```
+
+3. **Call `update()` each frame** in the main game-loop update block (alongside
+   `wantedSystem.update(...)` and `notorietySystem.update(...)`):
+   ```java
+   streetEconomySystem.update(delta, npcManager.getNPCs(), player,
+       weatherSystem.getCurrentWeather(),
+       notorietySystem.getTier(),
+       inventory, rumourNetwork,
+       type -> achievementSystem.unlock(type));
+   ```
+
+4. **Wire the E-key deal interaction** in `handleInteract()`, immediately after the
+   existing NPC interaction block. When `interactionSystem.findNPCInRange(...)` returns
+   a non-null NPC and no other UI is open, attempt a deal:
+   ```java
+   if (targetNPC != null && streetEconomySystem.hasRelevantNeed(targetNPC,
+           inventory.getSelectedItem())) {
+       StreetEconomySystem.DealResult result = streetEconomySystem.attemptDeal(
+           targetNPC, inventory, player,
+           factionSystem.getRespect(targetNPC.getFaction()),
+           disguiseSystem.isDisguiseActive(),
+           notorietySystem.getTier(),
+           rumourNetwork, type -> achievementSystem.unlock(type));
+       if (result != StreetEconomySystem.DealResult.NO_DEAL) {
+           String msg = streetEconomySystem.getLastDealMessage();
+           if (msg != null) tooltipSystem.showMessage(msg, 3.0f);
+       }
+   }
+   ```
+
+5. **Wire crime events** — when the player commits a visible crime (block smash near NPCs,
+   NPC punch), call:
+   ```java
+   streetEconomySystem.onCrimeEvent(x, y, 8f, 0.3f, npcManager.getNPCs());
+   ```
+   alongside the existing `disguiseSystem.notifyCrime(...)` call.
+
+6. **Reset on restart** in `restartGame()`:
+   ```java
+   streetEconomySystem = new StreetEconomySystem();
+   ```
+
+### Integration tests — implement these exact scenarios
+
+1. **NPC needs accumulate each frame**: Initialise `RagamuffinGame` (headless). Spawn a
+   CIVILIAN NPC. Advance 300 in-game seconds via `streetEconomySystem.update(300f, ...)`.
+   Verify `streetEconomySystem.getNeedScore(npc, NeedType.HUNGRY)` is greater than 0.
+
+2. **Deal completes when player holds matching item**: Give the player a `Material.GREGGS_PASTRY`.
+   Set an NPC's HUNGRY need to 60 via `streetEconomySystem.setNeedScore(npc, NeedType.HUNGRY, 60f)`.
+   Simulate pressing E near the NPC. Verify `DealResult` is not `NO_DEAL` and the pastry is
+   removed from the player's inventory.
+
+3. **Market event spikes price**: Call `streetEconomySystem.triggerMarketEvent(MarketEvent.GREGGS_STRIKE, ...)`.
+   Verify `streetEconomySystem.getEffectivePrice(Material.GREGGS_PASTRY, 0, false, 0)` is
+   at least 4× `streetEconomySystem.getBasePrice(Material.GREGGS_PASTRY)`.
+
+4. **Racket passive income deposits coin**: Call `streetEconomySystem.startRacket(LandmarkType.GREGGS, ...)`.
+   Advance 60 real seconds via repeated `update()` calls. Verify at least 1 `Material.COIN`
+   has been added to the player's inventory.
+
+5. **Crime event raises SCARED need**: Set an NPC's SCARED need to 0. Call
+   `streetEconomySystem.onCrimeEvent(npc.getX(), npc.getZ(), 8f, 0.3f, npcs)`. Verify
+   `streetEconomySystem.getNeedScore(npc, NeedType.SCARED)` is greater than 0.
+
+6. **StreetEconomySystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `streetEconomySystem` field is non-null. Simulate 1 frame in
+   PLAYING state. Verify no exception is thrown.
