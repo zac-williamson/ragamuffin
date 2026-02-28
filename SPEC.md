@@ -10856,3 +10856,69 @@ existing method.
    E outside the hit zone (cursor at position 0.0 when hit zone does not include 0.0).
    Verify the battle resolves with `mcBattleSystem.wasLastResolvedPlayerWin()` returning
    `false`.
+
+---
+
+## Wire StreetSkillSystem into the game loop
+
+`StreetSkillSystem` (Issue #787) is instantiated via `player.getStreetSkillSystem()` and
+its data is passed into several other systems (JobCentreSystem, BootSaleSystem,
+CornerShopSystem), but its own `update(float delta, Player player, List<NPC> allNPCs)` method
+is **never called** anywhere in `RagamuffinGame.java`. This means:
+
+- The **RALLY** perk (INFLUENCE Legend tier) is completely broken: the 30-second rally timer
+  never ticks, followers never auto-disperse via `disperseFollowers()`, the rally cooldown
+  never decrements, and `applyFollowerDeterrence()` is never executed each frame. Any NPCs
+  recruited as followers will follow the player forever and never deter hostiles as intended.
+- The `rallyCooldown` counter never decrements, so the player can never re-use RALLY even
+  after the rally should have ended.
+
+**What needs to be done:**
+
+In `updatePlayingSimulation(float delta)` in `RagamuffinGame.java`, add a call to:
+
+```java
+player.getStreetSkillSystem().update(delta, player, npcManager.getNPCs());
+```
+
+This should be placed alongside the other per-frame system updates (e.g. near the
+`gangTerritorySystem.update(...)` call). The same call should also be added to the PAUSED
+and CINEMATIC branches so the rally timer keeps ticking when those states are active
+(consistent with how other timers such as `wantedSystem.update()` and `rumourNetwork.update()`
+are advanced in all three branches).
+
+No new classes are required — this is purely routing the existing per-frame tick to an
+existing method.
+
+### Integration tests — implement these exact scenarios
+
+1. **Rally timer auto-disperses followers**: Give the player INFLUENCE Legend tier
+   (`streetSkillSystem.setSkillTier(StreetSkill.INFLUENCE, 4)`). Call `rally()` to start the
+   rally. Spawn a PUBLIC NPC and set its state to `FOLLOWING_PLAYER`. Call
+   `streetSkillSystem.update(delta, player, npcs)` for `RALLY_DURATION_SECONDS` total seconds
+   in increments of 0.1f. Verify `getFollowers()` is empty and the NPC's state is
+   `WANDERING` (not `FOLLOWING_PLAYER`).
+
+2. **Rally cooldown decrements over time**: Give INFLUENCE Legend tier and call `rally()`.
+   Advance the update loop for `RALLY_DURATION_SECONDS + 0.1f` seconds so the rally ends and
+   `rallyCooldown` is set. Continue advancing for `RALLY_COOLDOWN_SECONDS - 1f` seconds.
+   Verify `canRally()` returns `false`. Advance for another `1.1f` seconds. Verify
+   `canRally()` returns `true`.
+
+3. **Follower deterrence backs off hostile NPCs**: Give INFLUENCE Legend tier and call
+   `rally()`. Spawn a YOUTH_GANG NPC in state `CHASING_PLAYER` within `RALLY_DETER_RADIUS`
+   blocks of a follower NPC (state `FOLLOWING_PLAYER`). Call
+   `streetSkillSystem.update(0.1f, player, npcs)`. Verify the YOUTH_GANG NPC's state is now
+   `WANDERING` (deterred by the follower's presence).
+
+4. **Game loop calls update each frame**: In a headless integration test, start the game in
+   PLAYING state, place the player at the world centre, give INFLUENCE Legend tier, and call
+   `rally()`. Simulate 60 frames at delta=1/60. Verify `getRallyTimer()` has decreased by
+   approximately 1 second (within 0.1s tolerance), confirming the game loop is calling
+   `streetSkillSystem.update()`.
+
+5. **Rally does not tick in PAUSED state when update is absent**: (Regression guard) Confirm
+   that after the fix is applied the rally timer also advances in the PAUSED branch by
+   simulating 30 frames with state=PAUSED. Verify the timer decrements, matching the
+   behaviour already specified for other timers (wantedSystem, rumourNetwork) in the paused
+   branch.
