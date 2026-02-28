@@ -192,6 +192,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     private ragamuffin.render.GraffitiRenderer graffitiRenderer;
     // Issue #824: Street economy system — NPC needs, black market dealing, protection rackets
     private StreetEconomySystem streetEconomySystem;
+    // Fix #899: Cooldown timer (seconds) before the next random market event fires.
+    // Initialised to a random value in [120, 300] on game start and reset after each event.
+    private float marketEventCooldown = 180f;
     // Issue #826: Witness & evidence system — witnesses, CCTV tapes, informant mechanic
     private WitnessSystem witnessSystem;
     // Issue #828: JobCentre system — Universal Credit, sanctions & bureaucratic torment
@@ -531,6 +534,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         graffitiRenderer = new ragamuffin.render.GraffitiRenderer();
         // Issue #824: Initialize street economy system — NPC needs, black market, protection rackets
         streetEconomySystem = new StreetEconomySystem();
+        // Fix #899: Randomise initial cooldown so events don't all fire at the same time after start
+        marketEventCooldown = 120f + new java.util.Random().nextFloat() * 180f;
 
         // Issue #826: Initialize witness & evidence system — witnesses, CCTV tapes, informant mechanic
         witnessSystem = new WitnessSystem();
@@ -920,6 +925,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                     player.getPosition().x, player.getPosition().z, 15f)) {
                 player.heal(delta / 60f);
             }
+
+            // Fix #899: Decrement market event cooldown during cinematic for scheduling consistency
+            marketEventCooldown -= delta;
 
             // Fix #435: Check for player death and advance the respawn countdown
             // during the cinematic.  starvation damage and weather health drain
@@ -1710,6 +1718,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 player.heal(delta / 60f);
             }
 
+            // Fix #899: Decrement market event cooldown while paused for scheduling consistency
+            marketEventCooldown -= delta;
+
             // Fix #382: Advance gang territory linger timer while paused so the player cannot
             // exploit the pause menu to freeze the 5-second hostility escalation countdown.
             // Mirrors the pattern used for healing (#381), dodge (#379), reputation (#359),
@@ -2475,6 +2486,18 @@ public class RagamuffinGame extends ApplicationAdapter {
                 notorietySystem.getTier(),
                 inventory, rumourNetwork,
                 type -> achievementSystem.unlock(type));
+
+        // Fix #899: Random market event scheduler — decrement cooldown and fire when ready
+        marketEventCooldown -= delta;
+        if (marketEventCooldown <= 0f && streetEconomySystem.getActiveEvent() == null) {
+            // Pick a random MarketEvent excluding GREGGS_STRIKE (handled by NewspaperSystem)
+            MarketEvent[] candidates = java.util.Arrays.stream(MarketEvent.values())
+                    .filter(e -> e != MarketEvent.GREGGS_STRIKE)
+                    .toArray(MarketEvent[]::new);
+            MarketEvent event = candidates[new java.util.Random().nextInt(candidates.length)];
+            streetEconomySystem.triggerMarketEvent(event, npcManager.getNPCs(), rumourNetwork);
+            marketEventCooldown = 120f + new java.util.Random().nextFloat() * 180f;
+        }
 
         // Issue #862: Advance newspaper publication timer — fires daily edition at 18:00, triggers
         // market events (GREGGS_STRIKE etc.), spreads rumours, and enables the pickUpNewspaper() path.
@@ -4905,6 +4928,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         graffitiSystem = new GraffitiSystem();
         // Issue #824: Reset street economy system so NPC needs and market state don't carry over
         streetEconomySystem = new StreetEconomySystem();
+        // Fix #899: Reset market event cooldown so events restart on a fresh schedule
+        marketEventCooldown = 120f + new java.util.Random().nextFloat() * 180f;
         // Issue #799: Reset corner shop system so shop state, heat and stock don't carry over
         cornerShopSystem = new CornerShopSystem();
         // Issue #852: Reset fruit machine so RNG state doesn't carry over between sessions
