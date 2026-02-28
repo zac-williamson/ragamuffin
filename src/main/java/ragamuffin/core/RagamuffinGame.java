@@ -100,6 +100,12 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Phase 12: CRITIC 2 Improvements
     private WeatherSystem weatherSystem;
 
+    // Issue #807: WarmthSystem — hypothermia/wetness survival mechanics
+    private WarmthSystem warmthSystem;
+
+    // Issue #807: NoiseSystem — player noise level for NPC hearing detection
+    private NoiseSystem noiseSystem;
+
     // Issue #234: Exposure system — shelter protection from weather effects
     private ExposureSystem exposureSystem;
 
@@ -354,6 +360,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 12: Initialize CRITIC 2 systems
         weatherSystem = new WeatherSystem();
+
+        // Issue #807: Initialize warmth/wetness and noise systems
+        warmthSystem = new WarmthSystem();
+        noiseSystem = new NoiseSystem();
 
         // Issue #234: Initialize exposure system
         exposureSystem = new ExposureSystem();
@@ -2188,6 +2198,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #48: Passive reputation decay — "lying low" reduces reputation over time
         player.getStreetReputation().update(delta);
 
+        // Issue #807: Update warmth/wetness survival system
+        if (!player.isDead()) {
+            boolean nearCampfire = false; // no campfire system wired yet
+            warmthSystem.update(player, weatherSystem.getCurrentWeather(), world,
+                    delta, nearCampfire, inventory);
+        }
+
         // Issue #171: Update particle system
         particleSystem.update(delta);
 
@@ -2406,12 +2423,18 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
             moveSpeed = (inputHandler.isSprintHeld() && player.canSprint()) ? Player.SPRINT_SPEED : Player.MOVE_SPEED;
         }
+        // Issue #807: Apply hypothermia speed penalty when warmth is dangerously low
+        moveSpeed *= player.getWarmthSpeedMultiplier();
         world.moveWithCollision(player, tmpMoveDir.x, 0, tmpMoveDir.z, delta, moveSpeed);
 
         // Update footstep sounds based on movement
         boolean isMoving = tmpMoveDir.len2() > 0;
         BlockType blockUnderfoot = world.getBlockUnderPlayer(player);
         soundSystem.updateFootsteps(delta, isMoving, blockUnderfoot);
+
+        // Issue #807: Update noise system and mirror result onto player
+        noiseSystem.update(delta, isMoving, player.isCrouching());
+        player.setNoiseLevel(noiseSystem.getNoiseLevel());
 
         // Issue #171: Footstep dust particles while moving on the ground
         if (isMoving && world.isOnGround(player)) {
@@ -2572,6 +2595,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 gameHUD.setBlockBreakProgress(0f);
                 // Play block break sound based on material
                 soundSystem.playBlockBreak(blockType);
+                // Issue #807: Block-break noise spike for NPC hearing detection
+                noiseSystem.spikeBlockBreak();
             }
 
             // Consume tool durability if a tool was used
@@ -2764,6 +2789,18 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #807: Flask of Tea restores warmth when used
+        if (material == ragamuffin.building.Material.FLASK_OF_TEA) {
+            boolean drank = warmthSystem.drinkFlaskOfTea(player, inventory);
+            if (drank) {
+                soundSystem.play(ragamuffin.audio.SoundEffect.ITEM_EAT);
+                tooltipSystem.showMessage("Lovely cuppa. You feel warmer.", 3.0f);
+            } else {
+                tooltipSystem.showMessage("No flask of tea left.", 2.0f);
+            }
+            return;
+        }
+
         // Fix #257: Check if material has a non-food, non-placeable use action
         if (interactionSystem.canUseItem(material)) {
             String message = interactionSystem.useItem(material, player, inventory);
@@ -2812,6 +2849,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Play block place sound
         soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+
+        // Issue #807: Block-place noise spike for NPC hearing detection
+        noiseSystem.spikeBlockPlace();
 
         // Phase 11: Trigger first block place tooltip
         if (!tooltipSystem.hasShown(TooltipTrigger.FIRST_BLOCK_PLACE)) {
@@ -3530,6 +3570,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         respawnSystem = new RespawnSystem();
         respawnSystem.setSpawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         weatherSystem = new WeatherSystem();
+        warmthSystem = new WarmthSystem();
+        noiseSystem = new NoiseSystem();
         exposureSystem = new ExposureSystem();
         arrestSystem = new ArrestSystem();
         arrestSystem.setRespawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
