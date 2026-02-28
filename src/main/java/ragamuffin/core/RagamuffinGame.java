@@ -915,6 +915,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             // fly-through freezes the timer and any accumulated resting progress is
             // discarded on the first PLAYING frame.
             healingSystem.update(delta, player);
+            // Squat passive regen: +1 health/min when inside squat at Vibe >= 20
+            if (squatSystem != null && squatSystem.isRegenActive(
+                    player.getPosition().x, player.getPosition().z, 15f)) {
+                player.heal(delta / 60f);
+            }
 
             // Fix #435: Check for player death and advance the respawn countdown
             // during the cinematic.  starvation damage and weather health drain
@@ -1296,6 +1301,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                 if (!isUIBlocking()) {
                     healingSystem.update(delta, player);
                 }
+            }
+            // Squat passive regen: +1 health/min when inside squat at Vibe >= 20
+            if (squatSystem != null && squatSystem.isRegenActive(
+                    player.getPosition().x, player.getPosition().z, 15f)) {
+                player.heal(delta / 60f);
             }
 
             // Phase 11: Check for death and respawn
@@ -1694,6 +1704,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Fix #381: Advance healing resting timer while paused so the 5-second threshold
             // continues to accumulate and healing is not artificially delayed on resume.
             healingSystem.update(delta, player);
+            // Squat passive regen: +1 health/min when inside squat at Vibe >= 20
+            if (squatSystem != null && squatSystem.isRegenActive(
+                    player.getPosition().x, player.getPosition().z, 15f)) {
+                player.heal(delta / 60f);
+            }
 
             // Fix #382: Advance gang territory linger timer while paused so the player cannot
             // exploit the pause menu to freeze the 5-second hostility escalation countdown.
