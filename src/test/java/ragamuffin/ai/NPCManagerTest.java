@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.entity.NPC;
+import ragamuffin.entity.FacialHairType;
+import ragamuffin.entity.HairstyleType;
 import ragamuffin.entity.NPCModelVariant;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
@@ -949,5 +951,103 @@ class NPCManagerTest {
                         "Issue #729: " + type + " must have a non-null model variant after spawning");
             }
         }
+    }
+
+    // ── Issue #875: Hairstyle and Facial Hair assignment on spawn ────────────
+
+    /**
+     * Every spawned NPC must have a non-null hairstyle assigned after spawning.
+     */
+    @Test
+    void allSpawnedNPCsHaveNonNullHairstyle() {
+        for (NPCType type : NPCType.values()) {
+            NPC npc = manager.spawnNPC(type, 0, 1, 0);
+            if (npc != null) {
+                assertNotNull(npc.getHairstyle(),
+                        "Issue #875: " + type + " must have a non-null hairstyle after spawning");
+            }
+        }
+    }
+
+    /**
+     * Every spawned NPC must have a non-null facial hair setting assigned after spawning.
+     */
+    @Test
+    void allSpawnedNPCsHaveNonNullFacialHair() {
+        for (NPCType type : NPCType.values()) {
+            NPC npc = manager.spawnNPC(type, 0, 1, 0);
+            if (npc != null) {
+                assertNotNull(npc.getFacialHair(),
+                        "Issue #875: " + type + " must have a non-null facial hair after spawning");
+            }
+        }
+    }
+
+    /**
+     * Non-humanoid and helmeted NPCs (DOG, BIRD, POLICE, etc.) must have NONE hairstyle
+     * since hair is not visible on them.
+     */
+    @Test
+    void nonHumanoidAndHelmetedNPCsHaveNoHairstyle() {
+        NPC dog  = manager.spawnNPC(NPCType.DOG,  5, 1, 5);
+        NPC bird = manager.spawnNPC(NPCType.BIRD, 6, 1, 6);
+        NPC police = manager.spawnNPC(NPCType.POLICE, 7, 1, 7);
+        NPC pcso   = manager.spawnNPC(NPCType.PCSO,   8, 1, 8);
+        NPC armed  = manager.spawnNPC(NPCType.ARMED_RESPONSE, 9, 1, 9);
+        assertEquals(HairstyleType.NONE, dog.getHairstyle(),
+                "Issue #875: DOG must have NONE hairstyle");
+        assertEquals(HairstyleType.NONE, bird.getHairstyle(),
+                "Issue #875: BIRD must have NONE hairstyle");
+        assertEquals(HairstyleType.NONE, police.getHairstyle(),
+                "Issue #875: POLICE must have NONE hairstyle (helmet)");
+        assertEquals(HairstyleType.NONE, pcso.getHairstyle(),
+                "Issue #875: PCSO must have NONE hairstyle (helmet)");
+        assertEquals(HairstyleType.NONE, armed.getHairstyle(),
+                "Issue #875: ARMED_RESPONSE must have NONE hairstyle (helmet)");
+    }
+
+    /**
+     * School kids should never have facial hair (they are children).
+     */
+    @Test
+    void schoolKidsHaveNoFacialHair() {
+        for (int i = 0; i < 20; i++) {
+            NPC kid = manager.spawnNPC(NPCType.SCHOOL_KID, i, 1, 0);
+            assertEquals(FacialHairType.NONE, kid.getFacialHair(),
+                    "Issue #875: SCHOOL_KID must not have facial hair, got " + kid.getFacialHair());
+        }
+    }
+
+    /**
+     * Spawning many PUBLIC NPCs should produce at least two different hairstyles,
+     * confirming that variety is actually applied.
+     */
+    @Test
+    void publicNPCsShowHairstyleVarietyAcrossSpawns() {
+        java.util.Set<HairstyleType> seen = new java.util.HashSet<>();
+        for (int i = 0; i < 40; i++) {
+            NPC npc = manager.spawnNPC(NPCType.PUBLIC, i * 2, 1, 0);
+            if (npc != null) seen.add(npc.getHairstyle());
+        }
+        assertTrue(seen.size() >= 2,
+                "Issue #875: PUBLIC NPCs should have at least 2 different hairstyles across 40 spawns; got " + seen);
+    }
+
+    /**
+     * Spawning many DRUNK or BUSKER NPCs should sometimes produce facial hair
+     * (those types have weighted distributions favouring beard/stubble).
+     */
+    @Test
+    void drunkNPCsSometimesHaveFacialHair() {
+        boolean foundFacialHair = false;
+        for (int i = 0; i < 30; i++) {
+            NPC npc = manager.spawnNPC(NPCType.DRUNK, i * 2, 1, 0);
+            if (npc != null && npc.getFacialHair() != FacialHairType.NONE) {
+                foundFacialHair = true;
+                break;
+            }
+        }
+        assertTrue(foundFacialHair,
+                "Issue #875: DRUNK NPCs should sometimes have facial hair across 30 spawns");
     }
 }
