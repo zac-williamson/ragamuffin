@@ -1,10 +1,12 @@
 package ragamuffin.ui;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import ragamuffin.core.DisguiseSystem;
 import ragamuffin.core.Faction;
 import ragamuffin.core.FactionSystem;
 import ragamuffin.core.MCBattleSystem;
@@ -51,6 +53,7 @@ public class GameHUD {
     private RaveSystem raveSystem;           // Issue #716 — may be null if not yet initialised
     private WitnessSystem witnessSystem;     // Issue #765 — may be null if not yet initialised
     private ragamuffin.core.PirateRadioSystem pirateRadioSystem; // Issue #783 — may be null
+    private DisguiseSystem disguiseSystem; // Issue #818 — may be null if not yet initialised
     private boolean visible;
     private Weather currentWeather;
     private float blockBreakProgress; // 0.0 to 1.0
@@ -282,6 +285,11 @@ public class GameHUD {
         // Render evidence countdown counter and CCTV vignette (Issue #765)
         if (witnessSystem != null) {
             renderEvidenceHUD(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Render cover-integrity bar when disguise is active (Issue #818)
+        if (disguiseSystem != null && disguiseSystem.isDisguised()) {
+            renderCoverIntegrityBar(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
     }
 
@@ -886,6 +894,69 @@ public class GameHUD {
     /** Returns the attached PirateRadioSystem, or null. */
     public ragamuffin.core.PirateRadioSystem getPirateRadioSystem() {
         return pirateRadioSystem;
+    }
+
+    // ── Disguise system (Issue #818) ───────────────────────────────────────────
+
+    /**
+     * Attach the DisguiseSystem so the HUD can render the cover-integrity bar
+     * when the player is wearing a disguise (Issue #818).
+     */
+    public void setDisguiseSystem(DisguiseSystem disguiseSystem) {
+        this.disguiseSystem = disguiseSystem;
+    }
+
+    /** Returns the attached DisguiseSystem, or null. */
+    public DisguiseSystem getDisguiseSystem() {
+        return disguiseSystem;
+    }
+
+    /**
+     * Render the cover-integrity bar when a disguise is active.
+     * Shown above the hotbar area, colour-coded GREEN/AMBER/RED by cover status.
+     */
+    private void renderCoverIntegrityBar(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer,
+                                         BitmapFont font, int screenWidth, int screenHeight) {
+        if (disguiseSystem == null || !disguiseSystem.isDisguised()) return;
+
+        float integrity = disguiseSystem.getCoverIntegrity();
+        DisguiseSystem.CoverStatus status = disguiseSystem.getCoverStatus();
+
+        float barWidth = 160f;
+        float barHeight = 14f;
+        float barX = screenWidth / 2f - barWidth / 2f;
+        float barY = screenHeight - 80f;
+
+        // Background
+        Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA,
+                com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.55f);
+        shapeRenderer.rect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+
+        // Fill colour by status
+        Color fillColor;
+        switch (status) {
+            case GREEN:  fillColor = new Color(0.1f, 0.8f, 0.1f, 0.9f); break;
+            case AMBER:  fillColor = new Color(0.9f, 0.7f, 0.0f, 0.9f); break;
+            case RED:    fillColor = new Color(0.9f, 0.1f, 0.1f, 0.9f); break;
+            default:     fillColor = new Color(0.4f, 0.4f, 0.4f, 0.9f); break;
+        }
+        shapeRenderer.setColor(fillColor);
+        float fillWidth = barWidth * (integrity / DisguiseSystem.MAX_COVER_INTEGRITY);
+        shapeRenderer.rect(barX, barY, fillWidth, barHeight);
+        shapeRenderer.end();
+        Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+
+        // Label
+        spriteBatch.begin();
+        font.getData().setScale(0.7f);
+        font.setColor(Color.WHITE);
+        font.draw(spriteBatch, "COVER", barX, barY + barHeight + 14f);
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
     }
 
     /**
