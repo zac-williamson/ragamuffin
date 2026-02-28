@@ -9412,3 +9412,116 @@ and CCTV tapes never activate.
 5. **WitnessSystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `witnessSystem` field is non-null. Simulate 1 frame in PLAYING
    state. Verify no exception is thrown.
+
+## Wire JobCentreSystem & JobCentreUI into the Game Loop
+
+**Goal**: `JobCentreSystem` (609 lines, Issue #795) is fully implemented but never
+instantiated in `RagamuffinGame`. Its `update()` is never called, `trySignOn()` is
+never triggered by the E key, `JobCentreUI.render()` is never drawn, and the
+sign-on → debt-collector loop never fires. Players cannot access Universal Credit,
+sign-on windows never open, the `DEBT_COLLECTOR` NPC never spawns, and the
+BUREAUCRACY skill track (already in `StreetSkillSystem`) has no effect. This is a
+core economic survival loop that has been dead code since Issue #795 was merged.
+
+`JobCentreSystem` depends on: `TimeSystem`, `CriminalRecord` (from player),
+`NotorietySystem`, `FactionSystem`, `RumourNetwork`, `NewspaperSystem`,
+`StreetSkillSystem`, `WantedSystem`, `NPCManager` — all of which are now wired in.
+`NewspaperSystem` must also be instantiated (it is currently dead code too).
+
+### What needs wiring
+
+1. **Instantiate `NewspaperSystem`** in `RagamuffinGame` (required by `JobCentreSystem`):
+   ```java
+   private NewspaperSystem newspaperSystem;
+   // in initGame():
+   newspaperSystem = new NewspaperSystem();
+   ```
+
+2. **Instantiate `JobCentreSystem`** in `RagamuffinGame` after all dependencies exist:
+   ```java
+   private JobCentreSystem jobCentreSystem;
+   private ragamuffin.ui.JobCentreUI jobCentreUI;
+   // in initGame():
+   jobCentreSystem = new JobCentreSystem(
+       timeSystem,
+       player.getCriminalRecord(),
+       notorietySystem,
+       factionSystem,
+       rumourNetwork,
+       newspaperSystem,
+       player.getStreetSkillSystem(),   // or however StreetSkillSystem is accessed
+       wantedSystem,
+       npcManager,
+       new java.util.Random());
+   jobCentreUI = new ragamuffin.ui.JobCentreUI();
+   ```
+
+3. **Call `update()` each frame** inside the PLAYING state update block:
+   ```java
+   jobCentreSystem.update(delta, player, npcManager.getNPCs());
+   ```
+
+4. **Wire the E-key interact hook** — in `handleInteract()`, when near the JobCentre
+   landmark, attempt sign-on:
+   ```java
+   if (nearLandmark(LandmarkType.JOB_CENTRE, 4f)) {
+       JobCentreSystem.SignOnResult result = jobCentreSystem.trySignOn(player, inventory);
+       if (result != null) {
+           jobCentreUI.show(result, jobCentreSystem.getRecord());
+           tooltipSystem.showMessage(result.getMessage(), 3.0f);
+       }
+   }
+   ```
+
+5. **Render `JobCentreUI`** in the 2D overlay pass (after `spriteBatch.begin()`):
+   ```java
+   if (jobCentreUI.isVisible()) {
+       jobCentreUI.render(spriteBatch, shapeRenderer, font,
+           Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+   }
+   ```
+
+6. **Wire ESC / E to close the UI** — in the ESC handler:
+   ```java
+   if (jobCentreUI.isVisible()) { jobCentreUI.hide(); return; }
+   ```
+
+7. **Wire debt-collector punch callback** — when the player punches an NPC of type
+   `DEBT_COLLECTOR`, call:
+   ```java
+   jobCentreSystem.onDebtCollectorPunched(achievementSystem::award);
+   ```
+
+8. **Reset on restart** in `restartGame()`:
+   ```java
+   newspaperSystem = new NewspaperSystem();
+   jobCentreSystem = new JobCentreSystem(
+       timeSystem, player.getCriminalRecord(), notorietySystem,
+       factionSystem, rumourNetwork, newspaperSystem,
+       player.getStreetSkillSystem(), wantedSystem, npcManager, new java.util.Random());
+   jobCentreUI = new ragamuffin.ui.JobCentreUI();
+   ```
+
+### Integration tests — implement these exact scenarios
+
+1. **Sign-on window opens at correct time**: Initialise `RagamuffinGame` in headless
+   mode. Set `timeSystem` to day 3, hour 9.0. Call
+   `jobCentreSystem.update(0.1f, player, emptyList)`. Verify
+   `jobCentreSystem.isSignOnWindowOpen()` returns `true`.
+
+2. **Missed sign-on increments sanction level**: Advance time past the sign-on window
+   (day 3, hour 10.1). Call `jobCentreSystem.update(0.1f, player, emptyList)`. Verify
+   `jobCentreSystem.getRecord().getSanctionLevel()` is 1.
+
+3. **Debt collector spawns at sanction level 3**: Call `update` three times with missed
+   sign-on windows (days 3, 6, 9). Verify `jobCentreSystem.getRecord().getSanctionLevel()`
+   equals 3. Verify `npcManager.getNPCs()` contains an NPC with type `DEBT_COLLECTOR`.
+
+4. **Successful sign-on pays UC and resets mission**: Set the player's inventory coin
+   count to 0. Advance to sign-on window. Call `jobCentreSystem.trySignOn(player, inventory)`.
+   Verify the return value is non-null. Verify `inventory` coin count increased by at
+   least 7 (base UC payment). Verify sanction level remains 0.
+
+5. **JobCentreSystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `jobCentreSystem` field is non-null. Simulate 1 frame in
+   PLAYING state. Verify no exception is thrown.
