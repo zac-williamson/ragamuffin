@@ -8662,3 +8662,103 @@ unwired infrastructure in the codebase.
    `FactionSystem.EVERYONE_HATES_YOU_THRESHOLD` (30). Call `factionSystem.update(1f,
    player, npcList)`. Verify `factionSystem.isEveryoneHatesYou()` returns `true` and
    that all faction NPCs in `npcList` have a hostile NPC state.
+
+## Wire CampfireSystem into the Game Loop
+
+### Problem
+
+`CampfireSystem` is fully implemented (`ragamuffin/core/CampfireSystem.java`, 122 lines)
+but is never instantiated in `RagamuffinGame`. The game loop contains this explicit
+stub comment at the `WarmthSystem.update()` call site:
+
+```java
+boolean nearCampfire = false; // no campfire system wired yet
+warmthSystem.update(player, weatherSystem.getCurrentWeather(), world,
+        delta, nearCampfire, inventory);
+```
+
+Because `nearCampfire` is hardcoded to `false`, the `WarmthSystem` can never restore
+warmth from a campfire — players with hypothermia cannot warm up next to a fire, no
+matter how many CAMPFIRE blocks they craft and place. Additionally:
+
+- Campfires are never registered with the system when placed via `BlockPlacer`, so
+  rain-extinguishing and flicker-light behaviour never fire.
+- Campfires are never deregistered when broken via `BlockBreaker`, so the system
+  never tracks any campfire positions at all.
+
+The `CAMPFIRE` block type exists in `BlockType.java` and `WarmthSystem` already reads
+the `nearCampfire` boolean — the only missing piece is wiring `CampfireSystem` in.
+
+### What needs wiring
+
+1. **Declare and instantiate** `private CampfireSystem campfireSystem;` in
+   `RagamuffinGame`. Instantiate it in `initGame()` after `weatherSystem`:
+   ```java
+   campfireSystem = new CampfireSystem();
+   ```
+
+2. **Register campfire on block place** — in the right-click / block-place handler
+   inside `RagamuffinGame`, after `blockPlacer.placeBlock(...)` succeeds, check if the
+   placed block type is `BlockType.CAMPFIRE` and register it:
+   ```java
+   if (placedType == BlockType.CAMPFIRE) {
+       campfireSystem.addCampfire(new Vector3(bx, by, bz));
+   }
+   ```
+
+3. **Deregister campfire on block break** — in the block-break logic, after
+   `blockBreaker` removes a CAMPFIRE block, call:
+   ```java
+   campfireSystem.removeCampfire(new Vector3(bx, by, bz));
+   ```
+
+4. **Call `update()` every frame** in `updatePlayingSimulation()`:
+   ```java
+   campfireSystem.update(world, weatherSystem.getCurrentWeather(), delta);
+   ```
+
+5. **Pass real `nearCampfire` to WarmthSystem** — replace the hardcoded stub:
+   ```java
+   // BEFORE (broken):
+   boolean nearCampfire = false; // no campfire system wired yet
+   // AFTER:
+   boolean nearCampfire = campfireSystem.isNearCampfire(player.getPosition());
+   ```
+
+6. **Reset on restart** — call `campfireSystem = new CampfireSystem();` inside
+   `restartGame()` so campfire state does not bleed between sessions.
+
+### Integration tests — implement these exact scenarios
+
+1. **Player warms up near a campfire**: Create `WarmthSystem` and `CampfireSystem`.
+   Drain player warmth to 30 (below the cold threshold). Register a campfire at
+   position (0, 0, 0). Place the player at (0, 0, 2) (within
+   `WarmthSystem.CAMPFIRE_WARMTH_RADIUS` = 5 blocks). Call
+   `campfireSystem.isNearCampfire(player.getPosition())` and verify it returns `true`.
+   Call `warmthSystem.update(player, Weather.CLEAR, world, 1f, true, inventory)`.
+   Verify `player.getWarmth()` has increased above 30.
+
+2. **Player does NOT warm up when out of campfire range**: Register a campfire at
+   (0, 0, 0). Place the player at (0, 0, 10) (beyond the 5-block radius). Verify
+   `campfireSystem.isNearCampfire(player.getPosition())` returns `false`. Drain
+   player warmth to 30. Call `warmthSystem.update(player, Weather.CLEAR, world, 1f,
+   false, inventory)`. Verify warmth has not increased.
+
+3. **Rain extinguishes campfire**: Create `CampfireSystem` and a `World`. Set block
+   (5, 1, 5) to `BlockType.CAMPFIRE`. Call `campfireSystem.addCampfire(new Vector3(5, 1,
+   5))`. Verify `campfireSystem.hasCampfires()` is `true`. Create a `Weather` instance
+   where `weather.isRaining()` returns `true`. Call `campfireSystem.update(world,
+   rainyWeather, 0.016f)`. Verify `campfireSystem.hasCampfires()` is now `false` and
+   `world.getBlock(5, 1, 5)` is `BlockType.AIR`.
+
+4. **Campfire flicker intensity varies over time**: Create `CampfireSystem`. Call
+   `campfireSystem.update(world, clearWeather, 0f)` to reset flicker time. Record
+   `float i1 = campfireSystem.getCurrentLightIntensity()`. Advance time by
+   `1f / (CampfireSystem.FLICKER_FREQUENCY * 4)` seconds via repeated `update` calls.
+   Record `float i2 = campfireSystem.getCurrentLightIntensity()`. Verify `i1 != i2`
+   (the intensity has changed due to sine-wave flicker).
+
+5. **Campfire deregistered on block break**: Register a campfire at (3, 1, 3). Verify
+   `campfireSystem.hasCampfires()` is `true`. Call
+   `campfireSystem.removeCampfire(new Vector3(3, 1, 3))`. Verify
+   `campfireSystem.hasCampfires()` is now `false`.
