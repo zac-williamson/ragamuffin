@@ -182,6 +182,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private GraffitiSystem graffitiSystem;
     // Issue #781: Graffiti renderer — renders graffiti marks as depth-offset quads on block surfaces
     private ragamuffin.render.GraffitiRenderer graffitiRenderer;
+    // Issue #824: Street economy system — NPC needs, black market dealing, protection rackets
+    private StreetEconomySystem streetEconomySystem;
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
@@ -467,6 +469,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #781: Initialize graffiti system and renderer — territorial marking and turf-war
         graffitiSystem = new GraffitiSystem();
         graffitiRenderer = new ragamuffin.render.GraffitiRenderer();
+        // Issue #824: Initialize street economy system — NPC needs, black market, protection rackets
+        streetEconomySystem = new StreetEconomySystem();
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2201,6 +2205,13 @@ public class RagamuffinGame extends ApplicationAdapter {
                 factionSystem.getTurfMap(), wantedSystem, noiseSystem, rumourNetwork, inventory,
                 type -> achievementSystem.unlock(type));
 
+        // Issue #824: Update street economy system — NPC needs accumulation, market events, racket income
+        streetEconomySystem.update(delta, npcManager.getNPCs(), player,
+                weatherSystem.getCurrentWeather(),
+                notorietySystem.getTier(),
+                inventory, rumourNetwork,
+                type -> achievementSystem.unlock(type));
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -2620,6 +2631,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
             // Issue #818: Notify disguise system of visible crime (punching NPCs)
             disguiseSystem.notifyCrime(player, npcManager.getNPCs());
+            // Issue #824: Notify street economy system of visible crime — spikes SCARED need on nearby NPCs
+            streetEconomySystem.onCrimeEvent(player.getPosition().x, player.getPosition().z,
+                    8f, 0.3f, npcManager.getNPCs());
             // Issue #26: If a YOUTH_GANG member was punched, escalate territory to hostile
             if (targetNPC.getType() == ragamuffin.entity.NPCType.YOUTH_GANG) {
                 gangTerritorySystem.onPlayerAttacksGang(tooltipSystem, npcManager, player, world);
@@ -2765,6 +2779,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.BLOCKS_DESTROYED);
                 // Issue #818: Notify disguise system of visible crime (breaking blocks)
                 disguiseSystem.notifyCrime(player, npcManager.getNPCs());
+                // Issue #824: Notify street economy system of visible crime — spikes SCARED need on nearby NPCs
+                streetEconomySystem.onCrimeEvent(player.getPosition().x, player.getPosition().z,
+                        8f, 0.3f, npcManager.getNPCs());
 
                 // Issue #171: Emit block-break debris using the block's colour
                 com.badlogic.gdx.graphics.Color blockColour = blockType.getColor();
@@ -3075,6 +3092,35 @@ public class RagamuffinGame extends ApplicationAdapter {
         NPC targetNPC = interactionSystem.findNPCInRange(player.getPosition(), tmpDirection, npcManager.getNPCs());
 
         if (targetNPC != null) {
+            // Issue #824: Street deal — if the player is holding an item that satisfies the NPC's need,
+            // attempt a street deal instead of the normal dialogue interaction.
+            {
+                int selectedSlot = hotbarUI.getSelectedSlot();
+                ragamuffin.building.Material selectedMaterial = inventory.getItemInSlot(selectedSlot);
+                if (selectedMaterial != null && streetEconomySystem.hasRelevantNeed(targetNPC, selectedMaterial)) {
+                    int price = streetEconomySystem.getEffectivePrice(selectedMaterial,
+                            -1, disguiseSystem.isDisguised(),
+                            streetEconomySystem.getActiveEvent(),
+                            notorietySystem.getTier());
+                    StreetEconomySystem.DealResult dealResult = streetEconomySystem.attemptDeal(
+                            targetNPC, selectedMaterial, price, inventory, player,
+                            npcManager.getNPCs(), -1, disguiseSystem.isDisguised(),
+                            notorietySystem.getTier(),
+                            type -> achievementSystem.unlock(type));
+                    String dealMsg;
+                    switch (dealResult) {
+                        case SUCCESS: dealMsg = "Deal done."; break;
+                        case NO_NEED: dealMsg = "They don't need that right now."; break;
+                        case MISSING_ITEM: dealMsg = "You don't have that."; break;
+                        case HAGGLE_REJECTED: dealMsg = "They're not desperate enough for that price."; break;
+                        case OUT_OF_RANGE: dealMsg = "Too far away."; break;
+                        case POLICE_NEARBY_DODGY: dealMsg = "Not with the police watching."; break;
+                        default: dealMsg = "Deal failed."; break;
+                    }
+                    tooltipSystem.showMessage(dealMsg, 2.5f);
+                    return;
+                }
+            }
             // Interact with the NPC — pass inventory, player and all NPCs so Fence
             // interactions work correctly (Issue #733).
             String dialogue = interactionSystem.interactWithNPC(targetNPC, inventory, player,
@@ -3901,6 +3947,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         disguiseSystem.setRumourNetwork(rumourNetwork);
         // Issue #781: Reset graffiti system so marks and timers don't carry over between games
         graffitiSystem = new GraffitiSystem();
+        // Issue #824: Reset street economy system so NPC needs and market state don't carry over
+        streetEconomySystem = new StreetEconomySystem();
         gameHUD = new GameHUD(player);
         gameHUD.setNeighbourhoodWatchSystem(neighbourhoodWatchSystem);
         gameHUD.setDisguiseSystem(disguiseSystem);
