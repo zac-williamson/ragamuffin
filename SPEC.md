@@ -10922,3 +10922,56 @@ existing method.
    simulating 30 frames with state=PAUSED. Verify the timer decrements, matching the
    behaviour already specified for other timers (wantedSystem, rumourNetwork) in the paused
    branch.
+
+---
+
+## Wire NewspaperSystem.update() into the game loop
+
+`NewspaperSystem` is instantiated in `RagamuffinGame` (line 542) and passed to
+`JobCentreSystem` as a dependency, but its `update()` method is **never called** in any of
+the three game-state branches (PLAYING, PAUSED, CINEMATIC). As a result:
+
+- The daily newspaper is never published (no editions are ever generated).
+- `MarketEvent` disruptions (GREGGS_STRIKE, LAGER_SHORTAGE, BENEFIT_DAY, etc.) that are
+  triggered by `NewspaperSystem.update()` calling `streetEconomySystem.triggerMarketEvent()`
+  are never fired.
+- Rumours are never spread via newspaper publications.
+- The `pickUpNewspaper()` path is effectively dead because no editions exist.
+
+**What needs to be done:**
+
+Call `newspaperSystem.update(delta, timeSystem.getTime(), timeSystem.getDayCount(),
+notorietySystem, wantedSystem, rumourNetwork, <barmanNpc>, factionSystem, fenceSystem,
+streetEconomySystem, player.getCriminalRecord(), npcManager.getNPCs(),
+type -> achievementSystem.unlock(type))` each frame inside the PLAYING branch of
+`RagamuffinGame.render()` (alongside `streetEconomySystem.update()` at approximately
+line 2419). The same call (or a no-op guard) should be added to the PAUSED branch so the
+publication timer advances consistently.
+
+No new classes are required — this is purely routing the existing per-frame tick to an
+existing method.
+
+### Integration tests — implement these exact scenarios
+
+1. **Newspaper published at 18:00 each in-game day**: Construct a `NewspaperSystem` and call
+   `update()` each frame advancing `currentHour` from 0.0 to 18.1 with a fake delta of 1/60.
+   Verify that `getLatestPaper()` returns a non-null `Newspaper` after the hour passes 18.0,
+   and that `getLatestPaper().getEditionDay()` equals the `currentDay` passed in.
+
+2. **Market event triggered via newspaper on GREGGS_STRIKE headline**: Set up a
+   `NewspaperSystem` and `StreetEconomySystem`. Add a `PRESS_INFAMY` event to the newspaper
+   that corresponds to a Greggs raid. Advance `currentHour` past 18.0. Verify
+   `streetEconomySystem.getActiveEvent()` returns `MarketEvent.GREGGS_STRIKE`.
+
+3. **Game loop calls update each frame in PLAYING state**: In a headless integration test,
+   start the game in PLAYING state. Set the in-game hour to 17.9. Simulate 120 frames at
+   delta=1/60 (advancing 2 seconds, crossing 18:00). Verify `newspaperSystem.getLatestPaper()`
+   is non-null after the simulation, confirming `update()` is being called by the game loop.
+
+4. **Publication fires only once per day**: Call `newspaperSystem.update()` repeatedly with
+   `currentHour=18.5` and the same `currentDay=1`. Verify `getLatestPaper()` is published
+   exactly once (not re-published on every frame).
+
+5. **PAUSED branch advances the publication timer**: Set state to PAUSED. Set `currentHour`
+   to 17.9. Simulate 120 frames at delta=1/60. Verify `getLatestPaper()` is non-null,
+   confirming the PAUSED branch also calls `newspaperSystem.update()`.
