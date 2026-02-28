@@ -77,7 +77,19 @@ public enum LandmarkType {
      * A 12×8×4 STONE basement with DIRT floor, LANTERN props, a central rope ring,
      * and spectators. Entry requires Notoriety ≥ 10 or a FIGHT_CARD flyer.
      */
-    THE_PIT;
+    THE_PIT,
+
+    // ── Issue #901: Portal to Bista Village ───────────────────────────────────
+    /**
+     * Bista Village — a historically accurate recreation of the Nepali Gurkha
+     * settlement established near Aldershot following the Gurkha Justice Campaign
+     * of 2009. The village features traditional Nepali architecture: stone-and-mortar
+     * homes, a community chautara (stone resting platform), prayer flags, terraced
+     * gardens, and a small dhara (stone water spout).
+     * Accessible only via the craftable BISTA_VILLAGE_PORTAL item.
+     * A return portal stone spawns at the village entrance on arrival.
+     */
+    BISTA_VILLAGE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -129,6 +141,7 @@ public enum LandmarkType {
             case POLICE_STATION:    return "Northfield Police Station";
             case FOOD_BANK:         return "Northfield Food Bank";
             case THE_PIT:           return "The Pit";
+            case BISTA_VILLAGE:     return "Bista Village";
             default:                return null; // No sign for parks, houses, etc.
         }
     }

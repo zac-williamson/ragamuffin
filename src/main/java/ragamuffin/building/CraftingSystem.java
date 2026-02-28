@@ -328,6 +328,16 @@ public class CraftingSystem {
             Map.of(Material.RUBBER, 2),
             Map.of(Material.MOUTH_GUARD, 1)
         ));
+
+        // ── Issue #901: Portal to Bista Village ──────────────────────────────────
+
+        // BISTA_VILLAGE_PORTAL: DIAMOND×2 + STONE×4 + WOOD×2 → BISTA_VILLAGE_PORTAL×1
+        // (one-use portal stone; right-click to teleport to Bista Village;
+        //  portal is the only means of accessing this location)
+        recipes.add(new Recipe(
+            Map.of(Material.DIAMOND, 2, Material.STONE, 4, Material.WOOD, 2),
+            Map.of(Material.BISTA_VILLAGE_PORTAL, 1)
+        ));
     }
 
     /**
