@@ -2261,8 +2261,18 @@ public class RagamuffinGame extends ApplicationAdapter {
                     soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
                 } else {
                     com.badlogic.gdx.math.Vector3 pos = player.getPosition();
-                    if (pirateRadioSystem.startBroadcast(pos.x, pos.y, pos.z)) {
-                        soundSystem.loop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+                    // Check if player is in range of the transmitter
+                    if (pirateRadioSystem.isTransmitterPlaced()) {
+                        float dx = pos.x - pirateRadioSystem.getTransmitterX();
+                        float dz = pos.z - pirateRadioSystem.getTransmitterZ();
+                        float dist = (float) Math.sqrt(dx * dx + dz * dz);
+                        if (dist > pirateRadioSystem.getBroadcastRange()) {
+                            tooltipSystem.showMessage("Too far from transmitter to broadcast.", 2.0f);
+                        } else if (pirateRadioSystem.startBroadcast(pos.x, pos.y, pos.z)) {
+                            soundSystem.loop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+                        }
+                    } else {
+                        tooltipSystem.showMessage("Place a transmitter first (right-click).", 2.0f);
                     }
                 }
             }
