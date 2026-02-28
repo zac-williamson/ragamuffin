@@ -12337,3 +12337,266 @@ it is replaced by the Night Bus, which runs once per hour and costs double fare.
    60 in-game minutes). Verify `getEffectiveFare()` returns `BUS_FARE × 2.0`.
    Verify that after 01:00 the `LAST_NIGHT_BUS` achievement is unlockable by
    boarding.
+
+---
+
+## Phase 8j: The Pub Lock-In — After-Hours Drinking, Darts & Pub Quiz
+
+**Goal**: Give The Ragamuffin Arms a living, after-hours social scene. When last
+orders are called at 23:00 the landlord quietly locks the front door and anyone
+still inside gets to stay for an illegal lock-in. The player can be one of them —
+or can tip off the police for a bribe. Includes a darts mini-game, a pub quiz
+(every Thursday at 20:00), and a landlord `TERRY` NPC with his own opinions.
+
+---
+
+### Lock-In Schedule & Triggering
+
+A new `PubLockInSystem` class manages the entire phase.
+
+- **Last orders**: At in-game 22:45, `BARMAN` NPC calls "Last orders please!" (speech
+  bubble + rumour seeded into all pub-interior NPCs). Any NPC outside the pub stops
+  pathfinding toward it.
+- **Lock-in begins**: At 23:00, the pub's front door block changes to a `LOCKED_DOOR`
+  state (impenetrable from outside, openable from inside). Up to `MAX_LOCK_IN_GUESTS`
+  (8) pub-interior NPCs and the player (if present) become **lock-in guests**. All
+  others are gently ejected (teleported 2 blocks outside the door; speech: "On yer way,
+  love.").
+- **Lock-in ends**: At 01:30, all guests are sent home (NPCState → WANDERING, door
+  unlocked). If police raided before then, lock-in ends immediately.
+- **Police raid chance**: Every 10 in-game minutes during the lock-in, there is a
+  `POLICE_RAID_CHANCE` (20%) that a `POLICE` NPC knocks on the door. If the player
+  **tips off** the police (see below) the raid is guaranteed on the next cycle.
+
+### Landlord Terry NPC
+
+A new `NPCType.LANDLORD` — `TERRY` — stands behind the bar throughout the lock-in.
+He is distinct from the `BARMAN` (who works day shifts). Terry:
+
+- Has 10 unique speech lines he cycles through, delivered every 2–4 in-game minutes
+  to the nearest guest:
+  - "This is a private gathering. Nothing illegal about friends having a drink."
+  - "The council can do one."
+  - "You want a top-up? On me. Don't tell the wife."
+  - "Last copper who came in here left without his hat. Just saying."
+  - "Best pub in the borough. Used to be, anyway."
+  - "Don't mind him. He's been like that since Thatcher."
+  - "You're alright, you are. For a stranger."
+  - "Lock-in rule: what happens here stays here. Right?"
+  - "Police round here can't find their arse with both hands."
+  - "Another one? Go on then. This recession won't drink itself."
+- Terry sells drinks at **half price** during the lock-in (lock-in discount):
+  - Pint of lager: 1 COIN (normally 2)
+  - Double whisky: 2 COIN (normally 3)
+  - Cup of tea: still 1 COIN — "Tea's the same price. Non-negotiable."
+- Pressing **E** on Terry during the lock-in reveals his top barman rumour for free
+  (same as the `BARMAN` mechanic in Phase 8b, no drink required — Terry just talks).
+- Terry has `HP 50`, does not fight, but if the player hits him three times he ejects
+  them permanently ("Get out and don't come back.") — door opens for player only,
+  then locks again.
+
+### Darts Mini-Game
+
+A `PropType.DARTBOARD` in the pub corner can be interacted with (**E**) at any time
+the pub is open (not just lock-in). Implemented in a new `DartsMinigame` class.
+
+**Mechanics:**
+
+- Two players: the player character and a randomly selected `REGULAR` NPC opponent.
+- Best of 3 legs. Each leg starts at 301; players alternate turns; first to exactly 0
+  wins the leg (must finish on a double — last dart must score an even number that
+  reduces score to exactly 0; going below 0 is a "bust", score resets to leg start).
+- Each **turn** consists of 3 dart throws. The player "throws" by pressing **E** once
+  for each dart; a random score between 1 and 20 is generated (with 5% chance of
+  hitting the bullseye = 25, and 2% chance of double bullseye = 50). Trebles and
+  doubles are simulated via the RNG: 10% chance of triple, 15% chance of double.
+- The NPC opponent throws automatically with a skill level based on `NPCType.REGULAR`
+  accuracy (mean 14, std dev 4, clamped 1–20 before multiplier).
+- **Stake**: Player can optionally wager 1–5 COIN before the game starts (press E on
+  dartboard, dialogue: "Fancy a game? Money on it?"). Opponent matches the stake.
+  Winner takes the pot.
+- Tooltip on first win: "Turned out you're handy with a dart. Who knew."
+- Tooltip on first bust: "Went bust. Classic."
+
+### Pub Quiz (Every Thursday, 20:00–22:00)
+
+A `PubQuizSystem` class runs a quiz every in-game Thursday evening. The quiz is hosted
+by a `QUIZ_MASTER` NPC who appears only during quiz nights.
+
+**Format:**
+- 5 rounds of 3 questions each (15 questions total).
+- Questions are drawn from a hardcoded bank of 40 British general-knowledge questions
+  (pop culture, geography, football, history — the kind asked in every pub in England).
+  Examples:
+  - "What is the capital of Scotland?" → Edinburgh
+  - "Which year did England win the World Cup?" → 1966
+  - "What is the name of the Queen's corgi in _The Crown_?" → (trick — no correct
+    answer, quiz master apologises)
+  - "How many players in a cricket team?" → 11
+  - "Which supermarket chain has a 'Finest' range?" → Tesco
+- Player answers by pressing 1/2/3/4 to select from multiple-choice options displayed
+  in the speech log (A/B/C/D mapped to keys 1/2/3/4).
+- NPC teams (2–4 teams of 2–3 REGULAR NPCs each) also compete; their answers are
+  auto-resolved with 60% correct rate.
+- **Scoring**: 1 point per correct answer. Player's team = player alone (solo entry).
+- **Prize**: Winning team takes `QUIZ_POT` = 2 × number of teams × entry fee.
+  Entry fee = 3 COIN (deducted when quiz starts). If player wins:
+  - Receives QUIZ_POT COIN.
+  - Achievement `QUIZ_NIGHT_CHAMPION` unlocked.
+  - Terry says: "First time I've seen someone actually win in years."
+- If the player cheats (walks out mid-quiz and re-enters, detected by position check):
+  Terry says "Oi! You can't walk out mid-round!" and bans the player from the next
+  quiz night.
+- Tooltip on first quiz: "A pub quiz. The pinnacle of British intellectual life."
+
+### Tipping Off the Police
+
+At any point during the lock-in, the player can **tip off the police** by pressing
+**E** on the `LOCKED_DOOR` from inside and selecting "Tip off the police". This:
+
+1. Requires Notoriety ≤ Tier 2 (higher-tier players are known criminals — police
+   won't take their tip seriously).
+2. Costs 0 COIN but immediately sets `nextRaidTimer` to 0 (raid on next cycle).
+3. Guarantees a `POLICE` NPC knocks at the door within 30 in-game seconds.
+4. Adds `+3 Notoriety` (snitching still has a cost, even when legal).
+5. All lock-in guests who are caught receive a `DRUNK_AND_DISORDERLY` criminal
+   record entry. The player does not (they tipped off — technically co-operating).
+6. Achievement `GRASS` unlocked. Terry remembers — next time the player enters
+   the pub, Terry says: "I know what you did. Get out."
+
+### Police Raid Sequence
+
+When a raid is triggered:
+
+1. A `POLICE` NPC (officer) pounds on the door (sound effect: `SoundEffect.HEAVY_KNOCK`).
+   Terry says: "Everyone act natural."
+2. Player has **5 real seconds** to hide (duck behind the bar counter — position within
+   1 block of the bar). If the player is behind the bar when the door opens, they are
+   not caught.
+3. After 5 seconds, the door opens and the officer enters. Any guest not behind the bar
+   is caught: `DRUNK_AND_DISORDERLY` added to criminal record, Notoriety +3.
+4. The officer issues a `CriminalRecord.CrimeType.DRUNK_AND_DISORDERLY` to each caught
+   guest and leaves. Terry is fined (flavour: "Another fine. Cheers, boys."). Lock-in
+   ends.
+5. If the player is hiding, they are not caught. Achievement `STAYED_BEHIND_THE_BAR`.
+
+### Integration with Existing Systems
+
+- **WarmthSystem**: Being inside the lock-in pub counts as `INDOORS` for warmth
+  purposes (same as existing shelter logic — no cold drain).
+- **NotorietySystem**: Tipping off adds +3 Notoriety. Getting caught in a raid adds
+  +3 Notoriety.
+- **RumourNetwork**: Lock-in raid generates a `RumourType.PLAYER_SPOTTED` rumour seeded
+  into all post-raid NPCs ("The Old Bill raided the Ragamuffin Arms lock-in last night").
+- **WeatherSystem**: During `FROST` weather, Terry offers free tea at 22:30: "Cold out
+  there. Have a brew on the house." (1 CUP_OF_TEA added to player inventory).
+- **AchievementSystem**: See achievements table below.
+- **NewspaperSystem**: A raid generates a headline the next in-game morning:
+  "Police Break Up Illegal Drinking Den — Seven Charged".
+- **BusSystem**: The Night Bus stop nearest the pub is slightly more likely (30% bonus
+  chance) to have DRUNK NPCs after a successful (un-raided) lock-in dispersal.
+
+### New Materials
+
+| Material | Description |
+|----------|-------------|
+| `PINT_LOCK_IN` | A half-price lock-in pint. Functionally identical to `PINT` but consumed immediately when bought from Terry; sets `drunkTimer` to 60s. Not stored in inventory. |
+| `CUP_OF_TEA` | Hot tea. Restores 10 energy. Same as the pub's regular tea but Terry's is better. |
+
+(Note: `PINT_LOCK_IN` is an internal sentinel used only by `PubLockInSystem`; it does
+not appear in player inventory. `CUP_OF_TEA` is a new `Material` enum entry.)
+
+### New NPCType
+
+| Type | Stats | Notes |
+|------|-------|-------|
+| `LANDLORD` | HP 50, 0 dmg (passive), ejects on 3 hits | Terry. Lock-in host. Present 22:45–01:30 only. |
+| `QUIZ_MASTER` | HP 20, 0 dmg, passive | Hosts the Thursday quiz. Appears 19:45–22:15. |
+
+### New CriminalRecord.CrimeType
+
+| Crime | Notoriety gained | Notes |
+|-------|-----------------|-------|
+| `DRUNK_AND_DISORDERLY` | +3 | Assigned when caught in a police raid of the lock-in. |
+
+### Achievements
+
+| Achievement | Unlock condition |
+|-------------|-----------------|
+| `LOCK_IN_REGULAR` | Attend 5 lock-ins without being caught in a raid |
+| `STAYED_BEHIND_THE_BAR` | Hide behind the bar and escape a police raid |
+| `QUIZ_NIGHT_CHAMPION` | Win a pub quiz |
+| `DARTS_HUSTLER` | Win 3 darts games in a row with a stake |
+| `GRASS` | Tip off the police during a lock-in |
+| `LOCK_IN_LEGEND` | Attend the lock-in 10 times total |
+
+**Unit tests**: Lock-in guest selection, door locking/unlocking, Terry's price
+discount calculation, darts scoring (301 countdown, bust detection, double-out rule,
+NPC accuracy distribution), pub quiz question selection and scoring, police raid
+timing, tip-off mechanics, Terry ejection logic, quiz cheat detection.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Lock-in guests selected and door locked at 23:00**: Place 5 REGULAR NPCs inside
+   the pub and 3 REGULAR NPCs outside. Set `TimeSystem` to 22:59. Advance to 23:00.
+   Verify the pub front door is in `LOCKED_DOOR` state (cannot be opened from outside).
+   Verify exactly 5 guests (the interior NPCs) are registered as lock-in guests.
+   Verify the 3 exterior NPCs are NOT in the guest list. Verify `PubLockInSystem`
+   `isLockInActive()` returns true.
+
+2. **Terry sells drinks at half price during lock-in**: Activate the lock-in (set
+   `isLockInActive = true`). Give the player 5 COIN. Press E on Terry and buy a pint.
+   Verify player now has 4 COIN (cost 1, not 2). Buy a double whisky. Verify player
+   now has 2 COIN (cost 2, not 3). Verify `drunkTimer` is > 0 after purchase.
+
+3. **Player hides behind bar and escapes raid**: Place the player within 1 block of the
+   bar counter during a lock-in. Trigger a police raid (call
+   `pubLockInSystem.triggerRaid()`). Advance 5 real seconds. Verify player is NOT
+   added to `DRUNK_AND_DISORDERLY` list. Verify player Notoriety has NOT increased.
+   Verify achievement `STAYED_BEHIND_THE_BAR` is unlocked.
+
+4. **Player caught in raid adds criminal record entry**: Place the player 5 blocks from
+   the bar (not hiding). Trigger a police raid. Advance past the 5-second window.
+   Verify player's `CriminalRecord` contains a `DRUNK_AND_DISORDERLY` entry. Verify
+   Notoriety increased by 3. Verify `isLockInActive()` returns false (lock-in ended).
+
+5. **Tip-off guarantees raid and unlocks GRASS achievement**: Set player Notoriety to
+   Tier 1 (≤ 249). Player presses E on the locked door and selects "Tip off the
+   police". Verify `nextRaidTimer` is set to 0. Advance 30 in-game seconds. Verify a
+   POLICE NPC has spawned at the pub entrance. Verify achievement `GRASS` is unlocked.
+   Verify player Notoriety increased by 3.
+
+6. **Darts game completes with correct scoring**: Construct `DartsMinigame` with a
+   seeded RNG. Simulate player throws. After each throw, verify the running score
+   decrements correctly. Simulate a finishing sequence: set score to 4, verify that a
+   throw of 2 (double-2) finishes the leg. Verify single-4 (non-double) does NOT
+   finish. Verify going to -1 (bust) resets score to 4. Verify leg win triggers
+   correctly on the third correct double-out.
+
+7. **Darts stake payout**: Give player 3 COIN. Start a darts game with a 3-COIN stake.
+   Verify player's COIN decreases by 3 immediately. Seed the RNG so the player wins
+   all 3 legs. Verify player receives 6 COIN (pot = 6, player's stake + opponent
+   stake). Verify net gain = +3 COIN.
+
+8. **Pub quiz runs on Thursday and accepts answers**: Set `TimeSystem` to Thursday
+   20:00. Verify `PubQuizSystem.isQuizNight()` returns true. Verify a `QUIZ_MASTER`
+   NPC has spawned inside the pub. Give the player 3 COIN (entry fee). Press E on
+   the QUIZ_MASTER to enter. Verify 3 COIN deducted. Simulate the first question
+   being displayed in the speech log. Press key 1 (answer A). Verify the player's
+   score increments by 1 if answer A is correct for that question (use a seeded
+   question bank so the correct answer is known).
+
+9. **Quiz cheat detection bans player from next quiz**: Enter a quiz night. Move the
+   player outside the pub (simulate walk-out mid-quiz). Re-enter within the quiz
+   window. Verify Terry's speech fires: "Oi! You can't walk out mid-round!" Verify
+   `PubQuizSystem.isPlayerBanned()` returns true for the next quiz night (next
+   Thursday). Verify the following Thursday, pressing E on the QUIZ_MASTER returns
+   a BANNED response.
+
+10. **Full lock-in stress test**: Set time to Wednesday 22:50. Fill the pub with 8
+    REGULAR NPCs. Advance to 23:00. Verify lock-in starts. Advance to 23:30 (first
+    possible raid window). Disable raid for this test (set `POLICE_RAID_CHANCE = 0`).
+    Have the player win 2 darts games against NPCs. Buy 3 drinks from Terry. Advance
+    to 01:30. Verify lock-in ends cleanly: door unlocks, all guests set to WANDERING,
+    `isLockInActive()` returns false. Verify `LOCK_IN_REGULAR` progress incremented.
+    Verify no NPEs and game state remains PLAYING throughout.
