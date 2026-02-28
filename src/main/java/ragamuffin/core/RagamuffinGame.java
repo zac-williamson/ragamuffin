@@ -2595,6 +2595,39 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
             pirateRadioSystem.update(delta, npcManager.getNPCs(), policeNearby,
                     playerPos.x, playerPos.y, playerPos.z);
+
+            // Stop broadcast if player moves out of transmitter range
+            if (pirateRadioSystem.isBroadcasting() && pirateRadioSystem.isTransmitterPlaced()) {
+                float dx = playerPos.x - pirateRadioSystem.getTransmitterX();
+                float dz = playerPos.z - pirateRadioSystem.getTransmitterZ();
+                float distToTransmitter = (float) Math.sqrt(dx * dx + dz * dz);
+                if (distToTransmitter > pirateRadioSystem.getBroadcastRange()) {
+                    pirateRadioSystem.stopBroadcast();
+                    soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+                    tooltipSystem.showMessage("Too far from transmitter — broadcast ended.", 3.0f);
+                }
+            }
+
+            // Signal Van spawn when triangulation hits 100%
+            if (pirateRadioSystem.isSignalVanSpawned() && !pirateRadioSystem.isSignalVanConfiscated()) {
+                // Spawn council builders near transmitter to represent confiscation van
+                float vanX = pirateRadioSystem.getTransmitterX() + 8f;
+                float vanZ = pirateRadioSystem.getTransmitterZ() + 8f;
+                spawnNPCAtTerrain(ragamuffin.entity.NPCType.COUNCIL_BUILDER, vanX, vanZ);
+                spawnNPCAtTerrain(ragamuffin.entity.NPCType.COUNCIL_BUILDER, vanX + 2f, vanZ);
+                tooltipSystem.showMessage("SIGNAL VAN INCOMING! They've found your transmitter!", 4.0f);
+                soundSystem.play(ragamuffin.audio.SoundEffect.POLICE_SIREN);
+                pirateRadioSystem.onSignalVanArrived();
+                soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+            }
+
+            // Spawn LISTENER NPCs requested by Black Market Shout-Out (action 3)
+            int listenersToSpawn = pirateRadioSystem.consumeListenerSpawnRequest();
+            for (int li = 0; li < listenersToSpawn; li++) {
+                float spawnX = pirateRadioSystem.getTransmitterX() + ((float) Math.random() * 10f - 5f);
+                float spawnZ = pirateRadioSystem.getTransmitterZ() + ((float) Math.random() * 10f - 5f);
+                spawnNPCAtTerrain(ragamuffin.entity.NPCType.LISTENER, spawnX, spawnZ);
+            }
         }
 
         // Issue #844: Update heist system — alarm timers, execution countdown, CCTV exposure, hot-loot ageing
@@ -3291,6 +3324,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Issue #813: Deregister campfire when broken
                 if (blockType == BlockType.CAMPFIRE) {
                     campfireSystem.removeCampfire(new Vector3(x, y, z));
+                }
+                if (blockType == BlockType.TRANSMITTER && pirateRadioSystem != null) {
+                    pirateRadioSystem.onTransmitterRemoved();
+                    soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+                    tooltipSystem.showMessage("Transmitter destroyed!", 3.0f);
                 }
 
                 // Issue #816: Exterior wall smash — BRICK, GLASS, or STONE belonging to a building

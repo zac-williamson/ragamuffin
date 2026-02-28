@@ -423,6 +423,14 @@ public class PirateRadioSystem {
         actionPending = false;
         lastAction = action;
         executeAction(action, nearbyNpcs, 1.0f);
+
+        // Dynamic tooltips for actions that have variable targets
+        if (action == BroadcastAction.SLAG_OFF_FACTION && lastSlagOffTarget != null) {
+            return "Slagging off " + lastSlagOffTarget + " on air!";
+        }
+        if (action == BroadcastAction.BLACK_MARKET_SHOUTOUT) {
+            return "Shout-out sent — listeners incoming!";
+        }
         return action.getTooltip();
     }
 
@@ -471,9 +479,12 @@ public class PirateRadioSystem {
         }
     }
 
+    private String lastSlagOffTarget;
+
     private void executeSlagOffFaction(List<NPC> nearbyNpcs, float effectiveness) {
         // Cycle through factions to determine target
         Faction target = getNextSlagOffTarget();
+        lastSlagOffTarget = (target != null) ? target.name().replace('_', ' ') : "nobody";
         if (factionSystem != null) {
             int targetDelta = Math.round(RESPECT_SLAG_OFF_TARGET * effectiveness);
             int rivalDelta  = Math.round(RESPECT_SLAG_OFF_RIVALS * effectiveness);
