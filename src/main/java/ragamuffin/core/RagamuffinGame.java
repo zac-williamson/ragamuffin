@@ -2472,6 +2472,35 @@ public class RagamuffinGame extends ApplicationAdapter {
                 weatherSystem.getCurrentWeather(), timeSystem.isNight(), false,
                 type -> achievementSystem.unlock(type));
 
+        // Spawn armed response units at wanted level 4+ (check before notoriety update)
+        if (wantedSystem.getWantedStars() >= 4) {
+            // Only spawn if no ARMED_RESPONSE NPCs currently exist
+            boolean aruPresent = false;
+            for (ragamuffin.entity.NPC npc : npcManager.getNPCs()) {
+                if (npc.getType() == ragamuffin.entity.NPCType.ARMED_RESPONSE && npc.isAlive()) {
+                    aruPresent = true;
+                    break;
+                }
+            }
+            if (!aruPresent) {
+                com.badlogic.gdx.math.Vector3 pp = player.getPosition();
+                int aruCount = (wantedSystem.getWantedStars() >= 5) ? 3 : 2;
+                for (int a = 0; a < aruCount; a++) {
+                    float angle = (float) (Math.random() * Math.PI * 2);
+                    float dist = 12f + (float) Math.random() * 8f;
+                    float ax = pp.x + (float) Math.cos(angle) * dist;
+                    float az = pp.z + (float) Math.sin(angle) * dist;
+                    NPC aru = spawnNPCAtTerrain(ragamuffin.entity.NPCType.ARMED_RESPONSE, ax, az);
+                    if (aru != null) {
+                        aru.setState(ragamuffin.entity.NPCState.AGGRESSIVE);
+                        aru.setSpeechText("Armed police! On the ground NOW!", 4.0f);
+                    }
+                }
+                tooltipSystem.showMessage("ARMED RESPONSE deployed!", 3.0f);
+                soundSystem.play(ragamuffin.audio.SoundEffect.POLICE_SIREN);
+            }
+        }
+
         // Issue #803: Update notoriety system — controls helicopter sweep timer at Tier 3+
         // and tier-up flash animations.
         notorietySystem.update(delta, player, type -> achievementSystem.unlock(type));
@@ -2620,12 +2649,28 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Signal Van spawn when triangulation hits 100%
             if (pirateRadioSystem.isSignalVanSpawned() && !pirateRadioSystem.isSignalVanConfiscated()) {
-                // Spawn council builders near transmitter to represent confiscation van
-                float vanX = pirateRadioSystem.getTransmitterX() + 8f;
-                float vanZ = pirateRadioSystem.getTransmitterZ() + 8f;
-                spawnNPCAtTerrain(ragamuffin.entity.NPCType.COUNCIL_BUILDER, vanX, vanZ);
-                spawnNPCAtTerrain(ragamuffin.entity.NPCType.COUNCIL_BUILDER, vanX + 2f, vanZ);
-                tooltipSystem.showMessage("SIGNAL VAN INCOMING! They've found your transmitter!", 4.0f);
+                float txX = pirateRadioSystem.getTransmitterX();
+                float txZ = pirateRadioSystem.getTransmitterZ();
+                float txY = pirateRadioSystem.getTransmitterY();
+
+                // Spawn a white council van on the nearest road
+                carManager.spawnCar(txX + 10f, txY, txZ, true,
+                        txZ - 20f, txZ + 20f, ragamuffin.entity.Car.CarColour.WHITE);
+
+                // Spawn council workers who confiscate the transmitter
+                NPC worker1 = spawnNPCAtTerrain(ragamuffin.entity.NPCType.COUNCIL_MEMBER, txX + 6f, txZ);
+                NPC worker2 = spawnNPCAtTerrain(ragamuffin.entity.NPCType.COUNCIL_MEMBER, txX + 8f, txZ + 2f);
+                if (worker1 != null) worker1.setSpeechText("Council enforcement. This transmitter is being seized.", 5.0f);
+                if (worker2 != null) worker2.setSpeechText("You'll be hearing from the licensing board, sunshine.", 5.0f);
+
+                // Spawn a police escort
+                NPC cop = spawnNPCAtTerrain(ragamuffin.entity.NPCType.POLICE, txX + 10f, txZ + 3f);
+                if (cop != null) {
+                    cop.setState(ragamuffin.entity.NPCState.WARNING);
+                    cop.setSpeechText("Broadcasting without a licence is a criminal offence.", 5.0f);
+                }
+
+                tooltipSystem.showMessage("SIGNAL VAN! The council have found your transmitter!", 4.0f);
                 soundSystem.play(ragamuffin.audio.SoundEffect.POLICE_SIREN);
                 pirateRadioSystem.onSignalVanArrived();
                 soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
