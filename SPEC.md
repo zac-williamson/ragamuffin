@@ -11034,3 +11034,65 @@ No new classes or methods are needed — only this wiring.
    Simulate pressing W for 30 frames. Verify that player movement is blocked (position
    unchanged), confirming that the existing `isVisible()` guard in the input handler
    is in effect.
+
+---
+
+## Wire FenceSystem.update() into the game loop
+
+`FenceSystem` is instantiated in `RagamuffinGame` and referenced by several systems
+(including `NewspaperSystem`, `InteractionSystem`, and `FenceTradeUI`), but its
+`update(float delta, Player player, List<NPC> allNpcs, int currentDayInt)` method is
+**never called** in any of the three game-state branches (PLAYING, PAUSED, CINEMATIC).
+
+This means:
+- The Fence NPC's daily rotating stock never refreshes (always shows the same 3 items).
+- Police-avoidance logic never runs — the Fence does not flee or abort a trade when
+  a police NPC walks within `POLICE_FLEE_DISTANCE` (15 blocks).
+- Contraband run countdown timers never decrement — timed delivery quests (`CONTRABAND_RUN_TIME_LIMITS`)
+  can never expire, making them effectively unbeatable or permanently blocking the lock-out
+  mechanic.
+- The post-failure lock countdown (`lockTimer`) never decrements — once a contraband
+  run fails, the Fence is permanently locked for that session.
+
+### What needs to be done
+
+In `RagamuffinGame.java`, call `fenceSystem.update()` in all three game-state update
+branches — PLAYING, PAUSED, and CINEMATIC — passing `delta`, `player`,
+`npcManager.getNPCs()`, and `timeSystem.getDayIndex()`.
+
+Place the call alongside the other economy-system updates (e.g. after
+`streetEconomySystem.update()` and `witnessSystem.update()`). No new classes or
+methods are required — only this wiring.
+
+### Integration tests — implement these exact scenarios
+
+1. **Daily stock refreshes on day rollover**: Construct a `FenceSystem`. Call
+   `update(0f, player, emptyList, 0)` to initialise day 0. Record the stock list.
+   Call `update(0f, player, emptyList, 1)` to trigger day rollover. Verify that
+   `getDailyStock()` returns a non-null list of exactly `FenceSystem.DAILY_STOCK_COUNT`
+   items and that `getCurrentDay()` equals `1`.
+
+2. **Police avoidance aborts open trade**: Construct a `FenceSystem`. Assign a Fence
+   NPC via `setFenceNpc()` and open the trade UI (`openTradeUI()`). Place a police NPC
+   within `POLICE_FLEE_DISTANCE` blocks of the Fence NPC. Call `update(0.1f, player,
+   policeList, 0)`. Verify `isTradeUIOpen()` returns `false` and
+   `isScaredByPolice()` returns `true`.
+
+3. **Contraband run timer expires and fails the run**: Start a contraband run via
+   `startContrabandRun(0, player)`. Record the player's rep. Call `update()` repeatedly
+   with `delta = 1f` until the run time limit (`CONTRABAND_RUN_TIME_LIMITS[0]`) is
+   exceeded. Verify `isContrabandRunActive()` returns `false`, and the player's rep has
+   decreased by `FAILED_RUN_REP_PENALTY`.
+
+4. **Lock timer decrements after a failed run**: After a contraband run fails (as in
+   test 3 above), verify `isLocked()` returns `true`. Call `update()` repeatedly with
+   `delta = 1f` until the lock timer (`IN_GAME_DAY_SECONDS`) elapses. Verify
+   `isLocked()` returns `false`.
+
+5. **FenceSystem.update() called in all three game-state branches**: In a headless
+   integration test, start the game in PLAYING state. Advance one frame. Verify
+   `fenceSystem.getCurrentDay()` has been initialised (i.e. `update()` was called).
+   Transition to PAUSED and advance one frame. Verify the police-avoidance timer
+   still decrements. Transition to CINEMATIC (opening sequence) and advance one frame.
+   Verify the contraband run timer still decrements (i.e. the cinematic branch also
+   calls `update()`).
