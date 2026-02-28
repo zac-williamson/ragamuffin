@@ -10225,3 +10225,82 @@ broadcast, build the transmitter, or trigger any of the faction/notoriety effect
 5. **Signal Van spawns at TRIANGULATION_MAX**: Construct `PirateRadioSystem` at power level 4.
    Start broadcast. Call `update(PirateRadioSystem.TRIANGULATION_MAX / TRIANGULATION_RATE[4] + 1f, emptyList, false)`.
    Verify `isSignalVanSpawned()` returns true.
+
+## Wire WeatherNPCBehaviour into the game loop
+
+**Goal**: `WeatherNPCBehaviour` (169 lines, Issue #698) is fully implemented but never
+instantiated or called anywhere in `RagamuffinGame.java`. The `weatherSystem` already runs
+and produces a `Weather` enum value each frame, but NPC reactions to weather — pedestrians
+sheltering in rain, gangs becoming aggressive in storms, police patrols thinning in frost —
+are completely dormant. Additionally, the frost-slip mechanic on ROAD/PAVEMENT blocks and
+the police line-of-sight reduction in fog are implemented but never exercised.
+
+**Changes required in `RagamuffinGame.java`:**
+
+1. **Declare a field** alongside the other system fields:
+   ```java
+   private WeatherNPCBehaviour weatherNPCBehaviour;
+   ```
+
+2. **Instantiate in `create()`** after `weatherSystem` is created:
+   ```java
+   weatherNPCBehaviour = new WeatherNPCBehaviour(new java.util.Random());
+   ```
+
+3. **Re-instantiate in `resetGame()`** so a new game session starts fresh:
+   ```java
+   weatherNPCBehaviour = new WeatherNPCBehaviour(new java.util.Random());
+   ```
+
+4. **Call `applyWeatherBehaviour` once per second** in the main PLAYING update block,
+   after `weatherSystem.update()` and `npcManager.update()`:
+   ```java
+   // Throttle to once per second — no need to run every frame
+   weatherNPCTimer += delta;
+   if (weatherNPCTimer >= 1.0f) {
+       weatherNPCBehaviour.applyWeatherBehaviour(npcManager.getNPCs(), weatherSystem.getCurrentWeather());
+       weatherNPCTimer = 0f;
+   }
+   ```
+   Add `private float weatherNPCTimer = 0f;` as a field.
+
+5. **Apply frost-slip** in the player movement update block in PLAYING state, after
+   resolving the block underfoot:
+   ```java
+   BlockType underFoot = world.getBlock(/* player feet position */);
+   boolean onRoad = underFoot == BlockType.ROAD || underFoot == BlockType.PAVEMENT;
+   float slipChance = WeatherNPCBehaviour.getFrostSlipProbabilityPerSecond(
+       weatherSystem.getCurrentWeather(), onRoad);
+   if (slipChance > 0f && new java.util.Random().nextFloat() < slipChance * delta) {
+       player.applyKnockback(camera.direction.cpy().scl(-1f));
+       tooltipSystem.trigger(TooltipTrigger.FROST_SLIP);
+   }
+   ```
+
+6. **Apply police LoS reduction** wherever `NPCManager` checks police detection range —
+   replace the hard-coded range constant with:
+   ```java
+   float policeRange = WeatherNPCBehaviour.getEffectivePoliceLoS(
+       NPCManager.POLICE_DETECTION_RANGE, weatherSystem.getCurrentWeather());
+   ```
+
+**Integration tests — implement these exact scenarios:**
+
+1. **WeatherNPCBehaviour instantiated in game loop**: In a headless integration test,
+   initialise `RagamuffinGame`, enter PLAYING state. Use reflection to assert the
+   `weatherNPCBehaviour` field is non-null.
+
+2. **Pedestrians shelter in rain**: Construct `WeatherNPCBehaviour`. Create a list of
+   NPCs of type PUBLIC all in state WANDERING. Call `applyWeatherBehaviour(npcs,
+   Weather.RAIN)` 100 times (simulating the stochastic trigger). Verify at least one NPC
+   is now in state SHELTERING.
+
+3. **Youth gang more aggressive in thunderstorm**: Construct `WeatherNPCBehaviour`.
+   Create 10 YOUTH_GANG NPCs in state WANDERING. Call `applyWeatherBehaviour(npcs,
+   Weather.THUNDERSTORM)` 100 times. Verify at least one is in state AGGRESSIVE.
+
+4. **Police loS halved in fog**: Call `WeatherNPCBehaviour.getEffectivePoliceLoS(10f,
+   Weather.FOG)`. Verify the result is 5.0f. Call with `Weather.CLEAR`. Verify 10.0f.
+
+5. **Frost slip probability on road**: Call `getFrostSlipProbabilityPerSecond(Weather.FROST, true)`.
+   Verify > 0. Call with `Weather.CLEAR` or `onRoad = false`. Verify == 0.
