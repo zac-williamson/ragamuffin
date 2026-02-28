@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import ragamuffin.core.Faction;
 import ragamuffin.core.FactionSystem;
 import ragamuffin.core.MCBattleSystem;
+import ragamuffin.core.NeighbourhoodWatchSystem;
 import ragamuffin.core.NotorietySystem;
 import ragamuffin.core.RaveSystem;
 import ragamuffin.core.StreetReputation;
@@ -42,6 +43,10 @@ public class GameHUD {
     private final Player player;
     private FactionSystem factionSystem; // may be null if not yet initialised
     private NotorietySystem notorietySystem; // Phase 8e — may be null if not yet initialised
+    private NeighbourhoodWatchSystem neighbourhoodWatchSystem; // Issue #816 — may be null if not yet initialised
+    private int watchAnger = 0;  // Current watch anger (0-100)
+    private int watchTier = 0;   // Current watch tier (0-5)
+    private float grovelProgress = 0f; // Grovel progress (0.0-1.0)
     private MCBattleSystem mcBattleSystem;   // Issue #716 — may be null if not yet initialised
     private RaveSystem raveSystem;           // Issue #716 — may be null if not yet initialised
     private WitnessSystem witnessSystem;     // Issue #765 — may be null if not yet initialised
@@ -94,6 +99,49 @@ public class GameHUD {
     /** Returns the attached NotorietySystem, or null. */
     public NotorietySystem getNotorietySystem() {
         return notorietySystem;
+    }
+
+    /**
+     * Attach the NeighbourhoodWatchSystem so the HUD can render the Watch Anger bar (Issue #816).
+     * Call once after the neighbourhood watch system is initialised.
+     */
+    public void setNeighbourhoodWatchSystem(NeighbourhoodWatchSystem neighbourhoodWatchSystem) {
+        this.neighbourhoodWatchSystem = neighbourhoodWatchSystem;
+    }
+
+    /** Returns the attached NeighbourhoodWatchSystem, or null. */
+    public NeighbourhoodWatchSystem getNeighbourhoodWatchSystem() {
+        return neighbourhoodWatchSystem;
+    }
+
+    /** Set current Watch Anger value for HUD display. Call each frame. */
+    public void setWatchAnger(int anger) {
+        this.watchAnger = anger;
+    }
+
+    /** Set current Watch tier for HUD display. Call each frame. */
+    public void setWatchTier(int tier) {
+        this.watchTier = tier;
+    }
+
+    /** Set current grovel progress (0.0–1.0) for HUD display. Call each frame. */
+    public void setGrovelProgress(float progress) {
+        this.grovelProgress = progress;
+    }
+
+    /** Returns the current Watch Anger value. */
+    public int getWatchAnger() {
+        return watchAnger;
+    }
+
+    /** Returns the current Watch tier. */
+    public int getWatchTier() {
+        return watchTier;
+    }
+
+    /** Returns the current grovel progress. */
+    public float getGrovelProgress() {
+        return grovelProgress;
     }
 
     /**
@@ -194,6 +242,11 @@ public class GameHUD {
         // Render notoriety star cluster (Phase 8e)
         if (notorietySystem != null) {
             renderNotoriety(spriteBatch, font, screenWidth, screenHeight);
+        }
+
+        // Render Watch Anger bar near the notoriety display (Issue #816)
+        if (neighbourhoodWatchSystem != null && watchAnger > 0) {
+            renderWatchAnger(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
 
         // Render night warning if applicable
@@ -571,6 +624,70 @@ public class GameHUD {
         font.getData().setScale(0.7f);
         font.setColor(0.9f, 0.9f, 0.9f, 1f);
         font.draw(spriteBatch, title, starsX, starsY - 18f);
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
+    }
+
+    /**
+     * Render the Watch Anger bar below the notoriety stars (Issue #816).
+     *
+     * <p>Shows a horizontal bar from 0–100 in amber/red. The tier label and grovel
+     * progress bar are shown when grovel is in progress.
+     */
+    private void renderWatchAnger(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer,
+                                   BitmapFont font, int screenWidth, int screenHeight) {
+        float barWidth = 120f;
+        float barHeight = 10f;
+        float x = screenWidth - 200f;
+        float y = screenHeight - 90f; // Below notoriety stars
+
+        float pct = Math.min(1f, watchAnger / (float) NeighbourhoodWatchSystem.MAX_ANGER);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        // Background
+        shapeRenderer.setColor(0.2f, 0.1f, 0.0f, 0.85f);
+        shapeRenderer.rect(x, y, barWidth, barHeight);
+        // Fill: amber at low tiers, red at high tiers
+        if (watchTier >= 4) {
+            shapeRenderer.setColor(0.9f, 0.1f, 0.1f, 1f); // Red at Tier 4+
+        } else if (watchTier >= 2) {
+            shapeRenderer.setColor(0.9f, 0.5f, 0.0f, 1f); // Orange at Tier 2-3
+        } else {
+            shapeRenderer.setColor(0.9f, 0.75f, 0.1f, 1f); // Amber at Tier 0-1
+        }
+        if (pct > 0f) {
+            shapeRenderer.rect(x, y, barWidth * pct, barHeight);
+        }
+
+        // Grovel progress bar (shown when grovelling)
+        if (grovelProgress > 0f) {
+            float gBarY = y - 14f;
+            shapeRenderer.setColor(0.15f, 0.15f, 0.15f, 0.85f);
+            shapeRenderer.rect(x, gBarY, barWidth, 8f);
+            shapeRenderer.setColor(0.3f, 0.9f, 0.4f, 1f); // Green grovel bar
+            shapeRenderer.rect(x, gBarY, barWidth * grovelProgress, 8f);
+        }
+        shapeRenderer.end();
+
+        // Border
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(Color.WHITE);
+        shapeRenderer.rect(x, y, barWidth, barHeight);
+        if (grovelProgress > 0f) {
+            shapeRenderer.rect(x, y - 14f, barWidth, 8f);
+        }
+        shapeRenderer.end();
+
+        // Label: "WATCH: <anger>" and tier name
+        spriteBatch.begin();
+        font.getData().setScale(0.65f);
+        font.setColor(0.95f, 0.85f, 0.4f, 1f);
+        font.draw(spriteBatch, "WATCH: " + watchAnger, x, y + barHeight + 12f);
+        if (grovelProgress > 0f) {
+            font.setColor(0.3f, 0.9f, 0.4f, 1f);
+            font.draw(spriteBatch, "Grovelling...", x, y - 6f);
+        }
         font.getData().setScale(1.0f);
         font.setColor(Color.WHITE);
         spriteBatch.end();
