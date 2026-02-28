@@ -138,6 +138,9 @@ class BlockPlacerTest {
         assertEquals(BlockType.BRICK, blockPlacer.materialToBlockType(Material.SHELTER_WALL));
         assertEquals(BlockType.BRICK, blockPlacer.materialToBlockType(Material.BRICK_WALL));
         assertEquals(BlockType.GLASS, blockPlacer.materialToBlockType(Material.WINDOW));
+        // Fix #886: LADDER material must map to LADDER block so right-click placement works
+        assertEquals(BlockType.LADDER, blockPlacer.materialToBlockType(Material.LADDER),
+            "Material.LADDER must map to BlockType.LADDER so players can place ladders");
     }
 
     @Test

@@ -378,6 +378,8 @@ public class BlockPlacer {
                 return BlockType.STAIRS;
             case HALF_BLOCK:
                 return BlockType.HALF_BLOCK;
+            case LADDER:
+                return BlockType.LADDER;
             default:
                 return null; // Non-placeable items (food, tools, etc.)
         }
