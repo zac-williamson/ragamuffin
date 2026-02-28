@@ -482,7 +482,19 @@ public enum Material {
     /**
      * Rubber — raw material used to craft a MOUTH_GUARD.
      */
-    RUBBER("Rubber");
+    RUBBER("Rubber"),
+
+    // ── Issue #901: Portal to Bista Village ───────────────────────────────────
+
+    /**
+     * Bista Village Portal — craftable one-use item.
+     * Crafted from DIAMOND×2 + STONE×4 + WOOD×2.
+     * When used (right-click while held), teleports the player to Bista Village —
+     * a historically accurate recreation of the Gurkha settlement outside Aldershot.
+     * The portal is the only means of accessing this location.
+     * Single-use: consumed on activation. A return portal stone appears in Bista Village.
+     */
+    BISTA_VILLAGE_PORTAL("Bista Village Portal");
 
     private final String displayName;
 
@@ -764,6 +776,10 @@ public enum Material {
                                               0.18f, 0.55f, 0.72f); // Darker blue
             case RUBBER:            return c(0.18f, 0.18f, 0.18f);  // Black rubber
 
+            // Issue #901: Bista Village Portal
+            case BISTA_VILLAGE_PORTAL: return cs(0.55f, 0.10f, 0.75f,  // Purple/violet portal shimmer
+                                                  0.85f, 0.70f, 0.20f); // Gold runes
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -912,6 +928,8 @@ public enum Material {
             case CHAMPIONSHIP_BELT:
             case MOUTH_GUARD:
             case RUBBER:
+            // Issue #901: Bista Village Portal (not a block item)
+            case BISTA_VILLAGE_PORTAL:
                 return false;
             default:
                 return true;
@@ -1183,6 +1201,10 @@ public enum Material {
                 return IconShape.CARD;       // small moulded piece
             case RUBBER:
                 return IconShape.BOX;        // rubber block/chunk
+
+            // Issue #901: Bista Village Portal
+            case BISTA_VILLAGE_PORTAL:
+                return IconShape.GEM;        // glowing portal stone / gem shape
 
             default:
                 return IconShape.BOX;

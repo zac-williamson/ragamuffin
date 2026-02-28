@@ -26,6 +26,9 @@ public class InteractionSystem {
     /** The Fence system, injected by the game loop. May be null if not yet initialised. */
     private FenceSystem fenceSystem;
 
+    /** Issue #901: The Bista Village portal system, injected by the game loop. */
+    private BistaVillageSystem bistaVillageSystem;
+
     // NPC dialogue lines
     private static final String[] PUBLIC_DIALOGUE = {
         "Is that... legal?",
@@ -719,6 +722,8 @@ public class InteractionSystem {
             case DIAMOND:
             case SHILLING:
             case PENNY:
+            // Issue #901: Bista Village Portal
+            case BISTA_VILLAGE_PORTAL:
                 return true;
             default:
                 return false;
@@ -776,9 +781,29 @@ public class InteractionSystem {
                 return "Shillings are currency — trade them with shopkeepers for food and goods.";
             case PENNY:
                 return "A penny. Twelve pennies make a shilling. Trade them with shopkeepers.";
+            // Issue #901: Bista Village Portal — delegates to BistaVillageSystem
+            case BISTA_VILLAGE_PORTAL:
+                if (bistaVillageSystem != null) {
+                    return bistaVillageSystem.activatePortal(player, inventory);
+                }
+                return "The stone hums with dormant energy. Something is missing.";
             default:
                 return null;
         }
+    }
+
+    /**
+     * Set the Bista Village system (injected by the game loop).
+     */
+    public void setBistaVillageSystem(BistaVillageSystem bistaVillageSystem) {
+        this.bistaVillageSystem = bistaVillageSystem;
+    }
+
+    /**
+     * Get the Bista Village system.
+     */
+    public BistaVillageSystem getBistaVillageSystem() {
+        return bistaVillageSystem;
     }
 
     // --- Merchant purchase constants ---
