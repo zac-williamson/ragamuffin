@@ -2729,8 +2729,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #807: Update warmth/wetness survival system
         if (!player.isDead()) {
             boolean nearCampfire = campfireSystem.isNearCampfire(player.getPosition());
+            boolean inCar = carDrivingSystem.isInCar();
             warmthSystem.update(player, weatherSystem.getCurrentWeather(), world,
-                    delta, nearCampfire, inventory);
+                    delta, nearCampfire, inCar, inventory);
             // Issue #879: Trigger cold-avoidance guidance tooltips when warmth drops
             if (player.getWarmth() <= 50f) {
                 tooltipSystem.trigger(TooltipTrigger.WARMTH_GETTING_COLD);
