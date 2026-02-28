@@ -11275,3 +11275,54 @@ reset to a value in `[120, 300]` after triggering.
    `triggerMarketEvent(MarketEvent.COUNCIL_CRACKDOWN, emptyList, null)`.
    Call `getEffectivePrice(Material.CIGARETTE, -1, false, streetEconomySystem.getActiveEvent(), 0)`.
    Verify the returned price is `2×` the base price for CIGARETTE.
+
+---
+
+## Fix: COLD_SNAP market event must force WeatherSystem to COLD_SNAP state
+
+The `MarketEvent.COLD_SNAP` enum documents: *"WeatherSystem forced to COLD_SNAP state
+while event is active."* However this is never implemented. `StreetEconomySystem`
+has no reference to `WeatherSystem`, and `RagamuffinGame` does not call
+`weatherSystem.setWeather(Weather.COLD_SNAP)` when the event fires or restore the
+previous weather when the event expires. The effect is purely cosmetic (warm-item
+prices spike) but the game world remains whatever weather it was — NPCs don't feel
+cold, `WarmthSystem` isn't triggered, and the `COLD_SNAP_CAPITALIST` achievement
+scenario (sell warm item at 2× market price *during* cold snap) is much harder to
+trigger organically because the cold weather doesn't actually arrive.
+
+**Root cause**: `StreetEconomySystem.triggerMarketEvent()` and `endMarketEvent()` do
+not take a `WeatherSystem` parameter and do not force/restore weather state.
+
+**What needs to change**:
+
+1. Add a `WeatherSystem` field to `StreetEconomySystem` (injected via a setter
+   `setWeatherSystem(WeatherSystem ws)`) or pass it through `triggerMarketEvent()`.
+2. When `COLD_SNAP` triggers, record the previous `Weather` value and call
+   `weatherSystem.setWeather(Weather.COLD_SNAP)`.
+3. When the COLD_SNAP event expires (timer hits 0 in `update()`), restore the
+   previously recorded weather via `weatherSystem.setWeather(savedWeather)`.
+4. `RagamuffinGame.initGame()` must call
+   `streetEconomySystem.setWeatherSystem(weatherSystem)` after both systems are
+   created.
+
+**Unit tests**:
+
+- `COLD_SNAP_triggers_weather_change`: Create `StreetEconomySystem` with a
+  `WeatherSystem` injected. Call
+  `triggerMarketEvent(MarketEvent.COLD_SNAP, emptyList, null)`. Verify
+  `weatherSystem.getCurrentWeather() == Weather.COLD_SNAP`.
+- `COLD_SNAP_restores_weather_on_expiry`: Trigger COLD_SNAP with a `WeatherSystem`
+  that starts at `Weather.CLEAR`. Call `update()` for exactly
+  `MarketEvent.COLD_SNAP.getDurationSeconds() + 0.1f` seconds. Verify
+  `weatherSystem.getCurrentWeather() == Weather.CLEAR` (previous weather restored).
+- `non_COLD_SNAP_event_does_not_change_weather`: Trigger `LAGER_SHORTAGE`. Verify
+  `weatherSystem.getCurrentWeather()` is unchanged.
+
+**Integration test**:
+
+- **COLD_SNAP event forces cold weather**: In the game loop harness, set
+  `weatherSystem` to `Weather.CLEAR`. Manually fire
+  `streetEconomySystem.triggerMarketEvent(MarketEvent.COLD_SNAP, npcs, null)`.
+  Advance the simulation by 1 second. Verify `weatherSystem.getCurrentWeather()`
+  is `Weather.COLD_SNAP`. Advance by `MarketEvent.COLD_SNAP.getDurationSeconds()`
+  more seconds. Verify `weatherSystem.getCurrentWeather()` returns to `Weather.CLEAR`.
