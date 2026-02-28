@@ -760,6 +760,41 @@ public class SquatSystem {
         return raidsWithVibeAbove60;
     }
 
+    /**
+     * Daily tick — convenience wrapper used by the game loop.
+     * Delegates to {@link #onDayTick(int, int, Inventory, List)}.
+     *
+     * @param dayIndex      current in-game day index (from {@code TimeSystem.getDayIndex()})
+     * @param notorietyTier the player's current notoriety tier
+     * @param allNpcs       all living NPCs
+     * @param inventory     player's inventory (income deposited here)
+     */
+    public void tickDay(int dayIndex, int notorietyTier, List<NPC> allNpcs, Inventory inventory) {
+        onDayTick(dayIndex, notorietyTier, inventory, allNpcs);
+    }
+
+    /**
+     * Count the number of NPCs currently inside the squat (used by RaveSystem).
+     * Returns 0 if no squat has been claimed.
+     * Uses a simple bounding-box check: any NPC within 15 blocks of the squat centre.
+     *
+     * @param allNpcs all living NPCs
+     * @return number of NPCs near the squat entrance
+     */
+    public int countAttendeesInSquat(List<NPC> allNpcs) {
+        if (squatLocation == null || allNpcs == null) return 0;
+        int count = 0;
+        for (NPC npc : allNpcs) {
+            if (!npc.isAlive()) continue;
+            float dx = npc.getPosition().x - squatWorldX;
+            float dz = npc.getPosition().z - squatWorldZ;
+            if (dx * dx + dz * dz <= 15f * 15f) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private void seedBarmanRumour(String text, List<NPC> allNpcs) {

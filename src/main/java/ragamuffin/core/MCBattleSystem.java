@@ -284,6 +284,37 @@ public class MCBattleSystem {
 
     // ── Queries ───────────────────────────────────────────────────────────────
 
+    /**
+     * Returns {@code true} if the player can challenge the given NPC to an MC Battle.
+     * Requires the NPC to be an {@link ragamuffin.entity.NPCType#MC_CHAMPION} and the
+     * player's inventory to contain at least one {@link ragamuffin.building.Material#MICROPHONE}.
+     *
+     * @param npc       the NPC the player is facing
+     * @param inventory the player's inventory
+     * @return whether a battle can be initiated
+     */
+    public boolean canChallenge(NPC npc, ragamuffin.building.Inventory inventory) {
+        if (npc == null || inventory == null) return false;
+        if (npc.getType() != ragamuffin.entity.NPCType.MC_CHAMPION) return false;
+        return inventory.getItemCount(ragamuffin.building.Material.MICROPHONE) >= 1;
+    }
+
+    /**
+     * Map an MC_CHAMPION NPC to the appropriate {@link Champion} enum value.
+     * Returns {@code null} if the NPC is not a champion.
+     */
+    public Champion championForNpc(NPC npc) {
+        if (npc == null || npc.getType() != ragamuffin.entity.NPCType.MC_CHAMPION) return null;
+        // Champion identity is determined by name; default to MARCHETTI_MC
+        String name = npc.getName();
+        if (name != null) {
+            String lower = name.toLowerCase(java.util.Locale.ROOT);
+            if (lower.contains("street") || lower.contains("lad")) return Champion.STREET_LADS_MC;
+            if (lower.contains("council")) return Champion.COUNCIL_MC;
+        }
+        return Champion.MARCHETTI_MC;
+    }
+
     /** @return current MC Rank (0–5) */
     public int getMcRank() { return mcRank; }
 
