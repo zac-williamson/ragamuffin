@@ -3,6 +3,8 @@ package ragamuffin.building;
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.entity.AABB;
 import ragamuffin.world.BlockType;
+import ragamuffin.world.PropPosition;
+import ragamuffin.world.PropType;
 import ragamuffin.world.Raycast;
 import ragamuffin.world.RaycastResult;
 import ragamuffin.world.World;
@@ -287,6 +289,80 @@ public class BlockPlacer {
         world.placeSmallItem(new SmallItem(material, new Vector3(itemX, itemY, itemZ)));
         inventory.removeItem(material, 1);
         return true;
+    }
+
+    /**
+     * Convert a PROP_* material to its corresponding PropType for placement.
+     * Returns null for materials that are not placeable props.
+     *
+     * Fix #887: Disco ball and other craftable props could not be placed.
+     */
+    public PropType materialToPropType(Material material) {
+        switch (material) {
+            case PROP_BED:          return PropType.BED;
+            case PROP_WORKBENCH:    return PropType.WORKBENCH;
+            case PROP_DARTBOARD:    return PropType.SQUAT_DARTBOARD;
+            case PROP_SPEAKER_STACK: return PropType.SPEAKER_STACK;
+            case PROP_DISCO_BALL:   return PropType.DISCO_BALL;
+            case PROP_DJ_DECKS:     return PropType.DJ_DECKS;
+            default:                return null;
+        }
+    }
+
+    /**
+     * Attempt to place a prop item from the inventory at the targeted surface.
+     * The prop is positioned on top of the hit block face.
+     *
+     * @param playerAABB if non-null, prevents placement inside the player's bounding box
+     * @param playerYaw  the player's current Y-axis rotation (degrees) so the prop faces the player
+     * @return the PropType placed, or null if placement failed
+     *
+     * Fix #887: Disco ball and other craftable props could not be placed.
+     */
+    public PropType placeProp(World world, Inventory inventory, Material material,
+                              Vector3 origin, Vector3 direction, float maxDistance,
+                              AABB playerAABB, float playerYaw) {
+        if (material == null) return null;
+
+        PropType propType = materialToPropType(material);
+        if (propType == null) return null;
+
+        if (!inventory.hasItem(material)) return null;
+
+        RaycastResult result = Raycast.cast(world, origin, direction, maxDistance);
+        if (result == null) return null;
+
+        // Determine which face was hit — only allow placement on the top face
+        Vector3 hitPos = result.getHitPosition();
+        int blockX = result.getBlockX();
+        int blockY = result.getBlockY();
+        int blockZ = result.getBlockZ();
+        Vector3 blockCenter = new Vector3(blockX + 0.5f, blockY + 0.5f, blockZ + 0.5f);
+        Vector3 toHit = new Vector3(hitPos).sub(blockCenter);
+
+        float absX = Math.abs(toHit.x);
+        float absY = Math.abs(toHit.y);
+        float absZ = Math.abs(toHit.z);
+
+        // Place on top face only
+        if (!(absY >= absX && absY >= absZ && toHit.y > 0)) return null;
+
+        // Prop base sits on top of the block surface
+        float propX = blockX + 0.5f;
+        float propY = blockY + 1.0f;
+        float propZ = blockZ + 0.5f;
+
+        // Prevent placing inside the player's bounding box
+        if (playerAABB != null) {
+            PropPosition candidate = new PropPosition(propX, propY, propZ, propType, playerYaw);
+            if (playerAABB.intersects(candidate.getAABB())) {
+                return null;
+            }
+        }
+
+        world.addPropPosition(new PropPosition(propX, propY, propZ, propType, playerYaw));
+        inventory.removeItem(material, 1);
+        return propType;
     }
 
     /**
