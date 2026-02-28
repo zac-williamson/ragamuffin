@@ -278,7 +278,17 @@ public enum NPCType {
      * achievement. Punching Biscuit adds +3 Notoriety and seeds a CAT_PUNCH rumour
      * town-wide. Passive and docile; never attacks.
      */
-    STRAY_CAT(5f, 0f, 0f, false);
+    STRAY_CAT(5f, 0f, 0f, false),
+
+    // ── Issue #928: Public Library System ──────────────────────────────────────
+
+    /**
+     * Librarian — stern NORTHFIELD LIBRARY staff member who patrols the shelves.
+     * Shushes sprinting players (imposing −30% speed debuff for 5s) and ejects
+     * repeat offenders (10-minute door lock). Seeds LIBRARY_BAN rumour on ejection.
+     * Passive unless provoked; never attacks. Wears sensible shoes.
+     */
+    LIBRARIAN(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

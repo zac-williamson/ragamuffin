@@ -934,6 +934,39 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #928: Public Library System ─────────────────────────────────────
+
+    BOOKWORM(
+        "Bookworm",
+        "Read three books in the library in a single day. Self-improvement. Sort of.",
+        3
+    ),
+    NIGHT_OWL(
+        "Night Owl",
+        "Slept rough in the library after closing time. The librarian would be horrified.",
+        1
+    ),
+    SELF_IMPROVEMENT(
+        "Self-Improvement",
+        "Gained XP from reading in the library five times. The estate should try it.",
+        5
+    ),
+    SHUSHED(
+        "Shhhhh!",
+        "Got shushed by the librarian. She's faster than she looks.",
+        1
+    ),
+    EJECTED_FROM_LIBRARY(
+        "Banned from the Library",
+        "Got ejected from the library. The quietest place in the postcode and you couldn't manage it.",
+        1
+    ),
+    FLASK_OF_SYMPATHY(
+        "Flask of Sympathy",
+        "Survived a cold night by sleeping in the library. The tea-coloured stain on the carpet was already there.",
+        1
+    ),
+
     // ── Issue #926: Chippy System ──────────────────────────────────────────────
 
     SALT_AND_VINEGAR(

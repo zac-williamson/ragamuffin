@@ -56,5 +56,10 @@ public enum RumourType {
     QUEUE_JUMP,
 
     /** "Someone punched Biscuit outside Tony's — Tony's furious" — seeded town-wide by ChippySystem when the player punches the STRAY_CAT NPC. */
-    CAT_PUNCH;
+    CAT_PUNCH,
+
+    // ── Issue #928: Public Library System ─────────────────────────────────────
+
+    /** "Heard someone got chucked out of the library — librarian's on the warpath" — seeded by LibrarySystem when the player is ejected by the LIBRARIAN NPC after repeat shushing. */
+    LIBRARY_BAN;
 }
