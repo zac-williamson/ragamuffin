@@ -34,7 +34,9 @@ class HorseRacingSystemTest {
     @BeforeEach
     void setUp() {
         system = new HorseRacingSystem(new Random(42));
-        timeSystem = new TimeSystem(11.0f); // Start at 11:00 (first race time)
+        // Issue #909: Start at 10:30 (before first race at 11:00) so races are not
+        // immediately resolved when update() is first called.
+        timeSystem = new TimeSystem(10.5f);
         inventory = new Inventory(36);
         inventory.addItem(Material.COIN, 200); // Plenty of coins for testing
     }
