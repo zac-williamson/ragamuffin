@@ -11096,3 +11096,59 @@ methods are required — only this wiring.
    still decrements. Transition to CINEMATIC (opening sequence) and advance one frame.
    Verify the contraband run timer still decrements (i.e. the cinematic branch also
    calls `update()`).
+
+---
+
+## Wire BootSaleUI into the render loop
+
+`BootSaleUI` is instantiated in `RagamuffinGame` and `bootSaleUI.show()` is called
+when the player approaches the boot sale landmark and presses `E`. The game state is
+correctly set to `GameState.BOOT_SALE_OPEN`. However, **`bootSaleUI.render()` is
+never called anywhere in the game**. This means:
+
+- When the player opens the boot sale, the screen goes blank (no overlay is drawn).
+- The player has no way to see lots, place bids, or use the Buy Now button.
+- The boot sale economic system (`BootSaleSystem`) runs correctly in the background
+  (its `update()` is called) but the player cannot interact with it.
+- `bootSaleUI.hide()` is also never called, so the UI remains silently "visible" in
+  memory even after the player exits, which could cause issues if the hide path ever
+  gains logic.
+
+### What needs to be done
+
+In `RagamuffinGame.java`:
+
+1. Call `bootSaleUI.render(screenWidth, screenHeight)` inside the render loop,
+   alongside the other UI overlays (e.g. after `fenceTradeUI.render()`). The call
+   should be guarded by `bootSaleUI.isVisible()` or placed unconditionally (the method
+   already guards internally with `if (!visible) return`).
+
+2. Call `bootSaleUI.hide()` when the player closes the boot sale UI (ESC key press
+   while `state == GameState.BOOT_SALE_OPEN`), and restore state to `PLAYING`.
+
+No new classes or methods are required — only these two wiring calls.
+
+### Integration tests — implement these exact scenarios
+
+1. **BootSaleUI render is called when visible**: In a headless integration test,
+   call `bootSaleUI.show()`. Invoke the render loop for one frame. Verify that no
+   exception is thrown and that `bootSaleUI.isVisible()` returns `true` (confirming
+   the render path is exercised without a null-pointer or batch state error).
+
+2. **BootSaleUI hidden by default**: Start the game in PLAYING state. Without
+   interacting with the boot sale landmark, verify `bootSaleUI.isVisible()` returns
+   `false`.
+
+3. **BootSaleUI shown when player opens boot sale**: With the game in PLAYING state,
+   call `bootSaleSystem.setPlayerInventory(inventory)` and `bootSaleUI.show()`, then
+   set `state = GameState.BOOT_SALE_OPEN`. Verify `bootSaleUI.isVisible()` returns
+   `true`.
+
+4. **BootSaleUI closed by ESC**: With `bootSaleUI.isVisible()` returning `true` and
+   `state == BOOT_SALE_OPEN`, simulate pressing ESC. Verify `bootSaleUI.isVisible()`
+   returns `false` and `state` has returned to `PLAYING`.
+
+5. **Normal input blocked while BootSaleUI is open**: Set `bootSaleUI.show()` and
+   `state = BOOT_SALE_OPEN`. Simulate pressing W for 30 frames. Verify that player
+   movement is blocked (position unchanged), confirming that the BOOT_SALE_OPEN state
+   does not pass through the normal movement-update path.
