@@ -11152,3 +11152,57 @@ No new classes or methods are required — only these two wiring calls.
    `state = BOOT_SALE_OPEN`. Simulate pressing W for 30 frames. Verify that player
    movement is blocked (position unchanged), confirming that the BOOT_SALE_OPEN state
    does not pass through the normal movement-update path.
+
+---
+
+## Fix #897: Wire squat passive health regen into the game loop
+
+**Goal**: Connect `SquatSystem.isRegenActive()` to the main game loop so that
+players inside their squat at Vibe ≥ 20 (Barely Liveable tier) receive the
+documented +1 health per minute passive regeneration.
+
+### What needs wiring
+
+`SquatSystem` has a fully implemented `isRegenActive(float playerX, float playerZ,
+float radius)` method that returns `true` when the player is inside their claimed
+squat and Vibe is at or above `VIBE_TIER_HABITABLE` (20). However, this method is
+**never called** anywhere in `RagamuffinGame.java`. As a result the squat Vibe tier
+table promise — "Player health regenerates +1/min while inside" at Vibe 20–39 — is
+silently broken; no regen is ever applied.
+
+### What to do
+
+In the PLAYING-state update block of `RagamuffinGame.updateGameplay()` (where other
+per-frame health effects such as `healingSystem.update()` are applied), add a squat
+regen check:
+
+```
+if (squatSystem != null && squatSystem.isRegenActive(
+        player.getPosition().x, player.getPosition().z, 15f)) {
+    // +1 health per in-game minute (rate = 1/60 per real second)
+    player.heal(delta / 60f);
+}
+```
+
+The radius `15f` matches the bounding-box radius already used by
+`countAttendeesInSquat()`. Apply the same regen in the PAUSED and CINEMATIC update
+paths that already call `healingSystem.update()` (so regen is consistent across all
+active states).
+
+**Unit tests**: Verify `isRegenActive()` returns `true` inside the squat at Vibe ≥ 20,
+and `false` when Vibe < 20 or player is outside the radius.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Squat regen applies at Vibe ≥ 20**: Claim a squat. Set Vibe to 25 using
+   `squatSystem.setVibeDirectly(25, npcs)`. Set player position to the squat centre
+   (within 15 blocks). Set player health to 50. Advance 60 real seconds (simulate
+   frames). Verify player health increased by at least 1.
+
+2. **No regen below Vibe 20**: Same setup but set Vibe to 15. Set player health to 50.
+   Advance 60 real seconds. Verify player health has NOT increased from the squat
+   regen path (health should remain ≤ 50 ignoring other healing).
+
+3. **No regen when player is outside the squat**: Set Vibe to 25. Move player 20 blocks
+   away from the squat centre (outside 15-block radius). Set health to 50. Advance 60
+   real seconds. Verify health has NOT increased via squat regen.
