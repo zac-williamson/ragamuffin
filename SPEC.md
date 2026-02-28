@@ -9771,3 +9771,108 @@ all of which are now wired in.
 5. **PropertySystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `propertySystem` field is non-null. Simulate 1 frame in
    PLAYING state. Verify no exception is thrown.
+
+## Wire HeistSystem into the Game Loop
+
+`HeistSystem` (1012 lines, `src/main/java/ragamuffin/core/HeistSystem.java`) implements a
+complete four-phase heist mechanic — **Casing → Planning → Execution → Fence** — for four
+heistable landmarks (Jeweller, Off-licence, Greggs, JobCentre). The class is fully implemented
+and compiles, but is never instantiated in `RagamuffinGame`; as a result, the player cannot
+case or rob any building, alarm boxes and safes never fire, and no heist-related faction
+impacts, rumours, or notoriety gains ever occur.
+
+### What needs to be done
+
+1. **Declare and instantiate** `private HeistSystem heistSystem;` in `RagamuffinGame`.
+   Instantiate in `create()` (and reset in `restartGame()`) after `noiseSystem`,
+   `factionSystem`, and `rumourNetwork` are available:
+   ```java
+   heistSystem = new HeistSystem();
+   ```
+
+2. **Call `update()` each frame** in the `PLAYING` state update block, after the other
+   system updates:
+   ```java
+   heistSystem.update(delta, player, noiseSystem, npcManager, factionSystem,
+       rumourNetwork, npcManager.getNPCs(), world, timeSystem.isNight());
+   ```
+
+3. **Wire F key — casing** — when the player presses F inside a heistable landmark,
+   call `startCasing()` and surface the returned message as a tooltip:
+   ```java
+   LandmarkType inside = world.getLandmarkTypeAt(player.getPosition());
+   if (inside != null) {
+       String msg = heistSystem.startCasing(inside,
+           world.getLandmarkCentre(inside), npcManager);
+       if (msg != null) tooltipSystem.showMessage(msg, 3.0f);
+   }
+   ```
+
+4. **Wire G key — execution** — when the player presses G and casing/planning is
+   complete, call `startExecution()`:
+   ```java
+   if (heistSystem.startExecution()) {
+       tooltipSystem.showMessage("Right. Let's do this.", 2.5f);
+   }
+   ```
+
+5. **Wire block-break hook** — after every successful block break, notify
+   `HeistSystem` so alarm boxes and CCTV trigger correctly:
+   ```java
+   heistSystem.onBlockBreak(breakPos, noiseSystem, npcManager, player);
+   ```
+
+6. **Wire E key — safe cracking** — when the player holds E near a safe during
+   execution phase, call `updateSafeCracking()` each frame:
+   ```java
+   if (heistSystem.getPhase() == HeistSystem.HeistPhase.EXECUTION) {
+       heistSystem.updateSafeCracking(delta, player.getPosition(), inventory,
+           noiseSystem);
+   }
+   ```
+
+7. **Wire heist completion** — when the player exits the building exclusion zone
+   during the execution phase, call `completeHeist()`:
+   ```java
+   heistSystem.completeHeist(player, inventory, factionSystem, rumourNetwork,
+       npcManager.getNPCs(), achievementSystem::award, notorietySystem);
+   ```
+
+8. **Wire HUD** — during the execution phase render a countdown timer using the
+   existing `SpriteBatch`/`BitmapFont`:
+   ```java
+   if (heistSystem.getPhase() == HeistSystem.HeistPhase.EXECUTION) {
+       String timerText = String.format("HEIST: %.0fs", heistSystem.getExecutionTimer());
+       font.draw(spriteBatch, timerText, 20, screenHeight - 60);
+   }
+   ```
+
+9. **Reset on restart** — call `heistSystem = new HeistSystem();` inside
+   `restartGame()`.
+
+### Integration tests — implement these exact scenarios
+
+1. **Casing returns a message for a valid target**: Create `HeistSystem`. Call
+   `startCasing(LandmarkType.JEWELLER, new Vector3(0,0,0), null)`. Verify the
+   returned string is non-null and `getPhase() == HeistPhase.CASING`.
+
+2. **Execution starts only from CASING phase**: Call `startExecution()` without
+   first calling `startCasing()`. Verify it returns `false` and phase remains
+   `IDLE`. Then call `startCasing(LandmarkType.GREGGS, ...)` followed by
+   `startExecution()`. Verify it returns `true` and `getPhase() == EXECUTION`.
+
+3. **Timer expires and floods police**: Call `startCasing(LandmarkType.JEWELLER, ...)`,
+   then `startExecution()`. Force-set `executionTimer` to 0.01f via
+   `setExecutionTimerForTesting(0.01f)`. Call `update(0.1f, player, ...)`. Verify
+   `getPhase() == HeistPhase.FAILED` and at least 4 POLICE NPCs have been spawned
+   via the `NPCManager`.
+
+4. **Alarm box triggers on block break**: Call `startCasing(LandmarkType.JEWELLER,
+   new Vector3(0,0,0), null)` and `startExecution()`. Call
+   `onBlockBreak(new Vector3(3, 1, -4), noiseSystem, npcManager, player)` — within
+   `ALARM_BOX_RANGE` of the alarm box at `(-3,1,-4)`. Verify `noiseSystem.getLevel()`
+   has increased to >= 0.8f (alarm triggered).
+
+5. **HeistSystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `heistSystem` field is non-null. Simulate 1 frame in
+   PLAYING state. Verify no exception is thrown.
