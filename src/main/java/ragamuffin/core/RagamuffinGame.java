@@ -4405,6 +4405,11 @@ public class RagamuffinGame extends ApplicationAdapter {
                     fenceSystem, player, inventory);
         }
 
+        // Issue #868: Render BootSaleUI if visible
+        if (bootSaleUI.isVisible()) {
+            bootSaleUI.render(screenWidth, screenHeight);
+        }
+
         // Issue #799: Render corner shop HUD status bar when shop is open
         if (cornerShopSystem != null && cornerShopSystem.hasShop() && cornerShopSystem.isShopOpen()) {
             spriteBatch.begin();
@@ -4618,6 +4623,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             fenceTradeUI.hide();
             fenceSystem.closeTradeUI();
             Gdx.input.setCursorCatched(state == GameState.PLAYING);
+        } else if (state == GameState.BOOT_SALE_OPEN) {
+            bootSaleUI.hide();
+            state = GameState.PLAYING;
+            Gdx.input.setCursorCatched(true);
         } else if (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen()) {
             activeShopkeeperNPC.setShopMenuOpen(false);
             activeShopkeeperNPC = null;
