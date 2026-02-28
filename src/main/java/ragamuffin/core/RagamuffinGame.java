@@ -2258,9 +2258,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (!isUIBlocking() && pirateRadioSystem != null) {
                 if (pirateRadioSystem.isBroadcasting()) {
                     pirateRadioSystem.stopBroadcast();
+                    soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
                 } else {
                     com.badlogic.gdx.math.Vector3 pos = player.getPosition();
-                    pirateRadioSystem.startBroadcast(pos.x, pos.y, pos.z);
+                    if (pirateRadioSystem.startBroadcast(pos.x, pos.y, pos.z)) {
+                        soundSystem.loop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+                    }
                 }
             }
             inputHandler.resetBroadcast();
@@ -3607,6 +3610,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             int bz = (int) placementPos.z;
             if (world.getBlock(bx, by, bz) == BlockType.CAMPFIRE) {
                 campfireSystem.addCampfire(placementPos);
+            }
+            if (world.getBlock(bx, by, bz) == BlockType.TRANSMITTER) {
+                pirateRadioSystem.onTransmitterPlaced(bx, by, bz);
             }
         }
 

@@ -92,6 +92,44 @@ public class SoundSystem {
         }
     }
 
+    /** Currently looping sound IDs, keyed by effect. */
+    private final Map<SoundEffect, Long> looping = new HashMap<>();
+
+    /**
+     * Start looping a sound effect. If already looping, does nothing.
+     */
+    public void loop(SoundEffect effect) {
+        loop(effect, 1.0f);
+    }
+
+    /**
+     * Start looping a sound effect with a volume multiplier.
+     */
+    public void loop(SoundEffect effect, float volumeMultiplier) {
+        if (!enabled) return;
+        if (looping.containsKey(effect)) return;
+
+        Sound sound = sounds.get(effect);
+        if (sound != null) {
+            float volume = masterVolume * volumeMultiplier * getCategoryVolume(effect);
+            long id = sound.loop(volume, 1.0f, 0f);
+            looping.put(effect, id);
+        }
+    }
+
+    /**
+     * Stop a looping sound effect.
+     */
+    public void stopLoop(SoundEffect effect) {
+        Long id = looping.remove(effect);
+        if (id != null) {
+            Sound sound = sounds.get(effect);
+            if (sound != null) {
+                sound.stop(id);
+            }
+        }
+    }
+
     /**
      * Play block break sound based on block type.
      */
@@ -182,6 +220,7 @@ public class SoundSystem {
                 return VOLUME_UI;
             case AMBIENT_PARK:
             case AMBIENT_STREET:
+            case PIRATE_RADIO_MUSIC:
                 return VOLUME_AMBIENT;
             case FOOTSTEP_PAVEMENT:
             case FOOTSTEP_GRASS:

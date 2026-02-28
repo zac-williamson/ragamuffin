@@ -45,6 +45,7 @@ public class ProceduralAudioGenerator {
             case ITEM_USE:          return generateItemUse();
             case MUNCH:             return generateMunch();
             case POLICE_SIREN:      return generatePoliceSiren();
+            case PIRATE_RADIO_MUSIC: return generatePirateRadioMusic();
             case AMBIENT_PARK:
             case AMBIENT_STREET:
             default:
@@ -424,6 +425,95 @@ public class ProceduralAudioGenerator {
             samples[i] = clampToShort(sine(phase) * env * 0.6);
         }
         return toWav(samples);
+    }
+
+    /**
+     * PIRATE_RADIO_MUSIC: ~8s lo-fi dub loop.
+     * Bass line (square wave), offbeat skank chords (filtered noise),
+     * hi-hat pattern, and a wobbly tape-warble effect.
+     */
+    private byte[] generatePirateRadioMusic() {
+        double bpm = 140.0;
+        double beatDur = 60.0 / bpm;
+        int bars = 4;
+        int beatsPerBar = 4;
+        double dur = bars * beatsPerBar * beatDur;
+        short[] samples = allocSamples(dur);
+
+        // Bass notes (root + fifth pattern in Dm): D2, A2, F2, G2
+        double[] bassFreqs = {73.42, 110.0, 87.31, 98.0};
+
+        // Pre-seeded random for deterministic hi-hat
+        java.util.Random hatRng = new java.util.Random(77);
+
+        double bassPhase = 0;
+        double lpBass = 0;
+        double lpSkank = 0;
+        double lpHat = 0;
+
+        for (int i = 0; i < samples.length; i++) {
+            double t = (double) i / SAMPLE_RATE;
+
+            // Tape warble: slow pitch wobble
+            double warble = 1.0 + 0.003 * Math.sin(2.0 * Math.PI * 0.8 * t);
+
+            // Which bar and beat are we in?
+            double beatPos = t / beatDur;
+            int bar = (int) (beatPos / beatsPerBar) % bars;
+            double beatInBar = beatPos - (int)(beatPos / beatsPerBar) * beatsPerBar;
+            double beatFrac = beatInBar - (int) beatInBar;
+
+            // ── Bass: square wave on beats 1 and 3, short decay ──
+            double bassFreq = bassFreqs[bar] * warble;
+            boolean bassHit = ((int) beatInBar == 0 || (int) beatInBar == 2);
+            double bassEnv = 0;
+            if (bassHit) {
+                bassEnv = expDecay(beatFrac * beatDur, beatDur * 0.6);
+            }
+            bassPhase += bassFreq / SAMPLE_RATE;
+            double bass = square(bassPhase) * bassEnv * 0.35;
+            lpBass = lowPass(bass, lpBass, 250); // muddy lo-fi bass
+
+            // ── Skank: filtered noise burst on offbeats (& of each beat) ──
+            double skankEnv = 0;
+            double offbeatFrac = beatFrac - 0.5;
+            if (offbeatFrac >= 0 && offbeatFrac < 0.25) {
+                skankEnv = expDecay(offbeatFrac * beatDur, beatDur * 0.08);
+            }
+            double skank = noise() * skankEnv * 0.2;
+            lpSkank = lowPass(skank, lpSkank, 3000);
+
+            // ── Hi-hat: 8th note pattern with velocity variation ──
+            double eighthFrac = (beatFrac * 2.0) - (int)(beatFrac * 2.0);
+            double hatEnv = expDecay(eighthFrac * beatDur * 0.5, beatDur * 0.04);
+            double hatVel = 0.08 + 0.07 * ((int)(beatPos * 2) % 2); // accent offbeats
+            double hat = noise() * hatEnv * hatVel;
+            lpHat = highPassSimple(hat, lpHat, 6000);
+
+            // ── Lo-fi crackle: very quiet random pops ──
+            double crackle = 0;
+            if (hatRng.nextDouble() < 0.001) {
+                crackle = (hatRng.nextDouble() * 2 - 1) * 0.05;
+            }
+
+            // ── Mix ──
+            double mix = lpBass + lpSkank + lpHat + crackle;
+
+            // Lo-fi: gentle saturation
+            mix = Math.tanh(mix * 1.5) * 0.65;
+
+            samples[i] = clampToShort(mix);
+        }
+        return toWav(samples);
+    }
+
+    /** Simple high-pass approximation: subtract low-passed signal. */
+    private double highPassSimple(double input, double lpState, double cutoff) {
+        double rc = 1.0 / (2.0 * Math.PI * cutoff);
+        double dt = 1.0 / SAMPLE_RATE;
+        double alpha = dt / (rc + dt);
+        double lp = lpState + alpha * (input - lpState);
+        return input - lp;
     }
 
     // ── WAV encoding ──────────────────────────────────────────────

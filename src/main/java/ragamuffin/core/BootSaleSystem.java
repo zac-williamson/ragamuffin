@@ -313,7 +313,9 @@ public class BootSaleSystem {
     }
 
     public String getLastTooltip() {
-        return lastTooltip;
+        String tip = lastTooltip;
+        lastTooltip = null;
+        return tip;
     }
 
     public void setVenuePosition(float x, float y, float z) {

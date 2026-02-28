@@ -45,7 +45,7 @@ public class PirateRadioSystem {
     public static final int[] POWER_RANGES = {0, 30, 60, 100, 160};
 
     /** Triangulation progress per second per power level (1-indexed; index 0 unused). */
-    public static final float[] TRIANGULATION_RATE = {0f, 0.3f, 0.5f, 0.8f, 1.5f};
+    public static final float[] TRIANGULATION_RATE = {0f, 1.5f, 2.5f, 4.0f, 7.5f};
 
     /** Triangulation threshold to spawn Signal Van. */
     public static final float TRIANGULATION_MAX = 100f;

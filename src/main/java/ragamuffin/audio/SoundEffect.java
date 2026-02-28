@@ -36,5 +36,6 @@ public enum SoundEffect {
     // Item use sounds
     ITEM_EAT,
     ITEM_USE,
-    MUNCH      // Large munching sound for crisp consumption
+    MUNCH,     // Large munching sound for crisp consumption
+    PIRATE_RADIO_MUSIC  // Looping lo-fi pirate radio jingle while broadcasting
 }

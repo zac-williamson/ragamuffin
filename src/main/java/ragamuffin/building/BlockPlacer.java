@@ -456,6 +456,8 @@ public class BlockPlacer {
                 return BlockType.HALF_BLOCK;
             case LADDER:
                 return BlockType.LADDER;
+            case TRANSMITTER_ITEM:
+                return BlockType.TRANSMITTER;
             default:
                 return null; // Non-placeable items (food, tools, etc.)
         }
