@@ -10465,3 +10465,83 @@ shutters, Dystopia fog) is dead code.
    Assert `getCurrentVibesState()` is `VibesState.DYSTOPIA`. Assert
    `isAmbientSilenced()` is true. Assert `achievementSystem` has
    `AchievementType.DYSTOPIA_NOW` unlocked.
+
+## Wire MCBattleSystem, RaveSystem & SquatSystem into the game loop
+
+`MCBattleSystem`, `RaveSystem`, and `SquatSystem` exist as fully implemented dead code
+(Issues #714 and #716) but are never instantiated or updated in `RagamuffinGame`.
+Without these systems the player cannot claim a squat, challenge MC champions, earn
+MC Rank, or host illegal raves — gating an entire vertical slice of faction,
+notoriety, and achievement progression that is otherwise completely inaccessible.
+
+### What needs to be done
+
+1. **Declare fields** in `RagamuffinGame`:
+   ```java
+   private SquatSystem squatSystem;
+   private MCBattleSystem mcBattleSystem;
+   private RaveSystem raveSystem;
+   ```
+
+2. **Instantiate in `initGame()`** (and mirror in `restartGame()`):
+   ```java
+   squatSystem    = new SquatSystem(achievementSystem, notorietySystem);
+   mcBattleSystem = new MCBattleSystem(factionSystem, notorietySystem,
+                        rumourNetwork, achievementSystem, new java.util.Random());
+   raveSystem     = new RaveSystem(achievementSystem, notorietySystem, rumourNetwork);
+   ```
+
+3. **Update each frame** in the PLAYING branch of `render()`:
+   ```java
+   squatSystem.tickDay(timeSystem.getDayIndex(),
+       notorietySystem.getTier(), npcManager.getNPCs(), inventory);
+   mcBattleSystem.update(delta);
+   raveSystem.update(delta, inventory,
+       squatSystem.countAttendeesInSquat(npcManager.getNPCs()));
+   ```
+
+4. **Wire the E key** in `handleInteract()`:
+   - If player is inside their unclaimed squat and holds ≥ 5 WOOD:
+     call `squatSystem.claimSquat(...)`.
+   - If `mcBattleSystem.canChallenge(targetNpc, inventory)`:
+     call `mcBattleSystem.startBattle(champion, inventory)`.
+   - If player is at squat entrance and a rave is active:
+     call `raveSystem.disperseRave(inventory)`.
+
+5. **Wire rave start**: on right-click/use of `Material.FLYER`:
+   call `raveSystem.startRave(inventory, squatSystem.getVibe(),
+       mcBattleSystem.getMcRank(), npcManager.getNearbyNpcs(player))`.
+
+6. **Wire police spawn** when `raveSystem.isPoliceAlerted()` first becomes `true`:
+   spawn 2 PCSO NPCs near the squat entrance via `npcManager`.
+
+7. **Render `BattleBarMiniGame` overlay** in the 2D HUD pass when
+   `mcBattleSystem.isBattleActive()` is true, using `SpriteBatch` / `ShapeRenderer`.
+
+8. **Reset on restart** in `restartGame()`:
+   re-instantiate all three systems with the same constructor calls as step 2.
+
+### Integration tests — implement these exact scenarios
+
+1. **Squat can be claimed**: Initialise `RagamuffinGame` headless. Give the player
+   5 `Material.WOOD`. Place the player inside a derelict building (Condition ≤ 10).
+   Simulate pressing **E**. Verify `squatSystem.hasSquat()` returns `true`.
+
+2. **MC Battle starts on E with microphone**: Give the player a `Material.MICROPHONE`.
+   Place a Marchetti MC Champion NPC adjacent to the player. Simulate pressing **E**.
+   Verify `mcBattleSystem.isBattleActive()` returns `true`.
+
+3. **Rave starts when player uses a FLYER with sufficient Vibe and MC Rank**:
+   Set squat Vibe to 50 and MC Rank to 1. Give the player a `Material.FLYER`.
+   Simulate using the flyer. Verify `raveSystem.isRaveActive()` returns `true`.
+   Verify a `RumourType.RAVE_ANNOUNCEMENT` rumour has been seeded into nearby NPCs.
+
+4. **Police spawn when rave runs past alert threshold**: Start a rave. Advance
+   time by `RaveSystem.POLICE_ALERT_SECONDS` via `update()`. Verify
+   `raveSystem.isPoliceAlerted()` is `true`. Verify at least 2 PCSO NPCs have
+   been spawned near the squat entrance.
+
+5. **Dispersing a rave early awards SWERVED_THE_FEDS achievement**: Start a rave.
+   Advance time by less than `RaveSystem.POLICE_ALERT_SECONDS`. Simulate pressing
+   **E** at the squat entrance. Verify `raveSystem.isRaveActive()` is `false`.
+   Verify `achievementSystem` has `AchievementType.SWERVED_THE_FEDS` unlocked.
