@@ -186,6 +186,10 @@ public class RagamuffinGame extends ApplicationAdapter {
     private StreetEconomySystem streetEconomySystem;
     // Issue #826: Witness & evidence system — witnesses, CCTV tapes, informant mechanic
     private WitnessSystem witnessSystem;
+    // Issue #828: JobCentre system — Universal Credit, sanctions & bureaucratic torment
+    private NewspaperSystem newspaperSystem;
+    private JobCentreSystem jobCentreSystem;
+    private ragamuffin.ui.JobCentreUI jobCentreUI;
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
@@ -479,6 +483,22 @@ public class RagamuffinGame extends ApplicationAdapter {
         witnessSystem.setCriminalRecord(player.getCriminalRecord());
         witnessSystem.setRumourNetwork(rumourNetwork);
         witnessSystem.setAchievementSystem(achievementSystem);
+
+        // Issue #828: Initialize newspaper system (required by JobCentreSystem)
+        newspaperSystem = new NewspaperSystem();
+        // Issue #828: Initialize JobCentre system — Universal Credit sign-on loop
+        jobCentreSystem = new JobCentreSystem(
+                timeSystem,
+                player.getCriminalRecord(),
+                notorietySystem,
+                factionSystem,
+                rumourNetwork,
+                newspaperSystem,
+                player.getStreetSkillSystem(),
+                wantedSystem,
+                npcManager,
+                new java.util.Random());
+        jobCentreUI = new ragamuffin.ui.JobCentreUI();
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2223,6 +2243,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #826: Update witness system — evidence props, witness NPC timers, CCTV tape countdowns
         witnessSystem.update(delta, npcManager.getNPCs(), player);
 
+        // Issue #828: Update JobCentre system — sign-on window, sanctions, debt collector
+        jobCentreSystem.update(delta, player, npcManager.getNPCs());
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -3201,6 +3224,38 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #828: E key near JobCentre — attempt sign-on
+        {
+            ragamuffin.world.Landmark jobCentreLandmark = world.getLandmark(ragamuffin.world.LandmarkType.JOB_CENTRE);
+            if (jobCentreLandmark != null) {
+                float distToJobCentre = player.getPosition().dst(
+                        jobCentreLandmark.getPosition().x + jobCentreLandmark.getWidth() / 2f,
+                        player.getPosition().y,
+                        jobCentreLandmark.getPosition().z + jobCentreLandmark.getDepth() / 2f);
+                if (distToJobCentre <= 4f) {
+                    JobCentreSystem.SignOnResult result = jobCentreSystem.trySignOn(player, inventory);
+                    if (result != null) {
+                        jobCentreUI.setLastSignOnResult(result);
+                        jobCentreUI.show();
+                        String signOnMsg;
+                        switch (result) {
+                            case SUCCESS: signOnMsg = "Sign-on successful. UC payment received."; break;
+                            case SUSPICIOUS: signOnMsg = "The case worker eyes you suspiciously..."; break;
+                            case POLICE_ESCORT: signOnMsg = "Police are waiting for you at the entrance."; break;
+                            case NOTORIETY_SCARED: signOnMsg = "The case worker is terrified but pays up."; break;
+                            case NOTORIETY_FLEE: signOnMsg = "The case worker runs away. Claim closed."; break;
+                            case MARCHETTI_CONFISCATION: signOnMsg = "Contraband confiscated at sign-on."; break;
+                            case WINDOW_CLOSED: signOnMsg = "The sign-on window is not open right now."; break;
+                            case CLAIM_CLOSED: signOnMsg = "Your UC claim has been permanently closed."; break;
+                            default: signOnMsg = "JobCentre interaction."; break;
+                        }
+                        tooltipSystem.showMessage(signOnMsg, 3.0f);
+                    }
+                    return;
+                }
+            }
+        }
+
         // Issue #826: E key — steal a hot CCTV tape if the player is close enough to one
         {
             boolean tapeStolen = witnessSystem.stealCctvTape(
@@ -3638,6 +3693,12 @@ public class RagamuffinGame extends ApplicationAdapter {
             questLogUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
 
+        // Issue #828: Render JobCentre UI if visible
+        if (jobCentreUI != null && jobCentreUI.isVisible()) {
+            jobCentreUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight,
+                    jobCentreSystem, player, inventory);
+        }
+
         // Render damage flash overlay
         float flashIntensity = player.getDamageFlashIntensity();
         if (flashIntensity > 0f) {
@@ -3822,7 +3883,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private void handleEscapePress() {
         // Close any open UI first
-        if (fenceTradeUI.isVisible()) {
+        if (jobCentreUI != null && jobCentreUI.isVisible()) {
+            jobCentreUI.hide();
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
+        } else if (fenceTradeUI.isVisible()) {
             fenceTradeUI.hide();
             fenceSystem.closeTradeUI();
             Gdx.input.setCursorCatched(state == GameState.PLAYING);
