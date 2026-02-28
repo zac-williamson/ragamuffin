@@ -176,6 +176,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private RumourNetwork rumourNetwork;
     // Issue #811: Faction system — three-faction turf-war engine (Marchetti Crew, Street Lads, The Council)
     private FactionSystem factionSystem;
+    // Issue #818: Disguise system — player can loot and wear NPC clothing to infiltrate restricted areas
+    private DisguiseSystem disguiseSystem;
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
@@ -453,6 +455,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #811: Initialize faction system — three-faction turf-war engine
         factionSystem = new FactionSystem(new TurfMap(), rumourNetwork);
         gameHUD.setFactionSystem(factionSystem);
+        // Issue #818: Initialize disguise system — player can loot NPC clothing and wear it
+        disguiseSystem = new DisguiseSystem();
+        disguiseSystem.setAchievementSystem(achievementSystem);
+        disguiseSystem.setRumourNetwork(rumourNetwork);
+        gameHUD.setDisguiseSystem(disguiseSystem);
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2143,6 +2150,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Fix #196: update speech log after NPC speech is set for this frame
         speechLogUI.update(npcManager.getNPCs(), delta);
 
+        // Issue #818: Update disguise system — scrutiny decay, cover integrity, NPC freeze-stare
+        disguiseSystem.update(delta, player, npcManager.getNPCs(), player.getVelocity().len());
+
         // Issue #803: Update wanted system — drives police NPC state transitions (CHASING, ALERTED)
         // and spawns reinforcements based on witnessed crimes.
         wantedSystem.update(delta, player, npcManager.getNPCs(),
@@ -2579,7 +2589,14 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Issue #659: Record NPC kill if the punch was lethal
             if (npcWasAlive && !targetNPC.isAlive()) {
                 player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.NPCS_KILLED);
+                // Issue #818: Loot disguise from newly knocked-out NPC
+                Material looted = disguiseSystem.lootDisguise(targetNPC, inventory);
+                if (looted != null) {
+                    tooltipSystem.showMessage("You take the " + looted.getDisplayName() + ".", 2.5f);
+                }
             }
+            // Issue #818: Notify disguise system of visible crime (punching NPCs)
+            disguiseSystem.notifyCrime(player, npcManager.getNPCs());
             // Issue #26: If a YOUTH_GANG member was punched, escalate territory to hostile
             if (targetNPC.getType() == ragamuffin.entity.NPCType.YOUTH_GANG) {
                 gangTerritorySystem.onPlayerAttacksGang(tooltipSystem, npcManager, player, world);
@@ -2723,6 +2740,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                 // Issue #659: Track block destruction in criminal record
                 player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.BLOCKS_DESTROYED);
+                // Issue #818: Notify disguise system of visible crime (breaking blocks)
+                disguiseSystem.notifyCrime(player, npcManager.getNPCs());
 
                 // Issue #171: Emit block-break debris using the block's colour
                 com.badlogic.gdx.graphics.Color blockColour = blockType.getColor();
@@ -3057,6 +3076,22 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
             // The dialogue is set on the NPC, which will be rendered as a speech bubble
             return;
+        }
+
+        // Issue #818: Wire equip-disguise on E-key — if the player is holding a clothing item, equip it
+        {
+            int selectedSlot = hotbarUI.getSelectedSlot();
+            ragamuffin.building.Material selectedMaterial = inventory.getItemInSlot(selectedSlot);
+            if (selectedMaterial != null && DisguiseSystem.isDisguiseMaterial(selectedMaterial)) {
+                boolean equipped = disguiseSystem.equipDisguise(selectedMaterial, inventory);
+                if (equipped) {
+                    tooltipSystem.showMessage("Disguise equipped: " + selectedMaterial.getDisplayName(), 2.5f);
+                    // Issue #818: Wire disguise-change escape into WantedSystem (pass real disguiseSystem, not null)
+                    wantedSystem.attemptDisguiseEscape(disguiseSystem, player, npcManager.getNPCs(),
+                            type -> achievementSystem.unlock(type));
+                }
+                return;
+            }
         }
 
         // Check for door interaction via short raycast (≤3 blocks)
@@ -3733,8 +3768,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         gangTerritorySystem.reset();
         // Issue #816: Reset neighbourhood watch system so anger and tier don't carry over
         neighbourhoodWatchSystem = new NeighbourhoodWatchSystem();
+        // Issue #818: Reset disguise system so cover and disguise state don't carry over
+        disguiseSystem = new DisguiseSystem();
+        disguiseSystem.setAchievementSystem(achievementSystem);
+        disguiseSystem.setRumourNetwork(rumourNetwork);
         gameHUD = new GameHUD(player);
         gameHUD.setNeighbourhoodWatchSystem(neighbourhoodWatchSystem);
+        gameHUD.setDisguiseSystem(disguiseSystem);
         openingSequence = new OpeningSequence();
         speechLogUI = new SpeechLogUI();
         deathMessage = null;
@@ -4098,6 +4138,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     /** Issue #547: Returns the shopkeeper whose shop menu is currently open, or null. */
     public ragamuffin.entity.NPC getActiveShopkeeperNPC() {
         return activeShopkeeperNPC;
+    }
+
+    /** Issue #818: Returns the DisguiseSystem, or null if the game has not yet been initialised. */
+    public DisguiseSystem getDisguiseSystem() {
+        return disguiseSystem;
     }
 
     /**
