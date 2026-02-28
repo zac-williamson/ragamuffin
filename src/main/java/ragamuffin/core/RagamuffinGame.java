@@ -191,6 +191,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     private JobCentreSystem jobCentreSystem;
     private ragamuffin.ui.JobCentreUI jobCentreUI;
 
+    // Issue #830: Boot Sale system — underground auction economy
+    private FenceValuationTable fenceValuationTable;
+    private BootSaleSystem bootSaleSystem;
+    private ragamuffin.ui.BootSaleUI bootSaleUI;
+
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
     // Issue #773: Car driving system — lets player enter and drive cars
@@ -499,6 +504,26 @@ public class RagamuffinGame extends ApplicationAdapter {
                 npcManager,
                 new java.util.Random());
         jobCentreUI = new ragamuffin.ui.JobCentreUI();
+
+        // Issue #830: Initialize FenceValuationTable and BootSaleSystem/UI
+        fenceValuationTable = new FenceValuationTable();
+        bootSaleSystem = new BootSaleSystem(
+                timeSystem,
+                fenceValuationTable,
+                factionSystem,
+                rumourNetwork,
+                noiseSystem,
+                notorietySystem,
+                wantedSystem,
+                player.getStreetSkillSystem(),
+                new java.util.Random());
+        bootSaleUI = new ragamuffin.ui.BootSaleUI(bootSaleSystem);
+        // Set venue position from world landmark so police spawn at the right place
+        ragamuffin.world.Landmark bootSaleLandmark = world.getLandmark(ragamuffin.world.LandmarkType.BOOT_SALE);
+        if (bootSaleLandmark != null) {
+            bootSaleSystem.setVenuePosition(
+                    bootSaleLandmark.getPosition().x, 0, bootSaleLandmark.getPosition().z);
+        }
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2246,6 +2271,16 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #828: Update JobCentre system — sign-on window, sanctions, debt collector
         jobCentreSystem.update(delta, player, npcManager.getNPCs());
 
+        // Issue #830: Update BootSale system — lot schedule, NPC bidders, police spawn
+        if (bootSaleSystem != null) {
+            bootSaleSystem.update(delta, player, npcManager.getNPCs());
+            // Poll last tooltip to surface auction messages to the player
+            String bsMsg = bootSaleSystem.getLastTooltip();
+            if (bsMsg != null && !bsMsg.isEmpty()) {
+                tooltipSystem.showMessage(bsMsg, 3.0f);
+            }
+        }
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -3250,6 +3285,27 @@ public class RagamuffinGame extends ApplicationAdapter {
                             default: signOnMsg = "JobCentre interaction."; break;
                         }
                         tooltipSystem.showMessage(signOnMsg, 3.0f);
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Issue #830: E key near Boot Sale — open the auction UI
+        if (bootSaleSystem != null) {
+            ragamuffin.world.Landmark bootSaleLandmarkE = world.getLandmark(ragamuffin.world.LandmarkType.BOOT_SALE);
+            if (bootSaleLandmarkE != null) {
+                float distToBootSale = player.getPosition().dst(
+                        bootSaleLandmarkE.getPosition().x + bootSaleLandmarkE.getWidth() / 2f,
+                        player.getPosition().y,
+                        bootSaleLandmarkE.getPosition().z + bootSaleLandmarkE.getDepth() / 2f);
+                if (distToBootSale <= 5f) {
+                    if (!bootSaleSystem.isVenueOpen()) {
+                        tooltipSystem.showMessage("Can't go in — you're too hot right now.", 2.5f);
+                    } else {
+                        bootSaleSystem.setPlayerInventory(inventory);
+                        bootSaleUI.show();
+                        state = GameState.BOOT_SALE_OPEN;
                     }
                     return;
                 }
