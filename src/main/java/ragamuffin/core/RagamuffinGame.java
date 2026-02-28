@@ -184,6 +184,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private ragamuffin.render.GraffitiRenderer graffitiRenderer;
     // Issue #824: Street economy system — NPC needs, black market dealing, protection rackets
     private StreetEconomySystem streetEconomySystem;
+    // Issue #826: Witness & evidence system — witnesses, CCTV tapes, informant mechanic
+    private WitnessSystem witnessSystem;
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
@@ -471,6 +473,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         graffitiRenderer = new ragamuffin.render.GraffitiRenderer();
         // Issue #824: Initialize street economy system — NPC needs, black market, protection rackets
         streetEconomySystem = new StreetEconomySystem();
+
+        // Issue #826: Initialize witness & evidence system — witnesses, CCTV tapes, informant mechanic
+        witnessSystem = new WitnessSystem();
+        witnessSystem.setCriminalRecord(player.getCriminalRecord());
+        witnessSystem.setRumourNetwork(rumourNetwork);
+        witnessSystem.setAchievementSystem(achievementSystem);
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2212,6 +2220,9 @@ public class RagamuffinGame extends ApplicationAdapter {
                 inventory, rumourNetwork,
                 type -> achievementSystem.unlock(type));
 
+        // Issue #826: Update witness system — evidence props, witness NPC timers, CCTV tape countdowns
+        witnessSystem.update(delta, npcManager.getNPCs(), player);
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -2631,6 +2642,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
             // Issue #818: Notify disguise system of visible crime (punching NPCs)
             disguiseSystem.notifyCrime(player, npcManager.getNPCs());
+            // Issue #826: Notify witness system of crime — transitions nearby NPCs to WITNESS state
+            witnessSystem.registerCrime(player.getPosition().x, player.getPosition().y, player.getPosition().z,
+                    "attacking someone", npcManager.getNPCs(), null);
+            witnessSystem.notifyCrime(player.getPosition().x, player.getPosition().z);
             // Issue #824: Notify street economy system of visible crime — spikes SCARED need on nearby NPCs
             streetEconomySystem.onCrimeEvent(player.getPosition().x, player.getPosition().z,
                     8f, 0.3f, npcManager.getNPCs());
@@ -2779,6 +2794,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                 player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.BLOCKS_DESTROYED);
                 // Issue #818: Notify disguise system of visible crime (breaking blocks)
                 disguiseSystem.notifyCrime(player, npcManager.getNPCs());
+                // Issue #826: Notify witness system of crime — transitions nearby NPCs to WITNESS state
+                witnessSystem.registerCrime(player.getPosition().x, player.getPosition().y, player.getPosition().z,
+                        "breaking things", npcManager.getNPCs(), null);
+                witnessSystem.notifyCrime(player.getPosition().x, player.getPosition().z);
                 // Issue #824: Notify street economy system of visible crime — spikes SCARED need on nearby NPCs
                 streetEconomySystem.onCrimeEvent(player.getPosition().x, player.getPosition().z,
                         8f, 0.3f, npcManager.getNPCs());
@@ -3178,6 +3197,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                 rebuildChunkAt(x, lowerY, z);
                 rebuildChunkAt(x, lowerY + 1, z);
                 soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+                return;
+            }
+        }
+
+        // Issue #826: E key — steal a hot CCTV tape if the player is close enough to one
+        {
+            boolean tapeStolen = witnessSystem.stealCctvTape(
+                    player.getPosition().x, player.getPosition().z);
+            if (tapeStolen) {
+                inventory.addItem(ragamuffin.building.Material.CCTV_TAPE, 1);
+                tooltipSystem.showMessage("Evidence sorted. You're getting good at this.", 3.0f);
                 return;
             }
         }
@@ -3949,6 +3979,11 @@ public class RagamuffinGame extends ApplicationAdapter {
         graffitiSystem = new GraffitiSystem();
         // Issue #824: Reset street economy system so NPC needs and market state don't carry over
         streetEconomySystem = new StreetEconomySystem();
+        // Issue #826: Reset witness system so evidence props, CCTV timers and witness state don't carry over
+        witnessSystem = new WitnessSystem();
+        witnessSystem.setCriminalRecord(player.getCriminalRecord());
+        witnessSystem.setRumourNetwork(rumourNetwork);
+        witnessSystem.setAchievementSystem(achievementSystem);
         gameHUD = new GameHUD(player);
         gameHUD.setNeighbourhoodWatchSystem(neighbourhoodWatchSystem);
         gameHUD.setDisguiseSystem(disguiseSystem);
