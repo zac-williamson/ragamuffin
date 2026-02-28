@@ -11206,3 +11206,72 @@ and `false` when Vibe < 20 or player is outside the radius.
 3. **No regen when player is outside the squat**: Set Vibe to 25. Move player 20 blocks
    away from the squat centre (outside 15-block radius). Set health to 50. Advance 60
    real seconds. Verify health has NOT increased via squat regen.
+
+---
+
+## Fix #899: Wire random market event triggering into the game loop
+
+**Goal**: Connect `StreetEconomySystem.triggerMarketEvent()` to the game loop so
+that the five currently dead market events (LAGER_SHORTAGE, COLD_SNAP, BENEFIT_DAY,
+COUNCIL_CRACKDOWN, MARCHETTI_SHIPMENT) fire randomly during gameplay.
+
+### What needs wiring
+
+`StreetEconomySystem` has six `MarketEvent` disruption events fully implemented,
+each with price multipliers, NPC behaviour effects, and rumour seeding logic. The
+system even holds a `Random` instance for this purpose. However, `triggerMarketEvent()`
+is only ever called from `NewspaperSystem` for a single hardcoded case
+(`GREGGS_STRIKE`). The other five events are **never triggered anywhere** in
+`RagamuffinGame.java`. As a result the entire dynamic economy — price spikes, NPC
+need surges, BENEFIT_DAY windfalls, COUNCIL_CRACKDOWN police pressure — is silently
+broken; the player never sees any market disruption.
+
+### What to do
+
+In `RagamuffinGame`'s PLAYING-state update block (alongside the existing
+`streetEconomySystem.update()` call), add a random market event scheduler. A
+lightweight approach:
+
+1. Add a private `marketEventCooldown` float field (reset to a random value in
+   `[120f, 300f]` seconds after each event, and on game start).
+2. Each frame, decrement `marketEventCooldown` by `delta`. When it reaches 0 and
+   no event is already active (`streetEconomySystem.getActiveEvent() == null`):
+   - Pick a random `MarketEvent` value (excluding `GREGGS_STRIKE` which is already
+     handled by `NewspaperSystem`).
+   - Call `streetEconomySystem.triggerMarketEvent(event, npcManager.getNPCs(), rumourNetwork)`.
+   - Reset `marketEventCooldown` to a new random value in `[120f, 300f]`.
+3. Apply the same cooldown decrement in the PAUSED and CINEMATIC update paths so
+   time-based scheduling continues consistently across all active states.
+4. Reset `marketEventCooldown` on new game / restart (alongside other system resets).
+
+**Unit tests**: Verify that after cooldown expires with no active event,
+`triggerMarketEvent` is called with a non-GREGGS_STRIKE event. Verify that when an
+event is already active, no new event is triggered. Verify `marketEventCooldown` is
+reset to a value in `[120, 300]` after triggering.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **BENEFIT_DAY zeroes NPC BROKE needs**: Create a `StreetEconomySystem`. Populate
+   three NPCs with BROKE need score 80. Call
+   `streetEconomySystem.triggerMarketEvent(MarketEvent.BENEFIT_DAY, npcs, null)`.
+   Call `streetEconomySystem.update(0.1f, npcs, player, null, 0, null, null, null)`.
+   Verify all three NPCs now have BROKE need score 0.
+
+2. **LAGER_SHORTAGE spikes BORED accumulation**: Create a `StreetEconomySystem`.
+   Call `triggerMarketEvent(MarketEvent.LAGER_SHORTAGE, emptyList, null)`.
+   Run `update()` for 10 seconds with one NPC. Verify the NPC's BORED need score is
+   at least 2× the value it would have without the event active.
+
+3. **Market event cooldown triggers automatically**: Construct a game loop harness
+   with `streetEconomySystem`, `marketEventCooldown = 0.1f`, and no active event.
+   Advance by 0.2 seconds. Verify that `streetEconomySystem.getActiveEvent()` is
+   non-null (an event was triggered).
+
+4. **No double-trigger while event active**: Trigger COLD_SNAP manually. Set
+   `marketEventCooldown = 0`. Advance by 1 second. Verify `getActiveEvent()` is still
+   COLD_SNAP (the active event was not replaced by the scheduler).
+
+5. **COUNCIL_CRACKDOWN price effect**: Call
+   `triggerMarketEvent(MarketEvent.COUNCIL_CRACKDOWN, emptyList, null)`.
+   Call `getEffectivePrice(Material.CIGARETTE, -1, false, streetEconomySystem.getActiveEvent(), 0)`.
+   Verify the returned price is `2×` the base price for CIGARETTE.
