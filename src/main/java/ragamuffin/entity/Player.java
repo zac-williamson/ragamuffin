@@ -25,6 +25,9 @@ public class Player {
     public static final float GRAVITY = 9.8f; // Gravity acceleration (m/s^2)
     public static final float JUMP_VELOCITY = 6.0f; // Initial upward velocity when jumping
 
+    /** Fix #885: Vertical speed while climbing a ladder (blocks/second). */
+    public static final float CLIMB_SPEED = 4.0f;
+
     // Dodge/roll constants
     public static final float DODGE_SPEED = 25.0f;   // Burst speed during dodge
     public static final float DODGE_DURATION = 0.3f;  // How long the dodge lasts (seconds)
@@ -482,6 +485,14 @@ public class Player {
      */
     public void jump() {
         verticalVelocity = JUMP_VELOCITY;
+    }
+
+    /**
+     * Fix #885: Cancel any in-progress fall without dealing damage.
+     * Called when the player grabs a ladder mid-air.
+     */
+    public void cancelFall() {
+        isFalling = false;
     }
 
     /**

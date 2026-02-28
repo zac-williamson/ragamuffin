@@ -446,6 +446,31 @@ public class World {
     }
 
     /**
+     * Fix #885: Check if the player's AABB overlaps any LADDER block.
+     * When true, gravity is suppressed and the player can climb vertically.
+     */
+    public boolean isOnLadder(Player player) {
+        AABB aabb = player.getAABB();
+        int minX = (int) Math.floor(aabb.getMinX());
+        int maxX = (int) Math.floor(aabb.getMaxX());
+        int minY = (int) Math.floor(aabb.getMinY());
+        int maxY = (int) Math.floor(aabb.getMaxY());
+        int minZ = (int) Math.floor(aabb.getMinZ());
+        int maxZ = (int) Math.floor(aabb.getMaxZ());
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (getBlock(x, y, z) == BlockType.LADDER) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Get the block type directly under the player's feet for footstep sounds.
      */
     public BlockType getBlockUnderPlayer(Player player) {
@@ -470,8 +495,22 @@ public class World {
      * Fix #202: Apply gravity and vertical collision independently of horizontal input.
      * Called unconditionally every frame from updatePlayingSimulation() so that gravity
      * continues to act even when a UI overlay (inventory/help/crafting) is open.
+     * Fix #885: Suppress gravity when the player is on a LADDER block so they can climb.
      */
     public void applyGravityAndVerticalCollision(Player player, float delta) {
+        // Fix #885: When on a ladder, suppress gravity entirely and cancel fall tracking.
+        // Vertical velocity is set each frame by the climb input (in updatePlayingInput)
+        // and applied here; it is then reset so the player hovers when no input is held.
+        if (isOnLadder(player)) {
+            player.cancelFall();
+            float verticalMove = player.getVerticalVelocity() * delta;
+            player.getPosition().y += verticalMove;
+            player.getAABB().setPosition(player.getPosition(), Player.WIDTH, Player.HEIGHT, Player.DEPTH);
+            // Reset so the player stops climbing if input is released next frame
+            player.resetVerticalVelocity();
+            return;
+        }
+
         // Only apply gravity if not standing on solid ground
         boolean onGround = isOnGround(player);
         if (onGround && player.getVerticalVelocity() <= 0) {

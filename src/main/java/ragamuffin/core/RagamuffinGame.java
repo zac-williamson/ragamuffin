@@ -2974,12 +2974,27 @@ public class RagamuffinGame extends ApplicationAdapter {
             tmpMoveDir.sub(tmpRight);
         }
 
-        // Jump
-        if (inputHandler.isJumpPressed()) {
-            if (world.isOnGround(player)) {
-                player.jump();
+        // Fix #885: Ladder climbing — W climbs up, S climbs down.
+        // Overrides normal jump/gravity; applyGravityAndVerticalCollision handles the rest.
+        if (world.isOnLadder(player)) {
+            if (inputHandler.isForward()) {
+                player.setVerticalVelocity(Player.CLIMB_SPEED);
+            } else if (inputHandler.isBackward()) {
+                player.setVerticalVelocity(-Player.CLIMB_SPEED);
             }
-            inputHandler.resetJump();
+            // Suppress standard jump while on a ladder (Space still works to dismount)
+            if (inputHandler.isJumpPressed()) {
+                player.setVerticalVelocity(Player.CLIMB_SPEED);
+                inputHandler.resetJump();
+            }
+        } else {
+            // Jump
+            if (inputHandler.isJumpPressed()) {
+                if (world.isOnGround(player)) {
+                    player.jump();
+                }
+                inputHandler.resetJump();
+            }
         }
 
         // Dodge/roll (Left Ctrl while moving)
