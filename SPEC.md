@@ -8322,3 +8322,90 @@ spread mechanics, disguise halving of grass roll, SquatSystem loss cascade to Sa
     (not 5 — the 2 contacts blocked their grass). Verify Newspaper has a headline
     about police tips. Verify barman holds at least 1 `POLICE_TIP` rumour. Verify no
     NPEs, game remains in PLAYING state throughout.
+
+---
+
+## Wire Up WantedSystem & NotorietySystem into the Game Loop
+
+**Goal**: Connect the two existing but entirely unwired police-response systems so that
+criminal acts have real in-game consequences — wanted stars, police pursuit escalation,
+and a persistent notoriety score that modifies police aggression.
+
+### Problem
+
+`WantedSystem` (Issue #771 — Hot Pursuit) and `NotorietySystem` (Phase 8e) are fully
+implemented classes with `update()` methods, but neither is ever instantiated in
+`RagamuffinGame.java`. As a result:
+
+- No wanted stars are ever raised when the player commits crimes
+- Police never chase the player regardless of what they do
+- The `GameHUD` has a `setNotorietySystem()` hook and full notoriety-tier rendering code
+  that is dead — it is never supplied a `NotorietySystem` instance, so the HUD notoriety
+  cluster is never drawn
+- `WantedSystem.update()` drives police NPC state transitions (CHASING, ALERTED, etc.)
+  and spawns reinforcements — this logic is completely bypassed
+- `NotorietySystem.update()` controls the helicopter sweep timer at Tier 3+ and tier-up
+  flash animations — never called
+
+### What needs doing
+
+1. **Declare fields** in `RagamuffinGame`:
+   - `private WantedSystem wantedSystem;`
+   - `private NotorietySystem notorietySystem;`
+
+2. **Instantiate in `initGame()`** after the NPC manager and crime-related systems are set up:
+   ```java
+   wantedSystem = new WantedSystem();
+   notorietySystem = new NotorietySystem();
+   gameHUD.setNotorietySystem(notorietySystem);
+   ```
+
+3. **Call `update()` every frame** inside `updatePlayingSimulation()` (and the PAUSED /
+   CINEMATIC ticks that update live systems):
+   ```java
+   wantedSystem.update(delta, player, npcManager.getNPCs(),
+       weatherSystem.getCurrentWeather(), timeSystem.isNight(),
+       /* isRaveActive */ false, achievementSystem);
+   notorietySystem.update(delta, player, achievementSystem);
+   ```
+
+4. **Hook criminal actions** — wherever the player breaks blocks, hits NPCs, or commits
+   crimes, call `wantedSystem.reportCrime(...)` and `notorietySystem.addNotoriety(...)`
+   so the systems actually accumulate state.
+
+5. **Pass `WantedSystem` to `ArrestSystem`** so arrests correctly reduce wanted stars and
+   notoriety on booking (currently `ArrestSystem.arrest()` has no reference to either).
+
+6. **Ensure the `RumourNetwork` receives `POLICE_TIP` rumours** seeded by `WantedSystem`
+   when witnesses report crimes (the link between `WantedSystem` and `RumourNetwork` is
+   currently severed because neither is wired into the game).
+
+**Unit tests**: `WantedSystem` star escalation per crime type, decay timer resets on LOS
+contact, `NotorietySystem` tier thresholds, arrest reduces both systems, notoriety HUD
+renders correct tier title.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Breaking a block raises wanted stars**: Place player adjacent to a BRICK block
+   (inside a building). Simulate a punch action. Verify `wantedSystem.getWantedStars()`
+   increases from 0 to at least 1. Verify at least one nearby NPC transitions to
+   `NPCState.ALERTED`.
+
+2. **Wanted star decay over time**: Set `wantedSystem` to 1 star manually. Remove all
+   police NPCs from NPC list. Advance 95 simulated seconds (beyond the 90-second decay
+   threshold). Verify `wantedSystem.getWantedStars()` has dropped to 0.
+
+3. **Notoriety HUD renders after wiring**: Call `gameHUD.setNotorietySystem(notorietySystem)`.
+   Set notoriety score to 250 (Tier 2). Render the HUD. Verify the notoriety section
+   draws the correct tier title "Neighbourhood Villain" in the rendered output (inspect
+   the SpriteBatch draw calls or check `notorietySystem.getTierTitle()`).
+
+4. **Arrest clears wanted stars**: Set `wantedSystem` to 3 stars. Trigger
+   `arrestSystem.arrest(player, inventory)`. Verify `wantedSystem.getWantedStars()` is 0
+   after arrest. Verify `notorietySystem.getNotoriety()` decreased by the expected
+   per-arrest penalty.
+
+5. **Rave doubles wanted escalation**: Activate a rave (set `isRaveActive = true`). Call
+   `wantedSystem.reportCrime(...)`. Verify stars escalate at double speed compared to the
+   non-rave baseline (use `wantedSystem.getRaveAlertSpeedMultiplier()` to confirm the
+   multiplier is > 1).
