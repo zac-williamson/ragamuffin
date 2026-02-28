@@ -409,6 +409,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #733: Initialize Fence trade system and inject into interaction system
         fenceSystem = new FenceSystem();
         interactionSystem.setFenceSystem(fenceSystem);
+
+        // Issue #901: Initialize Bista Village portal system
+        interactionSystem.setBistaVillageSystem(new BistaVillageSystem());
         fenceTradeUI = new ragamuffin.ui.FenceTradeUI();
 
         // Phase 6: Initialize day/night cycle and lighting
