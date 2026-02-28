@@ -107,35 +107,36 @@ class QuestTrackerUITest {
                 "MAX_VISIBLE must be at least 1 so at least one quest can be shown");
     }
 
-    // --- Objective string (Fix #519) ---
+    // --- Objective string for COLLECT quests (Fix #519) ---
+    // Using BOOKIES quest: COLLECT 3x ENERGY_DRINK (a stable COLLECT quest with count=3)
 
     @Test
     void objectiveStringForCollectQuestShowsCollectPrefix() {
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
-        // Tesco quest: COLLECT 3x TIN_OF_BEANS
-        String obj = ui.buildObjectiveString(tesco);
-        assertEquals("Collect 3x tin of beans", obj,
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies, "BOOKIES quest must exist");
+        assertEquals(Quest.ObjectiveType.COLLECT, bookies.getType(),
+                "BOOKIES quest must be COLLECT type");
+        String obj = ui.buildObjectiveString(bookies);
+        assertEquals("Collect 3x energy drink", obj,
                 "COLLECT quest objective must read 'Collect Nx material'");
     }
 
     @Test
     void objectiveStringDoesNotExceed35Chars() {
-        // The Tesco description is much longer than 35 chars, but buildObjectiveString
-        // for COLLECT quests uses the auto-generated form which is always short.
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
-        String obj = ui.buildObjectiveString(tesco);
+        // buildObjectiveString for COLLECT quests uses the auto-generated form which is always short.
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
+        String obj = ui.buildObjectiveString(bookies);
         assertTrue(obj.length() <= 35,
                 "Objective string must not exceed 35 characters to fit the tracker panel");
     }
 
     @Test
     void objectiveStringNeverReturnsFullNPCDialogue() {
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
-        String obj = ui.buildObjectiveString(tesco);
-        assertNotEquals(tesco.getDescription(), obj,
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
+        String obj = ui.buildObjectiveString(bookies);
+        assertNotEquals(bookies.getDescription(), obj,
                 "Tracker must not show the full NPC dialogue as the objective");
     }
 
@@ -144,54 +145,73 @@ class QuestTrackerUITest {
     @Test
     void objectiveStringShowsRemainingCountWhenInventoryHasSome() {
         Inventory inv = new Inventory(36);
-        inv.addItem(Material.TIN_OF_BEANS, 2);
+        inv.addItem(Material.ENERGY_DRINK, 2);
         QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
 
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
+        // BOOKIES quest: COLLECT 3x ENERGY_DRINK
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
 
-        String obj = uiWithInv.buildObjectiveString(tesco);
-        assertEquals("Collect 1x tin of beans", obj,
+        String obj = uiWithInv.buildObjectiveString(bookies);
+        assertEquals("Collect 1x energy drink", obj,
                 "Objective must show remaining count (3-2=1) when inventory is available");
     }
 
     @Test
     void objectiveStringShowsZeroRemainingWhenInventoryFull() {
         Inventory inv = new Inventory(36);
-        inv.addItem(Material.TIN_OF_BEANS, 3);
+        inv.addItem(Material.ENERGY_DRINK, 3);
         QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
 
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
 
-        String obj = uiWithInv.buildObjectiveString(tesco);
-        assertEquals("Collect 0x tin of beans", obj,
+        String obj = uiWithInv.buildObjectiveString(bookies);
+        assertEquals("Collect 0x energy drink", obj,
                 "Objective must show 0 remaining when inventory already has required count");
     }
 
     @Test
     void objectiveStringNeverNegativeWhenInventoryExceedsRequired() {
         Inventory inv = new Inventory(36);
-        inv.addItem(Material.TIN_OF_BEANS, 5);
+        inv.addItem(Material.ENERGY_DRINK, 5);
         QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
 
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
 
-        String obj = uiWithInv.buildObjectiveString(tesco);
-        assertEquals("Collect 0x tin of beans", obj,
+        String obj = uiWithInv.buildObjectiveString(bookies);
+        assertEquals("Collect 0x energy drink", obj,
                 "Objective remaining count must not go below 0");
     }
 
     @Test
     void objectiveStringFallsBackToTotalWhenInventoryNull() {
         // ui was constructed with null inventory in @BeforeEach
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
 
-        String obj = ui.buildObjectiveString(tesco);
-        assertEquals("Collect 3x tin of beans", obj,
+        String obj = ui.buildObjectiveString(bookies);
+        assertEquals("Collect 3x energy drink", obj,
                 "Without inventory, objective must fall back to showing total required count");
+    }
+
+    // --- Objective string for DELIVER quests (Issue #873) ---
+
+    @Test
+    void objectiveStringForDeliverQuestShowsDeliverPrefix() {
+        // TESCO_EXPRESS is now a DELIVER quest (Issue #873)
+        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
+        assertNotNull(tesco, "TESCO_EXPRESS quest must exist");
+        assertEquals(Quest.ObjectiveType.DELIVER, tesco.getType(),
+                "TESCO_EXPRESS must be a DELIVER quest after Issue #873");
+        String obj = ui.buildObjectiveString(tesco);
+        assertTrue(obj.startsWith("Deliver "),
+                "DELIVER quest objective must start with 'Deliver ': got '" + obj + "'");
+        assertFalse(obj.equals(tesco.getDescription()),
+                "Tracker must not show the full NPC dialogue for a DELIVER quest");
+        assertTrue(obj.length() <= 50,
+                "DELIVER objective string must be reasonably short: got '" + obj + "'");
     }
 
     // --- Progress string (Fix #511) ---
@@ -199,25 +219,25 @@ class QuestTrackerUITest {
     @Test
     void progressStringWithoutInventoryShowsRequiredOnly() {
         // ui has null inventory (set up in @BeforeEach)
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
-        // Tesco quest: 3x tin of beans
-        String progress = ui.buildProgressString(tesco);
-        assertEquals("3x tin of beans", progress,
+        // BOOKIES quest: COLLECT 3x ENERGY_DRINK
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
+        String progress = ui.buildProgressString(bookies);
+        assertEquals("3x energy drink", progress,
                 "Without inventory, progress must show 'required x material'");
     }
 
     @Test
     void progressStringWithInventoryShowsCurrentAndRequired() {
         Inventory inv = new Inventory(36);
-        inv.addItem(Material.TIN_OF_BEANS, 1);
+        inv.addItem(Material.ENERGY_DRINK, 1);
         QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
 
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
 
-        String progress = uiWithInv.buildProgressString(tesco);
-        assertEquals("1/3x tin of beans", progress,
+        String progress = uiWithInv.buildProgressString(bookies);
+        assertEquals("1/3x energy drink", progress,
                 "With inventory, progress must show 'current/required x material'");
     }
 
@@ -226,11 +246,11 @@ class QuestTrackerUITest {
         Inventory inv = new Inventory(36);
         QuestTrackerUI uiWithInv = new QuestTrackerUI(registry, inv);
 
-        Quest tesco = registry.getQuest(LandmarkType.TESCO_EXPRESS);
-        assertNotNull(tesco);
+        Quest bookies = registry.getQuest(LandmarkType.BOOKIES);
+        assertNotNull(bookies);
 
-        String progress = uiWithInv.buildProgressString(tesco);
-        assertEquals("0/3x tin of beans", progress,
+        String progress = uiWithInv.buildProgressString(bookies);
+        assertEquals("0/3x energy drink", progress,
                 "With empty inventory, current count must be 0");
     }
 }
