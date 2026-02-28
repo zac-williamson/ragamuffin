@@ -561,6 +561,22 @@ public class NPC {
     }
 
     /**
+     * Returns a unique shop identifier for this shopkeeper based on the linked shop.
+     * For a shopkeeper linked to GREGGS this returns "SHOPKEEPER_GREGGS",
+     * for one linked to OFF_LICENCE it returns "SHOPKEEPER_OFF_LICENCE", etc.
+     * Returns null if this NPC is not linked to a shop (no buildingType set).
+     *
+     * Issue #874: Shopkeepers have unique identification that corresponds to
+     * which shop they are linked to.
+     */
+    public String getShopId() {
+        if (buildingType == null) {
+            return null;
+        }
+        return "SHOPKEEPER_" + buildingType.name();
+    }
+
+    /**
      * Returns true when the shop menu is currently open for this shopkeeper
      * (the player has pressed E once and is now being shown available items).
      */
