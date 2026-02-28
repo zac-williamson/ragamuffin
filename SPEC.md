@@ -10685,3 +10685,59 @@ prop in the pub get no interaction prompt and cannot play it.
 5. **No match loses the coin**: Seed `FruitMachine` with a `Random` that produces
    `[0, 1, 2]` (no match). Give the player 1 COIN. Simulate pressing **E**. Verify
    the player's COIN count is 0.
+
+---
+
+## Wire CriminalRecordUI into the render loop
+
+**Goal**: Make the Criminal Record overlay actually visible when the player presses R.
+
+`CriminalRecordUI` is fully implemented — it has `show()`, `hide()`, `toggle()`, and
+`render(SpriteBatch, ShapeRenderer, BitmapFont, int, int)` — and is already instantiated
+in `RagamuffinGame.initGame()` and toggled via the R key in the input handler.
+However, its `render()` method is **never called** anywhere in the game loop, so pressing
+R has no visible effect: the overlay is internally marked visible but never drawn to screen.
+
+**Changes required** (in `RagamuffinGame.java` only):
+
+1. **Add a render call** in the UI render section (the block that renders `inventoryUI`,
+   `helpUI`, `craftingUI`, `achievementsUI`, `skillsUI`, `questLogUI`, `jobCentreUI`, etc.)
+   immediately after the `skillsUI` render block:
+
+   ```java
+   // Issue #659: Render criminal record overlay if visible
+   if (criminalRecordUI.isVisible()) {
+       criminalRecordUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+   }
+   ```
+
+2. **ESC closes the overlay** — update the ESC-key handling block (where `inventoryUI.hide()`,
+   `craftingUI.hide()`, etc. are called) to also call `criminalRecordUI.hide()` so ESC
+   dismisses the overlay consistently with every other UI panel.
+
+3. **Suppress other HUD elements while open** — in the condition that suppresses the hotbar
+   and clock while overlays are open (the `!questLogUI.isVisible()` guard), add
+   `|| criminalRecordUI.isVisible()` so the hotbar and clock do not render on top of the
+   record screen.
+
+No new classes, no new assets, no behaviour changes — this is purely a missing render call.
+
+### Integration tests — implement these exact scenarios
+
+1. **Criminal record overlay renders when R is pressed**: Initialise `RagamuffinGame`
+   headless. Set game state to `PLAYING`. Simulate pressing R. Verify
+   `criminalRecordUI.isVisible()` returns `true`. Call the render path (or verify the
+   render method is invoked) — confirm no exception is thrown and the overlay is drawn.
+
+2. **Criminal record overlay hides on second R press**: With the overlay visible (from
+   test 1), simulate pressing R again. Verify `criminalRecordUI.isVisible()` returns
+   `false`.
+
+3. **ESC closes the criminal record overlay**: Show the overlay. Simulate pressing ESC.
+   Verify `criminalRecordUI.isVisible()` returns `false` and game state remains `PLAYING`
+   (ESC should close the overlay, not pause the game, when an overlay is open).
+
+4. **Criminal record reflects committed crimes**: Record two crimes on the player's
+   `CriminalRecord` (e.g. `BLOCKS_DESTROYED` and `NPCS_KILLED`). Open the overlay.
+   Verify the rendered output (or the data fed to the renderer) contains non-zero counts
+   for those crime types.
