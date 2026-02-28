@@ -242,6 +242,26 @@ public class Car {
         applyHeadingToVelocity();
     }
 
+    /**
+     * How far (blocks) to push the car back on a block collision so it no
+     * longer overlaps the solid voxel.  This gives the visual "bounce".
+     */
+    public static final float BOUNCE_PUSHBACK = 0.3f;
+
+    /**
+     * Reverse direction and nudge the car back along the new (reversed)
+     * heading so that it no longer overlaps the block it just hit.
+     * This is the "bounce" response for block collisions.
+     */
+    public void bounceOffBlock() {
+        reverseDirection();
+        // Push the car a little in the new direction so it clears the block
+        double rad = Math.toRadians(heading);
+        position.x += (float) Math.sin(rad) * BOUNCE_PUSHBACK;
+        position.z += (float) Math.cos(rad) * BOUNCE_PUSHBACK;
+        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+    }
+
     // ── Player driving ────────────────────────────────────────────────────────
 
     /**

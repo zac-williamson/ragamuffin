@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Vector3;
 import ragamuffin.ai.CarManager;
 import ragamuffin.entity.Car;
 import ragamuffin.entity.Player;
+import ragamuffin.world.World;
 
 /**
  * Issue #773 — Car interaction and driving mechanics.
@@ -33,9 +34,15 @@ public class CarDrivingSystem {
     private String lastMessage = null;
 
     private final CarManager carManager;
+    private World world;
 
     public CarDrivingSystem(CarManager carManager) {
         this.carManager = carManager;
+    }
+
+    /** Provide the world reference for block collision checks when driving. */
+    public void setWorld(World world) {
+        this.world = world;
     }
 
     // ── Entry ─────────────────────────────────────────────────────────────────
@@ -115,6 +122,11 @@ public class CarDrivingSystem {
         }
 
         currentCar.updatePlayerDriven(delta, accelerate, braking, turnLeft, turnRight);
+
+        // Issue #804: bounce the player-driven car off solid blocks
+        if (world != null && world.checkAABBCollision(currentCar.getAABB())) {
+            currentCar.bounceOffBlock();
+        }
 
         // Snap the player to the car's position (seat position — slightly above car base)
         Vector3 carPos = currentCar.getPosition();
