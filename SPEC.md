@@ -8507,3 +8507,73 @@ level updated via `setNoiseLevel`.
    Advance 3.0 simulated seconds via `noiseSystem.update()` with `isMoving = false`.
    Verify `noiseSystem.getNoiseLevel()` has returned to within 0.1 of
    `NoiseSystem.NOISE_STILL` (0.05).
+
+---
+
+## Wire StreetSkillSystem & SkillsUI into the Game Loop
+
+**Goal**: The `StreetSkillSystem` (Issue #787) and its companion `SkillsUI` exist as
+complete, fully-featured dead code. The system is never instantiated in
+`RagamuffinGame`, its `update()` is never called, no XP is ever awarded for any
+player action, and the K-key Skills screen is inaccessible to the player. All seven
+skills (BRAWLING, GRAFTING, TRADING, STEALTH, INFLUENCE, SURVIVAL, BUREAUCRACY) and
+their tier perks are completely inert.
+
+### What needs wiring
+
+1. **Instantiate** `StreetSkillSystem` and `SkillsUI` in `RagamuffinGame.initGame()`.
+   Inject optional dependencies: `achievementSystem`, `raveSystem` (if present),
+   `stallSystem` (if present), `factionSystem` (if present), `wantedSystem`.
+
+2. **Call `update(delta)`** on `StreetSkillSystem` in the PLAYING game loop
+   (`updatePlayingSimulation`) to advance the RALLY timer and follower management.
+
+3. **Award XP at every relevant action site** in `RagamuffinGame` (and in system
+   classes that already receive a `StreetSkillSystem` reference):
+   - Punch lands on NPC → `award(BRAWLING, XP_PUNCH_HIT)`
+   - NPC defeated → `award(BRAWLING, XP_FIGHT_WIN)`
+   - Player takes damage → `award(BRAWLING, XP_TAKE_DAMAGE)`
+   - Block broken → `award(GRAFTING, XP_BLOCK_BREAK)`
+   - Item collected from drop → `award(GRAFTING, XP_COLLECT_RESOURCE)`
+   - Talk to NPC → `award(INFLUENCE, XP_TALK_NPC)`
+   - Player crouches and loses police pursuit → `award(STEALTH, XP_CROUCH_ESCAPE)`
+   - Police pursuit lost → `award(STEALTH, XP_EVADE_POLICE)`
+   - In-game day survives → `award(SURVIVAL, XP_DAY_SURVIVED)`
+
+4. **K-key toggle**: Add `isSkillsPressed()` / `resetSkills()` to `InputHandler`
+   (key code `com.badlogic.gdx.Input.Keys.K`). In the PLAYING input block, toggle
+   `skillsUI.isOpen()` on K press (close other panels first, same pattern as
+   inventory/crafting).
+
+5. **Render `SkillsUI`** in the 2D HUD pass when `skillsUI.isOpen()` is true.
+
+6. **Apply active perks** at decision points already present in the game loop:
+   - BRAWLING Apprentice: multiply punch damage by 1.1 when `getTier(BRAWLING) ≥ APPRENTICE`
+   - GRAFTING Expert: reduce soft block hit threshold from 5 → 3 when `getTier(GRAFTING) ≥ EXPERT`
+   - SURVIVAL Apprentice: multiply hunger drain by 0.8 when `getTier(SURVIVAL) ≥ APPRENTICE`
+   - STEALTH Apprentice: halve noise while crouching (pass into `NoiseSystem`)
+
+### Integration tests — implement these exact scenarios
+
+1. **XP awarded on block break**: Create `StreetSkillSystem`. Call
+   `system.award(StreetSkillSystem.Skill.GRAFTING, StreetSkillSystem.XP_BLOCK_BREAK)` 50 times.
+   Verify `system.getXP(Skill.GRAFTING)` equals `50 * XP_BLOCK_BREAK`. Verify
+   `system.getTier(Skill.GRAFTING)` is `Tier.APPRENTICE` (threshold is 100 XP, so 50
+   awards × 1 XP = 50; use `XP_BLOCK_BREAK = 1`, confirm tier is still NOVICE at 50
+   XP; award 50 more and confirm tier advances to APPRENTICE).
+
+2. **Tier-up fires achievement**: Inject a mock `AchievementSystem`. Award enough XP
+   to cross the APPRENTICE threshold (100 XP) in BRAWLING. Verify
+   `achievementSystem.unlock(AchievementType.STREET_LEGEND)` is called once the
+   player reaches the LEGEND tier (1500 XP).
+
+3. **BRAWLING Apprentice perk increases punch damage**: Set up a player and an NPC.
+   Award BRAWLING XP until tier is `APPRENTICE`. Read the perk multiplier via
+   `system.getPunchDamageMultiplier()`. Verify the value is `1.1f` (not `1.0f`).
+
+4. **GRAFTING Expert reduces soft block hits**: Award GRAFTING XP until tier is
+   `EXPERT`. Verify `system.getSoftBlockHitsRequired()` returns `3` (not `5`).
+
+5. **SkillsUI opens on K key**: In a headless integration test, instantiate
+   `SkillsUI` and confirm `isOpen()` is `false` by default. Call `open()`. Verify
+   `isOpen()` returns `true`. Call `close()`. Verify `isOpen()` returns `false`.
