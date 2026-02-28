@@ -216,7 +216,16 @@ public enum NPCType {
      * Generates random neighbour events (compliment, complaint, gift, rivalry)
      * every 5 in-game minutes while the player is on site.
      */
-    PLOT_NEIGHBOUR(10f, 0f, 0f, false);
+    PLOT_NEIGHBOUR(10f, 0f, 0f, false),
+
+    // ── Issue #916: Late-Night Kebab Van ───────────────────────────────────────
+
+    /**
+     * Van Owner — the kebab van operator standing at the serving hatch.
+     * Spawns near the PUB between 22:00–02:00. Passive; serves food to queuing NPCs
+     * and the player. Does not move; despawns with the van.
+     */
+    VAN_OWNER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

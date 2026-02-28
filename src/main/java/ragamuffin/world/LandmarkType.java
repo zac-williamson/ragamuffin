@@ -89,7 +89,15 @@ public enum LandmarkType {
      * Accessible only via the craftable BISTA_VILLAGE_PORTAL item.
      * A return portal stone spawns at the village entrance on arrival.
      */
-    BISTA_VILLAGE;
+    BISTA_VILLAGE,
+
+    // ── Issue #916: Late-Night Kebab Van ─────────────────────────────────────
+    /**
+     * The late-night kebab van — a mobile food vendor that spawns near the pub
+     * between 22:00 and 02:00. Not a permanent landmark; used as a position tag
+     * for spawn logic and police patrol awareness.
+     */
+    KEBAB_VAN;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -142,6 +150,7 @@ public enum LandmarkType {
             case FOOD_BANK:         return "Northfield Food Bank";
             case THE_PIT:           return "The Pit";
             case BISTA_VILLAGE:     return "Bista Village";
+            case KEBAB_VAN:          return "Ali's Kebab Van";
             default:                return null; // No sign for parks, houses, etc.
         }
     }

@@ -807,6 +807,29 @@ public enum AchievementType {
         "Keep Britain Tidy",
         "Received 3 compliments from plot neighbours without getting a complaint. Diplomatic. Somehow.",
         3
+    ),
+
+    // ── Issue #916: Late-Night Kebab Van ──────────────────────────────────────
+
+    DIRTY_KEBAB(
+        "After Midnight",
+        "Ate a kebab from the late-night van. It's mostly meat. Mostly.",
+        1
+    ),
+    FRONT_OF_THE_QUEUE(
+        "Queue Jumper",
+        "Queue-jumped three times at the kebab van. It's quicker, not nicer.",
+        3
+    ),
+    DISTRACTION_TECHNIQUE(
+        "Tin of Beans Stratagem",
+        "Used a tin of beans to steal a kebab. Van owner never saw it coming.",
+        1
+    ),
+    LAST_ORDERS(
+        "Last Orders",
+        "Bought from the kebab van during the last-orders discount window. Savvy.",
+        1
     );
 
     private final String name;
