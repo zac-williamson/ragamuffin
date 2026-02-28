@@ -291,6 +291,11 @@ public class GameHUD {
         if (disguiseSystem != null && disguiseSystem.isDisguised()) {
             renderCoverIntegrityBar(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
+
+        // Render triangulation bar when pirate radio is broadcasting (Issue #783)
+        if (pirateRadioSystem != null && pirateRadioSystem.isActive()) {
+            renderTriangulationBar(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
     }
 
     private void renderStatusBars(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer, BitmapFont font,

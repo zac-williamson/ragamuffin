@@ -30,6 +30,7 @@ public class InputHandler implements InputProcessor {
     private boolean pickpocketPressed; // F key for pickpocket (Issue #709)
     private boolean skillsPressed; // K key for skills screen (Issue #809)
     private boolean tagPressed; // T key for graffiti spray (Issue #781)
+    private boolean broadcastPressed; // B key for pirate radio broadcast toggle (Issue #783)
     private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
     private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
     private float mouseDeltaX, mouseDeltaY;
@@ -83,6 +84,7 @@ public class InputHandler implements InputProcessor {
     public boolean isPickpocketPressed() { return pickpocketPressed; }
     public boolean isSkillsPressed() { return skillsPressed; }
     public boolean isTagPressed() { return tagPressed; }
+    public boolean isBroadcastPressed() { return broadcastPressed; }
     public int getHotbarSlotPressed() { return hotbarSlotPressed; }
     public int getCraftingSlotPressed() { return craftingSlotPressed; }
 
@@ -119,6 +121,7 @@ public class InputHandler implements InputProcessor {
     public void resetPickpocket() { pickpocketPressed = false; }
     public void resetSkills() { skillsPressed = false; }
     public void resetTag() { tagPressed = false; }
+    public void resetBroadcast() { broadcastPressed = false; }
     public void resetHotbarSlot() { hotbarSlotPressed = -1; }
     public void resetCraftingSlot() { craftingSlotPressed = -1; }
 
@@ -163,6 +166,8 @@ public class InputHandler implements InputProcessor {
             skillsPressed = true;
         } else if (keycode == Input.Keys.T) {
             tagPressed = true;
+        } else if (keycode == Input.Keys.B) {
+            broadcastPressed = true;
         } else if (keycode == Input.Keys.ENTER) {
             enterPressed = true;
         } else if (keycode == Input.Keys.UP) {
