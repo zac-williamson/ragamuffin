@@ -165,7 +165,20 @@ public enum LandmarkType {
      * Litter props spawn every 15 in-game minutes (cap 8); deposit in LITTER_BIN_PROP
      * for −1 Notoriety per piece. Street brawl: 15%/hour chance 22:00–01:00.
      */
-    FRIED_CHICKEN_SHOP;
+    FRIED_CHICKEN_SHOP,
+
+    // ── Issue #954: Northfield Bingo Hall ─────────────────────────────────────
+
+    /**
+     * Lucky Stars Bingo — a single-storey brick bingo hall on the high street.
+     * Sessions run Tuesdays and Thursdays 14:00–17:00 (doors open 13:30).
+     * Staffed by the CALLER NPC at the podium. Entry costs 2 COIN.
+     * Interior features BENCH_PROP seating, BINGO_CALLER_PODIUM_PROP, PRIZE_BOARD_PROP,
+     * and a REFRESHMENT_COUNTER_PROP selling TEA_CUP and BISCUIT (1 COIN each).
+     * 4–8 PENSIONER NPCs attend each session. Rigged card mechanic available.
+     * Warm shelter: +5 Warmth/min while seated.
+     */
+    BINGO_HALL;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -226,6 +239,7 @@ public enum LandmarkType {
             case BARBER_SHOP:           return "Ali's Barber Shop";
             case HAND_CAR_WASH:         return "Sparkle Hand Car Wash";
             case FRIED_CHICKEN_SHOP:    return "Clucky's Fried Chicken";
+            case BINGO_HALL:            return "Lucky Stars Bingo";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

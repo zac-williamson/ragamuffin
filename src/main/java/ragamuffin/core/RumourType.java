@@ -88,5 +88,12 @@ public enum RumourType {
     /** "There's a scrap kicking off outside Clucky's — someone's getting battered"
      * — seeded by FriedChickenShopSystem when 2–3 YOUTH_GANG NPCs enter FIGHTING_EACH_OTHER
      * state outside the shop. Triggers NOISE_EVENT and police patrol awareness. */
-    FIGHT_NEARBY;
+    FIGHT_NEARBY,
+
+    // ── Issue #954: Northfield Bingo Hall ─────────────────────────────────────
+
+    /** "Someone just had a full house at Lucky Stars — walked away with fifteen coin!"
+     * — seeded by BingoSystem when the player wins a FULL HOUSE.
+     * Spreads via nearby NPCs; draws curious PUBLIC NPCs toward the bingo hall. */
+    WINNER;
 }

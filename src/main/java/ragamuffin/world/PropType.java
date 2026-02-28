@@ -461,7 +461,37 @@ public enum PropType {
      * achievement on first successful sneak-in.
      * Destroyed by 5 punches; yields SCRAP_METAL.
      */
-    FIRE_EXIT_PROP(0.20f, 2.10f, 1.00f, 5, Material.SCRAP_METAL);
+    FIRE_EXIT_PROP(0.20f, 2.10f, 1.00f, 5, Material.SCRAP_METAL),
+
+    // ── Issue #954: Northfield Bingo Hall ─────────────────────────────────────
+
+    /**
+     * Bingo caller's podium — a wooden lectern at the front of the bingo hall.
+     * The CALLER NPC stands here and announces numbers during sessions.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    BINGO_CALLER_PODIUM_PROP(0.60f, 1.20f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * Bingo prize board — a wall-mounted board showing the current top prize.
+     * TRADING Tier 2 perk: press E to peek at the next 3 called numbers.
+     * Destroyed by 3 punches; yields nothing.
+     */
+    PRIZE_BOARD_PROP(0.10f, 1.00f, 0.80f, 3, null),
+
+    /**
+     * Bingo hall refreshment counter — sells TEA_CUP and BISCUIT at 1 COIN each.
+     * Press E while within 2 blocks to buy refreshments during a session.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    REFRESHMENT_COUNTER_PROP(1.20f, 1.00f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * Bingo trophy prop — placed in the player's nearest squat on FULL HOUSE win.
+     * A small golden cup with "LUCKY STARS" engraved on the plinth.
+     * Destroyed by 3 punches; yields BINGO_TROPHY material.
+     */
+    BINGO_TROPHY_PROP(0.30f, 0.40f, 0.30f, 3, Material.BINGO_TROPHY);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
