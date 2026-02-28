@@ -161,4 +161,28 @@ public class WarmthSystem {
         player.restoreWarmth(FLASK_OF_TEA_WARMTH);
         return true;
     }
+
+    /**
+     * Issue #940: Apply warmth from an external heat source (e.g. a burning bin) to
+     * the player if they are within the campfire warmth radius of the source.
+     *
+     * <p>Uses the same rate and radius as a campfire
+     * ({@link #CAMPFIRE_WARMTH_RATE}, {@link #CAMPFIRE_WARMTH_RADIUS}).
+     *
+     * @param player     the player to warm
+     * @param sourcePos  world position of the heat source
+     * @param playerPos  world position of the player
+     * @param delta      seconds since last frame
+     * @return true if warmth was applied (player was within radius)
+     */
+    public boolean applyExternalWarmthSource(Player player,
+                                              com.badlogic.gdx.math.Vector3 sourcePos,
+                                              com.badlogic.gdx.math.Vector3 playerPos,
+                                              float delta) {
+        if (sourcePos.dst(playerPos) <= CAMPFIRE_WARMTH_RADIUS) {
+            player.restoreWarmth(CAMPFIRE_WARMTH_RATE * delta);
+            return true;
+        }
+        return false;
+    }
 }

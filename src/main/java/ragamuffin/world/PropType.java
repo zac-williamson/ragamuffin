@@ -380,7 +380,32 @@ public enum PropType {
      * Frost weather damages the loft (−10 condition per frost period via WeatherSystem).
      * Destroyed by 8 punches; yields WOOD.
      */
-    PIGEON_LOFT(1.50f, 1.20f, 1.00f, 8, Material.WOOD);
+    PIGEON_LOFT(1.50f, 1.20f, 1.00f, 8, Material.WOOD),
+
+    // ── Issue #940: Wheelie Bin Fire System ──────────────────────────────────
+
+    /**
+     * A dark grey wheelie bin prop. Solid (1×1×1.5 blocks). Found outside terraced
+     * houses and in clusters at the industrial estate and off-licence. Can be ignited
+     * with a PETROL_CAN or by a YOUTH_GANG NPC at night.
+     * Destroyed by 8 punches (HARD material); yields SCRAP_METAL.
+     */
+    WHEELIE_BIN(1.00f, 1.50f, 1.00f, 8, Material.SCRAP_METAL),
+
+    /**
+     * A burning wheelie bin. Replaces WHEELIE_BIN when ignited. Non-solid (fire
+     * hazard cosmetic only). Emits flickering orange point light and smoke particles.
+     * Provides campfire-level warmth within 5 blocks. Cannot be punched; interact
+     * with FIRE_EXTINGUISHER (E) to extinguish early.
+     */
+    BURNING_BIN(1.00f, 1.50f, 1.00f, 0, null),
+
+    /**
+     * A burnt-out wheelie bin husk. Replaces BURNING_BIN after extinguishing or
+     * natural burnout. Cosmetic ruin prop; no light. Destroyed by 1 punch; drops
+     * 1 SCRAP_METAL.
+     */
+    BURNT_BIN(1.00f, 1.50f, 1.00f, 1, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
