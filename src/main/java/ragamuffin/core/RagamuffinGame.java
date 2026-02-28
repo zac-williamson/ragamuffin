@@ -2,6 +2,7 @@ package ragamuffin.core;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.PerspectiveCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -169,6 +170,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #803: Wanted & Notoriety systems — police pursuit and persistent criminal reputation
     private WantedSystem wantedSystem;
     private NotorietySystem notorietySystem;
+    // Issue #816: Neighbourhood Watch System — community uprising in response to visible crimes
+    private NeighbourhoodWatchSystem neighbourhoodWatchSystem;
     // Issue #803: Rumour network — NPC gossip spreading police tips on witnessed crimes
     private RumourNetwork rumourNetwork;
     // Issue #811: Faction system — three-faction turf-war engine (Marchetti Crew, Street Lads, The Council)
@@ -442,6 +445,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         wantedSystem = new WantedSystem();
         notorietySystem = new NotorietySystem();
         gameHUD.setNotorietySystem(notorietySystem);
+        // Issue #816: Initialize neighbourhood watch system — community uprising in response to player crimes
+        neighbourhoodWatchSystem = new NeighbourhoodWatchSystem();
+        gameHUD.setNeighbourhoodWatchSystem(neighbourhoodWatchSystem);
         // Issue #803: Initialize rumour network for spreading police tips and NPC gossip
         rumourNetwork = new RumourNetwork(new java.util.Random());
         // Issue #811: Initialize faction system — three-faction turf-war engine
@@ -2147,6 +2153,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         // and tier-up flash animations.
         notorietySystem.update(delta, player, type -> achievementSystem.unlock(type));
 
+        // Issue #816: Update neighbourhood watch system — decays anger, manages tier escalation
+        {
+            Weather w = weatherSystem.getCurrentWeather();
+            neighbourhoodWatchSystem.update(delta,
+                w == Weather.RAIN || w == Weather.DRIZZLE || w == Weather.THUNDERSTORM,
+                w == Weather.FOG,
+                type -> achievementSystem.unlock(type));
+        }
+
         // Issue #803: Update rumour network — spreads NPC gossip and police tips.
         rumourNetwork.update(npcManager.getNPCs(), delta);
 
@@ -2231,6 +2246,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             warmthSystem.update(player, weatherSystem.getCurrentWeather(), world,
                     delta, nearCampfire, inventory);
         }
+
+        // Issue #816: G key — Grovel mechanic (hold G to reduce Watch Anger)
+        if (Gdx.input.isKeyPressed(Keys.G) && state == GameState.PLAYING && !player.isDead()) {
+            boolean done = neighbourhoodWatchSystem.grovelling(delta, type -> achievementSystem.unlock(type));
+            if (done) tooltipSystem.showMessage("You grovel apologetically.", 2.0f);
+        }
+        gameHUD.setGrovelProgress(neighbourhoodWatchSystem.getGroveltProgress());
+        // Issue #816: Pass Watch Anger and tier to HUD for display
+        gameHUD.setWatchAnger(neighbourhoodWatchSystem.getWatchAnger());
+        gameHUD.setWatchTier(neighbourhoodWatchSystem.getCurrentTier());
 
         // Issue #171: Update particle system
         particleSystem.update(delta);
@@ -2541,8 +2566,15 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Issue #659: Criminal record — record NPC punch by type
             if (targetNPC.getType() == ragamuffin.entity.NPCType.PENSIONER) {
                 player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.PENSIONERS_PUNCHED);
+                // Issue #816: Punching a civilian increases Watch Anger
+                neighbourhoodWatchSystem.onPlayerPunchedCivilian();
             } else if (targetNPC.getType() == ragamuffin.entity.NPCType.PUBLIC) {
                 player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.MEMBERS_OF_PUBLIC_PUNCHED);
+                // Issue #816: Punching a civilian increases Watch Anger
+                neighbourhoodWatchSystem.onPlayerPunchedCivilian();
+            } else if (targetNPC.getType() == ragamuffin.entity.NPCType.WATCH_MEMBER) {
+                // Issue #816: Punching a Watch Member increases Watch Anger even more
+                neighbourhoodWatchSystem.onPlayerPunchedWatchMember();
             }
             // Issue #659: Record NPC kill if the punch was lethal
             if (npcWasAlive && !targetNPC.isAlive()) {
@@ -2667,6 +2699,26 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Issue #813: Deregister campfire when broken
                 if (blockType == BlockType.CAMPFIRE) {
                     campfireSystem.removeCampfire(new Vector3(x, y, z));
+                }
+
+                // Issue #816: Exterior wall smash — BRICK, GLASS, or STONE belonging to a building
+                if ((blockType == BlockType.BRICK || blockType == BlockType.GLASS || blockType == BlockType.STONE)
+                        && world.getLandmarkAt(x, y, z) != null) {
+                    neighbourhoodWatchSystem.onPlayerSmashedExteriorWall();
+                }
+
+                // Issue #816: Visible crime — breaking blocks in a public landmark area
+                if (world.getLandmarkAt(x, y, z) != null) {
+                    // Count nearby NPCs as witnesses
+                    int witnessCount = 0;
+                    for (ragamuffin.entity.NPC npc : npcManager.getNPCs()) {
+                        if (npc.isAlive() && npc.getPosition().dst(player.getPosition()) < 20f) {
+                            witnessCount++;
+                        }
+                    }
+                    if (witnessCount >= 2) {
+                        neighbourhoodWatchSystem.onVisibleCrime();
+                    }
                 }
 
                 // Issue #659: Track block destruction in criminal record
@@ -3679,7 +3731,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         arrestSystem.setRespawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
         greggsRaidSystem = new GreggsRaidSystem();
         gangTerritorySystem.reset();
+        // Issue #816: Reset neighbourhood watch system so anger and tier don't carry over
+        neighbourhoodWatchSystem = new NeighbourhoodWatchSystem();
         gameHUD = new GameHUD(player);
+        gameHUD.setNeighbourhoodWatchSystem(neighbourhoodWatchSystem);
         openingSequence = new OpeningSequence();
         speechLogUI = new SpeechLogUI();
         deathMessage = null;
