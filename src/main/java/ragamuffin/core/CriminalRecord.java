@@ -57,7 +57,13 @@ public class CriminalRecord {
          * Issue #918: Recorded when the player boards The Number 47 without paying
          * the fare and without a valid BUS_PASS.
          */
-        FARE_EVASION("Fare evasion");
+        FARE_EVASION("Fare evasion"),
+
+        /**
+         * Issue #920: Recorded when the player is caught by a police raid during
+         * the pub lock-in after-hours session and fails to hide behind the bar counter.
+         */
+        DRUNK_AND_DISORDERLY("Drunk and disorderly charges");
 
         private final String displayName;
 

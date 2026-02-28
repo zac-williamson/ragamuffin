@@ -178,6 +178,17 @@ public class NPC {
         this.speechTimer = duration;
     }
 
+    /**
+     * Convenience wrapper: make this NPC say something for the given duration.
+     * Equivalent to {@link #setSpeechText(String, float)}.
+     *
+     * @param text     the speech text to display
+     * @param duration seconds the speech bubble stays visible
+     */
+    public void say(String text, float duration) {
+        setSpeechText(text, duration);
+    }
+
     public boolean isSpeaking() {
         return speechTimer > 0 && speechText != null;
     }

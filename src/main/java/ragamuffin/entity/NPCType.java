@@ -250,7 +250,17 @@ public enum NPCType {
      * and paths to the nearest bus stop. Boards the bus automatically; despawns
      * when the bus departs the stop.
      */
-    COMMUTER(20f, 0f, 0f, false);
+    COMMUTER(20f, 0f, 0f, false),
+
+    // ── Issue #920: Pub Lock-In ─────────────────────────────────────────────
+
+    /**
+     * Landlord — Terry, the landlord of The Ragamuffin Arms.
+     * Locks the front door at 23:00 for an illegal after-hours session with up to 8 guests.
+     * Sells drinks at half price; cycles through 10 flavourful speech lines.
+     * Remembers if the player grassed and permanently ejects them.
+     */
+    LANDLORD(30f, 5f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
