@@ -196,6 +196,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     private BootSaleSystem bootSaleSystem;
     private ragamuffin.ui.BootSaleUI bootSaleUI;
 
+    // Issue #832: Property system — slumlord economy (buildings, decay, passive income, council rates)
+    private PropertySystem propertySystem;
+
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
     // Issue #773: Car driving system — lets player enter and drive cars
@@ -524,6 +527,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             bootSaleSystem.setVenuePosition(
                     bootSaleLandmark.getPosition().x, 0, bootSaleLandmark.getPosition().z);
         }
+
+        // Issue #832: Initialize property system — slumlord economy
+        propertySystem = new PropertySystem(factionSystem, achievementSystem, rumourNetwork);
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2281,6 +2287,21 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #832: Fire PropertySystem daily tick — decay, passive income, council rates
+        if (propertySystem != null) {
+            java.util.List<String> propDayMsgs = propertySystem.onDayTick(
+                    timeSystem.getDayCount(), inventory,
+                    factionSystem.getTurfMap(), npcManager.getNPCs());
+            for (String msg : propDayMsgs) {
+                tooltipSystem.showMessage(msg, 3.0f);
+            }
+            // Poll per-frame tooltip (e.g. cap warning)
+            String propMsg = propertySystem.pollTooltip();
+            if (propMsg != null && !propMsg.isEmpty()) {
+                tooltipSystem.showMessage(propMsg, 3.0f);
+            }
+        }
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -2696,6 +2717,12 @@ public class RagamuffinGame extends ApplicationAdapter {
                 Material looted = disguiseSystem.lootDisguise(targetNPC, inventory);
                 if (looted != null) {
                     tooltipSystem.showMessage("You take the " + looted.getDisplayName() + ".", 2.5f);
+                }
+                // Issue #832: Notify PropertySystem when a THUG takeover attacker is defeated
+                if (propertySystem != null && targetNPC.getType() == ragamuffin.entity.NPCType.THUG) {
+                    propertySystem.onThugsDefeated(
+                            (int) targetNPC.getPosition().x,
+                            (int) targetNPC.getPosition().z);
                 }
             }
             // Issue #818: Notify disguise system of visible crime (punching NPCs)
@@ -3198,6 +3225,30 @@ public class RagamuffinGame extends ApplicationAdapter {
                     return;
                 }
             }
+            // Issue #832: Estate agent interaction — buy a building when talking to ESTATE_AGENT NPC
+            if (propertySystem != null && targetNPC.getType() == ragamuffin.entity.NPCType.ESTATE_AGENT) {
+                if (!propertySystem.isEstateAgentOpen(timeSystem)) {
+                    tooltipSystem.showMessage("The estate agent is closed. Come back on a weekday between 9am and 5pm.", 3.0f);
+                    return;
+                }
+                // Find the nearest landmark to purchase
+                ragamuffin.world.Landmark estateAgentLandmark = world.getLandmark(ragamuffin.world.LandmarkType.ESTATE_AGENT);
+                ragamuffin.world.LandmarkType targetLandmarkType = ragamuffin.world.LandmarkType.TERRACED_HOUSE;
+                int buildingX = (int) player.getPosition().x;
+                int buildingZ = (int) player.getPosition().z;
+                if (estateAgentLandmark != null) {
+                    buildingX = (int) estateAgentLandmark.getPosition().x;
+                    buildingZ = (int) estateAgentLandmark.getPosition().z;
+                    targetLandmarkType = ragamuffin.world.LandmarkType.ESTATE_AGENT;
+                }
+                ragamuffin.core.Faction owningFaction = landmarkToFaction(targetLandmarkType);
+                String purchaseMsg = propertySystem.purchaseProperty(
+                        targetLandmarkType, buildingX, buildingZ,
+                        inventory, npcManager.getNPCs(), owningFaction);
+                tooltipSystem.showMessage(purchaseMsg, 3.0f);
+                return;
+            }
+
             // Interact with the NPC — pass inventory, player and all NPCs so Fence
             // interactions work correctly (Issue #733).
             String dialogue = interactionSystem.interactWithNPC(targetNPC, inventory, player,
@@ -3237,6 +3288,26 @@ public class RagamuffinGame extends ApplicationAdapter {
                             type -> achievementSystem.unlock(type));
                 }
                 return;
+            }
+        }
+
+        // Issue #832: Repair an owned building — press E while holding BRICK, WOOD, or PAINT_TIN near a property
+        if (propertySystem != null) {
+            int playerX = (int) player.getPosition().x;
+            int playerZ = (int) player.getPosition().z;
+            if (propertySystem.ownsAt(playerX, playerZ)) {
+                int selectedSlot = hotbarUI.getSelectedSlot();
+                ragamuffin.building.Material selectedMaterial = inventory.getItemInSlot(selectedSlot);
+                boolean hasRepairMaterial = selectedMaterial == ragamuffin.building.Material.BRICK
+                        || selectedMaterial == ragamuffin.building.Material.WOOD
+                        || selectedMaterial == ragamuffin.building.Material.PAINT_TIN;
+                if (hasRepairMaterial) {
+                    String repairMsg = propertySystem.repairProperty(playerX, playerZ, inventory);
+                    if (repairMsg != null) {
+                        tooltipSystem.showMessage(repairMsg, 3.0f);
+                        return;
+                    }
+                }
             }
         }
 
