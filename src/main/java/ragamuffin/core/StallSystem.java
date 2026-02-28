@@ -189,6 +189,11 @@ public class StallSystem {
     private boolean achievementEmpireBuilder = false;
     private boolean achievementTurfVendor = false;
 
+    // ── Pending tooltip ───────────────────────────────────────────────────────
+
+    /** Tooltip message queued for display by the game loop (null = none). */
+    private String pendingTooltip = null;
+
     // ── Random ────────────────────────────────────────────────────────────────
 
     private final Random random;
@@ -771,6 +776,21 @@ public class StallSystem {
     public StallSlot getStockSlot(int index) {
         if (index < 0 || index >= stock.length) return null;
         return stock[index];
+    }
+
+    /**
+     * Poll the next pending tooltip message, consuming it.
+     * Returns null if no message is queued.
+     */
+    public String pollTooltip() {
+        String msg = pendingTooltip;
+        pendingTooltip = null;
+        return msg;
+    }
+
+    /** Queue a tooltip message to be displayed by the game loop. */
+    private void queueTooltip(String message) {
+        pendingTooltip = message;
     }
 
     /** Set stall territory (for testing). */
