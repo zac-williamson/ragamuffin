@@ -4,6 +4,8 @@ import ragamuffin.entity.Car;
 import ragamuffin.entity.Car.CarColour;
 import ragamuffin.entity.AABB;
 import ragamuffin.entity.DamageReason;
+import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCState;
 import ragamuffin.entity.Player;
 import ragamuffin.world.World;
 
@@ -142,8 +144,11 @@ public class CarManager {
 
     // ── Per-frame update ──────────────────────────────────────────────────────
 
+    /** Damage dealt to an NPC per car collision. */
+    public static final float NPC_COLLISION_DAMAGE = 20.0f;
+
     /**
-     * Update all cars and check for player collisions.
+     * Update all cars and check for player and NPC collisions.
      *
      * Each frame:
      * 1. Look-ahead collision avoidance — stop the car if a solid block or
@@ -154,16 +159,32 @@ public class CarManager {
      * 5. Reverse the car if it overlaps a solid block (fallback for any missed
      *    obstacle).
      * 6. Deal damage + knockback to the player on collision.
+     * 7. Deal damage + knockback to any NPCs on collision (Issue #884).
      *
      * @param delta  seconds since last frame
      * @param player the player entity
      */
     public void update(float delta, Player player) {
+        update(delta, player, null);
+    }
+
+    /**
+     * Update all cars and check for player and NPC collisions.
+     *
+     * @param delta  seconds since last frame
+     * @param player the player entity
+     * @param npcs   list of NPCs to check for collisions (may be null)
+     */
+    public void update(float delta, Player player, List<NPC> npcs) {
         for (int i = 0; i < cars.size(); i++) {
             Car car = cars.get(i);
 
             // Issue #773: player-driven cars are controlled by CarDrivingSystem — skip AI
             if (car.isDrivenByPlayer()) {
+                // Player-driven cars still collide with NPCs (Issue #884)
+                if (npcs != null) {
+                    applyNPCCollisions(car, npcs);
+                }
                 continue;
             }
 
@@ -201,6 +222,58 @@ public class CarManager {
                     player.setVelocity(vx / len * 8.0f, 4.0f, vz / len * 8.0f);
                 }
             }
+
+            // --- 7: NPC collisions (Issue #884) ---
+            if (npcs != null) {
+                applyNPCCollisions(car, npcs);
+            }
+        }
+    }
+
+    /**
+     * Check whether the given car's AABB overlaps any alive NPC.
+     * NPCs that are hit take {@link #NPC_COLLISION_DAMAGE} damage and are
+     * knocked back in the direction the car is travelling.  If the damage
+     * kills the NPC it is transitioned to {@link NPCState#KNOCKED_OUT}.
+     *
+     * The same per-car damage cooldown used for the player is reused here so
+     * that a single collision event does not deal repeated hits on consecutive
+     * frames.
+     *
+     * @param car  the car to check
+     * @param npcs list of all active NPCs
+     */
+    private void applyNPCCollisions(Car car, List<NPC> npcs) {
+        if (!car.canDamagePlayer()) {
+            // Cooldown is shared with player; skip NPC checks while cooling down too
+            return;
+        }
+        float vx = car.getVelocity().x;
+        float vz = car.getVelocity().z;
+        float len = (float) Math.sqrt(vx * vx + vz * vz);
+        boolean hasVelocity = len > 0.001f;
+
+        for (NPC npc : npcs) {
+            if (!npc.isAlive()) continue;
+            if (npc.getState() == NPCState.KNOCKED_OUT) continue;
+            if (!car.getAABB().intersectsWithTolerance(npc.getAABB(), Car.PLAYER_COLLISION_TOLERANCE)) continue;
+
+            // Apply damage
+            boolean killed = npc.takeDamage(NPC_COLLISION_DAMAGE);
+            if (killed) {
+                npc.setState(NPCState.KNOCKED_OUT);
+                npc.setSpeechText("Ugh!", 2.0f);
+            }
+
+            // Apply knockback in the car's direction of travel
+            if (hasVelocity) {
+                Vector3 knockDir = new Vector3(vx / len, 0f, vz / len);
+                npc.applyKnockback(knockDir, 2.5f);
+            }
+
+            // Reset the cooldown so we don't keep hitting every frame
+            car.resetDamageCooldown();
+            break; // one NPC hit per cooldown window is sufficient
         }
     }
 
