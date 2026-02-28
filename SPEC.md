@@ -15188,3 +15188,237 @@ water is always slightly greasy.
    in-game minute. Verify Vibes increased by at least 3 (car wash operational bonus).
    Rob the cash box. Advance 1 in-game minute. Verify Vibes decreased by at least 2
    (closed penalty).
+
+---
+
+## Add Northfield Leisure Centre — Swimming, Bans & Changing Room Gossip
+
+**Landmark**: `LandmarkType.LEISURE_CENTRE` (already registered, no system implemented)
+
+### Overview
+
+Northfield Leisure Centre is the town's council-run swimming pool and gym. It smells
+of chlorine and broken dreams. The receptionist, Sharon, has worked there since 1987
+and has the energy of someone who has seen everything and cared about none of it.
+
+The leisure centre adds a meaningful **warmth/health restoration** venue, a **notoriety
+launder** mechanism, and a richly British slice of public-sector life. It also
+integrates with the `RumourNetwork` (changing room gossip) and `TimeSystem`
+(after-school session time-gates).
+
+### New class: `LeisureCentreSystem`
+
+Located at `src/main/java/ragamuffin/core/LeisureCentreSystem.java`.
+
+#### Entrance & Access
+
+- Open **07:00–21:00** daily (closed outside these hours; Sharon says "Sorry, we're
+  shut, love" if the player approaches the desk after hours).
+- Entry costs **3 COIN** (pay at reception desk by pressing **E** on RECEPTIONIST NPC).
+- Players with **Notoriety Tier ≥ 3** (500+ Notoriety) are on the **Banned List** —
+  Sharon refuses entry: *"You're on the system. You know what you did."* No entry
+  unless player is wearing a DISGUISE (COUNCIL_JACKET or BASEBALL_CAP reduces
+  recognition chance by 60%).
+- **After-school session** runs 15:00–17:00 Mon–Fri: the pool is full of children's
+  lessons; adult entry costs 5 COIN instead of 3 (peak pricing). A SWIMMING_TEACHER
+  NPC patrols poolside and ejects players who run (sprint key held).
+
+#### Fire Exit Sneak-In
+
+- A `FIRE_EXIT_PROP` at the rear of the building can be pushed open (press **E**).
+- Sneak-in succeeds silently if no RECEPTIONIST or PCSO NPC is within 8 blocks.
+- If caught: `NotorietySystem` +8, `WantedSystem` +1 star, player is ejected. Sharon
+  says: *"I knew it was you. I always know."*
+- Successful sneak-in still grants full swimming session benefits.
+- Achievement `TIGHT_FISTED` unlocked on first successful sneak-in.
+
+#### Swimming Session
+
+When the player is inside the pool area (detected by being on WATER or WET_TILES
+block type within the leisure centre bounds), a session begins:
+
+- **Duration**: 3 in-game minutes (configurable constant `SWIM_DURATION_SECONDS`).
+- **Warmth**: +40 (warm pool water).
+- **Health**: +15 HP (low-impact exercise).
+- **Notoriety laundering**: −5 Notoriety (a legitimate public activity — hard to argue
+  with being at the leisure centre). Capped at −10 per in-game day.
+- **Filth/Odour**: If a `FilthSystem` or `DisguiseSystem` is tracking player hygiene,
+  reset it to 0 (you're clean now, technically).
+- On session end, the player is returned to the changing room area. Tooltip:
+  *"You feel marginally better. The water was only slightly green."*
+
+#### Vending Machine
+
+A `VENDING_MACHINE_PROP` in the changing room corridor. Press **E** to browse:
+
+| Item | Cost (COIN) | Effect |
+|------|------------|--------|
+| `ENERGY_DRINK` | 2 | +20 Energy |
+| `CHOCOLATE_BAR` | 2 | +15 Hunger, satisfies NeedType.HUNGRY |
+| `WATER_BOTTLE` | 1 | +10 Hunger, minor warmth |
+
+Items go directly into inventory. If the player has no coins: *"You press all the
+buttons. Nothing happens. Story of your life."*
+
+#### Changing Room Rumours
+
+While in the changing room area (within 5 blocks of `CHANGING_ROOM_PROP`), up to
+3 PUBLIC NPCs passively exchange whispers. Each 60 real seconds, a random NPC in
+the changing room emits a `RumourType.LOOT_TIP` or `RumourType.GANG_ACTIVITY`
+rumour drawn from a pool of 8 leisure-centre-specific lines:
+
+1. *"Heard that new car wash near the estate is a front for something."*
+2. *"Council's putting the pool budget into that new luxury flat development."*
+3. *"Someone left a bag full of stuff in locker 14. Still there."*
+4. *"Marchetti lot use the sauna for meetings, or so I'm told."*
+5. *"Sharon banned Dave Norris from the pool again. Third time this year."*
+6. *"The food bank's running low — they're asking for donations."*
+7. *"Pigeon racing finals are this weekend. Big money apparently."*
+8. *"Greggs is doing a new pastry. Queue round the block this morning."*
+
+The player can press **E** near a whispering NPC to "listen in" — the rumour is
+added to `RumourNetwork` for that NPC, and displayed as a tooltip.
+
+#### The Sauna (Always Broken)
+
+A `SAUNA_PROP` in the corner of the changing room. Press **E**: *"Out of Order.
+Has been since 2009."* No gameplay effect. Pure British leisure centre atmosphere.
+Achievement `TYPICAL` unlocked on first interaction.
+
+#### Sharon (RECEPTIONIST NPC)
+
+Sharon is a permanent NPC at the reception desk (NPCType.RECEPTIONIST). She does not
+wander. Her speech lines vary by context:
+
+| Context | Line |
+|---------|------|
+| Normal greeting | *"Swim? Three pounds. Exact change if you've got it."* |
+| After-school peak | *"It's lessons now, love. Five pounds or come back at five."* |
+| Player on Banned List | *"You're on the system. You know what you did."* |
+| After hours | *"Sorry, we're shut, love. Seven in the morning."* |
+| Player has no coins | *"It's three pound, not three pence. Do you want a receipt?"* |
+| After a sneak-in (if caught) | *"I knew it was you. I always know."* |
+
+### Integration with Existing Systems
+
+| System | Integration |
+|--------|-------------|
+| `TimeSystem` | Opening hours check; after-school peak pricing 15:00–17:00 |
+| `NotorietySystem` | Banned list at Tier ≥ 3; −5 Notoriety per session (max −10/day) |
+| `WantedSystem` | Sneak-in penalty: +1 star |
+| `WarmthSystem` | +40 warmth per swim session |
+| `HealingSystem` | +15 HP per swim session |
+| `RumourNetwork` | Changing room gossip seeded every 60 seconds |
+| `StreetEconomySystem` | CHOCOLATE_BAR satisfies NeedType.HUNGRY; ENERGY_DRINK satisfies NeedType.BORED |
+| `DisguiseSystem` | COUNCIL_JACKET/BASEBALL_CAP reduce banned-list recognition by 60% |
+| `NeighbourhoodSystem` | Leisure centre open = +2 Vibes/minute; closed (after-hours) = no penalty |
+| `AchievementSystem` | `TIGHT_FISTED` (sneak-in), `TYPICAL` (broken sauna) |
+
+### New Materials
+
+| Material | Source | Use |
+|----------|--------|-----|
+| `CHOCOLATE_BAR` | Vending machine (2 COIN) | +15 Hunger |
+| `WATER_BOTTLE` | Vending machine (1 COIN) | +10 Hunger, minor warmth |
+| `SWIM_TRUNKS` | Dropped by SWIMMING_TEACHER on punch (rare) | Cosmetic; equipping gives tooltip *"Very professional."* |
+
+### New NPCType entries
+
+- `RECEPTIONIST` — static desk NPC, fixed dialogue tree, checks banned list
+- `SWIMMING_TEACHER` — patrols poolside during after-school session, ejects sprinting players
+
+### New PropType entries
+
+- `VENDING_MACHINE_PROP` — interactive vending machine
+- `CHANGING_ROOM_PROP` — triggers rumour zone
+- `SAUNA_PROP` — broken, always
+- `FIRE_EXIT_PROP` — alternate entry point
+- `WET_TILES` — (also a BlockType) pool surround, slippery (movement speed −20%)
+
+### Constants
+
+```java
+public static final float SWIM_DURATION_SECONDS     = 180f;  // 3 in-game minutes
+public static final int   ENTRY_COST_NORMAL         = 3;
+public static final int   ENTRY_COST_PEAK           = 5;
+public static final float OPEN_HOUR                 = 7f;
+public static final float CLOSE_HOUR                = 21f;
+public static final float PEAK_START_HOUR           = 15f;
+public static final float PEAK_END_HOUR             = 17f;
+public static final int   NOTORIETY_TIER_BANNED      = 3;
+public static final int   SWIM_WARMTH_BONUS          = 40;
+public static final int   SWIM_HEALTH_BONUS          = 15;
+public static final int   SWIM_NOTORIETY_REDUCTION   = 5;
+public static final int   MAX_NOTORIETY_REDUCTION_PER_DAY = 10;
+public static final int   SNEAK_IN_NOTORIETY_PENALTY = 8;
+public static final int   SNEAK_IN_WANTED_STARS      = 1;
+public static final float DISGUISE_RECOGNITION_REDUCTION = 0.60f;
+public static final float FIRE_EXIT_DETECTION_RANGE  = 8f;
+public static final float CHANGING_ROOM_RUMOUR_INTERVAL = 60f;
+public static final float CHANGING_ROOM_RUMOUR_RANGE    = 5f;
+public static final float WET_TILES_SPEED_REDUCTION     = 0.20f;
+```
+
+### Unit Tests
+
+- `LeisureCentreSystem.canEnter()` returns false outside opening hours.
+- `LeisureCentreSystem.canEnter()` returns false at Notoriety Tier ≥ 3 without disguise.
+- `LeisureCentreSystem.canEnter()` returns true at Tier ≥ 3 with disguise (60% chance, seed random).
+- Entry cost is 3 COIN normally, 5 COIN during peak hours.
+- Swim session grants exactly +40 warmth, +15 health, −5 notoriety.
+- Notoriety reduction clamps at −10 per in-game day across multiple sessions.
+- Vending machine dispenses correct item and deducts correct coin cost.
+- Sneak-in caught adds +8 Notoriety and +1 wanted star.
+- Changing room rumour fires after exactly 60 seconds of proximity.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Paying for a swim restores warmth and health**: Set player Warmth to 30, Health
+   to 60. Give player 3 COIN. Place player at reception desk (within 2 blocks of
+   RECEPTIONIST NPC). Press **E**. Verify 3 COIN deducted. Verify player is
+   moved into pool area. Advance simulation for 3 in-game minutes (`SWIM_DURATION_SECONDS`).
+   Verify player Warmth ≥ 70 (+40). Verify player Health ≥ 75 (+15).
+
+2. **Swimming reduces Notoriety**: Set Notoriety to 100 (Tier 1). Complete a swim
+   session (pay 3 COIN, advance 3 in-game minutes). Verify Notoriety is now 95 (−5).
+   Complete a second session in the same in-game day. Verify Notoriety is now 90 (−5,
+   hitting the −10/day cap). Attempt a third session. Verify Notoriety is unchanged
+   (cap reached).
+
+3. **Banned player refused entry**: Set Notoriety to 500 (Tier 3). Place player at
+   reception. Press **E**. Verify entry is refused. Verify Sharon NPC emits *"You're
+   on the system."* speech. Verify player COIN is unchanged (not deducted).
+
+4. **Disguise bypasses banned list**: Set Notoriety to 500 (Tier 3). Give player
+   COUNCIL_JACKET. Equip it. Seed Random with a value that produces a successful
+   bypass (recognition roll > 0.4). Press **E** at reception. Verify entry is granted.
+   Verify 3 COIN deducted.
+
+5. **Sneak-in via fire exit caught**: Set Notoriety to 0. Place a PCSO NPC within
+   5 blocks of the `FIRE_EXIT_PROP`. Press **E** on the fire exit. Verify sneak-in
+   fails (player is not inside the leisure centre). Verify Notoriety increased by 8.
+   Verify WantedSystem has +1 star. Verify Sharon emits *"I knew it was you."*
+
+6. **Sneak-in via fire exit succeeds when no NPC nearby**: Remove all NPCs from
+   within 8 blocks of the fire exit. Press **E** on `FIRE_EXIT_PROP`. Verify player
+   is now inside the leisure centre. Verify 0 COIN deducted. Verify achievement
+   `TIGHT_FISTED` is unlocked.
+
+7. **Vending machine dispenses item**: Give player 2 COIN. Press **E** on
+   `VENDING_MACHINE_PROP`. Select ENERGY_DRINK (index 0). Verify inventory contains
+   1 ENERGY_DRINK. Verify player COIN is now 0 (deducted 2). Verify player Energy
+   increased.
+
+8. **After-school peak pricing active**: Set time to 16:00 (within 15:00–17:00 peak).
+   Give player 3 COIN. Press **E** on RECEPTIONIST. Verify entry is refused with
+   message about peak pricing. Give player 2 more COIN (total 5). Press **E** again.
+   Verify entry granted and 5 COIN deducted.
+
+9. **Changing room rumour heard by player**: Place player within 5 blocks of
+   `CHANGING_ROOM_PROP`. Advance simulation for 60 seconds. Verify at least one
+   rumour from the leisure-centre gossip pool is now present in the `RumourNetwork`.
+   Verify the seeded rumour text matches one of the 8 defined gossip lines.
+
+10. **Broken sauna triggers TYPICAL achievement**: Place player adjacent to
+    `SAUNA_PROP`. Press **E**. Verify tooltip *"Out of Order. Has been since 2009."*
+    is displayed. Verify achievement `TYPICAL` is unlocked.
