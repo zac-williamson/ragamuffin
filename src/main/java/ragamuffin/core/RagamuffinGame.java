@@ -227,6 +227,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     private SquatSystem squatSystem;
     private MCBattleSystem mcBattleSystem;
     private RaveSystem raveSystem;
+
+    // Issue #852: Fruit machine mini-game — pub prop interaction
+    private FruitMachine fruitMachine;
     /** Whether police have already been spawned for the current rave alert. */
     private boolean ravePoliceSpawned = false;
 
@@ -604,6 +607,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 rumourNetwork, new java.util.Random());
         raveSystem = new RaveSystem(achievementSystem, notorietySystem, rumourNetwork);
         ravePoliceSpawned = false;
+        // Issue #852: Initialize fruit machine mini-game
+        fruitMachine = new FruitMachine(new java.util.Random());
         gameHUD.setMcBattleSystem(mcBattleSystem);
         gameHUD.setRaveSystem(raveSystem);
 
@@ -3632,6 +3637,28 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #852: E key — play fruit machine if targeting FRUIT_MACHINE prop
+        if (fruitMachine != null) {
+            int fruitMachinePropIndex = findPropInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
+            if (fruitMachinePropIndex >= 0) {
+                java.util.List<ragamuffin.world.PropPosition> fmProps = world.getPropPositions();
+                if (fruitMachinePropIndex < fmProps.size()
+                        && fmProps.get(fruitMachinePropIndex).getType() == ragamuffin.world.PropType.FRUIT_MACHINE) {
+                    if (inventory.getItemCount(ragamuffin.building.Material.COIN) >= 1) {
+                        inventory.removeItem(ragamuffin.building.Material.COIN, 1);
+                        FruitMachine.SpinResult spinResult = fruitMachine.spin();
+                        if (spinResult.payout > 0) {
+                            inventory.addItem(ragamuffin.building.Material.COIN, spinResult.payout);
+                        }
+                        tooltipSystem.showMessage(spinResult.displayText, 3.0f);
+                    } else {
+                        tooltipSystem.showMessage("Need 1 coin to play the fruit machine.", 2.5f);
+                    }
+                    return;
+                }
+            }
+        }
+
         // Check for door interaction via short raycast (≤3 blocks)
         ragamuffin.world.RaycastResult doorResult =
                 blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, 3.0f);
@@ -4138,7 +4165,13 @@ public class RagamuffinGame extends ApplicationAdapter {
                 if (hudTargetNPC != null) {
                     gameHUD.setTargetName(formatNPCName(hudTargetNPC.getType()));
                 } else if (hudShowProp) {
-                    gameHUD.setTargetName(formatPropName(world.getPropPositions().get(hudTargetPropIndex).getType()));
+                    ragamuffin.world.PropType hudPropType = world.getPropPositions().get(hudTargetPropIndex).getType();
+                    // Issue #852: Show interaction hint for fruit machine
+                    if (hudPropType == ragamuffin.world.PropType.FRUIT_MACHINE) {
+                        gameHUD.setTargetName("[E] Play fruit machine (1 coin)");
+                    } else {
+                        gameHUD.setTargetName(formatPropName(hudPropType));
+                    }
                 } else if (hudShowBlock) {
                     gameHUD.setTargetName(formatBlockName(targetBlock.getBlockType()));
                 } else {
@@ -4572,6 +4605,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         streetEconomySystem = new StreetEconomySystem();
         // Issue #799: Reset corner shop system so shop state, heat and stock don't carry over
         cornerShopSystem = new CornerShopSystem();
+        // Issue #852: Reset fruit machine so RNG state doesn't carry over between sessions
+        fruitMachine = new FruitMachine(new java.util.Random());
         // Issue #837: Reset stall system so stall state, stock and inspector don't carry over
         stallSystem = new StallSystem();
         // Issue #826: Reset witness system so evidence props, CCTV timers and witness state don't carry over
