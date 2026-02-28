@@ -11912,3 +11912,175 @@ notoriety penalty, BENEFIT_DAY stake cap doubling, rumour seeding on 33/1 win.
    a 75-coin bet (above normal 50-coin cap). Verify `BET_RESULT.SUCCESS` (not
    `STAKE_TOO_HIGH`). Deactivate event. Attempt the same 75-coin bet again. Verify
    `BET_RESULT.STAKE_TOO_HIGH` is returned.
+
+---
+
+## Phase 8k: Allotment System — Grow Your Own, Mind Your Own
+
+**Goal**: Give the player a plot on the ALLOTMENTS landmark to grow vegetables,
+trade surplus produce, and navigate classic British allotment drama: nosy plot
+neighbours, council repossession threats, and an annual vegetable show.
+
+### Overview
+
+The ALLOTMENTS landmark already exists in `LandmarkType` and `WorldGenerator`.
+A new `AllotmentSystem` class manages plot ownership, crop growth, harvesting,
+plot-neighbour events, and the annual Giant Vegetable Show.
+
+### Plot Claiming
+
+- The allotments area contains 6 individual plots (5×5 DIRT blocks each), separated
+  by FENCE blocks and narrow PAVEMENT paths.
+- Press E near the `ALLOTMENT_WARDEN` NPC (a PENSIONER sub-variant stationed at the
+  gate) to claim an unclaimed plot for **free** — or buy out an occupied plot for
+  **30 coins** if all plots are taken.
+- Only one plot per player at a time. A `PLOT_DEED` item is added to inventory on
+  claim.
+- The warden opens hours: 07:00–19:00. Outside these hours, the gate is locked
+  (attempting to enter adds `TRESPASSING` to the criminal record).
+
+### Crop Growing
+
+Four growable crops, each planted by right-clicking a DIRT block in the player's
+plot while holding the corresponding seed item:
+
+| Crop | Seed item | Grow time (in-game mins) | Yield on harvest | Satisfies need |
+|------|-----------|--------------------------|-----------------|----------------|
+| POTATO | `POTATO_SEED` | 15 | 2–4 `POTATO` | HUNGRY |
+| CARROT | `CARROT_SEED` | 10 | 2–3 `CARROT` | HUNGRY |
+| CABBAGE | `CABBAGE_SEED` | 20 | 1–2 `CABBAGE` | HUNGRY |
+| SUNFLOWER | `SUNFLOWER_SEED` | 8 | 1 `SUNFLOWER` | BORED (trade value) |
+
+- Seeds are obtained from: CORNER_SHOP (buy for 1 coin each), FOOD_BANK
+  (free once per day), or by harvesting and retaining 1 seed from the yield.
+- Crops display a 3-stage visual: freshly planted dirt (stage 0), small sprout
+  (stage 1, 50% grown), fully grown (stage 2). Use block metadata / `PropType` to
+  track stage.
+- Harvesting: left-click the fully grown crop. Yields items, resets block to DIRT.
+- Watering: right-click with `BUCKET` (already in `Material`) on a crop block to
+  reduce remaining grow time by 30%. Bucket is not consumed.
+- Drought (HEATWAVE weather): grow time ×1.5 unless watered each in-game day.
+- Rain/DRIZZLE: automatic watering — no bucket needed that day.
+
+### Plot Neighbour Events
+
+Two neighbouring PLOT_NEIGHBOUR NPCs (PENSIONER type with unique speech) tend
+adjacent plots. They generate one of four random events every 5 in-game minutes
+while the player is on the allotments:
+
+1. **Compliment** — "Them carrots are coming on lovely." Faction respect STREET_LADS +1.
+2. **Complaint** — "Your weeds are blowing onto my patch." Player must harvest any
+   fully grown crop within 60 seconds or lose 2 coins (withheld by the warden as a
+   "nuisance fine").
+3. **Gift** — Neighbour drops 1 `POTATO` or `CARROT` near the plot boundary. No
+   conditions.
+4. **Rivalry** — "Mine'll be bigger than yours at the show." Triggers the Giant
+   Vegetable Show vote bonus (see below).
+
+### Council Repossession Threat
+
+If the player fails to harvest any crop for 3 consecutive in-game days (plot goes
+entirely fallow), the council issues a `REPOSSESSION_NOTICE` prop on the plot gate
+post. The player has 1 in-game day to plant at least one seed. If ignored, the plot
+is repossessed (removed from player ownership, PLOT_DEED removed from inventory,
+Council Respect −5). The warden delivers the notice with speech: "Use it or lose it,
+pal."
+
+### Annual Giant Vegetable Show
+
+Once per in-game week (day 7, 14, 21…) at 12:00, a Giant Vegetable Show event runs
+for 1 in-game hour. The player can enter their largest harvested crop (tracked by
+cumulative harvest count per crop type) to compete against the plot neighbours.
+
+- Judge NPC (COUNCIL_MEMBER sub-variant in tweed jacket) inspects entries.
+- Winner determined by RNG weighted by: largest yield harvested in the past week
+  (player's cumulative harvest) vs neighbour score (fixed random 2–5).
+- **Win**: 15 coins + `CHAMPION_GROWER` achievement + Newspaper headline
+  "LOCAL HERO TAKES TOP PRIZE AT VEG SHOW".
+- **Lose**: Neighbour speech: "Better luck next year." No penalty.
+- Entering gives INFLUENCE skill XP regardless of outcome.
+
+### Items / Materials added
+
+- `POTATO_SEED`, `CARROT_SEED`, `CABBAGE_SEED`, `SUNFLOWER_SEED` — plantable seeds
+- `POTATO`, `CARROT`, `CABBAGE`, `SUNFLOWER` — harvested produce (all `isSmallItem=true`)
+- `PLOT_DEED` — proof of plot ownership
+- `REPOSSESSION_NOTICE` — prop item; no inventory use
+
+All produce satisfies `NeedType.HUNGRY` when consumed (left-click in hand or E
+on hungry NPC to give). SUNFLOWER can be sold to a PLOT_NEIGHBOUR or at the
+BOOT_SALE for 3 coins each (trade only, not edible).
+
+### Integration
+
+- **`StreetEconomySystem`**: harvested POTATO/CARROT/CABBAGE satisfy `NeedType.HUNGRY`
+  for NPCs. Dealing produce to hungry NPCs earns coins at standard deal rates.
+- **`MarketEvent.GREGGS_STRIKE`**: produce prices double; nearby PUBLIC NPCs develop
+  HUNGRY need faster, making allotment produce more valuable.
+- **`WeatherSystem`**: HEATWAVE slows growth ×1.5; RAIN/DRIZZLE auto-waters; FROST
+  kills any crop currently at stage 0 (seed just planted) — yields nothing on harvest.
+- **`TimeSystem`**: crop growth ticks every in-game minute; show triggers weekly.
+- **`NewspaperSystem`**: Giant Vegetable Show win generates a headline at infamy 0
+  level ("PIGEON" tier replaced by allotment content).
+- **`NotorietySystem`**: trespassing outside warden hours adds criminal record entry.
+- **`StreetSkillSystem`**: each successful harvest awards `GRAFTING` skill XP (1 point
+  per crop). Winning the Veg Show awards `INFLUENCE` skill XP (5 points).
+- **`AchievementSystem`**:
+  - **`GREEN_FINGERS`** ("Down the Allotment"): Harvest your first crop — instant.
+  - **`CHAMPION_GROWER`** ("Best in Show"): Win the Giant Vegetable Show — instant.
+  - **`SELF_SUFFICIENT`** ("Off the Grid"): Harvest 20 crops total — progress target 20.
+  - **`GOOD_NEIGHBOUR`** ("Keep Britain Tidy"): Receive 3 compliment events without
+    triggering a complaint — progress target 3.
+
+### Unit tests
+
+`AllotmentSystem` unit tests:
+- `claimPlot()` returns SUCCESS when plots available, fails when all occupied.
+- `plantCrop()` returns WRONG_BLOCK if block is not DIRT in player's plot,
+  ALREADY_PLANTED if block already has a crop, SUCCESS otherwise.
+- Crop growth timer advances correctly with delta; reaches stage 1 at 50% and
+  stage 2 at 100% of grow time.
+- `waterCrop()` reduces remaining grow time by 30%.
+- HEATWAVE multiplier: growth rate slowed by ×1.5.
+- FROST kills stage-0 crop (yields 0 on harvest attempt).
+- Fallow-days counter increments when no crops harvested for a full in-game day;
+  resets on any harvest.
+- Repossession notice triggers on day 3 of fallow; plot removed on day 4.
+- Neighbour complaint event deducts 2 coins if player does not harvest within
+  60 seconds.
+- Giant Vegetable Show winner is determined correctly by weighted RNG; correct
+  coin and achievement rewards applied.
+
+### Integration tests — implement these exact scenarios:
+
+1. **Plot claim and crop growth cycle**: Spawn `ALLOTMENT_WARDEN` NPC near the
+   ALLOTMENTS landmark. Call `allotmentSystem.claimPlot(player, warden)`. Verify
+   `PLOT_DEED` is in player inventory. Set a DIRT block in the player's plot; call
+   `allotmentSystem.plantCrop(player, blockPos, Material.CARROT_SEED)`. Advance
+   the `TimeSystem` by 10 in-game minutes (10 × 60 real seconds at default speed).
+   Call `allotmentSystem.update(delta, ...)` each frame. Verify the crop block
+   reaches stage 2 (fully grown). Call `allotmentSystem.harvestCrop(player, blockPos,
+   inventory)`. Verify at least 2 `CARROT` items in player inventory.
+
+2. **Watering reduces grow time**: Plant a POTATO_SEED (15-min grow time). Call
+   `allotmentSystem.waterCrop(player, blockPos)`. Verify the crop's remaining grow
+   time has been reduced to ≤ 10.5 in-game minutes (30% reduction of 15 = 4.5 min
+   off). Advance time by 10.5 minutes. Verify crop is at stage 2.
+
+3. **FROST kills newly planted crop**: Set weather to FROST. Plant a CARROT_SEED
+   (stage 0). Call `allotmentSystem.update(delta, weather=FROST)` for 1 in-game
+   minute. Verify `allotmentSystem.isCropKilled(blockPos)` returns true. Attempt to
+   harvest — verify 0 CARROT items returned and block resets to DIRT.
+
+4. **Repossession after 3 fallow days**: Claim a plot. Advance `TimeSystem` by
+   3 full in-game days without planting any seed. Verify
+   `allotmentSystem.isRepossessionNoticePending()` returns true after day 3. Advance
+   1 more day. Verify `allotmentSystem.hasPlot(player)` returns false (plot removed).
+   Verify `PLOT_DEED` is no longer in player inventory.
+
+5. **Giant Vegetable Show win pays out**: Claim plot. Harvest at least 3 POTATO
+   crops (advance time, plant, harvest × 3). Advance TimeSystem to the next show
+   time (day 7 at 12:00). Force `allotmentSystem.runShow(deterministicRng=playerWins)`
+   with an RNG that returns a value ensuring player wins. Verify player receives 15
+   coins. Verify `CHAMPION_GROWER` achievement is unlocked. Verify
+   `NewspaperSystem.getLastHeadline()` contains "VEG SHOW".
