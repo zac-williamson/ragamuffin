@@ -239,6 +239,17 @@ public class FactionSystem {
     }
 
     /**
+     * Convenience overload: detects the faction from the NPC's name and fires the hit delta.
+     * Does nothing if the NPC does not belong to any faction.
+     */
+    public void onPlayerHitFactionNpc(NPC hitNpc, List<NPC> allNpcs) {
+        Faction faction = detectFactionFromNpc(hitNpc);
+        if (faction != null) {
+            onPlayerHitFactionNpc(faction, allNpcs);
+        }
+    }
+
+    /**
      * Call when the player breaks a block associated with a building owned by a faction.
      *
      * @param buildingFaction the faction that owns the building

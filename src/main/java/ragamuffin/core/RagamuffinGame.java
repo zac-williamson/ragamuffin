@@ -168,6 +168,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private NotorietySystem notorietySystem;
     // Issue #803: Rumour network — NPC gossip spreading police tips on witnessed crimes
     private RumourNetwork rumourNetwork;
+    // Issue #811: Faction system — three-faction turf-war engine (Marchetti Crew, Street Lads, The Council)
+    private FactionSystem factionSystem;
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
@@ -436,6 +438,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         gameHUD.setNotorietySystem(notorietySystem);
         // Issue #803: Initialize rumour network for spreading police tips and NPC gossip
         rumourNetwork = new RumourNetwork(new java.util.Random());
+        // Issue #811: Initialize faction system — three-faction turf-war engine
+        factionSystem = new FactionSystem(new TurfMap(), rumourNetwork);
+        gameHUD.setFactionSystem(factionSystem);
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2139,6 +2144,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #803: Update rumour network — spreads NPC gossip and police tips.
         rumourNetwork.update(npcManager.getNPCs(), delta);
 
+        // Issue #811: Update faction system — mission timers, turf transfers, NPC hostility
+        factionSystem.update(delta, player, npcManager.getNPCs());
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -2537,6 +2545,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 // Issue #450: gang aggro achievement
                 achievementSystem.unlock(ragamuffin.ui.AchievementType.GANG_AGGRO);
             }
+            // Issue #811: Fire faction Respect delta when hitting a faction NPC
+            factionSystem.onPlayerHitFactionNpc(targetNPC, npcManager.getNPCs());
             return; // Don't punch blocks if we hit an NPC
         }
 
@@ -2716,6 +2726,14 @@ public class RagamuffinGame extends ApplicationAdapter {
                             break;
                         default:
                             break;
+                    }
+                }
+
+                // Issue #811: Fire faction Respect delta when breaking a block in a faction building
+                if (landmark != null) {
+                    Faction brokenFaction = landmarkToFaction(landmark);
+                    if (brokenFaction != null) {
+                        factionSystem.onPlayerBreaksRivalBuilding(brokenFaction, npcManager.getNPCs());
                     }
                 }
 
@@ -3058,6 +3076,35 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Issue #811: Map a landmark type to the faction that owns it, or null if neutral.
+     * Marchetti Crew: industrial / off-licence.
+     * Street Lads: park / council flats / skate park.
+     * The Council: office building / job centre / police station / council areas.
+     */
+    private Faction landmarkToFaction(ragamuffin.world.LandmarkType landmark) {
+        if (landmark == null) return null;
+        switch (landmark) {
+            case INDUSTRIAL_ESTATE:
+            case OFF_LICENCE:
+            case WAREHOUSE:
+            case PAWN_SHOP:
+                return Faction.MARCHETTI_CREW;
+            case COUNCIL_FLATS:
+            case SKATE_PARK:
+            case ESTATE_AGENT:
+                return Faction.STREET_LADS;
+            case OFFICE_BUILDING:
+            case JOB_CENTRE:
+            case POLICE_STATION:
+            case COMMUNITY_CENTRE:
+            case LIBRARY:
+                return Faction.THE_COUNCIL;
+            default:
+                return null;
+        }
     }
 
     /**
