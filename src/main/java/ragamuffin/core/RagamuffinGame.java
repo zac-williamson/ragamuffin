@@ -385,6 +385,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Phase 3: Initialize inventory and resource systems
         inventory = new Inventory(36);
+        inventory.addItem(ragamuffin.building.Material.TRANSMITTER_ITEM, 1);
         blockBreaker = new BlockBreaker();
         propBreaker = new PropBreaker();
         dropTable = new BlockDropTable();
