@@ -73,6 +73,7 @@ public enum Material {
     HYMN_BOOK("Hymn Book"),
     PETROL_CAN("Petrol Can"),
     HAIR_CLIPPERS("Hair Clippers"),
+    HAIR_CLIPPERS_BROKEN("Broken Hair Clippers"),  // Issue #944: exhausted after 3 DIY uses
     NAIL_POLISH("Nail Polish"),
     BROKEN_PHONE("Broken Phone"),
     DODGY_DVD("Dodgy DVD"),
@@ -995,7 +996,8 @@ public enum Material {
             case TEXTBOOK:       return c(0.20f, 0.38f, 0.68f);   // Blue textbook
             case HYMN_BOOK:      return c(0.18f, 0.18f, 0.52f);   // Dark blue
             case PETROL_CAN:     return c(0.82f, 0.30f, 0.15f);   // Red can
-            case HAIR_CLIPPERS:  return c(0.35f, 0.35f, 0.38f);   // Silver-grey
+            case HAIR_CLIPPERS:         return c(0.35f, 0.35f, 0.38f);   // Silver-grey
+            case HAIR_CLIPPERS_BROKEN:  return c(0.20f, 0.20f, 0.22f);   // Dark grey, broken
             case NAIL_POLISH:    return c(0.92f, 0.18f, 0.55f);   // Hot pink
             case BROKEN_PHONE:   return c(0.18f, 0.18f, 0.22f);   // Dark screen
             case DODGY_DVD:      return c(0.62f, 0.62f, 0.72f);   // Silver disc
@@ -1350,6 +1352,7 @@ public enum Material {
             case HYMN_BOOK:
             case PETROL_CAN:
             case HAIR_CLIPPERS:
+            case HAIR_CLIPPERS_BROKEN:
             case NAIL_POLISH:
             case BROKEN_PHONE:
             case DODGY_DVD:
@@ -1652,6 +1655,7 @@ public enum Material {
             case PETROL_CAN:
             case FIRE_EXTINGUISHER:
             case HAIR_CLIPPERS:
+            case HAIR_CLIPPERS_BROKEN:
                 return IconShape.CYLINDER;
 
             case HIGH_VIS_JACKET:

@@ -19,5 +19,8 @@ public enum FacialHairType {
     BEARD,
 
     /** Goatee — a small neat tuft on the chin only. */
-    GOATEE;
+    GOATEE,
+
+    /** Clean-shaven — no facial hair; freshly shaved smooth skin. Set by wet or hot towel shave (Issue #944). */
+    CLEAN_SHAVEN;
 }
