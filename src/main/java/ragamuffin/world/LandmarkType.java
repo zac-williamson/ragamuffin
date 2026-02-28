@@ -117,7 +117,19 @@ public enum LandmarkType {
      * Bus Stop — Industrial Estate near JobCentre.
      * The Number 47's third and final scheduled stop on the town route.
      */
-    BUS_STOP_INDUSTRIAL;
+    BUS_STOP_INDUSTRIAL,
+
+    // ── Issue #938: Greasy Spoon Café ────────────────────────────────────────
+
+    /**
+     * Vera's Caff — a classic British greasy spoon café on the high street.
+     * Open 07:00–14:00 daily. Run by Vera (CAFF_OWNER NPC).
+     * Features a daily specials CHALKBOARD prop with combo discounts.
+     * Seated CAFF_REGULAR NPCs passively reveal rumours on player proximity (2 blocks).
+     * Weather modifier: rain/drizzle/thunderstorm adds +2 seated regulars.
+     * Monday rush: max 4 customers. Notoriety ≥ 60 + police nearby blocks service.
+     */
+    GREASY_SPOON_CAFE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -174,6 +186,7 @@ public enum LandmarkType {
             case BUS_STOP_HIGH_STREET:  return "Bus Stop – High Street";
             case BUS_STOP_PARK:         return "Bus Stop – Park";
             case BUS_STOP_INDUSTRIAL:   return "Bus Stop – Industrial Estate";
+            case GREASY_SPOON_CAFE:     return "Vera's Caff";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
