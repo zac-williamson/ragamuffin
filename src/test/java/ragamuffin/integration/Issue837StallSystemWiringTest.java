@@ -54,7 +54,7 @@ class Issue837StallSystemWiringTest {
         player = new Player(10f, 1f, 10f);
         npcs = new ArrayList<>();
         TurfMap turfMap = new TurfMap();
-        factionSystem = new FactionSystem(turfMap, new ragamuffin.core.RumourNetwork());
+        factionSystem = new FactionSystem(turfMap, new ragamuffin.core.RumourNetwork(new Random(42L)));
         notorietySystem = new NotorietySystem();
         streetEconomySystem = new StreetEconomySystem(new Random(42L));
         achievementSystem = new AchievementSystem();

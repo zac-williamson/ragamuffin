@@ -861,6 +861,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // cannot exploit the city fly-through to freeze the 5-second hostility escalation
             // countdown.  Mirrors the equivalent call in the PAUSED branch (line ~884).
             gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
+
+            // Fix #860: Advance StreetSkillSystem during cinematic — mirrors the PLAYING and PAUSED branches.
+            player.getStreetSkillSystem().update(delta, player, npcManager.getNPCs());
             // Fix #429: Keep police spawn/despawn logic in sync with the day/night cycle
             // during the cinematic.  If the fly-through straddles dusk or dawn the wasNight
             // flag transition must not be skipped — mirrors the PAUSED branch (line ~852).
@@ -1664,6 +1667,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             // weather (#341), and other timer-based systems in the PAUSED branch.
             gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
+            // Fix #860: Advance StreetSkillSystem while paused — mirrors the PLAYING branch.
+            player.getStreetSkillSystem().update(delta, player, npcManager.getNPCs());
+
             // Fix #391: Advance block/prop damage decay timers while paused so partially-damaged
             // blocks and props continue decaying toward zero. Without this, the player can exploit
             // the pause menu to freeze decay indefinitely and resume with the same damage level —
@@ -2405,7 +2411,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         factionSystem.update(delta, player, npcManager.getNPCs());
 
         // Issue #781: Update graffiti system — fade timers, NPC crew spray, turf pressure, passive income
-        graffitiSystem.update(delta, timeSystem.getDaysDelta(), npcManager.getNPCs(),
+        graffitiSystem.update(delta, timeSystem.getTimeSpeed() * delta / 24f, npcManager.getNPCs(),
                 factionSystem.getTurfMap(), wantedSystem, noiseSystem, rumourNetwork, inventory,
                 type -> achievementSystem.unlock(type));
 
@@ -2451,7 +2457,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (cornerShopSystem != null) {
             cornerShopSystem.update(delta, npcManager.getNPCs(), player, inventory,
                     factionSystem, notorietySystem, rumourNetwork,
-                    player.getStreetSkillSystem(), achievementSystem::award);
+                    player.getStreetSkillSystem(), achievementSystem::unlock);
         }
 
         // Issue #837: Update stall economy — customers, inspector, weather, faction modifiers
@@ -2465,7 +2471,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                     factionSystem,
                     notorietySystem,
                     player.getCriminalRecord(),
-                    achievementSystem::award,
+                    achievementSystem::unlock,
                     streetEconomySystem);
             String stallMsg = stallSystem.pollTooltip();
             if (stallMsg != null) tooltipSystem.showMessage(stallMsg, 3.0f);
@@ -2477,7 +2483,7 @@ public class RagamuffinGame extends ApplicationAdapter {
             com.badlogic.gdx.math.Vector3 playerPos = player.getPosition();
             for (ragamuffin.entity.NPC npc : npcManager.getNPCs()) {
                 if ((npc.getType() == ragamuffin.entity.NPCType.POLICE
-                        || npc.getType() == ragamuffin.entity.NPCType.ARMED_RESPONSE_UNIT)
+                        || npc.getType() == ragamuffin.entity.NPCType.ARMED_RESPONSE)
                         && npc.getPosition().dst(playerPos) <= PirateRadioSystem.POLICE_DETECTION_RANGE) {
                     policeNearby = true;
                     break;
@@ -2587,6 +2593,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
+
+        // Fix #860: Advance StreetSkillSystem per-frame so the RALLY perk timer ticks,
+        // followers auto-disperse, cooldowns decrement, and follower deterrence is applied.
+        player.getStreetSkillSystem().update(delta, player, npcManager.getNPCs());
 
         // CRITIC 5: Handle police arrest — apply penalties if player was caught
         if (npcManager.isArrestPending() && !player.isDead()) {
@@ -3660,9 +3670,14 @@ public class RagamuffinGame extends ApplicationAdapter {
                         player.getPosition().y,
                         lm.getPosition().z + lm.getDepth() / 2f);
                 if (dist < nearestDist) {
-                    int condition = neighbourhoodSystem != null
-                            ? neighbourhoodSystem.getCondition(lm.getType())
-                            : PropertySystem.INITIAL_CONDITION;
+                    int condition = PropertySystem.INITIAL_CONDITION;
+                    if (neighbourhoodSystem != null) {
+                        ragamuffin.core.NeighbourhoodSystem.BuildingRecord rec =
+                                neighbourhoodSystem.getBuilding(
+                                        (int) lm.getPosition().x,
+                                        (int) lm.getPosition().z);
+                        if (rec != null) condition = rec.getCondition();
+                    }
                     if (condition <= SquatSystem.MAX_CLAIMABLE_CONDITION) {
                         nearestDist = dist;
                         nearestDerelict = lm;
@@ -3845,7 +3860,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #799: E key — open/close shop when inside the claimed shop
         if (cornerShopSystem != null && cornerShopSystem.hasShop()) {
             if (!cornerShopSystem.isShopOpen()) {
-                cornerShopSystem.openShop(achievementSystem::award);
+                cornerShopSystem.openShop(achievementSystem::unlock);
                 tooltipSystem.showMessage("Shop open for business.", 2.0f);
             } else {
                 cornerShopSystem.closeShop();
@@ -3873,7 +3888,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                     }
                 }
             } else if (!stallSystem.isStallOpen()) {
-                stallSystem.openStallWithAchievement(achievementSystem::award);
+                stallSystem.openStallWithAchievement(achievementSystem::unlock);
                 tooltipSystem.showMessage("Stall open. Time to shift some gear.", 2.0f);
             } else {
                 stallSystem.closeStall();
