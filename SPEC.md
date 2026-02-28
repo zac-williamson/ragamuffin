@@ -9152,3 +9152,95 @@ marks are never drawn on screen.
 4. **GraffitiSystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `graffitiSystem` field is non-null. Simulate 1 frame.
    Verify `graffitiSystem.getMarks()` returns an empty list (no tags on fresh start).
+
+---
+
+## Wire MCBattleSystem, RaveSystem & SquatSystem into the game loop
+
+`MCBattleSystem`, `RaveSystem`, and `SquatSystem` were implemented (Issues #714 and #716) but
+are never instantiated or updated in `RagamuffinGame`. Without these systems the player cannot
+claim a squat, challenge MC champions, earn MC Rank, or host illegal raves — a large chunk of
+the gameplay loop that unlocks factions, notoriety and achievement progression is completely
+inaccessible.
+
+### What needs to be done
+
+1. **Declare fields** in `RagamuffinGame`:
+   ```java
+   private SquatSystem squatSystem;
+   private MCBattleSystem mcBattleSystem;
+   private RaveSystem raveSystem;
+   ```
+
+2. **Instantiate in `create()`** (and `restartGame()`):
+   ```java
+   squatSystem   = new SquatSystem(achievementSystem, notorietySystem);
+   mcBattleSystem = new MCBattleSystem(factionSystem, notorietySystem, rumourNetwork, achievementSystem, new java.util.Random());
+   raveSystem    = new RaveSystem(achievementSystem, notorietySystem, rumourNetwork);
+   ```
+
+3. **Update each frame** in the PLAYING branch of `render()`:
+   ```java
+   // SquatSystem — daily Vibe decay (pass current day index from timeSystem)
+   squatSystem.tickDay(timeSystem.getDayIndex(),
+       notorietySystem.getTier(), npcManager.getNPCs(), inventory);
+
+   // MCBattleSystem — advance active battle bar cursor
+   mcBattleSystem.update(delta);
+
+   // RaveSystem — income accumulation, police alert timer
+   raveSystem.update(delta, inventory,
+       squatSystem.countAttendeesInSquat(npcManager.getNPCs()));
+   ```
+
+4. **Wire the E key** in `handleInteract()`:
+   - If the player is inside their squat and no squat claimed yet: attempt to claim via
+     `squatSystem.claimSquat(...)` when the player holds ≥ 5 WOOD.
+   - If `mcBattleSystem.canChallenge(targetNpc, inventory)`: start a battle via
+     `mcBattleSystem.startBattle(targetNpc, ...)`.
+   - If the player is at their squat entrance and a rave is active: call
+     `raveSystem.disperseRave(inventory)` (early disperse to swerve the feds).
+
+5. **Wire rave start** via flyer use (right-click on FLYER item or `handleInteract()`):
+   Call `raveSystem.startRave(inventory, squatSystem.getVibe(), mcBattleSystem.getMcRank(), npcManager.getNearbyNpcs(player))`.
+
+6. **Wire police spawn** when `raveSystem.isPoliceAlerted()` transitions to `true`:
+   Spawn 2 PCSO NPCs near the squat entrance via `npcManager`.
+
+7. **Wire the BattleBar rendering** in the 2D HUD pass:
+   When `mcBattleSystem.isBattleActive()`, render the `BattleBarMiniGame` overlay
+   (cursor position, hit zone, round count) using `SpriteBatch` / `ShapeRenderer`.
+
+8. **Reset on restart** in `restartGame()`:
+   ```java
+   squatSystem    = new SquatSystem(achievementSystem, notorietySystem);
+   mcBattleSystem = new MCBattleSystem(factionSystem, notorietySystem, rumourNetwork, achievementSystem, new java.util.Random());
+   raveSystem     = new RaveSystem(achievementSystem, notorietySystem, rumourNetwork);
+   ```
+
+### Integration tests — implement these exact scenarios
+
+1. **Squat can be claimed**: Initialise `RagamuffinGame` (headless). Give the player 5
+   `Material.WOOD` in inventory. Place the player inside a derelict building landmark.
+   Simulate pressing E. Verify `squatSystem.hasSquat()` returns `true`.
+
+2. **MC Battle starts on E with microphone**: Give the player a `Material.MICROPHONE`.
+   Place a Marchetti MC Champion NPC adjacent to the player. Simulate pressing E.
+   Verify `mcBattleSystem.isBattleActive()` returns `true`.
+
+3. **Winning MC Battle increments MC Rank**: Begin a battle against the Easy (Marchetti)
+   champion. Simulate pressing the action key when the cursor is inside the hit zone for
+   all 3 rounds (using `BattleBarMiniGame` directly). Verify `mcBattleSystem.getMcRank()`
+   increases from 0 to 1.
+
+4. **Rave starts with flyer + vibe + MC Rank**: Set `squatSystem` vibe to 40, set MC Rank
+   to 1, give the player a `Material.FLYER`. Call `raveSystem.startRave(...)`. Verify
+   `raveSystem.isRaveActive()` returns `true` and the FLYER was consumed from inventory.
+
+5. **Police alerted after 120 seconds**: Call `raveSystem.startRave(...)` with valid
+   prerequisites. Call `raveSystem.update(120f, inventory, 5)`. Verify
+   `raveSystem.isPoliceAlerted()` returns `true`.
+
+6. **RaveSystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `raveSystem` field is non-null. Simulate 1 frame in PLAYING
+   state. Verify no exception is thrown.
