@@ -494,7 +494,17 @@ public enum Material {
      * The portal is the only means of accessing this location.
      * Single-use: consumed on activation. A return portal stone appears in Bista Village.
      */
-    BISTA_VILLAGE_PORTAL("Bista Village Portal");
+    BISTA_VILLAGE_PORTAL("Bista Village Portal"),
+
+    // ── Issue #906: Busking System ────────────────────────────────────────────
+
+    /**
+     * Bucket Drum — craftable street percussion instrument.
+     * Crafted from 1 SCRAP_METAL + 1 PLANKS.
+     * Held item; equip in hotbar and press E near PAVEMENT/ROAD to start a busk session.
+     * Tooltip on first pickup: "Bucket drum. The percussion instrument of the dispossessed."
+     */
+    BUCKET_DRUM("Bucket Drum");
 
     private final String displayName;
 
@@ -780,6 +790,10 @@ public enum Material {
             case BISTA_VILLAGE_PORTAL: return cs(0.55f, 0.10f, 0.75f,  // Purple/violet portal shimmer
                                                   0.85f, 0.70f, 0.20f); // Gold runes
 
+            // Issue #906: Busking System
+            case BUCKET_DRUM:    return cs(0.20f, 0.20f, 0.22f,  // Dark grey bucket body
+                                           0.48f, 0.52f, 0.55f); // Blue-grey metal rim
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -930,6 +944,8 @@ public enum Material {
             case RUBBER:
             // Issue #901: Bista Village Portal (not a block item)
             case BISTA_VILLAGE_PORTAL:
+            // Issue #906: Busking System (not a block item)
+            case BUCKET_DRUM:
                 return false;
             default:
                 return true;
@@ -1205,6 +1221,10 @@ public enum Material {
             // Issue #901: Bista Village Portal
             case BISTA_VILLAGE_PORTAL:
                 return IconShape.GEM;        // glowing portal stone / gem shape
+
+            // Issue #906: Busking System
+            case BUCKET_DRUM:
+                return IconShape.CYLINDER;   // bucket drum cylinder shape
 
             default:
                 return IconShape.BOX;

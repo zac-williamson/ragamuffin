@@ -39,7 +39,13 @@ public class CriminalRecord {
          * Issue #797: Recorded by Watch Members during a soft citizen's arrest.
          * Two counts added per citizen's arrest at Tier 3+.
          */
-        ANTISOCIAL_BEHAVIOUR("Antisocial behaviour charges");
+        ANTISOCIAL_BEHAVIOUR("Antisocial behaviour charges"),
+
+        /**
+         * Issue #906: Recorded when police confiscate the player's BUCKET_DRUM
+         * during a busking licence check.
+         */
+        UNLICENSED_BUSKING("Unlicensed busking");
 
         private final String displayName;
 
