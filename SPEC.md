@@ -11786,3 +11786,129 @@ spawn count.
    unchanged. Verify Council respect increased by 1 (first-use bonus). Call
    `busSystem.boardBus(player, stopB, stopA)` a second time. Verify Council respect
    did NOT increase again (one-time bonus only).
+
+---
+
+## Phase 8j: Bookies Horse Racing System
+
+**Goal**: Give the BOOKIES and BETTING_SHOP landmarks real gameplay by adding a
+horse-racing betting system. The player can walk in, study the odds displayed on
+the TV screen prop, place bets with coins, watch a simulated race, and either win
+big or lose everything. Debt and addiction mechanics add tension.
+
+### Core Design
+
+A `HorseRacingSystem` singleton manages daily race schedules, odds generation, bet
+placement, and outcome resolution.
+
+**Race Schedule**:
+- 8 races per in-game day, spaced evenly from 11:00 to 21:00 (every ~1.25 in-game hours)
+- Each race has 6 named horses with seeded-RNG odds and a unique race name
+- Horse names are drawn from a fixed pool of 30 British-flavoured names (e.g.
+  "Broken Biscuit", "Council Flat", "Benefit Cheque", "Grey Drizzle", "Last Orders",
+  "Missed the Bus", "Dodgy Kebab", "Northern Grit", "Chip Shop Queue", etc.)
+- Odds are assigned per race: one favourite (2/1), two mid-range (4/1, 6/1), two
+  outsiders (10/1, 16/1), one rank outsider (33/1)
+- Actual win probability is the inverse of stated odds (favourite wins ~33% of
+  races, rank outsider wins ~3%)
+
+**Betting**:
+- Player interacts with a TV_SCREEN prop inside a BOOKIES or BETTING_SHOP landmark
+  (E key); opens a `BettingUI` overlay showing today's races, current race, horses
+  with odds, and the player's active bets
+- Player selects a horse and a stake (1–50 coins, capped by inventory coins)
+- Only one active bet allowed per race; cannot bet once the race has started
+- `BET_SLIP` item is added to inventory when bet placed; removed on resolution
+- Payout = stake × odds numerator (e.g. 10-coin bet at 10/1 returns 100 coins)
+- Minimum stake: 1 coin. House minimum is enforced.
+
+**Race Resolution**:
+- When the race time arrives (TimeSystem tick), `HorseRacingSystem.resolveRace(raceId)`
+  is called
+- Winner determined by weighted RNG matching the stated odds
+- If player had a winning bet: coins added to inventory, tooltip "You backed a
+  winner! +N coins", achievement check
+- If player lost: BET_SLIP removed silently, tooltip "Unlucky — [HorseName] came in
+  last"
+- Cumulative net loss tracking for debt and addiction mechanics (see below)
+
+**Debt Mechanic**:
+- A `LOAN_SHARK` NPC spawns inside the bookies if the player's cumulative net loss
+  across all bets reaches 50 coins
+- The LOAN_SHARK offers a loan of 20 coins at 50% interest (must repay 30 coins
+  within 3 in-game days)
+- If loan is not repaid: LOAN_SHARK becomes hostile, two STREET_LAD enforcers spawn
+  and pursue the player; WantedSystem gains +1 star
+- Repaying the loan on time gives `DEBT_FREE` achievement and LOAN_SHARK NPC departs
+
+**Inside the Bookies ambience**:
+- 2–4 PENSIONER and PUBLIC NPCs always present during opening hours (09:00–22:00),
+  wandering slowly near the TV screen
+- Each has a `BORED` need score that slowly rises; interacting and winning raises
+  their mood (reduces BORED by 20)
+- NPCs occasionally mutter flavour lines: "Come on my son", "Useless horse",
+  "Just one more", "Should've gone to Greggs"
+
+**Items / Materials added**:
+- `BET_SLIP` — paper item, single-use, represents an active wager; isSmallItem=true
+- No new block types required
+
+**Integration**:
+- `TimeSystem` — triggers race resolution callbacks at scheduled times
+- `NotorietySystem` — placing bets with counterfeit notes (COUNTERFEIT_NOTE in
+  inventory when paying stake) raises notoriety +5 and triggers LOAN_SHARK hostility
+  immediately
+- `StreetEconomySystem` — BENEFIT_DAY market event doubles max allowed stake (100
+  coins) and increases race frequency by one extra race
+- `RumourNetwork` — on a jackpot win (33/1 outsider), seed rumour type `BIG_WIN_AT_BOOKIES`;
+  nearby NPCs have their BORED need set to 0 and wander toward the bookies for 60s
+- `AchievementSystem`:
+  - **`LUCKY_PUNT`** ("Worth a Flutter"): Win any bet — instant
+  - **`OUTSIDER`** ("Didn't See That Coming"): Win a bet at 10/1 or longer odds — instant
+  - **`RANK_OUTSIDER`** ("You Beauty!"): Win a bet at 33/1 — instant
+  - **`LOSING_STREAK`** ("In Too Deep"): Accumulate 50 coins net loss — instant
+  - **`DEBT_FREE`** ("Clean Slate"): Repay the loan shark on time — instant
+  - **`DAILY_PUNTER`** ("Regulars Know Best"): Place a bet on every race in a single
+    in-game day (all 8 races) — progress target 8
+
+**Unit tests**: Race schedule generation (8 races, correct times), odds assignment
+(one favourite, six horses), payout calculation at each odds tier, debt threshold
+triggers LOAN_SHARK spawn, repayment clears debt and dismisses NPC, counterfeit-note
+notoriety penalty, BENEFIT_DAY stake cap doubling, rumour seeding on 33/1 win.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Bet placement opens BettingUI**: Place player inside a BOOKIES landmark. Interact
+   with TV_SCREEN prop (call `horseRacingSystem.onPlayerInteract(player, propPos)`).
+   Verify `BettingUI.isVisible()` returns true. Verify at least one race with 6
+   horses is listed. Verify the player cannot bet more coins than they hold (place a
+   100-coin bet with only 10 coins in inventory — verify `BET_RESULT.INSUFFICIENT_FUNDS`
+   is returned and no BET_SLIP is added).
+
+2. **Winning bet pays out correctly**: Set up a race with horse "Grey Drizzle" at
+   10/1. Force the race winner to "Grey Drizzle" (inject deterministic RNG returning
+   the index of that horse). Give player 5 coins and place a 5-coin bet on that horse.
+   Resolve the race. Verify player receives 50 coins (5 × 10), BET_SLIP is removed
+   from inventory, and tooltip contains "+50 coins".
+
+3. **Losing bet removes bet slip**: Place a 3-coin bet. Force the race winner to a
+   different horse. Resolve the race. Verify player's coins are unchanged from
+   post-bet amount (no refund), BET_SLIP is absent from inventory, and tooltip
+   contains "Unlucky".
+
+4. **Debt triggers LOAN_SHARK spawn**: Configure player with 0 net loss. Place and
+   lose bets totalling 50 coins net loss (simulate via
+   `horseRacingSystem.recordLoss(50)`). Verify a LOAN_SHARK NPC is present within
+   15 blocks of the bookies entrance. Verify the NPC offers a loan dialogue when
+   interacted with.
+
+5. **Loan shark turns hostile on non-repayment**: Accept the 20-coin loan. Advance
+   TimeSystem by 3 in-game days without repaying. Verify LOAN_SHARK NPC state is
+   HOSTILE. Verify two STREET_LAD NPCs are present near the bookies. Verify
+   WantedSystem wanted level increased by 1.
+
+6. **BENEFIT_DAY doubles max stake**: Activate market event BENEFIT_DAY
+   (`streetEconomySystem.setActiveEvent(MarketEvent.BENEFIT_DAY)`). Attempt to place
+   a 75-coin bet (above normal 50-coin cap). Verify `BET_RESULT.SUCCESS` (not
+   `STAKE_TOO_HIGH`). Deactivate event. Attempt the same 75-coin bet again. Verify
+   `BET_RESULT.STAKE_TOO_HIGH` is returned.
