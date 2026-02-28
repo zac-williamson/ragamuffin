@@ -124,6 +124,24 @@ public class NPCManager {
         "Resisting arrest!", "I'll taser you!"
     };
 
+    // Issue #910: NPC dialogue lines when acknowledging player constructions
+    private static final String[] CONSTRUCTION_STARING_SPEECH = {
+        "What on earth is that?", "Is that... legal?", "Someone's been busy.",
+        "I've seen some things but...", "That's a bit much, isn't it?",
+        "No planning permission, I'd wager.", "Well. There it is."
+    };
+    private static final String[] CONSTRUCTION_PHOTOGRAPHING_SPEECH = {
+        "I'm getting this on camera.", "That's going on social media.",
+        "The council will want to see this.", "Evidence. Pure evidence.",
+        "My followers won't believe this.", "Screenshot. Screenshot. Screenshot."
+    };
+    private static final String[] CONSTRUCTION_COMPLAINING_SPEECH = {
+        "This is an absolute eyesore!", "I'm ringing the council!",
+        "That shouldn't be allowed!", "The neighbourhood is going downhill.",
+        "My house value just dropped.", "Absolutely disgraceful.",
+        "Someone will hear about this!", "Not in my back yard!"
+    };
+
     // NPC-to-NPC dialogue exchanges — each entry is a [initiator_line, responder_line] pair.
     // The initiator speaks first; the responder replies after a short delay.
     // Indexed as: NPC_TO_NPC_EXCHANGES[pairIndex][0] = initiator, [1] = responder.
@@ -286,6 +304,11 @@ public class NPCManager {
     // Per-NPC structure scan stagger — spread checks over time
     private Map<NPC, Float> npcStructureCheckTimers;
 
+    // Issue #910: Per-NPC timer tracking how long they have been reacting to a structure.
+    // NPCs return to WANDERING after STRUCTURE_REACTION_DURATION seconds.
+    private Map<NPC, Float> npcStructureReactionTimers;
+    private static final float STRUCTURE_REACTION_DURATION = 10.0f; // seconds before NPC moves on
+
     // BlockBreaker reference — used to clear stale hit counters when demolishing blocks
     private BlockBreaker blockBreaker;
 
@@ -359,6 +382,7 @@ public class NPCManager {
         this.npcIdleTimers = new HashMap<>();
         this.npcPathRecalcTimers = new HashMap<>();
         this.npcStructureCheckTimers = new HashMap<>();
+        this.npcStructureReactionTimers = new HashMap<>();
         this.alertedPoliceNPCs = new HashSet<>();
         this.npcStealCooldownTimers = new HashMap<>();
         this.policeLostSightTimers = new HashMap<>();
@@ -682,6 +706,7 @@ public class NPCManager {
         npcStealCooldownTimers.remove(npc);
         npcPathRecalcTimers.remove(npc);
         npcStructureCheckTimers.remove(npc);
+        npcStructureReactionTimers.remove(npc);
         alertedPoliceNPCs.remove(npc);
         policeLostSightTimers.remove(npc);
         npcConversationCooldowns.remove(npc);
@@ -958,6 +983,9 @@ public class NPCManager {
 
         // Tick per-NPC steal cooldown timer
         npcStealCooldownTimers.computeIfPresent(npc, (k, v) -> Math.max(0f, v - delta));
+
+        // Issue #910: Tick per-NPC structure reaction timer (counts up while NPC is reacting)
+        npcStructureReactionTimers.computeIfPresent(npc, (k, v) -> v + delta);
 
         // Update timers and facing (but NOT position — we handle movement with collision)
         npc.updateTimers(delta);
@@ -1384,8 +1412,20 @@ public class NPCManager {
 
     /**
      * Update NPC reacting to a structure.
+     * Issue #910: NPCs speak dialogue when they arrive, then return to wandering after a timeout.
      */
     private void updateReactingToStructure(NPC npc, float delta, World world) {
+        // Check if the reaction has timed out — return NPC to wandering
+        float reactionTime = npcStructureReactionTimers.getOrDefault(npc, 0f);
+        if (reactionTime >= STRUCTURE_REACTION_DURATION) {
+            npcStructureReactionTimers.remove(npc);
+            npc.setState(NPCState.WANDERING);
+            // Issue #910: Give the NPC a delay before it can react again, so it doesn't
+            // immediately re-enter a reaction state when checkForPlayerStructures fires next.
+            npcStructureCheckTimers.put(npc, 30.0f);
+            return;
+        }
+
         // Find nearest player structure
         Vector3 nearestStructure = findNearestPlayerStructure(npc.getPosition());
 
@@ -1393,8 +1433,31 @@ public class NPCManager {
             // Move toward structure
             setNPCTarget(npc, nearestStructure, world);
         } else {
-            // At structure, just idle
+            // At structure — stop moving and speak a reaction line if not already speaking
             npc.setVelocity(0, 0, 0);
+            if (!npc.isSpeaking()) {
+                String line = getConstructionReactionSpeech(npc.getState());
+                if (line != null) {
+                    npc.setSpeechText(line, 4.0f);
+                }
+            }
+        }
+    }
+
+    /**
+     * Return a random speech line for the given construction-reaction state.
+     * Issue #910: NPC acknowledges player constructions with state-appropriate dialogue.
+     */
+    private String getConstructionReactionSpeech(NPCState state) {
+        switch (state) {
+            case STARING:
+                return CONSTRUCTION_STARING_SPEECH[random.nextInt(CONSTRUCTION_STARING_SPEECH.length)];
+            case PHOTOGRAPHING:
+                return CONSTRUCTION_PHOTOGRAPHING_SPEECH[random.nextInt(CONSTRUCTION_PHOTOGRAPHING_SPEECH.length)];
+            case COMPLAINING:
+                return CONSTRUCTION_COMPLAINING_SPEECH[random.nextInt(CONSTRUCTION_COMPLAINING_SPEECH.length)];
+            default:
+                return null;
         }
     }
 
@@ -1519,6 +1582,9 @@ public class NPCManager {
                     case 1: npc.setState(NPCState.PHOTOGRAPHING); break;
                     case 2: npc.setState(NPCState.COMPLAINING); break;
                 }
+
+                // Issue #910: Start the reaction timer so the NPC eventually moves on
+                npcStructureReactionTimers.put(npc, 0f);
 
                 // Track this structure using string key to avoid Vector3 identity issues
                 // (cap to prevent unbounded growth)
@@ -3164,5 +3230,22 @@ public class NPCManager {
      */
     public void forceApplyPoliceTape(World world, Vector3 structureCenter) {
         applyPoliceTapeToStructure(world, structureCenter);
+    }
+
+    /**
+     * Force a structure check for a specific NPC (for testing Issue #910).
+     * Resets the per-NPC check timer so the check runs immediately.
+     */
+    public void forceCheckForPlayerStructures(NPC npc, World world) {
+        npcStructureCheckTimers.put(npc, 0f);
+        checkForPlayerStructures(npc, world);
+    }
+
+    /**
+     * Force structure reaction update for a specific NPC (for testing Issue #910).
+     * Simulates the NPC being at the structure and triggering speech.
+     */
+    public void forceUpdateReactingToStructure(NPC npc, float delta, World world) {
+        updateReactingToStructure(npc, delta, world);
     }
 }
