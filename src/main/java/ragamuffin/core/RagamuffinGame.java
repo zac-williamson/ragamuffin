@@ -220,6 +220,13 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #793 / #846: NeighbourhoodSystem — dynamic decay, gentrification & Vibes state machine
     private NeighbourhoodSystem neighbourhoodSystem;
 
+    // Issue #714 / #716 / #848: Squat, MC Battle & Rave systems — underground music scene
+    private SquatSystem squatSystem;
+    private MCBattleSystem mcBattleSystem;
+    private RaveSystem raveSystem;
+    /** Whether police have already been spawned for the current rave alert. */
+    private boolean ravePoliceSpawned = false;
+
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
     // Issue #773: Car driving system — lets player enter and drive cars
@@ -583,6 +590,16 @@ public class RagamuffinGame extends ApplicationAdapter {
         for (ragamuffin.world.Landmark lm : world.getAllLandmarks()) {
             neighbourhoodSystem.registerBuilding(lm);
         }
+
+        // Issue #714 / #716 / #848: Initialize squat, MC battle & rave systems
+        squatSystem = new SquatSystem(notorietySystem, factionSystem, achievementSystem,
+                rumourNetwork, new java.util.Random());
+        mcBattleSystem = new MCBattleSystem(notorietySystem, factionSystem, achievementSystem,
+                rumourNetwork, new java.util.Random());
+        raveSystem = new RaveSystem(achievementSystem, notorietySystem, rumourNetwork);
+        ravePoliceSpawned = false;
+        gameHUD.setMcBattleSystem(mcBattleSystem);
+        gameHUD.setRaveSystem(raveSystem);
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2442,6 +2459,39 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (nbTip != null) tooltipSystem.showMessage(nbTip, 3.0f);
         }
 
+        // Issue #848: Update squat system — daily tick (income, vibe decay, raid checks)
+        if (squatSystem != null) {
+            squatSystem.tickDay(timeSystem.getDayIndex(), notorietySystem.getTier(),
+                    npcManager.getNPCs(), inventory);
+        }
+
+        // Issue #848: Update MC battle system — advance battle bar each frame
+        if (mcBattleSystem != null) {
+            mcBattleSystem.update(delta);
+        }
+
+        // Issue #848: Update rave system — income accumulation, police alert threshold
+        if (raveSystem != null && squatSystem != null) {
+            int attendees = squatSystem.countAttendeesInSquat(npcManager.getNPCs());
+            raveSystem.update(delta, inventory, attendees);
+
+            // Wire police spawn when rave crosses alert threshold
+            if (raveSystem.isPoliceAlerted() && !ravePoliceSpawned) {
+                ravePoliceSpawned = true;
+                // Spawn 2 PCSO NPCs near the squat entrance
+                int sqX = squatSystem.getSquatWorldX();
+                int sqZ = squatSystem.getSquatWorldZ();
+                float sqY = calculateSpawnHeight(world, sqX, sqZ);
+                npcManager.spawnNPC(ragamuffin.entity.NPCType.PCSO, sqX + 2f, sqY, sqZ + 2f);
+                npcManager.spawnNPC(ragamuffin.entity.NPCType.PCSO, sqX - 2f, sqY, sqZ + 2f);
+                tooltipSystem.showMessage("The feds have been called to the rave. Scarper!", 4.0f);
+            }
+            // Reset spawn flag when rave ends
+            if (!raveSystem.isRaveActive()) {
+                ravePoliceSpawned = false;
+            }
+        }
+
         // Issue #844: Daily heist reset — when clock crosses 06:00
         if (heistSystem != null && prevTimeForHeistReset >= 0f) {
             float currentTime = timeSystem.getTime();
@@ -3244,6 +3294,21 @@ public class RagamuffinGame extends ApplicationAdapter {
             return;
         }
 
+        // Issue #848: FLYER use — start a rave at the player's squat
+        if (material == ragamuffin.building.Material.FLYER && raveSystem != null && squatSystem != null) {
+            // Gather NPCs near the player to seed the rave rumour
+            java.util.List<ragamuffin.entity.NPC> nearbyNpcs = new java.util.ArrayList<>();
+            for (ragamuffin.entity.NPC npc : npcManager.getNPCs()) {
+                if (npc.getPosition().dst(player.getPosition()) <= 30f) {
+                    nearbyNpcs.add(npc);
+                }
+            }
+            String raveMsg = raveSystem.startRave(inventory, squatSystem.getVibe(),
+                    mcBattleSystem != null ? mcBattleSystem.getMcRank() : 0, nearbyNpcs);
+            tooltipSystem.showMessage(raveMsg, 3.0f);
+            return;
+        }
+
         // Fix #257: Check if material has a non-food, non-placeable use action
         if (interactionSystem.canUseItem(material)) {
             String message = interactionSystem.useItem(material, player, inventory);
@@ -3366,6 +3431,16 @@ public class RagamuffinGame extends ApplicationAdapter {
         NPC targetNPC = interactionSystem.findNPCInRange(player.getPosition(), tmpDirection, npcManager.getNPCs());
 
         if (targetNPC != null) {
+            // Issue #848: MC Battle — if player holds a MICROPHONE and target is an MC_CHAMPION
+            if (mcBattleSystem != null && mcBattleSystem.canChallenge(targetNPC, inventory)) {
+                MCBattleSystem.Champion champion = mcBattleSystem.championForNpc(targetNPC);
+                if (champion != null) {
+                    String battleMsg = mcBattleSystem.startBattle(champion, inventory);
+                    tooltipSystem.showMessage(battleMsg, 3.0f);
+                    return;
+                }
+            }
+
             // Issue #824: Street deal — if the player is holding an item that satisfies the NPC's need,
             // attempt a street deal instead of the normal dialogue interaction.
             {
@@ -3490,6 +3565,49 @@ public class RagamuffinGame extends ApplicationAdapter {
                         return;
                     }
                 }
+            }
+        }
+
+        // Issue #848: Squat claim — E key inside a derelict building with ≥5 WOOD
+        if (squatSystem != null && !squatSystem.hasSquat()) {
+            // Find the nearest landmark to the player — check if it's a derelict building
+            ragamuffin.world.Landmark nearestDerelict = null;
+            float nearestDist = 6f; // must be within 6 blocks
+            for (ragamuffin.world.Landmark lm : world.getAllLandmarks()) {
+                float dist = player.getPosition().dst(
+                        lm.getPosition().x + lm.getWidth() / 2f,
+                        player.getPosition().y,
+                        lm.getPosition().z + lm.getDepth() / 2f);
+                if (dist < nearestDist) {
+                    int condition = neighbourhoodSystem != null
+                            ? neighbourhoodSystem.getCondition(lm.getType())
+                            : PropertySystem.INITIAL_CONDITION;
+                    if (condition <= SquatSystem.MAX_CLAIMABLE_CONDITION) {
+                        nearestDist = dist;
+                        nearestDerelict = lm;
+                    }
+                }
+            }
+            if (nearestDerelict != null) {
+                String claimMsg = squatSystem.claimSquat(
+                        nearestDerelict.getType(),
+                        (int) (nearestDerelict.getPosition().x + nearestDerelict.getWidth() / 2f),
+                        (int) (nearestDerelict.getPosition().z + nearestDerelict.getDepth() / 2f),
+                        PropertySystem.INITIAL_CONDITION, inventory, npcManager.getNPCs());
+                tooltipSystem.showMessage(claimMsg, 3.0f);
+                return;
+            }
+        }
+
+        // Issue #848: Rave disperse — E key at squat entrance while rave is active
+        if (raveSystem != null && raveSystem.isRaveActive() && squatSystem != null && squatSystem.hasSquat()) {
+            float distToSquat = player.getPosition().dst(
+                    squatSystem.getSquatWorldX(), player.getPosition().y, squatSystem.getSquatWorldZ());
+            if (distToSquat <= 6f) {
+                String disperseMsg = raveSystem.disperseRave(inventory);
+                tooltipSystem.showMessage(disperseMsg, 3.0f);
+                ravePoliceSpawned = false;
+                return;
             }
         }
 
