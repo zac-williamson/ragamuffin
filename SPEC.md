@@ -14629,3 +14629,172 @@ carry.
 10. **HEARTS_AND_MINDS achievement after 5 donations**: Reset `donationDayLog`. Simulate
     5 donations on 5 separate in-game days (advance `TimeSystem.dayCount` between each).
     Verify `AchievementSystem` has unlocked `HEARTS_AND_MINDS` after the fifth donation.
+
+---
+
+## Phase 38: The High Street Barber — Fresh Cut, Hot Towel & Neighbourhood Gossip
+
+**Goal**: Add "Ali's Barber Shop", a Turkish barber on the high street, where the player
+can pay for haircuts and wet shaves that subtly alter their appearance and chip away at
+notoriety. The barber is a font of neighbourhood gossip, a social hub for NPCs, and — if
+the player owns `HAIR_CLIPPERS` — an opportunity for comedy DIY barbering. This phase
+builds on the existing `HairstyleType` and `FacialHairType` enums (Issue #875) and the
+`HAIR_CLIPPERS` material already present in the codebase.
+
+### Location & World Generation
+
+- `WorldGenerator` places a `BARBER_SHOP` landmark (new `LandmarkType` entry) on the
+  high street, between the off-licence and the charity shop.
+- The building is a narrow two-storey terrace: ground floor is the shop (barber's chair
+  prop `PropType.BARBER_CHAIR`, wall-mounted mirror `PropType.MIRROR`, waiting chairs, a
+  small TV prop showing rolling news), upper floor is storage.
+- A red-and-white barber's pole prop (`PropType.BARBER_POLE`) is placed outside. When the
+  shop is open it spins (rendered as an animated texture UV offset, toggled by
+  `BarberSystem.isOpen()`).
+- The shop is open **09:00–18:00** Monday–Saturday. Closed Sundays (the game's TimeSystem
+  tracks day-of-week via `dayCount % 7`; day 0 = Monday start).
+
+### The Barber NPC
+
+- A new `NPCType.BARBER` NPC called **Ali** is spawned inside the shop at world-gen.
+- Ali greets the player on entry: *"Sit down, mate — what are we doing today?"*
+- On `FROST` or `COLD_SNAP` weather: *"Freezing out there, innit. I'll do you a hot towel shave — on the house. Well… not quite on the house."*
+- Ali spreads one rumour from the `RumourNetwork` to the player for free, once per visit
+  (no drink required, unlike the pub — Ali talks while he cuts). He cycles through his
+  rumour buffer each visit.
+- Ali also accumulates rumours from NPCs who come in for cuts: any NPC within 3 blocks
+  of `PropType.BARBER_CHAIR` has a 30% chance per in-game minute of sharing their top
+  rumour with Ali.
+
+### `BarberSystem` Class (new)
+
+```
+BarberSystem(TimeSystem timeSystem, RumourNetwork rumourNetwork,
+             NotorietySystem notorietySystem, DisguiseSystem disguiseSystem,
+             WitnessSystem witnessSystem, Random random)
+```
+
+Key state:
+- `playerHairstyle: HairstyleType` — the player's current hairstyle (initially `SHORT`).
+- `playerFacialHair: FacialHairType` — the player's current facial hair (initially `NONE`).
+- `lastVisitDay: int` — day of last visit (prevents repeated notoriety reductions per day).
+- `totalCutCount: int` — total haircuts received (for achievements).
+- `diyClipperUses: int` — number of times player has used `HAIR_CLIPPERS` on an NPC.
+
+#### Haircut Menu (5 options, press **E** on Ali or barber's chair)
+
+| Option | Cost | Effect | Notes |
+|--------|------|--------|-------|
+| `SHORT` buzzcut | 3 coins | Sets `playerHairstyle = BUZZCUT`; Notoriety −2 | "Smart. Very smart." |
+| `LONG` style | 3 coins | Sets `playerHairstyle = LONG`; no notoriety effect | "Going for the look, are we?" |
+| `MOHAWK` | 5 coins | Sets `playerHairstyle = MOHAWK`; Street Rep +3, Notoriety +1 | "Bold choice, mate." |
+| Full wet shave | 4 coins | Sets `playerFacialHair = CLEAN_SHAVEN`; Notoriety −1 | Only offered if `playerFacialHair != CLEAN_SHAVEN` |
+| Hot towel shave | 6 coins | Sets `playerFacialHair = CLEAN_SHAVEN`; Warmth +20; Notoriety −1 | Only available on `FROST`/`COLD_SNAP` weather; tooltip: *"Worth every penny on a day like this."* |
+
+- **Notoriety reduction is capped at once per in-game day** (`lastVisitDay` check).
+- Any haircut seeds a `PLAYER_SPOTTED` rumour via Ali: *"Player was in getting a tidy up."* —
+  flavour only, low severity.
+- First haircut tooltip: *"A fresh cut changes everything."*
+
+#### DIY Hair Clippers
+
+- If the player has `HAIR_CLIPPERS` in their hotbar and presses **E** on any non-hostile
+  NPC, `BarberSystem.applyDiyClip(npc, inventory)` is called.
+- The NPC's hairstyle is set to `BUZZCUT` at random — or if they already have `BUZZCUT`,
+  to `MOHAWK`.
+- The targeted NPC becomes `ANNOYED` for 60 seconds and delivers the line:
+  *"Oi! What are you doing, you muppet?!"*
+- `WitnessSystem`: any NPC within 5 blocks who sees this becomes a witness
+  (`EvidenceType.ANTISOCIAL_BEHAVIOUR`).
+- Three or more DIY clips on separate NPCs in a single session unlocks achievement
+  `COWBOY_BARBER`.
+- `HAIR_CLIPPERS` take 3 uses before breaking (replaced with `HAIR_CLIPPERS_BROKEN` in
+  inventory).
+
+### System Integrations
+
+- **NotorietySystem**: haircut reduces Notoriety as above; capped per day.
+- **DisguiseSystem**: a fresh `MOHAWK` hairstyle stacks with `BALACLAVA` to provide a
+  minor `DISGUISE_PRICE_BONUS` equivalent in street deals for 1 in-game hour post-cut
+  (NPCs don't recognise the new look immediately).
+- **RumourNetwork**: Ali accumulates and spreads rumours passively; player always gets one
+  free rumour per visit.
+- **StreetReputationSystem**: `MOHAWK` grants +3 Street Rep; `BUZZCUT` grants +1 Street
+  Rep with `WORKER` and `PENSIONER` NPCs ("Looks respectable").
+- **WeatherSystem**: `HOT_TOWEL_SHAVE` only available during `FROST`/`COLD_SNAP`.
+- **WitnessSystem**: DIY clipping triggers `ANTISOCIAL_BEHAVIOUR` evidence.
+- **AchievementSystem**: two new achievements:
+
+| Achievement | Trigger |
+|-------------|---------|
+| `FRESH_CUT` | Get a haircut for the first time |
+| `COWBOY_BARBER` | Use `HAIR_CLIPPERS` on 3 different NPCs in one session |
+
+### Key Constants (`public static final` in `BarberSystem`)
+
+| Constant | Value | Meaning |
+|----------|-------|---------|
+| `OPEN_HOUR` | 9 | Opening time |
+| `CLOSE_HOUR` | 18 | Closing time |
+| `NOTORIETY_REDUCTION_PER_CUT` | 2 | Notoriety lost on BUZZCUT |
+| `NOTORIETY_REDUCTION_SHAVE` | 1 | Notoriety lost on wet/hot shave |
+| `MOHAWK_STREET_REP_BONUS` | 3 | Street Rep gained from MOHAWK |
+| `MOHAWK_NOTORIETY_PENALTY` | 1 | Notoriety gained from MOHAWK |
+| `HOT_TOWEL_WARMTH_BONUS` | 20 | Warmth restored by hot towel shave |
+| `DIY_CLIPPER_USES` | 3 | Uses before clippers break |
+| `RUMOUR_ACCUMULATE_CHANCE` | 0.30f | Probability per minute NPC shares rumour with Ali |
+| `DISGUST_DURATION_SECONDS` | 60 | How long DIY victim stays ANNOYED |
+| `DISGUISE_BONUS_DURATION_HOURS` | 1f | Post-MOHAWK disguise bonus duration (game hours) |
+
+### Unit Tests
+
+- `BarberSystem.isOpen()` returns true at 10:00 and false at 20:00.
+- `getHaircut(BUZZCUT, playerInventory, player)` deducts 3 coins, sets `playerHairstyle`
+  to `BUZZCUT`, reduces Notoriety by 2, seeds a rumour.
+- Second haircut same day does NOT reduce Notoriety (capped by `lastVisitDay`).
+- `getHotTowelShave()` only available when weather is `FROST` or `COLD_SNAP`; returns
+  `WEATHER_NOT_ELIGIBLE` otherwise.
+- Hot towel shave deducts 6 coins, sets `playerFacialHair = CLEAN_SHAVEN`, adds 20 warmth.
+- `applyDiyClip(npc, inventory)` changes NPC hairstyle to `BUZZCUT`, sets NPC state to
+  `ANNOYED`, decrements `HAIR_CLIPPERS` use count.
+- `HAIR_CLIPPERS` replaced by `HAIR_CLIPPERS_BROKEN` after 3 uses.
+- `COWBOY_BARBER` achievement unlocks after 3 DIY clips on distinct NPCs.
+- Ali accumulates a rumour from an NPC within 3 blocks at 30% chance per minute.
+- `MOHAWK` grants Street Rep +3 and Notoriety +1.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Barber shop exists and Ali is present**: Generate the world. Verify a `BARBER_SHOP`
+   landmark exists on the high street. Verify a `BARBER` NPC named "Ali" is inside the
+   building. Verify the `BARBER_POLE` prop is present outside the building.
+
+2. **Paying for a BUZZCUT deducts coins, changes hairstyle, reduces notoriety**: Give the
+   player 5 coins. Set player Notoriety to 20. Set time to 11:00 (open). Place player
+   adjacent to `PropType.BARBER_CHAIR`. Press **E**. Select "Buzzcut (3 coins)". Verify
+   player now has 2 coins. Verify `barberSystem.getPlayerHairstyle() == BUZZCUT`. Verify
+   player Notoriety is now 18 (−2). Verify tooltip "A fresh cut changes everything." fires.
+
+3. **Notoriety reduction capped to once per day**: Give player 10 coins. Set Notoriety to
+   30. Get a BUZZCUT (Notoriety → 28). On the same in-game day, get a second BUZZCUT.
+   Verify Notoriety is still 28 (no second reduction). Verify 3 more coins are deducted
+   (the cut itself still costs coins).
+
+4. **Hot towel shave only available in cold weather**: Set weather to `RAIN`. Press **E**
+   on Ali. Verify "Hot towel shave" is NOT in the menu options. Set weather to `FROST`.
+   Press **E** on Ali. Verify "Hot towel shave (6 coins)" IS in the menu options. Purchase
+   it. Verify player `facialHair == CLEAN_SHAVEN` and warmth increased by 20.
+
+5. **DIY hair clippers trigger NPC annoyance and witness**: Give player `HAIR_CLIPPERS`
+   (3 uses). Spawn a `PUBLIC` NPC 2 blocks away. Spawn a second `PUBLIC` NPC (the witness)
+   3 blocks away. Press **E** on the first NPC. Verify first NPC hairstyle is `BUZZCUT`.
+   Verify first NPC state is `ANNOYED`. Verify `WitnessSystem` has recorded an
+   `ANTISOCIAL_BEHAVIOUR` evidence entry. Verify `HAIR_CLIPPERS` use count decremented.
+
+6. **COWBOY_BARBER achievement after 3 DIY clips**: Use `HAIR_CLIPPERS` on 3 distinct
+   NPCs (advancing slightly between each so they are unique). Verify `AchievementSystem`
+   has unlocked `COWBOY_BARBER` after the third clip.
+
+7. **Ali spreads rumours during visit**: Seed a `LOOT_TIP` rumour into a `PUBLIC` NPC
+   within 3 blocks of the barber's chair. Simulate 5 in-game minutes. Verify Ali's rumour
+   buffer contains the `LOOT_TIP` rumour (accumulated via 30% chance per minute). Press
+   **E** on Ali to get a haircut. Verify the player receives Ali's rumour in the speech log.
