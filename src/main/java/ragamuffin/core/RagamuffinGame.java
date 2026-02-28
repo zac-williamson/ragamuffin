@@ -172,6 +172,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #659: Criminal record log
     private ragamuffin.ui.CriminalRecordUI criminalRecordUI;
 
+    // Issue #850: Skills UI overlay
+    private ragamuffin.ui.SkillsUI skillsUI;
+
     // Issue #803: Wanted & Notoriety systems — police pursuit and persistent criminal reputation
     private WantedSystem wantedSystem;
     private NotorietySystem notorietySystem;
@@ -494,6 +497,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #659: Initialize criminal record UI
         criminalRecordUI = new ragamuffin.ui.CriminalRecordUI(player.getCriminalRecord());
+
+        // Issue #850: Initialize skills UI
+        skillsUI = new ragamuffin.ui.SkillsUI(player.getStreetSkillSystem());
 
         // Issue #803: Initialize wanted and notoriety systems — police pursuit & criminal reputation
         wantedSystem = new WantedSystem();
@@ -939,6 +945,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                 helpUI.hide();
                 achievementsUI.hide();
                 questLogUI.hide();
+                skillsUI.hide();
                 // Fix #623: Close and clear any active shop menu so isUIBlocking() returns false
                 // after respawn — mirrors the PLAYING branch (Fix #601) and PAUSED branch (Fix #621).
                 if (activeShopkeeperNPC != null) {
@@ -2085,9 +2092,23 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #850: Skills toggle (K key)
+        if (inputHandler.isSkillsPressed()) {
+            boolean wasVisible = skillsUI.isVisible();
+            skillsUI.toggle();
+            soundSystem.play(wasVisible ? ragamuffin.audio.SoundEffect.UI_CLOSE : ragamuffin.audio.SoundEffect.UI_OPEN);
+            inputHandler.resetSkills();
+            if (!wasVisible) {
+                inputHandler.resetPunchHeld();
+                punchHeldTimer = 0f;
+                lastPunchTargetKey = null;
+            }
+        }
+
         // Release cursor when any overlay UI is open, re-catch when all closed
         boolean uiOpen = inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
                 || achievementsUI.isVisible() || questLogUI.isVisible() || criminalRecordUI.isVisible()
+                || skillsUI.isVisible()
                 || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen())
                 || fenceTradeUI.isVisible();
         Gdx.input.setCursorCatched(!uiOpen);
@@ -2245,7 +2266,7 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     private boolean isUIBlocking() {
         return inventoryUI.isVisible() || helpUI.isVisible() || craftingUI.isVisible()
-                || achievementsUI.isVisible() || questLogUI.isVisible()
+                || achievementsUI.isVisible() || questLogUI.isVisible() || skillsUI.isVisible()
                 || (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen())
                 || fenceTradeUI.isVisible();
     }
@@ -4164,6 +4185,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             achievementsUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
 
+        // Issue #850: Render skills overlay if visible
+        if (skillsUI.isVisible()) {
+            skillsUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
         // Issue #464: Render quest log overlay if visible
         if (questLogUI.isVisible()) {
             questLogUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
@@ -4409,6 +4435,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (criminalRecordUI.isVisible()) {
             criminalRecordUI.hide();
+            Gdx.input.setCursorCatched(state == GameState.PLAYING);
+        } else if (skillsUI.isVisible()) {
+            skillsUI.hide();
             Gdx.input.setCursorCatched(state == GameState.PLAYING);
         } else if (state == GameState.PLAYING) {
             transitionToPaused();
