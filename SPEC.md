@@ -13126,3 +13126,182 @@ complete any pending transaction before being ejected (same as when the door blo
    the `CHIPPY` AABB. Advance simulation by 10 real seconds via
    `warmthSystem.update(10f, player, world, weatherSystem)`. Verify player warmth
    is now 50 (20 + 30 from 3 warmth/s × 10 seconds).
+
+---
+
+## Public Library System — Quiet Reading, Free Internet & Rough Sleeping (Issue #928)
+
+**Goal**: Add a Council-run Public Library landmark where the player can read books
+to gain street-skill XP, use the free internet terminal to scout fence prices and
+check the wanted list, sleep rough in a quiet corner, and avoid police attention —
+all while contending with the LIBRARIAN NPC enforcing strict silence rules.
+
+### Overview
+
+The `LibrarySystem` class (in `ragamuffin/core/LibrarySystem.java`) manages the
+library's opening hours, reading sessions, internet terminal, rough-sleeping slot,
+and the LIBRARIAN NPC's shushing/ejection behaviour.
+
+The Library is a `LandmarkType.LIBRARY` landmark generated as part of the town
+centre, adjacent to the park. It opens 09:00–17:30 Monday–Saturday, closed Sunday.
+
+### Core Mechanics
+
+#### Reading Sessions
+- The library contains 5 `BOOKSHELF` props. Press **E** on a bookshelf to begin
+  reading. A reading session lasts 60 in-game seconds (1 real second).
+- Each book belongs to one of four categories mapped to a `StreetSkillSystem.Skill`:
+  - **DIY Manual** → `CONSTRUCTION` XP (+15 per session)
+  - **Negotiation Tactics** → `TRADING` XP (+15 per session)
+  - **Street Law** → `STREETWISE` XP (+15 per session)
+  - **Gardening Weekly** → `HORTICULTURE` XP (+15 per session, allotment synergy)
+- Player must remain stationary (no WASD input) for the full session or XP is lost.
+- Maximum 3 reading sessions per in-game day (books per session shown in UI).
+
+#### Free Internet Terminal
+- One `INTERNET_TERMINAL` prop (press **E** to use). Opens a simple text-based UI
+  (`LibraryTerminalUI`).
+- **Check Fence Prices**: Shows current `FenceValuationTable` prices for the top
+  5 most valuable materials in the player's inventory. Tooltip: "Knowledge is power.
+  Or at least money."
+- **Check Wanted Level**: Displays the player's current notoriety tier and the
+  most recent `CriminalRecord` offence log entry.
+- **Browse Job Listings**: Shows the current `JobCentreSystem` available jobs list.
+  Selecting a job pre-registers the player (skips the queue at JobCentre).
+- Terminal session ends if the LIBRARIAN NPC is within 3 blocks (ejected for
+  "excessive keyboard noise").
+
+#### Rough Sleeping
+- Between 17:30 (closing) and 09:00 (opening) the library is technically closed
+  but a broken back window (`GLASS` block replaced with `AIR` at world-gen) lets
+  the player sneak in.
+- Press **E** on the `READING_CHAIR` prop to sleep. Sleep restores full health
+  (+100 HP over 5 in-game seconds) and warmth (+50 warmth). Advances time to 07:00.
+- Sleeping inside gives the `ROUGH_SLEEPER` achievement.
+- 20% chance per sleep that a POLICE NPC spawns outside at 07:00 and checks the
+  premises — player must exit within 30 seconds or receive `TRESPASS` criminal
+  record entry and +10 Notoriety.
+
+#### LIBRARIAN NPC
+- A `NPCType.LIBRARIAN` NPC (elderly woman, `FacialExpression.STERN`) patrols
+  between the bookshelves on a fixed 20-block route.
+- **Shushing**: If the player runs (sprint key held) inside the library or breaks
+  any block, the LIBRARIAN immediately faces the player and says
+  *"Shh! This is a library!"* — player movement speed is reduced by 30% for
+  5 seconds (embarrassment debuff).
+- **Ejection**: If the player commits a second noise offence within 60 seconds,
+  the LIBRARIAN ejects them: player is teleported to the library entrance, the
+  door is locked for 10 in-game minutes, and a `LIBRARY_BAN` rumour is seeded
+  to nearby NPCs. Tooltip: "Ejected from the library. Absolutely disgraceful."
+- **Kindness**: If the player has not committed any offence this session and speaks
+  to the LIBRARIAN (press **E**), she offers a free `FLASK_OF_TEA` once per day.
+  Tooltip: "The librarian takes pity. 'You look like you need this, dear.'"
+
+### System Integrations
+
+- **`StreetSkillSystem`**: Reading sessions award XP to the appropriate skill tier.
+  Tier 1 unlocks require 100 XP; Tier 2 require 300 XP. Library is the cheapest
+  way to level `TRADING` and `STREETWISE` skills.
+- **`NotorietySystem`**: Police do not enter the library during opening hours unless
+  player Notoriety ≥ 60 (armed response threshold). Below that threshold, being
+  inside the library provides a "low profile" bonus: Notoriety decays 2× faster
+  per in-game minute.
+- **`WarmthSystem`**: Library interior counts as a `ShelterDetector` warm zone
+  (+3 warmth/s while inside). Particularly valuable during `COLD_SNAP` weather.
+- **`TimeSystem`**: Opening hours enforced strictly. Closed Sunday (in-game day 7).
+  The broken back window allows night access regardless of day.
+- **`JobCentreSystem`**: Pre-registering via the terminal removes the player from
+  the queue, granting immediate job pickup next visit (saves 1 in-game hour).
+- **`RumourNetwork`**: Reading about an NPC's area of expertise (e.g. Negotiation
+  Tactics when `TRADER` NPCs are nearby) seeds a `LOOT_TIP` rumour of new goods
+  arriving at the market stall.
+- **`NewspaperSystem`**: The library receives the daily newspaper. Press **E** on
+  the NEWSPAPER_STAND prop to read it for free (normally costs 1 COIN at the
+  corner shop). Reveals today's active `MarketEvent` if one is running.
+- **`FactionSystem`**: Reading `Street Law` grants +5 Street Lads Respect (they
+  appreciate someone who knows their rights). Ejection for noise offences costs
+  −3 Street Lads Respect ("even the lads think that's embarrassing").
+
+### New Materials / Props
+
+- `PropType.BOOKSHELF` — interactable bookshelf; opens reading session.
+- `PropType.INTERNET_TERMINAL` — interactable PC terminal; opens `LibraryTerminalUI`.
+- `PropType.READING_CHAIR` — interactable chair; initiates rough-sleeping sequence.
+- `PropType.NEWSPAPER_STAND` — interactable stand; reveals daily `MarketEvent`.
+- `Material.DIY_MANUAL` — readable item; grants `CONSTRUCTION` XP when used from inventory.
+- `Material.NEGOTIATION_BOOK` — readable item; grants `TRADING` XP.
+- `Material.STREET_LAW_PAMPHLET` — readable item; grants `STREETWISE` XP + Street Lads Respect.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `BOOKWORM` | Complete 10 reading sessions across sessions |
+| `NIGHT_OWL` | Sleep rough in the library 3 times |
+| `SELF_IMPROVEMENT` | Gain a StreetSkill Tier 2 level entirely through library reading |
+| `SHUSHED` | Be shushed by the librarian |
+| `EJECTED_FROM_LIBRARY` | Be ejected for a second noise offence |
+| `FLASK_OF_SYMPATHY` | Receive the librarian's free FLASK_OF_TEA |
+
+### Unit Tests
+
+- `LibrarySystem.isOpen(dayOfWeek, hour)` returns true Mon–Sat 09:00–17:29, false otherwise and always false on Sunday.
+- Reading session awards +15 XP to the correct `StreetSkillSystem.Skill`.
+- Movement interruption during reading session cancels XP award.
+- Maximum 3 reading sessions per in-game day; 4th attempt returns `SESSION_LIMIT_REACHED`.
+- LIBRARIAN shush debuff reduces speed by 30% for exactly 5 seconds.
+- Second noise offence within 60 seconds triggers ejection and 10-minute door lock.
+- Rough sleeping advances time to 07:00 and restores full health and warmth.
+- 20% trespass check: with `Random` seeded for 20% outcome, POLICE spawns at 07:00.
+- `FenceValuationTable` price lookup shown correctly in terminal UI.
+- Free newspaper reveals active `MarketEvent`; shows "No disruptions today" if none.
+- Notoriety decay rate doubles while player is inside and Notoriety < 60.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Reading session awards XP and respects daily limit**: Place player inside the
+   library (inside `LandmarkType.LIBRARY` AABB). Call
+   `librarySystem.startReadingSession(player, PropType.BOOKSHELF, StreetSkillSystem.Skill.TRADING,
+   streetSkillSystem)`. Advance 60 in-game seconds without WASD input. Verify
+   `streetSkillSystem.getXp(Skill.TRADING)` increased by 15. Repeat 2 more times.
+   Attempt a 4th session. Verify result is `SESSION_LIMIT_REACHED` and XP has not
+   increased further.
+
+2. **LIBRARIAN shushes sprinting player and applies debuff**: Place LIBRARIAN NPC
+   inside library. Set player sprint flag true. Call
+   `librarySystem.update(delta, player, librarianNpc, world)`. Verify
+   `librarianNpc.getSpeechText()` equals `"Shh! This is a library!"`. Verify
+   `player.getSpeedMultiplier()` equals 0.7f. Advance 5 seconds. Verify
+   `player.getSpeedMultiplier()` returns to 1.0f.
+
+3. **Second noise offence triggers ejection**: Trigger first noise offence (sprint).
+   Within 60 seconds, trigger a second (break a block via
+   `librarySystem.onBlockBroken(player, librarianNpc, world, rumourNetwork, npcManager)`).
+   Verify player position equals library entrance coordinates. Verify
+   `librarySystem.isDoorLocked()` is true. Verify a `LIBRARY_BAN` rumour exists in
+   the `RumourNetwork`.
+
+4. **Rough sleeping restores health and warmth and advances time**: Set player HP to
+   30 and warmth to 15. Set time to 22:00. Call
+   `librarySystem.sleepRough(player, timeSystem, warmthSystem, achievementSystem)`.
+   Verify `timeSystem.getHour()` equals 7. Verify `player.getHealth()` equals
+   `player.getMaxHealth()`. Verify `player.getWarmth()` equals 65 (15 + 50). Verify
+   `ROUGH_SLEEPER` achievement was awarded (first sleep).
+
+5. **Internet terminal reveals fence prices and wanted level**: Give player
+   `Material.DIAMOND` (fence value 50) and `Material.BRICK` (fence value 2).
+   Call `librarySystem.openTerminal(player, fenceValuationTable, criminalRecord,
+   jobCentreSystem)`. Query `terminal.getFencePriceList()`. Verify DIAMOND appears
+   first (highest value). Verify `terminal.getWantedLevel()` matches
+   `notorietySystem.getTier()`. Close terminal. Verify player's inventory unchanged.
+
+6. **Notoriety decays faster inside library**: Set player Notoriety to 40 (below
+   armed response threshold). Call `librarySystem.update(delta=60f, ...)` with player
+   inside the library AABB. Verify `notorietySystem.getNotoriety()` decreased by at
+   least 2 points (double the normal 1-per-minute decay rate).
+
+7. **Free newspaper reveals active MarketEvent**: Trigger `MarketEvent.GREGGS_STRIKE`
+   via `streetEconomySystem.triggerMarketEvent(...)`. Place player inside library.
+   Call `librarySystem.readNewspaper(player, streetEconomySystem, tooltipSystem)`.
+   Verify `tooltipSystem.getLastTooltip()` contains `"Greggs"`. Verify no COIN was
+   deducted from player inventory.
