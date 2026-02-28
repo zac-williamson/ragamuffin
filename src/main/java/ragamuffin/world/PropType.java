@@ -369,7 +369,18 @@ public enum PropType {
      * Maximum 3 mystery bags per day (reduced to 1 for Notoriety Tier 3+ players).
      * Destroyed by 1 punch; yields nothing (it's already empty inside).
      */
-    MYSTERY_BAG(0.20f, 0.30f, 0.15f, 1, null);
+    MYSTERY_BAG(0.20f, 0.30f, 0.15f, 1, null),
+
+    // ── Issue #934: Pigeon Racing System ─────────────────────────────────────
+
+    /**
+     * Pigeon loft — a handbuilt wooden structure housing up to 3 racing pigeons.
+     * Crafted from 8 WOOD + 2 PLANKS; placed on the squat roof or allotment.
+     * Interact (E) to open the PigeonLoftUI: train pigeons, enter races, check morale.
+     * Frost weather damages the loft (−10 condition per frost period via WeatherSystem).
+     * Destroyed by 8 punches; yields WOOD.
+     */
+    PIGEON_LOFT(1.50f, 1.20f, 1.00f, 8, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

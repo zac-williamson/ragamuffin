@@ -135,6 +135,9 @@ public class NewspaperSystem {
     /** Filler headline used when infamy score is 0 or story is suppressed. */
     public static final String PIGEON_FILLER = "PIGEON MENACE GRIPS TOWN CENTRE";
 
+    /** Victory headline replacing filler on the day a pigeon race is won. */
+    public static final String PIGEON_VICTORY_HEADLINE = "LOCAL BIRD WINS NORTHFIELD DERBY — FANCIER IN TEARS OF JOY";
+
     /** Brief item used for council announcements (filler edition). */
     private static final String COUNCIL_FILLER = "COUNCIL UNVEILS NEW PLANNING APPLICATION";
 
@@ -259,6 +262,12 @@ public class NewspaperSystem {
     /** Whether PIGEON_MENACE has been awarded. */
     private boolean pigeonMenaceAwarded = false;
 
+    /**
+     * Whether a pigeon race victory should replace the filler headline on the next
+     * publication (set by PigeonRacingSystem on a race win day).
+     */
+    private boolean pigeonVictoryPending = false;
+
     // ── Construction ──────────────────────────────────────────────────────────
 
     public NewspaperSystem() {
@@ -364,11 +373,19 @@ public class NewspaperSystem {
         int infamyScore;
 
         if (buyOutActive || frontPageEvent == null) {
-            // Filler edition
-            headline = PIGEON_FILLER;
+            // Filler edition — but a pigeon victory replaces standard filler
+            if (pigeonVictoryPending) {
+                headline = PIGEON_VICTORY_HEADLINE;
+                pigeonVictoryPending = false;
+                consecutiveFillerDays = 0; // victory is news, not filler
+            } else {
+                headline = PIGEON_FILLER;
+            }
             infamyScore = 0;
-            consecutiveFillerDays++;
-            checkPigeonMenaceAchievement(achievementCallback);
+            if (headline.equals(PIGEON_FILLER)) {
+                consecutiveFillerDays++;
+                checkPigeonMenaceAchievement(achievementCallback);
+            }
         } else {
             infamyScore = frontPageEvent.getInfamyScore();
             headline = generateHeadline(frontPageEvent);
@@ -794,6 +811,19 @@ public class NewspaperSystem {
     /** Current consecutive collection days for REGULAR_READER tracking. */
     public int getConsecutiveCollectionDays() {
         return consecutiveCollectionDays;
+    }
+
+    /**
+     * Flag that a pigeon race was won today — the next filler slot will be replaced
+     * by the PIGEON_VICTORY headline. Called by PigeonRacingSystem on a race win.
+     */
+    public void setPigeonVictoryPending(boolean pending) {
+        this.pigeonVictoryPending = pending;
+    }
+
+    /** Whether a pigeon victory headline is queued for the next filler edition. */
+    public boolean isPigeonVictoryPending() {
+        return pigeonVictoryPending;
     }
 
     /** Current count of suppressed stories (for NO_COMMENT tracking). */

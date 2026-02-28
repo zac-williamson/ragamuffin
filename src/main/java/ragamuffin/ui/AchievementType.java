@@ -1013,6 +1013,34 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #934: Pigeon Racing System ──────────────────────────────────────
+
+    HOME_BIRD(
+        "Home Bird",
+        "Your pigeon completed its first homing race. It found its way back. Unlike some people.",
+        1
+    ),
+    CHAMPION_OF_THE_LOFT(
+        "Champion of the Loft",
+        "Won three neighbourhood races with the same pigeon. She's a proper racer now.",
+        3
+    ),
+    NORTHFIELD_DERBY(
+        "Northfield Derby",
+        "Won the Northfield Derby. A proud day. The pigeon fancier raised an eyebrow of respect.",
+        1
+    ),
+    CAUGHT_IT_YERSELF(
+        "Caught It Yerself",
+        "Acquired a racing pigeon by catching a wild BIRD NPC in the park. Old-school.",
+        1
+    ),
+    BREAD_WINNER(
+        "Bread Winner",
+        "Used 10 bread crusts to train your pigeon. Dedication. Frugal, but dedicated.",
+        10
+    ),
+
     // ── Issue #926: Chippy System ──────────────────────────────────────────────
 
     SALT_AND_VINEGAR(

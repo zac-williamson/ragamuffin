@@ -722,7 +722,32 @@ public enum Material {
      * Bubblegum — chewy pink bubblegum ball found at the bottom of a SCREWBALL (30% chance).
      * No gameplay effect; collectible novelty item.
      */
-    BUBBLEGUM("Bubblegum");
+    BUBBLEGUM("Bubblegum"),
+
+    // ── Issue #934: Pigeon Racing System ─────────────────────────────────────
+
+    /**
+     * Racing Pigeon — the player's homing pigeon, acquired from PIGEON_FANCIER NPC,
+     * caught as a wild BIRD NPC, or earned as a community reward.
+     * Stored in the PIGEON_LOFT prop; not carried in inventory during a race.
+     * Tooltip on first acquisition: "A proper racing pigeon. Treat it right."
+     */
+    RACING_PIGEON("Racing Pigeon"),
+
+    /**
+     * Bread Crust — pigeon feed used to train the racing pigeon.
+     * Each crust increases the pigeon's training level (0–10, capped).
+     * Dropped by PENSIONER NPCs (10% chance) or crafted from CARDBOARD + COIN.
+     * Tooltip on first pickup: "Stale bread. The pigeon's not fussed."
+     */
+    BREAD_CRUST("Bread Crust"),
+
+    /**
+     * Pigeon Trophy — awarded on winning the Northfield Derby (NORTHFIELD_DERBY achievement).
+     * Decorative; can be placed on a surface in the squat for +5 Vibe.
+     * Tooltip: "First place. The bird earned it more than you did."
+     */
+    PIGEON_TROPHY("Pigeon Trophy");
 
     private final String displayName;
 
@@ -1087,6 +1112,13 @@ public enum Material {
             case OYSTER_CARD_LOLLY: return c(0.12f, 0.42f, 0.72f); // Oyster card blue
             case BUBBLEGUM:      return c(0.95f, 0.40f, 0.70f);  // Bubblegum pink
 
+            // Issue #934: Pigeon Racing System
+            case RACING_PIGEON:  return cs(0.62f, 0.60f, 0.65f,  // Grey-blue pigeon
+                                           0.92f, 0.75f, 0.55f); // Orange ring on foot
+            case BREAD_CRUST:    return c(0.82f, 0.70f, 0.42f);  // Stale crust tan
+            case PIGEON_TROPHY:  return cs(0.88f, 0.72f, 0.10f,  // Gold trophy
+                                           0.75f, 0.58f, 0.05f); // Darker gold base
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1281,6 +1313,10 @@ public enum Material {
             case CHOC_ICE:
             case OYSTER_CARD_LOLLY:
             case BUBBLEGUM:
+            // Issue #934: Pigeon Racing System (not block items)
+            case RACING_PIGEON:
+            case BREAD_CRUST:
+            case PIGEON_TROPHY:
                 return false;
             default:
                 return true;
@@ -1637,6 +1673,14 @@ public enum Material {
                 return IconShape.CARD;        // card-shaped lolly
             case BUBBLEGUM:
                 return IconShape.FOOD;        // small round sweet
+
+            // Issue #934: Pigeon Racing System
+            case RACING_PIGEON:
+                return IconShape.CARD;        // pigeon shape (compact bird silhouette)
+            case BREAD_CRUST:
+                return IconShape.FOOD;        // flat bread crust
+            case PIGEON_TROPHY:
+                return IconShape.CYLINDER;    // trophy cup shape
 
             default:
                 return IconShape.BOX;
