@@ -697,6 +697,29 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #906: Busking System ────────────────────────────────────────────
+
+    STREET_PERFORMER(
+        "Street Performer",
+        "Started your first busk session. Percussive. Improvised. Very British.",
+        1
+    ),
+    LIVING_WAGE(
+        "Living Wage",
+        "You've made more busking than a week at the JobCentre. The bucket never lies.",
+        1
+    ),
+    BUCKET_LIST(
+        "Bucket List",
+        "Earned 20 coins from busking across all sessions. The dispossessed percussionist.",
+        1
+    ),
+    MOVE_ALONG_PLEASE(
+        "Move Along Please",
+        "Had your bucket drum confiscated by police. Unlicensed street performance. Classic.",
+        1
+    ),
+
     // ── Issue #799: The Corner Shop Economy ──────────────────────────────────
 
     OPEN_FOR_BUSINESS(
