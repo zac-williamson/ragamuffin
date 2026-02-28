@@ -10975,3 +10975,62 @@ existing method.
 5. **PAUSED branch advances the publication timer**: Set state to PAUSED. Set `currentHour`
    to 17.9. Simulate 120 frames at delta=1/60. Verify `getLatestPaper()` is non-null,
    confirming the PAUSED branch also calls `newspaperSystem.update()`.
+
+## Wire FenceTradeUI into the render loop
+
+`FenceTradeUI` (in `ragamuffin/ui/FenceTradeUI.java`) is fully implemented with a
+`render(SpriteBatch, ShapeRenderer, BitmapFont, int, int, FenceSystem, Player, Inventory)`
+method, but **its `render()` method is never called anywhere in `RagamuffinGame.java`**.
+
+The UI is instantiated at line 406, shown at line 3643 (`fenceTradeUI.show()`), hidden at
+line 4601 (`fenceTradeUI.hide()`), and its `isVisible()` flag is even checked at lines 2165
+and 2332 to block other input while open — yet nothing is ever drawn to the screen. When the
+player interacts with a Fence NPC, the trading panel is silently suppressed: the UI blocks
+normal input but the player sees nothing and cannot sell stolen goods, buy contraband stock,
+or take a contraband run.
+
+### What needs to be done
+
+1. **Add a `render()` call** in the HUD-rendering section of `RagamuffinGame.java`
+   (after the other UI panels such as `jobCentreUI`, `bootSaleUI`, etc.) inside the
+   `renderHUD()` method (or equivalent location where all 2-D overlays are drawn):
+
+   ```java
+   if (fenceTradeUI.isVisible()) {
+       fenceTradeUI.render(spriteBatch, shapeRenderer, font,
+               Gdx.graphics.getWidth(), Gdx.graphics.getHeight(),
+               fenceSystem, player, inventory);
+   }
+   ```
+
+2. The call must appear in **all three game-state branches** that draw the HUD
+   (PLAYING, PAUSED, and the cinematic-camera branch) so the UI is always drawn when
+   visible regardless of game state.
+
+3. Ensure the `spriteBatch` is in the expected state (begin/end order) at the call site,
+   consistent with the surrounding UI render calls.
+
+No new classes or methods are needed — only this wiring.
+
+### Integration tests — implement these exact scenarios
+
+1. **FenceTradeUI renders when visible**: In a headless integration test, set
+   `fenceTradeUI.show()`. Call the game render method for one frame. Verify that
+   `fenceTradeUI.isVisible()` returns `true` and that the render loop did not throw
+   any exception (confirming the render path is exercised without a null-pointer or
+   batch state error).
+
+2. **FenceTradeUI hidden by default**: Start the game in PLAYING state. Without
+   interacting with a Fence NPC, verify `fenceTradeUI.isVisible()` returns `false`.
+
+3. **FenceTradeUI shown after Fence interaction**: Simulate pressing `E` while the
+   player is adjacent to an NPC of type FENCE. Verify `fenceTradeUI.isVisible()`
+   becomes `true` after the interaction event is processed.
+
+4. **FenceTradeUI closed by ESC**: With `fenceTradeUI` visible, simulate pressing ESC.
+   Verify `fenceTradeUI.isVisible()` returns `false` after the key is processed.
+
+5. **Normal input blocked while FenceTradeUI is open**: Set `fenceTradeUI.show()`.
+   Simulate pressing W for 30 frames. Verify that player movement is blocked (position
+   unchanged), confirming that the existing `isVisible()` guard in the input handler
+   is in effect.
