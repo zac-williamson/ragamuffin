@@ -15422,3 +15422,198 @@ public static final float WET_TILES_SPEED_REDUCTION     = 0.20f;
 10. **Broken sauna triggers TYPICAL achievement**: Place player adjacent to
     `SAUNA_PROP`. Press **E**. Verify tooltip *"Out of Order. Has been since 2009."*
     is displayed. Verify achievement `TYPICAL` is unlocked.
+
+---
+
+## Phase 41: The Fried Chicken Shop — Late-Night Hunger, Youth Congregation & Wing Tax
+
+**Goal**: Add "Clucky's Fried Chicken" to the high street — a distinctly British
+urban institution open until 2am, perpetually staffed by one exhausted person
+behind bulletproof glass, and absolutely surrounded by youth NPCs at all hours.
+The fried chicken shop fills a gap between the chippy (closes at 10pm) and
+starvation. It is cheap, it is greasy, it is exactly what you need at midnight,
+and it will absolutely get you into trouble.
+
+### Building & Layout
+
+A new `LandmarkType.FRIED_CHICKEN_SHOP` is added to the world generator, placed
+on the high street adjacent to or near the kebab van site (but distinct from it).
+The building uses BRICK exterior, GLASS shop front, with a `BUILDING_SIGN` prop
+reading *"Clucky's — 7 Wings for £2"*. Interior props:
+
+- `COUNTER_PROP` — the service counter with bulletproof-glass partition
+- `MENU_BOARD_PROP` — illuminated menu on the wall (GLASS block with sign)
+- `CHIP_FRYER_PROP` — the fryer behind the counter
+- `LITTER_BIN_PROP` — always overflowing (flavour only)
+- 3–5 `PLASTIC_CHAIR_PROP` seats (the hard orange kind)
+
+One `COUNTER_STAFF_NPC` named **Devraj** is always present behind the counter,
+wearing a uniform. He has 3 speech lines on interaction: *"What you having?"* /
+*"Wings or a box?"* / *"That's 2 quid mate, not 1."*
+
+Opening hours: **10:00–02:00** (next day). After 02:00, Devraj is replaced by
+a `CLOSED_SIGN_PROP` and the door is sealed. Tooltip on first visit after 02:00:
+*"Closed. They are never open when you need them."*
+
+### Menu & Hunger
+
+New `Material` entries:
+
+| Item | Cost | Hunger restored | Notes |
+|------|------|----------------|-------|
+| `CHICKEN_WINGS` | 2 COIN | +35 hunger | *"7 wings, a prayer, and a napkin that dissolves on contact."* |
+| `CHICKEN_BOX` | 4 COIN | +50 hunger | Large box meal. Also restores +10 energy. |
+| `CHIPS_AND_GRAVY` | 1 COIN | +20 hunger | Available after 20:00 only. |
+| `FLAT_COLA` | 1 COIN | Restores +5 energy | Always flat. Tooltip on first purchase: *"Flat as the local economy."* |
+
+Player presses **E** near the `COUNTER_PROP` to open a simple menu overlay
+(similar to `ChippyOrderUI`). Purchasing deducts COIN and adds the item to
+inventory. Items are consumed from the hotbar by right-clicking, restoring hunger.
+
+### Youth NPC Congregation
+
+Youth NPCs and YOUTH_GANG NPCs congregate outside Clucky's between **18:00–02:00**.
+Up to 6 youth NPCs gather within 8 blocks of the entrance, loitering with
+`NPCState.IDLE`. They:
+
+- Comment on food: *"Clucky's is peak, bruv."* / *"Seven wings though, where's the eighth?"*
+- Occasionally start arguments between themselves (random 5% chance per minute per
+  pair within 3 blocks: both enter `NPCState.ARGUING` for 30 seconds, then one
+  shoves the other — applying 5 damage)
+- React to player carrying `CHICKEN_WINGS` or `CHICKEN_BOX`: one nearby youth will
+  attempt a **Wing Tax** (see below)
+
+### Wing Tax
+
+When the player purchases `CHICKEN_WINGS` or `CHICKEN_BOX` and exits the shop
+with youth NPCs within 6 blocks, one youth attempts a Wing Tax:
+
+1. The youth NPC approaches the player (`NPCState.APPROACHING`), says
+   *"Oi, allow me a wing."*
+2. Player has 3 options (hotkey prompt shown on HUD for 8 seconds):
+   - **Give a wing** (`G` key): removes 1 unit of hunger value from the item
+     (conceptually one wing given), youth is satisfied (`NPCState.IDLE`), +3
+     StreetReputation with STREET_LADS faction.
+   - **Refuse** (`R` key): youth enters `NPCState.AGGRESSIVE`, attempts to grab
+     the box. Roll: 40% chance youth succeeds — item is removed from player
+     inventory. On success: `CHICKEN_WINGS` / `CHICKEN_BOX` removed from
+     hotbar. +5 Notoriety if player retaliates (punches the youth).
+   - **Leg it** (player moves >5 blocks within the 8-second window): youth
+     gives up and returns to loitering. No consequence.
+3. Wing Tax only triggers once per food item purchase (cooldown per youth NPC:
+   3 in-game minutes).
+
+### Fight Outside Clucky's
+
+Between 22:00–01:00, there is a 15% chance per in-game hour that a full fight
+erupts outside Clucky's among the loitering youth NPCs. When triggered:
+
+- 2–3 youth NPCs enter `NPCState.FIGHTING_EACH_OTHER`
+- They deal 5 damage to each other every 10 seconds for 60 seconds
+- A `NOISE_EVENT` is seeded, potentially attracting POLICE NPCs
+- The fight generates a `RumourType.FIGHT_NEARBY` rumour seeded into any
+  PUBLIC NPC within 20 blocks: *"Massive ruck outside Clucky's last night.
+  Someone lost a wing."*
+- Player can intervene (punch a combatant) or record it (if holding
+  `STOLEN_PHONE` — no gameplay effect, but triggers tooltip: *"Content."*)
+- After 60 seconds, or when police arrive, NPCs flee or return to idle
+
+### Litter & Notoriety Reduction
+
+Clucky's generates `LITTER_PROP` (chicken bones, boxes) on the surrounding
+PAVEMENT blocks every 15 in-game minutes. Up to 8 litter props can exist at
+once; oldest is removed when cap is reached.
+
+Player can pick up litter (press **E** on a `LITTER_PROP`) and deposit it in
+the `LITTER_BIN_PROP`. Each litter piece deposited: −1 Notoriety (max −5 per
+in-game day). Tooltip on first deposit: *"Bin it. You're not an animal. Well."*
+
+### Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `SEVEN_WINGS` | Purchase `CHICKEN_WINGS` for the first time |
+| `WING_TAXED` | Have a `CHICKEN_BOX` stolen by a youth NPC |
+| `STAND_YOUR_GROUND` | Successfully refuse Wing Tax 3 times without being robbed |
+| `COMMUNITY_SERVICE` | Deposit 5 pieces of litter in a single in-game day |
+
+### Integrations
+
+- **NotorietySystem**: Wing Tax refusal violence adds +5 Notoriety; litter binning
+  reduces Notoriety −1 per piece (−5/day cap).
+- **StreetEconomySystem**: `CHICKEN_WINGS` and `CHICKEN_BOX` satisfy `NeedType.HUNGRY`.
+  Base prices added to `BASE_PRICES` map: CHICKEN_WINGS=2, CHICKEN_BOX=4.
+- **WantedSystem**: Fight Outside Clucky's triggers a `NOISE_EVENT` (same as existing
+  noise mechanic) — police may respond.
+- **RumourNetwork**: Fight seeded as `FIGHT_NEARBY` rumour; Devraj seeds a
+  `LOOT_TIP`-type rumour at midnight: *"Last night's shift. Don't ask."*
+- **FactionSystem**: Giving a wing adds +3 STREET_LADS respect; refusing and
+  fighting a youth adds −5 STREET_LADS respect.
+- **TimeSystem**: Opening hours enforced (10:00–02:00); peak congregation 18:00–02:00.
+- **StreetReputation**: Litter depositing adds +1 Street Reputation point (once per day).
+
+**Unit tests**: Menu item hunger values, Wing Tax success/failure probability, fight
+trigger chance, litter spawn/cap logic, opening hours enforcement, youth congregation
+count, achievement trigger conditions.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Purchasing chicken wings restores hunger**: Give player 2 COIN. Set hunger
+   to 40. Place player within 2 blocks of `COUNTER_PROP` inside Clucky's. Set time
+   to 20:00 (open). Press **E**, select CHICKEN_WINGS. Verify player COIN reduced to 0.
+   Verify `CHICKEN_WINGS` is in inventory. Right-click to consume. Verify hunger
+   ≥ 75 (restored +35). Verify achievement `SEVEN_WINGS` is unlocked.
+
+2. **Shop is closed after 02:00**: Set time to 02:30. Place player at Clucky's
+   entrance. Press **E**. Verify the menu overlay does NOT open. Verify tooltip
+   *"Closed. They are never open when you need them."* is displayed. Verify no COIN
+   is deducted.
+
+3. **Wing Tax — youth steals box on successful roll**: Give player 4 COIN and a
+   `CHICKEN_BOX` in hotbar. Spawn a `YOUTH_GANG` NPC within 6 blocks of the
+   Clucky's entrance. Seed the `Random` with a value that produces a theft success
+   (roll < 0.40). Player presses **R** to refuse. Verify `CHICKEN_BOX` is removed
+   from player inventory. Verify the youth NPC's speech is *"Tax."* or similar.
+   Verify Notoriety is unchanged (no retaliation).
+
+4. **Wing Tax — player gives wing, gains street rep**: Spawn a `YOUTH_GANG` NPC
+   within 6 blocks. Give player `CHICKEN_WINGS`. Wing Tax prompt triggers (advance
+   until NPC speech appears). Player presses **G**. Verify `CHICKEN_WINGS` remains
+   in inventory (one was given, item not fully removed). Verify STREET_LADS faction
+   Respect has increased by 3. Verify youth NPC returns to `NPCState.IDLE`.
+
+5. **Fight erupts outside Clucky's**: Set time to 23:00. Force-trigger the fight
+   event (call `triggerFight()` directly or seed the random to guarantee it). Verify
+   at least 2 youth NPCs enter `NPCState.FIGHTING_EACH_OTHER`. Advance 10 seconds.
+   Verify each fighting NPC has taken at least 5 damage. Verify a `FIGHT_NEARBY`
+   rumour has been seeded into the `RumourNetwork`. Verify a `NOISE_EVENT` was
+   generated.
+
+6. **Police respond to fight noise**: Trigger a fight (as above). Verify a
+   `NOISE_EVENT` is generated. Advance 300 frames. Verify at least 1 POLICE or PCSO
+   NPC has spawned in the vicinity. Verify fighting youth NPCs enter `NPCState.FLEEING`
+   when a police NPC comes within 6 blocks.
+
+7. **Litter spawns and can be binned for Notoriety reduction**: Set Notoriety to 50.
+   Advance simulation 15 in-game minutes. Verify at least 1 `LITTER_PROP` has
+   spawned on a PAVEMENT block within 10 blocks of Clucky's. Press **E** on the
+   litter prop. Verify litter prop is removed. Verify Notoriety is now 49 (−1).
+   Repeat 4 more times. Verify Notoriety is now 45 (−5 total, daily cap reached).
+   Deposit one more piece. Verify Notoriety is still 45 (cap enforced).
+
+8. **Chips and gravy only available after 20:00**: Set time to 14:00. Open menu
+   at Clucky's. Verify `CHIPS_AND_GRAVY` option is NOT present (greyed out or absent).
+   Set time to 21:00. Open menu. Verify `CHIPS_AND_GRAVY` IS present. Purchase it.
+   Verify 1 COIN deducted and `CHIPS_AND_GRAVY` added to inventory.
+
+9. **Youth congregation peaks at night**: Set time to 14:00. Count YOUTH/YOUTH_GANG
+   NPCs within 8 blocks of Clucky's entrance (should be 0 or few). Set time to 22:00.
+   Advance 60 frames. Count again. Verify at least 3 youth NPCs are now within 8 blocks
+   (congregation mechanic active).
+
+10. **Wing Tax cooldown prevents repeat attempts**: Give player `CHICKEN_WINGS`.
+    Spawn one `YOUTH_GANG` NPC within 6 blocks. Wing Tax triggers; player refuses
+    (and wing is NOT stolen). Immediately give player a second `CHICKEN_WINGS`.
+    Advance 30 seconds (within the 3 in-game minute cooldown). Verify the same youth
+    NPC does NOT trigger Wing Tax again. Advance past the cooldown (3 in-game minutes).
+    Verify Wing Tax triggers again on the second item.
