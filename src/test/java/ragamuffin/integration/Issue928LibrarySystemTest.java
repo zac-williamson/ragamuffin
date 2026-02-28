@@ -214,7 +214,7 @@ class Issue928LibrarySystemTest {
             }
         });
 
-        ragamuffin.entity.Player player = new ragamuffin.entity.Player();
+        ragamuffin.entity.Player player = new ragamuffin.entity.Player(50, 1, 50);
         player.setHealth(30f);
         player.setWarmth(10f);
 
@@ -247,7 +247,7 @@ class Issue928LibrarySystemTest {
      */
     @Test
     void roughSleeping_refusedWhenLibraryIsOpen() {
-        ragamuffin.entity.Player player = new ragamuffin.entity.Player();
+        ragamuffin.entity.Player player = new ragamuffin.entity.Player(50, 1, 50);
         player.setHealth(50f);
 
         TimeSystem ts = new TimeSystem(10.0f); // 10:00 — library open
@@ -389,7 +389,7 @@ class Issue928LibrarySystemTest {
                 "Bookshelf should return CLOSED when library is closed");
 
         // During hours — sleep rough should return LIBRARY_OPEN
-        ragamuffin.entity.Player player = new ragamuffin.entity.Player();
+        ragamuffin.entity.Player player = new ragamuffin.entity.Player(50, 1, 50);
         LibrarySystem.SleepResult sleepResult = librarySystem.sleepRough(11.0f, 1, player, timeSystem,
                 achievementCallback);
         assertEquals(LibrarySystem.SleepResult.LIBRARY_OPEN, sleepResult,

@@ -69,5 +69,10 @@ public enum RumourType {
     PIGEON_RACE_DAY,
 
     /** "Heard someone's bird won the Northfield Derby yesterday — brought home the trophy an' all." — seeded by PigeonRacingSystem on a NORTHFIELD_DERBY win. Spreads via PIGEON_FANCIER NPCs. */
-    PIGEON_VICTORY;
+    PIGEON_VICTORY,
+
+    // ── Issue #942: Food Bank System ─────────────────────────────────────────
+
+    /** "Someone's been doing proper good at the food bank — donated again this week, apparently" — seeded by FoodBankSystem when the player donates surplus food or materials. Seeds into the barman's rumour buffer. */
+    COMMUNITY_WIN;
 }
