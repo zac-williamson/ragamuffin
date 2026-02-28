@@ -61,5 +61,13 @@ public enum RumourType {
     // ── Issue #928: Public Library System ─────────────────────────────────────
 
     /** "Heard someone got chucked out of the library — librarian's on the warpath" — seeded by LibrarySystem when the player is ejected by the LIBRARIAN NPC after repeat shushing. */
-    LIBRARY_BAN;
+    LIBRARY_BAN,
+
+    // ── Issue #934: Pigeon Racing System ─────────────────────────────────────
+
+    /** "Race day tomorrow — lofts are out in Northfield. Should be a good one." — seeded by PigeonRacingSystem the evening before a race day, or when a race is postponed due to bad weather (+1 day reschedule). */
+    PIGEON_RACE_DAY,
+
+    /** "Heard someone's bird won the Northfield Derby yesterday — brought home the trophy an' all." — seeded by PigeonRacingSystem on a NORTHFIELD_DERBY win. Spreads via PIGEON_FANCIER NPCs. */
+    PIGEON_VICTORY;
 }

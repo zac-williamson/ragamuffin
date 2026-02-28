@@ -317,7 +317,18 @@ public enum NPCType {
      * plays a louder jingle during a Jingle War.
      * Speech: "Oi, that's MY patch!" / "You're cutting into my margins, mate."
      */
-    DODGY_VAN_MAN(30f, 6f, 2.0f, true);
+    DODGY_VAN_MAN(30f, 6f, 2.0f, true),
+
+    // ── Issue #934: Pigeon Racing System ─────────────────────────────────────
+
+    /**
+     * Pigeon Fancier — a proud working-class pigeon enthusiast who frequents the park
+     * and the allotment area. Sells RACING_PIGEON items to the player (8 COIN each,
+     * one per day). Also acts as a rumour source for race-day gossip.
+     * Speech: "Beautiful bird, that." / "Trained her meself." / "You keep her fed, yeah?"
+     * Passive; never attacks. Wears a flat cap and carries a basket.
+     */
+    PIGEON_FANCIER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
