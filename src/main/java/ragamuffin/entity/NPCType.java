@@ -288,7 +288,18 @@ public enum NPCType {
      * repeat offenders (10-minute door lock). Seeds LIBRARY_BAN rumour on ejection.
      * Passive unless provoked; never attacks. Wears sensible shoes.
      */
-    LIBRARIAN(20f, 0f, 0f, false);
+    LIBRARIAN(20f, 0f, 0f, false),
+
+    // ── Issue #930: Charity Shop System ──────────────────────────────────────
+
+    /**
+     * Volunteer — counter-anchored charity shop staff member who patrols a
+     * 6-block route inside Hearts &amp; Minds Charity Shop.
+     * Refuses service to BALACLAVA wearers. Nervously serves Tier 3+ players.
+     * Reduces mystery bag daily limit to 1 for high-notoriety players.
+     * Passive; never attacks. Distinct compassionate speech lines.
+     */
+    VOLUNTEER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

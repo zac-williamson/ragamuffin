@@ -967,6 +967,29 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #930: Charity Shop System ──────────────────────────────────────
+
+    CHARITY_SHOP_DIAMOND(
+        "Diamond Geezer",
+        "Found a diamond in a mystery bag from the charity shop. Against all statistical likelihood.",
+        1
+    ),
+    DIAMOND_DONOR(
+        "Big Giver",
+        "Donated a diamond to the charity shop. The volunteer almost fainted. It's going straight to the display cabinet.",
+        1
+    ),
+    COMMUNITY_SERVICE(
+        "Outstanding Citizen",
+        "Made five donations to the charity shop. The volunteer has started leaving your name off the suspect list.",
+        5
+    ),
+    TIGHT_FISTED(
+        "Every Penny",
+        "Successfully haggled the price down at the charity shop. Even in a charity shop, you couldn't pay full price.",
+        1
+    ),
+
     // ── Issue #926: Chippy System ──────────────────────────────────────────────
 
     SALT_AND_VINEGAR(
