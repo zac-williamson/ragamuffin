@@ -183,9 +183,9 @@ public class CarManager {
                 maybeTurnAtIntersection(car);
             }
 
-            // --- 5: solid-block collision fallback (reverse) ---
+            // --- 5: solid-block collision fallback (bounce) ---
             if (world != null && world.checkAABBCollision(car.getAABB())) {
-                car.reverseDirection();
+                car.bounceOffBlock();
             }
 
             // --- 6: player collision ---

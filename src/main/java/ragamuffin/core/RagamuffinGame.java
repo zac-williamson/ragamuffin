@@ -429,6 +429,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         carManager.spawnInitialCars(world);
         // Issue #773: Initialize car driving system
         carDrivingSystem = new CarDrivingSystem(carManager);
+        // Issue #804: Give driving system world reference for block collision
+        carDrivingSystem.setWorld(world);
         // Issue #672: Initialize car renderer so cars are visible in-game
         carRenderer = new ragamuffin.render.CarRenderer();
 
