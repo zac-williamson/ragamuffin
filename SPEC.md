@@ -10802,3 +10802,57 @@ into the existing systems.
 5. **Daily champion bonus adds notoriety**: Put the player at rank 1. Simulate a day tick.
    Verify `notorietySystem` received a +5 notoriety call (check via a spy or by reading the
    notoriety value before and after the tick).
+
+---
+
+## Wire MCBattleSystem.pressAction() into the game loop input handler
+
+`MCBattleSystem` implements a full timing-based BattleBar mini-game (`BattleBarMiniGame`),
+but the player's action key press during an active battle is **never routed to
+`mcBattleSystem.pressAction()`** in `RagamuffinGame`. As a result:
+
+- The battle starts when the player challenges a champion NPC (E key + MICROPHONE).
+- `mcBattleSystem.update(delta)` is called each frame, advancing the cursor.
+- However, the player has **no way to hit the bar** — every round always times out as a
+  miss after 4 seconds (`ROUND_TIMEOUT_SECONDS`), making the mini-game impossible to win
+  through skill. The player loses every MC Battle regardless of timing.
+
+### What needs to be done
+
+In `RagamuffinGame.updatePlayingSimulation()` (or the input-handling block called from
+`render()`), add a check: when `mcBattleSystem.isBattleActive()` is true and the player
+presses the interact key (E / `inputHandler.isInteractPressed()`), call
+`mcBattleSystem.pressAction(npcManager.getNPCs())` and surface the returned hit/miss
+message via `tooltipSystem.showMessage(...)`. The interact key press must be consumed
+(`inputHandler.resetInteract()`) so it is not also processed as a normal NPC interaction
+on the same frame.
+
+No new classes are required — this is purely routing an existing input event to an
+existing method.
+
+### Integration tests — implement these exact scenarios
+
+1. **Player can win a round by pressing E at the right time**: Start an MC Battle. Call
+   `mcBattleSystem.update()` until the cursor is inside the hit zone
+   (`getCursorPos() >= getHitZoneStart()` and `<= getHitZoneStart() + getHitZoneWidth()`).
+   Simulate pressing E. Verify `pressAction()` returns `"Hit!"` and
+   `currentBar.wasHit()` is `true`.
+
+2. **E press is consumed during active battle**: While `mcBattleSystem.isBattleActive()`
+   is true, simulate pressing E. Verify that the normal NPC interaction path
+   (`interactionSystem.interactWithNPC(...)`) is NOT called on that same frame (i.e. the
+   input is consumed by the battle handler first).
+
+3. **Round auto-misses on timeout without player input**: Start a battle. Call
+   `mcBattleSystem.update(delta)` for `ROUND_TIMEOUT_SECONDS + 0.1f` seconds without
+   pressing E. Verify `currentBar.isTimedOut()` is `true` and `currentBar.wasHit()` is
+   `false`.
+
+4. **Full battle can be won**: Simulate three rounds where the player presses E while
+   the cursor is always inside the hit zone. Verify the battle resolves with
+   `mcBattleSystem.wasLastResolvedPlayerWin()` returning `true`.
+
+5. **Full battle can be lost**: Simulate three rounds where the player always presses
+   E outside the hit zone (cursor at position 0.0 when hit zone does not include 0.0).
+   Verify the battle resolves with `mcBattleSystem.wasLastResolvedPlayerWin()` returning
+   `false`.
