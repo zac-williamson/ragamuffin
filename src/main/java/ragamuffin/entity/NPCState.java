@@ -42,5 +42,9 @@ public enum NPCState {
     HIDING,             // Issue #771: (unused by police) Player-initiated hide state marker on NPC prop
 
     // Issue #916: Late-Night Kebab Van
-    QUEUING             // NPC is standing in line at the kebab van waiting to be served
+    QUEUING,            // NPC is standing in line at the kebab van waiting to be served
+
+    // Issue #918: Bus Stop & Public Transport System
+    WAITING_FOR_BUS,    // NPC is queuing at a bus stop waiting for The Number 47
+    BOARDING            // NPC is boarding the bus (brief transition state)
 }

@@ -97,7 +97,27 @@ public enum LandmarkType {
      * between 22:00 and 02:00. Not a permanent landmark; used as a position tag
      * for spawn logic and police patrol awareness.
      */
-    KEBAB_VAN;
+    KEBAB_VAN,
+
+    // ── Issue #918: Bus Stop & Public Transport System ─────────────────────────
+
+    /**
+     * Bus Stop — High Street near Greggs.
+     * The Number 47's first scheduled stop on the town route.
+     */
+    BUS_STOP_HIGH_STREET,
+
+    /**
+     * Bus Stop — Park near the pond.
+     * The Number 47's second scheduled stop; serves the park area.
+     */
+    BUS_STOP_PARK,
+
+    /**
+     * Bus Stop — Industrial Estate near JobCentre.
+     * The Number 47's third and final scheduled stop on the town route.
+     */
+    BUS_STOP_INDUSTRIAL;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -150,8 +170,11 @@ public enum LandmarkType {
             case FOOD_BANK:         return "Northfield Food Bank";
             case THE_PIT:           return "The Pit";
             case BISTA_VILLAGE:     return "Bista Village";
-            case KEBAB_VAN:          return "Ali's Kebab Van";
-            default:                return null; // No sign for parks, houses, etc.
+            case KEBAB_VAN:              return "Ali's Kebab Van";
+            case BUS_STOP_HIGH_STREET:  return "Bus Stop – High Street";
+            case BUS_STOP_PARK:         return "Bus Stop – Park";
+            case BUS_STOP_INDUSTRIAL:   return "Bus Stop – Industrial Estate";
+            default:                    return null; // No sign for parks, houses, etc.
         }
     }
 }
