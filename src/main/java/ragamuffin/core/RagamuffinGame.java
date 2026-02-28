@@ -212,6 +212,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #783: Pirate FM — underground radio station
     private PirateRadioSystem pirateRadioSystem;
 
+    // Issue #704 / #844: HeistSystem — four-phase robbery mechanic (casing, planning, execution, fencing)
+    private HeistSystem heistSystem;
+    /** Previous time (hours) — used to detect when clock ticks past 06:00 for daily reset. */
+    private float prevTimeForHeistReset = -1f;
+
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
     // Issue #773: Car driving system — lets player enter and drive cars
@@ -562,6 +567,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         pirateRadioSystem.setWantedSystem(wantedSystem);
         pirateRadioSystem.setAchievementCallback(type -> achievementSystem.unlock(type));
         gameHUD.setPirateRadioSystem(pirateRadioSystem);
+
+        // Issue #704 / #844: Initialize heist system — four-phase robbery mechanic
+        heistSystem = new HeistSystem();
+        prevTimeForHeistReset = timeSystem.getTime();
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2404,6 +2413,24 @@ public class RagamuffinGame extends ApplicationAdapter {
             pirateRadioSystem.update(delta, npcManager.getNPCs(), policeNearby,
                     playerPos.x, playerPos.y, playerPos.z);
         }
+
+        // Issue #844: Update heist system — alarm timers, execution countdown, CCTV exposure, hot-loot ageing
+        if (heistSystem != null) {
+            heistSystem.update(delta, player, noiseSystem, npcManager, factionSystem,
+                    rumourNetwork, npcManager.getNPCs(), world, timeSystem.isNight());
+        }
+
+        // Issue #844: Daily heist reset — when clock crosses 06:00
+        if (heistSystem != null && prevTimeForHeistReset >= 0f) {
+            float currentTime = timeSystem.getTime();
+            // Detect crossing of 06:00 (handles normal progress and midnight wrap)
+            boolean crossedSix = (prevTimeForHeistReset < 6.0f && currentTime >= 6.0f)
+                    || (prevTimeForHeistReset > currentTime && currentTime >= 6.0f);
+            if (crossedSix) {
+                heistSystem.resetDaily();
+            }
+        }
+        prevTimeForHeistReset = timeSystem.getTime();
 
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
