@@ -853,6 +853,39 @@ public enum AchievementType {
         "Rush Hour Special",
         "Picked a commuter's pocket on a crowded bus. Professional. Morally questionable.",
         1
+    ),
+
+    // ── Issue #920: Pub Lock-In ────────────────────────────────────────────────
+
+    LOCK_IN_REGULAR(
+        "After Hours",
+        "Attended five lock-ins at The Ragamuffin Arms. Terry knows your usual.",
+        5
+    ),
+    STAYED_BEHIND_THE_BAR(
+        "Under the Counter",
+        "Hid behind the bar during a police raid. Terry was impressed. Briefly.",
+        1
+    ),
+    QUIZ_NIGHT_CHAMPION(
+        "Mastermind (Budget Edition)",
+        "Won the Thursday pub quiz. Your specialist subject: being there.",
+        1
+    ),
+    DARTS_HUSTLER(
+        "One Hundred and Eighty",
+        "Beat an NPC opponent at darts with a coin stake. Treble twenty, son.",
+        1
+    ),
+    PUB_GRASS(
+        "Judas",
+        "Tipped off the police about the lock-in. Terry will never forgive you.",
+        1
+    ),
+    LOCK_IN_LEGEND(
+        "Last Man Standing",
+        "Survived ten lock-ins without a DRUNK_AND_DISORDERLY charge. Legendary constitution.",
+        10
     );
 
     private final String name;
