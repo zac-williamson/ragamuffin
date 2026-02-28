@@ -424,6 +424,9 @@ public class PirateRadioSystem {
         lastAction = action;
         executeAction(action, nearbyNpcs, 1.0f);
 
+        // Every broadcast action bumps triangulation by 10%
+        triangulation = Math.min(TRIANGULATION_MAX, triangulation + TRIANGULATION_MAX * 0.10f);
+
         // Dynamic tooltips for actions that have variable targets
         if (action == BroadcastAction.SLAG_OFF_FACTION && lastSlagOffTarget != null) {
             return "Slagging off " + lastSlagOffTarget + " on air!";

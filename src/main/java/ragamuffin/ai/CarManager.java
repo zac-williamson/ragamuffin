@@ -220,8 +220,13 @@ public class CarManager {
             }
 
             // --- 5: solid-block collision fallback (bounce) ---
-            if (world != null && world.checkAABBCollision(car.getAABB())) {
-                car.bounceOffBlock();
+            // Use a ground-level AABB (0.8 blocks tall) to avoid bouncing off overhangs/roofs
+            if (world != null) {
+                Vector3 cPos = car.getPosition();
+                AABB groundAABB = new AABB(cPos, car.getWidth() * 0.8f, 0.8f, car.getDepth() * 0.8f);
+                if (world.checkAABBCollision(groundAABB)) {
+                    car.bounceOffBlock();
+                }
             }
 
             // --- 6: player collision ---
@@ -317,24 +322,29 @@ public class CarManager {
             dz = (float) Math.cos(rad);
         }
 
-        // Build a probe AABB slightly ahead of the car
-        float probeX = pos.x + dx * (Car.DEPTH / 2f + Car.LOOK_AHEAD_DISTANCE / 2f);
-        float probeZ = pos.z + dz * (Car.DEPTH / 2f + Car.LOOK_AHEAD_DISTANCE / 2f);
-        AABB probe = new AABB(
-            new Vector3(probeX, pos.y, probeZ),
-            Car.WIDTH * 0.9f,
-            Car.HEIGHT,
-            Car.LOOK_AHEAD_DISTANCE
-        );
+        // Build a probe AABB slightly ahead of the car.
+        // Use only ground-level height (0.8 blocks) to avoid hitting overhangs/roofs.
+        float halfDepth = car.getDepth() / 2f;
+        float probeX = pos.x + dx * (halfDepth + Car.LOOK_AHEAD_DISTANCE / 2f);
+        float probeZ = pos.z + dz * (halfDepth + Car.LOOK_AHEAD_DISTANCE / 2f);
+        float probeH = 0.8f; // only check at road level, not full vehicle height
+        float probeW = car.getWidth() * 0.7f;
+        AABB probe;
 
         // Rotate probe to align with heading
         if (car.isTravellingAlongX()) {
-            // Width and depth are swapped for X-travelling cars
             probe = new AABB(
                 new Vector3(probeX, pos.y, probeZ),
                 Car.LOOK_AHEAD_DISTANCE,
-                Car.HEIGHT,
-                Car.WIDTH * 0.9f
+                probeH,
+                probeW
+            );
+        } else {
+            probe = new AABB(
+                new Vector3(probeX, pos.y, probeZ),
+                probeW,
+                probeH,
+                Car.LOOK_AHEAD_DISTANCE
             );
         }
 
