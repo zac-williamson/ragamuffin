@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import ragamuffin.core.BattleBarMiniGame;
 import ragamuffin.core.DisguiseSystem;
 import ragamuffin.core.Faction;
 import ragamuffin.core.FactionSystem;
@@ -295,6 +296,11 @@ public class GameHUD {
         // Render triangulation bar when pirate radio is broadcasting (Issue #783)
         if (pirateRadioSystem != null && pirateRadioSystem.isActive()) {
             renderTriangulationBar(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+        }
+
+        // Render BattleBar mini-game overlay when an MC Battle is active (Issue #848)
+        if (mcBattleSystem != null && mcBattleSystem.isBattleActive()) {
+            renderBattleBar(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
         }
     }
 
@@ -1020,5 +1026,61 @@ public class GameHUD {
     /** Returns the last set rave attendee count. */
     public int getRaveAttendeeCount() {
         return raveAttendeeCount;
+    }
+
+    // ── BattleBar mini-game overlay (Issue #848) ──────────────────────────────
+
+    /**
+     * Render the MC Battle BattleBar mini-game overlay in the centre of the screen.
+     * Shows: round number, hit zone (green), cursor (white), and timeout bar (amber).
+     * Only rendered when {@code mcBattleSystem.isBattleActive()} is true.
+     */
+    private void renderBattleBar(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer,
+                                  BitmapFont font, int screenWidth, int screenHeight) {
+        if (mcBattleSystem == null || !mcBattleSystem.isBattleActive()) return;
+        BattleBarMiniGame bar = mcBattleSystem.getCurrentBar();
+        if (bar == null) return;
+
+        // Bar geometry — centred horizontally, lower-middle of screen
+        float barTotalWidth = 400f;
+        float barHeight     = 24f;
+        float barLeft       = screenWidth / 2f - barTotalWidth / 2f;
+        float barY          = screenHeight / 2f - 60f;
+
+        // Background bar (dark grey)
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.2f, 0.2f, 0.2f, 0.85f);
+        shapeRenderer.rect(barLeft, barY, barTotalWidth, barHeight);
+
+        // Hit zone (green)
+        float hitStart = barLeft + bar.getHitZoneStart() * barTotalWidth;
+        float hitWidth = bar.getHitZoneWidth() * barTotalWidth;
+        shapeRenderer.setColor(0.1f, 0.85f, 0.2f, 0.9f);
+        shapeRenderer.rect(hitStart, barY, hitWidth, barHeight);
+
+        // Cursor (white vertical line)
+        float cursorX = barLeft + bar.getCursorPos() * barTotalWidth;
+        shapeRenderer.setColor(Color.WHITE);
+        shapeRenderer.rect(cursorX - 2f, barY - 4f, 4f, barHeight + 8f);
+
+        // Timeout bar (amber) — shrinks as time elapses
+        float timeoutFraction = Math.max(0f, 1f - bar.getElapsed() / BattleBarMiniGame.ROUND_TIMEOUT_SECONDS);
+        shapeRenderer.setColor(1f, 0.65f, 0f, 0.8f);
+        shapeRenderer.rect(barLeft, barY - 8f, barTotalWidth * timeoutFraction, 5f);
+
+        shapeRenderer.end();
+
+        // Round label and champion name
+        spriteBatch.begin();
+        font.getData().setScale(0.9f);
+        font.setColor(0.92f, 0.10f, 0.55f, 1f); // Hot pink
+        String roundLabel = "MC BATTLE — Round " + mcBattleSystem.getCurrentRound()
+                + " of " + MCBattleSystem.ROUNDS_PER_BATTLE
+                + "  [SPACE to hit]";
+        GlyphLayout layout = new GlyphLayout(font, roundLabel);
+        font.draw(spriteBatch, roundLabel, screenWidth / 2f - layout.width / 2f, barY + barHeight + 22f);
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
     }
 }
