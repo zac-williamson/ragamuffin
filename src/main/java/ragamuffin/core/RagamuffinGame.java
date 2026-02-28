@@ -864,6 +864,22 @@ public class RagamuffinGame extends ApplicationAdapter {
 
             // Fix #860: Advance StreetSkillSystem during cinematic — mirrors the PLAYING and PAUSED branches.
             player.getStreetSkillSystem().update(delta, player, npcManager.getNPCs());
+
+            // Issue #862: Advance newspaper publication timer during cinematic — mirrors PLAYING and PAUSED branches.
+            newspaperSystem.update(
+                    delta,
+                    timeSystem.getTime(),
+                    timeSystem.getDayCount(),
+                    notorietySystem,
+                    wantedSystem,
+                    rumourNetwork,
+                    null,
+                    factionSystem,
+                    fenceSystem,
+                    streetEconomySystem,
+                    player.getCriminalRecord(),
+                    npcManager.getNPCs(),
+                    type -> achievementSystem.unlock(type));
             // Fix #429: Keep police spawn/despawn logic in sync with the day/night cycle
             // during the cinematic.  If the fly-through straddles dusk or dawn the wasNight
             // flag transition must not be skipped — mirrors the PAUSED branch (line ~852).
@@ -1657,6 +1673,22 @@ public class RagamuffinGame extends ApplicationAdapter {
             notorietySystem.update(delta, player, type -> achievementSystem.unlock(type));
             rumourNetwork.update(npcManager.getNPCs(), delta);
 
+            // Issue #862: Advance newspaper publication timer while paused — mirrors PLAYING branch.
+            newspaperSystem.update(
+                    delta,
+                    timeSystem.getTime(),
+                    timeSystem.getDayCount(),
+                    notorietySystem,
+                    wantedSystem,
+                    rumourNetwork,
+                    null,
+                    factionSystem,
+                    fenceSystem,
+                    streetEconomySystem,
+                    player.getCriminalRecord(),
+                    npcManager.getNPCs(),
+                    type -> achievementSystem.unlock(type));
+
             // Fix #381: Advance healing resting timer while paused so the 5-second threshold
             // continues to accumulate and healing is not artificially delayed on resume.
             healingSystem.update(delta, player);
@@ -2420,6 +2452,23 @@ public class RagamuffinGame extends ApplicationAdapter {
                 weatherSystem.getCurrentWeather(),
                 notorietySystem.getTier(),
                 inventory, rumourNetwork,
+                type -> achievementSystem.unlock(type));
+
+        // Issue #862: Advance newspaper publication timer — fires daily edition at 18:00, triggers
+        // market events (GREGGS_STRIKE etc.), spreads rumours, and enables the pickUpNewspaper() path.
+        newspaperSystem.update(
+                delta,
+                timeSystem.getTime(),
+                timeSystem.getDayCount(),
+                notorietySystem,
+                wantedSystem,
+                rumourNetwork,
+                null,
+                factionSystem,
+                fenceSystem,
+                streetEconomySystem,
+                player.getCriminalRecord(),
+                npcManager.getNPCs(),
                 type -> achievementSystem.unlock(type));
 
         // Issue #826: Update witness system — evidence props, witness NPC timers, CCTV tape countdowns
