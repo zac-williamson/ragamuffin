@@ -2153,12 +2153,21 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetHotbarSlot();
         }
 
+        // Issue #858: E key during active MC battle — route to battle action press.
         // Phase 11: E key interaction — only when no UI overlay is open,
         // but allow E through when the shop menu is open so the purchase confirmation works.
         if (inputHandler.isInteractPressed()) {
-            boolean shopMenuOpen = activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen();
-            if (!isUIBlocking() || shopMenuOpen) {
-                handleInteraction();
+            if (mcBattleSystem != null && mcBattleSystem.isBattleActive()) {
+                // Battle is active: consume the press as a hit attempt on the bar
+                String hitMsg = mcBattleSystem.pressAction(npcManager.getNPCs());
+                if (hitMsg != null && !hitMsg.isEmpty()) {
+                    tooltipSystem.showMessage(hitMsg, 3.0f);
+                }
+            } else {
+                boolean shopMenuOpen = activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen();
+                if (!isUIBlocking() || shopMenuOpen) {
+                    handleInteraction();
+                }
             }
             inputHandler.resetInteract();
         }
