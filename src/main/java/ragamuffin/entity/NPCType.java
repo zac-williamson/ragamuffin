@@ -372,7 +372,31 @@ public enum NPCType {
      * 30 seconds after a bin is ignited. Navigates toward the fire at car speed
      * and extinguishes the blaze on arrival. Passive; never attacks the player.
      */
-    FIRE_ENGINE(100f, 0f, 0f, false);
+    FIRE_ENGINE(100f, 0f, 0f, false),
+
+    // ── Issue #942: Food Bank System ──────────────────────────────────────────
+
+    /**
+     * Food Bank Volunteer — Margaret, the volunteer running Northfield Food Bank.
+     * Stands at the counter Mon–Fri 09:00–17:00. Passive; manages donations and
+     * emergency parcel distribution. Refuses service if notoriety ≥ 80.
+     * Speech: "Hello love, what can we do for you?" / "Every little helps, ta."
+     */
+    FOOD_BANK_VOLUNTEER(20f, 0f, 0f, false),
+
+    /**
+     * Recipient — a queuing NPC outside the food bank before opening time.
+     * 1–3 spawn outdoors in NPCState.QUEUING, murmuring British misery lines.
+     * Extra recipients spawn during FROST/COLD_SNAP weather.
+     */
+    RECIPIENT(15f, 0f, 0f, false),
+
+    /**
+     * Council Inspector — spawns at the food bank on Thursdays 10:00–12:00.
+     * Increases NeighbourhoodWatch anger +5/min while present. Passive; carries
+     * a clipboard. Never attacks; despawns at 12:00.
+     */
+    COUNCIL_INSPECTOR(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

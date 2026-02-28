@@ -1123,6 +1123,19 @@ public enum AchievementType {
         "Community Champion",
         "Extinguished a bin fire with a fire extinguisher before the fire engine arrived. Hero. Or grass. Depending on who's watching.",
         1
+    ),
+
+    // ── Issue #942: Food Bank System ──────────────────────────────────────────
+
+    HEARTS_AND_MINDS(
+        "Hearts and Minds",
+        "Donated to the food bank on five separate days. Margaret is cautiously optimistic about you.",
+        5
+    ),
+    ROUGH_WEEK(
+        "Rough Week",
+        "Collected an emergency parcel three separate times. No questions asked. That's the point.",
+        3
     );
 
     private final String name;

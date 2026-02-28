@@ -114,6 +114,16 @@ public class FactionSystem {
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
+    /** No-arg constructor for tests and contexts where turf/rumour integration is not needed. */
+    public FactionSystem() {
+        this(new TurfMap(), new RumourNetwork(new Random()), new Random());
+    }
+
+    /** Single-Random constructor for tests. Uses fresh TurfMap and RumourNetwork. */
+    public FactionSystem(Random random) {
+        this(new TurfMap(), new RumourNetwork(random), random);
+    }
+
     public FactionSystem(TurfMap turfMap, RumourNetwork rumourNetwork) {
         this(turfMap, rumourNetwork, new Random());
     }
