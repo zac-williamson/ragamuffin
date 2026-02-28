@@ -74,5 +74,12 @@ public enum RumourType {
     // ── Issue #942: Food Bank System ─────────────────────────────────────────
 
     /** "Someone's been doing proper good at the food bank — donated again this week, apparently" — seeded by FoodBankSystem when the player donates surplus food or materials. Seeds into the barman's rumour buffer. */
-    COMMUNITY_WIN;
+    COMMUNITY_WIN,
+
+    // ── Issue #950: Northfield Leisure Centre ─────────────────────────────────
+
+    /** Leisure centre changing room gossip — one of 8 pool-specific lines seeded every 60s
+     * when the player is within 5 blocks of a CHANGING_ROOM_PROP.
+     * Spreads via the regular NPC rumour network. */
+    CHANGING_ROOM_GOSSIP;
 }

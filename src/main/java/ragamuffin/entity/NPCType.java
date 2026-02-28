@@ -430,7 +430,25 @@ public enum NPCType {
      * You're not in the papers, are ya?" — but still allows work.
      * Absent for 1 in-game day after the cash box is robbed.
      */
-    CAR_WASH_BOSS(20f, 0f, 0f, false);
+    CAR_WASH_BOSS(20f, 0f, 0f, false),
+
+    // ── Issue #950: Northfield Leisure Centre ─────────────────────────────────
+
+    /**
+     * Receptionist — Sharon, who runs the front desk at Northfield Leisure Centre.
+     * Present during opening hours (07:00–21:00). Charges 3 COIN entry (5 COIN
+     * during after-school peak 15:00–17:00). Refuses entry to players at
+     * Notoriety Tier 3+: "You're on the system. You know what you did."
+     * COUNCIL_JACKET or BASEBALL_CAP reduces recognition by 60%.
+     */
+    RECEPTIONIST(20f, 0f, 0f, false),
+
+    /**
+     * Swimming Teacher — a leisure centre staff NPC who patrols poolside.
+     * Monitors the swimming session timer; ejects players who overstay.
+     * Passive; never attacks. Speech: "Right, time's up — out you come."
+     */
+    SWIMMING_TEACHER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -1168,6 +1168,14 @@ public enum AchievementType {
         "Soapy Bandit",
         "Worked for it, then nicked it back. Efficient.",
         1
+    ),
+
+    // ── Issue #950: Northfield Leisure Centre ─────────────────────────────────
+
+    TYPICAL(
+        "Typical",
+        "Found the sauna out of order. It's been like that since 2009. Nobody's surprised.",
+        1
     );
 
     private final String name;
