@@ -338,6 +338,30 @@ public class CraftingSystem {
             Map.of(Material.DIAMOND, 2, Material.STONE, 4, Material.WOOD, 2),
             Map.of(Material.BISTA_VILLAGE_PORTAL, 1)
         ));
+
+        // ── Issue #936: Council Skip & Bulky Item Day ─────────────────────────────
+
+        // LUXURY_BED: OLD_MATTRESS×1 + SLEEPING_BAG×1 → LUXURY_BED×1
+        // (squat furnishing, +15 Vibe; weaker than a purpose-built bed but free)
+        recipes.add(new Recipe(
+            Map.of(Material.OLD_MATTRESS, 1, Material.SLEEPING_BAG, 1),
+            Map.of(Material.LUXURY_BED, 1)
+        ));
+
+        // IMPROVISED_TOOL (skip variant): EXERCISE_BIKE×1 + SCRAP_METAL×1 → IMPROVISED_TOOL×1
+        // (25 uses vs. the normal 30; this is the weaker skip-salvage variant)
+        recipes.add(new Recipe(
+            Map.of(Material.EXERCISE_BIKE, 1, Material.SCRAP_METAL, 1),
+            Map.of(Material.IMPROVISED_TOOL, 1)
+        ));
+
+        // HOT_PASTRY: GREGGS_PASTRY×1 → HOT_PASTRY×1
+        // (Only craftable when a MICROWAVE has been placed in the squat;
+        //  checked at runtime by SkipDivingSystem; restores +15 hunger)
+        recipes.add(new Recipe(
+            Map.of(Material.GREGGS_PASTRY, 1),
+            Map.of(Material.HOT_PASTRY, 1)
+        ));
     }
 
     /**

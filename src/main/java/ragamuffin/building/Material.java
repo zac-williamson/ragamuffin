@@ -747,7 +747,100 @@ public enum Material {
      * Decorative; can be placed on a surface in the squat for +5 Vibe.
      * Tooltip: "First place. The bird earned it more than you did."
      */
-    PIGEON_TROPHY("Pigeon Trophy");
+    PIGEON_TROPHY("Pigeon Trophy"),
+
+    // ── Issue #936: Council Skip & Bulky Item Day ─────────────────────────────
+
+    /**
+     * Old Sofa — common skip loot. Yields 3 WOOD when broken.
+     * Fence value: 3 COIN. Not stolen; no Notoriety gain.
+     */
+    OLD_SOFA("Old Sofa"),
+
+    /**
+     * Broken Telly — common skip loot. Yields 1 SCRAP_METAL + 1 COMPUTER when broken.
+     * Fence value: 4 COIN. Not stolen; no Notoriety gain.
+     */
+    BROKEN_TELLY("Broken Telly"),
+
+    /**
+     * Wonky Chair — common skip loot. Yields 2 WOOD when broken.
+     * Fence value: 2 COIN. Not stolen; no Notoriety gain.
+     */
+    WONKY_CHAIR("Wonky Chair"),
+
+    /**
+     * Carpet Roll — common skip loot. Wearable as WOOLLY_HAT_ECONOMY proxy.
+     * Fence value: 3 COIN. Not stolen; no Notoriety gain.
+     */
+    CARPET_ROLL("Carpet Roll"),
+
+    /**
+     * Old Mattress — uncommon skip loot. Restores 20 warmth when slept on in squat.
+     * Crafting ingredient: OLD_MATTRESS + SLEEPING_BAG → LUXURY_BED (+15 Vibe).
+     * Fence value: 5 COIN. Not stolen; no Notoriety gain.
+     */
+    OLD_MATTRESS("Old Mattress"),
+
+    /**
+     * Filing Cabinet — uncommon skip loot. Yields 1 COIN + random DWP_LETTER when broken.
+     * Fence value: 6 COIN. Not stolen; no Notoriety gain.
+     */
+    FILING_CABINET("Filing Cabinet"),
+
+    /**
+     * Exercise Bike — uncommon skip loot.
+     * Crafting ingredient: EXERCISE_BIKE + SCRAP_METAL → IMPROVISED_TOOL (25 uses).
+     * Fence value: 7 COIN. Not stolen; no Notoriety gain.
+     */
+    EXERCISE_BIKE("Exercise Bike"),
+
+    /**
+     * Box of Records — uncommon skip loot. Gives +10 MC Rank XP.
+     * Pre-claimed by the PIGEON_FANCIER at 07:55 on Bulky Item Day.
+     * Fence value: 8 COIN. Not stolen; no Notoriety gain.
+     */
+    BOX_OF_RECORDS("Box of Records"),
+
+    /**
+     * Microwave — rare skip loot. When placed in squat, enables
+     * GREGGS_PASTRY → HOT_PASTRY conversion at the workbench (+15 hunger).
+     * Fence value: 10 COIN. Not stolen; no Notoriety gain.
+     */
+    MICROWAVE("Microwave"),
+
+    /**
+     * Shopping Trolley (Gold) — rare skip loot. Special prop: carries 4× inventory
+     * slots as a mobile chest.
+     * Fence value: 12 COIN. Not stolen; no Notoriety gain.
+     */
+    SHOPPING_TROLLEY_GOLD("Golden Shopping Trolley"),
+
+    /**
+     * Antique Clock — very rare skip loot.
+     * Tooltip: "Probably worth something. Probably nicked."
+     * Triggers special Fence dialogue and ANTIQUE_ROADSHOW achievement on sale.
+     * Fence value: 20 COIN. Not stolen; no Notoriety gain.
+     */
+    ANTIQUE_CLOCK("Antique Clock"),
+
+    /**
+     * Hot Pastry — result of microwaving GREGGS_PASTRY in a squat with a MICROWAVE.
+     * Restores +15 hunger compared to the cold version.
+     */
+    HOT_PASTRY("Hot Pastry"),
+
+    /**
+     * Luxury Bed — crafted from OLD_MATTRESS + SLEEPING_BAG.
+     * Squat furnishing: +15 Vibe. A step above the PROP_BED.
+     */
+    LUXURY_BED("Luxury Bed"),
+
+    /**
+     * DWP Letter — drops from a FILING_CABINET when broken.
+     * Flavour item; no gameplay function beyond being delightfully grim.
+     */
+    DWP_LETTER("DWP Letter");
 
     private final String displayName;
 
@@ -1119,6 +1212,35 @@ public enum Material {
             case PIGEON_TROPHY:  return cs(0.88f, 0.72f, 0.10f,  // Gold trophy
                                            0.75f, 0.58f, 0.05f); // Darker gold base
 
+            // Issue #936: Council Skip & Bulky Item Day
+            case OLD_SOFA:           return cs(0.55f, 0.35f, 0.20f,  // Brown fabric
+                                               0.40f, 0.25f, 0.12f); // Darker wood legs
+            case BROKEN_TELLY:       return cs(0.15f, 0.15f, 0.18f,  // Black plastic
+                                               0.35f, 0.35f, 0.40f); // Grey screen
+            case WONKY_CHAIR:        return cs(0.50f, 0.32f, 0.15f,  // Wood brown
+                                               0.38f, 0.22f, 0.08f); // Darker legs
+            case CARPET_ROLL:        return cs(0.52f, 0.18f, 0.18f,  // Burgundy carpet
+                                               0.38f, 0.12f, 0.12f); // Darker roll
+            case OLD_MATTRESS:       return cs(0.78f, 0.72f, 0.58f,  // Cream/beige ticking
+                                               0.60f, 0.52f, 0.38f); // Stained yellow
+            case FILING_CABINET:     return cs(0.55f, 0.58f, 0.62f,  // Grey metal
+                                               0.40f, 0.42f, 0.48f); // Darker metal
+            case EXERCISE_BIKE:      return cs(0.18f, 0.18f, 0.20f,  // Black frame
+                                               0.55f, 0.55f, 0.60f); // Silver parts
+            case BOX_OF_RECORDS:     return cs(0.38f, 0.28f, 0.18f,  // Cardboard box
+                                               0.15f, 0.15f, 0.20f); // Dark vinyl records
+            case MICROWAVE:          return cs(0.72f, 0.72f, 0.75f,  // Silver/white plastic
+                                               0.20f, 0.20f, 0.22f); // Dark glass door
+            case SHOPPING_TROLLEY_GOLD: return cs(0.92f, 0.75f, 0.15f, // Gold chrome frame
+                                                   0.72f, 0.55f, 0.05f); // Darker gold
+            case ANTIQUE_CLOCK:      return cs(0.55f, 0.40f, 0.15f,  // Dark mahogany
+                                               0.88f, 0.72f, 0.15f); // Gold clock face
+            case HOT_PASTRY:         return c(0.92f, 0.65f, 0.22f);  // Golden pastry
+            case LUXURY_BED:         return cs(0.42f, 0.28f, 0.12f,  // Dark frame
+                                               0.88f, 0.72f, 0.55f); // Cream mattress
+            case DWP_LETTER:         return cs(0.88f, 0.84f, 0.72f,  // Cream paper
+                                               0.18f, 0.28f, 0.65f); // Blue official text
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1317,6 +1439,21 @@ public enum Material {
             case RACING_PIGEON:
             case BREAD_CRUST:
             case PIGEON_TROPHY:
+            // Issue #936: Council Skip & Bulky Item Day (not block items)
+            case OLD_SOFA:
+            case BROKEN_TELLY:
+            case WONKY_CHAIR:
+            case CARPET_ROLL:
+            case OLD_MATTRESS:
+            case FILING_CABINET:
+            case EXERCISE_BIKE:
+            case BOX_OF_RECORDS:
+            case MICROWAVE:
+            case SHOPPING_TROLLEY_GOLD:
+            case ANTIQUE_CLOCK:
+            case HOT_PASTRY:
+            case LUXURY_BED:
+            case DWP_LETTER:
                 return false;
             default:
                 return true;
@@ -1681,6 +1818,36 @@ public enum Material {
                 return IconShape.FOOD;        // flat bread crust
             case PIGEON_TROPHY:
                 return IconShape.CYLINDER;    // trophy cup shape
+
+            // Issue #936: Council Skip & Bulky Item Day
+            case OLD_SOFA:
+                return IconShape.BOX;         // sofa bulk shape
+            case BROKEN_TELLY:
+                return IconShape.BOX;         // TV box shape
+            case WONKY_CHAIR:
+                return IconShape.BOX;         // chair shape
+            case CARPET_ROLL:
+                return IconShape.CYLINDER;    // rolled-up carpet
+            case OLD_MATTRESS:
+                return IconShape.FLAT_PAPER;  // flat mattress silhouette
+            case FILING_CABINET:
+                return IconShape.BOX;         // metal cabinet
+            case EXERCISE_BIKE:
+                return IconShape.BOX;         // bike frame bulk
+            case BOX_OF_RECORDS:
+                return IconShape.BOX;         // cardboard box of vinyl
+            case MICROWAVE:
+                return IconShape.BOX;         // white box appliance
+            case SHOPPING_TROLLEY_GOLD:
+                return IconShape.BOX;         // trolley frame
+            case ANTIQUE_CLOCK:
+                return IconShape.CYLINDER;    // mantel clock cylinder
+            case HOT_PASTRY:
+                return IconShape.FOOD;        // pastry food item
+            case LUXURY_BED:
+                return IconShape.BOX;         // bed frame box
+            case DWP_LETTER:
+                return IconShape.FLAT_PAPER;  // official letter
 
             default:
                 return IconShape.BOX;

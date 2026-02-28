@@ -325,10 +325,23 @@ public enum NPCType {
      * Pigeon Fancier — a proud working-class pigeon enthusiast who frequents the park
      * and the allotment area. Sells RACING_PIGEON items to the player (8 COIN each,
      * one per day). Also acts as a rumour source for race-day gossip.
+     * On Bulky Item Day, pre-claims BOX_OF_RECORDS at 07:55.
      * Speech: "Beautiful bird, that." / "Trained her meself." / "You keep her fed, yeah?"
      * Passive; never attacks. Wears a flat cap and carries a basket.
      */
-    PIGEON_FANCIER(20f, 0f, 0f, false);
+    PIGEON_FANCIER(20f, 0f, 0f, false),
+
+    // ── Issue #936: Council Skip & Bulky Item Day ─────────────────────────────
+
+    /**
+     * Skip Diver — an opportunistic scavenger who competes with the player on Bulky Item Day.
+     * 2–4 spawn at 08:00 when the Bulky Item Day event opens.
+     * Every 30 real seconds, an unblocked SKIP_DIVER grabs a random unclaimed item from the skip zone.
+     * Acknowledges the player with contextual speech:
+     * "Bags I the sofa." / "You were quick." / "Don't even think about that telly."
+     * Passive (never attacks); despawns when the event ends at 10:00.
+     */
+    SKIP_DIVER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
