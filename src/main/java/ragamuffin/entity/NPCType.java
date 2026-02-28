@@ -299,7 +299,25 @@ public enum NPCType {
      * Reduces mystery bag daily limit to 1 for high-notoriety players.
      * Passive; never attacks. Distinct compassionate speech lines.
      */
-    VOLUNTEER(20f, 0f, 0f, false);
+    VOLUNTEER(20f, 0f, 0f, false),
+
+    // ── Issue #932: Ice Cream Van System ─────────────────────────────────────
+
+    /**
+     * Ice Cream Man — operator of the roaming ice cream van.
+     * Flees if the player's notoriety is ≥ 150 or if the player approaches with
+     * a CROWBAR in hand. Speech: "What's your fancy?" / "99 Flake? Can't go wrong."
+     * / "You're not gonna nick it are ya?"
+     */
+    ICE_CREAM_MAN(20f, 0f, 0f, false),
+
+    /**
+     * Dodgy Van Man — rival ice cream van operator.
+     * Hostile if the player has stolen the van. Undercuts prices by 1 COIN and
+     * plays a louder jingle during a Jingle War.
+     * Speech: "Oi, that's MY patch!" / "You're cutting into my margins, mate."
+     */
+    DODGY_VAN_MAN(30f, 6f, 2.0f, true);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

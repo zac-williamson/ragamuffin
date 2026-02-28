@@ -678,7 +678,51 @@ public enum Material {
      * and grants Street Lads Respect +5 via FactionSystem.
      * Can be carried in inventory; auto-returns at next library visit.
      */
-    STREET_LAW_PAMPHLET("Street Law Pamphlet");
+    STREET_LAW_PAMPHLET("Street Law Pamphlet"),
+
+    // ── Issue #932: Ice Cream Van System ─────────────────────────────────────
+
+    /**
+     * 99 Flake — classic British ice cream cone with a chocolate flake.
+     * Purchased from the ice cream van for 2 COIN (3 during HEATWAVE).
+     * Satisfies HUNGRY −20. Tooltip on first purchase:
+     * "Nothing says British summer like overpriced ice cream from a van that might fail its MOT."
+     */
+    ICE_CREAM_99("99 Flake"),
+
+    /**
+     * Screwball — spiral ice lolly with a bubblegum ball at the bottom.
+     * Purchased from the ice cream van for 1 COIN (2 during HEATWAVE).
+     * Satisfies HUNGRY −10. Has a 30% chance of also giving the player a BUBBLEGUM item.
+     */
+    SCREWBALL("Screwball"),
+
+    /**
+     * Fab Lolly — strawberry, chocolate and hundreds-and-thousands lolly.
+     * Purchased from the ice cream van for 2 COIN (3 during HEATWAVE).
+     * Satisfies HUNGRY −15. Interaction: "You eat the strawberry bit first, don't you."
+     */
+    FAB_LOLLY("Fab Lolly"),
+
+    /**
+     * Choc Ice — chocolate-coated vanilla ice cream bar.
+     * Purchased from the ice cream van for 3 COIN (4 during HEATWAVE).
+     * Satisfies HUNGRY −25 and grants SWEET_TOOTH buff (+5 energy for 60 seconds).
+     */
+    CHOC_ICE("Choc Ice"),
+
+    /**
+     * Oyster Card Lolly — rare blue lolly shaped like an Oyster card.
+     * Purchased from the ice cream van for 5 COIN (6 during HEATWAVE).
+     * Single-use: when redeemed at a bus stop, grants a free ride on the Number 47.
+     */
+    OYSTER_CARD_LOLLY("Oyster Card Lolly"),
+
+    /**
+     * Bubblegum — chewy pink bubblegum ball found at the bottom of a SCREWBALL (30% chance).
+     * No gameplay effect; collectible novelty item.
+     */
+    BUBBLEGUM("Bubblegum");
 
     private final String displayName;
 
@@ -1032,6 +1076,17 @@ public enum Material {
             case STREET_LAW_PAMPHLET: return cs(0.88f, 0.18f, 0.18f, // Red pamphlet cover
                                                 0.65f, 0.10f, 0.10f); // Darker red
 
+            // Issue #932: Ice Cream Van System
+            case ICE_CREAM_99:   return cs(0.98f, 0.95f, 0.88f,  // Cream cone
+                                           0.72f, 0.52f, 0.28f); // Wafer brown
+            case SCREWBALL:      return c(0.92f, 0.55f, 0.78f);  // Pink spiral
+            case FAB_LOLLY:      return cs(0.92f, 0.18f, 0.28f,  // Strawberry red top
+                                           0.88f, 0.72f, 0.18f); // Yellow bottom
+            case CHOC_ICE:       return cs(0.28f, 0.18f, 0.10f,  // Dark chocolate coat
+                                           0.98f, 0.95f, 0.88f); // Cream inside
+            case OYSTER_CARD_LOLLY: return c(0.12f, 0.42f, 0.72f); // Oyster card blue
+            case BUBBLEGUM:      return c(0.95f, 0.40f, 0.70f);  // Bubblegum pink
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1219,6 +1274,13 @@ public enum Material {
             case DIY_MANUAL:
             case NEGOTIATION_BOOK:
             case STREET_LAW_PAMPHLET:
+            // Issue #932: Ice Cream Van System (not block items)
+            case ICE_CREAM_99:
+            case SCREWBALL:
+            case FAB_LOLLY:
+            case CHOC_ICE:
+            case OYSTER_CARD_LOLLY:
+            case BUBBLEGUM:
                 return false;
             default:
                 return true;
@@ -1561,6 +1623,20 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // book shape
             case STREET_LAW_PAMPHLET:
                 return IconShape.FLAT_PAPER;  // pamphlet/paper shape
+
+            // Issue #932: Ice Cream Van System
+            case ICE_CREAM_99:
+                return IconShape.FOOD;        // ice cream cone
+            case SCREWBALL:
+                return IconShape.CYLINDER;    // lolly cylinder shape
+            case FAB_LOLLY:
+                return IconShape.CYLINDER;    // lolly cylinder shape
+            case CHOC_ICE:
+                return IconShape.BOX;         // rectangular bar shape
+            case OYSTER_CARD_LOLLY:
+                return IconShape.CARD;        // card-shaped lolly
+            case BUBBLEGUM:
+                return IconShape.FOOD;        // small round sweet
 
             default:
                 return IconShape.BOX;

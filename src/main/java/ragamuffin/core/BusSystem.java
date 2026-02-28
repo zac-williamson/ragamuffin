@@ -1061,4 +1061,37 @@ public class BusSystem {
     public float getNextDepartureTimer() {
         return nextDepartureTimer;
     }
+
+    // ── Issue #932: Ice Cream Van System — Oyster Card Lolly free ride ────────
+
+    /** Whether the player has a pending free ride granted by an OYSTER_CARD_LOLLY. */
+    private boolean playerHasFreeRide = false;
+
+    /**
+     * Grant the player a single free ride (called when OYSTER_CARD_LOLLY is redeemed).
+     *
+     * @param player the player (reserved for future per-player support)
+     */
+    public void redeemFreeLollyRide(Player player) {
+        playerHasFreeRide = true;
+    }
+
+    /**
+     * Returns {@code true} if the player currently has a free ride from an
+     * OYSTER_CARD_LOLLY redemption. The free ride is consumed when the player boards.
+     *
+     * @param player the player (reserved for future per-player support)
+     * @return {@code true} if a free lolly ride is pending
+     */
+    public boolean hasFreeRide(Player player) {
+        return playerHasFreeRide;
+    }
+
+    /**
+     * Consume the pending free ride (called when the player boards the bus).
+     * Safe to call even if no free ride is pending.
+     */
+    public void consumeFreeRide() {
+        playerHasFreeRide = false;
+    }
 }
