@@ -467,7 +467,7 @@ public class StreetEconomySystem {
         npc.setState(NPCState.IDLE);
 
         // Track sales for CORNERED_THE_MARKET
-        sessionSales.merge(item, 1, Integer::sum);
+        sessionSales.merge(item, 1, (a, b) -> a + b);
         if (!corneredMarketAwarded && sessionSales.getOrDefault(item, 0) >= CORNERED_MARKET_THRESHOLD) {
             corneredMarketAwarded = true;
             if (achievementCallback != null) {

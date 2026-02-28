@@ -440,7 +440,7 @@ public class GraffitiSystem {
             int zx = (int) mark.getBlockPos().x / ZONE_SIZE;
             int zz = (int) mark.getBlockPos().z / ZONE_SIZE;
             long key = ((long) zx << 32) | (zz & 0xFFFFFFFFL);
-            zoneCounts.merge(key, 1, Integer::sum);
+            zoneCounts.merge(key, 1, (a, b) -> a + b);
         }
 
         List<int[]> result = new ArrayList<>();

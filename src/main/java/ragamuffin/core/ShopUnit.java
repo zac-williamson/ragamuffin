@@ -88,7 +88,7 @@ public class ShopUnit {
      */
     public void addStock(Material material, int quantity) {
         if (quantity <= 0) return;
-        stockMap.merge(material, quantity, Integer::sum);
+        stockMap.merge(material, quantity, (a, b) -> a + b);
     }
 
     /**

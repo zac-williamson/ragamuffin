@@ -3,6 +3,7 @@ package ragamuffin.core;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
 import ragamuffin.ui.AchievementSystem;
@@ -264,11 +265,11 @@ public class CarWashSystem {
         boss = new NPC(NPCType.CAR_WASH_BOSS, bossX, bossY, bossZ);
         boss.setSpeechText("Full valet, five pounds. Interior extra.", 0f);
 
-        NPC worker1 = new NPC(NPCType.WORKER, bossX + 2, bossY, bossZ + 1);
+        NPC worker1 = new NPC(NPCType.PUBLIC, bossX + 2, bossY, bossZ + 1);
         worker1.setSpeechText("Lovely job mate, come back Tuesday.", 0f);
         workers.add(worker1);
 
-        NPC worker2 = new NPC(NPCType.WORKER, bossX + 4, bossY, bossZ + 1);
+        NPC worker2 = new NPC(NPCType.PUBLIC, bossX + 4, bossY, bossZ + 1);
         worker2.setSpeechText("We do tyres an' all.", 0f);
         workers.add(worker2);
     }
@@ -488,13 +489,13 @@ public class CarWashSystem {
 
         // Workers flee
         for (NPC npc : workers) {
-            npc.setState(NPC.State.FLEEING);
+            npc.setState(NPCState.FLEEING);
         }
         // Also check allNpcs for any workers near the car wash
         if (allNpcs != null) {
             for (NPC npc : allNpcs) {
-                if (npc.getType() == NPCType.WORKER) {
-                    npc.setState(NPC.State.FLEEING);
+                if (npc.getType() == NPCType.PUBLIC) {
+                    npc.setState(NPCState.FLEEING);
                 }
             }
         }
@@ -550,10 +551,10 @@ public class CarWashSystem {
     public boolean triggerMarchettiTipOff() {
         if (marchettiTipOffDone) return false;
         if (factionSystem == null) return false;
-        int respect = factionSystem.getRespect(Faction.MARCHETTI);
+        int respect = factionSystem.getRespect(Faction.MARCHETTI_CREW);
         if (respect < MARCHETTI_TIP_OFF_RESPECT) return false;
 
-        factionSystem.adjustRespect(Faction.MARCHETTI, MARCHETTI_TIP_OFF_RESPECT_GAIN);
+        factionSystem.applyRespectDelta(Faction.MARCHETTI_CREW, MARCHETTI_TIP_OFF_RESPECT_GAIN);
         marchettiTipOffDone = true;
         return true;
     }

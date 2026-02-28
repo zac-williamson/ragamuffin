@@ -1198,7 +1198,7 @@ public enum AchievementType {
         1
     ),
 
-    COMMUNITY_SERVICE(
+    LITTER_HERO(
         "Community Service",
         "Picked up five pieces of chicken litter and binned them. Unpaid. Almost noble.",
         5

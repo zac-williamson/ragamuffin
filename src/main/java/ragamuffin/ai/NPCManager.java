@@ -976,7 +976,7 @@ public class NPCManager {
         }
 
         // Advance path recalculation timer
-        npcPathRecalcTimers.merge(npc, delta, Float::sum);
+        npcPathRecalcTimers.merge(npc, delta, (a, b) -> a + b);
 
         // Tick per-NPC structure check timer (count down toward 0 when a scan is due)
         npcStructureCheckTimers.computeIfPresent(npc, (k, v) -> Math.max(0f, v - delta));

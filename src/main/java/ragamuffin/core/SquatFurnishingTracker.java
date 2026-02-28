@@ -34,7 +34,7 @@ public class SquatFurnishingTracker {
      * @param prop the prop type placed
      */
     public void addProp(PropType prop) {
-        propCounts.merge(prop, 1, Integer::sum);
+        propCounts.merge(prop, 1, (a, b) -> a + b);
     }
 
     /**
