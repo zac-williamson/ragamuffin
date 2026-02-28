@@ -14240,3 +14240,200 @@ the counter.
    `dayCount % 7 == 1` (Monday). Set weather to `Weather.CLEAR`. Call
    `greasSpoonSystem.getSeatedNpcCount()`. Verify the count equals 4 (maximum Monday
    value).
+
+---
+
+## Wheelie Bin Fire System — Saturday Night Spectacle, Warmth & Disorder
+
+**Goal**: The player (or Street Lads NPCs) can set wheelie bins on fire, creating a
+street-level social event that provides warmth, attracts gathering NPCs, draws police,
+inflames the Neighbourhood Watch, and generates newspaper headlines. A quintessentially
+British piece of antisocial theatre.
+
+### Core Concept
+
+`PropType.WHEELIE_BIN` props are scattered throughout the world (one per two terraced
+houses, plus clusters at the industrial estate and outside the off-licence). Any wheelie
+bin can be ignited using a `Material.PETROL_CAN` (interact with **E** while holding it)
+or by a `YOUTH_GANG` NPC at night when `NeighbourhoodSystem.VibesState` is `TENSE` or
+worse. Once lit, the bin burns for 90–180 real seconds (randomised per bin), casting
+flickering orange light, restoring Warmth to nearby players and NPCs, generating noise,
+and triggering a cascade of faction and police responses.
+
+A new `WheeliBinFireSystem` class manages all active fires, their lifetimes, warmth
+emission, NPC attraction, and police / Neighbourhood Watch escalation.
+
+### Ignition
+
+| Method | Condition | Notes |
+|--------|-----------|-------|
+| Player holds `PETROL_CAN` and presses **E** on a bin | Any time | Consumes 1 PETROL_CAN; +3 street reputation |
+| `YOUTH_GANG` NPC auto-ignites | Time ≥ 22:00, Vibes ≤ TENSE (≤49) | 10% chance per minute per gang NPC near a bin |
+| Player punches bin 8 times (`HARD` material) | Any time — causes physical damage | No rep gain; bin becomes `BROKEN` prop, no fire |
+
+Attempting to ignite a bin that is already burning, already broken, or soaked (weather
+`RAIN` / `DRIZZLE` / `THUNDERSTORM`) returns a tooltip: *"It's too wet to catch."*
+
+### Warmth Emission
+
+A burning bin emits warmth exactly like a campfire, using `WarmthSystem.CAMPFIRE_WARMTH_RATE`
+(15 Warmth/s) within `WarmthSystem.CAMPFIRE_WARMTH_RADIUS` (5 blocks). The `WarmthSystem`
+is updated each frame by `WheeliBinFireSystem.update()` for all active fires, calling
+`warmthSystem.applyExternalWarmthSource(binPosition, delta)` — the same API as the
+campfire. Multiple nearby fires stack (max 3× warmth per tick).
+
+### Crowd Attraction & Social Dynamics
+
+When a bin ignites:
+1. All `PUBLIC`, `PENSIONER`, and `YOUTH_GANG` NPCs within 20 blocks receive a
+   waypoint toward the bin (they "come to watch"). Up to 6 NPCs gather.
+2. Gathered NPCs take on `NPCState.STARING` (existing state) and generate ambient
+   speech every 15 seconds drawn from a pool:
+   - *"Not again."*
+   - *"Someone call the fire brigade."*
+   - *"Fair play though, it's warm."*
+   - *"Every bloody weekend."*
+   - *"This is why we can't have nice things."*
+3. If `NeighbourhoodWatchSystem.watchAnger` ≥ 50, one or two `WATCH_MEMBER` NPCs
+   arrive and shout *"We've called the police! Shame on you!"* (if the player lit
+   the fire) or stare disapprovingly at the nearest YOUTH_GANG NPC (if they did).
+4. If the player is standing within 3 blocks of the fire while `POLICE` NPCs are
+   within 15 blocks, the player immediately gains 1 `CriminalRecord` offence
+   (arson suspicion). Tooltip: *"You look suspicious. Step away from the bin."*
+
+### Police Response
+
+A bin fire is a noise event (noise level `0.8`, persistent for the duration of the
+burn, emitted from the bin's world position). `NPCManager` police hearing/LoS logic
+picks this up automatically. Additionally:
+
+- On ignition, `WheeliBinFireSystem` calls `noiseSystem.emitNoise(binPos, 0.8f)`.
+- After 30 seconds of burning, a `FIRE_ENGINE` NPC (new `NPCType.FIRE_ENGINE` —
+  a council-type vehicle NPC, moves at car speed) spawns at the nearest road
+  intersection outside the 50-block world boundary and navigates toward the fire.
+- The `FIRE_ENGINE` NPC extinguishes the fire on arrival (calls `extinguish(binId)`)
+  and replaces the `BURNING_BIN` prop with a `BURNT_BIN` prop (new `PropType`).
+- Police NPCs within 40 blocks enter PATROLLING state with the fire's position as
+  their patrol target.
+
+### Neighbourhood Watch & Faction Integration
+
+| Event | Effect |
+|-------|--------|
+| Bin ignited by player | `NeighbourhoodWatchSystem.addAnger(15)` |
+| Bin ignited by YOUTH_GANG | `NeighbourhoodWatchSystem.addAnger(8)` (residents less surprised) |
+| Fire extinguished by FIRE_ENGINE | `NeighbourhoodWatchSystem.addAnger(-5)` (order restored) |
+| Player seen near fire by WATCH_MEMBER | `NeighbourhoodSystem.onBlockBroken(binX, binZ)` (treat as property damage) |
+| STREET_LADS lit the fire | `FactionSystem.applyRespectDelta(Faction.STREET_LADS, +3)` among nearby gang NPCs; `Faction.THE_COUNCIL` −2 |
+| Player extinguishes fire with FIRE_EXTINGUISHER | `NeighbourhoodWatchSystem.addAnger(-10)`; Street Lads Respect −5 (spoilsport) |
+
+### Extinguishing
+
+The player can also extinguish a burning bin by:
+- Using a `FIRE_EXTINGUISHER` (press **E** on burning bin while holding it) — instant.
+  Tooltip: *"Hero. Or grass. Depending on who's watching."*
+- Placing a `WATER` block adjacent to the bin (spawns from bucket interaction if
+  implemented, or any WATER block in the world).
+- Waiting for the fire to burn out naturally (90–180 seconds).
+
+Rain weather (`RAIN`, `DRIZZLE`, `THUNDERSTORM`) halves the fire's remaining lifetime
+each in-game minute — fast-tracking the burnout.
+
+### Props
+
+Two new `PropType` entries:
+- `WHEELIE_BIN` — static prop, solid (1×1×1.5 blocks), colour `#2a2a2a` (dark grey
+  wheelie bin). Already notionally used in world generation; this spec formalises it.
+- `BURNING_BIN` — replaces `WHEELIE_BIN` when ignited; flickering orange point light
+  (intensity 1.0f, range 6 blocks, colour `#ff6600`), emitting `ParticleSystem` smoke.
+  Non-solid (fire hazard cosmetic only).
+- `BURNT_BIN` — replaces `BURNING_BIN` after extinguishing / burnout; cosmetic ruin prop,
+  no light. Players can break it (1 hit, drops 1 `SCRAP_METAL`).
+
+### New Material
+
+- `FIRE_EXTINGUISHER` (already in `Material` enum — just needs interaction path wired).
+
+### Newspaper Integration
+
+After a bin fire burns for ≥ 60 seconds, `NewspaperSystem` generates a headline:
+- *"ARSON FEARS AS BINS BLAZE ON HIGH STREET"*
+- *"COUNCIL SLAMS 'MINDLESS' BIN VANDALISM"*
+- *"LOCAL LADS IN WHEELIE BIN INCIDENT — THIRD THIS MONTH"*
+
+Headline is picked randomly from this pool and stored in `NewspaperSystem` for display.
+
+### Achievement
+
+- `PYROMANIAC`: Light 3 wheelie bin fires in a single in-game night.
+- `FIRE_WARDEN`: Extinguish a bin fire with a FIRE_EXTINGUISHER before the fire engine arrives.
+
+### Tooltip (first ignition)
+
+*"The bins are on fire. As is tradition."*
+
+### Unit Tests
+
+- `WheeliBinFireSystem.ignite()` returns `false` in rain weather.
+- `WheeliBinFireSystem.ignite()` returns `false` for already-burning bin.
+- Warmth is applied correctly within radius (== CAMPFIRE_WARMTH_RATE), zero outside.
+- Noise emitted at level 0.8 on ignition.
+- `FIRE_ENGINE` NPC spawned after 30 seconds.
+- `NeighbourhoodWatchSystem` anger increases by 15 on player-ignited fire.
+- Rain halves remaining lifetime per in-game minute.
+- `PYROMANIAC` achievement unlocks after 3 fires in one night.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Player ignites bin with PETROL_CAN**: Place a `WHEELIE_BIN` prop at world position
+   (20, 1, 20). Give player 1 PETROL_CAN. Move player to within 2 blocks. Press **E**.
+   Verify the prop at (20, 1, 20) is now `BURNING_BIN`. Verify player inventory no longer
+   contains PETROL_CAN (consumed). Verify `player.getStreetReputation().getPoints()` has
+   increased by 3. Verify `noiseSystem.getNoiseLevel(20, 1, 20)` is approximately 0.8.
+
+2. **Burning bin provides warmth within radius**: Set weather to FROST (cold). Set player
+   warmth to 50. Place player 4 blocks from a `BURNING_BIN`. Advance 120 frames (2 seconds).
+   Verify `player.getWarmth() > 50` (warmth has increased). Move player 10 blocks away.
+   Advance 120 frames. Verify warmth is NOT increasing (outside radius).
+
+3. **NPCs gather at bin fire**: Spawn 4 PUBLIC NPCs within 15 blocks of a `BURNING_BIN`.
+   Advance 300 frames. Verify at least 2 NPCs have moved within 5 blocks of the bin
+   (attracted by the fire). Verify at least 1 NPC is in `NPCState.STARING`.
+
+4. **Neighbourhood Watch anger increases on player ignition**: Set `NeighbourhoodWatchSystem`
+   anger to 30. Player ignites a bin (as in test 1). Verify anger is now 45 (+15). Verify
+   no anger increase occurs if the bin was already burning or if the fire was started by a
+   YOUTH_GANG NPC (only +8 for gang-ignited fire).
+
+5. **Fire engine spawns and extinguishes after 30 seconds**: Ignite a bin. Advance the
+   simulation for 31 in-game seconds (1860 frames at 60fps). Verify at least one NPC of
+   type `FIRE_ENGINE` exists in the world. Move the `FIRE_ENGINE` NPC to within 2 blocks
+   of the burning bin (or advance until it arrives). Verify the prop at the bin position
+   becomes `BURNT_BIN`. Verify the `BURNING_BIN` point light is no longer active.
+
+6. **Player extinguishes fire with FIRE_EXTINGUISHER**: Ignite a bin. Give player 1
+   FIRE_EXTINGUISHER. Move player to within 2 blocks of the burning bin. Press **E**.
+   Verify the prop is now `BURNT_BIN` (extinguished). Verify `NeighbourhoodWatchSystem`
+   anger has decreased by 10. Verify the `FIRE_WARDEN` achievement has been unlocked.
+
+7. **Rain halves fire lifetime**: Ignite a bin with natural lifetime of 120 seconds. Set
+   weather to RAIN. Advance 60 in-game seconds. Verify the remaining lifetime is ≤ 30
+   seconds (halved twice — once per in-game minute × 2 minutes elapsed). Advance another
+   30 seconds. Verify the bin has burned out (`BURNT_BIN`).
+
+8. **Newspaper headline generated after 60 seconds of burning**: Ignite a bin. Advance
+   60 in-game seconds without extinguishing. Verify `NewspaperSystem.getLatestHeadline()`
+   is non-null and contains one of the expected arson headline strings. Verify no headline
+   is generated if the fire was extinguished before 60 seconds.
+
+9. **PYROMANIAC achievement after 3 fires in one night**: Set time to 22:30. Ignite 3
+   separate wheelie bins (different positions) before 06:00. Verify the `PYROMANIAC`
+   achievement has been unlocked after the third ignition. Verify it does NOT unlock
+   if the 3 fires span two different nights (reset at dawn).
+
+10. **Police patrol bin fire location**: Spawn a POLICE NPC 30 blocks from a burning bin.
+    Set weather to CLEAR (no LoS reduction). Advance 600 frames (10 seconds). Verify the
+    police NPC has moved closer to the bin position (within 15 blocks). Verify the police
+    NPC is in PATROLLING state with a patrol target near the fire. Verify `arrestPending`
+    remains false (player not near the fire in this test — police are responding to the
+    fire itself, not the player).
