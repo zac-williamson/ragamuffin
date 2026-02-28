@@ -3725,8 +3725,18 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #881: Do not let the squat claim intercept E key when the player is
+        // targeting a shop door — check for a door in the short raycast first.
+        ragamuffin.world.RaycastResult preDoorResult =
+                blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, 3.0f);
+        boolean targetingDoor = preDoorResult != null
+                && (world.getBlock(preDoorResult.getBlockX(), preDoorResult.getBlockY(), preDoorResult.getBlockZ())
+                        == ragamuffin.world.BlockType.DOOR_LOWER
+                    || world.getBlock(preDoorResult.getBlockX(), preDoorResult.getBlockY(), preDoorResult.getBlockZ())
+                        == ragamuffin.world.BlockType.DOOR_UPPER);
+
         // Issue #848: Squat claim — E key inside a derelict building with ≥5 WOOD
-        if (squatSystem != null && !squatSystem.hasSquat()) {
+        if (!targetingDoor && squatSystem != null && !squatSystem.hasSquat()) {
             // Find the nearest landmark to the player — check if it's a derelict building
             ragamuffin.world.Landmark nearestDerelict = null;
             float nearestDist = 6f; // must be within 6 blocks
@@ -3815,9 +3825,8 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
-        // Check for door interaction via short raycast (≤3 blocks)
-        ragamuffin.world.RaycastResult doorResult =
-                blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, 3.0f);
+        // Check for door interaction via short raycast (≤3 blocks) — reuse preDoorResult
+        ragamuffin.world.RaycastResult doorResult = preDoorResult;
         if (doorResult != null) {
             int x = doorResult.getBlockX();
             int y = doorResult.getBlockY();
