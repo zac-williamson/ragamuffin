@@ -265,7 +265,16 @@ public enum PropType {
      * A hanging lantern providing atmospheric lighting inside the Pit.
      * Emits a warm orange glow. Destroyed by 2 punches; yields SCRAP_METAL.
      */
-    LANTERN(0.20f, 0.40f, 0.20f, 2, Material.SCRAP_METAL);
+    LANTERN(0.20f, 0.40f, 0.20f, 2, Material.SCRAP_METAL),
+
+    // ── Issue #914: Allotment System ──────────────────────────────────────────
+
+    /**
+     * A council repossession notice — posted on the allotment gate post after
+     * 3 consecutive fallow days. The player has 1 in-game day to plant a seed
+     * before the plot is repossessed. Destroyed by 1 punch; yields nothing.
+     */
+    REPOSSESSION_NOTICE(0.30f, 0.40f, 0.02f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -126,6 +126,11 @@ public class StreetEconomySystem {
         BASE_PRICES.put(Material.FLASK_OF_TEA,       3);
         BASE_PRICES.put(Material.SCRATCH_CARD,       2);
         BASE_PRICES.put(Material.ENERGY_DRINK,       2);
+        // Issue #914: Allotment produce
+        BASE_PRICES.put(Material.POTATO,             2);
+        BASE_PRICES.put(Material.CARROT,             2);
+        BASE_PRICES.put(Material.CABBAGE,            2);
+        BASE_PRICES.put(Material.SUNFLOWER,          3);
     }
 
     // ── Which goods satisfy which needs ──────────────────────────────────────
@@ -135,7 +140,9 @@ public class StreetEconomySystem {
     static {
         SATISFIERS.put(NeedType.HUNGRY, new Material[]{
             Material.GREGGS_PASTRY, Material.SAUSAGE_ROLL, Material.DODGY_PASTY,
-            Material.CHIPS, Material.KEBAB
+            Material.CHIPS, Material.KEBAB,
+            // Issue #914: Allotment produce satisfies HUNGRY
+            Material.POTATO, Material.CARROT, Material.CABBAGE
         });
         SATISFIERS.put(NeedType.COLD, new Material[]{
             Material.WOOLLY_HAT_ECONOMY, Material.WOOLLY_HAT, Material.COAT, Material.FLASK_OF_TEA
