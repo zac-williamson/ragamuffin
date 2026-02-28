@@ -10368,3 +10368,100 @@ fence hot loot — the entire four-phase robbery mechanic is dead code.
    Advance `timeSinceHeistComplete` by 301 seconds (just past 5 in-game minutes).
    Assert multiplier returns 0.5f. Advance by 3600 seconds. Assert multiplier
    returns 0.25f.
+
+---
+
+## Wire NeighbourhoodSystem into the game loop
+
+`NeighbourhoodSystem` (Issue #793) is fully implemented — it drives building decay,
+gentrification waves, faction reactions, and the Neighbourhood Vibes state machine —
+but is never instantiated or called in `RagamuffinGame.java`. All dynamic world
+degradation (crumbling bricks, shattered windows, council luxury flats, Marchetti
+shutters, Dystopia fog) is dead code.
+
+**What needs to be done in `RagamuffinGame`:**
+
+1. **Declare field**: `private NeighbourhoodSystem neighbourhoodSystem;`
+2. **Instantiate** in `initGame()` after `factionSystem`, `turfMap`, `rumourNetwork`,
+   and `achievementSystem` are ready:
+   ```java
+   neighbourhoodSystem = new NeighbourhoodSystem(
+       factionSystem, turfMap, rumourNetwork, achievementSystem, new java.util.Random());
+   ```
+3. **Register buildings** at world-gen time — after `WorldGenerator` places
+   landmarks, iterate `world.getLandmarks()` and call:
+   ```java
+   for (Landmark lm : world.getLandmarks()) {
+       neighbourhoodSystem.registerBuilding(lm);
+   }
+   ```
+4. **Update each frame** inside the `PLAYING` branch of `render()`:
+   ```java
+   neighbourhoodSystem.update(delta, world, npcManager.getNPCs(),
+       notorietySystem.getNotoriety(),
+       player.getPosition().x, player.getPosition().z);
+   neighbourhoodSystem.checkMarchettiShutters(world);
+   String tip = neighbourhoodSystem.pollTooltip();
+   if (tip != null) tooltipSystem.show(tip);
+   ```
+5. **Wire block-break hook**: in the resolution path where `BlockBreaker` removes a
+   block, call:
+   ```java
+   neighbourhoodSystem.onBlockBroken(blockX, blockZ);
+   ```
+6. **Wire graffiti hook**: in `GraffitiSystem` (or wherever graffiti is placed),
+   call:
+   ```java
+   neighbourhoodSystem.onGraffitiPlaced(worldX, worldZ);
+   ```
+7. **Wire pirate radio hook**: when `PirateRadioSystem` completes a broadcast, call:
+   ```java
+   neighbourhoodSystem.onPirateRadioBroadcast(buildingX, buildingZ);
+   ```
+8. **Wire rave hook**: when `RaveSystem` starts or ends a rave, call:
+   ```java
+   neighbourhoodSystem.setRaveActive(true); // on start
+   neighbourhoodSystem.setRaveActive(false); // on end
+   ```
+9. **Wire E-key interactions**: in the E-key handler add branches for:
+   - `squatBuilding` — when player targets a condemned/derelict building
+   - `tearDownCondemnedNotice` — when player targets a condemned notice prop
+   - `organiseCommunityMeeting` — when player has a FLYER and enough NPCs nearby
+   - `sellToDevelopers` — when player interacts with a developer NPC
+10. **Wire BootSale price multiplier**: in `BootSaleSystem`/`BootSaleUI` apply
+    `neighbourhoodSystem.getBootSalePriceMultiplier()` to auction prices, and add
+    `neighbourhoodSystem.getBootSaleExtraBuyers()` extra buyers.
+11. **Wire Marchetti shutter break**: in block-break resolution, if the broken block
+    is `METAL_SHUTTER`, call `neighbourhoodSystem.onMarchettiShutterBroken(npcManager.getNPCs())`
+    and show the returned tooltip.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **NeighbourhoodSystem instantiated in game loop**: In a headless integration test,
+   initialise `RagamuffinGame` and enter PLAYING state. Use reflection to assert
+   the `neighbourhoodSystem` field is non-null.
+
+2. **Building decay reduces condition over time**: Construct `NeighbourhoodSystem`.
+   Register a building of type `LandmarkType.TERRACED_HOUSE` at (50, 50). Call
+   `update(delta=1.0f, ...)` 80 times. Assert `getBuilding(50, 50).getCondition()`
+   is less than `DEFAULT_CONDITION` (80).
+
+3. **Condition drop transitions to CRUMBLING and places CRUMBLED_BRICK**: Construct
+   `NeighbourhoodSystem` with a real `World`. Register a building at (50, 50) and
+   set some `BlockType.BRICK` blocks near that position. Manually set condition to
+   69 (just below `CONDITION_CRUMBLING`). Call `update(delta=1.1f, ...)`. Assert
+   `getBuilding(50, 50).getState()` is `ConditionState.CRUMBLING`. Assert at least
+   one block near (50, y, 50) is now `BlockType.CRUMBLED_BRICK`.
+
+4. **Gentrification wave builds luxury flat**: Construct `NeighbourhoodSystem` with
+   mocked `TurfMap` returning `Faction.THE_COUNCIL` owning >50% of territory.
+   Register a building with condition 20. Manually advance `gentrifyTimer` to just
+   above `GENTRIFY_INTERVAL_SECONDS`. Call `update(delta=1.0f, ...)`. Assert
+   `getBuilding(...).isLuxuryFlat()` is true. Assert at least one `CONCRETE_PANEL`
+   block was placed at the building position.
+
+5. **Dystopia Vibes state silences ambient and unlocks achievement**: Construct
+   `NeighbourhoodSystem` with a real `AchievementSystem`. Call `setVibes(5)`.
+   Assert `getCurrentVibesState()` is `VibesState.DYSTOPIA`. Assert
+   `isAmbientSilenced()` is true. Assert `achievementSystem` has
+   `AchievementType.DYSTOPIA_NOW` unlocked.
