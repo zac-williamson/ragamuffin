@@ -15024,3 +15024,167 @@ Key state:
     cold). Set weather to `CLEAR`. Advance 2 more in-game minutes. Verify the hunger
     decrease in CLEAR is approximately `2 × DOG_HUNGER_DRAIN_PER_MINUTE` (normal
     rate). The FROST drain must be measurably higher than the CLEAR drain.
+
+---
+
+## Hand Car Wash — Cash in Hand, Soapy Reputation & Turf at the Forecourt
+
+**Goal**: Add a hand car wash landmark to the industrial estate / high street edge,
+staffed by two WORKER NPCs. The player can take on a shift to earn cash-in-hand coin,
+launder notoriety through "honest work", rob the lockbox for a lump sum, or tip off
+rival factions about the car wash owner's unregistered income. A small but rich slice
+of modern British life — the kind of place where nobody asks questions and the hot
+water is always slightly greasy.
+
+### Landmark & Layout
+
+- `LandmarkType.HAND_CAR_WASH` generated near the industrial estate or petrol station.
+  A 6×4 block forecourt of PAVEMENT blocks with a `HOSE_PROP` prop, a `BUCKET_PROP`,
+  a `CASH_BOX_PROP` (the lockbox), and a small `SHED_PROP` at the back for shelter.
+- Two `NPCType.WORKER` NPCs with `NPCModelVariant.CAR_WASH_WORKER` are permanently
+  stationed here. They wander the forecourt, occasionally interact with parked car
+  props, and speak flavour lines to passing NPCs:
+  - "Full valet, five pounds. Interior extra."
+  - "Lovely job mate, come back Tuesday."
+  - "We do tyres an' all."
+- A `CAR_PROP` periodically spawns on the forecourt (every 3 in-game minutes) and
+  despawns after 90 seconds (representing a customer car being washed). While a car
+  is present, the workers gather near it and the `SoundSystem` plays a water-splashing
+  sound.
+
+### Working a Shift
+
+- The player can press **E** near the `HOSE_PROP` to start a shift (available 08:00–18:00).
+  They must not be in WANTED state (any outstanding stars) to start.
+- Shift duration: 3 in-game minutes (real-time ~18 seconds at default time speed).
+- During the shift the player is pinned to the forecourt (movement limited to 6 blocks
+  from the hose). Each in-game minute of the shift awards **3 COIN** directly to inventory.
+- The shift ends automatically after 3 minutes or if the player walks away. Completing
+  the full shift also reduces Notoriety by **5 points** and adds 1 COIN bonus (tip from
+  the boss).
+- Tooltip on first shift start: *"Honest work. Almost."*
+- Tooltip on completing a full shift: *"You did a proper job. The boss is impressed.
+  He didn't ask where you live."*
+- If the player starts a shift while already having ≥1 wanted star, the boss NPC says:
+  *"I can't have that sort of energy on the forecourt, son."* and the interaction is
+  refused.
+
+### Notoriety Laundering
+
+- Each completed shift reduces Notoriety by 5 (capped at −20 total per in-game day).
+- After 4 completed shifts in a single in-game day, the boss says: *"You'll do. Come
+  back tomorrow."* and blocks further shifts until the next in-game day.
+- `CriminalRecord` gains a `LEGITIMATE_WORK` entry per completed shift. If the player
+  is ever arrested with 3+ LEGITIMATE_WORK entries on their record, the arresting officer
+  reduces the fine by 20% (the benefit of the doubt, grudgingly). Tooltip: *"Your
+  surprisingly legitimate employment history helped your case."*
+
+### Robbing the Cash Box
+
+- The `CASH_BOX_PROP` contains a variable amount of coin (3–9 coins, randomised each
+  in-game day). The player can press **E** on it to rob it.
+- Robbing requires NO tool if the player has Notoriety Tier 2 or above. Below Tier 2,
+  a `CROWBAR` (from the black market) is required to force the box.
+- Robbing yields the full coin amount but:
+  - Increases Notoriety by **15**.
+  - Both WORKER NPCs immediately enter `FLEEING` state (they leg it).
+  - Seeds a `GANG_ACTIVITY` rumour: *"Someone's turned over the car wash. Bold move."*
+  - The car wash is closed for 1 in-game day (no more shifts available, boss NPC absent,
+    no car props spawn).
+  - If a WITNESS NPC is within 12 blocks, a `POLICE_CALLED` event fires immediately (as
+    per `WitnessSystem`).
+- Tooltip on first robbery: *"Fast cash. The boss won't be best pleased."*
+
+### Faction & Economy Integration
+
+- **Marchetti Crew**: The car wash owner pays 2 coins/day protection to Marchetti Crew
+  (this is off-screen flavour, but the player can **tip off Marchetti** about the
+  owner's undeclared income). Press **E** on a Marchetti NPC while at Marchetti Respect
+  ≥ 30 to trigger the tip-off. Effect: Marchetti Crew increases their protection cut to
+  3 coins/day (still off-screen) and the owner NPC disappears for 1 in-game day (the
+  meeting). Marchetti Respect +5. Tooltip: *"You grassed up a small businessman to
+  organised crime. At least it's consistent."*
+- **The Council**: A `COUNCIL_MEMBER` NPC patrols past the car wash every 5 in-game
+  minutes. If the player is working a shift when the council member passes, there is a
+  20% chance the council member inspects the `CASH_BOX_PROP` (off-screen).
+  If inspected, the boss NPC mutters: *"Right, everyone look busy."* No gameplay effect
+  — purely flavour that acknowledges the grey economy.
+- **BootSaleSystem**: Completing a shift awards 1 `TRADING_XP` point (from `BootSaleSystem`),
+  reflecting the player's growing hustle credentials.
+- **StreetEconomySystem**: Working a shift counts as satisfying the player's BROKE need
+  (zeroes the BROKE score for the current hour).
+- **NeighbourhoodSystem**: An operational car wash (not robbed, boss present) contributes
+  +3 to the Neighbourhood Vibes score each in-game minute. A robbed car wash (closed)
+  contributes −2 per in-game minute until it reopens.
+
+### New NPCType Entry
+
+- `NPCType.CAR_WASH_BOSS` — the owner. Present 08:00–20:00. Stands near the `SHED_PROP`,
+  occasionally interacts with WORKER NPCs. Player presses **E** to start/end a shift or
+  receive payment. If Notoriety > 40 when approaching the boss, he says: *"I know your
+  face from somewhere. You're not in the papers, are ya?"* — but still lets the player
+  work (he's not choosy).
+
+### New Materials
+
+| Material | Source | Use |
+|---|---|---|
+| `SQUEEGEE` | Spawns in the `SHED_PROP` at the car wash; also sold by charity shop | Equipping it while on a shift gives +1 bonus coin per in-game minute (showing initiative) |
+
+### Achievement
+
+| Achievement ID | Trigger | Flavour text |
+|---|---|---|
+| `HONEST_DAYS_WORK` | Complete 4 shifts across any number of days | *"Four shifts at the car wash. Your nan would be proud."* |
+| `SOAPY_BANDIT` | Rob the cash box on the same in-game day you completed a shift | *"Worked for it, then nicked it back. Efficient."* |
+
+### Unit Tests
+
+- `CarWashSystem.canStartShift()` returns false when player has wanted stars.
+- `CarWashSystem.canStartShift()` returns false when boss is absent (robbed day).
+- Notoriety reduction clamps at −20 per day (4 shifts max).
+- Cash box coin amount is randomised between 3 and 9.
+- Robbery increases Notoriety by exactly 15.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Completing a full shift awards coin and reduces Notoriety**: Place the player at
+   the car wash forecourt. Set Notoriety to 30 (no wanted stars). Start a shift (press
+   E on HOSE_PROP). Advance the simulation for 3 in-game minutes. Verify the player's
+   inventory contains at least 9 COIN (3/min × 3 min plus 1 tip). Verify player
+   Notoriety is now 25 (−5). Verify a `LEGITIMATE_WORK` entry exists in the
+   `CriminalRecord`.
+
+2. **Shift blocked when player is wanted**: Set player Wanted stars to 1. Attempt to
+   start a shift (press E on HOSE_PROP). Verify the shift does NOT start (player is
+   not pinned to forecourt). Verify the boss NPC emits the refusal speech line. Verify
+   player Notoriety and COIN are unchanged.
+
+3. **Maximum 4 shifts per in-game day**: Complete 4 shifts (advance time 4 × 3
+   in-game minutes). Verify Notoriety has reduced by 20 (5 per shift). Attempt a 5th
+   shift. Verify the shift is blocked (boss says "Come back tomorrow"). Advance to the
+   next in-game day. Verify a 5th shift is now permitted.
+
+4. **Robbing the cash box yields coins and triggers consequences**: Set player Notoriety
+   Tier to 2 (250+ Notoriety). Place the player adjacent to the `CASH_BOX_PROP`.
+   Record coin count. Press **E** on the cash box. Verify player coin count increased
+   by 3–9 (random). Verify player Notoriety increased by 15. Verify both WORKER NPCs
+   are now in `FLEEING` state. Verify a `GANG_ACTIVITY` rumour containing "car wash"
+   is present in at least one NPC's rumour buffer. Verify `CarWashSystem.isClosed()`
+   returns true.
+
+5. **Car wash closure lasts exactly 1 in-game day**: Rob the cash box. Verify the car
+   wash is closed (no shifts, boss absent). Advance time by exactly 1 in-game day.
+   Verify `CarWashSystem.isClosed()` returns false. Verify the boss NPC has respawned
+   and a shift can be started again.
+
+6. **SQUEEGEE bonus increases shift income**: Give the player a SQUEEGEE item. Equip
+   it (place in active hotbar slot). Start and complete a shift. Verify the player
+   earns at least 12 COIN for the shift (3 base/min × 3 min + 1 bonus/min × 3 min
+   = 12, rather than 9+1=10 without squeegee).
+
+7. **Neighbourhood Vibes reflect car wash state**: Record current Neighbourhood Vibes.
+   Verify the car wash landmark is operational (boss present, not robbed). Advance 1
+   in-game minute. Verify Vibes increased by at least 3 (car wash operational bonus).
+   Rob the cash box. Advance 1 in-game minute. Verify Vibes decreased by at least 2
+   (closed penalty).
