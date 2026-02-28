@@ -11513,3 +11513,139 @@ public static final float PITCH_EXCLUSION_RANGE              = 10f; // existing 
    interruption. Verify `LIVING_WAGE` achievement is unlocked. Verify a rumour with text
    containing *"actually decent"* has been seeded into the BARMAN NPC in the world.
    Verify Street Reputation increased by at least 5 points.
+
+---
+
+## Phase 8h: Pub Quiz Night
+
+**Goal**: Add a recurring pub quiz mini-game at The Ragamuffin Arms (and The Rusty
+Anchor) that gives the player a legitimate, social reason to visit the pub, rewards
+knowledge with coins and faction respect, and connects to the rumour network, time
+system, and street reputation — all quintessentially British.
+
+### Overview
+
+Every Thursday in-game at 20:00 (TimeSystem game-time), a pub quiz starts at The
+Ragamuffin Arms. A QUIZMASTER NPC (new type, wears a novelty bow-tie) takes position
+behind the bar and announces the quiz via a speech bubble. The quiz consists of
+5 rounds of 3 questions each (15 questions total). Questions are drawn from a fixed
+bank of ~60 absurdist-British multiple-choice questions covering topics such as:
+"Locally Historical" (Northfield trivia), "Greggs Menu" (food knowledge), "Blagging
+It" (general knowledge), "Council Jargon" (bureaucracy nonsense), and "Street
+Wisdom" (survival/crime awareness).
+
+The player participates by walking into the pub before 20:05 and pressing **E** on
+the QUIZMASTER. A UI overlay (`PubQuizUI`) presents the current question and three
+answer options (A/B/C). The player selects using keys **1**, **2**, **3**. Each
+question has a 15-second timer (shown as a countdown bar); failure to answer in
+time counts as a wrong answer.
+
+### Scoring & Rewards
+
+| Result | Coins | Street Rep | Notes |
+|--------|-------|------------|-------|
+| ≤5 correct | 0 | 0 | "Might wanna lay off the lager next time." |
+| 6–9 correct | 3 | +1 | "Decent effort that." |
+| 10–12 correct | 6 | +2 | "Not bad for someone who looks like you." |
+| 13–15 correct | 12 | +4 | QUIZ_CHAMPION achievement; barman seeds rumour |
+
+The **QUIZ_CHAMPION** achievement ("Local Knowledge") is unlocked only on a perfect
+or near-perfect score (≥13). The prize pot is paid out by the QUIZMASTER NPC (coins
+added to player inventory).
+
+### Team Play
+
+If the player has ≥2 FOLLOWER or ACCOMPLICE NPCs nearby (within 8 blocks), they form
+a "team". Each teammate grants +1 second to the answer timer and a 10% bonus to prize
+money (stacks, max 3 teammates = +3 seconds, +30% coins). Team members cheer when
+correct (short speech bubble "YES MATE").
+
+### Faction Integration
+
+- **Street Lads**: Attending the quiz raises Street Lads respect +3 (they respect
+  local knowledge). If the player wins, respect +5 additional.
+- **The Council**: A COUNCIL_MEMBER NPC is always present in the pub during quiz
+  night. Winning in front of them lowers Council respect by 3 ("Nobody likes a
+  smartarse").
+- **Marchetti Crew**: If the player is the known QUIZ_CHAMPION, a Marchetti lieutenant
+  offers a one-time "Rig the Quiz" side mission: distract or intimidate the QUIZMASTER
+  before 20:10 so that another team wins. Reward: 15 coins + Respect +15, but
+  Criminal Record entry `QUIZ_RIGGING` is logged.
+
+### RumourNetwork Integration
+
+- When the quiz starts, the BARMAN seeds a `LOOT_TIP` rumour: *"Quiz night at the
+  Arms tonight — winner takes the pot. Usually about twelve quid."*
+- After a player wins, a `STREET_REPUTATION` rumour is seeded to 3 nearby NPCs:
+  *"[Player] just cleaned up at the pub quiz. Proper local, that."*
+- If the player cheats (uses `COUNCIL_ID` item for a bonus answer — see below), a
+  `WITNESS_SIGHTING` rumour is seeded by the QUIZMASTER: *"Someone had a cheat sheet
+  at quiz night. Low."*
+
+### Cheat Mechanic
+
+The player can spend 1 `COUNCIL_ID` before a question begins to "phone a friend" —
+the correct answer is highlighted in the UI for 2 seconds before the timer starts.
+This consumes the COUNCIL_ID and seeds the WITNESS_SIGHTING rumour. Using cheats
+3+ times in one quiz awards the `PLAYED_THE_SYSTEM` achievement.
+
+### New Classes
+
+- **`PubQuizSystem`** (`core/`): Manages quiz state (IDLE, WAITING_FOR_PLAYERS,
+  ROUND_IN_PROGRESS, FINISHED), question bank, scoring, team detection, and faction
+  integration. Integrates with `TimeSystem`, `FactionSystem`, `RumourNetwork`,
+  `StreetReputation`, and `WantedSystem`.
+- **`PubQuizUI`** (`ui/`): Renders the question overlay — question text, three answer
+  buttons (1/2/3), countdown bar, current score, and round indicator.
+- **`PubQuizQuestion`** (`core/`): Simple data record: question string, three option
+  strings, correct answer index (0/1/2), topic tag.
+
+### New NPCType
+
+- **`QUIZMASTER`**: Passive; spawns inside the PUB at 19:55 on quiz nights; despawns
+  at 22:00. Delivers quiz announcements and hands out prize money. Wears a bow-tie
+  (rendered via NPCModelVariant). If threatened, speech: *"Oi — I'm just the quizmaster,
+  leave it out."* Never fights back; flees if health drops below 50%.
+
+### New AchievementType entries
+
+- **`QUIZ_CHAMPION`** ("Local Knowledge"): Score ≥13/15 in a single pub quiz.
+- **`PLAYED_THE_SYSTEM`** ("Brazen"): Use 3 COUNCIL_ID cheat answers in one quiz.
+- **`RIGGED_IT`** ("That's Not Sport"): Successfully complete the Rig the Quiz mission.
+
+**Unit tests**: Question bank loads correctly (≥60 questions), scoring formula, timer
+expiry counts as wrong answer, team bonus calculation, cheat mechanic deducts COUNCIL_ID,
+faction respect deltas applied correctly, QUIZMASTER NPC spawns/despawns at correct times.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Quiz starts Thursday 20:00**: Set TimeSystem to Thursday 19:59. Advance 70 frames
+   (~1.2 in-game minutes). Verify a QUIZMASTER NPC has spawned inside the PUB landmark.
+   Verify the BARMAN NPC's speech text contains *"Quiz night"*. Verify a `LOOT_TIP`
+   rumour has been seeded into at least one NPC.
+
+2. **Player answers all 15 questions correctly**: Enrol the player in the quiz (call
+   `pubQuizSystem.enrol(player)`). For each of 15 questions, call
+   `pubQuizSystem.submitAnswer(correctAnswerIndex)` before the timer expires. Verify
+   `pubQuizSystem.getScore()` is 15. Verify player's COIN count has increased by 12.
+   Verify `QUIZ_CHAMPION` achievement is unlocked. Verify Street Reputation increased
+   by 4. Verify a rumour containing *"cleaned up"* is seeded to at least 3 NPCs.
+
+3. **Timer expiry counts as wrong answer**: Enrol the player. On the first question,
+   advance `PubQuizSystem.QUESTION_TIMEOUT_SECONDS` without submitting an answer.
+   Verify the question advances automatically. Verify the score remains 0.
+
+4. **Team bonus increases prize money**: Add 2 FOLLOWER NPCs within 8 blocks of the
+   player. Enrol the player. Answer all 15 questions correctly. Verify the coin reward
+   is 12 × 1.20 = 14 (rounded down), not the base 12.
+
+5. **COUNCIL_ID cheat highlights answer**: Give the player 1 COUNCIL_ID. Enrol the
+   player. Before the first question timer starts, call
+   `pubQuizSystem.useCheatAnswer(player.getInventory())`. Verify COUNCIL_ID count
+   decreased by 1. Verify `pubQuizSystem.isCorrectAnswerHighlighted()` is true for
+   2 seconds. Verify a `WITNESS_SIGHTING` rumour has been seeded.
+
+6. **Faction respect changes on win**: Set Street Lads respect to 50 and Council
+   respect to 50. Player wins the quiz (score ≥13). Verify Street Lads respect is
+   ≥55 (base +3 for attending + +5 for win). Verify Council respect is ≤47 (−3 for
+   witnessing a win).
