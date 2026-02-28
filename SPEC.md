@@ -8577,3 +8577,88 @@ their tier perks are completely inert.
 5. **SkillsUI opens on K key**: In a headless integration test, instantiate
    `SkillsUI` and confirm `isOpen()` is `false` by default. Call `open()`. Verify
    `isOpen()` returns `true`. Call `close()`. Verify `isOpen()` returns `false`.
+
+## Wire FactionSystem into the Game Loop
+
+**Goal**: `FactionSystem` (649 lines, Phase 8d / Issue #702) exists as complete dead
+code. It is never instantiated in `RagamuffinGame`, its `update()` is never called,
+and `gameHUD.setFactionSystem()` is never invoked — so the three-faction Respect bars
+built into `GameHUD` are permanently blank. Worse, `FactionSystem` is a **required
+constructor argument or injected dependency for 13 other systems** that are
+themselves dead code: `StreetSkillSystem`, `GraffitiSystem`, `CornerShopSystem`,
+`BootSaleSystem`, `JobCentreSystem`, `HeistSystem`, `NewspaperSystem`,
+`PirateRadioSystem`, `StallSystem`, `NeighbourhoodSystem`, `SquatSystem`,
+`MCBattleSystem`, and `PropertySystem`. None of these can be wired in until
+`FactionSystem` exists in the game loop. This is the single most-blocking piece of
+unwired infrastructure in the codebase.
+
+### What needs wiring
+
+1. **Declare and instantiate** `private FactionSystem factionSystem;` in
+   `RagamuffinGame`. Instantiate it in `initGame()`:
+   ```java
+   factionSystem = new FactionSystem();
+   ```
+
+2. **Call `update(delta)`** on `factionSystem` every frame in the PLAYING game loop
+   (`updatePlayingSimulation`), passing the current player and NPC list:
+   ```java
+   factionSystem.update(delta, player, npcManager.getNPCs());
+   ```
+
+3. **Connect to GameHUD** immediately after `gameHUD` is created so faction Respect
+   bars render in the HUD:
+   ```java
+   gameHUD.setFactionSystem(factionSystem);
+   ```
+   Also call `gameHUD.setFactionSystem(factionSystem)` in `restartGame()` after the
+   new `GameHUD` is constructed.
+
+4. **Fire Respect deltas at existing action sites** in `RagamuffinGame`:
+   - Player punches an NPC belonging to a faction →
+     `factionSystem.applyRespectDelta(npc.getFaction(), FactionSystem.DELTA_HIT_NPC)`
+   - Player breaks a block in a faction building →
+     `factionSystem.applyRespectDelta(buildingFaction, FactionSystem.DELTA_RIVAL_BUILDING_BREAK)`
+   - Player is arrested → `factionSystem.onPlayerArrested()`
+   - Player completes a quest for an NPC → `factionSystem.onQuestCompleted(npc.getFaction())`
+
+5. **Pass `factionSystem` into `WantedSystem.update()`** — `WantedSystem` already
+   documents a `FactionSystem` lockdown at Wanted 5 during `COUNCIL_CRACKDOWN`
+   (see its line ~910). Update the call-site in `RagamuffinGame` to supply the
+   instance once it exists.
+
+6. **Reset on restart**: Call `factionSystem = new FactionSystem()` (or
+   `factionSystem.reset()` if such a method exists) inside `restartGame()` so
+   faction state does not bleed between sessions.
+
+### Integration tests — implement these exact scenarios
+
+1. **Respect changes on NPC hit**: Create `FactionSystem`. Verify initial Respect for
+   `STREET_LADS` is `FactionSystem.STARTING_RESPECT` (50). Call
+   `factionSystem.applyRespectDelta(Faction.STREET_LADS, FactionSystem.DELTA_HIT_NPC)`.
+   Verify `factionSystem.getRespect(Faction.STREET_LADS)` equals
+   `50 + FactionSystem.DELTA_HIT_NPC` (i.e. 35).
+
+2. **Hostile threshold makes NPCs hostile**: Create `FactionSystem`. Force Respect for
+   `MARCHETTI_CREW` below `FactionSystem.HOSTILE_THRESHOLD` (20) via repeated
+   `applyRespectDelta` calls. Create a `GANG_MEMBER` NPC whose faction is
+   `MARCHETTI_CREW`. Call `factionSystem.update(1f, player, List.of(npc))`. Verify
+   the NPC's state is `NPCState.HOSTILE` (or `CHASING`).
+
+3. **Turf transfer fires when Respect gap exceeds threshold**: Create
+   `FactionSystem` with a `TurfMap`. Grant `STREET_LADS` Respect 90 and
+   `MARCHETTI_CREW` Respect 55 (gap = 35 > `TURF_TRANSFER_GAP` = 30). Call
+   `factionSystem.update(1f, player, emptyList)`. Verify that
+   `turfMap.getOwner(someBlock)` has changed from `MARCHETTI_CREW` to `STREET_LADS`
+   for at least one transferred block.
+
+4. **GameHUD renders faction bars when FactionSystem is attached**: Instantiate
+   `FactionSystem` and `GameHUD`. Call `gameHUD.setFactionSystem(factionSystem)`.
+   Verify `gameHUD.getFactionSystem()` returns the same instance (not null). Verify
+   that calling `gameHUD.render(...)` does not throw — confirming the render path
+   that reads `factionSystem.getRespect(f)` is exercised without NPE.
+
+5. **Everyone Hates You state activates**: Force all three factions below
+   `FactionSystem.EVERYONE_HATES_YOU_THRESHOLD` (30). Call `factionSystem.update(1f,
+   player, npcList)`. Verify `factionSystem.isEveryoneHatesYou()` returns `true` and
+   that all faction NPCs in `npcList` have a hostile NPC state.
