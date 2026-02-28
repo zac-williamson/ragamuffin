@@ -204,6 +204,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     // Issue #837: Market stall economy — passive income, inspector, weather, faction modifiers
     private StallSystem stallSystem;
+    // Issue #783: Pirate FM — underground radio station
+    private PirateRadioSystem pirateRadioSystem;
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
@@ -542,6 +544,15 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #837: Initialize stall system — market stall passive income economy
         stallSystem = new StallSystem();
+
+        // Issue #783: Initialize pirate radio system — after faction and rumour systems are ready
+        pirateRadioSystem = new PirateRadioSystem(new java.util.Random());
+        pirateRadioSystem.setFactionSystem(factionSystem);
+        pirateRadioSystem.setRumourNetwork(rumourNetwork);
+        pirateRadioSystem.setNotorietySystem(notorietySystem);
+        pirateRadioSystem.setWantedSystem(wantedSystem);
+        pirateRadioSystem.setAchievementCallback(type -> achievementSystem.unlock(type));
+        gameHUD.setPirateRadioSystem(pirateRadioSystem);
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2037,9 +2048,20 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Hotbar selection
         int hotbarSlot = inputHandler.getHotbarSlotPressed();
         if (hotbarSlot >= 0) {
+            // Issue #783: if broadcasting, route keys 1-4 to broadcast action selection
+            if (pirateRadioSystem != null && pirateRadioSystem.isBroadcasting() && hotbarSlot <= 3) {
+                PirateRadioSystem.BroadcastAction action =
+                        PirateRadioSystem.BroadcastAction.fromNumber(hotbarSlot + 1);
+                if (action != null) {
+                    String tooltip = pirateRadioSystem.executePlayerAction(action, npcManager.getNPCs());
+                    if (tooltip != null && !tooltip.isEmpty()) {
+                        tooltipSystem.showMessage(tooltip, 3.0f);
+                    }
+                }
+                inputHandler.resetCraftingSlot();
             // Issue #541: if a shopkeeper shop menu is open, intercept keys 1-3 (slots 0-2)
             // and route them to item selection instead of changing the hotbar.
-            if (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen() && hotbarSlot <= 2) {
+            } else if (activeShopkeeperNPC != null && activeShopkeeperNPC.isShopMenuOpen() && hotbarSlot <= 2) {
                 interactionSystem.selectShopItem(activeShopkeeperNPC, hotbarSlot + 1, inventory);
                 inputHandler.resetCraftingSlot(); // Issue #543: prevent stale craftingSlotPressed
             } else if (!craftingUI.isVisible()) {
@@ -2065,6 +2087,19 @@ public class RagamuffinGame extends ApplicationAdapter {
                 handleGraffitiSpray();
             }
             inputHandler.resetTag();
+        }
+
+        // Issue #783: B key — toggle pirate radio broadcast start/stop
+        if (inputHandler.isBroadcastPressed()) {
+            if (!isUIBlocking() && pirateRadioSystem != null) {
+                if (pirateRadioSystem.isBroadcasting()) {
+                    pirateRadioSystem.stopBroadcast();
+                } else {
+                    com.badlogic.gdx.math.Vector3 pos = player.getPosition();
+                    pirateRadioSystem.startBroadcast(pos.x, pos.y, pos.z);
+                }
+            }
+            inputHandler.resetBroadcast();
         }
 
         // Handle mouse clicks on UI overlays
@@ -2336,6 +2371,22 @@ public class RagamuffinGame extends ApplicationAdapter {
                     streetEconomySystem);
             String stallMsg = stallSystem.pollTooltip();
             if (stallMsg != null) tooltipSystem.showMessage(stallMsg, 3.0f);
+        }
+
+        // Issue #783: Update pirate radio system — triangulation, action timers, signal van spawn
+        if (pirateRadioSystem != null) {
+            boolean policeNearby = false;
+            com.badlogic.gdx.math.Vector3 playerPos = player.getPosition();
+            for (ragamuffin.entity.NPC npc : npcManager.getNPCs()) {
+                if ((npc.getType() == ragamuffin.entity.NPCType.POLICE
+                        || npc.getType() == ragamuffin.entity.NPCType.ARMED_RESPONSE_UNIT)
+                        && npc.getPosition().dst(playerPos) <= PirateRadioSystem.POLICE_DETECTION_RANGE) {
+                    policeNearby = true;
+                    break;
+                }
+            }
+            pirateRadioSystem.update(delta, npcManager.getNPCs(), policeNearby,
+                    playerPos.x, playerPos.y, playerPos.z);
         }
 
         // Issue #26: Update gang territory system
