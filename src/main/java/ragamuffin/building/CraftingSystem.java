@@ -56,7 +56,7 @@ public class CraftingSystem {
         ));
 
         recipes.add(new Recipe(
-            Map.of(Material.STONE, 4, Material.WOOD, 2),
+            Map.of(Material.STONE, 3, Material.WOOD, 1),
             Map.of(Material.STONE_TOOL, 1)
         ));
 
@@ -307,6 +307,26 @@ public class CraftingSystem {
         recipes.add(new Recipe(
             Map.of(Material.SAUSAGE_ROLL, 1, Material.COIN, 1),
             Map.of(Material.PEACE_OFFERING, 1)
+        ));
+
+        // ── Issue #870: Additional tool options ────────────────────────────────
+
+        // SKELETON_KEY: WIRE×3 + BRICK×1 → SKELETON_KEY×1 (opens any locked door once)
+        recipes.add(new Recipe(
+            Map.of(Material.WIRE, 3, Material.BRICK, 1),
+            Map.of(Material.SKELETON_KEY, 1)
+        ));
+
+        // BOLT_CUTTERS: SCRAP_METAL×3 + IRON×1 → BOLT_CUTTERS×1 (cuts padlocks/fences)
+        recipes.add(new Recipe(
+            Map.of(Material.SCRAP_METAL, 3, Material.IRON, 1),
+            Map.of(Material.BOLT_CUTTERS, 1)
+        ));
+
+        // MOUTH_GUARD: RUBBER×2 → MOUTH_GUARD×1 (reduces stamina loss from hits by 25%)
+        recipes.add(new Recipe(
+            Map.of(Material.RUBBER, 2),
+            Map.of(Material.MOUTH_GUARD, 1)
         ));
     }
 
