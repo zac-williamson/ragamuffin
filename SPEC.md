@@ -13305,3 +13305,249 @@ centre, adjacent to the park. It opens 09:00–17:30 Monday–Saturday, closed S
    Call `librarySystem.readNewspaper(player, streetEconomySystem, tooltipSystem)`.
    Verify `tooltipSystem.getLastTooltip()` contains `"Greggs"`. Verify no COIN was
    deducted from player inventory.
+
+---
+
+## Charity Shop System — Haggling, Mystery Bags & Community Service (Issue #930)
+
+**Goal**: Transform the existing `LandmarkType.CHARITY_SHOP` from a passive CARDBOARD-
+dropping block into a fully interactive economy hub with a `VOLUNTEER` NPC, price
+haggling, mystery bag gambling, item donation for notoriety reduction, and rare
+hidden-treasure finds. The charity shop should feel like a treasure hunt with a side
+order of judgement from a retired schoolteacher.
+
+### Overview
+
+The `CharityShopSystem` class (in `ragamuffin/core/CharityShopSystem.java`) manages
+the shop's rotating stock, haggling interactions with the `VOLUNTEER` NPC, donation
+mechanics, and mystery bag loot. It integrates with the existing `NotorietySystem`,
+`StreetEconomySystem`, `WarmthSystem`, `RumourNetwork`, and `AchievementSystem`.
+
+The shop opens **10:00–16:00 Monday–Saturday** (closed Sunday and bank holidays,
+because of course it is). A `NPCType.VOLUNTEER` NPC (elderly woman, sensible cardigan,
+distinct speech lines) stands behind the counter.
+
+### Core Mechanics
+
+#### Rotating Stock
+
+The charity shop holds a rotating stock of **6 items**, re-rolled each in-game day at
+opening time from the following pool:
+
+| Item | Base Price (COIN) | Category |
+|------|-------------------|----------|
+| `COAT` | 4 | Clothing |
+| `WOOLLY_HAT` | 2 | Clothing |
+| `UMBRELLA` | 3 | Clothing |
+| `TEXTBOOK` | 2 | Books |
+| `HYMN_BOOK` | 1 | Books |
+| `DODGY_DVD` | 1 | Media |
+| `BROKEN_PHONE` | 2 | Electronics |
+| `WASHING_POWDER` | 2 | Household |
+| `FIRE_EXTINGUISHER` | 3 | Household |
+| `SAUSAGE_ROLL` | 1 | Food |
+| `SLEEPING_BAG` | 5 | Survival |
+| `FLASK_OF_TEA` | 2 | Survival |
+| `NEWSPAPER` | 1 | Media |
+
+The clothing items (`COAT`, `WOOLLY_HAT`, `UMBRELLA`) must always be represented in
+the stock if available in the pool. Other slots are randomly filled.
+
+Stock is tracked in `CharityShopSystem.todayStock` (List<Material>) and
+`todayStockPrices` (List<Integer>). Buying an item removes it from stock for the day.
+
+#### Haggling
+
+Pressing **E** on the `VOLUNTEER` NPC while facing a stocked item opens a simple
+text-based trade prompt. The player can:
+
+1. **Buy at listed price** — straightforward transaction.
+2. **Haggle** — offer 1 COIN less than the listed price.
+   - If listed price is 1 (already minimum), haggling is refused: "This money goes to
+     charity, dear. Don't be tight."
+   - At listed price 2+: VOLUNTEER accepts the haggle with 40% probability (base).
+     Acceptance rate improves if player Notoriety Tier ≤ 1 (+20%) or if player has
+     donated ≥ 3 items to this shop in the current session (+15%).
+   - On rejection: VOLUNTEER says "I know it's a charity shop, but we still have
+     bills to pay." The item stays available.
+   - On acceptance: VOLUNTEER says one of three randomised charitable remarks.
+     Tooltip first time: "Even the charity shop takes pity. Eventually."
+
+Haggling for a `COAT` or `WOOLLY_HAT` during `Weather.COLD_SNAP` or `Weather.FROST`
+always succeeds (VOLUNTEER takes pity on the cold): "You look frozen, take it for the
+lower price." Tooltip: "British charity: reluctant, but ultimately decent."
+
+#### Mystery Bags
+
+A special **"Mystery Bag"** interaction (press **E** on the shop's MYSTERY_BAG prop,
+a new `PropType.MYSTERY_BAG` placed on the counter at world-gen) costs **2 COIN** and
+yields a random item from a weighted loot table:
+
+| Item | Weight | Notes |
+|------|--------|-------|
+| `CARDBOARD` | 30 | Bulk filler |
+| `CRISPS` | 20 | |
+| `NEWSPAPER` | 15 | |
+| `BROKEN_PHONE` | 12 | Fence value 5 |
+| `DODGY_DVD` | 8 | Fence value 3 |
+| `WOOLLY_HAT` | 5 | |
+| `COAT` | 3 | Jackpot clothing |
+| `DIAMOND` | 1 | Hidden treasure find |
+
+On receiving `DIAMOND`, the tooltip fires: "Someone donated a diamond. To a charity
+shop. This town is something else." Achievement `CHARITY_SHOP_DIAMOND` is awarded.
+On receiving `CARDBOARD`, the tooltip fires: "A charity bag full of cardboard. The
+circle of rubbish is complete."
+
+Maximum 3 mystery bag purchases per in-game day (the VOLUNTEER notices).
+
+#### Donations
+
+The player can donate any item from their inventory by pressing **E** on the VOLUNTEER
+and selecting "Donate item" from the interaction menu, then choosing an item from
+their hotbar.
+
+**Donation effects:**
+- Any donation: NPC speech "That's very generous, love." Notoriety −1 (community
+  goodwill). Adds 1 to `sessionDonationCount`.
+- Donating `COAT`, `WOOLLY_HAT`, or `UMBRELLA`: Notoriety −3 (visible charitable
+  act). Seeded as a `RumourType.LOOT_TIP` rumour: "Someone left a [item] at the
+  charity shop. Proper kind."
+- Donating `DIAMOND`: Achievement `DIAMOND_DONOR` ("You gave away a diamond to
+  a charity shop. You absolute saint. Or complete mug."). Notoriety −10.
+- Donating 5+ items in one session: Achievement `COMMUNITY_SERVICE`.
+  VOLUNTEER speech: "You've been very busy today, dear."
+- Donated items are removed from the player's inventory and added to the shop's
+  `todayStock` (up to the stock cap of 6), priced at half their `FenceValuationTable`
+  value (minimum 1 COIN). This makes the shop genuinely dynamic — you can donate
+  your junk and watch another player (or NPC customer) buy it.
+
+#### NPC Customers
+
+Two `NPCType.PUBLIC` or `NPCType.PENSIONER` customers browse the shop during opening
+hours, spawned by the `CharityShopSystem` and despawned at close. Customers:
+- Walk slowly between the stock display positions.
+- Have a 5% chance per in-game minute to purchase the cheapest item and leave.
+- If the player has donated an item this session, customers have a +10% purchase
+  chance for that item (word travels fast in a small charity shop).
+
+#### VOLUNTEER NPC Behaviour
+
+The `VOLUNTEER` NPC has distinct speech lines and reactions:
+
+- **Idle patrol**: Patrols between the counter and a back-room door on a 6-block
+  route. Speech on idle: "Such a lovely selection today." / "Such a shame what
+  people throw away."
+- **Interaction**: Greets player on first approach each visit: "Hello dear, can I
+  help you?" / "We've just had a new donation in."
+- **Player with Notoriety Tier 3+**: VOLUNTEER is visibly nervous but still serves:
+  "I... yes. Can I help? Quickly?" She reduces mystery bag purchases allowed to 1
+  for this visit.
+- **Player with active BALACLAVA**: VOLUNTEER refuses service entirely: "I'm sorry,
+  I don't serve people dressed like that. This is a charity shop, not a balaclava
+  convention."
+
+### System Integrations
+
+- **`WarmthSystem`**: Clothing purchased from the charity shop has the same warmth
+  effect as found clothing. Being inside the charity shop counts as sheltered
+  (+2 warmth/s while browsing).
+- **`NotorietySystem`**: Donations reduce Notoriety. Buying at full price with
+  Notoriety Tier 4+ earns a tooltip: "The charity shop doesn't judge. Almost no one
+  does, in fact."
+- **`StreetEconomySystem`**: COAT and WOOLLY_HAT purchased here satisfy COLD NeedType
+  for NPC deals (same as other sources). Mystery Bag DIAMOND satisfies BROKE NeedType.
+- **`RumourNetwork`**: Donations of valuable items seed `LOOT_TIP` rumours. Buying
+  a DIAMOND from the mystery bag seeds a `PLAYER_SPOTTED` rumour: "Someone scored big
+  at the charity shop. Jammy sod."
+- **`FenceSystem`**: `BROKEN_PHONE` and `DODGY_DVD` purchased here can be sold to
+  the fence at standard rates. VOLUNTEER doesn't ask questions.
+- **`WeatherSystem`**: Clothing purchase during COLD_SNAP triggers the compassionate
+  haggle path regardless of Notoriety.
+- **`AchievementSystem`**: 4 new achievements (see below).
+- **`NewspaperSystem`**: A donation of 5+ items in one day generates a local newspaper
+  story: "Local Good Samaritan Donates to Hearts & Minds." Player's Street Reputation
+  +2.
+
+### New Types
+
+- `NPCType.VOLUNTEER` — charity shop volunteer. Non-hostile. Counter-anchored with
+  short patrol. Sensible-shoes energy.
+- `PropType.MYSTERY_BAG` — interactable prop on the counter.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `CHARITY_SHOP_DIAMOND` | Pull a DIAMOND from a mystery bag |
+| `DIAMOND_DONOR` | Donate a DIAMOND to the charity shop |
+| `COMMUNITY_SERVICE` | Donate 5+ items in one session |
+| `TIGHT_FISTED` | Successfully haggle at the charity shop 3 times in one session |
+
+### Unit Tests
+
+- `CharityShopSystem.rollDailyStock(random)` always includes at least one clothing
+  item when the pool contains clothing items.
+- Haggle acceptance probability is 40% base, +20% at Notoriety ≤ 1, +15% with 3+
+  session donations — additive, capped at 100%.
+- Cold-snap haggle for COAT/WOOLLY_HAT always returns `HaggleResult.ACCEPTED`.
+- Mystery bag loot table weights sum to 94 (sanity check).
+- DIAMOND mystery bag outcome awards `CHARITY_SHOP_DIAMOND` achievement.
+- Donation of COAT reduces Notoriety by 3; donation of CARDBOARD by 1.
+- Donating 5 items awards `COMMUNITY_SERVICE` achievement.
+- VOLUNTEER refuses service to BALACLAVA-wearing player.
+- Daily mystery bag purchase limit (3) is enforced.
+- Donated item is added to todayStock (if under cap) at half fence value, min 1.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Buy a COAT reduces warmth drain during COLD_SNAP**: Set `Weather.COLD_SNAP`.
+   Generate world, find `LandmarkType.CHARITY_SHOP`. Add `Material.COAT` to
+   `charityShopSystem.todayStock` at price 4. Give player 4 COIN. Press E on
+   VOLUNTEER, select COAT at full price. Verify COAT is in player inventory. Verify
+   `charityShopSystem.todayStock` no longer contains COAT. Call
+   `warmthSystem.update(60f, player, world, weather, false, inventory)`. Verify
+   player warmth drained less than without COAT (i.e. drain rate ≤ 50% of base rate).
+
+2. **Haggle succeeds during COLD_SNAP for clothing**: Set `Weather.COLD_SNAP`.
+   Add `Material.WOOLLY_HAT` to stock at price 2. Give player 1 COIN. Call
+   `charityShopSystem.attemptHaggle(player, Material.WOOLLY_HAT, inventory,
+   notorietySystem, weather)`. Verify result is `HaggleResult.ACCEPTED`. Verify
+   player has 0 COIN and 1 WOOLLY_HAT. Verify VOLUNTEER speech contains "frozen".
+
+3. **Mystery bag yields weighted loot and respects daily limit**: Seed RNG with a
+   known value that produces `CARDBOARD`. Give player 6 COIN. Call
+   `charityShopSystem.buyMysteryBag(player, inventory, random, tooltipSystem,
+   achievementSystem)` three times. Verify player received 3 items and spent 6 COIN.
+   Verify `tooltipSystem.getLastTooltip()` contains "cardboard" on a CARDBOARD result.
+   Attempt a 4th purchase. Verify result is `MysteryBagResult.DAILY_LIMIT_REACHED`
+   and player COIN is unchanged.
+
+4. **DIAMOND mystery bag awards achievement**: Seed RNG to force DIAMOND outcome.
+   Give player 2 COIN. Call `charityShopSystem.buyMysteryBag(...)`. Verify player
+   has 1 DIAMOND. Verify `achievementSystem.isUnlocked(AchievementType.CHARITY_SHOP_DIAMOND)`
+   is true. Verify `tooltipSystem.getLastTooltip()` contains "diamond".
+
+5. **Donating COAT reduces Notoriety and seeds rumour**: Set player Notoriety to 20.
+   Give player 1 COAT. Call `charityShopSystem.donateItem(player, Material.COAT,
+   inventory, notorietySystem, rumourNetwork)`. Verify player has 0 COAT. Verify
+   `notorietySystem.getNotoriety()` equals 17 (−3). Verify `rumourNetwork`
+   contains a `RumourType.LOOT_TIP` rumour mentioning "coat".
+
+6. **Donating 5 items awards COMMUNITY_SERVICE achievement**: Give player 5
+   different items (e.g. NEWSPAPER×1, CRISPS×1, BROKEN_PHONE×1, DODGY_DVD×1,
+   CARDBOARD×1). Donate each via `charityShopSystem.donateItem(...)`. Verify
+   `achievementSystem.isUnlocked(AchievementType.COMMUNITY_SERVICE)` is true after
+   the 5th donation. Verify `charityShopSystem.getSessionDonationCount()` equals 5.
+
+7. **BALACLAVA refusal**: Give player `Material.BALACLAVA` in inventory. Call
+   `charityShopSystem.onPlayerInteract(player, inventory, volunteerNpc)`. Verify
+   return value is a non-null refusal string. Verify `volunteerNpc.getSpeechText()`
+   contains "balaclava". Verify no trade UI opens (`charityShopSystem.isTradeUIOpen()`
+   is false).
+
+8. **Donated item appears in shop stock**: Give player 1 COAT. Stock is currently
+   empty. Call `charityShopSystem.donateItem(...)`. Verify `todayStock` contains
+   COAT. Verify its price equals `max(1, fenceValuationTable.getValueFor(COAT) / 2)`.
+   Give player 2 COIN and buy the COAT back. Verify player has 1 COAT and stock is
+   empty again.
