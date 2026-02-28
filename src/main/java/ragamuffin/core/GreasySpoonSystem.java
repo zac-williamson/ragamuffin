@@ -353,7 +353,7 @@ public class GreasySpoonSystem {
         }
 
         // Notoriety + police proximity check
-        if (isServiceRefused(allNpcs)) {
+        if (isServiceRefused(vera, allNpcs)) {
             vera.setSpeechText("Not today, love. Not with them lot outside.", 5f);
             return OrderResult.SERVICE_REFUSED;
         }
@@ -534,19 +534,20 @@ public class GreasySpoonSystem {
     /**
      * True if service should be refused due to high notoriety and police nearby.
      *
+     * @param veraNpc the CAFF_OWNER NPC (used for proximity check)
      * @param allNpcs all live NPCs in the world
      */
-    private boolean isServiceRefused(List<NPC> allNpcs) {
+    private boolean isServiceRefused(NPC veraNpc, List<NPC> allNpcs) {
         if (notorietySystem == null || notorietySystem.getNotoriety() < NOTORIETY_BLOCK_THRESHOLD) {
             return false;
         }
-        if (vera == null || allNpcs == null) return false;
+        if (veraNpc == null || allNpcs == null) return false;
         for (NPC npc : allNpcs) {
             if (npc == null || !npc.isAlive()) continue;
             if (npc.getType() == NPCType.POLICE || npc.getType() == NPCType.ARMED_RESPONSE
                     || npc.getType() == NPCType.PCSO) {
-                float dx = npc.getPosition().x - vera.getPosition().x;
-                float dz = npc.getPosition().z - vera.getPosition().z;
+                float dx = npc.getPosition().x - veraNpc.getPosition().x;
+                float dz = npc.getPosition().z - veraNpc.getPosition().z;
                 float distSq = dx * dx + dz * dz;
                 if (distSq <= POLICE_BLOCK_RADIUS * POLICE_BLOCK_RADIUS) {
                     return true;

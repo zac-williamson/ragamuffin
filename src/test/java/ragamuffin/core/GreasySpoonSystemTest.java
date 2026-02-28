@@ -365,6 +365,12 @@ class GreasySpoonSystemTest {
     void fullEnglishFanaticUnlocksAtFiveDays() {
         system.setFullEnglishDaysEatenForTesting(4);
         system.setLastFullEnglishDayForTesting(-1); // Reset so next order counts
+        // Sync achievement system progress with the 4 days already eaten
+        for (int i = 0; i < 4; i++) {
+            achievements.increment(AchievementType.FULL_ENGLISH_FANATIC);
+        }
+        assertFalse(achievements.isUnlocked(AchievementType.FULL_ENGLISH_FANATIC),
+                "Should not be unlocked after only 4 days");
         // Eat on day 5
         system.order(player, vera, Material.FULL_ENGLISH, inventory, 9.0f, 5, new ArrayList<>());
         assertTrue(achievements.isUnlocked(AchievementType.FULL_ENGLISH_FANATIC),

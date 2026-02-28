@@ -421,7 +421,7 @@ public class FoodBankSystem {
             return DonationResult.ITEM_NOT_FOUND;
         }
         // Gate: high notoriety + police nearby
-        if (isDonationBlockedByPolice(allNpcs)) {
+        if (isDonationBlockedByPolice(margaret, allNpcs)) {
             margaret.setSpeechText("Best come back when it's a bit quieter, love.", 5f);
             return DonationResult.BLOCKED_POLICE;
         }
@@ -642,19 +642,22 @@ public class FoodBankSystem {
 
     /**
      * Returns true if the donation is blocked due to high notoriety and nearby police.
+     *
+     * @param margaretNpc the FOOD_BANK_VOLUNTEER NPC (used for proximity check)
+     * @param allNpcs     all live NPCs in the world
      */
-    private boolean isDonationBlockedByPolice(List<NPC> allNpcs) {
+    private boolean isDonationBlockedByPolice(NPC margaretNpc, List<NPC> allNpcs) {
         if (notorietySystem == null || notorietySystem.getNotoriety() < NOTORIETY_POLICE_BLOCK) {
             return false;
         }
-        if (margaret == null || allNpcs == null) return false;
+        if (margaretNpc == null || allNpcs == null) return false;
         for (NPC npc : allNpcs) {
             if (npc == null || !npc.isAlive()) continue;
             if (npc.getType() == NPCType.POLICE
                     || npc.getType() == NPCType.ARMED_RESPONSE
                     || npc.getType() == NPCType.PCSO) {
-                float dx = npc.getPosition().x - margaret.getPosition().x;
-                float dz = npc.getPosition().z - margaret.getPosition().z;
+                float dx = npc.getPosition().x - margaretNpc.getPosition().x;
+                float dz = npc.getPosition().z - margaretNpc.getPosition().z;
                 float distSq = dx * dx + dz * dz;
                 if (distSq <= POLICE_BLOCK_RADIUS * POLICE_BLOCK_RADIUS) {
                     return true;

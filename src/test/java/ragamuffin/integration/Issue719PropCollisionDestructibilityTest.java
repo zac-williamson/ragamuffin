@@ -167,8 +167,9 @@ class Issue719PropCollisionDestructibilityTest {
                     type.name() + " must have positive collisionHeight");
             assertTrue(type.getCollisionDepth()  > 0f,
                     type.name() + " must have positive collisionDepth");
-            assertTrue(type.getHitsToBreak()     >= 1,
-                    type.name() + " must require at least 1 hit to break");
+            // Some props (e.g. BURNING_BIN) are non-destructible by design (hitsToBreak == 0)
+            assertTrue(type.getHitsToBreak()     >= 0,
+                    type.name() + " must have non-negative hitsToBreak");
         }
     }
 

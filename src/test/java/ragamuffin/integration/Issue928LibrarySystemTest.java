@@ -370,10 +370,9 @@ class Issue928LibrarySystemTest {
         assertFalse(librarySystem.isOpen(11.0f, 7),
                 "Library should be closed on Sunday even during normal hours");
 
-        // Non-Sunday day (day 14+1=15)
+        // Non-Sunday day checks
         assertFalse(librarySystem.isSunday(1), "Day 1 should not be Sunday");
-        assertFalse(librarySystem.isSunday(14), "Day 14 is a Sunday (7*2=14)");
-        assertTrue(librarySystem.isSunday(14), "Day 14 should be Sunday");
+        assertTrue(librarySystem.isSunday(14), "Day 14 should be Sunday (7*2=14)");
     }
 
     /**

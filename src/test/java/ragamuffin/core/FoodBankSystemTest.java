@@ -531,6 +531,7 @@ class FoodBankSystemTest {
 
     @Test
     void rainyDayTeaIncreasesWarmth() {
+        player.setWarmth(50f); // Set below max so boost is visible
         float warmthBefore = player.getWarmth();
         system.openFoodBank(10, 1, 10, Weather.RAIN, 1);
         system.offerRainyDayTea(player, inventory);

@@ -46,6 +46,7 @@ public class ProceduralAudioGenerator {
             case MUNCH:             return generateMunch();
             case POLICE_SIREN:      return generatePoliceSiren();
             case PIRATE_RADIO_MUSIC: return generatePirateRadioMusic();
+            case ICE_CREAM_JINGLE: return generateIceCreamJingle();
             case AMBIENT_PARK:
             case AMBIENT_STREET:
             default:
@@ -503,6 +504,30 @@ public class ProceduralAudioGenerator {
             mix = Math.tanh(mix * 1.5) * 0.65;
 
             samples[i] = clampToShort(mix);
+        }
+        return toWav(samples);
+    }
+
+    /**
+     * ICE_CREAM_JINGLE: ~2s tinny ice cream van jingle.
+     * Simple major-key melody with a lo-fi telephone-line filter.
+     */
+    private byte[] generateIceCreamJingle() {
+        double dur = 2.0;
+        short[] samples = allocSamples(dur);
+        // Simple melody: C5-E5-G5-C6-G5-E5 repeated, each note ~0.33s
+        double[] freqs = {523.25, 659.25, 783.99, 1046.50, 783.99, 659.25};
+        double noteLen = dur / freqs.length;
+        double lpState = 0;
+        for (int i = 0; i < samples.length; i++) {
+            double t = (double) i / SAMPLE_RATE;
+            int noteIdx = Math.min((int) (t / noteLen), freqs.length - 1);
+            double localT = t - noteIdx * noteLen;
+            double env = envelope(localT, noteLen, 0.005, 0.03, 0.6, 0.05);
+            double sig = sine(freqs[noteIdx] * t) * env * 0.5;
+            // Lo-fi telephone filter (bandpass 300-3400 Hz approximated by LP 3000)
+            lpState = lowPass(sig, lpState, 3000);
+            samples[i] = clampToShort(lpState);
         }
         return toWav(samples);
     }
