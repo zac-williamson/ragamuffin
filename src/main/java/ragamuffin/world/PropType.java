@@ -274,7 +274,17 @@ public enum PropType {
      * 3 consecutive fallow days. The player has 1 in-game day to plant a seed
      * before the plot is repossessed. Destroyed by 1 punch; yields nothing.
      */
-    REPOSSESSION_NOTICE(0.30f, 0.40f, 0.02f, 1, null);
+    REPOSSESSION_NOTICE(0.30f, 0.40f, 0.02f, 1, null),
+
+    // ── Issue #922: Skate Park System ─────────────────────────────────────────
+
+    /**
+     * A council closure notice — a bright yellow warning sign placed on the skate
+     * park perimeter wall during a Park Closure Attempt. Player can tear it down
+     * by pressing E (granting Street Lads Respect +10, Council Respect −5) or
+     * bribe the COUNCIL_MEMBER NPC for 8 COIN. Destroyed by 1 punch; yields nothing.
+     */
+    CLOSURE_NOTICE(0.30f, 0.50f, 0.02f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

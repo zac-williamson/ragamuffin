@@ -559,7 +559,17 @@ public enum Material {
      * Acts as a disguise: while held, TICKET_INSPECTOR NPCs do not check the player's
      * ticket. Tradeable at the fence for 8 COIN.
      */
-    INSPECTOR_BADGE("Inspector Badge");
+    INSPECTOR_BADGE("Inspector Badge"),
+
+    // ── Issue #922: Skate Park System ─────────────────────────────────────────
+
+    /**
+     * Skateboard — craftable from 2 WOOD + 1 PLANKS.
+     * Not required to perform tricks, but holding one in the hotbar gives +15%
+     * trick score multiplier when skating in the SKATE_PARK.
+     * Tooltip on first craft: "Technically it's a weapon too."
+     */
+    SKATEBOARD("Skateboard");
 
     private final String displayName;
 
@@ -875,6 +885,10 @@ public enum Material {
             case INSPECTOR_BADGE: return cs(0.82f, 0.72f, 0.15f, // Gold badge face
                                             0.62f, 0.52f, 0.08f); // Darker gold edge
 
+            // Issue #922: Skate Park System
+            case SKATEBOARD:     return cs(0.35f, 0.22f, 0.08f,  // Dark maple deck
+                                           0.20f, 0.20f, 0.22f); // Black trucks
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1042,6 +1056,8 @@ public enum Material {
             // Issue #918: Bus System (not block items)
             case BUS_PASS:
             case INSPECTOR_BADGE:
+            // Issue #922: Skate Park System (not a block item)
+            case SKATEBOARD:
                 return false;
             default:
                 return true;
@@ -1349,6 +1365,10 @@ public enum Material {
                 return IconShape.CARD;        // travelcard shape
             case INSPECTOR_BADGE:
                 return IconShape.CARD;        // badge/card shape
+
+            // Issue #922: Skate Park System
+            case SKATEBOARD:
+                return IconShape.FLAT_PAPER;  // flat deck/board shape
 
             default:
                 return IconShape.BOX;
