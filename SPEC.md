@@ -8868,3 +8868,101 @@ None of these interactions fire because the system is never wired in.
    `update()` calls. Verify `heistSystem.getHotLootMultiplier() == 0.5f`. Advance by
    `HeistSystem.HOT_LOOT_HALF_PRICE_WINDOW + 1f` more seconds. Verify
    `heistSystem.getHotLootMultiplier() == 0.25f`.
+
+## Wire NeighbourhoodWatchSystem into the Game Loop
+
+**Goal**: The `NeighbourhoodWatchSystem` (Issue #797) is complete, fully-featured dead code.
+The system tracks Watch Anger (0–100) and escalates ordinary civilian NPCs into vigilante mobs
+in response to the player's crimes — the most distinctly British threat in the game. However, it
+is never instantiated in `RagamuffinGame`, its `update()` is never called, its anger triggers
+are never fired from crime events, and the G key grovel mechanic is never wired. The entire
+community-uprising pillar is invisible to the player.
+
+### Problem
+
+`NeighbourhoodWatchSystem` was built with a clean interface for all required hooks:
+- `update(delta, raining, foggy, callback)` — per-frame anger decay and tier recalculation
+- `onPlayerPunchedCivilian()` — fires when player punches a PUBLIC NPC
+- `onPlayerSmashedExteriorWall()` — fires when player breaks an exterior building block
+- `onVisibleCrime()` — fires when a crime is witnessed
+- `grovelling(delta, callback)` — call every frame while G is held for the grovel mechanic
+- `addAnger(int)` — direct anger injection from other systems (Notoriety tier threshold, etc.)
+
+None of these are connected.
+
+### What needs wiring
+
+1. **Declare and instantiate** `private NeighbourhoodWatchSystem neighbourhoodWatchSystem;`
+   in `RagamuffinGame`. Instantiate in `initGame()` after `notorietySystem`:
+   ```java
+   neighbourhoodWatchSystem = new NeighbourhoodWatchSystem();
+   ```
+
+2. **Call `update()` every frame** in `updatePlayingSimulation()`:
+   ```java
+   Weather w = weatherSystem.getCurrentWeather();
+   neighbourhoodWatchSystem.update(delta,
+       w == Weather.RAIN || w == Weather.DRIZZLE || w == Weather.THUNDERSTORM,
+       w == Weather.FOG,
+       type -> achievementSystem.unlock(type));
+   ```
+
+3. **Wire civilian-punch trigger** — in the NPC hit-detection path (left-click on a PUBLIC or
+   PENSIONER NPC), call:
+   ```java
+   neighbourhoodWatchSystem.onPlayerPunchedCivilian();
+   ```
+
+4. **Wire exterior-wall-smash trigger** — in the block-break handler, when the broken block
+   belongs to a building structure (BRICK, GLASS, STONE) and the block is on an outer face
+   of that structure, call:
+   ```java
+   neighbourhoodWatchSystem.onPlayerSmashedExteriorWall();
+   ```
+
+5. **Wire visible-crime trigger** — in `WitnessSystem` or the crime event path (theft,
+   visible block break), when 2+ NPC witnesses are present, call:
+   ```java
+   neighbourhoodWatchSystem.onVisibleCrime();
+   ```
+
+6. **Wire G key — Grovel mechanic** — in `updatePlayingSimulation()`, while
+   `Gdx.input.isKeyPressed(Keys.G)` and `gameState == PLAYING`, call:
+   ```java
+   boolean done = neighbourhoodWatchSystem.grovelling(delta,
+       type -> achievementSystem.unlock(type));
+   if (done) tooltipSystem.showMessage("You grovel apologetically.", 2.0f);
+   ```
+   Also render a grovel progress bar via `gameHUD` using `neighbourhoodWatchSystem.getGroveltProgress()`.
+
+7. **Wire HUD display** — pass `neighbourhoodWatchSystem.getWatchAnger()` and
+   `neighbourhoodWatchSystem.getCurrentTier()` to `gameHUD` so the Watch Anger level is visible
+   to the player (small indicator near the notoriety display).
+
+8. **Reset on restart** — call `neighbourhoodWatchSystem = new NeighbourhoodWatchSystem();`
+   inside `restartGame()`.
+
+### Integration tests — implement these exact scenarios
+
+1. **Punching a civilian increases Watch Anger**: Create `NeighbourhoodWatchSystem`.
+   Assert initial anger is 0. Call `onPlayerPunchedCivilian()`. Verify
+   `getWatchAnger() == NeighbourhoodWatchSystem.ANGER_PUNCH_CIVILIAN`.
+
+2. **Anger decays to zero over time in rainy weather**: Create `NeighbourhoodWatchSystem`.
+   Call `addAnger(20)`. Call `update(10f, true, false, null)` (10 seconds of rain).
+   Verify anger has decreased by at least
+   `(int)(10f * ANGER_DECAY_PER_SECOND * ANGER_DECAY_WEATHER_MULTIPLIER)` points.
+
+3. **Tier escalates correctly**: Create `NeighbourhoodWatchSystem`. Call `addAnger(50)`.
+   Call `update(0f, false, false, null)`. Verify `getCurrentTier() == 3`
+   (Vigilante Patrol threshold).
+
+4. **Grovel mechanic reduces anger**: Create `NeighbourhoodWatchSystem`. Call `addAnger(30)`.
+   Simulate holding G: call `grovelling(delta, null)` in a loop until it returns `true`
+   (total time >= `GROVEL_HOLD_DURATION` seconds). Verify
+   `getWatchAnger() == 30 - ANGER_GROVEL_REDUCTION`.
+
+5. **Watch anger visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify that `neighbourhoodWatchSystem` is non-null. Call
+   `onPlayerPunchedCivilian()` once. Simulate 1 frame (`render()` with delta=0.016f).
+   Verify `neighbourhoodWatchSystem.getWatchAnger() > 0`.
