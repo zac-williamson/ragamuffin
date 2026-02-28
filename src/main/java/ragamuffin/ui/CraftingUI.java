@@ -216,10 +216,15 @@ public class CraftingUI {
         // Draw text
         spriteBatch.begin();
 
+        int availableCount = craftingSystem.getAvailableRecipes(inventory).size();
+        int totalCount = recipes.size();
+
         font.setColor(Color.WHITE);
-        font.draw(spriteBatch, "Crafting Menu (click recipe, then click Craft)", panelX + 20, panelY + panelHeight - 20);
+        font.draw(spriteBatch, "Crafting Menu", panelX + 20, panelY + panelHeight - 20);
+        font.setColor(Color.GREEN);
+        font.draw(spriteBatch, availableCount + " / " + totalCount + " recipes available", panelX + panelWidth - 200, panelY + panelHeight - 20);
         font.setColor(Color.GRAY);
-        font.draw(spriteBatch, "Press C to close | Scroll to see more recipes", panelX + 20, panelY + panelHeight - 50);
+        font.draw(spriteBatch, "C to close  |  Scroll to browse  |  ENTER or double-click to craft", panelX + 20, panelY + panelHeight - 50);
 
         // Draw visible recipes
         int endIndex = Math.min(scrollOffset + visibleRecipeCount, recipes.size());
@@ -267,8 +272,8 @@ public class CraftingUI {
         font.draw(spriteBatch, "[CRAFT]", panelX + 40, panelY + 75);
 
         // Draw instructions
-        font.setColor(Color.WHITE);
-        font.draw(spriteBatch, "Click a recipe then click [CRAFT] or press ENTER", panelX + 20, panelY + 30);
+        font.setColor(Color.LIGHT_GRAY);
+        font.draw(spriteBatch, "Click to select  |  [CRAFT] or ENTER to craft  |  Green = craftable", panelX + 20, panelY + 30);
 
         spriteBatch.end();
     }
