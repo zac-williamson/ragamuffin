@@ -886,7 +886,17 @@ public enum Material {
      * Chalkboard — a prop used for the daily specials board at Vera's Caff.
      * Displays the day's combo discount. Not an inventory item; placed as a prop.
      */
-    CHALKBOARD("Chalkboard");
+    CHALKBOARD("Chalkboard"),
+
+    // ── Issue #948: Hand Car Wash ─────────────────────────────────────────────
+
+    /**
+     * Squeegee — a window-cleaning squeegee on a telescopic pole.
+     * Spawns in the SHED_PROP at the Sparkle Hand Car Wash; also sold by the
+     * charity shop. Equipping it while on a car wash shift gives +1 bonus COIN
+     * per in-game minute (showing initiative).
+     */
+    SQUEEGEE("Squeegee");
 
     private final String displayName;
 
@@ -1304,6 +1314,10 @@ public enum Material {
             case CHALKBOARD:         return cs(0.18f, 0.18f, 0.20f,  // Dark slate
                                                0.88f, 0.88f, 0.72f); // Chalk text cream
 
+            // Issue #948: Hand Car Wash
+            case SQUEEGEE:           return cs(0.20f, 0.50f, 0.85f,  // Blue rubber blade
+                                               0.55f, 0.40f, 0.18f); // Brown wood handle
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1526,6 +1540,8 @@ public enum Material {
             case BACON_BUTTY:
             case BUILDER_S_TEA:
             case CHALKBOARD:
+            // Issue #948: Hand Car Wash (not block items)
+            case SQUEEGEE:
                 return false;
             default:
                 return true;
@@ -1944,6 +1960,10 @@ public enum Material {
                 return IconShape.BOTTLE;      // large mug shape
             case CHALKBOARD:
                 return IconShape.FLAT_PAPER;  // flat board
+
+            // Issue #948: Hand Car Wash
+            case SQUEEGEE:
+                return IconShape.TOOL;        // long-handled squeegee
 
             default:
                 return IconShape.BOX;

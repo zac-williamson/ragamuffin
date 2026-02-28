@@ -70,7 +70,14 @@ public class CriminalRecord {
          * with Notoriety ≥ 50, or when the dog is used for intimidation and a police
          * NPC is within 15 blocks.
          */
-        DANGEROUS_DOG("Dangerous dog offences");
+        DANGEROUS_DOG("Dangerous dog offences"),
+
+        /**
+         * Issue #948: Recorded each time the player completes a full 3-minute shift
+         * at the Sparkle Hand Car Wash. 3+ entries reduce the arrest fine by 20%
+         * (arresting officer gives benefit of the doubt for legitimate employment).
+         */
+        LEGITIMATE_WORK("Legitimate employment (car wash shifts)");
 
         private final String displayName;
 

@@ -1154,6 +1154,20 @@ public enum AchievementType {
         "Dangerous Dog",
         "Used your dog to intimidate someone five times. The council has a file on you. And the dog.",
         5
+    ),
+
+    // ── Issue #948: Hand Car Wash ─────────────────────────────────────────────
+
+    HONEST_DAYS_WORK(
+        "Honest Day's Work",
+        "Four shifts at the car wash. Your nan would be proud.",
+        4
+    ),
+
+    SOAPY_BANDIT(
+        "Soapy Bandit",
+        "Worked for it, then nicked it back. Efficient.",
+        1
     );
 
     private final String name;
