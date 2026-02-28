@@ -8409,3 +8409,101 @@ renders correct tier title.
    `wantedSystem.reportCrime(...)`. Verify stars escalate at double speed compared to the
    non-rave baseline (use `wantedSystem.getRaveAlertSpeedMultiplier()` to confirm the
    multiplier is > 1).
+
+---
+
+## Wire WarmthSystem & NoiseSystem into the Game Loop
+
+**Goal**: Connect two fully-implemented survival systems — `WarmthSystem` (hypothermia /
+wetness) and `NoiseSystem` (player noise level for NPC hearing detection) — into
+`RagamuffinGame`. Both systems are complete dead code: the HUD already renders warmth and
+wetness bars (always stuck at 100% / 0%), and `NPCManager` already reads
+`player.getNoiseLevel()` for police hearing detection (always returns the default 0.05).
+
+### WarmthSystem wiring
+
+1. **Declare field** in `RagamuffinGame`:
+   ```java
+   private WarmthSystem warmthSystem;
+   ```
+
+2. **Instantiate in `initGame()`** after `weatherSystem` is created:
+   ```java
+   warmthSystem = new WarmthSystem();
+   ```
+
+3. **Call `update()` every frame** inside `updatePlayingSimulation()` (and any live-tick
+   code paths during CINEMATIC / non-paused states):
+   ```java
+   boolean nearCampfire = campfireSystem != null &&
+       campfireSystem.isNearActiveCampfire(player.getPosition(), WarmthSystem.CAMPFIRE_WARMTH_RADIUS);
+   warmthSystem.update(player, weatherSystem.getCurrentWeather(), world,
+       delta, nearCampfire, inventory);
+   ```
+
+4. **Wire the Flask of Tea drink action** — when the player uses a `FLASK_OF_TEA` item,
+   call `warmthSystem.drinkFlaskOfTea(player, inventory)` so the warmth restore actually
+   fires.
+
+5. **Apply warmth speed penalty** — when computing player movement speed, multiply by
+   `player.getWarmthSpeedMultiplier()` so hypothermia visibly slows the player.
+
+### NoiseSystem wiring
+
+1. **Declare field** in `RagamuffinGame`:
+   ```java
+   private NoiseSystem noiseSystem;
+   ```
+
+2. **Instantiate in `initGame()`**:
+   ```java
+   noiseSystem = new NoiseSystem();
+   ```
+
+3. **Call `update()` every frame** and mirror the result onto the player:
+   ```java
+   boolean isMoving = player.isMoving();
+   boolean isCrouching = player.isCrouching();
+   noiseSystem.update(delta, isMoving, isCrouching);
+   player.setNoiseLevel(noiseSystem.getNoiseLevel());
+   ```
+
+4. **Spike on block-break** — wherever `blockBreaker` removes a block, call
+   `noiseSystem.spikeBlockBreak()`.
+
+5. **Spike on block-place** — wherever `blockPlacer` places a block, call
+   `noiseSystem.spikeBlockPlace()`.
+
+**Unit tests**: `WarmthSystem` drains warmth outdoors in rain, restores near campfire,
+`WarmthSystem` applies coat / umbrella modifiers correctly, `NoiseSystem` baseline
+matches movement state, block-break spike decays over correct duration, player noise
+level updated via `setNoiseLevel`.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Warmth drains in rain outdoors**: Set weather to `Weather.OVERCAST` (raining). Place
+   player outdoors (no roof blocks above). Record `player.getWarmth()` (starts at 100).
+   Advance 120 simulated seconds via `warmthSystem.update()`. Verify
+   `player.getWarmth()` has decreased from 100.
+
+2. **Hypothermia causes damage**: Set `player.setWarmth(10f)` (below
+   `WARMTH_DANGER_THRESHOLD = 20`). Call `warmthSystem.update(player, Weather.FROST, world,
+   1.0f, false, inventory)`. Verify `player.getHealth()` has decreased by approximately
+   `Player.WARMTH_DAMAGE_PER_SECOND` (within 0.1 tolerance).
+
+3. **Coat halves warmth drain**: Set weather to `Weather.FROST`. Add `Material.COAT` to
+   inventory. Record warmth drain over 10 simulated seconds with coat, vs 10 seconds
+   without coat. Verify the with-coat drain is ≤ 55% of the without-coat drain (50%
+   reduction ± 5% tolerance).
+
+4. **NPC hears player block-break**: Place player 8 blocks from a police NPC (within
+   max hearing range of 20 blocks). Fire `noiseSystem.spikeBlockBreak()` and
+   `player.setNoiseLevel(noiseSystem.getNoiseLevel())`. Verify
+   `NoiseSystem.getHearingRange(player.getNoiseLevel())` ≥ 8f (player is audible).
+   Verify the police NPC transitions to `NPCState.ALERTED` on the next
+   `npcManager.update()` tick.
+
+5. **Noise decays to baseline after spike**: Fire `noiseSystem.spikeBlockBreak()`.
+   Advance 3.0 simulated seconds via `noiseSystem.update()` with `isMoving = false`.
+   Verify `noiseSystem.getNoiseLevel()` has returned to within 0.1 of
+   `NoiseSystem.NOISE_STILL` (0.05).
