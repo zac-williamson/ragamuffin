@@ -917,7 +917,51 @@ public enum Material {
      * Sold by the receptionist for 3 COIN or found in the charity shop.
      * Equipping reduces the costume check at the leisure centre.
      */
-    SWIM_TRUNKS("Swim Trunks");
+    SWIM_TRUNKS("Swim Trunks"),
+
+    // ── Issue #952: Clucky's Fried Chicken ───────────────────────────────────
+
+    /**
+     * Chicken Wings — purchased from Clucky's for 2 COIN.
+     * Restores +35 hunger. Can be shared (Wing Tax mechanic).
+     * Tooltip on first purchase: "Still got the bone in. How it should be."
+     */
+    CHICKEN_WINGS("Chicken Wings"),
+
+    /**
+     * Chicken Box — purchased from Clucky's for 4 COIN.
+     * Restores +50 hunger. Target of the Wing Tax steal mechanic (40% chance).
+     * Tooltip on first purchase: "Four pieces, chips, and a suspicious sauce."
+     */
+    CHICKEN_BOX("Chicken Box"),
+
+    /**
+     * Chips and Gravy — purchased from Clucky's for 1 COIN after 20:00 only.
+     * Restores +30 hunger. Late-night special; unavailable before 20:00.
+     * Tooltip on first purchase: "Chips and gravy. The north approves."
+     */
+    CHIPS_AND_GRAVY("Chips and Gravy"),
+
+    /**
+     * Flat Cola — purchased from Clucky's for 1 COIN.
+     * Restores +5 energy. Noticeably flat.
+     * Tooltip on first purchase: "It was fizzy when it left the factory. Probably."
+     */
+    FLAT_COLA("Flat Cola"),
+
+    /**
+     * Chicken Bone — litter prop spawned outside Clucky's every 15 in-game minutes (cap 8).
+     * Depositing in a LITTER_BIN_PROP reduces Notoriety by 1 (cap −5/day).
+     * Tooltip: "Someone's dinner. Now the pavement's problem."
+     */
+    CHICKEN_BONE("Chicken Bone"),
+
+    /**
+     * Chicken Box (Empty) — litter prop spawned outside Clucky's every 15 in-game minutes (cap 8).
+     * Depositing in a LITTER_BIN_PROP reduces Notoriety by 1 (cap −5/day).
+     * Tooltip: "Grease-stained and sad. Much like the high street."
+     */
+    EMPTY_CHICKEN_BOX("Empty Chicken Box");
 
     private final String displayName;
 
@@ -1346,6 +1390,17 @@ public enum Material {
                                                0.90f, 0.90f, 0.90f); // White label
             case SWIM_TRUNKS:        return cs(0.12f, 0.28f, 0.75f,  // Swimming blue
                                                0.85f, 0.85f, 0.85f); // White trim
+            case CHICKEN_WINGS:      return cs(0.82f, 0.52f, 0.18f,  // Golden fried
+                                               0.90f, 0.72f, 0.35f); // Spiced orange
+            case CHICKEN_BOX:        return cs(0.82f, 0.52f, 0.18f,  // Golden fried
+                                               0.88f, 0.35f, 0.10f); // Red box
+            case CHIPS_AND_GRAVY:    return cs(0.88f, 0.72f, 0.30f,  // Chips yellow
+                                               0.45f, 0.28f, 0.08f); // Dark gravy
+            case FLAT_COLA:          return cs(0.20f, 0.08f, 0.04f,  // Very dark cola
+                                               0.65f, 0.65f, 0.65f); // Grey can
+            case CHICKEN_BONE:       return c(0.90f, 0.85f, 0.75f);  // Off-white bone
+            case EMPTY_CHICKEN_BOX:  return cs(0.88f, 0.35f, 0.10f,  // Red box
+                                               0.72f, 0.52f, 0.28f); // Grease-stained
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -1575,6 +1630,13 @@ public enum Material {
             case CHOCOLATE_BAR:
             case WATER_BOTTLE:
             case SWIM_TRUNKS:
+            // Issue #952: Clucky's Fried Chicken (not block items)
+            case CHICKEN_WINGS:
+            case CHICKEN_BOX:
+            case CHIPS_AND_GRAVY:
+            case FLAT_COLA:
+            case CHICKEN_BONE:
+            case EMPTY_CHICKEN_BOX:
                 return false;
             default:
                 return true;
@@ -1628,6 +1690,13 @@ public enum Material {
             // Issue #950: Northfield Leisure Centre — vending items sit on surfaces
             case CHOCOLATE_BAR:
             case WATER_BOTTLE:
+            // Issue #952: Clucky's Fried Chicken — food items sit on surfaces
+            case CHICKEN_WINGS:
+            case CHICKEN_BOX:
+            case CHIPS_AND_GRAVY:
+            case FLAT_COLA:
+            case CHICKEN_BONE:
+            case EMPTY_CHICKEN_BOX:
                 return true;
             default:
                 return false;
@@ -2008,6 +2077,20 @@ public enum Material {
                 return IconShape.BOTTLE;      // plastic bottle
             case SWIM_TRUNKS:
                 return IconShape.FLAT_PAPER;  // flat garment silhouette
+
+            // Issue #952: Clucky's Fried Chicken
+            case CHICKEN_WINGS:
+                return IconShape.FOOD;        // wings on a plate
+            case CHICKEN_BOX:
+                return IconShape.BOX;         // takeaway box
+            case CHIPS_AND_GRAVY:
+                return IconShape.FOOD;        // chips with gravy
+            case FLAT_COLA:
+                return IconShape.BOTTLE;      // can shape
+            case CHICKEN_BONE:
+                return IconShape.FOOD;        // gnawed bone
+            case EMPTY_CHICKEN_BOX:
+                return IconShape.BOX;         // discarded box
 
             default:
                 return IconShape.BOX;

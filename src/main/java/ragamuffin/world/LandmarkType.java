@@ -151,7 +151,21 @@ public enum LandmarkType {
      * rob the CASH_BOX_PROP. A HOSE_PROP and BUCKET_PROP sit on a 6×4 PAVEMENT
      * forecourt; a SHED_PROP at the back houses a SQUEEGEE.
      */
-    HAND_CAR_WASH;
+    HAND_CAR_WASH,
+
+    // ── Issue #952: Clucky's Fried Chicken ───────────────────────────────────
+
+    /**
+     * Clucky's Fried Chicken — a late-night fried chicken shop on the high street.
+     * Open 10:00–02:00. Staffed by Devraj (DEVRAJ NPC) behind a counter.
+     * Menu: CHICKEN_WINGS (2 coin), CHICKEN_BOX (4 coin), CHIPS_AND_GRAVY (1 coin,
+     * after 20:00 only), FLAT_COLA (1 coin).
+     * Youth/YOUTH_GANG NPCs congregate outside 18:00–02:00 (up to 6).
+     * Wing Tax mechanic: on player exit with food, a youth may demand a wing.
+     * Litter props spawn every 15 in-game minutes (cap 8); deposit in LITTER_BIN_PROP
+     * for −1 Notoriety per piece. Street brawl: 15%/hour chance 22:00–01:00.
+     */
+    FRIED_CHICKEN_SHOP;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -211,6 +225,7 @@ public enum LandmarkType {
             case GREASY_SPOON_CAFE:     return "Vera's Caff";
             case BARBER_SHOP:           return "Ali's Barber Shop";
             case HAND_CAR_WASH:         return "Sparkle Hand Car Wash";
+            case FRIED_CHICKEN_SHOP:    return "Clucky's Fried Chicken";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

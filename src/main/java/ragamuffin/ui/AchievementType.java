@@ -1176,6 +1176,32 @@ public enum AchievementType {
         "Typical",
         "Found the sauna out of order. It's been like that since 2009. Nobody's surprised.",
         1
+    ),
+
+    // ── Issue #952: Clucky's Fried Chicken ────────────────────────────────────
+
+    SEVEN_WINGS(
+        "Seven Wings",
+        "Ate seven chicken wings in one sitting outside Clucky's. At midnight. Alone.",
+        7
+    ),
+
+    WING_TAXED(
+        "Wing Tax",
+        "A youth took your box. You stood there. This is the story of the high street.",
+        1
+    ),
+
+    STAND_YOUR_GROUND(
+        "Stand Your Ground",
+        "Refused to hand over your wings and survived the consequences. Barely.",
+        1
+    ),
+
+    COMMUNITY_SERVICE(
+        "Community Service",
+        "Picked up five pieces of chicken litter and binned them. Unpaid. Almost noble.",
+        5
     );
 
     private final String name;
