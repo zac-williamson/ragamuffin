@@ -7877,3 +7877,188 @@ all new achievement triggers.
     Immediately re-open the shop (re-claim building, re-stock). Verify the `RAIDED` achievement
     fires. Throughout: verify game remains in PLAYING state, no NPEs, all HUD elements render,
     NPC count non-zero, Shop Management UI opens/closes without error.
+
+---
+
+## Phase 17: The Underground Fight Night — Bare-Knuckle Boxing, Faction Betting & Championship Ladder
+
+**Goal**: A clandestine fight promotion system centred on an unmarked basement venue (the
+"Pit") beneath the industrial estate. The player can enter bouts, promote their own fight
+cards, place bets, and climb a shadowy championship ladder whose standings ripple through
+faction respect, street reputation, and the rumour network. The whole spectacle is promoted
+via `PirateRadioSystem` and reported in `NewspaperSystem`.
+
+### The Pit Venue
+
+- A new `LandmarkType.THE_PIT` generated beneath the industrial estate: a rectangular basement
+  room (12×8×4 blocks) of STONE walls and DIRT floor, lit by dangling LANTERN props, with a
+  central 6×6 fighting ring marked by rope-prop blocks.
+- Entry: a concealed WOOD trapdoor at ground level. Player must press **E** on the trapdoor
+  while Notoriety ≥ 10 **or** carrying a `Material.FIGHT_CARD` flyer — otherwise the BOUNCER
+  NPC at the door says *"Members only, pal."*
+- Inside: a crowd of 8–16 spectator NPCs (mix of WORKER, YOUTH, PENSIONER types) arranged
+  around the ring; a `BOOKIE_NPC` against the east wall; and the current two fighters in the ring.
+
+### Fight Card & Scheduling
+
+- Fights occur on a schedule: every 3 in-game days a new `FightCard` is generated, seeded with
+  two FIGHTER NPCs drawn from the neighbourhood (names like "Mad Terry", "The Postman", "Gaz Two
+  Fingers"). Each fighter has hidden stats: `strength` (1–10), `stamina` (1–10), `dirty` (boolean).
+- The player can enter their own name into a fight slot by pressing **E** on the chalkboard
+  prop inside the Pit. This costs 0 coins but requires Notoriety ≥ 15.
+- The player can also **promote** a fight card: pay 20 coins to the BOOKIE_NPC, which triggers
+  a `PirateRadioSystem` broadcast ("Fight night at the Pit — be there or be square") and
+  spawns 4 extra spectators. Promoting boosts the prize pot by 50%.
+
+### Combat Mechanics (Player vs Fighter NPC)
+
+- When the fight starts, the player and opponent enter a specialised combat mode inside the ring:
+  - **Left click**: jab (1 stamina damage to opponent, low stagger)
+  - **Shift + Left click**: haymaker (3 stamina damage, high stagger, −2 player stamina)
+  - **Space**: dodge (50% chance to avoid the opponent's next swing, costs 1 player stamina)
+- Each fighter has a `stamina` pool (10–30 HP scaled from NPC stat). Reaching 0 = knockout.
+- The opponent AI cycles between JABS, HAYMAKERS (telegraphed with a 0.5s wind-up animation
+  flag visible as the NPC model raising an arm), and CLINCH (closes distance fast).
+- Round limit: 3 rounds of 30 real-seconds each. If both fighters are still standing, the
+  fighter with more remaining stamina wins on points.
+- `dirty` fighters may attempt an eye-gouge (−5 instant stamina, triggers `WitnessSystem` crowd
+  grumble) — detectable by the player as a 0.25s glint particle before the attack lands.
+
+### Betting Economy
+
+- `BookieNPC` offers odds on each fight using a simple implied-probability model based on hidden
+  fighter stats (player cannot see stats directly — must infer from rumours or observation).
+- The player bets with `Material.COIN`. Min bet: 2 coins. Max bet: 50 coins.
+- Winning bets pay at the offered odds. Losing bets go to the bookie's pot.
+- The bookie's pot is finite (`bookiePot`, starting at 100 coins). If the player drains the pot
+  below 20 coins, the bookie refuses further bets until the next fight card.
+- `FenceSystem` integration: the player can get inside odds from the fence (press E on Fence
+  NPC, costs 5 coins) revealing one fighter's true `strength` value.
+- `StreetSkillSystem` HUSTLE perk at level 3: the player can spot the `dirty` flag from the
+  fighter's idle animation without paying the fence.
+
+### Championship Ladder
+
+- A persistent ranked list of 8 fighters (`ChampionshipLadder`). The top-ranked fighter holds
+  the `Material.CHAMPIONSHIP_BELT` prop item and receives a passive +5 Notoriety/day.
+- After each fight, winner climbs one rung, loser drops one rung.
+- Reaching rank 1 grants the player `AchievementType.CHAMPION_OF_THE_PIT` and causes rival
+  factions to treat the player with elevated respect (+10 all factions).
+- Marchetti Crew fields their own fighter ("Vinnie"). If Vinnie reaches rank 1 before the
+  player, Marchetti Respect boost drops by 15 (they don't need you anymore).
+- The Street Lads will cheer the player's fights if Street Lads Respect ≥ 60, giving the
+  player a crowd-noise buff: +2 stamina at the start of each round.
+
+### Promotion & Narrative Integration
+
+- Every fight result is published as a `NewspaperSystem` headline: *"Mad Terry KO'd in
+  three — Pit punters gutted"* or *"Local hero floors Marchetti's man in shock upset"*.
+- The `RumourNetwork` seeds `RumourType.GANG_ACTIVITY` rumours describing the ladder standings
+  so NPCs discuss the fights in dialogue.
+- `PirateRadioSystem` DJ commentary: after a fight the pirate DJ delivers a 3-line monologue
+  referencing the winner and loser by name (stored in `PirateRadioSystem.fightCommentary` list).
+- Police awareness: each fight event adds +5 `NoiseSystem` noise in the industrial estate zone.
+  After 3 fight nights, a plain-clothes POLICE NPC appears in the crowd — detectable by
+  `DisguiseSystem` check (identical mechanic to undercover shop surveillance). If not spotted
+  and removed, the next event triggers a raid: all spectators scatter, Pit sealed with STONE
+  blocks for 2 in-game days.
+
+### New Materials & Props
+
+| Material / Prop | Description |
+|---|---|
+| `Material.FIGHT_CARD` | Paper flyer granting Pit entry; dropped by YOUTH NPCs near the estate |
+| `Material.CHAMPIONSHIP_BELT` | Held by ladder rank-1 fighter; wearable cosmetic (+5 Notoriety/day) |
+| `Material.MOUTH_GUARD` | Reduces stamina loss from opponent hits by 25%; craftable from RUBBER |
+| `PropType.BOOKIE_BOARD` | Chalkboard showing current odds and ladder standings |
+| `PropType.FIGHT_RING_ROPE` | Rope boundary prop forming the ring perimeter |
+| `PropType.LANTERN` | Atmospheric lighting prop for Pit interior |
+
+### New `FightNightSystem` class
+
+Implements all logic above. Key public API:
+
+```
+FightNightSystem(World, NPCManager, PirateRadioSystem, NewspaperSystem,
+                 RumourNetwork, FactionSystem, StreetSkillSystem,
+                 NoiseSystem, WitnessSystem, DisguiseSystem)
+generateFightCard()                        // called every 3 in-game days
+enterPlayerIntoFight(Player)               // registers player as a combatant
+promoteFightCard(Player, Inventory)        // pays 20 coins, triggers radio broadcast
+startFight(FightCard)                      // begins the combat phase
+placeBet(Player, Inventory, int coins, int fighterIndex)
+resolveRound(Fighter a, Fighter b)         // returns winner or DRAW
+knockOut(Fighter loser)                    // removes from ring, updates ladder
+updateLadder(Fighter winner, Fighter loser)
+getOdds(int fighterIndex) : float          // implied probability
+checkUndercoverPolice(FightCard)           // DetectableConcreteCheck
+```
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `FIRST_BLOOD` | Win your first fight in the Pit |
+| `CHAMPION_OF_THE_PIT` | Reach rank 1 on the Championship Ladder |
+| `DIRTY_FIGHTER` | Win a fight after landing an eye-gouge |
+| `CLEANED_OUT_THE_BOOKIE` | Drain the bookie's pot below 20 coins in a single fight night |
+| `PROMOTED` | Successfully promote a fight card with the PirateRadio broadcast |
+| `UNDERCOVER_SPOTTER` | Identify and expose the plain-clothes police officer in the crowd |
+
+---
+
+**Unit tests**: `ChampionshipLadder` rank ordering, odds calculation, stamina damage model,
+round timer logic, bookie pot depletion, police detection threshold, fight card scheduling
+interval, `FIGHT_CARD` flyer drop probability from YOUTH NPCs, crowd-buff application when
+Street Lads Respect ≥ 60, Marchetti Vinnie rank impact on faction respect delta.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Pit is accessible at Notoriety ≥ 10**: Generate the world. Find `THE_PIT` trapdoor
+   position. Set player Notoriety to 9. Press **E** on the trapdoor. Verify BOUNCER NPC
+   speech text contains *"Members only, pal."* and player position has not changed (not
+   entered). Set Notoriety to 10. Press **E** again. Verify player Y coordinate drops by 4
+   blocks (descended into the basement). Verify spectator NPC count inside Pit room ≥ 8.
+
+2. **Fight card generates fighters and odds**: Call `generateFightCard()`. Verify the returned
+   `FightCard` contains exactly 2 fighters, each with `strength` in [1,10], `stamina` in [1,10],
+   and a non-null name string. Call `getOdds(0)` and `getOdds(1)`. Verify odds are in (0, 1)
+   and sum to ≤ 1.05 (allowing for bookie margin). Verify odds correlate with stats: the fighter
+   with higher combined `strength + stamina` has odds < 0.5 (i.e., is the favourite).
+
+3. **Player wins fight, ladder updates**: Enter player into a fight against a Fighter NPC with
+   `strength = 2, stamina = 10`. Simulate the fight: player lands 4 haymakers (4×3 = 12 stamina
+   damage > 10 = knockout). Verify opponent `stamina ≤ 0`. Verify `knockOut()` was called.
+   Verify player has moved up at least 1 rung on the `ChampionshipLadder`. Verify a
+   `NewspaperSystem` headline was generated containing the player's name.
+
+4. **Bet placed and paid out correctly on win**: Set `bookiePot = 100`. Player bets 10 coins
+   on fighter index 0 at odds 2.0 (implied 50%). Fighter 0 wins the bout. Verify player
+   inventory gained 20 coins (10 stake × 2.0 odds). Verify `bookiePot` reduced by 10
+   (net payout from pot). Verify player lost 10 coins from inventory before the fight started.
+
+5. **Undercover police triggers raid after 3 fight nights**: Run 3 consecutive `generateFightCard()`
+   and `startFight()` cycles without the player using `DisguiseSystem` to identify the
+   plain-clothes officer. After the 3rd fight, verify: a plain-clothes `POLICE` NPC was
+   spawned inside the Pit. Verify the Pit trapdoor prop is replaced by a STONE block
+   (sealed). Verify no `FightCard` can be generated for the next 2 in-game days
+   (`FightNightSystem.pitSealedUntil > currentTime`).
+
+6. **Street Lads crowd buff applies**: Set Street Lads Respect to 65. Enter player into a
+   fight. At the start of round 2, verify player's current `stamina` equals their stamina at
+   end of round 1 **plus 2** (crowd buff applied). Verify this buff fires exactly once per round
+   start, not once per frame.
+
+7. **Pirate radio broadcasts fight card promotion**: Player calls `promoteFightCard()` with
+   20 coins in inventory. Verify player inventory decreased by 20 coins. Verify
+   `PirateRadioSystem.getScheduledBroadcasts()` contains an entry with text containing *"Fight
+   night at the Pit"*. Verify 4 additional spectator NPCs are spawned inside the Pit room.
+   Verify the prize pot for that `FightCard` increased by 50%.
+
+8. **Full fight night stress test**: Generate the world. Player enters the Pit (Notoriety = 15).
+   Generate a fight card. Promote it (pay 20 coins). Observe the two NPC fighters spar for
+   1 round (advance 30 real-seconds). Player enters next fight card. Place a bet (5 coins on
+   themselves). Fight 3 rounds to victory. Verify ladder updated. Verify newspaper headline
+   generated. Verify pirate radio commentary scheduled. Verify `bookiePot` debited correctly.
+   Verify game remains in PLAYING state throughout, no NPEs, NPC count non-zero, Pit spectator
+   crowd count within [8, 20].
