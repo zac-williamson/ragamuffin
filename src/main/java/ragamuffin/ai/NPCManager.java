@@ -8,6 +8,8 @@ import ragamuffin.building.StructureTracker;
 import ragamuffin.core.NoiseSystem;
 import ragamuffin.core.ShelterDetector;
 import ragamuffin.entity.DamageReason;
+import ragamuffin.entity.FacialHairType;
+import ragamuffin.entity.HairstyleType;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCModelVariant;
 import ragamuffin.entity.NPCState;
@@ -409,6 +411,10 @@ public class NPCManager {
         // Assign a model variant to give visual variety to NPCs (Issue #729).
         npc.setModelVariant(pickVariant(type));
 
+        // Assign hairstyle and facial hair for visual variety (Issue #875).
+        npc.setHairstyle(pickHairstyle(type));
+        npc.setFacialHair(pickFacialHair(type));
+
         // Assign a unique name to humanoid NPCs for immersion (Issue #730).
         // Non-humanoid types (DOG, BIRD) and role-anonymous types that are always
         // addressed by role (POLICE, PCSO, ARMED_RESPONSE, COUNCIL_BUILDER) do not
@@ -484,6 +490,103 @@ public class NPCManager {
      */
     private NPCModelVariant randomFrom(NPCModelVariant... variants) {
         return variants[random.nextInt(variants.length)];
+    }
+
+    /**
+     * Pick an appropriate {@link HairstyleType} for the given NPC type (Issue #875).
+     * Non-humanoid types (DOG, BIRD) and helmeted types use NONE (hair hidden/irrelevant).
+     * School kids tend to have neat hair. Punks and street youth may have mohawks.
+     * Other types get a weighted random selection.
+     */
+    private HairstyleType pickHairstyle(NPCType type) {
+        switch (type) {
+            // Non-humanoid or helmeted — no hair visible
+            case DOG:
+            case BIRD:
+            case POLICE:
+            case ARMED_RESPONSE:
+            case PCSO:
+            case LOLLIPOP_LADY:
+                return HairstyleType.NONE;
+
+            // School kids — neat SHORT hair predominantly
+            case SCHOOL_KID:
+                return randomHairstyleFrom(HairstyleType.SHORT, HairstyleType.SHORT, HairstyleType.BUZZCUT);
+
+            // Street youth / gang — variety including mohawk
+            case YOUTH_GANG:
+            case STREET_LAD:
+                return randomHairstyleFrom(HairstyleType.MOHAWK, HairstyleType.SHORT, HairstyleType.LONG, HairstyleType.BUZZCUT);
+
+            // Buskers / bohemian types — often long hair
+            case BUSKER:
+                return randomHairstyleFrom(HairstyleType.LONG, HairstyleType.LONG, HairstyleType.CURLY, HairstyleType.SHORT);
+
+            // Joggers — short or buzzcut
+            case JOGGER:
+                return randomHairstyleFrom(HairstyleType.SHORT, HairstyleType.BUZZCUT, HairstyleType.BUZZCUT);
+
+            // Elderly — thinning, short, or none
+            case PENSIONER:
+                return randomHairstyleFrom(HairstyleType.SHORT, HairstyleType.NONE, HairstyleType.NONE, HairstyleType.BUZZCUT);
+
+            // All other humanoid types — fully random
+            default: {
+                HairstyleType[] all = HairstyleType.values();
+                return all[random.nextInt(all.length)];
+            }
+        }
+    }
+
+    /**
+     * Pick one of the supplied hairstyle values at random with equal probability.
+     */
+    private HairstyleType randomHairstyleFrom(HairstyleType... styles) {
+        return styles[random.nextInt(styles.length)];
+    }
+
+    /**
+     * Pick an appropriate {@link FacialHairType} for the given NPC type (Issue #875).
+     * Non-humanoid types get NONE. Most types get a weighted random selection.
+     */
+    private FacialHairType pickFacialHair(NPCType type) {
+        switch (type) {
+            // Non-humanoid or uniformed female roles — no facial hair
+            case DOG:
+            case BIRD:
+            case LOLLIPOP_LADY:
+                return FacialHairType.NONE;
+
+            // School kids — no facial hair (children)
+            case SCHOOL_KID:
+                return FacialHairType.NONE;
+
+            // Buskers and drunks often have beards
+            case BUSKER:
+            case DRUNK:
+                return randomFacialHairFrom(FacialHairType.BEARD, FacialHairType.STUBBLE, FacialHairType.MOUSTACHE, FacialHairType.NONE);
+
+            // Police — clean-shaven or light stubble
+            case POLICE:
+            case ARMED_RESPONSE:
+            case PCSO:
+                return randomFacialHairFrom(FacialHairType.NONE, FacialHairType.NONE, FacialHairType.STUBBLE);
+
+            // Pensioners — often moustaches or goatees
+            case PENSIONER:
+                return randomFacialHairFrom(FacialHairType.NONE, FacialHairType.MOUSTACHE, FacialHairType.GOATEE, FacialHairType.STUBBLE);
+
+            // All other humanoid types — weighted toward none/light
+            default:
+                return randomFacialHairFrom(FacialHairType.NONE, FacialHairType.NONE, FacialHairType.STUBBLE, FacialHairType.BEARD, FacialHairType.GOATEE);
+        }
+    }
+
+    /**
+     * Pick one of the supplied facial hair values at random with equal probability.
+     */
+    private FacialHairType randomFacialHairFrom(FacialHairType... styles) {
+        return styles[random.nextInt(styles.length)];
     }
 
     /**

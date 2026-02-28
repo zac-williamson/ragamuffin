@@ -10,6 +10,8 @@ import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.entity.FacialExpression;
+import ragamuffin.entity.FacialHairType;
+import ragamuffin.entity.HairstyleType;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCModelVariant;
 import ragamuffin.entity.NPCState;
@@ -105,6 +107,14 @@ public class NPCRenderer {
     // Per-NPC long-hair ModelInstance (only allocated for LONG_HAIR variant NPCs)
     private final Map<NPC, ModelInstance> longHairInstances;
 
+    // Issue #875: Hairstyle models (shared geometry per style) and per-NPC instances
+    private final Map<HairstyleType, Model> hairstyleModels;
+    private final Map<NPC, ModelInstance> hairstyleInstances;
+
+    // Issue #875: Facial hair models (shared geometry per style) and per-NPC instances
+    private final Map<FacialHairType, Model> facialHairModels;
+    private final Map<NPC, ModelInstance> facialHairInstances;
+
     private final ModelBuilder mb;
 
     // Reusable transform to avoid GC pressure
@@ -125,6 +135,10 @@ public class NPCRenderer {
         speakFaceParts = new HashMap<>();
         speakFaceInstances = new IdentityHashMap<>();
         longHairInstances = new IdentityHashMap<>();
+        hairstyleModels = new HashMap<>();
+        hairstyleInstances = new IdentityHashMap<>();
+        facialHairModels = new HashMap<>();
+        facialHairInstances = new IdentityHashMap<>();
         buildAllModels();
     }
 
@@ -266,6 +280,20 @@ public class NPCRenderer {
         // Long-hair block — shared by all LONG_HAIR variant NPCs regardless of type.
         // Dark brown rectangle hanging behind the head.
         longHairModel = buildLongHairBlock();
+
+        // Issue #875: Hairstyle geometry (shared per style).
+        for (HairstyleType style : HairstyleType.values()) {
+            if (style != HairstyleType.NONE) {
+                hairstyleModels.put(style, buildHairstyleModel(style));
+            }
+        }
+
+        // Issue #875: Facial hair geometry (shared per type).
+        for (FacialHairType fh : FacialHairType.values()) {
+            if (fh != FacialHairType.NONE) {
+                facialHairModels.put(fh, buildFacialHairModel(fh));
+            }
+        }
     }
 
     private void buildAndCacheHumanoid(NPCType type, Color shirtColor, Color trouserColor,
@@ -396,6 +424,99 @@ public class NPCRenderer {
             setPartTransform(faces[exprIdx], pos, yawRad, 0f, headCentreY, faceZ);
             modelBatch.render(faces[exprIdx], environment);
         }
+    }
+
+    /**
+     * Render the NPC's hairstyle on or behind the head (Issue #875).
+     * NONE and LONG_HAIR-variant hair are handled separately (NONE = no geometry,
+     * LONG = via the existing LONG_HAIR variant block). The remaining styles are
+     * positioned on top of the head.
+     */
+    private void renderHairstyle(ModelBatch modelBatch, Environment environment,
+                                  NPC npc, Vector3 pos, float yawRad,
+                                  float headCentreY, float headScale) {
+        HairstyleType style = npc.getHairstyle();
+        if (style == HairstyleType.NONE) return;
+
+        ModelInstance inst = getOrCreateHairstyleInstance(npc);
+        if (inst == null) return;
+
+        // All hairstyles (except LONG which hangs behind) sit on top of the head.
+        // Centre Y = top of head + half the hairstyle height.
+        float hairHalfH;
+        float hairZ = 0f;
+        switch (style) {
+            case LONG: {
+                // Behind the head — same geometry as the LONG_HAIR variant block
+                float hairHalfDepth = HEAD_D * 0.3f / 2f;
+                hairZ = -(HEAD_D * headScale / 2f + hairHalfDepth + 0.005f);
+                float hairY = headCentreY + HEAD_H * headScale / 2f - (HEAD_H + 0.20f) / 2f;
+                setPartTransform(inst, pos, yawRad, 0f, hairY, hairZ);
+                modelBatch.render(inst, environment);
+                return;
+            }
+            case SHORT:
+                hairHalfH = 0.04f;
+                break;
+            case MOHAWK:
+                hairHalfH = 0.10f;
+                break;
+            case CURLY:
+                hairHalfH = 0.09f;
+                break;
+            case BUZZCUT:
+                hairHalfH = 0.02f;
+                break;
+            default:
+                hairHalfH = 0.04f;
+                break;
+        }
+        float hairY = headCentreY + HEAD_H * headScale / 2f + hairHalfH;
+        setPartTransform(inst, pos, yawRad, 0f, hairY, hairZ);
+        modelBatch.render(inst, environment);
+    }
+
+    /**
+     * Render the NPC's facial hair on the lower front face (Issue #875).
+     * Positioned below the eye level, in front of the face surface.
+     */
+    private void renderFacialHair(ModelBatch modelBatch, Environment environment,
+                                   NPC npc, Vector3 pos, float yawRad,
+                                   float headCentreY, float headScale) {
+        FacialHairType facialHair = npc.getFacialHair();
+        if (facialHair == FacialHairType.NONE) return;
+
+        ModelInstance inst = getOrCreateFacialHairInstance(npc);
+        if (inst == null) return;
+
+        // Position on the lower part of the face, in front of the head surface.
+        float fhDepth;
+        float fhOffsetY; // Y offset from headCentre (negative = lower face)
+        switch (facialHair) {
+            case STUBBLE:
+                fhDepth = 0.02f;
+                fhOffsetY = -HEAD_H * headScale * 0.28f;
+                break;
+            case MOUSTACHE:
+                fhDepth = 0.02f;
+                fhOffsetY = -HEAD_H * headScale * 0.18f;
+                break;
+            case BEARD:
+                fhDepth = 0.04f;
+                fhOffsetY = -HEAD_H * headScale * 0.30f;
+                break;
+            case GOATEE:
+                fhDepth = 0.03f;
+                fhOffsetY = -HEAD_H * headScale * 0.35f;
+                break;
+            default:
+                fhDepth = 0.02f;
+                fhOffsetY = -HEAD_H * headScale * 0.28f;
+                break;
+        }
+        float faceZ = HEAD_D * headScale / 2f + fhDepth / 2f + 0.012f;
+        setPartTransform(inst, pos, yawRad, 0f, headCentreY + fhOffsetY, faceZ);
+        modelBatch.render(inst, environment);
     }
 
     /**
@@ -676,6 +797,106 @@ public class NPCRenderer {
         return inst;
     }
 
+    /**
+     * Build a hairstyle geometry model for the given style (Issue #875).
+     * All styles use a dark-brown base colour; the shape differs per style.
+     *
+     * <ul>
+     *   <li>SHORT     — thin cap sitting on top of the head</li>
+     *   <li>LONG      — wide block hanging behind and below the head</li>
+     *   <li>MOHAWK    — tall narrow strip running front-to-back along the centre</li>
+     *   <li>CURLY     — wide rounded puff on top of the head</li>
+     *   <li>BUZZCUT   — very thin, close-cropped cap on top</li>
+     * </ul>
+     */
+    private Model buildHairstyleModel(HairstyleType style) {
+        Color hairColor = new Color(0.22f, 0.14f, 0.08f, 1f); // dark brown
+        mb.begin();
+        Material mat = new Material(ColorAttribute.createDiffuse(hairColor));
+        MeshPartBuilder hair = mb.part("hair", GL20.GL_TRIANGLES, ATTRS, mat);
+        switch (style) {
+            case SHORT:
+                // Thin cap — slightly wider than head, low profile
+                hair.box(HEAD_W + 0.04f, 0.08f, HEAD_D + 0.04f);
+                break;
+            case LONG:
+                // Wide block hanging behind the head (same as existing LONG_HAIR variant)
+                hair.box(HEAD_W + 0.06f, HEAD_H + 0.20f, HEAD_D * 0.3f);
+                break;
+            case MOHAWK:
+                // Tall narrow strip along the top centre
+                hair.box(0.08f, 0.20f, HEAD_D + 0.02f);
+                break;
+            case CURLY:
+                // Wide puff sitting above the head
+                hair.box(HEAD_W + 0.12f, 0.18f, HEAD_D + 0.08f);
+                break;
+            case BUZZCUT:
+                // Very thin close-cropped cap
+                hair.box(HEAD_W + 0.02f, 0.04f, HEAD_D + 0.02f);
+                break;
+            default:
+                hair.box(HEAD_W, 0.06f, HEAD_D);
+                break;
+        }
+        return mb.end();
+    }
+
+    /** Returns the per-NPC hairstyle ModelInstance, creating it if needed. */
+    private ModelInstance getOrCreateHairstyleInstance(NPC npc) {
+        ModelInstance inst = hairstyleInstances.get(npc);
+        if (inst != null) return inst;
+        Model model = hairstyleModels.get(npc.getHairstyle());
+        if (model == null) return null;
+        inst = new ModelInstance(model);
+        hairstyleInstances.put(npc, inst);
+        return inst;
+    }
+
+    /**
+     * Build a facial hair geometry model for the given type (Issue #875).
+     * All styles use dark colour positioned on the lower face.
+     */
+    private Model buildFacialHairModel(FacialHairType type) {
+        Color hairColor = new Color(0.18f, 0.12f, 0.07f, 1f); // very dark brown
+        mb.begin();
+        Material mat = new Material(ColorAttribute.createDiffuse(hairColor));
+        MeshPartBuilder fh = mb.part("facialhair", GL20.GL_TRIANGLES, ATTRS, mat);
+        switch (type) {
+            case STUBBLE:
+                // Very thin rectangle covering the chin and cheeks
+                fh.box(HEAD_W * 0.80f, 0.08f, 0.02f);
+                break;
+            case MOUSTACHE:
+                // Small block above the upper lip
+                fh.box(HEAD_W * 0.50f, 0.05f, 0.02f);
+                break;
+            case BEARD:
+                // Wide, deep block covering the chin and lower jaw
+                fh.box(HEAD_W * 0.82f, 0.18f, 0.04f);
+                break;
+            case GOATEE:
+                // Small neat tuft on the chin only
+                fh.box(HEAD_W * 0.30f, 0.10f, 0.03f);
+                break;
+            default:
+                fh.box(0.1f, 0.05f, 0.02f);
+                break;
+        }
+        return mb.end();
+    }
+
+    /** Returns the per-NPC facial hair ModelInstance, creating it if needed. */
+    private ModelInstance getOrCreateFacialHairInstance(NPC npc) {
+        ModelInstance inst = facialHairInstances.get(npc);
+        if (inst != null) return inst;
+        Model model = facialHairModels.get(npc.getFacialHair());
+        if (model == null) return null;
+        inst = new ModelInstance(model);
+        facialHairInstances.put(npc, inst);
+        return inst;
+    }
+
     private Model buildBox(float w, float h, float d, Color color) {
         mb.begin();
         Material mat = new Material(ColorAttribute.createDiffuse(color));
@@ -875,6 +1096,12 @@ public class NPCRenderer {
             setPartTransform(hairInst, pos, yawRad, 0f, hairY, hairZ);
             modelBatch.render(hairInst, environment);
         }
+
+        // Issue #875: Hairstyle rendering — positioned on or behind the head.
+        renderHairstyle(modelBatch, environment, npc, pos, yawRad, headCentre + headBob, headScale);
+
+        // Issue #875: Facial hair rendering — on the front lower face.
+        renderFacialHair(modelBatch, environment, npc, pos, yawRad, headCentre + headBob, headScale);
 
         // Helmet (police only) — follows head bob
         if (inst.length > PART_HELMET) {
@@ -1660,5 +1887,17 @@ public class NPCRenderer {
             longHairModel = null;
         }
         longHairInstances.clear();
+
+        for (Model m : hairstyleModels.values()) {
+            if (m != null) m.dispose();
+        }
+        hairstyleModels.clear();
+        hairstyleInstances.clear();
+
+        for (Model m : facialHairModels.values()) {
+            if (m != null) m.dispose();
+        }
+        facialHairModels.clear();
+        facialHairInstances.clear();
     }
 }

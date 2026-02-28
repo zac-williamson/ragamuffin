@@ -21,6 +21,8 @@ public class NPC {
 
     private final NPCType type;
     private NPCModelVariant modelVariant; // Physical appearance variant for 3D model rendering
+    private HairstyleType hairstyle;      // Issue #875: hairstyle rendered on the NPC's head
+    private FacialHairType facialHair;    // Issue #875: facial hair rendered on the NPC's face
     private String name; // Optional unique name (null = anonymous NPC)
     private final Vector3 position;
     private final Vector3 velocity;
@@ -45,6 +47,8 @@ public class NPC {
         this.type = type;
         this.name = name;
         this.modelVariant = NPCModelVariant.DEFAULT;
+        this.hairstyle = HairstyleType.SHORT;
+        this.facialHair = FacialHairType.NONE;
         this.position = new Vector3(x, y, z);
         this.velocity = new Vector3();
         this.aabb = new AABB(position, WIDTH, HEIGHT, DEPTH);
@@ -105,6 +109,36 @@ public class NPC {
      */
     public void setModelVariant(NPCModelVariant variant) {
         this.modelVariant = (variant != null) ? variant : NPCModelVariant.DEFAULT;
+    }
+
+    /**
+     * Returns the hairstyle rendered on this NPC's head (Issue #875).
+     * Defaults to {@link HairstyleType#SHORT} on construction.
+     */
+    public HairstyleType getHairstyle() {
+        return hairstyle;
+    }
+
+    /**
+     * Set the hairstyle for this NPC. Null is treated as {@link HairstyleType#SHORT}.
+     */
+    public void setHairstyle(HairstyleType hairstyle) {
+        this.hairstyle = (hairstyle != null) ? hairstyle : HairstyleType.SHORT;
+    }
+
+    /**
+     * Returns the facial hair style rendered on this NPC's face (Issue #875).
+     * Defaults to {@link FacialHairType#NONE} on construction.
+     */
+    public FacialHairType getFacialHair() {
+        return facialHair;
+    }
+
+    /**
+     * Set the facial hair style for this NPC. Null is treated as {@link FacialHairType#NONE}.
+     */
+    public void setFacialHair(FacialHairType facialHair) {
+        this.facialHair = (facialHair != null) ? facialHair : FacialHairType.NONE;
     }
 
     public Vector3 getPosition() {
