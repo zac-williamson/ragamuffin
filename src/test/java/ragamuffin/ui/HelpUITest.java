@@ -56,5 +56,15 @@ class HelpUITest {
         assertTrue(helpText.contains("E") && helpText.contains("Interact"), "Should contain E for interact");
         assertTrue(helpText.contains("ESC"), "Should contain ESC");
         assertTrue(helpText.contains("1-9") || helpText.contains("1") && helpText.contains("9"), "Should contain 1-9 for hotbar");
+        // Additional shortcuts
+        assertTrue(helpText.contains("Space") || helpText.contains("Jump"), "Should contain Space/Jump");
+        assertTrue(helpText.contains("Shift") || helpText.contains("Sprint"), "Should contain Shift/Sprint");
+        assertTrue(helpText.contains("F") && (helpText.contains("Pickpocket") || helpText.contains("pickpocket")), "Should contain F for pickpocket");
+        assertTrue(helpText.contains("K") && (helpText.contains("Skill") || helpText.contains("skill")), "Should contain K for skills");
+        assertTrue(helpText.contains("T") && (helpText.contains("graffiti") || helpText.contains("Graffiti") || helpText.contains("tag") || helpText.contains("Tag")), "Should contain T for graffiti");
+        assertTrue(helpText.contains("B") && (helpText.contains("radio") || helpText.contains("Radio") || helpText.contains("broadcast") || helpText.contains("Broadcast")), "Should contain B for pirate radio");
+        assertTrue(helpText.contains("Q") && (helpText.contains("Quest") || helpText.contains("quest")), "Should contain Q for quest log");
+        assertTrue(helpText.contains("R") && (helpText.contains("criminal") || helpText.contains("Criminal") || helpText.contains("record") || helpText.contains("Record")), "Should contain R for criminal record");
+        assertTrue(helpText.contains("Tab") || helpText.contains("TAB"), "Should contain Tab for achievements");
     }
 }
