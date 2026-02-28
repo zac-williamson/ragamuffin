@@ -129,7 +129,18 @@ public enum LandmarkType {
      * Weather modifier: rain/drizzle/thunderstorm adds +2 seated regulars.
      * Monday rush: max 4 customers. Notoriety ≥ 60 + police nearby blocks service.
      */
-    GREASY_SPOON_CAFE;
+    GREASY_SPOON_CAFE,
+
+    // ── Issue #944: High Street Barber ────────────────────────────────────────
+
+    /**
+     * Ali's Barber Shop — a Turkish barber on the high street, between the
+     * off-licence and the charity shop. Open 09:00–18:00 Monday–Saturday.
+     * Run by Ali (BARBER NPC). Features BARBER_CHAIR, BARBER_POLE (outside),
+     * and MIRROR props. Ali accumulates neighbourhood rumours and shares one free
+     * per visit.
+     */
+    BARBER_SHOP;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -187,6 +198,7 @@ public enum LandmarkType {
             case BUS_STOP_PARK:         return "Bus Stop – Park";
             case BUS_STOP_INDUSTRIAL:   return "Bus Stop – Industrial Estate";
             case GREASY_SPOON_CAFE:     return "Vera's Caff";
+            case BARBER_SHOP:           return "Ali's Barber Shop";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

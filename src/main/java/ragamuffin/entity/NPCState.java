@@ -46,5 +46,8 @@ public enum NPCState {
 
     // Issue #918: Bus Stop & Public Transport System
     WAITING_FOR_BUS,    // NPC is queuing at a bus stop waiting for The Number 47
-    BOARDING            // NPC is boarding the bus (brief transition state)
+    BOARDING,           // NPC is boarding the bus (brief transition state)
+
+    // Issue #944: High Street Barber
+    ANNOYED             // NPC is annoyed after being given an unwanted DIY haircut
 }

@@ -396,7 +396,18 @@ public enum NPCType {
      * Increases NeighbourhoodWatch anger +5/min while present. Passive; carries
      * a clipboard. Never attacks; despawns at 12:00.
      */
-    COUNCIL_INSPECTOR(25f, 0f, 0f, false);
+    COUNCIL_INSPECTOR(25f, 0f, 0f, false),
+
+    // ── Issue #944: High Street Barber ────────────────────────────────────────
+
+    /**
+     * Barber — Ali, the proprietor of Ali's Barber Shop (BARBER_SHOP landmark).
+     * Open 09:00–18:00 Mon–Sat. Passive; offers haircuts and wet shaves via the
+     * haircut menu (press E). Accumulates and shares neighbourhood rumours with
+     * the player each visit.
+     * Speech: "Sit down, mate — what are we doing today?"
+     */
+    BARBER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
