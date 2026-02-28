@@ -1072,6 +1072,26 @@ public enum AchievementType {
         "Chippy Regular",
         "Bought a fish supper from Tony's five times. Your arteries have filed a formal complaint.",
         5
+    ),
+
+    // ── Issue #936: Council Skip & Bulky Item Day ─────────────────────────────
+
+    SKIP_KING(
+        "Skip King",
+        "Salvaged 5 or more items from a single Bulky Item Day. The street is basically your warehouse now.",
+        1
+    ),
+
+    ANTIQUE_ROADSHOW(
+        "Antique Roadshow",
+        "Sold an Antique Clock to the Fence. He had questions. You had answers. Sort of.",
+        1
+    ),
+
+    EARLY_BIRD(
+        "Early Bird",
+        "First to take an item from the skip on Bulky Item Day. The early scavenger gets the sofa.",
+        1
     );
 
     private final String name;
