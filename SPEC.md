@@ -14073,3 +14073,170 @@ materials, `ANTIQUE_CLOCK` triggers achievement on fence sale.
    `BOX_OF_RECORDS` is NOT in the skip zone. Verify player can press E on the
    `PIGEON_FANCIER` to receive negotiation dialogue ("I've got first dibs, mate").
    Pay 5 COIN. Verify player receives `BOX_OF_RECORDS` and `PIGEON_FANCIER` relinquishes it.
+
+---
+
+## Add Greasy Spoon Café — Vera's Caff, Full Breakfast & Rumour Hub
+
+**New system**: `GreasySpoonSystem` in `ragamuffin/core/GreasySpoonSystem.java`
+
+A proper greasy spoon caff — the heartbeat of the British working-class neighbourhood.
+"Vera's Caff" (landmark type `GREASY_SPOON`) opens 07:00–14:00 daily. Inside, NPC
+regulars gossip over mugs of tea and full English breakfasts, making it the richest
+passive rumour hub in the game. The player can sit down, order, eat, and eavesdrop.
+Bad weather packs it out; Mondays after the weekend are busiest.
+
+### Landmark
+
+Add `GREASY_SPOON` to `LandmarkType`. Display name: `"Vera's Caff"`. Placed by
+`WorldGenerator` on the high street between the off-licence and the charity shop.
+Interior: 8×6 blocks, four two-seat tables (WOOD props), counter along the back wall
+(`COUNTER` prop), gas-hob behind the counter (`HOB` prop), chalkboard specials sign
+(`CHALKBOARD` prop).
+
+### Menu & New Materials
+
+Add the following entries to `Material`:
+
+| Material | Cost (COIN) | Hunger restored | Warmth restored | Notes |
+|----------|-------------|-----------------|-----------------|-------|
+| `FULL_ENGLISH` | 6 | 60 | 20 | Restores most hunger of any single item; tooltip on first eat: "The full English: Britain's greatest contribution to civilisation." |
+| `MUG_OF_TEA` | 2 | 0 | 25 | Same warmth as `FLASK_OF_TEA` but cheaper; consumed on seat |
+| `BEANS_ON_TOAST` | 3 | 30 | 10 | Budget option |
+| `FRIED_BREAD` | 2 | 20 | 5 | Sold as a side; pairs with `FULL_ENGLISH` for a combined +10 hunger bonus |
+| `BACON_BUTTY` | 4 | 40 | 10 | Morning staple; available until 11:00 only; tooltip on purchase after 11:00: "Sorry love, it's gone eleven. No more bacon." |
+| `BUILDER_S_TEA` | 1 | 0 | 15 | Weak version; Vera's cheapest item; "Builder's tea — strong, brown, no nonsense." |
+
+Vera also sells `NEWSPAPER` (1 COIN, as elsewhere) and `CIGARETTE` (2 COIN) from behind
+the counter.
+
+### Opening Hours & Weather Modifier
+
+- Open: 07:00–14:00 (checked against `TimeSystem`).
+- Closed outside hours: pressing **E** on the door shows "Sorry, we're closed. Come back
+  tomorrow." (until 07:00) or "We're done for the day, love." (after 14:00).
+- **Weather modifier**: when `WeatherSystem.getCurrentWeather()` is `RAIN`,
+  `DRIZZLE`, or `THUNDERSTORM`, the number of seated NPC customers increases by +2
+  (NPCs sheltering). Vera mutters: "Raining again. Good for business."
+- **Monday rush**: on Monday (day-of-week derived from `TimeSystem.getDayCount() % 7 == 1`),
+  NPC customer count is at maximum (4 customers instead of the usual 0–2).
+
+### Ordering Mechanic
+
+1. Player presses **E** on the counter or on Vera (new `NPCType.CAFF_OWNER`).
+2. A simple order menu appears (same pattern as `ChippyOrderUI`):
+   - Shows available items with prices and current stock.
+   - `BACON_BUTTY` greyed out and unselectable after 11:00.
+3. Player selects item; COIN is deducted from inventory. Item is added directly to
+   inventory (player eats at their leisure) — except `MUG_OF_TEA` and `BUILDER_S_TEA`
+   which are consumed immediately on purchase (no inventory slot used) and apply
+   warmth instantly.
+4. Vera has contextual speech based on time and weather:
+   - Before 09:00: "You're up early. Building site?"
+   - Raining: "Horrible out there, isn't it. Sit down."
+   - Player has high Notoriety (≥40): "You look like trouble. Eat and go."
+   - Player is low on COIN (< 3): "I can do you a builder's tea for a quid, love."
+
+### Seated Eavesdropping
+
+- 2–4 `NPCType.CAFF_REGULAR` NPCs are seated when the caff is open. Each `CAFF_REGULAR`
+  holds 1 random `Rumour` (drawn from the `RumourNetwork` on spawn).
+- When the player sits at an adjacent table (walks within 2 blocks of a `CAFF_REGULAR`),
+  the NPC's rumour is automatically revealed to the player via the `SpeechLogUI`
+  (same mechanism as `PubLockInSystem`). This does NOT require pressing E.
+- Rumours available via caff: `LOOT_TIP`, `COUNCIL_NOTICE`, `GANG_ACTIVITY`,
+  `WEATHER_TIP`, and a new type `LOCAL_GOSSIP` (flavour only, e.g. "Did you hear
+  about Derek's allotment? Council's after him.").
+- After hearing 3 unique rumours in one caff visit, the achievement
+  `WELL_INFORMED` is unlocked.
+
+### Daily Specials Board
+
+- The `CHALKBOARD` prop inside the caff displays a random "Daily Special" drawn at
+  07:00 each day from a weighted pool:
+  - "Today's special: FULL ENGLISH + TEA — 7 COIN" (saves 1 coin on the combo;
+    player buying both gets the discount automatically).
+  - "Today's special: BEANS ON TOAST — 2 COIN" (1 coin off).
+  - "Closed Monday — WRONG, WE ARE OPEN. Ignore that." (flavour only, no discount).
+- The special is stored in `GreasySpoonSystem.dailySpecial` (a `String`) and updated
+  at 07:00 via the `TimeSystem` hour-change hook.
+- Pressing **E** on the chalkboard displays the special in a tooltip.
+
+### Notoriety & Police Integration
+
+- If the player's Notoriety is ≥ 60 and a `POLICE` NPC is within 15 blocks, Vera
+  refuses service: "I run a respectable establishment. Out."
+- If the player commits a crime (block-break, NPC assault) within 12 blocks of the
+  caff during opening hours, all `CAFF_REGULAR` NPCs flee (set to `NPCState.FLEEING`)
+  and Vera shouts: "Oi! Take it outside!" The caff counts as a witness location for
+  `WitnessSystem`.
+
+### Faction Integration
+
+- `CAFF_REGULAR` NPCs are neutral; however, if `FactionSystem` respect for
+  `Faction.MARCHETTI_CREW` ≥ 70, one regular is replaced by a `MARCHETTI_MEMBER`
+  NPC who sells `PRESCRIPTION_MEDS` via the street-deal mechanic (same as
+  `StreetEconomySystem`) from their seat — effectively using the caff as a front.
+- If the player tips off `WitnessSystem` about the deal, Marchetti respect drops −25
+  and the `CAFF_REGULAR` replacement is removed for 3 in-game days.
+
+### Achievement
+
+- `FULL_ENGLISH_FANATIC`: eat a `FULL_ENGLISH` on 5 separate in-game days.
+- `WELL_INFORMED`: hear 3 unique rumours in a single caff visit.
+- `REGULAR`: visit Vera's Caff on 7 consecutive in-game days.
+
+### Tooltip (first entry)
+
+"Vera's Caff. Est. 1987. Cash only. No WiFi. No nonsense."
+
+### Unit Tests
+
+- `GreasySpoonSystem` opens/closes correctly based on `TimeSystem` hour.
+- `BACON_BUTTY` unavailable after 11:00 (returns `false` from `canOrder()`).
+- Weather modifier increases seated NPC count in rain (+2 customers).
+- Monday rush sets customer count to 4.
+- Combo discount applied when buying `FULL_ENGLISH` + `MUG_OF_TEA` on special day.
+- Notoriety ≥ 60 + police nearby blocks ordering.
+- `CAFF_REGULAR` rumour eavesdrop triggers `SpeechLogUI` entry on proximity.
+- `FULL_ENGLISH_FANATIC` achievement unlocks after 5 separate eating days.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Caff opens at 07:00 and closes at 14:00**: Create a `GreasySpoonSystem`. Set
+   `TimeSystem` to 06:59. Verify `greasSpoonSystem.isOpen()` is `false`. Advance
+   time to 07:00. Verify `isOpen()` is `true`. Advance time to 14:00. Verify
+   `isOpen()` is `false`. Pressing E on the door after 14:00 returns the closed
+   message "We're done for the day, love."
+
+2. **Player orders FULL_ENGLISH, hunger increases**: Set player hunger to 20. Set
+   player COIN count to 10. Player presses E on Vera and selects `FULL_ENGLISH`
+   (cost 6 COIN). Verify player COIN is now 4. Verify `FULL_ENGLISH` is in player
+   inventory. Player uses `FULL_ENGLISH` from inventory. Verify player hunger has
+   increased by 60 (capped at 100 if applicable). Verify `AchievementType.FULL_ENGLISH_FANATIC`
+   progress has incremented by 1.
+
+3. **BACON_BUTTY unavailable after 11:00**: Set time to 11:01. Call
+   `greasSpoonSystem.canOrder(Material.BACON_BUTTY, currentHour)`. Verify it returns
+   `false`. Set time to 10:59. Verify `canOrder(Material.BACON_BUTTY, currentHour)`
+   returns `true`.
+
+4. **Rain weather increases seated NPCs**: Set weather to `Weather.RAIN`. Call
+   `greasSpoonSystem.getSeatedNpcCount()`. Verify it returns at least 2 more than the
+   same call under `Weather.CLEAR`. (Base count + 2 rain modifier.)
+
+5. **Eavesdropping reveals CAFF_REGULAR rumour**: Spawn a `CAFF_REGULAR` NPC with a
+   seeded `Rumour` of type `LOOT_TIP`. Place the player 3 blocks away. Call
+   `greasSpoonSystem.update(delta, player, ...)`. Verify the `SpeechLogUI` (or
+   equivalent log) now contains the `LOOT_TIP` rumour text. Verify the
+   `WELL_INFORMED` achievement counter has incremented.
+
+6. **Notoriety blocks service when police nearby**: Set player Notoriety to 65.
+   Spawn a `POLICE` NPC 10 blocks from the caff. Player presses E on Vera. Verify
+   ordering returns the refusal message "I run a respectable establishment. Out."
+   Verify no COIN is deducted from player inventory.
+
+7. **Monday rush spawns maximum customers**: Set `TimeSystem.dayCount` so that
+   `dayCount % 7 == 1` (Monday). Set weather to `Weather.CLEAR`. Call
+   `greasSpoonSystem.getSeatedNpcCount()`. Verify the count equals 4 (maximum Monday
+   value).
