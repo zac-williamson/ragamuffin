@@ -9333,3 +9333,82 @@ NotorietySystem, RumourNetwork, DisguiseSystem) are already wired.
 6. **StreetEconomySystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `streetEconomySystem` field is non-null. Simulate 1 frame in
    PLAYING state. Verify no exception is thrown.
+
+---
+
+## Wire WitnessSystem into the Game Loop
+
+`WitnessSystem` (Issue #765, `src/main/java/ragamuffin/core/WitnessSystem.java`) is a
+490-line system that manages witnesses, evidence props, CCTV tapes, and informant mechanics.
+It is **never instantiated** in `RagamuffinGame.java` — all 490 lines are dead code. Players
+commit crimes, but no NPCs ever transition to WITNESS state, no evidence props ever spawn,
+and CCTV tapes never activate.
+
+### What needs to be done
+
+1. **Declare and instantiate** in `RagamuffinGame`:
+   ```java
+   private WitnessSystem witnessSystem;
+   // in create():
+   witnessSystem = new WitnessSystem();
+   witnessSystem.setCriminalRecord(player.getCriminalRecord());
+   witnessSystem.setRumourNetwork(rumourNetwork);
+   witnessSystem.setAchievementSystem(achievementSystem);
+   ```
+
+2. **Call `update()` every frame** in the PLAYING branch of `render()`:
+   ```java
+   witnessSystem.update(delta, npcManager.getNPCs(), player);
+   ```
+
+3. **Wire crime events** — wherever the player commits a visible crime (block punch near
+   NPCs, NPC punch), call `registerCrime` and `notifyCrime` alongside the existing
+   `disguiseSystem.notifyCrime(...)` call:
+   ```java
+   witnessSystem.registerCrime(
+       player.getPosition().x, player.getPosition().y, player.getPosition().z,
+       npcManager.getNPCs(), player);
+   witnessSystem.notifyCrime(player.getPosition().x, player.getPosition().z);
+   ```
+
+4. **Wire CCTV tape stealing** — in `handleInteract()`, when the player presses E near an
+   office or off-licence, attempt to steal a tape:
+   ```java
+   if (witnessSystem.stealCctvTape(player.getPosition().x, player.getPosition().z)) {
+       tooltipSystem.showMessage("CCTV tape stolen — no evidence.", 3.0f);
+       inventory.add(Material.CCTV_TAPE, 1);
+   }
+   ```
+
+5. **Reset on restart** in `restartGame()`:
+   ```java
+   witnessSystem = new WitnessSystem();
+   witnessSystem.setCriminalRecord(player.getCriminalRecord());
+   witnessSystem.setRumourNetwork(rumourNetwork);
+   witnessSystem.setAchievementSystem(achievementSystem);
+   ```
+
+### Integration tests — implement these exact scenarios
+
+1. **NPC witnesses a crime and transitions to WITNESS state**: Spawn a CIVILIAN NPC at
+   (10, 1, 10). Place the player at (10, 1, 14) (within `WITNESS_LOS_RANGE`). Call
+   `witnessSystem.registerCrime(10, 1, 14, npcs, player)`. Call
+   `witnessSystem.update(0.1f, npcs, player)`. Verify the NPC's state is
+   `NPCState.WITNESS`.
+
+2. **Witness reports after delay**: Continue the above scenario. Call
+   `witnessSystem.update(WITNESS_REPORT_DELAY + 1f, npcs, player)`. Verify the player's
+   `CriminalRecord` has at least one entry added by the witness report.
+
+3. **CCTV tape activates on nearby crime**: Spawn a `EvidenceType.CCTV_TAPE` evidence prop
+   at (12, 1, 10) via `witnessSystem.spawnEvidence(...)`. Call
+   `witnessSystem.notifyCrime(10, 10)`. Verify `witnessSystem.isCctvHot()` returns `true`.
+
+4. **Stealing CCTV tape cancels evidence**: With a hot CCTV tape at (12, 1, 10), call
+   `witnessSystem.stealCctvTape(12, 10)`. Verify the return value is `true` and that after
+   `update(200f, npcs, player)` no new `WITNESSED_CRIMES` entry is added to the player's
+   `CriminalRecord`.
+
+5. **WitnessSystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `witnessSystem` field is non-null. Simulate 1 frame in PLAYING
+   state. Verify no exception is thrown.
