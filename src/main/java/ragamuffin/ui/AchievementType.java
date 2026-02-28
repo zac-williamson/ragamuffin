@@ -1092,6 +1092,24 @@ public enum AchievementType {
         "Early Bird",
         "First to take an item from the skip on Bulky Item Day. The early scavenger gets the sofa.",
         1
+    ),
+
+    // ── Issue #938: Greasy Spoon Café ─────────────────────────────────────────
+
+    FULL_ENGLISH_FANATIC(
+        "Full English Fanatic",
+        "Eaten a full English on five separate days. Vera knows your order before you open your mouth.",
+        5
+    ),
+    WELL_INFORMED(
+        "Well Informed",
+        "Heard three different rumours in a single visit to Vera's Caff. Knowledge is power. Allegedly.",
+        3
+    ),
+    CAFF_REGULAR(
+        "Proper Regular",
+        "Visited Vera's Caff on seven consecutive days. You've got your own mug now. Figuratively.",
+        7
     );
 
     private final String name;

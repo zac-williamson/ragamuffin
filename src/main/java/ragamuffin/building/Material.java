@@ -840,7 +840,52 @@ public enum Material {
      * DWP Letter — drops from a FILING_CABINET when broken.
      * Flavour item; no gameplay function beyond being delightfully grim.
      */
-    DWP_LETTER("DWP Letter");
+    DWP_LETTER("DWP Letter"),
+
+    // ── Issue #938: Greasy Spoon Café ─────────────────────────────────────────
+
+    /**
+     * Full English — the centrepiece of Vera's Caff menu.
+     * Cost: 6 COIN. Restores +60 hunger, +20 warmth. Unavailable after 11:00.
+     * Counts toward FULL_ENGLISH_FANATIC achievement on consumption.
+     */
+    FULL_ENGLISH("Full English"),
+
+    /**
+     * Mug of Tea — builder's staple sold at Vera's Caff.
+     * Cost: 2 COIN. Restores +25 warmth instantly. Available all day.
+     */
+    MUG_OF_TEA("Mug of Tea"),
+
+    /**
+     * Beans on Toast — a simple caff staple.
+     * Cost: 3 COIN. Restores +30 hunger. Available all day.
+     */
+    BEANS_ON_TOAST("Beans on Toast"),
+
+    /**
+     * Fried Bread — greasy side item from Vera's Caff.
+     * Cost: 1 COIN. Restores +15 hunger. Available all day.
+     */
+    FRIED_BREAD("Fried Bread"),
+
+    /**
+     * Bacon Butty — the breakfast classic, available before 11:00 only.
+     * Cost: 3 COIN. Restores +35 hunger, +10 warmth.
+     */
+    BACON_BUTTY("Bacon Butty"),
+
+    /**
+     * Builder's Tea — a large mug of strong tea.
+     * Cost: 2 COIN. Restores +30 warmth. Available all day.
+     */
+    BUILDER_S_TEA("Builder's Tea"),
+
+    /**
+     * Chalkboard — a prop used for the daily specials board at Vera's Caff.
+     * Displays the day's combo discount. Not an inventory item; placed as a prop.
+     */
+    CHALKBOARD("Chalkboard");
 
     private final String displayName;
 
@@ -1241,6 +1286,22 @@ public enum Material {
             case DWP_LETTER:         return cs(0.88f, 0.84f, 0.72f,  // Cream paper
                                                0.18f, 0.28f, 0.65f); // Blue official text
 
+            // Issue #938: Greasy Spoon Café
+            case FULL_ENGLISH:       return cs(0.92f, 0.72f, 0.22f,  // Golden yolk
+                                               0.72f, 0.22f, 0.12f); // Red tomato/beans
+            case MUG_OF_TEA:         return cs(0.62f, 0.40f, 0.22f,  // Tan tea colour
+                                               0.88f, 0.88f, 0.85f); // White mug
+            case BEANS_ON_TOAST:     return cs(0.80f, 0.35f, 0.15f,  // Orange bean sauce
+                                               0.82f, 0.65f, 0.38f); // Toast brown
+            case FRIED_BREAD:        return cs(0.82f, 0.68f, 0.30f,  // Fried golden
+                                               0.68f, 0.52f, 0.20f); // Darker crust
+            case BACON_BUTTY:        return cs(0.80f, 0.28f, 0.18f,  // Bacon pink-red
+                                               0.92f, 0.82f, 0.60f); // Buttered roll
+            case BUILDER_S_TEA:      return cs(0.55f, 0.32f, 0.15f,  // Dark strong tea
+                                               0.88f, 0.88f, 0.85f); // White mug
+            case CHALKBOARD:         return cs(0.18f, 0.18f, 0.20f,  // Dark slate
+                                               0.88f, 0.88f, 0.72f); // Chalk text cream
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1454,6 +1515,14 @@ public enum Material {
             case HOT_PASTRY:
             case LUXURY_BED:
             case DWP_LETTER:
+            // Issue #938: Greasy Spoon Café (not block items)
+            case FULL_ENGLISH:
+            case MUG_OF_TEA:
+            case BEANS_ON_TOAST:
+            case FRIED_BREAD:
+            case BACON_BUTTY:
+            case BUILDER_S_TEA:
+            case CHALKBOARD:
                 return false;
             default:
                 return true;
@@ -1497,6 +1566,13 @@ public enum Material {
             case CARROT:
             case CABBAGE:
             case SUNFLOWER:
+            // Issue #938: Greasy Spoon Café — food items sit on surfaces
+            case FULL_ENGLISH:
+            case MUG_OF_TEA:
+            case BEANS_ON_TOAST:
+            case FRIED_BREAD:
+            case BACON_BUTTY:
+            case BUILDER_S_TEA:
                 return true;
             default:
                 return false;
@@ -1848,6 +1924,22 @@ public enum Material {
                 return IconShape.BOX;         // bed frame box
             case DWP_LETTER:
                 return IconShape.FLAT_PAPER;  // official letter
+
+            // Issue #938: Greasy Spoon Café
+            case FULL_ENGLISH:
+                return IconShape.FOOD;        // full plate of food
+            case MUG_OF_TEA:
+                return IconShape.BOTTLE;      // mug shape
+            case BEANS_ON_TOAST:
+                return IconShape.FOOD;        // food on toast
+            case FRIED_BREAD:
+                return IconShape.FOOD;        // flat fried slice
+            case BACON_BUTTY:
+                return IconShape.FOOD;        // bread roll with filling
+            case BUILDER_S_TEA:
+                return IconShape.BOTTLE;      // large mug shape
+            case CHALKBOARD:
+                return IconShape.FLAT_PAPER;  // flat board
 
             default:
                 return IconShape.BOX;

@@ -341,7 +341,28 @@ public enum NPCType {
      * "Bags I the sofa." / "You were quick." / "Don't even think about that telly."
      * Passive (never attacks); despawns when the event ends at 10:00.
      */
-    SKIP_DIVER(20f, 0f, 0f, false);
+    SKIP_DIVER(20f, 0f, 0f, false),
+
+    // ── Issue #938: Greasy Spoon Café ────────────────────────────────────────
+
+    /**
+     * Caff Owner — Vera, the proprietor of Vera's Caff (GREASY_SPOON_CAFE landmark).
+     * Stands behind the counter during opening hours (07:00–14:00).
+     * Passive; serves food via the café menu. Refuses service if notoriety ≥ 60 and police are nearby.
+     * Notoriety-aware dialogue. Last orders at 13:45; ejects all customers at 14:00.
+     * Speech: "What can I get you, love?" / "Cash only, no exceptions." / "You alright, darlin'?"
+     */
+    CAFF_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * Caff Regular — a seated regular at Vera's Caff.
+     * Passively reveals rumours to the player on proximity (within 2 blocks) without pressing E.
+     * Speech delivered into SpeechLogUI automatically on approach.
+     * Up to 4 regulars; +2 extra during rain/drizzle/thunderstorm (weather modifier).
+     * If Marchetti Crew respect ≥ 70, one regular acts as a dealer (PRESCRIPTION_MEDS from seat).
+     * Passive; never attacks. Wears flat cap or hi-vis.
+     */
+    CAFF_REGULAR(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
