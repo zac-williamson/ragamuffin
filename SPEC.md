@@ -10075,3 +10075,86 @@ open it, or earn passive income — the entire market-stall economy is dead code
 5. **Unlicensed trading spawns inspector after delay**: Place and open stall (no
    `MARKET_LICENCE`). Call `update(StallSystem.UNLICENSED_INSPECTOR_DELAY + 1f, npcs, ...)`.
    Verify at least one NPC with type `NPCType.MARKET_INSPECTOR` has been spawned.
+
+---
+
+## Update SPEC.md: Wire NewspaperSystem into the game loop
+
+**Goal**: Connect the fully-implemented `NewspaperSystem` to the game loop so that
+*The Daily Ragamuffin* tabloid publishes every evening at 18:00 game-time, NPCs react
+to headlines, and the player can pick up and read newspapers.
+
+`NewspaperSystem` (Issue #774) is instantiated in `RagamuffinGame.create()` and passed
+to `JobCentreSystem`, but its `update()` method is **never called** — meaning no edition
+is ever published, no NPC ever reacts to a headline, and no `Material.NEWSPAPER` item
+ever spawns. The system is entirely dead code.
+
+### Changes required in `RagamuffinGame.java`
+
+1. **Call `newspaperSystem.update()` each PLAYING-state frame** inside the main game-loop
+   update block (alongside `notorietySystem.update()`, `rumourNetwork.update()`, etc.):
+   ```java
+   NPC barmanNpc = npcManager.getNPCsByType(NPCType.BARMAN).stream().findFirst().orElse(null);
+   newspaperSystem.update(
+       delta,
+       timeSystem.getCurrentHour(),
+       timeSystem.getCurrentDay(),
+       notorietySystem,
+       wantedSystem,
+       rumourNetwork,
+       barmanNpc,
+       factionSystem,
+       fenceSystem,
+       streetEconomySystem,
+       player.getCriminalRecord(),
+       npcManager.getNPCs(),
+       type -> achievementSystem.award(type)
+   );
+   ```
+
+2. **Spawn `Material.NEWSPAPER` items at publication time** — after `update()` triggers a
+   new edition, drop a stack of `Material.NEWSPAPER` at the off-licence/newsagent landmark
+   position (and on park benches, letterboxes of terraced houses) so the player can
+   physically collect them.
+
+3. **Handle `E` key on `Material.NEWSPAPER` in inventory** — pressing **R** (or **E**)
+   with a `NEWSPAPER` item selected opens a simple overlay UI showing the headline, briefs,
+   and classifieds for that edition. Trigger `newspaperSystem.pickUpNewspaper()` on
+   collection.
+
+4. **NPC reads newspaper behaviour** — each frame, when an NPC walks over a `NEWSPAPER`
+   item on the ground (via `SmallItemRenderer`/prop proximity), call
+   `newspaperSystem.onNpcReadsNewspaper(npc, newspaperSystem.getLatestPaper(), rumourNetwork, wantedSystem)`.
+
+5. **Reset on restart** — add `newspaperSystem = new NewspaperSystem();` inside
+   `restartGame()`.
+
+6. **Record infamy events** — hook into existing crime systems to call
+   `newspaperSystem.recordEvent(new InfamyEvent(...))` after:
+   - A Wanted Level 3+ chase resolved (escape or arrest)
+   - A heist completes (success or fail)
+   - A Greggs raid occurs
+   - A GangTerritorySystem turf war resolves
+
+### Integration tests — implement these exact scenarios
+
+1. **NewspaperSystem instantiated and updated in game loop**: In a headless integration
+   test, initialise `RagamuffinGame`. Verify `newspaperSystem` is non-null after `create()`.
+   Simulate 1 PLAYING-state frame. Verify no exception is thrown.
+
+2. **Edition published at 18:00**: Construct `NewspaperSystem`. Record one `InfamyEvent`
+   (infamyScore=8, actionType="CHASE"). Call `update(0.1f, 17.85f, 1, ...)` — verify no
+   paper is published yet (`getLatestPaper()` is null). Call `update(0.1f, 18.05f, 1, ...)`
+   — verify `getLatestPaper()` is non-null and its headline contains "WANTED" or "FUGITIVE".
+
+3. **Filler edition on zero infamy**: Construct `NewspaperSystem` with no recorded events.
+   Advance time past 18:00. Verify `getLatestPaper().getHeadline()` equals
+   `NewspaperSystem.PIGEON_FILLER`.
+
+4. **NPC reacts to high-infamy headline**: Construct an NPC of type `NPCType.PUBLIC`.
+   Construct a `Newspaper` with infamyScore=8. Call `onNpcReadsNewspaper(npc, paper, null,
+   null)`. Verify `npc.getSpeechText()` contains "Did you see the paper?".
+
+5. **Heightened Alert triggered on 7+ infamy publication**: Construct `WantedSystem` and
+   `NewspaperSystem`. Record an event with infamyScore=9. Advance time past 18:00 (calling
+   `update()` with `wantedSystem`). Verify `wantedSystem.isHeightenedAlert()` returns true.
