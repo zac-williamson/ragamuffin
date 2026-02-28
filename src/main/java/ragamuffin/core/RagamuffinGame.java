@@ -217,6 +217,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     /** Previous time (hours) — used to detect when clock ticks past 06:00 for daily reset. */
     private float prevTimeForHeistReset = -1f;
 
+    // Issue #793 / #846: NeighbourhoodSystem — dynamic decay, gentrification & Vibes state machine
+    private NeighbourhoodSystem neighbourhoodSystem;
+
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
     // Issue #773: Car driving system — lets player enter and drive cars
@@ -571,6 +574,15 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #704 / #844: Initialize heist system — four-phase robbery mechanic
         heistSystem = new HeistSystem();
         prevTimeForHeistReset = timeSystem.getTime();
+
+        // Issue #793 / #846: Initialize neighbourhood system — building decay, gentrification & Vibes
+        neighbourhoodSystem = new NeighbourhoodSystem(
+                factionSystem, factionSystem.getTurfMap(), rumourNetwork, achievementSystem,
+                new java.util.Random());
+        // Register all world landmarks so buildings are tracked from world-gen time
+        for (ragamuffin.world.Landmark lm : world.getAllLandmarks()) {
+            neighbourhoodSystem.registerBuilding(lm);
+        }
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2418,6 +2430,16 @@ public class RagamuffinGame extends ApplicationAdapter {
         if (heistSystem != null) {
             heistSystem.update(delta, player, noiseSystem, npcManager, factionSystem,
                     rumourNetwork, npcManager.getNPCs(), world, timeSystem.isNight());
+        }
+
+        // Issue #793 / #846: Update neighbourhood system — building decay, gentrification, Vibes
+        if (neighbourhoodSystem != null) {
+            neighbourhoodSystem.update(delta, world, npcManager.getNPCs(),
+                    notorietySystem.getNotoriety(),
+                    player.getPosition().x, player.getPosition().z);
+            neighbourhoodSystem.checkMarchettiShutters(world);
+            String nbTip = neighbourhoodSystem.pollTooltip();
+            if (nbTip != null) tooltipSystem.showMessage(nbTip, 3.0f);
         }
 
         // Issue #844: Daily heist reset — when clock crosses 06:00
