@@ -407,7 +407,18 @@ public enum NPCType {
      * the player each visit.
      * Speech: "Sit down, mate — what are we doing today?"
      */
-    BARBER(20f, 0f, 0f, false);
+    BARBER(20f, 0f, 0f, false),
+
+    // ── Issue #946: Status Dog — Staffy Companion ─────────────────────────────
+
+    /**
+     * Stray Dog — a stray Staffordshire Bull Terrier wandering the park area near
+     * the pond. Has no owner; state is WANDERING until the player offers food.
+     * Can be adopted by pressing E while holding SAUSAGE_ROLL or STEAK_BAKE.
+     * Once adopted, enters FOLLOWING_PLAYER state and becomes the player's companion.
+     * Only one stray dog spawns per world; managed by DogCompanionSystem.
+     */
+    STRAY_DOG(15f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

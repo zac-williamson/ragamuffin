@@ -1136,6 +1136,24 @@ public enum AchievementType {
         "Rough Week",
         "Collected an emergency parcel three separate times. No questions asked. That's the point.",
         3
+    ),
+
+    // ── Issue #946: Status Dog — Staffy Companion ─────────────────────────────
+
+    MANS_BEST_FRIEND(
+        "Man's Best Friend",
+        "Adopted the stray Staffy from the park. He's not much, but he's yours. Probably.",
+        1
+    ),
+    GOOD_BOY_GOOD_BOY(
+        "Good Boy. Good Boy.",
+        "Taught your dog all four tricks. The neighbourhood is cautiously impressed.",
+        1
+    ),
+    DANGEROUS_DOG(
+        "Dangerous Dog",
+        "Used your dog to intimidate someone five times. The council has a file on you. And the dog.",
+        5
     );
 
     private final String name;
