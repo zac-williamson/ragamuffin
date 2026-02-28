@@ -12193,3 +12193,147 @@ NPCs wander away disappointed, and the van despawns early.
 5. **Van sells out and despawns early**: Set van stock to 1. Serve the last item
    (advance time by 8 in-game seconds). Verify `VAN_OWNER` displays "SOLD OUT"
    speech. Verify `isVanActive()` returns false within the next update tick.
+
+---
+
+## Feature: Bus Stop & Public Transport System — 'The Number 47'
+
+**Goal**: Add a functioning bus network to the town — bus stops along the high
+street, a timetable that is never quite right, NPCs that queue and grumble, and
+a player who can ride, rob, or simply watch the bus drive past without stopping.
+This system makes the world feel genuinely British by weaving public transport
+frustration into survival gameplay.
+
+### Overview
+
+A new `BusSystem` class manages a single bus route (the Number 47) that runs a
+loop between 3 fixed bus stops: the High Street stop (near Greggs), the Park
+stop (near the pond), and the Industrial Estate stop (near the JobCentre). The
+bus runs every 10 in-game minutes during operating hours (06:00–23:00). At night
+it is replaced by the Night Bus, which runs once per hour and costs double fare.
+
+### Bus Stops
+
+- 3 `BUS_STOP` prop positions are placed by the WorldGenerator along pavements
+  adjacent to key landmarks.
+- Bus stops have a small sign prop (`PropType.BUS_STOP_SIGN`) showing the route
+  number and next departure time (updated dynamically on the sign texture).
+- NPCs with `COMMUTER` or `WORK` intent automatically path toward the nearest
+  bus stop during morning (07:00–09:00) and evening rush (17:00–19:00) hours.
+- Up to 8 NPCs can queue at a bus stop; overflow NPCs wait nearby and grumble.
+
+### The Bus (Vehicle)
+
+- The bus is a new entity of type `VehicleType.BUS`, rendered as an elongated
+  red block structure using the existing `CarRenderer` pipeline.
+- It follows a fixed waypoint path between the 3 stops at 6 blocks/second.
+- **Arrival behaviour**: when a bus arrives, it pauses for 8 seconds at the stop.
+  All queued NPCs board (despawn from world, counted as boarded). Player can
+  board by pressing **E** near the bus during the 8-second window.
+- **Skip-stop behaviour**: if no NPCs or player are at the stop AND the player
+  has not flagged the bus (by pressing **F** while facing it), the bus drives
+  past without stopping. This is canonical.
+- **Flag the bus**: pressing **F** while the bus is within 15 blocks and
+  approaching causes it to stop. Without flagging, a passing bus ignores you.
+  First-time tooltip: "You have to wave it down. This isn't a taxi."
+
+### Fare & Player Actions
+
+| Action | Effect |
+|--------|--------|
+| Board normally (press **E**) | Costs `BUS_FARE` coins (2 by default); player fast-travels to next stop (position teleports, 3-second fade) |
+| Ride without paying | Press **E** without enough coins; adds +1 Notoriety if a `TICKET_INSPECTOR` NPC is on board (30% chance) |
+| Pickpocket a queuing commuter | Standard pickpocket mechanic; +1–3 COIN; queuing NPCs are distracted and face away (easier than street pickpocket) |
+| Throw NPC under the bus | Throw a NPC into the bus path (push mechanic); bus stops, player gets +10 Notoriety; POLICE spawn immediately |
+| Night Bus brawl | After 22:00, DRUNK NPCs on the Night Bus have 50% chance of entering `BRAWLING` state on arrival at stop |
+
+### Ticket Inspector
+
+- **30% chance** a `TICKET_INSPECTOR` NPC spawns on the bus each journey.
+- Ticket inspector checks all passengers during travel. Player must have paid or
+  provide a `FAKE_ID` (consumed) to avoid penalty.
+- Caught without ticket: +1 Notoriety, +5 coins fine deducted, `CriminalRecord`
+  entry "Fare Evasion".
+- At Notoriety Tier 3+, the inspector calls ahead and a POLICE NPC waits at the
+  next stop.
+
+### Dynamic Pricing & Market Events
+
+| Condition | Fare multiplier |
+|-----------|----------------|
+| Rush hour (07:00–09:00 and 17:00–19:00) | ×1.5 |
+| Night Bus (23:00–06:00) | ×2.0 |
+| `COUNCIL_CRACKDOWN` market event | ×1.75 (austerity surcharge) |
+| Player Notoriety Tier 4+ | ×1.0 (police aware — driver hesitates but must legally stop) |
+
+### NPC Integration
+
+- **COMMUTER** (new NPCType subvariant of PUBLIC): spawns near residential areas
+  at 07:30 and 17:30; paths to nearest bus stop; boards bus and despawns (arrives
+  at work/home off-screen).
+- NPCs waiting at the bus stop grumble contextually:
+  - "Been waiting 20 minutes." (if bus is late by >2 in-game minutes)
+  - "It's always bloody late."
+  - "That's the third one that's driven past full."
+  - "I should've got the Uber."
+- If the bus does not arrive within `LATE_THRESHOLD_MINUTES` (3 in-game minutes)
+  of the scheduled time, a `DELAY_NOTICE` rumour is seeded into the RumourNetwork.
+- On `GREGGS_STRIKE` market event, Greggs workers abandon the bus queue and walk
+  to the picket line instead.
+
+### New Materials
+
+| Material | Description |
+|----------|-------------|
+| `BUS_PASS` | Weekly bus pass — craftable from 3 COIN + 1 NEWSPAPER. Grants unlimited rides for 7 in-game days. Shown in inventory as a card. |
+| `INSPECTOR_BADGE` | Looted from a knocked-out `TICKET_INSPECTOR`. Wearing it grants free rides but causes all NPCs on the bus to become nervous. |
+
+### New NPCType
+
+| Type | Stats | Notes |
+|------|-------|-------|
+| `TICKET_INSPECTOR` | HP 25, 0 dmg, passive | Checks tickets; calls police at Notoriety Tier 3+; wears a hi-vis vest; can be bribed for 3 COIN |
+| `BUS_DRIVER` | HP 30, 0 dmg, passive | Sits in driver seat; unkillable while driving; panics if player boards aggressively (triggers alarm) |
+
+### Achievements
+
+| Achievement | Unlock condition |
+|-------------|-----------------|
+| `MISSED_THE_BUS` | Watch 3 buses drive past you without stopping |
+| `FARE_DODGER` | Successfully ride without paying 5 times |
+| `LAST_NIGHT_BUS` | Board the Night Bus after 01:00 |
+| `COMMUTER_PICKPOCKET` | Pickpocket 3 queuing commuters in a single morning rush |
+
+### Integration tests — implement these exact scenarios:
+
+1. **Bus arrives on schedule and picks up NPCs**: Place 3 COMMUTER NPCs at a bus
+   stop. Set `TimeSystem` to 1 minute before the scheduled departure. Advance
+   time to the scheduled departure. Verify a bus entity has spawned and is
+   moving toward the stop. Advance until the bus arrives (within 8-second
+   window). Verify all 3 COMMUTER NPCs have despawned (boarded). Verify bus
+   departs and moves toward the next stop.
+
+2. **Bus skips stop when no passengers and not flagged**: Set the bus route in
+   motion. Ensure no NPCs are at the second stop and the player is not within
+   15 blocks. Advance the bus to the second stop. Verify the bus does NOT pause
+   (its velocity never drops to 0 at the stop position). Verify no boarding
+   event is triggered.
+
+3. **Player flags bus and boards**: Place the player at a bus stop, facing the
+   approaching bus (within 15 blocks). Press **F** (flag). Verify `BusSystem`
+   registers the flag. Advance until the bus arrives. Verify the bus pauses for
+   8 seconds. Press **E**. Verify `BUS_FARE` coins are deducted from inventory.
+   Verify the player's position changes to the next stop (fast-travel occurred).
+
+4. **Fare evasion triggers inspector penalty**: Board a bus without sufficient
+   coins (give player 0 COIN). Seed the RNG so a TICKET_INSPECTOR spawns on
+   this journey. Advance the journey. Verify the inspector's dialogue fires
+   ("Ticket please"). Verify player Notoriety increases by 1. Verify player
+   inventory loses 5 COIN (capped at 0). Verify a `FARE_EVASION` entry is added
+   to `CriminalRecord`.
+
+5. **Night Bus spawns after 23:00 at double fare**: Set `TimeSystem` to 23:05.
+   Verify the standard bus does NOT spawn. Verify the Night Bus spawns (interval
+   60 in-game minutes). Verify `getEffectiveFare()` returns `BUS_FARE × 2.0`.
+   Verify that after 01:00 the `LAST_NIGHT_BUS` achievement is unlockable by
+   boarding.
