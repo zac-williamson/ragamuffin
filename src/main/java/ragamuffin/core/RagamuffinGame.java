@@ -228,6 +228,11 @@ public class RagamuffinGame extends ApplicationAdapter {
     private MCBattleSystem mcBattleSystem;
     private RaveSystem raveSystem;
 
+    // Issue #856: Championship Ladder — persistent ranked-fighter system
+    private ChampionshipLadder championshipLadder;
+    /** Last day index processed by championship ladder daily tick (prevents double-ticking). */
+    private int championshipLastProcessedDay = -1;
+
     // Issue #852: Fruit machine mini-game — pub prop interaction
     private FruitMachine fruitMachine;
     /** Whether police have already been spawned for the current rave alert. */
@@ -607,6 +612,10 @@ public class RagamuffinGame extends ApplicationAdapter {
                 rumourNetwork, new java.util.Random());
         raveSystem = new RaveSystem(achievementSystem, notorietySystem, rumourNetwork);
         ravePoliceSpawned = false;
+        // Issue #856: Initialize championship ladder and seed default fighters
+        championshipLadder = new ChampionshipLadder();
+        championshipLadder.initDefault();
+        championshipLadder.registerFighter("Player");
         // Issue #852: Initialize fruit machine mini-game
         fruitMachine = new FruitMachine(new java.util.Random());
         gameHUD.setMcBattleSystem(mcBattleSystem);
@@ -2491,9 +2500,46 @@ public class RagamuffinGame extends ApplicationAdapter {
                     npcManager.getNPCs(), inventory);
         }
 
+        // Issue #856: Championship ladder daily tick — +5 Notoriety if player is rank 1
+        if (championshipLadder != null && notorietySystem != null) {
+            int currentDay = timeSystem.getDayIndex();
+            if (currentDay > championshipLastProcessedDay) {
+                championshipLastProcessedDay = currentDay;
+                if (championshipLadder.isChampion("Player")) {
+                    notorietySystem.addNotoriety(5, achievementSystem::unlock);
+                }
+            }
+        }
+
         // Issue #848: Update MC battle system — advance battle bar each frame
         if (mcBattleSystem != null) {
             mcBattleSystem.update(delta);
+
+            // Issue #856: After each MC Battle resolves, update the championship ladder
+            MCBattleSystem.Champion resolvedChampion = mcBattleSystem.pollLastResolvedChampion();
+            if (resolvedChampion != null && championshipLadder != null) {
+                boolean playerWon = mcBattleSystem.wasLastResolvedPlayerWin();
+                String opponentName = mcChampionDisplayName(resolvedChampion);
+                // Ensure opponent is on the ladder
+                championshipLadder.registerFighter(opponentName);
+                String winnerName = playerWon ? "Player" : opponentName;
+                String loserName  = playerWon ? opponentName : "Player";
+                championshipLadder.updateAfterFight(winnerName, loserName);
+
+                // If player is now champion, award belt and show tooltip
+                if (championshipLadder.isChampion("Player")) {
+                    if (inventory.getItemCount(ragamuffin.building.Material.CHAMPIONSHIP_BELT) == 0) {
+                        inventory.addItem(ragamuffin.building.Material.CHAMPIONSHIP_BELT, 1);
+                        tooltipSystem.showMessage("You're the champion! Championship Belt added to inventory.", 4.0f);
+                    }
+                }
+
+                // If Vinnie reaches rank 1, apply -15 respect penalty to Marchetti faction
+                if (ChampionshipLadder.VINNIE_NAME.equals(championshipLadder.getChampionName())) {
+                    factionSystem.applyRespectDelta(ragamuffin.core.Faction.MARCHETTI_CREW, -15);
+                    tooltipSystem.showMessage("Vinnie is champion. Marchetti's running the ladder now.", 3.0f);
+                }
+            }
         }
 
         // Issue #848: Update rave system — income accumulation, police alert threshold
@@ -3659,6 +3705,26 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #856: E key — view top-3 championship ladder standings at BOOKIE_BOARD prop
+        if (championshipLadder != null) {
+            int bookiePropIndex = findPropInReach(tmpCameraPos, tmpDirection, PUNCH_REACH);
+            if (bookiePropIndex >= 0) {
+                java.util.List<ragamuffin.world.PropPosition> bkProps = world.getPropPositions();
+                if (bookiePropIndex < bkProps.size()
+                        && bkProps.get(bookiePropIndex).getType() == ragamuffin.world.PropType.BOOKIE_BOARD) {
+                    java.util.List<ChampionshipLadder.Entry> top = championshipLadder.getEntries();
+                    StringBuilder sb = new StringBuilder("Championship: ");
+                    int shown = Math.min(3, top.size());
+                    for (int i = 0; i < shown; i++) {
+                        if (i > 0) sb.append(" | ");
+                        sb.append(top.get(i).getRank()).append(". ").append(top.get(i).getFighterName());
+                    }
+                    tooltipSystem.showMessage(sb.toString(), 4.0f);
+                    return;
+                }
+            }
+        }
+
         // Check for door interaction via short raycast (≤3 blocks)
         ragamuffin.world.RaycastResult doorResult =
                 blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, 3.0f);
@@ -4019,6 +4085,16 @@ public class RagamuffinGame extends ApplicationAdapter {
      * returning the index of the nearest prop whose AABB is intersected within
      * {@code reach} distance, or {@code -1} if none.
      */
+    /** Issue #856: Returns a display name for an MC champion (used in the championship ladder). */
+    private static String mcChampionDisplayName(MCBattleSystem.Champion champion) {
+        switch (champion) {
+            case MARCHETTI_MC:   return "Marchetti MC";
+            case STREET_LADS_MC: return "Street Lads MC";
+            case COUNCIL_MC:     return "Council MC";
+            default: return champion.name();
+        }
+    }
+
     private int findPropInReach(Vector3 origin, Vector3 direction, float reach) {
         List<PropPosition> props = world.getPropPositions();
         int bestIndex = -1;

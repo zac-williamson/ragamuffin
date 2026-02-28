@@ -118,6 +118,10 @@ public class MCBattleSystem {
     private int playerWins;
     private BattleBarMiniGame currentBar;
 
+    // Last resolved battle result — read by ChampionshipLadder wiring
+    private Champion lastResolvedChampion;
+    private boolean lastResolvedPlayerWon;
+
     // ── Constructor ───────────────────────────────────────────────────────────
 
     public MCBattleSystem(
@@ -237,10 +241,32 @@ public class MCBattleSystem {
         activeBattle = null;
         currentBar   = null;
 
+        // Record result so external systems (e.g. ChampionshipLadder) can read it
+        lastResolvedChampion  = champion;
+        lastResolvedPlayerWon = playerWon;
+
         if (playerWon) {
             applyVictory(champion, nearbyNpcs);
         }
         // If player lost, no stat changes — they can try again
+    }
+
+    /**
+     * Returns the champion from the most recently resolved battle, then clears it.
+     * Returns {@code null} if no new result is pending.
+     */
+    public Champion pollLastResolvedChampion() {
+        Champion c = lastResolvedChampion;
+        lastResolvedChampion = null;
+        return c;
+    }
+
+    /**
+     * Returns whether the player won the most recently resolved battle.
+     * Only meaningful immediately after {@link #pollLastResolvedChampion()} returns non-null.
+     */
+    public boolean wasLastResolvedPlayerWin() {
+        return lastResolvedPlayerWon;
     }
 
     /** Apply all victory effects for winning against {@code champion}. */
