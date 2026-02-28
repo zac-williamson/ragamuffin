@@ -199,6 +199,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #832: Property system — slumlord economy (buildings, decay, passive income, council rates)
     private PropertySystem propertySystem;
 
+    // Issue #799: Corner shop economy — shop claiming, customer traffic, Marchetti rivalry, police raid heat
+    private CornerShopSystem cornerShopSystem;
+
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
     // Issue #773: Car driving system — lets player enter and drive cars
@@ -530,6 +533,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #832: Initialize property system — slumlord economy
         propertySystem = new PropertySystem(factionSystem, achievementSystem, rumourNetwork);
+
+        // Issue #799: Initialize corner shop system — shop claiming, customer traffic, Marchetti rivalry
+        cornerShopSystem = new CornerShopSystem();
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2302,6 +2308,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #799: Update corner shop economy — customer traffic, heat, faction rivalries
+        if (cornerShopSystem != null) {
+            cornerShopSystem.update(delta, npcManager.getNPCs(), player, inventory,
+                    factionSystem, notorietySystem, rumourNetwork,
+                    player.getStreetSkillSystem(), achievementSystem::award);
+        }
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -3291,6 +3304,18 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #799: Claim shop via SHOP_KEY in hotbar
+        if (cornerShopSystem != null) {
+            int selectedSlot = hotbarUI.getSelectedSlot();
+            ragamuffin.building.Material selectedMaterial = inventory.getItemInSlot(selectedSlot);
+            if (selectedMaterial == ragamuffin.building.Material.SHOP_KEY) {
+                if (cornerShopSystem.tryClaimShop(inventory)) {
+                    tooltipSystem.showMessage("Shop claimed. Time to hustle.", 3.0f);
+                }
+                return;
+            }
+        }
+
         // Issue #832: Repair an owned building — press E while holding BRICK, WOOD, or PAINT_TIN near a property
         if (propertySystem != null) {
             int playerX = (int) player.getPosition().x;
@@ -3322,6 +3347,16 @@ public class RagamuffinGame extends ApplicationAdapter {
             if (hitBlock == ragamuffin.world.BlockType.DOOR_LOWER || hitBlock == ragamuffin.world.BlockType.DOOR_UPPER) {
                 // Normalise to DOOR_LOWER position
                 int lowerY = (hitBlock == ragamuffin.world.BlockType.DOOR_UPPER) ? y - 1 : y;
+                // Issue #799: Try to claim a derelict shop via door interaction (buildingCondition <= 49)
+                if (cornerShopSystem != null && !cornerShopSystem.hasShop()) {
+                    // Use DERELICT_CONDITION_THRESHOLD — derelict buildings have condition <= 49
+                    int buildingCondition = PropertySystem.INITIAL_CONDITION; // 30 — derelict
+                    String claimMsg = cornerShopSystem.claimShopByInteraction(buildingCondition) ?
+                            "Shop's yours. Don't let the council find out." :
+                            "Can't claim this one.";
+                    tooltipSystem.showMessage(claimMsg, 2.5f);
+                    if (cornerShopSystem.hasShop()) return;
+                }
                 world.toggleDoor(x, lowerY, z);
                 rebuildChunkAt(x, lowerY, z);
                 rebuildChunkAt(x, lowerY + 1, z);
@@ -3406,6 +3441,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                             type -> achievementSystem.unlock(type));
                     tooltipSystem.showMessage("Scrubbed rival tag", 1.5f);
                 }
+            }
+        }
+
+        // Issue #799: E key — open/close shop when inside the claimed shop
+        if (cornerShopSystem != null && cornerShopSystem.hasShop()) {
+            if (!cornerShopSystem.isShopOpen()) {
+                cornerShopSystem.openShop(achievementSystem::award);
+                tooltipSystem.showMessage("Shop open for business.", 2.0f);
+            } else {
+                cornerShopSystem.closeShop();
+                tooltipSystem.showMessage("Shop closed.", 2.0f);
             }
         }
     }
@@ -3826,6 +3872,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                     jobCentreSystem, player, inventory);
         }
 
+        // Issue #799: Render corner shop HUD status bar when shop is open
+        if (cornerShopSystem != null && cornerShopSystem.hasShop() && cornerShopSystem.isShopOpen()) {
+            spriteBatch.begin();
+            font.draw(spriteBatch,
+                    String.format("SHOP  Revenue: %d  Heat: %d%%",
+                            cornerShopSystem.getDailyRevenue(),
+                            cornerShopSystem.getHeat()),
+                    20, 80);
+            spriteBatch.end();
+        }
+
         // Render damage flash overlay
         float flashIntensity = player.getDamageFlashIntensity();
         if (flashIntensity > 0f) {
@@ -4170,6 +4227,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         graffitiSystem = new GraffitiSystem();
         // Issue #824: Reset street economy system so NPC needs and market state don't carry over
         streetEconomySystem = new StreetEconomySystem();
+        // Issue #799: Reset corner shop system so shop state, heat and stock don't carry over
+        cornerShopSystem = new CornerShopSystem();
         // Issue #826: Reset witness system so evidence props, CCTV timers and witness state don't carry over
         witnessSystem = new WitnessSystem();
         witnessSystem.setCriminalRecord(player.getCriminalRecord());

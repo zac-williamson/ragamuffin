@@ -763,6 +763,48 @@ public class CornerShopSystem {
         return pirateRadioBoostTimer > 0f;
     }
 
+    /** Returns true if the shop is claimed and currently open for business. */
+    public boolean isShopOpen() {
+        return shopUnit != null && shopUnit.isClaimed() && shopUnit.isOpen();
+    }
+
+    /** Returns the daily revenue of the current shop, or 0 if no shop. */
+    public int getDailyRevenue() {
+        return shopUnit != null ? shopUnit.getDailyRevenue() : 0;
+    }
+
+    /** Returns the heat level of the current shop, or 0 if no shop. */
+    public int getHeat() {
+        return shopUnit != null ? shopUnit.getHeatLevel() : 0;
+    }
+
+    /**
+     * Record a sale manually — adds heat for dodgy goods.
+     * Used by integration tests and direct sale flows.
+     *
+     * @param material        the material sold
+     * @param notorietySystem not used directly here but kept for API consistency
+     */
+    public void recordSale(Material material, NotorietySystem notorietySystem) {
+        if (shopUnit == null) return;
+        if (material == Material.CIDER || material == Material.TOBACCO
+                || material == Material.ENERGY_DRINK) {
+            shopUnit.addHeat(HEAT_PER_DODGY_SALE);
+        }
+    }
+
+    /** For testing: force the heat level of the current shop. */
+    public void setHeatForTesting(int heat) {
+        if (shopUnit == null) {
+            shopUnit = new ShopUnit();
+            shopUnit.setClaimed(true);
+            shopUnit.setOpen(true);
+        }
+        // Set heat by reducing to 0 first then adding the desired amount
+        shopUnit.reduceHeat(100);
+        shopUnit.addHeat(heat);
+    }
+
     /** For testing: expose the customer queue size. */
     public int getCustomerQueueSize() {
         return customerQueue.size();
