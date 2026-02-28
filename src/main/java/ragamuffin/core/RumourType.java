@@ -40,5 +40,8 @@ public enum RumourType {
     SHOP_NEWS,
 
     /** "Heard the filth got a tip-off about someone causing bother" — seeded by WantedSystem when a witness reports a crime to police. */
-    POLICE_TIP;
+    POLICE_TIP,
+
+    /** "Someone just cleaned up at the bookies on a 33/1 shot" — seeded by HorseRacingSystem on a 33/1 win. Draws nearby NPCs toward the bookies for 60 seconds. */
+    BIG_WIN_AT_BOOKIES;
 }

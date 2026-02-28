@@ -720,6 +720,39 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #908: Bookies Horse Racing System ───────────────────────────────
+
+    LUCKY_PUNT(
+        "Lucky Punt",
+        "Won your first bet at the bookies. Don't let it go to your head.",
+        1
+    ),
+    OUTSIDER(
+        "Outsider",
+        "Won a bet at 10/1 or better. The form book knows nothing.",
+        1
+    ),
+    RANK_OUTSIDER(
+        "Rank Outsider",
+        "Won at 33/1. The whole estate heard about it. Even the loan shark looked impressed.",
+        1
+    ),
+    LOSING_STREAK(
+        "Losing Streak",
+        "Lost 50 coins net at the bookies. The horses were definitely trying their best.",
+        1
+    ),
+    DEBT_FREE(
+        "Debt Free",
+        "Repaid a loan shark debt on time. A rare act of fiscal responsibility in this postcode.",
+        1
+    ),
+    DAILY_PUNTER(
+        "Daily Punter",
+        "Bet on all 8 races in a single day. Some people have a system. This wasn't it.",
+        1
+    ),
+
     // ── Issue #799: The Corner Shop Economy ──────────────────────────────────
 
     OPEN_FOR_BUSINESS(
