@@ -10545,3 +10545,77 @@ notoriety, and achievement progression that is otherwise completely inaccessible
    Advance time by less than `RaveSystem.POLICE_ALERT_SECONDS`. Simulate pressing
    **E** at the squat entrance. Verify `raveSystem.isRaveActive()` is `false`.
    Verify `achievementSystem` has `AchievementType.SWERVED_THE_FEDS` unlocked.
+
+---
+
+## Wire SkillsUI into the game loop
+
+`SkillsUI` (Issue #787) exists as a complete overlay displaying all six street-skill
+progress bars (BRAWLING, GRAFTING, TRADING, STEALTH, INFLUENCE, SURVIVAL) with tier
+labels and perk descriptions. `StreetSkillSystem` is already instantiated on the
+`Player` and awards XP throughout the game. `InputHandler` already detects the **K**
+key (`isSkillsPressed()` / `resetSkills()`). However `SkillsUI` is **never
+instantiated, never rendered, and never toggled** in `RagamuffinGame.java` — the
+player has no way to view their character progression.
+
+### Steps to wire in
+
+1. **Declare** a `private ragamuffin.ui.SkillsUI skillsUI;` field in
+   `RagamuffinGame`.
+
+2. **Instantiate** in `create()` and in `restartGame()`:
+   ```java
+   skillsUI = new SkillsUI(player.getStreetSkillSystem());
+   ```
+
+3. **Toggle** in the PLAYING branch of `handleKeyboardInput()` (alongside the
+   existing K-key detection from `InputHandler`):
+   ```java
+   if (inputHandler.isSkillsPressed()) {
+       skillsUI.toggle();
+       inputHandler.resetSkills();
+   }
+   ```
+
+4. **Close** in `handleEscapeKey()` (mirror pattern used for `achievementsUI`,
+   `questLogUI`, `criminalRecordUI`):
+   ```java
+   } else if (skillsUI.isVisible()) {
+       skillsUI.hide();
+   ```
+
+5. **Render** in the 2D HUD pass of `renderHUD()` (after `achievementsUI`):
+   ```java
+   if (skillsUI.isVisible()) {
+       skillsUI.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+   }
+   ```
+
+6. **Guard movement / mouse-look** via `isUIBlocking()`:
+   ```java
+   || skillsUI.isVisible()
+   ```
+
+7. **Hide on state transition** in `transitionToState()` and on game restart.
+
+8. **Update SPEC Key Controls Reference** — add:
+   - **K**: Open/close skills overlay
+
+### Integration tests — implement these exact scenarios
+
+1. **K key opens SkillsUI**: Initialise `RagamuffinGame` headless. State = PLAYING.
+   Simulate pressing **K**. Verify `skillsUI.isVisible()` returns `true`. Verify
+   mouse look is blocked (`isUIBlocking()` returns `true`).
+
+2. **K key closes SkillsUI**: With `skillsUI` visible, simulate pressing **K**
+   again. Verify `skillsUI.isVisible()` returns `false`.
+
+3. **ESC closes SkillsUI**: Open `skillsUI`. Simulate pressing **ESC**. Verify
+   `skillsUI.isVisible()` returns `false` and game state is still PLAYING.
+
+4. **XP gained shows in SkillsUI**: Award 50 XP to `StreetSkillSystem.Skill.BRAWLING`
+   via `player.getStreetSkillSystem().addXp(Skill.BRAWLING, 50)`. Open `skillsUI`.
+   Verify the rendered data (via `StreetSkillSystem.getXp(Skill.BRAWLING)`) equals 50.
+
+5. **SkillsUI hidden on restart**: Open `skillsUI`. Call `restartGame()`. Verify
+   `skillsUI.isVisible()` returns `false`.
