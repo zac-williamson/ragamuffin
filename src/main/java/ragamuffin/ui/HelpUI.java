@@ -19,12 +19,18 @@ public class HelpUI {
             "Left Ctrl - Dodge roll (while moving)\n" +
             "Space - Jump\n" +
             "Left Shift - Sprint\n" +
+            "E - Interact with objects/NPCs\n" +
+            "F - Pickpocket\n" +
+            "T - Spray graffiti tag\n" +
+            "B - Toggle pirate radio broadcast\n" +
+            "1-9 - Select hotbar slot\n" +
             "I - Open/close Inventory\n" +
-            "H - Open/close Help\n" +
             "C - Open/close Crafting menu\n" +
             "Q - Open/close Quest Log\n" +
-            "E - Interact with objects/NPCs\n" +
-            "1-9 - Select hotbar slot\n" +
+            "K - Open/close Skills screen\n" +
+            "R - View criminal record\n" +
+            "Tab - Open/close Achievements\n" +
+            "H - Open/close Help\n" +
             "ESC - Pause menu\n\n" +
             "Press H to close this help screen.";
 
