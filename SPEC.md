@@ -13727,3 +13727,212 @@ During `HEATWAVE`, all prices increase by 1 COIN: "Costs more when it's hot, dun
    `iceCreamVanSystem.redeemOysterLolly(player, busSystem, world)`. Verify
    `busSystem.hasFreeRide(player)` is `true`. Board the Number 47. Verify
    `busSystem.hasFreeRide(player)` is `false` after boarding.
+
+---
+
+## Pigeon Racing System — The Loft, Homing Races & Neighbourhood Flutter
+
+### Overview
+
+A `PigeonRacingSystem` that lets the player own, train, and race homing pigeons —
+a proud British working-class tradition. The player builds a `PIGEON_LOFT` prop
+(crafted from 8 WOOD + 2 PLANKS) on their squat or allotment, acquires a pigeon
+(`Material.RACING_PIGEON`), and enters it in weekly neighbourhood races organised
+by `NPCType.PIGEON_FANCIER`. The races are resolved by simulation: pigeon speed
+is derived from training level, weather, and a seeded RNG. Other residents bet on
+outcomes through the existing `BettingUI` extended with a "Pigeon Racing" tab.
+
+### The Pigeon Loft
+
+- Crafted: 8 WOOD + 2 PLANKS → `PropType.PIGEON_LOFT` (placed as a 2×1×1 prop).
+- Only one loft can be active at a time. The loft must be placed on the player's
+  squat or allotment land (checked via `SquatSystem` / `AllotmentSystem`).
+- Press **E** on the loft to open the loft management UI:
+  - **Slot**: holds 1 pigeon (expandable to 3 via `PIGEON_LOFT_EXTENSION` craft:
+    4 WOOD, costs 12 coins from builders merchant).
+  - Shows pigeon name, training level (0–10), race record (wins/total), morale.
+- Pigeon health degrades in `COLD_SNAP` / `FROST` weather if the loft has no roof
+  block above it (solid block within 2 tiles overhead).
+
+### Acquiring a Pigeon
+
+Three ways to get a `Material.RACING_PIGEON`:
+1. **Buy**: Press **E** on `NPCType.PIGEON_FANCIER` NPC (spawns near the park or
+   allotments). Costs 5 COIN. Speech: "She's a good bird, son. Don't let her down."
+2. **Catch**: Crouch and hold **E** near a park `BIRD` NPC for 3 seconds (replaces
+   it with `RACING_PIGEON` item, 40% success, 60% the bird flies away).
+   Tooltip on first catch attempt: "It's harder than it looks."
+3. **Gift**: After completing a `NeighbourhoodSystem` community event, a
+   `PIGEON_FANCIER` may gift one as a reward.
+
+Each pigeon has a procedurally generated name (e.g. "Northfield Blue", "Big Dave",
+"Biscuit Jr.") stored on the `Material.RACING_PIGEON` item's metadata string.
+
+### Training
+
+- Press **E** on the loft → "Train" → consumes 1 `BREAD_CRUST` (new item, crafted
+  from 1 GREGGS_PASTRY or found in bins) and advances training level by 1.
+- Training level caps at 10. Each level adds `+0.5` speed units to the pigeon's
+  base speed of `5.0`.
+- Over-training: training once per in-game day. Attempting to train more than once
+  per day has no effect and shows speech: "She needs her rest, mate."
+- Morale: starts at 100. Drops by 5 for each missed race (pigeon not entered but
+  a race occurred). Below 50 morale: speed penalty −1.0. Restored by training or
+  feeding `SUNFLOWER` (from allotment, +20 morale).
+
+### Race Schedule
+
+- One race per in-game week (every 7 game-days), triggered at 10:00 game-time.
+- The `PIGEON_FANCIER` NPC announces upcoming races via a `RumourType.LOOT_TIP`
+  rumour: "Race day Saturday. Get your bird entered by Friday night."
+- Entry window: press **E** on `PIGEON_FANCIER` before 18:00 the day before the
+  race. Entry fee: 2 COIN (added to the prize pool).
+- Up to 6 pigeons race (5 NPC-owned + player's if entered). NPC pigeon speed is
+  seeded from `(3.0 + random * 4.0)` — player's trained bird can outpace them.
+
+### Race Resolution
+
+`PigeonRacingSystem.resolveRace(List<PigeonEntry> entries, Weather weather, Random rng)`:
+
+- Race distance: 100 simulated "furlongs" (abstract units).
+- Each pigeon's finish time = `distance / (speed * weatherModifier * random(0.9, 1.1))`.
+- Weather modifiers:
+  - `CLEAR`, `OVERCAST`: 1.0×
+  - `DRIZZLE`, `FOG`: 0.9× (slower — pigeons navigate poorly in low visibility)
+  - `RAIN`, `THUNDERSTORM`: 0.75× (race is called off if active at race time;
+    postponed 1 game-day, notification seeded as rumour)
+  - `HEATWAVE`: 1.1× (pigeons love warm lift; all birds faster)
+  - `FROST`, `COLD_SNAP`: 0.8×
+- Finishing order determines prize distribution:
+  - 1st: 70% of prize pool
+  - 2nd: 20% of prize pool
+  - 3rd: 10% of prize pool
+- Player pigeon result stored: win/loss added to race record.
+
+### Betting
+
+- Betting opens when the entry window closes (from 18:00 day-before to 10:00
+  race day). Extended `BettingUI` shows a "Pigeon Racing" tab alongside horse
+  racing.
+- Odds derived from training levels of entered pigeons (higher training = lower
+  odds). Player's pigeon odds displayed as e.g. `3/1`.
+- Max stake: 20 COIN (or 40 on `BENEFIT_DAY`). Any NPC with BORED need ≥ 40 has
+  a 20% chance per race of placing an NPC bet (purely flavour, no economic impact).
+- Win payout = stake × odds numerator. `BET_SLIP` added to inventory on bet;
+  consumed on resolution.
+
+### NPC Reactions
+
+- After race resolution, `PIGEON_FANCIER` announces result: "Northfield Blue wins
+  it at 4/1! What a bird!" / "Terrible result. She went the wrong way."
+- PUBLIC NPCs within 10 blocks comment: "Did your pigeon win?" / "I lost a quid
+  on that race."
+- `NewspaperSystem`: a 1st-place win seeds a `PIGEON_VICTORY` story headline
+  ("LOCAL BIRD TRIUMPHS IN NORTHFIELD DERBY") in the next evening edition if
+  the infamy score is 0 that day (replaces the normal pigeon-filler).
+
+### New Items (`Material` enum additions)
+
+| Constant | Description |
+|----------|-------------|
+| `RACING_PIGEON` | A homing pigeon (named). Placed in loft; consumed in race entry. |
+| `BREAD_CRUST` | Pigeon training feed. Crafted from 1 GREGGS_PASTRY or found in bins. |
+| `PIGEON_TROPHY` | Awarded on first race win. Decorative; can be placed in squat. |
+
+### New Prop / NPC Types
+
+- `PropType.PIGEON_LOFT` — 2×1×1 wooden loft prop. Occupies one allotment/squat tile.
+- `NPCType.PIGEON_FANCIER` — Elderly male NPC, spawns near allotments or park.
+  Passive. Manages race registration and broadcasts results. Speech pool includes
+  regional pigeon-racing terminology.
+
+### `WeatherSystem` Integration
+
+- `THUNDERSTORM` / `RAIN` at race time: race postponed 1 day.
+  `TimeSystem` reschedules next race tick. Rumour seeded: "Race off — too wet
+  for the birds."
+- `HEATWAVE`: bonus speed multiplier 1.1×. `PIGEON_FANCIER` speech: "Lovely
+  thermals today. Good for the birds."
+- `FROST`: pigeon health −5 if loft has no overhead shelter.
+
+### `NeighbourhoodSystem` Integration
+
+- Winning a race: +3 Vibes (wholesome community event).
+- First pigeon loft placed: +2 Vibes ("someone's keeping pigeons again").
+- Catching a wild park pigeon: −1 Vibes ("oi, leave the birds alone").
+
+### `StreetEconomySystem` Integration
+
+- `BREAD_CRUST` base price: 1 COIN. Added to `BASE_PRICES`.
+- `RACING_PIGEON` base price: 5 COIN (sold by PIGEON_FANCIER).
+- NPC BORED need satisfied by "watching the pigeon race" — attending the race
+  area (within 15 blocks of `PIGEON_FANCIER` at race time) reduces BORED by 20.
+
+### `RumourNetwork` Integration
+
+- Race day reminder seeded on day-before evening by `PIGEON_FANCIER`.
+- Race postponement seeded as `RumourType.LOOT_TIP`.
+- Player win seeded as `RumourType.GANG_ACTIVITY` (flavour: neighbourhood gossip).
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `HOME_BIRD` | Win your first pigeon race |
+| `CHAMPION_OF_THE_LOFT` | Win 3 races with the same pigeon |
+| `NORTHFIELD_DERBY` | Enter and place 1st in 5 consecutive races |
+| `CAUGHT_IT_YERSELF` | Successfully catch a wild park pigeon (40% chance) |
+| `BREAD_WINNER` | Train a pigeon to level 10 |
+
+### Unit Tests
+
+- `PigeonRacingSystem.resolveRace()` with 6 entries, seeded RNG returns consistent
+  finishing order.
+- `PigeonRacingSystem.getWeatherModifier(Weather.RAIN)` returns `0.75f`.
+- `PigeonRacingSystem.getWeatherModifier(Weather.HEATWAVE)` returns `1.1f`.
+- `PigeonRacingSystem.isRacePostponed(Weather.THUNDERSTORM)` returns `true`;
+  `isRacePostponed(Weather.OVERCAST)` returns `false`.
+- Training a pigeon twice in one in-game day only increases level by 1 (second
+  training call returns `TrainResult.ALREADY_TRAINED_TODAY`).
+- Prize pool distributed correctly: 70%/20%/10% rounded to int, minimum 1 COIN.
+- Morale drops by 5 per missed race; speed penalty applied when morale < 50.
+- `catchWildPigeon(float probability, Random rng)`: with seeded rng that returns
+  `0.3f`, returns `CatchResult.SUCCESS`; with `0.7f`, returns `CatchResult.FLED`.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Full race cycle — player wins**: Build a `PIGEON_LOFT`. Acquire a
+   `RACING_PIGEON` from `PIGEON_FANCIER`. Train it to level 5. Press **E** on
+   `PIGEON_FANCIER` the day before the race to enter (pay 2 COIN entry fee).
+   Set weather to `CLEAR`. Set all NPC pigeons' seeded speed to 4.0 (below player's
+   trained speed of 7.5). Advance `TimeSystem` to race time (10:00). Call
+   `pigeonRacingSystem.resolveRace(...)`. Verify player pigeon finishes 1st. Verify
+   player receives 70% of the prize pool in COIN. Verify `AchievementType.HOME_BIRD`
+   is awarded. Verify `NewspaperSystem` has a pending `PIGEON_VICTORY` story for the
+   evening edition.
+
+2. **Race postponed in thunderstorm**: Schedule a race for in-game day 7. At
+   09:55 race-day, set weather to `THUNDERSTORM`. Call `pigeonRacingSystem.update(...)`.
+   Verify `pigeonRacingSystem.isRacePostponed()` is `true`. Verify a `LOOT_TIP`
+   rumour containing "wet" or "weather" has been seeded. Verify the next race tick
+   is set to day 8 at 10:00. Set weather to `CLEAR`. Advance to day 8, 10:00.
+   Verify race resolves normally.
+
+3. **Pigeon morale penalty applied**: Give player a `RACING_PIGEON` with training
+   level 5 (base speed 7.5). Miss 10 consecutive races (advance 10 game-weeks
+   without entering). Verify morale ≤ 50. Verify effective speed is `7.5 - 1.0 =
+   6.5` when `PigeonRacingSystem.getEffectiveSpeed(pigeon)` is called. Feed pigeon
+   1 `SUNFLOWER` via loft UI. Verify morale increases by 20.
+
+4. **Betting pays out on win**: Open `BettingUI` pigeon racing tab. Place a 10
+   COIN bet on the player's pigeon at 3/1 odds. Advance to race time. Ensure player
+   pigeon wins (force via seeded RNG). Verify player receives 30 COIN payout (10 ×
+   3). Verify `BET_SLIP` is removed from inventory. Verify `BettingUI` shows the
+   win message.
+
+5. **Catching a wild pigeon**: Place player adjacent to a `BIRD` NPC in the park.
+   Crouch and hold **E** for 3 seconds (simulate 180 frames at 60fps). Use a seeded
+   RNG that returns `0.25f` (below 0.4 threshold). Verify `BIRD` NPC is removed from
+   the world. Verify player inventory contains 1 `RACING_PIGEON` item. Verify tooltip
+   "It's harder than it looks." has been triggered. Now use a seeded RNG returning
+   `0.65f` and repeat. Verify `BIRD` NPC remains in world. Verify inventory unchanged.
