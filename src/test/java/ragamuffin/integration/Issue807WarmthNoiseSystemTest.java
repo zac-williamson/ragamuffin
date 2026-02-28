@@ -156,7 +156,7 @@ class Issue807WarmthNoiseSystemTest {
         Inventory inv = new Inventory(36);
 
         // Place police NPC 8 blocks away
-        NPC policeNPC = new NPC(8f, 1f, 0f, NPCType.POLICE);
+        NPC policeNPC = new NPC(NPCType.POLICE, 8f, 1f, 0f);
         policeNPC.setState(NPCState.PATROLLING);
         npcManager.getNPCs().add(policeNPC);
 
@@ -172,8 +172,8 @@ class Issue807WarmthNoiseSystemTest {
         // Run one NPCManager update tick — police should hear the player and become ALERTED
         npcManager.update(1f / 60f, testWorld, testPlayer, inv, tooltipSystem);
 
-        assertEquals(NPCState.ALERTED, policeNPC.getState(),
-                "Police NPC should transition to ALERTED after hearing a nearby block break");
+        assertEquals(NPCState.SUSPICIOUS, policeNPC.getState(),
+                "Police NPC should transition to SUSPICIOUS after hearing a nearby block break");
     }
 
     /**

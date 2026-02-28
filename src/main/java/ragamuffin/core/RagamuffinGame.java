@@ -185,6 +185,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     private float cameraPitch = 0f;
     private float cameraYaw = 0f; // 0 = facing -Z
 
+    /** Smooth chase camera angle (degrees) — lerps toward car heading for visual feedback. */
+    private float chaseCameraAngle = 0f;
+
     // Reusable vectors to avoid per-frame allocation
     private final Vector3 tmpForward = new Vector3();
     private final Vector3 tmpRight = new Vector3();
@@ -969,24 +972,31 @@ public class RagamuffinGame extends ApplicationAdapter {
         } else if (state == GameState.PLAYING) {
             // Apply mouse look FIRST — before any game logic — to eliminate perceived lag.
             // This ensures the camera direction is always up-to-date when the frame renders.
-            if (Gdx.input.isCursorCatched()) {
-                float mouseDX = inputHandler.getMouseDeltaX();
-                float mouseDY = inputHandler.getMouseDeltaY();
-                if (mouseDX != 0 || mouseDY != 0) {
-                    cameraYaw += mouseDX * MOUSE_SENSITIVITY;
-                    cameraPitch -= mouseDY * MOUSE_SENSITIVITY;
-                    cameraPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cameraPitch));
+            // Suppress mouse look while driving — the chase camera controls the view direction.
+            if (!carDrivingSystem.isInCar()) {
+                if (Gdx.input.isCursorCatched()) {
+                    float mouseDX = inputHandler.getMouseDeltaX();
+                    float mouseDY = inputHandler.getMouseDeltaY();
+                    if (mouseDX != 0 || mouseDY != 0) {
+                        cameraYaw += mouseDX * MOUSE_SENSITIVITY;
+                        cameraPitch -= mouseDY * MOUSE_SENSITIVITY;
+                        cameraPitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, cameraPitch));
+                    }
                 }
+                // Rebuild camera direction from yaw/pitch angles
+                float pitchRad = (float) Math.toRadians(cameraPitch);
+                float yawRad = (float) Math.toRadians(cameraYaw);
+                camera.direction.set(
+                    (float) Math.sin(yawRad) * (float) Math.cos(pitchRad),
+                    (float) Math.sin(pitchRad),
+                    -(float) Math.cos(yawRad) * (float) Math.cos(pitchRad)
+                );
+                camera.up.set(Vector3.Y);
+            } else {
+                // Consume mouse deltas so they don't accumulate
+                inputHandler.getMouseDeltaX();
+                inputHandler.getMouseDeltaY();
             }
-            // Rebuild camera direction from yaw/pitch angles
-            float pitchRad = (float) Math.toRadians(cameraPitch);
-            float yawRad = (float) Math.toRadians(cameraYaw);
-            camera.direction.set(
-                (float) Math.sin(yawRad) * (float) Math.cos(pitchRad),
-                (float) Math.sin(pitchRad),
-                -(float) Math.cos(yawRad) * (float) Math.cos(pitchRad)
-            );
-            camera.up.set(Vector3.Y);
 
             // Update opening sequence if active
             if (openingSequence.isActive()) {
@@ -2249,18 +2259,34 @@ public class RagamuffinGame extends ApplicationAdapter {
             // Third-person chase camera behind and above the car
             Car drivenCar = carDrivingSystem.getCurrentCar();
             Vector3 carPos = drivenCar.getPosition();
-            float carHeadingRad = (float) Math.toRadians(drivenCar.getHeading());
+            float carHeading = drivenCar.getHeading();
 
-            // Camera orbits based on mouse yaw, but defaults to behind the car
+            // Smooth-follow: lerp the chase camera angle toward the car heading.
+            // This lets the user SEE the car rotate on screen, giving clear turn-direction feedback.
+            float chaseLerpSpeed = 4.0f; // higher = snappier follow
+            // Compute shortest angular difference to avoid wrapping artifacts
+            float angleDiff = carHeading - chaseCameraAngle;
+            // Normalize to [-180, 180]
+            angleDiff = ((angleDiff + 180f) % 360f + 360f) % 360f - 180f;
+            chaseCameraAngle += angleDiff * Math.min(1f, chaseLerpSpeed * delta);
+            // Keep in [0, 360)
+            chaseCameraAngle = ((chaseCameraAngle % 360f) + 360f) % 360f;
+
+            float cameraAngleRad = (float) Math.toRadians(chaseCameraAngle);
             float chaseDist = 8.0f;
             float chaseHeight = 4.0f;
-            // Position camera behind the car (opposite to heading direction)
-            float behindX = -(float) Math.sin(carHeadingRad) * chaseDist;
-            float behindZ = -(float) Math.cos(carHeadingRad) * chaseDist;
+            // Position camera behind the car (opposite to the smoothed camera angle)
+            float behindX = -(float) Math.sin(cameraAngleRad) * chaseDist;
+            float behindZ = -(float) Math.cos(cameraAngleRad) * chaseDist;
             camera.position.set(carPos.x + behindX, carPos.y + chaseHeight, carPos.z + behindZ);
             // Look at a point slightly above the car
             camera.lookAt(carPos.x, carPos.y + 1.5f, carPos.z);
             camera.up.set(Vector3.Y);
+
+            // Sync cameraYaw/cameraPitch to the chase camera direction so the skybox
+            // renders correctly aligned with the view.
+            cameraYaw = (float) Math.toDegrees(Math.atan2(camera.direction.x, -camera.direction.z));
+            cameraPitch = (float) Math.toDegrees(Math.asin(camera.direction.y));
         } else {
             camera.position.set(player.getPosition());
             camera.position.y += Player.EYE_HEIGHT;
@@ -2897,6 +2923,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             return;
         }
         if (carDrivingSystem.tryEnterCar(player)) {
+            // Initialize chase camera angle to car heading so camera starts behind the car
+            if (carDrivingSystem.getCurrentCar() != null) {
+                chaseCameraAngle = carDrivingSystem.getCurrentCar().getHeading();
+            }
             String msg = carDrivingSystem.pollLastMessage();
             if (msg != null) tooltipSystem.showMessage(msg, 3.0f);
             return;

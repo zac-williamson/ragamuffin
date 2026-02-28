@@ -72,7 +72,7 @@ public class Car {
     public static final float PLAYER_DECELERATION = 10.0f;
 
     /** Turning rate when driven by the player (degrees/sec). */
-    public static final float PLAYER_TURN_SPEED = 90.0f;
+    public static final float PLAYER_TURN_SPEED = 60.0f;
 
     /** Current speed magnitude when driven by the player. */
     private float driverSpeed = 0f;
@@ -306,8 +306,8 @@ public class Car {
         // Handle turning (only effective while moving)
         if (Math.abs(driverSpeed) > 0.5f) {
             float turnDir = 0f;
-            if (turnLeft)  turnDir -= 1f;
-            if (turnRight) turnDir += 1f;
+            if (turnLeft)  turnDir += 1f;
+            if (turnRight) turnDir -= 1f;
             if (turnDir != 0f) {
                 // Steer in the direction the player intends; reverse turns flip when reversing
                 float sign = driverSpeed > 0 ? 1f : -1f;
