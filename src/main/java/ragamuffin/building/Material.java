@@ -504,7 +504,16 @@ public enum Material {
      * Held item; equip in hotbar and press E near PAVEMENT/ROAD to start a busk session.
      * Tooltip on first pickup: "Bucket drum. The percussion instrument of the dispossessed."
      */
-    BUCKET_DRUM("Bucket Drum");
+    BUCKET_DRUM("Bucket Drum"),
+
+    // ── Issue #908: Bookies Horse Racing System ────────────────────────────────
+
+    /**
+     * Bet Slip — single-use paper item added to inventory when a bet is placed at the bookies.
+     * Removed from inventory when the race resolves (win or loss).
+     * Payout = stake × odds numerator on win.
+     */
+    BET_SLIP("Bet Slip");
 
     private final String displayName;
 
@@ -794,6 +803,10 @@ public enum Material {
             case BUCKET_DRUM:    return cs(0.20f, 0.20f, 0.22f,  // Dark grey bucket body
                                            0.48f, 0.52f, 0.55f); // Blue-grey metal rim
 
+            // Issue #908: Bookies Horse Racing System
+            case BET_SLIP:       return cs(0.92f, 0.88f, 0.72f,  // Cream/off-white paper
+                                           0.22f, 0.55f, 0.22f); // Green bookies print
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -946,6 +959,8 @@ public enum Material {
             case BISTA_VILLAGE_PORTAL:
             // Issue #906: Busking System (not a block item)
             case BUCKET_DRUM:
+            // Issue #908: Bookies Horse Racing System (not a block item)
+            case BET_SLIP:
                 return false;
             default:
                 return true;
@@ -982,6 +997,8 @@ public enum Material {
             // Issue #799: Corner Shop Economy
             case CIDER:
             case TOBACCO:
+            // Issue #908: Bookies Horse Racing System
+            case BET_SLIP:
                 return true;
             default:
                 return false;

@@ -191,7 +191,16 @@ public enum NPCType {
      * Spectator NPC inside the Pit — WORKER, YOUTH, or PENSIONER mix.
      * Provides crowd atmosphere; Street Lads spectators can buff the player.
      */
-    PIT_SPECTATOR(20f, 0f, 0f, false);
+    PIT_SPECTATOR(20f, 0f, 0f, false),
+
+    // ── Issue #908: Bookies Horse Racing System ────────────────────────────────
+
+    /**
+     * Loan Shark — spawns inside bookies when the player's cumulative net loss hits 50 coins.
+     * Offers a 20-coin loan at 50% interest (repay 30 coins within 3 in-game days).
+     * Becomes hostile on non-repayment; spawns 2 STREET_LAD enforcers and adds WantedSystem +1 star.
+     */
+    LOAN_SHARK(35f, 8f, 1.5f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
