@@ -210,9 +210,13 @@ class Phase6IntegrationTest {
         NPC police = npcManager.spawnNPC(NPCType.POLICE, player.getPosition().x + 8, 1, player.getPosition().z);
         assertNotNull(police, "Police should have spawned");
         police.setState(NPCState.PATROLLING); // Must be PATROLLING for police AI to activate
+        // Face the police toward the player so it falls within the vision cone.
+        // Police is at (8,0) and player is at (0,0), so direction to player is -X = 270°.
+        police.setFacingAngle(270f);
 
         // Set to night so police behavior activates
         timeSystem.setTime(22.0f);
+        npcManager.setGameTime(22.0f); // sync NPCManager's internal time so vision range is correct
 
         // Record initial distance
         float initialDistance = police.getPosition().dst(player.getPosition());

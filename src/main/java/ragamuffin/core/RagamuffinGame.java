@@ -2403,8 +2403,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
 
         // Issue #662: Update car traffic
+        // Issue #884: Pass NPC list so cars can knock back and damage NPCs on collision
         if (!player.isDead()) {
-            carManager.update(delta, player);
+            carManager.update(delta, player, npcManager.getNPCs());
         }
 
         // Phase 5: Update NPCs
