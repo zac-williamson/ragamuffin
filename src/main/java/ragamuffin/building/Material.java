@@ -961,7 +961,40 @@ public enum Material {
      * Depositing in a LITTER_BIN_PROP reduces Notoriety by 1 (cap −5/day).
      * Tooltip: "Grease-stained and sad. Much like the high street."
      */
-    EMPTY_CHICKEN_BOX("Empty Chicken Box");
+    EMPTY_CHICKEN_BOX("Empty Chicken Box"),
+
+    // ── Issue #954: Northfield Bingo Hall ─────────────────────────────────────
+
+    /**
+     * Rigged Bingo Card — a homemade bingo card with pre-dabbed numbers.
+     * Crafted from 1 BET_SLIP + 1 COIN + 2 WOOD. When used on entry to the bingo hall,
+     * silently replaces the fair card (needs only 3 more numbers to complete).
+     * 5% cheat-detection chance per number called. If caught: ejection, Notoriety +8.
+     * Tooltip on use: "It's only cheating if you get caught."
+     * Tooltip on caught: "You absolute melt."
+     */
+    RIGGED_BINGO_CARD("Rigged Bingo Card"),
+
+    /**
+     * Tea Cup — sold at the bingo hall refreshment counter for 1 COIN.
+     * A small cup of lukewarm tea. Restores +10 warmth.
+     * Tooltip: "Milky. Slightly too hot. Exactly right."
+     */
+    TEA_CUP("Tea Cup"),
+
+    /**
+     * Biscuit — sold at the bingo hall refreshment counter for 1 COIN.
+     * A single digestive in a paper wrapper. Restores +5 hunger.
+     * Tooltip: "One biscuit. The economy, mate."
+     */
+    BISCUIT("Biscuit"),
+
+    /**
+     * Bingo Trophy — awarded on FULL HOUSE win at Lucky Stars Bingo.
+     * Placed as a BINGO_TROPHY_PROP in the player's nearest squat.
+     * Tooltip: "You are the luckiest person in Northfield. Statistically."
+     */
+    BINGO_TROPHY("Bingo Trophy");
 
     private final String displayName;
 

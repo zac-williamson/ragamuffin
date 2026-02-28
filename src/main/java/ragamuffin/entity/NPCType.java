@@ -461,7 +461,19 @@ public enum NPCType {
      * Speech: "What d'you want, mate?" / "Wings are fresh, just done 'em."
      *         / "I hear things, you know. Sat here all day."
      */
-    DEVRAJ(20f, 0f, 0f, false);
+    DEVRAJ(20f, 0f, 0f, false),
+
+    // ── Issue #954: Northfield Bingo Hall ─────────────────────────────────────
+
+    /**
+     * The bingo caller — stands at the BINGO_CALLER_PODIUM_PROP.
+     * Announces numbers each in-game minute with authentic British bingo patter.
+     * Collects entry fees (2 COIN) from the player at the door.
+     * Ejects cheaters and false-BINGO shouters with appropriate speech.
+     * Speech: "Eyes down, look in!" / "Two fat ladies — eighty-eight!"
+     *         / "We've got a cheater — number 9!" / "False call! Shame on you!"
+     */
+    CALLER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

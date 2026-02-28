@@ -1202,6 +1202,26 @@ public enum AchievementType {
         "Community Service",
         "Picked up five pieces of chicken litter and binned them. Unpaid. Almost noble.",
         5
+    ),
+
+    // ── Issue #954: Northfield Bingo Hall ─────────────────────────────────────
+
+    EYES_DOWN(
+        "Eyes Down",
+        "Won a full house at Lucky Stars Bingo. No assistance. Just luck and a very large felt-tip.",
+        1
+    ),
+
+    CHEEKY_DABBER(
+        "Cheeky Dabber",
+        "Won using a rigged card and didn't get caught. The caller suspects nothing. Probably.",
+        1
+    ),
+
+    SOLIDARITY(
+        "Solidarity",
+        "Ejected by a pensioner uprising. You hit one of them. In a bingo hall. On a Tuesday.",
+        1
     );
 
     private final String name;

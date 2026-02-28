@@ -77,7 +77,13 @@ public class CriminalRecord {
          * at the Sparkle Hand Car Wash. 3+ entries reduce the arrest fine by 20%
          * (arresting officer gives benefit of the doubt for legitimate employment).
          */
-        LEGITIMATE_WORK("Legitimate employment (car wash shifts)");
+        LEGITIMATE_WORK("Legitimate employment (car wash shifts)"),
+
+        /**
+         * Issue #954: Recorded when the player is caught using a RIGGED_BINGO_CARD
+         * at Lucky Stars Bingo Hall and ejected by the CALLER NPC.
+         */
+        BINGO_CHEATING("Bingo cheating offences");
 
         private final String displayName;
 
