@@ -2731,6 +2731,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             boolean nearCampfire = campfireSystem.isNearCampfire(player.getPosition());
             warmthSystem.update(player, weatherSystem.getCurrentWeather(), world,
                     delta, nearCampfire, inventory);
+            // Issue #879: Trigger cold-avoidance guidance tooltips when warmth drops
+            if (player.getWarmth() <= 50f) {
+                tooltipSystem.trigger(TooltipTrigger.WARMTH_GETTING_COLD);
+            }
+            if (player.isWarmthDangerous()) {
+                tooltipSystem.trigger(TooltipTrigger.WARMTH_DANGER);
+            }
         }
 
         // Issue #842: Frost-slip — black ice on ROAD/PAVEMENT blocks during FROST
