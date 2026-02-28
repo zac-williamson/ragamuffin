@@ -12808,3 +12808,146 @@ NPC reactions to the player's tricks:
     with a nearby `PUBLIC` NPC within 15 blocks. Verify a rumour containing "McTwist"
     has been added to that NPC's rumour buffer via `rumourNetwork`. Verify tooltip
     "Absolute legend. How is your ankle?" is queued.
+
+---
+
+## Launderette System — Wash Your Dirty Laundry (Literally)
+
+**Goal**: Make the `LAUNDERETTE` landmark a functional location where the player
+can launder clothes (and reputation). The Spotless Launderette is a liminal British
+space — fluorescent lights, the smell of fabric softener, and NPCs airing their
+grievances while waiting for a 40-degree cycle to finish.
+
+### Core Mechanics
+
+**Washing Machine** (`PropType.WASHING_MACHINE`): the player interacts (**E**) with
+a washing machine prop inside the launderette to start a wash cycle.
+
+- A wash cycle costs **2 COIN** and takes **90 real seconds** (one in-game cycle).
+- While a cycle is running, the player cannot use that machine (it belongs to them).
+- On completion, the player collects a `Material.CLEAN_CLOTHES` item from the machine.
+
+**Notoriety Scrub**: If the player interacts with the machine while wearing a
+`Material.BLOODY_HOODIE` or `Material.STOLEN_JACKET` (tracked via
+`DisguiseSystem.getCurrentDisguise()`), the wash also reduces their Notoriety by
+**−2** and removes the `COVERED_IN_BLOOD` debuff flag. Tooltip on first use:
+"Nothing says 'fresh start' like a 40-degree cycle."
+
+**Waiting NPCs**: 1–3 `PUBLIC` NPCs are always present in the launderette. Because
+they have nothing to do while their clothes wash, they are especially chatty:
+
+- Any NPC waiting here shares rumours without requiring the player to have bought a
+  drink (overrides the `drunkTimer` check in `RumourNetwork`). The launderette is
+  treated as a "loose-tongue zone".
+- Each waiting NPC has an elevated `NeedType.BORED` need (starting at 60), making
+  them prime targets for street deals.
+
+**Coin-Op Drama**: Every 5 in-game minutes there is a **30% chance** of a random
+`LaunderetteEvent` occurring:
+
+| Event | Effect |
+|-------|--------|
+| `MACHINE_STOLEN` | A random NPC grabs someone else's laundry — that NPC becomes AGGRESSIVE for 2 minutes. The player can intervene (press E on the thief) to broker peace (+5 Neighbourhood Watch anger reduction) or ignore it. |
+| `SOAP_SPILL` | SLIPPERY floor for 60 seconds — player and NPCs move at 70% speed inside. |
+| `POWER_CUT` | All running cycles pause for 30 seconds (timer frozen). NPC speech: "Not again. Council's fault." |
+| `SUSPICIOUS_LOAD` | A `FENCE`-type NPC appears briefly with a machine full of "laundry". Player can press E to buy one `STOLEN_JACKET` for 5 COIN. |
+
+### Disguise Interaction
+
+After collecting `CLEAN_CLOTHES`, the player can press **E** on the changing-room
+prop (`PropType.CHANGING_CUBICLE`) to equip `CLEAN_CLOTHES` as a disguise:
+
+- Replaces current disguise in `DisguiseSystem`.
+- Grants the `FRESHLY_LAUNDERED` buff: Notoriety recognition chance reduced by **20%**
+  for 3 in-game minutes (NPCs are less likely to recognise the player as wanted).
+- Tooltip: "Clean clothes. The perfect disguise."
+
+### Integration
+
+- **`DisguiseSystem`**: `CLEAN_CLOTHES` disguise reduces NPC recognition probability;
+  `BLOODY_HOODIE`/`STOLEN_JACKET` trigger the Notoriety scrub.
+- **`NotorietySystem`**: Wash cycle reduces Notoriety by −2 when disguise is a
+  dirty/wanted item.
+- **`RumourNetwork`**: Launderette is a loose-tongue zone — waiting NPCs share
+  rumours freely (no `drunkTimer` required).
+- **`NeighbourhoodWatchSystem`**: Intervening in `MACHINE_STOLEN` event reduces
+  WatchAnger by 5.
+- **`StreetEconomySystem`**: Waiting NPCs have elevated BORED need — good deal targets.
+- **`TimeSystem`**: Launderette is open 07:00–22:00. Outside these hours the door is
+  blocked by a `CLOSED_SIGN` prop. Late-night use requires the player to break in
+  (adds `ANGER_VISIBLE_CRIME` to NeighbourhoodWatch).
+- **`NewspaperSystem`**: A `SUSPICIOUS_LOAD` event where the player buys a
+  `STOLEN_JACKET` can generate an infamy event: "FENCE SPOTTED AT LOCAL LAUNDERETTE".
+
+### New Materials / Props
+
+- `Material.CLEAN_CLOTHES` — result of a wash cycle. Wearable as a disguise.
+- `Material.BLOODY_HOODIE` — dropped by the player after taking significant damage in
+  combat (>30 HP lost in one fight). Triggers Notoriety scrub when washed.
+- `PropType.WASHING_MACHINE` — interactable prop; displays cycle progress as a
+  percentage in the speech-log overlay.
+- `PropType.CHANGING_CUBICLE` — interactable prop for equipping laundered clothes.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `FRESH_START` | Complete first wash cycle |
+| `SMELLS_LIKE_CLEAN_SPIRIT` | Scrub Notoriety via laundry 3 times |
+| `LAUNDERING` | Buy a `STOLEN_JACKET` from a `SUSPICIOUS_LOAD` event |
+| `PEACEKEEPER_OF_SUDWORTH` | Broker peace in a `MACHINE_STOLEN` dispute |
+
+### Unit Tests
+
+- Wash cycle timer counts down correctly (90s → 0).
+- Notoriety reduction only triggers on dirty/wanted disguise items.
+- Loose-tongue zone overrides `drunkTimer` check (rumours shared without drink).
+- BORED need is initialised to 60 for launderette waiting NPCs.
+- LaunderetteEvent probability is 30% per 5-minute tick.
+- `SOAP_SPILL` reduces movement speed to 0.7× for both player and NPCs.
+- `POWER_CUT` freezes cycle timer for 30 seconds then resumes.
+- Opening hours block — door is passable 07:00–22:00, blocked otherwise.
+- `FRESHLY_LAUNDERED` buff reduces recognition probability by 20% and expires
+  after 3 in-game minutes.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Wash cycle costs coins and produces CLEAN_CLOTHES**: Give the player 5 COIN.
+   Place the player facing a `WASHING_MACHINE` prop inside the `LAUNDERETTE` AABB.
+   Press E (`launderetteSystem.startCycle(player, inventory, machine)`). Verify
+   player now has 3 COIN (2 spent). Verify `machine.isCycleRunning()` is true.
+   Advance the simulation by 90 real seconds. Verify `machine.isCycleRunning()` is
+   false. Press E again. Verify player inventory now contains 1 `CLEAN_CLOTHES`.
+
+2. **Wash removes Notoriety on dirty disguise**: Set player Notoriety to 20. Set
+   current disguise to `BLOODY_HOODIE` via `DisguiseSystem`. Start a wash cycle.
+   Advance 90s. Collect clean clothes. Verify `notorietySystem.getNotoriety()` == 18
+   (reduced by 2). Verify `DisguiseSystem.hasBuff(COVERED_IN_BLOOD)` is false.
+
+3. **Waiting NPCs share rumours without drink**: Spawn a waiting NPC inside the
+   launderette with `NeedType.BORED` set to 70. Player has `drunkTimer == 0` (no
+   drink bought). Press E on the NPC. Verify the NPC's top rumour is displayed in
+   the speech log (rumour shared despite no drink — loose-tongue zone active).
+
+4. **MACHINE_STOLEN event makes NPC aggressive**: Force a `MACHINE_STOLEN` event
+   via `launderetteSystem.triggerEvent(LaunderetteEvent.MACHINE_STOLEN)`. Verify
+   that exactly one waiting NPC has `NPCState.AGGRESSIVE`. Advance the simulation
+   60 frames. Press E on the thief NPC (`launderetteSystem.onPlayerBrokePeace(...)`).
+   Verify the thief NPC returns to `NPCState.IDLE`. Verify
+   `neighbourhoodWatchSystem.getWatchAnger()` has decreased by 5.
+
+5. **FRESHLY_LAUNDERED buff expires after 3 in-game minutes**: Collect CLEAN_CLOTHES.
+   Use changing cubicle to equip them. Verify `disguiseSystem.hasBuff(FRESHLY_LAUNDERED)`
+   is true. Advance `TimeSystem` by 3 in-game minutes. Verify the buff is no longer
+   active. Verify the recognition chance penalty is back to the base rate.
+
+6. **Launderette closed outside hours**: Set `TimeSystem` hour to 23:30. Place the
+   player at the launderette entrance. Verify the entrance is blocked (a `CLOSED_SIGN`
+   prop is present and the door block is solid). Attempt to press E on the door. Verify
+   no cycle is started and the speech log shows "Sorry, we're closed." Set time to
+   08:00. Verify the entrance is now open (door block is passable).
+
+7. **SOAP_SPILL slows player movement**: Force `SOAP_SPILL` event. Verify player
+   movement speed is multiplied by 0.7. Advance 60 real seconds. Verify speed returns
+   to normal (1.0×). Verify NPCs inside the launderette also moved at reduced speed
+   during the event.
