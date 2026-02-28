@@ -28,6 +28,7 @@ public class InputHandler implements InputProcessor {
     private boolean sprintHeld; // Left Shift for sprinting
     private boolean dodgePressed; // Left Ctrl for dodge/roll
     private boolean pickpocketPressed; // F key for pickpocket (Issue #709)
+    private boolean skillsPressed; // K key for skills screen (Issue #809)
     private int hotbarSlotPressed = -1; // 0-8 for slots 1-9, -1 for none
     private int craftingSlotPressed = -1; // For selecting recipes in crafting menu
     private float mouseDeltaX, mouseDeltaY;
@@ -79,6 +80,7 @@ public class InputHandler implements InputProcessor {
     public boolean isSprintHeld() { return sprintHeld; }
     public boolean isDodgePressed() { return dodgePressed; }
     public boolean isPickpocketPressed() { return pickpocketPressed; }
+    public boolean isSkillsPressed() { return skillsPressed; }
     public int getHotbarSlotPressed() { return hotbarSlotPressed; }
     public int getCraftingSlotPressed() { return craftingSlotPressed; }
 
@@ -113,6 +115,7 @@ public class InputHandler implements InputProcessor {
     public void resetJump() { jumpPressed = false; }
     public void resetDodge() { dodgePressed = false; }
     public void resetPickpocket() { pickpocketPressed = false; }
+    public void resetSkills() { skillsPressed = false; }
     public void resetHotbarSlot() { hotbarSlotPressed = -1; }
     public void resetCraftingSlot() { craftingSlotPressed = -1; }
 
@@ -153,6 +156,8 @@ public class InputHandler implements InputProcessor {
             dodgePressed = true;
         } else if (keycode == Input.Keys.F) {
             pickpocketPressed = true;
+        } else if (keycode == Input.Keys.K) {
+            skillsPressed = true;
         } else if (keycode == Input.Keys.ENTER) {
             enterPressed = true;
         } else if (keycode == Input.Keys.UP) {
