@@ -14437,3 +14437,195 @@ Headline is picked randomly from this pool and stored in `NewspaperSystem` for d
     NPC is in PATROLLING state with a patrol target near the fire. Verify `arrestPending`
     remains false (player not near the fire in this test — police are responding to the
     fire itself, not the player).
+
+---
+
+## Add Food Bank System — Northfield Food Bank, Dignity, Donations & Emergency Parcels
+
+**Goal**: Bring the `FOOD_BANK` landmark to life as a meaningful gameplay location. The
+Northfield Food Bank is open Mon–Fri 09:00–17:00. It is run by a `FOOD_BANK_VOLUNTEER` NPC
+(named Margaret) who is relentlessly cheerful and quietly judgemental. The player can interact
+with the food bank in two roles: **donor** (surplus materials → street rep) or **recipient**
+(emergency food parcel when broke and hungry). Both paths are gated, carry social consequences,
+and tie into the RumourNetwork, NotorietySystem, NeighbourhoodSystem, and FactionSystem.
+
+### NPCs
+
+- `FOOD_BANK_VOLUNTEER` (Margaret) — stands behind the donations counter during opening hours.
+  Passive. Speech lines vary depending on player's hunger level, notoriety, and whether they
+  have donated before. Examples: "We're all just one bad week away, love." / "Bless you for
+  coming in." / "We don't judge here. Much."
+- `RECIPIENT` — 1–3 queue NPCs standing outside before opening, sitting inside once open.
+  They are `PUBLIC` type but in a distinct visual state (`NPCState.QUEUING`). They shuffle
+  forward each in-game minute. On proximity, they murmur: "Prices, innit." / "Don't tell my
+  mum." If the player is also in the recipient queue, one says: "First time? It gets easier."
+- `COUNCIL_INSPECTOR` — spawns outside the food bank on Thursdays (day % 7 == 4) between
+  10:00–12:00, clipboard in hand, visibly doing nothing useful. Increases NeighbourhoodWatch
+  anger by 5 per minute while present. Press **E** to complain: "The council's here to count
+  us, not help us." Seeds a `COUNCIL_NOTICE` rumour.
+
+### Donation Mechanic (Press **E** on Margaret, select "Donate")
+
+The player can donate any of the following `Material` types from their inventory:
+
+| Donated item       | Qty | Street Rep gain | Council Respect gain | Notoriety reduction |
+|--------------------|-----|-----------------|----------------------|---------------------|
+| `SAUSAGE_ROLL`     | 1   | +2              | +1                   | 0                   |
+| `BEANS_ON_TOAST`   | 1   | +2              | +1                   | 0                   |
+| `FULL_ENGLISH`     | 1   | +5              | +2                   | 0                   |
+| `MUG_OF_TEA`       | 1   | +1              | +1                   | 0                   |
+| `COIN`             | 5   | +3              | +3                   | −1 (min 0)          |
+| `WOOD`             | 3   | +2              | +1                   | 0                   |
+| `CARDBOARD`        | 5   | +1              | +1                   | 0                   |
+
+- Only one donation per in-game day (Margaret: "That's very generous, love. Come back tomorrow.").
+- If the player has Notoriety ≥ 50 AND a POLICE NPC is within 15 blocks, Margaret refuses:
+  "I'm sorry, love — we can't accept donations from… well. Not today." Seeds a `GANG_ACTIVITY`
+  rumour: "That one tried to donate at the food bank. While the feds were outside."
+- On first-ever donation: tooltip "Doing your bit. Whether out of guilt or goodness, Margaret
+  doesn't ask."
+- Donation seeds a `COMMUNITY_WIN` rumour into 1 nearby NPC and the barman.
+- `NeighbourhoodSystem.vibes` receives +3 on each donation (capped at 100).
+
+### Recipient Mechanic (Press **E** on Margaret, select "I need help")
+
+Gating conditions — ALL must be true:
+1. Player `hunger < 30` OR player `coins == 0` (genuinely destitute)
+2. Player has NOT received a parcel in the last 3 in-game days (tracked per
+   `FoodBankSystem.daysSinceLastParcel`)
+3. Player Notoriety < 80 (Margaret: "I'm sorry — we've had complaints. You know why.")
+
+On successful collection:
+- Player receives 1 `FULL_ENGLISH` + 1 `MUG_OF_TEA` + 1 `BEANS_ON_TOAST` directly into
+  inventory (no UI — Margaret just hands it over).
+- Hunger is immediately restored by +20 (emergency top-up, not full restoration — the parcel
+  still needs to be eaten for full effect).
+- Street Rep −2 (local gossip: "Saw them at the food bank"). If Street Rep drops below 0,
+  clamp to 0.
+- `daysSinceLastParcel` reset to 0.
+- Tooltip on first collection: "There's no shame in it. That's what Margaret says, anyway."
+- If any nearby NPC witnesses the collection (within 8 blocks), a `PLAYER_SPOTTED` rumour is
+  seeded: "I heard [player] was round the food bank. Not judging, just saying."
+
+### Rainy Day Queue Bonus
+
+If weather is RAIN, DRIZZLE, or THUNDERSTORM:
+- 1 extra `RECIPIENT` NPC appears in the queue.
+- Margaret gives the player a `MUG_OF_TEA` for free on entry, even if they are donating
+  (tooltip: "You look soaked, love. Kettle's always on.").
+- `WarmthSystem` receives +15 warmth immediately on receiving the tea.
+
+### Daily Specials Board
+
+A `CHALKBOARD` prop near the entrance lists the day's most-needed donations. Each in-game
+day one item is chosen at random from the table above. Donating that item doubles the Street
+Rep gain for that donation. The chalkboard text updates at midnight: "TODAY'S PRIORITY:
+[ITEM_NAME]". This is purely cosmetic but encourages the player to think about what they
+carry.
+
+### Integration with Existing Systems
+
+- **NeighbourhoodSystem**: Each donation raises Vibes +3. Vibes ≥ 70 causes Margaret to
+  comment: "The neighbourhood's really pulling together lately." Vibes < 30 causes her to
+  say: "It's been a rough week for everyone, love."
+- **NotorietySystem**: Coins donated reduce Notoriety by 1 per 5 coins (max −3 per day).
+  This is one of the very few ways to shed notoriety without the fence or a night in the
+  cells — but it's slow and requires the player to be genuinely broke-adjacent to avoid
+  the police gate.
+- **RumourNetwork**: The barman always knows who donated (Margaret talks): "I heard someone
+  left a Full English at the food bank — Margaret was chuffed."
+- **WeatherNPCBehaviour**: On FROST or COLD_SNAP weather, all `RECIPIENT` NPCs gain a
+  `COLD` state flag — they shiver visually and Margaret says: "We're full today, it's
+  the weather." (max recipient NPCs increases by 2 on FROST/COLD_SNAP).
+- **AchievementSystem**: Two new achievements:
+
+| Achievement          | Trigger                                                              |
+|----------------------|----------------------------------------------------------------------|
+| `HEARTS_AND_MINDS`   | Donate to the food bank 5 times across separate in-game days        |
+| `ROUGH_WEEK`         | Collect an emergency parcel 3 times across separate in-game days    |
+
+### Key constants (public static final in `FoodBankSystem`)
+
+| Constant                        | Value | Meaning                                              |
+|---------------------------------|-------|------------------------------------------------------|
+| `OPEN_HOUR`                     | 9     | Opening time (09:00)                                 |
+| `CLOSE_HOUR`                    | 17    | Closing time (17:00)                                 |
+| `PARCEL_COOLDOWN_DAYS`          | 3     | Days between recipient collections                   |
+| `HUNGER_THRESHOLD`              | 30    | Hunger below which player is eligible as recipient   |
+| `NOTORIETY_BLOCK_THRESHOLD`     | 80    | Notoriety above which recipient service is refused   |
+| `NOTORIETY_POLICE_BLOCK`        | 50    | Notoriety above which donations are blocked w/ police|
+| `POLICE_BLOCK_RADIUS`           | 15    | Blocks radius for police-near check on donation      |
+| `VIBES_DONATION_BOOST`          | 3     | Vibes increase per donation                          |
+| `RECIPIENT_STREET_REP_PENALTY`  | 2     | Street Rep lost per parcel collected                 |
+| `RAINY_WARMTH_BOOST`            | 15    | Warmth gained from Margaret's emergency tea          |
+| `WITNESS_RADIUS`                | 8     | Blocks radius for NPC witness on parcel collection   |
+| `COINS_PER_NOTORIETY_REDUCTION` | 5     | Coins donated per −1 Notoriety                       |
+| `MAX_NOTORIETY_REDUCTION`       | 3     | Max Notoriety reduction per in-game day via coins    |
+
+### Unit Tests
+
+- `FoodBankSystem` opens at 09:00 and closes at 17:00; `isOpen()` returns correct values.
+- Donation of `FULL_ENGLISH` removes item from inventory, grants +5 Street Rep, +2 Council
+  Respect, boosts Vibes +3, seeds a rumour.
+- Donation blocked if already donated today (`daysSinceDonation == 0`).
+- Donation blocked if Notoriety ≥ 50 and police within 15 blocks.
+- Recipient parcel: player receives 3 items, hunger +20, Street Rep −2, cooldown set.
+- Recipient refused if Notoriety ≥ 80.
+- Recipient refused if hunger ≥ 30 AND coins > 0 (not eligible).
+- Recipient refused within cooldown window.
+- Rainy weather adds extra RECIPIENT NPC and warmth boost.
+- Priority item on chalkboard doubles Street Rep for that donation.
+- `HEARTS_AND_MINDS` achievement unlocks after 5 separate-day donations.
+- `ROUGH_WEEK` achievement unlocks after 3 separate-day parcel collections.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Food bank is open during hours and closed outside**: Set time to 12:00. Verify
+   `foodBankSystem.isOpen()` returns true. Set time to 18:00. Verify `isOpen()` returns
+   false. Place player at food bank entrance. Press **E** at 18:00. Verify Margaret's
+   speech is "We're closed for today, love. Back at nine." (no donation/collection menu).
+
+2. **Donating FULL_ENGLISH raises Street Rep and Vibes**: Give player 1 `FULL_ENGLISH`.
+   Set initial Street Rep to 10, Vibes to 50. Set time to 10:00 (open). Press **E**,
+   select Donate → FULL_ENGLISH. Verify player no longer has `FULL_ENGLISH` in inventory.
+   Verify Street Rep is now 15 (+5). Verify Council Respect increased by 2. Verify Vibes
+   is now 53 (+3). Verify a `COMMUNITY_WIN` rumour exists in the barman's rumour buffer.
+
+3. **Daily donation limit enforced**: Give player 2 `SAUSAGE_ROLL`. Donate one. Verify
+   Street Rep +2. Attempt to donate second `SAUSAGE_ROLL` in same in-game day. Verify
+   Margaret says "That's very generous, love. Come back tomorrow." Verify no additional
+   Street Rep gained. Verify the second `SAUSAGE_ROLL` is still in inventory.
+
+4. **High-notoriety donation blocked with police nearby**: Set player Notoriety to 55.
+   Spawn a POLICE NPC 10 blocks from the food bank. Give player 1 `SAUSAGE_ROLL`. Press
+   **E**, select Donate. Verify donation is refused (Margaret: "I'm sorry, love — we
+   can't accept donations from… well. Not today."). Verify `SAUSAGE_ROLL` remains in
+   inventory. Verify a `GANG_ACTIVITY` rumour has been seeded.
+
+5. **Emergency parcel given when player is hungry and broke**: Set player hunger to 20,
+   coins to 0, Notoriety to 30. Set time to 11:00. Verify parcel cooldown has expired
+   (set `daysSinceLastParcel` to 4). Press **E**, select "I need help". Verify player
+   now has `FULL_ENGLISH`, `MUG_OF_TEA`, and `BEANS_ON_TOAST` in inventory. Verify
+   hunger is now 40 (+20 emergency top-up). Verify Street Rep decreased by 2. Verify
+   `daysSinceLastParcel` is reset to 0. Verify tooltip "There's no shame in it." fires.
+
+6. **Parcel refused when Notoriety ≥ 80**: Set player Notoriety to 85, hunger to 10,
+   coins to 0. Press **E**, select "I need help". Verify Margaret says "I'm sorry —
+   we've had complaints. You know why." Verify no items added to inventory.
+
+7. **Parcel refused when player is not eligible**: Set player hunger to 60, coins to 10.
+   Press **E**, select "I need help". Verify Margaret says "You look alright to me, love —
+   leave it for someone who needs it." Verify no items added to inventory.
+
+8. **Cooldown prevents repeated collection**: Successfully collect a parcel (test 5
+   conditions). Attempt a second collection on the same day (`daysSinceLastParcel == 0`).
+   Verify Margaret refuses: "I gave you a parcel yesterday, love. Come back in a few days."
+   Verify no items added.
+
+9. **Witness seeds rumour on parcel collection**: Spawn a PUBLIC NPC 5 blocks from the
+   food bank interior. Player successfully collects a parcel. Verify a `PLAYER_SPOTTED`
+   rumour containing "food bank" has been seeded into the nearby NPC's rumour buffer.
+
+10. **HEARTS_AND_MINDS achievement after 5 donations**: Reset `donationDayLog`. Simulate
+    5 donations on 5 separate in-game days (advance `TimeSystem.dayCount` between each).
+    Verify `AchievementSystem` has unlocked `HEARTS_AND_MINDS` after the fifth donation.
