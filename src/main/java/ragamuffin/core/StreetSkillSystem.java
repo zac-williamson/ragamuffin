@@ -99,7 +99,13 @@ public class StreetSkillSystem {
     public enum Skill {
         BRAWLING, GRAFTING, TRADING, STEALTH, INFLUENCE, SURVIVAL,
         /** Issue #795: Navigating bureaucratic systems — JobCentre, council, DWP. */
-        BUREAUCRACY
+        BUREAUCRACY,
+        /** Issue #928: Building and repair knowledge — learned from library DIY books. */
+        CONSTRUCTION,
+        /** Issue #928: Street-level legal and social knowledge — learned from library pamphlets. */
+        STREETWISE,
+        /** Issue #928: Growing and plant knowledge — learned from library gardening section. */
+        HORTICULTURE
     }
 
     // ── Tier enum ─────────────────────────────────────────────────────────────

@@ -654,7 +654,31 @@ public enum Material {
      * White Paper — junk wrapping material. Every chippy item is delivered
      * inside this. Can be dropped or discarded; no gameplay function.
      */
-    WHITE_PAPER("White Paper");
+    WHITE_PAPER("White Paper"),
+
+    // ── Issue #928: Public Library System ──────────────────────────────────────
+
+    /**
+     * DIY Manual — borrowed from the BOOKSHELF prop in the library's home improvement
+     * section. Reading it during a 60-second session awards +15 CONSTRUCTION XP.
+     * Can be carried in inventory; auto-returns at next library visit.
+     */
+    DIY_MANUAL("DIY Manual"),
+
+    /**
+     * Negotiation Book — borrowed from the BOOKSHELF prop in the library's business
+     * and self-help section. Reading it during a 60-second session awards +15 TRADING XP.
+     * Can be carried in inventory; auto-returns at next library visit.
+     */
+    NEGOTIATION_BOOK("Negotiation Book"),
+
+    /**
+     * Street Law Pamphlet — borrowed from the BOOKSHELF prop in the library's legal
+     * reference section. Reading it during a 60-second session awards +15 STREETWISE XP
+     * and grants Street Lads Respect +5 via FactionSystem.
+     * Can be carried in inventory; auto-returns at next library visit.
+     */
+    STREET_LAW_PAMPHLET("Street Law Pamphlet");
 
     private final String displayName;
 
@@ -1000,6 +1024,14 @@ public enum Material {
                                              0.88f, 0.95f, 1.00f); // Lighter highlight
             case WHITE_PAPER:    return c(0.96f, 0.96f, 0.94f);  // Off-white paper
 
+            // Issue #928: Public Library System
+            case DIY_MANUAL:     return cs(0.78f, 0.52f, 0.22f,  // Orange/ochre cover
+                                           0.62f, 0.38f, 0.10f); // Darker spine
+            case NEGOTIATION_BOOK: return cs(0.18f, 0.42f, 0.72f, // Blue business cover
+                                             0.12f, 0.28f, 0.55f); // Darker spine
+            case STREET_LAW_PAMPHLET: return cs(0.88f, 0.18f, 0.18f, // Red pamphlet cover
+                                                0.65f, 0.10f, 0.10f); // Darker red
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1183,6 +1215,10 @@ public enum Material {
             case CHIPS_SEASONED:
             case BOTTLE_OF_WATER:
             case WHITE_PAPER:
+            // Issue #928: Public Library System (not block items)
+            case DIY_MANUAL:
+            case NEGOTIATION_BOOK:
+            case STREET_LAW_PAMPHLET:
                 return false;
             default:
                 return true;
@@ -1517,6 +1553,14 @@ public enum Material {
                 return IconShape.BOTTLE;      // water bottle
             case WHITE_PAPER:
                 return IconShape.FLAT_PAPER;  // paper wrapping
+
+            // Issue #928: Public Library System
+            case DIY_MANUAL:
+                return IconShape.FLAT_PAPER;  // booklet/manual shape
+            case NEGOTIATION_BOOK:
+                return IconShape.FLAT_PAPER;  // book shape
+            case STREET_LAW_PAMPHLET:
+                return IconShape.FLAT_PAPER;  // pamphlet/paper shape
 
             default:
                 return IconShape.BOX;

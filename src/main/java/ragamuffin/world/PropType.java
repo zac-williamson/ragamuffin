@@ -322,7 +322,43 @@ public enum PropType {
      * SALT_AND_VINEGAR_PACKET, and BOTTLE_OF_WATER. Only available during opening
      * hours 11:00–00:00. Destroyed by 8 punches; yields COUNTER material.
      */
-    CHIPPY_COUNTER(1.40f, 1.10f, 0.80f, 8, Material.COUNTER);
+    CHIPPY_COUNTER(1.40f, 1.10f, 0.80f, 8, Material.COUNTER),
+
+    // ── Issue #928: Public Library System ──────────────────────────────────────
+
+    /**
+     * A library bookshelf stocked with books inside Northfield Library.
+     * Interact (E) to start a 60-second reading session that awards +15 XP to a
+     * StreetSkill based on the book's content:
+     * DIY_MANUAL → CONSTRUCTION, NEGOTIATION_BOOK → TRADING,
+     * STREET_LAW_PAMPHLET → STREETWISE, Gardening section → HORTICULTURE.
+     * Maximum 3 sessions per in-game day. Destroyed by 5 punches; yields WOOD.
+     */
+    BOOKSHELF(0.90f, 1.80f, 0.30f, 5, Material.WOOD),
+
+    /**
+     * A public internet terminal inside Northfield Library.
+     * Interact (E) to access the library internet: scout fence prices (+10 coins price
+     * preview), check criminal record summary, or pre-register for JobCentre jobs.
+     * Available only during library opening hours. Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    INTERNET_TERMINAL(0.60f, 1.50f, 0.60f, 8, Material.SCRAP_METAL),
+
+    /**
+     * A reading chair inside Northfield Library.
+     * Sitting in a reading chair (press E) doubles the library's Notoriety decay
+     * bonus — police give the player a pass if Notoriety &lt; 60 while seated.
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    READING_CHAIR(0.70f, 0.90f, 0.70f, 3, Material.WOOD),
+
+    /**
+     * A newspaper stand inside Northfield Library.
+     * Interact (E) to collect the free daily newspaper (equivalent to today's
+     * NewspaperSystem edition), revealing any active MarketEvent.
+     * One free copy per in-game day. Destroyed by 2 punches; yields nothing.
+     */
+    NEWSPAPER_STAND(0.80f, 1.20f, 0.30f, 2, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
