@@ -279,7 +279,7 @@ public class CornerShopSystem {
         shopUnit.setOpen(true);
         if (!achievementOpenForBusiness && achievementCallback != null) {
             achievementOpenForBusiness = true;
-            achievementCallback.onAchievement(AchievementType.OPEN_FOR_BUSINESS);
+            achievementCallback.award(AchievementType.OPEN_FOR_BUSINESS);
         }
     }
 
@@ -374,7 +374,7 @@ public class CornerShopSystem {
 
         if (!achievementProtectionMoney && achievementCallback != null) {
             achievementProtectionMoney = true;
-            achievementCallback.onAchievement(AchievementType.PROTECTION_MONEY);
+            achievementCallback.award(AchievementType.PROTECTION_MONEY);
         }
         return true;
     }
@@ -602,7 +602,7 @@ public class CornerShopSystem {
         if (!achievementKerching && shopUnit.getDailyRevenue() >= NEWSPAPER_HEADLINE_REVENUE
                 && achievementCallback != null) {
             achievementKerching = true;
-            achievementCallback.onAchievement(AchievementType.KERCHING);
+            achievementCallback.award(AchievementType.KERCHING);
         }
     }
 
@@ -626,7 +626,7 @@ public class CornerShopSystem {
             if (npcs != null) {
                 for (NPC npc : npcs) {
                     if (npc.isAlive() && npc.getType() == NPCType.PUBLIC) {
-                        npc.addRumour(new Rumour(RumourType.SHOP_NEWS, 0));
+                        npc.getRumours().add(new Rumour(RumourType.SHOP_NEWS, "A shop got raided!"));
                         break;
                     }
                 }
@@ -679,7 +679,7 @@ public class CornerShopSystem {
         // Achievement
         if (!achievementRaided && achievementCallback != null) {
             achievementRaided = true;
-            achievementCallback.onAchievement(AchievementType.RAIDED);
+            achievementCallback.award(AchievementType.RAIDED);
         }
 
         shopUnit = null;
@@ -700,7 +700,7 @@ public class CornerShopSystem {
                 marchettiEnforcerVisitTriggered = true;
                 if (!achievementPriceWar && achievementCallback != null) {
                     achievementPriceWar = true;
-                    achievementCallback.onAchievement(AchievementType.PRICE_WAR);
+                    achievementCallback.award(AchievementType.PRICE_WAR);
                 }
             }
         }
@@ -727,7 +727,7 @@ public class CornerShopSystem {
         if (streetLadsRespect >= STREET_LADS_DEFEND_RESPECT && !achievementNeighbourhoodShop
                 && achievementCallback != null) {
             achievementNeighbourhoodShop = true;
-            achievementCallback.onAchievement(AchievementType.THE_NEIGHBOURHOOD_SHOP);
+            achievementCallback.award(AchievementType.THE_NEIGHBOURHOOD_SHOP);
         }
     }
 
