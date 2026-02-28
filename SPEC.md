@@ -14798,3 +14798,229 @@ Key state:
    within 3 blocks of the barber's chair. Simulate 5 in-game minutes. Verify Ali's rumour
    buffer contains the `LOOT_TIP` rumour (accumulated via 30% chance per minute). Press
    **E** on Ali to get a haircut. Verify the player receives Ali's rumour in the speech log.
+
+---
+
+## Phase 39: The Status Dog — Staffy Companion, Intimidation & Park Walks
+
+**Goal**: Add a stray Staffordshire Bull Terrier the player can adopt and look after.
+The status dog is an iconic fixture of British council estate life — a loyal companion,
+an intimidation tool, a conversation starter, and a magnet for police suspicion. It
+meaningfully interacts with the NeighbourhoodWatch, FactionSystem, WantedSystem,
+WeatherSystem, and RumourNetwork without requiring any new block types.
+
+### Finding the Dog
+
+- A stray dog (`NPCType.STRAY_DOG`) wanders the park area, spawned by the WorldGenerator
+  near the pond. It has no owner tag and `NPCState.WANDERING`.
+- Press **E** while holding `SAUSAGE_ROLL` or `STEAK_BAKE` in the hotbar to offer food.
+  The item is consumed. The dog's state changes to `FOLLOWING_PLAYER`. The player gains
+  a `hasDog: boolean` flag in the `DogCompanionSystem`.
+- First-adoption tooltip: *"He's not much, but he's yours. Probably."*
+- Only one dog at a time. If the player already has a dog and approaches a second stray,
+  the stray wanders off.
+
+### `DogCompanionSystem` Class (new)
+
+```
+DogCompanionSystem(NotorietySystem notorietySystem,
+                   NeighbourhoodWatchSystem neighbourhoodWatchSystem,
+                   FactionSystem factionSystem, WantedSystem wantedSystem,
+                   WarmthSystem warmthSystem, Random random)
+```
+
+Key state:
+- `hasDog: boolean` — whether the player currently has the companion dog.
+- `dogHunger: float` (0–100, starts 50) — drains 1 per in-game minute; at 0 the dog
+  whimpers and stops following until fed.
+- `dogBondLevel: int` (0–100, starts 0) — increases with feeding (+5/feed), park walks
+  (+3/minute in park), and tricks training (+2/trick). Never decreases.
+- `tricksLearned: Set<DogTrick>` — tricks the dog has learned (see below).
+- `lastWalkMinute: int` — in-game minute of last park walk (for daily walk bonus).
+- `isOffLead: boolean` — whether the dog is running free or on lead.
+
+#### Key Constants (`public static final` in `DogCompanionSystem`)
+
+| Constant | Value | Meaning |
+|----------|-------|---------|
+| `FEED_HUNGER_RESTORE` | 30f | Hunger restored per food item |
+| `FEED_BOND_BONUS` | 5 | Bond gained per feed |
+| `PARK_WALK_BOND_PER_MINUTE` | 3 | Bond gained per in-game minute in park |
+| `TRICK_BOND_BONUS` | 2 | Bond gained per successful trick |
+| `INTIMIDATION_NOTORIETY_GAIN` | 3 | Notoriety gained per intimidation use |
+| `INTIMIDATION_WATCH_ANGER_GAIN` | 8 | NeighbourhoodWatch anger per intimidation |
+| `PARK_WALK_WATCH_ANGER_REDUCTION` | 5 | Watch anger reduced per walk |
+| `POLICE_SUSPICION_RANGE` | 10f | Range at which police become suspicious of dog |
+| `DOG_HUNGER_DRAIN_PER_MINUTE` | 1f | Hunger drain rate |
+| `WHIMPER_HUNGER_THRESHOLD` | 15f | Below this, dog whimpers and stops following |
+| `BOND_TRICK_UNLOCK_SIT` | 10 | Bond required to teach SIT |
+| `BOND_TRICK_UNLOCK_STAY` | 25 | Bond required to teach STAY |
+| `BOND_TRICK_UNLOCK_FETCH` | 40 | Bond required to teach FETCH |
+| `BOND_TRICK_UNLOCK_GUARD` | 60 | Bond required to teach GUARD |
+| `OFF_LEAD_RANGE` | 12f | Maximum range before dog auto-returns to player |
+
+### Dog Mechanics
+
+#### Feeding
+- Holding `SAUSAGE_ROLL`, `STEAK_BAKE`, or `BEANS_ON_TOAST` and pressing **E** near the
+  dog feeds it: `dogHunger += FEED_HUNGER_RESTORE`; item consumed; `dogBondLevel += FEED_BOND_BONUS`.
+- If hunger < `WHIMPER_HUNGER_THRESHOLD` the dog speech-bubble shows *"*whimper*"* and
+  it sits down (stops following). Feed it to resume.
+
+#### Park Walks
+- While the player is within the park landmark boundary (inside the park area tracked by
+  `LandmarkType.PARK`) with the dog following, `DogCompanionSystem.update()` accrues walk
+  time each frame. Each in-game minute of park time:
+  - `dogBondLevel += PARK_WALK_BOND_PER_MINUTE`
+  - `neighbourhoodWatchSystem.addAnger(-PARK_WALK_WATCH_ANGER_REDUCTION)` — residents
+    love a dog being walked responsibly
+- Tooltip on first park walk: *"Even the Neighbourhood Watch likes a dog in the park."*
+- First park walk seeds a `WEATHER_TIP`-family rumour (flavour): *"That one's not all bad
+  — saw them walking their dog earlier."*
+
+#### Tricks Training
+- Press **T** while standing still with the dog following to enter trick-training mode
+  (new key binding, added to Help UI). A simple text menu appears:
+  - **SIT** (Bond ≥ 10): dog performs sit animation (NPCState.SITTING, 2 seconds). Each
+    successful trick trains the dog: `tricksLearned.add(SIT)`.
+  - **STAY** (Bond ≥ 25): dog holds position for 10 seconds (ignores player movement).
+    Useful for leaving the dog as a distraction.
+  - **FETCH** (Bond ≥ 40): dog runs to the nearest dropped `SmallItem` on the ground within
+    8 blocks and brings it back — item added to player inventory. Bond ≥ 40 required.
+  - **GUARD** (Bond ≥ 60): dog sits at current position and growls at any NPC who comes
+    within 3 blocks — NPC enters FLEEING or AVOIDING state for 30 seconds. Does not damage.
+- Tooltip on first trick: *"Good boy. Better than most people round here."*
+
+#### Intimidation
+- Press **F** (the existing pickpocket key, context-sensitive) when facing a non-hostile
+  NPC while the dog is off-lead (`isOffLead = true`) and Bond ≥ 30: `useForIntimidation()`.
+  - The dog growls (speech bubble: *"grrrr"*). Target NPC enters `FLEEING` state.
+  - `notorietySystem.addNotoriety(INTIMIDATION_NOTORIETY_GAIN, callback)`
+  - `neighbourhoodWatchSystem.addAnger(INTIMIDATION_WATCH_ANGER_GAIN)` — witnesses don't
+    like it
+  - If a POLICE NPC is within 15 blocks, the officer approaches and issues a warning:
+    *"Keep that dog under control."* — 1 offence added to CriminalRecord.
+  - Tooltip on first use: *"That's probably not legal, technically speaking."*
+
+#### Police Suspicion
+- Any POLICE NPC within `POLICE_SUSPICION_RANGE` (10 blocks) of the player while the dog
+  is off-lead has a 20% chance per in-game minute to inspect the player:
+  - If player Notoriety < 50: *"Nice dog, mate. Keep it on a lead, yeah?"* — no offence.
+  - If player Notoriety ≥ 50: *"That's a dangerous dog. Papers, please."* — 1 offence added
+    to CriminalRecord; dog must be put back on lead (sets `isOffLead = false`).
+- At Notoriety Tier 3+ (≥ 500), police always treat the dog as a dangerous dog regardless
+  of lead status: 20% chance per minute to issue a `DANGEROUS_DOG` offence.
+
+#### Dog Fight (defence mechanic)
+- When a `YOUTH_GANG` NPC attacks the player (enters `ATTACKING_PLAYER` state) and the
+  dog is following (`hasDog && dogBondLevel >= 20`), the dog automatically intercepts:
+  the gang NPC switches from `ATTACKING_PLAYER` to `FLEEING` for 20 seconds.
+  `dogHunger -= 10` (the excitement tires it out).
+- This does NOT apply to POLICE or COUNCIL_BUILDER NPCs — the dog backs down from authority
+  (its one moment of good sense).
+
+#### Weather Effects
+- `FROST`/`COLD_SNAP` weather: `dogHunger` drains at 2× rate (cold dog needs more food).
+  Speech bubble (once per session): *"He's shivering. Poor little muppet."*
+- `RAIN`: dog shakes off water each time it re-enters a sheltered area (speech bubble:
+  *"...shake..."*). No gameplay effect — pure flavour.
+
+### System Integrations
+
+- **NeighbourhoodWatchSystem**: park walks reduce anger; intimidation increases anger.
+- **FactionSystem**: dog intimidation counts as an antisocial act in Street Lads territory
+  (+5 Street Lads Respect — they love the dog); in Council territory (−10 Council Respect).
+- **WantedSystem / CriminalRecord**: intimidation and dangerous-dog inspections add offences.
+- **NotorietySystem**: intimidation gains Notoriety.
+- **WarmthSystem**: player holding the dog (Bond ≥ 50, standing still for 5 seconds) adds
+  +5 Warmth per in-game minute — a dog on your lap keeps you warm. Tooltip: *"Best hot
+  water bottle in the borough."*
+- **RumourNetwork**: first park walk seeds a positive rumour; intimidation seeds a
+  `PLAYER_SPOTTED` rumour.
+- **WeatherSystem**: cold speeds up hunger drain; rain triggers shake animation.
+- **AchievementSystem**: three new achievements:
+
+| Achievement | Trigger |
+|-------------|---------|
+| `MANS_BEST_FRIEND` | Adopt the stray dog |
+| `GOOD_BOY_GOOD_BOY` | Teach the dog all 4 tricks (Bond ≥ 60) |
+| `DANGEROUS_DOG` | Use intimidation 5 times |
+
+### Unit Tests
+
+- `DogCompanionSystem.feedDog(SAUSAGE_ROLL, inventory)` increases hunger by 30, bond by 5, removes item.
+- `feedDog()` with empty inventory returns false, no state change.
+- `dogHunger` drains by `DOG_HUNGER_DRAIN_PER_MINUTE` per in-game minute.
+- Below `WHIMPER_HUNGER_THRESHOLD`, `isFollowing()` returns false.
+- `teachTrick(SIT)` returns `BOND_TOO_LOW` when bond < 10; returns `SUCCESS` when bond ≥ 10.
+- `useForIntimidation()` returns `NOT_OFF_LEAD` when `isOffLead == false`.
+- `useForIntimidation()` with Bond ≥ 30, off-lead: Notoriety +3, Watch Anger +8.
+- `getWarmthBonus()` returns 5 when bond ≥ 50 and player is stationary ≥ 5 seconds.
+- All 4 tricks unlock at correct bond thresholds.
+- `MANS_BEST_FRIEND` achievement fires on first adoption.
+- `GOOD_BOY_GOOD_BOY` fires after all 4 tricks learned.
+- `DANGEROUS_DOG` achievement fires on 5th intimidation use.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Stray dog spawns in park and can be adopted**: Generate the world. Verify a
+   `STRAY_DOG` NPC exists in the park area. Give the player 1 `SAUSAGE_ROLL`. Place
+   player within 2 blocks of the dog. Press **E**. Verify `dogCompanionSystem.hasDog()`
+   is true. Verify the player's inventory no longer contains `SAUSAGE_ROLL`. Verify the
+   dog's `NPCState` is `FOLLOWING_PLAYER`. Verify tooltip *"He's not much, but he's
+   yours. Probably."* fires.
+
+2. **Hungry dog stops following and resumes after feeding**: Set `dogHunger` to 10
+   (below threshold). Verify `dogCompanionSystem.isFollowing()` returns false. Verify
+   the dog's speech bubble contains *"*whimper*"*. Give the player 1 `SAUSAGE_ROLL`.
+   Feed the dog (press **E** near dog). Verify `dogHunger` is 40. Verify
+   `isFollowing()` is now true.
+
+3. **Park walk reduces NeighbourhoodWatch anger**: Set `neighbourhoodWatchSystem` anger
+   to 30. Place player with dog inside the park boundary. Advance the simulation for 3
+   in-game minutes. Verify Watch anger has decreased by at least `3 ×
+   PARK_WALK_WATCH_ANGER_REDUCTION` (≥ 15). Verify `dogBondLevel` has increased by
+   at least 9. Verify tooltip *"Even the Neighbourhood Watch likes a dog in the park."*
+   fired on the first walk.
+
+4. **Trick SIT unlocks at Bond ≥ 10**: Set `dogBondLevel` to 9. Press **T**, select
+   SIT. Verify the system returns `BOND_TOO_LOW` and the dog does not sit. Set
+   `dogBondLevel` to 10. Press **T**, select SIT. Verify the trick succeeds (dog enters
+   `NPCState.SITTING` for 2 seconds). Verify `tricksLearned` contains `SIT`. Verify
+   `dogBondLevel` increased by `TRICK_BOND_BONUS` (to 12).
+
+5. **Intimidation causes NPC to flee and raises Notoriety / Watch Anger**: Set `isOffLead`
+   to true, `dogBondLevel` to 35, player Notoriety to 20. Spawn a PUBLIC NPC 3 blocks
+   in front of the player. Press **F** (intimidation). Verify the NPC's state is
+   `FLEEING`. Verify player Notoriety is now 23 (+3). Verify NeighbourhoodWatch anger
+   increased by 8. Verify tooltip *"That's probably not legal, technically speaking."*
+   fired on first use.
+
+6. **Police warns player when dog is off-lead and Notoriety ≥ 50**: Set player Notoriety
+   to 55, `isOffLead` to true. Spawn a POLICE NPC 8 blocks away. Advance 1 in-game
+   minute. Verify the police NPC has moved toward the player and issued speech *"That's
+   a dangerous dog. Papers, please."*. Verify player CriminalRecord has 1 new offence.
+   Verify `isOffLead` is now false.
+
+7. **Dog defends player from YOUTH_GANG attack**: Set `dogBondLevel` to 25. Spawn a
+   `YOUTH_GANG` NPC 3 blocks away in `ATTACKING_PLAYER` state. Advance 5 frames. Verify
+   the gang NPC's state has changed to `FLEEING`. Verify `dogHunger` decreased by 10
+   (excitement cost). Verify the player received no damage from the gang NPC during
+   those 5 frames.
+
+8. **Warmth bonus when resting with dog**: Set `dogBondLevel` to 55. Set
+   `warmthSystem` warmth to 40. Player stands still (no input) for 5 in-game seconds.
+   Verify `warmthSystem` warmth has increased above 40. Verify tooltip *"Best hot water
+   bottle in the borough."* fires on first occurrence.
+
+9. **GOOD_BOY_GOOD_BOY achievement after all 4 tricks**: Set `dogBondLevel` to 65
+   (above all thresholds). Teach all 4 tricks (SIT, STAY, FETCH, GUARD) in sequence.
+   Verify `tricksLearned` contains all 4. Verify `AchievementSystem` has unlocked
+   `GOOD_BOY_GOOD_BOY`. Verify no NPE during any trick command.
+
+10. **Dog hunger drains faster in cold weather**: Set weather to `FROST`. Record
+    `dogHunger`. Advance the simulation for 2 in-game minutes. Verify the hunger
+    decrease is approximately `2 × DOG_HUNGER_DRAIN_PER_MINUTE × 2` (double drain in
+    cold). Set weather to `CLEAR`. Advance 2 more in-game minutes. Verify the hunger
+    decrease in CLEAR is approximately `2 × DOG_HUNGER_DRAIN_PER_MINUTE` (normal
+    rate). The FROST drain must be measurably higher than the CLEAR drain.
