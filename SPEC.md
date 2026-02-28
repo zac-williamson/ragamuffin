@@ -8762,3 +8762,109 @@ the `nearCampfire` boolean — the only missing piece is wiring `CampfireSystem`
    `campfireSystem.hasCampfires()` is `true`. Call
    `campfireSystem.removeCampfire(new Vector3(3, 1, 3))`. Verify
    `campfireSystem.hasCampfires()` is now `false`.
+
+## Wire HeistSystem into the Game Loop
+
+**Goal**: `HeistSystem` (1012 lines, Phase O / Issue #704) is fully implemented but
+never instantiated or called anywhere in `RagamuffinGame.java`. Players cannot
+case buildings, plan heists, crack safes, dodge CCTV, recruit accomplices, or fence
+hot loot — the entire heist gameplay pillar is dead code.
+
+### Problem
+
+`HeistSystem` was built as a self-contained four-phase heist orchestrator:
+- **Casing** — press F inside a Jeweller / Off-licence / Greggs / JobCentre to gather
+  intel and create a `HeistPlan`.
+- **Planning** — acquire tools (CROWBAR etc.) and optionally pay 10 COIN to recruit
+  an NPC accomplice.
+- **Execution** — press G to start the countdown timer; break blocks near alarm boxes
+  spikes noise to 1.0 and triggers `WantedSystem`; hold E on a safe for 8 s to crack
+  it; CCTV cameras detect the player within a 45° cone / 6-block range.
+- **Fencing** — hot loot depreciates over time (100% → 50% after 5 min, 25% after
+  60 min in-game).
+
+None of these interactions fire because the system is never wired in.
+
+### What needs wiring
+
+1. **Declare and instantiate** `private HeistSystem heistSystem;` in `RagamuffinGame`.
+   Instantiate in `initGame()` after `factionSystem`:
+   ```java
+   heistSystem = new HeistSystem();
+   ```
+
+2. **Call `update()` every frame** in `updatePlayingSimulation()`:
+   ```java
+   heistSystem.update(delta, player, noiseSystem, npcManager, factionSystem,
+       rumourNetwork, npcManager.getAllNPCs(), world,
+       timeSystem.isNight());
+   ```
+
+3. **Wire F key — Casing** — in the keyboard input handler (`keyDown`), when
+   `Keys.F` is pressed while `gameState == PLAYING` and the player is inside a
+   recognised landmark building, call:
+   ```java
+   String msg = heistSystem.startCasing(landmarkType, buildingCentre, npcManager);
+   tooltipSystem.show(msg);
+   ```
+
+4. **Wire G key — Execution** — in `keyDown`, when `Keys.G` is pressed:
+   ```java
+   boolean started = heistSystem.startExecution();
+   if (started) tooltipSystem.show("Heist started! Timer running…");
+   ```
+
+5. **Wire block-break hook** — after a block is broken in the execution handler,
+   call `heistSystem.onBlockBreak(breakPos, noiseSystem, npcManager, world)` so
+   alarm boxes spike noise correctly.
+
+6. **Wire safe-cracking hold-E** — during the hold-E interaction frame, if the player
+   is targeting a SAFE prop, call:
+   ```java
+   boolean cracked = heistSystem.updateSafeCracking(delta, player, inventory,
+       npcManager, achievementSystem::award, world);
+   ```
+
+7. **Wire accomplice recruitment** — in the NPC interact path (E key on NPC), if the
+   NPC type is CRIMINAL and the heist is in PLANNING phase, call
+   `heistSystem.recruitAccomplice(npc, inventory)`.
+
+8. **Wire daily reset** — call `heistSystem.resetDaily()` from the time-system
+   midnight callback.
+
+9. **Reset on restart** — call `heistSystem = new HeistSystem();` inside
+   `restartGame()`.
+
+10. **HUD hint** — when `heistSystem.getActivePlan() != null`, draw a small HUD label
+    showing the current heist phase and countdown timer via `gameHUD`.
+
+### Integration tests — implement these exact scenarios
+
+1. **Casing a landmark creates a HeistPlan**: Create `HeistSystem` and `NPCManager`.
+   Call `heistSystem.startCasing(LandmarkType.JEWELLER, new Vector3(0,0,0), npcManager)`.
+   Verify `heistSystem.getActivePlan() != null`. Verify
+   `heistSystem.getActivePlan().getTarget() == LandmarkType.JEWELLER`. Verify
+   `heistSystem.getPhase() == HeistSystem.HeistPhase.PLANNING`.
+
+2. **Execution start transitions phase**: After casing (as above), call
+   `heistSystem.startExecution()`. Verify it returns `true`. Verify
+   `heistSystem.getPhase() == HeistSystem.HeistPhase.EXECUTION`.
+
+3. **Block break near alarm box spikes noise**: Create `HeistSystem`, `NoiseSystem`,
+   `NPCManager`, and a `World`. Case the Jeweller. Start execution. Place the player
+   within `HeistSystem.ALARM_BOX_RANGE` of a recorded alarm box position. Call
+   `heistSystem.onBlockBreak(alarmPos, noiseSystem, npcManager, world)`. Verify
+   `noiseSystem.getCurrentNoise() >= 1.0f`.
+
+4. **Safe cracking completes after 8 seconds**: Create `HeistSystem`, `Inventory`,
+   and `NPCManager`. Add a CROWBAR to the inventory. Case and start execution. Call
+   `heistSystem.updateSafeCracking(delta, player, inventory, npcManager,
+   cb -> {}, world)` in a loop for `HeistSystem.SAFE_CRACK_TIME` seconds total.
+   Verify the method returns `true` (cracking complete) on the final call.
+
+5. **Hot loot multiplier depreciates over time**: Create `HeistSystem`. Case and
+   complete a heist. Verify `heistSystem.getHotLootMultiplier() == 1.0f` immediately.
+   Advance the system by `HeistSystem.HOT_LOOT_FULL_PRICE_WINDOW + 1f` seconds via
+   `update()` calls. Verify `heistSystem.getHotLootMultiplier() == 0.5f`. Advance by
+   `HeistSystem.HOT_LOOT_HALF_PRICE_WINDOW + 1f` more seconds. Verify
+   `heistSystem.getHotLootMultiplier() == 0.25f`.
