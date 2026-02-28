@@ -37,5 +37,8 @@ public enum RumourType {
     GENTRIFICATION,
 
     /** "There's a new shop on the high street — bit dodgy if you ask me" — seeded when the player's corner shop opens or hits a revenue milestone. */
-    SHOP_NEWS;
+    SHOP_NEWS,
+
+    /** "Heard the filth got a tip-off about someone causing bother" — seeded by WantedSystem when a witness reports a crime to police. */
+    POLICE_TIP;
 }

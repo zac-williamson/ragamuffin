@@ -156,6 +156,12 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #659: Criminal record log
     private ragamuffin.ui.CriminalRecordUI criminalRecordUI;
 
+    // Issue #803: Wanted & Notoriety systems — police pursuit and persistent criminal reputation
+    private WantedSystem wantedSystem;
+    private NotorietySystem notorietySystem;
+    // Issue #803: Rumour network — NPC gossip spreading police tips on witnessed crimes
+    private RumourNetwork rumourNetwork;
+
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
     // Issue #773: Car driving system — lets player enter and drive cars
@@ -410,6 +416,13 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #659: Initialize criminal record UI
         criminalRecordUI = new ragamuffin.ui.CriminalRecordUI(player.getCriminalRecord());
 
+        // Issue #803: Initialize wanted and notoriety systems — police pursuit & criminal reputation
+        wantedSystem = new WantedSystem();
+        notorietySystem = new NotorietySystem();
+        gameHUD.setNotorietySystem(notorietySystem);
+        // Issue #803: Initialize rumour network for spreading police tips and NPC gossip
+        rumourNetwork = new RumourNetwork(new java.util.Random());
+
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
         carManager.spawnInitialCars(world);
@@ -628,6 +641,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             // any speech set during this frame's NPC tick is reflected right away —
             // mirrors the ordering in the PLAYING path (updatePlayingSimulation).
             speechLogUI.update(npcManager.getNPCs(), delta);
+            // Issue #803: Advance wanted and notoriety systems during cinematic so timers
+            // continue to accumulate — mirrors the PAUSED and PLAYING branches.
+            wantedSystem.update(delta, player, npcManager.getNPCs(),
+                    weatherSystem.getCurrentWeather(), timeSystem.isNight(), false,
+                    type -> achievementSystem.unlock(type));
+            notorietySystem.update(delta, player, type -> achievementSystem.unlock(type));
+            rumourNetwork.update(npcManager.getNPCs(), delta);
             blockBreaker.tickDecay(delta);
             propBreaker.tickDecay(delta);
             player.getStreetReputation().update(delta);
@@ -1415,6 +1435,13 @@ public class RagamuffinGame extends ApplicationAdapter {
             // update(), so keeping both would double-tick every timer.
             // Mirrors the approach taken for the CINEMATIC state in Fix #447.
             npcManager.update(delta, world, player, inventory, tooltipSystem);
+            // Issue #803: Advance wanted and notoriety systems while paused so police pursuit
+            // timers and notoriety tier state continue to accumulate.
+            wantedSystem.update(delta, player, npcManager.getNPCs(),
+                    weatherSystem.getCurrentWeather(), timeSystem.isNight(), false,
+                    type -> achievementSystem.unlock(type));
+            notorietySystem.update(delta, player, type -> achievementSystem.unlock(type));
+            rumourNetwork.update(npcManager.getNPCs(), delta);
 
             // Fix #381: Advance healing resting timer while paused so the 5-second threshold
             // continues to accumulate and healing is not artificially delayed on resume.
@@ -2075,6 +2102,19 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Fix #196: update speech log after NPC speech is set for this frame
         speechLogUI.update(npcManager.getNPCs(), delta);
+
+        // Issue #803: Update wanted system — drives police NPC state transitions (CHASING, ALERTED)
+        // and spawns reinforcements based on witnessed crimes.
+        wantedSystem.update(delta, player, npcManager.getNPCs(),
+                weatherSystem.getCurrentWeather(), timeSystem.isNight(), false,
+                type -> achievementSystem.unlock(type));
+
+        // Issue #803: Update notoriety system — controls helicopter sweep timer at Tier 3+
+        // and tier-up flash animations.
+        notorietySystem.update(delta, player, type -> achievementSystem.unlock(type));
+
+        // Issue #803: Update rumour network — spreads NPC gossip and police tips.
+        rumourNetwork.update(npcManager.getNPCs(), delta);
 
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
