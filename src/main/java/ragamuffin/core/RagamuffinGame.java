@@ -880,6 +880,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                     player.getCriminalRecord(),
                     npcManager.getNPCs(),
                     type -> achievementSystem.unlock(type));
+            // Issue #866: Advance FenceSystem during cinematic — mirrors the PLAYING and PAUSED branches.
+            fenceSystem.update(delta, player, npcManager.getNPCs(), timeSystem.getDayIndex());
             // Fix #429: Keep police spawn/despawn logic in sync with the day/night cycle
             // during the cinematic.  If the fly-through straddles dusk or dawn the wasNight
             // flag transition must not be skipped — mirrors the PAUSED branch (line ~852).
@@ -1699,6 +1701,10 @@ public class RagamuffinGame extends ApplicationAdapter {
             // weather (#341), and other timer-based systems in the PAUSED branch.
             gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
+            // Issue #866: Advance FenceSystem while paused — mirrors the PLAYING branch so that
+            // police-avoidance, stock refresh, and contraband-run timers continue while paused.
+            fenceSystem.update(delta, player, npcManager.getNPCs(), timeSystem.getDayIndex());
+
             // Fix #860: Advance StreetSkillSystem while paused — mirrors the PLAYING branch.
             player.getStreetSkillSystem().update(delta, player, npcManager.getNPCs());
 
@@ -2473,6 +2479,10 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #826: Update witness system — evidence props, witness NPC timers, CCTV tape countdowns
         witnessSystem.update(delta, npcManager.getNPCs(), player);
+
+        // Issue #866: Advance FenceSystem — refreshes daily rotating stock, runs police-avoidance
+        // logic, counts down contraband-run timers, and decrements the post-failure lock countdown.
+        fenceSystem.update(delta, player, npcManager.getNPCs(), timeSystem.getDayIndex());
 
         // Issue #828: Update JobCentre system — sign-on window, sanctions, debt collector
         jobCentreSystem.update(delta, player, npcManager.getNPCs());
