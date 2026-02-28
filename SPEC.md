@@ -9079,3 +9079,76 @@ POLICE_UNIFORM to delay a heist alarm.
 6. **DisguiseSystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `disguiseSystem` field is non-null. Simulate 1 frame. Verify
    `disguiseSystem.isDisguised() == false` (no disguise on fresh start).
+
+---
+
+## Wire GraffitiSystem into the game loop
+
+`GraffitiSystem` (implemented in issue #781) and its dedicated `GraffitiRenderer` are
+completely absent from `RagamuffinGame.java`. The T-key spray handler, the per-frame
+`update()` call, and the `GraffitiRenderer.render()` call are all missing, making the
+entire graffiti and territorial-marking feature dead code. Players cannot spray tags,
+faction NPC crews never dispatch to claim turf, fade timers never advance, and graffiti
+marks are never drawn on screen.
+
+### What needs to be wired
+
+1. **Declare fields** in `RagamuffinGame`:
+   ```java
+   private GraffitiSystem graffitiSystem;
+   private ragamuffin.render.GraffitiRenderer graffitiRenderer;
+   ```
+
+2. **Instantiate in `create()`** (and `restartGame()`):
+   ```java
+   graffitiSystem = new GraffitiSystem();
+   graffitiRenderer = new ragamuffin.render.GraffitiRenderer();
+   ```
+
+3. **Update each frame** in the PLAYING branch of `render()`:
+   ```java
+   graffitiSystem.update(delta, timeSystem.getDaysDelta(),
+       npcManager.getNPCs(), world.getTurfMap(),
+       wantedSystem, noiseSystem, rumourNetwork,
+       inventory, type -> achievementSystem.unlock(type));
+   ```
+
+4. **Render each frame** after chunk rendering (3D pass):
+   ```java
+   graffitiRenderer.render(graffitiSystem.getMarks(), camera);
+   ```
+
+5. **Wire the T key** in `handlePlayerInput()`:
+   When the player presses T and has a `Material.SPRAY_CAN` in the active hotbar slot,
+   call `graffitiSystem.placeTag(...)` at the targeted block face (from raycast result).
+   Show a tooltip if no spray can is held.
+
+6. **Wire the E-key scrub** in `handleInteract()`:
+   When the player is within `GraffitiSystem.MAX_TAG_DISTANCE` of a block that has a
+   graffiti mark belonging to a rival faction, call
+   `graffitiSystem.scrubTag(mark, world.getTurfMap(), wantedSystem, noiseSystem)`.
+
+7. **Reset on restart** in `restartGame()`:
+   ```java
+   graffitiSystem = new GraffitiSystem();
+   ```
+
+### Integration tests — implement these exact scenarios
+
+1. **Tag placed on T keypress**: Initialise `RagamuffinGame` (headless). Give the player
+   a `Material.SPRAY_CAN` in hotbar slot 0. Place the player at (10, 1, 10) facing a
+   BRICK wall at (10, 1, 9). Simulate pressing T once. Verify
+   `graffitiSystem.getMarks().size() == 1`.
+
+2. **GraffitiRenderer called each frame**: Initialise `RagamuffinGame` (headless).
+   Verify `graffitiRenderer` field is non-null. Simulate 2 frames in PLAYING state.
+   Verify no exception is thrown and `graffitiSystem.getMarks()` is accessible.
+
+3. **GraffitiSystem.update() advances NPC crew timer**: Create `GraffitiSystem`. Call
+   `update(301f, 0f, npcList, turfMap, wantedSystem, noiseSystem, rumourNetwork, inventory, cb)`.
+   Verify that after 301 seconds of delta the NPC crew spray tick has fired at least once
+   (observable via `getMarks().size() > 0` if faction NPCs are present in the list).
+
+4. **GraffitiSystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `graffitiSystem` field is non-null. Simulate 1 frame.
+   Verify `graffitiSystem.getMarks()` returns an empty list (no tags on fresh start).
