@@ -1455,7 +1455,10 @@ public class WorldGenerator {
             boolean zOverlap = slotZ < offZ + 15 && slotZ + slot[2] > offZ;
             if (xOverlap && zOverlap) continue;
             LandmarkType type = southShops.get(shopIdx++);
-            generateShopWithSign(world, slot[0], slotZ, slot[1], slot[2], 4, wallForShop(type), signForShop(type), type);
+            // Issue #909: BOOKIES needs extra space to fit TV_SCREEN and FRUIT_MACHINE props
+            int slotWidth = (type == LandmarkType.BOOKIES) ? 10 : slot[1];
+            int slotDepth = (type == LandmarkType.BOOKIES) ? 10 : slot[2];
+            generateShopWithSign(world, slot[0], slotZ, slotWidth, slotDepth, 4, wallForShop(type), signForShop(type), type);
         }
 
         // --- North side slots ---
@@ -4293,6 +4296,35 @@ public class WorldGenerator {
         // ── Statue ───────────────────────────────────────────────────────────
         // Heroic monument in the park (offset from centre to avoid blocking player spawn at 0,0)
         addProp(world, 5f, y, 5f, PropType.STATUE, 0f);
+
+        // ── Issue #909: Bookies interior props ───────────────────────────────
+        // TV_SCREEN (for BettingUI interaction) and FRUIT_MACHINE inside the
+        // bookies. We look up the landmark position so we correctly follow the
+        // randomised slot assignment from generateHighStreet().
+        Landmark bookiesLandmark = world.getLandmark(LandmarkType.BOOKIES);
+        if (bookiesLandmark != null) {
+            float bx = bookiesLandmark.getPosition().x;
+            float bz = bookiesLandmark.getPosition().z;
+            float bw = bookiesLandmark.getWidth();
+            float bd = bookiesLandmark.getDepth();
+            // TV_SCREEN on the back wall, centred
+            addProp(world, bx + bw / 2f, y + 1.5f, bz + bd - 1f, PropType.TV_SCREEN, 180f);
+            // Two FRUIT_MACHINEs along the side wall
+            addProp(world, bx + 1f, y, bz + bd / 2f,       PropType.FRUIT_MACHINE, 90f);
+            addProp(world, bx + 1f, y, bz + bd / 2f + 1.5f, PropType.FRUIT_MACHINE, 90f);
+        }
+        // Also place props in the BETTING_SHOP (Ladbrokes) landmark
+        Landmark bettingShopLandmark = world.getLandmark(LandmarkType.BETTING_SHOP);
+        if (bettingShopLandmark != null) {
+            float bx = bettingShopLandmark.getPosition().x;
+            float bz = bettingShopLandmark.getPosition().z;
+            float bw = bettingShopLandmark.getWidth();
+            float bd = bettingShopLandmark.getDepth();
+            // TV_SCREEN on the back wall, centred
+            addProp(world, bx + bw / 2f, y + 1.5f, bz + bd - 1f, PropType.TV_SCREEN, 180f);
+            // One FRUIT_MACHINE
+            addProp(world, bx + 1f, y, bz + bd / 2f, PropType.FRUIT_MACHINE, 90f);
+        }
     }
 
     /**

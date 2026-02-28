@@ -236,6 +236,15 @@ public enum PropType {
      */
     BUSINESS_RATES_NOTICE(0.30f, 0.40f, 0.02f, 1, null),
 
+    // ── Issue #908 / #909: Bookies Horse Racing System ───────────────────────
+
+    /**
+     * A wall-mounted TV screen inside the bookies, showing live race results and
+     * race schedules. Player presses E to open BettingUI and place bets.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    TV_SCREEN(0.80f, 0.50f, 0.10f, 5, Material.SCRAP_METAL),
+
     // ── Issue #801: The Underground Fight Night ────────────────────────────────
 
     /**
