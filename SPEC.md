@@ -9978,3 +9978,100 @@ fires, and the entire grey/black-market shopkeeping loop is dead code.
 5. **CornerShopSystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `cornerShopSystem` field is non-null. Simulate 1 frame in
    PLAYING state. Verify no exception is thrown.
+
+## Wire StallSystem into the game loop
+
+`StallSystem` (820 lines, `ragamuffin/core/StallSystem.java`) is fully implemented but never
+instantiated or updated in `RagamuffinGame.java`. The player cannot place a stall, stock it,
+open it, or earn passive income — the entire market-stall economy is dead code.
+
+### What needs to be wired
+
+1. **Declare field** in `RagamuffinGame`:
+   ```java
+   private StallSystem stallSystem;
+   ```
+
+2. **Instantiate** in `create()` after `streetEconomySystem` is initialised:
+   ```java
+   stallSystem = new StallSystem();
+   ```
+
+3. **Update each frame** in the PLAYING branch of `render()` alongside the other economy
+   systems (after `cornerShopSystem.update(...)` is a natural location):
+   ```java
+   if (stallSystem != null) {
+       stallSystem.update(
+           delta,
+           npcManager.getNPCs(),
+           player,
+           weatherSystem.getCurrentWeather(),
+           inventory,
+           factionSystem,
+           notorietySystem,
+           player.getCriminalRecord(),
+           achievementSystem::award,
+           streetEconomySystem
+       );
+       String stallMsg = stallSystem.pollTooltip();
+       if (stallMsg != null) tooltipSystem.showMessage(stallMsg, 3.0f);
+   }
+   ```
+
+4. **Wire E key — place/open stall** — when the player presses E facing a placed
+   `STALL_FRAME` block:
+   ```java
+   if (stallSystem != null && !stallSystem.isStallPlaced()) {
+       // Try to place from hotbar
+       if (inventory.hasItem(Material.STALL_FRAME)) {
+           boolean placed = stallSystem.placeStall(
+               targetBlock.x, targetBlock.y, targetBlock.z,
+               world.getBlock(targetBlock.x, targetBlock.y - 1, targetBlock.z).name(),
+               factionSystem, world);
+           if (placed) {
+               inventory.removeItem(Material.STALL_FRAME, 1);
+               tooltipSystem.showMessage("Stall placed. Press E to open.", 2.5f);
+           }
+       }
+   } else if (stallSystem != null && stallSystem.isStallPlaced() && !stallSystem.isStallOpen()) {
+       stallSystem.openStallWithAchievement(achievementSystem::award);
+       tooltipSystem.showMessage("Stall open. Time to shift some gear.", 2.0f);
+   } else if (stallSystem != null && stallSystem.isStallOpen()) {
+       stallSystem.closeStall();
+       tooltipSystem.showMessage("Stall closed.", 1.5f);
+   }
+   ```
+
+5. **Wire HUD** — render a compact stall status line when the stall is open:
+   ```java
+   if (stallSystem != null && stallSystem.isStallOpen()) {
+       font.draw(spriteBatch,
+           String.format("STALL  Sold: %d  Income: %d",
+               stallSystem.getTotalSales(),
+               stallSystem.getTotalIncome()),
+           20, 60);
+   }
+   ```
+
+6. **Reset on restart** — add `stallSystem = new StallSystem();` inside `restartGame()`.
+
+### Integration tests — implement these exact scenarios
+
+1. **StallSystem instantiated in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify the `stallSystem` field is non-null after `create()`.
+   Simulate 1 PLAYING-state frame. Verify no exception is thrown.
+
+2. **placeStall on PAVEMENT succeeds**: Construct a `StallSystem`. Call `placeStall(5, 1, 5,
+   "PAVEMENT", factionSystem, world)` where the block at (5, 0, 5) is PAVEMENT. Verify it
+   returns `true` and `isStallPlaced()` is `true`.
+
+3. **placeStall on non-valid surface fails**: Call `placeStall(5, 1, 5, "GRASS", ...)`.
+   Verify it returns `false` and `isStallPlaced()` is `false`.
+
+4. **RAIN without awning closes stall and destroys stock**: Place the stall and open it.
+   Add 2 items to stock. Call `update(0.1f, ..., Weather.RAIN, ...)`. Verify
+   `isStallOpen()` is `false` and stock count is 0.
+
+5. **Unlicensed trading spawns inspector after delay**: Place and open stall (no
+   `MARKET_LICENCE`). Call `update(StallSystem.UNLICENSED_INSPECTOR_DELAY + 1f, npcs, ...)`.
+   Verify at least one NPC with type `NPCType.MARKET_INSPECTOR` has been spawned.
