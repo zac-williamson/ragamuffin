@@ -39,5 +39,8 @@ public enum NPCState {
     SCRUTINISING,       // Issue #767: NPC is suspicious of player's disguise — freeze-stares for 3 seconds
     CHASING_PLAYER,     // Issue #771: Police actively chasing player (hot pursuit)
     SEARCHING,          // Issue #771: Police searching area after losing line of sight
-    HIDING              // Issue #771: (unused by police) Player-initiated hide state marker on NPC prop
+    HIDING,             // Issue #771: (unused by police) Player-initiated hide state marker on NPC prop
+
+    // Issue #916: Late-Night Kebab Van
+    QUEUING             // NPC is standing in line at the kebab van waiting to be served
 }

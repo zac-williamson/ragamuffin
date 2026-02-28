@@ -43,5 +43,10 @@ public enum RumourType {
     POLICE_TIP,
 
     /** "Someone just cleaned up at the bookies on a 33/1 shot" — seeded by HorseRacingSystem on a 33/1 win. Draws nearby NPCs toward the bookies for 60 seconds. */
-    BIG_WIN_AT_BOOKIES;
+    BIG_WIN_AT_BOOKIES,
+
+    // ── Issue #916: Late-Night Kebab Van ─────────────────────────────────────
+
+    /** "Someone half-inched a kebab from the van last night — they used a tin of beans" — seeded by KebabVanSystem when the player steals food via the TIN_OF_BEANS distraction. */
+    THEFT;
 }
