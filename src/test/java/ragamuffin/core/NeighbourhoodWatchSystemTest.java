@@ -249,18 +249,18 @@ class NeighbourhoodWatchSystemTest {
     void testAngerDecayDoubledInRainAndFog() {
         watchSystem.setWatchAnger(60);
 
-        // Simulate 100 frames of normal weather decay (1 second total)
+        // Simulate 10 seconds of normal weather decay (100 frames × 0.1s)
         NeighbourhoodWatchSystem normalSystem = new NeighbourhoodWatchSystem(new Random(1));
         normalSystem.setWatchAnger(60);
         for (int i = 0; i < 100; i++) {
-            normalSystem.update(0.01f, false, false, null);
+            normalSystem.update(0.1f, false, false, null);
         }
 
-        // Simulate 100 frames with rain weather decay (1 second total)
+        // Simulate 10 seconds with rain weather decay (100 frames × 0.1s)
         NeighbourhoodWatchSystem rainSystem = new NeighbourhoodWatchSystem(new Random(1));
         rainSystem.setWatchAnger(60);
         for (int i = 0; i < 100; i++) {
-            rainSystem.update(0.01f, true, false, null);
+            rainSystem.update(0.1f, true, false, null);
         }
 
         int normalAnger = normalSystem.getWatchAnger();
@@ -274,7 +274,7 @@ class NeighbourhoodWatchSystemTest {
         NeighbourhoodWatchSystem fogSystem = new NeighbourhoodWatchSystem(new Random(1));
         fogSystem.setWatchAnger(60);
         for (int i = 0; i < 100; i++) {
-            fogSystem.update(0.01f, false, true, null);
+            fogSystem.update(0.1f, false, true, null);
         }
         int fogAnger = fogSystem.getWatchAnger();
         assertTrue(fogAnger < normalAnger,

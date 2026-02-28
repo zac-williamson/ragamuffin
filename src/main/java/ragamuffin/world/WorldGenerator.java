@@ -1290,11 +1290,12 @@ public class WorldGenerator {
             }
         }
 
-        // Plant trees
+        // Plant trees (avoid 3-block radius around origin to keep player spawn clear)
         int treeCount = 0;
         for (int i = 0; i < 8 && treeCount < 5; i++) {
             int treeX = parkStart + random.nextInt(PARK_SIZE - 4) + 2;
             int treeZ = parkStart + random.nextInt(PARK_SIZE - 4) + 2;
+            if (Math.abs(treeX) <= 2 && Math.abs(treeZ) <= 2) continue; // keep spawn clear
 
             for (int y = 1; y <= 4; y++) {
                 world.setBlock(treeX, y, treeZ, BlockType.TREE_TRUNK);
@@ -4290,8 +4291,8 @@ public class WorldGenerator {
         addProp(world, -8f, y, rz2 - 30f,       PropType.SHOPPING_TROLLEY, 42f);
 
         // ── Statue ───────────────────────────────────────────────────────────
-        // Heroic monument at the centre of the park
-        addProp(world, 0f, y, 0f, PropType.STATUE, 0f);
+        // Heroic monument in the park (offset from centre to avoid blocking player spawn at 0,0)
+        addProp(world, 5f, y, 5f, PropType.STATUE, 0f);
     }
 
     /**
