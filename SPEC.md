@@ -8966,3 +8966,116 @@ None of these are connected.
    `RagamuffinGame`. Verify that `neighbourhoodWatchSystem` is non-null. Call
    `onPlayerPunchedCivilian()` once. Simulate 1 frame (`render()` with delta=0.016f).
    Verify `neighbourhoodWatchSystem.getWatchAnger() > 0`.
+
+---
+
+## Wire DisguiseSystem into the game loop
+
+`DisguiseSystem` (Issue #767) is fully implemented in
+`src/main/java/ragamuffin/core/DisguiseSystem.java` but is never instantiated in
+`RagamuffinGame.java`. It is the most important unwired system because `WantedSystem`
+(already wired) explicitly calls `disguiseSystem.attemptDisguiseEscape()` at line 416 of
+`WantedSystem.java` — passing `null` until this is fixed silently skips the entire
+police-escape-via-disguise path. No player can ever wear a disguise, bluff a guard,
+loot NPC clothing, trigger the UNDERCOVER or METHOD_ACTOR achievements, or use the
+POLICE_UNIFORM to delay a heist alarm.
+
+### Key APIs already implemented
+
+| Method | Purpose |
+|---|---|
+| `equipDisguise(Material, Inventory)` | Player equips looted clothing |
+| `update(float, Player, List<NPC>, float)` | Each frame: scrutiny decay, cover integrity |
+| `notifyCrime(Player, List<NPC>)` | –20 cover on visible crime |
+| `attemptBluff(Inventory, Player, List<NPC>)` | 60/90 % success gate on E-key entry |
+| `lootDisguise(NPC, Inventory)` | Add clothing to inventory from knocked-out NPC |
+| `isDisguised()` / `getCoverIntegrity()` | HUD display |
+| `isWearingPoliceUniform()` | Used by HeistSystem alarm-delay |
+
+### What needs wiring
+
+1. **Declare and instantiate** `private DisguiseSystem disguiseSystem;` in `RagamuffinGame`.
+   Instantiate in `initGame()` after `achievementSystem`:
+   ```java
+   disguiseSystem = new DisguiseSystem();
+   disguiseSystem.setAchievementSystem(achievementSystem);
+   disguiseSystem.setRumourNetwork(rumourNetwork);
+   ```
+
+2. **Call `update()` every frame** in `updatePlayingSimulation()`:
+   ```java
+   disguiseSystem.update(delta, player, npcManager.getNPCs(), player.getSpeed());
+   ```
+
+3. **Wire loot-disguise on NPC knockout** — in the NPC hit-detection path, when an NPC's
+   health drops to 0, call:
+   ```java
+   Material looted = disguiseSystem.lootDisguise(targetNPC, inventory);
+   if (looted != null) tooltipSystem.showMessage("You take the " + looted.displayName() + ".", 2.5f);
+   ```
+
+4. **Wire equip-disguise on E-key** — when the player presses E on a clothing item in the
+   hotbar (or inventory), call:
+   ```java
+   disguiseSystem.equipDisguise(selectedMaterial, inventory);
+   ```
+
+5. **Wire bluff on E-key entry attempt** — when the player presses E to enter a guarded
+   building (faction building, police station, off-licence back room), call:
+   ```java
+   DisguiseSystem.BluffResult bluff = disguiseSystem.attemptBluff(inventory, player, npcManager.getNPCs());
+   if (bluff == DisguiseSystem.BluffResult.SUCCESS) { /* grant entry */ }
+   else if (bluff == DisguiseSystem.BluffResult.FAILED) tooltipSystem.showMessage("Blown! Leg it!", 2f);
+   ```
+
+6. **Wire notifyCrime** — in the block-break handler and NPC-punch handler, after a visible
+   crime, call:
+   ```java
+   disguiseSystem.notifyCrime(player, npcManager.getNPCs());
+   ```
+
+7. **Wire into WantedSystem escape** — pass `disguiseSystem` to the existing
+   `wantedSystem.attemptDisguiseEscape(disguiseSystem, ...)` call site in the wanted-escape
+   input handler (currently called with `null`).
+
+8. **Wire HUD display** — pass `disguiseSystem.isDisguised()` and
+   `disguiseSystem.getCoverIntegrity()` to `gameHUD` so a cover-integrity bar is shown
+   whenever a disguise is active.
+
+9. **Reset on restart** — call:
+   ```java
+   disguiseSystem = new DisguiseSystem();
+   disguiseSystem.setAchievementSystem(achievementSystem);
+   disguiseSystem.setRumourNetwork(rumourNetwork);
+   ```
+   inside `restartGame()`.
+
+### Integration tests — implement these exact scenarios
+
+1. **Equipping a disguise sets isDisguised true**: Create `DisguiseSystem`. Create an
+   `Inventory` containing `Material.POLICE_UNIFORM`. Call
+   `equipDisguise(Material.POLICE_UNIFORM, inventory)`. Verify `isDisguised() == true`
+   and `getCoverIntegrity() == DisguiseSystem.MAX_COVER_INTEGRITY`.
+
+2. **Cover decays during scrutiny**: Create `DisguiseSystem`. Equip `POLICE_UNIFORM`.
+   Manually enter scrutiny state by calling `update(3.1f, player, suspiciousNpcList, 0f)`
+   where `suspiciousNpcList` contains a COUNCIL_MEMBER NPC within `SCRUTINY_RANGE`.
+   Verify `getCoverIntegrity() < MAX_COVER_INTEGRITY`.
+
+3. **Crime event reduces cover**: Create `DisguiseSystem`. Equip `MARCHETTI_TRACKSUIT`.
+   Assert `getCoverIntegrity() == 100`. Call `notifyCrime(player, emptyList)`. Verify
+   `getCoverIntegrity() == 100 - DisguiseSystem.CRIME_COVER_PENALTY`.
+
+4. **Bluff succeeds with RUMOUR_NOTE**: Create `DisguiseSystem`. Equip `POLICE_UNIFORM`.
+   Create an `Inventory` with 1× `Material.RUMOUR_NOTE`. Over 100 calls to
+   `attemptBluff(inventory, player, emptyNpcs)`, verify success rate ≥ 85%
+   (confirming the 90 % path, with statistical tolerance).
+
+5. **Loot disguise from knocked-out NPC**: Create a `DisguiseSystem`. Create a dead
+   (health = 0) NPC of type `NPCType.POLICE`. Create an empty `Inventory`. Call
+   `lootDisguise(deadPoliceNPC, inventory)`. Verify `inventory.hasItem(Material.POLICE_UNIFORM, 1)`
+   returns `true`.
+
+6. **DisguiseSystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `disguiseSystem` field is non-null. Simulate 1 frame. Verify
+   `disguiseSystem.isDisguised() == false` (no disguise on fresh start).
