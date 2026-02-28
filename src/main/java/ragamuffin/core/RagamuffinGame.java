@@ -103,6 +103,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #807: WarmthSystem — hypothermia/wetness survival mechanics
     private WarmthSystem warmthSystem;
 
+    // Issue #813: CampfireSystem — warmth from campfires, rain extinguishing, flicker-light
+    private CampfireSystem campfireSystem;
+
     // Issue #807: NoiseSystem — player noise level for NPC hearing detection
     private NoiseSystem noiseSystem;
 
@@ -369,6 +372,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #807: Initialize warmth/wetness and noise systems
         warmthSystem = new WarmthSystem();
         noiseSystem = new NoiseSystem();
+
+        // Issue #813: Initialize campfire system
+        campfireSystem = new CampfireSystem();
 
         // Issue #234: Initialize exposure system
         exposureSystem = new ExposureSystem();
@@ -2216,9 +2222,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #48: Passive reputation decay — "lying low" reduces reputation over time
         player.getStreetReputation().update(delta);
 
+        // Issue #813: Update campfire system (extinguish in rain, sync positions)
+        campfireSystem.update(world, weatherSystem.getCurrentWeather(), delta);
+
         // Issue #807: Update warmth/wetness survival system
         if (!player.isDead()) {
-            boolean nearCampfire = false; // no campfire system wired yet
+            boolean nearCampfire = campfireSystem.isNearCampfire(player.getPosition());
             warmthSystem.update(player, weatherSystem.getCurrentWeather(), world,
                     delta, nearCampfire, inventory);
         }
@@ -2655,6 +2664,11 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
 
             if (broken) {
+                // Issue #813: Deregister campfire when broken
+                if (blockType == BlockType.CAMPFIRE) {
+                    campfireSystem.removeCampfire(new Vector3(x, y, z));
+                }
+
                 // Issue #659: Track block destruction in criminal record
                 player.getCriminalRecord().record(ragamuffin.core.CriminalRecord.CrimeType.BLOCKS_DESTROYED);
 
@@ -2893,6 +2907,16 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Play block place sound
         soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+
+        // Issue #813: Register campfire when a CAMPFIRE block is placed
+        if (placementPos != null) {
+            int bx = (int) placementPos.x;
+            int by = (int) placementPos.y;
+            int bz = (int) placementPos.z;
+            if (world.getBlock(bx, by, bz) == BlockType.CAMPFIRE) {
+                campfireSystem.addCampfire(placementPos);
+            }
+        }
 
         // Issue #807: Block-place noise spike for NPC hearing detection
         noiseSystem.spikeBlockPlace();
@@ -3649,6 +3673,7 @@ public class RagamuffinGame extends ApplicationAdapter {
         weatherSystem = new WeatherSystem();
         warmthSystem = new WarmthSystem();
         noiseSystem = new NoiseSystem();
+        campfireSystem = new CampfireSystem();
         exposureSystem = new ExposureSystem();
         arrestSystem = new ArrestSystem();
         arrestSystem.setRespawnY(calculateSpawnHeight(world, 0, 0) + 1.0f);
