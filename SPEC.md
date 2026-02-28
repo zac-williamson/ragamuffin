@@ -12084,3 +12084,112 @@ BOOT_SALE for 3 coins each (trade only, not edible).
    with an RNG that returns a value ensuring player wins. Verify player receives 15
    coins. Verify `CHAMPION_GROWER` achievement is unlocked. Verify
    `NewspaperSystem.getLastHeadline()` contains "VEG SHOW".
+
+---
+
+## Phase 8w: Late-Night Kebab Van
+
+**Goal**: A kebab/chip van that appears after 22:00 near the pub, creating a
+focal point for late-night chaos — drunk NPCs queuing, queue-jumping, price
+gouging, and a surly owner who has seen it all.
+
+### Overview
+
+A `KebabVanSystem` manages a single mobile food van (`KEBAB_VAN` landmark) that
+parks at a fixed spot near the pub entrance between **22:00 and 02:00** each
+night. Outside those hours the van is absent (despawned). While active:
+
+- A **VAN_OWNER** NPC stands at the serving hatch (new `NPCType.VAN_OWNER`).
+- Drunk NPCs (`DRUNK`, `RAVE_ATTENDEE`) nearby are magnetically drawn to the
+  van and join a virtual queue (ordered list of NPCs, max 8).
+- Each queued NPC takes 8 in-game seconds to be served, then receives a
+  `KEBAB` or `CHIPS` item and moves away satisfied (HUNGRY and BORED needs
+  reset to 0).
+- The player can:
+  - **Queue normally** (press **E** on the VAN_OWNER while facing the hatch):
+    joins back of queue, costs **3 COIN** for KEBAB or **2 COIN** for CHIPS.
+  - **Queue-jump** (press **E** while running, i.e. sprint key held): pushes to
+    front of queue. Any NPC displaced generates a speech complaint; there is a
+    **40% chance** a displaced DRUNK NPC becomes hostile and attacks the player.
+  - **Distract the owner** (throw a `TIN_OF_BEANS` item near the van): the
+    VAN_OWNER chases the distraction for 5 seconds; during this window the
+    player can steal food (takes one KEBAB from the van's stock for free, adds
+    2 Notoriety, and seeds a `THEFT` rumour).
+
+### Dynamic Pricing
+
+The van's prices float based on demand and time of night:
+- **Base price**: KEBAB = 3 COIN, CHIPS = 2 COIN.
+- **Rush hour** (22:00–23:00): prices ×1.5 (rounded up).
+- **Last orders** (01:00–02:00): prices ×0.75 (discounted to clear stock).
+- **COLD_SNAP / FROST** weather: prices ×2.0 (British entrepreneurialism).
+- **Active GREGGS_STRIKE** market event: prices ×1.5 and queue length +3 extra
+  NPCs (everyone's desperate for hot food).
+
+### Van Stock
+
+The van starts each night with **20 servings** (any mix of KEBAB and CHIPS).
+When stock hits 0 the VAN_OWNER puts up a "SOLD OUT" speech bubble, all queued
+NPCs wander away disappointed, and the van despawns early.
+
+### NPC Behaviour Integration
+
+- **DRUNK** NPCs with HUNGRY need > 40 within 20 blocks automatically pathfind
+  to the van and join the queue (via `NPCState.QUEUING`).
+- **RAVE_ATTENDEE** NPCs leaving an active rave always attempt to visit the van
+  (HUNGRY need set to 60 on rave end).
+- **POLICE / PCSO** NPCs patrol within 10 blocks of the van at night; witnessing
+  the player steal food triggers a `WitnessSystem` evidence entry and +5 Notoriety.
+
+### Achievements
+
+- **`DIRTY_KEBAB`** ("Nutrition Optional"): Buy your first kebab from the van — instant.
+- **`FRONT_OF_THE_QUEUE`** ("Queue-Jumper"): Successfully queue-jump 3 times — progress target 3.
+- **`DISTRACTION_TECHNIQUE`** ("Misdirection"): Steal from the van using the
+  TIN_OF_BEANS distraction — instant.
+- **`LAST_ORDERS`** ("Night Owl"): Buy food during the 01:00–02:00 last orders
+  window — instant.
+
+### Unit tests
+
+`KebabVanSystem` unit tests:
+- Van spawns when `TimeSystem` reports hour ≥ 22 and despawns at hour ≥ 26 (02:00).
+- Queue-join adds player to back of queue; queue-jump inserts player at index 0.
+- Serve tick reduces stock by 1 and grants correct item to front-of-queue entity.
+- Dynamic price calculation correct for each time window and weather combination.
+- GREGGS_STRIKE market event adds 3 extra queued NPCs on van spawn.
+- Distraction window set to 5 seconds on `TIN_OF_BEANS` throw; theft adds 2 Notoriety.
+- Displaced drunk NPC hostility rolls at 40% probability (use seeded RNG in tests).
+- Stock reaching 0 despawns van and clears queue.
+
+### Integration tests — implement these exact scenarios:
+
+1. **Van appears at night and disappears at dawn**: Set `TimeSystem` to 21:59.
+   Call `kebabVanSystem.update(delta, ...)`. Verify no `KEBAB_VAN` landmark is
+   active. Advance time to 22:01. Call `update`. Verify a `VAN_OWNER` NPC is
+   present and `kebabVanSystem.isVanActive()` returns true. Advance time to
+   02:01. Call `update`. Verify `isVanActive()` returns false and `VAN_OWNER`
+   NPC is no longer alive.
+
+2. **Player buys a kebab and HUNGRY need resets**: Give the player 3 COIN.
+   Set `TimeSystem` to 22:30 (base price window). Activate the van. Press **E**
+   on `VAN_OWNER` and select KEBAB. Verify player has 0 COIN remaining and 1
+   KEBAB in inventory. Verify `StreetEconomySystem.getNeedScore(player, HUNGRY)`
+   has been set to 0 (or close to 0 via `HealingSystem` consumption).
+
+3. **Queue-jump displaces NPC and may trigger fight**: Spawn a DRUNK NPC with
+   HUNGRY need = 80. Let the NPC join the queue (verify queue size = 1). Player
+   queue-jumps (press E with sprint). Verify player is at queue index 0. Verify
+   the displaced DRUNK NPC has received a complaint speech. Seed the RNG so the
+   hostility roll succeeds; verify the DRUNK NPC transitions to `NPCState.ATTACKING`.
+
+4. **Distraction theft adds Notoriety and seeds rumour**: Give the player 1
+   `TIN_OF_BEANS`. Activate the van (stock = 20). Throw the TIN_OF_BEANS within
+   5 blocks of the van. Verify `kebabVanSystem.isOwnerDistracted()` is true.
+   Press **E** on the serving hatch. Verify player receives 1 KEBAB. Verify van
+   stock is now 19. Verify `WantedSystem` Notoriety has increased by 2. Verify
+   `RumourNetwork` contains a `THEFT` rumour seeded by the van's position.
+
+5. **Van sells out and despawns early**: Set van stock to 1. Serve the last item
+   (advance time by 8 in-game seconds). Verify `VAN_OWNER` displays "SOLD OUT"
+   speech. Verify `isVanActive()` returns false within the next update tick.
