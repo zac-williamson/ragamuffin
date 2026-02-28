@@ -1035,6 +1035,41 @@ public class GameHUD {
      * Shows: round number, hit zone (green), cursor (white), and timeout bar (amber).
      * Only rendered when {@code mcBattleSystem.isBattleActive()} is true.
      */
+    /**
+     * Render the pirate radio triangulation bar when broadcasting is active (Issue #783).
+     * A red fill grows from left to right as triangulation approaches 100%.
+     */
+    private void renderTriangulationBar(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer,
+                                        BitmapFont font, int screenWidth, int screenHeight) {
+        if (pirateRadioSystem == null || !pirateRadioSystem.isActive()) return;
+
+        float triangulation = pirateRadioSystem.getTriangulation();
+        float barWidth = 160f;
+        float barHeight = 14f;
+        float barX = screenWidth / 2f - barWidth / 2f;
+        float barY = screenHeight - 100f;
+
+        Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA,
+                com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.55f);
+        shapeRenderer.rect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
+        float fraction = triangulation / ragamuffin.core.PirateRadioSystem.TRIANGULATION_MAX;
+        shapeRenderer.setColor(0.9f + 0.1f * fraction, 0.2f - 0.2f * fraction, 0.1f, 0.9f);
+        shapeRenderer.rect(barX, barY, barWidth * fraction, barHeight);
+        shapeRenderer.end();
+        Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+
+        spriteBatch.begin();
+        font.getData().setScale(0.7f);
+        font.setColor(Color.WHITE);
+        font.draw(spriteBatch, "TRIANGULATION", barX, barY + barHeight + 14f);
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
+    }
+
     private void renderBattleBar(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer,
                                   BitmapFont font, int screenWidth, int screenHeight) {
         if (mcBattleSystem == null || !mcBattleSystem.isBattleActive()) return;
