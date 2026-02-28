@@ -9676,3 +9676,98 @@ be instantiated (it is currently dead code with no references in `RagamuffinGame
 5. **BootSaleSystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `bootSaleSystem` field is non-null. Simulate 1 frame in
    PLAYING state. Verify no exception is thrown.
+
+## Wire PropertySystem into the Game Loop
+
+**Goal**: `PropertySystem` (568 lines, Phase P / Issue #712) is fully implemented but
+never instantiated or called anywhere in `RagamuffinGame.java`. Players cannot buy
+buildings from the estate agent, repair them to earn passive income, respond to
+rival faction takeovers, pay council rates, or face compulsory purchase. The entire
+property ownership pillar — a core progression system referenced by `SquatSystem`,
+`NeighbourhoodSystem`, and `FactionSystem` — is completely dead code.
+
+`PropertySystem` depends on: `FactionSystem`, `AchievementSystem`, `TimeSystem` —
+all of which are now wired in.
+
+### What needs wiring
+
+1. **Declare and instantiate** `private PropertySystem propertySystem;` in
+   `RagamuffinGame`. Instantiate in `initGame()` after `factionSystem` and
+   `achievementSystem`:
+   ```java
+   propertySystem = new PropertySystem(factionSystem, achievementSystem, timeSystem);
+   ```
+
+2. **Call `onDayTick()` from the midnight callback** so properties decay, income is
+   collected, and council rates are charged:
+   ```java
+   propertySystem.onDayTick(currentDay, inventory, npcManager.getAllNPCs(),
+       rumourNetwork, notorietySystem);
+   ```
+
+3. **Wire E key — estate agent interaction** — when the player presses E near an
+   `NPCType.ESTATE_AGENT` and `propertySystem.isEstateAgentOpen(timeSystem)` is true,
+   open a buy dialogue:
+   ```java
+   String msg = propertySystem.purchaseProperty(landmarkType, buildingX, buildingZ,
+       inventory, notorietySystem);
+   tooltipSystem.showMessage(msg, 3.0f);
+   ```
+
+4. **Wire E key — repair** — when the player presses E inside an owned building while
+   holding BRICK or WOOD, call:
+   ```java
+   String msg = propertySystem.repairProperty(buildingX, buildingZ, inventory);
+   tooltipSystem.showMessage(msg, 3.0f);
+   ```
+
+5. **Wire rival takeover defeat** — after punching off THUG NPCs near an owned
+   building, call:
+   ```java
+   propertySystem.onThugsDefeated(buildingX, buildingZ);
+   ```
+
+6. **Wire rates payment** — when the player presses E at the JobCentre to pay rates:
+   ```java
+   boolean paid = propertySystem.payRates(inventory);
+   tooltipSystem.showMessage(paid ? "Rates paid." : "Not enough coin for council rates.", 2.5f);
+   ```
+
+7. **Poll tooltip** each frame to surface property messages:
+   ```java
+   String propMsg = propertySystem.pollTooltip();
+   if (propMsg != null && !propMsg.isEmpty()) {
+       tooltipSystem.showMessage(propMsg, 3.0f);
+   }
+   ```
+
+8. **Reset on restart** — call `propertySystem = new PropertySystem(factionSystem,
+   achievementSystem, timeSystem);` inside `restartGame()`.
+
+### Integration tests — implement these exact scenarios
+
+1. **Estate agent open during business hours**: Create `PropertySystem` with a
+   `TimeSystem` set to 10:00 AM. Verify `propertySystem.isEstateAgentOpen(timeSystem)`
+   returns `true`. Set time to 20:00. Verify it returns `false`.
+
+2. **Purchasing a property reduces inventory coins**: Add 60 COIN to inventory. Call
+   `propertySystem.purchaseProperty(LandmarkType.TERRACED_HOUSE, 10, 10, inventory,
+   notorietySystem)`. Verify `propertySystem.getPropertyCount() == 1`. Verify
+   inventory COIN count decreased by `PropertySystem.BASE_PURCHASE_PRICE` (50).
+
+3. **Daily decay reduces condition without repair**: Purchase a property. Call
+   `propertySystem.onDayTick(1, inventory, emptyList, rumourNetwork, notorietySystem)`
+   for 5 consecutive days. Verify that
+   `propertySystem.getPropertyAt(10, 10).getCondition()` has decreased from
+   `PropertySystem.INITIAL_CONDITION` (30) by at least
+   `PropertySystem.DECAY_PER_DAY` (5) per missed day.
+
+4. **Rival takeover marks building under attack**: Call
+   `propertySystem.triggerTakeoverAttempt(10, 10)`. Verify
+   `propertySystem.getPropertyAt(10, 10).isUnderTakeover()` is `true`. Call
+   `propertySystem.onThugsDefeated(10, 10)`. Verify `isUnderTakeover()` returns
+   `false`.
+
+5. **PropertySystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `propertySystem` field is non-null. Simulate 1 frame in
+   PLAYING state. Verify no exception is thrown.
