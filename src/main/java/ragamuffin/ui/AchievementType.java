@@ -662,6 +662,39 @@ public enum AchievementType {
         "Community Correspondent",
         "Removed a petition board with a neighbourhood newsletter. Local hero. Sort of.",
         1
+    ),
+
+    // ── Issue #799: The Corner Shop Economy ──────────────────────────────────
+
+    OPEN_FOR_BUSINESS(
+        "Open For Business",
+        "Claimed your first derelict shop unit. Del Boy's looking worried.",
+        1
+    ),
+    KERCHING(
+        "Ker-ching!",
+        "Earned 100 coins in a single day at your corner shop. Not bad for a grey market.",
+        1
+    ),
+    PROTECTION_MONEY(
+        "Protection Money",
+        "Paid Marchetti's crew to look the other way. Business is business.",
+        1
+    ),
+    THE_NEIGHBOURHOOD_SHOP(
+        "The Neighbourhood Shop",
+        "Achieved Street Lads Respect ≥ 70 — they're defending your stock now.",
+        1
+    ),
+    RAIDED(
+        "Raided",
+        "Got your shop raided by police. They took everything. Start again.",
+        1
+    ),
+    PRICE_WAR(
+        "Price War",
+        "Triggered a Marchetti enforcer visit by undercutting their off-licence prices.",
+        1
     );
 
     private final String name;

@@ -436,7 +436,27 @@ public enum Material {
      * neutral patrol mode and reduce WatchAnger by 5.
      * A sausage roll has resolved more conflicts than you'd think.
      */
-    PEACE_OFFERING("Peace Offering");
+    PEACE_OFFERING("Peace Offering"),
+
+    // ── Issue #799: The Corner Shop Economy ───────────────────────────────────
+
+    /**
+     * Shop Key — used to claim any charity shop, off-licence, or derelict unit.
+     * Alternatively, pressing E on a derelict door (Condition ≤ 49) claims it directly.
+     */
+    SHOP_KEY("Shop Key"),
+
+    /**
+     * Cider — sold at the corner shop for faction Street Lads Respect.
+     * Selling at fair price gives Street Lads Respect +2–5/day.
+     */
+    CIDER("Cider"),
+
+    /**
+     * Tobacco — sold at the corner shop. Grey-market item.
+     * Selling at fair price gives Street Lads Respect +2–5/day.
+     */
+    TOBACCO("Tobacco");
 
     private final String displayName;
 
@@ -701,6 +721,14 @@ public enum Material {
             case PEACE_OFFERING:    return cs(0.80f, 0.55f, 0.20f,  // Sausage roll gold
                                               0.85f, 0.72f, 0.20f); // Coin gold
 
+            // Issue #799: Corner Shop Economy materials
+            case SHOP_KEY:          return cs(0.75f, 0.65f, 0.10f,  // Brass key
+                                              0.55f, 0.45f, 0.08f); // Darker brass
+            case CIDER:             return cs(0.88f, 0.72f, 0.18f,  // Golden cider
+                                              0.72f, 0.55f, 0.12f); // Darker gold
+            case TOBACCO:           return cs(0.52f, 0.35f, 0.18f,  // Brown tobacco
+                                              0.38f, 0.22f, 0.08f); // Dark brown
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -840,6 +868,10 @@ public enum Material {
             // Issue #797: Neighbourhood Watch materials (not block items)
             case NEIGHBOURHOOD_NEWSLETTER:
             case PEACE_OFFERING:
+            // Issue #799: Corner Shop Economy materials (not block items)
+            case SHOP_KEY:
+            case CIDER:
+            case TOBACCO:
                 return false;
             default:
                 return true;
@@ -873,6 +905,9 @@ public enum Material {
             case PARACETAMOL:
             case ANTIDEPRESSANTS:
             case NAIL_POLISH:
+            // Issue #799: Corner Shop Economy
+            case CIDER:
+            case TOBACCO:
                 return true;
             default:
                 return false;
@@ -1090,6 +1125,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER; // folded community newsletter
             case PEACE_OFFERING:
                 return IconShape.FOOD;       // sausage roll + coin bundle
+
+            // Issue #799: Corner Shop Economy materials
+            case SHOP_KEY:
+                return IconShape.TOOL;       // key shape
+            case CIDER:
+                return IconShape.BOTTLE;     // cider can/bottle
+            case TOBACCO:
+                return IconShape.FLAT_PAPER; // tobacco packet
 
             default:
                 return IconShape.BOX;

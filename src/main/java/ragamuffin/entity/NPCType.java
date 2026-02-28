@@ -153,7 +153,23 @@ public enum NPCType {
      * Can be converted to patrol mode via a PEACE_OFFERING.
      * Passive until the player commits a visible crime nearby.
      */
-    WATCH_MEMBER(30f, 6f, 2.0f, false);
+    WATCH_MEMBER(30f, 6f, 2.0f, false),
+
+    // ── Issue #799: The Corner Shop Economy ────────────────────────────────────
+
+    /**
+     * Undercover Police — plainclothes officer monitoring the player's shop.
+     * Spawns at Heat Level 60. Appears as PUBLIC NPC; does not arrest on sight.
+     * Triggers a Raid Warning at Heat 80 and a full Raid at Heat 100.
+     */
+    UNDERCOVER_POLICE(40f, 10f, 1.0f, false),
+
+    /**
+     * Runner — a hired PUBLIC/YOUTH NPC employed by the player for 5 coins/day.
+     * Autonomously restocks empty shop slots and makes player-queued home deliveries.
+     * Earns +2 coin premium per delivery item; each delivery adds +3 Notoriety.
+     */
+    RUNNER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
