@@ -3512,6 +3512,33 @@ public class RagamuffinGame extends ApplicationAdapter {
             return;
         }
 
+        // Fix #887: PROP_* items place as 3D props in the world
+        ragamuffin.world.PropType propTypeForMaterial = blockPlacer.materialToPropType(material);
+        if (propTypeForMaterial != null) {
+            ragamuffin.world.PropType placedPropType = blockPlacer.placeProp(
+                    world, inventory, material, tmpCameraPos, tmpDirection, PLACE_REACH,
+                    player.getAABB(), cameraYaw);
+            if (placedPropType == null) {
+                tooltipSystem.showMessage("Can't place here.", 2.0f);
+                soundSystem.play(ragamuffin.audio.SoundEffect.UI_CLOSE);
+            } else {
+                soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+                // Refresh prop renderer so the newly placed prop is visible
+                if (propRenderer != null) {
+                    propRenderer.setProps(world.getPropPositions());
+                }
+                // Notify squat system if player has a squat (furnishing Vibe bonus)
+                if (squatSystem != null && squatSystem.hasSquat()) {
+                    java.util.List<ragamuffin.entity.NPC> allNpcs = npcManager.getNPCs();
+                    int vibeGain = squatSystem.furnish(placedPropType, allNpcs);
+                    if (vibeGain > 0) {
+                        tooltipSystem.showMessage("Squat Vibe +" + vibeGain + "!", 2.5f);
+                    }
+                }
+            }
+            return;
+        }
+
         // Get placement position before placing so we know which chunk to rebuild
         Vector3 placementPos = blockPlacer.getPlacementPosition(world, tmpCameraPos, tmpDirection, PLACE_REACH);
 
