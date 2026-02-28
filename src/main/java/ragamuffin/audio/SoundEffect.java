@@ -37,5 +37,8 @@ public enum SoundEffect {
     ITEM_EAT,
     ITEM_USE,
     MUNCH,     // Large munching sound for crisp consumption
-    PIRATE_RADIO_MUSIC  // Looping lo-fi pirate radio jingle while broadcasting
+    PIRATE_RADIO_MUSIC,  // Looping lo-fi pirate radio jingle while broadcasting
+
+    // Issue #932: Ice Cream Van System
+    ICE_CREAM_JINGLE  // Tinny ice cream van jingle; plays at each van stop
 }

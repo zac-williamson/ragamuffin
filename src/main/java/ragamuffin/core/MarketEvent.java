@@ -93,6 +93,21 @@ public enum MarketEvent {
         150f, // 2.5 game minutes
         new Material[]{Material.PRESCRIPTION_MEDS, Material.TOBACCO_POUCH, Material.STOLEN_PHONE},
         0.5f // price drop — flood market
+    ),
+
+    /**
+     * Issue #932: Ice Cream Frenzy — triggered by HEATWAVE weather.
+     * NPC HUNGRY accumulation rate ×1.5 for the day (everyone wants ice cream).
+     * Ice cream van sales occur 2× more frequently.
+     * ICE_CREAM_99, SCREWBALL, FAB_LOLLY, CHOC_ICE, OYSTER_CARD_LOLLY prices +1 COIN.
+     */
+    ICE_CREAM_FRENZY(
+        "Ice Cream Frenzy",
+        "It's roasting out there. The van's doing a roaring trade.",
+        480f, // 8 game minutes (covers a full heatwave day)
+        new Material[]{Material.ICE_CREAM_99, Material.SCREWBALL, Material.FAB_LOLLY,
+                       Material.CHOC_ICE, Material.OYSTER_CARD_LOLLY},
+        2.0f // demand spike multiplier
     );
 
     private final String displayName;

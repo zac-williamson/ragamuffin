@@ -990,6 +990,29 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #932: Ice Cream Van System ──────────────────────────────────────
+
+    KING_OF_THE_ROAD(
+        "King of the Road",
+        "Destroyed the rival ice cream van during a Jingle War. The estate is yours.",
+        1
+    ),
+    MISTER_FROSTY(
+        "Mister Frosty",
+        "Sold ice cream from the stolen van 10 times. Entrepreneurship, British-style.",
+        10
+    ),
+    CHOC_ICE_COLD(
+        "Choc Ice Cold",
+        "Bought a Choc Ice during a cold snap. Against all reason. Against all instinct.",
+        1
+    ),
+    FREE_RIDE(
+        "Free Ride",
+        "Used an Oyster Card Lolly to board the Number 47. The driver was baffled.",
+        1
+    ),
+
     // ── Issue #926: Chippy System ──────────────────────────────────────────────
 
     SALT_AND_VINEGAR(
