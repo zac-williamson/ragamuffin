@@ -158,6 +158,8 @@ public class RagamuffinGame extends ApplicationAdapter {
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
+    // Issue #773: Car driving system — lets player enter and drive cars
+    private CarDrivingSystem carDrivingSystem;
     // Issue #672: Car renderer — makes cars visible in-game
     private ragamuffin.render.CarRenderer carRenderer;
     private float distanceTravelledAchievement = 0f; // accumulated metres walked
@@ -411,6 +413,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
         carManager.spawnInitialCars(world);
+        // Issue #773: Initialize car driving system
+        carDrivingSystem = new CarDrivingSystem(carManager);
         // Issue #672: Initialize car renderer so cars are visible in-game
         carRenderer = new ragamuffin.render.CarRenderer();
 
@@ -2281,6 +2285,17 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetPlace();
         }
 
+        // Issue #773: Car driving — WASD controls the car instead of the player
+        if (carDrivingSystem.isInCar()) {
+            carDrivingSystem.update(delta, player,
+                    inputHandler.isForward(), inputHandler.isBackward(),
+                    inputHandler.isLeft(), inputHandler.isRight());
+            // Suppress normal movement, jump, dodge while driving
+            inputHandler.resetJump();
+            inputHandler.resetDodge();
+            return;
+        }
+
         // Camera direction is already up-to-date (applied at top of frame)
         // Calculate movement direction from current camera facing (reuse vectors)
         tmpForward.set(camera.direction.x, 0, camera.direction.z).nor();
@@ -2773,6 +2788,19 @@ public class RagamuffinGame extends ApplicationAdapter {
      * Phase 11: Handle E key interaction with NPCs and doors.
      */
     private void handleInteraction() {
+        // Issue #773: Car enter/exit takes priority
+        if (carDrivingSystem.isInCar()) {
+            carDrivingSystem.exitCar(player);
+            String msg = carDrivingSystem.pollLastMessage();
+            if (msg != null) tooltipSystem.showMessage(msg, 3.0f);
+            return;
+        }
+        if (carDrivingSystem.tryEnterCar(player)) {
+            String msg = carDrivingSystem.pollLastMessage();
+            if (msg != null) tooltipSystem.showMessage(msg, 3.0f);
+            return;
+        }
+
         tmpCameraPos.set(camera.position);
         tmpDirection.set(camera.direction);
 
