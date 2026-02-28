@@ -10619,3 +10619,69 @@ player has no way to view their character progression.
 
 5. **SkillsUI hidden on restart**: Open `skillsUI`. Call `restartGame()`. Verify
    `skillsUI.isVisible()` returns `false`.
+
+---
+
+## Wire FruitMachine into the game loop
+
+`FruitMachine` (Issue #696) is a complete pub mini-game class with full spin logic,
+symbol slots, and coin payout rules. The `FRUIT_MACHINE` prop type is already
+defined in `PropType` (with collision dimensions and `Material.SCRAP_METAL` drop),
+and the `Material.COIN` currency is already used throughout the economy. However
+`FruitMachine` is **never instantiated, never connected to E-key interaction, and
+never invoked** in `RagamuffinGame.java` — players standing next to the fruit machine
+prop in the pub get no interaction prompt and cannot play it.
+
+### Steps to wire in
+
+1. **Declare** a field in `RagamuffinGame`:
+   ```java
+   private ragamuffin.core.FruitMachine fruitMachine;
+   ```
+
+2. **Instantiate** in `create()` and in `restartGame()`:
+   ```java
+   fruitMachine = new FruitMachine(new java.util.Random());
+   ```
+
+3. **Add an E-key interaction handler** in the PLAYING branch of
+   `handleInteractKey()` (alongside existing prop interactions). When the
+   targeted prop is `PropType.FRUIT_MACHINE`:
+   - If the player has at least 1 `Material.COIN` in inventory:
+     - Deduct 1 COIN from inventory.
+     - Call `fruitMachine.spin()` to get a `SpinResult`.
+     - Add `spinResult.payout` COIN to inventory.
+     - Display `spinResult.displayText` as an on-screen toast/message.
+   - Otherwise display: `"Need 1 coin to play the fruit machine."`.
+
+4. **Add an interaction prompt** in the HUD: when the player is looking at a
+   `FRUIT_MACHINE` prop, show the tooltip `"[E] Play fruit machine (1 coin)"`.
+
+5. **Update SPEC Key Controls Reference** — verify **E** already lists
+   "Interact with objects/NPCs" (no change needed).
+
+### Integration tests — implement these exact scenarios
+
+1. **Playing with a coin triggers a spin**: Initialise `RagamuffinGame` headless.
+   Give the player 1 `Material.COIN`. Place a `FRUIT_MACHINE` prop directly in
+   front of the player. Simulate pressing **E**. Verify the player's COIN count
+   has changed (either decreased by 1 on loss, or changed by `WIN_PAIR - 1` or
+   `WIN_TRIPLE - 1` on win). Verify no exception is thrown.
+
+2. **Playing without a coin shows an error message**: Give the player 0 COIN.
+   Place a `FRUIT_MACHINE` prop in front of the player. Simulate pressing **E**.
+   Verify the player's COIN count remains 0. Verify an error message (containing
+   "coin") is queued for display.
+
+3. **Triple match pays 9 coins**: Seed `FruitMachine` with a `Random` that always
+   produces `0` (all three slots match symbol 0). Give the player 1 COIN. Simulate
+   pressing **E** on the fruit machine. Verify the player's COIN count is
+   `1 - FruitMachine.COST + FruitMachine.WIN_TRIPLE` = 9.
+
+4. **Pair match pays 2 coins**: Seed `FruitMachine` with a `Random` that produces
+   `[0, 0, 1]` (two matching slots). Give the player 1 COIN. Simulate pressing **E**.
+   Verify the player's COIN count is `1 - FruitMachine.COST + FruitMachine.WIN_PAIR` = 2.
+
+5. **No match loses the coin**: Seed `FruitMachine` with a `Random` that produces
+   `[0, 1, 2]` (no match). Give the player 1 COIN. Simulate pressing **E**. Verify
+   the player's COIN count is 0.
