@@ -12951,3 +12951,178 @@ prop (`PropType.CHANGING_CUBICLE`) to equip `CLEAN_CLOTHES` as a disguise:
    movement speed is multiplied by 0.7. Advance 60 real seconds. Verify speed returns
    to normal (1.0×). Verify NPCs inside the launderette also moved at reduced speed
    during the event.
+
+---
+
+## Chippy System — Tony's Chip Shop ('Salt? Vinegar? Open till Midnight.')
+
+**Goal**: Make the `CHIPPY` landmark (`LandmarkType.CHIPPY` — "Tony's Chip Shop") a
+fully interactive location. The chippy is a liminal British institution: harsh neon
+lighting, condensation on the windows, a laminated menu above a bain-marie, and an
+owner who has been there since 1987 and absolutely will not be rushed.
+
+### Core Mechanics
+
+**Ordering at the Counter** (`PropType.CHIPPY_COUNTER`): The player presses **E**
+on the counter prop inside the chippy to open the `ChippyOrderUI` — a simple list
+of menu items with prices. Items are purchased with COIN.
+
+| Menu Item | Cost (COIN) | Effect |
+|-----------|-------------|--------|
+| `CHIPS` (large) | 2 | Restores 40 hunger; satisfies `NeedType.HUNGRY` |
+| `BATTERED_SAUSAGE` | 2 | Restores 30 hunger + 10 energy |
+| `CHIP_BUTTY` | 3 | Restores 50 hunger; needs 2 slices of bread in inventory, or Tony refuses ("Sorry love, we're out of bread.") |
+| `MUSHY_PEAS` | 1 | Restores 15 hunger; satisfies `NeedType.COLD` by +5 (it's warm, alright?) |
+| `PICKLED_EGG` | 1 | Restores 10 hunger; chance (20%) of `FOOD_POISONING` debuff: player moves at 80% speed for 60 real seconds |
+| `FISH_SUPPER` | 4 | Restores 60 hunger + warmth +10; rare item — only available 2 in-game days out of 3 ("We're out of fish, love.") |
+| `BOTTLE_OF_WATER` | 1 | Restores 10 thirst / generic buff |
+
+All items arrive wrapped in `Material.WHITE_PAPER` — a collectable junk item that
+piles up on tables and can be thrown (right-click while held) to create a litter-drop
+NPC reaction. Tooltip on first chip purchase: "Salt? Vinegar? Open till midnight."
+
+**Tony the Owner** (`NPCType.CHIPPY_OWNER`): A unique NPC (`TONY`) who stands
+behind the counter and delivers dry one-liners. Tony has fixed dialogue lines
+depending on time of day, player notoriety, and recent events:
+
+- Default: "What can I get ya, love?"
+- If Notoriety ≥ 20: "Saw your face in the paper. Still want chips, do ya?"
+- If time is 23:30–00:00: "Almost closing time. Hurry up."
+- If `GREGGS_RAID` rumour is active: "I heard about Greggs. Tragic. Still, more business for us."
+- If player holds BALACLAVA: "Take that thing off before I serve you."
+  (Refuses to serve until the BALACLAVA is removed or stashed.)
+
+**Post-Pub Queue**: Between 23:00 and 01:00, 3–6 `PUBLIC` NPCs queue outside the
+chippy in a line. These NPCs have `NeedType.HUNGRY` at 80+. If the player is in the
+queue (within 5 blocks of the door), they can:
+- **Queue-jump** (press **F** near the front) — gain service immediately, but 1
+  queuing NPC becomes `NPCState.AGGRESSIVE` for 2 minutes. Adds +1 `ANTISOCIAL_BEHAVIOUR`
+  to `CriminalRecord` if a POLICE NPC is within 20 blocks.
+- **Wait normally** — player reaches counter after 30 real seconds; no penalty.
+
+**Salt & Vinegar** (`Material.SALT_AND_VINEGAR_PACKET`): A consumable item sold
+at the counter for 1 COIN. Interacting (**E**) with any chip item in the inventory
+while holding SALT_AND_VINEGAR_PACKET combines them to produce `CHIPS_SEASONED`,
+which restores 50 hunger instead of 40. Tooltip: "You absolute class act."
+
+**Tony's Closing Wrath**: The chippy is open 11:00–00:00. At exactly 00:00 Tony
+places a `CLOSED_SIGN` prop at the door and says "Right. Jog on." Any NPC still
+inside is ushered out (`NPCState.FLEEING`). The player gets 10 seconds to
+complete any pending transaction before being ejected (same as when the door blocks).
+
+**The Chip Shop Cat** (`NPCType.STRAY_CAT`): A persistent `STRAY_CAT` NPC named
+"Biscuit" lives inside the chippy. Biscuit:
+- Spawns near the counter at opening time and despawns at closing.
+- Has `NeedType.HUNGRY` that ticks up — the player can press **E** on Biscuit while
+  holding any food item to feed them (HUNGRY reset to 0).
+- Feeding Biscuit 3 times across separate sessions awards the `FED_THE_CAT` achievement.
+- If the player punches Biscuit, all queuing NPCs immediately become AGGRESSIVE and
+  Tony refuses service for the rest of the session. Tooltip:
+  "You punched a cat. In a chip shop. You absolute monster."
+
+### Integration
+
+- **`StreetEconomySystem`**: Post-pub queue NPCs have `NeedType.HUNGRY` at 80+ —
+  prime deal targets if the player has spare CHIPS to resell.
+- **`NotorietySystem`**: Queue-jumping adds `ANTISOCIAL_BEHAVIOUR` when police are
+  near. Punching Biscuit the cat adds +3 Notoriety immediately.
+- **`CriminalRecord`**: Queue-jumping near police adds `ANTISOCIAL_BEHAVIOUR` offence.
+- **`RumourNetwork`**: Any NPC who witnesses the player queue-jump seeds a
+  `QUEUE_JUMP` rumour to nearby NPCs. If Biscuit is punched, a `CAT_PUNCH` rumour
+  propagates town-wide — all PUBLIC NPCs become slightly hostile for 5 in-game minutes.
+- **`WeatherSystem`**: During `RAIN` or `FROST`, post-pub queue NPCs spawn 30%
+  sooner and the chippy interior counts as `ShelterDetector` warmth zone.
+- **`WarmthSystem`**: Standing inside the chippy provides passive warmth restoration
+  (+3 warmth/s) due to hot fat fryer environment.
+- **`NewspaperSystem`**: If the player eats `FISH_SUPPER` 5 times, a positive
+  `CHIPPY_REGULAR` infamy note appears: "Local seen keeping Tony's Chip Shop afloat."
+- **`TimeSystem`**: Opening hours 11:00–00:00. Post-pub queue spawns 23:00–01:00.
+- **`BuskingSystem`**: If the player busks within 5 blocks of the chippy entrance
+  during the post-pub queue window, busking income increases by +50% (captive tipsy
+  audience).
+
+### New Materials / Props
+
+- `Material.BATTERED_SAUSAGE` — menu item; restores 30 hunger + 10 energy.
+- `Material.CHIP_BUTTY` — menu item; requires BREAD (from `TESCO_EXPRESS`) or
+  refused; restores 50 hunger.
+- `Material.MUSHY_PEAS` — menu item; restores 15 hunger + 5 cold relief.
+- `Material.PICKLED_EGG` — menu item; 20% chance of FOOD_POISONING debuff.
+- `Material.FISH_SUPPER` — premium menu item; available 2/3 days; restores 60 hunger.
+- `Material.SALT_AND_VINEGAR_PACKET` — condiment item; combines with CHIPS → CHIPS_SEASONED.
+- `Material.CHIPS_SEASONED` — enhanced chips; restores 50 hunger.
+- `Material.BOTTLE_OF_WATER` — sold at counter for 1 COIN.
+- `Material.WHITE_PAPER` — chip wrapping; collectable junk litter prop.
+- `PropType.CHIPPY_COUNTER` — interactable counter prop; opens `ChippyOrderUI`.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `SALT_AND_VINEGAR` | Season chips with SALT_AND_VINEGAR_PACKET for the first time |
+| `LAST_ORDERS` | Purchase from Tony in the final 10 minutes before closing |
+| `FED_THE_CAT` | Feed Biscuit 3 times across sessions |
+| `QUEUE_JUMPER` | Successfully queue-jump the post-pub queue |
+| `CAT_PUNCHER` | Punch Biscuit (shame achievement — no tooltip congratulation) |
+| `CHIPPY_REGULAR` | Buy from Tony's 10 times across sessions |
+
+### Unit Tests
+
+- `ChippySystem.isOpen(hour)` returns true for 11:00–00:00, false otherwise.
+- FOOD_POISONING debuff applies with 20% probability on PICKLED_EGG purchase.
+- FISH_SUPPER availability cycles correctly (available 2 out of 3 in-game days).
+- Tony refuses to serve player holding BALACLAVA.
+- Queue-jump increments `CriminalRecord.ANTISOCIAL_BEHAVIOUR` when police within 20 blocks.
+- Feeding Biscuit 3 times awards `FED_THE_CAT` achievement.
+- Post-pub queue spawns 3–6 NPCs between 23:00–01:00.
+- CHIPS_SEASONED produced by combining CHIPS + SALT_AND_VINEGAR_PACKET.
+- Warmth restoration rate inside chippy is +3/s.
+- Punching Biscuit adds +3 Notoriety and triggers `CAT_PUNCH` rumour.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Ordering chips costs coins and restores hunger**: Give the player 5 COIN and set
+   hunger to 20. Set time to 13:00 (open). Place player facing a `CHIPPY_COUNTER`
+   prop. Press E (`chippySystem.openOrderUI(player)` → select CHIPS → confirm).
+   Verify player now has 3 COIN (2 spent). Verify player hunger is now 60 (20 + 40).
+   Verify player inventory contains 1 `WHITE_PAPER` (the chip wrapping).
+
+2. **Tony refuses BALACLAVA wearers**: Set player's active disguise to `BALACLAVA`
+   via `DisguiseSystem`. Press E on `CHIPPY_COUNTER`. Verify `ChippySystem.getLastRefusalReason()`
+   is `BALACLAVA_WORN`. Verify no COIN is spent and the speech log shows
+   "Take that thing off before I serve you."
+
+3. **PICKLED_EGG food poisoning debuff**: Set `ChippySystem.FOOD_POISONING_CHANCE = 1.0f`
+   (deterministic). Give player 2 COIN. Buy PICKLED_EGG. Verify
+   `chippySystem.isFoodPoisoned(player)` is true. Verify player movement speed
+   multiplier is 0.8×. Advance 60 real seconds. Verify debuff has expired and speed
+   is back to 1.0×.
+
+4. **Queue-jump triggers ANTISOCIAL_BEHAVIOUR near police**: Spawn post-pub queue
+   (set time to 23:30, call `chippySystem.spawnPostPubQueue(npcManager, world)`).
+   Verify 3–6 PUBLIC NPCs exist within 5 blocks of chippy door. Place a POLICE NPC
+   12 blocks from the player. Player presses F (`chippySystem.attemptQueueJump(player,
+   npcManager, criminalRecord, world)`). Verify the front NPC becomes `NPCState.AGGRESSIVE`.
+   Verify `criminalRecord.getOffenceCount(ANTISOCIAL_BEHAVIOUR)` increased by 1.
+
+5. **Feeding Biscuit 3 times awards achievement**: Spawn `STRAY_CAT` NPC "Biscuit"
+   via `chippySystem.spawnBiscuit(npcManager, world)`. Give player 3 CHIPS. Press E
+   on Biscuit 3 times (`chippySystem.feedBiscuit(player, achievementSystem)`). Verify
+   Biscuit's `NeedType.HUNGRY` is 0 after each feeding. Verify `FED_THE_CAT`
+   achievement was awarded on the third feeding.
+
+6. **Post-pub queue spawns only between 23:00–01:00**: Set time to 20:00. Call
+   `chippySystem.update(delta, timeSystem, npcManager, world)`. Verify no post-pub
+   queue NPCs have been spawned. Set time to 23:30. Call `update()` again. Verify
+   3–6 PUBLIC NPCs are now queued within 5 blocks of the door. Set time to 02:00.
+   Call `update()`. Verify those NPCs have been despawned (or moved to FLEEING).
+
+7. **FISH_SUPPER unavailable every third day**: Set `ChippySystem.fishDayCounter = 2`
+   (day 3 of the cycle). Open order UI. Verify FISH_SUPPER is shown as greyed out and
+   speech log shows "We're out of fish, love." Set `fishDayCounter = 0` (day 1).
+   Re-open UI. Verify FISH_SUPPER is available and can be purchased for 4 COIN.
+
+8. **Chippy interior provides warmth**: Set player warmth to 20. Place player inside
+   the `CHIPPY` AABB. Advance simulation by 10 real seconds via
+   `warmthSystem.update(10f, player, world, weatherSystem)`. Verify player warmth
+   is now 50 (20 + 30 from 3 warmth/s × 10 seconds).
