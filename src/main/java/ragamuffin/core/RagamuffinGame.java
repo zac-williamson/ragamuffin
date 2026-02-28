@@ -178,6 +178,10 @@ public class RagamuffinGame extends ApplicationAdapter {
     private FactionSystem factionSystem;
     // Issue #818: Disguise system — player can loot and wear NPC clothing to infiltrate restricted areas
     private DisguiseSystem disguiseSystem;
+    // Issue #781: Graffiti system — territorial marking, turf pressure, NPC crew spraying
+    private GraffitiSystem graffitiSystem;
+    // Issue #781: Graffiti renderer — renders graffiti marks as depth-offset quads on block surfaces
+    private ragamuffin.render.GraffitiRenderer graffitiRenderer;
 
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
@@ -460,6 +464,9 @@ public class RagamuffinGame extends ApplicationAdapter {
         disguiseSystem.setAchievementSystem(achievementSystem);
         disguiseSystem.setRumourNetwork(rumourNetwork);
         gameHUD.setDisguiseSystem(disguiseSystem);
+        // Issue #781: Initialize graffiti system and renderer — territorial marking and turf-war
+        graffitiSystem = new GraffitiSystem();
+        graffitiRenderer = new ragamuffin.render.GraffitiRenderer();
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -1243,6 +1250,9 @@ public class RagamuffinGame extends ApplicationAdapter {
             flagRenderer.render(modelBatch, environment);
             modelBatch.end();
 
+            // Issue #781: Render graffiti marks on block surfaces
+            graffitiRenderer.render(graffitiSystem.getAllMarks(), camera);
+
             // Issue #54: Render block targeting outline and placement ghost block
             // Issue #192: Skip when a UI overlay is open to avoid drawing on top of inventory/crafting/help screens
             if (!isUIBlocking()) {
@@ -1974,6 +1984,14 @@ public class RagamuffinGame extends ApplicationAdapter {
             inputHandler.resetInteract();
         }
 
+        // Issue #781: T key — spray graffiti when holding a SPRAY_CAN
+        if (inputHandler.isTagPressed()) {
+            if (!isUIBlocking()) {
+                handleGraffitiSpray();
+            }
+            inputHandler.resetTag();
+        }
+
         // Handle mouse clicks on UI overlays
         int screenHeight = Gdx.graphics.getHeight();
         if (inputHandler.isLeftClickPressed()) {
@@ -2177,6 +2195,11 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #811: Update faction system — mission timers, turf transfers, NPC hostility
         factionSystem.update(delta, player, npcManager.getNPCs());
+
+        // Issue #781: Update graffiti system — fade timers, NPC crew spray, turf pressure, passive income
+        graffitiSystem.update(delta, timeSystem.getDaysDelta(), npcManager.getNPCs(),
+                factionSystem.getTurfMap(), wantedSystem, noiseSystem, rumourNetwork, inventory,
+                type -> achievementSystem.unlock(type));
 
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
@@ -3109,7 +3132,111 @@ public class RagamuffinGame extends ApplicationAdapter {
                 rebuildChunkAt(x, lowerY, z);
                 rebuildChunkAt(x, lowerY + 1, z);
                 soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+                return;
             }
+        }
+
+        // Issue #781: E key — scrub a rival faction's graffiti mark on the targeted block face
+        {
+            ragamuffin.world.RaycastResult scrubResult =
+                    blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, GraffitiSystem.MAX_TAG_DISTANCE);
+            if (scrubResult != null) {
+                Vector3 targetBlockPos = new Vector3(scrubResult.getBlockX(), scrubResult.getBlockY(), scrubResult.getBlockZ());
+                GraffitiSystem.GraffitiMark rivalMark = findRivalGraffitiMark(targetBlockPos);
+                if (rivalMark != null) {
+                    graffitiSystem.scrubTag(rivalMark, factionSystem.getTurfMap(),
+                            type -> achievementSystem.unlock(type));
+                    tooltipSystem.showMessage("Scrubbed rival tag", 1.5f);
+                }
+            }
+        }
+    }
+
+    /**
+     * Issue #781: Find a living rival (non-player) graffiti mark on the given block position.
+     */
+    private GraffitiSystem.GraffitiMark findRivalGraffitiMark(Vector3 blockPos) {
+        for (GraffitiSystem.GraffitiMark mark : graffitiSystem.getAllMarks()) {
+            if (!mark.isAlive()) continue;
+            if (mark.getStyle() == GraffitiSystem.TagStyle.PLAYER_TAG) continue;
+            Vector3 mp = mark.getBlockPos();
+            if ((int) mp.x == (int) blockPos.x
+                    && (int) mp.y == (int) blockPos.y
+                    && (int) mp.z == (int) blockPos.z) {
+                return mark;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Issue #781: Handle T key — spray a PLAYER_TAG graffiti mark on the targeted block face.
+     * Shows a tooltip if no spray can is held.
+     */
+    private void handleGraffitiSpray() {
+        int selectedSlot = hotbarUI.getSelectedSlot();
+        Material heldMaterial = inventory.getItemInSlot(selectedSlot);
+
+        if (heldMaterial != Material.SPRAY_CAN) {
+            tooltipSystem.showMessage("Equip a spray can to tag walls (T)", 2.0f);
+            return;
+        }
+
+        tmpCameraPos.set(camera.position);
+        tmpDirection.set(camera.direction);
+
+        ragamuffin.world.RaycastResult result =
+                blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, GraffitiSystem.MAX_TAG_DISTANCE);
+        if (result == null) return;
+
+        Vector3 blockPos = new Vector3(result.getBlockX(), result.getBlockY(), result.getBlockZ());
+
+        // Determine which face was hit from the hit point relative to the block centre
+        GraffitiSystem.BlockFace face = computeHitFace(result);
+
+        // Determine indoor/outdoor (below block height 1 = indoor heuristic; simplified)
+        boolean isOutdoor = result.getBlockY() > 0;
+        boolean isIndoor  = !isOutdoor;
+
+        GraffitiSystem.GraffitiMark placed = graffitiSystem.placeTag(
+                blockPos,
+                face,
+                GraffitiSystem.TagStyle.PLAYER_TAG,
+                player.getPosition(),
+                isIndoor,
+                isOutdoor,
+                inventory,
+                factionSystem.getTurfMap(),
+                noiseSystem,
+                type -> achievementSystem.unlock(type));
+
+        if (placed != null) {
+            soundSystem.play(ragamuffin.audio.SoundEffect.BLOCK_PLACE);
+            tooltipSystem.trigger(TooltipTrigger.FIRST_TREE_PUNCH); // reuse closest available trigger; graffiti has its own in GraffitiSystem
+        }
+    }
+
+    /**
+     * Derive which block face was hit from the fractional hit position.
+     */
+    private GraffitiSystem.BlockFace computeHitFace(ragamuffin.world.RaycastResult result) {
+        Vector3 hit = result.getHitPosition();
+        if (hit == null) return GraffitiSystem.BlockFace.NORTH;
+        float bx = result.getBlockX();
+        float by = result.getBlockY();
+        float bz = result.getBlockZ();
+        float dx = hit.x - bx - 0.5f;
+        float dy = hit.y - by - 0.5f;
+        float dz = hit.z - bz - 0.5f;
+        float adx = Math.abs(dx);
+        float ady = Math.abs(dy);
+        float adz = Math.abs(dz);
+        if (ady >= adx && ady >= adz) {
+            return dy > 0 ? GraffitiSystem.BlockFace.TOP : GraffitiSystem.BlockFace.BOTTOM;
+        } else if (adx >= adz) {
+            return dx > 0 ? GraffitiSystem.BlockFace.EAST : GraffitiSystem.BlockFace.WEST;
+        } else {
+            return dz > 0 ? GraffitiSystem.BlockFace.SOUTH : GraffitiSystem.BlockFace.NORTH;
         }
     }
 
@@ -3772,6 +3899,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         disguiseSystem = new DisguiseSystem();
         disguiseSystem.setAchievementSystem(achievementSystem);
         disguiseSystem.setRumourNetwork(rumourNetwork);
+        // Issue #781: Reset graffiti system so marks and timers don't carry over between games
+        graffitiSystem = new GraffitiSystem();
         gameHUD = new GameHUD(player);
         gameHUD.setNeighbourhoodWatchSystem(neighbourhoodWatchSystem);
         gameHUD.setDisguiseSystem(disguiseSystem);
