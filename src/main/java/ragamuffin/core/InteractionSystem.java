@@ -433,8 +433,16 @@ public class InteractionSystem {
     /**
      * Handle a quest interaction with a building NPC.
      * Returns the dialogue line to show, or null if no special quest handling.
+     * Also checks if the player has arrived at the target of any active DELIVER quest.
      */
     private String handleQuestInteraction(LandmarkType buildingType, Inventory inventory) {
+        // Check if any active DELIVER quest targets this building — player has arrived
+        // at the drop-off point with the goods.
+        String deliverResult = checkDeliverQuestAtTarget(buildingType, inventory);
+        if (deliverResult != null) {
+            return deliverResult;
+        }
+
         Quest quest = questRegistry.getQuest(buildingType);
         if (quest == null) return null;
 
@@ -449,17 +457,46 @@ public class InteractionSystem {
         }
 
         // Quest is active — check if player can complete it.
-        // EXPLORE quests don't need an inventory; COLLECT/DELIVER quests do.
-        if (quest.checkCompletion(inventory)) {
-            boolean success = quest.complete(inventory);
-            if (success) {
-                lastQuestCompleted = quest;
-                return BuildingQuestRegistry.getQuestCompletionLine(quest);
+        // EXPLORE quests don't need an inventory; COLLECT quests check inventory here.
+        // DELIVER quests are completed at the target landmark (handled by checkDeliverQuestAtTarget),
+        // so the origin building only reminds the player of the objective.
+        if (quest.getType() != Quest.ObjectiveType.DELIVER) {
+            if (quest.checkCompletion(inventory)) {
+                boolean success = quest.complete(inventory);
+                if (success) {
+                    lastQuestCompleted = quest;
+                    return BuildingQuestRegistry.getQuestCompletionLine(quest);
+                }
             }
         }
 
         // Remind the player of the objective
         return BuildingQuestRegistry.getQuestReminderLine(quest, inventory);
+    }
+
+    /**
+     * Check if any active DELIVER quest from any building targets {@code targetLandmark}.
+     * If the player is here with the required items, complete the quest and return the
+     * completion dialogue. Returns null if no matching DELIVER quest is ready.
+     */
+    private String checkDeliverQuestAtTarget(LandmarkType targetLandmark, Inventory inventory) {
+        if (targetLandmark == null || inventory == null) return null;
+        for (LandmarkType origin : LandmarkType.values()) {
+            Quest quest = questRegistry.getQuest(origin);
+            if (quest == null) continue;
+            if (!quest.isActive() || quest.isCompleted()) continue;
+            if (quest.getType() != Quest.ObjectiveType.DELIVER) continue;
+            if (targetLandmark != quest.getTargetLandmark()) continue;
+            // Player is at the delivery target — check they have the goods
+            if (quest.checkCompletion(inventory)) {
+                boolean success = quest.complete(inventory);
+                if (success) {
+                    lastQuestCompleted = quest;
+                    return BuildingQuestRegistry.getQuestCompletionLine(quest);
+                }
+            }
+        }
+        return null;
     }
 
     /**

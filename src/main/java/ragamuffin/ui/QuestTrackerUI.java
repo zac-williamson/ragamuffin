@@ -160,8 +160,9 @@ public class QuestTrackerUI {
 
     /**
      * Builds a short at-a-glance objective string for the tracker panel.
-     * For COLLECT quests this is "Collect Nx material"; for other types the
-     * full description is truncated to 35 characters with an ellipsis.
+     * For COLLECT quests this is "Collect Nx material".
+     * For DELIVER quests this is "Deliver Nx material to X".
+     * For other types the full description is truncated to 35 characters with an ellipsis.
      */
     String buildObjectiveString(Quest quest) {
         if (quest.getType() == Quest.ObjectiveType.COLLECT && quest.getRequiredMaterial() != null) {
@@ -174,6 +175,26 @@ public class QuestTrackerUI {
                 count = quest.getRequiredCount();
             }
             return "Collect " + count + "x " + mat;
+        }
+        if (quest.getType() == Quest.ObjectiveType.DELIVER && quest.getRequiredMaterial() != null) {
+            String mat = quest.getRequiredMaterial().name().toLowerCase().replace('_', ' ');
+            int count;
+            if (inventory != null) {
+                int current = inventory.getItemCount(quest.getRequiredMaterial());
+                count = Math.max(0, quest.getRequiredCount() - current);
+            } else {
+                count = quest.getRequiredCount();
+            }
+            if (quest.getTargetLandmark() != null) {
+                String target = quest.getTargetLandmark().getDisplayName();
+                if (target == null) {
+                    target = quest.getTargetLandmark().name().toLowerCase().replace('_', ' ');
+                }
+                // Truncate target name to keep total length reasonable
+                if (target.length() > 14) target = target.substring(0, 14);
+                return "Deliver " + count + "x " + mat + " \u2192 " + target;
+            }
+            return "Deliver " + count + "x " + mat;
         }
         String desc = quest.getDescription();
         if (desc != null && desc.length() > 35) {

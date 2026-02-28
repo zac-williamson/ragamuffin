@@ -20,9 +20,9 @@ public class BuildingQuestRegistry {
     public BuildingQuestRegistry() {
         register(LandmarkType.TESCO_EXPRESS,
             new Quest("tesco_stock", "Tesco Express Manager",
-                "Our shelves are bare. Bring me 3 tins of beans and I'll make it worth your while.",
-                ObjectiveType.COLLECT, Material.TIN_OF_BEANS, 3,
-                Material.CRISPS, 5));
+                "Our shelves are bare. We've had a request from the food bank — can you drop off 3 tins of beans there for us?",
+                ObjectiveType.DELIVER, Material.TIN_OF_BEANS, 3,
+                LandmarkType.FOOD_BANK, Material.CRISPS, 5));
 
         register(LandmarkType.GREGGS,
             new Quest("greggs_flour", "Greggs Baker",
@@ -32,9 +32,9 @@ public class BuildingQuestRegistry {
 
         register(LandmarkType.OFF_LICENCE,
             new Quest("offlicence_delivery", "Khan's Off-Licence",
-                "My delivery driver's done a runner. Bring me an energy drink from the high street, will you?",
-                ObjectiveType.COLLECT, Material.ENERGY_DRINK, 1,
-                Material.PINT, 2));
+                "My delivery driver's done a runner. There's a crate of pints that need to go to the pub — take them over, will you?",
+                ObjectiveType.DELIVER, Material.PINT, 2,
+                LandmarkType.PUB, Material.ENERGY_DRINK, 3));
 
         register(LandmarkType.CHARITY_SHOP,
             new Quest("charity_clothes", "Charity Shop Volunteer",
@@ -110,9 +110,9 @@ public class BuildingQuestRegistry {
 
         register(LandmarkType.NANDOS,
             new Quest("nandos_chicken", "Nando's Manager",
-                "We've had a rush on peri-peri. Bring me one portion and I'll upgrade your loyalty card.",
-                ObjectiveType.COLLECT, Material.PERI_PERI_CHICKEN, 1,
-                Material.ENERGY_DRINK, 3));
+                "We've run out of peri-peri sauce. Take this order of chicken over to the community centre — they're expecting it.",
+                ObjectiveType.DELIVER, Material.PERI_PERI_CHICKEN, 1,
+                LandmarkType.COMMUNITY_CENTRE, Material.ENERGY_DRINK, 3));
 
         register(LandmarkType.BARBER,
             new Quest("barber_clippers", "Kev",
@@ -133,10 +133,10 @@ public class BuildingQuestRegistry {
                 Material.TIN_OF_BEANS, 2));
 
         register(LandmarkType.BETTING_SHOP,
-            new Quest("ladbrokes_card", "Ladbrokes Manager",
-                "Need a couple of scratch cards for a VIP customer. Sort me out?",
-                ObjectiveType.COLLECT, Material.SCRATCH_CARD, 2,
-                Material.ENERGY_DRINK, 2));
+            new Quest("ladbrokes_deliver", "Ladbrokes Manager",
+                "Someone left a newspaper here — we're not a library. Drop it off at the newsagent for me.",
+                ObjectiveType.DELIVER, Material.NEWSPAPER, 1,
+                LandmarkType.NEWSAGENT, Material.ENERGY_DRINK, 2));
 
         register(LandmarkType.PHONE_REPAIR,
             new Quest("phone_repair", "Fix My Phone Tech",
@@ -169,9 +169,9 @@ public class BuildingQuestRegistry {
                 Material.TIN_OF_BEANS, 3));
 
         register(LandmarkType.PRIMARY_SCHOOL,
-            new Quest("school_textbook", "St. Aidan's Teacher",
-                "Terrible — half our textbooks have gone missing. Bring me 2 and you'll be doing good.",
-                ObjectiveType.COLLECT, Material.TEXTBOOK, 2,
+            new Quest("school_hymns", "St. Aidan's Teacher",
+                "We're putting on a school assembly but we're short of hymn books. Can you find 2?",
+                ObjectiveType.COLLECT, Material.HYMN_BOOK, 2,
                 Material.CRISPS, 3));
     }
 
@@ -222,6 +222,23 @@ public class BuildingQuestRegistry {
             }
             return "Still waiting on those " + quest.getRequiredCount() + " "
                 + materialName(quest.getRequiredMaterial()) + ". Don't let me down.";
+        }
+        if (quest.getType() == Quest.ObjectiveType.DELIVER && quest.getRequiredMaterial() != null
+                && quest.getTargetLandmark() != null) {
+            String targetName = quest.getTargetLandmark().getDisplayName();
+            if (targetName == null) targetName = quest.getTargetLandmark().name().toLowerCase().replace('_', ' ');
+            if (inventory != null) {
+                int current = inventory.getItemCount(quest.getRequiredMaterial());
+                int remaining = Math.max(0, quest.getRequiredCount() - current);
+                if (remaining > 0) {
+                    return "You've got " + current + " — still need " + remaining + " more "
+                        + materialName(quest.getRequiredMaterial()) + " before heading to " + targetName + ".";
+                }
+                return "Got the " + materialName(quest.getRequiredMaterial())
+                    + "? Now take it to " + targetName + ". Chop chop.";
+            }
+            return "Take " + quest.getRequiredCount() + " " + materialName(quest.getRequiredMaterial())
+                + " over to " + targetName + " for me.";
         }
         if (quest.getType() == Quest.ObjectiveType.EXPLORE && quest.getTargetLandmark() != null) {
             String name = quest.getTargetLandmark().getDisplayName();
