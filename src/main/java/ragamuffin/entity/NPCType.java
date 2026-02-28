@@ -200,7 +200,23 @@ public enum NPCType {
      * Offers a 20-coin loan at 50% interest (repay 30 coins within 3 in-game days).
      * Becomes hostile on non-repayment; spawns 2 STREET_LAD enforcers and adds WantedSystem +1 star.
      */
-    LOAN_SHARK(35f, 8f, 1.5f, false);
+    LOAN_SHARK(35f, 8f, 1.5f, false),
+
+    // ── Issue #914: Allotment System ───────────────────────────────────────────
+
+    /**
+     * Allotment Warden — a PENSIONER sub-variant stationed at the allotments gate.
+     * Opens 07:00–19:00. Manages plot claims, issues repossession notices.
+     * Passive; delivers speech on interaction.
+     */
+    ALLOTMENT_WARDEN(10f, 0f, 0f, false),
+
+    /**
+     * Plot Neighbour — a PENSIONER-type NPC tending an adjacent allotment plot.
+     * Generates random neighbour events (compliment, complaint, gift, rivalry)
+     * every 5 in-game minutes while the player is on site.
+     */
+    PLOT_NEIGHBOUR(10f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

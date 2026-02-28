@@ -45,7 +45,13 @@ public class CriminalRecord {
          * Issue #906: Recorded when police confiscate the player's BUCKET_DRUM
          * during a busking licence check.
          */
-        UNLICENSED_BUSKING("Unlicensed busking");
+        UNLICENSED_BUSKING("Unlicensed busking"),
+
+        /**
+         * Issue #914: Recorded when the player enters the allotments outside warden
+         * open hours (07:00–19:00).
+         */
+        TRESPASSING("Trespassing charges");
 
         private final String displayName;
 

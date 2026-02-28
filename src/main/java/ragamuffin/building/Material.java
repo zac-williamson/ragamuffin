@@ -513,7 +513,36 @@ public enum Material {
      * Removed from inventory when the race resolves (win or loss).
      * Payout = stake × odds numerator on win.
      */
-    BET_SLIP("Bet Slip");
+    BET_SLIP("Bet Slip"),
+
+    // ── Issue #914: Allotment System ──────────────────────────────────────────
+
+    /** Potato seed — plantable in a DIRT plot block. Grows into POTATO in 15 in-game minutes. */
+    POTATO_SEED("Potato Seed"),
+
+    /** Carrot seed — plantable in a DIRT plot block. Grows into CARROT in 10 in-game minutes. */
+    CARROT_SEED("Carrot Seed"),
+
+    /** Cabbage seed — plantable in a DIRT plot block. Grows into CABBAGE in 20 in-game minutes. */
+    CABBAGE_SEED("Cabbage Seed"),
+
+    /** Sunflower seed — plantable in a DIRT plot block. Grows into SUNFLOWER in 8 in-game minutes. */
+    SUNFLOWER_SEED("Sunflower Seed"),
+
+    /** Harvested potato — satisfies NeedType.HUNGRY. Yield 2–4 per POTATO crop. */
+    POTATO("Potato"),
+
+    /** Harvested carrot — satisfies NeedType.HUNGRY. Yield 2–3 per CARROT crop. */
+    CARROT("Carrot"),
+
+    /** Harvested cabbage — satisfies NeedType.HUNGRY. Yield 1–2 per CABBAGE crop. */
+    CABBAGE("Cabbage"),
+
+    /** Harvested sunflower — trade-only (3 coins each at stalls/PLOT_NEIGHBOUR). Not edible. */
+    SUNFLOWER("Sunflower"),
+
+    /** Plot Deed — proof of allotment plot ownership. Issued on claiming a plot; removed on repossession. */
+    PLOT_DEED("Plot Deed");
 
     private final String displayName;
 
@@ -807,6 +836,22 @@ public enum Material {
             case BET_SLIP:       return cs(0.92f, 0.88f, 0.72f,  // Cream/off-white paper
                                            0.22f, 0.55f, 0.22f); // Green bookies print
 
+            // Issue #914: Allotment System
+            case POTATO_SEED:    return c(0.72f, 0.52f, 0.22f);  // Brown seed
+            case CARROT_SEED:    return c(0.72f, 0.52f, 0.22f);  // Brown seed
+            case CABBAGE_SEED:   return c(0.68f, 0.52f, 0.22f);  // Brown seed
+            case SUNFLOWER_SEED: return c(0.78f, 0.62f, 0.18f);  // Yellow-brown seed
+            case POTATO:         return cs(0.72f, 0.60f, 0.28f,  // Potato skin beige
+                                           0.60f, 0.50f, 0.20f); // Darker side
+            case CARROT:         return cs(0.92f, 0.50f, 0.10f,  // Bright orange
+                                           0.75f, 0.38f, 0.05f); // Darker orange
+            case CABBAGE:        return cs(0.30f, 0.62f, 0.20f,  // Leafy green
+                                           0.22f, 0.50f, 0.15f); // Darker green
+            case SUNFLOWER:      return cs(0.95f, 0.82f, 0.12f,  // Yellow petals
+                                           0.55f, 0.35f, 0.08f); // Brown centre
+            case PLOT_DEED:      return cs(0.88f, 0.82f, 0.55f,  // Parchment
+                                           0.25f, 0.55f, 0.25f); // Green council stamp
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -961,6 +1006,16 @@ public enum Material {
             case BUCKET_DRUM:
             // Issue #908: Bookies Horse Racing System (not a block item)
             case BET_SLIP:
+            // Issue #914: Allotment System (not block items)
+            case POTATO_SEED:
+            case CARROT_SEED:
+            case CABBAGE_SEED:
+            case SUNFLOWER_SEED:
+            case POTATO:
+            case CARROT:
+            case CABBAGE:
+            case SUNFLOWER:
+            case PLOT_DEED:
                 return false;
             default:
                 return true;
@@ -999,6 +1054,11 @@ public enum Material {
             case TOBACCO:
             // Issue #908: Bookies Horse Racing System
             case BET_SLIP:
+            // Issue #914: Allotment System — produce sits on surfaces
+            case POTATO:
+            case CARROT:
+            case CABBAGE:
+            case SUNFLOWER:
                 return true;
             default:
                 return false;
@@ -1242,6 +1302,21 @@ public enum Material {
             // Issue #906: Busking System
             case BUCKET_DRUM:
                 return IconShape.CYLINDER;   // bucket drum cylinder shape
+
+            // Issue #914: Allotment System
+            case POTATO_SEED:
+            case CARROT_SEED:
+            case CABBAGE_SEED:
+            case SUNFLOWER_SEED:
+                return IconShape.CARD;       // small seed packet
+            case POTATO:
+            case CARROT:
+            case CABBAGE:
+                return IconShape.FOOD;       // vegetable food shape
+            case SUNFLOWER:
+                return IconShape.FLAT_PAPER; // flat flower shape
+            case PLOT_DEED:
+                return IconShape.FLAT_PAPER; // official deed document
 
             default:
                 return IconShape.BOX;

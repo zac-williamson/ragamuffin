@@ -784,6 +784,29 @@ public enum AchievementType {
         "Price War",
         "Triggered a Marchetti enforcer visit by undercutting their off-licence prices.",
         1
+    ),
+
+    // ── Issue #914: Allotment System ──────────────────────────────────────────
+
+    GREEN_FINGERS(
+        "Down the Allotment",
+        "Harvested your first crop. Get your hands dirty. The earth doesn't care about your problems.",
+        1
+    ),
+    CHAMPION_GROWER(
+        "Best in Show",
+        "Won the Giant Vegetable Show. The neighbourhood has spoken. Your veg is the best.",
+        1
+    ),
+    SELF_SUFFICIENT(
+        "Off the Grid",
+        "Harvested 20 crops total. Who needs Greggs when you've got your own patch?",
+        20
+    ),
+    GOOD_NEIGHBOUR(
+        "Keep Britain Tidy",
+        "Received 3 compliments from plot neighbours without getting a complaint. Diplomatic. Somehow.",
+        3
     );
 
     private final String name;
