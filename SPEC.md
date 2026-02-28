@@ -13936,3 +13936,140 @@ Each pigeon has a procedurally generated name (e.g. "Northfield Blue", "Big Dave
    the world. Verify player inventory contains 1 `RACING_PIGEON` item. Verify tooltip
    "It's harder than it looks." has been triggered. Now use a seeded RNG returning
    `0.65f` and repeat. Verify `BIRD` NPC remains in world. Verify inventory unchanged.
+
+---
+
+## Add Council Skip & Bulky Item Day — Skip Diving, Furniture Rescue & Neighbour Rivalry
+
+**Goal**: Every 3 in-game days, the council schedules a Bulky Item Collection Day.
+Residents drag their old furniture, appliances, and junk onto the pavement and a large
+skip prop appears at the end of the street. The player has a 2-hour window (08:00–10:00
+game-time) to pick through the skip and kerbside piles before the council lorry arrives
+to haul everything away. This is an authentically British scavenging opportunity: arrive
+early for the best loot, but the Neighbourhood Watch will be watching.
+
+### SkipDivingSystem
+
+A new `SkipDivingSystem` class manages the entire lifecycle.
+
+**Bulky Item Day Schedule**
+- A `BulkyItemDay` event triggers every 3 in-game days, starting on day 3.
+- The event opens at 08:00 game-time and closes at 10:00. Anything left in the
+  skip at close is removed (the lorry takes it). Lorry arrival is announced by a
+  `RUMOUR_TYPE.LOOT_TIP` rumour seeded into the nearest NPC at 09:55: "Council lorry's
+  on its way. Last chance."
+- The skip spawns at a fixed pavement position 10 blocks east of the Charity Shop.
+
+**Skip Contents (generated fresh each Bulky Item Day)**
+Each event generates 8–14 items drawn from the `SkipLot` pool:
+
+| Item / `Material` | Rarity | Fence value (COIN) | Notes |
+|---|---|---|---|
+| `OLD_SOFA` | Common | 3 | 3 units of `WOOD` when broken |
+| `BROKEN_TELLY` | Common | 4 | 1 `SCRAP_METAL` + 1 `COMPUTER` |
+| `WONKY_CHAIR` | Common | 2 | 2 `WOOD` |
+| `CARPET_ROLL` | Common | 3 | Wearable as `WOOLLY_HAT_ECONOMY` proxy |
+| `OLD_MATTRESS` | Uncommon | 5 | Restores 20 warmth when slept on in squat |
+| `FILING_CABINET` | Uncommon | 6 | 1 `COIN` + random `DWP_LETTER` |
+| `EXERCISE_BIKE` | Uncommon | 7 | Crafting ingredient: `EXERCISE_BIKE` + `SCRAP_METAL` → `IMPROVISED_TOOL` |
+| `BOX_OF_RECORDS` | Uncommon | 8 | Gives +10 MC Rank XP; sells to Fence for 8 COIN |
+| `MICROWAVE` | Rare | 10 | Converts `GREGGS_PASTRY` → `HOT_PASTRY` (restores +15 hunger) |
+| `SHOPPING_TROLLEY_GOLD` | Rare | 12 | Special prop: carries 4× inventory slots as a mobile chest |
+| `ANTIQUE_CLOCK` | Very Rare | 20 | Tooltip: "Probably worth something. Probably nicked." |
+
+Items are represented both as world props (stacked near the `COUNCIL_SKIP` prop) and
+as `Material` entries the player picks up by pressing E on the adjacent item prop.
+
+**NPC Competitors**
+- 2–4 `SKIP_DIVER` NPCs (new `NPCType`) spawn at 08:00 and compete for items. Each
+  tick (every 30 real seconds) an unblocked `SKIP_DIVER` grabs a random unclaimed item.
+- The `PIGEON_FANCIER` NPC always arrives first at 07:55 and claims `BOX_OF_RECORDS`
+  before the window opens ("I've got first dibs, mate"). The player can press E on him
+  to negotiate: pay 5 COIN or let him keep it.
+- `SKIP_DIVER` NPCs acknowledge the player with contextual speech:
+  - "Bags I the sofa."
+  - "You were quick."
+  - "Don't even think about that telly."
+
+**Neighbourhood Watch Integration**
+- `NeighbourhoodWatchSystem.WatchAnger` increases by +3 for every item the player
+  takes from the skip (perceived as anti-social hoarding).
+- If the player takes 5+ items in a single event, a `PETITION_BOARD` prop spawns.
+- Anger cools normally after the lorry departs (event end).
+
+**Fence Integration**
+- Items from the skip count as legitimate salvage: selling them does NOT add to
+  `Notoriety` (unlike stolen goods).
+- `FenceValuationTable` recognises all `SkipLot` materials at the values above.
+- `ANTIQUE_CLOCK` triggers special Fence dialogue: "Where'd you get this? Asda? No,
+  really — where'd you get it?" Awards `AchievementType.ANTIQUE_ROADSHOW`.
+
+**Crafting Integration**
+- `OLD_MATTRESS` + `SLEEPING_BAG` → `LUXURY_BED` (squat furnishing, +15 Vibe).
+- `EXERCISE_BIKE` + `SCRAP_METAL` → `IMPROVISED_TOOL` (bypasses the normal WOOD + STONE
+  recipe; this is a weaker variant: 25 uses vs. 30).
+- `MICROWAVE` placed in squat enables `GREGGS_PASTRY` → `HOT_PASTRY` conversion
+  at the workbench.
+
+**Key Controls**
+- **E** on a skip item prop: pick up the item (adds to inventory). If a `SKIP_DIVER`
+  is adjacent to the same item, a brief tug-of-war triggers (first E press wins).
+- The `COUNCIL_SKIP` prop itself is destructible (8 punches → `SCRAP_METAL`), but
+  destroying it raises `WatchAnger` by +20 and triggers immediate `WantedSystem`
+  escalation (1 star).
+
+**Achievements**
+- `SKIP_KING`: collect 5+ items in a single Bulky Item Day event.
+- `ANTIQUE_ROADSHOW`: sell the `ANTIQUE_CLOCK` to the Fence.
+- `EARLY_BIRD`: be the first entity (player or NPC) to take an item from the skip
+  on any Bulky Item Day.
+
+**Tooltip (first skip interaction)**: "Someone's loss is your gain. Probably literally."
+
+**Unit tests**: `SkipDivingSystem` schedule (event triggers on correct days), loot table
+generation (8–14 items, correct rarity weights), `SKIP_DIVER` NPC item-grab tick,
+`WatchAnger` increment per item taken, `FenceValuationTable` recognises all skip
+materials, `ANTIQUE_CLOCK` triggers achievement on fence sale.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Bulky Item Day spawns on day 3**: Create a `SkipDivingSystem`. Advance
+   `TimeSystem` to day 3 at 07:59. Verify `skipDivingSystem.isEventActive()` is
+   `false`. Advance to 08:00. Verify `isEventActive()` is `true`. Verify a
+   `COUNCIL_SKIP` prop has been placed in the world at the expected position
+   (10 blocks east of the Charity Shop). Verify 8–14 item props are present in
+   the skip zone (within 3 blocks of the skip prop).
+
+2. **Player picks up item and WatchAnger increases**: Set an active Bulky Item Day.
+   Place an `OLD_SOFA` prop adjacent to `COUNCIL_SKIP`. Set `WatchAnger` to 10.
+   Player presses E on the `OLD_SOFA`. Verify `Material.OLD_SOFA` is now in the
+   player's inventory. Verify `OLD_SOFA` prop has been removed from the world.
+   Verify `WatchAnger` is now 13 (+3 per item).
+
+3. **5+ items triggers PetitionBoard**: Simulate the player taking 5 items from a
+   single Bulky Item Day event (call `skipDivingSystem.onPlayerTakesItem()` 5
+   times). Verify a `PETITION_BOARD` prop has been placed on the pavement within
+   10 blocks of the skip position.
+
+4. **Lorry removes remaining items at 10:00**: Set an active Bulky Item Day. Leave
+   4 items unclaimed in the skip zone. Advance `TimeSystem` to 10:00. Call
+   `skipDivingSystem.update(...)`. Verify `isEventActive()` is `false`. Verify all
+   4 unclaimed item props have been removed from the world. Verify the `COUNCIL_SKIP`
+   prop has also been removed.
+
+5. **SKIP_DIVER NPC grabs unclaimed items**: Set an active Bulky Item Day with 3
+   items in the skip. Spawn a `SKIP_DIVER` NPC adjacent to the skip. Advance
+   simulation by 30 real seconds (NPC grab tick interval). Verify the `SKIP_DIVER`
+   NPC's inventory contains 1 item and 1 item has been removed from the skip zone.
+
+6. **ANTIQUE_CLOCK fence sale awards achievement**: Give player 1 `ANTIQUE_CLOCK`.
+   Press E on the Fence. Verify the Fence offers the special dialogue ("Where'd you
+   get this?"). Confirm sale. Verify `ANTIQUE_CLOCK` removed from inventory. Verify
+   player receives 20 COIN. Verify `AchievementType.ANTIQUE_ROADSHOW` is awarded.
+
+7. **PigeonFancier claims BOX_OF_RECORDS at 07:55**: Create a `PIGEON_FANCIER` NPC.
+   Set `TimeSystem` to day 3, 07:55. Advance 1 tick. Verify `PIGEON_FANCIER` NPC
+   holds `BOX_OF_RECORDS` (it's pre-claimed). At 08:00 when the window opens, verify
+   `BOX_OF_RECORDS` is NOT in the skip zone. Verify player can press E on the
+   `PIGEON_FANCIER` to receive negotiation dialogue ("I've got first dibs, mate").
+   Pay 5 COIN. Verify player receives `BOX_OF_RECORDS` and `PIGEON_FANCIER` relinquishes it.
