@@ -3927,6 +3927,23 @@ public class RagamuffinGame extends ApplicationAdapter {
             }
         }
 
+        // Issue #872: E key — pick up a nearby small 3D object into inventory
+        {
+            int smallItemIndex = findSmallItemInReach(player.getPosition(), PUNCH_REACH);
+            if (smallItemIndex >= 0) {
+                ragamuffin.building.SmallItem nearbyItem = world.getSmallItems().get(smallItemIndex);
+                ragamuffin.building.Material mat = nearbyItem.getMaterial();
+                world.removeSmallItem(smallItemIndex);
+                inventory.addItem(mat, 1);
+                if (smallItemRenderer != null) {
+                    smallItemRenderer.setItems(world.getSmallItems());
+                }
+                soundSystem.play(ragamuffin.audio.SoundEffect.INVENTORY_PICKUP);
+                tooltipSystem.showMessage("Picked up " + mat.getDisplayName() + ".", 2.0f);
+                return;
+            }
+        }
+
         // Issue #837: E key — place stall from hotbar, or open/close an already-placed stall
         if (stallSystem != null) {
             ragamuffin.world.RaycastResult stallTarget =
@@ -4195,6 +4212,31 @@ public class RagamuffinGame extends ApplicationAdapter {
     }
 
     /**
+     * Find the nearest small item within reach distance of the player.
+     *
+     * <p>Issue #872: Small 3D objects are lootable. Uses a sphere test (proximity
+     * rather than ray cast) since small items are small targets and picking them
+     * up by walking close makes for more natural game feel.</p>
+     *
+     * @return the index of the nearest small item within {@code reach}, or {@code -1}
+     */
+    private int findSmallItemInReach(Vector3 playerPos, float reach) {
+        List<ragamuffin.building.SmallItem> items = world.getSmallItems();
+        int bestIndex = -1;
+        float bestDist = reach + 1f;
+        for (int i = 0; i < items.size(); i++) {
+            ragamuffin.building.SmallItem item = items.get(i);
+            Vector3 itemPos = item.getPosition();
+            float dist = playerPos.dst(itemPos.x, playerPos.y, itemPos.z);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestIndex = i;
+            }
+        }
+        return bestIndex;
+    }
+
+    /**
      * Ray-AABB intersection test (slab method).
      *
      * @return the entry distance along the ray, or {@code -1} if no intersection
@@ -4321,8 +4363,13 @@ public class RagamuffinGame extends ApplicationAdapter {
                 }
 
                 // Issue #189: Update target reticule label — NPC takes priority over block/prop
+                // Issue #872: Small items show pickup hint when player is nearby
+                int hudSmallItemIndex = findSmallItemInReach(player.getPosition(), PUNCH_REACH);
                 if (hudTargetNPC != null) {
                     gameHUD.setTargetName(formatNPCName(hudTargetNPC.getType()));
+                } else if (hudSmallItemIndex >= 0) {
+                    ragamuffin.building.Material smallItemMat = world.getSmallItems().get(hudSmallItemIndex).getMaterial();
+                    gameHUD.setTargetName("[E] Pick up " + smallItemMat.getDisplayName());
                 } else if (hudShowProp) {
                     ragamuffin.world.PropType hudPropType = world.getPropPositions().get(hudTargetPropIndex).getType();
                     // Issue #852: Show interaction hint for fruit machine

@@ -150,6 +150,19 @@ public class World {
     }
 
     /**
+     * Remove the small item at the given index from the world.
+     * Called when the player loots a small item from the ground.
+     *
+     * Issue #872: Make small 3D objects lootable.
+     *
+     * @param itemIndex index into {@link #getSmallItems()}
+     * @throws IndexOutOfBoundsException if the index is out of range
+     */
+    public void removeSmallItem(int itemIndex) {
+        smallItems.remove(itemIndex);
+    }
+
+    /**
      * Register an animated flag pole position.
      * Called by WorldGenerator when placing flag poles on buildings.
      */
