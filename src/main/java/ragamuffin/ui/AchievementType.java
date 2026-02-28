@@ -1110,6 +1110,19 @@ public enum AchievementType {
         "Proper Regular",
         "Visited Vera's Caff on seven consecutive days. You've got your own mug now. Figuratively.",
         7
+    ),
+
+    // ── Issue #940: Wheelie Bin Fire System ──────────────────────────────────
+
+    PYROMANIAC(
+        "Man of the People",
+        "Set three wheelie bins alight in a single night. Saturday night entertainment — no subscription required.",
+        3
+    ),
+    FIRE_WARDEN(
+        "Community Champion",
+        "Extinguished a bin fire with a fire extinguisher before the fire engine arrived. Hero. Or grass. Depending on who's watching.",
+        1
     );
 
     private final String name;

@@ -362,7 +362,17 @@ public enum NPCType {
      * If Marchetti Crew respect ≥ 70, one regular acts as a dealer (PRESCRIPTION_MEDS from seat).
      * Passive; never attacks. Wears flat cap or hi-vis.
      */
-    CAFF_REGULAR(20f, 0f, 0f, false);
+    CAFF_REGULAR(20f, 0f, 0f, false),
+
+    // ── Issue #940: Wheelie Bin Fire System ──────────────────────────────────
+
+    /**
+     * Fire Engine — a council-type vehicle NPC that responds to bin fires.
+     * Spawns at the nearest road intersection outside the 50-block world boundary
+     * 30 seconds after a bin is ignited. Navigates toward the fire at car speed
+     * and extinguishes the blaze on arrival. Passive; never attacks the player.
+     */
+    FIRE_ENGINE(100f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

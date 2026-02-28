@@ -1,5 +1,10 @@
 package ragamuffin.core;
 
+import com.badlogic.gdx.math.Vector3;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * Tracks the player's noise level (0.0–1.0) based on movement state and actions.
  *
@@ -39,6 +44,27 @@ public class NoiseSystem {
 
     // Current spike level (saved so we can decay from it over spikeTimer)
     private float spikeLevel;
+
+    // ── Issue #940: World-position noise sources (e.g. burning bins) ─────────
+
+    /**
+     * A persistent noise source at a world position with a given level.
+     * Used by WheeliBinFireSystem and similar environmental noise emitters.
+     */
+    public static class NoiseSource {
+        public final Vector3 position;
+        public float level;
+        public float duration; // remaining lifetime; -1 = permanent (until removed)
+
+        public NoiseSource(Vector3 position, float level, float duration) {
+            this.position = new Vector3(position);
+            this.level = level;
+            this.duration = duration;
+        }
+    }
+
+    /** Active world-position noise sources (e.g. burning bins). */
+    private final List<NoiseSource> noiseSources = new ArrayList<>();
 
     public NoiseSystem() {
         this.noiseLevel = NOISE_STILL;
@@ -140,5 +166,58 @@ public class NoiseSystem {
      */
     public static float getHearingRange(float noiseLevel) {
         return 5f + noiseLevel * 15f;
+    }
+
+    // ── Issue #940: World-position noise emission ──────────────────────────
+
+    /**
+     * Emit a persistent noise at a world position (e.g. a burning bin).
+     * The noise source persists until removed via {@link #removeNoiseAt(Vector3)}.
+     * Also raises the player noise level immediately so NPCManager can hear it.
+     *
+     * @param position world position of the noise source
+     * @param level    noise level (0.0–1.0)
+     */
+    public void emitNoise(Vector3 position, float level) {
+        noiseSources.add(new NoiseSource(position, level, -1f));
+        // Also spike the player's perceived noise level so NPC hearing works
+        addNoise(level);
+    }
+
+    /**
+     * Remove the nearest noise source to the given position (within 1 block).
+     * Called when a burning bin is extinguished or burned out.
+     *
+     * @param position world position of the noise source to remove
+     */
+    public void removeNoiseAt(Vector3 position) {
+        noiseSources.removeIf(src -> src.position.dst(position) < 1.0f);
+    }
+
+    /**
+     * Get the maximum noise level at a given world position.
+     * Returns the level of any noise source within 1 block, or 0 if none.
+     *
+     * @param x world X coordinate
+     * @param y world Y coordinate
+     * @param z world Z coordinate
+     * @return noise level at the position (0.0–1.0)
+     */
+    public float getNoiseLevel(float x, float y, float z) {
+        float maxLevel = 0f;
+        Vector3 query = new Vector3(x, y, z);
+        for (NoiseSource src : noiseSources) {
+            if (src.position.dst(query) < 1.0f) {
+                maxLevel = Math.max(maxLevel, src.level);
+            }
+        }
+        return maxLevel;
+    }
+
+    /**
+     * Get all active world-position noise sources.
+     */
+    public List<NoiseSource> getNoiseSources() {
+        return noiseSources;
     }
 }
