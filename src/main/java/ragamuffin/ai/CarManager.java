@@ -142,6 +142,21 @@ public class CarManager {
         return car;
     }
 
+    /**
+     * Spawn a van (larger vehicle) at the given position.
+     *
+     * @return the spawned Van (as a Car with van=true), or null if the cap is reached
+     */
+    public Car spawnVan(float x, float y, float z,
+                        boolean travelAlongX,
+                        float segmentMin, float segmentMax,
+                        CarColour colour) {
+        if (cars.size() >= MAX_CARS) return null;
+        Car van = new Car(x, y, z, travelAlongX, segmentMin, segmentMax, colour, true);
+        cars.add(van);
+        return van;
+    }
+
     // ── Per-frame update ──────────────────────────────────────────────────────
 
     /** Damage dealt to an NPC per car collision. */

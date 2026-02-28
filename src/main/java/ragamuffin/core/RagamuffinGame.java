@@ -2653,8 +2653,8 @@ public class RagamuffinGame extends ApplicationAdapter {
                 float txZ = pirateRadioSystem.getTransmitterZ();
                 float txY = pirateRadioSystem.getTransmitterY();
 
-                // Spawn a white council van on the nearest road
-                carManager.spawnCar(txX + 10f, txY, txZ, true,
+                // Spawn a white council van (distinct from cars)
+                carManager.spawnVan(txX + 10f, txY, txZ, true,
                         txZ - 20f, txZ + 20f, ragamuffin.entity.Car.CarColour.WHITE);
 
                 // Spawn council workers who confiscate the transmitter
@@ -2670,7 +2670,17 @@ public class RagamuffinGame extends ApplicationAdapter {
                     cop.setSpeechText("Broadcasting without a licence is a criminal offence.", 5.0f);
                 }
 
-                tooltipSystem.showMessage("SIGNAL VAN! The council have found your transmitter!", 4.0f);
+                // Destroy the transmitter block
+                int bx = (int) txX, by = (int) txY, bz = (int) txZ;
+                if (world.getBlock(bx, by, bz) == BlockType.TRANSMITTER) {
+                    world.setBlock(bx, by, bz, BlockType.AIR);
+                    rebuildChunkAt(bx, by, bz);
+                }
+
+                // Confiscate the player's microphone
+                inventory.removeItem(ragamuffin.building.Material.MICROPHONE, 1);
+
+                tooltipSystem.showMessage("SIGNAL VAN! Transmitter seized. Microphone confiscated.", 4.0f);
                 soundSystem.play(ragamuffin.audio.SoundEffect.POLICE_SIREN);
                 pirateRadioSystem.onSignalVanArrived();
                 soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);

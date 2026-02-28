@@ -18,6 +18,11 @@ public class Car {
     public static final float HEIGHT = 1.4f;
     /** Depth (length) of the car along its direction of travel. */
     public static final float DEPTH  = 3.2f;
+
+    // ── Van dimensions (taller, longer, wider) ─────────────────────────────
+    public static final float VAN_WIDTH  = 2.0f;
+    public static final float VAN_HEIGHT = 2.2f;
+    public static final float VAN_DEPTH  = 4.5f;
     /** Default driving speed in blocks/sec. */
     public static final float DEFAULT_SPEED = 6.0f;
     /** Damage dealt to the player per collision. */
@@ -51,6 +56,9 @@ public class Car {
 
     private float speed;
     private final CarColour colour;
+
+    /** True if this vehicle is a van (larger dimensions, different model). */
+    private final boolean van;
 
     /** When true the car is waiting for the path ahead to clear. */
     private boolean stopped = false;
@@ -92,13 +100,24 @@ public class Car {
                boolean travelAlongX,
                float segmentMin, float segmentMax,
                CarColour colour) {
+        this(x, y, z, travelAlongX, segmentMin, segmentMax, colour, false);
+    }
+
+    public Car(float x, float y, float z,
+               boolean travelAlongX,
+               float segmentMin, float segmentMax,
+               CarColour colour, boolean van) {
         this.position   = new Vector3(x, y, z);
         this.velocity   = new Vector3();
         this.segmentMin = segmentMin;
         this.segmentMax = segmentMax;
         this.colour     = colour;
-        this.speed      = DEFAULT_SPEED;
-        this.aabb       = new AABB(position, WIDTH, HEIGHT, DEPTH);
+        this.van        = van;
+        this.speed      = van ? DEFAULT_SPEED * 0.75f : DEFAULT_SPEED;
+        float w = van ? VAN_WIDTH : WIDTH;
+        float h = van ? VAN_HEIGHT : HEIGHT;
+        float d = van ? VAN_DEPTH : DEPTH;
+        this.aabb       = new AABB(position, w, h, d);
 
         // Start moving in the positive direction on the chosen axis
         this.heading = travelAlongX ? 90f : 0f;
@@ -164,7 +183,7 @@ public class Car {
         }
 
         // Update AABB
-        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+        aabb.setPosition(position, getWidth(), getHeight(), getDepth());
 
         // Tick damage cooldown
         if (damageCooldown > 0f) {
@@ -193,7 +212,7 @@ public class Car {
         segmentMax = newSegMax;
         stopped = false;
         applyHeadingToVelocity();
-        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+        aabb.setPosition(position, getWidth(), getHeight(), getDepth());
         return true;
     }
 
@@ -203,6 +222,10 @@ public class Car {
     public Vector3 getVelocity() { return velocity; }
     public AABB    getAABB()     { return aabb; }
     public CarColour getColour() { return colour; }
+    public boolean isVan() { return van; }
+    public float getWidth() { return van ? VAN_WIDTH : WIDTH; }
+    public float getHeight() { return van ? VAN_HEIGHT : HEIGHT; }
+    public float getDepth() { return van ? VAN_DEPTH : DEPTH; }
 
     public float getSegmentMin() { return segmentMin; }
     public float getSegmentMax() { return segmentMax; }
@@ -268,7 +291,7 @@ public class Car {
         double rad = Math.toRadians(heading);
         position.x += (float) Math.sin(rad) * BOUNCE_PUSHBACK;
         position.z += (float) Math.cos(rad) * BOUNCE_PUSHBACK;
-        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+        aabb.setPosition(position, getWidth(), getHeight(), getDepth());
     }
 
     // ── Player driving ────────────────────────────────────────────────────────
@@ -350,7 +373,7 @@ public class Car {
 
         // Move the car
         position.add(velocity.x * delta, 0f, velocity.z * delta);
-        aabb.setPosition(position, WIDTH, HEIGHT, DEPTH);
+        aabb.setPosition(position, getWidth(), getHeight(), getDepth());
 
         // Tick damage cooldown
         if (damageCooldown > 0f) {

@@ -41,6 +41,8 @@ public class CarRenderer {
 
     /** One shared Model per car colour. */
     private final Map<CarColour, Model> carModels;
+    /** One shared Model per van colour. */
+    private final Map<CarColour, Model> vanModels;
 
     /** Reusable transform matrix to avoid per-frame allocation. */
     private final Matrix4 tmpMatrix = new Matrix4();
@@ -50,6 +52,7 @@ public class CarRenderer {
     public CarRenderer() {
         mb = new ModelBuilder();
         carModels = new EnumMap<>(CarColour.class);
+        vanModels = new EnumMap<>(CarColour.class);
         buildAllModels();
     }
 
@@ -75,7 +78,10 @@ public class CarRenderer {
                 if (camPos.dst2(tmpVec) > MAX_RENDER_DIST_SQ) continue;
             }
 
-            Model model = carModels.get(car.getColour());
+            Model model = car.isVan()
+                    ? vanModels.get(car.getColour())
+                    : carModels.get(car.getColour());
+            if (model == null) model = carModels.get(car.getColour());
             if (model == null) continue;
 
             ModelInstance instance = new ModelInstance(model);
@@ -101,6 +107,10 @@ public class CarRenderer {
             model.dispose();
         }
         carModels.clear();
+        for (Model model : vanModels.values()) {
+            model.dispose();
+        }
+        vanModels.clear();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -114,6 +124,13 @@ public class CarRenderer {
         carModels.put(CarColour.SILVER, buildCarModel(new Color(0.65f, 0.65f, 0.68f, 1f)));
         carModels.put(CarColour.BLACK,  buildCarModel(new Color(0.10f, 0.10f, 0.10f, 1f)));
         carModels.put(CarColour.YELLOW, buildCarModel(new Color(0.90f, 0.80f, 0.05f, 1f)));
+
+        vanModels.put(CarColour.WHITE,  buildVanModel(new Color(0.92f, 0.92f, 0.92f, 1f)));
+        vanModels.put(CarColour.BLUE,   buildVanModel(new Color(0.15f, 0.25f, 0.75f, 1f)));
+        vanModels.put(CarColour.RED,    buildVanModel(new Color(0.80f, 0.10f, 0.10f, 1f)));
+        vanModels.put(CarColour.SILVER, buildVanModel(new Color(0.65f, 0.65f, 0.68f, 1f)));
+        vanModels.put(CarColour.BLACK,  buildVanModel(new Color(0.10f, 0.10f, 0.10f, 1f)));
+        vanModels.put(CarColour.YELLOW, buildVanModel(new Color(0.90f, 0.80f, 0.05f, 1f)));
     }
 
     /**
@@ -205,6 +222,95 @@ public class CarRenderer {
         MeshPartBuilder tailR = mb.part("tailR", GL20.GL_TRIANGLES, ATTRS, tailMat);
         tailR.setVertexTransform(new Matrix4().setToTranslation(0.38f, 0.52f, -Car.DEPTH * 0.501f));
         tailR.box(0.28f, 0.16f, 0.04f);
+
+        return mb.end();
+    }
+
+    /**
+     * Build a van model — taller, longer than a car with a flat-topped cargo body
+     * and a small cab at the front. Visually distinct from a car.
+     *
+     * Dimensions: VAN_WIDTH=2.0, VAN_HEIGHT=2.2, VAN_DEPTH=4.5.
+     */
+    private Model buildVanModel(Color bodyColour) {
+        mb.begin();
+
+        float W = Car.VAN_WIDTH;
+        float H = Car.VAN_HEIGHT;
+        float D = Car.VAN_DEPTH;
+
+        Material bodyMat    = new Material(ColorAttribute.createDiffuse(bodyColour));
+        Material darkMat    = new Material(ColorAttribute.createDiffuse(new Color(0.12f, 0.12f, 0.12f, 1f)));
+        Material glassMat   = new Material(ColorAttribute.createDiffuse(new Color(0.55f, 0.70f, 0.80f, 1f)));
+        Material headMat    = new Material(ColorAttribute.createDiffuse(new Color(1.00f, 0.95f, 0.70f, 1f)));
+        Material tailMat    = new Material(ColorAttribute.createDiffuse(new Color(0.60f, 0.05f, 0.05f, 1f)));
+        Material stripeMat  = new Material(ColorAttribute.createDiffuse(new Color(0.95f, 0.65f, 0.0f, 1f)));
+
+        // ── Cargo body — full-height box from ground to roof ──────────────────
+        MeshPartBuilder cargo = mb.part("cargo", GL20.GL_TRIANGLES, ATTRS, bodyMat);
+        cargo.setVertexTransform(new Matrix4().setToTranslation(0f, H * 0.5f, -D * 0.1f));
+        cargo.box(W, H, D * 0.7f);
+
+        // ── Cab — shorter front section ───────────────────────────────────────
+        float cabH = H * 0.7f;
+        MeshPartBuilder cab = mb.part("cab", GL20.GL_TRIANGLES, ATTRS, bodyMat);
+        cab.setVertexTransform(new Matrix4().setToTranslation(0f, cabH * 0.5f, D * 0.35f));
+        cab.box(W, cabH, D * 0.3f);
+
+        // ── Windscreen ────────────────────────────────────────────────────────
+        MeshPartBuilder windscreen = mb.part("windscreen", GL20.GL_TRIANGLES, ATTRS, glassMat);
+        windscreen.setVertexTransform(new Matrix4().setToTranslation(0f, cabH * 0.65f, D * 0.501f));
+        windscreen.box(W * 0.8f, cabH * 0.45f, 0.05f);
+
+        // ── Side stripe (council hi-vis band) ─────────────────────────────────
+        MeshPartBuilder stripeL = mb.part("stripeL", GL20.GL_TRIANGLES, ATTRS, stripeMat);
+        stripeL.setVertexTransform(new Matrix4().setToTranslation(-W * 0.501f, H * 0.35f, -D * 0.1f));
+        stripeL.box(0.04f, 0.2f, D * 0.68f);
+
+        MeshPartBuilder stripeR = mb.part("stripeR", GL20.GL_TRIANGLES, ATTRS, stripeMat);
+        stripeR.setVertexTransform(new Matrix4().setToTranslation(W * 0.501f, H * 0.35f, -D * 0.1f));
+        stripeR.box(0.04f, 0.2f, D * 0.68f);
+
+        // ── Wheels (4 corners, larger than car) ───────────────────────────────
+        float wheelR = 0.35f;
+        float wheelW = 0.14f;
+        float wheelY = wheelR;
+        float wheelZ = D * 0.38f;
+        float wheelX = W * 0.50f + wheelW * 0.5f;
+
+        MeshPartBuilder wfl = mb.part("wFL", GL20.GL_TRIANGLES, ATTRS, darkMat);
+        wfl.setVertexTransform(new Matrix4().setToTranslation(-wheelX, wheelY, wheelZ));
+        wfl.box(wheelW, wheelR * 2f, wheelR * 2f);
+
+        MeshPartBuilder wfr = mb.part("wFR", GL20.GL_TRIANGLES, ATTRS, darkMat);
+        wfr.setVertexTransform(new Matrix4().setToTranslation(wheelX, wheelY, wheelZ));
+        wfr.box(wheelW, wheelR * 2f, wheelR * 2f);
+
+        MeshPartBuilder wrl = mb.part("wRL", GL20.GL_TRIANGLES, ATTRS, darkMat);
+        wrl.setVertexTransform(new Matrix4().setToTranslation(-wheelX, wheelY, -wheelZ));
+        wrl.box(wheelW, wheelR * 2f, wheelR * 2f);
+
+        MeshPartBuilder wrr = mb.part("wRR", GL20.GL_TRIANGLES, ATTRS, darkMat);
+        wrr.setVertexTransform(new Matrix4().setToTranslation(wheelX, wheelY, -wheelZ));
+        wrr.box(wheelW, wheelR * 2f, wheelR * 2f);
+
+        // ── Headlights ────────────────────────────────────────────────────────
+        MeshPartBuilder headL = mb.part("headL", GL20.GL_TRIANGLES, ATTRS, headMat);
+        headL.setVertexTransform(new Matrix4().setToTranslation(-0.5f, 0.55f, D * 0.501f));
+        headL.box(0.32f, 0.18f, 0.04f);
+
+        MeshPartBuilder headR = mb.part("headR", GL20.GL_TRIANGLES, ATTRS, headMat);
+        headR.setVertexTransform(new Matrix4().setToTranslation(0.5f, 0.55f, D * 0.501f));
+        headR.box(0.32f, 0.18f, 0.04f);
+
+        // ── Tail lights ───────────────────────────────────────────────────────
+        MeshPartBuilder tailL = mb.part("tailL", GL20.GL_TRIANGLES, ATTRS, tailMat);
+        tailL.setVertexTransform(new Matrix4().setToTranslation(-0.5f, 0.55f, -D * 0.45f - 0.02f));
+        tailL.box(0.32f, 0.18f, 0.04f);
+
+        MeshPartBuilder tailR = mb.part("tailR", GL20.GL_TRIANGLES, ATTRS, tailMat);
+        tailR.setVertexTransform(new Matrix4().setToTranslation(0.5f, 0.55f, -D * 0.45f - 0.02f));
+        tailR.box(0.32f, 0.18f, 0.04f);
 
         return mb.end();
     }
