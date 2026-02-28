@@ -9525,3 +9525,154 @@ core economic survival loop that has been dead code since Issue #795 was merged.
 5. **JobCentreSystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `jobCentreSystem` field is non-null. Simulate 1 frame in
    PLAYING state. Verify no exception is thrown.
+
+## Wire BootSaleSystem & BootSaleUI into the Game Loop
+
+**Goal**: `BootSaleSystem` (604 lines, Issue #789) and its companion `BootSaleUI` are
+fully implemented but never instantiated in `RagamuffinGame`. The underground auction
+economy is completely dead code: the daily lot schedule never generates, NPC bidders
+never compete, the player can never bid or buy-now, and winning a lot never triggers
+police, rumours, or TRADING skill XP. The `BOOT_SALE_OPEN` game state already exists
+in `GameState` but is never entered. This is a major economy and social gameplay loop
+that players have no access to.
+
+`BootSaleSystem` depends on: `TimeSystem`, `FenceValuationTable`, `FactionSystem`,
+`RumourNetwork`, `NoiseSystem`, `NotorietySystem`, `WantedSystem`,
+`StreetSkillSystem` — all of which are now wired in. `FenceValuationTable` must also
+be instantiated (it is currently dead code with no references in `RagamuffinGame`).
+
+### What needs wiring
+
+1. **Instantiate `FenceValuationTable`** in `RagamuffinGame` (required by
+   `BootSaleSystem`):
+   ```java
+   private FenceValuationTable fenceValuationTable;
+   // in initGame():
+   fenceValuationTable = new FenceValuationTable();
+   ```
+
+2. **Instantiate `BootSaleSystem`** in `RagamuffinGame` after all dependencies exist:
+   ```java
+   private BootSaleSystem bootSaleSystem;
+   private ragamuffin.ui.BootSaleUI bootSaleUI;
+   // in initGame():
+   bootSaleSystem = new BootSaleSystem(
+       timeSystem,
+       fenceValuationTable,
+       factionSystem,
+       rumourNetwork,
+       noiseSystem,
+       notorietySystem,
+       wantedSystem,
+       player.getStreetSkillSystem(),
+       new java.util.Random());
+   bootSaleUI = new ragamuffin.ui.BootSaleUI(bootSaleSystem);
+   ```
+
+3. **Call `update()` each frame** inside the PLAYING state update block:
+   ```java
+   bootSaleSystem.update(delta, player, npcManager.getNPCs());
+   ```
+
+4. **Wire the E-key interact hook** — in `handleInteract()`, when near the
+   `BOOT_SALE` landmark, open the auction UI:
+   ```java
+   if (nearLandmark(LandmarkType.BOOT_SALE, 5f)) {
+       if (!bootSaleSystem.isVenueOpen()) {
+           tooltipSystem.showMessage("Can't go in — you're too hot right now.", 2.5f);
+       } else {
+           bootSaleSystem.setPlayerInventory(inventory);
+           bootSaleUI.show();
+           state = GameState.BOOT_SALE_OPEN;
+       }
+   }
+   ```
+
+5. **Wire bidding keys** inside the `BOOT_SALE_OPEN` state input block:
+   ```java
+   // F key — bid +5
+   if (Gdx.input.isKeyJustPressed(Keys.F)) {
+       boolean ok = bootSaleSystem.playerBid(player, inventory, 5);
+       if (!ok) tooltipSystem.showMessage("Not enough coin.", 1.5f);
+   }
+   // R key — bid +20
+   if (Gdx.input.isKeyJustPressed(Keys.R)) {
+       boolean ok = bootSaleSystem.playerBid(player, inventory, 20);
+       if (!ok) tooltipSystem.showMessage("Not enough coin.", 1.5f);
+   }
+   // B key — buy now
+   if (Gdx.input.isKeyJustPressed(Keys.B)) {
+       boolean ok = bootSaleSystem.playerBuyNow(player, inventory);
+       if (!ok) tooltipSystem.showMessage("Can't afford buy-now price.", 1.5f);
+   }
+   ```
+
+6. **Render `BootSaleUI`** in the 2D overlay pass (after `spriteBatch.begin()`):
+   ```java
+   if (bootSaleUI != null && bootSaleUI.isVisible()) {
+       bootSaleUI.render(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+   }
+   ```
+
+7. **Wire ESC to close the UI** — in the ESC handler:
+   ```java
+   if (bootSaleUI != null && bootSaleUI.isVisible()) {
+       bootSaleSystem.passLot();
+       bootSaleUI.hide();
+       state = GameState.PLAYING;
+       return;
+   }
+   ```
+
+8. **Set venue position** after world generation so police spawning works:
+   ```java
+   ragamuffin.world.Landmark bootSaleLandmark = world.getLandmark(LandmarkType.BOOT_SALE);
+   if (bootSaleLandmark != null) {
+       bootSaleSystem.setVenuePosition(bootSaleLandmark.getX(), 0, bootSaleLandmark.getZ());
+   }
+   ```
+
+9. **Poll lastTooltip** each frame to surface boot sale messages to the player:
+   ```java
+   String bsMsg = bootSaleSystem.getLastTooltip();
+   if (bsMsg != null && !bsMsg.isEmpty()) {
+       tooltipSystem.showMessage(bsMsg, 3.0f);
+   }
+   ```
+
+10. **Reset on restart** in `restartGame()`:
+    ```java
+    bootSaleSystem = new BootSaleSystem(
+        timeSystem, fenceValuationTable, factionSystem, rumourNetwork,
+        noiseSystem, notorietySystem, wantedSystem,
+        player.getStreetSkillSystem(), new java.util.Random());
+    bootSaleUI = new ragamuffin.ui.BootSaleUI(bootSaleSystem);
+    ```
+
+### Integration tests — implement these exact scenarios
+
+1. **Daily schedule generates on first update**: Construct a `BootSaleSystem` with a
+   `TimeSystem` at day 1. Call `bootSaleSystem.update(0.1f, player, emptyList)`.
+   Verify `bootSaleSystem.getDaySchedule().size()` is between `MIN_LOTS_PER_DAY` (6)
+   and `MAX_LOTS_PER_DAY` (10).
+
+2. **Player bid accepted when sufficient coin**: Add 50 COIN to the player's inventory.
+   Call `update` to initialise the first lot. Call
+   `bootSaleSystem.playerBid(player, inventory, 10)`. Verify it returns `true`.
+   Verify the player's COIN count decreased by 0 (bids are promises, not immediate
+   deductions — confirm via `getCurrentLot().getCurrentBidder()` equals `"Player"`).
+
+3. **Buy-now concludes the lot immediately**: Initialise `BootSaleSystem`. Call `update`
+   to start the first lot. Add sufficient COIN to the inventory. Call
+   `bootSaleSystem.playerBuyNow(player, inventory)`. Verify the lot is concluded
+   (`getCurrentLot()` returns null or is a different lot). Verify
+   `bootSaleSystem.getLotsWonToday()` equals 1.
+
+4. **Venue closed when player is wanted**: Initialise `BootSaleSystem` with a
+   `WantedSystem`. Set player wanted stars to `WANTED_ENTRY_THRESHOLD` (1 star) via
+   `wantedSystem.addWantedStars(1)`. Verify `bootSaleSystem.isVenueOpen()` returns
+   `false`.
+
+5. **BootSaleSystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `bootSaleSystem` field is non-null. Simulate 1 frame in
+   PLAYING state. Verify no exception is thrown.
