@@ -209,7 +209,32 @@ public enum PropType {
      * Can be removed by crafting and using a NEIGHBOURHOOD_NEWSLETTER (−8 Anger).
      * Destroyed by 3 punches; yields nothing.
      */
-    PETITION_BOARD(0.80f, 1.40f, 0.10f, 3, null);
+    PETITION_BOARD(0.80f, 1.40f, 0.10f, 3, null),
+
+    // ── Issue #799: The Corner Shop Economy ────────────────────────────────────
+
+    /**
+     * A hand-painted shop sign above the door of the player's corner shop.
+     * Placed automatically when the player claims and opens their shop.
+     * Destroyed by 5 punches; yields WOOD when broken.
+     */
+    SHOP_SIGN(1.20f, 0.50f, 0.10f, 5, Material.WOOD),
+
+    /**
+     * An official-looking council inspection notice taped to the shop door.
+     * Spawned when shop Heat reaches 30 (Inspection Notice threshold).
+     * Interacting (E) dismisses it but raises Heat by +5 if ignored for one day.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    INSPECTION_NOTICE(0.30f, 0.40f, 0.02f, 1, null),
+
+    /**
+     * A business rates demand notice from the council.
+     * Spawns when daily revenue exceeds 50 coins.
+     * Ignoring it triggers a subsidised competitor stall from the Council.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    BUSINESS_RATES_NOTICE(0.30f, 0.40f, 0.02f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

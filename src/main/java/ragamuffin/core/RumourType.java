@@ -34,5 +34,8 @@ public enum RumourType {
     BETRAYAL,
 
     /** "Developers are moving in — prices are going up round here" — seeded when a Luxury Flat is built by The Council's gentrification wave. */
-    GENTRIFICATION;
+    GENTRIFICATION,
+
+    /** "There's a new shop on the high street — bit dodgy if you ask me" — seeded when the player's corner shop opens or hits a revenue milestone. */
+    SHOP_NEWS;
 }
