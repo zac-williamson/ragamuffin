@@ -886,6 +886,29 @@ public enum AchievementType {
         "Last Man Standing",
         "Survived ten lock-ins without a DRUNK_AND_DISORDERLY charge. Legendary constitution.",
         10
+    ),
+
+    // ── Issue #922: Skate Park System ─────────────────────────────────────────
+
+    KICKFLIP_KING(
+        "Kickflip King",
+        "Pulled off ten tricks in one session. The lads are genuinely impressed.",
+        10
+    ),
+    COUNCIL_SABOTEUR(
+        "Council Saboteur",
+        "Torn down three closure notices. The Council has filed a strongly-worded memo about you.",
+        3
+    ),
+    ASBO_MAGNET(
+        "ASBO Magnet",
+        "Three ASBOs. Your mum stopped answering the phone.",
+        3
+    ),
+    PARK_LEGEND(
+        "Park Legend",
+        "Pulled a McTwist. The whole estate saw it. Even the council CCTV.",
+        1
     );
 
     private final String name;
