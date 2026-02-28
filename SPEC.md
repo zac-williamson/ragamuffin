@@ -10158,3 +10158,70 @@ ever spawns. The system is entirely dead code.
 5. **Heightened Alert triggered on 7+ infamy publication**: Construct `WantedSystem` and
    `NewspaperSystem`. Record an event with infamyScore=9. Advance time past 18:00 (calling
    `update()` with `wantedSystem`). Verify `wantedSystem.isHeightenedAlert()` returns true.
+
+---
+
+## Wire PirateRadioSystem into the game loop
+
+`PirateRadioSystem` (Issue #783) is fully implemented in
+`src/main/java/ragamuffin/core/PirateRadioSystem.java` but is never instantiated,
+updated, or connected to input/rendering in `RagamuffinGame.java`. Players cannot
+broadcast, build the transmitter, or trigger any of the faction/notoriety effects.
+
+### What needs to be done
+
+1. **Declare a field** in `RagamuffinGame`:
+   ```java
+   // Issue #783: Pirate FM — underground radio station
+   private PirateRadioSystem pirateRadioSystem;
+   ```
+
+2. **Instantiate in `initGame()`** after the faction and rumour systems are ready:
+   ```java
+   pirateRadioSystem = new PirateRadioSystem();
+   ```
+
+3. **Call `update()` each frame** inside `updatePlayingSimulation()`:
+   ```java
+   pirateRadioSystem.update(
+       delta,
+       npcManager.getNPCs(),
+       wantedSystem.isPoliceNearby(player.getPosition(), npcManager.getNPCs()),
+       notorietySystem,
+       factionSystem,
+       rumourNetwork,
+       noiseSystem,
+       achievementSystem::unlock
+   );
+   ```
+
+4. **Wire 1–4 broadcast-action keys** — when the player is broadcasting (`pirateRadioSystem.isBroadcasting()`), route number key presses to `pirateRadioSystem.selectAction(BroadcastAction.fromNumber(n))` instead of hotbar slot selection.
+
+5. **Wire `B` key** (or repurpose an existing unused key) in `InputHandler` so pressing it while standing near a TRANSMITTER prop calls `pirateRadioSystem.startBroadcast()` / `pirateRadioSystem.stopBroadcast()`.
+
+6. **Display triangulation HUD bar** — when broadcasting, render a progress bar in `GameHUD` showing `pirateRadioSystem.getTriangulationProgress()` / `PirateRadioSystem.TRIANGULATION_MAX` with a warning flash above 80%.
+
+7. **Reset on restart** — add `pirateRadioSystem = new PirateRadioSystem();` inside `restartGame()`.
+
+### Integration tests — implement these exact scenarios
+
+1. **PirateRadioSystem instantiated and updated in game loop**: In a headless integration
+   test, initialise `RagamuffinGame`. Verify `pirateRadioSystem` is non-null after `create()`.
+   Simulate 1 PLAYING-state frame. Verify no exception is thrown.
+
+2. **Triangulation advances while broadcasting**: Construct `PirateRadioSystem` at power
+   level 1. Call `startBroadcast()`. Call `update(1.0f, emptyList, false)` once. Verify
+   `getTriangulationProgress()` equals `PirateRadioSystem.TRIANGULATION_RATE[1]` (±0.01f).
+
+3. **Triangulation resets on broadcast stop**: Construct `PirateRadioSystem` at power level 2.
+   Start broadcast, call `update(10f, emptyList, false)`. Verify triangulation > 0. Call
+   `stopBroadcast()`. Verify `getTriangulationProgress()` == 0f.
+
+4. **BIG_UP_THE_AREA action boosts faction respect**: Construct `PirateRadioSystem` and a
+   `FactionSystem`. Start broadcast. Call `selectAction(BroadcastAction.BIG_UP_THE_AREA)`.
+   Verify all three factions have had their respect increased by
+   `PirateRadioSystem.RESPECT_BIG_UP_ALL`.
+
+5. **Signal Van spawns at TRIANGULATION_MAX**: Construct `PirateRadioSystem` at power level 4.
+   Start broadcast. Call `update(PirateRadioSystem.TRIANGULATION_MAX / TRIANGULATION_RATE[4] + 1f, emptyList, false)`.
+   Verify `isSignalVanSpawned()` returns true.
