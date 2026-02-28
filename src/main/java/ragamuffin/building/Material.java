@@ -594,7 +594,67 @@ public enum Material {
      * COVERED_IN_BLOOD debuff, same as the BLOODY_HOODIE.
      * Earns the LAUNDERING achievement on purchase.
      */
-    STOLEN_JACKET("Stolen Jacket");
+    STOLEN_JACKET("Stolen Jacket"),
+
+    // ── Issue #926: Chippy System — Tony's Chip Shop ──────────────────────────
+
+    /**
+     * Battered Sausage — purchased from CHIPPY_COUNTER for 2 COIN.
+     * Restores +30 hunger and +10 energy. Comes wrapped in WHITE_PAPER.
+     */
+    BATTERED_SAUSAGE("Battered Sausage"),
+
+    /**
+     * Chip Butty — purchased from CHIPPY_COUNTER for 3 COIN.
+     * Requires BREAD in the player's inventory to unlock on the menu.
+     * Restores +50 hunger. Comes wrapped in WHITE_PAPER.
+     */
+    CHIP_BUTTY("Chip Butty"),
+
+    /**
+     * Mushy Peas — purchased from CHIPPY_COUNTER for 1 COIN.
+     * Restores +15 hunger and provides +5 cold relief. Comes wrapped in WHITE_PAPER.
+     */
+    MUSHY_PEAS("Mushy Peas"),
+
+    /**
+     * Pickled Egg — purchased from CHIPPY_COUNTER for 1 COIN.
+     * Restores +10 hunger but has a 20% chance of inflicting FOOD_POISONING
+     * (80% movement speed for 60 seconds). Comes wrapped in WHITE_PAPER.
+     */
+    PICKLED_EGG("Pickled Egg"),
+
+    /**
+     * Fish Supper — premium item purchased from CHIPPY_COUNTER for 4 COIN.
+     * Only available on 2 out of every 3 in-game days. Restores +60 hunger.
+     * Comes wrapped in WHITE_PAPER. Buying 5 triggers CHIPPY_REGULAR newspaper infamy.
+     */
+    FISH_SUPPER("Fish Supper"),
+
+    /**
+     * Salt and Vinegar Packet — condiment sold at CHIPPY_COUNTER for 1 COIN.
+     * Combine with CHIPS in inventory to produce CHIPS_SEASONED (+50 hunger).
+     * Earns the SALT_AND_VINEGAR achievement on first use.
+     */
+    SALT_AND_VINEGAR_PACKET("Salt &amp; Vinegar Packet"),
+
+    /**
+     * Chips (Seasoned) — result of combining CHIPS + SALT_AND_VINEGAR_PACKET.
+     * Restores +50 hunger (compared to plain CHIPS' +40).
+     */
+    CHIPS_SEASONED("Chips (Seasoned)"),
+
+    /**
+     * Bottle of Water — purchased from CHIPPY_COUNTER for 1 COIN.
+     * Restores +20 thirst. Non-food item, does not trigger FOOD_POISONING.
+     */
+    BOTTLE_OF_WATER("Bottle of Water"),
+
+    /**
+     * White Paper — junk wrapping material. Every chippy item is delivered
+     * inside this. Can be dropped or discarded; no gameplay function.
+     */
+    WHITE_PAPER("White Paper");
 
     private final String displayName;
 
@@ -922,6 +982,24 @@ public enum Material {
             case STOLEN_JACKET:  return cs(0.18f, 0.25f, 0.18f,  // Dark olive jacket
                                            0.35f, 0.20f, 0.10f); // Brown lining
 
+            // Issue #926: Chippy System
+            case BATTERED_SAUSAGE: return cs(0.72f, 0.50f, 0.18f,  // Battered coating golden
+                                              0.58f, 0.22f, 0.10f); // Sausage brown
+            case CHIP_BUTTY:     return cs(0.92f, 0.88f, 0.72f,  // White bread
+                                            0.90f, 0.78f, 0.30f); // Golden chips
+            case MUSHY_PEAS:     return c(0.38f, 0.62f, 0.25f);  // Muted green
+            case PICKLED_EGG:    return cs(0.95f, 0.95f, 0.88f,  // Pale egg white
+                                            0.62f, 0.58f, 0.35f); // Vinegar brown
+            case FISH_SUPPER:    return cs(0.80f, 0.65f, 0.25f,  // Golden batter
+                                            0.88f, 0.78f, 0.30f); // Chip yellow
+            case SALT_AND_VINEGAR_PACKET: return cs(0.20f, 0.22f, 0.72f, // Blue packet
+                                                     0.92f, 0.88f, 0.10f); // Yellow text
+            case CHIPS_SEASONED: return cs(0.90f, 0.78f, 0.30f,  // Golden chips
+                                            0.72f, 0.62f, 0.20f); // Darker seasoned
+            case BOTTLE_OF_WATER: return cs(0.62f, 0.82f, 0.95f, // Clear blue water
+                                             0.88f, 0.95f, 1.00f); // Lighter highlight
+            case WHITE_PAPER:    return c(0.96f, 0.96f, 0.94f);  // Off-white paper
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1095,6 +1173,16 @@ public enum Material {
             case CLEAN_CLOTHES:
             case BLOODY_HOODIE:
             case STOLEN_JACKET:
+            // Issue #926: Chippy System (not block items)
+            case BATTERED_SAUSAGE:
+            case CHIP_BUTTY:
+            case MUSHY_PEAS:
+            case PICKLED_EGG:
+            case FISH_SUPPER:
+            case SALT_AND_VINEGAR_PACKET:
+            case CHIPS_SEASONED:
+            case BOTTLE_OF_WATER:
+            case WHITE_PAPER:
                 return false;
             default:
                 return true;
@@ -1414,6 +1502,21 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // hoodie / clothing
             case STOLEN_JACKET:
                 return IconShape.FLAT_PAPER;  // jacket / clothing
+
+            // Issue #926: Chippy System
+            case BATTERED_SAUSAGE:
+            case CHIP_BUTTY:
+            case MUSHY_PEAS:
+            case PICKLED_EGG:
+            case FISH_SUPPER:
+            case CHIPS_SEASONED:
+                return IconShape.FOOD;        // food item
+            case SALT_AND_VINEGAR_PACKET:
+                return IconShape.FLAT_PAPER;  // condiment packet
+            case BOTTLE_OF_WATER:
+                return IconShape.BOTTLE;      // water bottle
+            case WHITE_PAPER:
+                return IconShape.FLAT_PAPER;  // paper wrapping
 
             default:
                 return IconShape.BOX;

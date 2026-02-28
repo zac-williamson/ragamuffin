@@ -311,7 +311,18 @@ public enum PropType {
      * ANGER_VISIBLE_CRIME in the NeighbourhoodWatchSystem. Destroyed by 1 punch;
      * yields nothing.
      */
-    CLOSED_SIGN(0.40f, 0.60f, 0.02f, 1, null);
+    CLOSED_SIGN(0.40f, 0.60f, 0.02f, 1, null),
+
+    // ── Issue #926: Tony's Chip Shop ──────────────────────────────────────────
+
+    /**
+     * The serving counter at Tony's Chip Shop (CHIPPY landmark).
+     * Interact (E) to open the {@code ChippyOrderUI} and purchase food items:
+     * CHIPS, BATTERED_SAUSAGE, CHIP_BUTTY, MUSHY_PEAS, PICKLED_EGG, FISH_SUPPER,
+     * SALT_AND_VINEGAR_PACKET, and BOTTLE_OF_WATER. Only available during opening
+     * hours 11:00–00:00. Destroyed by 8 punches; yields COUNTER material.
+     */
+    CHIPPY_COUNTER(1.40f, 1.10f, 0.80f, 8, Material.COUNTER);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
