@@ -225,7 +225,32 @@ public enum NPCType {
      * Spawns near the PUB between 22:00–02:00. Passive; serves food to queuing NPCs
      * and the player. Does not move; despawns with the van.
      */
-    VAN_OWNER(20f, 0f, 0f, false);
+    VAN_OWNER(20f, 0f, 0f, false),
+
+    // ── Issue #918: Bus Stop & Public Transport System ─────────────────────────
+
+    /**
+     * Bus Driver — seated at the wheel of The Number 47 bus.
+     * Spawns with the bus entity; despawns when the bus leaves. Passive; never moves
+     * independently. Broadcasts grumbles if the bus is running more than 20 in-game
+     * minutes late.
+     */
+    BUS_DRIVER(20f, 0f, 0f, false),
+
+    /**
+     * Ticket Inspector — rides the Number 47 bus with a 30% chance per journey.
+     * Passive until the player boards; then checks for a valid ticket (BUS_PASS or
+     * paid fare). Can be bribed for 3 COIN or beaten for INSPECTOR_BADGE loot.
+     * Calls police if notoriety Tier 3+ is detected.
+     */
+    TICKET_INSPECTOR(30f, 5f, 2.0f, false),
+
+    /**
+     * Commuter — a PUBLIC-type NPC that spawns during rush hours (07:30 and 17:30)
+     * and paths to the nearest bus stop. Boards the bus automatically; despawns
+     * when the bus departs the stop.
+     */
+    COMMUTER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

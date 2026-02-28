@@ -493,6 +493,15 @@ public class NPC {
     }
 
     /**
+     * Immediately kill this NPC (set alive = false, health = 0).
+     * Used when despawning system-controlled NPCs (e.g. kebab van owner, bus driver).
+     */
+    public void kill() {
+        alive = false;
+        health = 0f;
+    }
+
+    /**
      * Revive this NPC after being knocked out.
      * Restores health to half maximum, resets the knocked-out timer,
      * and transitions the NPC back to WANDERING so it resumes normal behaviour.

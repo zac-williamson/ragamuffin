@@ -51,7 +51,13 @@ public class CriminalRecord {
          * Issue #914: Recorded when the player enters the allotments outside warden
          * open hours (07:00–19:00).
          */
-        TRESPASSING("Trespassing charges");
+        TRESPASSING("Trespassing charges"),
+
+        /**
+         * Issue #918: Recorded when the player boards The Number 47 without paying
+         * the fare and without a valid BUS_PASS.
+         */
+        FARE_EVASION("Fare evasion");
 
         private final String displayName;
 

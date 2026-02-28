@@ -542,7 +542,24 @@ public enum Material {
     SUNFLOWER("Sunflower"),
 
     /** Plot Deed — proof of allotment plot ownership. Issued on claiming a plot; removed on repossession. */
-    PLOT_DEED("Plot Deed");
+    PLOT_DEED("Plot Deed"),
+
+    // ── Issue #918: Bus Stop & Public Transport System ─────────────────────────
+
+    /**
+     * Bus Pass — craftable from 3 COIN + 1 NEWSPAPER.
+     * Provides 7-day unlimited travel on The Number 47 bus.
+     * Avoids the base 2-COIN fare and bypasses ticket inspector checks.
+     * Tooltip on first pickup: "Seven days of unlimited travel. The bus still won't come on time."
+     */
+    BUS_PASS("Bus Pass"),
+
+    /**
+     * Inspector Badge — looted from a beaten TICKET_INSPECTOR NPC.
+     * Acts as a disguise: while held, TICKET_INSPECTOR NPCs do not check the player's
+     * ticket. Tradeable at the fence for 8 COIN.
+     */
+    INSPECTOR_BADGE("Inspector Badge");
 
     private final String displayName;
 
@@ -852,6 +869,12 @@ public enum Material {
             case PLOT_DEED:      return cs(0.88f, 0.82f, 0.55f,  // Parchment
                                            0.25f, 0.55f, 0.25f); // Green council stamp
 
+            // Issue #918: Bus Stop & Public Transport System
+            case BUS_PASS:       return cs(0.10f, 0.38f, 0.72f,  // TfL-style blue card
+                                           0.88f, 0.75f, 0.10f); // Yellow accent stripe
+            case INSPECTOR_BADGE: return cs(0.82f, 0.72f, 0.15f, // Gold badge face
+                                            0.62f, 0.52f, 0.08f); // Darker gold edge
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1016,6 +1039,9 @@ public enum Material {
             case CABBAGE:
             case SUNFLOWER:
             case PLOT_DEED:
+            // Issue #918: Bus System (not block items)
+            case BUS_PASS:
+            case INSPECTOR_BADGE:
                 return false;
             default:
                 return true;
@@ -1317,6 +1343,12 @@ public enum Material {
                 return IconShape.FLAT_PAPER; // flat flower shape
             case PLOT_DEED:
                 return IconShape.FLAT_PAPER; // official deed document
+
+            // Issue #918: Bus System
+            case BUS_PASS:
+                return IconShape.CARD;        // travelcard shape
+            case INSPECTOR_BADGE:
+                return IconShape.CARD;        // badge/card shape
 
             default:
                 return IconShape.BOX;

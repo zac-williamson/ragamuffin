@@ -830,6 +830,29 @@ public enum AchievementType {
         "Last Orders",
         "Bought from the kebab van during the last-orders discount window. Savvy.",
         1
+    ),
+
+    // ── Issue #918: Bus Stop & Public Transport System ─────────────────────────
+
+    MISSED_THE_BUS(
+        "Missed The Bus",
+        "The Number 47 left without you. It was always going to be like this.",
+        1
+    ),
+    FARE_DODGER(
+        "Fare Dodger",
+        "Boarded without paying. The inspector's somewhere on this bus. Probably.",
+        1
+    ),
+    LAST_NIGHT_BUS(
+        "Last Night Bus",
+        "Took the Night Bus after 23:00. At least three passengers were unconscious.",
+        1
+    ),
+    COMMUTER_PICKPOCKET(
+        "Rush Hour Special",
+        "Picked a commuter's pocket on a crowded bus. Professional. Morally questionable.",
+        1
     );
 
     private final String name;
