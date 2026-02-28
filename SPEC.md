@@ -12600,3 +12600,211 @@ timing, tip-off mechanics, Terry ejection logic, quiz cheat detection.
     to 01:30. Verify lock-in ends cleanly: door unlocks, all guests set to WANDERING,
     `isLockInActive()` returns false. Verify `LOCK_IN_REGULAR` progress incremented.
     Verify no NPEs and game state remains PLAYING throughout.
+
+---
+
+## Add Skate Park System — Tricks, Street Rep & Council Crackdown
+
+**Goal**: Give the `SKATE_PARK` landmark actual gameplay. The concrete bowl exists
+in the world; now skaters use it, the player can perform tricks to earn Street Lads
+Respect and coins, and The Council periodically tries to shut it down.
+
+### Overview
+
+The skate park is a piece of contested public space — the Street Lads treat it as
+their domain, youths hang out there after school, and The Council views it as an
+eyesore that attracts antisocial behaviour. A new `SkateParkSystem` class manages:
+
+- **Player tricks**: pressing T while sprinting on CONCRETE inside the park executes
+  a trick. Tricks score points that convert to Street Lads Respect and coins.
+- **Trick variety**: five tricks with ascending score values.
+- **Council Enforcement Events**: periodic attempts to close the park (new signs,
+  enforcement NPCs) that the player can sabotage.
+- **Skater NPCs**: `YOUTH_GANG` and `SCHOOL_KID` NPCs gather here afternoons
+  (14:00–22:00), performing ambient skating loops and reacting to player tricks.
+- **ASBO mechanic**: accumulating too much trick notoriety in view of police earns
+  an ASBO (Anti-Social Behaviour Order) — 5 Notoriety added, park banned for
+  1 in-game day.
+
+### Tricks
+
+The player must be:
+- Inside the `SKATE_PARK` landmark AABB.
+- Moving (speed > 0.5 blocks/s).
+- On or directly above a CONCRETE block (y == 0 or y == 1).
+
+Pressing **T** consumes 5 energy and executes the current trick (selected by the
+system based on the player's `SkatePark` skill rank):
+
+| Rank | Trick name | Score | Unlocked at |
+|------|-----------|-------|-------------|
+| 0 | Kickflip | 10 | Default |
+| 1 | Heelflip | 20 | 3 successful tricks |
+| 2 | 50-50 Grind | 35 | 8 successful tricks |
+| 3 | 720 Spin | 60 | 18 successful tricks |
+| 4 | McTwist | 100 | 35 successful tricks |
+
+A trick **fails** (adds 0 score, wastes 5 energy, plays a crash sound) if:
+- The player is not moving fast enough (speed < 1.0 blocks/s).
+- Energy < 5.
+- Player performed a trick within the last 2.0 seconds (cooldown).
+
+On success:
+- Score accumulates in `SkateParkSystem.sessionScore`.
+- Every 50 accumulated score: award 1 COIN directly to player inventory.
+- Every 100 accumulated score: award +5 Street Lads Respect.
+- First ever successful trick: tooltip "Sick kick. The lads are watching."
+- On McTwist success: tooltip "Absolute legend. How is your ankle?"
+
+### Trick Key Binding
+
+**T** — Perform skate trick (when in skate park). Added to Help UI.
+
+### Council Enforcement Events
+
+Every 8 in-game hours, The Council has a 40% chance to initiate a **Park Closure
+Attempt**:
+
+1. A `COUNCIL_MEMBER` NPC walks to the park entrance carrying a clipboard.
+2. A `CLOSURE_NOTICE` prop (yellow sign) is placed on the park perimeter wall
+   nearest to the entrance.
+3. A speech bubble on the `COUNCIL_MEMBER`: "This facility is to be closed pending
+   a risk assessment and licensing review."
+4. If the closure notice is not removed within 10 in-game minutes, the park
+   entrance gap is blocked (a CONCRETE block placed over it), and a 30-minute
+   lockout begins — players and NPCs cannot enter.
+
+**Player can sabotage the closure**:
+- Press **E** on the `CLOSURE_NOTICE` prop to tear it down (if player Notoriety
+  Tier < 3; otherwise it triggers ASBO — see below).
+- Alternatively, bribe the `COUNCIL_MEMBER` with 8 COIN (press **E** on them,
+  select "Sort it out") to cancel the event outright.
+- Tearing down the notice: Council Respect −5, Street Lads Respect +10.
+- Bribing: Council Respect +5 (they got paid), Street Lads Respect +5.
+- Each sabotage contributes +1 to `CLOSURE_NOTICES_TORN_DOWN` counter.
+
+### ASBO Mechanic
+
+If a `POLICE` or `PCSO` NPC is within 8 blocks of the player when they perform
+a trick, there is a 30% chance per trick of receiving an ASBO:
+
+- `NotorietySystem` Notoriety +5.
+- `CriminalRecord` receives a `ANTISOCIAL_BEHAVIOUR` offence entry.
+- Player receives a `PARK_BANNED` flag for 1 in-game day. While banned:
+  - Entering the `SKATE_PARK` AABB causes the nearest NPC to call police.
+  - The `CLOSURE_NOTICE` event cooldown is halved (Council sees opportunity).
+- Tooltip on first ASBO: "ASBO acquired. Your mum will be so proud."
+
+### Skater NPCs
+
+Between **14:00 and 22:00**, the skate park attracts NPCs:
+- 3–6 `SCHOOL_KID` NPCs wander inside the park AABB.
+- 1–2 `YOUTH_GANG` NPCs loiter at the perimeter wall.
+- While at the park, `SCHOOL_KID` NPCs cycle through a skating animation
+  (internally: they teleport 1 block every 2 seconds in a figure-8 pattern
+  within the AABB — approximate a skating loop).
+
+NPC reactions to the player's tricks:
+- On a 720 Spin or McTwist success: all `SCHOOL_KID` and `YOUTH_GANG` NPCs
+  within 15 blocks emit a speech bubble: "BRUUUH" or "Mad ting" (random from list).
+- On a trick failure (crash): nearby NPCs emit: "Get rekt" or "Unlucky, son."
+
+### Integration
+
+- **`FactionSystem`**: Street Lads Respect gains from tricks are channelled through
+  `FactionSystem.addRespect(Faction.STREET_LADS, delta)`.
+- **`TimeSystem`**: NPC spawn window gated by `timeSystem.getHour()`.
+- **`NotorietySystem`**: ASBO adds Notoriety; high notoriety (≥ Tier 3) means
+  council closure events happen twice as often.
+- **`RumourNetwork`**: On a McTwist success, a `PLAYER_SPOTTED` rumour is seeded
+  in the nearest NPC ("Someone just pulled a McTwist down the skate park. Actual
+  legend.").
+- **`NewspaperSystem`**: If `CLOSURE_NOTICES_TORN_DOWN` ≥ 3 in one game day, a
+  front-page story is generated: "Local Tearaway Defies Council's Skate Park
+  Crackdown — For the Third Time." Infamy +2.
+- **`AchievementSystem`**: New achievements:
+
+| Achievement | Trigger |
+|-------------|---------|
+| `KICKFLIP_KING` | Perform 10 successful tricks in one session |
+| `COUNCIL_SABOTEUR` | Tear down 3 closure notices |
+| `ASBO_MAGNET` | Receive 3 ASBOs |
+| `PARK_LEGEND` | Achieve McTwist (rank 4) |
+
+### New Materials / Props
+
+- `Material.SKATEBOARD` — craftable (2 WOOD + 1 PLANKS). Not required to skate
+  (the player skates anyway), but holding a SKATEBOARD in the hotbar gives +15%
+  trick score multiplier. Tooltip on first craft: "Technically it's a weapon too."
+- `PropType.CLOSURE_NOTICE` — yellow sign prop. Placed by Council enforcement event.
+  Removable via E key interaction.
+
+### Unit Tests
+
+- Trick scoring formula (correct score per trick rank).
+- Trick cooldown enforced (second trick within 2s always fails).
+- Energy consumption on success and failure.
+- ASBO probability gated by police proximity (30% with police nearby, 0% without).
+- Council enforcement event timing (40% chance per 8-hour tick).
+- PARK_BANNED flag blocks re-entry NPC call.
+- NPC spawn window (no NPCs spawned before 14:00 or after 22:00).
+- Skateboard multiplier (1.15× score when equipped).
+
+### Integration Tests — implement these exact scenarios
+
+1. **Successful kickflip awards coins**: Place the player inside the `SKATE_PARK`
+   AABB at position (skX + 5, 1, skZ + 5) on a CONCRETE block. Set player speed to
+   1.5 blocks/s. Set player energy to 100. Ensure no police NPCs are within 20 blocks.
+   Press T (call `skateParkSystem.attemptTrick(player, world, timeSystem, npcManager)`).
+   Verify `getLastTrickResult()` returns `SUCCESS`. Verify `getSessionScore()` == 10
+   (Kickflip). Verify player energy is 95. Verify no coins awarded yet (< 50 score).
+   Press T four more times (each success). Verify `getSessionScore()` == 50. Verify
+   player inventory now contains 1 COIN.
+
+2. **Trick fails when moving too slowly**: Place player inside the park, speed set to
+   0.3 blocks/s. Energy 100. Call `attemptTrick()`. Verify result is `FAIL_TOO_SLOW`.
+   Verify `getSessionScore()` is still 0. Verify player energy is 95 (energy still consumed
+   on a failed attempt — you tried).
+
+3. **Trick cooldown prevents double-trick**: Call `attemptTrick()` — success. Immediately
+   call `attemptTrick()` again (within same frame, delta = 0.1s). Verify second result
+   is `FAIL_COOLDOWN`. Verify score did not increase a second time.
+
+4. **Skill rank progresses and unlocks heelflip**: Start with 0 successful tricks.
+   Simulate 3 successful tricks (mock `SUCCESS` results). Verify `getSkillRank()` == 1
+   (Heelflip unlocked). Verify next successful trick returns score 20 (not 10).
+
+5. **Council enforcement event places closure notice**: Call
+   `skateParkSystem.triggerEnforcementEvent(world, npcManager)`. Verify a
+   `COUNCIL_MEMBER` NPC has been added to the world near the park entrance. Verify a
+   `CLOSURE_NOTICE` prop exists on the park perimeter. Verify `isClosureEventActive()`
+   returns true.
+
+6. **Tearing down notice awards Street Lads Respect**: Active closure event present.
+   Place player adjacent to `CLOSURE_NOTICE` prop. Press E (call `onPlayerInteractClosure
+   Notice(player, factionSystem, notorietySystem)`). Verify `CLOSURE_NOTICE` prop is
+   removed. Verify `factionSystem.getRespect(Faction.STREET_LADS)` increased by 10.
+   Verify `factionSystem.getRespect(Faction.COUNCIL)` decreased by 5. Verify
+   `isClosureEventActive()` returns false.
+
+7. **Park lockout activates after 10 minutes without tear-down**: Trigger enforcement
+   event. Advance `TimeSystem` by 10 in-game minutes without the player interacting.
+   Verify `isParkLocked()` returns true. Verify the entrance gap in the park perimeter
+   is now a solid CONCRETE block (`world.getBlock(skX + width/2, 1, skZ) == CONCRETE`).
+   Verify `getLockedOutTimer()` > 0.
+
+8. **ASBO received when police nearby during trick**: Place a `POLICE` NPC 5 blocks from
+   the player inside the park. Set `SkateParkSystem.ASBO_CHANCE = 1.0f` (deterministic).
+   Call `attemptTrick()` with a successful trick. Verify `notorietySystem.getNotoriety()`
+   increased by 5. Verify `criminalRecord.getOffenceCount(CriminalRecord.CrimeType
+   .ANTISOCIAL_BEHAVIOUR)` increased by 1. Verify `isPlayerBanned()` returns true.
+
+9. **Skater NPCs spawn in afternoon window**: Set `TimeSystem` to 15:00. Call
+   `skateParkSystem.update(delta, timeSystem, npcManager, world)`. Verify at least 3
+   `SCHOOL_KID` NPCs have been added within the `SKATE_PARK` AABB. Set time to 23:00.
+   Call `update()`. Verify those NPCs have been removed (or moved out of the AABB).
+
+10. **McTwist seeds a rumour**: Progress player to skill rank 4. Call `attemptTrick()`
+    with a nearby `PUBLIC` NPC within 15 blocks. Verify a rumour containing "McTwist"
+    has been added to that NPC's rumour buffer via `rumourNetwork`. Verify tooltip
+    "Absolute legend. How is your ankle?" is queued.
