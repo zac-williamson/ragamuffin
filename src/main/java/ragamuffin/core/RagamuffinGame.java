@@ -17,6 +17,7 @@ import java.util.List;
 import ragamuffin.ai.GangTerritorySystem;
 import ragamuffin.ai.NPCManager;
 import ragamuffin.building.*;
+import ragamuffin.entity.Car;
 import ragamuffin.entity.DamageReason;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
@@ -2184,9 +2185,27 @@ public class RagamuffinGame extends ApplicationAdapter {
         }
         lastPlayerPosForDistance.set(player.getPosition());
 
-        // Update camera to follow player
-        camera.position.set(player.getPosition());
-        camera.position.y += Player.EYE_HEIGHT;
+        // Update camera to follow player (or car in driving mode)
+        if (carDrivingSystem.isInCar() && carDrivingSystem.getCurrentCar() != null) {
+            // Third-person chase camera behind and above the car
+            Car drivenCar = carDrivingSystem.getCurrentCar();
+            Vector3 carPos = drivenCar.getPosition();
+            float carHeadingRad = (float) Math.toRadians(drivenCar.getHeading());
+
+            // Camera orbits based on mouse yaw, but defaults to behind the car
+            float chaseDist = 8.0f;
+            float chaseHeight = 4.0f;
+            // Position camera behind the car (opposite to heading direction)
+            float behindX = -(float) Math.sin(carHeadingRad) * chaseDist;
+            float behindZ = -(float) Math.cos(carHeadingRad) * chaseDist;
+            camera.position.set(carPos.x + behindX, carPos.y + chaseHeight, carPos.z + behindZ);
+            // Look at a point slightly above the car
+            camera.lookAt(carPos.x, carPos.y + 1.5f, carPos.z);
+            camera.up.set(Vector3.Y);
+        } else {
+            camera.position.set(player.getPosition());
+            camera.position.y += Player.EYE_HEIGHT;
+        }
 
         camera.update();
     }
@@ -3034,8 +3053,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         hoverTooltipSystem.clear();
         float delta = Gdx.graphics.getDeltaTime();
 
-        // Render first-person arm (always visible in gameplay)
-        if (!openingSequence.isActive()) {
+        // Render first-person arm (hidden during car driving — third-person camera)
+        if (!openingSequence.isActive() && !carDrivingSystem.isInCar()) {
             firstPersonArm.render(shapeRenderer, screenWidth, screenHeight);
         }
 
