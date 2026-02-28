@@ -427,7 +427,41 @@ public enum PropType {
      * per in-game day). Press E to rob it (requires CROWBAR if Notoriety below
      * Tier 2; no tool required at Tier 2+). Destroyed by 8 punches; yields IRON.
      */
-    CASH_BOX_PROP(0.40f, 0.50f, 0.30f, 8, Material.IRON);
+    CASH_BOX_PROP(0.40f, 0.50f, 0.30f, 8, Material.IRON),
+
+    // ── Issue #950: Northfield Leisure Centre ─────────────────────────────────
+
+    /**
+     * A leisure centre vending machine stocked with ENERGY_DRINK (2 COIN),
+     * CHOCOLATE_BAR (2 COIN), and WATER_BOTTLE (1 COIN).
+     * Press E to open the vending menu. Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    VENDING_MACHINE_PROP(0.70f, 1.80f, 0.50f, 8, Material.SCRAP_METAL),
+
+    /**
+     * The leisure centre changing room cubicle area.
+     * Player within 5 blocks triggers changing room rumour gossip seeded into
+     * the RumourNetwork every 60 real seconds. Non-solid (cosmetic zone marker).
+     * Destroyed by 3 punches; yields nothing.
+     */
+    CHANGING_ROOM_PROP(1.20f, 2.10f, 0.10f, 3, null),
+
+    /**
+     * A broken sauna unit — has been Out of Order since 2009.
+     * Interact (E) to read the out-of-order notice.
+     * Always non-functional; triggers TYPICAL achievement on first interaction.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    SAUNA_PROP(1.80f, 2.20f, 1.80f, 5, Material.SCRAP_METAL),
+
+    /**
+     * The fire exit door of the leisure centre.
+     * Press E to attempt a silent sneak-in. Silent if no NPC is within 8 blocks;
+     * otherwise caught: +8 Notoriety, +1 wanted star. Awards TIGHT_FISTED
+     * achievement on first successful sneak-in.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    FIRE_EXIT_PROP(0.20f, 2.10f, 1.00f, 5, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

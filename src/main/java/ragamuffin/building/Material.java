@@ -896,7 +896,28 @@ public enum Material {
      * charity shop. Equipping it while on a car wash shift gives +1 bonus COIN
      * per in-game minute (showing initiative).
      */
-    SQUEEGEE("Squeegee");
+    SQUEEGEE("Squeegee"),
+
+    // ── Issue #950: Northfield Leisure Centre ─────────────────────────────────
+
+    /**
+     * Chocolate Bar — sold in the leisure centre vending machine for 2 COIN.
+     * Restores +20 hunger. Also satisfies HUNGRY need for NPCs.
+     */
+    CHOCOLATE_BAR("Chocolate Bar"),
+
+    /**
+     * Water Bottle — sold in the leisure centre vending machine for 1 COIN.
+     * Restores +10 hunger and +5 warmth. Satisfies THIRSTY need for NPCs.
+     */
+    WATER_BOTTLE("Water Bottle"),
+
+    /**
+     * Swim Trunks — pool-side attire. Required to use the swimming session.
+     * Sold by the receptionist for 3 COIN or found in the charity shop.
+     * Equipping reduces the costume check at the leisure centre.
+     */
+    SWIM_TRUNKS("Swim Trunks");
 
     private final String displayName;
 
@@ -1318,6 +1339,14 @@ public enum Material {
             case SQUEEGEE:           return cs(0.20f, 0.50f, 0.85f,  // Blue rubber blade
                                                0.55f, 0.40f, 0.18f); // Brown wood handle
 
+            // Issue #950: Northfield Leisure Centre
+            case CHOCOLATE_BAR:      return cs(0.35f, 0.18f, 0.08f,  // Dark chocolate
+                                               0.88f, 0.72f, 0.35f); // Gold foil wrapper
+            case WATER_BOTTLE:       return cs(0.55f, 0.80f, 0.95f,  // Light blue bottle
+                                               0.90f, 0.90f, 0.90f); // White label
+            case SWIM_TRUNKS:        return cs(0.12f, 0.28f, 0.75f,  // Swimming blue
+                                               0.85f, 0.85f, 0.85f); // White trim
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1542,6 +1571,10 @@ public enum Material {
             case CHALKBOARD:
             // Issue #948: Hand Car Wash (not block items)
             case SQUEEGEE:
+            // Issue #950: Northfield Leisure Centre (not block items)
+            case CHOCOLATE_BAR:
+            case WATER_BOTTLE:
+            case SWIM_TRUNKS:
                 return false;
             default:
                 return true;
@@ -1592,6 +1625,9 @@ public enum Material {
             case FRIED_BREAD:
             case BACON_BUTTY:
             case BUILDER_S_TEA:
+            // Issue #950: Northfield Leisure Centre — vending items sit on surfaces
+            case CHOCOLATE_BAR:
+            case WATER_BOTTLE:
                 return true;
             default:
                 return false;
@@ -1964,6 +2000,14 @@ public enum Material {
             // Issue #948: Hand Car Wash
             case SQUEEGEE:
                 return IconShape.TOOL;        // long-handled squeegee
+
+            // Issue #950: Northfield Leisure Centre
+            case CHOCOLATE_BAR:
+                return IconShape.FOOD;        // chocolate bar shape
+            case WATER_BOTTLE:
+                return IconShape.BOTTLE;      // plastic bottle
+            case SWIM_TRUNKS:
+                return IconShape.FLAT_PAPER;  // flat garment silhouette
 
             default:
                 return IconShape.BOX;
