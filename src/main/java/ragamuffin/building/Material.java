@@ -569,7 +569,32 @@ public enum Material {
      * trick score multiplier when skating in the SKATE_PARK.
      * Tooltip on first craft: "Technically it's a weapon too."
      */
-    SKATEBOARD("Skateboard");
+    SKATEBOARD("Skateboard"),
+
+    // ── Issue #924: Launderette System ────────────────────────────────────────
+
+    /**
+     * Clean Clothes — received after a completed 90-second wash cycle at the
+     * WASHING_MACHINE prop. Using the CHANGING_CUBICLE prop after collection
+     * equips them and grants the FRESHLY_LAUNDERED buff (−20% NPC recognition
+     * chance for 3 in-game minutes).
+     */
+    CLEAN_CLOTHES("Clean Clothes"),
+
+    /**
+     * Bloody Hoodie — drops from the player after losing more than 30 HP in a
+     * single fight. Washing it at the launderette deducts 2 Notoriety and clears
+     * the COVERED_IN_BLOOD debuff.
+     */
+    BLOODY_HOODIE("Bloody Hoodie"),
+
+    /**
+     * Stolen Jacket — sold by the FENCE NPC during a SUSPICIOUS_LOAD random event
+     * at the launderette (5 COIN). Washing it deducts 2 Notoriety and clears the
+     * COVERED_IN_BLOOD debuff, same as the BLOODY_HOODIE.
+     * Earns the LAUNDERING achievement on purchase.
+     */
+    STOLEN_JACKET("Stolen Jacket");
 
     private final String displayName;
 
@@ -889,6 +914,14 @@ public enum Material {
             case SKATEBOARD:     return cs(0.35f, 0.22f, 0.08f,  // Dark maple deck
                                            0.20f, 0.20f, 0.22f); // Black trucks
 
+            // Issue #924: Launderette System
+            case CLEAN_CLOTHES:  return cs(0.92f, 0.95f, 1.00f,  // White-blue fresh fabric
+                                           0.75f, 0.82f, 0.92f); // Pale blue fold
+            case BLOODY_HOODIE:  return cs(0.15f, 0.10f, 0.10f,  // Dark hoodie body
+                                           0.72f, 0.08f, 0.08f); // Blood red stain
+            case STOLEN_JACKET:  return cs(0.18f, 0.25f, 0.18f,  // Dark olive jacket
+                                           0.35f, 0.20f, 0.10f); // Brown lining
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1058,6 +1091,10 @@ public enum Material {
             case INSPECTOR_BADGE:
             // Issue #922: Skate Park System (not a block item)
             case SKATEBOARD:
+            // Issue #924: Launderette System (not block items)
+            case CLEAN_CLOTHES:
+            case BLOODY_HOODIE:
+            case STOLEN_JACKET:
                 return false;
             default:
                 return true;
@@ -1369,6 +1406,14 @@ public enum Material {
             // Issue #922: Skate Park System
             case SKATEBOARD:
                 return IconShape.FLAT_PAPER;  // flat deck/board shape
+
+            // Issue #924: Launderette System
+            case CLEAN_CLOTHES:
+                return IconShape.FLAT_PAPER;  // folded clean laundry
+            case BLOODY_HOODIE:
+                return IconShape.FLAT_PAPER;  // hoodie / clothing
+            case STOLEN_JACKET:
+                return IconShape.FLAT_PAPER;  // jacket / clothing
 
             default:
                 return IconShape.BOX;

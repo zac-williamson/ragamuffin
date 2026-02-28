@@ -909,6 +909,29 @@ public enum AchievementType {
         "Park Legend",
         "Pulled a McTwist. The whole estate saw it. Even the council CCTV.",
         1
+    ),
+
+    // ── Issue #924: Launderette System ────────────────────────────────────────
+
+    FRESH_START(
+        "Fresh Start",
+        "Completed your first wash cycle at the Spotless Launderette. Clean slate. Relatively.",
+        1
+    ),
+    SMELLS_LIKE_CLEAN_SPIRIT(
+        "Smells Like Clean Spirit",
+        "Scrubbed your notoriety three times in the launderette. The machine knows your secrets.",
+        3
+    ),
+    LAUNDERING(
+        "Laundering",
+        "Bought a stolen jacket from a dodgy bloke in a launderette. No questions asked.",
+        1
+    ),
+    PEACEKEEPER_OF_SUDWORTH(
+        "Peacekeeper of Sudworth",
+        "Brokered peace during a machine theft dispute. Diplomacy. In a launderette.",
+        1
     );
 
     private final String name;
