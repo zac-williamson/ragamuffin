@@ -448,7 +448,20 @@ public enum NPCType {
      * Monitors the swimming session timer; ejects players who overstay.
      * Passive; never attacks. Speech: "Right, time's up — out you come."
      */
-    SWIMMING_TEACHER(20f, 0f, 0f, false);
+    SWIMMING_TEACHER(20f, 0f, 0f, false),
+
+    // ── Issue #952: Clucky's Fried Chicken ───────────────────────────────────
+
+    /**
+     * Devraj — the proprietor of Clucky's Fried Chicken.
+     * Stands behind the CHIPPY_COUNTER during opening hours (10:00–02:00).
+     * Passive; serves food via the fried chicken menu. Refuses service to
+     * BALACLAVA wearers. Notoriety-aware dialogue.
+     * Seeds a midnight rumour at 00:00: shares local gossip from the counter.
+     * Speech: "What d'you want, mate?" / "Wings are fresh, just done 'em."
+     *         / "I hear things, you know. Sat here all day."
+     */
+    DEVRAJ(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

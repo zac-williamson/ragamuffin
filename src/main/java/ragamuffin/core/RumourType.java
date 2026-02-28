@@ -81,5 +81,12 @@ public enum RumourType {
     /** Leisure centre changing room gossip — one of 8 pool-specific lines seeded every 60s
      * when the player is within 5 blocks of a CHANGING_ROOM_PROP.
      * Spreads via the regular NPC rumour network. */
-    CHANGING_ROOM_GOSSIP;
+    CHANGING_ROOM_GOSSIP,
+
+    // ── Issue #952: Clucky's Fried Chicken ───────────────────────────────────
+
+    /** "There's a scrap kicking off outside Clucky's — someone's getting battered"
+     * — seeded by FriedChickenShopSystem when 2–3 YOUTH_GANG NPCs enter FIGHTING_EACH_OTHER
+     * state outside the shop. Triggers NOISE_EVENT and police patrol awareness. */
+    FIGHT_NEARBY;
 }

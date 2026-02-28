@@ -52,5 +52,9 @@ public enum NPCState {
     ANNOYED,            // NPC is annoyed after being given an unwanted DIY haircut
 
     // Issue #946: Status Dog — Staffy Companion
-    SITTING             // Dog is performing the SIT trick (2 seconds) or waiting in place
+    SITTING,            // Dog is performing the SIT trick (2 seconds) or waiting in place
+
+    // Issue #952: Clucky's Fried Chicken
+    FIGHTING_EACH_OTHER, // Youth NPCs brawling with each other (not targeting player); deal 5 dmg per 10s to each other
+    CONGREGATING        // Youth NPCs loitering outside Clucky's in a group (18:00–02:00)
 }
