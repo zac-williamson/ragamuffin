@@ -49,5 +49,8 @@ public enum NPCState {
     BOARDING,           // NPC is boarding the bus (brief transition state)
 
     // Issue #944: High Street Barber
-    ANNOYED             // NPC is annoyed after being given an unwanted DIY haircut
+    ANNOYED,            // NPC is annoyed after being given an unwanted DIY haircut
+
+    // Issue #946: Status Dog — Staffy Companion
+    SITTING             // Dog is performing the SIT trick (2 seconds) or waiting in place
 }

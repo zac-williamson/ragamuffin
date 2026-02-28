@@ -63,7 +63,14 @@ public class CriminalRecord {
          * Issue #920: Recorded when the player is caught by a police raid during
          * the pub lock-in after-hours session and fails to hide behind the bar counter.
          */
-        DRUNK_AND_DISORDERLY("Drunk and disorderly charges");
+        DRUNK_AND_DISORDERLY("Drunk and disorderly charges"),
+
+        /**
+         * Issue #946: Recorded when a POLICE NPC inspects the player's off-lead dog
+         * with Notoriety ≥ 50, or when the dog is used for intimidation and a police
+         * NPC is within 15 blocks.
+         */
+        DANGEROUS_DOG("Dangerous dog offences");
 
         private final String displayName;
 
