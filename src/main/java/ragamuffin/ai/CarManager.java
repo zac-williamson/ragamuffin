@@ -189,7 +189,9 @@ public class CarManager {
             }
 
             // --- 6: player collision ---
-            if (car.canDamagePlayer() && car.getAABB().intersects(player.getAABB())) {
+            // Issue #882: use tolerance so edge-grazes don't trigger damage
+            if (car.canDamagePlayer() && car.getAABB().intersectsWithTolerance(
+                    player.getAABB(), Car.PLAYER_COLLISION_TOLERANCE)) {
                 player.damage(Car.COLLISION_DAMAGE, DamageReason.CAR_HIT);
                 car.resetDamageCooldown();
                 float vx = car.getVelocity().x;

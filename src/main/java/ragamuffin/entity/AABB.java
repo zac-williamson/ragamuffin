@@ -35,6 +35,21 @@ public class AABB {
                this.minZ < other.maxZ && this.maxZ > other.minZ;
     }
 
+    /**
+     * Returns true only when the overlap on every axis exceeds {@code tolerance}
+     * blocks.  Use this for player-car collisions to avoid triggering damage
+     * on a bare edge-graze — the player must genuinely penetrate the box by
+     * at least {@code tolerance} on each axis.
+     *
+     * @param other     the other AABB to test against
+     * @param tolerance minimum required overlap (blocks) on each axis
+     */
+    public boolean intersectsWithTolerance(AABB other, float tolerance) {
+        return this.minX + tolerance < other.maxX && this.maxX - tolerance > other.minX &&
+               this.minY + tolerance < other.maxY && this.maxY - tolerance > other.minY &&
+               this.minZ + tolerance < other.maxZ && this.maxZ - tolerance > other.minZ;
+    }
+
     public float getMinX() { return minX; }
     public float getMinY() { return minY; }
     public float getMinZ() { return minZ; }

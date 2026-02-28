@@ -249,6 +249,15 @@ public class Car {
     public static final float BOUNCE_PUSHBACK = 0.3f;
 
     /**
+     * Minimum overlap (blocks) required on each axis before a car-player
+     * collision is registered.  Increasing this value makes the collision
+     * less strict, so the player must genuinely intersect the car body rather
+     * than merely graze its edge.  Addresses player feedback about overly
+     * sensitive car collisions (Issue #882).
+     */
+    public static final float PLAYER_COLLISION_TOLERANCE = 0.25f;
+
+    /**
      * Reverse direction and nudge the car back along the new (reversed)
      * heading so that it no longer overlaps the block it just hit.
      * This is the "bounce" response for block collisions.
