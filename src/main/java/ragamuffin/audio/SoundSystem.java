@@ -2,8 +2,12 @@ package ragamuffin.audio;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.files.FileHandle;
 import ragamuffin.world.BlockType;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -36,34 +40,32 @@ public class SoundSystem {
         this.enabled = true;
         this.footstepTimer = 0f;
 
-        // Note: We're not loading actual sound files here as they don't exist.
-        // In a real implementation, you'd load .wav/.ogg files from assets/sounds/
-        // For now, this system is a no-op placeholder that can be wired in.
-        // When actual audio assets are added, uncomment the loading logic below.
-
-        // loadSounds();
+        generateAndLoadSounds();
     }
 
     /**
-     * Load all sound files from assets (disabled for now - no audio files exist).
+     * Generate all sounds procedurally, write to temp WAV files, load via LibGDX, then delete.
      */
-    private void loadSounds() {
-        // Example loading code (disabled until audio assets are added):
-        // sounds.put(SoundEffect.BLOCK_PUNCH, Gdx.audio.newSound(Gdx.files.internal("sounds/block_punch.wav")));
-        // sounds.put(SoundEffect.BLOCK_BREAK_WOOD, Gdx.audio.newSound(Gdx.files.internal("sounds/break_wood.wav")));
-        // sounds.put(SoundEffect.BLOCK_BREAK_STONE, Gdx.audio.newSound(Gdx.files.internal("sounds/break_stone.wav")));
-        // sounds.put(SoundEffect.BLOCK_BREAK_GLASS, Gdx.audio.newSound(Gdx.files.internal("sounds/break_glass.wav")));
-        // sounds.put(SoundEffect.BLOCK_PLACE, Gdx.audio.newSound(Gdx.files.internal("sounds/block_place.wav")));
-        // sounds.put(SoundEffect.FOOTSTEP_PAVEMENT, Gdx.audio.newSound(Gdx.files.internal("sounds/footstep_pavement.wav")));
-        // sounds.put(SoundEffect.FOOTSTEP_GRASS, Gdx.audio.newSound(Gdx.files.internal("sounds/footstep_grass.wav")));
-        // sounds.put(SoundEffect.UI_CLICK, Gdx.audio.newSound(Gdx.files.internal("sounds/ui_click.wav")));
-        // sounds.put(SoundEffect.UI_OPEN, Gdx.audio.newSound(Gdx.files.internal("sounds/ui_open.wav")));
-        // sounds.put(SoundEffect.UI_CLOSE, Gdx.audio.newSound(Gdx.files.internal("sounds/ui_close.wav")));
-        // sounds.put(SoundEffect.INVENTORY_PICKUP, Gdx.audio.newSound(Gdx.files.internal("sounds/pickup.wav")));
-        // sounds.put(SoundEffect.NPC_HIT, Gdx.audio.newSound(Gdx.files.internal("sounds/npc_hit.wav")));
-        // sounds.put(SoundEffect.PLAYER_DODGE, Gdx.audio.newSound(Gdx.files.internal("sounds/dodge.wav")));
-        // sounds.put(SoundEffect.POLICE_SIREN, Gdx.audio.newSound(Gdx.files.internal("sounds/police_siren.wav")));
-        // sounds.put(SoundEffect.TOOLTIP, Gdx.audio.newSound(Gdx.files.internal("sounds/tooltip.wav")));
+    private void generateAndLoadSounds() {
+        if (Gdx.audio == null) return;
+
+        ProceduralAudioGenerator generator = new ProceduralAudioGenerator();
+        for (SoundEffect effect : SoundEffect.values()) {
+            try {
+                byte[] wav = generator.generate(effect);
+                if (wav == null) continue;
+
+                File tmp = File.createTempFile("ragamuffin_" + effect.name() + "_", ".wav");
+                try (FileOutputStream fos = new FileOutputStream(tmp)) {
+                    fos.write(wav);
+                }
+                Sound sound = Gdx.audio.newSound(new FileHandle(tmp));
+                sounds.put(effect, sound);
+                tmp.delete();
+            } catch (Exception e) {
+                System.err.println("Failed to generate sound: " + effect + " - " + e.getMessage());
+            }
+        }
     }
 
     /**
