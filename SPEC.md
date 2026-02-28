@@ -11649,3 +11649,140 @@ faction respect deltas applied correctly, QUIZMASTER NPC spawns/despawns at corr
    respect to 50. Player wins the quiz (score ≥13). Verify Street Lads respect is
    ≥55 (base +3 for attending + +5 for win). Verify Council respect is ≤47 (−3 for
    witnessing a win).
+
+---
+
+## Phase 8i: Bus Stop & Public Transport System
+
+**Goal**: Add a working bus network that connects key landmarks across the 200×200
+block world, giving the player a legitimate fast-travel option that interacts with
+the WantedSystem, TimeSystem, WeatherSystem, and NPC routines — all quintessentially
+British.
+
+### Overview
+
+The world has **4 bus stops** at fixed positions near major landmarks (town centre /
+park, industrial estate, Greggs parade, and the JobCentre). Each stop has a
+`BUS_STOP` prop (a yellow pole with a timetable sign rendered via `PropRenderer`).
+Buses run on a fixed schedule: one bus every **8 in-game minutes** during operating
+hours (07:00–23:00). At night (23:00–07:00) only a single "night bus" runs every
+20 minutes on a reduced route (town centre ↔ industrial estate only).
+
+When the player presses **E** at a bus stop, a `BusStopUI` overlay appears listing
+the next 3 departures and their destinations. The player selects a destination with
+**1/2/3** keys. The "fare" is **2 coins** deducted immediately. If the player has
+insufficient coins, the fare can be dodged (see below). The bus then "arrives" (a
+brief arrival cinematic: blocky low-poly bus model slides into view from off-screen),
+the player boards, a fast-travel fade-to-black occurs, and they reappear at the
+destination stop after a simulated journey time of **3 real seconds**.
+
+### Fare Dodging
+
+The player may choose "Leg it" instead of paying. This:
+- Teleports them to the destination as normal.
+- Rolls a dice: if `notorietySystem.getLevel() >= 2` (KNOWN or above), there is a
+  40% chance a **TICKET_INSPECTOR** NPC (new type) is waiting at the destination stop.
+- The TICKET_INSPECTOR demands a **10-coin fine** or arrests the player (same flow as
+  `ArrestSystem`). The player may run (WantedSystem +1 star) or pay.
+- Criminal record entry `FARE_DODGING` is logged on arrest.
+- At notoriety level 0, fare dodging has only a 10% chance of a TICKET_INSPECTOR.
+
+### Night Bus Chaos
+
+After 22:00, the night bus carries **2–4 DRUNK NPC passengers** visible at the
+destination stop when the player arrives. They linger for 60 seconds before
+dispersing. One DRUNK NPC has a 30% chance of starting a fight with another NPC
+(triggering `NPCHitDetector` logic). The player arriving on the night bus gains
+the street-flavour tooltip: *"The night bus. God help us."*
+
+### Weather Integration
+
+During `RAIN` or `THUNDERSTORM` weather, the bus stop gains an NPC crowd: **3
+extra PUBLIC NPCs** spawn at the stop (waiting for the bus, obviously). These NPCs
+have BORED need set to 80, making them prime targets for the BuskingSystem if the
+player sets up nearby. During `COLD_SNAP` or `FROST`, NPCs at the stop have dialogue
+referencing the cold: *"Bloody freezing. Where's the bus?"*
+
+### Faction Integration
+
+- **The Council**: Owning a `BUS_PASS` item (crafted: `COUNCIL_ID ×1 + SCRAP_METAL ×1`)
+  gives the player free unlimited rides. The Council respect increases by +1 the first
+  time the player uses a bus pass (they approve of using public services).
+- **Street Lads**: Spray-painting graffiti on a bus stop (via `GraffitiSystem`)
+  earns Street Lads respect +2. The Council immediately dispatches a COUNCIL_CLEANER
+  NPC to remove it (existing behaviour).
+- **Marchetti Crew**: A `MARCHETTI_PACKAGE` quest variant can require the player to
+  deliver a package by bus to the industrial estate stop. The package must arrive
+  within 2 in-game bus cycles or the mission fails.
+
+### New Classes
+
+- **`BusSystem`** (`core/`): Manages the bus schedule (timetable per stop, next
+  arrival timers), fare payment/dodging logic, TICKET_INSPECTOR spawn logic, night
+  bus DRUNK NPC spawning, and weather crowd spawning. Integrates with `TimeSystem`,
+  `WeatherSystem`, `NotorietySystem`, `WantedSystem`, `ArrestSystem`,
+  `CriminalRecord`, `RumourNetwork`, and `NPCManager`.
+- **`BusStopUI`** (`ui/`): Renders the destination-selection overlay — stop name,
+  next 3 departures with countdown timers, fare cost, and a "Leg it" option.
+- **`BusRoute`** (`core/`): Simple data record: ordered list of stop landmark IDs,
+  operating hours start/end, frequency in game-minutes.
+
+### New NPCType
+
+- **`TICKET_INSPECTOR`**: Spawns only at bus stops after a fare dodge. Passive but
+  immediately initiates the fine dialogue on proximity. Stats: health 30, attack 4,
+  cooldown 1.5s, hostile if the player refuses to pay or flees.
+
+### New PropType entry
+
+- **`BUS_STOP`**: Rendered as a yellow post with a rectangular sign face. Placed at
+  4 fixed world positions by `WorldGenerator`.
+
+### New Material / Item
+
+- **`BUS_PASS`**: Craftable consumable (unlimited uses, not consumed on use). Displayed
+  in inventory as a small card. Recipe: `COUNCIL_ID ×1 + SCRAP_METAL ×1`. Tooltip:
+  *"Valid for travel on all services. Probably."*
+
+### New AchievementType entries
+
+- **`NIGHT_OWL`** ("Late One"): Ride the night bus at least once.
+- **`COMMUTER`** ("Regular"): Take 10 bus rides in total.
+- **`DODGER`** ("Tight Git"): Successfully fare-dodge 5 times without being caught.
+
+**Unit tests**: BusRoute timetable returns correct next-arrival time, fare deduction
+from inventory, fare-dodge notoriety probability thresholds, TICKET_INSPECTOR spawn
+condition, night bus DRUNK NPC count range, BUS_PASS crafting recipe, weather crowd
+spawn count.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Bus arrives on schedule**: Set TimeSystem to 07:00. Interact with a bus stop
+   (call `busSystem.onPlayerInteract(player, stopId)`). Verify `BusStopUI` is shown
+   with at least one departure listed. Advance 8 in-game minutes. Verify
+   `busSystem.isServiceActive()` is true and a departure event has fired.
+
+2. **Paying fare teleports player**: Place player at stop A. Give player 5 coins.
+   Call `busSystem.boardBus(player, stopA, stopB)`. Verify player's coin count
+   decreased by 2. Advance 3 real seconds of simulation. Verify player position is
+   within 3 blocks of stop B's world position.
+
+3. **Fare dodging with high notoriety spawns TICKET_INSPECTOR**: Set notoriety level
+   to 2. Call `busSystem.dodgeFare(player, stopA, stopB)` 10 times (resetting
+   position each time). Verify at least 4 TICKET_INSPECTOR NPCs were spawned at
+   stop B across the 10 attempts (≈40% rate, allow ±2 for RNG variance).
+
+4. **Night bus spawns drunk NPCs**: Set TimeSystem to 22:30. Board the night bus
+   (call `busSystem.boardBus(player, stopA, stopB)`). Advance 3 real seconds. Verify
+   between 2 and 4 DRUNK NPCs are present within 5 blocks of stop B. Verify at
+   least one DRUNK NPC has BORED need score > 0.
+
+5. **Weather crowd spawns during rain**: Set WeatherSystem to RAIN. Trigger stop
+   update (call `busSystem.updateStop(stopId, delta)` for 1 frame). Verify 3 PUBLIC
+   NPCs are present at the stop with BORED need score = 80.
+
+6. **BUS_PASS gives free ride**: Give player a `BUS_PASS` item. Call
+   `busSystem.boardBus(player, stopA, stopB)`. Verify player's coin count is
+   unchanged. Verify Council respect increased by 1 (first-use bonus). Call
+   `busSystem.boardBus(player, stopB, stopA)` a second time. Verify Council respect
+   did NOT increase again (one-time bonus only).
