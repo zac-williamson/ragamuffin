@@ -418,7 +418,19 @@ public enum NPCType {
      * Once adopted, enters FOLLOWING_PLAYER state and becomes the player's companion.
      * Only one stray dog spawns per world; managed by DogCompanionSystem.
      */
-    STRAY_DOG(15f, 0f, 0f, false);
+    STRAY_DOG(15f, 0f, 0f, false),
+
+    // ── Issue #948: Hand Car Wash ─────────────────────────────────────────────
+
+    /**
+     * Car Wash Boss — the owner of the Sparkle Hand Car Wash.
+     * Present 08:00–20:00. Stands near the SHED_PROP.
+     * Player presses E to start or end a shift, or receive payment.
+     * If player Notoriety &gt; 40 when approaching: "I know your face from somewhere.
+     * You're not in the papers, are ya?" — but still allows work.
+     * Absent for 1 in-game day after the cash box is robbed.
+     */
+    CAR_WASH_BOSS(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -405,7 +405,29 @@ public enum PropType {
      * natural burnout. Cosmetic ruin prop; no light. Destroyed by 1 punch; drops
      * 1 SCRAP_METAL.
      */
-    BURNT_BIN(1.00f, 1.50f, 1.00f, 1, Material.SCRAP_METAL);
+    BURNT_BIN(1.00f, 1.50f, 1.00f, 1, Material.SCRAP_METAL),
+
+    // ── Issue #948: Hand Car Wash ─────────────────────────────────────────────
+
+    /**
+     * A wall-mounted hose reel with a trigger nozzle. Interaction point for car
+     * wash shifts. Press E within 2 blocks to start a shift (08:00–18:00).
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    HOSE_PROP(1.20f, 1.50f, 0.80f, 5, Material.SCRAP_METAL),
+
+    /**
+     * A plastic bucket filled with soapy water. Decorative; confirms the forecourt
+     * is operational. Destroyed by 2 punches; yields nothing (plastic bucket).
+     */
+    BUCKET_PROP(0.60f, 0.50f, 0.60f, 2, null),
+
+    /**
+     * A metal lockbox containing today's car wash takings (3–9 COIN, randomised
+     * per in-game day). Press E to rob it (requires CROWBAR if Notoriety below
+     * Tier 2; no tool required at Tier 2+). Destroyed by 8 punches; yields IRON.
+     */
+    CASH_BOX_PROP(0.40f, 0.50f, 0.30f, 8, Material.IRON);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
