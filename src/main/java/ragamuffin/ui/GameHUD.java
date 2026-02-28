@@ -396,9 +396,9 @@ public class GameHUD {
             hoverTooltips.addZone(x, y4, DODGE_BAR_WIDTH, DODGE_BAR_HEIGHT,
                     dodgeReady ? "Dodge ready — press Ctrl while moving" : "Dodge on cooldown");
             hoverTooltips.addZone(x, y5, BAR_WIDTH, BAR_HEIGHT,
-                    "Warmth: " + (int)(warmthPct * 100) + "% — wear a coat or stand near a campfire");
+                    "Warmth: " + (int)(warmthPct * 100) + "% — go indoors, stand near a campfire, wear a coat or woolly hat, or drink a flask of tea");
             hoverTooltips.addZone(x, y6, BAR_WIDTH, BAR_HEIGHT,
-                    "Wetness: " + (int)(wetnessPct * 100) + "% — use an umbrella to stay dry");
+                    "Wetness: " + (int)(wetnessPct * 100) + "% — use an umbrella or find shelter to stay dry (wetness accelerates warmth loss)");
         }
     }
 

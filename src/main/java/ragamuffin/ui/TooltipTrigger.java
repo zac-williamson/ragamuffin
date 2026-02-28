@@ -21,7 +21,9 @@ public enum TooltipTrigger {
     GREGGS_RAID_ALERT("Raiding Greggs? Bold. The police take a dim view of sausage roll crime."),
     GREGGS_RAID_ESCALATION("Someone's called it in. Police are on their way to avenge the pastries."),
     GANG_TERRITORY_ENTERED("You've wandered into their patch. They've noticed."),
-    GANG_TERRITORY_HOSTILE("Wrong postcode, mate. They're not happy about that.");
+    GANG_TERRITORY_HOSTILE("Wrong postcode, mate. They're not happy about that."),
+    WARMTH_GETTING_COLD("Getting cold. Find shelter or stand near a campfire to warm up."),
+    WARMTH_DANGER("Hypothermia setting in. Get indoors, find a campfire, or drink a flask of tea. A coat or woolly hat will slow the drain.");
 
     private final String message;
 
