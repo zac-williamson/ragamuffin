@@ -202,6 +202,9 @@ public class RagamuffinGame extends ApplicationAdapter {
     // Issue #799: Corner shop economy — shop claiming, customer traffic, Marchetti rivalry, police raid heat
     private CornerShopSystem cornerShopSystem;
 
+    // Issue #837: Market stall economy — passive income, inspector, weather, faction modifiers
+    private StallSystem stallSystem;
+
     // Issue #662: Car traffic system
     private ragamuffin.ai.CarManager carManager;
     // Issue #773: Car driving system — lets player enter and drive cars
@@ -536,6 +539,9 @@ public class RagamuffinGame extends ApplicationAdapter {
 
         // Issue #799: Initialize corner shop system — shop claiming, customer traffic, Marchetti rivalry
         cornerShopSystem = new CornerShopSystem();
+
+        // Issue #837: Initialize stall system — market stall passive income economy
+        stallSystem = new StallSystem();
 
         // Issue #662: Initialize car traffic system
         carManager = new ragamuffin.ai.CarManager();
@@ -2315,6 +2321,23 @@ public class RagamuffinGame extends ApplicationAdapter {
                     player.getStreetSkillSystem(), achievementSystem::award);
         }
 
+        // Issue #837: Update stall economy — customers, inspector, weather, faction modifiers
+        if (stallSystem != null) {
+            stallSystem.update(
+                    delta,
+                    npcManager.getNPCs(),
+                    player,
+                    weatherSystem.getCurrentWeather(),
+                    inventory,
+                    factionSystem,
+                    notorietySystem,
+                    player.getCriminalRecord(),
+                    achievementSystem::award,
+                    streetEconomySystem);
+            String stallMsg = stallSystem.pollTooltip();
+            if (stallMsg != null) tooltipSystem.showMessage(stallMsg, 3.0f);
+        }
+
         // Issue #26: Update gang territory system
         gangTerritorySystem.update(delta, player, tooltipSystem, npcManager, world);
 
@@ -3454,6 +3477,34 @@ public class RagamuffinGame extends ApplicationAdapter {
                 tooltipSystem.showMessage("Shop closed.", 2.0f);
             }
         }
+
+        // Issue #837: E key — place stall from hotbar, or open/close an already-placed stall
+        if (stallSystem != null) {
+            ragamuffin.world.RaycastResult stallTarget =
+                    blockBreaker.getTargetBlock(world, tmpCameraPos, tmpDirection, PLACE_REACH);
+            if (!stallSystem.isStallPlaced()) {
+                // Try to place stall on targeted block surface
+                if (stallTarget != null) {
+                    int tx = stallTarget.getBlockX();
+                    int ty = stallTarget.getBlockY();
+                    int tz = stallTarget.getBlockZ();
+                    ragamuffin.world.BlockType ground = world.getBlock(tx, ty - 1, tz);
+                    String groundName = (ground != null) ? ground.name() : "";
+                    Faction territory = (factionSystem != null)
+                            ? factionSystem.getTurfMap().getOwner(tx, tz) : null;
+                    boolean placed = stallSystem.placeStall(tx, ty, tz, groundName, inventory, territory);
+                    if (placed) {
+                        tooltipSystem.showMessage("Stall placed. Press E to open.", 2.5f);
+                    }
+                }
+            } else if (!stallSystem.isStallOpen()) {
+                stallSystem.openStallWithAchievement(achievementSystem::award);
+                tooltipSystem.showMessage("Stall open. Time to shift some gear.", 2.0f);
+            } else {
+                stallSystem.closeStall();
+                tooltipSystem.showMessage("Stall closed.", 1.5f);
+            }
+        }
     }
 
     /**
@@ -3883,6 +3934,17 @@ public class RagamuffinGame extends ApplicationAdapter {
             spriteBatch.end();
         }
 
+        // Issue #837: Render stall HUD status bar when stall is open
+        if (stallSystem != null && stallSystem.isStallOpen()) {
+            spriteBatch.begin();
+            font.draw(spriteBatch,
+                    String.format("STALL  Sold: %d  Income: %d",
+                            stallSystem.getLifetimeSales(),
+                            stallSystem.getStallCoinTotal()),
+                    20, 60);
+            spriteBatch.end();
+        }
+
         // Render damage flash overlay
         float flashIntensity = player.getDamageFlashIntensity();
         if (flashIntensity > 0f) {
@@ -4229,6 +4291,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         streetEconomySystem = new StreetEconomySystem();
         // Issue #799: Reset corner shop system so shop state, heat and stock don't carry over
         cornerShopSystem = new CornerShopSystem();
+        // Issue #837: Reset stall system so stall state, stock and inspector don't carry over
+        stallSystem = new StallSystem();
         // Issue #826: Reset witness system so evidence props, CCTV timers and witness state don't carry over
         witnessSystem = new WitnessSystem();
         witnessSystem.setCriminalRecord(player.getCriminalRecord());
