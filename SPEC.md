@@ -13551,3 +13551,179 @@ The `VOLUNTEER` NPC has distinct speech lines and reactions:
    COAT. Verify its price equals `max(1, fenceValuationTable.getValueFor(COAT) / 2)`.
    Give player 2 COIN and buy the COAT back. Verify player has 1 COAT and stock is
    empty again.
+
+---
+
+## Ice Cream Van System — Mister Softee, Jingle Wars & Heatwave Hustle
+
+### Overview
+
+A roaming `ICE_CREAM_VAN` NPC vehicle (driven by `NPCType.ICE_CREAM_MAN`) circles
+the streets on a fixed 200-block loop, playing a tinny jingle every 90 in-game
+seconds. The player can buy ice creams, steal the van, operate it as a mobile shop,
+and trigger a rival van turf war.
+
+### Ice Cream Van Behaviour
+
+- **Route**: The van follows a deterministic loop around the park and high street,
+  pausing for 20 in-game seconds at each of 4 designated `STOP_POINT` positions.
+- **Jingle**: Plays `SoundEffect.ICE_CREAM_JINGLE` at the start of each stop. NPCs
+  within 15 blocks enter a `WANDERING_TOWARDS` state and queue at the van (up to
+  6 NPCs per stop).
+- **Weather gating**: The van only runs when `Weather` is `CLEAR`, `OVERCAST`, or
+  `HEATWAVE`. In `RAIN`, `DRIZZLE`, `THUNDERSTORM`, `FOG`, `COLD_SNAP`, or `FROST`
+  the van parks up at the `ICE_CREAM_DEPOT` landmark and the `ICE_CREAM_MAN` NPC
+  idles with speech: "Not worth it in this weather, is it love."
+- **Heatwave bonus**: In `HEATWAVE` the queue cap increases to 10 NPCs and the van
+  stops for 30 seconds instead of 20.
+
+### Menu & Prices
+
+| Item | Cost (COIN) | Notes |
+|------|------------|-------|
+| `99_FLAKE` | 2 | Satisfies HUNGRY −20, COLD need unaffected |
+| `SCREWBALL` | 1 | Satisfies HUNGRY −10; random BUBBLEGUM at bottom (30% chance) |
+| `FAB_LOLLY` | 2 | Satisfies HUNGRY −15; interaction: "You eat the strawberry bit first, don't you." |
+| `CHOC_ICE` | 3 | Satisfies HUNGRY −25; grants `SWEET_TOOTH` buff: +5 energy for 60s |
+| `OYSTER_CARD_LOLLY` | 5 | Rare item; grants a free bus ride on the Number 47 (single use) |
+
+The `ICE_CREAM_MAN` sells to NPCs at 1 COIN/item (their HUNGRY need must be ≥ 30).
+During `HEATWAVE`, all prices increase by 1 COIN: "Costs more when it's hot, dunnit."
+
+### Player Interactions
+
+**Buying**
+
+- Press `E` near the van hatch while `ICE_CREAM_MAN` is serving. Opens a 5-item
+  trade menu. Payment deducted on confirm.
+- First purchase triggers tooltip: "Nothing says British summer like overpriced ice
+  cream from a van that might fail its MOT."
+
+**Stealing the Van**
+
+- Player must have Notoriety ≥ 150 (Tier 2) and `CROWBAR` in inventory.
+- Press `E` on the cab door. `ICE_CREAM_MAN` flees. Van enters `PLAYER_DRIVEN` mode
+  (uses `CarDrivingSystem`).
+- Player can sell ice cream from the van: park near any NPC cluster (5+ NPCs within
+  10 blocks), press `E` to open hatch. Jingle plays. NPCs queue as normal.
+- Each sale earns 2 COIN (regardless of item). Van holds 20 units of random stock.
+- After 5 player sales, `WantedSystem` adds 1 star: "Ice cream theft. That's a new
+  one." Police spawn within 60 seconds.
+- Rival `DODGY_VAN_MAN` NPC arrives after 10 player sales to "negotiate" (i.e.
+  attack player to reclaim territory).
+
+**Jingle Wars**
+
+- A second rival van (`DODGY_ICE_CREAM_VAN`) spawns when the player operates the
+  stolen van for 2+ in-game days. It plays a louder jingle (100% volume vs 70%)
+  and undercuts all prices by 1 COIN.
+- Player can end Jingle Wars by: (a) abandoning the stolen van, (b) paying the
+  `DODGY_VAN_MAN` 15 COIN as a truce, or (c) destroying the rival van (crowbar,
+  8 hits, notoriety +30).
+- If the rival van is destroyed: achievement `KING_OF_THE_ROAD` unlocked. Nearby
+  NPCs react: "They've only gone and smashed up Mister Frosty's van!"
+
+### `NeedType` Integration
+
+- `ICE_CREAM_VAN` present within 20 blocks reduces NPC `HUNGRY` accumulation rate
+  by 10% while the jingle is playing (they are distracted by the possibility of
+  ice cream).
+- In `HEATWAVE`, the van presence reduces NPC `BORED` need rate by 15%.
+- During `COLD_SNAP`/`FROST`: no van present. NPCs' COLD need accumulates faster
+  (+5%) due to the absence of warm comfort food (the van's absence is noted).
+
+### `NeighbourhoodSystem` Integration
+
+- Van operating in `THRIVING` or `NORMAL` vibes areas: +2 Vibes per stop completed
+  (it's a wholesome community presence).
+- Van stolen by player: −5 Vibes (community trust eroded).
+- Rival van war active: −3 Vibes/in-game day (noise complaints).
+
+### `WeatherSystem` Integration
+
+- `HEATWAVE` triggers a `MarketEvent`-style boost: `ICE_CREAM_FRENZY` — NPC HUNGRY
+  rates +1.5× for that day (everyone wants one), van sales 2× more frequent.
+- `COLD_SNAP`: van parks up AND the player receives a tooltip the first time they
+  check: "The ice cream van's gone into hibernation. Probably sensible."
+
+### `BusSystem` Integration
+
+- `OYSTER_CARD_LOLLY` grants a free ride on the Number 47. When used at a bus stop,
+  `BusSystem.redeemFreeLollyRide(player)` is called. The bus driver says: "That's...
+  unusual. Alright then."
+
+### New NPC Types
+
+- `NPCType.ICE_CREAM_MAN` — van operator. Flees if notoriety ≥ 150 or player
+  approaches with CROWBAR in hand. Speech: "What's your fancy?" / "99 Flake? Can't
+  go wrong." / "You're not gonna nick it are ya?"
+- `NPCType.DODGY_VAN_MAN` — rival van operator. Hostile if player has stolen van.
+  Speech: "Oi, that's MY patch!" / "You're cutting into my margins, mate."
+
+### New Items (Material enum additions)
+
+| Constant | Description |
+|----------|-------------|
+| `Material.ICE_CREAM_99` | 99 Flake cone (alias `99_FLAKE`) |
+| `Material.SCREWBALL` | Screwball lolly with bubblegum |
+| `Material.FAB_LOLLY` | Fab lolly (strawberry/chocolate/hundreds-and-thousands) |
+| `Material.CHOC_ICE` | Chocolate-coated ice cream bar |
+| `Material.OYSTER_CARD_LOLLY` | Blue lolly shaped like an Oyster card |
+
+### New Achievement
+
+| Achievement | Trigger |
+|-------------|---------|
+| `KING_OF_THE_ROAD` | Destroy the rival ice cream van during a Jingle War |
+| `MISTER_FROSTY` | Sell ice cream from the stolen van 10 times in one session |
+| `CHOC_ICE_COLD` | Buy a CHOC_ICE during a COLD_SNAP weather event |
+| `FREE_RIDE` | Use an OYSTER_CARD_LOLLY to board the Number 47 |
+
+### Unit Tests
+
+- `IceCreamVanSystem.getMenuPrice(Material.ICE_CREAM_99, Weather.CLEAR)` returns 2.
+- `IceCreamVanSystem.getMenuPrice(Material.ICE_CREAM_99, Weather.HEATWAVE)` returns 3.
+- `IceCreamVanSystem.isOperating(Weather.RAIN)` returns `false`.
+- `IceCreamVanSystem.isOperating(Weather.HEATWAVE)` returns `true`.
+- `IceCreamVanSystem.getQueueCap(Weather.HEATWAVE)` returns 10; all other operating
+  weathers return 6.
+- Buying a SCREWBALL has a 30% chance of adding `BUBBLEGUM` to player inventory.
+- Stealing the van requires both Notoriety ≥ 150 AND `CROWBAR` in inventory; missing
+  either returns `VanStealResult.PRECONDITION_NOT_MET`.
+- Player sales counter increments correctly; at 5 sales `WantedSystem.addWantedLevel(1)`
+  is called exactly once.
+- `OYSTER_CARD_LOLLY` can only be redeemed at a bus stop; calling redeem elsewhere
+  returns `LollyRedeemResult.NOT_AT_STOP`.
+- Vibes reduced by 5 when player steals van; vibes increased by 2 per completed stop
+  under normal operation.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Van arrives, jingle plays, NPCs queue**: Generate world with `ICE_CREAM_DEPOT`
+   landmark. Tick `IceCreamVanSystem` until van reaches its first stop. Verify
+   `SoundSystem.getLastSoundEffect()` equals `SoundEffect.ICE_CREAM_JINGLE`. Spawn
+   8 NPCs within 15 blocks, all with `HUNGRY` ≥ 30. Tick for 10 seconds. Verify at
+   least 6 NPCs have state `WANDERING_TOWARDS` targeting the van position.
+
+2. **Van parks in bad weather**: Set `Weather.RAIN`. Call
+   `iceCreamVanSystem.update(delta, weather, world)`. Verify
+   `iceCreamVanSystem.isOperating()` is `false`. Verify van position matches
+   `ICE_CREAM_DEPOT` landmark position. Verify `ICE_CREAM_MAN` NPC speech contains
+   "weather".
+
+3. **Heatwave prices increase**: Set `Weather.HEATWAVE`. Press E on van hatch.
+   Verify the displayed price for `99_FLAKE` is 3 COIN (base 2 + 1 heatwave).
+   Give player 3 COIN. Buy `99_FLAKE`. Verify player has 0 COIN and 1 `ICE_CREAM_99`
+   in inventory. Verify player `HUNGRY` need decreased by 20.
+
+4. **Stealing the van triggers wanted level**: Set player Notoriety to 200. Give
+   player `Material.CROWBAR`. Call `iceCreamVanSystem.stealVan(player, inventory,
+   notorietySystem, wantedSystem)`. Verify `ICE_CREAM_MAN` NPC state is `FLEEING`.
+   Simulate 5 player sales from van. Verify `wantedSystem.getWantedLevel()` is 1.
+   Verify tooltip contains "ice cream theft".
+
+5. **OYSTER_CARD_LOLLY gives free bus ride**: Give player 5 COIN. Buy
+   `OYSTER_CARD_LOLLY` from van (costs 5). Place player at bus stop. Call
+   `iceCreamVanSystem.redeemOysterLolly(player, busSystem, world)`. Verify
+   `busSystem.hasFreeRide(player)` is `true`. Board the Number 47. Verify
+   `busSystem.hasFreeRide(player)` is `false` after boarding.
