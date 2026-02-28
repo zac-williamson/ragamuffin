@@ -4388,6 +4388,13 @@ public class RagamuffinGame extends ApplicationAdapter {
                     jobCentreSystem, player, inventory);
         }
 
+        // Issue #864: Render FenceTradeUI if visible
+        if (fenceTradeUI.isVisible()) {
+            fenceTradeUI.render(spriteBatch, shapeRenderer, font,
+                    screenWidth, screenHeight,
+                    fenceSystem, player, inventory);
+        }
+
         // Issue #799: Render corner shop HUD status bar when shop is open
         if (cornerShopSystem != null && cornerShopSystem.hasShop() && cornerShopSystem.isShopOpen()) {
             spriteBatch.begin();
