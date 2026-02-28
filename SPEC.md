@@ -8062,3 +8062,263 @@ Street Lads Respect ≥ 60, Marchetti Vinnie rank impact on faction respect delt
    generated. Verify pirate radio commentary scheduled. Verify `bookiePot` debited correctly.
    Verify game remains in PLAYING state throughout, no NPEs, NPC count non-zero, Pit spectator
    crowd count within [8, 20].
+
+---
+
+## Phase 22: The Snitch Network — Informants, Paranoia & The Long Con
+
+**Goal**: Introduce a living criminal underworld where trust is currency and betrayal is
+inevitable. Every NPC in the world has a hidden loyalty and an informant score. Some are
+grasses on retainer for the police. Others can be turned. The player must build a network
+of trusted contacts — or burn them all — while never knowing for certain who's talking to
+who. This system weaves paranoia into every interaction and turns the existing rumour,
+faction, and wanted systems into a single, terrifying whole.
+
+This is Ragamuffin's answer to GTA's wanted system: not just stars and police cars, but a
+living web of informants, cover stories, and betrayal — with dark British humour throughout.
+
+### The Informant System
+
+Every `NPC` instance gains two hidden fields:
+- `informantScore` (0–100, default varies by type): how willing this NPC is to grass on the
+  player to the police. Computed at world-gen time.
+- `groomedBy` (`Faction` or null): which faction (including POLICE) has recruited this NPC
+  as an informant. Null means civilian.
+
+**Base informant scores by NPC type:**
+
+| NPC Type | Base Score | Reasoning |
+|----------|-----------|-----------|
+| `PUBLIC` | 15–30 | Mostly decent, but some are curtain-twitchers |
+| `YOUTH` | 5–15 | Gang code: snitches get stitches |
+| `STREET_LAD` | 5–10 | Extremely loyal to street code |
+| `SHOPKEEPER` | 40–60 | Pays their taxes, cooperates with authorities |
+| `BOUNCER` | 20–35 | They've seen things but stay quiet (mostly) |
+| `BARMAN` | 10–20 | Hears everything, says nothing (professionally) |
+| `COUNCIL_BUILDER` | 70–90 | Works for the council, obviously grasses |
+| `POLICE` | N/A | Already police |
+| `ACCOMPLICE` | 0–5 | You recruited them — starts loyal |
+
+**Score modifiers** applied at runtime:
+- Player's Notoriety × 0.2 added to all `PUBLIC` and `SHOPKEEPER` scores (the higher your
+  notoriety, the more nervous civilians become around you)
+- Player has bought that NPC a drink (barman trade): −10 to that NPC's score
+- Player has completed a faction mission that benefited that NPC's faction: −15
+- Player has been arrested within 50 blocks of that NPC in the last 5 in-game minutes: +20
+  ("they saw what you did")
+
+### Grassing Mechanic
+
+When a player commits a crime (block break in a building, pickpocket, assault, heist),
+all NPCs within 20 blocks who have line-of-sight are added to a **WitnessPool** for that
+crime (a transient list, existing `WitnessSystem` extended). At the next `CLOSE_OF_BUSINESS`
+TimeSystem event (midnight each in-game day), the `SnitchNetwork` resolves:
+
+1. For each NPC in any active WitnessPool, roll: `random(0, 100) < informantScore`.
+2. On success: that NPC "reports" — adding 1 `CriminalRecord` offence, generating a
+   `POLICE_TIP` rumour type (new), and seeding a Notoriety +10 penalty.
+3. The player is not immediately notified — they find out when the next police patrol
+   encounter has clearly been "briefed" (police speech bubble: "We've had reports about
+   you, sunshine."), or when they read the next `NewspaperSystem` headline.
+4. Each NPC can only successfully grass once per crime event (no double-reporting).
+
+**New `RumourType`:** `POLICE_TIP` — template: "Word is the filth got a tip-off about
+[player name] near [landmark]." Spreads through the rumour network like any other rumour.
+
+### The Grooming System — Turning NPCs
+
+The player can work to reduce an NPC's informant score or flip them to actively work
+against the police. New interaction mechanic via **E** key on any non-hostile NPC:
+
+**Stage 1 — Build Trust** (reduces informant score):
+- Buy them a drink (costs 2 coins via nearby barman, or player carries BEER material):
+  informantScore −10. Speech: "Cheers, mate. You're alright, you are."
+- Complete a favour for them — if the NPC is a `SHOPKEEPER`, chase away a harassing
+  `YOUTH` (attack a YOUTH within 15 blocks of the shop): informantScore −15.
+  Speech: "Thanks. Those kids are a bloody nightmare."
+- Gift them FOOD material (SAUSAGE_ROLL, STEAK_BAKE, etc.): informantScore −5.
+
+**Stage 2 — Recruit as Asset** (once score drops below 20):
+- Press **E** and select "I need a favour" dialogue option (costs 5 coins).
+- NPC becomes a **CONTACT** — their `groomedBy` is set to null (no longer grassing).
+- Contact perk activates: any time the police would receive a tip from this NPC's area,
+  there is a 60% chance the contact "loses" the information. The player sees a tooltip:
+  "[NPC name] covered for you."
+
+**Stage 3 — Double Agent** (requires score at 0 AND Street Lads or Marchetti Respect ≥ 70):
+- Pay 15 coins. NPC becomes a `DOUBLE_AGENT` CONTACT.
+- A Double Agent actively feeds *false* `POLICE_TIP` rumours back into the `RumourNetwork`
+  that reference a different location, diverting police patrols for 3 in-game minutes.
+  This can be triggered manually: press **E** on the Double Agent and select
+  "Set them up" (costs 5 coins per use, 10-minute cooldown).
+- On use: 2 `POLICE` NPCs are diverted to a false landmark for 3 minutes. Speech bubble
+  from the diverted police: "Anonymous tip. Let's check it out."
+
+### The Paranoia Mechanic — Who Can You Trust?
+
+The player never sees raw `informantScore` values. Instead, tension is communicated
+through:
+
+- **Behaviour tells** (visual/audio cues when informantScore > 50):
+  - NPC glances toward the nearest police NPC when the player is nearby (a brief
+    head-rotation animation toward the police direction, then back).
+  - Speech bubble probability triggers: "Busy round here, isn't it" (neutral deflection).
+  - NPC subtly moves away if the player stands within 3 blocks for more than 5 seconds.
+- **Newspaper confirmation**: after a successful grass, the `NewspaperSystem` generates
+  a story: "Local Snitch Helps Police Nab Ragamuffin Suspect". The player sees this as
+  a headline — but NOT which NPC grassed.
+- **Barman intel**: After buying a Double Whisky at the pub, the barman will (if he
+  holds a `POLICE_TIP` rumour) hint: "Word is someone near [landmark] had a chat with
+  the filth recently." This narrows down the area but still doesn't name the NPC.
+- **Rumour fishing**: With a drink active, pressing **E** on any NPC who has grassed
+  in the last 24 in-game hours has a 30% chance they say: "No comment" instead of
+  normal dialogue — the player learns *someone* in this area is suspicious, but not who.
+
+**New Material**: `BEER` — craftable (2 CARDBOARD → 1 BEER — improvised homebrew) or
+bought at the pub for 1 coin. Carrying 3+ BEER in inventory triggers police interest:
+speech bubble "Got your cans out already?" — +1 offence if Wanted level > 0.
+
+### The Informant Exposure Event
+
+Once per in-game day, the `SnitchNetwork` randomly selects one confirmed informant NPC
+(groomedBy == POLICE, informantScore > 60) and generates an **Exposure Roll**:
+
+- `random(0, 100) < (Street Lads Respect − 30)` — Street Lads may unmask the grass
+  independently. If triggered: 2 Street Lad NPCs approach the informant, speech bubble:
+  "We know what you did." The informant's `NPCState` transitions to FLEEING. The
+  player receives a QUEST_LEAD rumour: "The Lads are sorting out a grass near [area]."
+  If the player assists (hits the fleeing informant before they reach a police NPC),
+  Street Lads Respect +10, informantScore reset to 0 (they've been "dealt with").
+- If the player ignores it: the informant reaches the police NPC and their score
+  increases to 95 permanently ("they're on the payroll now").
+
+### Safe House System
+
+New building type: **SAFE_HOUSE**. The player can establish a safe house in any building
+they have squatted (via existing `SquatSystem`). Press **E** on the door of a squatted
+building to "set it as safe house" (one safe house at a time).
+
+Benefits of a safe house:
+- Police do not enter or raid a safe house unless the player's Notoriety ≥ 300 (Tier 3+).
+  At Tier 3+, police gain the ability to raid — a `POLICE_RAID_INCOMING` event is seeded
+  24 in-game minutes before arrival, visible as a RUMOUR: "Word is the filth are planning
+  something round your way." Player has time to evacuate.
+- Press **E** inside the safe house on a WALL block to access a hidden stash (a secondary
+  `Inventory` of 9 slots). Stashed items do NOT appear in `CriminalRecord` searches.
+- Sleeping inside a safe house (stand still for 10 seconds at night) skips to morning
+  and fully restores energy. Tooltip on first use: "Home is where you hide your gear."
+- Safe house can be compromised: if any Double Agent with a score reset to 0 is within
+  50 blocks AND was previously a CONTACT of the player's, they may lead police to it
+  on a `POLICE_TIP` grass roll. Tooltip: "Looks like your safe house isn't so safe anymore."
+
+### New Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `FIRST_CONTACT` | Groom your first NPC into a Contact |
+| `DOUBLE_AGENT` | Successfully use a Double Agent to divert police |
+| `NOBODY_TALKS` | Reduce 5 NPCs' informant scores to 0 in a single playthrough |
+| `TRUST_NO_ONE` | Lose a Safe House to a compromised Contact |
+| `THE_LONG_CON` | Have the barman hold a `POLICE_TIP` rumour seeded by your own Double Agent (a tip about yourself, that you planted) |
+| `CURTAIN_TWITCHER` | Be grassed on by a `PUBLIC` NPC with informantScore > 80 |
+| `CLEARED_OUT` | Successfully survive a police raid on your Safe House |
+
+### New Key Binding
+
+**T** — Talk (extended interaction): opens the grooming/favour dialogue on a nearby NPC.
+Distinct from **E** (quick interaction). Added to Help UI and key reference.
+
+### New Classes Required
+
+- `SnitchNetwork` — manages `WitnessPool` per crime, resolves grassing at close-of-business,
+  tracks which NPCs are CONTACTS or DOUBLE_AGENTS
+- `SafeHouseSystem` — manages safe house registration, stash inventory, raid countdown,
+  police entry exemption
+- `SnitchBehaviour` (inner class or extension of NPC) — handles behaviour tells, glance
+  animation trigger, movement-away logic
+
+### Integration with Existing Systems
+
+- **WitnessSystem**: `SnitchNetwork` subscribes to witness events from `WitnessSystem`.
+  The existing witness detection is extended: witnesses now also add themselves to the
+  `SnitchNetwork`'s WitnessPool.
+- **RumourNetwork**: `POLICE_TIP` is a new `RumourType` seeded by `SnitchNetwork` and
+  spread identically to existing rumours (5-hop expiry, barman as sink).
+- **NewspaperSystem**: Successful grass events generate headlines in the next edition.
+- **FactionSystem**: Grooming a Council NPC costs −5 Council Respect per attempt
+  (they notice you're interfering with their assets).
+- **NotorietySystem**: Being grassed on adds Notoriety +10 per confirmed grass.
+- **DisguiseSystem**: While wearing a disguise, all NPC informant score rolls are halved
+  (they don't recognise you to grass). Disguise must be active at time of WitnessPool
+  resolution (midnight roll), not just at crime time.
+- **SquatSystem**: Safe house requires an active squat. Losing the squat (council
+  demolition) simultaneously loses the safe house.
+- **TimeSystem**: Grass resolution fires at `TIME_EVENT.CLOSE_OF_BUSINESS` (23:00).
+
+**Unit tests**: Informant score initialisation by NPC type, modifier application, grass
+roll probability, Contact recruitment cost/state change, Double Agent diversion targeting,
+WitnessPool per-crime cap, safe house stash access, raid countdown seeding, behaviour
+tell trigger threshold, newspaper headline generation on grass, rumour type POLICE_TIP
+spread mechanics, disguise halving of grass roll, SquatSystem loss cascade to SafeHouse.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Grass roll fires at close-of-business**: Commit a crime (break a block inside a
+   building). Verify a `PUBLIC` NPC within 20 blocks is added to the `WitnessPool`. Set
+   that NPC's `informantScore` to 100. Advance `TimeSystem` to 23:00. Verify the
+   `CriminalRecord` now has 1 additional offence. Verify a `POLICE_TIP` rumour exists in
+   the `RumourNetwork`. Verify `Notoriety` has increased by 10.
+
+2. **Low informant score NPC does NOT grass**: Commit the same crime. Add a witness NPC
+   with `informantScore = 0`. Advance to 23:00. Verify `CriminalRecord` has NOT gained
+   an additional offence from this NPC. Verify no `POLICE_TIP` rumour was seeded by this
+   NPC (no new rumour with that NPC as source).
+
+3. **Grooming reduces informant score**: Spawn a `SHOPKEEPER` NPC with `informantScore = 50`.
+   Trigger the "Buy them a drink" interaction (player has 2 coins, calls groom action).
+   Verify `informantScore` decreases to 40. Repeat 4 times. Verify score is now 10.
+   Verify NPC dialogue contains "Cheers, mate."
+
+4. **Contact recruitment prevents grass**: Groom a `PUBLIC` NPC to `informantScore < 20`.
+   Pay 5 coins to recruit as CONTACT. Commit a crime within that NPC's view. Set their
+   informantScore to 100 temporarily (to guarantee roll would succeed without contact
+   status). Advance to 23:00. Verify the `CriminalRecord` has NOT received an additional
+   offence (Contact's 60% block fired, or deterministically: mock the random to return
+   0.3 < 0.6 to confirm block). Verify a tooltip "[NPC name] covered for you." was
+   triggered.
+
+5. **Double Agent diverts police patrol**: Groom an NPC to score 0, meet faction Respect
+   requirement. Pay 15 coins to make them `DOUBLE_AGENT`. Trigger "Set them up" action.
+   Verify 2 `POLICE` NPCs change their `NPCState` to a diverted patrol state, heading
+   toward the false landmark. Advance 180 game-minutes. Verify the police NPCs have
+   returned to normal patrol state (diversion expired).
+
+6. **Behaviour tell triggers above threshold**: Spawn an NPC with `informantScore = 75`.
+   Place player within 3 blocks. Advance 300 frames. Verify at least 1 glance animation
+   event was fired toward the nearest police NPC direction. Verify the NPC moved at least
+   1 block away from the player after 5 seconds.
+
+7. **Safe house blocks police entry at Notoriety < 300**: Set player Notoriety to 150.
+   Establish a safe house (squat a building, press E on door). Spawn a POLICE NPC
+   directly outside. Advance 300 frames. Verify the POLICE NPC has NOT entered the
+   safe house interior (player Y coordinate in building, police Y coordinate outside).
+
+8. **Safe house raid countdown at Notoriety ≥ 300**: Set player Notoriety to 300.
+   Establish a safe house. Advance `TimeSystem` by 1 in-game minute. Verify a
+   `POLICE_RAID_INCOMING` rumour exists in the `RumourNetwork`. Advance 24 in-game
+   minutes. Verify at least 2 POLICE NPCs have entered the safe house interior.
+
+9. **Disguise halves grass roll**: Commit a crime. Set witness NPC `informantScore = 50`.
+   Activate `DisguiseSystem` (player is in disguise). Advance to 23:00. With disguise,
+   effective roll threshold is 25 — mock random to return 0.4 (40 > 25, no grass).
+   Verify no offence added. Deactivate disguise. Same crime, same NPC score, mock random
+   0.4 again (40 < 50, grass fires). Verify offence added.
+
+10. **Full snitch network stress test**: Start a new game. Commit 5 crimes at different
+    landmarks. Verify 5 different WitnessPools exist. Set all witness NPC scores to 80.
+    Advance to 23:00. Verify 5 `POLICE_TIP` rumours exist (one per crime). Verify
+    Notoriety increased by 50 total. Groom 2 NPCs to CONTACT. Commit 2 more crimes at
+    those NPCs' locations. Advance to next 23:00. Verify only 3 new offences were added
+    (not 5 — the 2 contacts blocked their grass). Verify Newspaper has a headline
+    about police tips. Verify barman holds at least 1 `POLICE_TIP` rumour. Verify no
+    NPEs, game remains in PLAYING state throughout.
