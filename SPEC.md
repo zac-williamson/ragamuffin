@@ -10741,3 +10741,64 @@ No new classes, no new assets, no behaviour changes — this is purely a missing
    `CriminalRecord` (e.g. `BLOCKS_DESTROYED` and `NPCS_KILLED`). Open the overlay.
    Verify the rendered output (or the data fed to the renderer) contains non-zero counts
    for those crime types.
+
+---
+
+## Wire ChampionshipLadder into the game loop
+
+**Problem**: `ChampionshipLadder` (Issue #801) is a complete ranked-fighter persistence system
+that has never been instantiated or connected to any game logic. `Material.CHAMPIONSHIP_BELT`
+exists but is never awarded. The `BOOKIE_BOARD` prop type references the ladder standings but
+no code ever populates them. The `ChampionshipLadder` javadoc references a `FightNightSystem`
+for Marchetti faction consequences, but that consequence logic is also absent from the game loop.
+
+As a result, players can win MC Battles (which works via `MCBattleSystem`) but the persistent
+championship ranking that should accumulate across battles — and the associated social/faction
+consequences — never happen.
+
+**Changes required** (primarily in `RagamuffinGame.java`):
+
+1. **Declare and instantiate** a `ChampionshipLadder` field. Call `initDefault()` on it during
+   `initGame()` and register the player with `registerFighter("Player")`.
+
+2. **Connect to MCBattleSystem after each battle** — after `mcBattleSystem.startBattle(...)` or
+   wherever a battle result is resolved, call
+   `championshipLadder.updateAfterFight(winnerName, loserName)` to update rankings.
+
+3. **Award CHAMPIONSHIP_BELT** — after updating the ladder, if
+   `championshipLadder.isChampion("Player")` is true, add `Material.CHAMPIONSHIP_BELT` to the
+   player's inventory (and show a tooltip). If Vinnie (`ChampionshipLadder.VINNIE_NAME`) reaches
+   rank 1, apply a −15 respect penalty to the Marchetti faction via `factionSystem`.
+
+4. **Passive notoriety bonus** — in the daily tick (where `propertySystem.onDayTick(...)` and
+   `squatSystem.tickDay(...)` are called), if the player is rank 1 on the ladder, call
+   `notorietySystem` to add +5 Notoriety for the day.
+
+5. **BOOKIE_BOARD prop interaction** — when the player interacts (E key) with a prop of type
+   `PropType.BOOKIE_BOARD`, display the top-3 ladder entries as a tooltip using
+   `tooltipSystem.show(...)`.
+
+No new classes are required — this is purely wiring the existing `ChampionshipLadder` class
+into the existing systems.
+
+### Integration tests — implement these exact scenarios
+
+1. **Ladder initialises with 8 fighters including Vinnie**: After `initGame()`, verify
+   `championshipLadder.size() == 8` and `championshipLadder.getRank(ChampionshipLadder.VINNIE_NAME) > 0`.
+   Verify `"Player"` is also registered on the ladder.
+
+2. **Winning an MC Battle updates the ladder**: Start a battle against a champion NPC and
+   simulate winning (2 out of 3 bar hits). Verify `championshipLadder.getRank("Player")` has
+   decreased (player climbed at least one rung) compared to before the battle.
+
+3. **Reaching rank 1 awards the Championship Belt**: Manually call
+   `championshipLadder.registerFighter("Player")` and manipulate the ladder so the player
+   reaches rank 1. Verify `Material.CHAMPIONSHIP_BELT` is present in the player's inventory.
+
+4. **Vinnie at rank 1 triggers Marchetti respect penalty**: Seed the ladder so Vinnie is at rank
+   1 (or simulate a fight where Vinnie wins). Trigger the consequence check in the game loop.
+   Verify the Marchetti faction's respect toward the player has decreased by 15.
+
+5. **Daily champion bonus adds notoriety**: Put the player at rank 1. Simulate a day tick.
+   Verify `notorietySystem` received a +5 notoriety call (check via a spy or by reading the
+   notoriety value before and after the tick).
