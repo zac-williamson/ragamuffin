@@ -11326,3 +11326,190 @@ not take a `WeatherSystem` parameter and do not force/restore weather state.
   Advance the simulation by 1 second. Verify `weatherSystem.getCurrentWeather()`
   is `Weather.COLD_SNAP`. Advance by `MarketEvent.COLD_SNAP.getDurationSeconds()`
   more seconds. Verify `weatherSystem.getCurrentWeather()` returns to `Weather.CLEAR`.
+
+---
+
+## Feature: Busking System — Street Performance Economy
+
+**Goal**: Let the player busk on the high street using a craftable instrument, earning coins
+from passing NPCs, with a police licence-check threat, faction approval dynamics, and deep
+integration with the existing NPC needs and reputation systems.
+
+### Rationale
+
+The `BUSKER` NPC type already exists (plays music on the high street), but there is no
+equivalent mechanic for the player. The world has everything needed: a high street with foot
+traffic, `StreetEconomySystem` NPC needs (BORED), `FactionSystem` respect modifiers, a police
+threat model, and a `RumourNetwork` to spread the word. This feature adds a low-commitment
+income stream that rewards creativity and risk management — and is very British.
+
+### New Material: BUCKET_DRUM
+
+```
+Material.BUCKET_DRUM("Bucket Drum")
+```
+
+Craftable at the crafting menu: `1 SCRAP_METAL + 1 PLANKS`. Held item; equips in the active
+hotbar slot. Tooltip on first pickup: *"Bucket drum. The percussion instrument of the
+dispossessed."*
+
+### New System: `BuskingSystem`
+
+A new class `ragamuffin.core.BuskingSystem` manages all busking state.
+
+#### Starting a Busk Session
+
+- Player selects `BUCKET_DRUM` in hotbar and presses **E** near any PAVEMENT or ROAD block
+  on the high street (within 30 blocks of any shop landmark).
+- If a BUSKER NPC is already performing within 10 blocks, the start fails with speech:
+  *"Oi — find your own pitch, mate."*
+- If player Notoriety Tier ≥ 3, police recognise the player and a licence-check is
+  automatically triggered within 30 seconds (see below).
+- On session start:
+  - `BUSKER_STARTED` rumour seeded into 3 nearby NPCs (`RumourType.GANG_ACTIVITY`,
+    text: *"Someone's busking out front. Actually not bad."*)
+  - Street Lads Respect +2 (they enjoy it)
+  - Council Respect −1 (unlicensed street performance)
+  - Achievement `STREET_PERFORMER` unlocked (first busk session started)
+
+#### Income Accumulation
+
+Every real second while busking, nearby NPCs contribute coins based on their `BORED` need
+score (accessed via `StreetEconomySystem.getNeedScore(npc, NeedType.BORED)`):
+
+```
+incomePerSecond = Σ over NPCs within 8 blocks:
+    clamp(npcBoredScore / 100f, 0f, 1f) × BASE_COIN_PER_NPC_PER_SECOND
+```
+
+Where `BASE_COIN_PER_NPC_PER_SECOND = 0.1f` (so a fully bored NPC contributes 1 coin
+per 10 seconds; 6 bored NPCs yields ~1 coin every ~1.7 seconds).
+
+Additionally:
+- Each coin dropped reduces the contributing NPC's BORED need by 10 points (paying the
+  busker satisfies their boredom).
+- During LAGER_SHORTAGE market event: income ×1.5 (desperate people need entertainment).
+- During BENEFIT_DAY market event: income ×2.0 (people have cash and are celebrating).
+- GREGGS_STRIKE: income ×0.5 (everyone's miserable and hungry, not generous).
+
+Coins are disbursed to the player's inventory in whole-coin increments each frame.
+
+#### Police Licence Check
+
+After `LICENCE_CHECK_DELAY_SECONDS = 60f` of continuous busking (or 30 seconds at
+Notoriety Tier ≥ 3), a nearby POLICE or PCSO NPC is set to approach the player.
+When the officer reaches within 3 blocks:
+
+- Speech: *"You got a busking licence, sunshine?"*
+- Player has two choices (presented via the existing speech interaction prompt):
+  1. **Show Licence** (requires `Material.FAKE_ID` in inventory — consumes it):
+     Police NPC says *"Right, carry on then"* and returns to PATROLLING. Session continues.
+  2. **Leg It** (player presses ESC or moves away): Notoriety +5, WantedSystem +1 star,
+     busk session ends, `BUCKET_DRUM` not consumed.
+  3. **No Licence** (interact without FAKE_ID, or wait 10 seconds): Notoriety +10,
+     WantedSystem +2 stars, Criminal Record entry `UNLICENSED_BUSKING`, busk session ends,
+     `BUCKET_DRUM` confiscated (removed from inventory).
+
+#### Session End Conditions
+
+- Player moves more than 3 blocks from the start position.
+- Player switches hotbar slot away from BUCKET_DRUM.
+- Police confiscate the drum.
+- Player is arrested.
+- `GREGGS_STRIKE` market event ends (police crack down on loitering).
+
+On natural session end (player walks away), `BUCKET_DRUM` is retained.
+
+#### Fame Integration
+
+Each full minute of uninterrupted busking awards +1 Street Reputation point (capped
+at once per real-world session to prevent farming). At 5 consecutive minutes:
+- Achievement `LIVING_WAGE` unlocked (tooltip: *"You've made more busking than a week
+  at the JobCentre."*)
+- A `LOOT_TIP` rumour is seeded into the barman NPC: *"There's a busker near the shops.
+  Word is they're actually decent."*
+- All FACTION_LIEUTENANT NPCs gain awareness of the player (+5 to their BORED satisfaction
+  if they wander near the pitch).
+
+#### Achievements
+
+| Achievement | Condition |
+|---|---|
+| `STREET_PERFORMER` | Start first busk session |
+| `LIVING_WAGE` | Busk for 5 consecutive minutes without police interruption |
+| `BUCKET_LIST` | Earn 20 coins total across all busk sessions |
+| `MOVE_ALONG_PLEASE` | Have BUCKET_DRUM confiscated by police |
+
+#### Constants (all in `BuskingSystem`)
+
+```java
+public static final float BASE_COIN_PER_NPC_PER_SECOND      = 0.1f;
+public static final float LICENCE_CHECK_DELAY_SECONDS        = 60f;
+public static final float HIGH_NOTORIETY_CHECK_DELAY_SECONDS = 30f;
+public static final float BUSK_RADIUS_BLOCKS                 = 8f;
+public static final float MAX_PITCH_DISTANCE_TO_SHOP         = 30f;
+public static final int   NOTORIETY_CONFISCATION             = 10;
+public static final int   NOTORIETY_LEG_IT                   = 5;
+public static final int   WANTED_STARS_CONFISCATION          = 2;
+public static final int   WANTED_STARS_LEG_IT                = 1;
+public static final float LAGER_SHORTAGE_MULTIPLIER          = 1.5f;
+public static final float BENEFIT_DAY_MULTIPLIER             = 2.0f;
+public static final float GREGGS_STRIKE_MULTIPLIER           = 0.5f;
+public static final float BORED_NEED_REDUCTION_PER_COIN      = 10f;
+public static final int   REP_AWARD_INTERVAL_SECONDS         = 60;
+public static final float PITCH_EXCLUSION_RANGE              = 10f; // existing busker nearby
+```
+
+#### Wiring into `RagamuffinGame`
+
+1. Add `private BuskingSystem buskingSystem;` field.
+2. In `initGame()`, instantiate: `buskingSystem = new BuskingSystem(streetEconomySystem, factionSystem, wantedSystem, notorietySystem, rumourNetwork, achievementSystem);`
+3. In `updatePlaying()`, while not UI-blocking, call `buskingSystem.update(delta, npcManager.getNPCs(), player, weatherSystem.getCurrentWeather(), streetEconomySystem.getActiveEvent())`.
+4. In `handleInteract()`, if the player's selected hotbar item is `BUCKET_DRUM` and the player is not already busking, call `buskingSystem.startBusk(player, world, npcManager.getNPCs(), tooltipSystem)`.
+5. In the `InputHandler` loop, detect hotbar-slot changes and call `buskingSystem.stopBusk()` if the BUCKET_DRUM slot is deselected mid-session.
+6. Add `Material.BUCKET_DRUM` to the crafting menu recipe (recipe: `SCRAP_METAL ×1 + PLANKS ×1`).
+7. Add `AchievementType` entries: `STREET_PERFORMER`, `LIVING_WAGE`, `BUCKET_LIST`, `MOVE_ALONG_PLEASE`.
+
+**Unit tests**: Income formula with varying BORED scores, market-event multipliers, licence-check delay at different notoriety tiers, session-end detection, achievement trigger conditions, pitch-exclusion check.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Busking near high street earns coins**: Place player on a PAVEMENT block within 25
+   blocks of the Greggs landmark. Give the player a `BUCKET_DRUM`. Spawn 4 NPCs within
+   8 blocks with BORED need score set to 80. Start a busk session. Advance 120 frames
+   (2 seconds). Verify the player's COIN count has increased. Verify at least one NPC's
+   BORED need score has decreased below 80.
+
+2. **Police licence check triggers after 60 seconds**: Start a busk session. Advance
+   `LICENCE_CHECK_DELAY_SECONDS` real seconds of simulation. Verify a POLICE or PCSO NPC
+   is within 3 blocks of the player and has delivered the *"You got a busking licence?"*
+   speech text. Verify `buskingSystem.isLicenceCheckActive()` is `true`.
+
+3. **FAKE_ID clears the licence check**: During an active licence check, give the player
+   a `FAKE_ID`. Simulate the player "showing licence" (call
+   `buskingSystem.onShowLicence(player.getInventory())`). Verify `FAKE_ID` is consumed
+   from the player's inventory. Verify `isLicenceCheckActive()` is `false`. Verify busk
+   session is still active. Verify Notoriety did not increase.
+
+4. **Confiscation on no-licence wait**: During an active licence check, advance 10 seconds
+   without player interaction (no FAKE_ID, no movement). Verify `BUCKET_DRUM` is removed
+   from the player's inventory. Verify Notoriety increased by `NOTORIETY_CONFISCATION`.
+   Verify WantedSystem stars increased by `WANTED_STARS_CONFISCATION`. Verify a
+   `UNLICENSED_BUSKING` criminal record entry was logged. Verify `isBusking()` is `false`.
+
+5. **Existing busker blocks pitch**: Spawn an NPC of type `BUSKER` at (5, 1, 5). Player
+   attempts to start a busk session at (5, 1, 7) (within 10 blocks). Verify
+   `startBusk()` returns failure. Verify `isBusking()` remains `false`. Verify the
+   BUSKER NPC's speech text contains *"find your own pitch"*.
+
+6. **BENEFIT_DAY doubles income**: Trigger `MarketEvent.BENEFIT_DAY` in
+   `StreetEconomySystem`. Start a busk session with 2 NPCs at BORED=100. Advance 60
+   frames (1 second). Verify the coin income rate is approximately double the baseline
+   rate (within 5% tolerance for floating point). Verify `getLastIncomeRate()` reflects
+   the `BENEFIT_DAY_MULTIPLIER`.
+
+7. **5-minute achievement and barman rumour**: Start a busk session. Advance
+   `REP_AWARD_INTERVAL_SECONDS × 5` seconds (5 minutes) of simulation without police
+   interruption. Verify `LIVING_WAGE` achievement is unlocked. Verify a rumour with text
+   containing *"actually decent"* has been seeded into the BARMAN NPC in the world.
+   Verify Street Reputation increased by at least 5 points.
