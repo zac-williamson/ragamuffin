@@ -9876,3 +9876,105 @@ impacts, rumours, or notoriety gains ever occur.
 5. **HeistSystem visible in game loop**: In a headless integration test, initialise
    `RagamuffinGame`. Verify `heistSystem` field is non-null. Simulate 1 frame in
    PLAYING state. Verify no exception is thrown.
+
+## Wire CornerShopSystem into the Game Loop
+
+`CornerShopSystem` (Issue #799, `ragamuffin.core.CornerShopSystem`) implements the full corner
+shop economy — shop claiming, dynamic customer traffic, Marchetti rivalry, police raid heat
+progression, runner NPC, and three-faction pressure. The class is fully implemented and
+compiles, but is **never instantiated or referenced in `RagamuffinGame`**; as a result, the
+player cannot claim or run a shop, no customer NPCs ever visit, Marchetti enforcement never
+fires, and the entire grey/black-market shopkeeping loop is dead code.
+
+### What needs to be done
+
+1. **Declare and instantiate** `private CornerShopSystem cornerShopSystem;` in `RagamuffinGame`.
+   Instantiate in `initGame()` (and reset in `restartGame()`) after `factionSystem`,
+   `notorietySystem`, `rumourNetwork`, and `streetSkillSystem` are available:
+   ```java
+   cornerShopSystem = new CornerShopSystem();
+   ```
+
+2. **Call `update()` each frame** in the `PLAYING` state update block:
+   ```java
+   cornerShopSystem.update(delta,
+       npcManager.getNPCs(),
+       player,
+       inventory,
+       factionSystem,
+       notorietySystem,
+       rumourNetwork,
+       player.getStreetSkillSystem(),
+       achievementSystem::award);
+   ```
+
+3. **Wire E key — shop claiming** — when the player presses E on a derelict building
+   (door interaction with `buildingCondition <= 49`) or while holding a `Material.SHOP_KEY`:
+   ```java
+   // Via SHOP_KEY in hotbar:
+   if (inventory.getSelectedItem() == Material.SHOP_KEY) {
+       if (cornerShopSystem.tryClaimShop(inventory)) {
+           tooltipSystem.showMessage("Shop claimed. Time to hustle.", 3.0f);
+       }
+   }
+   // Via derelict building door:
+   String msg = cornerShopSystem.claimShopByInteraction(buildingCondition) ?
+       "Shop's yours. Don't let the council find out." :
+       "Can't claim this one.";
+   tooltipSystem.showMessage(msg, 2.5f);
+   ```
+
+4. **Wire E key — open/close shop** — when the player is inside their claimed shop and
+   presses E without targeting anything specific:
+   ```java
+   if (cornerShopSystem.hasShop()) {
+       cornerShopSystem.openShop(achievementSystem::award);
+       tooltipSystem.showMessage("Shop open for business.", 2.0f);
+   }
+   ```
+
+5. **Wire daily tick** — call `onNewDay` indirectly via `update()` (already handled),
+   but also wire the `NewspaperSystem` headline callback on revenue milestones by passing
+   a lambda that calls `newspaperSystem.publishHeadline(...)` when daily revenue exceeds
+   `CornerShopSystem.NEWSPAPER_HEADLINE_REVENUE`.
+
+6. **Wire HUD** — during the PLAYING state render a compact shop status bar when the
+   shop is open, using the existing `SpriteBatch`/`BitmapFont`:
+   ```java
+   if (cornerShopSystem.hasShop() && cornerShopSystem.isShopOpen()) {
+       font.draw(spriteBatch,
+           String.format("SHOP  Revenue: %d  Heat: %d%%",
+               cornerShopSystem.getDailyRevenue(),
+               cornerShopSystem.getHeat()),
+           20, 80);
+   }
+   ```
+
+7. **Reset on restart** — call `cornerShopSystem = new CornerShopSystem();` inside
+   `restartGame()`.
+
+### Integration tests — implement these exact scenarios
+
+1. **Shop claimed via SHOP_KEY removes the key**: Give the player 1 `Material.SHOP_KEY`
+   in their hotbar. Call `cornerShopSystem.tryClaimShop(inventory)`. Verify it returns
+   `true`, `cornerShopSystem.hasShop()` is `true`, and the `SHOP_KEY` has been removed
+   from inventory.
+
+2. **Customer purchases stock and reduces inventory**: Claim shop (call
+   `claimShopByInteraction(30)`). Add 3 `Material.CIDER` to the shop's stock via
+   `cornerShopSystem.getShopUnit().addStock(Material.CIDER, 3, 4)`. Spawn a PUBLIC NPC
+   within `CUSTOMER_ATTRACTION_RANGE`. Call `update(CUSTOMER_SCAN_INTERVAL + 0.1f, ...)`.
+   Verify the NPC state is `NPCState.WALKING_TO_SHOP` or the stock count has decreased.
+
+3. **Heat rises on dodgy sale**: Claim shop and add `Material.TOBACCO` to stock.
+   Call `cornerShopSystem.recordSale(Material.TOBACCO, notorietySystem)`. Verify
+   `cornerShopSystem.getHeat()` has increased by at least `HEAT_PER_DODGY_SALE` (2).
+
+4. **Police raid fires at heat 100**: Claim shop. Force heat to 100 via
+   `cornerShopSystem.setHeatForTesting(100)`. Call `update(0.1f, npcs, player, ...)`.
+   Verify shop is no longer open (`isShopOpen()` returns `false`) and at least 1
+   `NPCType.POLICE` NPC has been spawned near the shop.
+
+5. **CornerShopSystem visible in game loop**: In a headless integration test, initialise
+   `RagamuffinGame`. Verify `cornerShopSystem` field is non-null. Simulate 1 frame in
+   PLAYING state. Verify no exception is thrown.
