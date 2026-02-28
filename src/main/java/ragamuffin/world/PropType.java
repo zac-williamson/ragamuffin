@@ -358,7 +358,18 @@ public enum PropType {
      * NewspaperSystem edition), revealing any active MarketEvent.
      * One free copy per in-game day. Destroyed by 2 punches; yields nothing.
      */
-    NEWSPAPER_STAND(0.80f, 1.20f, 0.30f, 2, null);
+    NEWSPAPER_STAND(0.80f, 1.20f, 0.30f, 2, null),
+
+    // ── Issue #930: Charity Shop System ──────────────────────────────────────
+
+    /**
+     * A mystery bag prop on the charity shop counter — a tatty carrier bag
+     * stapled shut with unknown contents inside.
+     * Interact (E) to purchase for 2 COIN; yields a weighted random item.
+     * Maximum 3 mystery bags per day (reduced to 1 for Notoriety Tier 3+ players).
+     * Destroyed by 1 punch; yields nothing (it's already empty inside).
+     */
+    MYSTERY_BAG(0.20f, 0.30f, 0.15f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
