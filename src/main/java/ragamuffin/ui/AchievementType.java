@@ -664,6 +664,39 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #801: The Underground Fight Night ───────────────────────────────
+
+    FIRST_BLOOD_PIT(
+        "First Blood (Pit)",
+        "Won your first fight in the Pit. The crowd went wild. Relatively.",
+        1
+    ),
+    CHAMPION_OF_THE_PIT(
+        "Champion of the Pit",
+        "Reached rank 1 on the Championship Ladder. Nobody messes with you now. In the basement, anyway.",
+        1
+    ),
+    DIRTY_FIGHTER(
+        "Dirty Fighter",
+        "Won a fight after landing an eye-gouge. The ref didn't see it. There isn't a ref.",
+        1
+    ),
+    CLEANED_OUT_THE_BOOKIE(
+        "Cleaned Out the Bookie",
+        "Drained the bookie's pot below 20 coins in a single fight night. He looked gutted.",
+        1
+    ),
+    PROMOTED(
+        "Fight Promoter",
+        "Promoted a fight card via Pirate Radio. The whole estate knew about it by evening.",
+        1
+    ),
+    UNDERCOVER_SPOTTER(
+        "Undercover Spotter",
+        "Identified and exposed the plain-clothes police officer in the Pit crowd. Good eyes.",
+        1
+    ),
+
     // ── Issue #799: The Corner Shop Economy ──────────────────────────────────
 
     OPEN_FOR_BUSINESS(

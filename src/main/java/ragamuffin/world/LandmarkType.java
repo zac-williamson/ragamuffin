@@ -69,7 +69,15 @@ public enum LandmarkType {
 
     // ── Issue #789: Boot Sale — Emergent Underground Auction Economy ─────────
     /** Clandestine daily boot sale venue on wasteland at the south-east corner. */
-    BOOT_SALE;
+    BOOT_SALE,
+
+    // ── Issue #801: The Underground Fight Night ────────────────────────────────
+    /**
+     * The Pit — a concealed basement fight venue beneath the industrial estate.
+     * A 12×8×4 STONE basement with DIRT floor, LANTERN props, a central rope ring,
+     * and spectators. Entry requires Notoriety ≥ 10 or a FIGHT_CARD flyer.
+     */
+    THE_PIT;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -120,6 +128,7 @@ public enum LandmarkType {
             case SUPERMARKET:       return "Aldi";
             case POLICE_STATION:    return "Northfield Police Station";
             case FOOD_BANK:         return "Northfield Food Bank";
+            case THE_PIT:           return "The Pit";
             default:                return null; // No sign for parks, houses, etc.
         }
     }

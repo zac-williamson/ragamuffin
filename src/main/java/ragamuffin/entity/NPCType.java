@@ -169,7 +169,29 @@ public enum NPCType {
      * Autonomously restocks empty shop slots and makes player-queued home deliveries.
      * Earns +2 coin premium per delivery item; each delivery adds +3 Notoriety.
      */
-    RUNNER(20f, 0f, 0f, false);
+    RUNNER(20f, 0f, 0f, false),
+
+    // ── Issue #801: The Underground Fight Night ────────────────────────────────
+
+    /**
+     * Bookie NPC — stands against the east wall of the Pit with a BOOKIE_BOARD.
+     * Accepts bets on fights; holds a finite pot (starting 100 COIN).
+     * Can be consulted with 5 COIN to reveal one fighter's strength stat.
+     */
+    BOOKIE_NPC(20f, 0f, 0f, false),
+
+    /**
+     * Fighter NPC — a named bare-knuckle fighter participating in Pit bouts.
+     * Has hidden stats: strength (1–10), stamina (1–10), dirty (boolean).
+     * Cycles between JAB, HAYMAKER (telegraphed 0.5s), and CLINCH attack modes.
+     */
+    FIGHTER(40f, 6f, 1.2f, false),
+
+    /**
+     * Spectator NPC inside the Pit — WORKER, YOUTH, or PENSIONER mix.
+     * Provides crowd atmosphere; Street Lads spectators can buff the player.
+     */
+    PIT_SPECTATOR(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

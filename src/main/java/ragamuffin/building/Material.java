@@ -456,7 +456,33 @@ public enum Material {
      * Tobacco — sold at the corner shop. Grey-market item.
      * Selling at fair price gives Street Lads Respect +2–5/day.
      */
-    TOBACCO("Tobacco");
+    TOBACCO("Tobacco"),
+
+    // ── Issue #801: The Underground Fight Night ────────────────────────────────
+
+    /**
+     * Fight Card — a paper flyer granting entry to the Pit.
+     * Dropped by YOUTH NPCs near the industrial estate.
+     * Alternatively, Notoriety ≥ 10 is sufficient for entry.
+     */
+    FIGHT_CARD("Fight Card"),
+
+    /**
+     * Championship Belt — held by the rank-1 fighter on the Championship Ladder.
+     * Wearable cosmetic; grants +5 Notoriety/day while worn.
+     */
+    CHAMPIONSHIP_BELT("Championship Belt"),
+
+    /**
+     * Mouth Guard — reduces stamina loss from opponent hits by 25%.
+     * Craftable from RUBBER.
+     */
+    MOUTH_GUARD("Mouth Guard"),
+
+    /**
+     * Rubber — raw material used to craft a MOUTH_GUARD.
+     */
+    RUBBER("Rubber");
 
     private final String displayName;
 
@@ -729,6 +755,15 @@ public enum Material {
             case TOBACCO:           return cs(0.52f, 0.35f, 0.18f,  // Brown tobacco
                                               0.38f, 0.22f, 0.08f); // Dark brown
 
+            // Issue #801: Underground Fight Night materials
+            case FIGHT_CARD:        return cs(0.92f, 0.88f, 0.30f,  // Yellow paper flyer
+                                              0.78f, 0.18f, 0.18f); // Red print
+            case CHAMPIONSHIP_BELT: return cs(0.95f, 0.82f, 0.15f,  // Gold belt
+                                              0.78f, 0.60f, 0.08f); // Darker gold
+            case MOUTH_GUARD:       return cs(0.22f, 0.68f, 0.88f,  // Blue mouthguard
+                                              0.18f, 0.55f, 0.72f); // Darker blue
+            case RUBBER:            return c(0.18f, 0.18f, 0.18f);  // Black rubber
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -872,6 +907,11 @@ public enum Material {
             case SHOP_KEY:
             case CIDER:
             case TOBACCO:
+            // Issue #801: Underground Fight Night materials (not block items)
+            case FIGHT_CARD:
+            case CHAMPIONSHIP_BELT:
+            case MOUTH_GUARD:
+            case RUBBER:
                 return false;
             default:
                 return true;
@@ -1133,6 +1173,16 @@ public enum Material {
                 return IconShape.BOTTLE;     // cider can/bottle
             case TOBACCO:
                 return IconShape.FLAT_PAPER; // tobacco packet
+
+            // Issue #801: Underground Fight Night materials
+            case FIGHT_CARD:
+                return IconShape.FLAT_PAPER; // paper flyer
+            case CHAMPIONSHIP_BELT:
+                return IconShape.FLAT_PAPER; // belt / strap
+            case MOUTH_GUARD:
+                return IconShape.CARD;       // small moulded piece
+            case RUBBER:
+                return IconShape.BOX;        // rubber block/chunk
 
             default:
                 return IconShape.BOX;

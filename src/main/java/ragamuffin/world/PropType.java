@@ -234,7 +234,29 @@ public enum PropType {
      * Ignoring it triggers a subsidised competitor stall from the Council.
      * Destroyed by 1 punch; yields nothing.
      */
-    BUSINESS_RATES_NOTICE(0.30f, 0.40f, 0.02f, 1, null);
+    BUSINESS_RATES_NOTICE(0.30f, 0.40f, 0.02f, 1, null),
+
+    // ── Issue #801: The Underground Fight Night ────────────────────────────────
+
+    /**
+     * A chalkboard BOOKIE_BOARD showing current odds and championship ladder standings.
+     * Found inside the Pit next to the BOOKIE_NPC.
+     * Interact (E) to view odds; destroyed by 3 punches, yields WOOD.
+     */
+    BOOKIE_BOARD(0.80f, 1.20f, 0.10f, 3, Material.WOOD),
+
+    /**
+     * A rope-prop forming the perimeter of the fighting ring.
+     * Six of these form the 6×6 square boundary inside the Pit.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    FIGHT_RING_ROPE(1.00f, 0.60f, 0.10f, 1, null),
+
+    /**
+     * A hanging lantern providing atmospheric lighting inside the Pit.
+     * Emits a warm orange glow. Destroyed by 2 punches; yields SCRAP_METAL.
+     */
+    LANTERN(0.20f, 0.40f, 0.20f, 2, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
