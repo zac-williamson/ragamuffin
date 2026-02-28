@@ -10304,3 +10304,67 @@ the police line-of-sight reduction in fog are implemented but never exercised.
 
 5. **Frost slip probability on road**: Call `getFrostSlipProbabilityPerSecond(Weather.FROST, true)`.
    Verify > 0. Call with `Weather.CLEAR` or `onRoad = false`. Verify == 0.
+
+---
+
+## Wire HeistSystem into the game loop
+
+`HeistSystem` (Phase O / Issue #704) is fully implemented but never instantiated or
+connected in `RagamuffinGame.java`. Players cannot case buildings, execute heists, or
+fence hot loot — the entire four-phase robbery mechanic is dead code.
+
+**What needs to be done in `RagamuffinGame`:**
+
+1. **Declare field**: `private HeistSystem heistSystem;`
+2. **Instantiate** in `initGame()`:
+   ```java
+   heistSystem = new HeistSystem();
+   ```
+3. **Update each frame** inside the `PLAYING` branch of `render()`:
+   ```java
+   heistSystem.update(delta, player, noiseSystem, npcManager, factionSystem,
+       rumourNetwork, npcManager.getNPCs(), world, timeSystem.isNight());
+   ```
+4. **Wire F key (casing)** in the key-press handler: when `F` is pressed and the
+   player is inside a heistable building (landmark type is JEWELLER, OFF_LICENCE,
+   GREGGS, or JOB_CENTRE), call `heistSystem.startCasing(player, world,
+   npcManager.getNPCs())` and show the returned tooltip via `tooltipSystem`.
+5. **Wire G key (start execution)** in the key-press handler: call
+   `heistSystem.startExecution(player, world)` and display any returned message.
+6. **Wire E key (alarm/safe interaction)** in the existing E-key block: if the
+   player's targeted prop is `ALARM_BOX` or `SAFE`, delegate to
+   `heistSystem.tryInteractProp(player, inventory, targetedProp, world)`.
+7. **Wire block-break noise spike**: in `BlockBreaker` resolution (where the player
+   punches a block), call `heistSystem.onBlockBroken(blockPos, player, noiseSystem)`
+   so alarm boxes can detect the noise.
+8. **Wire fence loot price**: in `FenceSystem.getOffer()` (or wherever hot-loot
+   valuation occurs), call `heistSystem.getHotLootMultiplier()` to apply the
+   time-decaying price (100% → 50% → 25%).
+9. **Reset on new day**: when `TimeSystem` ticks past 06:00, call `heistSystem.reset()`.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **HeistSystem instantiated in game loop**: In a headless integration test,
+   initialise `RagamuffinGame` and enter PLAYING state. Use reflection to assert
+   the `heistSystem` field is non-null.
+
+2. **Casing a building records a HeistPlan**: Construct `HeistSystem`. Place the
+   player inside the jeweller landmark bounds. Call `startCasing(player, world,
+   npcs)`. Assert `heistSystem.getActivePlan()` is non-null and its target type is
+   `JEWELLER`.
+
+3. **Alarm box triggers wanted status**: Create a `HeistSystem`. Start execution
+   phase targeting the jeweller. Place an `ALARM_BOX` prop within 8 blocks of the
+   player. Call `onBlockBroken(nearbyBlockPos, player, noiseSystem)`. Assert
+   `noiseSystem.getNoiseLevel()` equals 1.0f and `player.isWanted()` is true.
+
+4. **Safe cracking yields DIAMOND**: Create `HeistSystem`. Start execution on
+   jeweller. Call `updateSafeCracking(delta=8.1f, player, inventory, noiseSystem,
+   npcManager)` (simulating 8+ seconds hold). Assert `inventory` contains at least
+   3 DIAMOND.
+
+5. **Hot loot multiplier decays over time**: Create `HeistSystem`. Call
+   `heistSystem.completeHeist()`. Assert `getHotLootMultiplier()` returns 1.0f.
+   Advance `timeSinceHeistComplete` by 301 seconds (just past 5 in-game minutes).
+   Assert multiplier returns 0.5f. Advance by 3600 seconds. Assert multiplier
+   returns 0.25f.
