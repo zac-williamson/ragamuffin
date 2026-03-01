@@ -1667,6 +1667,168 @@ Once per in-game day (random time 10:00–15:00), a funeral procession arrives:
 
 ---
 
+## Add Northfield Canal — Towpath, Fishing, Narrowboat Squatters & the Great Shopping Trolley Incident
+
+**Landmark**: `CANAL` (already registered in `LandmarkType`, no system exists yet)
+
+### Overview
+
+The Northfield Canal cuts through the edge of town — a half-mile of stagnant water, mossy brick
+towpath, and narrowboats that haven't moved since 2009. It's where dogs are walked, fishing rods
+are slung, and shopping trolleys go to die. A `CanalSystem` brings this landmark to life.
+
+### Physical Layout
+
+The canal runs east–west across the northern edge of the map. The `WorldGenerator` already places
+the `CANAL` landmark; the system builds gameplay on top without touching world generation:
+
+- **Towpath** (`PAVEMENT` blocks): runs along both banks; 2 blocks wide.
+- **Water** (`WATER` blocks): 4 blocks wide, 2 blocks deep. Impassable without a `DINGHY` item.
+- **Lock Gate** (`CANAL_LOCK_PROP`): at the east end. Can be opened/closed with `E` (changes water level, purely cosmetic).
+- **Fishing Spots** (`FISHING_SPOT_PROP`): 3 fixed spots on the south bank. Each requires a `FISHING_ROD`.
+- **Canal Berths**: 4 mooring positions. Two berths have `NARROWBOAT_PROP` permanently moored.
+- **Towpath Pub** (`THE_ANCHOR_PROP`): a small pub at the western end, open 11:00–23:00.
+  Press E to buy a `CAN_OF_LAGER` (1 COIN) or `PACKET_OF_CRISPS` (1 COIN). Run by a `BARMAN` NPC.
+
+### Key Characters
+
+- **Derek** (`CANAL_BOAT_OWNER` NPCType): lives aboard the easternmost narrowboat. Present 07:00–22:00.
+  Passive; reveals `NEIGHBOURHOOD` rumours on first interaction each day. Will sell a `DINGHY` for 15 COIN.
+  If the player has squat-claimed the western narrowboat, Derek objects (speech: "That's not your
+  bloody boat, mate.") but takes no further action — he's too tired.
+- **Maureen** (`CANAL_BOAT_OWNER` NPCType): second narrowboat resident. Present 09:00–20:00.
+  Feeds the ducks with `BREAD` items every 30 in-game minutes. Gives player 1 `COIN` for
+  catching 3 fish in a single session ("Buy yourself something nice, love.").
+- **Terry the Twitcher** (`PENSIONER` NPC sub-variant): stands motionless at a fishing spot
+  with binoculars from 06:00–10:00 every morning. Provides one free `BIRDWATCHING_TIP` rumour
+  containing neighbourhood gossip (he sees everything from that towpath).
+- **Canal Rat** (`DOG`-type NPC tagged as `CANAL_RAT`): 1–3 spawn at dusk on the canal banks.
+  Passive; scurry into WATER blocks when approached. No loot.
+
+### Fishing Mechanic
+
+- Equip a `FISHING_ROD` (craftable: 2 WOOD + 1 STRING_ITEM; or purchased from the corner shop
+  for 4 COIN). Stand adjacent to a `FISHING_SPOT_PROP` and press `E` to cast.
+- A 10–60 second wait begins (randomised). A `BITE_INDICATOR_PROP` flash appears above the spot.
+  Press `E` again within 3 seconds to reel in. Miss the window: 30-second reset.
+- **Fish loot table** (pick 1 per catch):
+  | Item | Weight | Notes |
+  |------|--------|-------|
+  | `CANAL_FISH` (sellable at Fence for 2 COIN or eaten for +10 hunger) | 50 | Basic catch |
+  | `SHOPPING_TROLLEY` (large loot, cannot carry — place in world as prop) | 20 | The classic |
+  | `BOOT` (flavour item; tooltip: "Someone had a worse day than you.") | 15 | Unsellable |
+  | `STOLEN_WALLET` (contains 2–6 COIN; +5 Notoriety) | 10 | |
+  | `GOLD_RING` (fenceable for 10 COIN) | 5 | |
+
+- Fishing is impossible during `THUNDERSTORM` weather (system logs: "Lightning and fishing rods
+  don't mix, mate."). Rain slightly improves catch rate (weight×1.3 for fish).
+- Achievement `SOMETHING_FISHY`: catch 5 fish in a single play session.
+- Achievement `TROLLEY_DASH`: fish up a `SHOPPING_TROLLEY` for the first time.
+
+### Shopping Trolley Mechanic
+
+`SHOPPING_TROLLEY` is a large prop item (cannot be placed in inventory). When fished up:
+- It spawns as a `SHOPPING_TROLLEY_PROP` on the bank next to the player.
+- The player can push it (walk into it) along pavement blocks. Pushing speed: 70% of normal walk.
+- **Ride it downhill**: if the towpath has a 1-block elevation drop, player can press `F` to
+  ride inside for 3 seconds. Noise level 8 generated. Any NPC within 10 blocks reacts with
+  speech ("OI!" / "Watch where you're going!" / "Get out of it!").
+- After 5 minutes unattended, the trolley despawns (Northfield Council reclaims it silently).
+- Pushing a trolley into a POLICE NPC: +3 Notoriety, `CrimeType.AFFRAY`.
+
+### Narrowboat Squatting
+
+- The western narrowboat has no permanent resident. The player can claim it as an alternative
+  squat (pressing `E` on the boat door when Condition ≤ 49). Cost: 0 COIN (it's abandoned).
+- Once claimed, the boat provides `WarmthSystem` shelter (+8 Warmth/min, better than a tent,
+  worse than a squat building due to draughts).
+- The boat has 3 internal prop slots: player can place up to 3 `SMALL_ITEM` props (e.g.,
+  a `CAMPING_STOVE`, `SLEEPING_BAG`, `CAMPING_LANTERN`) to improve Warmth bonus to +12/min.
+- If `SquatSystem.hasActiveSquat()` is true for a building, Derek says: "Got a proper place now,
+  have ya?" and the boat becomes unavailable to re-claim.
+- Council may serve a `MOORING_NOTICE` (like a `CONDEMNED_NOTICE`) after 3 in-game days; player
+  can tear it down (−Council Respect 10) or comply (loses boat, gets 5 COIN compensation).
+
+### Integration with Existing Systems
+
+- **WarmthSystem**: canal towpath counts as partially exposed (no Warmth bonus outdoors;
+  the towpath pub counts as indoor shelter while player is inside).
+- **WeatherSystem**: rain makes fishing better (×1.3 catch rate); fog makes the canal
+  atmospheric (visibility distance halved on the towpath); `FROST` freezes the canal
+  surface (WATER blocks temporarily passable as ICE; player slips — random direction change
+  10% chance per block traversed).
+- **RumourNetwork**: Terry the Twitcher seeds 1 `NEIGHBOURHOOD` rumour each morning. Derek
+  seeds a `LOOT_TIP` rumour if the player fishes up a `STOLEN_WALLET`.
+- **NoiseSystem**: pushing a shopping trolley (noise 6), riding it (noise 8). Fish bite
+  check uses NoiseSystem: if noise > 0.5 in the past 10 seconds, bite chance halved.
+- **WitnessSystem**: `SHOPPING_TROLLEY_PROP` pushed into a POLICE NPC triggers `CrimeType.AFFRAY`.
+- **StreetSkillSystem**: `SURVIVAL` skill XP +5 per fish caught. `GRAFTING` skill XP +3 per
+  canal scavenge (Shopping Trolley, Boot, Stolen Wallet catches).
+- **FactionSystem**: Street Lads Respect ≥ 50 means one of the `CANAL_RAT`-tagged NPCs drops a
+  `RACE_CARD` on death (they're running numbers for the track).
+- **AchievementSystem**: four new achievements (see below).
+
+### New Items
+
+- `FISHING_ROD` — tool; 20 uses before snapping. Craftable or sold at corner shop.
+- `CANAL_FISH` — food item; eat for +10 hunger. Sellable at Fence for 2 COIN.
+- `DINGHY` — vehicle item; equip and press F on WATER block to float across. 10 uses.
+- `GOLD_RING` — loot; fenceable for 10 COIN at Fence or Pawn Shop.
+
+### New NPCType
+
+- `CANAL_BOAT_OWNER` — narrowboat resident; passive; rumour source; present limited hours.
+
+### New CrimeType
+
+- `CriminalRecord.CrimeType.AFFRAY` — shopping trolley assault on police; +3 Notoriety.
+
+### Achievements
+
+- `SOMETHING_FISHY` — Catch 5 fish in a single session.
+- `TROLLEY_DASH` — Fish up a SHOPPING_TROLLEY for the first time.
+- `LIFE_ON_THE_CUT` — Spend a night in the narrowboat squat.
+- `CANAL_RAT` (meta-achievement) — Catch a fish, ride a shopping trolley, and sleep on the
+  canal boat all in the same in-game day.
+
+### Unit Tests
+
+- Fish loot table produces items within defined weight distribution (run 1000 samples).
+- Fishing impossible during THUNDERSTORM weather.
+- Shopping trolley despawns after 5 in-game minutes.
+- Frost weather makes WATER blocks temporarily passable.
+- Narrowboat squat provides correct Warmth bonus with and without interior props.
+- Terry the Twitcher seeds exactly 1 `NEIGHBOURHOOD` rumour per morning.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Fishing yields expected loot**: Give player a `FISHING_ROD`. Place player adjacent to a
+   `FISHING_SPOT_PROP`. Press `E` to cast. Advance simulation until bite indicator fires
+   (use `CanalSystem.forceBite()` for determinism). Press `E` within 3 seconds. Verify player
+   inventory contains one item from the loot table. Verify `FISHING_ROD` use count has
+   decreased by 1.
+
+2. **Shopping trolley spawns and can be pushed**: Force-set next fish loot to `SHOPPING_TROLLEY`
+   via `CanalSystem.setNextFishLoot(CanalSystem.FishLoot.SHOPPING_TROLLEY)`. Complete one fish
+   action. Verify a `SHOPPING_TROLLEY_PROP` exists within 2 blocks of the fishing spot.
+   Simulate player walking into the prop. Verify the prop's position has changed by 1 block.
+
+3. **Fishing impossible in thunderstorm**: Set weather to `Weather.THUNDERSTORM`. Give player
+   `FISHING_ROD`. Press `E` on `FISHING_SPOT_PROP`. Verify no bite timer starts (system returns
+   early). Verify a tooltip containing "Lightning" or "fishing rods" fires.
+
+4. **Narrowboat squatting provides Warmth**: Claim the western narrowboat via `E`-interaction
+   (set boat Condition to 45). Verify `CanalSystem.isBoatClaimed()` returns true. Advance
+   simulation 60 frames. Verify player Warmth has increased by at least 8 (shelter effect
+   applied). Place a `CAMPING_STOVE` prop inside the boat. Advance 60 more frames. Verify
+   Warmth increment is now ≥12.
+
+5. **Terry seeds morning rumour**: Set in-game time to 06:05. Advance simulation until 07:00.
+   Verify `RumourNetwork` contains at least 1 new `NEIGHBOURHOOD` rumour seeded by the
+   `PENSIONER`-type NPC (Terry) at the canal. Verify the rumour has not yet expired.
+
+---
+
 ## Phase 9: CODE REVIEW
 
 **Goal**: Comprehensive code review of the entire codebase. This phase runs after
