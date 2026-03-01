@@ -1799,7 +1799,29 @@ public enum Material {
      * Tool Kit — used to fix the CHILLI_SAUCE_DISPENSER_PROP during the Chilli Sauce Incident.
      * Also used for general repairs. Found in BUILDERS_MERCHANT or crafted.
      */
-    TOOL_KIT("Tool Kit");
+    TOOL_KIT("Tool Kit"),
+
+    // ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
+
+    /**
+     * Copper Wire — stripped from streetlights (3 hits, 22:00–05:00) or industrial
+     * COPPER_PIPE_PROP fittings (SCREWDRIVER, 5 seconds). Sells for 4 COIN at the
+     * scrapyard weigh-bridge. Gary refuses it if Notoriety ≥ 50.
+     */
+    COPPER_WIRE("Copper Wire"),
+
+    /**
+     * Lead Flashing — harvested from St. Mary's Church roof with BOLT_CUTTERS (8 seconds).
+     * Sells for 3 COIN at the scrapyard weigh-bridge. If VICAR is within 15 blocks when
+     * harvested, triggers CrimeType.METAL_THEFT (+2 Notoriety).
+     */
+    LEAD_FLASHING("Lead Flashing"),
+
+    /**
+     * Copper Bale — a compressed bale of copper found in the scrapyard locked compound.
+     * Too hot to sell openly; Gary refuses it. Sells for 15 COIN via FENCE only.
+     */
+    COPPER_BALE("Copper Bale");
 
     private final String displayName;
 
@@ -2436,6 +2458,14 @@ public enum Material {
             case TOOL_KIT:              return cs(0.62f, 0.42f, 0.22f,   // Brown case
                                                   0.72f, 0.52f, 0.12f); // Metal clasp
 
+            // Issue #1026: Northfield Scrapyard
+            case COPPER_WIRE:           return cs(0.72f, 0.45f, 0.12f,   // Copper orange
+                                                  0.85f, 0.60f, 0.20f); // Bright copper
+            case LEAD_FLASHING:         return cs(0.55f, 0.55f, 0.58f,   // Lead grey
+                                                  0.45f, 0.45f, 0.48f); // Dark lead
+            case COPPER_BALE:           return cs(0.68f, 0.40f, 0.10f,   // Compressed copper
+                                                  0.58f, 0.32f, 0.08f); // Dark bale
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2765,6 +2795,10 @@ public enum Material {
             case COOKED_DONER_MEAT:
             case PITTA_BREAD:
             case TOOL_KIT:
+            // Issue #1026: Northfield Scrapyard
+            case COPPER_WIRE:
+            case LEAD_FLASHING:
+            case COPPER_BALE:
                 return false;
             default:
                 return true;
@@ -3442,6 +3476,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // flat bread shape
             case TOOL_KIT:
                 return IconShape.BOX;         // toolbox
+
+            // Issue #1026: Northfield Scrapyard
+            case COPPER_WIRE:
+                return IconShape.TOOL;        // coiled wire
+            case LEAD_FLASHING:
+                return IconShape.FLAT_PAPER;  // flat sheet of lead
+            case COPPER_BALE:
+                return IconShape.BOX;         // compressed bale
 
             default:
                 return IconShape.BOX;

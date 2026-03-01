@@ -1769,6 +1769,34 @@ public enum AchievementType {
         "Still Waiting",
         "Sat in the waiting room for over 30 in-game minutes. You've earned it.",
         1
+    ),
+
+    // ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
+
+    WEIGHT_FOR_IT(
+        "Weight for It",
+        "Sold your first load of scrap at the weigh-bridge. Gary wasn't impressed.",
+        1
+    ),
+    COPPER_THIEF(
+        "Sparky",
+        "Stripped the cables off a streetlight and flogged them before dawn. Very British.",
+        1
+    ),
+    HEAVY_METAL(
+        "Heavy Metal",
+        "Sold 20 pieces of scrap metal in a single session. Gary's warming to you.",
+        20
+    ),
+    CLEAN_SLATE(
+        "Clean Slate",
+        "Used the crusher to destroy three pieces of evidence. No body, no crime.",
+        3
+    ),
+    DOGS_DINNER(
+        "Dog's Dinner",
+        "Distracted Tyson with a sausage roll and raided the locked compound. Respect.",
+        1
     );
 
     private final String name;

@@ -205,7 +205,16 @@ public class CriminalRecord {
          * paying. Penalty: +5 Notoriety; cashier enters CHASING state for 20s.
          * Awards DRIVEOFF achievement on first offence.
          */
-        PETROL_THEFT("Petrol theft (drive-off)");
+        PETROL_THEFT("Petrol theft (drive-off)"),
+
+        // ── Issue #1026: Northfield Scrapyard ─────────────────────────────────────
+
+        /**
+         * Recorded when LEAD_FLASHING is stolen from a church roof or COPPER_WIRE
+         * is stripped from a streetlight and a witness NPC is within 10 blocks.
+         * Penalty: +2 Notoriety per witnessed theft.
+         */
+        METAL_THEFT("Metal theft");
 
         private final String displayName;
 
