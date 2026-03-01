@@ -322,7 +322,20 @@ public enum LandmarkType {
      * Compact 8×6-block floor plan: SHOPKEEPER_COUNTER_PROP at rear, shelf CRATE_PROPs
      * along two walls. Entrance on south face.
      */
-    POUND_SHOP;
+    POUND_SHOP,
+
+    // ── Issue #1069: Northfield Ice Cream Van ─────────────────────────────────
+
+    /**
+     * Dave's Ices — a battered Mr. Whippy ice cream van that cruises Northfield's
+     * residential streets and park on warm days (SUNNY/OVERCAST, 12:00–19:30).
+     * Operated by ICE_CREAM_MAN NPC (Dave). Sells 99 Flakes, lollies, choc ices,
+     * and wafer tubs through the main hatch. At Street Rep ≥ 40, the side-hatch fence
+     * opens (55% of base value, no Notoriety penalty).
+     * Mobile; not a permanent map fixture. Used as a position tag for spawn logic,
+     * police patrol awareness, and faction (Marchetti) territory interactions.
+     */
+    ICE_CREAM_VAN;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -393,6 +406,8 @@ public enum LandmarkType {
             case INDOOR_MARKET:         return "Northfield Indoor Market";
             case BARBERS:               return "Kosta's Barbers";
             case ARGOS:                 return "Argos";
+            case POUND_SHOP:            return "Poundstretcher";
+            case ICE_CREAM_VAN:         return "Dave's Ices";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
