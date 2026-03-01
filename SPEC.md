@@ -20176,3 +20176,158 @@ MEMBER(20f, 0f, 0f, false),
 6. **KNOCK_OFF_TRACKSUIT barred by Keith**: Equip `KNOCK_OFF_TRACKSUIT`. Place player at `CLUB_DOOR_PROP` during opening hours. Press E. Verify Keith's speech contains "Tracksuit". Verify door remains closed regardless of membership status.
 
 7. **Lock-in triggered on Saturday at closing**: Set time to Saturday 23:55. Set `SocialClubSystem.isPlayerInside = true`. Advance time to 00:01. Verify `SocialClubSystem.isLockInActive()` returns true. Verify Keith's speech contains "lock-in" or "after hours". Verify `LAST_ORDERS` achievement unlocked. Advance time to 01:00. Verify `SocialClubSystem.isLockInActive()` returns false and player is flagged as needing to exit.
+
+---
+
+## Add Northfield GP Surgery — NHS Appointments, Sick Notes, Repeat Prescriptions & the Waiting Room Economy
+
+**Landmark**: `LandmarkType.GP_SURGERY` (already placed in `WorldGenerator.java` as "Northfield Surgery")
+
+The GP Surgery exists on the map as an NHS-green-signed building, but has zero gameplay. This issue gives it a full system: the classic British experience of fighting through reception gatekeepers, waiting forever, getting a sick note for dodgy purposes, managing repeat prescriptions, and the chaos that erupts when the surgery's drug cabinet gets burgled.
+
+### Building Layout
+
+A 14×10×6 NHS brick building:
+- **Reception area**: `RECEPTION_DESK_PROP` (Brenda the receptionist), `WAITING_CHAIR_PROP` × 8, `NOTICEBOARD_PROP` (NHS posters), `LEAFLET_RACK_PROP`.
+- **Consultation Room 1 & 2**: `DOCTOR_DESK_PROP`, `EXAMINATION_TABLE_PROP`, `MEDICINE_CABINET_PROP` (locked, contains PRESCRIPTION_MEDS × 3–6).
+- **Pharmacy hatch**: `PHARMACY_HATCH_PROP` — collect prescriptions here after consulting Dr. Nair.
+- **Staff corridor**: leads to `STAFF_ROOM_PROP` and `DRUG_SAFE_PROP` (reinforced, 12 hits, yields PRESCRIPTION_MEDS × 8 if raided).
+
+### NPCs
+
+- **Brenda** (`RECEPTIONIST` NPC) — reception gatekeeper. Speech: *"Do you have an appointment?"* / *"The doctor's running about forty minutes behind."* / *"We don't do walk-ins after half ten."* Gate-keeps the consultation rooms; refuses entry at Notoriety ≥ 70.
+- **Dr. Nair** (`GP_DOCTOR` NPC) — the GP. Speech: *"I'm referring you to a specialist."* / *"Are you still taking these?"* / *"I'll put you on the six-week waiting list."* Only reachable by booking appointment. Gives SICK_NOTE, PRESCRIPTION_MEDS, or ANTIDEPRESSANTS depending on player health/needs.
+- **Nurse Pat** (`NURSE` NPC) — does blood pressure checks and flu jabs. Present Mon/Wed/Fri. Speech: *"Sharp scratch."* / *"Roll your sleeve up."* / *"You haven't had your booster, have you."*
+- **Waiting Room Patients** (`PATIENT` NPC × 2–5) — sit in waiting chairs; each has a randomly selected condition affecting their speech. Occasionally share local rumours unprompted. One may ask player to fetch their prescription.
+
+### Core Mechanics
+
+#### 1. Appointment System
+- Press **E** on `RECEPTION_DESK_PROP` to request an appointment. Brenda offers the next available slot (randomised 1–3 in-game days away).
+- `GPSurgerySystem.bookAppointment(currentDay, currentHour)` returns an `AppointmentSlot` (day offset + hour).
+- At the appointed time (±30 in-game minutes), player must be inside the surgery. Brenda calls player's name; pressing E enters consultation.
+- **Walk-in**: possible only Mon–Fri 08:00–10:30 (Brenda: *"You're in luck — there's a cancellation."*). Requires waiting 15 in-game minutes (skip mechanic: press E on `WAITING_CHAIR_PROP` to sit and advance wait time at 10× speed).
+- Missing an appointment: slot lost, next available pushed back by 1 day.
+
+#### 2. Consultation with Dr. Nair
+`GPSurgerySystem.consult(playerHealth, needs, streetSkill)` returns a `ConsultResult`:
+- **SICK_NOTE**: issued if player health < 60 or DESPERATE need active. SICK_NOTE satisfies JobCentre sanctions (present instead of attending a JobCentre appointment). Value: avoids 5-COIN sanction.
+- **PRESCRIPTION_MEDS**: issued if DESPERATE need ≥ 50. Collected at pharmacy hatch. Satisfies NPC DESPERATE need.
+- **ANTIDEPRESSANTS**: issued if BORED + DESPERATE both ≥ 40. Long-term effect: BORED accumulation rate halved for 3 in-game days.
+- **REFERRAL**: issued for serious injury (health < 30). Flavour only — "Specialist waiting list: 18 weeks."
+- **LIFESTYLE_ADVICE**: issued otherwise. Flavour text only.
+
+#### 3. Repeat Prescription Mechanic
+- Once issued PRESCRIPTION_MEDS, player can collect a repeat prescription once per in-game week without a consultation.
+- Press E on `PHARMACY_HATCH_PROP` during opening hours (Mon–Fri 08:30–18:00, Sat 09:00–12:00). Nurse Pat (or automated) dispenses 1× PRESCRIPTION_MEDS.
+- **Abuse prevention**: collect more than once in a week → Brenda flags the account → Notoriety +5, blocked for 2 in-game weeks.
+
+#### 4. Sick Note for Dodgy Purposes
+- SICK_NOTE can be used:
+  - At JobCentre: avoids sanction if presented within 48 in-game hours of a missed appointment.
+  - At STREET_LADS faction: trade for 2 COIN ("nice one, I can get out of community service").
+  - At PawnShopSystem: SICK_NOTE not accepted (Brenda: *"We don't do those here"* — flavour).
+
+#### 5. Drug Cabinet Raid
+- `MEDICINE_CABINET_PROP` (in consultation rooms) — requires LOCKPICK; 4 hits to pry open; yields PRESCRIPTION_MEDS × 1–2 + ANTIDEPRESSANTS × 1. Opens `CriminalRecord` entry: `DRUG_THEFT`. Police response: Wanted Tier 2.
+- `DRUG_SAFE_PROP` (staff corridor) — requires CROWBAR; 12 hits; yields PRESCRIPTION_MEDS × 8. Opens `CriminalRecord` entry: `SURGERY_RAID`. Police response: Wanted Tier 3. Triggers NoiseSystem (ALARM). Brenda calls police.
+- `FenceSystem`: PRESCRIPTION_MEDS sells for 4–8 COIN each at FENCE landmark (above normal item rate).
+
+#### 6. Waiting Room Social Economy
+- `PATIENT` NPCs have randomly assigned NEED states (BORED, HUNGRY, COLD) visible via proximity speech.
+- Each patient has a 40% chance of offering a Fetch Quest: *"Could you nip to the pharmacy and get my prescription?"* — go to `PHARMACY_HATCH_PROP`, interact, return to patient for 3 COIN.
+- `LEAFLET_RACK_PROP` (E to interact) → player receives a random `LEAFLET` item. Flavour: one leaflet per type, 8 types (Stop Smoking, Diabetes UK, etc.). Some can be sold to the FENCE for 1 COIN as "blackmail fodder" (flavour).
+
+### Opening Hours
+Mon–Fri 08:00–18:00, Sat 08:30–12:00, closed Sunday.
+
+### System Integrations
+- **JobCentreSystem**: `SICK_NOTE` prevents sanction on missed signing-on appointment.
+- **NeedType.DESPERATE**: PRESCRIPTION_MEDS from Dr. Nair satisfies it without black-market risk.
+- **FactionSystem**: `LOCALS` Faction Respect +5 on completing patient fetch quest; Marchetti Crew interest in DRUG_SAFE raid (tip-off rumour at Respect ≥ 60).
+- **RumourNetwork**: Dr. Nair adds a `LOCAL_HEALTH` rumour to the network weekly (random flavour: "*Brenda's retiring*", "*The surgery's getting a parking charge*").
+- **NotorietySystem**: DRUG_THEFT → +10 Notoriety; SURGERY_RAID → +20 Notoriety.
+- **WeatherSystem**: Cold/Frost weather → +2 PATIENT NPCs in waiting room.
+- **ArrestSystem**: SURGERY_RAID triggers Wanted Tier 3.
+
+### New `NPCType` entries
+
+```java
+// ── Issue #1022: GP Surgery ────────────────────────────────────────────────
+/**
+ * Brenda — the Northfield Surgery receptionist. Gatekeeps the consultation rooms.
+ * Speech: "Do you have an appointment?" / "The doctor's running forty minutes behind."
+ * Refuses entry at Notoriety ≥ 70. Calls police on SURGERY_RAID.
+ */
+RECEPTIONIST(20f, 0f, 0f, false),
+
+/**
+ * Dr. Nair — the GP. Provides SICK_NOTE, PRESCRIPTION_MEDS, ANTIDEPRESSANTS,
+ * REFERRAL, or LIFESTYLE_ADVICE based on player condition.
+ * Speech: "I'm referring you to a specialist." / "Are you still taking these?"
+ */
+GP_DOCTOR(30f, 0f, 0f, false),
+
+/**
+ * Nurse Pat — present Mon/Wed/Fri. Does blood pressure checks and flu jabs.
+ * Speech: "Sharp scratch." / "Roll your sleeve up."
+ */
+NURSE(25f, 0f, 0f, false),
+
+/**
+ * Patient — waiting room occupant with a random condition / need state.
+ * May offer a fetch-prescription quest for 3 COIN.
+ */
+PATIENT(15f, 0f, 0f, false),
+```
+
+### New `PropType` entries
+
+- `RECEPTION_DESK_PROP` — NHS reception desk (1.4f × 1.1f × 0.6f, 8 hits, WOOD). Press E to book appointment.
+- `WAITING_CHAIR_PROP` — grey plastic NHS chair (0.5f × 0.9f × 0.5f, 3 hits, PLASTIC). Press E to sit and fast-forward wait time.
+- `EXAMINATION_TABLE_PROP` — padded examination table (1.8f × 0.8f × 0.6f, 6 hits, METAL). Flavour interaction.
+- `DOCTOR_DESK_PROP` — desk with computer monitor (1.2f × 0.8f × 0.6f, 6 hits, WOOD). Triggers consultation when Brenda grants access.
+- `MEDICINE_CABINET_PROP` — lockable glass cabinet (0.6f × 1.4f × 0.3f, 4 hits, GLASS). Lockpick to open; yields PRESCRIPTION_MEDS + ANTIDEPRESSANTS.
+- `DRUG_SAFE_PROP` — reinforced metal safe (0.5f × 0.8f × 0.4f, 12 hits, METAL). Crowbar required; major loot.
+- `PHARMACY_HATCH_PROP` — sliding glass hatch (0.8f × 0.5f × 0.1f, 4 hits, GLASS). Press E to collect prescription.
+- `LEAFLET_RACK_PROP` — rotating leaflet rack (0.3f × 1.2f × 0.3f, 2 hits, CARDBOARD). Press E for random LEAFLET item.
+- `NOTICEBOARD_PROP` — NHS poster board (0.8f × 1.0f × 0.05f, 2 hits, CARDBOARD). Press E to read NHS notices.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `HYPOCHONDRIAC` | Book and attend 5 GP appointments in a single playthrough |
+| `OFF_SICK` | Use a SICK_NOTE to avoid a JobCentre sanction |
+| `SELF_MEDICATING` | Raid the MEDICINE_CABINET_PROP and collect PRESCRIPTION_MEDS |
+| `SURGERY_RAIDER` | Successfully loot the DRUG_SAFE_PROP |
+| `GOOD_SAMARITAN` | Complete 3 patient fetch-prescription quests |
+| `WAITING_LIST` | Sit in the waiting room for more than 30 in-game minutes in a single visit |
+
+### Unit Tests
+
+- `GPSurgerySystem.isOpen(dayOfWeek, hour)` returns true Mon–Fri 08:00–17:59, Sat 08:30–11:59; false on Sunday and outside hours.
+- `GPSurgerySystem.bookAppointment(day, hour)` returns a slot 1–3 in-game days in the future with an hour between 09:00 and 17:00.
+- `GPSurgerySystem.isWalkInAvailable(dayOfWeek, hour)` returns true Mon–Fri 08:00–10:29; false at 10:30 and on weekends.
+- `GPSurgerySystem.consult(health=50, needs=[DESPERATE=60], streetSkill)` returns `ConsultResult.PRESCRIPTION_MEDS`.
+- `GPSurgerySystem.consult(health=80, needs=[BORED=30, DESPERATE=20], streetSkill)` returns `ConsultResult.LIFESTYLE_ADVICE`.
+- `GPSurgerySystem.consult(health=25, needs=[], streetSkill)` returns `ConsultResult.REFERRAL`.
+- `GPSurgerySystem.consult(health=50, needs=[BORED=45, DESPERATE=45], streetSkill)` returns `ConsultResult.ANTIDEPRESSANTS`.
+- `GPSurgerySystem.canCollectRepeatPrescription(weekNumber, lastCollectedWeek)` returns true if weekNumber > lastCollectedWeek; false if same week.
+- `GPSurgerySystem.computeWaitingRoomCount(weather, hour)` returns ≥ 4 during cold weather and peak hours (09:00–11:00); ≤ 2 outside hours.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Appointment booking and consultation flow**: Construct `GPSurgerySystem`. Set time to Monday 09:00. Press E on `RECEPTION_DESK_PROP`. Verify `GPSurgerySystem.hasPendingAppointment()` returns true. Advance time to appointment slot. Move player inside surgery boundary. Verify Brenda's speech contains the player's appointment acknowledgement. Press E on `DOCTOR_DESK_PROP`. Set player health to 45. Verify `GPSurgerySystem.getLastConsultResult()` equals `SICK_NOTE`. Verify player inventory contains `SICK_NOTE`.
+
+2. **Walk-in refused after 10:30**: Set time to Monday 10:35. Press E on `RECEPTION_DESK_PROP`. Verify Brenda's speech contains "walk-in" and "half ten". Verify `GPSurgerySystem.isWalkInAvailable()` returns false. Verify player cannot access consultation rooms.
+
+3. **Sick note prevents JobCentre sanction**: Give player `SICK_NOTE`. Set JobCentre missed appointment flag. Interact with `JobCentreSystem.presentSickNote(inventory)`. Verify SICK_NOTE is removed from inventory. Verify no sanction applied (player COIN unchanged). Verify `OFF_SICK` achievement unlocked.
+
+4. **Medicine cabinet raid triggers Wanted Tier 2**: Give player `LOCKPICK`. Place player at `MEDICINE_CABINET_PROP` in consultation room (outside opening hours for stealth). Press E. Verify `MEDICINE_CABINET_PROP` opens. Verify player inventory contains `PRESCRIPTION_MEDS`. Verify `CriminalRecord` contains `DRUG_THEFT`. Verify `WantedSystem.getWantedTier()` equals 2. Verify Notoriety increased by 10. Verify `SELF_MEDICATING` achievement unlocked.
+
+5. **Drug safe raid triggers Wanted Tier 3 and police response**: Give player `CROWBAR`. Punch `DRUG_SAFE_PROP` 12 times. Verify yield of PRESCRIPTION_MEDS ≥ 4. Verify `WantedSystem.getWantedTier()` equals 3. Verify `NoiseSystem` alarm triggered. Verify `SURGERY_RAIDER` achievement unlocked. Verify `RumourNetwork` contains a rumour referencing the surgery raid.
+
+6. **Repeat prescription — abuse detection**: Give player a prescription. Set `lastCollectedWeek = currentWeek`. Press E on `PHARMACY_HATCH_PROP`. Verify `GPSurgerySystem.canCollectRepeatPrescription()` returns false. Verify Brenda's speech contains "already". Verify Notoriety increases by 5.
+
+7. **Patient fetch quest — completion rewards LOCALS respect**: Spawn a `PATIENT` NPC in waiting room. Force `GPSurgerySystem.patientHasFetchQuest(patient) = true`. Press E on PATIENT. Verify quest prompt shown. Move player to `PHARMACY_HATCH_PROP`. Press E. Verify PRESCRIPTION_MEDS in player inventory. Return to PATIENT and press E. Verify COIN increases by 3. Verify LOCALS Faction Respect increases by 5. Verify `GOOD_SAMARITAN` progress incremented.
