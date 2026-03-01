@@ -2770,7 +2770,42 @@ public enum Material {
      * Single use. Triggers CrimeType.FRAUD on successful swap.
      * Tooltip: "Looks like a barrel. Isn't quite a barrel."
      */
-    RIGGED_BARREL("Rigged Barrel");
+    RIGGED_BARREL("Rigged Barrel"),
+
+    // ── Issue #1100: Northfield Council Flats — Kendrick House ───────────────
+
+    /**
+     * Housing Priority Letter — issued by Derek (COUNCIL_MEMBER) after passing a
+     * clean housing inspection at Kendrick House. Required with 50 COIN at the
+     * council office to claim a flat via {@link ragamuffin.core.PropertySystem}.
+     * Fence value: 15 COIN at the council office counter.
+     * Tooltip: "Congratulations. You're on the list. Don't hold your breath."
+     */
+    HOUSING_PRIORITY_LETTER("Housing Priority Letter"),
+
+    /**
+     * Stolen Parcel — a parcel lifted from the LETTERBOX_BANK_PROP in Kendrick House.
+     * Fence value: 60% of base value (varies 3–8 COIN). Marked as stolen.
+     * Possession triggers HANDLING_STOLEN_GOODS if police search the player.
+     * Tooltip: "Someone's Amazon order. Their loss."
+     */
+    STOLEN_PARCEL("Stolen Parcel"),
+
+    /**
+     * Stolen Goods — generic contraband label applied to items pilfered from flats.
+     * Seized by Derek during the housing inspection if found near the player.
+     * Fence value: 4 COIN. Triggers PARCEL_THEFT crime on discovery.
+     * Tooltip: "Didn't come from a shop. Well, it did. But not yours."
+     */
+    STOLEN_GOODS("Stolen Goods"),
+
+    /**
+     * Suit Jacket — a smart jacket worn as a disguise.
+     * When worn as active disguise ({@link ragamuffin.core.DisguiseSystem}),
+     * Derek (COUNCIL_MEMBER) skips the player's floor during the housing inspection.
+     * Tooltip: "Looks like you've got your life together. You don't, but it helps."
+     */
+    SUIT_JACKET("Suit Jacket");
 
     private final String displayName;
 

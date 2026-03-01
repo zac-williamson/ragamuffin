@@ -318,7 +318,17 @@ public class CriminalRecord {
          * match. Triggers WantedSystem +2 stars.
          * Penalty: +8 Notoriety.
          */
-        ASSAULT_OF_OFFICIAL("Assault of a match official");
+        ASSAULT_OF_OFFICIAL("Assault of a match official"),
+
+        // ── Issue #1100: Northfield Council Flats — Kendrick House ──────────
+
+        /**
+         * Recorded when Derek (COUNCIL_MEMBER) finds contraband (STOLEN_GOODS,
+         * COUNTERFEIT_NOTE, DRUGS_EVIDENCE, STOLEN_PHONE, or a weapon) near the
+         * player during the housing inspection at Kendrick House.
+         * Penalty: +5 Notoriety, Wanted +1.
+         */
+        POSSESSION("Possession of contraband");
 
         private final String displayName;
 
