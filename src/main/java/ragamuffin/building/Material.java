@@ -1749,7 +1749,57 @@ public enum Material {
      * Distributed by Derek at 20:00. Filled in during the quiz; handed back at the end.
      * Tooltip: "Capital of Peru? Lima. Everyone always forgets Lima."
      */
-    QUIZ_SHEET("Quiz Sheet");
+    QUIZ_SHEET("Quiz Sheet"),
+
+    // ── Issue #1024: Sultan's Kebab ───────────────────────────────────────────
+
+    /**
+     * Doner Kebab — purchased from KEBAB_COUNTER_PROP for 4 COIN.
+     * Restores 50 HUNGER, 15 WARMTH. The classic.
+     */
+    DONER_KEBAB("Doner Kebab"),
+
+    /**
+     * Shish Kebab — purchased from KEBAB_COUNTER_PROP for 5 COIN.
+     * Restores 45 HUNGER, 10 WARMTH. A touch classier.
+     */
+    SHISH_KEBAB("Shish Kebab"),
+
+    /**
+     * Chips in Pitta — purchased from KEBAB_COUNTER_PROP for 2 COIN.
+     * Restores 25 HUNGER. Available after 22:00 only.
+     */
+    CHIPS_IN_PITTA("Chips in Pitta"),
+
+    /**
+     * Garlic Bread Slice — purchased from KEBAB_COUNTER_PROP for 1 COIN.
+     * Restores 10 HUNGER. Cheap filler.
+     */
+    GARLIC_BREAD_SLICE("Garlic Bread"),
+
+    /**
+     * Doner Meat — raw. Stolen from WALK_IN_FRIDGE_PROP.
+     * Cook on campfire for COOKED_DONER_MEAT.
+     */
+    DONER_MEAT("Doner Meat"),
+
+    /**
+     * Cooked Doner Meat — cooked DONER_MEAT on campfire.
+     * +65 HUNGER, +20 WARMTH. Best meal in the game.
+     */
+    COOKED_DONER_MEAT("Cooked Doner"),
+
+    /**
+     * Pitta Bread — stolen from WALK_IN_FRIDGE_PROP.
+     * +5 HUNGER. Barely worth it. But here you are.
+     */
+    PITTA_BREAD("Pitta Bread"),
+
+    /**
+     * Tool Kit — used to fix the CHILLI_SAUCE_DISPENSER_PROP during the Chilli Sauce Incident.
+     * Also used for general repairs. Found in BUILDERS_MERCHANT or crafted.
+     */
+    TOOL_KIT("Tool Kit");
 
     private final String displayName;
 
@@ -2369,6 +2419,23 @@ public enum Material {
             case QUIZ_SHEET:            return cs(0.95f, 0.92f, 0.82f,   // Off-white paper
                                                   0.15f, 0.15f, 0.55f); // Blue ink
 
+            // Issue #1024: Sultan's Kebab
+            case DONER_KEBAB:           return cs(0.72f, 0.48f, 0.15f,   // Toasted wrap
+                                                  0.88f, 0.55f, 0.12f); // Doner meat
+            case SHISH_KEBAB:           return cs(0.72f, 0.28f, 0.12f,   // Grilled meat
+                                                  0.85f, 0.65f, 0.20f); // Golden skewer
+            case CHIPS_IN_PITTA:        return cs(0.88f, 0.72f, 0.25f,   // Golden chips
+                                                  0.92f, 0.88f, 0.72f); // Pitta bread
+            case GARLIC_BREAD_SLICE:    return cs(0.88f, 0.82f, 0.45f,   // Toasted bread
+                                                  0.65f, 0.58f, 0.22f); // Butter/garlic
+            case DONER_MEAT:            return cs(0.62f, 0.32f, 0.18f,   // Raw meat
+                                                  0.48f, 0.22f, 0.12f); // Dark meat
+            case COOKED_DONER_MEAT:     return cs(0.72f, 0.42f, 0.12f,   // Cooked meat
+                                                  0.55f, 0.30f, 0.08f); // Dark crust
+            case PITTA_BREAD:           return c(0.92f, 0.88f, 0.72f);   // Cream pitta
+            case TOOL_KIT:              return cs(0.62f, 0.42f, 0.22f,   // Brown case
+                                                  0.72f, 0.52f, 0.12f); // Metal clasp
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2689,6 +2756,15 @@ public enum Material {
             case MEMBERS_CARD:
             case DODGY_LEDGER:
             case QUIZ_SHEET:
+            // Issue #1024: Sultan's Kebab — all inventory items, not blocks
+            case DONER_KEBAB:
+            case SHISH_KEBAB:
+            case CHIPS_IN_PITTA:
+            case GARLIC_BREAD_SLICE:
+            case DONER_MEAT:
+            case COOKED_DONER_MEAT:
+            case PITTA_BREAD:
+            case TOOL_KIT:
                 return false;
             default:
                 return true;
@@ -3352,6 +3428,20 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // ledger/notebook
             case QUIZ_SHEET:
                 return IconShape.FLAT_PAPER;  // answer sheet
+
+            // Issue #1024: Sultan's Kebab
+            case DONER_KEBAB:
+            case SHISH_KEBAB:
+            case CHIPS_IN_PITTA:
+            case GARLIC_BREAD_SLICE:
+            case COOKED_DONER_MEAT:
+                return IconShape.FOOD;        // wrapped kebab / food item
+            case DONER_MEAT:
+                return IconShape.FOOD;        // raw meat
+            case PITTA_BREAD:
+                return IconShape.FLAT_PAPER;  // flat bread shape
+            case TOOL_KIT:
+                return IconShape.BOX;         // toolbox
 
             default:
                 return IconShape.BOX;
