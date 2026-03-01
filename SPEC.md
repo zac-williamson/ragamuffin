@@ -27009,3 +27009,251 @@ At 23:00 on polling day (whether the box was stolen or not):
 // Existing: GraffitiSystem, NewspaperSystem, WitnessSystem, NotorietySystem,
 //           WantedSystem, FactionSystem, NeighbourhoodSystem, FenceSystem,
 //           HeistSystem, RumourNetwork, AchievementSystem all present
+
+---
+
+## Add Northfield Sunday League Football — Kickabout in the Park, Ref Abuse & the Post-Match Pint
+
+**Landmark**: `PARK` (existing; the flat grass area with the pond)
+
+### Overview
+
+Every Sunday morning a five-a-side Sunday League match kicks off on the park's
+grass pitch. Two local NPC teams — **The Ragamuffin Rovers** (associated with
+Street Lads) and **The Council FC** (associated with The Council faction) — play
+a 90-minute match compressed to 12 in-game minutes. The player can watch from
+the touchline, substitute in as an outfield player, harass the referee, sabotage
+the opposition, or gamble on the result at a trackside `PITCH_BOOKIE_PROP`.
+The post-match crowd migrates to The Ragamuffin Arms, spiking pub income.
+
+A new `FootballSystem` class manages the complete lifecycle: pitch setup,
+team spawning, kick-off, goal scoring, half-time, full-time, and post-match.
+
+### Schedule
+
+- **When**: Every Sunday, 10:00–11:00 in-game time (12 real seconds per in-game
+  minute × 90 = ~24 real seconds per half; match runs for ~4 real minutes).
+- **Cancelled** if weather is `THUNDERSTORM` (lightning on a metal goal post).
+  If `RAIN` or `DRIZZLE`, the pitch becomes muddy (player movement 20% slower
+  on grass blocks in the pitch area for the match duration).
+- **Half-time**: 10:06 in-game. 3-minute interval: players mill at centre circle.
+- **Full-time**: 10:12 in-game. Post-match walk to pub begins.
+
+### Pitch Layout
+
+The `WorldGenerator` already places the `PARK` landmark with a flat grass area.
+`FootballSystem.setupPitch()` places props and markers on top of the existing
+grass without modifying world block data:
+
+- `GOAL_POST_PROP` ×2: north and south ends of the pitch (10 blocks apart, 3 wide).
+- `CORNER_FLAG_PROP` ×4: corners of the 10×10 pitch area.
+- `CENTRE_CIRCLE_PROP`: centre spot marker.
+- `PITCH_BOOKIE_PROP`: east touchline, 2 blocks south of centre.
+  Press **E** to bet 1–5 COIN on Rovers, Draw, or Council FC.
+- `PHYSIO_BAG_PROP`: west touchline. Press **E** while injured to restore 20 HP
+  (simulates on-pitch medical treatment; can only be used once per match).
+
+All props despawn at full-time (`FootballSystem.teardownPitch()`).
+
+### NPCs
+
+| NPC | Count | Type | Notes |
+|-----|-------|------|-------|
+| Rovers Player | 5 | `STREET_LAD` | Street Lads faction colours (red kit flag) |
+| Council FC Player | 5 | `COUNCIL_MEMBER` | Council faction colours (blue kit) |
+| Referee | 1 | `REFEREE` (new NPCType) | Patrols pitch; books players; cannot be attacked without +8 Notoriety |
+| Touchline Fan | 4–8 | `PUBLIC` | Appear 09:50; cheer goals, boo fouls; migrate to pub at 10:12 |
+| Physio | 1 | `COUNCIL_BUILDER` sub-variant | Runs on for injured player; passive |
+
+**New NPCType entry required:**
+```
+REFEREE(20f, 0f, 0f, false)  // Passive; issues yellow/red cards; calls police on +8 Notoriety assault
+```
+
+### Match Simulation
+
+The match runs as a simple probability engine inside `FootballSystem.update()`:
+
+- Every 30 real seconds (1 in-game half), a goal-attempt roll occurs for the
+  team currently in possession. Base chance: 30% per attempt. Modifiers:
+  - Rovers buff: Street Lads Respect ≥ 60 → +10% goal chance.
+  - Council FC buff: Council Respect ≥ 60 → +10% goal chance.
+  - Muddy pitch (RAIN weather) → −5% for both teams.
+  - Player on pitch as Rovers substitute → +5% for Rovers.
+  - Player sabotage (see below) → −20% for targeted team that attempt.
+- Goals are announced via the referee NPC: "GOAL! [Team]!" (speech bubble,
+  4 seconds). `SoundSystem` plays `SoundEffect.CROWD_CHEER`.
+- Score tracked in `FootballSystem.score[]` (int[2]: [rovers, councilFC]).
+- At full-time, `FootballSystem.resolveBets()` pays out winning bets at 2:1
+  odds (draw pays 3:1). Net loss adds to `StreetEconomySystem` NPC money pool.
+
+### Player Participation
+
+**Substitute in (Press E on Rovers captain before kick-off)**:
+- Replaces one STREET_LAD player NPC (they step off pitch).
+- Player spawns at kickoff position; movement is unrestricted on pitch.
+- Player can "tackle" opposition players: walk into a COUNCIL_MEMBER within 1
+  block and press left-click (punch). If the referee is not within 6 blocks and
+  `NoiseSystem.noiseLevel < 0.4`, the tackle is not penalised. If seen:
+  - Yellow card: `CriminalRecord.CrimeType.AFFRAY` + Notoriety +2.
+  - Red card (second yellow or blatant): player is ejected from pitch; Notoriety
+    +4; COUNCIL faction Respect −5.
+
+**Referee Abuse**:
+- Press **E** on the referee NPC to shout abuse (player spends 1 second, speech
+  bubble: "Terrible ref!" / "You're blind, mate!" / "My gran runs faster!").
+- On first abuse: referee issues a yellow card to the player (speech: "Watch it.").
+- On second abuse: red card + Notoriety +3 + CrimeType.DISORDERLY_CONDUCT.
+- If the player punches the referee: Notoriety +8, ASSAULT_OF_OFFICIAL entry,
+  referee calls police immediately (WantedSystem +2 stars).
+- Achievement `REF_ABUSE`: shout abuse at the referee twice in one match.
+
+**Sabotage (Marchetti Crew mission hook)**:
+- With Marchetti Crew Respect ≥ 50, Tony (CRIME_BOSS) offers a pre-match tip:
+  "Make sure Council FC don't win. Know what I mean?"
+- Player can sabotage a Council FC player by giving them a `DODGY_PIE` item
+  (press **E** on an opposing player, consume 1 DODGY_PIE from inventory):
+  target player enters `NPCState.SICK` for the remainder of the match (removed
+  from pitch). Council FC goal chance −20% per sabotaged player.
+- Completing this for Marchetti: Respect +15, 8 COIN reward.
+- If caught by referee (30% chance while referee is within 6 blocks): red card
+  + CrimeType.MATCH_FIXING + Notoriety +10.
+
+### Post-Match
+
+At full-time (`hour >= 10.2f`):
+- All fan and player NPCs migrate toward the pub (NPCState.GOING_TO_PUB path).
+- `WetherspoonsSystem` and `PubLockInSystem` receive a patron-count surge:
+  +4 to +8 extra PUBLIC NPCs in the pub for 2 in-game hours.
+- `NewspaperSystem.addMatchReport()` generates a Monday headline:
+  "[Winner] Triumph in Northfield Derby" / "Goalless Draw Bores Touchline"
+  / "Ref Attacked in Park Match Chaos" (if Notoriety was gained).
+- `RumourNetwork.addRumour()` seeds a `RumourType.LOCAL_EVENT` rumour into 2–4
+  nearby NPCs: "Did you see that match on Sunday? Ref was having a nightmare."
+
+### Integration with Existing Systems
+
+| System | Integration |
+|--------|-------------|
+| `FactionSystem` | Rovers win: Street Lads Respect +3. Council win: Council Respect +3. Draw: no change. |
+| `BettingUI` / `HorseRacingSystem` | Pattern: `PITCH_BOOKIE_PROP` uses same bet-resolution model; no new UI class needed. |
+| `WeatherSystem` | THUNDERSTORM cancels match; RAIN/DRIZZLE adds mud slowdown. |
+| `NewspaperSystem` | Monday match-report headline generated at full-time. |
+| `RumourNetwork` | Goal announcements seed `LOCAL_EVENT` rumours; ref-attack seeds `PLAYER_SPOTTED`. |
+| `WantedSystem` | Referee assault triggers +2 stars. |
+| `AchievementSystem` | New achievements (see below). |
+| `NotorietySystem` | Yellow/red cards, referee abuse, sabotage all add notoriety. |
+| `SoundSystem` | `CROWD_CHEER` on goal; ambient crowd murmur while match active. |
+| `BusSystem` | Away fans (COUNCIL_MEMBER × 2) board the bus at STOP_INDUSTRIAL at 09:45. |
+
+### New Material Entries Required
+
+| Material | Source | Notes |
+|----------|--------|-------|
+| `DODGY_PIE` | Kebab van (late night), skip diving | Used to sabotage opposition player; tooltip: "Guaranteed to put someone off their game." |
+| `FOOTBALL` | Craftable: 1 LEATHER + 1 RUBBER (or found in skip) | Can be placed as prop or kicked (walk into it) |
+| `REFEREE_WHISTLE` | Dropped by REFEREE NPC (10% chance) | Blowing it (press E) causes all NPCs within 10 blocks to pause briefly |
+
+### New PropType Entries Required
+
+`GOAL_POST_PROP`, `CORNER_FLAG_PROP`, `CENTRE_CIRCLE_PROP`, `PITCH_BOOKIE_PROP`,
+`PHYSIO_BAG_PROP`
+
+### New CrimeType Entry Required
+
+`MATCH_FIXING` (add to `CriminalRecord.CrimeType`)
+
+### New RumourType Entry Required
+
+No new type needed — uses existing `LOCAL_EVENT` for match gossip.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `SUNDAY_LEAGUE` | Substitute into a match and play to full-time |
+| `REF_ABUSE` | Shout abuse at the referee twice in one match |
+| `DODGY_PIE` | Successfully sabotage an opposition player |
+| `PUNTER` | Win a pitch-side bet |
+| `DIRTY_TACKLE` | Foul an opposition player without the referee seeing |
+
+**Unit tests**: goal-attempt probability calculations, bet payout resolution,
+sabotage detection probability (referee proximity), mud-slowdown modifier,
+match cancellation on THUNDERSTORM, score tracking, post-match patron surge
+calculation, NPC migration to pub at full-time.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Match spawns at 10:00 on Sunday and pitch props appear**: Set in-game time
+   to Sunday 09:59. Advance 2 frames. Verify `FootballSystem.isMatchActive()`
+   is true. Verify `GOAL_POST_PROP` exists at two locations within the PARK
+   landmark boundary. Verify 10 player NPCs (5 STREET_LAD + 5 COUNCIL_MEMBER)
+   are present within the pitch area.
+
+2. **Match is cancelled in THUNDERSTORM**: Set weather to THUNDERSTORM. Set
+   in-game time to Sunday 09:59. Advance 2 frames. Verify
+   `FootballSystem.isMatchActive()` is false. Verify no GOAL_POST_PROP exists
+   in the world. Verify a `LOCAL_EVENT` rumour has been seeded: "Match called
+   off — thunder's about." has been added to at least one NPC's rumour buffer.
+
+3. **Goal scored updates score and triggers crowd cheer**: Call
+   `footballSystem.forceGoal(FootballSystem.Team.ROVERS)`. Verify
+   `footballSystem.getScore(FootballSystem.Team.ROVERS)` is 1. Verify the
+   referee NPC has an active speech bubble containing "GOAL". Verify
+   `SoundSystem.wasPlayed(SoundEffect.CROWD_CHEER)` is true.
+
+4. **Bet pays out correctly on Rovers win**: Player bets 3 COIN on ROVERS via
+   `footballSystem.placeBet(FootballSystem.Team.ROVERS, 3, playerInventory)`.
+   Verify player inventory loses 3 COIN. Call `footballSystem.forceMatchEnd(1, 0)` 
+   (Rovers win 1–0). Verify `footballSystem.resolveBets(playerInventory)` adds
+   6 COIN to player inventory (3 × 2:1 odds). Verify player net gain is 3 COIN.
+
+5. **Player can substitute in and receive a yellow card**: Set in-game time to
+   Sunday 09:58. Start a match. Spawn a Rovers captain NPC. Press E on the
+   captain to substitute in. Verify `footballSystem.isPlayerOnPitch()` is true.
+   Place the player within 1 block of a COUNCIL_MEMBER NPC while the referee is
+   within 6 blocks. Press left-click. Verify `CriminalRecord` gains 1
+   `CrimeType.AFFRAY` entry. Verify Notoriety increased by 2.
+
+6. **Referee abuse issues yellow then red card**: Substitute player onto pitch.
+   Press E on referee — verify referee speech contains "Watch it." and
+   `footballSystem.getPlayerCardCount()` is 1. Press E again — verify
+   `footballSystem.isPlayerOnPitch()` is false (ejected). Verify Notoriety
+   increased by at least 7 total (2 + 3 = 5, plus any prior). Verify
+   CrimeType.DISORDERLY_CONDUCT is in criminal record.
+
+7. **Sabotage with DODGY_PIE removes Council player**: Give player 1 DODGY_PIE.
+   Start a match. Locate a COUNCIL_MEMBER player NPC on the pitch. Press E on
+   that NPC. Verify player inventory DODGY_PIE count decreased by 1. Verify the
+   target NPC's state is SICK or has been removed from the active player list.
+   Verify the Council FC effective goal-chance modifier has decreased.
+
+8. **Post-match patron surge reaches the pub**: Complete or force-end a match.
+   Verify `WetherspoonsSystem.getExtraPatronCount()` or equivalent returns ≥ 4.
+   Advance 10 in-game minutes. Verify at least 4 NPC fans are within 5 blocks
+   of the pub (WETHERSPOONS or RAGAMUFFIN_ARMS) landmark.
+
+9. **Muddy pitch slows player movement in rain**: Set weather to RAIN. Start a
+   match. Verify `FootballSystem.isMuddy()` is true. Place the player on a GRASS
+   block inside the pitch boundary. Simulate W-key press for 60 frames. Verify
+   the player's displacement is at most 80% of the displacement measured in the
+   same test with weather set to CLEAR (mud slows by 20%).
+
+10. **Full match lifecycle stress test**: Set time to Sunday 09:59. Advance through
+    the full match duration (10:00–10:12 in-game = ~24 real seconds at 60fps =
+    ~1440 frames). Verify: no NPEs at any frame; score never goes negative; NPC
+    count remains non-zero; props are removed at full-time
+    (`FootballSystem.isMatchActive()` is false after 10:12); at least 1
+    `LOCAL_EVENT` rumour exists in the network; game remains in PLAYING state.
+
+// ── New: FootballSystem.java in ragamuffin.core
+// New: NPCType stub required: REFEREE
+// New: Material stubs required: DODGY_PIE, FOOTBALL, REFEREE_WHISTLE
+// New: PropType stubs required: GOAL_POST_PROP, CORNER_FLAG_PROP,
+//      CENTRE_CIRCLE_PROP, PITCH_BOOKIE_PROP, PHYSIO_BAG_PROP
+// New: CrimeType stub: MATCH_FIXING (add to CriminalRecord.CrimeType)
+// New: AchievementType stubs: SUNDAY_LEAGUE, REF_ABUSE, DODGY_PIE,
+//      PUNTER, DIRTY_TACKLE (add to AchievementType)
+// Existing: FactionSystem, WeatherSystem, NewspaperSystem, RumourNetwork,
+//           WantedSystem, NotorietySystem, SoundSystem, BusSystem,
+//           StreetEconomySystem, WetherspoonsSystem all present
