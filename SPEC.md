@@ -26709,3 +26709,303 @@ Achievement `LADS_LADS_LADS`: Interact with the stag do and receive the Vaults i
 // Existing: LandmarkType.NANDOS already defined; HeistSystem, WarmthSystem, StreetEconomySystem,
 //           RumourNetwork, NotorietySystem, FactionSystem, NewspaperSystem, WitnessSystem,
 //           NightclubSystem all present
+
+---
+
+## Issue #1095: Northfield By-Election — Canvassing, Poster Wars & the Ballot Box Job
+
+**New System**: `ByElectionSystem.java` in `ragamuffin.core`
+
+**Goal**: A Northfield Ward by-election is called on in-game Day 7 (or when the player
+reaches Notoriety Tier 2, whichever comes first) and runs for 5 in-game days before
+polling day. The player can support or sabotage either candidate, run a disinformation
+campaign, steal the ballot box from the polling station, or — if their Community Respect
+is high enough — stand as an Independent and win a seat on the council.
+
+This system is rich in British political satire, uses the existing `RumourNetwork`,
+`NewspaperSystem`, `FactionSystem`, `NotorietySystem`, and `WitnessSystem` to make
+the election feel like a living event that the whole town reacts to.
+
+---
+
+### Physical Layout
+
+The election adds several world props to existing locations:
+
+- **Election Posters** (`ELECTION_POSTER_BLUE_PROP`, `ELECTION_POSTER_RED_PROP`) — 6 of
+  each nailed to lampposts, fences, and walls throughout the town. Each is a
+  breakable prop (1 hit). Destroying them is `CrimeType.CRIMINAL_DAMAGE` (+2 Notoriety),
+  but only if witnessed.
+- **Canvassing Table** (`CANVASSING_TABLE_PROP`) — one per candidate, set up outside the
+  community centre and library (alternating days). Press E to talk to the volunteer
+  canvasser NPC.
+- **Polling Station** (`POLLING_STATION_PROP`) — placed in the community centre lobby on
+  polling day (Day 12). Contains a `BALLOT_BOX_PROP` (see heist mechanic).
+- **Returning Officer's Podium** (`RETURNING_OFFICER_PODIUM_PROP`) — spawns outside the
+  community centre at 23:00 on polling day for the count announcement.
+
+---
+
+### Key Characters
+
+- **Nigel Pemberton** (`TORY_CANDIDATE` NPCType): a red-faced man in a navy suit and
+  regimental tie. Canvasses 10:00–16:00, accompanied by a `PARTY_VOLUNTEER` NPC carrying
+  a clipboard. Speech: *"Strong communities, strong Britain." / "Delighted to meet you." /
+  "I do think this area has great potential, actually." / "Could I count on your support?"*
+  Passive; runs away (FLEEING state) if attacked. Backed by the `NEIGHBOURHOOD_WATCH`
+  faction (Neighbourhood Watch Respect +5 if player supports him; −5 if player sabotages).
+
+- **Sandra Okafor** (`LABOUR_CANDIDATE` NPCType): a confident woman in a red coat with a
+  rosette. Canvasses 14:00–19:00, stopping to talk to PUBLIC NPCs in the street.
+  Speech: *"More youth services, that's what we need." / "The cuts have hit this ward hard." /
+  "Vote for change." / "Lovely to meet you."*
+  Passive; never hostile. Backed by the `STREET_LADS` and `MARCHETTI_CREW` factions
+  in flavour only (Faction Respect unaffected by vote outcome).
+
+- **Reg Holloway** (`RETURNING_OFFICER` NPCType): a tired council official in a suit.
+  Appears only at the polling station (08:00–22:00 polling day) and the count podium
+  (23:00). Cannot be attacked without triggering a 3-star wanted response.
+
+- **Campaign Volunteers** (`PARTY_VOLUNTEER` NPCType): 1–2 per candidate, carrying
+  `LEAFLET_STACK_PROP`. Drop `CAMPAIGN_LEAFLET` items when defeated. Passive.
+
+---
+
+### The Election Mechanics
+
+#### Canvassing & Door Knocking
+
+Each of the 5 campaign days, between 1 and 3 CANVASSING EVENTS occur where either
+candidate appears at the door of the `SQUAT` or `COUNCIL_FLATS` landmark and knocks
+(press E on candidate → short dialogue tree). The player can:
+
+| Player action | Outcome |
+|---------------|---------|
+| **Support** (choice 1) | +3 votes for that candidate; NPC says *"Wonderful!"*; seeds `LOCAL_EVENT` rumour |
+| **Doorstep argument** (choice 2) | −2 votes for that candidate; Notoriety +1; candidate walks away flustered |
+| **Ignore** | No effect |
+
+Votes are tracked as `byElectionSystem.votes[NIGEL]` and `byElectionSystem.votes[SANDRA]`.
+Each starts at 50. The winner is whoever has more votes at polling day.
+
+#### Poster Sabotage
+
+The player can pull down (`CRIMINAL_DAMAGE`) or deface (`GRAFFITI` crime type via
+`GraffitiSystem`) election posters. Each poster destroyed subtracts 2 votes from that
+candidate. `GraffitiSystem.sprayPoster(candidate)` applies a custom stencil — the
+result is visible in-world as a `DEFACED_POSTER_PROP`.
+
+If 3+ posters for the same candidate are destroyed, the `NewspaperSystem` triggers
+headline: *"POSTER VANDAL TARGETS [CANDIDATE] IN NORTHFIELD WARD BATTLE"*. Notoriety
++4 if player's name is known to police (Wanted ≥ 1 star at time of defacement).
+
+#### Leaflet Flooding
+
+Press E on the `CANVASSING_TABLE_PROP` to volunteer. The player receives 10
+`CAMPAIGN_LEAFLET` items. Each leaflet can be:
+- **Delivered** (press E on any front door `DOOR_PROP` within 20 blocks of a residential
+  building): +1 vote for that candidate; no Notoriety.
+- **Binned** (place in a `WHEELIE_BIN` or `LITTER_BIN_PROP`): no effect; seeds a
+  `LOCAL_EVENT` rumour *"Saw someone binning campaign leaflets outside."*
+- **Used as rolling papers** (craft `CAMPAIGN_LEAFLET` + `ROLLING_TOBACCO` → `ROLLIE`):
+  cosmetic; achievement `POLITICAL_SMOKER` on first craft.
+
+#### The Independent Candidacy
+
+If the player has Community Respect ≥ 40 (tracked by `NeighbourhoodSystem`) and
+Notoriety ≤ 20 on Day 7 when the election is called, the `RETURNING_OFFICER` NPC
+appears at the community centre and offers them a `NOMINATION_FORM`. Submitting it
+(press E on `POLLING_STATION_PROP` with `NOMINATION_FORM` in inventory) registers the
+player as an Independent candidate:
+
+- A third set of `ELECTION_POSTER_INDEPENDENT_PROP` posters appears.
+- `byElectionSystem.votes[INDEPENDENT]` starts at 20.
+- Each successful canvassing event (door-knock choice: support), leaflet delivery, or
+  completed community shift adds 2 votes to INDEPENDENT.
+- If INDEPENDENT wins, `NeighbourhoodSystem` Community Respect +30, Notoriety −15,
+  achievement `PEOPLE'S_CHAMPION` unlocked, and a `COUNCILLOR_BADGE` item appears
+  in the player's inventory. The badge is purely cosmetic but NPCs display
+  `"Congratulations, Councillor."` speech when the player interacts with them for
+  the rest of the session.
+- The achievement text: *"Against all odds, you are now technically responsible for bin
+  collections across Ward 4."*
+
+#### The Ballot Box Heist
+
+On polling day the `POLLING_STATION_PROP` inside the community centre holds a
+`BALLOT_BOX_PROP`. After 18:00 (polling closes), the ballot box becomes an interactive
+prop. The player can:
+
+- **Steal the ballot box** (press E, requires Notoriety ≤ 30 or `COUNCIL_JACKET` disguise;
+  8-second hold-E, same as `HeistSystem` pattern): adds `BALLOT_BOX` item to inventory.
+  `CrimeType.ELECTION_INTERFERENCE` added to `CriminalRecord`. Notoriety +25.
+  `WantedSystem` immediately adds 2 stars. `NewspaperSystem` headline: *"BALLOT BOX
+  STOLEN FROM NORTHFIELD POLLING STATION — POLICE APPEAL."*
+  The election result is voided; `byElectionSystem.setResultVoided(true)`. Neither
+  candidate wins; the returning officer announces: *"Due to irregularities, I am unable
+  to declare a result. A new poll will be held."* (The new poll never comes — it's just
+  chaos.)
+- **Sell the ballot box** to the Fence (`FenceSystem.sell(BALLOT_BOX)`) for 15 COIN.
+  `FenceValuationTable` flags it as hot property (+1 Notoriety each day held, up to max
+  Notoriety Tier 3).
+
+---
+
+### The Count & Announcement
+
+At 23:00 on polling day (whether the box was stolen or not):
+
+- If box NOT stolen: `RETURNING_OFFICER` NPC appears at the podium. The result is
+  announced via the `NewspaperSystem` (next morning's headline). 4–6 PUBLIC NPCs
+  gather. The losing candidate's `PARTY_VOLUNTEER` NPC despawns. The winning candidate
+  spawns near the `COUNCIL_FLATS` landmark once a week for the rest of the session,
+  available for interaction.
+- If box stolen: the announcement is cancelled; `RETURNING_OFFICER` paces behind the
+  podium; nearby PUBLIC NPCs seed `LOCAL_EVENT` rumours about the chaos.
+
+---
+
+### New Items
+
+- `CAMPAIGN_LEAFLET` — paper item; 10 fit in one inventory slot; deliverable to doors;
+  craftable into `ROLLIE`. Tooltip: *"Vote for [Candidate]. Bin-lined delivery accepted."*
+- `NOMINATION_FORM` — quest item; given by `RETURNING_OFFICER`; required to stand as
+  Independent. Cannot be sold. Tooltip: *"Step one of a thousand."*
+- `BALLOT_BOX` — stolen prop item; heavy (reduces movement speed −5% while held);
+  sellable to Fence. Tooltip: *"Democracy, boxed."*
+- `COUNCILLOR_BADGE` — cosmetic item; awarded on Independent win. Cannot be dropped.
+  Tooltip: *"Ward 4 — A Better Tomorrow."*
+
+---
+
+### New NPCTypes
+
+- `TORY_CANDIDATE` — Nigel Pemberton; canvasser; passive; FLEEING if attacked.
+- `LABOUR_CANDIDATE` — Sandra Okafor; canvasser; passive; never hostile.
+- `RETURNING_OFFICER` — Reg Holloway; polling station warden; 3-star police response
+  if attacked.
+- `PARTY_VOLUNTEER` — clipboard-carrier for either candidate; passive; drops
+  `CAMPAIGN_LEAFLET` when defeated.
+
+---
+
+### New CrimeType
+
+- `CriminalRecord.CrimeType.ELECTION_INTERFERENCE` — ballot box theft.
+
+---
+
+### New RumourTypes
+
+- `RumourType.ELECTION_CALLED` — seeded by `ByElectionSystem` to 4 NPCs on Day 7.
+  Text: *"By-election coming up. Doubt it'll change anything."*
+- `RumourType.POSTER_VANDAL` — seeded after 3+ poster destructions. Text: *"Someone's
+  been tearing down the election posters."*
+
+---
+
+### Achievements
+
+- `CAMPAIGNER` — deliver 10 campaign leaflets.
+- `POLITICAL_SMOKER` — craft a `ROLLIE` from a `CAMPAIGN_LEAFLET`.
+- `POSTER_BOY` — destroy all 12 election posters (6 per candidate) in one campaign.
+- `PEOPLE'S_CHAMPION` — win the election as an Independent candidate.
+- `DEMOCRACY_THIEF` — steal the ballot box.
+
+---
+
+### Integrations
+
+- **GraffitiSystem**: `sprayPoster(candidate)` creates a `DEFACED_POSTER_PROP`; deducts
+  2 votes from that candidate's tally.
+- **NewspaperSystem**: three possible headlines — poster vandal story, ballot box theft,
+  and election result (winner announced).
+- **WitnessSystem**: poster destruction and ballot box theft are witnessed by NPCs within
+  8 blocks; `CCTV_CAMERA_PROP` within 10 blocks also witnesses ballot box theft.
+- **NotorietySystem**: poster tear-down +2 (if witnessed); ballot box theft +25.
+- **WantedSystem**: ballot box theft immediately +2 stars.
+- **FactionSystem**: Neighbourhood Watch Respect ±5 based on which candidate player
+  supports; no direct effect on Marchetti/Street Lads respect.
+- **NeighbourhoodSystem**: Independent win +30 Community Respect; Notoriety −15.
+- **FenceSystem**: `BALLOT_BOX` sellable for 15 COIN (hot property flag).
+- **HeistSystem**: ballot box theft uses the existing hold-E 8-second steal pattern.
+- **RumourNetwork**: `ELECTION_CALLED` seeded on Day 7; `POSTER_VANDAL` on 3+ poster
+  destructions; candidate win seeded as `LOCAL_EVENT` on result day.
+- **AchievementSystem**: five new achievements above.
+
+---
+
+### Unit Tests
+
+1. `ByElectionSystem.isElectionActive(day=7)` returns `true`; `isElectionActive(day=6)`
+   returns `false`.
+2. `ByElectionSystem.recordVote(NIGEL, +3)` → `getVotes(NIGEL)` returns 53 (starts at 50).
+3. `ByElectionSystem.resolvePosterDestruction(candidate=SANDRA, posterCount=3)` →
+   `getVotes(SANDRA)` returns 44 (50 − 6); `NewspaperSystem` has poster vandal headline.
+4. `ByElectionSystem.canStandAsIndependent(communityRespect=45, notoriety=15)` returns
+   `true`; `(communityRespect=35, notoriety=15)` returns `false`;
+   `(communityRespect=45, notoriety=25)` returns `false`.
+5. `ByElectionSystem.getWinner()` — with `votes[NIGEL]=60, votes[SANDRA]=45` returns
+   `NIGEL`; with `setResultVoided(true)` returns `VOID`.
+6. `ByElectionSystem.stealBallotBox(inventory, notoriety=25)` — adds `BALLOT_BOX` to
+   inventory, sets `resultVoided=true`, `CriminalRecord` contains
+   `ELECTION_INTERFERENCE`, Notoriety +25.
+7. `ByElectionSystem.deliverLeaflet(candidate=SANDRA)` → `getVotes(SANDRA)` returns 51.
+
+---
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Election is called on Day 7 and posters appear**: Advance in-game time to Day 7.
+   Verify `byElectionSystem.isElectionActive()` returns `true`. Verify at least 6
+   `ELECTION_POSTER_BLUE_PROP` and 6 `ELECTION_POSTER_RED_PROP` exist in the world.
+   Verify `RumourNetwork` contains a `RumourType.ELECTION_CALLED` rumour.
+
+2. **Destroying 3 posters reduces votes and triggers newspaper headline**: Destroy 3
+   `ELECTION_POSTER_BLUE_PROP` (Nigel's). Verify `byElectionSystem.getVotes(NIGEL)` ≤
+   44 (50 − 6). Verify `CriminalRecord` contains 3 `CrimeType.CRIMINAL_DAMAGE` entries.
+   Verify `NewspaperSystem` has a headline containing "POSTER VANDAL".
+
+3. **Canvassing interaction adds votes**: Advance to Day 8. Locate a `CANVASSING_TABLE_PROP`
+   (Sandra's). Press E and select "Support". Verify `byElectionSystem.getVotes(SANDRA)`
+   increased by 3 (= 53). Verify a `LOCAL_EVENT` rumour was seeded. Verify Nigel's vote
+   total is unchanged.
+
+4. **Independent candidacy registered when eligible**: Set Community Respect to 45,
+   Notoriety to 10. Advance to Day 7. Verify `ByElectionSystem.canStandAsIndependent()`
+   returns `true`. Locate `RETURNING_OFFICER` NPC at community centre. Press E. Verify
+   `NOMINATION_FORM` added to inventory. Press E on `POLLING_STATION_PROP` with form in
+   inventory. Verify `byElectionSystem.isIndependentRegistered()` returns `true`. Verify
+   `ELECTION_POSTER_INDEPENDENT_PROP` props appear in world.
+
+5. **Ballot box heist voids result and triggers wanted stars**: Advance to polling day
+   (Day 12), set time to 19:00. Give player `COUNCIL_JACKET` disguise. Move player to
+   `POLLING_STATION_PROP`. Hold E for 8 seconds (480 frames). Verify `BALLOT_BOX` is in
+   player inventory. Verify `byElectionSystem.isResultVoided()` returns `true`. Verify
+   `WantedSystem` has ≥ 2 stars. Verify `CriminalRecord` contains
+   `CrimeType.ELECTION_INTERFERENCE`. Verify `NewspaperSystem` has "BALLOT BOX STOLEN"
+   headline.
+
+6. **Independent wins election when votes are highest**: Register as Independent. Deliver
+   20 leaflets (call `deliverLeaflet(INDEPENDENT)` 20 times → votes = 60). Ensure
+   NIGEL=50, SANDRA=50. Advance to Day 12 count (23:00). Verify
+   `byElectionSystem.getWinner()` returns `INDEPENDENT`. Verify player inventory contains
+   `COUNCILLOR_BADGE`. Verify `NeighbourhoodSystem` Community Respect increased by 30.
+   Verify Notoriety decreased by 15. Verify `AchievementType.PEOPLES_CHAMPION` has been
+   unlocked.
+
+// ── New: ByElectionSystem.java in ragamuffin.core
+// New: NPCType stubs required: TORY_CANDIDATE, LABOUR_CANDIDATE, RETURNING_OFFICER,
+//      PARTY_VOLUNTEER
+// New: Material stubs required: CAMPAIGN_LEAFLET, NOMINATION_FORM, BALLOT_BOX,
+//      COUNCILLOR_BADGE
+// New: PropType stubs required: ELECTION_POSTER_BLUE_PROP, ELECTION_POSTER_RED_PROP,
+//      ELECTION_POSTER_INDEPENDENT_PROP, CANVASSING_TABLE_PROP, POLLING_STATION_PROP,
+//      BALLOT_BOX_PROP, RETURNING_OFFICER_PODIUM_PROP, DEFACED_POSTER_PROP
+// New: CrimeType stub: ELECTION_INTERFERENCE (add to CriminalRecord.CrimeType)
+// New: RumourType stubs: ELECTION_CALLED, POSTER_VANDAL (add to RumourType)
+// New: AchievementType stubs: CAMPAIGNER, POLITICAL_SMOKER, POSTER_BOY,
+//      PEOPLES_CHAMPION, DEMOCRACY_THIEF (add to AchievementType)
+// Existing: GraffitiSystem, NewspaperSystem, WitnessSystem, NotorietySystem,
+//           WantedSystem, FactionSystem, NeighbourhoodSystem, FenceSystem,
+//           HeistSystem, RumourNetwork, AchievementSystem all present
