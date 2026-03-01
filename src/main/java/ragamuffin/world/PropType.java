@@ -757,6 +757,19 @@ public enum PropType {
     FLASH_SHEET_PROP(0.05f, 0.80f, 0.60f, 1, null),
     /** Tattoo station workbench with inks and equipment. */
     TATTOO_STATION_PROP(1.00f, 1.00f, 0.60f, 4, Material.NEEDLE),
+    /**
+     * MIRROR_PROP — wall-mounted mirror. Player can press E near this to attempt
+     * a prison tattoo DIY mechanic (requires NEEDLE + INK_BOTTLE).
+     * Destroyed by 2 hits; yields GLASS.
+     */
+    MIRROR_PROP(0.80f, 1.00f, 0.05f, 2, Material.GLASS),
+    /**
+     * CCTV_CAMERA_PROP — a wall-mounted CCTV camera covering the tattoo parlour
+     * display area. If unobstructed and within 8 blocks of a theft event, witnesses
+     * the crime (+1 wanted star, THEFT CriminalRecord entry).
+     * Destroyed by 2 hits (FRAGILE); yields SCRAP_METAL.
+     */
+    CCTV_CAMERA_PROP(0.25f, 0.20f, 0.30f, 2, Material.SCRAP_METAL),
 
     // ── Issue #1020: Northfield Sporting & Social Club ────────────────────────
 
