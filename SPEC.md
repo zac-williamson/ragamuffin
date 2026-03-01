@@ -28121,3 +28121,229 @@ stolen items).
 // New achievements: BOXING_CHAMP, COUNCIL_MOLE, JUMBLE_SALE_KING,
 //     CAKE_SABOTEUR, BAKE_OFF_CHEAT (add to AchievementType.java)
 // All other stubs (PropTypes, NPCTypes, RumourType.COMMUNITY_OUTRAGE) already present
+
+---
+
+## Northfield Nail Salon — Angel Nails & Beauty, Gossip Economy & the Stolen Gel Polish Racket
+
+**Issue #1106** (stubbed across codebase — `NailSalonSystem.java` does not yet exist)
+
+`NAIL_SALON` landmark is already placed in the world generator (a pink-fronted
+shopfront at the high street parade), `NAIL_TECH` NPC type is defined, and
+`LandmarkType.NAIL_SALON` returns "Angel Nails & Beauty". The system driving the
+gameplay has never been written.
+
+**Building**: 6×10×4 blocks, `RENDER_PINK` exterior, `SIGN_WHITE`. Interior:
+two `NAIL_STATION_PROP` units (treatment tables with UV lamp), a `WAITING_BENCH_PROP`
+(3 seats), a `PRODUCT_SHELF_PROP` along the back wall, a `CASH_DESK_PROP` near
+the door, and a `GEL_DISPLAY_PROP` near the window. Outside: `NAIL_SIGN_PROP`
+(acrylic nails illustration). Open Mon–Sat 09:30–18:00, Sun 11:00–16:00.
+
+**Staff**: Tracy the owner (`NAIL_TECH` NPC, always present during hours) and
+Jade the apprentice (`NAIL_TECH`, Tue–Fri 12:00–18:00). Two seated `PUBLIC` female
+NPCs as clients at any time (rotate every 30 in-game minutes).
+
+---
+
+### Core Mechanics
+
+#### 1. Treatments & Disguise
+
+Press E on `CASH_DESK_PROP` to access the treatment menu:
+
+| Treatment | Cost | Effect |
+|-----------|------|--------|
+| Basic Manicure | 4 COIN | `DisguiseSystem` cosmetic shift — NPCs less likely to recognise player for 30 in-game mins |
+| Gel Nails (set) | 8 COIN | As above + `FRESHLY_GROOMED` buff; `NeighbourhoodSystem` vibes +3 |
+| Acrylic Full Set | 12 COIN | Strong disguise modifier; `WantedSystem` recognition –1 tier for 60 in-game mins |
+| Nail Removal | 3 COIN | Clears any active nail buff/debuff; no other effect |
+
+- Tracy refuses service to players with ≥ 3 wanted stars: "We're fully booked, love."
+- If `WantedSystem` drops below 3 stars mid-treatment, service resumes normally.
+- Getting nails done while `COVERED_IN_BLOOD` debuff is active: Tracy recoils — no
+  service, Notoriety +2, rumour: `RumourType.COMMUNITY_OUTRAGE` ("Someone came in
+  covered in blood asking for a gel set").
+
+#### 2. Gossip Sink — The Chair Economy
+
+While the player is seated (waiting or receiving a treatment), Tracy and Jade
+exchange gossip. Every 5 in-game minutes the player is in the salon, they receive
+one free `RumourType.LOCAL_EVENT` rumour seeded into `RumourNetwork` (Tracy as
+source). This is the richest passive gossip source on the high street — no
+friendship or drink required.
+
+If player initiates conversation with Tracy (press E on her directly), she offers:
+- "Did you hear about…" (one `LOCAL_EVENT` rumour, same cooldown as the passive one)
+- "Any jobs going?" (links to `JobCentreSystem` — Tracy mentions a cleaning role)
+- "What do you know about the Marchettis?" (only at Marchetti Respect ≥ 30;
+  yields `RumourType.FACTION_ACTIVITY` rumour)
+
+#### 3. Stolen Gel Polish Racket
+
+A `PRODUCT_SHELF_PROP` at the back holds 3–6 units of `GEL_POLISH` material (worth
+3 COIN each at the Fence, 1 COIN at PawnShop).
+
+- **Sneak-steal** (press E on shelf while no `NAIL_TECH` is within 4 blocks):
+  - Success (Notoriety tier ≤ 2): gain 1× `GEL_POLISH`, Notoriety +2.
+  - Caught (Tracy or Jade within 4 blocks): Notoriety +8,
+    `CriminalRecord.CrimeType.THEFT`, NoiseSystem +10; Tracy shouts —
+    NeighbourhoodWatchSystem anger +5. One `POLICE_OFFICER` NPC spawns at the
+    door within 60 seconds.
+
+- **Bulk order scam** (unlocked at StreetSkillSystem `CHARM` ≥ 3): player can
+  convince Jade (not Tracy) to "set aside" 5× `GEL_POLISH` claiming they're
+  "for a hen do." Jade hands over the stock; next visit Tracy notices — seeded
+  `COMMUNITY_OUTRAGE` rumour, Jade is sacked (removed from spawn), Tracy hostile
+  for the rest of the session. Achievement: `GEL_BANDIT`.
+
+#### 4. UV Lamp Fuse — Atmospheric Event
+
+30% chance each in-game hour: UV lamp on one `NAIL_STATION_PROP` trips the fuse.
+Tracy fusses: "Not again — the electrics in this place!" Treatment suspended for
+5 in-game minutes. Player with `ELECTRICAL_TAPE` in inventory can press E on the
+fuse box (`FUSE_BOX_PROP`, back wall) to fix it instantly — Tracy rewards with
+1× `GEL_POLISH` and Notoriety −1 (good neighbour).
+
+#### 5. Hen Do Chaos (Friday/Saturday 13:00–17:00)
+
+4–6 extra `PUBLIC` NPCs (hen party) crowd the salon. NoiseSystem ambient level
++15 inside during this window. Tracy visibly stressed. All treatment costs +1 COIN
+(surcharge). Player can:
+- Join the chaos: buy a round of prosecco (`CHEAP_SPIRITS` from their inventory,
+  press E on the waiting bench) — all hen NPCs gain `DRUNK` state, NoiseSystem +10
+  more, Notoriety −2 (social legend), Achievement: `HEN_PARTY_HERO`.
+- Pickpocket during the noise: 40% success chance (vs 20% normally) — if caught,
+  Notoriety +12, `CriminalRecord.CrimeType.THEFT`.
+
+#### 6. Police Raid (low-probability scripted event)
+
+1% chance per in-game hour while salon open: `WantedSystem` detects player Notoriety
+≥ 50 and sends a `POLICE_OFFICER` to check the salon (police informant network).
+Officer enters, scans for the player. Player has 5 seconds to move into the back
+room (`BACK_ROOM_PROP` corridor) or face a stop-and-search:
+- Stop-and-search: `WantedSystem.stopAndSearch()` — if `GEL_POLISH` (stolen marker)
+  in inventory, `CriminalRecord.CrimeType.THEFT` added, Notoriety +8.
+- Hiding in back room: no penalty, but Tracy is angry next visit (+1 COIN surcharge
+  forever after).
+
+---
+
+### Opening Hours Summary
+
+| Day | Hours |
+|-----|-------|
+| Mon–Sat | 09:30–18:00 |
+| Sun | 11:00–16:00 |
+| Fri/Sat 13:00–17:00 | Hen Do Chaos (surcharge +1 COIN, noise +15) |
+
+---
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `GEL_POLISH` | Fenceable item; 3 COIN at Fence, 1 COIN at PawnShop |
+| `FRESHLY_GROOMED` | Buff applied on Gel Nails treatment (flag/debuff, not a held item) |
+
+(Add to `Material.java` if not present.)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `NAIL_STATION_PROP` | Treatment table with UV lamp |
+| `PRODUCT_SHELF_PROP` | Holds GEL_POLISH stock (3–6 units) |
+| `GEL_DISPLAY_PROP` | Window display prop, ambient only |
+| `NAIL_SIGN_PROP` | External signage prop |
+| `CASH_DESK_PROP` | Counter to access treatment menu |
+| `FUSE_BOX_PROP` | Back-wall fuse box (interactable) |
+| `BACK_ROOM_PROP` | Corridor hiding spot during police visit |
+
+(Add to `PropType.java` if not present.)
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `GEL_BANDIT` | Successfully complete the bulk order scam on Jade |
+| `HEN_PARTY_HERO` | Provide prosecco to the hen party during chaos window |
+| `UNDERCOVER_NAILS` | Avoid recognition using Acrylic Full Set while at 2 wanted stars |
+| `SPARKY` | Fix the UV lamp fuse with ELECTRICAL_TAPE |
+
+(Add to `AchievementType.java`.)
+
+### System Integrations
+
+- **DisguiseSystem**: treatments apply cosmetic recognition modifiers.
+- **WantedSystem**: Acrylic Full Set reduces recognition tier; ≥3 stars refused;
+  police raid trigger at Notoriety ≥ 50.
+- **NotorietySystem**: theft, blood debuff entry, caught pickpocket triggers.
+- **CriminalRecord**: `THEFT` on caught steal/pickpocket; `THEFT` on stop-and-search
+  with stolen polish.
+- **RumourNetwork**: `LOCAL_EVENT` passively from Tracy; `COMMUNITY_OUTRAGE` on
+  bulk scam / blood-covered entry; `FACTION_ACTIVITY` from Marchetti conversation.
+- **NeighbourhoodWatchSystem**: caught theft anger +5.
+- **NoiseSystem**: hen-do ambient +15; caught theft +10.
+- **StreetSkillSystem**: `CHARM` ≥ 3 unlocks bulk order scam.
+- **JobCentreSystem**: Tracy's job tip cross-reference.
+- **FenceSystem / PawnShopSystem**: `GEL_POLISH` fence value (3 COIN) and pawn
+  value (1 COIN).
+- **NeighbourhoodSystem**: Gel Nails vibes +3.
+- **WarmthSystem**: indoor shelter during open hours.
+- **WeatherSystem**: rain/cold sends extra `PUBLIC` clients seeking warmth — +1
+  seated client on RAIN/DRIZZLE/THUNDERSTORM.
+- **NewspaperSystem**: "Local Salon in Theft Shock" headline if police raid occurs.
+- **FactionSystem / Marchetti**: `FACTION_ACTIVITY` rumour at Marchetti Respect ≥ 30.
+
+**Unit tests**: treatment menu price lookup (basic 4, gel 8, acrylic 12, removal 3),
+gossip cooldown (one rumour per 5 in-game minutes), gel steal success/fail conditions
+(Notoriety tier ≤ 2 succeeds; within 4 blocks caught), bulk scam unlock threshold
+(CHARM < 3 unavailable), hen-do surcharge (+1 COIN on Fri/Sat 13–17), UV lamp event
+probability (30%/hour), pickpocket success rate (40% hen-do, 20% normal).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Acrylic Full Set reduces wanted recognition**: Set player `WantedSystem` stars
+   to 2. Enter salon, buy Acrylic Full Set for 12 COIN. Verify `DisguiseSystem`
+   recognition tier reduced by 1 (i.e. effectively 1 star tier for 60 in-game mins).
+   Advance time by 61 in-game minutes. Verify recognition reverts to 2-star tier.
+
+2. **Blood-covered player refused and rumour seeded**: Give player `COVERED_IN_BLOOD`
+   debuff. Enter salon, press E on `CASH_DESK_PROP`. Verify service is refused.
+   Verify Notoriety increased by 2. Verify `RumourNetwork` contains a
+   `COMMUNITY_OUTRAGE` rumour mentioning "blood".
+
+3. **Gel steal caught triggers crime record and NPC response**: Set Notoriety tier 3.
+   Place `NAIL_TECH` NPC (Tracy) within 3 blocks. Press E on `PRODUCT_SHELF_PROP`.
+   Verify `GEL_POLISH` NOT added to inventory. Verify `CriminalRecord` contains
+   `THEFT`. Verify Notoriety increased by 8. Verify `NoiseSystem` noise increased
+   by 10. Verify a `POLICE_OFFICER` is scheduled to spawn within 60 seconds.
+
+4. **Passive gossip fires every 5 in-game minutes**: Seat player in salon (E on
+   `WAITING_BENCH_PROP`). Advance time by 5 in-game minutes. Verify `RumourNetwork`
+   has gained exactly 1 `LOCAL_EVENT` rumour. Advance another 5 in-game minutes.
+   Verify 2 total `LOCAL_EVENT` rumours from Tracy.
+
+5. **Bulk order scam succeeds at CHARM ≥ 3, fails below**: Set CHARM Skill = 2.
+   Press E on Jade. Verify "bulk order" option is NOT shown. Set CHARM = 3.
+   Press E on Jade, select bulk order. Verify inventory receives 5× `GEL_POLISH`.
+   Verify Tracy becomes hostile. Verify `COMMUNITY_OUTRAGE` rumour seeded.
+   Verify achievement `GEL_BANDIT` unlocked.
+
+6. **Hen do noise surcharge on Friday 14:00**: Set day to Friday, time 14:00. Enter
+   salon. Verify basic manicure costs 5 COIN (4 + 1 surcharge). Verify
+   `NoiseSystem.getAmbientLevel()` inside salon ≥ 15. Advance to 17:05. Verify
+   manicure price reverts to 4 COIN.
+
+7. **UV lamp fix rewards GEL_POLISH**: Trigger UV lamp event (force
+   `uvLampFused = true`). Give player 1× `ELECTRICAL_TAPE`. Press E on
+   `FUSE_BOX_PROP`. Verify `uvLampFused` = false. Verify inventory receives
+   1× `GEL_POLISH`. Verify Notoriety decreased by 1.
+
+// ── New: NailSalonSystem.java in ragamuffin.core
+// New materials if absent: GEL_POLISH (add to Material.java)
+// New PropTypes if absent: NAIL_STATION_PROP, PRODUCT_SHELF_PROP, GEL_DISPLAY_PROP,
+//     NAIL_SIGN_PROP, CASH_DESK_PROP, FUSE_BOX_PROP, BACK_ROOM_PROP (add to PropType.java)
+// New achievements: GEL_BANDIT, HEN_PARTY_HERO, UNDERCOVER_NAILS, SPARKY (add to AchievementType.java)
+// NAIL_TECH NPC type already present in NPCType.java
+// NAIL_SALON landmark already present in LandmarkType.java + WorldGenerator.java
