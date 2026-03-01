@@ -296,7 +296,23 @@ public enum LandmarkType {
      * NeighbourhoodSystem (boards up when vibes &lt;30), RumourNetwork (LOCAL_EVENT
      * per cut), NewspaperSystem (hairstyle in crime descriptions).
      */
-    BARBERS;
+    BARBERS,
+
+    // ── Issue #1041: Northfield Argos ─────────────────────────────────────────
+
+    /**
+     * Argos — the iconic British catalogue shop on the high street.
+     * Open Mon–Sat 09:00–17:30, Sun 10:00–16:00.
+     * Staffed by ARGOS_CLERK and ARGOS_MANAGER. Customers browse catalogues,
+     * write slips at ARGOS_CATALOGUE props, and collect orders at the counter.
+     * Features layby debt system, returns desk fraud mechanic, pencil theft,
+     * Marchetti dead-drop (item 9999), and random chaos events.
+     * Integrates with WantedSystem (refused ≥2 stars), FactionSystem (Marchetti
+     * dead-drop at Respect ≥50), CriminalRecord (TRESPASS for pencil theft),
+     * NotorietySystem, RumourNetwork (LOCAL_EVENT from seated shoppers),
+     * NewspaperSystem (SYSTEM_DOWN headlines).
+     */
+    ARGOS;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -366,6 +382,7 @@ public enum LandmarkType {
             case SCRAPYARD:             return "Pearce & Sons Metal Merchants";
             case INDOOR_MARKET:         return "Northfield Indoor Market";
             case BARBERS:               return "Kosta's Barbers";
+            case ARGOS:                 return "Argos";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

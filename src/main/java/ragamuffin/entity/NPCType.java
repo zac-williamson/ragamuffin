@@ -989,7 +989,44 @@ public enum NPCType {
      * Slower service: cuts take +50% longer. Refused at ≥ 2 wanted stars.
      * Speech: "Yeah, no problem mate, I'll sort you out."
      */
-    BARBER_APPRENTICE(18f, 0f, 0f, false);
+    BARBER_APPRENTICE(18f, 0f, 0f, false),
+
+    // ── Issue #1041: Northfield Argos ─────────────────────────────────────────
+
+    /**
+     * Argos Clerk — staffs the collection counter at Argos (ARGOS landmark).
+     * Present Mon–Sat 09:00–17:30, Sun 10:00–16:00.
+     * Receives order slips from players, assigns collection numbers, and calls
+     * orders when stock is retrieved. Refuses service at ≥ 2 wanted stars.
+     * Processes returns at ARGOS_RETURNS_DESK: 60% approval for own purchases,
+     * 30% for others', 5% for stolen goods.
+     * Speech: "Can I take your slip?" / "Your number is 347." /
+     *         "That's not what you paid for, is it." / "Sorry, system's down."
+     */
+    ARGOS_CLERK(20f, 0f, 0f, false),
+
+    /**
+     * Argos Manager — spawned when stolen returns are detected (30% chance on
+     * stolen goods return attempt). Also manages the SYSTEM_DOWN chaos event.
+     * Present during opening hours; otherwise spawned dynamically.
+     * Passive unless a theft is in progress; then calls police (+1 wanted star,
+     * THEFT in criminal record).
+     * Speech: "I'm going to have to ask you to come with me." /
+     *         "We've got a situation at the returns desk." /
+     *         "The system's down — everyone out, please."
+     */
+    ARGOS_MANAGER(30f, 5f, 2.0f, false),
+
+    /**
+     * Argos Shopper — a member of the public browsing catalogues or waiting
+     * in the collection area. 3–5 present during opening hours.
+     * Seated shoppers gossip, seeding RumourType.LOCAL_EVENT (25% chance/NPC).
+     * Passive; despawns at closing time.
+     * Speech: "It's always the big stuff that takes ages." /
+     *         "I've been waiting twenty minutes for a toaster." /
+     *         "They said five minutes twenty minutes ago."
+     */
+    ARGOS_SHOPPER(18f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

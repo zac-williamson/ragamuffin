@@ -1904,6 +1904,29 @@ public enum AchievementType {
         "On the House",
         "Kosta gave you a free trim. Marchetti connections pay off.",
         1
+    ),
+
+    // ── Issue #1041: Northfield Argos ─────────────────────────────────────────
+
+    PENCIL_THIEF(
+        "Armed and Dangerous",
+        "Stole five Argos pencils. You're basically a criminal mastermind.",
+        5
+    ),
+    LAYBY_LIMBO(
+        "Still Waiting",
+        "Waited ten in-game days for an out-of-stock layby item. It's not coming.",
+        1
+    ),
+    MARCHETTI_DELIVERY(
+        "Special Delivery",
+        "Collected item 9999 and delivered the Marchetti Package. No questions asked.",
+        1
+    ),
+    ARGOS_CHAOS(
+        "Computer Says No",
+        "Survived a full SYSTEM_DOWN event. The whole queue was fuming.",
+        1
     );
 
     private final String name;

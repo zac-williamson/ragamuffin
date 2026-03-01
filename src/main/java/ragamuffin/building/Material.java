@@ -2067,7 +2067,110 @@ public enum Material {
      * Jam Doughnut — sold at Brenda's stall for 1 COIN.
      * Restores +20 Hunger. Sugary and entirely adequate.
      */
-    JAM_DOUGHNUT("Jam Doughnut");
+    JAM_DOUGHNUT("Jam Doughnut"),
+
+    // ── Issue #1041: Northfield Argos ─────────────────────────────────────────
+
+    /**
+     * Argos Pencil — the tiny stubby pencil provided free at Argos for writing slips.
+     * Stealing 5 triggers TRESPASS in CriminalRecord and unlocks PENCIL_THIEF achievement.
+     * Tooltip on first pickup: "It's just a pencil. A very specific, very Argos pencil."
+     */
+    ARGOS_PENCIL("Argos Pencil"),
+
+    /**
+     * Argos Order Slip — the completed paper slip written at the catalogue desk.
+     * Holds a 4-digit item number. Hand to ARGOS_CLERK to receive a collection number.
+     * Single use; consumed when order is placed.
+     */
+    ARGOS_ORDER_SLIP("Argos Order Slip"),
+
+    /**
+     * Argos Collection Ticket — issued by ARGOS_CLERK after a slip is accepted.
+     * Holds the collection number. Press E on ARGOS_COUNTER_PROP to collect order
+     * when called. Wait time: 60–120 real seconds.
+     */
+    ARGOS_COLLECTION_TICKET("Argos Collection Ticket"),
+
+    /**
+     * Folding Chair (Argos) — catalogue item #1234.
+     * A lightweight folding chair from the Argos furniture range.
+     * Restores 5 Warmth when sat in (placed as prop).
+     */
+    FOLDING_CHAIR("Folding Chair"),
+
+    /**
+     * Kettle (Argos) — catalogue item #2156.
+     * A standard electric kettle. Can be placed in a squat to brew tea (+10 Warmth).
+     * Craftable into MAKESHIFT_WEAPON (3 hits, 8 damage) with SCRAP_METAL.
+     */
+    KETTLE("Kettle"),
+
+    /**
+     * Toaster (Argos) — catalogue item #3421.
+     * A two-slice toaster. Placed at squat, generates TOAST (food, +15 Hunger) once per hour.
+     */
+    TOASTER("Toaster"),
+
+    /**
+     * Gold Chain (Argos) — catalogue item #4567.
+     * A chunky gold-effect chain necklace. Wearable cosmetic; +5 Notoriety display while worn.
+     * Sellable at pawn shop for 4 COIN.
+     */
+    GOLD_CHAIN("Gold Chain"),
+
+    /**
+     * Portable Radio (Argos) — catalogue item #5102.
+     * A battery-powered portable radio. Placed at squat, satisfies BORED need for 3 nearby NPCs.
+     * Required component for PIRATE_FM transmitter build.
+     */
+    PORTABLE_RADIO("Portable Radio"),
+
+    /**
+     * Air Fryer (Argos) — catalogue item #7801.
+     * The modern British kitchen staple. Placed at squat, generates HOT_FOOD (food, +25 Hunger)
+     * once per 30 in-game minutes.
+     */
+    AIR_FRYER("Air Fryer"),
+
+    /**
+     * Duvet (Argos) — catalogue item #8045.
+     * A 10.5 tog duvet. Placed at squat bed, grants WARM_SLEEP buff: +15 Warmth on wake.
+     */
+    DUVET("Duvet"),
+
+    /**
+     * Electric Heater (Argos) — catalogue item #8921.
+     * A plug-in convector heater. Placed at squat, increases ambient Warmth rate by +2/min.
+     */
+    ELECTRIC_HEATER("Electric Heater"),
+
+    /**
+     * Alarm Clock (Argos) — catalogue item #9012.
+     * A battery alarm clock. Press E to set wake time; player auto-wakes at that hour.
+     */
+    ALARM_CLOCK("Alarm Clock"),
+
+    /**
+     * Kids Bike (Argos) — catalogue item #9411.
+     * A small child's bicycle. Can be resold at market stall for 3 COIN or fenced for 2 COIN.
+     */
+    KIDS_BIKE("Kids Bike"),
+
+    /**
+     * Layby Receipt — document proving a layby deposit has been paid.
+     * Holds item number, deposit amount, and remaining instalments.
+     * Losing this causes inability to claim the reserved item.
+     */
+    LAYBY_RECEIPT("Layby Receipt"),
+
+    /**
+     * Marchetti Package — the item collected at Argos using slip #9999.
+     * Delivered to a Marchetti faction contact for 10 COIN + 5 respect.
+     * Police nearby adds SUSPICIOUS_PACKAGE suspicion to CriminalRecord.
+     * Tooltip: "Don't open it. Seriously."
+     */
+    MARCHETTI_PACKAGE("Marchetti Package");
 
     private final String displayName;
 
