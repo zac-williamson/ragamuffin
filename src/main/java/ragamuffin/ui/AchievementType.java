@@ -1263,6 +1263,38 @@ public enum AchievementType {
         "Solidarity",
         "Ejected by a pensioner uprising. You hit one of them. In a bingo hall. On a Tuesday.",
         1
+    ),
+
+    // ── Issue #965: Northfield Snooker Hall ───────────────────────────────────
+
+    FIRST_FRAME(
+        "First Frame",
+        "Played your first frame at Cue Zone. The green baize wept.",
+        1
+    ),
+
+    SNOOKER_HUSTLER(
+        "The Hustler",
+        "Successfully hustled Frank. He never saw it coming. You nearly felt bad.",
+        1
+    ),
+
+    SNOOKER_LEGEND(
+        "Cue Sport Legend",
+        "Defeated One-Armed Carl at snooker. Nobody is speaking. The chalk dust settles.",
+        1
+    ),
+
+    BACK_ROOM_WINNER(
+        "Back Room Winner",
+        "Won the back-room pontoon game at Cue Zone. The Marchetti boys respect a winner.",
+        1
+    ),
+
+    CHALK_AND_TALK(
+        "Chalk and Talk",
+        "Bought chalk from Dennis. He looked genuinely pleased. It's his only consistent income.",
+        1
     );
 
     private final String name;

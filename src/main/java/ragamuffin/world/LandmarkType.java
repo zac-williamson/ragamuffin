@@ -178,7 +178,19 @@ public enum LandmarkType {
      * 4–8 PENSIONER NPCs attend each session. Rigged card mechanic available.
      * Warm shelter: +5 Warmth/min while seated.
      */
-    BINGO_HALL;
+    BINGO_HALL,
+
+    // ── Issue #965: Northfield Snooker Hall ───────────────────────────────────
+
+    /**
+     * Cue Zone — a dingy upstairs snooker hall above a row of shops on the high street.
+     * Open 10:00–23:00 daily. Managed by Dennis the Proprietor (SHOPKEEPER NPC).
+     * Features four SNOOKER_TABLE_PROP tables available for 2 COIN rental.
+     * Frank the Hustler (SNOOKER_HUSTLER NPC) wanders 12:00–22:00.
+     * One-Armed Carl (PUBLIC NPC) available at STREET_LADS Respect ≥ 75.
+     * Back-room card game (pontoon) accessible at MARCHETTI_CREW Respect ≥ 60.
+     */
+    SNOOKER_HALL;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -240,6 +252,7 @@ public enum LandmarkType {
             case HAND_CAR_WASH:         return "Sparkle Hand Car Wash";
             case FRIED_CHICKEN_SHOP:    return "Clucky's Fried Chicken";
             case BINGO_HALL:            return "Lucky Stars Bingo";
+            case SNOOKER_HALL:          return "Cue Zone";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
