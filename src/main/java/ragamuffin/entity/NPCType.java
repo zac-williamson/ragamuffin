@@ -935,7 +935,41 @@ public enum NPCType {
      * The headteacher's secretary. Staffs reception Mon–Fri 08:00–16:30.
      * Passive unless player enters interior; calls HEADTEACHER on intrusion.
      */
-    HEADTEACHER_SECRETARY(18f, 0f, 0f, false);
+    HEADTEACHER_SECRETARY(18f, 0f, 0f, false),
+
+    // ── Issue #1037: Northfield Indoor Market ─────────────────────────────────
+
+    /**
+     * Market Trader — one of four stall holders at the Northfield Indoor Market.
+     * Dave (electronics), Sheila (clothes), Mo (knock-offs), Brenda (hot food).
+     * Each occupies one stall; sells 3–5 items. Press E to open buy menu.
+     * Present on market days (Tue/Fri/Sat) 08:00–16:00 only.
+     */
+    MARKET_TRADER(20f, 0f, 0f, false),
+
+    /**
+     * Market Punter — generic PUBLIC crowd at the indoor market.
+     * Spawns in groups of 8–12 on market days. Carries 1–5 COIN.
+     * Browses player stall every 2 in-game minutes; pickpocketable with crowd cover.
+     * Despawns when market closes or during a Trading Standards raid.
+     */
+    MARKET_PUNTER(18f, 0f, 0f, false),
+
+    /**
+     * Ray — the Market Manager. Stationed near the entrance.
+     * Handles stall rentals (3 COIN/day). Refuses Notoriety Tier ≥ 4 players.
+     * During a Trading Standards raid, calls police if player stall contains contraband.
+     * Speech: "You after a stall?" / "I know your sort. Take it elsewhere."
+     */
+    MARKET_MANAGER(22f, 0f, 0f, false),
+
+    /**
+     * Trading Standards Officer — spawns at the entrance during a raid event.
+     * Walks each stall in sequence; confiscates contraband items.
+     * 2 spawn per raid; despawn after 10 in-game minutes.
+     * Hostile only if player is adjacent to a stall with contraband after warning period.
+     */
+    TRADING_STANDARDS(25f, 5f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

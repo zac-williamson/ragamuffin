@@ -2015,7 +2015,59 @@ public enum Material {
      * Integrates with DisguiseSystem: kitchen access bypasses service block.
      * Tooltip: "Black polo. Red apron. You look the part. Mostly."
      */
-    NANDOS_APRON("Nando's Apron");
+    NANDOS_APRON("Nando's Apron"),
+
+    // ── Issue #1037: Northfield Indoor Market ─────────────────────────────────
+
+    /**
+     * Counterfeit Watch — sold at Mo's stall for 3 COIN.
+     * Fenceable via FenceSystem for 5 COIN (50% markup).
+     * Triggers Trading Standards confiscation if in player stall during a raid.
+     */
+    COUNTERFEIT_WATCH("Counterfeit Watch"),
+
+    /**
+     * Knockoff Designer T-Shirt — sold at Sheila's stall for 1 COIN.
+     * Fenceable via FenceSystem at 50% markup.
+     * DisguiseSystem: reduces NPC recognition by 15% (looks like a punter).
+     */
+    KNOCKOFF_DESIGNER_TSHIRT("Knockoff Designer T-Shirt"),
+
+    /**
+     * Tracksuit Bottoms — sold at Sheila's stall for 2 COIN.
+     * DisguiseSystem: reduces NPC recognition by 15%.
+     */
+    TRACKSUIT_BOTTOMS("Tracksuit Bottoms"),
+
+    /**
+     * Football Shirt — sold at Sheila's stall for 2 COIN.
+     * No special effects beyond being cheap clothes.
+     */
+    FOOTBALL_SHIRT("Football Shirt"),
+
+    /**
+     * Dodgy Charger — sold at Dave's stall for 2 COIN.
+     * 20% chance of spawning ELECTRICAL_FIRE prop when placed in a building.
+     */
+    DODGY_CHARGER("Dodgy Charger"),
+
+    /**
+     * Old Telly — sold at Dave's stall for 3 COIN.
+     * A battered old CRT television. Large, heavy, and nearly worthless.
+     */
+    OLD_TELLY("Old Telly"),
+
+    /**
+     * Extension Lead — sold at Dave's stall for 1 COIN.
+     * Cheap electrical item. No special function.
+     */
+    EXTENSION_LEAD("Extension Lead"),
+
+    /**
+     * Jam Doughnut — sold at Brenda's stall for 1 COIN.
+     * Restores +20 Hunger. Sugary and entirely adequate.
+     */
+    JAM_DOUGHNUT("Jam Doughnut");
 
     private final String displayName;
 

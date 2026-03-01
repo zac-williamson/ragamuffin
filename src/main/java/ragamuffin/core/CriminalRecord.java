@@ -223,7 +223,17 @@ public class CriminalRecord {
          * Penalty: +3 Notoriety, −20 Community Respect, permanent sanctuary revocation,
          * COMMUNITY_OUTRAGE rumour seeded within 50 blocks.
          */
-        THEFT_FROM_PLACE_OF_WORSHIP("Theft from place of worship");
+        THEFT_FROM_PLACE_OF_WORSHIP("Theft from place of worship"),
+
+        // ── Issue #1037: Northfield Indoor Market ─────────────────────────────────
+
+        /**
+         * Recorded when Trading Standards officers discover counterfeit or stolen items
+         * in the player's rented market stall during an IndoorMarketSystem raid.
+         * Penalty: +20 Notoriety, +1 WantedSystem star, items confiscated.
+         * Player has 60 frames to vacate stall before arrest.
+         */
+        TRADING_STANDARDS_RAID("Trading Standards raid (indoor market)");
 
         private final String displayName;
 
