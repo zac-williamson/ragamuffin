@@ -27493,3 +27493,217 @@ DRIZZLE, raffle-fix detection (volunteer proximity), post-fete patron surge calc
 // Existing: ChurchSystem, IceCreamVanSystem, WetherspoonsSystem,
 //           FoodBankSystem, WeatherSystem, RumourNetwork, WantedSystem,
 //           NotorietySystem, StreetEconomySystem, CraftingSystem all present
+
+---
+
+## Northfield Council Flats — The Lift's Broken Again, Nosy Neighbour Network & the Housing Inspection Hustle
+
+**System**: `CouncilFlatsSystem.java` in `ragamuffin.core`
+**Landmark**: `LandmarkType.COUNCIL_FLATS` (Kendrick House — a 5-storey tower block on the east edge of the map)
+
+### Overview
+
+The `COUNCIL_FLATS` landmark has no dedicated gameplay system. `CouncilFlatsSystem` brings
+Kendrick House to life as a dense, chaotic social space: the lift is perpetually out of order,
+the stairwells are youth gang territory, nosy neighbours are the best rumour source in town,
+and once a fortnight the Council sends a housing inspector who must not find the player's
+contraband. The top floor holds a squat used by the `TUNNEL_DWELLER` faction; the ground
+floor has a communal letterbox bank ripe for parcel theft.
+
+### Core Mechanics
+
+#### 1. The Broken Lift
+- `LIFT_PROP` (already in `PropType`) exists on floors 1–5 at the lift shaft.
+- On game start, lift status is randomly `WORKING` (20%) or `BROKEN` (80%).
+  `CouncilFlatsSystem.isLiftWorking()` exposes status.
+- If `BROKEN`: player must use the stairwell. Stairwell on floors 2–4 has a 40% chance per
+  visit of a `SCHOOL_KID` NPC blocking the path with a bike; press E to ask them to move
+  (Friendly status required) or shove them (costs 5 Notoriety, triggers SCHOOL_KID aggression).
+- If `WORKING`: press E on `LIFT_PROP` to travel to any floor (1-second in-game travel).
+  Lift randomly breaks during use (5% chance per ride). If it breaks mid-ride, player is
+  trapped for 60 real seconds (adds CLAUSTROPHOBIC debuff: −10% movement for 2 in-game minutes).
+  A speech log entry is added: "The lift's broken again. Of course it is."
+- Lift can be fixed by the player: requires 1× `SCRAP_METAL` + 1× `WIRE` (both existing
+  `Material` items), hold E on `LIFT_PROP` for 5 seconds. Fixes lift for 10 in-game minutes.
+  Notoriety −1 (locals appreciate it). `NEIGHBOUR_GOSSIP` rumour seeded:
+  "Someone actually fixed the lift. Must be new."
+
+#### 2. Nosy Neighbour Network
+- Floors 2–4 each have 1–2 `PENSIONER` or `PUBLIC` NPC residents (always home 08:00–20:00).
+- Each resident NPC is a passive rumour **source**: pressing E within 2 blocks initiates
+  a gossip conversation. The NPC dispenses 1 random `LOCAL_EVENT` or `CRIMINAL_ACTIVITY`
+  rumour from the `RumourNetwork` (not specific to the player).
+- If the player has committed a crime within the `COUNCIL_FLATS` building in the past
+  in-game day, there's a 30% chance the NPC says
+  "I know it was you" and seeds a `PLAYER_SPOTTED` rumour instead.
+- Each NPC can only be gossiped with once per in-game hour.
+- At 16:00–17:00 daily, all resident NPCs gather in the ground-floor communal area and
+  share rumours with each other (cross-pollinate: 2 rumours from different NPCs merge).
+- `NeighbourhoodWatchSystem` integration: if Neighbourhood Watch anger > 50, all residents
+  have a 20% chance to call police if they see the player in the stairwell with
+  `WantedSystem.getStars() >= 1`.
+
+#### 3. Housing Inspection Hustle
+- Council inspector (`COUNCIL_MEMBER` NPC, named "Derek from the Council") visits every
+  14 in-game days between 10:00–12:00 on a weekday.
+- `CouncilFlatsSystem.isInspectionDay()` returns true on these days from 09:30.
+- A `LOCAL_EVENT` rumour is seeded at 09:00: "Derek's doing inspections today. Hide your
+  stuff." `NewspaperSystem` also adds a single-line notice: "Tenancy inspection: Kendrick
+  House, Tuesday."
+- Derek visits each floor (top to bottom) spending 3 in-game minutes per floor. He
+  checks for contraband by scanning for specific `Material` items in the stairwell area
+  (within 4 blocks of a flat door): `STOLEN_GOODS`, `COUNTERFEIT_CASH`, `DRUGS`
+  (any drug-type material), `STOLEN_PHONE`, `WEAPON_*` materials.
+- If contraband found AND player is within 10 blocks: Notoriety +5, `CrimeType.POSSESSION`
+  added to `CriminalRecord`, Derek calls police (Wanted +1 star).
+- If player hides all contraband before Derek reaches their floor (stashes in
+  `SQUATTING_CHEST_PROP` or moves it outside the building): inspection passes cleanly.
+  Reward: `DWP_LETTER` in player inventory (random benefit: either 5 COIN Benefit Payment
+  or a `HOUSING_PRIORITY_LETTER` item worth 15 COIN at the `COUNCIL_OFFICE`).
+- `DisguiseSystem` interaction: if player is wearing a `SUIT_JACKET` disguise, Derek
+  mistakes them for a council colleague and skips their floor entirely.
+
+#### 4. Ground-Floor Letterbox Economy
+- The communal letterbox bank: `LETTERBOX_BANK_PROP` (new prop) near the front entrance.
+- Parcels spawn in the letterbox daily at 08:00 (1–3 random parcels from `ArgosOrderUI`
+  drop table: `STOLEN_PHONE`, `TRAINERS`, `SMALL_ELECTRICAL_GOODS`).
+- Press E to steal a parcel: 1–3 seconds hold depending on lock type (LOCKED 3s, UNLOCKED 1s).
+  If a resident NPC is within 8 blocks and line-of-sight: 50% chance they witness the theft,
+  call police (Wanted +1), seed `PLAYER_SPOTTED` rumour. Notoriety +3, `CrimeType.PETTY_THEFT`.
+- Stolen parcels can be fenced via `FenceSystem` or sold at `PawnShopSystem` for 60%
+  of item value.
+- `PostOfficeSystem` integration: if the player has pending deliveries via PostOfficeSystem,
+  one may arrive in the letterbox (adds immersion; PostOfficeSystem notifies player by
+  speech log: "Looks like your parcel's arrived at Kendrick House.").
+
+#### 5. Top-Floor Squat Economy
+- Floor 5 hosts a permanent squat occupied by 1–2 `TUNNEL_DWELLER` NPCs (from the existing
+  tunnel faction). They sell `SCRAP_METAL`, `WIRE`, `STOLEN_GOODS` at 50% off street price.
+- Entering floor 5 while `WantedSystem.getStars() >= 2` causes both NPCs to become hostile.
+- At 23:00 on Fridays and Saturdays, a `DRUNK` NPC gathers here with 2 `YOUTH_GANG` NPCs —
+  a small party that generates `NOISE_COMPLAINT` rumour. `NoiseSystem` noise level +30 for
+  the floor. `NeighbourhoodWatchSystem` anger +5. Police may respond if noise persists > 5
+  in-game minutes.
+
+### Schedule
+
+| Time | Event |
+|------|-------|
+| 08:00 daily | Parcels spawn in letterbox bank |
+| 08:00–20:00 | Resident NPCs home (gossip available) |
+| 16:00–17:00 daily | Resident gossip gathering in communal area |
+| Every 14 in-game days, weekday 10:00–12:00 | Council inspection (Derek) |
+| Fri/Sat 23:00 | Top-floor squat party |
+| 09:30 lift-break check | 5% chance per lift ride |
+
+### New PropTypes
+
+| PropType | Dimensions | Hardness | Notes |
+|----------|------------|----------|-------|
+| `LETTERBOX_BANK_PROP` | 2.0f × 1.2f × 0.3f | 8 hits, BRICK | Breaks into SCRAP_METAL |
+| `FLAT_DOOR_PROP` | 0.1f × 2.2f × 1.0f | 6 hits, WOOD | Leads to individual flat interior |
+| `COMMUNAL_NOTICEBOARD_PROP` | 1.0f × 1.5f × 0.1f | 2 hits, WOOD | Press E to read local rumours |
+
+### New Materials
+
+| Material | Source | Notes |
+|----------|--------|-------|
+| `HOUSING_PRIORITY_LETTER` | Council inspection reward | 15 COIN at council office; useless otherwise |
+| `STOLEN_PARCEL` | Letterbox theft | Generic stolen item; fence for 2–8 COIN |
+
+### New RumourTypes
+
+No new RumourType values needed. Uses existing `LOCAL_EVENT`, `PLAYER_SPOTTED`,
+`CRIMINAL_ACTIVITY`, and `NEIGHBOUR_GOSSIP` (verify `NEIGHBOUR_GOSSIP` exists; if not,
+add to `RumourType.java`).
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `LIFT_ENGINEER` | Fix the lift 3 times |
+| `NOSY_NEIGHBOUR` | Gossip with every resident NPC on all 3 floors in a single in-game day |
+| `INSPECTION_PASSED` | Pass a council inspection while carrying contraband (via SUIT_JACKET disguise) |
+| `PARCEL_PIRATE` | Steal 10 parcels from the letterbox |
+
+### System Integrations
+
+- **PropertySystem**: `COUNCIL_FLATS` can be claimed as a base if the player has
+  `HOUSING_PRIORITY_LETTER` + 50 COIN. `PropertySystem.claimFlat(floor)` added.
+- **DisguiseSystem**: `SUIT_JACKET` causes Derek to skip player's floor during inspection.
+- **NeighbourhoodWatchSystem**: Resident NPC police calls triggered by watch anger > 50.
+- **WantedSystem**: Parcel theft + inspection failure add wanted stars.
+- **NotorietySystem**: Lift repair −1 Notoriety; theft/contraband +3–5.
+- **RumourNetwork**: Nosy neighbours seed `LOCAL_EVENT`/`PLAYER_SPOTTED` rumours.
+- **NewspaperSystem**: Inspection day notice appears in the paper.
+- **PostOfficeSystem**: Deliveries may arrive in the letterbox.
+- **NoiseSystem**: Top-floor party raises noise level +30.
+- **FenceSystem / PawnShopSystem**: Stolen parcels / `HOUSING_PRIORITY_LETTER` are sellable.
+- **SquatSystem**: Top-floor squat interacts with existing squat occupancy rules.
+
+**Unit tests**: lift break probability over 1000 rides (should be ~5%), inspection schedule
+(every 14 days), parcel spawn (1–3 per day), neighbour gossip throttle (once per in-game hour),
+contraband detection radius (4 blocks), Derek floor visit timing (3 min/floor × 5 floors = 15
+min total window), CLAUSTROPHOBIC debuff duration, SUIT_JACKET disguise bypass.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Lift traps player and applies CLAUSTROPHOBIC debuff**: Set lift to `WORKING`. Player
+   enters lift and presses E. Force-trigger lift break mid-ride (mock `Random` to return
+   value triggering 5% break). Verify player position is unchanged for 60 real seconds.
+   Verify `CouncilFlatsSystem.getPlayerDebuff()` returns `CLAUSTROPHOBIC`. Verify speech
+   log contains "The lift's broken again". After 60 seconds, verify player can move and
+   debuff is cleared.
+
+2. **Fixing the lift seeds a rumour and reduces Notoriety**: Give player 1× `SCRAP_METAL`
+   + 1× `WIRE`. Place player within reach of broken `LIFT_PROP`. Hold E for 5 seconds
+   (300 frames at 60fps). Verify `CouncilFlatsSystem.isLiftWorking()` is true. Verify
+   player `SCRAP_METAL` and `WIRE` counts decreased by 1 each. Verify Notoriety decreased
+   by 1. Verify `RumourNetwork` contains a `LOCAL_EVENT` rumour with text containing
+   "fixed the lift".
+
+3. **Council inspection: contraband found triggers wanted level**: Set inspection day.
+   Give player 1× `STOLEN_GOODS`. Place player within 10 blocks of a flat door on floor 2.
+   Advance in-game time to 10:00 (Derek starts inspections). Wait for Derek to reach
+   floor 2 (6 in-game minutes from start). Verify `WantedSystem.getStars()` increased by 1.
+   Verify `CriminalRecord` contains `CrimeType.POSSESSION`. Verify Notoriety increased by 5.
+
+4. **Council inspection bypassed by SUIT_JACKET disguise**: Set inspection day. Give player
+   `SUIT_JACKET` and equip it via `DisguiseSystem.equip(SUIT_JACKET)`. Place player on
+   floor 2. Advance Derek to floor 2. Verify `WantedSystem.getStars()` is unchanged.
+   Verify `CouncilFlatsSystem.isFloorSkipped(2)` is true.
+
+5. **Parcel theft witnessed by neighbour calls police**: Spawn a `PENSIONER` NPC within
+   6 blocks of `LETTERBOX_BANK_PROP` with line-of-sight. Mock `Random` so witness check
+   succeeds (50%). Player holds E on letterbox for 3 seconds. Verify player inventory
+   gains 1× `STOLEN_PARCEL`. Verify `WantedSystem.getStars()` increased by 1. Verify
+   `RumourNetwork` contains a `PLAYER_SPOTTED` rumour. Verify Notoriety increased by 3.
+
+6. **Nosy neighbour gossip throttle**: Interact with a resident NPC on floor 3. Receive
+   a rumour (any `LOCAL_EVENT`). Immediately interact again. Verify second interaction
+   returns no rumour ("Not now, love — ask me later") and NPC speech log entry does not
+   add a second rumour. Advance in-game time by 61 minutes. Interact again. Verify a
+   new rumour IS dispensed this time.
+
+7. **Top-floor squat party raises noise level**: Set day to Friday. Set time to 23:00.
+   Call `councilFlatsSystem.update(delta, timeSystem, ...)`. Verify `NoiseSystem.getNoiseAt(floor5Position)` ≥ 30.
+   Verify `NeighbourhoodWatchSystem.getAnger()` increased by 5. Advance 5 in-game minutes
+   without police response. Verify a `NOISE_COMPLAINT` rumour exists in the network.
+
+8. **Post-fete lifecycle: PostOfficeSystem parcel lands in letterbox**: Complete a
+   `PostOfficeSystem` delivery order. Advance in-game time to 08:00 next day. Verify
+   `LETTERBOX_BANK_PROP` contains 1 parcel whose material matches the ordered item.
+   Verify speech log entry contains "Looks like your parcel's arrived at Kendrick House."
+
+// ── New: CouncilFlatsSystem.java in ragamuffin.core
+// New: PropType stubs required: LETTERBOX_BANK_PROP, FLAT_DOOR_PROP,
+//      COMMUNAL_NOTICEBOARD_PROP (add to PropType.java)
+// New: Material stubs required: HOUSING_PRIORITY_LETTER, STOLEN_PARCEL
+//      (add to Material.java)
+// New: AchievementType stubs: LIFT_ENGINEER, NOSY_NEIGHBOUR,
+//      INSPECTION_PASSED, PARCEL_PIRATE (add to AchievementType.java)
+// New: RumourType.NEIGHBOUR_GOSSIP if not present (add to RumourType.java)
+// Existing: PropertySystem, DisguiseSystem, NeighbourhoodWatchSystem,
+//           WantedSystem, NotorietySystem, RumourNetwork, NewspaperSystem,
+//           PostOfficeSystem, NoiseSystem, FenceSystem, PawnShopSystem,
+//           SquatSystem, LIFT_PROP all present
