@@ -24083,3 +24083,153 @@ Player jumps into the canal water blocks (WATER block contact):
    an angler within 1 block. Player presses pickpocket key (F). Verify player gains
    CANAL_FISH or COIN. If caught (per PickpocketSystem odds), verify angler transitions
    to HOSTILE state and `NoiseSystem.onDisturbance()` called.
+
+---
+
+## Skin Deep Tattoos — Kev's Parlour, Flash Sheets & the Prison Tattoo Economy
+
+The `TATTOO_PARLOUR` landmark is world-generated (10×8-block brick shopfront on the
+high street), with props `TATTOO_CHAIR_PROP`, `FLASH_SHEET_PROP`, and
+`TATTOO_STATION_PROP` already defined, and NPC type `TATTOOIST` plus items
+`TATTOO_GUN`, `NEEDLE`, and `INK_BOTTLE` all existing — but no `TattooSystem.java`
+exists. This issue implements the full tattoo system.
+
+### Building / Environment
+
+A narrow, low-lit brick shopfront squeezed between two high-street units. Interior:
+- One `TATTOO_STATION_PROP` (Kev's workbench) at the back.
+- One `TATTOO_CHAIR_PROP` recliner in the centre.
+- Three `FLASH_SHEET_PROP` frames on the walls displaying available designs.
+- A glass display cabinet (`DISPLAY_CASE_PROP`) holding the `TATTOO_GUN` item
+  (breakable; GLASS × 2 required; triggers `WantedSystem` tier-1 if stolen and
+  caught on CCTV).
+- One `MIRROR_PROP` near the entrance (used for prison tattoo mechanic).
+- Open Tue–Sat 11:00–18:00.
+
+### NPCs
+
+- **Kev** (`TATTOOIST`) — present during opening hours. Straight-talking, covered
+  in tattoos. Offers 6 tattoo designs at fixed COIN costs. Refuses players with
+  Notoriety Tier ≥ 4. Dialogue: *"Take a seat, mate."* / *"That'll be 8 quid."*
+- **1–2 `PUBLIC` Waiting Customers** — seated near flash sheets during opening
+  hours. Each passively reveals a `LOCAL_EVENT` rumour on player proximity (2
+  blocks). They leave after 10 in-game minutes.
+
+### Tattoo Designs & Effects
+
+Player approaches Kev (within 1 block) and presses **E** to open the
+`TattooMenuUI`. Designs cost COIN; the tattoo is applied immediately after
+payment via `TattooSystem.applyTattoo(player, design)`:
+
+| Design | Cost | Passive Effect |
+|--------|------|---------------|
+| `BULLDOG` | 5 COIN | +5 max health |
+| `ROSE` | 6 COIN | +2 charm (NPCs greet more favourably; reduced chance of HOSTILE response for first 3 interactions per day) |
+| `SPIDER_WEB` | 8 COIN | +10% pickpocket success chance |
+| `TRIBAL` | 10 COIN | Faction members recognise player; all faction Respect +3 on first meeting |
+| `MUM_HEART` | 4 COIN | Free meal at `FoodBankSystem` once per day |
+| `PRISON_BARS` | 12 COIN | `ArrestSystem` cool-down extended by 5 in-game minutes (police hesitate) |
+
+- Each design is permanent (no removal mechanic).
+- Player can have up to 6 tattoos total (one per body slot; Kev refuses if slot
+  full: *"No room left, mate."*).
+- Tattoos are serialised on the `Player` object as `EnumSet<TattooDesign>`.
+- The player's `FacialExpression` / model variant is unaffected, but the
+  `HairstyleType` lore description text updates to note tattoos are visible.
+
+### Prison Tattoo (DIY) Mechanic
+
+If the player has `NEEDLE` + `INK_BOTTLE` in inventory and stands within 1 block
+of a `MIRROR_PROP`:
+- Press **E** → `TattooSystem.attemptPrisonTattoo(player, random)`.
+- 60% success: grants a random design from the list above at zero COIN cost.
+  Awards `PRISON_TATTOO` achievement.
+- 40% failure: Health −15, `INFECTED_WOUND` debuff for 60 in-game seconds
+  (movement speed −20%), message: *"That looks infected."*. NEEDLE and INK_BOTTLE
+  consumed regardless.
+- Works from any `MIRROR_PROP` in the world (squat, leisure centre changing room,
+  GP surgery bathroom).
+
+### Tattoo Gun Theft
+
+Player breaks `DISPLAY_CASE_PROP` (GLASS × 2, 2 hits) and picks up `TATTOO_GUN`:
+- `TATTOO_GUN` item added to inventory.
+- If `CCTV_CAMERA_PROP` is within 8 blocks and unobstructed: +1 wanted star,
+  `CriminalRecord.CrimeType.THEFT` entry.
+- Player can use `TATTOO_GUN` instead of paying Kev — press **E** on `TATTOO_CHAIR_PROP`
+  to perform DIY tattoo:
+  - Requires `INK_BOTTLE` × 1 per use.
+  - Same design selection, same effects.
+  - 30% chance of `INFECTED_WOUND` debuff (dirty conditions).
+  - `TATTOO_GUN` has 5 durability uses; drops `SCRAP_METAL` × 1 on break.
+
+### System Integrations
+
+- `NotorietySystem` — Kev refuses Tier ≥ 4; `PRISON_BARS` tattoo extends arrest
+  cool-down.
+- `WantedSystem` — CCTV theft triggers tier-1 alert.
+- `CriminalRecord` — `THEFT` on CCTV-witnessed case theft.
+- `FactionSystem` — `TRIBAL` tattoo gives +3 Respect on first meeting with any faction.
+- `FoodBankSystem` — `MUM_HEART` tattoo grants one free daily meal.
+- `ArrestSystem` — `PRISON_BARS` tattoo delays re-arrest cool-down by 5 min.
+- `HealingSystem` — `BULLDOG` tattoo raises max HP; `INFECTED_WOUND` debuff reduces
+  movement.
+- `AchievementSystem` — 4 new achievements (see below).
+- `RumourNetwork` — each tattoo application seeds 1 × `LOCAL_EVENT` rumour:
+  *"Someone just got a big spider web tattoo down the high street."*
+- `DisguiseSystem` — player with 3+ tattoos gets a passive +5% recognition chance
+  (distinctive appearance; works against disguises at Notoriety Tier ≥ 3).
+
+### Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `FULLY_INKED` | Acquire all 6 tattoo designs |
+| `PRISON_TATTOO` | Successfully complete a DIY prison tattoo |
+| `TATTOOED_TOURIST` | Get first tattoo from Kev |
+| `FIVE_FINGER_DISCOUNT` | Steal the tattoo gun without being caught on CCTV |
+
+### Unit Tests
+
+- `testTattooApplied()` — call `applyTattoo(player, BULLDOG)`; verify `player.getTattoos()` contains `BULLDOG`; verify `player.getMaxHealth()` = base + 5.
+- `testTattooSlotLimit()` — apply 6 tattoos; attempt 7th; verify `applyTattoo` returns false and `player.getTattoos().size()` = 6.
+- `testRoseCharmReducesHostility()` — apply `ROSE` tattoo; verify `TattooSystem.getCharmBonus(player)` = 2.
+- `testSpiderWebPickpocket()` — apply `SPIDER_WEB`; verify `TattooSystem.getPickpocketBonus(player)` = 0.10f.
+- `testPrisonBarsArrestDelay()` — apply `PRISON_BARS`; verify `TattooSystem.getArrestCooldownExtension(player)` = 5 (minutes).
+- `testPrisonTattooDIYSuccess()` — seed RNG for success path; give player NEEDLE + INK_BOTTLE; call `attemptPrisonTattoo`; verify tattoo added, `PRISON_TATTOO` achievement, items consumed.
+- `testPrisonTattooDIYFailure()` — seed RNG for failure path; set health 50; call `attemptPrisonTattoo`; verify health = 35, `INFECTED_WOUND` debuff active, items consumed.
+- `testKevRefusesHighNotoriety()` — set Notoriety tier 4; call `canServePlayer(player)`; verify returns false.
+- `testRumourSeededOnTattoo()` — apply tattoo; verify `rumourNetwork.getRecentRumours()` has 1 `LOCAL_EVENT` entry.
+- `testTattooGunDurability()` — use `TATTOO_GUN` 5 times; verify gun removed from inventory, `SCRAP_METAL` dropped.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Kev applies a tattoo — full payment flow**: Set time to 13:00 (Tuesday). Kev
+   present. Player has 8 COIN. Player presses E on Kev. `TattooMenuUI` opens.
+   Player selects `SPIDER_WEB` (8 COIN). Verify COIN reduced by 8. Verify
+   `player.getTattoos()` contains `SPIDER_WEB`. Verify `TATTOOED_TOURIST` achievement
+   unlocked. Verify `RumourNetwork.getRecentRumours()` contains 1 `LOCAL_EVENT` entry
+   referencing spider web.
+
+2. **DIY prison tattoo success pipeline**: Player has NEEDLE + INK_BOTTLE in
+   inventory. Player stands within 1 block of MIRROR_PROP. Force
+   `TattooSystem.PRISON_TATTOO_SUCCESS_OVERRIDE = true`. Player presses E. Verify
+   NEEDLE and INK_BOTTLE removed from inventory. Verify one new tattoo design in
+   `player.getTattoos()`. Verify `PRISON_TATTOO` achievement unlocked.
+
+3. **DIY prison tattoo failure — infection debuff**: Player has NEEDLE + INK_BOTTLE.
+   Force `TattooSystem.PRISON_TATTOO_SUCCESS_OVERRIDE = false`. Set health 60.
+   Player presses E on MIRROR_PROP. Verify health = 45. Verify `INFECTED_WOUND`
+   debuff present. Verify NEEDLE + INK_BOTTLE consumed. Verify no new tattoo in
+   `player.getTattoos()`.
+
+4. **Tattoo gun theft — CCTV alert**: Break `DISPLAY_CASE_PROP` (2 punches).
+   CCTV_CAMERA_PROP within 8 blocks, unobstructed. Verify `TATTOO_GUN` in inventory.
+   Verify `WantedSystem.getStars()` ≥ 1. Verify `CriminalRecord` has `THEFT` entry.
+   Player uses TATTOO_GUN on TATTOO_CHAIR_PROP with INK_BOTTLE in inventory.
+   Verify tattoo applied. Verify INK_BOTTLE consumed.
+
+5. **Faction respect boost from TRIBAL tattoo**: Apply `TRIBAL` tattoo to player.
+   Spawn a `FACTION_LIEUTENANT` NPC from any faction. First interaction via
+   `FactionSystem.greetPlayer()`. Verify that faction's Respect increases by 3.
+   Second interaction with the same NPC — verify no additional +3 bonus.
