@@ -2250,7 +2250,58 @@ public enum Material {
      * Reading grants +5% payout bonus on next horse bet (once per day).
      * Fenceable for 1 COIN.
      */
-    RACING_POST("Racing Post");
+    RACING_POST("Racing Post"),
+
+    // Issue #1055: Northfield War Memorial — StatueSystem
+    /**
+     * Bread Crumbs — crafted from 1 × BREAD. Placing within 1 block of the war memorial
+     * attracts 8 pigeons simultaneously, enabling wild pigeon capture.
+     * Achievement: STATUE_SNACK.
+     */
+    BREAD_CRUMBS("Bread Crumbs"),
+
+    /**
+     * Rope — crafted from 2 × WIRE. Used to attach to the statue base during toppling.
+     * Also sold by Barge Baz. Fenceable for 2 COIN.
+     */
+    ROPE("Rope"),
+
+    /**
+     * Chain — crafted from 3 × METAL_SCRAP. Alternative to ROPE for statue toppling.
+     * Fenceable for 3 COIN.
+     */
+    CHAIN("Chain"),
+
+    /**
+     * Firework — crafted from 1 × WIRE + 1 × COIN. Used during Bonfire Night at the statue.
+     * 5% misfire chance ignites nearby LEAVES/WOOD blocks and triggers FireStationSystem.
+     */
+    FIREWORK("Firework"),
+
+    /**
+     * Time Capsule — loot from toppling the war memorial statue.
+     * Flavour text: "Northfield District Council, 1953. Contents: a copy of the Birmingham Post and a Woodbine."
+     * Fenceable for 12 COIN.
+     */
+    TIME_CAPSULE("Time Capsule"),
+
+    /**
+     * Poppy — seasonal loot at the Remembrance Sunday event at the statue.
+     * 3–5 available from the poppy wreath prop. Fenceable for 1 COIN each.
+     */
+    POPPY("Poppy"),
+
+    /**
+     * Cleaning Supplies — dropped by the COUNCIL_CLEANER NPC when they scrub the statue.
+     * Fenceable for 2 COIN equivalent or used as a crafting ingredient.
+     */
+    CLEANING_SUPPLIES("Cleaning Supplies"),
+
+    /**
+     * Placard — held by protestors at the war memorial. Player can pick it up.
+     * Achievement: PLACARD_PINCHER. Fenceable for 2 COIN.
+     */
+    PLACARD("Placard");
 
     private final String displayName;
 
@@ -2374,6 +2425,18 @@ public enum Material {
             // Issue #1053: Ladbrokes BettingShopSystem
             case BETTING_SLIP_BLANK: return c(0.95f, 0.92f, 0.80f); // Off-white paper slip
             case RACING_POST:        return c(0.88f, 0.18f, 0.18f); // Classic Racing Post red
+
+            // Issue #1055: Northfield War Memorial — StatueSystem
+            case BREAD_CRUMBS:       return c(0.88f, 0.75f, 0.50f); // Sandy crumb colour
+            case ROPE:               return c(0.65f, 0.48f, 0.28f); // Natural hemp brown
+            case CHAIN:              return c(0.60f, 0.60f, 0.65f); // Steel grey
+            case FIREWORK:           return cs(0.95f, 0.18f, 0.10f, // Red firework body
+                                               0.95f, 0.80f, 0.10f); // Gold sparkle
+            case TIME_CAPSULE:       return c(0.55f, 0.45f, 0.25f); // Aged bronze tin
+            case POPPY:              return cs(0.90f, 0.10f, 0.10f, // Poppy red
+                                               0.08f, 0.08f, 0.08f); // Black centre
+            case CLEANING_SUPPLIES:  return c(0.35f, 0.65f, 0.90f); // Council-issue blue bottle
+            case PLACARD:            return c(0.92f, 0.88f, 0.72f); // Cardboard/pale sign
             case HAIR_CLIPPERS:         return c(0.35f, 0.35f, 0.38f);   // Silver-grey
             case HAIR_CLIPPERS_BROKEN:  return c(0.20f, 0.20f, 0.22f);   // Dark grey, broken
             case NAIL_POLISH:    return c(0.92f, 0.18f, 0.55f);   // Hot pink
@@ -3983,6 +4046,24 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // blank paper betting slip
             case RACING_POST:
                 return IconShape.FLAT_PAPER;  // folded newspaper
+
+            // Issue #1055: Northfield War Memorial — StatueSystem
+            case BREAD_CRUMBS:
+                return IconShape.FOOD;        // scattered crumbs
+            case ROPE:
+                return IconShape.TOOL;        // coiled rope
+            case CHAIN:
+                return IconShape.TOOL;        // chain links
+            case FIREWORK:
+                return IconShape.TOOL;        // firework tube
+            case TIME_CAPSULE:
+                return IconShape.BOX;         // sealed tin
+            case POPPY:
+                return IconShape.FOOD;        // small flower
+            case CLEANING_SUPPLIES:
+                return IconShape.BOTTLE;      // cleaning bottle
+            case PLACARD:
+                return IconShape.FLAT_PAPER;  // placard board
 
             default:
                 return IconShape.BOX;

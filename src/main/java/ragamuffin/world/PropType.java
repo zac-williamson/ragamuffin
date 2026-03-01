@@ -1127,7 +1127,15 @@ public enum PropType {
      * Racing Post prop — the folded Racing Post on the betting shop counter.
      * Press E to read today's horse form guide; grants +5% payout bonus on next horse bet.
      */
-    RACING_POST_PROP(0.40f, 0.05f, 0.30f, 2, Material.RACING_POST);
+    RACING_POST_PROP(0.40f, 0.05f, 0.30f, 2, Material.RACING_POST),
+
+    // Issue #1055: Northfield War Memorial — StatueSystem
+    /**
+     * Placard Prop — sign board held or placed by protestors at the war memorial.
+     * Player can pick it up for the PLACARD_PINCHER achievement.
+     * Drops: Material.PLACARD (fenceable for 2 COIN).
+     */
+    PLACARD_PROP(0.30f, 1.20f, 0.05f, 2, Material.PLACARD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

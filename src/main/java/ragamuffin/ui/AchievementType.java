@@ -2016,6 +2016,39 @@ public enum AchievementType {
         "Betting Slip Blues",
         "Held three losing slips simultaneously. All three. You beautiful optimist.",
         1
+    ),
+
+    // ── Issue #1055: Northfield War Memorial — StatueSystem ────────────────
+
+    STATUE_SNACK(
+        "Statue Snack",
+        "Attracted 8 pigeons to the war memorial simultaneously with BREAD_CRUMBS.",
+        1
+    ),
+    COUNCIL_ESTATE(
+        "Council Estate",
+        "Bribed the council cleaner on 3 separate days. They've seen nuffink.",
+        3
+    ),
+    COME_DOWN(
+        "Come Down",
+        "Toppled the war memorial statue. Northfield will never forget.",
+        1
+    ),
+    LEST_WE_FORGET(
+        "Lest We Forget",
+        "Attended the full Remembrance Sunday silence without causing any disturbance.",
+        1
+    ),
+    REMEMBER_REMEMBER(
+        "Remember Remember",
+        "Triggered a firework misfire that started a fire on Bonfire Night.",
+        1
+    ),
+    PLACARD_PINCHER(
+        "Placard Pincher",
+        "Picked up a protestor's placard. Whose side are you on?",
+        1
     );
 
     private final String name;
