@@ -2569,7 +2569,47 @@ public enum Material {
      * Required to re-enter the same night without paying again.
      * Consumed on exit if not re-entering.
      */
-    CLUB_WRISTBAND("Club Wristband");
+    CLUB_WRISTBAND("Club Wristband"),
+
+    // ── Issue #1089: Northfield BP Petrol Station — 24-Hour Forecourt ──────────
+
+    /**
+     * Forecourt Pasty — a sausage-roll-shaped mystery parcel from the PASTY_WARMER_PROP.
+     * Costs 1 COIN. Satisfies HUNGRY −30; 20% chance of PASTY_REGRET debuff
+     * (stomach pain: −5 speed for 90s). Tooltip: "It's been there since Tuesday."
+     */
+    FORECOURT_PASTY("Forecourt Pasty"),
+
+    /**
+     * Motor Oil — a litre of 10W-40 from the BP kiosk. Costs 3 COIN.
+     * Crafting ingredient: PETROL_CAN + MOTOR_OIL + RAG → MOLOTOV_COCKTAIL.
+     * Also used for vehicle maintenance in CarDrivingSystem.
+     */
+    MOTOR_OIL("Motor Oil"),
+
+    /**
+     * Rag — a dirty cloth, sold cheaply from the BP kiosk for 1 COIN.
+     * Crafting ingredient: PETROL_CAN + MOTOR_OIL + RAG → MOLOTOV_COCKTAIL.
+     */
+    RAG("Rag"),
+
+    /**
+     * Molotov Cocktail (BP variant) — crafted from PETROL_CAN + MOTOR_OIL + RAG.
+     * Throwable incendiary (right-click while selected): ignites a 3×3 fire area
+     * for 10 seconds, triggers {@code WheeliBinFireSystem.onFireStarted()} at impact.
+     * Records {@link ragamuffin.core.CriminalRecord.CrimeType#ARSON} on throw.
+     * Notoriety +5 per throw. Cannot be used indoors.
+     * Tooltip: "Handle with extreme care. And run."
+     */
+    MOLOTOV_COCKTAIL("Molotov Cocktail (Petrol)"),
+
+    /**
+     * Siphon Hose — sold at the Builders Merchant. Used with Stealth Tier 2+ to siphon
+     * petrol from parked cars into an empty PETROL_CAN. Takes 10 real seconds.
+     * Generates noise LEVEL_1; caught by PCSO within 10 blocks (+2 Notoriety, CrimeType.THEFT).
+     * Tooltip: "Don't ask where it's been."
+     */
+    SIPHON_HOSE("Siphon Hose");
 
     private final String displayName;
 
