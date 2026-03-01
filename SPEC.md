@@ -24626,3 +24626,165 @@ Events triggered randomly while player is inside:
 
 // LandmarkType addition:
 // SOCIAL_CLUB,   // "Northfield Social Club"
+
+---
+
+## Issue #1065: Fix My Phone — Tariq's Repair Shop, Phone Cloning & the IMEI Economy
+
+**Goal**: Implement `PhoneRepairSystem` — the missing system behind the already-stubbed
+`PHONE_REPAIR` landmark ("Fix My Phone"). All supporting types (`SIM_CARD`, `CLONED_PHONE`,
+`BURNED_PHONE`, `SCREEN_PROTECTOR`, `BROKEN_PHONE`, `WIPED_PHONE`, `PHONE_REPAIR_MAN`
+NPCType, and the `BuildingQuestRegistry` quest) are already defined; only the system
+class and integration tests are missing.
+
+### Building
+
+A narrow 4×8 shop unit squeezed between two other high-street businesses.
+Glass frontage (`GLASS` blocks), white-render (`RENDER_WHITE`) side walls, 4 blocks tall.
+Interior: `COUNTER_PROP` along the back wall, `PHONE_DISPLAY_PROP` near the window,
+`REPAIR_BENCH_PROP` in the back corner, a locked `BACK_ROOM_DOOR_PROP` (4×3 alcove).
+Outside: hand-painted sign reading "Fix My Phone — Unlocking • Repairs • Accessories".
+
+Open **Mon–Sat 10:00–18:00**. Tariq (`PHONE_REPAIR_MAN` NPC) is at the counter during
+open hours; the shop is dark and locked when closed.
+
+### Services (press E on counter)
+
+| Service | Cost | Time | Result |
+|---------|------|------|--------|
+| Screen repair (BROKEN_PHONE) | 3 COIN | instant | BROKEN_PHONE → working STOLEN_PHONE |
+| IMEI wipe (STOLEN_PHONE) | 5 COIN | 10 in-game min | STOLEN_PHONE → WIPED_PHONE |
+| SIM swap (WIPED_PHONE + SIM_CARD) | 2 COIN | instant | WIPED_PHONE → CLONED_PHONE |
+| Screen protector upsell | 1 COIN | instant | adds SCREEN_PROTECTOR to inventory |
+
+**Screen repair** removes `CriminalRecord.CrimeType.THEFT` flagging on the returned phone
+(Tariq "doesn't ask"). **IMEI wipe** counts as `PHONE_CLONING` for the `WitnessSystem`
+(+3 Notoriety + police investigate 40% chance if a POLICE NPC is within 12 blocks).
+
+### Back-Room Cloning (Illegal)
+
+At `MARCHETTI_CREW` Respect ≥ 40 or after completing the `BuildingQuestRegistry` quest
+("Bring me a BROKEN_PHONE for parts"), Tariq offers back-room access. Press E on
+`BACK_ROOM_DOOR_PROP` to enter the 4×3 alcove.
+
+**Clone recipe**: STOLEN_PHONE + SIM_CARD + 2 COIN → CLONED_PHONE (adds
+`CriminalRecord.CrimeType.THEFT`, Notoriety +3). If a `POLICE_OFFICER` NPC enters the
+shop during cloning, Tariq panics — player has 5 seconds to exit through the back window
+(`BACK_WINDOW_PROP`, press E) or is caught (Notoriety +15, +2 wanted stars).
+
+**Cloned Phone use**:
+- Press E: extract 1 rumour (`LOOT_TIP` or `GANG_ACTIVITY`) from `RumourNetwork`, phone
+  becomes `BURNED_PHONE`.
+- Alternatively, press E on any NPC to plant surveillance: 3 rumours revealed over 3
+  in-game hours, then phone auto-burns. Planting detected if NPC Awareness > 60 (35%
+  chance per minute).
+
+**Wiped Phone** can be sold to `Cash Converters` (`CASH_CONVERTER` landmark) at full
+market rate; selling a `STOLEN_PHONE` (non-wiped) there triggers `THEFT` suspicion
+(30% chance Dean refuses and calls police).
+
+### Atmospheric Events
+
+One random event per 30 in-game minutes while the shop is open (1 of 4):
+- `AWKWARD_CUSTOMER` — a PUBLIC NPC demands their phone back, Tariq deflects (no action for player)
+- `POLICE_KNOCK` — a POLICE_OFFICER NPC enters and asks if Tariq has seen any stolen phones;
+  player holding STOLEN_PHONE has 3 seconds to move 6 blocks away
+- `SMASHED_SCREEN` — a YOUTH NPC drops a phone outside, BROKEN_PHONE spawns on pavement
+- `TARIQ_RUMOUR` — Tariq mutters a `LOCAL_EVENT` rumour; player within 3 blocks hears it
+
+### Integration with existing systems
+
+- **`StreetEconomySystem`** — CLONED_PHONE satisfies `NeedType.BORED` at 4 COIN.
+- **`FenceSystem`** — WIPED_PHONE value 8 COIN; CLONED_PHONE value 5 COIN; BURNED_PHONE value 1 COIN.
+- **`WitnessSystem`** — IMEI wipe while POLICE NPC present → `CriminalRecord.CrimeType.THEFT` + Notoriety.
+- **`CashConvertersSystem`** — WIPED_PHONE sells at full rate; STOLEN_PHONE triggers suspicion roll.
+- **`RumourNetwork`** — Tariq seeds `LOCAL_EVENT` rumour once per session; cloned phone extracts rumours.
+- **`DisguiseSystem`** — player wearing `COUNCIL_JACKET` disguise reduces Tariq's police-panic threshold
+  from 12 blocks to 20 blocks (Tariq thinks you're legitimate).
+- **`NotorietySystem`** — IMEI wipe adds +3 Notoriety; back-room police catch adds +15.
+- **`NewspaperSystem`** — if player caught in back room: morning headline "PHONE SHOP RAID — IMEI
+  CLONING GANG SMASHED."
+
+### Achievements (add to `AchievementType`)
+
+```java
+// ── Issue #1065: Fix My Phone ──────────────────────────────────────────────
+SIMSWAPPER(
+    "SIM Swapper",
+    "Completed your first IMEI wipe. Tariq said he didn't want to know. He definitely wants to know.",
+    1
+),
+PLANTED_IT(
+    "Planted It",
+    "Planted a cloned phone on an NPC for surveillance. Three hours of intel. Completely illegal.",
+    1
+),
+CRACKED_SCREEN(
+    "Cracked Screen",
+    "The POLICE_KNOCK event fired while you were holding a stolen phone. You moved faster than you thought.",
+    1
+),
+TARIQ_REGULAR(
+    "Tariq's Regular",
+    "Used Fix My Phone five times. Tariq has stopped pretending he doesn't know your name.",
+    5
+),
+BURNED(
+    "Burned",
+    "A cloned phone's surveillance burned out. Three rumours. Zero fingerprints.",
+    1
+),
+```
+
+### Unit tests
+
+1. **Screen repair converts BROKEN_PHONE to STOLEN_PHONE**: Create system. Give player 3 COIN and
+   1 BROKEN_PHONE. Call `repairScreen(player, inventory)`. Verify BROKEN_PHONE removed, STOLEN_PHONE
+   added, inventory -3 COIN.
+2. **IMEI wipe requires 5 COIN**: Give player 4 COIN and 1 STOLEN_PHONE. Call `wipeImei(...)`. Verify
+   returns false (insufficient funds). Give 5 COIN. Call again. Verify returns true, STOLEN_PHONE → WIPED_PHONE.
+3. **Clone recipe**: Give player STOLEN_PHONE, SIM_CARD, 2 COIN. Call `clonePhone(player, inventory)`.
+   Verify CLONED_PHONE added, STOLEN_PHONE + SIM_CARD removed, CriminalRecord contains THEFT.
+4. **Cloned phone extracts rumour**: Create CLONED_PHONE in inventory. Seed 1 GANG_ACTIVITY rumour
+   into RumourNetwork. Call `useClonedPhone(player)`. Verify player inventory contains no CLONED_PHONE
+   (→ BURNED_PHONE). Verify extracted rumour count increased by 1.
+5. **Shop closed outside hours**: Set time to 09:30. Call `isOpen(timeSystem)`. Verify false. Set time
+   to 13:00. Verify true. Set time to 18:30. Verify false.
+6. **Police knock event**: Trigger `POLICE_KNOCK` event. Give player STOLEN_PHONE. Verify
+   `isPoliceKnockActive()` returns true. Move player 6 blocks away within 3 seconds. Verify
+   no CriminalRecord THEFT entry added (player escaped).
+
+### Integration tests
+
+1. **Full repair → wipe → clone → fence pipeline**:
+   Give player BROKEN_PHONE, 12 COIN, SIM_CARD. Set Marchetti Respect to 50.
+   Call `repairScreen()` → verify STOLEN_PHONE. Call `wipeImei()` → advance 10 in-game minutes
+   → verify WIPED_PHONE. Enter back room. Call `clonePhone()` → verify CLONED_PHONE. Call
+   `FenceSystem.sell(CLONED_PHONE)` → verify player receives 5 COIN. Verify CriminalRecord
+   contains exactly 1 THEFT entry.
+
+2. **Police catch in back room raises wanted level**:
+   Set Marchetti Respect ≥ 40. Player enters back room. Begin cloning. Spawn POLICE_OFFICER
+   NPC within 5 blocks of the shop front. Verify `isPoliceAlertActive()` becomes true.
+   Simulate 5 real-seconds passing without player escaping. Verify Notoriety increased by 15,
+   wanted stars increased by 2, player position is outside back room (ejected).
+
+3. **Surveillance plant delivers rumours over time**:
+   Give player CLONED_PHONE. Choose target NPC with Awareness = 0. Call `plantSurveillance(player, npc)`.
+   Advance time by 1 in-game hour. Verify 1 rumour extracted. Advance 2 more in-game hours. Verify
+   3 total rumours extracted and CLONED_PHONE → BURNED_PHONE in inventory.
+
+4. **Tariq rumour event seeds RumourNetwork**:
+   Set time to 14:00 (shop open). Force `TARIQ_RUMOUR` event. Place player within 3 blocks of counter.
+   Call `update(delta, player, allNpcs)`. Verify `RumourNetwork` now contains a `LOCAL_EVENT` rumour
+   seeded from Tariq's NPC.
+
+5. **Cash Converters WIPED_PHONE sells; STOLEN_PHONE triggers suspicion**:
+   Give player WIPED_PHONE. Call `CashConvertersSystem.sellItem(WIPED_PHONE, player)`. Verify 8 COIN
+   added to inventory, no police flag. Give player STOLEN_PHONE (30% suspicion): run 100 iterations.
+   Verify police call triggered between 20% and 40% of the time (confirming ~30% probability).
+
+// ── Issue #1065: Fix My Phone ─────────────────────────────────────────────
+// No new PropType additions required (COUNTER_PROP, PHONE_DISPLAY_PROP already exist or
+// can reuse SHOPKEEPER_COUNTER_PROP; REPAIR_BENCH_PROP reuses WORKBENCH_PROP).
+// All Material, NPCType, LandmarkType entries already defined in their respective enums.
