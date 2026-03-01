@@ -16863,3 +16863,219 @@ Tier 4 threshold.
    is delivered to `SpeechLogUI`. Verify the rumour buffer decreases by 1. Attempt to
    hear another rumour without buying again. Verify Gary says "Buy something and I'll
    have a chat." (no rumour delivered).
+
+---
+
+## Add Northfield GP Surgery — NHS Waiting Room, Sick Notes & Prescription Hustle
+
+**Landmark**: `GP_SURGERY` (already in `LandmarkType` as "Northfield Surgery"; no system exists yet)
+
+### Overview
+
+Northfield Surgery is the area's sole GP practice — a beige-carpeted, leaflet-festooned NHS waiting
+room with a number ticket machine and a perpetually running daytime TV. It is simultaneously a vital
+survival resource (healing, prescriptions, sick notes) and a bureaucratic obstacle course that is
+quintessentially, painfully British.
+
+A `GPSurgerySystem` brings the `GP_SURGERY` landmark to life with appointment booking, a waiting
+room queue mechanic, triage outcomes, prescription dispensing, and a sick note that unlocks bonus
+JobCentre benefits.
+
+### Physical Layout
+
+The existing landmark building is a single-storey flat-roof structure. The system adds gameplay
+props without altering the WorldGenerator:
+
+- **Reception Desk** (`RECEPTION_DESK_PROP`): staffed by Sandra (RECEPTIONIST NPC). Press E to
+  book an appointment. Opening hours: 08:00–18:00 Monday–Friday, 08:00–12:00 Saturday. Closed
+  Sundays and Bank Holidays (Saturdays labelled on the HUD as "Good luck").
+- **Waiting Room** (`WAITING_ROOM_PROP`): 6 chairs in two rows. `WAITING_PATIENT` NPCs occupy
+  these from 08:30 onwards (up to 5 other patients waiting).
+- **Number Ticket Machine** (`TICKET_MACHINE_PROP`): Press E to take a ticket; your queue number
+  displays as floating text above the player.
+- **Doctor's Door** (`SURGERY_DOOR_PROP`): only opens when it's the player's turn; closed otherwise.
+- **Leaflet Stand** (`LEAFLET_STAND_PROP`): Press E to collect a random `NEON_LEAFLET` item
+  (flavour item, unsellable; tooltip varies by type).
+- **Pharmacy Hatch** (`PHARMACY_HATCH_PROP`): outside the main surgery near the exit. Open
+  08:30–18:00. Press E with a `PRESCRIPTION` item in hand to collect the prescribed medicine.
+
+### Key NPC: Sandra (Receptionist)
+
+- Present 08:00–18:00 Mon–Fri, 08:00–12:00 Sat.
+- Booking: Press E → "Book an appointment" or "Emergency appointment (costs 10 COIN, same-day)."
+  Standard appointments are free but have a **2 in-game day wait** (tracked by `TimeSystem`).
+- If `Notoriety >= 500` (Tier 4+), Sandra says: "I'll need to see some ID, love" and the booking
+  fails unless the player holds a `FAKE_ID` item (consumed on use).
+- Emergency appointments bypass the queue and the wait but cost 10 COIN.
+- Speech lines: "Take a seat, love, the doctor won't be long." /
+  "We're running a bit behind today." (always) /
+  "No walk-ins I'm afraid — system won't allow it." /
+  "Have you tried ringing 111?"
+
+### Waiting Room Queue Mechanic
+
+- When the player arrives for their appointment (scheduled or emergency), they take a number from
+  the `TICKET_MACHINE_PROP` and sit in a `WAITING_ROOM_PROP` chair.
+- Each real second, the queue advances by 1. With 0–2 other patients: wait ≈ 30 real seconds.
+  With 3–5 patients: wait ≈ 60–90 real seconds. Monday mornings (in-game day 1 and day 8):
+  queue is doubled (Monday morning rush).
+- While waiting, the player cannot sprint (energy drain suspended). `WAITING_PATIENT` NPCs deliver
+  ambient speech every 15 real seconds: "Been here since half eight." / "Lovely carpet that, in't it."
+  / "Terrible, the waiting times." / "He looked right poorly."
+- If the player leaves the waiting room before their number is called, their appointment is
+  **cancelled** — they must rebook. Tooltip on cancellation: "The NHS doesn't wait for you."
+- The daytime television (`TELEVISION_PROP`) shows either `ANTIQUES_ROADSHOW` or `MORNING_TV`
+  (cosmetic flavour; no gameplay effect). Pressing E on the TV changes channel and causes a
+  `WAITING_PATIENT` NPC to complain.
+
+### The Consultation (Dr. Kapoor)
+
+Once the player's number is called, the `SURGERY_DOOR_PROP` opens. The player enters a small
+room with Dr. Kapoor (`DOCTOR` NPC, passive). Press E on Dr. Kapoor to begin the consultation.
+
+Dr. Kapoor checks the player's current survival stats and delivers a diagnosis from this table:
+
+| Condition | Trigger | Outcome |
+|-----------|---------|---------|
+| `FIT_AND_WELL` | All stats ≥ 70% | "You're in fine health. Come back if it gets worse." No item. |
+| `MINOR_AILMENT` | Any stat 40–69% | Prescribes `PARACETAMOL` (×2, heals 10 HP each). Tooltip: "He gave me paracetamol. Of course he did." |
+| `MODERATE_ILLNESS` | Any stat 20–39% | Prescribes `ANTIBIOTICS` (×1, heals 30 HP; clears all stat debuffs). |
+| `SERIOUS_CONDITION` | Any stat < 20% | Prescribes `STRONG_MEDS` (×1, heals 60 HP; full warmth restore). Also issues a `SICK_NOTE`. |
+| `MENTAL_HEALTH` | Notoriety ≥ 250 | Prescribes `ANTIDEPRESSANTS` (×1, reduces stress debuff; grants 60s immunity to Notoriety-based NPC fear). Tooltip: "Standard." |
+| `WORK_RELATED_STRESS` | `JobCentreSystem.consecutiveSanctions ≥ 2` | Issues a `SICK_NOTE` + prescribes `ANTIDEPRESSANTS`. Seeds a `LOCAL_EVENT` rumour: "Doctor's signing half the estate off sick, apparently." |
+
+All prescriptions are issued as a `PRESCRIPTION` item in the player's inventory. The prescription
+must be redeemed at the `PHARMACY_HATCH_PROP` within 2 in-game days (it expires after that).
+
+### The Sick Note
+
+A `SICK_NOTE` item, when shown to the `CASE_WORKER` NPC at the JobCentre (press E while holding
+it), grants:
+
+- **Exemption from that week's job search requirements** — no conditionality, no Debt Collector.
+- **Benefit uplift**: `JobCentreSystem` weekly payment increases by 50% for 7 in-game days.
+- The CASE_WORKER says: "Right, that's fine then. Doctor's note. Very sorry to hear it."
+- After 7 in-game days the sick note expires. The player can obtain a new one only if stats
+  genuinely warrant it (Dr. Kapoor won't issue one for `FIT_AND_WELL`).
+
+### Prescription Hustle
+
+Prescriptions are tradeable items. Players can:
+
+1. **Sell to the Fence** — `PRESCRIPTION_MEDS` and `STRONG_MEDS` accepted; base value 4 and 8
+   COIN respectively. Adding +3 Notoriety per sell (the NHS doesn't approve).
+2. **Sell to NPCs directly** — any NPC whose `HEALTH` stat is < 30% will buy `PARACETAMOL` for 2
+   COIN or `STRONG_MEDS` for 6 COIN via the StreetEconomySystem deal prompt (NeedType.DESPERATE).
+3. **Fake prescription scam** (Tier 2+ Notoriety only): Press E on the `PHARMACY_HATCH_PROP`
+   while holding a `BLANK_PRESCRIPTION_FORM` (found in doctor's room waste bin with 30% chance).
+   - Success (60% base, −20% if a police NPC is within 20 blocks): receive 1 random prescription
+     item. +8 Notoriety, `CrimeType.PRESCRIPTION_FRAUD`.
+   - Failure: Pharmacist calls police. +15 Notoriety, +1 Wanted star.
+
+### New Items
+
+- `PRESCRIPTION` — issued by Dr. Kapoor; redeemed at the pharmacy hatch for medicine.
+- `PARACETAMOL` — heals 10 HP per use (2 uses). Tooltip: "Take two and have a lie down."
+- `ANTIBIOTICS` — heals 30 HP; clears all active stat debuffs. Tooltip: "Finish the course."
+- `STRONG_MEDS` — heals 60 HP; restores warmth to 80. Tooltip: "Don't mix these with alcohol." (if player drinks within 10 in-game minutes: warmth drops −20 instantly)
+- `ANTIDEPRESSANTS` — reduces Notoriety fear debuff for 60s. Tooltip: "Standard."
+- `SICK_NOTE` — presented to JobCentre for benefit uplift and sanction exemption.
+- `BLANK_PRESCRIPTION_FORM` — found in bin; used for prescription fraud.
+- `NEON_LEAFLET` — flavour item from leaflet stand. Random flavour texts: "Know Your Chlamydia",
+  "5-A-Day: An Aspiration", "Feeling Low? You're Not Alone (But We're Very Busy)".
+
+### New NPC Types
+
+- `DOCTOR` — Dr. Kapoor; consultation NPC. Passive; never hostile. Present behind the surgery
+  door during opening hours. Delivers diagnosis speech from the outcome table above.
+- `WAITING_PATIENT` — generic queuing public NPC in the waiting room. Passive; ambient speech.
+  1–5 present during opening hours.
+- `PHARMACIST` — behind the pharmacy hatch. Passive; dispenses medicine on PRESCRIPTION.
+  Calls police on PRESCRIPTION_FRAUD.
+
+### New CrimeType
+
+- `CriminalRecord.CrimeType.PRESCRIPTION_FRAUD` — +15 Notoriety, +1 Wanted star.
+
+### Integrations
+
+- **JobCentreSystem**: `SICK_NOTE` grants sanction exemption and 50% benefit uplift for 7 days.
+- **HealingSystem**: All prescription medicines route through `HealingSystem.heal()`.
+- **FenceSystem**: `PRESCRIPTION_MEDS` and `STRONG_MEDS` added to the Fence's buy table.
+- **StreetEconomySystem**: NPCs with DESPERATE need buy meds directly from the player.
+- **NotorietySystem**: Tier 4+ blocked from booking without FAKE_ID; PRESCRIPTION_FRAUD crime.
+- **WitnessSystem**: Pharmacy fraud witnessed by police → Wanted star escalation.
+- **RumourNetwork**: `WORK_RELATED_STRESS` outcome seeds a `LOCAL_EVENT` rumour town-wide.
+- **WeatherSystem**: FROST / COLD_SNAP: 1 additional `WAITING_PATIENT` (people going in from the
+  cold to waste time warmly).
+- **AchievementSystem**: New achievements (see below).
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `JUST_PARACETAMOL` | Receive a `PARACETAMOL` prescription from Dr. Kapoor |
+| `SIGNED_OFF_SICK` | Receive a `SICK_NOTE` and use it at the JobCentre |
+| `PRESCRIPTION_FRAUDSTER` | Successfully complete the fake prescription scam |
+| `FULL_WAITING_ROOM` | Enter a waiting room with all 5 patient chairs occupied |
+| `DONT_MIX_WITH_ALCOHOL` | Drink a PINT within 10 in-game minutes of taking `STRONG_MEDS` |
+
+### Unit Tests
+
+- Appointment booking: standard (2 in-game day wait) vs emergency (10 COIN, same-day).
+- Queue wait time calculation: 0–2 patients ≈ 30s, 3–5 ≈ 60–90s; Monday doubles.
+- Diagnosis table: correct outcome for each stat threshold.
+- Sick Note effects: JobCentre sanction exemption flag set; benefit uplift multiplier = 1.5.
+- Prescription fraud: success/failure probability, crime entry added, wanted star increment.
+- Prescription expiry: `PRESCRIPTION` item invalid after 2 in-game days.
+- STRONG_MEDS + alcohol interaction: warmth penalty triggers within 10 in-game minutes.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Standard appointment wait and consultation**: Book a standard appointment with Sandra.
+   Verify the appointment is scheduled for 2 in-game days hence (check `GPSurgerySystem.getAppointmentDay()`).
+   Advance time to the appointment day. Enter the waiting room; take a ticket.
+   Set player health to 45% (triggers `MINOR_AILMENT`). Wait out the queue (advance frames until
+   queue number is called). Enter the surgery room and press E on Dr. Kapoor.
+   Verify the player's inventory contains 1 `PRESCRIPTION` item. Press E on the
+   `PHARMACY_HATCH_PROP` while holding the prescription. Verify inventory now contains 2
+   `PARACETAMOL` items. Verify the `PRESCRIPTION` item has been consumed.
+
+2. **Emergency appointment costs 10 COIN and skips the wait**: Give the player 10 COIN.
+   Press E on Sandra and select emergency appointment. Verify COIN count decreases by 10.
+   Verify `GPSurgerySystem.getQueuePosition()` is 0 (no wait). Verify the `SURGERY_DOOR_PROP`
+   opens immediately (within 5 frames). Press E on Dr. Kapoor. Verify the consultation completes.
+
+3. **Sandra blocks Tier 4 without FAKE_ID**: Set player Notoriety to 800 (Tier 4).
+   Press E on Sandra. Verify the booking fails and Sandra's speech contains "I'll need to see
+   some ID". Give the player a `FAKE_ID` item. Press E on Sandra again. Verify the booking
+   succeeds and `FAKE_ID` is removed from inventory (consumed).
+
+4. **Sick note grants JobCentre sanction exemption**: Set `JobCentreSystem.consecutiveSanctions`
+   to 2 (triggers `WORK_RELATED_STRESS` diagnosis). Book and attend appointment. Verify Dr. Kapoor
+   issues a `SICK_NOTE`. Take the sick note to the JobCentre; press E on the CASE_WORKER while
+   holding it. Verify `JobCentreSystem.isSickNoteActive()` returns true. Verify the player's
+   weekly benefit payment is multiplied by 1.5 for the next 7 in-game days. Advance 8 in-game
+   days. Verify the sick note has expired (`isSickNoteActive()` returns false).
+
+5. **Leaving the waiting room cancels appointment**: Book an appointment and join the queue.
+   Walk the player out of the `GP_SURGERY` building boundary before the queue number is called.
+   Verify `GPSurgerySystem.getAppointmentStatus()` returns `CANCELLED`. Verify the tooltip
+   "The NHS doesn't wait for you." is displayed. Verify Sandra's booking is available again.
+
+6. **Prescription fraud succeeds with rigged RNG**: Give the player a `BLANK_PRESCRIPTION_FORM`.
+   Construct `GPSurgerySystem` with a seeded Random that produces a value < 0.60 (success).
+   Ensure no POLICE NPC is within 20 blocks. Press E on `PHARMACY_HATCH_PROP` while holding
+   the blank form. Verify the player receives 1 prescription medicine item. Verify Notoriety
+   increased by 8. Verify `CriminalRecord` contains `PRESCRIPTION_FRAUD`.
+
+7. **STRONG_MEDS and alcohol interaction**: Set player to `SERIOUS_CONDITION` (health < 20%).
+   Book and attend an emergency appointment. Verify Dr. Kapoor issues `STRONG_MEDS`. Use the
+   `STRONG_MEDS` (press E in inventory). Verify health restores by 60. Within 10 in-game
+   minutes, buy a PINT at the pub. Verify player Warmth decreases by 20 immediately.
+   Verify the tooltip "Don't mix these with alcohol." has been displayed.
+
+8. **Monday morning queue doubles**: Set the in-game day to a Monday. Set `WAITING_PATIENT`
+   count to 3. Record the expected queue time (normally ≈ 60s for 3 patients). Verify
+   `GPSurgerySystem.getExpectedWaitSeconds()` returns approximately 120 seconds (doubled).
+   Non-Monday: set the day to Wednesday with same 3 patients. Verify wait is approximately 60s.
