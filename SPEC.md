@@ -17438,3 +17438,212 @@ anger in the surrounding zone.
    Give the player 10 `TWOPENCE`. Advance 3 pushes. Verify `AchievementType.PENNY_KING`
    is unlocked. Verify a `LOCAL_EVENT` rumour containing "penny falls" has been seeded
    into at least one NPC in the `RumourNetwork`.
+
+---
+
+## Add Fix My Phone — Phone Repair, Cloning & the Stolen Handset Pipeline
+
+**Goal**: Bring the `PHONE_REPAIR` landmark (Fix My Phone, already present in
+`LandmarkType`) to life with a fully interactive phone repair shop run by Tariq.
+The shop is the legitimate face of a quiet criminal enterprise: it fixes BROKEN_PHONE
+items for coin, allows the player to clone stolen handsets for surveillance,
+extracts contacts for the RumourNetwork, and gives Fence integration a clean
+resale pipeline. It's a small, grubby unit squeezed between the bookies and the
+off-licence — half the town has been in there.
+
+### Building Layout
+
+A 6×5-block interior: `LINO_GREEN` floor, `YELLOW_BRICK` walls, `GLASS` frontage.
+Interior layout:
+
+| Prop | Position | Description |
+|------|----------|-------------|
+| `REPAIR_COUNTER_PROP` | Centre-front | Tariq's counter. Press E to open the repair menu. |
+| `PHONE_DISPLAY_PROP` | East wall | Display case of refurbished phones. Inspect for rumours. |
+| `WORKBENCH_PROP` (existing) | Back room | Used for cloning; visible through a half-open door prop. |
+| `CCTV_PROP` | Corner | Always watching. Tariq is aware when the player has Notoriety ≥ 50. |
+| `SIGN_PROP` | Frontage | "Fix My Phone — Unlocked While U Wait" |
+
+### NPCs
+
+| NPC | Description |
+|-----|-------------|
+| `PHONE_REPAIR_MAN` | Tariq — friendly, efficient, asks no questions about provenance. Present Mon–Sat 09:00–18:00. At Notoriety Tier 3+ he charges a 2-COIN "discretion surcharge" on all services. |
+
+New `NPCType.PHONE_REPAIR_MAN`: passive, `maxHealth = 20`, no attack, not hostile.
+Speech: `"What's wrong with it?"` / `"Give us ten minutes."` / `"That's not exactly yours, is it."` / `"I don't want to know, yeah?"`.
+
+### Core Mechanics
+
+#### 1. Phone Repair
+
+Player brings a `BROKEN_PHONE` (dropped by defeated NPCs or found during skip-diving
+/ Bulky Item Day). Press E on `REPAIR_COUNTER_PROP` to open repair menu.
+
+- **Repair cost**: 3 COIN per phone. Takes 5 in-game minutes (advance time).
+- **Output**: 1 `STOLEN_PHONE` (functional again — same material as the hot-goods item).
+- **Resale value**: `STOLEN_PHONE` sells to the Fence for 12 COIN (pre-existing
+  FenceValuationTable entry) or via `StreetEconomySystem` deal to a BROKE NPC.
+- **Notoriety surcharge**: If Notoriety ≥ 50 (approx Tier 3), repair costs 5 COIN.
+- **Batch repair**: Player may queue up to 3 phones at once; each takes 5 min.
+- **Tooltip on first repair**: `"Tariq fixed it. No questions asked. As advertised."`
+
+#### 2. Screen Protector Upsell
+
+On each repair, Tariq offers a `SCREEN_PROTECTOR` for 1 COIN (new material,
+cosmetic — adds `+1` durability charge to the repaired phone before it becomes
+BROKEN_PHONE again when sold and the buyer "drops" it later). Purely flavour item
+but sellable to the charity shop for 1 COIN or tradeable to desperate BORED NPCs.
+
+#### 3. Phone Cloning (Criminal Back Room)
+
+If the player has Marchetti Crew Respect ≥ 50 OR has previously spoken to the
+Fence, a new **"Back Room"** option appears on the repair menu.
+
+Press E → select **CLONE PHONE**. Requires:
+- 1 `STOLEN_PHONE` in inventory
+- 1 `SIM_CARD` (new material, found in the `NEWSAGENT` PHONE_DISPLAY_PROP or
+  looted from POSTMAN / DELIVERY_DRIVER NPCs at 20% drop chance)
+- 2 COIN fee
+
+**Outcome**:
+- Produces 1 `CLONED_PHONE` (new material).
+- `CLONED_PHONE` can be pressed E on to extract 1 rumour from the `RumourNetwork`
+  (Tariq "saw the texts" — seeds a `LOOT_TIP` or `GANG_ACTIVITY` rumour directly
+  into the player's SpeechLogUI). Each phone yields one rumour; then it becomes a
+  `BURNED_PHONE` (new material — worthless except as Fence junk, 1 COIN).
+- `CriminalRecord.CrimeType.THEFT` entry added (cloning counts as misuse of stolen goods).
+- If Tariq is flagged by an undercover police NPC present in the shop, it triggers
+  a `POLICE_NEARBY_DODGY` outcome: Tariq refuses, Notoriety +3.
+
+#### 4. Contacts Extraction — Surveillance Play
+
+Alternative use of `CLONED_PHONE`: instead of extracting a rumour immediately,
+player can **plant** the cloned phone on an NPC (press E on any PUBLIC / SHOPKEEPER
+NPC while holding `CLONED_PHONE`). Over the next 3 in-game hours the phone
+passively seeds 1 additional rumour per hour (3 total) from that NPC's "conversation
+data" into the `RumourNetwork`. Tooltip on first plant: `"Tariq said he didn't want
+to know. He definitely wants to know."` The phone burns after 3 hours
+(`NPCState.IDLE` NPC "finds" it and drops it as `BURNED_PHONE`).
+
+#### 5. Phone Recycling — Honest Work
+
+Even without criminal intent, the player can **recycle** any `BROKEN_PHONE`
+(no repair needed) for 1 COIN and +1 to Neighbourhood community goodwill
+(reduces `NeighbourhoodWatchSystem` anger by 1 point). Max 5 recycled per day.
+Tooltip on first recycle: `"Tariq gave you a pound. You felt briefly virtuous."`
+
+#### 6. Shift Work
+
+If the player's notoriety is Tier 0–1 AND they speak to Tariq, they can take a
+repair shift: 5 minutes of in-game time passes, player earns 6 COIN, 1 BROKEN_PHONE
+is consumed from a prop "in-tray" (always present). One shift per in-game day.
+Achievement: `PHONE_JOCKEY` — complete 3 repair shifts.
+
+### New Materials
+
+| Material | Source | Notes |
+|----------|--------|-------|
+| `SIM_CARD` | NEWSAGENT PHONE_DISPLAY_PROP (inspect), looted from POSTMAN / DELIVERY_DRIVER (20% drop) | Required for cloning |
+| `CLONED_PHONE` | Phone cloning back room | Single-use rumour extraction or plant-on-NPC surveillance |
+| `BURNED_PHONE` | Used `CLONED_PHONE` after extraction / surveillance timeout | Junk; sells to Fence for 1 COIN |
+| `SCREEN_PROTECTOR` | Upsell at repair counter (1 COIN) | Cosmetic; sellable to charity shop 1 COIN |
+
+### Faction Integration
+
+- **Marchetti Crew** Respect ≥ 50: Unlocks back-room cloning option. Respect ≥ 75:
+  Tariq pays 2 extra COIN per `STOLEN_PHONE` sold to him (shortcut pipeline — no
+  Fence required). Tooltip: `"Tariq's getting fewer questions from certain people."`
+- **Street Lads** Respect ≥ 60: One Street Lad runner drops off 1 `BROKEN_PHONE`
+  per in-game day at the shop door for the player to collect free (they "found it").
+- **The Council** Respect ≤ 25: A Council Planning Officer issues a notice; Tariq
+  closes for 1 in-game day. Player can pay 5 COIN to Tariq to "sort the paperwork"
+  and reopen immediately.
+
+### Integrations
+
+- **FenceSystem**: `STOLEN_PHONE` already in fence table (12 COIN). `BURNED_PHONE`
+  added at 1 COIN. `CLONED_PHONE` added at 5 COIN (fence pays for data).
+- **StreetEconomySystem**: `STOLEN_PHONE` already satisfies BROKE need (pre-existing).
+  `SIM_CARD` added as satisfier for NeedType.BORED at base price 2 COIN.
+- **RumourNetwork**: Cloned phones and planted phones seed `LOOT_TIP` / `GANG_ACTIVITY`
+  rumours directly. `LOCAL_EVENT` rumour seeded on first successful clone:
+  `"Tariq at Fix My Phone is doing something with the phones in the back. Careful."`
+- **CriminalRecord**: Phone cloning adds `THEFT` entry. Police in shop blocks back-room.
+- **NotorietySystem**: Tariq surcharge at Tier 3. Discretion speech at Tier 2.
+- **NeighbourhoodWatchSystem**: Phone recycling reduces anger by 1 point per recycle
+  (max 5/day).
+- **CharityShopSystem**: `SCREEN_PROTECTOR` is a valid donation item (+1 goodwill).
+- **NewspaperSystem**: If 5+ CLONED_PHONE rumours are active simultaneously, The Daily
+  Ragamuffin generates headline: `"PHONE CLONING RING SUSPECTED IN NORTHFIELD"`.
+  Notoriety +5 if the player's name is in the rumour chain.
+- **WeatherSystem**: During RAIN, Tariq gets a walk-in customer queue (1–3 extra
+  PUBLIC NPCs waiting; player must wait one extra repair cycle per queued customer
+  OR pay a 2-COIN queue-jump fee).
+- **WitnessSystem**: If a POLICE NPC enters the shop while the player is in the
+  back-room cloning menu, it triggers a `POLICE_NEARBY_DODGY` flag (deal aborted,
+  Notoriety +3, `THEFT` added to CriminalRecord).
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `PHONE_JOCKEY` | Complete 3 repair shifts at Fix My Phone |
+| `INFORMATION_IS_POWER` | Extract a rumour from a `CLONED_PHONE` for the first time |
+| `SURVEILLANCE_STATE` | Have 3 NPCs simultaneously carrying a planted `CLONED_PHONE` |
+| `FACTORY_SETTINGS` | Recycle 5 phones in one day via the recycling option |
+
+### Unit Tests
+
+- Repair cost: `repairPhone(BROKEN_PHONE, notoriety=0)` costs 3 COIN; with `notoriety=50`
+  costs 5 COIN; with `notoriety=100` costs 5 COIN.
+- Batch queue: queue 3 phones; after 15 in-game minutes, all 3 produce `STOLEN_PHONE`.
+- Cloning requires `SIM_CARD` + `STOLEN_PHONE` + 2 COIN; missing any ingredient → rejected.
+- Cloned phone extraction: `extractRumour(CLONED_PHONE, rumourNetwork)` seeds 1 rumour,
+  phone becomes `BURNED_PHONE`.
+- Plant-on-NPC: after 3 in-game hours, 3 rumours seeded, phone expires as `BURNED_PHONE`.
+- Recycling: 5 recycles reduce `NeighbourhoodWatch` anger by 5; 6th recycle that day → rejected.
+- Faction gate: Marchetti Respect 49 → back room locked; Respect 50 → unlocked.
+- Police in shop: POLICE NPC within 4 blocks → `POLICE_NEARBY_DODGY` abort, Notoriety +3.
+- Shift work: player at Tier 0, `BROKEN_PHONE` in tray → 6 COIN earned, phone consumed,
+  shift locked for rest of day.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Basic repair pipeline**: Give the player 1 `BROKEN_PHONE` and 3 COIN. Press E on
+   `REPAIR_COUNTER_PROP`. Select "Repair". Advance 5 in-game minutes. Verify the player
+   has 0 COIN (paid 3), 0 `BROKEN_PHONE`, and 1 `STOLEN_PHONE` in inventory. Verify no
+   `CriminalRecord` entries were added.
+
+2. **Cloning extracts rumour**: Give the player 1 `STOLEN_PHONE`, 1 `SIM_CARD`, and 2 COIN.
+   Set Marchetti Crew Respect to 50. Press E on `REPAIR_COUNTER_PROP`, select "Clone Phone".
+   Verify COIN is reduced by 2, `STOLEN_PHONE` and `SIM_CARD` are consumed, and player
+   has 1 `CLONED_PHONE`. Press E on `CLONED_PHONE` to extract rumour. Verify 1 rumour
+   with type `LOOT_TIP` or `GANG_ACTIVITY` is now in `RumourNetwork`. Verify the
+   `CLONED_PHONE` has become a `BURNED_PHONE` in inventory. Verify `CriminalRecord`
+   contains `THEFT`.
+
+3. **Notoriety surcharge applied**: Set player Notoriety to 60. Give the player 1
+   `BROKEN_PHONE` and 5 COIN. Press E on `REPAIR_COUNTER_PROP`, select "Repair".
+   Verify the repair costs 5 COIN (surcharge applied). Verify Tariq NPC delivers a
+   discretion speech line. Advance 5 in-game minutes. Verify `STOLEN_PHONE` received.
+
+4. **Police block cloning**: Give the player 1 `STOLEN_PHONE`, 1 `SIM_CARD`, 2 COIN,
+   and set Marchetti Respect to 50. Place a `POLICE` NPC within 4 blocks of the
+   `REPAIR_COUNTER_PROP`. Press E, select "Clone Phone". Verify the action is rejected
+   (`POLICE_NEARBY_DODGY` outcome). Verify Notoriety increased by 3. Verify
+   `CriminalRecord` contains `THEFT`. Verify `STOLEN_PHONE` and `SIM_CARD` were NOT
+   consumed.
+
+5. **Phone recycling reduces neighbourhood watch anger**: Set `NeighbourhoodWatchSystem`
+   anger to 10. Give the player 5 `BROKEN_PHONE` items. Press E on `REPAIR_COUNTER_PROP`
+   five times selecting "Recycle" each time. Verify `NeighbourhoodWatchSystem` anger is
+   now 5. Verify player received 5 COIN total. Press E a sixth time and select "Recycle".
+   Verify the action is rejected with a message ("That's your lot for today, mate").
+   Verify anger remains at 5 and COIN did not increase.
+
+6. **Shift work earns coin and consumes phone**: Set player Notoriety Tier to 0.
+   Ensure a `BROKEN_PHONE` is present in the shop's in-tray. Press E on Tariq NPC
+   and select "Do a Shift". Advance 5 in-game minutes. Verify player earned 6 COIN.
+   Verify the in-tray `BROKEN_PHONE` was consumed. Verify shift is now locked (pressing
+   E and selecting "Do a Shift" is rejected for the rest of the in-game day).
