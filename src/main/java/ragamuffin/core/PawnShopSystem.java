@@ -115,14 +115,20 @@ public class PawnShopSystem {
             Material.STOLEN_PHONE,
             Material.GUITAR,
             Material.HAIR_CLIPPERS,
-            Material.BROKEN_PHONE
+            Material.BROKEN_PHONE,
+            // Issue #1073: Northfield Cemetery grave loot
+            Material.WEDDING_RING,
+            Material.POCKET_WATCH
         ));
 
         STOLEN_ITEMS = Collections.unmodifiableSet(EnumSet.of(
             Material.STOLEN_PHONE,
             Material.GOLD_RING,
             Material.DIAMOND,
-            Material.COMPUTER
+            Material.COMPUTER,
+            // Issue #1073: grave loot is stolen goods
+            Material.WEDDING_RING,
+            Material.POCKET_WATCH
         ));
     }
 
@@ -524,6 +530,9 @@ public class PawnShopSystem {
             case GUITAR:       return 18;
             case HAIR_CLIPPERS: return 10;
             case BROKEN_PHONE: return 3;
+            // Issue #1073: cemetery grave loot
+            case WEDDING_RING: return 8;
+            case POCKET_WATCH: return 12;
             default:           return 5;
         }
     }

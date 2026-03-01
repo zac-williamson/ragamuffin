@@ -1162,7 +1162,41 @@ public enum PropType {
     CLUB_NOTICEBOARD_PROP(0.10f, 1.20f, 0.05f, 3, Material.WOOD),
 
     /** Bar hatch — the serving counter at the Social Club bar. */
-    BAR_HATCH_PROP(1.50f, 1.00f, 0.10f, 5, Material.WOOD);
+    BAR_HATCH_PROP(1.50f, 1.00f, 0.10f, 5, Material.WOOD),
+
+    // ── Issue #1073: Northfield Cemetery ──────────────────────────────────────
+
+    /**
+     * Grave plot — a diggable 1×1 dirt mound at each headstone location in the
+     * cemetery. 8 SPADE hits convert it to {@code OPEN_GRAVE_PROP} and yield a
+     * loot roll. Rain extends this to 10 hits.
+     */
+    GRAVE_PLOT_PROP(0.80f, 0.20f, 0.80f, 8, null),
+
+    /**
+     * Open grave — the disturbed state of a {@code GRAVE_PLOT_PROP} after the
+     * player has fully dug it out. No further loot; cosmetic open-pit appearance.
+     */
+    OPEN_GRAVE_PROP(0.80f, 0.20f, 0.80f, 99, null),
+
+    /**
+     * Groundskeeper's shed — a small 2×2 wooden shed near the cemetery north wall.
+     * Contains a SPADE item. Breakable when Vernon is absent; breaking it while
+     * Vernon is present triggers a police call.
+     */
+    GROUNDSKEEPER_SHED_PROP(2.00f, 2.00f, 2.00f, 8, Material.SPADE),
+
+    /**
+     * Lych gate — the decorative entrance gate at the cemetery south face.
+     * Cosmetic only; always passable by the player.
+     */
+    LYCH_GATE_PROP(2.00f, 2.50f, 0.30f, 6, Material.WOOD),
+
+    /**
+     * Fresh flowers — dropped by MOURNER NPCs after a funeral procession ends.
+     * Despawns after 2 in-game days. Not sellable.
+     */
+    FRESH_FLOWERS_PROP(0.30f, 0.20f, 0.30f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

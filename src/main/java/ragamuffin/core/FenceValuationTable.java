@@ -63,6 +63,10 @@ public class FenceValuationTable {
         m.put(Material.SHOPPING_TROLLEY_GOLD, 12);   // Rare — golden trolley curiosity
         m.put(Material.ANTIQUE_CLOCK,         20);   // Very Rare — triggers special dialogue
 
+        // ── Issue #1073: Northfield Cemetery grave loot — 55% of pawn value ─
+        m.put(Material.WEDDING_RING,  4);  // 55% of 8 COIN pawn value ≈ 4
+        m.put(Material.POCKET_WATCH,  7);  // 55% of 12 COIN pawn value ≈ 7
+
         VALUATIONS = Collections.unmodifiableMap(m);
     }
 
