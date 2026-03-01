@@ -24946,3 +24946,194 @@ BULK_BUY(
 // New: FIVE_FINGER_DISCOUNT, SLIPPERY_CUSTOMER, ADIADS, BULK_BUY in AchievementType.java
 // WorldGenerator: place POUND_SHOP on high street between BARBER and CHARITY_SHOP zones
 // All Material and NPCType entries already exist (Issue #1018).
+
+---
+
+## Issue #1069: Add Northfield Ice Cream Van — Mr. Whippy, the Jingle Economy & the Marchetti Turf War
+
+### Overview
+
+Dave drives his battered Whippy van — "Dave's Ices" — around Northfield's residential streets
+and parks on warm days, selling 99 Flakes, lollies, and (through a side-hatch) fencing stolen
+goods at a slight markdown. The van is a beloved British institution and a rolling grey-market
+hub. Dave has a long-running territorial beef with the Marchetti family, who consider the ice
+cream trade their ancestral racket.
+
+The van only operates in good weather (SUNNY, OVERCAST above 14°C in-game). It parks at three
+rotating spots: park entrance, outside the primary school (not during school hours), and the
+industrial estate perimeter. A distinctive jingle plays on approach (SoundEffect.ICE_CREAM_JINGLE).
+NPCs with the BORED or HUNGRY need within 12 blocks queue up autonomously and buy a cone
+(need −30, coin −2 from NPC wallet). The player can also buy items, fence loot, or attempt
+to steal from the van while Dave's distracted serving a queue.
+
+Dave is an NPC of type ICE_CREAM_MAN. He is wary of strangers but warms up quickly (+10
+reputation per purchase). At Street Rep ≥ 40 he'll offer the side-hatch fence menu.
+
+### Opening Conditions
+
+| Condition | Result |
+|-----------|--------|
+| Weather: SUNNY | Van operates, full jingle |
+| Weather: OVERCAST | Van operates, jingle volume 50% |
+| Weather: RAIN / DRIZZLE / THUNDERSTORM | Van stays in depot — absent all day |
+| Weather: COLD_SNAP / FROST | Van stays in depot — absent all day |
+| Time: before 12:00 or after 19:30 | Van absent |
+| School hours (08:50–15:30) at school spot | Van moves to park spot instead |
+| Marchetti Respect < 20 | Van is firebombed — absent for 3 in-game days |
+
+### Menu (buy with E when within 2 blocks of van)
+
+| Item | Price | Effect |
+|------|-------|--------|
+| NINETY_NINE_FLAKE | 2 COIN | Hunger +20, BORED need −35, Warmth +5 |
+| LOLLY | 1 COIN | Hunger +10, BORED need −20 |
+| CHOC_ICE | 2 COIN | Hunger +15, BORED need −25 |
+| WAFER_TUBS | 1 COIN | Hunger +8 |
+| BANANA_SPLIT | 3 COIN | Hunger +25, BORED need −40 |
+| FLAKE_99_WITH_SAUCE | 3 COIN | Hunger +22, BORED need −45, Street Rep +1 (first ever) |
+
+### Side-Hatch Fence Menu (Street Rep ≥ 40 with Dave)
+
+Dave buys stolen goods at 55% of FenceValuationTable base price (lower than the
+regular Fence at 65%, but Dave asks no questions and has no Notoriety penalty).
+Available only when NO police NPC is within 20 blocks. Side-hatch purchase sets
+`IceCreamVanSystem.lastSideHatchTime` and triggers `NoiseSystem.QUIET_TRANSACTION`.
+
+### Events
+
+**JINGLE_AMBUSH** — if player is Wanted (≥ 1 star) and approaches the van, Dave
+briefly stops the jingle, glances at a police scanner, and refuses service
+("Sorry mate, scanner's going off. Come back when it's quiet."). Service resumes
+after wanted level clears.
+
+**MARCHETTI_DRIVE-BY** — if Marchetti Respect < 35, a MARCHETTI_ENFORCER NPC on a
+bicycle does a slow pass every 30 in-game minutes the van is parked. If Respect < 20,
+they throw a PETROL_BOMB prop at the van (van destroyed: absent 3 days, Dave hospitalised,
+player gains STREET_LADS respect +5 if they intervene and hit enforcer before throw).
+
+**QUEUE_JUMP** — a CHAV NPC joins the queue and pushes to the front. If player is
+behind them: player can confront (E prompt → dialogue, escalates to fight if failed),
+ignore, or pay for the Chav's ice cream (coins −2, Street Rep +2, CHAV_CHARMED
+achievement progress).
+
+**KIDS_MOB** — on school dismissal (15:30), 4–6 YOUTH NPCs sprint toward the van
+from the school direction. Dave's serving speed halves; player queue wait time +60
+seconds. Selling a LOLLY to each YOUTH clears the mob in 30 seconds.
+
+**STOLEN_VAN** — once per week (random day, 22:00), if player has Driving skill ≥ 3
+and is near the van's overnight depot (industrial estate), they can steal the van
+(CarDrivingSystem integration). Van is worth 80 COIN to the Scrapyard; selling it
+triggers VAN_HEIST achievement and spawns Dave as a DESPERATE NPC for 3 days
+("You ruined me, you absolute..."  speech).
+
+### Integration Points
+
+- **WeatherSystem**: Van absent in rain/cold. Check `WeatherSystem.getCurrentWeather()`.
+- **TimeSystem**: Operating window 12:00–19:30. School-hour spot avoidance.
+- **WarmthSystem**: NINETY_NINE_FLAKE and other ice creams give mild Warmth penalty
+  (−3) in COLD_SNAP or FROST if player somehow acquires one from inventory.
+- **StreetEconomySystem**: NPC BORED and HUNGRY needs reduced on purchase; NPC coins
+  deducted via `StreetEconomySystem.deductNPCCoins(npc, 2)`.
+- **FenceSystem / FenceValuationTable**: Side-hatch fence at 55% base value, no
+  Notoriety delta (Dave is not flagged as a formal fence).
+- **FactionSystem**: Marchetti respect thresholds gate drive-by and firebomb events.
+  Street Lads respect +5 if player defends van during drive-by.
+- **NotorietySystem**: JINGLE_AMBUSH gate. Side-hatch deals produce no Notoriety.
+- **CarDrivingSystem**: STOLEN_VAN event; depot at industrial estate.
+- **SoundSystem**: `SoundEffect.ICE_CREAM_JINGLE` plays while van is at location
+  (loop, audible within 20 blocks, volume falls off with distance).
+- **AchievementSystem**: see achievements below.
+- **RumourNetwork**: After MARCHETTI_DRIVE-BY, barman seeds rumour
+  `RumourType.GANG_ACTIVITY` ("Marchettis are going after Dave's van again").
+- **NewspaperSystem**: If van firebombed, next day's headline:
+  "ICE CREAM VAN TORCHED: LOCALS DEVASTATED".
+
+### New LandmarkType
+
+```
+ICE_CREAM_VAN   // mobile; location stored as current parking spot, updated each in-game day
+```
+
+### New NPCType
+
+```
+ICE_CREAM_MAN   // Dave; uses car-adjacent sprite; serves queue; has side-hatch dialogue
+```
+
+### New Material/Item entries
+
+```
+NINETY_NINE_FLAKE
+LOLLY
+CHOC_ICE
+WAFER_TUBS
+BANANA_SPLIT
+FLAKE_99_WITH_SAUCE
+```
+
+### New SoundEffect entry
+
+```
+ICE_CREAM_JINGLE   // looping ambient; distance-attenuated
+```
+
+### New AchievementType entries
+
+```
+CHEEKY_FLAKE          // Buy your first 99 Flake from Dave
+DAVE_APPROVES         // Reach Street Rep 40 with Dave (unlock side hatch)
+SIDE_HATCH            // Use the side-hatch fence at least once
+CHAV_CHARMED          // Pay for the queue-jumping Chav's ice cream
+VAN_HEIST             // Steal the ice cream van
+MARCHETTI_DEFENDER    // Intervene in a Marchetti drive-by and stop the firebomb
+KIDS_MOB_SURVIVED     // Wait in queue through a KIDS_MOB event and still buy ice cream
+```
+
+### Unit Tests
+
+1. `IceCreamVanSystem.isVanOperating()` returns `false` when weather is RAIN.
+2. `isVanOperating()` returns `false` when time is 11:59 or 19:31.
+3. `isVanOperating()` returns `false` when Marchetti respect < 20 and firebomb flag set.
+4. `getSidehatchAvailable(player)` returns `false` when streetRep < 40.
+5. `getSidehatchAvailable(player)` returns `false` when police NPC within 20 blocks.
+6. `calculateSidehatchPrice(item)` returns 55% of `FenceValuationTable.getBaseValue(item)`.
+7. `getMenuItems()` returns all 6 menu items with correct prices.
+8. `applyPurchaseEffects(player, NINETY_NINE_FLAKE)` increases player hunger by 20 and
+   decreases BORED need by 35.
+9. `triggerMarchettiDriveBy()` is called when Marchetti respect < 35 and 30 in-game
+   minutes have elapsed since last drive-by.
+10. `triggerQueueJump()` spawns a CHAV NPC at queue position 1, ahead of player.
+
+### Integration Tests
+
+1. **Van absent in rain**: Set weather to RAIN. Call `IceCreamVanSystem.update(delta, time, weather)`.
+   Verify `isVanOperating()` returns `false`. Verify no ICE_CREAM_JINGLE sound is playing.
+   Verify approaching van (within 2 blocks) shows "No service today" message.
+
+2. **NPC queue reduces BORED need**: Place 2 BORED NPCs (need score 80) within 12 blocks of van.
+   Van is operating (weather SUNNY, time 14:00). Advance time 60 seconds.
+   Verify each NPC's BORED need has decreased by ≥ 25. Verify each NPC's coin balance decreased by 2.
+
+3. **Side hatch unlocks at Rep 40**: Player has Street Rep 38 with Dave. Buy 2 items (Rep +1 each on
+   first purchase — use `gainRepWithDave(1)` twice). Verify `getSidehatchAvailable(player)` is now
+   `true`. Verify side-hatch fence menu is accessible via E interaction.
+
+4. **Marchetti drive-by triggers at low respect**: Set Marchetti faction respect to 30.
+   Set van as operating. Advance time by 31 in-game minutes.
+   Verify a MARCHETTI_ENFORCER NPC is spawned within 15 blocks of the van.
+   Verify `RumourNetwork` contains a `GANG_ACTIVITY` rumour seeded by barman NPC.
+
+5. **Player intervention stops firebomb**: Marchetti respect set to 18. MARCHETTI_DRIVE-BY event
+   active, enforcer within 3 blocks of van with `petrolBombThrowCountdown > 0`. Player punches
+   enforcer before countdown expires. Verify van is NOT flagged as firebombed.
+   Verify Street Lads respect increased by 5. Verify VAN_HEIST achievement NOT awarded
+   (wrong achievement). Verify MARCHETTI_DEFENDER achievement progress incremented.
+
+// ── Issue #1069: Northfield Ice Cream Van ────────────────────────────────────
+// New: IceCreamVanSystem.java in ragamuffin.core
+// New: ICE_CREAM_VAN entry in LandmarkType.java
+// New: ICE_CREAM_MAN entry in NPCType.java
+// New: NINETY_NINE_FLAKE, LOLLY, CHOC_ICE, WAFER_TUBS, BANANA_SPLIT, FLAKE_99_WITH_SAUCE in Material.java
+// New: ICE_CREAM_JINGLE in SoundEffect.java
+// New: CHEEKY_FLAKE, DAVE_APPROVES, SIDE_HATCH, CHAV_CHARMED, VAN_HEIST, MARCHETTI_DEFENDER, KIDS_MOB_SURVIVED in AchievementType.java
+// WorldGenerator: van depot at industrial estate; 3 parking spots (park entrance, school perimeter, industrial estate)
