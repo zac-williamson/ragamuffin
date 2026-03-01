@@ -21903,3 +21903,238 @@ Add these to `AchievementType.java`.
    1 in-game minute. Verify `rumourNetwork` contains at least 1 new `OFFICE_GOSSIP`
    rumour. Move player 10 blocks away. Advance another minute. Verify the rumour count
    does NOT increase again from the same workers.
+
+---
+
+## Issue #1037: Northfield Indoor Market — Knock-Offs, Stall Rental & the Trading Standards Raid
+
+**Goal**: Add the Northfield Indoor Market (a covered market hall open Tue/Fri/Sat,
+08:00–16:00) as a fully interactive landmark. The market is a quintessential British
+working-class institution: rows of stalls selling dodgy DVDs, second-hand clothes,
+counterfeit goods, knock-off perfume, and a greasy tea urn. Players can rent a stall
+and sell items, browse for cheap gear, pickpocket in the crowds, and survive the
+chaos of a Trading Standards raid.
+
+### Landmark
+
+- New `LandmarkType.INDOOR_MARKET` — `getDisplayName()` returns `"Northfield Indoor Market"`.
+- Open **Tuesday, Friday, Saturday** 08:00–16:00 only. All other times the shutters are
+  down (`MARKET_SHUTTER_PROP` in impassable state). Attempting to enter when closed
+  shows: *"Northfield Indoor Market — Next market day: [day]."*
+- WorldGenerator places it near the High Street, adjacent to the parade of shops.
+  The building is a low single-storey brick rectangle (16×24×4 blocks), open-plan
+  interior with 8 stall units (`MARKET_STALL_PROP`) arranged in two rows of four.
+
+### NPCs
+
+| NPC Type | Name / Description |
+|---|---|
+| `MARKET_TRADER` (×4) | Dave, Sheila, Mo, Brenda — each occupies one stall, sells 3–5 items |
+| `MARKET_PUNTER` (×8–12) | Generic PUBLIC crowd; spawn only on market days |
+| `MARKET_MANAGER` (×1) | Ray — manages stall rentals, stationed near the entrance |
+| `TRADING_STANDARDS` (×1–2) | Spawn only during raid event; confiscate and arrest |
+
+**Dave's Stall** — second-hand electronics: `BROKEN_PHONE` (1 COIN), `OLD_TELLY` (3 COIN),
+`EXTENSION_LEAD` (1 COIN), `DODGY_CHARGER` (2 COIN — 20% chance of `ELECTRICAL_FIRE` prop
+spawn when placed in a building).
+
+**Sheila's Stall** — clothes: `TRACKSUIT_BOTTOMS` (2 COIN), `FOOTBALL_SHIRT` (2 COIN),
+`PUFFER_JACKET` (3 COIN, +20 Warmth), `KNOCKOFF_DESIGNER_TSHIRT` (1 COIN).
+
+**Mo's Stall** — DVDs and knock-offs: `DODGY_DVD` (1 COIN, watchable on `TV_SCREEN_PROP`
+for +5 Boredom relief), `KNOCK_OFF_PERFUME` (2 COIN, acts as disguise-tier item),
+`COUNTERFEIT_WATCH` (3 COIN, fenceable for 5 COIN via FenceSystem).
+
+**Brenda's Stall** — hot food (tea urn): `MUG_OF_TEA` (1 COIN, +15 Warmth),
+`BACON_BUTTY` (2 COIN, +35 Hunger), `JAM_DOUGHNUT` (1 COIN, +20 Hunger).
+
+### `IndoorMarketSystem` Class (new)
+
+```
+IndoorMarketSystem(TimeSystem timeSystem, RumourNetwork rumourNetwork,
+                   FenceSystem fenceSystem, StreetEconomySystem streetEconomySystem,
+                   NotorietySystem notorietySystem, WantedSystem wantedSystem,
+                   CriminalRecord criminalRecord, Random random)
+```
+
+Key state:
+- `isMarketDay(): boolean` — true if current day is Tue/Fri/Sat and time is 08:00–16:00.
+- `playerStallActive: boolean` — whether the player currently has a rented stall.
+- `playerStallItems: List<ShopUnit>` — items the player has placed for sale.
+- `stallRentExpiry: float` — in-game hour when the player's stall rental expires.
+- `raidActive: boolean` — true during a Trading Standards raid.
+- `raidStartMinute: int` — in-game minute the current raid started.
+- `stallsRentedToday: int` — tracks rentals for achievement tracking.
+
+#### Stall Rental
+
+- Press **E** on `MARKET_MANAGER` Ray to rent a stall for **3 COIN / market day**.
+  Ray refuses if player Notoriety Tier ≥ 4: *"I know your sort. Take it elsewhere."*
+- Player stall is placed at one of the 4 empty `MARKET_STALL_PROP` slots.
+- Player can then press **E** on their own stall to open `StallInventoryUI` — place
+  up to 6 items from inventory with custom prices.
+- Every 2 in-game minutes a `MARKET_PUNTER` NPC browses and may purchase an item:
+  - Price ≤ 150% market value → always buys.
+  - Price 151–200% → 40% chance.
+  - Price > 200% → never buys.
+- Stolen/counterfeit items (`STOLEN_PHONE`, `COUNTERFEIT_WATCH`, `COUNTERFEIT_NOTE`)
+  can be sold at the stall. If `raidActive` and player stall contains any, +15 Notoriety
+  and `HANDLING_STOLEN_GOODS` CriminalRecord entry.
+
+#### Browsing & Bartering
+
+- Press **E** on any `MARKET_TRADER` NPC to open a buy menu showing their 3–5 items.
+- Press **G** while near a trader to attempt a barter: offer 2 items from inventory
+  for 1 of theirs. The trader accepts if combined market value of offered items
+  ≥ 80% of the target item's value. Seeded `Random` governs personality:
+  - Dave: 60% accept rate on fair barters (haggler).
+  - Sheila: 90% accept rate (generous).
+  - Mo: 50% accept rate, always refuses COUNTERFEIT items (nervous).
+  - Brenda: never barters (food is food).
+
+#### Crowd & Pickpocket Economy
+
+- Market day spawns 8–12 `MARKET_PUNTER` NPCs. Each carries 1–5 COIN (random).
+- Press **E** while within 1 block of a `MARKET_PUNTER` (and at least 3 other NPCs
+  within 4 blocks — cover of the crowd) to attempt pickpocket:
+  - Base success 55%. +10% per StreetSkill `PICKPOCKET` level. −20% if Notoriety Tier ≥ 3.
+  - Success: transfer 1–3 COIN; NPC continues shopping (doesn't notice).
+  - Failure: NPC shouts, all NPCs within 6 blocks enter ALARMED state, +5 Notoriety.
+  - Witnessed failure: `MARKET_MANAGER` calls police; WantedSystem +1 star.
+
+#### Trading Standards Raid
+
+- Triggered randomly: 15% chance per market day at a random time between 10:00–15:00.
+- `TRADING_STANDARDS` (×2) NPCs spawn at the entrance and walk each stall.
+- If player stall contains counterfeit or stolen items:
+  - Items confiscated (removed from `playerStallItems`).
+  - +20 Notoriety. CriminalRecord entry: `TRADING_STANDARDS_RAID`.
+  - WantedSystem +1 star.
+  - Player has 30 seconds (60 frames at 2fps in-game clock) to vacate stall before
+    arrest; if player is adjacent to stall when officers arrive → immediate arrest.
+- `MARKET_TRADER` NPCs with counterfeit stock (Mo) also flee during raid (NPCState
+  transitions to FLEEING for 5 in-game minutes).
+- Raid ends after 10 in-game minutes. `TRADING_STANDARDS` NPCs despawn.
+
+#### Rumour & Integration
+
+- **RumourNetwork**: On a successful raid, seed `RumourType.POLICE_ACTIVITY` to 4
+  `MARKET_PUNTER` NPCs. If player escapes raid with contraband intact, seed
+  `RumourType.LOOT_TIP` (market stall location) to 2 nearby NPCs.
+- **FenceSystem**: `COUNTERFEIT_WATCH` and `KNOCKOFF_DESIGNER_TSHIRT` are fenceable
+  at 50% markup. `DODGY_DVD` not fenceable (no value to fences).
+- **StreetEconomySystem**: `MUG_OF_TEA` satisfies COLD need; `BACON_BUTTY` satisfies
+  HUNGRY need. `MARKET_PUNTER` NPCs can be traded with directly if their BROKE need > 60.
+- **WeatherSystem**: During RAIN, crowd spawns 30% fewer punters; Brenda sells
+  `MUG_OF_TEA` at half price (1 → 0 COIN, free): *"It's Baltic out there, love."*
+- **DisguiseSystem**: Wearing `KNOCKOFF_DESIGNER_TSHIRT` or `TRACKSUIT_BOTTOMS`
+  reduces NPC recognition by 15% (they look like just another punter).
+- **NoiseSystem**: During raid, register noise level 3 at market position.
+
+### Key Constants (`public static final` in `IndoorMarketSystem`)
+
+```java
+public static final float OPEN_HOUR                    = 8.0f;
+public static final float CLOSE_HOUR                   = 16.0f;
+public static final int[] MARKET_DAYS                  = {2, 5, 6}; // Tue=2, Fri=5, Sat=6
+public static final int STALL_RENT_COST                = 3;
+public static final float STALL_BROWSE_INTERVAL_MINS   = 2.0f;
+public static final float PUNTER_BUY_THRESHOLD_FAIR    = 1.5f;  // 150% market value
+public static final float PUNTER_BUY_THRESHOLD_HIGH    = 2.0f;  // 200% market value
+public static final float PUNTER_BUY_CHANCE_HIGH_PRICE = 0.40f;
+public static final int   MAX_STALL_ITEMS              = 6;
+public static final int   PUNTER_CROWD_MIN             = 8;
+public static final int   PUNTER_CROWD_MAX             = 12;
+public static final float PICKPOCKET_BASE_SUCCESS      = 0.55f;
+public static final float PICKPOCKET_NOTORIETY_PENALTY = 0.20f;
+public static final int   PICKPOCKET_CROWD_MIN         = 3;  // min nearby NPCs for cover
+public static final float RAID_DAILY_CHANCE            = 0.15f;
+public static final float RAID_WINDOW_START            = 10.0f;
+public static final float RAID_WINDOW_END              = 15.0f;
+public static final int   RAID_ESCAPE_FRAMES           = 60;
+public static final int   RAID_DURATION_MINS           = 10;
+public static final float RAIN_CROWD_REDUCTION         = 0.30f;
+public static final int   DAVE_BARTER_ACCEPT_PCT       = 60;
+public static final int   SHEILA_BARTER_ACCEPT_PCT     = 90;
+public static final int   MO_BARTER_ACCEPT_PCT         = 50;
+```
+
+### Achievements
+
+| Achievement | Condition |
+|---|---|
+| `MARKET_REGULAR` | Complete 5 stall rentals (sell at least 1 item per rental) |
+| `SOVEREIGN_TRADING` | Sell a `COUNTERFEIT_WATCH` at the market for 5+ COIN |
+| `LEGS_IT` | Escape a Trading Standards raid with contraband still in stall inventory |
+| `CROWD_WORKER` | Successfully pickpocket 5 `MARKET_PUNTER` NPCs in a single market day |
+| `SATURDAY_MARKET_KING` | Earn 20+ COIN from stall sales in a single Saturday market day |
+
+Add these to `AchievementType.java`.
+
+### Integration & Cross-System Hooks
+
+- **LandmarkType**: Add `INDOOR_MARKET` with `getDisplayName()` = `"Northfield Indoor Market"`.
+- **NPCType**: Add `MARKET_TRADER`, `MARKET_PUNTER`, `MARKET_MANAGER`, `TRADING_STANDARDS`.
+- **Material**: Add `DODGY_DVD`, `KNOCK_OFF_PERFUME`, `COUNTERFEIT_WATCH`,
+  `KNOCKOFF_DESIGNER_TSHIRT`, `TRACKSUIT_BOTTOMS`, `FOOTBALL_SHIRT`, `DODGY_CHARGER`,
+  `OLD_TELLY`, `EXTENSION_LEAD`, `BACON_BUTTY`, `JAM_DOUGHNUT`.
+- **PropType**: Add `MARKET_STALL_PROP`, `MARKET_SHUTTER_PROP`, `TEA_URN_PROP`.
+- **RumourType**: Add `MARKET_RAID` (distinct from POLICE_ACTIVITY, spread only by
+  market NPCs after a raid).
+- **AchievementType**: Add 5 achievements listed above.
+- **CriminalRecord**: Add `HANDLING_STOLEN_GOODS`, `TRADING_STANDARDS_RAID` record types.
+
+### Unit Tests
+
+- `IndoorMarketSystem.isMarketDay(Tuesday 09:00)` returns `true`.
+- `IndoorMarketSystem.isMarketDay(Wednesday 09:00)` returns `false`.
+- `IndoorMarketSystem.isMarketDay(Saturday 16:01)` returns `false` (after hours).
+- `IndoorMarketSystem.isMarketDay(Saturday 08:00)` returns `true`.
+- `IndoorMarketSystem.tryPickpocket(player, punter, nearbyNpcCount=3, random seeded win)` returns `true` and transfers COIN.
+- `IndoorMarketSystem.tryPickpocket(player, punter, nearbyNpcCount=2, ...)` returns `false` (insufficient crowd cover).
+- `IndoorMarketSystem.tryBarter(player, Dave, offerValue=4, targetValue=5)` returns `true` (80% threshold met).
+- `IndoorMarketSystem.tryBarter(player, Dave, offerValue=3, targetValue=5)` returns `false` (60% < 80%).
+- `IndoorMarketSystem.shouldPunterBuy(price=4, marketValue=3)` returns `true` (≤150%).
+- `IndoorMarketSystem.shouldPunterBuy(price=7, marketValue=3)` returns `false` (>200%).
+- Stall rental blocked when player Notoriety ≥ Tier 4.
+- Raid confiscates counterfeit items and adds CriminalRecord entry.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Market is open on market days only**: Construct `IndoorMarketSystem`. Set time to
+   Wednesday 10:00. Verify `isMarketDay()` returns `false`. Verify the `MARKET_SHUTTER_PROP`
+   is in impassable state. Set time to Friday 09:00. Verify `isMarketDay()` returns `true`.
+   Verify 4 `MARKET_TRADER` NPCs are present inside the `INDOOR_MARKET` landmark AABB.
+
+2. **Stall rental and NPC purchase**: Set day to Saturday, time 09:00. Give player 5 COIN.
+   Press E on `MARKET_MANAGER` Ray. Verify player COIN reduced by 3 (stall rent paid).
+   Verify `playerStallActive` is `true`. Place `MUG_OF_TEA` (market value 1) in stall at
+   price 1. Advance 2 in-game minutes. Verify a `MARKET_PUNTER` has purchased the item
+   (playerStallItems is empty; player COIN increased by 1).
+
+3. **Pickpocket in crowd succeeds with cover**: Set day to Friday, time 12:00. Spawn 4
+   `MARKET_PUNTER` NPCs within 4 blocks of player. Seed `Random` so pickpocket attempt
+   succeeds. Press E on one punter. Verify player COIN increased by 1–3. Verify the
+   punter NPC continues in WANDERING state (not ALARMED).
+
+4. **Pickpocket fails without crowd cover**: Spawn only 1 `MARKET_PUNTER` within 4 blocks.
+   Attempt pickpocket. Verify it returns `false` immediately (insufficient cover, no random
+   roll). Verify no COIN transfer. Verify no Notoriety change.
+
+5. **Trading Standards raid confiscates contraband**: Set day to Saturday, time 11:00.
+   Give player a `COUNTERFEIT_WATCH` in stall inventory. Trigger a raid manually
+   (`indoorMarketSystem.triggerRaid(timeSystem)`). Verify 2 `TRADING_STANDARDS` NPCs
+   spawn at the entrance. Advance 60 frames (player adjacent to stall). Verify
+   `COUNTERFEIT_WATCH` removed from `playerStallItems`. Verify Notoriety increased by 20.
+   Verify CriminalRecord contains `TRADING_STANDARDS_RAID` entry.
+
+6. **LEGS_IT achievement — escape raid with contraband**: Trigger a raid. Place player
+   10 blocks from stall (not adjacent). Advance 60 frames. Verify player was NOT arrested.
+   Verify `COUNTERFEIT_WATCH` still in `playerStallItems`. Verify `LEGS_IT` achievement
+   unlocked.
+
+7. **Rain reduces crowd and Brenda gives free tea**: Set weather to RAIN. Set day to
+   Saturday, time 10:00. Call `indoorMarketSystem.spawnCrowd(weatherSystem)`. Verify
+   spawned `MARKET_PUNTER` count is ≤ 8 (PUNTER_CROWD_MAX × (1 − 0.30) = 8.4 → ≤ 8).
+   Press E on Brenda (TEA_URN_PROP). Verify `MUG_OF_TEA` added to inventory. Verify
+   player COIN NOT reduced (free during rain).
