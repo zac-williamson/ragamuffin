@@ -26,11 +26,11 @@ public class WarmthSystem {
     /** Warmth restored per second when near a campfire. */
     public static final float CAMPFIRE_WARMTH_RATE = 15.0f;
 
-    /** Warmth restored per second when sheltered indoors. */
-    public static final float INDOOR_WARMTH_RATE = 5.0f;
+    /** Warmth restored per second when sheltered indoors (Issue #957: raised for adequate comfort). */
+    public static final float INDOOR_WARMTH_RATE = 10.0f;
 
     /** Warmth restored per second when inside a car (engine heat, sheltered interior). */
-    public static final float CAR_WARMTH_RATE = 8.0f;
+    public static final float CAR_WARMTH_RATE = 12.0f;
 
     /** Warmth restored by drinking a FLASK_OF_TEA. */
     public static final float FLASK_OF_TEA_WARMTH = 30.0f;
