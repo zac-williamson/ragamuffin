@@ -233,7 +233,21 @@ public class CriminalRecord {
          * Penalty: +20 Notoriety, +1 WantedSystem star, items confiscated.
          * Player has 60 frames to vacate stall before arrest.
          */
-        TRADING_STANDARDS_RAID("Trading Standards raid (indoor market)");
+        TRADING_STANDARDS_RAID("Trading Standards raid (indoor market)"),
+
+        // ── Issue #1051: Angel Nails & Beauty ─────────────────────────────────
+
+        /**
+         * Recorded when the player breaks into Angel Nails & Beauty after closing hours
+         * (19:00–09:00). Penalty: +4 Notoriety; NeighbourhoodWatchSystem triggered.
+         */
+        BURGLARY("Burglary"),
+
+        /**
+         * Recorded when a POLICE NPC is within 20 blocks during the Marchetti voucher
+         * scam at Angel Nails & Beauty. Penalty: +8 Notoriety.
+         */
+        MONEY_LAUNDERING("Money laundering");
 
         private final String displayName;
 
