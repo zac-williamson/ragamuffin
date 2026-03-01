@@ -23156,3 +23156,162 @@ public static final int   SCRATCH_FIVE_THRESHOLD    = 99;   // %
    RNG for jackpot). Press E while holding scratch card — outcome is 20 COIN win.
    Walk to kiosk, press E. Verify 20 COIN added to player total. Verify
    `achievementSystem.isUnlocked(AchievementType.SCRATCH_CARD_WINNER)`.
+
+---
+
+## Add Northfield Chippy — Tony's Chip Shop, Late-Night Comfort Food & the Lard Economy
+
+**Landmark**: `LandmarkType.CHIPPY` ("Tony's Chip Shop")
+**System**: `ChippySystem` (new — `src/main/java/ragamuffin/core/ChippySystem.java`)
+**UI**: `ChippyOrderUI` already exists (Issue #926 stub); this issue wires it to a real backing system.
+
+### Overview
+
+Tony's Chip Shop is the beating, greasy heart of Northfield's late-night economy.
+Open **11:30–23:00** daily (later than most food venues), it serves as a survival
+lifeline for the hungry and broke, a social hub after pub closing time (22:00), and
+a minor crime hotspot where protection rackets, stolen-goods fencing, and after-hours
+food theft all intersect.
+
+**Key NPC**: Tony (NPCType.CHIPPY_OWNER) — works the fryer 11:30–23:00. Blunt,
+salt-of-the-earth Brummie. If the player's notoriety is Tier 1+ Tony will still
+serve them, but warns: "I don't want no trouble in here, right?" at Tier 2+.
+
+**Second NPC**: Donna (NPCType.CHIPPY_ASSISTANT) — on till 17:00–23:00 (evening
+rush). Gossip queen; shares rumours freely (no drunk timer needed, like the
+Launderette's loose-tongue NPCs).
+
+### Menu & Ordering
+
+Press **E** on the `PropType.CHIPPY_COUNTER` prop to open `ChippyOrderUI`.
+The UI is already defined; `ChippySystem` must handle:
+
+| Item | Cost | Effect |
+|------|------|--------|
+| CHIPS | 2 COIN | +40 hunger |
+| BATTERED_SAUSAGE | 2 COIN | +30 hunger, +10 energy |
+| CHIP_BUTTY | 3 COIN | +50 hunger (requires BREAD in inventory; BREAD consumed) |
+| MUSHY_PEAS | 1 COIN | +15 hunger, +5 cold relief (warmth) |
+| PICKLED_EGG | 1 COIN | 20% chance FOOD_POISONING debuff (−5 HP/min for 60s) |
+| FISH_SUPPER | 4 COIN | +60 hunger, only available on 2 out of every 3 in-game days (Tony "couldn't get a good catch") |
+| SALT_AND_VINEGAR_PACKET | 1 COIN | Condiment; +5 hunger bonus if added within 30s of buying CHIPS |
+| BOTTLE_OF_WATER | 1 COIN | +20 thirst |
+
+- **CHIP_BUTTY gate**: If player orders CHIP_BUTTY without BREAD, Tony says
+  "You need to bring your own bread, mate." and the order fails.
+- **FISH_SUPPER availability**: Seeded per in-game day; unavailable 1 in every 3 days.
+  Tony says "No fish today, the van never showed up" when unavailable.
+- **Warmth bonus**: All hot food items (CHIPS, BATTERED_SAUSAGE, CHIP_BUTTY, FISH_SUPPER,
+  MUSHY_PEAS) grant +8 warmth when consumed (cold relief in winter).
+
+### Post-Pub Rush (22:00–23:00)
+
+After the pub closes (22:00), 2–4 PUBLIC NPCs and 1–2 STREET_LAD NPCs spawn near
+the chippy door in NPCState.QUEUING, each with drunk-adjacent speech lines:
+- "Get us a battered sausage mate I'm starving"
+- "Large chips, large chips, LARGE chips"
+- "Is there any curry sauce left or what"
+
+This is the busiest period. During the rush:
+- Tony moves 20% faster (reduced service delay).
+- A random ALTERCATION event (15% chance each in-game minute) has two STREET_LAD
+  NPCs arguing over the last PICKLED_EGG. Player can intervene (E) to broker peace
+  (+2 Street Rep) or instigate the fight (+1 notoriety, NPCState.FIGHTING).
+
+### Protection Racket Integration
+
+If the Marchetti Crew faction has territory (via `GangTerritorySystem`), Tony pays
+weekly protection money (3 COIN/week, deducted from player's passive faction income
+pool). If the player has Marchetti Crew respect ≥ 20, Tony gives a **10% discount**
+on all items. If the player is aligned with a rival faction, Tony is nervous and
+service is 30% slower (dialogue: "Just hurry up, yeah, I've got people watching.").
+
+### Lard Bucket — Crafting Integration
+
+A `PropType.LARD_BUCKET` prop sits behind the counter. The player can interact (E)
+with it to collect **COOKING_OIL** (one use per in-game day, free). COOKING_OIL
+is a new `Material` used in crafting:
+- `COOKING_OIL + CLOTH → FIRE_STARTER` (lights campfires instantly)
+- `COOKING_OIL + PETROL_CAN_FULL → MOLOTOV` (throwable incendiary, +15 notoriety on use)
+
+### Steal the Chips
+
+When Tony is not looking (>6 blocks away, or NPC state WANDERING), the player can
+press **E** on the warming rack prop (`PropType.CHIP_WARMING_RACK`) to steal food:
+- Steals: CHIPS (1 portion, +40 hunger)
+- Caught (if Tony within 6 blocks): +3 notoriety, Tony kicks player out
+  (`NPCState.AGGRESSIVE`; door interaction blocked for 5 in-game minutes).
+- Not caught: +1 notoriety (noise), `RumourType.PLAYER_SPOTTED` seeded into Donna.
+
+### Closing Time (23:00)
+
+At 23:00 Tony locks up. A `PropType.CLOSED_SIGN` is placed. Remaining queuing NPCs
+scatter. Any leftover CHIPS on the warming rack becomes `Material.COLD_CHIPS`
+(salvageable if player breaks in — triggers `NeighbourhoodWatchSystem.onVisibleCrime()`).
+
+**After-hours break-in**: Player can break the chippy door (WOOD, 5 hits) after
+23:00 to access COLD_CHIPS and COOKING_OIL. Adds +2 notoriety and `BREAKING_AND_ENTERING`
+criminal record entry.
+
+### Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `LARGE_CHIPS` | Buy CHIPS 10 times |
+| `CHIP_CONNOISSEUR` | Buy every item on Tony's menu at least once |
+| `MIDNIGHT_MUNCHIES` | Buy food during the post-pub rush (22:00–23:00) |
+| `PICKLED_EGG_REGRET` | Get FOOD_POISONING from a PICKLED_EGG |
+| `LARD_ALCHEMIST` | Craft a MOLOTOV using COOKING_OIL from Tony's lard bucket |
+| `CLOSING_TIME_BURGLAR` | Steal COLD_CHIPS after breaking in after 23:00 |
+
+### Unit Tests
+
+- `testOrderChipsReducesCoinAndIncreasesHunger()` — buy CHIPS for 2 COIN; verify
+  hunger +40, coin −2.
+- `testChipButtyRequiresBread()` — order CHIP_BUTTY without BREAD; verify fail result
+  `CHIP_BUTTY_NO_BREAD`; order again with BREAD; verify success and BREAD consumed.
+- `testFishSupperUnavailableOneInThreeDays()` — seed RNG; call `isFishAvailable()` for
+  3 consecutive days; verify exactly 1 day returns false.
+- `testPickledEggFoodPoisoning()` — seed RNG for 20% trigger; buy PICKLED_EGG; verify
+  FOOD_POISONING debuff active.
+- `testStealChipsWhenTonyFar()` — set Tony 7 blocks away; steal chips; verify CHIPS
+  added and notoriety +1 (not caught).
+- `testStealChipsCaughtByTony()` — set Tony 3 blocks away; steal chips; verify
+  notoriety +3 and Tony state AGGRESSIVE.
+- `testCookingOilCraftingFireStarter()` — give COOKING_OIL + CLOTH; call
+  CraftingSystem; verify FIRE_STARTER produced.
+- `testPostPubRushSpawnsNpcs()` — advance time to 22:00; call update(); verify 2–4
+  PUBLIC and 1–2 STREET_LAD NPCs spawned.
+- `testMarchettiDiscountApplied()` — set Marchetti Crew respect 25; buy FISH_SUPPER;
+  verify cost is 3 COIN (10% off 4 = ~3.6, floored to 3).
+- `testBreakInAfterHoursAddsCriminalRecord()` — advance to 23:30; break chippy door;
+  verify notoriety +2 and BREAKING_AND_ENTERING in CriminalRecord.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Order full meal end-to-end**: Player has 12 COIN and 1 BREAD. Advance time to
+   13:00. Press E on CHIPPY_COUNTER. Select CHIP_BUTTY (3 COIN). Verify BREAD
+   consumed, hunger +50, warmth +8, coin reduced to 9. Select MUSHY_PEAS (1 COIN).
+   Verify hunger +15, warmth +13 total (8+5). Select BOTTLE_OF_WATER (1 COIN).
+   Verify thirst +20. Total coin spent = 5; player has 7 COIN remaining.
+
+2. **Post-pub rush NPC spawn and altercation**: Advance time to 22:01. Call
+   `update(delta)` for 60 frames. Verify 2–4 PUBLIC NPCs in QUEUING state near
+   chippy. Advance 1 more in-game minute with RNG seeded for altercation. Verify
+   two STREET_LAD NPCs have state FIGHTING or player was prompted to intervene.
+
+3. **Steal chips undetected, then get caught**: Move Tony to (20, 1, 20) (far
+   away). Player presses E on CHIP_WARMING_RACK at (10, 1, 10). Verify CHIPS
+   added, notoriety +1. Now move Tony to (11, 1, 10). Player presses E again.
+   Verify notoriety +3 total and Tony state is AGGRESSIVE.
+
+4. **Lard bucket to MOLOTOV crafting chain**: Player collects COOKING_OIL from
+   LARD_BUCKET (first time today — succeeds). Verify COOKING_OIL in inventory.
+   Give player PETROL_CAN_FULL. Open crafting menu; combine. Verify MOLOTOV in
+   inventory and `LARD_ALCHEMIST` achievement unlocked.
+
+5. **After-hours break-in and COLD_CHIPS**: Advance time to 23:30. Verify
+   CLOSED_SIGN prop is active. Player attacks chippy door 5 times. Verify door
+   removed. Player presses E on CHIP_WARMING_RACK. Verify COLD_CHIPS added.
+   Verify notoriety +2 and CriminalRecord contains BREAKING_AND_ENTERING. Verify
+   `NeighbourhoodWatchSystem.onVisibleCrime()` was called.
