@@ -1084,7 +1084,43 @@ public enum Material {
      * Contents unknown. If UNDERCOVER_POLICE is nearby on arrival, they investigate.
      * Tooltip: "Never ask what's in the bag."
      */
-    DODGY_PACKAGE("Dodgy Package");
+    DODGY_PACKAGE("Dodgy Package"),
+
+    // ── Issue #969: Northfield Cemetery ───────────────────────────────────────
+
+    /**
+     * Spade — a gravedigger's tool. Used to dig GRAVE_PLOT_PROP blocks in the cemetery.
+     * 8 uses before it breaks. Craftable: 2 WOOD + 1 SCRAP_METAL.
+     * Also found in the groundskeeper's shed.
+     */
+    SPADE("Spade"),
+
+    /**
+     * Wedding Ring — loot from a disturbed grave.
+     * Fenceable to FENCE NPC or PAWN_SHOP for 8 COIN.
+     * Tooltip: "Someone wore this their whole life."
+     */
+    WEDDING_RING("Wedding Ring"),
+
+    /**
+     * Pocket Watch — loot from a disturbed grave.
+     * Fenceable to FENCE NPC or PAWN_SHOP for 12 COIN.
+     * Tooltip: "Stopped at some point. Hasn't moved since."
+     */
+    POCKET_WATCH("Pocket Watch"),
+
+    /**
+     * Condolence Card — a social item.
+     * Giving one to a MOURNER NPC after the funeral raises Community Respect +1.
+     * Not sellable.
+     */
+    CONDOLENCE_CARD("Condolence Card"),
+
+    /**
+     * Old Photograph — flavour item found in graves.
+     * Not sellable. Examining it displays: "Someone loved this person."
+     */
+    OLD_PHOTOGRAPH("Old Photograph");
 
     private final String displayName;
 
@@ -1554,6 +1590,18 @@ public enum Material {
             case DODGY_PACKAGE:      return cs(0.48f, 0.38f, 0.25f,  // Brown plain packaging
                                                0.22f, 0.18f, 0.12f); // Dark tape / string
 
+            // Issue #969: Northfield Cemetery
+            case SPADE:              return cs(0.45f, 0.30f, 0.10f,  // Brown wooden handle
+                                               0.55f, 0.55f, 0.60f); // Metal blade
+            case WEDDING_RING:       return cs(0.95f, 0.82f, 0.20f,  // Gold band
+                                               0.98f, 0.90f, 0.55f); // Lighter highlight
+            case POCKET_WATCH:       return cs(0.78f, 0.68f, 0.40f,  // Tarnished gold case
+                                               0.35f, 0.35f, 0.38f); // Dark face
+            case CONDOLENCE_CARD:    return cs(0.92f, 0.90f, 0.88f,  // Cream card
+                                               0.60f, 0.45f, 0.55f); // Mauve floral accent
+            case OLD_PHOTOGRAPH:     return cs(0.85f, 0.78f, 0.65f,  // Sepia tones
+                                               0.55f, 0.45f, 0.35f); // Dark border
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1801,6 +1849,12 @@ public enum Material {
             // Issue #967: Northfield Taxi Rank (not block items)
             case TAXI_PASS:
             case DODGY_PACKAGE:
+            // Issue #969: Northfield Cemetery (not block items)
+            case SPADE:
+            case WEDDING_RING:
+            case POCKET_WATCH:
+            case CONDOLENCE_CARD:
+            case OLD_PHOTOGRAPH:
                 return false;
             default:
                 return true;
@@ -2282,6 +2336,18 @@ public enum Material {
                 return IconShape.CARD;        // prepaid card shape
             case DODGY_PACKAGE:
                 return IconShape.BOX;         // plain wrapped box
+
+            // Issue #969: Northfield Cemetery
+            case SPADE:
+                return IconShape.TOOL;        // long-handled spade
+            case WEDDING_RING:
+                return IconShape.GEM;         // ring / gem shape
+            case POCKET_WATCH:
+                return IconShape.CYLINDER;    // round watch case
+            case CONDOLENCE_CARD:
+                return IconShape.FLAT_PAPER;  // greeting card shape
+            case OLD_PHOTOGRAPH:
+                return IconShape.FLAT_PAPER;  // flat photo print
 
             default:
                 return IconShape.BOX;
