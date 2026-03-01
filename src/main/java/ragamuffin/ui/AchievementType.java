@@ -1295,6 +1295,26 @@ public enum AchievementType {
         "Chalk and Talk",
         "Bought chalk from Dennis. He looked genuinely pleased. It's his only consistent income.",
         1
+    ),
+
+    // ── Issue #967: Northfield Taxi Rank ──────────────────────────────────────
+
+    DODGY_PACKAGE(
+        "Don't Ask, Don't Tell",
+        "Received a mysterious package from Dave's Minicab. You didn't ask. Smart.",
+        1
+    ),
+
+    LAST_FARE(
+        "Last Fare",
+        "Took Dave's minicab after 02:00. He was the only one still running. You didn't want to know why.",
+        1
+    ),
+
+    REGULAR_CUSTOMER(
+        "Regular Customer",
+        "Used A1 Taxis five times. Mick knows your usual destinations. He doesn't comment. Much.",
+        5
     );
 
     private final String name;
