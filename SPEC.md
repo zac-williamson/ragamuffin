@@ -27891,3 +27891,233 @@ Mo's stall despawn timing (–5 min from raid), shutter passability (raised/lowe
 // New achievements: MARKET_TRADER_ACH, TRADING_STANDARDS_SURVIVOR,
 //     MARKET_PICKPOCKET, TEA_IN_THE_RAIN (add to AchievementType.java)
 // All other stubs (NPC types, PropTypes, CriminalRecord, RumourType) already present
+
+---
+
+## Northfield Community Centre — Boxing Club, Council Meetings & the Jumble Sale Racket
+
+**Issue #1104** (stubbed across codebase — `CommunityCentreSystem.java` does not yet exist)
+
+The Northfield Community Centre (`LandmarkType.COMMUNITY_CENTRE`) is a squat 1970s
+civic building at the edge of the park. Its main hall hosts wildly different events on
+different days: Monday evening is the Boxing Club, Tuesday morning is a Council Budget
+Meeting, Wednesday is a Jumble Sale, Thursday is a Youth Drop-in, and Sunday afternoon
+is a Cake Bake-Off. All prop stubs are already in the codebase:
+`PropType.BOXING_BAG_PROP`, `PropType.BOXING_RING_PROP`, `PropType.COMMUNITY_NOTICE_BOARD`,
+`PropType.TROPHY_CABINET_PROP`, `PropType.FOLDING_TABLE_PROP` (from `CouncilFlatsSystem`),
+`NPCType.BOXING_COACH`, `RumourType.COMMUNITY_OUTRAGE`.
+Only `CommunityCentreSystem.java` is missing.
+
+### Core Mechanics
+
+#### 1. Event Schedule & Entrance
+
+The Community Centre is open 08:00–22:00 daily, but the main hall layout changes by event:
+
+| Day | Time | Event |
+|-----|------|-------|
+| Mon | 18:00–21:00 | Boxing Club (Ray the Coach) |
+| Tue | 10:00–12:00 | Council Budget Meeting (locked to outsiders) |
+| Wed | 09:00–13:00 | Jumble Sale |
+| Thu | 15:00–19:00 | Youth Drop-in |
+| Sun | 13:00–17:00 | Northfield Cake Bake-Off |
+
+A `COMMUNITY_NOTICE_BOARD` prop near the entrance displays the weekly schedule.
+Press E on the board to read: "This week: Boxing Mon 18:00, Jumble Wed 09:00..." etc.
+
+#### 2. Boxing Club (Monday 18:00–21:00)
+
+`BOXING_COACH` NPC Ray runs the session.
+
+- Press E on `BOXING_BAG_PROP`: start a 30-second training round. Each round awards
+  +1 `StreetSkillSystem.Skill.BOXING`. At Skill ≥ 3: Ray says "You've got something, son."
+  Maximum 3 rounds per session (1 per visit); a 4th attempt gets: "That's enough for tonight."
+- Press E on `BOXING_RING_PROP` at BOXING Skill ≥ 2: start a sparring session vs a
+  randomly selected `YOUTH_GANG` NPC (1–3 spawn as sparring partners on boxing nights).
+  Sparring uses the BattleBarMiniGame; win earns +2 BOXING Skill and 3 COIN. Lose: NPC
+  taunts and Notoriety +1.
+- Ray refuses service to players with ≥ 3 wanted stars: "I run a clean gym. You're
+  not training here with that lot after you."
+- If player attacks Ray or destroys `BOXING_BAG_PROP`: `RumourType.COMMUNITY_OUTRAGE`
+  seeded, Notoriety +10, NeighbourhoodWatchSystem anger +8.
+- `TROPHY_CABINET_PROP` in the corner holds the "Northfield Amateur Boxing Cup."
+  Break it (2 hits, yields `BINGO_TROPHY` material with a rename): Notoriety +5 +
+  `COMMUNITY_OUTRAGE` rumour.
+
+#### 3. Council Budget Meeting (Tuesday 10:00–12:00)
+
+- Main hall is **locked** during this period: a `LOCKED_DOOR_PROP` blocks entry.
+  Attempting entry: "Council meeting in progress. Members only."
+- Three `COUNCIL_MEMBER` NPCs sit at `FOLDING_TABLE_PROP` inside.
+- **Eavesdrop mechanic**: player can crouch adjacent to the door (within 1 block) and
+  press E to eavesdrop. If `NoiseSystem.getNoiseLevel()` < 30: success — receive a
+  `RumourType.SHOP_NEWS` rumour (budget cuts, shop closures, upcoming road works)
+  seeded into `RumourNetwork`. If noise ≥ 30: fail — one `COUNCIL_MEMBER` opens
+  the door and issues a verbal warning (+3 Notoriety).
+- **Mission: Steal the Minutes**: A Marchetti Crew contact in the pub (at Marchetti
+  Respect ≥ 40) asks the player to steal the meeting minutes document. Item:
+  `COUNCIL_MINUTES` material. The document is placed on the `FOLDING_TABLE_PROP`.
+  Player must unlock the door (LOCKPICK), sneak in without triggering NPCs, grab
+  the item, and return it to the contact for 15 COIN reward.
+- If caught inside during the meeting: `CriminalRecord.CrimeType.TRESPASS` added,
+  Notoriety +8, WantedSystem +1 star.
+
+#### 4. Jumble Sale (Wednesday 09:00–13:00)
+
+- 4–6 `PENSIONER` NPCs man `FOLDING_TABLE_PROP` stalls with random secondhand items.
+- Stall inventory generated from a table: `TEXTBOOK`, `WOOLLY_HAT_ECONOMY`, `BASEBALL_CAP`,
+  `KNOCK_OFF_PERFUME`, `NEWSPAPER`, `ANTIDEPRESSANTS`, `PRESCRIPTION_MEDS`,
+  `TIN_OF_BEANS` (random selection, 1–3 items each stall, priced 1–2 COIN each).
+- Player can **haggle** (press E, then select "Offer less"): 50% chance of 1 COIN
+  discount if `StreetSkillSystem.getSkill(CHARM) >= 1`, 25% otherwise. Pensioner
+  responds: "Go on then, love" or "No, that's my best price."
+- **Sneak-steal**: player can grab an item without paying if no PENSIONER is within
+  3 blocks and `NotorietySystem.getTier() <= 2`. Success: +item, Notoriety +3.
+  Fail (caught): Notoriety +8, `CriminalRecord.CrimeType.THEFT`, NeighbourhoodWatch
+  anger +5, Pensioner shouts triggering NoiseSystem +15.
+- **Ring of dodgy goods**: if player has 3+ stolen items in inventory on entering
+  the Jumble Sale, one of the PENSIONER NPCs approaches: "You're not flogging that
+  tat here, are ya?" Option to sell stolen items at 50% PawnShop value (no Notoriety
+  risk) or decline.
+- Revenue collected in a `CASH_BOX_PROP` near entrance. Rob it (2 hits): 5–15 COIN,
+  `COMMUNITY_OUTRAGE` rumour, Notoriety +12, NeighbourhoodWatch anger +10.
+
+#### 5. Youth Drop-in (Thursday 15:00–19:00)
+
+- 4–8 `SCHOOL_KID` NPCs present. Player can join a table tennis/pool mini-game
+  (press E on `FOLDING_TABLE_PROP`) for a simplified BattleBarMiniGame variant.
+  Win: +2 COIN, +5 Notoriety reduction (community engagement).
+  Lose: SCHOOL_KID taunts; no penalty.
+- Selling anything to SCHOOL_KID NPCs: `CriminalRecord.CrimeType.SUPPLY_TO_MINOR`,
+  Notoriety +20, WantedSystem +2 stars. Text: "You sold to a kid? Even for Northfield,
+  that's low."
+- One SCHOOL_KID NPC offers a fetch quest (find their lost `FOOTBALL` material from
+  the park; 1 COIN reward). Simple delivery quest using `BuildingQuestRegistry` pattern.
+
+#### 6. Cake Bake-Off (Sunday 13:00–17:00)
+
+- 5–8 `PENSIONER` NPCs and 2 `PUBLIC` NPCs present. Three `FOLDING_TABLE_PROP` stalls
+  hold cake items.
+- Buy `CAKE_SLICE` for 1 COIN from any stall. `WarmthSystem` +5, `HealingSystem` +8,
+  `NeedType.HUNGRY` satisfied.
+- **Sabotage**: player can add `ANTIDEPRESSANTS` from inventory to a competitor's cake
+  batter (press E on stall while holding ANTIDEPRESSANTS). 48-hour cooldown.
+  If sabotage goes undetected (requires NoiseSystem < 20): `RumourType.COMMUNITY_OUTRAGE`
+  seeded: "Someone put pills in Margaret's Victoria sponge." Achievement: `CAKE_SABOTEUR`.
+  If caught: Notoriety +15, `CriminalRecord.CrimeType.POISONING`, WantedSystem +2 stars.
+- First Bake-Off win (arrive with `STEAK_BAKE` in inventory at event time): "Oi — that's
+  bought in!" Achievement `BAKE_OFF_CHEAT` +2 Notoriety but still wins 3 COIN prize.
+
+### Schedule Summary
+
+| Day | Event | Hours | Entry |
+|-----|-------|-------|-------|
+| Mon | Boxing Club | 18:00–21:00 | Open (refused ≥3 stars) |
+| Tue | Council Meeting | 10:00–12:00 | Locked |
+| Wed | Jumble Sale | 09:00–13:00 | Open |
+| Thu | Youth Drop-in | 15:00–19:00 | Open (selling banned) |
+| Sun | Cake Bake-Off | 13:00–17:00 | Open |
+| All | Lobby/Notice Board | 08:00–22:00 | Open |
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `COUNCIL_MINUTES` | Stolen document; Marchetti mission item |
+| `CAKE_SLICE` | WarmthSystem +5, HealingSystem +8, HUNGRY need |
+| `FOOTBALL` | Youth Drop-in fetch quest item |
+
+(Add to `Material.java` if not present.)
+
+### New PropTypes Required
+
+None — `BOXING_BAG_PROP`, `BOXING_RING_PROP`, `COMMUNITY_NOTICE_BOARD`, `TROPHY_CABINET_PROP`,
+`FOLDING_TABLE_PROP`, `CASH_BOX_PROP` (from other systems) are all present.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `BOXING_CHAMP` | Win 5 sparring sessions at the Boxing Club |
+| `COUNCIL_MOLE` | Successfully eavesdrop on the Council Budget Meeting 3 times |
+| `JUMBLE_SALE_KING` | Buy 10 items from the Jumble Sale |
+| `CAKE_SABOTEUR` | Successfully add ANTIDEPRESSANTS to a Cake Bake-Off entry undetected |
+| `BAKE_OFF_CHEAT` | Win the Cake Bake-Off using a shop-bought item |
+
+(Add to `AchievementType.java`.)
+
+### System Integrations
+
+- **BattleBarMiniGame**: boxing sparring sessions, youth table tennis.
+- **StreetSkillSystem**: `BOXING` Skill from bag training, CHARM for jumble haggling.
+- **NotorietySystem**: theft, trespassing, assault, cake sabotage triggers.
+- **WantedSystem**: trespassing +1 star; supply to minor +2 stars; caught sabotage +2 stars.
+- **RumourNetwork**: `COMMUNITY_OUTRAGE` rumour from assault/theft/sabotage;
+  `SHOP_NEWS` from eavesdropping.
+- **NoiseSystem**: eavesdropping requires low noise; jumble theft caught triggers +15.
+- **CriminalRecord**: `TRESPASS`, `THEFT`, `SUPPLY_TO_MINOR`, `POISONING`.
+- **NeighbourhoodWatchSystem**: trophy/cash box smash, jumble theft anger.
+- **WarmthSystem**: indoor during cold weather = shelter; CAKE_SLICE +5.
+- **HealingSystem**: CAKE_SLICE +8.
+- **FactionSystem / MarchettI**: Council Minutes steal mission at Marchetti Respect ≥ 40.
+- **DisguiseSystem**: COUNCIL_JACKET reduces detection in Council Meeting.
+- **NewspaperSystem**: "Jumble Sale in Chaos" headline if cash box robbed.
+
+**Unit tests**: event schedule (day/time to event mapping), jumble item pricing,
+haggling success rates (CHARM ≥ 1: 50%, otherwise 25%), cake sabotage detection
+(noise < 20 = undetected), Boxing Skill award per bag session (max 3/session),
+eavesdrop noise threshold (< 30 success, ≥ 30 fail), ring-of-dodgy-goods trigger (3+
+stolen items).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Boxing bag awards skill and enforces session cap**: Set day to Monday, time 18:30.
+   Verify `BOXING_COACH` is present. Press E on `BOXING_BAG_PROP` 3 times (each 30 seconds
+   simulated). Verify `StreetSkillSystem.getSkill(BOXING)` increased by 3.
+   Press E a 4th time. Verify skill NOT increased again. Verify speech log contains
+   "That's enough for tonight."
+
+2. **Sparring session triggers BattleBarMiniGame**: Set BOXING Skill = 2. Set day Monday,
+   time 19:00. Press E on `BOXING_RING_PROP`. Verify `BattleBarMiniGame` session is
+   started (session active flag = true). Simulate win. Verify BOXING Skill increased by 2.
+   Verify player COIN increased by 3.
+
+3. **Council meeting door locked on Tuesday**: Set day to Tuesday, time 10:30.
+   Verify `LOCKED_DOOR_PROP` is impassable. Place player adjacent. Simulate pressing W
+   for 30 frames. Verify player has NOT entered main hall. Verify speech log contains
+   "Council meeting in progress."
+
+4. **Eavesdrop succeeds with low noise**: Set day Tuesday, time 10:30. Set
+   `NoiseSystem.getNoiseLevel()` to 15. Place player adjacent to meeting room door.
+   Press E. Verify `RumourNetwork` contains a new `SHOP_NEWS` rumour. Verify Notoriety
+   unchanged.
+
+5. **Eavesdrop fails with high noise**: Set day Tuesday, time 10:30. Set noise to 35.
+   Press E on door. Verify no `SHOP_NEWS` rumour added. Verify Notoriety increased by 3.
+
+6. **Jumble Sale haggling with CHARM**: Set day Wednesday, time 10:00. Spawn 4 PENSIONER
+   NPCs at stalls. Set `CHARM` Skill = 1. Mock `Random` to guarantee haggle success.
+   Press E on stall, select "Offer less". Verify item purchased for 1 COIN less than
+   listed price.
+
+7. **Jumble theft caught triggers crime record**: Set day Wednesday, time 10:00.
+   Set Notoriety tier = 1. Place player near stall with PENSIONER within 2 blocks
+   (too close). Attempt steal. Verify `CriminalRecord` contains `THEFT`. Verify Notoriety
+   increased by 8. Verify `NoiseSystem` noise increased by 15.
+
+8. **Cake Bake-Off sabotage detected if noisy**: Set day Sunday, time 14:00.
+   Give player 1× `ANTIDEPRESSANTS`. Set `NoiseSystem.getNoiseLevel()` = 25.
+   Press E on a cake stall while holding ANTIDEPRESSANTS. Verify `CriminalRecord`
+   contains `POISONING`. Verify WantedSystem.getStars() increased by 2.
+   Verify Notoriety increased by 15.
+
+9. **Cake Bake-Off sabotage undetected when quiet**: Set noise = 10. Repeat sabotage.
+   Verify `RumourNetwork` contains `COMMUNITY_OUTRAGE` rumour with text "pills".
+   Verify `CriminalRecord` does NOT contain `POISONING`. Verify achievement
+   `CAKE_SABOTEUR` unlocked.
+
+// ── New: CommunityCentreSystem.java in ragamuffin.core
+// New materials if absent: COUNCIL_MINUTES, CAKE_SLICE, FOOTBALL (add to Material.java)
+// New achievements: BOXING_CHAMP, COUNCIL_MOLE, JUMBLE_SALE_KING,
+//     CAKE_SABOTEUR, BAKE_OFF_CHEAT (add to AchievementType.java)
+// All other stubs (PropTypes, NPCTypes, RumourType.COMMUNITY_OUTRAGE) already present
