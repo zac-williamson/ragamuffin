@@ -17259,3 +17259,182 @@ shift in disguise to case buildings for later robbery.
    1 in-game day. Verify the SHOPKEEPER NPC is in `NPCState.FRIGHTENED`. Verify the
    SHOPKEEPER drops 20% of their coin on their home block. Verify the SHOPKEEPER does not
    report the player when the player commits a witnessed crime nearby.
+
+---
+
+## Add Northfield Amusement Arcade — 2p Machines, Claw Grabbers & Teenage Congregation
+
+**Goal**: Add a fully interactive amusement arcade (Ace Amusements) on the high
+street — a single-storey brick unit squeezed between the charity shop and the
+bookies. It is open 10:00–22:00 daily and draws a rotating cast of bored
+teenagers, truant school kids, and lonely pensioners. The arcade provides a
+money-sink/gamble mechanic, a passive coin trickle from machine-cheating, and a
+social hot spot that interacts with the notoriety, noise, and faction systems.
+
+### Building Layout
+
+A 10×8-block interior with a low suspended ceiling (height 3). Block palette:
+`CARPET` (garish red), `YELLOW_BRICK` walls, `GLASS` frontage. Interior filled
+with `ARCADE_MACHINE_PROP` and `PENNY_FALLS_PROP` placements arranged in rows.
+
+New `LandmarkType.ARCADE` with display name `"Ace Amusements"`. New prop types:
+
+| Prop | Description |
+|------|-------------|
+| `ARCADE_MACHINE_PROP` | Upright video-game cabinet. Each has a genre (FIGHTER, RACER, SHOOTER). |
+| `PENNY_FALLS_PROP` | 2p penny-falls machine. Core gambling mechanic. |
+| `CLAW_MACHINE_PROP` | Prize-grabber with a random plush toy item in it. |
+| `CHANGE_MACHINE_PROP` | Converts 1 COIN → 5 `TWOPENCE` tokens. |
+| `REDEMPTION_COUNTER_PROP` | Staffed counter where tokens are exchanged for prizes. |
+
+### NPCs
+
+| NPC | Description |
+|-----|-------------|
+| `ARCADE_ATTENDANT` | Kevin, a bored teen in a polo shirt. Present 10:00–22:00. Passive. Ejects Tier 3+ notoriety players ("You're barred, mate"). Calls police if player shakes/tilts a machine three times. |
+| `ARCADE_KID` | 2–4 SCHOOL_KID-type NPCs who hang around the machines 15:00–21:00, spending tokens. Truant variants spawn 10:00–15:00 (adds +2 Notoriety if player is seen encouraging truancy). |
+
+### New Materials
+
+| Material | Source | Use |
+|----------|--------|-----|
+| `TWOPENCE` | Change machine (5 per 1 COIN) or found on floor | Currency for arcade machines |
+| `PLUSH_TOY` | Won from claw machine | Sellable to fence (3 COIN) or charity shop (2 COIN). Tooltip on first win: "Against all odds." |
+| `ARCADE_TOKEN` | Redemption prize for 20 tokens | Can be traded at the Fence for 2 COIN; no legitimate use |
+
+### Penny Falls Mechanic
+
+The core loop. Player spends 1 `TWOPENCE` per push (press E on `PENNY_FALLS_PROP`).
+Each push advances an internal piston by 1 unit. When a coin tips over the ledge
+edge (piston position ≥ threshold, computed with seeded RNG per machine instance)
+a payout of 2–8 `TWOPENCE` drops.
+
+- Payout probability: **12%** per push yields 2–4 tokens; **2%** yields 5–8 tokens.
+- Machine tilt: Player can press **F** (shove) to advance piston by 2 extra units,
+  but each shove has a **25%** chance of triggering a `MACHINE_TILT` event —
+  Kevin warns the player and 1 Notoriety is added. Three tilts in one visit: ejected.
+- Jackpot slot: each machine has a hidden jackpot threshold (seeded on world-gen,
+  range 50–200 pushes). Hitting it exactly pays 30 `TWOPENCE` and triggers
+  `AchievementType.PENNY_KING`.
+
+### Claw Machine Mechanic
+
+Press E on `CLAW_MACHINE_PROP`. Costs 2 `TWOPENCE`. Player steers a 3-second
+timed claw (horizontal/vertical input). On release: success if claw position is
+within ±1 block of the hidden prize position (seeded per machine). Failure returns
+nothing. Two prizes per machine; machine is then empty until the next in-game day
+(Kevin restocks at opening time). Prize is a `PLUSH_TOY` item.
+
+### Machine Cheating — Schoolboy Electronics
+
+If the player has a `SCREWDRIVER` (new crafting recipe: 1 SCRAP_METAL + 1 PIPE)
+they can hold it and press F on any machine while Kevin is not looking (more than
+6 blocks away or facing away). This opens a `MACHINE_TAMPER` action:
+
+- **PENNY_FALLS**: Move piston threshold −10 (easier jackpot). Notoriety +3 if caught.
+- **ARCADE_MACHINE**: Free plays. Notoriety +2 if caught.
+- **CHANGE_MACHINE**: Extract 1 COIN per tamper (max 5 per day). Notoriety +5 if caught.
+  `CriminalRecord.CrimeType.THEFT` entry added.
+
+### Redemption Counter
+
+Kevin exchanges accumulated `TWOPENCE` tokens for prizes:
+
+| Token cost | Prize |
+|------------|-------|
+| 10 | `PLUSH_TOY` |
+| 20 | `ARCADE_TOKEN` |
+| 50 | `WOOLLY_HAT_ECONOMY` |
+| 100 | `SCRATCH_CARD` × 3 |
+
+### Noise & Time-of-Day Behaviour
+
+`NoiseSystem` registers the arcade as a permanent low-level noise source
+(noise level 2) during opening hours. This gently elevates the `NeighbourhoodWatch`
+anger in the surrounding zone.
+
+- After 20:00: `ARCADE_KID` NPCs become louder (noise level +1) and 15% chance
+  per in-game hour of a minor brawl outside (sets two NPCs to `NPCState.ATTACKING`;
+  adds Notoriety +1 if player is within 10 blocks and does nothing).
+- Police patrol passes the arcade entrance once per in-game hour after 20:00.
+
+### Faction Integration
+
+- **Street Lads** at Respect ≥ 60: One `ARCADE_KID` becomes a Street Lads runner
+  who slips the player 1 free `TWOPENCE` per visit. Tooltip: "He's alright, for a kid."
+- **Marchetti Crew** at Respect ≥ 75: Kevin operates a side deal — player can sell
+  stolen `ARCADE_TOKEN` items at 3 COIN each (double face value) via E on Kevin.
+- **The Council** at Respect ≤ 30: Planning notice served on the arcade; Kevin locks
+  the door for 1 in-game day while he "sorts the paperwork". Player can slip Kevin
+  5 COIN to reopen it early.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `PENNY_KING` | Hit the penny-falls jackpot |
+| `AGAINST_ALL_ODDS` | Win the claw machine on the first attempt |
+| `TILTED` | Trigger a machine tilt three times in one visit |
+| `SKOOL_SKIVER` | Spend 3 in-game hours in the arcade during school hours (10:00–15:00) |
+
+### Integrations
+
+- **NotorietySystem**: Machine tampering and ejection feed through standard notoriety pipeline.
+- **CriminalRecord**: Change-machine theft adds `THEFT` entry.
+- **FenceSystem**: `PLUSH_TOY` and `ARCADE_TOKEN` added to Fence's buy table.
+- **CharityShopSystem**: `PLUSH_TOY` is a valid donation item (+1 goodwill).
+- **NoiseSystem**: Arcade registered as noise source level 2; escalates to 3 after 20:00.
+- **NeighbourhoodWatchSystem**: Arcade noise increases area anger +1/in-game-hour.
+- **WeatherSystem**: RAIN sends queuing `ARCADE_KID` NPCs inside (crowds the arcade).
+  HEATWAVE empties the arcade (they'd rather be outside). Both adjust NPC counts.
+- **RumourNetwork**: First jackpot win seeds `LOCAL_EVENT` rumour:
+  "Someone won the penny falls at Ace Amusements. Didn't believe it meself."
+- **AchievementSystem**: Four new achievements above.
+- **ScrewdriverCrafting**: New recipe `1 SCRAP_METAL + 1 PIPE → SCREWDRIVER` added to
+  `CraftingSystem`.
+
+### Unit Tests
+
+- Penny-falls payout probability: over 1,000 pushes with seeded RNG, win rate within
+  1% of 12% (2–4 payout) and 2% (5–8 payout).
+- Jackpot threshold detection: piston advancing past threshold exactly triggers jackpot payout.
+- Machine tilt: shove with 25%-trigger RNG seed fires `MACHINE_TILT` event; Kevin speech fires.
+- Three tilts: ejection flag set, player cannot re-enter for remainder of in-game day.
+- Claw machine success: position within ±1 block of hidden prize → `PLUSH_TOY` awarded.
+- Redemption counter: 10-token exchange returns `PLUSH_TOY`; token count decremented.
+- Tamper detection: Kevin within 6 blocks → tamper fails; Kevin facing away → tamper succeeds.
+- Change machine: 1 COIN → 5 `TWOPENCE`; theft variant adds `THEFT` to criminal record.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Penny falls basic payout**: Construct `ArcadeSystem` with a seeded RNG producing
+   a win on push 1. Give the player 5 `TWOPENCE`. Press E on `PENNY_FALLS_PROP` once.
+   Verify `TWOPENCE` count has decreased by 1. Verify payout tokens (2–8) were added
+   to the player's inventory. Verify no `MACHINE_TILT` event fired.
+
+2. **Machine tilt ejects after three shoves**: Construct `ArcadeSystem`. Give the player
+   5 `TWOPENCE`. Simulate three F-presses (shove) on `PENNY_FALLS_PROP` with a seeded
+   RNG that triggers `MACHINE_TILT` on each shove. Verify Notoriety increased by 3
+   (1 per tilt). Verify Kevin NPC entered speech mode after the third tilt. Verify the
+   player's `arcadeEjected` flag is true and they cannot interact with any arcade machine.
+
+3. **Claw machine win on first attempt**: Construct `ArcadeSystem` with the hidden prize
+   at column 3. Simulate player steering claw to column 3. Press E (release). Verify
+   `PLUSH_TOY` is now in the player's inventory. Verify the machine's prize count has
+   decreased by 1. Verify `AchievementType.AGAINST_ALL_ODDS` is unlocked.
+
+4. **Change machine converts coin to twopence**: Give the player 2 COIN. Press E on
+   `CHANGE_MACHINE_PROP`. Verify COIN count is now 1 and `TWOPENCE` count is 5. Press E
+   again. Verify COIN is 0 and `TWOPENCE` is 10. Press E with no COIN. Verify interaction
+   is rejected ("No coins, mate").
+
+5. **Tamper blocked when Kevin nearby**: Place Kevin NPC within 4 blocks of the
+   `CHANGE_MACHINE_PROP`. Give player a `SCREWDRIVER`. Press F on the change machine.
+   Verify the tamper is blocked (no COIN extracted, no `THEFT` record added, no
+   Notoriety change). Move Kevin 10 blocks away. Press F again. Verify 1 COIN is added
+   to player inventory. Verify `CriminalRecord` contains `THEFT`.
+
+6. **Jackpot seeds rumour in network**: Set the penny-falls jackpot threshold to 3 pushes.
+   Give the player 10 `TWOPENCE`. Advance 3 pushes. Verify `AchievementType.PENNY_KING`
+   is unlocked. Verify a `LOCAL_EVENT` rumour containing "penny falls" has been seeded
+   into at least one NPC in the `RumourNetwork`.
