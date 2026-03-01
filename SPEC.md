@@ -23928,3 +23928,158 @@ is not `TOPPLED`.
    punches one PENSIONER. Verify ALL nearby NPCs transition to HOSTILE. Verify
    `NotorietySystem.getNotoriety()` increased by 10. Advance to next in-game day.
    Verify `NewspaperSystem.getTodaysHeadlines()` contains the word "Remembrance".
+
+---
+
+## Northfield Canal — Gone Fishing, Towpath Economy & The Cut at Night
+
+The `CANAL` landmark is already world-generated (240-block east-west water channel
+with towpath, stone walls, and a footbridge) and has items
+(`FISHING_ROD`, `CANAL_FISH`, `DINGHY`, `STRING_ITEM`, `SHOPPING_TROLLEY_GOLD`),
+an NPC type (`CANAL_BOAT_OWNER`), achievements (`CANAL_CATCH`, `TROLLEY_FISHERMAN`,
+`EVIDENCE_IN_THE_CUT`, `NIGHT_SWIMMER`), and a `RumourType.SUSPICIOUS_ACTIVITY`
+seed reference — but no `CanalSystem.java`. This issue implements it.
+
+### Building / Environment
+
+The canal already exists geometrically. Two narrowboats
+(`NARROWBOAT_EAST_PROP`, `NARROWBOAT_WEST_PROP`) sit moored on the south bank.
+A wooden `FISHING_BENCH_PROP` is placed at 3 spots along the towpath.
+A `BIKE_RACK_PROP` near the footbridge holds 1–2 `BIKE_PROP` items (stealable,
+20 COIN fence value each). A rusting `SHOPPING_TROLLEY_PROP` sits half-submerged
+at the east end.
+
+### NPCs
+
+- **Derek** (`CANAL_BOAT_OWNER`, east boat) — present 07:00–22:00. Sells `DINGHY`
+  for 15 COIN. Gossips freely (passive rumour source, +1 `LOCAL_EVENT` rumour per
+  conversation). Carries `CANAL_FISH` × 2 at all times; can be pickpocketed.
+  Dialogue: *"Lovely morning on the cut." / "Mind the locks."*
+- **Maureen** (`CANAL_BOAT_OWNER`, west boat) — present 09:00–20:00. Feeds ducks
+  (2–4 `BIRD` NPCs spawn near her boat when she is present). Rewards the player
+  5 COIN for every 3 `CANAL_FISH` traded to her. Dialogue: *"Ooh, a nice bream!"*
+- **1–3 `PUBLIC` Anglers** — present dawn-to-dusk (06:00–20:00), seated at
+  `FISHING_BENCH_PROP`. Each carries a `FISHING_ROD` and 1–2 `CANAL_FISH`.
+  Can be pickpocketed; become `HOSTILE` if caught.
+- **Night Walker** (`DRUNK` NPC, 22:00–03:00) — patrols the towpath, 1 per night.
+  Drops `CAN_OF_LAGER` × 1–2. If player pushes into the canal (punch
+  while within 1 block of water edge), NPC enters `SWIMMING_PANIC` state and
+  calls `NoiseSystem.onDisturbance()` at radius 10; `WantedSystem` tier-1 alert.
+- **PCSO** — spawns at the canal entrance 20:00–06:00. Issues warnings for
+  nighttime swimming. Follows player who enters the water after dark for
+  60 in-game seconds.
+
+### Fishing Mini-Game
+
+1. Player crafts or finds a `FISHING_ROD` (crafted: 2 WOOD + 1 `STRING_ITEM`).
+2. Player stands within 1 block of the canal water edge, rod in hotbar.
+3. Player presses **E** to cast. A line indicator appears in the HUD.
+4. After 15–45 seconds (random), a bite prompt flashes: player presses **E**
+   again to reel in.
+5. Success: `CANAL_FISH` × 1 added to inventory. 15% chance: a
+   `SHOPPING_TROLLEY_PROP` is "caught" instead — gives `SHOPPING_TROLLEY_GOLD`
+   item (12 COIN fence value). `TROLLEY_FISHERMAN` achievement unlocked.
+6. The rod has 10 durability uses before breaking (dropping `WOOD` × 1).
+
+#### Time-of-day modifiers
+
+| Time | Bite chance per 30s |
+|------|---------------------|
+| 05:00–08:00 | 60% (dawn peak) |
+| 08:00–12:00 | 35% |
+| 12:00–18:00 | 25% |
+| 18:00–20:00 | 40% (dusk peak) |
+| 20:00–05:00 | 10% (night — fish feed less) |
+
+### Evidence Disposal
+
+Player presses **E** while standing within 1 block of canal water and holding a
+`CCTV_TAPE`, `STOLEN_GOODS`, `BLOODY_HOODIE`, `WEAPON`, or `FAKE_ID`:
+- Item is consumed (dropped into the water, visual splash particle).
+- If no `WITNESS` NPC has line-of-sight within 15 blocks:
+  `EVIDENCE_IN_THE_CUT` achievement; `CriminalRecord` clears one matching evidence
+  entry; `NotorietySystem` −1.
+  `RumourNetwork` seeds 1 × `SUSPICIOUS_ACTIVITY` rumour to the nearest NPC.
+- If witnessed: `WantedSystem` tier-1 alert, `CriminalRecord` entry
+  `EVIDENCE_DESTRUCTION`. The witnessing NPC says *"Oi! What're you throwing in there?"*
+
+### Night Swimming
+
+Player jumps into the canal water blocks (WATER block contact):
+- `NIGHT_SWIMMER` achievement if after 20:00.
+- Each second in the water: Warmth −4/sec (`WarmthSystem`). Health −2/sec
+  (contaminated water debuff — cleared on exit after 5 seconds).
+- After 30 seconds in water: player exits on nearest bank, `COVERED_IN_GRIME`
+  debuff applied (visible to all NPCs, lasts 120 seconds, increases police
+  suspicion by 20%).
+- `WantedSystem` tier-1 alert if PCSO is within 20 blocks.
+
+### Dinghy
+
+- Buy from Derek for 15 COIN. Stored as `DINGHY` item.
+- Player equips `DINGHY` and presses **E** on water edge to inflate and board.
+- While in dinghy: player floats on water; no Warmth/health drain.
+- Max speed: 2.0 (vs land 5.0); cannot be attacked while on water.
+- Dinghy deflates and returns to inventory after 120 seconds or if player
+  presses **E** again.
+- Dinghy allows evidence disposal from mid-canal (no line-of-sight from bank
+  NPCs unless they are on the footbridge).
+
+### Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `CANAL_CATCH` | Catch first CANAL_FISH |
+| `TROLLEY_FISHERMAN` | Pull a SHOPPING_TROLLEY out of the canal |
+| `EVIDENCE_IN_THE_CUT` | Dispose of evidence unwitnessed |
+| `NIGHT_SWIMMER` | Enter the canal water after 20:00 |
+
+### Unit Tests
+
+- `testFishingRodCraftable()` — verify `FISHING_ROD` recipe requires 2 WOOD + 1 STRING_ITEM.
+- `testBiteChanceByHour()` — `CanalSystem.getBiteChance(5f)` ≥ 0.55f; `getBiteChance(14f)` ≤ 0.30f; `getBiteChance(2f)` ≤ 0.15f.
+- `testCastAndCatch()` — seed RNG for success; call `onEKeyPressed()` twice (cast, then reel); verify `CANAL_FISH` in inventory.
+- `testTrolleyCatch()` — seed RNG for trolley outcome; cast and reel; verify `SHOPPING_TROLLEY_GOLD` in inventory, `TROLLEY_FISHERMAN` achievement.
+- `testRodDurabilityDecrement()` — cast and reel 10 times; on 11th attempt verify rod is broken (WOOD ×1 dropped, rod removed from inventory).
+- `testEvidenceDisposalUnwitnessed()` — give player `CCTV_TAPE`; no witnesses; press E on water edge; verify tape removed, `CriminalRecord` entry cleared, `EVIDENCE_IN_THE_CUT` achievement.
+- `testEvidenceDisposalWitnessed()` — add witness NPC in line-of-sight; dispose; verify `WantedSystem.getStars()` ≥ 1, `CriminalRecord` has `EVIDENCE_DESTRUCTION`.
+- `testNightSwimmingWarmthDrain()` — set Warmth to 100; enter water after 20:00; advance 10 seconds; verify Warmth < 60.
+- `testDinghy()` — buy dinghy; equip; press E on water edge; verify player state is ON_WATER, warmth drain suspended.
+- `testDerekSellsDinghy()` — player has 15 COIN; press E on Derek; select buy dinghy; verify DINGHY in inventory, COIN = 0.
+- `testMaureenRewardsFish()` — give player 3 CANAL_FISH; interact with Maureen; verify fish consumed and 5 COIN added.
+- `testPCSOSpawnsAtNight()` — set time 21:00; call `canalSystem.update(delta)`; verify PCSO NPC exists within 10 blocks of canal entrance.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Fishing full cycle — dawn catch**: Set time to 06:00 (dawn). Player crafts
+   FISHING_ROD (has 2 WOOD + 1 STRING_ITEM). Player stands 1 block from water
+   edge, FISHING_ROD in hotbar. Player presses E (cast). Advance 20 in-game
+   seconds with `CanalSystem.BITE_FORCE_OVERRIDE = true` (test override).
+   Bite prompt fires. Player presses E (reel). Verify `CANAL_FISH` in player
+   inventory. Verify `CANAL_CATCH` achievement unlocked.
+
+2. **Evidence disposal pipeline**: Player has `CCTV_TAPE` in inventory. No
+   witnesses within 20 blocks. Player stands 1 block from water edge. Player
+   presses E. Verify `CCTV_TAPE` removed from inventory. Verify `CriminalRecord`
+   no longer has the tape-related evidence entry. Verify `NotorietySystem` decreased
+   by 1. Verify `RumourNetwork.getRecentRumours()` has 1 `SUSPICIOUS_ACTIVITY` entry.
+   Verify `EVIDENCE_IN_THE_CUT` achievement unlocked.
+
+3. **Nighttime swim triggers PCSO response**: Set time to 22:00. PCSO NPC spawned
+   at canal entrance. Player jumps into water. Verify warmth decreasing (< 80 after
+   5 seconds). Verify PCSO begins following player. Advance 10 in-game seconds.
+   Verify `WantedSystem.getStars()` ≥ 1. Verify `NIGHT_SWIMMER` achievement unlocked.
+   Player exits water. Verify `COVERED_IN_GRIME` debuff applied.
+
+4. **Derek's dinghy sale and water traversal**: Player approaches Derek (east boat).
+   Player presses E. Select "Buy Dinghy (15 COIN)". Verify DINGHY in inventory,
+   player COIN reduced by 15. Player equips DINGHY. Player presses E on water edge.
+   Verify player enters ON_WATER state. Verify warmth drain rate = 0 while on water.
+   Advance 30 seconds. Verify player still on water. Player presses E again to
+   deflate. Verify player returns to normal state, DINGHY back in inventory.
+
+5. **Nighttime angler pickpocket economy**: Set time to 10:00. Verify 1–3 PUBLIC
+   angler NPCs seated at FISHING_BENCH_PROP positions along towpath. Player approaches
+   an angler within 1 block. Player presses pickpocket key (F). Verify player gains
+   CANAL_FISH or COIN. If caught (per PickpocketSystem odds), verify angler transitions
+   to HOSTILE state and `NoiseSystem.onDisturbance()` called.
