@@ -2301,7 +2301,39 @@ public enum Material {
      * Placard — held by protestors at the war memorial. Player can pick it up.
      * Achievement: PLACARD_PINCHER. Fenceable for 2 COIN.
      */
-    PLACARD("Placard");
+    PLACARD("Placard"),
+
+    // ── Issue #1063: Northfield Social Club ───────────────────────────────────
+
+    /**
+     * Membership Card — Northfield Social Club. Est. 1963. No football colours.
+     * Grants permanent bar access and eligibility for committee elections.
+     */
+    MEMBERSHIP_CARD("Membership Card"),
+
+    /**
+     * Pack of Nuts — dry roasted. Half of them are skin.
+     * Available at the Social Club bar for members. 1 COIN.
+     */
+    PACK_OF_NUTS("Pack of Nuts"),
+
+    /**
+     * Pork Scratchings — technically food.
+     * Available at the Social Club bar for members. 1 COIN.
+     */
+    PORK_SCRATCHINGS("Pork Scratchings"),
+
+    /**
+     * Raffle Ticket — you've probably not won.
+     * Purchased from the Social Club raffle draw for 1 COIN each (up to 3).
+     */
+    RAFFLE_TICKET("Raffle Ticket"),
+
+    /**
+     * Meat Raffle Prize — a frozen chicken. Still in the bag.
+     * Win from the Social Club raffle draw. Worth 4 COIN at the fence.
+     */
+    MEAT_RAFFLE_PRIZE("Meat Raffle Prize");
 
     private final String displayName;
 
@@ -2437,6 +2469,11 @@ public enum Material {
                                                0.08f, 0.08f, 0.08f); // Black centre
             case CLEANING_SUPPLIES:  return c(0.35f, 0.65f, 0.90f); // Council-issue blue bottle
             case PLACARD:            return c(0.92f, 0.88f, 0.72f); // Cardboard/pale sign
+            case MEMBERSHIP_CARD:    return c(0.18f, 0.30f, 0.62f); // Club blue card
+            case PACK_OF_NUTS:       return c(0.75f, 0.55f, 0.18f); // Golden-yellow packet
+            case PORK_SCRATCHINGS:   return c(0.72f, 0.45f, 0.18f); // Warm brown/crispy
+            case RAFFLE_TICKET:      return c(0.88f, 0.20f, 0.20f); // Red raffle stub
+            case MEAT_RAFFLE_PRIZE:  return c(0.88f, 0.88f, 0.92f); // Frozen/white chicken bag
             case HAIR_CLIPPERS:         return c(0.35f, 0.35f, 0.38f);   // Silver-grey
             case HAIR_CLIPPERS_BROKEN:  return c(0.20f, 0.20f, 0.22f);   // Dark grey, broken
             case NAIL_POLISH:    return c(0.92f, 0.18f, 0.55f);   // Hot pink

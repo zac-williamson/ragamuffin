@@ -1148,7 +1148,21 @@ public enum PropType {
      * Player can pick it up for the PLACARD_PINCHER achievement.
      * Drops: Material.PLACARD (fenceable for 2 COIN).
      */
-    PLACARD_PROP(0.30f, 1.20f, 0.05f, 2, Material.PLACARD);
+    PLACARD_PROP(0.30f, 1.20f, 0.05f, 2, Material.PLACARD),
+
+    // ── Issue #1063: Northfield Social Club ───────────────────────────────────
+
+    /** Performance stage at the Social Club — Diamond Dave performs here on Saturday nights. */
+    STAGE_PROP(3.00f, 0.50f, 2.00f, 6, Material.WOOD),
+
+    /** Dominoes table — PENSIONER and COUNCIL_BUILDER NPCs gather here Tue/Thu 19:00–22:00. */
+    DOMINOES_TABLE_PROP(1.20f, 0.80f, 0.70f, 4, Material.WOOD),
+
+    /** Club noticeboard — displays committee notices, raffle results, and event schedules. */
+    CLUB_NOTICEBOARD_PROP(0.10f, 1.20f, 0.05f, 3, Material.WOOD),
+
+    /** Bar hatch — the serving counter at the Social Club bar. */
+    BAR_HATCH_PROP(1.50f, 1.00f, 0.10f, 5, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
