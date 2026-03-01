@@ -181,7 +181,22 @@ public class CriminalRecord {
          * caught (20% chance of immediate detection).
          * Penalty: +2 Notoriety.
          */
-        FALSE_REPORT("False report");
+        FALSE_REPORT("False report"),
+
+        // ── Issue #1000: Northfield Fire Station ──────────────────────────────
+
+        /**
+         * Recorded each time the player places a false alarm via the station noticeboard
+         * or nearby phone box. +5 Notoriety per call. After 3 entries, FIREFIGHTER NPCs
+         * become suspicious of the player.
+         */
+        FALSE_ALARM("False alarm (fire service)"),
+
+        /**
+         * Recorded when the player steals the fire engine from the station garage.
+         * Penalty: +25 Notoriety, +3 Wanted stars; MAJOR_THEFT rumour seeded to 5 NPCs.
+         */
+        FIRE_ENGINE_STOLEN("Fire engine theft");
 
         private final String displayName;
 

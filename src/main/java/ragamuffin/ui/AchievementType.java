@@ -1667,6 +1667,19 @@ public enum AchievementType {
         "Golden Trolley",
         "Found the golden shopping trolley in the car park. Twenty coin. Don't ask where it came from.",
         1
+    ),
+
+    // ── Issue #1000: Northfield Fire Station ──────────────────────────────────
+
+    EMERGENCY_SERVICES(
+        "Emergency Services",
+        "Called in a false alarm to the fire station. They weren't best pleased. Worth it.",
+        1
+    ),
+    GREAT_ENGINE_HEIST(
+        "The Great Engine Heist",
+        "Stole the actual fire engine. Three wanted stars. Twenty-five notoriety. Completely worth it.",
+        1
     );
 
     private final String name;

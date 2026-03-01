@@ -374,6 +374,19 @@ public enum NPCType {
      */
     FIRE_ENGINE(100f, 0f, 0f, false),
 
+    // ── Issue #1000: Northfield Fire Station ──────────────────────────────────
+
+    /**
+     * Firefighter — one of two crew members stationed at Northfield Fire Station.
+     * Works a 24/7 rota: one patrols the exterior, one rests in the crew room.
+     * Night-shift patroller 'sleeps' with halved detection radius.
+     * Detects equipment theft with 60% probability if within 6 blocks → +1 wanted star.
+     * After 3 false alarms, becomes suspicious of the player.
+     * Passive until theft or false alarm triggers; then becomes ALERT/HOSTILE.
+     * Speech: "Move along, pal." / "This is a working fire station, not a tourist attraction."
+     */
+    FIREFIGHTER(60f, 8f, 1.5f, false),
+
     // ── Issue #942: Food Bank System ──────────────────────────────────────────
 
     /**
