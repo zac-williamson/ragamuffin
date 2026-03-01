@@ -433,7 +433,21 @@ public enum LandmarkType {
      * WantedSystem, CriminalRecord, DisguiseSystem, NeighbourhoodSystem,
      * WeatherSystem, NoiseSystem, WitnessSystem, RumourNetwork, AchievementSystem.
      */
-    INTERNET_CAFE;
+    INTERNET_CAFE,
+
+    /**
+     * The Vaults — converted railway arch nightclub at the edge of the high
+     * street near the Wetherspoons. Open Thu–Sun 22:00–03:00. Entry: 3 COIN
+     * (Big Dave the BOUNCER on the door). Main floor: dancefloor, bar, DJ booth.
+     * Lower level: VIP booths and fire exit.
+     *
+     * <p>Integrates with NightclubSystem, TaxiSystem, KebabVanSystem, RaveSystem,
+     * MCBattleSystem, StreetSkillSystem, FactionSystem, NotorietySystem, WantedSystem,
+     * CriminalRecord, DisguiseSystem, RumourNetwork, NeighbourhoodSystem,
+     * WeatherSystem, NoiseSystem, NeighbourhoodWatchSystem, WitnessSystem,
+     * AchievementSystem.
+     */
+    NIGHTCLUB;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -512,6 +526,7 @@ public enum LandmarkType {
             case PET_SHOP:              return "Paws 'n' Claws";
             case VET_SURGERY:           return "Northfield Vets";
             case INTERNET_CAFE:         return "Cybernet";
+            case NIGHTCLUB:             return "The Vaults";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
