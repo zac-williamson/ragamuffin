@@ -705,7 +705,18 @@ public enum NPCType {
      * Speech: "That's your lot, love." / "Do you want a bag?" /
      *         "Oi — did that go through?" / "I'm calling Dave."
      */
-    SHOP_ASSISTANT(20f, 0f, 0f, false);
+    SHOP_ASSISTANT(20f, 0f, 0f, false),
+
+    // ── Issue #1002: Northfield BP Petrol Station ──────────────────────────────
+
+    /**
+     * Kiosk Cashier — staffs the BP petrol station kiosk CHECKOUT_PROP 06:00–00:00.
+     * Sells PETROL_CAN, ENERGY_DRINK, CHOCOLATE_BAR, NEWSPAPER, SCRATCH_CARD,
+     * PASTY (06:00–14:00), and DISPOSABLE_LIGHTER. Refuses service at Notoriety ≥ 60.
+     * Enters CHASING state for 20s when pump-and-walk theft is detected.
+     * Speech: "Oi! Come back here!" / "I'm not serving you. You know why."
+     */
+    CASHIER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

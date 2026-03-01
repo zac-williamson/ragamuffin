@@ -196,7 +196,16 @@ public class CriminalRecord {
          * Recorded when the player steals the fire engine from the station garage.
          * Penalty: +25 Notoriety, +3 Wanted stars; MAJOR_THEFT rumour seeded to 5 NPCs.
          */
-        FIRE_ENGINE_STOLEN("Fire engine theft");
+        FIRE_ENGINE_STOLEN("Fire engine theft"),
+
+        // ── Issue #1002: Northfield BP Petrol Station ──────────────────────────────
+
+        /**
+         * Recorded when the player uses a fuel pump and walks off the forecourt without
+         * paying. Penalty: +5 Notoriety; cashier enters CHASING state for 20s.
+         * Awards DRIVEOFF achievement on first offence.
+         */
+        PETROL_THEFT("Petrol theft (drive-off)");
 
         private final String displayName;
 
@@ -210,6 +219,24 @@ public class CriminalRecord {
     }
 
     private final Map<CrimeType, Integer> counts;
+
+    // ── Issue #1002: CCTV heat level for petrol station ───────────────────────
+
+    /**
+     * CCTV heat level — incremented by 10 each time a crime is committed on the
+     * petrol station forecourt while the CCTV_PROP is active. At 50+, a POLICE NPC
+     * spawns 60 seconds after the event. Capped at 100.
+     */
+    private int cctvHeatLevel = 0;
+
+    /** Maximum value for {@link #cctvHeatLevel}. */
+    public static final int CCTV_HEAT_MAX = 100;
+
+    /** Amount cctvHeatLevel increases per forecourt crime. */
+    public static final int CCTV_HEAT_INCREMENT = 10;
+
+    /** Threshold at which a deferred POLICE NPC spawn is triggered. */
+    public static final int CCTV_HEAT_POLICE_THRESHOLD = 50;
 
     public CriminalRecord() {
         counts = new EnumMap<>(CrimeType.class);
