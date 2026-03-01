@@ -1887,7 +1887,58 @@ public enum Material {
      * Restores +20 Hunger.
      * Tooltip: "Warm flatbread, freshly made."
      */
-    FLATBREAD("Flatbread");
+    FLATBREAD("Flatbread"),
+
+    // ── Issue #1033: St. Aidan's C.E. Primary School ─────────────────────────
+
+    /**
+     * School Dinner — bought from the DINNER_LADY for 1 COIN (11:30–13:30 Mon–Fri).
+     * Restores +25 Hunger and +10 Health.
+     * Tooltip: "It's turkey twizzlers and chips. You've had worse."
+     */
+    SCHOOL_DINNER("School Dinner"),
+
+    /**
+     * Vaping Supplies — sold by truant SCHOOL_KID for 2 COIN.
+     * Useable anywhere; reduces Warmth −5 but seeds STREET_LADS respect rumour (+3).
+     * Tooltip: "Not great for you."
+     */
+    VAPING_SUPPLIES("Vaping Supplies"),
+
+    /**
+     * Copied Homework — sold by truant SCHOOL_KID for 2 COIN.
+     * Use at Library internet terminal for +20 STREETWISE XP (one-time per session).
+     * Tooltip: "Someone else's hard work. Your gain."
+     */
+    COPIED_HOMEWORK("Copied Homework"),
+
+    /**
+     * Teacher Reference Letter — looted from the headteacher's safe.
+     * Use at JobCentre to unlock a 1-day cleaning job regardless of criminal record.
+     * Tooltip: "Forged but convincing. Mrs Fowler's signature is surprisingly easy to copy."
+     */
+    TEACHER_REFERENCE_LETTER("Teacher Reference Letter"),
+
+    /**
+     * Mophead — looted from the caretaker's shed.
+     * Use on graffiti to clean it (same mechanic as BUCKET_OF_WATER).
+     * Tooltip: "A well-used mophead. Still works though."
+     */
+    MOPHEAD("Mophead"),
+
+    /**
+     * Second-Hand Bike — looted from the caretaker's shed.
+     * Rideable item; sell at scrapyard for 8 COIN.
+     * Tooltip: "Three gears and a dodgy brake. Should be fine."
+     */
+    SECOND_HAND_BIKE("Second-Hand Bike"),
+
+    /**
+     * Petty Cash Box — looted from the headteacher's safe.
+     * Auto-converts to 5–12 COIN on pickup.
+     * Tooltip: "Heavy for a small box. Must be a good week."
+     */
+    PETTY_CASH_BOX("Petty Cash Box");
 
     private final String displayName;
 
