@@ -17832,3 +17832,142 @@ can be knocked on (press E):
    Press E. If interference succeeds (50% chance — force `rng` seed for determinism):
    verify `PirateRadioSystem.getSignalStrength()` == 70. Advance 5 in-game minutes.
    Verify signal has recovered back to 100.
+
+---
+
+## Northfield Dog Track — Greyhound Racing, Track Fixing & Kennel Heist
+
+**Landmark**: `GREYHOUND_TRACK` on the industrial fringe of Northfield, adjacent to the
+industrial estate. A crumbling 1970s stand, floodlit at night, smelling of chip fat and
+dog biscuits. Open evenings (18:00–23:00) and Saturday afternoons (13:00–17:00).
+
+### Core Loop
+
+Six greyhounds race in each event; events run every 8 in-game minutes while the track is
+open. The player can:
+
+- **Place a bet** at the on-site Tote window (BettingUI reused): pick a dog (1–6),
+  wager 1–20 COIN. Fixed-odds win multipliers: 1.5× (favourite) up to 8× (rank outsider).
+- **Watch the race**: a 30-second deterministic race sequence plays out using a seeded
+  RNG; result displayed on the scoreboard prop.
+- **Collect winnings** at the Tote window after the race if correct dog won.
+
+### Dog Names & Flavour
+
+Six permanent dogs rotate through events (reseeded each session):
+`Northfield Rocket`, `Brummie Lightning`, `Council Whippet`, `Barry's Hope`,
+`Tax Dodge`, `After The Pub`.
+
+### Race Fixing (Illegal Activities)
+
+1. **Bribe the kennel hand** (NPC near kennel door, 19:00–21:00): Pay 10 COIN to
+   guarantee dog №4 loses its next race. Adds `BRIBERY` to CriminalRecord if witnessed.
+2. **Slip the dog a dodgy pie** (requires `DODGY_PIE` item near kennel, E key): reduces
+   target dog's speed by 30% for one race. `DODGY_PIE` crafted from `COLD_PASTRY` +
+   `SUSPICIOUS_MEAT` (both scavenged from Greggs skip or KebabVan).
+3. **Start a distraction fight** in the stands: triggers `WantedSystem` +1 star; crowd
+   scatters, Tote window closes early (remaining race of current session cancelled).
+
+### Kennel Heist
+
+At night (23:30–04:00 when track is locked) the player can:
+- Pick the kennel padlock (`LOCKPICK` item, 3-second interaction).
+- Steal a greyhound (`GREYHOUND` item, carried in inventory).
+- Fence the dog at the Pawn Shop for 25–40 COIN, or sell to a contact via
+  RumourNetwork `LOOT_TIP` for 50 COIN.
+- If caught inside by a `SECURITY_GUARD` NPC (patrols every 90 seconds), WantedSystem
+  +2 stars and `TRESPASSING` + `ANIMAL_THEFT` records.
+
+### New Items
+
+| Item | Source | Use |
+|------|--------|-----|
+| `DODGY_PIE` | Craft: `COLD_PASTRY` + `SUSPICIOUS_MEAT` | Slip to greyhound to fix race |
+| `GREYHOUND` | Steal from kennel | Fence at PawnShop or sell via rumour |
+| `RACE_CARD` | Free at Tote window on entry | Shows tonight's dogs & odds; readable prop |
+| `LOCKPICK` | Craft or buy from Fence | Opens padlocked doors |
+
+### Achievements
+
+- `PUNTER` — Place 5 bets at the dog track.
+- `LUCKY_DOG` — Win 3 consecutive bets.
+- `TRACK_FIXER` — Successfully fix a race result (dodgy pie lands, dog loses).
+- `NICKED_THE_GREYHOUND` — Fence a stolen greyhound.
+- `BROKE_THE_TOTE` — Win 50+ COIN in one session through legitimate bets.
+
+### Integrations
+
+- **BettingUI**: Reuse `BettingUI` for the Tote window; extend to support fixed-odds
+  greyhound bets alongside horse racing odds.
+- **FactionSystem**: Marchetti Crew run the track; Respect ≥60 unlocks insider tip
+  (know correct winning dog 1 race per session). Respect <30 = entry refused.
+- **StreetEconomySystem**: `RACE_CARD` item counts as BORED-need satisfier (+15 boredom
+  relief when given to an NPC). Market event `DOG_TRACK_FINAL` spikes all bets 2× for
+  one event.
+- **RumourNetwork**: Selling a stolen greyhound seeds a `LOOT_TIP` rumour
+  ("Someone's been nicking dogs from the track"). `TRACK_FIXER` achievement seeds
+  `CRIMINAL_RECORD` rumour near Marchetti NPCs (they're not happy).
+- **PawnShopSystem**: `GREYHOUND` item accepted; valuation 25–40 COIN based on FenceSystem
+  table; pawn shop owner has unique speech line ("I'm not storing a dog, mate").
+- **NotorietySystem**: Winning 3 consecutive bets adds +3 Notoriety (suspected cheater).
+  Being witnessed fixing a race adds +10.
+- **NoiseSystem**: Crowd noise during race = ambient level 3 (masks player actions; stealth
+  window for pickpocketing nearby punters).
+- **WeatherSystem**: Rain reduces attendance (fewer NPCs in stands → lower ambient noise
+  cover); track is uncovered so fog reduces race visibility (scoreboard prop dimmed).
+- **WitnessSystem**: Kennel break-in witnessed by `SECURITY_GUARD` escalates to police call.
+- **CriminalRecord**: New crime types `ANIMAL_THEFT`, `RACE_FIXING` added.
+- **AchievementSystem**: Five new achievements as listed above.
+
+### New LandmarkType
+
+`LandmarkType.GREYHOUND_TRACK` — placed on the industrial fringe, at least 80 blocks
+from the park centre, near the industrial estate. Single-storey stand (10×20 blocks),
+open dog run behind it (20×6), kennel block (6×4) with padlocked door prop.
+
+### New NPC Roles (spawned at GREYHOUND_TRACK)
+
+- `KENNEL_HAND` — Inside/near kennel 18:00–22:00; bribe target.
+- `TOTE_CLERK` — At Tote window during opening hours; runs BettingUI.
+- `PUNTER` (×4–6) — Stand area; BORED need; will accept RACE_CARD; pickpocket target.
+- `SECURITY_GUARD` — Patrols kennel perimeter at night on 90-second loop.
+
+### Unit Tests
+
+- Race RNG produces consistent winner given same seed.
+- Dodgy-pie effect correctly reduces dog speed by 30% for exactly one race.
+- Bet payout uses correct multiplier per dog rank.
+- Kennel padlock interaction requires `LOCKPICK` in inventory; fails without it.
+- Greyhound fence valuation falls in 25–40 COIN range.
+- `TRACK_FIXER` achievement fires only when fixed dog loses (not when it wins despite pie).
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Win a legitimate bet**: Open the track during hours (18:00). Approach Tote window,
+   press E. BettingUI opens showing 6 dogs with odds. Select dog №1 (favourite, 1.5×),
+   wager 10 COIN. Advance 8 in-game minutes (one race cycle). Verify scoreboard prop
+   shows a winner. If dog №1 won, verify player COIN increased by 15 (10 × 1.5). If
+   dog №1 lost, verify player COIN decreased by 10.
+
+2. **Race fixing with dodgy pie**: Craft `DODGY_PIE` (give player `COLD_PASTRY` +
+   `SUSPICIOUS_MEAT`). Approach kennel during 19:00–21:00. Press E on kennel door with
+   `DODGY_PIE` in inventory. Select target dog №3. Advance one race cycle. Verify dog
+   №3 did NOT finish first. Verify `AchievementType.TRACK_FIXER` is unlocked. Verify
+   player Notoriety increased by 10.
+
+3. **Kennel heist detected by guard**: Set time to 00:30. Give player `LOCKPICK`. Approach
+   kennel padlock, press E. Verify padlock opens after 3-second interaction. Enter kennel.
+   Verify `GREYHOUND` item added to inventory. Advance 90 seconds (guard patrol cycle).
+   Verify `SECURITY_GUARD` NPC detects player (line-of-sight check). Verify WantedSystem
+   stars = 2. Verify CriminalRecord contains `TRESPASSING` and `ANIMAL_THEFT`.
+
+4. **Marchetti Crew deny entry at low Respect**: Set FactionSystem Marchetti Respect to
+   20 (below 30 threshold). Approach the GREYHOUND_TRACK entrance. Press E on turnstile
+   prop. Verify player is NOT admitted (position unchanged). Verify NPC speech line
+   contains "You're not welcome here".
+
+5. **Insider tip at high Respect**: Set FactionSystem Marchetti Respect to 65. Approach a
+   Marchetti PUNTER NPC in the stands. Press E. Verify the NPC reveals the winning dog for
+   the current race (speech line contains a dog name). Verify the revealed dog matches the
+   seeded RNG winner for that race. Verify this tip is available only once per session
+   (second E press returns "I've told you enough").
