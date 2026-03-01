@@ -1067,7 +1067,24 @@ public enum Material {
      * Sold by Dennis the Proprietor for 1 COIN.
      * Tooltip: "Chalk. Technically for cue tips. Technically."
      */
-    CHALK_CUBE("Chalk Cube");
+    CHALK_CUBE("Chalk Cube"),
+
+    // ── Issue #967: Northfield Taxi Rank ──────────────────────────────────────
+
+    /**
+     * Taxi Pass — a prepaid 5-journey card purchased from Mick at A1 Taxis for 18 COIN,
+     * or crafted from 1 NEWSPAPER + 3 COIN (counterfeit version adds +1 Notoriety).
+     * Each journey decrements the ride counter; when exhausted, falls back to coin payment.
+     * Tooltip: "Five journeys. Cash upfront was non-negotiable."
+     */
+    TAXI_PASS("Taxi Pass"),
+
+    /**
+     * Dodgy Package — an unmarked package received from Dave's Minicab with 15% chance.
+     * Contents unknown. If UNDERCOVER_POLICE is nearby on arrival, they investigate.
+     * Tooltip: "Never ask what's in the bag."
+     */
+    DODGY_PACKAGE("Dodgy Package");
 
     private final String displayName;
 
@@ -1531,6 +1548,12 @@ public enum Material {
                                                0.48f, 0.30f, 0.08f); // Darker butt end
             case CHALK_CUBE:         return c(0.28f, 0.45f, 0.72f);  // Chalk blue
 
+            // Issue #967: Northfield Taxi Rank
+            case TAXI_PASS:          return cs(0.08f, 0.55f, 0.20f,  // Taxi green card
+                                               0.88f, 0.75f, 0.10f); // Yellow accent stripe
+            case DODGY_PACKAGE:      return cs(0.48f, 0.38f, 0.25f,  // Brown plain packaging
+                                               0.22f, 0.18f, 0.12f); // Dark tape / string
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1775,6 +1798,9 @@ public enum Material {
             case FISH_PERCH:
             case FISH_PIKE:
             case ROPE:
+            // Issue #967: Northfield Taxi Rank (not block items)
+            case TAXI_PASS:
+            case DODGY_PACKAGE:
                 return false;
             default:
                 return true;
@@ -2250,6 +2276,12 @@ public enum Material {
                 return IconShape.TOOL;        // long cue shaft
             case CHALK_CUBE:
                 return IconShape.BOX;         // small cube
+
+            // Issue #967: Northfield Taxi Rank
+            case TAXI_PASS:
+                return IconShape.CARD;        // prepaid card shape
+            case DODGY_PACKAGE:
+                return IconShape.BOX;         // plain wrapped box
 
             default:
                 return IconShape.BOX;

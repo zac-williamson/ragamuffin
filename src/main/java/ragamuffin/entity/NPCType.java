@@ -497,7 +497,21 @@ public enum NPCType {
      * Speech: "Fancy a frame, mate?" / "Tell you what — make it interesting?"
      *         / "I've been playing this table since before you were born."
      */
-    SNOOKER_HUSTLER(25f, 5f, 2.0f, false);
+    SNOOKER_HUSTLER(25f, 5f, 2.0f, false),
+
+    // ── Issue #967: Northfield Taxi Rank ──────────────────────────────────────
+
+    /**
+     * Minicab Driver — Dave, operator of a beat-up hatchback parked near the pub.
+     * Operates 22:00–04:00 as a late-night alternative to A1 Taxis.
+     * 1 COIN cheaper per journey than A1 Taxis.
+     * 30% chance of detour (drops player 20 blocks off target).
+     * 15% chance of issuing a DODGY_PACKAGE item.
+     * Refuses service to BALACLAVA-wearing players.
+     * Speech: "Hop in, mate." / "Don't ask what's in the bag."
+     *         / "I know a shortcut." / "Cash only, yeah?"
+     */
+    MINICAB_DRIVER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
