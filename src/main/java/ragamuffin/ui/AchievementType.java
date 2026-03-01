@@ -1204,6 +1204,29 @@ public enum AchievementType {
         5
     ),
 
+    // ── Issue #963: Northfield Canal ──────────────────────────────────────────
+
+    CANAL_CATCH(
+        "Gone Fishing",
+        "Caught your first fish from the canal. The water is brown. The fish is not.",
+        1
+    ),
+    TROLLEY_FISHERMAN(
+        "Aisle 12",
+        "Pulled a shopping trolley out of the canal. Worth more than the fish, honestly.",
+        1
+    ),
+    EVIDENCE_IN_THE_CUT(
+        "The Cut Sees Everything",
+        "Disposed of evidence in the canal unwitnessed. The pike know. They're not talking.",
+        1
+    ),
+    NIGHT_SWIMMER(
+        "Hypothermia Chic",
+        "Entered the canal after dark. The PCSO looked on in bewilderment.",
+        1
+    ),
+
     // ── Issue #961: Cash4Gold Pawn Shop ───────────────────────────────────────
 
     SUNDAY_MORNING_REGRET(
