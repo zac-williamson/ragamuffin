@@ -1028,7 +1028,42 @@ public enum PropType {
      * Waiting Bench — a wooden bench for customers awaiting their turn.
      * Seats up to 3 NPC customers. Destroyed by 3 punches; yields WOOD.
      */
-    WAITING_BENCH_PROP(1.40f, 1.00f, 0.60f, 3, Material.WOOD);
+    WAITING_BENCH_PROP(1.40f, 1.00f, 0.60f, 3, Material.WOOD),
+
+    // ── Issue #1041: Northfield Argos ─────────────────────────────────────────
+
+    /**
+     * Argos Catalogue — the iconic laminated catalogue on a fixed pedestal.
+     * Press E to browse the 12-item catalogue, write a slip, and hand it to
+     * the clerk. Destroyed by 5 punches; yields SCRAP_METAL.
+     * Multiple units are placed around the shop floor.
+     */
+    ARGOS_CATALOGUE_PROP(0.50f, 1.10f, 0.50f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Argos Returns Desk — the dedicated returns counter at the back of the shop.
+     * Press E to initiate a returns transaction with the ARGOS_CLERK.
+     * Success rate: 60% own purchase, 30% others', 5% stolen goods.
+     * Stolen return: 30% chance clerk notices → ARGOS_MANAGER spawns.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    ARGOS_RETURNS_DESK_PROP(1.20f, 1.00f, 0.60f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Argos Plastic Seat — a moulded orange plastic seat bolted to the floor.
+     * 3–5 placed in the waiting area. Sitting in one speeds up the order wait
+     * timer and restores 1 Warmth/minute. NPCs seated here gossip (LOCAL_EVENT).
+     * Destroyed by 4 punches; yields SCRAP_METAL.
+     */
+    ARGOS_PLASTIC_SEAT_PROP(0.60f, 0.90f, 0.60f, 4, Material.SCRAP_METAL),
+
+    /**
+     * Argos Collection Counter — the main service counter where clerks retrieve
+     * orders and call out collection numbers. Press E when adjacent to hand in
+     * a slip or collect a completed order.
+     * Destroyed by 6 punches; yields SCRAP_METAL.
+     */
+    ARGOS_COUNTER_PROP(2.00f, 1.00f, 0.80f, 6, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
