@@ -1546,6 +1546,109 @@ public enum AchievementType {
         "Evidence Lost",
         "Reclaimed your own confiscated items from the police evidence locker. Technically they were yours to begin with.",
         1
+    ),
+
+    // ── Issue #789: The Boot Sale — Underground Auction ───────────────────────
+
+    FIRST_LOT(
+        "Got Your Eye In",
+        "Won your first lot at the boot sale. Don't ask where it came from. Nobody will.",
+        1
+    ),
+    HIGH_ROLLER(
+        "High Roller",
+        "Won a HIGH-risk lot at the boot sale without police turning up. Beautiful. Absolutely beautiful.",
+        1
+    ),
+    MARKET_KING(
+        "King of the Carpark",
+        "Won five lots in a single boot sale day. The Marchetti boys are taking notice.",
+        1
+    ),
+    BOOT_SALE_REGULAR(
+        "Regular Punter",
+        "Won twenty lots in total across all boot sales. You've got a system. Or just no shame.",
+        20
+    ),
+
+    // ── Issue #702: Three-Faction Turf War ────────────────────────────────────
+
+    FACTION_FRIEND(
+        "Useful to Someone",
+        "Reached Friendly status with any faction. They might not shoot you first. Might.",
+        1
+    ),
+    FACTION_ENEMY(
+        "Wrong Side of the Street",
+        "Let all three factions drop to Hostile. The whole town wants a word with you.",
+        1
+    ),
+    MARCHETTI_MANOR(
+        "Marchetti Manor",
+        "Helped the Marchetti Crew reach faction victory. The off-licence is all yours. Sort of.",
+        1
+    ),
+    STREETS_LIBERATED(
+        "Streets Liberated",
+        "Helped the Street Lads reach faction victory. The park is free. So are the youths.",
+        1
+    ),
+    COUNCIL_APPROVED(
+        "Council Approved",
+        "Helped The Council reach faction victory. They tore down your shed. You still got a laminated ID.",
+        1
+    ),
+
+    // ── Issue #698: Campfire System ────────────────────────────────────────────
+
+    FIRST_CAMPFIRE(
+        "Urban Survivor",
+        "Lit your first campfire on the street. The warmth is real. The legality is questionable.",
+        1
+    ),
+    CAMPFIRE_COOK(
+        "Into the Wild (Northfield Edition)",
+        "Survived three cold snaps using only campfires for warmth. Ray Mears would understand.",
+        3
+    ),
+
+    // ── Issue #773: Car Driving ────────────────────────────────────────────────
+
+    BEHIND_THE_WHEEL(
+        "Behind the Wheel",
+        "Got into a car and drove it. Technically. The definition of 'drove' is flexible here.",
+        1
+    ),
+    JOYRIDER(
+        "Tax, Test, Insurance",
+        "Driven 200 blocks in total. The DVLA doesn't know. The PCSO suspects.",
+        200
+    ),
+
+    // ── Issue #901: Bista Village ──────────────────────────────────────────────
+
+    PORTAL_TOURIST(
+        "Mind the Gap",
+        "Stepped through the portal to Bista Village for the first time. Didn't even ask where it goes.",
+        1
+    ),
+    RETURN_TRIP(
+        "There and Back Again",
+        "Made three return trips through the Bista Village portal. You know the way now.",
+        3
+    ),
+
+    // ── Issue #950: Northfield Leisure Centre (additional) ────────────────────
+
+    REGULAR_SWIMMER(
+        "Lane Hogger",
+        "Completed five swim sessions at Northfield Leisure Centre. Chlorine is your cologne now.",
+        5
+    ),
+    VENDING_FIEND(
+        "All Four Food Groups",
+        "Bought all three vending machine items in a single visit to the leisure centre. Nutrition.",
+        1
     );
 
     private final String name;

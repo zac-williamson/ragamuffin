@@ -6,6 +6,7 @@ import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
+import ragamuffin.ui.AchievementType;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
