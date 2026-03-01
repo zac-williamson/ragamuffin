@@ -2714,7 +2714,63 @@ public enum Material {
      * pause briefly.
      * Tooltip: "One blast stops play. Two blasts gets you glassed."
      */
-    REFEREE_WHISTLE("Referee Whistle");
+    REFEREE_WHISTLE("Referee Whistle"),
+
+    // ── Issue #1098: Northfield Summer Fete ──────────────────────────────────
+
+    /**
+     * Victoria Sponge — 2 COIN at the cake stall. Hunger +30.
+     * Can be gifted to an NPC for Friendly status.
+     * Tooltip: "Technically two sponges. The jam is the star."
+     */
+    VICTORIA_SPONGE("Victoria Sponge"),
+
+    /**
+     * Scone — 1 COIN at the cake stall. Hunger +15.
+     * Tooltip: "Best eaten with cream and jam. In that order."
+     */
+    SCONE("Scone"),
+
+    /**
+     * Cupcake — 1 COIN at the cake stall. Hunger +10.
+     * Tooltip: "Small. Iced. Suspiciously neat."
+     */
+    CUPCAKE("Cupcake"),
+
+    /**
+     * Jam and Cream — 1 COIN at the cake stall. Hunger +12.
+     * The topping for scones. Also sold separately.
+     * Tooltip: "A small pot of cream and jam. No scone included. Typical."
+     */
+    JAM_AND_CREAM("Jam and Cream"),
+
+    /**
+     * Cuddly Toy — tombola or Hook-a-Duck prize. Fence buy: 1 COIN.
+     * Gift to a child NPC for +10 Street Rep.
+     * Tooltip: "A stuffed bear with one eye. He's been to better fetes."
+     */
+    CUDDLY_TOY("Cuddly Toy"),
+
+    /**
+     * Ornament — bric-a-brac rummage find. Sell value: 2 COIN; fence buy: 1 COIN.
+     * Tooltip: "A ceramic horse. Hideous. Someone's gran loved it."
+     */
+    ORNAMENT("Ornament"),
+
+    /**
+     * Retro Cassette — bric-a-brac rummage find. No value; flavour item.
+     * Tooltip: "Still plays. Nobody owns a cassette player."
+     */
+    RETRO_CASSETTE("Retro Cassette"),
+
+    /**
+     * Rigged Barrel — crafted from 1 WOOD + 1 RAFFLE_TICKET.
+     * Hold E on RAFFLE_TICKET_STALL_PROP for 3 seconds (no volunteer within 8 blocks)
+     * to swap the raffle draw and guarantee 1st prize.
+     * Single use. Triggers CrimeType.FRAUD on successful swap.
+     * Tooltip: "Looks like a barrel. Isn't quite a barrel."
+     */
+    RIGGED_BARREL("Rigged Barrel");
 
     private final String displayName;
 

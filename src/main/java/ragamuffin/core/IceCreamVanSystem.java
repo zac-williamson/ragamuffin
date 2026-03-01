@@ -863,4 +863,29 @@ public class IceCreamVanSystem {
     public void setKidsMobActiveForTesting(boolean value) {
         this.kidsMobActive = value;
     }
+
+    // ── FeteSystem integration ─────────────────────────────────────────────────
+
+    /** Whether the van is currently available (not stolen, not firebombed). */
+    public boolean isVanAvailable() {
+        return !vanFirebombed && !vanStolen;
+    }
+
+    /** Whether the van is currently parked at the park (active and at park location). */
+    public boolean isAtPark() {
+        return vanAtPark;
+    }
+
+    /** Whether the van is currently at the park. */
+    private boolean vanAtPark = false;
+
+    /** Move the van to the park entrance (called by FeteSystem at 13:00). */
+    public void sendToPark() {
+        this.vanAtPark = true;
+    }
+
+    /** For testing: set the van-at-park flag directly. */
+    public void setAtParkForTesting(boolean atPark) {
+        this.vanAtPark = atPark;
+    }
 }

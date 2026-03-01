@@ -2354,6 +2354,29 @@ public enum AchievementType {
         "Studs Up",
         "Fouled an opposition player without the referee noticing. You're a menace. The touchline loved it.",
         1
+    ),
+
+    // ── Issue #1098: Northfield Summer Fete ──────────────────────────────────
+
+    FETE_CHAMPION(
+        "Fete Champion",
+        "Won the tombola, raffle, and Hook-a-Duck in a single fete. Margaret was delighted. You were smug.",
+        1
+    ),
+    CAKE_THIEF(
+        "No Shame",
+        "Stole a cake from the fete stall. It wasn't even a good cake. The vicar saw everything.",
+        1
+    ),
+    RIGGED(
+        "Fix the Draw",
+        "Successfully rigged the raffle barrel at the summer fete. You guaranteed your own win. Shameful.",
+        1
+    ),
+    BRITISH_INSTITUTION(
+        "British Institution",
+        "Attended 3 annual summer fetes. You've eaten the scones, spun the tombola, lost on the raffle. Bliss.",
+        3
     );
 
     private final String name;
