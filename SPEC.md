@@ -21669,3 +21669,237 @@ TEACHERS_PET(
    nearest youth. Verify `STREET_LADS` faction Respect increased. Verify player Warmth
    increased by 5. Advance time to 06:05. Verify `YOUTH_GANG` NPCs on the field have
    been removed (despawned).
+
+## Add Northfield Nando's — Cheeky Nandos, Peri-Peri Economy & the Loyalty Card Hustle
+
+**Goal**: Give `LandmarkType.NANDOS` ("Nando's") a full gameplay system. Nando's is
+already present in the world generator and referenced in `BlockDropTable`,
+`BuildingQuestRegistry`, `InteractionSystem`, and `SignageRenderer` — but has no
+dedicated `NandosSystem` class, no opening hours, no ordering mechanic, and no
+integration with the game's social/economy systems. This issue implements the full
+"cheeky Nandos" experience: a casual dining chain that acts as a social meeting point,
+a heat-level peri-peri economy, a loyalty card hustle, and a hot sauce contraband
+pipeline.
+
+---
+
+### World & Building
+
+The `LandmarkType.NANDOS` building already exists in `WorldGenerator`. It is a
+two-storey brick-and-glass unit on the high street, red Nando's signage
+(`SignageRenderer` already returns `(0.78f, 0.10f, 0.10f)` for this landmark).
+
+Interior props (new `PropType` entries):
+- `NANDOS_COUNTER_PROP` — ordering counter, interactable (E key), opens `NandosOrderUI`.
+- `NANDOS_TABLE_PROP` — booth seating; player can sit (E) to eat, gaining +5 Warmth and
+  rumour eavesdrop opportunity.
+- `PERI_PERI_SAUCE_RACK` — wall-mounted rack of sauces; player can pocket one bottle
+  per visit without paying (small Notoriety risk: +1 if a `NANDOS_STAFF` NPC is within
+  6 blocks).
+- `LOYALTY_CARD_STAND` — near entrance; E to take a `NANDOS_LOYALTY_CARD` (one per visit).
+
+Opening hours: **11:30–22:30** daily. `NandosSystem.isOpen(TimeSystem)` returns true
+within this window. After 22:30 a `NANDOS_STAFF` NPC locks the door prop.
+
+---
+
+### NPC: NANDOS_MANAGER
+
+`NPCType.NANDOS_MANAGER` — passive, `maxHealth = 20`, no attack, not hostile. Wears
+a black polo shirt. Present during opening hours. Stands near `NANDOS_COUNTER_PROP`.
+
+At Notoriety Tier 3+: refuses service with *"Mate, I know who you are. Out."*  
+At Notoriety Tier 4+: calls police if player lingers inside > 30 seconds.
+
+Conversation topics (press E when not ordering):
+- *"Busy night?"* → manager gives a rumour about a nearby NPC (seeded to `RumourNetwork`).
+- *"What's the hottest sauce?"* → manager mentions `EXTRA_HOT_SAUCE`, unlocking it in
+  the menu.
+
+---
+
+### The Peri-Peri Heat Menu
+
+`NandosOrderUI` (new UI class, extends existing UI pattern) shows 6 options:
+
+| Item | Cost | Hunger Restored | Heat Level | Notes |
+|------|------|-----------------|------------|-------|
+| `LEMON_HERB_CHICKEN` | 4 COIN | 30 | 0 | Default. Safe. |
+| `MILD_CHICKEN` | 4 COIN | 30 | 1 | |
+| `MEDIUM_CHICKEN` | 5 COIN | 35 | 2 | |
+| `HOT_CHICKEN` | 5 COIN | 35 | 3 | Player's face turns red (screen tint 2s). |
+| `EXTRA_HOT_CHICKEN` | 6 COIN | 40 | 4 | Causes 3s mild screen-shake; seeds rumour. |
+| `EXTRA_HOT_SAUCE` | 2 COIN | 0 | — | Bottled sauce; inventory item; unlocked by talking to manager. |
+
+`EXTRA_HOT_SAUCE` (new `Material`): a bottled sauce that can be:
+1. **Consumed** — instant +2 Health, −5 Notoriety ("People like someone who can handle heat").
+2. **Thrown at NPC** — acts as a temporary blind/debuff (NPC enters `FLEEING` state for
+   10 seconds). Counts as assault if witnessed; +2 Notoriety.
+3. **Sold to Fence** — 3 COIN ("People love this stuff").
+
+---
+
+### The Loyalty Card Hustle
+
+`NANDOS_LOYALTY_CARD` (new `Material`): a stamp-card item. Gains 1 stamp per
+`CHICKEN_WING_PLATTER` (add to `NandosOrderUI` menu, 3 COIN, 20 Hunger) purchased.
+At 10 stamps → auto-converts to `NANDOS_FREE_MEAL_VOUCHER`.
+
+`NANDOS_FREE_MEAL_VOUCHER`: redeemable at `NANDOS_COUNTER_PROP` for one
+`EXTRA_HOT_CHICKEN` free of charge. Can alternatively be sold to an NPC via
+`StreetEconomySystem` for 4 COIN (NPCs with `HUNGRY` need > 60 will buy).
+
+**The Multi-Card Scam**: Player can hold up to 5 `NANDOS_LOYALTY_CARD` items.
+If the player has ≥ 3 cards on their person and purchases any item, a `NANDOS_STAFF`
+NPC may notice (20% chance per transaction). If noticed: cards confiscated, player
+ejected, +1 Notoriety. Achievement `LOYALTY_CARD_SCAMMER` unlocked on first confiscation.
+
+---
+
+### Social Hub — The Post-Pub Crowd
+
+Between **22:00–22:30** (last orders before close): 3–5 `DRUNK` NPCs queue outside
+Nando's. They are hungry and loud. NoiseSystem registers a level-2 noise event.
+
+One `DRUNK` NPC carries a `NANDOS_LOYALTY_CARD` with 9 stamps — can be pickpocketed.
+If stolen and redeemed, achievement `CHEEKY_NANDOS` is unlocked.
+
+Between **13:00–14:00** (lunch rush): 2–3 `OFFICE_WORKER` NPCs are seated. They gossip
+about their workplace — player eavesdropping (sitting within 2 blocks at a
+`NANDOS_TABLE_PROP`) has a 40% chance per minute to seed one `RumourType.OFFICE_GOSSIP`
+rumour into the `RumourNetwork`.
+
+---
+
+### `NandosSystem` Class (new)
+
+```
+NandosSystem(TimeSystem timeSystem, RumourNetwork rumourNetwork,
+             Inventory playerInventory, NotorietySystem notorietySystem,
+             WantedSystem wantedSystem, NoiseSystem noiseSystem)
+```
+
+Key methods:
+- `isOpen(TimeSystem)` — returns true 11:30–22:30.
+- `orderItem(Material item, Inventory inv, NotorietySystem notoriety)` — deducts cost,
+  adds item to inventory, applies heat effects.
+- `applyHeatEffect(int heatLevel, Player player)` — triggers screen tint/shake at
+  levels 3–4; seeds rumour "Someone ate the Extra Hot at Nando's. Respect." at level 4.
+- `tryPocketSauce(Player player, NPC nearestStaff)` — pockets `EXTRA_HOT_SAUCE`, applies
+  +1 Notoriety if staff within 6 blocks.
+- `stampLoyaltyCard(Inventory inv)` — adds stamp to first `NANDOS_LOYALTY_CARD` in
+  inventory; converts to voucher at 10 stamps.
+- `checkMultiCardScam(Inventory inv, NPC staff)` — 20% chance to trigger scam detection.
+- `spawnPostPubQueue(TimeSystem)` — spawns 3–5 `DRUNK` NPCs between 22:00–22:30.
+- `updateEavesdrop(Player player, List<NPC> officeWorkers, RumourNetwork rumours)` —
+  called per frame; seeds rumour on 40% per-minute probability.
+- `update(float delta, TimeSystem time, List<NPC> nearbyNpcs)` — main tick.
+
+---
+
+### Key Constants (`public static final` in `NandosSystem`)
+
+```java
+public static final int HEAT_SCREEN_TINT_LEVEL = 3;
+public static final int HEAT_SCREEN_SHAKE_LEVEL = 4;
+public static final int BASE_LOYALTY_STAMPS_NEEDED = 10;
+public static final int MAX_LOYALTY_CARDS = 5;
+public static final float MULTI_CARD_SCAM_CHANCE = 0.20f;
+public static final float EAVESDROP_RUMOUR_CHANCE_PER_MIN = 0.40f;
+public static final int STAFF_SAUCE_DETECTION_RANGE = 6;
+public static final float POST_PUB_QUEUE_START = 22.0f;
+public static final float POST_PUB_QUEUE_END   = 22.5f;
+public static final int POST_PUB_DRUNK_MIN = 3;
+public static final int POST_PUB_DRUNK_MAX = 5;
+```
+
+---
+
+### Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `CHEEKY_NANDOS` | Pickpocket a loyalty card with 9 stamps and redeem it |
+| `LOYALTY_CARD_SCAMMER` | Get caught running the multi-card scam |
+| `CANT_HANDLE_THE_HEAT` | Order `EXTRA_HOT_CHICKEN` and flee the building within 10 seconds |
+| `PERI_PERI_DEALER` | Sell 5 `EXTRA_HOT_SAUCE` bottles to NPCs via StreetEconomySystem |
+| `OFFICE_GOSSIP` | Eavesdrop 3 distinct rumours from office workers at Nando's |
+
+Add these to `AchievementType.java`.
+
+---
+
+### Integration & Cross-System Hooks
+
+- **NoiseSystem**: Post-pub queue registers noise level 2 (22:00–22:30).
+- **RumourNetwork**: `EXTRA_HOT_CHICKEN` purchase at heat level 4 seeds rumour
+  `RumourType.NANDOS_LEGEND` town-wide.
+- **StreetEconomySystem**: `EXTRA_HOT_SAUCE` and `NANDOS_FREE_MEAL_VOUCHER` added
+  as tradeable items; NPCs with `HUNGRY > 60` will buy vouchers for 4 COIN.
+- **WitnessSystem**: Sauce-throwing counted as assault; `NANDOS_STAFF` NPC is a valid
+  witness.
+- **DisguiseSystem**: Wearing `NANDOS_APRON` (lootable from `NANDOS_STAFF`) gives
+  free entry to the kitchen area (normally staff-only).
+- **WantedSystem**: Manager calls police at Notoriety Tier 4+; triggers WantedSystem
+  severity +2.
+
+---
+
+### Unit Tests
+
+- `NandosSystem.isOpen(TimeSystem at 12:00)` returns `true`.
+- `NandosSystem.isOpen(TimeSystem at 11:00)` returns `false`.
+- `NandosSystem.isOpen(TimeSystem at 23:00)` returns `false`.
+- `NandosSystem.stampLoyaltyCard(inv with 9-stamp card)` auto-converts to voucher.
+- `NandosSystem.checkMultiCardScam(inv with 1 card, staff)` never triggers (< 3 cards).
+- `NandosSystem.checkMultiCardScam(inv with 3 cards, staff)` triggers with 20% probability.
+- `NandosSystem.applyHeatEffect(2, player)` returns without side effects.
+- `NandosSystem.applyHeatEffect(4, player)` triggers screen-shake flag.
+- `NandosSystem.getMenuItems()` returns a list of 6+ items.
+
+---
+
+### Integration Tests — implement these exact scenarios
+
+1. **Nando's is open at lunchtime and closed after 22:30**: Construct `NandosSystem`.
+   Set time to 12:00. Verify `isOpen()` returns true. Verify `NANDOS_MANAGER` NPC is
+   present inside the `NANDOS` landmark AABB. Set time to 23:00. Verify `isOpen()`
+   returns false. Verify the entrance door prop is in an impassable state.
+
+2. **Order and hunger restored**: Set time to 13:00. Give player 6 COIN. Place player
+   facing `NANDOS_COUNTER_PROP`. Set player Hunger to 20. Press E on counter to open
+   `NandosOrderUI`. Select `MEDIUM_CHICKEN` (5 COIN). Verify player Hunger increased by
+   35 (to 55). Verify player COIN reduced by 5 (to 1). Verify `MEDIUM_CHICKEN` item NOT
+   in inventory (consumed immediately). Verify no screen effect at heat level 2.
+
+3. **Extra Hot triggers screen shake and seeds rumour**: Set time to 13:00. Give player
+   6 COIN. Set player Hunger to 30. Select `EXTRA_HOT_CHICKEN`. Verify `applyHeatEffect`
+   was called with level 4. Verify player's screen-shake flag is true (or a mock
+   `applyHeatEffect` recorded the call). Verify `rumourNetwork` contains a new rumour of
+   type `NANDOS_LEGEND`.
+
+4. **Loyalty card stamps and redeems**: Give player `NANDOS_LOYALTY_CARD` with 9 existing
+   stamps. Purchase `CHICKEN_WING_PLATTER` (3 COIN). Verify `stampLoyaltyCard` converts
+   the card to `NANDOS_FREE_MEAL_VOUCHER` in inventory. Press E on counter, select
+   "Redeem Voucher". Verify `EXTRA_HOT_CHICKEN` added to inventory. Verify COIN NOT
+   deducted.
+
+5. **Multi-card scam detection**: Give player 3 `NANDOS_LOYALTY_CARD` items. Seed the
+   `Random` so that `checkMultiCardScam` returns `true`. Purchase any menu item. Verify
+   all `NANDOS_LOYALTY_CARD` items removed from inventory. Verify player's `arcadeEjected`
+   equivalent flag (`nandosEjected`) is true and `NANDOS_COUNTER_PROP` interactions are
+   blocked. Verify Notoriety increased by 1. Verify `LOYALTY_CARD_SCAMMER` achievement
+   awarded.
+
+6. **Post-pub drunk queue at 22:00**: Set time to 22:05. Call
+   `nandosSystem.spawnPostPubQueue(timeSystem)`. Verify 3–5 `DRUNK` NPCs are present
+   within 5 blocks of the `NANDOS` entrance. Verify `noiseSystem` has a level-2 noise
+   event registered at the `NANDOS` landmark position. Advance time to 22:35. Verify
+   `DRUNK` NPCs have despawned.
+
+7. **Office gossip eavesdrop seeds rumour**: Set time to 13:30 (lunch rush). Spawn 2
+   `OFFICE_WORKER` NPCs seated at `NANDOS_TABLE_PROP`. Place player within 2 blocks of
+   them. Seed `Random` so `updateEavesdrop` probability fires. Advance simulation
+   1 in-game minute. Verify `rumourNetwork` contains at least 1 new `OFFICE_GOSSIP`
+   rumour. Move player 10 blocks away. Advance another minute. Verify the rumour count
+   does NOT increase again from the same workers.
