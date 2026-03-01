@@ -18796,3 +18796,137 @@ CASHIER(20f, 0f, 0f, false)  // kiosk cashier — passive unless stolen from
 7. **Pasty only available in morning**: Set time to 08:00. Verify `isPastyAvailable` is true. Give player 2 COIN, press E, select `PASTY`. Verify `PASTY` added to inventory. Set time to 16:00. Verify `isPastyAvailable` is false. Verify PASTY option is absent from the kiosk menu.
 
 8. **DISPOSABLE_LIGHTER ignites bin without PETROL_CAN**: Give player a `DISPOSABLE_LIGHTER` (no PETROL_CAN). Stand within 2 blocks of a `WHEELIE_BIN_PROP`. Use lighter (press E or use action). Verify `WheeliBinFireSystem` has a burning entry at that position. Verify `DISPOSABLE_LIGHTER` removed from player inventory (consumed).
+
+## Add Northfield Community Centre — Boxing Club, Bring & Buy Sale & the AA Meeting
+
+**Goal**: Bring the `COMMUNITY_CENTRE` landmark to life with a full `CommunityCentreSystem`. The building already exists in the world generator (brick, flat roof, noticeboard outside) but is completely inert — no NPCs, no schedule, nothing to do. This issue implements a multi-use community hub that serves different populations at different times of day: daytime pensioners, evening boxing sessions, Saturday jumble sales, and late-night AA meetings.
+
+### CommunityCentreSystem
+
+A new `CommunityCentreSystem` class managing:
+
+- **Schedule-driven activity rooms**: the centre runs different activities depending on the in-game time and day.
+- **Opening hours**: 09:00–22:00 daily. The building is physically accessible 24/7 but NPCs only spawn during opening hours.
+- **Central noticeboard** (`NOTICEBOARD_PROP` — new `PropType`): press E to browse a rotating weekly board of 3–5 rumour-tagged "notices" (drawn from `RumourNetwork`) and 1–2 quest leads (drawn from `BuildingQuestRegistry`). Refresh every Monday in-game.
+
+---
+
+### Activity 1: Boxing Club (Mon / Wed / Fri, 18:00–21:00)
+
+A `BOXING_COACH` NPC (`COUNCIL_MEMBER` type, named "Ray") runs sessions in the main hall. The hall contains `BOXING_BAG_PROP` (new `PropType`) and `BOXING_RING_PROP` (new `PropType`) props.
+
+- **Player training**: press E on `BOXING_BAG_PROP` for a 30-second session (tracks using `update()` call-count). Each session awards +1 `BOXING` skill point (new `StreetSkillSystem.Skill` entry: `BOXING`).
+  - At BOXING skill ≥ 3: player base punch damage increased by 2 (from 5 → 7).
+  - At BOXING skill ≥ 6: increased by 3 more (total 10). Tooltip: "Ray's got you throwing proper combos now."
+  - At BOXING skill ≥ 10 (max): achievement `PROPER_HARD` unlocked.
+- **Sparring**: at BOXING skill ≥ 2, press E on the `BOXING_RING_PROP` to spar with a `STREET_LAD` NPC (pulled from nearby NPCs, or spawned temporarily). Sparring deals reduced damage (50%). Win by reducing opponent to 10% HP — opponent submits. Reward: +5 COIN, +3 STREET_LADS Faction Respect. Lose: −3 HP, no reward. Cooldown: once per in-game day.
+- **Gang tensions**: if a `YOUTH_GANG` NPC is within 5 blocks of the centre during boxing hours, there's a 25% chance per minute they attempt to enter and start trouble (`NPCState.CHASING` a random `STREET_LAD`), requiring player to intervene (E to break it up) for +5 STREET_LADS Respect and −3 Notoriety.
+
+---
+
+### Activity 2: Bring & Buy Sale (Saturdays only, 09:00–13:00)
+
+4–6 `PENSIONER` NPCs set up `STALL_PROP` tables in the main hall selling randomised items from a curated pool:
+
+- `OLD_PHOTOGRAPH` (1 COIN), `ANTIQUE_CLOCK` (8 COIN), `HYMN_BOOK` (1 COIN), `BISCUIT` (1 COIN), `CONDOLENCE_CARD` (1 COIN), `TEXTBOOK` (2 COIN), `VINYL_RECORD` (new `Material` — 3 COIN), `THERMOS_FLASK` (new `Material` — 2 COIN), `JIGSAWPUZZLE_BOX` (new `Material` — 1 COIN), `KNITTING_NEEDLES` (new `Material` — 1 COIN).
+- **Haggling**: player can press E on a stall and offer 50% of the listed price. `PENSIONER` accepts if player's `STREET_LADS` Faction Respect ≥ 30 (they've seen you around) or if the player has previously donated to the `FoodBankSystem`. Otherwise refuses: "Sorry love, the price is the price."
+- **Shoplifting** from a stall: +5 Notoriety, +1 Wanted star; a PENSIONER shouts "He's nicking things!" and all NPCs in range become witnesses (`WitnessSystem.recordWitness`). Cooldown: the centre is alerted for 10 in-game minutes and the player is refused service.
+- **Donation mechanic**: player can place any item (drag from inventory) onto a `DONATION_BOX_PROP` (new `PropType`). Donating 3+ items on a single Saturday: +2 Notoriety reduction, +5 FOOD_BANK Respect, tooltip "You're not all bad."
+
+---
+
+### Activity 3: AA Meeting (Tue / Thu, 20:00–22:00)
+
+4–6 `PUBLIC` NPCs (with speech lines referencing "the twelve steps", "day at a time", etc.) sit in a circle of `CHAIR_PROP`. A `CASE_WORKER` NPC facilitates.
+
+- **Player attendance**: player can sit (press E on `CHAIR_PROP`) to "attend" the meeting. After 10 in-game minutes of attendance:
+  - If `WarmthSystem.getDrunkLevel() > 0`: drunk level reduced by 1 (sobering up).
+  - `NotorietySystem` charge for `DRUNK_AND_DISORDERLY` offences reduced by 1 (compassionate precedent).
+  - Achievement `ONE_DAY_AT_A_TIME`: attend your first AA meeting.
+- **Disruption**: entering the room while actively `NPCState.DRUNK` (stumbling animation) causes attendees to go to `NPCState.FLEEING`. `CASE_WORKER` becomes `NPCState.CHASING` (asking player to leave). +3 Notoriety. Tooltip: "You absolute state."
+- **Confession rumour**: one attendee NPC has a 20% chance per meeting of "sharing" a rumour (dialogue line overheard by player). The rumour is drawn from `RumourNetwork` and tagged `RumourType.OVERHEARD`.
+
+---
+
+### Noticeboard System
+
+`NOTICEBOARD_PROP` (new `PropType`) outside the centre and one inside. Each holds up to 5 notices:
+- **Community alert**: if `WantedSystem.getWantedLevel() >= 2`, the board displays "WANTED — police are looking for someone matching your description." +2 Notoriety if player lingers 10s while wanted.
+- **Quest lead**: one notice links to a `BuildingQuestRegistry` quest available at a nearby landmark (e.g. "Lost cat — see Margaret at the Food Bank"). Interacting starts the quest without needing to travel first.
+- **Rumour notice**: one or two rumours from `RumourNetwork` are pinned as handwritten notes. Reading them marks them as "heard" in the rumour network (equivalent to an NPC conversation).
+- **Faction graffiti**: if the COUNCIL faction's territory score ≥ 50, the noticeboard has council-approved notices; if STREET_LADS ≥ 50, someone has scrawled over them with `GraffitiSystem` tags.
+
+---
+
+### System Integrations
+
+- `StreetSkillSystem` — new `BOXING` skill slot; `getBoxingDamageBonus()` returns 0/2/5 at levels 0/3/6.
+- `NotorietySystem` — gang brawl broken up: −3; drunk disruption: +3; stall theft: +5.
+- `WantedSystem` — stall theft: +1 wanted star.
+- `FactionSystem` — boxing sparring win: +3 STREET_LADS Respect; gang break-up: +5 STREET_LADS Respect; community donation: +5 THE_COUNCIL Respect.
+- `WarmthSystem` — inside centre: +3 Warmth/min (heated building). Shelter from rain.
+- `RumourNetwork` — noticeboard check seeds 1–2 rumours as heard; AA confession: seeds 1 `RumourType.OVERHEARD`.
+- `GraffitiSystem` — noticeboard graffiti reflects faction territory scores.
+- `WeatherSystem` — rain/cold increases NPC attendance at Bring & Buy (extra 1–2 pensioners seeking shelter).
+- `BuildingQuestRegistry` — noticeboard exposes 1 pending quest as a notice.
+- `WitnessSystem` — stall theft: all attending NPCs become witnesses.
+- `FoodBankSystem` — donation count fed into `FoodBankSystem.getPlayerDonationCount()` for cross-system haggling unlock.
+- `TimeSystem` — schedule gate for all three activities; correct day-of-week check for Saturday sales.
+- `AchievementSystem` — `PROPER_HARD`, `ONE_DAY_AT_A_TIME`, `SATURDAY_BARGAIN_HUNTER`.
+
+---
+
+### New `PropType` entries
+
+- `NOTICEBOARD_PROP` — readable community noticeboard; press E to browse notices. (0.10f × 1.20f × 0.05f, 3 hits, `Material.WOOD`)
+- `BOXING_BAG_PROP` — interactive training prop; press E during boxing club hours to train. (0.40f × 1.20f × 0.40f, 8 hits, `Material.SCRAP_METAL`)
+- `BOXING_RING_PROP` — sparring arena; press E to start a sparring session. (4.00f × 0.10f × 4.00f, 12 hits, `Material.WOOD`)
+- `DONATION_BOX_PROP` — accepts items from inventory; triggers donation mechanic. (0.60f × 0.80f × 0.60f, 5 hits, `Material.CARDBOARD`)
+
+### New `Material` entries
+
+- `VINYL_RECORD` — "Still in its sleeve. Contains something by a band you've vaguely heard of." 3 COIN sell value.
+- `THERMOS_FLASK` — consumable; drink once for +20 Warmth. "Lukewarm at best. You're grateful."
+- `JIGSAW_PUZZLE_BOX` — "Five hundred pieces. At least two are missing." Satisfies `NeedType.BORED` for 15 score when 'used'.
+- `KNITTING_NEEDLES` — "Could be used for knitting. Or other things." Weapon: 3 damage. Crafting component.
+
+### New `StreetSkillSystem.Skill` entry
+
+- `BOXING` — unlocked via `BOXING_BAG_PROP` training at the community centre. Max level 10. Provides punch damage bonus at levels 3 and 6.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `PROPER_HARD` | Reach BOXING skill level 10 — maximum training at Ray's boxing club |
+| `ONE_DAY_AT_A_TIME` | Attend your first AA meeting at the community centre |
+| `SATURDAY_BARGAIN_HUNTER` | Purchase 3 items from a single Bring & Buy Sale session |
+
+### Unit Tests
+
+- `CommunityCentreSystem.isBoxingClubActive(day, hour)` returns true Mon/Wed/Fri 18:00–20:59, false at all other times.
+- `CommunityCentreSystem.isBringAndBuyActive(day, hour)` returns true Saturday 09:00–12:59 only.
+- `CommunityCentreSystem.isAAMeetingActive(day, hour)` returns true Tue/Thu 20:00–21:59 only.
+- `getBoxingDamageBonus(skill)` returns 0 at skill < 3, 2 at skill 3–5, 5 at skill ≥ 6.
+- Haggling succeeds when `STREET_LADS` Respect ≥ 30; fails below threshold.
+- Donation of 3 items: `getNotorietyReduction()` returns 2, `getFoodBankRespectBonus()` returns 5.
+- `canAttendAAMeeting(drunkLevel)` — attending while drunk (level > 0) triggers disruption flag, not seated flag.
+- Noticeboard: `getNoticeCount()` returns 3–5 after `refreshNoticeboard(rumourNetwork, questRegistry)`.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Boxing skill increases punch damage**: Set time to Monday 19:00. Spawn BOXING_COACH at community centre. Press E on `BOXING_BAG_PROP` 30 times (simulating 30 training ticks). Verify `StreetSkillSystem.getSkillLevel(BOXING)` == 1. Continue training to skill level 3. Place a BRICK block adjacent to player (normally 8 hits to break). Simulate punching. Verify BRICK breaks in 6 hits (8 − 2 bonus = 6).
+
+2. **Bring & Buy Sale runs on Saturday only**: Set time to Saturday 10:00. Call `CommunityCentreSystem.update(delta, timeSystem, npcManager, ...)`. Verify 4–6 `PENSIONER` NPCs are present in the main hall. Set time to Sunday 10:00. Advance update. Verify all PENSIONER stall NPCs are despawned.
+
+3. **Haggling succeeds with sufficient Faction Respect**: Set `STREET_LADS` Respect to 35. Set time to Saturday 10:00. Spawn PENSIONER stall with `ANTIQUE_CLOCK` priced at 8 COIN. Give player 4 COIN. Press E on stall, choose "Haggle". Verify player pays 4 COIN and receives `ANTIQUE_CLOCK`. Verify player COIN == 0.
+
+4. **Stall theft triggers wanted star and witnesses**: Set time to Saturday 11:00. Spawn 4 PENSIONER NPCs in hall. Attempt to steal item from stall (punch prop or pick-up without paying). Verify Notoriety increased by 5. Verify `WantedSystem.getWantedLevel()` == 1. Verify at least 2 PENSIONER NPCs have `isWitness()` true in `WitnessSystem`.
+
+5. **AA meeting sober-up mechanic**: Set time to Tuesday 20:30. Set `WarmthSystem.drunkLevel` to 2. Spawn CASE_WORKER NPC. Press E on CHAIR_PROP (attend). Advance 10 in-game minutes. Verify `WarmthSystem.getDrunkLevel()` == 1 (reduced by 1). Verify `ONE_DAY_AT_A_TIME` achievement is unlocked.
+
+6. **Drunk disruption at AA meeting**: Set time to Tuesday 20:30. Set player drunk level > 0 (stumbling). Enter the AA room. Verify `CASE_WORKER` state is `NPCState.CHASING`. Verify `attendees` NPCs have state `NPCState.FLEEING`. Verify Notoriety increased by 3.
+
+7. **Noticeboard populates and rumours count as heard**: Seed `RumourNetwork` with 5 rumours. Call `CommunityCentreSystem.refreshNoticeboard(rumourNetwork, questRegistry)`. Press E on `NOTICEBOARD_PROP`. Verify `getNoticeCount()` is between 3 and 5. Verify at least 2 rumours in `RumourNetwork` are now marked as heard by the player.
+
+8. **Gang brawl intervention reduces notoriety**: Set time to Monday 19:00. Spawn YOUTH_GANG NPC within 5 blocks of centre. Simulate 60-second `update()` loop to trigger brawl attempt. Verify YOUTH_GANG enters hall and targets a STREET_LAD NPC. Press E (player breaks up brawl). Verify Notoriety decreased by 3. Verify `STREET_LADS` Faction Respect increased by 5.
