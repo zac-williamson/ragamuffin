@@ -4587,12 +4587,15 @@ public class RagamuffinGame extends ApplicationAdapter {
 
                 // Issue #189: Update target reticule label — NPC takes priority over block/prop
                 // Issue #872: Small items show pickup hint when player is nearby
+                // Issue #1082: Pass targeted NPC to HUD for detail panel
                 int hudSmallItemIndex = findSmallItemInReach(player.getPosition(), PUNCH_REACH);
                 if (hudTargetNPC != null) {
                     gameHUD.setTargetName(formatNPCName(hudTargetNPC.getType()));
+                    gameHUD.setTargetNPC(hudTargetNPC);
                 } else if (hudSmallItemIndex >= 0) {
                     ragamuffin.building.Material smallItemMat = world.getSmallItems().get(hudSmallItemIndex).getMaterial();
                     gameHUD.setTargetName("[E] Pick up " + smallItemMat.getDisplayName());
+                    gameHUD.setTargetNPC(null);
                 } else if (hudShowProp) {
                     ragamuffin.world.PropType hudPropType = world.getPropPositions().get(hudTargetPropIndex).getType();
                     // Issue #852: Show interaction hint for fruit machine
@@ -4601,16 +4604,20 @@ public class RagamuffinGame extends ApplicationAdapter {
                     } else {
                         gameHUD.setTargetName(formatPropName(hudPropType));
                     }
+                    gameHUD.setTargetNPC(null);
                 } else if (hudShowBlock) {
                     gameHUD.setTargetName(formatBlockName(targetBlock.getBlockType()));
+                    gameHUD.setTargetNPC(null);
                 } else {
                     gameHUD.setTargetName(null);
+                    gameHUD.setTargetNPC(null);
                 }
             } else {
                 // UI overlay is open — clear crosshair state so stale values don't
                 // linger when the overlay is closed
                 gameHUD.setBlockBreakProgress(0f);
                 gameHUD.setTargetName(null);
+                gameHUD.setTargetNPC(null);
             }
 
             gameHUD.render(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltipSystem, showCrosshair);

@@ -18,6 +18,8 @@ import ragamuffin.core.StreetReputation;
 import ragamuffin.core.Weather;
 import ragamuffin.core.WitnessSystem;
 import ragamuffin.entity.DamageReason;
+import ragamuffin.entity.NPC;
+import ragamuffin.entity.NPCState;
 import ragamuffin.entity.Player;
 
 /**
@@ -60,6 +62,7 @@ public class GameHUD {
     private float blockBreakProgress; // 0.0 to 1.0
     private boolean isNight; // Whether it is currently night (police active)
     private String targetName; // Name of the block or NPC currently targeted (null = nothing)
+    private NPC targetNPC;    // Issue #1082: NPC currently under the crosshair (null = no NPC)
 
     // Damage reason display
     private float damageReasonTimer; // > 0 while reason banner is visible
@@ -73,6 +76,7 @@ public class GameHUD {
         this.blockBreakProgress = 0f;
         this.isNight = false;
         this.targetName = null;
+        this.targetNPC = null;
         this.damageReasonTimer = 0f;
         this.damageReasonText = null;
         this.factionSystem = null;
@@ -261,6 +265,10 @@ public class GameHUD {
         // Render crosshair and target name only when no UI overlay is blocking
         if (showCrosshair) {
             renderCrosshair(spriteBatch, shapeRenderer, font, screenWidth, screenHeight, hoverTooltips);
+            // Issue #1082: Render NPC detail panel when an NPC is targeted
+            if (targetNPC != null) {
+                renderNPCDetails(spriteBatch, shapeRenderer, font, screenWidth, screenHeight);
+            }
         }
 
         // Render damage reason banner
@@ -524,6 +532,21 @@ public class GameHUD {
      */
     public String getTargetName() {
         return targetName;
+    }
+
+    /**
+     * Set the NPC currently under the crosshair (Issue #1082).
+     * Pass null to clear the NPC detail panel.
+     */
+    public void setTargetNPC(NPC npc) {
+        this.targetNPC = npc;
+    }
+
+    /**
+     * Get the NPC currently under the crosshair (Issue #1082).
+     */
+    public NPC getTargetNPC() {
+        return targetNPC;
     }
 
     /**
@@ -1117,5 +1140,143 @@ public class GameHUD {
         font.getData().setScale(1.0f);
         font.setColor(Color.WHITE);
         spriteBatch.end();
+    }
+
+    // ── Issue #1082: NPC detail panel ─────────────────────────────────────────
+
+    /**
+     * Render a small NPC detail panel just above the crosshair label.
+     *
+     * <p>Shows the NPC's name (or type if unnamed), a colour-coded health bar,
+     * and a short description of their current state. Positioned above the
+     * crosshair so it does not overlap the reticule.
+     */
+    private void renderNPCDetails(SpriteBatch spriteBatch, ShapeRenderer shapeRenderer,
+                                   BitmapFont font, int screenWidth, int screenHeight) {
+        if (targetNPC == null) return;
+
+        // Panel geometry — centred on screen, sitting above the crosshair
+        float panelWidth  = 200f;
+        float panelHeight = 52f;
+        float panelX      = screenWidth  / 2f - panelWidth  / 2f;
+        // Position above the crosshair (crosshair sits at centre; the label below it
+        // takes about 20px, so we place the panel well above the reticule).
+        float panelY      = screenHeight / 2f + CROSSHAIR_SIZE + CROSSHAIR_GAP + 12f;
+
+        // Semi-transparent dark background
+        Gdx.gl.glEnable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+        Gdx.gl.glBlendFunc(com.badlogic.gdx.graphics.GL20.GL_SRC_ALPHA,
+                com.badlogic.gdx.graphics.GL20.GL_ONE_MINUS_SRC_ALPHA);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0f, 0f, 0f, 0.55f);
+        shapeRenderer.rect(panelX - 2, panelY - 2, panelWidth + 4, panelHeight + 4);
+
+        // Health bar — fill colour: green→amber→red
+        float maxHP  = targetNPC.getType().getMaxHealth();
+        float curHP  = targetNPC.getHealth();
+        float hpPct  = (maxHP > 0f) ? Math.max(0f, curHP / maxHP) : 0f;
+        float barW   = panelWidth - 4f;
+        float barH   = 8f;
+        float barX   = panelX + 2f;
+        float barY   = panelY + 4f;
+
+        // Background for health bar
+        shapeRenderer.setColor(0.25f, 0.05f, 0.05f, 0.9f);
+        shapeRenderer.rect(barX, barY, barW, barH);
+
+        // Fill: green above 60%, amber 30–60%, red below 30%
+        if (hpPct > 0.6f) {
+            shapeRenderer.setColor(0.15f, 0.85f, 0.15f, 0.9f);
+        } else if (hpPct > 0.3f) {
+            shapeRenderer.setColor(0.9f, 0.65f, 0.0f, 0.9f);
+        } else {
+            shapeRenderer.setColor(0.9f, 0.1f, 0.1f, 0.9f);
+        }
+        if (hpPct > 0f) {
+            shapeRenderer.rect(barX, barY, barW * hpPct, barH);
+        }
+        shapeRenderer.end();
+        Gdx.gl.glDisable(com.badlogic.gdx.graphics.GL20.GL_BLEND);
+
+        // Text: name line + state line
+        spriteBatch.begin();
+        font.getData().setScale(0.75f);
+
+        // Name: use unique name if the NPC has one, otherwise fall back to type title-case
+        String displayName;
+        if (targetNPC.isNamed()) {
+            displayName = targetNPC.getName();
+        } else {
+            String raw = targetNPC.getType().name().replace('_', ' ');
+            StringBuilder sb = new StringBuilder();
+            for (String word : raw.split(" ")) {
+                if (sb.length() > 0) sb.append(' ');
+                if (!word.isEmpty()) {
+                    sb.append(Character.toUpperCase(word.charAt(0)));
+                    sb.append(word.substring(1).toLowerCase());
+                }
+            }
+            displayName = sb.toString();
+        }
+
+        font.setColor(1f, 1f, 1f, 0.95f);
+        font.draw(spriteBatch, displayName, panelX + 4f, panelY + panelHeight - 4f);
+
+        // State description
+        String stateDesc = describeNPCState(targetNPC.getState());
+        font.getData().setScale(0.65f);
+        font.setColor(0.8f, 0.8f, 0.8f, 0.9f);
+        font.draw(spriteBatch, stateDesc, panelX + 4f, panelY + panelHeight - 20f);
+
+        // HP fraction label beside the health bar
+        font.getData().setScale(0.6f);
+        font.setColor(0.9f, 0.9f, 0.9f, 0.9f);
+        String hpLabel = (int) curHP + " / " + (int) maxHP;
+        font.draw(spriteBatch, hpLabel, panelX + 4f, barY + barH + 10f);
+
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
+        spriteBatch.end();
+    }
+
+    /**
+     * Return a short human-readable description of an NPC state.
+     * Used in the NPC detail panel (Issue #1082).
+     */
+    static String describeNPCState(NPCState state) {
+        switch (state) {
+            case IDLE:               return "Standing around";
+            case WANDERING:          return "Wandering";
+            case GOING_TO_WORK:      return "Heading to work";
+            case GOING_HOME:         return "Heading home";
+            case AT_PUB:             return "At the pub";
+            case AT_HOME:            return "At home";
+            case GOING_TO_SCHOOL:    return "Heading to school";
+            case AT_SCHOOL:          return "At school";
+            case LEAVING_SCHOOL:     return "Leaving school";
+            case PATROLLING:         return "Patrolling";
+            case SUSPICIOUS:         return "Suspicious";
+            case WARNING:            return "Issuing a warning";
+            case AGGRESSIVE:         return "Hostile";
+            case ARRESTING:          return "Arresting!";
+            case FLEEING:            return "Fleeing";
+            case KNOCKED_OUT:        return "Knocked out";
+            case ATTACKING:          return "Attacking";
+            case ATTACKING_PLAYER:   return "Attacking you!";
+            case CHASING_PLAYER:     return "Chasing you!";
+            case WITNESS:            return "Witnessed a crime";
+            case REPORTING_TO_POLICE:return "Reporting to police";
+            case SCRUTINISING:       return "Suspicious of you";
+            case FOLLOWING:          // fall-through
+            case FOLLOWING_PLAYER:   return "Following you";
+            case SEARCHING:          return "Searching";
+            case STARING:            return "Staring";
+            case DANCING:            return "Dancing";
+            case WAVING:             return "Waving";
+            case SHELTERING:         return "Taking shelter";
+            case QUEUING:            return "Queuing";
+            case WAITING_FOR_BUS:    return "Waiting for the bus";
+            default:                 return state.name().replace('_', ' ').toLowerCase();
+        }
     }
 }
