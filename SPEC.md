@@ -25809,3 +25809,103 @@ One random event per in-game hour (22:00–00:00 only):
 // New: RumourType.PIGEON_CHAOS (may not yet exist — add stub)
 // Existing: NPCType.SHOPKEEPER, PUBLIC, DELIVERY_DRIVER, BIRD, PCSO, DRUNK all defined
 // WorldGenerator: add CHINESE_TAKEAWAY block to parade-of-shops generation pass
+
+---
+
+## Add Northfield Magistrates' Court — Your Day in Dock, the Duty Solicitor & the Community Service Economy
+
+**Landmark**: New `LandmarkType.MAGISTRATES_COURT` ("Northfield Magistrates' Court")
+
+Every working-class British town has a magistrates' court — a drab, slightly threatening civic building that handles 95% of criminal cases without a jury. The ArrestSystem currently teleports the player to the park with items confiscated and that's it: no charges, no appearance, no consequences proportional to the crime. The magistrates' court completes the criminal justice pipeline in a distinctly British fashion.
+
+### Building
+
+A two-storey civic brick building (14×12×6 blocks) on a side street off the high street, adjacent to the police station. Ground floor: public waiting area (BENCH_PROP rows, a WATER_COOLER_PROP, NOTICE_BOARD_PROP listing today's docket), a CLERK_COUNTER_PROP, and two court rooms. Upper floor: inaccessible magistrate chambers. Exterior: stone steps, a ROYAL_CREST_PROP above the double doors, a public NOTICE_BOARD_PROP listing case docket outside. Open Mon–Fri 09:30–16:30.
+
+### Court Summons Mechanic
+
+After any arrest where `CriminalRecord` contains at least one `CrimeType` above `MINOR` severity, the `MagistratesCourtSystem` schedules a **court date** 3 in-game days hence. A `COURT_SUMMONS_PROP` letter is delivered to the player's squat (or materialises in inventory if no squat). A notification is logged to `SpeechLogUI`.
+
+- **Failure to appear**: Notoriety +10, automatic `FAILURE_TO_APPEAR` criminal record entry, police patrol density increases for 2 in-game days.
+- **Appearing on time** (player walks through court entrance 09:30–10:00 on the scheduled day): triggers court session.
+
+### NPCs
+
+- **Her Honour Magistrate Sandra Pemberton** (`MAGISTRATE`) — sits behind the bench. Severe, impartial, hates time-wasters. Refuses to deal with players who interrupt proceedings. Notoriety ≥ 70: orders immediate remand ("I'm not having you in my courtroom without a custodial risk assessment").
+- **CPS Prosecutor Martin Gale** (`CPS_PROSECUTOR`) — reads the charges in a flat, bureaucratic tone. Can be bribed (20 COIN) before the hearing starts to "misplace" one charge from the file.
+- **Duty Solicitor Donna** (`DUTY_SOLICITOR`) — waits in the public area. Hire for 5 COIN before the session. Reduces sentence tier by one. At FactionSystem STREET_LADS Respect ≥ 60, Donna quietly signals the player which charges are weakest.
+- **Court Usher Trevor** (`COURT_USHER`) — opens doors, calls names, profoundly bored. Can be bribed for 3 COIN to delay the session 30s (useful if player is running late).
+- **2–4 waiting PUBLIC/PENSIONER NPCs** — fellow defendants; comment on the player's crimes if Notoriety is high.
+
+### Hearing Flow
+
+1. **Charges read** — Martin lists offences from `CriminalRecord` (up to 3 most recent).
+2. **Plea** — Player chooses: Guilty (faster, lower sentence tier) or Not Guilty (longer session, 50% chance of acquittal on each charge based on evidence strength).
+3. **Evidence check** — `WitnessSystem` reports: each witnessed crime increases conviction probability +20%.
+4. **Sentence** — Sandra delivers verdict per charge:
+
+| Outcome            | Condition                                       | Effect                                              |
+|--------------------|-------------------------------------------------|-----------------------------------------------------|
+| Acquitted          | Not guilty plea + no witnesses                 | Charge wiped from `CriminalRecord`; Notoriety −2    |
+| Conditional Caution| First offence, guilty plea, Notoriety ≤ 20     | No fine; one community service shift required       |
+| Fine               | Standard conviction                             | 5–25 COIN deducted; charge remains on record        |
+| Community Service  | Two+ charges, guilty plea                      | 3 community service shifts at `JobCentreSystem`     |
+| Suspended Sentence | Serious charge, no prior court appearances     | Notoriety cap −10 for 5 in-game days; 1 more arrest = custodial |
+| Custodial          | Notoriety ≥ 60 or Duty Solicitor not hired     | 24h in-game lock-out; player respawns at park gates with empty inventory |
+
+5. **Post-hearing**: Sandra strikes the gavel; NPCs disperse. Player exits.
+
+### Community Service Economy
+
+When sentenced to community service, a `COMMUNITY_SERVICE_SLIP` appears in inventory. The player must report to the `JobCentreSystem` (Derek assigns work) or `FoodBankSystem` (sorting donations) or `AllotmentSystem` (weeding). Each shift takes 10 in-game minutes. Completing all shifts: `COMMUNITY_SERVICE_COMPLETE` rumour seeded (LOCAL_EVENT pool), Notoriety −5 per shift. Skipping a shift: Notoriety +8, immediate warrant issued (police attack on sight for 5 minutes).
+
+### Bribery & Manipulation
+
+- **Bribe CPS Prosecutor** (20 COIN before hearing): removes one charge from today's docket. Requires Notoriety ≤ 50 (visible criminals are watched). Caught bribing: Notoriety +15, `PERVERTING_COURSE_OF_JUSTICE` added to record.
+- **Bribe Court Usher Trevor** (3 COIN): delays session start by 30s.
+- **Intimidate a Witness** (via `WitnessSystem`, before court date): removes a witness; reduces conviction probability by 20% per witness silenced. Costs 10 COIN or Notoriety +5.
+- **Plant False Evidence** (requires `FORGED_DOCUMENT` item from `FenceSystem`): swaps one of the player's charges for a `PUBLIC_ORDER_OFFENCE` (minor). Costs `FORGED_DOCUMENT` + 15 COIN.
+
+### Achievements
+
+- `FIRST_OFFENCE` — appear in court for the first time.
+- `NOT_GUILTY` — be acquitted on all charges in a single hearing.
+- `COMMUNITY_SERVICE_HERO` — complete 5 community service shifts.
+- `BENT_BRIEF` — successfully bribe the CPS prosecutor.
+- `CONTEMPT_OF_COURT` — interrupt Magistrate Pemberton mid-sentence 3 times.
+- `CUSTODIAL` — receive a custodial sentence.
+
+### Unit Tests
+
+1. `MagistratesCourtSystem.isOpen(9.5f, DAY_WEEKDAY)` returns `true`; `isOpen(9.5f, DAY_SATURDAY)` returns `false`; `isOpen(17.0f, DAY_WEEKDAY)` returns `false`.
+2. `scheduleCourt(criminalRecord, 3)` schedules court date at `currentDay + 3`; `getScheduledDay()` returns `currentDay + 3`.
+3. `computeSentenceTier(notoriety=15, chargeCount=1, guilty=true, dutyHired=false)` returns `CONDITIONAL_CAUTION`.
+4. `computeSentenceTier(notoriety=65, chargeCount=2, guilty=false, dutyHired=false)` returns `CUSTODIAL`.
+5. `computeSentenceTier(notoriety=40, chargeCount=2, guilty=true, dutyHired=true)` returns one tier lower than without duty solicitor.
+6. `MagistratesCourtSystem.calcFine(CrimeType.THEFT, notoriety=30)` returns a value in [5, 25].
+7. `isFailureToAppear(scheduledDay=3, currentDay=4, appeared=false)` returns `true`; `(appeared=true)` returns `false`.
+
+### Integration Tests
+
+1. **Court date scheduled after arrest**: Trigger an arrest via `ArrestSystem.arrest()` with a `THEFT` charge in `CriminalRecord`. Verify `MagistratesCourtSystem.getScheduledDay()` is `currentDay + 3`. Verify `COURT_SUMMONS` material appears in player inventory.
+
+2. **Guilty plea results in fine and cleared schedule**: Simulate player entering court on scheduled day. Call `startHearing(plea=GUILTY)`. Advance simulation through sentence phase. Verify player COIN reduced by fine amount. Verify `getScheduledDay()` returns `NO_DATE`. Verify `THEFT` charge remains on `CriminalRecord`.
+
+3. **Not guilty acquittal clears charge**: Set `WitnessSystem` witness count to 0. Call `startHearing(plea=NOT_GUILTY)`. Simulate hearing (50% acquittal with no witnesses). Seed `Random(42)` for determinism. Verify charge is removed from `CriminalRecord` on acquittal. Verify Notoriety reduced by 2.
+
+4. **Community service completion reduces notoriety**: Sentence player to community service (3 shifts). Simulate `completeShift(JobCentreSystem)` three times. Verify Notoriety reduced by 15 total (5 per shift). Verify `COMMUNITY_SERVICE_COMPLETE` rumour is seeded in `RumourNetwork`.
+
+5. **Failure to appear triggers warrant**: Schedule court date for day 3. Advance time to day 4 without entering court. Call `MagistratesCourtSystem.update(delta, timeSystem, notorietySystem, wantedSystem)`. Verify Notoriety increased by 10. Verify `CriminalRecord` contains `FAILURE_TO_APPEAR`. Verify police patrol density flag is set.
+
+// ── New: MagistratesCourtSystem.java in ragamuffin.core
+// New: LandmarkType.MAGISTRATES_COURT ("Northfield Magistrates' Court")
+// New: NPCType stubs required: MAGISTRATE, CPS_PROSECUTOR, DUTY_SOLICITOR, COURT_USHER
+// New: Material stubs required: COURT_SUMMONS, COMMUNITY_SERVICE_SLIP, FORGED_DOCUMENT
+// New: PropType stubs required: ROYAL_CREST_PROP, WATER_COOLER_PROP, NOTICE_BOARD_PROP (may exist),
+//      CLERK_COUNTER_PROP, COURT_USHER_PROP
+// New: AchievementType stubs required: FIRST_OFFENCE, NOT_GUILTY, COMMUNITY_SERVICE_HERO,
+//      BENT_BRIEF, CONTEMPT_OF_COURT, CUSTODIAL
+// New: CriminalRecord.CrimeType.FAILURE_TO_APPEAR, PERVERTING_COURSE_OF_JUSTICE (add stubs)
+// Existing: ArrestSystem, CriminalRecord, WitnessSystem, NotorietySystem, WantedSystem,
+//           JobCentreSystem, FoodBankSystem, AllotmentSystem, FactionSystem, FenceSystem all defined
+// WorldGenerator: add MAGISTRATES_COURT block adjacent to POLICE_STATION in civic zone
