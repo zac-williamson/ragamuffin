@@ -248,7 +248,19 @@ public enum LandmarkType {
      * Run by Kev (TATTOOIST), open Tue–Sat 11:00–18:00.
      * Features TATTOO_CHAIR_PROP, FLASH_SHEET_PROP, TATTOO_STATION_PROP.
      */
-    TATTOO_PARLOUR;
+    TATTOO_PARLOUR,
+
+    // ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
+
+    /**
+     * Pearce &amp; Sons Metal Merchants — a scrapyard on the industrial estate.
+     * Managed by SCRAPYARD_OWNER Gary and SCRAPYARD_WORKER Kyle.
+     * Open 09:00–17:00. GUARD_DOG Tyson patrols 20:00–07:00.
+     * Features WEIGH_BRIDGE_PROP, CRUSHER_PROP, YARD_OFFICE_PROP.
+     * Locked compound (LOCKED_GATE_PROP) contains COPPER_BALE_PROP.
+     * Buys scrap by weight; refuses copper if player Notoriety ≥ 50.
+     */
+    SCRAPYARD;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -315,6 +327,7 @@ public enum LandmarkType {
             case ARCADE:                return "Ace Amusements";
             case GREYHOUND_TRACK:       return "Northfield Dog Track";
             case TATTOO_PARLOUR:        return "Skin Deep Tattoos";
+            case SCRAPYARD:             return "Pearce & Sons Metal Merchants";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

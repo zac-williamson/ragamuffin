@@ -857,7 +857,55 @@ public enum PropType {
      * Press E to receive a random collectible LEAFLET item.
      * Destroyed by 2 punches; yields CARDBOARD.
      */
-    LEAFLET_RACK_PROP(0.30f, 1.20f, 0.30f, 2, Material.CARDBOARD);
+    LEAFLET_RACK_PROP(0.30f, 1.20f, 0.30f, 2, Material.CARDBOARD),
+
+    // ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
+
+    /**
+     * WEIGH_BRIDGE_PROP — flat metal weighing platform at the scrapyard entrance.
+     * Press E to open the sell menu. Destroyed by 8 hits; yields SCRAP_METAL.
+     */
+    WEIGH_BRIDGE_PROP(2.0f, 0.2f, 2.0f, 8, Material.SCRAP_METAL),
+
+    /**
+     * CRUSHER_PROP — large hydraulic industrial press in the south yard.
+     * Press E to destroy items permanently (evidence destruction).
+     * Running it generates NoiseSystem level 8. Destroyed by 12 hits; yields SCRAP_METAL.
+     */
+    CRUSHER_PROP(2.0f, 2.5f, 2.0f, 12, Material.SCRAP_METAL),
+
+    /**
+     * YARD_OFFICE_PROP — small portacabin near the scrapyard entrance.
+     * Gary Pearce works inside 09:00–17:00. Contains CASH_BOX_PROP (12 COIN; requires LOCKPICK).
+     * Destroyed by 6 hits; yields WOOD.
+     */
+    YARD_OFFICE_PROP(3.0f, 2.5f, 4.0f, 6, Material.WOOD),
+
+    /**
+     * SCRAP_PILE_PROP — heap of twisted scrap metal scattered around the yard.
+     * Each pile yields SCRAP_METAL ×1–3 on 4 hits with any tool. Respawn after 1 in-game day.
+     * Destroyed by 4 hits; yields SCRAP_METAL.
+     */
+    SCRAP_PILE_PROP(1.5f, 1.0f, 1.5f, 4, Material.SCRAP_METAL),
+
+    /**
+     * COPPER_BALE_PROP — compressed bale of copper in the locked compound.
+     * Yields COPPER_BALE ×1 when broken. Destroyed by 6 hits; yields COPPER_BALE.
+     */
+    COPPER_BALE_PROP(1.2f, 1.0f, 0.8f, 6, Material.COPPER_BALE),
+
+    /**
+     * DOG_KENNEL_PROP — Tyson the Rottweiler's night base.
+     * Tyson is unleashed 20:00–07:00. Destroyed by 3 hits; yields WOOD.
+     */
+    DOG_KENNEL_PROP(1.2f, 1.0f, 1.0f, 3, Material.WOOD),
+
+    /**
+     * COPPER_PIPE_PROP — exposed copper pipe fitting on an industrial wall.
+     * Remove with SCREWDRIVER (5 seconds) to yield COPPER_WIRE ×2.
+     * Destroyed by 5 hits; yields SCRAP_METAL.
+     */
+    COPPER_PIPE_PROP(0.3f, 0.3f, 0.6f, 5, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

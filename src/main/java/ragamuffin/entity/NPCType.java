@@ -837,7 +837,31 @@ public enum NPCType {
      * Shares rumours with nearby NPCs. Passive.
      * Speech: "Been waiting forty minutes." / "You got an appointment?"
      */
-    GP_PATIENT(15f, 0f, 0f, false);
+    GP_PATIENT(15f, 0f, 0f, false),
+
+    // ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
+
+    /**
+     * Scrapyard Owner — Gary Pearce, runs the weigh-bridge and yard office.
+     * Present 09:00–17:00. Buys scrap by weight; refuses copper if Notoriety ≥ 50.
+     * Speech: "By the kilo, son — none of this individual-piece nonsense."
+     */
+    SCRAPYARD_OWNER(35f, 5f, 2.0f, false),
+
+    /**
+     * Scrapyard Worker — Kyle, operates the crusher and warns about police.
+     * Present 08:00–18:00. Charges 1 COIN per item crushed.
+     * 20% chance to warn player if police are nearby and his respect is ≥ 10.
+     */
+    SCRAPYARD_WORKER(30f, 5f, 2.0f, false),
+
+    /**
+     * Guard Dog — Tyson the Rottweiler, night patrol 20:00–07:00.
+     * Attacks player on sight unless player carries SAUSAGE_ROLL.
+     * Distracted for 30 seconds by SAUSAGE_ROLL. Cannot be adopted.
+     * Speech: [growl]
+     */
+    GUARD_DOG(40f, 12f, 1.5f, true);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
