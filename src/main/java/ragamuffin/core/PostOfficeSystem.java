@@ -644,8 +644,8 @@ public class PostOfficeSystem {
 
         inventory.removeItem(Material.STAMP, 1);
 
-        // Apply FRIGHTENED state to target
-        targetNpc.setState(NPCState.FRIGHTENED);
+        // Apply FLEEING state to target (NPC becomes frightened/fleeing)
+        targetNpc.setState(NPCState.FLEEING);
 
         // First letter achievement
         if (!firstLetterSent && achievementSystem != null) {

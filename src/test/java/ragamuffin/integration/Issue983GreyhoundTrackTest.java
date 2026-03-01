@@ -48,7 +48,7 @@ class Issue983GreyhoundTrackTest {
     @BeforeEach
     void setUp() {
         greySystem = new GreyhoundRacingSystem(new Random(12345));
-        timeSystem = new TimeSystem(18.5f); // 18:30 — track is open (18:00–23:00)
+        timeSystem = new TimeSystem(18.05f); // 18:03 — track is just open (18:00–23:00), before first race
         factionSystem = new FactionSystem();
         notorietySystem = new NotorietySystem();
         criminalRecord = new CriminalRecord();
