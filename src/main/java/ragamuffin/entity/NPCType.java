@@ -884,7 +884,26 @@ public enum NPCType {
      * Speech: "Got something for me?" / "That's hot, innit." /
      *         "Don't bring it back if it's got a tracking chip, yeah?"
      */
-    DAVE_MIDDLEMAN(20f, 0f, 0f, false);
+    DAVE_MIDDLEMAN(20f, 0f, 0f, false),
+
+    // ── Issue #1030: Al-Noor Mosque ────────────────────────────────────────────
+
+    /**
+     * Imam Hassan — leads the five daily prayers and Friday Jumu'ah at Al-Noor Mosque.
+     * Present 08:00–21:00 daily. Passive; never hostile.
+     * Offers rumours, sanctuary advice, and FLATBREAD to hungry players.
+     * Speech: "Salaam alaikum." / "You're welcome here, friend."
+     *         / "Friday prayers are at one o'clock, if you'd like to attend."
+     */
+    IMAM(20f, 0f, 0f, false),
+
+    /**
+     * Worshipper — attends the five daily prayers and Friday Jumu'ah.
+     * Kneels on PRAYER_MAT_PROP during prayer; shares NEIGHBOURHOOD rumours after Jumu'ah.
+     * Passive; 4–8 present during regular prayer, 10–16 during Friday Jumu'ah.
+     * Speech: "Jumu'ah today — are you joining us?" / "Peace be with you."
+     */
+    WORSHIPPER(18f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

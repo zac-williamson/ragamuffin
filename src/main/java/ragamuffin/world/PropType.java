@@ -931,7 +931,64 @@ public enum PropType {
      * Back room contains SAFE_PROP with day's takings.
      * Destroyed by 8 punches; yields SCRAP_METAL.
      */
-    BACK_ROOM_DOOR_PROP(1.00f, 2.20f, 0.20f, 8, Material.SCRAP_METAL);
+    BACK_ROOM_DOOR_PROP(1.00f, 2.20f, 0.20f, 8, Material.SCRAP_METAL),
+
+    // ── Issue #1030: Al-Noor Mosque ────────────────────────────────────────────
+
+    /**
+     * Prayer mat — a small woven mat laid on the mosque floor.
+     * WORSHIPPER NPCs kneel on these during the five daily prayers and Friday Jumu'ah.
+     * Player may use one (press E) during prayer for +1 Community Respect per minute.
+     * Destroyed by 2 punches; yields CLOTH.
+     */
+    PRAYER_MAT_PROP(0.60f, 0.02f, 0.90f, 2, Material.CLOTH),
+
+    /**
+     * Mihrab — the ornate prayer niche in the mosque's qibla wall, indicating the
+     * direction of Mecca. The Imam leads prayers here. Player must be within 6 blocks
+     * of this prop for the full Friday Jumu'ah attendance bonus.
+     * Destroyed by 8 punches; yields STONE.
+     */
+    MIHRAB_PROP(1.00f, 2.40f, 0.30f, 8, Material.STONE),
+
+    /**
+     * Shoe rack — a wooden rack beside the mosque entrance where shoes are left.
+     * Player must interact (E) to remove shoes before entering; sanctuary mechanic
+     * and Jumu'ah attendance reward both require shoes removed.
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    SHOE_RACK_PROP(1.00f, 1.00f, 0.30f, 3, Material.WOOD),
+
+    /**
+     * Ablution tap — wall-mounted tap in the wudu room for ritual washing.
+     * Press E to use: +3 Warmth, removes DIRTY status. Always accessible.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    ABLUTION_TAP_PROP(0.20f, 0.50f, 0.20f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Outdoor tap — exterior tap on the mosque wall, accessible at all times.
+     * Press E to drink: +10 Thirst. No conditions required.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    OUTDOOR_TAP_PROP(0.20f, 0.40f, 0.20f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Takings box — a wooden collection box for mosque donations near the entrance.
+     * Donate COIN (press E while holding): +5 Community Respect per 2 COIN donated.
+     * Rob it (punch to break): yields 5–15 COIN but triggers COMMUNITY_OUTRAGE rumour,
+     * +3 Notoriety, −20 Community Respect, THEFT_FROM_PLACE_OF_WORSHIP crime, and
+     * permanent sanctuary revocation. Destroyed by 5 punches; yields WOOD.
+     */
+    TAKINGS_BOX_PROP(0.30f, 0.50f, 0.30f, 5, Material.WOOD),
+
+    /**
+     * Fold table — a portable folding table set up at Maghrib during Ramadan for the
+     * Iftar meal. Carries DATE_FRUIT×3, FLATBREAD×1, SOUP_CUP×1 (once per session).
+     * Seeds IFTAR_TONIGHT rumour to nearby NPCs when placed.
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    FOLD_TABLE_PROP(1.80f, 0.90f, 0.90f, 3, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -214,7 +214,16 @@ public class CriminalRecord {
          * is stripped from a streetlight and a witness NPC is within 10 blocks.
          * Penalty: +2 Notoriety per witnessed theft.
          */
-        METAL_THEFT("Metal theft");
+        METAL_THEFT("Metal theft"),
+
+        // ── Issue #1030: Al-Noor Mosque ────────────────────────────────────────────
+
+        /**
+         * Recorded when the player robs the TAKINGS_BOX_PROP at Al-Noor Mosque.
+         * Penalty: +3 Notoriety, −20 Community Respect, permanent sanctuary revocation,
+         * COMMUNITY_OUTRAGE rumour seeded within 50 blocks.
+         */
+        THEFT_FROM_PLACE_OF_WORSHIP("Theft from place of worship");
 
         private final String displayName;
 

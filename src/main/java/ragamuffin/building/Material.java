@@ -1871,7 +1871,23 @@ public enum Material {
      * Base price same as STOLEN_PHONE (8 COIN); no HANDLING_STOLEN_GOODS crime risk.
      * Tooltip: "Totally clean. Totally."
      */
-    WIPED_PHONE("Wiped Phone");
+    WIPED_PHONE("Wiped Phone"),
+
+    // ── Issue #1030: Al-Noor Mosque ────────────────────────────────────────────
+
+    /**
+     * Date Fruit — dried dates served at the Iftar table during Ramadan.
+     * Restores +15 Hunger. Given as part of the Iftar meal (DATE_FRUIT×3, FLATBREAD×1, SOUP_CUP×1).
+     * Tooltip: "Sweet, sticky, and surprisingly filling."
+     */
+    DATE_FRUIT("Dates"),
+
+    /**
+     * Flatbread — unleavened bread served at the Iftar table or given by the Imam to hungry visitors.
+     * Restores +20 Hunger.
+     * Tooltip: "Warm flatbread, freshly made."
+     */
+    FLATBREAD("Flatbread");
 
     private final String displayName;
 
