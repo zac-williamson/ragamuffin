@@ -28641,3 +28641,207 @@ On Saturdays, a rival TATTOOIST NPC "Spider" sets up a chair outside the pub and
 // Existing NPCs reused: TATTOOIST (Kev), PUBLIC, POLICE_OFFICER
 // New achievements: LIVING_CANVAS, HARD_AS_NAILS, TATTOO_REGRET, GRASSROOTS_INFORMANT, WALKING_ARTFORM (add to AchievementType.java)
 // LandmarkType.TATTOO_PARLOUR already exists
+
+---
+
+## The Raj Mahal — Northfield Indian Restaurant
+
+**Landmark**: `CURRY_HOUSE` (add to `LandmarkType.java`)
+**System file**: `src/main/java/ragamuffin/core/CurryHouseSystem.java`
+**Display name**: "The Raj Mahal"
+
+The quintessential British institution. Open for sit-down meals and takeaway.
+A proper Friday-night curry with BYO lager, an aggressive head waiter, and a
+back room that smells of secrets.
+
+### NPCs
+
+- **Bashir** (`CURRY_HOUSE_OWNER`) — the owner. Stands near the front desk during
+  opening hours (Tue–Sun 17:00–23:30). Warm but mercurial: friendly at low Notoriety,
+  sharp-tongued when busy. Will refuse service if player holds a CROWBAR.
+  Seeds `LOCAL_EVENT` rumours on request. Offers a "family discount" (−1 COIN) to
+  players with Community Respect ≥ 40.
+
+- **Sanjay** (`CURRY_WAITER`) — a fleet-footed waiter who patrols between tables and
+  the kitchen hatch. Carries plates; if the player is in a seat they haven't paid for,
+  he confronts them. 25% chance of spilling a dish on the player when Noise ≥ 50
+  (adds `WET_CLOTHES` debuff, −5 Warmth for 10 in-game minutes). Never hostile unless
+  assaulted.
+
+- **Kitchen Hand** (`PUBLIC`) — occasionally visible through the hatch; never directly
+  interactable.
+
+- **Friday Diners** (`PUBLIC`, 4–8) — spawn Fri–Sat 18:00–22:00. Seated at tables.
+  Proximity-rumour sources; pickpocketable with crowd cover (2–6 COIN each).
+
+### Menu (press E on `MENU_PROP` or on Sanjay)
+
+| Item | Price (COIN) | Effect |
+|------|-------------|--------|
+| `CHICKEN_TIKKA_MASALA` | 6 | Hunger −70, Warmth +20, Mood +10 |
+| `LAMB_BALTI` | 7 | Hunger −80, Warmth +25 |
+| `SAAG_ALOO` | 3 | Hunger −30, Warmth +10 |
+| `NAAN_BREAD` | 2 | Hunger −20 |
+| `POPPADOMS` | 1 | Hunger −10; triggers `FIRST_POPPADOM` tooltip on first purchase |
+| `MANGO_LASSI` | 2 | Thirst −40, Warmth +5 |
+| `BYO_LAGER_CORKAGE` | 1 | Allows player to consume own `CAN_OF_LAGER` at the table without Notoriety penalty |
+
+All food items grant `FULL_STOMACH` buff (Hunger regeneration paused for 30 in-game min).
+Eating `LAMB_BALTI` after already having `FULL_STOMACH` triggers the `MASOCHIST`
+achievement and a 20% chance of `STOMACH_ACHE` debuff (−2 HP/min until GP visit).
+
+### BYO Mechanic
+
+Player may bring up to 3 `CAN_OF_LAGER` items into the restaurant. Without paying
+`BYO_LAGER_CORKAGE`, Sanjay confiscates the can and adds a `CORKAGE_FINE` (−3 COIN
+charged on bill). At Street Lads Respect ≥ 50, Sanjay looks the other way.
+
+### Late Night Takeaway
+
+After 22:30 (or when the restaurant closes for sit-down), Bashir opens a takeaway
+hatch (new `TAKEAWAY_HATCH_PROP`). Player presses E to receive a `TAKEAWAY_BAG`
+(material already exists) containing random curry items. Cost: 4 COIN.
+Takeaway is available 22:30–00:30.
+The `TAKEAWAY_BAG` can be opened in the player's inventory to eat the contents
+(counts as consuming `CHICKEN_TIKKA_MASALA`).
+
+### Back Room Hustle
+
+A `CURTAINED_DOOR_PROP` at the rear of the restaurant leads to a private dining room
+used by the Marchetti Crew on Thursday evenings (20:00–23:00). Player requires
+Marchetti Crew Respect ≥ 35 to enter. Inside: a `ROUND_TABLE_PROP` with 2–4
+`FACTION_LIEUTENANT` NPCs dining.
+
+- Press E on a lieutenant while carrying a `FOLDED_NOTE` (craftable: PAPER + PEN) to
+  pass a mission request.
+- One lieutenant carries an `ENVELOPE` (pickpocketable, contains 8 COIN + MISSION_INFO
+  material).
+- If player is caught in the back room without sufficient Respect, Bashir is alerted:
+  calls police (+8 Notoriety, adds TRESPASS to CriminalRecord).
+
+### Atmospheric Events
+
+One random event per in-game hour (1 of 4):
+
+1. `SPILLED_FOOD` — Sanjay trips; all seated NPCs react. Player in adjacent tile gets
+   `WET_CLOTHES` debuff.
+2. `BIRTHDAY_TABLE` — a PUBLIC group orders a birthday cake prop; singing triggers
+   `NoiseSystem` +10.
+3. `STAG_DO` — Fri–Sat only; 3 extra `DRUNK` NPCs enter. Noise +20. One DRUNK NPC
+   attempts to pickpocket another diner (not the player) — player can intervene for
+   +5 Community Respect.
+4. `KITCHEN_SMOKE` — visible `ParticleSystem` smoke from the kitchen hatch for
+   30 seconds. Triggers `WarmthSystem` heat bonus +5 for all seated players.
+
+### Opening Hours
+
+| Day | Hours |
+|-----|-------|
+| Tue–Thu | 17:00–23:00 |
+| Fri–Sat | 17:00–23:30 |
+| Sun | 16:00–22:00 |
+| Mon | Closed |
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `CHICKEN_TIKKA_MASALA` | Hot meal; consumed from inventory |
+| `LAMB_BALTI` | Hot meal; consumed from inventory |
+| `SAAG_ALOO` | Vegetable side dish |
+| `NAAN_BREAD` | Bread side; can be crafted as makeshift wrap |
+| `POPPADOMS` | Snack; first use triggers tooltip |
+| `MANGO_LASSI` | Drink item |
+| `BYO_LAGER_CORKAGE` | Service token; purchased from Sanjay |
+| `FOLDED_NOTE` | Craftable: PAPER + PEN; used to pass messages |
+
+(Add to `Material.java`.)
+
+### New NPC Types Required
+
+| NPCType | Notes |
+|---------|-------|
+| `CURRY_HOUSE_OWNER` | Bashir; anchored to front desk during hours |
+| `CURRY_WAITER` | Sanjay; patrols tables; enforces corkage |
+
+(Add to `NPCType.java`.)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `CURRY_HOUSE_SIGN_PROP` | Neon sign outside The Raj Mahal |
+| `TAKEAWAY_HATCH_PROP` | Serving hatch for late-night orders |
+| `CURTAINED_DOOR_PROP` | Entrance to private back room |
+| `ROUND_TABLE_PROP` | Back-room dining table |
+
+(Add to `PropType.java`.)
+
+### New Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `FRIDAY_NIGHT_CURRY` | Eat a `CHICKEN_TIKKA_MASALA` on a Friday between 18:00–22:00 |
+| `MASOCHIST` | Eat a `LAMB_BALTI` while `FULL_STOMACH` buff is active |
+| `BYO_CHANCER` | Consume `CAN_OF_LAGER` at the table without paying corkage and escape without fine |
+| `BACK_ROOM_INVITE` | Enter the Marchetti back room legitimately (Respect ≥ 35) |
+| `FIRST_POPPADOM` | Buy first `POPPADOMS` (tooltip: "You'd think these were free, wouldn't you?") |
+
+(Add to `AchievementType.java`.)
+
+### System Integrations
+
+- **WarmthSystem**: Raj Mahal interior counts as warm shelter; food items give Warmth bonuses
+- **HungerSystem / HealingSystem**: food items reduce Hunger; `STOMACH_ACHE` debuff cleared by GP
+- **FactionSystem**: Back room requires Marchetti Crew Respect ≥ 35; lieutenant missions available
+- **NotorietySystem**: Service refusal at Tier 3+; Bashir calls police at Tier 4+
+- **CriminalRecord**: TRESPASS added if caught in back room without Respect
+- **RumourNetwork**: Bashir seeds `LOCAL_EVENT` rumours; Friday Diners proximity-rumour sources
+- **NoiseSystem**: `BIRTHDAY_TABLE` +10, `STAG_DO` +20, `KITCHEN_SMOKE` atmospheric
+- **WeatherSystem**: Rain adds 2 extra Friday Diner NPCs (people shelter in restaurant)
+- **WantedSystem**: Back room intrusion +8 Notoriety; CROWBAR visible causes refusal
+- **TimeSystem**: Open hours Tue–Sun as above; takeaway hatch 22:30–00:30; Marchetti back room Thu 20:00–23:00
+- **StreetSkillSystem**: `TRADING` XP for buying full meal deal (all 4 courses)
+
+**Unit tests**: menu item costs, BYO corkage deduction, back room Respect gate (35), `FULL_STOMACH`
+buff duration (30 min), `STOMACH_ACHE` trigger chance (20%), Sanjay spill condition (Noise ≥ 50),
+STAG_DO spawn window (Fri–Sat only), takeaway hatch hours (22:30–00:30).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Eating chicken tikka masala on Friday night grants FRIDAY_NIGHT_CURRY achievement**:
+   Set game time to Friday 19:00. Give player 6 COIN. Place player inside CURRY_HOUSE
+   landmark bounds. Press E on MENU_PROP, select `CHICKEN_TIKKA_MASALA`. Verify 6 COIN
+   deducted. Verify `FULL_STOMACH` buff active. Verify `FRIDAY_NIGHT_CURRY` achievement
+   unlocked. Verify Hunger stat decreased by 70.
+
+2. **BYO corkage confiscation**: Give player 1 `CAN_OF_LAGER` and 0 COIN (cannot afford
+   corkage). Place player at a `PUB_TABLE_PROP` inside the restaurant. Simulate "drink
+   lager" action (consume item from inventory while seated). Verify Sanjay confronts player
+   (NPC enters CONFRONTING state). Verify player's `CAN_OF_LAGER` removed from inventory.
+   Verify player COIN decreased by 3 (corkage fine added to bill).
+
+3. **Back room requires Marchetti Respect**: Set Marchetti Crew Respect = 20 (below
+   threshold). Place player at `CURTAINED_DOOR_PROP`. Simulate press E on door. Verify
+   player is NOT moved past the door. Verify speech bubble appears: "Members only, mate."
+   Now set Respect = 35. Simulate press E again. Verify player position advances past door.
+
+4. **Takeaway hatch opens after 22:30**: Set time to 22:00. Place player at
+   `TAKEAWAY_HATCH_PROP`. Simulate press E. Verify hatch is CLOSED (no menu offered).
+   Advance time to 22:30. Simulate press E again. Give player 4 COIN. Select takeaway.
+   Verify `TAKEAWAY_BAG` added to player inventory. Verify 4 COIN deducted.
+
+5. **STAG_DO event spawns drunk NPCs on Friday only**: Set time to Friday 20:00, trigger
+   `STAG_DO` event (force RNG seed). Verify 3 `DRUNK` NPCs spawn inside restaurant bounds.
+   Verify `NoiseSystem` ambient level increased by at least 20. Now set time to Wednesday
+   20:00, trigger event. Verify `STAG_DO` does NOT spawn on a Wednesday.
+
+// ── New: CurryHouseSystem.java in ragamuffin.core
+// New materials: CHICKEN_TIKKA_MASALA, LAMB_BALTI, SAAG_ALOO, NAAN_BREAD, POPPADOMS,
+//                MANGO_LASSI, BYO_LAGER_CORKAGE, FOLDED_NOTE (add to Material.java)
+// New NPCTypes: CURRY_HOUSE_OWNER, CURRY_WAITER (add to NPCType.java)
+// New PropTypes: CURRY_HOUSE_SIGN_PROP, TAKEAWAY_HATCH_PROP, CURTAINED_DOOR_PROP,
+//                ROUND_TABLE_PROP (add to PropType.java)
+// New achievements: FRIDAY_NIGHT_CURRY, MASOCHIST, BYO_CHANCER, BACK_ROOM_INVITE,
+//                   FIRST_POPPADOM (add to AchievementType.java)
+// New LandmarkType: CURRY_HOUSE (add to LandmarkType.java), display name "The Raj Mahal"
