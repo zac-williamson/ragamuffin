@@ -2413,7 +2413,34 @@ public enum Material {
     FORTUNE_COOKIE("Fortune Cookie"),
 
     /** Takeaway Bag — given free with any order ≥ 3 COIN. Inventory slot container. */
-    TAKEAWAY_BAG("Takeaway Bag");
+    TAKEAWAY_BAG("Takeaway Bag"),
+
+    // ── Issue #1079: Northfield Magistrates' Court ─────────────────────────
+
+    /**
+     * Court Summons — issued to the player after arrest for a non-minor offence.
+     * Schedules a court appearance 3 in-game days from issue date.
+     * Tooltip: "Northfield Magistrates' Court. Room 2. Do not be late."
+     */
+    COURT_SUMMONS("Court Summons"),
+
+    /**
+     * Community Service Slip — issued as part of a Community Service sentence.
+     * Present this at JobCentreSystem, FoodBankSystem, or AllotmentSystem to
+     * begin a work shift. Each completed 10-minute shift grants Notoriety −5.
+     * Skipping a shift: Notoriety +8 and an immediate warrant.
+     * Tooltip: "Report to your assigned service point by 09:00. Or else."
+     */
+    COMMUNITY_SERVICE_SLIP("Community Service Slip"),
+
+    /**
+     * Forged Document — obtained from FenceSystem.
+     * When presented at the magistrates' court hearing, swaps a serious charge
+     * for a minor public order offence.
+     * Adds PERVERTING_COURSE_OF_JUSTICE to CriminalRecord if caught (15% detection chance).
+     * Tooltip: "Almost real. Probably good enough. Definitely illegal."
+     */
+    FORGED_DOCUMENT("Forged Document");
 
     private final String displayName;
 

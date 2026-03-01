@@ -255,7 +255,23 @@ public class CriminalRecord {
          * Recorded when the player disposes of evidence in the canal while witnessed
          * by a PCSO or other officer. Penalty: +1 WantedSystem star.
          */
-        EVIDENCE_DESTRUCTION("Evidence destruction (canal)");
+        EVIDENCE_DESTRUCTION("Evidence destruction (canal)"),
+
+        // ── Issue #1079: Northfield Magistrates' Court ────────────────────────
+
+        /**
+         * Recorded when the player fails to attend a scheduled court appearance at
+         * Northfield Magistrates' Court. Penalty: Notoriety +10, increased police patrols.
+         */
+        FAILURE_TO_APPEAR("Failure to appear"),
+
+        /**
+         * Recorded when the player uses a FORGED_DOCUMENT in court and is caught
+         * (15% detection chance), or when the player successfully intimidates a witness
+         * via WitnessSystem and this is subsequently discovered.
+         * Penalty: Notoriety +15, +1 Wanted star.
+         */
+        PERVERTING_COURSE_OF_JUSTICE("Perverting the course of justice");
 
         private final String displayName;
 

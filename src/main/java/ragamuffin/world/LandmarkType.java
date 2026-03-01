@@ -360,7 +360,27 @@ public enum LandmarkType {
      * SquatSystem, RumourNetwork, NotorietySystem, NoiseSystem, StreetEconomySystem,
      * NPCManager, WantedSystem, AchievementSystem.
      */
-    CHINESE_TAKEAWAY;
+    CHINESE_TAKEAWAY,
+
+    // ── Issue #1079: Northfield Magistrates' Court ─────────────────────────
+
+    /**
+     * Northfield Magistrates' Court — a squat, authoritative 1960s civic building
+     * on the edge of the town centre. Presided over by Magistrate Sandra Pemberton.
+     * Open Mon–Fri 09:00–17:00.
+     *
+     * <p>The MagistratesCourtSystem runs hearings here: charges are read, pleas entered,
+     * evidence checked via WitnessSystem, and sentences delivered.
+     * Outcomes range from Conditional Caution to Custodial (24h lock-out).
+     *
+     * <p>NPCs: MAGISTRATE (Sandra Pemberton), CPS_PROSECUTOR (Martin Gale),
+     * DUTY_SOLICITOR (Donna), COURT_USHER (Trevor).
+     *
+     * <p>Integrates with MagistratesCourtSystem, ArrestSystem, WitnessSystem,
+     * FenceSystem, JobCentreSystem, FoodBankSystem, AllotmentSystem,
+     * NotorietySystem, CriminalRecord, AchievementSystem, RumourNetwork.
+     */
+    MAGISTRATES_COURT;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -435,6 +455,7 @@ public enum LandmarkType {
             case ICE_CREAM_VAN:         return "Dave's Ices";
             case PAYDAY_LOAN_SHOP:      return "Fast Cash Finance";
             case CHINESE_TAKEAWAY:      return "Golden Palace";
+            case MAGISTRATES_COURT:     return "Northfield Magistrates' Court";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

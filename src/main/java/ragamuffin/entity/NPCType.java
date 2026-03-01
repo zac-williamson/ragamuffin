@@ -1084,7 +1084,37 @@ public enum NPCType {
      * Can be paid off, bribed, or attacked.
      * Moderately tough; will defend itself if attacked.
      */
-    BAILIFF(35f, 8f, 1.5f, false);
+    BAILIFF(35f, 8f, 1.5f, false),
+
+    // ── Issue #1079: Northfield Magistrates' Court ─────────────────────────
+
+    /**
+     * Magistrate Sandra Pemberton — presides over the bench at Northfield Magistrates' Court.
+     * Severe disposition; hates time-wasters; passive unless directly addressed.
+     * Delivers charges, hears pleas, and pronounces sentence. Never hostile.
+     */
+    MAGISTRATE(30f, 0f, 0f, false),
+
+    /**
+     * CPS Prosecutor Martin Gale — reads charges and presents evidence for the Crown.
+     * Can be bribed (20 COIN) to drop a charge before the hearing begins.
+     * Passive; speech-rich. Despawns after sentencing.
+     */
+    CPS_PROSECUTOR(25f, 0f, 0f, false),
+
+    /**
+     * Duty Solicitor Donna — the player's court-appointed legal representative.
+     * Available for 5 COIN at the court entrance; reduces sentence tier by one if engaged.
+     * Passive; never hostile. Shares rumours about the local justice system.
+     */
+    DUTY_SOLICITOR(25f, 0f, 0f, false),
+
+    /**
+     * Court Usher Trevor — manages the waiting area and announces when the bench is ready.
+     * Can be bribed (3 COIN) to delay the session by one in-game hour.
+     * Passive; never hostile. Present whenever the court building is open.
+     */
+    COURT_USHER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
