@@ -2188,6 +2188,39 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #1079: Northfield Magistrates' Court ────────────────────────────
+
+    FIRST_OFFENCE(
+        "First Offence",
+        "You stood in the dock for the first time. Sandra Pemberton looked at you like something she'd scraped off her shoe.",
+        1
+    ),
+    NOT_GUILTY(
+        "No Comment",
+        "You walked out of court without a conviction. Martin Gale looked furious. Sandra looked unconvinced. You're free.",
+        1
+    ),
+    COMMUNITY_SERVICE_HERO(
+        "Community Spirit",
+        "Completed ten community service shifts without skipping a single one. The parole board is mildly impressed.",
+        10
+    ),
+    BENT_BRIEF(
+        "Bent Brief",
+        "Bribed Martin Gale to drop a charge. He pocketed it without blinking. Says everything, really.",
+        1
+    ),
+    CONTEMPT_OF_COURT(
+        "Contempt of Court",
+        "You showed open disrespect in Sandra Pemberton's courtroom. She was not pleased. Nobody has ever been less pleased.",
+        1
+    ),
+    CUSTODIAL(
+        "Her Majesty's Guest",
+        "Sentenced to a custodial term. Released 24 hours later with nothing but the clothes on your back and a bus fare.",
+        1
+    ),
+
     // ── Issue #1077: Northfield Chinese Takeaway — Golden Palace ─────────────
 
     LATE_NIGHT_REGULAR(
