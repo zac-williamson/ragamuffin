@@ -1462,6 +1462,26 @@ public enum AchievementType {
         "Skool Skiver",
         "Spent three hours in the arcade during school hours. The register will show you absent. Allegedly.",
         1
+    ),
+
+    // ── Issue #981: Council Estate ────────────────────────────────────────────
+
+    LEGS_OF_STEEL(
+        "Legs of Steel",
+        "Climbed to the top floor via the stairs while the lift was out of order. The council said they'd fix it last month.",
+        1
+    ),
+
+    ROOFTOP_DEALER(
+        "Rooftop Dealer",
+        "Completed 5 item sales to council flat residents in a single day. Entrepreneurial spirit, if nothing else.",
+        1
+    ),
+
+    URBAN_ARTIST(
+        "Urban Artist",
+        "Tagged 10 stairwell walls in a single visit. You've left your mark on the estate. The cleaners will be round Thursday.",
+        1
     );
 
     private final String name;

@@ -554,7 +554,29 @@ public enum PropType {
      * Token exchanges: 10→PLUSH_TOY, 20→ARCADE_TOKEN, 50→WOOLLY_HAT_ECONOMY, 100→SCRATCH_CARD×3.
      * Destroyed by 5 punches; yields WOOD.
      */
-    REDEMPTION_COUNTER_PROP(1.20f, 1.00f, 0.60f, 5, Material.WOOD);
+    REDEMPTION_COUNTER_PROP(1.20f, 1.00f, 0.60f, 5, Material.WOOD),
+
+    // ── Issue #981: Council Estate — Tower Block, Lifts & Stair-Climbing Misery ─
+
+    /**
+     * Lift prop — a 2×2×3 metal box with a door face in the council flat lobby.
+     * Press E to call the lift or select a destination floor while inside.
+     * Managed by CouncilFlatsSystem.
+     */
+    LIFT_PROP(2.00f, 3.00f, 2.00f, 20, Material.SCRAP_METAL),
+
+    /**
+     * Satellite dish — mounted on the roof of council tower blocks.
+     * Press E to attempt dish interference (50% chance to reduce PirateRadioSystem
+     * signal by 30% for 5 in-game minutes). Adds +1 Notoriety regardless.
+     */
+    SATELLITE_DISH_PROP(1.00f, 0.80f, 1.00f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Graffiti wall prop — flavour graffiti painted on stairwell concrete walls.
+     * Spawns in stairwells with 10% probability per floor. Not the player's own tag.
+     */
+    GRAFFITI_WALL_PROP(0.80f, 0.60f, 0.02f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
