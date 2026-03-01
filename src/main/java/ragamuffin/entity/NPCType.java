@@ -1055,7 +1055,19 @@ public enum NPCType {
      * If the lift is broken, mutters "That bloody lift!"
      * Passive; never hostile unless provoked.
      */
-    FLAT_RESIDENT(20f, 0f, 0f, false);
+    FLAT_RESIDENT(20f, 0f, 0f, false),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1061: Northfield Community Centre NPCs
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Boxing Coach — Ray, runs the Boxing Club at the Community Centre.
+     * Active Mon/Wed/Fri 18:00–21:00. Supervises training at BOXING_BAG_PROP
+     * and sparring at BOXING_RING_PROP.
+     * Passive; never hostile unless provoked.
+     */
+    BOXING_COACH(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
