@@ -802,7 +802,42 @@ public enum NPCType {
      * Votes at AGM; gossips about the committee conspiracy if trust ≥ 60.
      * Passive unless provoked.
      */
-    MEMBER(25f, 3f, 2.0f, false);
+    MEMBER(25f, 3f, 2.0f, false),
+
+    // ── Issue #1022: Northfield GP Surgery ────────────────────────────────────
+
+    /**
+     * Brenda — the GP surgery receptionist.
+     * Gatekeeps entry; refuses the player if Notoriety ≥ 70.
+     * Calls POLICE on surgery raids. Present Mon–Sat 08:00–17:59.
+     * Speech: "Have you got an appointment?" / "You'll need to take a seat."
+     *         / "I'm calling the police!" (on raid)
+     */
+    GP_RECEPTIONIST(20f, 0f, 0f, false),
+
+    /**
+     * Dr. Nair — the GP.
+     * Issues SICK_NOTE, PRESCRIPTION_MEDS, ANTIDEPRESSANTS, or REFERRAL based on
+     * player health and need states. Seeds LOCAL_HEALTH rumour weekly.
+     * Present Mon–Fri 09:00–17:30. Passive.
+     * Speech: "Right, what seems to be the trouble?" / "I'm prescribing you some rest."
+     */
+    GP_DOCTOR(30f, 0f, 0f, false),
+
+    /**
+     * Nurse Pat — surgery nurse for injections and blood pressure checks.
+     * Present Mon/Wed/Fri 09:00–13:00. Offers flu jabs.
+     * Passive. Speech: "Just a little scratch." / "Blood pressure's a bit high."
+     */
+    GP_NURSE(20f, 0f, 0f, false),
+
+    /**
+     * Patient — a waiting-room NPC at the GP surgery.
+     * 2–5 present at any time; randomly assigned needs (40% fetch-prescription quest).
+     * Shares rumours with nearby NPCs. Passive.
+     * Speech: "Been waiting forty minutes." / "You got an appointment?"
+     */
+    GP_PATIENT(15f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

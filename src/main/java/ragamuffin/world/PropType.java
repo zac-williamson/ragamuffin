@@ -796,7 +796,68 @@ public enum PropType {
      * Contains darts and snooker trophies. Decorative; press E for flavour text.
      * Destroyed by 3 punches; yields GLASS.
      */
-    TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 3, Material.GLASS);
+    TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 3, Material.GLASS),
+
+    // ── Issue #1022: Northfield GP Surgery ────────────────────────────────────
+
+    /**
+     * RECEPTION_DESK_PROP — Brenda's reception desk at the surgery entrance.
+     * Press E to book an appointment (1–3 days ahead) or check walk-in availability.
+     * Destroyed by 8 punches; yields WOOD.
+     */
+    RECEPTION_DESK_PROP(1.40f, 1.10f, 0.60f, 8, Material.WOOD),
+
+    /**
+     * WAITING_CHAIR_PROP — plastic NHS waiting-room chair (NHS blue).
+     * Sitting here (press E) fast-forwards wait time at 10×.
+     * Destroyed by 3 punches; yields PLASTIC.
+     */
+    WAITING_CHAIR_PROP(0.50f, 0.90f, 0.50f, 3, Material.PLASTIC),
+
+    /**
+     * EXAMINATION_TABLE_PROP — padded examination table in the consultation room.
+     * Decorative; press E for flavour text from Dr. Nair.
+     * Destroyed by 6 punches; yields SCRAP_METAL.
+     */
+    EXAMINATION_TABLE_PROP(1.80f, 0.80f, 0.60f, 6, Material.SCRAP_METAL),
+
+    /**
+     * DOCTOR_DESK_PROP — Dr. Nair's desk; press E to begin a consultation.
+     * Requires a valid appointment or walk-in window.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    DOCTOR_DESK_PROP(1.20f, 0.80f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * MEDICINE_CABINET_PROP — wall-mounted cabinet in the treatment room.
+     * Lockpick required; 4 hits to open; yields PRESCRIPTION_MEDS + ANTIDEPRESSANTS.
+     * Triggers Wanted Tier 2, Notoriety +10.
+     * Destroyed by 4 punches; yields SCRAP_METAL.
+     */
+    MEDICINE_CABINET_PROP(0.60f, 1.40f, 0.30f, 4, Material.SCRAP_METAL),
+
+    /**
+     * DRUG_SAFE_PROP — heavy floor safe in the dispensary.
+     * Crowbar required; 12 hits; yields PRESCRIPTION_MEDS ×8.
+     * Triggers Wanted Tier 3, NoiseSystem alarm, Notoriety +20.
+     * Destroyed by 12 punches; yields SCRAP_METAL.
+     */
+    DRUG_SAFE_PROP(0.50f, 0.80f, 0.40f, 12, Material.SCRAP_METAL),
+
+    /**
+     * PHARMACY_HATCH_PROP — sliding window at the dispensary counter.
+     * Press E once per in-game week to collect a repeat prescription.
+     * Abuse detection (>1/week) → Notoriety +5 and 2-week block.
+     * Destroyed by 4 punches; yields SCRAP_METAL.
+     */
+    PHARMACY_HATCH_PROP(0.80f, 0.50f, 0.10f, 4, Material.SCRAP_METAL),
+
+    /**
+     * LEAFLET_RACK_PROP — wall-mounted NHS leaflet rack in the waiting area.
+     * Press E to receive a random collectible LEAFLET item.
+     * Destroyed by 2 punches; yields CARDBOARD.
+     */
+    LEAFLET_RACK_PROP(0.30f, 1.20f, 0.30f, 2, Material.CARDBOARD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
