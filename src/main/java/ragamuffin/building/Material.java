@@ -1181,7 +1181,41 @@ public enum Material {
      * "Feeling Low? You're Not Alone (But We're Very Busy)".
      * Tooltip varies by type.
      */
-    NEON_LEAFLET("Neon Leaflet");
+    NEON_LEAFLET("Neon Leaflet"),
+
+    // ── Issue #975: Northfield Post Office ────────────────────────────────────
+
+    /**
+     * Benefits Book — issued to the player upon registration at the JobCentre.
+     * Cashed weekly at the Post Office counter for the player's current benefit amount.
+     * Stolen books from PENSIONER NPCs can be fraudulently cashed (40% detection by Maureen).
+     * Tooltip: "Sign here. Every week. No exceptions."
+     */
+    BENEFITS_BOOK("Benefits Book"),
+
+    /**
+     * Parcel — a doorstep delivery item placed by the POSTMAN each morning (06:00–08:00).
+     * Contents are randomised loot when opened.
+     * Stealing one adds PARCEL_THEFT to the criminal record (+5 Notoriety; +3 if witnessed).
+     * Tooltip: "Addressed to someone else. Obviously."
+     */
+    PARCEL("Parcel"),
+
+    /**
+     * Stamp — purchased from the Post Office counter for 1 COIN.
+     * Required to send a THREATENING_LETTER via a POST_BOX_PROP.
+     * Tooltip: "First class. Because you mean business."
+     */
+    STAMP("Stamp"),
+
+    /**
+     * Post Box Prop — a red Royal Mail post box on the high street.
+     * Press E while holding a STAMP to compose and send a threatening letter to a target NPC.
+     * Target enters FRIGHTENED state for 24h, drops 20% coin, and refuses to report crimes.
+     * Traceable at Notoriety Tier 3+, triggering THREATENING_BEHAVIOUR crime.
+     * Tooltip: "Post early for guaranteed delivery."
+     */
+    POST_BOX_PROP("Post Box");
 
     private final String displayName;
 
@@ -1682,6 +1716,15 @@ public enum Material {
             case NEON_LEAFLET:          return cs(0.20f, 0.82f, 0.45f,   // Bright green NHS leaflet
                                                    0.10f, 0.62f, 0.28f); // Darker green accent
 
+            // Issue #975: Northfield Post Office
+            case BENEFITS_BOOK:         return cs(0.12f, 0.38f, 0.70f,   // Royal blue DWP booklet
+                                                   0.92f, 0.88f, 0.80f); // Cream page interior
+            case PARCEL:                return cs(0.62f, 0.48f, 0.28f,   // Brown cardboard
+                                                   0.22f, 0.18f, 0.12f); // Dark tape
+            case STAMP:                 return cs(0.92f, 0.20f, 0.18f,   // Royal Mail red
+                                                   0.88f, 0.88f, 0.85f); // White stamp face
+            case POST_BOX_PROP:         return c(0.90f, 0.15f, 0.12f);   // Pillar box red
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1945,6 +1988,11 @@ public enum Material {
             case SICK_NOTE:
             case BLANK_PRESCRIPTION_FORM:
             case NEON_LEAFLET:
+            // Issue #975: Northfield Post Office (not block items)
+            case BENEFITS_BOOK:
+            case PARCEL:
+            case STAMP:
+            case POST_BOX_PROP:
                 return false;
             default:
                 return true;
@@ -2015,6 +2063,10 @@ public enum Material {
             case SICK_NOTE:
             case BLANK_PRESCRIPTION_FORM:
             case NEON_LEAFLET:
+            // Issue #975: Northfield Post Office — paper/parcel items sit on surfaces
+            case BENEFITS_BOOK:
+            case PARCEL:
+            case STAMP:
                 return true;
             default:
                 return false;
@@ -2468,6 +2520,16 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // blank paper form
             case NEON_LEAFLET:
                 return IconShape.FLAT_PAPER;  // folded leaflet
+
+            // Issue #975: Northfield Post Office
+            case BENEFITS_BOOK:
+                return IconShape.FLAT_PAPER;  // blue booklet
+            case PARCEL:
+                return IconShape.BOX;         // wrapped cardboard box
+            case STAMP:
+                return IconShape.FLAT_PAPER;  // small red stamp
+            case POST_BOX_PROP:
+                return IconShape.CYLINDER;    // red post box cylinder
 
             default:
                 return IconShape.BOX;

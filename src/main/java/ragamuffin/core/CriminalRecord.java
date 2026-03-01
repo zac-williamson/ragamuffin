@@ -112,7 +112,29 @@ public class CriminalRecord {
          * pharmacy hatch and is caught by the pharmacist or a nearby police NPC.
          * Penalty: +15 Notoriety, +1 Wanted star.
          */
-        PRESCRIPTION_FRAUD("Prescription fraud");
+        PRESCRIPTION_FRAUD("Prescription fraud"),
+
+        // ── Issue #975: Northfield Post Office ──────────────────────────────────────
+
+        /**
+         * Recorded when the player steals a PARCEL from a residential doorstep.
+         * Base penalty: +5 Notoriety; +3 additional if witnessed by an NPC within 8 blocks.
+         */
+        PARCEL_THEFT("Parcel theft"),
+
+        /**
+         * Recorded when Maureen (COUNTER_CLERK) detects a stolen BENEFITS_BOOK
+         * from a PENSIONER NPC being presented at the Post Office counter.
+         * Detection chance: 40%. Penalty: +12 Notoriety, police called.
+         */
+        BENEFITS_FRAUD("Benefits fraud"),
+
+        /**
+         * Recorded when a threatening letter sent via POST_BOX_PROP is traced back
+         * to the player at Notoriety Tier 3+.
+         * Penalty: +10 Notoriety, 40% chance police investigate.
+         */
+        THREATENING_BEHAVIOUR("Threatening behaviour");
 
         private final String displayName;
 

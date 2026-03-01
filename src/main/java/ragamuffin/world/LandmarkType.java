@@ -190,7 +190,19 @@ public enum LandmarkType {
      * One-Armed Carl (PUBLIC NPC) available at STREET_LADS Respect ≥ 75.
      * Back-room card game (pontoon) accessible at MARCHETTI_CREW Respect ≥ 60.
      */
-    SNOOKER_HALL;
+    SNOOKER_HALL,
+
+    // ── Issue #975: Northfield Post Office ────────────────────────────────────
+
+    /**
+     * Northfield Post Office — a red-brick Royal Mail branch on the high street.
+     * Open Mon–Fri 09:00–17:30, Sat 09:00–12:30.
+     * Staffed by Maureen the COUNTER_CLERK. Serves as the focal point for the
+     * PostOfficeSystem: benefit book cashing, scratch cards, stamp purchases,
+     * and POSTMAN shift sign-on (05:30–07:00).
+     * A POST_BOX_PROP stands outside for sending threatening letters.
+     */
+    POST_OFFICE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -253,6 +265,7 @@ public enum LandmarkType {
             case FRIED_CHICKEN_SHOP:    return "Clucky's Fried Chicken";
             case BINGO_HALL:            return "Lucky Stars Bingo";
             case SNOOKER_HALL:          return "Cue Zone";
+            case POST_OFFICE:           return "Northfield Post Office";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
