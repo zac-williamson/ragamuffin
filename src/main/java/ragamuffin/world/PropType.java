@@ -639,7 +639,26 @@ public enum PropType {
      * A tape recorder prop sits on top. Interacting (E) plays flavour dialogue.
      * Cannot be removed by the player.
      */
-    INTERVIEW_TABLE_PROP(1.60f, 0.80f, 0.80f, 8, Material.WOOD);
+    INTERVIEW_TABLE_PROP(1.60f, 0.80f, 0.80f, 8, Material.WOOD),
+
+    // ── Issue #998: Northfield Aldi Supermarket ────────────────────────────────
+
+    /**
+     * Aldi checkout counter — staffed by Bev (SHOP_ASSISTANT).
+     * Press E to pay for basket contents; each item's price is deducted from
+     * COIN. During yellow-sticker hour (19:00–21:00) all prices are 0 COIN.
+     * Destroyed by 8 punches; yields COUNTER material.
+     */
+    CHECKOUT_PROP(1.40f, 1.10f, 0.80f, 8, Material.COUNTER),
+
+    /**
+     * Aldi self-checkout terminal near the exit.
+     * Press E to attempt unmanned checkout: 40% chance of "Unexpected item in
+     * bagging area" alert (empties basket, alerts Bev and Dave); 60% silent
+     * success (items move to inventory at full price).
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    SELF_CHECKOUT_PROP(0.70f, 1.60f, 0.60f, 8, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

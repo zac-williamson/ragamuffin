@@ -680,7 +680,19 @@ public enum NPCType {
      * inside the evidence locker adds EVIDENCE_TAMPERING to criminal record and
      * triggers WantedSystem +2 stars.
      */
-    DETECTIVE(45f, 8f, 1.2f, false);
+    DETECTIVE(45f, 8f, 1.2f, false),
+
+    // ── Issue #998: Northfield Aldi Supermarket ────────────────────────────────
+
+    /**
+     * Shop Assistant — Bev at the Aldi checkout. Staffs the CHECKOUT_PROP
+     * 08:00–22:00. Accepts payment for basket items; alerted by
+     * self-checkout failure. Passive unless Dave (SECURITY_GUARD) is
+     * already hostile.
+     * Speech: "That's your lot, love." / "Do you want a bag?" /
+     *         "Oi — did that go through?" / "I'm calling Dave."
+     */
+    SHOP_ASSISTANT(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -180,5 +180,22 @@ public enum RumourType {
      * — seeded by PoliceStationSystem on a successful cell breakout.
      * Positive reputation with STREET_LADS (+5 Respect).
      * Spreads via PUBLIC NPCs near the police station. */
-    GREAT_ESCAPE_RUMOUR;
+    GREAT_ESCAPE_RUMOUR,
+
+    // ── Issue #998: Northfield Aldi Supermarket ────────────────────────────────
+
+    /** "Someone knocked a trolley over down Aldi — Dave had to go and sort it out."
+     * — seeded by SupermarketSystem when the player punches a SHOPPING_TROLLEY prop.
+     * Adds +5 Notoriety; diverts SECURITY_GUARD Dave for 15 seconds. */
+    VANDALISM,
+
+    /** "Someone reckons there's a gold trolley down Aldi car park come closing."
+     * — seeded by SupermarketSystem the night before the golden trolley spawns.
+     * Spreads to 2 nearby NPCs via RumourNetwork. */
+    URBAN_LEGEND,
+
+    /** "Someone just legged it out of Aldi with a full basket — Dave went after 'em."
+     * — seeded by SupermarketSystem when the player punches Dave (SECURITY_GUARD).
+     * Spreads to 3 nearby NPCs; triggers WantedSystem stars and Notoriety gain. */
+    ASSAULT;
 }
