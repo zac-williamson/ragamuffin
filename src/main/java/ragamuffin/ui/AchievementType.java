@@ -1955,6 +1955,34 @@ public enum AchievementType {
         "That Pasty Has Been There Since Tuesday",
         "Suffered stomach pain from a forecourt pasty. You had it coming.",
         1
+    ),
+
+    // ── Issue #1051: Angel Nails & Beauty ─────────────────────────────────────
+
+    TREAT_YOURSELF(
+        "Treat Yourself",
+        "Got your nails done for the first time. You deserve it.",
+        1
+    ),
+    HIGH_MAINTENANCE(
+        "High Maintenance",
+        "Tried every service at Angel Nails & Beauty. You're practically a regular.",
+        1
+    ),
+    GEL_ECONOMY(
+        "Gel Economy",
+        "Completed the Marchetti voucher scam on 3 separate Thursdays. Nails out, money in.",
+        3
+    ),
+    SMUDGED(
+        "Smudged",
+        "Received the SMUDGED_NAILS debuff during a heatwave. Should've waited for it to dry.",
+        1
+    ),
+    NAIL_BURGLAR(
+        "Nail Burglar",
+        "Broke into Angel Nails & Beauty after hours. Desperate times.",
+        1
     );
 
     private final String name;

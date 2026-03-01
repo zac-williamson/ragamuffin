@@ -268,5 +268,22 @@ public enum RumourType {
      * — seeded by PetrolStationSystem when the player encounters a frozen nozzle during FROST.
      * Spreads to JOGGER and PUBLIC NPCs passing the forecourt.
      * No gameplay effect; minor flavour rumour. */
-    WEATHER_GRUMBLE;
+    WEATHER_GRUMBLE,
+
+    // ── Issue #1051: Angel Nails & Beauty ─────────────────────────────────────
+
+    /** "Tracy from the nail salon was saying [detail] about [location/person]."
+     * — seeded by NailSalonSystem at 09:00 daily. Spreads via seated PUBLIC and PENSIONER NPCs.
+     * Higher spread rate than NEIGHBOURHOOD (salons are the original social media). */
+    SALON_GOSSIP,
+
+    /** "Heard there's a shipment coming in — something dodgy, by the sounds of it."
+     * — seeded by NailSalonSystem when Trang shares intel with a player at Street Rep ≥ 20.
+     * Spreads via GANG_MEMBER and STREET_LAD NPCs within 15 blocks. */
+    CONTRABAND_SHIPMENT,
+
+    /** "Someone spotted doing [crime] near [location] — looked well dodgy."
+     * — seeded by NailSalonSystem when a crime sighting is reported in the vicinity.
+     * Spreads via PUBLIC and PENSIONER NPCs; increases police patrol awareness. */
+    CRIME_SIGHTING;
 }
