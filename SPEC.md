@@ -19229,3 +19229,150 @@ VICAR(15f, 0f, 0f, false)  // parish vicar — passive, service provider, rumour
 9. **Soup kitchen gives SOUP_CUP once per day**: Set time to Monday 12:30. Set player hunger to 10. Press E on Reverend Dave (soup kitchen). Verify player inventory contains 1 `SOUP_CUP`. Press E on Reverend Dave again. Verify player inventory still contains only 1 `SOUP_CUP` (second request refused — daily cap). Advance to Tuesday 12:30. Press E on Dave. Verify player receives a second `SOUP_CUP`.
 
 10. **Jumble sale runs first Saturday only**: Set `dayOfMonth` to 7 (first Saturday of month). Set time to Saturday 11:00. Call `ChurchSystem.update(delta, timeSystem, npcManager, ...)`. Verify 3–5 `PENSIONER` stall NPCs are present inside church hall area. Set `dayOfMonth` to 14 (second Saturday). Advance update. Verify stall NPCs are not present.
+
+---
+
+## Issue #1012: Northfield Tattoo Parlour — Skin Deep Tattoos: Ink, Identity & the Underground Disguise Trade
+
+### Overview
+
+**Skin Deep Tattoos** is a small, dark-fronted tattoo parlour wedged between the bookies and the charity shop on the high street. Run by **Kev** (a taciturn ex-con with full sleeve tattoos and a flat cap), it is open **Tuesday–Saturday 11:00–18:00**. Getting tattooed is a permanent cosmetic action with real gameplay consequences: disguise value, NPC reactions, and faction signalling.
+
+A `TATTOO_PARLOUR` landmark type is added to `LandmarkType`. A new `TattooSystem` handles all mechanics.
+
+---
+
+### Core Mechanics
+
+#### 1. Tattoo Menu (press E on Kev)
+
+A simple text-based menu with 6 tattoo designs. Each design has a **cost**, a **Notoriety modifier** (positive or negative), a **faction signal**, and a **disguise interference value** (how much it affects the player's disguisability — some tattoos make you more recognisable).
+
+| Design | Cost (COIN) | Notoriety | Faction Signal | Disguise Interference |
+|---|---|---|---|---|
+| `TEAR_DROP` | 8 | +5 | `STREET_LADS` +5 Respect | +10% recognition chance |
+| `BULLDOG` | 10 | +3 | `LOCALS` +5 Respect | +5% recognition chance |
+| `ROSE` | 6 | 0 | none | 0% |
+| `MUM_HEART` | 5 | −2 (sympathy) | none | 0% |
+| `CREW_TAG` | 15 | +8 | `MARCHETTI_CREW` +10 Respect | +15% recognition chance |
+| `LUCKY_STARS` | 4 | 0 | none | 0% |
+
+- The player can have **multiple tattoos** (stacked effects).
+- Tattoos are **permanent** — there is no removal option (Kev: *"Mate, I'm a tattooist, not a miracle worker."*).
+- Getting a `TEAR_DROP` tattoo while already wanted (Wanted Level ≥ 2) prompts a special line from Kev: *"That one means something, you know. Make sure you deserve it."*
+
+#### 2. Prison Tattoo — DIY Mechanic
+
+If the player has a `NEEDLE` item and `INK_BOTTLE` in their inventory, they can press E on a mirror prop (e.g., `MIRROR_PROP` in barber shop or leisure centre changing room) to apply a **Prison Tattoo**:
+- Design: `PRISON_CROSS` — the cheapest, most notorious tattoo.
+- Effect: Notoriety +10, +20% recognition chance, `STREET_LADS` +3 Respect.
+- One-time only; Kev refuses to cover it (*"That's a prison job. I've got standards."*).
+- Awards `JAILBIRD_INK` achievement.
+
+#### 3. NPC Reaction System
+
+Different NPCs react to visible tattoos (neck, hands — visible regardless of disguise):
+
+- `PENSIONER`: 15% chance of avoiding the player ("You'd not get that on your face in my day.").
+- `POLICE` / `PCSO`: recognition chance increased by the tattoo's disguise interference value.
+- `YOUTH_GANG`: `TEAR_DROP` or `CREW_TAG` → increased passive respect (10% less likely to attack unprovoked).
+- `SHOPKEEPER`: `CREW_TAG` tattoo + Notoriety ≥ 30: 20% chance to refuse service (*"Sorry, we don't serve your sort."*).
+- `VICAR` (Reverend Dave): will comment once on any tattoo but never refuses service (*"The body is a temple… I suppose it's yours to decorate."*).
+
+#### 4. Stolen Gear Side Quest
+
+Kev runs low on supplies on Thursdays. He'll offer **2 COIN per unit** for `NEEDLE` or `INK_BOTTLE` materials (sourced from the pharmacy raid, skip diving, or the pawn shop). This creates a recurring side-hustle tying TattooSystem into `SkipDivingSystem`, `PawnShopSystem`, and `CornerShopSystem`.
+
+#### 5. Dodgy Tattoo Gun
+
+With `Kev's Trust ≥ 3 visits`, he offers a back-room service: **a `TATTOO_GUN` item** (craftable prop), usable as:
+- A weapon (3 damage per hit — jabbing, not lethal).
+- A crafting ingredient for the `PRISON_TATTOO` action (replaces `NEEDLE`).
+- A fence item at 12–18 COIN (the Fence: *"Kinky. I'll take it."*).
+
+---
+
+### System Integrations
+
+- `DisguiseSystem` — tattoo recognition penalties stack with the disguise check. A `CREW_TAG` tattoo reduces the effectiveness of any worn disguise by the interference percentage.
+- `NotorietySystem` — tattoo designs apply a one-time Notoriety delta on receipt; permanent passive recognition bonus is applied in `WantedSystem`.
+- `WantedSystem` — recognition chance modifier per tattoo, additive. Max cap: +40% total from all tattoos.
+- `FactionSystem` — `TEAR_DROP` → `STREET_LADS +5`; `CREW_TAG` → `MARCHETTI_CREW +10`; `BULLDOG` → `LOCALS +5`. Applied once on getting the tattoo.
+- `RumourNetwork` — getting a `CREW_TAG` seeds a `GANG_ACTIVITY` rumour: *"Heard someone got the Marchetti tag done at Skin Deep."*
+- `SkipDivingSystem` / `PawnShopSystem` / `CornerShopSystem` — `NEEDLE` and `INK_BOTTLE` as supply items sourced from these systems.
+- `AchievementSystem` — see achievements table.
+- `CriminalRecord` — Prison tattoo applied without Kev adds `POSSESSION_OF_OFFENSIVE_WEAPON` if `TATTOO_GUN` is in inventory when a POLICE NPC is within 4 blocks.
+- `TimeSystem` — opening hours gate (Tue–Sat 11:00–18:00); Kev absent on Mondays/Sundays.
+- `NewspaperSystem` — if player has 4+ visible tattoos and commits a crime: headline chance: *"Heavily tattooed man terrorises Northfield high street."*
+
+---
+
+### New `LandmarkType` entry
+
+```java
+// ── Issue #1012: Northfield Tattoo Parlour ────────────────────────────────
+/**
+ * Skin Deep Tattoos — a small tattoo parlour on the high street.
+ * Open Tue–Sat 11:00–18:00. Run by Kev (TATTOOIST NPC).
+ * Offers 6 permanent tattoo designs with Notoriety, faction, and disguise effects.
+ * Back-room TATTOO_GUN item available at Kev's Trust ≥ 3 visits.
+ */
+TATTOO_PARLOUR
+```
+
+### New `NPCType` entry
+
+```java
+TATTOOIST(20f, 0f, 0f, false)
+// Kev — the taciturn proprietor of Skin Deep Tattoos. Passive; never hostile.
+// Offers tattoo menu on E-interaction. Trust-gated back-room item.
+// Speech: "What are you after?" / "That'll be there forever, you know."
+//         / "I'm not doing your neck. Not without a drink first."
+//         / "Cash only, mate. I don't do receipts."
+```
+
+### New `Material` entries
+
+- `NEEDLE` — "A sterile tattoo needle. Or maybe not that sterile." Used in prison tattoo DIY. Fence value: 2 COIN.
+- `INK_BOTTLE` — "Black tattoo ink in a tiny plastic bottle." Used in prison tattoo DIY; also a supply item for Kev. Fence value: 2 COIN.
+- `TATTOO_GUN` — "A professional (ish) rotary tattoo machine. Surprisingly loud." Weapon (3 damage/hit); crafting ingredient; Fence value: 12–18 COIN. Back-room item from Kev at Trust ≥ 3.
+
+### New `PropType` entries
+
+- `TATTOO_CHAIR_PROP` — padded recliner in the studio. Player sits (E) to receive a tattoo. (1.0f × 1.5f × 0.8f, 5 hits, `Material.WOOD`)
+- `FLASH_SHEET_PROP` — wall-mounted display of tattoo designs. Press E to browse available designs without committing. (0.6f × 0.8f × 0.05f, 2 hits, `Material.GLASS`)
+- `TATTOO_STATION_PROP` — Kev's workstation: stool, ink tray, lamp. Purely decorative. (1.0f × 1.0f × 0.8f, 4 hits, `Material.WOOD`)
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `MARKED_FOR_LIFE` | Get your first tattoo from Kev |
+| `FULL_SLEEVE` | Accumulate 4 or more tattoos total |
+| `JAILBIRD_INK` | Apply a prison tattoo using needle and ink at a mirror |
+| `KEV_APPROVED` | Visit Kev 3 times (reach Trust ≥ 3 and unlock the back room) |
+| `TATTOOED_VILLAIN` | Commit a crime while having 3+ tattoos and appear in the newspaper |
+
+### Unit Tests
+
+- `TattooSystem.applyTattoo(design, player)` applies the correct Notoriety delta, faction signal, and recognition modifier.
+- `TattooSystem.getTotalRecognitionBonus(player)` returns the sum of all tattoo interference values, capped at 40%.
+- `TattooSystem.canApplyPrisonTattoo(playerInventory)` returns true only if `NEEDLE` and `INK_BOTTLE` are both present.
+- `TattooSystem.isOpen(dayOfWeek, hour)` returns true Tue–Sat 11:00–17:59, false Mon/Sun and outside hours.
+- `TattooSystem.getKevTrust(player)` increments by 1 per completed tattoo session; correct threshold for back-room unlock.
+- `TattooSystem.getSupplyDemand(dayOfWeek)` returns true on Thursdays (Kev buys needles/ink), false other days.
+- `TattooSystem.getNewspaperHeadlineChance(tattooCount)` returns 0 for < 4 tattoos, > 0 for 4+.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Tattoo applied permanently with correct effects**: Open `TattooSystem`. Set time to Wednesday 13:00. Press E on `TATTOOIST` (Kev). Select `TEAR_DROP` (cost 8 COIN). Verify player COIN reduced by 8. Verify `TattooSystem.getTattoos(player)` contains `TEAR_DROP`. Verify `NotorietySystem.getNotoriety()` increased by 5. Verify `FactionSystem.getRespect(STREET_LADS)` increased by 5. Verify `WantedSystem` recognition bonus increased by 10%.
+
+2. **Tattoo shop closed on Monday**: Set time to Monday 13:00. Verify `TattooSystem.isOpen()` returns false. Verify pressing E on Kev delivers "Closed" speech and no menu opens.
+
+3. **Prison tattoo applied at mirror**: Give player `NEEDLE` and `INK_BOTTLE`. Place player at `MIRROR_PROP` in barber shop. Press E. Select prison tattoo option. Verify `TattooSystem.getTattoos(player)` contains `PRISON_CROSS`. Verify Notoriety increased by 10. Verify `JAILBIRD_INK` achievement awarded. Verify `NEEDLE` and `INK_BOTTLE` removed from inventory.
+
+4. **Disguise effectiveness reduced by CREW_TAG**: Give player `CREW_TAG` tattoo (set via `TattooSystem.applyTattooForTesting`). Apply a standard disguise (`BASEBALL_CAP`). Verify `DisguiseSystem.getEffectiveDisguiseLevel(player)` is lower than it would be without the tattoo (by 15% of base value).
+
+5. **Kev buys needles on Thursday**: Set time to Thursday 12:00. Give player 3 `NEEDLE` items. Press E on Kev. Select "Supply run" option. Verify player inventory loses 3 `NEEDLE`. Verify player COIN increases by 6 (3 × 2 COIN). Verify `TattooSystem.isSupplyDayActive()` returns true.
+
+6. **Kev back-room unlocked at Trust 3**: Apply 3 tattoos via Kev. Verify `TattooSystem.getKevTrust(player)` == 3. Press E on Kev. Verify back-room option "Something special?" appears in menu. Select it. Verify player inventory receives `TATTOO_GUN`.
