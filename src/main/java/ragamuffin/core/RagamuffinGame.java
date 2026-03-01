@@ -217,6 +217,8 @@ public class RagamuffinGame extends ApplicationAdapter {
     private StallSystem stallSystem;
     // Issue #783: Pirate FM — underground radio station
     private PirateRadioSystem pirateRadioSystem;
+    // Issue #990: Radio interface — broadcast action selection overlay
+    private ragamuffin.ui.RadioUI radioUI;
 
     // Issue #704 / #844: HeistSystem — four-phase robbery mechanic (casing, planning, execution, fencing)
     private HeistSystem heistSystem;
@@ -604,6 +606,8 @@ public class RagamuffinGame extends ApplicationAdapter {
         pirateRadioSystem.setWantedSystem(wantedSystem);
         pirateRadioSystem.setAchievementCallback(type -> achievementSystem.unlock(type));
         gameHUD.setPirateRadioSystem(pirateRadioSystem);
+        // Issue #990: Radio UI — broadcast action overlay
+        radioUI = new ragamuffin.ui.RadioUI();
 
         // Issue #704 / #844: Initialize heist system — four-phase robbery mechanic
         heistSystem = new HeistSystem();
@@ -2264,6 +2268,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                 if (pirateRadioSystem.isBroadcasting()) {
                     pirateRadioSystem.stopBroadcast();
                     soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+                    if (radioUI != null) radioUI.hide();
                 } else {
                     com.badlogic.gdx.math.Vector3 pos = player.getPosition();
                     // Check if player is in range of the transmitter
@@ -2275,6 +2280,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                             tooltipSystem.showMessage("Too far from transmitter to broadcast.", 2.0f);
                         } else if (pirateRadioSystem.startBroadcast(pos.x, pos.y, pos.z)) {
                             soundSystem.loop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+                            if (radioUI != null) radioUI.show();
                         }
                     } else {
                         tooltipSystem.showMessage("Place a transmitter first (right-click).", 2.0f);
@@ -2649,6 +2655,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                     pirateRadioSystem.stopBroadcast();
                     soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
                     tooltipSystem.showMessage("Too far from transmitter — broadcast ended.", 3.0f);
+                    if (radioUI != null) radioUI.hide();
                 }
             }
 
@@ -2689,6 +2696,7 @@ public class RagamuffinGame extends ApplicationAdapter {
                 soundSystem.play(ragamuffin.audio.SoundEffect.POLICE_SIREN);
                 pirateRadioSystem.onSignalVanArrived();
                 soundSystem.stopLoop(ragamuffin.audio.SoundEffect.PIRATE_RADIO_MUSIC);
+                if (radioUI != null) radioUI.hide();
             }
 
             // Spawn LISTENER NPCs requested by Black Market Shout-Out (action 3)
@@ -4670,6 +4678,12 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #868: Render BootSaleUI if visible
         if (bootSaleUI.isVisible()) {
             bootSaleUI.render(screenWidth, screenHeight);
+        }
+
+        // Issue #990: Render RadioUI while broadcasting
+        if (radioUI != null && radioUI.isVisible() && pirateRadioSystem != null) {
+            radioUI.render(spriteBatch, shapeRenderer, font,
+                    pirateRadioSystem, screenWidth, screenHeight);
         }
 
         // Issue #799: Render corner shop HUD status bar when shop is open
