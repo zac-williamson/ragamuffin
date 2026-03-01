@@ -18930,3 +18930,152 @@ A `BOXING_COACH` NPC (`COUNCIL_MEMBER` type, named "Ray") runs sessions in the m
 7. **Noticeboard populates and rumours count as heard**: Seed `RumourNetwork` with 5 rumours. Call `CommunityCentreSystem.refreshNoticeboard(rumourNetwork, questRegistry)`. Press E on `NOTICEBOARD_PROP`. Verify `getNoticeCount()` is between 3 and 5. Verify at least 2 rumours in `RumourNetwork` are now marked as heard by the player.
 
 8. **Gang brawl intervention reduces notoriety**: Set time to Monday 19:00. Spawn YOUTH_GANG NPC within 5 blocks of centre. Simulate 60-second `update()` loop to trigger brawl attempt. Verify YOUTH_GANG enters hall and targets a STREET_LAD NPC. Press E (player breaks up brawl). Verify Notoriety decreased by 3. Verify `STREET_LADS` Faction Respect increased by 5.
+
+## Add Angel Nails & Beauty — Nail Salon: Gossip, Disguise & Cash-in-Hand Laundering
+
+**Goal**: Bring the `NAIL_SALON` landmark (already a pink `RENDER_PINK` building in the world generator) to life with a full `NailSalonSystem`. Currently the building is entirely inert — no NPCs, no schedule, nothing to interact with. This issue implements a richly characterful beauty salon that acts as a gossip hub, a light disguise mechanic, a cash-laundering outlet, and a source of low-level criminal activity.
+
+### NailSalonSystem
+
+A new `NailSalonSystem` class managing:
+
+- **Opening hours**: 09:00–19:00 Monday–Saturday, 10:00–16:00 Sunday.
+- **Staff**: two named NPCs — `NAIL_TECH` type (new `NPCType` entry). "Tracy" runs the front desk; "Jade" works the back chair.
+- **Clients**: 1–4 `PENSIONER` and `PUBLIC` NPCs seated at `NAIL_STATION_PROP` chairs during the day. Client count peaks 11:00–14:00 (up to 4); drops to 1–2 after 16:00.
+- **Gossip sink**: clients at the salon are among the best-connected rumour-holders in town — each seated client has a 30% chance per minute of sharing a rumour with the player if within 3 blocks. These are drawn from `RumourNetwork` as `RumourType.NEIGHBOURHOOD` gossip.
+
+---
+
+### Service Menu (press E on Tracy at the front desk)
+
+| Service | Cost | Effect |
+|---|---|---|
+| Basic manicure | 4 COIN | +1 temporary Disguise tier (lasts 10 in-game minutes) |
+| Acrylic set | 8 COIN | +2 temporary Disguise tier (lasts 25 in-game minutes) |
+| Full pamper (nails + hair wrap) | 15 COIN | Notoriety −3, +2 Disguise tier (lasts 40 in-game minutes), +5 Warmth |
+| OPI nail varnish (take-away item) | 3 COIN | `NAIL_VARNISH` item added to inventory — see crafting below |
+
+Disguise tier from salon services stacks with `DisguiseSystem`'s existing `COUNCIL_JACKET` bonus. The timed effect is tracked by `NailSalonSystem.disguiseExpiry` (game-time seconds remaining).
+
+If player Notoriety ≥ 60, Tracy refuses standard service: *"Sorry love, we're fully booked."* However, if `STREET_LADS` Respect ≥ 40, Jade will still serve in the back chair — she's seen it all.
+
+---
+
+### Gossip & Rumour Mechanic
+
+The salon is the gossip capital of Northfield. The following rumour seeding rules apply:
+
+- **On player receiving a service**: one free rumour drawn from `RumourNetwork` and marked as heard. Tracy or Jade delivers it as flavour dialogue: *"You hear about what happened at [location]?"*
+- **Eavesdropping**: player can stand inside the salon without purchasing a service. Every 2 in-game minutes within 5 blocks of any client NPC, a `RumourType.NEIGHBOURHOOD` rumour is marked as heard (max 2 per visit without purchasing).
+- **Salon rumour pool**: Tracy seeds one new `RumourType.NEIGHBOURHOOD` rumour per in-game day at 09:00 (opening). Reflects the previous day's events.
+
+---
+
+### Cash-in-Hand Laundering (back-room mechanic)
+
+At `STREET_LADS` Respect ≥ 50, Jade offers an off-menu service: **"cash washing"**.
+
+- The player can hand over up to 20 COIN per visit, which is recorded as "salon income". In exchange the player's `CriminalRecord` has the most recent petty offence (`PETTY_THEFT` or `ANTISOCIAL_BEHAVIOUR`) expunged.
+- This is a bribe, not legal — if a `DETECTIVE` NPC is within 10 blocks during the transaction, there is a 40% chance the transaction is observed: `CriminalRecord.BRIBERY` added, Notoriety +5, `WantedSystem` +1 star.
+- A `CCTV_PROP` is above the front desk by default. If it is active, the risk of DETECTIVE observation increases to 80%. Destroying it reduces risk back to 40%.
+- Achievement `SQUEAKY_CLEAN`: launder coin at the salon for the first time.
+
+---
+
+### OPI Nail Varnish Item — Crafting Uses
+
+`NAIL_VARNISH` (new `Material`) opens two crafting recipes:
+
+1. `NAIL_VARNISH` + `GLASS_BOTTLE` → `IMPROVISED_BANGER` — a throwable distraction device (causes nearby NPCs to flee 5 blocks for 3 seconds). Damage: 0. Counts as `NoiseSystem` noise event (level 3).
+2. `NAIL_VARNISH` + `CLOTH` → `DISGUISE_FACE_PAINT` — single-use item; press E to apply: Notoriety −2 for 5 in-game minutes (cosmetic suppression only, not a full `DisguiseSystem` tier).
+
+---
+
+### Late-Night Event: After-Hours Gathering (Fridays & Saturdays, 20:00–23:00)
+
+After closing, 3–5 `PUBLIC` NPCs congregate outside the salon — friends of Tracy and Jade, having pre-drinks. This creates a social hotspot:
+
+- Player can join by pressing E on any congregant: social score +3 (new minor stat, tracked by `StreetSkillSystem.Skill.SOCIAL`). Outcome is friendly.
+- A `STREET_LAD` NPC is 20% likely to cause a `FIGHT_NEARBY` rumour event during the congregation period.
+- If a `POLICE` NPC patrols past, there is a 15% chance they attempt to disperse the group (`NPCState.CHASING` → each NPC `FLEEING`). Player can intervene (E) to draw police attention and let friends escape: +5 STREET_LADS Respect, +3 Notoriety.
+
+---
+
+### System Integrations
+
+- `DisguiseSystem` — `addTempDisguiseTier(tiers, durationSeconds)` called on salon service purchase; decremented by `NailSalonSystem.update()` each tick.
+- `NotorietySystem` — full pamper: −3; launder detection: +5; dispersal intervention: +3.
+- `WantedSystem` — laundering detected by DETECTIVE: +1 star.
+- `CriminalRecord` — laundering detected: `BRIBERY` added; successful launder: most recent petty offence expunged.
+- `RumourNetwork` — service purchase seeds 1 heard `NEIGHBOURHOOD` rumour; eavesdropping up to 2; Tracy seeds 1 per day at open.
+- `FactionSystem` — after-hours dispersal intervention: +5 STREET_LADS; Jade service at high rep: checks `STREET_LADS` ≥ 40.
+- `StreetSkillSystem` — `SOCIAL` skill incremented by after-hours interaction (+1 per E-interaction, max 10). At SOCIAL ≥ 5: NPCs are 10% less likely to run from the player.
+- `WeatherSystem` — rain during congregation: clients cluster indoors (no outdoor gathering); +2 seated daytime clients (seeking shelter).
+- `NoiseSystem` — `IMPROVISED_BANGER` use: noise event level 3, attracts NPCs and POLICE awareness.
+- `WitnessSystem` — laundering transaction witnessed by DETECTIVE: calls `recordWitness`.
+- `AchievementSystem` — `SQUEAKY_CLEAN`, `PAMPERED`, `SOCIAL_BUTTERFLY`.
+- `TimeSystem` — schedule gate for opening hours, late-night gathering window, Tracy's morning rumour seed.
+
+---
+
+### New `NPCType` entry
+
+```
+NAIL_TECH(20f, 0f, 0f, false)  // salon staff — passive, service provider, gossip source
+```
+
+### New `PropType` entries
+
+- `NAIL_STATION_PROP` — interactive nail treatment station; press E (as client) to sit and be served; player presses E on Tracy/Jade to purchase service. (0.80f × 0.75f × 0.50f, 4 hits, `Material.WOOD`)
+- `NAIL_DRYER_PROP` — decorative; emits a weak warm glow. (+1 Warmth while within 1 block) (0.20f × 0.15f × 0.15f, 2 hits, `Material.SCRAP_METAL`)
+
+### New `Material` entries
+
+- `NAIL_VARNISH` — "OPI. Stolen from the salon, possibly." Sell value: 1 COIN. Crafting component for `IMPROVISED_BANGER` and `DISGUISE_FACE_PAINT`.
+- `IMPROVISED_BANGER` — throwable; causes `NoiseSystem` level-3 event + nearby NPC flee. "Don't ask what's in it." Crafted.
+- `DISGUISE_FACE_PAINT` — single-use cosmetic disguise. "You look ridiculous. But different." Notoriety −2 for 5 in-game minutes when used.
+
+### New `StreetSkillSystem.Skill` entry
+
+- `SOCIAL` — incremented by after-hours E-interaction at salon congregation (+1/interaction, max 10). At ≥ 5: NPCs 10% less likely to flee from player. At 10: achievement `SOCIAL_BUTTERFLY`.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `SQUEAKY_CLEAN` | Use Jade's cash-washing service for the first time |
+| `PAMPERED` | Receive the Full Pamper treatment (15 COIN service) |
+| `SOCIAL_BUTTERFLY` | Reach SOCIAL skill level 10 via after-hours salon gatherings |
+
+### New `RumourType` entry
+
+- `SALON_GOSSIP` — *"Tracy from the nail salon was saying [detail] about [location/person]."* Seeded by `NailSalonSystem` at 09:00 daily. Spreads via seated `PUBLIC` and `PENSIONER` NPCs. Higher spread rate than `NEIGHBOURHOOD` (salons are the original social media).
+
+### Unit Tests
+
+- `NailSalonSystem.isOpen(dayOfWeek, hour)` returns true Mon–Sat 09:00–18:59, Sun 10:00–15:59; false otherwise.
+- `NailSalonSystem.getClientCountForHour(hour)` returns 3–4 at 12:00, 1–2 at 17:00, 0 outside opening hours.
+- `computeDetectionRisk(cctvActive, detectiveNearby)` returns 0.40 when CCTV inactive, 0.80 when CCTV active.
+- `applyDisguiseExpiry(delta)` decrements `disguiseExpiry` by `delta`; calls `DisguiseSystem.removeTemp()` when it reaches 0.
+- `canAccessBackRoom(streetLadsRespect)` returns true only when respect ≥ 50.
+- `canServeHighNotoriety(notoriety, streetLadsRespect)` returns false when notoriety ≥ 60 AND streetLadsRespect < 40; true when notoriety ≥ 60 AND streetLadsRespect ≥ 40.
+- `NAIL_VARNISH` + `GLASS_BOTTLE` recipe: `CraftingSystem.craft(NAIL_VARNISH, GLASS_BOTTLE)` yields `IMPROVISED_BANGER`.
+- Congregation spawning: `getCongregantCountForHour(dayOfWeek, hour)` returns 3–5 on Fri/Sat at 21:00, 0 on Monday at 21:00.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Basic manicure adds disguise tier and expires**: Set time to Wednesday 11:00. Spawn NAIL_TECH (Tracy) at front desk. Give player 4 COIN. Press E on Tracy, select "Basic manicure". Verify player COIN == 0. Verify `DisguiseSystem.getTempDisguiseTier()` == 1. Advance 10 in-game minutes. Verify `DisguiseSystem.getTempDisguiseTier()` == 0 (expired).
+
+2. **High-notoriety player refused by Tracy, served by Jade**: Set player Notoriety to 65. Set `STREET_LADS` Respect to 45. Press E on Tracy. Verify response text contains "fully booked". Press E on Jade. Verify service menu is displayed (player can select a service).
+
+3. **Gossip heard after service purchase**: Seed `RumourNetwork` with 3 `NEIGHBOURHOOD` rumours. Give player 4 COIN. Purchase basic manicure from Tracy. Verify exactly 1 rumour in `RumourNetwork` is now marked as heard by the player. Verify Tracy's dialogue line contains a reference to a landmark name.
+
+4. **Eavesdropping yields maximum 2 rumours per visit**: Seed `RumourNetwork` with 5 rumours. Move player within 3 blocks of a seated PUBLIC NPC (no purchase). Advance 4 in-game minutes (two 2-minute ticks). Verify exactly 2 rumours are marked as heard. Advance another 4 minutes. Verify still only 2 rumours heard (cap enforced).
+
+5. **Cash laundering succeeds without DETECTIVE nearby**: Set `STREET_LADS` Respect to 55. Add `PETTY_THEFT` to `CriminalRecord`. Set CCTV inactive. Ensure no DETECTIVE within 10 blocks. Give player 15 COIN. Press E on Jade, select "Cash washing", pay 15 COIN. Verify `CriminalRecord` no longer contains `PETTY_THEFT`. Verify `SQUEAKY_CLEAN` achievement unlocked. Verify player COIN == 0.
+
+6. **Cash laundering detected by DETECTIVE with CCTV active**: Set `STREET_LADS` Respect to 55. Set CCTV active. Spawn DETECTIVE within 5 blocks. Give player 20 COIN. Attempt cash washing. Verify (after multiple attempts, given 80% detection rate) `CriminalRecord` contains `BRIBERY`. Verify Notoriety increased by 5. Verify `WantedSystem.getWantedLevel()` increased by 1.
+
+7. **After-hours congregation spawns on Friday night**: Set time to Friday 21:00. Call `NailSalonSystem.update(delta, timeSystem, npcManager, ...)`. Verify 3–5 `PUBLIC` NPCs are present outside the nail salon. Set time to Friday 19:30 (before gathering window). Verify no congregation NPCs are spawned.
+
+8. **IMPROVISED_BANGER crafted and causes noise event**: Give player 1 `NAIL_VARNISH` and 1 `GLASS_BOTTLE`. Open crafting menu. Select IMPROVISED_BANGER recipe. Verify player receives 1 `IMPROVISED_BANGER`. Throw it (use-item action). Verify `NoiseSystem` has a noise event at throw position with level ≥ 3. Verify at least 1 nearby NPC transitions to `NPCState.FLEEING`.
