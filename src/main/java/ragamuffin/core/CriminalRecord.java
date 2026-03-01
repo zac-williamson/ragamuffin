@@ -247,7 +247,15 @@ public class CriminalRecord {
          * Recorded when a POLICE NPC is within 20 blocks during the Marchetti voucher
          * scam at Angel Nails & Beauty. Penalty: +8 Notoriety.
          */
-        MONEY_LAUNDERING("Money laundering");
+        MONEY_LAUNDERING("Money laundering"),
+
+        // ── Issue #1057: Northfield Canal ─────────────────────────────────────────
+
+        /**
+         * Recorded when the player disposes of evidence in the canal while witnessed
+         * by a PCSO or other officer. Penalty: +1 WantedSystem star.
+         */
+        EVIDENCE_DESTRUCTION("Evidence destruction (canal)");
 
         private final String displayName;
 
