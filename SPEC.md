@@ -27707,3 +27707,187 @@ min total window), CLAUSTROPHOBIC debuff duration, SUIT_JACKET disguise bypass.
 //           WantedSystem, NotorietySystem, RumourNetwork, NewspaperSystem,
 //           PostOfficeSystem, NoiseSystem, FenceSystem, PawnShopSystem,
 //           SquatSystem, LIFT_PROP all present
+
+---
+
+## Northfield Indoor Market — Stall Rental, Knock-Offs & the Trading Standards Raid
+
+**Issue #1037** (stubbed across codebase — `IndoorMarketSystem.java` does not yet exist)
+
+The Northfield Indoor Market (`LandmarkType.INDOOR_MARKET`) is a covered single-storey
+brick building housing 8 market stalls in two rows of four. It is open Tue/Fri/Sat
+08:00–16:00. All stubs are already in the codebase:
+`NPCType.MARKET_TRADER/PUNTER/MANAGER/TRADING_STANDARDS_OFFICER`, `PropType.MARKET_STALL`,
+`PropType.MARKET_SHUTTER_PROP`, `PropType.TEA_URN_PROP`, `Material.KNOCK_OFF_PERFUME/TRACKSUIT`,
+`Material.COUNTERFEIT_WATCH`, `CriminalRecord.CrimeType.TRADING_STANDARDS_RAID`,
+`RumourType.MARKET_RAID`. Only `IndoorMarketSystem.java` is missing.
+
+### Core Mechanics
+
+#### 1. Market Hours & Entrance
+- `MARKET_SHUTTER_PROP` blocks entry when market is closed. Attempting to enter outside
+  hours: "Market's shut, love. Opens Tuesday." Destroying shutter (+8 Notoriety) allows
+  off-hours entry — triggers `CrimeType.CRIMINAL_DAMAGE` + `NeighbourhoodWatchSystem` anger +5.
+- On open days (Tue/Fri/Sat) at 08:00, shutter raises automatically.
+
+#### 2. Market Traders
+Four permanent MARKET_TRADER NPCs occupy fixed stalls:
+- **Dave (Electronics stall)**: sells `PORTABLE_RADIO` (6 COIN), `ALARM_CLOCK` (3 COIN),
+  `STOLEN_PHONE` (4 COIN, "off the back of a lorry").
+- **Sheila (Clothes stall)**: sells `KNOCK_OFF_TRACKSUIT` (2 COIN),
+  `KNOCK_OFF_PERFUME` (3 COIN), `BASEBALL_CAP` (2 COIN).
+- **Mo (Knock-offs stall)**: sells `COUNTERFEIT_WATCH` (5 COIN),
+  `COUNTERFEIT_NOTE` (8 COIN for 1 note, only at Notoriety Tier ≤ 2).
+- **Brenda (Hot food stall / TEA_URN_PROP)**: sells `MUG_OF_TEA` (1 COIN; free during rain),
+  `SAUSAGE_ROLL` (1 COIN), `BACON_BARM` (2 COIN). During rain, says
+  "It's Baltic out there, love." Weather hook: `WeatherSystem`.
+
+Press E on any trader to open a simple buy menu. Traders refuse service if
+`WantedSystem.getStars() >= 3`.
+
+#### 3. Ray the Market Manager — Stall Rental
+- `MARKET_MANAGER` NPC Ray stands near the entrance (08:00–15:30 on open days).
+- Press E: "You after a stall?" Rent costs 3 COIN/market-day (flat fee).
+- If `NotorietySystem.getTier() >= 4`, Ray refuses: "I know your sort. Take it elsewhere."
+- Rented stall (stall #5 or #6 — the two nearest the exit) becomes interactive:
+  player can place up to 5 items on it for sale (press E to open stall price editor).
+- `MARKET_PUNTER` NPCs (8–12 spawned per open day) browse player stall every
+  2 in-game minutes; if item price ≤ 150% FenceValuationTable value, there's a 40%
+  chance they buy it.
+- Player can sell `STOLEN_GOODS`, `KNOCK_OFF_*`, `COUNTERFEIT_*` items on stall —
+  but these are flagged for Trading Standards.
+
+#### 4. Trading Standards Raid
+- Raid triggers once every 7 in-game days (random weekday, 10:00–14:00).
+- 30-minute warning: `RumourType.MARKET_RAID` seeded at -30 min:
+  "Word is Trading Standards are doing the market today. Mo's already packed up."
+- Mo's stall closes if raid is triggered during market hours (Mo despawns at -5 min).
+- Two `TRADING_STANDARDS_OFFICER` NPCs enter at 10:00 and walk each stall in sequence
+  (2 in-game minutes per stall). They check for:
+  `STOLEN_GOODS`, `COUNTERFEIT_NOTE`, `COUNTERFEIT_WATCH`, `KNOCK_OFF_PERFUME`,
+  `KNOCK_OFF_TRACKSUIT`, `STOLEN_PHONE`.
+- If contraband found in player stall: `CriminalRecord.CrimeType.TRADING_STANDARDS_RAID`
+  added. Notoriety +20, WantedSystem +1 star, all contraband confiscated. Player has
+  60 frames (1 second) to clear the stall before arrest.
+- `DisguiseSystem` interaction: wearing `BASEBALL_CAP` + `KNOCK_OFF_TRACKSUIT` causes
+  officers to mistake player for a regular trader; raid bypass (no check on player stall).
+- `NewspaperSystem` next edition: "Trading Standards close stalls at Northfield Market."
+- If player has vacated their stall of all contraband before officers arrive: raid passes.
+  Reward: Ray gives the player a free stall day next session.
+
+#### 5. Pickpocketing in the Crowd
+- With 8+ `MARKET_PUNTER` NPCs present, player can attempt pickpocket by pressing
+  E while within 1 block of any punter (no `MARKET_PUNTER` aggro state required).
+- 60% success if `StreetSkillSystem.getSkill(PICKPOCKET) >= 1`; 30% otherwise.
+- Success: gain 1–5 COIN from punter. Failure: punter shouts "Oi!", Notoriety +3,
+  `WantedSystem` +1 if `MARKET_MANAGER` is within 10 blocks.
+- `NoiseSystem` noise raised by shouting punter: +10.
+
+#### 6. Brenda's Tea Urn — Weather Hook
+- During rain (`WeatherSystem.isRaining()` true), `MUG_OF_TEA` is free from Brenda.
+- Drinking `MUG_OF_TEA`: `WarmthSystem` +20, `HealingSystem` +5.
+- `WarmthSystem` integration: indoor market counts as warm shelter (no warmth drain
+  while inside during cold weather).
+
+### Schedule
+
+| Time | Event |
+|------|-------|
+| Tue/Fri/Sat 08:00 | Market opens; shutter raises; traders + punters spawn |
+| Tue/Fri/Sat 15:30 | Ray packs up (no new stall rentals) |
+| Tue/Fri/Sat 16:00 | Market closes; shutter lowers; all NPCs despawn |
+| Every 7 in-game days | Trading Standards raid (random open day, 10:00–14:00) |
+| Raid day –30 min | MARKET_RAID rumour seeded; Mo's stall closes at –5 min |
+
+### New PropTypes Required
+
+None — `MARKET_STALL`, `MARKET_SHUTTER_PROP`, `TEA_URN_PROP` are all present in `PropType`.
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `MUG_OF_TEA` | From Brenda; WarmthSystem +20, HealingSystem +5 |
+| `BACON_BARM` | From Brenda; HealingSystem +10, satisfies HUNGRY need |
+
+(Add to `Material.java` if not present — check first.)
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `MARKET_TRADER_ACH` | Sell 10 items from a rented market stall |
+| `TRADING_STANDARDS_SURVIVOR` | Pass a Trading Standards raid while carrying contraband (disguise bypass) |
+| `MARKET_PICKPOCKET` | Pickpocket 5 punters in a single market day |
+| `TEA_IN_THE_RAIN` | Receive a free tea from Brenda during rain |
+
+(Add to `AchievementType.java`.)
+
+### System Integrations
+
+- **WeatherSystem**: Brenda's free tea during rain; warmth shelter logic.
+- **WantedSystem**: contraband found +1 star; pickpocket caught +1 star (if Ray nearby).
+- **NotorietySystem**: raid +20; pickpocket failure +3; shutter destruction +8.
+- **RumourNetwork**: `MARKET_RAID` rumour seeded 30 min before raid.
+- **NewspaperSystem**: raid headline next edition.
+- **DisguiseSystem**: `BASEBALL_CAP` + `KNOCK_OFF_TRACKSUIT` bypasses raid check on player stall.
+- **StreetSkillSystem**: `PICKPOCKET` skill affects pickpocket success rate.
+- **NoiseSystem**: pickpocket shout +10 noise.
+- **FenceValuationTable**: punter buy threshold = 150% fence value.
+- **CriminalRecord**: `TRADING_STANDARDS_RAID` crime type.
+- **NeighbourhoodWatchSystem**: shutter destruction anger +5.
+- **WarmthSystem**: indoor market = warm shelter.
+- **HealingSystem**: tea +5 HP; bacon barm +10 HP.
+- **StreetEconomySystem**: punters satisfy needs from Brenda's stall.
+
+**Unit tests**: market open/closed hours check (Tue/Fri/Sat only), raid schedule (every 7 days),
+punter buy probability (40% at ≤150% fence value), pickpocket success rates (30% vs 60%),
+Brenda tea price (free in rain, 1 COIN otherwise), contraband detection list,
+Mo's stall despawn timing (–5 min from raid), shutter passability (raised/lowered).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Market shutter blocks entry when closed**: Set day to Monday (market closed). Place
+   player at entrance. Simulate pressing W for 30 frames. Verify player Z coordinate has
+   NOT moved past the shutter boundary. Verify speech log contains "Market's shut, love."
+
+2. **Buying from Dave yields STOLEN_PHONE**: Set day to Tuesday, time 09:00. Dave spawns
+   at electronics stall. Press E on Dave. Select `STOLEN_PHONE` (4 COIN). Verify player
+   inventory gains 1× `STOLEN_PHONE`. Verify player COIN decreased by 4.
+
+3. **Trading Standards raid: contraband found triggers record**: Set raid day. Give player
+   1× `COUNTERFEIT_WATCH` on their rented stall. Advance to 10:00. Let officers walk to
+   player stall (2 min/stall × stall position). Verify `CriminalRecord` contains
+   `TRADING_STANDARDS_RAID`. Verify Notoriety increased by 20. Verify `WantedSystem.getStars()`
+   increased by 1. Verify `COUNTERFEIT_WATCH` removed from stall.
+
+4. **Trading Standards raid bypassed by disguise**: Equip `BASEBALL_CAP` + `KNOCK_OFF_TRACKSUIT`
+   via `DisguiseSystem`. Place `COUNTERFEIT_WATCH` on player stall. Trigger raid. Let officers
+   walk entire route. Verify `CriminalRecord` does NOT contain `TRADING_STANDARDS_RAID`.
+   Verify `WantedSystem.getStars()` unchanged.
+
+5. **Pickpocket succeeds with StreetSkill**: Set `PICKPOCKET` skill ≥ 1. Spawn 10
+   `MARKET_PUNTER` NPCs. Mock `Random` to guarantee success. Press E near a punter.
+   Verify player COIN increased by 1–5. Verify punter `getCoins()` decreased by same amount.
+
+6. **MARKET_RAID rumour seeded 30 minutes before raid**: Trigger a raid at 10:00.
+   Advance time to 09:30 (30 minutes before). Verify `RumourNetwork` contains a
+   `MARKET_RAID` rumour with text containing "Trading Standards". Verify Mo's stall
+   is still open at 09:30. Advance to 09:55. Verify Mo's stall is closed
+   (`IndoorMarketSystem.isMoOpen()` returns false).
+
+7. **Brenda's tea is free during rain**: Set `WeatherSystem` to raining. Press E on
+   `TEA_URN_PROP`. Verify player receives `MUG_OF_TEA` without COIN deduction.
+   Verify `WarmthSystem` warmth increased by 20. Stop rain. Press E again. Verify
+   this time 1 COIN is deducted.
+
+8. **Player stall rental and sale**: Rent stall from Ray (3 COIN deducted). Place
+   `PORTABLE_RADIO` on stall priced at 7 COIN (≤150% of fence value). Spawn a
+   `MARKET_PUNTER`. Advance 2 in-game minutes. Mock `Random` to guarantee punter
+   purchase. Verify player COIN increased by 7. Verify stall now empty.
+
+// ── New: IndoorMarketSystem.java in ragamuffin.core
+// New materials if absent: MUG_OF_TEA, BACON_BARM (add to Material.java)
+// New achievements: MARKET_TRADER_ACH, TRADING_STANDARDS_SURVIVOR,
+//     MARKET_PICKPOCKET, TEA_IN_THE_RAIN (add to AchievementType.java)
+// All other stubs (NPC types, PropTypes, CriminalRecord, RumourType) already present
