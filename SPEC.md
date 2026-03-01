@@ -28508,3 +28508,136 @@ Add `SPORTING_SOCIAL_CLUB` to `LandmarkType.java` with `getDisplayName()` → `"
 // Existing NPCs reused: SOCIAL_CLUB_CHAIRMAN (Derek), SOCIAL_CLUB_BARMAN (Keith), MEMBER, FACTION_LIEUTENANT
 // New achievements if absent: CARD_SHARK, GRASS, BENT_ACCOUNTANT (add to AchievementType.java)
 // Existing achievements reused: DARTS_HUSTLER_CLUB, AGM_TROUBLEMAKER, QUIZ_NIGHT_CHAMPION
+
+---
+
+## Issue #1110: Skin Deep Tattoos — Flash Designs, Custom Ink & the Prison Tattoo Kit
+
+Skin Deep Tattoos is a landmark already defined (`LandmarkType.TATTOO_PARLOUR`) with all supporting assets in place (TATTOOIST NPC type for Kev, TATTOO_CHAIR_PROP, FLASH_SHEET_PROP, TATTOO_STATION_PROP, TATTOO_GUN material, INK_BOTTLE material, NEEDLE material). What's missing is:
+
+1. `TattooParlourSystem.java` implementing the full lifecycle
+
+### Building Layout
+
+A narrow shopfront (6×10×4 blocks) on the high street. Outside: a BARBER_POLE_PROP-style spinning sign replaced by a neon TATTOO_SIGN_PROP. Inside: reception desk (COUNTER_PROP), two TATTOO_CHAIR_PROPs, a TATTOO_STATION_PROP (Kev's workstation), a FLASH_SHEET_PROP display on the wall, and a back-room SAFE_PROP where Kev keeps dodgy cash.
+
+Open Tue–Sat 11:00–18:00. Closed Sun/Mon.
+
+### Core Mechanics
+
+#### 1. Getting a Tattoo (E on TATTOO_CHAIR_PROP)
+
+Player sits in the chair; Kev approaches and offers a menu:
+
+| Design | Cost | Time | Effect |
+|--------|------|------|--------|
+| Flash (from sheet) | 8 COIN | 5 in-game minutes | TATTOOED buff (+1 INTIMIDATION vs NPCs) |
+| Custom (describe via dialogue) | 15 COIN | 10 in-game minutes | HEAVILY_TATTOOED buff (+2 INTIMIDATION, -1 CHARM) |
+| Prison special (only if CRIMINAL_RECORD ≥ 3 offences) | 5 COIN | 3 in-game minutes | PRISON_INK buff (+3 INTIMIDATION, REPUTATION_CRIMINAL +5) |
+
+- Player must sit still for the full duration (leaving early cancels and wastes 2 COIN deposit)
+- INTIMIDATION buff persists for the rest of the session; HEAVILY_TATTOOED is permanent (cosmetic flag)
+- At Notoriety Tier 4+, Kev adds a surcharge: +5 COIN ("liability insurance")
+
+#### 2. The Flash Sheet Browse (E on FLASH_SHEET_PROP)
+
+8 designs displayed (British classics: bulldog, rose, anchor, mum's heart, swallow, grim reaper, Staffordshire knot, St George's cross). Browsing is free. Each design has a unique flavour tooltip ("Timeless", "Mum'd be proud", "Nautical but nice"). Buying a design off the sheet queues it for the chair.
+
+#### 3. DIY Prison Tattoo Kit
+
+If player has NEEDLE + INK_BOTTLE in inventory, they can craft a PRISON_TATTOO_KIT (new material). Using it:
+- Applies PRISON_INK buff without Kev (free, but costs 10 HP and adds INFECTED_WOUND debuff with 20% chance)
+- INFECTED_WOUND debuff: -2 HP per in-game minute until player visits GP_SURGERY or eats ANTIBIOTICS
+- Unlocks `HARD_AS_NAILS` achievement
+
+Kev will notice if the player has a DIY prison tattoo and refuses service: "I don't fix botch jobs."
+
+#### 4. Kev's Back-Room Fence Operation
+
+Kev is a small-time fence for stolen goods. At STREET_LADS Respect ≥ 30, player can press E on SAFE_PROP (back room, requires getting past COUNTER_PROP):
+- Offer stolen items (STOLEN_JACKET, stolen electronics from OfficeBuildingSystem etc.) for 60% of fence value (less than FenceSystem but no Notoriety risk)
+- Kev refuses if Notoriety Tier ≥ 3: "Police are sniffing about"
+- At Respect ≥ 50: Kev will buy HOT_ITEM materials at 80% value
+
+#### 5. Tattoo Regret
+
+24 in-game hours after getting a HEAVILY_TATTOOED buff, a 15% random chance triggers the `TATTOO_REGRET` event: a tooltip appears — "You've had a good look at it in the mirror. You're not sure about it." Player can pay 25 COIN to have it partially removed (TATTOOED buff remains, HEAVILY_TATTOOED removed). Removal takes 5 in-game minutes.
+
+#### 6. Rival Tattooist
+
+On Saturdays, a rival TATTOOIST NPC "Spider" sets up a chair outside the pub and undercuts Kev: 4 COIN for flash designs. Spider uses NEEDLE + INK_BOTTLE (dirty). Spider's work: 50% chance of INFECTED_WOUND debuff. If player tells Kev about Spider (E on Kev), Kev pays 5 COIN reward and seeds a `LOCAL_DISPUTE` rumour. A fistfight between Kev and Spider triggers at 15:00 Saturday if Spider is still operating — `NoiseSystem` +15, bystanders scatter.
+
+### Opening Hours
+
+| Day | Hours |
+|-----|-------|
+| Tue–Sat | 11:00–18:00 |
+| Sun–Mon | Closed |
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `PRISON_TATTOO_KIT` | Crafted from NEEDLE + INK_BOTTLE; single-use DIY tattoo |
+| `TATTOO_VOUCHER` | Gift item; given by Kev for completing the Spider tip-off; 1× free flash tattoo |
+
+(Add to `Material.java` if not present.)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `TATTOO_SIGN_PROP` | Neon shop sign outside Skin Deep |
+
+(Add to `PropType.java` if not present.)
+
+### New Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `LIVING_CANVAS` | Get 3 tattoos in a single session |
+| `HARD_AS_NAILS` | Apply a DIY prison tattoo kit successfully |
+| `TATTOO_REGRET` | Pay for tattoo removal within 24 in-game hours |
+| `GRASSROOTS_INFORMANT` | Tip off Kev about Spider |
+| `WALKING_ARTFORM` | Have HEAVILY_TATTOOED buff active while entering the JobCentre (JobCentreSystem reaction: adviser visibly uncomfortable) |
+
+(Add to `AchievementType.java`.)
+
+### System Integrations
+
+- **FenceSystem / StreetReputation**: Kev's back-room fence checks STREET_LADS Respect; sells at 60–80% value
+- **CriminalRecord**: Prison special gated on ≥ 3 offences; HEAVILY_TATTOOED flag visible to police (WantedSystem reaction)
+- **NotorietySystem**: surcharge at Tier 4+; Kev refuses fence deal at Tier 3+
+- **RumourNetwork**: `LOCAL_DISPUTE` rumour on Spider tip-off; `STREET_REPUTATION` rumour on PRISON_INK buff
+- **NoiseSystem**: Kev vs Spider brawl +15 ambient noise
+- **HealingSystem**: INFECTED_WOUND debuff from DIY kit; cleared by GP or ANTIBIOTICS
+- **DisguiseSystem**: HEAVILY_TATTOOED cosmetic flag affects NPC reactions (WantedSystem, JobCentreSystem)
+- **TimeSystem**: open hours Tue–Sat 11:00–18:00; Spider Saturday event 13:00–15:00; tattoo regret check 24h after application
+- **WarmthSystem**: indoor shelter during open hours
+- **WeatherSystem**: rain increases foot traffic (2 extra PUBLIC NPCs browsing flash sheet)
+- **StreetSkillSystem**: `INTIMIDATION` skill increased by tattoo buffs
+- **JobCentreSystem**: `WALKING_ARTFORM` reaction when heavily tattooed player enters
+
+**Unit tests**: flash design menu costs, DIY kit infection chance (20%), tattoo regret trigger window (24h), Kev fence valuation (60% / 80% tiers), Spider spawn time (Saturday 13:00), Notoriety surcharge threshold (Tier 4).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Flash tattoo grants INTIMIDATION buff and deducts coin**: Give player 8 COIN. Press E on TATTOO_CHAIR_PROP. Select flash design. Advance time 5 in-game minutes. Verify player COIN decreased by 8. Verify player has TATTOOED buff. Verify INTIMIDATION stat increased by 1.
+
+2. **Early departure cancels tattoo and deducts deposit**: Give player 15 COIN. Press E on TATTOO_CHAIR_PROP. Select custom design. After 2 in-game minutes (mid-session), move player away from chair. Verify tattoo NOT applied. Verify player COIN decreased by 2 (deposit only). Verify Kev returns to workstation and plays annoyed animation.
+
+3. **DIY prison tattoo kit causes INFECTED_WOUND with 20% chance**: Give player NEEDLE + INK_BOTTLE. Craft PRISON_TATTOO_KIT. Apply kit (E on player, use item). Force infection probability to trigger (seed Random so first call < 0.20). Verify PRISON_INK buff applied. Verify INFECTED_WOUND debuff active. Verify player HP decreasing by 2 per in-game minute. Visit GP_SURGERY (E on DOCTOR_PROP). Verify INFECTED_WOUND cleared.
+
+4. **Kev refuses service on DIY prison tattoo**: Apply DIY prison tattoo kit (set `hasDiyTattoo = true`). Press E on TATTOO_CHAIR_PROP. Verify dialogue response = "I don't fix botch jobs." Verify player is NOT seated in chair.
+
+5. **Spider tip-off rewards voucher and seeds rumour**: Set day Saturday. Observe TATTOOIST (Spider) NPC outside pub. Press E on Kev, select "tip off about Spider". Verify player inventory contains TATTOO_VOUCHER. Verify player COIN increased by 5. Verify `RumourNetwork` contains LOCAL_DISPUTE rumour. Verify at 15:00 Saturday, Kev and Spider enter combat (NPC state = FIGHTING).
+
+6. **WALKING_ARTFORM achievement triggers at JobCentre**: Give player HEAVILY_TATTOOED buff. Enter JobCentre (player position inside building bounds). Press E on DESK_PROP (job adviser). Verify achievement `WALKING_ARTFORM` unlocked. Verify adviser NPC plays "uncomfortable" reaction (speech bubble = "...we have a dress code here").
+
+// ── New: TattooParlourSystem.java in ragamuffin.core
+// New materials if absent: PRISON_TATTOO_KIT, TATTOO_VOUCHER (add to Material.java)
+// New PropTypes if absent: TATTOO_SIGN_PROP (add to PropType.java)
+// Existing props reused: TATTOO_CHAIR_PROP, FLASH_SHEET_PROP, TATTOO_STATION_PROP, SAFE_PROP, COUNTER_PROP
+// Existing NPCs reused: TATTOOIST (Kev), PUBLIC, POLICE_OFFICER
+// New achievements: LIVING_CANVAS, HARD_AS_NAILS, TATTOO_REGRET, GRASSROOTS_INFORMANT, WALKING_ARTFORM (add to AchievementType.java)
+// LandmarkType.TATTOO_PARLOUR already exists
