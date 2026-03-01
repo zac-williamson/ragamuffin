@@ -2649,7 +2649,53 @@ public enum Material {
      * or sold to Marchetti via FactionSystem for 3 COIN.
      * Tooltip: "Order #47. Paid by card. Name: D. MARCHETTI."
      */
-    TILL_RECEIPT("Till Receipt");
+    TILL_RECEIPT("Till Receipt"),
+
+    // ── Issue #1094: Northfield By-Election ──────────────────────────────────
+
+    /**
+     * Campaign Leaflet — paper flyer handed out by the PARTY_VOLUNTEER at the
+     * CANVASSING_TABLE_PROP (receive 10 per visit).
+     * Deliver to a residential DOOR_PROP for +1 vote to the corresponding party.
+     * Can be crafted with TOBACCO into a ROLLIE (achievement: POLITICAL_SMOKER).
+     * Tooltip: "Technically you're supposed to deliver these, not smoke them."
+     */
+    CAMPAIGN_LEAFLET("Campaign Leaflet"),
+
+    /**
+     * Nomination Form — issued by the RETURNING_OFFICER NPC to the player when
+     * Community Respect ≥ 40 and Notoriety ≤ 20.
+     * Submit at the POLLING_STATION_PROP to register as Independent candidate
+     * (starts at 20 votes).
+     * Tooltip: "Your name, printed above the fold. Local democracy in action."
+     */
+    NOMINATION_FORM("Nomination Form"),
+
+    /**
+     * Ballot Box — the sealed ballot box at the BALLOT_BOX_PROP.
+     * Obtained by holding E for 8 seconds on polling day after 18:00
+     * (requires Notoriety ≤ 30 or COUNCIL_JACKET disguise).
+     * Voids the election result. Sellable to the Fence for 15 COIN.
+     * Records CrimeType.ELECTION_INTERFERENCE; +25 Notoriety, +2 Wanted stars.
+     * Tooltip: "Heavy. Smells of old felt-tips. Don't drop it."
+     */
+    BALLOT_BOX("Ballot Box"),
+
+    /**
+     * Councillor Badge — awarded to the Independent candidate on winning the by-election.
+     * Grants Community Respect +30, Notoriety −15, and the PEOPLES_CHAMPION achievement.
+     * Wearable cosmetic; increases NPC cooperation chance by 15% while equipped.
+     * Tooltip: "Cllr. [Your Name]. It's laminated and everything."
+     */
+    COUNCILLOR_BADGE("Councillor Badge"),
+
+    /**
+     * Rollie — crafted from 1 CAMPAIGN_LEAFLET + 1 TOBACCO.
+     * A hand-rolled cigarette made from a campaign pamphlet.
+     * Restores +5 energy. Earns the POLITICAL_SMOKER achievement on first craft.
+     * Tooltip: "You've rolled a Tory manifesto into a cigarette. Somehow fitting."
+     */
+    ROLLIE("Rollie");
 
     private final String displayName;
 

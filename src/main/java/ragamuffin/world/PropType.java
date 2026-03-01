@@ -1325,7 +1325,72 @@ public enum PropType {
      * CCTV camera activates at Notoriety Tier 3+. Safe looted: +15 Notoriety + newspaper headline.
      * Destroyed by 12 punches; yields SCRAP_METAL.
      */
-    SAFE_PROP(0.50f, 0.80f, 0.40f, 12, Material.SCRAP_METAL);
+    SAFE_PROP(0.50f, 0.80f, 0.40f, 12, Material.SCRAP_METAL),
+
+    // ── Issue #1094: Northfield By-Election ──────────────────────────────────
+
+    /**
+     * Blue election poster — Conservative Party. Attached to walls and fences.
+     * Tear down with 1 punch → CrimeType.CRIMINAL_DAMAGE, −2 Tory votes.
+     * Spray with GraffitiSystem → becomes DEFACED_POSTER_PROP.
+     * 3+ destructions triggers a NewspaperSystem headline.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    ELECTION_POSTER_BLUE_PROP(0.60f, 0.80f, 0.05f, 1, null),
+
+    /**
+     * Red election poster — Labour Party. Attached to walls and fences.
+     * Tear down with 1 punch → CrimeType.CRIMINAL_DAMAGE, −2 Labour votes.
+     * Spray with GraffitiSystem → becomes DEFACED_POSTER_PROP.
+     * 3+ destructions triggers a NewspaperSystem headline.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    ELECTION_POSTER_RED_PROP(0.60f, 0.80f, 0.05f, 1, null),
+
+    /**
+     * Independent candidate election poster — appears if the player registers
+     * as Independent via the NOMINATION_FORM. Placed near polling station.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    ELECTION_POSTER_INDEPENDENT_PROP(0.60f, 0.80f, 0.05f, 1, null),
+
+    /**
+     * Canvassing table — set up by PARTY_VOLUNTEER during canvassing hours.
+     * Press E to volunteer and receive 10 CAMPAIGN_LEAFLET items.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    CANVASSING_TABLE_PROP(1.20f, 0.90f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * Polling station booth — the official voting point.
+     * Press E while holding a NOMINATION_FORM to register as Independent candidate.
+     * Present during the 5 campaign days only. Destroyed by 8 punches; yields WOOD.
+     */
+    POLLING_STATION_PROP(1.60f, 2.20f, 0.40f, 8, Material.WOOD),
+
+    /**
+     * Ballot box — sealed transparent box containing cast ballots.
+     * Hold E for 8 seconds after 18:00 on polling day to steal it.
+     * Requires Notoriety ≤ 30 or COUNCIL_JACKET disguise.
+     * Grants BALLOT_BOX item, voids election result.
+     * Destroyed by 1 punch after theft; yields nothing.
+     */
+    BALLOT_BOX_PROP(0.40f, 0.60f, 0.40f, 1, null),
+
+    /**
+     * Returning Officer's podium — where the RETURNING_OFFICER NPC stands.
+     * Press E to speak with the Returning Officer about the Independent candidacy.
+     * Present during campaign period. Destroyed by 5 punches; yields WOOD.
+     */
+    RETURNING_OFFICER_PODIUM_PROP(0.80f, 1.20f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * Defaced poster — result of spraying an ELECTION_POSTER_BLUE_PROP or
+     * ELECTION_POSTER_RED_PROP with GraffitiSystem.
+     * A poster covered in graffiti and slogans.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    DEFACED_POSTER_PROP(0.60f, 0.80f, 0.05f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
