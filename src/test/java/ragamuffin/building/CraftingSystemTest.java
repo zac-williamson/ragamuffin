@@ -224,6 +224,115 @@ class CraftingSystemTest {
         assertEquals(0, inventory.getItemCount(Material.RUBBER));
     }
 
+    // ── Issue #988: Further tools ─────────────────────────────────────────────
+
+    @Test
+    void testFlaskOfTea_RecipeExists() {
+        boolean hasFlaskOfTea = craftingSystem.getAllRecipes().stream()
+            .anyMatch(r -> r.getOutputs().containsKey(Material.FLASK_OF_TEA));
+        assertTrue(hasFlaskOfTea, "Should have FLASK_OF_TEA recipe");
+    }
+
+    @Test
+    void testFlaskOfTea_CanCraft() {
+        inventory.addItem(Material.WOOD, 1);
+        inventory.addItem(Material.COIN, 1);
+
+        Recipe recipe = craftingSystem.getAllRecipes().stream()
+            .filter(r -> r.getOutputs().containsKey(Material.FLASK_OF_TEA))
+            .findFirst()
+            .orElseThrow();
+
+        assertTrue(craftingSystem.canCraft(recipe, inventory));
+        assertTrue(craftingSystem.craft(recipe, inventory));
+        assertEquals(1, inventory.getItemCount(Material.FLASK_OF_TEA));
+        assertEquals(0, inventory.getItemCount(Material.WOOD));
+        assertEquals(0, inventory.getItemCount(Material.COIN));
+    }
+
+    @Test
+    void testBusPass_RecipeExists() {
+        boolean hasBusPass = craftingSystem.getAllRecipes().stream()
+            .anyMatch(r -> r.getOutputs().containsKey(Material.BUS_PASS));
+        assertTrue(hasBusPass, "Should have BUS_PASS recipe");
+    }
+
+    @Test
+    void testBusPass_CanCraft() {
+        inventory.addItem(Material.COIN, 3);
+        inventory.addItem(Material.NEWSPAPER, 1);
+
+        Recipe recipe = craftingSystem.getAllRecipes().stream()
+            .filter(r -> r.getOutputs().containsKey(Material.BUS_PASS))
+            .findFirst()
+            .orElseThrow();
+
+        assertTrue(craftingSystem.canCraft(recipe, inventory));
+        assertTrue(craftingSystem.craft(recipe, inventory));
+        assertEquals(1, inventory.getItemCount(Material.BUS_PASS));
+        assertEquals(0, inventory.getItemCount(Material.COIN));
+        assertEquals(0, inventory.getItemCount(Material.NEWSPAPER));
+    }
+
+    @Test
+    void testBusPass_CannotCraftWithInsufficientCoins() {
+        inventory.addItem(Material.COIN, 2);
+        inventory.addItem(Material.NEWSPAPER, 1);
+
+        Recipe recipe = craftingSystem.getAllRecipes().stream()
+            .filter(r -> r.getOutputs().containsKey(Material.BUS_PASS))
+            .findFirst()
+            .orElseThrow();
+
+        assertFalse(craftingSystem.canCraft(recipe, inventory));
+    }
+
+    @Test
+    void testSkateboard_RecipeExists() {
+        boolean hasSkateboard = craftingSystem.getAllRecipes().stream()
+            .anyMatch(r -> r.getOutputs().containsKey(Material.SKATEBOARD));
+        assertTrue(hasSkateboard, "Should have SKATEBOARD recipe");
+    }
+
+    @Test
+    void testSkateboard_CanCraft() {
+        inventory.addItem(Material.WOOD, 2);
+        inventory.addItem(Material.PLANKS, 1);
+
+        Recipe recipe = craftingSystem.getAllRecipes().stream()
+            .filter(r -> r.getOutputs().containsKey(Material.SKATEBOARD))
+            .findFirst()
+            .orElseThrow();
+
+        assertTrue(craftingSystem.canCraft(recipe, inventory));
+        assertTrue(craftingSystem.craft(recipe, inventory));
+        assertEquals(1, inventory.getItemCount(Material.SKATEBOARD));
+        assertEquals(0, inventory.getItemCount(Material.WOOD));
+        assertEquals(0, inventory.getItemCount(Material.PLANKS));
+    }
+
+    @Test
+    void testBreadCrust_RecipeExists() {
+        boolean hasBreadCrust = craftingSystem.getAllRecipes().stream()
+            .anyMatch(r -> r.getOutputs().containsKey(Material.BREAD_CRUST));
+        assertTrue(hasBreadCrust, "Should have BREAD_CRUST recipe");
+    }
+
+    @Test
+    void testBreadCrust_CanCraft() {
+        inventory.addItem(Material.GREGGS_PASTRY, 1);
+
+        Recipe recipe = craftingSystem.getAllRecipes().stream()
+            .filter(r -> r.getOutputs().containsKey(Material.BREAD_CRUST))
+            .findFirst()
+            .orElseThrow();
+
+        assertTrue(craftingSystem.canCraft(recipe, inventory));
+        assertTrue(craftingSystem.craft(recipe, inventory));
+        assertEquals(1, inventory.getItemCount(Material.BREAD_CRUST));
+        assertEquals(0, inventory.getItemCount(Material.GREGGS_PASTRY));
+    }
+
     @Test
     void testGetAvailableRecipes() {
         inventory.addItem(Material.WOOD, 4);

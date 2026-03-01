@@ -371,6 +371,40 @@ public class CraftingSystem {
             Map.of(Material.WOOD, 1, Material.SCRAP_METAL, 1, Material.CARDBOARD, 1),
             Map.of(Material.FISHING_ROD, 1)
         ));
+
+        // ── Issue #988: Further tools ─────────────────────────────────────────────
+
+        // FLASK_OF_TEA: WOOD×1 + COIN×1 → FLASK_OF_TEA×1
+        // (Single use; restores +30 warmth instantly.
+        //  Tooltip: "Never underestimate a hot flask.")
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 1, Material.COIN, 1),
+            Map.of(Material.FLASK_OF_TEA, 1)
+        ));
+
+        // BUS_PASS: COIN×3 + NEWSPAPER×1 → BUS_PASS×1
+        // (7-day unlimited travel; bypasses fare and ticket inspector checks.
+        //  Tooltip: "Seven days of unlimited travel. The bus still won't come on time.")
+        recipes.add(new Recipe(
+            Map.of(Material.COIN, 3, Material.NEWSPAPER, 1),
+            Map.of(Material.BUS_PASS, 1)
+        ));
+
+        // SKATEBOARD: WOOD×2 + PLANKS×1 → SKATEBOARD×1
+        // (Holding in hotbar gives +15% trick score multiplier at the skate park.
+        //  Tooltip: "Technically it's a weapon too.")
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 2, Material.PLANKS, 1),
+            Map.of(Material.SKATEBOARD, 1)
+        ));
+
+        // BREAD_CRUST: GREGGS_PASTRY×1 → BREAD_CRUST×1
+        // (Pigeon training feed; advances training level by 1 per use.
+        //  Alternative to finding crusts in bins.)
+        recipes.add(new Recipe(
+            Map.of(Material.GREGGS_PASTRY, 1),
+            Map.of(Material.BREAD_CRUST, 1)
+        ));
     }
 
     /**
