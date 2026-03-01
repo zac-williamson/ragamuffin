@@ -2049,6 +2049,19 @@ public enum AchievementType {
         "Placard Pincher",
         "Picked up a protestor's placard. Whose side are you on?",
         1
+    ),
+
+    // ── Issue #1061: Northfield Community Centre ───────────────────────────
+
+    ONE_DAY_AT_A_TIME(
+        "One Day at a Time",
+        "Attended your first AA meeting at the community centre. You showed up.",
+        1
+    ),
+    SATURDAY_BARGAIN_HUNTER(
+        "Saturday Bargain Hunter",
+        "Purchased 3 items from a single Bring & Buy Sale session. Happy shopping.",
+        1
     );
 
     private final String name;
