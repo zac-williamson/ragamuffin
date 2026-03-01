@@ -213,5 +213,18 @@ public enum RumourType {
      * — seeded weekly by GPSurgerySystem from Dr. Nair.
      * Spreads via GP_PATIENT and PUBLIC NPCs near the surgery.
      * Soft narrative flavour; no gameplay effect beyond atmosphere. */
-    LOCAL_HEALTH;
+    LOCAL_HEALTH,
+
+    // ── Issue #1030: Al-Noor Mosque ────────────────────────────────────────────
+
+    /** "Someone robbed the mosque collection box. Absolute disgrace."
+     * — seeded by MosqueSystem when the player destroys the TAKINGS_BOX_PROP.
+     * Spreads to all NPCs within 50 blocks. Raises hostility toward the player.
+     * Contributes to LOWEST_OF_THE_LOW achievement unlock. */
+    COMMUNITY_OUTRAGE,
+
+    /** "The mosque is doing an Iftar tonight — free food for everyone, come along."
+     * — seeded by MosqueSystem at Maghrib during Ramadan when the FOLD_TABLE_PROP is placed.
+     * Spreads to nearby NPCs; draws WORSHIPPER and PUBLIC NPCs toward the mosque. */
+    IFTAR_TONIGHT;
 }

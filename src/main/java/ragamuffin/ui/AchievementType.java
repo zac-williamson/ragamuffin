@@ -1825,6 +1825,29 @@ public enum AchievementType {
         "Blind Spot",
         "Smashed the CCTV before selling hot goods to Dean. Evidence? What evidence?",
         1
+    ),
+
+    // ── Issue #1030: Al-Noor Mosque ────────────────────────────────────────────
+
+    IFTAR_GUEST(
+        "Breaking Bread",
+        "Ate at the Iftar table during Ramadan. You were welcome, and you knew it.",
+        1
+    ),
+    JUMU_AH_REGULAR(
+        "Friday Feeling",
+        "Attended Friday Jumu'ah three times. The Imam recognised your face.",
+        3
+    ),
+    LOWEST_OF_THE_LOW(
+        "Below Rock Bottom",
+        "Robbed the mosque collection box. The whole neighbourhood knows. Even the kids.",
+        1
+    ),
+    COMMUNITY_PILLAR(
+        "Community Pillar",
+        "Donated to the mosque five times. Hassan nodded at you. High praise.",
+        5
     );
 
     private final String name;
