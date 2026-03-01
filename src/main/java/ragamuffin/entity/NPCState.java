@@ -56,5 +56,8 @@ public enum NPCState {
 
     // Issue #952: Clucky's Fried Chicken
     FIGHTING_EACH_OTHER, // Youth NPCs brawling with each other (not targeting player); deal 5 dmg per 10s to each other
-    CONGREGATING        // Youth NPCs loitering outside Clucky's in a group (18:00–02:00)
+    CONGREGATING,       // Youth NPCs loitering outside Clucky's in a group (18:00–02:00)
+
+    // Issue #1008: St. Mary's Church
+    INVESTIGATING       // NPC is investigating a loud noise source (e.g. bell ringing) — walks toward noise origin for 10 seconds
 }

@@ -710,7 +710,45 @@ public enum PropType {
      * Saturday: −2 Notoriety, +5 FOOD_BANK Respect. Tooltip: "You're not all bad."
      * Destroyed by 5 punches; yields CARDBOARD.
      */
-    DONATION_BOX_PROP(0.60f, 0.80f, 0.60f, 5, Material.CARDBOARD);
+    DONATION_BOX_PROP(0.60f, 0.80f, 0.60f, 5, Material.CARDBOARD),
+
+    // ── Issue #1008: St. Mary's Church ────────────────────────────────────────
+
+    /**
+     * Pulpit — wooden lectern where Reverend Dave stands during services.
+     * Press E during service to receive a blessing (Notoriety −2).
+     * Destroyed by 6 punches; yields WOOD.
+     */
+    PULPIT_PROP(0.80f, 1.20f, 0.80f, 6, Material.WOOD),
+
+    /**
+     * Church pew — long bench where the congregation sits.
+     * Player can sit (press E) for +1 Warmth/min bonus during service.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    PEW_PROP(2.00f, 0.80f, 0.50f, 5, Material.WOOD),
+
+    /**
+     * Collection plate — circulated 10:30–11:00 Sunday.
+     * Press E to donate (Notoriety −1/COIN, max −3) or steal (Notoriety +10, +1 wanted star if witnessed).
+     * Destroyed by 1 punch; yields SCRAP_METAL.
+     */
+    COLLECTION_PLATE_PROP(0.30f, 0.05f, 0.30f, 1, Material.SCRAP_METAL),
+
+    /**
+     * Confession booth — wooden confessional; press E to eavesdrop.
+     * Hear one random rumour from RumourNetwork.
+     * Destroyed by 6 punches; yields WOOD.
+     */
+    CONFESSION_BOOTH_PROP(1.00f, 2.00f, 1.00f, 6, Material.WOOD),
+
+    /**
+     * Bell rope — hanging rope in the bell tower; press E to ring the bell.
+     * Causes NoiseSystem noise level 5. All NPCs within 40 blocks → INVESTIGATING.
+     * Night ringing (23:00–06:00): +5 Notoriety, ANTISOCIAL_BEHAVIOUR, +1 wanted star.
+     * Destroyed by 2 punches; yields CLOTH.
+     */
+    BELL_ROPE_PROP(0.10f, 2.00f, 0.10f, 2, Material.CLOTH);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

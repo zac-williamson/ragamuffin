@@ -1435,7 +1435,30 @@ public enum Material {
      * Knitting Needles — "Could be used for knitting. Or other things."
      * Weapon: 3 damage. Also a crafting component. Sold at Bring &amp; Buy for 1 COIN.
      */
-    KNITTING_NEEDLES("Knitting Needles");
+    KNITTING_NEEDLES("Knitting Needles"),
+
+    // ── Issue #1008: St. Mary's Church ──────────────────────────────────────
+
+    /**
+     * Soup Cup — "Vegetable soup in a polystyrene cup. Hot, beige, comforting."
+     * Given free by Reverend Dave at the soup kitchen (Mon/Thu 12:00–14:00).
+     * Restores +25 hunger, +5 Warmth on consume. Sell value: 0 COIN.
+     */
+    SOUP_CUP("Soup Cup"),
+
+    /**
+     * Candle — "A white wax candle. Burns for 5 in-game minutes, providing light radius 3."
+     * Crafting component; also usable as a throwable fire-starter (sets WOOD blocks within 1 block alight).
+     * Found at jumble sales; sell value: 1 COIN.
+     */
+    CANDLE("Candle"),
+
+    /**
+     * Tablecloth — "Beige, floral. Smells of moth balls."
+     * Wearable as a disguise component: +1 Disguise tier for 5 minutes if draped over player (press E to wear).
+     * Found at jumble sales; sell value: 1 COIN.
+     */
+    TABLECLOTH("Tablecloth");
 
     private final String displayName;
 
