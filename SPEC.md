@@ -15892,3 +15892,174 @@ maximum pledge count (3), faction price bonus, police-nearby handling stolen goo
 
 8. **Maximum 3 pledges**: Pledge 3 items. Attempt to pledge a 4th. Verify Gary refuses
    ("I've got enough of your stuff") and pledge count remains 3.
+
+---
+
+## Add Northfield Pub Quiz — Wednesday Night Trivia, Faction Teams & Terry's Aftermath
+
+**Goal**: Add a weekly pub quiz at The Ragamuffin Arms (`LandmarkType.PUB`) that runs
+every Wednesday evening (19:30 doors, 20:00 start, 22:00 finish). The player joins a
+team, answers multiple-choice trivia questions, competes against NPC teams, earns prize
+coin, and gains or loses Faction respect and street reputation based on results. Terry
+(the `LANDLORD` NPC) compères the quiz; the barman sells rounds. The event dovetails with
+the existing `PubLockInSystem` — the lock-in begins at 23:00 immediately after the quiz
+finishes.
+
+### Core Systems
+
+**`PubQuizSystem`** (new class in `ragamuffin.core`)
+
+- Tracks the quiz schedule: day-of-week check via `TimeSystem.getDayIndex() % 7 == 2`
+  (Wednesday; day 1 of game = Wednesday, so `dayIndex % 7 == 2`).
+- Manages quiz state machine: `CLOSED → DOORS_OPEN → ROUND_IN_PROGRESS → BREAK →
+  FINISHED → LOCK_IN_TRANSITION`.
+- Stores the current round number (1–4), the current question, NPC team scores, and
+  player team score.
+- Generates a `QuizQuestion` list: 4 rounds × 5 questions = 20 questions total, randomly
+  sampled from a pool of 60 hard-coded British general-knowledge questions (sport,
+  geography, pop culture, local knowledge).
+- Entry fee: **2 COIN** (collected by Terry on interaction at the door during DOORS_OPEN).
+- If player's Notoriety ≥ Tier 4, Terry blocks entry: *"Nah, mate. Not tonight. You'll
+  start something."*
+
+**`QuizQuestion`** (new record/class):
+- `String questionText` — the question.
+- `String[] options` — exactly 4 options (A/B/C/D).
+- `int correctIndex` — index of correct answer.
+- `QuizCategory category` — enum: SPORT, GEOGRAPHY, POP_CULTURE, LOCAL_KNOWLEDGE, HISTORY.
+
+### Teams
+
+Three NPC teams compete against the player:
+
+| Team name | NPC type composition | Faction alignment |
+|-----------|---------------------|-------------------|
+| The Marchetti Mob | 3 × `FACTION_LIEUTENANT` | `MARCHETTI_CREW` |
+| The Park Lot | 2 × `YOUTH_GANG`, 1 × `STREET_LAD` | `STREET_LADS` |
+| The Quango | 2 × `COUNCIL_MEMBER`, 1 × `CASE_WORKER` | `THE_COUNCIL` |
+
+Player's team name is auto-generated: *"Team [player street legend title or 'Ragamuffin']"*.
+
+NPC teams answer questions autonomously. Each NPC team has a hidden **knowledge stat**
+(1–10, rolled once per quiz) that determines per-question accuracy:
+
+- `knowledge ≥ 7`: 85% chance correct.
+- `knowledge 4–6`: 55% chance correct.
+- `knowledge ≤ 3`: 30% chance correct.
+
+### Scoring
+
+- Correct answer in **Round 1–3**: **1 point**.
+- Correct answer in **Round 4 (Double or Quits)**: **2 points** (player can wager 0–10
+  coins on each answer; wager returned ×2 on correct, lost on wrong).
+- Wrong answer: 0 points.
+- **Joker**: player may play a JOKER once per quiz (doubles points for that round);
+  costs 1 `SCRATCH_CARD` item from inventory.
+
+### Prizes
+
+- **1st place (highest score)**: `QUIZ_TROPHY` item + **15 COIN** + `+10` Respect with
+  winning team's aligned faction + `QUIZ_CHAMPION` achievement.
+- **2nd place**: **8 COIN**.
+- **3rd place**: **4 COIN**.
+- **4th place (last)**: −5 Respect with the player's affiliated faction + speech from
+  Terry: *"Better luck next week, son."*
+- **Tie-break**: sudden-death single question; first team to buzz (player presses E,
+  NPC teams buzz after a 1.5-second delay) answers.
+
+### Cheating Mechanics
+
+The player can cheat in two ways:
+
+1. **Pocket Phone**: if player has `STOLEN_PHONE` or `BROKEN_PHONE` in inventory,
+   they can press **Q** during a question to "look it up" — auto-selects correct answer,
+   but has a **25% chance** of Terry noticing (+10 Notoriety, player ejected from quiz,
+   `CHEAT_CAUGHT` achievement).
+2. **Inside Info**: if player has `MARCHETTI_CREW` Respect ≥ 70 before the quiz, the
+   barman whispers 3 correct answers before Round 1 starts (flagged as hints in UI).
+
+### Rumour Integration
+
+- On quiz night (Wednesday 19:00), `RumourNetwork` seeds a `SHOP_NEWS` rumour from the
+  barman: *"Quiz night tonight at the Ragamuffin. Terry's picked a right evil picture
+  round."*
+- If the player wins, a `GANG_ACTIVITY` rumour spreads: *"[Player title] won the pub
+  quiz. Knew every answer. Something's not right."*
+- If the player cheats and is caught, a rumour spreads: *"Got caught Googling at the
+  quiz. Thrown out by Terry."*
+
+### UI
+
+**`PubQuizUI`** (new class in `ragamuffin.ui`):
+- Displayed full-screen during `ROUND_IN_PROGRESS` state; closed otherwise.
+- Shows: round number, current question text, four labelled buttons (A/B/C/D),
+  30-second countdown timer per question (a `PIXEL_FONT`-rendered bar).
+- Scoreboard panel (right side): all team names and running scores, updated after each
+  question.
+- Double-or-Quits wager input (Round 4 only): numeric stepper 0–10 coin.
+- Player presses **A/B/C/D** keys to answer; answer locks in and turns green/red after
+  reveal (2-second reveal pause before next question).
+
+### Faction & Achievement Integration
+
+- **`AchievementType.QUIZ_CHAMPION`** — win the pub quiz outright.
+- **`AchievementType.PHONE_A_FRIEND`** — use the pocket-phone cheat successfully.
+- **`AchievementType.CHEAT_CAUGHT`** — get ejected for cheating.
+- **`AchievementType.JOKER_PLAYED`** — play a JOKER card in Round 4 and get every answer correct.
+- Winning against The Marchetti Mob: `MARCHETTI_CREW` Respect +5.
+- Winning against The Park Lot: `STREET_LADS` Respect +5.
+- Beating The Quango by ≥5 points: `THE_COUNCIL` Respect −10 (they're sore losers),
+  `STREET_LADS` Respect +10.
+
+### New Materials
+
+- **`QUIZ_TROPHY`** (`Material.QUIZ_TROPHY`) — prize item; can be pledged at Cash4Gold for
+  12 COIN or displayed in the squat (adds +5 Street Rep passive).
+- **`QUIZ_QUESTION_PAPER`** (`Material.QUIZ_QUESTION_PAPER`) — dropped by Terry at quiz end;
+  can be sold to the `JOURNALIST` NPC for 3 COIN as a "scoop on tonight's questions".
+
+**Unit tests**: QuizQuestion pool has ≥ 60 entries; NPC team accuracy at each knowledge tier;
+scoring logic (including double-or-quits and joker); cheating detection probability (25%);
+tie-break buzz-in delay; faction respect deltas; rumour seeding on quiz night and on win;
+entry-fee deduction; Notoriety Tier 4+ entry block.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Quiz starts on Wednesday at 20:00**: Set `TimeSystem` to Wednesday (day index % 7 == 2)
+   at 20:00. Interact with Terry (E). Verify `PubQuizSystem` state is `ROUND_IN_PROGRESS`.
+   Verify first question text is non-null and has exactly 4 options. Verify player's entry
+   fee of 2 COIN has been deducted.
+
+2. **Correct answer scores a point**: During Round 1, retrieve `currentQuestion.correctIndex`.
+   Simulate player pressing the corresponding key (A/B/C/D). Verify player team score
+   increases by 1. Verify the correct option UI highlight turns green after the 2-second
+   reveal. Verify no other team scored on this question (NPC teams have knowledge 1 so they
+   always get wrong — force NPC knowledge to 1 for test).
+
+3. **Double-or-Quits wager in Round 4**: Enter Round 4. Player has 10 COIN. Set wager to
+   5. Answer correctly. Verify player receives 5 extra COIN (10 coin returned minus original
+   wager + 5 × 2 = net +5). Answer incorrectly on the next question with wager 3. Verify
+   player loses 3 COIN.
+
+4. **Pocket-phone cheat: success path**: Player holds `STOLEN_PHONE`. During a question,
+   press Q. Force RNG result to < 0.75 (success). Verify the correct answer is auto-selected.
+   Verify score increased by 1. Verify Notoriety unchanged (not caught).
+
+5. **Pocket-phone cheat: caught path**: Player holds `STOLEN_PHONE`. Press Q during a
+   question. Force RNG result to ≥ 0.75 (caught). Verify player is ejected (`PubQuizSystem`
+   state → `CLOSED` for player). Verify Notoriety increased by 10. Verify `CHEAT_CAUGHT`
+   achievement awarded.
+
+6. **NPC team wins if player scores below all teams**: Force all NPC team knowledge stats to
+   10 (always correct) and player answers all 20 questions wrong. After quiz, verify player is
+   in 4th place. Verify player's affiliated faction Respect decreased by 5. Verify Terry's
+   speech bubble contains "Better luck".
+
+7. **Quiz champion prize awarded**: Force player to answer all 20 questions correctly and NPC
+   teams to answer all wrong (knowledge = 1). After quiz finishes, verify player inventory
+   contains 1 `QUIZ_TROPHY`. Verify 15 COIN added to inventory. Verify `QUIZ_CHAMPION`
+   achievement is awarded.
+
+8. **Wednesday rumour is seeded at 19:00**: Set TimeSystem to Wednesday 19:00. Advance 1
+   frame. Verify `RumourNetwork` contains at least 1 rumour from the BARMAN NPC with text
+   containing "Quiz night" or "quiz".
