@@ -1163,7 +1163,41 @@ public enum NPCType {
      * If tipped (energy drink received): seeds LOCAL_EVENT rumour.
      * Speech: "Cheers mate." / "I'll put the word out." / "Don't tell my uncle."
      */
-    INTERNET_CAFE_ASSISTANT(20f, 0f, 0f, false);
+    INTERNET_CAFE_ASSISTANT(20f, 0f, 0f, false),
+
+    // ── Issue #1087: The Vaults Nightclub ─────────────────────────────────────
+
+    /**
+     * DJ Mikey — energetic DJ on the decks at The Vaults nightclub.
+     * Present Thu–Sun 22:00–03:00. Comments on crowd size.
+     * At crowd {@literal <} 5: "It's dead in here, man."
+     * At crowd ≥ 15: "This place is jumping!" — seeds LOCAL_EVENT rumour.
+     * When active, {@code RaveSystem.isVaultsDjPresent()} returns true.
+     */
+    DJ(20f, 0f, 0f, false),
+
+    /**
+     * Chantelle — barmaid at The Vaults nightclub. Quick, no-nonsense.
+     * Refuses service when player DrunkenessLevel ≥ 4:
+     * "You've had enough, babe."
+     * Present Thu–Sun 22:00–03:00.
+     */
+    BARMAID(20f, 0f, 0f, false),
+
+    /**
+     * The Dealer — drug dealer who loiters in the club toilets 22:00–02:30.
+     * Sells PILLS ×2 for 4 COIN. Flees on police arrival.
+     * Each purchase triggers a 10% undercover bust check.
+     */
+    DEALER(20f, 0f, 0f, false),
+
+    /**
+     * Tony Marchetti — senior crime boss. Present at The Vaults VIP booth
+     * Fri–Sat 23:00–01:00 at MARCHETTI_CREW Respect ≥ 50.
+     * Offers the phone-tracker side mission.
+     * Also used in other Marchetti faction contexts.
+     */
+    CRIME_BOSS(40f, 8f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

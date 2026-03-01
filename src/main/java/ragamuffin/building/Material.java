@@ -2512,7 +2512,64 @@ public enum Material {
      * time (session cost reduced) for 7 in-game days.
      * Tooltip: "Five quid for a card that saves you 20p. Asif's no mug."
      */
-    CYBERNET_MEMBERSHIP_CARD("Cybernet Membership Card");
+    CYBERNET_MEMBERSHIP_CARD("Cybernet Membership Card"),
+
+    // ── Issue #1087: The Vaults Nightclub ─────────────────────────────────────
+
+    /**
+     * Alcopop — a sugary bottled drink sold at The Vaults bar for 1 COIN.
+     * DrunkenessLevel +1 on consumption.
+     */
+    ALCOPOP("Alcopop"),
+
+    /**
+     * Double Vodka — strong spirit sold at The Vaults bar for 1 COIN.
+     * DrunkenessLevel +2 on consumption (great value).
+     */
+    DOUBLE_VODKA("Double Vodka"),
+
+    /**
+     * Pills — sold by The Dealer in the club toilets (4 COIN ×2).
+     * Effect: DrunkenessLevel −1, movement speed +20% for 5 in-game minutes,
+     * then DrunkenessLevel +2 crash.
+     * Purchase triggers 10% undercover bust check.
+     */
+    PILLS("Pills"),
+
+    /**
+     * Faction Pass — grants free VIP entry to The Vaults, skipping the queue.
+     * Obtainable by completing a Marchetti mission outside the club.
+     * Big Dave tips his chin when you show it.
+     */
+    FACTION_PASS("Faction Pass"),
+
+    /**
+     * Phone Tracker Item — given by Tony Marchetti for the tracker side mission.
+     * One-use; must be pickpocketed into a named STREET_LADS NPC's jacket.
+     * On success: MARCHETTI_CREW Respect +15, 10 COIN reward.
+     */
+    PHONE_TRACKER_ITEM("Phone Tracker"),
+
+    /**
+     * Lost Wallet — drops from a random NPC at closing time chaos (02:45).
+     * Contains 3–8 COIN (revealed on E). Can be returned to the police station
+     * for Notoriety −2, or kept for the cash.
+     */
+    LOST_WALLET("Lost Wallet"),
+
+    /**
+     * Cigarettes — sold from the CIGARETTE_MACHINE_PROP (5× for 2 COIN).
+     * Smoking one (E while selected) reduces DrunkenessLevel −1
+     * but adds Notoriety +1 (anti-social behaviour).
+     */
+    CIGARETTES("Cigarettes"),
+
+    /**
+     * Club Wristband — issued on entry to The Vaults.
+     * Required to re-enter the same night without paying again.
+     * Consumed on exit if not re-entering.
+     */
+    CLUB_WRISTBAND("Club Wristband");
 
     private final String displayName;
 
