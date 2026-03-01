@@ -19079,3 +19079,153 @@ NAIL_TECH(20f, 0f, 0f, false)  // salon staff — passive, service provider, gos
 7. **After-hours congregation spawns on Friday night**: Set time to Friday 21:00. Call `NailSalonSystem.update(delta, timeSystem, npcManager, ...)`. Verify 3–5 `PUBLIC` NPCs are present outside the nail salon. Set time to Friday 19:30 (before gathering window). Verify no congregation NPCs are spawned.
 
 8. **IMPROVISED_BANGER crafted and causes noise event**: Give player 1 `NAIL_VARNISH` and 1 `GLASS_BOTTLE`. Open crafting menu. Select IMPROVISED_BANGER recipe. Verify player receives 1 `IMPROVISED_BANGER`. Throw it (use-item action). Verify `NoiseSystem` has a noise event at throw position with level ≥ 3. Verify at least 1 nearby NPC transitions to `NPCState.FLEEING`.
+
+## Add St. Mary's Church — Sunday Services, Jumble Sales, Sanctuary & the Bell Tower
+
+**Goal**: Bring the `CHURCH` landmark (already generated in the world) to life with a full `ChurchSystem`. Currently the building is inert — no NPCs, no interaction, no schedule. St. Mary's is a quintessential British parish church: a source of free soup, a hiding spot from the police, a jumble-sale economy, a gossip hub for pensioners, and — if you're brave enough — the tallest accessible vantage point in Northfield via the bell tower.
+
+### ChurchSystem
+
+A new `ChurchSystem` class managing:
+
+- **Opening hours**: Church doors open 08:00–20:00 daily. Services run **Sunday 10:00–11:30** and **Wednesday 19:00–20:00**. The building is always physically accessible but NPCs only gather during service and event windows.
+- **Staff**: One named NPC — `VICAR` type (new `NPCType` entry). Reverend Dave is always present 09:00–19:00. Passive, greets the player, shares rumours on E-interaction.
+- **Congregation**: 4–10 `PENSIONER` NPCs attend Sunday service; 2–5 on Wednesday. They disperse after the service ends.
+- **Warm shelter**: Being inside the church grants +3 Warmth/minute (pews, radiators, community spirit).
+
+---
+
+### Services & Events
+
+**Sunday Morning Service** (10:00–11:30):
+- Reverend Dave stands at the `PULPIT_PROP`. Press E to receive a blessing: Notoriety −2 (God forgives freely). One `NEIGHBOURHOOD` rumour shared by a nearby PENSIONER NPC per service attended.
+- Collection plate mechanic: a `COLLECTION_PLATE_PROP` is passed 10:30–11:00. Player can donate (1–5 COIN: Notoriety −1 per COIN donated, max −3) or steal (COIN added to inventory equal to total congregation donations; Notoriety +10, `WantedSystem` +1 star if any PENSIONER witnesses).
+
+**Wednesday Evening Service** (19:00–20:00):
+- Smaller gathering; same mechanics but no collection plate.
+- Chance of `CONFESSION_BOOTH_PROP` being occupied by a `PUBLIC` NPC — press E on the confession booth to eavesdrop: hear one rumour (any `RumourType`, drawn from `RumourNetwork`).
+
+**Monthly Jumble Sale** (first Saturday of each in-game month, 10:00–13:00):
+- 3–5 `PENSIONER` NPCs run stalls with random `Material` items for 1–4 COIN each. Items drawn from a fixed pool: `THERMOS_FLASK`, `JIGSAW_PUZZLE_BOX`, `KNITTING_NEEDLES`, `VINYL_RECORD`, `TABLECLOTH`, `CANDLE`.
+- `StallSystem` logic reused for transactions.
+- Player can haggle (requires STREET_LADS Respect ≥ 20 or `SOCIAL` skill ≥ 3): 50% chance to halve price.
+- Theft from stalls: Notoriety +8, witnesses cause `WantedSystem` +1 star.
+
+**Soup Kitchen** (Mondays and Thursdays 12:00–14:00, run by Reverend Dave):
+- Player can press E on Reverend Dave to receive free `SOUP_CUP` item (restores +25 hunger, +5 Warmth). Limit: once per visit per day.
+- If player Notoriety ≥ 50, Dave hesitates: *"We welcome everyone here… but please don't cause trouble."* Service still granted but Notoriety tracked.
+
+---
+
+### Sanctuary Mechanic
+
+The church is a place of sanctuary. If the player enters the church while being actively chased by `POLICE` NPCs:
+
+- All pursuing `POLICE` NPCs stop at the church door (`NPCState.IDLE`) — they will not enter during an active service (10:00–11:30 Sunday, 19:00–20:00 Wednesday).
+- Outside service hours, POLICE will enter and resume pursuit after a 10-second hesitation at the door (they're British, they feel awkward about it).
+- `WantedSystem` wanted level decays by 1 star after 3 in-game minutes inside the church without leaving. Achievement: `SANCTUARY_SEEKER`.
+- If player attacks any NPC inside the church, sanctuary is immediately forfeited and all `POLICE` NPCs within 30 blocks are alerted.
+
+---
+
+### Bell Tower (Vantage Point)
+
+The church has a `BELL_TOWER_PROP` accessible via an interior staircase (`STAIR_PROP` chain, 5 blocks high). This is the highest point in Northfield.
+
+- From the top, the player can see a wider range: `PlayerCamera.setFovBonus(15f)` for 60 seconds after climbing (simulates surveying the town).
+- A `BELL_ROPE_PROP` at the top: press E to ring the bell. Causes `NoiseSystem` noise event level 5 (the loudest possible). All NPCs within 40 blocks enter `NPCState.INVESTIGATING` for 10 seconds. If between 08:00–09:00 Sunday, congregation NPCs begin walking to church (early bell ringing = summoning worshippers).
+- Ringing the bell between 23:00–06:00 is a criminal offence: Notoriety +5, `CriminalRecord.ANTISOCIAL_BEHAVIOUR` added.
+
+---
+
+### Reverend Dave as Information Source
+
+Reverend Dave is unusually well-connected for a vicar. He hears everything in confession and at the soup kitchen.
+
+- Press E on Reverend Dave (outside service): one `NEIGHBOURHOOD` rumour revealed per conversation (up to 2 per in-game day).
+- Dave refuses to share gossip about specific individuals (*"That's between them and God, I'm afraid"*) — `CRIMINAL` or `GANG_ACTIVITY` rumour types are never revealed, only `NEIGHBOURHOOD` and `SHOP_NEWS`.
+- After attending 3 services, Dave trusts the player: one bonus `NEIGHBOURHOOD` rumour per visit (raised cap).
+
+---
+
+### System Integrations
+
+- `WarmthSystem` — +3 Warmth/minute while indoors; soup +5; Warmth bonus if sitting in pew during service.
+- `NotorietySystem` — blessing: −2; donation: −1/COIN (max −3); collection plate theft: +10; bell ringing at night: +5; sanctuary decay: −1 star after 3 min.
+- `WantedSystem` — collection plate theft witnessed: +1 star; night bell ringing: +1 star; sanctuary 3-min decay: −1 star.
+- `CriminalRecord` — bell ringing at night: `ANTISOCIAL_BEHAVIOUR`; stealing collection plate: `THEFT`.
+- `RumourNetwork` — Dave reveals `NEIGHBOURHOOD`/`SHOP_NEWS` rumours; eavesdropping confession booth yields 1 random rumour; PENSIONER congregation members are passive rumour sources (2-block range, 20% per minute).
+- `StallSystem` — jumble sale stalls reuse existing stall transaction logic.
+- `NoiseSystem` — bell rope: noise level 5.
+- `FactionSystem` — attending 5+ services: +5 `LOCALS` Faction Respect (if a `LOCALS` faction is defined, else +3 `STREET_LADS`).
+- `AchievementSystem` — `BLESS_YOU`, `COLLECTION_THIEF`, `BELL_RINGER`, `SANCTUARY_SEEKER`, `REGULAR_PARISHIONER`.
+- `TimeSystem` — schedule gate for all service/event windows, soup kitchen hours, bell ringing time check.
+- `PlayerCamera` — `setFovBonus(15f)` for 60 seconds on bell tower summit.
+- `StreetSkillSystem` — `SOCIAL` skill +1 per unique Sunday service attended (max 5 from church); Dave trust mechanic after 3 services.
+
+---
+
+### New `NPCType` entry
+
+```
+VICAR(15f, 0f, 0f, false)  // parish vicar — passive, service provider, rumour source, soup kitchen operator
+```
+
+### New `PropType` entries
+
+- `PULPIT_PROP` — wooden lectern where Reverend Dave stands during services. Press E during service for blessing. (0.80f × 1.20f × 0.80f, 6 hits, `Material.WOOD`)
+- `PEW_PROP` — long church bench; player can sit (E) for +1 Warmth/min bonus during service. (2.00f × 0.80f × 0.50f, 5 hits, `Material.WOOD`)
+- `COLLECTION_PLATE_PROP` — interactive prop circulated 10:30–11:00 Sunday. Press E to donate or steal. (0.30f × 0.05f × 0.30f, 1 hit, `Material.SCRAP_METAL`)
+- `CONFESSION_BOOTH_PROP` — wooden confessional; press E to eavesdrop rumour. (1.00f × 2.00f × 1.00f, 6 hits, `Material.WOOD`)
+- `BELL_ROPE_PROP` — decorative rope hanging in the bell tower; press E to ring the bell. (0.10f × 2.00f × 0.10f, 2 hits, `Material.CLOTH`)
+- `STAIR_PROP` (reuse if already exists, else new) — climbable stair block used for bell tower ascent.
+
+### New `Material` entries
+
+- `SOUP_CUP` — "Vegetable soup in a polystyrene cup. Hot, beige, comforting." +25 hunger, +5 Warmth on consume. Sell value: 0 COIN (Dave's face if you tried).
+- `CANDLE` — "A white wax candle. Burns for 5 in-game minutes, providing light radius 3." Crafting component; also usable as a throwable fire-starter (sets WOOD blocks within 1 block alight). Sell value: 1 COIN.
+- `TABLECLOTH` — "Beige, floral. Smells of moth balls." Wearable as a disguise component: +1 Disguise tier for 5 minutes if draped over player (press E to wear). Sell value: 1 COIN.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `BLESS_YOU` | Receive your first blessing from Reverend Dave |
+| `COLLECTION_THIEF` | Steal the collection plate (undetected or caught — either counts) |
+| `BELL_RINGER` | Ring the church bell for the first time |
+| `SANCTUARY_SEEKER` | Lose a wanted star by taking sanctuary in the church |
+| `REGULAR_PARISHIONER` | Attend 5 Sunday services |
+
+### Unit Tests
+
+- `ChurchSystem.isServiceActive(dayOfWeek, hour)` returns true Sunday 10:00–11:29, Wednesday 19:00–19:59; false at all other times.
+- `ChurchSystem.isSoupKitchenActive(dayOfWeek, hour)` returns true Monday/Thursday 12:00–13:59; false otherwise.
+- `ChurchSystem.isJumbleSaleActive(dayOfMonth, dayOfWeek, hour)` returns true only on the first Saturday of the month 10:00–12:59.
+- `computeCollectionDonationBonus(coins)` returns 0 for 0 coins, −1 for 1 COIN, −3 for 3+ COIN (capped).
+- `isSanctuaryActive(serviceActive, policeInside)` returns true during service with no police inside; false outside service hours.
+- `getBlessingNotorietyReduction()` returns 2.
+- `ChurchSystem.getCongregantCount(dayOfWeek, hour)` returns 4–10 on Sunday 10:00–11:30, 2–5 on Wednesday 19:00–20:00, 0 outside windows.
+- Night bell ringing (`hour < 6 || hour >= 23`): `isBellRingingCriminal(hour)` returns true.
+- `computeSanctuaryDecayTime()` returns 180 in-game seconds (3 minutes).
+
+### Integration Tests — implement these exact scenarios
+
+1. **Sunday service runs and congregation gathers**: Set time to Sunday 10:00. Call `ChurchSystem.update(delta, timeSystem, npcManager, ...)`. Verify 4–10 `PENSIONER` NPCs are inside the church area. Verify `VICAR` (Reverend Dave) is at `PULPIT_PROP` position. Set time to Sunday 11:31. Call update. Verify all PENSIONER congregation NPCs have been despawned.
+
+2. **Blessing reduces Notoriety**: Set time to Sunday 10:30. Set player Notoriety to 20. Press E on Reverend Dave at `PULPIT_PROP`. Verify Notoriety == 18 (−2). Verify dialogue contains "bless".
+
+3. **Collection plate donation reduces Notoriety (capped at −3)**: Set time to Sunday 10:30. Set player Notoriety to 15. Spawn `COLLECTION_PLATE_PROP`. Give player 5 COIN. Press E on plate, donate 5 COIN. Verify player COIN == 0. Verify Notoriety == 12 (−3, not −5 — cap enforced).
+
+4. **Collection plate theft triggers wanted star**: Set time to Sunday 10:45. Spawn 3 PENSIONER NPCs within 4 blocks of `COLLECTION_PLATE_PROP`. Press E on plate, select "Take". Verify player gains COIN (total congregant donations). Verify Notoriety increased by 10. Verify `WantedSystem.getWantedLevel()` == 1. Verify at least 1 PENSIONER has `isWitness()` true.
+
+5. **Police sanctuary: don't enter during service**: Set time to Sunday 10:15. Set `WantedSystem` wanted level to 2. Spawn 2 `POLICE` NPCs outside church door. Move player inside church. Advance 5 frames. Verify both POLICE NPCs remain at church door threshold (Z coordinate ≥ church door Z). Verify their state is `NPCState.IDLE` (not `CHASING`).
+
+6. **Sanctuary decay reduces wanted star after 3 minutes**: Set time to Sunday 10:15 (service active). Set wanted level to 2. Move player inside church. Advance 3 in-game minutes (180 seconds). Verify `WantedSystem.getWantedLevel()` == 1. Verify `SANCTUARY_SEEKER` achievement unlocked.
+
+7. **Bell rope rings at level-5 noise**: Move player to bell tower summit. Press E on `BELL_ROPE_PROP`. Verify `NoiseSystem` has an event at player position with level ≥ 5. Verify at least 1 nearby NPC (within 40 blocks) transitions to `NPCState.INVESTIGATING`.
+
+8. **Night bell ringing adds criminal record**: Set time to Monday 00:30. Move player to bell tower. Press E on `BELL_ROPE_PROP`. Verify Notoriety increased by 5. Verify `CriminalRecord` contains `ANTISOCIAL_BEHAVIOUR`. Verify `WantedSystem.getWantedLevel()` increased by 1.
+
+9. **Soup kitchen gives SOUP_CUP once per day**: Set time to Monday 12:30. Set player hunger to 10. Press E on Reverend Dave (soup kitchen). Verify player inventory contains 1 `SOUP_CUP`. Press E on Reverend Dave again. Verify player inventory still contains only 1 `SOUP_CUP` (second request refused — daily cap). Advance to Tuesday 12:30. Press E on Dave. Verify player receives a second `SOUP_CUP`.
+
+10. **Jumble sale runs first Saturday only**: Set `dayOfMonth` to 7 (first Saturday of month). Set time to Saturday 11:00. Call `ChurchSystem.update(delta, timeSystem, npcManager, ...)`. Verify 3–5 `PENSIONER` stall NPCs are present inside church hall area. Set `dayOfMonth` to 14 (second Saturday). Advance update. Verify stall NPCs are not present.
