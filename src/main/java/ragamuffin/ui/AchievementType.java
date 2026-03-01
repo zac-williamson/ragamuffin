@@ -1341,6 +1341,38 @@ public enum AchievementType {
         "Night Owl",
         "Entered the cemetery after midnight. What were you looking for? Best not to think about it.",
         1
+    ),
+
+    // ── Issue #971: The Rusty Anchor Wetherspoons ──────────────────────────────
+
+    CURRY_CLUB(
+        "Curry Club",
+        "Ate the Curry Club Special on a Thursday at The Rusty Anchor. Four quid. Can't go wrong.",
+        1
+    ),
+
+    SEVEN_AM_PINT(
+        "Hair of the Dog",
+        "Bought a pint at The Rusty Anchor before 08:00. Wetherspoons is the only place that understands you.",
+        1
+    ),
+
+    WETHERSPOONS_REGULAR(
+        "Local",
+        "Bought 10 drinks at The Rusty Anchor. Gary knows your face. He doesn't seem happy about it.",
+        10
+    ),
+
+    APP_AT_THE_TABLE(
+        "There's an App for That",
+        "Ordered at the table via the Spoons app mechanic. Gary eventually found you. He wasn't pleased.",
+        1
+    ),
+
+    SLEEPING_DRUNK_PICKPOCKET(
+        "Don't Mind If I Do",
+        "Pickpocketed the sleeping drunk at The Rusty Anchor. He'll never know. Probably.",
+        1
     );
 
     private final String name;

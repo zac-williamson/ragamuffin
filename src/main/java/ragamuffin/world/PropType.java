@@ -501,7 +501,21 @@ public enum PropType {
      * Destroyed by 10 punches; yields WOOD×2.
      * Used for the snooker mini-game triggered by pressing E while adjacent.
      */
-    SNOOKER_TABLE_PROP(4.00f, 0.90f, 2.00f, 10, Material.WOOD);
+    SNOOKER_TABLE_PROP(4.00f, 0.90f, 2.00f, 10, Material.WOOD),
+
+    // ── Issue #971: The Rusty Anchor Wetherspoons ──────────────────────────────
+
+    /**
+     * Newspaper rack at The Rusty Anchor — free to read.
+     * Player interaction picks up 1 NEWSPAPER (if none in inventory).
+     */
+    NEWSPAPER_RACK_PROP(0.40f, 1.20f, 0.20f, 3, Material.NEWSPAPER),
+
+    /**
+     * Television set on the wall — activates for Football on the Telly atmospheric event.
+     * Seated PUBLIC NPCs face it when active.
+     */
+    TELEVISION_PROP(0.80f, 0.60f, 0.15f, 3, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
