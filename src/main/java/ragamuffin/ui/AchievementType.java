@@ -1927,6 +1927,34 @@ public enum AchievementType {
         "Computer Says No",
         "Survived a full SYSTEM_DOWN event. The whole queue was fuming.",
         1
+    ),
+
+    // ── Issue #1047: Northfield BP Petrol Station ──────────────────────────────
+
+    FORECOURT_REGULAR(
+        "Forecourt Regular",
+        "You've bought from the petrol station 10 times. Dave knows your face.",
+        10
+    ),
+    DRIVE_OFF(
+        "Drive-Off",
+        "Stole a full petrol can without being caught. Classic.",
+        1
+    ),
+    SCRATCH_CARD_WINNER(
+        "Jackpot!",
+        "Won the 20 COIN scratch card jackpot. Luck of the forecourt.",
+        1
+    ),
+    NIGHT_SHIFT_FRIEND(
+        "Night Shift Friend",
+        "Baz gave you a free energy drink at 3am. You're his only company.",
+        1
+    ),
+    PASTY_REGRET(
+        "That Pasty Has Been There Since Tuesday",
+        "Suffered stomach pain from a forecourt pasty. You had it coming.",
+        1
     );
 
     private final String name;

@@ -254,5 +254,19 @@ public enum RumourType {
      * — seeded by BarberSystem when the player calls {@code attemptQueueJump()}.
      * The offended waiting NPC seeds this; spreads to any NPC within 8 blocks.
      * Minor hostility increase to PUBLIC NPCs nearby. */
-    ANTISOCIAL_BEHAVIOUR;
+    ANTISOCIAL_BEHAVIOUR,
+
+    // ── Issue #1047: Northfield BP Petrol Station ──────────────────────────────
+
+    /** "Someone drove off from the BP without paying — Dave was fuming."
+     * — seeded by PetrolStationSystem when PETROL_THEFT is committed.
+     * Spreads to NPCs within 20 blocks of the petrol station.
+     * Increases patrol awareness near PETROL_STATION landmark. */
+    CRIME_SPOTTED,
+
+    /** "That pump on the BP forecourt was frozen solid again this morning."
+     * — seeded by PetrolStationSystem when the player encounters a frozen nozzle during FROST.
+     * Spreads to JOGGER and PUBLIC NPCs passing the forecourt.
+     * No gameplay effect; minor flavour rumour. */
+    WEATHER_GRUMBLE;
 }

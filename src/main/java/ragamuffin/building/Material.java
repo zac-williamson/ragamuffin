@@ -2185,7 +2185,17 @@ public enum Material {
      * Opens any FLAT_DOOR_PROP in tower 1 without knocking.
      * Tooltip: "Opens every door on the estate. Don't lose it."
      */
-    MASTER_KEY("Master Key");
+    MASTER_KEY("Master Key"),
+
+    // ── Issue #1047: Northfield BP Petrol Station ──────────────────────────────
+
+    /**
+     * Petrol Can (Full) — an empty {@link #PETROL_CAN} filled at a forecourt pump for 5 COIN.
+     * Required by {@link ragamuffin.core.WheeliBinFireSystem} to ignite wheelie bins.
+     * Non-stackable (max 1 per slot). Movement speed −5% while carrying.
+     * Tooltip: "Full to the brim. Handle with care."
+     */
+    PETROL_CAN_FULL("Petrol Can (Full)");
 
     private final String displayName;
 
@@ -2295,6 +2305,7 @@ public enum Material {
             case TEXTBOOK:       return c(0.20f, 0.38f, 0.68f);   // Blue textbook
             case HYMN_BOOK:      return c(0.18f, 0.18f, 0.52f);   // Dark blue
             case PETROL_CAN:     return c(0.82f, 0.30f, 0.15f);   // Red can
+            case PETROL_CAN_FULL: return c(0.82f, 0.30f, 0.15f);  // Red can with yellow stripe
             case HAIR_CLIPPERS:         return c(0.35f, 0.35f, 0.38f);   // Silver-grey
             case HAIR_CLIPPERS_BROKEN:  return c(0.20f, 0.20f, 0.22f);   // Dark grey, broken
             case NAIL_POLISH:    return c(0.92f, 0.18f, 0.55f);   // Hot pink
@@ -2891,6 +2902,7 @@ public enum Material {
             case TEXTBOOK:
             case HYMN_BOOK:
             case PETROL_CAN:
+            case PETROL_CAN_FULL:
             case HAIR_CLIPPERS:
             case HAIR_CLIPPERS_BROKEN:
             case NAIL_POLISH:
@@ -3360,6 +3372,7 @@ public enum Material {
                 return IconShape.BOX;
 
             case PETROL_CAN:
+            case PETROL_CAN_FULL:
             case FIRE_EXTINGUISHER:
             case HAIR_CLIPPERS:
             case HAIR_CLIPPERS_BROKEN:
