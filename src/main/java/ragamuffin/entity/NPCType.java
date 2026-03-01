@@ -772,7 +772,37 @@ public enum NPCType {
      * Passive; speed-walks toward suspected shoplifter on alert from Sharon.
      * Speech: "Can I help you with something?" / "Everything's priced to clear."
      */
-    SHOP_WORKER(25f, 4f, 2.0f, false);
+    SHOP_WORKER(25f, 4f, 2.0f, false),
+
+    // ── Issue #1020: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * Derek — Chairman of Northfield Sporting &amp; Social Club.
+     * Runs the Thursday quiz night; chairs the Saturday AGM; conducts the
+     * protection payment handover to the Marchetti Crew on Sunday evenings.
+     * Passive unless committee conspiracy is exposed. Speech-rich.
+     * Speech: "Right then, let's get on with it." / "Membership's not free, you know."
+     *         / "Any Other Business?" / "Question 4: Capital of Peru."
+     */
+    SOCIAL_CLUB_CHAIRMAN(35f, 5f, 2.0f, false),
+
+    /**
+     * Keith — barman at the Northfield Sporting &amp; Social Club.
+     * Serves BITTER, MILD, and LAGER_TOP from 12:00–23:00 daily.
+     * Refuses service to KNOCK_OFF_TRACKSUIT wearers and Wanted Tier 2+.
+     * Passive unless refused-patron altercation escalates.
+     * Speech: "Right, what'll it be?" / "We don't serve that sort in here."
+     *         / "Lager top? Seriously?"
+     */
+    SOCIAL_CLUB_BARMAN(30f, 4f, 2.0f, false),
+
+    /**
+     * Member — a regular club member; plays darts, attends quiz night, drinks at the bar.
+     * Can challenge player to a darts game (5 COIN pot).
+     * Votes at AGM; gossips about the committee conspiracy if trust ≥ 60.
+     * Passive unless provoked.
+     */
+    MEMBER(25f, 3f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

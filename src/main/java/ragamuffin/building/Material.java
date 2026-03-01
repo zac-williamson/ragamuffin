@@ -1702,7 +1702,54 @@ public enum Material {
      * Provides light in dark areas; burns out after 120 seconds.
      * Tooltip: "Medieval. Effective."
      */
-    MAKESHIFT_TORCH("Makeshift Torch");
+    MAKESHIFT_TORCH("Makeshift Torch"),
+
+    // ── Issue #1020: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * Bitter — a proper pint of bitter, served by Keith at the social club bar.
+     * Members: 1 COIN. Guests: 2 COIN. Restores 8 hunger, slight warmth boost.
+     * Tooltip: "Not Flash. Not Fancy. Quite Good."
+     */
+    BITTER("Bitter"),
+
+    /**
+     * Mild — a pint of mild ale, cheapest drink on the bar.
+     * Members: 1 COIN. Guests: 2 COIN. Restores 6 hunger.
+     * Tooltip: "Old man's drink. You've earned it."
+     */
+    MILD("Mild"),
+
+    /**
+     * Lager Top — a pint of lager with a splash of lemonade.
+     * Members: 1 COIN. Guests: 2 COIN. Restores 7 hunger.
+     * Keith's look of disdain is free of charge.
+     * Tooltip: "Keith disapproves, but serves it anyway."
+     */
+    LAGER_TOP("Lager Top"),
+
+    /**
+     * Members Card — laminated membership card for the Northfield Sporting &amp; Social Club.
+     * Three tiers: GUEST (day pass), TEMP (1-day), FULL (permanent).
+     * Required for member pricing and AGM voting rights.
+     * Tooltip: "Membership has its privileges. Mostly cheaper beer."
+     */
+    MEMBERS_CARD("Members Card"),
+
+    /**
+     * Dodgy Ledger — Derek's ledger from the back office, recording protection payments
+     * to the Marchetti Crew. Can be handed to the police for Notoriety −10
+     * and MARCHETTI_CREW Respect −20. Unlocks the GRASS achievement.
+     * Tooltip: "Numbers that shouldn't exist. Names that shouldn't be written down."
+     */
+    DODGY_LEDGER("Dodgy Ledger"),
+
+    /**
+     * Quiz Sheet — the answer sheet for Thursday Quiz Night.
+     * Distributed by Derek at 20:00. Filled in during the quiz; handed back at the end.
+     * Tooltip: "Capital of Peru? Lima. Everyone always forgets Lima."
+     */
+    QUIZ_SHEET("Quiz Sheet");
 
     private final String displayName;
 
@@ -2308,6 +2355,20 @@ public enum Material {
             case MAKESHIFT_TORCH:       return cs(0.55f, 0.38f, 0.22f,   // Dark wood handle
                                                   0.98f, 0.68f, 0.15f);  // Orange flame
 
+            // Issue #1020: Northfield Sporting & Social Club
+            case BITTER:                return cs(0.72f, 0.42f, 0.08f,   // Amber bitter
+                                                  0.90f, 0.90f, 0.88f); // Cream head
+            case MILD:                  return cs(0.48f, 0.28f, 0.08f,   // Dark mild
+                                                  0.90f, 0.90f, 0.88f); // Cream head
+            case LAGER_TOP:             return cs(0.88f, 0.80f, 0.20f,   // Pale lager
+                                                  0.90f, 0.90f, 0.88f); // Cream lemonade top
+            case MEMBERS_CARD:          return cs(0.18f, 0.35f, 0.18f,   // Dark green card
+                                                  0.92f, 0.88f, 0.70f); // Cream text
+            case DODGY_LEDGER:          return cs(0.25f, 0.18f, 0.12f,   // Dark cover
+                                                  0.92f, 0.88f, 0.70f); // Cream page
+            case QUIZ_SHEET:            return cs(0.95f, 0.92f, 0.82f,   // Off-white paper
+                                                  0.15f, 0.15f, 0.55f); // Blue ink
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2621,6 +2682,13 @@ public enum Material {
             case DUCT_TAPE_RESTRAINT:
             case IMPROVISED_PEPPER_SPRAY:
             case MAKESHIFT_TORCH:
+            // Issue #1020: Northfield Sporting & Social Club — all inventory items, not blocks
+            case BITTER:
+            case MILD:
+            case LAGER_TOP:
+            case MEMBERS_CARD:
+            case DODGY_LEDGER:
+            case QUIZ_SHEET:
                 return false;
             default:
                 return true;
@@ -3272,6 +3340,18 @@ public enum Material {
                 return IconShape.BOTTLE;      // small spray bottle
             case MAKESHIFT_TORCH:
                 return IconShape.TOOL;        // torch/handle shape
+
+            // Issue #1020: Northfield Sporting & Social Club
+            case BITTER:
+            case MILD:
+            case LAGER_TOP:
+                return IconShape.BOTTLE;      // pint glass shape
+            case MEMBERS_CARD:
+                return IconShape.CARD;        // membership card
+            case DODGY_LEDGER:
+                return IconShape.FLAT_PAPER;  // ledger/notebook
+            case QUIZ_SHEET:
+                return IconShape.FLAT_PAPER;  // answer sheet
 
             default:
                 return IconShape.BOX;
