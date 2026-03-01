@@ -988,7 +988,25 @@ public enum PropType {
      * Seeds IFTAR_TONIGHT rumour to nearby NPCs when placed.
      * Destroyed by 3 punches; yields WOOD.
      */
-    FOLD_TABLE_PROP(1.80f, 0.90f, 0.90f, 3, Material.WOOD);
+    FOLD_TABLE_PROP(1.80f, 0.90f, 0.90f, 3, Material.WOOD),
+
+    // ── Issue #1037: Northfield Indoor Market ─────────────────────────────────
+
+    /**
+     * Market Shutter — a rolling metal shutter across the indoor market entrance.
+     * Impassable state when market is closed (outside Tue/Fri/Sat 08:00–16:00).
+     * Raised state during market hours; player can walk through.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    MARKET_SHUTTER_PROP(3.00f, 2.50f, 0.20f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Tea Urn — Brenda's large stainless-steel tea urn at her hot food stall.
+     * Press E to receive a MUG_OF_TEA (1 COIN; free during rain).
+     * Brenda says: "It's Baltic out there, love." during rain.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    TEA_URN_PROP(0.40f, 0.70f, 0.40f, 5, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

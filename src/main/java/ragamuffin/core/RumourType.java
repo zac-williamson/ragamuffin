@@ -237,5 +237,14 @@ public enum RumourType {
     SUSPICIOUS_PERSON,
 
     /** "That dinner lady at St. Aidan's got robbed. Bold as brass." */
-    BANNED_FROM_CANTEEN;
+    BANNED_FROM_CANTEEN,
+
+    // ── Issue #1037: Northfield Indoor Market ─────────────────────────────────
+
+    /** "Trading Standards turned up at the indoor market — Mo legged it out the back."
+     * — seeded by IndoorMarketSystem during a Trading Standards raid.
+     * Spreads only via MARKET_PUNTER and MARKET_TRADER NPCs at the indoor market.
+     * Distinct from POLICE_ACTIVITY: specifically market-origin and carries contraband
+     * context. Police NPCs who receive it add +1 patrol awareness near INDOOR_MARKET. */
+    MARKET_RAID;
 }

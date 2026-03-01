@@ -260,7 +260,28 @@ public enum LandmarkType {
      * Locked compound (LOCKED_GATE_PROP) contains COPPER_BALE_PROP.
      * Buys scrap by weight; refuses copper if player Notoriety ≥ 50.
      */
-    SCRAPYARD;
+    SCRAPYARD,
+
+    // ── Issue #1037: Northfield Indoor Market ─────────────────────────────────
+
+    /**
+     * Northfield Indoor Market — a covered market hall open Tue/Fri/Sat 08:00–16:00.
+     * A quintessential British working-class institution: rows of stalls selling
+     * dodgy DVDs, second-hand clothes, counterfeit goods, knock-off perfume, and
+     * a greasy tea urn. Players can rent a stall, browse for cheap gear, pickpocket
+     * in the crowds, and survive the chaos of a Trading Standards raid.
+     *
+     * <p>Building: low single-storey brick rectangle (16×24×4 blocks), open-plan
+     * interior with 8 stall units ({@code MARKET_STALL_PROP}) in two rows of four.
+     * When closed, {@code MARKET_SHUTTER_PROP} is in impassable state.
+     *
+     * <p>Staffed by Dave (electronics), Sheila (clothes), Mo (knock-offs), Brenda
+     * (hot food / tea urn), and Ray the Market Manager near the entrance.
+     *
+     * <p>Integrates with: IndoorMarketSystem, FenceSystem, StreetEconomySystem,
+     * WeatherSystem, DisguiseSystem, NoiseSystem, RumourNetwork.
+     */
+    INDOOR_MARKET;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -328,6 +349,7 @@ public enum LandmarkType {
             case GREYHOUND_TRACK:       return "Northfield Dog Track";
             case TATTOO_PARLOUR:        return "Skin Deep Tattoos";
             case SCRAPYARD:             return "Pearce & Sons Metal Merchants";
+            case INDOOR_MARKET:         return "Northfield Indoor Market";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
