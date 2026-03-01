@@ -1390,7 +1390,41 @@ public enum PropType {
      * A poster covered in graffiti and slogans.
      * Destroyed by 1 punch; yields nothing.
      */
-    DEFACED_POSTER_PROP(0.60f, 0.80f, 0.05f, 1, null);
+    DEFACED_POSTER_PROP(0.60f, 0.80f, 0.05f, 1, null),
+
+    // ── Issue #1096: Sunday League Football ──────────────────────────────────
+
+    /**
+     * Goal Post — a pair of metal posts with a crossbar.
+     * Placed at each end of the pitch by FootballSystem at 09:55.
+     * Removed at full-time. Yields SCRAP_METAL if destroyed (5 hits).
+     */
+    GOAL_POST_PROP(1.0f, 3.0f, 0.2f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Corner Flag — a lightweight plastic flag on a flexible post.
+     * Placed at each corner of the pitch. Yields nothing if destroyed (1 hit).
+     */
+    CORNER_FLAG_PROP(0.15f, 1.5f, 0.15f, 1, null),
+
+    /**
+     * Centre Circle Marker — a painted centre-circle marker on the pitch.
+     * Purely decorative; no collision. Destroyed by 1 punch; yields nothing.
+     */
+    CENTRE_CIRCLE_PROP(0.5f, 0.05f, 0.5f, 1, null),
+
+    /**
+     * Pitch Bookie — an illegal pitch-side betting table run by a STREET_LAD.
+     * Player bets 1–5 COIN on Rovers / Draw / Council FC at 2:1 / 3:1 odds.
+     * Yields COIN if destroyed (3 hits).
+     */
+    PITCH_BOOKIE_PROP(1.0f, 1.0f, 0.5f, 3, Material.COIN),
+
+    /**
+     * Physio Bag — a sports bag left on the touchline.
+     * Yields PARACETAMOL if looted (press E) or destroyed (2 hits).
+     */
+    PHYSIO_BAG_PROP(0.4f, 0.3f, 0.4f, 2, Material.PARACETAMOL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

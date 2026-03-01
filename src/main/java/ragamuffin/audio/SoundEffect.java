@@ -43,5 +43,8 @@ public enum SoundEffect {
     ICE_CREAM_JINGLE,  // Tinny ice cream van jingle; plays at each van stop
 
     // Issue #981: Council Estate
-    LIFT_CREAK  // Creaking lift cable SFX; played while the lift is travelling between floors
+    LIFT_CREAK,  // Creaking lift cable SFX; played while the lift is travelling between floors
+
+    // Issue #1096: Sunday League Football
+    CROWD_CHEER  // Crowd cheer on goal scored during Sunday League match
 }

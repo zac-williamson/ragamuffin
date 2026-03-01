@@ -1253,7 +1253,18 @@ public enum NPCType {
      * Press E on the table to receive 10 CAMPAIGN_LEAFLET items.
      * Passive; never hostile. Accompanies Nigel Pemberton on canvassing runs.
      */
-    PARTY_VOLUNTEER(20f, 0f, 0f, false);
+    PARTY_VOLUNTEER(20f, 0f, 0f, false),
+
+    // ── Issue #1096: Sunday League Football ──────────────────────────────────
+
+    /**
+     * The Referee — patrols the pitch during the Sunday League match.
+     * Issues yellow/red cards to players who foul or abuse.
+     * Calls police immediately if assaulted (WantedSystem +2 stars, Notoriety +8).
+     * Passive under normal circumstances; never hostile.
+     * Drops REFEREE_WHISTLE on destruction (10% chance).
+     */
+    REFEREE(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

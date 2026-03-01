@@ -2695,7 +2695,26 @@ public enum Material {
      * Restores +5 energy. Earns the POLITICAL_SMOKER achievement on first craft.
      * Tooltip: "You've rolled a Tory manifesto into a cigarette. Somehow fitting."
      */
-    ROLLIE("Rollie");
+    ROLLIE("Rollie"),
+
+    // ── Issue #1096: Sunday League Football ──────────────────────────────────
+
+    /**
+     * Football — a standard five-a-side match ball.
+     * Craftable: 1 LEATHER + 1 RUBBER. Also found in skips.
+     * Can be placed as a prop or kicked by walking into it.
+     * Required for the FootballSystem match; spawned by FootballSystem at kick-off.
+     * Tooltip: "They say football is the beautiful game. Not on a Sunday in Northfield."
+     */
+    FOOTBALL("Football"),
+
+    /**
+     * Referee Whistle — dropped by the REFEREE NPC (10% chance on defeat).
+     * Blowing it (press E while holding) causes all NPCs within 10 blocks to
+     * pause briefly.
+     * Tooltip: "One blast stops play. Two blasts gets you glassed."
+     */
+    REFEREE_WHISTLE("Referee Whistle");
 
     private final String displayName;
 
