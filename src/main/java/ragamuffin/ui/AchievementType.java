@@ -2377,6 +2377,29 @@ public enum AchievementType {
         "British Institution",
         "Attended 3 annual summer fetes. You've eaten the scones, spun the tombola, lost on the raffle. Bliss.",
         3
+    ),
+
+    // ── Issue #1100: Northfield Council Flats — Kendrick House ───────────────
+
+    LIFT_ENGINEER(
+        "Going Up? Eventually.",
+        "Fixed the broken lift at Kendrick House using Scrap Metal and Wire. Derek from the Council is taking the credit.",
+        1
+    ),
+    NOSY_NEIGHBOUR(
+        "Net Curtain Intelligence",
+        "Gossiped with 5 different residents on floors 2–4 of Kendrick House. You know everyone's business now.",
+        5
+    ),
+    INSPECTION_PASSED(
+        "Passes Inspection",
+        "Derek completed his housing inspection and found nothing. Your flat is the cleanest crime scene in Northfield.",
+        1
+    ),
+    PARCEL_PIRATE(
+        "Someone's Amazon Order",
+        "Stolen 5 parcels from the communal letterbox bank at Kendrick House. You've got a cheek.",
+        5
     );
 
     private final String name;

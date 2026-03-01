@@ -1457,7 +1457,35 @@ public enum PropType {
      * Hook-a-Duck — children's game for SCHOOL_KID NPCs.
      * Press E + 1 COIN → 30% chance CUDDLY_TOY win. Made from PLASTIC (4 hits).
      */
-    HOOK_A_DUCK_PROP(1.5f, 0.8f, 1.0f, 4, Material.PLASTIC);
+    HOOK_A_DUCK_PROP(1.5f, 0.8f, 1.0f, 4, Material.PLASTIC),
+
+    // ── Issue #1100: Northfield Council Flats — Kendrick House ───────────────
+
+    /**
+     * Letterbox bank — a row of metal communal letterboxes in the Kendrick House lobby.
+     * Spawns 1–3 parcels daily at 08:00. Hold E (1–3 seconds) to steal a parcel.
+     * Witnessed theft: police called (Wanted +1), PLAYER_SPOTTED rumour, Notoriety +3.
+     * Stolen parcels fence at 60% face value.
+     * Integrated with PostOfficeSystem for parcel deliveries.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    LETTERBOX_BANK_PROP(1.20f, 1.60f, 0.20f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Flat door — a metal fire-door on each flat in Kendrick House.
+     * Can be knocked on (E) to trigger gossip with resident PENSIONER/PUBLIC NPC.
+     * Can be lockpicked (LOCKPICK + 5 seconds) to enter when resident absent.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    FLAT_DOOR_PROP(1.00f, 2.20f, 0.15f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Communal noticeboard in the Kendrick House lobby/stairwell.
+     * Press E to read current notices seeded from RumourNetwork and NewspaperSystem.
+     * On housing inspection days, the inspection notice appears here.
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    COMMUNAL_NOTICEBOARD_PROP(0.80f, 1.20f, 0.10f, 3, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
