@@ -2824,7 +2824,16 @@ public enum Material {
      * {@link ragamuffin.core.WarmthSystem} +5. Satisfies hunger.
      * Tooltip: "Victoria sponge. Proper job. Someone's nan made it."
      */
-    CAKE_SLICE("Cake Slice");
+    CAKE_SLICE("Cake Slice"),
+
+    // ── Issue #1106: Angel Nails & Beauty ────────────────────────────────────
+
+    /**
+     * Gel Polish — bottle of professional gel nail polish from the salon shelf.
+     * Fence value: 3 COIN. Pawn value: 1 COIN.
+     * Tooltip: "Could be a nice present. Or just nicked."
+     */
+    GEL_POLISH("Gel Polish");
 
     private final String displayName;
 
