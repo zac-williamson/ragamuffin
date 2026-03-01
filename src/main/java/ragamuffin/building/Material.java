@@ -1247,7 +1247,43 @@ public enum Material {
      * Machine tampering actions: lower penny-falls threshold, unlock free plays, extract coin.
      * Tooltip: "For fixing things. And breaking things. Mostly breaking things."
      */
-    SCREWDRIVER("Screwdriver");
+    SCREWDRIVER("Screwdriver"),
+
+    // ── Issue #979: Fix My Phone — Phone Repair Shop ─────────────────────────
+
+    /**
+     * SIM Card — a network SIM card for cloning stolen phones.
+     * Found at the NEWSAGENT PHONE_DISPLAY_PROP or looted from POSTMAN / DELIVERY_DRIVER
+     * NPCs at 20% drop chance. Required (with 1 STOLEN_PHONE + 2 COIN) for back-room
+     * phone cloning at Fix My Phone. Satisfies NeedType.BORED at base price 2 COIN.
+     * Tooltip: "You don't want to know whose number that is."
+     */
+    SIM_CARD("SIM Card"),
+
+    /**
+     * Cloned Phone — a phone cloned from a STOLEN_PHONE + SIM_CARD in Tariq's back room.
+     * Single-use: press E to extract 1 rumour (LOOT_TIP or GANG_ACTIVITY) from the
+     * RumourNetwork, then the phone becomes a BURNED_PHONE. Alternatively, plant it on an
+     * NPC for passive surveillance (3 rumours over 3 in-game hours); burns automatically.
+     * Fence value: 5 COIN. CriminalRecord: adds THEFT on creation.
+     * Tooltip: "Tariq said he didn't want to know. He definitely wants to know."
+     */
+    CLONED_PHONE("Cloned Phone"),
+
+    /**
+     * Burned Phone — a used-up CLONED_PHONE after rumour extraction or surveillance timeout.
+     * Worthless except as Fence junk (1 COIN).
+     * Tooltip: "That's the last of its secrets."
+     */
+    BURNED_PHONE("Burned Phone"),
+
+    /**
+     * Screen Protector — a cosmetic 1 COIN item upsold by Tariq on each phone repair.
+     * Adds +1 durability flavour charge to the repaired phone. Donatable to the charity
+     * shop for 1 COIN goodwill. Tradeable to desperate BORED NPCs.
+     * Tooltip: "It'll probably scratch anyway."
+     */
+    SCREEN_PROTECTOR("Screen Protector");
 
     private final String displayName;
 
