@@ -2186,6 +2186,34 @@ public enum AchievementType {
         "Five Finger Discount",
         "Shoplifted from Khan's without being detected.",
         1
+    ),
+
+    // ── Issue #1077: Northfield Chinese Takeaway — Golden Palace ─────────────
+
+    LATE_NIGHT_REGULAR(
+        "Last Orders at the Palace",
+        "Ordered from Golden Palace between 23:00 and 00:00. Mr. Chen gave you a look.",
+        1
+    ),
+    FORTUNE_SEEKER(
+        "You Will Find Great Fortune",
+        "Used ten fortune cookies. The fortunes were increasingly accurate. Unsettlingly so.",
+        10
+    ),
+    PRAWN_CRACKER_PIGEON_FEEDER(
+        "The Prawn Cracker Economy",
+        "Fed prawn crackers to pigeons three times. The pigeons have formed a committee.",
+        3
+    ),
+    CRISPY_DUCK_CONNOISSEUR(
+        "Peking Duck, Northfield-Style",
+        "Ordered Crispy Duck five times. Mr. Chen knows your order before you open your mouth.",
+        5
+    ),
+    PHONE_CHAOS(
+        "Wrong Number",
+        "Answered the Golden Palace phone during the Phone Order Chaos event. You gave a fake address. Classic.",
+        1
     );
 
     private final String name;

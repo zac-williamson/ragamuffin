@@ -285,5 +285,12 @@ public enum RumourType {
     /** "Someone spotted doing [crime] near [location] — looked well dodgy."
      * — seeded by NailSalonSystem when a crime sighting is reported in the vicinity.
      * Spreads via PUBLIC and PENSIONER NPCs; increases police patrol awareness. */
-    CRIME_SIGHTING;
+    CRIME_SIGHTING,
+
+    // ── Issue #1077: Northfield Chinese Takeaway — Golden Palace ─────────────
+
+    /** "Someone's feeding prawn crackers to the pigeons outside the Golden Palace — they've gone absolutely mental."
+     * — seeded by ChineseTakeawaySystem when the player feeds {@code PRAWN_CRACKERS} to 3+ {@code BIRD} NPCs.
+     * Spreads to NPCs within 15 blocks. Minor Notoriety gain (+1). */
+    PIGEON_CHAOS;
 }

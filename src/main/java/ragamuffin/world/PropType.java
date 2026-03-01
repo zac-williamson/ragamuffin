@@ -1196,7 +1196,37 @@ public enum PropType {
      * Fresh flowers — dropped by MOURNER NPCs after a funeral procession ends.
      * Despawns after 2 in-game days. Not sellable.
      */
-    FRESH_FLOWERS_PROP(0.30f, 0.20f, 0.30f, 1, null);
+    FRESH_FLOWERS_PROP(0.30f, 0.20f, 0.30f, 1, null),
+
+    // ── Issue #1077: Northfield Chinese Takeaway — Golden Palace ─────────────
+
+    /**
+     * Chinese lantern — a red-and-gold decorative lantern above the Golden Palace door.
+     * Always lit (emits ambient warmth glow). Decorative only.
+     * Destroyed by 2 punches; yields SCRAP_METAL.
+     */
+    CHINESE_LANTERN_PROP(0.30f, 0.60f, 0.30f, 2, Material.SCRAP_METAL),
+
+    /**
+     * Menu board — a laminated picture menu mounted on the wall behind the counter.
+     * Press E to read the full menu (tooltip). Decorative; cannot be removed.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    MENU_BOARD_PROP(0.80f, 1.20f, 0.05f, 5, Material.WOOD),
+
+    /**
+     * Serving hatch — the partition separating kitchen from front-of-house.
+     * Cosmetic only; impassable. Mr. Chen passes food through it.
+     * Destroyed by 8 punches; yields WOOD.
+     */
+    SERVING_HATCH_PROP(1.60f, 1.20f, 0.15f, 8, Material.WOOD),
+
+    /**
+     * Kebab flyer — a paper flyer dropped by the rival DELIVERY_DRIVER NPC during late-night events.
+     * Picking it up reveals Sultan's Kebab on the map if undiscovered.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    KEBAB_FLYER_PROP(0.20f, 0.01f, 0.30f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
