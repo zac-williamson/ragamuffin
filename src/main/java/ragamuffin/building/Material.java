@@ -2195,7 +2195,48 @@ public enum Material {
      * Non-stackable (max 1 per slot). Movement speed −5% while carrying.
      * Tooltip: "Full to the brim. Handle with care."
      */
-    PETROL_CAN_FULL("Petrol Can (Full)");
+    PETROL_CAN_FULL("Petrol Can (Full)"),
+
+    // ── Issue #1049: Northfield Chippy — Tony's Chip Shop ─────────────────────
+
+    /**
+     * Bread — a plain white loaf. Required in inventory to unlock CHIP_BUTTY on Tony's menu.
+     * Also sold at the corner shop and Tesco Express.
+     */
+    BREAD("Bread"),
+
+    /**
+     * Cold Chips — leftover CHIPS obtained by breaking into the chippy after closing time.
+     * Restores only +10 hunger. Tooltip: "They're cold. And a bit sad. But they're yours."
+     */
+    COLD_CHIPS("Cold Chips"),
+
+    /**
+     * Cooking Oil — looted from the chippy's lard bucket prop after closing.
+     * Crafting input: COOKING_OIL → FIRE_STARTER (combine with NEWSPAPER) or
+     * MOLOTOV (combine with BOTTLE_OF_WATER + CLOTH).
+     */
+    COOKING_OIL("Cooking Oil"),
+
+    /**
+     * Fire Starter — crafted from COOKING_OIL + NEWSPAPER.
+     * Ignites a campfire or wheelie bin in one use. Consumed on use.
+     */
+    FIRE_STARTER("Fire Starter"),
+
+    /**
+     * Molotov Cocktail — crafted from COOKING_OIL + BOTTLE_OF_WATER + CLOTH.
+     * Throwable incendiary. Records {@link ragamuffin.core.CriminalRecord.CrimeType#ARSON}
+     * on use. Earns LARD_ALCHEMIST achievement when first crafted.
+     */
+    MOLOTOV("Molotov Cocktail"),
+
+    /**
+     * Lard Bucket — a prop item obtained from the chippy fryer after break-in.
+     * Converted in inventory to COOKING_OIL (×3) when examined (press E while holding).
+     * Tooltip: "A bucket of old lard. Tony won't miss it. Probably."
+     */
+    LARD_BUCKET("Lard Bucket");
 
     private final String displayName;
 
@@ -2306,6 +2347,15 @@ public enum Material {
             case HYMN_BOOK:      return c(0.18f, 0.18f, 0.52f);   // Dark blue
             case PETROL_CAN:     return c(0.82f, 0.30f, 0.15f);   // Red can
             case PETROL_CAN_FULL: return c(0.82f, 0.30f, 0.15f);  // Red can with yellow stripe
+            // Issue #1049: Chippy
+            case BREAD:          return c(0.92f, 0.88f, 0.72f);  // Pale cream loaf
+            case COLD_CHIPS:     return c(0.78f, 0.70f, 0.28f);  // Dull yellow, cold
+            case COOKING_OIL:    return cs(0.92f, 0.82f, 0.30f,  // Golden oil
+                                          0.70f, 0.60f, 0.20f);  // Darker base
+            case FIRE_STARTER:   return c(0.90f, 0.40f, 0.10f);  // Orange-red
+            case MOLOTOV:        return cs(0.55f, 0.78f, 0.95f,  // Glass bottle blue
+                                          0.90f, 0.40f, 0.10f);  // Rag flame
+            case LARD_BUCKET:    return c(0.88f, 0.85f, 0.72f);  // Pale greasy white
             case HAIR_CLIPPERS:         return c(0.35f, 0.35f, 0.38f);   // Silver-grey
             case HAIR_CLIPPERS_BROKEN:  return c(0.20f, 0.20f, 0.22f);   // Dark grey, broken
             case NAIL_POLISH:    return c(0.92f, 0.18f, 0.55f);   // Hot pink
@@ -2903,6 +2953,12 @@ public enum Material {
             case HYMN_BOOK:
             case PETROL_CAN:
             case PETROL_CAN_FULL:
+            case BREAD:
+            case COLD_CHIPS:
+            case COOKING_OIL:
+            case FIRE_STARTER:
+            case MOLOTOV:
+            case LARD_BUCKET:
             case HAIR_CLIPPERS:
             case HAIR_CLIPPERS_BROKEN:
             case NAIL_POLISH:
@@ -3376,7 +3432,11 @@ public enum Material {
             case FIRE_EXTINGUISHER:
             case HAIR_CLIPPERS:
             case HAIR_CLIPPERS_BROKEN:
+            case COOKING_OIL:
+            case MOLOTOV:
                 return IconShape.CYLINDER;
+            case LARD_BUCKET:
+                return IconShape.BOX;
 
             case HIGH_VIS_JACKET:
                 return IconShape.FLAT_PAPER; // vest-like shape
