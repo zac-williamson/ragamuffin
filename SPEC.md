@@ -17079,3 +17079,183 @@ Prescriptions are tradeable items. Players can:
    count to 3. Record the expected queue time (normally ≈ 60s for 3 patients). Verify
    `GPSurgerySystem.getExpectedWaitSeconds()` returns approximately 120 seconds (doubled).
    Non-Monday: set the day to Wednesday with same 3 patients. Verify wait is approximately 60s.
+
+---
+
+## Add Northfield Post Office — Benefits Book, Dodgy Parcels & Royal Mail Round
+
+**Goal**: Add a fully interactive Post Office counter inside a corner shop unit on the high
+street. The Post Office is a quintessentially British hub where the player can cash benefits,
+buy scratch cards, intercept or steal parcels left on doorsteps, and optionally work a POSTMAN
+shift in disguise to case buildings for later robbery.
+
+### Building & Layout
+
+- The Post Office occupies a dedicated unit in the high street parade, adjacent to the corner
+  shop but distinct (sign prop: "Northfield Post Office – Royal Mail"). A brick building with a
+  yellow-and-red awning prop.
+- Interior: a `COUNTER_PROP` behind a Plexiglas screen (glass blocks), staffed by `COUNTER_CLERK`
+  NPC (Maureen). Queue area with 4 chairs. A rack of `SCRATCH_CARD` items near the door.
+  A red `POST_BOX_PROP` outside the entrance.
+- Opening hours: Mon–Fri 09:00–17:30, Sat 09:00–12:30. Closed Sunday. `CLOSED_SIGN_PROP`
+  appears on the door outside these hours.
+
+### Counter Services (press E on Maureen)
+
+| Service | Condition | Effect |
+|---------|-----------|--------|
+| Cash Benefits Book | Player holds `BENEFITS_BOOK` + is a registered JobCentre claimant | Gives player `COIN × weekly_benefit_amount`. `BENEFITS_BOOK` stamped (used once per week). Tooltip: "Every little helps." |
+| Buy Scratch Card | Costs 1 COIN | Gives `SCRATCH_CARD` item. Scratch via inventory E: 10% chance 5 COIN, 3% chance 25 COIN, 87% nothing. Tooltip on first scratch: "Worth a go, innit." |
+| Buy Stamps | Costs 1 COIN per stamp | Gives `STAMP` item ×1. Used to send threatening letters via `POST_BOX_PROP` (see Threatening Letters below). |
+| Post a Parcel | Player holds any item (value ≥ 5 COIN fence value) + 2 COIN postage | Sends item to `FENCE` by post; received as coins after 1 in-game day (fence rate −10% for postal surcharge). |
+
+### Benefits Book
+
+- New `Material.BENEFITS_BOOK` item. Awarded to the player automatically when they first
+  register at the JobCentre (`JobCentreSystem.isRegistered() == true`).
+- Each Tuesday in-game (day % 7 == 2), the player's weekly benefit amount is loaded into the
+  book (tracked by `PostOfficeSystem.pendingBenefitAmount`). Amount mirrors whatever
+  `JobCentreSystem.getWeeklyBenefitAmount()` returns.
+- `BENEFITS_BOOK` can be stolen from `PENSIONER` NPCs (30% carry one; contains a random
+  amount of 3–8 COIN, unrelated to the player's own claim).
+- Attempting to cash a stolen benefits book is `CriminalRecord.CrimeType.BENEFITS_FRAUD`
+  (+12 Notoriety, +1 Wanted star if Maureen recognises the fraud — 40% chance; she calls police).
+
+### Doorstep Parcel System
+
+- Each morning (06:00–08:00 in-game), the POSTMAN NPC delivers `PARCEL` props to 3–5 random
+  front doors across the residential streets.
+- `PARCEL` props sit on the pavement block outside a door for 4 in-game hours before
+  despawning (resident collected them).
+- Player can pick up a `PARCEL` prop (press E) — this is `CriminalRecord.CrimeType.PARCEL_THEFT`
+  (+5 Notoriety). If a witness NPC is within 8 blocks, Notoriety adds a further +3.
+- `PARCEL` contents on opening (press E in inventory): 40% SCRAP_METAL ×2, 25% COIN ×5,
+  15% COMPUTER_PART ×1, 10% WOOLLY_HAT, 10% random `Material` flavour item (NEON_LEAFLET,
+  LAMP etc). Tooltip on first theft: "Sorted for Christmas."
+- Stolen parcels can be sold to the Fence (`FenceSystem`) or opened immediately.
+
+### Threatening Letters
+
+- With `STAMP` in inventory, press E on `POST_BOX_PROP` to open a compose menu.
+- Choose a target NPC (any named NPC the player has met). Compose a letter from preset
+  templates: "Pay up or else", "Stay out of my manor", "I know where you live".
+- Letter arrives after 1 in-game day. Target NPC enters `NPCState.FRIGHTENED` for 24 in-game
+  hours: they avoid the player, refuse to report crimes they witness, and drop 20% of their
+  coin on the ground near their home.
+- Police can trace a letter back to the player if Notoriety ≥ Tier 3 (40% chance per letter
+  sent): `CriminalRecord.CrimeType.THREATENING_BEHAVIOUR` (+10 Notoriety).
+- Tooltip on first letter sent: "The pen is mightier. Allegedly."
+
+### POSTMAN Shift (HI_VIS_VEST Disguise)
+
+- If the player is wearing a `HI_VIS_VEST` (already in game), they can interact with the
+  sorting office door (rear of Post Office) between 05:30–07:00.
+- Accepting the shift starts a timed delivery run: deliver 4 `PARCEL` props to marked doors
+  within 20 in-game minutes. Each delivery earns 3 COIN.
+- During the shift, the player has free, unsuspicious access to all front gardens and porches.
+  POLICE NPCs do not escalate on Notoriety < Tier 3. Civilians do not flee.
+- The player can divert a delivery (keep the parcel + open it) at the cost of −3 COIN
+  earnings for that stop and +5 Notoriety. At the end of the shift, if ≥ 2 parcels were
+  diverted, `PostOfficeSystem` flags the player as a suspected bad postman:
+  next shift attempt is refused for 3 in-game days.
+- Tooltip on completing first shift: "Honest day's work. Almost."
+
+### New Materials
+
+- `Material.BENEFITS_BOOK` — passport-sized booklet. Obtained from JobCentre registration or
+  looted from PENSIONER NPCs.
+- `Material.SCRATCH_CARD` — single-use lottery item. Scratch via inventory E.
+- `Material.STAMP` — used with POST_BOX_PROP to send threatening letters.
+- `Material.PARCEL` — deliverable/stealable prop item. Opens to reveal contents.
+
+### New NPC Types
+
+- `COUNTER_CLERK` (Maureen) — behind the counter 09:00–17:30 Mon–Fri, 09:00–12:30 Sat.
+  Passive. Sells counter services. Calls police on BENEFITS_FRAUD detection. Speech lines
+  reflect mild exasperation: "Next!", "Do you have ID?", "We close at half five, love."
+
+### New CrimeTypes
+
+- `CriminalRecord.CrimeType.PARCEL_THEFT` — +5 Notoriety base; +3 if witnessed.
+- `CriminalRecord.CrimeType.BENEFITS_FRAUD` — +12 Notoriety, +1 Wanted star (40% chance).
+- `CriminalRecord.CrimeType.THREATENING_BEHAVIOUR` — +10 Notoriety (40% traced by police).
+
+### Integrations
+
+- **JobCentreSystem**: Benefits book weekly amount mirrors `getWeeklyBenefitAmount()`. Sick
+  note active → uplift applies to cashed amount. Sanctions → book shows 0 until cleared.
+- **FenceSystem**: Stolen `PARCEL` items and opened contents added to the Fence's buy table.
+- **NotorietySystem**: PARCEL_THEFT, BENEFITS_FRAUD, THREATENING_BEHAVIOUR crimes feed
+  through the standard notoriety pipeline.
+- **WitnessSystem**: Parcel theft witnessed by nearby NPC or CCTV escalates notoriety.
+- **RumourNetwork**: Benefits fraud seeds `LOCAL_EVENT` rumour "Someone's cashing books
+  down the post office — bold as brass". Threatening letter seeds `PLAYER_SPOTTED` rumour.
+- **NPCManager**: POSTMAN NPC now has a spawn point at the Post Office sorting office door
+  (05:30) and returns there at 18:00. Delivery stops are generated from residential landmarks.
+- **WeatherSystem**: FROST/RAIN: POSTMAN walk speed reduced 20% (they're only human).
+  Doorstep `PARCEL` props despawn 1 hour earlier (resident collected it sooner to get out
+  of the cold).
+- **AchievementSystem**: New achievements (see below).
+- **DisguiseSystem**: HI_VIS_VEST disguise check extended to include POSTMAN shift context.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `SIGNED_FOR_IT` | Cash your benefits book at the Post Office for the first time |
+| `LUCKY_DIP` | Win 25 COIN from a scratch card |
+| `SPECIAL_DELIVERY` | Steal 5 parcels in a single in-game day |
+| `GOING_POSTAL` | Complete a POSTMAN shift without diverting any parcels |
+| `DEAR_SIR` | Send a threatening letter to a named NPC |
+
+### Unit Tests
+
+- Benefits book cash: correct amount transferred, book stamped, duplicate cash blocked.
+- Scratch card odds: over 1000 trials, win rate within 1% of expected (10% / 3% / 87%).
+- Stolen benefits book: Notoriety +12, 40% Maureen recognition probability with seeded RNG.
+- Parcel theft crime entry: correct notoriety values with/without witness.
+- Threatening letter trace probability: 0% below Tier 3, 40% at Tier 3+.
+- POSTMAN shift completion: 4 deliveries → 12 COIN; 2+ diversions → shift lockout 3 days.
+- Parcel contents distribution: over 100 openings, each tier within 5% of expected frequency.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Cash benefits book at Post Office**: Register the player at the JobCentre
+   (`JobCentreSystem.register()`). Set `JobCentreSystem.weeklyBenefitAmount` to 10 COIN.
+   Advance time to Tuesday (day % 7 == 2). Give the player a `BENEFITS_BOOK`. Enter the Post
+   Office during opening hours. Press E on Maureen. Select "Cash Benefits Book". Verify the
+   player's COIN count increases by 10. Verify `PostOfficeSystem.pendingBenefitAmount` is now
+   0. Verify attempting to cash again immediately returns a "Already cashed this week" message
+   and COIN count is unchanged.
+
+2. **Scratch card win with seeded RNG**: Construct `PostOfficeSystem` with a seeded Random
+   that produces a value < 0.03 (jackpot tier). Buy a scratch card (give player 1 COIN,
+   interact with Maureen). Verify `SCRATCH_CARD` is in inventory. Press E on it. Verify player
+   receives 25 COIN. Verify the `SCRATCH_CARD` is consumed from inventory. Verify the
+   `LUCKY_DIP` achievement is unlocked.
+
+3. **Doorstep parcel theft witnessed**: Advance time to 07:00 (delivery window). Verify
+   at least 1 `PARCEL` prop exists in the world near a residential door. Place a PUBLIC NPC
+   within 6 blocks of the parcel. Player presses E on the parcel. Verify parcel is in player
+   inventory. Verify `CriminalRecord` contains `PARCEL_THEFT`. Verify Notoriety increased by
+   8 (5 base + 3 witnessed). Verify the PUBLIC NPC entered speech mode ("Oi!").
+
+4. **Benefits fraud detected by Maureen**: Give the player a `BENEFITS_BOOK` that was stolen
+   from a PENSIONER (set `PostOfficeSystem.isStolenBook(book) == true` via `markAsStolen()`).
+   Construct `PostOfficeSystem` with a seeded Random producing < 0.40 (detection). Player
+   presses E on Maureen and attempts to cash the book. Verify the cash fails. Verify
+   `CriminalRecord` contains `BENEFITS_FRAUD`. Verify Notoriety increased by 12. Verify a
+   POLICE NPC is spawned within 20 blocks (Maureen called police).
+
+5. **POSTMAN shift completes with no diversions**: Give the player a `HI_VIS_VEST`.
+   Advance time to 05:45. Player interacts with sorting office door. Verify shift starts.
+   Deliver all 4 parcels to their marked doors (simulate E on each door). Verify player
+   earns 12 COIN (3 per delivery). Verify `GOING_POSTAL` achievement is unlocked. Verify
+   no `PARCEL_THEFT` entries in CriminalRecord. Verify player can start another shift the
+   following day.
+
+6. **Threatening letter frightens NPC**: Give player 1 STAMP. Press E on `POST_BOX_PROP`.
+   Select target NPC (named SHOPKEEPER). Select template "Stay out of my manor". Advance
+   1 in-game day. Verify the SHOPKEEPER NPC is in `NPCState.FRIGHTENED`. Verify the
+   SHOPKEEPER drops 20% of their coin on their home block. Verify the SHOPKEEPER does not
+   report the player when the player commits a witnessed crime nearby.
