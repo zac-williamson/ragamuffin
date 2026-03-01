@@ -22285,3 +22285,240 @@ FREE_FROM_KOSTA,     // Get a free trim from Kosta via Marchetti faction standin
 6. **Free cut from Marchetti faction**: Set `factionSystem.getRespect(Faction.MARCHETTI_CREW)` ≥ 75. Trigger Marchetti mission completion callback. Press E on Kosta. Verify TRIM is offered at 0 COIN cost. Complete trim. Verify player COIN is NOT reduced. Verify Notoriety increased by 2.
 
 7. **Shop boards up in hostile neighbourhood**: Set `neighbourhoodSystem.getVibes()` = 25 (HOSTILE). Call `barberSystem.update(delta, neighbourhoodSystem)`. Verify `barberSystem.isOpen(THURSDAY, 14.0f)` returns `false` (limited opening during hostile vibes). Verify a `BOARDED_WINDOW_PROP` is placed at the shop's window position in the world.
+
+---
+
+## Issue #1041: Add Northfield Argos — Pencil & Slip, Layby Debt & the Great Returns Scam
+
+**Landmark**: `LandmarkType.ARGOS` (display name: `"Argos"`)
+
+**Goal**: Implement `ArgosSystem` — the Northfield Argos catalogue shop. A uniquely
+British retail experience: no stock on the shelves, just laminated catalogues and a tiny
+golf pencil. You write an order number on a slip, hand it over the counter, and wait
+while someone rummages around the back. What you order may or may not be what arrives.
+
+### New class: `ArgosSystem`
+
+Located at `src/main/java/ragamuffin/core/ArgosSystem.java`.
+
+Constructor: `ArgosSystem(World, Inventory, NotorietySystem, WantedSystem, CriminalRecord, Random)`
+
+**Opening hours**: 09:00–18:00 Monday–Saturday. 10:00–16:00 Sunday.
+Staff: `ARGOS_CLERK` (NPC type) at the counter during opening hours; `ARGOS_MANAGER` (emerges
+from the back on `RETURNS_REFUSED` events and Notoriety ≥ Tier 3).
+
+---
+
+### Catalogue System
+
+The Argos catalogue is a `PropType.ARGOS_CATALOGUE` prop on a stand near the entrance.
+Press **E** on it to open the `ArgosOrderUI` — a scrollable list of items with 4-digit
+item numbers, descriptions, and prices. Navigation: UP/DOWN arrows to scroll, ENTER to
+add to slip, ESC to close.
+
+**Catalogue items** (item number → Material, price in COIN, availability):
+
+| Item No. | Item | Price | Condition |
+|----------|------|-------|-----------|
+| 3421 | `FOLDING_CHAIR` | 8 COIN | Always in stock |
+| 3422 | `FOLDING_TABLE` | 12 COIN | 2-in-3 days in stock |
+| 5519 | `KETTLE` | 6 COIN | Always in stock |
+| 5520 | `TOASTER` | 5 COIN | Always in stock |
+| 7731 | `PORTABLE_RADIO` | 7 COIN | 1-in-3 days in stock (connects to PirateRadioSystem) |
+| 7732 | `ALARM_CLOCK` | 4 COIN | Always in stock |
+| 2214 | `GOLD_CHAIN` | 15 COIN | In stock Mon/Wed/Fri only |
+| 2215 | `SOVEREIGN_RING` | 10 COIN | In stock Tue/Thu/Sat only |
+| 8801 | `AIRFIX_KIT` | 3 COIN | Always in stock |
+| 8802 | `TOY_CAR` | 2 COIN | Always in stock |
+| 9991 | `SLEEPING_BAG` | 9 COIN | Always in stock (+WarmthSystem buff) |
+| 9992 | `HIKING_BOOTS` | 11 COIN | Always in stock (reduces cold debuff by 20%) |
+
+`FOLDING_CHAIR` and `FOLDING_TABLE` are `PropType` items that can be placed in the
+world (integrates with existing building/prop systems). `PORTABLE_RADIO` when placed
+and activated picks up any active PirateRadioSystem broadcast.
+
+**Out-of-stock mechanic**: If an item is out of stock, the clerk says "Sorry love, we
+haven't got that one. It's on order." Player can place a **layby** (see below) even for
+out-of-stock items — staff assure them it will arrive. It never does.
+
+---
+
+### Order Slip Mechanic
+
+After browsing the catalogue, player picks up an `ARGOS_PENCIL` from the tray (infinite
+supply, each use consumes it and returns it to the tray — it's always there). Press E on
+`ARGOS_SLIP_TRAY` prop to fill in the item number. The slip is added to inventory as
+`ORDER_SLIP` (carries the item number as metadata).
+
+Hand the slip to the `ARGOS_CLERK` (press E while holding `ORDER_SLIP`). The clerk:
+1. Takes the slip.
+2. Announces a **collection number** (1–99, seeded random per day).
+3. Starts a **wait timer**: 60–120 real seconds (random, shorter during quiet hours).
+4. Calls the collection number aloud when ready.
+
+Player must be within 10 blocks of the counter when their number is called, or the item
+is returned to stock and they must re-queue. Missing the call twice on the same item
+triggers the clerk's muttered observation: *"Some people just don't listen, do they."*
+
+---
+
+### Wait Area
+
+The wait area contains `ARGOS_PLASTIC_SEAT_PROP` chairs (3–5 seats). While seated
+(press E to sit), time passes faster subjectively (in-game minute counter ticks at 2×
+speed for the wait timer only — the actual TimeSystem clock is unchanged). Sitting also
+slowly restores 1 Warmth per in-game minute (the shop is warm).
+
+1–3 `PUBLIC` NPCs also wait, occasionally complaining to each other. Overhearing their
+conversation has a 25% chance of seeding a `RumourType.LOCAL_EVENT` rumour per NPC
+per wait period.
+
+---
+
+### Layby System
+
+Layby = reserve now, pay weekly instalments. Press E on the clerk and select "Put it
+on layby". Costs 20% deposit up front. Remaining balance tracked in `ArgosSystem.laybys`
+map (player → `LaybySummary`). Each in-game week (7 days), 20% of the original price
+is due. After 5 payments the item is released for collection.
+
+**Failure to pay**: After 2 missed weekly payments the layby is cancelled. Deposit is
+forfeited. `ArgosSystem.getLaybyStatus()` returns `CANCELLED`. The manager emerges to
+explain, drily.
+
+**Layby on out-of-stock items**: The item never arrives. The layby never completes.
+Staff remain cheerfully unhelpful for up to 30 in-game days before quietly cancelling it.
+Achievement: `LAYBY_LIMBO` — maintain an active layby on an out-of-stock item for 10 days.
+
+---
+
+### Returns Fraud
+
+Press E on the `ARGOS_RETURNS_DESK` prop (separate counter, staffed during opening
+hours) while holding any `Material` item from the permitted returns list. The clerk
+checks a paper ledger (simulated: 60% chance of successful return for items bought at
+Argos this session; 30% if item was bought elsewhere; 5% if item is `STOLEN_GOODS`
+variant).
+
+**Successful return**: Player receives the item's catalogue price in COIN.
+**Failed return ("We can't take that without a receipt")**: Item stays in inventory.
+**Stolen goods return attempt**: 30% chance clerk notices (`WantedSystem` adds THEFT
+offence, `ARGOS_MANAGER` NPC spawns). 70% chance it goes through — but seeds
+`RumourType.DODGY_DEALING` into the rumour network.
+
+`ArgosSystem.getReturnAttemptCount()` — tracks returns for achievement purposes.
+Achievement: `SERIAL_RETURNER` — successfully return 5 items in one in-game day.
+Achievement: `RECEIPT_NOT_REQUIRED` — return a stolen item successfully.
+
+---
+
+### Pencil Theft Mini-game
+
+The `ARGOS_PENCIL` is technically property of the store. Taking one without using it at
+the slip tray (i.e., player walks away with it in inventory) adds 1 tiny unit of
+`SHOPLIFTING_SUSPICION`. Accumulate 5 pencils and the manager notices, adding a
+`TRESPASS` entry to `CriminalRecord`. Achievement: `PENCIL_THIEF` — steal 3 Argos
+pencils in one session.
+
+---
+
+### Chaos Events
+
+Every 5 in-game minutes while Argos is open, a random event triggers (30% chance):
+
+| Event | Description |
+|-------|-------------|
+| `WRONG_ITEM` | Clerk brings out the wrong item. Player can accept it (free, different material) or complain (restarts wait timer). |
+| `QUEUE_CONFUSION` | Two NPCs claim the same collection number. Mini-argument. Player can mediate (+3 COIN tip from grateful NPC) or ignore. |
+| `SYSTEM_DOWN` | "The computer says no." All orders halted for 3 in-game minutes. Clerk apologises. |
+| `MANAGER_CALLED` | NPC ahead of player complains loudly. `ARGOS_MANAGER` NPC emerges. If player Notoriety ≥ Tier 2, manager also eyes the player suspiciously. |
+| `PENSIONER_FORM_HELP` | Elderly NPC can't read the catalogue. Press E to help them (takes 30s wait; rewards 2 COIN and `RumourType.LOCAL_EVENT` from grateful NPC). |
+
+---
+
+### NPC Integration
+
+- `ARGOS_CLERK` — stationed at the counter. Refuses service if player is at Wanted ≥ 2 stars and unmasked. Dialogue variants for: no receipt, wrong item, out of stock, layby update.
+- `ARGOS_MANAGER` — spawns from back room on escalations. Calm but firm. Will call police after second incident: `wantedSystem.addOffence(OffenceType.TRESPASS, player)`.
+- `ARGOS_SHOPPER` NPCs — 2–4 browse the catalogue and join the queue during opening hours. Their orders are occasionally called, providing ambient wait-area audio.
+
+---
+
+### Faction & Notoriety Integration
+
+- **FactionSystem**: MARCHETTI_CREW members can use Argos as a dead-drop. If `factionSystem.getRespect(Faction.MARCHETTI_CREW) ≥ 50`, a crew member occasionally leaves an `ORDER_SLIP` with item `9999` (not in the catalogue). Handing this to the clerk produces `MARCHETTI_PACKAGE` — a wrapped parcel Material. Delivering it to the correct NPC earns 10 COIN and +5 faction respect. `wantedSystem` adds `SUSPICIOUS_PACKAGE` suspicion if police are within 12 blocks at collection time.
+- **NotorietySystem**: Successful stolen-goods return seeds `RumourType.DODGY_DEALING`. Returns fraud (3+ in one day) triggers `RumourType.SERIAL_FRAUDSTER`.
+- **NewspaperSystem**: If `SYSTEM_DOWN` event lasts > 10 minutes and > 5 NPCs are affected, `NewspaperSystem` publishes: *"Northfield Argos 'Computer Says No' Disaster Leaves Shoppers Furious."*
+
+---
+
+### Required Additions
+
+- `LandmarkType.ARGOS` — display name `"Argos"`
+- `NPCType.ARGOS_CLERK`, `NPCType.ARGOS_MANAGER`, `NPCType.ARGOS_SHOPPER`
+- `PropType.ARGOS_CATALOGUE`, `PropType.ARGOS_SLIP_TRAY`, `PropType.ARGOS_PLASTIC_SEAT`, `PropType.ARGOS_RETURNS_DESK`
+- `Material.ORDER_SLIP`, `Material.ARGOS_PENCIL`, `Material.FOLDING_CHAIR`, `Material.FOLDING_TABLE`, `Material.KETTLE`, `Material.TOASTER`, `Material.PORTABLE_RADIO`, `Material.ALARM_CLOCK`, `Material.GOLD_CHAIN`, `Material.SOVEREIGN_RING`, `Material.AIRFIX_KIT`, `Material.TOY_CAR`, `Material.SLEEPING_BAG`, `Material.HIKING_BOOTS`, `Material.ARGOS_PACKAGE`, `Material.MARCHETTI_PACKAGE`
+- `AchievementType.LAYBY_LIMBO`, `AchievementType.SERIAL_RETURNER`, `AchievementType.RECEIPT_NOT_REQUIRED`, `AchievementType.PENCIL_THIEF`
+- Inner class `ArgosSystem.LaybySummary` — tracks item number, deposit paid, total price, weeks paid, missed payments
+
+---
+
+### Constants
+
+```java
+public static final float WAIT_TIME_MIN_SECONDS     = 60f;
+public static final float WAIT_TIME_MAX_SECONDS     = 120f;
+public static final float LAYBY_DEPOSIT_FRACTION    = 0.20f;
+public static final int   LAYBY_INSTALMENTS         = 5;
+public static final int   LAYBY_MAX_MISSED_PAYMENTS = 2;
+public static final float CHAOS_EVENT_CHANCE        = 0.30f;
+public static final int   CHAOS_EVENT_INTERVAL_MINS = 5;
+public static final float RETURNS_SUCCESS_OWN       = 0.60f;
+public static final float RETURNS_SUCCESS_OTHER     = 0.30f;
+public static final float RETURNS_SUCCESS_STOLEN    = 0.05f;
+public static final float STOLEN_RETURN_CAUGHT_CHANCE = 0.30f;
+public static final int   PENCIL_THEFT_CRIME_THRESHOLD = 5;
+public static final int   COLLECTION_NUMBER_MAX     = 99;
+public static final float SEAT_WARMTH_PER_MINUTE    = 1.0f;
+public static final float RUMOUR_CHANCE_PER_NPC     = 0.25f;
+```
+
+---
+
+### `ArgosSystem` Unit Tests
+
+- `testIsOpenDuringWeekday()` — 09:00–18:00 returns true; 08:59 returns false; 18:01 returns false.
+- `testIsOpenSunday()` — 10:00–16:00 returns true; 09:59 returns false; 16:01 returns false.
+- `testCatalogueItemAvailability()` — `PORTABLE_RADIO` available on Monday; unavailable Tuesday.
+- `testOrderSlipAssigned()` — hand `ORDER_SLIP` to clerk; verify collection number 1–99 returned.
+- `testWaitTimerExpiry()` — advance time past `WAIT_TIME_MAX_SECONDS`; verify item added to inventory.
+- `testMissedCollectionRequeues()` — miss two collection calls; verify item returned to stock.
+- `testLaybyDeposit()` — start layby on 10-COIN item; verify 2 COIN deducted, `laybys` map populated.
+- `testLaybyCancelledAfterMissedPayments()` — miss 2 weekly payments; verify `CANCELLED` status, deposit lost.
+- `testReturnsOwnItem()` — buy `KETTLE`, return it; 60% success seeded random = true; verify COIN refunded.
+- `testReturnsOtherItem()` — add `KETTLE` to inventory without buying; attempt return; 30% success rate.
+- `testStolenGoodsReturnCaught()` — `STOLEN_GOODS` return, RNG set to caught path; verify `TRESPASS` offence added.
+- `testStolenGoodsReturnSucceeds()` — RNG set to pass; verify COIN refunded and `DODGY_DEALING` rumour seeded.
+- `testPencilTheftThreshold()` — steal 5 pencils; verify `TRESPASS` in `CriminalRecord`.
+- `testWrongItemChaosEvent()` — trigger `WRONG_ITEM` event; verify different material delivered or wait reset.
+- `testSystemDownPausesOrders()` — trigger `SYSTEM_DOWN`; verify all pending orders frozen for 3 minutes.
+- `testMarchettiDeadDrop()` — set respect ≥ 50, trigger dead-drop slip; hand to clerk; verify `MARCHETTI_PACKAGE` received.
+- `testNewspaperPublishedAfterLongOutage()` — `SYSTEM_DOWN` lasts 11 minutes with 6 affected NPCs; verify `NewspaperSystem` headline.
+
+---
+
+### Integration Tests — implement these exact scenarios
+
+1. **Full order cycle — browse, slip, wait, collect**: Place player inside `ARGOS` landmark during opening hours. Press E on `ARGOS_CATALOGUE`. Navigate to item 5519 (`KETTLE`, 6 COIN). Press ENTER to add to slip. Press E on `ARGOS_SLIP_TRAY`. Verify `ORDER_SLIP` in inventory. Press E on `ARGOS_CLERK` with slip selected. Verify clerk takes slip and announces a collection number (1–99). Advance time by `WAIT_TIME_MAX_SECONDS`. Verify player is within 10 blocks of counter. Verify `KETTLE` is in player inventory and 6 COIN has been deducted.
+
+2. **Missed collection re-queues item**: Run the order cycle as above. When the collection number is called, simulate player being > 10 blocks away for the first call (do not approach). Verify item is NOT delivered. Verify the order is re-queued and a second collection number is announced within the next `WAIT_TIME_MAX_SECONDS`. Approach counter on second call. Verify `KETTLE` delivered.
+
+3. **Layby deposit and completion**: Initiate a layby on `FOLDING_TABLE` (12 COIN). Verify 3 COIN (25% rounded — actually 20% = 2.4 → use `Math.ceil` → 3 COIN) deducted from inventory. Advance 5 in-game weeks (call `argosSystem.onWeekTick()` 5 times). Verify each tick deducts the instalment (≈ 2 COIN per week). Verify `argosSystem.getLaybyStatus()` returns `COMPLETE` after the 5th payment. Collect item: verify `FOLDING_TABLE` in inventory.
+
+4. **Stolen goods return triggers WantedSystem**: Add `STOLEN_JACKET` (a stolen-goods Material) to player inventory without buying it at Argos. Set RNG to caught path (`ArgosSystem.STOLEN_RETURN_CAUGHT_CHANCE = 1.0f`). Press E on `ARGOS_RETURNS_DESK` with `STOLEN_JACKET` selected. Verify `wantedSystem.getActiveOffences()` contains `OffenceType.THEFT`. Verify `ARGOS_MANAGER` NPC has spawned within 5 blocks of the returns desk.
+
+5. **Refused service at Wanted ≥ 2 stars**: Give player 2 wanted stars. Place player inside `ARGOS` landmark. Press E on `ARGOS_CLERK`. Verify no menu opens. Verify clerk's dialogue contains "I'm going to have to ask you to leave". Verify player is not arrested (refusal is passive, not an arrest trigger).
+
+6. **Marchetti dead-drop delivery**: Set `factionSystem.getRespect(Faction.MARCHETTI_CREW)` ≥ 50. Call `argosSystem.triggerDeadDropSlip()`. Verify an `ORDER_SLIP` with item `9999` appears at the slip tray. Hand it to clerk. Verify `MARCHETTI_PACKAGE` added to inventory. Locate the target NPC (`MARCHETTI_CREW` member). Press E to deliver. Verify player COIN increases by 10 and faction respect increases by 5.
+
+7. **`SYSTEM_DOWN` chaos event halts orders**: Place player with pending `ORDER_SLIP` in queue. Trigger `SYSTEM_DOWN` event (`argosSystem.triggerChaosEvent(ChaosEventType.SYSTEM_DOWN)`). Verify `argosSystem.isSystemDown()` returns true. Advance 3 in-game minutes. Verify `argosSystem.isSystemDown()` returns false. Verify the pending order resumes (wait timer continues from where it paused).
