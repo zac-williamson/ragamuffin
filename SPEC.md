@@ -28347,3 +28347,164 @@ probability (30%/hour), pickpocket success rate (40% hen-do, 20% normal).
 // New achievements: GEL_BANDIT, HEN_PARTY_HERO, UNDERCOVER_NAILS, SPARKY (add to AchievementType.java)
 // NAIL_TECH NPC type already present in NPCType.java
 // NAIL_SALON landmark already present in LandmarkType.java + WorldGenerator.java
+
+---
+
+## Issue #1108: Northfield Sporting & Social Club — Quiz Night, Darts Hustle & the AGM Conspiracy
+
+The Northfield Sporting & Social Club is a quintessential British members' club: sticky carpet, faded trophies, a cheap bar, and decades of barely-suppressed resentment simmering under a veneer of committee civility. All supporting data (NPC types `SOCIAL_CLUB_CHAIRMAN`, `SOCIAL_CLUB_BARMAN`, `MEMBER`; PropTypes `DARTBOARD_PROP`, `NOTICE_BOARD_PROP`, `MEMBERSHIP_DESK_PROP`, `CLUB_DOOR_PROP`, `TROPHY_CABINET_PROP`; achievements `DARTS_HUSTLER_CLUB`, `AGM_TROUBLEMAKER`, `QUIZ_NIGHT_CHAMPION`) already exist in the codebase. What's missing is:
+
+1. `LandmarkType.SPORTING_SOCIAL_CLUB` entry (with `getDisplayName()` → `"Northfield Sporting & Social Club"`)
+2. `SportingSocialClubSystem.java` implementing the full lifecycle
+
+### Building Layout
+
+A single-storey red-brick building (14×10×4 blocks), on the high street between the Wetherspoons side-alley and the Library. Entrance on the south face with `CLUB_DOOR_PROP`. Interior: bar area (west, `SOCIAL_CLUB_BARMAN` behind counter), main room (east, `DARTBOARD_PROP`, `TROPHY_CABINET_PROP`, 3× `TABLE_PROP` with chairs), `MEMBERSHIP_DESK_PROP` near entrance, and a `NOTICE_BOARD_PROP` in the lobby corridor. A small back room holds a card table (pontoon; locked at `MARCHETTI_CREW` Respect < 60).
+
+Open 12:00–23:00 daily. Friday/Saturday: doors locked at 23:00 for a lock-in (until 01:00) via `PubLockInSystem` integration.
+
+### Membership
+
+Membership tiers control access:
+- **Guest**: any player may enter during opening hours (free).
+- **Temp Member**: `STREET_LADS` Respect ≥ 40 OR a `MEMBER_INVITE` item; 2 COIN joining fee. Unlocks bar (half-price bitter) and `DARTBOARD_PROP`.
+- **Full Member**: `STREET_LADS` Respect ≥ 60; 5 COIN joining fee; unlocks AGM voting and back-room pontoon.
+
+Press E on `MEMBERSHIP_DESK_PROP` (Derek) to apply. Derek refuses Notoriety Tier ≥ 3 outright: "We're a respectable club." At Tier 2, he charges a 5-COIN "admin fee" (bribe) instead.
+
+### Events Schedule
+
+| Day/Time | Event |
+|----------|-------|
+| Mon/Wed/Fri 18:00–21:00 | Boxing Club (runs via existing `COMMUNITY_CENTRE` `BoxingSystem` hook — referencing it for cross-system synergy) |
+| Tue/Thu 20:00–22:00 | Darts Night — MEMBER NPCs use `DARTBOARD_PROP`; player can challenge |
+| Wed 20:00–22:00 | Quiz Night (full `BattleBarMiniGame` hook — 5 rounds, 3 points each) |
+| Sun 11:00–13:00 | AGM — committee-only by default; Full Members may attend |
+| Fri/Sat 23:00–01:00 | Lock-In (`PubLockInSystem` integration; 4–8 MEMBER NPCs, drinks at half price) |
+
+### Core Mechanics
+
+#### 1. Darts Mini-Game
+
+Press E on `DARTBOARD_PROP` during Darts Night to challenge the nearest `MEMBER` NPC for a 5 COIN side bet (or free-play at other times). Uses the existing `PubLockInSystem.DartsMinigame` inner class. `StreetSkillSystem.DARTS` skill applies accuracy bonus (existing `getDartsAccuracyBonus()` method).
+
+- **Win** 3 consecutive games: `DARTS_HUSTLER_CLUB` achievement unlocked.
+- **Thrown dart hits Keith** (SOCIAL_CLUB_BARMAN NPC within 1 block): Notoriety +5, Keith annoyed for the session.
+- **Rage-quit** (leave mid-game): `MEMBER` NPC becomes hostile, `ANTISOCIAL_BEHAVIOUR` rumour seeded.
+
+#### 2. Thursday Quiz Night
+
+Press E on any `TABLE_PROP` between 19:55–22:00 to join. 5 rounds of 3 questions each (15 total). Questions drawn from a pool of 60 British-culture, geography, sport, and pub-trivia strings (hardcoded). `StreetSkillSystem.KNOWLEDGE` gives +1 point per correct answer in the final round only.
+
+- **Score ≥ 12**: `QUIZ_NIGHT_CHAMPION` achievement, 5 COIN prize, Notoriety −2 (community respect).
+- **Score 7–11**: 2 COIN prize.
+- **Score ≤ 6**: Keith mocks the player at the bar.
+- **Cheat** (press F during a question to peek at a note — requires `CHEAT_SHEET` item): +2 points but 40% catch chance. If caught: ejected, Notoriety +5, `CriminalRecord.CrimeType.DISORDERLY_CONDUCT`.
+
+#### 3. Sunday AGM — The Committee Conspiracy
+
+The AGM runs 11:00–13:00 on Sundays. Full Members may attend. Derek (`SOCIAL_CLUB_CHAIRMAN`) chairs; 2–4 `MEMBER` NPCs sit at the table.
+
+Derek is secretly paying protection money to the Marchetti Crew (10 COIN/week, every Sunday evening after the AGM). At `MARCHETTI_CREW` Respect ≥ 50, the player can press E on Derek to discover this (he confides). At Respect < 50, the player can find evidence by picking up `EVIDENCE_PROP` (PROTECTION_LETTER) from the back room (requires `LOCKPICK`).
+
+**Motions mechanic**: during the AGM, 2 motions are voted on (randomly chosen from: raise bar prices, fix the car park, cancel the quiz night, expel a member, invite women, ban phones). Press E on `MEMBERSHIP_DESK_PROP` to vote. Vote succeeds if player + majority of `MEMBER` NPCs agree. Carrying out a successful motion yields Notoriety −3 and `AGM_TROUBLEMAKER` achievement (if the motion was contentious — defined as "cancel quiz night" or "expel a member").
+
+**Expose the corruption**: after obtaining `EVIDENCE_PROP` (PROTECTION_LETTER), player can:
+- **Report to police** (press E on any POLICE NPC): Derek arrested, Marchetti Respect −20, `COMMUNITY_SERVICE` achievement, `CriminalRecord` cleared of one minor charge.
+- **Blackmail Derek** (press E on Derek with item in inventory): Derek pays 15 COIN/week indefinitely. Seeds `FACTION_ACTIVITY` rumour. Marchetti aware after 2 weeks → Notoriety +10.
+- **Hand to the newspaper** (press E on `JOURNALIST` NPC in pub): `NewspaperSystem` headline "Corruption at the Club", NeighbourhoodSystem vibes +5.
+
+#### 4. The Back-Room Pontoon Game
+
+Locked door (`LOCKED_DOOR_PROP`) requires `MARCHETTI_CREW` Respect ≥ 60 or a `LOCKPICK`. Inside: a `CARD_TABLE_PROP`, 3 `MEMBER` NPC gamblers. Pontoon: player draws against a MEMBER dealer, bet 1–10 COIN per hand.
+
+- House always deals first. Deck is a standard shuffled 52-card set.
+- Win 5 consecutive hands: `CARD_SHARK` rumour seeded town-wide.
+- If player is caught inside without membership (Full): Notoriety +5, ejected.
+
+#### 5. Marchetti Protection Handover (Sunday 19:00)
+
+Every Sunday at 19:00, Derek meets a `FACTION_LIEUTENANT` NPC in the car park behind the club. They exchange a `BRIEFCASE_PROP`. Player can:
+- **Steal the briefcase** (E on `FACTION_LIEUTENANT` after exchange): 20 COIN inside, Marchetti Respect −30, `CRIME_BOSS` hostile for 3 days.
+- **Photograph with phone** (press F while within 4 blocks): get `EVIDENCE_PROP` (PROTECTION_PHOTO) usable in the blackmail/newspaper path above.
+- **Ambush** (attack `FACTION_LIEUTENANT`): full faction war trigger (existing `FactionSystem` flow).
+
+### Opening Hours
+
+| Day | Hours |
+|-----|-------|
+| Mon–Thu | 12:00–23:00 |
+| Fri–Sat | 12:00–01:00 (lock-in 23:00–01:00) |
+| Sun | 11:00–23:00 (AGM 11:00–13:00) |
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `MEMBER_INVITE` | Guest pass; obtained from a MEMBER NPC at STREET_LADS Respect ≥ 30 |
+| `CHEAT_SHEET` | Quiz answer crib; found in library or crafted from NEWSPAPER + PEN |
+| `PROTECTION_LETTER` | Evidence item; found in Derek's back-room desk |
+| `PROTECTION_PHOTO` | Evidence item; taken with player's phone |
+| `BRIEFCASE_PROP` | Contains 20 COIN; dropped on faction handover |
+
+(Add to `Material.java` if not present.)
+
+### New LandmarkType Required
+
+Add `SPORTING_SOCIAL_CLUB` to `LandmarkType.java` with `getDisplayName()` → `"Northfield Sporting & Social Club"`.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `DARTS_HUSTLER_CLUB` | Win 3 consecutive darts games vs MEMBERs at the club |
+| `AGM_TROUBLEMAKER` | Pass a contentious motion at the AGM |
+| `QUIZ_NIGHT_CHAMPION` | Score ≥ 12 at Quiz Night |
+| `CARD_SHARK` | Win 5 consecutive hands of back-room pontoon |
+| `GRASS` | Report Derek's protection racket to police |
+| `BENT_ACCOUNTANT` | Blackmail Derek successfully for 2 consecutive weeks |
+
+(Add to `AchievementType.java` if not present — `DARTS_HUSTLER_CLUB`, `AGM_TROUBLEMAKER`, `QUIZ_NIGHT_CHAMPION` already exist.)
+
+### System Integrations
+
+- **PubLockInSystem**: Friday/Saturday lock-in from 23:00; DartsMinigame reused.
+- **BattleBarMiniGame**: Quiz Night question/answer loop.
+- **StreetSkillSystem**: `DARTS` accuracy bonus; `KNOWLEDGE` quiz bonus.
+- **FactionSystem**: `MARCHETTI_CREW` Respect gates back room and protection reveal; Marchetti reaction on theft/expose.
+- **NotorietySystem**: membership refusal thresholds; darts ejection; cheat catch.
+- **WantedSystem**: refused entry at Tier 2+ (Keith informs door) without bribe.
+- **CriminalRecord**: `DISORDERLY_CONDUCT` for quiz cheat; `THEFT` for briefcase.
+- **RumourNetwork**: `ANTISOCIAL_BEHAVIOUR` on darts rage-quit; `FACTION_ACTIVITY` on blackmail; `CARD_SHARK` on pontoon streak.
+- **NewspaperSystem**: "Corruption at the Club" headline on newspaper expose.
+- **NeighbourhoodSystem**: community vibes +5 on newspaper headline.
+- **EvidenceSystem / WitnessSystem**: `PROTECTION_LETTER`/`PROTECTION_PHOTO` as evidence items.
+- **TimeSystem**: all event scheduling (Darts Night, Quiz, AGM, lock-in, handover).
+- **WarmthSystem**: indoor warmth shelter during open hours.
+- **WeatherSystem**: rain adds +2 MEMBER NPCs at bar (seeking shelter).
+- **NoiseSystem**: Quiz Night ambient +10; lock-in +15.
+
+**Unit tests**: membership tier gating (Guest/Temp/Full access rules), quiz scoring (correct ≥ 12 → champion, ≤ 6 → mocked), darts hustle 3-win streak detection, AGM motion success condition (player + majority), pontoon deck shuffle and win detection, protection handover time check (Sunday 19:00 only), briefcase coin contents.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Full membership grants back-room access**: Set `MARCHETTI_CREW` Respect = 60. Apply for Full Membership (E on `MEMBERSHIP_DESK_PROP`, pay 5 COIN). Attempt to open `LOCKED_DOOR_PROP` to back room. Verify door opens (player passes through). Verify `CARD_TABLE_PROP` is present inside.
+
+2. **Darts hustle 3-win streak unlocks achievement**: Start Darts Night (set time Tue 20:30). Challenge MEMBER NPC (E on `DARTBOARD_PROP`). Force-win 3 consecutive games (stub `DartsMinigame.playerScore` = 301 each time). Verify `DARTS_HUSTLER_CLUB` achievement unlocked after the third win.
+
+3. **Quiz cheat caught triggers disorderly conduct**: Join Quiz Night (E on TABLE_PROP, Tue 20:05). Give player `CHEAT_SHEET`. During a question, press F. Force the 40% catch probability to trigger (seed Random so first call returns < 0.4). Verify player is ejected (position outside building). Verify Notoriety increased by 5. Verify `CriminalRecord` contains `DISORDERLY_CONDUCT`.
+
+4. **AGM motion passes with majority**: Set day Sunday 11:30. Attend AGM as Full Member. Force motion = "cancel quiz night". Vote E on `MEMBERSHIP_DESK_PROP`. Stub 3 MEMBER NPCs to also vote yes. Verify motion passes. Verify `AGM_TROUBLEMAKER` achievement unlocked. Verify Notoriety decreased by 3.
+
+5. **Protection letter blackmail yields weekly payment**: Obtain `PROTECTION_LETTER` from back room. Press E on Derek with item in inventory. Select blackmail option. Advance time 7 in-game days. Verify player COIN increased by 15. Verify `FACTION_ACTIVITY` rumour seeded. Advance another 7 days (total 14). Verify `BENT_ACCOUNTANT` achievement unlocked.
+
+6. **Marchetti handover theft triggers faction hostility**: Set Sunday 19:00. Observe `FACTION_LIEUTENANT` NPC in car park. Wait for exchange (BRIEFCASE_PROP in lieutenant's hands). Press E on `FACTION_LIEUTENANT`. Verify player inventory contains 20 COIN. Verify `MARCHETTI_CREW` Respect decreased by 30. Verify `CRIME_BOSS` NPC hostility flag = true.
+
+// ── New: SportingSocialClubSystem.java in ragamuffin.core
+// New LandmarkType: SPORTING_SOCIAL_CLUB (add to LandmarkType.java)
+// New materials if absent: MEMBER_INVITE, CHEAT_SHEET, PROTECTION_LETTER, PROTECTION_PHOTO (add to Material.java)
+// New PropTypes if absent: CARD_TABLE_PROP, LOCKED_DOOR_PROP (add to PropType.java if not present)
+// Existing props reused: DARTBOARD_PROP, MEMBERSHIP_DESK_PROP, NOTICE_BOARD_PROP, CLUB_DOOR_PROP, TROPHY_CABINET_PROP
+// Existing NPCs reused: SOCIAL_CLUB_CHAIRMAN (Derek), SOCIAL_CLUB_BARMAN (Keith), MEMBER, FACTION_LIEUTENANT
+// New achievements if absent: CARD_SHARK, GRASS, BENT_ACCOUNTANT (add to AchievementType.java)
+// Existing achievements reused: DARTS_HUSTLER_CLUB, AGM_TROUBLEMAKER, QUIZ_NIGHT_CHAMPION
