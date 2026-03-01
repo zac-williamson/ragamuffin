@@ -2170,7 +2170,22 @@ public enum Material {
      * Police nearby adds SUSPICIOUS_PACKAGE suspicion to CriminalRecord.
      * Tooltip: "Don't open it. Seriously."
      */
-    MARCHETTI_PACKAGE("Marchetti Package");
+    MARCHETTI_PACKAGE("Marchetti Package"),
+
+    // ── Issue #1045: Northfield Council Flats ────────────────────────────────
+
+    /**
+     * Parcel Delivery — a parcel collected from the Post Office for a FLAT_RESIDENT
+     * side-quest. Delivering it earns 3 COIN. Single use; consumed on delivery.
+     */
+    PARCEL_DELIVERY("Parcel Delivery"),
+
+    /**
+     * Master Key — earned by completing Donna's eviction quest chain (tower 1).
+     * Opens any FLAT_DOOR_PROP in tower 1 without knocking.
+     * Tooltip: "Opens every door on the estate. Don't lose it."
+     */
+    MASTER_KEY("Master Key");
 
     private final String displayName;
 

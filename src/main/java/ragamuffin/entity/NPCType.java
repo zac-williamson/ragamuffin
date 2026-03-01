@@ -1042,7 +1042,20 @@ public enum NPCType {
      *         "Oi — what d'you think you're doing?" /
      *         "Cheers — the lads have been struggling."
      */
-    WATCH_COMMANDER(50f, 8f, 2.0f, false);
+    WATCH_COMMANDER(50f, 8f, 2.0f, false),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1045: Northfield Council Flats NPCs
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Flat Resident — a council estate resident NPC.
+     * Emerges from their flat 06:00–23:00 and wanders between the lobby,
+     * corner shop, and park. Returns home at 23:00.
+     * If the lift is broken, mutters "That bloody lift!"
+     * Passive; never hostile unless provoked.
+     */
+    FLAT_RESIDENT(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
