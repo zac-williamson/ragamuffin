@@ -1140,7 +1140,30 @@ public enum NPCType {
      * Speech: "Right, what are we dealing with today?" / "That'll be four pounds, please."
      *         / "Keep him warm and give him plenty of water."
      */
-    VET(20f, 0f, 0f, false);
+    VET(20f, 0f, 0f, false),
+
+    // ── Issue #1085: Northfield Internet Café — Cybernet ─────────────────────
+
+    /**
+     * Asif — the owner of Cybernet internet café. Calm, seen-it-all attitude.
+     * Present daily 09:00–18:00. Sells terminal time (1 COIN = 10 min), enforces
+     * the no-food rule, and will call police if props are damaged.
+     * At Notoriety ≥ 60: "I know who you are, mate — pay upfront, no trouble."
+     * At Notoriety ≥ 80: refuses service entirely.
+     * Watches for printer fraud 09:00–18:00; 10% base chance to detect.
+     * Speech: "Terminal's 1 coin a session, mate." / "I didn't see nothin'."
+     */
+    INTERNET_CAFE_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * Hamza — Asif's teenage nephew, evening shift assistant at Cybernet.
+     * Present 18:00–23:00. Bored, on his phone; shares LOCAL_EVENT rumours
+     * freely if player buys him an energy drink from the vending machine.
+     * 25% chance to notice and report printer abuse (evening only).
+     * If tipped (energy drink received): seeds LOCAL_EVENT rumour.
+     * Speech: "Cheers mate." / "I'll put the word out." / "Don't tell my uncle."
+     */
+    INTERNET_CAFE_ASSISTANT(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

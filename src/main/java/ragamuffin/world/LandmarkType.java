@@ -411,7 +411,29 @@ public enum LandmarkType {
      * <p>Integrates with PetShopSystem, PigeonRacingSystem, NotorietySystem,
      * WantedSystem, WitnessSystem, CriminalRecord, RumourNetwork, AchievementSystem.
      */
-    VET_SURGERY;
+    VET_SURGERY,
+
+    // ── Issue #1085: Northfield Internet Café — Cybernet ─────────────────────
+
+    /**
+     * Cybernet — a narrow 8×10×3 brick shopfront on the high street, between
+     * the Off-Licence and Poundstretcher.
+     *
+     * <p>Interior: six {@code INTERNET_TERMINAL} props in two rows of three,
+     * a repurposed counter (Asif behind it), a {@code VENDING_MACHINE_PROP}
+     * (instant noodles, energy drinks — 1 COIN each), a {@code PRINTER_PROP},
+     * and a BACK_ROOM behind a locked {@code DOOR_PROP}. Outside: a neon
+     * OPEN/CLOSED sign.
+     *
+     * <p>Open daily 09:00–23:00. Run by Asif ({@code INTERNET_CAFE_OWNER} NPC);
+     * nephew Hamza ({@code INTERNET_CAFE_ASSISTANT} NPC) covers 18:00–23:00.
+     *
+     * <p>Integrates with InternetCafeSystem, FenceSystem, PirateRadioSystem,
+     * PhoneRepairSystem, JobCentreSystem, FactionSystem, NotorietySystem,
+     * WantedSystem, CriminalRecord, DisguiseSystem, NeighbourhoodSystem,
+     * WeatherSystem, NoiseSystem, WitnessSystem, RumourNetwork, AchievementSystem.
+     */
+    INTERNET_CAFE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -489,6 +511,7 @@ public enum LandmarkType {
             case MAGISTRATES_COURT:     return "Northfield Magistrates' Court";
             case PET_SHOP:              return "Paws 'n' Claws";
             case VET_SURGERY:           return "Northfield Vets";
+            case INTERNET_CAFE:         return "Cybernet";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
