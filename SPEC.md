@@ -24396,3 +24396,233 @@ A `BOXING_COACH` NPC (`COUNCIL_MEMBER` type, named **"Ray"**) runs sessions in t
 
 // StreetSkillSystem.Skill addition:
 // BOXING,  // max level 10; damage bonus: +2 at lvl 3, +5 at lvl 6
+
+## Issue #1063: Add Northfield Working Men's Social Club — Members-Only Beer, Dominoes League & the Concert Night Racket
+
+**LandmarkType**: `SOCIAL_CLUB` → display name `"Northfield Social Club"`
+
+The Northfield Social Club is a distinctly British institution: a members-only working men's club
+that predates the estate by forty years. It smells of stale Bass and carpet cleaner. The committee
+runs it like a tin-pot dictatorship. The beer is 80p a pint cheaper than anywhere else in Northfield,
+which is why everyone puts up with Derek the steward.
+
+---
+
+### SocialClubSystem.java
+
+**Core state**
+
+```java
+private final Set<String> memberIds = new HashSet<>();  // NPC/player IDs with valid membership
+private boolean playerIsMember = false;
+private int playerMembershipDaysRemaining = 0;
+private boolean committeeElectionPending = false;
+private String currentChairman = "Derek";  // changes after election
+```
+
+**Membership mechanics**
+- Full membership: purchased at the bar for 5 COIN, grants permanent access; stored in
+  `memberIds`. Non-members are turned away at the door by `STEWARD` NPC Derek.
+- Temporary membership: a `TOUT` NPC lurks outside 19:00–23:00 selling "guest passes" for
+  1 COIN each, valid for one session (until the club closes at 23:00). The tout's pass is
+  technically valid — Derek grumbles but lets it go.
+- If the player enters without membership and no guest pass, Derek says one of:
+  - "Members only, pal. Join up at the bar — five quid."
+  - "You got a guest pass? No? Off you go then."
+  - "This isn't a pub, son. It's a club. There's a difference."
+- Membership card item: `Material.MEMBERSHIP_CARD` — "Northfield Social Club. Est. 1963. No
+  football colours."
+
+**Beer & snacks**
+- The bar sells: PINT (80p, i.e. cost `1 COIN`), PACK_OF_NUTS (1 COIN), PORK_SCRATCHINGS (1 COIN)
+- Only accessible to members/pass-holders
+- Drinking 3+ pints in one session sets player drunk; drunk player can start `PUB_FIGHT` at 20%
+  chance per additional pint (triggers `WetherspoonsSystem`-style ejection logic)
+
+**Dominoes League (Tuesday & Thursday 19:00–22:00)**
+- 4 PENSIONER NPCs and 1 COUNCIL_BUILDER NPC sit at tables playing dominoes
+- Player can challenge any seated NPC for a 2 COIN stake via `E` key
+- Dominoes mini-game: simplified — player draws 7 tiles from a pool of 28, takes turns placing
+  matching tiles; first to empty hand wins; if stuck, draws from boneyard; if boneyard empty,
+  lowest pip count wins
+- Winning grants 2 COIN + `RumourNetwork` rumour: `RumourType.LOCAL_EVENT` "Someone beat Reg
+  at dominoes. He's not happy about it."
+- Losing: NPC taunts player with flavour line; player loses stake
+
+**Concert Night (Saturday 20:00–23:00)**
+- A `CLUB_SINGER` NPC (Dave, performs as "Diamond Dave") performs on stage at `STAGE_PROP`
+- Songs: alternates between a Neil Diamond medley, a Tom Jones number, and "Sweet Caroline" singalong
+- During "Sweet Caroline": all PENSIONER NPCs in the room chant "Ba ba ba!" (speech bubble)
+- Player can tip Dave 1 COIN; at 5 COIN total tips Dave adds a special request (player chooses
+  from 3 songs)
+- Concert raises Warmth by +15 and mood (WarmthSystem shelter bonus applies — building counts
+  as warm shelter)
+
+**Committee Drama (random events, one per real-time minute of play)**
+
+Events triggered randomly while player is inside:
+1. `COMMITTEE_ARGUMENT` — Two `COMMITTEE_MEMBER` NPCs argue about whether to spend the social
+   fund on a new carpet or a karaoke machine. Player can intervene (press E) to side with one;
+   siding with carpet gives 5 faction respect with PENSIONERS; karaoke side gives 5 respect
+   with YOUTH_GANG (word gets out).
+2. `RAFFLE_DRAW` — Derek announces a raffle draw. Player holding a `RAFFLE_TICKET` item has a
+   1-in-6 chance to win a `Material.MEAT_RAFFLE_PRIZE` (a frozen chicken) worth 4 COIN.
+   Raffle tickets cost 1 COIN each; player can buy up to 3.
+3. `COMMITTEE_ELECTION` — Once per in-game week, Derek announces an election. Player can
+   nominate themselves (requires membership). If elected (random 40% base chance, +20% if
+   dominoes win recorded), `currentChairman` becomes `"Player"`. Elected player gets 10%
+   discount on all bar prices and can ban one NPC type from the club for 1 in-game day.
+
+**Steward Derek (STEWARD NPC)**
+- Roams the bar area 10:00–23:00
+- Delivers flavour lines every 60 seconds:
+  - "We don't serve Kronenbourg. This is a proper club."
+  - "There's a sign-in book. You did sign in, didn't you?"
+  - "I've been steward here twenty-two years. Twenty-two years."
+  - "The fruit machine's been serviced. It won't pay out any better, but it's been serviced."
+  - "Dinner tickets stop at half seven. I don't make the rules. I just enforce them."
+- Derek is unkickable (his `NPCState` resets to `IDLE` if set to `FLEEING` — he's seen worse)
+
+**Integrations**
+- `WarmthSystem`: building interior counts as warm shelter (warmth +20/min while inside)
+- `RumourNetwork`: committee events seed rumours of type `LOCAL_EVENT`
+- `NotorietySystem`: starting a fight inside raises Notoriety +5; getting banned by Derek
+  raises it +2 (word gets around)
+- `FactionSystem`: election win grants +10 respect with PENSIONERS faction; banning YOUTH_GANG
+  NPCs grants +5 PENSIONERS / -10 YOUTH_GANG
+- `AchievementSystem`: three new achievements (see below)
+- `FruitMachine`: an existing `FruitMachine` instance inside the club; members can use it
+  (no entry fee beyond membership)
+- `BusSystem`: `BUS_STOP_HIGH_STREET` stops outside; club appears on bus route map
+
+---
+
+### PropType additions
+
+```java
+// STAGE_PROP(3.00f, 0.50f, 2.00f, 6, Material.WOOD),
+// DOMINOES_TABLE_PROP(1.20f, 0.80f, 0.70f, 4, Material.WOOD),
+// CLUB_NOTICEBOARD_PROP(0.10f, 1.20f, 0.05f, 3, Material.WOOD),
+// BAR_HATCH_PROP(1.50f, 1.00f, 0.10f, 5, Material.WOOD),
+```
+
+---
+
+### Material additions
+
+```java
+// MEMBERSHIP_CARD("Northfield Social Club. Est. 1963. No football colours.", 5),
+// PACK_OF_NUTS("Dry roasted. Half of them are skin.", 1),
+// PORK_SCRATCHINGS("Technically food.", 1),
+// RAFFLE_TICKET("You've probably not won.", 1),
+// MEAT_RAFFLE_PRIZE("A frozen chicken. Still in the bag.", 4),
+```
+
+---
+
+### NPCType additions
+
+```java
+// STEWARD(25f, 0f, 0f, false),          // Derek — club steward, won't flee
+// CLUB_SINGER(25f, 0f, 0f, false),      // Dave / Diamond Dave — Sat 20–23
+// COMMITTEE_MEMBER(20f, 0f, 0f, false), // two committee members, always present
+// TOUT(20f, 0f, 0f, false),             // guest pass seller, outside 19–23
+```
+
+---
+
+### AchievementType additions
+
+```java
+// SOCIAL_CLUB_MEMBER,       // Purchase full membership
+// DIAMOND_DAVE_SUPER_FAN,   // Tip Dave 5 COIN in one concert night
+// CLUB_CHAIRMAN,            // Win the committee election
+```
+
+---
+
+### LandmarkType addition
+
+```java
+// SOCIAL_CLUB,              // "Northfield Social Club"
+```
+
+---
+
+### Unit tests
+
+1. **Membership gate**: Non-member player triggers Derek dialogue line. Pass-holder bypasses gate.
+   Full member bypasses gate silently.
+2. **Dominoes stake**: Player wins dominoes with stake 2 COIN — verify inventory +4 COIN (stake
+   returned + winnings). Player loses — verify inventory -2 COIN.
+3. **Raffle odds**: Over 600 simulated draws with 1 ticket each, verify win rate is between
+   12% and 22% (expected ~16.7%).
+4. **Concert warmth**: While CLUB_SINGER is active (Saturday 20:30), verify `WarmthSystem`
+   grants shelter bonus each update tick.
+5. **Derek state reset**: Set Derek's NPCState to FLEEING. Call update(). Verify state resets
+   to IDLE.
+6. **Election probability**: Simulate 100 elections without prior dominoes win; verify
+   win count is between 30 and 50 (expected 40%).
+
+---
+
+### Integration tests
+
+1. **Full session flow — member enters, drinks, plays dominoes, wins raffle**:
+   Set player as member. Set time to Thursday 19:30. Call `update()` for 10 ticks. Verify
+   4 PENSIONER NPCs are seated at `DOMINOES_TABLE_PROP`. Player challenges Reg (first PENSIONER).
+   Force player win. Verify player inventory +2 COIN. Player buys 3 raffle tickets, calls
+   `triggerRaffle()` with forced win seed. Verify `MEAT_RAFFLE_PRIZE` in inventory.
+
+2. **Non-member bounced, guest pass admitted**:
+   Set player not a member, no guest pass. Press E on door. Verify Derek speech line delivered and
+   player position unchanged (blocked). Give player a guest pass item. Press E on door. Verify
+   player enters (position changes). Verify guest pass consumed from inventory.
+
+3. **Concert night singalong**:
+   Set time to Saturday 21:00. Add 6 PENSIONER NPCs inside. Call `update()` for 5 ticks through
+   "Sweet Caroline" moment. Verify at least 4 PENSIONER NPCs have speech bubble `"Ba ba ba!"`.
+
+4. **Committee election changes chairman**:
+   Set `playerIsMember = true`, inject a prior dominoes win. Call `triggerElection()` with
+   forced-win seed. Verify `currentChairman` equals `"Player"`. Verify PENSIONERS faction
+   respect increased by 10. Verify bar price for PINT is `1` (discounted from normal 2, as 10%
+   rounds to same; adjust: make discount make PACK_OF_NUTS free or give a visible flag).
+
+5. **Fight ejection raises notoriety**:
+   Set player drunk (3 pints consumed this session). Simulate additional pint purchase.
+   Force `PUB_FIGHT` trigger. Verify `NotorietySystem` notoriety increased by 5. Verify player
+   position is outside the club (ejected by Derek).
+
+6. **Tout sells valid guest pass outside hours**:
+   Set time to 18:59. Verify TOUT NPC is not spawned. Set time to 19:01. Verify TOUT NPC spawned
+   outside club. Player approaches and presses E. Verify `MEMBERSHIP_CARD` (guest pass variant)
+   added to inventory for 1 COIN deducted.
+
+// ── Issue #1063: Social Club ───────────────────────────────────────────────
+// PropType additions (add to PropType enum):
+// STAGE_PROP(3.00f, 0.50f, 2.00f, 6, Material.WOOD),
+// DOMINOES_TABLE_PROP(1.20f, 0.80f, 0.70f, 4, Material.WOOD),
+// CLUB_NOTICEBOARD_PROP(0.10f, 1.20f, 0.05f, 3, Material.WOOD),
+// BAR_HATCH_PROP(1.50f, 1.00f, 0.10f, 5, Material.WOOD),
+
+// Material additions (add to Material enum):
+// MEMBERSHIP_CARD("Northfield Social Club. Est. 1963. No football colours.", 5),
+// PACK_OF_NUTS("Dry roasted. Half of them are skin.", 1),
+// PORK_SCRATCHINGS("Technically food.", 1),
+// RAFFLE_TICKET("You've probably not won.", 1),
+// MEAT_RAFFLE_PRIZE("A frozen chicken. Still in the bag.", 4),
+
+// NPCType additions:
+// STEWARD(25f, 0f, 0f, false),
+// CLUB_SINGER(25f, 0f, 0f, false),
+// COMMITTEE_MEMBER(20f, 0f, 0f, false),
+// TOUT(20f, 0f, 0f, false),
+
+// AchievementType additions:
+// SOCIAL_CLUB_MEMBER,
+// DIAMOND_DAVE_SUPER_FAN,
+// CLUB_CHAIRMAN,
+
+// LandmarkType addition:
+// SOCIAL_CLUB,   // "Northfield Social Club"
