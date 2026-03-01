@@ -159,7 +159,29 @@ public class CriminalRecord {
          * or slipping a DODGY_PIE to a greyhound. Triggered by SECURITY_GUARD or
          * KENNEL_HAND detection. Penalty: +10 Notoriety.
          */
-        RACE_FIXING("Race fixing");
+        RACE_FIXING("Race fixing"),
+
+        // ── Issue #985: Northfield Police Station ────────────────────────────
+
+        /**
+         * Recorded when the player breaks out of a custody cell using a LOCKPICK.
+         * Penalty: WantedSystem +3 stars, station-wide hostile alert for 120 seconds.
+         */
+        ESCAPE_FROM_CUSTODY("Escape from custody"),
+
+        /**
+         * Recorded when a DETECTIVE or DETENTION_OFFICER catches the player inside
+         * the evidence locker without authorisation.
+         * Penalty: WantedSystem +2 stars, station-wide hostile alert.
+         */
+        EVIDENCE_TAMPERING("Evidence tampering"),
+
+        /**
+         * Recorded when the player provides a false tip to the DUTY_SERGEANT and is
+         * caught (20% chance of immediate detection).
+         * Penalty: +2 Notoriety.
+         */
+        FALSE_REPORT("False report");
 
         private final String displayName;
 
