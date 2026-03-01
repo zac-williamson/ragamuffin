@@ -16063,3 +16063,145 @@ entry-fee deduction; Notoriety Tier 4+ entry block.
 8. **Wednesday rumour is seeded at 19:00**: Set TimeSystem to Wednesday 19:00. Advance 1
    frame. Verify `RumourNetwork` contains at least 1 rumour from the BARMAN NPC with text
    containing "Quiz night" or "quiz".
+
+---
+
+## Add Northfield Canal — Fishing, Towpath Trouble & Evidence Disposal
+
+**Goal**: Bring the `CANAL` landmark to life as an interactive waterway on the edge of
+Northfield. Players can fish using a homemade rod, dump stolen goods and evidence into
+the cut to reduce Notoriety, risk a late-night towpath mugging, and interact with
+`CANAL_BOAT` NPC squatters who trade rare items. Swimming in the canal lowers Warmth
+rapidly and triggers a Notoriety check if a PCSO sees you. At night the canal is dark
+and dangerous; by day it is a quiet escape with ambient sound.
+
+### Core Systems
+
+**`CanalSystem`** (new class in `ragamuffin.core`)
+
+- Manages fishing state machine: `IDLE → CASTING → WAITING → BITE → REELING → CATCH_OR_SNAP`.
+- Tracks active fishing sessions per player, towpath mugging cooldown, and canal boat trade schedule.
+- Integrates with `WeatherSystem`: rain increases fish bite rate by +25%; frost halves it.
+- Integrates with `TimeSystem`: fishing is viable 06:00–22:00. At night (22:00–06:00) the
+  towpath mugging hazard activates.
+
+**Fishing mechanic** (press **E** on the canal bank while holding a `FISHING_ROD`):
+- On interact, state → `CASTING`. A HUD prompt shows *"Press E to reel in"*.
+- Wait time: 15–45 in-game seconds (random, modified by weather).
+- If player presses **E** during `WAITING`, state → `BITE` → brief screen-shake → `REELING`.
+- During `REELING`, player must press **E** repeatedly (mashing, 3–6 presses) within a 4-second
+  window. Success → catch. Failure → `SNAP` (rod durability −1; at 0 durability, rod breaks).
+- **Catch table** (uniform random):
+  - `FISH_ROACH` (40%) — *"A small roach. Edible, barely."*
+  - `FISH_BREAM` (25%) — *"A chunky bream. Decent size."*
+  - `FISH_PERCH` (15%) — *"A stripey perch. Not bad."*
+  - `FISH_PIKE` (10%) — *"A pike! Heavy. Could sell this."*
+  - `SHOPPING_TROLLEY` (8%) — *"You've caught a Tesco trolley. Classic."* (provides SCRAP_METAL × 2)
+  - `OLD_BOOT` (2%) — *"An old boot. You throw it back."* (no item)
+- Each fish item is a new `Material`: `FISH_ROACH`, `FISH_BREAM`, `FISH_PERCH`, `FISH_PIKE`.
+- Fish can be eaten raw for small hunger (+8) but risk food poisoning (20% chance, −10 HP over
+  30 seconds) OR cooked at a `CampfireSystem` fire for full hunger (+25) with no risk.
+- Fish can be sold to the `CANAL_BOAT_NPC` for 1–5 COIN depending on type.
+
+**Crafting — `FISHING_ROD`** (`Material.FISHING_ROD`):
+- Recipe: `WOOD` × 1 + `SCRAP_METAL` × 1 + `CARDBOARD` × 1 (repurposed as line).
+- Durability: 5 uses. On break, drops `SCRAP_METAL` × 1.
+- Add recipe to `CraftingSystem`.
+
+**Evidence Disposal** (press **E** on canal water block while holding a `STOLEN_PHONE`,
+`STOLEN_JACKET`, or any `EvidenceType` item):
+- Prompt: *"Dump it in the cut? [E] Yes"*.
+- On confirm: item removed from inventory; `NotorietySystem.reduceNotoriety(8)`.
+- If a `WITNESS` NPC or `POLICE` NPC is within 12 blocks: disposal is witnessed →
+  Notoriety reduced by only 2 instead of 8 + `WitnessSystem.recordWitness(LITTERING)`.
+- Adds a `LITTER` rumour to `RumourNetwork`: *"Someone chucked something in the canal.
+  Wouldn't want to be swimming in it."*
+
+**Swimming** (player walks into WATER block at canal):
+- Warmth −3/second while in water.
+- Movement speed halved.
+- If `TimeSystem.isNight()`: Notoriety +2 immediately (reckless behaviour).
+- PCSO/POLICE within 8 blocks: Notoriety +5 + speech *"Oi! Out of the water!"*.
+
+**Towpath Mugging** (night hazard, 22:00–05:00):
+- Every 2 in-game minutes, 15% chance a `YOUTH_GANG` NPC spawns at one end of the
+  canal towpath and walks toward the player.
+- If the youth reaches the player: demands *"Wallet. Now."* — player loses between 2–5
+  COIN (random). Player can refuse (triggers combat) or comply.
+- Mugging cooldown: 10 in-game minutes after each event.
+- If player has Notoriety ≥ Tier 3, the youth NPCs instead flee from the player.
+
+**Canal Boat Squatters** (`CANAL_BOAT_NPC` — reuse `TUNNEL_DWELLER` type for now):
+- One named NPC: **Barge Baz** (`TUNNEL_DWELLER`, spawned at the canal landmark).
+- Trades during daylight (08:00–20:00) using a simple barter menu (press **E**).
+- Buys: `FISH_PIKE` for 5 COIN, `FISH_BREAM` for 3 COIN, `FISH_ROACH` for 1 COIN.
+- Sells: `PETROL_CAN` for 6 COIN, `SCRAP_METAL` for 2 COIN, `ROPE` (new) for 3 COIN.
+  `ROPE` (`Material.ROPE`) is used in the crafting recipe for a `GRAPPLING_HOOK`.
+- Speech line on first meet: *"Alright, mate. Not many come down the towpath these days.
+  What you after?"*
+
+**New Materials**:
+- `FISHING_ROD` (`Material.FISHING_ROD`) — craftable tool with 5 durability.
+- `FISH_ROACH` (`Material.FISH_ROACH`) — small edible fish.
+- `FISH_BREAM` (`Material.FISH_BREAM`) — medium edible fish.
+- `FISH_PERCH` (`Material.FISH_PERCH`) — medium edible fish.
+- `FISH_PIKE` (`Material.FISH_PIKE`) — large fish, sellable.
+- `ROPE` (`Material.ROPE`) — crafting component sold by Barge Baz.
+
+**Achievements**:
+- `AchievementType.CANAL_CATCH` — catch your first fish.
+- `AchievementType.TROLLEY_FISHERMAN` — catch a shopping trolley.
+- `AchievementType.EVIDENCE_IN_THE_CUT` — dump evidence in the canal successfully without a witness.
+- `AchievementType.NIGHT_SWIMMER` — enter the canal water after 22:00.
+
+**Rumour Integration**:
+- On a `FISH_PIKE` catch: `RumourNetwork` seeds a `SHOP_NEWS` rumour:
+  *"Someone pulled a proper pike out of the canal. Must be six pounds at least."*
+- On towpath mugging: a `GANG_ACTIVITY` rumour: *"The towpath's not safe after dark.
+  Someone got done over by the canal again."*
+
+**Unit tests**: Catch-table probability distribution; fishing rod durability decrement on snap;
+evidence disposal Notoriety reduction with and without witness; swimming Warmth drain rate;
+towpath mugging spawn probability and cooldown; Barge Baz trade prices; fish edibility HP
+and food-poisoning chance; recipe validity (`WOOD` + `SCRAP_METAL` + `CARDBOARD` → `FISHING_ROD`).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Catch a fish**: Equip player with `FISHING_ROD`. Stand adjacent to a WATER block at
+   `CANAL` landmark. Press E (cast). Advance time by 30 in-game seconds. Press E (reel).
+   Simulate 5 rapid E presses within 4 seconds. Verify player inventory contains exactly
+   1 fish item (any of `FISH_ROACH`, `FISH_BREAM`, `FISH_PERCH`, `FISH_PIKE`) OR
+   `SCRAP_METAL` (trolley) and `CanalSystem.getState()` returns `IDLE`.
+
+2. **Rod snaps on failed reel**: Equip `FISHING_ROD` with durability = 1. Cast. During
+   `REELING` window, do NOT press E (let timer expire). Verify rod durability = 0. Verify
+   rod is removed from inventory. Verify `SCRAP_METAL` count increased by 1.
+
+3. **Evidence disposal without witness**: Give player 1 `STOLEN_PHONE`. Stand at canal
+   WATER block with no NPC within 12 blocks. Press E, confirm. Verify `STOLEN_PHONE`
+   is removed from inventory. Verify Notoriety reduced by 8. Verify `RumourNetwork`
+   contains a rumour with text containing "canal".
+
+4. **Evidence disposal witnessed**: Give player 1 `STOLEN_JACKET`. Place a `POLICE` NPC
+   8 blocks away. Press E on canal water, confirm. Verify Notoriety reduced by only 2
+   (not 8). Verify `WitnessSystem` has recorded a `LITTERING` witness event.
+
+5. **Swimming at night raises Notoriety**: Set time to 23:00. Player walks into WATER
+   block at canal. Verify `WarmthSystem` is reducing warmth (warmth value decreases over
+   2 seconds). Verify Notoriety increased by 2. Verify player movement speed is halved
+   (compare actual distance moved in 60 frames vs normal).
+
+6. **Towpath mugging at night**: Set time to 23:00. Set mugging cooldown to 0. Force
+   RNG to trigger the 15% mugging spawn. Advance 2 in-game minutes. Verify a `YOUTH_GANG`
+   NPC has spawned near the canal towpath. Advance until NPC reaches player. Verify player
+   loses 2–5 COIN on compliance. Verify mugging cooldown is reset to 10 in-game minutes.
+
+7. **Barge Baz trade**: Spawn `TUNNEL_DWELLER` NPC with ID "barge_baz" at canal. Give
+   player 1 `FISH_PIKE`. Press E on Barge Baz. Select sell FISH_PIKE. Verify FISH_PIKE
+   removed from inventory and player gains 5 COIN. Verify Barge Baz's stock of `ROPE`
+   is available for purchase.
+
+8. **Fish eaten raw causes poisoning**: Give player 1 `FISH_ROACH`. Use (consume) it.
+   Verify player hunger increased by 8. Force poisoning RNG to ≥ 0.80 (20% trigger zone
+   flipped: ≥ 0.80 = poisoned). Over 30 seconds of game time, verify player HP decreases
+   by approximately 10 (within ±2 tolerance).
