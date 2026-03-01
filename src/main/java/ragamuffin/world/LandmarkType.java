@@ -312,7 +312,17 @@ public enum LandmarkType {
      * NotorietySystem, RumourNetwork (LOCAL_EVENT from seated shoppers),
      * NewspaperSystem (SYSTEM_DOWN headlines).
      */
-    ARGOS;
+    ARGOS,
+
+    // ── Issue #1067: Northfield Poundstretcher ────────────────────────────────
+
+    /**
+     * Northfield Poundstretcher — own-brand bargain retailer on the high street.
+     * Run by Sharon (POUND_SHOP_MANAGER). Open Mon–Sat 08:30–18:30, Sun 10:00–16:00.
+     * Compact 8×6-block floor plan: SHOPKEEPER_COUNTER_PROP at rear, shelf CRATE_PROPs
+     * along two walls. Entrance on south face.
+     */
+    POUND_SHOP;
 
     /**
      * Returns the display name shown on the building's sign.
