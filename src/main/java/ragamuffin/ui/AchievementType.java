@@ -1680,6 +1680,34 @@ public enum AchievementType {
         "The Great Engine Heist",
         "Stole the actual fire engine. Three wanted stars. Twenty-five notoriety. Completely worth it.",
         1
+    ),
+
+    // ── Issue #1008: St. Mary's Church ────────────────────────────────────────
+
+    BLESS_YOU(
+        "Bless You",
+        "Received your first blessing from Reverend Dave. God forgives freely. The council does not.",
+        1
+    ),
+    COLLECTION_THIEF(
+        "Passing the Plate",
+        "Stole the collection plate. Either very brave or very wrong. Possibly both.",
+        1
+    ),
+    BELL_RINGER(
+        "Ding Dong",
+        "Rang the church bell for the first time. Half of Northfield looked up.",
+        1
+    ),
+    SANCTUARY_SEEKER(
+        "God's on Your Side",
+        "Lost a wanted star by sheltering in St. Mary's Church. The police felt awkward about it.",
+        1
+    ),
+    REGULAR_PARISHIONER(
+        "Regular Parishioner",
+        "Attended five Sunday services. God is starting to recognise your face.",
+        5
     );
 
     private final String name;

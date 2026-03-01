@@ -729,7 +729,19 @@ public enum NPCType {
      * Speech: "You alright, love?" / "Sit down, I'll be with you in a sec."
      *         / "Sorry love, we're fully booked." / "What colour are we going for?"
      */
-    NAIL_TECH(20f, 0f, 0f, false);
+    NAIL_TECH(20f, 0f, 0f, false),
+
+    // ── Issue #1008: St. Mary's Church ────────────────────────────────────────
+
+    /**
+     * Vicar — Reverend Dave, the parish vicar of St. Mary's Church.
+     * Present 09:00–19:00 daily. Stands at PULPIT_PROP during services.
+     * Passive; greets players, shares NEIGHBOURHOOD/SHOP_NEWS rumours on E-interaction.
+     * Operates the soup kitchen Mon/Thu 12:00–14:00. Never hostile.
+     * Speech: "God loves everyone, even you." / "Service starts at ten, if you're interested."
+     *         / "Soup's on — come and get it while it's hot."
+     */
+    VICAR(15f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
