@@ -2428,6 +2428,34 @@ public enum AchievementType {
         "Saturday Market King",
         "Earned 20 COIN or more from stall sales in a single Saturday market day. The king of Northfield.",
         1
+    ),
+
+    // ── Issue #1104: Northfield Community Centre ──────────────────────────────
+
+    BOXING_CHAMP(
+        "Float Like a Butterfly",
+        "Won 5 sparring sessions at Ray's Boxing Club. The Northfield Amateur Champion. Sort of.",
+        5
+    ),
+    COUNCIL_MOLE(
+        "Minutes Away",
+        "Successfully eavesdropped on the Council Budget Meeting 3 times. You know where the money isn't going.",
+        3
+    ),
+    JUMBLE_SALE_KING(
+        "One Man's Junk",
+        "Bought 10 items from the Jumble Sale. Northfield's premier bargain hunter.",
+        10
+    ),
+    CAKE_SABOTEUR(
+        "Special Ingredient",
+        "Slipped something extra into a Bake-Off competitor's cake without anyone noticing. That's not flour.",
+        1
+    ),
+    BAKE_OFF_CHEAT(
+        "Bought-In Bake",
+        "Won the Northfield Cake Bake-Off using a shop-bought item. Technically still a winner.",
+        1
     );
 
     private final String name;

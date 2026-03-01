@@ -2805,7 +2805,26 @@ public enum Material {
      * Derek (COUNCIL_MEMBER) skips the player's floor during the housing inspection.
      * Tooltip: "Looks like you've got your life together. You don't, but it helps."
      */
-    SUIT_JACKET("Suit Jacket");
+    SUIT_JACKET("Suit Jacket"),
+
+    // ── Issue #1104: Northfield Community Centre ──────────────────────────────
+
+    /**
+     * Council Minutes — stolen document from the Northfield Council Budget Meeting.
+     * Required for the Marchetti Crew mission at {@link ragamuffin.world.LandmarkType#COMMUNITY_CENTRE}.
+     * Steal from {@code FOLDING_TABLE_PROP} inside the locked meeting room on Tuesday 10:00–12:00.
+     * Return to Marchetti contact at the pub for 15 COIN reward.
+     * Tooltip: "Twelve pages of bureaucratic nothing — and someone wants it very badly."
+     */
+    COUNCIL_MINUTES("Council Minutes"),
+
+    /**
+     * Cake Slice — a slice of homemade cake from the Sunday Cake Bake-Off stall.
+     * Cost: 1 COIN. Effects: {@link ragamuffin.core.HealingSystem} +8 HP,
+     * {@link ragamuffin.core.WarmthSystem} +5. Satisfies hunger.
+     * Tooltip: "Victoria sponge. Proper job. Someone's nan made it."
+     */
+    CAKE_SLICE("Cake Slice");
 
     private final String displayName;
 
