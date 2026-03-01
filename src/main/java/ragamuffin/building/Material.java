@@ -2609,7 +2609,47 @@ public enum Material {
      * Generates noise LEVEL_1; caught by PCSO within 10 blocks (+2 Notoriety, CrimeType.THEFT).
      * Tooltip: "Don't ask where it's been."
      */
-    SIPHON_HOSE("Siphon Hose");
+    SIPHON_HOSE("Siphon Hose"),
+
+    // ── Issue #1091: Northfield Nando's ────────────────────────────────────────
+
+    /**
+     * Chicken Wrap — Nando's menu item. 5 COIN. Restores +35 Hunger.
+     * Available all day during opening hours.
+     * Tooltip: "Flatbread. Chicken. Slaw. It's a wrap."
+     */
+    CHICKEN_WRAP("Chicken Wrap"),
+
+    /**
+     * Bottomless Drink — Nando's refillable soft drink. 2 COIN.
+     * Restores +20 Thirst per refill. Counts as one item on the order.
+     * Tooltip: "Bottomless. Unlike your dignity."
+     */
+    BOTTOMLESS_DRINK("Bottomless Drink"),
+
+    /**
+     * Peri-Peri Sauce — a bottle of house peri-peri sauce from the HOT_SAUCE_RACK_PROP.
+     * Throwable: creates a 2-block PERI_SAUCE_SLICK ground prop (60s lifetime)
+     * that slows any NPC/player by 30% on contact.
+     * Records CrimeType.AFFRAY and adds +3 Notoriety when thrown.
+     * Tooltip: "Handle with care. It's sticky and it stings."
+     */
+    PERI_PERI_SAUCE("Peri-Peri Sauce"),
+
+    /**
+     * Peri Chips — Nando's seasoned chips. 3 COIN. Restores +25 Hunger.
+     * Tooltip: "Just chips. But better chips."
+     */
+    PERI_CHIPS("Peri Chips"),
+
+    /**
+     * Till Receipt — a printed receipt from the Nando's CARD_MACHINE_PROP.
+     * Evidence item found in the SAFE_PROP alongside stolen coin.
+     * Can be handed to police (tips off money laundering route, −10 Notoriety)
+     * or sold to Marchetti via FactionSystem for 3 COIN.
+     * Tooltip: "Order #47. Paid by card. Name: D. MARCHETTI."
+     */
+    TILL_RECEIPT("Till Receipt");
 
     private final String displayName;
 

@@ -271,7 +271,21 @@ public class CriminalRecord {
          * via WitnessSystem and this is subsequently discovered.
          * Penalty: Notoriety +15, +1 Wanted star.
          */
-        PERVERTING_COURSE_OF_JUSTICE("Perverting the course of justice");
+        PERVERTING_COURSE_OF_JUSTICE("Perverting the course of justice"),
+
+        // ── Issue #1091: Northfield Nando's ─────────────────────────────────
+
+        /**
+         * Recorded when the player uses the card machine jam mechanic at Nando's
+         * to obtain a free meal. Penalty: +8 Notoriety.
+         */
+        CARD_MACHINE_FRAUD("Card machine fraud"),
+
+        /**
+         * Recorded when the player throws PERI_PERI_SAUCE in a public place,
+         * creating a PERI_SAUCE_SLICK hazard prop. Penalty: +3 Notoriety.
+         */
+        AFFRAY("Affray (sauce throwing)");
 
         private final String displayName;
 

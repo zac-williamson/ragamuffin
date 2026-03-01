@@ -309,5 +309,14 @@ public enum RumourType {
     /** "Heard someone nicked a posh dog from the school playground — right in front of the lollipop lady."
      * — seeded by PetShopSystem when the dodgy pedigree breeding mission is completed.
      * Spreads via YOUTH_GANG and STREET_LAD NPCs. Adds +3 patrol awareness near PRIMARY_SCHOOL. */
-    PEDIGREE_THEFT;
+    PEDIGREE_THEFT,
+
+    // ── Issue #1091: Northfield Nando's ──────────────────────────────────────
+
+    /** "Lads on a stag do at Nando's invited everyone to The Vaults tonight — free entry token an' all."
+     * — seeded by NandosSystem on Saturdays 12:00–15:00 when the Stag Do event fires and
+     * the player receives a free-entry invitation.
+     * Spreads via DRUNK and PUBLIC NPCs in the restaurant. Draws NPCs toward The Vaults.
+     * Grants a free-entry token at The Vaults nightclub when received. */
+    VAULTS_PARTY;
 }

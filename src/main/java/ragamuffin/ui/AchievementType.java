@@ -2275,6 +2275,29 @@ public enum AchievementType {
         "No Questions Asked",
         "Captured an ambient dog as your companion without buying it. It seemed to like you. Still theft though.",
         1
+    ),
+
+    // ── Issue #1091: Northfield Nando's ─────────────────────────────────────
+
+    NANDOS_REGULAR(
+        "Half Chicken, No Chips",
+        "Eaten at Nando's five times. Kezia knows your order. She's judging you. Gently.",
+        5
+    ),
+    EXTRA_HOT_REGRET(
+        "Why Did I Do That",
+        "Suffered the NANDOS_REGRET debuff. You had five minutes to find a toilet. You did not.",
+        1
+    ),
+    CHICKEN_THIEF(
+        "The Safe Was Just Sitting There",
+        "Looted the Nando's manager's office safe. Dave called the police. Worth it.",
+        1
+    ),
+    LADS_LADS_LADS(
+        "On the Lash",
+        "Accepted a stag do invitation at Nando's. Free entry to The Vaults. The lads respect you now.",
+        1
     );
 
     private final String name;
