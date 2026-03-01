@@ -25472,4 +25472,175 @@ FRESH_FLOWERS_PROP    // dropped by MOURNER NPCs; despawns after 2 in-game days
 // AchievementType: GRAVE_ROBBER, RESPECTFUL, POCKET_FULL_OF_SORROW, CEMETERY_NIGHT_OWL already defined (Issue #969 stubs)
 // RumourType: FRESH_GRAVE already defined (Issue #969 stub)
 // CriminalRecord: GRAVE_ROBBING already defined (Issue #969 stub)
+
+---
+
+## Khan's Off-Licence — After-Hours Booze, Marchetti Muscle & the Loyalty Card Hustle
+
+**Landmark**: `LandmarkType.OFF_LICENCE` ("Khan's Off-Licence")
+
+The most-referenced unimplemented location in Northfield. Khan's Off-Licence is the Marchetti
+Crew's primary turf landmark — the place that gives them their name ("the off-licence boys") — yet
+it has no system at all. This is the highest-priority feature gap in the game.
+
+### NPCs
+
+- **Imran Khan** (`SHOPKEEPER`) — proprietor; stands behind the counter Mon–Sun 08:00–23:00.
+  Passive unless theft is detected. Faction-aware: Marchetti Crew respect ≥ 40 gets a 10%
+  discount. At respect ≥ 70, Imran hands the player an unmarked envelope once per day
+  (Marchetti faction mission trigger). Refuses service at Notoriety ≥ 80.
+  Speech: "What can I get you, mate?" / "That's a good one, that." / "You're not trouble, are ya?"
+- **Declan** (`YOUTH_GANG`) — a Marchetti Crew enforcer stationed outside the front door
+  17:00–23:00. Prevents Tier 3+ Notoriety players from entering unless Marchetti respect ≥ 50.
+  Hostile if the player loiters within 2 blocks for 15+ seconds without buying.
+  Speech: "You gonna buy something or what?" / "Imran's not in the mood, yeah?"
+- **1–2 Marchetti Crew** (`YOUTH_GANG`) — inside during peak hours (18:00–22:00); buy lager,
+  watch the door. Hostile if rival faction items (gang colours) are worn.
+
+### Stock & Prices
+
+| Item                  | Price (COIN) | Notes                                      |
+|-----------------------|--------------|--------------------------------------------|
+| `CAN_OF_LAGER`        | 2            | Core item. DRUNK chance 15%.               |
+| `CHEAP_SPIRITS`       | 3            | DRUNK chance 30%. Warmth +8.               |
+| `CIGARETTE`           | 1            | Stress −5, Hunger −1.                      |
+| `TOBACCO_POUCH`       | 2            | Crafts 5 CIGARETTE at any time.             |
+| `SCRATCH_CARD`        | 1            | Standard 10% win rate (2–10 COIN).          |
+| `ENERGY_DRINK`        | 2            | Speed +15% for 30s. Stackable up to ×2.    |
+| `NEWSPAPER`           | 1            | Seeds 1 LOCAL_EVENT rumour on pickup.       |
+| `LIGHTER`             | 1            | Crafting component; lights campfires/bins.  |
+| `PLASTIC_BAG`         | 0            | Given free with purchase. Inventory +1 slot.|
+
+After hours (23:00–08:00) the shop is locked and shuttered — but a back-door knock
+mechanic allows Marchetti Crew members (Respect ≥ 60) to buy at double prices.
+
+### Loyalty Card System
+
+Every purchase stamps a virtual loyalty card. At **5 stamps**: Imran gives a free
+`CAN_OF_LAGER`. At **10 stamps**: free `CHEAP_SPIRITS`. At **20 stamps** lifetime:
+`CORNER_SHOP_REGULAR` achievement unlocked.
+
+### Shoplifting
+
+The player can attempt to steal any item by leaving the shop without paying while holding
+it in hand (no E-interact required — just walk out). Detection probability:
+
+- Imran within 4 blocks: 70% detected.
+- Declan in sight-line of exit: +20%.
+- Wearing `HOODIE`: −20%. Wearing `BALACLAVA`: immediate detection + ban.
+- CCTV_PROP covers the counter area; breaking it (2 hits) reduces Imran detection to 30%.
+
+On detection: Imran shouts, Declan enters CHASING state, Notoriety +3,
+`CriminalRecord.THEFT`. Third detection: permanent ban ("Don't come back here.").
+
+### After-Hours Back Door Knock
+
+Between 23:00 and 02:00 the player can press **E on the rear door** (accessible via the
+alley behind the shop). Requires Marchetti Crew Respect ≥ 60. Imran answers after 5
+seconds. Items sold at 2× price. If the player arrives drunk (DRUNK status active),
+Imran refuses ("Come back when you're sober, yeah?").
+
+### Marchetti Mission Trigger
+
+Once per game-day at 20:00, if Marchetti Respect ≥ 70, Imran slides an unmarked envelope
+across the counter. Picking it up triggers a Marchetti faction mission (delivered via
+`FactionMission`). If the player already has an active faction mission, Imran says:
+"Sort the other business first, yeah?"
+
+### Turf War Integration
+
+When the **Street Lads** hold the OFF_LICENCE territory node (from `GangTerritorySystem`):
+- Declan is replaced by a `YOUTH_GANG` Street Lads NPC.
+- Imran's discount is reversed (Street Lads respect ≥ 40 gets 10% off instead).
+- A STREET_LADS graffiti tag appears on the exterior wall.
+
+When **The Council** holds the node:
+- The shop gets a `COUNCIL_NOTICE` prop on the door (inspection pending).
+- Imran charges full price to everyone; offers a `COUNCIL_JACKET` for 15 COIN.
+
+### Price War Mechanic (existing `PRICE_WAR` achievement hook)
+
+If the player's corner shop (`CornerShopSystem`) stocks `CAN_OF_LAGER` at less than
+Khan's price, Declan appears at the player's shop door within 2 in-game hours to issue
+a verbal warning. If the undercutting continues for 1 more day, a Marchetti enforcer
+(`YOUTH_GANG`, hostile) smashes one inventory shelf (destroys 3 random stock items).
+This seeds a `GANG_ACTIVITY` rumour town-wide.
+
+### Atmosphere & Events
+
+One random event per 2 in-game hours while open:
+
+1. **Queue at the door** (18:00–19:00 Fri/Sat): 4–6 PUBLIC NPCs queue outside.
+   Player can queue-jump for Notoriety +1.
+2. **Underage attempt**: A `SCHOOL_KID` NPC tries to buy lager; Imran refuses.
+   Player can buy it and hand it over for Notoriety +2, `ANTISOCIAL_BEHAVIOUR` rumour.
+3. **Scratch card celebration**: A PENSIONER NPC wins 10 COIN; seeds `BIG_WIN_AT_BOOKIES`
+   (cross-system flavour — same joy, different venue).
+4. **Argument over change**: Two PUBLIC NPCs argue; Declan intervenes after 10s.
+5. **Marchetti meeting**: At 21:00 on Sundays, 3 YOUTH_GANG NPCs gather inside for 20
+   in-game minutes; player within 3 blocks overhears a `GANG_ACTIVITY` rumour automatically.
+
+### Achievements
+
+- `CORNER_SHOP_REGULAR` — 20 lifetime loyalty stamps at Khan's Off-Licence.
+- `UNDERAGE_ENABLER` — handed alcohol to a `SCHOOL_KID` NPC.
+- `BACK_DOOR_BOY` — used the after-hours back-door knock 3 times.
+- `MARCHETTI_ERRAND_BOY` — accepted 5 Marchetti envelopes from Imran.
+- `FIVE_FINGER_DISCOUNT` — shoplifted from Khan's without being detected (first time).
+
+### Integration
+
+- `WarmthSystem` — shop counts as shelter.
+- `WeatherSystem` — rain adds 2 extra PUBLIC NPCs sheltering.
+- `FactionSystem` / `GangTerritorySystem` — Marchetti primary turf node; faction victory
+  requires holding OFF_LICENCE.
+- `CornerShopSystem` — price war enforcement mechanic.
+- `RumourNetwork` — Marchetti meeting seeds GANG_ACTIVITY; underage attempt seeds
+  ANTISOCIAL_BEHAVIOUR; queue jump seeds QUEUE_JUMP.
+- `NotorietySystem` / `WantedSystem` — shoplifting detection.
+- `CriminalRecord` — THEFT on detection.
+- `AchievementSystem` — 5 new achievements above.
+- `NewspaperSystem` — after-hours raid (if Notoriety ≥ 60 and police tip-off received)
+  generates morning headline via `pollPendingHeadline()`.
+
+### Unit Tests
+
+1. `OffLicenceSystem.findMenuItem(CAN_OF_LAGER)` returns a non-null `MenuItem` with price 2.
+2. `OffLicenceSystem.isOpen(7.5f)` returns `true`; `isOpen(23.5f)` returns `false`.
+3. `OffLicenceSystem.isBackDoorAccessible(60, 23.5f)` returns `true`; `(40, 23.5f)` returns `false`.
+4. After 5 purchases, `getLoyaltyStamps()` returns 5 and `pollFreeItem()` returns `CAN_OF_LAGER`.
+5. `detectShoplift(inRange=true, balaclavas=false, cctv=true)` returns true with ≥ 70% probability
+   over 100 seeded trials.
+6. `OffLicenceSystem.checkDeclanEntry(notoriety=80, marchetti=30)` returns `BLOCKED`.
+7. `OffLicenceSystem.checkDeclanEntry(notoriety=80, marchetti=55)` returns `ALLOWED`.
+
+### Integration Tests
+
+1. **Purchase stamps loyalty card**: Give player 5 COIN. Call `buyItem(CAN_OF_LAGER)` five
+   times. Verify `getLoyaltyStamps()` equals 5. Verify `pollFreeItem()` returns `CAN_OF_LAGER`
+   and player inventory contains it. Verify COIN count is reduced by 10 (5 × 2 COIN).
+
+2. **Shoplifting detected triggers criminal record**: Equip player with `CAN_OF_LAGER`.
+   Position Imran within 4 blocks. Call `checkShopliftDetection(player, imran, declan)`.
+   Simulate 100 trials with `Random(seed)`. Verify detection rate ≥ 60%. On detection,
+   verify `CriminalRecord.hasOffence(THEFT)` is true and Notoriety increased by ≥ 3.
+
+3. **After-hours back door knock**: Set time to 00:30. Set Marchetti Respect to 65.
+   Call `knockBackDoor(player, marchetti)`. Verify Imran responds (NPC speech set).
+   Verify `CAN_OF_LAGER` available at price 4 (2× base). Verify purchase succeeds.
+
+4. **Price war triggers enforcer visit**: Set player corner shop lager price to 1 (< Khan's 2).
+   Call `OffLicenceSystem.update()` for 2 simulated in-game hours. Verify a `YOUTH_GANG`
+   NPC (Declan) spawns at the corner shop location. Verify a `GANG_ACTIVITY` rumour is seeded.
+
+5. **Turf war reassigns Declan to Street Lads**: Set `GangTerritorySystem` OFF_LICENCE node to
+   STREET_LADS. Call `OffLicenceSystem.update(delta, factionSystem)`. Verify no Marchetti Declan
+   is present. Verify a STREET_LADS `YOUTH_GANG` NPC stands at the door. Verify Marchetti
+   discount is no longer applied to a player with Marchetti Respect 50.
+
+// ── New: OffLicenceSystem.java in ragamuffin.core
+// New: AchievementType stubs required: CORNER_SHOP_REGULAR (rename/reuse existing OPEN_FOR_BUSINESS?),
+//      UNDERAGE_ENABLER, BACK_DOOR_BOY, MARCHETTI_ERRAND_BOY, FIVE_FINGER_DISCOUNT
+// Existing: LandmarkType.OFF_LICENCE, NPCType.SHOPKEEPER, NPCType.YOUTH_GANG, Material.CAN_OF_LAGER,
+//           Material.CHEAP_SPIRITS, Material.CIGARETTE, RumourType.GANG_ACTIVITY, PRICE_WAR achievement
 // WorldGenerator: cemetery already generated at (cemX, 0, cemZ) with headstone rows — add PropPositions
