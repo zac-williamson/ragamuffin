@@ -1686,20 +1686,6 @@ public enum Material {
     MOP("Mop"),
 
     /**
-     * Cloth — a scrap of fabric, 1 COIN.
-     * Sold at POUND_SHOP. Used in MAKESHIFT_ARMOUR craft.
-     * Tooltip: "Rough. Scratchy. Vaguely protective."
-     */
-    CLOTH("Cloth"),
-
-    /**
-     * Candle — a cheap tallow candle, 1 COIN.
-     * Sold at POUND_SHOP. Provides light; tracked by SquatFurnishingTracker.
-     * Tooltip: "Smells of paraffin. Comforting."
-     */
-    CANDLE("Candle"),
-
-    /**
      * Padlock — a basic combination padlock, 2 COIN.
      * Sold at POUND_SHOP. Used to secure squat doors; tracked by SquatFurnishingTracker.
      * Tooltip: "Not exactly a safe. But it's something."
@@ -2303,12 +2289,6 @@ public enum Material {
      * Achievement: STATUE_SNACK.
      */
     BREAD_CRUMBS("Bread Crumbs"),
-
-    /**
-     * Rope — crafted from 2 × WIRE. Used to attach to the statue base during toppling.
-     * Also sold by Barge Baz. Fenceable for 2 COIN.
-     */
-    ROPE("Rope"),
 
     /**
      * Chain — crafted from 3 × METAL_SCRAP. Alternative to ROPE for statue toppling.
