@@ -19703,3 +19703,244 @@ NEWSAGENT_OWNER(20f, 0f, 0f, false)
 6. **LOCALS respect discount applies**: Set `FactionSystem` `LOCALS` Respect to 55. Buy `NEWSPAPER` (base price 1 COIN). Verify player is charged 0 COIN (floored from 0.9 × 1 COIN = 0.9 → floor = 0). Set Respect to 40. Verify player charged full 1 COIN.
 
 7. **Youth gang shoplifting triggers Patel chase**: Spawn a `YOUTH_GANG` NPC inside the shop. Advance 1 in-game minute with detection roll forced to "caught". Verify Patel NPC transitions to `NPCState.CHASING` targeting the youth. Verify youth NPC exits shop and Patel returns to counter after 3 blocks.
+
+---
+
+## Issue #1018: Northfield Poundstretcher — Bulk Bargains, Knock-Off Goods & the Haunted Aisle 5
+
+### Overview
+
+**Poundstretcher** (internally `POUND_SHOP` landmark) is a cavernous, fluorescent-lit discount shop crammed to the ceiling with cheap household goods, off-brand toiletries, and mystery clearance bins. Run by **Sharon** (`POUND_SHOP_MANAGER` NPCType) — a no-nonsense manageress who's seen it all — and staffed by two listless `SHOP_WORKER` NPCs who are definitely not watching the self-checkout. Open **Mon–Sat 09:00–18:00, Sun 10:00–16:00**. A new `PoundShopSystem` implements all mechanics.
+
+---
+
+### Physical Layout
+
+- 14×10 block interior, single-floor, `BRICK` walls, `CONCRETE` floor, `GLASS` frontage.
+- **Aisle 1** (household): `SHELF_PROP` stocked with `BLEACH_BOTTLE`, `WASHING_UP_LIQUID`, `MOP_HEAD`.
+- **Aisle 2** (food): day-old bread, tins of `BAKED_BEANS`, `SPAM_TIN`, off-brand `CEREAL_BOX`.
+- **Aisle 3** (clothing): `KNOCK_OFF_TRACKSUIT`, `NOVELTY_SLIPPERS`, `FLAT_CAP` (cheaper than barber).
+- **Aisle 4** (DIY / tools): `GAFFER_TAPE`, `CABLE_TIES`, `PADLOCK` (craftable ingredient).
+- **Clearance Bin** (`BARGAIN_BIN_PROP`) in the centre: randomised daily stock, 50% standard price. Press **E** to rummage; one free look per visit, then 1 COIN per additional rummage.
+- **Self-Checkout** (`SELF_CHECKOUT_PROP`): can be used to pay, or to shoplift (with a risk).
+- **Manager's Office** (`OFFICE_DOOR_PROP`, locked): contains `CASH_BOX_PROP` (12–20 COIN), `MASTER_KEY_PROP`.
+
+---
+
+### Core Mechanics
+
+#### 1. Shop Stock (press E on Sharon or any `SHELF_PROP`)
+
+| Item | Price (COIN) | Notes |
+|---|---|---|
+| `BLEACH_BOTTLE` | 1 | Cleaning tool; can be used as improvised weapon (+10 dmg, `BLINDED` debuff 5s); fence value 0 COIN |
+| `WASHING_UP_LIQUID` | 1 | Used in `CraftingSystem` to craft `SLIPPERY_FLOOR_TRAP` (with `MOP_HEAD`) |
+| `MOP_HEAD` | 1 | Craftable ingredient; also equippable as melee weapon (comically weak: 2 dmg) |
+| `BAKED_BEANS` (tin) | 1 | +20 hunger; throwable as distraction (noise level 4 on impact) |
+| `SPAM_TIN` | 1 | +15 hunger; can be opened with `SPADE` or `SCREWDRIVER` to consume |
+| `GAFFER_TAPE` | 2 | Crafting ingredient for `DUCT_TAPE_RESTRAINT` and `MAKESHIFT_ARMOUR`; fence 1 COIN |
+| `CABLE_TIES` | 1 | Crafting ingredient; used in HeistSystem to bind a guard |
+| `PADLOCK` | 2 | Used to lock a `SQUAT` or `SHED_PROP` door; blocks NPC entry |
+| `KNOCK_OFF_TRACKSUIT` | 3 | Wearable outfit: −15% Notoriety recognition (people don't expect crime from Poundstretcher shoppers); DisguiseSystem modifier |
+| `NOVELTY_SLIPPERS` | 1 | Equippable footwear: movement −10% but silence penalty −50% (very quiet); comedy item |
+| `FLAT_CAP` | 2 | Wearable hat: +5 Community Respect with `LOCALS` faction; cheaper than barber shop disguise |
+| `CEREAL_BOX` | 1 | +10 hunger; box can be used as improvised container for small items (hides 1 Material in inventory search) |
+| `LIGHTER` | 1 | Same as newsagent's `LIGHTER` but cheaper (1 COIN vs 2 COIN); valid fire-starter |
+
+All items listed except clothing always in stock. Clothing items (`KNOCK_OFF_TRACKSUIT`, `NOVELTY_SLIPPERS`, `FLAT_CAP`) rotate — only 2 of 3 available per day (determined by `PoundShopSystem.getDailyClothingStock(dayOfWeek)`).
+
+#### 2. Clearance Bin (`BARGAIN_BIN_PROP`) Rummage Mechanic
+
+- Press **E** on `BARGAIN_BIN_PROP` to rummage.
+- First rummage per visit: free. Each subsequent rummage: 1 COIN.
+- Rummage loot table (pick 1 item, seeded by day + visit count):
+
+| Item | Weight | Price Override |
+|------|--------|----------------|
+| `BROKEN_UMBRELLA` | 25 | 0 COIN (useless; 10% chance rain blocks it anyway) |
+| `BIRTHDAY_CARD` | 20 | 0 COIN (same as Patel's, but free) |
+| `NOVELTY_MUG` | 15 | 0 COIN; can be thrown (noise 3) or sold to Fence for 1 COIN |
+| `CANDLE` | 15 | 0 COIN; used in `SquatFurnishingTracker` as ambient light source |
+| `GAFFER_TAPE` | 10 | 0 COIN |
+| `OLD_TRAINERS` | 10 | 0 COIN; wearable, +5% movement speed, degrades after 20 minutes |
+| `MYSTERY_BOX` | 5 | Contains 1 random Material from the full game item pool |
+
+- Finding `MYSTERY_BOX` seeds a `LOOT_TIP` rumour ("Someone found something good in the Poundstretcher bin.").
+- `BIN_DIVER` achievement: rummage the clearance bin 5 times across sessions.
+
+#### 3. Self-Checkout Shoplifting
+
+- Player takes item from shelf, then approaches `SELF_CHECKOUT_PROP` and either:
+  - **Pays**: presses E → transaction complete.
+  - **Skips checkout**: walks toward exit `GLASS_DOOR_PROP` without pressing E at self-checkout.
+- Shoplifting detection:
+  - Base detection chance: 25% per item carried past exit sensor.
+  - Sharon (if within 6 blocks): +30% detection.
+  - `SHOP_WORKER` NPC watching self-checkout: +15% detection.
+  - `KNOCK_OFF_TRACKSUIT` worn by player: −10% detection (ironic).
+  - `SELF_CHECKOUT_PROP` has a `SECURITY_CAMERA_PROP` above it: +20% (same as Newsagent).
+- Caught: Sharon calls police, Notoriety +5, `CriminalRecord.SHOPLIFTING`, banned 10 in-game minutes.
+- Got away: `PETTY_CROOK` achievement progress (shared counter with Newsagent).
+- **Sharon's Sixth Sense**: if player has Notoriety ≥ 50, Sharon always watches the self-checkout area (LOS check every 30 seconds), making undetected theft much harder.
+
+#### 4. Manager's Office Heist
+
+- `OFFICE_DOOR_PROP` (back of shop): locked with `PADLOCK`.
+- Entry methods: `LOCKPICK` (silent, 1 durability), `CROWBAR` (noisy, noise level 5, 20% chance Sharon investigates), or `MASTER_KEY_PROP` (if previously pickpocketed from Sharon).
+- Inside: `CASH_BOX_PROP` yields 12–20 COIN; `STOCK_LEDGER_PROP` (flavour item: press E for procedurally generated funny purchase order).
+- After taking cash, `NoiseSystem` registers the intrusion if `CROWBAR` was used; `WitnessSystem` checks for nearby NPCs.
+- Achievements: `FIVE_FINGER_DISCOUNT` (steal from `CASH_BOX_PROP`).
+
+#### 5. Sharon — The Manageress
+
+- **Sharon** (`POUND_SHOP_MANAGER` NPCType): present Mon–Sat 09:00–18:00, Sun 10:00–16:00 (matches shop hours).
+- Walks a patrol route between the aisles every 45 seconds.
+- Speech pool: "Can I help you?" / "That bin's not a bed, love." / "You buying that or just standing there?" / "Staff only back there." / "Oi! Self-checkout only!"
+- If `LOCALS` Faction Respect ≥ 60: Sharon gives player 10% discount and one tip about the day's bargain bin contents.
+- If player punches Sharon: Notoriety +20, `WantedSystem` star +1, CriminalRecord `ASSAULT`.
+
+#### 6. Sharon's Stock Rotation Tip (Side Mechanic)
+
+Every in-game Wednesday at 09:00, Sharon does a full restocking. If the player is present at opening (09:00–09:15), they can press E on Sharon to hear her mutter: *"New clearance stock coming in Thursday."* — this is a free `LOOT_TIP` rumour insert, giving players reason to visit regularly.
+
+#### 7. Crafting Interactions
+
+New recipes using Poundstretcher items (added to `CraftingSystem`):
+
+| Recipe | Result | Notes |
+|---|---|---|
+| `WASHING_UP_LIQUID` + `MOP_HEAD` | `SLIPPERY_FLOOR_TRAP` | Placed on ground; NPC walks over → `NPCState.STUMBLING` for 3s |
+| `GAFFER_TAPE` + any CLOTH item | `MAKESHIFT_ARMOUR` | Reduces damage taken by 20%; 10 uses |
+| `GAFFER_TAPE` + `CABLE_TIES` | `DUCT_TAPE_RESTRAINT` | HeistSystem: bind a guard for 60s |
+| `BLEACH_BOTTLE` + `SPRAY_BOTTLE` | `IMPROVISED_PEPPER_SPRAY` | 3 uses; `BLINDED` debuff on NPC for 8s; Notoriety +5 if used on civilian |
+| `CANDLE` + `LIGHTER` | `MAKESHIFT_TORCH` | Equippable light source; lasts 5 in-game minutes; cheaper than `LANTERN` |
+
+---
+
+### System Integrations
+
+- `DisguiseSystem` — `KNOCK_OFF_TRACKSUIT` grants −15% recognition; stacks with other disguise items.
+- `CraftingSystem` — 5 new recipes using Poundstretcher materials.
+- `HeistSystem` — `CABLE_TIES` and `DUCT_TAPE_RESTRAINT` used to bind guards.
+- `FenceSystem` / `PawnShopSystem` — `MYSTERY_BOX` contents, `POCKET_WATCH`, `GAFFER_TAPE`, `NOVELTY_MUG` all tradeable.
+- `NoiseSystem` — thrown `BAKED_BEANS` tin, `CROWBAR` office entry generate noise.
+- `NotorietySystem` — shoplifting, punching Sharon, pepper-spray use all add Notoriety.
+- `CriminalRecord` — `SHOPLIFTING`, `ASSAULT` crime types triggered.
+- `RumourNetwork` — `LOOT_TIP` rumour on `MYSTERY_BOX` find; Wednesday stock tip.
+- `WarmthSystem` — shop interior: +3 Warmth/min (shelter from rain/cold).
+- `WeatherSystem` — rain increases foot traffic (3 extra `PUBLIC` NPCs shelter inside during rain).
+- `FactionSystem` — `LOCALS` Respect ≥ 60: Sharon gives discount and bargain bin tip.
+- `SquatFurnishingTracker` — `CANDLE`, `MOP_HEAD`, `PADLOCK` can furnish or secure a squat.
+- `WitnessSystem` — office heist with crowbar alerts nearby NPCs.
+
+---
+
+### New `LandmarkType` entry
+
+```java
+// ── Issue #1018: Poundstretcher ───────────────────────────────────────────
+/**
+ * Poundstretcher — a cavernous discount shop on the edge of the high street.
+ * Run by Sharon (POUND_SHOP_MANAGER). Open Mon–Sat 09:00–18:00, Sun 10:00–16:00.
+ * Features BARGAIN_BIN_PROP, SELF_CHECKOUT_PROP, locked OFFICE_DOOR_PROP.
+ */
+POUND_SHOP,
+```
+
+`getDisplayName()` returns `"Poundstretcher"`.
+
+---
+
+### New `NPCType` entries
+
+```java
+// ── Issue #1018: Pound Shop ───────────────────────────────────────────────
+/**
+ * Sharon — no-nonsense Poundstretcher manageress. Patrols aisles. Calls
+ * police on shoplifting. Gives discount at LOCALS Respect ≥ 60.
+ * Speech: "Can I help you?" / "That bin's not a bed, love." / "Oi!"
+ */
+POUND_SHOP_MANAGER(25f, 0f, 0f, false),
+
+/**
+ * Listless shelf-stacker at Poundstretcher. Passively wanders aisles.
+ * Increases shoplifting detection chance by 15% if watching self-checkout.
+ */
+SHOP_WORKER(20f, 0f, 0f, false),
+```
+
+---
+
+### New `Material` entries
+
+- `BLEACH_BOTTLE` — "Thick bleach. Cleans well; burns worse." Improvised weapon (+10 dmg, BLINDED 5s on target); crafting ingredient.
+- `WASHING_UP_LIQUID` — "Fairy. As seen on TV." Crafting ingredient for `SLIPPERY_FLOOR_TRAP`.
+- `MOP_HEAD` — "Still damp." Melee weapon (2 dmg); crafting ingredient. Equippable (comic value).
+- `BAKED_BEANS` — "Heinz? No. Something else." +20 hunger; throwable (noise level 4 on impact).
+- `SPAM_TIN` — "Spiced Ham product. Contents unclear." +15 hunger; must be opened first.
+- `GAFFER_TAPE` — "Silver. Strong. Fixes everything." Crafting ingredient; fence for 1 COIN.
+- `CABLE_TIES` — "Pack of 20. Zip ties, technically." Crafting ingredient for `DUCT_TAPE_RESTRAINT`.
+- `KNOCK_OFF_TRACKSUIT` — "Adidas? Close enough." Wearable; −15% recognition; reduces shoplifting detection.
+- `NOVELTY_SLIPPERS` — "Plush duck feet. Men's size 9." Wearable footwear; −50% movement noise; −10% movement speed.
+- `CEREAL_BOX` — "Corn Flakes. Probably." +10 hunger; empty box hides 1 item from NPC inventory searches.
+- `SLIPPERY_FLOOR_TRAP` — "Washing-up liquid and a mop. Caution: Wet Floor." Placed trap; NPCs stumble for 3s.
+- `MAKESHIFT_ARMOUR` — "Gaffer tape over your jacket. Surprisingly effective." Wearable; −20% damage taken; 10 uses.
+- `DUCT_TAPE_RESTRAINT` — "Arms behind back. Gaffer tape. Simple." HeistSystem: bind a guard 60s.
+- `IMPROVISED_PEPPER_SPRAY` — "Bleach in a spray bottle. Absolutely horrible." 3-use weapon; `BLINDED` debuff 8s.
+- `MAKESHIFT_TORCH` — "A candle taped to a lighter. Health and safety nightmare." 5 in-game minutes of light.
+- `BROKEN_UMBRELLA` — "Snapped spoke. Still opens. Mostly." Useless item; throwable (noise 2).
+- `NOVELTY_MUG` — "'World's Okayest Employee'. Accurate." Throwable (noise 3); sellable to Fence for 1 COIN.
+- `MYSTERY_BOX` — "Clearance bin find. Contents unknown until opened." Opens to reveal 1 random Material.
+- `STOCK_LEDGER_PROP` — "Sharon's ordering spreadsheet. 400 units of off-brand Lynx." Flavour item.
+
+---
+
+### New `PropType` entries
+
+- `BARGAIN_BIN_PROP` — large plastic wheeled bin full of clearance items. Press E to rummage. (0.8f × 0.9f × 0.8f, 4 hits, `Material.PLASTIC`)
+- `SELF_CHECKOUT_PROP` — a self-service checkout terminal. Press E to pay; skip to shoplift. (0.6f × 1.2f × 0.4f, 6 hits, `Material.PLASTIC`)
+- `SHELF_PROP` (reusable if already exists) — aisle shelving unit with stock. Press E to browse.
+- `STOCK_LEDGER_PROP` — Sharon's ordering binder on the office desk. Press E to read. (0.3f × 0.1f × 0.4f, 1 hit, `Material.CARDBOARD`)
+
+---
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `BIN_DIVER` | Rummage the Poundstretcher clearance bin 5 times across sessions |
+| `FIVE_FINGER_DISCOUNT` | Steal from the manager's `CASH_BOX_PROP` |
+| `SHARON_KNOWS_BEST` | Receive Sharon's discount (reach LOCALS Respect ≥ 60) |
+| `MAKESHIFT_WARRIOR` | Equip `MAKESHIFT_ARMOUR` and `IMPROVISED_PEPPER_SPRAY` simultaneously |
+| `EVERYTHING_S_A_QUID` | Buy one of every item from Poundstretcher across sessions |
+
+---
+
+### Unit Tests
+
+- `PoundShopSystem.isOpen(dayOfWeek, hour)` returns true Mon–Sat 09:00–17:59, Sun 10:00–15:59, false outside those hours.
+- `PoundShopSystem.getShopliftDetectionChance(sharonNearby, workerWatching, hasCamera, playerNotoriety, wearingTracksuit)` returns correct combined probability; caps at 95%.
+- `PoundShopSystem.getRummageLoot(day, visitCount, random)` returns an item from the clearance bin table; `MYSTERY_BOX` appears at correct weight.
+- `PoundShopSystem.getDailyClothingStock(dayOfWeek)` returns exactly 2 of the 3 clothing items; deterministic per seed.
+- `PoundShopSystem.getOfficeHeistLoot(random)` returns value in range [12, 20] COIN.
+- `PoundShopSystem.getSharonDiscount(localsRespect)` returns 0.9f at Respect ≥ 60, 1.0f otherwise.
+- Crafting recipe: `WASHING_UP_LIQUID` + `MOP_HEAD` → `SLIPPERY_FLOOR_TRAP` resolves correctly in `CraftingSystem`.
+- `SLIPPERY_FLOOR_TRAP` placed in world triggers `NPCState.STUMBLING` on NPC walk-over.
+
+---
+
+### Integration Tests — implement these exact scenarios
+
+1. **Full purchase transaction deducts COIN**: Set time to Wednesday 10:00. Give player 5 COIN. Press E on `SHELF_PROP` in Aisle 2. Select `BAKED_BEANS` (1 COIN). Navigate to `SELF_CHECKOUT_PROP`. Press E. Verify player COIN is now 4. Verify player inventory contains `BAKED_BEANS`. Verify Sharon does not trigger any alert.
+
+2. **Shoplifting caught by Sharon adds Notoriety and bans player**: Give player `BLEACH_BOTTLE` via direct inventory injection. Set Sharon within 4 blocks of self-checkout. Force detection roll to "caught" (set `PoundShopSystem.testDetectionOverride = true`). Move player toward exit `GLASS_DOOR_PROP` without pressing E on self-checkout. Verify Notoriety increased by 5. Verify `CriminalRecord` contains `SHOPLIFTING`. Verify pressing E on Sharon returns "Get out. Come back later." for 10 in-game minutes.
+
+3. **Clearance bin rummage yields correct loot and seeds rumour on MYSTERY_BOX**: Set `Random` seed such that `getRummageLoot` returns `MYSTERY_BOX`. Press E on `BARGAIN_BIN_PROP`. Verify player inventory contains `MYSTERY_BOX`. Verify `RumourNetwork` contains a `LOOT_TIP` rumour referencing "Poundstretcher" or "bin". Verify second rummage attempt costs 1 COIN and is deducted correctly.
+
+4. **Manager's office heist with LOCKPICK yields COIN**: Set time to 14:00 (shop open, Sharon on patrol away from office). Give player `LOCKPICK`. Place player at `OFFICE_DOOR_PROP`. Press E. Verify door opens. Move player to `CASH_BOX_PROP`. Press E. Verify player COIN increases by 12–20. Verify `FIVE_FINGER_DISCOUNT` achievement awarded. Verify `NoiseSystem` did NOT register noise (silent entry).
+
+5. **SLIPPERY_FLOOR_TRAP triggers NPC stumble**: Craft `SLIPPERY_FLOOR_TRAP` (`WASHING_UP_LIQUID` + `MOP_HEAD` in crafting UI). Place trap on floor at a grid position. Spawn a `PUBLIC` NPC. Pathfind NPC over the trap position. Verify NPC enters `NPCState.STUMBLING` for ≥ 3 seconds (game time). Verify trap prop is consumed after triggering.
+
+6. **KNOCK_OFF_TRACKSUIT reduces shoplifting detection**: Buy `KNOCK_OFF_TRACKSUIT`. Equip it via inventory. Verify `PoundShopSystem.getShopliftDetectionChance(false, false, false, 10, true)` is 10% lower than `getShopliftDetectionChance(false, false, false, 10, false)` (25% base − 10% → 15% with tracksuit, 25% without).
+
+7. **Sharon absent on Sunday after 16:00**: Set time to Sunday 16:30. Verify `POUND_SHOP_MANAGER` NPC is not present (or flagged inactive) in the `POUND_SHOP` boundary. Set time to Sunday 10:30. Verify Sharon IS present and patrol route is active.
