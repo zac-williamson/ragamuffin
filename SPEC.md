@@ -16380,3 +16380,141 @@ back-room win; faction Respect deltas for all events.
    After the 3rd hit, verify `CUE` is removed from inventory and `WOOD` count increased
    by 1 (breakage drop). Verify the 4th punch (bare-fisted) deals default punch damage
    (not 2).
+
+---
+
+## Add Northfield Taxi Rank — A1 Taxis, Dodgy Minicabs & Cash-Only Night Rides
+
+The `TAXI_RANK` landmark already exists in `LandmarkType` (displayed as "A1 Taxis") but is
+completely inert — no system, no NPC, no interaction. This feature brings the taxi rank to
+life as a late-night transport alternative to the bus: faster than the bus, more expensive,
+cash-only, and staffed by a driver who asks too many questions.
+
+### The Taxi Rank (A1 Taxis)
+
+A small 8×6 block forecourt on the high street with space for two parked cars. Open 08:00–02:00.
+Features a TAXI_KIOSK_PROP inside a 3×3 booth at the back, staffed by **Mick**, the dispatcher
+(SHOPKEEPER NPC). Two `Car` props are parked in bays (they don't move; the "journey" is a
+fast-travel screen).
+
+Outside service hours (02:00–08:00) the rank is dark, the booth is shuttered, and pressing E
+returns: "Closed. Ring the number on the sign." (no phone mechanic needed — just flavour).
+
+### Destinations & Fares
+
+Three destinations, mirroring the three bus stops for consistency:
+
+| Destination | Fare (day) | Fare (night, 22:00–06:00) |
+|-------------|-----------|--------------------------|
+| Park (Bus Stop — Park area) | 4 COIN | 7 COIN |
+| Industrial Estate / JobCentre | 6 COIN | 10 COIN |
+| High Street (return to rank) | 3 COIN | 5 COIN |
+
+- Player presses **E** on Mick at the kiosk to open the destination menu.
+- Selecting a destination deducts the fare from the player's inventory and fast-travels
+  them to the destination (same fast-travel logic as the bus).
+- If the player lacks funds: Mick says "Cash only, mate. No card, no tap, no crypto."
+- Notoriety Tier 3+: Mick hesitates — "You're not going to cause any bother, are ya?"
+  — but still takes the money (taxi driver code: never turn down a fare).
+- Notoriety Tier 5: Mick refuses entirely — "I know your face. Get away from my cab."
+
+### Dodgy Minicab (Late-Night Alternative)
+
+Between 22:00–04:00, a second taxi option appears: **Dave's Minicabs** — a beat-up
+hatchback parked outside the pub (near the kebab van). No kiosk; the player approaches
+the car and presses **E** to hail Dave (DODGY_VAN_MAN NPC type, repurposed — or a new
+`MINICAB_DRIVER` NPCType variant).
+
+Dave's fares are **1 COIN cheaper** than A1 Taxis but with a twist:
+
+- **30% chance**: Dave "takes a detour" — the fast-travel dumps the player at a random
+  nearby location (within 20 blocks of intended destination). Speech: "Shortcut, mate.
+  Trust me."
+- **15% chance**: Dave asks the player to hold a mystery PACKAGE for the journey
+  (gains 1 `DODGY_PACKAGE` item). On arrival, an UNDERCOVER_POLICE NPC spawns nearby
+  with 20% chance. Tooltip on first occurrence: "Never ask what's in the bag."
+- **If player holds BALACLAVA**: Dave won't take them — "I'm not a getaway driver,
+  sunshine."
+
+### TAXI_PASS Item
+
+A new `Material` entry: `TAXI_PASS` — a pre-paid taxi card for 5 journeys. Purchased
+from Mick for 18 COIN (saving 2 COIN vs. buying 5 individual journeys at average fare).
+Each journey deducts one ride; when rides run out, Mick says "That's your last one, mate —
+want another?"
+
+Craftable alternative: `TAXI_PASS` can also be crafted from 1 NEWSPAPER + 3 COIN
+(a counterfeit pass — works identically but adds +1 Notoriety on first use as Mick
+squints at it: "This looks... homemade. But alright.").
+
+### NPC Interaction — Mick the Dispatcher
+
+Mick (SHOPKEEPER NPC type) stands in the kiosk 08:00–02:00. He:
+
+- Greets the player with contextual speech based on time of day:
+  - Morning: "Morning. Where you off to?"
+  - Evening: "Quiet night, is it?"
+  - After midnight: "You're out late. Trouble?"
+- Accumulates 1 rumour per in-game hour from passing NPCs (same mechanism as barman).
+  The player can ask "Hear anything?" (E on Mick, second option) to receive his current
+  rumour — free, no drink required, because cab drivers hear everything.
+- If the player has a `CRIMINAL_RECORD` entry for FARE_EVASION (from the bus system),
+  Mick mentions it: "I heard about you and the Number 47. Cash upfront."
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `DODGY_PACKAGE` | Receive and keep a mystery package from Dave |
+| `LAST_FARE` | Take a taxi home after 02:00 (Night Bus hours) using Dave's Minicab |
+| `REGULAR_CUSTOMER` | Use the taxi rank 10 times |
+
+**Unit tests**: Fare calculation (day/night multipliers), TAXI_PASS deduction logic, Mick
+refusal at Notoriety Tier 5, Dave's detour and package RNG, destination fast-travel
+coordinate mapping, rumour accumulation on Mick, criminal record dialogue flag.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Taxi rank accessible and Mick present**: Generate the world. Verify a `TAXI_RANK`
+   landmark exists. Verify a SHOPKEEPER NPC (Mick) is present inside the kiosk prop at
+   the rank. Set time to 10:00. Place the player within 2 blocks of Mick. Press E.
+   Verify a destination menu opens (TaxiSystem returns a non-empty list of destinations).
+   Verify the menu contains at least the Park and Industrial Estate destinations.
+
+2. **Day fare deducted and player fast-travels**: Give the player 10 COIN. Set time to
+   14:00 (day rate). Press E on Mick and select the Industrial Estate destination (fare
+   6 COIN). Verify the player's COIN count decreases by 6 (now 4). Verify the player's
+   position is within 10 blocks of the `BUS_STOP_INDUSTRIAL` landmark position (fast
+   travel arrived correctly).
+
+3. **Night fare higher than day fare**: Set time to 23:00. Call `TaxiSystem.computeFare()`
+   for the Industrial Estate destination. Verify the returned fare equals 10 COIN (night
+   rate). Set time to 12:00 and call again. Verify the returned fare equals 6 COIN (day
+   rate).
+
+4. **Mick refuses at Notoriety Tier 5**: Set player Notoriety to 1000 (Tier 5). Place the
+   player within 2 blocks of Mick. Press E. Verify `TaxiSystem.boardResult` is `REFUSED`
+   (or equivalent enum value). Verify Mick's speech contains "I know your face."
+
+5. **TAXI_PASS deducts one ride per journey**: Give the player a TAXI_PASS with 5 rides
+   remaining (`TaxiSystem.taxiPassRidesRemaining = 5`). Set time to 10:00. Take a journey
+   to the Park. Verify `taxiPassRidesRemaining` is now 4. Verify no COIN was deducted from
+   the player's inventory. Take 4 more journeys. Verify `taxiPassRidesRemaining` is 0.
+   Verify the next journey attempt deducts COIN instead of using the pass.
+
+6. **Dave's Minicab spawns after 22:00 and despawns before 04:00**: Set time to 21:59.
+   Advance 2 frames. Verify no Dave NPC exists near the pub. Set time to 22:01. Advance
+   2 frames. Verify a MINICAB_DRIVER (or DODGY_VAN_MAN) NPC has spawned within 15 blocks
+   of the PUB landmark. Set time to 04:01. Advance 2 frames. Verify the Dave NPC has
+   despawned (no longer in the NPC list).
+
+7. **Mick reveals rumour when asked**: Seed a `GANG_ACTIVITY` rumour into Mick's rumour
+   buffer manually. Place the player within 2 blocks of Mick. Press E and select "Hear
+   anything?". Verify the rumour text appears in the SpeechLogUI output. Verify the
+   rumour is removed from Mick's buffer after being shared (consumed, unlike barman).
+
+8. **Criminal record dialogue fires for FARE_EVASION**: Add a `FARE_EVASION` entry to
+   the player's `CriminalRecord`. Place the player within 2 blocks of Mick. Press E.
+   Verify Mick's greeting speech contains "Cash upfront" (the criminal-record-aware
+   dialogue variant). Verify the destination menu still opens (Mick takes the money,
+   just says something about it).
