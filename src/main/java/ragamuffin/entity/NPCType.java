@@ -1197,7 +1197,29 @@ public enum NPCType {
      * Offers the phone-tracker side mission.
      * Also used in other Marchetti faction contexts.
      */
-    CRIME_BOSS(40f, 8f, 2.0f, false);
+    CRIME_BOSS(40f, 8f, 2.0f, false),
+
+    // ── Issue #1091: Northfield Nando's ─────────────────────────────────────
+
+    /**
+     * Kezia — Nando's counter staff.
+     * Staffs the NANDOS_COUNTER_PROP during opening hours (11:00–23:00).
+     * Passive; serves food via NandosOrderUI. Refuses service at Notoriety ≥ 60.
+     * Notoriety-aware dialogue. Aware of card machine drama.
+     * Speech: "Hiya, what can I get you?" / "Card machine's playing up, sorry."
+     *         / "Need a moment? Take your time." / "Enjoy your meal!"
+     */
+    NANDOS_STAFF(20f, 0f, 0f, false),
+
+    /**
+     * Dave — the Nando's manager.
+     * Present 12:00–22:00 Mon–Sun. Patrols the restaurant and manager's office.
+     * Calls police if player is spotted near the SAFE_PROP (adds +12 Notoriety).
+     * Passive otherwise; never attacks. Notoriety-aware.
+     * Speech: "Can I help you?" / "Staff only back there, mate."
+     *         / "Oi — that's the manager's office!" / "I'm calling the police."
+     */
+    NANDOS_MANAGER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

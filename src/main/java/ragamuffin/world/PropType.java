@@ -1272,7 +1272,60 @@ public enum PropType {
      * Cosmetic prop; press E to read full text.
      * Destroyed by 1 punch; yields nothing.
      */
-    HANDWRITTEN_SIGN_PROP(0.10f, 0.60f, 0.40f, 1, null);
+    HANDWRITTEN_SIGN_PROP(0.10f, 0.60f, 0.40f, 1, null),
+
+    // ── Issue #1091: Northfield Nando's ─────────────────────────────────────
+
+    /**
+     * Nando's order counter — the main service counter staffed by Kezia (NANDOS_STAFF).
+     * Press E to open NandosOrderUI. Impassable. Destroyed by 8 punches; yields WOOD.
+     */
+    NANDOS_COUNTER_PROP(2.00f, 1.20f, 0.60f, 8, Material.WOOD),
+
+    /**
+     * Nando's restaurant table — a standard 4-seat dining table.
+     * Used by NPC customers and the Stag Do group (4 DRUNK NPCs on Saturdays).
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    NANDOS_TABLE_PROP(1.20f, 0.90f, 0.80f, 5, Material.WOOD),
+
+    /**
+     * Card machine — the portable card payment terminal at the Nando's counter.
+     * 25% chance of DECLINE per transaction; always succeeds on retry.
+     * Press E to use jam mechanic (free meal, adds CrimeType.CARD_MACHINE_FRAUD, +8 Notoriety).
+     * Destroyed by 4 punches; yields SCRAP_METAL.
+     */
+    CARD_MACHINE_PROP(0.15f, 0.25f, 0.10f, 4, Material.SCRAP_METAL),
+
+    /**
+     * Hot sauce rack — wall-mounted rack of peri-peri sauce bottles near the counter.
+     * Press E to take one PERI_PERI_SAUCE (1 free per visit, NANDOS_STAFF must not be watching).
+     * Destroyed by 3 punches; yields nothing.
+     */
+    HOT_SAUCE_RACK_PROP(0.40f, 0.60f, 0.10f, 3, null),
+
+    /**
+     * Peri-Peri sauce slick — a temporary ground prop created when PERI_PERI_SAUCE is thrown.
+     * Slows any NPC or player passing over it by 30%. Lifetime: 60 seconds.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    PERI_SAUCE_SLICK(2.00f, 0.05f, 2.00f, 1, null),
+
+    /**
+     * Nando's exterior sign — the red illuminated signage above the restaurant door.
+     * Decorative; confirms the NANDOS landmark to players.
+     * Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    NANDOS_SIGN_PROP(2.00f, 0.60f, 0.10f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Nando's manager's office safe — holds 15–40 COIN + TILL_RECEIPT evidence.
+     * Requires LOCKPICK (8-second hold-E) to crack.
+     * If Dave (NANDOS_MANAGER) is present (12:00–22:00), police are called on interaction.
+     * CCTV camera activates at Notoriety Tier 3+. Safe looted: +15 Notoriety + newspaper headline.
+     * Destroyed by 12 punches; yields SCRAP_METAL.
+     */
+    SAFE_PROP(0.50f, 0.80f, 0.40f, 12, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
