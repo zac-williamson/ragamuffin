@@ -23315,3 +23315,205 @@ criminal record entry.
    removed. Player presses E on CHIP_WARMING_RACK. Verify COLD_CHIPS added.
    Verify notoriety +2 and CriminalRecord contains BREAKING_AND_ENTERING. Verify
    `NeighbourhoodWatchSystem.onVisibleCrime()` was called.
+
+## Add Northfield Nail Salon — Angel Nails & Beauty, Social Grooming, Money Laundering & the Gel Economy
+
+**Landmark**: `LandmarkType.NAIL_SALON` ("Angel Nails & Beauty")
+**System**: `NailSalonSystem` (new — `src/main/java/ragamuffin/core/NailSalonSystem.java`)
+**UI**: New `NailSalonUI` (order menu, same pattern as `ChippyOrderUI`)
+
+### Overview
+
+Angel Nails & Beauty is a Vietnamese-run nail salon squeezed between the bookies and
+the off-licence on the high street. Pink render-brick exterior, a BARBER_POLE_PROP
+replaced with a NAIL_SIGN_PROP, UV lamps humming in every window. Run by Linh
+(NPCType.NAIL_TECH, owner/senior tech) and her cousin Trang (NPCType.NAIL_TECH,
+apprentice, Tue–Sat only). Open Mon–Sat 09:00–19:00.
+
+The salon is a social nexus: pensioners come for a weekly treat, young women for
+pre-night-out prep, and the Marchetti Crew's wives use it to launder modest sums of
+cash through "gift vouchers". The player can get a manicure for a stat boost, overhear
+gossip, participate in the voucher scam, or use the salon as a hideout disguise.
+
+---
+
+### Building
+
+A 7×8-block single-storey interior: RENDER_PINK walls, WHITE_TILE floor (custom
+BlockType.WHITE_TILE or approximated with PAVEMENT), large GLASS frontage facing
+the street. Props:
+- `PropType.NAIL_STATION` × 4 (workbenches along the walls)
+- `PropType.NAIL_DRYING_LAMP` × 4 (UV lamp at each station)
+- `PropType.NAIL_WAITING_BENCH` × 1 (3-seat bench near entrance)
+- `PropType.NAIL_RECEPTION_DESK` × 1 (counter near door)
+- `PropType.NAIL_SIGN_PROP` (outside, flashing pink)
+
+---
+
+### Services Menu (press E on `PropType.NAIL_RECEPTION_DESK`)
+
+| Service | Cost | Effect | Duration |
+|---------|------|--------|----------|
+| Basic Manicure | 5 COIN | Street Rep +3, 2h "Polished" buff | ~12 in-game min |
+| Gel Manicure | 10 COIN | Street Rep +6, 4h buff, DisguiseSystem bonus +10 | ~20 in-game min |
+| Nail Art | 15 COIN | Street Rep +8, 6h buff, DisguiseSystem bonus +15, WantedSystem recognition −15% | ~30 in-game min |
+| Pedicure | 8 COIN | Warmth +10, Hunger −0 | ~15 in-game min |
+| Eyebrow Thread | 3 COIN | +1 Street Rep | ~5 in-game min |
+
+**"Polished" buff**: While active, NPCs react slightly more favourably (5% lower deal
+prices from female NPCs, PENSIONER NPCs comment positively). On buff expiry, no
+gameplay change — purely cosmetic.
+
+During service, player sits at a `PropType.NAIL_STATION` (QUEUING state). Linh
+(or Trang) moves to the same station and delivers dialogue. Service cannot be
+interrupted without forfeiting the fee.
+
+---
+
+### Gossip — Rumour Sink
+
+Every visit, Linh shares **one free local rumour** drawn from `RumourNetwork`
+(type: `LOCAL_EVENT`, `CRIME_SIGHTING`, or `COUNCIL_NOTICE`). She also seeds a
+new rumour herself: if the player's Notoriety ≥ 30, she seeds `RumourType.PLAYER_SPOTTED`
+into the NPC closest to the police station.
+
+Trang (when present) knows a different rumour tier: `RumourType.CONTRABAND_SHIPMENT`
+or `RumourType.GANG_ACTIVITY` — available only if player Street Rep ≥ 20.
+
+---
+
+### Money Laundering — Voucher Scam
+
+At Marchetti Crew Respect ≥ 50, a MARCHETTI_WIFE NPC visits on Thursday 14:00–16:00.
+She asks the player to buy NAIL_VOUCHERS (5 × 10 COIN each = 50 COIN total) using
+cash — the vouchers are "gifted" to her and redeemed immediately, giving her 50 COIN
+and the player 60 COIN worth of Marchetti Crew passive income credit.
+
+Mechanics:
+- Player must have ≥ 50 COIN in inventory
+- Each voucher purchase: player −10 COIN, NAIL_VOUCHER item added, then redeemed
+  for +12 COIN passive credit (logged in FactionSystem, paid out next game-day)
+- Risk: if a POLICE NPC is within 20 blocks during the transaction, WitnessSystem
+  logs MONEY_LAUNDERING, adding a criminal record entry and +8 Notoriety
+- Achievement: `GEL_ECONOMY` — complete the voucher scam on 3 separate Thursdays
+
+---
+
+### Disguise Integration
+
+A fresh Nail Art treatment contributes to `DisguiseSystem`:
+- Appearance modifier: NAIL_ART_FRESH (lasts 6 in-game hours; decays to NAIL_ART_WORN
+  at 3h, then gone)
+- Recognition penalty: −15% while NAIL_ART_FRESH, −7% while NAIL_ART_WORN
+- Stacks additively with other disguise modifiers (hat, apron, etc.)
+- WantedSystem: if player has ≥ 2 wanted stars, Linh refuses service
+  (`getLastRefusalReason()` → `WANTED_LEVEL`)
+
+---
+
+### Queue & NPC Schedule
+
+| Time | NPCs |
+|------|------|
+| 09:00–12:00 | 1–2 PENSIONER NPCs (Monday treat, weekly appointment) |
+| 12:00–14:00 | 1 PENSIONER, 0–1 PUBLIC (lunch-break eyebrows) |
+| 16:00–19:00 | 1–3 PUBLIC NPCs (post-work pre-night-out rush) |
+| Thursday 14:00–16:00 | + MARCHETTI_WIFE (if Respect ≥ 50) |
+
+Waiting NPCs use NPCState.QUEUING on the `PropType.NAIL_WAITING_BENCH`.
+Rain/Drizzle: +1 extra PENSIONER ("nowhere else to be, love").
+
+---
+
+### Weather
+
+- **HEATWAVE**: Drying lamps overheat — 20% chance per service that gel sets
+  improperly → player receives SMUDGED_NAILS debuff (Street Rep −2 for 2h). Linh
+  apologises and refunds 2 COIN.
+- **FROST**: Linh adds complimentary MUG_OF_TEA to each service (warmth +8).
+- **RAIN/DRIZZLE**: Queuing NPCs shelter inside; extra dialogue line from Trang:
+  "Horrible out there, innit."
+
+---
+
+### NeighbourhoodWatch Integration
+
+If the player breaks into the salon after hours (19:00–09:00):
+- `NeighbourhoodWatchSystem.onVisibleCrime()` triggered
+- Notoriety +4 (TRESPASS + BURGLARY)
+- Loot: NAIL_VARNISH (sellable at Fence for 3 COIN each, 3–5 on shelf), NAIL_FILE
+  (improvised weapon, melee damage +1, 3 uses), UV_LAMP_BULB (craftable into
+  IMPROVISED_TASER for 15 COIN fence value)
+
+---
+
+### Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `TREAT_YOURSELF` | Get a manicure for the first time |
+| `HIGH_MAINTENANCE` | Buy every service type at least once |
+| `GEL_ECONOMY` | Complete the Marchetti voucher scam on 3 Thursdays |
+| `SMUDGED` | Receive the SMUDGED_NAILS debuff during a heatwave |
+| `NAIL_BURGLAR` | Break into the salon after hours |
+
+---
+
+### Unit Tests
+
+- `testBasicManicureDeductsCoinAndGrantsBuff()` — give player 10 COIN; buy Basic
+  Manicure (5 COIN); verify coin −5, "Polished" buff active, Street Rep +3.
+- `testGelManicureGrantsDisguiseBonus()` — buy Gel Manicure; verify DisguiseSystem
+  modifier is +10 and lasts 4 in-game hours.
+- `testWantedLevelRefusesService()` — set WantedSystem stars = 2; press E on
+  reception desk; verify result is REFUSED and `getLastRefusalReason()` == WANTED_LEVEL.
+- `testGossipRumourSharedOnVisit()` — seed a LOCAL_EVENT rumour into the network;
+  visit salon; verify `RumourNetwork.getRecentRumours()` contains a rumour sourced
+  from NAIL_SALON.
+- `testVoucherScamDeductsCoinAndGrantsCredit()` — set Marchetti Respect ≥ 50,
+  Thursday 14:30, player has 50 COIN; trigger voucher scam; verify player coin = 0,
+  5 × NAIL_VOUCHER redeemed, FactionSystem passive credit +60.
+- `testVoucherScamCaughtByPolice()` — same setup but place POLICE NPC within 15
+  blocks; verify WitnessSystem logs MONEY_LAUNDERING and notoriety +8.
+- `testSmudgedNailsDebuffOnHeatwave()` — set weather HEATWAVE, `NailSalonSystem.GEL_SMUDGE_CHANCE = 1.0f`; buy Gel Manicure; verify SMUDGED_NAILS debuff active and 2 COIN refunded.
+- `testRainAddsExtraPensioner()` — set weather RAIN; call `update(delta)` during
+  09:00; verify NPC count for PENSIONER at salon ≥ 2.
+- `testBreakInAfterHoursGrantsLoot()` — advance to 20:00; break salon door (5
+  hits); press E on nail varnish shelf; verify 3–5 NAIL_VARNISH in inventory,
+  notoriety +4, CriminalRecord contains BURGLARY.
+- `testTrangRumourRequiresStreetRep()` — set Street Rep = 10 (below 20); interact
+  with Trang; verify no CONTRABAND_SHIPMENT rumour shared. Set Street Rep = 25;
+  verify rumour is shared.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Service end-to-end, buff persists**: Player has 15 COIN. Advance time to
+   11:00. Press E on `PropType.NAIL_RECEPTION_DESK`. Select Gel Manicure (10 COIN).
+   Verify player is in QUEUING state at a NAIL_STATION. Advance 20 in-game minutes.
+   Verify service complete, coin = 5, Street Rep +6, DisguiseSystem modifier = +10,
+   buff timer > 0. Advance 4 in-game hours. Verify DisguiseSystem modifier = 0
+   (buff expired).
+
+2. **Voucher scam full cycle — Thursday only**: Set day to Thursday, time 14:30,
+   Marchetti Respect = 55, player coin = 60. Call `update(delta)` to spawn
+   MARCHETTI_WIFE. Verify NPC present. Interact (E). Confirm voucher purchase (5
+   vouchers × 10 COIN). Verify player coin = 10 (60 − 50), FactionSystem credit
+   +60. Advance to next in-game day; verify passive coin payout includes the +60
+   credit. Set day to Wednesday; verify MARCHETTI_WIFE does NOT spawn.
+
+3. **Police interruption during voucher scam**: Same setup as test 2 but spawn
+   POLICE NPC at 12 blocks from salon. Begin voucher transaction. Verify
+   WitnessSystem logged MONEY_LAUNDERING, player notoriety increased by 8, and
+   MARCHETTI_WIFE exits (NPCState.FLEEING).
+
+4. **Rumour pipeline — Linh to police station NPC**: Set player Notoriety = 35.
+   Visit salon (press E, select any service). After service, verify `RumourNetwork`
+   contains a PLAYER_SPOTTED rumour with source=NAIL_SALON. Verify the target NPC
+   of that rumour is the closest NPC to the police station landmark.
+
+5. **After-hours burglary full flow**: Advance time to 21:30 (salon closed). Verify
+   CLOSED_SIGN prop active. Player attacks door 5 times. Verify door removed (AIR
+   block). Player interacts with NAIL_VARNISH shelf. Verify 3–5 NAIL_VARNISH in
+   inventory. Verify notoriety +4, CriminalRecord contains BURGLARY,
+   `NeighbourhoodWatchSystem.onVisibleCrime()` was called. Verify NAIL_FILE item
+   also available on shelf.
