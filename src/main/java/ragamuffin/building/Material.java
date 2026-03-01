@@ -1369,7 +1369,36 @@ public enum Material {
      * Holding it adds +5 Notoriety if spotted by a police NPC.
      * Tooltip: "Confiscated goods. Technically still evidence."
      */
-    DRUGS_EVIDENCE("Drugs Evidence");
+    DRUGS_EVIDENCE("Drugs Evidence"),
+
+    // ── Issue #1000: Northfield Fire Station ──────────────────────────────────
+
+    /**
+     * Firefighter Helmet — bright yellow safety helmet looted from a station locker.
+     * Provides fire protection (halves burn damage) and 50% disguise effectiveness
+     * when worn — NPCs are less likely to notice the player in a fire station context.
+     * Theft detected with 60% probability if a FIREFIGHTER is within 6 blocks → +1 wanted star.
+     * Tooltip: "Big yellow lid. Either you're a hero or you're very committed to a bit."
+     */
+    FIREFIGHTER_HELMET("Firefighter Helmet"),
+
+    /**
+     * Fire Axe — a full-size fire axe from the station equipment locker.
+     * Breaks BRICK or WOOD blocks in 4 hits (standard is 8 and 5 respectively).
+     * Deals 15 weapon damage in melee combat.
+     * Theft detected with 60% probability if a FIREFIGHTER is within 6 blocks → +1 wanted star.
+     * Tooltip: "They use it to open doors. You're not using it to open doors."
+     */
+    FIRE_AXE("Fire Axe"),
+
+    /**
+     * Hose Reel — a coiled fire hose from the station equipment locker.
+     * Single-use item: press E near a BURNING_BIN to extinguish it, or aim at an NPC
+     * to knock them back 5 blocks (cancels NPC aggression state).
+     * Theft detected with 60% probability if a FIREFIGHTER is within 6 blocks → +1 wanted star.
+     * Tooltip: "Heavy. Wet. One use. Make it count."
+     */
+    HOSE_REEL("Hose Reel");
 
     private final String displayName;
 
@@ -1889,6 +1918,13 @@ public enum Material {
             case SCREWDRIVER:           return cs(0.48f, 0.48f, 0.52f,   // Metal blade
                                                    0.55f, 0.35f, 0.12f); // Wooden handle
 
+            // Issue #1000: Northfield Fire Station
+            case FIREFIGHTER_HELMET:    return c(0.95f, 0.80f, 0.10f);   // Bright yellow helmet
+            case FIRE_AXE:              return cs(0.78f, 0.12f, 0.08f,   // Red axe head
+                                                   0.45f, 0.28f, 0.12f); // Dark wood handle
+            case HOSE_REEL:             return cs(0.88f, 0.12f, 0.08f,   // Red reel drum
+                                                   0.55f, 0.55f, 0.60f); // Grey hose
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2162,6 +2198,10 @@ public enum Material {
             case PLUSH_TOY:
             case ARCADE_TOKEN:
             case SCREWDRIVER:
+            // Issue #1000: Northfield Fire Station (not block items)
+            case FIREFIGHTER_HELMET:
+            case FIRE_AXE:
+            case HOSE_REEL:
                 return false;
             default:
                 return true;
@@ -2713,6 +2753,14 @@ public enum Material {
                 return IconShape.CYLINDER;    // token disc
             case SCREWDRIVER:
                 return IconShape.TOOL;        // long screwdriver handle
+
+            // Issue #1000: Northfield Fire Station
+            case FIREFIGHTER_HELMET:
+                return IconShape.BOX;         // helmet shape — boxy silhouette
+            case FIRE_AXE:
+                return IconShape.TOOL;        // long-handled axe
+            case HOSE_REEL:
+                return IconShape.CYLINDER;    // coiled drum shape
 
             default:
                 return IconShape.BOX;

@@ -197,5 +197,13 @@ public enum RumourType {
     /** "Someone just legged it out of Aldi with a full basket — Dave went after 'em."
      * — seeded by SupermarketSystem when the player punches Dave (SECURITY_GUARD).
      * Spreads to 3 nearby NPCs; triggers WantedSystem stars and Notoriety gain. */
-    ASSAULT;
+    ASSAULT,
+
+    // ── Issue #1000: Northfield Fire Station ─────────────────────────────────
+
+    /** "Someone only went and nicked the actual fire engine from the station — full flashing lights and all."
+     * — seeded by FireStationSystem when the player completes the Engine Heist.
+     * Spreads to 5 nearby NPCs via RumourNetwork. Raises FIREFIGHTER suspicion permanently.
+     * Police NPCs who receive it immediately raise WantedSystem by +1 star. */
+    MAJOR_THEFT;
 }
