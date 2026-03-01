@@ -2456,6 +2456,43 @@ public enum AchievementType {
         "Bought-In Bake",
         "Won the Northfield Cake Bake-Off using a shop-bought item. Technically still a winner.",
         1
+    ),
+
+    // ── Issue #1110: Skin Deep Tattoos ────────────────────────────────────────
+
+    /** Get 3 tattoos in a single session at Skin Deep Tattoos. */
+    LIVING_CANVAS(
+        "Living Canvas",
+        "Got 3 tattoos in a single session. Kev's done more work on you than your nan ever did.",
+        3
+    ),
+
+    /** Apply a DIY prison tattoo kit successfully. */
+    HARD_AS_NAILS(
+        "Hard as Nails",
+        "Applied a prison tattoo kit yourself. Needle, ink, and a complete disregard for hygiene.",
+        1
+    ),
+
+    /** Pay for tattoo removal within 24 in-game hours of getting a HEAVILY_TATTOOED buff. */
+    TATTOO_REGRET(
+        "What Was I Thinking",
+        "Paid to have a tattoo removed within 24 hours. At least you made it quick.",
+        1
+    ),
+
+    /** Tip off Kev about Spider the rival tattooist. */
+    GRASSROOTS_INFORMANT(
+        "Eyes on the Street",
+        "Told Kev about Spider's cut-price operation. The neighbourhood watches out for its own.",
+        1
+    ),
+
+    /** Have HEAVILY_TATTOOED buff active while entering the JobCentre. */
+    WALKING_ARTFORM(
+        "Walking Artform",
+        "Turned up to sign-on absolutely covered in ink. The case worker had opinions.",
+        1
     );
 
     private final String name;

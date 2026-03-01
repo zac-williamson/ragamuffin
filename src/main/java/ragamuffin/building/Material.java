@@ -1519,6 +1519,20 @@ public enum Material {
     /** Tattoo gun — unlocked by Kev after 3 visits; weapon (3 dmg) and fence item (12–18 COIN). */
     TATTOO_GUN("Tattoo Gun"),
 
+    // ── Issue #1110: Skin Deep Tattoos — new craft items ─────────────────────
+    /**
+     * Prison Tattoo Kit — crafted from NEEDLE + INK_BOTTLE.
+     * Single-use DIY tattoo: applies PRISON_INK buff free, costs 10 HP,
+     * 20% chance of INFECTED_WOUND debuff. Unlocks HARD_AS_NAILS achievement.
+     */
+    PRISON_TATTOO_KIT("Prison Tattoo Kit"),
+
+    /**
+     * Tattoo Voucher — given by Kev as reward for tipping him off about Spider.
+     * Redeemable for one free flash tattoo at Skin Deep Tattoos.
+     */
+    TATTOO_VOUCHER("Tattoo Voucher"),
+
     // ── Issue #1014: Northfield Newsagent ────────────────────────────────────
 
     /**
@@ -3450,6 +3464,12 @@ public enum Material {
             case TATTOO_GUN:            return cs(0.22f, 0.22f, 0.25f,   // Gunmetal body
                                                    0.80f, 0.80f, 0.80f); // Chrome highlight
 
+            // Issue #1110: Skin Deep Tattoos — new craft items
+            case PRISON_TATTOO_KIT:     return cs(0.35f, 0.28f, 0.20f,   // Brown cloth wrap
+                                                   0.10f, 0.10f, 0.38f); // Dark ink stain
+            case TATTOO_VOUCHER:        return cs(0.95f, 0.92f, 0.75f,   // Cream card stock
+                                                   0.12f, 0.10f, 0.30f); // Dark ink logo
+
             // Issue #1014: Northfield Newsagent
             case LOTTERY_TICKET:        return cs(0.20f, 0.55f, 0.20f,   // Green ticket body
                                                    0.88f, 0.82f, 0.15f); // Gold strip
@@ -4014,6 +4034,9 @@ public enum Material {
             // Issue #1012: Skin Deep Tattoos — small craft items sit on surfaces
             case NEEDLE:
             case INK_BOTTLE:
+            // Issue #1110: Skin Deep Tattoos — new craft items sit on surfaces
+            case PRISON_TATTOO_KIT:
+            case TATTOO_VOUCHER:
             // Issue #1018: Northfield Poundstretcher — small shop items sit on surfaces
             case BLEACH:
             case GAFFER_TAPE:
@@ -4547,6 +4570,12 @@ public enum Material {
                 return IconShape.CYLINDER;    // small glass bottle
             case TATTOO_GUN:
                 return IconShape.TOOL;        // handheld tattoo gun
+
+            // Issue #1110: Skin Deep Tattoos — new craft items
+            case PRISON_TATTOO_KIT:
+                return IconShape.TOOL;        // improvised kit bundle
+            case TATTOO_VOUCHER:
+                return IconShape.FLAT_PAPER;  // gift voucher card
 
             // Issue #1016: Northfield Canal
             case CANAL_FISH:
