@@ -328,7 +328,25 @@ public class CriminalRecord {
          * player during the housing inspection at Kendrick House.
          * Penalty: +5 Notoriety, Wanted +1.
          */
-        POSSESSION("Possession of contraband");
+        POSSESSION("Possession of contraband"),
+
+        // ── Issue #1104: Northfield Community Centre ──────────────────────────
+
+        /**
+         * Recorded when the player sells any item to a SCHOOL_KID NPC during
+         * the Thursday Youth Drop-in at the Community Centre.
+         * Penalty: +20 Notoriety, WantedSystem +2 stars.
+         * Text: "You sold to a kid? Even for Northfield, that's low."
+         */
+        SUPPLY_TO_MINOR("Supply of goods to a minor"),
+
+        /**
+         * Recorded when the player is caught adding ANTIDEPRESSANTS to a
+         * competitor's cake during the Sunday Cake Bake-Off
+         * (caught condition: NoiseSystem ≥ 20).
+         * Penalty: +15 Notoriety, WantedSystem +2 stars.
+         */
+        POISONING("Food poisoning (Bake-Off sabotage)");
 
         private final String displayName;
 
