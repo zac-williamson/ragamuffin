@@ -25644,3 +25644,168 @@ One random event per 2 in-game hours while open:
 // Existing: LandmarkType.OFF_LICENCE, NPCType.SHOPKEEPER, NPCType.YOUTH_GANG, Material.CAN_OF_LAGER,
 //           Material.CHEAP_SPIRITS, Material.CIGARETTE, RumourType.GANG_ACTIVITY, PRICE_WAR achievement
 // WorldGenerator: cemetery already generated at (cemX, 0, cemZ) with headstone rows — add PropPositions
+
+---
+
+## Add Northfield Chinese Takeaway — Golden Palace, Late-Night Grub & the Prawn Cracker Economy
+
+**Landmark**: New `LandmarkType.CHINESE_TAKEAWAY` ("Golden Palace")
+
+Every British town has one: a slightly-gloomy-but-absolutely-beloved Chinese takeaway with
+steamed-up windows, a laminated picture menu on the wall, and a phone propped on the counter
+that never stops ringing. The Golden Palace is open afternoons and late evenings, perfectly timed
+to catch the post-pub crowd. It is NOT currently represented in Northfield — a significant cultural
+gap for a game set in working-class Britain.
+
+### Building
+
+A narrow shopfront (6×10×4 blocks) squeezed between the Wetherspoons side-alley and the payday
+loan shop. Brick exterior with a red-and-gold `CHINESE_LANTERN_PROP` above the door (always lit).
+Interior: CARPET (red pattern), MENU_BOARD_PROP behind the counter, SERVING_HATCH_PROP separating
+kitchen from front-of-house, PHONE_PROP on the counter, 4 WAITING_BENCH_PROP seats along one wall.
+Kitchen (not accessible) indicated by a swinging door prop.
+
+### NPCs
+
+- **Mr. Chen** (`SHOPKEEPER`) — proprietor and cook, behind the counter daily 16:00–23:30.
+  Terse but fair. Knows the name of every regular within 3 visits. Refuses service at
+  Notoriety ≥ 70 (he recognises faces). At Notoriety ≤ 30, adds a free `PRAWN_CRACKERS`
+  item to orders over 5 COIN.
+  Speech: "You want the usual?" / "Twenty minute, OK?" / "We closing soon."
+- **Tracy** (`PUBLIC`) — a local who works the till Friday/Saturday evenings 18:00–23:30.
+  Chatty; passive rumour source (LOCAL_EVENT pool). Reveals a `NEIGHBOURHOOD` rumour if
+  the player buys something first.
+- **2–4 waiting PUBLIC NPCs** — queue during peak hours (18:00–22:00 Fri/Sat). One or two
+  stay late (22:30+) and are visibly drunk (DRUNK status). They occasionally drop a `PRAWN_CRACKERS`
+  bag on the floor (litter prop).
+
+### Menu
+
+| Item                    | Price (COIN) | Notes                                             |
+|-------------------------|--------------|---------------------------------------------------|
+| `PRAWN_CRACKERS`        | 1            | Hunger −10. Seeds tooltip: "Lovely."              |
+| `SPRING_ROLLS`          | 2            | Hunger −20. Two served; shareable with NPC.       |
+| `CHICKEN_CHOW_MEIN`     | 4            | Hunger −50, Warmth +10. Post-pub favourite.       |
+| `EGG_FRIED_RICE`        | 2            | Hunger −30.                                       |
+| `SWEET_AND_SOUR_CHICKEN`| 4            | Hunger −50. Colour: orange-red sauce.             |
+| `CRISPY_DUCK`           | 6            | Hunger −60, Warmth +15. Requires 10-min wait.     |
+| `FORTUNE_COOKIE`        | 1            | On use: shows a random fortune string. No hunger. |
+| `TAKEAWAY_BAG`          | 0            | Given with any order ≥ 3 COIN. Inventory +1 slot. |
+
+Delivery radius: If the player has a registered squat (`SquatSystem`), they can call in a delivery
+order (press E on `PHONE_PROP` in squat) for any menu item +1 COIN delivery charge. Delivery NPC
+(`DELIVERY_DRIVER`) arrives in 3 in-game minutes. Notoriety ≥ 50 blocks delivery ("We don't come
+to that area after dark").
+
+### The Prawn Cracker Economy
+
+Free prawn crackers are seeded as litter props around the immediate vicinity of the Golden Palace
+between 22:00 and 00:00 (1 per 8 in-game minutes, capped at 6). The player can:
+- **Pick up** a litter bag: adds `PRAWN_CRACKERS` to inventory.
+- **Feed to pigeons** (`BIRD` NPCs): draws 3–5 pigeons within 5 blocks; each pigeon stays for
+  15 seconds. Seeds `PIGEON_CHAOS` rumour locally.
+- **Throw at NPC**: counts as a `FOOD_THROW` action; target NPC gets DISGUSTED status for 10s;
+  Notoriety +1.
+
+### Fortune Cookie System
+
+`FORTUNE_COOKIE` generates a random string from a fixed pool of 20 fortune strings on use:
+- "Hard work is its own reward."
+- "Beware the man who offers easy coin."
+- "The pigeon sees everything."
+- "A kebab deferred is a kebab forgotten."
+- "Someone nearby owes you money."
+- "Your notoriety precedes you."
+- "The allotment grows best when unwatched."
+- ...and 13 more. One fortune per cookie; cookie consumed on use.
+
+### Ordering Wait Mechanic
+
+Non-instant orders (`CHICKEN_CHOW_MEIN`, `SWEET_AND_SOUR_CHICKEN`, `CRISPY_DUCK`) trigger a
+20–40 second wait (simulated as in-game minutes ÷ 10). While waiting the player can: sit on
+a `WAITING_BENCH_PROP` (+2 Warmth/min), read the `MENU_BOARD_PROP` (tooltip describing specials),
+or leave (order cancelled, no refund for `CRISPY_DUCK`). After waiting, Mr. Chen calls "Number
+[N], ready!" and the item appears in the player's inventory.
+
+### Late-Night Atmosphere Events
+
+One random event per in-game hour (22:00–00:00 only):
+1. **Drunk post-pub crowd** (Fri/Sat): 4–6 DRUNK NPCs arrive simultaneously; wait queue overflows;
+   Mr. Chen raises voice ("One at a time, please!").
+2. **Phone order chaos**: The PHONE_PROP rings; Mr. Chen disappears to kitchen for 60s. Player can
+   interact with PHONE_PROP to answer it and give a fake address, seeding a `LOCAL_EVENT` rumour.
+3. **Chip-fat fire**: Kitchen emits smoke for 30s. Mr. Chen panics; player can pull fire alarm
+   (`FIRE_ALARM_PROP`) for −1 Notoriety, or ignore it for +1 Notoriety (failure to act).
+4. **Rival takeaway flyer drop**: A `DELIVERY_DRIVER` NPC briefly appears, drops a flyer
+   (`KEBAB_FLYER_PROP`); picking it up reveals Sultan's Kebab on the map if undiscovered.
+5. **Police welfare check**: A PCSO NPC enters, speaks to Mr. Chen for 15 seconds, leaves.
+   Player with Notoriety ≥ 2 stars gets +1 star if the PCSO spots them inside.
+
+### Achievements
+
+- `LATE_NIGHT_REGULAR` — ordered from Golden Palace at least once between 23:00 and 00:00.
+- `FORTUNE_SEEKER` — used 10 fortune cookies.
+- `PRAWN_CRACKER_PIGEON_FEEDER` — fed prawn crackers to pigeons 3 times.
+- `CRISPY_DUCK_CONNOISSEUR` — ordered Crispy Duck 5 times.
+- `PHONE_CHAOS` — answered the phone during the Phone Order Chaos event.
+
+### Integration
+
+- `WarmthSystem` — shop interior counts as shelter (+3 Warmth/min indoors).
+- `WeatherSystem` — rain adds 2 extra PUBLIC NPCs sheltering inside; COLD_SNAP raises prices by
+  1 COIN across the menu.
+- `SquatSystem` — delivery mechanic hooks into squat's PHONE_PROP.
+- `RumourNetwork` — `PIGEON_CHAOS` from prawn cracker feeding; `LOCAL_EVENT` from Tracy and
+  Phone Chaos event; `NEIGHBOURHOOD` from Tracy after purchase.
+- `NotorietySystem` — +1 from food throw; PCSO event adds star on sight.
+- `NoiseSystem` — drunk crowd event generates NOISE at medium radius.
+- `StreetEconomySystem` — `CHICKEN_CHOW_MEIN` / `SPRING_ROLLS` satisfy HUNGRY NPC need.
+- `NPCManager` — delivery driver NPC spawns from Golden Palace heading toward squat position.
+- `WantedSystem` — delivery blocked at Notoriety ≥ 50.
+- `AchievementSystem` — 5 new achievements above.
+
+### Unit Tests
+
+1. `ChineseTakeawaySystem.findMenuItem(PRAWN_CRACKERS)` returns non-null `MenuItem` with price 1.
+2. `ChineseTakeawaySystem.isOpen(15.5f)` returns `false`; `isOpen(18.0f)` returns `true`; `isOpen(23.75f)` returns `false`.
+3. `ChineseTakeawaySystem.calculateOrderPrice(CRISPY_DUCK, weatherColdSnap=true)` returns 7 (6 + 1 COLD_SNAP surcharge).
+4. After player orders `CHICKEN_CHOW_MEIN`, `pollWaitSeconds()` returns a value in [20, 40].
+5. `ChineseTakeawaySystem.getFortune(seed=42)` returns a non-null, non-empty string from the fortune pool.
+6. `ChineseTakeawaySystem.isDeliveryBlocked(notoriety=55)` returns `true`; `(notoriety=45)` returns `false`.
+7. After 3 pickup interactions, litter prop count is ≤ 3 (removed on pickup).
+
+### Integration Tests
+
+1. **Order and receive food**: Give player 4 COIN. Press E on `MENU_BOARD_PROP`. Select
+   `CHICKEN_CHOW_MEIN`. Verify COIN reduced by 4. Advance simulation 30 seconds. Verify
+   `CHICKEN_CHOW_MEIN` in player inventory. Verify player Hunger reduced by 50.
+
+2. **Free prawn crackers with large order**: Give player 6 COIN. Set player Notoriety to 10.
+   Order `CRISPY_DUCK` (6 COIN). Advance simulation 40 seconds. Verify player inventory contains
+   both `CRISPY_DUCK` and `PRAWN_CRACKERS`. Verify COIN is 0.
+
+3. **Delivery to squat succeeds under threshold**: Player has squat registered. Set Notoriety to
+   30. Interact with PHONE_PROP in squat. Order `EGG_FRIED_RICE` (2 COIN + 1 delivery = 3 COIN).
+   Verify `DELIVERY_DRIVER` NPC spawns. Advance simulation 3 in-game minutes. Verify `EGG_FRIED_RICE`
+   in player inventory. Verify COIN reduced by 3.
+
+4. **Delivery blocked at high notoriety**: Set player Notoriety to 55. Interact with squat
+   PHONE_PROP. Verify `ChineseTakeawaySystem.isDeliveryBlocked(55)` returns true. Verify no
+   `DELIVERY_DRIVER` NPC is spawned. Verify appropriate NPC speech set on Mr. Chen.
+
+5. **Prawn cracker pigeon feeding seeds rumour**: Spawn 3 `BIRD` NPCs within 5 blocks. Player
+   uses `PRAWN_CRACKERS` item from inventory. Call `ChineseTakeawaySystem.onFeedPigeons(player,
+   birds, rumourNetwork)`. Verify all BIRD NPCs enter attracted state for ≥ 15 seconds.
+   Verify `RumourNetwork` contains a `PIGEON_CHAOS` rumour.
+
+// ── New: ChineseTakeawaySystem.java in ragamuffin.core
+// New: LandmarkType.CHINESE_TAKEAWAY ("Golden Palace")
+// New: Material stubs required: PRAWN_CRACKERS, SPRING_ROLLS, CHICKEN_CHOW_MEIN, EGG_FRIED_RICE,
+//      SWEET_AND_SOUR_CHICKEN, CRISPY_DUCK, FORTUNE_COOKIE, TAKEAWAY_BAG
+// New: PropType stubs required: CHINESE_LANTERN_PROP, MENU_BOARD_PROP, SERVING_HATCH_PROP,
+//      PHONE_PROP (may already exist), KEBAB_FLYER_PROP
+// New: AchievementType stubs required: LATE_NIGHT_REGULAR, FORTUNE_SEEKER,
+//      PRAWN_CRACKER_PIGEON_FEEDER, CRISPY_DUCK_CONNOISSEUR, PHONE_CHAOS
+// New: RumourType.PIGEON_CHAOS (may not yet exist — add stub)
+// Existing: NPCType.SHOPKEEPER, PUBLIC, DELIVERY_DRIVER, BIRD, PCSO, DRUNK all defined
+// WorldGenerator: add CHINESE_TAKEAWAY block to parade-of-shops generation pass
