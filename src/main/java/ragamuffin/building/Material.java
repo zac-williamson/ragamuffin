@@ -2470,7 +2470,49 @@ public enum Material {
      * (press E on squat's fish prop once per day). When goldfish dies, Vibe −2.
      * Tooltip: "His name is Gary. The other Gary."
      */
-    GOLDFISH("Goldfish");
+    GOLDFISH("Goldfish"),
+
+    // ── Issue #1085: Northfield Internet Café — Cybernet ─────────────────────
+
+    /**
+     * Blank Paper — a ream of plain A4 paper.
+     * Purchasable from Asif at Cybernet (1 COIN per 5 sheets), or looted from
+     * the Post Office stationery shelf (3 COIN value, minor theft).
+     * Required for printing FORGED_DOCUMENT, FAKE_ID, and COUNTERFEIT_NOTE
+     * at the Cybernet printer.
+     */
+    BLANK_PAPER("Blank Paper"),
+
+    /**
+     * Cloned Phone Data — a copy of a phone's identity extracted at Cybernet.
+     * Produced by the "Clone phone details" terminal action (3 COIN + STOLEN_PHONE).
+     * One-use; enables PhoneRepairSystem.unlockWithClonedData() to unlock a phone
+     * without needing Tariq's service.
+     */
+    CLONED_PHONE_DATA("Cloned Phone Data"),
+
+    /**
+     * Mining Rig Component — hardware from a destroyed MINING_RIG_PROP.
+     * Drops when a MINING_RIG_PROP (back room of Cybernet) is destroyed.
+     * Sellable at ScrapyardSystem for 4 COIN per unit, or at FenceSystem for
+     * 7 COIN ("dodgy GPUs"). 3 units total in the back room.
+     */
+    MINING_RIG_COMPONENT("Mining Rig Component"),
+
+    /**
+     * Coin Roll — a paper roll of 5 COIN (currency bundle).
+     * Drops from the CASH_BOX_PROP in Cybernet's back room alongside loose coin.
+     * Tradeable or usable directly as 5 COIN value.
+     */
+    COIN_ROLL("Coin Roll"),
+
+    /**
+     * Cybernet Membership Card — a loyalty card from Asif's internet café.
+     * Purchasable from Asif for 5 COIN. Grants a 20% discount on all terminal
+     * time (session cost reduced) for 7 in-game days.
+     * Tooltip: "Five quid for a card that saves you 20p. Asif's no mug."
+     */
+    CYBERNET_MEMBERSHIP_CARD("Cybernet Membership Card");
 
     private final String displayName;
 
