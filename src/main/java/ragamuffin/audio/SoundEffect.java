@@ -40,5 +40,8 @@ public enum SoundEffect {
     PIRATE_RADIO_MUSIC,  // Looping lo-fi pirate radio jingle while broadcasting
 
     // Issue #932: Ice Cream Van System
-    ICE_CREAM_JINGLE  // Tinny ice cream van jingle; plays at each van stop
+    ICE_CREAM_JINGLE,  // Tinny ice cream van jingle; plays at each van stop
+
+    // Issue #981: Council Estate
+    LIFT_CREAK  // Creaking lift cable SFX; played while the lift is travelling between floors
 }

@@ -145,5 +145,12 @@ public enum RumourType {
     /** "Someone round here's been sending nasty letters. Police are asking questions."
      * — seeded by PostOfficeSystem when a threatening letter is traced at Tier 3+.
      * Spreads town-wide; increases WATCH_MEMBER vigilance. */
-    THREATENING_LETTER;
+    THREATENING_LETTER,
+
+    // ── Issue #981: Council Estate ────────────────────────────────────────────
+
+    /** "Someone's been hammering on doors up on the estate at all hours."
+     * — seeded by CouncilFlatsSystem when the player knocks on a resident door 3+
+     * times after 22:00. Triggers NeighbourhoodWatchSystem +5 anger. */
+    NOISE_COMPLAINT;
 }
