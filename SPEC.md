@@ -23517,3 +23517,137 @@ If the player breaks into the salon after hours (19:00–09:00):
    inventory. Verify notoriety +4, CriminalRecord contains BURGLARY,
    `NeighbourhoodWatchSystem.onVisibleCrime()` was called. Verify NAIL_FILE item
    also available on shelf.
+
+## Add Northfield Ladbrokes — Fixed-Odds Slips, FOBTs & the Racing Post Economy
+
+**Goal**: Bring the `BETTING_SHOP` landmark (`LandmarkType.BETTING_SHOP`, display name "Ladbrokes") to life with a fully interactive `BettingShopSystem`. The building already exists in the world (green-fronted, two plastic chairs, a counter) but is completely inert. This issue wires it up to the existing `HorseRacingSystem`, `GreyhoundRacingSystem`, and `PigeonRacingSystem`, adds a FOBT (Fixed-Odds Betting Terminal) minigame, and creates the classic British bookmaker atmosphere — Racing Posts on the counter, regulars arguing about form, and the ever-present smell of disappointment.
+
+### BettingShopSystem
+
+A new `BettingShopSystem` class managing:
+- **Opening hours**: Mon–Sat 08:00–22:00, Sun 10:00–20:00
+- **Staff**: Derek the cashier (NPCType.SHOPKEEPER, surly, minimal dialogue)
+- **Ambient regulars**: 2–4 PENSIONER or PUBLIC NPCs during opening hours, states IDLE or READING; they mutter about form and argue about yesterday's results
+- **Banned if**: WantedSystem stars ≥ 2 (Derek calls police); or player has BANNED_FROM_BOOKIES flag (set permanently after assault)
+
+#### 1. Fixed-Odds Betting (press E on Derek / counter)
+
+Player places bets on races from the three existing race systems:
+- **Horse races** (HorseRacingSystem): available when a race is scheduled within the next 30 in-game minutes
+- **Greyhound races** (GreyhoundRacingSystem): available when a race is scheduled at the track tonight
+- **Pigeon races** (PigeonRacingSystem): available only if player owns a pigeon (via pigeon loft)
+
+Betting slip UI (text-based):
+1. Choose race type (Horse / Greyhound / Pigeon)
+2. Choose runner from current race's entrant list (names + odds displayed)
+3. Choose stake (1–20 COIN, must be in inventory)
+4. Derek confirms: *"Right then. Don't come crying to me."*
+
+**Payout formula**: stake × runner's odds (integer odds, e.g. 5/1 = stake × 6). Winnings paid immediately after race resolves. Losing slips: nothing returned. Maximum single bet: 20 COIN. Maximum outstanding bets: 3 at once.
+
+**Bet slip item**: Player receives a `BETTING_SLIP` item added to inventory for each bet placed. On race resolution, if the player is within 40 blocks of the betting shop, they are notified via `TooltipSystem`. Winning slips auto-cash when player presses E on Derek (or at the counter).
+
+#### 2. FOBT (Fixed-Odds Betting Terminal)
+
+A `PropType.FOBT_TERMINAL` prop in the corner of the shop. Press E to play.
+
+Simple virtual roulette: player bets 1–5 COIN on Red/Black/Green. Red/Black pays 2×, Green pays 14× (1/36 chance, house edge).
+
+- Uses seeded `Random` for determinism in tests
+- Each spin takes 3 real seconds (animated number display via TooltipSystem)
+- On a win: coins added to inventory immediately, play `SoundEffect.COIN_COLLECT`
+- **Chasing losses mechanic**: if player loses 3 consecutive spins, Derek says *"You alright, mate?"* (flavour only, no gameplay penalty)
+- **FOBT Rage** achievement if player loses 10+ COIN total on the FOBT in a single session
+- Press ESC or walk away to exit the FOBT
+
+#### 3. Racing Post Prop
+
+A `PropType.RACING_POST_PROP` on the counter. Press E to read — reveals odds and form guide for today's scheduled horse race (one runner highlighted as "Today's Tip"). Reading it grants +5% payout on the next horse bet placed (one-time bonus per day, flavour mechanic).
+
+#### 4. Atmosphere & NPC Reactions
+
+- Regulars react to race results seeded via RumourNetwork: a win by the favoured horse → one NPC says *"Told you, didn't I? Told you!"*; an upset → *"Bloody typical."*
+- After player wins a bet ≥ 15 COIN: one ambient NPC gains HOSTILE state briefly (jealousy), returns to IDLE after 60 seconds
+- After player wins a FOBT spin: Derek's dialogue for next interaction shifts to curt mode (*"Don't get used to it."*)
+
+#### 5. Race Fix Side-Quest
+
+At Marchetti Respect ≥ 60, a MARCHETTI_CREW NPC appears outside the betting shop on Saturday afternoons (14:00–17:00). He offers the player a "sure thing" for the next greyhound race (the fixed dog from GreyhoundRacingSystem). Accepting:
+- Forces next GreyhoundRacingSystem race to use fixed winner
+- Player is expected to bet ≥ 10 COIN on that dog
+- If police are within 20 blocks when the fix is discussed: WitnessSystem logs CONSPIRACY, notoriety +6
+- Achievement: `SURE_THING`
+
+#### 6. After-Hours Break-In
+
+Closed sign on door (19:00–07:00). Breaking in:
+- `NeighbourhoodWatchSystem.onVisibleCrime()` triggered
+- Notoriety +5
+- Loot: COIN (3–8, float tray), BETTING_SLIP_BLANK (used to forge slips at FenceSystem — fence dialogue: *"Old Derek's float? Nice."*)
+- Achievement: `FOLDED`
+
+---
+
+### New Items / Props
+
+| Item/Prop | Description |
+|-----------|-------------|
+| `Material.BETTING_SLIP` | Inventory item representing an outstanding bet; consumed on cashout |
+| `Material.BETTING_SLIP_BLANK` | Blank slip; fenceable for 4 COIN or used in forgery recipe |
+| `Material.RACING_POST` | Newspaper item (fenceable, 1 COIN); reading gives horse tip bonus |
+| `PropType.FOBT_TERMINAL` | Interactive FOBT machine prop |
+| `PropType.RACING_POST_PROP` | Counter prop; press E to read |
+
+---
+
+### Integration Hooks
+
+- **HorseRacingSystem**: `getUpcomingRaces()` / `resolveRace()` — BettingShopSystem subscribes to race results to resolve outstanding slips
+- **GreyhoundRacingSystem**: `getScheduledRace()` / `pickWinner()` — same pattern; the race fix feeds `setFixedWinner()`
+- **PigeonRacingSystem**: player pigeon can be entered; odds calculated from training stats
+- **FenceSystem**: BETTING_SLIP_BLANK and RACING_POST fenceable items
+- **WantedSystem**: ban check on entry; CONSPIRACY charge from race fix with witness
+- **RumourNetwork**: race result rumours seeded to 3–5 nearby NPCs after each resolved race
+- **StreetSkillSystem**: no new skill, but TRADING XP +10 per winning bet cashout
+- **NeighbourhoodSystem**: betting shop counts as COMMERCIAL building for vibes calculations
+- **SoundSystem**: `SoundEffect.COIN_COLLECT` on FOBT win; ambient TV racing commentary loop while open
+
+---
+
+### Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `FIRST_FLUTTER` | Place your first bet at the bookies |
+| `RACING_CERT` | Cash out a winning bet of ≥ 10 COIN |
+| `FOBT_RAGE` | Lose 10+ COIN on the FOBT in one session |
+| `SURE_THING` | Complete the Marchetti race fix and cash out |
+| `FOLDED` | Break into the bookies after hours |
+| `BETTING_SLIP_BLUES` | Hold 3 losing slips simultaneously (all three outstanding bets lose) |
+
+---
+
+### Unit Tests
+
+- `testPlaceBetDeductsCoin()` — give player 15 COIN; place a 5-COIN bet; verify coin = 10, BETTING_SLIP in inventory.
+- `testWinningBetPaysOut()` — set up race with known winner (seeded RNG); place 5-COIN bet on winner at 3/1 odds; resolve race; verify coin += 20 (5 × 4), BETTING_SLIP removed.
+- `testLosingBetDeductsSlip()` — place bet on loser; resolve race; verify BETTING_SLIP removed, coin unchanged.
+- `testFOBTWinAddsCoins()` — seed FOBT Random to guarantee Green; bet 2 COIN on Green; verify coin += 28 (2 × 14).
+- `testFOBTRageAchievement()` — lose 10 COIN cumulatively across multiple spins; verify FOBT_RAGE unlocked.
+- `testMaxOutstandingBets()` — place 3 bets; attempt 4th; verify result is REJECTED.
+- `testBannedOnHighWanted()` — set WantedSystem stars = 2; attempt entry; verify BANNED result.
+- `testRaceFixSpawnsOnSaturdayOnly()` — set day Saturday 15:00, Marchetti Respect = 65; call update; verify MARCHETTI_CREW NPC present. Set day Monday; verify NPC absent.
+- `testRacingPostGrantsTipBonus()` — press E on RACING_POST_PROP; verify `hasTodaysTipBonus()` returns true; place horse bet; verify payout is 1.05× normal.
+- `testAfterHoursBreakInGrantsLoot()` — advance to 21:00; break door; press E on float tray; verify 3–8 COIN and BETTING_SLIP_BLANK in inventory; verify notoriety +5.
+
+### Integration Tests — implement these exact scenarios
+
+1. **End-to-end bet on horse race**: Set time to 13:30. HorseRacingSystem has a race scheduled at 14:00 with 6 runners, seeded RNG. Player has 20 COIN. Press E on counter — verify race is listed. Select runner 3 (odds 4/1). Stake 5 COIN. Verify player coin = 15, BETTING_SLIP in inventory. Advance time past 14:00. HorseRacingSystem resolves race; runner 3 wins. Press E on counter. Verify coin = 15 + 25 = 40 (5 × 5), BETTING_SLIP removed, TRADING XP +10, RACING_CERT unlocked.
+
+2. **FOBT full session with rage achievement**: Player has 20 COIN. Seed FOBT Random so first 5 spins all lose on Red. Bet 2 COIN × 5 spins. After 4 COIN total lost: verify Derek says *"You alright, mate?"* (chasing losses dialogue triggered). After 10 COIN total lost: verify FOBT_RAGE achievement unlocked.
+
+3. **Race fix pipeline**: Set day Saturday, time 14:30, Marchetti Respect = 65. Advance update — verify MARCHETTI_CREW NPC spawns outside shop. Player presses E on NPC — select accept fix. Verify `GreyhoundRacingSystem.hasFixedWinner()` returns true. Player places 10 COIN bet on fixed dog. Advance time to race resolution. Verify fixed dog wins. Press E on counter to cash out. Verify SURE_THING achievement unlocked, coin increased by (10 × odds).
+
+4. **Banned player cannot enter**: Set WantedSystem stars = 2. Player walks to betting shop door. Verify Derek's CLOSED dialogue fires, player cannot enter interior, and no bet UI is accessible.
+
+5. **Race result rumour seeded to NPCs**: Resolve a horse race via HorseRacingSystem. Verify `RumourNetwork` contains a LOCAL_EVENT rumour about the race result. Verify at least 3 NPCs within 30 blocks of the betting shop have that rumour in their known-rumour set.
