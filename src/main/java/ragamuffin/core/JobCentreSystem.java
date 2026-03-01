@@ -156,6 +156,23 @@ public class JobCentreSystem {
         Material.CROWBAR, Material.BOLT_CUTTERS, Material.BALACLAVA
     };
 
+    // ── Issue #973: Sick Note integration ─────────────────────────────────────
+
+    /** UC payment multiplier when a sick note is active (50% uplift). */
+    public static final float SICK_NOTE_UPLIFT_MULTIPLIER = 1.5f;
+
+    /** Number of in-game days the sick note benefit lasts. */
+    public static final int SICK_NOTE_DURATION_DAYS = 7;
+
+    /** Whether a sick note is currently active (exempts from sanctions, uplifts payment). */
+    private boolean sickNoteActive = false;
+
+    /** The in-game day on which the sick note expires. -1 if inactive. */
+    private int sickNoteExpiryDay = -1;
+
+    /** Number of consecutive sanctions (tracked for GPSurgerySystem WORK_RELATED_STRESS). */
+    private int consecutiveSanctions = 0;
+
     // ── Construction ──────────────────────────────────────────────────────────
 
     public JobCentreSystem(
@@ -205,6 +222,10 @@ public class JobCentreSystem {
             if (record.getLastSignOnDay() < nextSignOnDay) {
                 // Missed sign-on
                 record.recordMissedSignOn();
+                // Track consecutive sanctions; sick note exempts from the current sanction
+                if (!sickNoteActive) {
+                    consecutiveSanctions++;
+                }
 
                 // BUREAUCRACY Apprentice+: automatic sanction appeal
                 int bureaucracyLevel = streetSkillSystem.getTierLevel(StreetSkillSystem.Skill.BUREAUCRACY);
@@ -238,6 +259,12 @@ public class JobCentreSystem {
         }
 
         windowWasOpen = windowOpen;
+
+        // Sick note expiry check
+        if (sickNoteActive && sickNoteExpiryDay >= 0 && currentDay >= sickNoteExpiryDay) {
+            sickNoteActive = false;
+            sickNoteExpiryDay = -1;
+        }
 
         // Debt collector update
         updateDebtCollector(delta, player, allNpcs);
@@ -335,22 +362,31 @@ public class JobCentreSystem {
         record.recordSignOn(currentDay);
         nextSignOnDay = currentDay + SIGN_ON_INTERVAL_DAYS;
 
-        // Assign a random mission
-        JobSearchMissionType mission = pickRandomMission();
-        record.assignMission(mission);
+        // Reset consecutive sanctions on successful sign-on
+        consecutiveSanctions = 0;
+
+        // Assign a random mission (skip if sick note is active)
+        if (!sickNoteActive) {
+            JobSearchMissionType mission = pickRandomMission();
+            record.assignMission(mission);
+        }
 
         // Award BUREAUCRACY XP
         streetSkillSystem.awardXP(StreetSkillSystem.Skill.BUREAUCRACY, JobCentreRecord.XP_SIGN_ON);
     }
 
     /**
-     * Compute the effective UC payment for this sign-on, including BUREAUCRACY bonuses.
+     * Compute the effective UC payment for this sign-on, including BUREAUCRACY bonuses
+     * and any sick note uplift (×1.5 for 7 in-game days).
      */
     public int computeUCPayment() {
         int base = record.getCurrentUCPayment();
         int bureaucracyLevel = streetSkillSystem.getTierLevel(StreetSkillSystem.Skill.BUREAUCRACY);
         if (bureaucracyLevel >= BUREAUCRACY_PAYMENT_LEVEL) {
             base += BUREAUCRACY_PAYMENT_BONUS;
+        }
+        if (sickNoteActive) {
+            base = Math.round(base * SICK_NOTE_UPLIFT_MULTIPLIER);
         }
         return Math.max(0, base);
     }
@@ -606,4 +642,44 @@ public class JobCentreSystem {
 
     /** Force the debt collector NPC reference (for testing). */
     public void setDebtCollectorForTesting(NPC npc) { this.debtCollector = npc; }
+
+    // ── Issue #973: Sick Note integration ─────────────────────────────────────
+
+    /**
+     * Activate the sick note benefit for 7 in-game days.
+     * Called by GPSurgerySystem when the player presents a SICK_NOTE to the CASE_WORKER.
+     *
+     * @param currentDay the current in-game day
+     */
+    public void activateSickNote(int currentDay) {
+        sickNoteActive = true;
+        sickNoteExpiryDay = currentDay + SICK_NOTE_DURATION_DAYS;
+    }
+
+    /**
+     * Returns true if the sick note benefit is currently active (exempts from sanctions,
+     * uplifts UC payment by 50%).
+     */
+    public boolean isSickNoteActive() {
+        return sickNoteActive;
+    }
+
+    /**
+     * Returns the number of consecutive missed sign-ons (sanctions).
+     * Used by GPSurgerySystem to determine WORK_RELATED_STRESS diagnosis (≥ 2 sanctions).
+     */
+    public int getConsecutiveSanctions() {
+        return consecutiveSanctions;
+    }
+
+    /** Force-set consecutive sanctions (for testing). */
+    public void setConsecutiveSanctionsForTesting(int count) {
+        this.consecutiveSanctions = count;
+    }
+
+    /** Force-set sick note active state (for testing). */
+    public void setSickNoteActiveForTesting(boolean active, int expiryDay) {
+        this.sickNoteActive = active;
+        this.sickNoteExpiryDay = expiryDay;
+    }
 }

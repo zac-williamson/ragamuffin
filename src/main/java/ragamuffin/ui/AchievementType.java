@@ -1373,6 +1373,37 @@ public enum AchievementType {
         "Don't Mind If I Do",
         "Pickpocketed the sleeping drunk at The Rusty Anchor. He'll never know. Probably.",
         1
+    ),
+
+    // --- Issue #973: Northfield GP Surgery ---
+    JUST_PARACETAMOL(
+        "Is That It?",
+        "Received a Paracetamol prescription from Dr. Kapoor. He gave you paracetamol. Of course he did.",
+        1
+    ),
+
+    SIGNED_OFF_SICK(
+        "Doctor's Orders",
+        "Received a sick note and used it at the JobCentre. The DWP were sympathetic. For once.",
+        1
+    ),
+
+    PRESCRIPTION_FRAUDSTER(
+        "Pharmacist's Worst Nightmare",
+        "Successfully forged a prescription at the pharmacy hatch. Bold. Very bold.",
+        1
+    ),
+
+    FULL_WAITING_ROOM(
+        "Take a Number",
+        "Entered the GP Surgery waiting room when all 5 patient chairs were already occupied.",
+        1
+    ),
+
+    DONT_MIX_WITH_ALCOHOL(
+        "Medical Advice Ignored",
+        "Drank a pint within 10 minutes of taking Strong Meds. The leaflet warned you.",
+        1
     );
 
     private final String name;

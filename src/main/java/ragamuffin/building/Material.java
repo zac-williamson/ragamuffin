@@ -1135,7 +1135,53 @@ public enum Material {
      * Cost: 4 COIN. Hunger -80, Warmth +20.
      * Eating it on a Thursday awards the CURRY_CLUB achievement.
      */
-    CURRY_CLUB_SPECIAL("Curry Club Special");
+    CURRY_CLUB_SPECIAL("Curry Club Special"),
+
+    // ── Issue #973: Northfield GP Surgery ─────────────────────────────────────
+
+    /**
+     * Prescription — issued by Dr. Kapoor after consultation.
+     * Redeemed at the PHARMACY_HATCH_PROP within 2 in-game days for the actual medicine.
+     * Tooltip: "Take to the pharmacy. Don't lose it."
+     */
+    PRESCRIPTION("Prescription"),
+
+    /**
+     * Antibiotics — heals 30 HP and clears all active stat debuffs.
+     * Dispensed for MODERATE_ILLNESS diagnosis (any stat 20–39%).
+     * Tooltip: "Finish the course."
+     */
+    ANTIBIOTICS("Antibiotics"),
+
+    /**
+     * Strong Meds — heals 60 HP; restores warmth to 80.
+     * Dispensed for SERIOUS_CONDITION diagnosis (any stat < 20%).
+     * IMPORTANT: drinking a PINT within 10 in-game minutes drops Warmth by 20.
+     * Tooltip: "Don't mix these with alcohol."
+     */
+    STRONG_MEDS("Strong Meds"),
+
+    /**
+     * Sick Note — presented to the CASE_WORKER at the JobCentre (press E while holding).
+     * Grants: sanction exemption for that week's job search + 50% benefit uplift for 7 in-game days.
+     * Tooltip: "Signed off. Doctor's orders."
+     */
+    SICK_NOTE("Sick Note"),
+
+    /**
+     * Blank Prescription Form — found in the doctor's room waste bin (30% chance).
+     * Used for the prescription fraud scam at the PHARMACY_HATCH_PROP.
+     * Tooltip: "Someone's letterhead. Technically. Don't."
+     */
+    BLANK_PRESCRIPTION_FORM("Blank Prescription Form"),
+
+    /**
+     * Neon Leaflet — flavour item collected from the LEAFLET_STAND_PROP in the GP Surgery.
+     * Unsellable. Random flavour texts: "Know Your Chlamydia", "5-A-Day: An Aspiration",
+     * "Feeling Low? You're Not Alone (But We're Very Busy)".
+     * Tooltip varies by type.
+     */
+    NEON_LEAFLET("Neon Leaflet");
 
     private final String displayName;
 
@@ -1623,6 +1669,19 @@ public enum Material {
             case CURRY_CLUB_SPECIAL: return cs(0.90f, 0.55f, 0.10f,  // Curry orange
                                                0.75f, 0.38f, 0.05f); // Rich sauce
 
+            // Issue #973: Northfield GP Surgery
+            case PRESCRIPTION:          return cs(0.88f, 0.88f, 0.95f,  // White paper slip
+                                                   0.28f, 0.55f, 0.82f); // NHS blue stamp
+            case ANTIBIOTICS:           return c(0.88f, 0.72f, 0.18f);   // Yellow capsule
+            case STRONG_MEDS:           return cs(0.78f, 0.22f, 0.22f,   // Red pill/packet
+                                                   0.55f, 0.08f, 0.08f); // Dark red warning
+            case SICK_NOTE:             return cs(0.92f, 0.92f, 0.88f,   // Cream official paper
+                                                   0.28f, 0.55f, 0.82f); // NHS blue header
+            case BLANK_PRESCRIPTION_FORM: return cs(0.95f, 0.95f, 0.90f, // Pale cream form
+                                                   0.70f, 0.70f, 0.65f); // Grey ruled lines
+            case NEON_LEAFLET:          return cs(0.20f, 0.82f, 0.45f,   // Bright green NHS leaflet
+                                                   0.10f, 0.62f, 0.28f); // Darker green accent
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1879,6 +1938,13 @@ public enum Material {
             // Issue #971: The Rusty Anchor Wetherspoons (not block items)
             case CHEAP_SPIRITS:
             case CURRY_CLUB_SPECIAL:
+            // Issue #973: Northfield GP Surgery (not block items)
+            case PRESCRIPTION:
+            case ANTIBIOTICS:
+            case STRONG_MEDS:
+            case SICK_NOTE:
+            case BLANK_PRESCRIPTION_FORM:
+            case NEON_LEAFLET:
                 return false;
             default:
                 return true;
@@ -1942,6 +2008,13 @@ public enum Material {
             // Issue #971: The Rusty Anchor Wetherspoons — drinks/food sit on surfaces
             case CHEAP_SPIRITS:
             case CURRY_CLUB_SPECIAL:
+            // Issue #973: Northfield GP Surgery — medicine/paper items sit on surfaces
+            case PRESCRIPTION:
+            case ANTIBIOTICS:
+            case STRONG_MEDS:
+            case SICK_NOTE:
+            case BLANK_PRESCRIPTION_FORM:
+            case NEON_LEAFLET:
                 return true;
             default:
                 return false;
@@ -2381,6 +2454,20 @@ public enum Material {
                 return IconShape.BOTTLE;      // small spirits bottle
             case CURRY_CLUB_SPECIAL:
                 return IconShape.FOOD;        // curry dish
+
+            // Issue #973: Northfield GP Surgery
+            case PRESCRIPTION:
+                return IconShape.FLAT_PAPER;  // paper prescription slip
+            case ANTIBIOTICS:
+                return IconShape.FLAT_PAPER;  // medicine packet
+            case STRONG_MEDS:
+                return IconShape.FLAT_PAPER;  // medicine packet (red)
+            case SICK_NOTE:
+                return IconShape.FLAT_PAPER;  // official note paper
+            case BLANK_PRESCRIPTION_FORM:
+                return IconShape.FLAT_PAPER;  // blank paper form
+            case NEON_LEAFLET:
+                return IconShape.FLAT_PAPER;  // folded leaflet
 
             default:
                 return IconShape.BOX;
