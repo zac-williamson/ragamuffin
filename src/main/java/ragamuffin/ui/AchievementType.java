@@ -1797,6 +1797,34 @@ public enum AchievementType {
         "Dog's Dinner",
         "Distracted Tyson with a sausage roll and raided the locked compound. Respect.",
         1
+    ),
+
+    // ── Issue #1028: Northfield Cash Converters ───────────────────────────────
+
+    DIGITAL_POVERTY(
+        "Digital Poverty",
+        "Sold a games console to pay the gas bill. No judgement.",
+        1
+    ),
+    CLEAN_IMEI(
+        "Clean IMEI",
+        "Sold a wiped phone to Dean without him batting an eyelid. Tariq did good work.",
+        1
+    ),
+    NIGHT_SHIFT(
+        "Night Shift",
+        "Made a sale to Dave the Middleman in the back alley after midnight. Very discreet.",
+        1
+    ),
+    STORE_CREDIT_MILLIONAIRE(
+        "Store Credit Millionaire",
+        "Earned 50 COIN in total from Cash Converters. Dean knows your face by now.",
+        50
+    ),
+    CCTV_BLIND_SPOT(
+        "Blind Spot",
+        "Smashed the CCTV before selling hot goods to Dean. Evidence? What evidence?",
+        1
     );
 
     private final String name;
