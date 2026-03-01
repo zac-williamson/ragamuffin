@@ -485,7 +485,19 @@ public enum NPCType {
      *         "I'll give you sixty percent — take it or leave it." /
      *         "No food, no rubble, no coin. I'm a shop, not a skip."
      */
-    PAWN_BROKER(25f, 0f, 0f, false);
+    PAWN_BROKER(25f, 0f, 0f, false),
+
+    // ── Issue #965: Northfield Snooker Hall ───────────────────────────────────
+
+    /**
+     * Snooker Hustler — Frank, a seasoned pool shark who wanders Cue Zone 12:00–22:00.
+     * Plays at HUSTLER difficulty tier in the snooker mini-game.
+     * Will accept side bets of 1–10 COIN. 25% chance of detecting a deliberate miss
+     * during the hustle setup. If caught hustling back, turns hostile.
+     * Speech: "Fancy a frame, mate?" / "Tell you what — make it interesting?"
+     *         / "I've been playing this table since before you were born."
+     */
+    SNOOKER_HUSTLER(25f, 5f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

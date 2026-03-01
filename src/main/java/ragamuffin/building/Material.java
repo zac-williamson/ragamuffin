@@ -1051,7 +1051,23 @@ public enum Material {
      * Used in advanced crafting recipes (e.g. canal-related structures).
      * Tooltip: "Rope. Not a noose. Don't be dramatic."
      */
-    ROPE("Rope");
+    ROPE("Rope"),
+
+    // ── Issue #965: Northfield Snooker Hall ───────────────────────────────────
+
+    /**
+     * Cue — a snooker cue used as a melee weapon (2 damage per hit) and for playing.
+     * Craftable: WOOD×2. Breaks after 3 hits in combat, dropping WOOD×1.
+     * Tooltip: "A snooker cue. Two damage, breaks in three hits. Not ideal."
+     */
+    CUE("Snooker Cue"),
+
+    /**
+     * Chalk Cube — a small blue cube of snooker chalk. Cosmetic item.
+     * Sold by Dennis the Proprietor for 1 COIN.
+     * Tooltip: "Chalk. Technically for cue tips. Technically."
+     */
+    CHALK_CUBE("Chalk Cube");
 
     private final String displayName;
 
@@ -1509,6 +1525,11 @@ public enum Material {
                                                0.65f, 0.72f, 0.45f); // Yellow-green belly
             case ROPE:               return cs(0.72f, 0.60f, 0.35f,  // Natural hemp tan
                                                0.55f, 0.42f, 0.20f); // Darker twisted strand
+
+            // Issue #965: Northfield Snooker Hall
+            case CUE:                return cs(0.75f, 0.55f, 0.22f,  // Light ash wood shaft
+                                               0.48f, 0.30f, 0.08f); // Darker butt end
+            case CHALK_CUBE:         return c(0.28f, 0.45f, 0.72f);  // Chalk blue
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -2223,6 +2244,12 @@ public enum Material {
                 return IconShape.FOOD;        // fish food item
             case ROPE:
                 return IconShape.TOOL;        // coiled rope / tool shape
+
+            // Issue #965: Northfield Snooker Hall
+            case CUE:
+                return IconShape.TOOL;        // long cue shaft
+            case CHALK_CUBE:
+                return IconShape.BOX;         // small cube
 
             default:
                 return IconShape.BOX;

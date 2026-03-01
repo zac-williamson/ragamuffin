@@ -491,7 +491,17 @@ public enum PropType {
      * A small golden cup with "LUCKY STARS" engraved on the plinth.
      * Destroyed by 3 punches; yields BINGO_TROPHY material.
      */
-    BINGO_TROPHY_PROP(0.30f, 0.40f, 0.30f, 3, Material.BINGO_TROPHY);
+    BINGO_TROPHY_PROP(0.30f, 0.40f, 0.30f, 3, Material.BINGO_TROPHY),
+
+    // ── Issue #965: Northfield Snooker Hall ───────────────────────────────────
+
+    /**
+     * Snooker table prop — a full-size 4×2 block green baize snooker table with
+     * wooden surround. Collidable; player cannot walk through it.
+     * Destroyed by 10 punches; yields WOOD×2.
+     * Used for the snooker mini-game triggered by pressing E while adjacent.
+     */
+    SNOOKER_TABLE_PROP(4.00f, 0.90f, 2.00f, 10, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
