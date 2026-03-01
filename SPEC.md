@@ -26151,3 +26151,153 @@ At `FactionSystem` MARCHETTI_CREW Respect ≥ 40, Asif unlocks the back-room doo
 //           NotorietySystem, WantedSystem, CriminalRecord, DisguiseSystem, NeighbourhoodSystem,
 //           WeatherSystem, NoiseSystem, WitnessSystem, RumourNetwork, AchievementSystem all defined
 // WorldGenerator: add INTERNET_CAFE block to high street parade between OFF_LICENCE and POUND_SHOP
+
+---
+
+## Add Northfield Nightclub — The Vaults, the Bouncer Economy & the 2am Chaos
+
+**Landmark**: New `LandmarkType.NIGHTCLUB` ("The Vaults")
+
+Every British town has one: a sticky-floored nightclub in a converted railway arch or basement, open Thursday to Sunday, where most of the weekend drama happens. The Vaults fills the gap between the game's daytime economy and the late-night chaos already seeded by `PubLockInSystem`, `RaveSystem`, `KebabVanSystem`, and `TaxiSystem`. The pub shuts at 23:00 and kicks everyone out — The Vaults opens at 22:00 and doesn't close until 03:00. It becomes the natural endpoint of any night out and a hotbed of faction conflict, low-level drug dealing, fights, and police attention.
+
+### Building
+
+A two-storey converted railway arch at the edge of the high street near the Wetherspoons, accessible via a side alley. Ground floor: the main club space — `DJ_BOOTH_PROP`, `DANCEFLOOR_PROP` (4×4 block area with coloured-block lighting), `BAR_COUNTER_PROP`, `SPEAKER_STACK_PROP` ×2, `STROBE_LIGHT_PROP` (new prop), `CIGARETTE_MACHINE_PROP` (new prop), and `TOILET_DOOR_PROP` ×2 (M/F). Lower level (accessed via `STAIRCASE_PROP`): two `PRIVATE_BOOTH_PROP` tables, a `FIRE_EXIT_DOOR_PROP` (leads to back alley). Outside: `VELVET_ROPE_PROP` queue line, `BOUNCER_BOOTH_PROP`.
+
+Open **Thu–Sun 22:00–03:00** only. Entry: **3 COIN** (collected by Big Dave, `BOUNCER` NPC).
+
+### The Bouncer Economy — Getting In
+
+Big Dave (`BOUNCER` NPC) works the door. Entry is gated:
+
+| Condition | Outcome |
+|---|---|
+| Entry fee (3 COIN), Notoriety < 50 | Admitted normally |
+| Notoriety 50–69 | Dave eyes you up; 50% chance denied ("Not tonight, mate.") |
+| Notoriety ≥ 70 | Always denied ("You're barred, son.") |
+| Wearing `DISGUISE_KIT` | Notoriety check treated as 0 (always admitted) |
+| `FACTION_PASS` item (new) | Skip queue, free entry, Dave tips his chin |
+| MARCHETTI_CREW Respect ≥ 60 | Admitted free; Dave nods |
+| Bribe Dave (press E + 5 COIN) | Bypasses Notoriety check; Dave admits player, adds `BRIBED_BOUNCER` flag |
+
+**Queue mechanic**: 3–6 `PUBLIC` NPC queue outside from 22:00. Player must join the back of the queue (walk behind the last NPC) and wait 2 in-game minutes, or bribe Dave to skip it. Pushing in (walking to front without bribe) adds `QUEUE_JUMPED` flag — Dave ejects the player next time he spots them inside.
+
+### Inside The Vaults
+
+Once inside, the player can:
+
+- **Buy drinks at the bar** (1 COIN each): `ALCOPOP`, `PINT_OF_LAGER`, `DOUBLE_VODKA` (new items). Each drink adds +1 to a hidden `DrunkenessLevel` (0–5). At level 3: movement sways (walk direction randomly jittered ±10°). At level 5: screen blur effect; player randomly sits down every 30 seconds.
+- **Dance on the dancefloor** (press E on `DANCEFLOOR_PROP`): earns `STREET_SKILL` XP (Dancing) at 1 XP/in-game-minute; at skill ≥ 5 unlocks `CROWD_PLEASER` — nearby NPCs gain a small approval buff. If `MCBattleSystem` MC Rank ≥ 3, the DJ calls the player up for a freestyle — triggers a simplified `BattleBarMiniGame` round worth +10 MC XP on win.
+- **VIP booths** (lower level): sitting in a `PRIVATE_BOOTH_PROP` with 2+ COIN spent at the bar seeds a `GANG_ACTIVITY` rumour (implied dealing/plotting). MARCHETTI_CREW NPCs will join the player in the booth at Respect ≥ 50 and offer a side mission (see Missions below).
+- **Toilets** (press E on `TOILET_DOOR_PROP`): a `DRUG_DEALER_NPC` (`DEALER` NPC type) loiters inside. Sells `PILLS` ×2 for 4 COIN. Buying triggers a 10% chance `UNDERCOVER_OFFICER` NPC is present — instant arrest, Notoriety +15, `CriminalRecord.CrimeType.DRUG_POSSESSION`.
+- **Cigarette machine** (press E on `CIGARETTE_MACHINE_PROP`): buys `CIGARETTES` ×5 for 2 COIN. Cigarettes can be smoked (E while selected) — reduces `DrunkenessLevel` by 1, adds Notoriety +1 (anti-social behaviour).
+- **Fire exit** (press E on `FIRE_EXIT_DOOR_PROP`): leads to the back alley behind the building. Player can smuggle NPCs (or loot) out through the fire exit without passing the bouncer. Triggers a 30% chance alarm prop activates (`FIRE_ALARM_PROP`), which alerts Big Dave and halves the door detection time.
+
+### Fights & Ejection
+
+The Vaults is volatile. Every 5 in-game minutes a fight check runs:
+- Base fight probability: 15%.
+- +10% per `DrunkenessLevel` of NPCs present above 3.
+- +20% if MARCHETTI_CREW and STREET_LADS NPCs are both present.
+
+When a fight triggers, 2 `PUBLIC` NPCs enter `NPCState.FIGHTING`. If the player is adjacent, they are automatically drawn in unless they step back 3 blocks within 2 seconds. Big Dave rushes in after 30 seconds. Anyone in the fight when Dave arrives gets ejected (teleported to outside; `EJECTED_FROM_VAULTS` flag set). Ejected players cannot re-enter for 10 in-game minutes.
+
+**Player can intervene**:
+- Help break up the fight (stand between the two NPCs for 5 seconds): both NPCs calm down; player earns `PEACEKEEPER` achievement and Notoriety −2.
+- Join in: adds `AFFRAY` charge to `CriminalRecord`; Notoriety +8; 40% chance police arrive.
+
+### Missions
+
+**Marchetti Side Mission** (MARCHETTI_CREW Respect ≥ 50): In the VIP booth, Tony Marchetti (`CRIME_BOSS` NPC, present Fri–Sat 23:00–01:00) offers the player a job: plant a `PHONE_TRACKER_ITEM` (new item) in the jacket of a named STREET_LADS NPC currently on the dancefloor. Player must pickpocket the target (press E while behind target, 20% fail chance) and insert the tracker. Success: MARCHETTI_CREW Respect +15, 10 COIN. Caught: Notoriety +10, STREET_LADS Respect −10, fight triggered.
+
+**Closing Time Chaos** (special event, every night at 02:45): All NPC `DrunkenessLevel` jumps to 4. Fight probability doubles. A queue forms at `TAXI_RANK` (seeded via `TaxiSystem`). Kebab van spawns nearby (seeded via `KebabVanSystem`). One random NPC drops `LOST_WALLET` item (new: contains 3–8 COIN, returnable to `POLICE_STATION` for +2 Notoriety reduction, or keepable). `NeighbourhoodSystem` Vibes −2 for each fight event at closing time.
+
+### NPCs
+
+- **Big Dave** (`BOUNCER`) — terse, immovable. Works the door 22:00–03:00. Patrols inside hourly. Will permanently bar the player if ejected twice in one night.
+- **DJ Mikey** (`DJ` NPC) — energetic, on the decks. Comments on crowd size. At crowd < 5 NPCs: "It's dead in here, man." At crowd ≥ 15: "This place is jumping!" — seeds a `LOCAL_EVENT` rumour.
+- **Chantelle** (`BARMAID` NPC) — quick, no-nonsense. Will refuse service at `DrunkenessLevel` ≥ 4. "You've had enough, babe."
+- **Tony Marchetti** (`CRIME_BOSS` NPC) — present Fri–Sat 23:00–01:00 in the VIP booth. Offers the tracker mission.
+- **The Dealer** (`DEALER` NPC) — in the toilets 22:00–02:30. Flees on police arrival.
+- **4–8 `PUBLIC` / `YOUTH_GANG` NPCs** — on the dancefloor and at the bar. Drunkenness accumulates over time.
+
+### Items
+
+- `ALCOPOP` — new drink; DrunkenessLevel +1. Cost 1 COIN from bar.
+- `DOUBLE_VODKA` — new drink; DrunkenessLevel +2. Cost 1 COIN from bar (great value).
+- `PILLS` — new item; sold by Dealer in toilets (4 COIN ×2). Effect: DrunkenessLevel −1, movement speed +20% for 5 in-game minutes, then DrunkenessLevel +2 crash.
+- `FACTION_PASS` — new item; grants free VIP entry to The Vaults. Obtainable by completing a Marchetti mission outside the club.
+- `PHONE_TRACKER_ITEM` — new item; given by Tony Marchetti for the side mission. One-use.
+- `LOST_WALLET` — new item; drops at closing time. Contains 3–8 COIN (revealed on E).
+- `CIGARETTES` — new item (stackable ×5); from cigarette machine. Smoked to reduce DrunkenessLevel −1.
+- `CLUB_WRISTBAND` — new item; issued on entry, consumed on exit. Required to re-enter the same night without paying again.
+
+### Integration
+
+- `TaxiSystem` — closing time chaos seeds taxi queue NPC at rank; `TaxiSystem.setClosingTimeSurge(true)` doubles fare.
+- `KebabVanSystem` — closing time spawns kebab van near The Vaults.
+- `RaveSystem` — DJ_DECKS inside The Vaults are separate from squat raves; `RaveSystem.isVaultsDjPresent()` returns true when DJ Mikey is active, boosting `MCBattleSystem` difficulty slightly.
+- `MCBattleSystem` — dancefloor freestyle hook at MC Rank ≥ 3.
+- `StreetSkillSystem` — Dancing skill XP earned on dancefloor.
+- `FactionSystem` — MARCHETTI Respect gates free entry, VIP booth mission, tracker job; STREET_LADS/MARCHETTI fight probability +20%.
+- `NotorietySystem` — ejection, fight, drug buy detection, bribe all modify Notoriety.
+- `WantedSystem` — undercover drug buy → Wanted Tier 2; affray charge during police presence → Tier 1.
+- `CriminalRecord` — DRUG_POSSESSION, AFFRAY charges.
+- `DisguiseSystem` — DISGUISE_KIT zeroes Notoriety check at door.
+- `RumourNetwork` — VIP booth plotting seeds GANG_ACTIVITY; closing time fight seeds LOCAL_EVENT; DJ Mikey crowd comment seeds LOCAL_EVENT.
+- `NeighbourhoodSystem` — closing time fights each reduce Vibes −2; The Vaults open adds +1 Vibe/min (employment/footfall).
+- `WeatherSystem` — STORM: queue shrinks (people stay home); indoor DrunkenessLevel ticks +1 faster (it's a freezing night and people pre-drink).
+- `NoiseSystem` — `SPEAKER_STACK_PROP` ×2 emit high-radius noise during opening hours; `NeighbourhoodWatchSystem` Anger +5 per night The Vaults is open if Watch Anger > 30.
+- `WitnessSystem` — undercover officer witnesses drug buy; fight witnesses add evidence.
+- `AchievementSystem` — 5 new achievements below.
+
+### Achievements
+
+- `VAULTS_REGULAR` — visit The Vaults 5 times.
+- `DANCE_FLOOR_LEGEND` — reach Dancing skill ≥ 5 via the dancefloor.
+- `PEACEKEEPER` — break up a fight without being drawn in.
+- `BACK_DOOR_MERCHANT` — exit via the fire exit with an NPC in tow.
+- `CLOSING_TIME_CHAMPION` — survive closing time chaos 3 nights running without being ejected.
+
+### Unit Tests
+
+1. `NightclubSystem.isOpen(22.0f, DAY_THURSDAY)` returns `true`; `isOpen(22.0f, DAY_WEDNESDAY)` returns `false`; `isOpen(3.5f, DAY_FRIDAY)` returns `false`.
+2. `NightclubSystem.canEnter(notoriety=45, disguiseActive=false)` returns `ENTRY_ALLOWED`; `canEnter(notoriety=72, disguiseActive=false)` returns `ENTRY_DENIED`; `canEnter(notoriety=72, disguiseActive=true)` returns `ENTRY_ALLOWED`.
+3. `NightclubSystem.addDrink(drunkennessLevel=3, drinkType=DOUBLE_VODKA)` returns `5` (capped at 5).
+4. `NightclubSystem.calcFightProbability(baseProb=0.15f, avgNpcDrunkAbove3=2, bothFactionsPresent=true)` returns `0.15f + 0.20f + 0.20f = 0.55f`.
+5. `NightclubSystem.closingTimeChaos(timeHour=2.75f)` returns `true`; `timeHour=2.5f` returns `false`.
+6. `NightclubSystem.drugBustCheck(random=new Random(0), undercoverPresent=true)` seed-deterministically returns `BUSTED` or `SAFE`; `undercoverPresent=false` always returns `SAFE`.
+7. `NightclubSystem.bribeBouncer(inventory, coinCount=5)` deducts 5 COIN, returns `BRIBE_SUCCESS`; `coinCount=4` returns `BRIBE_FAIL`.
+
+### Integration Tests
+
+1. **Entry denied at high Notoriety**: Set player Notoriety = 75. Attempt entry (press E on `BOUNCER_BOOTH_PROP`). Verify entry is denied. Verify no `CLUB_WRISTBAND` in inventory. Equip `DISGUISE_KIT`. Attempt entry again. Verify entry allowed. Verify `CLUB_WRISTBAND` in inventory.
+
+2. **Drunkenness mechanics work end-to-end**: Enter the club. Buy 3 drinks from bar. Verify `DrunkenessLevel` = 3. Buy 2 more drinks. Verify `DrunkenessLevel` = 5 (capped). Verify `SpeechLogUI` contains Chantelle's refusal message on next purchase attempt.
+
+3. **Fight triggers ejection**: Advance in-game time 5 minutes inside the club with 4+ NPCs present and both factions present. Verify a fight has triggered (2 NPCs in `NPCState.FIGHTING`). Remain adjacent to fight for 2+ seconds. Verify player is drawn into the fight. Advance 30 seconds. Verify player teleported outside and `EJECTED_FROM_VAULTS` flag is set.
+
+4. **Closing time chaos spawns taxi and kebab van**: Advance in-game time to 02:45. Verify `TaxiSystem.isClosingTimeSurge()` returns `true`. Verify a `KEBAB_VAN_NPC` or `KEBAB_VAN` landmark is active within 20 blocks of The Vaults. Verify a `LOST_WALLET` item has been spawned in the club.
+
+5. **Tracker mission completes correctly**: Set MARCHETTI_CREW Respect ≥ 50. Advance to Friday 23:30. Sit in VIP booth. Verify Tony Marchetti offers tracker mission. Accept mission. Walk behind target STREET_LADS NPC on dancefloor. Press E to pickpocket (use `Random(99)` for guaranteed success). Verify `PHONE_TRACKER_ITEM` consumed from inventory. Verify MARCHETTI_CREW Respect increased by 15. Verify player COIN increased by 10.
+
+// ── New: NightclubSystem.java in ragamuffin.core
+// New: LandmarkType.NIGHTCLUB ("The Vaults")
+// New: NPCType stubs required: BOUNCER, DJ, BARMAID, DEALER (add to NPCType enum if not present)
+// New: Material stubs required: ALCOPOP, DOUBLE_VODKA, PILLS, FACTION_PASS, PHONE_TRACKER_ITEM,
+//      LOST_WALLET, CIGARETTES, CLUB_WRISTBAND
+// New: PropType stubs required: STROBE_LIGHT_PROP (0.50×0.30×0.50, 1 hit, null),
+//      CIGARETTE_MACHINE_PROP (0.60×1.80×0.40, 3 hits, Material.SCRAP_METAL),
+//      BOUNCER_BOOTH_PROP (1.00×1.20×0.60, 5 hits, Material.BRICK),
+//      VELVET_ROPE_PROP (0.10×1.00×2.00, 1 hit, null),
+//      PRIVATE_BOOTH_PROP (2.00×1.20×1.00, 6 hits, Material.WOOD),
+//      FIRE_EXIT_DOOR_PROP (1.00×2.00×0.20, 4 hits, Material.WOOD),
+//      DANCEFLOOR_PROP (4.00×0.20×4.00, 0, null — non-breakable surface marker)
+// New: AchievementType stubs required: VAULTS_REGULAR, DANCE_FLOOR_LEGEND, PEACEKEEPER,
+//      BACK_DOOR_MERCHANT, CLOSING_TIME_CHAMPION
+// Existing: DJ_BOOTH_PROP, BAR_COUNTER_PROP, SPEAKER_STACK_PROP, TOILET_DOOR_PROP,
+//           STAIRCASE_PROP, RaveSystem, MCBattleSystem, StreetSkillSystem, TaxiSystem,
+//           KebabVanSystem, FactionSystem, NotorietySystem, WantedSystem, CriminalRecord,
+//           DisguiseSystem, RumourNetwork, NeighbourhoodSystem, WeatherSystem, NoiseSystem,
+//           NeighbourhoodWatchSystem, WitnessSystem, AchievementSystem all defined
+// WorldGenerator: add NIGHTCLUB block to high street near Wetherspoons side-alley
