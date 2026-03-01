@@ -1114,7 +1114,33 @@ public enum NPCType {
      * Can be bribed (3 COIN) to delay the session by one in-game hour.
      * Passive; never hostile. Present whenever the court building is open.
      */
-    COURT_USHER(20f, 0f, 0f, false);
+    COURT_USHER(20f, 0f, 0f, false),
+
+    // ── Issue #1081: Northfield Pet Shop & Vet — Paws 'n' Claws ─────────────
+
+    /**
+     * Bev — the proprietor of Paws 'n' Claws pet shop.
+     * Present Mon–Sat 09:00–17:30. Cheerful and chatty; comments on the dog's breed.
+     * Sells dogs (8–15 COIN), DOG_TREATS (1 COIN), DOG_LEAD (2 COIN), BUDGIE (3 COIN),
+     * GOLDFISH (1 COIN). At Notoriety Tier ≥ 3: refuses service.
+     * At Marchetti Crew Respect ≥ 50: offers the dodgy pedigree breeding mission.
+     * Speech: "Aren't they lovely?" / "He'll need feeding every day, mind."
+     *         / "I'm not selling you a dog, love. I've seen the paper."
+     */
+    PET_SHOP_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * Dr. Patel — the vet at Northfield Vets (adjoining Paws 'n' Claws).
+     * Present Mon–Fri 08:30–18:00, Sat 09:00–13:00. Professional and harried.
+     * Offers consultations: dog health check (5 COIN), pigeon tune-up (4 COIN),
+     * dog vaccinations (8 COIN), emergency (12 COIN).
+     * If player's dog is injured (HP &lt; 50%): "He's taken a knock, hasn't he? Bring him in."
+     * Seeds LOCAL_HEALTH rumour after each emergency visit. Passive; never hostile
+     * unless medicine cabinet is raided in his presence (calls police).
+     * Speech: "Right, what are we dealing with today?" / "That'll be four pounds, please."
+     *         / "Keep him warm and give him plenty of water."
+     */
+    VET(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -2247,6 +2247,34 @@ public enum AchievementType {
         "Wrong Number",
         "Answered the Golden Palace phone during the Phone Order Chaos event. You gave a fake address. Classic.",
         1
+    ),
+
+    // ── Issue #1081: Northfield Pet Shop & Vet — Paws 'n' Claws ─────────────
+
+    DOG_OWNER(
+        "Man's Best Friend",
+        "Purchased a dog from Bev at Paws 'n' Claws. He's looking at you like you're the best person in the world. You're not.",
+        1
+    ),
+    BEST_IN_SHOW(
+        "Crufts, Eventually",
+        "Brought a vaccinated dog with a vet record to the Boot Sale. Bev would be proud.",
+        1
+    ),
+    VET_BILLS(
+        "Worth Every Penny",
+        "Spent 30 coins or more at Northfield Vets. Dr. Patel has a new conservatory.",
+        1
+    ),
+    DODGY_BREEDER(
+        "Pedigree Chums",
+        "Completed Bev's Marchetti pedigree theft mission. The less said the better.",
+        1
+    ),
+    DOGNAPPED(
+        "No Questions Asked",
+        "Captured an ambient dog as your companion without buying it. It seemed to like you. Still theft though.",
+        1
     );
 
     private final String name;

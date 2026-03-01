@@ -380,7 +380,38 @@ public enum LandmarkType {
      * FenceSystem, JobCentreSystem, FoodBankSystem, AllotmentSystem,
      * NotorietySystem, CriminalRecord, AchievementSystem, RumourNetwork.
      */
-    MAGISTRATES_COURT;
+    MAGISTRATES_COURT,
+
+    // ── Issue #1081: Northfield Pet Shop & Vet — Paws 'n' Claws ─────────────
+
+    /**
+     * Paws 'n' Claws — a narrow 6×10×4 brick shopfront on the high street parade.
+     *
+     * <p>Interior: FISH_TANK_PROP (ambient gurgling), two ANIMAL_CAGE_PROP rows
+     * (rabbits / guinea pigs), a BIRD_PERCH_PROP (budgies), DOG_KENNEL_PROP
+     * behind the counter. Outside: faded HANDWRITTEN_SIGN_PROP.
+     *
+     * <p>Open Mon–Sat 09:00–17:30. Staffed by Bev (PET_SHOP_OWNER NPC).
+     *
+     * <p>Integrates with PetShopSystem, FactionSystem, NotorietySystem,
+     * SquatSystem, StreetEconomySystem, NeighbourhoodSystem, WeatherSystem,
+     * RumourNetwork, CriminalRecord, AchievementSystem, BootSaleSystem.
+     */
+    PET_SHOP,
+
+    /**
+     * Northfield Vets — adjoining Paws 'n' Claws via a shared corridor.
+     *
+     * <p>A 6×8×3 practice: CONSULTING_TABLE_PROP, MEDICINE_CABINET_PROP
+     * (lockpickable), WAITING_BENCH_PROP (3 seats).
+     *
+     * <p>Open Mon–Fri 08:30–18:00, Sat 09:00–13:00. Staffed by Dr. Patel (VET NPC).
+     * 2–3 waiting PUBLIC NPCs in the waiting room.
+     *
+     * <p>Integrates with PetShopSystem, PigeonRacingSystem, NotorietySystem,
+     * WantedSystem, WitnessSystem, CriminalRecord, RumourNetwork, AchievementSystem.
+     */
+    VET_SURGERY;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -456,6 +487,8 @@ public enum LandmarkType {
             case PAYDAY_LOAN_SHOP:      return "Fast Cash Finance";
             case CHINESE_TAKEAWAY:      return "Golden Palace";
             case MAGISTRATES_COURT:     return "Northfield Magistrates' Court";
+            case PET_SHOP:              return "Paws 'n' Claws";
+            case VET_SURGERY:           return "Northfield Vets";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

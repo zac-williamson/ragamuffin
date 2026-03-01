@@ -292,5 +292,22 @@ public enum RumourType {
     /** "Someone's feeding prawn crackers to the pigeons outside the Golden Palace — they've gone absolutely mental."
      * — seeded by ChineseTakeawaySystem when the player feeds {@code PRAWN_CRACKERS} to 3+ {@code BIRD} NPCs.
      * Spreads to NPCs within 15 blocks. Minor Notoriety gain (+1). */
-    PIGEON_CHAOS;
+    PIGEON_CHAOS,
+
+    // ── Issue #1081: Northfield Pet Shop & Vet — Paws 'n' Claws ─────────────
+
+    /** "Have you seen that lovely dog that fella's walking? Proper sweet."
+     * — seeded by PetShopSystem when a PENSIONER NPC admires the player's dog companion.
+     * Spreads via PENSIONER NPCs. Seeds a LOCAL_EVENT rumour; no gameplay effect. */
+    PET_ADMIRATION,
+
+    /** "Someone got rushed into the vet with their dog — looked in a right state."
+     * — seeded by PetShopSystem after a dog emergency consultation at Northfield Vets.
+     * Spreads to PUBLIC NPCs within 20 blocks. Minor police patrol increase near VET_SURGERY. */
+    VET_EMERGENCY,
+
+    /** "Heard someone nicked a posh dog from the school playground — right in front of the lollipop lady."
+     * — seeded by PetShopSystem when the dodgy pedigree breeding mission is completed.
+     * Spreads via YOUTH_GANG and STREET_LAD NPCs. Adds +3 patrol awareness near PRIMARY_SCHOOL. */
+    PEDIGREE_THEFT;
 }
