@@ -17647,3 +17647,188 @@ Achievement: `PHONE_JOCKEY` — complete 3 repair shifts.
    and select "Do a Shift". Advance 5 in-game minutes. Verify player earned 6 COIN.
    Verify the in-tray `BROKEN_PHONE` was consumed. Verify shift is now locked (pressing
    E and selecting "Do a Shift" is rejected for the rest of the in-game day).
+
+---
+
+## Add Northfield Council Estate — Tower Block, Lifts & Stair-Climbing Misery
+
+The `COUNCIL_FLATS` landmark is generated in the world (two tower blocks, 15–18 storeys
+tall) but has zero gameplay. The tower blocks are just inert voxel pillars. This feature
+implements `CouncilFlatsSystem` to bring the estate to life: creaking lifts, stairwell
+hazards, nosey neighbours, antisocial behaviour opportunities, and the peculiar solidarity
+of people who've been on the council waiting list for nine years.
+
+### Building Layout
+
+The two existing tower blocks (`COUNCIL_FLATS` landmarks) each have:
+- A ground-floor lobby (4×4 LINOLEUM floor, BRICK walls, GLASS front door prop).
+- A `LIFT_PROP` in the lobby — a 2×2×3 box of `METAL_RED` blocks with a `DOOR` face.
+- A stairwell running the full height on the west wall (1-block-wide `STAIRS` props
+  per floor, CONCRETE walls).
+- 4 flats per floor (FLOOR_2 to FLOOR_N). Each flat: a `DOOR` prop in the corridor,
+  a 4×5 interior of `CARPET` (green lino) and `BRICK` walls, with a single `WINDOW`
+  on the outer face. Furnished with `TABLE` + `CHAIR` props and one of
+  `TV_PROP` / `MICROWAVE_PROP` / `BOOKSHELF` chosen randomly.
+- A ROOF level: accessible, with `FENCE` props around the perimeter and a `SATELLITE_DISH_PROP`.
+
+### Lift Mechanic
+
+Managed by `CouncilFlatsSystem`. The lift operates between floor 0 (lobby) and the top floor.
+
+- **Calling the lift** (press E on `LIFT_PROP` from outside): the lift travels to the
+  player's floor at `LIFT_SPEED_FLOORS_PER_SECOND = 1.0f`. While travelling, play a
+  creaking SFX (`SoundEffect.LIFT_CREAK`). On arrival, doors open for `LIFT_DWELL_SECONDS = 6f`.
+- **Riding the lift**: player steps inside during the dwell period. Press E on the
+  interior panel to select a destination floor (1–top floor). Lift travels, player
+  is teleported to the destination floor corridor on arrival.
+- **Lift out of order**: 20% chance per in-game day that the lift is `OUT_OF_ORDER`.
+  When out of order, pressing E shows: "Out of order. Again. You'll have to use the stairs."
+  The tooltip fires: "Council maintains the lifts the same way they maintain everything else."
+  Lift stays broken until the next in-game day.
+- **Broken lift award**: If the player climbs all the way to the top floor via stairs
+  while the lift is out of order, award the `LEGS_OF_STEEL` achievement.
+
+### Stairwell
+
+- Each floor's stairwell has a 20% chance of containing a `LITTER_PROP` (crisp packet,
+  bottle), a 10% chance of `GRAFFITI_WALL_PROP` (flavour), and a 5% chance per floor of
+  a `DRUNK` NPC slumped in the corner (sleeping, never hostile unless punched).
+- **Spray-painting**: Player holding `SPRAY_CAN` (new item, 1 COIN from corner shop) can
+  press E on a blank stairwell wall to leave graffiti. Each tag on council property adds
+  +1 Notoriety. The Council dispatches a `COUNCIL_CLEANER` within 2 in-game hours if
+  more than 3 new tags are detected.
+- **Stair climb speed**: Player movement speed on stairwells is `0.7×` normal (fatigue).
+  A tooltip fires on first stair use: "Nobody uses the stairs by choice."
+
+### Residents (Flat Tenants)
+
+Each occupied flat (60% occupancy rate) has one resident `NPC` of type `PUBLIC` or
+`PENSIONER`, present 08:00–22:00 (PENSIONER stays home all day). Their front `DOOR_PROP`
+can be knocked on (press E):
+
+- **Daytime knock**: NPC opens door and delivers one of 8 resident speech lines:
+  - "Not now, love."
+  - "What do you want?"
+  - "Is it about the noise? Because that's Dave in 4C, not me."
+  - "If you're collecting, I haven't got it."
+  - "I've been waiting three years for that boiler to be fixed."
+  - "Do you mind? I'm watching Countdown."
+  - "I'm not opening that door. Call through the letterbox."
+  - "If it's about the car, it's got a SORN."
+- **Night knock** (after 22:00): NPC does NOT open. After 3 night knocks on the same
+  door, NPC complains to `NeighbourhoodWatchSystem` (+5 anger) and seeds a
+  `NOISE_COMPLAINT` rumour.
+- **Selling to residents**: if the player has `DODGY_DVD` or `CRISPS` in inventory,
+  a "sell" option appears. Resident buys 1 item for 2 COIN. One sale per resident per
+  day; if the player returns for a second sale, resident says "You again? Clear off."
+
+### Communal Roof
+
+- Accessible day and night (no gate).
+- 2–3 `SCHOOL_KID` NPCs hang out on the roof 15:00–20:00. One may dare the player to
+  `THROW_ITEM` off the roof (press T while holding any item to throw it; the item spawns
+  as a `SmallItem` at the base of the block below the roof edge).
+- A lone `PENSIONER` NPC ("Derek") sits on a deckchair 10:00–16:00 watching the town.
+  Derek is a passive rumour source: pressing E yields a random rumour from the
+  `RumourNetwork` (no drink required — he has all day and nowhere to be).
+- **Satellite dish**: press E to "interfere" with dish. 50% chance it disrupts a rival
+  faction's pirate radio broadcast (reduces PirateRadioSystem signal strength by 30%
+  for 5 in-game minutes). 50% chance nothing happens. Either way, adds +1 Notoriety.
+
+### New Items
+
+- `SPRAY_CAN` — purchasable from corner shop for 1 COIN. 10 uses before empty.
+  Used to tag walls (stairwells, external brickwork). Empty can becomes `EMPTY_CAN`
+  (throwable; counts as litter if left on ground — +1 Notoriety if witnessed).
+- `DOOR_KEY` — dropped by residents on knock-and-mug (hitting a resident after they
+  open the door). Lets the player enter their flat without knocking for the rest of
+  the day. Resident calls police on theft of key (+2 Wanted stars).
+
+### New NPCTypes
+
+- None required — residents use existing `PUBLIC` and `PENSIONER` types.
+
+### New AchievementTypes
+
+- `LEGS_OF_STEEL` — Climb to the top floor via stairs while the lift is out of order.
+- `ROOFTOP_DEALER` — Complete 5 item sales to residents in a single in-game day.
+- `URBAN_ARTIST` — Tag 10 stairwell walls in a single visit (using `SPRAY_CAN`).
+
+### New CrimeTypes
+
+- `CriminalRecord.CrimeType.CRIMINAL_DAMAGE` (already exists in spirit; reuse for spray
+  tags on council property if police witness it).
+
+### Integrations
+
+- **WitnessSystem**: spray-tagging in view of `POLICE` NPC adds +2 Notoriety and
+  `CRIMINAL_DAMAGE` record entry.
+- **NeighbourhoodWatchSystem**: 3+ night knocks on one door → +5 Watch anger.
+- **PirateRadioSystem**: satellite dish interference reduces signal by 30% for 5 min.
+- **RumourNetwork**: Derek on the roof is a passive rumour source (E key, no purchase
+  required). Each `DODGY_DVD` sale seeds a `LOOT_TIP` rumour ("Someone's shifting
+  DVDs up on the sixth floor").
+- **NoiseSystem**: stairwell spray-can use generates noise level 2.
+- **AchievementSystem**: three new achievements.
+- **WeatherSystem**: roof is exposed — cold snap on roof drains warmth at 1.5× normal
+  rate. Rain on roof drains energy at 1.5× normal rate.
+- **FactionSystem**: completing 5 resident sales in one day earns Street Lads Respect +5.
+
+### Unit Tests
+
+- Lift `OUT_OF_ORDER` flag set with 20% daily probability; resets on day change.
+- Lift travel time equals `abs(destFloor - srcFloor) / LIFT_SPEED_FLOORS_PER_SECOND`.
+- Resident door knock returns correct speech line from pool; night knock is silent.
+- Resident sale limited to 1 per NPC per day; second attempt rejected.
+- Spray can use count decremented per tag; becomes `EMPTY_CAN` at 0.
+- Satellite dish interference: 50% chance reduces pirate signal by 30%.
+- Stairwell drunk NPC spawns at correct 5% per floor probability.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Lift travels to destination floor**: Spawn player at lobby (floor 0) of a
+   `COUNCIL_FLATS` landmark. Press E on `LIFT_PROP`. Verify `CouncilFlatsSystem`
+   lift state is `TRAVELLING`. Advance time by `1.0 / LIFT_SPEED_FLOORS_PER_SECOND`
+   seconds. Verify lift is `AT_FLOOR` with current floor = 1. Select floor 5 on interior
+   panel. Advance `4.0 / LIFT_SPEED_FLOORS_PER_SECOND` seconds. Verify player position Y
+   corresponds to floor 5 corridor. Verify `SoundEffect.LIFT_CREAK` was triggered.
+
+2. **Out-of-order lift forces stair climb and awards achievement**: Force
+   `CouncilFlatsSystem.setLiftOutOfOrder(true)`. Place player at lobby. Press E on
+   `LIFT_PROP`. Verify response message contains "Out of order". Verify tooltip
+   "Council maintains the lifts the same way they maintain everything else." fired.
+   Simulate the player walking up the stairwell to the top floor (N stairs).
+   Verify `AchievementType.LEGS_OF_STEEL` is unlocked.
+
+3. **Resident answers door knock and refuses second sale**: Place player at a flat door
+   on floor 3. Give player 2 `DODGY_DVD` items. Press E on door. Verify an NPC speech
+   line from the resident pool is triggered. Select "Sell item". Verify player has 1
+   `DODGY_DVD` and has gained 2 COIN. Press E again. Select "Sell item". Verify rejection
+   message fires ("You again? Clear off."). Verify COIN count unchanged.
+
+4. **Night knocks trigger NeighbourhoodWatch anger**: Set in-game time to 23:00.
+   Press E on a resident door 3 times. Verify `NeighbourhoodWatchSystem` anger has
+   increased by 5. Verify a `NOISE_COMPLAINT` rumour exists in a nearby NPC's rumour
+   buffer.
+
+5. **Spray can tagging adds notoriety and triggers council cleaner**: Give player a
+   `SPRAY_CAN` (10 uses). Tag 4 stairwell walls (press E on each blank wall). Verify
+   player Notoriety increased by 4. Verify `CouncilFlatsSystem` has queued a
+   `COUNCIL_CLEANER` dispatch (cleanerDispatchPending == true). Advance 2 in-game hours.
+   Verify a `COUNCIL_CLEANER` NPC has spawned near the block tower.
+
+6. **Derek on roof provides rumour without purchase**: Seed a `LOOT_TIP` rumour into
+   `RumourNetwork`. Set in-game time to 12:00. Spawn `PENSIONER` Derek on the roof.
+   Place player adjacent to Derek. Press E. Verify the rumour text is delivered to the
+   player without requiring any coin purchase or drink timer.
+
+7. **Rooftop weather exposure drains warmth faster**: Set weather to `COLD_SNAP`.
+   Place player on the roof of a `COUNCIL_FLATS` building (above top floor). Record
+   current warmth. Advance 60 frames. Verify warmth drain is at least 1.4× the normal
+   outdoor drain rate (rooftop exposure multiplier active).
+
+8. **Satellite dish interference reduces pirate signal**: Give `PirateRadioSystem` a
+   signal strength of 100. Place player adjacent to `SATELLITE_DISH_PROP` on the roof.
+   Press E. If interference succeeds (50% chance — force `rng` seed for determinism):
+   verify `PirateRadioSystem.getSignalStrength()` == 70. Advance 5 in-game minutes.
+   Verify signal has recovered back to 100.
