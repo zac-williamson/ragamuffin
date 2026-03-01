@@ -26488,3 +26488,224 @@ All already defined in `AchievementType`:
 // Existing: LandmarkType.PETROL_STATION already defined; AchievementType entries already defined;
 //           CarWashSystem, WarmthSystem, CampfireSystem, WheeliBinFireSystem, StreetEconomySystem,
 //           WitnessSystem, NotorietySystem, FactionSystem, RumourNetwork, NewspaperSystem all present
+
+---
+
+## Add Northfield Nando's — The Peri-Peri Economy, the Card Machine Drama & the Great Chicken Theft
+
+**Landmark**: `NANDOS` (already registered in `LandmarkType`, `getDisplayName()` returns `"Nando's"`, no system exists yet)
+
+### Overview
+
+Nando's. The great equaliser of the British high street. A place where you can spend £25 on chicken,
+share a table with someone's stag do, and still feel like you're slumming it. Northfield's branch sits
+between the Wetherspoons alley and the Argos, its chirpy yellow-and-red signage a beacon of aspirational
+fast-casual dining in an area that's seen better days. A `NandosSystem` brings this landmark to life.
+
+The key tension: Nando's is just expensive enough that the player cannot casually afford it, but the
+rewards (hunger restoration, buffs, social encounters, and the heist opportunity of a lifetime) make
+it worth the hustle. The system is built around the **Peri-Peri Heat Scale** — a mechanic that applies
+different gameplay effects based on the spice level the player orders.
+
+### Physical Layout (built on the `NANDOS` landmark position)
+
+A 12×16×4 brick building with a red-tiled WOOD floor, GLASS frontage, and a `NANDOS_SIGN_PROP` above
+the door. Interior contains:
+
+- **Order Counter** (`NANDOS_COUNTER_PROP`): a long counter staffed by `NANDOS_STAFF` NPC "Kezia".
+  Press **E** when facing it to open the `NandosOrderUI`.
+- **Dining Tables** (`NANDOS_TABLE_PROP` × 6): each seats up to 4 NPCs. Players can sit at an empty
+  chair to eat (reduces hunger drain while seated, same as the greasy spoon).
+- **Card Machine** (`CARD_MACHINE_PROP`): beside the counter. Occasionally displays "DECLINED" (see
+  mechanic below). Breakable (4 hits, drops `SCRAP_METAL`).
+- **Hot Sauce Rack** (`HOT_SAUCE_RACK_PROP`): next to the counter; breakable (2 hits, drops
+  `PERI_PERI_SAUCE`).
+- **Manager's Office Door** (`LOCKED_DOOR_PROP`): at the back — locked. Inside: a `SAFE_PROP`
+  (the Nando's franchise takings safe, see heist mechanic).
+- **Staff Toilet** (`TOILET_PROP`): accessible 09:00–23:00. Eating the Extra Hot tier sends the player
+  to use it within 5 in-game minutes (cosmetic, earns achievement).
+
+Opening hours: **11:30–23:00** daily. Closed Monday (franchise contract maintenance day). A
+`CLOSED_SIGN_PROP` appears on the door when closed.
+
+### Key Characters
+
+- **Kezia** (`NANDOS_STAFF` NPCType): cheerful counter staff. Present 11:30–23:00.
+  Takes orders, handles card machine drama, and will quietly let a repeat customer
+  skip the queue (at Community Respect ≥ 50). Passive; never hostile.
+  Speech: *"What heat level?" / "Card machine's playing up, sorry." /
+  "You want a bottomless drink?" / "Enjoy your meal!" / "Table 7, when you're ready."*
+
+- **Dave the Manager** (`NANDOS_MANAGER` NPCType): a stressed 30-something in a logoed polo.
+  Present 12:00–22:00. Patrols between the kitchen, manager's office, and the dining floor.
+  Calls police (+1 Wanted star) if the player is caught in the manager's office. Passive
+  otherwise; never personally attacks.
+  Speech: *"Can I help you?" / "Enjoy your meal!" / "We'll have a table free in two minutes." /
+  "Excuse me — you can't be back here."*
+
+- **Diners** (`PUBLIC` NPC sub-type, 4–8 per session): spawn in groups of 2–4, seated at tables.
+  Seed `LOCAL_EVENT` rumours via proximity. During Saturday lunch 12:00–15:00, one group is
+  always a stag do (4 `DRUNK` NPCs in matching T-shirts). Passive.
+
+### The Menu & Peri-Peri Heat Scale
+
+Ordering costs COIN (paid via `NandosOrderUI`). The system tracks a `CURRENT_HEAT_LEVEL` on the
+player:
+
+| Item | Cost | Hunger restored | Heat Level set | Notes |
+|------|------|-----------------|----------------|-------|
+| `PERI_PERI_CHICKEN` (quarter) | 4 COIN | +35 hunger | `MILD` | Baseline meal |
+| `PERI_PERI_CHICKEN` (half) | 7 COIN | +60 hunger | `MEDIUM` | Warm-up |
+| `PERI_PERI_CHICKEN` (whole) | 11 COIN | +100 hunger (full) | `HOT` | Full restoration |
+| `CHICKEN_WRAP` | 5 COIN | +45 hunger | `MEDIUM` | Portable; can be taken away |
+| `BOTTOMLESS_DRINK` | 2 COIN | +10 energy | `LEMON_HERB` | Soft drink; no spice |
+| `PERI_CHIPS` | 3 COIN | +20 hunger | n/a | Side item |
+| `PERI_PERI_SAUCE` (bottle) | 2 COIN | n/a | n/a | Throwable item (see below) |
+
+**Heat Level effects** (applied to the player for 5 in-game minutes after eating):
+
+| Heat Level | Effect |
+|------------|--------|
+| `LEMON_HERB` | No effect |
+| `MILD` | +5% movement speed (food energy) |
+| `MEDIUM` | +10% movement speed; +5 Warmth/min |
+| `HOT` | +15% movement speed; Warmth fully restored; WeatherSystem wetness drain −20% |
+| `EXTRA_HOT` | +20% speed; Warmth fully restored; but after 5 minutes player must reach a `TOILET_PROP` within 5 minutes or suffer −20 health and −10% max speed for 10 minutes (PASTY_REGRET-style debuff `NANDOS_REGRET`) |
+
+Tooltip on first Extra Hot order: *"You've made a grave mistake."*
+Tooltip on first HOT order: *"Feels like actual food for once."*
+
+### The Card Machine Drama
+
+This is the heart of the system. When the player attempts to pay at the counter, there is a
+**25% chance** the card machine displays "DECLINED — please try again". This is purely theatrical
+(it will work on the second try), but it triggers authentic British social anxiety:
+
+- Kezia says: *"It's doing that thing again. Try it again?"*
+- If the player does NOT have enough COIN to pay cash (fallback), a secondary `EMBARRASS_DIALOGUE`
+  fires. 2 nearby Diner NPCs turn to watch. Player Notoriety +1 (the shame).
+- After 2 failed attempts (seeded RNG for both), the card machine accepts. If the player has
+  `SCRAP_METAL` in inventory, there is a 30% chance they can attempt to jam it (Hacking mechanic
+  placeholder: instant free meal but `CARD_MACHINE_FRAUD` CrimeType added to record, Notoriety +8).
+
+### The Peri-Peri Sauce Throw
+
+`PERI_PERI_SAUCE` (a bottle bought from the rack or ordered) can be placed in the hotbar and thrown
+(right-click while selected) in the same arc as the Molotov. On impact:
+
+- Creates a 2-block-radius `PERI_SAUCE_SLICK` on the ground (temporary prop, despawns in 60s).
+- Any NPC or player walking through the slick has movement speed reduced 30% for 5 seconds.
+- Police treat this as `CrimeType.AFFRAY`. Notoriety +3.
+- Tooltip on first throw: *"Peri-peri: the great equaliser."*
+
+### The Safe Heist
+
+The manager's office contains a `SAFE_PROP` holding the day's franchise takings:
+- **Contents**: 15–40 COIN (more on weekends) + 1 `TILL_RECEIPT` (evidence item).
+- **Opening the safe**: requires `LOCKPICK` tool (8-second hold-E), same as HeistSystem pattern.
+  The `TILL_RECEIPT` is evidence that seeds a `PLAYER_SPOTTED` rumour if found in the player's
+  possession when a Police NPC is within 6 blocks.
+- **Alert condition**: if Dave the Manager is present (12:00–22:00) and the player is detected
+  in the office (within 2 blocks of the `LOCKED_DOOR_PROP` interior), he calls police and
+  adds `CrimeType.TRESPASS` to the record. Outside those hours, the office is unguarded.
+- **Security**: at Notoriety Tier 3+, a `CCTV_CAMERA_PROP` is visible on the office wall
+  (added by the system on first spawn). Smashing it (2 hits) prevents police call but adds
+  `CrimeType.CRIMINAL_DAMAGE`.
+
+This is intentionally the smallest heist in the game — chicken shop money. But it's accessible
+early and thematically perfect.
+
+### The Stag Do Event
+
+On Saturdays 12:00–15:00 a fixed group of 4 `DRUNK` NPCs in matching "STAG DO — NORTHFIELD 2026"
+T-shirts occupies one of the corner tables. They:
+
+- Drop 1–3 COIN each when they leave (they overtip).
+- Can be pickpocketed (pickpocket success chance +10% due to general incoherence).
+- At 14:00 one of them approaches the counter and starts arguing about the bill, generating
+  speech bubbles and a `LOCAL_EVENT` rumour (*"Stag do kicking off at Nando's again."*).
+- If the player interacts with them (press E on a stag do NPC), there is a 50% chance they
+  invite the player to the hen-do party at The Vaults later (plants a rumour `VAULTS_PARTY`
+  in the `RumourNetwork`, giving the player a free-entry token worth 3 COIN at the nightclub).
+
+Achievement `LADS_LADS_LADS`: Interact with the stag do and receive the Vaults invitation.
+
+### New Items
+
+- `PERI_PERI_CHICKEN` — food item; eat for hunger restoration (amount depends on size).
+  Not purchasable individually; created by the system when an order is fulfilled.
+- `CHICKEN_WRAP` — food item; eat for +45 hunger. Can be eaten outside (portable).
+  Drips peri-peri sauce on the floor if carried for > 10 in-game minutes without eating
+  (purely cosmetic prop placed at player's location).
+- `BOTTOMLESS_DRINK` — consumable; +10 energy. Single use despite the name.
+- `PERI_PERI_SAUCE` — throwable item; creates ground slick on impact. 1 use.
+- `PERI_CHIPS` — food item; +20 hunger. Drops from the hot sauce rack when broken.
+- `TILL_RECEIPT` — evidence item; creates a `PLAYER_SPOTTED` risk if held near police.
+
+### New NPCTypes
+
+- `NANDOS_STAFF` — Kezia; counter staff; order handler; never hostile.
+- `NANDOS_MANAGER` — Dave; patrols; calls police on intrusion; passive otherwise.
+
+### New CrimeType
+
+- `CriminalRecord.CrimeType.CARD_MACHINE_FRAUD` — triggered by the jam-card mechanic.
+
+### Achievements
+
+- `NANDOS_REGULAR` — eat at Nando's 5 times.
+- `EXTRA_HOT_REGRET` — suffer the `NANDOS_REGRET` debuff (ordered Extra Hot and didn't reach a toilet in time).
+- `CHICKEN_THIEF` — successfully loot the manager's office safe.
+- `LADS_LADS_LADS` — receive the Vaults invitation from the stag do.
+
+### Integrations
+
+- **StreetEconomySystem**: `PERI_PERI_CHICKEN` satisfies `NeedType.HUNGRY` (high-value satisfier, same tier as CHIPPY).
+- **WarmthSystem**: eating a HOT/EXTRA_HOT meal restores Warmth; restaurant interior counts as indoor shelter.
+- **FactionSystem**: Marchetti Crew Respect ≥ 70 allows the player to launder small amounts (pay 5 COIN, receive a `MEAL_RECEIPT` prop that reduces Notoriety display by 2 for 1 in-game day — "legitimate expense").
+- **RumourNetwork**: `LOCAL_EVENT` rumour seeded on Card Machine Drama; stag do `VAULTS_PARTY` rumour on invitation.
+- **NoiseSystem**: stag do argument at 14:00 generates noise level 5 (audible to police NPCs within 15 blocks).
+- **NotorietySystem**: card machine jam +8; peri-peri sauce throw +3; safe heist +15.
+- **WitnessSystem**: `CCTV_CAMERA_PROP` in office witnesses safe heist if intact.
+- **NewspaperSystem**: headline `"NORTHFIELD NANDO'S CASHBOX RAID — POLICE APPEAL"` if safe is looted and player is Notoriety Tier 2+.
+- **NightclubSystem**: `VAULTS_PARTY` rumour grants free entry token redeemable at `NIGHTCLUB` landmark.
+- **WeatherSystem**: rain/DRIZZLE/FROST increases diner NPC count by +2 (people sheltering); restaurant warmth bonus doubled.
+- **AchievementSystem**: four new achievements above.
+
+### Unit Tests
+
+1. `NandosSystem.computeHeatEffect(HeatLevel.EXTRA_HOT)` returns speed multiplier `1.20f` and debuff timer `300f` (5 minutes).
+2. `NandosSystem.computeHeatEffect(HeatLevel.MILD)` returns speed multiplier `1.05f` and no debuff timer.
+3. `NandosSystem.processOrder(inventory, item=PERI_PERI_CHICKEN_HALF, coinCount=7)` deducts 7 COIN, adds 1 `PERI_PERI_CHICKEN` to inventory, returns `ORDER_SUCCESS`; `coinCount=6` returns `INSUFFICIENT_FUNDS`.
+4. `NandosSystem.rollCardMachineDecline(new Random(seed))` — over 1000 calls, DECLINED fires in 23–27% of trials (statistical tolerance ±2%).
+5. `NandosSystem.isSafeAccessible(hour=23:30f, managerPresent=false)` returns `true`; `managerPresent=true` returns `false`.
+6. `NandosSystem.throwSauce(playerPos, targetPos, world)` — creates a `PERI_SAUCE_SLICK` prop within 1 block of target; prop has a 60-second lifetime.
+7. `NandosSystem.isStagDoActive(hour=13.0f, dayOfWeek=SATURDAY)` returns `true`; `dayOfWeek=MONDAY` returns `false`.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Eating a half chicken restores hunger and sets MEDIUM heat**: Give player 7 COIN. Set hunger to 30. Place player at `NANDOS_COUNTER_PROP`. Press E, open `NandosOrderUI`, select "Half Chicken (Medium)". Verify 7 COIN deducted. Verify player hunger increased to 90 (30 + 60). Verify `NandosSystem.getCurrentHeatLevel()` returns `MEDIUM`. Advance 60 frames. Verify player movement speed multiplier is 1.10f. Advance until 5 in-game minutes elapsed. Verify speed multiplier returns to 1.0f.
+
+2. **Extra Hot triggers NANDOS_REGRET if toilet not reached**: Give player 11 COIN. Order a whole chicken at Extra Hot. Verify heat level is `EXTRA_HOT`. Advance simulation by 5 in-game minutes WITHOUT moving player to a `TOILET_PROP`. Verify player health has decreased by 20. Verify `NandosSystem.isNandosRegretActive()` returns `true`. Verify player max speed is reduced by 10%.
+
+3. **Card machine decline fires 25% of the time**: Seed the system RNG with a fixed value. Over 100 order attempts, verify DECLINED fires in 20–30 of them. Verify Kezia's speech changes to card-machine-drama dialogue during a DECLINED event. Verify the second attempt always succeeds.
+
+4. **Peri-peri sauce throw creates slick and slows NPC**: Give player 1 `PERI_PERI_SAUCE`. Select in hotbar. Right-click to throw at a point 3 blocks ahead. Verify a `PERI_SAUCE_SLICK` prop exists within 1 block of the target. Spawn an NPC at the slick position. Advance 10 frames. Verify NPC movement speed has been reduced by 30%. Advance 60 seconds (prop lifetime). Verify `PERI_SAUCE_SLICK` prop has despawned.
+
+5. **Safe heist succeeds outside manager hours**: Set time to 23:00 (Dave absent). Give player `LOCKPICK`. Move player to manager's office door. Hold E for 8 seconds (simulate 480 frames at 60fps). Verify safe is open. Verify player inventory contains 15–40 COIN. Verify `TILL_RECEIPT` is in inventory. Verify `NotorietySystem` Notoriety increased by 15. Verify `NewspaperSystem` has the NANDO'S CASHBOX RAID headline (player is Tier 2+).
+
+6. **Safe triggers police call if Dave is present**: Set time to 14:00 (Dave on shift). Move player to within 2 blocks of the manager's office interior. Advance 60 frames. Verify `CriminalRecord` contains `CrimeType.TRESPASS`. Verify `WantedSystem` has at least 1 star. Verify Dave's speech bubble contains "you can't be back here".
+
+7. **Stag do spawns on Saturday and drops coins**: Set in-game day to SATURDAY. Set time to 13:00. Advance 60 frames. Verify 4 `DRUNK` NPC instances exist at a `NANDOS_TABLE_PROP`. Set time to 16:00 (they leave). Verify the 4 NPCs have despawned. Verify at least 4 COIN have been dropped at or near the table position (1 per NPC minimum).
+
+// ── New: NandosSystem.java in ragamuffin.core
+// New: NPCType stubs required: NANDOS_STAFF, NANDOS_MANAGER
+// New: Material stubs required: PERI_PERI_CHICKEN, CHICKEN_WRAP, BOTTOMLESS_DRINK,
+//      PERI_PERI_SAUCE, PERI_CHIPS, TILL_RECEIPT
+// New: PropType stubs required: NANDOS_COUNTER_PROP, NANDOS_TABLE_PROP, CARD_MACHINE_PROP,
+//      HOT_SAUCE_RACK_PROP, PERI_SAUCE_SLICK (0.80×0.05×0.80, 0 hits, null — timed),
+//      NANDOS_SIGN_PROP, CLOSED_SIGN_PROP
+// New: CrimeType stub: CARD_MACHINE_FRAUD (add to CriminalRecord.CrimeType)
+// Existing: LandmarkType.NANDOS already defined; HeistSystem, WarmthSystem, StreetEconomySystem,
+//           RumourNetwork, NotorietySystem, FactionSystem, NewspaperSystem, WitnessSystem,
+//           NightclubSystem all present
