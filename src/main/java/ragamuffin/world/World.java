@@ -89,6 +89,7 @@ public class World {
 
     /**
      * Set a block at world coordinates.
+     * Marks the chunk (and any boundary neighbours) dirty so the mesh is rebuilt.
      */
     public void setBlock(int x, int y, int z, BlockType type) {
         int chunkX = Math.floorDiv(x, Chunk.SIZE);
@@ -102,6 +103,7 @@ public class World {
         int localZ = Math.floorMod(z, Chunk.SIZE);
 
         chunk.setBlock(localX, localY, localZ, type);
+        markBlockDirty(x, y, z);
     }
 
     /**
