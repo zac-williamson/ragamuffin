@@ -26301,3 +26301,190 @@ When a fight triggers, 2 `PUBLIC` NPCs enter `NPCState.FIGHTING`. If the player 
 //           DisguiseSystem, RumourNetwork, NeighbourhoodSystem, WeatherSystem, NoiseSystem,
 //           NeighbourhoodWatchSystem, WitnessSystem, AchievementSystem all defined
 // WorldGenerator: add NIGHTCLUB block to high street near Wetherspoons side-alley
+
+---
+
+## Add Northfield BP Petrol Station — 24-Hour Forecourt, the Drive-Off Economy & Baz's Night Shift
+
+**Landmark**: `PETROL_STATION` (already in `LandmarkType` as "BP Petrol Station"; no system exists yet)
+
+### Overview
+
+The BP forecourt on the edge of the high street is the only place in Northfield open at
+3 a.m. Baz the night-shift attendant is the loneliest man in Northfield. The station sells
+petrol cans, energy drinks, forecourt pasties, scratch cards, and cheap cigarettes through
+a hatch. It's also the easiest place in town to nick a full petrol can, run a drive-off
+scam, or warm up for free under the forecourt canopy.
+
+A `PetrolStationSystem` brings the `PETROL_STATION` landmark to life.
+
+### Physical Layout
+
+A 10×8×4-block concrete-and-glass structure at the north edge of the high street:
+
+- **Forecourt canopy** (`CANOPY_PROP`, 10×2×8 overhang): shelters two `PETROL_PUMP_PROP`
+  pairs (four pumps total). The canopy counts as shelter for `WarmthSystem`; player
+  warms at `INDOOR_WARMTH_RATE` while standing beneath it.
+- **Kiosk** (6×4×3 interior behind a `PAYMENT_HATCH_PROP`): Baz operates from here.
+  Contains a `CASH_REGISTER_PROP`, `SCRATCH_CARD_RACK_PROP`, `PASTY_WARMER_PROP` (holds
+  3 pasties; restocked every 4 in-game hours), and a `CCTV_MONITOR_PROP`.
+- **Car wash bay** (`CAR_WASH_MACHINE_PROP`, 4×4×3): automatic machine, costs 2 COIN.
+  Integrates with `CarWashSystem.applyWash(car)`.
+- **Air/water post** (`AIR_PUMP_PROP`): free to use; player can inflate a tyre or use the
+  hose as a makeshift weapon (1 hit, no damage, knocks NPC back 1 block, generates noise).
+
+### Key Characters
+
+- **Baz** (`PETROL_ATTENDANT` NPCType): present 22:00–06:00 (night shift). During the day
+  shift (06:00–22:00), Dave the Day Manager (`SHOPKEEPER` NPCType) runs the kiosk.
+  - Baz is lonely. If the player speaks to him (E), he gives a free `ENERGY_DRINK` on
+    first visit each night and shares one random `LOCAL_EVENT` rumour per shift.
+  - At Notoriety ≥ 50, Baz refuses hatch service and calls police if the player
+    loiters 30+ seconds on the forecourt (adds Notoriety +1, seeds `POLICE_ALERT` rumour).
+  - **Night Shift Friend** achievement: unlock by receiving Baz's free drink on 3
+    separate nights (already defined: `AchievementType.NIGHT_SHIFT_FRIEND`).
+- **Dave** (`SHOPKEEPER` NPCType): day shift, 06:00–22:00. Less chatty. Calls police
+  faster (15-second loiter tolerance vs Baz's 30). Notices drive-offs immediately if
+  CCTV is intact.
+
+### Products (purchased via E at `PAYMENT_HATCH_PROP`)
+
+| Item | Price | Notes |
+|---|---|---|
+| `PETROL_CAN` (full) | 4 COIN | Required for `CampfireSystem` and molotov crafting |
+| `ENERGY_DRINK` | 2 COIN | +10 stamina, keeps player at max run speed for 60s |
+| `FORECOURT_PASTY` | 1 COIN | Satisfies HUNGRY −30; 20% chance of `PASTY_REGRET` debuff (stomach pain: −5 speed for 90s) |
+| `SCRATCH_CARD` | 2 COIN | 5% jackpot (20 COIN); 25% minor win (3 COIN); 70% loss |
+| `CIGARETTE` | 2 COIN | 3-pack; satisfies BORED −20 per cigarette in `StreetEconomySystem` |
+| `MOTOR_OIL` | 3 COIN | Crafting ingredient (MOLOTOV_COCKTAIL = PETROL_CAN + MOTOR_OIL + RAG) |
+| `RAG` | 1 COIN | Crafting ingredient |
+
+### Drive-Off Mechanic
+
+The core crime mechanic. Player pumps petrol then walks away without paying:
+
+1. Player approaches a `PETROL_PUMP_PROP` and presses E: a pump UI opens. Player selects
+   pump duration (1–5 units; 1 COIN per unit) and begins pumping. A `PETROL_CAN` (partially
+   or fully filled, proportional to units pumped) appears in inventory after 3 real seconds.
+2. **Pay at hatch**: player approaches `PAYMENT_HATCH_PROP` and pays. Normal transaction.
+3. **Drive-off**: player leaves the forecourt boundary without paying.
+   - If `CCTV_MONITOR_PROP` is intact and Dave is on shift: caught immediately. Fine =
+     units pumped × 2 COIN deducted from inventory; `CrimeType.THEFT` recorded;
+     Notoriety +2; Dave calls police (WantedSystem +1 star).
+   - If Baz is on shift (night): 40% catch chance (Baz is watching the telly). On catch:
+     Baz shouts "Oi! Come back!" — Notoriety +1, no police call unless player is Tier 3+.
+   - If player has smashed `CCTV_MONITOR_PROP` (3 hits to break, drops `SCRAP_METAL`):
+     no automatic detection. A `DRIVE_OFF` rumour is seeded; `WitnessSystem` checks for
+     any nearby NPCs who saw the smash.
+4. **Achievement** `DRIVE_OFF`: first successful undetected drive-off
+   (already defined in `AchievementType`).
+
+### Petrol Can Uses
+
+- `CampfireSystem`: lighting a campfire with a petrol can starts it instantly (no tinder
+  needed) and raises flame size to LARGE, increasing warmth radius to 8 blocks.
+- **Molotov Cocktail** (new crafting recipe): PETROL_CAN + MOTOR_OIL + RAG →
+  `MOLOTOV_COCKTAIL`. Thrown item (right-click while selected): ignites a 3×3 fire area
+  for 10 seconds, sets nearby NPCs' clothing on fire (+5 damage/sec), triggers
+  `WheeliBinFireSystem.onFireStarted()` at impact point. Criminal record:
+  `CrimeType.ARSON`. Notoriety +5 per throw. Cannot be used indoors (blocked with
+  tooltip: "You're not lighting that in here.").
+- **Siphoning** (Stealth Tier 2+): player can siphon petrol from parked cars in the world
+  into an empty `PETROL_CAN` using a `SIPHON_HOSE` (sold at Builders Merchant). Takes 10
+  real seconds; generates noise `LEVEL_1`; if a PCSO is within 10 blocks, caught
+  immediately (+2 Notoriety, `CrimeType.THEFT`).
+
+### Scratch Card Economy
+
+The `SCRATCH_CARD_RACK_PROP` gives access to scratch cards (also buyable from
+`PostOfficeSystem` and `SupermarketSystem` for consistency). Pull into a unified
+`ScratchCardSystem` helper class (static methods only, no state):
+
+```java
+// ScratchCardSystem.scratch(Random rng) → ScratchResult {JACKPOT, MINOR_WIN, LOSS}
+// with probabilities: JACKPOT 5%, MINOR_WIN 25%, LOSS 70%
+```
+
+Already-existing `AchievementType.SCRATCH_CARD_WINNER` fires on JACKPOT result.
+
+### Forecourt Canopy as Shelter
+
+The canopy `CANOPY_PROP` is treated as a shelter block by `ShelterDetector`:
+
+- Player standing in the 10×8 footprint beneath the canopy (Y level at pump height)
+  receives warmth at `INDOOR_WARMTH_RATE` (10.0f/sec) — same as indoors.
+- Wetness stops accumulating under the canopy even during rain.
+- Up to 3 NPC `ROUGH_SLEEPER` NPCs may shelter under the canopy at night
+  (22:00–06:00) when weather is RAIN or worse; they do not enter the kiosk.
+  If Baz Notoriety-bars the player, he also chases away rough sleepers (shouts:
+  "This isn't a hotel."). If Street Lads Respect ≥ 50, rough sleepers are not chased.
+
+### Integration with Existing Systems
+
+- `WarmthSystem`: canopy counts as shelter; `ENERGY_DRINK` gives +5 Warmth on consumption.
+- `CampfireSystem`: petrol can accelerates ignition and increases flame radius.
+- `CarWashSystem`: car wash bay calls `CarWashSystem.applyWash(car)` for 2 COIN.
+- `StreetEconomySystem`: `CIGARETTE` satisfies BORED; `FORECOURT_PASTY` satisfies HUNGRY;
+  `ENERGY_DRINK` added to BASE_PRICES (already present).
+- `WheeliBinFireSystem`: molotov throw calls `onFireStarted()`.
+- `WitnessSystem`: drive-off, CCTV smash, and siphoning all generate witness events.
+- `NotorietySystem`: drive-off +2 (Dave) or +1 (Baz, if caught); CCTV smash +1; molotov +5.
+- `RumourNetwork`: `LOCAL_EVENT` from Baz per shift; `DRIVE_OFF` rumour seeds on undetected theft.
+- `PostOfficeSystem` / `SupermarketSystem`: scratch card logic unified via `ScratchCardSystem`.
+- `WeatherSystem`: rain/storm triggers rough sleepers under canopy.
+- `FactionSystem`: Marchetti Crew collect protection from Dave's float on Monday mornings
+  (4 COIN/week). If Marchetti Respect ≥ 60, player can redirect the collection (takes 4 COIN
+  directly, seeds `GANG_ACTIVITY` rumour, Dave reports to police next day).
+- `NewspaperSystem`: headline "FORECOURT ARSON: NORTHFIELD BP BLAZE" if player throws a
+  molotov on the forecourt (any time, witnessed or not).
+
+### Achievements
+
+All already defined in `AchievementType`:
+- `FORECOURT_REGULAR` — buy from petrol station 10 times.
+- `DRIVE_OFF` — first undetected drive-off.
+- `SCRATCH_CARD_WINNER` — jackpot on a scratch card.
+- `NIGHT_SHIFT_FRIEND` — receive Baz's free drink on 3 separate nights.
+- `PASTY_REGRET` — suffer the PASTY_REGRET stomach debuff.
+
+### Unit Tests
+
+1. `PetrolStationSystem.isOpen(hour=3.0f)` returns `true` (24h); `getBehindCounter(hour=3.0f)` returns `BAZ`; `getBehindCounter(hour=10.0f)` returns `DAVE`.
+2. `PetrolStationSystem.computeDriveOffCatchChance(staffOnDuty=BAZ, cctvIntact=true)` returns `0.40f`; `staffOnDuty=DAVE, cctvIntact=true` returns `1.0f`; `cctvIntact=false` returns `0.0f`.
+3. `PetrolStationSystem.purchaseItem(inventory, item=PETROL_CAN, coinCount=4)` deducts 4 COIN, adds 1 `PETROL_CAN`, returns `PURCHASE_SUCCESS`; `coinCount=3` returns `INSUFFICIENT_FUNDS`.
+4. `ScratchCardSystem.scratch(new Random(0))` returns a deterministic result; calling 1000 times with `new Random(i)` produces JACKPOT in 4–6% of trials (statistical tolerance ±2%).
+5. `PetrolStationSystem.isSheltered(playerX, playerZ, canopyOriginX, canopyOriginZ, canopyW=10, canopyD=8)` returns `true` when player is within bounds; `false` when 1 block outside.
+6. `PetrolStationSystem.pumpPetrol(units=3)` adds a `PETROL_CAN` with fillLevel=3 to inventory after 3 seconds; `units=5` adds fillLevel=5.
+7. `PetrolStationSystem.notifyDriveOff(staffOnDuty=DAVE, cctvIntact=true, notorietySystem, criminalRecord)` adds `CrimeType.THEFT`, applies Notoriety +2, calls `wantedSystem.addWantedStars(1,...)`.
+
+### Integration Tests
+
+1. **Buy petrol and use in campfire**: Place player at `PETROL_PUMP_PROP`. Press E, select 5 units, wait 3 seconds. Verify `PETROL_CAN` (fillLevel=5) in inventory. Move to an open outdoor area. Use `CampfireSystem.lightFire(inventory)`. Verify campfire state is `LARGE` (not `SMALL`). Verify warmth radius is 8 blocks (not 5).
+
+2. **Drive-off with Dave catches player**: Set time to 10:00 (Dave on shift). Ensure `CCTV_MONITOR_PROP` is intact. Pump 3 units. Walk past forecourt boundary without paying. Verify player inventory has 3 COIN deducted × 2 = −6 COIN (or remaining coins reduced). Verify `CriminalRecord` contains `CrimeType.THEFT`. Verify Notoriety increased by 2. Verify `WantedSystem` has 1 star.
+
+3. **Drive-off with Baz — undetected path**: Set time to 02:00 (Baz on shift). Smash `CCTV_MONITOR_PROP` (3 hits). Verify `SCRAP_METAL` dropped. Pump 2 units. Walk off forecourt. Verify catch chance is 0% (no CCTV). Verify no `CrimeType.THEFT` in `CriminalRecord`. Verify a `DRIVE_OFF` rumour was seeded into a nearby NPC.
+
+4. **Canopy provides warmth in rain**: Set weather to RAIN. Place player inside canopy footprint. Call `WarmthSystem.update(...)`. Verify player wetness does NOT increase (sheltered). Verify player warmth increases at `INDOOR_WARMTH_RATE`. Move player 1 block outside canopy. Call update again. Verify wetness now increases.
+
+5. **Molotov crafting and throw ignites fire**: Craft `MOLOTOV_COCKTAIL` (PETROL_CAN + MOTOR_OIL + RAG). Verify item in inventory. Move outdoors. Select molotov in hotbar. Right-click to throw at a point 3 blocks ahead. Verify `WheeliBinFireSystem.onFireStarted()` was called at impact coordinates. Verify 3×3 fire area is active for 10 seconds. Verify `CriminalRecord` contains `CrimeType.ARSON`. Verify Notoriety increased by 5. Verify `NewspaperSystem` has a headline containing "ARSON".
+
+6. **Rough sleepers shelter under canopy at night**: Set weather to RAIN, time to 23:00, Street Lads Respect = 30. Advance 5 in-game minutes. Verify 1–3 `ROUGH_SLEEPER` NPCs have spawned within the canopy footprint. Set Notoriety = 55. Trigger `PetrolStationSystem.update(...)`. Verify Baz calls `npc.setState(NPCState.FLEEING)` on each rough sleeper (chasing them away).
+
+// ── New: PetrolStationSystem.java in ragamuffin.core
+// New: ScratchCardSystem.java (static helper) in ragamuffin.core
+// New: NPCType stubs required: PETROL_ATTENDANT (add if not present)
+// New: Material stubs required: PETROL_CAN, MOTOR_OIL, RAG, MOLOTOV_COCKTAIL,
+//      FORECOURT_PASTY (if distinct from DODGY_PASTY), SIPHON_HOSE
+// New: PropType stubs required: PETROL_PUMP_PROP (1.00×1.50×0.50, 2 hits, Material.SCRAP_METAL),
+//      PAYMENT_HATCH_PROP (0.80×1.00×0.30, 4 hits, Material.SCRAP_METAL),
+//      CANOPY_PROP (10.00×0.30×8.00, 0 hits, null — non-breakable structural marker),
+//      SCRATCH_CARD_RACK_PROP (0.50×1.20×0.20, 2 hits, Material.COIN),
+//      PASTY_WARMER_PROP (0.60×0.40×0.40, 2 hits, Material.SCRAP_METAL),
+//      CCTV_MONITOR_PROP (0.40×0.30×0.30, 3 hits, Material.SCRAP_METAL),
+//      AIR_PUMP_PROP (0.30×1.00×0.30, 2 hits, null),
+//      CAR_WASH_MACHINE_PROP (3.00×2.50×3.00, 8 hits, Material.SCRAP_METAL)
+// New: CrimeType stub: ARSON (add to CriminalRecord.CrimeType if not present)
+// Existing: LandmarkType.PETROL_STATION already defined; AchievementType entries already defined;
+//           CarWashSystem, WarmthSystem, CampfireSystem, WheeliBinFireSystem, StreetEconomySystem,
+//           WitnessSystem, NotorietySystem, FactionSystem, RumourNetwork, NewspaperSystem all present
