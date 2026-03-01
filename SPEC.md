@@ -15779,3 +15779,116 @@ trigger, session schedule (open only on correct days/times), warmth gain while s
     (position unchanged after 60 frames of pressing W into door). Set time to Tuesday
     13:00 (session day but before doors open). Verify same closed response. Set time to
     Tuesday 14:00. Verify entry is now permitted.
+
+---
+
+## Issue #962: Cash4Gold Pawn Shop — Pledging, Redemption & Sunday Morning Regret
+
+**Landmark**: `PAWN_SHOP` ("Cash4Gold Pawnbrokers") — already present in world gen.
+
+### Overview
+
+A semi-legitimate alternative to the Fence. Gary, the pawn shop proprietor, buys items
+outright (lower price, no heat) or accepts pledge loans (full value minus interest, item
+returned on repayment). Unlike the black-market Fence, Gary asks one question — and it's
+"Have you got ID?" — but takes anything if the player's notoriety is low enough. A key
+survival resource for the cash-strapped player, and a fence-lite for stolen goods when
+police heat is high.
+
+### Key Mechanics
+
+**Selling (Outright)**
+- Player presses **E** near Gary to open the `PawnShopUI`.
+- Player drags an item to the SELL slot. Gary quotes a **buy price** (45–60% of base
+  StreetEconomySystem value, rounded down, minimum 1 COIN).
+- Player confirms. Item removed from inventory; COIN added.
+- Stolen items (STOLEN_PHONE, DIAMOND taken from heist, etc.) accepted silently if
+  Notoriety Tier ≤ 2. At Tier 3+, Gary adds +5 Notoriety per stolen item sold ("I'll
+  need a receipt for that, mate") but still completes the sale.
+- HAIR_CLIPPERS, BROKEN_PHONE, COMPUTER, OFFICE_CHAIR, STAPLER, CROWBAR, BOLT_CUTTERS,
+  DIAMOND, GOLD_RING (new Material), STOLEN_PHONE, GUITAR (new Material) accepted.
+- COIN, food items, and building materials (BRICK, WOOD, etc.) rejected ("We're not a
+  skip, mate").
+
+**Pledge Loans**
+- Player can pledge an item to receive 80% of its base value as a COIN loan.
+- Item is held by Gary for up to **3 in-game days**.
+- Redemption: player pays back principal + 20% interest (i.e. the full base value).
+- If not redeemed in 3 days, item is forfeit and listed for sale in Gary's shop window
+  (visible as a prop SHOP_WINDOW_ITEM_PROP at 120% original value — flavour only; player
+  cannot re-buy).
+- Maximum 3 active pledges at once.
+- Achievement `SUNDAY_MORNING_REGRET` — lose a pledged item (fail to redeem within 3 days).
+
+**Gary's Patter & Reactions**
+- Opening: "What've you got for me then?"
+- Stolen goods (Tier 3+): "I'll need a receipt for that, mate."
+- Rejected items: "We're not a skip, mate."
+- Pledge accepted: "I'll hold it three days. After that, it's mine."
+- Pledge redeemed: "Sorted. Good as new, that."
+- Item forfeited: "Time's up, son. It's in the window."
+- Player punches Gary: Gary flees, shop shutter drops (STEEL_DOOR_PROP animates shut),
+  re-opens next in-game day; +10 Notoriety.
+
+**Shop Hours**
+- Open Mon–Sat 09:00–17:30. Closed Sunday ("Sunday's for regret, not retail").
+- During closed hours: STEEL_SHUTTER_PROP visible; interacting returns "Closed. Come back
+  tomorrow." Player cannot break in without triggering NotorietySystem +15 + WantedSystem
+  +2 stars.
+
+**System Integrations**
+- **StreetEconomySystem**: base prices inform buy-price calculations.
+- **NotorietySystem**: Tier 3+ triggers "receipt" dialogue; Tier 5 Gary refuses service
+  entirely ("I know who you are. Not today.").
+- **FactionSystem**: Marchetti Crew respect ≥ FRIENDLY_THRESHOLD gives +10% on all sell
+  prices (Gary's on good terms with the crew).
+- **TimeSystem**: pledge countdown tracked in in-game days; forfeit triggered on day tick.
+- **WitnessSystem**: if a POLICE NPC is within 8 blocks during a stolen-item sale, adds
+  a CriminalRecord entry for HANDLING_STOLEN_GOODS.
+- **RumourNetwork**: significant sales (DIAMOND, pledge loss) seed a rumour from Gary
+  to the nearest BARMAN NPC.
+- **AchievementSystem**: `SUNDAY_MORNING_REGRET` (pledge forfeited), `IN_HOC`
+  (3 active pledges simultaneously), `CASH_IN_HAND` (sell 10 items outright in one session).
+
+**New `Material` entries**: `GOLD_RING`, `GUITAR`.
+**New `NPCType` entry**: `PAWN_BROKER` (Gary; stands behind the counter; patter
+speech; flees on assault).
+
+**Unit tests**: buy-price calculation (45–60% of base, minimum 1), pledge loan amount
+(80% base), redemption cost (100% base), pledge forfeit trigger (after 3 in-game days),
+stolen-item notoriety penalty (Tier 3+ adds 5), rejected item list, Gary-flee trigger,
+maximum pledge count (3), faction price bonus, police-nearby handling stolen goods.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Selling an item gives correct coin**: Give player 1 CROWBAR. Open PawnShopUI (E near Gary,
+   time set to Monday 10:00). Drag CROWBAR to sell slot. Verify quoted price is
+   `Math.max(1, (int)(StreetEconomySystem.BASE_PRICE(CROWBAR) * 0.55))` (±1 coin rounding).
+   Confirm sale. Verify CROWBAR removed from inventory and COIN added equal to quoted price.
+
+2. **Pledge loan and redemption**: Give player 1 DIAMOND. Pledge it. Verify player receives
+   `(int)(BASE_PRICE * 0.80)` COIN. Verify `pawnShopSystem.getActivePledgeCount()` == 1.
+   Advance time by 2 in-game days. Give player enough COIN to redeem. Press E, select
+   redeem. Verify DIAMOND returned to inventory and COIN deducted equal to `BASE_PRICE`.
+   Verify pledge count == 0.
+
+3. **Pledge forfeit after 3 days**: Give player 1 GUITAR. Pledge it. Advance time by 4
+   in-game days. Verify `pawnShopSystem.getActivePledgeCount()` == 0. Verify GUITAR is
+   NOT in player inventory. Verify player has `SUNDAY_MORNING_REGRET` achievement.
+
+4. **Stolen goods at Tier 3+ adds notoriety**: Set Notoriety to Tier 3. Give player
+   1 STOLEN_PHONE. Open PawnShopUI. Sell STOLEN_PHONE. Verify Notoriety increased by 5.
+   Verify Gary's speech bubble contains "receipt".
+
+5. **Tier 5 service refusal**: Set Notoriety to Tier 5. Open PawnShopUI (press E on Gary).
+   Verify UI does not open (returns null) and Gary's speech bubble contains "Not today".
+
+6. **Shop closed on Sunday**: Set time to Sunday 14:00. Press E on Gary (or door).
+   Verify no UI opens. Verify speech/tooltip message references "Closed".
+
+7. **Police nearby + stolen item = criminal record entry**: Place a POLICE NPC within
+   6 blocks. Give player 1 STOLEN_PHONE. Sell it at Notoriety Tier 1 (police nearby check
+   uses WitnessSystem). Verify CriminalRecord has 1 new HANDLING_STOLEN_GOODS entry.
+
+8. **Maximum 3 pledges**: Pledge 3 items. Attempt to pledge a 4th. Verify Gary refuses
+   ("I've got enough of your stuff") and pledge count remains 3.
