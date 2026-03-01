@@ -17971,3 +17971,175 @@ open dog run behind it (20×6), kennel block (6×4) with padlocked door prop.
    the current race (speech line contains a dog name). Verify the revealed dog matches the
    seeded RNG winner for that race. Verify this tip is available only once per session
    (second E press returns "I've told you enough").
+
+## Add Northfield Police Station — Custody Suite, Interview Room & Evidence Locker Heist
+
+**Goal**: Transform the `POLICE_STATION` landmark from a named stub into a fully
+interactive hub of British bureaucratic menace. When arrested, the player is processed
+through the custody suite — fingerprints, property bag, one phone call — and held in a
+cell until bail is paid or morning. The station can also be infiltrated to raid the evidence
+locker and reclaim confiscated property. A new `PoliceStationSystem` class drives all
+station interactions and integrates with the existing `ArrestSystem`, `CriminalRecord`,
+`WantedSystem`, and `FactionSystem`.
+
+### Building Layout
+
+The police station is a two-storey brick building near the town hall / office block area.
+Ground floor:
+- Public reception: a desk with a `DUTY_SERGEANT` NPC, a `WAITING_BENCH_PROP`, and a
+  noticeboard prop covered in "HAVE YOU SEEN..." flyers.
+- Custody suite (staff-only, door locked): processing desk, a `DETENTION_OFFICER` NPC,
+  a `FINGERPRINT_PAD_PROP`, and a `PROPERTY_BAG_CUPBOARD_PROP`.
+- Three cells (3×3 STONE rooms with a `CELL_DOOR_PROP` per cell, barred GLASS window).
+- Interview Room: 4×3 room with a `INTERVIEW_TABLE_PROP` and two chairs. A tape recorder prop sits on the table.
+- Evidence Locker: a 4×4 locked room with a `KEYPAD_PROP` at the door and `EVIDENCE_SHELF_PROP` units inside.
+
+Upper floor:
+- CID office: open-plan, 3 `DETECTIVE` NPCs at desks during 09:00–18:00. Filing cabinet props.
+- Break room: `VENDING_MACHINE_PROP`, `KETTLE_PROP` (flavour only).
+
+### Custody Processing (triggered by `ArrestSystem`)
+
+When the player is arrested (caught by POLICE, ARMED_RESPONSE, or surrenders at the
+station reception), instead of the current instant "teleport to park" mechanic:
+
+1. **Processing**: Player is teleported to the custody suite. `DETENTION_OFFICER` NPC
+   delivers speech ("Empty your pockets. All of it."). All inventory items are placed
+   into the `PROPERTY_BAG_CUPBOARD_PROP` — accessible only from inside the station.
+2. **Fingerprinting**: Player is placed at the `FINGERPRINT_PAD_PROP`. A 3-second
+   interaction plays. CriminalRecord gains a `PROCESSED` flag.
+3. **Cell detention**: Player is locked in Cell 1. Cell door is impassable (solid block).
+   Player health is set to 30, hunger to 20 (as per current ArrestSystem constants).
+4. **Release conditions** (any one unlocks the cell):
+   - Pay bail: `DUTY_SERGEANT` NPC accepts `BAIL_AMOUNT` COIN (10 + 5 × NotorietyTier).
+     Player's remaining inventory and confiscated items are returned. Notoriety reduced by 1 tier.
+   - Wait for morning: if player waits until 08:00 in-game time, cell door opens automatically
+     (released without charge for minor offences; formal charge for Tier 3+ crimes).
+   - Phone a friend: Player presses E on the `TELEPHONE_PROP` in the cell to trigger a
+     "phone call" — costs nothing, reduces bail by 5 COIN (friend lends a hand). One call per arrest.
+   - Break out: Pick the `CELL_DOOR_PROP` lock with a `LOCKPICK` item (5-second interaction,
+     fails if `DETENTION_OFFICER` is within 8 blocks). Adds `ESCAPE_FROM_CUSTODY` CrimeType.
+     WantedSystem +3 stars. Starts a station-wide alert (all NPCs hostile for 120 seconds).
+
+### Grassing Mechanic
+
+In the reception, the player can press E on the `DUTY_SERGEANT` to open the "Tip Off" menu:
+- **Grass on a gang member**: costs 0 COIN; player names a Faction (MARCHETTI_CREW or
+  STREET_LADS). That faction's Respect toward the player drops by 20. Player Notoriety
+  drops by 5. The duty sergeant spawns 2 POLICE NPCs near the named faction's territory
+  for 3 in-game minutes. Seeds a `GRASSED_UP` `RumourType` across the RumourNetwork —
+  NPCs who carry this rumour will use it against the player ("I heard you grassed 'em up").
+  Tooltip on first use: "In this neighbourhood, snitches do get stitches."
+- **False tip**: Player provides incorrect information. No effect except +2 Notoriety
+  and a `FALSE_REPORT` CriminalRecord entry if player is caught (20% chance the
+  duty sergeant recognises the false lead immediately).
+
+### Evidence Locker Heist
+
+The evidence locker contains all items confiscated from the player in previous arrests
+(tracked by `PoliceStationSystem.evidenceLocker` list). It may also contain a random
+`STOLEN_PHONE` or `DRUGS_EVIDENCE` (placeable item with contraband charge potential).
+
+To access:
+1. Obtain a `CUSTODY_KEY_CARD` — dropped by the `DETENTION_OFFICER` (5% chance on defeat),
+   or crafted from `BLANK_CARD` + `INSPECTOR_BADGE` (which already exists).
+2. Use key card on `KEYPAD_PROP` (3-second interaction). Door opens for 30 seconds.
+3. Loot `EVIDENCE_SHELF_PROP` (press E): returns all player's own confiscated items plus a
+   random contraband bonus.
+4. If a `DETECTIVE` or `DETENTION_OFFICER` sees the player inside: WantedSystem +2 stars,
+   `EVIDENCE_TAMPERING` CriminalRecord entry, station-wide alert (120-second hostile window).
+
+### New Items
+
+| Item | Source | Use |
+|------|--------|-----|
+| `CUSTODY_KEY_CARD` | Drop from `DETENTION_OFFICER`, or craft `BLANK_CARD` + `INSPECTOR_BADGE` | Opens evidence locker keypad |
+| `BLANK_CARD` | Craft: 2 COIN | Component for key card |
+| `BAIL_RECEIPT` | Given on bail payment | Proof of release; reduces bail 20% on next arrest if held |
+
+### New NPC Roles
+
+| NPC Type | Role | Hours |
+|----------|------|-------|
+| `DUTY_SERGEANT` | Reception desk; bail payments; tip-off menu | 24/7 |
+| `DETENTION_OFFICER` | Custody suite; processes arrests; patrols custody | 06:00–22:00 |
+| `DETECTIVE` | CID upstairs; patrols if alert triggered | 09:00–18:00 |
+
+### Achievements
+
+- `BANG_TO_RIGHTS` — Processed through the custody suite for the first time.
+- `ONE_PHONE_CALL` — Use the cell telephone during an arrest.
+- `GREAT_ESCAPE` — Break out of the cell with a lockpick.
+- `PROPER_GRASS` — Use the Tip Off menu successfully.
+- `EVIDENCE_LOST` — Reclaim your own confiscated items from the evidence locker.
+
+### Integrations
+
+- **ArrestSystem**: Replace the existing instant "teleport to park" with the new
+  custody processing flow. `ArrestSystem.arrest()` now delegates to
+  `PoliceStationSystem.processCustody()`. Backwards compatibility: if no station
+  exists (during early phase testing), fall back to original teleport.
+- **CriminalRecord**: New crime types `ESCAPE_FROM_CUSTODY`, `EVIDENCE_TAMPERING`,
+  `FALSE_REPORT` added. `PROCESSED` flag set on first arrest.
+- **WantedSystem**: Cell breakout adds +3 stars. Evidence locker caught adds +2 stars.
+  Station-wide alert runs for 120 in-game seconds.
+- **FactionSystem**: Grassing on MARCHETTI_CREW or STREET_LADS drops their Respect by 20.
+  MARCHETTI_CREW Respect ≥ 70 unlocks a bribe option to the `DUTY_SERGEANT` (costs 20 COIN,
+  reduces charges by 1 tier, skips fingerprinting).
+- **RumourNetwork**: Grassing seeds `GRASSED_UP` rumour. Cell breakout seeds `GREAT_ESCAPE`
+  rumour (positive rep with STREET_LADS, +5 Respect). Evidence locker heist seeds `LOOT_TIP`
+  rumour about the station.
+- **NotorietySystem**: Bail payment reduces notoriety 1 tier. Morning release for Tier 1–2
+  offences clears notoriety fully (caution only). Tier 3+ offences result in formal charge:
+  notoriety stays, CriminalRecord updated.
+- **StreetEconomySystem**: Bail payment uses COIN from player inventory. `DRUGS_EVIDENCE`
+  item from locker is a DESPERATE-need satisfier worth 20 COIN on the street.
+- **DisguiseSystem**: Wearing `POLICE_JACKET` (new, drop from `DETENTION_OFFICER`) lets
+  player walk freely through reception and into the custody suite — fails at door to
+  cell block (DETENTION_OFFICER recognises the player on close inspection if Notoriety ≥ 30).
+- **NoiseSystem**: Cell breakout generates noise level 4 (triggers ARMED_RESPONSE within 60
+  real seconds if not escaped from the building). Normal station ambient: level 1.
+
+### Unit Tests
+
+- `processCustody()` confiscates all inventory items and places them in evidenceLocker.
+- Bail amount formula: `10 + 5 × notorietyTier` is correct for tiers 0–5.
+- Cell door remains impassable until release condition met (bail paid, morning, lockpick).
+- Grassing on faction correctly reduces faction Respect by 20 and seeds GRASSED_UP rumour.
+- Evidence locker door opens only with valid `CUSTODY_KEY_CARD` interaction.
+- Station-wide alert flag correctly makes all station NPCs hostile for exactly 120 seconds.
+- Morning release fires at exactly 08:00 in-game time and only for Tier 1–2 offences.
+- `CUSTODY_KEY_CARD` craft recipe produces valid item from `BLANK_CARD` + `INSPECTOR_BADGE`.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Arrest triggers custody processing**: Set player WantedSystem stars = 3. Spawn a
+   POLICE NPC adjacent to the player. Advance 10 frames. Verify the player is teleported
+   to the police station custody suite (player position is inside the POLICE_STATION AABB).
+   Verify all player inventory items have been removed. Verify the evidenceLocker list
+   contains the removed items. Verify `DETENTION_OFFICER` speech contains "Empty your pockets".
+
+2. **Bail payment releases player**: Place player in cell (set `inCustody = true`).
+   Give player 15 COIN. Set NotorietyTier = 1 (bail = 15 COIN). Press E on
+   `DUTY_SERGEANT` prop and select "Pay bail". Verify player COIN reduced by 15.
+   Verify `inCustody = false`. Verify player position is outside the cell block
+   (in the reception area). Verify confiscated items returned to inventory.
+   Verify NotorietyTier reduced to 0.
+
+3. **Cell breakout detected**: Place player in cell. Give player a `LOCKPICK`. Ensure
+   `DETENTION_OFFICER` is MORE than 8 blocks from cell door. Press E on cell door.
+   Advance 300 frames (5 seconds). Verify `ESCAPE_FROM_CUSTODY` CrimeType is in
+   CriminalRecord. Verify WantedSystem stars increased by 3. Verify station-wide alert
+   is active (all station NPCs return `isHostile() == true` for next 120 in-game seconds).
+
+4. **Evidence locker heist succeeds**: Process player through custody (confiscate
+   STONE × 10). Give player `CUSTODY_KEY_CARD`. Ensure no DETECTIVE or DETENTION_OFFICER
+   is within 8 blocks of the locker. Press E on `KEYPAD_PROP`. Advance 3 seconds.
+   Verify locker door is open. Press E on `EVIDENCE_SHELF_PROP`. Verify STONE × 10
+   returned to player inventory. Verify evidenceLocker is now empty.
+
+5. **Grassing drops faction Respect and seeds rumour**: Set MARCHETTI_CREW Respect to 60.
+   Place player at reception. Press E on `DUTY_SERGEANT`, select "Grass — Marchetti Crew".
+   Verify MARCHETTI_CREW Respect reduced to 40. Verify player Notoriety reduced by 5.
+   Verify at least one NPC in the RumourNetwork holds a `GRASSED_UP` rumour.
+   Verify 2 POLICE NPCs spawned near the Marchetti territory within 60 simulation frames.
