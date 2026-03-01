@@ -1026,7 +1026,23 @@ public enum NPCType {
      *         "I've been waiting twenty minutes for a toaster." /
      *         "They said five minutes twenty minutes ago."
      */
-    ARGOS_SHOPPER(18f, 0f, 0f, false);
+    ARGOS_SHOPPER(18f, 0f, 0f, false),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1043: Northfield Fire Station NPCs
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Watch Commander — senior officer at the fire station.
+     * Stationed in the WATCH_ROOM. Comes out when alerted.
+     * Cannot be bribed. Calls police if the fire engine is stolen.
+     * Accepts ANTIDEPRESSANTS delivery quest.
+     * Sees through FIREFIGHTER_HELMET disguise within 3 blocks.
+     * Speech: "That engine better be back in the bay by end of shift." /
+     *         "Oi — what d'you think you're doing?" /
+     *         "Cheers — the lads have been struggling."
+     */
+    WATCH_COMMANDER(50f, 8f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

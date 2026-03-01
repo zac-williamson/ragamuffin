@@ -1063,7 +1063,58 @@ public enum PropType {
      * a slip or collect a completed order.
      * Destroyed by 6 punches; yields SCRAP_METAL.
      */
-    ARGOS_COUNTER_PROP(2.00f, 1.00f, 0.80f, 6, Material.SCRAP_METAL);
+    ARGOS_COUNTER_PROP(2.00f, 1.00f, 0.80f, 6, Material.SCRAP_METAL),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1043: Northfield Fire Station props
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * BAY_DOOR — rollup garage door for the fire engine bay.
+     * Double-width. Opens/closes via FireStationSystem state.
+     * Destroyed by 10 punches; yields SCRAP_METAL.
+     */
+    BAY_DOOR(2.40f, 2.60f, 0.20f, 10, Material.SCRAP_METAL),
+
+    /**
+     * FIRE_ENGINE_PROP — the red fire engine parked in Bay 1.
+     * Press E to attempt the Engine Heist (FireStationSystem handles interaction).
+     * Not destructible by normal means; yields null.
+     */
+    FIRE_ENGINE_PROP(3.00f, 2.00f, 7.00f, 99, null),
+
+    /**
+     * HOSE_REEL — wall-mounted hose reel in the station.
+     * Press E to pick up FIRE_EXTINGUISHER (theft if FIREFIGHTER within 6 blocks).
+     * Destroyed by 4 punches; yields SCRAP_METAL.
+     */
+    HOSE_REEL(0.60f, 1.00f, 0.40f, 4, Material.SCRAP_METAL),
+
+    /**
+     * LOCKER — personal locker in the crew room.
+     * Press E to search; 50% chance yields FIREFIGHTER_HELMET.
+     * Destroyed by 4 punches; yields SCRAP_METAL.
+     */
+    LOCKER(0.60f, 1.80f, 0.50f, 4, Material.SCRAP_METAL),
+
+    /**
+     * WATCH_ROOM — elevated glass booth where the Watch Commander is stationed.
+     * Non-interactive prop (scene dressing). Destroyed by 6 punches; yields GLASS.
+     */
+    WATCH_ROOM(2.40f, 2.00f, 2.40f, 6, Material.GLASS),
+
+    /**
+     * FIRE_POLE — connects upper crew quarters to the appliance bay.
+     * Scene dressing / traversal prop. Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    FIRE_POLE(0.30f, 3.00f, 0.30f, 5, Material.SCRAP_METAL),
+
+    /**
+     * RECEPTION_DESK (fire station) — front-desk area inside the station entrance.
+     * Press E to attempt interaction. Destroyed by 8 punches; yields WOOD.
+     * (Separate from RECEPTION_DESK_PROP used by the GP Surgery.)
+     */
+    FIRE_STATION_RECEPTION_DESK(1.40f, 1.10f, 0.60f, 8, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
