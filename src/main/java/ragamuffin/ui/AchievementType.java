@@ -1848,6 +1848,29 @@ public enum AchievementType {
         "Community Pillar",
         "Donated to the mosque five times. Hassan nodded at you. High praise.",
         5
+    ),
+
+    // ── Issue #1033: St. Aidan's C.E. Primary School ─────────────────────────
+
+    SCHOOL_DINNER(
+        "Turkey Twizzlers",
+        "You bought a school dinner. A highlight, honestly.",
+        1
+    ),
+    SAFE_CRACKER_JR(
+        "Petty Cash",
+        "You robbed a primary school. This is rock bottom.",
+        1
+    ),
+    NIGHT_SCHOOL(
+        "After Hours",
+        "You broke into the school after dark. Old habits.",
+        1
+    ),
+    TEACHERS_PET(
+        "Model Citizen",
+        "Derek shared a rumour with you. He thinks you're alright.",
+        1
     );
 
     private final String name;

@@ -226,5 +226,16 @@ public enum RumourType {
     /** "The mosque is doing an Iftar tonight — free food for everyone, come along."
      * — seeded by MosqueSystem at Maghrib during Ramadan when the FOLD_TABLE_PROP is placed.
      * Spreads to nearby NPCs; draws WORSHIPPER and PUBLIC NPCs toward the mosque. */
-    IFTAR_TONIGHT;
+    IFTAR_TONIGHT,
+
+    // ── Issue #1033: St. Aidan's C.E. Primary School ─────────────────────────
+
+    /** "Apparently a kid from St. Aidan's was seen bunking off near the chicken shop." */
+    TRUANCY,
+
+    /** "Some bloke was hanging round the school today — looked proper dodgy." */
+    SUSPICIOUS_PERSON,
+
+    /** "That dinner lady at St. Aidan's got robbed. Bold as brass." */
+    BANNED_FROM_CANTEEN;
 }

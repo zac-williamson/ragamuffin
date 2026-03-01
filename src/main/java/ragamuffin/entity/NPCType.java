@@ -903,7 +903,39 @@ public enum NPCType {
      * Passive; 4–8 present during regular prayer, 10–16 during Friday Jumu'ah.
      * Speech: "Jumu'ah today — are you joining us?" / "Peace be with you."
      */
-    WORSHIPPER(18f, 0f, 0f, false);
+    WORSHIPPER(18f, 0f, 0f, false),
+
+    // ── Issue #1033: St. Aidan's C.E. Primary School ─────────────────────────
+
+    /**
+     * Mrs Fowler — the headteacher. Ejects adults; calls police on Notoriety ≥ 30.
+     * Active 08:00–16:30 (Mon–Fri). Patrols reception and corridor.
+     */
+    HEADTEACHER(20f, 0f, 0f, false),
+
+    /**
+     * Dot — the dinner lady. Sells SCHOOL_DINNER 11:30–13:30; hostile to high-Notoriety players.
+     * Pickpocketable for 2–5 COIN; calls HEADTEACHER if caught.
+     */
+    DINNER_LADY(20f, 0f, 0f, false),
+
+    /**
+     * Derek — the caretaker. Patrols exterior; sweeps playground; locks gate at 15:30.
+     * Shed key pickpocketable at Notoriety &lt; 30. Friendly if low notoriety.
+     */
+    CARETAKER(25f, 4f, 2.0f, false),
+
+    /**
+     * A gossiping parent at the school gate during the school run (08:15–08:45, 15:00–15:30).
+     * Proximity-rumour source: player within 2 blocks receives 1 NEIGHBOURHOOD rumour per day per mum.
+     */
+    SCHOOL_MUM(18f, 0f, 0f, false),
+
+    /**
+     * The headteacher's secretary. Staffs reception Mon–Fri 08:00–16:30.
+     * Passive unless player enters interior; calls HEADTEACHER on intrusion.
+     */
+    HEADTEACHER_SECRETARY(18f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
