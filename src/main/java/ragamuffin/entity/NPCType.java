@@ -511,7 +511,31 @@ public enum NPCType {
      * Speech: "Hop in, mate." / "Don't ask what's in the bag."
      *         / "I know a shortcut." / "Cash only, yeah?"
      */
-    MINICAB_DRIVER(20f, 0f, 0f, false);
+    MINICAB_DRIVER(20f, 0f, 0f, false),
+
+    // ── Issue #969: Northfield Cemetery ───────────────────────────────────────
+
+    /**
+     * Groundskeeper — Vernon, the cemetery warden.
+     * Present 08:00–17:00. Patrols cemetery paths.
+     * Passive unless the player attempts to dig a grave while he watches —
+     * then calls police (+2 Notoriety, CrimeType.GRAVE_ROBBING).
+     */
+    GROUNDSKEEPER(25f, 0f, 0f, false),
+
+    /**
+     * Funeral Director — leads processions to the graveside.
+     * Passive; delivers solemn speech lines. Never hostile.
+     * Despawns after the procession ends (90 real seconds).
+     */
+    FUNERAL_DIRECTOR(20f, 0f, 0f, false),
+
+    /**
+     * Mourner — follows the coffin during a funeral procession.
+     * 3–6 per funeral. Drops FLOWERS_PROP on departure.
+     * Flees if the player attacks; never hostile.
+     */
+    MOURNER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

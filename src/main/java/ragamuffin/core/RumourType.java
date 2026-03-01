@@ -102,5 +102,13 @@ public enum RumourType {
     /** "Someone chucked something in the canal — right in front of me, an' all"
      * — seeded by CanalSystem when the player disposes of evidence in the water.
      * If a POLICE/WITNESS NPC is nearby the rumour records LITTERING. */
-    LITTER;
+    LITTER,
+
+    // ── Issue #969: Northfield Cemetery ──────────────────────────────────────
+
+    /** "Did you see the funeral today? Poor sod."
+     * — seeded by CemeterySystem after each funeral procession ends.
+     * Spreads via nearby NPCs within 30 blocks of the cemetery.
+     * Marks the freshly covered grave plot as DISTURBED (diggable in 4 hits). */
+    FRESH_GRAVE;
 }

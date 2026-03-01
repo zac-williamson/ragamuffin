@@ -1315,6 +1315,32 @@ public enum AchievementType {
         "Regular Customer",
         "Used A1 Taxis five times. Mick knows your usual destinations. He doesn't comment. Much.",
         5
+    ),
+
+    // ── Issue #969: Northfield Cemetery ───────────────────────────────────────
+
+    GRAVE_ROBBER(
+        "Grave Robber",
+        "Successfully dug and looted a grave in Northfield Cemetery. Low point, this.",
+        1
+    ),
+
+    RESPECTFUL(
+        "Paying Your Respects",
+        "Attended a full funeral procession without disrupting it. It cost you nothing.",
+        1
+    ),
+
+    POCKET_FULL_OF_SORROW(
+        "Pocket Full of Sorrow",
+        "Sold a wedding ring or pocket watch to the pawn shop. Gary didn't ask where you got it.",
+        1
+    ),
+
+    NIGHT_OWL(
+        "Night Owl",
+        "Entered the cemetery after midnight. What were you looking for? Best not to think about it.",
+        1
     );
 
     private final String name;

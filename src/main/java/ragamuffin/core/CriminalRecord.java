@@ -89,7 +89,19 @@ public class CriminalRecord {
          * Issue #961: Recorded by WitnessSystem when the player sells a stolen item
          * at the pawn shop while a POLICE NPC is within 8 blocks.
          */
-        HANDLING_STOLEN_GOODS("Handling stolen goods");
+        HANDLING_STOLEN_GOODS("Handling stolen goods"),
+
+        /**
+         * Issue #969: Recorded when the GROUNDSKEEPER NPC witnesses the player
+         * digging a grave plot in Northfield Cemetery (+2 Notoriety per witnessed dig).
+         */
+        GRAVE_ROBBING("Grave robbing"),
+
+        /**
+         * Issue #969: Recorded when the player attacks a MOURNER or FUNERAL_DIRECTOR
+         * during a funeral procession.
+         */
+        DISTURBING_THE_PEACE("Disturbing the peace");
 
         private final String displayName;
 
