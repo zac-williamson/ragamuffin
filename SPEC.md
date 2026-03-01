@@ -20482,3 +20482,218 @@ PITTA_BREAD("Pitta Bread"),        // +5 HUNGER. Barely worth it. But here you a
 6. **Chilli sauce incident — player fixes dispenser**: Force `KebabShopSystem.triggerChilliSauceIncident()`. Verify `KebabShopSystem.isChilliSauceIncidentActive()` returns true. Order DONER_KEBAB. Verify HUNGER increases by 65 (50 + 15 chilli bonus). Give player `TOOL_KIT`. Press E on `CHILLI_SAUCE_DISPENSER_PROP`. Call `KebabShopSystem.fixChilliDispenser()`. Verify `isChilliSauceIncidentActive()` returns false. Verify player receives 1 free meal. Verify LOCALS Faction Respect increases by 3. Verify `CHILLI_HERO` achievement unlocked.
 
 7. **Doner meat cooked on campfire**: Give player `DONER_MEAT`. Place player at a `CAMPFIRE_PROP` with 3 fuel. Press E on campfire. Select `DONER_MEAT`. Advance simulation 60 seconds. Verify `CampfireSystem.getCookingResult(DONER_MEAT)` equals `COOKED_DONER_MEAT`. Verify player inventory contains `COOKED_DONER_MEAT`. Consume it. Verify HUNGER increases by 65. Verify WARMTH increases by 20.
+
+---
+
+## Add Northfield Scrapyard — Metal by Weight, Evidence Crusher & the Copper Thief Economy
+
+**Landmark**: New `SCRAPYARD` landmark on the industrial estate. New `ScrapyardSystem` class.
+
+### Overview
+
+Pearce & Sons Metal Merchants — a corrugated-iron-roofed scrapyard wedged between the industrial
+estate warehouses and the canal towpath. A mountain of crushed cars, towers of baled copper wire,
+and a suspicious lack of questions asked. Gary Pearce runs the weigh-bridge. His lad Kyle does the
+heavy lifting. A Rottweiler named Tyson patrols at night.
+
+The scrapyard creates a new resource economy: scrap metal, copper, lead and electrical components
+have a cash value here — but the copper trade attracts police attention, and the industrial crusher
+out back can make stolen goods (and evidence) disappear permanently.
+
+### Physical Layout
+
+- **Weigh-Bridge** (`WEIGH_BRIDGE_PROP`): at the entrance. Player deposits scrap here to be
+  weighed and paid. Press E to open sell menu.
+- **Crusher** (`CRUSHER_PROP`): large hydraulic press in the south yard. Press E to feed items
+  in; they are destroyed permanently (no drop). Running it generates `NoiseSystem` level 8.
+- **Yard Office** (`YARD_OFFICE_PROP`): small cabin near the entrance. Gary Pearce works inside
+  09:00–17:00. Contains a `CASH_BOX_PROP` (12 COIN; requires LOCKPICK to open).
+- **Scrap Piles** (`SCRAP_PILE_PROP`): 5 piles scattered around the yard. Each yields
+  1–3 `SCRAP_METAL` on 4 hits with any tool. Respawn after 1 in-game day.
+- **Locked Compound** (`LOCKED_GATE_PROP`): back area containing the `COPPER_BALE_PROP`
+  (worth 15 COIN if sold to a FENCE). Requires BOLT_CUTTERS to enter.
+- **Night Kennel** (`DOG_KENNEL_PROP`): Tyson's base. Tyson is unleashed 20:00–07:00.
+
+### Key Characters
+
+- **Gary Pearce** (`SCRAPYARD_OWNER` NPCType): at the weigh-bridge / yard office 09:00–17:00.
+  Gruff, northern, suspicious of strangers but happy to take their metal. Buys scrap by weight;
+  no questions on most items. Refuses copper if Notoriety ≥ 50 (too hot). Speech: *"By the kilo,
+  son — none of this individual-piece nonsense."*
+- **Kyle** (`SCRAPYARD_WORKER` NPCType): present 08:00–18:00. Operates the crusher on request
+  (costs 1 COIN per item crushed). Will warn the player if police are nearby (20% chance per
+  interaction if his respect is ≥ 10).
+- **Tyson** (`GUARD_DOG` NPCType): aggressive Rottweiler, roams the yard 20:00–07:00. Attacks
+  player on sight unless the player is carrying `SAUSAGE_ROLL` (can be distracted for 30 seconds).
+  Tyson cannot be adopted (he's *working*).
+
+### Scrap Economy — Sell Prices at Weigh-Bridge
+
+| Item | Price |
+|------|-------|
+| `SCRAP_METAL` | 1 COIN each |
+| `PIPE` | 2 COIN each |
+| `COPPER_WIRE` (new) | 4 COIN each |
+| `LEAD_FLASHING` (new) | 3 COIN each |
+| `COMPUTER` | 3 COIN each (salvage value) |
+| `BROKEN_TELLY` | 2 COIN each |
+| `HAIR_CLIPPERS_BROKEN` | 1 COIN each |
+| `COPPER_BALE` (from locked compound) | 15 COIN at FENCE only (too hot for Gary) |
+
+Gary refuses `COPPER_WIRE` and `COPPER_BALE` if player Notoriety ≥ 50 (police heat).
+
+### Copper Theft Loop
+
+Copper theft is a beloved British petty crime. The `ScrapyardSystem` enables it:
+
+- **Church roof** (`LandmarkType.CHURCH`): press E on `ROOF_PROP` with `BOLT_CUTTERS`
+  to harvest `LEAD_FLASHING` ×3. Takes 8 seconds. If `VICAR` NPC is inside and within
+  15 blocks: +2 Notoriety, seeds `ANTI_SOCIAL` rumour, `CrimeType.METAL_THEFT`.
+- **Streetlights** (`STREETLIGHT_PROP`): smash with any tool (3 hits) between 22:00–05:00
+  to yield `COPPER_WIRE` ×1. Each broken streetlight seeds a `NEIGHBOURHOOD` rumour
+  ("Someone's nicked the cables off the lights again") and reduces ambient lighting in
+  a 20-block radius until the `COUNCIL_CLEANER` NPC repairs it (next day 08:00).
+- **Industrial Estate units**: two `COPPER_PIPE_PROP` fittings in the warehouse wall.
+  SCREWDRIVER removes them (5 seconds), yielding `COPPER_WIRE` ×2. Silent crime but
+  `SECURITY_GUARD` patrols within 40 blocks — 30% detection chance.
+
+### The Crusher — Evidence Destruction
+
+`CrusherSystem.crush(item)` permanently destroys the item with no drop. Key uses:
+
+- Destroying `STOLEN_JACKET`, `BLOODY_HOODIE`, `STOLEN_PHONE`: removes the item from
+  the world and prevents `WitnessSystem` retrospective identification. Notoriety −1 per
+  evidence item crushed (cleaned up properly).
+- Crushing `STOLEN_GOODS` category items: `CriminalRecord` associated entry marked as
+  EVIDENCE_DESTROYED (cannot be used in court, so to speak).
+- Kyle can operate the crusher for you (1 COIN per use), preventing the noise from
+  alerting anyone (Kyle has a legitimate reason to run it).
+- Player can self-operate the crusher for free but it generates `NoiseSystem` level 8.
+
+### Random Events (5% per in-game hour, capped at 1 per day)
+
+| Event | Effect |
+|-------|--------|
+| `POLICE_RAID` | Two POLICE NPCs arrive at the gate — Gary refuses all trade for the session. |
+| `SCRAP_BONUS` | Gary is in a good mood; doubles sell prices for next 30 in-game minutes. |
+| `TYSON_ESCAPED` | Tyson is loose during opening hours (random 30-minute window). |
+| `DODGY_DELIVERY` | A van arrives at the back gate; Kyle unloads 3 `SCRAP_METAL` and 1 `COPPER_BALE` — player can steal from the van before it's secured (60-second window). |
+
+### New NPCTypes
+
+- `SCRAPYARD_OWNER` — Gary Pearce; runs the weigh-bridge; trades scrap for coin.
+- `SCRAPYARD_WORKER` — Kyle; operates crusher; warns player about police.
+- `GUARD_DOG` — Tyson; aggressive Rottweiler; distracted by SAUSAGE_ROLL.
+
+### New `Material` entries
+
+```java
+// ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
+COPPER_WIRE("Copper Wire"),      // 4 COIN at scrapyard. Stolen from streetlights/industrial units.
+LEAD_FLASHING("Lead Flashing"),  // 3 COIN at scrapyard. Stolen from church roof.
+COPPER_BALE("Copper Bale"),      // 15 COIN via FENCE only. Too hot to sell openly.
+```
+
+### New `PropType` entries
+
+- `WEIGH_BRIDGE_PROP` — flat metal platform with a readout screen (2.0×0.2×2.0, 8 hits, METAL). Press E to sell.
+- `CRUSHER_PROP` — large industrial press (2.0×2.5×2.0, 12 hits, METAL). Press E to destroy items. NoiseLevel 8.
+- `YARD_OFFICE_PROP` — small portacabin (3.0×2.5×4.0, 6 hits, WOOD). Contains CASH_BOX.
+- `SCRAP_PILE_PROP` — heap of twisted metal (1.5×1.0×1.5, 4 hits, METAL). Yields SCRAP_METAL ×1–3.
+- `COPPER_BALE_PROP` — compressed copper bale (1.2×1.0×0.8, 6 hits, METAL). Yields COPPER_BALE ×1.
+- `DOG_KENNEL_PROP` — wooden kennel (1.2×1.0×1.0, 3 hits, WOOD). Tyson's night base.
+- `COPPER_PIPE_PROP` — exposed pipe fitting on wall (0.3×0.3×0.6, 5 hits, METAL). Yields COPPER_WIRE ×2 with SCREWDRIVER.
+
+### New `LandmarkType` entry
+
+```java
+// ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
+/**
+ * Pearce & Sons Metal Merchants — a scrapyard on the industrial estate.
+ * Managed by SCRAPYARD_OWNER Gary and SCRAPYARD_WORKER Kyle.
+ * Open 09:00–17:00. GUARD_DOG Tyson patrols 20:00–07:00.
+ * Features WEIGH_BRIDGE_PROP, CRUSHER_PROP, YARD_OFFICE_PROP.
+ */
+SCRAPYARD,
+```
+
+### New `CrimeType` entries
+
+- `CriminalRecord.CrimeType.METAL_THEFT` — recorded when LEAD_FLASHING or COPPER_WIRE
+  is stolen and a witness NPC is within 10 blocks. Notoriety +2.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `WEIGHT_FOR_IT` | Sell scrap at the weigh-bridge for the first time |
+| `COPPER_THIEF` | Steal `COPPER_WIRE` from a streetlight and sell it before dawn |
+| `HEAVY_METAL` | Sell 20 `SCRAP_METAL` in a single session |
+| `CLEAN_SLATE` | Use the crusher to destroy 3 evidence items in one session |
+| `DOGS_DINNER` | Distract Tyson with a `SAUSAGE_ROLL` and enter the locked compound |
+
+### System Integrations
+
+- **FenceSystem**: `COPPER_BALE` added to the fence's high-value buy list (15 COIN).
+- **WitnessSystem**: copper theft from streetlights and church roof triggers evidence.
+- **NoiseSystem**: crusher generates level-8 noise; streetlight smashing generates level-4.
+- **WeatherSystem**: rain during the scrapyard open hours causes Gary to stay in the office
+  (must press E on `YARD_OFFICE_PROP` door rather than the weigh-bridge).
+- **CampfireSystem**: `SCRAP_METAL` can be used as fuel (1 unit, 15s burn — poor fuel but better than nothing).
+- **CriminalRecord**: `METAL_THEFT` crime type.
+- **RumourNetwork**: broken streetlights seed `NEIGHBOURHOOD` rumour; police raid seeds `GANG_ACTIVITY`.
+- **AchievementSystem**: five new achievements.
+- **LightingSystem**: smashed streetlights reduce `LightingSystem.getAmbientLevel()` in radius.
+
+### Unit Tests
+
+- `ScrapyardSystem.isOpen(hour)` returns true 09:00–16:59; false 17:00–08:59.
+- `ScrapyardSystem.getSellPrice(SCRAP_METAL)` returns 1. `getSellPrice(COPPER_WIRE)` returns 4.
+- `ScrapyardSystem.refuseTrade(notoriety=60, item=COPPER_WIRE)` returns true.
+- `ScrapyardSystem.refuseTrade(notoriety=40, item=COPPER_WIRE)` returns false.
+- `ScrapyardSystem.crush(BLOODY_HOODIE)` removes item from inventory; returns Notoriety delta −1.
+- `ScrapyardSystem.crush(SCRAP_METAL)` removes item; returns Notoriety delta 0.
+- Tyson enters AGGRESSIVE state when player is within 8 blocks at 21:00 without SAUSAGE_ROLL.
+- Tyson enters DISTRACTED state when player is within 8 blocks at 21:00 with SAUSAGE_ROLL.
+- `ScrapyardSystem.harvestLeadFlashing(vicarNearby=true)` adds `METAL_THEFT` to CriminalRecord and increases Notoriety by 2.
+- `ScrapyardSystem.harvestLeadFlashing(vicarNearby=false)` adds LEAD_FLASHING to inventory silently.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Sell scrap at the weigh-bridge**: Give player `SCRAP_METAL` ×5 and `PIPE` ×2. Set time
+   to 10:00. Place player at `WEIGH_BRIDGE_PROP`. Press E. Select "Sell All Scrap". Verify
+   player COIN increases by 9 (5×1 + 2×2). Verify player inventory no longer contains
+   `SCRAP_METAL` or `PIPE`. Verify `WEIGHT_FOR_IT` achievement unlocked.
+
+2. **Gary refuses copper when Notoriety is high**: Set player Notoriety to 55. Give player
+   `COPPER_WIRE` ×3. Place player at `WEIGH_BRIDGE_PROP`. Press E. Verify `COPPER_WIRE`
+   does not appear in the sell menu (Gary refuses). Set Notoriety to 40. Press E again.
+   Verify `COPPER_WIRE` now appears and can be sold for 4 COIN each.
+
+3. **Crusher destroys evidence and reduces Notoriety**: Set player Notoriety to 30. Give
+   player `BLOODY_HOODIE`, `STOLEN_JACKET`, `STOLEN_PHONE`. Place player at `CRUSHER_PROP`.
+   Press E. Select `BLOODY_HOODIE`. Verify item removed from inventory. Verify Notoriety is
+   now 29 (−1). Repeat for remaining 2 items. Verify Notoriety is now 27. Verify
+   `CLEAN_SLATE` achievement unlocked after third item.
+
+4. **Tyson attacks at night without food distraction**: Set time to 22:00. Place player
+   5 blocks from `DOG_KENNEL_PROP`. Player inventory has no `SAUSAGE_ROLL`. Advance 5
+   frames. Verify Tyson NPC enters AGGRESSIVE state. Verify player health decreases
+   (Tyson deals damage on contact). Reload scenario; give player `SAUSAGE_ROLL`. Verify
+   Tyson enters DISTRACTED state. Verify player can reach `LOCKED_GATE_PROP` without
+   taking damage. Verify `DOGS_DINNER` achievement unlocked on entering compound.
+
+5. **Streetlight copper theft loop**: Set time to 23:00. Place player adjacent to
+   `STREETLIGHT_PROP`. Simulate 3 hit actions. Verify `STREETLIGHT_PROP` is broken
+   (replaced with `BROKEN_STREETLIGHT_PROP`). Verify player inventory contains
+   `COPPER_WIRE` ×1. Verify ambient light level in 20-block radius has decreased.
+   Verify a `NEIGHBOURHOOD` rumour is seeded in a nearby NPC's buffer. Set time to 09:00
+   next day. Place player at `WEIGH_BRIDGE_PROP`. Sell `COPPER_WIRE`. Verify `COPPER_THIEF`
+   achievement unlocked (sold before dawn threshold already passed in prior session, so
+   trigger on first sale after overnight steal — verify by `ScrapyardSystem.isTheftSoldBeforeDawn()`).
+
+6. **Police raid shuts down trading**: Force `ScrapyardSystem.triggerPoliceRaid()`. Verify
+   two `POLICE` NPCs spawn at the scrapyard entrance. Press E on `WEIGH_BRIDGE_PROP`.
+   Verify sell menu is unavailable (Gary refuses all trade). Verify Gary speech is
+   *"Not right now, son. Come back later."*. Advance simulation 5 in-game minutes.
+   Verify POLICE NPCs despawn and trade resumes.
