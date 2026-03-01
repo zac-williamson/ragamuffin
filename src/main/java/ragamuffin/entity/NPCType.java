@@ -716,7 +716,20 @@ public enum NPCType {
      * Enters CHASING state for 20s when pump-and-walk theft is detected.
      * Speech: "Oi! Come back here!" / "I'm not serving you. You know why."
      */
-    CASHIER(20f, 0f, 0f, false);
+    CASHIER(20f, 0f, 0f, false),
+
+    // ── Issue #1006: Angel Nails & Beauty ─────────────────────────────────────
+
+    /**
+     * Nail Tech — salon staff member at Angel Nails &amp; Beauty (NAIL_SALON landmark).
+     * Two named instances: "Tracy" at the front desk and "Jade" in the back chair.
+     * Passive; provides beauty services, gossip, and (for Jade) cash-washing.
+     * Refuses standard service to players with Notoriety ≥ 60 (Tracy only).
+     * Jade will serve high-notoriety players if STREET_LADS Respect ≥ 40.
+     * Speech: "You alright, love?" / "Sit down, I'll be with you in a sec."
+     *         / "Sorry love, we're fully booked." / "What colour are we going for?"
+     */
+    NAIL_TECH(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
