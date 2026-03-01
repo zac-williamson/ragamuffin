@@ -1649,6 +1649,24 @@ public enum AchievementType {
         "All Four Food Groups",
         "Bought all three vending machine items in a single visit to the leisure centre. Nutrition.",
         1
+    ),
+
+    // ── Issue #998: Northfield Aldi Supermarket ────────────────────────────────
+
+    YELLOW_STICKER_LEGEND(
+        "Yellow Sticker Legend",
+        "Exploited yellow-sticker hour at Aldi. Everything's 0 COIN between seven and nine. The pensioners know.",
+        1
+    ),
+    BLIND_SPOT_ARTIST(
+        "Blind Spot Artist",
+        "Lifted an item from the blind-spot corner without Dave clocking you. Professional. Borderline artistic.",
+        1
+    ),
+    GOLDEN_TROLLEY(
+        "Golden Trolley",
+        "Found the golden shopping trolley in the car park. Twenty coin. Don't ask where it came from.",
+        1
     );
 
     private final String name;
