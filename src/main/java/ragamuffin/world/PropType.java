@@ -748,7 +748,15 @@ public enum PropType {
      * Night ringing (23:00–06:00): +5 Notoriety, ANTISOCIAL_BEHAVIOUR, +1 wanted star.
      * Destroyed by 2 punches; yields CLOTH.
      */
-    BELL_ROPE_PROP(0.10f, 2.00f, 0.10f, 2, Material.CLOTH);
+    BELL_ROPE_PROP(0.10f, 2.00f, 0.10f, 2, Material.CLOTH),
+
+    // ── Issue #1012: Skin Deep Tattoos ────────────────────────────────────────
+    /** Reclining tattoo chair — Kev works on the player here. */
+    TATTOO_CHAIR_PROP(0.80f, 1.00f, 1.80f, 5, Material.SCRAP_METAL),
+    /** Wall-mounted flash sheet showing tattoo designs. */
+    FLASH_SHEET_PROP(0.05f, 0.80f, 0.60f, 1, null),
+    /** Tattoo station workbench with inks and equipment. */
+    TATTOO_STATION_PROP(1.00f, 1.00f, 0.60f, 4, Material.NEEDLE);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

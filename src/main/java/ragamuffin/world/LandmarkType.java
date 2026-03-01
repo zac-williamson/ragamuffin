@@ -241,7 +241,14 @@ public enum LandmarkType {
      * NotorietySystem, NoiseSystem, WeatherSystem, CriminalRecord, PawnShopSystem,
      * StreetEconomySystem (RACE_CARD as BORED satisfier).
      */
-    GREYHOUND_TRACK;
+    GREYHOUND_TRACK,
+
+    /**
+     * Issue #1012: Skin Deep Tattoos — tattoo parlour on the high street.
+     * Run by Kev (TATTOOIST), open Tue–Sat 11:00–18:00.
+     * Features TATTOO_CHAIR_PROP, FLASH_SHEET_PROP, TATTOO_STATION_PROP.
+     */
+    TATTOO_PARLOUR;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -307,6 +314,7 @@ public enum LandmarkType {
             case POST_OFFICE:           return "Northfield Post Office";
             case ARCADE:                return "Ace Amusements";
             case GREYHOUND_TRACK:       return "Northfield Dog Track";
+            case TATTOO_PARLOUR:        return "Skin Deep Tattoos";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
