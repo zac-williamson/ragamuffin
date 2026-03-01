@@ -447,7 +447,14 @@ public enum LandmarkType {
      * WeatherSystem, NoiseSystem, NeighbourhoodWatchSystem, WitnessSystem,
      * AchievementSystem.
      */
-    NIGHTCLUB;
+    NIGHTCLUB,
+
+    /**
+     * Northfield Sporting &amp; Social Club — single-storey red-brick members' club.
+     * Features darts, quiz nights, AGM, back-room pontoon, and protection money
+     * handover. Managed by SportingSocialClubSystem.
+     */
+    SPORTING_SOCIAL_CLUB;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -527,6 +534,7 @@ public enum LandmarkType {
             case VET_SURGERY:           return "Northfield Vets";
             case INTERNET_CAFE:         return "Cybernet";
             case NIGHTCLUB:             return "The Vaults";
+            case SPORTING_SOCIAL_CLUB:  return "Northfield Sporting & Social Club";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
