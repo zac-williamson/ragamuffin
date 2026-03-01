@@ -609,7 +609,52 @@ public enum NPCType {
      * Speech: "What's wrong with it?" / "Give us ten minutes." /
      *         "That's not exactly yours, is it." / "I don't want to know, yeah?"
      */
-    PHONE_REPAIR_MAN(20f, 0f, 0f, false);
+    PHONE_REPAIR_MAN(20f, 0f, 0f, false),
+
+    // ── Issue #983: Northfield Dog Track ──────────────────────────────────────
+
+    /**
+     * Kennel Hand — the overnight kennel worker at the Northfield Dog Track.
+     * Present from 17:00 until 23:30. Patrols the kennel block on a 4-block route.
+     * Can be bribed (10 COIN) to guarantee a specific dog loses the next race.
+     * If the player approaches with a LOCKPICK or DODGY_PIE and the kennel hand
+     * is within 8 blocks, they call SECURITY_GUARD and add RACE_FIXING to the record.
+     * Speech: "Keep away from them dogs." / "She's in good form tonight."
+     *         / "I didn't see nuffin, right?" / "Nice earner, that."
+     */
+    KENNEL_HAND(20f, 0f, 0f, false),
+
+    /**
+     * Tote Clerk — the betting window operator at the Northfield Dog Track.
+     * Present during open hours (18:00–23:00 evenings, Saturday 13:00–19:00).
+     * Sells RACE_CARD for 1 COIN. Accepts greyhound bets via GreyhoundRacingSystem.
+     * At MARCHETTI_CREW Respect >= 60, provides one insider tip per session (naming
+     * the dog least likely to win, for fixing purposes).
+     * Speech: "What dog, love?" / "Place your bets." / "Eyes on the traps."
+     *         / "That one's got form, I'm telling ya."
+     */
+    TOTE_CLERK(20f, 0f, 0f, false),
+
+    /**
+     * Track Punter — a betting regular at the Northfield Dog Track.
+     * 4–6 spawn per session during open hours. Wanders between TOTE_CLERK and trackside.
+     * Speech: "Come on, Trap 4!" / "Useless mutt." / "I had the winner last week."
+     *         / "Rigged, that is." / "One more and I'm done."
+     * Passive; never hostile. Crowd noise level 3 generated while 4+ are present;
+     * this masks stealth actions.
+     */
+    TRACK_PUNTER(20f, 0f, 0f, false),
+
+    /**
+     * Security Guard — a burly security operative on 90-second patrol around the track.
+     * Present from 18:00 until 00:00. Has a predictable patrol path (4 waypoints).
+     * Confronts players holding LOCKPICK or DODGY_PIE within 5 blocks: calls police,
+     * adds RACE_FIXING or ANIMAL_THEFT to criminal record, Notoriety +10.
+     * Will not actively chase the player but will block kennel access.
+     * Speech: "You're not meant to be back here." / "Move along, mate."
+     *         / "I'm calling it in." / "Track's for spectators only after nine."
+     */
+    SECURITY_GUARD(35f, 6f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

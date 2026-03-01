@@ -1283,7 +1283,50 @@ public enum Material {
      * shop for 1 COIN goodwill. Tradeable to desperate BORED NPCs.
      * Tooltip: "It'll probably scratch anyway."
      */
-    SCREEN_PROTECTOR("Screen Protector");
+    SCREEN_PROTECTOR("Screen Protector"),
+
+    // ── Issue #983: Northfield Dog Track ─────────────────────────────────────
+
+    /**
+     * Cold Pastry — a stale, unidentifiable pastry from a dodgy van.
+     * Crafting ingredient: COLD_PASTRY + SUSPICIOUS_MEAT → DODGY_PIE.
+     * Tooltip: "Still in the bag. Nobody's asking questions."
+     */
+    COLD_PASTRY("Cold Pastry"),
+
+    /**
+     * Suspicious Meat — an unlabelled lump of protein of indeterminate origin.
+     * Crafting ingredient: COLD_PASTRY + SUSPICIOUS_MEAT → DODGY_PIE.
+     * Tooltip: "Don't look at it. Don't smell it. Just use it."
+     */
+    SUSPICIOUS_MEAT("Suspicious Meat"),
+
+    /**
+     * Dodgy Pie — crafted from COLD_PASTRY + SUSPICIOUS_MEAT.
+     * When slipped to a greyhound (press E while holding, near kennel),
+     * reduces that dog's speed by 30% for the next race.
+     * The KENNEL_HAND must not be watching (>8 blocks away or facing away).
+     * If caught: RACE_FIXING added to CriminalRecord, Notoriety +10.
+     * Tooltip: "A pie with a purpose. A terrible, illegal purpose."
+     */
+    DODGY_PIE("Dodgy Pie"),
+
+    /**
+     * Greyhound — a stolen racing greyhound liberated from the kennel at night.
+     * Requires LOCKPICK to access the kennel block. Stolen via kennel heist.
+     * Fenceable at the Pawn Shop for 25–40 COIN.
+     * Adds ANIMAL_THEFT to CriminalRecord; Notoriety +10 if witnessed.
+     * Tooltip: "Fast dog. Faster sentence."
+     */
+    GREYHOUND("Greyhound"),
+
+    /**
+     * Race Card — the official programme for tonight's greyhound racing.
+     * Satisfies NeedType.BORED for NPCs (StreetEconomySystem satisfier).
+     * Sold by the TOTE_CLERK for 1 COIN. Gives odds information for the evening.
+     * Tooltip: "Tonight's runners. Six dogs, one dream, zero guarantees."
+     */
+    RACE_CARD("Race Card");
 
     private final String displayName;
 

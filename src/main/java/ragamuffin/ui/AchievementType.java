@@ -1337,8 +1337,8 @@ public enum AchievementType {
         1
     ),
 
-    NIGHT_OWL(
-        "Night Owl",
+    CEMETERY_NIGHT_OWL(
+        "Night Owl (Cemetery)",
         "Entered the cemetery after midnight. What were you looking for? Best not to think about it.",
         1
     ),
@@ -1481,6 +1481,38 @@ public enum AchievementType {
     URBAN_ARTIST(
         "Urban Artist",
         "Tagged 10 stairwell walls in a single visit. You've left your mark on the estate. The cleaners will be round Thursday.",
+        1
+    ),
+
+    // ── Issue #983: Northfield Dog Track ─────────────────────────────────────
+
+    PUNTER(
+        "Down the Dogs",
+        "Placed your first bet at the Northfield Dog Track. Welcome to the most reliable way to lose money in Northfield.",
+        1
+    ),
+
+    LUCKY_DOG(
+        "Lucky Dog",
+        "Won a greyhound bet at 8/1 or better. The dog did all the work. You just held a slip.",
+        1
+    ),
+
+    TRACK_FIXER(
+        "Bent as a Nine-Bob Note",
+        "Successfully fixed a greyhound race — either by bribing the kennel hand or slipping a dodgy pie to a dog. Marchetti would be proud.",
+        1
+    ),
+
+    NICKED_THE_GREYHOUND(
+        "Nicked the Greyhound",
+        "Stole a live greyhound from the kennel and fenced it. You absolute liability. Bless you.",
+        1
+    ),
+
+    BROKE_THE_TOTE(
+        "Broke the Tote",
+        "Won three consecutive greyhound races in a single session. The Marchetti Crew have noticed. That might not be good.",
         1
     );
 

@@ -214,7 +214,34 @@ public enum LandmarkType {
      * CHANGE_MACHINE_PROP, and REDEMPTION_COUNTER_PROP.
      * Staffed by Kevin the ARCADE_ATTENDANT; 2–4 ARCADE_KID NPCs after school.
      */
-    ARCADE;
+    ARCADE,
+
+    // ── Issue #983: Northfield Dog Track ─────────────────────────────────────
+
+    /**
+     * Northfield Dog Track — a floodlit greyhound racing venue on the industrial
+     * fringe of Northfield. Open evenings (18:00–23:00) and Saturday afternoons
+     * (13:00–19:00). The Marchetti Crew run the track.
+     *
+     * <p>Six named greyhounds race every 8 in-game minutes. Fixed-odds bets
+     * (1.5×–8×) are placed at the Tote window (TOTE_CLERK NPC). The track is
+     * guarded by a SECURITY_GUARD on a 90-second patrol; a KENNEL_HAND tends
+     * the dogs in the kennel block.
+     *
+     * <p>Entry is refused at Marchetti Crew Respect &lt; 30. At Respect &ge; 60,
+     * the TOTE_CLERK provides one insider tip per session. Rain reduces attendance
+     * (fewer TRACK_PUNTER NPCs); fog dims the scoreboard display.
+     *
+     * <p>Illegal activities: bribe the KENNEL_HAND (10 COIN, guarantees a dog
+     * loses); slip a DODGY_PIE to a dog (reduces speed 30%); night kennel heist
+     * with LOCKPICK to steal a GREYHOUND item and fence it at the Pawn Shop
+     * for 25–40 COIN.
+     *
+     * <p>Integrates with: FactionSystem (Marchetti), BettingUI, RumourNetwork,
+     * NotorietySystem, NoiseSystem, WeatherSystem, CriminalRecord, PawnShopSystem,
+     * StreetEconomySystem (RACE_CARD as BORED satisfier).
+     */
+    GREYHOUND_TRACK;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -279,6 +306,7 @@ public enum LandmarkType {
             case SNOOKER_HALL:          return "Cue Zone";
             case POST_OFFICE:           return "Northfield Post Office";
             case ARCADE:                return "Ace Amusements";
+            case GREYHOUND_TRACK:       return "Northfield Dog Track";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

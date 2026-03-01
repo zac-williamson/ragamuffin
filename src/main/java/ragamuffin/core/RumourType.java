@@ -152,5 +152,19 @@ public enum RumourType {
     /** "Someone's been hammering on doors up on the estate at all hours."
      * — seeded by CouncilFlatsSystem when the player knocks on a resident door 3+
      * times after 22:00. Triggers NeighbourhoodWatchSystem +5 anger. */
-    NOISE_COMPLAINT;
+    NOISE_COMPLAINT,
+
+    // ── Issue #983: Northfield Dog Track ─────────────────────────────────────
+
+    /** "Heard a dog went missing from the track kennels last night — Marchetti's not happy."
+     * — seeded by GreyhoundRacingSystem when the player successfully steals a GREYHOUND.
+     * Spreads via TRACK_PUNTER and KENNEL_HAND NPCs; increases SECURITY_GUARD patrols for
+     * one session. Raises Marchetti Crew hostility by -5 Respect. */
+    DOG_HEIST,
+
+    /** "Someone fixed the dogs down the track — third trap never had a chance."
+     * — seeded by GreyhoundRacingSystem when a race fix (DODGY_PIE or bribery) is witnessed.
+     * Spreads via TRACK_PUNTER NPCs; triggers SECURITY_GUARD alert state.
+     * If it reaches police: RACE_FIXING added to criminal record. */
+    RACE_FIXED;
 }

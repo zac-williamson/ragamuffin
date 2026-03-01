@@ -143,7 +143,23 @@ public class CriminalRecord {
          * Fix My Phone. Also triggered by WitnessSystem if a POLICE NPC enters the
          * shop during back-room cloning (along with Notoriety +3).
          */
-        THEFT("Theft");
+        THEFT("Theft"),
+
+        // ── Issue #983: Northfield Dog Track ────────────────────────────────────
+
+        /**
+         * Recorded when the player steals a GREYHOUND from the kennel at the
+         * Northfield Dog Track using a LOCKPICK. Also triggered if a SECURITY_GUARD
+         * or KENNEL_HAND witnesses the theft (+10 Notoriety).
+         */
+        ANIMAL_THEFT("Animal theft"),
+
+        /**
+         * Recorded when the player is witnessed bribing the KENNEL_HAND (10 COIN)
+         * or slipping a DODGY_PIE to a greyhound. Triggered by SECURITY_GUARD or
+         * KENNEL_HAND detection. Penalty: +10 Notoriety.
+         */
+        RACE_FIXING("Race fixing");
 
         private final String displayName;
 
