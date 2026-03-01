@@ -1938,7 +1938,84 @@ public enum Material {
      * Auto-converts to 5–12 COIN on pickup.
      * Tooltip: "Heavy for a small box. Must be a good week."
      */
-    PETTY_CASH_BOX("Petty Cash Box");
+    PETTY_CASH_BOX("Petty Cash Box"),
+
+    // ── Issue #1035: Northfield Nando's ───────────────────────────────────────
+
+    /**
+     * Lemon &amp; Herb Chicken — mildest Nando's menu item (heat level 0).
+     * Costs 4 COIN. Restores +30 Hunger.
+     * Tooltip: "Safe choice. Nobody's judging. Well, a bit."
+     */
+    LEMON_HERB_CHICKEN("Lemon & Herb Chicken"),
+
+    /**
+     * Mild Chicken — heat level 1 Nando's menu item.
+     * Costs 4 COIN. Restores +30 Hunger.
+     * Tooltip: "Mild. A gentle warmth. Nothing to worry about."
+     */
+    MILD_CHICKEN("Mild Chicken"),
+
+    /**
+     * Medium Chicken — heat level 2 Nando's menu item.
+     * Costs 5 COIN. Restores +35 Hunger.
+     * Tooltip: "Medium. You're committed now."
+     */
+    MEDIUM_CHICKEN("Medium Chicken"),
+
+    /**
+     * Hot Chicken — heat level 3 Nando's menu item. Causes brief screen tint (2s).
+     * Costs 5 COIN. Restores +35 Hunger.
+     * Tooltip: "Hot. Your face is going red. It's fine."
+     */
+    HOT_CHICKEN("Hot Chicken"),
+
+    /**
+     * Extra Hot Chicken — heat level 4 Nando's menu item. Causes 3s screen-shake;
+     * seeds NANDOS_LEGEND rumour town-wide.
+     * Costs 6 COIN. Restores +40 Hunger.
+     * Tooltip: "Extra Hot. Respect. Or stupidity. Hard to tell."
+     */
+    EXTRA_HOT_CHICKEN("Extra Hot Chicken"),
+
+    /**
+     * Chicken Wing Platter — entry-level Nando's order that stamps the loyalty card.
+     * Costs 3 COIN. Restores +20 Hunger. Each purchase adds 1 stamp to NANDOS_LOYALTY_CARD.
+     * Tooltip: "Six wings. Not nearly enough."
+     */
+    CHICKEN_WING_PLATTER("Chicken Wing Platter"),
+
+    /**
+     * Extra Hot Sauce — bottled peri-peri sauce pocketable from PERI_PERI_SAUCE_RACK.
+     * Consumable: +2 Health, −5 Notoriety. Throwable: NPC enters FLEEING for 10s (+2 Notoriety).
+     * Sellable to Fence for 3 COIN. Unlocked in menu by asking manager.
+     * Tooltip: "Handle with care. And maybe gloves."
+     */
+    EXTRA_HOT_SAUCE("Extra Hot Sauce"),
+
+    /**
+     * Nando's Loyalty Card — a stamp-card item from the LOYALTY_CARD_STAND.
+     * Gains 1 stamp per CHICKEN_WING_PLATTER purchased. Auto-converts to
+     * NANDOS_FREE_MEAL_VOUCHER at 10 stamps. Player can hold up to 5 cards.
+     * Tooltip: "Eight stamps in. Two to go. Or are there."
+     */
+    NANDOS_LOYALTY_CARD("Nando's Loyalty Card"),
+
+    /**
+     * Nando's Free Meal Voucher — auto-generated when NANDOS_LOYALTY_CARD reaches 10 stamps.
+     * Redeemable at NANDOS_COUNTER_PROP for one EXTRA_HOT_CHICKEN free of charge.
+     * Alternatively sell via StreetEconomySystem for 4 COIN to an NPC with HUNGRY > 60.
+     * Tooltip: "Worth four coins to the right person. Or a free meal."
+     */
+    NANDOS_FREE_MEAL_VOUCHER("Nando's Free Meal Voucher"),
+
+    /**
+     * Nando's Apron — lootable from NANDOS_STAFF NPC.
+     * Wearing it gives free access to the kitchen area (staff-only zone).
+     * Integrates with DisguiseSystem: kitchen access bypasses service block.
+     * Tooltip: "Black polo. Red apron. You look the part. Mostly."
+     */
+    NANDOS_APRON("Nando's Apron");
 
     private final String displayName;
 
