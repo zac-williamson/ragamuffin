@@ -285,7 +285,17 @@ public class CriminalRecord {
          * Recorded when the player throws PERI_PERI_SAUCE in a public place,
          * creating a PERI_SAUCE_SLICK hazard prop. Penalty: +3 Notoriety.
          */
-        AFFRAY("Affray (sauce throwing)");
+        AFFRAY("Affray (sauce throwing)"),
+
+        // ── Issue #1094: Northfield By-Election ──────────────────────────────
+
+        /**
+         * Recorded when the player steals the BALLOT_BOX_PROP on polling day.
+         * Penalty: +25 Notoriety, +2 WantedSystem stars; NewspaperSystem headline published.
+         * WitnessSystem records any witnesses within 15 blocks.
+         * Faction: Neighbourhood Watch −5 respect.
+         */
+        ELECTION_INTERFERENCE("Election interference (ballot box theft)");
 
         private final String displayName;
 

@@ -2298,6 +2298,34 @@ public enum AchievementType {
         "On the Lash",
         "Accepted a stag do invitation at Nando's. Free entry to The Vaults. The lads respect you now.",
         1
+    ),
+
+    // ── Issue #1094: Northfield By-Election ──────────────────────────────────
+
+    CAMPAIGNER(
+        "Knocking on Doors",
+        "Delivered campaign leaflets to 10 residential doors. Local democracy in action. Sort of.",
+        10
+    ),
+    POLITICAL_SMOKER(
+        "Roll-Up Manifesto",
+        "Crafted a Rollie from a campaign leaflet and tobacco. Technically a form of political commentary.",
+        1
+    ),
+    POSTER_BOY(
+        "No Platform",
+        "Tore down 3 election posters. The returning officer is not impressed. Neither is the Daily Ragamuffin.",
+        3
+    ),
+    PEOPLES_CHAMPION(
+        "The People's Choice",
+        "Won the Northfield Ward by-election as an Independent candidate. Cllr. You. It's laminated and everything.",
+        1
+    ),
+    DEMOCRACY_THIEF(
+        "Carried Away With It",
+        "Stole the ballot box on polling day. The election was voided. You are not a hero of the people.",
+        1
     );
 
     private final String name;

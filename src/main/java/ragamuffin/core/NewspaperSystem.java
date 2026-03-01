@@ -827,6 +827,21 @@ public class NewspaperSystem {
         return latestArsonHeadline;
     }
 
+    /**
+     * Immediately publish a single breaking-news headline without going through
+     * the daily edition process.  Used by systems that need an instant front-page
+     * splash (e.g. Nando's safe heist, by-election ballot-box theft).
+     *
+     * <p>The headline is stored as the {@code latestArsonHeadline} slot so that
+     * {@link #getLatestHeadline()} returns it.  A full daily edition will
+     * overwrite it on the next publication cycle.
+     *
+     * @param headline the headline text to publish
+     */
+    public void publishHeadline(String headline) {
+        this.latestArsonHeadline = headline;
+    }
+
     /** All pending events recorded since the last publication. */
     public List<InfamyEvent> getPendingEvents() {
         return Collections.unmodifiableList(pendingEvents);

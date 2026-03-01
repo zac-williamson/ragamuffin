@@ -318,5 +318,19 @@ public enum RumourType {
      * the player receives a free-entry invitation.
      * Spreads via DRUNK and PUBLIC NPCs in the restaurant. Draws NPCs toward The Vaults.
      * Grants a free-entry token at The Vaults nightclub when received. */
-    VAULTS_PARTY;
+    VAULTS_PARTY,
+
+    // ── Issue #1094: Northfield By-Election ──────────────────────────────────
+
+    /** "Reckon there's a by-election on. Northfield Ward. Proper local drama this time."
+     * — seeded by ByElectionSystem on Day 7 (or Notoriety Tier 2) when the election is called.
+     * Spreads to all PUBLIC and PENSIONER NPCs within 30 blocks of the town centre.
+     * Increases canvassing NPC foot traffic during campaign days. */
+    ELECTION_CALLED,
+
+    /** "Heard someone's been tearin' down the election posters round here. Proper vandal."
+     * — seeded by ByElectionSystem when the player destroys 3 or more election posters.
+     * Spreads via NEIGHBOURHOOD_WATCH members and PENSIONER NPCs.
+     * Adds +3 patrol awareness near polling station and canvassing areas. */
+    POSTER_VANDAL;
 }

@@ -1219,7 +1219,41 @@ public enum NPCType {
      * Speech: "Can I help you?" / "Staff only back there, mate."
      *         / "Oi — that's the manager's office!" / "I'm calling the police."
      */
-    NANDOS_MANAGER(30f, 0f, 0f, false);
+    NANDOS_MANAGER(30f, 0f, 0f, false),
+
+    // ── Issue #1094: Northfield By-Election ──────────────────────────────────
+
+    /**
+     * Nigel Pemberton — Conservative Party candidate.
+     * Canvasses door-to-door 10:00–16:00 with a clipboard volunteer.
+     * Press E to interact: support (+3 votes), argument (−2 votes), ignore.
+     * Passive; never hostile. Wears a blue rosette.
+     */
+    TORY_CANDIDATE(25f, 0f, 0f, false),
+
+    /**
+     * Sandra Okafor — Labour Party candidate.
+     * Canvasses door-to-door 14:00–19:00.
+     * Press E to interact: support (+3 votes), argument (−2 votes), ignore.
+     * Passive; never hostile. Wears a red rosette.
+     */
+    LABOUR_CANDIDATE(25f, 0f, 0f, false),
+
+    /**
+     * The Returning Officer — official who oversees the election process.
+     * Stationed at the RETURNING_OFFICER_PODIUM_PROP.
+     * If Community Respect ≥ 40 and Notoriety ≤ 20, offers the player
+     * a NOMINATION_FORM to stand as Independent candidate.
+     * Passive; never hostile.
+     */
+    RETURNING_OFFICER(20f, 0f, 0f, false),
+
+    /**
+     * Party Volunteer — clipboard-carrying helper at the CANVASSING_TABLE_PROP.
+     * Press E on the table to receive 10 CAMPAIGN_LEAFLET items.
+     * Passive; never hostile. Accompanies Nigel Pemberton on canvassing runs.
+     */
+    PARTY_VOLUNTEER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
