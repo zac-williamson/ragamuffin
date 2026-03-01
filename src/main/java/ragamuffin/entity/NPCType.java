@@ -861,7 +861,30 @@ public enum NPCType {
      * Distracted for 30 seconds by SAUSAGE_ROLL. Cannot be adopted.
      * Speech: [growl]
      */
-    GUARD_DOG(40f, 12f, 1.5f, true);
+    GUARD_DOG(40f, 12f, 1.5f, true),
+
+    // ── Issue #1028: Northfield Cash Converters ───────────────────────────────
+
+    /**
+     * Cash Converter Manager — Dean, the store manager at Northfield Cash Converters.
+     * Present Mon–Sat 09:00–17:30. Passive; runs serial number checks on high-value
+     * electronics (GAMES_CONSOLE, LAPTOP, STOLEN_PHONE, TABLET). At Notoriety ≥ 40
+     * calls police when a stolen item is detected. Briabable at Notoriety ≥ 30 (5 COIN).
+     * If CCTV_PROP is broken before a sale, skips police call.
+     * Speech: "What you got for me?" / "Serial number, have to check that."
+     *         / "I'm going to have to ask you to leave." / "Cash in hand, no questions."
+     */
+    CASH_CONVERTER_MANAGER(25f, 0f, 0f, false),
+
+    /**
+     * Dave the Middleman — operates in the back alley behind Cash Converters 22:00–02:00.
+     * Buys stolen electronics at 30% of Dean's price, no questions asked.
+     * References Fence rep (FENCE rep ≥ 10 required).
+     * Passive; despawns at 02:00.
+     * Speech: "Got something for me?" / "That's hot, innit." /
+     *         "Don't bring it back if it's got a tracking chip, yeah?"
+     */
+    DAVE_MIDDLEMAN(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

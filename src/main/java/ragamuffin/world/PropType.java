@@ -905,7 +905,33 @@ public enum PropType {
      * Remove with SCREWDRIVER (5 seconds) to yield COPPER_WIRE ×2.
      * Destroyed by 5 hits; yields SCRAP_METAL.
      */
-    COPPER_PIPE_PROP(0.3f, 0.3f, 0.6f, 5, Material.SCRAP_METAL);
+    COPPER_PIPE_PROP(0.3f, 0.3f, 0.6f, 5, Material.SCRAP_METAL),
+
+    // ── Issue #1028: Northfield Cash Converters ───────────────────────────────
+
+    /**
+     * COUNTER_PROP — the Cash Converters service counter.
+     * Dean stands behind it during opening hours (09:00–17:30 Mon–Sat).
+     * Press E to open the CashConvertersUI for buying/selling electronics.
+     * Destroyed by 8 punches; yields COUNTER material.
+     */
+    COUNTER_PROP(1.40f, 1.10f, 0.80f, 8, Material.COUNTER),
+
+    /**
+     * DISPLAY_CASE_PROP — a locked glass display case showing high-value stock.
+     * Smash (2 hits, fragile glass) to grab contents without payment.
+     * Triggers WitnessSystem THEFT crime and +8 Notoriety.
+     * Destroyed by 2 hits; yields GLASS + 1 random GAMES_CONSOLE / LAPTOP / TABLET.
+     */
+    DISPLAY_CASE_PROP(1.20f, 1.20f, 0.50f, 2, Material.GLASS),
+
+    /**
+     * BACK_ROOM_DOOR_PROP — reinforced door to the Cash Converters back room.
+     * Accessible only with LOCKPICK (5-second interact) or during shift work.
+     * Back room contains SAFE_PROP with day's takings.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    BACK_ROOM_DOOR_PROP(1.00f, 2.20f, 0.20f, 8, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

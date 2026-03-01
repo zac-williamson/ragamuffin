@@ -108,6 +108,32 @@ public enum MarketEvent {
         new Material[]{Material.ICE_CREAM_99, Material.SCREWBALL, Material.FAB_LOLLY,
                        Material.CHOC_ICE, Material.OYSTER_CARD_LOLLY},
         2.0f // demand spike multiplier
+    ),
+
+    /**
+     * Issue #1028: Console Drop — a new games console release drives demand for second-hand stock.
+     * GAMES_CONSOLE prices ×1.8 at Cash Converters and via the Fence.
+     * Dean becomes reluctant to sell stock (holds it for premium buyers).
+     */
+    CONSOLE_DROP(
+        "Console Drop",
+        "New console's out. Everyone wants last-gen now. Funny how that works.",
+        360f, // 6 game minutes
+        new Material[]{Material.GAMES_CONSOLE},
+        1.8f
+    ),
+
+    /**
+     * Issue #1028: School Holidays — bored kids drive DVD trade through the floor.
+     * DVD prices halved (×0.5 multiplier) — oversupply of tat.
+     * BLUETOOTH_SPEAKER demand spikes (×1.5) as teens splash birthday money.
+     */
+    SCHOOLHOLIDAYS(
+        "School Holidays",
+        "Half the town's at home watching DVDs. Supply's through the roof.",
+        600f, // 10 game minutes
+        new Material[]{Material.DVD, Material.BLUETOOTH_SPEAKER},
+        0.5f  // DVD price halved; BLUETOOTH_SPEAKER gets ×1.5 handled separately
     );
 
     private final String displayName;

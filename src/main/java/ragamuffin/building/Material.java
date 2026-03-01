@@ -1821,7 +1821,57 @@ public enum Material {
      * Copper Bale — a compressed bale of copper found in the scrapyard locked compound.
      * Too hot to sell openly; Gary refuses it. Sells for 15 COIN via FENCE only.
      */
-    COPPER_BALE("Copper Bale");
+    COPPER_BALE("Copper Bale"),
+
+    // ── Issue #1028: Northfield Cash Converters ───────────────────────────────
+
+    /**
+     * DVD — a second-hand film or game DVD in a plastic case.
+     * Sold by Dean at Cash Converters (base price 2 COIN).
+     * Prices halved during SCHOOLHOLIDAYS market event.
+     * Tooltip: "Region 2. Slight scratches. Plays fine, probably."
+     */
+    DVD("DVD"),
+
+    /**
+     * Bluetooth Speaker — a portable wireless speaker, used or boxed.
+     * Sold at Cash Converters (base price 6 COIN).
+     * Tooltip: "Connects to everything. Sounds like nothing."
+     */
+    BLUETOOTH_SPEAKER("Bluetooth Speaker"),
+
+    /**
+     * Tablet — a second-hand touchscreen tablet.
+     * High-value electronics item checked for serial number by Dean.
+     * Base price 15 COIN at Cash Converters; 30% of that via Dave the Middleman.
+     * Tooltip: "Previous owner's wallpaper is still on it."
+     */
+    TABLET("Tablet"),
+
+    /**
+     * Games Console — a second-hand gaming console (generic).
+     * High-value electronics; serial number checked by Dean.
+     * Price ×1.8 during CONSOLE_DROP market event.
+     * Base price 20 COIN; Dave pays 30%.
+     * Tooltip: "No controllers included. Obviously."
+     */
+    GAMES_CONSOLE("Games Console"),
+
+    /**
+     * Laptop — a second-hand laptop computer.
+     * High-value electronics; serial number checked by Dean.
+     * Base price 18 COIN at Cash Converters; Dave pays 30%.
+     * Tooltip: "Needs a good clean. And a new keyboard. And probably a battery."
+     */
+    LAPTOP("Laptop"),
+
+    /**
+     * Wiped Phone — a STOLEN_PHONE with its IMEI scrubbed via the Fix My Phone
+     * cloning pipeline. Bypasses Dean's serial number check at Cash Converters.
+     * Base price same as STOLEN_PHONE (8 COIN); no HANDLING_STOLEN_GOODS crime risk.
+     * Tooltip: "Totally clean. Totally."
+     */
+    WIPED_PHONE("Wiped Phone");
 
     private final String displayName;
 
@@ -2466,6 +2516,20 @@ public enum Material {
             case COPPER_BALE:           return cs(0.68f, 0.40f, 0.10f,   // Compressed copper
                                                   0.58f, 0.32f, 0.08f); // Dark bale
 
+            // Issue #1028: Northfield Cash Converters
+            case DVD:                   return cs(0.62f, 0.62f, 0.72f,   // Silver disc
+                                                  0.10f, 0.22f, 0.68f); // Blue case
+            case BLUETOOTH_SPEAKER:     return cs(0.15f, 0.15f, 0.18f,   // Black body
+                                                  0.55f, 0.55f, 0.60f); // Grey grille
+            case TABLET:                return cs(0.12f, 0.12f, 0.15f,   // Dark screen
+                                                  0.45f, 0.45f, 0.48f); // Aluminium back
+            case GAMES_CONSOLE:         return cs(0.22f, 0.22f, 0.25f,   // Dark grey unit
+                                                  0.55f, 0.15f, 0.15f); // Red accent
+            case LAPTOP:                return cs(0.18f, 0.18f, 0.22f,   // Dark lid
+                                                  0.62f, 0.62f, 0.62f); // Grey keyboard
+            case WIPED_PHONE:           return cs(0.12f, 0.12f, 0.15f,   // Dark screen
+                                                  0.25f, 0.72f, 0.25f); // Green "clean" indicator
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2799,6 +2863,13 @@ public enum Material {
             case COPPER_WIRE:
             case LEAD_FLASHING:
             case COPPER_BALE:
+            // Issue #1028: Northfield Cash Converters
+            case DVD:
+            case BLUETOOTH_SPEAKER:
+            case TABLET:
+            case GAMES_CONSOLE:
+            case LAPTOP:
+            case WIPED_PHONE:
                 return false;
             default:
                 return true;
@@ -2895,6 +2966,9 @@ public enum Material {
             case CANDLE:
             case PADLOCK:
             case MYSTERY_BOX:
+            // Issue #1028: Northfield Cash Converters — small electronics sit on shelves
+            case DVD:
+            case WIPED_PHONE:
                 return true;
             default:
                 return false;
@@ -3484,6 +3558,20 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // flat sheet of lead
             case COPPER_BALE:
                 return IconShape.BOX;         // compressed bale
+
+            // Issue #1028: Northfield Cash Converters
+            case DVD:
+                return IconShape.CARD;        // disc in case
+            case BLUETOOTH_SPEAKER:
+                return IconShape.BOX;         // compact speaker box
+            case TABLET:
+                return IconShape.FLAT_PAPER;  // flat touchscreen
+            case GAMES_CONSOLE:
+                return IconShape.BOX;         // console unit
+            case LAPTOP:
+                return IconShape.BOX;         // laptop shape
+            case WIPED_PHONE:
+                return IconShape.CARD;        // phone shape
 
             default:
                 return IconShape.BOX;
