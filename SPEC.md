@@ -25909,3 +25909,121 @@ When sentenced to community service, a `COMMUNITY_SERVICE_SLIP` appears in inven
 // Existing: ArrestSystem, CriminalRecord, WitnessSystem, NotorietySystem, WantedSystem,
 //           JobCentreSystem, FoodBankSystem, AllotmentSystem, FactionSystem, FenceSystem all defined
 // WorldGenerator: add MAGISTRATES_COURT block adjacent to POLICE_STATION in civic zone
+
+---
+
+## Add Northfield Pet Shop & Vet — Paws 'n' Claws, the Dog Companion Economy & the Dodgy Breeding Racket
+
+**Landmark**: New `LandmarkType.PET_SHOP` ("Paws 'n' Claws")
+New `LandmarkType.VET_SURGERY` ("Northfield Vets")
+
+Every British high street in decline has a pet shop hanging on by a thread — overpriced rabbits, a sad goldfish tank, and bags of bird seed nobody buys. Behind it, separated by a urine-scented corridor, is the vet practice that charges you forty quid to tell you the hamster is dying of old age. Paws 'n' Claws fills the gap between the DOG NPC type (already wandering about), the BIRD pigeon-racing economy (`PigeonRacingSystem`), and the player's squat (`SquatSystem`) — completing a pet companion loop that adds genuine personality to street life.
+
+### Buildings
+
+**Paws 'n' Claws** — a narrow 6×10×4 brick shopfront on the high street parade. Interior: FISH_TANK_PROP (ambient gurgling), two ANIMAL_CAGE_PROP rows (rabbits / guinea pigs), a BIRD_PERCH_PROP (budgies), DOG_KENNEL_PROP behind the counter. Counter staffed by **Bev** (`PET_SHOP_OWNER` NPC). Outside: a faded HANDWRITTEN_SIGN_PROP ("Puppies for sale — no time wasters"). Open Mon–Sat 09:00–17:30.
+
+**Northfield Vets** — adjoining the pet shop via a shared corridor (DOOR_PROP, always unlocked during vet hours). A 6×8×3 practice: CONSULTING_TABLE_PROP, MEDICINE_CABINET_PROP (lockpickable, see below), WAITING_BENCH_PROP (3 seats). Staffed by **Dr. Patel** (`VET` NPC). Open Mon–Fri 08:30–18:00, Sat 09:00–13:00.
+
+### Dog Companion Mechanic
+
+Press E on the **DOG_KENNEL_PROP** to browse dogs for sale (3 random names from a pool of 20 classic British dog names: Buster, Rex, Patch, Bonnie, Tyson, Bruno, Bella, Max, Trixie, Lady, Duke, Pip, Rover, Scamp, Lassie, Biscuit, Scout, Molly, Spike, Fudge). Each dog costs 8–15 COIN (randomised per visit, reseeded daily). Once purchased, the dog spawns as a persistent DOG NPC that follows the player within 10 blocks (uses existing `NPCManager` follow logic).
+
+**Dog companion effects**:
+- Acts as a passive deterrent: YOUTH_GANG NPCs within 6 blocks have a 35% chance to disengage rather than initiate a fight (dog barks; `NPCState.FLEEING` for 5s).
+- POLICE NPCs see the dog as a character witness: −3 to Notoriety suspicion threshold when the dog is present and the player has no prior witnessed crime in the current session.
+- Reduces LONELY need (if `StreetEconomySystem` NeedType.BORED tracks the player) — dog presence passively cancels BORED accumulation.
+- PENSIONER NPCs will stop and admire the dog (IDLE state 8s), then share a LOCAL_EVENT rumour.
+- Dog can be sent to the squat (`SquatSystem`): player presses G near the squat entrance to "stay" the dog, which then patrols the squat perimeter and alerts on THUG NPC approach (triggers `NoiseSystem` bark event).
+
+**Dog needs**: The dog has a HUNGER level (0–100) accumulating at 2/min. Feed with `DOG_TREATS` item (purchasable from Bev, 1 COIN per pack, reduces hunger by 40). If hunger reaches 100, dog enters `NPCState.IDLE` (sits, refuses to follow) until fed. After 30 in-game minutes unfed, dog runs away (despawns; "Buster ran off — he was hungry" message in `SpeechLogUI`).
+
+**Stolen dog**: A DOG NPC already wandering the world (ambient type) can be captured: player stands adjacent to a DOG NPC for 5 continuous seconds (hold E). DOG adopts the player as companion (no purchase required). If captured within 2 blocks of a `POLICE` NPC: `CriminalRecord.CrimeType.THEFT` entry, Notoriety +10, dog released.
+
+### Vet Economy
+
+Press E on **CONSULTING_TABLE_PROP** to request a consultation (dog companion must be present or player must be carrying a `RACING_PIGEON` item from `PigeonRacingSystem`):
+
+| Consultation | Cost | Outcome |
+|---|---|---|
+| Dog health check | 5 COIN | Resets dog HUNGER to 0, +20s follow-speed buff |
+| Pigeon tune-up | 4 COIN | `PigeonRacingSystem.applyVetBuff()` — +10% speed for next 2 races |
+| Dog vaccinations | 8 COIN | Unlocks `DOG_VET_RECORD` item; allows entry to `BOOT_SALE` with dog (+5% loot value) |
+| Emergency | 12 COIN | Triggered automatically if dog HP drops to 0 from NPC fight; dog respawns at vet |
+
+**Dodgy Breeding Racket**: At FactionSystem `MARCHETTI_CREW` Respect ≥ 50, Bev will quietly offer the player a job: steal a pedigree DOG NPC from the `PRIMARY_SCHOOL` playground (a LOLLIPOP_LADY NPC supervises), bring it back to the pet shop before 17:30 to receive 20 COIN and MARCHETTI_CREW Respect +5. Caught stealing: `CriminalRecord.CrimeType.THEFT`, Notoriety +15.
+
+**Medicine Cabinet raid**: MEDICINE_CABINET_PROP at the vet requires LOCKPICK (2 hits to open). Yields: `PRESCRIPTION_MEDS` ×3, `ANTIDEPRESSANTS` ×1, `DOG_SEDATIVE` item (new: one-use; throw at any NPC to reduce speed by 50% for 30s). Raid adds Notoriety +12, Wanted Tier 2. If `VET` NPC is present and witnesses raid: Notoriety +5 bonus and NPC calls police.
+
+### Items
+
+- `DOG_TREATS` — purchasable (1 COIN), feeds dog companion (hunger −40).
+- `DOG_LEAD` — purchasable (2 COIN), equippable leash item; when equipped, police treat dog as "controlled" and do not cite the player for "dangerous dog" (Notoriety +3 avoided).
+- `DOG_VET_RECORD` — issued after vaccination; allows dog entry to BOOT_SALE.
+- `DOG_SEDATIVE` — looted from vet cabinet; thrown item, slows target NPC 50% for 30s.
+- `BUDGIE` — purchasable from Bev (3 COIN); placed in squat adds +5 Vibe (`SquatSystem`). Does not follow player.
+- `GOLDFISH` — purchasable (1 COIN); placed in squat adds +2 Vibe. Goldfish dies after 3 in-game days if not "fed" (pressing E on the squat's fish prop once per day).
+
+### NPCs
+
+- **Bev** (`PET_SHOP_OWNER`) — cheerful, chatty. Comments on the dog's breed. At Notoriety Tier ≥ 3: "I'm not selling you a dog, love. I've seen the paper." Refuses service.
+- **Dr. Patel** (`VET`) — professional, harried. If player's dog is injured (HP < 50%): "He's taken a knock, hasn't he? Bring him in." Seeding a LOCAL_HEALTH rumour after each emergency visit.
+- **2–3 waiting `PUBLIC` NPCs** (vet waiting room) — carry animals (implied). Each has a 50% chance to share a NEIGHBOURHOOD rumour if player sits on WAITING_BENCH_PROP for 10+ seconds.
+
+### Integration
+
+- `PigeonRacingSystem` — vet buff `applyVetBuff()` hooks into pigeon race speed calculation.
+- `SquatSystem` — BUDGIE and GOLDFISH items add Vibe; dog "stay" patrols squat perimeter.
+- `FactionSystem` — MARCHETTI_CREW Respect gates the breeding racket mission; STREET_LADS Respect ≥ 40 gives 10% discount on all Bev's dog purchases.
+- `RumourNetwork` — PENSIONER admiration event seeds LOCAL_EVENT rumour; vet emergency visit seeds LOCAL_HEALTH rumour; breeding racket completion seeds GANG_ACTIVITY rumour.
+- `NotorietySystem` — stolen dog at +10; medicine cabinet +12; being caught by POLICE with stolen dog adds THEFT charge.
+- `WantedSystem` — medicine cabinet raid triggers Wanted Tier 2.
+- `StreetEconomySystem` — DOG_TREATS satisfy NPC HUNGRY need if an NPC with HUNGRY ≥ 50 is adjacent (emergency give).
+- `NeighbourhoodSystem` — Paws 'n' Claws open: +1 Vibes/min. If shop is closed/boarded (Vibes < 20): Bev leaves, shop shutters, sign reads "Closed — thanks for nothing".
+- `WeatherSystem` — COLD_SNAP: Bev adds WOOLLY_DOG_JUMPER prop to window display (cosmetic). Dog follow-speed reduced 20% in rain.
+- `NoiseSystem` — dog bark event (squat patrol alert) is a medium-radius noise source.
+- `WitnessSystem` — vet medicine cabinet raid adds evidence if VET NPC is present.
+- `CriminalRecord` — THEFT for stolen dog or stolen pedigree; dangerous dog citation if unleashed near POLICE without DOG_LEAD.
+- `AchievementSystem` — 5 new achievements below.
+
+### Achievements
+
+- `DOG_OWNER` — purchase a dog from Bev.
+- `BEST_IN_SHOW` — have a vaccinated dog with vet record at the Boot Sale.
+- `VET_BILLS` — spend 30+ COIN total at the vet across all visits.
+- `DODGY_BREEDER` — complete the Marchetti pedigree theft mission.
+- `DOGNAPPED` — capture an ambient DOG NPC as a companion (without purchase).
+
+### Unit Tests
+
+1. `PetShopSystem.isOpen(9.0f, DAY_WEEKDAY)` returns `true`; `isOpen(18.0f, DAY_WEEKDAY)` returns `false`; `isOpen(9.0f, DAY_SUNDAY)` returns `false`.
+2. `PetShopSystem.generateDogPrice(seed=42)` returns a value in [8, 15].
+3. `PetShopSystem.generateDogName(seed=7)` returns a non-null, non-empty String from the 20-name pool.
+4. `PetShopSystem.dogHungerTick(currentHunger=50, deltaMinutes=10)` returns `70.0f` (accumulates at 2/min).
+5. `PetShopSystem.isDogRunAway(hunger=100, minutesUnfed=31)` returns `true`; `minutesUnfed=29` returns `false`.
+6. `PetShopSystem.calculateVetCost(ConsultationType.PIGEON_TUNE_UP)` returns `4`.
+7. `PetShopSystem.isDogCaptureBlocked(playerNotoriety=30, policePresentWithin2Blocks=true)` returns `true`; `policePresentWithin2Blocks=false` returns `false`.
+
+### Integration Tests
+
+1. **Purchase dog and companion follows player**: Give player 15 COIN. Press E on `DOG_KENNEL_PROP`. Select first dog. Verify player COIN reduced by purchase price. Verify a DOG NPC spawns within 3 blocks. Move player 8 blocks north over 60 frames. Verify DOG NPC is within 12 blocks of player.
+
+2. **Dog deters youth gang attack**: Spawn a `YOUTH_GANG` NPC 5 blocks from player. Player has dog companion present. Call `PetShopSystem.applyDogDeterrenceCheck(dog, youthGang, random=new Random(1))`. Verify `YOUTH_GANG` NPC enters `NPCState.FLEEING` (seed=1 should yield deterrence). Verify `NoiseSystem` received a bark event.
+
+3. **Dog runs away when starved**: Set dog hunger to 98. Advance simulation 2 in-game minutes. Verify dog hunger reaches 100. Advance 30 more in-game minutes without feeding. Verify DOG NPC is despawned. Verify `SpeechLogUI` contains the "ran off" message.
+
+4. **Pigeon vet buff increases race speed**: Register a `RACING_PIGEON` item in player inventory. Call `VetSystem.applyVetBuff(pigeon, pigeonRacingSystem)`. Verify `PigeonRacingSystem.getVetBuffMultiplier(pigeon)` returns `1.10f`. Verify buff expires after 2 calls to `PigeonRacingSystem.resolvePigeonRace()`.
+
+5. **Medicine cabinet raid triggers wanted tier**: Simulate player lock-picking `MEDICINE_CABINET_PROP` at the vet (2 hits). Verify `DOG_SEDATIVE`, `PRESCRIPTION_MEDS` ×3, and `ANTIDEPRESSANTS` appear in player inventory. Verify Notoriety increased by 12. Verify `WantedSystem.getWantedTier()` returns `2`.
+
+// ── New: PetShopSystem.java in ragamuffin.core
+// New: LandmarkType.PET_SHOP ("Paws 'n' Claws"), LandmarkType.VET_SURGERY ("Northfield Vets")
+// New: NPCType stubs required: PET_SHOP_OWNER, VET (add to NPCType enum)
+// New: Material stubs required: DOG_TREATS, DOG_LEAD, DOG_VET_RECORD, DOG_SEDATIVE, BUDGIE, GOLDFISH
+// New: PropType stubs required: FISH_TANK_PROP, ANIMAL_CAGE_PROP, BIRD_PERCH_PROP, DOG_KENNEL_PROP,
+//      CONSULTING_TABLE_PROP (may already exist), HANDWRITTEN_SIGN_PROP
+// New: AchievementType stubs required: DOG_OWNER, BEST_IN_SHOW, VET_BILLS, DODGY_BREEDER, DOGNAPPED
+// Existing: DOG NPCType, BIRD NPCType, PigeonRacingSystem, SquatSystem, FactionSystem,
+//           RumourNetwork, NotorietySystem, WantedSystem, StreetEconomySystem, NeighbourhoodSystem,
+//           WeatherSystem, NoiseSystem, WitnessSystem, CriminalRecord, BootSaleSystem all defined
+// WorldGenerator: add PET_SHOP + VET_SURGERY block to high street parade generation pass
