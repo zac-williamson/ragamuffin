@@ -1409,7 +1409,33 @@ public enum Material {
      * Consumed on use. Cannot be refilled.
      * Tooltip: "Stolen from by the till, probably."
      */
-    DISPOSABLE_LIGHTER("Disposable Lighter");
+    DISPOSABLE_LIGHTER("Disposable Lighter"),
+
+    // ── Issue #1004: Northfield Community Centre ──────────────────────────────
+
+    /**
+     * Vinyl Record — "Still in its sleeve. Contains something by a band you've vaguely heard of."
+     * Sold at the Bring &amp; Buy Sale for 3 COIN. Can be fenced for coin.
+     */
+    VINYL_RECORD("Vinyl Record"),
+
+    /**
+     * Thermos Flask — consumable; drink once for +20 Warmth. "Lukewarm at best. You're grateful."
+     * Sold at the Bring &amp; Buy Sale for 2 COIN.
+     */
+    THERMOS_FLASK("Thermos Flask"),
+
+    /**
+     * Jigsaw Puzzle Box — "Five hundred pieces. At least two are missing."
+     * Satisfies {@code NeedType.BORED} for 15 score when used. Sold at Bring &amp; Buy for 1 COIN.
+     */
+    JIGSAW_PUZZLE_BOX("Jigsaw Puzzle Box"),
+
+    /**
+     * Knitting Needles — "Could be used for knitting. Or other things."
+     * Weapon: 3 damage. Also a crafting component. Sold at Bring &amp; Buy for 1 COIN.
+     */
+    KNITTING_NEEDLES("Knitting Needles");
 
     private final String displayName;
 
@@ -1938,6 +1964,15 @@ public enum Material {
             case DISPOSABLE_LIGHTER:    return cs(0.95f, 0.20f, 0.10f,   // Red lighter body
                                                    0.92f, 0.88f, 0.20f); // Yellow flame top
 
+            // Issue #1004: Northfield Community Centre
+            case VINYL_RECORD:          return c(0.10f, 0.10f, 0.10f);   // Black vinyl
+            case THERMOS_FLASK:         return cs(0.62f, 0.18f, 0.12f,   // Red flask body
+                                                   0.80f, 0.80f, 0.80f); // Silver lid
+            case JIGSAW_PUZZLE_BOX:     return cs(0.20f, 0.45f, 0.75f,   // Blue box side
+                                                   0.85f, 0.75f, 0.30f); // Gold lid
+            case KNITTING_NEEDLES:      return cs(0.78f, 0.12f, 0.12f,   // Red needles
+                                                   0.88f, 0.82f, 0.50f); // Yellow yarn
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2295,6 +2330,11 @@ public enum Material {
             case TWOPENCE:
             case PLUSH_TOY:
             case ARCADE_TOKEN:
+            // Issue #1004: Northfield Community Centre — Bring & Buy Sale items
+            case VINYL_RECORD:
+            case THERMOS_FLASK:
+            case JIGSAW_PUZZLE_BOX:
+            case KNITTING_NEEDLES:
                 return true;
             default:
                 return false;
@@ -2778,6 +2818,16 @@ public enum Material {
                 return IconShape.CYLINDER;    // coiled drum shape
             case DISPOSABLE_LIGHTER:
                 return IconShape.BOX;         // small rectangular lighter
+
+            // Issue #1004: Northfield Community Centre
+            case VINYL_RECORD:
+                return IconShape.CYLINDER;    // round record disc
+            case THERMOS_FLASK:
+                return IconShape.CYLINDER;    // cylindrical flask
+            case JIGSAW_PUZZLE_BOX:
+                return IconShape.BOX;         // flat box shape
+            case KNITTING_NEEDLES:
+                return IconShape.TOOL;        // long needle shafts
 
             default:
                 return IconShape.BOX;

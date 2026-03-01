@@ -105,7 +105,10 @@ public class StreetSkillSystem {
         /** Issue #928: Street-level legal and social knowledge — learned from library pamphlets. */
         STREETWISE,
         /** Issue #928: Growing and plant knowledge — learned from library gardening section. */
-        HORTICULTURE
+        HORTICULTURE,
+        /** Issue #1004: Boxing — trained at the community centre boxing club. Max level 10.
+         *  Provides punch damage bonus at levels 3 (+2) and 6 (+5 total). */
+        BOXING
     }
 
     // ── Tier enum ─────────────────────────────────────────────────────────────
@@ -690,6 +693,36 @@ public class StreetSkillSystem {
     public float getRallyCooldown() { return rallyCooldown; }
     public List<NPC> getFollowers() { return followers; }
     public int getFollowerCount()  { return followers.size(); }
+
+    // ── BOXING skill ──────────────────────────────────────────────────────────
+
+    /**
+     * Issue #1004: Returns the raw BOXING skill point count (0–10).
+     * Each training session at BOXING_BAG_PROP awards +1 point.
+     */
+    public int getSkillLevel(Skill skill) {
+        return xp.getOrDefault(skill, 0);
+    }
+
+    /**
+     * Issue #1004: Award a single skill point to a skill (used by BOXING_BAG_PROP training).
+     * This is distinct from the XP system — BOXING uses raw integer points, not XP tiers.
+     */
+    public void awardSkillPoint(Skill skill) {
+        int current = xp.getOrDefault(skill, 0);
+        xp.put(skill, current + 1);
+    }
+
+    /**
+     * Issue #1004: Returns the boxing punch damage bonus based on BOXING skill level.
+     * 0 at skill &lt; 3, +2 at skill 3–5, +5 at skill ≥ 6.
+     */
+    public int getBoxingDamageBonus() {
+        int level = getSkillLevel(Skill.BOXING);
+        if (level >= 6) return 5;
+        if (level >= 3) return 2;
+        return 0;
+    }
 
     /**
      * Set XP directly for a skill (for testing).
