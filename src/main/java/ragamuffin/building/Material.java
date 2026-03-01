@@ -2387,7 +2387,33 @@ public enum Material {
      * Crafting substitute for CARDBOARD in paper-based recipes.
      * Fenceable for 0 COIN (worthless) but useful as crafting material.
      */
-    LOAN_LEAFLET("Loan Leaflet");
+    LOAN_LEAFLET("Loan Leaflet"),
+
+    // ── Issue #1077: Northfield Chinese Takeaway — Golden Palace ─────────────
+
+    /** Prawn Crackers — 1 COIN. Hunger −10. Also a litter prop near the Golden Palace 22:00–00:00. */
+    PRAWN_CRACKERS("Prawn Crackers"),
+
+    /** Spring Rolls — 2 COIN. Hunger −20. Two served; shareable with NPC. */
+    SPRING_ROLLS("Spring Rolls"),
+
+    /** Chicken Chow Mein — 4 COIN. Hunger −50, Warmth +10. Post-pub favourite. */
+    CHICKEN_CHOW_MEIN("Chicken Chow Mein"),
+
+    /** Egg Fried Rice — 2 COIN. Hunger −30. */
+    EGG_FRIED_RICE("Egg Fried Rice"),
+
+    /** Sweet and Sour Chicken — 4 COIN. Hunger −50. */
+    SWEET_AND_SOUR_CHICKEN("Sweet and Sour Chicken"),
+
+    /** Crispy Duck — 6 COIN. Hunger −60, Warmth +15. Requires 20–40s wait. No refund if order cancelled. */
+    CRISPY_DUCK("Crispy Duck"),
+
+    /** Fortune Cookie — 1 COIN. On use: shows a random British fortune string. No hunger gain. */
+    FORTUNE_COOKIE("Fortune Cookie"),
+
+    /** Takeaway Bag — given free with any order ≥ 3 COIN. Inventory slot container. */
+    TAKEAWAY_BAG("Takeaway Bag");
 
     private final String displayName;
 

@@ -344,7 +344,23 @@ public enum LandmarkType {
      * Run by Barry (LOAN_MANAGER NPC). Open Mon–Fri 09:00–18:00, Sat 10:00–16:00.
      * Interior: LOAN_DESK_PROP, LEAFLET_RACK_PROP, CCTV_CAMERA_PROP.
      */
-    PAYDAY_LOAN_SHOP;
+    PAYDAY_LOAN_SHOP,
+
+    // ── Issue #1077: Northfield Chinese Takeaway — Golden Palace ─────────────
+
+    /**
+     * Golden Palace — a narrow Chinese takeaway shopfront (6×10×4 blocks) squeezed
+     * between the Wetherspoons side-alley and the payday loan shop.
+     * Run by Mr. Chen ({@code SHOPKEEPER} NPC). Open daily 16:00–23:30.
+     * Interior: red CARPET, {@code MENU_BOARD_PROP} behind the counter,
+     * {@code SERVING_HATCH_PROP} separating kitchen from front-of-house,
+     * {@code TELEPHONE_PROP} on the counter, 4 {@code WAITING_BENCH_PROP} seats.
+     * A {@code CHINESE_LANTERN_PROP} hangs above the door (always lit).
+     * Integrates with ChineseTakeawaySystem, WarmthSystem, WeatherSystem,
+     * SquatSystem, RumourNetwork, NotorietySystem, NoiseSystem, StreetEconomySystem,
+     * NPCManager, WantedSystem, AchievementSystem.
+     */
+    CHINESE_TAKEAWAY;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -418,6 +434,7 @@ public enum LandmarkType {
             case POUND_SHOP:            return "Poundstretcher";
             case ICE_CREAM_VAN:         return "Dave's Ices";
             case PAYDAY_LOAN_SHOP:      return "Fast Cash Finance";
+            case CHINESE_TAKEAWAY:      return "Golden Palace";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
