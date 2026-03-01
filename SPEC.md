@@ -22941,3 +22941,218 @@ public static final int   MASTER_KEY_TOWER_ID         = 0;  // Tower 1 (index 0)
    30 in-game seconds without moving. Verify `rumourNetwork` contains at least one
    `RumourType.SHOP_NEWS` rumour (stock tip). Verify
    `achievementSystem.isUnlocked(AchievementType.ROOF_OF_THE_WORLD)`.
+
+---
+
+## Issue #1047: Add Northfield BP Petrol Station — Forecourt Economy, Petrol Theft & the Night Shift
+
+The `PETROL_STATION` landmark already exists in `LandmarkType` and is placed in
+the world by `WorldGenerator`, but the building has **no gameplay system**.
+This issue implements `PetrolStationSystem` to give the forecourt full interactive
+depth — overpriced snacks, petrol can refills, scratch cards, dodgy forecourt
+food, a bored night-shift attendant, and the classic British pastime of driving
+off without paying.
+
+---
+
+### The Location
+
+A flat-roofed brick-and-glass BP forecourt on the edge of the industrial estate:
+12 × 8 footprint, a small shop interior, two pump islands (4 pumps total) outside.
+A hand-painted "PAY AT KIOSK" sign above the counter.
+
+---
+
+### NPCs
+
+| NPC type | Name | Schedule | Personality |
+|---|---|---|---|
+| `SHOPKEEPER` | **Dave** (day, 06:00–22:00) | Bored, easily distracted, reads tabloids | Sells items; ignores mild theft if player low notoriety |
+| `SHOPKEEPER` | **Baz** (night, 22:00–06:00) | Paranoid, behind bulletproof glass | Won't leave kiosk; calls police at any notoriety Tier 2+ |
+| `JOGGER` | Passing jogger | 06:00–09:00, random | Uses air pump; not a vendor |
+| `PUBLIC` | Forecourt punter | Random arrivals | Buys fuel or snacks, leaves |
+
+Dave and Baz are present one at a time based on `TimeSystem.getHour()`.
+
+---
+
+### Shop Menu (press E on kiosk counter)
+
+| Item | Price | Notes |
+|---|---|---|
+| `ENERGY_DRINK` | 3 COIN | Overpriced; heals 5 HP |
+| `SCRATCH_CARD` | 2 COIN | Same odds as newsagent |
+| `CIGARETTE` | 2 COIN | Single cigarette pack |
+| `NEWSPAPER` | 1 COIN | Day's edition |
+| `PETROL_CAN` (empty) | 0 COIN | Free — player must fill at pump |
+| `DISPOSABLE_LIGHTER` | 2 COIN | |
+| `PASTY` | 2 COIN | Forecourt pasty — restores 8 HP; 20% chance of stomach pain (−3 HP, "That pasty has been there since Tuesday.") |
+| `ENERGY_DRINK` (warm) | 1 COIN | From the non-refrigerated shelf; same effect, no cool visual |
+
+---
+
+### Pump Economy
+
+Four pumps outside the shop. Each pump has a `PUMP_PROP` in `PropType`.
+
+**Filling a PETROL_CAN:**
+1. Player carries an empty `PETROL_CAN` and stands adjacent to a pump.
+2. Press E → prompt: "Fill petrol can? (5 COIN)"
+3. Confirm → coin deducted, `PETROL_CAN` becomes full (flagged in inventory as
+   `PETROL_CAN_FULL`; new `Material` entry).
+4. `PETROL_CAN_FULL` is required by `WheeliBinFireSystem` to ignite bins (existing
+   system currently accepts `PETROL_CAN`; update it to accept `PETROL_CAN_FULL`).
+
+**Drive-Off Mechanic (forecourt theft):**
+- If player fills the can and walks away without pressing E on the kiosk to pay:
+  - Dave/Baz notices after 10 in-game seconds (line of sight check).
+  - Notoriety +5, `CriminalRecord` entry `PETROL_THEFT`.
+  - Dave calls police; Baz presses panic button immediately.
+  - If Notoriety already Tier 3+, Baz presses panic button the moment the player
+    lifts the nozzle (he's seen the news).
+- If player distracts Dave (press E on magazine rack near the door, triggering
+  "Cor, look at this…" — Dave turns away for 15 seconds), the drive-off window
+  extends and notoriety penalty drops to +2.
+
+---
+
+### Night-Shift Economy (22:00–06:00)
+
+Baz is behind a sliding glass screen. The kiosk is accessible but the screen
+blocks punching.
+
+- **Begging from Baz**: Press E at 02:00–04:00; Baz is lonely and will give
+  player 1 free `ENERGY_DRINK` (once per night) — "Go on then, it's dead out
+  there."
+- **Overnight Weirdos**: Random 15% chance per in-game hour that a `STREET_LAD`
+  NPC arrives, loiters 5 minutes, and leaves a `SCRATCH_CARD` on the counter
+  (player can pick it up).
+- **Security Camera**: Night shift has a working CCTV camera prop. If player
+  commits petrol theft at night, the footage flags the `PETROL_THEFT` record
+  as CCTV-evidenced (harder to dispute; Notoriety penalty +2 extra).
+
+---
+
+### Scratch Card Economy
+
+Scratch cards bought here (or found) can be scratched:
+- Press E while holding `SCRATCH_CARD` → outcome resolved by `Random`.
+- 60% chance: nothing ("Not a winner. Better luck next time.").
+- 30% chance: 2 COIN ("£2 winner! Redeem at kiosk.") — press E on kiosk to
+  collect.
+- 9% chance: 5 COIN ("£5 winner!").
+- 1% chance: 20 COIN jackpot ("JACKPOT! £20!") → achievement `SCRATCH_CARD_WINNER`.
+
+Winners are redeemed at the kiosk counter (press E). Dave/Baz pays out grudgingly.
+
+---
+
+### Interactions with Existing Systems
+
+- **WheeliBinFireSystem**: Accept `PETROL_CAN_FULL` (filled at pump) in addition to
+  existing `PETROL_CAN` for bin ignition.
+- **HeistSystem**: The petrol station is a valid heist target (Tier 1, low cash
+  yield: 10–20 COIN, but drops 1 `PETROL_CAN_FULL` and 2 `ENERGY_DRINK`).
+- **StreetEconomySystem**: `PETROL_CAN_FULL` satisfies `NeedType.DESPERATE` for
+  arson-adjacent NPCs; price floor 4 COIN when selling on street.
+- **NeighbourhoodWatchSystem**: Petrol theft triggers a `PETROL_THEFT` rumour seeded
+  to `RumourNetwork` as `RumourType.CRIME_SPOTTED`.
+- **NotorietySystem**: `PETROL_THEFT` is a new `CriminalRecord` offence category;
+  fine: 10 COIN if caught by police (existing arrest flow).
+- **WeatherSystem**: During `FROST`, pump nozzles are frozen — press E triggers
+  "Bloody frozen again." Five seconds of button mashing (5 × E presses) thaws it;
+  seeds `WEATHER_GRUMBLE` rumour.
+
+---
+
+### Achievements
+
+| Constant | Condition |
+|---|---|
+| `FORECOURT_REGULAR` | Buy from petrol station 10 times |
+| `DRIVE_OFF` | Steal a full petrol can without being caught |
+| `SCRATCH_CARD_WINNER` | Win the 20 COIN jackpot |
+| `NIGHT_SHIFT_FRIEND` | Receive Baz's free energy drink |
+| `PASTY_REGRET` | Suffer the forecourt pasty stomach pain |
+
+---
+
+### New Material
+
+`PETROL_CAN_FULL` — filled petrol can; distinct from empty `PETROL_CAN`.
+- Colour: same red as `PETROL_CAN` but with a yellow liquid-level indicator stripe.
+- Weight: heavier (movement speed −5% while carrying, same mechanic as `FIRE_EXTINGUISHER`).
+- Stackable: no (single slot, max 1).
+
+---
+
+### Constants (inner static class in `PetrolStationSystem`)
+
+```java
+public static final int   ENERGY_DRINK_PRICE      = 3;
+public static final int   SCRATCH_CARD_PRICE       = 2;
+public static final int   CIGARETTE_PRICE          = 2;
+public static final int   NEWSPAPER_PRICE          = 1;
+public static final int   DISPOSABLE_LIGHTER_PRICE = 2;
+public static final int   PASTY_PRICE              = 2;
+public static final int   PETROL_FILL_PRICE        = 5;
+public static final int   DRIVE_OFF_NOTORIETY      = 5;
+public static final int   DISTRACT_NOTORIETY       = 2;
+public static final int   CCTV_NOTORIETY_BONUS     = 2;
+public static final float DAVE_NOTICE_DELAY        = 10f;   // seconds
+public static final float DISTRACT_WINDOW          = 15f;   // seconds
+public static final float LOITERER_CHANCE          = 0.15f;
+public static final float PASTY_BAD_CHANCE         = 0.20f;
+public static final int   SCRATCH_NOTHING_THRESHOLD = 60;   // %
+public static final int   SCRATCH_TWO_THRESHOLD     = 90;   // %
+public static final int   SCRATCH_FIVE_THRESHOLD    = 99;   // %
+// 100 → 20 COIN jackpot
+```
+
+---
+
+### `PetrolStationSystem` Unit Tests
+
+- `testBuyEnergyDrinkDeductsCoin()` — player buys ENERGY_DRINK; coin −3; item added.
+- `testBuyPastyHealsThenMaySicken()` — seed RNG for bad roll; verify −3 HP applied after pasty.
+- `testFillPetrolCanCostsCoin()` — carry empty can; fill; coin −5; inventory has PETROL_CAN_FULL.
+- `testDriveOffAddsNotoriety()` — fill can; walk away; advance 11 seconds; verify notoriety +5 and CriminalRecord entry.
+- `testDistractDaveLowersNotoriety()` — press E on magazine rack; fill can; walk away; verify notoriety penalty is +2 not +5.
+- `testBazCallsPoliceOnTier2()` — set notoriety Tier 2; interact with Baz kiosk; verify police alert fired.
+- `testNightScratchCardLoiterer()` — set time 02:00; advance 1 in-game hour with 15% seeded RNG; verify SCRATCH_CARD on counter.
+- `testBazGivesFreeEnergyDrink()` — set time 03:00; press E on Baz; verify ENERGY_DRINK added, flag set so it won't repeat.
+- `testFrostFreezesNozzle()` — set weather FROST; press E on pump once; verify cannot fill; press E 5 times; verify fill available.
+- `testScratchCardJackpot()` — seed RNG for 1% roll; scratch card; verify 20 COIN added and achievement unlocked.
+- `testWheeliBinAcceptsPetrolCanFull()` — give player PETROL_CAN_FULL; call WheeliBinFireSystem.ignite(); verify success.
+
+---
+
+### Integration Tests — implement these exact scenarios
+
+1. **Buy, fill, use end-to-end**: Player has 8 COIN. Walk to kiosk, press E, buy
+   `ENERGY_DRINK` (3 COIN) and empty `PETROL_CAN` (free). Walk to pump, press E,
+   confirm fill (5 COIN). Verify player has 0 COIN, inventory contains
+   `PETROL_CAN_FULL` and `ENERGY_DRINK`. Walk to a wheelie bin prop, press E to
+   ignite. Verify bin is on fire (`WheeliBinFireSystem.isOnFire()` returns true).
+
+2. **Drive-off caught by Dave**: Player carries empty `PETROL_CAN`. Walk to pump,
+   press E, fill. Walk away from forecourt without visiting kiosk. Advance 11
+   in-game seconds. Verify Dave has line-of-sight to player (LOS check passes).
+   Verify player Notoriety has increased by 5. Verify `criminalRecord` contains
+   `PETROL_THEFT`. Verify police pursuit state is ALERTED.
+
+3. **Distract Dave, escape undetected**: Player presses E on magazine rack
+   (Dave turns). Within 15 seconds: walk to pump, fill can, walk off forecourt.
+   Verify Dave did NOT trigger police alert. Verify notoriety penalty was ≤ 2
+   (distract penalty, not full drive-off penalty). Verify
+   `achievementSystem.isUnlocked(AchievementType.DRIVE_OFF)`.
+
+4. **Night shift Baz interaction at 03:00**: Set time to 03:00. Player walks to
+   kiosk, presses E on Baz's screen. Verify dialogue "Go on then, it's dead out
+   there." is returned. Verify `ENERGY_DRINK` added to player inventory. Press E
+   on Baz again immediately. Verify no second drink given (once-per-night flag).
+
+5. **Scratch card jackpot redeemed**: Player has `SCRATCH_CARD` in inventory (seeded
+   RNG for jackpot). Press E while holding scratch card — outcome is 20 COIN win.
+   Walk to kiosk, press E. Verify 20 COIN added to player total. Verify
+   `achievementSystem.isUnlocked(AchievementType.SCRATCH_CARD_WINNER)`.
