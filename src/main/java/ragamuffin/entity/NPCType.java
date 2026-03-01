@@ -745,7 +745,15 @@ public enum NPCType {
 
     // ── Issue #1012: Skin Deep Tattoos ────────────────────────────────────────
     /** Kev — taciturn ex-con running Skin Deep Tattoos. Passive, speech-rich. */
-    TATTOOIST(40f, 5f, 2.0f, false);
+    TATTOOIST(40f, 5f, 2.0f, false),
+
+    // ── Issue #1016: Northfield Canal ─────────────────────────────────────────
+    /**
+     * Canal Boat Owner — narrowboat resident; passive; rumour source; present limited hours.
+     * Derek (east boat): present 07:00–22:00; sells DINGHY for 15 COIN.
+     * Maureen (west boat): present 09:00–20:00; feeds ducks; rewards fish catches.
+     */
+    CANAL_BOAT_OWNER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
