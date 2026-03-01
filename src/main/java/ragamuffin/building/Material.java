@@ -2833,7 +2833,37 @@ public enum Material {
      * Fence value: 3 COIN. Pawn value: 1 COIN.
      * Tooltip: "Could be a nice present. Or just nicked."
      */
-    GEL_POLISH("Gel Polish");
+    GEL_POLISH("Gel Polish"),
+
+    // ── Issue #1108: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * Member Invite — a guest pass to the Northfield Sporting &amp; Social Club.
+     * Obtained from a MEMBER NPC at STREET_LADS Respect ≥ 30.
+     * Allows Guest-level entry without paying. One-use.
+     */
+    MEMBER_INVITE("Member Invite"),
+
+    /**
+     * Cheat Sheet — a crib sheet of quiz answers.
+     * Found in the library or crafted from NEWSPAPER + PEN.
+     * Used during Quiz Night (press F during a question): +2 points, 40% catch chance.
+     */
+    CHEAT_SHEET("Cheat Sheet"),
+
+    /**
+     * Protection Letter — documentary evidence of Derek's protection payments.
+     * Found in Derek's back-room desk (requires LOCKPICK to access).
+     * Can be used to report to police, blackmail Derek, or give to a journalist.
+     */
+    PROTECTION_LETTER("Protection Letter"),
+
+    /**
+     * Protection Photo — a phone photo of the Marchetti handover in the car park.
+     * Taken by pressing F within 4 blocks of the Sunday 19:00 exchange.
+     * Functions like PROTECTION_LETTER for expose paths.
+     */
+    PROTECTION_PHOTO("Protection Photo");
 
     private final String displayName;
 

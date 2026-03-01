@@ -1485,7 +1485,31 @@ public enum PropType {
      * On housing inspection days, the inspection notice appears here.
      * Destroyed by 3 punches; yields WOOD.
      */
-    COMMUNAL_NOTICEBOARD_PROP(0.80f, 1.20f, 0.10f, 3, Material.WOOD);
+    COMMUNAL_NOTICEBOARD_PROP(0.80f, 1.20f, 0.10f, 3, Material.WOOD),
+
+    // ── Issue #1108: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * CARD_TABLE_PROP — green baize card table in the back room of the social club.
+     * Press E to start a pontoon game (bet 1–10 COIN per hand).
+     * Accessible only with MARCHETTI_CREW Respect ≥ 60 or a LOCKPICK.
+     * Destroyed by 4 punches; yields WOOD.
+     */
+    CARD_TABLE_PROP(1.20f, 0.80f, 0.70f, 4, Material.WOOD),
+
+    /**
+     * LOCKED_DOOR_PROP — a reinforced interior door to the back room of the social club.
+     * Requires MARCHETTI_CREW Respect ≥ 60 or a LOCKPICK to open.
+     * Destroyed by 8 punches; yields WOOD.
+     */
+    LOCKED_DOOR_PROP(1.00f, 2.20f, 0.15f, 8, Material.WOOD),
+
+    /**
+     * EVIDENCE_PROP — a sealed envelope containing PROTECTION_LETTER documents.
+     * Found in Derek's back-room desk; picking up auto-adds PROTECTION_LETTER to inventory.
+     * Non-destructible by design (E to take).
+     */
+    EVIDENCE_PROP(0.30f, 0.20f, 0.20f, 99, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
