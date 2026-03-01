@@ -2400,6 +2400,34 @@ public enum AchievementType {
         "Someone's Amazon Order",
         "Stolen 5 parcels from the communal letterbox bank at Kendrick House. You've got a cheek.",
         5
+    ),
+
+    // ── Issue #1102: Northfield Indoor Market ─────────────────────────────────
+
+    MARKET_REGULAR(
+        "Regular at the Market",
+        "Completed 5 stall rentals at the Indoor Market, selling at least one item each time. Ray's starting to know your face.",
+        5
+    ),
+    SOVEREIGN_TRADING(
+        "Sovereign Trading",
+        "Sold a Counterfeit Watch at the Indoor Market for 5 COIN or more. Lovely bit of bling.",
+        1
+    ),
+    LEGS_IT(
+        "Legs It",
+        "Escaped a Trading Standards raid with contraband still in your stall inventory. Had it on your toes.",
+        1
+    ),
+    CROWD_WORKER(
+        "Crowd Worker",
+        "Successfully pickpocketed 5 Market Punters in a single market day. The crowd's your cover.",
+        5
+    ),
+    SATURDAY_MARKET_KING(
+        "Saturday Market King",
+        "Earned 20 COIN or more from stall sales in a single Saturday market day. The king of Northfield.",
+        1
     );
 
     private final String name;
