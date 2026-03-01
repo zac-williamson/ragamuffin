@@ -994,7 +994,17 @@ public enum Material {
      * Placed as a BINGO_TROPHY_PROP in the player's nearest squat.
      * Tooltip: "You are the luckiest person in Northfield. Statistically."
      */
-    BINGO_TROPHY("Bingo Trophy");
+    BINGO_TROPHY("Bingo Trophy"),
+
+    // ── Issue #961: Cash4Gold Pawn Shop ───────────────────────────────────────
+
+    /**
+     * Guitar — sellable or pledgeable at the pawn shop.
+     * Found in skips, squats, or looted from busker NPCs.
+     * Pawn shop base value: 18 COIN.
+     * Tooltip: "Six strings, three chords, zero prospects."
+     */
+    GUITAR("Guitar");
 
     private final String displayName;
 
@@ -1435,6 +1445,10 @@ public enum Material {
             case EMPTY_CHICKEN_BOX:  return cs(0.88f, 0.35f, 0.10f,  // Red box
                                                0.72f, 0.52f, 0.28f); // Grease-stained
 
+            // Issue #961: Cash4Gold Pawn Shop
+            case GUITAR:             return cs(0.62f, 0.38f, 0.12f,  // Warm wood body
+                                               0.38f, 0.22f, 0.06f); // Darker neck
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1670,6 +1684,8 @@ public enum Material {
             case FLAT_COLA:
             case CHICKEN_BONE:
             case EMPTY_CHICKEN_BOX:
+            // Issue #961: Cash4Gold Pawn Shop
+            case GUITAR:
                 return false;
             default:
                 return true;
@@ -2124,6 +2140,10 @@ public enum Material {
                 return IconShape.FOOD;        // gnawed bone
             case EMPTY_CHICKEN_BOX:
                 return IconShape.BOX;         // discarded box
+
+            // Issue #961: Cash4Gold Pawn Shop
+            case GUITAR:
+                return IconShape.TOOL;        // long instrument shape
 
             default:
                 return IconShape.BOX;

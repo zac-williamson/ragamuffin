@@ -1204,6 +1204,24 @@ public enum AchievementType {
         5
     ),
 
+    // ── Issue #961: Cash4Gold Pawn Shop ───────────────────────────────────────
+
+    SUNDAY_MORNING_REGRET(
+        "Sunday Morning Regret",
+        "Forfeited a pawn pledge on Day 4. Gary kept it. You knew this would happen.",
+        1
+    ),
+    IN_HOC(
+        "In Hoc",
+        "Three simultaneous pledges at Cash4Gold. Gary has a poster of you on the wall. Not in a good way.",
+        1
+    ),
+    CASH_IN_HAND(
+        "Cash in Hand",
+        "Sold ten items to Gary in one session. He's beginning to ask fewer questions.",
+        10
+    ),
+
     // ── Issue #954: Northfield Bingo Hall ─────────────────────────────────────
 
     EYES_DOWN(

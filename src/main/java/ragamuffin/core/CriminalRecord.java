@@ -83,7 +83,13 @@ public class CriminalRecord {
          * Issue #954: Recorded when the player is caught using a RIGGED_BINGO_CARD
          * at Lucky Stars Bingo Hall and ejected by the CALLER NPC.
          */
-        BINGO_CHEATING("Bingo cheating offences");
+        BINGO_CHEATING("Bingo cheating offences"),
+
+        /**
+         * Issue #961: Recorded by WitnessSystem when the player sells a stolen item
+         * at the pawn shop while a POLICE NPC is within 8 blocks.
+         */
+        HANDLING_STOLEN_GOODS("Handling stolen goods");
 
         private final String displayName;
 
