@@ -16205,3 +16205,178 @@ and food-poisoning chance; recipe validity (`WOOD` + `SCRAP_METAL` + `CARDBOARD`
    Verify player hunger increased by 8. Force poisoning RNG to ≥ 0.80 (20% trigger zone
    flipped: ≥ 0.80 = poisoned). Over 30 seconds of game time, verify player HP decreases
    by approximately 10 (within ±2 tolerance).
+
+---
+
+## Add Northfield Snooker Hall — The Reds, Hustling & Smoky Back Rooms
+
+**Goal**: Add `SNOOKER_HALL` as a new landmark — *Cue Zone*, a dingy upstairs snooker
+hall above a row of shops on the high street. Open 10:00–23:00 daily. Players can
+rent a table, play a turn-based snooker mini-game against NPC opponents, hustle for
+coin by placing hidden side-bets, and access a locked back room used by the Marchetti
+Crew for card games. The hall is a social hub where rumours circulate and faction
+tensions occasionally spill into a cue-brandishing brawl.
+
+### Core Systems
+
+**`SnookerSystem`** (new class in `ragamuffin.core`)
+
+- Manages table rental, active frame state machine, hustle bet ledger, and back-room
+  card game state.
+- Integrates with `TimeSystem`: hall open 10:00–23:00. Table rental costs 2 COIN per
+  frame. Closed Sundays before 12:00 (league prep).
+- Integrates with `FactionSystem`: `MARCHETTI_CREW` Respect ≥ 60 unlocks back-room access.
+- Integrates with `NotorietySystem`: brawling in the hall adds Notoriety +5 and causes
+  the proprietor to ban the player for 1 in-game day.
+
+**Snooker frame mini-game** (press **E** on a vacant `SNOOKER_TABLE_PROP` to rent):
+
+Turn-based, abstracted to avoid a full physics engine:
+
+- Player and NPC opponent alternate breaks. A break is resolved by pressing **E** to
+  "take a shot" — a timing bar (like `BattleBarMiniGame`) determines pot success.
+  - **Green zone** (20% of bar): pot succeeds. Add ball value to break, continue.
+  - **Yellow zone** (50%): safety shot — no pot, turn ends safely.
+  - **Red zone** (30%): miss — ball in hand for opponent.
+- Balls potted in regulation order (reds → colours). Simplified scoring:
+  each frame runs for **15 scoring events** (not full 147). Winner is whoever has
+  more points after 15 events or when all reds are potted.
+- NPC difficulty set by `SnookerNpcTier`:
+  - `NOVICE` (regulars): green-zone probability 30%, miss probability 20%.
+  - `HUSTLER` (Frank the Hustler NPC): green-zone 60%, miss 10%.
+  - `LEGEND` (one-armed Carl, unlocked at `STREET_LADS` Respect ≥ 75): green-zone 75%, miss 5%.
+- After each frame, player receives: win → table rental returned + 3 COIN; loss → rental
+  not returned. Draw → rental returned only.
+
+**Hustle Betting** (hidden mechanic):
+
+- Before a frame, player can place a side-bet of 1–10 COIN via a dialogue option with
+  `SNOOKER_REGULAR_NPC` (press **E** on a spectating regular near the table).
+- Hustle mode: player **pretends to be worse** — if the player deliberately misses 3
+  shots in a row (hits red zone 3× consecutively) without the NPC noticing, the hustle
+  is *set up*. On the next frame, bet doubles automatically and opponent's difficulty
+  drops one tier (they grow overconfident).
+- 25% chance the `SNOOKER_REGULAR_NPC` notices the hustle mid-frame and calls it
+  (`GANG_ACTIVITY` rumour seeded: *"Someone's hustling the lads at the snooker hall.
+  Cheeky sod."*). On detection: bet confiscated, Notoriety +3.
+- If hustle is completed undetected: winnings = bet × 2. `TRADING` street skill XP +10.
+
+**Back Room — Card Game** (`MARCHETTI_CREW` Respect ≥ 60):
+
+- A locked `DOOR_PROP` at the rear of the hall. Press **E** to knock; if Respect
+  condition is met the door opens.
+- Inside: 4 `MARCHETTI_CREW` NPCs playing cards around a `TABLE_PROP`. Player can
+  join (costs 5 COIN entry) or observe.
+- Card game is a simplified pontoon (blackjack variant):
+  - Press **E** to "twist" (draw a card, displayed as text: *"7 of clubs"*), or **Space** to
+    "stick". Bust at >21.
+  - Highest hand wins the pot. If player wins: pot = 5 COIN × number of players (max 20 COIN).
+  - If player loses: entry fee lost. If player busts and NPC doesn't: NPC says *"Unlucky, son."*
+- Cheat option: if player holds `STOLEN_PHONE`, press **Q** to peek at NPC hand (25% caught;
+  caught → kicked out, Notoriety +8, `MARCHETTI_CREW` Respect −20).
+- Card game available once per in-game day (resets at 00:00).
+
+**Named NPCs**:
+
+- **Dennis the Proprietor** (`NPC` type `SHOPKEEPER`, ID `"dennis_proprietor"`):
+  Stands at the counter near the entrance. Rents tables, sells `CHALK_CUBE` (1 COIN,
+  restores 1 tip-success attempt — cosmetic). Speech: *"You playing or just watching?"*
+  Bars player for 1 in-game day if a brawl occurs. During closing time (23:00) says:
+  *"Right, that's time gentlemen. I'm not joking."*
+
+- **Frank the Hustler** (`NPC` type `SNOOKER_HUSTLER`, ID `"frank_hustler"`):
+  Wanders between tables 12:00–22:00. Always up for a frame. Difficulty: HUSTLER tier.
+  Speech: *"Fancy a game? Tenner a frame, friendly like."* If player beats Frank twice in
+  the same session: seeds a `SHOP_NEWS` rumour across nearby NPCs: *"Someone absolutely
+  wiped the floor with Frank at Cue Zone. He's fuming."*
+
+- **One-Armed Carl** (`NPC` type `PUBLIC`, ID `"one_armed_carl"`): Unlocked at `STREET_LADS`
+  Respect ≥ 75. Legendary player despite the arm. Difficulty: LEGEND tier. Beating Carl
+  unlocks `AchievementType.SNOOKER_LEGEND`. Speech: *"Go on then. Don't embarrass yourself."*
+
+**New Materials / Props**:
+
+- `Material.CUE` — a snooker cue. Craftable: `WOOD` × 2. Can be used as a melee weapon
+  (2 hit damage, same as a plank). Breaks after 3 weapon hits (drops `WOOD` × 1).
+  Required in hotbar to play (Dennis won't let you play without one; he rents them for
+  1 COIN if you don't have one).
+- `Material.CHALK_CUBE` — cosmetic tip-chalk. Sold by Dennis for 1 COIN.
+- `PropType.SNOOKER_TABLE_PROP` — a full-size snooker table block structure (4×2 blocks,
+  green felt colour). Collidable; player must stand at one end to interact.
+- `PropType.SNOOKER_REGULAR_NPC` — spectating NPC used for hustle bets (spawn 2–4 in
+  hall during opening hours).
+
+**Faction & Rumour Integration**:
+
+- Beating Frank twice: `STREET_LADS` Respect +5 (they respect a hustler).
+- Winning the back-room card game: `MARCHETTI_CREW` Respect +5.
+- Getting caught cheating in card game: `MARCHETTI_CREW` Respect −20.
+- A brawl in the hall (punching any NPC inside): `MARCHETTI_CREW` Respect −10,
+  `THE_COUNCIL` Respect +3 (they love the law being respected).
+- Rumour on back-room win: *"Someone cleaned out the card game at Cue Zone.
+  Marchetti lads aren't happy."* — `RumourType.GANG_ACTIVITY`.
+
+**Achievements**:
+
+- `AchievementType.FIRST_FRAME` — win your first snooker frame.
+- `AchievementType.SNOOKER_HUSTLER` — complete a hustle undetected.
+- `AchievementType.SNOOKER_LEGEND` — beat One-Armed Carl.
+- `AchievementType.BACK_ROOM_WINNER` — win the Marchetti card game.
+- `AchievementType.CHALK_AND_TALK` — buy a chalk cube from Dennis (cosmetic/collector).
+
+**Add `SNOOKER_HALL` to `LandmarkType`** with display name `"Cue Zone"`.
+**Add `SNOOKER_HUSTLER` to `NPCType`**.
+**Add `CUE` and `CHALK_CUBE` to `Material`**.
+**Add `SNOOKER_TABLE_PROP` to `PropType`**.
+**Add all five achievements to `AchievementType`**.
+
+**Unit tests**: Table rental coin deduction; frame scoring logic (15-event limit, winner
+detection, draw handling); hustle detection probability (25%); NPC tier accuracy values;
+back-room pontoon bust detection; card-game cheat caught probability (25%); `CUE` weapon
+damage and durability; Dennis ban duration; rumour seeding on double Frank-win and
+back-room win; faction Respect deltas for all events.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Rent a table and win a frame**: Give player 2 COIN and 1 `CUE`. Press E on
+   `SNOOKER_TABLE_PROP`. Verify 2 COIN deducted. Simulate 15 scoring events all landing
+   in green zone (force `SnookerSystem` timing-bar result to always succeed). Verify
+   frame ends with player winning. Verify player inventory contains 3 COIN (rental
+   refunded + 3 coin prize) and `SnookerSystem.getState()` returns `IDLE`.
+
+2. **Lose a frame and lose rental**: Give player 2 COIN and 1 `CUE`. Rent a table.
+   Force all 15 scoring events to red zone (player misses). Verify player ends frame with
+   0 COIN (rental not returned). Verify NPC opponent's score > player score.
+
+3. **Hustle completes undetected**: Place a `SNOOKER_REGULAR_NPC` spectating at the
+   table. Bet 5 COIN. Simulate player hitting red zone 3 times in a row. Force hustle-
+   detection RNG to < 0.75 (not caught). Verify on next frame the NPC opponent drops
+   one difficulty tier. Win the frame. Verify player receives 10 COIN (5 × 2). Verify
+   `TRADING` skill XP increased by 10.
+
+4. **Hustle detected mid-frame**: Place a `SNOOKER_REGULAR_NPC`. Bet 5 COIN. Simulate
+   3 consecutive red-zone misses. Force detection RNG ≥ 0.75 (caught). Verify 5 COIN
+   deducted from inventory (bet confiscated). Verify Notoriety increased by 3. Verify
+   `RumourNetwork` contains a `GANG_ACTIVITY` rumour with text containing "hustling".
+
+5. **Back-room access requires Marchetti Respect**: Set `MARCHETTI_CREW` Respect to 50
+   (below 60). Press E on the back-room door. Verify door does not open and `SnookerSystem`
+   returns `ACCESS_DENIED`. Set Respect to 60. Press E again. Verify door opens and
+   `SnookerSystem.getState()` transitions to `BACK_ROOM_CARD_GAME`.
+
+6. **Card game win pays out correctly**: Enter back-room with 5 COIN entry. Force
+   `SnookerSystem` card-game RNG so player holds 19 (safe) and all NPC opponents bust
+   (>21). Verify player receives pot = 5 COIN × 4 players = 20 COIN. Verify
+   `MARCHETTI_CREW` Respect increased by 5. Verify card game is marked unavailable for
+   the rest of the in-game day (second entry attempt returns `GAME_UNAVAILABLE`).
+
+7. **Dennis bans player after brawl**: Player punches any NPC inside the snooker hall.
+   Verify `SnookerSystem.isBanned()` returns true. Verify the next attempt to press E on
+   Dennis returns a "banned" message. Advance in-game time by 1 full day (24 hours).
+   Verify `SnookerSystem.isBanned()` returns false (ban expired).
+
+8. **CUE used as weapon degrades and breaks**: Give player 1 `CUE`. Punch a `PUBLIC` NPC
+   3 times using the CUE as the active hotbar item. Verify each hit deals 2 damage.
+   After the 3rd hit, verify `CUE` is removed from inventory and `WOOD` count increased
+   by 1 (breakage drop). Verify the 4th punch (bare-fisted) deals default punch damage
+   (not 2).
