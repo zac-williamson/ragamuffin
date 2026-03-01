@@ -24788,3 +24788,161 @@ BURNED(
 // No new PropType additions required (COUNTER_PROP, PHONE_DISPLAY_PROP already exist or
 // can reuse SHOPKEEPER_COUNTER_PROP; REPAIR_BENCH_PROP reuses WORKBENCH_PROP).
 // All Material, NPCType, LandmarkType entries already defined in their respective enums.
+
+---
+
+## Issue #1067: Northfield Poundstretcher — Sharon's Shop, Slippery Floors & the Shoplifting Economy
+
+### Overview
+
+The **Poundstretcher** on the Northfield high street is a bargain retailer selling own-brand
+cleaning products, cheap food, and knock-off clothing at 1–3 COIN apiece. Run by Sharon
+(`NPCType.POUND_SHOP_MANAGER`) with one floor `SHOP_WORKER`, it is the go-to source for
+crafting ingredients (BLEACH, GAFFER_TAPE, CABLE_TIES) and the KNOCK_OFF_TRACKSUIT disguise.
+
+The shop has a **shoplifting mechanic**: stuffing items into inventory without paying triggers
+a loss-prevention alert. Sharon escalates to the police if the player does not leave within
+8 seconds. A SLIPPERY_FLOOR_TRAP (crafted from WASHING_UP_LIQUID + MOP) can be placed at
+the shop entrance to slow NPCs during escape.
+
+NPCType entries `POUND_SHOP_MANAGER` and `SHOP_WORKER`, and all item Materials
+(BLEACH, GAFFER_TAPE, KNOCK_OFF_TRACKSUIT, BAKED_BEANS_TIN, CABLE_TIES,
+WASHING_UP_LIQUID, MOP, CLOTH, CANDLE) are **already defined** in their respective enums.
+This issue implements the missing `PoundShopSystem`, `POUND_SHOP` LandmarkType entry, and
+WorldGenerator placement.
+
+### Opening hours
+
+Mon–Sat 08:30–18:30 / Sun 10:00–16:00. Closed on Christmas Day (in-game).
+
+### Shop stock (prices in COIN)
+
+| Item | Price | Notes |
+|------|-------|-------|
+| BLEACH | 1 | Ingredient: IMPROVISED_PEPPER_SPRAY |
+| GAFFER_TAPE | 2 | Ingredient: MAKESHIFT_ARMOUR, DUCT_TAPE_RESTRAINT |
+| CABLE_TIES | 2 | Ingredient: DUCT_TAPE_RESTRAINT; HeistSystem guard-binding |
+| WASHING_UP_LIQUID | 1 | Ingredient: SLIPPERY_FLOOR_TRAP |
+| MOP | 2 | Ingredient: SLIPPERY_FLOOR_TRAP |
+| CLOTH | 1 | Ingredient: MAKESHIFT_ARMOUR |
+| CANDLE | 1 | SquatFurnishingTracker light source |
+| BAKED_BEANS_TIN | 1 | Restores hunger |
+| KNOCK_OFF_TRACKSUIT | 3 | Disguise: −15% NPC recognition |
+
+### Events
+
+- `SHARON_ALERT` — player pocketed item without paying; Sharon calls SHOP_WORKER and starts
+  an 8-second countdown. Player leaving the shop before countdown expires cancels the alert.
+  Player caught → `CriminalRecord.CrimeType.THEFT` + Notoriety +5.
+- `SLIPPERY_FLOOR_TRAP_PLACED` — player places trap at entrance; any NPC (including Sharon)
+  entering the tile is slowed to 50% speed for 10 seconds.
+- `WEDNESDAY_DEAL` — every in-game Wednesday, one random item is discounted by 1 COIN
+  (min 1). Sharon announces via speech bubble: "Wednesday's the best day for deals."
+- `LOCALS_DISCOUNT` — at LOCALS faction Respect ≥ 60, Sharon gives −1 COIN on all items.
+
+### Integration with existing systems
+
+- **`CraftingSystem`** — BLEACH + CANDLE → IMPROVISED_PEPPER_SPRAY; GAFFER_TAPE + CLOTH →
+  MAKESHIFT_ARMOUR; WASHING_UP_LIQUID + MOP → SLIPPERY_FLOOR_TRAP.
+- **`HeistSystem`** — CABLE_TIES used for guard-binding during heists.
+- **`DisguiseSystem`** — KNOCK_OFF_TRACKSUIT lowers NPC recognition by 15%.
+- **`NotorietySystem`** — shoplifting caught adds +5 Notoriety.
+- **`WarmthSystem`** — KNOCK_OFF_TRACKSUIT provides +5 warmth (cheap synthetic fabric).
+- **`HealingSystem`** — BAKED_BEANS_TIN restores 10 hunger points.
+- **`RumourNetwork`** — Sharon seeds a `LOCAL_EVENT` rumour once per session:
+  "Sharon at Poundstretcher says someone's been lifting from the stockroom."
+- **`SquatSystem` / `SquatFurnishingTracker`** — CANDLE tracked as light source in furnished
+  squat; adds +3 to Squat Comfort score.
+- **`FenceSystem`** — KNOCK_OFF_TRACKSUIT fences for 1 COIN (it's already worthless).
+
+### New LandmarkType entry
+
+```java
+// ── Issue #1067: Northfield Poundstretcher ────────────────────────────────────
+/**
+ * Northfield Poundstretcher — own-brand bargain retailer on the high street.
+ * Run by Sharon (POUND_SHOP_MANAGER). Open Mon–Sat 08:30–18:30, Sun 10:00–16:00.
+ * Compact 8×6-block floor plan: SHOPKEEPER_COUNTER_PROP at rear, shelf CRATE_PROPs
+ * along two walls. Entrance on south face.
+ */
+POUND_SHOP,
+```
+
+### Achievements (add to `AchievementType`)
+
+```java
+// ── Issue #1067: Northfield Poundstretcher ────────────────────────────────────
+FIVE_FINGER_DISCOUNT(
+    "Five Finger Discount",
+    "Shoplifted from Poundstretcher. Sharon saw you. She always sees you.",
+    1
+),
+SLIPPERY_CUSTOMER(
+    "Slippery Customer",
+    "Placed a Slippery Floor Trap at the Poundstretcher entrance. Sharon went down like a sack of spuds.",
+    1
+),
+ADIADS(
+    "Adiads",
+    "Bought the Knock-Off Tracksuit. You look completely inconspicuous.",
+    1
+),
+BULK_BUY(
+    "Bulk Buy",
+    "Spent 20 COIN or more in a single Poundstretcher visit. Sharon gave you a loyalty nod.",
+    1
+),
+```
+
+### Unit tests
+
+1. **Shop sells BLEACH for 1 COIN**: Create `PoundShopSystem`. Give player 1 COIN.
+   Call `buyItem(player, inventory, Material.BLEACH)`. Verify BLEACH added to inventory,
+   player coin count decreased by 1.
+2. **Insufficient funds refused**: Give player 0 COIN. Call `buyItem(player, inventory, Material.GAFFER_TAPE)`.
+   Verify returns false, inventory unchanged.
+3. **Shoplifting triggers SHARON_ALERT**: Call `pocketItem(player, Material.CABLE_TIES)` without paying.
+   Verify `isSharonAlertActive()` returns true. Verify `getSharonCountdownSeconds()` == 8.
+4. **Escaping before countdown cancels alert**: Activate SHARON_ALERT. Move player outside shop bounds.
+   Call `update(delta, ...)`. Verify `isSharonAlertActive()` returns false, no CriminalRecord entry added.
+5. **Caught after countdown adds crime**: Activate SHARON_ALERT. Advance 8+ seconds without moving.
+   Call `update(delta, ...)`. Verify `CriminalRecord` contains THEFT entry, Notoriety increased by 5.
+6. **Wednesday deal discounts one item by 1 COIN**: Set in-game day to Wednesday. Call `getPrice(player, item)`.
+   Verify at least one item costs 1 less than its base price (minimum 1 COIN).
+7. **LOCALS discount at Respect ≥ 60**: Set LOCALS faction Respect to 60. Call `getPrice(player, Material.GAFFER_TAPE)`.
+   Verify returns 1 (2 base − 1 discount).
+8. **isOpen() respects hours**: Set time to 08:00 Mon. Verify false. Set to 09:00 Mon. Verify true.
+   Set to 19:00 Mon. Verify false. Set to 10:30 Sun. Verify true. Set to 16:30 Sun. Verify false.
+
+### Integration tests
+
+1. **Buy BLEACH + CANDLE → craft IMPROVISED_PEPPER_SPRAY**:
+   Give player 2 COIN. Open shop. Buy BLEACH (1 COIN) and CANDLE (1 COIN). Verify inventory
+   contains BLEACH + CANDLE, 0 COIN remaining. Open `CraftingSystem`. Craft IMPROVISED_PEPPER_SPRAY.
+   Verify IMPROVISED_PEPPER_SPRAY in inventory, BLEACH + CANDLE removed.
+
+2. **Shoplift → Sharon escalates → police called**:
+   Enter shop. Pocket GAFFER_TAPE without paying. Verify SHARON_ALERT active. Wait 8+ seconds
+   (advance game time). Verify POLICE NPC spawns near shop entrance. Verify player
+   `CriminalRecord` contains THEFT, Notoriety increased by 5.
+
+3. **KNOCK_OFF_TRACKSUIT reduces NPC recognition**:
+   Note player recognition rate with no disguise (call `DisguiseSystem.getRecognitionModifier(player)`).
+   Buy KNOCK_OFF_TRACKSUIT and equip. Call `DisguiseSystem.getRecognitionModifier(player)`.
+   Verify new modifier is 15% lower than baseline.
+
+4. **Slippery Floor Trap slows Sharon during escape**:
+   Player has WASHING_UP_LIQUID + MOP. Craft SLIPPERY_FLOOR_TRAP. Place trap at shop entrance.
+   Trigger SHARON_ALERT. Verify Sharon NPC enters entrance tile. Verify Sharon speed drops to
+   50% of normal for ≥ 10 seconds. Verify player escapes shop bounds before countdown.
+
+5. **Candle improves squat comfort**:
+   Establish a squat (SquatSystem). Buy CANDLE. Place CANDLE in squat via `SquatFurnishingTracker`.
+   Verify `getComfortScore()` increases by 3. Verify CANDLE appears in `getPlacedItems()`.
+
+// ── Issue #1067: Northfield Poundstretcher ──────────────────────────────────
+// New: PoundShopSystem.java in ragamuffin.core
+// New: POUND_SHOP entry in LandmarkType.java
+// New: FIVE_FINGER_DISCOUNT, SLIPPERY_CUSTOMER, ADIADS, BULK_BUY in AchievementType.java
+// WorldGenerator: place POUND_SHOP on high street between BARBER and CHARITY_SHOP zones
+// All Material and NPCType entries already exist (Issue #1018).
