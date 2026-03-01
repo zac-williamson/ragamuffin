@@ -1708,6 +1708,34 @@ public enum AchievementType {
         "Regular Parishioner",
         "Attended five Sunday services. God is starting to recognise your face.",
         5
+    ),
+
+    // ── Issue #1020: Northfield Sporting & Social Club ────────────────────────
+
+    FULL_MEMBER(
+        "Card-Carrying Member",
+        "Became a full member of the Northfield Sporting & Social Club. Derek shook your hand. Firmly.",
+        1
+    ),
+    QUIZ_CHAMPION(
+        "Quiz Champion",
+        "Won Thursday Quiz Night with a perfect score. Derek announced it to the whole room. Twice.",
+        1
+    ),
+    DARTS_HUSTLER_CLUB(
+        "Darts Hustler",
+        "Won 5 COIN off a MEMBER in a darts challenge at the social club. You didn't even look like you were trying.",
+        1
+    ),
+    AGM_TROUBLEMAKER(
+        "Point of Order",
+        "Successfully moved a motion at the AGM. The committee looked deeply uncomfortable.",
+        1
+    ),
+    COMMITTEE_CONSPIRACY(
+        "Follow the Money",
+        "Witnessed Derek's protection payment to the Marchetti Crew. Sometimes it's better not to know.",
+        1
     );
 
     private final String name;

@@ -108,7 +108,11 @@ public class StreetSkillSystem {
         HORTICULTURE,
         /** Issue #1004: Boxing — trained at the community centre boxing club. Max level 10.
          *  Provides punch damage bonus at levels 3 (+2) and 6 (+5 total). */
-        BOXING
+        BOXING,
+        /** Issue #1020: Darts — played at the social club DARTBOARD_PROP or pub dartboard.
+         *  Raw integer points (0–10). Improves accuracy in 301 mini-game:
+         *  level 0–2: baseline; 3–5: +1 scoring accuracy tier; 6+: double-out bonus. */
+        DARTS
     }
 
     // ── Tier enum ─────────────────────────────────────────────────────────────
@@ -721,6 +725,18 @@ public class StreetSkillSystem {
         int level = getSkillLevel(Skill.BOXING);
         if (level >= 6) return 5;
         if (level >= 3) return 2;
+        return 0;
+    }
+
+    /**
+     * Issue #1020: Returns the darts accuracy bonus tier based on DARTS skill level.
+     * 0 at skill 0–2 (baseline), 1 at skill 3–5 (+1 scoring accuracy tier),
+     * 2 at skill ≥ 6 (double-out bonus: +20% double-out success rate).
+     */
+    public int getDartsAccuracyBonus() {
+        int level = getSkillLevel(Skill.DARTS);
+        if (level >= 6) return 2;
+        if (level >= 3) return 1;
         return 0;
     }
 

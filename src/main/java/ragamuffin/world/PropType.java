@@ -756,7 +756,47 @@ public enum PropType {
     /** Wall-mounted flash sheet showing tattoo designs. */
     FLASH_SHEET_PROP(0.05f, 0.80f, 0.60f, 1, null),
     /** Tattoo station workbench with inks and equipment. */
-    TATTOO_STATION_PROP(1.00f, 1.00f, 0.60f, 4, Material.NEEDLE);
+    TATTOO_STATION_PROP(1.00f, 1.00f, 0.60f, 4, Material.NEEDLE),
+
+    // ── Issue #1020: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * DARTBOARD_PROP — wall-mounted bristle dartboard at the social club.
+     * Press E to start a darts mini-game (301 countdown, double-out required).
+     * NPC challenge mode: challenge a MEMBER for a 5 COIN pot.
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    DARTBOARD_PROP(0.50f, 0.50f, 0.10f, 3, Material.WOOD),
+
+    /**
+     * NOTICE_BOARD_PROP — cork notice board in the social club entrance.
+     * Displays upcoming quiz night, AGM dates, and club rules.
+     * Press E to read. Destroyed by 2 punches; yields WOOD.
+     */
+    NOTICE_BOARD_PROP(0.80f, 1.00f, 0.10f, 2, Material.WOOD),
+
+    /**
+     * MEMBERSHIP_DESK_PROP — Derek's membership desk near the entrance.
+     * Press E to apply for membership (requires STREET_LADS Respect ≥ 40 for TEMP,
+     * ≥ 60 for FULL, or a guest invite from a MEMBER).
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    MEMBERSHIP_DESK_PROP(1.20f, 0.90f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * CLUB_DOOR_PROP — the reinforced front door of the social club.
+     * Closed 23:00–11:00. Friday/Saturday: PubLockInSystem lock-in from 23:00.
+     * Blocking entry when the player is Wanted Tier 2+ (Keith informs the door).
+     * Destroyed by 8 punches; yields WOOD.
+     */
+    CLUB_DOOR_PROP(1.00f, 2.20f, 0.20f, 8, Material.WOOD),
+
+    /**
+     * TROPHY_CABINET_PROP — glass-fronted trophy cabinet in the main room.
+     * Contains darts and snooker trophies. Decorative; press E for flavour text.
+     * Destroyed by 3 punches; yields GLASS.
+     */
+    TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 3, Material.GLASS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
