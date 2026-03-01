@@ -267,6 +267,12 @@ public enum Material {
     CAN_OF_LAGER("Can of Lager"),
 
     /**
+     * Plastic Bag — given free with any purchase at Khan's Off-Licence.
+     * Provides +1 inventory slot while carried.
+     */
+    PLASTIC_BAG("Plastic Bag"),
+
+    /**
      * Cigarette — sold to NPCs to satisfy DESPERATE need.
      * Affected by COUNCIL_CRACKDOWN event (restricted supply).
      */
@@ -2615,6 +2621,7 @@ public enum Material {
 
             // Issue #769: Black Market Economy items
             case GREGGS_PASTRY:      return c(0.88f, 0.68f, 0.22f);  // Golden pastry
+            case PLASTIC_BAG:        return c(0.85f, 0.92f, 0.95f);  // Translucent white bag
             case CAN_OF_LAGER:       return cs(0.88f, 0.75f, 0.10f,  // Gold lager label
                                                0.55f, 0.55f, 0.60f); // Silver can
             case CIGARETTE:          return cs(0.95f, 0.95f, 0.90f,  // White paper
@@ -3198,6 +3205,7 @@ public enum Material {
             case HI_VIS_VEST:
             case GREGGS_APRON:
             // Issue #769: Black Market Economy items
+            case PLASTIC_BAG:
             case GREGGS_PASTRY:
             case CAN_OF_LAGER:
             case CIGARETTE:
@@ -3703,6 +3711,8 @@ public enum Material {
             // Issue #769: Black Market Economy items
             case GREGGS_PASTRY:
                 return IconShape.FOOD;
+            case PLASTIC_BAG:
+                return IconShape.FLAT_PAPER; // carrier bag
             case CAN_OF_LAGER:
                 return IconShape.BOTTLE;
             case CIGARETTE:
