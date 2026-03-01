@@ -127,5 +127,23 @@ public enum RumourType {
     /** "Someone got proper kicked out of the pub last night — all hell broke loose"
      * — seeded by WetherspoonsSystem when the KICKED_OUT atmospheric event fires.
      * Spreads via NPCs within 30 blocks of The Rusty Anchor. */
-    TROUBLE_AT_PUB;
+    TROUBLE_AT_PUB,
+
+    // ── Issue #975: Northfield Post Office ────────────────────────────────────
+
+    /** "Heard someone's been nicking parcels off doorsteps — broad daylight an' all"
+     * — seeded by PostOfficeSystem on PARCEL_THEFT when a witness is present.
+     * Spreads via nearby NPCs; increases police patrol awareness in residential areas. */
+    PARCEL_THEFT_SPOTTED,
+
+    /** "Maureen at the post office caught someone trying to cash a stolen benefits book.
+     * Phoned the police herself, she did."
+     * — seeded by PostOfficeSystem on BENEFITS_FRAUD detection.
+     * Spreads via PENSIONER NPCs who recognise the fraud pattern. */
+    BENEFITS_FRAUD_CAUGHT,
+
+    /** "Someone round here's been sending nasty letters. Police are asking questions."
+     * — seeded by PostOfficeSystem when a threatening letter is traced at Tier 3+.
+     * Spreads town-wide; increases WATCH_MEMBER vigilance. */
+    THREATENING_LETTER;
 }

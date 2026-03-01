@@ -562,7 +562,20 @@ public enum NPCType {
      * Calls police and adds +1 Wanted star on PRESCRIPTION_FRAUD detection.
      * Passive otherwise; never hostile.
      */
-    PHARMACIST(20f, 0f, 0f, false);
+    PHARMACIST(20f, 0f, 0f, false),
+
+    // ── Issue #975: Northfield Post Office ────────────────────────────────────
+
+    /**
+     * Counter Clerk — Maureen, the Post Office counter clerk.
+     * Present Mon–Fri 09:00–17:30, Sat 09:00–12:30.
+     * Handles benefit book cashing, scratch card sales, and stamp purchases.
+     * 40% chance of detecting a stolen BENEFITS_BOOK from a PENSIONER (BENEFITS_FRAUD).
+     * Passive; never hostile. Familiar with every regular's face.
+     * Speech: "Next please." / "Sign here, love." / "Have you got your book?"
+     *         / "I'm going to have to ask you to wait."
+     */
+    COUNTER_CLERK(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

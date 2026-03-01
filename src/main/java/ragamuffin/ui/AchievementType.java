@@ -1404,6 +1404,38 @@ public enum AchievementType {
         "Medical Advice Ignored",
         "Drank a pint within 10 minutes of taking Strong Meds. The leaflet warned you.",
         1
+    ),
+
+    // ── Issue #975: Northfield Post Office ────────────────────────────────────
+
+    SIGNED_FOR_IT(
+        "Signed For It",
+        "Cashed your benefits book at the Post Office for the first time. Every week. Without fail. Allegedly.",
+        1
+    ),
+
+    LUCKY_DIP(
+        "Lucky Dip",
+        "Won the 25 COIN jackpot on a scratch card. Maureen looked almost pleased for you.",
+        1
+    ),
+
+    SPECIAL_DELIVERY(
+        "Special Delivery",
+        "Stole five parcels from doorsteps in a single morning. Worse than Amazon, and that's saying something.",
+        5
+    ),
+
+    GOING_POSTAL(
+        "Going Postal",
+        "Completed a full postman delivery shift without diverting a single parcel. Almost honest work.",
+        1
+    ),
+
+    DEAR_SIR(
+        "Dear Sir or Madam",
+        "Sent a threatening letter through the Royal Mail. First class. Because you mean business.",
+        1
     );
 
     private final String name;
