@@ -2062,6 +2062,33 @@ public enum AchievementType {
         "Saturday Bargain Hunter",
         "Purchased 3 items from a single Bring & Buy Sale session. Happy shopping.",
         1
+    ),
+
+    // ── Issue #1065: Fix My Phone ──────────────────────────────────────────────
+    SIMSWAPPER(
+        "SIM Swapper",
+        "Completed your first IMEI wipe. Tariq said he didn't want to know. He definitely wants to know.",
+        1
+    ),
+    PLANTED_IT(
+        "Planted It",
+        "Planted a cloned phone on an NPC for surveillance. Three hours of intel. Completely illegal.",
+        1
+    ),
+    CRACKED_SCREEN(
+        "Cracked Screen",
+        "The POLICE_KNOCK event fired while you were holding a stolen phone. You moved faster than you thought.",
+        1
+    ),
+    TARIQ_REGULAR(
+        "Tariq's Regular",
+        "Used Fix My Phone five times. Tariq has stopped pretending he doesn't know your name.",
+        5
+    ),
+    BURNED(
+        "Burned",
+        "A cloned phone's surveillance burned out. Three rumours. Zero fingerprints.",
+        1
     );
 
     private final String name;
