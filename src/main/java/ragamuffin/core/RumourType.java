@@ -332,5 +332,19 @@ public enum RumourType {
      * — seeded by ByElectionSystem when the player destroys 3 or more election posters.
      * Spreads via NEIGHBOURHOOD_WATCH members and PENSIONER NPCs.
      * Adds +3 patrol awareness near polling station and canvassing areas. */
-    POSTER_VANDAL;
+    POSTER_VANDAL,
+
+    // ── Issue #1110: Skin Deep Tattoos ────────────────────────────────────────
+
+    /** "There's some dodgy bloke setting up outside The Vaults doing tats for a fiver — I'd avoid it."
+     * — seeded by TattooParlourSystem when Spider the rival tattooist is active on Saturday
+     *   and the player tips off Kev. Spreads via PUBLIC and STREET_LADS NPCs.
+     *   Seeds a follow-up brawl event between Kev and Spider at 15:00. */
+    LOCAL_DISPUTE,
+
+    /** "Saw someone in the precinct absolutely covered in ink — looked proper hard."
+     * — seeded by TattooParlourSystem when the player applies a PRISON_INK buff
+     *   (either at Kev's or DIY). Spreads via PUBLIC and YOUTH_GANG NPCs.
+     *   Minor Notoriety gain (+1) for nearby witnesses. */
+    STREET_REPUTATION;
 }

@@ -771,6 +771,14 @@ public enum PropType {
      */
     CCTV_CAMERA_PROP(0.25f, 0.20f, 0.30f, 2, Material.SCRAP_METAL),
 
+    // ── Issue #1110: Skin Deep Tattoos — neon sign ────────────────────────────
+    /**
+     * TATTOO_SIGN_PROP — neon shop sign mounted outside Skin Deep Tattoos.
+     * Visible at night; glows pink/purple. Destroyed by 3 hits; yields SCRAP_METAL.
+     * Interacting (E) causes Kev to shout "Oi, that's me sign!"
+     */
+    TATTOO_SIGN_PROP(0.40f, 0.30f, 0.10f, 3, Material.SCRAP_METAL),
+
     // ── Issue #1020: Northfield Sporting & Social Club ────────────────────────
 
     /**
