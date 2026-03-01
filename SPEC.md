@@ -19376,3 +19376,168 @@ TATTOOIST(20f, 0f, 0f, false)
 5. **Kev buys needles on Thursday**: Set time to Thursday 12:00. Give player 3 `NEEDLE` items. Press E on Kev. Select "Supply run" option. Verify player inventory loses 3 `NEEDLE`. Verify player COIN increases by 6 (3 × 2 COIN). Verify `TattooSystem.isSupplyDayActive()` returns true.
 
 6. **Kev back-room unlocked at Trust 3**: Apply 3 tattoos via Kev. Verify `TattooSystem.getKevTrust(player)` == 3. Press E on Kev. Verify back-room option "Something special?" appears in menu. Select it. Verify player inventory receives `TATTOO_GUN`.
+
+---
+
+## Issue #1014: Northfield Newsagent — Patel's News: Paper Rounds, Scratch Cards & Corner-Shop Commerce
+
+### Overview
+
+**Patel's News** is a cluttered, over-lit newsagent on the high street — the kind of shop that sells everything from the *Daily Ragamuffin* to out-of-date Ginster's pasties. Run by **Patel** (a harried but good-natured shopkeeper, `NPCType.SHOPKEEPER`), it is open **every day 05:30–22:00** — one of the few businesses open before 9. A `NEWSAGENT` landmark type already exists in `LandmarkType`; a new `NewsagentSystem` implements all mechanics.
+
+---
+
+### Core Mechanics
+
+#### 1. Shop Stock (press E on Patel or COUNTER_PROP)
+
+Daily rotating stock of 8 items drawn from the newsagent pool:
+
+| Item | Price (COIN) | Notes |
+|---|---|---|
+| `NEWSPAPER` | 1 | Today's *Daily Ragamuffin* — reading it reveals the current headline and seeds a rumour |
+| `SCRATCH_CARD` | 2 | Instant reveal; prizes: COIN 0 (50%), 1 (25%), 3 (15%), 5 (7%), 10 (2%), 50 (1%) |
+| `LOTTERY_TICKET` | 1 | Daily draw at 20:00; jackpot 100 COIN (0.5% chance), match-3: 5 COIN (8%) |
+| `CRISPS` | 1 | +10 hunger |
+| `CHOCOLATE_BAR` | 1 | +15 hunger, +2 mood |
+| `ENERGY_DRINK` | 2 | +5 hunger, sprint speed +20% for 3 in-game minutes |
+| `BIRTHDAY_CARD` | 1 | Sellable to a NPC target for 2 COIN (gift mechanic) |
+| `LIGHTER` | 2 | Used in WheeliBinFireSystem and CampfireSystem; fence value 1 COIN |
+| `CHEWING_GUM` | 1 | Reduces Notoriety detection time by 5 seconds while chewing (idle animation) |
+| `PHONE_CREDIT_VOUCHER` | 3 | Satisfies NPC `NEED_PHONE_CREDIT`; tradeable on the street for 4 COIN |
+
+At least 1 `NEWSPAPER` and 1 `SCRATCH_CARD` are always in stock. Stock refreshes at 05:30 each in-game day.
+
+#### 2. Paper Round Job
+
+Between **05:30–07:30**, Patel offers the player a **paper round shift**:
+- Accept: player receives `PAPER_SATCHEL` item (capacity 10 `NEWSPAPER`s).
+- 5 delivery addresses (terraced houses) are marked on a mini-map overlay.
+- Press E at each front door to deliver. Each delivery: +2 COIN.
+- Completing all 5 in under 15 in-game minutes: bonus +5 COIN + `EARLY_BIRD` achievement.
+- Missing any delivery: Patel deducts 1 COIN per missed address. Repeatedly missing (3 days): Patel refuses to offer the round for 2 in-game days ("You're unreliable, mate.").
+- Stealing the satchel without doing the round: −10 Notoriety, `PETTY_THIEF` criminal record entry, and Patel refuses service until Notoriety < 20.
+
+#### 3. Scratch Card Mechanics
+
+- Player buys `SCRATCH_CARD`, press E in inventory or at counter to scratch.
+- Animated text reveal (simulated with text: "— — —  ►  3 COIN!").
+- If player wins ≥ 10 COIN from a single card: seeds `LOOT_TIP` rumour ("Someone won on a scratchie at Patel's.").
+- Win of 50 COIN triggers `SCRATCH_CARD_MILLIONAIRE` achievement and a *Daily Ragamuffin* headline: *"Northfield Man's Scratchcard Dream."*
+
+#### 4. Lottery Draw
+
+- At 20:00 each in-game day, `NewsagentSystem` resolves all `LOTTERY_TICKET`s.
+- Results broadcast as a rumour: `LOTTERY_DRAW_RUMOUR`.
+- Player with a winning ticket: must return to Patel to claim within 24 in-game hours or prize is forfeit.
+- Jackpot winner (100 COIN): *Daily Ragamuffin* headline + `LUCKY_BEGGAR` achievement.
+
+#### 5. Shoplifting
+
+- Small items (CRISPS, CHOCOLATE_BAR, CHEWING_GUM) can be stolen if Patel's line of sight is blocked (LOS check from counter).
+- A `SECURITY_CAMERA_PROP` above the counter gives +20% detection chance regardless of LOS.
+- Getting caught: Patel bars the player for 10 in-game minutes, Notoriety +5, criminal record `SHOPLIFTING`.
+- Getting away: `PETTY_CROOK` achievement on 3rd successful theft.
+- Youth NPCs (`YOUTH_GANG`) have a 10% per-minute chance of attempting shoplifting while in the shop; Patel shouts "Oi!" and chases them 3 blocks.
+
+#### 6. Magazine Rack Rumours
+
+A `MAGAZINE_RACK_PROP` near the door: press E to browse. Each browse (once per in-game hour) reveals one random rumour from `RumourNetwork` as flavour text — framed as a magazine headline ("According to *Wheels & Deals*: someone's been laundering money at the car wash.").
+
+#### 7. Lottery Syndicate (Side Quest)
+
+Patel occasionally (once per in-game week, Monday mornings) invites the player to join a syndicate:
+- Player contributes 5 COIN.
+- Syndicate wins at 3× the normal ticket odds (combined 12 tickets).
+- If syndicate wins (≥ match-3): player gets their share proportionally.
+- Declining: Patel shrugs ("Your loss, mate.").
+
+---
+
+### System Integrations
+
+- `NewspaperSystem` — buying `NEWSPAPER` from Patel marks today's paper as "read" and delivers the same headline text; Patel is also where the press manipulation tip-off can be initiated (Patel acts as middleman: "I know a bloke at the paper.").
+- `TimeSystem` — opening hours (05:30–22:00); paper round window (05:30–07:30); lottery draw at 20:00.
+- `StreetEconomySystem` — `PHONE_CREDIT_VOUCHER` satisfies `NEED_PHONE_CREDIT`; `ENERGY_DRINK` satisfies `BORED` need if traded on the street.
+- `WheeliBinFireSystem` / `CampfireSystem` — `LIGHTER` from Patel is a valid ignition source.
+- `RumourNetwork` — magazine rack reveals rumours; big scratch wins seed `LOOT_TIP`; lottery result seeds `LOTTERY_DRAW_RUMOUR`.
+- `NotorietySystem` — shoplifting adds Notoriety; successful paper round has no notoriety effect; satchel theft adds.
+- `CriminalRecord` — shoplifting logs `SHOPLIFTING`; satchel theft logs `PETTY_THIEF`.
+- `AchievementSystem` — 5 new achievements (see table).
+- `WarmthSystem` — shop interior is a warm shelter (+3 Warmth/min).
+- `WeatherSystem` — rain increases `NEWSPAPER` purchase rate by 30% (NPCs shelter and read); HEATWAVE spikes `ENERGY_DRINK` sales.
+- `FactionSystem` — `LOCALS` Respect ≥ 50: Patel gives 10% discount and shares one free rumour per visit.
+
+---
+
+### New `NPCType` entry
+
+```java
+// ── Issue #1014: Newsagent ────────────────────────────────────────────────
+/**
+ * Patel — the harried proprietor of Patel's News. Never hostile; calls police
+ * if shoplifting is witnessed. Offers paper round shift 05:30–07:30.
+ * Speech: "Can I help you, mate?" / "That's 1 coin, please." /
+ *          "You buying that or just reading it?" / "Oi! Put that back!"
+ */
+NEWSAGENT_OWNER(20f, 0f, 0f, false)
+```
+
+### New `Material` entries
+
+- `SCRATCH_CARD` — "A National Lottery scratchcard. Already sticky." Instant-use; prize determined on reveal.
+- `LOTTERY_TICKET` — "Lucky Dip. Numbers: 4, 7, 12, 23, 41, 9." Resolved at 20:00 daily.
+- `CHOCOLATE_BAR` — "A Dairy Milk. Slightly soft." +15 hunger, +2 mood.
+- `CHEWING_GUM` — "Spearmint. Still in the packet." Reduces detection timer by 5s while chewing.
+- `PHONE_CREDIT_VOUCHER` — "£5 top-up. Valid at all major networks." Tradeable; satisfies `NEED_PHONE_CREDIT`.
+- `PAPER_SATCHEL` — "A canvas delivery bag with 'Patel's News' stencilled on it." Container (capacity 10 `NEWSPAPER`s); quest item for paper round.
+- `BIRTHDAY_CARD` — "A card with a picture of balloons. Generic but sincere." Giftable to NPC for +1 Faction Respect.
+
+### New `PropType` entries
+
+- `MAGAZINE_RACK_PROP` — floor-standing wire rack crammed with tabloids. Press E to browse rumours. (0.4f × 1.2f × 0.4f, 3 hits, `Material.WOOD`)
+- `NEWSPAPER_BUNDLE_PROP` — stack of morning papers near the door, delivered at 05:30. Press E to take (free if doing paper round; 1 COIN otherwise). (0.4f × 0.3f × 0.4f, 2 hits, `Material.CARDBOARD`)
+- `LOTTERY_TERMINAL_PROP` — a Camelot terminal behind the counter. Press E when Patel is present to buy lottery ticket. (0.5f × 1.0f × 0.4f, 4 hits, `Material.PLASTIC`)
+- `SECURITY_CAMERA_PROP` — a small dome camera above the counter. Increases shoplifting detection by 20%. (0.2f × 0.2f × 0.2f, 2 hits, `Material.GLASS`)
+- `COUNTER_DISPLAY_PROP` — glass display case with confectionery and lighters. Press E to browse stock. (1.2f × 0.9f × 0.4f, 6 hits, `Material.GLASS`)
+
+### New `LandmarkType` entry
+
+(Already exists as `NEWSAGENT` — no new entry needed. `getDisplayName()` already returns `"Patel's News"`.)
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `EARLY_BIRD` | Complete a full paper round in under 15 in-game minutes |
+| `SCRATCH_CARD_MILLIONAIRE` | Win 50 COIN from a single scratch card |
+| `LUCKY_BEGGAR` | Win the lottery jackpot (100 COIN) |
+| `PETTY_CROOK` | Successfully shoplift from Patel 3 times without being caught |
+| `RELIABLE_LAD` | Complete 5 paper rounds across different in-game days |
+
+### Unit Tests
+
+- `NewsagentSystem.isOpen(hour)` returns true for 05:30–21:59, false for 22:00–05:29.
+- `NewsagentSystem.isPaperRoundAvailable(hour)` returns true 05:30–07:29, false otherwise.
+- `NewsagentSystem.resolveScratchCard(random)` returns 0 at 50% probability, 1 at 25%, 3 at 15%, 5 at 7%, 10 at 2%, 50 at 1% (using seeded Random).
+- `NewsagentSystem.resolveLotteryTicket(random)` returns 0 for the common case, 5 for match-3 (8% band), 100 for jackpot (0.5% band).
+- `NewsagentSystem.getPaperRoundBonus(deliveriesCompleted, timeMinutes)` returns +5 COIN bonus only when deliveriesCompleted == 5 and timeMinutes < 15.
+- `NewsagentSystem.getShopliftDetectionChance(hasCamera, playerNotoriety)` returns base 20% without camera; base + 20% with camera; caps at 95%.
+- `NewsagentSystem.getDailyStock(seed)` always contains at least 1 `NEWSPAPER` and 1 `SCRATCH_CARD`.
+- `NewsagentSystem.getPatelDiscount(localsRespect)` returns 0.9f (10% off) when respect ≥ 50, 1.0f otherwise.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Paper round job completes and pays out**: Set time to 06:00. Press E on `NEWSAGENT_OWNER` (Patel). Accept paper round. Verify player inventory contains `PAPER_SATCHEL` with 5 `NEWSPAPER`s. Navigate to all 5 delivery addresses and press E at each door. Verify all 5 `NEWSPAPER`s removed from satchel. Verify player COIN increased by 10 (5 × 2 COIN). Verify all deliveries completed within 15 in-game minutes. Verify `EARLY_BIRD` achievement awarded. Verify `RELIABLE_LAD` counter incremented by 1.
+
+2. **Scratch card win seeds rumour when ≥ 10 COIN**: Buy `SCRATCH_CARD` from Patel. Override `Random` seed such that `resolveScratchCard` returns 10. Press E on card in inventory. Verify player COIN increases by 10. Verify `RumourNetwork` contains a `LOOT_TIP` rumour with text containing "scratchie" or "Patel's". Verify `NewspaperSystem` headline queue does NOT yet contain the big-win story (only triggers at 50 COIN).
+
+3. **Shoplifting caught by camera adds Notoriety and bars entry**: Give player `CRISPS` via direct inventory injection (bypass purchase). Simulate shoplifting attempt with `SECURITY_CAMERA_PROP` active and detection roll forced to "caught". Verify player Notoriety increased by 5. Verify `CriminalRecord` contains `SHOPLIFTING`. Verify pressing E on Patel returns "Get out. Come back in 10 minutes." for 10 in-game minutes.
+
+4. **Lottery draw resolves at 20:00 and prize claimed at counter**: Give player 1 `LOTTERY_TICKET`. Advance time to 20:00. Call `NewsagentSystem.update(delta, timeSystem, ...)`. Override draw result to match-3 (5 COIN prize). Verify player is notified of win. Press E on `LOTTERY_TERMINAL_PROP` before 20:00 next day. Verify player COIN increased by 5. Verify `LOTTERY_DRAW_RUMOUR` seeded in `RumourNetwork`.
+
+5. **Magazine rack reveals RumourNetwork entry**: Pre-seed `RumourNetwork` with a known rumour. Press E on `MAGAZINE_RACK_PROP`. Verify displayed text references the seeded rumour content. Advance 1 in-game hour. Press E again. Verify a new (or repeated) rumour text is displayed without error.
+
+6. **LOCALS respect discount applies**: Set `FactionSystem` `LOCALS` Respect to 55. Buy `NEWSPAPER` (base price 1 COIN). Verify player is charged 0 COIN (floored from 0.9 × 1 COIN = 0.9 → floor = 0). Set Respect to 40. Verify player charged full 1 COIN.
+
+7. **Youth gang shoplifting triggers Patel chase**: Spawn a `YOUTH_GANG` NPC inside the shop. Advance 1 in-game minute with detection roll forced to "caught". Verify Patel NPC transitions to `NPCState.CHASING` targeting the youth. Verify youth NPC exits shop and Patel returns to counter after 3 blocks.
