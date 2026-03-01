@@ -596,7 +596,20 @@ public enum NPCType {
      * One may be a Street Lads runner (Respect ≥ 60) who gives 1 free TWOPENCE per visit.
      * Speech: "Watch this!" / "Give us a go." / "I've got loads of tokens."
      */
-    ARCADE_KID(15f, 0f, 0f, false);
+    ARCADE_KID(15f, 0f, 0f, false),
+
+    // ── Issue #979: Fix My Phone — Phone Repair Shop ─────────────────────────
+
+    /**
+     * Phone Repair Man — Tariq, proprietor of Fix My Phone (PHONE_REPAIR landmark).
+     * Present Mon–Sat 09:00–18:00. Passive; offers repair, cloning (back room, Marchetti
+     * Crew Respect ≥ 50), recycling, and shift work services. At Notoriety Tier 3+ adds a
+     * 2-COIN "discretion surcharge" on all services. Faction-aware: Marchetti unlocks back
+     * room; Street Lads deliver free BROKEN_PHONE daily; Council can shutter the shop.
+     * Speech: "What's wrong with it?" / "Give us ten minutes." /
+     *         "That's not exactly yours, is it." / "I don't want to know, yeah?"
+     */
+    PHONE_REPAIR_MAN(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

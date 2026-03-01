@@ -134,7 +134,16 @@ public class CriminalRecord {
          * to the player at Notoriety Tier 3+.
          * Penalty: +10 Notoriety, 40% chance police investigate.
          */
-        THREATENING_BEHAVIOUR("Threatening behaviour");
+        THREATENING_BEHAVIOUR("Threatening behaviour"),
+
+        // ── Issue #979: Fix My Phone ─────────────────────────────────────────────
+
+        /**
+         * Recorded when the player clones a stolen phone in Tariq's back room at
+         * Fix My Phone. Also triggered by WitnessSystem if a POLICE NPC enters the
+         * shop during back-room cloning (along with Notoriety +3).
+         */
+        THEFT("Theft");
 
         private final String displayName;
 
