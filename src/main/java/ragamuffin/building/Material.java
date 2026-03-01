@@ -732,6 +732,44 @@ public enum Material {
      */
     BUBBLEGUM("Bubblegum"),
 
+    // ── Issue #1069: Ice Cream Van System (Dave's Ices — Mr. Whippy) ─────────
+
+    /**
+     * Ninety-Nine Flake — classic Mr. Whippy cone with a chocolate flake.
+     * Purchased from Dave's Ices van for 2 COIN (3 during HEATWAVE/SUNNY).
+     * Satisfies HUNGRY −20. Tooltip on first purchase:
+     * "Nothing says British summer like overpriced ice cream from a van that might fail its MOT."
+     */
+    NINETY_NINE_FLAKE("99 Flake"),
+
+    /**
+     * Lolly — a basic ice lolly from Dave's van.
+     * Purchased for 1 COIN. Satisfies HUNGRY −10.
+     * Tooltip: "Tastes like childhood and traffic fumes."
+     */
+    LOLLY("Lolly"),
+
+    /**
+     * Wafer Tub — a small tub of soft-serve ice cream with a wafer.
+     * Purchased for 2 COIN. Satisfies HUNGRY −15.
+     * Tooltip: "The spoon is barely a spoon."
+     */
+    WAFER_TUBS("Wafer Tub"),
+
+    /**
+     * Banana Split — a banana-flavoured ice lolly split down the middle.
+     * Purchased for 2 COIN. Satisfies HUNGRY −15.
+     * Tooltip: "No actual banana was harmed in the making of this."
+     */
+    BANANA_SPLIT("Banana Split"),
+
+    /**
+     * Flake 99 with Sauce — 99 Flake ice cream with strawberry sauce drizzled on top.
+     * Purchased for 3 COIN. Satisfies HUNGRY −25 and grants SWEET_TOOTH buff.
+     * Tooltip: "You asked for sauce. You got sauce. No regrets."
+     */
+    FLAKE_99_WITH_SAUCE("Flake 99 with Sauce"),
+
     // ── Issue #934: Pigeon Racing System ─────────────────────────────────────
 
     /**
@@ -2720,6 +2758,14 @@ public enum Material {
                                                 0.65f, 0.10f, 0.10f); // Darker red
 
             // Issue #932: Ice Cream Van System
+            case NINETY_NINE_FLAKE: return cs(0.98f, 0.95f, 0.88f, // Cream cone
+                                           0.42f, 0.28f, 0.10f); // Chocolate flake
+            case LOLLY:          return c(0.90f, 0.25f, 0.45f);  // Pink lolly
+            case WAFER_TUBS:     return cs(0.98f, 0.95f, 0.88f, // Cream top
+                                           0.92f, 0.82f, 0.60f); // Wafer side
+            case BANANA_SPLIT:   return c(0.95f, 0.88f, 0.20f);  // Banana yellow
+            case FLAKE_99_WITH_SAUCE: return cs(0.98f, 0.95f, 0.88f, // Cream
+                                               0.92f, 0.18f, 0.28f); // Strawberry sauce
             case ICE_CREAM_99:   return cs(0.98f, 0.95f, 0.88f,  // Cream cone
                                            0.72f, 0.52f, 0.28f); // Wafer brown
             case SCREWBALL:      return c(0.92f, 0.55f, 0.78f);  // Pink spiral
@@ -3225,6 +3271,12 @@ public enum Material {
             case CHOC_ICE:
             case OYSTER_CARD_LOLLY:
             case BUBBLEGUM:
+            // Issue #1069: Ice Cream Van System (Dave's Ices — not block items)
+            case NINETY_NINE_FLAKE:
+            case LOLLY:
+            case WAFER_TUBS:
+            case BANANA_SPLIT:
+            case FLAKE_99_WITH_SAUCE:
             // Issue #934: Pigeon Racing System (not block items)
             case RACING_PIGEON:
             case BREAD_CRUST:
@@ -3788,6 +3840,18 @@ public enum Material {
                 return IconShape.CARD;        // card-shaped lolly
             case BUBBLEGUM:
                 return IconShape.FOOD;        // small round sweet
+
+            // Issue #1069: Ice Cream Van System (Dave's Ices)
+            case NINETY_NINE_FLAKE:
+                return IconShape.FOOD;        // ice cream cone
+            case LOLLY:
+                return IconShape.CYLINDER;    // lolly stick cylinder
+            case WAFER_TUBS:
+                return IconShape.BOX;         // small tub
+            case BANANA_SPLIT:
+                return IconShape.CYLINDER;    // lolly shape
+            case FLAKE_99_WITH_SAUCE:
+                return IconShape.FOOD;        // cone with sauce
 
             // Issue #934: Pigeon Racing System
             case RACING_PIGEON:

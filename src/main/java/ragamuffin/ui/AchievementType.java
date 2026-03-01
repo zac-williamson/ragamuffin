@@ -2064,6 +2064,43 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #1069: Ice Cream Van System (Dave's Ices) ───────────────────────
+    CHEEKY_FLAKE(
+        "Cheeky Flake",
+        "Bought a 99 Flake from Dave's van on a warm day. Worth every penny. Probably.",
+        1
+    ),
+    DAVE_APPROVES(
+        "Dave Approves",
+        "Dave opened the main hatch for you without hesitation. High praise from a man with a van.",
+        1
+    ),
+    SIDE_HATCH(
+        "Side Hatch",
+        "Dave opened the side hatch. You didn't ask where any of it came from.",
+        1
+    ),
+    CHAV_CHARMED(
+        "Chav Charmed",
+        "You talked down the queue-jumping Chav without a single punch. Progress.",
+        1
+    ),
+    VAN_HEIST(
+        "Van Heist",
+        "You nicked Dave's ice cream van from the depot. The jingle is now your problem.",
+        1
+    ),
+    MARCHETTI_DEFENDER(
+        "Marchetti Defender",
+        "You protected Dave's van from the Marchetti drive-by. Dave owes you an ice cream. He will forget.",
+        1
+    ),
+    KIDS_MOB_SURVIVED(
+        "Kids Mob Survived",
+        "The school run swarm hit the queue and you made it out with your 99 Flake intact. Respect.",
+        1
+    ),
+
     // ── Issue #1065: Fix My Phone ──────────────────────────────────────────────
     SIMSWAPPER(
         "SIM Swapper",
