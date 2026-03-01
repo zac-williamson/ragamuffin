@@ -104,7 +104,15 @@ public class CriminalRecord {
         DISTURBING_THE_PEACE("Disturbing the peace"),
 
         // ── Issue #971: The Rusty Anchor Wetherspoons ──────────────────────────────
-        ASSAULT_IN_PUB("Assault in a licensed premises");
+        ASSAULT_IN_PUB("Assault in a licensed premises"),
+
+        // ── Issue #973: Northfield GP Surgery ──────────────────────────────────────
+        /**
+         * Recorded when the player attempts to use a BLANK_PRESCRIPTION_FORM at the
+         * pharmacy hatch and is caught by the pharmacist or a nearby police NPC.
+         * Penalty: +15 Notoriety, +1 Wanted star.
+         */
+        PRESCRIPTION_FRAUD("Prescription fraud");
 
         private final String displayName;
 

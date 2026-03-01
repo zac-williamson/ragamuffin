@@ -535,7 +535,34 @@ public enum NPCType {
      * 3–6 per funeral. Drops FLOWERS_PROP on departure.
      * Flees if the player attacks; never hostile.
      */
-    MOURNER(20f, 0f, 0f, false);
+    MOURNER(20f, 0f, 0f, false),
+
+    // ── Issue #973: Northfield GP Surgery ─────────────────────────────────────
+
+    /**
+     * Doctor — Dr. Kapoor, the GP at Northfield Surgery.
+     * Present behind the surgery door during opening hours (08:00–18:00 Mon–Fri).
+     * Passive; never hostile. Delivers diagnosis from the stat-based outcome table.
+     * Consultation triggered by pressing E when it is the player's turn.
+     */
+    DOCTOR(20f, 0f, 0f, false),
+
+    /**
+     * Waiting Patient — a generic queuing NPC in the GP Surgery waiting room.
+     * 1–5 present during opening hours. Passive; ambient speech lines every 15s.
+     * Speech: "Been here since half eight." / "Terrible, the waiting times."
+     *         / "Lovely carpet that, in't it." / "He looked right poorly."
+     * +1 extra spawn during FROST / COLD_SNAP weather (people warming up).
+     */
+    WAITING_PATIENT(20f, 0f, 0f, false),
+
+    /**
+     * Pharmacist — behind the pharmacy hatch at Northfield Surgery.
+     * Open 08:30–18:00. Dispenses medicine when the player presents a PRESCRIPTION.
+     * Calls police and adds +1 Wanted star on PRESCRIPTION_FRAUD detection.
+     * Passive otherwise; never hostile.
+     */
+    PHARMACIST(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
