@@ -16682,3 +16682,184 @@ coordinate mapping, rumour accumulation on Mick, criminal record dialogue flag.
    Verify Mick's greeting speech contains "Cash upfront" (the criminal-record-aware
    dialogue variant). Verify the destination menu still opens (Mick takes the money,
    just says something about it).
+
+---
+
+## Add The Rusty Anchor Wetherspoons — Cheap Pints, Thursday Curry Club & the 7am Breakfast Crowd
+
+The `WETHERSPOONS` landmark already exists in `LandmarkType` (displayed as "The Rusty Anchor")
+and the building is generated in the world, but it is completely inert — no system, no NPCs
+beyond a generic spawn point, and no interactions. This feature brings the Rusty Anchor to
+life as a distinct, fully interactive pub experience separate from The Ragamuffin Arms.
+
+### The Rusty Anchor (Wetherspoons)
+
+A large 16×14 yellow-brick pub with big front windows and a blue sign strip. Open 07:00–00:00
+daily (longer than the Arms; Spoons opens for breakfast). Interior features:
+
+- **BAR_STOOL_PROP** row at the counter (5 stools)
+- **PUB_TABLE_PROP** and **PUB_CHAIR_PROP** throughout (8 tables, 24 seats)
+- **FRUIT_MACHINE_PROP** in the corner (same mechanic as Arms fruit machine)
+- **NEWSPAPER_RACK_PROP** — free to read; player picks up 1 NEWSPAPER (if none in inventory)
+- **CHALKBOARD_PROP** — today's daily specials (breakfast, lunch, curry night)
+
+Staffed by **Gary the Barman** (BARMAN NPC type) behind the counter. Gary is a world-weary
+man of few words. Two BOUNCER NPCs flank the entrance (same role as Arms bouncers: block
+entry for Notoriety Tier 4+, but Spoons bouncers are more lenient — Tier 4 only, not Tier 3).
+
+### Menu & Drinks
+
+All prices lower than the Arms (Wetherspoons gimmick — the cheapest pub in town):
+
+| Item | Price | Notes |
+|------|-------|-------|
+| PINT | 2 COIN | Warmth +10, -5 Alertness |
+| CHEAP_SPIRITS | 1 COIN | New material; Warmth +5, -10 Alertness, 20% chance of DRUNK state |
+| FULL_ENGLISH | 3 COIN | New material; Hunger -60, Warmth +15; only 07:00–11:30 |
+| BEANS_ON_TOAST | 2 COIN | New material; Hunger -40; available all day |
+| CURRY_CLUB_SPECIAL | 4 COIN | New material; Hunger -80, Warmth +20; **Thursdays only 17:00–21:00** |
+
+New `Material` entries: `CHEAP_SPIRITS`, `FULL_ENGLISH`, `BEANS_ON_TOAST`, `CURRY_CLUB_SPECIAL`.
+
+### Thursday Curry Club
+
+On Thursdays between 17:00 and 21:00, the Rusty Anchor fills with an extra 4–6 PENSIONER
+and PUBLIC NPCs drawn by the curry night. The CHALKBOARD_PROP updates to display "CURRY CLUB
+TONIGHT — £4". The CURRY_CLUB_SPECIAL item becomes available from Gary. Eating the Curry
+Club Special seeds a `CURRY_CLUB` rumour into the RumourNetwork: "Rusty Anchor's doing the
+curry club again — four quid, can't go wrong."
+
+### 7am Breakfast Crowd
+
+Between 07:00 and 09:00, 2–4 WORKER NPCs and 1–2 PENSIONER NPCs are already seated with
+FULL_ENGLISH items visible in their hands (cosmetic). This is the only time FULL_ENGLISH
+is available for purchase. A COUNCIL_BUILDER NPC type sits reading a NEWSPAPER at one
+table — passive, briefly greets the player if approached.
+
+### App-at-the-Table Mechanic (Spoons App)
+
+The player can interact with any PUB_TABLE_PROP in the Rusty Anchor to "order at the table"
+(press E while standing next to a table). This opens a simple mini-menu showing the available
+items. Ordering at the table is **identical** to ordering from Gary except: if Notoriety is
+Tier 3+ and Gary would refuse service, ordering at the table still works (Gary hasn't spotted
+the player yet). On delivery (next press of E at the table after 10 in-game seconds):
+Gary approaches the table, drops the item, and spots the player — then refuses all further
+table orders for that visit (shouts "Oi — you've got some nerve!").
+
+### NPC Atmosphere
+
+The Rusty Anchor is home to a broader social mix than the Arms. Each in-game hour a random
+**atmospheric event** fires (1 of 5):
+
+1. **Domestic Argument**: Two PUBLIC NPCs begin arguing (animated walk-toward-each-other,
+   speech bubbles). After 30 seconds: either reconcile (hug animation placeholder: both
+   stand still) or one storms out (despawns).
+2. **Sleeping Drunk**: A DRUNK NPC slumped at a table; can be pickpocketed for 1–3 COIN
+   (see StreetEconomySystem pickpocket). Wakes if the player gets within 1 block.
+3. **Quiz Night** (Wednesdays only, 19:00–22:00): Quiz Master NPC (PUBLIC type) calls
+   questions aloud via SpeechLogUI. Player answers via yes/no prompt (3 questions, 1 COIN
+   prize per correct answer). Seeds a `LOCAL_EVENT` rumour on quiz night start.
+4. **Football on the Telly**: A new TELEVISION_PROP activates during a 20% chance each
+   evening 19:00–22:00 outside of quiz night. All seated PUBLIC NPCs turn toward it
+   (face orientation change). Player proximity reveals speech: "Come on!" / "Offside!"
+5. **Kicked Out**: A DRUNK NPC is ejected by a BOUNCER — Bouncer grabs DRUNK (walks him
+   to door), DRUNK is despawned outside. Seeds a `TROUBLE_AT_PUB` rumour.
+
+### Gary's Rumours
+
+Gary (BARMAN NPC) accumulates 1 rumour per in-game hour, same mechanic as the Arms barman.
+However, Gary's rumours have a different flavour pool: more `LOCAL_EVENT` and `NEIGHBOURHOOD`
+rumours, fewer `GANG_ACTIVITY` rumours (Spoons isn't a gangster pub).
+
+To get a rumour from Gary the player must **buy a drink first** (same as Arms), then press E
+again to hear the rumour. If the player hasn't bought a drink this visit:
+Gary says "Buy something and I'll have a chat." This is the same mechanic as the Arms barman
+but with Spoons-appropriate dialogue.
+
+### Interactions With Other Systems
+
+- **WarmthSystem**: Inside the Rusty Anchor counts as shelter (same as Arms).
+- **WeatherSystem**: Rain adds +2 extra patron NPCs (people ducking in from the rain).
+- **NotorietySystem**: Bouncer blocks Tier 4+ (more lenient than Arms Tier 3+).
+- **CriminalRecord**: Player with ASSAULT_IN_PUB record gets refused entry even below Tier 4.
+  Gary says: "Not in here, mate. You're barred."
+- **FactionSystem**: Rusty Anchor is neutral territory — no faction controls it. All faction
+  NPCs may be found here peacefully (rare cross-faction encounters possible).
+- **HealingSystem**: FULL_ENGLISH counts as a healing meal (same as any food item restoring HP).
+- **AchievementSystem**: See achievements below.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `CURRY_CLUB` | Eat the Curry Club Special on a Thursday |
+| `SEVEN_AM_PINT` | Buy a PINT before 08:00 |
+| `WETHERSPOONS_REGULAR` | Buy 10 drinks total at the Rusty Anchor |
+| `APP_AT_THE_TABLE` | Successfully order via the table mechanic |
+| `SLEEPING_DRUNK_PICKPOCKET` | Pickpocket the sleeping DRUNK NPC at the Rusty Anchor |
+
+**Add `CURRY_CLUB`, `SEVEN_AM_PINT`, `WETHERSPOONS_REGULAR`, `APP_AT_THE_TABLE`,
+`SLEEPING_DRUNK_PICKPOCKET` to `AchievementType`.**
+
+**Add `CHEAP_SPIRITS`, `FULL_ENGLISH`, `BEANS_ON_TOAST`, `CURRY_CLUB_SPECIAL` to `Material`.**
+
+**Add `NEWSPAPER_RACK_PROP`, `TELEVISION_PROP` to `PropType`.**
+
+**Add `WETHERSPOONS_SYSTEM` class** in `ragamuffin.core` implementing all the above.
+
+**Unit tests**: Menu price calculation (day/night, curry night availability), table-order
+discovery mechanic (Notoriety Tier 3+ bypass, subsequent refusal), atmospheric event
+selection RNG, Gary's rumour pool weighting, drunk pickpocket probability, curry club NPC
+spawn count (4–6 range), 7am breakfast window (07:00–11:30 FULL_ENGLISH only), bouncer
+Tier 4 threshold.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Gary serves food during opening hours**: Generate the world. Place player inside
+   the Rusty Anchor. Set time to 08:00. Give the player 5 COIN. Press E on Gary.
+   Verify a menu appears with at least PINT, FULL_ENGLISH, and BEANS_ON_TOAST.
+   Select FULL_ENGLISH (3 COIN). Verify COIN count decreases by 3. Verify player
+   inventory contains 1 FULL_ENGLISH item. Verify `WetherspoonsSystem.getState()` is
+   `SERVING` during the transaction then returns to `IDLE`.
+
+2. **FULL_ENGLISH unavailable after 11:30**: Set time to 12:00. Press E on Gary.
+   Verify the menu does NOT contain FULL_ENGLISH. Verify PINT and BEANS_ON_TOAST
+   are still listed.
+
+3. **Curry Club Special available Thursday evening only**: Set time to Wednesday 18:00.
+   Press E on Gary. Verify CURRY_CLUB_SPECIAL is NOT in the menu. Set time to Thursday
+   18:00. Press E on Gary. Verify CURRY_CLUB_SPECIAL IS in the menu and costs 4 COIN.
+   Set time to Thursday 21:01. Press E on Gary. Verify CURRY_CLUB_SPECIAL is no longer
+   listed.
+
+4. **Bouncer blocks Notoriety Tier 4 but allows Tier 3**: Set player Notoriety to 500
+   (Tier 4). Attempt to walk through the entrance (simulate W presses from 1 block
+   outside). Verify the Bouncer NPC blocks movement and speech contains "Not tonight."
+   Set Notoriety to 200 (Tier 3). Attempt entry again. Verify the player passes through
+   the entrance without being blocked.
+
+5. **App-at-table mechanic bypasses Gary's refusal**: Set player Notoriety to Tier 3
+   (Gary would refuse service at Tier 3+ in the Arms, but Gary at the Rusty Anchor still
+   serves Tier 3; test the app mechanic at Tier 4 instead). Set Notoriety to 500 (Tier 4).
+   Bypass bouncer by teleporting the player inside. Press E on a PUB_TABLE_PROP. Verify
+   a table menu appears. Select PINT. Advance time 10 in-game seconds. Press E on the
+   table again. Verify PINT is delivered to player inventory. Verify Gary subsequently
+   refuses table orders: press E on table again, verify the response is `TABLE_ORDER_REFUSED`.
+
+6. **Thursday Curry Club spawns extra NPCs**: Set time to Thursday 17:00. Advance 5 frames.
+   Count NPC count inside the Rusty Anchor. Verify at least 4 NPCs are seated (curry crowd).
+   Set time to Thursday 21:01. Advance 5 frames. Verify the extra curry-night NPCs have
+   despawned and NPC count has returned to the normal range (0–4 regulars).
+
+7. **Sleeping Drunk pickpocket**: Trigger the `SLEEPING_DRUNK` atmospheric event manually
+   (`WetherspoonsSystem.triggerAtmosphericEvent(SLEEPING_DRUNK)`). Verify a DRUNK NPC
+   is spawned at a table. Record the player's COIN count. Approach within 0.8 blocks and
+   execute a pickpocket action. Verify COIN count increased by 1–3. Verify the DRUNK NPC
+   wakes (state changes to WANDERING) if the player gets within 1 block without performing
+   the action.
+
+8. **Gary accumulates and shares rumours**: Seed 2 rumours into Gary's rumour buffer.
+   Give the player 2 COIN. Buy a PINT from Gary. Press E on Gary again. Verify a rumour
+   is delivered to `SpeechLogUI`. Verify the rumour buffer decreases by 1. Attempt to
+   hear another rumour without buying again. Verify Gary says "Buy something and I'll
+   have a chat." (no rumour delivered).
