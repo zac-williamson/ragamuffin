@@ -969,7 +969,27 @@ public enum NPCType {
      * 2 spawn per raid; despawn after 10 in-game minutes.
      * Hostile only if player is adjacent to a stall with contraband after warning period.
      */
-    TRADING_STANDARDS(25f, 5f, 2.0f, false);
+    TRADING_STANDARDS(25f, 5f, 2.0f, false),
+
+    // ── Issue #1039: Northfield Barber ────────────────────────────────────────
+
+    /**
+     * Barber Owner — Kosta, the proprietor of Kosta's Barbers.
+     * Present Mon–Sat 09:00–18:00. Offers all cuts from the service menu.
+     * Shares LOCAL_EVENT rumours with the player on each visit.
+     * Speech: "Sit down, mate — what are we doing today?"
+     * At Marchetti Crew Respect ≥ 75, provides one free trim per session.
+     * Refuses service if the player has ≥ 2 wanted stars.
+     */
+    BARBER_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * Barber Apprentice — Wayne, Kosta's trainee.
+     * Present Tue–Fri 12:00–18:00. Offers Trim only (cheaper, slower).
+     * Slower service: cuts take +50% longer. Refused at ≥ 2 wanted stars.
+     * Speech: "Yeah, no problem mate, I'll sort you out."
+     */
+    BARBER_APPRENTICE(18f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

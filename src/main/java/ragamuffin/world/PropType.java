@@ -1006,7 +1006,29 @@ public enum PropType {
      * Brenda says: "It's Baltic out there, love." during rain.
      * Destroyed by 5 punches; yields SCRAP_METAL.
      */
-    TEA_URN_PROP(0.40f, 0.70f, 0.40f, 5, Material.SCRAP_METAL);
+    TEA_URN_PROP(0.40f, 0.70f, 0.40f, 5, Material.SCRAP_METAL),
+
+    // ── Issue #1039: Northfield Barber ────────────────────────────────────────
+
+    /**
+     * Barber Chair — the padded hydraulic chair where the customer sits for a cut.
+     * Two placed inside Kosta's Barbers. Press E while adjacent to book a cut.
+     * Destroyed by 6 punches; yields SCRAP_METAL.
+     */
+    BARBER_CHAIR_PROP(0.70f, 1.20f, 0.70f, 6, Material.SCRAP_METAL),
+
+    /**
+     * Barber Pole — the iconic red-and-white rotating striped pole mounted outside.
+     * Decorative; signals the shop is open when it rotates.
+     * Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    BARBER_POLE_PROP(0.20f, 1.80f, 0.20f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Waiting Bench — a wooden bench for customers awaiting their turn.
+     * Seats up to 3 NPC customers. Destroyed by 3 punches; yields WOOD.
+     */
+    WAITING_BENCH_PROP(1.40f, 1.00f, 0.60f, 3, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

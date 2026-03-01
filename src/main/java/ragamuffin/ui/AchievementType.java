@@ -1871,6 +1871,39 @@ public enum AchievementType {
         "Model Citizen",
         "Derek shared a rumour with you. He thinks you're alright.",
         1
+    ),
+
+    // ── Issue #1039: Northfield Barber ────────────────────────────────────────
+
+    FRESH_CUT(
+        "Fresh Cut",
+        "You had a haircut at Kosta's Barbers. Smart.",
+        1
+    ),
+    UNDERCOVER_FADE(
+        "Undercover Fade",
+        "You got a fade and ducked police recognition. Smooth.",
+        1
+    ),
+    NEW_MAN(
+        "New Man",
+        "Your new look fooled everyone. Even you.",
+        1
+    ),
+    KOSTA_REGULAR(
+        "Kosta's Regular",
+        "You've visited Kosta's Barbers five times. He knows your order.",
+        5
+    ),
+    QUEUE_JUMPER(
+        "Queue Jumper",
+        "You jumped the waiting queue at the barber. They were not happy.",
+        1
+    ),
+    FREE_FROM_KOSTA(
+        "On the House",
+        "Kosta gave you a free trim. Marchetti connections pay off.",
+        1
     );
 
     private final String name;
