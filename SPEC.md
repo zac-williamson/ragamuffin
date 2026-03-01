@@ -22138,3 +22138,150 @@ Add these to `AchievementType.java`.
    spawned `MARKET_PUNTER` count is ≤ 8 (PUNTER_CROWD_MAX × (1 − 0.30) = 8.4 → ≤ 8).
    Press E on Brenda (TEA_URN_PROP). Verify `MUG_OF_TEA` added to inventory. Verify
    player COIN NOT reduced (free during rain).
+
+## Issue #1039: Add Northfield Barber — Fade, Trim & the Underground Identity Swap
+
+**Landmark**: `LandmarkType.BARBERS` (new; add to `LandmarkType` with `getDisplayName()` → `"Kosta's Barbers"`)
+
+**Goal**: Add *Kosta's Barbers* — a Turkish-run barbershop on the high street. A classic British institution: sports TV playing on a wall-mounted telly, a faded price board, aftershave that smells like ambition, and absolutely nobody paying full price. Kosta hears everything; regulars whisper, strangers get observed. The key gameplay hook is that a **haircut changes your hairstyle** (updating your `HairstyleType`) which reduces NPC recognition by the `WantedSystem` and `NotorietySystem` for a temporary window — a cheap, accessible, and very British form of disguise.
+
+---
+
+### The Barber Shop
+
+**Opening hours**: Mon–Sat 09:00–18:00, closed Sunday. A `BARBER_POLE_PROP` spins outside during opening hours.
+
+**Kosta** (`NPCType.BARBER_OWNER`): the owner. Present 09:00–18:00, Mon–Sat. Stands behind the `BARBER_CHAIR_PROP`. Speaks with dry commentary:
+- *"Sit down, bruv. I'll sort you out."*
+- *"You want the fade or the trim? Or you're still deciding?"*
+- *"You know what I heard? Don't worry, I won't tell no one. Well..."*
+- *"Last bloke in here left a different man. Literally."*
+
+**Kosta's Apprentice — Wayne** (`NPCType.BARBER_APPRENTICE`): present Tue–Fri 12:00–18:00. Slower cuts (2× time), cheaper prices (70% of Kosta's rate). Slightly nervous. Can be tipped for rumours.
+
+---
+
+### Hair Services & Costs
+
+Press **E** on the `BARBER_CHAIR_PROP` to open the haircut menu (only when Kosta or Wayne is present and shop is open):
+
+| Service | Cost | Result | Notes |
+|---|---|---|---|
+| Trim | 2 COIN | Same `HairstyleType`, refresh recognition bonus | Extends existing disguise window |
+| Short Back & Sides | 3 COIN | `HairstyleType.SHORT` | Standard cut; +15% NPC recognition reduction for 10 in-game minutes |
+| Grade 1 Buzzcut | 3 COIN | `HairstyleType.BUZZCUT` | Drastically different if was LONG/CURLY; +25% NPC recognition reduction for 10 in-game minutes |
+| Fade | 4 COIN | `HairstyleType.SHORT` (clean fade) | Highest quality; +20% NPC recognition reduction for 12 in-game minutes |
+| Mohawk | 4 COIN | `HairstyleType.MOHAWK` | Memorable; +10% NPC recognition, but Notoriety Tier 0–1 NPCs react with amusement (speech bubble) |
+| Head Shave | 3 COIN | `HairstyleType.NONE` | Radical change; +30% recognition reduction for 15 in-game minutes but player appears in `NewspaperSystem` as "bald man" if wanted |
+
+**Cut duration**: 30 real seconds (fast-forwardable by pressing E again). Player is seated (no movement) during cut. If wanted level ≥ 2 stars, Kosta says *"I don't want trouble in here"* and refuses service until stars drop.
+
+---
+
+### Disguise Integration
+
+- `BarberSystem.getRecognitionReduction()` returns the active percentage (0 if no cut, decaying over time after the in-game window expires).
+- `WantedSystem` and `NotorietySystem` apply this reduction as a multiplier to their NPC line-of-sight detection range.
+- After cutting: seed `RumourType.PLAYER_SPOTTED` is suppressed for the duration (witnesses describe someone with the *old* hairstyle, not matching current appearance).
+- **Stacks with disguises** from `DisguiseSystem` (e.g., balaclava + new haircut = layered effect), but the hairstyle bonus is lost immediately if cover is blown.
+
+---
+
+### Rumour Economy
+
+Kosta is a **passive rumour hub** — he hears gossip and can pass it to the player:
+- Buy a trim → Kosta shares 1 random `Rumour` from the neighbourhood (pulled from `RumourNetwork`).
+- Tip Wayne 1 COIN → Wayne shares 1 `GANG_ACTIVITY` or `POLICE_ACTIVITY` rumour if one exists.
+- If player has Notoriety Tier 3+, Kosta whispers: *"You didn't hear this from me, yeah?"* before sharing a rumour about a faction (seeded `FactionSystem`-linked rumour).
+
+---
+
+### Waiting Queue
+
+- Up to 3 `PUBLIC` or `PENSIONER` NPCs can queue (sit on `WAITING_BENCH_PROP` inside).
+- Queued NPCs have `NeedType.BORED` = 40+ (they're waiting and fed up).
+- If the player queue-jumps (interacts with `BARBER_CHAIR_PROP` while NPCs are queuing), 1 random queued NPC becomes HOSTILE for 60 seconds and seeds a `RumourType.ANTISOCIAL_BEHAVIOUR` rumour.
+
+---
+
+### TV & Atmosphere
+
+- `TV_SCREEN_PROP` plays football or snooker (`SNR_MATCH_PROP` seasonal variant).
+- Seated NPCs' `NeedType.BORED` reduces by 2 per second while waiting (TV entertains them).
+- During a major football result (linked to `NeighbourhoodSystem.vibes ≥ 80`): Kosta shouts *"Get IN! That's three in a row!"* and all BORED needs of waiting NPCs drop to 0.
+
+---
+
+### Cross-System Integration
+
+- **`WantedSystem`**: Wanted ≥ 2 stars → refused. After a successful haircut, police NPCs require 30% more LOS time before raising alert (recognition reduction applied).
+- **`NotorietySystem`**: Fresh haircut = −5 effective notoriety display for the window (NPCs perceive the player as less threatening).
+- **`DisguiseSystem`**: Haircut is not a disguise material but a persistent visual modifier. `DisguiseSystem.getPassiveRecognitionModifier()` is updated by `BarberSystem` post-cut.
+- **`RumourNetwork`**: Each haircut seeds a `RumourType.LOCAL_EVENT` rumour: *"Someone got a tidy fade at Kosta's today."* (low-value filler rumour, but populates the network).
+- **`NeighbourhoodSystem`**: Kosta's Barbers counts as a community business; if `NeighbourhoodSystem.vibes < 30` (HOSTILE), Kosta boards up the window (`BOARDED_WINDOW_PROP` replaces glass) and opens only Mon–Wed.
+- **`FactionSystem`**: MARCHETTI_CREW members use Kosta's; Kosta pays protection money. Player completing a MARCHETTI faction mission → Kosta acknowledges: *"You're with them lot, yeah? No charge today."* (free trim, +2 Notoriety).
+- **`NewspaperSystem`**: If the player commits a crime with a distinctive hairstyle (MOHAWK or NONE): headline variant: *"Mohawked/Bald man causes mayhem on Northfield High Street."* — hairstyle description propagated from `BarberSystem.getCurrentHairstyle()`.
+
+---
+
+### New Additions Required
+
+```java
+// ── Issue #1039: Kosta's Barbers ──────────────────────────────────────────
+// LandmarkType.java
+BARBERS,
+// getDisplayName() → "Kosta's Barbers"
+
+// NPCType.java
+BARBER_OWNER(25f, 4f, 1.5f, false),       // Kosta
+BARBER_APPRENTICE(20f, 3f, 1.5f, false),  // Wayne
+
+// PropType.java
+BARBER_CHAIR_PROP,    // interactable seat — opens haircut menu
+BARBER_POLE_PROP,     // spinning pole outside; visible when open
+WAITING_BENCH_PROP,   // 3-slot queue bench inside
+
+// Material.java  (no new items needed — uses existing COIN economy)
+
+// AchievementType.java
+FRESH_CUT,           // Get your first haircut at Kosta's
+UNDERCOVER_FADE,     // Commit a crime within 5 minutes of a fresh haircut
+NEW_MAN,             // Change hairstyle 3 times in one game session
+KOSTA_REGULAR,       // Buy 10 haircuts total
+QUEUE_JUMPER,        // Jump the queue and survive the hostility
+FREE_FROM_KOSTA,     // Get a free trim from Kosta via Marchetti faction standing
+```
+
+---
+
+### Unit Tests
+
+- `BarberSystem.isOpen(MONDAY, 09.0f)` returns `true`.
+- `BarberSystem.isOpen(SUNDAY, 12.0f)` returns `false`.
+- `BarberSystem.isOpen(SATURDAY, 18.01f)` returns `false`.
+- `BarberSystem.isOpen(TUESDAY, 13.0f)` returns `true` (Wayne is present).
+- `BarberSystem.canServePlayer(player, wantedStars=1)` returns `true`.
+- `BarberSystem.canServePlayer(player, wantedStars=2)` returns `false`.
+- `BarberSystem.getRecognitionReduction()` returns 0 when no cut active.
+- `BarberSystem.applyCut(HairstyleType.BUZZCUT, player)` sets player hairstyle to `BUZZCUT` and sets active reduction to 25%.
+- `BarberSystem.getRecognitionReduction()` decays to 0 after the bonus window expires (simulate delta time).
+- `BarberSystem.attemptQueueJump(player, queue=[npc1])` returns `QUEUE_JUMPED` and sets `npc1` to `HOSTILE`.
+- `BarberSystem.attemptQueueJump(player, queue=[])` returns `OK` (no queue, no hostility).
+
+---
+
+### Integration Tests — implement these exact scenarios
+
+1. **Haircut reduces WantedSystem recognition range**: Give player a Wanted star (1 star, < 2). Sit player in `BARBER_CHAIR_PROP`. Call `barberSystem.performCut(CutType.BUZZCUT, player, timeSystem)`. Verify `player.getHairstyle()` == `HairstyleType.BUZZCUT`. Verify `barberSystem.getRecognitionReduction()` == 0.25f. Place a POLICE NPC at 10 blocks. Call `wantedSystem.update(delta, ...)`. Verify the police NPC does NOT raise alert (recognition reduction means the 10-block range is outside effective detection range of 10 × 0.75 = 7.5 blocks).
+
+2. **Recognition reduction expires after time window**: Apply a Fade cut (12-minute window). Advance the `TimeSystem` by 12 in-game minutes. Call `barberSystem.update(delta, timeSystem)`. Verify `barberSystem.getRecognitionReduction()` == 0.0f. Place a POLICE NPC at 8 blocks. Verify WantedSystem now raises alert normally.
+
+3. **Refused when wanted ≥ 2 stars**: Give player 2 wanted stars. Place player inside `BARBERS` landmark, facing `BARBER_CHAIR_PROP`. Press E (`barberSystem.openCutMenu(player, wantedSystem)`). Verify the menu does NOT open. Verify Kosta's speech contains "trouble" (refusal dialogue). Verify player `HairstyleType` is unchanged.
+
+4. **Queue jump triggers NPC hostility and rumour**: Place 2 `PUBLIC` NPCs on `WAITING_BENCH_PROP`. Press E on `BARBER_CHAIR_PROP` before queue is empty (`barberSystem.attemptQueueJump(player, queue)`). Verify `QUEUE_JUMPED` result. Verify the first queued NPC transitions to `NPCState.HOSTILE`. Verify `rumourNetwork` contains a `RumourType.ANTISOCIAL_BEHAVIOUR` rumour seeded by that NPC within 1 second.
+
+5. **Kosta shares rumour after trim purchase**: Seed a `RumourType.LOCAL_EVENT` rumour into `rumourNetwork` from another NPC. Press E on Kosta and select TRIM (2 COIN). Verify player COIN reduced by 2. Verify `barberSystem.getLastSharedRumour()` is non-null and of type `LOCAL_EVENT`. Verify the rumour text appears in `SpeechLogUI`.
+
+6. **Free cut from Marchetti faction**: Set `factionSystem.getRespect(Faction.MARCHETTI_CREW)` ≥ 75. Trigger Marchetti mission completion callback. Press E on Kosta. Verify TRIM is offered at 0 COIN cost. Complete trim. Verify player COIN is NOT reduced. Verify Notoriety increased by 2.
+
+7. **Shop boards up in hostile neighbourhood**: Set `neighbourhoodSystem.getVibes()` = 25 (HOSTILE). Call `barberSystem.update(delta, neighbourhoodSystem)`. Verify `barberSystem.isOpen(THURSDAY, 14.0f)` returns `false` (limited opening during hostile vibes). Verify a `BOARDED_WINDOW_PROP` is placed at the shop's window position in the world.
