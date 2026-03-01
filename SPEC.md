@@ -18463,3 +18463,219 @@ All must be added to `Material` if not already present (most already exist):
 4. **Blind-spot lift evades Dave**: Move player to blind-spot position. Add `BISCUIT` to basket. Move Dave within 3 blocks. Verify Dave detection probability is 0 (no challenge issued after 10 update ticks). Move player to normal aisle; verify Dave now has detection chance > 0.
 
 5. **Golden trolley spawns and yields reward**: Set time to 03:30. Call `SupermarketSystem.update()`. Verify `SHOPPING_TROLLEY_GOLD` prop exists in car park position. Give player 0 COIN. Press E on golden trolley. Verify player COIN == 20. Verify `GOLDEN_TROLLEY` achievement unlocked. Set time to 05:01. Call `update()`. Verify `SHOPPING_TROLLEY_GOLD` prop is removed.
+
+---
+
+## Issue #1000: Northfield Fire Station — 999 Diversions, Equipment Theft & the Great Engine Heist
+
+**Goal**: Bring the `FIRE_STATION` landmark to life with a `FireStationSystem`. The
+fire station is the home base for the `FIRE_ENGINE` NPC already spawned by
+`WheeliBinFireSystem` — currently it spawns at a hardcoded world-edge position.
+This issue gives the engine a real garage to leave from and return to, adds
+firefighter crew NPCs, a 999 diversion mechanic, and the ability to steal
+firefighting equipment (or the engine itself).
+
+### FireStationSystem
+
+**Building**: A single-storey red-brick building on the industrial fringe, adjacent
+to the INDUSTRIAL_ESTATE landmark. Approx 12×8 footprint with a large garage bay
+(double-width ROLLUP_DOOR_PROP) housing the `FIRE_ENGINE_PROP` (a red vehicle prop,
+distinct from the NPC). A small crew room at the back contains: `LOCKER_PROP` ×3
+(holds equipment), `KETTLE_PROP`, `TABLE_PROP`, and a `FIRE_STATION_NOTICEBOARD_PROP`
+(displays current 999 call count — flavour only).
+
+**Crew NPCs**:
+- Two `FIREFIGHTER` NPCs (new `NPCType`, 50hp, passive unless equipment stolen or
+  engine tampered with) are on duty 24/7, alternating: one in the crew room, one
+  doing a slow patrol of the station forecourt on a 90-second loop.
+- `FIREFIGHTER` NPCs do NOT respond to the player committing crimes elsewhere —
+  they only react to direct interference with station property.
+
+**Fire engine home base integration** (`WheeliBinFireSystem` update):
+- When a bin fire spawns a `FIRE_ENGINE` NPC, it now spawns at the `FIRE_STATION`
+  landmark position (retrieved from `World.getLandmark(LandmarkType.FIRE_STATION)`)
+  instead of a hardcoded offset.
+- After the `FIRE_ENGINE` NPC extinguishes a fire and its task ends, it despawns
+  after 10 seconds — representing it returning off-screen to the station.
+- If the fire engine is currently "out on a call" (i.e. a `FIRE_ENGINE` NPC is
+  active in the world), `FireStationSystem.isEngineOut()` returns true and the
+  garage bay prop is visually removed (replaced with AIR blocks) until the engine
+  returns (NPC despawns).
+
+### 999 Diversion Call
+
+- The player can press **E** on the `FIRE_STATION_NOTICEBOARD_PROP` (or on a
+  `PHONE_BOX_PROP` if one exists within 20 blocks) to place a false 999 call.
+- Cost: +5 Notoriety. Logged as `CriminalRecord.CrimeType.FALSE_ALARM`.
+- Effect: any `POLICE` NPCs within 40 blocks are immediately redirected away from
+  the player (set to `NPCState.PATROLLING` toward a random point 30 blocks from
+  the player's position), simulating them responding to the reported incident. The
+  redirect lasts 30 real seconds (`diversionTimer`).
+- If no police are within 40 blocks, the call still adds Notoriety but has no
+  redirect effect — tooltip: "Nobody came. Story of your life."
+- Cooldown: 120 real seconds between calls. During cooldown, pressing E shows:
+  "Lines are busy. Try again in a minute."
+- If the player has called 999 3+ times (tracked by `falseAlarmCount`), the
+  `FIREFIGHTER` NPCs become suspicious: they watch the player when within 8 blocks
+  (face toward player, reduced patrol speed) but do not act unless the engine or
+  equipment is touched.
+- Tooltip on first use: "Redirecting the boys in blue. Very responsible."
+- Achievement: `EMERGENCY_SERVICES` — place a 999 diversion call that successfully
+  redirects at least one police NPC.
+
+### Equipment Theft
+
+Three `LOCKER_PROP` items in the crew room each contain one piece of equipment:
+- `FIREFIGHTER_HELMET` (new `Material`) — provides 80% protection from fire damage
+  (existing campfire/burn damage sources); halves Notoriety recognition chance while
+  worn (counts as a disguise in `DisguiseSystem` at 50% effectiveness). Wearing it
+  near the fire station causes `FIREFIGHTER` NPCs to immediately become hostile.
+- `FIRE_AXE` (new `Material`, Tool subtype) — breaks `BRICK` and `WOOD` blocks in
+  **4 hits** (instead of 8 hard / 5 soft), functions as a weapon dealing 15 damage
+  per swing (vs the fist's 5). Tooltip on first pickup: "Chop your way through
+  Northfield's finest brickwork."
+- `HOSE_REEL` (new `Material`) — single-use: activates when held and the player
+  stands within 3 blocks of a `BURNING_BIN` prop; extinguishes it instantly
+  (calls `WheeliBinFireSystem.extinguish()`). Grants `FIRE_WARDEN` achievement
+  (same as the existing pre-engine-arrival achievement). Also usable to knock back
+  any NPC 5 blocks (acts like a knockback weapon, 0 damage). One use, then
+  consumed.
+
+Opening a `LOCKER_PROP` inside the fire station (press E) while no `FIREFIGHTER`
+NPC is within 6 blocks silently adds the item to inventory. If a `FIREFIGHTER` is
+within 6 blocks: 60% chance they notice → they become hostile, call
+`WantedSystem.addWantedStars(1, ...)`, and pursue the player for 30 seconds. 40%
+chance they don't notice (looking away during patrol).
+
+### The Engine Heist
+
+The `FIRE_ENGINE_PROP` in the garage bay can be interacted with (press E) when:
+1. `isEngineOut()` is false (engine is present), AND
+2. No `FIREFIGHTER` NPC is within 8 blocks.
+
+Stealing the engine:
+- Replaces the `FIRE_ENGINE_PROP` with AIR (garage is now empty).
+- Adds a `FIRE_ENGINE_STOLEN` flag to the player's `CriminalRecord`.
+- Adds +25 Notoriety and `WantedSystem.addWantedStars(3, ...)`.
+- Seeds a `RumourType.MAJOR_THEFT` rumour ("Someone nicked the bloody fire engine!")
+  to 5 nearby NPCs.
+- Achievement: `GREAT_ENGINE_HEIST` — steal the fire engine.
+- For the next 10 in-game minutes, any new bin fire lit by `WheeliBinFireSystem`
+  will NOT spawn a `FIRE_ENGINE` NPC (the engine is gone). This is tracked via
+  `FireStationSystem.isEngineStolen()` checked from `WheeliBinFireSystem`.
+- Selling the fire engine at the Pawn Shop yields 30 COIN (new entry in
+  `FenceValuationTable`) — but only once per playthrough.
+
+### Opening Hours & NPC Schedule
+
+The fire station is always technically "open" (24/7 manned), but:
+- 08:00–18:00: Both `FIREFIGHTER` NPCs are fully active (one crew-room, one patrol).
+- 18:00–08:00: One `FIREFIGHTER` NPC is "asleep" (stationary in crew room,
+  detection range halved to 4 blocks) — easier window for equipment theft.
+- On active bin-fire calls (`isEngineOut()` true): both `FIREFIGHTER` NPCs move
+  to the forecourt and stand watching until the engine returns.
+
+### System Integrations
+
+- `WheeliBinFireSystem` — fire engine spawns from station position; checks
+  `FireStationSystem.isEngineStolen()` before spawning.
+- `WantedSystem` — engine theft: +3 wanted stars; equipment theft (caught): +1.
+- `NotorietySystem` — false alarm: +5; engine theft: +25; equipment theft (caught): +10.
+- `CriminalRecord` — `FALSE_ALARM` and `FIRE_ENGINE_STOLEN` crime types (add to
+  `CriminalRecord.CrimeType` enum).
+- `DisguiseSystem` — `FIREFIGHTER_HELMET` as 50%-effective disguise.
+- `RumourNetwork` — `MAJOR_THEFT` rumour on engine heist.
+- `PawnShopSystem` — `FIRE_ENGINE_STOLEN` flag enables one-time engine fence.
+- `FenceValuationTable` — `FIRE_ENGINE_PROP` value: 30 COIN.
+- `NeighbourhoodSystem` — fire station open: +1 Vibes/min (community anchor).
+- `AchievementSystem` — `EMERGENCY_SERVICES`, `GREAT_ENGINE_HEIST`.
+
+### New `NPCType`
+
+```
+FIREFIGHTER(50f, 8f, 1.2f, false)  // reactive only, not hostile by default
+```
+
+### New `Material` entries
+
+- `FIREFIGHTER_HELMET` — equippable head slot; fire protection + disguise.
+- `FIRE_AXE` — tool; 4-hit BRICK/WOOD, 15 weapon damage.
+- `HOSE_REEL` — single-use; extinguishes BURNING_BIN or knocks back NPCs.
+
+### New `CriminalRecord.CrimeType` entries
+
+- `FALSE_ALARM` — placing a fraudulent 999 call.
+- `FIRE_ENGINE_STOLEN` — stealing the fire engine from the station.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `EMERGENCY_SERVICES` | First successful 999 diversion that redirects a police NPC |
+| `GREAT_ENGINE_HEIST` | Steal the fire engine from the garage |
+
+### Unit Tests
+
+- `FireStationSystem.isEngineOut()` returns false when no `FIRE_ENGINE` NPC active;
+  true when one is spawned; false again after NPC despawns.
+- `FireStationSystem.isEngineStolen()` returns true after heist; reset on new game.
+- `computeDiversionCooldown()` returns remaining cooldown seconds correctly.
+- `FIRE_AXE` tool: `BlockBreaker` breaks BRICK in 4 hits, WOOD in 4 hits.
+- `FIREFIGHTER_HELMET` in `DisguiseSystem.getRecognitionChance()` returns 50% of
+  normal recognition chance.
+- `HOSE_REEL` use on a BURNING_BIN: `WheeliBinFireSystem.extinguishByHose(pos)`
+  removes the fire entry; prop reverts to WHEELIE_BIN.
+- Equipment locker theft detection: probability 0.6 when FIREFIGHTER within 6
+  blocks, 0.0 when out of range.
+- False alarm with 3 prior calls: `isSuspiciousPlayer()` returns true.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Fire engine spawns from station, not a hardcoded position**: Generate the world.
+   Verify `LandmarkType.FIRE_STATION` landmark exists. Light a wheelie bin (call
+   `WheeliBinFireSystem.ignite(pos, player)`). Advance 30 seconds. Verify a
+   `FIRE_ENGINE` NPC has spawned. Verify its spawn position is within 5 blocks of the
+   `FIRE_STATION` landmark position. Verify `FireStationSystem.isEngineOut()` is true.
+
+2. **999 diversion redirects a nearby police NPC**: Spawn a `POLICE` NPC within 30
+   blocks of the player. Record the police NPC's current patrol target. Call
+   `FireStationSystem.placeFalseAlarm(player, notorietySystem, wantedSystem,
+   criminalRecord, nearbyNpcs)`. Verify Notoriety increased by 5. Verify the police
+   NPC's state is `NPCState.PATROLLING` toward a position different from the original
+   target. Advance 31 seconds. Verify the diversion has expired (police returns to
+   normal patrol logic).
+
+3. **Equipment theft undetected during night shift**: Set time to 02:00 (both crew
+   asleep). Move the "sleeping" firefighter to 10 blocks away from the locker. Open
+   `LOCKER_PROP`. Verify `FIREFIGHTER_HELMET` is added to player inventory. Verify no
+   wanted stars added. Verify no Notoriety added (undetected).
+
+4. **Equipment theft detected during day shift**: Set time to 10:00. Place a
+   `FIREFIGHTER` NPC 4 blocks from the locker. Seed RNG to guarantee detection
+   (probability 0.6). Open `LOCKER_PROP`. Verify `FIREFIGHTER` becomes hostile
+   (state `NPCState.ATTACKING` or `NPCState.CHASING`). Verify wanted stars increased
+   by 1.
+
+5. **Engine heist**: Place both `FIREFIGHTER` NPCs 10 blocks away. Verify
+   `isEngineOut()` is false. Press E on `FIRE_ENGINE_PROP`. Verify prop is replaced
+   with AIR. Verify `isEngineStolen()` is true. Verify Notoriety increased by 25.
+   Verify wanted stars == 3. Verify `GREAT_ENGINE_HEIST` achievement unlocked. Verify
+   a `MAJOR_THEFT` rumour is present in `RumourNetwork` (check at least 1 NPC holds
+   it). Light a wheelie bin. Advance 30 seconds. Verify NO `FIRE_ENGINE` NPC spawns.
+
+6. **FIRE_AXE breaks brick in 4 hits**: Give player a `FIRE_AXE`. Place a BRICK
+   block adjacent to player. Simulate 3 punch actions. Verify BRICK block still
+   exists. Simulate 1 more punch. Verify BRICK block is now AIR.
+
+7. **HOSE_REEL extinguishes a burning bin**: Light a wheelie bin (creates a
+   `BURNING_BIN` prop). Give player a `HOSE_REEL`. Use the hose reel while within 3
+   blocks of the `BURNING_BIN`. Verify the prop reverts to `WHEELIE_BIN` (or AIR if
+   bin is spent). Verify `FIRE_WARDEN` achievement is unlocked. Verify `HOSE_REEL`
+   is removed from player inventory (consumed).
+
+8. **Engine-out state disables garage prop**: Verify `FIRE_ENGINE_PROP` exists in
+   the garage bay at game start. Light a bin fire. Advance 30 seconds. Verify
+   `isEngineOut()` is true. Verify `FIRE_ENGINE_PROP` in garage bay is replaced
+   with AIR. Despawn the `FIRE_ENGINE` NPC manually. Advance 11 seconds. Verify
+   `isEngineOut()` is false. Verify `FIRE_ENGINE_PROP` has returned to the garage
+   bay position.
