@@ -1473,7 +1473,57 @@ public enum Material {
     /** Ink bottle — combined with NEEDLE for prison tattoo. */
     INK_BOTTLE("Ink Bottle"),
     /** Tattoo gun — unlocked by Kev after 3 visits; weapon (3 dmg) and fence item (12–18 COIN). */
-    TATTOO_GUN("Tattoo Gun");
+    TATTOO_GUN("Tattoo Gun"),
+
+    // ── Issue #1014: Northfield Newsagent ────────────────────────────────────
+
+    /**
+     * Lottery Ticket — "Lucky Dip. Numbers: 4, 7, 12, 23, 41, 9."
+     * Purchased from Patel's News for 1 COIN. Resolved at 20:00 daily:
+     * jackpot 100 COIN (0.5%), match-3 5 COIN (8%). Forfeited if not claimed within 24 hours.
+     */
+    LOTTERY_TICKET("Lottery Ticket"),
+
+    /**
+     * Chewing Gum — "Spearmint. Still in the packet."
+     * Reduces Notoriety detection timer by 5 seconds while chewing (idle animation).
+     * Purchased from Patel's News for 1 COIN.
+     */
+    CHEWING_GUM("Chewing Gum"),
+
+    /**
+     * Phone Credit Voucher — "£5 top-up. Valid at all major networks."
+     * Satisfies NPC NEED_PHONE_CREDIT; tradeable on the street for 4 COIN.
+     * Purchased from Patel's News for 3 COIN.
+     */
+    PHONE_CREDIT_VOUCHER("Phone Credit Voucher"),
+
+    /**
+     * Paper Satchel — "A canvas delivery bag with 'Patel's News' stencilled on it."
+     * Container (capacity 10 NEWSPAPERs); quest item for the paper round job.
+     * Awarded by Patel on accepting the paper round shift.
+     */
+    PAPER_SATCHEL("Paper Satchel"),
+
+    /**
+     * Birthday Card — "A card with a picture of balloons. Generic but sincere."
+     * Giftable to an NPC target for +1 Faction Respect.
+     * Purchased from Patel's News for 1 COIN.
+     */
+    BIRTHDAY_CARD("Birthday Card"),
+
+    /**
+     * Plastic — generic plastic material dropped by prop destruction.
+     * Dropped by LOTTERY_TERMINAL_PROP on destruction.
+     */
+    PLASTIC("Plastic"),
+
+    /**
+     * Lighter — a reusable pocket lighter sold at Patel's News for 2 COIN.
+     * Valid ignition source for WheeliBinFireSystem and CampfireSystem.
+     * Fence value: 1 COIN. Tooltip: "Flicks first time, every time. Usually."
+     */
+    LIGHTER("Lighter");
 
     private final String displayName;
 
@@ -2019,6 +2069,20 @@ public enum Material {
             case TATTOO_GUN:            return cs(0.22f, 0.22f, 0.25f,   // Gunmetal body
                                                    0.80f, 0.80f, 0.80f); // Chrome highlight
 
+            // Issue #1014: Northfield Newsagent
+            case LOTTERY_TICKET:        return cs(0.20f, 0.55f, 0.20f,   // Green ticket body
+                                                   0.88f, 0.82f, 0.15f); // Gold strip
+            case CHEWING_GUM:           return c(0.65f, 0.90f, 0.55f);   // Spearmint green packet
+            case PHONE_CREDIT_VOUCHER:  return cs(0.20f, 0.35f, 0.75f,   // Blue voucher
+                                                   0.88f, 0.88f, 0.88f); // Grey back
+            case PAPER_SATCHEL:         return cs(0.62f, 0.48f, 0.28f,   // Canvas brown
+                                                   0.45f, 0.32f, 0.15f); // Darker strap
+            case BIRTHDAY_CARD:         return cs(0.88f, 0.20f, 0.55f,   // Pink card front
+                                                   0.95f, 0.92f, 0.85f); // Cream inside
+            case PLASTIC:               return c(0.72f, 0.80f, 0.88f);   // Light blue-grey plastic
+            case LIGHTER:               return cs(0.22f, 0.22f, 0.25f,   // Dark chrome body
+                                                   0.92f, 0.78f, 0.15f); // Gold flame top
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2298,6 +2362,13 @@ public enum Material {
             case HOSE_REEL:
             // Issue #1002: Northfield BP Petrol Station (not block items)
             case DISPOSABLE_LIGHTER:
+            // Issue #1014: Northfield Newsagent (not block items)
+            case LOTTERY_TICKET:
+            case CHEWING_GUM:
+            case PHONE_CREDIT_VOUCHER:
+            case PAPER_SATCHEL:
+            case BIRTHDAY_CARD:
+            case LIGHTER:
                 return false;
             default:
                 return true;
