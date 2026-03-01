@@ -95,5 +95,12 @@ public enum RumourType {
     /** "Someone just had a full house at Lucky Stars — walked away with fifteen coin!"
      * — seeded by BingoSystem when the player wins a FULL HOUSE.
      * Spreads via nearby NPCs; draws curious PUBLIC NPCs toward the bingo hall. */
-    WINNER;
+    WINNER,
+
+    // ── Issue #963: Northfield Canal ──────────────────────────────────────────
+
+    /** "Someone chucked something in the canal — right in front of me, an' all"
+     * — seeded by CanalSystem when the player disposes of evidence in the water.
+     * If a POLICE/WITNESS NPC is nearby the rumour records LITTERING. */
+    LITTER;
 }

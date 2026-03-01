@@ -362,6 +362,15 @@ public class CraftingSystem {
             Map.of(Material.GREGGS_PASTRY, 1),
             Map.of(Material.HOT_PASTRY, 1)
         ));
+
+        // ── Issue #963: Northfield Canal ─────────────────────────────────────────
+
+        // FISHING_ROD: WOOD×1 + SCRAP_METAL×1 + CARDBOARD×1 → FISHING_ROD×1
+        // (5 durability; snaps on failed reel, drops SCRAP_METAL×1)
+        recipes.add(new Recipe(
+            Map.of(Material.WOOD, 1, Material.SCRAP_METAL, 1, Material.CARDBOARD, 1),
+            Map.of(Material.FISHING_ROD, 1)
+        ));
     }
 
     /**

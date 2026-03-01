@@ -1004,7 +1004,54 @@ public enum Material {
      * Pawn shop base value: 18 COIN.
      * Tooltip: "Six strings, three chords, zero prospects."
      */
-    GUITAR("Guitar");
+    GUITAR("Guitar"),
+
+    // ── Issue #963: Northfield Canal ─────────────────────────────────────────
+
+    /**
+     * Fishing Rod — crafted from WOOD×1 + SCRAP_METAL×1 + CARDBOARD×1.
+     * Has 5 durability; breaks on a failed reel, dropping SCRAP_METAL×1.
+     * Used at canal bank (press E while holding) to enter fishing state machine.
+     * Tooltip: "The optimism of a fishing rod is one of Britain's great traditions."
+     */
+    FISHING_ROD("Fishing Rod"),
+
+    /**
+     * Fish: Roach — common canal catch (40% chance). Yields +8 hunger raw
+     * (20% food-poisoning chance, −10 HP over 30s) or +25 hunger when cooked
+     * at a campfire (no risk). Sellable to Barge Baz for 1 COIN.
+     * Tooltip: "A roach. Technically edible."
+     */
+    FISH_ROACH("Roach"),
+
+    /**
+     * Fish: Bream — uncommon canal catch (25% chance). Same hunger/cooking stats
+     * as FISH_ROACH. Sellable to Barge Baz for 3 COIN.
+     * Tooltip: "A bream. Smells like canal. Tastes like canal."
+     */
+    FISH_BREAM("Bream"),
+
+    /**
+     * Fish: Perch — uncommon canal catch (15% chance). Same hunger/cooking stats
+     * as FISH_ROACH. Not bought by Barge Baz (too common to bother).
+     * Tooltip: "A perch. Still alive. Sort of."
+     */
+    FISH_PERCH("Perch"),
+
+    /**
+     * Fish: Pike — rare canal catch (10% chance). Same hunger/cooking stats as
+     * other fish. Sellable to Barge Baz for 5 COIN. Seeds a SHOP_NEWS rumour
+     * on catch: "Someone pulled a proper pike out of the canal..."
+     * Tooltip: "A pike. Aggressive, territorial, and somehow a metaphor."
+     */
+    FISH_PIKE("Pike"),
+
+    /**
+     * Rope — crafting material sold by Barge Baz (3 COIN).
+     * Used in advanced crafting recipes (e.g. canal-related structures).
+     * Tooltip: "Rope. Not a noose. Don't be dramatic."
+     */
+    ROPE("Rope");
 
     private final String displayName;
 
@@ -1449,6 +1496,20 @@ public enum Material {
             case GUITAR:             return cs(0.62f, 0.38f, 0.12f,  // Warm wood body
                                                0.38f, 0.22f, 0.06f); // Darker neck
 
+            // Issue #963: Northfield Canal
+            case FISHING_ROD:        return cs(0.55f, 0.40f, 0.18f,  // Brown bamboo rod
+                                               0.48f, 0.52f, 0.55f); // Grey metal reel
+            case FISH_ROACH:         return cs(0.55f, 0.65f, 0.55f,  // Grey-green fish body
+                                               0.80f, 0.72f, 0.45f); // Silver-gold belly
+            case FISH_BREAM:         return cs(0.62f, 0.68f, 0.58f,  // Olive-grey body
+                                               0.88f, 0.82f, 0.58f); // Golden-cream belly
+            case FISH_PERCH:         return cs(0.28f, 0.55f, 0.28f,  // Green striped body
+                                               0.92f, 0.38f, 0.18f); // Orange-red fins
+            case FISH_PIKE:          return cs(0.35f, 0.52f, 0.32f,  // Dark olive-green body
+                                               0.65f, 0.72f, 0.45f); // Yellow-green belly
+            case ROPE:               return cs(0.72f, 0.60f, 0.35f,  // Natural hemp tan
+                                               0.55f, 0.42f, 0.20f); // Darker twisted strand
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1686,6 +1747,13 @@ public enum Material {
             case EMPTY_CHICKEN_BOX:
             // Issue #961: Cash4Gold Pawn Shop
             case GUITAR:
+            // Issue #963: Northfield Canal
+            case FISHING_ROD:
+            case FISH_ROACH:
+            case FISH_BREAM:
+            case FISH_PERCH:
+            case FISH_PIKE:
+            case ROPE:
                 return false;
             default:
                 return true;
@@ -2144,6 +2212,17 @@ public enum Material {
             // Issue #961: Cash4Gold Pawn Shop
             case GUITAR:
                 return IconShape.TOOL;        // long instrument shape
+
+            // Issue #963: Northfield Canal
+            case FISHING_ROD:
+                return IconShape.TOOL;        // long rod shape
+            case FISH_ROACH:
+            case FISH_BREAM:
+            case FISH_PERCH:
+            case FISH_PIKE:
+                return IconShape.FOOD;        // fish food item
+            case ROPE:
+                return IconShape.TOOL;        // coiled rope / tool shape
 
             default:
                 return IconShape.BOX;
