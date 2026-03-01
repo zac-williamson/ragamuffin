@@ -1588,7 +1588,121 @@ public enum Material {
      * One of the small items that improves the narrowboat Warmth bonus to +12/min.
      * Tooltip: "Hot food. Technically cooking. Technically a kitchen."
      */
-    CAMPING_STOVE("Camping Stove");
+    CAMPING_STOVE("Camping Stove"),
+
+    // ── Issue #1018: Northfield Poundstretcher ────────────────────────────────
+
+    /**
+     * Bleach — bottle of own-brand bleach, 1 COIN.
+     * Sold at POUND_SHOP. Ingredient for IMPROVISED_PEPPER_SPRAY craft.
+     * Tooltip: "Multipurpose. Cleaning and intimidation."
+     */
+    BLEACH("Bleach"),
+
+    /**
+     * Gaffer Tape — a roll of heavy-duty gaffer tape, 2 COIN.
+     * Sold at POUND_SHOP. Used in MAKESHIFT_ARMOUR and DUCT_TAPE_RESTRAINT crafts.
+     * Tooltip: "Fixes everything. Literally."
+     */
+    GAFFER_TAPE("Gaffer Tape"),
+
+    /**
+     * Knock-Off Tracksuit — a suspiciously cheap branded tracksuit, 3 COIN.
+     * Sold at POUND_SHOP. Functions as a disguise: −15% NPC recognition.
+     * Tooltip: "Adiads. Close enough."
+     */
+    KNOCK_OFF_TRACKSUIT("Knock-Off Tracksuit"),
+
+    /**
+     * Baked Beans Tin — a large catering tin of beans, 1 COIN.
+     * Sold at POUND_SHOP. Restores hunger. Small item.
+     * Tooltip: "Heinz? No. But close."
+     */
+    BAKED_BEANS_TIN("Baked Beans Tin"),
+
+    /**
+     * Cable Ties — a pack of 100 cable ties, 2 COIN.
+     * Sold at POUND_SHOP. Used in DUCT_TAPE_RESTRAINT craft and HeistSystem guard-binding.
+     * Tooltip: "Useful. Very useful."
+     */
+    CABLE_TIES("Cable Ties"),
+
+    /**
+     * Washing Up Liquid — a bottle of supermarket-own washing-up liquid, 1 COIN.
+     * Sold at POUND_SHOP. Ingredient for SLIPPERY_FLOOR_TRAP craft.
+     * Tooltip: "Lemon fresh. Very slippery."
+     */
+    WASHING_UP_LIQUID("Washing Up Liquid"),
+
+    /**
+     * Mop — a floor mop, 2 COIN.
+     * Sold at POUND_SHOP. Ingredient for SLIPPERY_FLOOR_TRAP craft.
+     * Tooltip: "Cleans up messes. Makes new ones."
+     */
+    MOP("Mop"),
+
+    /**
+     * Cloth — a scrap of fabric, 1 COIN.
+     * Sold at POUND_SHOP. Used in MAKESHIFT_ARMOUR craft.
+     * Tooltip: "Rough. Scratchy. Vaguely protective."
+     */
+    CLOTH("Cloth"),
+
+    /**
+     * Candle — a cheap tallow candle, 1 COIN.
+     * Sold at POUND_SHOP. Provides light; tracked by SquatFurnishingTracker.
+     * Tooltip: "Smells of paraffin. Comforting."
+     */
+    CANDLE("Candle"),
+
+    /**
+     * Padlock — a basic combination padlock, 2 COIN.
+     * Sold at POUND_SHOP. Used to secure squat doors; tracked by SquatFurnishingTracker.
+     * Tooltip: "Not exactly a safe. But it's something."
+     */
+    PADLOCK("Padlock"),
+
+    /**
+     * Mystery Box — an unmarked cardboard box from the bargain bin.
+     * Contains a random loot item. Seeds a LOOT_TIP rumour when opened.
+     * Tooltip: "Could be anything. Probably isn't great."
+     */
+    MYSTERY_BOX("Mystery Box"),
+
+    /**
+     * Slippery Floor Trap — crafted trap: WASHING_UP_LIQUID×1 + MOP×1.
+     * Placed on floor; NPCs and player who walk over it are temporarily slowed.
+     * Tooltip: "Health and Safety nightmare."
+     */
+    SLIPPERY_FLOOR_TRAP("Slippery Floor Trap"),
+
+    /**
+     * Makeshift Armour — crafted from GAFFER_TAPE×2 + CLOTH×3.
+     * Reduces incoming damage by 20%. Very ugly.
+     * Tooltip: "It'll hold. Probably."
+     */
+    MAKESHIFT_ARMOUR("Makeshift Armour"),
+
+    /**
+     * Duct Tape Restraint — crafted from GAFFER_TAPE×1 + CABLE_TIES×1.
+     * Used in HeistSystem to bind guards silently.
+     * Tooltip: "Practical. Uncomfortable."
+     */
+    DUCT_TAPE_RESTRAINT("Duct Tape Restraint"),
+
+    /**
+     * Improvised Pepper Spray — crafted from BLEACH×1 + CANDLE×1.
+     * Single-use; temporarily blinds NPCs in a short cone.
+     * Tooltip: "Do NOT get this in your eyes."
+     */
+    IMPROVISED_PEPPER_SPRAY("Improvised Pepper Spray"),
+
+    /**
+     * Makeshift Torch — crafted from CLOTH×1 + CANDLE×1.
+     * Provides light in dark areas; burns out after 120 seconds.
+     * Tooltip: "Medieval. Effective."
+     */
+    MAKESHIFT_TORCH("Makeshift Torch");
 
     private final String displayName;
 
@@ -2168,6 +2282,32 @@ public enum Material {
             case CAMPING_STOVE:         return cs(0.35f, 0.35f, 0.38f,   // Dark metal body
                                                    0.88f, 0.30f, 0.10f); // Orange flame
 
+            // Issue #1018: Northfield Poundstretcher
+            case BLEACH:                return c(0.90f, 0.95f, 0.98f);   // White plastic bottle
+            case GAFFER_TAPE:           return c(0.22f, 0.22f, 0.22f);   // Black tape roll
+            case KNOCK_OFF_TRACKSUIT:   return cs(0.18f, 0.35f, 0.78f,   // Cheap blue top
+                                                   0.22f, 0.22f, 0.22f); // Dark trouser stripe
+            case BAKED_BEANS_TIN:       return cs(0.82f, 0.18f, 0.12f,   // Red tin body
+                                                   0.95f, 0.65f, 0.18f); // Orange bean fill
+            case CABLE_TIES:            return c(0.28f, 0.72f, 0.92f);   // Blue cable tie
+            case WASHING_UP_LIQUID:     return c(0.78f, 0.90f, 0.40f);   // Lime green bottle
+            case MOP:                   return cs(0.85f, 0.78f, 0.55f,   // Pale mop head
+                                                  0.55f, 0.38f, 0.22f);  // Brown handle
+            case CLOTH:                 return c(0.72f, 0.62f, 0.52f);   // Off-white rag
+            case CANDLE:                return cs(0.95f, 0.92f, 0.72f,   // Cream wax body
+                                                  0.98f, 0.78f, 0.20f);  // Yellow flame
+            case PADLOCK:               return c(0.52f, 0.52f, 0.58f);   // Metal grey padlock
+            case MYSTERY_BOX:           return cs(0.72f, 0.58f, 0.32f,   // Cardboard brown box
+                                                  0.88f, 0.20f, 0.12f);  // Red question mark
+            case SLIPPERY_FLOOR_TRAP:   return c(0.55f, 0.88f, 0.92f);   // Wet floor blue
+            case MAKESHIFT_ARMOUR:      return cs(0.22f, 0.22f, 0.22f,   // Gaffer tape black
+                                                  0.72f, 0.62f, 0.52f);  // Cloth beige
+            case DUCT_TAPE_RESTRAINT:   return cs(0.22f, 0.22f, 0.22f,   // Dark tape
+                                                  0.28f, 0.72f, 0.92f);  // Blue cable tie
+            case IMPROVISED_PEPPER_SPRAY: return c(0.92f, 0.88f, 0.25f); // Yellow warning
+            case MAKESHIFT_TORCH:       return cs(0.55f, 0.38f, 0.22f,   // Dark wood handle
+                                                  0.98f, 0.68f, 0.15f);  // Orange flame
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2464,6 +2604,23 @@ public enum Material {
             case BIRDWATCHING_TIP:
             case CAMPING_LANTERN:
             case CAMPING_STOVE:
+            // Issue #1018: Northfield Poundstretcher — all are inventory items, not blocks
+            case BLEACH:
+            case GAFFER_TAPE:
+            case KNOCK_OFF_TRACKSUIT:
+            case BAKED_BEANS_TIN:
+            case CABLE_TIES:
+            case WASHING_UP_LIQUID:
+            case MOP:
+            case CLOTH:
+            case CANDLE:
+            case PADLOCK:
+            case MYSTERY_BOX:
+            case SLIPPERY_FLOOR_TRAP:
+            case MAKESHIFT_ARMOUR:
+            case DUCT_TAPE_RESTRAINT:
+            case IMPROVISED_PEPPER_SPRAY:
+            case MAKESHIFT_TORCH:
                 return false;
             default:
                 return true;
@@ -2550,6 +2707,16 @@ public enum Material {
             // Issue #1012: Skin Deep Tattoos — small craft items sit on surfaces
             case NEEDLE:
             case INK_BOTTLE:
+            // Issue #1018: Northfield Poundstretcher — small shop items sit on surfaces
+            case BLEACH:
+            case GAFFER_TAPE:
+            case BAKED_BEANS_TIN:
+            case CABLE_TIES:
+            case WASHING_UP_LIQUID:
+            case CLOTH:
+            case CANDLE:
+            case PADLOCK:
+            case MYSTERY_BOX:
                 return true;
             default:
                 return false;
@@ -3071,6 +3238,40 @@ public enum Material {
                 return IconShape.CYLINDER;    // cylindrical lantern
             case CAMPING_STOVE:
                 return IconShape.BOX;         // compact stove unit
+
+            // Issue #1018: Northfield Poundstretcher
+            case BLEACH:
+                return IconShape.BOTTLE;      // cleaning bottle
+            case GAFFER_TAPE:
+                return IconShape.CYLINDER;    // tape roll cylinder
+            case KNOCK_OFF_TRACKSUIT:
+                return IconShape.FLAT_PAPER;  // clothing/garment shape
+            case BAKED_BEANS_TIN:
+                return IconShape.CYLINDER;    // tin can cylinder
+            case CABLE_TIES:
+                return IconShape.TOOL;        // bundled ties
+            case WASHING_UP_LIQUID:
+                return IconShape.BOTTLE;      // squeeze bottle
+            case MOP:
+                return IconShape.TOOL;        // long-handled mop
+            case CLOTH:
+                return IconShape.FLAT_PAPER;  // flat fabric square
+            case CANDLE:
+                return IconShape.CYLINDER;    // candle cylinder
+            case PADLOCK:
+                return IconShape.BOX;         // padlock body
+            case MYSTERY_BOX:
+                return IconShape.BOX;         // cardboard box
+            case SLIPPERY_FLOOR_TRAP:
+                return IconShape.FLAT_PAPER;  // flat trap on floor
+            case MAKESHIFT_ARMOUR:
+                return IconShape.FLAT_PAPER;  // taped-together vest
+            case DUCT_TAPE_RESTRAINT:
+                return IconShape.TOOL;        // bound restraint strip
+            case IMPROVISED_PEPPER_SPRAY:
+                return IconShape.BOTTLE;      // small spray bottle
+            case MAKESHIFT_TORCH:
+                return IconShape.TOOL;        // torch/handle shape
 
             default:
                 return IconShape.BOX;

@@ -753,7 +753,26 @@ public enum NPCType {
      * Derek (east boat): present 07:00–22:00; sells DINGHY for 15 COIN.
      * Maureen (west boat): present 09:00–20:00; feeds ducks; rewards fish catches.
      */
-    CANAL_BOAT_OWNER(30f, 0f, 0f, false);
+    CANAL_BOAT_OWNER(30f, 0f, 0f, false),
+
+    // ── Issue #1018: Northfield Poundstretcher ────────────────────────────────
+    /**
+     * Sharon — Pound Shop Manager; runs the Poundstretcher on the high street.
+     * Present Mon–Sat 08:30–18:30, Sun 09:30–16:30 (opens early for setup).
+     * Patrols in a 12-block route around the shop floor and stockroom.
+     * Passive until shoplifting is detected; then calls SHOP_WORKER and may escalate to police.
+     * Gives LOCALS faction discount (−1 COIN on all items) at Respect ≥ 60.
+     * Speech: "Mind how you go." / "Wednesday's the best day for deals." / "Don't make a mess."
+     */
+    POUND_SHOP_MANAGER(40f, 6f, 2.0f, false),
+
+    /**
+     * Shop Worker — floor staff at Poundstretcher.
+     * Present during opening hours; patrols shelves and stockroom.
+     * Passive; speed-walks toward suspected shoplifter on alert from Sharon.
+     * Speech: "Can I help you with something?" / "Everything's priced to clear."
+     */
+    SHOP_WORKER(25f, 4f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
