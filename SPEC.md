@@ -18143,3 +18143,190 @@ To access:
    Verify MARCHETTI_CREW Respect reduced to 40. Verify player Notoriety reduced by 5.
    Verify at least one NPC in the RumourNetwork holds a `GRASSED_UP` rumour.
    Verify 2 POLICE NPCs spawned near the Marchetti territory within 60 simulation frames.
+
+---
+
+## Add Northfield Pigeon Racing — Loft, Training & the Northfield Derby
+
+**Goal**: Implement the `PigeonRacingSystem` and `PigeonLoftUI` — a fully playable
+pigeon racing mini-game referenced extensively in existing code but never built.
+The scaffolding is already in place: `RACING_PIGEON`, `BREAD_CRUST`, `PIGEON_TROPHY`
+materials; `PIGEON_LOFT` prop; `PIGEON_FANCIER` NPC type; `PIGEON_RACE_DAY` and
+`PIGEON_VICTORY` rumour types; `HOME_BIRD`, `CHAMPION_OF_THE_LOFT`, `NORTHFIELD_DERBY`,
+`CAUGHT_IT_YERSELF`, and `BREAD_WINNER` achievements; and
+`NewspaperSystem.setPigeonVictoryPending()` already wired in. All that's missing is
+the system itself.
+
+### Pigeon Acquisition
+
+- **From PIGEON_FANCIER NPC**: Press E to buy a `RACING_PIGEON` for 8 COIN (once per day).
+- **Catching a wild BIRD NPC**: Sprint into a BIRD NPC in the park and press E when within
+  1 block. 40% success chance. Awards `CAUGHT_IT_YERSELF` achievement. Wild-caught pigeons
+  start with Training Level 0 and `MORALE = NERVOUS`.
+- **Community reward**: Win a neighbourhood race — the PIGEON_FANCIER offers a second
+  pigeon as a gift if player wins with Training Level ≤ 3.
+- Player can own at most **one pigeon** at a time. A second acquisition replaces the first
+  (old pigeon flies away; a `PIGEON_VICTORY` rumour seeds if it was a champion).
+
+### PIGEON_LOFT Prop
+
+Crafted from 8 WOOD + 2 PLANKS. Placed on any flat rooftop or allotment surface.
+Press E to open the `PigeonLoftUI`. The loft stores one `RACING_PIGEON`.
+
+**Loft conditions**:
+- `FROST` weather deals −10 Loft Condition per frost period (tracked by `WeatherSystem`).
+  Below Condition 30: pigeon morale drops by 1 tier.
+- Loft can be destroyed by 8 punches; yields WOOD × 8.
+- Loft must exist to enter any race. Attempting to race without a loft: tooltip
+  "You can't race a pigeon that lives in your pocket."
+
+### Training System
+
+| Action | Effect | Notes |
+|--------|--------|-------|
+| Feed `BREAD_CRUST` (press E on loft) | Training +1 (cap 10) | `BREAD_WINNER` at 10 crusts used |
+| Each in-game day the loft is undamaged | Morale +1 tier | Max `ELATED` |
+| Loft damaged (frost or punch) | Morale −1 tier | Min `MISERABLE` |
+
+**Training Level** (0–10) directly multiplies race speed. At Training ≥ 8, the pigeon
+has a 15% chance per race to outperform its speed calculation by +20% (inspired form).
+
+**Morale** (enum: `MISERABLE`, `NERVOUS`, `STEADY`, `CONFIDENT`, `ELATED`):
+- `MISERABLE`: −30% speed
+- `NERVOUS`: −15% speed
+- `STEADY`: baseline
+- `CONFIDENT`: +10% speed
+- `ELATED`: +20% speed
+
+### Race Schedule
+
+Races run every **3 in-game days** (Wednesday and Saturday afternoons, 14:00–16:00).
+The evening before a race, `PigeonRacingSystem` seeds a `RumourType.PIGEON_RACE_DAY`
+rumour into 3 nearby NPCs via `RumourNetwork`.
+
+**Race types**:
+
+| Race | Entry fee | Distance | Opponents | Prize |
+|------|-----------|----------|-----------|-------|
+| Neighbourhood Sprint | 0 COIN | Short | 3 PIGEON_FANCIER birds | 5 COIN |
+| Club Race | 2 COIN | Medium | 5 opponents | 12 COIN |
+| Northfield Derby | 5 COIN | Long | 7 opponents | 30 COIN + `PIGEON_TROPHY` |
+
+The Northfield Derby runs once per in-game week (Sunday 14:00). Entry requires
+Club Race win at least once. Win seeds `RumourType.PIGEON_VICTORY` and calls
+`NewspaperSystem.setPigeonVictoryPending(true)` (replaces filler headline).
+
+### Race Resolution
+
+Races are resolved **off-screen** (no 3D animation needed) using a dice-roll
+simulation inside `PigeonRacingSystem.resolveRace()`:
+
+1. Each pigeon has a `raceSpeed` = `(trainingLevel / 10.0f) × moraleFactor × baseSpeed + rng(0, 0.2f)`.
+2. The opponent pigeons have fixed `raceSpeed` values drawn from a `RACE_TYPE` distribution
+   (Neighbourhood: 0.3–0.6; Club: 0.5–0.8; Derby: 0.65–0.95).
+3. Player pigeon's rank among all entries determines outcome.
+4. Result screen shown in `PigeonLoftUI`: placement, time, and a flavour line.
+
+**Race outcome flavour lines** (shown in UI):
+
+- 1st: "She flew like she had somewhere to be. First place!"
+- 2nd: "Pipped at the post. Damn close."
+- 3rd: "Bronze. The pigeon fancier gives you a consolatory nod."
+- Last: "Dead last. She took the scenic route."
+
+### Weather Effects on Races
+
+| Weather | Effect |
+|---------|--------|
+| `RAIN` / `DRIZZLE` | All pigeons −10% speed; race may be delayed 1 in-game day (50% chance) |
+| `THUNDERSTORM` | Race postponed automatically; `PIGEON_RACE_DAY` rumour re-seeded for next day |
+| `FOG` | All speeds −5%; result announced with a 30-second delay |
+| `HEATWAVE` | All speeds +10% (pigeons love it) |
+| `FROST` | −20% speed; Loft takes damage |
+
+### PigeonLoftUI
+
+Opened by pressing E on a placed `PIGEON_LOFT` prop. Renders as a 2D overlay panel
+in the existing UI style. Sections:
+
+1. **Pigeon Stats**: Name (auto-generated, e.g. "Northfield Nora"), Training Level
+   (shown as 0–10 bar), Morale (text + colour: red/amber/green), Wins/Races.
+2. **Train**: "Feed Bread Crust" button (requires `BREAD_CRUST` in inventory).
+3. **Race Entry**: Lists upcoming races with entry fee, distance, and a disabled/enabled
+   state. "Enter Race" button advances to the race day.
+4. **Results**: Last race placement + flavour line. Blank if no races run yet.
+5. **Release**: Release the pigeon (removes it; tooltip: "Off you go then, love.").
+
+### Achievements
+
+All achievements are already defined in `AchievementType`:
+
+| Achievement | Trigger |
+|-------------|---------|
+| `HOME_BIRD` | Pigeon completes its first race (any placement) |
+| `CHAMPION_OF_THE_LOFT` | Win 3 neighbourhood or club races with the same pigeon |
+| `NORTHFIELD_DERBY` | Win the Northfield Derby |
+| `CAUGHT_IT_YERSELF` | Catch a wild BIRD NPC to acquire a pigeon |
+| `BREAD_WINNER` | Feed 10 `BREAD_CRUST` items to the pigeon |
+
+### Integrations
+
+- **NewspaperSystem**: `setPigeonVictoryPending(true)` called on Derby win.
+- **RumourNetwork**: Seeds `PIGEON_RACE_DAY` the evening before each race;
+  `PIGEON_VICTORY` on Derby win.
+- **WeatherSystem**: Weather modifies race outcome and loft condition.
+- **AllotmentSystem**: Loft can be placed on an allotment plot as a legal structure
+  (no council enforcement for loft-sized structures).
+- **SkipDivingSystem**: `PIGEON_FANCIER` NPC already integrated for Bulky Item Day;
+  pigeon racing adds a second reason to befriend him.
+- **AchievementSystem**: Unlock achievements listed above at the correct triggers.
+
+### New Items
+
+All items already defined in `Material`:
+- `RACING_PIGEON` — the pigeon; acquired via purchase, catch, or gift.
+- `BREAD_CRUST` — training feed; dropped by `PENSIONER` NPCs (10% chance) or
+  crafted from `CARDBOARD × 1 + COIN × 1`.
+- `PIGEON_TROPHY` — awarded on Derby win; placeable as squat decoration (+5 Vibe).
+
+### Unit Tests
+
+- `resolveRace()` with Training 10 + `ELATED` morale always beats opponents with speed ≤ 0.6.
+- `resolveRace()` with Training 0 + `MISERABLE` morale finishes last against a full field.
+- `BREAD_CRUST` feeding increments training level by 1; stops at cap 10.
+- Frost weather event reduces loft condition by exactly 10 per frost period.
+- `PIGEON_RACE_DAY` rumour is seeded into exactly 3 NPCs the evening before a race.
+- Derby entry is blocked if player has no prior Club Race win.
+- Weather `THUNDERSTORM` causes race postponement and re-seeds `PIGEON_RACE_DAY` for next day.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Buy pigeon, train, enter neighbourhood race, win**: Give player 8 COIN.
+   Press E on `PIGEON_FANCIER` NPC. Verify `RACING_PIGEON` added to inventory.
+   Place `PIGEON_LOFT`. Press E on loft. Give player 10 `BREAD_CRUST`. Feed all 10.
+   Verify Training Level = 10. Set morale to `ELATED`. Advance to race day (Wednesday 14:00).
+   Open `PigeonLoftUI`, press "Enter Race" (Neighbourhood Sprint). Call `resolveRace()`.
+   Verify placement = 1 (first place). Verify player receives 5 COIN. Verify
+   `HOME_BIRD` achievement unlocked.
+
+2. **Catch wild pigeon in the park**: Spawn a `BIRD` NPC in the park. Sprint player
+   to within 1 block of the BIRD. Press E. Use `rng` seeded to guarantee success (40%+).
+   Verify `RACING_PIGEON` added to inventory. Verify `CAUGHT_IT_YERSELF` achievement
+   unlocked. Verify caught pigeon has Training Level 0 and morale `NERVOUS`.
+
+3. **Frost damages loft**: Place `PIGEON_LOFT` with Condition = 100. Trigger a `FROST`
+   weather event via `WeatherSystem`. Advance 1 in-game period. Verify loft Condition
+   reduced to 90. Trigger 9 more frost periods. Verify loft Condition = 0 (floor).
+   Verify pigeon morale has dropped at least 1 tier from its starting value.
+
+4. **Thunderstorm postpones race**: Schedule a Club Race for Wednesday 14:00. At
+   Wednesday 13:00, trigger `THUNDERSTORM` weather. Advance time to 14:00. Verify
+   the race does NOT resolve (no placement recorded). Verify a `PIGEON_RACE_DAY`
+   rumour has been seeded into at least 1 NPC for the next available race day.
+
+5. **Derby win triggers newspaper headline**: Enter the Northfield Derby (satisfy
+   entry requirement by setting `hasWonClubRace = true`). Set player pigeon training
+   to 10, morale to `ELATED`. Call `resolveRace()` with a seeded `rng` that guarantees
+   first place. Verify placement = 1. Verify `NewspaperSystem.isPigeonVictoryPending()`
+   returns true. Verify `NORTHFIELD_DERBY` achievement unlocked. Verify `PIGEON_VICTORY`
+   rumour seeded into at least 3 NPCs.
