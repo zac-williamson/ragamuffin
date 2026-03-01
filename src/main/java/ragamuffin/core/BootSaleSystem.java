@@ -6,6 +6,7 @@ import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.entity.Player;
+import ragamuffin.ui.AchievementType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -111,6 +112,9 @@ public class BootSaleSystem {
     /** Whether police spawned (for STEALTH XP tracking). */
     private boolean policeSpawnedThisLot = false;
 
+    /** Whether the pending police spawn countdown is for a HIGH-risk lot win. */
+    private boolean highRiskPoliceCountdownActive = false;
+
     /** The position of the boot sale venue (set externally). */
     private float venueX = 0f, venueY = 1f, venueZ = 0f;
 
@@ -131,6 +135,9 @@ public class BootSaleSystem {
 
     /** Last tooltip message (for testing). */
     private String lastTooltip = null;
+
+    /** Achievement callback — set externally before the first update. */
+    private NotorietySystem.AchievementCallback achievementCallback = null;
 
     // ── Construction ──────────────────────────────────────────────────────────
 
@@ -332,6 +339,11 @@ public class BootSaleSystem {
         this.playerInventory = inventory;
     }
 
+    /** Set the achievement callback (called from RagamuffinGame during setup). */
+    public void setAchievementCallback(NotorietySystem.AchievementCallback callback) {
+        this.achievementCallback = callback;
+    }
+
     /**
      * Record that the player completed a faction mission today.
      * Enables the loyalty discount for that faction's lots.
@@ -503,11 +515,13 @@ public class BootSaleSystem {
 
         // HIGH risk → noise alert + police spawn
         policeSpawnedThisLot = false;
+        highRiskPoliceCountdownActive = false;
         if (lot.getRiskLevel() == AuctionLot.RiskLevel.HIGH) {
             if (noiseSystem != null) {
                 noiseSystem.setNoiseLevel(1.0f); // maximum noise
             }
             policeSpawnFrameCountdown = POLICE_SPAWN_FRAMES;
+            highRiskPoliceCountdownActive = true;
         }
 
         // STEALTH XP if no police spawned (checked later via policeSpawnedThisLot)
@@ -520,6 +534,22 @@ public class BootSaleSystem {
         if (!firstWinTooltipFired) {
             firstWinTooltipFired = true;
             lastTooltip = FIRST_WIN_TOOLTIP;
+        }
+
+        // Achievements
+        if (achievementCallback != null) {
+            // First lot won ever
+            if (totalLotsWon == 1) {
+                achievementCallback.award(AchievementType.FIRST_LOT);
+            }
+            // 20 lots won lifetime
+            if (totalLotsWon >= 20) {
+                achievementCallback.award(AchievementType.BOOT_SALE_REGULAR);
+            }
+            // Five lots won today
+            if (lotsWonToday >= NEIGHBOURHOOD_EVENT_LOT_THRESHOLD) {
+                achievementCallback.award(AchievementType.MARKET_KING);
+            }
         }
 
         // Lots-won-today neighbourhood event check
@@ -565,13 +595,19 @@ public class BootSaleSystem {
         policeSpawnedThisLot = true;
 
         // If the police can see the player, register a THEFT offence via WantedSystem
+        boolean playerSpotted = false;
         if (wantedSystem != null && player != null) {
             float dist = police.getPosition().dst(player.getPosition());
             if (dist <= 20f) { // within police LOS range
                 wantedSystem.onCrimeWitnessed(2,
                         player.getPosition().x, player.getPosition().y, player.getPosition().z,
                         player, null);
+                playerSpotted = true;
             }
+        }
+        // HIGH_ROLLER: police arrived but didn't spot the player — slipped away clean
+        if (!playerSpotted && highRiskPoliceCountdownActive && achievementCallback != null) {
+            achievementCallback.award(AchievementType.HIGH_ROLLER);
         }
         // STEALTH XP only if police did NOT spawn / can't see the player
         // → Since we just spawned police, no STEALTH XP this lot
