@@ -2126,6 +2126,38 @@ public enum AchievementType {
         "Burned",
         "A cloned phone's surveillance burned out. Three rumours. Zero fingerprints.",
         1
+    ),
+
+    // ── Issue #1071: Northfield Fast Cash Finance ─────────────────────────
+    IN_DEBT(
+        "In Debt",
+        "Took your first payday loan. The APR is 1,294%. Representative example.",
+        1
+    ),
+    DEBT_SPIRAL(
+        "Debt Spiral",
+        "Missed two repayments on a single loan. Barry is not best pleased.",
+        1
+    ),
+    BAILIFF_BRIBED(
+        "Grease the Wheels",
+        "Bribed the bailiff. Ten coins and a firm handshake. No paperwork.",
+        1
+    ),
+    BAILIFF_ASSAULT(
+        "Don't Shoot the Messenger",
+        "Attacked the bailiff. Wanted Tier 2 and Barry will never forgive you.",
+        1
+    ),
+    MARCHETTI_MONEY(
+        "In Deeper",
+        "Had your debt sold to the Marchetti Crew. This is fine. Everything is fine.",
+        1
+    ),
+    HIGH_ROLLER_NOTICE(
+        "Word Gets Around",
+        "Barry heard you had a good day at the bookies and proactively offered a bigger loan.",
+        1
     );
 
     private final String name;
