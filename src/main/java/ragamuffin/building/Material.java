@@ -1465,7 +1465,15 @@ public enum Material {
      * Wearable as a disguise component: +1 Disguise tier for 5 minutes if draped over player (press E to wear).
      * Found at jumble sales; sell value: 1 COIN.
      */
-    TABLECLOTH("Tablecloth");
+    TABLECLOTH("Tablecloth"),
+
+    // ── Issue #1012: Skin Deep Tattoos ────────────────────────────────────────
+    /** Sewing needle — used for prison-tattoo DIY at a MIRROR_PROP. */
+    NEEDLE("Needle"),
+    /** Ink bottle — combined with NEEDLE for prison tattoo. */
+    INK_BOTTLE("Ink Bottle"),
+    /** Tattoo gun — unlocked by Kev after 3 visits; weapon (3 dmg) and fence item (12–18 COIN). */
+    TATTOO_GUN("Tattoo Gun");
 
     private final String displayName;
 
@@ -2003,6 +2011,14 @@ public enum Material {
             case KNITTING_NEEDLES:      return cs(0.78f, 0.12f, 0.12f,   // Red needles
                                                    0.88f, 0.82f, 0.50f); // Yellow yarn
 
+            // Issue #1012: Skin Deep Tattoos
+            case NEEDLE:                return cs(0.80f, 0.80f, 0.82f,   // Silver needle
+                                                   0.10f, 0.10f, 0.10f); // Dark tip
+            case INK_BOTTLE:            return cs(0.10f, 0.10f, 0.38f,   // Dark ink body
+                                                   0.22f, 0.22f, 0.60f); // Blue ink cap
+            case TATTOO_GUN:            return cs(0.22f, 0.22f, 0.25f,   // Gunmetal body
+                                                   0.80f, 0.80f, 0.80f); // Chrome highlight
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2365,6 +2381,9 @@ public enum Material {
             case THERMOS_FLASK:
             case JIGSAW_PUZZLE_BOX:
             case KNITTING_NEEDLES:
+            // Issue #1012: Skin Deep Tattoos — small craft items sit on surfaces
+            case NEEDLE:
+            case INK_BOTTLE:
                 return true;
             default:
                 return false;
@@ -2858,6 +2877,14 @@ public enum Material {
                 return IconShape.BOX;         // flat box shape
             case KNITTING_NEEDLES:
                 return IconShape.TOOL;        // long needle shafts
+
+            // Issue #1012: Skin Deep Tattoos
+            case NEEDLE:
+                return IconShape.TOOL;        // thin needle shaft
+            case INK_BOTTLE:
+                return IconShape.CYLINDER;    // small glass bottle
+            case TATTOO_GUN:
+                return IconShape.TOOL;        // handheld tattoo gun
 
             default:
                 return IconShape.BOX;

@@ -741,7 +741,11 @@ public enum NPCType {
      * Speech: "God loves everyone, even you." / "Service starts at ten, if you're interested."
      *         / "Soup's on — come and get it while it's hot."
      */
-    VICAR(15f, 0f, 0f, false);
+    VICAR(15f, 0f, 0f, false),
+
+    // ── Issue #1012: Skin Deep Tattoos ────────────────────────────────────────
+    /** Kev — taciturn ex-con running Skin Deep Tattoos. Passive, speech-rich. */
+    TATTOOIST(40f, 5f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
