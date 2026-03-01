@@ -20697,3 +20697,192 @@ SCRAPYARD,
    Verify sell menu is unavailable (Gary refuses all trade). Verify Gary speech is
    *"Not right now, son. Come back later."*. Advance simulation 5 in-game minutes.
    Verify POLICE NPCs despawn and trade resumes.
+
+---
+
+## Add Northfield Cash Converters — Second-Hand Electronics, Serial Number Washing & the Stolen Console Pipeline
+
+**Landmark**: Existing `CASH_CONVERTER` landmark. New `CashConvertersSystem` class.
+
+### Overview
+
+Cash Converters on Northfield High Street — a fluorescent-lit purgatory of scratched game
+discs, cracked phones in display cases, and a manager named Dean who "doesn't ask where it came
+from" but who does run serial numbers on anything worth more than 20 quid. By day it's a
+legitimate second-hand electronics shop. By night it's a key link in the stolen-goods pipeline
+from Fix My Phone, fenced through Dave the Middleman in the alley behind.
+
+The shop creates a distinct economy: higher payouts than the Pawn Shop for electronics, but
+Dean checks serial numbers on high-value items (GAMES_CONSOLE, LAPTOP, STOLEN_PHONE). The
+player can bypass this via the IMEI-scrubbed `WIPED_PHONE` item crafted at Fix My Phone, or by
+bribing Dean (Notoriety ≥ 30, costs 5 COIN flat fee) to "not notice".
+
+### Opening Hours
+
+Open Mon–Sat 09:00–18:00. Closed Sunday (Dean "needs to recover"). After-hours, Dave the
+Middleman spawns in the alley 22:00–02:00 and buys stolen electronics at 30% of Dean's price.
+
+### Player Actions (press E on `COUNTER_PROP`)
+
+| Action | Requirement | Result |
+|--------|-------------|--------|
+| Sell electronics | Any time open | Receive `SELL_RATE` fraction of base value |
+| Trade-in for store credit | Any time open | Receive 10% bonus over cash sell |
+| Buy from display case | Any time open | Pay base value; items rotate daily |
+| Bribe Dean (serial check bypass) | Notoriety ≥ 30, 5 COIN | Stolen item accepted without check |
+| Use store credit | Accumulated credit > 0 | Offset against purchase |
+
+### Serial Number Check
+
+Dean runs a check on items in `SERIAL_CHECK_ITEMS` (GAMES_CONSOLE, LAPTOP, STOLEN_PHONE,
+TABLET). If the item is flagged as stolen (has the `stolen` tag from WitnessSystem), Dean
+refuses the sale and calls the police if Notoriety ≥ 40. At Notoriety < 40 he refuses
+silently ("Can't take this one, mate"). Items without stolen tag, or `WIPED_PHONE` items
+(produced by PhoneRepairSystem cloning route), are accepted without check.
+
+### Economics
+
+- `SELL_RATE`: 55–70% of base value (better than Pawn Shop's 45–60% for electronics).
+- Items: GAMES_CONSOLE (base 12), LAPTOP (base 20), STOLEN_PHONE (base 6), WIPED_PHONE (base 8),
+  DVD (base 1), CAMERA (base 7), TABLET (base 15), BLUETOOTH_SPEAKER (base 4).
+- Store credit carries no cash-out — only usable in-store.
+- Dave the Middleman: 30% of Dean's rate for stolen items, no serial check, no Notoriety risk.
+- If Dean has called police twice in a session, Dave spawns early (21:00 instead of 22:00).
+
+### Market Events
+
+- `CONSOLE_DROP` market event: all GAMES_CONSOLE prices ×1.8 for one in-game day; Dean runs
+  out of stock by 14:00.
+- `SCHOOLHOLIDAYS` market event: DVD sell-price halves (everyone's already seen them).
+
+### NPCs
+
+- `CASH_CONVERTER_MANAGER` — Dean; present during opening hours at the counter.
+  Dialogue varies with Notoriety: low ("All right mate, what you got?"), high
+  ("I'm going to need to see some ID for that").
+- `CASH_CONVERTER_CUSTOMER` — civilians browsing the display case; 2–4 spawned.
+- `DAVE_MIDDLEMAN` — Dave; spawns in the alley 22:00–02:00. Known to the Fence.
+  If FENCE Respect ≥ 20, Dave gives the player a 10% bonus.
+
+### New `PropType` entries
+
+- `COUNTER_PROP` — shop counter (3.0×1.0×0.9, 3 hits, WOOD). Press E to interact.
+- `DISPLAY_CASE_PROP` — glass display cabinet (2.0×1.2×0.5, 2 hits, GLASS). Shows
+  today's stock as floating item icons.
+- `BACK_ROOM_DOOR_PROP` — locked door to back room (1.0×2.0×0.2, 5 hits, WOOD).
+  Requires LOCKPICK or CASH_CONVERTER_MANAGER to be bribed.
+- `CCTV_PROP` — ceiling-mounted CCTV camera (0.3×0.3×0.2, 3 hits, METAL). If broken
+  before a stolen-item sale, Dean cannot call police regardless of Notoriety.
+
+### New `LandmarkType` entry
+
+Already exists: `CASH_CONVERTER` returning `"Cash Converters"`.
+
+### New `NPCType` entries
+
+```java
+// ── Issue #1028: Cash Converters ──────────────────────────────────────────────
+/** Dean — the Cash Converters manager. Runs serial checks on high-value items. */
+CASH_CONVERTER_MANAGER(20f, 0f, 0f, false),
+
+/** Dave the Middleman — nocturnal fence in the alley. */
+DAVE_MIDDLEMAN(20f, 0f, 0f, false),
+```
+
+### New `Material` entries
+
+```java
+// ── Issue #1028: Cash Converters ──────────────────────────────────────────────
+/** Blu-ray / DVD — second-hand disc. Sell at Cash Converters for 1 COIN. */
+DVD("DVD"),
+
+/** Bluetooth speaker — portable speaker, often nicked from students. */
+BLUETOOTH_SPEAKER("Bluetooth Speaker"),
+
+/** Tablet computer — mid-value electronics, check serial. */
+TABLET("Tablet"),
+```
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `DIGITAL_POVERTY` | Sell 10 DVDs to Cash Converters in one session |
+| `CLEAN_IMEI` | Sell a `WIPED_PHONE` without triggering a serial check |
+| `NIGHT_SHIFT` | Buy from Dave the Middleman for the first time |
+| `STORE_CREDIT_MILLIONAIRE` | Accumulate 50 store-credit COIN without spending any |
+| `CCTV_BLIND_SPOT` | Break the `CCTV_PROP` before a stolen-item sale succeeds |
+
+### System Integrations
+
+- **PhoneRepairSystem**: `WIPED_PHONE` produced by phone cloning bypasses Dean's serial check.
+- **PawnShopSystem**: Cash Converters pays 10% more for electronics; pawn shop pays more for
+  jewellery and gold — complementary, not redundant.
+- **FenceSystem**: Dave the Middleman references Fence rep; Fence NPC may tip the player to
+  use Dave for high-value electronics instead of the pawn shop.
+- **WitnessSystem**: Dean calling police triggers HANDLING_STOLEN_GOODS on CriminalRecord.
+- **MarketEvent**: `CONSOLE_DROP` and `SCHOOLHOLIDAYS` events affect pricing.
+- **NoiseSystem**: smashing CCTV_PROP generates noise level 4.
+- **WantedSystem**: Dean calling police adds 1 Wanted star if Notoriety ≥ 40.
+- **RumourNetwork**: selling `WIPED_PHONE` seeds `SHOP_NEWS` rumour ("Someone's been
+  flogging burner phones round the back of Cash Converters").
+- **AchievementSystem**: five new achievements.
+
+### Unit Tests
+
+- `CashConvertersSystem.isOpen(MON, 10)` returns true. `isOpen(SUN, 12)` returns false.
+  `isOpen(MON, 18)` returns false.
+- `CashConvertersSystem.getSellPrice(GAMES_CONSOLE, rng_seed=42)` returns value in range
+  `[floor(12*0.55), floor(12*0.70)]` = `[6, 8]`.
+- `CashConvertersSystem.requiresSerialCheck(GAMES_CONSOLE)` returns true.
+  `requiresSerialCheck(DVD)` returns false.
+  `requiresSerialCheck(WIPED_PHONE)` returns false.
+- `CashConvertersSystem.isStolenFlagged(item_with_stolen_tag)` returns true.
+  `isStolenFlagged(item_without_tag)` returns false.
+- `CashConvertersSystem.tryBribe(notoriety=25, coin=5)` returns BRIBE_FAILED.
+  `tryBribe(notoriety=35, coin=5)` returns BRIBE_SUCCESS and deducts 5 COIN.
+  `tryBribe(notoriety=35, coin=2)` returns BRIBE_INSUFFICIENT_FUNDS.
+- `CashConvertersSystem.getDaveSpawnHour(policeCallCount=0)` returns 22.
+  `getDaveSpawnHour(policeCallCount=2)` returns 21.
+- `CashConvertersSystem.applyMarketEvent(CONSOLE_DROP, GAMES_CONSOLE, 12)` returns 21.
+  `applyMarketEvent(SCHOOLHOLIDAYS, DVD, 1)` returns 0 (floor of 0.5).
+
+### Integration Tests — implement these exact scenarios
+
+1. **Sell electronics over the counter**: Give player `GAMES_CONSOLE` (not stolen-tagged).
+   Set time to 10:00 Monday. Place player at `COUNTER_PROP`. Press E. Select "Sell".
+   Verify player receives COIN in range [6, 8]. Verify `GAMES_CONSOLE` removed from
+   inventory. Verify `DIGITAL_POVERTY` not yet unlocked (only DVDs count).
+
+2. **Serial check rejects stolen phone**: Give player `STOLEN_PHONE` with stolen tag.
+   Set Notoriety to 45. Place player at `COUNTER_PROP`. Press E. Select "Sell
+   STOLEN_PHONE". Verify sale is rejected. Verify Dean dialogue contains "Can't take
+   this one". Verify a `POLICE` NPC spawns within 30 seconds of in-game time.
+   Verify `CriminalRecord` contains `HANDLING_STOLEN_GOODS`. Verify `WantedSystem`
+   wanted level increased by 1.
+
+3. **WIPED_PHONE bypasses serial check**: Give player `WIPED_PHONE` (no stolen tag).
+   Set Notoriety to 50. Place player at `COUNTER_PROP`. Press E. Select "Sell
+   WIPED_PHONE". Verify sale succeeds. Verify player receives COIN in range [4, 5]
+   (floor of 8×0.55 to 8×0.70). Verify no police spawned. Verify `CLEAN_IMEI`
+   achievement unlocked.
+
+4. **Bribe Dean to accept stolen console**: Give player `GAMES_CONSOLE` with stolen
+   tag, 10 COIN. Set Notoriety to 35. Place player at `COUNTER_PROP`. Press E.
+   Select "Bribe Dean (5 COIN)". Verify 5 COIN deducted. Verify `GAMES_CONSOLE`
+   is now accepted in subsequent sell attempt. Verify player receives COIN in
+   range [6, 8]. Verify no police spawned.
+
+5. **Dave the Middleman buys stolen stock after hours**: Set time to 23:00. Give
+   player `GAMES_CONSOLE` with stolen tag. Place player in the alley behind
+   `CASH_CONVERTER` landmark. Verify `DAVE_MIDDLEMAN` NPC is present. Press E on
+   Dave. Select "Sell GAMES_CONSOLE". Verify player receives COIN equal to
+   `floor(dean_price * 0.30)`. Verify no police response. Verify no serial check.
+   Verify `NIGHT_SHIFT` achievement unlocked on first Dave transaction.
+
+6. **CCTV blind spot prevents police call**: Place player at `CCTV_PROP`. Simulate
+   3 punch actions. Verify `CCTV_PROP` is broken. Verify `CashConvertersSystem.isCctvBroken()`
+   returns true. Give player `STOLEN_PHONE` with stolen tag. Set Notoriety to 50.
+   Press E on `COUNTER_PROP`. Select "Sell STOLEN_PHONE". Verify Dean refuses sale
+   (serial check still runs) but does NOT call police. Verify `CCTV_BLIND_SPOT`
+   achievement unlocked. Verify NoiseSystem logged noise level 4 when CCTV was broken.
