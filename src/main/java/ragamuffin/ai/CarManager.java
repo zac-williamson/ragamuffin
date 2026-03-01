@@ -157,6 +157,24 @@ public class CarManager {
         return van;
     }
 
+    /**
+     * Spawn a parked car at the given position (Issue #991).
+     * Parked cars have no AI driver and do not move until the player steals them.
+     * The player can take a parked car without a driver getting out.
+     *
+     * @return the spawned Car in parked state, or null if the cap is reached
+     */
+    public Car spawnParkedCar(float x, float y, float z,
+                               boolean facingAlongX,
+                               float segmentMin, float segmentMax,
+                               CarColour colour) {
+        if (cars.size() >= MAX_CARS) return null;
+        Car car = new Car(x, y, z, facingAlongX, segmentMin, segmentMax, colour);
+        car.setParked(true);
+        cars.add(car);
+        return car;
+    }
+
     // ── Per-frame update ──────────────────────────────────────────────────────
 
     /** Damage dealt to an NPC per car collision. */
@@ -195,7 +213,8 @@ public class CarManager {
             Car car = cars.get(i);
 
             // Issue #773: player-driven cars are controlled by CarDrivingSystem — skip AI
-            if (car.isDrivenByPlayer()) {
+            // Issue #991: parked cars have no driver and do not move — skip AI
+            if (car.isDrivenByPlayer() || car.isParked()) {
                 // Player-driven cars still collide with NPCs (Issue #884)
                 if (npcs != null) {
                     applyNPCCollisions(car, npcs);

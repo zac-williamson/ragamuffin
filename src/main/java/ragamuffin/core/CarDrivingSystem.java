@@ -52,6 +52,14 @@ public class CarDrivingSystem {
      * Does nothing and returns false if no car is within range or the player
      * is already driving.
      *
+     * Issue #991: Behaviour depends on whether the target car is parked or moving.
+     * <ul>
+     *   <li><b>Parked car</b> — no driver present; the player steals it silently
+     *       and immediately takes control.</li>
+     *   <li><b>Moving car</b> — an NPC driver is inside; interacting causes the
+     *       driver to get out (the car stops) and the player takes the wheel.</li>
+     * </ul>
+     *
      * @param player the player entity
      * @return true if the player successfully entered a car
      */
@@ -65,10 +73,21 @@ public class CarDrivingSystem {
             return false;
         }
 
-        nearest.setDrivenByPlayer(true);
-        currentCar = nearest;
-        inCar = true;
-        lastMessage = "You get in the car. WASD to drive, E or ESC to exit.";
+        if (nearest.isParked()) {
+            // Parked car — no driver, steal it directly (Issue #991)
+            nearest.setParked(false); // un-park so it can be driven
+            nearest.setDrivenByPlayer(true);
+            currentCar = nearest;
+            inCar = true;
+            lastMessage = "You get in the parked car. WASD to drive, E or ESC to exit.";
+        } else {
+            // Moving car — driver gets out first, then player takes over (Issue #991)
+            nearest.setStopped(true); // bring the car to a halt
+            nearest.setDrivenByPlayer(true);
+            currentCar = nearest;
+            inCar = true;
+            lastMessage = "The driver gets out. You take the wheel. WASD to drive, E or ESC to exit.";
+        }
         return true;
     }
 
