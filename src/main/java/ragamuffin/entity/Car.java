@@ -70,6 +70,14 @@ public class Car {
     /** True when the player is currently driving this car. */
     private boolean drivenByPlayer = false;
 
+    /**
+     * True when this car is parked (no AI driver — the engine is off).
+     * Parked cars can be stolen by the player without a driver getting out.
+     * Moving (non-parked) cars have an NPC driver who will exit when the
+     * player interacts with the vehicle (Issue #991).
+     */
+    private boolean parked = false;
+
     /** Maximum speed when driven by the player (blocks/sec). */
     public static final float PLAYER_MAX_SPEED = 12.0f;
 
@@ -159,7 +167,7 @@ public class Car {
      * @param delta seconds since last frame
      */
     public void update(float delta) {
-        if (!stopped) {
+        if (!stopped && !parked) {
             // Move car along heading
             position.add(velocity.x * delta, 0f, velocity.z * delta);
 
@@ -301,6 +309,31 @@ public class Car {
      */
     public boolean isDrivenByPlayer() {
         return drivenByPlayer;
+    }
+
+    /**
+     * Whether this car is parked (engine off, no AI driver).
+     * Parked cars can be stolen silently; moving cars eject their driver
+     * when the player interacts with them (Issue #991).
+     */
+    public boolean isParked() {
+        return parked;
+    }
+
+    /**
+     * Set the parked state of this car.
+     * When parking the car its velocity is zeroed and it is stopped.
+     * When un-parking (driving away) the car resumes from rest.
+     */
+    public void setParked(boolean parked) {
+        this.parked = parked;
+        if (parked) {
+            velocity.set(0f, 0f, 0f);
+            stopped = true;
+        } else {
+            stopped = false;
+            applyHeadingToVelocity();
+        }
     }
 
     /**
