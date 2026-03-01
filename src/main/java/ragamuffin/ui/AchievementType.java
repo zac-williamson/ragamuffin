@@ -2158,6 +2158,34 @@ public enum AchievementType {
         "Word Gets Around",
         "Barry heard you had a good day at the bookies and proactively offered a bigger loan.",
         1
+    ),
+
+    // ── Issue #1075: Khan's Off-Licence ───────────────────────────────────────
+
+    CORNER_SHOP_REGULAR(
+        "Loyalty Stamped",
+        "20 lifetime loyalty stamps at Khan's Off-Licence.",
+        20
+    ),
+    UNDERAGE_ENABLER(
+        "Underage Enabler",
+        "Handed alcohol to a school kid.",
+        1
+    ),
+    BACK_DOOR_BOY(
+        "Back Door Boy",
+        "Used the after-hours back-door knock 3 times.",
+        3
+    ),
+    MARCHETTI_ERRAND_BOY(
+        "Marchetti Errand Boy",
+        "Accepted 5 Marchetti envelopes from Imran.",
+        5
+    ),
+    FIVE_FINGER_DISCOUNT(
+        "Five Finger Discount",
+        "Shoplifted from Khan's without being detected.",
+        1
     );
 
     private final String name;
