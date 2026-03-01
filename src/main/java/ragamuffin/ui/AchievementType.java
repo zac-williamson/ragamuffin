@@ -1983,6 +1983,39 @@ public enum AchievementType {
         "Nail Burglar",
         "Broke into Angel Nails & Beauty after hours. Desperate times.",
         1
+    ),
+
+    // ── Issue #1053: Northfield Ladbrokes — BettingShopSystem ─────────────────
+
+    FIRST_FLUTTER(
+        "First Flutter",
+        "Placed your first bet at the bookies. Derek didn't even blink.",
+        1
+    ),
+    RACING_CERT(
+        "Racing Cert",
+        "Cashed out a winning bet of 10 COIN or more. Don't get used to it.",
+        1
+    ),
+    FOBT_RAGE(
+        "FOBT Rage",
+        "Lost 10+ COIN on the Fixed-Odds Betting Terminal in one session. The machine won.",
+        1
+    ),
+    SURE_THING(
+        "Sure Thing",
+        "Accepted a race fix from the Marchetti Crew and cashed out. Nice and easy.",
+        1
+    ),
+    FOLDED(
+        "Folded",
+        "Broke into the bookies after hours. Derek's float tray wasn't going to rob itself.",
+        1
+    ),
+    BETTING_SLIP_BLUES(
+        "Betting Slip Blues",
+        "Held three losing slips simultaneously. All three. You beautiful optimist.",
+        1
     );
 
     private final String name;
