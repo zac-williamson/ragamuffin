@@ -576,7 +576,70 @@ public enum PropType {
      * Graffiti wall prop — flavour graffiti painted on stairwell concrete walls.
      * Spawns in stairwells with 10% probability per floor. Not the player's own tag.
      */
-    GRAFFITI_WALL_PROP(0.80f, 0.60f, 0.02f, 1, null);
+    GRAFFITI_WALL_PROP(0.80f, 0.60f, 0.02f, 1, null),
+
+    // ── Issue #985: Northfield Police Station ─────────────────────────────────
+
+    /**
+     * Property bag cupboard — a locked metal cupboard in the custody suite.
+     * Holds all items confiscated from the player during arrest processing.
+     * Items are returned to inventory on bail payment or morning release.
+     * Accessible only with a CUSTODY_KEY_CARD via the evidence locker,
+     * or automatically on standard release.
+     */
+    PROPERTY_BAG_CUPBOARD_PROP(0.70f, 1.80f, 0.50f, 15, Material.SCRAP_METAL),
+
+    /**
+     * Fingerprint pad — an ink pad on the custody suite processing desk.
+     * Player is placed at this prop during the fingerprinting interaction (3 seconds).
+     * Triggers the BANG_TO_RIGHTS achievement on first use.
+     */
+    FINGERPRINT_PAD_PROP(0.40f, 0.05f, 0.30f, 3, null),
+
+    /**
+     * Cell door — a heavy barred door on each custody cell.
+     * Impassable until a release condition is met (bail, morning, or lockpick).
+     * Can be picked with a LOCKPICK (5-second interaction); adds ESCAPE_FROM_CUSTODY
+     * to CriminalRecord and triggers WantedSystem +3 stars on success.
+     */
+    CELL_DOOR_PROP(0.10f, 2.20f, 1.00f, 25, Material.SCRAP_METAL),
+
+    /**
+     * Cell telephone — a wall-mounted telephone inside each custody cell.
+     * Press E to make a single phone call (one per arrest): reduces bail by 5 COIN.
+     * Awards the ONE_PHONE_CALL achievement on first use.
+     */
+    TELEPHONE_PROP(0.20f, 0.25f, 0.15f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Keypad — electronic door entry panel beside the evidence locker.
+     * Requires a valid CUSTODY_KEY_CARD (press E while holding one).
+     * 3-second interaction; opens the evidence locker door for 30 seconds.
+     * Triggers EVIDENCE_TAMPERING crime + WantedSystem +2 stars if a
+     * DETECTIVE or DETENTION_OFFICER is within 8 blocks.
+     */
+    KEYPAD_PROP(0.15f, 0.20f, 0.08f, 5, null),
+
+    /**
+     * Evidence shelf — a steel shelving unit inside the evidence locker.
+     * Press E to loot: returns all of the player's own confiscated items and
+     * may yield a random STOLEN_PHONE or DRUGS_EVIDENCE bonus.
+     * Looting while witnessed triggers EVIDENCE_TAMPERING.
+     */
+    EVIDENCE_SHELF_PROP(0.60f, 2.00f, 0.40f, 10, Material.SCRAP_METAL),
+
+    /**
+     * Waiting bench — a fixed wooden bench in the police station reception.
+     * Purely decorative; NPCs (WAITING_PATIENT type) may sit on it.
+     */
+    WAITING_BENCH_PROP(1.80f, 0.50f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * Interview table — a scarred laminate table in the interview room.
+     * A tape recorder prop sits on top. Interacting (E) plays flavour dialogue.
+     * Cannot be removed by the player.
+     */
+    INTERVIEW_TABLE_PROP(1.60f, 0.80f, 0.80f, 8, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

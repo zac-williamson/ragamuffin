@@ -654,7 +654,33 @@ public enum NPCType {
      * Speech: "You're not meant to be back here." / "Move along, mate."
      *         / "I'm calling it in." / "Track's for spectators only after nine."
      */
-    SECURITY_GUARD(35f, 6f, 2.0f, false);
+    SECURITY_GUARD(35f, 6f, 2.0f, false),
+
+    // ── Issue #985: Northfield Police Station ─────────────────────────────────
+
+    /**
+     * Duty Sergeant — staffs the reception desk at Northfield Police Station 24/7.
+     * Accepts bail payments, handles the Tip Off menu, and can be bribed by players
+     * with MARCHETTI_CREW Respect ≥ 70 (20 COIN reduces charges by 1 tier).
+     * Passive unless player is in cell or commits a crime in reception.
+     */
+    DUTY_SERGEANT(40f, 8f, 1.5f, false),
+
+    /**
+     * Detention Officer — manages the custody suite 06:00–22:00.
+     * Processes arrivals (speech: "Empty your pockets. All of it."), fingerprints,
+     * and patrols the custody corridor. Drops CUSTODY_KEY_CARD (5% chance) on defeat,
+     * may also drop POLICE_JACKET.
+     */
+    DETENTION_OFFICER(50f, 10f, 1.0f, false),
+
+    /**
+     * Detective — works in the CID office (upper floor) 09:00–18:00.
+     * Patrols the station if a station-wide alert is active. Catching the player
+     * inside the evidence locker adds EVIDENCE_TAMPERING to criminal record and
+     * triggers WantedSystem +2 stars.
+     */
+    DETECTIVE(45f, 8f, 1.2f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

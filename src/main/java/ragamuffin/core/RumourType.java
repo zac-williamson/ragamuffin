@@ -166,5 +166,19 @@ public enum RumourType {
      * — seeded by GreyhoundRacingSystem when a race fix (DODGY_PIE or bribery) is witnessed.
      * Spreads via TRACK_PUNTER NPCs; triggers SECURITY_GUARD alert state.
      * If it reaches police: RACE_FIXING added to criminal record. */
-    RACE_FIXED;
+    RACE_FIXED,
+
+    // ── Issue #985: Northfield Police Station ─────────────────────────────────
+
+    /** "Someone grassed to the station — pointed the finger at [faction]."
+     * — seeded by PoliceStationSystem when the player uses the Tip Off menu.
+     * NPCs carrying this rumour use it against the player: "I heard you grassed 'em up."
+     * Turns the named faction hostile toward the player. */
+    GRASSED_UP,
+
+    /** "Someone broke out of the nick — lockpicked the cell door and legged it."
+     * — seeded by PoliceStationSystem on a successful cell breakout.
+     * Positive reputation with STREET_LADS (+5 Respect).
+     * Spreads via PUBLIC NPCs near the police station. */
+    GREAT_ESCAPE_RUMOUR;
 }

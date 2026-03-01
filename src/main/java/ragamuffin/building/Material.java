@@ -1326,7 +1326,50 @@ public enum Material {
      * Sold by the TOTE_CLERK for 1 COIN. Gives odds information for the evening.
      * Tooltip: "Tonight's runners. Six dogs, one dream, zero guarantees."
      */
-    RACE_CARD("Race Card");
+    RACE_CARD("Race Card"),
+
+    // ── Issue #985: Northfield Police Station ─────────────────────────────────
+
+    /**
+     * Custody Key Card — opens the evidence locker keypad at Northfield Police Station.
+     * Dropped by the DETENTION_OFFICER (5% chance on defeat), or crafted from
+     * BLANK_CARD + INSPECTOR_BADGE (crafting recipe unlocked at squat WORKBENCH).
+     * Single-use per entry attempt.
+     * Tooltip: "This opens something official. Something you're not meant to open."
+     */
+    CUSTODY_KEY_CARD("Custody Key Card"),
+
+    /**
+     * Blank Card — a plain white plastic card, blank on both sides.
+     * Crafting ingredient: 2 COIN → BLANK_CARD (at WORKBENCH).
+     * Used with INSPECTOR_BADGE to craft CUSTODY_KEY_CARD.
+     */
+    BLANK_CARD("Blank Card"),
+
+    /**
+     * Bail Receipt — issued by the DUTY_SERGEANT on bail payment.
+     * Proof of release; reduces bail by 20% on the next arrest if still held in inventory.
+     * Tooltip: "Paid up. Doesn't mean you're innocent. Just means you could afford it."
+     */
+    BAIL_RECEIPT("Bail Receipt"),
+
+    /**
+     * Police Jacket — looted from a defeated DETENTION_OFFICER.
+     * DisguiseSystem: wearing it allows free passage through the police station
+     * reception and into the custody suite. Fails at the cell block door if
+     * Notoriety ≥ 30 (DETENTION_OFFICER recognises the player on close inspection).
+     * Tooltip: "It fits, surprisingly. Try not to look too shifty."
+     */
+    POLICE_JACKET("Police Jacket"),
+
+    /**
+     * Drugs Evidence — contraband seized from suspects, stored in the evidence locker.
+     * Lootable from EVIDENCE_SHELF_PROP during the evidence locker heist.
+     * NeedType.DESPERATE satisfier worth 20 COIN on the street.
+     * Holding it adds +5 Notoriety if spotted by a police NPC.
+     * Tooltip: "Confiscated goods. Technically still evidence."
+     */
+    DRUGS_EVIDENCE("Drugs Evidence");
 
     private final String displayName;
 

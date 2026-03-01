@@ -1514,6 +1514,38 @@ public enum AchievementType {
         "Broke the Tote",
         "Won three consecutive greyhound races in a single session. The Marchetti Crew have noticed. That might not be good.",
         1
+    ),
+
+    // ── Issue #985: Northfield Police Station ─────────────────────────────────
+
+    BANG_TO_RIGHTS(
+        "Bang to Rights",
+        "Processed through the custody suite for the first time. The fingerprint machine doesn't lie.",
+        1
+    ),
+
+    ONE_PHONE_CALL(
+        "One Phone Call",
+        "Used the cell telephone during an arrest. Someone answered. You owe them one.",
+        1
+    ),
+
+    GREAT_ESCAPE(
+        "The Great Escape",
+        "Broke out of a police cell with a lockpick. McQueen would approve. The duty sergeant would not.",
+        1
+    ),
+
+    PROPER_GRASS(
+        "Proper Grass",
+        "Used the Tip Off menu at Northfield Police Station. In this neighbourhood, snitches do get stitches.",
+        1
+    ),
+
+    EVIDENCE_LOST(
+        "Evidence Lost",
+        "Reclaimed your own confiscated items from the police evidence locker. Technically they were yours to begin with.",
+        1
     );
 
     private final String name;
