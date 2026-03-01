@@ -205,5 +205,13 @@ public enum RumourType {
      * — seeded by FireStationSystem when the player completes the Engine Heist.
      * Spreads to 5 nearby NPCs via RumourNetwork. Raises FIREFIGHTER suspicion permanently.
      * Police NPCs who receive it immediately raise WantedSystem by +1 star. */
-    MAJOR_THEFT;
+    MAJOR_THEFT,
+
+    // ── Issue #1022: Northfield GP Surgery ────────────────────────────────────
+
+    /** "Doctor Nair reckons half the street's got stress-related conditions — not surprised, to be honest."
+     * — seeded weekly by GPSurgerySystem from Dr. Nair.
+     * Spreads via GP_PATIENT and PUBLIC NPCs near the surgery.
+     * Soft narrative flavour; no gameplay effect beyond atmosphere. */
+    LOCAL_HEALTH;
 }

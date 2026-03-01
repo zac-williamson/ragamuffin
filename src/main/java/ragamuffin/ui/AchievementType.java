@@ -1736,6 +1736,39 @@ public enum AchievementType {
         "Follow the Money",
         "Witnessed Derek's protection payment to the Marchetti Crew. Sometimes it's better not to know.",
         1
+    ),
+
+    // ── Issue #1022: Northfield GP Surgery ────────────────────────────────────
+
+    HYPOCHONDRIAC(
+        "Frequent Flyer (NHS Edition)",
+        "Booked and attended five GP appointments. Brenda knows your name now.",
+        5
+    ),
+    OFF_SICK(
+        "Doctor's Note",
+        "Used a sick note to dodge a JobCentre sanction. Technically legitimate.",
+        1
+    ),
+    SELF_MEDICATING(
+        "Taking Matters Into Your Own Hands",
+        "Raided the medicine cabinet. You're basically a pharmacist now.",
+        1
+    ),
+    SURGERY_RAIDER(
+        "Highly Irregular",
+        "Cracked the drug safe. Dr. Nair is absolutely furious.",
+        1
+    ),
+    GOOD_SAMARITAN(
+        "Just Doing My Bit",
+        "Completed three fetch-prescription quests for patients. Pure of heart.",
+        3
+    ),
+    WAITING_LIST(
+        "Still Waiting",
+        "Sat in the waiting room for over 30 in-game minutes. You've earned it.",
+        1
     );
 
     private final String name;
