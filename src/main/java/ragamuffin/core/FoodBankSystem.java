@@ -765,4 +765,21 @@ public class FoodBankSystem {
     public void setFirstEntryTooltipShownForTesting(boolean shown) {
         this.firstEntryTooltipShown = shown;
     }
+
+    // ── FeteSystem integration ─────────────────────────────────────────────────
+
+    /**
+     * Returns true if Margaret is currently available (food bank is open today).
+     * Used by FeteSystem: if food bank is running Saturday morning, Margaret
+     * arrives at the fete at 10:30 instead of 10:00.
+     *
+     * @param currentHour current in-game hour
+     * @param dayOfWeek   day of week (0=Monday … 6=Sunday based on dayCount % 7)
+     * @return true if food bank is open (Margaret is there); Saturday is always false
+     */
+    public boolean isMargaretAvailable(float currentHour, int dayOfWeek) {
+        // Food bank is Mon-Fri only (dayOfWeek 0-4 in 0=Mon convention)
+        if (dayOfWeek < 0 || dayOfWeek > 4) return false;
+        return currentHour >= OPEN_HOUR && currentHour < CLOSE_HOUR;
+    }
 }

@@ -820,4 +820,21 @@ public class ChurchSystem {
     public boolean isVicarSpawned() {
         return vicarSpawned;
     }
+
+    // ── FeteSystem integration ─────────────────────────────────────────────────
+
+    /**
+     * Returns true if today is the first Saturday of July (fete day).
+     *
+     * @param dayOfMonth  the current day-of-month (1-based) from TimeSystem
+     * @param dayCount    the current day count from TimeSystem
+     * @param month       the current month (0-based, July = 6) from TimeSystem
+     * @return true on the first Saturday of July
+     */
+    public boolean isFeteDay(int dayOfMonth, int dayCount, int month) {
+        if (month != 6) return false; // July = month index 6
+        if (dayCount % 7 != SATURDAY) return false;
+        // First Saturday: day-of-month in range 1–7
+        return dayOfMonth >= 1 && dayOfMonth <= 7;
+    }
 }

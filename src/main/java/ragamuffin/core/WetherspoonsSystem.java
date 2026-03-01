@@ -1162,4 +1162,27 @@ public class WetherspoonsSystem {
     public void setCurryClubActiveForTesting(boolean active) {
         this.curryClubActive = active;
     }
+
+    // ── FeteSystem integration ─────────────────────────────────────────────────
+
+    /** Number of extra patrons added by the post-fete surge. */
+    private int extraPatronCount = 0;
+
+    /**
+     * Add extra patrons to the pub (called by FeteSystem at 16:00 when fete ends).
+     * @param count number of extra patrons to add
+     */
+    public void addPatrons(int count) {
+        this.extraPatronCount += count;
+    }
+
+    /** Returns the number of extra patrons added by post-fete surge. */
+    public int getExtraPatronCount() {
+        return extraPatronCount;
+    }
+
+    /** For testing: reset the extra patron count. */
+    public void resetExtraPatronCountForTesting() {
+        this.extraPatronCount = 0;
+    }
 }

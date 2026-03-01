@@ -1424,7 +1424,40 @@ public enum PropType {
      * Physio Bag — a sports bag left on the touchline.
      * Yields PARACETAMOL if looted (press E) or destroyed (2 hits).
      */
-    PHYSIO_BAG_PROP(0.4f, 0.3f, 0.4f, 2, Material.PARACETAMOL);
+    PHYSIO_BAG_PROP(0.4f, 0.3f, 0.4f, 2, Material.PARACETAMOL),
+
+    // ── Issue #1098: Northfield Summer Fete ──────────────────────────────────
+
+    /**
+     * Tombola Stall — a rotating drum of numbered tickets manned by VOLUNTEER_NPC.
+     * Press E + 1 COIN for a random prize. Breaks into 2× WOOD (3 hits).
+     */
+    TOMBOLA_STALL_PROP(1.5f, 1.2f, 0.8f, 3, Material.WOOD),
+
+    /**
+     * Cake Stall — trestle table of home-baked cakes manned by VICAR_NPC.
+     * Press E to buy or steal. Breaks into 2× WOOD (3 hits).
+     */
+    CAKE_STALL_PROP(1.5f, 1.2f, 0.8f, 3, Material.WOOD),
+
+    /**
+     * Bric-a-Brac Table — an unmanned table piled with random junk.
+     * Press E to rummage. Breaks into 1× WOOD (2 hits).
+     */
+    BRIC_A_BRAC_PROP(2.0f, 1.0f, 0.6f, 2, Material.WOOD),
+
+    /**
+     * Raffle Ticket Stall — press E + 1 COIN per ticket (max 5).
+     * Grand draw at 15:00. Hold E for 3s with RIGGED_BARREL to fix draw.
+     * Breaks into 1× WOOD (3 hits).
+     */
+    RAFFLE_TICKET_STALL_PROP(1.2f, 1.2f, 0.8f, 3, Material.WOOD),
+
+    /**
+     * Hook-a-Duck — children's game for SCHOOL_KID NPCs.
+     * Press E + 1 COIN → 30% chance CUDDLY_TOY win. Made from PLASTIC (4 hits).
+     */
+    HOOK_A_DUCK_PROP(1.5f, 0.8f, 1.0f, 4, Material.PLASTIC);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
