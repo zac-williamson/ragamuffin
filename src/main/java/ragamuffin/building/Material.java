@@ -597,6 +597,13 @@ public enum Material {
      */
     STOLEN_JACKET("Stolen Jacket"),
 
+    /**
+     * Cloth — a piece of rough fabric. Dropped by BELL_ROPE_PROP on destruction.
+     * Used as a crafting component and wearable disguise component.
+     * Tooltip: "It's just a bit of cloth. Could be useful."
+     */
+    CLOTH("Cloth"),
+
     // ── Issue #926: Chippy System — Tony's Chip Shop ──────────────────────────
 
     /**
