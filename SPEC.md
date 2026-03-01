@@ -19944,3 +19944,235 @@ SHOP_WORKER(20f, 0f, 0f, false),
 6. **KNOCK_OFF_TRACKSUIT reduces shoplifting detection**: Buy `KNOCK_OFF_TRACKSUIT`. Equip it via inventory. Verify `PoundShopSystem.getShopliftDetectionChance(false, false, false, 10, true)` is 10% lower than `getShopliftDetectionChance(false, false, false, 10, false)` (25% base − 10% → 15% with tracksuit, 25% without).
 
 7. **Sharon absent on Sunday after 16:00**: Set time to Sunday 16:30. Verify `POUND_SHOP_MANAGER` NPC is not present (or flagged inactive) in the `POUND_SHOP` boundary. Set time to Sunday 10:30. Verify Sharon IS present and patrol route is active.
+
+---
+
+## Add Northfield Sporting & Social Club — Members Only, Quiz Night & the Committee Conspiracy
+
+**Landmark**: `SOCIAL_CLUB` (new; add to `LandmarkType` with `getDisplayName()` → `"Northfield S&S Club"`)
+
+**Goal**: Add a classic British working men's social club — a stubbornly unrenovated 1970s brick building tucked behind the high street. Open to members and their guests. Run by the committee: **Derek** (chairman, SOCIAL_CLUB_CHAIRMAN), **Maureen** (secretary, present if not at the Post Office — shared NPC), and **Keith** (barman, SOCIAL_CLUB_BARMAN). The player must earn membership to access cheap drinks, darts, the snooker annex, and the legendary Thursday Quiz Night.
+
+---
+
+### Building Layout
+
+A single-storey brick building, 18×12 blocks, with:
+- **Main Bar** (left two-thirds): `BAR_COUNTER_PROP`, 6 `BARSTOOL_PROP`s, `BEER_PUMP_PROP`, `CRIBBAGE_BOARD_PROP` on a corner table, `DARTBOARD_PROP` on the rear wall, `FRUIT_MACHINE_PROP` (same as pub), `TROPHY_CABINET_PROP` (press E for flavour: "1987 Darts League Champions. Runners-up 1988–2005.")
+- **Annex** (right third): `SNOOKER_TABLE_PROP` (shared type from `SnookerSystem` — no rental fee, members play free), `FOLDING_CHAIR_PROP` × 4
+- **Notice Board** (`NOTICE_BOARD_PROP`): press E to read weekly announcements — rotating from a pool of 10 procedurally assembled lines (e.g. "The AGM has been postponed. Again.", "Derek reminds members: no dogs, no Tracksuits, no exceptions.")
+
+**Opening hours**: Mon–Thu 17:00–23:00, Fri–Sat 12:00–00:00, Sun 12:00–22:00. Closed Christmas Day (flavour only).
+
+---
+
+### 1. Membership System
+
+- Non-members see the door `CLUB_DOOR_PROP` locked: Keith calls from inside "Members and guests only, pal."
+- Three ways to gain entry:
+  1. **Guest Pass**: any current `MEMBER` NPC in the club can invite the player in (press E on a member near the door, 30% chance if Notoriety ≤ 30, always succeeds if `LOCALS` faction Respect ≥ 50).
+  2. **Temporary Membership**: costs 5 COIN, purchased from Derek at the `MEMBERSHIP_DESK_PROP`. Valid 1 in-game day; grants access and cheap prices.
+  3. **Full Membership**: costs 15 COIN total (5 sign-up + 10 annual fee). Requires 3+ prior visits as guest or temp member. Grants permanent access, members' prices, and voting rights at AGM (flavour quest).
+
+- **MEMBERS_CARD** item: given on full membership. Prevents `NOTICE_BOARD_PROP` from locking player out on high-Notoriety days. If stolen by a `PICKPOCKET` NPC, player must re-purchase.
+
+---
+
+### 2. The Bar (Keith)
+
+**Keith** (`SOCIAL_CLUB_BARMAN` NPCType): gruff, efficient, has worked the bar since 1991. Opens and closes the bar exactly on time. If the player is mid-pint at closing: "Finish that up then, this isn't a hotel."
+
+Drinks menu (members' prices / non-member guest prices):
+
+| Item | Member price | Guest price | Effect |
+|------|-------------|-------------|--------|
+| `BITTER` | 1 COIN | 2 COIN | +20 hunger, −5 social anxiety (minor notoriety −1 if ≥ Tier 3) |
+| `MILD` | 1 COIN | 2 COIN | +15 hunger; NPC `BORED` need satisfied if drunk near them |
+| `LAGER_TOP` | 1 COIN | 2 COIN | +20 hunger; tooltip on first purchase: "Half lager, half lemonade. Classic." |
+| `DOUBLE_WHISKY` | 2 COIN | 3 COIN | +30 hunger, warmth +15, 20% chance of `DRUNK` debuff |
+| `SOFT_DRINK` | 1 COIN | 1 COIN | +10 hunger, no debuff; tooltip: "Keith pours it without making eye contact." |
+| `CRISPS` | 1 COIN | 1 COIN | +10 hunger (same item as elsewhere) |
+
+Non-members during a Quiz Night are barred entirely (Keith: "Quiz night's members only. Fire regulations.").
+
+---
+
+### 3. Darts Mechanic (`DARTBOARD_PROP`)
+
+- Press E on `DARTBOARD_PROP` to start a solo game of 301 (simplified).
+- Mechanic: `SocialClubSystem.throwDart(Random, skill)` — returns a score 1–60 drawn from a weighted distribution shaped by `StreetSkillSystem` DARTS skill (new sub-skill under SOCIAL_SKILLS, cap 5).
+- Each throw call = 1 dart. Three darts per turn. Display score in a HUD overlay (simple text).
+- Reach exactly 0 from 301 to win. Bust (go below 0) resets turn score.
+- Win reward: DARTS skill +1 XP, 1 COIN from Keith ("House pot.").
+- `DARTS_CHAMPION` achievement: win 3 darts games across sessions.
+- **Challenge mode**: After winning once, a `MEMBER` NPC (pick randomly from present members) challenges the player. Winning vs NPC: 5 COIN pot, `STREET_LADS` Faction Respect +5. Losing: nothing. The NPC opponent uses a fixed skill-level dice (medium difficulty).
+
+---
+
+### 4. Thursday Quiz Night
+
+Every in-game Thursday 19:30–22:00, the club runs a pub quiz. Entry 2 COIN per player/team.
+
+- `SocialClubSystem.generateQuizNight(Random, dayOfWeek, hour)` generates a 10-question round from a hardcoded pool of 40 British general knowledge questions (mix of: football, 90s TV, royal family, geography, food).
+- Player answers by pressing 1–4 to pick multiple-choice. Each correct answer: 1 point. 
+- Quiz is hosted by **Derek** (`SOCIAL_CLUB_CHAIRMAN`) using a `QUIZ_SHEET_PROP` — he reads out questions (displayed as speech bubbles, 30-second window per question).
+- Score outcomes:
+  - 0–3: "You've been absolutely hopeless. Keith, get this man/woman a drink." (free SOFT_DRINK)
+  - 4–6: "Creditable effort." (1 COIN refund)
+  - 7–9: "Top half! Well done." (3 COIN prize, `LOCALS` Respect +5)
+  - 10: Perfect score → `QUIZ_CHAMPION` achievement + 8 COIN + Derek's suspicion ("I'll be watching you next week.")
+- 4–8 MEMBER NPCs fill the tables during quiz. After the quiz ends, they mill about for 30 minutes before leaving.
+
+---
+
+### 5. The Annual General Meeting (Side Quest)
+
+- Once per in-game week (Saturday 14:00), Derek calls the AGM. Full members can attend (press E on Derek when AGM is active).
+- AGM agenda items rotate from a pool:
+  - "Motion: Replace the fruit machine." (Vote: yes/no. Flavour only.)
+  - "Motion: Allow under-45s as members." (Vote: yes/no. If player votes yes and it passes: 2 new YOUTH_GANG NPCs visit once, react with disappointment at the decor.)
+  - "Motion: Charge 50p more for lager." (Vote: yes. Prices update for 1 in-game week.)
+- Voting: press E = yes, walk away = abstain. Derek narrates the result.
+- `COMMITTEE_MEMBER` achievement: attend 3 AGMs as a full member.
+
+---
+
+### 6. The Committee Conspiracy (Integration with FactionSystem)
+
+- Derek secretly funnels club profits to the `MARCHETTI_CREW` (pays protection money 1× per week at 22:00 Sunday — an NPC event the player can witness by being present).
+- If the player witnesses this exchange and presses E on Derek while he hands over cash: Derek panics and offers a counter-deal — give evidence to the police (CriminalRecord `INFORMANT`) for +15 Notoriety exemption for 3 days, or keep quiet for 5 COIN per week bribe.
+- **Evidence**: `DODGY_LEDGER_PROP` in the back office (accessible at `LOCALS` Respect ≥ 70 or via `LOCKPICK`). Take the ledger and deliver to `POLICE_STATION` for: `MARCHETTI_CREW` Respect −20, all other factions +10, `NOTORIETY` −10.
+- `GRASS` achievement: deliver the ledger (controversial; tooltip: "Some would say he had it coming.").
+
+---
+
+### System Integrations
+
+- `StreetSkillSystem` — new DARTS sub-skill under SOCIAL_SKILLS.
+- `FactionSystem` — `LOCALS` Respect gates membership invite; committee conspiracy affects `MARCHETTI_CREW` Respect.
+- `SnookerSystem` — `SNOOKER_TABLE_PROP` re-used in annex; free for members.
+- `FruitMachine` — reused `FRUIT_MACHINE_PROP` (same mechanics as pub).
+- `WarmthSystem` — interior: +5 Warmth/min while inside.
+- `NoiseSystem` — darts game at Noise level 1; Quiz Night crowd at Noise level 2; AGM argument at level 3.
+- `RumourNetwork` — `LOCAL_EVENT` rumour when player wins quiz ("Someone aced the quiz at the Social Club last Thursday."); committee conspiracy seeds `CRIME_TIP` rumour.
+- `NotorietySystem` — being refused entry at Tier 3+ seeds `CRIME_TIP` rumour ("Police looking for someone matching that description — saw them hanging round the Social Club.").
+- `NewspaperSystem` — perfect quiz score generates a positive front-page snippet after a 1-day lag.
+- `DisguiseSystem` — `KNOCK_OFF_TRACKSUIT` explicitly barred by the NOTICE_BOARD (Keith refuses entry).
+- `WantedSystem` — Wanted Tier 2+ means Keith calls police if player lingers at the bar longer than 3 in-game minutes.
+- `PubLockInSystem` — on Fri/Sat, if player is still inside at 00:00, a mini lock-in triggers (same mechanics as pub, but with Keith complaining instead of celebrating).
+
+---
+
+### New `LandmarkType` entry
+
+```java
+// ── Issue #1020: Northfield Social Club ──────────────────────────────────
+/**
+ * Northfield Sporting & Social Club — a stubbornly unrenovated working men's
+ * club run by the committee (Derek, Maureen, Keith). Members only; cheap bar,
+ * free snooker annex, Thursday Quiz Night, annual AGM.
+ * The committee secretly pays protection to the Marchetti Crew.
+ */
+SOCIAL_CLUB,
+```
+
+`getDisplayName()` returns `"Northfield S&S Club"`.
+
+---
+
+### New `NPCType` entries
+
+```java
+// ── Issue #1020: Social Club ──────────────────────────────────────────────
+/**
+ * Derek — chairman of the Northfield S&S Club committee. Hosts the Thursday
+ * Quiz Night and AGM. Secretly pays protection money to the Marchetti Crew.
+ * Speech: "Members and guests only." / "That motion is out of order." / "Keith!"
+ */
+SOCIAL_CLUB_CHAIRMAN(25f, 0f, 0f, false),
+
+/**
+ * Keith — the social club barman. Gruff, efficient, present exactly on time.
+ * Refuses entry to non-members, KNOCK_OFF_TRACKSUIT wearers, Wanted Tier 2+.
+ * Speech: "Finish that up then." / "What'll it be?" / "Members and guests."
+ */
+SOCIAL_CLUB_BARMAN(25f, 4f, 1.5f, false),
+
+/**
+ * Member — regular club member NPC. Can invite the player as guest (30% chance
+ * at Notoriety ≤ 30). Participates in darts challenges and Quiz Night.
+ */
+MEMBER(20f, 0f, 0f, false),
+```
+
+---
+
+### New `Material` entries
+
+- `BITTER` — "A pint of bitter. Slightly warm. Exactly right." +20 hunger; BORED NPC satisfier.
+- `MILD` — "A mild. Practically a historical artefact." +15 hunger.
+- `LAGER_TOP` — "Half lager, half lemonade. Don't judge." +20 hunger.
+- `MEMBERS_CARD` — "Northfield S&S Club. Est. 1971. Member No. 47." Access token; gates full membership.
+- `DODGY_LEDGER` — "Weekly protection payments. Derek's handwriting." Evidence item; deliverable to police.
+- `QUIZ_SHEET` — "10 questions. Derek's best handwriting." Flavour item; readable via E for the week's questions after quiz ends.
+
+---
+
+### New `PropType` entries
+
+- `BAR_COUNTER_PROP` — social club bar counter (1.2f × 1.1f × 0.6f, 8 hits, WOOD). Press E to order.
+- `DARTBOARD_PROP` — wall-mounted dartboard (0.4f × 0.4f × 0.1f, 3 hits, CARDBOARD). Press E to play darts.
+- `BARSTOOL_PROP` — tall wooden stool (0.4f × 0.9f × 0.4f, 4 hits, WOOD). Sit on it.
+- `BEER_PUMP_PROP` — decorative beer pump on the bar (0.1f × 0.5f × 0.1f, 2 hits, METAL).
+- `CRIBBAGE_BOARD_PROP` — cribbage board on corner table (0.3f × 0.05f × 0.15f, 1 hit, WOOD). Flavour: press E for scoreboard.
+- `TROPHY_CABINET_PROP` — glass cabinet with trophies (0.8f × 1.4f × 0.3f, 6 hits, GLASS). Press E for flavour text.
+- `NOTICE_BOARD_PROP` — pinboard on the wall (0.8f × 1.0f × 0.05f, 2 hits, CARDBOARD). Press E to read announcements.
+- `MEMBERSHIP_DESK_PROP` — small desk where Derek sits (0.8f × 0.9f × 0.5f, 5 hits, WOOD). Press E to join.
+- `QUIZ_SHEET_PROP` — papers Derek reads questions from (0.3f × 0.05f × 0.4f, 1 hit, CARDBOARD).
+- `FOLDING_CHAIR_PROP` — stackable plastic chair (0.4f × 0.9f × 0.4f, 2 hits, PLASTIC). Sittable.
+- `CLUB_DOOR_PROP` — locked exterior door (1.0f × 2.2f × 0.2f, 8 hits, WOOD). Requires membership or guest invite.
+
+---
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `SIGNED_UP` | Obtain a `MEMBERS_CARD` (full membership) |
+| `QUIZ_CHAMPION` | Score 10/10 on the Thursday Quiz Night |
+| `DARTS_CHAMPION` | Win 3 darts games at the `DARTBOARD_PROP` across sessions |
+| `COMMITTEE_MEMBER` | Attend 3 AGMs as a full member |
+| `GRASS` | Deliver the `DODGY_LEDGER` to the police station |
+| `LAST_ORDERS` | Be locked in after closing time on a Friday or Saturday |
+
+---
+
+### Unit Tests
+
+- `SocialClubSystem.isOpen(dayOfWeek, hour)` returns true Mon–Thu 17:00–22:59, Fri–Sat 12:00–23:59, Sun 12:00–21:59; false otherwise.
+- `SocialClubSystem.getMemberPrice(Material, isMember)` returns correct coin values for BITTER, DOUBLE_WHISKY, SOFT_DRINK for both member and non-member.
+- `SocialClubSystem.throwDart(Random, skill)` returns a value in range [1, 60]; higher DARTS skill shifts the distribution toward higher scores (mean of 10 throws at skill=5 > mean at skill=0).
+- `SocialClubSystem.generateQuizNight(Random, THURSDAY, 19.5f)` returns a non-null quiz with exactly 10 questions; each question has exactly 4 answer choices; exactly 1 correct answer per question.
+- `SocialClubSystem.generateQuizNight(Random, MONDAY, 19.5f)` returns null (not Thursday).
+- `SocialClubSystem.scoreQuiz(playerAnswers, correctAnswers)` returns 0 for all wrong, 10 for all correct, 5 for half correct.
+- `SocialClubSystem.getGuestInviteChance(localsRespect, notoriety)` returns 1.0f at LOCALS Respect ≥ 50; 0.3f at Respect < 50 and Notoriety ≤ 30; 0.0f at Notoriety > 30 and Respect < 50.
+- `SocialClubSystem.computeProtectionPaymentDay(weekNumber)` always returns SUNDAY.
+- Notice board line pool: `SocialClubSystem.getNoticeBoardLines()` returns at least 10 distinct strings.
+
+---
+
+### Integration Tests — implement these exact scenarios
+
+1. **Non-member refused entry, member invite grants access**: Construct `SocialClubSystem` with `isMember = false`. Set time to Friday 14:00. Set `LOCALS` Faction Respect to 20. Place player at `CLUB_DOOR_PROP`. Press E. Verify door remains closed and Keith's speech contains "Members". Spawn a `MEMBER` NPC inside. Advance simulation to simulate the NPC walking to the door (set NPC state to GREETING_PLAYER). Press E on the MEMBER. Force `SocialClubSystem.testGuestInviteResult = true`. Verify door opens. Verify `SocialClubSystem.isPlayerGuest()` returns true.
+
+2. **Full membership gate — 3 prior visits required**: Give player 15 COIN. Set prior visit count to 0. Press E on `MEMBERSHIP_DESK_PROP`. Verify `SocialClubSystem.getFullMembershipResult()` returns `INSUFFICIENT_VISITS`. Set prior visit count to 3. Press E on `MEMBERSHIP_DESK_PROP` again. Verify player COIN decreases by 15. Verify `SocialClubSystem.isFullMember()` returns true. Verify player inventory contains `MEMBERS_CARD`.
+
+3. **Thursday Quiz Night — perfect score**: Set time to Thursday 19:30. Call `SocialClubSystem.startQuizNight(seededRandom)`. Supply the correct answer index for all 10 questions (derive from seeded random). Verify `SocialClubSystem.getQuizScore()` equals 10. Verify player COIN increases by 8. Verify `QUIZ_CHAMPION` achievement is unlocked. Verify `RumourNetwork` contains a `LOCAL_EVENT` rumour referencing the quiz.
+
+4. **Darts game — player wins 301**: Set `StreetSkillSystem` DARTS skill to 5. Call `SocialClubSystem.playDartsGame(seededRandom, skill=5)` with a seed that deterministically results in a win (pre-compute the sequence). Verify return value is `WIN`. Verify player COIN increases by 1. Verify DARTS skill XP incremented by 1.
+
+5. **Committee conspiracy: player witnesses protection payment, chooses to inform police**: Set time to Sunday 22:00. Force `SocialClubSystem.triggerProtectionPayment()`. Verify a `MARCHETTI_CREW` NPC appears. Press E on Derek while the payment event is active. Choose "Inform police" option. Give player `DODGY_LEDGER`. Move player to `POLICE_STATION` landmark boundary. Press E on `POLICE_OFFICER` NPC. Verify `MARCHETTI_CREW` Faction Respect decreases by 20. Verify player Notoriety decreases by 10. Verify `GRASS` achievement unlocked.
+
+6. **KNOCK_OFF_TRACKSUIT barred by Keith**: Equip `KNOCK_OFF_TRACKSUIT`. Place player at `CLUB_DOOR_PROP` during opening hours. Press E. Verify Keith's speech contains "Tracksuit". Verify door remains closed regardless of membership status.
+
+7. **Lock-in triggered on Saturday at closing**: Set time to Saturday 23:55. Set `SocialClubSystem.isPlayerInside = true`. Advance time to 00:01. Verify `SocialClubSystem.isLockInActive()` returns true. Verify Keith's speech contains "lock-in" or "after hours". Verify `LAST_ORDERS` achievement unlocked. Advance time to 01:00. Verify `SocialClubSystem.isLockInActive()` returns false and player is flagged as needing to exit.
