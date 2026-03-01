@@ -21365,3 +21365,307 @@ FLOWERS_FOR_SOMEONE(
    Verify no rumour is shared (Bert refuses). Advance simulation 10 seconds. Verify
    `WantedSystem.getWantedLevel()` is 2 (police called). Verify `GROUNDSKEEPER_SPOTTED`
    rumour has been seeded into the rumour network.
+
+---
+
+## Issue #1034: St. Aidan's C.E. Primary School — School Run Chaos, Truant Economy & the Caretaker's Shed
+
+**Goal**: Implement `SchoolSystem`, turning the `PRIMARY_SCHOOL` landmark from a named
+stub into a living location. The school gates bustle with parents and kids during the
+school run (08:30 and 15:15), the caretaker has a surprisingly well-stocked shed, and
+the playing field doubles as an unofficial market after dark. Integrates with
+`TimeSystem`, `NotorietySystem`, `WantedSystem`, `RumourNetwork`, `WarmthSystem`,
+`StreetSkillSystem`, and `WeatherSystem`.
+
+### Building Layout
+
+Single-storey brick building with flat roof. Perimeter: iron fence (`IRON_FENCE` blocks),
+with a locked `SCHOOL_GATE_PROP` at the front (closed 09:00–15:00 school hours;
+open 08:15–08:45 and 15:00–15:30 for the school run; locked at all other times).
+
+Ground floor (interior):
+- **Reception**: `RECEPTION_DESK_PROP`, `HEADTEACHER_SECRETARY` NPC (Mon–Fri 08:00–16:30).
+  A `SCHOOL_NOTICEBOARD_PROP` shows local events (seeds 1 random `NEIGHBOURHOOD` rumour
+  on first read per day, press E).
+- **Classroom block**: 3 classrooms, locked during school hours (impassable doors).
+  Each contains a `WHITEBOARD_PROP` and rows of `SCHOOL_DESK_PROP` chairs.
+- **Hall / canteen**: large open room; `CANTEEN_COUNTER_PROP` staffed by the `DINNER_LADY`
+  NPC (11:30–13:30, Mon–Fri). `DINING_TABLE_PROP` seats 6.
+- **Headteacher's Office**: locked room; contains `HEADTEACHER_DESK_PROP` and a
+  `SAFE_PROP` (requires 8 hits or LOCKPICK; contains `PETTY_CASH_BOX` with 5–12 COIN).
+- **Caretaker's Shed** (external, in the playground): `CARETAKER_SHED_PROP`.
+  Locked (LOCKPICK or 8 hits). Contains: `PAINT_TIN` × 2, `LADDER_PROP`, `MOPHEAD`
+  item, a `FLASK_OF_TEA`, and a `SECOND_HAND_BIKE` (rideable, worth 8 COIN at scrapyard).
+
+Exterior:
+- **Playground**: 20×12 PAVEMENT area enclosed by the fence.
+- **Playing field**: 30×20 GRASS area behind the school building.
+- `SCHOOL_GATE_PROP` at front entrance.
+
+### NPCs
+
+| NPC Type | Name | Hours | Behaviour |
+|----------|------|-------|-----------|
+| `HEADTEACHER` | Mrs Fowler | 08:00–16:30 (Mon–Fri) | Patrols reception and corridor; ejects non-pupil adults from interior |
+| `DINNER_LADY` | Dot | 11:30–13:30 (Mon–Fri) | Staffs canteen counter; sells `SCHOOL_DINNER` for 1 COIN |
+| `CARETAKER` | Derek | 07:30–17:00 (Mon–Fri) | Patrols exterior; sweeps playground; locks gate at 15:30 |
+| `SCHOOL_KID` | (4–8 spawned) | 08:30–15:15 (Mon–Fri, inside) | Runs around the playground during break (11:00–11:15, 12:00–13:00) |
+| `SCHOOL_MUM` | (2–4 spawned) | 08:15–08:45 and 15:00–15:30 | Loiters at the gate gossiping; rich source of neighbourhood rumours |
+
+`SCHOOL_MUM` NPC type (new): civilian female variant with pushchair prop; passive
+proximity-rumour behaviour identical to `CAFF_REGULAR` — player within 2 blocks of a
+`SCHOOL_MUM` receives 1 random `NEIGHBOURHOOD` rumour (once per in-game day per NPC).
+
+### School Run Events (08:30 & 15:15)
+
+At **08:30**: gate opens, 2–4 `SCHOOL_MUM` NPCs and 4–8 `SCHOOL_KID` NPCs spawn at the
+gate. Kids enter the playground in a loose group over 5 in-game minutes. Gate closes at
+08:45. Mums linger 3–5 minutes gossiping (proximity rumour window) then despawn.
+
+At **15:15**: gate opens, same number of `SCHOOL_MUM` + `SCHOOL_KID` NPCs spawn inside
+and stream out of the gate over 5 minutes. Kids scatter in random directions after
+exiting. Gate closes 15:30. `CARETAKER` locks it with audible key sound.
+
+**Weather modifier**: Rain triggers `SCHOOL_MUM` umbrella prop variant; all mums cluster
+tighter (2-block rumour radius unchanged); school run lasts 2 extra in-game minutes.
+Fog: gate doesn't fully open (stays at half-block clearance — cosmetic only).
+
+### Truant Economy
+
+Between **09:00–15:00** (school hours), if a `SCHOOL_KID` NPC is found outside the school
+perimeter, it is tagged `TRUANT`. A truant kid:
+- Loiters near the Fried Chicken Shop or Skate Park.
+- On player interaction (E): offers to sell `VAPING_SUPPLIES` (a new item, 2 COIN) or
+  `COPIED_HOMEWORK` (new item, useable at `INTERNET_TERMINAL` in Library for +20 STREETWISE
+  XP as a shortcut, once per session). If player accepts, seeds a `TRUANCY` RumourType
+  into 2 nearby NPCs.
+- If a `POLICE` or `PCSO` NPC comes within 10 blocks of a truant, they escort the kid
+  back to the school gate (kid NPC transitions to `BEING_ESCORTED` state, POLICE NPC
+  escorts for 30 seconds then despawns). Notoriety unchanged for player unless they
+  interfere (attacking the POLICE escort: +2 Notoriety).
+
+### Canteen Economy
+
+During **11:30–13:30**, the `DINNER_LADY` sells `SCHOOL_DINNER` for 1 COIN.
+- `SCHOOL_DINNER` restores 25 Hunger and 10 Health. Tooltip on first purchase:
+  "It's turkey twizzlers and chips. You've had worse."
+- If player enters the canteen during service hours with Notoriety ≥ 40, `DINNER_LADY`
+  refuses service: "I'm not serving you. You're trouble." No sale. Seeds `BANNED_FROM_CANTEEN`
+  rumour into nearby NPCs.
+- `DINNER_LADY` can be pickpocketed (3-second hold-E interaction while she's facing away)
+  for 2–5 COIN. If caught: +3 Notoriety, `DINNER_LADY` calls `HEADTEACHER` (who calls
+  police in 15 seconds if player still present).
+
+### Caretaker Interactions
+
+Derek the `CARETAKER` patrols the perimeter. On player interaction (E):
+- Provides one free `NEIGHBOURHOOD` rumour per day.
+- At Notoriety < 30: is friendly, mentions "Saw something odd by the bins last night"
+  (seeds a generic `SHOP_NEWS` rumour referencing a random nearby building).
+- At Notoriety ≥ 30: refuses to speak and radios `HEADTEACHER` (who calls police after
+  20 seconds if player remains in the playground area). Seeds `SUSPICIOUS_PERSON` rumour.
+- Derek keeps his shed key in his pocket. Player can pickpocket it (3-second hold-E,
+  Notoriety < 30 required; fail at ≥ 30 raises 2 Notoriety). Alternatively: break in
+  (8 hits on `CARETAKER_SHED_PROP` or LOCKPICK in 5 seconds). Breaking in without the
+  key: +1 Notoriety; `CARETAKER` notices the damage within 2 in-game minutes and calls
+  police.
+
+### After-Hours Playing Field
+
+Between **20:00–06:00**, the playing field becomes an unofficial social space:
+- 2–4 `YOUTH_GANG` NPCs spawn on the field, passing around `VAPING_SUPPLIES`.
+- The player can join the group (press E on the nearest youth). Joining seeds 2 random
+  `STREET_LADS` respect-positive rumours and restores 5 Warmth (shared body heat,
+  flavour).
+- Once per night: a `BOOT_SALE`-style informal exchange can trigger — a `PUBLIC` NPC
+  appears at the field corner and offers to trade 1 random item (picked from the scrap
+  loot table) for 3 COIN. Available only between 21:00–23:00.
+- `POLICE` patrol passes the school gate every **15 in-game minutes** at night. Entering
+  school grounds at night (after 20:00) adds +1 Notoriety per 5-minute period. Playing
+  field itself is outside the locked perimeter — no trespassing charge on the field.
+
+### Headteacher's Safe
+
+The `SAFE_PROP` in Mrs Fowler's office:
+- Locked; requires LOCKPICK (5-second interaction) or 8 hits.
+- Contains `PETTY_CASH_BOX` with 5–12 COIN (random) and a `TEACHER_REFERENCE_LETTER`
+  item (can be used at `JobCentreSystem` to unlock a 1-day cleaning job, regardless of
+  prior record — it's forged but convincing).
+- Accessing the safe: +4 Notoriety, `CriminalRecord.THEFT` entry.
+- If `HEADTEACHER` or `HEADTEACHER_SECRETARY` is within 12 blocks: alert immediately,
+  police called in 10 seconds.
+- After school hours (16:30+), Mrs Fowler is not present — prime time for the safe job.
+
+### New Items
+
+| Item | Source | Use |
+|------|--------|-----|
+| `SCHOOL_DINNER` | Bought from `DINNER_LADY` for 1 COIN | +25 Hunger, +10 Health |
+| `VAPING_SUPPLIES` | Bought from truant SCHOOL_KID for 2 COIN | Useable anywhere; tooltip "Not great for you" — reduces Warmth −5 but seeds `STREET_LADS` respect rumour (+3) |
+| `COPIED_HOMEWORK` | Bought from truant SCHOOL_KID for 2 COIN | Use at Library internet terminal: +20 STREETWISE XP, one-time |
+| `TEACHER_REFERENCE_LETTER` | Looted from headteacher's safe | Unlocks 1 cleaning job at JobCentre regardless of record |
+| `MOPHEAD` | Looted from caretaker's shed | Use on graffiti to clean it (same as `BUCKET_OF_WATER` mechanic) |
+| `SECOND_HAND_BIKE` | Looted from caretaker's shed | Rideable item; sell at scrapyard for 8 COIN |
+| `PETTY_CASH_BOX` | Looted from headteacher's safe | Auto-converts to 5–12 COIN on pickup |
+
+### New `PropType` entries
+
+```java
+// ── Issue #1034: St. Aidan's C.E. Primary School ─────────────────────────────
+/** The school's front gate — locked except during the school run (08:15–08:45, 15:00–15:30). */
+SCHOOL_GATE_PROP,
+/** A reception desk in the school entrance. Press E to read the noticeboard. */
+RECEPTION_DESK_PROP,
+/** A wall-mounted noticeboard covered in letters to parents and local notices. */
+SCHOOL_NOTICEBOARD_PROP,
+/** Classroom whiteboard. Decorative. */
+WHITEBOARD_PROP,
+/** A school desk and attached plastic chair. Breakable (3 hits); yields 1 WOOD. */
+SCHOOL_DESK_PROP,
+/** The canteen serving counter. Press E during 11:30–13:30 to buy SCHOOL_DINNER. */
+CANTEEN_COUNTER_PROP,
+/** Canteen dining table, seats 6. No interaction. */
+DINING_TABLE_PROP,
+/** The headteacher's desk. No interaction (safe is the goal). */
+HEADTEACHER_DESK_PROP,
+/** The headteacher's petty cash safe. Locked; requires LOCKPICK or 8 hits. */
+SAFE_PROP,
+/** Derek's locked wooden tool shed. Contains crafting mats and the bike. */
+CARETAKER_SHED_PROP,
+```
+
+### New `NPCType` entries
+
+```java
+// ── Issue #1034: St. Aidan's C.E. Primary School ─────────────────────────────
+/** Mrs Fowler — the headteacher. Ejects adults; calls police on Notoriety ≥ 30. Active 08:00–16:30. */
+HEADTEACHER,
+/** Dot — the dinner lady. Sells SCHOOL_DINNER 11:30–13:30; hostile to high-Notoriety players. */
+DINNER_LADY,
+/** Derek — the caretaker. Patrols perimeter; locks gate 15:30; shed key pickpocketable. */
+CARETAKER,
+/** A gossiping parent at the school gate. Proximity-rumour source during school run. */
+SCHOOL_MUM,
+/** The headteacher's secretary. Staffs reception; passive unless player enters interior. */
+HEADTEACHER_SECRETARY,
+```
+
+### New `RumourType` entries
+
+```java
+// ── Issue #1034: St. Aidan's C.E. Primary School ─────────────────────────────
+/** "Apparently a kid from St. Aidan's was seen bunking off near the chicken shop." */
+TRUANCY,
+/** "Some bloke was hanging round the school today — looked proper dodgy." */
+SUSPICIOUS_PERSON,
+/** "That dinner lady at St. Aidan's got robbed. Bold as brass." */
+BANNED_FROM_CANTEEN,
+```
+
+### New `AchievementType` entries
+
+```java
+// ── Issue #1034: St. Aidan's C.E. Primary School ─────────────────────────────
+SCHOOL_DINNER(
+    "Turkey Twizzlers",
+    "You bought a school dinner. A highlight, honestly.",
+    1
+),
+SAFE_CRACKER_JR(
+    "Petty Cash",
+    "You robbed a primary school. This is rock bottom.",
+    1
+),
+NIGHT_SCHOOL(
+    "After Hours",
+    "You broke into the school after dark. Old habits.",
+    1
+),
+TEACHERS_PET(
+    "Model Citizen",
+    "Derek shared a rumour with you. He thinks you're alright.",
+    1
+),
+```
+
+### `SchoolSystem` — Gameplay Specification
+
+#### `isSchoolOpen(TimeSystem)` — school hours logic
+- Returns `true` Mon–Fri 08:30–15:15.
+- Returns `false` on weekends and outside those hours.
+
+#### `isGateOpen(TimeSystem)` — gate access logic
+- Returns `true` during school run windows: 08:15–08:45 and 15:00–15:30 (Mon–Fri).
+- Returns `false` at all other times. Night entry by LOCKPICK on gate (5-second interaction).
+
+#### School Run Spawning
+- On each school run window: spawns 4–8 `SCHOOL_KID` and 2–4 `SCHOOL_MUM` NPCs at gate.
+- Each `SCHOOL_MUM` holds one random `NEIGHBOURHOOD` or `SHOP_NEWS` rumour, passively
+  transferred to player within 2 blocks (once per mum per session).
+
+#### Truant Detection
+- Every in-game minute during school hours, `SchoolSystem.update()` checks each `SCHOOL_KID`
+  NPC position. If outside the school perimeter AABB and not in `BEING_ESCORTED` state:
+  tag as `TRUANT`. Spawn vaping/homework trade offer.
+
+#### After-Hours Field
+- `SchoolSystem.spawnAfterHoursGroup(TimeSystem)`: called at 20:00 each night.
+  Spawns 2–4 `YOUTH_GANG` NPCs on the playing field (inside world boundary, outside
+  fence). Despawn at 06:00.
+- Night informal trade: one `PUBLIC` NPC spawned at field corner between 21:00–23:00.
+  Offers one scrap-table item for 3 COIN. Single offer per night.
+
+### Unit Tests
+
+- `SchoolSystem.isSchoolOpen(TimeSystem at Monday 09:00)` returns `true`.
+- `SchoolSystem.isSchoolOpen(TimeSystem at Saturday 10:00)` returns `false`.
+- `SchoolSystem.isSchoolOpen(TimeSystem at Monday 16:00)` returns `false`.
+- `SchoolSystem.isGateOpen(TimeSystem at 08:30)` returns `true`.
+- `SchoolSystem.isGateOpen(TimeSystem at 12:00)` returns `false`.
+- `SchoolSystem.isGateOpen(TimeSystem at 15:10)` returns `true`.
+- `SchoolSystem.getSchoolDinnerHungerBonus()` returns `25`.
+- `SchoolSystem.getSchoolDinnerHealthBonus()` returns `10`.
+- `SchoolSystem.getPettyCashRange()` returns a range `[5, 12]` (min/max check).
+- `SchoolSystem.isTruant(schoolKidNPC, schoolAABB)` correctly identifies NPC outside AABB as truant.
+
+### Integration Tests — implement these exact scenarios
+
+1. **School run spawns mums and kids**: Set day to Monday. Set time to 08:20.
+   Advance simulation until 08:30 (50 in-game minutes). Verify 4–8 `SCHOOL_KID` NPCs
+   are present at the school gate. Verify 2–4 `SCHOOL_MUM` NPCs are present. Advance
+   5 in-game minutes. Verify `SCHOOL_KID` NPCs have moved into the playground AABB.
+   Advance to 08:50. Verify `SCHOOL_GATE_PROP` is closed (impassable).
+
+2. **SCHOOL_MUM proximity rumour transfer**: Set time to 08:30 (school run active).
+   Spawn a `SCHOOL_MUM` NPC at position (X, Y, Z). Place player at (X+1, Y, Z) (within
+   2 blocks). Advance 2 simulation frames. Verify `playerRumourCount` has increased by 1.
+   Move player 10 blocks away. Advance 10 frames. Verify rumour count does NOT increase
+   again from the same mum (once-per-mum limit).
+
+3. **Truant kid detected and escorted**: Set time to 11:00 (school hours). Spawn a
+   `SCHOOL_KID` NPC 20 blocks outside the school perimeter AABB. Advance 1 in-game minute.
+   Verify `SchoolSystem.isTruant(kid, schoolAABB)` returns `true`. Spawn a `POLICE` NPC
+   within 10 blocks of the truant. Advance 5 frames. Verify the `SCHOOL_KID` transitions to
+   `BEING_ESCORTED` state. Advance 30 in-game seconds. Verify the `SCHOOL_KID` NPC is now
+   inside the school perimeter AABB.
+
+4. **Canteen purchase restores hunger and health**: Set time to 12:00 (canteen open).
+   Set player Hunger to 30, Health to 50, Notoriety to 10. Place player at
+   `CANTEEN_COUNTER_PROP`. Give player 3 COIN. Press E. Select "School Dinner (1 COIN)".
+   Verify player Hunger increased by 25 (to 55). Verify player Health increased by 10 (to 60).
+   Verify player COIN reduced by 1. Verify `SCHOOL_DINNER` achievement is unlocked.
+
+5. **Headteacher's safe yields petty cash**: Set time to 17:00 (after school hours).
+   Give player a `LOCKPICK`. Place player adjacent to `SAFE_PROP`. Ensure no `HEADTEACHER`
+   or `HEADTEACHER_SECRETARY` is within 12 blocks. Press E on safe and hold for 5 seconds
+   (lockpick interaction). Verify safe opens. Verify player inventory contains `PETTY_CASH_BOX`.
+   Verify `PETTY_CASH_BOX` auto-converts to between 5 and 12 COIN on pickup. Verify
+   `CriminalRecord` contains `THEFT` entry. Verify `SAFE_CRACKER_JR` achievement unlocked.
+   Verify player Notoriety increased by 4.
+
+6. **After-hours youth group spawns and provides warmth**: Set time to 20:30. Advance
+   simulation 1 in-game minute (spawn trigger fires). Verify 2–4 `YOUTH_GANG` NPCs are
+   present on the playing field AABB. Place player adjacent to the group. Press E on the
+   nearest youth. Verify `STREET_LADS` faction Respect increased. Verify player Warmth
+   increased by 5. Advance time to 06:05. Verify `YOUTH_GANG` NPCs on the field have
+   been removed (despawned).
