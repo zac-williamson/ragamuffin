@@ -18679,3 +18679,120 @@ FIREFIGHTER(50f, 8f, 1.2f, false)  // reactive only, not hostile by default
    with AIR. Despawn the `FIRE_ENGINE` NPC manually. Advance 11 seconds. Verify
    `isEngineOut()` is false. Verify `FIRE_ENGINE_PROP` has returned to the garage
    bay position.
+
+## Add Northfield BP Petrol Station — Kiosk Economy, Fuel Theft & Late-Night Chaos
+
+**Goal**: Bring the `PETROL_STATION` landmark to life with a full `PetrolStationSystem`. The building already exists (tarmac forecourt, kiosk, pump canopy) but the landmark is purely decorative — no NPC, no purchasing, no fuel mechanics, nothing to do. This issue wires it into a coherent kiosk economy, fuel-theft mechanic, and late-night congregation point.
+
+### PetrolStationSystem
+
+A new `PetrolStationSystem` class managing:
+- **Kiosk cashier** (`CASHIER` NPC, new `NPCType`) — present 06:00–00:00 daily behind the CHECKOUT_PROP inside the kiosk. Sells items from the kiosk menu.
+- **Opening hours**: kiosk 06:00–00:00 daily; forecourt (pumps) always accessible.
+- **Kiosk menu** (press E on CASHIER or CHECKOUT_PROP):
+  - `PETROL_CAN` — 3 COIN (filled)
+  - `ENERGY_DRINK` — 1 COIN
+  - `CHOCOLATE_BAR` — 1 COIN
+  - `NEWSPAPER` — 1 COIN
+  - `SCRATCH_CARD` — 1 COIN
+  - `PASTY` (new `Material`) — a foil-wrapped pasty from the hot cabinet; +20 hunger, +5 Warmth. 2 COIN. Only available 06:00–14:00 (hot cabinet restocked mornings).
+  - `DISPOSABLE_LIGHTER` (new `Material`) — 2 COIN; single-use ignition item. Functions identically to using PETROL_CAN on a WHEELIE_BIN_PROP for the `WheeliBinFireSystem` ignite mechanic, but without consuming a PETROL_CAN. Consumed on use.
+- **Cashier refusal**: at Notoriety ≥ 60, cashier refuses service — "I'm not serving you. You know why."
+
+### Fuel Pumps & Driveoff
+
+Two `FUEL_PUMP_PROP` (new `PropType`) stand on the forecourt under the canopy. Each pump:
+- Can be used (press E while holding an empty `PETROL_CAN` or while not holding anything) to fill up legally for 3 COIN — same as buying from the kiosk.
+- **Drive-off (player on foot)**: If the player uses a pump, receives a `PETROL_CAN`, and walks off the forecourt without paying (tracked by `hasPumpedWithoutPaying` flag):
+  - +5 Notoriety. `CriminalRecord.CrimeType.PETROL_THEFT` added (new entry).
+  - Cashier NPC shouts: "Oi! Come back here!" — becomes `NPCState.CHASING` for 20 seconds.
+  - Tooltip (first offence): "A classic. Gotta respect the tradition."
+  - Achievement: `DRIVEOFF` — steal petrol from the forecourt without paying.
+- **Free refill exploit**: if the player has a `COUNCIL_JACKET` equipped (DisguiseSystem — "maintenance worker"), the cashier does not notice the pump-and-walk for 1 attempt. Tooltip: "Disguise used. Very resourceful."
+
+### Late-Night Congregation (22:00–02:00)
+
+Between 22:00 and 02:00, 2–4 `YOUTH_GANG` NPCs loiter on the forecourt, parked near a `CAR_PROP` (if any car is parked on the road nearby). They:
+- Cycle through ambient speech: "Mate, you got a lighter?" / "This place never shuts, innit." / "Nah, I'm not going in — Dave's working."
+- If the player interacts (E), one offers to sell a `STOLEN_PHONE` for 4 COIN (30% chance) or demands a cigarette (`CIGARETTE` item from inventory).
+- **Fuel intimidation**: if the `hasPumpedWithoutPaying` flag is set AND a YOUTH_GANG NPC within 6 blocks noticed the theft, they demand 2 COIN to "keep quiet" — refuse and they become hostile (brawl, Notoriety +5).
+- If `PubLockInSystem.isLockInSuccessful()` (i.e. the pub lock-in ran tonight), one extra DRUNK NPC also loiters on the forecourt.
+
+### CCTV & Evidence
+
+A `CCTV_PROP` (new `PropType`) on the kiosk wall faces the forecourt. If a crime is committed on the forecourt (pump theft, assault of cashier):
+- `WitnessSystem.recordCCTVEvent(CrimeType, position)` (new method) logs it.
+- `CriminalRecord.getCctvHeatLevel()` increments by 10 per event (max 100).
+- At CCTV heat 50+: a `POLICE` NPC spawns at the petrol station 60 seconds after the event (deferred response).
+- Breaking the `CCTV_PROP` (2 hits, FRAGILE material) before committing the crime prevents the CCTV log. +3 Notoriety for destruction of property.
+- Achievement: `BLIND_EYE` — break the CCTV camera before stealing fuel.
+
+### System Integrations
+
+- `WheeliBinFireSystem` — `DISPOSABLE_LIGHTER` as valid ignition source (calls `ignite(pos, player)` without PETROL_CAN requirement).
+- `WantedSystem` — petrol theft: +0 wanted stars (minor); cashier assault: +1.
+- `NotorietySystem` — pump theft: +5; CCTV destruction: +3; cashier assault: +8.
+- `CriminalRecord` — `PETROL_THEFT` crime type (add to `CriminalRecord.CrimeType` enum).
+- `WitnessSystem` — new `recordCCTVEvent` method: deferred POLICE spawn after 60s.
+- `DisguiseSystem` — `COUNCIL_JACKET` suppresses one theft detection on forecourt.
+- `RumourNetwork` — on cashier assault: seeds `RumourType.PLAYER_SPOTTED` to 3 nearby NPCs.
+- `NeighbourhoodSystem` — station open: +1 Vibe/min (local amenity anchor); pump theft incident: −2 Vibes.
+- `StreetEconomySystem` — `PETROL_CAN` price spikes +50% during `COUNCIL_CRACKDOWN` market event; `ENERGY_DRINK` satisfies `NeedType.BORED` for 20 score.
+- `BusSystem` — petrol station is adjacent to an existing road; a `COMMUTER` NPC path-walks past it during rush hour.
+- `AchievementSystem` — `DRIVEOFF`, `BLIND_EYE`.
+
+### New `NPCType`
+
+```
+CASHIER(20f, 0f, 0f, false)  // kiosk cashier — passive unless stolen from
+```
+
+### New `Material` entries
+
+- `PASTY` — consumable; +20 hunger, +5 Warmth. Tooltip: "Lovely bit of pastry. Gone cold three hours ago."
+- `DISPOSABLE_LIGHTER` — single-use ignition tool. Tooltip: "Stolen from by the till, probably."
+
+### New `PropType` entries
+
+- `FUEL_PUMP_PROP` — interactive fuel dispenser on forecourt.
+- `CCTV_PROP` — breakable camera; 2 hits (FRAGILE); prevents CCTV logging when destroyed.
+
+### New `CriminalRecord.CrimeType` entry
+
+- `PETROL_THEFT` — driving off / walking off the forecourt without paying for fuel.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `DRIVEOFF` | Steal petrol from the forecourt without paying |
+| `BLIND_EYE` | Destroy the CCTV camera before stealing fuel |
+
+### Unit Tests
+
+- `PetrolStationSystem.isOpen(hour)` returns true 06:00–00:00, false 00:01–05:59.
+- `PetrolStationSystem.isPastyAvailable(hour)` returns true 06:00–14:00, false otherwise.
+- `hasPumpedWithoutPaying` is set true after pump use without payment and cleared on payment.
+- `computeCctvHeatLevel()` increments by 10 per logged CCTV event; caps at 100.
+- `CCTV_PROP` destruction: `PropBreaker.breakProp(CCTV_PROP)` removes the prop and sets `isCctvActive(false)`.
+- `DISPOSABLE_LIGHTER` use on a WHEELIE_BIN_PROP: `WheeliBinFireSystem.ignite(pos, player)` is called and lighter is removed from inventory.
+- Cashier refusal: `canServePlayer(notoriety)` returns false when notoriety ≥ 60.
+- Late-night spawn: `getCongregantsForHour(hour)` returns 2–4 YOUTH_GANG NPCs at 22:00 and 0 at 10:00.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Kiosk purchase works during opening hours**: Set time to 10:00. Spawn CASHIER NPC at kiosk. Give player 3 COIN. Press E on CHECKOUT_PROP. Select `PETROL_CAN`. Verify player inventory contains 1 `PETROL_CAN`. Verify player COIN reduced by 3. Verify CASHIER is still `NPCState.IDLE`.
+
+2. **Pump theft triggers notoriety and chase**: Give player 0 COIN. Press E on `FUEL_PUMP_PROP`. Verify `PETROL_CAN` added to player inventory. Move player 10 blocks off the forecourt boundary without paying. Verify Notoriety increased by 5. Verify `CriminalRecord` contains `PETROL_THEFT`. Verify CASHIER NPC state is `NPCState.CHASING`. Verify `DRIVEOFF` achievement is unlocked.
+
+3. **CCTV destruction prevents police spawn**: Move player to CCTV_PROP. Hit it twice (2 punch actions). Verify `CCTV_PROP` is replaced with AIR. Verify Notoriety increased by 3. Steal petrol (pump theft, walk off). Advance 90 seconds. Verify NO `POLICE` NPC has spawned at the petrol station (CCTV was down).
+
+4. **CCTV active — police spawn after theft**: Do NOT break CCTV. Steal petrol (pump theft, walk off). Verify `computeCctvHeatLevel()` == 10. Advance 61 seconds. Verify a `POLICE` NPC has spawned within 10 blocks of the `PETROL_STATION` landmark.
+
+5. **Late-night congregation spawns between 22:00 and 02:00**: Set time to 23:00. Call `PetrolStationSystem.update(delta, timeSystem, npcManager, ...)`. Verify 2–4 `YOUTH_GANG` NPCs are present on the forecourt. Set time to 09:00. Advance one update cycle. Verify all congregant NPCs are despawned (state changed or removed).
+
+6. **COUNCIL_JACKET suppresses one theft detection**: Equip player with `COUNCIL_JACKET`. Steal petrol (pump theft, walk off). Verify Notoriety has NOT increased. Verify `hasPumpedWithoutPaying` is cleared (disguise consumed). Steal petrol a second time without disguise. Verify Notoriety increased by 5 on the second theft.
+
+7. **Pasty only available in morning**: Set time to 08:00. Verify `isPastyAvailable` is true. Give player 2 COIN, press E, select `PASTY`. Verify `PASTY` added to inventory. Set time to 16:00. Verify `isPastyAvailable` is false. Verify PASTY option is absent from the kiosk menu.
+
+8. **DISPOSABLE_LIGHTER ignites bin without PETROL_CAN**: Give player a `DISPOSABLE_LIGHTER` (no PETROL_CAN). Stand within 2 blocks of a `WHEELIE_BIN_PROP`. Use lighter (press E or use action). Verify `WheeliBinFireSystem` has a burning entry at that position. Verify `DISPOSABLE_LIGHTER` removed from player inventory (consumed).
