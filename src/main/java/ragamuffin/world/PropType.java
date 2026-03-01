@@ -658,7 +658,27 @@ public enum PropType {
      * success (items move to inventory at full price).
      * Destroyed by 8 punches; yields SCRAP_METAL.
      */
-    SELF_CHECKOUT_PROP(0.70f, 1.60f, 0.60f, 8, Material.SCRAP_METAL);
+    SELF_CHECKOUT_PROP(0.70f, 1.60f, 0.60f, 8, Material.SCRAP_METAL),
+
+    // ── Issue #1002: Northfield BP Petrol Station ──────────────────────────────
+
+    /**
+     * Fuel pump dispenser on the BP petrol station forecourt.
+     * Press E (while holding empty PETROL_CAN or empty-handed) to fill up for 3 COIN.
+     * Leaving the forecourt without paying sets the pump-and-walk flag and triggers
+     * theft mechanics (+5 Notoriety, PETROL_THEFT crime, cashier CHASING).
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    FUEL_PUMP_PROP(0.60f, 1.80f, 0.60f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Wall-mounted CCTV camera on the kiosk exterior facing the forecourt.
+     * If active (not destroyed), crimes on the forecourt (pump theft, assault) are
+     * logged via {@code WitnessSystem.recordCCTVEvent}, incrementing cctvHeatLevel
+     * by 10 per event. At heat ≥ 50, a POLICE NPC spawns 60s later.
+     * Destroyed by 2 hits (FRAGILE); prevents CCTV logging when broken. +3 Notoriety.
+     */
+    CCTV_PROP(0.25f, 0.20f, 0.30f, 2, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

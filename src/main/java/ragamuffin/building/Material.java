@@ -1398,7 +1398,18 @@ public enum Material {
      * Theft detected with 60% probability if a FIREFIGHTER is within 6 blocks → +1 wanted star.
      * Tooltip: "Heavy. Wet. One use. Make it count."
      */
-    HOSE_REEL("Hose Reel");
+    HOSE_REEL("Hose Reel"),
+
+    // ── Issue #1002: Northfield BP Petrol Station ──────────────────────────────
+
+    /**
+     * Disposable Lighter — a cheap plastic lighter sold at the BP kiosk for 2 COIN.
+     * Single-use ignition item: press E on a {@link ragamuffin.world.PropType#WHEELIE_BIN}
+     * to ignite it via {@code WheeliBinFireSystem.ignite()} without consuming a PETROL_CAN.
+     * Consumed on use. Cannot be refilled.
+     * Tooltip: "Stolen from by the till, probably."
+     */
+    DISPOSABLE_LIGHTER("Disposable Lighter");
 
     private final String displayName;
 
@@ -1924,6 +1935,8 @@ public enum Material {
                                                    0.45f, 0.28f, 0.12f); // Dark wood handle
             case HOSE_REEL:             return cs(0.88f, 0.12f, 0.08f,   // Red reel drum
                                                    0.55f, 0.55f, 0.60f); // Grey hose
+            case DISPOSABLE_LIGHTER:    return cs(0.95f, 0.20f, 0.10f,   // Red lighter body
+                                                   0.92f, 0.88f, 0.20f); // Yellow flame top
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -2202,6 +2215,8 @@ public enum Material {
             case FIREFIGHTER_HELMET:
             case FIRE_AXE:
             case HOSE_REEL:
+            // Issue #1002: Northfield BP Petrol Station (not block items)
+            case DISPOSABLE_LIGHTER:
                 return false;
             default:
                 return true;
@@ -2761,6 +2776,8 @@ public enum Material {
                 return IconShape.TOOL;        // long-handled axe
             case HOSE_REEL:
                 return IconShape.CYLINDER;    // coiled drum shape
+            case DISPOSABLE_LIGHTER:
+                return IconShape.BOX;         // small rectangular lighter
 
             default:
                 return IconShape.BOX;
