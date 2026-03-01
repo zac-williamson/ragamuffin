@@ -20886,3 +20886,261 @@ TABLET("Tablet"),
    Press E on `COUNTER_PROP`. Select "Sell STOLEN_PHONE". Verify Dean refuses sale
    (serial check still runs) but does NOT call police. Verify `CCTV_BLIND_SPOT`
    achievement unlocked. Verify NoiseSystem logged noise level 4 when CCTV was broken.
+
+---
+
+## Add Al-Noor Mosque — Friday Prayers, Iftar Table & Community Sanctuary
+
+**Landmark**: `MOSQUE` (already registered in `LandmarkType` as `"Al-Noor Mosque"`, no system exists yet)
+
+### Overview
+
+Al-Noor Mosque sits quietly on a residential side street off the High Street — a converted
+Victorian terrace with a small green dome added in the 1990s. It's a genuine focal point of
+the Muslim community in Northfield: five daily prayers, Friday Jumu'ah that fills the pavement
+with shoes, a community hall used for everything from kids' Qur'an classes to charity
+fundraisers, and a water tap outside that anyone can use.
+
+The `MosqueSystem` brings this landmark to life with prayer schedules, a welcoming Imam,
+community events, an Iftar table during Ramadan, a sanctuary mechanic, and a `TAKINGS_BOX_PROP`
+that the morally bankrupt can rob — triggering the fiercest community response in the game.
+
+### Physical Layout
+
+The `WorldGenerator` already places the `MOSQUE` landmark. The system builds on top without
+touching world generation:
+
+- **Prayer Hall** (interior, 8×10 BRICK floor): rows of `PRAYER_MAT_PROP` (12 total).
+  The `MIHRAB_PROP` (prayer niche) sits at the north wall. Player cannot enter during
+  active prayer without removing shoes first (press E on `SHOE_RACK_PROP` at the entrance).
+- **Community Hall** (adjacent 6×8 room): `FOLD_TABLE_PROP` and `PLASTIC_CHAIR_PROP` used
+  for events. A `NOTICEBOARD_PROP` shows upcoming community events.
+- **Wudu Room** (2×3 side room): `ABLUTION_TAP_PROP` — press E to wash hands.
+  Restores +3 Warmth and removes `DIRTY` status effect. Always accessible.
+- **Water Tap** (outside, on the street wall): `OUTDOOR_TAP_PROP` — press E to drink.
+  Restores +10 Thirst. Free, always accessible, never locked.
+- **Shoe Rack** (`SHOE_RACK_PROP`): at the main entrance. Player must press E to
+  "remove shoes" before entering the prayer hall. Entering with shoes during prayer: Imam
+  politely redirects. Repeat offence: escorted out, −5 Community Respect.
+- **Takings Box** (`TAKINGS_BOX_PROP`): a donation box in the community hall.
+  Contains 5–15 COIN (random). Can be stolen; triggers community-wide response (see below).
+
+### Prayer Schedule
+
+The five daily prayers are scheduled dynamically based on the in-game `TimeSystem` and a
+simplified British-latitude formula (summer prayers earlier; winter later). The system uses
+fixed approximate times for simplicity:
+
+| Prayer | Time |
+|--------|------|
+| Fajr | 05:30 |
+| Dhuhr | 13:00 |
+| Asr | 16:00 |
+| Maghrib | 19:30 |
+| Isha | 21:00 |
+
+Each prayer lasts 15 in-game minutes. During prayer:
+- 4–8 `WORSHIPPER` NPCs kneel on `PRAYER_MAT_PROP` props.
+- Imam (`IMAM` NPCType) leads at the `MIHRAB_PROP`.
+- No combat or interaction with NPCs inside the hall is possible during prayer (a gentle
+  "Please wait — prayers are in progress." message appears).
+- Noise events inside the hall during prayer: each noise level ≥ 3 interrupts prayer,
+  spawns a `WORSHIPPER` NPC who walks to the player and says "Brother/Sister, please."
+  Repeated interruption: −10 Community Respect, escorted outside.
+
+### Friday Jumu'ah (Friday 13:00–14:00)
+
+Friday midday prayer is the social highlight of the week:
+- 10–16 `WORSHIPPER` NPCs attend (the highest NPC density of any mosque event).
+- 3–5 additional `PUBLIC` NPCs gather outside (late arrivals, neighbours).
+- The Imam delivers a khutbah (sermon): 3 lines drawn from a pool of 8 non-dogmatic,
+  community-focused speeches about solidarity, kindness, and local issues.
+- Players attending (within 6 blocks of `MIHRAB_PROP`, 13:00–14:00, shoes removed): +3
+  Community Respect.
+- After Jumu'ah, `WORSHIPPER` NPCs mill around outside for 20 in-game minutes exchanging
+  greetings. Each will share one free `NEIGHBOURHOOD` rumour if the player approaches.
+
+### Iftar Table (Ramadan Event)
+
+Once per playthrough, a randomly selected 30-day in-game period is designated as Ramadan.
+From day 1 of Ramadan, at Maghrib prayer (19:30), a `FOLD_TABLE_PROP` is set up in the
+community hall with free food:
+
+- Pressing E on the Iftar table gives the player: `DATE_FRUIT` ×3, `FLATBREAD` ×1, `SOUP_CUP` ×1.
+- Once per Maghrib session (resets at Fajr next morning).
+- Any NPC — Muslim or not — can participate. 6–10 `WORSHIPPER` and `PUBLIC` NPCs attend.
+- WeatherSystem modifier: rain during Iftar adds +2 attendees (no one wants to be outside).
+- Player tooltip on first Iftar interaction: "They'd feed anyone who came to the door."
+- `IFTAR_GUEST` achievement unlocked on first participation.
+
+### The Imam
+
+`IMAM` NPCType (Hassan — a calm, approachable man in his 50s). Present at the mosque
+08:00–21:00. Interacting with Hassan (press E):
+
+| Interaction | Requirement | Result |
+|-------------|-------------|--------|
+| Talk | Any | Receives a community rumour or piece of local wisdom |
+| Ask about the area | Any | Reveals one random `NEIGHBOURHOOD` rumour |
+| Request sanctuary | Wanted ≥ 1 | See Sanctuary mechanic below |
+| Donate | Have COIN ≥ 2 | Pay 2 COIN → +5 Community Respect, +1 goodwill towards Imam |
+| Ask for food | Hunger < 30 | Receives `FLATBREAD` ×1 (once per day) |
+
+### Sanctuary Mechanic
+
+The mosque offers limited sanctuary — consistent with the Northfield community-minded theme
+seen in the Church and Food Bank:
+
+- Police will not enter the mosque during active prayer (same rule as the Church during
+  services). Police will wait outside for up to 3 in-game minutes.
+- Outside prayer hours, police will enter after a 15-second hesitation.
+- Wanted level decays −1 star per 2 in-game minutes while inside and shoes removed.
+- If Wanted ≥ 4, police enter regardless. The Imam will not resist but will say: "Brother,
+  I cannot hide what is in your heart."
+- Hiding in the mosque does NOT reset the `CriminalRecord` — it only provides time.
+
+### Takings Box Robbery
+
+Stealing the `TAKINGS_BOX_PROP`:
+- Yields 5–15 COIN (random, based on time since last reset).
+- Resets every Friday after Jumu'ah.
+- If witnessed by any NPC inside: immediate −20 Community Respect (all community factions),
+  `CrimeType.THEFT_FROM_PLACE_OF_WORSHIP` added to CriminalRecord, +3 Notoriety.
+- Imam refuses all future sanctuary if robbery has been committed.
+- A `COMMUNITY_OUTRAGE` rumour spreads to all NPCs within 50 blocks within 5 minutes.
+- `LOWEST_OF_THE_LOW` achievement unlocked (see Achievements).
+
+### New NPCTypes
+
+```java
+// ── Issue #1030: Al-Noor Mosque ───────────────────────────────────────────────
+/** Imam Hassan — leads prayers, offers wisdom, provides sanctuary. Never hostile. */
+IMAM(20f, 0f, 0f, false),
+
+/** Worshipper — attends prayers; shares neighbourhood rumours after Jumu'ah. */
+WORSHIPPER(18f, 0f, 0f, false),
+```
+
+### New `PropType` entries
+
+- `PRAYER_MAT_PROP` — 1.0×0.02×0.6, 1 hit, SOFT. 12 placed in prayer hall rows.
+- `MIHRAB_PROP` — 1.2×2.0×0.4, 8 hits, BRICK. Niche in north wall; interactive with E.
+- `SHOE_RACK_PROP` — 1.0×1.0×0.3, 3 hits, WOOD. At entrance; press E to remove/replace shoes.
+- `ABLUTION_TAP_PROP` — 0.3×0.6×0.3, 3 hits, METAL. In wudu room; press E to wash.
+- `OUTDOOR_TAP_PROP` — 0.3×0.6×0.3, 3 hits, METAL. Outside wall; press E to drink.
+- `TAKINGS_BOX_PROP` — 0.3×0.4×0.3, 2 hits, WOOD. Donation box in community hall.
+- `NOTICEBOARD_PROP` — 1.2×1.0×0.1, 5 hits, WOOD. Shows upcoming events in SpeechLogUI.
+- `FOLD_TABLE_PROP` — 1.5×0.8×0.7, 4 hits, WOOD. Set up for Iftar; disappears after 20:30.
+
+### New `Material` entries
+
+```java
+// ── Issue #1030: Al-Noor Mosque ───────────────────────────────────────────────
+/** Date fruit — sweet Medjool dates. +15 Hunger, +2 Warmth. Found at Iftar table. */
+DATE_FRUIT("Dates"),
+
+/** Flatbread — soft warm bread. +20 Hunger. Given by Imam or found at Iftar. */
+FLATBREAD("Flatbread"),
+```
+
+### New `LandmarkType` entry
+
+Already exists: `MOSQUE` returning `"Al-Noor Mosque"`.
+
+### New `RumourType` entries
+
+```java
+// ── Issue #1030: Al-Noor Mosque ───────────────────────────────────────────────
+/** "Someone robbed the mosque box. Shameful." — seeded after TAKINGS_BOX robbery. */
+COMMUNITY_OUTRAGE,
+
+/** "The mosque is running an Iftar tonight — free food for everyone." */
+IFTAR_TONIGHT,
+```
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `IFTAR_GUEST` | Eat at the Iftar table for the first time |
+| `JUMU_AH_REGULAR` | Attend Friday Jumu'ah three times in one playthrough |
+| `SANCTUARY_SEEKER` | Use the mosque as sanctuary while at Wanted ≥ 2 |
+| `LOWEST_OF_THE_LOW` | Rob the takings box |
+| `COMMUNITY_PILLAR` | Donate to the mosque 5 times in one playthrough |
+
+### System Integrations
+
+- **ChurchSystem**: Parallel design — sanctuary, community events, donation mechanics.
+  Both active on Sundays (Church) and Fridays (Mosque) creates weekly rhythm.
+- **FoodBankSystem**: Iftar table and Food Bank both provide free food; NPCs cross-reference
+  ("Tried the mosque Iftar? Free food every evening this month.").
+- **WantedSystem**: Sanctuary decay rate, police hesitation timers.
+- **NotorietySystem**: Donation reduces Notoriety −2; robbery adds +3.
+- **RumourNetwork**: `COMMUNITY_OUTRAGE` and `IFTAR_TONIGHT` rumours spread via NPC gossip.
+- **WeatherSystem**: Rain during Iftar adds attendees. Cold nights increase sanctuary use.
+- **WarmthSystem**: Prayer hall is always +5 Warmth/min (warm, carpeted space).
+- **CriminalRecord**: `THEFT_FROM_PLACE_OF_WORSHIP` and `DISTURBING_RELIGIOUS_WORSHIP` crimes.
+- **AchievementSystem**: Five new achievements (above).
+- **NoiseSystem**: Noise ≥ 3 inside during prayer interrupts service; noise ≥ 5 triggers
+  immediate police call from a witness NPC outside.
+- **StreetSkillSystem**: Reading the `NOTICEBOARD_PROP` grants 5 XP in STREETWISE skill.
+- **FactionSystem**: Repeat mosque donation raises `THE_COUNCIL` faction Respect by 1 per 3 donations.
+
+### Unit Tests
+
+- `MosqueSystem.isPrayerActive(TimeSystem at 13:00)` returns true (Dhuhr active 13:00–13:15).
+  `isPrayerActive(TimeSystem at 13:16)` returns false.
+- `MosqueSystem.isJumuah(dayCount=4, hour=13.5)` returns true (Friday = day%7==4, 13:00–14:00).
+  `isJumuah(dayCount=3, hour=13.5)` returns false (Thursday).
+- `MosqueSystem.getTakingsBoxContents(sessionsSinceRobbery=0)` returns value in [5, 15].
+  `getTakingsBoxContents(sessionsSinceRobbery=0)` always returns value ≥ 5.
+- `MosqueSystem.isRamadanDay(gameDay)` returns consistent 30-day window (deterministic for seed).
+- `MosqueSystem.getSanctuaryDecayStar(wantedLevel=1)` returns true (sanctuary active).
+  `getSanctuaryDecayStar(wantedLevel=4)` returns false (police enter at ≥ 4 stars).
+- `MosqueSystem.getJumuahWorshipperCount(rng_seed=42)` returns value in [10, 16].
+- `MosqueSystem.getWorshipperCount(DHUHR_prayer, rng_seed=42)` returns value in [4, 8].
+
+### Integration Tests — implement these exact scenarios
+
+1. **Prayer prevents combat and NPCs respond to noise**: Set in-game time to 13:00
+   (Dhuhr prayer active). Place 4 `WORSHIPPER` NPCs on `PRAYER_MAT_PROP` props.
+   Place player in the prayer hall (shoes removed). Simulate `NoiseSystem.emitNoise(player, 4)`.
+   Verify one `WORSHIPPER` NPC transitions to `WALKING` state toward the player.
+   Verify NPC speech contains "please". Verify no combat NPCs respond (prayer shield active).
+   Simulate a second noise event ≥ 3. Verify `MosqueSystem.getCommunityRespect()` has
+   decreased by 10 from the repeat offence. Verify player is moved to the exterior.
+
+2. **Friday Jumu'ah attendance rewards Community Respect**: Set dayCount to a Friday
+   (dayCount % 7 == 4). Set time to 13:00. Remove player shoes (`isWearingShoes = false`).
+   Place player within 6 blocks of `MIHRAB_PROP`. Advance simulation to 14:00. Verify
+   `MosqueSystem.getAttendanceRespectGain()` returns 3. Verify player Community Respect
+   has increased by 3. Verify `JUMU_AH_REGULAR` achievement counter has incremented.
+   Verify 10–16 `WORSHIPPER` NPCs were spawned during the service.
+
+3. **Iftar table provides food during Ramadan**: Set a game day within the designated
+   Ramadan window. Set time to 19:30 (Maghrib). Verify `FOLD_TABLE_PROP` is present
+   in the community hall. Press E on the table. Verify player receives `DATE_FRUIT` ×3,
+   `FLATBREAD` ×1, `SOUP_CUP` ×1. Verify `IFTAR_GUEST` achievement unlocked on first
+   interaction. Press E again same session. Verify no additional items given ("Come back
+   tomorrow — there's plenty for everyone."). Verify `IFTAR_TONIGHT` rumour has been
+   seeded in at least one NPC within 30 blocks.
+
+4. **Sanctuary mechanic slows wanted decay**: Set player Wanted level to 2. Set time to
+   16:00 (outside prayer hours). Place player inside mosque, shoes removed. Advance
+   simulation 2 in-game minutes. Verify Wanted level has decreased to 1.
+   Advance 2 more minutes. Verify Wanted level is 0. Spawn a `POLICE` NPC at the mosque
+   entrance. Verify the POLICE NPC does not enter the mosque for 15 seconds. After 15
+   seconds, verify POLICE NPC moves inside (no active prayer).
+
+5. **Robbing the takings box triggers community outrage**: Give player `EMPTY_HANDS` (no
+   tool equipped). Place player in community hall, Wanted = 0. Spawn one `WORSHIPPER`
+   NPC within 4 blocks. Press E on `TAKINGS_BOX_PROP`. Select "Take". Verify player
+   receives 5–15 COIN. Verify `CriminalRecord` contains `THEFT_FROM_PLACE_OF_WORSHIP`.
+   Verify NotorietySystem notoriety has increased by 3. Verify `COMMUNITY_OUTRAGE`
+   rumour exists in the `WORSHIPPER` NPC's rumour buffer. Verify `LOWEST_OF_THE_LOW`
+   achievement unlocked. Verify `MosqueSystem.isSanctuaryRevoked()` returns true.
+
+6. **Outdoor tap is always accessible**: Set time to 03:00 (mosque closed). Place player
+   at `OUTDOOR_TAP_PROP`. Set player Thirst to 20. Press E on tap. Verify player Thirst
+   has increased by 10 (capped at 100). Verify no "mosque closed" message shown (tap is
+   always accessible). Verify no Notoriety change.
