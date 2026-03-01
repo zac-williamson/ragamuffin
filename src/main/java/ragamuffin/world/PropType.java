@@ -1114,7 +1114,20 @@ public enum PropType {
      * Press E to attempt interaction. Destroyed by 8 punches; yields WOOD.
      * (Separate from RECEPTION_DESK_PROP used by the GP Surgery.)
      */
-    FIRE_STATION_RECEPTION_DESK(1.40f, 1.10f, 0.60f, 8, Material.WOOD);
+    FIRE_STATION_RECEPTION_DESK(1.40f, 1.10f, 0.60f, 8, Material.WOOD),
+
+    // Issue #1053: Northfield Ladbrokes — BettingShopSystem props
+    /**
+     * FOBT Terminal — interactive Fixed-Odds Betting Terminal in the corner of Ladbrokes.
+     * Press E to play virtual roulette. Drops SCRAP_METAL when broken.
+     */
+    FOBT_TERMINAL(0.70f, 1.60f, 0.50f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Racing Post prop — the folded Racing Post on the betting shop counter.
+     * Press E to read today's horse form guide; grants +5% payout bonus on next horse bet.
+     */
+    RACING_POST_PROP(0.40f, 0.05f, 0.30f, 2, Material.RACING_POST);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

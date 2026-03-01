@@ -322,6 +322,10 @@ public class GreyhoundRacingSystem {
     /** Whether BROKE_THE_TOTE achievement has been awarded. */
     private boolean brokeToteAwarded = false;
 
+    // Issue #1053: Race-fix flag — set by BettingShopSystem when Marchetti fix accepted
+    /** Trap number of the forced winner for the next race (-1 = not fixed). */
+    private int fixedWinnerTrap = -1;
+
     // ── Construction ──────────────────────────────────────────────────────────
 
     public GreyhoundRacingSystem() {

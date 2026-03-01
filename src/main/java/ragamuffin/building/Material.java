@@ -2236,7 +2236,21 @@ public enum Material {
      * Converted in inventory to COOKING_OIL (×3) when examined (press E while holding).
      * Tooltip: "A bucket of old lard. Tony won't miss it. Probably."
      */
-    LARD_BUCKET("Lard Bucket");
+    LARD_BUCKET("Lard Bucket"),
+
+    // Issue #1053: Northfield Ladbrokes — BettingShopSystem
+    /**
+     * Betting Slip (Blank) — taken from Derek's float tray during after-hours break-in.
+     * Fenceable for 4 COIN. Tooltip: "Old Derek's float? Nice."
+     */
+    BETTING_SLIP_BLANK("Betting Slip (Blank)"),
+
+    /**
+     * Racing Post — today's horse form guide from the counter prop.
+     * Reading grants +5% payout bonus on next horse bet (once per day).
+     * Fenceable for 1 COIN.
+     */
+    RACING_POST("Racing Post");
 
     private final String displayName;
 
@@ -2356,6 +2370,10 @@ public enum Material {
             case MOLOTOV:        return cs(0.55f, 0.78f, 0.95f,  // Glass bottle blue
                                           0.90f, 0.40f, 0.10f);  // Rag flame
             case LARD_BUCKET:    return c(0.88f, 0.85f, 0.72f);  // Pale greasy white
+
+            // Issue #1053: Ladbrokes BettingShopSystem
+            case BETTING_SLIP_BLANK: return c(0.95f, 0.92f, 0.80f); // Off-white paper slip
+            case RACING_POST:        return c(0.88f, 0.18f, 0.18f); // Classic Racing Post red
             case HAIR_CLIPPERS:         return c(0.35f, 0.35f, 0.38f);   // Silver-grey
             case HAIR_CLIPPERS_BROKEN:  return c(0.20f, 0.20f, 0.22f);   // Dark grey, broken
             case NAIL_POLISH:    return c(0.92f, 0.18f, 0.55f);   // Hot pink
@@ -3959,6 +3977,12 @@ public enum Material {
                 return IconShape.BOX;         // laptop shape
             case WIPED_PHONE:
                 return IconShape.CARD;        // phone shape
+
+            // Issue #1053: Ladbrokes BettingShopSystem
+            case BETTING_SLIP_BLANK:
+                return IconShape.FLAT_PAPER;  // blank paper betting slip
+            case RACING_POST:
+                return IconShape.FLAT_PAPER;  // folded newspaper
 
             default:
                 return IconShape.BOX;
