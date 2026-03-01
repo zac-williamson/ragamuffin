@@ -473,7 +473,19 @@ public enum NPCType {
      * Speech: "Eyes down, look in!" / "Two fat ladies — eighty-eight!"
      *         / "We've got a cheater — number 9!" / "False call! Shame on you!"
      */
-    CALLER(20f, 0f, 0f, false);
+    CALLER(20f, 0f, 0f, false),
+
+    // ── Issue #961: Cash4Gold Pawn Shop ────────────────────────────────────────
+
+    /**
+     * Gary the pawn broker — proprietor of Cash4Gold Pawnbrokers (PAWN_SHOP landmark).
+     * Stands behind the counter Mon–Sat 09:00–17:30. Passive; offers buy and pledge
+     * services via PawnShopUI. If assaulted: drops shutter, flees, closes shop for the day.
+     * Speech: "What you got for me?" / "That's quality, that is." /
+     *         "I'll give you sixty percent — take it or leave it." /
+     *         "No food, no rubble, no coin. I'm a shop, not a skip."
+     */
+    PAWN_BROKER(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
