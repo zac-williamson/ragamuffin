@@ -2440,7 +2440,57 @@ public enum Material {
      * Adds PERVERTING_COURSE_OF_JUSTICE to CriminalRecord if caught (15% detection chance).
      * Tooltip: "Almost real. Probably good enough. Definitely illegal."
      */
-    FORGED_DOCUMENT("Forged Document");
+    FORGED_DOCUMENT("Forged Document"),
+
+    // ── Issue #1081: Northfield Pet Shop & Vet — Paws 'n' Claws ─────────────
+
+    /**
+     * Dog Treats — purchasable from Bev at Paws 'n' Claws (1 COIN per pack).
+     * Reduces dog companion HUNGER by 40. Also satisfies NPC HUNGRY need (≥ 50)
+     * if an adjacent NPC is hungry (emergency give). One use per pack.
+     * Tooltip: "Bisto-flavour — apparently. The dog loves them."
+     */
+    DOG_TREATS("Dog Treats"),
+
+    /**
+     * Dog Lead — purchasable from Bev (2 COIN). Equippable leash item.
+     * When equipped: police treat dog as "controlled" and do not cite the player
+     * for dangerous dog (avoids Notoriety +3 and DANGEROUS_DOG criminal record entry).
+     * Tooltip: "Keep him close or you'll regret it near the station."
+     */
+    DOG_LEAD("Dog Lead"),
+
+    /**
+     * Dog Vet Record — issued by Dr. Patel after a dog vaccination (8 COIN).
+     * Allows dog companion entry to BOOT_SALE with +5% loot value bonus.
+     * Required for BEST_IN_SHOW achievement.
+     * Tooltip: "Official. A4. Laminated. Dr. Patel's handwriting is terrible."
+     */
+    DOG_VET_RECORD("Dog Vet Record"),
+
+    /**
+     * Dog Sedative — looted from the vet medicine cabinet.
+     * One-use throwable item: when thrown at any NPC, reduces their speed by 50%
+     * for 30 in-game seconds. Adding this to inventory from the medicine cabinet
+     * raid triggers Notoriety +12 and Wanted Tier 2.
+     * Tooltip: "Not for human consumption. Not that you're considering it."
+     */
+    DOG_SEDATIVE("Dog Sedative"),
+
+    /**
+     * Budgie — purchasable from Bev at Paws 'n' Claws (3 COIN).
+     * Placed in squat via SquatSystem: adds +5 Vibe. Does not follow player.
+     * Tooltip: "His name is Gary. He knows three words. One of them is rude."
+     */
+    BUDGIE("Budgie"),
+
+    /**
+     * Goldfish — purchasable from Bev at Paws 'n' Claws (1 COIN).
+     * Placed in squat: adds +2 Vibe. Dies after 3 in-game days if not "fed"
+     * (press E on squat's fish prop once per day). When goldfish dies, Vibe −2.
+     * Tooltip: "His name is Gary. The other Gary."
+     */
+    GOLDFISH("Goldfish");
 
     private final String displayName;
 
@@ -3139,6 +3189,17 @@ public enum Material {
                                                   0.62f, 0.62f, 0.62f); // Grey keyboard
             case WIPED_PHONE:           return cs(0.12f, 0.12f, 0.15f,   // Dark screen
                                                   0.25f, 0.72f, 0.25f); // Green "clean" indicator
+
+            // Issue #1081: Pet Shop items
+            case DOG_TREATS:    return c(0.85f, 0.62f, 0.18f);  // Biscuit brown
+            case DOG_LEAD:      return c(0.52f, 0.28f, 0.10f);  // Leather brown
+            case DOG_VET_RECORD: return cs(0.92f, 0.88f, 0.72f, // Paper cream
+                                           0.25f, 0.62f, 0.25f); // Green stamp
+            case DOG_SEDATIVE:  return c(0.72f, 0.18f, 0.72f);  // Purple syringe
+            case BUDGIE:        return cs(0.20f, 0.72f, 0.25f,  // Green feathers
+                                          0.95f, 0.85f, 0.15f); // Yellow head
+            case GOLDFISH:      return cs(0.95f, 0.50f, 0.12f,  // Orange fish body
+                                          0.20f, 0.55f, 0.88f); // Blue water
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -4243,6 +4304,20 @@ public enum Material {
             // Issue #1071: Northfield Fast Cash Finance
             case LOAN_LEAFLET:
                 return IconShape.FLAT_PAPER;  // fluorescent flyer
+
+            // Issue #1081: Pet Shop items
+            case DOG_TREATS:
+                return IconShape.BOX;         // treat box
+            case DOG_LEAD:
+                return IconShape.TOOL;        // leather lead
+            case DOG_VET_RECORD:
+                return IconShape.FLAT_PAPER;  // official record card
+            case DOG_SEDATIVE:
+                return IconShape.BOTTLE;      // syringe/vial
+            case BUDGIE:
+                return IconShape.BOX;         // small bird cage shape
+            case GOLDFISH:
+                return IconShape.BOX;         // bag of water with fish
 
             default:
                 return IconShape.BOX;

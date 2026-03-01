@@ -1226,7 +1226,53 @@ public enum PropType {
      * Picking it up reveals Sultan's Kebab on the map if undiscovered.
      * Destroyed by 1 punch; yields nothing.
      */
-    KEBAB_FLYER_PROP(0.20f, 0.01f, 0.30f, 1, null);
+    KEBAB_FLYER_PROP(0.20f, 0.01f, 0.30f, 1, null),
+
+    // ── Issue #1081: Northfield Pet Shop & Vet — Paws 'n' Claws ─────────────
+
+    /**
+     * Fish Tank — a large aquarium in Paws 'n' Claws filled with tropical fish.
+     * Ambient gurgling noise source. Press E to view fish (flavour text only).
+     * Destroyed by 4 punches; yields GLASS.
+     */
+    FISH_TANK_PROP(1.20f, 0.80f, 0.50f, 4, ragamuffin.building.Material.GLASS),
+
+    /**
+     * Animal Cage — stacked wire cages housing rabbits and guinea pigs.
+     * Press E to view animals (flavour text). Not breakable in normal play.
+     * Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    ANIMAL_CAGE_PROP(0.60f, 0.80f, 0.60f, 3, ragamuffin.building.Material.SCRAP_METAL),
+
+    /**
+     * Bird Perch — a tall T-shaped perch stand in the budgie corner of Paws 'n' Claws.
+     * Cosmetic; press E for ambient budgie chatter speech line.
+     * Destroyed by 2 punches; yields WOOD.
+     */
+    BIRD_PERCH_PROP(0.30f, 1.60f, 0.30f, 2, ragamuffin.building.Material.WOOD),
+
+    /**
+     * Dog Kennel — the pen behind the counter at Paws 'n' Claws.
+     * Press E to browse dogs for purchase (opens the dog purchase menu).
+     * Interaction triggers PetShopSystem.browseKennel(). Not destroyable.
+     */
+    DOG_KENNEL_PROP(1.20f, 1.00f, 1.20f, 999, null),
+
+    /**
+     * Consulting Table — the examination table in Northfield Vets.
+     * Press E (with dog companion present or RACING_PIGEON in inventory)
+     * to request a vet consultation. Not destroyable in normal play.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    CONSULTING_TABLE_PROP(1.20f, 0.90f, 0.60f, 5, ragamuffin.building.Material.WOOD),
+
+    /**
+     * Handwritten Sign — the faded hand-lettered sign outside Paws 'n' Claws.
+     * Reads: "Puppies for sale — no time wasters".
+     * Cosmetic prop; press E to read full text.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    HANDWRITTEN_SIGN_PROP(0.10f, 0.60f, 0.40f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
