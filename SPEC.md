@@ -23651,3 +23651,280 @@ Closed sign on door (19:00–07:00). Breaking in:
 4. **Banned player cannot enter**: Set WantedSystem stars = 2. Player walks to betting shop door. Verify Derek's CLOSED dialogue fires, player cannot enter interior, and no bet UI is accessible.
 
 5. **Race result rumour seeded to NPCs**: Resolve a horse race via HorseRacingSystem. Verify `RumourNetwork` contains a LOCAL_EVENT rumour about the race result. Verify at least 3 NPCs within 30 blocks of the betting shop have that rumour in their known-rumour set.
+
+---
+
+## Add Northfield War Memorial — Pigeons, Protest & the Great Statue Toppling
+
+**Goal**: Bring the `STATUE` landmark (already present in `LandmarkType`, `PropType`,
+`BlockType`, and `WorldGenerator`) to life as the social heart of the town square.
+The war memorial is currently inert scenery — this issue wires it up to a new
+`StatueSystem` with pigeon congregation, graffiti targeting, protest mechanics,
+seasonal events (Remembrance Sunday, Bonfire Night), council cleaning crews, and an
+epic late-game "toppling" heist that triggers a town-wide newspaper scandal.
+
+---
+
+### StatueSystem
+
+A new `StatueSystem` class managing:
+
+- **The Statue**: Positioned at the `LandmarkType.STATUE` landmark. A 5-block-tall
+  figure on a 3×3 plinth of `STATUE` blocks.
+- **Condition state**: `PRISTINE` → `TAGGED` → `BIRD_FOULED` → `DEFACED` → `TOPPLED`.
+  Starts at `PRISTINE`. Each state is persistent and affects NPC reactions and
+  `NeighbourhoodSystem` vibes (see below).
+- **Opening**: no doors, always accessible. `NeighbourhoodWatchSystem` patrols within
+  15 blocks from 20:00–07:00.
+
+---
+
+#### 1. Pigeon Congregation
+
+The statue is a prime roosting site for `PropType.PIGEON` entities (from
+`PigeonRacingSystem`'s ambient pigeon pool):
+
+- **Idle roosting**: 2–6 pigeons land on the statue plinth/head during daylight
+  (07:00–19:00), increasing to 8+ on warm/sunny days (`WeatherSystem`).
+- **Scatter mechanic**: player walking within 2 blocks causes all roosting pigeons
+  to scatter (fly upward, random direction). 15-second cooldown before they
+  return.
+- **Bird fouling**: if ≥ 4 pigeons roost for 10 consecutive in-game minutes,
+  statue condition degrades by one step toward `BIRD_FOULED`. Resets after a
+  `COUNCIL_CLEANER` NPC scrubs it (see §4).
+- **Pigeon trap**: player can place `Material.BREAD_CRUMBS` (craft: 1 × BREAD)
+  within 1 block of the statue to attract 8 pigeons simultaneously — useful for
+  catching racing pigeons (integrates with `PigeonRacingSystem.captureWildPigeon()`).
+  Achievement: `STATUE_SNACK`.
+
+---
+
+#### 2. Graffiti Target
+
+The statue is a special, high-prestige graffiti surface for `GraffitiSystem`:
+
+- **Tag placement**: player or NPC crew can spray the statue plinth faces. Each
+  tag placed on the statue grants **2× the normal turf-pressure bonus** compared
+  to an ordinary wall (the statue is contested neutral territory, no faction owns
+  the zone by default).
+- **Condition change**: if ≥ 3 graffiti marks are present on the statue, condition
+  shifts to `TAGGED`. `NeighbourhoodSystem` vibes −5.
+- **Rival gang response**: opposing faction NPCs react — within 60 seconds a
+  `STREET_LAD` or `YOUTH_GANG` NPC may appear to spray over the rival tag
+  (standard GraffitiSystem crew logic, but the statue triggers it at 2× the
+  normal NPC dispatch rate).
+- **Council Cleaner** (see §4) removes all tags, reverting condition one step
+  toward `PRISTINE`.
+
+---
+
+#### 3. Protest Mechanics
+
+On **Saturdays 12:00–16:00**, there is a 40% chance of a protest spawning around
+the statue:
+
+- **Protester group**: 3–5 `PUBLIC` NPCs in `PROTESTING` state, holding
+  `PLACARD_PROP` items, chanting. Two protest types selected randomly:
+  - `TAKE_IT_DOWN`: protestors want the statue removed (e.g. it's a local
+    Victorian mill owner with a dodgy history). They cheer if the statue is
+    `DEFACED` or `TOPPLED`.
+  - `KEEP_IT_UP`: counter-protestors defending the statue. They become `HOSTILE`
+    if the statue is defaced while they're present.
+- **Counter-protest**: if a `TAKE_IT_DOWN` protest is active, a `KEEP_IT_UP`
+  group of 2–4 NPCs spawns 10 blocks away after 5 in-game minutes. Both groups
+  argue (speech bubbles); 20% chance of a brawl after 10 minutes (triggers
+  `NoiseSystem.onDisturbance()`).
+- **Police response**: brawl triggers `WantedSystem` tier-1 alert in the area.
+  A `POLICE` NPC arrives within 2 in-game minutes.
+- **Player involvement**:
+  - Joining protestors (press E on a protester while holding a `PLACARD_PROP`):
+    `StreetReputation.STREET_LADS` +3, `NeighbourhoodSystem` vibes −2.
+  - Dispersing protestors (attacking group until all flee):
+    `NotorietySystem` +4, `StreetReputation.STREET_LADS` −5.
+
+---
+
+#### 4. Council Cleaning Crew
+
+A `COUNCIL_CLEANER` NPC (in high-vis vest) spawns **Mon–Fri 09:00–11:00** and
+inspects the statue:
+
+- If condition is `TAGGED` or `BIRD_FOULED`: cleaner scrubs for 5 in-game minutes
+  (idle animation at statue), then removes all graffiti marks on the statue and
+  improves condition one step.
+- If condition is `DEFACED`: cleaner calls `NeighbourhoodWatchSystem.onVisibleCrime()`
+  and leaves without cleaning (too much damage — requires a contractor).
+- Cleaner can be bribed with 5 COIN to ignore existing graffiti for the day
+  (dialogue: *"I've not seen nuffink."*).
+- Cleaner carries `Material.CLEANING_SUPPLIES` — can be pickpocketed for 2 COIN
+  equivalent or used in crafting (see §6).
+
+---
+
+#### 5. Seasonal Events
+
+**Remembrance Sunday** (second Sunday in November, in-game calendar):
+
+- 8 `PENSIONER` NPCs gather at the statue at 11:00 for a 2-minute silence
+  (all NPCs enter `IDLE` with heads bowed, no movement).
+- Player punching any NPC during the silence: notoriety +10, all nearby NPCs
+  become `HOSTILE`, `NewspaperSystem` headline: *"Thug Disrupts Town's Remembrance."*
+- Poppy wreath `PROP` spawns at statue base; interacting yields 1 × `POPPY`
+  item (fenceable, 1 COIN each, 3–5 available).
+
+**Bonfire Night** (5 November, in-game calendar):
+
+- 19:00–22:00: 6–10 `PUBLIC` NPCs congregate around the statue watching a
+  virtual fireworks display (particle effects via `ParticleSystem`).
+- Player can place `Material.FIREWORK` (new item, craft: 1 × WIRE + 1 × COIN)
+  near the statue to trigger a burst display — NPCs cheer, `StreetSkillSystem`
+  entertainer XP +5.
+- Misfired firework (5% chance): sets nearby `LEAVES` or `WOOD` block on fire
+  (integrates with `WheeliBinFireSystem.igniteBlock()`), triggers
+  `FireStationSystem.onFireReported()`.
+
+---
+
+#### 6. Toppling the Statue
+
+The main late-game set-piece. Requires:
+
+- **Prep**: Player must have `Material.ROPE` (craft: 2 × WIRE) and a vehicle
+  (`CarDrivingSystem.hasVehicle()` returns true, or player carries
+  `Material.CHAIN` — craft: 3 × METAL_SCRAP).
+- **Method**: Player presses E on the statue base while holding ROPE to attach
+  it. Then presses E again to pull (or drives car with attached rope). Requires
+  8 interaction presses (simulating effort).
+- **Outcome**: All `STATUE` blocks at the landmark are replaced with `RUBBLE`
+  blocks. Condition set to `TOPPLED`.
+- **Immediate reactions**:
+  - Any nearby `PENSIONER` or `KEEP_IT_UP` protestors become `HOSTILE`.
+  - `NoiseSystem.onDisturbance()` at max radius.
+  - `NeighbourhoodSystem` vibes −15.
+  - `NotorietySystem` +8.
+  - `NewspaperSystem` generates a banner headline next morning:
+    *"Town Memorial Toppled: Council Vows To Rebuild."*
+  - `WantedSystem` stars +2 (CRIMINAL_DAMAGE, major public property).
+  - `RumourNetwork` seeds 5 × `LOCAL_EVENT` rumours to nearby NPCs.
+- **Loot**: toppled blocks yield 4–8 × `Material.STONE` (rubble). A hidden
+  `Material.TIME_CAPSULE` item (flavour; fenceable for 12 COIN) is found at
+  the base — flavour text: *"Northfield District Council, 1953. Contents:
+  a copy of the Birmingham Post and a Woodbine."*
+- **Rebuilding**: After 5 in-game days, a `COUNCIL_CONTRACTOR_NPC` appears and
+  spends 2 in-game minutes "rebuilding" (prop swap). Statue returns to `PRISTINE`.
+  `NewspaperSystem` headline: *"Memorial Restored After Mindless Vandalism."*
+- **Achievement**: `COME_DOWN` — topple the statue.
+
+---
+
+#### 7. Neighbourhood Vibes Integration
+
+| Condition | `NeighbourhoodSystem` vibes modifier |
+|-----------|--------------------------------------|
+| `PRISTINE` | 0 (neutral) |
+| `TAGGED` | −5 |
+| `BIRD_FOULED` | −3 |
+| `DEFACED` | −10 |
+| `TOPPLED` | −15 |
+
+Vibes recover +1 per in-game day while a `COUNCIL_CLEANER` is active and the statue
+is not `TOPPLED`.
+
+---
+
+### New Items / Props
+
+| Item/Prop | Type | Description |
+|-----------|------|-------------|
+| `Material.BREAD_CRUMBS` | Material | Crafted: 1 × BREAD → BREAD_CRUMBS. Attracts pigeons. |
+| `Material.ROPE` | Material | Crafted: 2 × WIRE. Used for statue toppling and other interactions. |
+| `Material.CHAIN` | Material | Crafted: 3 × METAL_SCRAP. Alternative to ROPE for toppling. |
+| `Material.FIREWORK` | Material | Crafted: 1 × WIRE + 1 × COIN. Used at Bonfire Night. |
+| `Material.TIME_CAPSULE` | Material | Loot from toppled statue. Fenceable: 12 COIN. Flavour item. |
+| `Material.POPPY` | Material | Seasonal loot at Remembrance Sunday. Fenceable: 1 COIN. |
+| `Material.CLEANING_SUPPLIES` | Material | Dropped by COUNCIL_CLEANER. Fenceable or crafting ingredient. |
+| `Material.PLACARD` | Material | Held by protesters; player can pick up (2 COIN fence value). |
+| `PropType.PLACARD_PROP` | Prop | Sign board held/placed by protesters. |
+
+---
+
+### Achievements
+
+| Achievement | Condition |
+|-------------|-----------|
+| `STATUE_SNACK` | Attract 8 pigeons to the statue simultaneously with BREAD_CRUMBS |
+| `COUNCIL_ESTATE` | Bribe the council cleaner 3 separate days |
+| `COME_DOWN` | Topple the statue |
+| `LEST_WE_FORGET` | Attend Remembrance Sunday without causing any disturbance |
+| `REMEMBER_REMEMBER` | Trigger a firework misfire that starts a fire on Bonfire Night |
+| `PLACARD_PINCHER` | Pick up a protester's placard |
+
+---
+
+### Unit Tests
+
+- `testBirdFoulingDegradeCondition()` — set `StatueSystem.PIGEON_FOUL_MINUTES = 0`;
+  call `onPigeonRoost(4)`; verify condition shifts from `PRISTINE` to `BIRD_FOULED`.
+- `testGraffitiTagsShiftCondition()` — add 3 graffiti marks at statue position via
+  `GraffitiSystem`; call `statueSystem.update(delta)`; verify condition is `TAGGED`,
+  `NeighbourhoodSystem` vibes = −5.
+- `testCouncilCleanerRestoresCondition()` — set condition to `TAGGED`; call
+  `statueSystem.onCleanerArrival()`; verify condition is `PRISTINE` and all graffiti
+  marks on the statue are removed.
+- `testProtestSpawnsOnSaturday()` — set day SATURDAY 13:00, `StatueSystem.PROTEST_CHANCE = 1.0f`;
+  call `update(delta)`; verify 3–5 PUBLIC NPCs in PROTESTING state within 5 blocks of statue.
+- `testCounterProtestSpawns()` — same setup, advance 5 in-game minutes; verify a
+  second NPC group with KEEP_IT_UP behaviour spawns 10 blocks away.
+- `testTopplingRequiresRope()` — player has no ROPE; press E on statue base 8 times;
+  verify statue condition is still NOT `TOPPLED`.
+- `testTopplingReplacesBlocksWithRubble()` — give player ROPE; press E 8 times;
+  verify all STATUE blocks at landmark position replaced with RUBBLE.
+- `testTopplingTriggersNewspaper()` — topple statue; advance to next in-game morning;
+  verify `NewspaperSystem.getTodaysHeadlines()` contains "Memorial Toppled".
+- `testTimeCapsuleLootOnTopple()` — topple statue; verify `TIME_CAPSULE` in player
+  inventory.
+- `testRemembranceSundayNPCsIdle()` — set in-game date to second Sunday of November,
+  time 11:00; call `update(delta)`; verify 8 PENSIONER NPCs within 6 blocks of statue
+  in IDLE state.
+- `testBonfireNightFireworkMisfire()` — set date to 5 November, `StatueSystem.MISFIRE_CHANCE = 1.0f`;
+  player places FIREWORK adjacent to a LEAVES block; verify block set on fire and
+  `FireStationSystem.hasPendingCallout()` returns true.
+
+---
+
+### Integration Tests — implement these exact scenarios
+
+1. **Pigeon trap → pigeon capture**: Set time to 10:00 (sunny weather). Verify 2–6
+   pigeons have roosted on the statue. Player crafts BREAD_CRUMBS (1 BREAD). Places
+   BREAD_CRUMBS within 1 block of the statue. Advance 1 in-game minute. Verify 8
+   pigeons congregated. Player presses E on a pigeon. Verify
+   `PigeonRacingSystem.getOwnedPigeons()` count increased by 1. Verify
+   `STATUE_SNACK` achievement unlocked.
+
+2. **Protest full cycle with brawl**: Set day to Saturday, time 13:00,
+   `StatueSystem.PROTEST_CHANCE = 1.0f`. Call `update(delta)`. Verify TAKE_IT_DOWN
+   protesters (3–5 NPCs) around statue. Advance 5 in-game minutes. Verify
+   KEEP_IT_UP counter-protesters spawned 10 blocks away. Advance 10 more in-game
+   minutes (brawl threshold). Verify `NoiseSystem.getLastDisturbanceRadius()` > 0.
+   Verify a POLICE NPC has spawned within 30 blocks.
+
+3. **Full toppling pipeline**: Player has ROPE in inventory. Player stands within
+   2 blocks of statue base. Player presses E 8 times (interaction). Verify all
+   STATUE blocks replaced by RUBBLE. Verify `NotorietySystem.getNotoriety()` increased
+   by 8. Verify `WantedSystem.getStars()` ≥ 2. Verify TIME_CAPSULE in inventory.
+   Verify `RumourNetwork.getRecentRumours()` has ≥ 5 LOCAL_EVENT entries. Advance
+   to next in-game morning. Verify `NewspaperSystem.getTodaysHeadlines()` contains
+   a headline about the memorial. Advance 5 in-game days. Verify STATUE blocks
+   restored to `PRISTINE` (contractor rebuild complete).
+
+4. **Graffiti tag degrades vibes and triggers crew response**: Player equips SPRAY_CAN.
+   Player tags statue plinth 3 times. Verify statue condition is `TAGGED`. Verify
+   `NeighbourhoodSystem.getVibesModifier(statuePos)` = −5. Advance 60 in-game seconds.
+   Verify a rival faction NPC has appeared within 20 blocks attempting to spray over
+   the tag (NPC in `IDLE` or `MOVING` near statue, carrying SPRAY_CAN).
+
+5. **Remembrance Sunday silence interrupted**: Set in-game date to second Sunday of
+   November, time 11:00. Verify 8 PENSIONER NPCs gathered, all in IDLE state. Player
+   punches one PENSIONER. Verify ALL nearby NPCs transition to HOSTILE. Verify
+   `NotorietySystem.getNotoriety()` increased by 10. Advance to next in-game day.
+   Verify `NewspaperSystem.getTodaysHeadlines()` contains the word "Remembrance".
