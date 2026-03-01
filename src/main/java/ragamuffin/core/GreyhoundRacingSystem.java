@@ -479,7 +479,7 @@ public class GreyhoundRacingSystem {
 
         List<Greyhound> dogs = new ArrayList<>();
         for (int i = 0; i < DOGS_PER_RACE; i++) {
-            String name = namePool.get(nameOffset + i);
+            String name = namePool.get((nameOffset + i) % namePool.size());
             dogs.add(new Greyhound(name, i + 1, shuffledOdds[i]));
         }
         return dogs;
@@ -512,7 +512,7 @@ public class GreyhoundRacingSystem {
     /**
      * Pick a winner using weighted effective probabilities.
      */
-    int pickWinner(List<Greyhound> dogs) {
+    public int pickWinner(List<Greyhound> dogs) {
         float total = 0f;
         float[] probs = new float[dogs.size()];
         for (int i = 0; i < dogs.size(); i++) {
