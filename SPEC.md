@@ -18330,3 +18330,52 @@ All items already defined in `Material`:
    first place. Verify placement = 1. Verify `NewspaperSystem.isPigeonVictoryPending()`
    returns true. Verify `NORTHFIELD_DERBY` achievement unlocked. Verify `PIGEON_VICTORY`
    rumour seeded into at least 3 NPCs.
+
+---
+
+## Issue #993: Northfield Ice Cream Van — Mister Whippy Route, Seasonal Sales & Heatwave Panic
+
+**Goal**: Bring the `ICE_CREAM_MAN` NPC and ice cream items (`ICE_CREAM_99`, `SCREWBALL`, `FAB_LOLLY`, `CHOC_ICE`, `OYSTER_CARD_LOLLY`) to life with a full `IceCreamVanSystem`. All the assets exist in the codebase; this issue wires them up.
+
+### IceCreamVanSystem
+
+- The van follows a fixed 5-stop route through town (park → high street → school → estate → canal towpath), spending **3 in-game minutes** at each stop before moving on.
+- The van **only operates** during summer weather (`SUNNY` or `HEATWAVE`) between **12:00–19:00**, or on any dry day (no `RAIN`/`THUNDERSTORM`/`BLIZZARD`) between **14:00–17:00**.
+- At each stop the `ICE_CREAM_MAN` NPC spawns next to a `VAN_PROP` and plays the `ICE_CREAM_JINGLE` sound on loop (stops when van departs).
+- **Purchasing**: Press **E** on the ICE_CREAM_MAN to open a simple buy menu (4 items):
+  - `ICE_CREAM_99` — 2 COIN (+15 Warmth; HUNGRY –20)
+  - `SCREWBALL` — 2 COIN (+10 Warmth; 30% chance awards BUBBLEGUM at the bottom)
+  - `FAB_LOLLY` — 1 COIN (+8 Warmth; HUNGRY –10)
+  - `CHOC_ICE` — 1 COIN (+5 Warmth; HUNGRY –8)
+  - `OYSTER_CARD_LOLLY` — 3 COIN (grants 1 free bus ride via `BusSystem.grantFreeRide()`)
+- **Children (YOUTH NPCs)** flock to the van stop (up to 4) while it's parked; they disperse when it leaves.
+- **Heatwave integration**: During an active `ICE_CREAM_FRENZY` market event, the van makes an **extra stop** at the park and prices increase by 1 COIN each. Queue of up to 8 NPCs forms.
+- **Rob the van**: After 20:00 (or if no NPCs are within 6 blocks), the player can hit the VAN_PROP 3 times to smash it open, yielding 6–12 random ice cream items and 5–15 COIN — but gaining +10 Notoriety and triggering a `THEFT` rumour seeded to 2 nearby NPCs.
+- **OYSTER_CARD_LOLLY** redeems via `BusSystem.grantFreeRide()` (already implemented in BusSystem).
+- Integrates with: `WeatherSystem`, `BusSystem`, `StreetEconomySystem` (ICE_CREAM_FRENZY), `NotorietySystem`, `RumourNetwork`, `SoundSystem` (ICE_CREAM_JINGLE), `HealingSystem` (Warmth).
+
+### Integration tests — implement these exact scenarios
+
+1. **Van stops at park and sells 99 Flake**: Set weather to SUNNY, time to 13:00. Call
+   `IceCreamVanSystem.update()` for 1 tick. Verify van is at the park stop. Give player
+   2 COIN. Press E on ICE_CREAM_MAN NPC. Select ICE_CREAM_99. Verify inventory contains
+   `ICE_CREAM_99`. Verify player COIN count is 0. Verify `SoundSystem` is looping
+   `ICE_CREAM_JINGLE`.
+
+2. **Van does not operate in rain**: Set weather to RAIN, time to 14:00. Call
+   `IceCreamVanSystem.update()`. Verify no ICE_CREAM_MAN NPC is spawned. Verify
+   `ICE_CREAM_JINGLE` is not playing.
+
+3. **Heatwave adds extra park stop and raises prices**: Trigger `ICE_CREAM_FRENZY`
+   market event. Verify van's stop list contains two park entries. Give player 3 COIN.
+   Attempt to buy `ICE_CREAM_99` (now costs 3 COIN). Verify purchase succeeds and
+   inventory contains `ICE_CREAM_99`.
+
+4. **OYSTER_CARD_LOLLY grants free bus ride**: Give player 3 COIN. Buy `OYSTER_CARD_LOLLY`
+   from the van. Call `player.useItem(OYSTER_CARD_LOLLY)`. Verify `BusSystem.hasFreeRide()`
+   returns true. Board a bus. Verify COIN count unchanged (free ride consumed).
+
+5. **Robbing the van yields loot and notoriety**: Set time to 20:30, spawn no NPCs within
+   6 blocks. Hit the VAN_PROP 3 times. Verify at least 6 ice cream items added to
+   player inventory. Verify player Notoriety increased by 10. Verify a THEFT rumour has
+   been seeded to at least 1 NPC in `RumourNetwork`.
