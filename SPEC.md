@@ -20331,3 +20331,154 @@ PATIENT(15f, 0f, 0f, false),
 6. **Repeat prescription — abuse detection**: Give player a prescription. Set `lastCollectedWeek = currentWeek`. Press E on `PHARMACY_HATCH_PROP`. Verify `GPSurgerySystem.canCollectRepeatPrescription()` returns false. Verify Brenda's speech contains "already". Verify Notoriety increases by 5.
 
 7. **Patient fetch quest — completion rewards LOCALS respect**: Spawn a `PATIENT` NPC in waiting room. Force `GPSurgerySystem.patientHasFetchQuest(patient) = true`. Press E on PATIENT. Verify quest prompt shown. Move player to `PHARMACY_HATCH_PROP`. Press E. Verify PRESCRIPTION_MEDS in player inventory. Return to PATIENT and press E. Verify COIN increases by 3. Verify LOCALS Faction Respect increases by 5. Verify `GOOD_SAMARITAN` progress incremented.
+
+---
+
+## Add Sultan's Kebab — Late-Night Doner Economy, Protection Racket & the Chilli Sauce Incident
+
+**Landmark**: `LandmarkType.KEBAB_SHOP` (already placed in `WorldGenerator.java` as "Sultan's Kebab"; no system exists yet)
+
+**Goal**: Sultan's Kebab is the high-street's only proper late-night sit-down kebab shop — a grease-soaked institution that has operated since 1987 under the same strip lighting. This issue gives it a full system: ordering food, the late-night drunk NPC rush, a protection racket from the Marchetti Crew, a credit tab economy, and the chaos that erupts if the chilli sauce runs out.
+
+### Building Layout
+
+A 10×8×5 brick building:
+- **Counter area**: `KEBAB_COUNTER_PROP` (Hassan at the grill), `CHILLI_SAUCE_DISPENSER_PROP`, `MENU_BOARD_PROP` (illuminated plastic signage), `TILL_PROP`.
+- **Seating area**: `WOBBLY_TABLE_PROP` × 4, `PLASTIC_CHAIR_PROP` × 8. Sticky floors.
+- **Back room**: `WALK_IN_FRIDGE_PROP` (locked, LOCKPICK, yields DONER_MEAT × 4 + PITTA_BREAD × 6), `CASH_TIN_PROP` (hidden under counter, 8 COIN).
+- **Outside**: `KEBAB_SIGN_PROP` (red neon, lit 17:00–04:00), `LITTER_BIN_PROP`, `PLASTIC_BAG_PROP` litter props spawning every 10 in-game minutes (cap 6).
+
+### NPCs
+
+- **Hassan** (`KEBAB_SHOP_OWNER` NPC) — proprietor and sole grill man. Present 17:00–04:00 daily. Passive; sells food, manages the credit tab, and calls police at Notoriety ≥ 60 or if the WALK_IN_FRIDGE is broken into. Speech: *"What you want mate?"* / *"Chilli sauce?"* / *"You can't have tab — you already owe me three quid."* / *"Oi, that's my fridge."*
+- **Drunk Customer** (`DRUNK` NPC × 1–4, spawning 22:00–03:00) — stumble in after pub closing, argue about what they ordered, occasionally vomit near `WOBBLY_TABLE_PROP`. Each has a 20% chance of starting a fight with another DRUNK if two or more are seated.
+- **Marchetti Crew Protection Collector** (`FACTION_LIEUTENANT` NPC) — arrives every in-game Sunday 23:00 to collect the weekly protection fee (8 COIN). If Hassan can't pay (coins < 8), a `WOBBLY_TABLE_PROP` gets smashed. Player can intervene.
+
+### Core Mechanics
+
+#### 1. Ordering Food
+- Press **E** on `KEBAB_COUNTER_PROP` during opening hours (17:00–04:00) to open the order menu. Hassan's speech: *"What you want mate?"*
+- Menu items (prices via `KebabShopSystem.getMenuPrice(Material)`):
+  - `DONER_KEBAB`: 4 COIN — restores 50 HUNGER, 15 WARMTH.
+  - `SHISH_KEBAB`: 5 COIN — restores 45 HUNGER, 10 WARMTH. Higher quality; no DRUNK buff.
+  - `CHIPS_IN_PITTA`: 2 COIN — restores 25 HUNGER. Available after 22:00 only.
+  - `LARGE_CHIPS`: 2 COIN — restores 30 HUNGER.
+  - `GARLIC_BREAD_SLICE`: 1 COIN — restores 10 HUNGER.
+  - `CAN_OF_COKE`: 1 COIN — satisfies BORED need by 5.
+- **Chilli Sauce Modifier**: Press E on `CHILLI_SAUCE_DISPENSER_PROP` before eating. Adds +5 HUNGER restoration to any kebab. If dispenser is empty (random 10% chance each visit), Hassan says *"Chilli's out mate"* and BORED need increases by 3.
+- `KebabShopSystem.purchase(item, playerCoins, creditTab)` returns `PurchaseResult` (SUCCESS, INSUFFICIENT_FUNDS, ON_TAB).
+
+#### 2. Credit Tab System
+- Player can run a tab of up to 5 COIN. `KebabShopSystem.getTabBalance()` tracks outstanding debt.
+- On each visit Hassan reminds player of tab if > 0: *"You owe me [X] quid — you payin' today?"*
+- Tab cleared by paying Hassan (press E on TILL_PROP, choose "Pay tab"). Paying tab gives +2 LOCALS Faction Respect.
+- Tab > 5 COIN: Hassan refuses service until paid. STREET_LADS Respect ≥ 60 allows one additional COIN of grace.
+- Failing to pay tab for 3 in-game weeks: Hassan adds player to `CriminalRecord` as `DEBT_DODGER`. Notoriety +3.
+
+#### 3. Late-Night Drunk Rush (22:00–03:00)
+- `KebabShopSystem.update(delta, timeSystem)` spawns 1–4 `DRUNK` NPCs near the shop each hour.
+- `KebabShopSystem.computeDrunkCount(hour, dayOfWeek)` returns higher counts on Fri/Sat nights (up to 6).
+- Each DRUNK NPC has a `drunkLevel` (1–3). At drunkLevel ≥ 2: 20% chance of fight trigger per minute.
+- **Drunk Fight**: two DRUNKs target each other. Player can break it up (press E on either DRUNK during fight: `INTERVENE` or `WATCH`). Breaking up raises LOCALS Respect +2. Watching lets it resolve (one DRUNK flees, one stays).
+- Drunk NPCs leave litter (PLASTIC_BAG_PROP) on exit.
+
+#### 4. Protection Racket
+- `KebabShopSystem.isProtectionPaymentDue(weekNumber)` returns true on Sunday 23:00–23:59.
+- The `FACTION_LIEUTENANT` NPC spawns, approaches counter, collects 8 COIN from Hassan.
+- **Player option A — Pay Nothing**: watch; Lieutenant takes the money and leaves.
+- **Player option B — Intervene**: press E on Lieutenant during collection. Choose `CONFRONT` (requires Notoriety ≥ 20 or STREET_LADS Respect ≥ 40). Fight ensues. WIN: MARCHETTI_CREW Respect −10, LOCALS Respect +5. LOSE: Notoriety +5, player health −20.
+- **Player option C — Pay Hassan's Debt** (if Hassan is short): give 8 COIN to Hassan directly (press E on KEBAB_COUNTER_PROP with option "Cover Hassan"). LOCALS Respect +8. Hassan gives player a free DONER_KEBAB. Unlocks a one-time tip from Hassan about the WALK_IN_FRIDGE.
+
+#### 5. Walk-In Fridge Raid
+- `WALK_IN_FRIDGE_PROP` (back room) — requires LOCKPICK; 3 hits to open; yields DONER_MEAT × 4 + PITTA_BREAD × 6 + LARGE_CHIPS × 2.
+- Hassan reacts immediately if within 10 blocks: speech *"Oi, that's my fridge!"* and calls police (Wanted Tier 2).
+- Outside opening hours (04:00–17:00): no Hassan present; raid undetected unless WITNESS NPC is nearby.
+- `CriminalRecord` entry: `FOOD_THEFT`. Notoriety +5.
+- DONER_MEAT can be cooked on `CampfireSystem` CAMPFIRE_PROP (3 fuel, 60s) to yield `COOKED_DONER_MEAT` (+65 HUNGER, +20 WARMTH — superior to shop-bought kebab).
+- PITTA_BREAD alone: +5 HUNGER. Not worth stealing. But fun.
+
+#### 6. Chilli Sauce Incident
+- Special event: 5% chance per session that `CHILLI_SAUCE_DISPENSER_PROP` is broken (stuck open, sprays chilli everywhere).
+- If triggered: `KebabShopSystem.isChilliSauceIncidentActive()` returns true for 30 in-game minutes.
+- During incident: all food items provide +15 HUNGER but player receives `EYES_WATERING` debuff (screen edge red tint for 5 real seconds on consumption). Hassan says *"Sorry mate, it's a bit heavy on the chilli."*
+- Hassan asks player to get `TOOL_KIT` (find in BUILDERS_MERCHANT or craft). Return with TOOL_KIT → press E on dispenser → `KebabShopSystem.fixChilliDispenser()`. Hassan rewards: 1 free meal of player's choice + LOCALS Respect +3.
+
+### Opening Hours
+Daily 17:00–04:00 (late licence). Closed 04:00–17:00.
+
+### New `NPCType` entry
+
+```java
+// ── Issue #1024: Sultan's Kebab ───────────────────────────────────────────
+/**
+ * Hassan — proprietor of Sultan's Kebab. Present 17:00–04:00 daily.
+ * Sells doner kebabs, manages credit tab, calls police at Notoriety ≥ 60.
+ * Reacts immediately to WALK_IN_FRIDGE break-in if within 10 blocks.
+ * Speech: "What you want mate?" / "Chilli sauce?" / "You can't have tab."
+ */
+KEBAB_SHOP_OWNER(20f, 0f, 0f, false),
+```
+
+### New `PropType` entries
+
+- `KEBAB_COUNTER_PROP` — stainless steel serving counter with doner spit (1.5f × 1.1f × 0.6f, 8 hits, METAL). Press E to order.
+- `CHILLI_SAUCE_DISPENSER_PROP` — pump bottle on counter (0.2f × 0.4f × 0.2f, 1 hit, PLASTIC). Press E to add chilli sauce modifier.
+- `MENU_BOARD_PROP` — illuminated plastic menu overhead (1.2f × 0.6f × 0.05f, 2 hits, PLASTIC). Press E to read menu prices.
+- `TILL_PROP` — cash register (0.4f × 0.4f × 0.3f, 4 hits, METAL). Press E to pay tab.
+- `WOBBLY_TABLE_PROP` — greasy laminate table (0.8f × 0.8f × 0.7f, 3 hits, WOOD). Yields SCRAP_WOOD × 1. Smashed by Marchetti Crew if Hassan can't pay.
+- `KEBAB_SIGN_PROP` — red neon outdoor sign (0.8f × 0.4f × 0.1f, 2 hits, GLASS). Lit 17:00–04:00; breaking it reduces DRUNK NPC spawn rate by 50% for 3 in-game days (they can't find it).
+- `WALK_IN_FRIDGE_PROP` — large metal fridge unit in back room (1.2f × 2.0f × 0.8f, 3 hits, METAL). LOCKPICK required. Major food loot.
+- `CASH_TIN_PROP` — small tin under counter (0.3f × 0.2f × 0.2f, 2 hits, METAL). Contains 8 COIN. Resets every Sunday.
+
+### New `Material` entries
+
+```java
+// ── Issue #1024: Sultan's Kebab ───────────────────────────────────────────
+DONER_KEBAB("Doner Kebab"),       // Restores 50 HUNGER, 15 WARMTH. The classic.
+SHISH_KEBAB("Shish Kebab"),       // Restores 45 HUNGER, 10 WARMTH. A touch classier.
+CHIPS_IN_PITTA("Chips in Pitta"), // Restores 25 HUNGER. After 22:00 only.
+GARLIC_BREAD_SLICE("Garlic Bread"),// Restores 10 HUNGER. Cheap filler.
+DONER_MEAT("Doner Meat"),         // Raw. Cook on campfire for COOKED_DONER_MEAT.
+COOKED_DONER_MEAT("Cooked Doner"),// Cooked. +65 HUNGER, +20 WARMTH. Best meal in the game.
+PITTA_BREAD("Pitta Bread"),        // +5 HUNGER. Barely worth it. But here you are.
+```
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `CHEEKY_DONOR` | Purchase your first DONER_KEBAB from Sultan's |
+| `RUN_A_TAB` | Accumulate a tab of 5 COIN at Sultan's |
+| `COVERED_HASSAN` | Pay Hassan's protection debt before the Faction Lieutenant takes it |
+| `FRIDGE_RAIDER` | Raid the WALK_IN_FRIDGE_PROP and escape without being caught |
+| `CHILLI_HERO` | Fix the CHILLI_SAUCE_DISPENSER_PROP during the Chilli Sauce Incident |
+| `LATE_NIGHT_REGULAR` | Purchase food from Sultan's on 5 separate nights between 01:00 and 03:00 |
+| `BOUNCER_OF_THE_KEBAB_SHOP` | Break up 3 drunk fights inside Sultan's |
+
+### Unit Tests
+
+- `KebabShopSystem.isOpen(hour)` returns true 17:00–03:59; false 04:00–16:59.
+- `KebabShopSystem.getMenuPrice(Material.DONER_KEBAB)` returns 4.
+- `KebabShopSystem.getMenuPrice(Material.CHIPS_IN_PITTA)` returns 2. `KebabShopSystem.isChipsInPittaAvailable(22f)` returns true; `isChipsInPittaAvailable(19f)` returns false.
+- `KebabShopSystem.purchase(DONER_KEBAB, coins=4, tab=0)` returns `SUCCESS`. `purchase(DONER_KEBAB, coins=0, tab=0)` returns `INSUFFICIENT_FUNDS`. `purchase(DONER_KEBAB, coins=0, tab=3)` returns `ON_TAB` and increments tab by 4.
+- `KebabShopSystem.purchase(DONER_KEBAB, coins=0, tab=5)` returns `TAB_FULL`.
+- `KebabShopSystem.computeDrunkCount(hour=23, SATURDAY, Random)` returns a value in [3, 6]. `computeDrunkCount(hour=20, TUESDAY, Random)` returns a value in [0, 2].
+- `KebabShopSystem.isProtectionPaymentDue(SUNDAY, 23)` returns true. `isProtectionPaymentDue(MONDAY, 23)` returns false.
+- `KebabShopSystem.getHungerRestored(DONER_KEBAB, chilli=true)` returns 55. `getHungerRestored(DONER_KEBAB, chilli=false)` returns 50.
+- `KebabShopSystem.getTabBalance()` starts at 0; increases correctly on ON_TAB purchase; resets to 0 on tab payment.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Order a doner kebab and eat it**: Construct `KebabShopSystem`. Set time to Friday 22:00. Give player 5 COIN. Place player at `KEBAB_COUNTER_PROP`, facing it. Press E. Select `DONER_KEBAB` from menu. Verify player COIN decreases by 4. Verify player inventory contains `DONER_KEBAB`. Consume DONER_KEBAB (press E on inventory). Verify player HUNGER increases by 50. Verify `CHEEKY_DONOR` achievement unlocked.
+
+2. **Credit tab accumulates and blocks service**: Give player 0 COIN. Set `KebabShopSystem.tabBalance = 3`. Press E on `KEBAB_COUNTER_PROP`. Select `DONER_KEBAB`. Verify `KebabShopSystem.purchase()` returns `ON_TAB`. Verify tabBalance is now 7. Press E again. Select `LARGE_CHIPS` (cost 2). Verify result is `TAB_FULL` (tab would reach 9 > 5). Verify player cannot order until tab paid. Press E on `TILL_PROP`. Give 7 COIN. Verify tabBalance returns to 0. Verify player COIN decreases by 7. Verify LOCALS Faction Respect increases by 2.
+
+3. **Drunk fight — player intervenes**: Set time to Saturday 23:30. Force spawn of 2 DRUNK NPCs with drunkLevel 2 inside the shop. Advance simulation 60 seconds. Verify `KebabShopSystem.isFightActive()` returns true. Place player within 2 blocks of a fighting DRUNK. Press E. Select `INTERVENE`. Verify `KebabShopSystem.isFightActive()` returns false. Verify LOCALS Faction Respect increases by 2. Verify `BOUNCER_OF_THE_KEBAB_SHOP` progress increments by 1.
+
+4. **Protection racket — player covers Hassan**: Set time to Sunday 23:00. Set `KebabShopSystem.hassanCoinBalance = 0`. Force `KebabShopSystem.triggerProtectionCollection()`. Verify `FACTION_LIEUTENANT` NPC spawns. Press E on `KEBAB_COUNTER_PROP`. Choose "Cover Hassan". Give player 8 COIN. Verify player COIN decreases by 8. Verify `FACTION_LIEUTENANT` departs. Verify LOCALS Faction Respect increases by 8. Verify player inventory contains `DONER_KEBAB` (Hassan's thanks). Verify `COVERED_HASSAN` achievement unlocked.
+
+5. **Walk-in fridge raid outside hours**: Set time to 10:00 (shop closed, Hassan absent). Give player `LOCKPICK`. Place player at `WALK_IN_FRIDGE_PROP` in back room. Press E. Verify `WALK_IN_FRIDGE_PROP` opens. Verify player inventory contains `DONER_MEAT`. Verify `CriminalRecord` contains `FOOD_THEFT`. Verify Notoriety increases by 5. Verify no police response (no witnesses present). Verify `FRIDGE_RAIDER` achievement unlocked.
+
+6. **Chilli sauce incident — player fixes dispenser**: Force `KebabShopSystem.triggerChilliSauceIncident()`. Verify `KebabShopSystem.isChilliSauceIncidentActive()` returns true. Order DONER_KEBAB. Verify HUNGER increases by 65 (50 + 15 chilli bonus). Give player `TOOL_KIT`. Press E on `CHILLI_SAUCE_DISPENSER_PROP`. Call `KebabShopSystem.fixChilliDispenser()`. Verify `isChilliSauceIncidentActive()` returns false. Verify player receives 1 free meal. Verify LOCALS Faction Respect increases by 3. Verify `CHILLI_HERO` achievement unlocked.
+
+7. **Doner meat cooked on campfire**: Give player `DONER_MEAT`. Place player at a `CAMPFIRE_PROP` with 3 fuel. Press E on campfire. Select `DONER_MEAT`. Advance simulation 60 seconds. Verify `CampfireSystem.getCookingResult(DONER_MEAT)` equals `COOKED_DONER_MEAT`. Verify player inventory contains `COOKED_DONER_MEAT`. Consume it. Verify HUNGER increases by 65. Verify WARMTH increases by 20.
