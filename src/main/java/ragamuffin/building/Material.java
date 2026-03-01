@@ -1523,7 +1523,72 @@ public enum Material {
      * Valid ignition source for WheeliBinFireSystem and CampfireSystem.
      * Fence value: 1 COIN. Tooltip: "Flicks first time, every time. Usually."
      */
-    LIGHTER("Lighter");
+    LIGHTER("Lighter"),
+
+    // ── Issue #1016: Northfield Canal ─────────────────────────────────────────
+
+    /**
+     * Canal Fish — generic fish caught from the Northfield Canal.
+     * Eat for +10 hunger. Sellable at Fence for 2 COIN.
+     * Tooltip: "Smells like canal. Tastes like canal. You're still eating it."
+     */
+    CANAL_FISH("Canal Fish"),
+
+    /**
+     * Dinghy — an inflatable rubber dinghy.
+     * Equip and press F on a WATER block to float across. 10 uses.
+     * Tooltip: "Not seaworthy. Barely canal-worthy."
+     */
+    DINGHY("Dinghy"),
+
+    /**
+     * Boot — a single wellington boot, fished out of the canal.
+     * Flavour item; unsellable. Tooltip: "Someone had a worse day than you."
+     */
+    BOOT("Boot"),
+
+    /**
+     * Stolen Wallet — a wallet fished out of the canal.
+     * Contains 2–6 COIN. +5 Notoriety when picked up.
+     * Tooltip: "The money's still in it. Mostly."
+     */
+    STOLEN_WALLET("Stolen Wallet"),
+
+    /**
+     * String — crafting ingredient for a FISHING_ROD.
+     * Craftable: 2 WOOD + 1 STRING_ITEM; sold at corner shop.
+     * Tooltip: "A length of string. Every crisis starts with a length of string."
+     */
+    STRING_ITEM("String"),
+
+    /**
+     * Mooring Notice — council notice served after the player squats the western
+     * narrowboat for 3 in-game days. Player can tear it down (−10 Council Respect)
+     * or comply (lose boat, receive 5 COIN compensation).
+     * Tooltip: "Notice to Vacate. The Council remains grateful for your cooperation."
+     */
+    MOORING_NOTICE("Mooring Notice"),
+
+    /**
+     * Birdwatching Tip — a rumour item from Terry the Twitcher at the canal.
+     * Contains neighbourhood gossip. Not sellable; auto-converts to a NEIGHBOURHOOD rumour.
+     * Tooltip: "Terry saw something. Terry always sees something."
+     */
+    BIRDWATCHING_TIP("Birdwatching Tip"),
+
+    /**
+     * Camping Lantern — a small lantern for the narrowboat interior.
+     * One of the small items that improves the narrowboat Warmth bonus to +12/min.
+     * Tooltip: "Warm glow. Slightly suspicious smell."
+     */
+    CAMPING_LANTERN("Camping Lantern"),
+
+    /**
+     * Camping Stove — a portable gas stove for the narrowboat interior.
+     * One of the small items that improves the narrowboat Warmth bonus to +12/min.
+     * Tooltip: "Hot food. Technically cooking. Technically a kitchen."
+     */
+    CAMPING_STOVE("Camping Stove");
 
     private final String displayName;
 
@@ -2083,6 +2148,26 @@ public enum Material {
             case LIGHTER:               return cs(0.22f, 0.22f, 0.25f,   // Dark chrome body
                                                    0.92f, 0.78f, 0.15f); // Gold flame top
 
+            // Issue #1016: Northfield Canal
+            case CANAL_FISH:            return cs(0.45f, 0.62f, 0.52f,   // Dull green-grey fish
+                                                   0.30f, 0.42f, 0.38f); // Darker belly
+            case DINGHY:                return cs(0.90f, 0.22f, 0.12f,   // Red inflatable rubber
+                                                   0.88f, 0.88f, 0.88f); // Grey interior
+            case BOOT:                  return cs(0.25f, 0.22f, 0.20f,   // Dark rubber boot
+                                                   0.38f, 0.35f, 0.30f); // Lighter sole
+            case STOLEN_WALLET:         return cs(0.35f, 0.22f, 0.10f,   // Brown leather
+                                                   0.18f, 0.12f, 0.05f); // Dark interior
+            case STRING_ITEM:           return cs(0.78f, 0.68f, 0.45f,   // Natural twine
+                                                   0.58f, 0.48f, 0.28f); // Shadow
+            case MOORING_NOTICE:        return cs(0.92f, 0.90f, 0.82f,   // Cream council paper
+                                                   0.18f, 0.38f, 0.65f); // Blue council header
+            case BIRDWATCHING_TIP:      return cs(0.88f, 0.88f, 0.80f,   // Cream note paper
+                                                   0.35f, 0.55f, 0.28f); // Green nature accent
+            case CAMPING_LANTERN:       return cs(0.88f, 0.72f, 0.15f,   // Warm yellow glow
+                                                   0.35f, 0.35f, 0.38f); // Dark metal frame
+            case CAMPING_STOVE:         return cs(0.35f, 0.35f, 0.38f,   // Dark metal body
+                                                   0.88f, 0.30f, 0.10f); // Orange flame
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -2369,6 +2454,16 @@ public enum Material {
             case PAPER_SATCHEL:
             case BIRTHDAY_CARD:
             case LIGHTER:
+            // Issue #1016: Northfield Canal (not block items)
+            case CANAL_FISH:
+            case DINGHY:
+            case BOOT:
+            case STOLEN_WALLET:
+            case STRING_ITEM:
+            case MOORING_NOTICE:
+            case BIRDWATCHING_TIP:
+            case CAMPING_LANTERN:
+            case CAMPING_STOVE:
                 return false;
             default:
                 return true;
@@ -2956,6 +3051,26 @@ public enum Material {
                 return IconShape.CYLINDER;    // small glass bottle
             case TATTOO_GUN:
                 return IconShape.TOOL;        // handheld tattoo gun
+
+            // Issue #1016: Northfield Canal
+            case CANAL_FISH:
+                return IconShape.FOOD;        // fish silhouette
+            case DINGHY:
+                return IconShape.BOX;         // inflatable dinghy shape
+            case BOOT:
+                return IconShape.BOX;         // single boot shape
+            case STOLEN_WALLET:
+                return IconShape.CARD;        // wallet shape
+            case STRING_ITEM:
+                return IconShape.TOOL;        // coil of string
+            case MOORING_NOTICE:
+                return IconShape.FLAT_PAPER;  // council notice paper
+            case BIRDWATCHING_TIP:
+                return IconShape.FLAT_PAPER;  // folded note
+            case CAMPING_LANTERN:
+                return IconShape.CYLINDER;    // cylindrical lantern
+            case CAMPING_STOVE:
+                return IconShape.BOX;         // compact stove unit
 
             default:
                 return IconShape.BOX;
