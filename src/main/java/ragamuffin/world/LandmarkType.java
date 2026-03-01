@@ -281,7 +281,22 @@ public enum LandmarkType {
      * <p>Integrates with: IndoorMarketSystem, FenceSystem, StreetEconomySystem,
      * WeatherSystem, DisguiseSystem, NoiseSystem, RumourNetwork.
      */
-    INDOOR_MARKET;
+    INDOOR_MARKET,
+
+    // ── Issue #1039: Northfield Barber ────────────────────────────────────────
+
+    /**
+     * Kosta's Barbers — a Turkish-run barbershop on the high street.
+     * Run by Kosta (BARBER_OWNER, Mon–Sat 09:00–18:00) and apprentice Wayne
+     * (BARBER_APPRENTICE, Tue–Fri 12:00–18:00). A BARBER_POLE_PROP stands
+     * outside; two BARBER_CHAIR_PROPs inside; a WAITING_BENCH_PROP seats up to 3.
+     * Haircuts change the player's HairstyleType and grant timed recognition reduction.
+     * Integrates with WantedSystem (refused ≥2 stars), NotorietySystem (−5 display),
+     * DisguiseSystem (passive modifier), FactionSystem (free trim at Marchetti ≥75),
+     * NeighbourhoodSystem (boards up when vibes &lt;30), RumourNetwork (LOCAL_EVENT
+     * per cut), NewspaperSystem (hairstyle in crime descriptions).
+     */
+    BARBERS;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -350,6 +365,7 @@ public enum LandmarkType {
             case TATTOO_PARLOUR:        return "Skin Deep Tattoos";
             case SCRAPYARD:             return "Pearce & Sons Metal Merchants";
             case INDOOR_MARKET:         return "Northfield Indoor Market";
+            case BARBERS:               return "Kosta's Barbers";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

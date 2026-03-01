@@ -246,5 +246,13 @@ public enum RumourType {
      * Spreads only via MARKET_PUNTER and MARKET_TRADER NPCs at the indoor market.
      * Distinct from POLICE_ACTIVITY: specifically market-origin and carries contraband
      * context. Police NPCs who receive it add +1 patrol awareness near INDOOR_MARKET. */
-    MARKET_RAID;
+    MARKET_RAID,
+
+    // ── Issue #1039: Northfield Barber ────────────────────────────────────────
+
+    /** "Someone jumped the queue at Kosta's — first in, first served, apparently not."
+     * — seeded by BarberSystem when the player calls {@code attemptQueueJump()}.
+     * The offended waiting NPC seeds this; spreads to any NPC within 8 blocks.
+     * Minor hostility increase to PUBLIC NPCs nearby. */
+    ANTISOCIAL_BEHAVIOUR;
 }
