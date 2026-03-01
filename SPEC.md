@@ -18379,3 +18379,87 @@ All items already defined in `Material`:
    6 blocks. Hit the VAN_PROP 3 times. Verify at least 6 ice cream items added to
    player inventory. Verify player Notoriety increased by 10. Verify a THEFT rumour has
    been seeded to at least 1 NPC in `RumourNetwork`.
+
+---
+
+## Issue #999: Northfield Aldi — Reduced to Clear: Supermarket Shopping, Shoplifting & the Yellow Sticker Rush
+
+**Goal**: Bring the `SUPERMARKET` landmark (Aldi) to life with a full `SupermarketSystem`. All the structural pieces exist — `SHOPPING_TROLLEY` prop, `SHELF_CAN`/`SHELF_BOTTLE`/`SHELF_BOX` props, `SECURITY_GUARD` NPC type, and food items (`TIN_OF_BEANS`, `CRISPS`, `ENERGY_DRINK`, `CHOCOLATE_BAR`, `WATER_BOTTLE`, `BISCUIT`) — this issue wires them into a coherent shopping, shoplifting and yellow-sticker-rush system.
+
+### SupermarketSystem
+
+**Opening hours**: 08:00–22:00 daily. A `SHOP_ASSISTANT` NPC (Bev) staffs the checkout. A `SECURITY_GUARD` NPC (Dave) patrols the floor, doing a 60-second loop through 4 waypoints near the entrance, shelves, and back. On Sundays 10:00–16:00 the store is at **reduced Sunday capacity** (half stock on shelves, queue of 2–4 `WORKER` + `PENSIONER` NPCs at checkout).
+
+**Legitimate shopping**:
+- Press **E** on a `SHELF_CAN`, `SHELF_BOTTLE`, or `SHELF_BOX` prop to pick up the corresponding item and add it to a virtual **basket** (not inventory yet).
+- Each shelf prop maps to an item and price:
+  - `SHELF_CAN` → `TIN_OF_BEANS` — 1 COIN
+  - `SHELF_BOTTLE` → `WATER_BOTTLE` — 1 COIN
+  - `SHELF_BOX` → `BISCUIT` — 1 COIN
+  - Freestanding display → `CRISPS` — 1 COIN, `ENERGY_DRINK` — 2 COIN, `CHOCOLATE_BAR` — 1 COIN
+- Press **E** on the `CHECKOUT_PROP` (staffed by Bev) to pay for basket contents. Items move to inventory; COIN deducted.
+- **Reduced aisle**: Between **19:00–21:00** (yellow-sticker hour) all prices drop to **0 COIN**. Up to 4 `PENSIONER` NPCs swarm the reduced aisle. First time player exploits yellow-sticker hour awards the `YELLOW_STICKER_LEGEND` achievement.
+
+**Shoplifting**:
+- Any item added to basket but not paid for (player leaves the store boundary without paying) is flagged as **stolen**.
+- `SECURITY_GUARD` Dave scans within 8 blocks every update tick. If Dave is within 5 blocks of a player carrying an unpaid basket, there is a **1-in-4 chance per second** he challenges: "Oi mate, did you pay for that?"
+  - **Comply**: Pay the basket total at full price. No notoriety.
+  - **Leg it**: Dave calls `WantedSystem.addWantedStar(1)` and `NotorietySystem.addNotoriety(15)`. He chases for 20 seconds (speed 6 f/s). Dave cannot follow outside a 30-block radius from the store entrance.
+  - **Assault Dave** (punch): `NotorietySystem.addNotoriety(25)`, `WantedSystem.addWantedStar(2)`, seeds `RumourType.ASSAULT` to 3 nearby NPCs.
+- **Blind spots**: Two `SHELF_BOX` props in the back corner create a blind spot (Dave's sight line is blocked). Items taken from within the blind spot have **0% Dave detection** chance. First successful blind-spot lift awards `BLIND_SPOT_ARTIST` achievement.
+- **Distraction**: Knocking over a `SHOPPING_TROLLEY` prop (1 punch) diverts Dave to investigate for 15 seconds (+5 Notoriety). Seeds `RumourType.VANDALISM` to 1 nearby NPC.
+
+**The Golden Trolley**:
+- Once per playthrough, a `SHOPPING_TROLLEY_GOLD` (golden shopping trolley) prop spawns in the car park between **03:00–05:00** (street-cleaning window). Interacting with it (press E) yields 20 COIN and awards the `GOLDEN_TROLLEY` achievement. It disappears at 05:00.
+- The night before it spawns, `RumourNetwork` seeds a `RumourType.URBAN_LEGEND` rumour ("Someone reckons there's a gold trolley down Aldi car park come closing.") to 2 nearby NPCs.
+
+**Self-checkout mayhem** (optional chaos interaction):
+- There is a `SELF_CHECKOUT_PROP` at the store exit (right-click to "use").
+- Press E to attempt checkout without a staff member. 40% chance: "Unexpected item in bagging area" — item enters basket but scan fails; basket empties, Bev is alerted, Dave turns hostile immediately.
+- 60% chance: checkout succeeds silently. Bev is oblivious. Items move to inventory at full price.
+
+**Integrations**:
+- `WantedSystem` — shoplifting and assault add wanted stars.
+- `NotorietySystem` — shoplifting/assault/trolley-topple all add Notoriety.
+- `RumourNetwork` — golden trolley rumour; assault and vandalism rumours.
+- `AchievementSystem` — `YELLOW_STICKER_LEGEND`, `BLIND_SPOT_ARTIST`, `GOLDEN_TROLLEY`.
+- `TimeSystem` — opening hours, yellow-sticker hour, golden-trolley window.
+- `HealingSystem` — `TIN_OF_BEANS` (+20 Hunger), `BISCUIT` (+10 Hunger), `WATER_BOTTLE` (+15 Thirst), `CHOCOLATE_BAR` (+12 Hunger), `CRISPS` (+8 Hunger), `ENERGY_DRINK` (+10 Hunger, +8 Warmth).
+- `WeatherSystem` — on `RAIN`/`DRIZZLE`/`THUNDERSTORM` the store gets +2 extra PENSIONER NPCs sheltering just inside entrance.
+- `NeighbourhoodSystem` — +1 Vibe/min while Aldi is open (local economic anchor).
+
+### Achievements
+
+All new achievements must be added to `AchievementType`:
+
+| Achievement | Trigger |
+|---|---|
+| `YELLOW_STICKER_LEGEND` | First time player takes an item during yellow-sticker hour (19:00–21:00) for 0 COIN |
+| `BLIND_SPOT_ARTIST` | First successful item lift from the blind-spot corner without Dave detecting |
+| `GOLDEN_TROLLEY` | Interact with the golden shopping trolley in the car park |
+
+### New Items
+
+All must be added to `Material` if not already present (most already exist):
+- `TIN_OF_BEANS`, `CRISPS`, `ENERGY_DRINK`, `CHOCOLATE_BAR`, `WATER_BOTTLE`, `BISCUIT` — already defined; ensure `HealingSystem` handles their consumption.
+
+### Unit Tests
+
+- `getItemPrice()` returns 0 COIN for all items during yellow-sticker hour (19:00–21:00) and normal price outside.
+- `isInBlindSpot(x, z)` returns true only for the two back-corner shelf positions.
+- Dave detection: probability is 0 when player basket is empty; 0 when in blind spot; 1-in-4 per second when basket is non-empty and Dave is within 5 blocks.
+- `knockOverTrolley()` sets `daveInvestigating = true` for 15 seconds.
+- Golden trolley spawns at 03:00 and despawns at 05:00 exactly.
+- Self-checkout with seeded `rng(0)` at 40% threshold fails and alerts Bev.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Legitimate purchase at checkout**: Set time to 10:00. Press E on `SHELF_CAN` prop. Verify basket contains `TIN_OF_BEANS`. Verify inventory does NOT yet contain it. Press E on `CHECKOUT_PROP`. Give player 1 COIN. Verify COIN deducted to 0 and inventory contains `TIN_OF_BEANS`.
+
+2. **Yellow-sticker hour reduces all prices to zero**: Set time to 19:30. Press E on `SHELF_BOX` prop. Verify basket contains `BISCUIT`. Press E on `CHECKOUT_PROP` with 0 COIN. Verify checkout succeeds and inventory contains `BISCUIT`. Verify COIN unchanged. Verify `YELLOW_STICKER_LEGEND` achievement unlocked.
+
+3. **Dave catches shoplifter attempting to leave**: Add `TIN_OF_BEANS` to basket (unpaid). Move player to within 4 blocks of Dave. Seed `rng` to guarantee detection. Verify Dave dialogue fires ("Oi mate, did you pay for that?"). Select "Leg it". Verify `WantedSystem.getWantedStars()` == 1. Verify Notoriety increased by 15. Verify Dave enters pursuit state.
+
+4. **Blind-spot lift evades Dave**: Move player to blind-spot position. Add `BISCUIT` to basket. Move Dave within 3 blocks. Verify Dave detection probability is 0 (no challenge issued after 10 update ticks). Move player to normal aisle; verify Dave now has detection chance > 0.
+
+5. **Golden trolley spawns and yields reward**: Set time to 03:30. Call `SupermarketSystem.update()`. Verify `SHOPPING_TROLLEY_GOLD` prop exists in car park position. Give player 0 COIN. Press E on golden trolley. Verify player COIN == 20. Verify `GOLDEN_TROLLEY` achievement unlocked. Set time to 05:01. Call `update()`. Verify `SHOPPING_TROLLEY_GOLD` prop is removed.
