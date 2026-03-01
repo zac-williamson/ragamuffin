@@ -25311,3 +25311,165 @@ HIGH_ROLLER_NOTICE // Trigger Barry's High Roller event after winning at the boo
 // New: LOAN_LEAFLET in Material.java
 // New: IN_DEBT, DEBT_SPIRAL, DEBT_FREE, BAILIFF_BRIBED, BAILIFF_ASSAULT, MARCHETTI_MONEY, LOAN_SHARK, HIGH_ROLLER_NOTICE in AchievementType.java
 // WorldGenerator: PAYDAY_LOAN_SHOP on the parade between CHARITY_SHOP and BOOKIES
+
+## Issue #1073: Northfield Cemetery — Funeral Processions, Grave Robbing & the Groundskeeper's Shed
+
+**Goal**: Implement `CemeterySystem.java` — the cemetery landmark already exists in the
+WorldGenerator and all supporting enums (NPCType, Material, AchievementType, RumourType,
+CriminalRecord) are already stubbed for Issue #969. This system brings the cemetery to life
+with scheduled funeral processions, a nocturnal grave-robbing mechanic, and Vernon the
+Groundskeeper as its gatekeeper NPC.
+
+### The Premises
+
+The cemetery is already generated as a 20×18 walled plot with iron-fence perimeter, a gravel
+path, headstone rows, two taller monuments, and a yew tree at the back. Open gate at the
+south face.
+
+**New props needed in PropType**:
+- `GRAVE_PLOT_PROP` — a diggable 1×1 DIRT prop at each headstone location; becomes
+  `OPEN_GRAVE_PROP` after 8 SPADE hits.
+- `GROUNDSKEEPER_SHED_PROP` — a small 2×2 shed near the north wall; contains a SPADE item.
+- `LYCH_GATE_PROP` — decorative gate prop at the cemetery entrance (cosmetic; always passable).
+- `FRESH_FLOWERS_PROP` — dropped by MOURNER NPCs after a procession; despawns after 2 in-game days.
+
+### CemeterySystem — Core Mechanics
+
+**Funeral Processions** — scheduled events:
+
+| Day        | Time  | Duration      |
+|------------|-------|---------------|
+| Monday     | 11:00 | ~90 real secs |
+| Wednesday  | 14:00 | ~90 real secs |
+| Saturday   | 10:30 | ~90 real secs |
+
+On procession start:
+- Spawn `FUNERAL_DIRECTOR` NPC at the cemetery gate; 3–5 `MOURNER` NPCs follow in a column.
+- NPCs walk the gravel path to a designated grave position at the north end (PATHING state).
+- At graveside: 30-second "service" pause (NPCs switch to IDLE, speech bubble lines:
+  "He was a good man." / "I'll miss him something rotten." / "Lovely service." / "Right sad, this.").
+- After service: mourners walk back to gate and despawn; each drops a `FRESH_FLOWERS_PROP`.
+- `RumourNetwork.addRumour(barman, new Rumour(RumourType.FRESH_GRAVE, "Someone was buried at the cemetery today — fresh plot up the north end."))` is seeded.
+
+**Player interaction during procession**:
+- Attending the full service without disruption (staying within 8 blocks for ≥ 45 seconds)
+  → `AchievementType.RESPECTFUL` unlocked.
+- Attacking any NPC during procession → Wanted Tier 2; all mourners flee; FUNERAL_DIRECTOR
+  calls police.
+- Giving a `CONDOLENCE_CARD` item to any MOURNER → Community Respect +1.
+
+**Vernon the Groundskeeper** (GROUNDSKEEPER NPC):
+- Present 08:00–17:00 daily. Patrols the cemetery path (2 waypoints: gate → yew tree, repeat).
+- On player approach (within 3 blocks), greets: "Morning." / "Keep to the path." / "Lovely day for it."
+- If player equips a SPADE while Vernon has line-of-sight: "Oi! What do you think you're doing?!"
+  → calls police; +2 Notoriety; `CriminalRecord.addCrime(GRAVE_ROBBING)`.
+- Vernon goes home at 17:00. **After 22:00** Vernon does not spawn; cemetery is unguarded.
+- The `GROUNDSKEEPER_SHED_PROP` holds a SPADE item (looted if player breaks the shed prop
+  when Vernon is absent); breaking it when Vernon is present triggers the police call.
+
+**Grave-Robbing Mechanic** (after 22:00, Vernon absent):
+- Player equips SPADE. Targets a `GRAVE_PLOT_PROP`. Each use = 1 durability hit (8 hits total).
+- After 8 hits: `GRAVE_PLOT_PROP` → `OPEN_GRAVE_PROP`. Player receives one randomised loot
+  roll (weighted):
+  - 60%: `WEDDING_RING`
+  - 25%: `POCKET_WATCH`
+  - 10%: `OLD_PHOTOGRAPH` (no sell value; flavour item)
+  - 5%: nothing ("The grave's already been disturbed.")
+- Loot roll is performed once per grave; subsequent digs on the same grave yield nothing.
+- Each successful dig: Notoriety +3; `GRAVE_ROBBING` added to CriminalRecord.
+- `AchievementType.GRAVE_ROBBER` unlocked on first successful loot.
+- `AchievementType.CEMETERY_NIGHT_OWL` unlocked on entering the cemetery between 00:00–05:00.
+
+**Selling grave loot**:
+- `WEDDING_RING` → PawnShopSystem: 8 COIN (triggers `POCKET_FULL_OF_SORROW` achievement).
+- `POCKET_WATCH` → PawnShopSystem: 12 COIN (also triggers `POCKET_FULL_OF_SORROW`).
+- Both items: FenceSystem accepts at 55% of pawn value (no questions asked).
+- GaryPawn and FENCE NPC comment: "I won't ask where this came from." / "Bit morbid, mate."
+
+**Weather interaction**:
+- RAIN / DRIZZLE: grave digging takes 10 hits instead of 8 (muddy conditions); no other effect.
+- FOG: Vernon's line-of-sight range reduced to 4 blocks (from 8) — player can slip past him.
+- COLD_SNAP: mourner NPCs comment: "Freezing at graveside, this." (ambient speech variant).
+
+**Newspaper integration**:
+- After 2 grave-robbing events in the same in-game week: NewspaperSystem generates headline
+  "CEMETERY VANDALS STRIKE AGAIN — Police urge vigilance". Player Notoriety +2 if read.
+
+### New PropType entries
+
+```
+GRAVE_PLOT_PROP       // diggable grave marker; each headstone has one; becomes OPEN_GRAVE_PROP after 8 SPADE hits
+OPEN_GRAVE_PROP       // disturbed grave — no further loot; cosmetic (open-pit appearance)
+GROUNDSKEEPER_SHED_PROP // small shed near north wall; contains SPADE; breakable when Vernon absent
+LYCH_GATE_PROP        // decorative entrance gate (cosmetic, always passable)
+FRESH_FLOWERS_PROP    // dropped by MOURNER NPCs; despawns after 2 in-game days
+```
+
+### Integrations
+
+- **PawnShopSystem**: `WEDDING_RING` (8 coin) and `POCKET_WATCH` (12 coin) accepted; triggers
+  `POCKET_FULL_OF_SORROW` achievement on first sale.
+- **FenceSystem**: Both grave-loot items fenceable at 55% pawn value.
+- **WantedSystem**: Grave-robbing caught by Vernon → Tier 2. Procession disruption → Tier 2.
+- **NotorietySystem**: Successful grave dig → +3 Notoriety. Newspaper headline → +2 if read.
+- **CriminalRecord**: `GRAVE_ROBBING` offence added per dig event.
+- **RumourNetwork**: FRESH_GRAVE rumour seeded after each funeral procession.
+- **NewspaperSystem**: Headline after 2 grave-robbing events in one week.
+- **WeatherSystem**: RAIN extends dig hits to 10; FOG reduces Vernon LOS; COLD_SNAP mourner speech.
+- **AchievementSystem**: GRAVE_ROBBER, RESPECTFUL, POCKET_FULL_OF_SORROW, CEMETERY_NIGHT_OWL.
+
+### Unit Tests
+
+1. `CemeterySystem.isFuneralScheduled(TimeSystem)` returns `true` on Monday 11:00 and `false`
+   on Monday 12:30 (procession has ended).
+2. `CemeterySystem.isGroundskeeperPresent(TimeSystem)` returns `true` at 09:00 and `false`
+   at 20:00.
+3. `CemeterySystem.getDigHitsRequired(WeatherSystem)` returns 8 normally and 10 during RAIN.
+4. `CemeterySystem.rollGraveLoot(Random(42))` returns a non-null Material from the drop table.
+5. `CemeterySystem.rollGraveLoot(Random)` called on an already-robbed grave returns `null`.
+6. `CemeterySystem.isGroundskeeperLineOfSight(vernon, player, WeatherSystem)` returns `false`
+   in FOG when player is 5 blocks away (beyond 4-block reduced range).
+7. `CemeterySystem.canPlayerEnterGrave(player, timeSystem)` returns `false` before 22:00
+   when Vernon is present.
+8. After `processFuneralProcession()`, the `RumourNetwork` contains exactly one FRESH_GRAVE rumour.
+9. `getMournerDrops()` returns a list of size equal to the mourner count (3–5 FRESH_FLOWERS_PROP).
+10. `getSellPrice(WEDDING_RING)` returns 8 and `getSellPrice(POCKET_WATCH)` returns 12.
+
+### Integration Tests
+
+1. **Funeral procession completes and seeds rumour**: Set day to Monday, time to 11:00.
+   Call `CemeterySystem.update(delta, timeSystem, npcManager, rumourNetwork)` for 90 simulated
+   seconds. Verify that a FUNERAL_DIRECTOR NPC was spawned. Verify 3–5 MOURNER NPCs were
+   spawned. Verify all NPCs are despawned after 90 seconds. Verify `RumourNetwork` contains
+   a `FRESH_GRAVE` rumour seeded from the BARMAN NPC.
+
+2. **Player attends full service and earns RESPECTFUL**: Position player within 8 blocks of
+   the graveside during an active procession. Advance simulation 45+ seconds. Verify
+   `AchievementType.RESPECTFUL` has been unlocked. Verify player has NOT gained any Notoriety.
+
+3. **Grave robbing at night yields loot**: Set time to 23:00 (Vernon absent). Give player a
+   SPADE item. Target a `GRAVE_PLOT_PROP`. Simulate 8 SPADE-use actions via
+   `CemeterySystem.onPlayerUsesSpade(player, gravePlot)`. Verify `GRAVE_PLOT_PROP` has become
+   `OPEN_GRAVE_PROP`. Verify player inventory contains at least one of: WEDDING_RING,
+   POCKET_WATCH, or OLD_PHOTOGRAPH. Verify player Notoriety increased by 3.
+   Verify `GRAVE_ROBBER` achievement unlocked.
+
+4. **Vernon catches player with spade**: Set time to 10:00 (Vernon present, line-of-sight clear,
+   no fog). Player equips SPADE within 8 blocks of Vernon. Call
+   `CemeterySystem.checkGroundskeeperDetection(player, vernon, wantedSystem, notorietySystem,
+   criminalRecord)`. Verify Wanted star count increased by 2. Verify Notoriety increased by 2.
+   Verify `CriminalRecord.hasOffence(GRAVE_ROBBING)` is `true`.
+
+5. **Rain increases dig difficulty**: Set weather to RAIN. Simulate player using SPADE on a
+   `GRAVE_PLOT_PROP`. After 8 hits, verify the prop has NOT yet converted to OPEN_GRAVE_PROP
+   (rain requires 10 hits). After 2 additional hits (10 total), verify it becomes `OPEN_GRAVE_PROP`.
+
+// ── Issue #1073: Northfield Cemetery ─────────────────────────────────────────
+// New: CemeterySystem.java in ragamuffin.core
+// New: GRAVE_PLOT_PROP, OPEN_GRAVE_PROP, GROUNDSKEEPER_SHED_PROP, LYCH_GATE_PROP, FRESH_FLOWERS_PROP in PropType.java
+// NPCType: GROUNDSKEEPER, FUNERAL_DIRECTOR, MOURNER already defined (Issue #969 stubs)
+// Material: SPADE, WEDDING_RING, POCKET_WATCH, CONDOLENCE_CARD, OLD_PHOTOGRAPH already defined (Issue #969 stubs)
+// AchievementType: GRAVE_ROBBER, RESPECTFUL, POCKET_FULL_OF_SORROW, CEMETERY_NIGHT_OWL already defined (Issue #969 stubs)
+// RumourType: FRESH_GRAVE already defined (Issue #969 stub)
+// CriminalRecord: GRAVE_ROBBING already defined (Issue #969 stub)
+// WorldGenerator: cemetery already generated at (cemX, 0, cemZ) with headstone rows — add PropPositions
