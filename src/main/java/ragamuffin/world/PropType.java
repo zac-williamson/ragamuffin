@@ -515,7 +515,46 @@ public enum PropType {
      * Television set on the wall — activates for Football on the Telly atmospheric event.
      * Seated PUBLIC NPCs face it when active.
      */
-    TELEVISION_PROP(0.80f, 0.60f, 0.15f, 3, Material.SCRAP_METAL);
+    TELEVISION_PROP(0.80f, 0.60f, 0.15f, 3, Material.SCRAP_METAL),
+
+    // ── Issue #977: Northfield Amusement Arcade ───────────────────────────────
+
+    /**
+     * Arcade machine — an upright video-game cabinet (genre: FIGHTER, RACER, or SHOOTER).
+     * Costs TWOPENCE to play. Player can tamper with SCREWDRIVER for free plays.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    ARCADE_MACHINE_PROP(0.70f, 1.90f, 0.60f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Penny falls machine — a 2p coin cascade gambling machine.
+     * Press E to spend 1 TWOPENCE per push; press F to shove (25% tilt chance).
+     * Each machine has a seeded jackpot threshold (50–200 pushes) paying 30 TWOPENCE.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    PENNY_FALLS_PROP(0.80f, 1.60f, 0.80f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Claw machine — a prize-grabber cabinet with plush toy prizes.
+     * Costs 2 TWOPENCE per attempt; 3-second timed steering.
+     * Two prizes per machine; restocked daily by Kevin.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    CLAW_MACHINE_PROP(1.00f, 2.00f, 1.00f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Change machine — converts 1 COIN → 5 TWOPENCE tokens.
+     * Press E to exchange. Player with SCREWDRIVER can extract COIN (THEFT crime).
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    CHANGE_MACHINE_PROP(0.60f, 1.80f, 0.60f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Redemption counter — staffed by Kevin; exchanges accumulated TWOPENCE for prizes.
+     * Token exchanges: 10→PLUSH_TOY, 20→ARCADE_TOKEN, 50→WOOLLY_HAT_ECONOMY, 100→SCRATCH_CARD×3.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    REDEMPTION_COUNTER_PROP(1.20f, 1.00f, 0.60f, 5, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

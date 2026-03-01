@@ -575,7 +575,28 @@ public enum NPCType {
      * Speech: "Next please." / "Sign here, love." / "Have you got your book?"
      *         / "I'm going to have to ask you to wait."
      */
-    COUNTER_CLERK(20f, 0f, 0f, false);
+    COUNTER_CLERK(20f, 0f, 0f, false),
+
+    // ── Issue #977: Northfield Amusement Arcade ───────────────────────────────
+
+    /**
+     * Arcade Attendant — Kevin, a bored teen in a polo shirt.
+     * Present 10:00–22:00 daily. Passive; ejects Tier 3+ notoriety players
+     * ("You're barred, mate"). Calls police if player tilts a machine 3 times.
+     * Operates redemption counter exchanges.
+     * Speech: "You breakin' that machine?" / "You're barred, mate."
+     *         / "You wanna exchange them tokens?" / "I'm watching you."
+     */
+    ARCADE_ATTENDANT(25f, 5f, 1.5f, false),
+
+    /**
+     * Arcade Kid — bored school kid hanging around the machines.
+     * 2–4 present 15:00–21:00 (truant variants 10:00–15:00).
+     * Truant variant: if player is seen encouraging them, +2 Notoriety.
+     * One may be a Street Lads runner (Respect ≥ 60) who gives 1 free TWOPENCE per visit.
+     * Speech: "Watch this!" / "Give us a go." / "I've got loads of tokens."
+     */
+    ARCADE_KID(15f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

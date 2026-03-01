@@ -1436,6 +1436,32 @@ public enum AchievementType {
         "Dear Sir or Madam",
         "Sent a threatening letter through the Royal Mail. First class. Because you mean business.",
         1
+    ),
+
+    // ── Issue #977: Northfield Amusement Arcade ───────────────────────────────
+
+    PENNY_KING(
+        "Penny King",
+        "Hit the penny-falls jackpot. Thirty twopences. The arcade has never felt such shame.",
+        1
+    ),
+
+    AGAINST_ALL_ODDS(
+        "Against All Odds",
+        "Won the claw machine on your very first attempt. Pure skill. Probably luck. Don't tell Kevin.",
+        1
+    ),
+
+    TILTED(
+        "Tilted",
+        "Triggered a machine tilt three times in one visit. Kevin was not impressed. Kevin is never impressed.",
+        1
+    ),
+
+    SKOOL_SKIVER(
+        "Skool Skiver",
+        "Spent three hours in the arcade during school hours. The register will show you absent. Allegedly.",
+        1
     );
 
     private final String name;

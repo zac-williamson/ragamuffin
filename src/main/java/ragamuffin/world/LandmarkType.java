@@ -202,7 +202,19 @@ public enum LandmarkType {
      * and POSTMAN shift sign-on (05:30–07:00).
      * A POST_BOX_PROP stands outside for sending threatening letters.
      */
-    POST_OFFICE;
+    POST_OFFICE,
+
+    // ── Issue #977: Northfield Amusement Arcade ───────────────────────────────
+
+    /**
+     * Ace Amusements — a garish amusement arcade on the high street, squeezed
+     * between the charity shop and the bookies. Open 10:00–22:00 daily.
+     * A 10×8-block interior with CARPET (red), YELLOW_BRICK walls and GLASS frontage.
+     * Features ARCADE_MACHINE_PROP, PENNY_FALLS_PROP, CLAW_MACHINE_PROP,
+     * CHANGE_MACHINE_PROP, and REDEMPTION_COUNTER_PROP.
+     * Staffed by Kevin the ARCADE_ATTENDANT; 2–4 ARCADE_KID NPCs after school.
+     */
+    ARCADE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -266,6 +278,7 @@ public enum LandmarkType {
             case BINGO_HALL:            return "Lucky Stars Bingo";
             case SNOOKER_HALL:          return "Cue Zone";
             case POST_OFFICE:           return "Northfield Post Office";
+            case ARCADE:                return "Ace Amusements";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

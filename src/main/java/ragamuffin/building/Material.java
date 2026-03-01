@@ -1215,7 +1215,39 @@ public enum Material {
      * Traceable at Notoriety Tier 3+, triggering THREATENING_BEHAVIOUR crime.
      * Tooltip: "Post early for guaranteed delivery."
      */
-    POST_BOX_PROP("Post Box");
+    POST_BOX_PROP("Post Box"),
+
+    // ── Issue #977: Northfield Amusement Arcade ───────────────────────────────
+
+    /**
+     * Twopence — a 2p coin used in arcade machines.
+     * Obtained from the change machine (5 per 1 COIN) or found on the arcade floor.
+     * Currency for PENNY_FALLS_PROP and CLAW_MACHINE_PROP.
+     * Tooltip: "Practically worthless. Until it isn't."
+     */
+    TWOPENCE("2p Coin"),
+
+    /**
+     * Plush Toy — a cheap stuffed animal won from the claw machine.
+     * Sellable to the fence (3 COIN) or donated to the charity shop (2 COIN goodwill).
+     * Tooltip: "Against all odds."
+     */
+    PLUSH_TOY("Plush Toy"),
+
+    /**
+     * Arcade Token — a redemption prize exchanged for 20 TWOPENCE at the redemption counter.
+     * Can be traded at the Fence for 2 COIN. No other legitimate use.
+     * Tooltip: "You can buy anything with enough of these. Theoretically."
+     */
+    ARCADE_TOKEN("Arcade Token"),
+
+    /**
+     * Screwdriver — a flathead screwdriver crafted from 1 SCRAP_METAL + 1 PIPE.
+     * Used to tamper with arcade machines when Kevin is not watching (>6 blocks away or facing away).
+     * Machine tampering actions: lower penny-falls threshold, unlock free plays, extract coin.
+     * Tooltip: "For fixing things. And breaking things. Mostly breaking things."
+     */
+    SCREWDRIVER("Screwdriver");
 
     private final String displayName;
 
@@ -1725,6 +1757,16 @@ public enum Material {
                                                    0.88f, 0.88f, 0.85f); // White stamp face
             case POST_BOX_PROP:         return c(0.90f, 0.15f, 0.12f);   // Pillar box red
 
+            // Issue #977: Northfield Amusement Arcade
+            case TWOPENCE:              return cs(0.82f, 0.68f, 0.18f,   // Copper coin face
+                                                   0.65f, 0.50f, 0.12f); // Darker edge
+            case PLUSH_TOY:             return cs(0.92f, 0.42f, 0.55f,   // Garish pink toy
+                                                   0.72f, 0.22f, 0.35f); // Darker shadow
+            case ARCADE_TOKEN:          return cs(0.75f, 0.62f, 0.20f,   // Gold token face
+                                                   0.22f, 0.22f, 0.22f); // Dark edge
+            case SCREWDRIVER:           return cs(0.48f, 0.48f, 0.52f,   // Metal blade
+                                                   0.55f, 0.35f, 0.12f); // Wooden handle
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1993,6 +2035,11 @@ public enum Material {
             case PARCEL:
             case STAMP:
             case POST_BOX_PROP:
+            // Issue #977: Northfield Amusement Arcade (not block items)
+            case TWOPENCE:
+            case PLUSH_TOY:
+            case ARCADE_TOKEN:
+            case SCREWDRIVER:
                 return false;
             default:
                 return true;
@@ -2067,6 +2114,10 @@ public enum Material {
             case BENEFITS_BOOK:
             case PARCEL:
             case STAMP:
+            // Issue #977: Northfield Amusement Arcade — small items sit on surfaces
+            case TWOPENCE:
+            case PLUSH_TOY:
+            case ARCADE_TOKEN:
                 return true;
             default:
                 return false;
@@ -2530,6 +2581,16 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // small red stamp
             case POST_BOX_PROP:
                 return IconShape.CYLINDER;    // red post box cylinder
+
+            // Issue #977: Northfield Amusement Arcade
+            case TWOPENCE:
+                return IconShape.CYLINDER;    // small coin disc
+            case PLUSH_TOY:
+                return IconShape.BOX;         // stuffed toy shape
+            case ARCADE_TOKEN:
+                return IconShape.CYLINDER;    // token disc
+            case SCREWDRIVER:
+                return IconShape.TOOL;        // long screwdriver handle
 
             default:
                 return IconShape.BOX;
