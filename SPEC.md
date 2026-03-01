@@ -25137,3 +25137,177 @@ KIDS_MOB_SURVIVED     // Wait in queue through a KIDS_MOB event and still buy ic
 // New: ICE_CREAM_JINGLE in SoundEffect.java
 // New: CHEEKY_FLAKE, DAVE_APPROVES, SIDE_HATCH, CHAV_CHARMED, VAN_HEIST, MARCHETTI_DEFENDER, KIDS_MOB_SURVIVED in AchievementType.java
 // WorldGenerator: van depot at industrial estate; 3 parking spots (park entrance, school perimeter, industrial estate)
+
+## Issue #1071: Northfield Fast Cash Finance — Payday Loans, Debt Spiral & the Bailiff's Knock
+
+**Goal**: Add a payday loan shop ("Fast Cash Finance") to the Northfield parade — a grimy
+storefront that lets the player borrow money at eye-watering interest, generating a debt
+spiral mechanic with escalating consequences: threatening letters, debt collectors (NPC
+BAILIFF type) turning up at the player's squat, and ultimately gang muscle if the loan is
+backed by Marchetti money. This is a British survival-game economic pressure valve: go in
+broke, come out funded but cursed.
+
+### The Premises
+
+A narrow shopfront on the parade, sandwiched between the charity shop and the bookies.
+A garish `BUILDING_SIGN` reading "FAST CASH FINANCE — INSTANT LOANS — APR 1,294%".
+Interior: LOAN_DESK_PROP at the counter where `LOAN_MANAGER` NPC (Barry) works;
+a LEAFLET_RACK_PROP of LOAN_LEAFLET items; a waiting area with 1–2 PUBLIC/DESPERATE NPCs.
+A `CCTV_CAMERA_PROP` inside (evidence if player tries to rob the desk).
+
+### PaydayLoanSystem — Core Mechanics
+
+A new `PaydayLoanSystem` class manages all loan state.
+
+**Loan products** (Barry offers based on player notoriety tier):
+
+| Tier | Product | Amount | Weekly Interest | Max Term |
+|------|---------|--------|-----------------|----------|
+| 0–1  | Standard | 15 COIN | 50% | 3 weeks |
+| 0–1  | Large | 30 COIN | 75% | 3 weeks |
+| 2    | Standard only | 10 COIN | 100% | 2 weeks |
+| 3+   | Refused | — | — | — |
+
+- Player can only hold **one active loan** at a time.
+- Weekly repayment = principal × (1 + interestRate). Miss a repayment: `MISSED_REPAYMENT`
+  flag set; Barry calls the player "a wrong 'un" (speech bubble) if they enter the shop.
+- After **2 missed repayments**: `BAILIFF_THREAT` flag; a BAILIFF NPC is spawned and
+  pathfinds to the player's squat (or last-known shelter). Bailiff knocks on the door:
+  "Open up — Fast Cash Finance!" Player can:
+  - **Pay the full outstanding debt** (all remaining weeks + 20% enforcement fee) to dismiss.
+  - **Ignore the door** (stay 8+ blocks away): bailiff waits 3 in-game minutes then leaves,
+    but `ENFORCEMENT_ESCALATED` flag is set.
+  - **Bribe the bailiff** (10 COIN + Street Rep ≥ 30): buys one extra week, no flag.
+  - **Attack the bailiff**: Wanted Tier 2; BAILIFF_ASSAULT achievement; Barry permanently
+    refuses further loans; Marchetti respect −10.
+- After `ENFORCEMENT_ESCALATED` (i.e., 3 total missed repayments): Barry sells the debt
+  to the Marchetti Crew. A MARCHETTI_ENFORCER NPC is spawned and pursues the player
+  city-wide. The enforcer demands double the outstanding balance; ignoring him for 2
+  in-game days triggers a turf event that temporarily closes the player's squat.
+
+**Paying off the loan early** (before term ends): 10% early-repayment fee applied.
+Full repayment unlocks `DEBT_FREE` achievement and Barry offers future loans at one
+tier better interest rate (loyalty bonus flag, persistent).
+
+**Loan Shark alternative** — if player's Notoriety ≥ 50 or Tier 3+, Barry refuses but
+a STREET_LADS NPC outside the shop offers an informal loan: 20 COIN, 200% weekly
+interest, no written contract. Miss 1 repayment: STREET_LADS respect −20 and the
+informal collector (CHAV NPC) spawns and attacks on sight. The player can cancel this
+debt by doing a favour mission for the Street Lads (FACTION_MISSION seeded).
+
+**Gambling tie-in**: If player borrowed money and then wins at the bookies or fruit
+machine, a "High Roller" event triggers Barry to proactively offer a larger loan next
+visit ("I heard you had a good day...").
+
+**Newspaper integration**: After 3 loans taken out (lifetime), `NewspaperSystem` runs a
+story "LOCAL MAN WARNS: THE HIDDEN COST OF PAYDAY LOANS". Player notoriety −1 (sympathy
+press) if they read the article.
+
+**LOAN_LEAFLET item**: Picked up from the rack; can be used as improvised paper (crafting
+substitute for CARDBOARD in paper-based recipes); or read to see a flavour tooltip:
+_"Representative example: borrow £10 for a week. Repay £15. TOTAL: despair."_
+
+### Integrations
+
+- **StreetEconomySystem**: BROKE need (score ≥ 70) causes Barry to proactively wave the
+  player over ("Looks like you could use some help, mate"). Loan receipt zeroes BROKE
+  need for 2 in-game days.
+- **FactionSystem**: Marchetti debt sale at 3 missed repayments. Bribe to bailiff seeds
+  `RumourType.DODGY_DEAL` ("someone's dodging their debts by the bookies").
+- **NotorietySystem**: BAILIFF_ASSAULT adds Wanted Tier 2. Marchetti enforcer pursuit
+  adds Notoriety +15 if the player is caught.
+- **PropertySystem**: If player owns the squat, ENFORCEMENT_ESCALATED flag temporarily
+  downgrades squat Condition by 10 (bailiff damage).
+- **RumourNetwork**: After MARCHETTI_ENFORCER is dispatched, barman seeds rumour
+  `RumourType.GANG_ACTIVITY` ("Marchettis are collecting on a debt — someone's in bother").
+- **NewspaperSystem**: "PAYDAY LOAN FIRM FACES COUNCIL PROBE" headline possible if player
+  makes 5+ repayments (good customer, attracts scrutiny).
+- **WeatherSystem**: Barry is more sympathetic during COLD_SNAP ("It's rough out there,
+  I'll do you the Standard at normal rate even if you're Tier 2").
+- **AchievementSystem**: see achievements below.
+
+### New LandmarkType
+
+```
+PAYDAY_LOAN_SHOP   // fixed location on the parade, between charity shop and bookies
+```
+
+### New NPCType
+
+```
+LOAN_MANAGER   // Barry; anchored to LOAN_DESK_PROP; offers loan products; tracks repayment
+BAILIFF        // spawned on BAILIFF_THREAT; pathfinds to player squat; knocks and waits
+```
+
+### New Material/Item entries
+
+```
+LOAN_LEAFLET       // paper item; readable tooltip; crafting substitute for CARDBOARD
+```
+
+### New AchievementType entries
+
+```
+IN_DEBT            // Take your first payday loan
+DEBT_SPIRAL        // Miss 2 repayments in a single loan
+DEBT_FREE          // Pay off a loan in full before the final week
+BAILIFF_BRIBED     // Bribe the bailiff successfully
+BAILIFF_ASSAULT    // Attack the bailiff (Wanted Tier 2 consequence)
+MARCHETTI_MONEY    // Have your debt sold to the Marchetti Crew
+LOAN_SHARK         // Use the Street Lads informal loan
+HIGH_ROLLER_NOTICE // Trigger Barry's High Roller event after winning at the bookies
+```
+
+### Unit Tests
+
+1. `PaydayLoanSystem.getLoanProducts(player)` returns 2 products for Notoriety Tier 0–1,
+   1 product for Tier 2, and an empty list for Tier 3+.
+2. `calculateWeeklyRepayment(15, 0.5f)` returns `22` (15 × 1.5, rounded up).
+3. `calculateWeeklyRepayment(30, 0.75f)` returns `52` (30 × 1.75, rounded).
+4. `applyMissedRepayment(loan)` sets `MISSED_REPAYMENT` flag and increments miss count.
+5. `applyMissedRepayment(loan)` called twice triggers `BAILIFF_THREAT` flag.
+6. `applyMissedRepayment(loan)` called three times (cumulative) sets `ENFORCEMENT_ESCALATED`.
+7. `calculateEarlyRepaymentTotal(loan)` returns outstanding balance × 1.10 (10% fee).
+8. `isBailiffBribeAccepted(player)` returns `false` when player coin < 10 or StreetRep < 30.
+9. `isBailiffBribeAccepted(player)` returns `true` when player has ≥ 10 COIN and StreetRep ≥ 30.
+10. `getStreetLadsLoanAvailable(player)` returns `true` when Notoriety ≥ 50 and no active loan.
+
+### Integration Tests
+
+1. **Loan receipt zeroes BROKE need**: Player has BROKE need score 80. Barry offers Standard
+   loan (15 COIN, Tier 0 player). Player accepts via E interaction. Verify player coin
+   balance increased by 15. Verify BROKE need score is 0. Verify `IN_DEBT` achievement
+   unlocked. Verify `PaydayLoanSystem.hasActiveLoan(player)` is `true`.
+
+2. **Missed repayment spawns bailiff**: Player takes Standard loan. Advance time by
+   1 in-game week without repaying. Call `PaydayLoanSystem.processMissedRepayment(player)`.
+   Call it again (second miss). Verify `BAILIFF_THREAT` flag is set on the loan.
+   Verify a BAILIFF NPC is spawned within 5 blocks of the player's registered squat position.
+   Verify the BAILIFF NPC state is `PATHING_TO_SQUAT`.
+
+3. **Bribe dismisses bailiff**: Set up active BAILIFF_THREAT. Give player 12 COIN and
+   StreetRep 35. Player presses E on BAILIFF NPC and selects "Bribe (10 COIN)".
+   Verify player coin reduced by 10. Verify BAILIFF NPC is despawned. Verify
+   `loan.getMissCount()` has not increased further. Verify `BAILIFF_BRIBED` achievement
+   progress incremented. Verify `RumourNetwork` contains a `DODGY_DEAL` rumour.
+
+4. **Three misses sells debt to Marchetti**: Player has 2 missed repayments
+   (`ENFORCEMENT_ESCALATED` not yet set). Call `processMissedRepayment(player)` once more.
+   Verify `ENFORCEMENT_ESCALATED` is set. Verify `MARCHETTI_MONEY` achievement unlocked.
+   Verify a MARCHETTI_ENFORCER NPC is spawned within 20 blocks of player's current position.
+   Verify `RumourNetwork` contains a `GANG_ACTIVITY` rumour seeded by the barman NPC.
+
+5. **Early repayment grants loyalty bonus**: Player has active Standard loan (week 1 of 3).
+   Player interacts with Barry, selects "Pay off early". Verify total charged is
+   `calculateEarlyRepaymentTotal(loan)` (outstanding × 1.10). Verify `DEBT_FREE`
+   achievement unlocked. Verify `loan.isRepaid()` is `true`.
+   Verify `PaydayLoanSystem.hasLoyaltyBonus(player)` is `true`.
+   Verify Barry now offers Standard loan at 40% interest instead of 50% on next visit.
+
+// ── Issue #1071: Northfield Fast Cash Finance ─────────────────────────────────
+// New: PaydayLoanSystem.java in ragamuffin.core
+// New: PAYDAY_LOAN_SHOP entry in LandmarkType.java
+// New: LOAN_MANAGER, BAILIFF entries in NPCType.java
+// New: LOAN_LEAFLET in Material.java
+// New: IN_DEBT, DEBT_SPIRAL, DEBT_FREE, BAILIFF_BRIBED, BAILIFF_ASSAULT, MARCHETTI_MONEY, LOAN_SHARK, HIGH_ROLLER_NOTICE in AchievementType.java
+// WorldGenerator: PAYDAY_LOAN_SHOP on the parade between CHARITY_SHOP and BOOKIES
