@@ -27257,3 +27257,239 @@ calculation, NPC migration to pub at full-time.
 // Existing: FactionSystem, WeatherSystem, NewspaperSystem, RumourNetwork,
 //           WantedSystem, NotorietySystem, SoundSystem, BusSystem,
 //           StreetEconomySystem, WetherspoonsSystem all present
+
+## Add Northfield Summer Fete — Tombola, Cake Stall & the Great Raffle Fix
+
+**Landmark**: Uses the existing `PARK` landmark (no new `LandmarkType` needed — the fete
+occupies a designated zone within the park bounds).
+
+**Goal**: Add a one-day annual summer fete to Northfield Park — a quintessentially British
+outdoor event with a tombola, cake stall, bric-a-brac table, children's games, and a grand
+raffle. The fete runs on **the first Saturday of July** (in-game calendar), 10:00–16:00,
+and is organised by St. Aidan's Church (`ChurchSystem`) with support from the Food Bank
+volunteers. It is a rare legitimate community occasion — but one ripe for light-fingered
+exploitation.
+
+### FeteSystem — Core Mechanics
+
+A new `FeteSystem` class manages all fete state:
+
+```java
+FeteSystem(TimeSystem timeSystem, World world, NPCManager npcManager,
+           RumourNetwork rumourNetwork, NotorietySystem notorietySystem,
+           WantedSystem wantedSystem, ChurchSystem churchSystem,
+           Inventory playerInventory, Random random)
+```
+
+**Fete Stalls** (props spawned within PARK AABB on fete day):
+- `TOMBOLA_STALL_PROP` — manned by `VOLUNTEER_NPC` (Margaret from FoodBankSystem re-used).
+  Press E + 1 COIN → random prize: BISCUIT (40%), BOTTLE_OF_WINE (20%), KETTLE (15%),
+  CUDDLY_TOY (10%), nothing / "Sorry, no prize" (15%). Can be rigged (see below).
+- `CAKE_STALL_PROP` — manned by `VICAR_NPC` (ChurchSystem's existing VICAR type).
+  Sells: VICTORIA_SPONGE (2 COIN, +30 hunger), SCONE (1 COIN, +15 hunger),
+  CUPCAKE (1 COIN, +10 hunger), JAM_AND_CREAM (1 COIN, +12 hunger). All satisfy
+  `NeedType.HUNGRY`. Held in `FeteSystem.cakeStalks` stock (3 of each, replenishes once
+  at 13:00).
+- `BRIC_A_BRAC_PROP` — unmanned table with random junk. Press E to rummage: yields 1 item
+  from loot table (COAT, OLD_BOOK, PUZZLE_BOOK, ORNAMENT, BROKEN_TOASTER, RETRO_CASSETTE).
+  Rummaging in front of a `VOLUNTEER_NPC` within 5 blocks is free; alone or after closing:
+  treated as theft (Notoriety +3, `CrimeType.PETTY_THEFT`).
+- `RAFFLE_TICKET_STALL_PROP` — press E + 1 COIN per ticket. Maximum 5 tickets. The grand
+  draw happens at 15:00: 1st prize `BOTTLE_OF_WINE` + 10 COIN, 2nd `CUDDLY_TOY`,
+  3rd `BISCUIT`. Player notified of result via speech log entry. `LOCAL_EVENT` rumour seeded
+  with winner's name.
+- `HOOK_A_DUCK_PROP` — children's fairground game. Press E + 1 COIN → random win/loss.
+  Win (30%): `CUDDLY_TOY`. Lose: "Better luck next time, love." Winning 3× in a row triggers
+  a VOLUNTEER_NPC suspicion check (50% chance they ban the player from the stall for the day).
+- `TEA_URN_PROP` (re-use existing prop) — press E (free): +20 warmth, +5 hunger
+  (a cup of tea and a digestive biscuit). Limit 3 per visit.
+
+**Fete Schedule**:
+- **09:30**: Setup begins — props spawn in the park. 2–3 `VOLUNTEER_NPC` NPCs appear.
+- **10:00**: Fete opens. `VICAR_NPC` gives opening speech (speech bubble: "Welcome to the
+  29th Annual Northfield Summer Fete! Mind the wasps."). 4–6 `PENSIONER` NPCs and
+  2–3 `SCHOOL_KID` NPCs spawn and wander the stalls.
+- **13:00**: Cake stall restocks. An `ICE_CREAM_VAN_NPC` (IceCreamVanSystem integration)
+  arrives at the park entrance and parks, triggering a small queue of `SCHOOL_KID` NPCs.
+- **15:00**: Raffle draw. `VICAR_NPC` reads out winners via speech bubble sequence.
+- **16:00**: Fete closes. All fete props despawn after 10 in-game minutes.
+  `VOLUNTEER_NPC` and event NPCs transition to `NPCState.WALKING` and disperse.
+- **Post-fete**: WetherspoonsSystem patron count +4 for the evening (punters moving from
+  the park to the pub). `LOCAL_EVENT` rumour seeded: "Lovely turnout at the fete today.
+  Mrs. Patterson's lemon drizzle was robbed, apparently."
+
+**Raffle Fix Mechanic** (light criminal element):
+- The player can *swap the raffle barrel* before the 15:00 draw. Requires:
+  1. Player has a `RIGGED_BARREL` item (crafted: 1 WOOD + 1 RAFFLE_TICKET via crafting menu).
+  2. No `VOLUNTEER_NPC` within 8 blocks.
+  3. Hold E on `RAFFLE_TICKET_STALL_PROP` for 3 seconds.
+- If successful: the draw is guaranteed to include the player's ticket number as 1st prize.
+  Notoriety +5. `CrimeType.FRAUD` added to `CriminalRecord`.
+- If caught mid-swap (VOLUNTEER_NPC walks within 8 blocks during the 3-second hold):
+  player is ejected from the fete (props become inaccessible), Notoriety +8,
+  `WantedSystem` adds 1 star.
+
+**Cake Theft**:
+- If no `VOLUNTEER_NPC` is within 6 blocks of `CAKE_STALL_PROP`, player can press E
+  without paying. Steals 1 item from stall stock. Notoriety +5, `CrimeType.PETTY_THEFT`.
+- `VICAR_NPC` witnessing theft: speech bubble "OI! That's for charity!" — calls police
+  (Wanted level +1) and generates `PLAYER_SPOTTED` rumour.
+
+**Weather Cancellation**:
+- `THUNDERSTORM` or `HEAVY_RAIN` weather at 09:30 cancels the fete.
+  Props do not spawn. `LOCAL_EVENT` rumour: "Fete's been called off — typical."
+  `DRIZZLE` does NOT cancel — the British public soldier on.
+
+### NPC Behaviour
+
+| NPC | Behaviour |
+|-----|-----------|
+| `VOLUNTEER_NPC` (re-use `FOOD_BANK_VOLUNTEER` type) | Mans stalls 10:00–16:00; patrols between stalls every 2 minutes; calls police on witnessed theft |
+| `VICAR_NPC` (re-use `VICAR` from ChurchSystem) | Mans cake stall; gives opening & closing speech; witnesses theft → calls police |
+| `PENSIONER` | Wanders stalls; buys cake; sits on park bench 12:30–14:00; departs at 16:00 |
+| `SCHOOL_KID` | Plays Hook-a-Duck; queues for ice cream at 13:00; leaves at 15:30 |
+
+### New Materials
+
+| Material | Cost/Source | Notes |
+|----------|-------------|-------|
+| `VICTORIA_SPONGE` | 2 COIN at cake stall | +30 hunger; can be gifted to NPC for Friendly status |
+| `SCONE` | 1 COIN at cake stall | +15 hunger |
+| `CUPCAKE` | 1 COIN at cake stall | +10 hunger |
+| `JAM_AND_CREAM` | 1 COIN at cake stall | +12 hunger |
+| `CUDDLY_TOY` | Tombola/Hook-a-Duck prize | Fence buy: 1 COIN; gift to child NPC: +10 Street Rep |
+| `ORNAMENT` | Bric-a-brac rummage | Sell value: 2 COIN; Fence buy: 1 COIN |
+| `RETRO_CASSETTE` | Bric-a-brac rummage | No value; flavour item. "Still plays. Nobody owns a cassette player." |
+| `RAFFLE_TICKET` | 1 COIN at raffle stall | Used in raffle draw + crafting `RIGGED_BARREL` |
+| `RIGGED_BARREL` | Crafted: 1 WOOD + 1 RAFFLE_TICKET | Single use; triggers guaranteed raffle win |
+
+### New PropTypes
+
+| PropType | Dimensions | Hardness | Notes |
+|----------|------------|----------|-------|
+| `TOMBOLA_STALL_PROP` | 1.5f × 1.2f × 0.8f | 3 hits, WOOD | Breaks into 2× WOOD |
+| `CAKE_STALL_PROP` | 1.5f × 1.2f × 0.8f | 3 hits, WOOD | Breaks into 2× WOOD |
+| `BRIC_A_BRAC_PROP` | 2.0f × 1.0f × 0.6f | 2 hits, WOOD | Breaks into 1× WOOD |
+| `RAFFLE_TICKET_STALL_PROP` | 1.2f × 1.2f × 0.8f | 3 hits, WOOD | Breaks into 1× WOOD |
+| `HOOK_A_DUCK_PROP` | 1.5f × 0.8f × 1.0f | 4 hits, PLASTIC | Breaks into PLASTIC |
+
+### New RumourType Entries
+
+No new type needed. Uses existing `LOCAL_EVENT` for all fete gossip.
+
+### New CrimeType Entry
+
+No new type. Uses existing `CrimeType.PETTY_THEFT` and `CrimeType.FRAUD`.
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `FETE_CHAMPION` | Win the tombola, raffle, and Hook-a-Duck in a single fete |
+| `CAKE_THIEF` | Steal a cake from the fete stall |
+| `RIGGED` | Successfully fix the raffle draw |
+| `BRITISH_INSTITUTION` | Attend 3 annual fetes (across in-game years) |
+
+### System Integrations
+
+- **ChurchSystem**: VICAR_NPC sourced from ChurchSystem's NPC pool; fete is flagged as a
+  church-organised event. `ChurchSystem.isFeteDay()` helper added.
+- **IceCreamVanSystem**: Van arrives at 13:00 if `IceCreamVanSystem.isVanAvailable()` is true.
+  Generates a SCHOOL_KID queue of 2–4 NPCs at the park entrance.
+- **WetherspoonsSystem**: `addPatrons(4)` called at fete end (16:00) to simulate punters
+  heading to the pub.
+- **FoodBankSystem**: `VOLUNTEER_NPC` re-uses the Food Bank volunteer character Margaret.
+  `FoodBankSystem.isMargaretAvailable()` check — if food bank is running that Saturday
+  morning, Margaret arrives at the fete at 10:30 instead of 10:00.
+- **WeatherSystem**: Cancellation check at 09:30 — `THUNDERSTORM` or `HEAVY_RAIN` → cancel.
+- **RumourNetwork**: Results of raffle draw seeded as `LOCAL_EVENT` rumour at 15:05.
+  Post-fete gossip ("Mrs. Patterson's lemon drizzle was robbed") seeded at 16:05.
+- **NotorietySystem / WantedSystem**: Theft/fraud at the fete carries standard penalties.
+- **CraftingSystem**: `RIGGED_BARREL` recipe added: 1× WOOD + 1× RAFFLE_TICKET.
+- **StreetEconomySystem**: `VICTORIA_SPONGE`, `SCONE`, `CUPCAKE`, `JAM_AND_CREAM` satisfy
+  `NeedType.HUNGRY`; prices added to `BASE_PRICES` map.
+
+**Unit tests**: tombola prize distribution (over 1000 spins with seeded RNG), raffle draw
+resolution (correct winner selection), Hook-a-Duck win rate, cake stall stock management,
+bric-a-brac loot table coverage, fete cancellation on THUNDERSTORM/HEAVY_RAIN but not
+DRIZZLE, raffle-fix detection (volunteer proximity), post-fete patron surge calculation.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Fete spawns props at 10:00 on first Saturday of July**: Set in-game time to the
+   first Saturday of July, 09:59. Advance 2 frames. Verify `FeteSystem.isFeteActive()`
+   is true. Verify `TOMBOLA_STALL_PROP`, `CAKE_STALL_PROP`, `BRIC_A_BRAC_PROP`,
+   `RAFFLE_TICKET_STALL_PROP`, and `HOOK_A_DUCK_PROP` all exist within the PARK landmark
+   AABB. Verify at least 1 `VOLUNTEER_NPC` and 1 `VICAR_NPC` are present. Verify
+   VICAR_NPC has an active speech bubble containing "Welcome to the".
+
+2. **Tombola dispenses correct prize distribution**: Construct `FeteSystem` with
+   `new Random(42)`. Call `feteSystem.playTombola(playerInventory)` 200 times with
+   player paying 1 COIN each time. Verify total prize distribution is within ±5% of
+   expected rates (BISCUIT ~40%, BOTTLE_OF_WINE ~20%, KETTLE ~15%, CUDDLY_TOY ~10%,
+   no prize ~15%). Verify player inventory COIN count decreased by 200.
+
+3. **Raffle draw at 15:00 selects correct ticket**: Give player 1 `RAFFLE_TICKET`.
+   Set time to 14:59. Advance 2 frames. Verify `FeteSystem.getRaffleDrawn()` is false.
+   Advance to 15:00. Call `feteSystem.update(delta, timeSystem, ...)`. Verify
+   `FeteSystem.getRaffleDrawn()` is true. Verify player inventory gains either
+   `BOTTLE_OF_WINE` + 10 COIN (1st), `CUDDLY_TOY` (2nd), or `BISCUIT` (3rd), OR no prize
+   (if player ticket didn't win — verify SpeechLogUI has a notification entry either way).
+
+4. **Cake theft detected by VICAR triggers wanted level**: Start fete. Spawn VICAR_NPC
+   within 6 blocks of `CAKE_STALL_PROP`. Attempt cake theft (press E on stall without
+   paying). Verify no cake is stolen. Verify VICAR_NPC speech contains "OI!". Verify
+   `wantedSystem.getStars()` increased by 1. Now move VICAR_NPC more than 6 blocks away.
+   Attempt cake theft again. Verify 1 cake item added to player inventory. Verify
+   Notoriety increased by 5.
+
+5. **Raffle fix succeeds when no volunteer nearby**: Start fete. Craft 1 `RIGGED_BARREL`
+   (give player 1 WOOD + 1 RAFFLE_TICKET, call `craftingSystem.craft(WOOD, RAFFLE_TICKET)`).
+   Ensure no `VOLUNTEER_NPC` within 8 blocks. Hold E on `RAFFLE_TICKET_STALL_PROP` for
+   180 frames (3 seconds at 60fps). Verify `feteSystem.isRaffleRigged()` is true. Advance
+   to 15:00 raffle draw. Verify player wins 1st prize. Verify `CriminalRecord` contains
+   `CrimeType.FRAUD`. Verify Notoriety increased by 5.
+
+6. **Raffle fix interrupted by approaching volunteer**: Start fete. Craft 1 `RIGGED_BARREL`.
+   Begin holding E on `RAFFLE_TICKET_STALL_PROP`. After 90 frames, move a `VOLUNTEER_NPC`
+   to within 7 blocks of the stall. Verify `feteSystem.isRaffleRigged()` is false. Verify
+   player Notoriety increased by 8. Verify `wantedSystem.getStars()` is 1. Verify player
+   cannot interact with any fete prop for the rest of the fete day.
+
+7. **Fete cancelled on THUNDERSTORM, proceeds on DRIZZLE**: Set weather to THUNDERSTORM.
+   Set time to first Saturday of July 09:30. Call `feteSystem.update(delta, timeSystem, ...)`.
+   Verify `FeteSystem.isFeteActive()` is false. Verify no fete props exist in the world.
+   Verify a `LOCAL_EVENT` rumour containing "called off" is in the rumour network. Now set
+   weather to DRIZZLE and reset. Advance to 10:00. Verify `FeteSystem.isFeteActive()` is
+   true and props have spawned.
+
+8. **Post-fete patron surge reaches Wetherspoons**: Force-end fete (set time to 16:00).
+   Call `feteSystem.update(delta, timeSystem, ...)`. Verify
+   `wetherspoonsSystem.getExtraPatronCount()` ≥ 4. Advance 5 in-game minutes. Verify at
+   least 4 `PENSIONER` NPCs are within 5 blocks of the `WETHERSPOONS` landmark.
+
+9. **Ice cream van arrives at 13:00 and spawns queue**: Set `IceCreamVanSystem` available.
+   Start fete. Advance to 13:00. Verify `IceCreamVanSystem.isAtPark()` is true. Verify
+   2–4 `SCHOOL_KID` NPCs are within 5 blocks of the park entrance. Verify ice cream purchase
+   works: press E on van → player inventory gains `ICE_CREAM` item, 1 COIN deducted.
+
+10. **Full fete lifecycle stress test**: Set time to first Saturday of July 09:59. Advance
+    through full fete duration (10:00–16:00 in-game = 6 hours at 60fps). Verify: no NPEs
+    at any frame; tombola prize count never goes negative; cake stall restocks once at 13:00;
+    raffle draw fires exactly once; all props despawn by 16:10;
+    `FeteSystem.isFeteActive()` is false after 16:00; at least 1 `LOCAL_EVENT` rumour exists
+    in the network; game remains in PLAYING state throughout.
+
+// ── New: FeteSystem.java in ragamuffin.core
+// New: Material stubs required: VICTORIA_SPONGE, SCONE, CUPCAKE, JAM_AND_CREAM,
+//      CUDDLY_TOY, ORNAMENT, RETRO_CASSETTE, RAFFLE_TICKET, RIGGED_BARREL
+//      (add to Material.java)
+// New: PropType stubs required: TOMBOLA_STALL_PROP, CAKE_STALL_PROP,
+//      BRIC_A_BRAC_PROP, RAFFLE_TICKET_STALL_PROP, HOOK_A_DUCK_PROP
+//      (add to PropType.java)
+// New: AchievementType stubs: FETE_CHAMPION, CAKE_THIEF, RIGGED,
+//      BRITISH_INSTITUTION (add to AchievementType.java)
+// New: CraftingSystem recipe: RIGGED_BARREL = WOOD + RAFFLE_TICKET
+// Existing: ChurchSystem, IceCreamVanSystem, WetherspoonsSystem,
+//           FoodBankSystem, WeatherSystem, RumourNetwork, WantedSystem,
+//           NotorietySystem, StreetEconomySystem, CraftingSystem all present
