@@ -678,7 +678,39 @@ public enum PropType {
      * by 10 per event. At heat ≥ 50, a POLICE NPC spawns 60s later.
      * Destroyed by 2 hits (FRAGILE); prevents CCTV logging when broken. +3 Notoriety.
      */
-    CCTV_PROP(0.25f, 0.20f, 0.30f, 2, Material.SCRAP_METAL);
+    CCTV_PROP(0.25f, 0.20f, 0.30f, 2, Material.SCRAP_METAL),
+
+    // ── Issue #1004: Northfield Community Centre ───────────────────────────────
+
+    /**
+     * Community noticeboard — press E to browse 3–5 weekly rotating notices drawn
+     * from {@code RumourNetwork} and {@code BuildingQuestRegistry}.
+     * Reading counts rumours as heard. Faction graffiti overlay reflects territory scores.
+     * If {@code WantedSystem.getWantedStars() >= 2}, the board displays a WANTED notice.
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    NOTICEBOARD_PROP(0.10f, 1.20f, 0.05f, 3, Material.WOOD),
+
+    /**
+     * Boxing bag — press E during boxing club hours (Mon/Wed/Fri 18:00–21:00) to train.
+     * Each 30-second session awards +1 {@code StreetSkillSystem.Skill.BOXING} point.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    BOXING_BAG_PROP(0.40f, 1.20f, 0.40f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Boxing ring — press E at BOXING skill ≥ 2 to start a sparring session with a
+     * STREET_LAD NPC. Win: +5 COIN and +3 STREET_LADS Faction Respect.
+     * Destroyed by 12 punches; yields WOOD.
+     */
+    BOXING_RING_PROP(4.00f, 0.10f, 4.00f, 12, Material.WOOD),
+
+    /**
+     * Donation box — drag items from inventory to donate. Donating 3+ items on a
+     * Saturday: −2 Notoriety, +5 FOOD_BANK Respect. Tooltip: "You're not all bad."
+     * Destroyed by 5 punches; yields CARDBOARD.
+     */
+    DONATION_BOX_PROP(0.60f, 0.80f, 0.60f, 5, Material.CARDBOARD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
