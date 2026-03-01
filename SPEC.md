@@ -26027,3 +26027,127 @@ Press E on **CONSULTING_TABLE_PROP** to request a consultation (dog companion mu
 //           RumourNetwork, NotorietySystem, WantedSystem, StreetEconomySystem, NeighbourhoodSystem,
 //           WeatherSystem, NoiseSystem, WitnessSystem, CriminalRecord, BootSaleSystem all defined
 // WorldGenerator: add PET_SHOP + VET_SURGERY block to high street parade generation pass
+
+---
+
+## Add Northfield Internet Café — Cybernet, the Per-Minute Economy & the Backroom Hustle
+
+**Landmark**: New `LandmarkType.INTERNET_CAFE` ("Cybernet")
+
+Every declining British high street had one: a dingy internet café squeezed between a charity shop and a kebab house, run by someone who couldn't quite afford a proper business. Mismatched chairs, a laminated price list, Windows XP loading screens, and the faint smell of burnt instant noodles. Cybernet fills the gap between the player's online criminal activity (currently limited to the library's free terminal — one machine, librarian watching) and the black-market digital economy that already exists in the game's item set (`FAKE_ID`, `COUNTERFEIT_NOTE`, `STOLEN_PHONE`, `SIM_CARD`, `LAPTOP`, `FORGED_DOCUMENT`). It also provides a node for `PirateRadioSystem` uploads, anonymous fence-price scouting, and a back-room Bitcoin rig that the Marchetti Crew has a stake in.
+
+### Building
+
+A narrow 8×10×3 brick shopfront on the high street, between the Off-Licence and the Poundstretcher. Interior: six `INTERNET_TERMINAL` props in two rows of three, an `ARGOS_RETURNS_DESK_PROP` repurposed as the front counter (Asif behind it), a `VENDING_MACHINE_PROP` (instant noodles, energy drinks — 1 COIN each), a `PRINTER_PROP` (new prop), and a BACK_ROOM behind a DOOR_PROP (locked by default). Outside: a neon sign (SIGNAGE prop) glowing `OPEN` / `CLOSED`. Open daily 09:00–23:00. Run by **Asif** (`INTERNET_CAFE_OWNER` NPC), Mon–Sun; his teenage nephew **Hamza** (`INTERNET_CAFE_ASSISTANT` NPC) covers evenings (18:00–23:00).
+
+### Per-Minute Economy
+
+Paying Asif 1 COIN grants 10 in-game minutes of terminal access (a `TERMINAL_SESSION_ACTIVE` flag is set). While active, the player can interact with any free `INTERNET_TERMINAL` prop and use the following actions:
+
+| Action | Cost (additional) | Effect |
+|---|---|---|
+| **Scout fence prices** | 0 | Reveals current `FenceSystem` valuations for 3 random items in the player's inventory (same as library terminal but always available) |
+| **Post pirate radio clip** | 0 | Triggers `PirateRadioSystem.uploadClip()` — boosts broadcast reach by +20% for the next broadcast; seeds a `GANG_ACTIVITY` rumour |
+| **Print forged document** | 2 COIN + `BLANK_PAPER` ×2 | Produces 1 `FORGED_DOCUMENT` item; Notoriety +5; 10% chance Asif notices and adds Notoriety +5 |
+| **Clone phone details** | 3 COIN + `STOLEN_PHONE` | Produces `CLONED_PHONE_DATA` item (new); used at `PhoneRepairSystem` to unlock a phone without Tariq's help |
+| **Research NPC** | 1 COIN | Player types an NPC's name; reveals their home location and daily schedule in the `SpeechLogUI` |
+| **Check wanted status** | 0 | Displays player's current `WantedSystem` tier and active `CriminalRecord` charges |
+| **Upload CV** | 0 | Pre-registers the player at `JobCentreSystem` (same as library terminal); seeds `LOCAL_EVENT` rumour "Someone actually uploaded a CV at Cybernet" |
+
+If the session timer expires while the player is mid-action, the action is cancelled. Asif will prompt: "Time's up, mate — pay again if you want more."
+
+### Printer Economy
+
+Press E on the `PRINTER_PROP` (no terminal session required, but costs 1 COIN per page):
+- Print `FAKE_ID` (requires 2 COIN + `BLANK_PAPER` ×1 + `STOLEN_PHONE` in inventory as "identity source"): produces `FAKE_ID` item. Notoriety +8 if Asif is watching (50% chance); triggers `CriminalRecord.CrimeType.FRAUD`.
+- Print `COUNTERFEIT_NOTE` (requires 3 COIN + `BLANK_PAPER` ×2): produces `COUNTERFEIT_NOTE` ×2. Notoriety +10. 25% chance Hamza notices (evening only); Hamza reports player to `WantedSystem` Tier 1.
+- Print legitimate documents (council letter template, job application): no Notoriety; satisfies `JobCentreSystem` proof-of-address requirement (waives 5-COIN admin fee).
+
+### Back Room — Bitcoin Rig
+
+At `FactionSystem` MARCHETTI_CREW Respect ≥ 40, Asif unlocks the back-room door. Inside: three `MINING_RIG_PROP` units (new prop; large desktop towers with blinking lights), a `COOLING_FAN_PROP`, and a `CASH_BOX_PROP` containing 8–18 COIN (refreshed every in-game day).
+
+- **Work the rig** (press E on `MINING_RIG_PROP`): earns 3 COIN per 5-minute in-game shift; requires `MARCHETTI_CREW` Respect ≥ 40. Max 2 shifts per day.
+- **Rob the cash box** (break `CASH_BOX_PROP`: 3 hits to open): yields 8–18 COIN + `COIN_ROLL` item (new — 5 COIN, tradeable). Asif reports: Notoriety +15, Wanted Tier 2, MARCHETTI_CREW Respect −20. If player is wearing `DISGUISE_KIT` when robbing: Notoriety penalty halved.
+- **Sabotage the rig** (requires `SCREWDRIVER` or `CROWBAR`; 4 hits to disable each unit): earns STREET_LADS Respect +10 per rig disabled (Marchetti's revenue cut). All 3 disabled: seeds `GANG_ACTIVITY` rumour "Someone took out Marchetti's mining farm". Marchetti `THUG` NPCs pursue player for 24 in-game hours.
+
+### NPCs
+
+- **Asif** (`INTERNET_CAFE_OWNER`) — calm, experienced, seen it all. Sells terminal time, enforces the no-food rule. At Notoriety ≥ 60: "I know who you are, mate — pay upfront, no trouble." Notoriety ≥ 80: refuses service. Passive but will call police if player damages props.
+- **Hamza** (`INTERNET_CAFE_ASSISTANT`) — 19, bored, on his phone. Evening shift (18:00–23:00). Shares LOCAL_EVENT rumours freely if player buys him an energy drink from the vending machine (1 COIN). 25% chance to spot printer abuse (evening).
+- **2–4 `PUBLIC` / `SCHOOL_KID` / `DELIVERY_DRIVER` NPCs** — browsing, gaming, printing tickets. Each has a 30% chance to be doing something they shouldn't (implied). DELIVERY_DRIVER always printing a label.
+- **1 `YOUTH_GANG` NPC** (evening only, 18:00–23:00) — uses a terminal for 10 minutes then loiters. If Notoriety ≥ 40, will attempt to shake the player down for 2 COIN upon exit ("Oi, I saw what you were printing").
+
+### Items
+
+- `BLANK_PAPER` — new item; purchasable from Asif (1 COIN per 5 sheets), or looted from `POST_OFFICE` stationery shelf (3 COIN value, minor theft). Required for printing `FORGED_DOCUMENT`, `FAKE_ID`, `COUNTERFEIT_NOTE`.
+- `CLONED_PHONE_DATA` — new item; produced by clone phone action. One-use; enables `PhoneRepairSystem.unlockWithClonedData()`, bypassing Tariq's fee.
+- `MINING_RIG_COMPONENT` — new item; drops when `MINING_RIG_PROP` is destroyed; sellable at `ScrapyardSystem` for 4 COIN per unit (3 units total), or at `FenceSystem` for 7 COIN ("dodgy GPUs").
+- `COIN_ROLL` — new item; 5 COIN value, tradeable or usable directly. Drops from `CASH_BOX_PROP`.
+- `CYBERNET_MEMBERSHIP_CARD` — new item; purchasable from Asif for 5 COIN; gives 20% discount on all terminal time for 7 in-game days.
+
+### Integration
+
+- `PirateRadioSystem` — `uploadClip()` method hooked into terminal action; boosts next broadcast reach +20%.
+- `PhoneRepairSystem` — `unlockWithClonedData(clonedData, inventory)` method: consumes `CLONED_PHONE_DATA`, produces unlocked phone (same result as Tariq's service minus cost).
+- `FenceSystem` — fence price scouting action (same data source as library terminal but always open).
+- `JobCentreSystem` — CV upload pre-registers player; legitimate document printing waives admin fee.
+- `FactionSystem` — MARCHETTI_CREW Respect ≥ 40 unlocks back room; STREET_LADS Respect gated by rig sabotage.
+- `NotorietySystem` — printing crimes; cash box robbery; youth shake-down on exit.
+- `WantedSystem` — counterfeit printing (Hamza report) → Tier 1; cash box robbery → Tier 2.
+- `CriminalRecord` — FRAUD for fake ID printing; THEFT for cash box robbery.
+- `RumourNetwork` — pirate radio upload seeds `GANG_ACTIVITY`; rig sabotage seeds `GANG_ACTIVITY`; Hamza rumour-share seeds `LOCAL_EVENT`.
+- `DisguiseSystem` — `DISGUISE_KIT` halves Notoriety penalty during cash box robbery.
+- `NeighbourhoodSystem` — Cybernet open: +1 Vibes/min. Boards up if Vibes < 15.
+- `WeatherSystem` — STORM: +2 extra customers (shelter-seekers with no terminal session, just sitting).
+- `NoiseSystem` — cooling fans emit ambient low-frequency hum (medium-radius noise source).
+- `WitnessSystem` — Asif witnessing printer fraud adds evidence prop; Hamza adds evidence (evening only).
+- `AchievementSystem` — 5 new achievements below.
+
+### Achievements
+
+- `CYBERNET_REGULAR` — use a terminal 10 times across all sessions.
+- `IDENTITY_FRAUD` — successfully print a `FAKE_ID` without Asif noticing.
+- `BITCOIN_BARON` — earn 15 COIN total from the back-room mining rig shifts.
+- `DIGITAL_PIRATE` — upload a pirate radio clip at Cybernet.
+- `SMASH_THE_RIG` — sabotage all 3 mining rigs in a single visit.
+
+### Unit Tests
+
+1. `InternetCafeSystem.isOpen(9.0f)` returns `true`; `isOpen(23.0f)` returns `false`; `isOpen(23.5f)` returns `false`.
+2. `InternetCafeSystem.startSession(inventory, coinCount=3)` deducts 1 COIN, returns `true`, sets `isSessionActive()` to `true`; `startSession(inventory, coinCount=0)` returns `false`.
+3. `InternetCafeSystem.sessionRemainingMinutes(elapsed=5.0f, sessionLengthMinutes=10.0f)` returns `5.0f`; `elapsed=10.5f` returns `0.0f` and `isSessionActive()` false.
+4. `InternetCafeSystem.printFakeId(inventory, asifWatching=false, random=new Random(0))` adds `FAKE_ID` to inventory, returns `PRINT_SUCCESS`; `asifWatching=true` returns `PRINT_CAUGHT`.
+5. `InternetCafeSystem.printCounterfeit(inventory, hamzaPresent=true, random=new Random(1))` checks 25% detection; with `Random(1)` confirm detection or not (seed-deterministic).
+6. `InternetCafeSystem.calcMiningEarnings(shiftsWorked=2)` returns `6` (3 COIN × 2); `shiftsWorked=3` returns `6` (capped at 2/day).
+7. `InternetCafeSystem.isServiceRefused(notoriety=85)` returns `true`; `notoriety=59` returns `false`.
+
+### Integration Tests
+
+1. **Terminal session starts and times out**: Give player 3 COIN. Start session at Cybernet. Verify COIN deducted by 1. Verify `isSessionActive()` true. Advance in-game time 10 minutes. Verify `isSessionActive()` false. Verify `SpeechLogUI` contains "Time's up" message.
+
+2. **Forged document printing adds Notoriety**: Give player 5 COIN and `BLANK_PAPER` ×2. Call `startSession`, then call `printForgedDocument(inventory, asifWatching=false)`. Verify `FORGED_DOCUMENT` added to inventory. Verify Notoriety increased by 5. Verify `CriminalRecord` contains `FRAUD` charge.
+
+3. **Cash box robbery triggers wanted tier**: Enter back room (MARCHETTI_CREW Respect ≥ 40). Simulate 3 punch actions on `CASH_BOX_PROP`. Verify player COIN increased by at least 8. Verify `WantedSystem.getWantedTier()` returns `2`. Verify Notoriety increased by 15.
+
+4. **Rig sabotage earns STREET_LADS Respect**: Simulate 4 hits on each of 3 `MINING_RIG_PROP` units. Verify `FactionSystem.getRespect(STREET_LADS)` increased by 30 (10 per rig). Verify `RumourNetwork` contains a `GANG_ACTIVITY` rumour about the mining farm. Verify MARCHETTI_CREW Respect reduced by 20.
+
+5. **Hamza tip triggers after energy drink**: Advance time to 19:00. Give player 1 COIN. Interact with `VENDING_MACHINE_PROP` to buy energy drink and give to Hamza. Verify `Hamza.isTipped()` is true. Verify a `LOCAL_EVENT` rumour is seeded in `RumourNetwork`.
+
+// ── New: InternetCafeSystem.java in ragamuffin.core
+// New: LandmarkType.INTERNET_CAFE ("Cybernet")
+// New: NPCType stubs required: INTERNET_CAFE_OWNER, INTERNET_CAFE_ASSISTANT (add to NPCType enum)
+// New: Material stubs required: BLANK_PAPER, CLONED_PHONE_DATA, MINING_RIG_COMPONENT, COIN_ROLL,
+//      CYBERNET_MEMBERSHIP_CARD
+// New: PropType stubs required: PRINTER_PROP (1.00×1.20×0.50, 3 hits, Material.SCRAP_METAL),
+//      MINING_RIG_PROP (0.60×1.80×0.60, 6 hits, Material.SCRAP_METAL),
+//      COOLING_FAN_PROP (0.50×0.50×0.50, 2 hits, Material.SCRAP_METAL),
+//      VENDING_MACHINE_PROP (may already exist — check PropType before adding)
+// New: AchievementType stubs required: CYBERNET_REGULAR, IDENTITY_FRAUD, BITCOIN_BARON,
+//      DIGITAL_PIRATE, SMASH_THE_RIG
+// Existing: INTERNET_TERMINAL PropType, FAKE_ID Material, COUNTERFEIT_NOTE Material,
+//           FORGED_DOCUMENT Material, STOLEN_PHONE Material, SIM_CARD Material, LAPTOP Material,
+//           FenceSystem, JobCentreSystem, PirateRadioSystem, PhoneRepairSystem, FactionSystem,
+//           NotorietySystem, WantedSystem, CriminalRecord, DisguiseSystem, NeighbourhoodSystem,
+//           WeatherSystem, NoiseSystem, WitnessSystem, RumourNetwork, AchievementSystem all defined
+// WorldGenerator: add INTERNET_CAFE block to high street parade between OFF_LICENCE and POUND_SHOP
