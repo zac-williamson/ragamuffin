@@ -2371,7 +2371,17 @@ public enum Material {
      * Meat Raffle Prize — a frozen chicken. Still in the bag.
      * Win from the Social Club raffle draw. Worth 4 COIN at the fence.
      */
-    MEAT_RAFFLE_PRIZE("Meat Raffle Prize");
+    MEAT_RAFFLE_PRIZE("Meat Raffle Prize"),
+
+    // ── Issue #1071: Northfield Fast Cash Finance ─────────────────────────
+    /**
+     * Loan Leaflet — a garish fluorescent flyer picked up from the LEAFLET_RACK_PROP
+     * inside Fast Cash Finance. Readable item: tooltip reads
+     * "Representative example: borrow £10 for a week. Repay £15. TOTAL: despair."
+     * Crafting substitute for CARDBOARD in paper-based recipes.
+     * Fenceable for 0 COIN (worthless) but useful as crafting material.
+     */
+    LOAN_LEAFLET("Loan Leaflet");
 
     private final String displayName;
 
@@ -2512,6 +2522,7 @@ public enum Material {
             case PORK_SCRATCHINGS:   return c(0.72f, 0.45f, 0.18f); // Warm brown/crispy
             case RAFFLE_TICKET:      return c(0.88f, 0.20f, 0.20f); // Red raffle stub
             case MEAT_RAFFLE_PRIZE:  return c(0.88f, 0.88f, 0.92f); // Frozen/white chicken bag
+            case LOAN_LEAFLET:       return c(0.98f, 0.85f, 0.10f); // Fluorescent yellow flyer
             case HAIR_CLIPPERS:         return c(0.35f, 0.35f, 0.38f);   // Silver-grey
             case HAIR_CLIPPERS_BROKEN:  return c(0.20f, 0.20f, 0.22f);   // Dark grey, broken
             case NAIL_POLISH:    return c(0.92f, 0.18f, 0.55f);   // Hot pink
@@ -4165,6 +4176,10 @@ public enum Material {
                 return IconShape.BOTTLE;      // cleaning bottle
             case PLACARD:
                 return IconShape.FLAT_PAPER;  // placard board
+
+            // Issue #1071: Northfield Fast Cash Finance
+            case LOAN_LEAFLET:
+                return IconShape.FLAT_PAPER;  // fluorescent flyer
 
             default:
                 return IconShape.BOX;

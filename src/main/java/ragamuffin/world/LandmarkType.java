@@ -335,7 +335,16 @@ public enum LandmarkType {
      * Mobile; not a permanent map fixture. Used as a position tag for spawn logic,
      * police patrol awareness, and faction (Marchetti) territory interactions.
      */
-    ICE_CREAM_VAN;
+    ICE_CREAM_VAN,
+
+    // ── Issue #1071: Northfield Fast Cash Finance ─────────────────────────
+    /**
+     * Fast Cash Finance — a garish payday loan shop on the Northfield parade,
+     * sandwiched between the charity shop and the bookies.
+     * Run by Barry (LOAN_MANAGER NPC). Open Mon–Fri 09:00–18:00, Sat 10:00–16:00.
+     * Interior: LOAN_DESK_PROP, LEAFLET_RACK_PROP, CCTV_CAMERA_PROP.
+     */
+    PAYDAY_LOAN_SHOP;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -408,6 +417,7 @@ public enum LandmarkType {
             case ARGOS:                 return "Argos";
             case POUND_SHOP:            return "Poundstretcher";
             case ICE_CREAM_VAN:         return "Dave's Ices";
+            case PAYDAY_LOAN_SHOP:      return "Fast Cash Finance";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

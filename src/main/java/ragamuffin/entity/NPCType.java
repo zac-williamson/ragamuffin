@@ -1067,7 +1067,24 @@ public enum NPCType {
      * and sparring at BOXING_RING_PROP.
      * Passive; never hostile unless provoked.
      */
-    BOXING_COACH(25f, 0f, 0f, false);
+    BOXING_COACH(25f, 0f, 0f, false),
+
+    // ── Issue #1071: Northfield Fast Cash Finance ─────────────────────────
+    /**
+     * Loan Manager — Barry; anchored to LOAN_DESK_PROP inside Fast Cash Finance.
+     * Offers tiered loan products based on player's Notoriety tier.
+     * Turns hostile (speech bubble "You're a wrong 'un") after a missed repayment.
+     * Passive by default; never attacks.
+     */
+    LOAN_MANAGER(25f, 0f, 0f, false),
+
+    /**
+     * Bailiff — spawned on BAILIFF_THREAT (2 missed repayments).
+     * Pathfinds to the player's registered squat and knocks on the door.
+     * Can be paid off, bribed, or attacked.
+     * Moderately tough; will defend itself if attacked.
+     */
+    BAILIFF(35f, 8f, 1.5f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
