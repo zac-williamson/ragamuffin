@@ -1120,7 +1120,22 @@ public enum Material {
      * Old Photograph — flavour item found in graves.
      * Not sellable. Examining it displays: "Someone loved this person."
      */
-    OLD_PHOTOGRAPH("Old Photograph");
+    OLD_PHOTOGRAPH("Old Photograph"),
+
+    // ── Issue #971: The Rusty Anchor Wetherspoons ──────────────────────────────
+
+    /**
+     * Cheap Spirits — the cheapest drink at The Rusty Anchor (Wetherspoons).
+     * Cost: 1 COIN. Warmth +5, Alertness -10, 20% chance of DRUNK state.
+     */
+    CHEAP_SPIRITS("Cheap Spirits"),
+
+    /**
+     * Curry Club Special — Thursday evening only (17:00–21:00) at The Rusty Anchor.
+     * Cost: 4 COIN. Hunger -80, Warmth +20.
+     * Eating it on a Thursday awards the CURRY_CLUB achievement.
+     */
+    CURRY_CLUB_SPECIAL("Curry Club Special");
 
     private final String displayName;
 
@@ -1602,6 +1617,12 @@ public enum Material {
             case OLD_PHOTOGRAPH:     return cs(0.85f, 0.78f, 0.65f,  // Sepia tones
                                                0.55f, 0.45f, 0.35f); // Dark border
 
+            // Issue #971: The Rusty Anchor Wetherspoons
+            case CHEAP_SPIRITS:      return cs(0.88f, 0.78f, 0.30f,  // Amber spirits
+                                               0.35f, 0.22f, 0.08f); // Dark bottle
+            case CURRY_CLUB_SPECIAL: return cs(0.90f, 0.55f, 0.10f,  // Curry orange
+                                               0.75f, 0.38f, 0.05f); // Rich sauce
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -1855,6 +1876,9 @@ public enum Material {
             case POCKET_WATCH:
             case CONDOLENCE_CARD:
             case OLD_PHOTOGRAPH:
+            // Issue #971: The Rusty Anchor Wetherspoons (not block items)
+            case CHEAP_SPIRITS:
+            case CURRY_CLUB_SPECIAL:
                 return false;
             default:
                 return true;
@@ -1915,6 +1939,9 @@ public enum Material {
             case FLAT_COLA:
             case CHICKEN_BONE:
             case EMPTY_CHICKEN_BOX:
+            // Issue #971: The Rusty Anchor Wetherspoons — drinks/food sit on surfaces
+            case CHEAP_SPIRITS:
+            case CURRY_CLUB_SPECIAL:
                 return true;
             default:
                 return false;
@@ -2348,6 +2375,12 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // greeting card shape
             case OLD_PHOTOGRAPH:
                 return IconShape.FLAT_PAPER;  // flat photo print
+
+            // Issue #971: The Rusty Anchor Wetherspoons
+            case CHEAP_SPIRITS:
+                return IconShape.BOTTLE;      // small spirits bottle
+            case CURRY_CLUB_SPECIAL:
+                return IconShape.FOOD;        // curry dish
 
             default:
                 return IconShape.BOX;

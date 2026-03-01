@@ -110,5 +110,22 @@ public enum RumourType {
      * — seeded by CemeterySystem after each funeral procession ends.
      * Spreads via nearby NPCs within 30 blocks of the cemetery.
      * Marks the freshly covered grave plot as DISTURBED (diggable in 4 hits). */
-    FRESH_GRAVE;
+    FRESH_GRAVE,
+
+    // ── Issue #971: The Rusty Anchor Wetherspoons ──────────────────────────────
+
+    /** "There's something on tonight down [location] — worth a look" — seeded by
+     * WetherspoonsSystem on quiz night start and Thursday curry club.
+     * Gary at the Rusty Anchor seeds this type more frequently than GANG_ACTIVITY. */
+    LOCAL_EVENT,
+
+    /** "Round here, there's been a bit of bother with [topic]" — neighbourhood
+     * gossip seeded by Gary (BARMAN) at The Rusty Anchor.
+     * More common from Gary than GANG_ACTIVITY rumours. */
+    NEIGHBOURHOOD,
+
+    /** "Someone got proper kicked out of the pub last night — all hell broke loose"
+     * — seeded by WetherspoonsSystem when the KICKED_OUT atmospheric event fires.
+     * Spreads via NPCs within 30 blocks of The Rusty Anchor. */
+    TROUBLE_AT_PUB;
 }

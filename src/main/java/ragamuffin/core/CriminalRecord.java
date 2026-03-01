@@ -101,7 +101,10 @@ public class CriminalRecord {
          * Issue #969: Recorded when the player attacks a MOURNER or FUNERAL_DIRECTOR
          * during a funeral procession.
          */
-        DISTURBING_THE_PEACE("Disturbing the peace");
+        DISTURBING_THE_PEACE("Disturbing the peace"),
+
+        // ── Issue #971: The Rusty Anchor Wetherspoons ──────────────────────────────
+        ASSAULT_IN_PUB("Assault in a licensed premises");
 
         private final String displayName;
 
