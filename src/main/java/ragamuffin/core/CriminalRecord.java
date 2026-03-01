@@ -295,7 +295,30 @@ public class CriminalRecord {
          * WitnessSystem records any witnesses within 15 blocks.
          * Faction: Neighbourhood Watch −5 respect.
          */
-        ELECTION_INTERFERENCE("Election interference (ballot box theft)");
+        ELECTION_INTERFERENCE("Election interference (ballot box theft)"),
+
+        // ── Issue #1096: Sunday League Football ──────────────────────────────
+
+        /**
+         * Recorded when the player is caught slipping a DODGY_PIE to a Council FC
+         * player during the Sunday League match (30% chance if referee within 6 blocks).
+         * Penalty: +10 Notoriety; immediate red card; match ejection.
+         */
+        MATCH_FIXING("Match fixing"),
+
+        /**
+         * Recorded when the player is ejected from the Sunday League pitch for
+         * verbally abusing the REFEREE NPC twice in one match.
+         * Penalty: +3 Notoriety.
+         */
+        DISORDERLY_CONDUCT("Disorderly conduct"),
+
+        /**
+         * Recorded when the player punches the REFEREE NPC during the Sunday League
+         * match. Triggers WantedSystem +2 stars.
+         * Penalty: +8 Notoriety.
+         */
+        ASSAULT_OF_OFFICIAL("Assault of a match official");
 
         private final String displayName;
 

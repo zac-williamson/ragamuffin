@@ -2326,6 +2326,34 @@ public enum AchievementType {
         "Carried Away With It",
         "Stole the ballot box on polling day. The election was voided. You are not a hero of the people.",
         1
+    ),
+
+    // ── Issue #1096: Sunday League Football ──────────────────────────────────
+
+    SUNDAY_LEAGUE(
+        "Lace 'Em Up",
+        "Substituted into the Sunday League match and played to full-time. Rovers needed you. Or maybe they didn't.",
+        1
+    ),
+    REF_ABUSE(
+        "Are You Blind, Mate?",
+        "Shouted abuse at the referee twice in one match. He wasn't impressed. You were ejected. Worth it.",
+        1
+    ),
+    DODGY_PIE(
+        "Guaranteed to Put Someone Off",
+        "Slipped a Dodgy Pie to an opposition player. Council FC's striker spent half-time in the bushes.",
+        1
+    ),
+    PUNTER(
+        "Two to One. Easy Money.",
+        "Won a pitch-side bet at the Northfield Sunday League. The bookie looked gutted.",
+        1
+    ),
+    DIRTY_TACKLE(
+        "Studs Up",
+        "Fouled an opposition player without the referee noticing. You're a menace. The touchline loved it.",
+        1
     );
 
     private final String name;
