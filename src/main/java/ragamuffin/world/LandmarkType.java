@@ -600,7 +600,29 @@ public enum LandmarkType {
      * BEAD_CURTAIN_PROP. Players can buy and sell criminal intelligence here.
      * Managed by InformationBrokerSystem.
      */
-    INFO_BROKER_PUB;
+    INFO_BROKER_PUB,
+
+    // ── Issue #1198: Northfield Traffic Warden ────────────────────────────────
+
+    /**
+     * Issue #1198: COUNCIL_OFFICE — a bland 1970s civic building two blocks from
+     * the Magistrates' Court. Open Mon–Fri 09:00–17:00. Staffed by
+     * COUNCIL_RECEPTIONIST Brenda at the front desk.
+     * <p>Contains APPEAL_DESK_PROP where the player can submit PCN appeals.
+     * Submit with PENALTY_CHARGE_NOTICE + BLANK_PAPER; 2 in-game day wait.
+     * Base appeal success: 30%; +20% if machine broken; +15% if no prior offences.
+     * Managed by TrafficWardenSystem.
+     */
+    COUNCIL_OFFICE,
+
+    /**
+     * Issue #1198: VEHICLE_IMPOUND — the council impound lot on the industrial estate.
+     * Impounded cars are held here after a third circuit violation (towed by BAILIFF).
+     * Open Mon–Fri 09:00–17:00. Pay 20 COIN to retrieve vehicle.
+     * Vehicle removal uses TaxiSystem vehicle-movement logic for towing animation.
+     * Managed by TrafficWardenSystem.
+     */
+    VEHICLE_IMPOUND;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -693,6 +715,8 @@ public enum LandmarkType {
             case RECYCLING_CENTRE:      return "Northfield Tip";
             case PROBATION_OFFICE:      return "Northfield Probation Service";
             case INFO_BROKER_PUB:       return "The Feathers";
+            case COUNCIL_OFFICE:        return "Northfield Council Office";
+            case VEHICLE_IMPOUND:       return "Vehicle Impound";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

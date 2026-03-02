@@ -2539,7 +2539,45 @@ public enum PropType {
      * E-hold (5 s, GRAFTING ≥ Apprentice) raises venue condition +10.
      * Crowbar sabotage variant: condition −25, CRIMINAL_DAMAGE CrimeType.
      */
-    KITCHEN_PROP(1.20f, 1.00f, 0.80f, 10, null);
+    KITCHEN_PROP(1.20f, 1.00f, 0.80f, 10, null),
+
+    // ── Issue #1198: Northfield Traffic Warden ────────────────────────────────
+
+    /**
+     * Double-yellow line road marking — painted on the road surface along the high street.
+     * Any car parked here while Clive is on patrol will immediately receive a PCN
+     * (zero grace period). Destroyed by CROWBAR (CRIMINAL_DAMAGE CrimeType); +8 Notoriety.
+     */
+    DOUBLE_YELLOW_PROP(0.50f, 0.05f, 2.00f, 10, null),
+
+    /**
+     * Single-yellow line road marking — 2-hour max parking restriction (SIDE_STREET_ZONE).
+     * Car parked here for &gt; 120 in-game minutes will receive a PCN from Clive.
+     */
+    SINGLE_YELLOW_PROP(0.50f, 0.05f, 2.00f, 8, null),
+
+    /**
+     * Pay-and-Display ticket machine — standalone yellow metal column at COUNCIL_CAR_PARK.
+     * Press E to buy a PAY_AND_DISPLAY_TICKET (1 COIN per hour, max 4 hours).
+     * Vandalism with CROWBAR: disables machine for 1 in-game day, seeds VANDALISM rumour,
+     * +8 Notoriety, +20 NoiseSystem level. Sets broken-machine flag (+20% appeal success).
+     * Yields SCRAP_METAL when destroyed.
+     */
+    PAY_AND_DISPLAY_MACHINE_PROP(0.40f, 1.60f, 0.40f, 12, Material.SCRAP_METAL),
+
+    /**
+     * Wheel clamp — a bright yellow Denver boot applied to a car's wheel by Clive
+     * after a second-circuit violation. Car.isClamped() == true while present.
+     * Removed when the fine (12 COIN) is paid; drops WHEEL_CLAMP material.
+     */
+    WHEEL_CLAMP_PROP(0.60f, 0.40f, 0.40f, 15, Material.WHEEL_CLAMP),
+
+    /**
+     * Appeal desk — counter prop at the COUNCIL_OFFICE where the player submits
+     * a PCN appeal. Press E (must hold PENALTY_CHARGE_NOTICE + BLANK_PAPER).
+     * Staffed by COUNCIL_RECEPTIONIST Brenda. Appeal takes 2 in-game days.
+     */
+    APPEAL_DESK_PROP(1.20f, 0.90f, 0.70f, 8, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -2017,7 +2017,28 @@ public enum NPCType {
      * 09:30–15:30. Passive; if assaulted seeds COUNCIL_ENFORCEMENT rumour, adds
      * ASSAULT_ON_OFFICIAL crime, Wanted +3. HP 25f, no attack, not hostile.
      */
-    ENVIRONMENTAL_HEALTH_OFFICER(25f, 0f, 0f, false);
+    ENVIRONMENTAL_HEALTH_OFFICER(25f, 0f, 0f, false),
+
+    // ── Issue #1198: Northfield Traffic Warden ────────────────────────────────
+
+    /**
+     * Clive — the town's sole civil enforcement officer (Traffic Warden).
+     * Male, 50s, yellow hi-vis tabard, peaked cap, hand-held terminal.
+     * Patrols high street, car park, and side streets Mon–Sat 08:00–18:00.
+     * Fixed circuit: each full patrol takes 8 in-game minutes.
+     * Passive; if assaulted seeds COUNCIL_ENFORCEMENT rumour, adds
+     * ASSAULT_ON_OFFICIAL to CriminalRecord, Wanted +3, NeighbourhoodSystem −5 vibes.
+     */
+    TRAFFIC_WARDEN(30f, 0f, 0f, false),
+
+    /**
+     * Brenda — Council Receptionist at the COUNCIL_OFFICE landmark.
+     * Staffs the front desk Mon–Fri 09:00–17:00. Passive; handles PCN appeals
+     * submitted at the APPEAL_DESK_PROP.
+     * Speech: "Take a number." / "You'll need to fill in the form."
+     *         / "Two working days and we'll write to you." / "Next, please."
+     */
+    COUNCIL_RECEPTIONIST(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

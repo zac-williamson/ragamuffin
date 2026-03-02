@@ -4305,7 +4305,48 @@ public enum Material {
      * Post to SUGGESTION_BOX_PROP at Council Office to force Janet's next
      * inspection to target a specific venue. One tip-off per in-game week.
      */
-    ANONYMOUS_NOTE("Anonymous Note");
+    ANONYMOUS_NOTE("Anonymous Note"),
+
+    // ── Issue #1198: Northfield Traffic Warden ────────────────────────────────
+
+    /**
+     * Pay-and-Display Ticket — bought from PAY_AND_DISPLAY_MACHINE_PROP (1 COIN/hr, max 4 hrs).
+     * Player must press E on their parked car to place it on the dashboard.
+     * Valid ticket prevents Clive from issuing a PCN at COUNCIL_CAR_PARK.
+     */
+    PAY_AND_DISPLAY_TICKET("Pay-and-Display Ticket"),
+
+    /**
+     * Penalty Charge Notice — issued by Clive (TRAFFIC_WARDEN) on a parking violation.
+     * Fine: 3 COIN if paid within 2 in-game days; 6 COIN standard; 12 COIN if clamped.
+     * Can be appealed at APPEAL_DESK_PROP at the COUNCIL_OFFICE.
+     * Recorded as PARKING_OFFENCE in CriminalRecord.
+     */
+    PENALTY_CHARGE_NOTICE("Penalty Charge Notice"),
+
+    /**
+     * Forged Parking Ticket — crafted at PHOTOCOPIER_PROP (GRAFTING ≥ Apprentice):
+     * PAY_AND_DISPLAY_TICKET + BLANK_PAPER → FORGED_PARKING_TICKET.
+     * Place on another car: 60% chance Clive detects forgery (FRAUD + Notoriety +6 + PCN).
+     * Sell to COMMUTER or CAFF_REGULAR NPCs for 1 COIN each.
+     * 5 sales in one day awards TICKET_TOUT achievement.
+     */
+    FORGED_PARKING_TICKET("Forged Parking Ticket"),
+
+    /**
+     * Wheel Clamp — dropped when the clamp is removed from a clamped car.
+     * Fence at scrapyard for 2 COIN (stolen clamp).
+     * Applied by Clive on a second-circuit repeat violation.
+     */
+    WHEEL_CLAMP("Wheel Clamp"),
+
+    /**
+     * Clive's Terminal — dropped if Clive is knocked out.
+     * Sell at pawn shop for 5 COIN.
+     * One-use: interact (E) with a PCN-marked car while holding CLIVE_TERMINAL
+     * to void the PCN (80% success chance).
+     */
+    CLIVE_TERMINAL("Clive's Terminal");
 
     private final String displayName;
 
@@ -7058,6 +7099,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official notice
             case ANONYMOUS_NOTE:
                 return IconShape.FLAT_PAPER;  // folded note
+
+            // Issue #1198: Northfield Traffic Warden
+            case PAY_AND_DISPLAY_TICKET:
+                return IconShape.FLAT_PAPER;  // small ticket slip
+            case PENALTY_CHARGE_NOTICE:
+                return IconShape.FLAT_PAPER;  // yellow PCN envelope
+            case FORGED_PARKING_TICKET:
+                return IconShape.FLAT_PAPER;  // forged ticket slip
+            case WHEEL_CLAMP:
+                return IconShape.BOX;         // heavy metal device
+            case CLIVE_TERMINAL:
+                return IconShape.BOX;         // hand-held enforcement terminal
 
             default:
                 return IconShape.BOX;
