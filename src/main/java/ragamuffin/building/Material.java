@@ -3059,7 +3059,27 @@ public enum Material {
      * Sellable to the estate agent (Baxter's) for 50 COIN.
      * Tooltip: "Someone's whole life on one sheet of paper."
      */
-    PROPERTY_DEED("Property Deed");
+    PROPERTY_DEED("Property Deed"),
+
+    // ── Issue #1122: Sun Kissed Studio — Marchetti front materials ────────────
+
+    /**
+     * Marchetti Ledger — a leather-bound accounts book from the back-room safe
+     * at Sun Kissed Studio. Contains records of all Marchetti Crew cash drops.
+     * Can be delivered to the police station to trigger a 24-hour raid closure,
+     * but marks the player as GRASS (−40 Marchetti Respect).
+     * Tooltip: "Names, dates, and amounts. The kind of book that gets people killed."
+     */
+    MARCHETTI_LEDGER("Marchetti Ledger"),
+
+    /**
+     * Brown Envelope — an unlabelled cash envelope used for Marchetti Crew drops.
+     * Dropped at Sun Kissed Studio at 11:00 and 18:00 daily.
+     * Player can intercept (−20 Marchetti Respect, +15–25 COIN) or deliver
+     * to Tracey (+3 Respect, +5 COIN).
+     * Tooltip: "The lifeblood of Northfield's informal economy."
+     */
+    BROWN_ENVELOPE("Brown Envelope");
 
     private final String displayName;
 

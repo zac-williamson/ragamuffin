@@ -2530,6 +2530,43 @@ public enum AchievementType {
         "Overdone It",
         "Three paracetamol in six hours. Janet would be appalled. Your stomach agrees with her.",
         1
+    ),
+
+    // ── Issue #1122: Sun Kissed Studio ────────────────────────────────────────
+
+    /** Use a sunbed at Sun Kissed Studio and leave with the TANNED buff active. */
+    BRONZED(
+        "Bronzed",
+        "Walked out of Sun Kissed Studio looking like you've been to Marbella. You haven't.",
+        1
+    ),
+
+    /** Use a sunbed 5 times (accumulate 5 sessions at Sun Kissed Studio). */
+    SUN_KISSED(
+        "Sun Kissed",
+        "Five sessions under the UV tubes. Tracey says you're her best customer. Worrying.",
+        5
+    ),
+
+    /** Deliver a Marchetti cash drop to Tracey at Sun Kissed Studio. */
+    CLEAN_MONEY(
+        "Clean Money",
+        "Walked a brown envelope through the front door of a tanning salon. Perfectly normal.",
+        1
+    ),
+
+    /** Deliver the MARCHETTI_LEDGER to the police station. */
+    LAUNDERED(
+        "Laundered",
+        "Handed over the ledger. The Marchetti Crew will have opinions about this.",
+        1
+    ),
+
+    /** Purchase Special Services at Sun Kissed Studio (Street Rep ≥ 40). */
+    SPECIAL_APPOINTMENT(
+        "Special Appointment",
+        "Booked in for the full treatment. The kind that doesn't go on the price board.",
+        1
     );
 
     private final String name;

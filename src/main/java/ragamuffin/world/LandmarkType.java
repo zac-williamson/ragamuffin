@@ -475,7 +475,20 @@ public enum LandmarkType {
      * Staffed by Janet (PHARMACIST) and a SHOP_WORKER.
      * Managed by PharmacySystem.
      */
-    PHARMACY;
+    PHARMACY,
+
+    // ── Issue #1122: Sun Kissed Studio ────────────────────────────────────────
+
+    /**
+     * Sun Kissed Studio — Northfield Tanning &amp; Massage.
+     * Narrow 6×8×3 shopfront on the high street parade between the nail salon
+     * and the payday loan shop. Run by Tracey (SALON_OWNER), with massage
+     * therapists Jade and Tanya (MASSAGE_THERAPIST).
+     * Open Mon–Sat 09:00–21:00, Sun 11:00–18:00.
+     * Also serves as a Marchetti Crew money-laundering front.
+     * Managed by TanningSalonSystem.
+     */
+    SUN_KISSED_STUDIO;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -558,6 +571,7 @@ public enum LandmarkType {
             case SPORTING_SOCIAL_CLUB:  return "Northfield Sporting & Social Club";
             case FUNERAL_PARLOUR:       return "Meredith & Sons Funeral Directors";
             case PHARMACY:              return "Day & Night Chemist";
+            case SUN_KISSED_STUDIO:     return "Sun Kissed Studio";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
