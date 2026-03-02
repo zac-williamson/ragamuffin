@@ -36031,3 +36031,145 @@ At 20:00 each in-game day, `NewsagentSystem.resolveLotteryTickets()` iterates al
 // All Props (NEWSAGENT_COUNTER_PROP, MAGAZINE_RACK_PROP, NEWSAGENT_NOTICE_BOARD_PROP, NEWSPAPER_BUNDLE_PROP, LOTTERY_DISPLAY_PROP) already defined in PropType.java
 // Integrates: NewspaperSystem, RumourNetwork, NotorietySystem, WantedSystem, CriminalRecord,
 //   StreetSkillSystem, NeighbourhoodSystem, WeatherSystem, TimeSystem, StreetEconomySystem, AchievementSystem
+
+---
+
+## Issue #1202: Add Northfield Karaoke Night — Wetherspoons Friday Special, Crowd Reaction & the Mic Drop Hustle
+
+### Overview
+
+Every Friday from 20:00–23:00, Wetherspoons hosts Karaoke Night. A DJ booth
+(`KARAOKE_BOOTH_PROP`) appears at the back of the pub. The compère is **Bev**
+(`NPCType.KARAOKE_COMPERE`), a chain-smoking woman in her 50s with a laminated
+song sheet and a grudge against silence.
+
+### `KaraokeSystem` — new class in `ragamuffin.core`
+
+#### Song Selection & Mini-Game
+
+- Press E on the `KARAOKE_BOOTH_PROP` to queue for a song.
+- Bev calls the player up after a random 0–3 NPC turns (1–3 minute wait).
+- Player performs using the existing `BattleBarMiniGame` timing mechanic (3 bars).
+  - Score 0–1 hit: TERRIBLE — crowd boos (see Crowd Reaction below).
+  - Score 2 hits: ADEQUATE — polite applause; NPC speech "Wasn't the worst I've heard."
+  - Score 3 hits: GREAT — crowd cheers; Bev says "Get in! Give it up!".
+- Song pool (5 songs): "Angels", "Don't Look Back in Anger", "Mr. Brightside",
+  "Livin' on a Prayer", "Valerie". Chosen randomly per performance.
+
+#### Crowd Reaction
+
+- **TERRIBLE performance**: 2–4 PUBLIC/DRUNK NPCs start `NPCState.JEERING`; one
+  throws a `PINT_GLASS_PROP` (projectile: if it hits, player takes 3 damage +
+  `GLASSED` debuff: -10 Alertness for 60 seconds). Notoriety +2.
+  Seeds `RumourType.LOCAL_EVENT` rumour: "Someone got bottled at karaoke last night."
+- **GREAT performance**: ALL NPCs in pub enter `NPCState.CELEBRATING` for 30 seconds.
+  Notoriety +5 (local fame). Bev offers 5 COIN tip. Seeds `RumourType.LOCAL_EVENT`
+  rumour: "Did you see that karaoke? Absolute legend."
+  `WetherspoonsSystem` bar sales spike: each PUBLIC NPC immediately buys a round
+  (calls `WetherspoonsSystem.serveRound()`).
+
+#### Bev the Compère
+
+- `NPCType.KARAOKE_COMPERE` (existing `SHOPKEEPER` base until a dedicated type can
+  be added; use `NPCType.PUBLIC` as fallback).
+- Active only on Fridays 20:00–23:00; otherwise IDLE at the bar.
+- Bev reacts to notoriety: if player Notoriety ≥ 50, she refuses to let them on
+  stage: "You're not touching my mic, love. I know what you did."
+
+#### Sabotage Opportunities
+
+- **Cut the power**: `FUSE_BOX_PROP` (back hallway). Interact while holding
+  `SCREWDRIVER` to kill the PA for the duration of a rival NPC's performance.
+  Success = rival NPC fails; rival gets booed. Notoriety +3 if witnessed.
+- **Steal the mic**: Grab `MICROPHONE_PROP` from booth while Bev is distracted
+  (she looks away 10 seconds after each song ends). Mic sells to `FenceSystem`
+  for 8 COIN or can be used with `BuskingSystem` at double XP.
+
+#### Integration
+
+- **`WetherspoonsSystem`**: karaoke only active on Friday night (check
+  `TimeSystem.getDayOfWeek() == DayOfWeek.FRIDAY && hour >= 20 && hour < 23`).
+  GREAT performance triggers a round-buying spike.
+- **`BattleBarMiniGame`**: reuse the same timing mini-game for song performance
+  (3 bars, difficulty = song difficulty enum: EASY/MEDIUM/HARD).
+- **`NotorietySystem`**: TERRIBLE = +2; GREAT = +5; sabotage witnessed = +3.
+- **`RumourNetwork`**: seed `LOCAL_EVENT` rumours after each TERRIBLE/GREAT outcome.
+- **`StreetSkillSystem`**: PERFORMING skill XP +1 per performance regardless of score;
+  +3 on GREAT; unlock `KARAOKE_KING` title at PERFORMING Journeyman.
+- **`WantedSystem`**: mic theft = +1 star; fuse box sabotage witnessed = +1 star.
+- **`CriminalRecord`**: logs `CRIMINAL_DAMAGE` on fuse box cut; `THEFT` on mic steal.
+- **`NeighbourhoodSystem`**: GREAT performance = +2 Vibes; glassing incident = −3 Vibes.
+- **`NoiseSystem`**: PA on = noise level 7 in pub vicinity; cut PA = level drops to 1.
+- **`DogCompanionSystem`**: dog companion present in pub = crowd reacts warmly (+1 to
+  performance score) unless dog barks during performance (20% chance, −1 score).
+- **`AchievementSystem`**: new achievements — `KARAOKE_KING` (GREAT score), 
+  `BOTTLED_IT` (hit by thrown pint glass), `FULL_HOUSE` (perform to max-capacity pub),
+  `MIC_DROP` (steal the mic during a rival's performance).
+
+### Materials
+
+All materials already defined in `Material.java`:
+- `MICROPHONE` (existing) — used as the stolen mic item.
+- `PINT_GLASS` (existing) — used as thrown projectile.
+
+New Props to add to `PropType.java`:
+- `KARAOKE_BOOTH_PROP`
+- `FUSE_BOX_PROP`
+- `MICROPHONE_PROP` (world prop, distinct from inventory `MICROPHONE`)
+
+### New AchievementType entries to add to `AchievementType.java`
+- `KARAOKE_KING` — Nailed a karaoke performance at the Spoons.
+- `BOTTLED_IT` — Got glassed for a terrible karaoke performance.
+- `FULL_HOUSE` — Performed to a packed pub.
+- `MIC_DROP` — Stole the mic mid-show.
+
+### Unit Tests
+
+- Song selection is uniformly distributed across the pool (seeded RNG, 5000 trials).
+- Score 3 = GREAT, score 2 = ADEQUATE, score ≤ 1 = TERRIBLE (boundary tests).
+- TERRIBLE: Notoriety +2 applied; rumour seeded; glassing projectile spawned.
+- GREAT: Notoriety +5 applied; rumour seeded; Bev tip (5 COIN) added to inventory.
+- Bev refusal: Notoriety ≥ 50 blocks stage access with correct message.
+- Fuse-box sabotage: requires `SCREWDRIVER`; fails without it; Notoriety +3 if NPC
+  within 4 blocks.
+- Karaoke active only Friday 20:00–23:00 (test at Thursday 20:00 = inactive, Friday
+  20:00 = active, Saturday 00:00 = inactive).
+
+### Integration Tests — implement these exact scenarios
+
+1. **Successful karaoke — GREAT performance**: Seed world. Set `TimeSystem` to Friday
+   20:30. Player enters Wetherspoons and presses E on `KARAOKE_BOOTH_PROP`. Advance
+   simulation until Bev calls player (mock the queue wait). Feed `BattleBarMiniGame`
+   with seeded input yielding 3/3 hits. Verify `NotorietySystem.getNotoriety()`
+   increased by 5. Verify `player.getInventory().getItemCount(Material.COIN)` increased
+   by 5 (Bev's tip). Verify at least one `RumourType.LOCAL_EVENT` rumour exists in
+   `RumourNetwork`. Verify `AchievementSystem` has `KARAOKE_KING` unlocked.
+
+2. **TERRIBLE performance — glassing**: Set `TimeSystem` to Friday 21:00. Player
+   performs with 0/3 hits (seeded `BattleBarMiniGame`). Verify `NotorietySystem`
+   increased by 2. Verify at least 2 PUBLIC/DRUNK NPCs have state `NPCState.JEERING`.
+   Verify a pint glass projectile has been spawned (check world or projectile list).
+   Verify `RumourNetwork` has a `LOCAL_EVENT` rumour containing "bottled".
+
+3. **Bev blocks high-notoriety player**: Set player Notoriety to 55. Set
+   `TimeSystem` to Friday 20:00. Player presses E on `KARAOKE_BOOTH_PROP`. Verify
+   `KaraokeSystem.tryQueueForStage(player)` returns `REFUSED_HIGH_NOTORIETY`. Verify
+   Bev's speech text contains "not touching my mic".
+
+4. **Fuse box sabotage — unwitnessed**: Player holds `SCREWDRIVER`. No NPCs within
+   4 blocks. Player interacts with `FUSE_BOX_PROP`. Verify `KaraokeSystem.isPaActive()`
+   == false. Verify `NotorietySystem` unchanged (unwitnessed). Verify next NPC
+   performance fails (score forced to 0).
+
+5. **Karaoke inactive outside Friday night**: Set `TimeSystem` to Saturday 00:01.
+   Player presses E on `KARAOKE_BOOTH_PROP`. Verify `KaraokeSystem.isKaraokeActive()`
+   == false. Verify Bev's speech text contains "not on tonight, love".
+
+// ── New: KaraokeSystem.java in ragamuffin.core
+// Uses existing NPCType.PUBLIC for Bev (fallback); BattleBarMiniGame for performance
+// Uses LandmarkType.WETHERSPOONS (existing)
+// New PropType: KARAOKE_BOOTH_PROP, FUSE_BOX_PROP, MICROPHONE_PROP — add to PropType.java
+// New AchievementType: KARAOKE_KING, BOTTLED_IT, FULL_HOUSE, MIC_DROP — add to AchievementType.java
+// Integrates: WetherspoonsSystem, BattleBarMiniGame, NotorietySystem, RumourNetwork,
+//   StreetSkillSystem, WantedSystem, CriminalRecord, NeighbourhoodSystem, NoiseSystem,
+//   DogCompanionSystem, AchievementSystem, TimeSystem
