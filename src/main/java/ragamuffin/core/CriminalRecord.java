@@ -614,7 +614,24 @@ public class CriminalRecord {
          * Recorded when the player assaults Janet (ENVIRONMENTAL_HEALTH_OFFICER).
          * WantedSystem +3 stars; COUNCIL_ENFORCEMENT rumour seeded.
          */
-        ASSAULT_ON_OFFICIAL("Assault on a council official");
+        ASSAULT_ON_OFFICIAL("Assault on a council official"),
+
+        // ── Issue #1213: Northfield Police Station — Custody Suite ────────────
+
+        /**
+         * Minor shoplifting or low-value theft offence.
+         * Can be cleared once per in-game week by CLO Sandra at Northfield Police Station
+         * if the player has ≥ 20 Community Respect.
+         */
+        PETTY_THEFT("Petty theft"),
+
+        /**
+         * Recorded when the player fails to attend a Magistrates' Court hearing after
+         * posting bail at Northfield Police Station.
+         * Penalty: WantedSystem +2 stars, Notoriety +40.
+         * Achievement: BAIL_JUMPER.
+         */
+        BAIL_JUMPING("Bail jumping (failure to surrender)");
 
         private final String displayName;
 
