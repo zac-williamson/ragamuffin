@@ -29273,3 +29273,212 @@ Janet's detection range (4 blocks) for shoplifting.
 // New achievements: FORGED_IT, FIVE_FINGER_DISCOUNT, MEDICINE_CABINET, JUST_IN_TIME,
 //                   OVERDONE_IT (add to AchievementType.java)
 // New LandmarkType: PHARMACY (add to LandmarkType.java), display name "Day & Night Chemist"
+
+---
+
+## Add Sultan's Kebab House — 24-Hour Doner, the Meat Card Hustle & the Back-Room Card School
+
+**Landmark**: `KEBAB_SHOP` (already in `LandmarkType.java`, display name "Sultan's Kebab")
+**System file**: `src/main/java/ragamuffin/core/KebabShopSystem.java`
+
+Sultan's Kebab on the high street — the fluorescent-lit, red-and-white tiled institution
+that never closes. Grease-stained laminated menus taped to the wall, a slowly rotating
+vertical spit of indeterminate meat, a hand-written special board, and Mehmet behind the
+counter who has seen everything twice. Distinct from the late-night `KebabVanSystem`
+(which is a mobile van outside the pub 22:00–02:00); Sultan's is a proper sit-down
+(four formica tables, eight rickety chairs) kebab house open 10:00–06:00.
+
+### NPCs
+
+- **Mehmet** (`KEBAB_SHOP_OWNER`) — the proprietor. 10:00–06:00 seven days. Anchored at
+  the KEBAB_COUNTER_PROP. Never refuses service regardless of Notoriety. Deeply unimpressed
+  by everything. Gives free BREAD if player looks sufficiently pitiful (hunger < 20,
+  no coins). Seeds `LOCAL_EVENT` rumours about neighbourhood comings and goings — he sees
+  everyone who walks the high street at 3am.
+
+- **Yusuf** (`KEBAB_SHOP_WORKER`) — Mehmet's nephew. Works 18:00–06:00 daily, manages the
+  DONER_SPIT_PROP and deep fryer. 20% chance of giving an extra CHIPS free if player orders
+  two or more items (tooltip: "Go on then, take the chips"). Passive until the player
+  attempts to reach the BACK_ROOM_DOOR_PROP without access, whereupon he blocks it.
+
+- **Card School regulars** — 3 STREET_LAD NPCs occupying the back room 23:00–05:00
+  (Monday–Saturday), playing three-card brag on a CARD_TABLE_PROP. Joined occasionally
+  by one YOUTH_GANG NPC at weekends. The school runs itself; player can join at
+  Street Rep ≥ 30.
+
+### Menu (KEBAB_COUNTER_PROP — press E)
+
+| Item | Price | Effect |
+|------|-------|--------|
+| `DONER_KEBAB` | 3 COIN | Hunger +60, Warmth +10; 15% FOOD_POISONING chance at 03:00+ |
+| `SHISH_KEBAB` | 4 COIN | Hunger +55, Energy +15; always safe |
+| `MIXED_KEBAB` | 5 COIN | Hunger +75, Warmth +15; premium — only 3 available per night |
+| `CHIPS` | 2 COIN | Hunger +40 (reuses existing Material) |
+| `GARLIC_BREAD` | 1 COIN | Hunger +20, Warmth +5; pairs with kebab for −1 COIN combo |
+| `FLAT_COLA` | 1 COIN | Thirst −30 (reuses existing Material) |
+| `EXTRA_CHILLI` | 0 COIN | Condiment; adds Warmth +5, 25% upset stomach (−5 HP over 30s) |
+
+Stock (doner/shish/mixed) resets each opening at 10:00. MIXED_KEBAB limited to 3/night.
+Combo discount: any two items from {DONER_KEBAB, SHISH_KEBAB, MIXED_KEBAB} + GARLIC_BREAD
+purchased together → −1 COIN total. Tooltip from Mehmet: "Together is cheaper. This is how
+we do it."
+
+### Meat Card Hustle
+
+**MEAT_CARD** — a laminated loyalty stamp card. First visit: Mehmet gives one free.
+Stamp per purchase (one per visit, max one per in-game day):
+
+- 5 stamps → free `DONER_KEBAB`
+- 10 stamps → free `MIXED_KEBAB` + Mehmet calls you by first name (tooltip)
+- 20 lifetime stamps → `SULTAN_REGULAR` achievement ("You're basically family now")
+- **Forgery mechanic**: MEAT_CARD can be forged at the squat WORKBENCH with
+  NEWSPAPER + COIN (1 each). Forged card grants 5 free stamps instantly.
+  Detection: 30% per visit (Mehmet inspects card). Caught: card confiscated,
+  banned for 2 in-game days, Notoriety +3. Achievement: `FORGED_LOYALTY`
+  — use a forged card successfully once.
+
+### Back-Room Card School (23:00–05:00, Mon–Sat)
+
+A low-lit CARD_TABLE_PROP in a 4×4 back room accessed via `BACK_ROOM_DOOR_PROP`.
+The door is unlocked for players with Street Rep ≥ 30 or a `CARD_SCHOOL_INVITE`
+(dropped by STREET_LAD NPCs at 5% chance on interaction). Locked otherwise
+(Yusuf blocks). Lockpick (6 hits) can force it: Notoriety +10, NoiseSystem +20,
+Yusuf becomes hostile.
+
+**Three-Card Brag** mini-game (press E at CARD_TABLE_PROP):
+- Buy-in: 3 COIN minimum, max 15 COIN per hand.
+- 3 STREET_LAD NPCs as opponents; one YOUTH_GANG at weekends.
+- Winning probability: 35% base, +5% per TRADING skill level, −5% per
+  DRUNK debuff stack (each PINT in last 2 in-game hours).
+- Win pot: 2–4× buy-in depending on number of players still in.
+- **Bluffing**: player can bluff (fake confidence); success probability
+  35% base, +10% at INFLUENCE Expert+. Failed bluff: opponents don't fold,
+  player still plays hand normally.
+- **Cheating**: player can slip a card at STEALTH Adept+ (30% base catch chance).
+  Caught cheating: STREET_LAD NPCs turn hostile (gang brawl), Notoriety +12,
+  CriminalRecord entry `CHEATING_AT_CARDS`, ejected from shop.
+- Achievement: `THREE_CARD_TRICK` — win 3 consecutive hands.
+- Achievement: `CLEANED_OUT` — lose 20+ COIN in one session.
+
+### Weather Effects
+
+- **COLD_SNAP / FROST / RAIN**: +2 seated PUBLIC/PENSIONER/DRUNK NPCs sheltering
+  inside; tooltip: "Mehmet doesn't charge extra for warmth." Shop warms player
+  +6 Warmth/min while inside (higher than charity shop, lower than leisure centre).
+- **SUNNY / HOT**: business drops; Mehmet tries to sell you FLAT_COLA.
+  One seated SCHOOL_KID NPC in afternoons (Mehmet periodically tells them to go home).
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `SULTAN_REGULAR` | 20 lifetime purchases at Sultan's Kebab |
+| `FORGED_LOYALTY` | Use a forged MEAT_CARD successfully |
+| `THREE_CARD_TRICK` | Win 3 consecutive hands at the card school |
+| `CLEANED_OUT` | Lose 20+ COIN in a single card school session |
+| `MIXED_KEBAB_SWEEP` | Buy all 3 MIXED_KEBAB in a single night |
+| `FOOD_POISONING` | Get food poisoning from a 3am DONER_KEBAB |
+
+(Add to `AchievementType.java`.)
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `DONER_KEBAB` | Main food item; 15% food poisoning chance after 03:00 |
+| `SHISH_KEBAB` | Premium skewer; always safe |
+| `MIXED_KEBAB` | Limited 3/night; max hunger restore |
+| `GARLIC_BREAD` | Combo discount trigger |
+| `MEAT_CARD` | Loyalty stamp card; forgeable at workbench |
+| `CARD_SCHOOL_INVITE` | Access token for back room; rare drop from STREET_LAD |
+
+(Note: `CHIPS` and `FLAT_COLA` already exist in `Material.java`.)
+
+### New NPC Types Required
+
+| NPCType | Notes |
+|---------|-------|
+| `KEBAB_SHOP_OWNER` | Mehmet; never closes, never refuses service |
+| `KEBAB_SHOP_WORKER` | Yusuf; evening/night shift, guards back room |
+
+(Add to `NPCType.java`.)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `KEBAB_COUNTER_PROP` | Menu/ordering interaction point |
+| `DONER_SPIT_PROP` | Rotating meat; ambient prop, Yusuf tends it |
+| `CARD_TABLE_PROP` | Three-card brag mini-game trigger |
+| `BACK_ROOM_DOOR_PROP` | Lockable door to card school; gated by Street Rep |
+| `KEBAB_SHOP_SIGN_PROP` | Exterior neon sign |
+| `FORMICA_TABLE_PROP` | Seating prop (4 tables × 2 chairs) |
+
+(Add to `PropType.java`.)
+
+### System Integrations
+
+- **KebabVanSystem**: distinct from the mobile van (different hours, indoor, different stock)
+- **WarmthSystem**: interior is warm shelter (+6/min); DONER_KEBAB and GARLIC_BREAD warm player
+- **HealingSystem**: food items restore hunger; FOOD_POISONING debuff from 3am doner
+- **StreetEconomySystem**: satisfies HUNGRY and COLD NPC needs; card school satisfies BORED
+- **StreetSkillSystem**: TRADING XP from combo purchase / MEAT_CARD stamp collecting;
+  STEALTH XP from successful card cheat; INFLUENCE XP from successful bluff
+- **FactionSystem**: STREET_LAD card players; brawl on cheat detection
+- **NotorietySystem**: forged card caught +3; card cheat caught +12; lockpick back room +10
+- **CriminalRecord**: `CHEATING_AT_CARDS` entry on cheat detection; `FORGERY` on forged card detection
+- **WantedSystem**: back-room lockpick triggers Tier 1 alert
+- **NoiseSystem**: lockpick entry +20; card school brawl +25
+- **RumourNetwork**: Mehmet seeds `LOCAL_EVENT` rumours (people he sees at 3am);
+  card cheat brawl seeds `GANG_ACTIVITY` rumour
+- **WeatherSystem**: COLD_SNAP/RAIN increases shelter NPCs; SUNNY reduces footfall
+- **SquatSystem**: MEAT_CARD forgery at squat WORKBENCH
+- **DisguiseSystem**: BALACLAVA or HOOD not challenged by Mehmet (unlike pharmacy/charity shop)
+- **WitnessSystem**: brawl evidence if police NPC within 10 blocks
+- **NewspaperSystem**: back-room brawl generates "Card School Bust-Up at Northfield Kebab House"
+- **AchievementSystem**: SULTAN_REGULAR, FORGED_LOYALTY, THREE_CARD_TRICK, CLEANED_OUT,
+  MIXED_KEBAB_SWEEP, FOOD_POISONING
+- **TimeSystem**: open 10:00–06:00; card school 23:00–05:00 Mon–Sat; MIXED_KEBAB resets at 10:00
+
+**Unit tests**: menu price table and combo discount logic (−1 COIN for kebab+garlic bread),
+MEAT_CARD stamp accumulation (one per in-game day), forged card detection probability (30%),
+FOOD_POISONING probability (15% for doner after 03:00, 0% before), card school win probability
+by TRADING skill level, cheat detection (30% base), bluff success by INFLUENCE skill,
+MIXED_KEBAB nightly cap (max 3), back-room lock (gated by Street Rep ≥ 30).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Combo discount applied**: Give player 10 COIN. Place player at KEBAB_COUNTER_PROP.
+   Select DONER_KEBAB (3 COIN) and GARLIC_BREAD (1 COIN) in a single order.
+   Verify total charged is 3 COIN (not 4 — combo discount of −1 applied).
+   Verify DONER_KEBAB and GARLIC_BREAD added to inventory. Verify Hunger stat increased.
+
+2. **MEAT_CARD stamp and free reward**: Give player a MEAT_CARD with 4 stamps. Give player
+   3 COIN. Place player at KEBAB_COUNTER_PROP. Purchase DONER_KEBAB. Verify MEAT_CARD
+   now has 5 stamps. Verify player receives one additional DONER_KEBAB free (5-stamp reward).
+   Verify 3 COIN deducted for the purchased kebab only.
+
+3. **Back-room card school — win hand**: Set player Street Rep = 35. Place player at
+   BACK_ROOM_DOOR_PROP. Verify door opens (no Yusuf block). Place player at CARD_TABLE_PROP.
+   Give player 6 COIN. Buy in for 3 COIN. Force RNG to player win outcome.
+   Verify player receives ≥ 6 COIN (2× pot for 2-player hand). Verify TRADING XP awarded.
+
+4. **Card cheat caught — brawl triggered**: Set player STEALTH skill below Adept. Place player
+   at CARD_TABLE_PROP in back room. Attempt cheat action. Force RNG to detection outcome.
+   Verify STREET_LAD NPCs turn hostile (NPCState.AGGRESSIVE). Verify CriminalRecord contains
+   CHEATING_AT_CARDS. Verify Notoriety increased by 12. Verify NoiseSystem level ≥ 25.
+
+5. **3am food poisoning**: Advance time to 03:30. Give player DONER_KEBAB. Use item.
+   Force RNG to poisoning outcome (15% chance — seed RNG). Verify player receives
+   FOOD_POISONING debuff (−5 HP over 30 real seconds). Verify FOOD_POISONING achievement
+   unlocked.
+
+// ── New: KebabShopSystem.java in ragamuffin.core
+// New materials: DONER_KEBAB, SHISH_KEBAB, MIXED_KEBAB, GARLIC_BREAD, MEAT_CARD,
+//                CARD_SCHOOL_INVITE (add to Material.java; CHIPS/FLAT_COLA already exist)
+// New NPCTypes: KEBAB_SHOP_OWNER, KEBAB_SHOP_WORKER (add to NPCType.java)
+// New PropTypes: KEBAB_COUNTER_PROP, DONER_SPIT_PROP, CARD_TABLE_PROP, BACK_ROOM_DOOR_PROP,
+//                KEBAB_SHOP_SIGN_PROP, FORMICA_TABLE_PROP (add to PropType.java)
+// New achievements: SULTAN_REGULAR, FORGED_LOYALTY, THREE_CARD_TRICK, CLEANED_OUT,
+//                   MIXED_KEBAB_SWEEP, FOOD_POISONING (add to AchievementType.java)
+// LandmarkType: KEBAB_SHOP already exists with display name "Sultan's Kebab"
