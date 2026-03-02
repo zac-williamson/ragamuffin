@@ -4243,6 +4243,82 @@ public enum AchievementType {
         "Gone Before Breakfast",
         "The repo man came in the night and took your car back. Should've paid Wayne.",
         1
+    ),
+
+    // ── Issue #1237: Northfield St. Aidan's Primary School ───────────────────
+
+    /**
+     * Awarded when the player pickpockets Dot (DINNER_LADY) for COIN.
+     * Ms. Pearson was watching from the hatch. Dot cried. You didn't hang around.
+     */
+    DINNER_MONEY_THIEF(
+        "Dinner Money Bandit",
+        "Pickpocketed the dinner lady. Dot had a good cry. You had a fiver.",
+        1
+    ),
+
+    /**
+     * Awarded when the player sells contraband CRISPS to SCHOOL_KID NPCs 5 times
+     * during lunch while Ms. Pearson isn't watching.
+     * Northfield's first-ever underground snack racket.
+     */
+    TUCK_SHOP_BANDIT(
+        "Black Market Snacks",
+        "Sold crisps to kids five times under Ms. Pearson's nose. You ran a whole operation.",
+        5
+    ),
+
+    /**
+     * Awarded when the player sprints through a PRAM during the school run chaos.
+     * The toddler thought it was funny. The mum did not.
+     */
+    PUSHCHAIR_MENACE(
+        "Road Rage Jr.",
+        "Sprinted through a pram during the school run. The toddler was fine. The mum less so.",
+        1
+    ),
+
+    /**
+     * Awarded when the player triggers a NoiseSystem event ≥ magnitude 60 (e.g. wheelie
+     * bin fire) during an Ofsted inspection, causing the inspectors to flee.
+     * The school is now Requires Improvement. Technically your fault.
+     */
+    OFSTED_SABOTEUR(
+        "Special Measures",
+        "Caused Ofsted to flee the school in chaos. The report said Requires Improvement.",
+        1
+    ),
+
+    /**
+     * Awarded when the player helps decorate the school during an Ofsted visit
+     * (Notoriety −2, positive outcome).
+     * You briefly became the most helpful person in Northfield.
+     */
+    HEAD_OF_CLASS(
+        "Model Citizen (Briefly)",
+        "Helped decorate the school during Ofsted. They gave it a Good. You got -2 Notoriety.",
+        1
+    ),
+
+    /**
+     * Awarded when the player sells the OFSTED_DRAFT_REPORT to a newspaper journalist.
+     * Front page of the Northfield Gazette. Mrs Fowler never forgave you.
+     */
+    SCHOOL_REPORT(
+        "Front Page Exclusive",
+        "Sold the Ofsted draft report to a journalist. It was in the Gazette by Tuesday.",
+        1
+    ),
+
+    /**
+     * Awarded when the player tips off the traffic warden about a double-parked car
+     * during school run chaos, earning 2 COIN.
+     * Northfield's most prolific informant. For hire.
+     */
+    INFORMANT(
+        "Grass of the Year",
+        "Tipped off a traffic warden during the school run. Earned 2 COIN. Worth it.",
+        1
     );
 
     private final String name;

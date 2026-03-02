@@ -706,7 +706,25 @@ public class CriminalRecord {
          * and is detected within 10 blocks of a POLICE NPC.
          * Penalty: Notoriety +10, WantedSystem +1 star.
          */
-        IMPERSONATION("Impersonation of a public official");
+        IMPERSONATION("Impersonation of a public official"),
+
+        // ── Issue #1237: Northfield St. Aidan's Primary School ───────────────
+
+        /**
+         * Recorded when the player enters the school grounds outside gate hours
+         * (08:00–16:00 Mon–Fri) and is caught by Ms. Pearson (HEADTEACHER_SECRETARY)
+         * within 60 seconds. DisguiseSystem score ≥ 4 bypasses Ms. Pearson but not Derek.
+         * Penalty: WantedSystem +2 stars, Notoriety +8.
+         */
+        SCHOOL_INTRUDER("School intruder (trespassing on school grounds)"),
+
+        /**
+         * Recorded when the player sells a forged FORGED_SCHOOL_REPORT or uses
+         * SCHOOL_REPORT_FORM documents fraudulently, or sells the OFSTED_DRAFT_REPORT
+         * to a newspaper journalist while a POLICE NPC is within 15 blocks.
+         * Penalty: Notoriety +10, WantedSystem +1 star.
+         */
+        SCHOOL_FRAUD("School document fraud");
 
         private final String displayName;
 

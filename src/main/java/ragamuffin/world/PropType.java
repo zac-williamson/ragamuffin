@@ -2809,7 +2809,42 @@ public enum PropType {
      * Non-destructible (council property); 0 hits; yields null.
      * Removed automatically when the ASBO expires or is overturned.
      */
-    ASBO_EXCLUSION_SIGN_PROP(0.60f, 1.40f, 0.10f, 0, null);
+    ASBO_EXCLUSION_SIGN_PROP(0.60f, 1.40f, 0.10f, 0, null),
+
+    // ── Issue #1237: Northfield St. Aidan's Primary School ───────────────────
+
+    /**
+     * School Gate — iron gate at the main entrance; closed outside 08:00–16:00.
+     * Entering when closed triggers Intruder Alert chain via PrimarySchoolSystem.
+     * Break: 0 hits (cannot be broken). Dimension: wide single-road gate.
+     */
+    SCHOOL_GATE_PROP(2.00f, 1.80f, 0.15f, 0, null),
+
+    /**
+     * Canteen Hatch — the serving counter where Dot (DINNER_LADY) sells SCHOOL_DINNER.
+     * Active 11:30–13:30 Mon–Fri. Press E to buy or attempt pickpocket.
+     */
+    CANTEEN_HATCH_PROP(1.40f, 1.00f, 0.80f, 0, null),
+
+    /**
+     * Caretaker's Shed — Derek's storage shed in the playground corner.
+     * Locked with padlock; requires CARETAKER_SHED_KEY or LOCKPICKING ≥ Journeyman.
+     * Contains PHOTOCOPIER_INK_CARTRIDGE, SCRAP_METAL, CARETAKER_MASTER_KEY.
+     */
+    CARETAKER_SHED_PROP(2.50f, 2.20f, 2.00f, 0, null),
+
+    /**
+     * Headteacher's Office Door — solid wood door requiring CARETAKER_MASTER_KEY.
+     * Behind it: filing cabinet with OFSTED_DRAFT_REPORT and SCHOOL_REPORT_FORM.
+     */
+    HEADTEACHER_OFFICE_DOOR_PROP(1.00f, 2.10f, 0.10f, 0, null),
+
+    /**
+     * Ofsted Notice — pinned to the school entrance during inspection days.
+     * Interacting gives player option to help decorate (Notoriety −2) or steal draft.
+     * Disappears when inspection ends.
+     */
+    OFSTED_NOTICE_PROP(0.60f, 0.90f, 0.05f, 0, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -975,6 +975,14 @@ public enum NPCType {
      */
     HEADTEACHER_SECRETARY(18f, 0f, 0f, false),
 
+    /**
+     * Issue #1237: Ofsted Inspector — arrives in pairs Mon morning (15% chance).
+     * Present 09:00–14:00. Passive unless a NoiseSystem event ≥ magnitude 60 occurs,
+     * causing them to flee. Immune to disguise (professional background check).
+     * Notoriety ≥ 3: becomes suspicious after 5 minutes.
+     */
+    OFSTED_INSPECTOR(20f, 0f, 0f, false),
+
     // ── Issue #1037: Northfield Indoor Market ─────────────────────────────────
 
     /**

@@ -506,5 +506,23 @@ public enum RumourType {
      * lot are involved."
      * — seeded by BettingShopSystem when player accepts Marchetti race fix.
      * Spreads via STREET_LAD and FACTION_LIEUTENANT NPCs. */
-    DODGY_DEAL;
+    DODGY_DEAL,
+
+    // ── Issue #1237: Northfield St. Aidan's Primary School ───────────────────
+
+    /** "Did you hear? There's a stranger hanging around outside St. Aidan's again."
+     * — seeded by SCHOOL_MUM NPCs during the school run (08:15–08:45, 15:00–15:30).
+     * Spreads via SCHOOL_MUM and PUBLIC NPCs; adds +3 patrol awareness near PRIMARY_SCHOOL.
+     * Also seeded when inspectors flee: "Ofsted legged it — something went off at the school." */
+    NEIGHBOURHOOD_GOSSIP,
+
+    /** "Someone's selling snacks to the kids out the back of St. Aidan's at lunch."
+     * — seeded by SCHOOL_KID NPCs when the player's tuck shop bandit count reaches 3.
+     * Spreads via SCHOOL_KID and SCHOOL_MUM NPCs; alerts Ms. Pearson patrol. */
+    SCHOOL_CONTRABAND,
+
+    /** "Ofsted are in St. Aidan's today — teachers are losing the plot."
+     * — seeded by PrimarySchoolSystem on Monday morning inspection trigger.
+     * Spreads via SCHOOL_MUM and PUBLIC NPCs within 30 blocks of PRIMARY_SCHOOL. */
+    OFSTED_VISIT;
 }
