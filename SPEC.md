@@ -41329,3 +41329,209 @@ While Keith is in `AT_BOOTH` state AND not facing the machine (probability check
 
 6. **Keith bribe enables safe looting**: Give player `SAUSAGE_ROLL`. Press E on Keith; select bribe. Verify `SAUSAGE_ROLL` consumed. Verify Keith state is `SMOKE_BREAK`. Verify looting machine for full 3-second animation completes without interruption. Verify tokens in player inventory.
 
+
+---
+
+## Issue #1265: Northfield Illegal Street Racing — Boy Racer Meets, Ring Road Sprint & the Plod Shutdown
+
+**Goal**: Add a Friday-and-Saturday-night illegal street racing event to Northfield — a gathering of modified Astras, Nova GTE bodykit specials, and loud exhausts in the Tesco car park that spills onto the ring road at midnight. The player can spectate, enter their own car, place bets, or tip off the police for a reward. The police "Plod Shutdown" mid-race adds risk and chaos.
+
+A new `StreetRacingSystem` class manages the full event lifecycle. The `STREET_RACING_MEET` landmark type is added to `LandmarkType` (a section of the ring road plus the Tesco car park staging area).
+
+---
+
+### StreetRacingSystem — Event Schedule
+
+- **Nights**: Friday 23:00–03:00 and Saturday 23:00–03:00 only.
+- The meet assembles in the Tesco car park (`TESCO_CAR_PARK` prop area) at 23:00 — 4–6 `BOY_RACER` NPCs arrive in parked cars.
+- Races are run on the ring road: a 300-block straight between two `RACING_CONE_PROP` markers.
+- Races fire every 8 in-game minutes once the meet is active. Up to 3 `BOY_RACER` NPCs compete per race.
+- At 03:00 (or when police are called — see Plod Shutdown), the meet disperses: all `BOY_RACER` NPCs drive away, props de-spawn.
+
+---
+
+### Entry & Player Participation
+
+- Player must be **in a car** (see `CarDrivingSystem`) to enter a race.
+- Press **E** on the `RACE_ORGANISER` NPC (Shane, `RACE_ORGANISER` NPCType) to enter: 5 COIN entry fee.
+  - `EnterResult`: `ENTERED`, `NO_CAR`, `INSUFFICIENT_FUNDS`, `MEET_NOT_ACTIVE`, `ALREADY_ENTERED`, `BANNED`.
+  - Player car must not be impounded (`CarDrivingSystem.isCarAvailable()`).
+- If the player's car has been modified at `CarDealershipSystem` (spoiler, alloy wheels, or engine upgrade): +5–15% speed bonus for the race.
+- Once entered, the player lines up at the starting `RACING_CONE_PROP`. Race starts 60 seconds after the previous race ends (countdown via `RACE_ORGANISER` speech line).
+
+---
+
+### Race Mechanics
+
+- Race is a 300-block sprint. Player holds **W** (or equivalent accelerate input) while in the car.
+- `StreetRacingSystem` tracks player and NPC positions along the track each frame.
+- NPC `BOY_RACER` base speed: 14–18 blocks/second (randomly assigned per NPC). Player car base speed equals `CarDrivingSystem.getPlayerCarSpeed()`.
+- **Nitrous boost**: if player has `NITROUS_CANISTER` in inventory (obtainable at `CarDealershipSystem` for 8 COIN), press **Space** once during a race to apply a 3-second +6 blocks/second burst. Single use per race.
+- Race ends when the leader crosses the finish line; remaining times recorded.
+- **Prizes** (paid by Shane from a pot funded by entry fees + spectator tips):
+
+| Finish | Prize |
+|--------|-------|
+| 1st    | 25 COIN + `RACING_TROPHY` item |
+| 2nd    | 10 COIN |
+| 3rd    | 0 COIN (entry fee lost) |
+
+- Win 3 races in one session → `RING_ROAD_KING` achievement.
+- Win 1 race with a standard (unmodified) car → `STOCK_STANDARD` achievement.
+
+---
+
+### Spectator Betting
+
+- Non-driving players (or players not entered) can bet on a race by pressing **E** on any `BOY_RACER` NPC before the race starts:
+  - Choose a racer; wager 2–20 COIN.
+  - Payout: 2:1 for favourite (fastest NPC), 3:1 for mid-field, 5:1 for underdog (slowest NPC).
+  - Win/loss resolved when race finishes.
+  - `BetResult`: `BET_PLACED`, `RACE_IN_PROGRESS`, `MEET_NOT_ACTIVE`, `INSUFFICIENT_FUNDS`, `INVALID_RACER`.
+
+---
+
+### NPC: Shane the Race Organiser
+
+- Type: `RACE_ORGANISER` (new NPCType); reuses `MECHANIC` model variant with a hi-vis jacket.
+- Present in the car park 22:45–03:00 on Friday/Saturday nights.
+- Speech lines (cycled every 90 seconds):
+  - "Right then lads, next race in five."
+  - "None of this is official, yeah? We're just enthusiasts."
+  - "Someone clocked 28 blocks a second last week. Absolute missile."
+  - "Police scanner's quiet. We're good."
+  - "Bets go through me. I take ten percent. Fair's fair."
+
+---
+
+### NPC: Boy Racers (3–5 per meet)
+
+- Type: `BOY_RACER` (new NPCType); reuses `UNEMPLOYED` model variant with `TRACKSUIT` cosmetic.
+- Each has a randomly-chosen car name from: `["Kai's Corsa", "Daz's Nova", "Liam's Fiesta", "Macca's Punto", "Gregg's Saxo"]`.
+- Pickpocket chance: 40% — each carries 3–10 COIN.
+- Between races: idle near their parked car, speech lines:
+  - "She's running sweet tonight."
+  - "Had the ECU remapped, makes a massive difference."
+  - "Don't touch the bonnet, mate."
+
+---
+
+### The Plod Shutdown
+
+The police scanner randomly triggers a shutdown between 00:00 and 03:00:
+
+- **Trigger chance**: 8% per in-game minute after midnight, rising to 20% per minute after 02:00.
+- **Alternatively**: Player can tip off the police by using the `PHONE_BOX_PROP` (press E, select "Ring Old Bill") — triggers immediate shutdown, player earns `GRASS_REWARD` (3 COIN added to player's registered address letterbox next day), and the `GRASS` achievement (morally dubious).
+- **Shutdown sequence**:
+  1. Shane shouts: *"SCATTER! PLOD!"*
+  2. All `BOY_RACER` NPCs transition to `FLEEING` state and despawn after 15 seconds.
+  3. Two `POLICE_OFFICER` NPCs arrive in a police car from the north road.
+  4. Any player still in the meet area (within 30 blocks of `RACING_CONE_PROP`) gets Wanted Tier 1 (+1 star). If the player is currently mid-race, +2 stars.
+  5. Shane despawns after 20 seconds.
+  6. Meet is cancelled for the remainder of the night. No refunds.
+- Player can avoid the shutdown by being 31+ blocks from the meet area when police arrive — no stars added.
+
+---
+
+### Hustle: Rigged Nitrous
+
+The player can **tamper with a competitor's car** to sabotage their race:
+- Approach a parked `BOY_RACER` car while owner is at least 8 blocks away.
+- Press **E** on the car → option: "Loosen nitrous line" (requires `SCREWDRIVER` in inventory; 4-second animation).
+- If undetected: target racer's speed reduced by 25% for the race. No crime recorded.
+- If caught by the car owner: `ANGRY` state; −2 Street Rep; +1 Notoriety; seeds `CAR_TAMPERED` rumour.
+- If caught by Shane: banned from future meets (`BANNED` EnterResult).
+- Achievement: `DIRTY_TRICKS` on first successful tamper that leads to a 1st-place finish.
+
+---
+
+### Integration
+
+- `CarDrivingSystem` — player car speed pulled via `getPlayerCarSpeed()`; car availability checked before entry.
+- `TimeSystem` — meet only Friday/Saturday 23:00–03:00; Plod trigger after midnight.
+- `WantedSystem` — present at meet during shutdown: +1 star; mid-race during shutdown: +2 stars; witness to sabotage: no stars (victimless crime), but being caught: +1 star.
+- `NotorietySystem` — win 3+ races: Notoriety −1 (local legend); grass on meet: Notoriety +2 (snitch reputation).
+- `CriminalRecord` — new `CrimeType`: `ILLEGAL_STREET_RACING`.
+- `RumourNetwork` — new `RumourType`: `STREET_RACING_MEET_TONIGHT` (seeded at 22:00 on meet nights by any `BOY_RACER` NPC), `CAR_TAMPERED`, `MEET_GOT_SHUT_DOWN`.
+- `NoiseSystem` — each car engine during a race: noise level 7 (audible from 20 blocks); race start: level 9 (brief spike).
+- `NeighbourhoodSystem` — meet contributes −3 Neighbourhood Vibes for the night.
+- `NewspaperSystem` — headline possibility: *"NORTHFIELD RING ROAD RACERS PLAGUE RESIDENTS — COUNCIL ACTS"* if meet is run 3+ times before Plod shutdown.
+- `FenceSystem` — `RACING_TROPHY` fences at 8 COIN ("Solid silver. Probably.").
+- `CarDealershipSystem` — `NITROUS_CANISTER` available for purchase (8 COIN, one-time use).
+- `StreetEconomySystem` — `NITROUS_CANISTER` tradeable on the black market (value 6 COIN).
+- `AchievementSystem` — four new achievements (see below).
+- `TooltipSystem` — first race entry: *"Hold W all the way. Don't let off."*; first nitrous use: *"That's the good stuff."*
+- `WitnessSystem` — car tamper observed by spectator seeds `CAR_TAMPERED` rumour; police arrival makes any racer a potential witness.
+
+---
+
+### Achievements
+
+- `RING_ROAD_KING` (progressTarget=3) — win 3 races in one session.
+- `STOCK_STANDARD` (instant) — win a race with an unmodified car.
+- `DIRTY_TRICKS` (instant) — successfully sabotage a competitor and win 1st place.
+- `GRASS` (instant) — tip off the police and trigger a Plod Shutdown.
+
+---
+
+### New Materials to add (`Material.java`)
+`NITROUS_CANISTER`, `RACING_TROPHY`
+
+### New NPCTypes to add (`NPCType.java`)
+`RACE_ORGANISER`, `BOY_RACER`
+
+### New PropTypes to add (`PropType.java`)
+`RACING_CONE_PROP`, `RACE_FINISH_BANNER_PROP`
+
+### New LandmarkType to add (`LandmarkType.java`)
+`STREET_RACING_MEET`
+
+### New AchievementTypes to add (`AchievementType.java`)
+`RING_ROAD_KING`, `STOCK_STANDARD`, `DIRTY_TRICKS`, `GRASS`
+
+### New RumourTypes to add (`RumourType.java`)
+`STREET_RACING_MEET_TONIGHT`, `CAR_TAMPERED`, `MEET_GOT_SHUT_DOWN`
+
+### New CrimeType to add (`CriminalRecord.java`)
+`ILLEGAL_STREET_RACING`
+
+---
+
+### Unit Tests
+
+1. `StreetRacingSystem_meetOnlyOnWeekendNights` — set `TimeSystem` to Wednesday 23:30; verify `isMeetActive()` returns false. Set to Friday 23:30; verify `isMeetActive()` returns true.
+2. `StreetRacingSystem_enterRequiresCar` — call `enter(player_no_car, 10_coin)`; verify result is `NO_CAR`.
+3. `StreetRacingSystem_enterRequiresFunds` — player has car, 3 COIN; call `enter()`; verify result is `INSUFFICIENT_FUNDS`.
+4. `StreetRacingSystem_raceResolves` — seed RNG to fix NPC speeds; start race with player at known speed; advance simulation 300 blocks / player-speed seconds; verify winner is correct.
+5. `StreetRacingSystem_nitrousBoost` — player enters race with `NITROUS_CANISTER`; trigger boost; verify player speed increases by 6 blocks/s for exactly 3 seconds then reverts.
+6. `StreetRacingSystem_plodShutdownOnTip` — call `tipOffPolice(player)`; verify `isMeetActive()` is false; verify 2 `POLICE_OFFICER` NPCs spawned; verify player GRASS achievement flagged.
+7. `StreetRacingSystem_sabotageDetected` — place car owner within 7 blocks; attempt `sabotageCarOfNPC(targetNPC, player_with_screwdriver)`; verify result is `CAUGHT`; verify player Street Rep reduced; verify `CAR_TAMPERED` rumour seeded.
+8. `StreetRacingSystem_banAfterShaneCatch` — call `reportSabotageToShane(player)`; verify subsequent `enter()` returns `BANNED`.
+
+### Integration Tests
+
+1. **Full meet — enter, race, win prize**: Set `TimeSystem` to Friday 23:00. Initialise meet (4 BOY_RACER NPCs, Shane spawned). Player is in car (speed 16). Player has 6 COIN. Press E on Shane; enter race. Verify 5 COIN deducted. Seed RNG so all BOY_RACER NPCs have speed 13. Simulate race (player wins). Verify player COIN increased by 25. Verify `RACING_TROPHY` in player inventory. Verify `RING_ROAD_KING` progress = 1.
+
+2. **Nitrous canister win**: Give player `NITROUS_CANISTER`. Enter race with BOY_RACER speed 18 (faster than base player 16). Simulate race; player activates nitrous at 100 blocks from start. Verify player overtakes NPC at boost activation. Verify `NITROUS_CANISTER` consumed from inventory after race.
+
+3. **Plod shutdown mid-race**: Start race. Advance time to 01:00. Force `plodTrigger()`. Verify Shane transitions to `FLEEING`. Verify all BOY_RACER NPCs transition to `FLEEING`. Verify player (within 20 blocks of cones) gains +2 Wanted stars. Verify meet is cancelled (`isMeetActive()` == false).
+
+4. **Spectator betting win**: Player does not enter race. Player has 10 COIN. Press E on `BOY_RACER` NPC (slowest — underdog). Bet 10 COIN. Seed RNG so underdog wins. Resolve race. Verify player COIN increased by 40 (10 × 4, but payout is 5:1 so 10 + 50 = 60? — use exact 5:1: player gets 10×5 = 50 COIN back including stake = net +40 COIN). Verify `ILLEGAL_STREET_RACING` NOT in CriminalRecord (spectating is not a crime).
+
+5. **Grass achievement and snitch reputation**: Player has no active race. Player presses E on `PHONE_BOX_PROP`; selects "Ring Old Bill". Verify `isMeetActive()` == false. Verify Notoriety increased by 2 (snitch rep). Verify `GRASS` achievement unlocked. Advance 1 in-game day; verify 3 COIN added to player registered address letterbox.
+
+6. **Meet not active on Sunday**: Set `TimeSystem` to Sunday 23:00. Call `StreetRacingSystem.update(delta, timeSystem)`. Verify `isMeetActive()` returns false. Verify no `RACE_ORGANISER` NPC spawned. Verify pressing E on any `RACING_CONE_PROP` yields no interaction.
+
+// ── Issue #1265: Northfield Illegal Street Racing ─────────────────────────────
+// New: StreetRacingSystem.java in ragamuffin.core
+// New: StreetRacingSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1265StreetRacingIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: RACE_ORGANISER, BOY_RACER — add to NPCType.java
+// Material: NITROUS_CANISTER, RACING_TROPHY — add to Material.java
+// PropType: RACING_CONE_PROP, RACE_FINISH_BANNER_PROP — add to PropType.java
+// LandmarkType: STREET_RACING_MEET — add to LandmarkType.java
+// AchievementType: RING_ROAD_KING, STOCK_STANDARD, DIRTY_TRICKS, GRASS — add to AchievementType.java
+// RumourType: STREET_RACING_MEET_TONIGHT, CAR_TAMPERED, MEET_GOT_SHUT_DOWN — add to RumourType.java
+// CriminalRecord.CrimeType: ILLEGAL_STREET_RACING — add to CriminalRecord.java
+// CarDealershipSystem: add NITROUS_CANISTER to shop inventory
+// WorldGenerator: place STREET_RACING_MEET on ring road section east of Tesco
