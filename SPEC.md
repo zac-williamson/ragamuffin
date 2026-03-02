@@ -43256,3 +43256,146 @@ The social club is the **community hub of the local underworld**. On the surface
 //             NotorietySystem, WantedSystem, CriminalRecord (THEFT, CHEATING),
 //             StreetSkillSystem (DARTS, FENCE XP), WarmthSystem, NeighbourhoodSystem,
 //             NoiseSystem, NewspaperSystem, HealingSystem, BuskingSystem, DisguiseSystem
+
+---
+
+## Issue #1290: Add Northfield Meredith & Sons Funeral Parlour — Pre-Need Arrangements, the Viewing Room Racket & the Hearse Hustle
+
+### Overview
+
+`FuneralParlourSystem` brings `LandmarkType.FUNERAL_PARLOUR` — Meredith & Sons Funeral Directors — fully to life. The landmark, all NPCTypes (`UNDERTAKER`, `FUNERAL_ASSISTANT`), all PropTypes (`FUNERAL_PARLOUR_SIGN_PROP`, `CASKET_PROP`, `HEARSE_PROP`, `FLOWER_STAND_PROP`), and all Materials (`FUNERAL_FLOWERS`, `CONDOLENCES_CARD`, `MEMORIAL_CANDLE`, `POCKET_WATCH`, `OLD_PHOTOGRAPH`, `WAR_MEDAL`) are already defined and waiting. This issue implements the system that backs all those references.
+
+The funeral parlour is the **quietest building on the high street** — and the most lucrative for someone with no scruples. On the surface: pre-need arrangement meetings, flowers for the departed, respectful condolences. Underneath: casket-lining theft, hearse-borrowing runs, selling fake condolence packages to grieving families, and Gerald's sideline in gold teeth. It's grim, it's British, and it's perfectly on-theme.
+
+---
+
+### NPCs
+
+- **Gerald Meredith** (`UNDERTAKER`) — proprietor, present Mon–Fri 09:00–17:00, Sat 09:00–12:00. Sells `FUNERAL_FLOWERS` (3 COIN), `CONDOLENCES_CARD` (2 COIN), `MEMORIAL_CANDLE` (2 COIN). Offers "pre-need arrangements" to player (pay 25 COIN now, guaranteed spawn point at funeral parlour on death instead of police station). Refuses service at Notoriety ≥ 60 ("I've read the papers"). At STREET_LADS Respect ≥ 75, mentions the gold teeth sideline and offers to buy `WAR_MEDAL` for 6 COIN (above PawnShop's 5 COIN). Dialogue: *"Good morning. How may I assist you?" / "Discretion is our middle name." / "I think you'd better leave."*
+- **Dawn** (`FUNERAL_ASSISTANT`) — viewing room attendant Tue–Fri 10:00–16:00. Oversees the `CASKET_PROP`. Hostile on witnessing casket theft. Becomes distracted at 12:30 for 15 in-game minutes (lunch break). Dialogue: *"The family will be here shortly." / "Please show some respect." / "OI! Get away from there!"*
+
+---
+
+### Activities
+
+#### Pre-Need Arrangement
+- Press E on Gerald to purchase a pre-need arrangement (25 COIN).
+- Flag `PRE_NEED_ARRANGED` set on Player. On next player death: spawn at `FUNERAL_PARLOUR` entrance instead of police station; skip 10-second black-screen respawn delay; flag cleared after use.
+- Achievement: `PLAN_AHEAD` (purchase a pre-need arrangement).
+
+#### Flower Stand Sales
+- Press E on `FLOWER_STAND_PROP` to buy `FUNERAL_FLOWERS` (3 COIN), `CONDOLENCES_CARD` (2 COIN), `MEMORIAL_CANDLE` (2 COIN).
+- Placing `FUNERAL_FLOWERS` on a `HEADSTONE_PROP` in the cemetery: Notoriety −1, seeds `LOCAL_EVENT` rumour "Someone left flowers on Old Bill's grave".
+- Giving `CONDOLENCES_CARD` to a `MOURNER` NPC during a funeral procession: `COMMUNITY_RESPECT` +3 via NeighbourhoodSystem.
+- Placing `MEMORIAL_CANDLE` at `CASKET_PROP`: Notoriety −1; Dawn says "How touching."
+
+#### Casket Viewing Room Theft
+- `CASKET_PROP` is accessible Tue–Fri 10:00–16:00 in the viewing room.
+- Press E on `CASKET_PROP` to open; yields 1 item from personal effects table: `POCKET_WATCH` (30%), `OLD_PHOTOGRAPH` (25%), `WAR_MEDAL` (15%), `WEDDING_RING` (15%), `OLD_COIN` (10%), empty (5%).
+- Taking any item: Notoriety +6, `THEFT_FROM_PERSON` in CriminalRecord, `COMMUNITY_RESPECT` −15.
+- If Dawn present and not on lunch break: Notoriety +6 → +12; WantedSystem +1; NoiseSystem HIGH (radius 10); Dawn enters HOSTILE state.
+- If Dawn on lunch break (12:30–12:45): theft unwitnessed; only Notoriety +6.
+- Achievement: `GRAVE_GOODS_COLLECTOR` (steal 3 items from caskets across separate visits).
+
+#### Hearse Hustle
+- `HEARSE_PROP` parked outside 09:00–17:00 weekdays.
+- At `STREET_LADS` Respect ≥ 50: press E on `HEARSE_PROP` to enter via CarDrivingSystem.
+- Top speed 0.6× normal. Police ignore for 30 in-game seconds before recognising and pursuing.
+- Returning hearse before 17:00: no crime recorded; Gerald doesn't notice.
+- Not returning hearse by 17:00: `VEHICLE_THEFT` in CriminalRecord; WantedSystem +2; Gerald calls police.
+- Using hearse to transport stolen goods (any `isStolen=true` item in inventory while driving): `HANDLING_STOLEN_GOODS` added if caught; police still ignore vehicle for the 30-second window.
+- Achievement: `DEAD_DELIVERY` (transport goods in the hearse and return it without being caught).
+
+#### Gold Teeth Sideline (Unlocked at STREET_LADS Respect ≥ 75)
+- Gerald mentions he removes gold teeth from deceased and sells them to the `PAWN_SHOP`.
+- Player can sell `WAR_MEDAL` to Gerald for 6 COIN (above PawnShop's standard 5 COIN).
+- Seeds `GOLD_TEETH_TRADE` rumour in RumourNetwork (radius 8) when transaction occurs.
+- Achievement: `GERALD'S_REGULAR` (sell 3 items to Gerald's sideline).
+
+#### Pre-Need Fake Sale (Fraud Mechanic)
+- Player can approach `MOURNER` NPCs during a funeral procession and offer a fake pre-need arrangement for 10 COIN (dialogue option: "Want to sort your own, while you're here?").
+- 60% chance mourner accepts (grief + pressure). Player gains 10 COIN; `FRAUD` added to CriminalRecord; Notoriety +4.
+- 40% chance mourner refuses and shouts → NoiseSystem MEDIUM (radius 8), nearby `VICAR` NPC becomes HOSTILE, WantedSystem +1 if police nearby.
+- Achievement: `COLD_COMFORT` (successfully sell 2 fake arrangements to mourners).
+
+---
+
+### Prices
+
+| Item | Price |
+|------|-------|
+| `FUNERAL_FLOWERS` (Gerald) | 3 COIN |
+| `CONDOLENCES_CARD` (Gerald) | 2 COIN |
+| `MEMORIAL_CANDLE` (Gerald) | 2 COIN |
+| Pre-need arrangement | 25 COIN |
+| `WAR_MEDAL` sell-to-Gerald | 6 COIN (buy price) |
+
+---
+
+### Integration Points
+
+- **CemeterySystem**: Funeral processions route from `FUNERAL_PARLOUR → CHURCH → CEMETERY`. `FUNERAL_FLOWERS` placement on `HEADSTONE_PROP` uses Notoriety reduction. `FRESH_GRAVE` rumour interacts with grave-robbing mechanic.
+- **CarDrivingSystem**: `HEARSE_PROP` entry at Respect ≥ 50; top speed 0.6×; police blind window 30 seconds.
+- **RumourNetwork**: `GOLD_TEETH_TRADE` seeded on sideline transaction; `LOCAL_EVENT` on flower placement; `FUNERAL_THIEF` rumour (radius 12) if casket theft witnessed.
+- **NotorietySystem**: Casket theft +6 (unwitnessed) or +12 (witnessed); flower placement −1; candle placement −1; fake sale fraud +4.
+- **WantedSystem**: Witnessed casket theft +1; hearse not returned +2; fake sale (if witness shouts and police nearby) +1.
+- **CriminalRecord**: `THEFT_FROM_PERSON` (casket theft); `VEHICLE_THEFT` (hearse not returned); `FRAUD` (fake pre-need sale); `HANDLING_STOLEN_GOODS` (hearse + stolen goods caught).
+- **RespawnSystem**: `PRE_NEED_ARRANGED` flag redirects spawn to `FUNERAL_PARLOUR` on death.
+- **PawnShopSystem**: `POCKET_WATCH` (5 COIN), `WAR_MEDAL` (5 COIN), `WEDDING_RING` (7 COIN), `OLD_COIN` (3 COIN) at pawn shop; Gerald outbids for `WAR_MEDAL` (6 COIN) at Respect ≥ 75.
+- **NeighbourhoodSystem**: `CONDOLENCES_CARD` given to mourner = `COMMUNITY_RESPECT` +3; casket theft witnessed = `COMMUNITY_RESPECT` −15; funeral attendance (player present at procession) = `COMMUNITY_RESPECT` +1.
+- **NoiseSystem**: Dawn shouting (witnessed casket theft) = HIGH radius 10; mourner rejecting fake sale = MEDIUM radius 8.
+- **WarmthSystem**: Funeral parlour interior provides Warmth +1/min (heated, quiet room).
+- **StreetReputation**: `STREET_LADS` Respect ≥ 50 unlocks hearse; ≥ 75 unlocks gold teeth sideline.
+- **NewspaperSystem**: "Northfield Funeral Home Rocked by Casket Theft Scandal" headline if `FUNERAL_THIEF` rumour spreads to 5+ NPCs.
+- **BootSaleSystem**: `POCKET_WATCH`, `OLD_PHOTOGRAPH`, `WAR_MEDAL`, `OLD_COIN` can be sold at the boot sale as "antiques" (10% above PawnShop value).
+
+---
+
+### Unit Tests (`FuneralParlourSystemTest.java`)
+
+1. `testPreNeedArrangementSetsFlag` — player has 25 COIN; call `purchasePreNeedArrangement(player)`; verify `PRE_NEED_ARRANGED` flag set; player COIN reduced by 25.
+2. `testPreNeedSpawnRedirectsOnDeath` — set `PRE_NEED_ARRANGED` flag; call `RespawnSystem.respawn(player)`; verify player spawns at `FUNERAL_PARLOUR` position; flag cleared after respawn.
+3. `testCasketTheftUnwitnessedAddsNotoriety` — set Dawn on lunch break (time 12:35); press E on `CASKET_PROP`; verify item added to inventory; Notoriety +6; `THEFT_FROM_PERSON` in CriminalRecord; WantedSystem unchanged.
+4. `testCasketTheftWitnessedByDawnRaisesWanted` — set time 11:00 (Dawn present, not lunch); press E on `CASKET_PROP`; verify Notoriety +12; WantedSystem stars +1; Dawn state = HOSTILE; NoiseSystem = HIGH.
+5. `testHearseEntryRequiresReputation` — set `STREET_LADS` Respect to 49; verify `canEnterHearse(player)` = false. Set to 50; verify `canEnterHearse(player)` = true.
+6. `testHearseReturnedBeforeDeadlineNoCrime` — enter hearse at 10:00; return by 16:50; verify no `VEHICLE_THEFT` in CriminalRecord; WantedSystem unchanged.
+7. `testHearseNotReturnedAddsVehicleTheft` — enter hearse at 10:00; advance time to 17:01 without returning; verify `VEHICLE_THEFT` in CriminalRecord; WantedSystem +2.
+8. `testFlowerPlacementOnHeadstonReducesNotoriety` — player has `FUNERAL_FLOWERS`; place on `HEADSTONE_PROP`; verify Notoriety −1; `LOCAL_EVENT` rumour seeded.
+9. `testCondolencesCardGivenToMournerAddsCommunityRespect` — give `CONDOLENCES_CARD` to `MOURNER` NPC during procession; verify `COMMUNITY_RESPECT` +3 via NeighbourhoodSystem.
+10. `testGeraldRefusesHighNotorietyPlayer` — set Notoriety to 65; call `tryBuyItem(player, FUNERAL_FLOWERS)`; verify `SaleResult.REFUSED`; player COIN unchanged.
+11. `testFakeSaleSuccessAddsCoinsAndFraud` — seed RNG < 0.60 (accept); call `offerFakePreNeed(player, mourner)`; verify player +10 COIN; `FRAUD` in CriminalRecord; Notoriety +4.
+12. `testFakeSaleRefusedTriggersNoise` — seed RNG ≥ 0.60 (refuse); call `offerFakePreNeed(player, mourner)`; verify player COIN unchanged; NoiseSystem = MEDIUM; VICAR state = HOSTILE.
+13. `testGoldTeethSidelineRequiresReputation` — set `STREET_LADS` Respect to 74; verify `canAccessSideline(player)` = false. Set to 75; verify `canAccessSideline(player)` = true.
+14. `testGeraldBuysWarMedalAbovePawnShopPrice` — player has `WAR_MEDAL`; set Respect ≥ 75; call `sellToGerald(player, WAR_MEDAL)`; verify player gains 6 COIN; `GOLD_TEETH_TRADE` rumour seeded.
+15. `testGeraldAbsentOutsideHours` — set time to 18:00 weekday; verify `isGeraldPresent()` = false; set to 09:30 weekday; verify `isGeraldPresent()` = true.
+
+---
+
+### Integration Tests (`Issue1290FuneralParlourIntegrationTest.java`)
+
+1. **Pre-need arrangement respawn redirect**: Player purchases pre-need arrangement (25 COIN, Gerald present, 10:00 Mon). Player is killed (health → 0). Verify: player spawns at `FUNERAL_PARLOUR` position (within 2 blocks of entrance); `PRE_NEED_ARRANGED` flag cleared; no police-station spawn occurred; no 10-second delay triggered.
+
+2. **Casket theft → newspaper headline pipeline**: Player enters viewing room at 11:00 (Dawn present). Player opens `CASKET_PROP`. Item stolen (`WAR_MEDAL` seeded). Dawn witnesses. `FUNERAL_THIEF` rumour seeded. Advance 1 in-game day. Verify: `FUNERAL_THIEF` rumour has spread to 5+ NPCs; `NewspaperSystem` contains "Northfield Funeral Home Rocked by Casket Theft Scandal"; player Notoriety = start+12; WantedSystem stars +1.
+
+3. **Hearse hustle end-to-end**: Player at `STREET_LADS` Respect 55. Time set to 10:00. Player enters `HEARSE_PROP`. Police patrol spawned 25 blocks away. Police blind window = 30 seconds. Player drives 20 blocks. Verify: no police pursuit for first 30 in-game seconds; police pursuit triggered at 31 seconds if player still visible. Player returns hearse to `FUNERAL_PARLOUR` by 16:00. Verify: no `VEHICLE_THEFT` in CriminalRecord; Gerald does not call police.
+
+4. **Funeral procession community interaction**: `CemeterySystem` triggers funeral procession at 10:00. MOURNER NPCs route from `FUNERAL_PARLOUR`. Player gives `CONDOLENCES_CARD` to first MOURNER. Verify: `COMMUNITY_RESPECT` +3; `LOCAL_EVENT` rumour seeded with text mentioning the funeral; procession continues without disruption.
+
+5. **Fake pre-need fraud → arrest**: Player approaches MOURNER during procession. Offers fake arrangement (RNG seeded to refuse, ≥ 0.60). VICAR becomes HOSTILE. Police nearby (within 15 blocks). Player is arrested. Verify: `FRAUD` in CriminalRecord; WantedSystem stars +1 then ArrestSystem triggers; player transported to police station; no hearse parked outside (hearse props persist after Gerald interaction).
+
+---
+
+// ── Issue #1290: Add Northfield Meredith & Sons Funeral Parlour ───────────────
+// New: FuneralParlourSystem.java in ragamuffin.core
+// New: FuneralParlourSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1290FuneralParlourIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: UNDERTAKER (Gerald), FUNERAL_ASSISTANT (Dawn) — already defined; no change needed
+// Material: FUNERAL_FLOWERS, CONDOLENCES_CARD, MEMORIAL_CANDLE — already defined; no change needed
+// PropType: FUNERAL_PARLOUR_SIGN_PROP, CASKET_PROP, HEARSE_PROP, FLOWER_STAND_PROP — already defined; no change needed
+// RumourType: FUNERAL_THIEF, GOLD_TEETH_TRADE — add to RumourType.java
+// AchievementType: PLAN_AHEAD, GRAVE_GOODS_COLLECTOR, DEAD_DELIVERY, COLD_COMFORT, GERALD_S_REGULAR — add to AchievementType.java
+// Integration: CemeterySystem (procession routing, FRESH_GRAVE interaction), CarDrivingSystem (HEARSE_PROP),
+//             RespawnSystem (PRE_NEED_ARRANGED flag), PawnShopSystem (personal effects prices),
+//             NeighbourhoodSystem (COMMUNITY_RESPECT), NoiseSystem, WantedSystem, CriminalRecord,
+//             NotorietySystem, RumourNetwork, NewspaperSystem, BootSaleSystem, StreetReputation,
+//             WarmthSystem, StreetEconomySystem
