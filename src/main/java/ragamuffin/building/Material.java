@@ -2877,7 +2877,60 @@ public enum Material {
      * Taken by pressing F within 4 blocks of the Sunday 19:00 exchange.
      * Functions like PROTECTION_LETTER for expose paths.
      */
-    PROTECTION_PHOTO("Protection Photo");
+    PROTECTION_PHOTO("Protection Photo"),
+
+    // ── Issue #1112: The Raj Mahal — Friday Night Curry ──────────────────────
+
+    /**
+     * Chicken Tikka Masala — 6 COIN. Hunger −70, Warmth +15. Grants FULL_STOMACH buff.
+     * Tooltip: "The national dish. Probably."
+     */
+    CHICKEN_TIKKA_MASALA("Chicken Tikka Masala"),
+
+    /**
+     * Lamb Balti — 7 COIN. Hunger −80, Warmth +20. Grants FULL_STOMACH buff.
+     * Tooltip: "Hot enough to start a fire. Be warned."
+     */
+    LAMB_BALTI("Lamb Balti"),
+
+    /**
+     * Saag Aloo — 3 COIN. Hunger −40, Warmth +5. Grants FULL_STOMACH buff.
+     * Tooltip: "Spinach and potato. Somehow greater than the sum of its parts."
+     */
+    SAAG_ALOO("Saag Aloo"),
+
+    /**
+     * Naan Bread — 2 COIN. Hunger −25. Grants FULL_STOMACH buff.
+     * Tooltip: "Tear, dip, repeat."
+     */
+    NAAN_BREAD("Naan Bread"),
+
+    /**
+     * Poppadoms — 1 COIN. Hunger −10. Grants FULL_STOMACH buff.
+     * Tooltip: "The beginning of something beautiful."
+     */
+    POPPADOMS("Poppadoms"),
+
+    /**
+     * Mango Lassi — 2 COIN. Hunger −15, Warmth +5. Grants FULL_STOMACH buff.
+     * Tooltip: "Sweet, cool, and deeply civilised."
+     */
+    MANGO_LASSI("Mango Lassi"),
+
+    /**
+     * BYO Lager Corkage — 1 COIN fee for bringing a CAN_OF_LAGER into the Raj Mahal.
+     * Paid to Sanjay. Avoidable at Street Lads Respect ≥ 50.
+     * Tooltip: "The price of liberty."
+     */
+    BYO_LAGER_CORKAGE("BYO Corkage Receipt"),
+
+    /**
+     * Folded Note — a sealed envelope passed between Marchetti lieutenants in the
+     * Raj Mahal back room on Thursday evenings. Pickpocketable from dining lieutenants.
+     * Can be delivered as a mission item or sold to the fence.
+     * Tooltip: "Don't open it. Actually — definitely open it."
+     */
+    FOLDED_NOTE("Folded Note");
 
     private final String displayName;
 
@@ -3594,6 +3647,21 @@ public enum Material {
             case GOLDFISH:      return cs(0.95f, 0.50f, 0.12f,  // Orange fish body
                                           0.20f, 0.55f, 0.88f); // Blue water
 
+            // Issue #1112: The Raj Mahal
+            case CHICKEN_TIKKA_MASALA: return cs(0.90f, 0.45f, 0.10f,  // Deep orange sauce
+                                                  0.82f, 0.62f, 0.18f); // Golden chicken
+            case LAMB_BALTI:           return cs(0.72f, 0.32f, 0.08f,  // Dark curry
+                                                  0.82f, 0.45f, 0.12f); // Lamb brown
+            case SAAG_ALOO:            return cs(0.25f, 0.55f, 0.18f,  // Spinach green
+                                                  0.88f, 0.80f, 0.25f); // Potato yellow
+            case NAAN_BREAD:           return c(0.92f, 0.85f, 0.62f);  // Toasted dough
+            case POPPADOMS:            return c(0.88f, 0.75f, 0.30f);  // Crisp golden
+            case MANGO_LASSI:          return cs(0.95f, 0.72f, 0.20f,  // Mango orange
+                                                  0.98f, 0.95f, 0.80f); // Cream yoghurt
+            case BYO_LAGER_CORKAGE:    return c(0.85f, 0.78f, 0.42f);  // Paper receipt
+            case FOLDED_NOTE:          return cs(0.92f, 0.88f, 0.70f,  // Cream paper
+                                                  0.40f, 0.35f, 0.28f); // Brown envelope
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -3948,6 +4016,15 @@ public enum Material {
             case GAMES_CONSOLE:
             case LAPTOP:
             case WIPED_PHONE:
+            // Issue #1112: The Raj Mahal — all food/items, not blocks
+            case CHICKEN_TIKKA_MASALA:
+            case LAMB_BALTI:
+            case SAAG_ALOO:
+            case NAAN_BREAD:
+            case POPPADOMS:
+            case MANGO_LASSI:
+            case BYO_LAGER_CORKAGE:
+            case FOLDED_NOTE:
                 return false;
             default:
                 return true;
