@@ -42937,3 +42937,171 @@ When Repo Man enters the squat:
 // NoiseSystem: knocking = MEDIUM (radius 8); fight = HIGH (radius 15)
 // NewspaperSystem: "Bailiffs Busy on Northfield Estate" headline if 5+ arrears
 // AchievementSystem: NEVER_OWN_ANYTHING, LEGITIMATE_PURCHASE, DODGY_DODGE
+
+---
+
+## Issue #1286: Add Northfield Cash Converters — Dean's Serial Number Check, the Back-Alley Middleman & the IMEI Wipe Hustle
+
+### Overview
+
+`CashConvertersSystem` brings the `CASH_CONVERTER` landmark fully to life. The NPCTypes `CASH_CONVERTER_MANAGER` (Dean) and `DAVE_MIDDLEMAN` (Dave) are already defined; the `CASH_CONVERTER_COUNTER_PROP` exists in PropType; the `LandmarkType.CASH_CONVERTER` is placed in the world by `WorldGenerator`; and multiple systems (`PharmacySystem`, `BrightChoiceSystem`, `BuildingQuestRegistry`) already call `CashConvertersSystem.sellItem(...)`. This issue implements the system that backs all those references.
+
+Cash Converters is the **primary legitimate resale outlet** for electronics, jewellery, tools, and household goods. It sits between the `PawnShopSystem` (lower prices, loans) and `FenceSystem` (no questions, criminal exposure). Dean runs serial number checks on high-value electronics; get caught with stolen goods and he calls the police. Smash the CCTV first. Or deal with Dave out back after closing.
+
+---
+
+### NPCs
+
+- **Dean** (`CASH_CONVERTER_MANAGER`) — Mon–Sat 09:00–17:30. Passive until triggered. Runs serial checks on `GAMES_CONSOLE`, `LAPTOP`, `TABLET`, `STOLEN_PHONE`, `WIPED_PHONE`. Bribeable at Notoriety ≥ 30 (5 COIN). Calls police if Notoriety ≥ 40 + stolen item detected (unless `CCTV_PROP` already broken). Dialogue: *"What you got for me?" / "Serial number — have to check that." / "I'm going to have to ask you to leave." / "Cash in hand, no questions."*
+- **Dave the Middleman** (`DAVE_MIDDLEMAN`) — spawns in the back alley 22:00–02:00. Pays 30% of Dean's price; no serial check; no questions. Requires `StreetReputation` FENCE tier ≥ 10 to access. Despawns at 02:00. Dialogue: *"Got something for me?" / "That's hot, innit." / "Don't bring it back if it's got a tracking chip, yeah."*
+
+---
+
+### Buy Prices (Dean — legitimate channel)
+
+| Item | Dean pays (COIN) | Dave pays (COIN) |
+|------|-----------------|-----------------|
+| `GAMES_CONSOLE` | 8 | 2 |
+| `LAPTOP` | 12 | 4 |
+| `TABLET` | 7 | 2 |
+| `STOLEN_PHONE` | 0 (refused) | 3 |
+| `WIPED_PHONE` | 6 | 2 |
+| `DVD` / `DODGY_DVD` | 1 | 0 (refused) |
+| `GOLD_CHAIN` | 10 | 3 |
+| `STOLEN_JEWELLERY` | 0 (refused) | 4 |
+| `ELECTRIC_HEATER` | 5 | 1 |
+| `PORTABLE_RADIO` | 4 | 1 |
+| `TOOLS` (crowbar, screwdriver) | 3 | 1 |
+| `CAMERA` | 8 | 2 |
+
+Items tagged `isStolen = true` (internal flag set by `BlockDropTable`/`InteractionSystem` when obtained via crime) are refused by Dean; Dave accepts them at 30% reduced rate.
+
+---
+
+### Serial Number Check
+
+Dean performs a serial number check on `GAMES_CONSOLE`, `LAPTOP`, `TABLET`, `WIPED_PHONE`:
+
+- **Check success** (item is clean or Notoriety < 30): Sale proceeds. Player receives COIN. `HANDLING_STOLEN_GOODS` NOT added.
+- **Check triggers** (item is `isStolen = true` AND Notoriety ≥ 20): Dean refuses, Notoriety +2.
+- **Check + police call** (item is `isStolen = true` AND Notoriety ≥ 40 AND `CCTV_PROP` NOT broken): WantedSystem +1, `HANDLING_STOLEN_GOODS` added to `CriminalRecord`.
+- **CCTV smashed first** (player broke `CCTV_PROP` in the last 30 in-game minutes): Dean still refuses the item at Notoriety ≥ 20, but does NOT call police. Bribeable at Notoriety ≥ 30.
+- **Bribe** (5 COIN at Notoriety ≥ 30): Dean waves through the item; sale proceeds; no crime recorded. 30% chance Dean still calls police regardless (*"Nah mate, can't risk it"*) at Notoriety ≥ 50.
+
+`PharmacySystem.CASH_CONVERTERS_SUSPICION_CHANCE` (0.30f) is used as the base chance Dean requests ID on any sale — if player has `PRESCRIPTION_FRAUD` in `CriminalRecord`, ID check auto-fails and Dean refuses all high-value items that session.
+
+---
+
+### IMEI Wipe Hustle
+
+`STOLEN_PHONE` can be converted to `WIPED_PHONE` via `PhoneRepairSystem.wipeImei(player)` (costs 3 COIN at Tariq's). `WIPED_PHONE` passes Dean's serial check 70% of the time (30% fail — Notoriety + 2, item confiscated). Dave accepts `WIPED_PHONE` without check.
+
+---
+
+### After-Hours Break-In
+
+After 17:30, Dean is gone. Player can break `CCTV_PROP` (2 hits, yields `SCRAP_METAL`) then force the counter with `CROWBAR` (5-second hold on `CASH_CONVERTER_COUNTER_PROP`):
+- Yields: 6–14 COIN + 1 random item from display case (`GOLD_CHAIN`, `GAMES_CONSOLE`, `LAPTOP` — 33% each).
+- Crime: `CrimeType.BURGLARY` + Notoriety +8.
+- `NeighbourhoodWatchSystem` CCTV trigger fires if `CCTV_PROP` not broken before 22:00.
+- `RumourNetwork`: seeds `DODGY_DEAL` rumour; `NeighbourhoodSystem` Vibes −3.
+
+---
+
+### Integration Points
+
+- **BrightChoiceSystem** (Issue #1284): `CashConvertersSystem.sellItem(player, GAMES_CONSOLE)` → 8 COIN; serial check if `isStolen`; `BrightChoiceSystem` agreement still live (Repo Man check).
+- **PharmacySystem** (Issue #1282): `CASH_CONVERTERS_SUSPICION_CHANCE` constant (0.30f) imported from this system for ID check probability.
+- **FenceSystem**: `FenceSystem.getReputation()` ≥ FENCE tier 10 gates access to Dave.
+- **PhoneRepairSystem**: `WIPED_PHONE` created here; IMEI wipe costs 3 COIN.
+- **PawnShopSystem**: Dean pays 20–30% more than the pawn shop on clean electronics; creates meaningful trade-off.
+- **StreetSkillSystem**: successful Dave sales give `FENCE` XP +1 per transaction.
+- **RumourNetwork**: `DODGY_DEAL` seeded on back-alley Dave trade (spreads via `STREET_LAD`, `YOUTH_GANG` NPCs, 20-block radius).
+- **WantedSystem**: police call from Dean = +1 star.
+- **CriminalRecord**: `HANDLING_STOLEN_GOODS` on failed serial check with police call.
+- **NotorietySystem**: failed check (no police) +2; successful bribe +0; break-in +8.
+- **BuskingSystem**: `CASH_CONVERTER` location in `BuskingSystem` already provides a busking spot outside — Dean interacts with the busker NPC (flavour line: *"Pack it in, mate — you're scaring the customers."*).
+- **NewspaperSystem**: headline "Northfield Cash Converters Hit by Night Raiders — Dean Absolutely Fuming" if break-in at Notoriety ≥ 50.
+
+---
+
+### PropType Additions
+
+- `CASH_CONVERTER_COUNTER_PROP` — shop counter (1.5f × 1.1f × 0.6f, WOOD, 8 hits). Press E to open sell/buy UI with Dean.
+- `DISPLAY_CASE_PROP` — glass display case (0.8f × 1.0f × 0.4f, GLASS, 2 hits). Contains fenceable items; breaking it yields 1 random item + `CRIMINAL_DAMAGE` crime.
+
+*(Note: `CCTV_PROP` already exists in PropType.java at line 681.)*
+
+---
+
+### AchievementType Additions
+
+- `DEAN_APPROVED` — sell 3 items to Dean without triggering a serial check failure. *"Clean as a whistle. Dean almost smiled."*
+- `BACK_ALLEY_REGULAR` — complete 5 transactions with Dave the Middleman. *"Dave doesn't even ask what it is anymore."*
+- `IMEI_ARTISTE` — sell a wiped phone that passes Dean's check. *"Tariq's finest work. Probably."*
+- `GLASS_CASE_OPPORTUNIST` — smash the display case and take something before Dave even shows up. *"You couldn't wait, could you."*
+
+---
+
+### RumourType Addition
+
+```
+/** "Someone knocked over Cash Converters last night — Dean's doing his nut."
+ * — seeded by CashConvertersSystem on BURGLARY (break-in with crowbar).
+ * Spreads via PUBLIC, PENSIONER, and STREET_LAD NPCs; NeighbourhoodSystem Vibes −3;
+ * police patrol frequency +1 in that zone for 24h. */
+CASH_CONVERTERS_RAIDED,
+
+/** "Some lad's dealing out the back of Cash Converters after dark — laptops and that."
+ * — seeded when Dave the Middleman completes 3+ transactions.
+ * Spreads via STREET_LAD and YOUTH_GANG NPCs; StreetReputation FENCE +1 if player
+ * involved; WantedSystem check trigger for Notoriety ≥ 30. */
+BACK_ALLEY_TRADE,
+```
+
+---
+
+### Unit Tests (`CashConvertersSystemTest.java`)
+
+1. `testSellCleanItemPaysCorrectAmount` — give player GAMES_CONSOLE (isStolen = false); call `sellItem(player, GAMES_CONSOLE)`; verify player gains 8 COIN; GAMES_CONSOLE removed from inventory; no crime recorded.
+2. `testStolenItemRefusedByDean` — give player GAMES_CONSOLE (isStolen = true); set Notoriety to 25; call `sellItem(player, GAMES_CONSOLE)`; verify `SaleResult.REFUSED`; player COIN unchanged.
+3. `testStolenItemCallsPoliceAtHighNotoriety` — give player LAPTOP (isStolen = true); set Notoriety to 45; CCTV not broken; call `sellItem(player, LAPTOP)`; verify WantedSystem stars == 1; `HANDLING_STOLEN_GOODS` in CriminalRecord.
+4. `testCCTVBrokenPreventsPoliceCall` — break CCTV_PROP; give player LAPTOP (isStolen = true); set Notoriety to 45; call `sellItem(player, LAPTOP)`; verify `SaleResult.REFUSED`; WantedSystem stars == 0 (no police call).
+5. `testBribeSucceedsClearsItem` — set Notoriety to 35; give player 5 COIN and TABLET (isStolen = true); mock `Random` to return bribe-success; call `bribeDean(player)`; then `sellItem`; verify player received 7 COIN (7 − 5 bribe + 7 sale = net 2 gain... actually 7 COIN for tablet - 5 bribe = net 2; player had 5 COIN → ends with 7 COIN); no crime recorded.
+6. `testDaveTransactionPays30Percent` — set FenceRep ≥ 10; give player GAMES_CONSOLE (isStolen = true); call `sellToMiddleman(player, GAMES_CONSOLE)`; verify player gains 2 COIN (30% of 8); FENCE XP +1 via StreetSkillSystem.
+7. `testDaveRequiresFenceRep` — set FenceRep to 5; call `sellToMiddleman(player, GAMES_CONSOLE)`; verify `SaleResult.ACCESS_DENIED`.
+8. `testWipedPhonePassesCheckSeventyPercent` — give player WIPED_PHONE; mock Random to return 0.69f (< 0.70 threshold); call `sellItem(player, WIPED_PHONE)`; verify sale succeeds; player gains 6 COIN.
+9. `testWipedPhoneConfiscatedOnFailedCheck` — give player WIPED_PHONE; mock Random to return 0.71f (≥ 0.70); call `sellItem(player, WIPED_PHONE)`; verify `SaleResult.CONFISCATED`; WIPED_PHONE removed from inventory; Notoriety +2.
+10. `testBreakInYieldsLootAndCrime` — break CCTV_PROP; hold crowbar on CASH_CONVERTER_COUNTER_PROP for 5 seconds; verify player gains 6–14 COIN and 1 random display item; CriminalRecord contains `BURGLARY`; Notoriety +8.
+11. `testDisplayCaseSmashedYieldsItem` — hit DISPLAY_CASE_PROP twice; verify 1 item dropped; `CRIMINAL_DAMAGE` in CriminalRecord.
+12. `testDeanClosedAfterHours` — set time to 19:00; verify `isDeanPresent()` returns false.
+13. `testDaveSpawnsAt2200` — set time to 22:01; verify `isDavePresent()` returns true; set time to 02:01; verify `isDavePresent()` returns false.
+
+---
+
+### Integration Tests (`Issue1286CashConvertersIntegrationTest.java`)
+
+1. **Clean sell pipeline**: Player obtains LAPTOP via legitimate drop (BlockDropTable, `isStolen = false`). Player walks into Cash Converters (Dean present, 10:00). Presses E on `CASH_CONVERTER_COUNTER_PROP`. Sells LAPTOP. Verify: player inventory has no LAPTOP; player COIN increased by 12; no `HANDLING_STOLEN_GOODS` in CriminalRecord; no WantedSystem change.
+
+2. **Stolen goods + police call**: Player obtains GAMES_CONSOLE via crime (`isStolen = true`). Notoriety set to 45. Player sells to Dean. Verify: `SaleResult.POLICE_CALLED`; WantedSystem stars == 1; `HANDLING_STOLEN_GOODS` in CriminalRecord; Dean NPC enters CALLING_POLICE animation state.
+
+3. **CCTV smash + bribe path**: Player breaks `CCTV_PROP` (2 hits). Notoriety = 35. Player has 5 COIN + stolen GAMES_CONSOLE. Player bribes Dean (Random seeded to succeed). Sale proceeds. Verify: no police call; player COIN = (starting COIN − 5 + 8); no crime recorded; `DEAN_APPROVED` progress NOT counted (bribe sale excluded from achievement).
+
+4. **Dave back-alley after dark**: Time set to 23:00. Player with FENCE rep ≥ 10 approaches Dave in back alley. Sells STOLEN_PHONE to Dave. Verify: player gains 3 COIN; `BACK_ALLEY_TRADE` rumour seeded in `RumourNetwork`; `StreetSkillSystem` FENCE XP +1; no CriminalRecord entry.
+
+5. **BrightChoice integration**: Player opens GAMES_CONSOLE agreement via BrightChoiceSystem. Player sells GAMES_CONSOLE to Dean. Player misses 2 weekly payments. Repo Man spawned. Repo Man cannot find GAMES_CONSOLE. Verify: player loses 20 COIN penalty (or `BRIGHTCHOICE_DEBT` flag if < 20 COIN); `FactionSystem` Marchetti contact triggered. Verify Dean's serial check does NOT flag the console (it was legitimately purchased, `isStolen = false`).
+
+---
+
+// ── Issue #1286: Add Northfield Cash Converters ───────────────────────────────
+// New: CashConvertersSystem.java in ragamuffin.core
+// New: CashConvertersSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1286CashConvertersIntegrationTest.java in src/test/java/ragamuffin/integration/
+// PropType: CASH_CONVERTER_COUNTER_PROP, DISPLAY_CASE_PROP — add to PropType.java
+// AchievementType: DEAN_APPROVED, BACK_ALLEY_REGULAR, IMEI_ARTISTE, GLASS_CASE_OPPORTUNIST — add to AchievementType.java
+// RumourType: CASH_CONVERTERS_RAIDED, BACK_ALLEY_TRADE — add to RumourType.java
+// NPCType: CASH_CONVERTER_MANAGER (Dean), DAVE_MIDDLEMAN — already defined; no change needed
+// Integration: PharmacySystem (suspicion chance constant), BrightChoiceSystem (sellItem calls),
+//             FenceSystem (Dave access gate), PhoneRepairSystem (WIPED_PHONE), PawnShopSystem (price comparison),
+//             StreetSkillSystem (FENCE XP), RumourNetwork, WantedSystem, CriminalRecord, NotorietySystem,
+//             BuskingSystem, NewspaperSystem, NeighbourhoodWatchSystem, NeighbourhoodSystem
