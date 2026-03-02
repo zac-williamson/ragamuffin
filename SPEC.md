@@ -34674,3 +34674,138 @@ Advanced mechanic: the player can systematically loot the WEEE and metal skips f
 // WorldGenerator: RECYCLING_CENTRE placed on edge of INDUSTRIAL_ESTATE zone
 // Integrates: ScrapyardSystem, PhoneRepairSystem, FenceSystem, CraftingSystem, NoiseSystem,
 //   WantedSystem, NotorietySystem, WeatherSystem, TimeSystem, CriminalRecord
+
+---
+
+## Phase 12r: Northfield Fast Cash Finance — Payday Loans, the Debt Spiral & the Provident Collector Hustle
+
+**Goal**: Implement `PaydayLoanSystem.java` — bring the `PAYDAY_LOAN_SHOP` landmark ("Fast Cash Finance") to life as a fully-functioning predatory lender. High-street staple of British poverty. Open Mon–Sat 09:00–17:30. Staffed by Sharon (`PAYDAY_LOAN_CLERK` NPC) behind bulletproof glass, who hands out cash with cheery indifference to the crippling interest rates. The Provident-style door-step collector (`DEBT_COLLECTOR` NPC, Kevin) visits the player's squat/property on repayment due dates. The whole system integrates with the existing `HorseRacingSystem` loan mechanic, `JobCentreSystem` benefits, and `WantedSystem`.
+
+### The Shop
+
+The `PAYDAY_LOAN_SHOP` landmark already exists in `LandmarkType` as "Fast Cash Finance" and is placed in the world by `WorldGenerator` on the high-street parade. The player presses **E** at the counter to access the loan menu.
+
+**Loan tiers** (all unsecured, repayable within 3 in-game days):
+
+| Tier | Borrow | Repay | APR Display |
+|---|---|---|---|
+| Small | 5 COIN | 8 COIN | 1,294% APR |
+| Medium | 15 COIN | 24 COIN | 1,294% APR |
+| Large | 30 COIN | 48 COIN | 1,294% APR |
+| Emergency | 50 COIN | 82 COIN | 1,294% APR |
+
+- Player can only hold **one active loan at a time**.
+- `CriminalRecord` check: if player has 3+ entries, Sharon refuses: *"I'm sorry, our affordability checks mean we can't help you today."* (Dark satire: the most predatory lender still has a rejection threshold.)
+- If player already has an active loan, Sharon says: *"You need to settle your existing balance first, love."*
+- Achievement `EASY_MONEY` on first loan taken.
+
+### Sharon the Clerk (PAYDAY_LOAN_CLERK)
+
+Sharon (`PAYDAY_LOAN_CLERK` NPC — add to `NPCType`, named "Sharon") stands behind the counter 09:00–17:30 Mon–Sat. She is cheerful, never judgemental, and speaks in corporate euphemisms:
+
+- On approach: *"Hello! Looking for a little financial flexibility today?"*
+- On loan approval: *"Lovely! Just sign here and the cash is yours. The 1,294% APR is just a number, don't worry about it."*
+- On loan decline (criminal record): *"Our responsible lending team has flagged your profile. Nothing personal!"*
+- On seeing the player with a WANTED star: she presses a silent alarm (calls police after 30 seconds).
+
+### Kevin the Door-Step Collector (DEBT_COLLECTOR)
+
+Kevin (`DEBT_COLLECTOR` NPC — add to `NPCType`, named "Kevin") is spawned when a loan becomes **overdue** (day 4+ after taking loan, not yet repaid). He wears a fleece and carries a clipboard.
+
+- Kevin walks to the player's current location (SQUAT_PROP or player's last known position).
+- On arrival, Kevin says: *"Kevin from Fast Cash. Just here about the balance. Shall we sort it out on the doorstep?"*
+- Player options:
+  - **Y — Pay in full** (repay amount): Kevin nods, leaves. Loan cleared.
+  - **N — Can't pay**: Kevin notes it. Returns next in-game day. Each revisit: loan amount grows by +20% (compound). After 3 revisits unpaid: Kevin calls `DEBT_COLLECTOR_ENFORCEMENT` (a second NPC, bailiff-level) who confiscates one random item from player inventory. `CriminalRecord` logs `LOAN_DEFAULT`.
+  - **F — Flee/ignore Kevin**: Kevin follows for 60 seconds before giving up. Marks player as evasive: next visit, Kevin brings an ally (second `DEBT_COLLECTOR` NPC).
+
+### The Debt Spiral
+
+The core survival pressure mechanic:
+
+1. Player takes a loan to cover immediate need (horse bet, rent, food).
+2. Fails to repay in 3 days → Kevin spawns.
+3. Each Kevin visit compounds the debt by 20%.
+4. After 3 missed collections: bailiff confiscates inventory item.
+5. After 5 total missed repayments: `WantedSystem` +1 star (county court judgment — fictional enforcement). `CriminalRecord` logs `CCJ_WARRANT`.
+6. Player can **escape the spiral** by:
+   - Paying in full at any point.
+   - Robbing the Fast Cash Finance till (see heist below).
+   - Getting Sharon arrested (plant stolen goods in the shop — `STOLEN_GOODS_PLANT` action, Notoriety −5 if successful, charges wiped as "under investigation").
+
+### The Fast Cash Heist
+
+Advanced mechanic — rob the till:
+
+- **Conditions**: Player must have at least 1 WANTED star already (Sharon already thinks you're dodgy).
+- **Method**: Wait until Sharon leaves for lunch (13:00–13:30, she goes to Greggs). Shop is unstaffed. Player breaks the `TILL_PROP` (2 hits, FRAGILE hardness) — yields the current outstanding loan balance in COIN + a bonus 10 COIN, plus a `TILL_RECEIPT_ROLL`.
+- **Noise**: `NoiseSystem` level 6 on till break. CCTV active (unless previously broken with BOLT_CUTTERS on the camera prop).
+- **Consequence**: `CriminalRecord` logs `ARMED_ROBBERY` (even though unarmed — the shop always over-charges). `WantedSystem` +2 stars. Sharon returns at 13:30 and calls police.
+- Achievement `PAYDAY` on successful till rob.
+- **Loan wipe**: Robbing the till clears the player's active loan (you've technically stolen your own debt back).
+
+### NPC Interactions
+
+- **PENSIONER NPCs** occasionally enter the shop and take out a £50 loan to pay for heating. If the player is present, they can intervene: press E on the pensioner before they reach the counter — *"Don't do it, it's not worth it."* — 50% chance the pensioner is persuaded (leaves, Notoriety −1). 50% chance: *"Mind your business, son."* (no effect).
+- **YOUTH_GANG** occasionally threatens Kevin on his collection rounds (3 blocks from Kevin: 30% chance of confrontation). If Kevin is attacked, `WantedSystem` increases notoriety for failure to pay (the gang "takes over the debt").
+- **SCHOOL_KID NPCs** dare each other to touch the door (ambient flavour, no interaction).
+
+### Weather & Time Effects
+
+- **HEATWAVE**: Sharon props the door open; CCTV angle shifts — 30% chance it doesn't capture the till robbery.
+- **FROST**: Kevin wears a hi-vis puffa. His patrol speed −10%. Speech: *"Bitter out, this. Shall we get this sorted quick?"*
+- **RAIN**: Kevin carries an umbrella, making him slightly slower (umbrella animation, −5% speed). Speech: *"Horrible day. Let's make this easy."*
+- Shop closed **Sundays** and **Bank Holidays** (check `dayCount % 7 == 0`).
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `EASY_MONEY` | Take a payday loan for the first time |
+| `DEBT_SPIRAL` | Have a loan compounded 3 times by Kevin |
+| `PAYDAY` | Successfully rob the Fast Cash Finance till |
+| `GOOD_SAMARITAN_LENDER` | Persuade a PENSIONER not to take out a loan |
+| `CCJ_DODGER` | Repay the loan on the final day before CCJ warrant |
+
+### Integration with Other Systems
+
+- **HorseRacingSystem**: The existing loan mechanic (`LOAN_SHARK`) is separate but thematically linked. If the player has both an active `HorseRacingSystem` loan AND a `PaydayLoanSystem` loan simultaneously: `DEBT_SPIRAL` achievement triggers early. The two systems track debt independently.
+- **JobCentreSystem**: `BENEFITS_BOOK` (JSA/UC payment) arriving each in-game week gives the player 3 COIN — enough to partially repay a small loan. `PaydayLoanSystem.onNewDay()` checks if a benefits payment arrived and auto-prompts repayment.
+- **WantedSystem**: Sharon's silent alarm (on seeing WANTED player) calls police after 30 seconds. Till robbery adds +2 stars.
+- **CriminalRecord**: `LOAN_DEFAULT`, `CCJ_WARRANT`, `ARMED_ROBBERY` entries.
+- **FenceSystem**: `TILL_RECEIPT_ROLL` accepted by FENCE NPC for 2 COIN ("Receipts? Always useful, mate.").
+- **NoiseSystem**: Till break = level 6; lasts 20 seconds.
+- **NotorietySystem**: Pensioner intervention success −1; till robbery +5.
+- **WeatherSystem**: HEATWAVE shifts CCTV angle; FROST/RAIN slow Kevin.
+- **TimeSystem**: Mon–Sat 09:00–17:30 open; lunch 13:00–13:30 unstaffed. Kevin spawns at day 4+ overdue; visits once per in-game day.
+- **CraftingSystem**: No new recipes. `TILL_RECEIPT_ROLL` is a non-craftable drop.
+
+**Unit tests**: Loan tier repayment amounts (5→8, 15→24, 30→48, 50→82), criminal record refusal (3+ entries), single active loan enforcement (second loan rejected), Kevin spawn trigger (day 4, unpaid), Kevin compound growth (×1.2 per missed visit), bailiff confiscation on 3 missed (removes 1 random inventory item), CCJ warrant on 5 missed (+1 star, LOAN_DEFAULT log), pensioner persuasion (50% success with seeded RNG), heist till yield (loan balance + 10 bonus), CCTV bypass on HEATWAVE (30% no-capture with seeded RNG), Sunday closure check (dayCount % 7 == 0).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Loan taken, repaid on time — no Kevin**: Give player 0 COIN. Player presses E at counter, selects Small loan (5 COIN). Verify player inventory has 5 COIN. Verify `PaydayLoanSystem.hasActiveLoan(player)` is true. Call `onNewDay()` twice (days 2 and 3). Verify Kevin has NOT spawned (`PaydayLoanSystem.isCollectorActive()` is false). Player repays 8 COIN (press E at counter, select Repay). Verify `hasActiveLoan(player)` is false. Verify `EASY_MONEY` achievement unlocked.
+
+2. **Loan overdue triggers Kevin on day 4**: Give player a Large loan (30 COIN, repay 48). Call `onNewDay()` 3 times (days 1–3, no repayment). Verify `isCollectorActive()` is false. Call `onNewDay()` a 4th time. Verify `isCollectorActive()` is true. Verify Kevin NPC has been spawned at the player's location ±10 blocks.
+
+3. **Kevin compounds debt and bailiff confiscates on third miss**: Take a Large loan (30 COIN, repay 48). Advance to day 4 (Kevin spawns). Player selects N (cannot pay). Verify loan balance is now `Math.round(48 * 1.2) = 58`. Call Kevin visit twice more (N both times). Verify balance is `Math.round(48 * 1.2f * 1.2f * 1.2f) ≈ 83`. Verify player inventory has lost 1 item (bailiff confiscation). Verify `CriminalRecord` contains `LOAN_DEFAULT`.
+
+4. **Criminal record blocks new loans**: Add 3 entries to player's `CriminalRecord`. Player presses E at counter. Verify Sharon refuses (`PaydayLoanSystem.getLoanResult()` == `DECLINED_CRIMINAL_RECORD`). Verify player COIN unchanged.
+
+5. **Heist — rob till during lunch break**: Set time to 13:15. Verify Sharon NPC is absent (`PaydayLoanSystem.isShopStaffed()` is false). Player punches `TILL_PROP` twice. Verify `NoiseSystem.getCurrentLevel()` is 6. Verify player received (loanBalance + 10) COIN, where loanBalance is 0 if no active loan. Verify `WantedSystem.getStarCount()` increased by 2. Verify `CriminalRecord` contains `ARMED_ROBBERY`. Verify `PAYDAY` achievement unlocked.
+
+6. **Pensioner dissuasion reduces Notoriety**: Set Notoriety to 30. Spawn `PENSIONER` NPC heading toward the shop counter. Player moves within 3 blocks. Seed RNG for persuasion success. Player presses E. Verify Notoriety is now 29. Verify PENSIONER NPC state is `WANDERING` (left shop). Verify `GOOD_SAMARITAN_LENDER` achievement unlocked.
+
+7. **Sunday closure — shop not accessible**: Set `dayCount` to 7 (Sunday, 7 % 7 == 0). Call `PaydayLoanSystem.update(delta, timeSystem, ...)` with time set to 11:00. Verify `PaydayLoanSystem.isOpen()` is false. Verify Sharon NPC is not active. Player presses E at counter: verify refusal message contains "closed" or "Sunday".
+
+// ── Issue #1185: Northfield Fast Cash Finance ─────────────────────────────────
+// New: PaydayLoanSystem.java in ragamuffin.core
+// New: PaydayLoanSystemTest.java in src/test/java/ragamuffin/core/
+// NPCType: PAYDAY_LOAN_CLERK, DEBT_COLLECTOR — add to NPCType.java
+// Material: TILL_RECEIPT_ROLL — add to Material.java
+// CriminalRecord.CrimeType: LOAN_DEFAULT, CCJ_WARRANT, ARMED_ROBBERY — add if absent
+// AchievementType: EASY_MONEY, DEBT_SPIRAL, PAYDAY, GOOD_SAMARITAN_LENDER, CCJ_DODGER — add to AchievementType.java
+// Integrates: HorseRacingSystem, JobCentreSystem, WantedSystem, CriminalRecord,
+//   FenceSystem, NoiseSystem, NotorietySystem, WeatherSystem, TimeSystem
+// LandmarkType.PAYDAY_LOAN_SHOP already exists — no change needed
+// WorldGenerator: shop already placed on high-street parade — no change needed
