@@ -29482,3 +29482,193 @@ MIXED_KEBAB nightly cap (max 3), back-room lock (gated by Street Rep ≥ 30).
 // New achievements: SULTAN_REGULAR, FORGED_LOYALTY, THREE_CARD_TRICK, CLEANED_OUT,
 //                   MIXED_KEBAB_SWEEP, FOOD_POISONING (add to AchievementType.java)
 // LandmarkType: KEBAB_SHOP already exists with display name "Sultan's Kebab"
+
+---
+
+## Issue #1120: Northfield Cemetery — St. Mary's Churchyard, Funeral Processions & the Night Shift
+
+**Landmark**: `CEMETERY` (already in `LandmarkType.java`; adjacent to `CHURCH` / `FUNERAL_PARLOUR`)
+
+The `CEMETERY` landmark exists in the world but has no gameplay. `RumourType.java` already
+references "seeded by CemeterySystem after each funeral procession ends." `PropType.java`
+already defines `GRAVE_PLOT_PROP`, `OPEN_GRAVE_PROP`, and `HEADSTONE_PROP`. `NPCType.java`
+already has `MOURNER` and `VICAR`. `Material.java` already has `SPADE`, `FUNERAL_FLOWERS`,
+`GOLD_RING`, and `WEDDING_RING`. `AchievementType.java` already has `GRAVE_ROBBER` and
+`CEMETERY_NIGHT_OWL`. This issue wires all of it together into a living, interactive location.
+
+### Building Layout
+
+A walled 20×18×3 STONE perimeter around a GRASS interior. Two rows of HEADSTONE_PROPs (12
+total, spaced 2 blocks apart). Four GRAVE_PLOT_PROPs beneath headstones. A central gravel
+PATH_PROP (PAVEMENT strip). An iron GATE_PROP at the south entrance (always open during
+daylight hours; locked 23:00–06:00 — lockpickable, 4 hits). A small STONE CHAPEL block
+cluster at the north wall (3×3×3). A YEWS_TREE_PROP (dark green LEAVES) at each corner.
+One MAINTENANCE_SHED_PROP (2×2×3) at the east wall containing a SPADE on CRATE_PROP inside.
+
+### Time Schedule
+
+- **Daylight (07:00–19:00)**: open to public; MOURNER NPCs may visit after a funeral event.
+- **Dusk (19:00–23:00)**: ambient only; VICAR NPC may linger until 20:00 after Sunday service.
+- **Night (23:00–06:00)**: gate locked; GRAVEDIGGER NPC (Reg) works 06:00–09:00 only.
+  Any player inside after 00:00 triggers `CEMETERY_NIGHT_OWL` achievement.
+
+### NPCs
+
+- **Reg** (`GRAVEDIGGER` NPC — add to `NPCType.java`) — digs new GRAVE_PLOT_PROPs each
+  weekday morning 06:00–09:00. Anchored near the east wall. Hostile if player tries to
+  open a GRAVE_PLOT_PROP while Reg is watching (within 8 blocks). Drops SPADE on defeat
+  (50% chance). Seeds `LOCAL_EVENT` rumour: "Reg was out digging before dawn again."
+
+- **Mourner(s)** (`MOURNER` NPC × 2–5) — spawned for 20 in-game minutes following a
+  **funeral procession** event (see below). Stand near a HEADSTONE, occasionally dropping
+  `FUNERAL_FLOWERS` on a GRAVE_PLOT_PROP. Passive; do not react to player unless struck.
+
+- **VICAR** (`VICAR` NPC — shared with ChurchSystem, same instance "Reverend Dave") —
+  leads funeral processions. Present 10:00–11:00 on procession days. Witnesses any crime
+  committed in the cemetery and reports to police.
+
+### Funeral Procession Event
+
+Triggers once per 3 in-game days (same schedule as `SkipDivingSystem.EVENT_INTERVAL_DAYS`
+but offset by 1 day). Time: 10:00–11:00. Route: FUNERAL_PARLOUR → CHURCH → CEMETERY gate →
+grave site. Uses `NPCManager` to path MOURNER NPCs and VICAR along the route.
+
+- VICAR leads; 2–5 MOURNERs follow in a loose column (each 1 block behind the previous).
+- On arrival at CEMETERY, MOURNER NPCs cluster around the freshest GRAVE_PLOT_PROP.
+- At 11:00 the procession disperses; MOURNERs wander for a further 10 in-game minutes
+  then despawn. VICAR returns to CHURCH.
+- After procession: `RumourNetwork` seeds `FUNERAL` rumour into the nearest civilian NPC.
+- Frequency of funerals increases if `NeighbourhoodSystem` vibes are below 30 (grim town).
+
+### Grave-Robbing Mechanic
+
+GRAVE_PLOT_PROP can be dug with a `SPADE` (equip in hotbar, left-click the prop):
+- 8 SPADE hits to convert `GRAVE_PLOT_PROP` → `OPEN_GRAVE_PROP`.
+- Yields one random loot item drawn from the `GraveRobLoot` table (see below).
+- If Reg or VICAR is within 8 blocks: Notoriety +15, WantedSystem Tier 2, `CriminalRecord`
+  entry `GRAVE_ROBBING`. `WitnessSystem` and `NoiseSystem` triggered (+30 noise).
+- If unwitnessed at night: Notoriety +5 (desecration), `GRAVE_ROBBER` achievement unlocked.
+- `OPEN_GRAVE_PROP` resets to `GRAVE_PLOT_PROP` after 2 in-game days (Reg fills it in).
+- Cannot loot the same grave twice before it resets.
+
+**GraveRobLoot table** (weighted):
+
+| Item | Weight | Notes |
+|------|--------|-------|
+| `WEDDING_RING` | 30 | Sellable at Fence (20 COIN) or PawnShop |
+| `GOLD_RING` | 20 | Sellable at Fence (25 COIN) |
+| `OLD_COIN` | 25 | New material — a Victorian coin; Fence value 8 COIN |
+| `POCKET_WATCH` | 15 | New material — antique pocket watch; Fence value 35 COIN |
+| `NOTHING` | 10 | Empty grave; tooltip: "Nothing here. You monster." |
+
+### FUNERAL_FLOWERS Interaction
+
+- Player can pick up FUNERAL_FLOWERS dropped by MOURNERs (press E near FLOWER_PROP).
+- Can be **placed** on any HEADSTONE_PROP (press E with FUNERAL_FLOWERS equipped).
+- Placing flowers: Notoriety −1 (act of decency), tooltip: "You're not all bad."
+- Stealing flowers already placed on a headstone: Notoriety +3, tooltip: "Really?"
+- FUNERAL_FLOWERS sell for 1 COIN at the Indoor Market (Sheila's stall) or FoodBank.
+
+### Weather Effects
+
+- **RAIN / DRIZZLE / THUNDERSTORM**: atmosphere modifier only; 1 additional MOURNER may
+  linger after procession dispersal; tooltip: "Even the sky's crying."
+- **FOG**: visibility reduced; player within 3 blocks of an OPEN_GRAVE_PROP gets
+  tooltip: "You can't quite make out what's down there."
+- **SUNNY**: rare; one PUBLIC NPC (dog walker) passes through the cemetery path.
+
+### Night Gate Lock
+
+`GATE_PROP` locks at 23:00 (4-hit lockpick). Forced entry: Notoriety +2, `TRESPASS`
+on CriminalRecord. Player can exit freely (gate only locks from outside). If police
+patrol sees player inside after midnight: WantedSystem Tier 1.
+
+### Achievements
+
+All already defined in `AchievementType.java`:
+
+| Achievement | Trigger |
+|-------------|---------|
+| `GRAVE_ROBBER` | Successfully loot a GRAVE_PLOT_PROP unwitnessed |
+| `CEMETERY_NIGHT_OWL` | Enter cemetery after midnight (00:00–06:00) |
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `OLD_COIN` | Victorian coin; Fence value 8 COIN; icon: gold disc |
+| `POCKET_WATCH` | Antique pocket watch; Fence value 35 COIN; icon: silver circle |
+
+(Add to `Material.java`. `SPADE`, `FUNERAL_FLOWERS`, `GOLD_RING`, `WEDDING_RING` already exist.)
+
+### New NPC Types Required
+
+| NPCType | Notes |
+|---------|-------|
+| `GRAVEDIGGER` | Reg; weekday mornings 06:00–09:00; hostile if witnesses grave-robbing |
+
+(Add to `NPCType.java`. `MOURNER` and `VICAR` already exist.)
+
+### System Integrations
+
+- **FuneralParlourSystem**: procession originates here; funeral event scheduling coordinated
+- **ChurchSystem**: VICAR shared NPC; procession pauses at church before entering cemetery
+- **WarmthSystem**: cemetery provides NO shelter (open air); cold+rain is brutal here
+- **FenceSystem / PawnShopSystem**: `WEDDING_RING`, `GOLD_RING`, `OLD_COIN`, `POCKET_WATCH`
+  all fenceable; FenceSystem marks as `STOLEN_GRAVE_GOODS` (Notoriety +2 on first fence)
+- **StreetEconomySystem**: FUNERAL_FLOWERS satisfy BORED (NPC pays respects)
+- **NeighbourhoodSystem**: vibes decrease −3 per grave robbed; funeral processions restore +2
+- **NotorietySystem**: grave-robbing penalties (witnessed +15, unwitnessed +5)
+- **CriminalRecord**: `GRAVE_ROBBING` entry; `TRESPASS` for night forced entry
+- **WantedSystem**: witnessed grave-robbing → Tier 2; night intrusion seen by police → Tier 1
+- **NoiseSystem**: SPADE hits on grave +30
+- **WitnessSystem**: VICAR or GRAVEDIGGER witnesses raise alarm
+- **RumourNetwork**: funeral procession seeds `FUNERAL` rumour; grave-robbing (if seen)
+  seeds `GANG_ACTIVITY` rumour ("Someone's been at the graves again")
+- **NewspaperSystem**: grave-robbing generates headline "Cemetery Desecrated — Police Appeal"
+- **AchievementSystem**: `GRAVE_ROBBER`, `CEMETERY_NIGHT_OWL`
+- **TimeSystem**: procession 10:00–11:00; gate locks 23:00; Reg works 06:00–09:00
+- **DisguiseSystem**: BALACLAVA / HOOD reduces recognition in night cemetery by 15%
+
+**Unit tests**: GraveRobLoot weight table sums to 100, loot distribution correct over 1000
+samples; GATE_PROP lockpick returns correct notoriety/CriminalRecord entry; FUNERAL_FLOWERS
+placement notoriety delta (−1 for place, +3 for steal); procession schedule (every 3 days,
+offset 1 day from SkipDiving); Reg hostility trigger (within 8 blocks while grave is open);
+night gate lock/unlock timing (locked at 23:00, open at 06:00).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Funeral procession arrives at cemetery**: Advance time to Day 1, 10:00. Trigger
+   procession manually. Verify VICAR NPC and 3 MOURNER NPCs are present in the cemetery
+   by 10:05. Verify at least one MOURNER NPC is within 2 blocks of a GRAVE_PLOT_PROP.
+   Verify at 11:00 MOURNERs begin despawn sequence. Verify `FUNERAL` rumour is seeded
+   into `RumourNetwork` after procession end.
+
+2. **Unwitnessed grave-robbing yields loot**: Advance time to 01:00. Ensure no VICAR or
+   GRAVEDIGGER within 20 blocks. Give player a SPADE. Equip SPADE. Place player adjacent
+   to a `GRAVE_PLOT_PROP`. Simulate 8 SPADE hits. Verify `GRAVE_PLOT_PROP` becomes
+   `OPEN_GRAVE_PROP`. Verify player inventory contains exactly one item from the
+   `GraveRobLoot` table (non-NOTHING outcome — seed RNG). Verify Notoriety increased by 5.
+   Verify `GRAVE_ROBBER` achievement unlocked.
+
+3. **Witnessed grave-robbing triggers Tier 2 wanted**: Place VICAR NPC within 5 blocks of
+   a GRAVE_PLOT_PROP. Give player SPADE. Simulate 8 SPADE hits. Verify WantedSystem tier
+   is 2. Verify CriminalRecord contains `GRAVE_ROBBING`. Verify Notoriety increased by 15.
+   Verify NoiseSystem level ≥ 30.
+
+4. **Night gate lock prevents entry**: Advance time to 23:30. Attempt to move player through
+   GATE_PROP from outside. Verify player is blocked (position unchanged). Simulate 4
+   lockpick hits on GATE_PROP. Verify gate opens. Verify Notoriety increased by 2. Verify
+   CriminalRecord contains `TRESPASS`.
+
+5. **CEMETERY_NIGHT_OWL achievement on midnight entry**: Place player inside cemetery
+   before midnight. Advance time to 00:05. Verify `CEMETERY_NIGHT_OWL` achievement is
+   unlocked. Verify tooltip displayed: "What were you looking for? Best not to think about it."
+
+// ── New: CemeterySystem.java in ragamuffin.core
+// New materials: OLD_COIN, POCKET_WATCH (add to Material.java)
+// New NPCType: GRAVEDIGGER (add to NPCType.java; MOURNER and VICAR already exist)
+// New PropType: GATE_PROP, YEWS_TREE_PROP (add to PropType.java if not present;
+//               GRAVE_PLOT_PROP, OPEN_GRAVE_PROP, HEADSTONE_PROP already exist)
+// Existing achievements: GRAVE_ROBBER, CEMETERY_NIGHT_OWL (already in AchievementType.java)
+// LandmarkType: CEMETERY already exists
