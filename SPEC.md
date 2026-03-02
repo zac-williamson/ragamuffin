@@ -31366,3 +31366,121 @@ At `PRIMO` tier, player can enter the `REGALIA_ROOM` through `REGALIA_ROOM_DOOR_
 //   RITUAL_BOOK_PROP (add to PropType.java)
 // New Achievements: BOTHER_BUFFALO, OLD_BOYS_NETWORK, SAFE_CRACKER, GRUBBY_LEVERAGE,
 //   FULL_REGALIA, GRAND_PRIMO, CEREMONIAL_VIOLENCE (add to AchievementType.java)
+
+---
+
+## Add Northfield Probation Office — Sign-On Appointments, Community Service & the Tagging Hustle
+
+A new landmark: the **Northfield Probation Office** ("Northfield Probation & Offender Management Service") — a drab council-beige building on a side street, staffed by overworked probation officers who have seen it all. This is a mandatory visit for the player once their CriminalRecord reaches a certain severity, but also a rich source of side-hustles, social drama, and criminal intelligence.
+
+### The Building & Schedule
+
+- Open **Mon–Fri, 09:00–17:00**. Closed weekends.
+- Two rooms: a **waiting area** (WAITING_BENCH_PROP, noticeboard with curfew notices) and a **case officer's office** (PROBATION_DESK_PROP, CASE_FILE_CABINET_PROP, CCTV_CAMERA_PROP).
+- NPCs: `PROBATION_OFFICER` (Karen — permanently sceptical), `PROBATION_RECEPTIONIST` (Debbie — easily distracted), `PROBATION_CLIENT` (3–5 rotating regulars in the waiting room: Daz, Leanne, Spider, Big Tone, Chantelle).
+
+### Sign-On Mechanic
+
+When the player's CriminalRecord contains **2+ non-custody entries** (e.g. PETTY_THEFT + ASSAULT), a `SIGN_ON_LETTER` is added to inventory (via PostOfficeSystem integration). The player must **attend the Probation Office within 3 in-game days** to sign on with Karen.
+
+- Press **E** at the `PROBATION_DESK_PROP` to check in. Karen runs through a dialogue tree:
+  - "Still at the same address?" → Player picks: (a) Yes — no penalty; (b) No → Notoriety +2, must provide new address
+  - "Any new offences to declare?" → Player picks: (a) No (honest/dishonest) → if player has new CriminalRecord entries added since last sign-on, Karen checks system — if caught lying: Notoriety +5, court summons added
+  - "Have you been looking for work?" → Ties into JobCentreSystem: if player has attended JobCentre within 3 days, Karen is satisfied; otherwise penalty note added to file
+- After sign-on: next appointment scheduled in **3 in-game days**. Missing appointments adds a `BREACH_OF_PROBATION` entry to CriminalRecord, triggers PCSO visit (WantedSystem: Wanted ≥ 1).
+
+### Electronic Tag Mechanic
+
+At **3+ CriminalRecord custody entries**: Karen fits the player with an `ELECTRONIC_TAG` item (equips to ankle slot). Tag enforces a **curfew: player must be inside a building between 21:00–07:00**. If the player is detected outdoors during curfew:
+- `TAG_MONITOR_NPC` (remote, never seen) sends alert after a 5-minute grace period.
+- PCSO arrives at player's last known address; if caught: WantedSystem Wanted +2, `CURFEW_BREACH` CriminalRecord entry, tag removed and `RECALL_TO_CUSTODY` status set (player must attend MagistratesCourtSystem hearing).
+- **Cutting the tag** (requires WIRE_CUTTERS from ScrapyardSystem): removes `ELECTRONIC_TAG` from inventory, sets `ABSCONDED` flag. Notoriety +10. All faction reactions worsen by −10 until player attends next sign-on. `BREACHED_TAG` achievement.
+- **Spoofing the tag** (requires PHONE_REPAIR tools + `FAKE_SIGNAL_CHIP` — craftable from BROKEN_PHONE + WIRE at workbench): gives 2-hour window where tag reports player as home even while outdoors. 30% chance Karen notices discrepancy at next sign-on — if caught: instant `RECALL_TO_CUSTODY`. `SIGNAL_GHOST` achievement.
+
+### Community Service
+
+Karen can assign **Community Service** instead of a fine (player's choice at sign-on, if CriminalRecord has PETTY_THEFT or VANDALISM). Community service is a **timed work event**:
+- Report to the **Community Service Supervisor** NPC (Gary — hi-vis, clipboard) at the park 08:00–16:00 on assigned days.
+- Tasks: litter-picking (press E at LITTER props to collect; 10 LITTER = 1 community service hour counted), graffiti cleaning (press E at GRAFFITI_WALL_PROP), or painting benches (press E at PARK_BENCH prop while holding TIN_OF_PAINT material).
+- Completing all assigned hours clears one CriminalRecord fine entry; `DONE_YOUR_TIME` achievement.
+- **Skiving**: Arrive at 08:00, collect ONE litter, then leave — Gary marks you present. 50% chance Gary notices absence if player is not within 20 blocks of the park for 30+ continuous minutes. If caught: community service hours reset to zero, Notoriety +3.
+
+### The Waiting Room Social Economy
+
+The 3–5 `PROBATION_CLIENT` NPCs in the waiting room are a rich social layer:
+- **Criminal intelligence**: Each client knows rumours about active crime bosses, police patrol patterns, or fence prices. Press E to chat — each has 1–2 exclusive rumours seeded into RumourNetwork (type: CRIMINAL_INTEL).
+- **Trade**: Daz always has `TOBACCO` (2 COIN), Big Tone has `STOLEN_PHONE`, Spider trades `FAKE_ID` (new material: used at NightclubSystem, StreetEconomySystem). Prices are 25% below fence value — unregulated waiting-room economy.
+- **Recruitment**: Spider will offer the player a small job: lift a package from the ScrapyardSystem yard during probation officer's lunch break (13:00–14:00). Reward: 8 COIN + `RUNNER` Notoriety bump. Ties into FactionSystem (MARCHETTI_CREW Respect +5).
+
+### The Case File Hustle
+
+Karen's `CASE_FILE_CABINET_PROP` (in her office) contains case files for all current `PROBATION_CLIENT` NPCs. If the player gains access (Karen steps out 13:00–14:00, leaving Debbie at reception distracted by her phone):
+- Press E on `CASE_FILE_CABINET_PROP` → view 3 client names + their current offence + next appointment time.
+- Steal a `CASE_FILE_DOCUMENT` (1–3 files): fenceable at FenceSystem for 5 COIN each (criminal background check value on black market), or use for blackmail (same mechanic as RAOB Lodge — approach client, press E, demand 5 COIN silence money per file).
+- WitnessSystem: Debbie is witness if she glances up (20% per minute); CCTV_CAMERA_PROP records the theft (ReviewableEvidence, triggers police inquiry after 2 in-game days).
+- `CASE_FILE_THIEF` achievement on first successful theft.
+
+### System Integrations
+
+- **CriminalRecord**: Sign-on triggered by 2+ entries; tag triggered by 3+ custody entries; BREACH_OF_PROBATION adds new entry; CURFEW_BREACH adds entry.
+- **WantedSystem**: Missed appointments → PCSO search; tag breach → Wanted +2.
+- **MagistratesCourtSystem**: RECALL_TO_CUSTODY from tag breach → automatic court hearing queued.
+- **JobCentreSystem**: Attending JobCentre within 3 days satisfies "looking for work" question.
+- **PostOfficeSystem**: SIGN_ON_LETTER delivered as first notification.
+- **TimeSystem**: Curfew window 21:00–07:00; office open Mon–Fri 09:00–17:00; lunch 13:00–14:00 for cabinet access.
+- **RumourNetwork**: Client NPCs seed CRIMINAL_INTEL rumours; CURFEW_BREACH seeds LOCAL_EVENT rumour ("Spotted someone with a tag legging it past the chippy").
+- **ScrapyardSystem**: Community service links to ScrapyardSystem for Spider's package job.
+- **FactionSystem**: MARCHETTI_CREW Respect +5 for completing Spider's job; Respect −10 if player informs Karen about the job.
+- **FenceSystem**: CASE_FILE_DOCUMENT fenced at 5 COIN each; FAKE_ID fenced at 8 COIN.
+- **DisguiseSystem**: Wearing COMMUNITY_SERVICE_VEST (hi-vis, issued at sign-on for community service) reduces suspicion from PCSO and POLICE NPCs by −15% but increases suspicion from FENCE and DEALER NPCs by +20% ("You're not really one of us").
+- **NotorietySystem**: Tag cut: +10 Notoriety. Curfew breach: Notoriety appropriate to tier. Full sign-on compliance for 2 consecutive weeks: Notoriety −1.
+- **CraftingSystem**: `FAKE_SIGNAL_CHIP` recipe: BROKEN_PHONE + WIRE → crafted at WORKBENCH.
+- **NightclubSystem**: FAKE_ID allows entry if player is below age threshold NPC check (currently auto-passes but FAKE_ID provides plausible deniability if searched).
+- **StreetEconomySystem**: TOBACCO and FAKE_ID now tradeable items with base prices (TOBACCO=2, FAKE_ID=10).
+
+### Items (add to `Material.java`)
+- `SIGN_ON_LETTER` — appointment letter; triggers sign-on obligation.
+- `ELECTRONIC_TAG` — ankle tag; enforces curfew mechanic.
+- `FAKE_SIGNAL_CHIP` — spoofing device; craftable; 2-hr curfew bypass.
+- `COMMUNITY_SERVICE_VEST` — hi-vis vest; disguise item.
+- `CASE_FILE_DOCUMENT` — client case file; fenceable or blackmail prop.
+- `FAKE_ID` — false identity document; trades in waiting room; used at NightclubSystem.
+- `TOBACCO` — rolling tobacco; trades in waiting room.
+- `WIRE_CUTTERS` — tool; cuts electronic tag; from ScrapyardSystem.
+- `TIN_OF_PAINT` — community service prop; used on PARK_BENCH during service.
+
+### Props (add to `PropType.java`)
+- `PROBATION_DESK_PROP` — sign-on check-in desk; E to interact with Karen.
+- `CASE_FILE_CABINET_PROP` — filing cabinet; E to steal files when Karen is out.
+- `COMMUNITY_SERVICE_STATION_PROP` — Gary's clipboard table; E to register for community service.
+
+### Achievements (add to `AchievementType.java`)
+| Achievement | Trigger |
+|---|---|
+| `DONE_YOUR_TIME` | Complete all assigned community service hours |
+| `BREACHED_TAG` | Cut the electronic tag with WIRE_CUTTERS |
+| `SIGNAL_GHOST` | Successfully spoof the tag with FAKE_SIGNAL_CHIP |
+| `MODEL_PRISONER` | Attend 5 consecutive sign-on appointments without a breach |
+| `CASE_FILE_THIEF` | Steal a case file from Karen's cabinet |
+| `WAITING_ROOM_DEALER` | Complete 3 waiting-room trades with PROBATION_CLIENT NPCs |
+
+**Unit tests**: Sign-on trigger threshold (exactly 2+ non-custody CriminalRecord entries); tag trigger threshold (3+ custody entries); curfew window boundary (20:59 = legal, 21:00 = start of curfew, 07:00 = end); FAKE_SIGNAL_CHIP 2-hour window; Karen catch-lying probability (check: new entries since last sign-on exist → 100% caught if dishonest); community service skiving detection (50% at 30-minute absence threshold); BREACH_OF_PROBATION added on missed appointment; TIN_OF_PAINT + PARK_BENCH E-interaction registers 1 community service hour.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Sign-on letter arrives and appointment must be met**: Add 2 non-custody CriminalRecord entries (PETTY_THEFT, VANDALISM). Verify `SIGN_ON_LETTER` appears in player inventory via PostOfficeSystem. Advance time 4 in-game days without visiting the Probation Office. Verify `BREACH_OF_PROBATION` entry added to CriminalRecord. Verify WantedSystem Wanted level ≥ 1. Verify a PCSO NPC is spawned near the player's last known position.
+
+2. **Electronic tag enforces curfew**: Add 3 custody CriminalRecord entries. Complete a sign-on (press E at PROBATION_DESK_PROP). Verify `ELECTRONIC_TAG` is in player inventory (equipped). Set in-game time to 21:30. Move the player to an outdoor position. Advance 6 in-game minutes (past 5-minute grace period). Verify WantedSystem Wanted +2 applied. Verify `CURFEW_BREACH` entry added to CriminalRecord.
+
+3. **Cutting the tag triggers consequences**: Player has `ELECTRONIC_TAG` equipped and `WIRE_CUTTERS` in inventory. Trigger tag-cut action. Verify `ELECTRONIC_TAG` removed from inventory. Verify Notoriety increased by 10. Verify `ABSCONDED` flag is true in ProbationSystem. Verify all faction Respect values reduced by 10. Verify `BREACHED_TAG` achievement unlocked.
+
+4. **Community service completes and clears fine**: CriminalRecord has PETTY_THEFT entry. At sign-on, select community service option. Verify `COMMUNITY_SERVICE_VEST` added to inventory. Press E on 10 LITTER props (each adding 1 unit). Verify community service progress = 10 LITTER collected. Continue until required hours complete. Verify PETTY_THEFT entry removed from CriminalRecord. Verify `DONE_YOUR_TIME` achievement unlocked.
+
+5. **Waiting room trade and criminal intel**: Enter the Probation Office waiting area. Press E on `PROBATION_CLIENT` NPC (Spider). Verify at least 1 rumour of type `CRIMINAL_INTEL` is seeded into RumourNetwork. Offer Spider 2 COIN. Verify `TOBACCO` or `STOLEN_PHONE` is added to player inventory. Verify Spider's inventory decreases by that item.
+
+// New system: ProbationSystem.java in ragamuffin.core
+// New landmark: PROBATION_OFFICE (add to LandmarkType.java) — "Northfield Probation & Offender Management Service"
+// New NPCTypes: PROBATION_OFFICER, PROBATION_RECEPTIONIST, PROBATION_CLIENT, COMMUNITY_SERVICE_SUPERVISOR (add to NPCType.java)
+// New Materials: SIGN_ON_LETTER, ELECTRONIC_TAG, FAKE_SIGNAL_CHIP, COMMUNITY_SERVICE_VEST, CASE_FILE_DOCUMENT, FAKE_ID, TOBACCO, WIRE_CUTTERS, TIN_OF_PAINT (add to Material.java)
+// New PropTypes: PROBATION_DESK_PROP, CASE_FILE_CABINET_PROP, COMMUNITY_SERVICE_STATION_PROP (add to PropType.java)
+// New Achievements: DONE_YOUR_TIME, BREACHED_TAG, SIGNAL_GHOST, MODEL_PRISONER, CASE_FILE_THIEF, WAITING_ROOM_DEALER (add to AchievementType.java)
