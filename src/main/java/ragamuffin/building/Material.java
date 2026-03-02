@@ -4470,7 +4470,36 @@ public enum Material {
      * Hand it to Margaret to complete the quest (reward: LOCALS Respect +8, rumour seeded).
      * Tooltip: "A written account of someone's debt situation."
      */
-    DEBT_STATEMENT_ITEM("Debt Statement");
+    DEBT_STATEMENT_ITEM("Debt Statement"),
+
+    // ── Issue #1216: Northfield Driving Instructor ─────────────────────────────
+
+    /**
+     * FORGED_PASS_CERTIFICATE — a forged DVSA pass certificate obtained from the
+     * DRIVING_SCHOOL_FILING_CABINET_PROP while Dave is on a lesson. Costs 20 COIN.
+     * Accepted at the DVSA Test Centre EXAMINER_DESK_PROP as a substitute for a
+     * FULL_DRIVING_LICENCE, but carries a 35% detection risk per use — on detection:
+     * CrimeType.DOCUMENT_FRAUD recorded, WantedSystem +1 star.
+     * Tooltip: "A very convincing pass certificate. Convincing enough, hopefully."
+     */
+    FORGED_PASS_CERTIFICATE("Forged Pass Certificate"),
+
+    /**
+     * CAR_KEY_COPY — a duplicate ignition key cut for Dave's dual-control Corsa.
+     * Allows instant hotwire of DAVE_INSTRUCTOR_CAR_PROP (skips the 10-second
+     * SCREWDRIVER mini-game). Obtainable from FenceSystem.
+     * Tooltip: "A rough-cut car key. Could be for anything. Probably isn't."
+     */
+    CAR_KEY_COPY("Car Key Copy"),
+
+    /**
+     * FULL_DRIVING_LICENCE — a full UK driving licence awarded after completing
+     * 5 lessons with Dave at the DRIVING_SCHOOL. Disables the dual-control speed cap
+     * in CarDrivingSystem. Unlocks DRIVING XP tier 4 cap in StreetSkillSystem.
+     * Also unlocks the "Delivery Driver" job in DWPSystem (+2 UC/day).
+     * Tooltip: "Full UK driving licence. Dave was almost proud."
+     */
+    FULL_DRIVING_LICENCE("Full Driving Licence");
 
     private final String displayName;
 
@@ -7265,6 +7294,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // referral form
             case DEBT_STATEMENT_ITEM:
                 return IconShape.FLAT_PAPER;  // handwritten statement
+
+            // Issue #1216: Northfield Driving Instructor
+            case FORGED_PASS_CERTIFICATE:
+                return IconShape.FLAT_PAPER;  // forged DVSA pass slip
+            case CAR_KEY_COPY:
+                return IconShape.TOOL;        // cut key
+            case FULL_DRIVING_LICENCE:
+                return IconShape.CARD;        // laminated licence card
 
             default:
                 return IconShape.BOX;

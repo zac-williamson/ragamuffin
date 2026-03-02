@@ -2109,7 +2109,20 @@ public enum NPCType {
      * Brian speech:    "I've seen this before — it's not hopeless."
      *                  / "Write it all down. Courts like paperwork."
      */
-    ADVICE_VOLUNTEER(20f, 0f, 0f, false);
+    ADVICE_VOLUNTEER(20f, 0f, 0f, false),
+
+    // ── Issue #1216: Northfield Driving Instructor ─────────────────────────────
+
+    /**
+     * Issue #1216: LEARNER_DRIVER — Dave's current lesson pupil. Spawns at
+     * DRIVING_SCHOOL_DESK_PROP at lesson start, boards INSTRUCTOR_CAR_PROP and
+     * departs on the route. Stumbles out shaking when the lesson ends or is
+     * sabotaged. Passive; never hostile.
+     * Speech: "I've only stalled it six times today."
+     *          / "I think I clipped the kerb."
+     *          / "Is it always this scary?"
+     */
+    LEARNER_DRIVER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

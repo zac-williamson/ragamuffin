@@ -2666,7 +2666,43 @@ public enum PropType {
      * to pick up a CAB_REFERRAL_FORM item. Used in the Eviction Dodger side-quest.
      * Yields CAB_REFERRAL_FORM on destruction (1 punch).
      */
-    CAB_REFERRAL_FORM_PROP(0.30f, 0.05f, 0.40f, 1, Material.CAB_REFERRAL_FORM);
+    CAB_REFERRAL_FORM_PROP(0.30f, 0.05f, 0.40f, 1, Material.CAB_REFERRAL_FORM),
+
+    // ── Issue #1216: Northfield Driving Instructor ─────────────────────────────
+
+    /**
+     * DRIVING_SCHOOL_DESK_PROP — Dave's booking counter in the BSM driving school
+     * above the newsagent. Press E to book lessons (15 COIN/lesson, or 60 COIN for
+     * 5-lesson block course). When Dave is on a lesson and Notoriety Tier ≥ 2,
+     * pressing E instead offers access to the filing cabinet forged-certificate hustle.
+     * Destroyed by 8 punches; yields WOOD.
+     */
+    DRIVING_SCHOOL_DESK_PROP(1.40f, 0.80f, 0.60f, 8, Material.WOOD),
+
+    /**
+     * THEORY_TEST_POSTER_PROP — a laminated highway-code poster on the wall.
+     * Flavour only; readable (press E) to see a mock question. No game effect.
+     * Destroyed by 2 punches; yields nothing.
+     */
+    THEORY_TEST_POSTER_PROP(0.60f, 0.90f, 0.02f, 2, null),
+
+    /**
+     * DRIVING_SCHOOL_FILING_CABINET_PROP — a grey metal filing cabinet in Dave's
+     * back office containing forged pass certificates. Costs 20 COIN to access
+     * (accessible only when Dave is on a lesson and player has Notoriety Tier ≥ 2).
+     * 35% detection chance at DVSA Test Centre per use.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    DRIVING_SCHOOL_FILING_CABINET_PROP(0.55f, 1.30f, 0.50f, 5, Material.SCRAP_METAL),
+
+    /**
+     * DAVE_INSTRUCTOR_CAR_PROP — Dave's dual-control Vauxhall Corsa with L-plates,
+     * parked outside the DRIVING_SCHOOL overnight. Stealable 21:00–06:00 using
+     * SCREWDRIVER (10s hotwire) or CAR_KEY_COPY (instant). Dual-control flag caps
+     * speed at 60% without a FULL_DRIVING_LICENCE. Destroyed by 10 punches;
+     * yields SCRAP_METAL.
+     */
+    DAVE_INSTRUCTOR_CAR_PROP(2.50f, 1.50f, 4.50f, 10, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

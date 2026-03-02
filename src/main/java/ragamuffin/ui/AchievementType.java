@@ -4055,6 +4055,37 @@ public enum AchievementType {
         "Serial Fraudster",
         "Three forgeries. Brian keeps a copy for his own records. You didn't ask why.",
         1
+    ),
+
+    // ── Issue #1216: Northfield Driving Instructor ─────────────────────────────
+
+    /**
+     * Awarded when the player completes 5 lessons with Dave and receives a
+     * FULL_DRIVING_LICENCE from the DRIVING_SCHOOL (not via DVSA test).
+     */
+    SHORTCUT_TO_NOWHERE(
+        "Why Learn When You Can Forge?",
+        "You paid 20 COIN for a certificate that will definitely hold up. Definitely.",
+        1
+    ),
+
+    /**
+     * Awarded when the player sabotages a live driving lesson (beeping horn,
+     * cutting in at a junction, or parking to block the route).
+     */
+    BACK_SEAT_DRIVER(
+        "You Absolute Menace",
+        "The learner stalled three times and cried. Dave will be filing a report.",
+        1
+    ),
+
+    /**
+     * Awarded when the player steals Dave's dual-control Corsa overnight.
+     */
+    TAKING_THE_WHEEL(
+        "L-Plates and All",
+        "Dave's dual-control Corsa. The L-plates didn't survive the first roundabout.",
+        1
     );
 
     private final String name;
