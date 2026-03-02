@@ -2439,7 +2439,20 @@ public enum NPCType {
      * </ul>
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    PRESCRIPTION_HOLDER(20f, 0f, 0f, false);
+    PRESCRIPTION_HOLDER(20f, 0f, 0f, false),
+
+    // ── Issue #1301: Northfield Big Issue Vendor ──────────────────────────────
+
+    /**
+     * BIG_ISSUE_VENDOR — Gary Milligan, who runs a MAGAZINE_PITCH_PROP outside Greggs.
+     * <ul>
+     *   <li>Present Mon–Sat 09:00–17:00; absent in frost; shelters under awning in rain.</li>
+     *   <li>Sells BIG_ISSUE_MAG for 3 COIN.</li>
+     *   <li>Will confront the player if they take over his pitch.</li>
+     * </ul>
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    BIG_ISSUE_VENDOR(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

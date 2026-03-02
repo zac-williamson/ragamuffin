@@ -5137,7 +5137,31 @@ public enum Material {
      * WHITE_COAT — wearable disguise, reduces suspicion in the chemist by 60%.
      * Found in STAFF_DOOR area or looted from PHARMACIST.
      */
-    WHITE_COAT("White Coat");
+    WHITE_COAT("White Coat"),
+
+    // ── Issue #1301: Northfield Big Issue Vendor ──────────────────────────────
+
+    /**
+     * BIG_ISSUE_MAG — a copy of The Big Issue sold by Gary Milligan outside Greggs.
+     * Costs 3 COIN from Gary. Reading it (hold E, 3 seconds) seeds a LOCAL_EVENT
+     * rumour and grants STREET_SMARTS XP +1. Can be donated to CharityShopSystem.
+     */
+    BIG_ISSUE_MAG("Big Issue Magazine"),
+
+    /**
+     * COUNTERFEIT_BIG_ISSUE — a fake copy printed at InternetCafeSystem for 1 COIN
+     * (yields 3 copies). Sells at the same 30% NPC buy rate as the genuine article.
+     * 30% per-sale detection risk; 3 detected sales → MARKET_INSPECTOR spawn
+     * and MAGAZINE_SCAM rumour seeded.
+     */
+    COUNTERFEIT_BIG_ISSUE("Counterfeit Big Issue"),
+
+    /**
+     * CANVAS_BAG — Gary's worn canvas shoulder bag, containing 3–6 COIN plus
+     * 5× BIG_ISSUE_MAG. Can be pickpocketed (55% detection base; −20% with
+     * STREET_SMARTS ≥ 5).
+     */
+    CANVAS_BAG("Canvas Bag");
 
     private final String displayName;
 
@@ -6306,6 +6330,14 @@ public enum Material {
                                                   0.40f, 0.60f, 0.85f); // Blue NHS stripe
             case STOLEN_METHADONE:      return c(0.40f, 0.72f, 0.40f);  // Green liquid bottle
             case WHITE_COAT:            return c(0.96f, 0.96f, 0.96f);  // Clinical white
+
+            // Issue #1301: Northfield Big Issue Vendor
+            case BIG_ISSUE_MAG:         return cs(0.20f, 0.45f, 0.80f,  // Blue Big Issue cover
+                                                  0.95f, 0.95f, 0.95f); // White title text
+            case COUNTERFEIT_BIG_ISSUE: return cs(0.25f, 0.38f, 0.62f,  // Faded blue cover
+                                                  0.75f, 0.75f, 0.75f); // Grey washed-out text
+            case CANVAS_BAG:            return cs(0.55f, 0.48f, 0.30f,  // Worn khaki canvas
+                                                  0.40f, 0.35f, 0.20f); // Dark strap
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -8186,6 +8218,14 @@ public enum Material {
                 return IconShape.CYLINDER;    // liquid bottle
             case WHITE_COAT:
                 return IconShape.BOX;         // folded coat
+
+            // Issue #1301: Northfield Big Issue Vendor
+            case BIG_ISSUE_MAG:
+                return IconShape.FLAT_PAPER;  // magazine
+            case COUNTERFEIT_BIG_ISSUE:
+                return IconShape.FLAT_PAPER;  // counterfeit magazine
+            case CANVAS_BAG:
+                return IconShape.BOX;         // shoulder bag
 
             default:
                 return IconShape.BOX;
