@@ -524,5 +524,26 @@ public enum RumourType {
     /** "Ofsted are in St. Aidan's today — teachers are losing the plot."
      * — seeded by PrimarySchoolSystem on Monday morning inspection trigger.
      * Spreads via SCHOOL_MUM and PUBLIC NPCs within 30 blocks of PRIMARY_SCHOOL. */
-    OFSTED_VISIT;
+    OFSTED_VISIT,
+
+    // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────────
+
+    /** "Bert down the industrial estate — does MOTs on anything. No questions asked."
+     * — seeded by MOTSystem when the player receives a FAIL_ON_PURPOSE outcome.
+     * Spreads via STREET_LAD and PUBLIC NPCs within 40 blocks of BERTS_GARAGE.
+     * Raises Bert's corruption score +5 when heard by other DODGY_MECHANIC NPCs. */
+    MOT_SCAM,
+
+    /** "DVSA were round Bert's garage — shut the place down for the afternoon."
+     * — seeded by MOTSystem on DVSA_INSPECTOR raid completion.
+     * Spreads via PUBLIC and PENSIONER NPCs within 30 blocks of BERTS_GARAGE.
+     * Reduces Bert's corruption by 10 (scared straight) for 3 in-game days. */
+    DVSA_RAID,
+
+    /** "That bloke at Bert's is bent as a nine-bob note. Got a certificate off him,
+     *  no inspection at all."
+     * — seeded by MOTSystem when PASS_BRIBE outcome occurs for the first time.
+     * Spreads via STREET_LAD and TYRE_KICKER NPCs. Adds +3 WatchAnger.
+     * Adds BERTS_GARAGE to the DVSA_INSPECTOR's patrol route. */
+    BENT_GARAGE;
 }
