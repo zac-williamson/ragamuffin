@@ -1842,7 +1842,23 @@ public enum NPCType {
      * Dental Patient — civilian waiting in the Northfield Dental Practice.
      * May share TOOTHACHE-related rumours.
      */
-    DENTAL_PATIENT(20f, 0f, 0f, false);
+    DENTAL_PATIENT(20f, 0f, 0f, false),
+
+    // ── Issue #1157: Northfield Tesco Express ─────────────────────────────────
+
+    /**
+     * Tesco Express Manager — Dave; tired, middle-management, clings to procedure.
+     * Present Mon–Fri 07:00–18:00. Checks for shoplifting flags. At Notoriety Tier 3+
+     * requests player to leave; calls police if refused.
+     */
+    TESCO_EXPRESS_MANAGER(30f, 0f, 0f, false),
+
+    /**
+     * Tesco Express Worker — Sharon (day) / Tyler (night 22:00–07:00).
+     * Stacks shelves, operates till. Tyler barely awake — suspicion threshold +20.
+     * Tyler sells TESCO_OWN_BRAND_VODKA without ID checks.
+     */
+    TESCO_EXPRESS_WORKER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
