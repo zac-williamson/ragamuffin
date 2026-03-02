@@ -2766,6 +2766,72 @@ public enum AchievementType {
         "Early Bird",
         "Completed a paper round before 07:00. You saw the milk float. Norman waved.",
         1
+    ),
+
+    // ── Issue #1136: The Vaults Nightclub ─────────────────────────────────────
+
+    /**
+     * Awarded when the player enters The Vaults nightclub for the first time.
+     */
+    FIRST_TIME_IN(
+        "Welcome to The Vaults",
+        "First time inside. The floor is sticky. The music is loud. You feel alive.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully bribes Big Dave to skip the queue.
+     */
+    BOUNCER_BRIBED(
+        "Slipped Him a Fiver",
+        "Bribed the bouncer. Big Dave pocketed it without blinking. Respect.",
+        1
+    ),
+
+    /**
+     * Awarded when the player wins an MCBattle on the nightclub dancefloor.
+     */
+    DANCEFLOOR_MC(
+        "Dancefloor MC",
+        "Won a freestyle battle at The Vaults. The crowd went absolutely mental.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully pickpockets a DRUNK NPC inside the club.
+     */
+    NIGHTCLUB_PICKPOCKET(
+        "Light Fingers",
+        "Lifted a wallet from a DRUNK punter. Dark venue, heavy bass. They never knew.",
+        1
+    ),
+
+    /**
+     * Awarded when the player is ejected from The Vaults at 03:00 on 3 separate nights.
+     */
+    CLOSING_TIME(
+        "Closing Time",
+        "Ejected at 03:00 three nights running. The bouncer knows your face now.",
+        3
+    ),
+
+    /**
+     * Awarded when the player gains entry to the VIP area of The Vaults.
+     */
+    VIP_ACCESS(
+        "VIP Treatment",
+        "Made it into the VIP area. The seats are slightly less sticky. Slightly.",
+        1
+    ),
+
+    /**
+     * Awarded when the player completes a full night (22:00–03:00) in the club
+     * without buying any alcohol.
+     */
+    SOBER_IN_THE_VAULTS(
+        "Designated Driver",
+        "Spent a whole night in The Vaults completely sober. You saw everything.",
+        1
     );
 
     private final String name;

@@ -1434,7 +1434,39 @@ public enum NPCType {
      * Speech: "Can't sleep again." / "You're up early." / "Did you hear about...?"
      *         / "Been stood here since four. Council should do something about the bins."
      */
-    INSOMNIAC_PENSIONER(20f, 0f, 0f, false);
+    INSOMNIAC_PENSIONER(20f, 0f, 0f, false),
+
+    // ── Issue #1136: The Vaults Nightclub ─────────────────────────────────────
+
+    /**
+     * Nightclub Manager — Terry, who manages The Vaults. Present in the back office
+     * from 22:30 onwards. Approachable only at FactionSystem respect ≥ 20 (FRIENDLY).
+     * Controls the lock-in decision. Calls Big Dave if player is caught in the office
+     * without permission. Passive; never attacks.
+     * Speech: "You'll need to see me about that." / "Nice one, son. Appreciated."
+     *         / "Oi — who let you in here?"
+     */
+    NIGHTCLUB_MANAGER(30f, 0f, 0f, false),
+
+    /**
+     * Nightclub Punter — a regular club-goer at The Vaults. Wanders between the
+     * dancefloor and bar. BORED need satisfied by dancing or drink. Pickpocketable
+     * (5–8 COIN each). Some become DRUNK after 00:00, increasing pickpocket success
+     * chance. Passive by default; may start brawls when DRUNK.
+     * Speech: "Alright mate?" / "It's well loud in here." / "Get in!"
+     *         / "I've had about seven of them." (slurring)
+     */
+    NIGHTCLUB_PUNTER(20f, 3f, 1.0f, false),
+
+    /**
+     * Drug Dealer NPC — Wayne, who lurks near the toilets 23:00–02:00.
+     * Buys PRESCRIPTION_MEDS or TOBACCO_POUCH from the player at 2× street price.
+     * Refuses service if WantedSystem tier ≥ 2 and seeds GANG_ACTIVITY rumour.
+     * Passive unless attacked. Flees on police arrival.
+     * Speech: "You got anything for me?" / "Nah mate, not tonight."
+     *         / "Keep it quiet. I'm working here."
+     */
+    DRUG_DEALER_NPC(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

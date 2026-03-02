@@ -1928,7 +1928,70 @@ public enum PropType {
      * Requires NEWSAGENT_KEY or a LOCKPICK to open. Contains CASH_BOX_PROP
      * (8–14 COIN) and stock shelves. 6 hits to break down; yields WOOD.
      */
-    STOCKROOM_DOOR_PROP(0.15f, 2.00f, 0.90f, 6, Material.WOOD);
+    STOCKROOM_DOOR_PROP(0.15f, 2.00f, 0.90f, 6, Material.WOOD),
+
+    // ── Issue #1136: The Vaults Nightclub ─────────────────────────────────────
+
+    /**
+     * Nightclub Queue Prop — the velvet-rope barrier outside The Vaults.
+     * Players press E to join the queue. Big Dave (BOUNCER) is stationed here.
+     * Non-destructible; 0 hits; yields null.
+     */
+    NIGHTCLUB_QUEUE_PROP(0.10f, 1.00f, 0.10f, 0, null),
+
+    /**
+     * Nightclub Bar Prop — the sticky-topped bar counter inside The Vaults.
+     * Press E to buy drinks: CAN_OF_LAGER (3C), DOUBLE_VODKA (5C), WATER_BOTTLE (1C).
+     * Stacey (BARMAID) is stationed here. 5 hits to demolish; yields WOOD.
+     */
+    NIGHTCLUB_BAR_PROP(2.00f, 1.10f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * Nightclub Speaker Prop — a bass-heavy speaker stack on the dancefloor.
+     * Proximity (≤5 blocks) triggers DANCING state in the player.
+     * Emits high-radius noise (85 dB equivalent) during opening hours.
+     * 5 hits to destroy; yields SCRAP_METAL.
+     */
+    NIGHTCLUB_SPEAKER_PROP(0.60f, 1.50f, 0.60f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Nightclub Toilet Prop — a cramped toilet stall at The Vaults.
+     * Wayne (DRUG_DEALER_NPC) lurks here 23:00–02:00. DRUNK NPCs are pickpocketable.
+     * 3 hits to break; yields SCRAP_METAL.
+     */
+    NIGHTCLUB_TOILET_PROP(0.90f, 2.00f, 0.90f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Nightclub VIP Table Prop — a booth in the VIP area of The Vaults.
+     * Accessible at FactionSystem respect ≥ 20 (FRIENDLY) or after 3 club visits.
+     * MARCHETTI_CREW NPCs share GANG_ACTIVITY rumours freely here.
+     * 4 hits to destroy; yields WOOD.
+     */
+    NIGHTCLUB_VIP_TABLE_PROP(1.20f, 0.80f, 0.80f, 4, Material.WOOD),
+
+    /**
+     * Nightclub Office Door Prop — the locked manager's office door at The Vaults.
+     * Requires NIGHTCLUB_MASTER_KEY or 3 LOCKPICK attempts to open.
+     * If player caught inside without permission: Big Dave called, 10-min ban.
+     * 8 hits to break down; yields WOOD.
+     */
+    NIGHTCLUB_OFFICE_DOOR_PROP(0.15f, 2.20f, 1.00f, 8, Material.WOOD),
+
+    /**
+     * Nightclub Safe Prop — the combination safe in the manager's office.
+     * Contains 20–40 COIN + random loot (COUNTERFEIT_NOTE, STOLEN_PHONE, GOLD_CHAIN).
+     * Failed lockpick (≥2 attempts) triggers alarm: Big Dave + WantedSystem tier +1.
+     * Successful loot: +6 Notoriety, THEFT record, LOCAL_EVENT rumour, newspaper headline.
+     * 12 hits to force open; yields SCRAP_METAL.
+     */
+    NIGHTCLUB_SAFE_PROP(0.50f, 0.80f, 0.40f, 12, Material.SCRAP_METAL),
+
+    /**
+     * Nightclub Mirror Ball Prop — a rotating disco mirror ball above the dancefloor.
+     * Decorative; identical visual function to DISCO_BALL in RaveSystem.
+     * Non-destructible; 0 hits; yields null.
+     */
+    NIGHTCLUB_MIRROR_BALL_PROP(0.40f, 0.40f, 0.40f, 0, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
