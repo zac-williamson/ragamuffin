@@ -3409,6 +3409,43 @@ public enum AchievementType {
         "Private Patient",
         "Fifteen coin for a next-day slot. At least the magazines are newer.",
         1
+    ),
+
+    // ── Issue #1165: Northfield Match Day ────────────────────────────────────
+    /**
+     * Awarded for successfully pickpocketing 3 fans in one match day.
+     */
+    MATCH_DAY_PICKPOCKET(
+        "Dip in the Derby",
+        "Three wallets lifted before the final whistle. Beautiful.",
+        3
+    ),
+
+    /**
+     * Awarded for selling 6 KNOCKOFF_SCARF items in one match day.
+     */
+    TOUT_MASTER(
+        "Scarf Artist",
+        "Six knock-off scarves flogged. Supply met demand.",
+        6
+    ),
+
+    /**
+     * Awarded for winning a street brawl on match day.
+     */
+    MATCH_DAY_WARRIOR(
+        "Hooligan in Chief",
+        "You took a side and came out on top. Proper result.",
+        1
+    ),
+
+    /**
+     * Awarded for walking through an away-fan mob wearing home-team colours.
+     */
+    WRONG_COLOURS(
+        "Wrong Colours",
+        "Three away fans disagree with your fashion choices.",
+        1
     );
 
     private final String name;

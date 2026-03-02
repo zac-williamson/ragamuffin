@@ -459,7 +459,15 @@ public class CriminalRecord {
          * inside with BURNER_PHONE or SCALES_PROP in proximity.
          * Penalty: +15 Notoriety, WantedSystem +2 stars; POSSESSION added concurrently.
          */
-        GARAGE_DRUG_POSSESSION("Found on drug premises (council garage)");
+        GARAGE_DRUG_POSSESSION("Found on drug premises (council garage)"),
+
+        // ── Issue #1165: Northfield Match Day ────────────────────────────────
+
+        /**
+         * Recorded when a HOME_FAN catches the player selling a COUNTERFEIT_TICKET
+         * (30% catch chance). Penalty: Notoriety +4.
+         */
+        TOUT_SCAM("Ticket touting (counterfeit match ticket)");
 
         private final String displayName;
 

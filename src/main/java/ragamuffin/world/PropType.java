@@ -2354,7 +2354,24 @@ public enum PropType {
      * reception. Press E to browse; TOOTHBRUSH available for 1 COIN.
      * Destroyed by 2 punches; yields WOOD.
      */
-    TOOTHPASTE_DISPLAY_PROP(0.40f, 1.20f, 0.30f, 2, Material.WOOD);
+    TOOTHPASTE_DISPLAY_PROP(0.40f, 1.20f, 0.30f, 2, Material.WOOD),
+
+    // ── Issue #1165: Northfield Match Day ────────────────────────────────────
+
+    /**
+     * COACH_PROP — a full-size coach at the STADIUM_COACH_PARK.
+     * 4 coach bays; indestructible (0 hits to break = never destroyed).
+     * Provides CROWD_WARMTH shelter on cold match days.
+     * Width 8 blocks, height 3 blocks, depth 3 blocks.
+     */
+    COACH_PROP(8.0f, 3.0f, 3.0f, 0, null),
+
+    /**
+     * MATCH_DAY_STALL_PROP — a fold-out table where FOOTBALL_TOUT stands.
+     * Destroyed by 4 punches; yields WOOD.
+     * Press E to interact with the tout's wares.
+     */
+    MATCH_DAY_STALL_PROP(1.20f, 0.80f, 0.60f, 4, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

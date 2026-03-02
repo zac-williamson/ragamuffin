@@ -441,5 +441,19 @@ public enum RumourType {
      * — seeded by PoundShopSystem when a player is caught shoplifting by Sharon.
      * Spreads via PUBLIC and PENSIONER NPCs within 20 blocks of the POUND_SHOP.
      * Adds +2 patrol awareness near POUND_SHOP. */
-    SHOPLIFTING_BAN;
+    SHOPLIFTING_BAN,
+
+    // ── Issue #1165: Northfield Match Day ────────────────────────────────────
+
+    /** "It all kicked off outside the Rusty Anchor — absolute carnage."
+     * — seeded by MatchDaySystem when STREET_BRAWL_EVENT fires.
+     * Spreads through pub NPCs (barmen, HOME_FAN) within 30 in-game minutes.
+     * NeighbourhoodWatchSystem logs this rumour (vibes −3). */
+    MATCH_DAY_TROUBLE,
+
+    /** "There's police horses up by the Anchor — best keep your head down."
+     * — seeded by MatchDaySystem when POLICE_HORSE_OFFICER spawns.
+     * Reduces NPC crime willingness by 10% for the duration.
+     * Spreads via PUBLIC and AWAY_FAN NPCs. */
+    POLICE_PRESENCE;
 }
