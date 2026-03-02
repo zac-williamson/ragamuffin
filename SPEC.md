@@ -41745,3 +41745,126 @@ The player can **tamper with a competitor's car** to sabotage their race:
 // WarmthSystem: gate ELECTRIC_HEATER warmth contribution on PrepaymentMeterSystem.isElectricOn()
 // LightingSystem: gate interior ambient light on PrepaymentMeterSystem.isElectricOn()
 // WeatherSystem: FROST/COLD_SNAP signals PrepaymentMeterSystem to double base drain
+
+---
+
+## Issue #1269: Add Northfield BT Phone Box — Anonymous Tip-Offs, Dead-Drop Calls & the Last Payphone Hustle
+
+**Theme:** Northfield's last red BT phone box. Sticky receiver, smell of old cigarettes, and a slot for 20p coins. Nobody uses it — except everyone who needs to stay off the grid. Anonymous police tip-offs, Marchetti dead-drop contacts, dodgy sex-line numbers scrawled on the wall, and the occasional desperate call to the social. The `PropType.PHONE_BOX` already exists in the world but has no gameplay whatsoever. This issue brings it fully to life.
+
+### New Files
+- `src/main/java/ragamuffin/core/PhoneBoxSystem.java`
+- `src/test/java/ragamuffin/core/PhoneBoxSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1269PhoneBoxIntegrationTest.java`
+
+### Existing Files to Modify
+- `Material.java` — add `PHONE_BOX_KEY` (BT engineer master key; lets player lock/unlock the box to prevent others using it), `SCRAWLED_NUMBER` (paper item found inside box on first use; a shady contact number), `PHONE_CARD` (legacy BT phonecard; acts as currency for calls instead of COIN; found in skip or charity shop)
+- `PropType.java` — `PHONE_BOX` already exists; add `isInteractive = true` annotation / flag in the PhoneBoxSystem
+- `LandmarkType.java` — add `PHONE_BOX_HIGH_STREET` (the single functioning box; a second broken one is at the estate — `PHONE_BOX_ESTATE`, out of order unless player repairs it with SCRAP_METAL ×3)
+- `AchievementType.java` — add `GRASSIN_UP` (first successful anonymous tip-off), `DEAD_DROP` (first Marchetti dead-drop call), `OFF_THE_BOOKS` (make 10 calls total), `LAST_PHONE_STANDING` (repair the estate box)
+- `RumourType.java` — add `POLICE_TIP_OFF` (seeded when police respond to an anonymous tip — nearby NPCs whisper "someone grassed"), `MARCHETTI_CONTACT` (seeded after a dead-drop call — Marchetti crew becomes temporarily wary), `PHONE_BOX_REPAIR` (seeded when player repairs the estate box — local legend)
+- `CriminalRecord.java` — add `CrimeType.PHONE_BOX_VANDALISM` (smashing the box; +1 Notoriety, +1 Wanted star)
+- `WantedSystem.java` — anonymous tip-off lowers Wanted stars by 1 if tip leads to an NPC arrest (delayed 5 in-game minutes after call)
+- `FactionSystem.java` — dead-drop call requires `Faction.MARCHETTI_CREW` Respect ≥ 30; rewards +5 Respect on successful delivery
+
+### PhoneBoxSystem Mechanics
+
+**The Phone Box Prop:**
+- One functioning `PHONE_BOX` on the High Street (near the bus stop); placed by WorldGenerator at `LandmarkType.PHONE_BOX_HIGH_STREET`.
+- One broken `PHONE_BOX` on the estate (`LandmarkType.PHONE_BOX_ESTATE`); displays tooltip "Out of order. What a surprise." on E press until repaired.
+- Press **E** within 1.5 blocks of a functioning box to open the `PhoneBoxUI` (phone menu overlaid on HUD).
+- Cost per call: **1 COIN** per call OR use a `PHONE_CARD` item (free call, card consumed).
+- Box is unusable 23:00–05:00 (council has sealed the coin slot at night — "vandalism prevention").
+
+**Call Menu (5 options):**
+
+1. **Ring the Old Bill (Anonymous Tip-Off)**
+   - Requires: player has observed an NPC committing a crime within the last 5 in-game minutes (tracked by `PhoneBoxSystem.recentCrimeWitness` list).
+   - Effect: `WantedSystem` reduces player's current stars by 1 (informant discount); a `POLICE` NPC is dispatched to investigate the named location within 5 in-game minutes; `POLICE_TIP_OFF` rumour seeded.
+   - If tip is "false" (player has no recent crime witness): police respond, find nothing; `POLICE_WASTED_TIME` flag raised; if player does this 3× in a row, police treat all future anonymous tips with 50% credibility.
+   - Achievement: `GRASSIN_UP` on first successful tip-off.
+
+2. **Call the Social (DWP)**
+   - Requires: `DWPSystem` is active (player registered for benefits).
+   - Effect: schedules next DWP payment 1 in-game day earlier (one-time per week); seeds rumour `DWP_OVERPAYMENT` locally (NPCs say "lucky sod, mine's always late"). No Notoriety change.
+   - Dialogue: "Thank you for calling DWP. Your call is important to us. Please hold." [pause 30 seconds real time] "Yes, right. We'll look into that. Goodbye." — 50% chance of success; 50% chance "System error, call back tomorrow."
+
+3. **Dead-Drop Contact (Marchetti Crew)**
+   - Requires: `FactionSystem` Respect ≥ 30 for `Faction.MARCHETTI_CREW`; player must have found `SCRAWLED_NUMBER` item in inventory.
+   - Effect: spawns a `MARCHETTI_RUNNER` NPC at the phone box within 3 in-game minutes; runner carries a random item from the Marchetti loot pool (FAKE_ID, STOLEN_PHONE, BURNER_PHONE, COCAINE_WRAP — flavour item, no gameplay effect, but sells to FenceSystem for 8 COIN); player collects by pressing E on runner.
+   - Costs 1 COIN; seeds `MARCHETTI_CONTACT` rumour; +5 Respect with Marchetti.
+   - If player already has 3 outstanding dead-drops uncollected: runner doesn't spawn ("line busy").
+   - Achievement: `DEAD_DROP` on first successful collection.
+
+4. **Ring a Sex Line (Dial-a-Fantasy)**
+   - Pure flavour. Costs 2 COIN per call.
+   - Displays one of 8 rotating humorous tooltip messages (e.g., "An automated voice says: 'Press 1 for Heavy Breathing.' You hang up.").
+   - Seeds `PREMIUM_RATE_BILL` rumour if nearby NPCs witness the player in the box for > 60 seconds.
+   - No gameplay effect. Achievement: none (just funny).
+
+5. **Report a Fault (BT Engineering)**
+   - Used to request repair of the estate phone box (`PHONE_BOX_ESTATE` out-of-order prop).
+   - Requires: `PHONE_BOX_ESTATE` is broken AND player has ≥ 3 `SCRAP_METAL` in inventory.
+   - Effect: 50% chance BT Engineer NPC (`UTILITY_WORKER` type) spawns next morning (08:00–10:00) and repairs the box; 50% chance nothing happens ("We'll log that."). Alternatively, player can repair it themselves (use SCRAP_METAL ×3 on the box prop directly — instant repair).
+   - Achievement: `LAST_PHONE_STANDING` on repair.
+
+**Vandalising the Box:**
+- Player can smash the phone box (8 hits with any tool) — destroys it. Props replaced with `SMASHED_PHONE_BOX_PROP`.
+- Records `CrimeType.PHONE_BOX_VANDALISM`; Notoriety +1; Wanted +1; seeds `PHONE_BOX_VANDALISM` rumour.
+- Council repairs it after 2 in-game days (WorldGenerator replaces prop).
+- While smashed, no calls possible from that box; seeds tooltip "Classic Northfield."
+
+**`PHONE_BOX_KEY` Mechanic (BT Engineer Key):**
+- Rare drop from `UTILITY_WORKER` NPC pickpocket (3% chance) or from `ScrapyardSystem` random events.
+- Equipping it near the box while pressing E allows the player to lock the coin slot (no other NPC can use it for 1 in-game day) or unlock a broken box without SCRAP_METAL.
+- Using it also reveals a hidden `SCRAWLED_NUMBER` sticker inside the box (if not already found).
+
+**Integration Points:**
+- **WantedSystem** — successful tip-off reduces stars by 1 (one-time per tip); vandalism +1 star.
+- **FactionSystem** — dead-drop requires Marchetti Respect ≥ 30; rewards +5 Respect.
+- **DWPSystem** — calling the social accelerates next payment (once per week).
+- **NPCManager** — tip-off dispatches POLICE NPC to the crime scene; dead-drop spawns MARCHETTI_RUNNER.
+- **RumourNetwork** — `POLICE_TIP_OFF`, `MARCHETTI_CONTACT`, `PHONE_BOX_REPAIR` rumours.
+- **NotorietySystem** — vandalism +1; successful tip-off (leading to arrest) −2.
+- **NeighbourhoodSystem** — repairing the estate box: +2 Vibes; smashing the working box: −3 Vibes.
+- **TimeSystem** — box sealed 23:00–05:00; BT engineer arrives 08:00–10:00 next day.
+- **TooltipSystem** — first call: "20p a minute. The good old days."; first tip-off: "That felt wrong. And right."; vandalise: "Classic Northfield."; out-of-order box: "Out of order. What a surprise."
+
+### Unit Tests (`PhoneBoxSystemTest.java`)
+1. `testBoxSealedAtNight` — set time to 23:30; call `attemptUse(player)`; verify result = `SEALED_AT_NIGHT`.
+2. `testCallCostsCoin` — player has 1 COIN; call tip-off option; verify COIN deducted by 1.
+3. `testPhoneCardAllowsFreeCall` — player has 0 COIN but has `PHONE_CARD` in inventory; call any option; verify PHONE_CARD consumed; verify no COIN deducted.
+4. `testTipOffDispatchesPolice` — seed recent crime witness list with a crime at (50, 1, 50); call tip-off; verify `POLICE` NPC dispatch pending for that location within 5 minutes.
+5. `testTipOffReducesWantedStars` — player has 2 Wanted stars and a valid crime witness; call tip-off; verify Wanted stars = 1 after 5-minute elapsed.
+6. `testFalseTipOffNoReduction` — player has no crime witness; call tip-off; verify result = `FALSE_TIP`; verify Wanted stars unchanged.
+7. `testDeadDropRequiresRespect` — Marchetti Respect = 25 (below 30); attempt dead-drop call; verify result = `INSUFFICIENT_RESPECT`.
+8. `testDeadDropRequiresScrawledNumber` — Marchetti Respect = 40 but no `SCRAWLED_NUMBER` in inventory; verify result = `NO_NUMBER`.
+9. `testDeadDropSpawnsRunner` — Marchetti Respect ≥ 30, `SCRAWLED_NUMBER` in inventory; call dead-drop; advance 3 minutes; verify `MARCHETTI_RUNNER` NPC spawned within 5 blocks of box.
+10. `testSexLineTooltipRotates` — call sex line 8 times; verify 8 distinct tooltip strings returned (no repeats in sequence).
+11. `testVandalismRecordsCrime` — hit box 8 times; verify `PHONE_BOX_VANDALISM` in CriminalRecord; verify `isPropSmashed()` returns true.
+12. `testRepairWithScrapMetal` — estate box broken; player has 3 SCRAP_METAL; call `attemptRepair(player)`; verify box repaired; verify SCRAP_METAL reduced by 3; verify `LAST_PHONE_STANDING` achievement unlocked.
+13. `testFalseTipOffCounterTriggersCredibilityFlag` — call tip-off 3 times with no witness; verify `credibilityFlag = true`; fourth tip-off with valid witness has `policeResponseProbability = 0.5f`.
+14. `testDWPCallAdvancesPayment` — DWP active; call social; 50% seed RNG to success; verify next payment day advanced by 1.
+
+### Integration Tests (`Issue1269PhoneBoxIntegrationTest.java`)
+1. **Tip-off leads to NPC arrest**: NPC commits visible crime (pickpocket) within player sight. Player walks to phone box and calls tip-off (1 COIN deducted). Verify `POLICE` NPC dispatched. Advance 5 in-game minutes. Verify police NPC has moved to crime location. Verify crime NPC transitions to `ARRESTED` state (or flees). Verify `POLICE_TIP_OFF` rumour in RumourNetwork. Verify player Wanted stars reduced by 1. Verify `GRASSIN_UP` achievement unlocked.
+2. **Dead-drop call and collection**: Player has Marchetti Respect ≥ 30 and `SCRAWLED_NUMBER` in inventory. Approach phone box; press E; select dead-drop. Verify COIN deducted. Verify `MARCHETTI_RUNNER` NPC spawns within 3 in-game minutes within 5 blocks of box. Player presses E on runner. Verify Marchetti loot item in player inventory. Verify `DEAD_DROP` achievement unlocked. Verify `MARCHETTI_CONTACT` rumour seeded.
+3. **Repair the estate box end-to-end**: Player has 3 SCRAP_METAL. Navigate to estate phone box. Press E — verify tooltip "Out of order." Player equips SCRAP_METAL and presses E again (or uses PhoneBoxSystem repair action). Verify estate box now functional. Verify 3 SCRAP_METAL removed from inventory. Verify `LAST_PHONE_STANDING` achievement unlocked. Verify `PHONE_BOX_REPAIR` rumour seeded. Verify `NeighbourhoodSystem.getVibes()` increased by 2.
+4. **Vandalism and council repair**: Player punches phone box 8 times. Verify prop state = `SMASHED`. Verify `PHONE_BOX_VANDALISM` CrimeType in CriminalRecord. Verify Wanted stars +1. Verify attempting to use the box returns `BOX_SMASHED`. Advance 2 in-game days. Verify box prop restored to functional state by WorldGenerator.
+5. **Box sealed at night, usable at dawn**: Set time to 23:00. Player presses E on box. Verify `SEALED_AT_NIGHT` result and tooltip "Come back after 5am." Advance time to 05:01. Player presses E again. Verify UI opens normally.
+6. **Phone card substitutes for coin**: Player has 0 COIN and 1 `PHONE_CARD`. Call DWP option. Verify `PHONE_CARD` consumed from inventory. Verify COIN balance unchanged. Verify DWP call response received. Verify `OFF_THE_BOOKS` achievement progress increments.
+
+// ── Issue #1269: Northfield BT Phone Box ─────────────────────────────────────
+// New: PhoneBoxSystem.java in ragamuffin.core
+// New: PhoneBoxSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1269PhoneBoxIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: PHONE_BOX_KEY, SCRAWLED_NUMBER, PHONE_CARD — add to Material.java
+// LandmarkType: PHONE_BOX_HIGH_STREET, PHONE_BOX_ESTATE — add to LandmarkType.java
+// AchievementType: GRASSIN_UP, DEAD_DROP, OFF_THE_BOOKS, LAST_PHONE_STANDING — add to AchievementType.java
+// RumourType: POLICE_TIP_OFF, MARCHETTI_CONTACT, PHONE_BOX_REPAIR — add to RumourType.java
+// CriminalRecord.CrimeType: PHONE_BOX_VANDALISM — add to CriminalRecord.java
+// WantedSystem: tip-off reduces stars by 1 after successful NPC arrest; vandalism +1 star
+// FactionSystem: dead-drop requires Marchetti Respect ≥ 30; rewards +5 Respect
+// DWPSystem: calling social advances next payment by 1 day (once per week)
+// NeighbourhoodSystem: estate box repair +2 Vibes; working box smash −3 Vibes
+// WorldGenerator: place PHONE_BOX prop at PHONE_BOX_HIGH_STREET and PHONE_BOX_ESTATE
