@@ -3110,7 +3110,33 @@ public enum Material {
      * Restores +25 Hunger and removes COLD debuff when filled with hot soup.
      * Tooltip: "Thick vegetable soup. There is no shame in this."
      */
-    SOUP_BOWL("Soup Bowl");
+    SOUP_BOWL("Soup Bowl"),
+
+    // ── Issue #1126: Northfield Household Waste Recycling Centre ─────────────
+
+    /**
+     * Junk Bag — a black bin bag of miscellaneous rubbish. Used in fly-tip jobs at the
+     * Recycling Centre (carry to GENERAL_WASTE_BAY_PROP for payment). Also a decorative
+     * prop in the general waste bay.
+     * Tooltip: "Someone's problem, now yours."
+     */
+    JUNK_BAG("Junk Bag"),
+
+    /**
+     * Circuit Board — electronic component smashed from EWASTE_SKIP_PROP at the Tip.
+     * Crafting material for PirateRadioSystem TRANSMITTER upgrades.
+     * Sells for 2 COIN at the Scrapyard.
+     * Tooltip: "The guts of someone's old PC."
+     */
+    CIRCUIT_BOARD("Circuit Board"),
+
+    /**
+     * Working Laptop — rare find from the Reuse shelf at the Tip. Fenceable at the
+     * Pawn Shop for 10 COIN. Selling adds HANDLING_STOLEN_GOODS to CriminalRecord
+     * (suspicious resale). Flagged NOT_STOLEN so no Notoriety on standard fence.
+     * Tooltip: "Someone chucked this. Their loss."
+     */
+    WORKING_LAPTOP("Working Laptop");
 
     private final String displayName;
 
@@ -3882,6 +3908,14 @@ public enum Material {
             case SOUP_BOWL:               return cs(0.80f, 0.55f, 0.30f,  // Terracotta bowl
                                                     0.90f, 0.68f, 0.28f); // Warm soup
 
+            // Issue #1126: Recycling Centre
+            case JUNK_BAG:                return cs(0.12f, 0.12f, 0.12f,  // Black bin bag
+                                                    0.25f, 0.25f, 0.25f); // Dark grey tie
+            case CIRCUIT_BOARD:           return cs(0.18f, 0.45f, 0.18f,  // PCB green
+                                                    0.82f, 0.72f, 0.18f); // Gold traces
+            case WORKING_LAPTOP:          return cs(0.22f, 0.22f, 0.22f,  // Dark grey lid
+                                                    0.35f, 0.35f, 0.35f); // Lighter base
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4269,6 +4303,10 @@ public enum Material {
             case SALVATION_ARMY_UNIFORM:
             case COLLECTION_LEDGER:
             case SOUP_BOWL:
+            // Issue #1126: Recycling Centre — not block items
+            case JUNK_BAG:
+            case CIRCUIT_BOARD:
+            case WORKING_LAPTOP:
                 return false;
             default:
                 return true;
