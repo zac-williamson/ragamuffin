@@ -33530,3 +33530,23 @@ it to Tommy: +15 BOXING points, permanent free membership, `LEGACY_OF_THE_RING` 
 //   WantedSystem, NotorietySystem, FactionSystem, NoiseSystem,
 //   NeighbourhoodWatchSystem, CriminalRecord, RumourNetwork, AchievementSystem,
 //   MatchDaySystem (White-Collar Saturday scheduling), PawnShopSystem
+
+// ── Issue #1169: Status Dog — DogCompanionSystem implementation ──────────────
+// Phase 39 (spec already written at "Phase 39: The Status Dog") is fully specced
+// but DogCompanionSystem.java does not exist in src/main/java/ragamuffin/core/.
+// All surrounding infrastructure is already in place:
+//   - DogTrick.java (enum: SIT, STAY, FETCH, GUARD) — exists
+//   - NPCType.STRAY_DOG — exists (park-spawned; adoptable via E + SAUSAGE_ROLL/STEAK_BAKE)
+//   - NPCState.SITTING — exists (dog SIT trick animation)
+//   - AchievementType: MANS_BEST_FRIEND, GOOD_BOY_GOOD_BOY, DANGEROUS_DOG — exist
+//   - CriminalRecord.CrimeType.DANGEROUS_DOG — exists
+// What is MISSING: the DogCompanionSystem.java class itself.
+//
+// Implement DogCompanionSystem.java per the Phase 39 spec above, including:
+//   All constants (FEED_HUNGER_RESTORE, FEED_BOND_BONUS, PARK_WALK_BOND_PER_MINUTE, etc.)
+//   adoptDog(), feedDog(), teachTrick(), useForIntimidation(), update() per-frame method
+//   isFollowing(), hasDog(), getDogBondLevel(), getDogHunger() accessors
+//   All system integrations: NotorietySystem, NeighbourhoodWatchSystem, FactionSystem,
+//     WantedSystem, WarmthSystem, WeatherSystem, RumourNetwork, AchievementSystem
+//   Unit tests in DogCompanionSystemTest.java
+//   Integration tests per Phase 39 spec scenarios
