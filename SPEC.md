@@ -36173,3 +36173,137 @@ New Props to add to `PropType.java`:
 // Integrates: WetherspoonsSystem, BattleBarMiniGame, NotorietySystem, RumourNetwork,
 //   StreetSkillSystem, WantedSystem, CriminalRecord, NeighbourhoodSystem, NoiseSystem,
 //   DogCompanionSystem, AchievementSystem, TimeSystem
+
+---
+
+## The Vaults — Northfield Nightclub System
+
+**Issue**: Add Northfield Nightclub — The Vaults: Door Policy, Dancefloor, DJ Booth, VIP Area & Kicking-Out Time Chaos
+
+### Overview
+
+`LandmarkType.NIGHTCLUB` ("The Vaults") already exists in the codebase as a converted railway arch nightclub adjacent to the Wetherspoons. This issue implements `NightclubSystem.java` to bring it to life.
+
+**Opening hours**: Thu–Sun 22:00–03:00. Outside hours the venue is dark and the shutter is down (impassable `SHUTTER_PROP`). From 21:30, a queue forms outside.
+
+### Building Layout
+
+A 16×10×5 block brick arch. Main floor (12×10): a central dancefloor (`DANCE_FLOOR_PROP`, 6×6), a bar running along the east wall (`BAR_COUNTER_PROP` × 4), a DJ booth raised 1 block (`DJ_BOOTH_PROP`), speaker stacks (`SPEAKER_STACK_PROP` × 2), and a fire exit (`FIRE_EXIT_PROP`) on the north wall. Lower level (VIP, 8×6, entered via stairs near the DJ booth): four `VIP_BOOTH_PROP` seating units. Two toilet cubicles (`TOILET_CUBICLE_PROP`) off a side corridor — these are interaction hotspots.
+
+### NPCs
+
+- **Big Dave** (`NPCType.BOUNCER`) — on the door 21:30–03:00. Refuses entry for Notoriety Tier 4+, or if player is already WANTED. Bribe: 5 COIN buys entry at Tier 3.
+- **Leanne** (`NPCType.BARMAN`) — behind the bar. Sells `PINT` (3 COIN), `SHORT` (2 COIN), `WATER` (0 COIN). Cuts off visibly DRUNK players.
+- **DJ Mikey** (`NPCType.DJ`) — at the booth. Active 22:30–02:30. Replaced by silence (NoiseSystem drops to 2) if absent.
+- **2–6 RAVE_ATTENDEE** — on the dancefloor after midnight; count scales with `NeighbourhoodSystem` vibes (higher vibes = bigger crowd).
+- **1–2 FACTION_LIEUTENANT** (Marchetti Crew) in VIP booths from midnight.
+- **1 DEALER NPC** (`NPCType.STREET_LAD`) — loiters near the toilet corridor 23:00–02:00.
+
+### Mechanics
+
+#### Door Policy
+- Entry refused if: Notoriety ≥ Tier 4; player is WANTED; player is carrying `OFFENSIVE_WEAPON`.
+- Entry refused at Tier 3 unless bribe (5 COIN) paid. Refusal text: "Not tonight, mate."
+- `DogCompanionSystem`: dog companion is refused at the door always ("No dogs, pal.").
+
+#### Dancefloor & Atmosphere
+- `NoiseSystem` sets noise level 9 inside while DJ is active; 4 while dark.
+- `BattleBarMiniGame` (EASY difficulty): press E on `DANCE_FLOOR_PROP` to "throw shapes". Success = +1 `StreetSkillSystem.PERFORMING` XP, brief `NPCState.DANCING` on nearest NPC.
+- Random crowd event every 15 in-game minutes (1 of 4): `FIGHT_BREAKS_OUT`, `SOMEONE_DROPS_THEIR_KEBAB`, `FOAM_MACHINE_KICKS_IN`, `CELEBRITY_SIGHTING`.
+
+#### Bar Economy
+- Three drinks tiers. Drinking a `SHORT` has 25% chance of DRUNK debuff (`NPCState.DRUNK`).
+- Leanne refuses service: player DRUNK already, or Notoriety Tier 4+.
+- Pay with COIN; running a tab (pressing E again without buying) triggers "Card declined, love."
+
+#### VIP Area
+- Entry requires: `FactionSystem` Marchetti Respect ≥ 60, or paying 10 COIN cover to the FACTION_LIEUTENANT.
+- Inside VIP, FACTION_LIEUTENANT NPC offers one random `FactionMission` per night session.
+- A `CASH_BOX_PROP` sits under the VIP bar — theft triggers `CriminalRecord.CrimeType.THEFT`, +10 Notoriety, WantedSystem +1.
+
+#### Toilet Cubicle Deals
+- Press E on `TOILET_CUBICLE_PROP` to enter. If DEALER NPC within 4 blocks, a text prompt offers a trade: pay 3 COIN, receive `Material.PILLS` (consumable: Alertness +50, 10% chance of BAD_TRIP debuff).
+- BAD_TRIP debuff: player staggers (movement speed ×0.4) for 60 real seconds, random NPCState flips between DANCING and FLEEING.
+- Using the toilet cubicle with `Material.LOCKPICK` while nobody nearby lets the player hide for 90 seconds (police search ignores the club interior during this window).
+
+#### Kicking-Out Time (03:00)
+- At 03:00 sharp, Big Dave announces "Right, that's your lot!" — all player/NPC patrons are ejected via the fire exit or front door.
+- A queue of 4–8 PUBLIC/DRUNK NPCs forms at the `KEBAB_VAN` spawn point (links to `KebabVanSystem`).
+- 20% chance of a `FIGHT_BREAKS_OUT` event in the street. If fight: 2 YOUTH_GANG NPCs spawn, `WantedSystem` +1 if player involved.
+- `TaxiSystem`: two cabs queue on the road adjacent; press E to fast-travel home (costs BASE_FARE).
+
+#### Integration
+
+- **`RaveSystem`**: if a RAVE announcement is active, dancefloor attendance doubles and a `FOAM_MACHINE_KICKS_IN` event is guaranteed.
+- **`MCBattleSystem`**: a weekly MC Battle (Saturday 23:00) takes place on the dancefloor in front of the DJ booth, using `BattleBarMiniGame`.
+- **`NotorietySystem`**: fight involvement = +5; kicking out peacefully = 0; VIP entry = −1 (briefly normalised by being seen mixing).
+- **`WantedSystem`**: any violence inside = +1 star; drug deal witnessed by Leanne = +1 star.
+- **`CriminalRecord`**: logs `AFFRAY` on fight involvement; `POSSESSION` if carrying PILLS when arrested outside.
+- **`NeighbourhoodSystem`**: big Saturday night = +2 Vibes (capped at current); fight outside = −3 Vibes.
+- **`NoiseSystem`**: PA noise 9 while open; `NeighbourhoodWatchSystem` triggers complaint after 01:00.
+- **`TaxiSystem`** / **`KebabVanSystem`**: post-kicking-out links.
+- **`DisguiseSystem`**: wearing a suit (`Material.SUIT`) bypasses Tier 3 door bribe.
+- **`RumourNetwork`**: FIGHT_BREAKS_OUT seeds `RumourType.STREET_VIOLENCE`; CELEBRITY_SIGHTING seeds `RumourType.LOCAL_EVENT`.
+- **`AchievementSystem`**: new achievements (see below).
+- **`StreetSkillSystem`**: PERFORMING XP from dancing; CHARISMA from VIP schmooze.
+- **`TimeSystem`**: opening hours gate via `getDayOfWeek()` and `getHour()`.
+- **`WeatherSystem`**: rain reduces queue length by 2 NPCs; thunderstorm closes the venue.
+
+### New PropTypes (add to `PropType.java`)
+- `DANCE_FLOOR_PROP`
+- `DJ_BOOTH_PROP`
+- `SPEAKER_STACK_PROP`
+- `VIP_BOOTH_PROP`
+- `TOILET_CUBICLE_PROP`
+- `FIRE_EXIT_PROP`
+- `SHUTTER_PROP`
+
+### New NPCType entries (add to `NPCType.java`)
+- `DJ` — passive behind the booth; triggers `NoiseSystem` level 9 while active.
+
+### New Material entries (add to `Material.java`)
+- `PILLS` — consumable; Alertness +50, 10% BAD_TRIP chance.
+- `SHORT` — alcoholic shot; consumable.
+
+### New AchievementType entries (add to `AchievementType.java`)
+- `SHAPES_ON_THE_FLOOR` — Successfully threw shapes on the dancefloor.
+- `VIP_TREATMENT` — Got into the VIP area.
+- `BAD_TRIP` — Suffered a bad trip in the toilets.
+- `CLOSING_TIME` — Survived kicking-out time at The Vaults.
+- `BOUNCED` — Got refused entry by Big Dave.
+
+### Unit Tests
+
+- Door policy: Notoriety Tier 1–2 = admitted; Tier 3 without bribe = refused, with bribe = admitted; Tier 4 = always refused; WANTED = refused.
+- Bar service: DRUNK player receives refusal text; sober player receives item and COIN deducted.
+- VIP entry: Marchetti Respect < 60 without cover = blocked; ≥ 60 = admitted; 10 COIN cover = admitted.
+- Noise: DJ active = 9; DJ absent = 4; venue closed = 0.
+- Kicking-out time: at 03:00, `isOpen()` returns false; patrons list cleared.
+- Pills BAD_TRIP: 10% probability (seeded Random, 10000 trials, within ±2%).
+- Dance floor `BattleBarMiniGame` success: PERFORMING XP incremented by 1.
+- Weather: thunderstorm sets `isOpen()` to false regardless of time.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Door policy — bribe admitted**: Set player Notoriety to Tier 3. Set `TimeSystem` to Friday 22:30. Player attempts entry at The Vaults door. Verify `NightclubSystem.tryEntry(player)` returns `REFUSED_NOTORIETY`. Player pays bribe (5 COIN deducted). Verify `tryEntry(player)` now returns `ADMITTED`. Verify `AchievementSystem` does NOT have `BOUNCED` (bribe succeeded).
+
+2. **Dancefloor XP**: Set `TimeSystem` to Saturday 23:00. Player inside venue, DJ active. Player presses E on `DANCE_FLOOR_PROP`. Seed `BattleBarMiniGame` to guarantee a hit. Verify `StreetSkillSystem.getSkillXP(Skill.PERFORMING)` increases by 1. Verify nearest RAVE_ATTENDEE NPC transitions to `NPCState.DANCING`.
+
+3. **Toilet cubicle deal — BAD_TRIP**: DEALER NPC placed within 4 blocks of `TOILET_CUBICLE_PROP`. Player presses E on cubicle. Player pays 3 COIN (deducted). `Material.PILLS` added to inventory. Player consumes PILLS with seeded Random forcing BAD_TRIP. Verify player movement speed is ×0.4 (`Player.getSpeed()` reduced). Verify `CriminalRecord` logs `POSSESSION` if player is arrested outside while holding PILLS.
+
+4. **Kicking-out time spawns cab queue**: Set `TimeSystem` to Sunday 03:00. Call `NightclubSystem.update(delta, timeSystem, ...)`. Verify `NightclubSystem.isOpen()` returns false. Verify `TaxiSystem` has at least 2 cabs queued near the club coordinates. Verify `KebabVanSystem.isActive()` returns true (van spawned).
+
+5. **Rave night doubles attendance**: Seed `RumourNetwork` with `RumourType.RAVE_ANNOUNCEMENT`. Set `TimeSystem` to Saturday 23:30. Call `NightclubSystem.update(delta, ...)`. Verify `NightclubSystem.getDancefloorOccupancy()` is at least double the baseline (non-rave) occupancy for same conditions.
+
+// ── New: NightclubSystem.java in ragamuffin.core
+// Uses LandmarkType.NIGHTCLUB (existing)
+// New NPCType: DJ — add to NPCType.java
+// New PropType: DANCE_FLOOR_PROP, DJ_BOOTH_PROP, SPEAKER_STACK_PROP, VIP_BOOTH_PROP,
+//   TOILET_CUBICLE_PROP, FIRE_EXIT_PROP, SHUTTER_PROP — add to PropType.java
+// New Material: PILLS, SHORT — add to Material.java
+// New AchievementType: SHAPES_ON_THE_FLOOR, VIP_TREATMENT, BAD_TRIP, CLOSING_TIME,
+//   BOUNCED — add to AchievementType.java
+// Integrates: RaveSystem, MCBattleSystem, BattleBarMiniGame, NotorietySystem,
+//   WantedSystem, CriminalRecord, NeighbourhoodSystem, NoiseSystem,
+//   TaxiSystem, KebabVanSystem, DisguiseSystem, RumourNetwork, AchievementSystem,
+//   StreetSkillSystem, TimeSystem, WeatherSystem, DogCompanionSystem, FactionSystem
