@@ -44019,3 +44019,183 @@ When `YOUTH_GANG` enters `THREATENING` state within 4 blocks of Gary:
 //             DWPSystem (flavour), WeatherSystem, StallSystem, FactionSystem,
 //             InternetCafeSystem (counterfeit recipe), SquatSystem (PRINTER_PROP),
 //             NoiseSystem, NewspaperSystem, MarketInspectorSystem (MARKET_INSPECTOR spawn)
+
+---
+
+## Issue #1303: Add Northfield Dave's Carpets — The Perpetual Closing-Down Sale, Sofa Hustle & the Trading Standards Investigation
+
+### Overview
+
+`CarpetShopSystem` brings Dave's Carpets to the Northfield retail strip — a mid-sized carpet and furniture warehouse that has been permanently "closing down" for three years. Dave Hogan (`NPCType.CARPET_SALESMAN`) holds a handwritten CLOSING DOWN SALE banner outside every morning and greets every passer-by with increasingly desperate pitches. The player can buy heavily overpriced furniture, manipulate NPCs into impulse purchases (commission hustle), loot the stockroom during a distraction, run their own copycat closing-down pitch elsewhere, or tip off Trading Standards for a chaotic investigation. The system integrates with `SquatSystem` (furnishing the squat), `PropertySystem` (flat furnishing XP), `FenceSystem`, `NotorietySystem`, `NeighbourhoodSystem`, `WeatherSystem`, `NewspaperSystem`, and `StreetSkillSystem`.
+
+---
+
+### NPCs
+
+- **CARPET_SALESMAN (Dave Hogan)** — Outside the shop 09:00–17:00 Mon–Sat with `CLOSING_DOWN_BANNER_PROP`. Cycles through escalating desperation lines: *"Last week of trading, promise you that." / "Everything's got to go — landlord's being unreasonable." / "Thirty per cent off everything, today only." / "I'm not joking this time, we really are shutting."* Has been saying this for three in-game years (DWP record shows SELF_EMPLOYED for 1,095 days). Press E on Dave: option menu — `[Browse]`, `[Ask when you're actually closing]`, `[Buy a carpet]`. "When" response: *"End of the month, mate. Definite."*
+- **DELIVERY_LAD (Kev)** — `NPCType.DELIVERY_DRIVER`; inside the stockroom 09:00–13:00; can be distracted with a `CHOCOLATE_BAR` or `CAN_OF_LAGER`. While distracted (90 seconds): stockroom accessible.
+- **TRADING_STANDARDS_OFFICER (Sandra)** — spawns 3–5 in-game minutes after a player tip-off. Inspects `CLOSING_DOWN_BANNER_PROP`, checks Dave's NPC dialogue for repeated "last week" claims. If 3+ in-game days have passed since last "closing down" claim: Sandra issues a `TRADING_STANDARDS_WARNING` (`PropType`); Dave enters `DEFLATED` state for 24 in-game hours (no banner, quieter pitches). Achievement: `REPORTED_DAVE`.
+
+---
+
+### PropTypes (new)
+
+- `CLOSING_DOWN_BANNER_PROP` — Handwritten A-frame sign outside the shop. Interact: triggers Dave's pitch. Lootable (smash): drops `CARDBOARD`. Notoriety +2 if done while Dave watching.
+- `CARPET_ROLL_PROP` — Large rolled carpet in showroom/stockroom. Can be looted (requires `CRAFT_KNIFE` to cut): yields 2–4 `CARPET_OFFCUT`. Size: 0.40×0.40×2.00. Looting takes 8 seconds; Notoriety +4 if caught.
+- `SOFA_PROP` — Displayroom sofa. Press E: `[Sit]` (restore 5 stamina) or `[Attempt to carry]` (too heavy alone; needs `SACK_TRUCK_PROP`). With SACK_TRUCK: carry to squat/property (see SquatFurnishingTracker). Notoriety +6 if caught.
+- `SACK_TRUCK_PROP` — In stockroom. Pickupable item (`Material.SACK_TRUCK`). Required to move SOFA_PROP. Dave notices absence within 60 seconds; calls POLICE if Notoriety ≥ 20.
+- `TRADING_STANDARDS_WARNING` — A4 laminated notice affixed to Dave's shopfront by Sandra. Reduces NPC impulse-buy chance by 30% for 48 in-game hours.
+
+---
+
+### Materials (new)
+
+| Material | Description |
+|----------|-------------|
+| `CARPET_OFFCUT` | Cut from CARPET_ROLL_PROP with CRAFT_KNIFE. Fenceable at 1 COIN. Used in SquatSystem: lay as flooring (reduces cold-draughts warmth penalty −15%). 4 CARPET_OFFCUT = full squat floor covering. |
+| `SOFA` | Carried from Dave's showroom via SACK_TRUCK. Placed in squat via SquatFurnishingTracker: +20 comfort points; NPCs visiting squat gain 10 stamina on sit. Fenceable at 4 COIN. |
+| `CLOSING_DOWN_FLYER` | Dave hands these out (1 per NPC per hour, up to 6). Player can collect flyers and use them at a different location to run a fake closing-down pitch (see Hustle). Craftable: 1 NEWSPAPER + MARKER_PEN = 3 CLOSING_DOWN_FLYER (unofficial copies). |
+| `SACK_TRUCK` | Stockroom equipment. Allows SOFA_PROP transport. Fenceable at 2 COIN. |
+| `CARPET_SAMPLE_BOOK` | On Dave's counter. Press E: +1 STREET_SMARTS XP (flavour: "You learn more than you expected about Berber twist."). Not fenceable; donation to CharityShop = +1 goodwill. |
+
+---
+
+### Activities
+
+#### Browsing and Buying
+- Press E on Dave → `[Browse]` opens a 6-item stock list: CARPET_OFFCUT (4 COIN, pre-cut), basic SOFA (12 COIN), SACK_TRUCK (6 COIN), CARPET_SAMPLE_BOOK (2 COIN), CLOSING_DOWN_FLYER (free, 1 per visit), PLASTIC_BAG (free).
+- Buying SOFA: Dave insists *"You won't find that cheaper anywhere. That's a Barker & Stonehouse quality. Honest."* (It isn't.)
+- `STANDING_CUSTOMER_DAVE` achievement on 3rd purchase from Dave.
+
+#### Commission Hustle (Social Engineering NPCs)
+1. Player collects `CLOSING_DOWN_FLYER` from Dave (or crafts unofficial copy).
+2. Player presses E on any PUBLIC or PENSIONER NPC within 20 blocks of Dave's shop and selects `[Tell them about the closing-down sale]`.
+3. NPC rolls impulse-buy chance (base 35%; +10% if PENSIONER; −20% if player Notoriety ≥ 30; +10% if player SOCIAL XP ≥ 10).
+4. On buy: NPC walks to Dave's, purchases 1 item. Dave says *"Champion! Good lad."* Player earns: +1 COIN commission (ambient), +1 SOCIAL XP, `DEAL_BROKER` rumour seeded (see below).
+5. 5 successful NPC referrals in one in-game day → `CARPET_KING` achievement.
+
+#### Stockroom Loot (Kev Distraction)
+1. Player has `CHOCOLATE_BAR` or `CAN_OF_LAGER` in inventory.
+2. Press E on Kev (stockroom, 09:00–13:00) → `[Offer Kev a snack]`: Kev enters `DISTRACTED` for 90 seconds.
+3. While distracted: player accesses stockroom. Lootable: `CARPET_ROLL_PROP` (→ CARPET_OFFCUT ×2–4), `SACK_TRUCK_PROP` (→ Material.SACK_TRUCK), miscellaneous `CARDBOARD` ×2, `PLASTIC_BAG` ×3.
+4. Kev returns at 90s: if player still in stockroom and items missing, Kev calls Dave. Dave calls POLICE (Notoriety +6, THEFT crime). If player escaped: no detection.
+5. `FIVE_FINGER_DISCOUNT` achievement: loot stockroom without detection.
+
+#### Sofa Transport to Squat
+1. Player has SACK_TRUCK (stolen or purchased).
+2. Press E on SOFA_PROP in showroom → `[Load onto sack truck]` (if SACK_TRUCK in inventory).
+3. Player moves to squat/property entrance while carrying SOFA (movement speed −40%).
+4. NPC witnesses during transit: 45% chance they call POLICE (stolen sofa report).
+5. At squat: press E on `SQUAT_INTERIOR_PROP` → `[Furnish with sofa]` → SquatFurnishingTracker records SOFA; comfort score +20.
+6. `INTERIOR_DECORATOR` achievement: furnish squat with SOFA + CARPET_OFFCUT flooring.
+
+#### Fake Closing-Down Pitch Hustle
+1. Player has 3× `CLOSING_DOWN_FLYER` and at least 6× any sellable item (CARDBOARD, CARPET_OFFCUT, old newspapers — anything).
+2. Player stands at any non-Dave prop location (empty pavement, market, park) and presses E → `[Set up closing-down pitch]`.
+3. While active: passing NPCs have 25% chance per NPC of buying one item (2 COIN each).
+4. After 4th sale: MARKET_INSPECTOR Keith arrives (2-minute warning via rumour). Player can flee or face `UNLICENSED_TRADING` crime + Notoriety +5.
+5. `COPYCAT_DAVE` achievement: earn 8 COIN from fake closing-down pitch in one session.
+
+#### Trading Standards Tip-Off
+1. Player presses E on CLOSING_DOWN_BANNER_PROP → `[Report to Trading Standards]` (only shown after Dave has used the "last week" line ≥ 3 times in current session; tracked by `closingDownClaimCount`).
+2. Sandra spawns 3–5 in-game minutes later. Inspects banner, talks to Dave.
+3. Dave enters `DEFLATED` for 24 in-game hours: removes banner, quieter dialogue (*"Might need a few more weeks actually."*), NPC purchase rate −30%.
+4. NeighbourhoodSystem: `COMMUNITY_RESPECT` +1 (players approve of consumer protection); MARCHETTI_CREW Respect −1 (Dave is an ally).
+5. `REPORTED_DAVE` achievement.
+6. After 48 in-game hours: Dave resets to normal. Repeatable.
+
+---
+
+### Prices
+
+| Transaction | Amount |
+|---|---|
+| Buy SOFA from Dave | −12 COIN |
+| Buy CARPET_OFFCUT from Dave | −4 COIN |
+| Buy SACK_TRUCK from Dave | −6 COIN |
+| Commission: refer NPC who buys | +1 COIN |
+| Fake pitch sale | +2 COIN per item |
+| Fence SOFA | +4 COIN |
+| Fence SACK_TRUCK | +2 COIN |
+| Fence CARPET_OFFCUT | +1 COIN |
+| Distract Kev (CHOCOLATE_BAR cost) | −1 COIN |
+
+---
+
+### Integration Points
+
+- **SquatSystem / SquatFurnishingTracker**: SOFA adds +20 comfort; CARPET_OFFCUT ×4 adds floor warmth bonus (−15% cold draughts warmth penalty). Tracked in `SquatFurnishingTracker`.
+- **PropertySystem**: Furnishing a rented flat with SOFA grants `PROPERTY_COMFORT` +1 milestone.
+- **NotorietySystem**: Carpet loot caught +4; sofa theft +6; fake pitch (caught) +5; smash banner +2; tip off Dave +0.
+- **WantedSystem**: THEFT crime on caught stockroom loot; UNLICENSED_TRADING on fake pitch bust.
+- **CriminalRecord**: `THEFT` (stockroom loot caught), `UNLICENSED_TRADING` (fake pitch). Add `UNLICENSED_TRADING` if not already present.
+- **RumourNetwork**: `DEAL_BROKER` (seeded on 3 NPC referrals — "Someone's been sending people into that carpet shop — proper little salesman"); `CARPET_THIEF` (seeded after sofa transport witnessed — "Someone wheeled a sofa through the high street on a sack truck"); `DAVE_REPORTED` (seeded after Trading Standards visit — "Sandra from Trading Standards went to Dave's Carpets again. Poor Dave."). Add `DEAL_BROKER`, `CARPET_THIEF`, `DAVE_REPORTED` to `RumourType.java`.
+- **StreetSkillSystem**: SOCIAL XP +1 per NPC referral; TRADING XP +1 per fake pitch sale; STREET_SMARTS XP +1 on reading CARPET_SAMPLE_BOOK.
+- **NeighbourhoodSystem**: Trading Standards tip-off `COMMUNITY_RESPECT` +1; sofa-theft-witnessed `COMMUNITY_RESPECT` −1.
+- **FenceSystem**: SOFA (4 COIN), SACK_TRUCK (2 COIN), CARPET_OFFCUT (1 COIN) — all accepted.
+- **CharityShopSystem**: CARPET_SAMPLE_BOOK donatable for +1 goodwill.
+- **WeatherSystem**: RAIN — Dave brings banner inside (no outdoor pitch), no NPC passers-by stopped; HEATWAVE — Dave mentions *"Good day for new floors, love. Keep the place cool."* +5% NPC purchase rate.
+- **NoiseSystem**: Sofa transport through high street = LOW noise radius 6 (trolley squeaking); MARKET_INSPECTOR confrontation = MEDIUM noise 10.
+- **NewspaperSystem**: After 5 fake-pitch income sessions (player), headline: "Trading Standards Probing 'Closing Down' Copycat Pitches on Northfield High Street." After 3 Sandra visits to Dave, headline: "Northfield Carpet Trader's Three-Year 'Closing Down Sale' Finally Investigated."
+- **FactionSystem**: MARCHETTI_CREW Respect −1 on Trading Standards report (Dave is a Marchetti associate); STREET_LADS Respect +1 on `COPYCAT_DAVE` achievement (admire the hustle).
+- **StallSystem / MarketInspectorSystem**: Fake pitch triggers MARKET_INSPECTOR Keith after 4 sales.
+- **DWPSystem**: Dave's DWP record: SELF_EMPLOYED for 1,095+ in-game days; flavour only — player cannot modify.
+
+---
+
+### Unit Tests (`CarpetShopSystemTest.java`)
+
+1. `testDaveSpawnsMondayMorning` — set TimeSystem to Monday 09:00, CLEAR weather; call `update(delta, timeSystem)`; verify CARPET_SALESMAN NPC present at `CLOSING_DOWN_BANNER_PROP` position.
+2. `testDaveAbsentAfterHours` — TimeSystem = Monday 17:30; call `update(delta, timeSystem)`; verify CARPET_SALESMAN not at banner; Kev not in stockroom.
+3. `testBuySofaDeductsCoin` — player has 15 COIN; call `buyItem(player, Material.SOFA)`; verify player COIN = 3; SOFA in inventory.
+4. `testReferNPCImpulseBuySucceeds` — seed RNG < 0.35 (base chance); player has CLOSING_DOWN_FLYER; call `referNPC(player, npcPublic, rng)`; verify npcPublic state = WALKING_TO_SHOP; player SOCIAL XP +1.
+5. `testReferNPCHighNotorietyReducesChance` — player Notoriety = 35; seed RNG = 0.28 (would succeed at base but fails with −0.20 penalty); call `referNPC(player, npc, rng)`; verify npc NOT directed to shop.
+6. `testKevDistractedByChocolateBar` — player has CHOCOLATE_BAR; call `distractKev(player)`; verify Kev state = DISTRACTED; `kevDistractedSecondsRemaining` = 90.0f.
+7. `testStockroomLootSucceedsWhileKevDistracted` — Kev in DISTRACTED state; call `lootStockroom(player)`; verify player gains CARPET_OFFCUT ≥ 2; CARPET_ROLL_PROP removed; no crime recorded.
+8. `testKevReturnsCatchesPlayer` — Kev DISTRACTED; player loots; advance `kevDistractedSecondsRemaining` to 0; call `update(delta, timeSystem)` with player still in stockroom; verify THEFT in CriminalRecord; Notoriety +6.
+9. `testSofaTransportToSquat` — player has SACK_TRUCK + SOFA in inventory; call `furnishSquat(player, squatFurnishingTracker)`; verify `squatFurnishingTracker.hasSOFA()` = true; comfort score increased by 20.
+10. `testCarpetOffcutFloorWarmthBonus` — lay 4 CARPET_OFFCUT via `applyFloorCovering(squatFurnishingTracker)`; verify `squatFurnishingTracker.getWarmthBonus()` ≥ 0.15f (15% reduction in cold draughts penalty).
+11. `testFakePitchEarnsCoinsPerSale` — player has CLOSING_DOWN_FLYER ×3 + CARDBOARD ×6; call `setupFakePitch(player)`; verify `fakePitchActive` = true; simulate 2 NPC purchases via `onNPCBrowsesFakePitch(player, npc, rng)` (seeded accept); verify player COIN +4.
+12. `testFakePitchFourthSaleTriggerInspector` — `fakePitchSaleCount` = 3; call `onNPCBrowsesFakePitch` once more (success); verify MARKET_INSPECTOR spawn queued within 120 in-game seconds; Notoriety +5; `UNLICENSED_TRADING` crime recorded on arrival.
+13. `testClosingDownClaimCountTracked` — call `onDaveSpeaks(CLOSING_DOWN_LINE)` 3×; verify `closingDownClaimCount` = 3; `canReportToTradingStandards()` = true.
+14. `testTradingStandardsTipOffSpawnsSandra` — `closingDownClaimCount` = 3; call `reportToTradingStandards(player)`; verify TRADING_STANDARDS_OFFICER spawned; Sandra state = INSPECTING; `DAVE_REPORTED` rumour seeded.
+15. `testDaveDeflatedAfterSandraVisit` — Sandra completes inspection; call `onSandraInspectionComplete(dave, sandra)`; verify Dave state = `DEFLATED`; `dave.isBannerDisplayed()` = false; NPC purchase rate multiplier = 0.70f.
+16. `testDaveResetAfter48Hours` — Dave DEFLATED; advance 48 in-game hours; call `update(delta, timeSystem)`; verify Dave state = WANDERING (normal); banner re-displayed; purchase rate multiplier = 1.0f.
+17. `testCommunityRespectOnTipOff` — call `reportToTradingStandards(player)`; verify NeighbourhoodSystem `COMMUNITY_RESPECT` +1; MARCHETTI_CREW Respect −1.
+18. `testSofaTransitWitnessCallsPolice` — seed RNG < 0.45 (witness calls police); player moves with SOFA through street; call `onSofaTransitWitness(player, witnessNPC, rng)`; verify WantedSystem +1; `CARPET_THIEF` rumour seeded.
+19. `testCarpetKingAchievementAt5Referrals` — set `npcReferralCount` = 4; call `referNPC` once more (success); verify `CARPET_KING` achievement unlocked.
+20. `testInteriorDecoratorAchievement` — `squatFurnishingTracker.hasSOFA()` = true; call `applyFloorCovering` with 4 CARPET_OFFCUT; verify `INTERIOR_DECORATOR` achievement unlocked.
+
+---
+
+### Integration Tests (`Issue1303CarpetShopIntegrationTest.java`)
+
+1. **Full buy → squat furnish pipeline**: Monday 10:00, CLEAR. Player has 18 COIN. Player buys SOFA (−12 COIN) and SACK_TRUCK (−6 COIN) from Dave. Player loads SOFA onto sack truck (`[Load onto sack truck]`). Player walks to squat (no witnesses seeded). Player furnishes squat. Verify: squat `comfortScore` = start+20; SOFA present in `SquatFurnishingTracker`; player COIN = 0; no crime recorded.
+
+2. **Kev distraction → stockroom loot → escape**: Tuesday 11:00. Player has CHOCOLATE_BAR. Player presses E on Kev → Kev DISTRACTED (90s). Player loots CARPET_ROLL_PROP (→ CARPET_OFFCUT ×3). Player exits stockroom before 90s. Verify: player has 3× CARPET_OFFCUT; no THEFT in CriminalRecord; no Notoriety change; Kev returns to WANDERING; CARPET_ROLL_PROP absent.
+
+3. **Commission hustle → CARPET_KING achievement**: Wednesday 13:00. Player collects CLOSING_DOWN_FLYER from Dave. Player refers 5 PUBLIC NPCs (RNG seeded all buy). All 5 NPCs walk to Dave and make a purchase. Verify: player COIN = start+5; SOCIAL XP = start+5; `CARPET_KING` achievement unlocked; `DEAL_BROKER` rumour seeded in RumourNetwork.
+
+4. **Fake pitch → market inspector busts player**: Friday 14:00. Player crafts 3× CLOSING_DOWN_FLYER (NEWSPAPER + MARKER_PEN). Player has 6× CARDBOARD. Player sets up fake pitch 50 blocks from Dave's (park area). NPCs buy 4 items (RNG seeded accept). On 4th sale: `UNLICENSED_TRADING` crime queued. MARKET_INSPECTOR Keith arrives within 2 in-game minutes. Player has not fled. Verify: `UNLICENSED_TRADING` in CriminalRecord; Notoriety = start+5; fake pitch deactivated; `COPYCAT_DAVE` NOT unlocked (player was caught).
+
+5. **Trading Standards tip-off → Dave deflated → reset**: Saturday 10:00. Player interacts with Dave 3× (accumulating "closing down" claims). Player presses E on banner → `[Report to Trading Standards]`. Sandra spawns and arrives within 5 in-game minutes. Sandra completes inspection. Verify: Dave in DEFLATED state; `TRADING_STANDARDS_WARNING` prop on shopfront; NeighbourhoodSystem `COMMUNITY_RESPECT` = start+1; `DAVE_REPORTED` achievement unlocked; `DAVE_REPORTED` rumour seeded. Advance 48 in-game hours. Verify: Dave returns to normal state; banner re-displayed; NPC purchase rate = 1.0f; `closingDownClaimCount` = 0.
+
+---
+
+// ── Issue #1303: Add Northfield Dave's Carpets ───────────────────────────────
+// New: CarpetShopSystem.java in ragamuffin.core
+// New: CarpetShopSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1303CarpetShopIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: CARPET_SALESMAN — add to NPCType.java
+// Material: CARPET_OFFCUT, SOFA, CLOSING_DOWN_FLYER, SACK_TRUCK, CARPET_SAMPLE_BOOK — add to Material.java
+// PropType: CLOSING_DOWN_BANNER_PROP, CARPET_ROLL_PROP, SOFA_PROP, SACK_TRUCK_PROP, TRADING_STANDARDS_WARNING — add to PropType.java
+// RumourType: DEAL_BROKER, CARPET_THIEF, DAVE_REPORTED — add to RumourType.java
+// AchievementType: CARPET_KING, INTERIOR_DECORATOR, FIVE_FINGER_DISCOUNT, COPYCAT_DAVE, REPORTED_DAVE, STANDING_CUSTOMER_DAVE — add to AchievementType.java
+// CriminalRecord: UNLICENSED_TRADING — add if not present
+// Integration: NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
+//             SquatSystem (SOFA comfort), SquatFurnishingTracker (CARPET_OFFCUT floor),
+//             PropertySystem (comfort milestone), FenceSystem, CharityShopSystem,
+//             WeatherSystem, NeighbourhoodSystem, FactionSystem (Marchetti −1, Street Lads +1),
+//             StreetSkillSystem (SOCIAL/TRADING/STREET_SMARTS XP), StallSystem,
+//             MarketInspectorSystem (fake pitch bust), NoiseSystem, NewspaperSystem,
+//             DWPSystem (flavour)
