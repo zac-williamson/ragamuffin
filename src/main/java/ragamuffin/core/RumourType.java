@@ -569,5 +569,24 @@ public enum RumourType {
     /** "Someone cleaned up at quiz night — answered every question right. Derek was fuming."
      * — seeded by PubQuizSystem when the player wins Quiz Night with a perfect or winning score.
      * Spreads via PUBLIC and BARMAN NPCs within the pub and nearby streets. */
-    QUIZ_CHAMPION_RUMOUR;
+    QUIZ_CHAMPION_RUMOUR,
+
+    // ── Issue #1263: Northfield Illegal Street Racing ──────────────────────────
+
+    /** "Street racing on the ring road again tonight. Boy racers out in force."
+     * — seeded by StreetRacingSystem when the meet assembles at 23:00 on Friday/Saturday.
+     * Spreads via YOUTH_GANG, BOY_RACER, and PUBLIC NPCs within 50 blocks of the Tesco car park.
+     * Adds +1 WatchAnger and draws police patrol route towards the ring road. */
+    STREET_RACING_MEET,
+
+    /** "Someone grassed up the racing — plod came down hard. Shane's not happy."
+     * — seeded by StreetRacingSystem when the player tips off police via PHONE_BOX_PROP.
+     * Spreads via BOY_RACER and RACE_ORGANISER NPCs; flags the player as a snitch.
+     * Seeds GRASSED_UP concurrently for gang-level repercussion tracking. */
+    RACING_GRASSED_UP,
+
+    /** "Some dodgy business at the racing last night — someone messed with the nitrous."
+     * — seeded by StreetRacingSystem on successful sabotage (SCREWDRIVER on competitor car).
+     * Spreads via BOY_RACER NPCs within the meet. Player identified if caught by car owner. */
+    RACING_SABOTAGE;
 }
