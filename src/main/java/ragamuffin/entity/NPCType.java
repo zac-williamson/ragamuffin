@@ -1953,7 +1953,17 @@ public enum NPCType {
      * Gullible: 40% fraud detection rate (FORGED_RECEIPT).
      * 20 HP; not hostile.
      */
-    ARGOS_RETURNS_STAFF(20f, 0f, 0f, false);
+    ARGOS_RETURNS_STAFF(20f, 0f, 0f, false),
+
+    // ── Issue #1177: Northfield Sunday Car Park Market ────────────────────────
+
+    /**
+     * Council Enforcement Officer — patrols the Sunday Car Park Market every
+     * 4 in-game minutes in the COUNCIL_VAN. Checks trader licences; confiscates
+     * goods from unlicensed traders. The player can bribe them for 5 COIN.
+     * Flees if the player has ≥ 3 wanted stars (not their department).
+     */
+    COUNCIL_OFFICER(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
