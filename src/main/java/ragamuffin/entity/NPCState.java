@@ -66,5 +66,8 @@ public enum NPCState {
     CELEBRATING,        // NPC is celebrating a great karaoke performance (or other positive event)
 
     // Issue #1211: BP Petrol Station
-    IDLE_SLEEPING       // NPC is asleep at their post (Wayne night shift 01:00–03:00)
+    IDLE_SLEEPING,      // NPC is asleep at their post (Wayne night shift 01:00–03:00)
+
+    // Issue #1246: Sunday League Football
+    SICK                // NPC is incapacitated (e.g. after eating a DODGY_PIE during the Sunday League match)
 }
