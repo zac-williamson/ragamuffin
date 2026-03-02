@@ -34257,3 +34257,175 @@ achievement trigger conditions, forged licence detection roll.
 // RumourType: MARKET_THEFT — add to RumourType.java
 // Integrates: WeatherSystem, TimeSystem, WantedSystem, NotorietySystem, CriminalRecord,
 //   NoiseSystem, RumourNetwork, AchievementSystem, CraftingSystem (FORGED_LICENCE recipe)
+
+---
+
+## Phase 12o: Northfield Tony's Chip Shop — Late-Night Queue, Biscuit the Cat & the Frying-Pan Heist
+
+**Goal**: Implement `ChippySystem.java` — the missing backend for `LandmarkType.CHIPPY`
+(Tony's Chip Shop). The `ChippyOrderUI`, `AchievementType` entries (`LAST_ORDERS_CHIPPY`,
+`QUEUE_JUMPER`, `CHIPPY_REGULAR`), `NPCType.CHIPPY_OWNER` (Tony), `NPCType.STRAY_CAT`
+(Biscuit), `PropType.CHIPPY_COUNTER`, `RumourType.QUEUE_JUMP`, and
+`BuildingQuestRegistry` already reference this system — but `ChippySystem.java` itself
+does not exist. Wire everything up.
+
+### Operating Hours & Location
+
+- **Open 11:00–00:00** daily (`LandmarkType.CHIPPY`). The CHIPPY_COUNTER prop is
+  interactable during opening hours only. Outside hours, pressing E shows Tony speech
+  bubble: "We're closed, mate. Try the kebab van."
+- **Post-pub rush**: 23:00–00:00 is peak time. `MARKET_PUNTER` NPC queue size doubles;
+  DRUNK NPCs (from `PubLockInSystem`) join queue automatically when they pass within
+  10 blocks of the chip shop door.
+- Tony (`NPCType.CHIPPY_OWNER`) stands behind `CHIPPY_COUNTER` 11:00–00:00, greeting
+  players: "What can I get ya, love?" Outside hours he's in the back (WANDERING state,
+  not interactable).
+
+### Ordering via ChippyOrderUI
+
+The `ChippyOrderUI` class already exists and is fully state-managed. `ChippySystem`
+must wire it to game state:
+
+- Player presses **E** on `CHIPPY_COUNTER` prop → `ChippyOrderUI.show()` opens.
+- **UP/DOWN** arrow keys → `ChippyOrderUI.selectPrev()` / `selectNext()`.
+- **ENTER or E** → attempt to buy selected item:
+  - Deduct COIN from player inventory. If insufficient: status message "You're skint, love."
+  - FISH_SUPPER only available on day numbers where `dayNumber % 3 != 0`
+    (i.e. 2 out of 3 days); call `setFishSupperAvailable(dayNumber % 3 != 0)` on reset.
+  - If CHIP_BUTTY selected and no BREAD in player inventory: status "Bring your own bread, la."
+    No purchase made.
+  - On success: add item to player inventory; status message "Enjoy your [item]!"; play
+    `SoundEffect.CHIPPY_ORDER` (add to `SoundEffect` enum if absent, no-op impl).
+  - PICKLED_EGG: on purchase, 20% chance to set `player.setFoodPoisoning(true)` (if the
+    flag exists on Player; otherwise seed `RumourType.FOOD_POISONING` if present, else skip).
+- **ESC** → `ChippyOrderUI.hide()`.
+
+### The Queue
+
+An outdoor queue forms at the chip shop entrance (`CHIPPY landmark` exterior, ground level):
+
+- **CHIPPY_QUEUE_NPC** (use `NPCType.MARKET_PUNTER` tagged as chippy queue) wait in a
+  line of 1–4 NPCs during daytime, 3–8 during post-pub rush (23:00–00:00).
+- Queue advances every 90 in-game seconds: front NPC enters, buys something, leaves;
+  NPC behind moves forward. Speech bubbles rotate: "Hurry up!", "I'm starving", "Salt on mine."
+- **Queue jumping**: If player presses E on Tony without joining the back of the queue
+  (i.e., a queue NPC is present AND the player is not at the front), Tony says "Oi, there's
+  a queue!" and refuses to serve. Seed `RumourType.QUEUE_JUMP` rumour town-wide.
+  Achievement `QUEUE_JUMPER` unlocked on first offence.
+- **Last Orders** (23:50–00:00): Tony shouts "Last orders!" (speech bubble). Any NPCs
+  in queue who get served in this window trigger `AchievementType.LAST_ORDERS_CHIPPY`
+  for the player if the player is also served in this window.
+- **CHIPPY_REGULAR achievement**: player has bought from Tony on 5 separate in-game days.
+
+### Biscuit the Stray Cat
+
+`NPCType.STRAY_CAT` — Biscuit — lives outside the chip shop:
+
+- Biscuit wanders within 15 blocks of the chip shop door in WANDERING state during
+  opening hours; sleeps (stationary) at night.
+- If the player punches Biscuit (left click hits STRAY_CAT NPC): Biscuit enters
+  FLEEING state for 30 seconds, then returns. Tony sees this (if within 20 blocks)
+  and enters AGGRESSIVE state toward player, speech: "You leave that cat alone!"
+  Seed `RumourType.BISCUIT_PUNCHED` (use the existing `RumourType` entry doc comment
+  referencing "Someone punched Biscuit outside Tony's") town-wide.
+- If the player feeds Biscuit (press E while holding CHIPS or FISH_SUPPER): Biscuit
+  enters FRIENDLY state (follows player for 2 in-game minutes). Tony speech: "She likes
+  you." Achievement `CAT_FEEDER` — add to `AchievementType` if not present.
+
+### The Frying-Pan Heist
+
+At opening time (11:00), Tony briefly leaves the counter unmanned for 2 in-game minutes
+to turn on the fryers (WANDERING state in back room). During this window:
+
+- Player can interact (E) with `CHIPPY_COUNTER` while Tony is absent:
+  - Steal 1–2 random items from the menu stock (CHIPS, BATTERED_SAUSAGE, or CHIP_BUTTY).
+  - Detection chance: 35% base. +25% if any queue NPC is present (+10% per extra NPC
+    beyond the first in queue). −15% if `DisguiseSystem` reports player is wearing
+    GREGGS_APRON (plausible food-worker disguise).
+  - On detection: nearest queue NPC enters AGGRESSIVE state, shouts "Oi, he's nicking from
+    the counter!", `WantedSystem` adds 1 star, Notoriety +10.
+  - On success: items added to player inventory silently. Achievement `FRYING_PAN_HEIST`
+    on first successful theft — add to `AchievementType` if not present.
+
+### Weather Effects
+
+- **RAIN / DRIZZLE**: Queue thins (max 3 NPCs instead of 4 daytime). Tony adds MUSHY_PEAS
+  as a free condiment on orders over 2 COIN (speech: "Take the peas, love, miserable day.").
+- **FROST**: Tony delays opening to 11:30 (fryers need longer to warm up). Speech bubble:
+  "Fryers are playing up in this cold."
+- **HEATWAVE**: Post-pub rush starts earlier at 22:00. CHIPS price increases 1 COIN
+  (demand surge). Tony speech: "Too hot to cook, but here we are."
+
+### Integration with Other Systems
+
+- **WarmthSystem**: Eating CHIPS, CHIP_BUTTY, or FISH_SUPPER restores +10 warmth on
+  cold days (Weather.FROST or COLD_SNAP).
+- **HealingSystem**: BATTERED_SAUSAGE grants +10 HP when eaten (if HealingSystem
+  exposes a method for food-based healing).
+- **RumourNetwork**: Tony is a natural gossip — interacting with Tony while purchasing
+  seeds 1 random rumour from the RumourNetwork (any rumour spread to ≥ 2 NPCs) as Tony
+  dialogue, prefix: "You didn't hear this from me, but..."
+- **NotorietySystem**: High notoriety (≥ 60) causes Tony to refuse service: "I know who
+  you are. I don't want your trouble in my shop." Player must reduce notoriety or use
+  DisguiseSystem to be served.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `LAST_ORDERS_CHIPPY` | Get served during the 23:50–00:00 last-orders window |
+| `QUEUE_JUMPER` | Attempt to jump the queue (Tony refuses service) |
+| `CHIPPY_REGULAR` | Buy from Tony on 5 separate in-game days |
+| `CAT_FEEDER` | Feed Biscuit the stray cat |
+| `FRYING_PAN_HEIST` | Steal from the counter while Tony is in the back |
+
+**Unit tests**: Opening hours gate (closed before 11:00), fish supper availability by day
+number, queue jump detection, queue advance timing (90s), Biscuit FLEEING on punch,
+Biscuit FRIENDLY on feed, Tony AGGRESSIVE on cat punch (within 20 blocks), heist
+detection formula (base 35%, per-NPC modifier, disguise modifier), rumour seeding on
+queue jump, notoriety block at ≥ 60, weather price/queue modifiers.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Ordering chips deducts coin and adds to inventory**: Give player 5 COIN. Player
+   presses E on `CHIPPY_COUNTER` during opening hours. `ChippyOrderUI.isVisible()` returns
+   true. Navigate to CHIPS (index 0). Press ENTER. Verify player COIN reduced by 2.
+   Verify `CHIPS` in player inventory. Verify `ChippyOrderUI.getStatusMessage()` contains
+   "Enjoy".
+
+2. **Fish Supper unavailable on day 3 (dayNumber % 3 == 0)**: Set day number to 3.
+   Call `ChippySystem.onNewDay(3)`. Verify `chippyOrderUI.isFishSupperAvailable()` is
+   false. Navigate to FISH_SUPPER in UI. Press ENTER. Verify no coin deducted, status
+   message contains "not today" or "not available".
+
+3. **Queue jump — Tony refuses, rumour seeded**: Spawn 2 `MARKET_PUNTER` NPCs in queue.
+   Player presses E on `CHIPPY_COUNTER` directly (not at queue front). Verify Tony speech
+   contains "queue". Verify no order placed. Verify `QUEUE_JUMPER` achievement unlocked.
+   Verify `RumourNetwork` contains a rumour of type `QUEUE_JUMP`.
+
+4. **Biscuit flees on punch, Tony goes aggressive**: Spawn `STRAY_CAT` NPC within 8
+   blocks of chip shop. Spawn Tony within 20 blocks. Player punches STRAY_CAT. Verify
+   STRAY_CAT enters `NPCState.FLEEING`. Verify Tony enters `NPCState.AGGRESSIVE`. Verify
+   `RumourNetwork` contains rumour text containing "Biscuit".
+
+5. **Frying-pan heist succeeds undetected (no queue NPCs)**: Set time to 11:00. Call
+   `update()` to trigger opening. Verify Tony enters back-room WANDERING state (absent
+   from counter). Seed RNG so detection roll = 0.70 (> 0.35 threshold). No queue NPCs
+   present. Player presses E on `CHIPPY_COUNTER`. Verify 1–2 items added to inventory.
+   Verify `FRYING_PAN_HEIST` achievement unlocked. Verify WantedSystem star count
+   unchanged.
+
+// ── Issue #1179: Northfield Tony's Chip Shop ─────────────────────────────────
+// New: ChippySystem.java in ragamuffin.core
+// New: ChippySystemTest.java in src/test/java/ragamuffin/core/
+// Existing: ChippyOrderUI.java in ragamuffin.ui (already present — wire up to ChippySystem)
+// LandmarkType: CHIPPY — already present
+// NPCType: CHIPPY_OWNER, STRAY_CAT — already present
+// PropType: CHIPPY_COUNTER — already present
+// RumourType: QUEUE_JUMP — already present; BISCUIT_PUNCHED (add if absent)
+// AchievementType: LAST_ORDERS_CHIPPY, QUEUE_JUMPER, CHIPPY_REGULAR — already present;
+//                  CAT_FEEDER, FRYING_PAN_HEIST — add if not present
+// SoundEffect: CHIPPY_ORDER — add to SoundEffect enum (no-op impl)
+// Integrates: ChippyOrderUI (existing), WantedSystem, NotorietySystem, DisguiseSystem,
+//   HealingSystem, WarmthSystem, RumourNetwork, AchievementSystem, WeatherSystem,
+//   TimeSystem, PubLockInSystem (drunk NPCs join queue)
