@@ -295,6 +295,11 @@ public class NeighbourhoodSystem {
         this.random            = random;
     }
 
+    /** Convenience no-arg constructor for testing. */
+    public NeighbourhoodSystem() {
+        this(null, null, null, null, new Random());
+    }
+
     // ── Building registration ─────────────────────────────────────────────────
 
     /**

@@ -125,11 +125,22 @@ public class HotbarUI {
         }
         shapeRenderer.end();
 
-        // Render item count badges and register tooltip zones
+        // Render item count badges, slot numbers, and register tooltip zones
         batch.begin();
         for (int i = 0; i < HOTBAR_SLOTS; i++) {
             int x = startX + i * (SLOT_SIZE + SLOT_PADDING);
             Material material = inventory.getItemInSlot(i);
+
+            // Slot number label (1–9) in top-right corner of each slot
+            font.getData().setScale(0.65f);
+            if (i == selectedSlot) {
+                font.setColor(1f, 1f, 0f, 1f); // Yellow for selected
+            } else {
+                font.setColor(0.55f, 0.55f, 0.55f, 1f); // Dim grey for others
+            }
+            font.draw(batch, String.valueOf(i + 1), x + SLOT_SIZE - 10, startY + SLOT_SIZE - 2);
+            font.getData().setScale(1.0f);
+
             if (material != null) {
                 int count = inventory.getCountInSlot(i);
                 font.setColor(com.badlogic.gdx.graphics.Color.WHITE);

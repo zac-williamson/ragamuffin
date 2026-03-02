@@ -382,19 +382,21 @@ public class GameHUD {
         shapeRenderer.rect(x, y6, BAR_WIDTH, BAR_HEIGHT); // Wetness border
         shapeRenderer.end();
 
-        // All text in one batch
+        // All text in one batch — use compact icon-prefixed labels for modern HUD look
         spriteBatch.begin();
+        font.getData().setScale(0.85f);
         font.setColor(Color.WHITE);
-        font.draw(spriteBatch, "HP: " + (int)(healthPct * 100) + "%", x + 5, y1 + BAR_HEIGHT - 5);
-        font.draw(spriteBatch, "Food: " + (int)(hungerPct * 100) + "%", x + 5, y2 + BAR_HEIGHT - 5);
-        font.draw(spriteBatch, "Energy: " + (int)(energyPct * 100) + "%", x + 5, y3 + BAR_HEIGHT - 5);
+        font.draw(spriteBatch, "\u2665 " + (int)(healthPct * 100) + "%", x + 5, y1 + BAR_HEIGHT - 4);
+        font.draw(spriteBatch, "\u25CF " + (int)(hungerPct * 100) + "%", x + 5, y2 + BAR_HEIGHT - 4);
+        font.draw(spriteBatch, "\u26A1 " + (int)(energyPct * 100) + "%", x + 5, y3 + BAR_HEIGHT - 4);
         // Dodge label beside the bar
         String dodgeLabel = dodgeReady ? "DODGE [Ctrl]" : "DODGE: wait";
         font.draw(spriteBatch, dodgeLabel, x + DODGE_BAR_WIDTH + 6, y4 + DODGE_BAR_HEIGHT - 1);
         // Warmth and Wetness labels (Issue #698)
-        String warmthLabel = player.isWarmthDangerous() ? "WARMTH: COLD!" : "Warmth: " + (int)(warmthPct * 100) + "%";
-        font.draw(spriteBatch, warmthLabel, x + 5, y5 + BAR_HEIGHT - 5);
-        font.draw(spriteBatch, "Wet: " + (int)(wetnessPct * 100) + "%", x + 5, y6 + BAR_HEIGHT - 5);
+        String warmthLabel = player.isWarmthDangerous() ? "\u2603 COLD!" : "\u2600 " + (int)(warmthPct * 100) + "%";
+        font.draw(spriteBatch, warmthLabel, x + 5, y5 + BAR_HEIGHT - 4);
+        font.draw(spriteBatch, "\u2614 " + (int)(wetnessPct * 100) + "%", x + 5, y6 + BAR_HEIGHT - 4);
+        font.getData().setScale(1.0f);
         spriteBatch.end();
 
         if (hoverTooltips != null) {
