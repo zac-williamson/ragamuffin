@@ -30693,3 +30693,214 @@ New `Material` entries:
 // New Achievements: SCRATCH_CARD_WINNER, SCRATCH_CARD_ADDICTION, RELIABLE_PAPERBOY, LOTTERY_WINNER, RAJS_FAVOURITE, TOP_SHELF, PAPIER_MACHE_ARCHITECT, EARLY_BIRD (add to AchievementType.java)
 // New CriminalRecord entries: SHOPLIFTING (if not already present), THEFT (if not already present)
 // New player flags/buffs: SCRATCH_CARD_ADDICTION (timed debuff), ENERGISED (timed buff from ENERGY_DRINK), BANNED_FROM_PATEL (persistent until reset)
+
+---
+
+## Add Northfield Nightclub — The Vaults: Bouncer Economy, Toilet Dealing & the Lock-In Heist
+
+### Overview
+`THE VAULTS` (using the existing `LandmarkType.NIGHTCLUB`) is Northfield's only proper nightclub, open
+Thursday–Saturday 22:00–03:00. It is a multi-room venue: main dancefloor, sticky-carpet VIP
+area, cramped bar, and grim toilets. Entry is gated by a `BOUNCER` NPC who enforces a door
+policy based on the player's reputation, disguise, and willingness to grease the right palms.
+The player can socialise, deal, pickpocket, and — if they can orchestrate a lock-in — rob the
+safe in the manager's office.
+
+New system: `NightclubSystem.java` in `ragamuffin.core`.
+No new landmark enum needed: `NIGHTCLUB` already in `LandmarkType.java`.
+
+### Key NPCs
+- **Big Dave** (`BOUNCER`) — door policy 22:00–03:00. Refuses entry if Notoriety ≥ 4 or
+  WantedSystem tier ≥ 1 unless bribed (5 COIN, one-time per session). Recognises `MARCHETTI_TRACKSUIT`
+  as gang-affiliated and refuses entry. If player is wearing `SMART_SHIRT` or has StreetReputation
+  ≥ 30, waives the queue.
+- **Stacey** (`BARMAID_NPC`) — serves drinks at the bar. Remembers the player (discount after 3
+  purchases). Gossips: seeds `LOCAL_GOSSIP` rumour if player buys her a drink (3 COIN).
+- **Terry** (`NIGHTCLUB_MANAGER`) — in the office from 22:30 onwards; approachable only by
+  players with FactionSystem respect ≥ 20 (FRIENDLY). Controls the lock-in decision. If player
+  is caught in the office without permission, Terry calls Big Dave (immediate ejection + 10-min
+  ban).
+- **Donna** (`NIGHTCLUB_PUNTER`) × 8–16 — wander between dancefloor and bar. BORED need,
+  satisfied by dancing (proximity to `SPEAKER_STACK_PROP`) or a drink. Pickpocketable (5–8 COIN
+  each, WitnessSystem risk). Some become `DRUNK` state after 00:00, increasing pickpocket success
+  chance to 70%.
+- **Wayne** (`DRUG_DEALER_NPC`) — lurks near toilets 23:00–02:00. Will buy `PRESCRIPTION_MEDS`
+  or `TOBACCO_POUCH` from the player for 2× street price. If WantedSystem tier ≥ 2 he refuses
+  and seeds a `GANG_ACTIVITY` rumour.
+
+### Entry & Queue
+- Queue forms outside from 21:30 (4–10 `NIGHTCLUB_PUNTER` NPCs).
+- Player joins queue by walking to `NIGHTCLUB_QUEUE_PROP` and pressing E.
+- Big Dave checks: Notoriety, WantedSystem tier, disguise, clothing. If any fail: "Not tonight,
+  son." — player is soft-banned for 30 in-game minutes.
+- Queue skip: offer 5 COIN bribe (E on Big Dave directly). Works if Notoriety < 6.
+- Entry costs 3 COIN cover charge (deducted automatically on passing the door).
+- If player has `FAKE_ID` item: passes age check (normally 18+; player is always adult but
+  it's flavour for a companion NPC who tags along).
+
+### Inside the Club
+- **Bar**: Press E on `NIGHTCLUB_BAR_PROP` to buy drinks.
+  - `CAN_OF_LAGER` (3 COIN) — satisfies BORED −20, triggers mild `TIPSY` buff (movement
+    slightly staggered, NPC dialogue more forthcoming, pickpocket chance +10%).
+  - `DOUBLE_VODKA` (5 COIN) — satisfies BORED −35, triggers `DRUNK` buff (significant sway,
+    NPC dialogue very forthcoming, pickpocket +20%, but police interaction goes badly).
+  - `WATER_BOTTLE` (1 COIN) — satisfies THIRSTY −30, no debuff; NPCs comment "You're sober?
+    In here?"
+- **Dancefloor**: Proximity to `NIGHTCLUB_SPEAKER_PROP` while playing triggers `DANCING` state.
+  - Each in-game minute dancing: +1 StreetReputation, seeds `STREET_CRED` rumour every 3 min.
+  - MCBattleSystem: if player has MC Rank ≥ 2, can challenge another NPC to a freestyle battle
+    on the dancefloor (existing mechanic, new venue trigger).
+- **Toilets**: Cramped `NIGHTCLUB_TOILET_PROP` stall. Player can interact with Wayne for
+  dealing. Can also pickpocket `DRUNK` NPCs who stagger in.
+- **VIP Area**: Accessible if FactionSystem respect ≥ FRIENDLY (20) or after 3 visits.
+  - `NIGHTCLUB_VIP_TABLE_PROP`: sit with NPCs for conversation; `GANG_FACTION` NPCs share
+    `GANG_ACTIVITY` rumours freely.
+
+### Lock-In Heist
+A late-game heist chain triggered when the player has Terry's trust (3+ conversations):
+1. Terry mentions the safe offhand: seeds a `LOOT_TIP` rumour.
+2. Player presses E on `NIGHTCLUB_OFFICE_DOOR_PROP` (locked; requires `NIGHTCLUB_MASTER_KEY`
+   or 3 lockpick attempts with `LOCKPICK` item in inventory).
+3. Inside: `NIGHTCLUB_SAFE_PROP` contains 20–40 COIN + a random `Material` from the
+   `NIGHTCLUB_TAKINGS` drop table (COUNTERFEIT_NOTE, STOLEN_PHONE, GOLD_CHAIN).
+4. Triggering the safe alarm (failed lockpick on the safe itself, ≥ 2 attempts) summons Big Dave
+   + WantedSystem tier +1.
+5. Successfully looting the safe: +6 Notoriety, `THEFT` CriminalRecord, seeds
+   `LOCAL_EVENT` rumour ("The Vaults Raided — Safe Emptied"), NewspaperSystem eligible
+   headline: "NIGHTCLUB HEIST: BRAZEN RAIDER CLEANS OUT VAULTS SAFE".
+
+### Closing Time (03:00)
+- Lights come up. All `NIGHTCLUB_PUNTER` NPCs begin leaving via the front door.
+- Drunk NPCs stagger outside; 30% chance each triggers `DRUNK_BRAWL` outside (2 DRUNK NPCs
+  fight; player can intervene for +2 StreetReputation or film it — no game mechanic for
+  filming, just flavour).
+- Taxi queue forms at `TAXI_RANK` (existing TaxiSystem integration): 6–10 punters waiting,
+  taxi arrives every 3 in-game minutes.
+- `LAST_ORDERS` achievement triggers on player's first visit before 23:00 closing time.
+
+### Props (add to `PropType.java`)
+- `NIGHTCLUB_QUEUE_PROP` — velvet rope + queue barrier outside
+- `NIGHTCLUB_BAR_PROP` — bar counter; E to order drinks
+- `NIGHTCLUB_SPEAKER_PROP` — bass-heavy music source; triggers DANCING state in proximity
+- `NIGHTCLUB_TOILET_PROP` — cramped stall; dealing/pickpocket zone
+- `NIGHTCLUB_VIP_TABLE_PROP` — booth in VIP area
+- `NIGHTCLUB_OFFICE_DOOR_PROP` — locked manager's office door
+- `NIGHTCLUB_SAFE_PROP` — combination safe in office (lockpickable)
+- `NIGHTCLUB_MIRROR_BALL_PROP` — decorative; identical function to `DISCO_BALL` in RaveSystem
+
+### Materials / Items (add to `Material.java`)
+- `DOUBLE_VODKA` — drink; BORED −35, triggers DRUNK buff (15 in-game min)
+- `WATER_BOTTLE` — drink; THIRSTY −30; also satisfies DRUNK recovery by 50% (speeds sober-up)
+- `SMART_SHIRT` — clothing; bypasses door policy reputaton check; slight Warmth penalty (not warm outdoors)
+- `FAKE_ID` — novelty item; passes age-check flavour event; fenceable 3 COIN
+- `NIGHTCLUB_MASTER_KEY` — opens `NIGHTCLUB_OFFICE_DOOR_PROP`; one-use
+- `GOLD_CHAIN` — loot from safe; fenceable 8 COIN; wearing it gives StreetReputation +3 per
+  in-game hour (passive) but increases Notoriety accumulation rate by 5% while worn
+
+### Player Buffs / Debuffs
+- `TIPSY` — mild alcohol buff: pickpocket +10%, movement sway, NPC dialogue easier. Duration:
+  10 in-game minutes. Drinking `WATER_BOTTLE` clears it in 3 min.
+- `DRUNK` — strong alcohol debuff: pickpocket +20%, movement severe sway, police interaction
+  degrades (any police interaction auto-fails, may trigger arrest check). Duration: 20 in-game min.
+- `DANCING` — while within 5 blocks of `NIGHTCLUB_SPEAKER_PROP`: +1 StreetReputation/min.
+
+### System Integrations
+- **WantedSystem**: tier ≥ 1 blocks entry; heist triggers tier +1
+- **NotorietySystem**: entry blocked at ≥ 4; heist +6; successful pickpocket +1
+- **StreetEconomySystem**: `DRUNK` NPCs satisfy BORED need; Wayne buys prescription meds/tobacco
+  at 2× base price; `NIGHTCLUB_PUNTER` NPCs have BORED need satisfied by dancing/drink
+- **RaveSystem**: if player has `DJ_DECKS` in inventory and enters, can offer to DJ (Terry
+  must agree, respect ≥ FRIENDLY); doubles StreetReputation gain on dancefloor for that session
+- **TaxiSystem**: closing time triggers taxi queue surge at nearest TAXI_RANK; fare from club
+  is ×1.5 multiplier (late night)
+- **RumourNetwork**: Stacey seeds `LOCAL_GOSSIP`; Wayne seeds `GANG_ACTIVITY`; heist seeds
+  `LOCAL_EVENT`
+- **FactionSystem**: VIP area accessible at respect ≥ 20; `MARCHETTI_CREW` NPCs in VIP share
+  `GANG_ACTIVITY` rumours
+- **MCBattleSystem**: freestyle battles triggerable on dancefloor (MC Rank ≥ 2)
+- **CriminalRecord**: `THEFT` on heist; `DRUNK_AND_DISORDERLY` if arrested while DRUNK outside
+- **NewspaperSystem**: heist eligible for headline; 3 dancefloor battles in one night eligible
+  for "LOCAL MC TAKES THE VAULTS BY STORM" filler headline
+- **WitnessSystem**: pickpocket inside; witness check with reduced base chance (dark venue)
+- **DisguiseSystem**: `SMART_SHIRT` bypasses door reputation check; `NIGHTCLUB_MANAGER_JACKET`
+  (lootable from office) gives staff disguise inside
+- **NoiseSystem**: `NIGHTCLUB_SPEAKER_PROP` emits constant high noise (85 decibels equivalent)
+  while open; complaints from adjacent `TERRACED_HOUSE` NPCs after 01:00
+- **WeatherSystem**: RAIN makes queue miserable — `NIGHTCLUB_PUNTER` NPCs' BORED need rises
+  faster outdoors; player gains `WET` debuff while queuing in rain without `UMBRELLA`
+- **TimeSystem**: open Thu–Sat 22:00–03:00; closed all other times; queue from 21:30
+
+### Achievements (add to `AchievementType.java`)
+| Achievement | Trigger |
+|---|---|
+| `FIRST_TIME_IN` | Enter The Vaults for the first time |
+| `BOUNCER_BRIBED` | Bribe Big Dave to skip the queue |
+| `LOCK_IN_LEGEND` | Successfully loot the nightclub safe |
+| `DANCEFLOOR_MC` | Win an MCBattle on the nightclub dancefloor |
+| `NIGHTCLUB_PICKPOCKET` | Successfully pickpocket a DRUNK NPC inside the club |
+| `CLOSING_TIME` | Be ejected at 03:00 on 3 separate nights |
+| `VIP_ACCESS` | Gain entry to the VIP area |
+| `SOBER_IN_THE_VAULTS` | Complete a full night (22:00–03:00) in the club without buying any alcohol |
+
+**Unit tests**: Big Dave entry checks (Notoriety threshold 0/3/4/6, WantedSystem tier 0/1,
+SMART_SHIRT bypass, MARCHETTI_TRACKSUIT block, 5 COIN bribe, 30-min ban after refusal); drink
+purchase deducts correct COIN and applies correct buff (TIPSY vs DRUNK); DRUNK buff duration
+timer (20 in-game minutes); WATER_BOTTLE clears TIPSY in 3 in-game minutes; dancefloor
+StreetReputation +1 per in-game minute; heist loot table produces 20–40 COIN in 1000 samples
+(mean ≈ 30); Wayne refuses at WantedSystem tier ≥ 2; pickpocket success rate: base 40%,
++10% TIPSY, +20% DRUNK, +10% dark venue (stacks multiplicatively); Taxi fare ×1.5 multiplier
+at closing time.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Bouncer blocks high-notoriety player, bribe unblocks entry**: Set player Notoriety to 4.
+   Set time to 22:00 Saturday. Place player in front of `NIGHTCLUB_QUEUE_PROP`. Press E to
+   attempt entry. Verify Big Dave refuses ("Not tonight, son." dialogue) and player position
+   has not moved inside the club. Give player 5 COIN and press E on Big Dave directly.
+   Verify 5 COIN deducted from player. Verify player is now inside the club (position past
+   the door threshold). Verify `BOUNCER_BRIBED` achievement is unlocked.
+
+2. **Buying a double vodka applies DRUNK buff and degrades police interaction**: Set time to
+   23:00. Place player inside club at `NIGHTCLUB_BAR_PROP`. Give player 10 COIN. Press E,
+   select `DOUBLE_VODKA`. Verify 5 COIN deducted. Verify `DRUNK` buff active on player.
+   Verify player movement has sway applied (drunk movement flag set). Place a `POLICE`
+   NPC within 10 blocks. Simulate pressing E on the police NPC. Verify interaction result
+   is `DRUNK_INTERACTION_FAILED` (auto-fail, triggers arrest check). Advance time by 21
+   in-game minutes. Verify `DRUNK` buff has expired.
+
+3. **Pickpocket succeeds on DRUNK NPC with correct loot range**: Set time to 00:30. Set
+   player Notoriety to 1. Spawn a `NIGHTCLUB_PUNTER` NPC in `DRUNK` state with 7 COIN.
+   Place player within 1 block. Trigger pickpocket action (hold E for 2 seconds). Using a
+   seeded Random that produces a success (≥ `(1.0 - pickpocketChance)`), verify 5–8 COIN
+   is removed from the NPC and added to player inventory. Verify `NIGHTCLUB_PICKPOCKET`
+   achievement unlocked. Verify WitnessSystem was queried (witness check occurred).
+
+4. **Lock-in heist: office entry, safe loot, wanted star**: Set player FactionSystem respect
+   to 20. Set time to 01:00 Saturday. Place player at `NIGHTCLUB_OFFICE_DOOR_PROP`. Give
+   player `NIGHTCLUB_MASTER_KEY`. Press E. Verify door opens and player enters office.
+   Verify `NIGHTCLUB_MASTER_KEY` consumed from inventory. Press E on `NIGHTCLUB_SAFE_PROP`.
+   Verify player receives 20–40 COIN (check range). Verify `THEFT` entry added to
+   CriminalRecord. Verify Notoriety increased by 6. Verify WantedSystem tier increased by 1.
+   Verify RumourNetwork contains a `LOCAL_EVENT` rumour with text matching "Vaults" or
+   "safe". Verify `LOCK_IN_LEGEND` achievement unlocked.
+
+5. **Closing time triggers taxi queue surge**: Set time to 02:55 Saturday. Place 8
+   `NIGHTCLUB_PUNTER` NPCs inside the club. Advance time by 6 in-game minutes (to 03:01).
+   Verify all 8 `NIGHTCLUB_PUNTER` NPCs are now outside the club (position past exit
+   threshold). Verify at least 4 `NIGHTCLUB_PUNTER` NPCs are within 10 blocks of the nearest
+   `TAXI_RANK` landmark position. Verify TaxiSystem fare multiplier is 1.5× for the next
+   3 in-game minutes after 03:00.
+
+// New system: NightclubSystem.java in ragamuffin.core
+// No new landmark enum needed: NIGHTCLUB already in LandmarkType.java
+// New NPCTypes: BOUNCER, BARMAID_NPC, NIGHTCLUB_MANAGER, NIGHTCLUB_PUNTER, DRUG_DEALER_NPC
+//   (add to NPCType.java; BOUNCER may already exist — check first)
+// New Materials: DOUBLE_VODKA, WATER_BOTTLE, SMART_SHIRT, FAKE_ID, NIGHTCLUB_MASTER_KEY,
+//   GOLD_CHAIN (add to Material.java)
+// New PropTypes: NIGHTCLUB_QUEUE_PROP, NIGHTCLUB_BAR_PROP, NIGHTCLUB_SPEAKER_PROP,
+//   NIGHTCLUB_TOILET_PROP, NIGHTCLUB_VIP_TABLE_PROP, NIGHTCLUB_OFFICE_DOOR_PROP,
+//   NIGHTCLUB_SAFE_PROP, NIGHTCLUB_MIRROR_BALL_PROP (add to PropType.java)
+// New Achievements: FIRST_TIME_IN, BOUNCER_BRIBED, LOCK_IN_LEGEND, DANCEFLOOR_MC,
+//   NIGHTCLUB_PICKPOCKET, CLOSING_TIME, VIP_ACCESS, SOBER_IN_THE_VAULTS (add to AchievementType.java)
+// New player buffs: TIPSY, DRUNK, DANCING (timed; stored in player state or managed by NightclubSystem)
+// New CriminalRecord entries: DRUNK_AND_DISORDERLY (if not already present)
