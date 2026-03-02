@@ -2076,7 +2076,22 @@ public enum NPCType {
      *         / "Check your blind spot, son."
      *         / "Three lessons and you'll be fine. Probably."
      */
-    DRIVING_INSTRUCTOR(25f, 0f, 0f, false);
+    DRIVING_INSTRUCTOR(25f, 0f, 0f, false),
+
+    // ── Issue #1209: Citizens Advice Bureau ────────────────────────────────────
+
+    /**
+     * Issue #1209: ADVICE_VOLUNTEER — unpaid CAB volunteer seated at a
+     * CONSULTATION_DESK_PROP in the Citizens Advice Bureau. Margaret (60s,
+     * cardigan) is present Mon–Fri 09:30–16:30. Brian (50s, retired teacher)
+     * attends Mon/Wed/Fri 10:00–14:00. Unhelpful to WANTED players (≥2 stars).
+     * Passive; never hostile.
+     * Margaret speech: "Take a seat love, we'll be with you."
+     *                  / "Have you got your reference number?"
+     * Brian speech:    "I've seen this before — it's not hopeless."
+     *                  / "Write it all down. Courts like paperwork."
+     */
+    ADVICE_VOLUNTEER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
