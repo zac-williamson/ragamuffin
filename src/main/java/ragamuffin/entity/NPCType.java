@@ -2235,7 +2235,17 @@ public enum NPCType {
      * Issue #1235: RAFFLE_ORGANISER — Irene, who runs the Friday-evening meat raffle.
      * Sells raffle tickets and draws numbers. Non-hostile.
      */
-    RAFFLE_ORGANISER(25f, 0f, 0f, false);
+    RAFFLE_ORGANISER(25f, 0f, 0f, false),
+
+    // ── Issue #1240: Northfield NHS Blood Donation Session ────────────────────
+
+    /**
+     * Issue #1240: NHS_DONOR_COORDINATOR — Brenda, the mobile unit coordinator.
+     * Stationed at BLOOD_DONATION_VAN_PROP in the Community Centre car park every
+     * 14 in-game days (Wednesday 09:00–17:00). Manages the eligibility questionnaire
+     * and oversees the donation session. Non-hostile.
+     */
+    NHS_DONOR_COORDINATOR(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
