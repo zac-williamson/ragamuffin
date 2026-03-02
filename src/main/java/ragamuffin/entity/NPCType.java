@@ -2304,7 +2304,35 @@ public enum NPCType {
      * Derek despawns and re-visits 2 in-game days later.
      * If bribed successfully: despawns for 7 in-game days.
      */
-    TV_LICENCE_OFFICER(20f, 0f, 0f, false);
+    TV_LICENCE_OFFICER(20f, 0f, 0f, false),
+
+    // ── Issue #1257: Northfield Rag-and-Bone Man ──────────────────────────────
+
+    /**
+     * Rag-and-Bone Man — named instance: Barry Dodd. Battered flat-cap, high-vis vest,
+     * drives the RAG_AND_BONE_VAN prop on his 6-stop route Mon–Sat 07:30–13:00.
+     * Calls out "Any old iroooon!" every 30 in-game seconds (range 20 blocks).
+     * Won't operate on Sundays or during rain.
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    RAG_AND_BONE_MAN(30f, 0f, 0f, false),
+
+    /**
+     * Rival Rag-and-Bone Man — named instance: Terry. Operates Barry's route when
+     * Barry's tyres are slashed (02:00–06:00). Hostile to the player; has a 25% chance
+     * to steal items from the player on each pass. Charges 90% of Barry's prices.
+     * HP: 30f, attack: 3f, cooldown: 2.0f, hostile: true.
+     */
+    RIVAL_RAGBONE_MAN(30f, 3f, 2.0f, true),
+
+    /**
+     * Council Enforcement Officer — patrols on Fridays (55% chance). Checks whether
+     * Barry has BARRY_LICENCE_STATUS. If not, impounds the van for 48 in-game hours
+     * and flees Barry. Player can warn Barry, bribe with TIN_OF_BEANS (60% success),
+     * or forged licence clears the stop.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    COUNCIL_ENFORCEMENT(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

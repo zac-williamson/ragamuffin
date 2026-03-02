@@ -554,5 +554,13 @@ public enum RumourType {
      * estate street every Sunday 14:00–16:00.
      * Spreads via PUBLIC and PENSIONER NPCs; panics unlicensed NPCs into fleeing.
      * Atmospheric only — the van cannot actually detect anything. */
-    DETECTOR_VAN_SPOTTED;
+    DETECTOR_VAN_SPOTTED,
+
+    // ── Issue #1257: Northfield Rag-and-Bone Man ──────────────────────────────
+
+    /** "Barry got nicked — council took his van. No rag-and-bone round this week."
+     * — seeded by RagAndBoneSystem when COUNCIL_ENFORCEMENT impounds the RAG_AND_BONE_VAN.
+     * Spreads via PUBLIC and PENSIONER NPCs within 30 blocks of the last known stop.
+     * Barry despawns for 48 in-game hours; RIVAL_RAGBONE_MAN Terry takes over. */
+    BARRY_NICKED;
 }

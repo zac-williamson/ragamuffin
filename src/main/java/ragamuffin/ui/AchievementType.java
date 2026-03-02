@@ -4505,6 +4505,38 @@ public enum AchievementType {
         "Derek's Nemesis",
         "Five times Derek knocked. Five times he left empty-handed.",
         5
+    ),
+
+    // ── Issue #1257: Northfield Rag-and-Bone Man ──────────────────────────────
+
+    /**
+     * Awarded (instant) when the player repairs Barry's slashed tyres with a RUBBER_TYRE,
+     * restoring the Rag-and-Bone round and earning Barry's gratitude (10 COIN reward).
+     */
+    BARRY_S_MATE(
+        "Barry's Mate",
+        "Sorted Barry's van out. He owes you one.",
+        1
+    ),
+
+    /**
+     * Progress achievement (×5): awarded for completing the Door-Knock Pre-buy hustle
+     * 5 times — knocking on residential doors before Barry arrives and reselling junk to him.
+     */
+    KNOCKER_BOY(
+        "Knocker Boy",
+        "Five times you beat Barry to the door.",
+        5
+    ),
+
+    /**
+     * Progress achievement (×10): awarded for completing 10 scrap-selling transactions
+     * with Barry across the Horsebox Hustle mechanics (any combination of sellable items).
+     */
+    HORSEBOX_HUSTLER(
+        "Horsebox Hustler",
+        "Ten deals done off the back of a flatbed Transit.",
+        10
     );
 
     private final String name;

@@ -2926,7 +2926,32 @@ public enum PropType {
      * Destroyed by 4 hits; yields nothing. High visibility — seeding a rumour
      * that "the chicken sign is smashed" if witnessed.
      */
-    CLUCKYS_SIGN_PROP(4.00f, 0.60f, 0.20f, 4, null);
+    CLUCKYS_SIGN_PROP(4.00f, 0.60f, 0.20f, 4, null),
+
+    // ── Issue #1257: Northfield Rag-and-Bone Man ──────────────────────────────
+
+    /**
+     * Rag-and-Bone Stop — a kerbside chalk marking at one of Barry's 6 route stops.
+     * Barry parks his van here for 90 seconds; up to 3 PUBLIC NPCs queue to sell JUNK_ITEM.
+     * Player can also press E to sell scrap. Cannot be broken.
+     */
+    RAGBONE_STOP(1.00f, 0.05f, 1.00f, 0, null),
+
+    /**
+     * Rag-and-Bone Van — Barry's battered flatbed Transit. Drives between RAGBONE_STOPs.
+     * Destroyed by 20 hits; yields SCRAP_METAL. Player can slash tyres at night with PENKNIFE
+     * (interacting 02:00–06:00) to trigger the Rival Route Sabotage hustle.
+     * Repairable by the player using RUBBER_TYRE for 10 COIN.
+     */
+    RAG_AND_BONE_VAN(4.50f, 2.20f, 2.00f, 20, Material.SCRAP_METAL),
+
+    /**
+     * Garden Ornament — a gnome, flamingo, or similar prop placed in a front garden.
+     * Stolen from residential areas at night (CriminalRecord THEFT, WitnessSystem).
+     * Sellable to Barry next morning for 2 COIN, or fenced for 1 COIN.
+     * Destroyed by 3 hits; yields nothing.
+     */
+    GARDEN_ORNAMENT(0.40f, 0.60f, 0.40f, 3, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
