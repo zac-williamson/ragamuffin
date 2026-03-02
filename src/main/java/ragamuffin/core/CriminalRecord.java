@@ -382,7 +382,22 @@ public class CriminalRecord {
          * Penalty: +5 Notoriety; increases Marchetti Crew respect by +2 (they appreciate
          * the player playing dirty). Exposed by NewspaperSystem if a JOURNALIST is nearby.
          */
-        SHOW_RIGGING("Dog show rigging (judge bribery)");
+        SHOW_RIGGING("Dog show rigging (judge bribery)"),
+
+        // ── Issue #1138: Northfield Iceland ────────────────────────────────────
+
+        /**
+         * Recorded when the player is caught by Kevin (ICELAND_SECURITY) attempting
+         * the self-checkout scam or when the CHRISTMAS_CLUB_CASH_BOX is stolen.
+         * Penalty: +8 Notoriety, WantedSystem +1 star.
+         */
+        SHOPLIFTING("Shoplifting (Iceland)"),
+
+        /**
+         * Recorded when the player steals the Christmas Club Cash Box from Iceland.
+         * Penalty: +15 Notoriety, WantedSystem +1 star; LOCAL_SCANDAL rumour seeded.
+         */
+        CHRISTMAS_CLUB_THEFT("Christmas Club savings theft");
 
         private final String displayName;
 

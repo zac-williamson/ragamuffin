@@ -3365,7 +3365,81 @@ public enum Material {
      * Looted from Terry (NIGHTCLUB_MANAGER) or hidden in the VIP area.
      * Tooltip: "A chunky Yale key with a 'T' fob. Opens something important."
      */
-    NIGHTCLUB_MASTER_KEY("Nightclub Master Key");
+    NIGHTCLUB_MASTER_KEY("Nightclub Master Key"),
+
+    // ── Issue #1138: Northfield Iceland ───────────────────────────────────────
+
+    /**
+     * Frozen Pizza — Iceland own-brand frozen pizza. Part of the three-for-a-fiver party food deal.
+     * Satisfies HUNGRY −30 when eaten. Sellable to the Fence for 1 COIN.
+     * Tooltip: "Cheese and tomato. Or possibly tomato and cheese. Hard to say."
+     */
+    FROZEN_PIZZA("Frozen Pizza"),
+
+    /**
+     * Prawn Ring — centrepiece of every British party buffet since 1987.
+     * Key item in the self-checkout scam: placing on the belt distracts Kevin (SECURITY_GUARD)
+     * for 30 seconds, reducing detection chance to 0%.
+     * Part of the three-for-a-fiver deal. Satisfies HUNGRY −20.
+     * Tooltip: "The gateway drug to a prawn cocktail addiction."
+     */
+    PRAWN_RING("Prawn Ring"),
+
+    /**
+     * Chicken Nuggets — Iceland own-brand nuggets. Part of the three-for-a-fiver party food deal.
+     * Satisfies HUNGRY −25. Tooltip: "Forty-seven nuggets for a fiver. Don't ask what's in them."
+     */
+    CHICKEN_NUGGETS("Chicken Nuggets"),
+
+    /**
+     * Iceland Prawn Cocktail — luxury party starter in a plastic tray.
+     * High-end item; not part of the basic deal but sold at the counter.
+     * Satisfies HUNGRY −35. Tooltip: "Posh. By Iceland standards."
+     */
+    ICELAND_PRAWN_COCKTAIL("Iceland Prawn Cocktail"),
+
+    /**
+     * Frozen Turkey — a whole frozen bird from the Iceland stockroom.
+     * 6 are locked in the stockroom Dec 1–24. Stealing all 6 earns the
+     * GREAT_TURKEY_HEIST achievement and a NewspaperSystem front page.
+     * Satisfies HUNGRY −80 when cooked. Heavy item: -10% player speed while held.
+     * Tooltip: "Bernard Matthews would be appalled. Or proud. It's ambiguous."
+     */
+    FROZEN_TURKEY("Frozen Turkey"),
+
+    /**
+     * Christmas Envelope — a paper envelope containing the customer's Christmas Club savings.
+     * Handed out by Debbie (ICELAND_MANAGER) in December.
+     * Contents: 20–35 COIN. Stealing it from another customer seeds LOCAL_SCANDAL rumour.
+     * Tooltip: "Someone's been saving all year for this."
+     */
+    CHRISTMAS_ENVELOPE("Christmas Envelope"),
+
+    /**
+     * Christmas Club Cash Box — the strongbox behind the Iceland counter where
+     * Debbie stores all the Christmas Club envelopes.
+     * Stealing it earns CHRISTMAS_CLUB_VILLAIN achievement and seeds LOCAL_SCANDAL.
+     * Contains 20–35 COIN per enrolled customer.
+     * Tooltip: "Heavier than it looks. Also heavier on your conscience. Probably."
+     */
+    CHRISTMAS_CLUB_CASH_BOX("Christmas Club Cash Box"),
+
+    /**
+     * Iceland Staff Key — Debbie's master key to the Iceland stockroom.
+     * Opens the STOCKROOM_DOOR_PROP; not consumed on use (can be used multiple times).
+     * Looted from Debbie (ICELAND_MANAGER) or found in the stockroom office.
+     * Tooltip: "A chunky brass key. 'Iceland Staff Only' stamped on the fob."
+     */
+    ICELAND_STAFF_KEY("Iceland Staff Key"),
+
+    /**
+     * Fake Receipt — a forged till receipt for unpaid self-checkout items.
+     * Crafted from 1 NEWSPAPER + 1 COIN at the squat WORKBENCH.
+     * Used at the self-checkout: 60% chance Sharon accepts it; if Kevin is distracted
+     * by a PRAWN_RING, acceptance chance rises to 100%.
+     * Tooltip: "Looks almost right. Squint a bit."
+     */
+    FAKE_RECEIPT("Fake Receipt");
 
     private final String displayName;
 
@@ -4205,6 +4279,26 @@ public enum Material {
                                                     0.60f, 0.60f, 0.72f); // Collar shadow
             case NIGHTCLUB_MASTER_KEY:    return cs(0.60f, 0.55f, 0.30f,  // Brass key
                                                     0.38f, 0.35f, 0.18f); // Dark shaft
+
+            // Issue #1138: Northfield Iceland
+            case FROZEN_PIZZA:            return cs(0.55f, 0.78f, 0.92f,  // Iceland blue box
+                                                    0.88f, 0.22f, 0.15f); // Red tomato sauce hint
+            case PRAWN_RING:              return cs(0.90f, 0.55f, 0.35f,  // Pink prawn
+                                                    0.75f, 0.82f, 0.45f); // Parsley garnish
+            case CHICKEN_NUGGETS:         return cs(0.88f, 0.68f, 0.28f,  // Golden nugget batter
+                                                    0.55f, 0.78f, 0.92f); // Iceland blue tray
+            case ICELAND_PRAWN_COCKTAIL:  return cs(0.85f, 0.35f, 0.40f,  // Prawn pink
+                                                    0.92f, 0.85f, 0.75f); // Cream sauce
+            case FROZEN_TURKEY:           return cs(0.88f, 0.78f, 0.65f,  // Pale turkey flesh
+                                                    0.55f, 0.78f, 0.92f); // Iceland blue bag
+            case CHRISTMAS_ENVELOPE:      return cs(0.88f, 0.12f, 0.12f,  // Red Christmas envelope
+                                                    0.92f, 0.82f, 0.18f); // Gold trim
+            case CHRISTMAS_CLUB_CASH_BOX: return cs(0.62f, 0.42f, 0.22f,  // Brown lockbox
+                                                    0.88f, 0.12f, 0.12f); // Red lid stripe
+            case ICELAND_STAFF_KEY:       return cs(0.55f, 0.78f, 0.92f,  // Iceland blue fob
+                                                    0.78f, 0.72f, 0.35f); // Brass key
+            case FAKE_RECEIPT:            return cs(0.95f, 0.95f, 0.90f,  // Off-white thermal paper
+                                                    0.70f, 0.70f, 0.65f); // Grey text hint
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }

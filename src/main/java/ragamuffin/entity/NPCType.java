@@ -1466,7 +1466,40 @@ public enum NPCType {
      * Speech: "You got anything for me?" / "Nah mate, not tonight."
      *         / "Keep it quiet. I'm working here."
      */
-    DRUG_DEALER_NPC(20f, 0f, 0f, false);
+    DRUG_DEALER_NPC(20f, 0f, 0f, false),
+
+    // ── Issue #1138: Northfield Iceland ───────────────────────────────────────
+
+    /**
+     * Iceland Manager — Debbie, who manages the Iceland on Northfield High Street.
+     * Present Mon–Sat 08:00–18:00, Sun 10:00–16:00. Manages the Christmas Club
+     * savings scheme (distributes envelopes in December). Passive unless shoplifting
+     * is detected; then calls Kevin (ICELAND_SECURITY). Holds the ICELAND_STAFF_KEY.
+     * Speech: "Can I help you with something, love?" / "Everything's three for a fiver."
+     *         / "Kevin! Kevin, come here please." / "Right, that's it — I'm calling the police."
+     */
+    ICELAND_MANAGER(25f, 0f, 0f, false),
+
+    /**
+     * Iceland Checkout — Sharon, who staffs the Iceland checkout.
+     * Present Mon–Sat 08:00–18:00, Sun 10:00–16:00. Processes the three-for-a-fiver deal.
+     * Will accept a FAKE_RECEIPT 60% of the time; 100% when Kevin is distracted.
+     * Passive unless the self-checkout scam is flagged by Kevin.
+     * Speech: "That's your lot, love." / "Three for a fiver on the party food."
+     *         / "Have you got your reward card?" / "Oi — that receipt doesn't look right."
+     */
+    ICELAND_CHECKOUT(20f, 0f, 0f, false),
+
+    /**
+     * Iceland Security — Kevin, the self-checkout security guard.
+     * Present Mon–Sat 09:00–18:00. Patrols the self-checkout area.
+     * 40% detection chance on self-checkout scam attempts; 0% when distracted by PRAWN_RING.
+     * Distractable for 30 seconds when a PRAWN_RING is placed near him.
+     * Passive until scam detected; then calls Debbie and triggers WantedSystem.
+     * Speech: "Excuse me — unexpected item." / "Can you pop that back through, please."
+     *         / "Ooh, is that a prawn ring? I love a prawn ring." / "Right, that's it."
+     */
+    ICELAND_SECURITY(35f, 6f, 1.5f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
