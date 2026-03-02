@@ -43105,3 +43105,154 @@ BACK_ALLEY_TRADE,
 //             FenceSystem (Dave access gate), PhoneRepairSystem (WIPED_PHONE), PawnShopSystem (price comparison),
 //             StreetSkillSystem (FENCE XP), RumourNetwork, WantedSystem, CriminalRecord, NotorietySystem,
 //             BuskingSystem, NewspaperSystem, NeighbourhoodWatchSystem, NeighbourhoodSystem
+
+---
+
+## Issue #1288: Add Northfield Sporting & Social Club — Darts Night, Thursday Quiz, the Back-Room Pontoon & the Protection Handover
+
+### Overview
+
+`SportingSocialClubSystem` brings `LandmarkType.SPORTING_SOCIAL_CLUB` — Northfield Sporting & Social Club — fully to life. The landmark, all NPCTypes (`SOCIAL_CLUB_CHAIRMAN`, `SOCIAL_CLUB_BARMAN`, `SOCIAL_CLUB_STEWARD`, `CLUB_REGULAR`, `QUIZ_HOST`, `MARCHETTI_ENFORCER`), all Materials (`CLUB_MEMBERSHIP_CARD`, `DARTS_SET`, `QUIZ_ANSWER_SHEET`), all PropTypes (`DARTBOARD_PROP`, `CARD_TABLE_PROP`, `DARTS_TROPHY_PROP`), and the `CARD_CHEAT` RumourType are already defined and waiting. This issue implements the system that backs all those references.
+
+The social club is the **community hub of the local underworld**. On the surface: cheap bitter, Thursday quiz night, darts. Underneath: a back-room pontoon game run by the Marchetti Crew, a weekly protection envelope, and a committee that knows exactly what goes on but looks the other way. Getting the membership card opens all doors. Getting the committee card opens the wrong ones.
+
+---
+
+### NPCs
+
+- **Ron** (`SOCIAL_CLUB_STEWARD`) — front desk Mon–Sat 11:00–23:00. Sells `CLUB_MEMBERSHIP_CARD` for 5 COIN. Blocks non-members from the main bar. Knows about the protection arrangement but stays quiet unless `StreetReputation` STREET_LADS Respect ≥ 50. Dialogue: *"Members only, mate." / "Fiver for the card." / "Ron's the name. I just work here."*
+- **Keith** (`SOCIAL_CLUB_BARMAN`) — bar Mon–Sat 12:00–23:00. Serves `BITTER` (1 COIN), `MILD` (1 COIN), `LAGER_TOP` (1 COIN). Refuses `KNOCK_OFF_TRACKSUIT` wearers and Wanted Tier 2+. Dialogue: *"Right, what'll it be?" / "We don't serve that sort in here." / "Lager top? Seriously?"*
+- **Terry** (`SOCIAL_CLUB_CHAIRMAN`) — committee room and bar Tue/Thu/Sat evenings. Hosts the AGM (1st Saturday of the month, 19:00). Speech-rich; passive unless committee conspiracy is exposed. Dialogue: *"Right then, let's get on with it." / "Membership's not free, you know." / "Any Other Business?"*
+- **Maureen** (`QUIZ_HOST`) — Thursday 19:30–22:00. Carries `QUIZ_ANSWER_SHEET` which can be stolen from `NOTICE_BOARD_PROP` at 19:00–19:30. Announces rounds, reads questions, tallies scores. Dialogue: *"Right, question one..." / "No phones!" / "Put that away, I can see you."*
+- **Brian** (`CLUB_REGULAR`) — darts regular Fri/Sat 18:00–23:00. Challenges player to 501 darts match (5 COIN wager). Awards `DARTS_SET` on first loss. Dialogue: *"You any good at darts?" / "Double top for the win." / "I've been coming here thirty years."*
+- **Mick** (`CARD_DEALER`) — back-room pontoon Fri/Sat 22:00–01:00. Members-only backroom, Marchetti-connected. Cheating detectable with `FENCE` Skill ≥ 10. Dialogue: *"Place your bets." / "Twist or stick?" / "House rules — no arguments."*
+- **Marchetti Enforcer** (`MARCHETTI_ENFORCER`) — arrives Sun 20:00–21:30 for protection envelope. Hostile if envelope stolen or player grasses. Dialogue: *"Tommy sends his regards." / "Is it ready?" / "Don't make this difficult."*
+
+---
+
+### Activities
+
+#### Darts Night (Fri/Sat 18:00–23:00)
+- Player must have `CLUB_MEMBERSHIP_CARD` in inventory.
+- Press E on `DARTBOARD_PROP` to enter 501 match mini-game (BattleBarMiniGame-style: press action key in decreasing window to score).
+- Beat Brian: earns 5 COIN + `DARTS_SET` item (first time). Subsequent wins: 5 COIN.
+- Equipping `DARTS_SET` in hotbar gives +1 accuracy tier at `DARTBOARD_PROP`.
+- `StreetSkillSystem.Skill.DARTS` XP +1 per game played, +2 per win.
+- Achievement: `DARTS_HUSTLER_CLUB` (win 5 darts matches at the social club).
+
+#### Thursday Quiz Night (Thu 19:30–22:00)
+- Player pays 2 COIN entry at door (Ron collects). Requires `CLUB_MEMBERSHIP_CARD`.
+- 5 rounds of 3 questions each. Player selects A/B/C/D answer within 15 seconds per question.
+- Correct answers: 1 point each. 15 points max. Winning score: 12+ points.
+- Prize: 10 COIN if player wins outright; 5 COIN split if tied.
+- **Quiz cheat**: steal `QUIZ_ANSWER_SHEET` from `NOTICE_BOARD_PROP` at 19:00–19:30.
+  - Using it guarantees correct answers but 30% chance Maureen catches player → CHEATING fine 5 COIN + ejected from quiz + `QUIZ_CHEAT` notoriety +2.
+  - If caught: `BANNED_FROM_QUIZ` flag set for 7 in-game days.
+
+#### Back-Room Pontoon (Fri/Sat 22:00–01:00)
+- Accessible via `CARD_TABLE_PROP` in back room. Requires `CLUB_MEMBERSHIP_CARD`.
+- Minimum bet: 2 COIN. Maximum: 10 COIN. Simple twist/stick pontoon.
+- Mick cheats: deals from bottom of deck. Player with `FENCE` Skill ≥ 10 may `detectCheating()`.
+  - Detecting Mick: seeds `CARD_CHEAT` rumour in `RumourNetwork`; reduces `MARCHETTI_CREW` Respect by 5; Mick becomes HOSTILE.
+  - If `MARCHETTI_ENFORCER` present: Enforcer attacks player on sight.
+- House edge: −5% EV per hand (Mick cheating → −15% when detected cheat suppressed).
+- Achievement: `PONTOON_KING` (win 20 COIN net at pontoon over career).
+- Achievement: `BACK_ROOM_WINNER` (detect Mick cheating and survive the back room).
+
+#### AGM (1st Saturday each in-game month, 19:00–21:00)
+- Terry chairs. 3 agenda items. Player can attend (members only).
+- Press E at `NOTICE_BOARD_PROP` before 19:00 to table a motion (any free-text from preset list: "Reduce bar prices", "Investigate the accounts", "New darts board needed").
+- "Investigate the accounts" motion: if passed (requires 3 CLUB_REGULAR NPC votes), triggers committee panic → Terry offers 10 COIN bribe to drop it.
+  - Accepting bribe: 10 COIN + `MARCHETTI_CREW` Respect +5.
+  - Refusing bribe: `COMMITTEE_CONSPIRACY` rumour seeded; `NeighbourhoodSystem` vibes +3 (community empowerment).
+- Achievement: `AGM_TROUBLEMAKER` (successfully move the "Investigate the accounts" motion).
+
+#### Protection Envelope (Sun 20:00–21:30)
+- Terry places a 20 COIN `PROTECTION_LETTER` envelope on the bar at 20:00.
+- Marchetti Enforcer arrives at 20:15, collects envelope, leaves by 21:30.
+- **Intercept**: Player can steal envelope (pickpocket or distraction) before 20:15.
+  - Stealing: player gains 20 COIN; `MARCHETTI_ENFORCER` becomes HOSTILE; `MARCHETTI_CREW` Respect −20; WantedSystem +2.
+  - Planting decoy (empty envelope from `JUNK_MAIL` item): Enforcer opens it at bar; seethes; departs. Terry panics.
+- **Grass**: Player can call police from `PHONE_BOX_ESTATE` before 20:00.
+  - Police arrive 20:10. Enforcer and Terry arrested. `MARCHETTI_CREW` Respect −30; `POLICE_SNITCH` rumour seeded; player cannot enter social club for 14 in-game days.
+
+---
+
+### Prices
+
+| Item | Price |
+|------|-------|
+| `CLUB_MEMBERSHIP_CARD` (Ron) | 5 COIN (once) |
+| `BITTER` | 1 COIN |
+| `MILD` | 1 COIN |
+| `LAGER_TOP` | 1 COIN |
+| Quiz entry | 2 COIN |
+| Darts wager | 5 COIN |
+| Pontoon minimum bet | 2 COIN |
+
+---
+
+### Integration Points
+
+- **FactionSystem**: `MARCHETTI_CREW` Respect affected by envelope theft (−20), grassing (−30), detecting Mick (−5), bribe-accept (+5). `STREET_LADS` Respect ≥ 50 unlocks Ron's insider dialogue.
+- **RumourNetwork**: `CARD_CHEAT` seeded when Mick caught; `COMMITTEE_CONSPIRACY` when "Investigate the accounts" passed and bribe refused; `POLICE_SNITCH` when player grasses on protection handover.
+- **NotorietySystem**: Quiz cheat caught +2; protection envelope theft +3; Enforcer brawl +5.
+- **WantedSystem**: Envelope theft +2; Enforcer assault +3; grassing (police arrive, Enforcer attacked) +0 but `SNITCH` flag set.
+- **CriminalRecord**: `THEFT` on envelope stolen; `CHEATING` if quiz cheat caught by Maureen.
+- **StreetSkillSystem**: `DARTS` XP +1/game, +2/win; `FENCE` XP +1 on detecting card cheat.
+- **WarmthSystem**: Social club interior provides Warmth +1/min (warm room, free heat).
+- **NeighbourhoodSystem**: `COMMITTEE_CONSPIRACY` rumour vibes +3; protection exposed vibes +5; Enforcer brawl vibes −4.
+- **NoiseSystem**: Brawl in back room = HIGH (radius 15); darts thud = LOW (radius 5).
+- **NewspaperSystem**: "Social Club Chairman Exposed in Protection Racket — Terry Denies All" headline if committee conspiracy spreads to 5+ NPCs.
+- **HealingSystem**: Buying a pint restores +2 HP (warmth + calories).
+- **BuskingSystem**: Front door is a valid busking spot Mon–Sat 11:00–14:00 only (Ron bans buskers in evenings).
+- **DisguiseSystem**: `KNOCK_OFF_TRACKSUIT` forces Keith refusal; wearing `CLUB_REGULAR` disguise bypasses refusal check.
+
+---
+
+### Unit Tests (`SportingSocialClubSystemTest.java`)
+
+1. `testMembershipCardGrantsAccess` — player has no card; verify `canEnterBar(player)` = false. Give player `CLUB_MEMBERSHIP_CARD`; verify `canEnterBar(player)` = true.
+2. `testDartsMiniGameWinAwardsCoin` — seed RNG for win; call `playDarts(player, Brian)`; verify player gains 5 COIN; DARTS XP +1 (or +2 on first win with `DARTS_SET` grant).
+3. `testQuizAnswerSheetGuaranteesCorrectAnswer` — give player `QUIZ_ANSWER_SHEET`; seed RNG to avoid detection (< 0.30); call `answerQuestion(player, 1)`; verify `CORRECT` returned.
+4. `testQuizCheatDetectionEjectsPlayer` — give player `QUIZ_ANSWER_SHEET`; seed RNG ≥ 0.70 (detection); call `answerQuestion(player, 1)`; verify `EJECTED` result; Notoriety +2; `BANNED_FROM_QUIZ` flag set.
+5. `testMickCheatDetectedSeedsRumour` — set FENCE Skill ≥ 10; call `detectCheating(player, Mick)`; verify `CARD_CHEAT` rumour seeded in `RumourNetwork`; MARCHETTI_CREW Respect −5.
+6. `testEnvelopeTheftGivesCoinAndRaisesWanted` — steal `PROTECTION_LETTER` before 20:15; verify player +20 COIN; WantedSystem stars +2; MARCHETTI_ENFORCER state = HOSTILE.
+7. `testGrassingArrestsEnforcerAndSetsSnitch` — call `reportToPolice(player)` before 20:00; advance to 20:10; verify MARCHETTI_ENFORCER state = ARRESTED; `POLICE_SNITCH` rumour seeded; `canEnterSocialClub(player)` = false for next 14 days.
+8. `testDecoyEnvelopeTriggersTerryPanic` — place `JUNK_MAIL` envelope on bar; Enforcer picks it up; verify Terry enters PANIC state.
+9. `testAGMInvestigateMotionPassed` — seed 3 CLUB_REGULAR NPCs to vote yes; call `tableMotion(player, "Investigate the accounts")`; advance AGM; verify `COMMITTEE_CONSPIRACY` rumour seeded; Terry offers bribe 10 COIN.
+10. `testKeithRefusesWantedTier2` — set player Wanted Tier 2; call `tryBuyDrink(player, BITTER)`; verify `SaleResult.REFUSED`; no COIN deducted.
+11. `testPontoonHouseEdgeApplied` — seed RNG deterministically; run 100 hands; verify net result is negative (house edge applies); Mick cheating active.
+12. `testBarmanServesWarmthBonus` — buy BITTER (1 COIN); verify player HP +2 via HealingSystem; player Warmth stat +1 from room warmth.
+
+---
+
+### Integration Tests (`Issue1288SportingSocialClubIntegrationTest.java`)
+
+1. **Full quiz night pipeline**: Player buys `CLUB_MEMBERSHIP_CARD` (5 COIN). Advances time to Thursday 19:30. Pays 2 COIN entry. Answers 12 questions correctly (seeded RNG for correct). Verify: player receives 10 COIN prize; quiz log shows "winner announced"; Maureen NPC enters END_QUIZ state.
+
+2. **Darts challenge end-to-end**: Player has `CLUB_MEMBERSHIP_CARD`. Advances to Friday 19:00. Presses E on `DARTBOARD_PROP`. Wins match (seeded RNG). Verify: player gains 5 COIN; `DARTS_SET` in inventory (first win); `DARTS_HUSTLER_CLUB` progress +1; `StreetSkillSystem` DARTS XP +2.
+
+3. **Protection envelope intercept and consequences**: Player steals envelope from bar at 20:05 (before Enforcer arrives). Verify: player +20 COIN; Enforcer spawned and HOSTILE; FactionSystem MARCHETTI_CREW Respect reduced by 20; WantedSystem stars +2; `MARCHETTI_ENFORCER` patrols to player location.
+
+4. **Back-room pontoon cheat detection**: Player has FENCE Skill ≥ 10. Advances to Friday 22:30. Enters back room (`CARD_TABLE_PROP`). Calls `detectCheating`. Verify: `CARD_CHEAT` rumour seeded with radius 10; Mick becomes HOSTILE; MARCHETTI_CREW Respect −5; if Enforcer present, Enforcer attacks player within 3 frames.
+
+5. **AGM motion triggers newspaper headline**: Player tables "Investigate the accounts" at AGM. 3 CLUB_REGULAR NPCs vote yes (seeded). Player refuses bribe. `COMMITTEE_CONSPIRACY` rumour spreads to 5+ NPCs (advance 1 in-game day). Verify: `NewspaperSystem` contains headline "Social Club Chairman Exposed in Protection Racket"; `NeighbourhoodSystem` vibes +5.
+
+---
+
+// ── Issue #1288: Add Northfield Sporting & Social Club ────────────────────────
+// New: SportingSocialClubSystem.java in ragamuffin.core
+// New: SportingSocialClubSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1288SportingSocialClubIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: SOCIAL_CLUB_CHAIRMAN (Terry), SOCIAL_CLUB_BARMAN (Keith), SOCIAL_CLUB_STEWARD (Ron),
+//          CLUB_REGULAR (Brian + generics), QUIZ_HOST (Maureen), CARD_DEALER (Mick),
+//          MARCHETTI_ENFORCER — all already defined; no change needed
+// Material: CLUB_MEMBERSHIP_CARD, DARTS_SET, QUIZ_ANSWER_SHEET — already defined; no change needed
+// PropType: DARTBOARD_PROP, CARD_TABLE_PROP, DARTS_TROPHY_PROP — already defined; no change needed
+// RumourType: CARD_CHEAT — already defined; add COMMITTEE_CONSPIRACY, POLICE_SNITCH
+// AchievementType: DARTS_HUSTLER_CLUB, AGM_TROUBLEMAKER, PONTOON_KING, BACK_ROOM_WINNER, CLUB_MEMBER — already defined; no change needed
+// Integration: FactionSystem (MARCHETTI_CREW Respect), RumourNetwork (CARD_CHEAT, COMMITTEE_CONSPIRACY, POLICE_SNITCH),
+//             NotorietySystem, WantedSystem, CriminalRecord (THEFT, CHEATING),
+//             StreetSkillSystem (DARTS, FENCE XP), WarmthSystem, NeighbourhoodSystem,
+//             NoiseSystem, NewspaperSystem, HealingSystem, BuskingSystem, DisguiseSystem
