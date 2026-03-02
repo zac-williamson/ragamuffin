@@ -4499,7 +4499,26 @@ public enum Material {
      * Also unlocks the "Delivery Driver" job in DWPSystem (+2 UC/day).
      * Tooltip: "Full UK driving licence. Dave was almost proud."
      */
-    FULL_DRIVING_LICENCE("Full Driving Licence");
+    FULL_DRIVING_LICENCE("Full Driving Licence"),
+
+    // ── Issue #1218: Northfield Claims Management Company ─────────────────────
+
+    /**
+     * NECK_BRACE — a foam cervical collar worn as part of a whiplash claim.
+     * Applying this when filing a WHIPLASH_CLAIM or SLIP_AND_FALL multiplies
+     * the payout by ×1.5 in ClaimsManagementSystem.
+     * Sellable at FenceSystem for 1 COIN.
+     * Tooltip: "Officially issued by Gary. Medically dubious."
+     */
+    NECK_BRACE("Neck Brace"),
+
+    /**
+     * CLAIM_REFERENCE_SLIP — a crumpled receipt-style slip issued by Gary when
+     * a claim is filed at Compensation Kings. Acts as proof of a pending claim in
+     * ClaimsManagementSystem. Worthless if sold to the Fence.
+     * Tooltip: "Keep this safe. Or don't. Gary's got a copy."
+     */
+    CLAIM_REFERENCE_SLIP("Claim Reference Slip");
 
     private final String displayName;
 
@@ -7302,6 +7321,12 @@ public enum Material {
                 return IconShape.TOOL;        // cut key
             case FULL_DRIVING_LICENCE:
                 return IconShape.CARD;        // laminated licence card
+
+            // Issue #1218: Northfield Claims Management Company
+            case NECK_BRACE:
+                return IconShape.BOX;         // foam cervical collar
+            case CLAIM_REFERENCE_SLIP:
+                return IconShape.FLAT_PAPER;  // crumpled payout receipt
 
             default:
                 return IconShape.BOX;
