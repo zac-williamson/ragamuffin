@@ -2702,7 +2702,32 @@ public enum PropType {
      * speed at 60% without a FULL_DRIVING_LICENCE. Destroyed by 10 punches;
      * yields SCRAP_METAL.
      */
-    DAVE_INSTRUCTOR_CAR_PROP(2.50f, 1.50f, 4.50f, 10, Material.SCRAP_METAL);
+    DAVE_INSTRUCTOR_CAR_PROP(2.50f, 1.50f, 4.50f, 10, Material.SCRAP_METAL),
+
+    // ── Issue #1218: Northfield Claims Management Company ─────────────────────
+
+    /**
+     * GOLD_SIGN_PROP — the brass and gold-effect signage outside Compensation Kings,
+     * reading "COMPENSATION KINGS — NO WIN, NO FEE*". Flavour prop; interaction (E)
+     * triggers Gary's intake spiel. Cannot be destroyed (hitsToBreak = 99 = very tough).
+     */
+    GOLD_SIGN_PROP(1.20f, 0.50f, 0.05f, 99, null),
+
+    /**
+     * PAMPHLET_RACK_PROP — a wire rack of glossy leaflets by the front door of
+     * Compensation Kings. Press E to take a pamphlet (flavour text: "Have you been
+     * injured in an accident that wasn't your fault?"). No game effect; yields null.
+     * Destroyed by 2 punches.
+     */
+    PAMPHLET_RACK_PROP(0.30f, 1.20f, 0.20f, 2, null),
+
+    /**
+     * LOOSE_PAVING_PROP — a cracked and raised section of pavement on the high street,
+     * near the park, or outside Iceland. Press E adjacent to this prop to stage a
+     * SLIP_AND_FALL accident via ClaimsManagementSystem.stageAccident(). The prop
+     * remains in the world after use. Destroyed by 5 punches; yields STONE.
+     */
+    LOOSE_PAVING_PROP(0.80f, 0.10f, 0.80f, 5, Material.STONE);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -4086,6 +4086,59 @@ public enum AchievementType {
         "L-Plates and All",
         "Dave's dual-control Corsa. The L-plates didn't survive the first roundabout.",
         1
+    ),
+
+    // ── Issue #1218: Northfield Claims Management Company ─────────────────────
+
+    /**
+     * Awarded when the player successfully files a fraudulent personal injury
+     * claim at Compensation Kings and receives a payout.
+     */
+    COMPENSATION_NATION(
+        "Where There's Blame, There's a Claim",
+        "Gary was delighted. The insurance company was not. You were 5 COIN richer.",
+        1
+    ),
+
+    /**
+     * Awarded when an INSURANCE_INVESTIGATOR catches the player sprinting,
+     * fighting, or breaking blocks within 20 blocks while a claim is pending,
+     * triggering claim invalidation and INSURANCE_FRAUD on the criminal record.
+     */
+    CAUGHT_IN_THE_ACT(
+        "You Absolute Melt",
+        "The investigator had photos. Gary has disowned you. The neck brace is in a bin.",
+        1
+    ),
+
+    /**
+     * Awarded when the player files a claim while wearing a NECK_BRACE,
+     * increasing the payout multiplier to ×1.5.
+     */
+    NECK_BRACE_BANDIT(
+        "Medically Certified Wrong 'Un",
+        "The neck brace cost 0 COIN. Gary's cut was 30%. You still came out ahead.",
+        1
+    ),
+
+    /**
+     * Awarded when the player suffers a genuine unprovoked injury (dog bite or
+     * car collision) and Gary waives his cut, paying out in full.
+     */
+    GENUINE_VICTIM(
+        "Actually Hurt",
+        "This one wasn't staged. Gary felt bad. He still filed the claim, obviously.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully shakes an INSURANCE_INVESTIGATOR by
+     * staying 60 blocks away for 5 in-game minutes without being seen.
+     */
+    SHOOK_THE_TAIL(
+        "Ghost Protocol",
+        "Gone in five minutes. The investigator went home. Gary was impressed.",
+        1
     );
 
     private final String name;

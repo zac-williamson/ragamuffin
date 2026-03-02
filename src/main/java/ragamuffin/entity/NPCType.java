@@ -2122,7 +2122,42 @@ public enum NPCType {
      *          / "I think I clipped the kerb."
      *          / "Is it always this scary?"
      */
-    LEARNER_DRIVER(30f, 0f, 0f, false);
+    LEARNER_DRIVER(30f, 0f, 0f, false),
+
+    // ── Issue #1218: Northfield Claims Management Company ─────────────────────
+
+    /**
+     * Issue #1218: CLAIMS_MANAGER — Gary, the unscrupulous proprietor of
+     * Compensation Kings on the high street. Stands behind his DESK_PROP
+     * Mon–Sat 09:00–17:00. Processes fraudulent personal injury claims, takes
+     * a 30% cut of each payout. Refuses service at Notoriety Tier ≥ 4 or when
+     * FRAUD_SUSPECTED threshold (3 claims in 7 days) is reached.
+     * Passive; never hostile.
+     * Speech: "Leave it with me, mate." / "Thirty per cent — that's industry standard."
+     *         / "You didn't hear this from me." / "Look, even I have limits."
+     */
+    CLAIMS_MANAGER(20f, 0f, 0f, false),
+
+    /**
+     * Issue #1218: CLAIMS_ASSISTANT — Chantelle, Gary's assistant at Compensation
+     * Kings. Patrols a 4-block route behind the counter Mon–Fri 09:00–17:00 only
+     * (Gary covers Saturday solo). Passive; never hostile.
+     * Speech: "Have you got your ref number?" / "Gary's just with someone."
+     *         / "Fill this in first, yeah?" / "Compensation's a human right, innit."
+     */
+    CLAIMS_ASSISTANT(20f, 0f, 0f, false),
+
+    /**
+     * Issue #1218: INSURANCE_INVESTIGATOR — a beige-anorak investigator dispatched
+     * by the insurance company when a claim is filed and CCTV coverage was detected
+     * (40% chance within 10 blocks of a CCTV_PROP). Carries a hidden camera.
+     * Follows the player at distance; monitors for sprint/fight/block-break within
+     * 20 blocks to invalidate the claim. Can be bribed (5 COIN, 50% accept) or
+     * shaken (60 blocks away, 5 in-game minutes out of sight).
+     * Passive until claim invalidation triggers → records INSURANCE_FRAUD.
+     * Speech: "Just passing through." / "Don't mind me." / "I've got all day, sunshine."
+     */
+    INSURANCE_INVESTIGATOR(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

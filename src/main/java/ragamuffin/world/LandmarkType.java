@@ -659,7 +659,20 @@ public enum LandmarkType {
      * Open Mon–Fri 08:00–18:00.
      * Staffed by Dave (DRIVING_INSTRUCTOR). Managed by DrivingInstructorSystem.
      */
-    DRIVING_SCHOOL;
+    DRIVING_SCHOOL,
+
+    // ── Issue #1218: Northfield Claims Management Company ─────────────────────
+
+    /**
+     * Issue #1218: CLAIMS_MANAGEMENT — Compensation Kings, a fraudulent personal
+     * injury claims management company on the high street. A 6×4×3 unit with
+     * a GOLD_SIGN_PROP outside, a PAMPHLET_RACK_PROP by the door, and Gary's
+     * DESK_PROP inside.
+     * Open Mon–Sat 09:00–17:00.
+     * Staffed by Gary (CLAIMS_MANAGER) and Chantelle (CLAIMS_ASSISTANT).
+     * Managed by ClaimsManagementSystem (CompensationKings.java).
+     */
+    CLAIMS_MANAGEMENT;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -758,6 +771,7 @@ public enum LandmarkType {
             case DVSA_TEST_CENTRE:      return "Northfield DVSA Test Centre";
             case CITIZENS_ADVICE:       return "Northfield Citizens Advice";
             case DRIVING_SCHOOL:        return "BSM Driving School";
+            case CLAIMS_MANAGEMENT:     return "Compensation Kings";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
