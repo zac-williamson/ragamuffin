@@ -29952,3 +29952,158 @@ Up to 3 `ROUGH_SLEEPER` NPCs exist in the world. They path between: park bench �
 // New NPCTypes: SALVATION_ARMY_OFFICER, BRASS_BAND_MEMBER, ROUGH_SLEEPER (add to NPCType.java)
 // New PropTypes: FOLDING_TABLE_PROP, LECTERN_PROP, HYMN_BOARD_PROP, COLLECTION_BOX_PROP, DONATION_BIN_PROP, SLEEPING_BAG_PROP, UNIFORM_HOOK_PROP, COLLECTION_TIN_PROP (add to PropType.java)
 // New achievements: REFORMED_CHARACTER, SOUP_KITCHEN_REGULAR, CHARITY_MUGGER, UNDERCOVER_ANGEL, BRASS_NECK (add to AchievementType.java)
+
+---
+
+## Issue #1126: Add Northfield Household Waste Recycling Centre — The Tip, Fly-Tipping Runs & the Treasure Trove
+
+**Landmark**: `RECYCLING_CENTRE` (add to `LandmarkType.java`)
+**System class**: `RecyclingCentreSystem.java` in `ragamuffin.core`
+**Display name**: `"Northfield Tip"`
+
+### Overview
+
+A sprawling, slightly chaotic council-run household waste and recycling facility on the industrial estate — two corrugated-iron bays, a concrete apron, mountains of bagged rubbish, colour-coded skips, and a weathered PORTAKABIN for the site supervisor. Run by Dave the Site Manager (`RECYCLING_CENTRE_MANAGER` NPC) and his grumpy colleague Keith (`RECYCLING_CENTRE_WORKER` NPC). Open Mon–Sat 08:00–18:00, Sun 09:00–13:00. Closed Christmas Day.
+
+The Tip is the final destination for the town's waste economy. Residents bring cars of junk; the player can legitimately dispose of unwanted materials, work a shift sorting recycling, scavenge through the "Reuse & Recycle" bay for hidden gems, or — after hours — run fly-tipping jobs for lazy NPCs who don't want to queue.
+
+### Site Layout (16×24×4 blocks)
+
+- **Entrance gate** (`GATE_PROP`, open hours only; lockpickable after-hours)
+- **PORTAKABIN** (Dave's office; `SITE_MANAGER_DESK_PROP`, `KETTLE_PROP`, `CASH_BOX_PROP` containing 8–25 COIN; locked)
+- **General waste bay**: 3 `SKIP_LARGE_PROP` (BRICK-coloured) for rubble, wood, mixed waste
+- **Recycling bays**: `RECYCLING_BIN_PROP` ×4 (paper, glass, metal, plastic — colour coded)
+- **Reuse & Recycle shelf**: `REUSE_SHELF_PROP` — 4–8 random items from the SkipDivingSystem loot pool, refreshed each morning
+- **Electronics area**: `EWASTE_SKIP_PROP` — smashable for `CIRCUIT_BOARD`, `SCRAP_METAL`, `COPPER_WIRE` (1–3 items per smash; Notoriety 0, but causes a `WORKPLACE_INJURY` rumour)
+- **Compactor**: `COMPACTOR_PROP` — destroys any item permanently; useful for disposing of hot evidence. If player compacts `CRIMINAL_EVIDENCE`, clears that evidence from WitnessSystem. Notoriety −2 per CRIMINAL_EVIDENCE disposed.
+- **Fly-tipping alley** (north edge, outside gate): 2×4-block lane where NPCs dump bags at night
+
+### Legitimate Services (free, no COIN unless noted)
+
+| Service | Trigger | Effect |
+|---------|---------|--------|
+| Dispose of item | Player presses E on any skip/bin with item selected | Item removed from inventory; no Notoriety gain (even for stolen items); satisfaction of "clean slate" |
+| Reuse bay browse | Player presses E on `REUSE_SHELF_PROP` | Opens loot panel; take any 1 item free per day |
+| Shift work | Press E on Dave 08:00–17:00 | 10-min sorting mini-game: match 8 materials to the correct bin type; +8 COIN per shift, max 1 per day; GRAFTING XP |
+| Sell scrap | Press E at Dave's desk with SCRAP_METAL / COPPER_WIRE | 1 COIN per SCRAP_METAL, 2 per COPPER_WIRE; no receipt |
+
+### Fly-Tipping Economy (illegal, night only)
+
+NPCs (random WORKER or PENSIONER) approach the player 22:00–05:00 near the Tip's locked gate. They have a bag of junk they "can't be bothered to queue with" and offer 3–8 COIN for the player to dump it inside the locked compound.
+
+- **Accept job**: player must lockpick the `GATE_PROP` (if not already open), carry `JUNK_BAG` material to the `GENERAL_WASTE_BAY_PROP`, and interact to deposit.
+- **Risk**: CCTV_CAMERA_PROP on a 90-second pan; WantedSystem +1 if caught; `FLY_TIPPING` CriminalRecord entry; Notoriety +5 per job.
+- **Reward**: 3–8 COIN (seeded per job); StreetEconomySystem COIN income tracked; at 5 successful fly-tip jobs → `LATE_NIGHT_REGULAR` achievement.
+- **Keith's blind eye**: if StreetReputation ≥ 50, Keith (on his night-shift patrol 20:00–06:00) ignores fly-tip activity for 1 COIN bribe; removes CCTV risk for that job.
+
+### The Treasure Trove
+
+The `REUSE_SHELF_PROP` refreshes at 08:00 each day with 4–8 items drawn from the SkipDivingSystem loot pool (same table; no duplication of SkipDiving event). Rare finds (weight ×2 rarity vs. street skips):
+
+| Item | Rarity | Notes |
+|------|--------|-------|
+| `ANTIQUE_CLOCK` | Very Rare | 15 COIN at Fence |
+| `OLD_VINYL` | Rare | 5 COIN at Boot Sale |
+| `WORKING_LAPTOP` | Rare | 10 COIN at Scrapyard/Pawn Shop |
+| `BRASS_INSTRUMENT` | Rare | Shared material; needed for Salvation Army band |
+| `CIRCUIT_BOARD` | Uncommon | Crafting component |
+| `BROKEN_CHAIR` | Common | Fenceable for 1 COIN; comedic |
+
+One slot is always occupied by a `JUNK_BAG` (the fly-tip material, also used as props in the general waste bay).
+
+### Evidence Disposal
+
+The `COMPACTOR_PROP` is the only way to permanently destroy `CRIMINAL_EVIDENCE` items (WITNESS_STATEMENT, STOLEN_PHONE, CCTV_FOOTAGE_DISC). Each item compacted:
+- Removes that evidence from WitnessSystem's active evidence list
+- Notoriety −2 (cleaning your trail)
+- `DESTROYING_EVIDENCE` CriminalRecord entry (ironic: caught disposing of evidence = new crime)
+
+If the player destroys evidence while WantedSystem tier ≥ 2, a POLICE_OFFICER NPC may be patrolling the area (30% chance) — sight radius extended to 12 blocks at the Tip (good sightlines, industrial lighting).
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `JUNK_BAG` | Black bin bag; used in fly-tip jobs and as decorative prop; weighs inventory slot |
+| `CIRCUIT_BOARD` | Electronic component; crafting material for TRANSMITTER upgrades (PirateRadioSystem); smashed from EWASTE_SKIP_PROP |
+| `COPPER_WIRE` | Scrap material; 2 COIN sell value at Dave; also useful at Scrapyard |
+| `WORKING_LAPTOP` | Rare find from Reuse shelf; fenceable at Pawn Shop for 10 COIN; CriminalRecord entry if sold |
+
+(`SCRAP_METAL` already exists; `ANTIQUE_CLOCK`, `OLD_VINYL`, `BRASS_INSTRUMENT` already exist or are being added)
+
+(Add new entries to `Material.java`)
+
+### New NPC Types Required
+
+| NPCType | Notes |
+|---------|-------|
+| `RECYCLING_CENTRE_MANAGER` | Dave; open hours; assigns shift work; calls police at Wanted Tier ≥ 2 if player loiters |
+| `RECYCLING_CENTRE_WORKER` | Keith; night patrol 20:00–06:00; bribable at StreetRep ≥ 50 |
+
+(Add to `NPCType.java`)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `SKIP_LARGE_PROP` | Large fixed skip; E to deposit items |
+| `RECYCLING_BIN_PROP` | Colour-coded bin; E to deposit matching material type |
+| `REUSE_SHELF_PROP` | Browse and take 1 free item per day |
+| `EWASTE_SKIP_PROP` | Punch to smash for electronic components |
+| `COMPACTOR_PROP` | E to permanently destroy any item in hand |
+| `GENERAL_WASTE_BAY_PROP` | Deposit point for fly-tip jobs |
+| `SITE_MANAGER_DESK_PROP` | Shift sign-on and scrap sale point |
+| `KETTLE_PROP` | Decorative; E gives `TEA_CUP` once per 30 min (Dave's office) |
+
+(Add to `PropType.java`)
+
+### System Integrations
+
+- **SkipDivingSystem**: Reuse shelf shares the same loot table; SkipDivingSystem can call `RecyclingCentreSystem.peekReuseShelf()` for a preview rumour ("heard there's a telly at the tip")
+- **ScrapyardSystem**: SCRAP_METAL and COPPER_WIRE from EWASTE_SKIP can be sold at both Scrapyard and Tip; Scrapyard pays slightly more (Gary's markup)
+- **WitnessSystem**: COMPACTOR_PROP removes evidence from active evidence list; CCTV_CAMERA_PROP at Tip operates on 90-second pan cycle
+- **PirateRadioSystem**: `CIRCUIT_BOARD` feeds transmitter upgrade crafting recipe (shared material)
+- **FenceSystem**: WORKING_LAPTOP and ANTIQUE_CLOCK from Reuse shelf are flagged as `NOT_STOLEN` (no Notoriety on fence); but selling WORKING_LAPTOP at Pawn Shop adds `HANDLING_SUSPICIOUS_GOODS` to CriminalRecord
+- **NeighbourhoodSystem**: vibes +1 per in-game day the Tip is open and operating; −2 if fly-tipping detected (noise complaint from nearby WORKER NPC)
+- **CriminalRecord**: `FLY_TIPPING` on caught fly-tip job; `DESTROYING_EVIDENCE` on compactor use; `TRESPASS` on after-hours entry
+- **WantedSystem**: caught by CCTV at Tip during fly-tip → +1 Wanted star; Dave calling police at Tier ≥ 2 adds `LOITERING` to CriminalRecord
+- **StreetEconomySystem**: shift work earns COIN tracked as legitimate income; fly-tip jobs tracked as criminal income
+- **NotorietySystem**: Evidence compacting −2 per item; being caught fly-tipping +5; shift work session −1 (community service vibe)
+- **RumourNetwork**: First morning refresh seeds `LOCAL_EVENT` rumour ("Dave at the tip had some decent stuff this morning"); WORKING_LAPTOP find seeds `LUCKY_FIND` rumour
+- **NewspaperSystem**: 3+ caught fly-tip events in one day → headline "Northfield Tip: Fly-Tipping Crackdown as Cameras Catch Culprit"
+- **WeatherSystem**: tip open regardless of weather; FROST closes gate 1 hour early (08:00–17:00); RAIN causes Keith to shelter in PORTAKABIN 50% of patrol time (lower vigilance)
+- **AchievementSystem**: new achievements (see below)
+- **TimeSystem**: open Mon–Sat 08:00–18:00, Sun 09:00–13:00; Reuse shelf refresh at 08:00; Keith night patrol 20:00–06:00
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `SKIP_ARCHAEOLOGIST` | Take 10 items from the Reuse shelf over any number of days |
+| `LATE_NIGHT_REGULAR` | Complete 5 fly-tip jobs without being caught |
+| `EVIDENCE_DESTROYED` | Compact a CRIMINAL_EVIDENCE item in the compactor |
+| `CIVIC_DUTY` | Complete 3 shift-work sorting sessions |
+| `TIPPING_POINT` | Get caught fly-tipping and charged with the offence |
+
+(Add to `AchievementType.java`)
+
+**Unit tests**: Reuse shelf daily refresh resets at 08:00 (new 4–8 items, previous items gone); EWASTE_SKIP yields 1–3 items per smash (1000 samples within bounds); fly-tip job COIN range (3–8, 1000 samples); compactor removes evidence from WitnessSystem active list; Keith bribe threshold (StreetRep ≥ 50); CCTV pan cycle (90 seconds); shift-work COIN reward (+8, once per day enforcement); FROST gate-close override (close hour moves to 17:00).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Reuse shelf browse yields free item daily**: Place player at `REUSE_SHELF_PROP`. Press E. Verify a loot panel opens with 4–8 items. Take one item. Verify it is now in player inventory. Press E again (same day). Verify no item can be taken (daily limit reached, display message "Come back tomorrow, mate"). Advance time to next day 08:00. Verify shelf has been refreshed with new items and player can take one again.
+
+2. **Fly-tip job earns COIN and CriminalRecord entry on detection**: Set time to 23:00. Trigger a fly-tip NPC approach event (seed NPC near gate). Accept job (player given `JUNK_BAG`). Lockpick `GATE_PROP`. Carry `JUNK_BAG` to `GENERAL_WASTE_BAY_PROP`. Simulate CCTV pan aligned on player during deposit. Verify WantedSystem tier increased by 1. Verify `FLY_TIPPING` entry in CriminalRecord. Verify Notoriety increased by 5.
+
+3. **Compactor destroys CRIMINAL_EVIDENCE and reduces Notoriety**: Give player a `WITNESS_STATEMENT` (CRIMINAL_EVIDENCE). Verify it exists in WitnessSystem active evidence list. Place player at `COMPACTOR_PROP`. Press E with `WITNESS_STATEMENT` selected. Verify item is removed from inventory. Verify WitnessSystem active evidence list no longer contains it. Verify Notoriety decreased by 2. Verify `DESTROYING_EVIDENCE` in CriminalRecord.
+
+4. **Shift work pays COIN and is limited once per day**: Press E on `SITE_MANAGER_DESK_PROP` at 09:00. Verify shift mini-game starts. Simulate completing 8 correct material sorts. Verify player COIN increased by 8. Verify GRAFTING XP increased. Press E again (same day). Verify player is told "Come back tomorrow — one shift a day" (no second shift starts, no COIN deducted).
+
+5. **Evidence disposal triggers police patrol**: Set WantedSystem tier to 2. Give player `CCTV_FOOTAGE_DISC` (CRIMINAL_EVIDENCE). Place player at `COMPACTOR_PROP`. Press E. Verify item is compacted and removed from evidence. Simulate update ticks. Verify that with 30% probability (tested over 30 seeds) a POLICE_OFFICER NPC is patrolling within 20 blocks of the Tip, with sight radius of 12 blocks.
+
+// New system: RecyclingCentreSystem.java in ragamuffin.core
+// New LandmarkType: RECYCLING_CENTRE (add to LandmarkType.java with display name "Northfield Tip")
+// New materials: JUNK_BAG, CIRCUIT_BOARD, COPPER_WIRE, WORKING_LAPTOP (add to Material.java)
+// New NPCTypes: RECYCLING_CENTRE_MANAGER, RECYCLING_CENTRE_WORKER (add to NPCType.java)
+// New PropTypes: SKIP_LARGE_PROP, RECYCLING_BIN_PROP, REUSE_SHELF_PROP, EWASTE_SKIP_PROP, COMPACTOR_PROP, GENERAL_WASTE_BAY_PROP, SITE_MANAGER_DESK_PROP, KETTLE_PROP (add to PropType.java)
+// New achievements: SKIP_ARCHAEOLOGIST, LATE_NIGHT_REGULAR, EVIDENCE_DESTROYED, CIVIC_DUTY, TIPPING_POINT (add to AchievementType.java)
