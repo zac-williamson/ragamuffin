@@ -499,7 +499,21 @@ public class CriminalRecord {
          * Seeds wanted level and links to FORGED_DOCUMENT in court proceedings.
          * Penalty: Notoriety +8, WantedSystem Tier 2.
          */
-        FORGED_DOCUMENT("Forged document (TV licence)");
+        FORGED_DOCUMENT("Forged document (TV licence)"),
+
+        /**
+         * Issue #1175: Recorded when the Argos number scam is detected — player
+         * pickpockets a queuing NPC's ARGOS_SLIP.
+         * Penalty: Notoriety +8, WantedSystem Tier 1.
+         */
+        THEFT_FROM_PERSON("Theft from person"),
+
+        /**
+         * Issue #1175: Recorded when returns fraud at the Argos returns desk is
+         * detected (FORGED_RECEIPT or suspicious genuine-receipt upsell caught).
+         * Penalty: Notoriety +12, WantedSystem Tier 2.
+         */
+        FRAUD("Fraud");
 
         private final String displayName;
 

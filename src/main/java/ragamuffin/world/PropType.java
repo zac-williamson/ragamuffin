@@ -2411,7 +2411,22 @@ public enum PropType {
      * Contains the 1987 ABA trophy (or empty slot if stolen by Derek).
      * Destroyed by 5 punches; yields GLASS.
      */
-    BOXING_TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 5, Material.GLASS);
+    BOXING_TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 5, Material.GLASS),
+
+    // ── Issue #1175: Northfield Argos ─────────────────────────────────────────
+
+    /**
+     * COLLECTION_BOARD_PROP — illuminated number display board at the Argos counter.
+     * Flashes the player's number when their order is ready.
+     * Press E on the counter when number is called to collect.
+     */
+    COLLECTION_BOARD_PROP(1.20f, 0.80f, 0.15f, 5, Material.SCRAP_METAL),
+
+    /**
+     * QUEUE_BARRIER_PROP — retractable belt barrier defining the collection queue.
+     * Marks the queue lane; collides with player to enforce queue discipline.
+     */
+    QUEUE_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
