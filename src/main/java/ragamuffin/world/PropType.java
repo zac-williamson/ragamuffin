@@ -1991,7 +1991,47 @@ public enum PropType {
      * Decorative; identical visual function to DISCO_BALL in RaveSystem.
      * Non-destructible; 0 hits; yields null.
      */
-    NIGHTCLUB_MIRROR_BALL_PROP(0.40f, 0.40f, 0.40f, 0, null);
+    NIGHTCLUB_MIRROR_BALL_PROP(0.40f, 0.40f, 0.40f, 0, null),
+
+    // ── Issue #1142: Northfield RAOB Lodge ────────────────────────────────────
+
+    /**
+     * Lodge Bar Prop — the Lodge's private bar counter.
+     * Press E to buy drinks: Worthington's Bitter at 1 COIN each.
+     * Available only during session hours (Tue/Thu 19:00–23:00, Sat 12:00–23:00).
+     * 8 hits to break; yields WOOD.
+     */
+    LODGE_BAR_PROP(3.0f, 1.2f, 0.6f, 8, Material.WOOD),
+
+    /**
+     * Lodge Altar Prop — the ceremonial focal point of the Lodge Room.
+     * Press E to begin the initiation ceremony (requires 2 SPONSORSHIP_FORMs + 5 COIN).
+     * Ceremony lasts 60 in-game seconds while Norman reads from the RITUAL_BOOK_PROP.
+     * 6 hits to break; yields WOOD.
+     */
+    LODGE_ALTAR_PROP(1.5f, 1.8f, 1.5f, 6, Material.WOOD),
+
+    /**
+     * Lodge Safe Prop — Keith's combination safe in the back room.
+     * Contains 30–50 COIN + LODGE_CHARTER_DOCUMENT + REGALIA_SET.
+     * Detection: 15% if Big Bernard is in distraction window (20:00–20:30), 70% outside.
+     * 12 hits to force open; yields SCRAP_METAL.
+     */
+    LODGE_SAFE_PROP(0.8f, 1.2f, 0.8f, 12, Material.SCRAP_METAL),
+
+    /**
+     * Regalia Room Door Prop — the locked door to the Regalia Room.
+     * Requires PRIMO membership tier to open legitimately, or 4 LOCKPICK attempts.
+     * 8 hits to break down; yields WOOD.
+     */
+    REGALIA_ROOM_DOOR_PROP(1.0f, 2.5f, 0.1f, 8, Material.WOOD),
+
+    /**
+     * Ritual Book Prop — the Lodge's ceremonial ritual book, read by Norman during initiations.
+     * Press E (as PRIMO+) to read Lodge lore.
+     * 2 hits to break; yields PLANKS (the wooden lectern).
+     */
+    RITUAL_BOOK_PROP(0.2f, 0.35f, 0.15f, 2, Material.PLANKS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

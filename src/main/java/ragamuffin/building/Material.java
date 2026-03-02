@@ -3439,7 +3439,89 @@ public enum Material {
      * by a PRAWN_RING, acceptance chance rises to 100%.
      * Tooltip: "Looks almost right. Squint a bit."
      */
-    FAKE_RECEIPT("Fake Receipt");
+    FAKE_RECEIPT("Fake Receipt"),
+
+    // ── Issue #1142: Northfield RAOB Lodge — Buffaloes, Secret Handshakes & Old Boys' Network ──
+
+    /**
+     * Membership Card — issued to INITIATES and BROTHER_BUFFALOs of Northfield Buffaloes Lodge No. 347.
+     * Required to pass RAOB_DOORMAN (Big Bernard) entry check.
+     * Fence value: 3 COIN.
+     * Tooltip: "The Northfield Buffaloes Lodge No. 347. It smells of Worthington's."
+     */
+    RAOB_MEMBERSHIP_CARD("RAOB Membership Card"),
+
+    /**
+     * Sponsorship Form — signed by a Lodge Member vouching for a prospective initiate.
+     * Two forms required (from two different RAOB_MEMBER NPCs) to begin initiation.
+     * Tooltip: "A Lodge sponsorship form. Reg's signature looks suspiciously legible."
+     */
+    SPONSORSHIP_FORM("Sponsorship Form"),
+
+    /**
+     * Lodge Charter Document — the founding document of Northfield Buffaloes Lodge No. 347.
+     * Looted from the LODGE_SAFE_PROP. Used for blackmail of any RAOB_MEMBER NPC.
+     * Fence value: 20 COIN.
+     * Tooltip: "The Lodge charter. Someone's been claiming expenses for 'ceremonial refreshments' since 1974."
+     */
+    LODGE_CHARTER_DOCUMENT("Lodge Charter Document"),
+
+    /**
+     * Regalia Set — full ceremonial regalia: apron, collar, jewel, and sash.
+     * Looted from LODGE_SAFE_PROP or the Regalia Room (PRIMO tier).
+     * Wearable as DisguiseSystem tier: −30% COUNCIL_MEMBER suspicion.
+     * Fence value: 8 COIN.
+     * Tooltip: "Full ceremonial Buffalo regalia. Somehow, no one questions you."
+     */
+    REGALIA_SET("Regalia Set"),
+
+    /**
+     * Ceremonial Mallet — the Lodge's ritual mallet used by the Grand Primo.
+     * Looted from the Regalia Room (PRIMO tier). Weapon: 1.5× melee damage multiplier.
+     * Fence value: 5 COIN.
+     * Tooltip: "Solid oak. Inscribed: 'For Ceremonial Use Only'. Nobody's checking."
+     */
+    CEREMONIAL_MALLET("Ceremonial Mallet"),
+
+    /**
+     * Premium Lager Crate — a case of premium continental lager.
+     * Bribe gift for Housing Officer Brian (RAOB_MEMBER) in exchange for a HOUSING_PRIORITY_LETTER.
+     * Fence value: 4 COIN.
+     * Tooltip: "A crate of something European and expensive. Brian will love this."
+     */
+    PREMIUM_LAGER_CRATE("Premium Lager Crate"),
+
+    /**
+     * Box of Chocolates — a luxury assortment box.
+     * Bribe gift for Magistrate Clerk Sandra (RAOB_MEMBER) in exchange for a CASE_DISMISSED_FORM.
+     * Fence value: 2 COIN.
+     * Tooltip: "Continental selection. Sandra's weakness. Everyone's weakness, really."
+     */
+    BOX_OF_CHOCOLATES("Box of Chocolates"),
+
+    /**
+     * Planning Permission — a forged or expedited planning approval document.
+     * Obtained from Planning Inspector Reg (RAOB_MEMBER) via a 10 COIN briefcase bribe.
+     * Skips property Notoriety check in PropertySystem.
+     * Tooltip: "Signed, stamped, and suspiciously prompt."
+     */
+    PLANNING_PERMISSION("Planning Permission"),
+
+    /**
+     * Case Dismissed Form — an official-looking form cancelling a pending fine.
+     * Obtained from Magistrate Clerk Sandra (RAOB_MEMBER) via a BOX_OF_CHOCOLATES bribe.
+     * Removes one pending CriminalRecord fine from the player's record.
+     * Tooltip: "Case dismissed. No reason given. Best not to ask."
+     */
+    CASE_DISMISSED_FORM("Case Dismissed Form"),
+
+    /**
+     * Racing Tip — an inside tip from a Lodge Member.
+     * Obtained from Bookmaker Terry (RAOB_MEMBER) in exchange for evidence of a ≥10 COIN
+     * greyhound or horse racing win. Activates BOOKIES_MULTIPLIER flag doubling next bet payout.
+     * Tooltip: "Dog four in the 8:30. Terry says it's a cert. Terry says that every time."
+     */
+    RACING_TIP("Racing Tip");
 
     private final String displayName;
 
@@ -4299,6 +4381,28 @@ public enum Material {
                                                     0.78f, 0.72f, 0.35f); // Brass key
             case FAKE_RECEIPT:            return cs(0.95f, 0.95f, 0.90f,  // Off-white thermal paper
                                                     0.70f, 0.70f, 0.65f); // Grey text hint
+
+            // Issue #1142: Northfield RAOB Lodge
+            case RAOB_MEMBERSHIP_CARD:    return cs(0.18f, 0.30f, 0.62f,  // Lodge blue card
+                                                    0.10f, 0.18f, 0.45f); // Dark border
+            case SPONSORSHIP_FORM:        return cs(0.92f, 0.88f, 0.72f,  // Cream paper
+                                                    0.50f, 0.40f, 0.20f); // Ink brown
+            case LODGE_CHARTER_DOCUMENT:  return cs(0.85f, 0.75f, 0.55f,  // Aged parchment
+                                                    0.62f, 0.48f, 0.28f); // Darker edge
+            case REGALIA_SET:             return cs(0.55f, 0.15f, 0.65f,  // Purple ceremonial
+                                                    0.85f, 0.72f, 0.20f); // Gold trim
+            case CEREMONIAL_MALLET:       return cs(0.55f, 0.38f, 0.18f,  // Oak handle
+                                                    0.45f, 0.30f, 0.12f); // Darker head
+            case PREMIUM_LAGER_CRATE:     return cs(0.88f, 0.80f, 0.18f,  // Gold label lager
+                                                    0.62f, 0.55f, 0.12f); // Darker crate
+            case BOX_OF_CHOCOLATES:       return cs(0.35f, 0.15f, 0.08f,  // Dark chocolate box
+                                                    0.90f, 0.72f, 0.28f); // Gold ribbon
+            case PLANNING_PERMISSION:     return cs(0.88f, 0.84f, 0.72f,  // Official cream paper
+                                                    0.10f, 0.30f, 0.62f); // Blue council stamp
+            case CASE_DISMISSED_FORM:     return cs(0.92f, 0.92f, 0.90f,  // White court paper
+                                                    0.18f, 0.55f, 0.22f); // Green court stamp
+            case RACING_TIP:              return cs(0.92f, 0.88f, 0.72f,  // Cream slip
+                                                    0.88f, 0.18f, 0.18f); // Red racing ink
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -5613,6 +5717,28 @@ public enum Material {
                 return IconShape.CARD;        // folded shirt
             case NIGHTCLUB_MASTER_KEY:
                 return IconShape.TOOL;        // Yale key
+
+            // Issue #1142: Northfield RAOB Lodge
+            case RAOB_MEMBERSHIP_CARD:
+                return IconShape.CARD;        // lodge membership card
+            case SPONSORSHIP_FORM:
+                return IconShape.FLAT_PAPER;  // official form
+            case LODGE_CHARTER_DOCUMENT:
+                return IconShape.FLAT_PAPER;  // aged parchment document
+            case REGALIA_SET:
+                return IconShape.BOX;         // folded ceremonial regalia
+            case CEREMONIAL_MALLET:
+                return IconShape.TOOL;        // wooden mallet
+            case PREMIUM_LAGER_CRATE:
+                return IconShape.BOX;         // wooden crate of lager
+            case BOX_OF_CHOCOLATES:
+                return IconShape.BOX;         // rectangular chocolate box
+            case PLANNING_PERMISSION:
+                return IconShape.FLAT_PAPER;  // official stamped document
+            case CASE_DISMISSED_FORM:
+                return IconShape.FLAT_PAPER;  // court dismissal form
+            case RACING_TIP:
+                return IconShape.FLAT_PAPER;  // small paper tip slip
 
             default:
                 return IconShape.BOX;
