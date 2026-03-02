@@ -30389,3 +30389,145 @@ New recipe unlocked via CraftingSystem:
 // New PropTypes: FUEL_PUMP_PROP, TILL_PROP, LOTTERY_DISPLAY_PROP, MICROWAVE_PROP, ENERGY_DRINK_FRIDGE_PROP, CONFECTIONERY_SHELF_PROP, CIGARETTE_CABINET_PROP, AIR_PUMP_PROP, SQUEEGEE_BUCKET_PROP, STOCKROOM_SHELF_PROP, CASH_POUCH_PROP, CAR_WASH_TOKEN_MACHINE_PROP, PANIC_BUTTON_PROP (add to PropType.java)
 // New achievements: MIDNIGHT_MECHANIC, HOLD_UP, MOLOTOV_MOMENT, MICROWAVE_MILLIONAIRE, REGULAR_CUSTOMER, PETROL_HEAD (add to AchievementType.java)
 // New CriminalRecord entries: VEHICLE_TAMPERING, ARSON (add to CriminalRecord.CrimeType)
+
+## Issue #1132: Add Northfield Dog Grooming Parlour — Pawfect Cuts, the Status Dog Economy & the Crufts Conspiracy
+
+**Theme**: A working-class British dog grooming parlour run by Tracey, a no-nonsense woman who's been grooming Staffordshire Bull Terriers, lurchers, and suspicious "rescue" breeds since 1994. Half the dogs that come in belong to people who shouldn't have dogs. The other half belong to people who love their dogs more than they love their kids. The parlour doubles as a social hub, gossip exchange, and — if you know who to ask — a front for a shady underground dog show circuit.
+
+### New Landmark
+`DOG_GROOMING_PARLOUR` (add to `LandmarkType.java`) — "Pawfect Cuts" on the high street, between the charity shop and the bookies. Operating hours: 09:00–17:30 Monday–Saturday, closed Sundays.
+
+### New System
+**`DogGroomingSystem.java`** in `ragamuffin.core`
+
+### Core Mechanics
+
+**Grooming Services** (requires player to have companion dog from `DogCompanionSystem`):
+- **Basic Wash & Brush** — 3 COIN; improves dog Bond Rate by +5 for the next 24 in-game hours; `CLEAN_DOG` status (NPCs react positively for 1 in-game day: COMMUTER, SCHOOL_MUM comment "ooh lovely dog")
+- **Full Groom** — 8 COIN; `DOG_GROOMED` status; unlocks `SHOW_READY` flag required for entering the Northfield Dog Show
+- **Nail Clipping** — 2 COIN; prevents `SNAGGED_LEAD` debuff (dog occasionally breaks free and chases pigeons, triggering PigeonRacingSystem panic)
+- **Medicated Bath** — 5 COIN (requires `FLEA_INFESTATION` debuff on dog, which develops if player ignores grooming for 7+ in-game days); clears `FLEA_INFESTATION`; without treatment, fleas spread to player's squat bed (SquatFurnishingTracker marks `SQUAT_BED` as infested, −2 sleep quality)
+
+**FLEA_INFESTATION mechanics**:
+- Dog gets `FLEA_INFESTATION` after 7 in-game days without any grooming service
+- While infested: NPCs avoid the dog within 2 blocks; DogCompanionSystem Bond Rate growth halved; Tracey refuses standard services until medicated bath is done first
+- NeighbourhoodSystem vibes −1 per day while dog is infested (neighbours complain)
+
+**Dog Show Circuit** (the hidden economy):
+Tracey quietly mentions the Northfield Dog Show to players whose dogs are `SHOW_READY`. The show runs every 14 in-game days on a Sunday at the park (LandmarkType.PARK, 13:00–16:00).
+
+- **Entry fee**: 5 COIN
+- **Three categories**: Best in Breed (Staffy), Best Trick (requires DogTrick.FETCH or higher), Most Handsome (random modifier ±20%)
+- **Judging**: weighted scoring — Bond Level (40%), last groom recency (30%), random modifier (30%)
+- **Prizes**: 1st = 20 COIN + `DOG_SHOW_ROSETTE` item; 2nd = 8 COIN; 3rd = 3 COIN
+- **NPC Competitors**: 2–4 NPC dogs with DOG_OWNER NPCs; one NPC always brings a suspiciously well-groomed Staffy named "Winston" (Bond Level 55, always near top)
+
+**The Crufts Conspiracy** (late-game quest):
+- After winning the Northfield Dog Show twice, Tracey takes the player aside
+- She reveals that "Winston" is owned by a regional crime boss (FactionSystem: MARCHETTI_FAMILY) who rigs local shows via bribing the judge (`JUDGE_NPC` — new NPC type)
+- Player can:
+  1. **Bribe the judge yourself** (8 COIN): guaranteed win, `SHOW_RIGGING` CriminalRecord entry; NotorietySystem +5
+  2. **Expose the rigging**: Talk to JOURNALIST NPC → seeds `COMMUNITY_OUTRAGE` rumour; NewspaperSystem headline "Local Dog Show Fixed: Marchetti Staffy Scandal"; FactionSystem MARCHETTI_RESPECT −15
+  3. **Beat Winston legitimately**: Requires Bond ≥ 70 AND DogTrick.GUARD taught AND `DOG_GROOMED` within last 3 in-game days; win grants `LEGITIMATE_CHAMPION` achievement
+
+**Tracey's Services & Side Income**:
+- **Dog-sitting**: Leave dog with Tracey for up to 24 in-game hours (1 COIN/hour); dog's FLEA_INFESTATION cannot develop during this time; Bond Level maintained at current value
+- **Gossip Exchange**: Tracey seeds 1 rumour per visit from RumourNetwork (LOCAL_EVENT or COMMUNITY_OUTRAGE type) — she knows everything that happens on the street
+- **Tracey's own dog** ("Biscuit", a lurcher): always present in parlour; non-interactive but ambient; if player's dog has DogTrick.FETCH, Biscuit and the companion dog play together (animation), Bond +2
+
+**Black market angle** (optional, discoverable):
+- After FactionSystem STREET_LADS Respect ≥ 50, a shady NPC (`DOG_DEALER`) appears outside the parlour on Tuesday evenings (19:00–22:00)
+- Sells `UNLICENSED_DOG` (a second dog, for 15 COIN) — player can flip it to `PIGEON_FANCIER` NPC for 20 COIN (quick 5 COIN profit), or use it as a distraction (`STAY` trick from second dog blocks a doorway)
+- `UNLICENSED_DOG` purchase: no CriminalRecord entry unless police observe the transaction (WantedSystem tier ≥ 1 means police are watching)
+
+### NPC Behaviour
+
+**Tracey** (owner, 09:00–17:30 Mon–Sat): Friendly but opinionated. Comments on the player's dog condition. If `FLEA_INFESTATION`: "Bleeding hell, what have you done to him? Get the medicated bath, love, before I have to fumigate the whole shop." At Bond ≥ 50, she gives player a 10% loyalty discount. Seeds LOCAL_EVENT gossip every 25 in-game minutes.
+
+**DOG_OWNER NPCs** (2–4 present during opening hours): Sit in waiting area with their dogs. Occasionally argue about breeds. If player's dog is `CLEAN_DOG`, one DOG_OWNER comments positively (Bond +1 from social validation). During COLD_SNAP weather, 2 extra DOG_OWNERs shelter inside.
+
+**DOG_DEALER** (Tuesday evenings, exterior): Shifty, won't make eye contact with police. Flees if WantedSystem tier ≥ 2 anywhere on the street. Only appears after STREET_LADS Respect ≥ 50.
+
+### Props
+New `PropType` entries:
+- `GROOMING_TABLE_PROP` — interactive surface where grooming animations play
+- `DOG_BATH_TUB_PROP` — used for Wash & Brush and Medicated Bath services
+- `GROOMING_TOOL_RACK_PROP` — decorative; can be smashed (HARD, 8 hits) to yield `SCISSORS` item (fenceable for 3 COIN)
+- `PET_TREAT_DISPLAY_PROP` — can be shoplifted (FRAGILE, 2 hits): yields `DOG_TREAT` ×3 (feed to companion dog for Bond +1 each)
+- `WAITING_AREA_BENCH_PROP` — seated DOG_OWNER NPCs rest here
+- `DOG_SHOW_TROPHY_CABINET_PROP` — displays `DOG_SHOW_ROSETTE` if player wins; purely decorative in Tracey's shop
+
+### Materials / Items
+New `Material` entries:
+- `DOG_TREAT` — feed to companion dog: Bond +1 (max 3 per day; beyond that dog is full, no effect)
+- `DOG_SHOW_ROSETTE` — trophy item; can be fenced for 5 COIN ("some minted bellend will pay for this")
+- `FLEA_POWDER` — craftable (1 SOAP + 1 NEWSPAPER = FLEA_POWDER); DIY alternative to medicated bath; clears `FLEA_INFESTATION` in 2 in-game hours but does NOT grant `CLEAN_DOG` status (Tracey: "It's not the same as a proper bath, love")
+- `UNLICENSED_DOG` — a second dog; tradeable only
+- `SCISSORS` — tool; can be used to cut a `FLYER` into confetti (NoiseSystem event +5 at rave), or fenced for 3 COIN
+- `DOG_GROOMING_VOUCHER` — occasionally given by DOG_OWNER NPCs as payment for favours (worth 5 COIN at parlour)
+
+### Crafting Integration
+| Recipe | Inputs | Output | Notes |
+|--------|--------|--------|-------|
+| Flea powder | `SOAP` + `NEWSPAPER` | `FLEA_POWDER` | DIY flea treatment |
+| Dog treats | `BREAD_CRUST` + `GREGGS_PASTRY` | `DOG_TREAT` ×3 | Home-made snacks |
+
+### System Integrations
+- **DogCompanionSystem**: All grooming services feed into Bond Level and status flags; `SHOW_READY` flag gated on `DOG_GROOMED` status
+- **DogTrick**: FETCH and GUARD unlock additional Dog Show scoring categories; GUARD trick demonstration can intimidate a rival DOG_OWNER into withdrawing from competition
+- **PigeonRacingSystem**: `SNAGGED_LEAD` debuff causes dog to chase `RACING_PIGEON` NPCs at the park, adding LOST_PIGEON consequence (PIGEON_FANCIER NPC becomes hostile for 24 in-game hours)
+- **SquatFurnishingTracker**: `FLEA_INFESTATION` marks squat bed infested; sleep quality penalty until fumigated
+- **FactionSystem**: Dog Show rigging ties into MARCHETTI_FAMILY respect; DOG_DEALER requires STREET_LADS Respect ≥ 50
+- **RumourNetwork**: Tracey gossip seeds LOCAL_EVENT/COMMUNITY_OUTRAGE; show scandal seeds COMMUNITY_OUTRAGE
+- **NewspaperSystem**: Dog show rigging exposed → headline "Local Dog Show Fixed: Marchetti Staffy Scandal"
+- **NeighbourhoodSystem**: `FLEA_INFESTATION` vibes penalty −1/day; `DOG_SHOW_ROSETTE` win seeds LOCAL_PRIDE vibes +3
+- **WeatherSystem**: RAIN doubles waiting customer count (sheltering); COLD_SNAP keeps 2 extra DOG_OWNERs inside all day
+- **StreetEconomySystem**: `DOG_TREAT` tradeable to BROKE NPCs with HUNGRY need (2 COIN); `SCISSORS` fenceable; `DOG_GROOMING_VOUCHER` accepted at parlour
+- **WantedSystem**: DOG_DEALER flees at tier ≥ 2; `UNLICENSED_DOG` purchase observed at tier ≥ 1 = `HANDLING_STOLEN_GOODS` CriminalRecord entry
+- **AchievementSystem**: new achievements (see below)
+- **TimeSystem**: parlour 09:00–17:30 Mon–Sat; Dog Show every 14 days Sunday 13:00–16:00; DOG_DEALER Tuesday 19:00–22:00
+
+### Achievements
+| Achievement | Trigger |
+|-------------|---------|
+| `PAMPERED_POOCH` | Get dog fully groomed (Full Groom service) for the first time |
+| `NORTHFIELD_CHAMPION` | Win the Northfield Dog Show (any category) |
+| `TWICE_THE_CHAMPION` | Win the Northfield Dog Show twice |
+| `LEGITIMATE_CHAMPION` | Beat Winston without bribing the judge (Bond ≥ 70, GUARD trick, DOG_GROOMED within 3 days) |
+| `CRUFTS_CORRUPTION` | Bribe the dog show judge |
+| `FLEA_MARKET` | Let dog develop FLEA_INFESTATION and spread to squat bed |
+| `DOG_WHISPERER` | Teach all 4 DogTrick values to the companion dog |
+| `TRACEYS_FAVOURITE` | Visit parlour 10 times (Tracey gives free DOG_TREAT on 10th visit) |
+
+(Add to `AchievementType.java`)
+
+### Unit Tests
+- `FLEA_INFESTATION` debuff appears after 7 in-game days without grooming service
+- Bond Rate bonus from `CLEAN_DOG` status applies for exactly 24 in-game hours then expires
+- Dog show scoring formula: Bond ×0.4 + recency_score ×0.3 + random ×0.3; test with fixed seed that Winston (Bond 55, stale groom) loses to player (Bond 70, fresh groom)
+- `FLEA_POWDER` recipe produces 1 unit from 1 SOAP + 1 NEWSPAPER; verify inputs consumed
+- `DOG_TREAT` feeding caps at 3 per in-game day (4th treat: Bond unchanged)
+- Tracey loyalty discount (10%): Full Groom costs 8 COIN normally, 7 COIN at Bond ≥ 50 (rounding down)
+- DOG_DEALER only spawns after STREET_LADS Respect ≥ 50 and on Tuesdays 19:00–22:00; verify absent Monday 20:00
+- `SNAGGED_LEAD` debuff triggers pigeon chase within 3 blocks of any RACING_PIGEON NPC
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full grooming service grants SHOW_READY and DOG_GROOMED status**: Give player companion dog with Bond ≥ 30. Give player 8 COIN. Place player at `GROOMING_TABLE_PROP` with Tracey present (09:00 Monday). Press E to open services menu. Select Full Groom. Verify 8 COIN deducted. Verify companion dog has `DOG_GROOMED` flag set. Verify `SHOW_READY` flag is true. Verify Bond Rate modifier +5 active.
+
+2. **FLEA_INFESTATION spreads to squat bed after 7 days without grooming**: Place player in squat with `SQUAT_BED` furnishing. Advance time by 7 in-game days without visiting DogGroomingSystem. Verify companion dog has `FLEA_INFESTATION` debuff. Verify `SQUAT_BED` is marked infested in SquatFurnishingTracker. Verify sleep quality reduced by 2. Visit Tracey and pay for Medicated Bath (5 COIN). Verify `FLEA_INFESTATION` cleared. Verify `SQUAT_BED` infestation status also cleared.
+
+3. **Dog Show scoring — Bond and groom recency determine winner**: Set player dog Bond Level to 72, groomed within 1 in-game day. Set Winston Bond Level to 55, last groomed 5 in-game days ago. Use fixed Random seed. Run dog show scoring for Best in Breed. Verify player dog total score exceeds Winston's score. Verify player receives 20 COIN and `DOG_SHOW_ROSETTE` item. Verify `DOG_SHOW_ROSETTE` is present in player inventory.
+
+4. **Bribing judge adds CriminalRecord entry and reduces Marchetti respect**: Win dog show once (to unlock Crufts Conspiracy). Bribe judge (8 COIN, press E on JUDGE_NPC with 8+ COIN in inventory). Verify `SHOW_RIGGING` entry added to CriminalRecord. Verify NotorietySystem increased by 5. Verify FactionSystem MARCHETTI_FAMILY respect does NOT decrease (bribe ≠ exposure). Verify player wins show.
+
+5. **DOG_DEALER spawns only under correct conditions**: Set in-game time to Tuesday 20:00 and STREET_LADS Respect = 50. Verify DOG_DEALER NPC spawns outside parlour. Purchase `UNLICENSED_DOG` (15 COIN). Verify `UNLICENSED_DOG` in inventory. Now set WantedSystem tier to 1. Repeat purchase attempt. Verify `HANDLING_STOLEN_GOODS` CriminalRecord entry added (police observed transaction). Set time to Monday 20:00 (same conditions otherwise). Verify DOG_DEALER NPC is NOT present.
+
+// New system: DogGroomingSystem.java in ragamuffin.core
+// New landmark: DOG_GROOMING_PARLOUR (add to LandmarkType.java) — "Pawfect Cuts"
+// New NPCTypes: DOG_OWNER, DOG_DEALER, JUDGE_NPC (add to NPCType.java)
+// New Materials: DOG_TREAT, DOG_SHOW_ROSETTE, FLEA_POWDER, UNLICENSED_DOG, SCISSORS, DOG_GROOMING_VOUCHER (add to Material.java)
+// New PropTypes: GROOMING_TABLE_PROP, DOG_BATH_TUB_PROP, GROOMING_TOOL_RACK_PROP, PET_TREAT_DISPLAY_PROP, WAITING_AREA_BENCH_PROP, DOG_SHOW_TROPHY_CABINET_PROP (add to PropType.java)
+// New Achievements: PAMPERED_POOCH, NORTHFIELD_CHAMPION, TWICE_THE_CHAMPION, LEGITIMATE_CHAMPION, CRUFTS_CORRUPTION, FLEA_MARKET, DOG_WHISPERER, TRACEYS_FAVOURITE (add to AchievementType.java)
+// New DogCompanionSystem flags: CLEAN_DOG, DOG_GROOMED, SHOW_READY, FLEA_INFESTATION, SNAGGED_LEAD
+// New CriminalRecord entries: SHOW_RIGGING, HANDLING_STOLEN_GOODS
