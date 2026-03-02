@@ -6,6 +6,7 @@ package ragamuffin.entity;
 public enum DamageReason {
     FALL("Fall damage"),
     NPC_ATTACK("Attacked"),
+    PUNCH("Punched"),
     STARVATION("Starving"),
     WEATHER("Exposure"),
     HYPOTHERMIA("Hypothermia"),
