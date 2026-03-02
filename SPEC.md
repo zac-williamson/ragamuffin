@@ -35444,3 +35444,140 @@ The Marchetti Crew extort 10 COIN/in-game week from Ron. The player can:
 // StreetSkillSystem: DARTS, STREETWISE, INFLUENCE — all existing skills; no change needed
 // Integrates: StreetSkillSystem, FactionSystem, RumourNetwork, WantedSystem, CriminalRecord,
 //   NotorietySystem, WarmthSystem, NoiseSystem, TimeSystem, AchievementSystem, PubLockInSystem
+
+---
+
+## Phase 12v: Northfield Community Centre — Aerobics, NA Meetings, Bring & Buy Sale, Grant Fraud & the Curry Night
+
+**Background / Why This Exists**: All infrastructure for this system has been scaffolded across the codebase under Issue #1153 — `NPCType` entries (`COMMUNITY_CENTRE_MANAGER`, `AEROBICS_INSTRUCTOR`, `NA_CHAIR`, `NA_ATTENDEE`, `COMMUNITY_MEMBER`), `Material` entries (`QUIZ_SHEET`, `QUIZ_ANSWER_SHEET`, `AEROBICS_PASS`, `GRANT_APPLICATION_FORM`, `FORGED_GRANT_APPLICATION`), `PropType` entries (`PHOTOCOPIER_PROP`, `FILING_CABINET_PROP`), `RumourType` entries (`COMMUNITY_CENTRE_PHOTOCOPIER`, `GRANT_FRAUD`, `NA_RECOGNITION`, `CURRY_NIGHT`), and `AchievementType` entries (`STEP_TOGETHER`, `GRANT_GRABBER`, `BISCUIT_BANDIT`, `HONEST_CITIZEN`, `ANONYMOUS`, `CLEAN_EIGHT`) are all fully defined. The implementing `CommunityCentreSystem.java` class, however, does not exist. This issue creates it.
+
+**Landmark**: Existing `LandmarkType.COMMUNITY_CENTRE` ("Northfield Community Ctr") — a low-profile 1970s brick building on the edge of the park. Single-storey, 12×16×4 blocks. Large main hall, two side rooms (Room A: aerobics; Room B: quiet / meetings), a back corridor with `PHOTOCOPIER_PROP` and `FILING_CABINET_PROP`, a small kitchen with a `BISCUIT_TIN_PROP` and tea urn (`TEA_URN_PROP`), and a notice board (`NOTICE_BOARD_PROP`) near the entrance listing the week's events. Managed by `CommunityCentreSystem.java` (new class, `ragamuffin.core`).
+
+**Manager**: Denise (`COMMUNITY_CENTRE_MANAGER` NPC, Mon–Sat 08:30–20:00). Denise runs the desk, sells `AEROBICS_PASS` (1 COIN each), issues grant forms, and books rooms. She is patient but watchful. If she witnesses the player near the photocopier or filing cabinet, suspicion timer starts (30 in-game seconds before she confronts player).
+
+---
+
+### Aerobics — Tuesday & Thursday Sessions (10:00–11:00 and 18:30–19:30)
+
+Instructor: Sandra (`AEROBICS_INSTRUCTOR` NPC). Entry requires `AEROBICS_PASS` in inventory; Denise sells up to 8 per block (one block = 8 sessions; a new block starts every Monday). Each session: 8 timed movement prompts (WASD or arrow keys displayed on HUD for 1.5 seconds each). Player scores 0–8 correct inputs.
+
+**Scoring**:
+- 0–3: Sandra calls it a "brave effort" — no benefit
+- 4–5: Warmth +10, Hunger +5
+- 6–7: Warmth +15, Hunger +8, `StreetSkillSystem.GRAFTING` XP +5
+- 8/8: All above + `STEP_TOGETHER` unlocked (first time only)
+
+**Block completion** (8 sessions without a miss): `CLEAN_EIGHT` unlocked. Sandra gives the player a complimentary `AEROBICS_PASS` for the next block.
+
+**Side interaction**: three `NA_ATTENDEE` NPCs who use both the aerobics class and the Thursday meeting can gossip with the player during the warm-up (E key): each shares a random `RumourType` from their known pool. Sandra tells them off if she catches it (increases waiting time for next prompt by 0.5 seconds).
+
+---
+
+### Narcotics Anonymous — Thursday 19:00–20:30 (Room B)
+
+Chaired by Brenda (`NA_CHAIR` NPC). 4–6 `NA_ATTENDEE` NPCs attend (seeded with `Random(seed)`). Entry is free and open — no pass required.
+
+**Share story mechanic**: Player presses E on an empty chair to sit. After sitting, press E again to speak. The player's "story" is auto-generated from their recent `CriminalRecord` entries and current `NotorietySystem.getNotoriety()` level; each generation selects 1–2 specific crime entries and frames them as an anonymous confession. Result text is displayed in `SpeechLogUI`. On first share: `ANONYMOUS` unlocked. On share when Notoriety ≥ 30: 15% chance `NA_RECOGNITION` rumour seeded (Brenda overheard) — which spreads to `PUBLIC` NPCs and raises Notoriety +3.
+
+**Biscuit theft**: A `BISCUIT_TIN_PROP` sits on the kitchen counter, visible through the open kitchen door. Player can sneak in (if all NPCs are in Room B) and steal contents: 2× `BISCUIT` items. If Denise is still present (before 20:00), there's a 50% chance she emerges. On theft: `BISCUIT_BANDIT` unlocked. `CriminalRecord` entry `PETTY_THEFT`. `NoiseSystem` level 1 event.
+
+---
+
+### Bring & Buy Sale — Every Saturday 10:00–13:00
+
+4–6 `COMMUNITY_MEMBER` NPCs set up stalls (folding tables with random `Material` items at 40–70% of fence value). Player can browse (E on a stall NPC) and buy. Items include: `JUMBLE_CLOTHES`, `OLD_BOOK`, `CASSETTE_TAPE`, `ORNAMENT`, `HAND_KNITTED_JUMPER` (warmth +8 when worn), and occasionally rarer items such as `ANTIQUE_CLOCK` (15% chance, 1 COIN — worth 12 COIN at pawn shop).
+
+**Sell your own**: Player can bring up to 5 items to Denise before 10:00 and list them at any price. Revenue collected at 13:00; Denise takes a 10% cut.
+
+**Saturday Bargain Hunter** (`SATURDAY_BARGAIN_HUNTER`): Buy 3+ items in one session.
+
+**Rumour seeding**: Saturday 17:00 — `CURRY_NIGHT` rumour seeded to nearby `COMMUNITY_MEMBER` and `PUBLIC` NPCs, drawing them toward the community centre for the evening meal.
+
+---
+
+### Curry Night — Every Saturday 19:00–22:00
+
+Volunteer cooks serve a rotating menu in the main hall. Entry: 2 COIN. Dishes served by `COMMUNITY_MEMBER` NPCs:
+| Dish | Cost | Effect |
+|---|---|---|
+| `CHICKEN_CURRY` | 2 COIN | Hunger +25, Warmth +10 |
+| `VEGETABLE_DHAL` | 1 COIN | Hunger +18, Warmth +8 |
+| `RICE_AND_NAAN` | 1 COIN | Hunger +12 |
+| `MANGO_LASSI` | 1 COIN | Hunger +8, clears one drunkTimer tick |
+
+8–12 `COMMUNITY_MEMBER` and `PUBLIC` NPCs attend; higher attendance in rain (`WeatherSystem`). Chatting (E on any attendee) has 20% chance of rumour exchange. `StreetSkillSystem.INFLUENCE` XP +2 per successful chat.
+
+---
+
+### Grant Application — Legitimate & Forged
+
+**Legitimate route**: Player presses E on Denise, selects "Grant Application". Denise gives `GRANT_APPLICATION_FORM`. Player completes it (press E on the `NOTICE_BOARD_PROP` — no input required, just triggers 3 in-game days' wait). On success: player receives `GRANT_CHEQUE` (30 COIN, redeemable at Post Office). `HONEST_CITIZEN` unlocked.
+
+**Forged route** (requires `LOCKPICK` + GRAFTING skill ≥ Apprentice):
+1. Player picks `FILING_CABINET_PROP` lock (70% success at Apprentice; 90% at Skilled). On failure: Notoriety +3, `NoiseSystem` level 2, Denise suspicion timer starts immediately.
+2. On success: player takes a blank `GRANT_APPLICATION_FORM`.
+3. Player uses `PHOTOCOPIER_PROP` (E key with `GRANT_APPLICATION_FORM` in hand) to create `FORGED_GRANT_APPLICATION`. A `COMMUNITY_CENTRE_PHOTOCOPIER` rumour is seeded (HIGH noise, 15-block radius) with Notoriety +2.
+4. Player posts the form at the `POST_BOX_PROP` outside the Post Office. `MagistratesCourtSystem.OBTAINING_MONEY_BY_DECEPTION` charge risk: 25% base catch rate, doubled at Notoriety ≥ 50.
+5. On success (3 in-game days later): `GRANT_CHEQUE` (30 COIN) arrives at Post Office. `GRANT_GRABBER` unlocked.
+6. On caught: `GRANT_FRAUD` rumour seeded; `CriminalRecord.FRAUD` entry; `WantedSystem` +1 star.
+
+---
+
+### NPCs & Dialogue
+
+- **Denise** (`COMMUNITY_CENTRE_MANAGER`): patient, organised, subtly judgmental. *"The aerobics pass covers the whole block — use it or lose it."* / *"Someone's been at the filing cabinet. I can tell."* / *"We rely on grants to keep the lights on. It's not funny, you know."*
+- **Sandra** (`AEROBICS_INSTRUCTOR`): relentlessly cheerful. *"And stretch! Come on, you're doing brilliantly."* / *"Eight out of eight — I knew you had it in you!"*
+- **Brenda** (`NA_CHAIR`): gentle, watchful. *"What's said in this room stays in this room."* / *"It takes courage to sit in that chair."*
+
+---
+
+### Integration with Other Systems
+
+- **StreetSkillSystem**: aerobics awards `GRAFTING` XP; curry night chats award `INFLUENCE` XP; grant filing requires `GRAFTING` ≥ Apprentice for forged route.
+- **RumourNetwork**: `COMMUNITY_CENTRE_PHOTOCOPIER`, `GRANT_FRAUD`, `NA_RECOGNITION`, `CURRY_NIGHT` — all seeded as specified.
+- **MagistratesCourtSystem**: `OBTAINING_MONEY_BY_DECEPTION` charge on caught grant fraud.
+- **CriminalRecord**: `PETTY_THEFT` on biscuit theft; `FRAUD` on caught grant fraud.
+- **WantedSystem**: +1 star on grant fraud catch.
+- **NotorietySystem**: photocopier use +2; NA recognition +3; filing cabinet failure +3.
+- **NoiseSystem**: filing cabinet fail = level 2 event; biscuit theft = level 1.
+- **WarmthSystem**: main hall interior = warm shelter; aerobics performance adds warmth.
+- **WeatherSystem**: rain increases curry night attendance; cold snap boosts aerobics pass sales.
+- **PostOfficeSystem**: grant cheque redeemed at Post Office counter.
+- **TimeSystem**: aerobics Tue/Thu 10:00–11:00 and 18:30–19:30; NA Thursday 19:00–20:30; Bring & Buy Saturday 10:00–13:00; Curry Night Saturday 19:00–22:00; Denise on duty Mon–Sat 08:30–20:00.
+- **AchievementSystem**: `STEP_TOGETHER`, `GRANT_GRABBER`, `BISCUIT_BANDIT`, `HONEST_CITIZEN`, `ANONYMOUS`, `CLEAN_EIGHT` — all defined in AchievementType.java; unlock as specified.
+- **PawnShopSystem**: `ANTIQUE_CLOCK` from Bring & Buy worth 12 COIN at pawn shop.
+- **SpeechLogUI**: NA share story displayed here.
+
+**Unit tests**: aerobics scoring (0–3 no benefit, 4–5 warmth/hunger, 6+ XP, 8/8 achievement); NA share seeds rumour at Notoriety ≥ 30 with 15% probability (seeded RNG); biscuit theft PETTY_THEFT entry added; legitimate grant wait period 3 days, cheque appears; forged grant catch rate 25% base / 50% at Notoriety ≥ 50; Denise suspicion timer starts on filing cabinet failure; photocopier noise seeded to 15-block radius.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Aerobics session scores 8/8 — STEP_TOGETHER unlocked**: It is Tuesday 10:00. Player holds `AEROBICS_PASS`. Press E on Room A door. Seed the aerobics prompt sequence with `Random(42)` such that all 8 prompts are answered correctly. Simulate player pressing the correct key for each prompt within the 1.5-second window. Verify `CommunityCentreSystem.getLastAerobicsScore()` == 8. Verify `WarmthSystem.getWarmth()` increased by 15. Verify `AchievementSystem.isUnlocked(STEP_TOGETHER)` == true.
+
+2. **Legitimate grant — cheque received in 3 days**: Player presses E on Denise and selects "Grant Application". Verify `GRANT_APPLICATION_FORM` added to inventory. Player presses E on `NOTICE_BOARD_PROP`. Verify `CommunityCentreSystem.isGrantPending(player)` == true. Advance in-game time by 72 hours (3 days). Verify `CommunityCentreSystem.isGrantPending(player)` == false. Verify `PostOfficeSystem.hasPendingCheque(player)` == true. Player redeems at Post Office counter. Verify player gains 30 COIN. Verify `AchievementSystem.isUnlocked(HONEST_CITIZEN)` == true.
+
+3. **Forged grant — caught and charged**: Set player `GRAFTING` skill ≥ Apprentice. Give player `LOCKPICK`. Player presses E on `FILING_CABINET_PROP`; seed `Random` so lockpick succeeds. Verify `GRANT_APPLICATION_FORM` in inventory. Player uses `PHOTOCOPIER_PROP`. Verify `FORGED_GRANT_APPLICATION` in inventory. Verify `RumourNetwork` contains `COMMUNITY_CENTRE_PHOTOCOPIER`. Player posts at `POST_BOX_PROP`. Set `NotorietySystem` to 50+. Seed Random so catch fires (≤ 0.50). Advance 3 days. Verify `RumourNetwork` contains `GRANT_FRAUD`. Verify `CriminalRecord` contains `FRAUD`. Verify `WantedSystem.getStarCount()` ≥ 1.
+
+4. **NA share — NA_RECOGNITION rumour at Notoriety ≥ 30**: It is Thursday 19:10. Player sits in empty chair, presses E to share. Verify `SpeechLogUI` contains a confession string. Set Notoriety to 35. Seed Random so 15% fires. Verify `RumourNetwork` contains `NA_RECOGNITION`. Verify `NotorietySystem.getNotoriety()` increased by 3 from baseline.
+
+5. **Biscuit theft — BISCUIT_BANDIT unlocked**: It is Thursday 19:20 (Brenda and attendees in Room B, Denise off duty after 20:00 so Denise absent). Player enters kitchen. Player presses E on `BISCUIT_TIN_PROP`. Verify inventory contains 2× `BISCUIT`. Verify `CriminalRecord` contains `PETTY_THEFT`. Verify `AchievementSystem.isUnlocked(BISCUIT_BANDIT)` == true.
+
+6. **Bring & Buy sale — antique clock purchased and fenced**: It is Saturday 10:30. Verify 4–6 `COMMUNITY_MEMBER` NPCs present with stalls. Seed Random so first stall contains `ANTIQUE_CLOCK` at 1 COIN. Player presses E on stall NPC and selects purchase. Verify `ANTIQUE_CLOCK` in inventory. Verify `AchievementSystem.isUnlocked(SATURDAY_BARGAIN_HUNTER)` == false (only 1 item). Purchase 2 more items from other stalls. Verify `SATURDAY_BARGAIN_HUNTER` unlocked. Player takes `ANTIQUE_CLOCK` to pawn shop. Verify `PawnShopSystem.getOfferPrice(ANTIQUE_CLOCK)` == 12.
+
+7. **Curry night attendance increases in rain**: Set `WeatherSystem` to RAIN. It is Saturday 19:15. Verify `CommunityCentreSystem.getCurryNightAttendance()` ≥ 10 (rain bonus). Set weather to SUNNY. Verify attendance drops to 8–9 range. Player pays 2 COIN entry. Verify `CHICKEN_CURRY` purchasable for 2 COIN. Verify Hunger +25 after eating.
+
+// ── New: CommunityCentreSystem.java in ragamuffin.core (Issue #1153)
+// LandmarkType.COMMUNITY_CENTRE — already defined
+// NPCType: COMMUNITY_CENTRE_MANAGER, AEROBICS_INSTRUCTOR, NA_CHAIR, NA_ATTENDEE,
+//   COMMUNITY_MEMBER — all already defined in NPCType.java
+// Material: QUIZ_SHEET, QUIZ_ANSWER_SHEET, AEROBICS_PASS, GRANT_APPLICATION_FORM,
+//   FORGED_GRANT_APPLICATION, GRANT_CHEQUE — already defined in Material.java
+// PropType: PHOTOCOPIER_PROP, FILING_CABINET_PROP — already defined in PropType.java
+// RumourType: COMMUNITY_CENTRE_PHOTOCOPIER, GRANT_FRAUD, NA_RECOGNITION, CURRY_NIGHT
+//   — already defined in RumourType.java
+// AchievementType: STEP_TOGETHER, GRANT_GRABBER, BISCUIT_BANDIT, HONEST_CITIZEN,
+//   ANONYMOUS, CLEAN_EIGHT — already defined in AchievementType.java
+// CriminalRecord.CrimeType: PETTY_THEFT, FRAUD — verify present; add if absent
+// Integrates: StreetSkillSystem, RumourNetwork, MagistratesCourtSystem, CriminalRecord,
+//   WantedSystem, NotorietySystem, NoiseSystem, WarmthSystem, WeatherSystem,
+//   PostOfficeSystem, TimeSystem, AchievementSystem, PawnShopSystem, SpeechLogUI
