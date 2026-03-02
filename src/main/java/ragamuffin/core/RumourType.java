@@ -112,6 +112,15 @@ public enum RumourType {
      * Marks the freshly covered grave plot as DISTURBED (diggable in 4 hits). */
     FRESH_GRAVE,
 
+    // ── Issue #1138: Northfield Iceland ───────────────────────────────────────
+
+    /** "Someone nicked the Christmas Club money from the Iceland — all of it. Poor Debbie."
+     * — seeded by IcelandSystem when the player steals the CHRISTMAS_CLUB_CASH_BOX
+     *   or a CHRISTMAS_ENVELOPE from another customer.
+     * Spreads to all PUBLIC and PENSIONER NPCs within 40 blocks of the Iceland.
+     * Triggers CHRISTMAS_CLUB_VILLAIN achievement unlock. Raises police patrol awareness. */
+    LOCAL_SCANDAL,
+
     // ── Issue #971: The Rusty Anchor Wetherspoons ──────────────────────────────
 
     /** "There's something on tonight down [location] — worth a look" — seeded by

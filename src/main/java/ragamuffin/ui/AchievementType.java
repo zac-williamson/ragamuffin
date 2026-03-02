@@ -2832,6 +2832,88 @@ public enum AchievementType {
         "Designated Driver",
         "Spent a whole night in The Vaults completely sober. You saw everything.",
         1
+    ),
+
+    // ── Issue #1138: Northfield Iceland ───────────────────────────────────────
+
+    /**
+     * Awarded when the player successfully exploits the three-for-a-fiver deal
+     * at the Iceland checkout for the first time.
+     */
+    THREE_FOR_A_FIVER(
+        "Life of Riley",
+        "Three items for a fiver. The apex of British consumer civilisation.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully uses a PRAWN_RING to distract Kevin
+     * (ICELAND_SECURITY) long enough to complete a self-checkout scam undetected.
+     */
+    PRAWN_RING_BAIT(
+        "Crustacean Misdirection",
+        "A prawn ring, correctly deployed, is a devastating tactical weapon.",
+        1
+    ),
+
+    /**
+     * Awarded when the player is caught by Kevin attempting the self-checkout scam
+     * (unexpected item in the bagging area).
+     */
+    UNEXPECTED_ITEM(
+        "Unexpected Item",
+        "In the bagging area. You are the unexpected item. Aren't we all.",
+        1
+    ),
+
+    /**
+     * Awarded when the player steals all 6 FROZEN_TURKEY items from the Iceland
+     * stockroom during Dec 1–24. Triggers a NewspaperSystem front page.
+     */
+    GREAT_TURKEY_HEIST(
+        "Great Turkey Heist",
+        "Six frozen turkeys. One stockroom. No regrets. Merry Christmas, Northfield.",
+        6
+    ),
+
+    /**
+     * Awarded when the player steals the Iceland Christmas Club Cash Box, depriving
+     * multiple customers of their year-long savings. Seeds a LOCAL_SCANDAL rumour.
+     */
+    CHRISTMAS_CLUB_VILLAIN(
+        "Bah Humbug",
+        "They saved all year for this. You took it in thirty seconds. You monster.",
+        1
+    ),
+
+    /**
+     * Awarded when the player honestly manages a customer's Christmas Club envelope
+     * (returns it without stealing). Raises LOCAL_HERO faction standing.
+     */
+    CHRISTMAS_CLUB_HONEST(
+        "Community Spirit",
+        "You handed it back. The whole envelope. All of it. People do this.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully passes a FAKE_RECEIPT at the Iceland
+     * self-checkout without Kevin noticing.
+     */
+    RECEIPT_ARTIST(
+        "Receipt Artist",
+        "The pen is mightier than the till. Marginally.",
+        1
+    ),
+
+    /**
+     * Awarded when the player fences all 6 stolen FROZEN_TURKEY items to the
+     * FenceSystem or KebabVanSystem in a single session.
+     */
+    TURKEY_DISTRIBUTOR(
+        "Cold Chain Logistics",
+        "Six turkeys, appropriately redistributed. Supply chain management at its finest.",
+        1
     );
 
     private final String name;
