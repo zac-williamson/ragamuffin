@@ -1484,6 +1484,38 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #1309: Northfield Ace Amusements Arcade (extended) ─────────────
+
+    PENNY_CASCADE(
+        "Penny Cascade",
+        "Won the penny-falls timing bar in the green zone. Pure reflex. Kevin watched the whole thing.",
+        1
+    ),
+
+    CLAW_MASTER(
+        "Claw Master",
+        "Won the claw machine on the first attempt. The machine was not rigged. Probably.",
+        1
+    ),
+
+    ARCADE_LEGEND(
+        "Arcade Legend",
+        "Won the arcade shooter without missing three times. Ten kills, clean. The high score board has your name.",
+        1
+    ),
+
+    DODGY_ENGINEER(
+        "Dodgy Engineer",
+        "Tampered with an arcade machine while Kevin wasn't looking. He's not paid enough to catch you.",
+        1
+    ),
+
+    REDEMPTION_ARC(
+        "Redemption Arc",
+        "Exchanged prize tickets for the Arcade Champion Badge. Kevin printed it himself. He cried a little.",
+        1
+    ),
+
     // ── Issue #981: Council Estate ────────────────────────────────────────────
 
     LEGS_OF_STEEL(
