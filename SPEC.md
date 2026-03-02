@@ -44366,6 +44366,185 @@ When `YOUTH_GANG` enters `THREATENING` state within 4 blocks of Gary:
 
 ---
 
+---
+
+## Add Northfield Ace Amusements Arcade — Tokens, Penny Falls, Claw Machine & Machine Tampering
+
+**Landmark**: `ARCADE` (already generated and registered in `LandmarkType`, no system exists yet)
+
+### Overview
+
+Ace Amusements squeezes between the charity shop and the bookies on the high street — a
+10×8-block cave of flashing lights, beeping machines, and the permanent smell of cheap
+carpet cleaner. Open 10:00–22:00 daily. An `ArcadeSystem` brings the ARCADE landmark to life.
+
+The existing `LandmarkType.ARCADE` doc, `PropType` entries (`ARCADE_MACHINE_PROP`,
+`PENNY_FALLS_PROP`, `CLAW_MACHINE_PROP`, `CHANGE_MACHINE_PROP`, `REDEMPTION_COUNTER_PROP`),
+NPC types (`ARCADE_ATTENDANT`, `ARCADE_KID`), and `Material.ARCADE_TOKEN` are already stubbed
+— this issue wires them into a complete system.
+
+### Key Characters
+
+- **Kevin** (`ARCADE_ATTENDANT` NPCType): slouches behind the counter 10:00–22:00. Changes
+  COIN → ARCADE_TOKEN at 1:1 rate. Has a 6-block line-of-sight patrol. If he catches the
+  player tampering with a machine (SCREWDRIVER in hand, within 1 block of any machine prop),
+  he goes HOSTILE and bans the player for 30 in-game minutes (`BAN_DURATION_MINUTES = 30`).
+  He can be distracted: if an `ARCADE_KID` NPC talks to Kevin (happens automatically, 15%
+  chance per minute), Kevin faces the kid for 30 seconds — long enough to tamper undetected.
+- **ARCADE_KID NPCs** (2–4 spawned after-school, 15:00–20:00, weekdays; all day weekends):
+  wander between machines, occasionally emit speech ("Oi Kevin, this one's bust again.").
+  Passive; never hostile.
+
+### Token Economy
+
+- Player presses **E** on Kevin to buy tokens: `CHANGE_COST_COINS = 1` COIN → 1 ARCADE_TOKEN.
+  Kevin refuses to sell tokens if the player is currently banned.
+- `ARCADE_TOKEN` is already defined in `Material.java`. Tokens are stored in inventory.
+- Surplus tokens can be sold to the `FENCE` NPC for `FENCE_TOKEN_VALUE = 2` COIN each
+  (the Fence knows a pub quiz machine that takes them).
+
+### Mini-Games
+
+Three machines, each consuming 1 ARCADE_TOKEN per play:
+
+#### 1. Penny Falls (`PENNY_FALLS_PROP`)
+A timing-bar mini-game. A sliding bar oscillates left–right; the player presses **E** to
+drop a coin. If the drop lands in the **green zone** (centre 20% of bar), a cascade happens:
+`PENNY_FALLS_CASCADE_COINS = 3` tokens fall into the tray. Yellow zone (middle 40%): 1 token.
+Red zone (outer 40%): nothing. One play per token. Tooltip on first win: "The pennies fall
+— eventually."
+
+#### 2. Claw Machine (`CLAW_MACHINE_PROP`)
+A two-axis mini-game. Player uses WASD to position the claw (3-second window), then **E**
+to drop. Claw success is probabilistic: base `CLAW_SUCCESS_CHANCE = 0.15f` (15%). On success,
+drops 1 `STUFFED_ANIMAL` item (new Material; see below). The claw grips but drops early at
+`CLAW_EARLY_DROP_CHANCE = 0.40f` of all attempts (disappointment is authentic). Tooltip on
+first attempt: "Nobody has ever won on the first go. It's the law."
+
+#### 3. Arcade Machine (`ARCADE_MACHINE_PROP`)
+A reaction-time shooter mini-game. Enemies (ASCII-art targets in the speech log) appear for
+0.5 seconds each; player presses **E** to shoot. Killing `ARCADE_WIN_TARGET_COUNT = 10`
+enemies without 3 misses wins the round and awards `ARCADE_WIN_TICKET_COUNT = 5`
+`PRIZE_TICKET` items (new Material; see below). High-score is tracked: `ArcadeSystem`
+stores the player's best round score. Achieving a new high-score seeds a
+`RumourType.SHOP_NEWS` rumour: "Someone smashed the high-score on Ace Amusements' shooter."
+
+### Redemption Counter (`REDEMPTION_COUNTER_PROP`)
+
+Press **E** to exchange `PRIZE_TICKET` items for prizes:
+
+| Tickets required | Prize |
+|-----------------|-------|
+| 5 | `PENNY_SWEETS` ×3 (`Material.PENNY_SWEETS` already defined) |
+| 15 | `STUFFED_ANIMAL` (also win-able from claw) |
+| 40 | `PLASTIC_TROPHY` (new Material; tooltip: "You earned this. God help you.") |
+| 100 | `ARCADE_CHAMPION_BADGE` (new Material; equippable cosmetic; Kevin is grudgingly impressed — he stops banning the player for machine tampering) |
+
+### Machine Tampering (SCREWDRIVER)
+
+`Material.SCREWDRIVER` is already defined in `Material.java` with a doc comment describing
+this mechanic. Implementation:
+
+- Player equips `SCREWDRIVER` and faces a machine prop within 1 block.
+- Hold **E** for `TAMPER_HOLD_SECONDS = 3.0f` seconds while Kevin is > 6 blocks away or
+  facing away (Kevin's facing direction tracked via his current WANDERING/PATROLLING path node).
+- On success, choose one of three tamper actions (displayed as E-interaction menu):
+  1. **Lower penny-falls threshold**: green zone expands to 40% for the next 5 plays
+     (`TAMPER_PENNY_FALLS_BONUS_PLAYS = 5`). NoiseSystem level 2.
+  2. **Unlock free play**: next play on that machine costs 0 tokens. One-time.
+  3. **Extract coin**: immediately yields `TAMPER_COIN_YIELD = 2` COIN from the machine.
+     NoiseSystem level 3.
+- Kevin catching the player (within 6 blocks, facing the player during or within 5 seconds of
+  tampering): player banned 30 in-game minutes; `CrimeType.CRIMINAL_DAMAGE` recorded (+3
+  Notoriety); Kevin goes HOSTILE until ban expires.
+- Achievement `DODGY_ENGINEER` fires on first successful tamper.
+
+### Weather & Time Integration
+
+- **Rain**: ARCADE_KID NPC count doubles (kids sheltering from the rain — see Phase 8c NPC
+  weather behaviour). Kevin is visibly busier (speech: "Busy day, innit.").
+- **After 21:30**: Kevin starts mopping the floor (WANDERING radius shrinks to 3 blocks from
+  counter) — best window for undetected tampering.
+- **Closed (before 10:00 or after 22:00)**: entering after-hours triggers
+  `NeighbourhoodWatchSystem.ANGER_VISIBLE_CRIME` and `CrimeType.TRESPASS`.
+
+### New Items (Materials)
+
+- `STUFFED_ANIMAL` — claw machine prize; also redeemable at counter. Can be given to a
+  `CHILD` NPC for +2 Community Respect. Tooltip: "A grubby bear with one eye. Perfect."
+- `PRIZE_TICKET` — redemption currency; no other use. Stacks to 999.
+- `PLASTIC_TROPHY` — cosmetic item; can be placed as a prop on any flat surface (uses
+  `BlockPlacer` item-as-prop logic). Tooltip: "You earned this. God help you."
+- `ARCADE_CHAMPION_BADGE` — equippable cosmetic (worn-slot, cosmetic only). Kevin's reaction
+  changes (speech: "Alright, fair play mate."); grants tamper immunity from Kevin.
+
+### New RumourTypes
+
+- `RumourType.SHOP_NEWS` (already exists): reused — high-score event seeds this.
+
+### Achievements
+
+- `PENNY_CASCADE` — Win 3 tokens from a single Penny Falls drop.
+- `CLAW_MASTER` — Win a STUFFED_ANIMAL from the Claw Machine.
+- `ARCADE_LEGEND` — Achieve a high score on the arcade shooter without losing.
+- `DODGY_ENGINEER` — Successfully tamper with an arcade machine without Kevin noticing.
+- `REDEMPTION_ARC` — Redeem 100 tickets at the counter (ARCADE_CHAMPION_BADGE level).
+
+### Integrations
+
+- **NoiseSystem**: tampering generates noise levels 2–3 (audible to Kevin and nearby NPCs).
+- **NotorietySystem**: caught tampering → `CrimeType.CRIMINAL_DAMAGE` +3 Notoriety.
+- **FenceSystem**: surplus ARCADE_TOKEN fenced at 2 COIN each.
+- **RumourNetwork**: high-score event seeds `SHOP_NEWS`; Kevin ban seeds `LOCAL_TROUBLE`.
+- **WeatherSystem**: rain doubles after-school ARCADE_KID count.
+- **DisguiseSystem**: wearing `BUILDER_OVERALLS` reduces Kevin's suspicion radius from 6 to
+  3 blocks (he assumes maintenance).
+- **AchievementSystem**: five new achievements (above).
+- **StreetSkillSystem**: STREET_SMARTS XP +1 per successful tamper; SOCIAL XP +1 per STUFFED_ANIMAL given to a child NPC.
+
+### Unit Tests
+
+- Token exchange: 1 COIN → 1 ARCADE_TOKEN, banned player refused.
+- Penny Falls: green/yellow/red zone yields (3/1/0 tokens).
+- Claw Machine: `CLAW_SUCCESS_CHANCE = 0.15f` — test with fixed Random seed.
+- Arcade shooter: 10 kills without 3 misses yields 5 PRIZE_TICKET.
+- Tamper detection: Kevin within 6 blocks → ban triggered; Kevin > 6 blocks → success.
+- Redemption table: correct ticket costs produce correct items.
+- Kevin distraction: ARCADE_KID interaction reduces Kevin's detection radius to 0 for 30s.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Token purchase and Penny Falls win**: Give player 3 COIN. Press E on Kevin → buy 3 tokens.
+   Verify player has 0 COIN, 3 ARCADE_TOKEN. Interact with `PENNY_FALLS_PROP` using a fixed
+   Random seed that puts the bar in the green zone. Verify player receives 3 more ARCADE_TOKEN
+   (net 5). Verify `PENNY_CASCADE` achievement is unlocked.
+
+2. **Claw machine failure then success**: Use a fixed seed that forces `CLAW_EARLY_DROP_CHANCE`
+   outcome first (failure). Verify player ARCADE_TOKEN count drops by 1, no STUFFED_ANIMAL.
+   Switch to a seed that forces `CLAW_SUCCESS_CHANCE` success. Verify player receives 1
+   STUFFED_ANIMAL and `CLAW_MASTER` achievement fires.
+
+3. **Tamper undetected — extract coin**: Give player SCREWDRIVER. Place Kevin 10 blocks from
+   PENNY_FALLS_PROP (> 6 block threshold). Face the prop and hold E for `TAMPER_HOLD_SECONDS`.
+   Select "Extract coin" action. Verify player gains 2 COIN. Verify no `CrimeType.CRIMINAL_DAMAGE`
+   in CriminalRecord. Verify `DODGY_ENGINEER` achievement fires. Verify NoiseSystem registers
+   noise level 3 at the machine position.
+
+4. **Kevin catches tamper — ban applied**: Give player SCREWDRIVER. Place Kevin 4 blocks from
+   `ARCADE_MACHINE_PROP` facing the machine. Attempt tamper hold. Before completion, Kevin's
+   detection triggers. Verify `CrimeType.CRIMINAL_DAMAGE` recorded (+3 Notoriety). Verify Kevin
+   state is HOSTILE. Verify subsequent E press on Kevin to buy tokens is refused with "banned"
+   speech. Advance 30 in-game minutes. Verify Kevin returns to PATROLLING and allows token purchase.
+
+5. **Redemption counter — full ticket-to-badge pipeline**: Give player 100 PRIZE_TICKET.
+   Press E on `REDEMPTION_COUNTER_PROP` and select ARCADE_CHAMPION_BADGE (100 tickets).
+   Verify player PRIZE_TICKET count = 0. Verify player inventory contains ARCADE_CHAMPION_BADGE.
+   Equip ARCADE_CHAMPION_BADGE. Verify that tampering with a machine while Kevin is within 6
+   blocks does NOT trigger a ban (Kevin's speech changes to "Alright, fair play mate.").
+   Verify `REDEMPTION_ARC` achievement fires.
+
+---
+
 // ── Issue #1305: Add Northfield Traveller Site ───────────────────────────────
 // New: TravellerSiteSystem.java in ragamuffin.core
 // New: TravellerSiteSystemTest.java in src/test/java/ragamuffin/core/
