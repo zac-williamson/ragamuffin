@@ -40876,3 +40876,177 @@ Barry won't operate on Sundays (he's at the pub), and disappears if it rains
 //   InternetCafeSystem (FORGED_LICENCE crafting), StreetEconomySystem (demand),
 //   NPCManager (resident queue spawn, Terry spawn), TooltipSystem (door-knock hint),
 //   AchievementSystem
+
+## Add Northfield Pub Quiz Night — PubQuizSystem, Derek's Wednesday Grilling & the Cheat Sheet Hustle
+
+### Overview
+
+Every Wednesday evening 20:00–22:00, Derek Stubbs (`QUIZ_MASTER` NPCType) sets up his
+`QUIZ_PODIUM_PROP` at The Rusty Anchor Wetherspoons and runs the Northfield Pub Quiz.
+Six rounds of five questions each; teams of up to four (player plus any 1–3 `PUBLIC`
+NPCs already in the pub). Prize: `QUIZ_PRIZE_ENVELOPE` (10 COIN + `QUIZ_CHAMPION`
+achievement). WetherspoonsSystem's existing `QUIZ_NIGHT` atmospheric event currently
+seeds only a rumour stub — this issue replaces that stub with a fully playable
+`PubQuizSystem` mini-game.
+
+### Key Mechanics
+
+**Quiz Structure**
+- 6 rounds × 5 questions = 30 questions total per session
+- Categories (in order): Sport, Geography, TV & Film, Music, Science & Nature,
+  Northfield Local Knowledge (final round; gives locals an edge)
+- Each question displayed as a `TooltipSystem` overlay; 20-second timer per question
+- Player selects answer A/B/C/D using keys 1–4 (or E to skip = 0 points)
+- Correct answer: +1 point. Wrong/skip: 0. Cheat sheet use: +2 but 40% catch chance.
+- NPC team-mates auto-answer (correct 55% of the time, seeded `Random`)
+- Team score = player points + NPC partner points
+- Derek announces each round result via `SoundSystem` (voice-line + speech bubble)
+
+**Starting the Quiz**
+- Player enters The Rusty Anchor on a Wednesday between 19:30–20:00
+- Press E on `QUIZ_PODIUM_PROP` to register a team (costs 1 COIN entry fee)
+- `QUIZ_SHEET` item placed in player inventory (distributed by Derek)
+- Quiz starts at 20:00 exactly (`TimeSystem` trigger); late arrivals cannot join
+
+**Competing Teams**
+- 2–4 rival NPC teams spawn at `PUB_TABLE_PROP` pairs (NPCType.QUIZ_TEAM)
+- Each NPC team has a name (e.g., "The Rusty Anchors", "Barry's Lot", "Marchetti FC")
+- NPC team scores are calculated per-round with slight randomness (Normal dist μ=3.0, σ=1.0)
+- Leaderboard shown between rounds on `PRIZE_BOARD_PROP`
+- Ties broken by sudden-death question (same 20s mechanic, fastest correct answer wins)
+
+**The Cheat Sheet Hustle**
+- `CHEAT_SHEET` material (crafted from `NEWSPAPER` + `PEN`, or found in LibrarySystem)
+- Press F during any question to use: +2 points added to that question's score
+- 40% chance Derek catches the player (`PubQuizSystem.isCheatingCaught(rng)`)
+  → Player disqualified, ejected from pub (WantedSystem Notoriety +3), no prize
+  → `CriminalRecord` CHEATING_AT_PUB_QUIZ (minor offence, speech: *"Disgraceful. Out."*)
+- Player can sabotage NPC rival team: press E on their table while holding a spare
+  `CHEAT_SHEET` and planting it under their sheet — if Derek does a spot check
+  (15% per round), the NPC team is disqualified instead
+
+**Prize & Rewards**
+- Winning team receives `QUIZ_PRIZE_ENVELOPE` (10 COIN); player pockets this
+- `QUIZ_CHAMPION` AchievementType unlocked on first win
+- `HAT_TRICK_QUIZZER` AchievementType: win three consecutive Wednesdays
+- Losing but scoring ≥ 20/30: "Nearest the post" consolation prize (2 COIN)
+- Gary the Barman offers 1 free pint to the winning team: `WetherspoonsSystem.grantFreeItem(Material.PINT)`
+
+**Atmosphere & Integration**
+- During the quiz, `NoiseSystem` level drops to 0.05 (hush in the pub)
+- Between rounds, `SoundSystem` plays PUB_AMBIENCE + clinking glasses
+- Derek's speech lines rotate: *"Pencils down!"*, *"And the answer is…"*,
+  *"Come on, think!"*, *"No conferring!"*
+- If player wins: RumourNetwork seeds `QUIZ_CHAMPION_RUMOUR` (type LOCAL_EVENT)
+  spreading to all NPCs within 40 blocks
+- If NotorietySystem tier ≥ 4: Derek refuses player entry (*"Not 'avin it, mate."*)
+
+**WetherspoonsSystem Upgrade**
+- Replace the existing `QUIZ_NIGHT` atmospheric event stub (lines ~848–855) with a
+  call to `pubQuizSystem.startSession(timeSystem, rumourNetwork, gary)` when the
+  Wednesday 20:00 trigger fires
+- `WetherspoonsSystem` holds a reference to `PubQuizSystem`; inject via constructor
+  or setter
+
+### Key Constants
+
+| Constant | Value | Description |
+|---|---|---|
+| `QUIZ_START_HOUR` | `20.0f` | Quiz starts at 20:00 |
+| `QUIZ_REGISTRATION_OPEN` | `19.5f` | Registration opens at 19:30 |
+| `QUIZ_END_HOUR` | `22.0f` | Quiz ends no later than 22:00 |
+| `ENTRY_FEE_COINS` | `1` | Cost to register a team |
+| `NUM_ROUNDS` | `6` | Number of rounds |
+| `QUESTIONS_PER_ROUND` | `5` | Questions per round |
+| `QUESTION_TIMER_SECONDS` | `20f` | Seconds per question |
+| `CHEAT_SHEET_BONUS` | `2` | Extra points from cheat sheet use |
+| `CHEAT_CATCH_CHANCE` | `0.40f` | Probability Derek catches cheating |
+| `RIVAL_TEAM_CATCH_CHANCE` | `0.15f` | Probability Derek checks rival team per round |
+| `NPC_CORRECT_CHANCE` | `0.55f` | Probability NPC team-mate answers correctly |
+| `NPC_RIVAL_MEAN_SCORE` | `3.0f` | Mean per-round score for NPC rival teams |
+| `NPC_RIVAL_STD_DEV` | `1.0f` | Std deviation for NPC rival team scores |
+| `PRIZE_WINNER_COINS` | `10` | COIN in winning QUIZ_PRIZE_ENVELOPE |
+| `CONSOLATION_COINS` | `2` | COIN for ≥20/30 nearest-the-post |
+| `NOTORIETY_CHEAT_CAUGHT` | `3` | Notoriety added on caught cheating |
+| `RUMOUR_RANGE_BLOCKS` | `40f` | Range for quiz champion rumour spread |
+| `HAT_TRICK_WINS_REQUIRED` | `3` | Wins needed for HAT_TRICK_QUIZZER achievement |
+
+### Unit Test Assertions (method-level, no LibGDX)
+
+- `PubQuizSystem.isRegistrationOpen(hour=19.5f, dayOfWeek=WEDNESDAY)` → `true`
+- `PubQuizSystem.isRegistrationOpen(hour=19.5f, dayOfWeek=THURSDAY)` → `false`
+- `PubQuizSystem.isRegistrationOpen(hour=19.3f, dayOfWeek=WEDNESDAY)` → `false` (too early)
+- `PubQuizSystem.isRegistrationOpen(hour=20.1f, dayOfWeek=WEDNESDAY)` → `false` (quiz started)
+- `PubQuizSystem.isCheatingCaught(rng=seeded_caught)` → `true`
+- `PubQuizSystem.isCheatingCaught(rng=seeded_not_caught)` → `false`
+- `PubQuizSystem.calcNpcRivalScore(rng=seeded, rounds=6)` → value between 0 and 30
+- `PubQuizSystem.isWinner(playerScore=18, rivalScores=[15, 12, 17])` → `true`
+- `PubQuizSystem.isWinner(playerScore=12, rivalScores=[15, 18, 17])` → `false`
+- `PubQuizSystem.qualifiesConsolation(playerScore=20)` → `true`
+- `PubQuizSystem.qualifiesConsolation(playerScore=19)` → `false`
+- `PubQuizSystem.isBlockedByNotoriety(notorietyTier=4)` → `true`
+- `PubQuizSystem.isBlockedByNotoriety(notorietyTier=3)` → `false`
+
+### Integration Tests — implement these exact scenarios
+
+1. **Player registers, completes quiz, and wins**: Set `TimeSystem` to Wednesday
+   19:30. Player enters The Rusty Anchor. Press E on `QUIZ_PODIUM_PROP`. Verify
+   `QUIZ_SHEET` added to player inventory. Verify 1 COIN deducted from player.
+   Advance `TimeSystem` to 20:00. Verify quiz session begins. Simulate 30 correct
+   answers (player selects correct option each time). Verify player score = 30.
+   Seed RNG so NPC rival teams score ≤ 25. Verify `QUIZ_PRIZE_ENVELOPE` added
+   to player inventory. Verify player receives 10 COIN on opening. Verify
+   `AchievementSystem` has `QUIZ_CHAMPION` unlocked.
+
+2. **Player uses cheat sheet and is caught**: Set `TimeSystem` to Wednesday 20:00.
+   Give player `CHEAT_SHEET`. Start quiz session. During round 1 question 1,
+   player presses F. Seed RNG with `seeded_caught` value. Verify
+   `PubQuizSystem.isCheatingCaught()` returns `true`. Verify player is ejected
+   from the pub (position moves to outside `WETHERSPOONS` landmark bounds). Verify
+   `NotorietySystem.getNotoriety()` increased by 3. Verify
+   `CriminalRecord` contains `CHEATING_AT_PUB_QUIZ` entry. Verify no
+   `QUIZ_PRIZE_ENVELOPE` in player inventory.
+
+3. **Player uses cheat sheet and is NOT caught**: Set `TimeSystem` to Wednesday
+   20:00. Give player `CHEAT_SHEET`. Start quiz session. During question 1,
+   press F. Seed RNG with `seeded_not_caught` value. Verify player score for
+   question 1 = 2. Verify player is still inside the pub. Verify no notoriety
+   increase. Verify `CHEAT_SHEET` consumed from inventory.
+
+4. **Player plants cheat sheet on rival team**: Set `TimeSystem` to Wednesday
+   20:10 (mid-quiz). Give player `CHEAT_SHEET`. Player moves within 2 blocks of
+   NPC rival team table. Press E while holding `CHEAT_SHEET`. Verify
+   `CHEAT_SHEET` removed from player inventory. Advance to next round. Seed RNG
+   so `RIVAL_TEAM_CATCH_CHANCE` check fires (Derek checks that table). Verify the
+   targeted NPC rival team is disqualified (removed from active team list). Verify
+   their score removed from leaderboard.
+
+5. **High-notoriety player is refused entry**: Set player `NotorietySystem` tier
+   to 4. Set `TimeSystem` to Wednesday 19:35. Player approaches `QUIZ_PODIUM_PROP`
+   (within 2 blocks). Player presses E. Verify `PubQuizSystem.isBlockedByNotoriety(4)`
+   returns `true`. Verify `QUIZ_SHEET` is NOT added to player inventory. Verify
+   Derek's speech bubble shows *"Not 'avin it, mate."*.
+
+6. **WetherspoonsSystem invokes PubQuizSystem on Wednesday at 20:00**: Instantiate
+   `WetherspoonsSystem` with a `PubQuizSystem` injected. Set `TimeSystem` to
+   Wednesday 19:59. Call `WetherspoonsSystem.update(delta, timeSystem, ...)` until
+   time reaches 20:00. Verify `PubQuizSystem.isSessionActive()` returns `true`.
+   Verify the `QUIZ_NIGHT` atmospheric event no longer seeds a standalone rumour
+   (rumour is now seeded by `PubQuizSystem.startSession()` instead).
+
+// ── New: PubQuizSystem.java in ragamuffin.core
+// ── New: Issue1259PubQuizSystemTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: QUIZ_MASTER (60hp, 0dmg, 0s cooldown, non-hostile),
+//   QUIZ_TEAM (40hp, 0dmg, 0s cooldown, non-hostile) — add to NPCType.java
+// New PropTypes: QUIZ_PODIUM_PROP (1×2×1, 0 hits, null drop) — add to PropType.java
+// New Materials: QUIZ_PRIZE_ENVELOPE — add to Material.java
+// New AchievementTypes: QUIZ_CHAMPION (instant), HAT_TRICK_QUIZZER (progressTarget=3),
+//   CHEATS_NEVER_PROSPER (instant, awarded on caught cheating) — add to AchievementType.java
+// New RumourType: QUIZ_CHAMPION_RUMOUR — add to RumourType.java
+// New CriminalRecord.CrimeType: CHEATING_AT_PUB_QUIZ — add to CriminalRecord.java
+// Modifies: WetherspoonsSystem (replace QUIZ_NIGHT stub with PubQuizSystem.startSession())
+// Integrates: TimeSystem (Wednesday 20:00 trigger), WetherspoonsSystem (session hook),
+//   TooltipSystem (question overlay), SoundSystem (PUB_AMBIENCE + voice lines),
+//   NoiseSystem (hush during quiz), RumourNetwork (winner rumour spread),
+//   NotorietySystem (cheat catch penalty), WantedSystem (ejection trigger),
+//   CriminalRecord (CHEATING_AT_PUB_QUIZ), AchievementSystem, LibrarySystem (CHEAT_SHEET source)
