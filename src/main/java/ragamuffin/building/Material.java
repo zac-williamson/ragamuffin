@@ -4587,7 +4587,63 @@ public enum Material {
      * Wayne. If the car is stolen, Wayne still asks for it but the V5C clears the transaction.
      * Tooltip: "Keep it in the glovebox. Or don't. Your call."
      */
-    V5C_PROP("V5C Document");
+    V5C_PROP("V5C Document"),
+
+    // ── Issue #1229: Northfield Handy Builders — Trade Counter, Builder's Credit & Copper Pipe Hustle ──
+
+    /**
+     * CEMENT_BAG — a 25kg bag of general-purpose cement. Purchased at Handy Builders
+     * (3 COIN) or found in the yard skip. Used in MORTAR crafting.
+     * Tooltip: "A 25kg bag of general-purpose cement. Your back won't thank you."
+     */
+    CEMENT_BAG("Cement Bag"),
+
+    /**
+     * SAND_BAG — builder's sand in a paper sack. Purchased at Handy Builders (2 COIN)
+     * or found in the yard. Used with CEMENT_BAG to make MORTAR.
+     * Tooltip: "Builder's sand. Gets everywhere."
+     */
+    SAND_BAG("Sand Bag"),
+
+    /**
+     * WIRE_REEL — a full reel of electrical cable. Purchased at Handy Builders (4 COIN,
+     * daily limit 10). Contains copper wire; strips via CraftingSystem into 3 x COPPER_WIRE
+     * and 1 x SCRAP_METAL (requires SCREWDRIVER).
+     * Tooltip: "A full reel of electrical cable. Contains copper wire."
+     */
+    WIRE_REEL("Wire Reel"),
+
+    /**
+     * COPPER_PIPE — 15mm copper plumbing pipe. Purchased at Handy Builders (5 COIN,
+     * daily limit 10). Can be sold at Scrapyard for 4 COIN or stripped via CRUSHER_PROP
+     * into COPPER_BALE worth 8 COIN — the core of the Copper Pipe Hustle.
+     * Tooltip: "15mm copper plumbing pipe. Hot commodity in certain circles."
+     */
+    COPPER_PIPE("Copper Pipe"),
+
+    /**
+     * MORTAR — mixed mortar ready to apply. Crafted from CEMENT_BAG + SAND_BAG + BUCKET
+     * (yields 3 units). Used in SquatFurnishingTracker to plaster BRICK wall faces;
+     * increases lodger rent tolerance by +2 COIN/night per face.
+     * Tooltip: "Mixed mortar, ready to apply. Give it a stir."
+     */
+    MORTAR("Mortar"),
+
+    /**
+     * TRADE_ACCOUNT_CARD — a legitimate Handy Builders trade account card issued by Terry.
+     * Grants a 20-COIN credit line repayable within 3 in-game days.
+     * Tooltip: "Your Handy Builders trade account card. Terry's name on the back."
+     */
+    TRADE_ACCOUNT_CARD("Trade Account Card"),
+
+    /**
+     * FAKE_TRADE_ACCOUNT_CARD — a forged Handy Builders trade card printed at Cybernet
+     * (BLANK_PAPER + PRINTER_INK). Provides a false-name 20-COIN credit line.
+     * Donna runs ID checks on Saturdays (1-in-3 chance); if caught: Notoriety +6,
+     * IDENTITY_FRAUD on CriminalRecord, card confiscated.
+     * Tooltip: "A convincing-looking Handy Builders trade card. The name on it is almost plausible."
+     */
+    FAKE_TRADE_ACCOUNT_CARD("Fake Trade Account Card");
 
     private final String displayName;
 
@@ -5662,6 +5718,21 @@ public enum Material {
                                                   0.18f, 0.45f, 0.22f); // Green "Appeal" text
             case CASH_IN_HAND_LEDGER:   return cs(0.32f, 0.22f, 0.12f,  // Brown notebook
                                                   0.88f, 0.72f, 0.18f); // Gold lettering
+
+            // Issue #1229: Northfield Handy Builders
+            case CEMENT_BAG:            return cs(0.72f, 0.68f, 0.55f,  // Sandy beige bag
+                                                  0.55f, 0.50f, 0.38f); // Darker stripe
+            case SAND_BAG:              return cs(0.82f, 0.72f, 0.40f,  // Sandy yellow bag
+                                                  0.65f, 0.55f, 0.28f); // Darker base
+            case WIRE_REEL:             return cs(0.15f, 0.15f, 0.18f,  // Dark reel body
+                                                  0.72f, 0.45f, 0.12f); // Orange cable
+            case COPPER_PIPE:           return c(0.72f, 0.40f, 0.18f);  // Copper orange
+            case MORTAR:                return cs(0.72f, 0.68f, 0.60f,  // Grey mortar
+                                                  0.55f, 0.52f, 0.45f); // Darker mix
+            case TRADE_ACCOUNT_CARD:    return cs(0.15f, 0.45f, 0.25f,  // Green trade card
+                                                  0.95f, 0.92f, 0.80f); // Cream text
+            case FAKE_TRADE_ACCOUNT_CARD: return cs(0.15f, 0.35f, 0.20f, // Slightly off green
+                                                  0.85f, 0.80f, 0.62f); // Slightly off cream
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -7410,6 +7481,22 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // forged V5C logbook
             case V5C_PROP:
                 return IconShape.FLAT_PAPER;  // legitimate V5C logbook
+
+            // Issue #1229: Northfield Handy Builders
+            case CEMENT_BAG:
+                return IconShape.BOX;         // paper cement bag
+            case SAND_BAG:
+                return IconShape.BOX;         // fabric sand bag
+            case WIRE_REEL:
+                return IconShape.CYLINDER;    // cable reel
+            case COPPER_PIPE:
+                return IconShape.CYLINDER;    // copper tube
+            case MORTAR:
+                return IconShape.BOX;         // tub of mortar mix
+            case TRADE_ACCOUNT_CARD:
+                return IconShape.CARD;        // credit/account card
+            case FAKE_TRADE_ACCOUNT_CARD:
+                return IconShape.CARD;        // forged account card
 
             default:
                 return IconShape.BOX;
