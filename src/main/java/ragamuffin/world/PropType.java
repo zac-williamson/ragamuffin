@@ -2426,7 +2426,28 @@ public enum PropType {
      * QUEUE_BARRIER_PROP — retractable belt barrier defining the collection queue.
      * Marks the queue lane; collides with player to enforce queue discipline.
      */
-    QUEUE_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.SCRAP_METAL);
+    QUEUE_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.SCRAP_METAL),
+
+    // ── Issue #1177: Northfield Sunday Car Park Market ────────────────────────
+
+    /**
+     * MARKET_STALL_PROP — folding table with tarpaulin awning used by Sunday market
+     * traders. Player can set up their own stall on any empty table (up to 6 items).
+     */
+    MARKET_STALL_PROP(1.50f, 1.00f, 0.80f, 4, Material.WOOD),
+
+    /**
+     * MARKET_VAN_PROP — Transit-style van parked at the edge of the Co-op car park.
+     * Each trader has one. Boot briefly unattended during 07:15–07:30 setup window.
+     * Interact to attempt the Van Unload Heist (steal 1–3 items).
+     */
+    MARKET_VAN_PROP(4.50f, 1.80f, 2.00f, 0, null),
+
+    /**
+     * COUNCIL_VAN — yellow council enforcement van. Patrols the market every
+     * 4 in-game minutes. Spawns COUNCIL_OFFICER when it arrives at the market.
+     */
+    COUNCIL_VAN(4.00f, 1.80f, 2.00f, 0, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
