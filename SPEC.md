@@ -36450,3 +36450,129 @@ The `FILING_CABINET_PROP` in Sandra's office holds `PENDING_TEST_RESULT_ITEM` �
 // Integrates: CarDrivingSystem, WantedSystem, TrafficWardenSystem, StreetSkillSystem,
 //   RumourNetwork, NewspaperSystem, CriminalRecord, NotorietySystem, FactionSystem,
 //   AchievementSystem, TimeSystem, WeatherSystem, NPCManager, BattleBarMiniGame
+
+---
+
+## Northfield Minicab Office — Big Terry's Cabs, Dodgy Dispatching & the Fare-Skip Hustle
+
+**Issue**: Add Northfield Minicab Office — Big Terry's Cabs, Rival Dispatching & the Fare-Skip Economy
+
+### Overview
+
+`MinicabOfficeSystem.java` brings a fully operational minicab firm to Northfield High Street — "Big Terry's Cabs". The firm is a grubby, strip-lit waiting room with a hatch-window dispatcher and two battered Vauxhall Corsas parked outside. It ties into the existing `TaxiSystem` but offers richer street-level interactions: the player can hail cabs, do runner jobs for Terry, fare-dodge, or muscle in on a rival firm's turf.
+
+Until the player has a `DRIVING_LICENCE` the minicab is the primary fast-travel option. Cab rides cost **1 COIN/zone** (3 zones in Northfield) and are always available during operating hours (Mon–Sat 07:00–03:00, Sun 10:00–01:00). Late-night surcharge ×1.5 applies after 23:00.
+
+**Location**: `LandmarkType.MINICAB_OFFICE` — squeezed between the bookies and the chippie on the High Street. A 7×5×3-block building: waiting area with 2 `PLASTIC_CHAIR_PROP` and a `HANDWRITTEN_SIGN_PROP` reading "NO BOOKING, NO RIDE". Dispatcher hatch faces the street.
+
+### NPCs
+
+- **Big Terry** (`NPCType.MINICAB_DISPATCHER`) — sat behind the hatch 07:00–03:00 every day. Rotund, wearing a headset. Has 8 idle speech lines ("CHARLIE, PICK-UP AT ICELAND!"; "Listen mate, I don't do accounts."; etc.). Refuses service to WANTED players (wanted stars ≥ 2) or notoriety Tier 4.
+- **Charlie** (`NPCType.MINICAB_DRIVER`) — drives `CAR` entity, on-duty 07:00–23:00 Mon–Sat. Parks outside the office between fares. Spawns a second car (`Dave`, same NPCType) on Fri/Sat nights.
+- **1–2 PUBLIC** NPCs in the waiting area during peak hours (07:00–09:00, 17:00–19:00, 23:00–02:00).
+
+### Mechanics
+
+#### Hailing a Cab
+
+Press E on Big Terry at the hatch. A destination menu (3 options — PARK, INDUSTRIAL_ESTATE, COUNCIL_FLATS) plus a fare quote appears. Player selects destination and confirms. `MinicabOfficeSystem.requestRide(destination)` is called. Charlie's car navigates via `Pathfinder` to the player, player presses E to board. Ride takes ~15 in-game seconds per zone. Player arrives at destination landmark.
+
+- Late-night (after 23:00): 1.5× fare multiplier applied automatically.
+- Bad weather (`WeatherSystem.isStormy()`): +1 COIN surcharge, Charlie complains.
+- Player with `DRIVING_LICENCE`: Terry offers them a cash-in-hand driving shift (see Runner Jobs below).
+
+#### Fare Skip
+
+Instead of pressing E to board normally, the player can sprint past Charlie and board the car while Charlie is distracted (within 3 blocks of the car, Charlie's `NPCState` is `IDLE`). This triggers `attemptFareSkip()`:
+- Success (70% base, −15% per CriminalRecord conviction, −20% if Notoriety Tier 3+): Player is driven to their destination, no COIN deducted. `CriminalRecord.CrimeType.FARE_EVASION` logged. `NotorietySystem` +2. `AchievementSystem.unlock(ON_THE_ROB)`.
+- Failure: Charlie locks the car and calls Big Terry. `WantedSystem` +1. Player must flee or bribe (3 COIN) to avoid arrest.
+
+#### Runner Jobs (requires DRIVING_LICENCE)
+
+Big Terry offers the player a cash-in-hand job as a runner. `startRunnerJob()`: Player drives Charlie's Corsa between 3 waypoints (PARK → INDUSTRIAL_ESTATE → COUNCIL_FLATS → back to office) within 90 in-game seconds. Pay: 4 COIN per completed run. Speed infraction during run: job cancelled, no pay. NPC passenger in back seat: if player collides, Terry docks 1 COIN and NPCState of passenger = `FRIGHTENED` → `FLEEING`.
+
+- Completing 5 runs awards `AchievementSystem.unlock(MINICAB_HUSTLE)`.
+- Completing a run while WANTED (stars ≥ 1) awards `AchievementSystem.unlock(HOT_WHEELS)`.
+- After 10 total runs, Terry offers the player a weekly retainer of 2 COIN/day passive income (tracked via `StreetEconomySystem.startRacket()`-style passive).
+
+#### Rival Firm Intimidation
+
+`STREET_LADS` faction: if Respect ≥ FRIENDLY_THRESHOLD, a STREET_LADS NPC outside the office suggests the player could kneecap the rival firm (the `INFO_BROKER_PUB`'s informal cab service). `startRivalIntimidation()`: player visits the rival cab rank (a `CAR` entity parked near `INFO_BROKER_PUB`), presses E to slash its tyres (requires `SCREWDRIVER` in inventory). `CriminalRecord.CrimeType.CRIMINAL_DAMAGE` logged. Rival fare prices increase by 50% for 1 in-game day, Terry's respect +10. `AchievementSystem.unlock(TURF_WARS)`.
+
+If the player is witnessed, `WantedSystem` +1 and rival driver spawns as a hostile NPC (NPCState = `AGGRESSIVE`) for 60 seconds.
+
+#### Weather & Night Events
+
+- **Thunderstorm**: Charlie refuses to go out. `isServiceAvailable()` returns false. Waiting room fills with 3 stranded PUBLIC NPCs. Player can "persuade" Terry for a premium ride (5 COIN flat regardless of zone).
+- **Friday/Saturday 02:00–03:00**: Dave spawns as a second driver; queue of 3 DRUNK NPCs forms outside. Drunk passengers have a 20% chance of vomiting in the car, causing Charlie to kick them out mid-journey (player next to board gets the clean car, no surcharge).
+- **Sunday morning (09:00–11:00)**: Only Dave on duty, half-price fares (church-run promotional rate). `RumourNetwork.addRumour(...)` seeds `RumourType.LOCAL_EVENT` ("Big Terry's doing half-price Sundays, probably lost his licence again").
+
+### Integration
+
+- **`TaxiSystem`**: `MinicabOfficeSystem` supersedes `TaxiSystem.spawnCabNearPlayer()` within the High Street zone; `TaxiSystem` still handles generic on-street hailing elsewhere.
+- **`WantedSystem`**: wanted stars ≥ 2 block cab booking; fare-skip failure triggers +1 star.
+- **`CarDrivingSystem`** / **`Pathfinder`**: Charlie's car uses existing car navigation; runner jobs reuse `CarDrivingSystem` for player driving.
+- **`WeatherSystem`**: stormy weather blocks service, triggers dialogue.
+- **`CriminalRecord`**: FARE_EVASION, CRIMINAL_DAMAGE entries.
+- **`NotorietySystem`**: fare-skip success adds notoriety; runner retainer is passive income.
+- **`StreetEconomySystem`**: weekly retainer implemented via racket-style passive income.
+- **`FactionSystem`**: STREET_LADS Respect gates rival intimidation mission.
+- **`RumourNetwork`**: Sunday offer seeds LOCAL_EVENT rumour.
+- **`AchievementSystem`**: new achievements (see below).
+- **`TimeSystem`**: opening hours, surge pricing, late-night driver spawns.
+- **`NoiseSystem`**: engine idle noise level 3 while car parked outside.
+- **`DogCompanionSystem`**: if player has dog companion, Charlie refuses to allow dog in cab ("No animals, mate — Terry's allergic"). Triggers unique Terry dialogue.
+
+### New LandmarkType entry (add to `LandmarkType.java`)
+- `MINICAB_OFFICE` — "Big Terry's Cabs"
+
+### New NPCType entries (add to `NPCType.java`)
+- `MINICAB_DISPATCHER` — desk-bound dispatcher; hatch interaction point.
+- `MINICAB_DRIVER` — drives CAR entity; responds to fare-skip detection.
+
+### New PropType entries (add to `PropType.java`)
+- `DISPATCHER_HATCH_PROP` — interaction trigger for cab booking.
+- `HANDWRITTEN_SIGN_PROP` (if not already present) — static flavour prop.
+
+### New Material entries (add to `Material.java`)
+- `FARE_RECEIPT` — consumable; redeems 1 COIN refund at the hatch if fare was overcharged (triggered by a 10% random overcharge bug in Terry's system — filing a complaint awards `CUSTOMER_SERVICE` achievement).
+
+### New AchievementType entries (add to `AchievementType.java`)
+- `ON_THE_ROB` — Successfully fare-skipped Big Terry's cab.
+- `MINICAB_HUSTLE` — Completed 5 runner jobs for Big Terry.
+- `HOT_WHEELS` — Completed a runner job while wanted by the police.
+- `TURF_WARS` — Sabotaged the rival cab firm's tyres.
+- `CUSTOMER_SERVICE` — Filed a complaint about Terry's dodgy overcharge and got a refund.
+
+### Unit Tests
+
+- Fare calculation: zone 1 = 1 COIN; zone 2 = 2 COIN; zone 3 = 3 COIN; after 23:00 = ×1.5 (rounded up); storm surcharge = +1 COIN.
+- Service availability: wanted stars ≥ 2 → `isServiceAvailable(player)` returns false; notoriety Tier 4 → false; stars < 2 and Tier ≤ 3 → true.
+- Fare-skip probability: base 70%, conviction −15% each, Tier 3 −20% (seeded RNG 10000 trials, ±2%).
+- Runner job: 3 waypoints completed within 90s → 4 COIN awarded; speed infraction → 0 COIN; collision → passenger NPCState == FLEEING.
+- Rival intimidation: STREET_LADS Respect < FRIENDLY_THRESHOLD → `canStartRivalIntimidation()` false; ≥ threshold → true; no SCREWDRIVER → `attemptTyreSlash()` returns `MISSING_TOOL`.
+- Dog refusal: player has dog companion → `requestRide()` returns `REFUSED_DOG`.
+- Sunday half-price: `TimeSystem` Sunday 10:00 → fare = base × 0.5 (rounded up); Saturday 10:00 → full fare.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Cab ride completes fare deduction**: Set `TimeSystem` to Monday 12:00. Player has 5 COIN. Player presses E on `DISPATCHER_HATCH_PROP`. Select destination PARK (zone 1 = 1 COIN). Charlie's car navigates to player; player presses E to board. After 15 in-game seconds, player position matches PARK landmark coordinates (within 3 blocks). Verify player COIN count is now 4 (1 COIN deducted). Verify `TaxiSystem.getActiveFares()` does not double-count this ride.
+
+2. **Fare-skip success — notoriety increment**: Set player Notoriety to Tier 1 (notoriety < Tier-2 threshold). Set `CriminalRecord` to 0 prior convictions. Seed `MinicabOfficeSystem(new Random(7))` so `attemptFareSkip()` returns SUCCESS. Player sprints into Charlie's car while Charlie is IDLE. Verify no COIN deducted. Verify `CriminalRecord` contains `CrimeType.FARE_EVASION`. Verify `NotorietySystem.getNotoriety()` increased by 2. Verify `AchievementSystem.isUnlocked(AchievementType.ON_THE_ROB)` is true.
+
+3. **Runner job pay — collision docks coin**: Set `TimeSystem` to Tuesday 14:00. Player has `DRIVING_LICENCE`. Player calls `startRunnerJob()`. Spawn a passenger NPC in back seat. Simulate player driving through waypoints PARK → INDUSTRIAL_ESTATE → COUNCIL_FLATS → MINICAB_OFFICE within 90 seconds. Inject exactly 1 collision event mid-route. Verify `MinicabOfficeSystem.getLastJobPay()` == 3 (4 − 1 docked). Verify passenger NPC's final state is `FLEEING`.
+
+4. **Rival firm intimidation — witness triggers wanted**: Set STREET_LADS Respect ≥ FRIENDLY_THRESHOLD. Player has `SCREWDRIVER` in inventory. Player presses E on rival car. A PUBLIC NPC is within witness range (6 blocks). Verify `WantedSystem.getStars()` increases by 1. Verify rival driver NPC spawns with `NPCState.AGGRESSIVE`. Verify `CriminalRecord` contains `CrimeType.CRIMINAL_DAMAGE`.
+
+5. **Storm blocks service — stranded NPCs spawn**: Set `WeatherSystem` to thunderstorm. Call `MinicabOfficeSystem.update(delta, timeSystem, weatherSystem, ...)`. Verify `isServiceAvailable(player)` returns false. Verify waiting-room NPC list contains exactly 3 PUBLIC NPCs. Player offers 5 COIN premium. Verify `requestRide(PARK)` now succeeds (premium override), player COIN reduced by 5.
+
+// ── New: MinicabOfficeSystem.java in ragamuffin.core
+// New LandmarkType: MINICAB_OFFICE — add to LandmarkType.java
+// New NPCType: MINICAB_DISPATCHER, MINICAB_DRIVER — add to NPCType.java
+// New PropType: DISPATCHER_HATCH_PROP, HANDWRITTEN_SIGN_PROP — add to PropType.java (if not already present)
+// New Material: FARE_RECEIPT — add to Material.java
+// New AchievementType: ON_THE_ROB, MINICAB_HUSTLE, HOT_WHEELS, TURF_WARS, CUSTOMER_SERVICE
+//   — add to AchievementType.java
+// Integrates: TaxiSystem, WantedSystem, CarDrivingSystem, Pathfinder, WeatherSystem,
+//   CriminalRecord, NotorietySystem, StreetEconomySystem, FactionSystem, RumourNetwork,
+//   AchievementSystem, TimeSystem, NoiseSystem, DogCompanionSystem, NPCManager
