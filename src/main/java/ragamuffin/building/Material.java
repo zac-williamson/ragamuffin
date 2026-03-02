@@ -1355,6 +1355,46 @@ public enum Material {
      */
     SCREWDRIVER("Screwdriver"),
 
+    // ── Issue #1309: Northfield Ace Amusements Arcade ────────────────────────
+
+    /**
+     * Stuffed Animal — a plush toy won from the claw machine at Ace Amusements.
+     * Sellable to the fence (3 COIN) or donated to the charity shop (2 COIN goodwill).
+     * Tooltip: "Against all odds."
+     */
+    STUFFED_ANIMAL("Stuffed Animal"),
+
+    /**
+     * Prize Ticket — a paper prize ticket dispensed by the arcade shooter machine.
+     * Accumulated and exchanged at the redemption counter for prizes.
+     * 5 tickets per win from the Arcade Shooter mini-game.
+     * Tooltip: "One day these will add up to something."
+     */
+    PRIZE_TICKET("Prize Ticket"),
+
+    /**
+     * Plastic Trophy — a gaudy plastic award from the redemption counter (40 tickets).
+     * Purely decorative. Sell to the fence for 1 COIN or donate to charity shop.
+     * Tooltip: "Third place at something you'll never quite remember."
+     */
+    PLASTIC_TROPHY("Plastic Trophy"),
+
+    /**
+     * Arcade Champion Badge — the top redemption counter prize (100 tickets).
+     * Grants the holder tamper immunity: Kevin will not catch the player tampering
+     * while they wear this badge. Shows as a wearable item in the hotbar.
+     * Tooltip: "Kevin himself pressed this. He wasn't happy about it."
+     */
+    ARCADE_CHAMPION_BADGE("Arcade Champion Badge"),
+
+    /**
+     * Builder's Overalls — worn by BUILDER NPCs and sold at the market.
+     * When worn, reduces Kevin's detection radius at Ace Amusements from 6 to 3 blocks,
+     * making machine-tampering easier to get away with.
+     * Tooltip: "Blend in. Act busy. Carry a clipboard."
+     */
+    BUILDER_OVERALLS("Builder's Overalls"),
+
     // ── Issue #979: Fix My Phone — Phone Repair Shop ─────────────────────────
 
     /**
