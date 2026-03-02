@@ -39658,3 +39658,16 @@ Phil unlocks as a persistent FenceSystem contact (available outside Saturdays vi
 //   NotorietySystem, NeighbourhoodWatchSystem, SkipDivingSystem, WeatherSystem,
 //   TimeSystem, RumourNetwork, NewspaperSystem, EnvironmentalHealthSystem,
 //   AchievementSystem, NoiseSystem, DisguiseSystem, WarmthSystem
+
+// ── Issue #1247: Northfield Sunday League Football ────────────────────────────
+// New: FootballSystem.java in ragamuffin.core
+// New: Issue1247FootballSystemTest.java in src/test/java/ragamuffin/integration/
+// New NPCType entry: REFEREE — add to NPCType.java
+// New AchievementTypes: SUNDAY_LEAGUE, REF_ABUSE, DODGY_PIE, PUNTER, DIRTY_TACKLE — add to AchievementType.java
+// New CrimeType: MATCH_FIXING — add to CriminalRecord.java
+// New Materials: DODGY_PIE, FOOTBALL, REFEREE_WHISTLE — add to Material.java
+// New PropTypes: GOAL_POST_PROP, CORNER_FLAG_PROP, CENTRE_CIRCLE_PROP,
+//   PITCH_BOOKIE_PROP, PHYSIO_BAG_PROP — add to PropType.java
+// Integrates: FactionSystem, WeatherSystem, NewspaperSystem, RumourNetwork,
+//   WantedSystem, NotorietySystem, SoundSystem, BusSystem, WetherspoonsSystem,
+//   PubLockInSystem, StreetEconomySystem, HorseRacingSystem (bet model)
