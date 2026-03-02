@@ -42614,3 +42614,53 @@ After 23:00 Sunday (fair closing), a `DIESEL_GENERATOR_PROP` sits unattended nea
 // NewspaperSystem: arrival headline + generator theft headline
 // RumourNetwork: LOCAL_EVENT on arrival; GANG_ACTIVITY on generator theft
 // NeighbourhoodSystem: vibes +5 during fair; noise complaint −3 near residential
+
+---
+
+## Issue #1281: Add Northfield Nightclub — The Vaults, the Bouncer Economy & the 2am Chaos
+
+**Landmark**: `LandmarkType.NIGHTCLUB` ("The Vaults") — already declared; implement `NightclubSystem.java`
+
+The `NIGHTCLUB` landmark has extensive infrastructure already in place (Props: `NIGHTCLUB_BAR_PROP`, `NIGHTCLUB_VIP_TABLE_PROP`, `NIGHTCLUB_OFFICE_DOOR_PROP`, `NIGHTCLUB_SAFE_PROP`, `NIGHTCLUB_MIRROR_BALL_PROP`, `NIGHTCLUB_QUEUE_PROP`, `NIGHTCLUB_SPEAKER_PROP`, `NIGHTCLUB_TOILET_PROP`; NPCTypes: `NIGHTCLUB_MANAGER`, `NIGHTCLUB_PUNTER`, `BOUNCER`; Materials: `CLUB_WRISTBAND`, `FACTION_PASS`, `NIGHTCLUB_MASTER_KEY`; Achievement: `NIGHTCLUB_PICKPOCKET`) but no `NightclubSystem.java` exists. This issue implements the full system as specified in the "Add Northfield Nightclub" section above.
+
+Implement `NightclubSystem.java` and its tests as described in the existing spec section. Key implementation checklist:
+
+- `isOpen(float hour, int dayOfWeek)` — Thu–Sun 22:00–03:00 only
+- `canEnter(int notoriety, boolean disguiseActive)` — returns `EntryResult` enum (ENTRY_ALLOWED, ENTRY_DENIED, ENTRY_BRIBED, ENTRY_FACTION_PASS)
+- `addDrink(int currentLevel, DrinkType type)` — returns new level capped at 5; DOUBLE_VODKA adds 2
+- `calcFightProbability(float base, int avgNpcDrunkAbove3, boolean bothFactionsPresent)`
+- `closingTimeChaos(float timeHour)` — returns true when hour >= 2.75f (02:45)
+- `drugBustCheck(Random rng, boolean undercoverPresent)` — returns BustResult enum
+- `bribeBouncer(Inventory inventory, int coinCount)` — deducts 5 COIN, returns BribeResult
+- Fight ejection mechanic with `EJECTED_FROM_VAULTS` player flag
+- `DrunkenessLevel` tracking (0–5) with movement jitter at 3, screen blur at 5
+- Closing time chaos: taxi surge, kebab van spawn, `LOST_WALLET` drop
+- Tracker side mission via Tony Marchetti in VIP booth
+- Fire exit smuggle mechanic (30% alarm chance)
+- Integration with `TaxiSystem.setClosingTimeSurge()`, `KebabVanSystem`, `RaveSystem.isVaultsDjPresent()`, `MCBattleSystem`, `StreetSkillSystem`, `FactionSystem`, `NotorietySystem`, `WantedSystem`, `CriminalRecord`, `DisguiseSystem`, `RumourNetwork`, `NeighbourhoodSystem`, `WeatherSystem`, `NoiseSystem`, `WitnessSystem`
+
+New Materials to add: `ALCOPOP`, `DOUBLE_VODKA`, `PILLS`, `PHONE_TRACKER_ITEM`, `LOST_WALLET`, `CIGARETTES`
+New PropTypes to add: `STROBE_LIGHT_PROP`, `CIGARETTE_MACHINE_PROP`, `BOUNCER_BOOTH_PROP`, `VELVET_ROPE_PROP`, `PRIVATE_BOOTH_PROP`, `FIRE_EXIT_DOOR_PROP`
+New AchievementTypes to add: `VAULTS_REGULAR`, `DANCE_FLOOR_LEGEND`, `PEACEKEEPER`, `BACK_DOOR_MERCHANT`, `CLOSING_TIME_CHAMPION`
+New CriminalRecord.CrimeType: `DRUG_POSSESSION` (if absent), `AFFRAY`
+
+// ── Issue #1281: Add Northfield Nightclub — The Vaults ────────────────────
+// New: NightclubSystem.java in ragamuffin.core
+// New: NightclubSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1281NightclubIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: ALCOPOP, DOUBLE_VODKA, PILLS, PHONE_TRACKER_ITEM, LOST_WALLET, CIGARETTES — add to Material.java
+// PropType: STROBE_LIGHT_PROP, CIGARETTE_MACHINE_PROP, BOUNCER_BOOTH_PROP, VELVET_ROPE_PROP, PRIVATE_BOOTH_PROP, FIRE_EXIT_DOOR_PROP — add to PropType.java
+// AchievementType: VAULTS_REGULAR, DANCE_FLOOR_LEGEND, PEACEKEEPER, BACK_DOOR_MERCHANT, CLOSING_TIME_CHAMPION — add to AchievementType.java
+// CriminalRecord.CrimeType: AFFRAY (and DRUG_POSSESSION if absent) — add to CriminalRecord.java
+// NPCType: DJ, BARMAID, DEALER already likely present — verify and add if absent
+// TaxiSystem: setClosingTimeSurge(true) at 02:45; doubles fare
+// KebabVanSystem: spawnNearLandmark(NIGHTCLUB) at closing time
+// RaveSystem: isVaultsDjPresent() hook
+// MCBattleSystem: dancefloor freestyle at MC Rank >= 3
+// StreetSkillSystem: Dancing XP from dancefloor interaction
+// FactionSystem: MARCHETTI Respect gates free entry, VIP booth, tracker mission
+// WeatherSystem: STORM shrinks queue and speeds DrunkenessLevel ticks
+// NoiseSystem: NIGHTCLUB_SPEAKER_PROP emits high-radius noise during open hours
+// NeighbourhoodWatchSystem: Anger +5 per open night if Watch Anger > 30
+// NewspaperSystem: headline "Brawl at The Vaults" when fight triggers police attendance
+// DisguiseSystem: DISGUISE_KIT zeroes Notoriety check at door
