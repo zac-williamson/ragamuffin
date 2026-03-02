@@ -3351,6 +3351,64 @@ public enum AchievementType {
         "Pallet Pirate",
         "Two minutes. One pallet. You were in and out before the driver finished his fag.",
         1
+    ),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1163: NHS Dentist achievements
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Awarded after waiting the full 6-in-game-day NHS wait without forging or going private.
+     */
+    SIX_MONTH_WAIT(
+        "Six-Month Wait",
+        "You waited the full NHS stretch. Dignity intact. Sort of.",
+        1
+    ),
+
+    /**
+     * Awarded for successfully presenting a FORGED_WAITING_LIST_LETTER to halve your wait.
+     */
+    QUEUE_JUMPER_DENTAL(
+        "Queue Jumper",
+        "Forged the waiting-list letter. Deborah didn't notice. This time.",
+        1
+    ),
+
+    /**
+     * Awarded for paying Mirek for dental treatment (any outcome).
+     */
+    BUDGET_MOLAR(
+        "Budget Molar",
+        "Five quid. A car seat. Mirek's steady hands. What could go wrong.",
+        1
+    ),
+
+    /**
+     * Awarded when Mirek's treatment makes your toothache worse.
+     */
+    BOTCHED_JOB(
+        "Botched Job",
+        "Mirek said \"Is fine. Normal.\" It was neither.",
+        1
+    ),
+
+    /**
+     * Awarded when toothachePoints reach SEVERE_TOOTHACHE level (≥ 85).
+     */
+    SWEET_TOOTH_CONSEQUENCE(
+        "Sweet Tooth Consequence",
+        "All those Haribos and Fanta cans. Your dentist tried to warn you. You didn't have one.",
+        1
+    ),
+
+    /**
+     * Awarded for paying 15 COIN for the private next-day slot.
+     */
+    PRIVATE_PATIENT(
+        "Private Patient",
+        "Fifteen coin for a next-day slot. At least the magazines are newer.",
+        1
     );
 
     private final String name;
