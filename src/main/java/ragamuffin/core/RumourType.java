@@ -498,5 +498,13 @@ public enum RumourType {
     /** "Council environmental health have been round — something's going on."
      * — seeded on Janet assault or failed bribe within 15-block radius.
      * Spreads via PUBLIC and PENSIONER NPCs. */
-    COUNCIL_ENFORCEMENT;
+    COUNCIL_ENFORCEMENT,
+
+    // ── Issue #1220: BettingShopSystem ────────────────────────────────────────
+
+    /** "Someone's got a proper dodgy deal going down at the bookies — Marchetti
+     * lot are involved."
+     * — seeded by BettingShopSystem when player accepts Marchetti race fix.
+     * Spreads via STREET_LAD and FACTION_LIEUTENANT NPCs. */
+    DODGY_DEAL;
 }

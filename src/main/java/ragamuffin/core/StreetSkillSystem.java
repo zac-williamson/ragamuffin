@@ -124,7 +124,11 @@ public class StreetSkillSystem {
          *  obtaining a DRIVING_LICENCE. Reduces fault penalties per tier during the practical:
          *  tier 0 = baseline; tier 1 = −1 fault/collision; tier 2 = −2 fault/collision;
          *  tier 3 = −3 fault/collision; tier 4 = −5 fault/collision (licence required). */
-        DRIVING
+        DRIVING,
+
+        /** Issue #1220: Gambling — earned from FOBT spins (+1 XP) and horse/greyhound bets
+         *  (+2 XP per bet placed) at the Ladbrokes betting shop. */
+        GAMBLING
     }
 
     // ── Tier enum ─────────────────────────────────────────────────────────────

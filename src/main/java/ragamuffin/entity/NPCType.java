@@ -2157,7 +2157,20 @@ public enum NPCType {
      * Passive until claim invalidation triggers → records INSURANCE_FRAUD.
      * Speech: "Just passing through." / "Don't mind me." / "I've got all day, sunshine."
      */
-    INSURANCE_INVESTIGATOR(25f, 0f, 0f, false);
+    INSURANCE_INVESTIGATOR(25f, 0f, 0f, false),
+
+    /**
+     * Issue #1220: BOOKIES_CLERK — Derek, the world-weary Ladbrokes clerk.
+     * Late 50s, cardigan, Racing Post perpetually folded under one arm.
+     * Stands behind the counter Mon–Sat 09:00–22:00, Sun 10:00–18:00.
+     * Non-hostile; dispenses dry wisdom about form guides and the futility
+     * of accumulator bets.
+     * Speech: "Alright son, what's your fancy today?" / "The machine giveth
+     * and the machine taketh away, mate." / "I'm not supposed to give tips,
+     * but… look at the form on number four." / "We're closing up. Come back
+     * tomorrow."
+     */
+    BOOKIES_CLERK(40f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

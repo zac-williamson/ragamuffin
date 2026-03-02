@@ -501,8 +501,14 @@ public class GreyhoundRacingSystem {
                               NotorietySystem.AchievementCallback achievementCallback,
                               NotorietySystem notorietySystem) {
 
-        // Pick winner weighted by effective probability
-        int winnerTrap = pickWinner(race.getDogs());
+        // Pick winner — use fixed trap if race has been rigged (Issue #1220)
+        int winnerTrap;
+        if (fixedWinnerTrap >= 1) {
+            winnerTrap = fixedWinnerTrap;
+            fixedWinnerTrap = -1; // consume the fix (one race only)
+        } else {
+            winnerTrap = pickWinner(race.getDogs());
+        }
         race.resolve(winnerTrap);
 
         // Settle active bet if it's on this race
@@ -911,6 +917,43 @@ public class GreyhoundRacingSystem {
 
     public boolean hasTodaysSchedule() {
         return !sessionRaces.isEmpty();
+    }
+
+    // ── Issue #1220: Race-fix API ─────────────────────────────────────────────
+
+    /**
+     * Set whether the next greyhound race is fixed.
+     * Called by {@link BettingShopSystem} when the player accepts the Marchetti
+     * Lieutenant's race-fix offer. When {@code true}, the fixed winner trap
+     * ({@link #setFixedWinnerTrap}) overrides the random result.
+     *
+     * @param fixed {@code true} to fix the next race; {@code false} to clear
+     */
+    public void setRaceFixed(boolean fixed) {
+        if (!fixed) {
+            fixedWinnerTrap = -1;
+        }
+        // When set to true, caller must also call setFixedWinnerTrap(trap)
+        // to specify which trap wins, or the first trap (1) is used by default.
+        if (fixed && fixedWinnerTrap < 1) {
+            fixedWinnerTrap = 1; // default to trap 1
+        }
+    }
+
+    /**
+     * Returns {@code true} if the next race has been fixed via the Marchetti offer.
+     */
+    public boolean isRaceFixed() {
+        return fixedWinnerTrap >= 1;
+    }
+
+    /**
+     * Set the specific trap number that wins the fixed race.
+     *
+     * @param trap trap number (1–6)
+     */
+    public void setFixedWinnerTrap(int trap) {
+        this.fixedWinnerTrap = trap;
     }
 
     // ── Internal helpers ──────────────────────────────────────────────────────
