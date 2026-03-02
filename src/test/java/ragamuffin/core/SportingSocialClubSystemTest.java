@@ -13,6 +13,7 @@ import ragamuffin.ui.AchievementType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import ragamuffin.core.Faction;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -239,13 +240,13 @@ class SportingSocialClubSystemTest {
     void testMickCheatDetectedSeedsRumour() {
         // Set FENCE skill >= 10
         for (int i = 0; i < 100; i++) {
-            streetSkillSystem.awardXP(StreetSkillSystem.Skill.FENCE, 20);
+            streetSkillSystem.awardXP(StreetSkillSystem.Skill.TRADING, 20);
         }
-        assertTrue(streetSkillSystem.getSkillLevel(StreetSkillSystem.Skill.FENCE)
+        assertTrue(streetSkillSystem.getSkillLevel(StreetSkillSystem.Skill.TRADING)
                 >= SportingSocialClubSystem.FENCE_SKILL_DETECT_CHEAT,
                 "FENCE skill should be >= 10 for detection");
 
-        int respectBefore = factionSystem.getRespect(FactionSystem.Faction.MARCHETTI_CREW);
+        int respectBefore = factionSystem.getRespect(Faction.MARCHETTI_CREW);
 
         inventory.addItem(Material.CLUB_MEMBERSHIP_CARD, 1);
         system.setBackRoomActive(true);
@@ -263,7 +264,7 @@ class SportingSocialClubSystemTest {
                 rumourNetwork.getAllRumourTypes().contains(RumourType.CARD_CHEAT),
                 "CARD_CHEAT rumour should be seeded");
         assertEquals(respectBefore - SportingSocialClubSystem.RESPECT_PENALTY_DETECT_MICK,
-                factionSystem.getRespect(FactionSystem.Faction.MARCHETTI_CREW),
+                factionSystem.getRespect(Faction.MARCHETTI_CREW),
                 "MARCHETTI_CREW Respect should decrease by " +
                         SportingSocialClubSystem.RESPECT_PENALTY_DETECT_MICK);
         assertEquals(NPCState.ATTACKING_PLAYER, mick.getState(),
