@@ -3248,6 +3248,53 @@ public enum AchievementType {
         "Clean Eight",
         "Eight sessions without missing one. Sandra saved you a spot at the front.",
         8
+    ),
+
+    // ── Issue #1159: Northfield Angel Nails & Beauty ──────────────────────────
+
+    /**
+     * Awarded after 5 visits to Angel Nails & Beauty.
+     */
+    SALON_REGULAR(
+        "Regular",
+        "You've been in that chair five times. Trang knows your name and your drama.",
+        5
+    ),
+
+    /**
+     * Awarded when the player gets a full set of acrylics.
+     */
+    FULL_SET(
+        "Full Set",
+        "Eight COIN and two hours later, you've got talons. Respect.",
+        1
+    ),
+
+    /**
+     * Awarded after seeding 10 SALON_GOSSIP rumours via the waiting bench exchange.
+     */
+    GOSSIP_QUEEN(
+        "Gossip Queen",
+        "Ten gossip exchanges at the nail salon. You know everything about everyone.",
+        10
+    ),
+
+    /**
+     * Awarded for stealing nail polish from the COLOUR_WALL_PROP without being caught.
+     */
+    FIVE_FINGER_DISCOUNT_DELUXE(
+        "Five-Finger Discount (Deluxe)",
+        "Nicked a bottle of Gel Polish 214 from right under Kim's nose. Bold.",
+        1
+    ),
+
+    /**
+     * Awarded for receiving Marchetti faction intel from Stacey during a WAG Saturday.
+     */
+    STACEY_INTEL(
+        "Overheard at the Nail Bar",
+        "Stacey Marchetti said something she probably shouldn't have. You were listening.",
+        1
     );
 
     private final String name;

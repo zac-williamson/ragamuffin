@@ -3808,6 +3808,32 @@ public enum Material {
      */
     FORGED_WAITING_LIST_LETTER("Forged Waiting List Letter"),
 
+    // ── Issue #1159: Northfield Angel Nails & Beauty ─────────────────────────
+
+    /**
+     * Stolen Jewellery — fenceable item from Trang's cousin drop or other heist loot.
+     * Worth 8–15 COIN at FenceSystem; Notoriety +3 if caught with it.
+     */
+    STOLEN_JEWELLERY("Stolen Jewellery"),
+
+    /**
+     * Gel Set — salon supply consumed by a gel manicure service.
+     * Trang restocks daily. Yields nothing when broken.
+     */
+    GEL_SET("Gel Set"),
+
+    /**
+     * Counterfeit Perfume — fenceable item dropped via Trang's cousin.
+     * Worth 4 COIN at FenceSystem; low risk, no WitnessSystem flag.
+     */
+    COUNTERFEIT_PERFUME("Counterfeit Perfume"),
+
+    /**
+     * Nail Salon Voucher — given by Trang at Street Rep ≥ 50.
+     * Redeemable for one free manicure; single use.
+     */
+    NAIL_SALON_VOUCHER("Nail Salon Voucher"),
+
     // ── Issue #1157: Northfield Tesco Express ─────────────────────────────────
 
     /**
@@ -5333,6 +5359,11 @@ public enum Material {
             case TESCO_OWN_BRAND_VODKA:
             case READY_MEAL:
             case CLUBCARD_STATEMENT:
+            // Issue #1159: Northfield Angel Nails & Beauty — not block items
+            case STOLEN_JEWELLERY:
+            case GEL_SET:
+            case COUNTERFEIT_PERFUME:
+            case NAIL_SALON_VOUCHER:
                 return false;
             default:
                 return true;
@@ -6336,6 +6367,16 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official NHS letter
             case FORGED_WAITING_LIST_LETTER:
                 return IconShape.FLAT_PAPER;  // forged NHS letter
+
+            // Issue #1159: Northfield Angel Nails & Beauty
+            case STOLEN_JEWELLERY:
+                return IconShape.BOX;         // small jewellery box
+            case GEL_SET:
+                return IconShape.BOX;         // small gel pot
+            case COUNTERFEIT_PERFUME:
+                return IconShape.BOTTLE;      // perfume bottle
+            case NAIL_SALON_VOUCHER:
+                return IconShape.FLAT_PAPER;  // voucher card
 
             // Issue #1157: Northfield Tesco Express
             case TESCO_SANDWICH:
