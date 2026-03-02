@@ -1649,7 +1649,102 @@ public enum PropType {
      * Tooltip: "Not towels."
      * Destroyed by 2 punches; yields BROWN_ENVELOPE.
      */
-    LAUNDRY_BAG_PROP(0.80f, 0.60f, 0.60f, 2, Material.BROWN_ENVELOPE);
+    LAUNDRY_BAG_PROP(0.80f, 0.60f, 0.60f, 2, Material.BROWN_ENVELOPE),
+
+    // ── Issue #1128: Northfield NHS Walk-In Centre ─────────────────────────────
+
+    /**
+     * Triage reception desk — TRIAGE_NURSE Brenda's station at the entrance.
+     * Player interacts to join the triage queue. Displays estimated wait time.
+     * Destruction yields SCRAP_METAL; 5 hits.
+     */
+    TRIAGE_DESK_PROP(1.60f, 1.00f, 0.60f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Plastic waiting chair — one of 4–8 in the waiting room.
+     * Sitting accelerates queue timer. Patients gossip here.
+     * 2 hits; yields SCRAP_METAL.
+     */
+    WAITING_CHAIR_PROP(0.55f, 0.85f, 0.55f, 2, Material.SCRAP_METAL),
+
+    /**
+     * NHS treatment cubicle — curtained bay where Dr. Okafor treats patients.
+     * Player must be adjacent for emergency healing. 4 cubicles total.
+     * Indestructible (hitPoints 99).
+     */
+    TREATMENT_CUBICLE_PROP(2.00f, 2.20f, 1.80f, 99, null),
+
+    /**
+     * Medicine cabinet — locked cabinet in the medicine room.
+     * Requires LOCKPICK (4 hits to open). Yields PARACETAMOL ×2, BANDAGE,
+     * ANTISEPTIC_CREAM; 15% chance MORPHINE_AMPOULE. Opening triggers
+     * MEDICINE_THEFT CriminalRecord, +8 Notoriety; Brenda calls police if
+     * she hears the lockpick. 8 hits with CROWBAR to destroy.
+     */
+    MEDICINE_CABINET_PROP(0.70f, 1.60f, 0.40f, 8, Material.PARACETAMOL),
+
+    /**
+     * Controlled drugs safe — reinforced safe in the medicine room.
+     * Requires CROWBAR. Yields TRAMADOL ×1–2, DIAZEPAM ×1.
+     * Opening adds MEDICINE_THEFT + CONTROLLED_DRUG_TRAFFICKING to CriminalRecord,
+     * +12 Notoriety, +2 WantedSystem stars. 20 hits; yields IRON on destruction.
+     */
+    CONTROLLED_DRUGS_SAFE_PROP(0.80f, 1.00f, 0.70f, 20, Material.IRON),
+
+    /**
+     * Blood pressure machine — self-service kiosk in the waiting room.
+     * Player interaction gives a random BP reading. High reading triggers
+     * a temporary resting heart-rate buff (reduces sprint fatigue).
+     * 3 hits; yields SCRAP_METAL.
+     */
+    BLOOD_PRESSURE_MACHINE_PROP(0.50f, 1.40f, 0.50f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Ambulance bay — docking station for the NHS ambulance outside the centre.
+     * PARAMEDIC NPCs (Andy and Sue) spawn here. Interacting when player is
+     * gravely injured triggers immediate transport to treatment.
+     * Indestructible (hitPoints 99).
+     */
+    AMBULANCE_BAY_PROP(3.00f, 1.80f, 6.00f, 99, null),
+
+    /**
+     * NHS sign — large illuminated sign above the main entrance.
+     * 3 hits; yields SCRAP_METAL. Destroying adds +2 Notoriety (vandalism).
+     */
+    NHS_SIGN_PROP(2.00f, 0.50f, 0.20f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Cigarette bin — metal bin outside the entrance for cigarette ends.
+     * Contains CIGARETTE ×1–3 with 40% probability. 2 hits; yields SCRAP_METAL.
+     */
+    CIGARETTE_BIN_PROP(0.30f, 0.90f, 0.30f, 2, Material.SCRAP_METAL),
+
+    /**
+     * Walk-in medicine room door — locked door separating waiting room from
+     * the medicine room. Requires LOCKPICK to open. Opening triggers Brenda's
+     * alarm if she is within 10 blocks. 8 hits; yields WOOD.
+     */
+    WALK_IN_MEDICINE_ROOM_DOOR_PROP(1.00f, 2.20f, 0.15f, 8, Material.WOOD),
+
+    /**
+     * Queue board — electronic display showing current queue length and wait times.
+     * Player can inspect to see their position. 3 hits; yields SCRAP_METAL.
+     */
+    QUEUE_BOARD_PROP(1.00f, 1.40f, 0.15f, 3, Material.SCRAP_METAL),
+
+    /**
+     * X-ray viewer — wall-mounted light box in a treatment cubicle.
+     * Decorative; can be interacted with for a humorous message about
+     * "someone's suspicious left knee".
+     * 3 hits; yields SCRAP_METAL.
+     */
+    X_RAY_VIEWER_PROP(0.60f, 0.80f, 0.15f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Sharps bin — yellow disposal container for used syringes.
+     * Contains UNUSED_SYRINGE ×1 with 30% probability. 2 hits; yields PLASTIC.
+     */
+    SHARPS_BIN_PROP(0.35f, 0.80f, 0.35f, 2, Material.PLASTIC);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

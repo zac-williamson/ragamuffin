@@ -3136,7 +3136,63 @@ public enum Material {
      * (suspicious resale). Flagged NOT_STOLEN so no Notoriety on standard fence.
      * Tooltip: "Someone chucked this. Their loss."
      */
-    WORKING_LAPTOP("Working Laptop");
+    WORKING_LAPTOP("Working Laptop"),
+
+    // ── Issue #1128: Northfield NHS Walk-In Centre ─────────────────────────────
+
+    /**
+     * Bandage — sterile dressing from the Walk-In Centre medicine cabinet.
+     * Heals 5 HP when used. Fenceable for 2 COIN.
+     * Tooltip: "Clean, sterile, and technically yours now."
+     */
+    BANDAGE("Bandage"),
+
+    /**
+     * Morphine Ampoule — rare controlled drug, 15% chance in MEDICINE_CABINET_PROP.
+     * Heals 30 HP instantly. Fenceable for 10–12 COIN.
+     * Triggers MEDICINE_THEFT CriminalRecord and +8 Notoriety on raid.
+     * Tooltip: "Single-use. Handle with care."
+     */
+    MORPHINE_AMPOULE("Morphine Ampoule"),
+
+    /**
+     * Tramadol — controlled opioid from CONTROLLED_DRUGS_SAFE_PROP (requires CROWBAR).
+     * Heals 15 HP. Fenceable for 6–10 COIN. Triggers CONTROLLED_DRUG_TRAFFICKING
+     * CriminalRecord if 3+ units fenced in one session.
+     * Tooltip: "Prescription only. Technically."
+     */
+    TRAMADOL("Tramadol"),
+
+    /**
+     * Diazepam — controlled benzodiazepine from CONTROLLED_DRUGS_SAFE_PROP.
+     * Reduces fear buff. Fenceable for 6–8 COIN.
+     * Tooltip: "Takes the edge off. All of it."
+     */
+    DIAZEPAM("Diazepam"),
+
+    /**
+     * Unused Syringe — found in SHARPS_BIN_PROP or dropped by medical staff.
+     * Used in PirateRadioSystem transmitter recipe (adds signal clarity buff).
+     * Fenceable for 1 COIN or tradeable at black market.
+     * Tooltip: "Still sealed. Mostly."
+     */
+    UNUSED_SYRINGE("Unused Syringe"),
+
+    /**
+     * Discharge Letter — issued by Dr. Okafor after emergency treatment.
+     * Accepted by JobCentreSystem as a sick note (same weight as GP_SICK_NOTE).
+     * Accepted by LaunderetteSystem as a fraud alibi for 2 COIN.
+     * Tooltip: "Official NHS paper. Worth surprisingly little."
+     */
+    DISCHARGE_LETTER("Discharge Letter"),
+
+    /**
+     * Prescription Form — pickpocketable from PENSIONER/PUBLIC NPCs in the
+     * Walk-In Centre waiting room (15% chance). Can be used at the pharmacy
+     * to obtain prescription items. Triggers PRESCRIPTION_FRAUD if caught.
+     * Tooltip: "Someone else's problem, briefly."
+     */
+    PRESCRIPTION_FORM("Prescription Form");
 
     private final String displayName;
 
@@ -3916,6 +3972,17 @@ public enum Material {
             case WORKING_LAPTOP:          return cs(0.22f, 0.22f, 0.22f,  // Dark grey lid
                                                     0.35f, 0.35f, 0.35f); // Lighter base
 
+            // Issue #1128: Northfield NHS Walk-In Centre
+            case BANDAGE:                 return c(0.95f, 0.95f, 0.95f);   // White dressing
+            case MORPHINE_AMPOULE:        return cs(0.75f, 0.88f, 0.95f,   // Glass blue tint
+                                                    0.90f, 0.95f, 0.98f); // Clear glass
+            case TRAMADOL:                return c(0.80f, 0.78f, 0.95f);   // Pale purple capsule
+            case DIAZEPAM:                return c(0.65f, 0.85f, 0.70f);   // Pale green tablet
+            case UNUSED_SYRINGE:          return cs(0.92f, 0.92f, 0.92f,   // Clear barrel
+                                                    0.90f, 0.15f, 0.15f); // Red plunger
+            case DISCHARGE_LETTER:        return c(0.95f, 0.98f, 0.92f);   // Off-white NHS paper
+            case PRESCRIPTION_FORM:       return c(0.85f, 0.92f, 0.98f);   // Light blue form
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4307,6 +4374,14 @@ public enum Material {
             case JUNK_BAG:
             case CIRCUIT_BOARD:
             case WORKING_LAPTOP:
+            // Issue #1128: NHS Walk-In Centre — not block items
+            case BANDAGE:
+            case MORPHINE_AMPOULE:
+            case TRAMADOL:
+            case DIAZEPAM:
+            case UNUSED_SYRINGE:
+            case DISCHARGE_LETTER:
+            case PRESCRIPTION_FORM:
                 return false;
             default:
                 return true;
@@ -4415,6 +4490,14 @@ public enum Material {
             // Issue #1028: Northfield Cash Converters — small electronics sit on shelves
             case DVD:
             case WIPED_PHONE:
+            // Issue #1128: NHS Walk-In Centre — small medical items sit on surfaces
+            case BANDAGE:
+            case MORPHINE_AMPOULE:
+            case TRAMADOL:
+            case DIAZEPAM:
+            case UNUSED_SYRINGE:
+            case DISCHARGE_LETTER:
+            case PRESCRIPTION_FORM:
                 return true;
             default:
                 return false;
@@ -5097,6 +5180,22 @@ public enum Material {
                 return IconShape.BOX;         // small bird cage shape
             case GOLDFISH:
                 return IconShape.BOX;         // bag of water with fish
+
+            // Issue #1128: NHS Walk-In Centre
+            case BANDAGE:
+                return IconShape.FLAT_PAPER;  // rolled bandage / dressing
+            case MORPHINE_AMPOULE:
+                return IconShape.BOTTLE;      // glass ampoule vial
+            case TRAMADOL:
+                return IconShape.FLAT_PAPER;  // blister packet
+            case DIAZEPAM:
+                return IconShape.FLAT_PAPER;  // tablet packet
+            case UNUSED_SYRINGE:
+                return IconShape.TOOL;        // syringe barrel + plunger
+            case DISCHARGE_LETTER:
+                return IconShape.FLAT_PAPER;  // official letter paper
+            case PRESCRIPTION_FORM:
+                return IconShape.FLAT_PAPER;  // NHS prescription slip
 
             default:
                 return IconShape.BOX;

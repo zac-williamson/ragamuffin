@@ -488,7 +488,16 @@ public enum LandmarkType {
      * Also serves as a Marchetti Crew money-laundering front.
      * Managed by TanningSalonSystem.
      */
-    SUN_KISSED_STUDIO;
+    SUN_KISSED_STUDIO,
+
+    /**
+     * Issue #1128: Northfield NHS Walk-In Centre.
+     * Emergency healthcare for Northfield residents. Open Mon–Sat 08:00–22:00,
+     * Sun 10:00–18:00. Triage queue (15–90 min), three treatment tiers,
+     * PARAMEDIC NPCs in ambulance bay. Drug cabinet economy behind locked door.
+     * Managed by WalkInCentreSystem.
+     */
+    NHS_WALK_IN_CENTRE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -572,6 +581,7 @@ public enum LandmarkType {
             case FUNERAL_PARLOUR:       return "Meredith & Sons Funeral Directors";
             case PHARMACY:              return "Day & Night Chemist";
             case SUN_KISSED_STUDIO:     return "Sun Kissed Studio";
+            case NHS_WALK_IN_CENTRE:    return "Northfield Walk-In Centre";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
