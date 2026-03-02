@@ -28,6 +28,7 @@ public enum LandmarkType {
     COMMUNITY_CENTRE,
     CHURCH,
     TAXI_RANK,
+    MINICAB_OFFICE,
     CAR_WASH,
     COUNCIL_FLATS,
     PETROL_STATION,
@@ -662,6 +663,7 @@ public enum LandmarkType {
             case COMMUNITY_CENTRE:  return "Northfield Community Ctr";
             case CHURCH:            return "St. Mary's Church";
             case TAXI_RANK:         return "A1 Taxis";
+            case MINICAB_OFFICE:    return "Big Terry's Cabs";
             case CAR_WASH:          return "Sparkle Car Wash";
             case PETROL_STATION:    return "BP Petrol Station";
             case NANDOS:            return "Nando's";

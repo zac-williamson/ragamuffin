@@ -1282,6 +1282,14 @@ public enum PropType {
      */
     HANDWRITTEN_SIGN_PROP(0.10f, 0.60f, 0.40f, 1, null),
 
+    // ── Issue #1207: Big Terry's Cabs ─────────────────────────────────────────
+
+    /**
+     * Dispatcher hatch — the hatch-window counter Big Terry sits behind.
+     * Press E to open the cab-booking menu. Impassable. Destroyed by 6 punches; yields WOOD.
+     */
+    DISPATCHER_HATCH_PROP(1.20f, 1.00f, 0.80f, 6, Material.WOOD),
+
     // ── Issue #1091: Northfield Nando's ─────────────────────────────────────
 
     /**

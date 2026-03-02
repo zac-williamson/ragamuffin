@@ -1137,6 +1137,16 @@ public enum Material {
      */
     DODGY_PACKAGE("Dodgy Package"),
 
+    // ── Issue #1207: Big Terry's Cabs ─────────────────────────────────────────
+
+    /**
+     * Fare Receipt — issued by Big Terry's Cabs when the player is overcharged (10% chance).
+     * Redeem at the DISPATCHER_HATCH_PROP for a 1 COIN refund.
+     * Filing a complaint awards CUSTOMER_SERVICE achievement.
+     * Tooltip: "Terry's overcharged you by 1 COIN. He claims it's a 'fuel surcharge'."
+     */
+    FARE_RECEIPT("Fare Receipt"),
+
     // ── Issue #969: Northfield Cemetery ───────────────────────────────────────
 
     /**
