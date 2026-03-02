@@ -622,7 +622,19 @@ public enum LandmarkType {
      * Vehicle removal uses TaxiSystem vehicle-movement logic for towing animation.
      * Managed by TrafficWardenSystem.
      */
-    VEHICLE_IMPOUND;
+    VEHICLE_IMPOUND,
+
+    // ── Issue #1205: Northfield DVSA Test Centre ──────────────────────────────
+
+    /**
+     * Issue #1205: DVSA_TEST_CENTRE — the Northfield DVSA driving test centre on
+     * the industrial estate. A 10×8×3 pebble-dash building.
+     * Open Mon–Fri 08:00–17:00, Sat 08:00–13:00.
+     * Staffed by Sandra (DVSA_EXAMINER) at the desk and Keith (DRIVING_INSTRUCTOR)
+     * outside with a car.
+     * Managed by DrivingTestSystem.
+     */
+    DVSA_TEST_CENTRE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -717,6 +729,7 @@ public enum LandmarkType {
             case INFO_BROKER_PUB:       return "The Feathers";
             case COUNCIL_OFFICE:        return "Northfield Council Office";
             case VEHICLE_IMPOUND:       return "Vehicle Impound";
+            case DVSA_TEST_CENTRE:      return "Northfield DVSA Test Centre";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

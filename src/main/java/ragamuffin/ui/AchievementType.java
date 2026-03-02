@@ -3956,6 +3956,56 @@ public enum AchievementType {
         "Mic Drop",
         "Stole the mic mid-show. Bev is absolutely fuming.",
         1
+    ),
+
+    // ── Issue #1205: Northfield DVSA Test Centre ──────────────────────────────
+
+    /**
+     * Awarded when the player passes the DVSA theory test with ≥8/10 correct.
+     */
+    THEORY_PASSMARK(
+        "First Time Pass",
+        "You passed the theory test. Eight out of ten. The Highway Code is surprisingly violent.",
+        1
+    ),
+
+    /**
+     * Awarded when the player obtains a full DRIVING_LICENCE by passing the
+     * practical test with Sandra (≤15 faults).
+     */
+    ROAD_LEGAL(
+        "Road Legal",
+        "Full UK licence. Sandra looked almost proud. Almost.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully bribes Sandra for an instant pass
+     * (CHARISMA ≥2 + 15 COIN, 70% success, no witnesses within 6 blocks).
+     */
+    PALM_GREASED(
+        "Cash in Hand",
+        "A brown envelope and a firm handshake. Sandra calls it a gift. The law calls it something else.",
+        1
+    ),
+
+    /**
+     * Awarded when the player completes 3 driving lessons with Keith.
+     */
+    BACKSEAT_DRIVER(
+        "Backseat Driver",
+        "Three lessons with Keith. He's given up correcting your mirror checks.",
+        1
+    ),
+
+    /**
+     * Awarded when a police NPC is spawned due to the unlicensed-driving penalty
+     * (player entered a car without a DRIVING_LICENCE).
+     */
+    DRIVING_WITHOUT_DUE_CARE(
+        "No Licence, No Problem",
+        "The police disagree. Twenty percent chance. You hit the twenty percent.",
+        1
     );
 
     private final String name;

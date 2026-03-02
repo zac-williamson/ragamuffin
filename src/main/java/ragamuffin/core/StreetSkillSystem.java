@@ -117,7 +117,14 @@ public class StreetSkillSystem {
         /** Issue #1153: Aerobics — trained at Sandra's Mon/Wed/Fri class at the Community Centre.
          *  Raw integer points (0–10). Improves rhythm prompt timing window:
          *  level 0–2: baseline 0.4s window; 3–5: 0.55s window; 6+: 0.70s window. */
-        AEROBICS
+        AEROBICS,
+
+        /** Issue #1205: Driving — earned via lessons with Keith (DRIVING_INSTRUCTOR) and
+         *  by completing the practical test. Raw integer XP; tier 4 cap unlocked only after
+         *  obtaining a DRIVING_LICENCE. Reduces fault penalties per tier during the practical:
+         *  tier 0 = baseline; tier 1 = −1 fault/collision; tier 2 = −2 fault/collision;
+         *  tier 3 = −3 fault/collision; tier 4 = −5 fault/collision (licence required). */
+        DRIVING
     }
 
     // ── Tier enum ─────────────────────────────────────────────────────────────
