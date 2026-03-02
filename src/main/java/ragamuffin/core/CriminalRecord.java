@@ -654,7 +654,24 @@ public class CriminalRecord {
          * Notoriety ≥ 50 triggers the 10% detection risk.
          * Penalty: WantedSystem +1 star.
          */
-        CYBER_FRAUD("Cyber fraud");
+        CYBER_FRAUD("Cyber fraud"),
+
+        // ── Issue #1225: Northfield Fast Cash Finance — PaydayLoanSystem ─────────
+
+        /**
+         * Recorded when the player attacks the BAILIFF NPC during a debt enforcement
+         * visit (PaydayLoanSystem). Triggers WantedSystem +2 stars.
+         * Penalty: +10 Notoriety; Barry refuses all future loans.
+         */
+        ASSAULT_ON_ENFORCEMENT_AGENT("Assault on an enforcement agent (bailiff)"),
+
+        /**
+         * Recorded when the player's loan from Fast Cash Finance defaults — i.e.
+         * after the 3rd missed repayment causes the debt to be sold to the Marchetti
+         * Crew. Seeds LOCAL_EVENT rumour to nearby NPCs.
+         * Penalty: Notoriety +5.
+         */
+        LOAN_DEFAULT("Loan default (Fast Cash Finance)");
 
         private final String displayName;
 
