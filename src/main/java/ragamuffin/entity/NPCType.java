@@ -1728,7 +1728,94 @@ public enum NPCType {
      * Speech: "Tommy sends his regards." / "Is it ready?" /
      *         "Don't make this difficult." / "You've made a very big mistake."
      */
-    MARCHETTI_ENFORCER(60f, 14f, 1.8f, false);
+    MARCHETTI_ENFORCER(60f, 14f, 1.8f, false),
+
+    // ── Issue #1153: Northfield Community Centre ──────────────────────────────
+
+    /**
+     * Community Centre Manager — Denise, the centre manager.
+     * Patrols the front desk 09:00–17:00 Mon–Fri. Passive; can issue AEROBICS_PASS
+     * and help with legitimate grant applications (trust ≥ 30).
+     * Speech: "Morning! What can I help you with?" /
+     *         "Sessions are on the board by the entrance." /
+     *         "We're a community resource — treat it like one."
+     */
+    COMMUNITY_CENTRE_MANAGER(20f, 0f, 0f, false),
+
+    /**
+     * Community Centre Volunteer — a general volunteer helper.
+     * Sets up chairs, makes tea, runs the tuck shop. Passive.
+     */
+    COMMUNITY_CENTRE_VOLUNTEER(20f, 0f, 0f, false),
+
+    /**
+     * Aerobics Instructor — Sandra, who runs Mon/Wed/Fri 09:30–10:30 aerobics.
+     * Leads the rhythm mini-game with 8 prompts. Passive; speech encourages exercise.
+     */
+    AEROBICS_INSTRUCTOR(20f, 0f, 0f, false),
+
+    /**
+     * Aerobics Participant — regular attendee of Sandra's aerobics class.
+     * 4–8 spawn during session hours. Passive.
+     */
+    AEROBICS_PARTICIPANT(20f, 0f, 0f, false),
+
+    /**
+     * Young Mum — attends the Toddler Playgroup Tue/Thu mornings.
+     * Brings a TODDLER NPC. Passive; gossips.
+     */
+    YOUNG_MUM(20f, 0f, 0f, false),
+
+    /**
+     * Toddler — a small child attending the Tuesday/Thursday playgroup.
+     * Passive; follows nearest YOUNG_MUM. Runs around near BOUNCY_CASTLE_PROP.
+     */
+    TODDLER(5f, 0f, 0f, false),
+
+    /**
+     * Citizens Advice Volunteer — Derek, who runs the Tue 14:00–16:00 CAB drop-in.
+     * Gives CAB_REFERRAL_LETTER (halves FoodBank wait) or CHARACTER_REFERENCE_LETTER
+     * (reduces MagistratesCourtSystem sentence by one tier). Passive.
+     * Speech: "Take a seat — we'll get to you." /
+     *         "I can't give legal advice, but I can point you in the right direction."
+     */
+    CAB_VOLUNTEER(20f, 0f, 0f, false),
+
+    /**
+     * NA Attendee — regular at the Thursday 19:00–20:30 Narcotics Anonymous meeting.
+     * Passive; listens during share-story mechanic.
+     */
+    NA_ATTENDEE(20f, 0f, 0f, false),
+
+    /**
+     * NA Chair — Brenda, who facilitates the Thursday NA meeting.
+     * Passive; awards COMMUNITY_TRUST after sharing. Seeds a rumour at trust ≥ 30.
+     */
+    NA_CHAIR(20f, 0f, 0f, false),
+
+    /**
+     * Community Member — a generic Northfield resident who attends community events
+     * (curry night, aerobics, etc.). Passive.
+     */
+    COMMUNITY_MEMBER(20f, 0f, 0f, false),
+
+    /**
+     * Karate Kid — a child attending the Wednesday 18:30 Karate Juniors session.
+     * Passive; follows KARATE_INSTRUCTOR.
+     */
+    KARATE_KID(15f, 2f, 3.0f, false),
+
+    /**
+     * Karate Instructor — runs the Wednesday 18:30 Karate Juniors class.
+     * Passive; demonstrates moves. Hostile if provoked (attacks defending).
+     */
+    KARATE_INSTRUCTOR(30f, 8f, 1.5f, false),
+
+    /**
+     * Curry Cook — volunteers at the Saturday 18:00–21:00 curry night.
+     * Sells CURRY_AND_RICE for 2 COIN (+12 Warmth, +15 Hunger). Passive.
+     */
+    CURRY_COOK(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
