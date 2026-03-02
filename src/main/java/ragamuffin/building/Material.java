@@ -1173,6 +1173,13 @@ public enum Material {
      */
     OLD_PHOTOGRAPH("Old Photograph"),
 
+    /**
+     * Old Coin — a tarnished Victorian coin found in graves.
+     * Fenceable to FENCE NPC for 8 COIN.
+     * Tooltip: "Worn smooth. Probably worth something to the right person."
+     */
+    OLD_COIN("Old Coin"),
+
     // ── Issue #971: The Rusty Anchor Wetherspoons ──────────────────────────────
 
     /**
@@ -3572,6 +3579,8 @@ public enum Material {
                                                0.60f, 0.45f, 0.55f); // Mauve floral accent
             case OLD_PHOTOGRAPH:     return cs(0.85f, 0.78f, 0.65f,  // Sepia tones
                                                0.55f, 0.45f, 0.35f); // Dark border
+            case OLD_COIN:           return cs(0.60f, 0.52f, 0.28f,  // Tarnished bronze face
+                                               0.45f, 0.38f, 0.18f); // Dark aged rim
 
             // Issue #971: The Rusty Anchor Wetherspoons
             case CHEAP_SPIRITS:      return cs(0.88f, 0.78f, 0.30f,  // Amber spirits
@@ -4079,6 +4088,7 @@ public enum Material {
             case POCKET_WATCH:
             case CONDOLENCE_CARD:
             case OLD_PHOTOGRAPH:
+            case OLD_COIN:
             // Issue #971: The Rusty Anchor Wetherspoons (not block items)
             case CHEAP_SPIRITS:
             case CURRY_CLUB_SPECIAL:
@@ -4741,6 +4751,8 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // greeting card shape
             case OLD_PHOTOGRAPH:
                 return IconShape.FLAT_PAPER;  // flat photo print
+            case OLD_COIN:
+                return IconShape.CYLINDER;    // round coin disc
 
             // Issue #971: The Rusty Anchor Wetherspoons
             case CHEAP_SPIRITS:

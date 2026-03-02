@@ -550,6 +550,14 @@ public enum NPCType {
      */
     MOURNER(20f, 0f, 0f, false),
 
+    /**
+     * Gravedigger — Reg, the cemetery's hired gravedigger.
+     * Present weekday mornings 06:00–09:00, digging new plots.
+     * Passive unless he witnesses the player digging a grave —
+     * then becomes hostile and calls police.
+     */
+    GRAVEDIGGER(30f, 5f, 1.5f, false),
+
     // ── Issue #973: Northfield GP Surgery ─────────────────────────────────────
 
     /**
