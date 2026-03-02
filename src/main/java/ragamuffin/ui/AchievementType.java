@@ -3547,6 +3547,58 @@ public enum AchievementType {
         "TV Licence Scammer",
         "Three pensioners. Three fake licences. The Daily Ragamuffin knows your face.",
         3
+    ),
+
+    // ── Issue #1181: Northfield Chugger Blitz ─────────────────────────────────
+
+    /**
+     * Awarded when the player donates to a CHUGGER NPC (2 COIN, −1 Notoriety).
+     * Unlocked on first donation.
+     */
+    GOOD_SAMARITAN(
+        "Good Samaritan",
+        "You gave 2 quid to someone holding a clipboard. They were genuinely grateful. Briefly.",
+        1
+    ),
+
+    /**
+     * Awarded when the player signs up for a Direct Debit via a CHUGGER NPC.
+     * Triggers the 3-day 1 COIN/day deduction mechanic.
+     */
+    STANDING_ORDER(
+        "Standing Order",
+        "Three days. Three coins. Automatic. You know what you signed.",
+        1
+    ),
+
+    /**
+     * Awarded when the player punches a CHUGGER NPC (aggressive refusal).
+     * Triggers FLEEING state, +8 Notoriety, +1 Wanted star.
+     */
+    CLIPBOARD_RAGE(
+        "Clipboard Rage",
+        "You punched a charity worker. The clipboard did not survive.",
+        1
+    ),
+
+    /**
+     * Awarded when the player collects fake donations using CHARITY_TABARD + CHARITY_CLIPBOARD.
+     * Fraud detected on 2nd suspicious NPC contact.
+     */
+    DIRECT_DEBIT_HUSTLE(
+        "Direct Debit Hustle",
+        "Fake tabard. Real clipboard. Almost-real donations. Almost.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully dodges a CHUGGER NPC three times in a row
+     * using road-crossing, sprint, or disguise mechanics.
+     */
+    CHUGGER_DODGER(
+        "Chugger Dodger",
+        "Three times. Three different methods. You are basically a black belt in clipboard avoidance.",
+        3
     );
 
     private final String name;

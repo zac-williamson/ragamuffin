@@ -1952,7 +1952,19 @@ public enum NPCType {
      * goods from unlicensed traders. The player can bribe them for 5 COIN.
      * Flees if the player has ≥ 3 wanted stars (not their department).
      */
-    COUNCIL_OFFICER(25f, 0f, 0f, false);
+    COUNCIL_OFFICER(25f, 0f, 0f, false),
+
+    // ── Issue #1181: Northfield Chugger Blitz ─────────────────────────────────
+
+    /**
+     * Chugger — a roving charity fundraiser who patrols the high street weekdays
+     * 09:00–17:00. Named NPCs: Kelly (female) and Marcus (male).
+     * Intercepts the player within 3 blocks with a 6-second HUD prompt offering
+     * four responses: Donate, Sign Up for Direct Debit, Refuse, or Flee.
+     * Aggressive refusal (punching) triggers FLEEING state.
+     * Passive otherwise; never initiates combat.
+     */
+    CHUGGER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

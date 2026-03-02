@@ -4067,7 +4067,36 @@ public enum Material {
      * Can be used as a improvised weapon (1 damage). Value: 0 COIN.
      * Picking one up unlocks the TINY_PENCIL achievement.
      */
-    CATALOGUE_PENCIL("Catalogue Pencil");
+    CATALOGUE_PENCIL("Catalogue Pencil"),
+
+    // ── Issue #1181: Northfield Chugger Blitz ─────────────────────────────────
+
+    /**
+     * Charity Tabard — bright yellow tabard worn by charity fundraisers.
+     * Craftable from FABRIC_SCRAP×1 + MARKER_PEN×1.
+     * Equipping redirects CHUGGER NPCs to target other NPCs instead of the player.
+     * Equip to collect fake donations (1 COIN each per NPC interaction).
+     * Fraud detection triggers on 2nd suspicious NPC contact.
+     * Tooltip: "The official disguise of the man who wants your direct debit."
+     */
+    CHARITY_TABARD("Charity Tabard"),
+
+    /**
+     * Charity Clipboard — the fundraiser's essential tool.
+     * Looted from CHUGGER NPCs or craftable indirectly via the CHARITY_TABARD bundle.
+     * Required to collect fake donations when wearing CHARITY_TABARD.
+     * Can be stolen by YOUTH_GANG NPCs (sends chugger into DISTRESSED state).
+     * Tooltip: "Contains: a pen, a sign-up form, and broken dreams."
+     */
+    CHARITY_CLIPBOARD("Charity Clipboard"),
+
+    /**
+     * Marker Pen — a thick permanent marker used for signs and crafting.
+     * Found in community centres, offices, and charity shops.
+     * Used in the CHARITY_TABARD crafting recipe.
+     * Tooltip: "Smells funny. Writes well."
+     */
+    MARKER_PEN("Marker Pen");
 
     private final String displayName;
 
@@ -5119,6 +5148,14 @@ public enum Material {
             case CATALOGUE_PENCIL:      return cs(0.95f, 0.80f, 0.10f,  // Yellow pencil body
                                                   0.50f, 0.30f, 0.10f); // Brown wood tip
 
+            // Issue #1181: Northfield Chugger Blitz
+            case CHARITY_TABARD:        return cs(0.95f, 0.80f, 0.05f,  // Bright yellow tabard
+                                                  0.15f, 0.55f, 0.25f); // Green charity logo
+            case CHARITY_CLIPBOARD:     return cs(0.72f, 0.52f, 0.28f,  // Brown clipboard board
+                                                  0.95f, 0.95f, 0.92f); // White paper
+            case MARKER_PEN:            return cs(0.10f, 0.10f, 0.10f,  // Black marker body
+                                                  0.85f, 0.20f, 0.20f); // Red cap
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5621,6 +5658,10 @@ public enum Material {
             case FORGED_RECEIPT:
             case BLANK_RECEIPT:
             case CATALOGUE_PENCIL:
+            // Issue #1181: Northfield Chugger Blitz
+            case CHARITY_TABARD:
+            case CHARITY_CLIPBOARD:
+            case MARKER_PEN:
                 return false;
             default:
                 return true;
@@ -5780,6 +5821,9 @@ public enum Material {
             case FORGED_RECEIPT:
             case BLANK_RECEIPT:
             case CATALOGUE_PENCIL:
+            // Issue #1181: Northfield Chugger Blitz — small items placed on surfaces
+            case CHARITY_CLIPBOARD:
+            case MARKER_PEN:
                 return true;
             default:
                 return false;
@@ -6746,6 +6790,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // thermal paper
             case CATALOGUE_PENCIL:
                 return IconShape.CYLINDER;    // tiny pencil
+
+            // Issue #1181: Northfield Chugger Blitz
+            case CHARITY_TABARD:
+                return IconShape.FLAT_PAPER;  // wearable tabard (folded)
+            case CHARITY_CLIPBOARD:
+                return IconShape.FLAT_PAPER;  // clipboard with form
+            case MARKER_PEN:
+                return IconShape.CYLINDER;    // marker pen
 
             default:
                 return IconShape.BOX;

@@ -513,7 +513,23 @@ public class CriminalRecord {
          * detected (FORGED_RECEIPT or suspicious genuine-receipt upsell caught).
          * Penalty: Notoriety +12, WantedSystem Tier 2.
          */
-        FRAUD("Fraud");
+        FRAUD("Fraud"),
+
+        // ── Issue #1181: Northfield Chugger Blitz ──────────────────────────────
+
+        /**
+         * Recorded when the player punches a CHUGGER NPC (charity fundraiser).
+         * Penalty: +8 Notoriety, WantedSystem +1 star.
+         * Text: "You assaulted a charity worker. In broad daylight."
+         */
+        ASSAULT("Assault (charity worker)"),
+
+        /**
+         * Recorded when a POLICE NPC witnesses the player collecting fake donations
+         * while wearing CHARITY_TABARD and holding CHARITY_CLIPBOARD.
+         * Penalty: +10 Notoriety, WantedSystem +1 star.
+         */
+        CHARITY_FRAUD("Charity donation fraud");
 
         private final String displayName;
 
