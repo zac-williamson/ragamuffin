@@ -373,7 +373,7 @@ public class LockUpGarageSystem {
         float delay = RAID_DELAY_HOURS_MIN
                 + random.nextFloat() * (RAID_DELAY_HOURS_MAX - RAID_DELAY_HOURS_MIN);
         raidTriggerTime = currentTimeHours + delay;
-        achievementCallback.onAchievement(AchievementType.GRASS);
+        achievementCallback.award(AchievementType.GRASS);
         return TipOffResult.CALL_MADE;
     }
 
@@ -447,7 +447,7 @@ public class LockUpGarageSystem {
         }
         if (playerIsDoorman && mcBattleRank >= BAND_JOIN_MC_RANK && !playerInBand) {
             playerInBand = true;
-            achievementCallback.onAchievement(AchievementType.GARAGE_BAND_MEMBER);
+            achievementCallback.award(AchievementType.GARAGE_BAND_MEMBER);
         }
     }
 
@@ -503,7 +503,7 @@ public class LockUpGarageSystem {
     public void recordBricABracFenced(NotorietySystem.AchievementCallback achievementCallback) {
         bricABracFenced++;
         if (bricABracFenced >= BRIC_A_BRAC_BANDIT_THRESHOLD) {
-            achievementCallback.onAchievement(AchievementType.BRIC_A_BRAC_BANDIT);
+            achievementCallback.award(AchievementType.BRIC_A_BRAC_BANDIT);
         }
     }
 
@@ -526,7 +526,7 @@ public class LockUpGarageSystem {
         inventory.addItem(Material.SCRAP_METAL, 5);
         inventory.addItem(Material.CABLE, 3);
         inventory.addItem(Material.BRIC_A_BRAC, 4);
-        achievementCallback.onAchievement(AchievementType.STASH_ROBBER);
+        achievementCallback.award(AchievementType.STASH_ROBBER);
         return true;
     }
 
@@ -558,7 +558,7 @@ public class LockUpGarageSystem {
                        boolean playerNearGarage3) {
 
         float currentTime = timeSystem.getHours();
-        int currentDay = timeSystem.getDay();
+        int currentDay = timeSystem.getDayCount();
 
         // ── Raid timer ──────────────────────────────────────────────────────────
         if (tipOffMade && !drugDenRaided && raidTriggerTime >= 0) {
@@ -568,7 +568,7 @@ public class LockUpGarageSystem {
                 garageUnlocked[GARAGE_DRUG_DEN] = false; // police seal it
 
                 // Marchetti respect penalty
-                factionSystem.modifyRespect(Faction.MARCHETTI_CREW, -DRUG_RAD_RESPECT_PENALTY);
+                factionSystem.applyRespectDelta(Faction.MARCHETTI_CREW, -DRUG_RAD_RESPECT_PENALTY);
 
                 // Seed raid rumour
                 NPC rumourNpc = findNpcNearGarages(npcs);
@@ -580,11 +580,11 @@ public class LockUpGarageSystem {
 
                 // Player caught inside?
                 if (playerNearGarage3) {
-                    notorietySystem.addNotoriety(RAID_CAUGHT_NOTORIETY);
+                    notorietySystem.addNotoriety(RAID_CAUGHT_NOTORIETY, null);
                     criminalRecord.record(CrimeType.GARAGE_DRUG_POSSESSION);
-                    achievementCallback.onAchievement(AchievementType.INFORMANT);
+                    achievementCallback.award(AchievementType.INFORMANT);
                 } else {
-                    achievementCallback.onAchievement(AchievementType.INFORMANT);
+                    achievementCallback.award(AchievementType.INFORMANT);
                 }
                 // brief raid window then clear
                 raidInProgress = false;
@@ -618,7 +618,7 @@ public class LockUpGarageSystem {
                                      RumourNetwork rumourNetwork,
                                      List<NPC> npcs) {
         criminalRecord.record(CrimeType.GARAGE_BREAK_IN);
-        notorietySystem.addNotoriety(DAVE_WITNESS_NOTORIETY);
+        notorietySystem.addNotoriety(DAVE_WITNESS_NOTORIETY, null);
         NPC dave = findNpcByType(npcs, NPCType.DAVE_CARETAKER);
         if (dave != null) {
             rumourNetwork.addRumour(dave,
@@ -640,7 +640,7 @@ public class LockUpGarageSystem {
                                      RumourNetwork rumourNetwork,
                                      List<NPC> npcs,
                                      NotorietySystem.AchievementCallback achievementCallback) {
-        achievementCallback.onAchievement(AchievementType.CROWBAR_JUSTICE);
+        achievementCallback.award(AchievementType.CROWBAR_JUSTICE);
         NPC nearbyNpc = findNpcNearGarages(npcs);
         if (nearbyNpc != null) {
             rumourNetwork.addRumour(nearbyNpc,
@@ -655,7 +655,7 @@ public class LockUpGarageSystem {
      * @param achievementCallback callback to unlock achievements
      */
     public void recordLockpickSuccess(NotorietySystem.AchievementCallback achievementCallback) {
-        achievementCallback.onAchievement(AchievementType.LOCKSMITH);
+        achievementCallback.award(AchievementType.LOCKSMITH);
     }
 
     /**
@@ -664,7 +664,7 @@ public class LockUpGarageSystem {
      * @param achievementCallback callback to unlock achievements
      */
     public void recordLockUpLandlord(NotorietySystem.AchievementCallback achievementCallback) {
-        achievementCallback.onAchievement(AchievementType.LOCK_UP_LANDLORD);
+        achievementCallback.award(AchievementType.LOCK_UP_LANDLORD);
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

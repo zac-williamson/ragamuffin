@@ -1671,17 +1671,6 @@ public enum NPCType {
     DAVE_CARETAKER(35f, 4f, 1.2f, false),
 
     /**
-     * Undercover Police — plain-clothes officer who raids Garage 3 (Marchetti drug den)
-     * 1–3 in-game hours after the player's anonymous tip-off via PAYPHONE_PROP.
-     * Clears the stash, removes SCALES_PROP, and adds POSSESSION to CriminalRecord
-     * if player is found inside during the raid.
-     * Speech: "Armed police! Nobody move!" /
-     *         "On the ground. Now." /
-     *         "You didn't see anything. Understood?"
-     */
-    UNDERCOVER_POLICE(60f, 12f, 1.5f, true),
-
-    /**
      * Garage Band Doorman — the band's informal doorman at Garage 1 rehearsals
      * (Tues/Thurs/Sat 19:00–22:00). Lets regulars in, charges 1 COIN for new faces.
      * After 3 sessions watched, player can take this role for 3 COIN/session.

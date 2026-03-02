@@ -572,9 +572,9 @@ public class CemeterySystem {
                                                       List<NPC> npcs) {
         for (NPC npc : npcs) {
             if (npc.getType() != NPCType.VICAR && npc.getType() != NPCType.GRAVEDIGGER) continue;
-            float dx = npc.getX() - px;
-            float dy = npc.getY() - py;
-            float dz = npc.getZ() - pz;
+            float dx = npc.getPosition().x - px;
+            float dy = npc.getPosition().y - py;
+            float dz = npc.getPosition().z - pz;
             float distSq = dx * dx + dy * dy + dz * dz;
             if (distSq <= WITNESS_DETECT_RANGE * WITNESS_DETECT_RANGE) {
                 return true;

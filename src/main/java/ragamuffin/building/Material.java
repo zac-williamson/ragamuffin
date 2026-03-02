@@ -3757,13 +3757,6 @@ public enum Material {
      */
     SAMOSA("Samosa"),
 
-    /**
-     * Mango Lassi — a cold yoghurt drink from the curry night.
-     * Restores +3 Hunger, +2 Warmth.
-     * Tooltip: "More of a palate cleanser than a drink. Still nice though."
-     */
-    MANGO_LASSI("Mango Lassi"),
-
     // ── Issue #1155: Northfield NHS Dentist ──────────────────────────────────
 
     /**
@@ -5026,8 +5019,6 @@ public enum Material {
             case NAAN:                    return c(0.88f, 0.78f, 0.55f);  // Warm bread tan
             case SAMOSA:                  return cs(0.78f, 0.62f, 0.30f,  // Pastry gold
                                                     0.55f, 0.72f, 0.22f); // Pea green filling hint
-            case MANGO_LASSI:             return cs(0.98f, 0.78f, 0.25f,  // Mango orange-yellow
-                                                    0.98f, 0.95f, 0.88f); // Creamy white
 
             // Issue #1155: Northfield NHS Dentist
             case FIZZY_DRINK:             return cs(0.88f, 0.10f, 0.10f,  // Red can
