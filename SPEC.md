@@ -41050,3 +41050,107 @@ seeds only a rumour stub — this issue replaces that stub with a fully playable
 //   NoiseSystem (hush during quiz), RumourNetwork (winner rumour spread),
 //   NotorietySystem (cheat catch penalty), WantedSystem (ejection trigger),
 //   CriminalRecord (CHEATING_AT_PUB_QUIZ), AchievementSystem, LibrarySystem (CHEAT_SHEET source)
+
+---
+
+## Issue #1261: Add Northfield Traffic Warden & Speed Camera — Yellow Lines, The Clamp & the Fixed Penalty Hustle
+
+### Overview
+Bring Northfield's roads to life with a fully functional parking enforcement and speed camera system. `CarDrivingSystem` already handles vehicles; this issue layers on the bureaucratic misery that makes British motoring so character-building. Players who drive recklessly or park on double yellows will face fines, clamping, and a paper trail of fixed-penalty notices — unless they can sweet-talk (or bribe) the warden.
+
+### TrafficWardenSystem — Core Mechanics
+
+**NPCs**
+- `TRAFFIC_WARDEN` (NPCType): `DEREK_HOBSON` — clipboard-wielding, high-vis-jacketed, absolutely loves his job. Patrols `ROAD` and `PAVEMENT` blocks in the town centre between 08:00 and 18:00 Monday–Saturday.
+- One warden per zone; THE_COUNCIL faction funds a second warden if council turf > 60%.
+
+**Speed Camera**
+- Static `SPEED_CAMERA_PROP` placed at 3 road junctions. Checks `CarDrivingSystem.getPlayerSpeed()` each frame.
+- Speed limit: `SPEED_LIMIT = 30` (blocks/s in-game). Threshold: `CAMERA_TRIGGER_SPEED = 35`.
+- On trigger: generates a `SPEEDING_TICKET` item (3 COIN fine) added to player inventory; `CriminalRecord.CrimeType.SPEEDING` logged; `NotorietySystem` +2.
+- Camera can be vandalised (2 GLASS-fragility hits with any tool). Destroyed camera no longer triggers. Council repairs after `CAMERA_REPAIR_HOURS = 48` in-game hours; repair triggers rumour `CAMERA_REPAIRED`.
+- Destroying a camera: `NotorietySystem` +8, `WantedSystem` +1 wanted star, `CriminalRecord.CrimeType.CRIMINAL_DAMAGE`.
+
+**Parking Enforcement**
+- Double-yellow zones: blocks tagged `DOUBLE_YELLOW` at 6 road-side positions near shops/park.
+- If player-driven `Car` is parked (speed = 0) on a `DOUBLE_YELLOW` block for ≥ `PARKING_GRACE_SECONDS = 30` seconds while warden is within `WARDEN_PATROL_RADIUS = 60` blocks:
+  - Warden pathfinds to car.
+  - On arrival, warden issues `PARKING_TICKET` (5 COIN fine) and attaches `WHEEL_CLAMP_PROP` to the car.
+  - `CriminalRecord.CrimeType.PARKING_VIOLATION` logged; `NotorietySystem` +3.
+  - Clamped car cannot move until clamp is removed.
+
+**Clamp Removal**
+Three options:
+1. **Pay the fine**: Press E on warden within 10 blocks; 5 COIN deducted; clamp removed immediately; rumour `PAID_UP` seeded to 1 nearby NPC.
+2. **Bribe**: Press E on warden; offer `SAUSAGE_ROLL` or `TIN_OF_BEANS`; `BRIBE_ACCEPT_CHANCE = 0.55f`; success removes clamp and clears the ticket (`NotorietySystem` −1); failure: +5 Notoriety, +1 wanted star, `CriminalRecord.CrimeType.BRIBERY_OF_OFFICIAL`.
+3. **Grind it off** (Hustle): Craft `ANGLE_GRINDER` (2 SCRAP_METAL + 1 COPPER_WIRE). Use on clamp (8-hit interaction, `GRIND_HIT_COUNT = 8`). 35% chance per hit warden notices if within `WARDEN_SIGHT_RADIUS = 40` blocks → immediate arrest trigger; on success: clamp removed, `NotorietySystem` +10, `CriminalRecord.CrimeType.TAMPERING_WITH_CLAMP`.
+
+**Ticket Ignoring / Escalation**
+- Unpaid `PARKING_TICKET` or `SPEEDING_TICKET` in inventory after `TICKET_EXPIRY_HOURS = 72` in-game hours: escalates to `COURT_SUMMONS` item. `MagistratesCourtSystem` notified — next time player enters `MAGISTRATES_COURT` landmark, a 15 COIN fine is imposed automatically. 
+- Three unpaid `COURT_SUMMONS` → `BAILIFF` NPC spawns at player's last known residence; seizes items worth up to fine value from inventory.
+
+**Fixed Penalty Hustle — the Warden's Clipboard**
+- Derek keeps a physical `TICKET_BOOK` prop on his belt. Pickpocket attempt (sneak within 2 blocks + E): `PICKPOCKET_CHANCE = 0.30f`; success gives `BLANK_TICKET_BOOK` item; failure: warden turns hostile, `NotorietySystem` +6.
+- `BLANK_TICKET_BOOK` can be sold to `FENCE_NPC` for 8 COIN, or used at `PRINTING_PRESS` (IndoorMarketSystem) to forge 3 `FAKE_PARKING_PERMIT` items (placed on car dashboard via E — reduces warden's parking-grace timer to `PERMIT_GRACE_SECONDS = 300` seconds before he checks; `FORGERY` CrimeType on discovery).
+- Achievement `PAPER_TRAIL` unlocked when player has 3 different ticket types in inventory simultaneously.
+
+**Derek's Banter Lines** (speech bubbles, sampled randomly)
+- "Oi, you can't park there, mate."
+- "It's more than my job's worth."
+- "There's a car park just round the corner."
+- "I don't make the rules, love."
+- "You've got 72 hours to appeal, it's all on the back."
+- "Don't shoot the messenger."
+
+**Weather Effects**
+- `HEAVY_RAIN` / `THUNDERSTORM`: Derek retreats to nearest doorway (does not patrol). No parking tickets issued. Speed cameras still function.
+- `FROST`: Car tyres lose grip; `CarDrivingSystem` steering reduced by 40% on `ROAD` blocks; new tooltip on first frost drive: *"Roads are icy — take it steady."*
+
+**Achievements**
+- `FINE_DODGER` (instant) — leave a clamped car for 10+ in-game minutes then escape on foot.
+- `BLAG_MERCHANT` (instant) — successfully bribe Derek.
+- `PAPER_TRAIL` (instant) — hold a `SPEEDING_TICKET`, `PARKING_TICKET`, and `COURT_SUMMONS` simultaneously.
+- `GREASE_MONKEY` (progressTarget=3) — remove 3 wheel clamps with the angle grinder.
+
+**Integration**
+- `CarDrivingSystem` — speed reading, car position, clamp state flag.
+- `WantedSystem` — wanted-star escalation on camera destruction, bribe failure.
+- `NotorietySystem` — fine/bribe/grind notoriety changes.
+- `CriminalRecord` — new CrimeTypes: `SPEEDING`, `PARKING_VIOLATION`, `BRIBERY_OF_OFFICIAL`, `TAMPERING_WITH_CLAMP`, `CRIMINAL_DAMAGE`, `FORGERY`.
+- `MagistratesCourtSystem` — court summons escalation hook.
+- `FactionSystem` — THE_COUNCIL earns 20% of all fines paid (represented as turf score +1 per paid fine).
+- `WeatherSystem` — warden retreat, frost grip mechanic.
+- `NewspaperSystem` — headline: *"Speed Camera Destroyed on High Street"* on camera vandalism.
+- `RumourNetwork` — `CAMERA_REPAIRED`, `PAID_UP`, rumours.
+- `AchievementSystem` — four new achievements above.
+- `TooltipSystem` — first frost drive tooltip; first ticket tooltip: *"You can pay fines at the magistrates court — or just ignore them."*
+
+### Integration Tests
+
+1. **Speed camera triggers fine**: Give player a car with speed 40 blocks/s. Place `SPEED_CAMERA_PROP` at (50, 1, 50). Drive player through camera position. Verify `SPEEDING_TICKET` in player inventory. Verify `CriminalRecord` contains `SPEEDING`. Verify `NotorietySystem.getNotoriety()` increased by 2.
+
+2. **Warden clamps illegally parked car**: Place player car on `DOUBLE_YELLOW` block at (30, 1, 30) with speed=0. Place Derek (TRAFFIC_WARDEN) within 60 blocks. Advance `TimeSystem` by `PARKING_GRACE_SECONDS + 1` seconds. Verify `PARKING_TICKET` in player inventory. Verify car has `WHEEL_CLAMP_PROP` attached. Verify `NotorietySystem` increased by 3.
+
+3. **Paying fine removes clamp**: Clamp car as above. Move player within 10 blocks of Derek. Player has 5 COIN. Press E on Derek. Verify 5 COIN deducted. Verify `WHEEL_CLAMP_PROP` removed from car. Verify `PARKING_TICKET` removed from inventory. Verify car can move (speed test).
+
+4. **Bribe succeeds — clamp removed, notoriety reduced**: Seed RNG with `seeded_bribe_success`. Clamp car. Give player `SAUSAGE_ROLL`. Press E on Derek, select bribe. Verify `SAUSAGE_ROLL` consumed. Verify clamp removed. Verify `PARKING_TICKET` not in inventory. Verify `NotorietySystem` notoriety decreased by 1.
+
+5. **Bribe fails — notoriety spike**: Seed RNG with `seeded_bribe_fail`. Give player `SAUSAGE_ROLL`. Press E on Derek, select bribe. Verify `SAUSAGE_ROLL` consumed. Verify clamp NOT removed. Verify `NotorietySystem` notoriety increased by 5. Verify `WantedSystem` wanted stars increased by 1. Verify `CriminalRecord` contains `BRIBERY_OF_OFFICIAL`.
+
+6. **Ticket escalates to court summons after expiry**: Give player `PARKING_TICKET`. Advance `TimeSystem` by `TICKET_EXPIRY_HOURS + 1` hours. Verify `PARKING_TICKET` replaced with `COURT_SUMMONS` in player inventory.
+
+7. **Warden retreats in heavy rain**: Set weather to `HEAVY_RAIN`. Set `TimeSystem` to 10:00 Monday. Verify `TRAFFIC_WARDEN` NPC state is NOT `PATROLLING` (is `IDLE` or `SEEKING_SHELTER`). Place car on `DOUBLE_YELLOW`. Advance `TimeSystem` by `PARKING_GRACE_SECONDS * 2` seconds. Verify no `PARKING_TICKET` issued.
+
+// ── New: TrafficWardenSystem.java in ragamuffin.core
+// ── New: Issue1261TrafficWardenSystemTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: TRAFFIC_WARDEN, BAILIFF — add to NPCType.java
+// New PropTypes: SPEED_CAMERA_PROP (1×2×1, 2 hits fragile, null drop), WHEEL_CLAMP_PROP (1×1×1, 0 hits, null drop) — add to PropType.java
+// New Materials: SPEEDING_TICKET, PARKING_TICKET, COURT_SUMMONS, BLANK_TICKET_BOOK, FAKE_PARKING_PERMIT, ANGLE_GRINDER — add to Material.java
+// New AchievementTypes: FINE_DODGER (instant), BLAG_MERCHANT (instant), PAPER_TRAIL (instant), GREASE_MONKEY (progressTarget=3) — add to AchievementType.java
+// New RumourTypes: CAMERA_REPAIRED, PAID_UP — add to RumourType.java
+// New CriminalRecord.CrimeTypes: SPEEDING, PARKING_VIOLATION, BRIBERY_OF_OFFICIAL, TAMPERING_WITH_CLAMP, CRIMINAL_DAMAGE, FORGERY — add to CriminalRecord.java
+// Modifies: CarDrivingSystem (expose getPlayerSpeed(), add clamp state, add frost grip on FROST weather)
+// Integrates: CarDrivingSystem, WantedSystem, NotorietySystem, CriminalRecord, MagistratesCourtSystem,
+//   FactionSystem (THE_COUNCIL fine revenue), WeatherSystem (warden retreat, frost grip),
+//   NewspaperSystem (camera vandalism headline), RumourNetwork, AchievementSystem,
+//   TooltipSystem (first ticket + first frost drive tooltips)
