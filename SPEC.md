@@ -33888,3 +33888,204 @@ BALTI_HOUSE  // "Mumtaz Baltis"
 //   NotorietySystem, CriminalRecord, NoiseSystem, WeatherSystem, TimeSystem, FactionSystem
 //   (Marchetti discount), RumourNetwork, NewspaperSystem, PawnShopSystem, WitnessSystem,
 //   NeighbourhoodWatchSystem, AchievementSystem, BaltiOrderUI
+
+---
+
+## Issue #1175: Northfield Argos — The Catalogue Counter, Saturday Queue Scrum & the Reserve Number Hustle
+
+Implement `ArgosSystem.java` in `ragamuffin.core` — the core backend for Northfield's Argos store
+(`LandmarkType.ARGOS`). The `ArgosOrderUI` already exists and references this system; this issue
+wires up the full gameplay loop.
+
+### Overview
+
+Argos is one of the great British institutions: a cavernous shop where you browse a laminated
+catalogue, fill in a slip with a tiny pencil, queue at the collection counter, wait for your number
+to flash on the board, then collect a box. The gameplay revolves around three mechanics:
+
+1. **Legitimate shopping** — browse catalogue, write slip, pay, wait, collect.
+2. **Number Scam** — steal a completed slip from another customer (pickpocket NPC queue),
+   claim their reserved item before they reach the counter.
+3. **Returns Fraud** — bring a cheap ARGOS_RECEIPT and swap it for a more expensive item
+   at the returns desk (requires forged receipt, crafted from BLANK_RECEIPT + BIRO).
+
+### Store Details
+
+- Open: Monday–Saturday 09:00–17:30, Sunday 10:00–16:00
+- Location: High Street, `LandmarkType.ARGOS`
+- Staff: Sharon (counter, sharp-eyed), Dave the Security Guard (patrols, 15% ban chance on
+  suspicion), Janice (returns desk, gullible — 40% fraud acceptance without FORGED_RECEIPT)
+- Queue NPCs: 4–10 CIVILIAN NPCs present during opening hours; 6–12 on Saturdays
+
+### Order Flow (State Machine)
+
+```
+IDLE → BROWSING_CATALOGUE → SLIP_WRITTEN → QUEUING → NUMBER_CALLED → COLLECTING → IDLE
+```
+
+- **BROWSING_CATALOGUE**: Player presses E on `ARGOS_CATALOGUE_PROP` → opens `ArgosOrderUI`.
+  Selecting an item writes the slip (consumes 1 BIRO if available, otherwise free).
+- **SLIP_WRITTEN**: Player receives `ARGOS_SLIP` item. Queue join time recorded.
+- **QUEUING**: Wait `ORDER_WAIT_SECONDS` (60–180s depending on queue length; Saturday ×1.5).
+  Number flashes on `COLLECTION_BOARD_PROP`. NPCs also queue and have their own slips.
+- **NUMBER_CALLED**: Player presses E on collection counter → item dispensed, COIN deducted.
+- **COLLECTING**: 2-second animation, item added to inventory.
+
+### Number Scam
+
+- While in QUEUING state, player can pickpocket a queuing NPC (press E within 1 block).
+- 30% base detection chance (Sharon sees queue jostling); +15% if Dave is nearby.
+- On success: player receives NPC's `ARGOS_SLIP`. Player's own slip cancelled.
+- On detection: Notoriety +8, `THEFT_FROM_PERSON` crime added, banned for
+  `BAN_DURATION_DAYS` days.
+- NPC enters DISTRESSED state, shouts "Oi, that's MY slip!" spawning a WitnessSystem alert.
+
+### Returns Fraud
+
+- Player approaches `RETURNS_DESK_PROP` with any item + a matching `ARGOS_RECEIPT`.
+- Janice checks receipt: if FORGED_RECEIPT, 40% detection (Dave called). If genuine receipt for
+  cheaper item: 70% success (upsell accepted); 30% Janice suspicious → Dave called.
+- On success: item swapped for higher-value catalogue item; receipt consumed.
+- On detection: Notoriety +12, `FRAUD` crime added, permanent ban.
+- `FORGED_RECEIPT` craftable: 1 BLANK_RECEIPT + 1 BIRO + 1 STOLEN_PHONE (for barcode lookup).
+
+### Saturday Scrum Event
+
+- Saturday 09:00: NPCs spawn outside, forming a scrum queue.
+- At 09:00 doors open: 8–12 NPCs rush in; `NoiseSystem` alert generated.
+- If player is first in queue (arrived before 09:00): guaranteed position 1 → no wait.
+- Random item "sold out" rolls: 20% chance per high-demand item (AIR_FRYER, KIDS_BIKE).
+  "Sorry, that one's gone love" dialogue from Sharon. Player can try reserve (next delivery
+  in 1 in-game day).
+- Scrum brawl: 10% chance one NPC pushes another → FIGHTING state, police called.
+
+### Materials (add to `Material.java`)
+
+| Constant | Description | Value |
+|----------|-------------|-------|
+| `ARGOS_SLIP` | Numbered collection slip; consumed on item pickup | — |
+| `ARGOS_RECEIPT` | Proof of purchase; used for returns | — |
+| `FORGED_RECEIPT` | Fake receipt for returns fraud | — |
+| `BLANK_RECEIPT` | Thermal paper; found in bins or crafted | — |
+| `CATALOGUE_PENCIL` | Tiny Argos pencil; can be used as a weapon (1 dmg) | 0 COIN |
+
+### New NPCTypes (add to `NPCType.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `ARGOS_COUNTER_STAFF` | Sharon; sharp-eyed; 20 HP; calls Dave on suspicion |
+| `ARGOS_SECURITY` | Dave; patrols store; 35 HP; bans on 2nd offence |
+| `ARGOS_RETURNS_STAFF` | Janice; gullible; 20 HP; at returns desk |
+
+### New CrimeTypes (add to `CriminalRecord.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `THEFT_FROM_PERSON` | Number scam detected |
+| `FRAUD` | Returns fraud detected |
+
+### Achievements (add to `AchievementType.java`)
+
+| Constant | Unlock condition |
+|----------|-----------------|
+| `CATALOGUE_BROWSING` | Browse the full Argos catalogue (view all 12 items) |
+| `NUMBER_CALLED` | Successfully collect a legitimately purchased item |
+| `SLIP_THIEF` | Successfully steal another customer's slip |
+| `SATURDAY_SCRUM` | Be first through the door on a Saturday opening |
+| `RETURNS_MAESTRO` | Complete returns fraud 3 times without being caught |
+| `TINY_PENCIL` | Pick up a CATALOGUE_PENCIL |
+
+### New PropType entries (add to `PropType.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `ARGOS_CATALOGUE_PROP` | Large catalogue on stand; opens ArgosOrderUI |
+| `COLLECTION_BOARD_PROP` | Illuminated number display board |
+| `RETURNS_DESK_PROP` | Janice's desk at rear of store |
+| `QUEUE_BARRIER_PROP` | Retractable belt barrier defining the queue |
+
+### New LandmarkType (add to `LandmarkType.java`)
+
+```
+ARGOS  // "Argos"
+```
+(if not already present — check `LandmarkType.java`)
+
+### Constants
+
+```java
+public static final int ORDER_WAIT_SECONDS_MIN  = 60;
+public static final int ORDER_WAIT_SECONDS_MAX  = 180;
+public static final float SATURDAY_WAIT_MULT    = 1.5f;
+public static final int QUEUE_SCRUM_NPC_MIN     = 8;
+public static final int QUEUE_SCRUM_NPC_MAX     = 12;
+public static final float PICKPOCKET_DETECT     = 0.30f;
+public static final float DAVE_DETECT_BONUS     = 0.15f;
+public static final int   BAN_DURATION_DAYS     = 3;
+public static final float SOLD_OUT_CHANCE       = 0.20f;
+public static final float SCRUM_BRAWL_CHANCE    = 0.10f;
+public static final int   NOTORIETY_SLIP_THEFT  = 8;
+public static final int   NOTORIETY_RETURNS_FRAUD = 12;
+public static final float JANICE_FRAUD_DETECT   = 0.40f;
+public static final float GENUINE_UPSELL_SUCCESS = 0.70f;
+```
+
+### Unit Tests (implement in `ArgosSystemTest.java`)
+
+1. Order wait time is between `ORDER_WAIT_SECONDS_MIN` and `ORDER_WAIT_SECONDS_MAX`.
+2. Saturday wait time is `ORDER_WAIT_SECONDS_MIN * SATURDAY_WAIT_MULT` to `ORDER_WAIT_SECONDS_MAX * SATURDAY_WAIT_MULT`.
+3. Pickpocket detection: seed RNG so roll < `PICKPOCKET_DETECT` → ARGOS_SLIP added to player inventory, NPC enters DISTRESSED state.
+4. No detection (seed RNG roll > `PICKPOCKET_DETECT + DAVE_DETECT_BONUS`): slip transferred, no crime recorded.
+5. Sold-out roll (seed RNG < `SOLD_OUT_CHANCE`): `isItemAvailable(Material.AIR_FRYER)` returns false.
+6. Returns fraud with FORGED_RECEIPT, detection roll < `JANICE_FRAUD_DETECT`: `CriminalRecord.hasCrime(FRAUD)` true.
+7. Legitimate purchase: player has correct COIN → item added to inventory, COIN deducted, state returns to IDLE.
+8. Banned player: `ArgosSystem.isBanned()` true → E key on entrance returns "You're barred" dialogue.
+9. Saturday scrum at 09:00: `getNPCQueueSize()` between `QUEUE_SCRUM_NPC_MIN` and `QUEUE_SCRUM_NPC_MAX`.
+10. `CATALOGUE_PENCIL` picked up → `TINY_PENCIL` achievement unlocked.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full purchase flow**: Create `ArgosSystem` with player COIN = 15. Set time to 10:00 Tuesday.
+   Simulate press E on `ARGOS_CATALOGUE_PROP`. Navigate to item #7801 (AIR_FRYER, 14 COIN).
+   Confirm selection. Verify player receives `ARGOS_SLIP`. Advance time by `ORDER_WAIT_SECONDS_MAX`.
+   Verify `COLLECTION_BOARD_PROP` shows player number. Simulate press E on counter. Verify
+   AIR_FRYER added to player inventory. Verify player COIN = 1. Verify `NUMBER_CALLED`
+   achievement unlocked.
+
+2. **Number scam end-to-end**: Place a queuing CIVILIAN NPC holding an `ARGOS_SLIP` for KIDS_BIKE.
+   Seed RNG so pickpocket roll = 0.10 (< 0.30 detect). Player presses E within 1 block of NPC.
+   Verify `ARGOS_SLIP` (KIDS_BIKE) added to player inventory. Verify NPC enters DISTRESSED state.
+   Verify `WitnessSystem.hasRecentAlert()` returns true. Verify `SLIP_THIEF` achievement unlocked.
+   Advance to number called. Verify KIDS_BIKE dispensed to player (not NPC).
+
+3. **Saturday scrum and sold-out**: Set time to Saturday 08:55. Seed RNG so AIR_FRYER sold-out
+   roll triggers. At 09:00 simulate doors opening. Verify `getNPCQueueSize()` ≥ 8. Player presses
+   E on `ARGOS_CATALOGUE_PROP`, selects AIR_FRYER. Verify `isItemAvailable(AIR_FRYER)` is false.
+   Verify Sharon dialogue contains "Sorry" or "gone". Verify `SATURDAY_SCRUM` achievement
+   unlocked for player (was in queue before 09:00).
+
+4. **Returns fraud caught**: Give player a FORGED_RECEIPT + FOLDING_CHAIR. Seed RNG so Janice
+   fraud roll = 0.35 (< 0.40 detect). Player presses E on `RETURNS_DESK_PROP`. Verify
+   `CriminalRecord.hasCrime(FRAUD)` is true. Verify Notoriety increased by 12. Verify Dave NPC
+   enters AGGRESSIVE state toward player. Verify player is banned (`isBanned()` returns true).
+
+5. **Scrum brawl and police response**: Set time to Saturday 09:00. Seed RNG so brawl roll = 0.05
+   (< 0.10). Call `update()` to trigger door opening. Verify two CIVILIAN NPCs enter FIGHTING
+   state. Verify `NoiseSystem.getRecentAlerts()` contains alert near ARGOS landmark. Verify
+   `WantedSystem` spawns POLICE NPC within 30 in-game seconds.
+
+// ── Issue #1175: Northfield Argos ────────────────────────────────────────────
+// New: ArgosSystem.java in ragamuffin.core
+// New: ArgosSystemTest.java in src/test/java/ragamuffin/core/
+// Existing: ArgosOrderUI.java in ragamuffin.ui (already present — wire up to ArgosSystem)
+// LandmarkType: ARGOS — add if not present in LandmarkType.java
+// NPCType: ARGOS_COUNTER_STAFF, ARGOS_SECURITY, ARGOS_RETURNS_STAFF — add to NPCType.java
+// Material: ARGOS_SLIP, ARGOS_RECEIPT, FORGED_RECEIPT, BLANK_RECEIPT, CATALOGUE_PENCIL — add
+// PropType: ARGOS_CATALOGUE_PROP, COLLECTION_BOARD_PROP, RETURNS_DESK_PROP, QUEUE_BARRIER_PROP — add
+// CriminalRecord.CrimeType: THEFT_FROM_PERSON, FRAUD — add
+// AchievementType: CATALOGUE_BROWSING, NUMBER_CALLED, SLIP_THIEF, SATURDAY_SCRUM,
+//                  RETURNS_MAESTRO, TINY_PENCIL — add
+// Player flag: bannedFromArgos (boolean on Player), argosOrderWaitEnd (float)
+// Integrates: WitnessSystem, WantedSystem, NotorietySystem, CriminalRecord, NoiseSystem,
+//   TimeSystem, WeatherSystem, FactionSystem, RumourNetwork, AchievementSystem,
+//   ArgosOrderUI (existing), CraftingSystem (FORGED_RECEIPT recipe)
