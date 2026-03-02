@@ -2260,7 +2260,35 @@ public enum PropType {
      * Press E to browse alcohol items: TESCO_FINEST_WINE × 3, TESCO_OWN_BRAND_VODKA × 2.
      * LOCKED after 22:00 (Challenge 25 policy). 8 hits to break; yields GLASS.
      */
-    WINE_CHILLER_PROP(0.80f, 1.80f, 0.40f, 8, Material.GLASS);
+    WINE_CHILLER_PROP(0.80f, 1.80f, 0.40f, 8, Material.GLASS),
+
+    // ── Issue #1159: Northfield Angel Nails & Beauty ─────────────────────────
+
+    /**
+     * A nail station — a small table with UV lamp and tools at Angel Nails & Beauty.
+     * Press E when vacant to purchase a nail service. 4 placed in the salon interior.
+     * Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    NAIL_STATION_PROP(0.80f, 1.00f, 0.50f, 3, Material.SCRAP_METAL),
+
+    /**
+     * A UV nail dryer — small countertop device placed next to each nail station.
+     * Decorative; destroyed by 2 punches; yields SCRAP_METAL.
+     */
+    NAIL_DRYER_PROP(0.30f, 0.25f, 0.25f, 2, Material.SCRAP_METAL),
+
+    /**
+     * A colour wall display holding 12 bottles of NAIL_POLISH.
+     * Press E to attempt theft (25% base catch chance; 60% if Kim is watching).
+     * Destroyed by 3 punches; yields NAIL_POLISH ×1.
+     */
+    COLOUR_WALL_PROP(1.20f, 1.60f, 0.15f, 3, Material.NAIL_POLISH),
+
+    /**
+     * Exterior signage for Angel Nails & Beauty — a pink illuminated sign above the shopfront.
+     * Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    NAIL_SALON_SIGN_PROP(1.60f, 0.50f, 0.15f, 3, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
