@@ -1742,6 +1742,20 @@ public enum AchievementType {
         "Won Thursday Quiz Night with a perfect score. Derek announced it to the whole room. Twice.",
         1
     ),
+
+    // ── Issue #1259: Northfield Pub Quiz Night ────────────────────────────────
+
+    HAT_TRICK_QUIZZER(
+        "Hat-Trick Quizzer",
+        "Won three consecutive Wednesday Quiz Nights at The Rusty Anchor. Derek is starting to look suspicious.",
+        3
+    ),
+    CHEATS_NEVER_PROSPER(
+        "Cheats Never Prosper",
+        "Got caught using a cheat sheet by Derek. He held it up in front of everyone. Absolutely humiliating.",
+        1
+    ),
+
     DARTS_HUSTLER_CLUB(
         "Darts Hustler",
         "Won 5 COIN off a MEMBER in a darts challenge at the social club. You didn't even look like you were trying.",

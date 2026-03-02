@@ -734,7 +734,16 @@ public class CriminalRecord {
          * holds an INSPECTION_STICKER linked to a PASS_BRIBE session.
          * Penalty: Notoriety +12, WantedSystem +2 stars.
          */
-        VEHICLE_FRAUD("Vehicle inspection fraud (forged MOT certificate)");
+        VEHICLE_FRAUD("Vehicle inspection fraud (forged MOT certificate)"),
+
+        // ── Issue #1259: Northfield Pub Quiz Night ────────────────────────────
+
+        /**
+         * Recorded when Derek (QUIZ_MASTER) catches the player using a CHEAT_SHEET
+         * during Quiz Night (40% catch chance on F press). The player is disqualified,
+         * ejected from the quiz, and gains Notoriety +3.
+         */
+        CHEATING_AT_PUB_QUIZ("Cheating at pub quiz");
 
         private final String displayName;
 

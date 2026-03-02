@@ -1850,6 +1850,15 @@ public enum Material {
      */
     QUIZ_SHEET("Quiz Sheet"),
 
+    // ── Issue #1259: Northfield Pub Quiz Night ────────────────────────────────
+
+    /**
+     * Quiz Prize Envelope — handed to the winning team by Derek at 22:00.
+     * Contains 10 COIN. Triggers QUIZ_CHAMPION achievement and QUIZ_CHAMPION_RUMOUR.
+     * Tooltip: "Derek sealed it himself. You can tell from the saliva."
+     */
+    QUIZ_PRIZE_ENVELOPE("Quiz Prize Envelope"),
+
     // ── Issue #1024: Sultan's Kebab ───────────────────────────────────────────
 
     /**
