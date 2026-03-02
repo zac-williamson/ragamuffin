@@ -2930,7 +2930,63 @@ public enum Material {
      * Can be delivered as a mission item or sold to the fence.
      * Tooltip: "Don't open it. Actually — definitely open it."
      */
-    FOLDED_NOTE("Folded Note");
+    FOLDED_NOTE("Folded Note"),
+
+    // ── Issue #1114: Meredith & Sons Funeral Parlour ──────────────────────────
+
+    /**
+     * Funeral Flowers — sold by Gerald; can be placed on HEADSTONE props in the cemetery
+     * for +2 Community Respect.
+     * Tooltip: "They were loved. Probably."
+     */
+    FUNERAL_FLOWERS("Funeral Flowers"),
+
+    /**
+     * Condolences Card — sold by Gerald; give to a BEREAVED NPC for +3 Community Respect.
+     * Tooltip: "The right words, printed by someone else."
+     */
+    CONDOLENCES_CARD("Condolences Card"),
+
+    /**
+     * Memorial Candle — sold by Gerald; can be placed at the CASKET prop.
+     * Tooltip: "Smells better than the back room."
+     */
+    MEMORIAL_CANDLE("Memorial Candle"),
+
+    /**
+     * Ornament Vase — a personal effect from the casket or deceased's home.
+     * Value: 5 COIN at PawnShop; Gerald buys for 2 COIN (50% of PawnShop).
+     * Tooltip: "It meant something. To someone."
+     */
+    ORNAMENT_VASE("Ornament Vase"),
+
+    /**
+     * War Medal — personal effect; library trades for TRADING XP.
+     * Value: 8 COIN at PawnShop; Gerald buys for 4 COIN.
+     * Tooltip: "Earned the hard way. Lost the easy way."
+     */
+    WAR_MEDAL("War Medal"),
+
+    /**
+     * Spare Dentures — cursed personal effect from the casket.
+     * Value: 1 COIN at PawnShop. Selling triggers tooltip "You absolute ghoul."
+     * Tooltip: "Someone's going to be eating soup tonight."
+     */
+    SPARE_DENTURES("Spare Dentures"),
+
+    /**
+     * Biscuit Tin Savings — a battered tin used as a cash box.
+     * Opening in inventory yields 15–35 COIN.
+     * Tooltip: "The working class pension fund."
+     */
+    BISCUIT_TIN_SAVINGS("Biscuit Tin Savings"),
+
+    /**
+     * Property Deed — document from the inheritance heist lockbox.
+     * Sellable to the estate agent (Baxter's) for 50 COIN.
+     * Tooltip: "Someone's whole life on one sheet of paper."
+     */
+    PROPERTY_DEED("Property Deed");
 
     private final String displayName;
 
@@ -3661,6 +3717,24 @@ public enum Material {
             case BYO_LAGER_CORKAGE:    return c(0.85f, 0.78f, 0.42f);  // Paper receipt
             case FOLDED_NOTE:          return cs(0.92f, 0.88f, 0.70f,  // Cream paper
                                                   0.40f, 0.35f, 0.28f); // Brown envelope
+
+            // Issue #1114: Funeral Parlour items
+            case FUNERAL_FLOWERS:      return cs(0.90f, 0.20f, 0.30f,  // Deep red petals
+                                                  0.25f, 0.60f, 0.20f); // Green stem
+            case CONDOLENCES_CARD:     return cs(0.92f, 0.88f, 0.82f,  // Cream card
+                                                  0.55f, 0.45f, 0.60f); // Lavender border
+            case MEMORIAL_CANDLE:      return cs(0.95f, 0.90f, 0.70f,  // Cream wax
+                                                  0.98f, 0.85f, 0.20f); // Flame yellow
+            case ORNAMENT_VASE:        return cs(0.60f, 0.50f, 0.35f,  // Earthy brown
+                                                  0.45f, 0.35f, 0.22f); // Dark base
+            case WAR_MEDAL:            return cs(0.85f, 0.72f, 0.20f,  // Gold medal
+                                                  0.60f, 0.15f, 0.15f); // Red ribbon
+            case SPARE_DENTURES:       return cs(0.95f, 0.92f, 0.88f,  // Off-white plastic
+                                                  0.88f, 0.82f, 0.72f); // Yellowed
+            case BISCUIT_TIN_SAVINGS:  return cs(0.72f, 0.55f, 0.30f,  // Tin brown
+                                                  0.85f, 0.70f, 0.40f); // Warm gold
+            case PROPERTY_DEED:        return cs(0.88f, 0.85f, 0.72f,  // Parchment
+                                                  0.50f, 0.40f, 0.20f); // Ink brown
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }

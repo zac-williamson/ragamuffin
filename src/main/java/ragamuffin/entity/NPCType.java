@@ -1285,7 +1285,25 @@ public enum NPCType {
      * Speech: "Ready to order?" / "Another naan, sir?" / "That's not on the menu, mate."
      *         / "Back room's private — members only."
      */
-    CURRY_WAITER(20f, 0f, 0f, false);
+    CURRY_WAITER(20f, 0f, 0f, false),
+
+    // ── Issue #1114: Meredith & Sons Funeral Parlour ──────────────────────────
+
+    /**
+     * Undertaker — Gerald Meredith, proprietor of the funeral parlour.
+     * Thin, black-suited; anchored near the front desk during open hours.
+     * Refuses service if player Notoriety ≥ 60. Seeds LOCAL_EVENT rumours about
+     * recently deceased residents.
+     */
+    UNDERTAKER(20f, 0f, 0f, false),
+
+    /**
+     * Funeral Assistant — Dawn, Gerald's assistant.
+     * Handles paperwork and flower arrangements; patrols the viewing room.
+     * Gossips freely about deceased estates; seeds INHERITANCE and WILL_LOCATION rumours.
+     * Calls police if the casket is found disturbed.
+     */
+    FUNERAL_ASSISTANT(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

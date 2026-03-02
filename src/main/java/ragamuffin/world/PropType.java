@@ -1517,7 +1517,72 @@ public enum PropType {
      * Found in Derek's back-room desk; picking up auto-adds PROTECTION_LETTER to inventory.
      * Non-destructible by design (E to take).
      */
-    EVIDENCE_PROP(0.30f, 0.20f, 0.20f, 99, null);
+    EVIDENCE_PROP(0.30f, 0.20f, 0.20f, 99, null),
+
+    // ── Issue #1114: Meredith & Sons Funeral Parlour ──────────────────────────
+
+    /**
+     * FUNERAL_PARLOUR_SIGN_PROP — gold-lettered black fascia sign mounted outside
+     * Meredith &amp; Sons Funeral Directors. Decorative; press E for "Meredith &amp; Sons
+     * Funeral Directors — Discretion Guaranteed."
+     * Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    FUNERAL_PARLOUR_SIGN_PROP(1.20f, 0.40f, 0.10f, 3, Material.SCRAP_METAL),
+
+    /**
+     * CASKET_PROP — an ornate wooden casket on a viewing table in the viewing room.
+     * Contains 3–5 personal effects from the effects table.
+     * Press E to open; taking items counts as THEFT_FROM_PERSON (+6 Notoriety, −15 Community Respect).
+     * Resets every 3 in-game days with new occupant name and effects.
+     * Destroyed by 10 punches; yields WOOD.
+     */
+    CASKET_PROP(1.80f, 0.70f, 0.70f, 10, Material.WOOD),
+
+    /**
+     * VELVET_CURTAIN_PROP — heavy velvet curtain doorway separating the viewing room
+     * from the main parlour. Entering the viewing room unescorted counts as TRESPASS.
+     * Non-destructible; press E to pass through.
+     */
+    VELVET_CURTAIN_PROP(1.00f, 2.20f, 0.10f, 99, null),
+
+    /**
+     * HEARSE_PROP — a black hearse parked outside 09:00–17:00 weekdays.
+     * At STREET_LADS Respect ≥ 50, player can "borrow" it via CarDrivingSystem.
+     * Top speed 0.6× normal; police ignore for 30 in-game seconds before pursuing.
+     * Destroyed by 15 punches; yields SCRAP_METAL.
+     */
+    HEARSE_PROP(2.00f, 1.60f, 4.60f, 15, Material.SCRAP_METAL),
+
+    /**
+     * HEADSTONE_PROP — a carved stone grave marker in the cemetery.
+     * Press E to read a procedurally generated name and date of the deceased.
+     * If the player has a matching WILL_LOCATION rumour, a special prompt appears
+     * and the GRAVEYARD_SHIFT achievement is unlocked.
+     * Destroyed by 8 punches; yields STONE.
+     */
+    HEADSTONE_PROP(0.60f, 0.80f, 0.20f, 8, Material.STONE),
+
+    /**
+     * FLOWER_STAND_PROP — Gerald's retail display near the parlour entrance.
+     * Features FUNERAL_FLOWERS, CONDOLENCES_CARD, and MEMORIAL_CANDLE for sale.
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    FLOWER_STAND_PROP(0.80f, 1.20f, 0.50f, 3, Material.WOOD),
+
+    /**
+     * LOCKBOX_PROP — a small metal cash box hidden under the floorboards of the
+     * deceased's TERRACED_HOUSE. Contains BISCUIT_TIN_SAVINGS (15–35 COIN) and a
+     * PROPERTY_DEED. Accessible after receiving a WILL_LOCATION rumour from Dawn.
+     * Non-destructible; press E to take.
+     */
+    LOCKBOX_PROP(0.30f, 0.20f, 0.25f, 99, null),
+
+    /**
+     * HIDING_SPOT_PROP — a floorboard trap-door prop in a TERRACED_HOUSE.
+     * Press E to reveal the LOCKBOX_PROP underneath.
+     * Non-destructible; decorative until revealed.
+     */
+    HIDING_SPOT_PROP(0.80f, 0.10f, 0.80f, 99, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
