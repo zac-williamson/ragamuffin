@@ -31484,3 +31484,128 @@ Karen's `CASE_FILE_CABINET_PROP` (in her office) contains case files for all cur
 // New Materials: SIGN_ON_LETTER, ELECTRONIC_TAG, FAKE_SIGNAL_CHIP, COMMUNITY_SERVICE_VEST, CASE_FILE_DOCUMENT, FAKE_ID, TOBACCO, WIRE_CUTTERS, TIN_OF_PAINT (add to Material.java)
 // New PropTypes: PROBATION_DESK_PROP, CASE_FILE_CABINET_PROP, COMMUNITY_SERVICE_STATION_PROP (add to PropType.java)
 // New Achievements: DONE_YOUR_TIME, BREACHED_TAG, SIGNAL_GHOST, MODEL_PRISONER, CASE_FILE_THIEF, WAITING_ROOM_DEALER (add to AchievementType.java)
+
+---
+
+## Add Northfield MOT & Tyre Centre — Dodgy MOTs, Ringing Cars & the Cut-and-Shut Hustle
+
+A new landmark: **Mick's MOT & Tyre Centre** — a grimy two-bay garage on the industrial estate, sandwiched between the scrapyard and the warehouses. Mick is a dodgy-but-loveable mechanic who will pass your car through its MOT for the right price, ring a stolen car with a fresh identity, and quietly chop a banger for parts no questions asked.
+
+### The Building & Layout
+
+- Open **Mon–Sat 08:00–18:00**. Closed Sundays (but the yard is accessible for theft).
+- Two bays: **Bay 1** (MOT ramp — `MOT_RAMP_PROP`) and **Bay 2** (general repairs — `REPAIR_RAMP_PROP`). Forecourt: a row of `CAR_FOR_SALE_PROP` markers (3 cheap bangers for purchase). A `TYRE_STACK_PROP` lines the east wall. A `GARAGE_OFFICE_PROP` cabin in the corner (where Mick sits; contains a `PARTS_INVOICE_PROP` desk and a locked `CASH_TIN_PROP`).
+- NPCs: `MECHANIC` (Mick — knows everything, talks nonsense), `MECHANIC_APPRENTICE` (Darren — 16, clueless, always under a car), `MOT_TESTER` (Terry from the council — only appears Mon/Wed/Fri for official test sessions 09:00–12:00).
+
+### MOT Mechanic
+
+The player's current stolen car has a hidden **roadworthiness score** (0–100, randomised at theft time: 20–80). If the player drives the car while WantedSystem Wanted ≥ 1, there's a 30% chance a passing PCSO runs the plate:
+- Car passes a check: no penalty (if car is "clean").
+- Car fails (stolen or unroadworthy): car is seized (`CAR_SEIZED` flag), player gains `DRIVING_UNREGISTERED` CriminalRecord entry, Notoriety +5.
+
+Pressing **E** at `MOT_RAMP_PROP` with a car nearby (within 6 blocks) opens the MOT menu:
+1. **Official MOT** (5 COIN, Terry sessions only): legitimate test. If roadworthiness ≥ 60, car passes → `MOT_CERT` material added to inventory, car is no longer flagged stolen if it was "rung" first. If < 60, car fails → advisory list displayed; failure adds `MOT_FAILURE` flag.
+2. **Dodgy MOT** (15 COIN, Mick directly, any time): instant pass regardless of condition. `MOT_CERT` added to inventory. 25% chance Terry walks in during the process (if present) → Mick refuses, notoriety unchanged; 10% chance an `UNDERCOVER_POLICE` NPC later visits the garage (triggered within 1 in-game day) and adds `FRAUDULENT_MOT` CriminalRecord entry.
+3. **Advisory Repairs** (cost varies by fault): Mick repairs specific faults (brakes, tyres, lights) for 3–8 COIN each, raising roadworthiness by 15–20 per repair. Requires `SCRAP_METAL` or `TYRE` material from ScrapyardSystem.
+
+### Car Ringing
+
+At `MARCHETTI_CREW` Respect ≥ 50, Mick offers the **Car Ringing** service: he changes a stolen car's identity to a legitimate plate.
+- Cost: 25 COIN + `BLANK_LOGBOOK` material (new item; found in `GARAGE_OFFICE_PROP` or in ScrapyardSystem skip).
+- Time: 2 in-game hours (player must leave and return; `CAR_RINGING_IN_PROGRESS` flag).
+- Result: car's `stolen` flag is cleared; car gains a fake registration. WantedSystem plate check now returns clean.
+- Risk: 15% chance per ringing job that `JOURNALIST` NPC is tipped off → NewspaperSystem headline ("Northfield chop shop linked to Marchetti Crew"); all Marchetti Respect −5.
+- `RINGER` achievement on first successful ring.
+
+### Cut-and-Shut / Chopping
+
+The player can bring any car to **Bay 2** and press E to open the chop menu:
+- **Chop for parts** (free): car is destroyed and yields 2–4 `SCRAP_METAL` + 1 `TYRE` + 1 `CAR_PART` material (new item; fenceable at ScrapyardSystem for 8 COIN or used in repairs). Takes 1 in-game hour.
+- **Cut and shut** (20 COIN + 2 `CAR_PART`): Mick fuses two cars into one. Requires 2 car chassis in yard. Result: a `CUT_SHUT_CAR` — roadworthiness is the lower of the two source cars minus 10 (min 5). Cosmetically one car remains. Risk: 20% chance the car falls apart on the road (engine stops mid-drive, `ENGINE_FAILURE` flag); triggers `DEATH_TRAP` achievement.
+
+### Forecourt Car Sales
+
+Three cheap bangers `CAR_FOR_SALE_PROP` on the forecourt:
+- Prices 20–40 COIN (randomised at world gen). Press E to buy — car spawns as a player-owned vehicle.
+- Cars are always slightly dodgy: roadworthiness 25–55. Mick's disclaimer: "It's a runner, mate. Just needs a bit of TLC."
+- At Mick friendship ≥ 40: one banger discounted by 10 COIN.
+
+### The Cash Tin Heist
+
+The `CASH_TIN_PROP` in Mick's office contains 20–40 COIN (replenished daily). Accessible when:
+- Mick is in Bay 1 (distracted during an MOT or repair job, 09:00–12:00 and 13:00–17:00).
+- Darren is under a car and not watching.
+- Requires LOCKPICK to open (or CROWBAR — makes noise, 50% Darren notices).
+- `GARAGE_THIEF` achievement on first successful theft.
+- WitnessSystem: Darren is witness (20% per minute); `CCTV_CAMERA_PROP` records entry (triggers police inquiry after 1 in-game day).
+
+### Car Parts Black Market
+
+`CAR_PART` material (dropped from chop jobs) can be sold:
+- To ScrapyardSystem (Gary) at 8 COIN each — but Gary refuses if Notoriety ≥ 50.
+- To Marchetti contact at the black market basement (via FenceSystem) at 12 COIN each — no questions.
+- Used as ingredient in `Advisory Repairs` at the garage.
+
+### System Integrations
+
+- **CarDrivingSystem / CarManager**: Cars gain `roadworthiness` and `stolen` flags; plate-check logic added to WantedSystem.
+- **WantedSystem**: 30% plate-check chance at Wanted ≥ 1; `CAR_SEIZED` removes the car from the world.
+- **CriminalRecord**: `DRIVING_UNREGISTERED`, `FRAUDULENT_MOT` entries.
+- **ScrapyardSystem**: `SCRAP_METAL` and `TYRE` sourced from scrapyard for repair jobs; `CAR_PART` sold to Gary.
+- **FactionSystem**: Car Ringing unlocked at `MARCHETTI_CREW` Respect ≥ 50; Marchetti Respect −5 on journalist tip-off. `STREET_LADS` Respect +5 on first car theft (word gets round).
+- **FenceSystem**: `CAR_PART` fenced at 12 COIN; `BLANK_LOGBOOK` fenced at 6 COIN.
+- **NewspaperSystem**: Car ringing tip-off → LOCAL_EVENT headline; cut-and-shut fatality → front-page headline.
+- **RumourNetwork**: Successful car ring seeds `CRIMINAL_INTEL` rumour ("Mick's dodgy MOTs are getting worse"); FRAUDULENT_MOT seeds `SCANDAL` rumour.
+- **NotorietySystem**: `CAR_SEIZED` Notoriety +5; `FRAUDULENT_MOT` Notoriety +8; compliant official MOT Notoriety −1 (legitimacy signal).
+- **WeatherSystem**: Rain reduces Mick's forecourt customers by 2; fog adds 10% plate-check failure chance (police can't see plate clearly). No outdoor work during THUNDERSTORM — garage closes Bay 1.
+- **TimeSystem**: Terry sessions Mon/Wed/Fri 09:00–12:00 only; cash tin heist window 09:00–17:00 (Mick distracted); Darren clocks off at 17:30.
+- **AchievementSystem**: See below.
+- **NoiseSystem**: Chop job emits HIGH noise for 1 in-game hour; alert radius 25 blocks.
+
+### Items (add to `Material.java`)
+
+- `TYRE` — rubber tyre; used in repairs; chopped from cars; sourced from ScrapyardSystem.
+- `CAR_PART` — generic car component; from chop jobs; fenceable at 8–12 COIN.
+- `BLANK_LOGBOOK` — forged V5C logbook; required for car ringing; found in garage skip or black market.
+- `MOT_CERT` — vehicle MOT certificate; clears `MOT_FAILURE` flag; fenceable at 3 COIN.
+
+### Props (add to `PropType.java`)
+
+- `MOT_RAMP_PROP` — hydraulic ramp in Bay 1; E to open MOT menu when car nearby.
+- `REPAIR_RAMP_PROP` — ground-level ramp in Bay 2; E to open chop/repair menu.
+- `TYRE_STACK_PROP` — stack of old tyres; contains 1–2 `TYRE` items (E to take).
+- `CAR_FOR_SALE_PROP` — marker on forecourt; E to purchase one of Mick's bangers.
+- `GARAGE_OFFICE_PROP` — Mick's cabin; contains `PARTS_INVOICE_PROP` desk and `CASH_TIN_PROP`.
+- `CASH_TIN_PROP` — locked cash tin; LOCKPICK or CROWBAR to open; 20–40 COIN.
+
+### Achievements (add to `AchievementType.java`)
+
+| Achievement | Trigger |
+|---|---|
+| `RINGER` | Successfully ring a stolen car via Mick's Car Ringing service |
+| `DODGY_MOT` | Purchase a fraudulent MOT certificate from Mick |
+| `DEATH_TRAP` | Drive a cut-and-shut car until it suffers engine failure |
+| `GARAGE_THIEF` | Steal from the cash tin in Mick's office |
+| `CHOP_SHOP` | Chop 3 cars for parts in a single in-game day |
+| `CLEAN_DRIVER` | Pass an official MOT with roadworthiness ≥ 80 |
+
+**Unit tests**: Roadworthiness range at theft (20–80); dodgy MOT detection chance (25% Terry walk-in); ringing journalist tip-off rate (15%); cut-and-shut roadworthiness formula (lower − 10, floor 5); plate-check trigger (Wanted ≥ 1, 30%); cash tin COIN range (20–40 across 1000 seeds); repair roadworthiness gain (15–20 per repair); car-for-sale roadworthiness range (25–55); Mick friendship discount threshold (≥ 40, −10 COIN).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Dodgy MOT clears stolen flag risk**: Steal a car (sets `stolen=true`). Drive it with Wanted ≥ 1 to trigger plate-check logic. Using seeded Random forcing detection: verify `CAR_SEIZED` flag is set, `DRIVING_UNREGISTERED` CriminalRecord entry is added, and Notoriety is +5. Now spawn a fresh stolen car. Navigate to `MOT_RAMP_PROP`. Purchase Dodgy MOT (15 COIN). Using seeded Random forcing non-detection (Terry not present): verify `MOT_CERT` is in player inventory. Verify Mick's COIN balance reduced by 15.
+
+2. **Car ringing clears stolen plate**: Attain MARCHETTI_CREW Respect ≥ 50. Steal a car (`stolen=true`). Obtain a `BLANK_LOGBOOK`. Press E at `MOT_RAMP_PROP`, select Car Ringing (25 COIN + BLANK_LOGBOOK). Advance time 2 in-game hours. Return to garage. Using seeded Random forcing non-journalist-tip: verify car's `stolen` flag is now `false`. Verify `BLANK_LOGBOOK` is consumed from inventory. Verify `RINGER` achievement is unlocked. Trigger WantedSystem plate check on the now-clean car: verify no seizure occurs.
+
+3. **Chopping a car yields parts**: Park a car within 6 blocks of `REPAIR_RAMP_PROP`. Press E, select "Chop for parts". Advance 1 in-game hour. Verify car no longer exists in world (removed from CarManager). Verify player inventory contains ≥ 2 `SCRAP_METAL` + 1 `TYRE` + 1 `CAR_PART`. Verify NoiseSystem has a HIGH noise event active within 25 blocks of Bay 2 during the chop.
+
+4. **Advisory repairs raise roadworthiness and enable official MOT pass**: Steal a car with roadworthiness = 40 (below 60 threshold). Visit garage. Purchase 2 Advisory Repairs (using SCRAP_METAL from inventory). Verify car's roadworthiness is now ≥ 60. Set in-game time to Monday 10:00 (Terry present). Press E at `MOT_RAMP_PROP`, select Official MOT (5 COIN). Verify `MOT_CERT` added to inventory. Verify `CLEAN_DRIVER` achievement is NOT triggered (roadworthiness < 80). Repeat with roadworthiness ≥ 80 — verify `CLEAN_DRIVER` unlocked.
+
+5. **Cash tin heist during Mick's distraction**: Set time to 10:30 (Mick in Bay 1, distracted). Approach `GARAGE_OFFICE_PROP`. Use LOCKPICK on `CASH_TIN_PROP`. Using seeded Random forcing non-witness: verify 20–40 COIN added to player inventory. Verify cash tin is now empty. Verify `GARAGE_THIEF` achievement unlocked. Set time to next day: verify tin has been refilled to 20–40 COIN. Now attempt theft with CROWBAR instead: verify NoiseSystem emits a MEDIUM noise event.
+
+// New system: GarageSystem.java in ragamuffin.core
+// New landmark: MOT_GARAGE (add to LandmarkType.java) — "Mick's MOT & Tyre Centre"
+// New NPCTypes: MECHANIC, MECHANIC_APPRENTICE, MOT_TESTER (add to NPCType.java)
+// New Materials: TYRE, CAR_PART, BLANK_LOGBOOK, MOT_CERT (add to Material.java)
+// New PropTypes: MOT_RAMP_PROP, REPAIR_RAMP_PROP, TYRE_STACK_PROP, CAR_FOR_SALE_PROP, GARAGE_OFFICE_PROP, CASH_TIN_PROP (add to PropType.java)
+// New Achievements: RINGER, DODGY_MOT, DEATH_TRAP, GARAGE_THIEF, CHOP_SHOP, CLEAN_DRIVER (add to AchievementType.java)
