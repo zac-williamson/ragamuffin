@@ -4181,6 +4181,68 @@ public enum AchievementType {
         "Ctrl+P, Ctrl+F Life",
         "Printed your first forged document at Cybernet. Hamza looked the other way.",
         1
+    ),
+
+    // ── Issue #1227: Wheelwright Motors — Dodgy Car Lot ──────────────────────
+
+    /**
+     * Awarded on first successful haggle below asking price at Wheelwright Motors.
+     * Wayne said "Go on then" and shook hands. You both knew it was a win.
+     */
+    WHEELER_DEALER(
+        "No Reasonable Offer Refused",
+        "Haggled Wayne down at Wheelwright's. He still made a profit. Probably.",
+        1
+    ),
+
+    /**
+     * Awarded on first finance purchase at Wheelwright Motors.
+     * Ten quid a day for ten days. What could possibly go wrong?
+     */
+    ON_THE_NEVER_NEVER(
+        "Never Never Land",
+        "Bought a car on Wayne's dodgy hire purchase. The repo man cometh.",
+        1
+    ),
+
+    /**
+     * Awarded when player sells a stolen car using a FAKE_V5C at Wheelwright's.
+     * Wayne didn't ask. You didn't tell. Beautiful arrangement, really.
+     */
+    CLEAN_TITLE(
+        "Nothing to See Here, Officer",
+        "Sold a stolen car with forged documents. Wayne pocketed the cash. You split.",
+        1
+    ),
+
+    /**
+     * Awarded when player clocks a car with Bez's help and sells it to a civilian.
+     * The mileage said 12,000. It had done 140,000. Classic.
+     */
+    DODGY_MILEAGE(
+        "Odometer? More Like Odd-ometer",
+        "Clocked a car and flogged it to a punter. Trading Standards were watching.",
+        1
+    ),
+
+    /**
+     * Awarded on first successful VIN plate swap at the Scrapyard.
+     * The car is now officially a different car. Legally speaking.
+     */
+    VIN_SWAP(
+        "Identity Crisis",
+        "Swapped the VIN plates at Pearce's yard. The ANPR won't know what to think.",
+        1
+    ),
+
+    /**
+     * Awarded when the repo man takes the player's financed car after 3 missed payments.
+     * It was gone when you got up. Bez had looked the other way.
+     */
+    REPOSSESSED(
+        "Gone Before Breakfast",
+        "The repo man came in the night and took your car back. Should've paid Wayne.",
+        1
     );
 
     private final String name;

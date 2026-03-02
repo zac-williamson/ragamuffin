@@ -4560,7 +4560,34 @@ public enum Material {
      * ClaimsManagementSystem. Worthless if sold to the Fence.
      * Tooltip: "Keep this safe. Or don't. Gary's got a copy."
      */
-    CLAIM_REFERENCE_SLIP("Claim Reference Slip");
+    CLAIM_REFERENCE_SLIP("Claim Reference Slip"),
+
+    // ── Issue #1227: Wheelwright Motors — Dodgy Car Lot ──────────────────────
+
+    /**
+     * MILEAGE_CORRECTOR — a handheld OBD-style device sold by Mo at the Indoor Market
+     * (knock-offs, 8 COIN). Used together with a 5-COIN bribe to Bez to clock a ROUGH or
+     * BANGER car's odometer up to TIDY condition at Wheelwright Motors.
+     * Tooltip: "Mo says it fell off a lorry. You believe him."
+     */
+    MILEAGE_CORRECTOR("Mileage Corrector"),
+
+    /**
+     * FAKE_V5C — a forged vehicle registration document (V5C logbook) printed at
+     * Cybernet's back-room PRINTER_PROP (requires BLANK_PAPER + PRINTER_INK, 3 COIN fee).
+     * Used to sell a stolen car to Wayne without triggering a police call.
+     * Selling with FAKE_V5C records DOCUMENT_FRAUD in CriminalRecord; Notoriety +5.
+     * Tooltip: "Looks official. Probably won't stand up in court."
+     */
+    FAKE_V5C("Fake V5C"),
+
+    /**
+     * V5C_PROP — a legitimate vehicle registration document (V5C logbook) that comes with
+     * a lawfully acquired car. Prevents HANDLING_STOLEN_GOODS charge when selling a car to
+     * Wayne. If the car is stolen, Wayne still asks for it but the V5C clears the transaction.
+     * Tooltip: "Keep it in the glovebox. Or don't. Your call."
+     */
+    V5C_PROP("V5C Document");
 
     private final String displayName;
 
@@ -7375,6 +7402,14 @@ public enum Material {
                 return IconShape.BOX;         // foam cervical collar
             case CLAIM_REFERENCE_SLIP:
                 return IconShape.FLAT_PAPER;  // crumpled payout receipt
+
+            // Issue #1227: Northfield Wheelwright Motors
+            case MILEAGE_CORRECTOR:
+                return IconShape.TOOL;        // handheld OBD clocking device
+            case FAKE_V5C:
+                return IconShape.FLAT_PAPER;  // forged V5C logbook
+            case V5C_PROP:
+                return IconShape.FLAT_PAPER;  // legitimate V5C logbook
 
             default:
                 return IconShape.BOX;
