@@ -31744,3 +31744,132 @@ Garage 3 is run by `MARCHETTI_CREW` NPC `JAYDEN` (visits 21:00–23:00 Mon–Fri
 // New PropTypes: GARAGE_DOOR_PROP, GARAGE_SHELF_PROP, AMPLIFIER_PROP, DRUM_KIT_PROP, SCALES_PROP, PIGEON_COOP_PROP (add to PropType.java)
 // New Achievements: LOCKSMITH, CROWBAR_JUSTICE, GRASS, INFORMANT, BRIC_A_BRAC_BANDIT, STASH_ROBBER, GARAGE_BAND_MEMBER, LOCK_UP_LANDLORD (add to AchievementType.java)
 // New Achievements: RINGER, DODGY_MOT, DEATH_TRAP, GARAGE_THIEF, CHOP_SHOP, CLEAN_DRIVER (add to AchievementType.java)
+
+## Add Northfield DVSA Driving Test Centre — Theory Test, Practical Route & the Backhander Economy
+
+**Goal**: Add a **Northfield DVSA Driving Test Centre** (`DrivingTestSystem`) — a beige single-storey brick building on the industrial estate road with a car park, a waiting room, and two interview/test booths. The DVSA examiner (`DRIVING_EXAMINER` NPC — `DEREK`) takes candidates on a fixed test route through Northfield streets Monday–Friday 09:00–16:30. Without a `FULL_DRIVING_LICENCE`, driving any car triggers `DRIVING_WITHOUT_LICENCE` from WantedSystem (Wanted +2) and a CriminalRecord entry. The system gives players a legitimate (or illegitimate) way to hold a driving licence and layers in the distinctly British trauma of the driving test economy.
+
+**New landmark**: `DRIVING_TEST_CENTRE` — "Northfield DVSA" — industrial estate, adjacent to JobCentre. Brown DVSA signage (`BUILDING_SIGN`). Car park with 3 `PARKED_CAR` positions (used for test-route cars). A `THEORY_TEST_BOOTH_PROP` (a cubicle with a monitor) and a `RECEPTION_DESK_PROP` inside.
+
+### Licensing State Machine
+
+Three player states (stored on `Player`):
+- **`NO_LICENCE`** (default): police plate-check → `DRIVING_WITHOUT_LICENCE` WantedSystem offence (Wanted +2); CriminalRecord entry `DRIVING_WITHOUT_LICENCE`. Can only legally drive with a valid `PROVISIONAL_LICENCE` (L-plates mode).
+- **`PROVISIONAL_LICENCE`**: obtained by pressing E on `RECEPTION_DESK_PROP` (fee: 3 COIN; requires age check NPC dialogue — always passes). Enables driving legally but with a speed cap of 60 mph equivalent (game units: max `Car.speed` = 8.0f). Police check still triggers if: speeding, motorway-equivalent road, or no L-plate displayed. `L_PLATE` material item must be in hotbar while driving.
+- **`FULL_DRIVING_LICENCE`**: awarded after passing the practical test. No restrictions. `FULL_DRIVING_LICENCE` material added to inventory. Driving without a `FULL_DRIVING_LICENCE` entry removed from CriminalRecord on pass.
+
+### Theory Test
+
+Press E on `THEORY_TEST_BOOTH_PROP` → opens `TheoryTestUI` (new class). Cost: 5 COIN. 10 multiple-choice questions drawn from a fixed pool of 30. Pass mark: 8/10. Questions cover UK Highway Code — e.g.:
+- *"What does a flashing amber traffic light mean?"* (A: Proceed with caution)  
+- *"What is the national speed limit on a single carriageway?"* (A: 60 mph)  
+- *"What shape is a Give Way sign?"* (A: Upside-down triangle)  
+- *"When must you use your headlights?"* (A: Between sunset and sunrise)  
+- *"What does the Highway Code say about following distance in rain?"* (A: Double the dry stopping distance)
+
+On **pass**: `THEORY_PASS_CERT` material added to inventory; NPC examiner DEREK says `"Well done. You may now book your practical."` On **fail**: 3 COIN refund withheld; tooltip: `"Revise the Highway Code. Or bribe Derek."`. 2-in-game-day cooldown before re-sitting.
+
+### Practical Test
+
+Requires `THEORY_PASS_CERT` in inventory. Player drives a test car (a spawned `Car` with roadworthiness = 100) with `DRIVING_EXAMINER` NPC DEREK in the passenger seat (visible as a passenger model). Test route: 5 fixed waypoints through Northfield streets (configurable positions in `DrivingTestSystem.WAYPOINTS` array — park road, high street, industrial estate loop, back to test centre).
+
+**Fault system**: DEREK accumulates `minorFaults` and `majorFaults`:
+- Speeding (> 8.0f game-units speed): +1 minor per second sustained.
+- Running a ROAD block boundary (collision with static block while in car): +1 major.
+- Not stopping at a 3-second in-game pause point (marked by `GIVE_WAY_SIGN_PROP`): +1 major.
+- Mounting the pavement (car enters PAVEMENT block): +1 minor.
+- Hitting an NPC pedestrian: immediate test termination — `INSTANT_FAIL`.
+
+**Pass conditions**: `majorFaults == 0` AND `minorFaults < 15`. On pass: `FULL_DRIVING_LICENCE` material awarded; DEREK says `"Congratulations. You've passed. Try not to run anyone over."` `ROAD_LEGAL` achievement unlocked. On fail: DEREK's feedback specifies the fault type; player must re-book (3 COIN re-test fee, 1-in-game-day wait).
+
+### The Bribe Economy
+
+At any point during the theory test debrief or post-practical-test result screen, the player can offer DEREK a bribe:
+- **Theory bribe**: press E on DEREK after failing theory → `"I don't suppose there's anything I can do to help?"` → 15 COIN → DEREK marks paper as passed; `THEORY_PASS_CERT` awarded. 20% chance DEREK refuses and files a complaint → WantedSystem `BRIBERY_OFFICIAL` offence (Wanted +3); CriminalRecord `BRIBERY_OF_PUBLIC_OFFICIAL` entry.
+- **Practical bribe**: press E on DEREK after failing practical → offer 25 COIN → DEREK resets `majorFaults` to 0 and `minorFaults` to 5; signs off pass. Same 20% refusal risk. `GREASED_WHEELS` achievement on first successful bribe.
+- **Bribe DEREK mid-test**: if player opens interaction with DEREK while test is in progress, a "slip him a tenner" option appears (10 COIN) → zeroes current minorFaults only; cannot clear majorFaults.
+
+### The Fake Licence Underground
+
+`FENCE` NPC (existing) sells `FAKE_DRIVING_LICENCE` for 30 COIN when FenceSystem Reputation ≥ 2. The `FAKE_DRIVING_LICENCE` acts identically to `FULL_DRIVING_LICENCE` for WantedSystem plate-checks 70% of the time. 30% chance a POLICE NPC detects the fake during a stop → `FAKE_DOCUMENT` CriminalRecord entry (Wanted +4); licence confiscated; player reverts to `NO_LICENCE`.
+
+The player can also **steal DEREK's marking sheet** (`THEORY_ANSWER_SHEET` material) from the `RECEPTION_DESK_PROP` during office hours when DEREK is in the car park (12:30–13:00 lunch break). `THEORY_ANSWER_SHEET` reveals correct answers in `TheoryTestUI` (answers highlighted). One-time use; 40% chance DEREK notices it's missing the next day → office security upgraded (WitnessSystem: `COUNCIL_CARETAKER`-class NPC `BRENDA` added as receptionist who spots lockpicking attempts).
+
+### Driving Without a Licence — WantedSystem Integration
+
+- `CarDrivingSystem.tryEnterCar()`: on entry to a parked car, if player holds `NO_LICENCE`: tooltip `"You shouldn't be driving without a licence."` (no mechanical block — game lets you drive, British attitude).
+- On police plate-check (existing `WantedSystem` 30% check at Wanted ≥ 1): additional check — if player has `NO_LICENCE` or `FAKE_DRIVING_LICENCE` (30% detection): `DRIVING_WITHOUT_LICENCE` CriminalRecord entry; Wanted +2; car seized.
+- On crash (car hits NPC or STONE block at speed > 6.0f): NoiseSystem HIGH noise; if player has `NO_LICENCE`: `UNLICENSED_DANGEROUS_DRIVING` CriminalRecord entry (Wanted +4); newspaper-eligible headline: `"UNLICENSED DRIVER CAUSES CHAOS ON NORTHFIELD HIGH STREET"`.
+
+### Nervous Candidate NPCs
+
+Every weekday 09:00–16:30, 2–4 `TEST_CANDIDATE` NPCs spawn in the waiting room:
+- Idle animations: leg-jiggling (random nervous state), looking at a `HIGHWAY_CODE_BOOK_PROP`.
+- Each has a `passChance` (40–80%) seeded per spawn. When their test slot arrives, they exit with DEREK and return after 15 in-game minutes: either `ELATED` (pass — celebrate outside, seed `LOCAL_EVENT` rumour: `"[Name] passed their test. First time!"`) or `DEFLATED` (fail — sit back in waiting room, mutter). Player can **give advice** (E on nervous candidate) → +5 STREET_LADS Respect, `passChance` +10%.
+- **Rob the waiting room**: test candidates leave `HANDBAG_PROP` or `WALLET_PROP` on seats while in the car park. Each contains 3–8 COIN. If WitnessSystem: BRENDA present → 60% witness chance.
+
+### System Integrations
+
+- **CarDrivingSystem**: `NO_LICENCE` flag checked on `tryEnterCar()`; tooltip displayed. `FULL_DRIVING_LICENCE` flag enables full speed cap removal.
+- **WantedSystem**: `DRIVING_WITHOUT_LICENCE` (Wanted +2); `BRIBERY_OF_PUBLIC_OFFICIAL` (Wanted +3); `UNLICENSED_DANGEROUS_DRIVING` (Wanted +4); `FAKE_DOCUMENT` (Wanted +4).
+- **CriminalRecord**: new entries `DRIVING_WITHOUT_LICENCE`, `BRIBERY_OF_PUBLIC_OFFICIAL`, `UNLICENSED_DANGEROUS_DRIVING`, `FAKE_DOCUMENT`.
+- **FenceSystem**: `FAKE_DRIVING_LICENCE` available at FenceReputation ≥ 2 (30 COIN); `THEORY_ANSWER_SHEET` fenceable at 8 COIN (to a rival test candidate, via RumourNetwork).
+- **NoiseSystem**: crash at speed > 6.0f → HIGH noise (25-block radius); car horn on near-miss → MEDIUM noise.
+- **RumourNetwork**: pass → `LOCAL_EVENT` rumour; DEREK bribe → `SCANDAL` rumour ("Derek at the test centre has his price, mate"); fake licence discovery → `CRIMINAL_INTEL` rumour.
+- **NewspaperSystem**: `UNLICENSED_DANGEROUS_DRIVING` with Notoriety ≥ Tier 2 → headline eligible.
+- **NotorietySystem**: `DRIVING_WITHOUT_LICENCE` caught → Notoriety +3; `BRIBERY_OF_PUBLIC_OFFICIAL` → Notoriety +5; `FULL_DRIVING_LICENCE` earned legitimately → Notoriety −1 (civic signal).
+- **TimeSystem**: test centre open Mon–Fri 09:00–16:30; DEREK lunch 12:30–13:00 (car park); theory booth open same hours; closed weekends and all bank holidays.
+- **AchievementSystem**: See below.
+
+### Items (add to `Material.java`)
+
+- `PROVISIONAL_LICENCE` — paper card; must be held in hotbar while driving on `PROVISIONAL` state.
+- `L_PLATE` — magnetic L-plate; placed on car (hotbar E interaction on car boot); required for provisional driving.
+- `THEORY_PASS_CERT` — paper certificate; required to book practical test; consumed on test day.
+- `FULL_DRIVING_LICENCE` — pink photocard licence; unlocks full car speed; persists in inventory.
+- `FAKE_DRIVING_LICENCE` — forged pink photocard; 70% police-fooling rate; 30% detection → seized.
+- `THEORY_ANSWER_SHEET` — DEREK's marking template; reveals answers in `TheoryTestUI`; stolen from desk.
+- `HIGHWAY_CODE_BOOK` — prop item; if player reads it (E while holding) → grants 1 free incorrect answer correction in next theory sitting.
+
+### Props (add to `PropType.java`)
+
+- `THEORY_TEST_BOOTH_PROP` — computer cubicle; E to start theory test (costs 5 COIN).
+- `RECEPTION_DESK_PROP` — front desk; E to book provisional, practical, or interact with BRENDA.
+- `GIVE_WAY_SIGN_PROP` — road sign at test-route junction; car must pause ≥ 3 seconds or major fault.
+- `HIGHWAY_CODE_BOOK_PROP` — on waiting-room table; E to read (grants answer correction bonus).
+- `HANDBAG_PROP` / `WALLET_PROP` — left on waiting-room seats; E to steal (3–8 COIN).
+
+### Achievements (add to `AchievementType.java`)
+
+| Achievement | Trigger |
+|---|---|
+| `ROAD_LEGAL` | Pass the practical driving test legitimately (no bribes) |
+| `GREASED_WHEELS` | Successfully bribe DEREK to pass a test |
+| `SERIAL_FAILER` | Fail the practical test 3 times |
+| `CHEAT_SHEET` | Use the stolen answer sheet to pass the theory test |
+| `FAKE_ID` | Drive with a `FAKE_DRIVING_LICENCE` without being detected, 5 times |
+| `UNLICENSED` | Drive without any licence for 10 in-game days without being caught |
+| `DEREK_MIDTEST` | Slip DEREK a tenner during an active practical test |
+
+**Unit tests**: `NO_LICENCE` WantedSystem trigger (Wanted +2 on plate-check); theory question pool shuffle (seeded Random, 10 drawn from 30); bribe refusal rate (20% across ≥ 1000 seeds); practical fault thresholds (pass: major=0, minor<15); fake licence detection rate (30% across ≥ 1000 seeds); DEREK lunch window (12:30–13:00); theory pass cert consumed on test day; provisional speed cap (Car.speed clamped to 8.0f); test-route waypoint count (5); candidate `passChance` range (40–80%).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Driving without a licence triggers WantedSystem**: Set player licence state to `NO_LICENCE`. Enter a parked car via `CarDrivingSystem.tryEnterCar()`. Verify tooltip `"You shouldn't be driving without a licence."` fires. Advance to a police plate-check event (set Wanted = 1, use seeded Random forcing detection). Verify `DRIVING_WITHOUT_LICENCE` CriminalRecord entry is added. Verify WantedSystem Wanted level is now 3 (1 + 2). Verify car is seized (removed from `CarManager`).
+
+2. **Theory test: pass, then book practical**: Set time to Monday 10:00. Press E on `THEORY_TEST_BOOTH_PROP`. Verify 5 COIN deducted. Using seeded question draw and player answers 9/10 correctly: verify `THEORY_PASS_CERT` added to inventory. Verify DEREK NPC emits pass dialogue. Press E on `RECEPTION_DESK_PROP` → select "Book practical test" (3 COIN). Verify practical test is scheduled for the next available 09:30 slot.
+
+3. **Practical test: major fault causes fail**: Begin practical test. While DEREK is passenger, simulate car colliding with a STONE block at speed > 4.0f (drive into a wall). Verify `majorFaults` increments by 1. Complete the route. Verify test result is FAIL (majorFaults ≥ 1). Verify `FULL_DRIVING_LICENCE` is NOT in player inventory. Verify DEREK delivers fault-specific dialogue mentioning collision. Verify `SERIAL_FAILER` achievement NOT yet unlocked (only 1 fail).
+
+4. **Bribe DEREK to pass practical**: Fail practical test (majorFaults = 1). In post-test result screen, press E on DEREK. Select bribe option (25 COIN). Use seeded Random forcing acceptance. Verify player inventory now contains `FULL_DRIVING_LICENCE`. Verify 25 COIN deducted. Verify `GREASED_WHEELS` achievement unlocked. Verify `SCANDAL` rumour seeded in RumourNetwork ("Derek at the test centre has his price, mate"). Verify `BRIBERY_OF_PUBLIC_OFFICIAL` CriminalRecord entry is NOT added (bribe accepted, no report filed).
+
+5. **Fake licence detected during police stop**: Obtain `FAKE_DRIVING_LICENCE` from FENCE NPC (set FenceReputation ≥ 2). Enter a car. Trigger police plate-check (set Wanted = 1). Use seeded Random forcing detection (30% rate). Verify WantedSystem adds `FAKE_DOCUMENT` entry (Wanted +4). Verify `FAKE_DRIVING_LICENCE` is removed from player inventory. Verify player licence state reverts to `NO_LICENCE`. Verify Notoriety increased by 5.
+
+// New system: DrivingTestSystem.java in ragamuffin.core
+// New UI: TheoryTestUI.java in ragamuffin.ui
+// New landmark: DRIVING_TEST_CENTRE (add to LandmarkType.java) — "Northfield DVSA"
+// New NPCTypes: DRIVING_EXAMINER, TEST_CANDIDATE (add to NPCType.java)
+// New Materials: PROVISIONAL_LICENCE, L_PLATE, THEORY_PASS_CERT, FULL_DRIVING_LICENCE, FAKE_DRIVING_LICENCE, THEORY_ANSWER_SHEET, HIGHWAY_CODE_BOOK (add to Material.java)
+// New PropTypes: THEORY_TEST_BOOTH_PROP, RECEPTION_DESK_PROP, GIVE_WAY_SIGN_PROP, HIGHWAY_CODE_BOOK_PROP, HANDBAG_PROP, WALLET_PROP (add to PropType.java)
+// New CriminalRecord entries: DRIVING_WITHOUT_LICENCE, BRIBERY_OF_PUBLIC_OFFICIAL, UNLICENSED_DANGEROUS_DRIVING, FAKE_DOCUMENT (add to CriminalRecord.java)
+// New Achievements: ROAD_LEGAL, GREASED_WHEELS, SERIAL_FAILER, CHEAT_SHEET, FAKE_ID, UNLICENSED, DEREK_MIDTEST (add to AchievementType.java)
