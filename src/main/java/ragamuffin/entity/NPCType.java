@@ -1414,7 +1414,27 @@ public enum NPCType {
      * Speech: "Excellent form." / "A fine specimen." / "I've seen better."
      *         / "The judging criteria are entirely above board." (nervous laugh)
      */
-    JUDGE_NPC(25f, 0f, 0f, false);
+    JUDGE_NPC(25f, 0f, 0f, false),
+
+    // ── Issue #1134: Patel's Newsagent ────────────────────────────────────────
+
+    /**
+     * Milk Float Driver — an early-morning delivery driver who patrols the residential
+     * streets adjacent to Patel's News between 05:30 and 07:00.
+     * Passive; delays 10 minutes in FROST weather (FREEZING debuff risk for players nearby).
+     * Talks to Norman (INSOMNIAC_PENSIONER) if paths cross.
+     * Speech: "Morning!" / "Lovely and cold this morning." / "Last stop, nearly done."
+     */
+    MILK_FLOAT_DRIVER(20f, 0f, 0f, false),
+
+    /**
+     * Insomniac Pensioner (Norman) — a chronic insomniac who loiters outside Patel's
+     * News between 05:00 and 08:00. Seeds LOCAL_GOSSIP rumours into the RumourNetwork
+     * every 10 in-game minutes. Passive; never hostile.
+     * Speech: "Can't sleep again." / "You're up early." / "Did you hear about...?"
+     *         / "Been stood here since four. Council should do something about the bins."
+     */
+    INSOMNIAC_PENSIONER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

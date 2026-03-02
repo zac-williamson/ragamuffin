@@ -2690,6 +2690,82 @@ public enum AchievementType {
         "Show Day",
         "Entered the Northfield Dog Show. The other dogs were impeccably groomed. Yours had a go.",
         1
+    ),
+
+    // ── Issue #1134: Patel's Newsagent ────────────────────────────────────────
+
+    /**
+     * Awarded when the player wins the scratch-card jackpot (50 COIN) at Patel's News.
+     */
+    NEWSAGENT_JACKPOT(
+        "Rajjackpot",
+        "Won the 50 COIN scratch card jackpot at Patel's. Raj looked quietly devastated.",
+        1
+    ),
+
+    /**
+     * Awarded when the player buys 5 or more scratch cards in a single in-game day,
+     * gaining the SCRATCH_CARD_ADDICTION debuff.
+     */
+    SCRATCH_CARD_ADDICTION(
+        "One More Can't Hurt",
+        "Bought five scratch cards in a single day. Raj said nothing. He didn't have to.",
+        1
+    ),
+
+    /**
+     * Awarded after completing 7 paper rounds before 07:00 on 7 separate days.
+     */
+    RELIABLE_PAPERBOY(
+        "Reliable Paperboy",
+        "Completed seven paper rounds on time. People actually expect you now. Terrifying.",
+        7
+    ),
+
+    /**
+     * Awarded when the player wins the weekly lottery draw (1-in-50 chance; 25 COIN).
+     */
+    LOTTERY_WINNER(
+        "It Could Be You",
+        "Won the newsagent lottery draw. Twenty-five quid. Raj was unreasonably happy for you.",
+        1
+    ),
+
+    /**
+     * Awarded when Raj gives the player a free chocolate bar after 10+ purchases —
+     * the mark of a truly loyal customer.
+     */
+    RAJS_FAVOURITE(
+        "Raj's Favourite",
+        "Raj slid you a free Dairy Milk across the counter. You're basically family now.",
+        1
+    ),
+
+    /**
+     * Awarded when the player buys or shoplifts a DODGY_MAGAZINE from the top shelf.
+     */
+    TOP_SHELF(
+        "Top Shelf",
+        "Acquired a dodgy magazine from behind the counter. Raj's expression was unreadable.",
+        1
+    ),
+
+    /**
+     * Awarded when the player places a crafted PAPIER_MACHE_BRICK in the world.
+     */
+    PAPIER_MACHE_ARCHITECT(
+        "Papier Mache Architect",
+        "Placed a papier mache brick. It looks convincing. It isn't.",
+        1
+    ),
+
+    /**
+     * Awarded on first completed paper round (player signs on and delivers 8 papers before 07:00).
+     */
+    EARLY_BIRD_PAPERBOY(
+        "Early Bird",
+        "Completed a paper round before 07:00. You saw the milk float. Norman waved.",
+        1
     );
 
     private final String name;

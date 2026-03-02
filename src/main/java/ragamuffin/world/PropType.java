@@ -1874,7 +1874,61 @@ public enum PropType {
      * Contains a DOG_SHOW_ROSETTE lootable item (unlocked after winning the show).
      * 5 hits; yields GLASS.
      */
-    DOG_SHOW_TROPHY_CABINET_PROP(0.80f, 1.80f, 0.40f, 5, Material.GLASS);
+    DOG_SHOW_TROPHY_CABINET_PROP(0.80f, 1.80f, 0.40f, 5, Material.GLASS),
+
+    // ── Issue #1134: Patel's Newsagent ────────────────────────────────────────
+
+    /**
+     * Newsagent counter — the main service counter in Patel's News.
+     * Press E to open the retail purchase menu (NEWSPAPER, SCRATCH_CARD, PENNY_SWEETS,
+     * CHOCOLATE_BAR, CRISPS, ENERGY_DRINK, TOBACCO_POUCH, LOTTERY_TICKET, BIRTHDAY_CARD,
+     * LOCAL_MAP). 5 hits to destroy; yields WOOD.
+     */
+    NEWSAGENT_COUNTER_PROP(1.80f, 1.10f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * Newsagent notice board — a cork board near the door with local ads and a
+     * paper-round sign-up sheet. Press E between 05:30 and 07:00 to begin the
+     * paper round delivery job. 3 hits to destroy; yields WOOD.
+     */
+    NEWSAGENT_NOTICE_BOARD_PROP(0.80f, 1.20f, 0.10f, 3, Material.WOOD),
+
+    /**
+     * Magazine rack — a floor-standing wire display rack near the counter.
+     * Press E to browse RACING_FORM, DIY_MONTHLY, PUZZLE_BOOK; top-shelf
+     * DODGY_MAGAZINE requires Notoriety ≥ 30. Shoplifting is detected by Raj.
+     * 4 hits to destroy; yields SCRAP_METAL.
+     */
+    MAGAZINE_RACK_PROP(0.60f, 1.50f, 0.35f, 4, Material.SCRAP_METAL),
+
+    /**
+     * Newspaper bundle — a bundled stack of today's Daily Ragamuffin editions,
+     * placed outside the shop door from 06:00. Interact to buy a NEWSPAPER (1 COIN)
+     * or to grab one for free (SHOPLIFTING + Notoriety +1 if Raj spots you).
+     * 2 hits to destroy; yields CARDBOARD.
+     */
+    NEWSPAPER_BUNDLE_PROP(0.60f, 0.50f, 0.40f, 2, Material.CARDBOARD),
+
+    /**
+     * Sweet counter — a glass counter-top display filled with jars of penny sweets.
+     * Press E to buy PENNY_SWEETS (1 COIN). 4 hits to destroy; yields GLASS.
+     */
+    SWEET_COUNTER_PROP(1.20f, 1.00f, 0.50f, 4, Material.GLASS),
+
+    /**
+     * Letterbox — a residential door letterbox used as a paper-round delivery stop.
+     * Eight LETTERBOX_PROP instances are placed across the nearby residential streets.
+     * Press E while carrying NEWSPAPER to deliver (increments paper-round progress).
+     * Non-destructible (attached to door); 0 hits; yields null.
+     */
+    LETTERBOX_PROP(0.30f, 0.15f, 0.10f, 0, null),
+
+    /**
+     * Stockroom door — the locked door to the Patel's News stockroom.
+     * Requires NEWSAGENT_KEY or a LOCKPICK to open. Contains CASH_BOX_PROP
+     * (8–14 COIN) and stock shelves. 6 hits to break down; yields WOOD.
+     */
+    STOCKROOM_DOOR_PROP(0.15f, 2.00f, 0.90f, 6, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

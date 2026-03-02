@@ -346,5 +346,13 @@ public enum RumourType {
      * — seeded by TattooParlourSystem when the player applies a PRISON_INK buff
      *   (either at Kev's or DIY). Spreads via PUBLIC and YOUTH_GANG NPCs.
      *   Minor Notoriety gain (+1) for nearby witnesses. */
-    STREET_REPUTATION;
+    STREET_REPUTATION,
+
+    // ── Issue #1134: Patel's Newsagent ────────────────────────────────────────
+
+    /** "Did you hear? There was a bit of bother round the back of the newsagent last night."
+     * — seeded by INSOMNIAC_PENSIONER Norman outside Patel's News between 05:00 and 08:00.
+     *   Spreads via PUBLIC and PENSIONER NPCs.
+     *   Minor ambient flavour; no direct gameplay effect. */
+    LOCAL_GOSSIP;
 }
