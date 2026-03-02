@@ -2425,7 +2425,43 @@ public enum PropType {
      * COUNCIL_VAN — yellow council enforcement van. Patrols the market every
      * 4 in-game minutes. Spawns COUNCIL_OFFICER when it arrives at the market.
      */
-    COUNCIL_VAN(4.00f, 1.80f, 2.00f, 0, null);
+    COUNCIL_VAN(4.00f, 1.80f, 2.00f, 0, null),
+
+    // ── Issue #1183: Northfield Household Waste Recycling Centre ─────────────
+
+    /**
+     * GENERAL_WASTE_SKIP — large open-top skip for general household waste.
+     * Player presses E to dispose items (no return). May yield RAGS or CHARITY_BAG.
+     */
+    GENERAL_WASTE_SKIP(2.50f, 1.20f, 1.20f, 20, null),
+
+    /**
+     * RECYCLING_SKIP — colour-coded skip for glass, paper, and cans.
+     * Player presses E to dispose recyclables. May yield GLASS_BOTTLE ×1–3.
+     */
+    RECYCLING_SKIP(2.50f, 1.20f, 1.20f, 20, null),
+
+    /**
+     * WEEE_SKIP — Waste Electrical and Electronic Equipment skip.
+     * Player presses E to search (3 seconds). Yields CIRCUIT_BOARD, COPPER_WIRE,
+     * OLD_PHONE, BROKEN_KETTLE, or RETRO_CONSOLE. Dave suspicious if player lingers
+     * more than 10 seconds. Richer loot during night runs.
+     */
+    WEEE_SKIP(2.50f, 1.20f, 1.20f, 20, null),
+
+    /**
+     * METAL_SKIP — skip for scrap metal and ferrous waste.
+     * Player presses E to search (3 seconds). Yields SCRAP_METAL ×1–2, rarely COPPER_PIPE.
+     * Dave suspicious if player lingers more than 10 seconds.
+     */
+    METAL_SKIP(2.50f, 1.20f, 1.20f, 20, null),
+
+    /**
+     * REUSE_SHELF_PROP — the Reuse Corner free shelf where items are left for others.
+     * Contents seeded daily by Random(dayNumber). Max 3 items taken per visit.
+     * Player can also deposit items. Deposit 3+ items → REUSE_HERO achievement.
+     */
+    REUSE_SHELF_PROP(1.20f, 1.00f, 0.40f, 5, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -529,7 +529,22 @@ public class CriminalRecord {
          * while wearing CHARITY_TABARD and holding CHARITY_CLIPBOARD.
          * Penalty: +10 Notoriety, WantedSystem +1 star.
          */
-        CHARITY_FRAUD("Charity donation fraud");
+        CHARITY_FRAUD("Charity donation fraud"),
+
+        /**
+         * Issue #1183: Recorded when the player enters the HWRC site with trade waste
+         * (BUILDERS_RUBBLE or ASBESTOS_SHEET) without paying the 15 COIN trade waste fee
+         * and escapes before COUNCIL_ENFORCEMENT can intercept them.
+         * Penalty: Notoriety +4, logged to CriminalRecord.
+         */
+        TRADE_WASTE_EVASION("Trade waste evasion at HWRC"),
+
+        /**
+         * Issue #1183: Recorded when Dave detects a forged HARDCORE_PERMIT
+         * (crafted from COUNCIL_LETTERHEAD + MARKER_PEN). 15% detection chance per check.
+         * Penalty: Notoriety +6, WantedSystem +1 star, Dave calls COUNCIL_ENFORCEMENT.
+         */
+        FORGED_COUNCIL_DOCUMENT("Forged council document (HWRC permit)");
 
         private final String displayName;
 
