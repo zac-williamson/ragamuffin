@@ -41535,3 +41535,96 @@ The player can **tamper with a competitor's car** to sabotage their race:
 // CriminalRecord.CrimeType: ILLEGAL_STREET_RACING — add to CriminalRecord.java
 // CarDealershipSystem: add NITROUS_CANISTER to shop inventory
 // WorldGenerator: place STREET_RACING_MEET on ring road section east of Tesco
+
+---
+
+## Issue #1266: Add Northfield Loan Shark — Big Mick's Doorstep Lending, Debt Spiral & the Debt Collector Hustle
+
+**Theme:** The predatory doorstep lender is a staple of deprived British neighbourhoods. Big Mick operates from the betting shop back room and will lend the player cash — at ruinous interest — when they're skint. Miss a repayment and his DEBT_COLLECTOR (an unkillable enforcer) starts following the player around. The system integrates tightly with the existing DWPSystem (benefits), JobCentreSystem, WantedSystem (loan-shark debts as pressured offences), and the existing DEBT_COLLECTOR NPCType.
+
+### New Files
+- `src/main/java/ragamuffin/core/LoanSharkSystem.java`
+- `src/test/java/ragamuffin/core/LoanSharkSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1266LoanSharkIntegrationTest.java`
+
+### Existing Files to Modify
+- `NPCType.java` — add `LOAN_SHARK` NPC (Big Mick; 80 HP, non-aggressive unless provoked, 0 dmg); `DEBT_COLLECTOR` already exists — wire to system
+- `Material.java` — add `LOAN_AGREEMENT` (paper item given on borrow), `DEBT_LEDGER` (rare drop from Big Mick's desk prop, reveals all outstanding loans in UI)
+- `PropType.java` — add `LOAN_SHARK_DESK_PROP` (interactive desk in betting shop back room)
+- `LandmarkType.java` — add `LOAN_SHARK_OFFICE`
+- `AchievementType.java` — add `IN_THE_RED` (borrow for first time), `SPIRAL` (owe > 50 COIN at once), `CLEARED_UP` (fully repay a loan), `BIG_MICK_BOUNCED` (repay full debt before first collector visit)
+- `RumourType.java` — add `LOAN_SHARK_LOOKING_FOR_YOU` (seeded when collector spawns), `LOAN_PAID_OFF` (seeded on full repayment), `BIG_MICK_DEBT` (seeded when player borrows)
+- `CriminalRecord.java` — add `CrimeType.LOAN_SHARK_ASSAULT` (attacking collector or Big Mick; +3 Notoriety, +2 Wanted stars)
+- `WorldGenerator.java` — place `LOAN_SHARK_OFFICE` landmark in betting shop back room
+- `DWPSystem.java` — when player receives benefits, if outstanding loan balance > 0, Big Mick texts player demanding payment (seeds `BIG_MICK_DEBT` rumour)
+- `WantedSystem.java` — DEBT_COLLECTOR following player at Wanted ≥ 3 causes collector to flee (Big Mick won't risk police attention)
+
+### LoanSharkSystem Mechanics
+
+**Borrowing:**
+- Press E on `LOAN_SHARK_DESK_PROP` to open loan menu (Big Mick present in back room between 10:00–22:00)
+- Loan tiers: 10 COIN (repay 15 within 2 in-game days), 25 COIN (repay 40 within 3 days), 50 COIN (repay 90 within 5 days)
+- First loan: no collateral. Second loan: requires prior loan cleared first.
+- Taking a loan adds `LOAN_AGREEMENT` to inventory and seeds `BIG_MICK_DEBT` rumour
+
+**Repayment:**
+- Return to desk, press E → "Pay Big Mick" option; deducts exact amount from COIN
+- Partial payment not accepted ("Mick doesn't do instalments")
+- On full repayment: `LOAN_PAID_OFF` rumour seeded; Notoriety −3 (Big Mick spreads word of a reliable debtor)
+
+**Overdue Mechanic:**
+- Each in-game day past due date: interest compounds +10 COIN (capped at 2× original loan)
+- On first overdue tick: DEBT_COLLECTOR NPC spawns within 15 blocks of player; follows player using Pathfinder
+- Collector harasses player every 30 seconds: "Big Mick sends his regards. Pay up." (speech bubble)
+- Collector disappears if player pays in full, or if Wanted level ≥ 3 (collector backs off)
+- If player punches collector: `LOAN_SHARK_ASSAULT` crime recorded, +2 Wanted stars, Notoriety +5
+- Collector never despawns otherwise — follows player across world (Pathfinder uses same logic as DEBT_COLLECTOR already uses)
+
+**Debt Forgiveness Hustle — "The Ledger Job":**
+- If player steals `DEBT_LEDGER` from `LOAN_SHARK_DESK_PROP` (pick pocket Big Mick or smash desk prop), player can bring it to a rival (FactionSystem MARCHETTI_CREW contact) who pays 30 COIN for it
+- Stealing the ledger cancels the player's own debt but also sets `bigMickEnraged = true`: Big Mick permanently hostile, spawns 2 THUG NPCs to pursue player for 5 in-game days
+- Achievement `BIG_MICK_BOUNCED` only unlocked via legitimate repayment (not ledger theft)
+
+**Integration with DWP/JobCentre:**
+- DWPSystem: if player on benefits and borrows from Big Mick, Big Mick plants a `SUSPICIOUS_FRIEND` marker on their DWP record (flavour only, no game penalty — unless player gets investigated)
+- JobCentreSystem: Advisor mention if player accepts job while in debt: "Careful — Mick's lads watch the job centre" (seeded via rumour)
+
+**Collateral Seizure:**
+- If debt reaches 2× original (maximum compound): DEBT_COLLECTOR attempts to grab a random hotbar item from player on next contact interaction (E press)
+- Item taken is added to Big Mick's inventory (can be bought back at 150% street value)
+- Player warned with text popup: "The collector snatches your [item]!"
+
+### Unit Tests (`LoanSharkSystemTest.java`)
+1. `testBorrowDeductsAndAddsAgreement` — borrow 10 COIN; verify balance deducted, `LOAN_AGREEMENT` in inventory, loan recorded
+2. `testRepaymentClearsLoan` — borrow and repay; verify no outstanding loans, `LOAN_PAID_OFF` rumour seeded
+3. `testInterestCompoundsDaily` — advance 2 days past due; verify amount owed = 10 + 10 + 10 = 30 (two compound ticks)
+4. `testCollectorSpawnsWhenOverdue` — advance past due date; verify DEBT_COLLECTOR NPC spawned in world within 15 blocks of player
+5. `testCollectorFleesAtHighWanted` — spawn collector; set Wanted level to 3; call update; verify collector despawns or transitions to FLEEING
+6. `testPunchCollectorAddsWanted` — punch DEBT_COLLECTOR; verify Wanted +2 and `LOAN_SHARK_ASSAULT` in CriminalRecord
+7. `testSecondLoanBlockedUntilFirstCleared` — take loan; attempt second loan; verify `LOAN_REJECTED` result
+8. `testLedgerTheftSetsEnraged` — steal `DEBT_LEDGER`; verify `bigMickEnraged == true` and outstanding debt cleared
+9. `testCollateralSeizureAtMaxDebt` — compound debt to 2× cap; verify next E-press removes hotbar item
+10. `testLoanMenuClosedOutsideHours` — try to borrow at 22:30; verify `CLOSED` result
+
+### Integration Tests (`Issue1266LoanSharkIntegrationTest.java`)
+1. **Full borrow-and-repay cycle**: Give player 0 COIN. Press E on desk. Borrow 10 COIN. Verify player has 10 COIN and `LOAN_AGREEMENT` in inventory. Wait 1 in-game day (advance time). Give player 20 COIN. Press E on desk; select repay. Verify debt cleared, COIN deducted (15), `LOAN_PAID_OFF` rumour seeded. Verify `CLEARED_UP` achievement unlocked.
+2. **Collector spawns and follows**: Borrow 25 COIN. Advance 4 in-game days (past due). Call `update()`. Verify DEBT_COLLECTOR NPC exists in world within 15 blocks of player. Move player 20 blocks away; call update 60 frames. Verify DEBT_COLLECTOR has moved toward player (distance reduced).
+3. **Collector disappears on repayment**: Collector active. Give player 40 COIN. Repay debt. Call update. Verify DEBT_COLLECTOR NPC no longer in world.
+4. **Collector backs off at Wanted ≥ 3**: Collector active. Set WantedSystem to 3 stars. Call update. Verify DEBT_COLLECTOR transitions to FLEEING state.
+5. **Ledger hustle end-to-end**: Steal `DEBT_LEDGER`. Approach Marchetti contact NPC. Press E; sell ledger. Verify player receives 30 COIN. Verify outstanding debt = 0. Verify `bigMickEnraged == true`. Advance 30 frames; verify 2 THUG NPCs spawned near Big Mick heading toward player.
+6. **DWP integration — benefit day harassment**: Player on benefits. Player has active loan. Advance to DWP payment day; DWP pays player 20 COIN. Verify `BIG_MICK_DEBT` rumour seeded and Big Mick sends text message (speech log entry).
+
+// ── Issue #1266: Northfield Loan Shark ────────────────────────────────────────
+// New: LoanSharkSystem.java in ragamuffin.core
+// New: LoanSharkSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1266LoanSharkIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: LOAN_SHARK — add to NPCType.java (DEBT_COLLECTOR already exists)
+// Material: LOAN_AGREEMENT, DEBT_LEDGER — add to Material.java
+// PropType: LOAN_SHARK_DESK_PROP — add to PropType.java
+// LandmarkType: LOAN_SHARK_OFFICE — add to LandmarkType.java
+// AchievementType: IN_THE_RED, SPIRAL, CLEARED_UP, BIG_MICK_BOUNCED — add to AchievementType.java
+// RumourType: LOAN_SHARK_LOOKING_FOR_YOU, LOAN_PAID_OFF, BIG_MICK_DEBT — add to RumourType.java
+// CriminalRecord.CrimeType: LOAN_SHARK_ASSAULT — add to CriminalRecord.java
+// WorldGenerator: place LOAN_SHARK_OFFICE in betting shop back room
+// DWPSystem: seed BIG_MICK_DEBT rumour on benefit payment if loan outstanding
+// WantedSystem: DEBT_COLLECTOR flees when player Wanted ≥ 3
