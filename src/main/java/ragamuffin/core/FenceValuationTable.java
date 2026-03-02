@@ -67,6 +67,9 @@ public class FenceValuationTable {
         m.put(Material.WEDDING_RING,  4);  // 55% of 8 COIN pawn value ≈ 4
         m.put(Material.POCKET_WATCH,  7);  // 55% of 12 COIN pawn value ≈ 7
 
+        // ── Issue #1120: Northfield Cemetery — new grave loot items ──────────
+        m.put(Material.OLD_COIN,      8);  // Fences for 8 COIN (Victorian coin)
+
         VALUATIONS = Collections.unmodifiableMap(m);
     }
 
