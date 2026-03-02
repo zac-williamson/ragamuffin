@@ -2405,7 +2405,33 @@ public enum NPCType {
      * Dialogue: "You're having a laugh mate, that didn't come from nowhere."
      * HP: 35f, attack: 0f, cooldown: 0f, hostile: false (until evasion triggers aggression).
      */
-    COUNCIL_VAN_OFFICER(35f, 0f, 0f, false);
+    COUNCIL_VAN_OFFICER(35f, 0f, 0f, false),
+
+    // ── Issue #1278: Northfield Travelling Fairground ─────────────────────────
+
+    /**
+     * Big Lenny — the fairground boss and operator.
+     * <ul>
+     *   <li>Manages the travelling fairground (fortnightly, Friday 18:00 – Sunday 22:00).</li>
+     *   <li>Offers cash-in-hand Strongman shifts (3 COIN/hr, skimming risk).</li>
+     *   <li>Sells FAIRGROUND_TICKET (1 COIN each).</li>
+     *   <li>Turns hostile if player skims more than 20% of takings or causes FAIRGROUND_TROUBLEMAKER.</li>
+     * </ul>
+     * HP: 60f, attack: 8f, cooldown: 2.5f, hostile: false (until triggered).
+     */
+    FAIRGROUND_BOSS(60f, 8f, 2.5f, false),
+
+    /**
+     * Fairground Worker — Shaz, Wayne, or Donna. Staffs the various rides and stalls.
+     * <ul>
+     *   <li>Shaz: runs Hook-a-Duck and Ring Toss stalls.</li>
+     *   <li>Wayne: operates the Waltzers (can be tipped 1 COIN to spin faster).</li>
+     *   <li>Donna: operates the Candy Floss stall.</li>
+     *   <li>All workers become hostile if player attacks the fairground or commits RIGGED_GAME.</li>
+     * </ul>
+     * HP: 35f, attack: 4f, cooldown: 2.0f, hostile: false (until triggered).
+     */
+    FAIRGROUND_WORKER(35f, 4f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

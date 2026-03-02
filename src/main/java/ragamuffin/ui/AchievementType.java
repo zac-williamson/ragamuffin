@@ -4767,6 +4767,43 @@ public enum AchievementType {
         "Big Terry's Regular",
         "Five rides with Terry. He knows your face and your usual. You don't ask about the other passengers.",
         5
+    ),
+
+    // ── Issue #1278: Northfield Travelling Fairground ─────────────────────────
+
+    /** Survive a Dodgems session without drawing police attention. */
+    DODGEMS_ACE(
+        "Dodgems Ace",
+        "Survived a Dodgems session without drawing police attention. Barely.",
+        1
+    ),
+
+    /** Ride the Waltzers three times in one fairground visit. */
+    DIZZY_RASCAL(
+        "Dizzy Rascal",
+        "Rode the Waltzers three times in one visit. You're still not right.",
+        3
+    ),
+
+    /** Hit the bell on the Strongman High-Striker. */
+    BELLRINGER(
+        "Bellringer",
+        "Hit the bell on the Strongman High-Striker. Big Lenny looked almost impressed.",
+        1
+    ),
+
+    /** Complete a cash-in-hand Strongman shift for Big Lenny. */
+    FAIRGROUND_WORKER_BADGE(
+        "Fairground Worker",
+        "Completed a cash-in-hand shift running the Strongman for Big Lenny.",
+        1
+    ),
+
+    /** Experience every fairground attraction in a single visit. */
+    ALL_THE_FUN_OF_THE_FAIR(
+        "All the Fun of the Fair",
+        "Experienced every attraction at the travelling fairground in a single visit.",
+        1
     );
 
     private final String name;

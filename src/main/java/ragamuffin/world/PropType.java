@@ -2997,7 +2997,52 @@ public enum PropType {
      * to accept a job (House Clearance, Garden Rubbish, or Builder's Rubble).
      * Cannot be destroyed (hitsToBreak = 0).
      */
-    CLEARANCE_JOB_BOARD_PROP(0.60f, 1.40f, 0.10f, 0, null);
+    CLEARANCE_JOB_BOARD_PROP(0.60f, 1.40f, 0.10f, 0, null),
+
+    // ── Issue #1278: Northfield Travelling Fairground ─────────────────────────
+
+    /**
+     * DODGEMS_RIDE_PROP — the dodgems arena: low-sided ring of bumper cars.
+     * Player interacts with E to start a 2-COIN session (screen-shake, Notoriety risk near police).
+     * 6×6×0.5 collision floor; cannot be destroyed (hitsToBreak = 0).
+     */
+    DODGEMS_RIDE_PROP(6.00f, 0.50f, 6.00f, 0, null),
+
+    /**
+     * WALTZER_RIDE_PROP — the spinning waltzer ride platform.
+     * Player interacts with E to ride for 2 COIN (DIZZY debuff). Tip Wayne 1 COIN to spin faster.
+     * 5×5×2 rotating platform; cannot be destroyed.
+     */
+    WALTZER_RIDE_PROP(5.00f, 2.00f, 5.00f, 0, null),
+
+    /**
+     * STRONGMAN_PROP — the high-striker strength-test tower with a bell at the top.
+     * Player uses BattleBarMiniGame (MEDIUM difficulty) to attempt the strike.
+     * Win = FAIRGROUND_PRIZE. Staffed by Big Lenny or a FAIRGROUND_WORKER.
+     * 0.6×4.0×0.6; hitsToBreak = 8 (yields SCRAP_METAL if destroyed).
+     */
+    STRONGMAN_PROP(0.60f, 4.00f, 0.60f, 8, Material.SCRAP_METAL),
+
+    /**
+     * CANDY_FLOSS_STALL_PROP — Donna's candy floss and toffee apple stall.
+     * Player interacts with E to buy CANDY_FLOSS (2 COIN) or TOFFEE_APPLE (2 COIN).
+     * 1.8×2.0×1.0; hitsToBreak = 3 (yields WOOD).
+     */
+    CANDY_FLOSS_STALL_PROP(1.80f, 2.00f, 1.00f, 3, Material.WOOD),
+
+    /**
+     * RING_TOSS_STALL_PROP — Shaz's ring toss stall. Always rigged (15% real success vs stated 25%).
+     * Player pays 1 COIN per attempt. Win = FAIRGROUND_PRIZE.
+     * 1.8×2.0×1.0; hitsToBreak = 3 (yields WOOD).
+     */
+    RING_TOSS_STALL_PROP(1.80f, 2.00f, 1.00f, 3, Material.WOOD),
+
+    /**
+     * DIESEL_GENERATOR_PROP — the unattended generator powering the fairground lights.
+     * Strippable for SCRAP_METAL on Sunday 23:00+ when fairground is closed.
+     * 1.5×1.2×0.8; hitsToBreak = 10 (yields SCRAP_METAL).
+     */
+    DIESEL_GENERATOR_PROP(1.50f, 1.20f, 0.80f, 10, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
