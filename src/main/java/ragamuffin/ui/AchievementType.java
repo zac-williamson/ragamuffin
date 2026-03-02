@@ -2768,6 +2768,48 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #1200: Patel's News (NewsagentSystem) ────────────────────────────
+
+    /**
+     * Issue #1200: Awarded when the player completes their first paper round on time
+     * (all 10 newspapers delivered to LETTERBOX_PROP targets before 07:00).
+     */
+    PAPER_ROUND_DONE(
+        "Morning Rounds",
+        "Delivered all ten papers before seven. Patel nodded. High praise.",
+        1
+    ),
+
+    /**
+     * Issue #1200: Awarded when the player buys or shoplifts a DODGY_MAGAZINE
+     * from behind the counter at Patel's News.
+     */
+    DODGY_MAG_BUYER(
+        "Reading Material",
+        "Acquired a dodgy magazine. It's for the articles. Obviously.",
+        1
+    ),
+
+    /**
+     * Issue #1200: Awarded when the player receives a BANNED_FROM_PATEL flag
+     * (shoplifting detected, bundle theft, or repeated criminal activity in the shop).
+     */
+    BANNED_FROM_PATEL(
+        "Persona Non Patel",
+        "You've been banned from Patel's. Even Raj looks disappointed.",
+        1
+    ),
+
+    /**
+     * Issue #1200: Awarded when the player uses NEWSAGENT_KEY to break into Patel's
+     * back office at night and raids the CASH_BOX_PROP.
+     */
+    NEWSAGENT_BURGLAR(
+        "After Hours",
+        "Raided Patel's cash box in the dead of night. Raj suspects nothing. Probably.",
+        1
+    ),
+
     // ── Issue #1136: The Vaults Nightclub ─────────────────────────────────────
 
     /**
