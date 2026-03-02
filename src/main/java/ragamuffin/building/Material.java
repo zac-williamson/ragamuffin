@@ -4041,7 +4041,40 @@ public enum Material {
      * Restaurant Receipt — proof of purchase from Mumtaz Baltis.
      * Used as alibi in WitnessSystem. Given on successful payment.
      */
-    RESTAURANT_RECEIPT("Restaurant Receipt");
+    RESTAURANT_RECEIPT("Restaurant Receipt"),
+
+    // ── Issue #1175: Northfield Argos ────────────────────────────────────────
+
+    /**
+     * Argos Slip — numbered collection slip written at the catalogue counter.
+     * Consumed when the player (or NPC) collects the item at the counter.
+     */
+    ARGOS_SLIP("Argos Slip"),
+
+    /**
+     * Argos Receipt — proof of purchase issued by the Argos counter.
+     * Used for legitimate returns or as the base for FORGED_RECEIPT.
+     */
+    ARGOS_RECEIPT("Argos Receipt"),
+
+    /**
+     * Forged Receipt — a fake Argos receipt craftable from BLANK_RECEIPT + BIRO + STOLEN_PHONE.
+     * Used for returns fraud at RETURNS_DESK_PROP; 40% detection chance.
+     */
+    FORGED_RECEIPT("Forged Receipt"),
+
+    /**
+     * Blank Receipt — thermal paper found in bins or lootable from the back office.
+     * Required ingredient for crafting a FORGED_RECEIPT.
+     */
+    BLANK_RECEIPT("Blank Receipt"),
+
+    /**
+     * Catalogue Pencil — tiny Argos pencil for writing slips.
+     * Can be used as a improvised weapon (1 damage). Value: 0 COIN.
+     * Picking one up unlocks the TINY_PENCIL achievement.
+     */
+    CATALOGUE_PENCIL("Catalogue Pencil");
 
     private final String displayName;
 
@@ -5084,6 +5117,17 @@ public enum Material {
             case RESTAURANT_RECEIPT:    return cs(0.95f, 0.95f, 0.90f,  // White till paper
                                                   0.35f, 0.35f, 0.35f); // Grey printed text
 
+            // Issue #1175: Northfield Argos
+            case ARGOS_SLIP:            return cs(0.85f, 0.88f, 0.95f,  // Light blue slip paper
+                                                  0.30f, 0.30f, 0.70f); // Dark blue printed number
+            case ARGOS_RECEIPT:         return cs(0.95f, 0.93f, 0.88f,  // Cream thermal paper
+                                                  0.20f, 0.45f, 0.75f); // Argos blue logo
+            case FORGED_RECEIPT:        return cs(0.90f, 0.88f, 0.82f,  // Off-white paper
+                                                  0.55f, 0.40f, 0.20f); // Brown ink (dodgy)
+            case BLANK_RECEIPT:         return c(0.96f, 0.96f, 0.94f);  // Plain thermal paper
+            case CATALOGUE_PENCIL:      return cs(0.95f, 0.80f, 0.10f,  // Yellow pencil body
+                                                  0.50f, 0.30f, 0.10f); // Brown wood tip
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5580,6 +5624,12 @@ public enum Material {
             case BALTI_CATERING_TIN:
             case FAKE_CURRY_POWDER:
             case RESTAURANT_RECEIPT:
+            // Issue #1175: Northfield Argos — not block items
+            case ARGOS_SLIP:
+            case ARGOS_RECEIPT:
+            case FORGED_RECEIPT:
+            case BLANK_RECEIPT:
+            case CATALOGUE_PENCIL:
                 return false;
             default:
                 return true;
@@ -5733,6 +5783,12 @@ public enum Material {
             case BALTI_CATERING_TIN:
             case FAKE_CURRY_POWDER:
             case RESTAURANT_RECEIPT:
+            // Issue #1175: Northfield Argos — paper items sit on surfaces
+            case ARGOS_SLIP:
+            case ARGOS_RECEIPT:
+            case FORGED_RECEIPT:
+            case BLANK_RECEIPT:
+            case CATALOGUE_PENCIL:
                 return true;
             default:
                 return false;
@@ -6687,6 +6743,18 @@ public enum Material {
                 return IconShape.BOX;         // spice packet
             case RESTAURANT_RECEIPT:
                 return IconShape.FLAT_PAPER;  // till receipt
+
+            // Issue #1175: Northfield Argos
+            case ARGOS_SLIP:
+                return IconShape.FLAT_PAPER;  // collection slip
+            case ARGOS_RECEIPT:
+                return IconShape.FLAT_PAPER;  // proof of purchase
+            case FORGED_RECEIPT:
+                return IconShape.FLAT_PAPER;  // dodgy receipt
+            case BLANK_RECEIPT:
+                return IconShape.FLAT_PAPER;  // thermal paper
+            case CATALOGUE_PENCIL:
+                return IconShape.CYLINDER;    // tiny pencil
 
             default:
                 return IconShape.BOX;

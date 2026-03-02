@@ -1930,7 +1930,30 @@ public enum NPCType {
      * Proximity ≤ 2 blocks: quietly exchanges rumours with nearby NPCs.
      * Required for the FULL_BALTI achievement.
      */
-    BALTI_REGULAR(30f, 0f, 0f, false);
+    BALTI_REGULAR(30f, 0f, 0f, false),
+
+    // ── Issue #1175: Northfield Argos ─────────────────────────────────────────
+
+    /**
+     * Argos Counter Staff — Sharon; staffs the collection counter.
+     * Sharp-eyed; calls Dave (ARGOS_SECURITY) on suspicion.
+     * 20 HP; not hostile.
+     */
+    ARGOS_COUNTER_STAFF(20f, 0f, 0f, false),
+
+    /**
+     * Argos Security — Dave; patrols the store floor.
+     * Bans player on 2nd offence. +15% pickpocket detection when nearby.
+     * 35 HP; not hostile by default but becomes AGGRESSIVE on offence.
+     */
+    ARGOS_SECURITY(35f, 8f, 1.5f, false),
+
+    /**
+     * Argos Returns Staff — Janice; sits at the returns desk.
+     * Gullible: 40% fraud detection rate (FORGED_RECEIPT).
+     * 20 HP; not hostile.
+     */
+    ARGOS_RETURNS_STAFF(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
