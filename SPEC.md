@@ -41628,3 +41628,120 @@ The player can **tamper with a competitor's car** to sabotage their race:
 // WorldGenerator: place LOAN_SHARK_OFFICE in betting shop back room
 // DWPSystem: seed BIG_MICK_DEBT rumour on benefit payment if loan outstanding
 // WantedSystem: DEBT_COLLECTOR flees when player Wanted ≥ 3
+
+---
+
+## Issue #1267: Add Northfield Prepayment Meter — Key Meter Runs Out, Emergency Top-Up & the Dodgy Credit Hustle
+
+**Theme:** The prepayment electricity meter is a hallmark of British poverty. You put a tenner on the key at the corner shop, you eke it out, and at 11pm on a Sunday in January the power cuts out. In the dark. With an electric heater running. This system makes energy poverty a real survival mechanic — draining credit, emergency top-ups, and a hustle around exploiting the card reader glitch that everyone's cousin claims works.
+
+### New Files
+- `src/main/java/ragamuffin/core/PrepaymentMeterSystem.java`
+- `src/test/java/ragamuffin/core/PrepaymentMeterSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1267PrepaymentMeterIntegrationTest.java`
+
+### Existing Files to Modify
+- `Material.java` — add `METER_KEY` (a top-up key; loaded at shop, inserted into meter), `EMERGENCY_CREDIT_NOTICE` (paper item left by meter when emergency credit activates)
+- `PropType.java` — add `ELECTRIC_METER_PROP` (interactive prepayment meter box, mounts on squat/flat interior wall)
+- `AchievementType.java` — add `LIGHTS_OUT` (first time power cuts), `EMERGENCY_CREDIT` (use emergency credit at least once), `METER_FIDDLER` (successfully exploit card reader glitch 3 times), `OFF_GRID` (go 2 in-game days without using any electric appliances)
+- `RumourType.java` — add `METER_CREDIT_GLITCH` (spreads player-to-player: "Kev says if you jab the key in twice fast the meter double-credits"), `POWER_OUT` (flavour rumour seeded when player's power cuts during a NeighbourhoodSystem event)
+- `CornerShopSystem.java` — add `METER_KEY` top-up purchase option (5 COIN for 10 credit units, 10 COIN for 22 credit units); player must have a blank `METER_KEY` to buy or can use a pre-keyed one
+- `NewsagentSystem.java` — same `METER_KEY` top-up purchase at identical prices
+- `SquatSystem.java` — on squat assignment, place `ELECTRIC_METER_PROP` in interior; start credit at 6 units (near-empty — life is grim)
+- `WarmthSystem.java` — when meter credit = 0, `ELECTRIC_HEATER` appliance provides 0 warmth (no power); cold-drain rate doubles during FROST weather
+- `LightingSystem.java` — when meter credit = 0, interior ambient light level drops to minimum (darkness penalty: increased NPC detection difficulty removed; replaces with increased player bumping-into-things flavour text)
+
+### PrepaymentMeterSystem Mechanics
+
+**Credit Model:**
+- Each squat/flat has a single `ELECTRIC_METER_PROP` with a `float creditUnits` balance (0.0–100.0).
+- Credit drains at a base rate of **0.5 units per in-game hour** (idle drain — fridges, standby).
+- Each `ELECTRIC_HEATER` in the squat interior adds **+1.5 units/hour** drain while player is inside.
+- During `WeatherSystem` FROST or COLD_SNAP: base drain doubles (+1.0 units/hour).
+- When `creditUnits` reaches **0.0**: power cuts (triggers `LIGHTS_OUT` achievement on first occurrence). All electric appliances stop functioning. `POWER_OUT` rumour seeded locally.
+
+**Emergency Credit:**
+- When credit first hits 0.0 between **23:00–06:00**: meter automatically loans **1.5 units** emergency credit (real meters do this). `EMERGENCY_CREDIT_NOTICE` placed in player inventory. Achievement `EMERGENCY_CREDIT` on first use.
+- Emergency credit only triggers **once per power-cut event**. Repaid automatically when player next tops up (deducted from new credit before balance applied).
+- If emergency credit is active and player tries to top up during the day, emergency credit debt is settled first.
+
+**Topping Up (Normal):**
+- Player takes blank `METER_KEY` (or any loaded key) to `CornerShopSystem` / `NewsagentSystem`.
+- Pay 5 COIN → key loaded with 10 credit units. Pay 10 COIN → key loaded with 22 credit units (bulk deal).
+- Return to `ELECTRIC_METER_PROP` at squat. Press **E** → insert key → credit added to meter. Key becomes blank again (reusable).
+- If emergency credit outstanding: first 1.5 units of new credit are deducted to clear debt before balance is credited.
+
+**The Dodgy Credit Hustle — "Double-Key Glitch":**
+- `METER_CREDIT_GLITCH` rumour spreads between `LOCAL` NPCs with 20% chance per conversation tick.
+- Once player has heard the rumour (rumour received), option appears at `ELECTRIC_METER_PROP`: "Try the double-tap".
+- Player rapidly inserts key twice (timed E-press within 0.8 seconds window).
+- **Success (40% base chance)**: meter credits double the key's value (key loaded with 10 units → 20 units credited). Key consumed (burned out).
+- **Failure**: key inserted normally (single credit applied), glitch attempt logged.
+- **Caught**: 5% chance per glitch attempt that a `METER_INSPECTOR_NPC` is spawned within 1 in-game day to investigate. If inspector visits and finds evidence (glitch log > 2): `METER_TAMPERING` CrimeType recorded; Notoriety +3; meter reset to 0.
+- `METER_FIDDLER` achievement: 3 successful glitch attempts without inspector visit.
+
+**Meter Inspector Visit:**
+- `METER_INSPECTOR` NPC (new NPCType subtype: reuse `UTILITY_WORKER` or define `METER_INSPECTOR`) knocks on squat door between 09:00–17:00.
+- Player can: **answer door** (inspector checks meter — if glitch log > 2: crime recorded, meter reset); **hide** (stay 6+ blocks from door for 3 minutes — inspector notes "no access" and leaves); **bribe** (5 COIN — inspector pockets money, leaves without checking, seeds `BENT_OFFICIAL` rumour locally).
+- If player **punches inspector**: `ASSAULT_OF_UTILITY_WORKER` CrimeType; +2 Wanted stars; Notoriety +4.
+
+### New NPCType
+- `METER_INSPECTOR` — utility company enforcement officer; 20 HP, non-aggressive unless attacked; visits squat once per inspector-spawn event; leaves after 3 in-game minutes if no answer.
+
+### System Integrations
+- **SquatSystem** — meter placed on squat assignment; `SquatSystem.isElectricOn()` queries `PrepaymentMeterSystem.creditUnits > 0`.
+- **WarmthSystem** — `ELECTRIC_HEATER` warmth contribution gated by `isElectricOn()`.
+- **LightingSystem** — interior ambient light gated by `isElectricOn()`.
+- **CornerShopSystem** / **NewsagentSystem** — add METER_KEY top-up purchase option.
+- **WeatherSystem** — FROST / COLD_SNAP doubles drain rate.
+- **RumourNetwork** — `METER_CREDIT_GLITCH` seeds from NPC-to-NPC conversation; `POWER_OUT` seeds on credit cut at 22:00–06:00 (prime time).
+- **NotorietySystem** — meter tampering: +3; assault on inspector: +4; successful bribe (undetected): 0.
+- **CriminalRecord** — new `CrimeType.METER_TAMPERING`, `CrimeType.ASSAULT_OF_UTILITY_WORKER`.
+- **NewspaperSystem** — if meter tampering CrimeType issued 3+ times across NPCs in the neighbourhood: headline *"NORTHFIELD FAMILIES WARNED: METER GLITCH SCAM COSTS PROVIDER THOUSANDS"*.
+- **DWPSystem** — player on benefits receives tooltip: "Your flat rate includes a small energy allowance" (flavour only; does NOT reduce drain — DWP are not that generous).
+- **AchievementSystem** — four achievements (see above).
+- **TooltipSystem** — first power cut: *"The lights went out. Classic."*; first top-up: *"A tenner on the leccy. You're living the dream."*; first emergency credit: *"Emergency credit. You've got til morning."*
+
+### Unit Tests (`PrepaymentMeterSystemTest.java`)
+1. `testCreditDrainsAtBaseRate` — set credit 10.0; advance 2 in-game hours; verify credit ≈ 9.0 (±0.05, base drain 0.5/hr).
+2. `testHeaterIncreasesdrain` — add 1 `ELECTRIC_HEATER` appliance; advance 1 hour; verify credit drained ≈ 2.0 (0.5 base + 1.5 heater).
+3. `testFrostDoublesBaseDrain` — set weather to FROST; advance 1 hour (no heater); verify credit drained ≈ 1.0 (0.5 × 2).
+4. `testPowerCutAtZeroCredit` — set credit to 0.0; call `update()`; verify `isPowerOn()` returns false.
+5. `testEmergencyCreditActivatesAt23h` — set credit 0.0; set time to 23:30; call `update()`; verify credit = 1.5; verify `EMERGENCY_CREDIT_NOTICE` in inventory.
+6. `testEmergencyCreditNotActivatesDuringDay` — set credit 0.0; set time to 14:00; call `update()`; verify credit = 0.0; verify `isPowerOn()` false.
+7. `testTopUpClearsEmergencyDebt` — set emergency credit outstanding (1.5); player tops up 10 units; verify final credit = 8.5 (10 − 1.5 debt).
+8. `testDoubleKeyGlitchSuccess` — seed RNG to force success; player has 10-unit key; call `attemptGlitch(player)`; verify credit += 20; verify glitchLog incremented.
+9. `testDoubleKeyGlitchFailure` — seed RNG to force failure; call `attemptGlitch(player)`; verify credit += 10 (normal insert); verify key consumed.
+10. `testInspectorSpawnsAfterThreeGlitches` — call `attemptGlitch()` 3 times with seeded success; verify `inspectorPending` flag set; call `update()` with time 10:00; verify `METER_INSPECTOR` NPC spawned within 5 blocks of squat.
+11. `testBribeInspectorClearsPending` — inspector at door; player bribes (5 COIN); verify `inspectorPending = false`; verify `BENT_OFFICIAL` rumour seeded; verify CriminalRecord has no new entries.
+12. `testMeterFiddlerAchievement` — three successful glitch attempts; verify `METER_FIDDLER` achievement unlocked.
+
+### Integration Tests (`Issue1267PrepaymentMeterIntegrationTest.java`)
+1. **Power cut stops heater warmth**: Assign player a squat. Place `ELECTRIC_HEATER` in squat interior. Set credit to 0.5 units. Advance time 1 in-game hour. Verify credit reaches 0.0 (heater + base drain). Verify `WarmthSystem.getHeaterContribution()` returns 0. Verify `LightingSystem.getInteriorAmbient()` is at minimum. Verify `LIGHTS_OUT` achievement unlocked on first cut.
+
+2. **Top-up at corner shop restores power**: Player has blank `METER_KEY` and 5 COIN. Press E on `CORNER_SHOP_COUNTER`. Select "Top up meter key — 5 COIN (10 units)". Verify COIN deducted by 5. Verify `METER_KEY` now has 10 units loaded. Player presses E on `ELECTRIC_METER_PROP` at squat. Verify `creditUnits` increased by 10. Verify `isPowerOn()` returns true. Verify `LightingSystem.getInteriorAmbient()` restored to normal.
+
+3. **Emergency credit midnight rescue**: Set credit to 0.05 units. Set `TimeSystem` to 02:00. Advance 1 frame (delta causes drain below 0). Verify credit becomes 1.5 (emergency credit applied). Verify `EMERGENCY_CREDIT_NOTICE` in player inventory. Verify `EMERGENCY_CREDIT` achievement unlocked. Advance to 03:00 — verify power remains on. Player tops up 5 units at shop. Verify final credit = 5.0 + 1.5 − 1.5 debt = 5.0.
+
+4. **Glitch hustle — inspector visit on third glitch**: Player hears `METER_CREDIT_GLITCH` rumour. Player attempts glitch 3 times (seeded RNG — all succeed). Verify credit reflects doubled additions. Verify `inspectorPending = true`. Advance time to 09:30. Verify `METER_INSPECTOR` NPC spawned within 5 blocks of squat door. Player opens door (moves within 2 blocks). Inspector checks meter. Verify `METER_TAMPERING` added to CriminalRecord. Verify Notoriety increased by 3. Verify meter credit reset to 0. Verify `METER_FIDDLER` achievement NOT unlocked (caught before third completed).
+
+5. **Hide from inspector**: Inspector spawned. Player stays 8+ blocks from door for 3 in-game minutes. Verify inspector `NPCState` transitions to `LEAVING`. Verify `inspectorPending = false` after departure. Verify CriminalRecord unchanged. Verify inspector does not return same day.
+
+6. **FROST doubles drain — power exhausted overnight**: Set credit to 4.0 units. Set weather to FROST. Set time to 22:00. No heater present. Advance 4 in-game hours. Expected drain: 0.5/hr × 2 (frost) × 4 hr = 4.0. Verify credit ≈ 0.0 (within ±0.1). Verify power cut occurs. Verify `POWER_OUT` rumour seeded in RumourNetwork.
+
+// ── Issue #1267: Northfield Prepayment Meter ──────────────────────────────────
+// New: PrepaymentMeterSystem.java in ragamuffin.core
+// New: PrepaymentMeterSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1267PrepaymentMeterIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: METER_INSPECTOR — add to NPCType.java
+// Material: METER_KEY, EMERGENCY_CREDIT_NOTICE — add to Material.java
+// PropType: ELECTRIC_METER_PROP — add to PropType.java
+// AchievementType: LIGHTS_OUT, EMERGENCY_CREDIT, METER_FIDDLER, OFF_GRID — add to AchievementType.java
+// RumourType: METER_CREDIT_GLITCH, POWER_OUT — add to RumourType.java
+// CriminalRecord.CrimeType: METER_TAMPERING, ASSAULT_OF_UTILITY_WORKER — add to CriminalRecord.java
+// CornerShopSystem: add METER_KEY top-up purchase option (5 COIN/10 units, 10 COIN/22 units)
+// NewsagentSystem: same METER_KEY top-up purchase
+// SquatSystem: place ELECTRIC_METER_PROP on squat assignment; start credit at 6 units
+// WarmthSystem: gate ELECTRIC_HEATER warmth contribution on PrepaymentMeterSystem.isElectricOn()
+// LightingSystem: gate interior ambient light on PrepaymentMeterSystem.isElectricOn()
+// WeatherSystem: FROST/COLD_SNAP signals PrepaymentMeterSystem to double base drain
