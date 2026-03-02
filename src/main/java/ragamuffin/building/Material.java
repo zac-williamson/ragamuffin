@@ -4346,7 +4346,37 @@ public enum Material {
      * One-use: interact (E) with a PCN-marked car while holding CLIVE_TERMINAL
      * to void the PCN (80% success chance).
      */
-    CLIVE_TERMINAL("Clive's Terminal");
+    CLIVE_TERMINAL("Clive's Terminal"),
+
+    // ── Issue #1205: Northfield DVSA Test Centre ──────────────────────────────
+
+    /**
+     * Driving Licence — a pink UK driving licence (DVLA format).
+     * Awarded on passing the practical test at the DVSA Test Centre, or obtained via
+     * the PENDING_TEST_RESULT_ITEM forgery route (30% fraud detection chance per use).
+     * Disables the unlicensed-driving penalty in NotorietySystem and unlocks DRIVING
+     * rank 4+ cap in StreetSkillSystem. Permanent item; not consumed on use.
+     * Tooltip: "Full UK driving licence. Sandra was reluctant but the Highway Code was clear."
+     */
+    DRIVING_LICENCE("Driving Licence"),
+
+    /**
+     * Theory Pass Certificate — a laminated DVSA theory pass certificate.
+     * Awarded on passing the theory test (≥8/10 questions correct) at the
+     * THEORY_TERMINAL_PROP. Required to book a practical test with Sandra.
+     * Single-use prerequisite; not consumed but checked on practical test booking.
+     * Tooltip: "Passed the theory. The examiner looked almost impressed."
+     */
+    THEORY_PASS_CERTIFICATE("Theory Pass Certificate"),
+
+    /**
+     * Pending Test Result — a manila envelope from the FILING_CABINET_PROP.
+     * Contains a forged driving test pass result. Acts as a DRIVING_LICENCE substitute
+     * but has a 30% chance each use that Sandra detects it as fraudulent:
+     * WantedSystem +2 stars, FRAUD recorded in CriminalRecord.
+     * Tooltip: "Someone's pending test result. Probably won't stand up to scrutiny."
+     */
+    PENDING_TEST_RESULT_ITEM("Pending Test Result");
 
     private final String displayName;
 
@@ -7111,6 +7141,14 @@ public enum Material {
                 return IconShape.BOX;         // heavy metal device
             case CLIVE_TERMINAL:
                 return IconShape.BOX;         // hand-held enforcement terminal
+
+            // Issue #1205: Northfield DVSA Test Centre
+            case DRIVING_LICENCE:
+                return IconShape.CARD;        // laminated pink licence card
+            case THEORY_PASS_CERTIFICATE:
+                return IconShape.FLAT_PAPER;  // printed certificate
+            case PENDING_TEST_RESULT_ITEM:
+                return IconShape.FLAT_PAPER;  // manila envelope
 
             default:
                 return IconShape.BOX;

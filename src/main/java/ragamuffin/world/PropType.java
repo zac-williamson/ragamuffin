@@ -2602,7 +2602,40 @@ public enum PropType {
      * Grab while Bev is distracted (10-second window after each song). Yields
      * MICROPHONE item. Destroyed by 2 punches; yields MICROPHONE material.
      */
-    MICROPHONE_PROP(0.20f, 1.20f, 0.20f, 2, Material.MICROPHONE);
+    MICROPHONE_PROP(0.20f, 1.20f, 0.20f, 2, Material.MICROPHONE),
+
+    // ── Issue #1205: Northfield DVSA Test Centre ──────────────────────────────
+
+    /**
+     * THEORY_TERMINAL_PROP — a beige desktop PC on a particleboard desk.
+     * Interact (E) to start a theory test (costs 2 COIN, 10 questions from pool of 30).
+     * Each question is multiple-choice (1–4 input); ≥8/10 correct = pass.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    THEORY_TERMINAL_PROP(0.70f, 1.10f, 0.50f, 5, Material.SCRAP_METAL),
+
+    /**
+     * EXAMINER_DESK_PROP — Sandra's examination desk at the DVSA Test Centre.
+     * Interact (E) to speak with Sandra: book a practical test, attempt a bribe,
+     * or check test status. Destroyed by 8 punches; yields WOOD.
+     */
+    EXAMINER_DESK_PROP(1.40f, 0.80f, 0.60f, 8, Material.WOOD),
+
+    /**
+     * INSTRUCTOR_CAR_PROP — Keith's dual-control Ford Fiesta parked outside the
+     * test centre. Interact (E) to start a driving lesson with Keith (3 COIN/session).
+     * Not driveable by the player independently. Destroyed by 10 punches; yields
+     * SCRAP_METAL. Exempt from TrafficWarden PCNs.
+     */
+    INSTRUCTOR_CAR_PROP(2.50f, 1.50f, 4.50f, 10, Material.SCRAP_METAL),
+
+    /**
+     * FILING_CABINET_PROP — a grey metal filing cabinet in the back office.
+     * LOCKPICK required; 3 hits to open; yields PENDING_TEST_RESULT_ITEM (forged cert).
+     * 30% chance Sandra flags it as fraud each use: WantedSystem +2 stars, FRAUD crime.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    FILING_CABINET_PROP(0.50f, 1.30f, 0.40f, 5, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

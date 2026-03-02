@@ -2038,7 +2038,33 @@ public enum NPCType {
      * Speech: "Take a number." / "You'll need to fill in the form."
      *         / "Two working days and we'll write to you." / "Next, please."
      */
-    COUNCIL_RECEPTIONIST(20f, 0f, 0f, false);
+    COUNCIL_RECEPTIONIST(20f, 0f, 0f, false),
+
+    // ── Issue #1205: Northfield DVSA Test Centre ──────────────────────────────
+
+    /**
+     * Sandra — DVSA Examiner at the Northfield DVSA Test Centre.
+     * Sits behind the EXAMINER_DESK_PROP. Conducts theory tests (10 questions,
+     * 2 COIN fee) and practical tests (5 COIN, requires THEORY_PASS_CERTIFICATE).
+     * Can be bribed (CHARISMA ≥2 + 15 COIN, no witnesses within 6 blocks).
+     * Permanently refuses after a failed bribe attempt.
+     * Passive unless provoked; never hostile.
+     * Speech: "Next candidate please." / "Form an orderly queue."
+     *         / "I'm going to need your certificate before we can proceed."
+     */
+    DVSA_EXAMINER(30f, 0f, 0f, false),
+
+    /**
+     * Keith — Driving Instructor stationed outside the DVSA Test Centre.
+     * Stands near the INSTRUCTOR_CAR_PROP. Offers 60-second driving lesson
+     * sessions for 3 COIN/session; awards DRIVING XP +5 per lesson.
+     * After 3 lessons, applies −5 fault reduction on the player's next
+     * practical test. Passive; never hostile.
+     * Speech: "Right, mirrors — signal — manoeuvre."
+     *         / "Check your blind spot, son."
+     *         / "Three lessons and you'll be fine. Probably."
+     */
+    DRIVING_INSTRUCTOR(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
