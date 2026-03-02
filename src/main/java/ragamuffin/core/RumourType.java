@@ -185,6 +185,15 @@ public enum RumourType {
      * Turns the named faction hostile toward the player. */
     GRASSED_UP,
 
+    // ── Issue #1213: Northfield Police Station — Desk Sergeant Bribe ─────────
+
+    /** "Word is someone's been greasing palms down the nick — that desk sergeant's on the take."
+     * — seeded by PoliceStationSystem when the player successfully bribes the DESK_SERGEANT.
+     * Spreads via PUBLIC and STREET_LADS NPCs near the police station.
+     * Raises Marchetti Crew respect +2 (they appreciate a bent copper); no police escalation
+     * unless rumour reaches a POLICE NPC (20% chance of +1 Wanted star). */
+    POLICE_CORRUPTION,
+
     /** "Someone broke out of the nick — lockpicked the cell door and legged it."
      * — seeded by PoliceStationSystem on a successful cell breakout.
      * Positive reputation with STREET_LADS (+5 Respect).

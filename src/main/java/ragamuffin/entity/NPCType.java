@@ -715,6 +715,24 @@ public enum NPCType {
      */
     DETECTIVE(45f, 8f, 1.2f, false),
 
+    // ── Issue #1213: Northfield Police Station — Custody Suite ────────────────
+
+    /**
+     * Desk Sergeant Dave — staffs the reception counter 08:00–20:00.
+     * Passive if player Notoriety &lt; 200. At 200+ demands ID and runs a check;
+     * if WantedSystem stars ≥ 1, immediately arrests. Bribeable for 25 COIN at
+     * Notoriety ≤ 400 (lowers Wanted stars by 1, seeds POLICE_CORRUPTION rumour).
+     */
+    DESK_SERGEANT(40f, 8f, 1.0f, false),
+
+    /**
+     * Community Liaison Officer Sandra — PCSO subtype present Mon/Wed/Fri 09:00–16:00.
+     * Can clear 1 minor offence (PETTY_THEFT or FARE_EVASION) from CriminalRecord per
+     * in-game week if player Community Respect ≥ 20.
+     * Speech: "We like to give people a second chance around here."
+     */
+    CLO(25f, 0f, 0f, false),
+
     // ── Issue #998: Northfield Aldi Supermarket ────────────────────────────────
 
     /**
