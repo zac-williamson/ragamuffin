@@ -36729,3 +36729,130 @@ Each `WAITING_CLIENT` NPC has a 50% chance of offering a side-quest:
 //   NeighbourhoodWatchSystem, StreetEconomySystem, MinicabOfficeSystem,
 //   RumourNetwork, CriminalRecord, NotorietySystem, WantedSystem,
 //   AchievementSystem, TimeSystem, FactionSystem, NPCManager
+
+---
+
+## Northfield BP Petrol Station — Forecourt Hustle, Drive-Off & the Pump-and-Walk Racket
+
+**Issue**: Add Northfield BP Petrol Station — Raj's Kiosk, Fuel Pumps, CCTV Forecourt & the Drive-Off Hustle
+
+### Overview
+
+`PetrolStationSystem.java` implements the **Northfield BP petrol station** — a 24-hour forecourt on the ring road, staffed by Raj (day shift) and Wayne (night shift). The station is already extensively wired into the codebase: `CriminalRecord.CrimeType.PETROL_THEFT` and `VEHICLE_TAMPERING` are defined and reference `PetrolStationSystem`; `PETROL_STATION_ATTENDANT` and `PETROL_STATION_ASSISTANT` NPC types exist; the `DRIVE_OFF` achievement and `PETROL_CAN` / `PETROL_CAN_FULL` materials are implemented; `RumourType.CRIME_SPOTTED` and `RumourType.WEATHER_GRUMBLE` both reference the system; and `CriminalRecord.cctvHeatLevel` logic awaits the system that increments it. This ticket implements the missing system to tie all of those stubs together.
+
+**Location**: `LandmarkType.PETROL_STATION` — a 12×8×4-block building with a flat canopy over the forecourt. Interior: a 4×4 kiosk with `CHECKOUT_PROP` till, a `MAGAZINE_RACK_PROP`, a `HOT_FOOD_COUNTER_PROP` (sausage rolls 06:00–14:00), and a `CCTV_PROP` dome camera covering the forecourt. Exterior: 2 `FUEL_PUMP_PROP` dispensers on the forecourt, a `TYRE_PUMP_PROP` on the side wall, a `CAR_VACUUM_PROP` bay, and a wheeled bin (reuses `WHEELIE_BIN_PROP`).
+
+**Opening hours**: 24 hours a day, 7 days a week.
+
+### NPCs
+
+- **Raj** (`NPCType.PETROL_STATION_ATTENDANT`) — day shift 06:00–22:00. Sells kiosk items, calls panic button at Wanted Tier ≥ 2. Refuses service at Wanted Tier ≥ 3. Has 6 idle speech lines ("Pump two's ready when you are"; "You after anything from the back?"; "Energy drink? Two for a pound."; "No I cannot break a fifty, mate."; "Hot dogs are off — the rollers went again."; "Raj's the name. Been here 11 years."). Enters `NPCState.CHASING` for 20 seconds when pump-and-walk theft detected.
+- **Wayne** (`NPCType.PETROL_STATION_ASSISTANT`) — night shift 22:00–06:00. Bored teenager. Sleeps 01:00–03:00 (ignores crimes if `NoiseSystem` noise < 15). Only calls panic button when awake. Has 4 idle speech lines ("This shift goes dead slow after two."; "Can't sell you cider. Manager's watching CCTV."; "Alright."; "We're out of that.").
+
+### Mechanics
+
+#### Kiosk Purchases (Press E on `CHECKOUT_PROP`)
+
+| Item | Price (COIN) | Notes |
+|---|---|---|
+| `PETROL_CAN` (empty) | 1 | Always available |
+| `ENERGY_DRINK` | 1 | Restores 10 stamina |
+| `CHOCOLATE_BAR` | 1 | Restores 5 hunger |
+| `NEWSPAPER` | 1 | Seeds `RumourType.LOCAL_EVENT` with today's headline |
+| `SCRATCH_CARD` | 1 | 10% chance of 5 COIN win (seeded `Random`) |
+| `PASTY` | 2 | Available 06:00–14:00 only; restores 15 hunger |
+| `DISPOSABLE_LIGHTER` | 1 | Crafting ingredient for Molotov |
+| `MOTOR_OIL` | 3 | Engine lubricant; crafting ingredient |
+
+#### Fuel Pumps (Press E on `FUEL_PUMP_PROP`)
+
+Player must hold an empty `PETROL_CAN`. Pump runs for 5 real seconds, then:
+- **Pay**: player approaches `CHECKOUT_PROP` within 30 seconds → pays 5 COIN → `PETROL_CAN` becomes `PETROL_CAN_FULL`. Raj/Wayne logs the transaction.
+- **Drive-off (walk away)**: player walks off the forecourt without paying within 30-second window → `CriminalRecord.CrimeType.PETROL_THEFT` recorded → Notoriety +5 → Raj enters `NPCState.CHASING` for 20 seconds → `RumourType.CRIME_SPOTTED` seeded within 20 blocks → `AchievementSystem.unlock(AchievementType.DRIVE_OFF)` on first offence → `CriminalRecord.incrementCctvHeatLevel()` by 10 if `CCTV_PROP` is active.
+- **Frozen nozzle** (FROST weather only): 20% chance pump interaction fails → tooltip "The nozzle's frozen solid, it won't budge" → `RumourType.WEATHER_GRUMBLE` seeded to passing PUBLIC/JOGGER NPCs.
+
+#### Fuel Siphoning (Press E on a parked car at forecourt, 21:00–06:00)
+
+Player must hold an empty `PETROL_CAN`. Takes 10 real seconds (interruptible). On completion:
+- `PETROL_CAN` becomes `PETROL_CAN_FULL`.
+- `CriminalRecord.CrimeType.VEHICLE_TAMPERING` recorded.
+- Notoriety +3.
+- If `CCTV_PROP` is active and player is within its range: `WantedSystem` +1 star, `CriminalRecord.incrementCctvHeatLevel()` by 10.
+- If Wayne is asleep (01:00–03:00) and `NoiseSystem` noise < 15: no detection by Wayne.
+
+#### CCTV Mechanic
+
+`CCTV_PROP` dome camera covers a 12-block cone over the forecourt. When active:
+- Any crime committed within range increments `CriminalRecord.cctvHeatLevel` by 10 (capped at 100).
+- At heat ≥ 50: a `POLICE` NPC spawns 60 seconds after the event (delayed — Raj has "phoned it in").
+- Player can disable the CCTV by punching the `CCTV_PROP` (2 hits — fragile): `cctvActive = false`; Notoriety +5; `CrimeType.CRIMINAL_DAMAGE` recorded.
+
+#### Tyre Pump & Car Vacuum (Flavour interactions)
+
+- **`TYRE_PUMP_PROP`**: Press E while driving → restores `Car` tyre pressure (purely cosmetic/flavour; no gameplay penalty for low pressure). 1 COIN.
+- **`CAR_VACUUM_PROP`**: Press E while driving → cleans car interior. Flavour-only; reduces heat if disguise system is tracking "distinctive dirty car". 2 COIN.
+
+#### Night-time Robbery (Optional escalation)
+
+If player has Notoriety Tier ≥ 3 and `WantedSystem` stars < 2, player can press E on `CHECKOUT_PROP` with `BALACLAVA` equipped → triggers kiosk robbery:
+- Wayne/Raj hands over 8–12 COIN (random).
+- `CrimeType.ROBBERY` recorded.
+- Wanted +2 stars.
+- `RumourType.CRIME_SPOTTED` seeded.
+- If Wayne is awake: Notoriety +10. If Wayne is asleep: Notoriety +7 (no witness).
+
+### New PropType entries (add to `PropType.java`)
+
+- `FUEL_PUMP_PROP` — forecourt pump dispenser; press E with empty `PETROL_CAN`.
+- `TYRE_PUMP_PROP` — wall-mounted air pump; press E while in car.
+- `CAR_VACUUM_PROP` — coin-operated vacuum bay.
+- `HOT_FOOD_COUNTER_PROP` — heated counter; sells `PASTY` 06:00–14:00.
+- `MAGAZINE_RACK_PROP` — flavour prop; interacting adds `NEWSPAPER` to inventory for free (steal) — `CrimeType.SHOPLIFTING` recorded if Raj/Wayne in range.
+
+### New Material entries (add to `Material.java`)
+
+- `MOTOR_OIL` — crafting ingredient (`PETROL_CAN + MOTOR_OIL + DISPOSABLE_LIGHTER → MOLOTOV_COCKTAIL`).
+
+### New AchievementType entries (add to `AchievementType.java`)
+
+- `NIGHT_FILL` — Siphoned fuel from a parked car after dark without being caught.
+- `FULL_SERVICE` — Purchased every item type from the kiosk in one session.
+- `KIOSK_RAID` — Robbed the kiosk while Wayne was asleep.
+
+### Unit Tests
+
+- Kiosk sale: player has 3 COIN; buys `ENERGY_DRINK` (1 COIN) → player has 2 COIN; inventory contains `ENERGY_DRINK`.
+- Pasty availability: `TimeSystem` at 10:00 → `isPastyAvailable()` true; at 15:00 → false.
+- Drive-off detection: `update()` called after pump-fill with player position off-forecourt and 31 seconds elapsed → `CriminalRecord` contains `PETROL_THEFT`; `NotorietySystem.getNotoriety()` increased by 5; `getCctvHeatLevel()` increased by 10 (CCTV active).
+- Drive-off no detection (CCTV disabled): same scenario with `cctvActive = false` → `getCctvHeatLevel()` unchanged.
+- Frozen nozzle: `WeatherSystem` set to `FROST`; seed `PetrolStationSystem(new Random(seed))` to force freeze path; `attemptFuelPump()` returns `FROZEN_NOZZLE`; `RumourType.WEATHER_GRUMBLE` seeded.
+- Scratch card win: `PetrolStationSystem(new Random(42))` → iterate `buyScratchCard()` 1000 times → win rate 9–11% (±2%).
+- Siphoning: night 02:00, Wayne sleeping, `NoiseSystem` < 15 → siphoning completes; no crime detected by Wayne; `PETROL_CAN_FULL` in inventory.
+- CCTV threshold: `cctvHeatLevel` at 45 → increment by 10 → heat = 55 → `isPoliceSpawnPending()` returns true after 60 game seconds.
+- Robbery: player has `BALACLAVA`, Notoriety Tier 3, wanted stars 1 → `attemptKioskRobbery()` → COIN in range [8, 12]; `CrimeType.ROBBERY` in `CriminalRecord`; wanted stars = 3.
+- Refused service: `PETROL_STATION_ATTENDANT` Raj refuses `buyFromKiosk()` when `WantedSystem.getStars()` ≥ 3 → returns `REFUSED_SERVICE`.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Pump-and-walk drive-off triggers crime and chase**: Player holds empty `PETROL_CAN`. Set `TimeSystem` to Tuesday 14:00. CCTV active. Player presses E on `FUEL_PUMP_PROP`. Simulate 5 real seconds (pump runs). Player moves to a position 15 blocks from the forecourt without visiting `CHECKOUT_PROP`. Advance time by 31 seconds. Call `PetrolStationSystem.update(delta, ...)`. Verify `CriminalRecord.hasCrime(CrimeType.PETROL_THEFT)` is true. Verify Raj's `NPCState` == `CHASING`. Verify `NotorietySystem.getNotoriety()` has increased by 5. Verify `CriminalRecord.getCctvHeatLevel()` has increased by 10. Verify `AchievementSystem.isUnlocked(AchievementType.DRIVE_OFF)` is true.
+
+2. **Honest payment converts can and clears debt**: Player holds empty `PETROL_CAN`. Player presses E on `FUEL_PUMP_PROP`. Simulate 5 real seconds. Player has 8 COIN. Player presses E on `CHECKOUT_PROP` within 30 seconds. Verify player COIN is now 3 (5 deducted). Verify player inventory contains `PETROL_CAN_FULL` (not empty). Verify `CriminalRecord` does NOT contain `PETROL_THEFT`. Verify Raj's `NPCState` == `IDLE`.
+
+3. **Night siphon — Wayne asleep, no detection**: Set `TimeSystem` to Wednesday 02:00. Wayne `NPCState` is `IDLE_SLEEPING`. `NoiseSystem.getNoise()` returns 10. Player holds empty `PETROL_CAN`. Player presses E on a parked `Car` on the forecourt. Simulate 10 real seconds. Verify `PETROL_CAN_FULL` is in player inventory. Verify `CriminalRecord.hasCrime(CrimeType.VEHICLE_TAMPERING)` is true. Verify `WantedSystem.getStars()` unchanged (CCTV disabled for this test). Verify `AchievementSystem.isUnlocked(AchievementType.NIGHT_FILL)` is true.
+
+4. **CCTV disabled — police spawn suppressed**: CCTV initially active. Player punches `CCTV_PROP` twice (fragile — 2 hits). Verify `PetrolStationSystem.isCctvActive()` is false. Verify `CriminalRecord.hasCrime(CrimeType.CRIMINAL_DAMAGE)` is true. Verify `NotorietySystem.getNotoriety()` increased by 5. Now player commits drive-off. Advance time by 31 seconds. Call `update()`. Verify `CriminalRecord.getCctvHeatLevel()` has NOT increased (CCTV off). Verify `PetrolStationSystem.isPoliceSpawnPending()` is false.
+
+5. **Kiosk robbery while Wayne sleeps awards KIOSK_RAID**: Set `TimeSystem` to Friday 02:30. Wayne `NPCState` == `IDLE_SLEEPING`. Player has `BALACLAVA` in inventory (worn). `NotorietySystem.getNotoriety()` ≥ 30 (Tier 3). `WantedSystem.getStars()` == 0. Player presses E on `CHECKOUT_PROP`. Verify `attemptKioskRobbery()` returns `SUCCESS`. Verify player COIN increased by value in [8, 12]. Verify `CrimeType.ROBBERY` in `CriminalRecord`. Verify `WantedSystem.getStars()` == 2. Verify `AchievementSystem.isUnlocked(AchievementType.KIOSK_RAID)` is true. Verify `NotorietySystem.getNotoriety()` increased by 7 (not 10, Wayne was asleep).
+
+// ── New: PetrolStationSystem.java in ragamuffin.core
+// New PropType: FUEL_PUMP_PROP, TYRE_PUMP_PROP, CAR_VACUUM_PROP, HOT_FOOD_COUNTER_PROP,
+//   MAGAZINE_RACK_PROP — add to PropType.java
+// New Material: MOTOR_OIL — add to Material.java
+// New AchievementType: NIGHT_FILL, FULL_SERVICE, KIOSK_RAID — add to AchievementType.java
+// Existing stubs already in codebase: PETROL_STATION_ATTENDANT, PETROL_STATION_ASSISTANT
+//   (NPCType.java); PETROL_CAN, PETROL_CAN_FULL, DISPOSABLE_LIGHTER (Material.java);
+//   DRIVE_OFF (AchievementType.java); PETROL_THEFT, VEHICLE_TAMPERING, cctvHeatLevel
+//   (CriminalRecord.java); CRIME_SPOTTED, WEATHER_GRUMBLE (RumourType.java).
+// Integrates: WantedSystem, CriminalRecord, NotorietySystem, RumourNetwork,
+//   AchievementSystem, WeatherSystem, NoiseSystem, WitnessSystem, TimeSystem,
+//   CarDrivingSystem, BlockBreaker (CCTV prop), DisguiseSystem, StreetEconomySystem
