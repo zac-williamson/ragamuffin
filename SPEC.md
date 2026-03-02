@@ -28845,3 +28845,232 @@ STAG_DO spawn window (Fri–Sat only), takeaway hatch hours (22:30–00:30).
 // New achievements: FRIDAY_NIGHT_CURRY, MASOCHIST, BYO_CHANCER, BACK_ROOM_INVITE,
 //                   FIRST_POPPADOM (add to AchievementType.java)
 // New LandmarkType: CURRY_HOUSE (add to LandmarkType.java), display name "The Raj Mahal"
+
+---
+
+## Add Northfield Funeral Parlour — Meredith & Sons, the Bereavement Economy & the Inheritance Heist
+
+**Landmark**: `FUNERAL_PARLOUR` (add to `LandmarkType.java`)
+**System file**: `src/main/java/ragamuffin/core/FuneralParlourSystem.java`
+**Display name**: "Meredith & Sons Funeral Directors"
+
+A narrow, double-fronted Victorian brick building on a quiet side street between
+the church and the cemetery. Purple and black fascia, gold lettering, a small
+wreath prop in the window. The quintessential British death industry — hushed tones,
+bad carpet, suspiciously expensive urns, and a back room full of interesting
+uncatalogued effects belonging to the recently departed.
+
+### NPCs
+
+- **Gerald Meredith** (`UNDERTAKER`) — the proprietor. Thin, black-suited, perpetually
+  grave expression. Open Mon–Fri 09:00–17:00, Sat 09:00–12:00. Sells FUNERAL_FLOWERS,
+  CONDOLENCES_CARD, and MEMORIAL_CANDLE. Will purchase ANTIQUE_CLOCK, GOLD_RING, and
+  ORNAMENT_VASE from player ("personal effects we deal in discreetly") — no questions asked,
+  no Notoriety penalty, but half PawnShop price. Refuses service if Notoriety ≥ 60.
+  Seeds `LOCAL_EVENT` rumours about recently deceased residents.
+
+- **Dawn** (`FUNERAL_ASSISTANT`) — Gerald's assistant; handles paperwork and flower
+  arrangements. Mon–Fri 09:00–17:00. Gossips freely with player about who in the
+  neighbourhood has died and what they left behind (seeds `INHERITANCE` rumour type).
+
+- **The Bereaved** (`PUBLIC`, 1–3) — PENSIONER or PUBLIC NPCs visiting to make
+  arrangements. Present 09:00–11:00 daily. Grieving state; cannot be pickpocketed
+  without −10 Community Respect penalty (even if successful).
+
+### Viewing Room & Casket
+
+A `CASKET_PROP` lies in the viewing room (accessed through a `VELVET_CURTAIN_PROP`
+doorway). The casket contains a random selection of personal effects from the
+`EFFECTS_TABLE` (see below) — the estate of a recently deceased resident. The
+casket prop resets every 3 in-game days with a new occupant name and new effects.
+
+**Effects table** (one `EFFECTS_TABLE` roll per casket, draws 3–5 items):
+
+| Item (Material) | Weight | Value |
+|-----------------|--------|-------|
+| `GOLD_RING` | 20 | 12 COIN |
+| `POCKET_WATCH` | 15 | 10 COIN |
+| `WAR_MEDAL` | 10 | 8 COIN |
+| `ORNAMENT_VASE` | 25 | 5 COIN |
+| `OLD_PHOTOGRAPH` | 30 | 0 COIN (sentimental) |
+| `SPARE_DENTURES` | 20 | 1 COIN |
+| `BISCUIT_TIN_SAVINGS` | 5 | 20 COIN (cash tin) |
+
+Entering the viewing room unescorted (without Dawn or Gerald present) counts as
+TRESPASS (`CriminalRecord`). Taking items from the casket counts as `THEFT_FROM_PERSON`
+with +6 Notoriety and −15 Community Respect. Dawn checks the room every 90 in-game
+seconds; if she finds the casket disturbed (items missing), she calls police.
+
+### Inheritance Heist Mechanic
+
+Dawn's gossip about the deceased reveals a `WILL_LOCATION` rumour — pointing to a
+specific `TERRACED_HOUSE` on the map where the deceased lived. That house contains
+a `HIDING_SPOT_PROP` (under the floorboards) with a `LOCKBOX_PROP` holding
+`BISCUIT_TIN_SAVINGS` (15–35 COIN) and a `PROPERTY_DEED` (sellable to the estate
+agent for 50 COIN). Breaking into the house before relatives arrive (within 1 in-game
+day of learning the rumour) is a `BURGLARY` criminal record entry but yields the
+highest-value single payout in the game.
+
+### Hearse as Vehicle
+
+A `HEARSE_PROP` parks outside 09:00–17:00 on weekdays. At `STREET_LADS` Respect ≥ 50,
+the player can "borrow" the hearse (enters `CarDrivingSystem` with the hearse vehicle
+tag). The hearse has top speed 0.6× a normal car but police ignore it for 30 in-game
+seconds before flagging it (they assume it's on a job). Returning it undamaged adds
++2 Community Respect; returning it damaged triggers `VEHICLE_DAMAGE` criminal record
+entry and Gerald refuses service permanently.
+
+### Cemetery Integration
+
+Pressing E on a `HEADSTONE_PROP` in the CEMETERY landmark now displays the name and
+date of a procedurally generated deceased resident. If the player has Dawn's
+`WILL_LOCATION` rumour for that name, a prompt appears: "This is their grave."
+Interacting unlocks the `GRAVEYARD_SHIFT` achievement and seeds an additional
+`INHERITANCE` rumour about a surviving relative who pays 5 COIN for the `OLD_PHOTOGRAPH`
+if the player recovered it from the casket.
+
+### Atmospheric Events (one random event per in-game day, 09:00–16:00)
+
+1. `FUNERAL_PROCESSION` — at 11:00, a cortège of 4–6 `PUBLIC` NPCs walks from the parlour
+   to the cemetery. Traffic (CarManager) pauses on the route for 2 minutes. Player who
+   joins the procession (walks within 3 blocks for 30+ seconds) earns +5 Community Respect.
+
+2. `WRONG_FLOWERS` — Dawn discovers Gerald ordered the wrong wreath colour; she loudly
+   berates him. Noise +5. One-time tooltip: "Some things transcend life itself."
+
+3. `UNEXPECTED_MOURNER` — a `DRUNK` NPC arrives claiming to be "a mate of the deceased"
+   and creates a scene. Gerald calls police if player doesn't intervene. Intervening
+   (talking to the Drunk NPC) earns +3 Community Respect.
+
+4. `EMBALMING_SMELL` — a ParticleSystem miasma prop emits from the back room for 20 minutes
+   (visible outside); NPCs passing on the street recoil. Tooltip: "Smells like thrift shops
+   and permanence."
+
+### Opening Hours
+
+| Day | Hours |
+|-----|-------|
+| Mon–Fri | 09:00–17:00 |
+| Sat | 09:00–12:00 |
+| Sun | Closed |
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `FUNERAL_FLOWERS` | Sold by Gerald; can be placed on HEADSTONE props in cemetery |
+| `CONDOLENCES_CARD` | Sold by Gerald; give to BEREAVED NPC for +3 Community Respect |
+| `MEMORIAL_CANDLE` | Sold by Gerald; can be placed at CASKET prop |
+| `POCKET_WATCH` | Personal effect; pawnable |
+| `WAR_MEDAL` | Personal effect; library trades for TRADING XP |
+| `OLD_PHOTOGRAPH` | Sentimental; sellable to surviving relative (5 COIN) |
+| `SPARE_DENTURES` | Cursed item; sells at PawnShop for 1 COIN with disgusted tooltip |
+| `BISCUIT_TIN_SAVINGS` | Cash tin; opened in inventory yields 15–35 COIN |
+| `PROPERTY_DEED` | From heist lockbox; sells to estate agent for 50 COIN |
+
+(Add to `Material.java`.)
+
+### New NPC Types Required
+
+| NPCType | Notes |
+|---------|-------|
+| `UNDERTAKER` | Gerald; anchored near front desk during hours |
+| `FUNERAL_ASSISTANT` | Dawn; patrols viewing room, paperwork area |
+
+(Add to `NPCType.java`.)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `FUNERAL_PARLOUR_SIGN_PROP` | Gold-lettered black fascia sign outside |
+| `CASKET_PROP` | In viewing room; contains personal effects |
+| `VELVET_CURTAIN_PROP` | Doorway to viewing room |
+| `HEARSE_PROP` | Parked outside; driveable at STREET_LADS ≥ 50 |
+| `HEADSTONE_PROP` | In cemetery; interactive (press E for name/date) |
+| `FLOWER_STAND_PROP` | Near entrance; Gerald's retail display |
+
+(Add to `PropType.java`.)
+
+### New Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `VULTURE` | Take items from the casket |
+| `GRAVEYARD_SHIFT` | Press E on a headstone matching an active WILL_LOCATION rumour |
+| `THE_FULL_INHERITANCE` | Complete the inheritance heist (break in, retrieve lockbox, sell deed) |
+| `LAST_RESPECTS` | Join a funeral procession for 30+ seconds |
+| `HEARSE_JOYRIDER` | Drive the hearse and return it undamaged |
+| `SPARE_DENTURES` | Sell SPARE_DENTURES to the PawnShop (tooltip: "You absolute ghoul.") |
+
+(Add to `AchievementType.java`.)
+
+### New RumourType
+
+| RumourType | Description |
+|------------|-------------|
+| `INHERITANCE` | Dawn gossips about deceased's estate and house location |
+| `WILL_LOCATION` | Points to specific TERRACED_HOUSE with hidden lockbox |
+
+(Add to `RumourType.java`.)
+
+### System Integrations
+
+- **CemeterySystem** (NEW, minimal): `HEADSTONE_PROP` interactions; procession route
+- **CarDrivingSystem**: hearse as borrowable slow vehicle with police grace period
+- **CriminalRecord**: TRESPASS (viewing room), THEFT_FROM_PERSON (casket), BURGLARY (heist)
+- **NotorietySystem**: +6 casket theft, +8 burglary; service refused ≥ Notoriety 60
+- **RumourNetwork**: Dawn seeds INHERITANCE + WILL_LOCATION rumours; Gerald seeds LOCAL_EVENT
+- **FenceSystem** / **PawnShopSystem**: personal effects sold; Gerald buys discretely
+- **WarmthSystem**: parlour interior is warm; useful in cold weather
+- **WeatherSystem**: FUNERAL_PROCESSION event skipped on THUNDERSTORM (indoors only)
+- **NeighbourhoodSystem**: Community Respect modifiers (procession, condolence card, casket theft)
+- **WantedSystem**: Dawn calls police if casket disturbed; hearse damage triggers record entry
+- **StreetSkillSystem**: `TRADING` XP for selling personal effects; `STEALTH` XP for casket theft
+- **TimeSystem**: open hours Mon–Fri 09:00–17:00, Sat 09:00–12:00; casket reset every 3 days
+- **NewspaperSystem**: heist generates "Thieves Desecrate Local Funeral Parlour" headline
+
+**Unit tests**: effects table weighted draw, casket reset interval (3 days), hearse police grace
+period (30 seconds), Gerald's buy price (50% PawnShop), Notoriety gate for Gerald service (60),
+bereaved pickpocket penalty (−10 Community Respect), inheritance heist window (1 in-game day).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Casket loot triggers criminal record**: Place player inside viewing room (unescorted).
+   Simulate press E on CASKET_PROP, take one item. Verify CriminalRecord contains
+   THEFT_FROM_PERSON entry. Verify player Notoriety increased by 6. Verify player's
+   inventory contains the taken item. Advance time 90 in-game seconds (Dawn's check cycle).
+   Verify WantedSystem shows police notified (Dawn called police).
+
+2. **Procession grants Community Respect**: Set time to 11:00. Trigger FUNERAL_PROCESSION
+   event (force). Verify 4–6 PUBLIC NPCs begin walking from FUNERAL_PARLOUR toward CEMETERY.
+   Move player within 3 blocks of the procession. Advance 30 in-game seconds. Verify player
+   Community Respect increased by 5. Verify CarManager has paused vehicles on the route.
+
+3. **Inheritance heist — full flow**: Have player interact with Dawn (she gossips about the
+   deceased, WILL_LOCATION rumour seeded for a specific TERRACED_HOUSE). Player breaks into
+   the house (BURGLARY record entry). Player retrieves LOCKBOX_PROP, opens it, receives
+   BISCUIT_TIN_SAVINGS + PROPERTY_DEED. Player sells PROPERTY_DEED to estate agent. Verify
+   50 COIN received. Verify THE_FULL_INHERITANCE achievement unlocked.
+
+4. **Hearse joyride — police grace period**: Player borrows hearse (STREET_LADS Respect ≥ 50).
+   Spawn a POLICE NPC within 10 blocks of the hearse. Verify police NPC does NOT react for
+   first 30 in-game seconds. Advance past 30 seconds. Verify police NPC enters PURSUING state.
+
+5. **Cemetery headstone integration**: Place player at HEADSTONE_PROP matching an active
+   WILL_LOCATION rumour name. Press E. Verify "This is their grave." prompt appears. Verify
+   GRAVEYARD_SHIFT achievement unlocked. Verify additional INHERITANCE rumour seeded
+   (surviving relative). Verify if player holds OLD_PHOTOGRAPH, dialogue option to return it
+   for 5 COIN appears.
+
+// ── New: FuneralParlourSystem.java in ragamuffin.core
+// New materials: FUNERAL_FLOWERS, CONDOLENCES_CARD, MEMORIAL_CANDLE, POCKET_WATCH,
+//                WAR_MEDAL, OLD_PHOTOGRAPH, SPARE_DENTURES, BISCUIT_TIN_SAVINGS,
+//                PROPERTY_DEED (add to Material.java)
+// New NPCTypes: UNDERTAKER, FUNERAL_ASSISTANT (add to NPCType.java)
+// New PropTypes: FUNERAL_PARLOUR_SIGN_PROP, CASKET_PROP, VELVET_CURTAIN_PROP,
+//                HEARSE_PROP, HEADSTONE_PROP, FLOWER_STAND_PROP (add to PropType.java)
+// New achievements: VULTURE, GRAVEYARD_SHIFT, THE_FULL_INHERITANCE, LAST_RESPECTS,
+//                   HEARSE_JOYRIDER, SPARE_DENTURES (add to AchievementType.java)
+// New RumourTypes: INHERITANCE, WILL_LOCATION (add to RumourType.java)
+// New LandmarkType: FUNERAL_PARLOUR (add to LandmarkType.java), display name "Meredith & Sons Funeral Directors"
