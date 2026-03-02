@@ -2247,6 +2247,16 @@ public enum NPCType {
      */
     NHS_DONOR_COORDINATOR(30f, 0f, 0f, false),
 
+    /**
+     * Issue #1311: NHS_VOLUNTEER — Tyler, the young blood donation volunteer.
+     * Patrols the waiting area and biscuit table inside the mobile unit.
+     * Detection radius: 6 blocks (reduced to 3 when distracted by a
+     * SCHOOL_KID or PENSIONER NPC). Non-hostile unless the biscuit tin is stolen.
+     * Speech: "Have you got your form?" / "Biscuits are for donors only, mate."
+     *         "You all right? Looking a bit peaky." / "Oi!"
+     */
+    NHS_VOLUNTEER(20f, 0f, 1.5f, false),
+
     // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────────
 
     /**

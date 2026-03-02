@@ -70,6 +70,9 @@ public class FenceValuationTable {
         // ── Issue #1120: Northfield Cemetery — new grave loot items ──────────
         m.put(Material.OLD_COIN,      8);  // Fences for 8 COIN (Victorian coin)
 
+        // ── Issue #1311: Northfield NHS Blood Donation Session ────────────────
+        m.put(Material.BLOOD_BAG,    10);  // NHS blood bag — medical black market
+
         VALUATIONS = Collections.unmodifiableMap(m);
     }
 
