@@ -38156,3 +38156,182 @@ Wayne cycles through 12 flavourful speech lines (45-second interval, same patter
 //   IndoorMarketSystem, InternetCafeSystem, FactionSystem, StreetEconomySystem,
 //   NotorietySystem, CriminalRecord, WantedSystem, WitnessSystem, RumourNetwork,
 //   AchievementSystem, NeighbourhoodSystem, NoiseSystem, PropertySystem, SquatSystem
+
+---
+
+## Add Northfield Handy Builders — Trade Counter, Builder's Credit & the Copper Pipe Hustle
+
+**Landmark**: `BUILDERS_MERCHANT` (already in `LandmarkType.java` with `getDisplayName()` → `"Handy Builders"`)
+
+New system: `BuildersMerchantSystem.java` in `ragamuffin.core`.
+
+Handy Builders is a grim trade counter on the edge of the industrial estate — corrugated iron roof, fork-lift tracks scored into the concrete yard, pallets of sand bags and breeze blocks under a sagging tarpaulin. Inside: two counters staffed by **Terry** (`TRADE_COUNTER_STAFF`, head of counter, present Mon–Sat 07:00–17:00) and **Donna** (`TRADE_COUNTER_STAFF`, Mon–Fri 07:00–17:00). The trade yard out back is accessible via a side gate that is locked 17:00–07:00.
+
+**Opening hours**: Mon–Fri 07:00–17:00, Sat 07:00–13:00. Closed Sundays.
+
+### Building / Environment
+
+A 20×14-block single-storey unit. Interior: two `TRADE_COUNTER_PROP` positions, a `RACKING_PROP` wall (shelves of materials), a `TILL_PROP`, and a `NOTICE_BOARD_PROP` (jobs / planning notices). Exterior yard: `PALLET_PROP` stacks, `SAND_BAG_PROP` × 4, `CEMENT_BAG_PROP` × 4, a `SKIP_PROP` (separate from SkipDivingSystem; content: construction rubble + occasional materials). `FORKLIFT_PROP` parked in the yard (decorative). `CCTV_CAMERA_PROP` above the counter and at the yard gate.
+
+### Core Mechanics
+
+#### 1. Trade Counter — Buying Materials
+
+Player approaches either counter staff and presses **E**. A simple text menu shows stocklisted materials with prices. All items are sold individually:
+
+| Material | Price (COIN) | Notes |
+|---|---|---|
+| `PLANKS` | 2 | 10 units per purchase |
+| `PIPE` | 2 | Standard grey plastic; 5 units |
+| `PAINT_TIN` | 3 | Random colour each purchase |
+| `TOOL_KIT` | 8 | General-purpose; used in crafting |
+| `CEMENT_BAG` | 3 | New material; used in squat plastering |
+| `SAND_BAG` | 2 | New material; used with CEMENT_BAG to mix MORTAR |
+| `WIRE_REEL` | 4 | New material; yields 3 × `COPPER_WIRE` when broken down |
+| `COPPER_PIPE` | 5 | New material; the prized hustle item |
+
+Stocklisted items are always available during opening hours except `COPPER_PIPE` and `WIRE_REEL` which have a **daily limit of 10 units** (shared across all buyers).
+
+#### 2. Trade Account (Credit) — the "On Account" System
+
+Regular builders pay **on account** — a credit system. The player can apply for a trade account:
+
+- **Application**: Press E on Terry with Notoriety Tier ≤ 1. Terry asks for name and company name. Player can give real name or any name (no verification). Creates a `TRADE_ACCOUNT_CARD` item.
+- **Credit limit**: 20 COIN. Repayable within 3 in-game days.
+- **Using the account**: When buying, choose "Put it on account." Items taken; running tab shown.
+- **Missing repayment (day 4+)**: Terry refuses further purchases until settled. After 7 days unpaid: `TRADE_COUNTER_STAFF` NPC calls police; `TRADE_ACCOUNT_FRAUD` added to `CriminalRecord`; Notoriety +4.
+- **Forging an account**: Player can craft a `FAKE_TRADE_ACCOUNT_CARD` from `BLANK_PAPER` + `PRINTER_INK` (at Cybernet). Provides a fresh 20-COIN credit limit under a false name. If Donna runs the ID check (Saturdays only, 1-in-3 chance): Notoriety +6, `IDENTITY_FRAUD` CriminalRecord entry.
+- **Awards `TRADE_ACCOUNT` achievement** on first successful account purchase.
+
+#### 3. The Copper Pipe Hustle
+
+`COPPER_PIPE` (5 COIN/unit) can be re-sold to the Scrapyard (`ScrapyardSystem`) for **4 COIN per unit** at face value — but if the player uses the Scrapyard's `CRUSHER_PROP` to strip it into raw copper (`COPPER_BALE`), it sells for **8 COIN per unit**. Net: buy 10 COPPER_PIPE for 50 COIN, strip to COPPER_BALE, sell for 80 COIN (+30 profit). `BuildersMerchantSystem` flags this pattern: if the same player account buys copper pipe more than twice in one in-game day, Terry becomes suspicious — next purchase attempt: *"You buying this for a job, are ya? Cos we've had a lot of interest in these this week."* Subsequent same-day purchases require Notoriety Tier ≤ 0 or a convincing dialogue option (`TRADE_ACCOUNT` holder only).
+
+Stealing copper instead: the trade yard has `COPPER_PIPE` props on exterior racking (accessible 17:00–07:00 via lock-picked gate; LOCKPICK required). If CCTV unobstructed: `THEFT` CriminalRecord entry, Wanted +1 star. Sells to Scrapyard at same rate. Awards `COPPER_KING` achievement on first successful copper yard theft.
+
+#### 4. The Skip
+
+The `SKIP_PROP` in the trade yard acts as a mini `SkipDivingSystem` node — but with construction-site loot:
+- 60% WOOD, PLANKS, SCRAP_METAL
+- 20% CEMENT_BAG (half-used, usable)
+- 10% WIRE_REEL (broken; gives 1 COPPER_WIRE when stripped)
+- 10% nothing / rubble
+
+Player can dive the skip during opening hours without suspicion (it's a public skip). After hours: trespassing — CCTV trigger applies.
+
+#### 5. Squat Renovation Integration
+
+New **crafting recipe**: `CEMENT_BAG` (1) + `SAND_BAG` (1) + `BUCKET` → `MORTAR` (3 units). MORTAR is used in `SquatFurnishingTracker` to **plaster walls** (replaces visible `BRICK` block faces with a smoother visual — texture change only, no structural effect). Plastered squat increases lodger rent tolerance by +2 COIN/night. Awards `DIY_HERO` achievement on first successful plaster job.
+
+New **crafting recipe**: `WIRE_REEL` (1) + `SCREWDRIVER` → `COPPER_WIRE` (3) + `SCRAP_METAL` (1). Existing `COPPER_WIRE` usage in crafting (IMPROVISED_TASER) is unchanged.
+
+#### 6. Terry's Banter
+
+Terry (and Donna) have 12 cycling speech lines (45-second interval):
+- "What can I get you, bud?"
+- "You a trader or just browsing?"
+- "Credit card machine's down. Cash only today."
+- "That lot's just come in. Fresh pallet."
+- "We're running low on the pipe — had a rush on it."
+- "Donna! Donna! Have we got any more of the 15mm?"
+- "You got a trade card? Makes it easier."
+- "Sign says no returns after 28 days. Just so you know."
+- "That one's the good stuff. Don't let on where you got it."
+- "Cash in hand? We can sort something out."
+- "Need a receipt? Or are we all right?"
+- "Stick it on the forklift. I'll get Donna to sort the paperwork."
+
+### Weather & Atmosphere
+
+- **RAIN**: Two `PUBLIC` builders in high-vis seek shelter under the corrugated roof overhang, share `LOCAL_EVENT` rumours. The skip fills with water (no functional change).
+- **FROST**: Terry is 30 minutes late opening (07:30). Donna absent all day.
+- **THUNDERSTORM**: Yard closed early (12:00 Saturday, 15:00 weekday). The gate is locked early.
+- **SUNNY**: An extra `COUNCIL_BUILDER` NPC wanders the yard, purchases CEMENT_BAG. Provides cover for player theft if timed right.
+
+### System Integrations
+
+- **SquatSystem / SquatFurnishingTracker**: `MORTAR` enables wall-plastering; increases lodger rent tolerance.
+- **ScrapyardSystem**: COPPER_PIPE → COPPER_BALE conversion pipeline; strip-and-sell hustle.
+- **CraftingSystem**: 2 new recipes (MORTAR, WIRE_REEL strip).
+- **InternetCafeSystem / Cybernet**: `FAKE_TRADE_ACCOUNT_CARD` printed at Cybernet.
+- **SkipDivingSystem**: shared loot logic; SKIP_PROP node registered with skip diving skip map.
+- **NotorietySystem**: trade account fraud +4; CCTV copper theft Wanted +1 star; ID check fail +6.
+- **CriminalRecord**: `TRADE_ACCOUNT_FRAUD`, `IDENTITY_FRAUD`, `THEFT` entries.
+- **WantedSystem**: CCTV-witnessed theft +1 star.
+- **WitnessSystem**: Terry, Donna, and `CCTV_CAMERA_PROP` witness crimes in the shop/yard.
+- **RumourNetwork**: `LOCAL_EVENT` seeded on each copper-pipe over-purchase ("Someone's been buying up all the copper pipe down Handy Builders."); `CRIMINAL_INTEL` seeded on account fraud.
+- **AchievementSystem**: `TRADE_ACCOUNT`, `COPPER_KING`, `DIY_HERO`, `ON_ACCOUNT` — add to `AchievementType.java`.
+- **NeighbourhoodSystem**: CEMENT_BAG purchased and squat plastered seeds `LOCAL_EVENT` rumour ("Looks like someone's doing the place up.").
+- **NoiseSystem**: forklift ambient (level 1) when yard open; skip diving splashing (level 1).
+- **KebabShopSystem**: TOOL_KIT side quest (Hassan asks player for TOOL_KIT to fix chilli dispenser) already references BUILDERS_MERCHANT — this system fulfils that reference.
+
+### New Materials
+
+- `CEMENT_BAG` — "A 25kg bag of general-purpose cement. Your back won't thank you." Used in MORTAR crafting; found in skip or purchased.
+- `SAND_BAG` — "Builder's sand. Gets everywhere." Used in MORTAR crafting; purchased or found.
+- `WIRE_REEL` — "A full reel of electrical cable. Contains copper wire." Strips into 3 × COPPER_WIRE + SCRAP_METAL.
+- `COPPER_PIPE` — "15mm copper plumbing pipe. Hot commodity in certain circles." Hustle item; strips to COPPER_BALE in Scrapyard.
+- `MORTAR` — "Mixed mortar, ready to apply. Give it a stir." Squat-plastering consumable; 3 uses per batch.
+- `FAKE_TRADE_ACCOUNT_CARD` — "A convincing-looking Handy Builders trade card. The name on it is almost plausible." Provides false-name credit line.
+- `TRADE_ACCOUNT_CARD` — "Your Handy Builders trade account card. Terry's name on the back." Legitimate credit account item.
+
+### New PropTypes
+
+- `TRADE_COUNTER_PROP` — the counter behind which Terry/Donna stand; blocks passage; 8 hits to break; drops WOOD × 3.
+- `RACKING_PROP` — industrial shelving; breakable (6 hits, drops SCRAP_METAL × 2); decorative when intact.
+- `CEMENT_BAG_PROP` — stacked bags in yard; interactable via E to pick up CEMENT_BAG material (yard-only).
+- `SAND_BAG_PROP` — ditto for SAND_BAG.
+- `PALLET_PROP` — wooden pallet stacks; WOOD × 2 on break (3 hits).
+- `FORKLIFT_PROP` — decorative prop in yard; 10 hits to destroy (noise level 3); drops SCRAP_METAL × 4.
+
+### Achievements
+
+| Achievement | Condition |
+|---|---|
+| `TRADE_ACCOUNT` | Open a trade account with Handy Builders |
+| `ON_ACCOUNT` | Purchase goods on credit for the first time |
+| `COPPER_KING` | Steal copper pipe from the trade yard unseen |
+| `DIY_HERO` | Plaster a wall in the squat using MORTAR |
+| `CASH_IN_HAND` | Negotiate a cash-in-hand deal with Terry (buy 10+ items in one session at 10% discount if Notoriety Tier 0) |
+
+### Unit Tests
+
+- `BuildersMerchantSystem.isOpen(7.0f, MONDAY)` → true; `isOpen(7.0f, SUNDAY)` → false; `isOpen(17.0f, MONDAY)` → false; `isOpen(13.0f, SATURDAY)` → false; `isOpen(12.59f, SATURDAY)` → true.
+- `buyMaterial(COPPER_PIPE, qty=5, account=null, inventory_with_25_coin)` → COIN −25; 5 COPPER_PIPE in inventory; daily limit decremented by 5.
+- `buyMaterial(COPPER_PIPE, qty=8, account=null, inventory_with_40_coin, alreadyBought=5)` → returns `DAILY_LIMIT_EXCEEDED`; no state change (limit=10, already 5 bought).
+- `applyForTradeAccount(player, notoriety_tier=1)` → returns `APPROVED`; `TRADE_ACCOUNT_CARD` in inventory.
+- `applyForTradeAccount(player, notoriety_tier=2)` → returns `REFUSED`; no card issued.
+- `buyOnAccount(PLANKS, qty=3, tab=0, limit=20)` → tab increases by 6; PLANKS × 3 in inventory.
+- `buyOnAccount(TOOL_KIT, qty=3, tab=18, limit=20)` → returns `CREDIT_LIMIT_EXCEEDED` (24 > 20); no state change.
+- `missRepayment(tabAge=7_days)` → `TRADE_ACCOUNT_FRAUD` added to CriminalRecord; Notoriety +4; Terry refuses future purchases.
+- `stripWireReel(inventory_with_WIRE_REEL_and_SCREWDRIVER)` → WIRE_REEL removed; 3 × COPPER_WIRE + SCRAP_METAL added.
+- `isSuspicious(copperPipePurchasesToday=3)` → returns true; Terry suspicion dialogue triggered.
+- `diveSkip(random=0.15f)` → yields CEMENT_BAG (0.15 falls in [0.10, 0.20) threshold).
+- `getPlasterResult(squat_with_BRICK_wall, MORTAR_count=1)` → one BRICK face plastered; lodger rent tolerance +2; MORTAR count decremented.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Buy on trade account and miss repayment**: Player presses E on Terry (Monday 08:00). Opens trade account (Notoriety tier 0). Verifies `TRADE_ACCOUNT_CARD` in inventory. Selects PLANKS × 5 on account (10 COIN). Verifies tab = 10, PLANKS × 5 in inventory. Advance TimeSystem 7 in-game days without repaying. Call `BuildersMerchantSystem.update()` each day. Verify on day 7: `TRADE_ACCOUNT_FRAUD` in CriminalRecord; Notoriety increased by 4; Terry's dialogue contains "I'll have to call it in"; subsequent purchase attempt returns `ACCOUNT_SUSPENDED`.
+
+2. **Copper pipe hustle — strip and sell**: Player purchases 5 COPPER_PIPE (25 COIN) from counter. Player visits ScrapyardSystem. Uses CRUSHER_PROP on COPPER_PIPE × 5. Verifies 5 × COPPER_BALE in inventory; COPPER_PIPE removed. Player sells COPPER_BALE × 5 to Gary at Scrapyard. Verifies COIN increases by 40 (5 × 8). Net profit: 40 − 25 = +15 COIN. Verify no CriminalRecord entry (legitimate purchase). Verify `COPPER_KING` achievement NOT awarded (was legal purchase, not theft).
+
+3. **Copper yard theft triggers CCTV wanted**: Advance TimeSystem to 18:00 (after hours). Player uses LOCKPICK on yard gate. Gate opens. Player approaches `COPPER_PIPE` prop on racking. `CCTV_CAMERA_PROP` within 8 blocks, unobstructed. Player presses E on copper pipe. Verifies COPPER_PIPE added to inventory. Verifies `WantedSystem.getStars()` = 1. Verifies `CriminalRecord` contains `THEFT`. Verifies `COPPER_KING` achievement awarded. Verifies `RumourNetwork` has `CRIMINAL_INTEL` entry.
+
+4. **MORTAR crafting and squat plastering**: Player has CEMENT_BAG (1) + SAND_BAG (1) + BUCKET in inventory. Opens CraftingSystem. Selects MORTAR recipe. Verifies MORTAR × 3 in inventory; CEMENT_BAG and SAND_BAG removed. Player opens SquatFurnishingTracker. Selects a BRICK wall face. Uses MORTAR (press E on wall with MORTAR selected). Verifies wall face texture updated. Verifies MORTAR count reduced by 1. Verifies lodger rent tolerance increased by 2. Verifies `DIY_HERO` achievement awarded on first plaster.
+
+5. **Fake trade card ID check caught on Saturday**: Player crafts FAKE_TRADE_ACCOUNT_CARD at Cybernet. Player enters Handy Builders on Saturday (Donna on duty). Player presses E on Donna. Attempts to buy PLANKS on account using fake card. Force Donna ID-check result = true (1-in-3 chance; use test override). Verify: Notoriety increased by 6. Verify `IDENTITY_FRAUD` in CriminalRecord. Verify Donna's dialogue contains "That's not right, is it." Verify FAKE_TRADE_ACCOUNT_CARD removed from inventory. Verify purchase fails.
+
+// ── Issue #1229: Northfield Handy Builders — Trade Counter, Builder's Credit & the Copper Pipe Hustle ──
+// New: BuildersMerchantSystem.java in ragamuffin.core
+// New: BuildersMerchantSystemTest.java in src/test/java/ragamuffin/integration/
+// LandmarkType.BUILDERS_MERCHANT already defined; getDisplayName() returns "Handy Builders"
+// New NPC types: TRADE_COUNTER_STAFF (Terry, Donna) — add to NPCType.java
+// New AchievementTypes: TRADE_ACCOUNT, ON_ACCOUNT, COPPER_KING, DIY_HERO, CASH_IN_HAND — add to AchievementType.java
+// New CriminalRecord crime types: TRADE_ACCOUNT_FRAUD, IDENTITY_FRAUD — add to CriminalRecord.java
+// New Materials: CEMENT_BAG, SAND_BAG, WIRE_REEL, COPPER_PIPE, MORTAR, FAKE_TRADE_ACCOUNT_CARD, TRADE_ACCOUNT_CARD — add to Material.java
+// New PropTypes: TRADE_COUNTER_PROP, RACKING_PROP, CEMENT_BAG_PROP, SAND_BAG_PROP, PALLET_PROP, FORKLIFT_PROP — add to PropType.java
+// New CraftingSystem recipes: MORTAR (CEMENT_BAG + SAND_BAG + BUCKET), WIRE_REEL strip (WIRE_REEL + SCREWDRIVER → COPPER_WIRE × 3 + SCRAP_METAL)
+// Integrates: SquatSystem, SquatFurnishingTracker, ScrapyardSystem, CraftingSystem,
+//   InternetCafeSystem, SkipDivingSystem, NotorietySystem, CriminalRecord,
+//   WantedSystem, WitnessSystem, RumourNetwork, AchievementSystem,
+//   NeighbourhoodSystem, NoiseSystem, KebabShopSystem, WeatherSystem
