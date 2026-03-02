@@ -672,5 +672,19 @@ public enum RumourType {
      * — seeded by PharmacySystem when the DRUG_SAFE_PROP is crowbarred.
      * Spreads via PUBLIC and PENSIONER NPCs; NeighbourhoodSystem Vibes −4;
      * NewspaperSystem headline triggered. */
-    PHARMACY_RAID;
+    PHARMACY_RAID,
+
+    // ── Issue #1286: Northfield Cash Converters ───────────────────────────────
+
+    /** "Someone knocked over Cash Converters last night — Dean's doing his nut."
+     * — seeded by CashConvertersSystem on BURGLARY (break-in with crowbar).
+     * Spreads via PUBLIC, PENSIONER, and STREET_LAD NPCs; NeighbourhoodSystem Vibes −3;
+     * police patrol frequency +1 in that zone for 24h. */
+    CASH_CONVERTERS_RAIDED,
+
+    /** "Some lad's dealing out the back of Cash Converters after dark — laptops and that."
+     * — seeded when Dave the Middleman completes 3+ transactions.
+     * Spreads via STREET_LAD and YOUTH_GANG NPCs; StreetReputation FENCE +1 if player
+     * involved; WantedSystem check trigger for Notoriety ≥ 30. */
+    BACK_ALLEY_TRADE;
 }

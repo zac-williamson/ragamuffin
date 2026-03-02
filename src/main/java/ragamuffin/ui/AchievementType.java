@@ -4864,6 +4864,36 @@ public enum AchievementType {
         "Back Street Pharmacist",
         "Crowbarred open the drug safe at the chemist. Janet is absolutely fuming.",
         1
+    ),
+
+    // ── Issue #1286: Northfield Cash Converters ───────────────────────────────
+
+    /** Sell 3 items to Dean without triggering a serial check failure. */
+    DEAN_APPROVED(
+        "Dean Approved",
+        "Clean as a whistle. Dean almost smiled.",
+        3
+    ),
+
+    /** Complete 5 transactions with Dave the Middleman. */
+    BACK_ALLEY_REGULAR(
+        "Back Alley Regular",
+        "Dave doesn't even ask what it is anymore.",
+        5
+    ),
+
+    /** Sell a wiped phone that passes Dean's check. */
+    IMEI_ARTISTE(
+        "IMEI Artiste",
+        "Tariq's finest work. Probably.",
+        1
+    ),
+
+    /** Smash the display case and take something before Dave shows up. */
+    GLASS_CASE_OPPORTUNIST(
+        "Glass Case Opportunist",
+        "You couldn't wait, could you.",
+        1
     );
 
     private final String name;

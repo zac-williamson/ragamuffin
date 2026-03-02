@@ -963,6 +963,16 @@ public enum PropType {
      */
     BACK_ROOM_DOOR_PROP(1.00f, 2.20f, 0.20f, 8, Material.SCRAP_METAL),
 
+    // ── Issue #1286: Northfield Cash Converters (additional props) ─────────────
+
+    /**
+     * CASH_CONVERTER_COUNTER_PROP — the main Cash Converters shop counter.
+     * Dean stands behind it during opening hours (09:00–17:30 Mon–Sat).
+     * Press E to open the sell/buy UI. Crowbar for 5 seconds after hours to break in.
+     * Destroyed by 8 hits; yields WOOD.
+     */
+    CASH_CONVERTER_COUNTER_PROP(1.5f, 1.1f, 0.6f, 8, Material.WOOD),
+
     // ── Issue #1030: Al-Noor Mosque ────────────────────────────────────────────
 
     /**
