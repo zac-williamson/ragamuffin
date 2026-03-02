@@ -33210,3 +33210,111 @@ Press `E` on Mirek to access treatment for **5 COIN**:
 //   SWEET_TOOTH_CONSEQUENCE, PRIVATE_PATIENT (add to AchievementType.java)
 // RumourType.LOCAL_HEALTH already exists ✓
 // CrimeType.FRAUD: verify exists in CriminalRecord.java or add
+
+---
+
+## Issue #1165: Northfield Match Day — Football Chaos, Away Fans & the Tout Economy
+
+**Trigger**: Every Saturday when `dayCount % 2 == 0` (alternating home/away), 13:00–18:30.
+Home-game Saturdays bring a surge of football fans through Northfield en route to/from the
+ground. Away-game Saturdays bring a rival mob passing through from New Street station.
+
+### Building / World Changes
+No new permanent landmark. The system uses the existing pub (`WETHERSPOONS`, `PUB`), high
+street, and a new `STADIUM_COACH_PARK` prop zone at the industrial estate edge (4 coach
+parking bays, `COACH_PROP` spawns). Add `LandmarkType.STADIUM_COACH_PARK` to
+`LandmarkType.java`.
+
+### NPC Spawns
+Add the following to `NPCType.java`:
+- `HOME_FAN(40f, 8f, 1.2f, false)` — wears blue/claret colours, sings, buys pies
+- `AWAY_FAN(40f, 10f, 1.0f, false)` — rival colours, hostile to HOME_FAN NPCs
+- `FOOTBALL_TOUT(30f, 0f, 0f, false)` — sells knock-off scarves and counterfeit tickets
+- `POLICE_HORSE_OFFICER(80f, 12f, 0f, false)` — mounted officer, extra intimidation radius
+
+**Spawn schedule (all home-game Saturdays):**
+- 13:00 — 6–10 `HOME_FAN` NPCs appear on high street heading toward `STADIUM_COACH_PARK`; 1 `FOOTBALL_TOUT` by Greggs.
+- 14:00 — Pubs fill: `WETHERSPOONS` and `PUB` each gain +6 `HOME_FAN`. Noise level +30. `FOOTBALL_ON_TELLY` event forces in both.
+- 17:00 — Match ends. 4–8 `HOME_FAN` and 3–6 `AWAY_FAN` arrive back. 20% chance of `STREET_BRAWL_EVENT` (see below).
+- 17:30 — 2 `POLICE_HORSE_OFFICER` NPCs spawn at high street / pub junction. Fan density stays high until 18:30.
+- 18:30 — Fans gradually despawn; `POLICE_HORSE_OFFICER` despawns at 19:00.
+
+### Criminal Mechanics
+1. **Tout Economy**: Press E on `FOOTBALL_TOUT` to buy `COUNTERFEIT_TICKET` (2 COIN) or `KNOCKOFF_SCARF` (1 COIN).
+   Selling a `COUNTERFEIT_TICKET` to a `HOME_FAN` yields 4 COIN; 30% chance fan notices → Notoriety +4, `TOUT_SCAM` CrimeType.
+   `KNOCKOFF_SCARF` can be worn as a disguise: while equipped, `AWAY_FAN` NPCs become non-hostile to the player.
+
+2. **Pickpocket Window**: During peak fan density (14:00–15:00, 17:00–18:00), pickpocket success rate +15% (crowd distraction).
+   Picking a `HOME_FAN` or `AWAY_FAN` yields `MATCH_PROGRAMME` (sellable 2 COIN at fence) or `WALLET_FAN` (3–8 COIN).
+
+3. **Street Brawl Event** (20% chance, 17:00): 3 `HOME_FAN` vs 3 `AWAY_FAN` fight in the street.
+   Player can join either side (press E on a fan mid-brawl to join their team).
+   Joining HOME side: StreetReputation +5 with `STREET_LADS`, Notoriety +3; winning fan team grants `MATCH_DAY_WARRIOR` achievement.
+   Joining AWAY side: same Notoriety +3, StreetReputation +3 with `STREET_LADS`, rumour seeded: `GANG_ACTIVITY`.
+   Police arrive 60 in-game seconds into the brawl (or immediately if `POLICE_HORSE_OFFICER` is within 20 blocks).
+   Fighting in presence of police: `AFFRAY` CrimeType + Wanted +2.
+
+4. **Pub Overflow Ejection**: Between 17:00–18:00 the pub is at capacity. Player inside during `STREET_BRAWL_EVENT` within 5 blocks of the door is ejected automatically.
+
+5. **Scarf Stall Hustle**: Player can `craft` a `KNOCKOFF_SCARF` from 2× `FABRIC_SCRAP` (a new `Material` drop from the charity shop / launderette).
+   Sell to passing `HOME_FAN` NPCs for 2 COIN each (max 6 sales per match day, after which demand dries up).
+
+### Warmth / Noise Interactions
+- Large fan groups outdoors count as `CROWD_WARMTH` — player within 3 blocks of 4+ fans gets +2 Warmth/min.
+- Noise level spikes: `NoiseSystem` adds `MATCH_DAY_NOISE` event (magnitude 70) at pub junction 17:00–18:00.
+  `NeighbourhoodWatchSystem` logs it; vibes −3 if match day causes brawl.
+
+### Achievements (add to `AchievementType.java`)
+- `MATCH_DAY_PICKPOCKET` — successfully pickpocket 3 fans in one match day
+- `TOUT_MASTER` — sell 6 `KNOCKOFF_SCARF` items in one match day
+- `MATCH_DAY_WARRIOR` — win a street brawl on match day
+- `WRONG_COLOURS` — walk through away-fan mob wearing home-team scarf (triggers 3 `AWAY_FAN` hostiles)
+
+### New Materials (add to `Material.java`)
+- `COUNTERFEIT_TICKET` (SMALL_ITEM, value 1, fence 1)
+- `KNOCKOFF_SCARF` (SMALL_ITEM, value 1, fence 1, wearable)
+- `MATCH_PROGRAMME` (SMALL_ITEM, value 1, fence 2)
+- `WALLET_FAN` (SMALL_ITEM, value 3–8, fence 0.6)
+- `FABRIC_SCRAP` (MATERIAL, value 0, drop from CHARITY_SHOP crates and LAUNDERETTE lost-property)
+
+### Rumour Seeds (add to `RumourType.java` comment block for `GANG_ACTIVITY` / `LOCAL_EVENT`)
+- `MATCH_DAY_TROUBLE` (LOCAL_EVENT) — seeded when `STREET_BRAWL_EVENT` fires; spreads through pub NPCs within 30 in-game minutes.
+- `POLICE_PRESENCE` (LOCAL_EVENT) — seeded when `POLICE_HORSE_OFFICER` spawns; reduces NPC crime willingness by 10%.
+
+### PropTypes needed (add to `PropType.java`)
+- `COACH_PROP` — a full-size coach prop at `STADIUM_COACH_PARK` (8×3×3 blocks, ROAD-coloured undercarriage)
+- `MATCH_DAY_STALL_PROP` — a fold-out table where `FOOTBALL_TOUT` stands
+
+### Unit Tests (implement in `MatchDaySystemTest.java`)
+- `isMatchDay(Saturday, dayCount=2)` → true; `isMatchDay(Saturday, dayCount=1)` → false; `isMatchDay(Sunday, dayCount=2)` → false.
+- `isHomeGame(dayCount=2)` → true; `isHomeGame(dayCount=4)` → false (away).
+- `calculateFanSpawnCount(seed=42, isHome=true)` → value in range [6, 10].
+- `pickpocketBonusActive(hour=14.5f)` → true; `pickpocketBonusActive(hour=16.0f)` → false.
+- `scarfSalesExhausted(salesCount=6)` → true; `scarfSalesExhausted(salesCount=5)` → false.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Fans spawn on match day Saturday**: Set `dayCount` to a home-game Saturday value (e.g. 2), advance time to 13:00. Call `MatchDaySystem.update(delta, timeSystem, npcManager, world)`. Verify ≥6 `HOME_FAN` NPCs exist on the high street tile. Verify 1 `FOOTBALL_TOUT` NPC is present near Greggs. Verify `WETHERSPOONS` NPC count increased by ≥4 by 14:00.
+
+2. **No fans spawn on non-match-day Saturday**: Set `dayCount` to 1 (away Saturday, non-home). Verify 0 `HOME_FAN` NPCs spawn at 13:00 (away Saturdays bring `AWAY_FAN` only, not home fans). Advance to 13:00. Verify 0 `HOME_FAN` spawn. Verify `AWAY_FAN` count ≥4 by 17:00.
+
+3. **Tout economy — counterfeit ticket sale**: Spawn `FOOTBALL_TOUT`. Press E → receive dialogue, purchase `COUNTERFEIT_TICKET` for 2 COIN (verify COIN deducted). Press E on nearby `HOME_FAN` with `COUNTERFEIT_TICKET` selected. Seed RNG to guarantee successful sale (roll ≥ 0.30). Verify player receives 4 COIN. Verify `CriminalRecord` does NOT contain `TOUT_SCAM`. Now seed RNG for catch (roll < 0.30). Repeat. Verify Notoriety increased by 4. Verify `CriminalRecord` contains `TOUT_SCAM`.
+
+4. **Street brawl event fires and police respond**: Seed RNG to force `STREET_BRAWL_EVENT` at 17:00. Verify 3 `HOME_FAN` + 3 `AWAY_FAN` NPCs switch to `FIGHTING` state. Advance 61 in-game seconds. Verify at least 1 `POLICE` NPC has spawned within 30 blocks. Now place a `POLICE_HORSE_OFFICER` within 15 blocks before the brawl. Verify brawl is resolved (fans switch to `FLEEING`) within 10 seconds.
+
+5. **Knockoff scarf disguise suppresses away fan hostility**: Equip `KNOCKOFF_SCARF` in player's held-item slot. Spawn 3 `AWAY_FAN` NPCs within 5 blocks. Verify all 3 remain in `IDLE` state (scarf recognised as neutral). Unequip scarf. Verify `AWAY_FAN` NPCs switch to `HOSTILE` within 2 update ticks.
+
+6. **Pickpocket bonus active during peak hours**: Set time to 14:30. Call `MatchDaySystem.getPickpocketBonus()` → verify returns 0.15f. Set time to 16:00. Call `MatchDaySystem.getPickpocketBonus()` → verify returns 0.0f. Set time to 17:30. Verify returns 0.15f again.
+
+// ── Issue #1165: Northfield Match Day ────────────────────────────────────────
+// New: MatchDaySystem.java in ragamuffin.core
+// LandmarkType.STADIUM_COACH_PARK — add to LandmarkType.java + getDisplayName() → "Coach Park"
+// NPCType: HOME_FAN, AWAY_FAN, FOOTBALL_TOUT, POLICE_HORSE_OFFICER — add to NPCType.java
+// Material: COUNTERFEIT_TICKET, KNOCKOFF_SCARF, MATCH_PROGRAMME, WALLET_FAN, FABRIC_SCRAP — add to Material.java
+// PropType: COACH_PROP, MATCH_DAY_STALL_PROP — add to PropType.java
+// AchievementType: MATCH_DAY_PICKPOCKET, TOUT_MASTER, MATCH_DAY_WARRIOR, WRONG_COLOURS — add
+// CriminalRecord.CrimeType: TOUT_SCAM, AFFRAY — verify or add
+// RumourType: MATCH_DAY_TROUBLE, POLICE_PRESENCE — add to RumourType.java
+// Integrates: WetherspoonsSystem, PubLockInSystem, NoiseSystem, NeighbourhoodWatchSystem,
+//   WantedSystem, NotorietySystem, FactionSystem, WeatherSystem, StreetEconomySystem,
+//   CriminalRecord, RumourNetwork, AchievementSystem, NPCManager, PickpocketSystem
