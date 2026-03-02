@@ -38867,3 +38867,184 @@ CriminalRecord discharge flag set. Notoriety reduced by 10.
 //   FeteSystem (RIGGED_BARREL item), NewspaperSystem, WantedSystem, CriminalRecord,
 //   DisguiseSystem, NotorietySystem, AchievementSystem, RumourNetwork, NoiseSystem,
 //   MatchDaySystem, WarmthSystem, WeatherSystem, StreetSkillSystem
+
+## Issue #1237: Northfield St. Aidan's C.E. Primary School — School Run Chaos, Ofsted Panic & the Caretaker's Shed Heist
+
+**Background / Why This Exists**: `LandmarkType.PRIMARY_SCHOOL` is already defined (display name "St. Aidan's C.E. School") and placed in the world at coordinates set by the world generator. Several NPCTypes are fully defined for this landmark: `HEADTEACHER` (Ms. Pearson), `DINNER_LADY` (Dot), `CARETAKER` (Derek), `SCHOOL_MUM`, `HEADTEACHER_SECRETARY`, `LOLLIPOP_LADY`, and `SCHOOL_KID`. Materials `HYMN_BOOK`, `SCHOOL_DINNER`, and `COPIED_HOMEWORK` already exist. Despite all this scaffolding, `PrimarySchoolSystem.java` does not exist. This issue brings the school fully to life.
+
+**The Building**: A two-storey brick school on a residential road, adjacent to the park. Ground floor: reception (HEADTEACHER_SECRETARY behind a counter), head's office (locked door, filing cabinet inside), corridor with NOTICE_BOARD_PROP, kitchen/canteen (Dot at the hatch), staff room. Exterior: a tarmac playground (PAVEMENT blocks), a small nature garden, a locked caretaker's shed at the back. Entrance: iron gates locked outside school hours (06:30–08:00 and 15:30+). A SCHOOL_GATE_PROP at the front operated by Derek.
+
+**Open Hours**: Mon–Fri 08:00–16:30. Gates physically open 08:15–08:45 (school run), 15:00–15:30 (pickup). Locked all other times. Derek locks the gate at 15:30 precisely.
+
+### NPCs (all defined in NPCType.java — wire up in PrimarySchoolSystem and WorldGenerator)
+
+- **Ms. Pearson** (`HEADTEACHER`) — patrols reception corridor 08:30–16:00; ejects unrecognised adults; triggers SCHOOL_INTRUDER CrimeType on player entry outside gate hours.
+- **Janet** (`HEADTEACHER_SECRETARY`) — staffs reception Mon–Fri 08:00–16:30; primary dialogue NPC for visitor sign-in.
+- **Dot** (`DINNER_LADY`) — serves SCHOOL_DINNER at the canteen hatch 11:30–13:30; 2–5 COIN pickpocketable; calls Ms. Pearson if caught.
+- **Derek** (`CARETAKER`) — patrols exterior and sweeps playground; locks gate at 15:30; CARETAKER_SHED_KEY pickpocketable at Notoriety < 30.
+- **Pat** (`LOLLIPOP_LADY`) — stands at the crossing 08:10–08:50 and 14:50–15:35; stops traffic (CAR_STOPPED event); is gossipy and spreads neighbourhood rumours if player lingers for 30 seconds.
+- **6–10 `SCHOOL_KID` NPCs** — swarm playground 08:45–09:00 and 12:00–13:00; truant SCHOOL_KID may appear in town during school hours (15% chance per day); pickpocketable for COPIED_HOMEWORK or CRISPS.
+- **4–8 `SCHOOL_MUM` NPCs** — gather at the gate 08:15–08:45 and 15:00–15:30; proximity rumour source (player within 2 blocks gets 1 NEIGHBOURHOOD_GOSSIP rumour per crossing); carry 2–6 COIN.
+
+### Mechanics
+
+#### 1. School Run Chaos (08:15–08:45 and 15:00–15:30)
+- `SCHOOL_MUM` NPCs cluster at the gate, blocking 60% of the pavement width (impassable without dodge).
+- Player can linger to absorb NEIGHBOURHOOD_GOSSIP rumours (1 per 30 seconds, max 3 per run). Each rumour is a randomly selected `RumourType.NEIGHBOURHOOD`.
+- **Double-park hustle**: 3 `CAR` entities park illegally on the road during the run. Player can tip off the traffic warden (press E on `TRAFFIC_WARDEN` NPC if present) → traffic warden issues PCN → player earns INFORMANT_FEE of 2 COIN per PCN; Notoriety −1; `GRASS` achievement flagged by FactionSystem.
+- **Pushchair obstacle**: A `SCHOOL_MUM` NPC with PRAM_PROP blocks the pavement. Press E to help navigate → COMMUNITY_SPIRIT +1 (small Notoriety reduction of 1). Or sprint through it → Notoriety +2, `PUSHCHAIR_MENACE` achievement.
+
+#### 2. Canteen Hustle — Dot's Dinner
+- 11:30–13:30: Player can queue at the canteen hatch (press E on CANTEEN_HATCH_PROP).
+- Buy SCHOOL_DINNER for 1 COIN (heals 15 HP, +5 Warmth).
+- Alternatively: pickpocket Dot for 2–5 COIN. Failure → Ms. Pearson called; WantedSystem +1 star; `DINNER_MONEY_THIEF` CrimeType.
+- **Tuck shop rig**: During the 12:00–13:00 break, SCHOOL_KID NPCs trade CRISPS and SHERBET at informal prices. Player can sell 1 contraband snack (CRISPS from inventory) to SCHOOL_KID for 1 COIN, but only while Ms. Pearson is not in the corridor. Sell 5+ contraband snacks: `TUCK_SHOP_BANDIT` achievement.
+
+#### 3. Caretaker's Shed Heist
+- Derek's shed (CARETAKER_SHED_PROP) is locked. Contains: 3 WOOD (shelving), 1 SCRAP_METAL (old pipes), 1 CARETAKER_MASTER_KEY (opens every interior door in the school), and 1 PHOTOCOPIER_INK_CARTRIDGE (fenceable for 6 COIN).
+- **Pickpocket route**: Notoriety < 30; approach Derek while he sweeps; press E → pick CARETAKER_SHED_KEY from pocket (uses StreetSkillSystem PICKPOCKET skill). Failure → Ms. Pearson alerted; WantedSystem +1 star.
+- **Lock-pick route**: LOCKPICK item in inventory; press E on shed door during 13:00–15:00 (Derek at lunch). StreetSkillSystem LOCKPICKING ≥ Journeyman required.
+- CARETAKER_MASTER_KEY allows entry to head's office (HEADTEACHER_OFFICE_DOOR_PROP, normally locked) → access FILING_CABINET_PROP containing OFSTED_DRAFT_REPORT.
+
+#### 4. Ofsted Panic Event (random, once per game week)
+- System rolls on Monday morning at 08:00 (15% chance). If triggered: `ofstedDay = true`.
+- Ms. Pearson paces frantically between reception and staff room (ANXIOUS_PATROL state).
+- A 2-person OFSTED_INSPECTOR team spawns (NPCType.OFSTED_INSPECTOR — add to NPCType.java) and visits classrooms 09:00–14:00.
+- **Legitimate path**: Player can volunteer to help decorate the corridor (press E on NOTICE_BOARD_PROP, spend 2 WOOD + 1 PAINT_TIN from inventory) → Notoriety −2; Janet thanks player; OFSTED result improved (GOOD vs REQUIRES_IMPROVEMENT).
+- **Sabotage path**: Player can steal the OFSTED_DRAFT_REPORT from the filing cabinet (requires CARETAKER_MASTER_KEY) and sell it to NewspaperSystem's journalist NPC for 15 COIN → NewspaperSystem headline "School Secrets Leaked Before Inspection"; Ms. Pearson Notoriety-hostile for 3 in-game days; `WHISTLEBLOWER` achievement variant triggered.
+- **Disrupt path**: Trigger a `NoiseSystem` event ≥ magnitude 60 (e.g. WheeliBinFireSystem fire, or smashing school window) during Ofsted visit → Inspectors flee; school fails (REQUIRES_IMPROVEMENT); Notoriety +10; WantedSystem +2 stars.
+- Result announced via NewspaperSystem next edition.
+
+#### 5. Parents' Evening — Tuesday Twice-Yearly
+- `parentsEveningDay = (dayCount == 14 || dayCount == 98)` — bi-annual event.
+- Tue 17:00–20:00: 8 `SCHOOL_MUM` NPCs file in for 15-minute slots with Ms. Pearson.
+- Player can sneak in using DisguiseSystem score ≥ 3 (parent disguise).
+- **Information hustle**: Overhear Ms. Pearson's assessments (press E on office door when closed) — each overhear yields a random `RumourType.NEIGHBOURHOOD` about a named NPC household.
+- **Forged school report**: Lockpick filing cabinet → steal blank SCHOOL_REPORT_FORM (new Material) → use at PHOTOCOPIER_PROP (CraftingSystem) to create FORGED_SCHOOL_REPORT → sell to SCHOOL_MUM NPC for 5 COIN (she thinks it's good news). 25% catch rate → `SCHOOL_FRAUD` CrimeType, WantedSystem +1 star.
+
+#### 6. Gate Trespass & Intruder Alert
+- Player entering the building without being signed in by Janet triggers the intruder chain:
+  - Ms. Pearson enters ACTIVE_PATROL state; school gates lock (Derek triggered).
+  - If player escapes within 60 seconds: no criminal record, but Notoriety +3.
+  - If caught by Ms. Pearson (within 5 blocks): `SCHOOL_INTRUDER` CrimeType added to CriminalRecord; WantedSystem +2 stars.
+  - DisguiseSystem score ≥ 4 prevents Ms. Pearson recognising the player (but not Derek).
+
+### NPC Dialogue Samples
+
+**Ms. Pearson (HEADTEACHER)**:
+- "Can I help you? This is a school. Do you have an appointment?"
+- "Derek! There's someone on the premises. Lock the gate now."
+- "The inspectors are here today. I need everyone on their best behaviour."
+
+**Janet (HEADTEACHER_SECRETARY)**:
+- "Sign in here please. Name and reason for visit?"
+- "Ms. Pearson isn't available right now. Can I take a message?"
+
+**Dot (DINNER_LADY)**:
+- "Chicken or pasta, love? Don't shilly-shally."
+- "Oi — those chips aren't for visitors."
+
+**Derek (CARETAKER)**:
+- "Gates close at half three. Sharp. Every day."
+- "I've got my eye on you. This is school property."
+
+**Pat (LOLLIPOP_LADY)**:
+- "Stop!" *blows whistle* "Right, cross now love."
+- "Did you hear about Debbie at number 12? No? Well..."
+
+### System Integrations
+
+- **TimeSystem**: gate schedules, school run windows, canteen hours, Ofsted trigger.
+- **NPCManager**: spawn/despawn SCHOOL_MUM and SCHOOL_KID on schedule.
+- **WantedSystem**: intruder chain, pickpocket failures.
+- **CriminalRecord**: SCHOOL_INTRUDER, DINNER_MONEY_THIEF, SCHOOL_FRAUD.
+- **NotorietySystem**: school-run events (pushchair, tuck shop, Ofsted sabotage).
+- **DisguiseSystem**: intruder recognition, parents' evening infiltration.
+- **StreetSkillSystem**: PICKPOCKET for Derek's key; LOCKPICKING for shed door.
+- **NewspaperSystem**: Ofsted result headline; leaked report headline.
+- **RumourNetwork**: NEIGHBOURHOOD_GOSSIP from SCHOOL_MUM; Pat's gossip seedings.
+- **NoiseSystem**: Ofsted disruption event (≥ magnitude 60 causes inspector flee).
+- **WheeliBinFireSystem**: fire event can trigger Ofsted disruption.
+- **TrafficWardenSystem** (via TrafficWardenSystem if available, else NPC interaction): double-park tip-off.
+- **CraftingSystem / PHOTOCOPIER_PROP**: forged school report.
+- **FactionSystem**: GRASS achievement flagged on traffic warden tip-off (STREET_LADS −3 Respect).
+- **AchievementSystem**: `DINNER_MONEY_THIEF`, `TUCK_SHOP_BANDIT`, `PUSHCHAIR_MENACE`, `OFSTED_SABOTEUR`, `HEAD_OF_CLASS`.
+- **PropertySystem / StructureTracker**: school building marked as PUBLIC_BUILDING (cannot be purchased).
+
+### New Materials (add to Material.java if not present)
+
+- `CARETAKER_SHED_KEY` — "A chunky yale key stamped 'SHED'. Smells of WD40." (stackable: no)
+- `CARETAKER_MASTER_KEY` — "A master key to every door in St. Aidan's. Derek would be furious." (stackable: no)
+- `OFSTED_DRAFT_REPORT` — "A printed draft Ofsted report. REQUIRES IMPROVEMENT. Don't let Ms. Pearson see this." (fence value: 15 COIN)
+- `SCHOOL_REPORT_FORM` — "A blank official school report template. Could be repurposed." (used in forged report crafting)
+- `FORGED_SCHOOL_REPORT` — "Someone's typed EXCEEDS EXPECTATIONS in large font. Convincing." (sell to SCHOOL_MUM for 5 COIN)
+- `PHOTOCOPIER_INK_CARTRIDGE` — "An HP toner cartridge. Derek ordered 12 and got 1. Fence for 6 COIN." (stackable: no)
+- `PRAM` — "A battered Graco pushchair with a broken wheel. Obstacle prop-item." (dropped by SCHOOL_MUM NPC)
+
+### New PropTypes (add to PropType.java if not present)
+
+- `SCHOOL_GATE_PROP(3.0f, 1.5f, 0.2f, 0, null)` — iron school gate; locked outside hours; interactive (Derek's key or CARETAKER_MASTER_KEY).
+- `CANTEEN_HATCH_PROP(1.2f, 1.0f, 0.4f, 5, Material.WOOD)` — serving hatch; press E to buy SCHOOL_DINNER.
+- `CARETAKER_SHED_PROP(3.0f, 2.5f, 3.0f, 0, null)` — locked shed; lockpickable or key entry.
+- `HEADTEACHER_OFFICE_DOOR_PROP(1.0f, 2.0f, 0.1f, 0, null)` — locked office door; CARETAKER_MASTER_KEY or lockpick.
+- `OFSTED_NOTICE_PROP(0.6f, 0.8f, 0.1f, 2, Material.WOOD)` — OFSTED result notice posted at school gate after inspection.
+
+### New NPCType (add to NPCType.java)
+
+- `OFSTED_INSPECTOR(25f, 0f, 0f, false)` — anonymous inspector; arrives in pairs on Ofsted day; notes on clipboard; flees on NoiseSystem magnitude ≥ 60.
+
+### Achievements (add to AchievementType.java)
+
+| Achievement | Condition |
+|---|---|
+| `DINNER_MONEY_THIEF` | Pickpocket Dot the dinner lady |
+| `TUCK_SHOP_BANDIT` | Sell 5+ contraband snacks to SCHOOL_KID NPCs in one lunch break |
+| `PUSHCHAIR_MENACE` | Sprint through a SCHOOL_MUM's pram during school run |
+| `OFSTED_SABOTEUR` | Cause Ofsted inspectors to flee via a noise event |
+| `HEAD_OF_CLASS` | Steal the CARETAKER_MASTER_KEY and enter the head's office |
+| `SCHOOL_REPORT` | Sell a FORGED_SCHOOL_REPORT to a SCHOOL_MUM |
+| `INFORMANT` | Tip off the traffic warden about 3 double-parked cars in one school run |
+
+### Unit Tests (implement in `PrimarySchoolSystemTest.java`)
+
+- `PrimarySchoolSystem.isGateOpen(time=08_20, isSchoolDay=true)` → true; `isGateOpen(time=09_00, isSchoolDay=true)` → false.
+- `PrimarySchoolSystem.isSchoolRun(time=08_20)` → true; `isSchoolRun(time=10_00)` → false; `isSchoolRun(time=15_15)` → true.
+- `PrimarySchoolSystem.pickpocketDerek(player, notoriety=25, pickpocketSkill=APPRENTICE, rng=seeded_success)` → CARETAKER_SHED_KEY in inventory; Derek does not alert.
+- `PrimarySchoolSystem.pickpocketDerek(player, notoriety=25, pickpocketSkill=NOVICE, rng=seeded_failure)` → WantedSystem +1 star; no key in inventory.
+- `PrimarySchoolSystem.pickpocketDot(player, rng=seeded_catch)` → WantedSystem +1 star; DINNER_MONEY_THIEF CrimeType added; coin unchanged.
+- `PrimarySchoolSystem.rollOfstedDay(rng=seeded_trigger)` → `ofstedDay` = true; `rollOfstedDay(rng=seeded_miss)` → false.
+- `PrimarySchoolSystem.sabotageOfsted(noiseLevel=65)` → inspectors flee; Notoriety +10; WantedSystem +2; OFSTED_SABOTEUR achievement.
+- `PrimarySchoolSystem.sellContrabandSnack(player, inventory=CRISPS, msePearsonInCorridor=false, salesCount=4)` → COIN +1; salesCount = 5; TUCK_SHOP_BANDIT achievement on 5th sale.
+- `PrimarySchoolSystem.sellContrabandSnack(player, msePearsonInCorridor=true)` → dialogue "Oi — no selling in my school"; no transaction.
+- `PrimarySchoolSystem.forgeSchoolReport(player, inventory=SCHOOL_REPORT_FORM, photocopySkill=GRAFTING_APPRENTICE)` → FORGED_SCHOOL_REPORT in inventory; SCHOOL_REPORT_FORM consumed.
+
+### Integration Tests — implement these exact scenarios
+
+1. **School run gate mechanics and SCHOOL_MUM rumour absorption**: Advance TimeSystem to Monday 08:20. Verify SCHOOL_GATE_PROP is open. Verify ≥4 SCHOOL_MUM NPCs are present within 8 blocks of the gate. Place player within 2 blocks of a SCHOOL_MUM. Advance 30 in-game seconds. Verify player has received 1 NEIGHBOURHOOD rumour via RumourNetwork. Advance TimeSystem to 08:50. Verify SCHOOL_GATE_PROP is closed (Derek has locked it). Verify SCHOOL_MUM NPCs have despawned.
+
+2. **Caretaker's shed heist via pickpocket**: Member player (Notoriety = 20) approaches Derek during his patrol at 10:00. StreetSkillSystem PICKPOCKET = APPRENTICE. Seed RNG for success. Press E on Derek. Verify CARETAKER_SHED_KEY in player inventory. Player presses E on CARETAKER_SHED_PROP. Verify shed is accessible. Verify PHOTOCOPIER_INK_CARTRIDGE and SCRAP_METAL are inside. Player takes PHOTOCOPIER_INK_CARTRIDGE. Verify it is added to inventory. Visit FenceSystem: verify fence value = 6 COIN.
+
+3. **Ofsted sabotage via bin fire**: Roll `ofstedDay = true` (seeded RNG). Advance TimeSystem to 09:30. Verify 2 OFSTED_INSPECTOR NPCs are present in the school. Player places a wheelie bin fire (WheeliBinFireSystem) within 20 blocks of the school entrance. Verify NoiseSystem magnitude ≥ 60 event fires. Verify both OFSTED_INSPECTOR NPCs switch to FLEEING state within 5 seconds. Verify Notoriety +10 applied to player. Verify WantedSystem stars +2. Verify OFSTED_SABOTEUR achievement awarded. Verify NewspaperSystem next edition headline contains "Ofsted".
+
+4. **Tuck shop hustle during lunch break**: Advance TimeSystem to Monday 12:15. Verify SCHOOL_KID NPCs are in playground. Verify Ms. Pearson (HEADTEACHER) is NOT in corridor state. Player has CRISPS in inventory. Press E on SCHOOL_KID NPC. Verify CRISPS removed from inventory; COIN +1. Repeat 4 more times (different SCHOOL_KID NPCs). On 5th sale verify TUCK_SHOP_BANDIT achievement awarded. Now advance Pearson into corridor (patrol triggered). Attempt sale. Verify dialogue blocks transaction; no COIN change.
+
+5. **Intruder alert chain — caught by headteacher**: Advance TimeSystem to 10:30 (not a gate-open window). Player has no visitor sign-in. Player enters the school building (bypasses gate prop). Verify Ms. Pearson switches to ACTIVE_PATROL within 5 seconds. Advance 61 in-game seconds without the player leaving. Move player to within 5 blocks of Ms. Pearson. Verify SCHOOL_INTRUDER CrimeType added to CriminalRecord. Verify WantedSystem stars = 2. Verify player is ejected (teleported to gate exterior). Now repeat with DisguiseSystem score = 4: verify Ms. Pearson does NOT catch player (remains IDLE after 61 seconds); Derek does still alert.
+
+// ── Issue #1237: Northfield Primary School ────────────────────────────────────
+// New: PrimarySchoolSystem.java in ragamuffin.core
+// New: Issue1237PrimarySchoolTest.java in src/test/java/ragamuffin/integration/
+// LandmarkType.PRIMARY_SCHOOL already defined
+// New NPCType: OFSTED_INSPECTOR — add to NPCType.java
+// Existing NPCTypes wired up: HEADTEACHER, DINNER_LADY, CARETAKER, SCHOOL_MUM,
+//   HEADTEACHER_SECRETARY, LOLLIPOP_LADY, SCHOOL_KID — all already in NPCType.java
+// New AchievementTypes: DINNER_MONEY_THIEF, TUCK_SHOP_BANDIT, PUSHCHAIR_MENACE,
+//   OFSTED_SABOTEUR, HEAD_OF_CLASS, SCHOOL_REPORT, INFORMANT — add to AchievementType.java
+// New CrimeTypes: SCHOOL_INTRUDER, DINNER_MONEY_THIEF, SCHOOL_FRAUD — add to CriminalRecord.java
+// New Materials: CARETAKER_SHED_KEY, CARETAKER_MASTER_KEY, OFSTED_DRAFT_REPORT,
+//   SCHOOL_REPORT_FORM, FORGED_SCHOOL_REPORT, PHOTOCOPIER_INK_CARTRIDGE, PRAM — add to Material.java
+// Existing Materials: HYMN_BOOK, SCHOOL_DINNER, COPIED_HOMEWORK — already in Material.java
+// New PropTypes: SCHOOL_GATE_PROP, CANTEEN_HATCH_PROP, CARETAKER_SHED_PROP,
+//   HEADTEACHER_OFFICE_DOOR_PROP, OFSTED_NOTICE_PROP — add to PropType.java
+// Integrates: TimeSystem, NPCManager, WantedSystem, CriminalRecord, NotorietySystem,
+//   DisguiseSystem, StreetSkillSystem, NewspaperSystem, RumourNetwork, NoiseSystem,
+//   WheeliBinFireSystem, CraftingSystem, FactionSystem, AchievementSystem, PropertySystem
