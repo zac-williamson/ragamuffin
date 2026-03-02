@@ -666,6 +666,20 @@ public enum RumourType {
      * Spreads via PUBLIC and STREET_LAD NPCs; FAIRGROUND_BOSS becomes hostile for 24h. */
     GENERATOR_STRIPPED,
 
+    // ── Issue #1288: Northfield Sporting & Social Club ────────────────────────
+
+    /** "Mick at the social club back room was dealing from the bottom of the deck."
+     * — seeded by SportingSocialClubSystem when player catches CARD_DEALER cheating.
+     * Spreads via SOCIAL_CLUB_STEWARD and CLUB_REGULAR NPCs.
+     * Reduces MARCHETTI_CREW Respect by 5 (they run Mick). */
+    COMMITTEE_CONSPIRACY,
+
+    /** "Someone grassed on the collection at the social club — Tommy's not happy."
+     * — seeded by SportingSocialClubSystem when player informs police about the
+     * protection envelope handover. Spreads via CLUB_REGULAR NPCs.
+     * Bans the player from the social club for 14 in-game days. */
+    POLICE_SNITCH,
+
     // ── Issue #1282: Northfield Day & Night Chemist ───────────────────────────
 
     /** "Someone did over the chemist — ripped the drug safe right out. Police everywhere."
