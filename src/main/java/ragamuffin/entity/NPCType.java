@@ -1382,7 +1382,39 @@ public enum NPCType {
      * Activates panic button at Wanted Tier ≥ 2 only when awake.
      * Passive unless attacked.
      */
-    PETROL_STATION_ASSISTANT(20f, 0f, 0f, false);
+    PETROL_STATION_ASSISTANT(20f, 0f, 0f, false),
+
+    // ── Issue #1132: Northfield Dog Grooming Parlour — Pawfect Cuts ───────────
+
+    /**
+     * Dog Owner — a local resident who visits Pawfect Cuts to have their dog groomed.
+     * Spawns outside the grooming parlour during opening hours (09:00–17:00).
+     * Passive; shares LOCAL_EVENT rumours about the dog show on approach.
+     * Accompanies an ambient DOG NPC on a lead.
+     */
+    DOG_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * Dog Dealer — a black-market pet trader who spawns Tuesday evenings after
+     * STREET_LADS Respect ≥ 50. Sells UNLICENSED_DOG items for resale profit.
+     * Present 20:00–23:00 on Tuesday evenings near the industrial estate.
+     * Passive; flees on police arrival. Refuses service at Notoriety Tier ≥ 4.
+     * Speech: "Don't ask about the paperwork." / "Lovely dog, that. No questions."
+     *         / "You want papers? I've got papers. Sort of."
+     */
+    DOG_DEALER(20f, 0f, 0f, false),
+
+    /**
+     * Judge NPC — the Northfield Dog Show judge. Presides over the fortnightly
+     * dog show at the park. Scores each entry on Bond Level (40%), groom recency
+     * (30%), and random factor (30%). On the payroll of the Marchetti Family
+     * (revealed during the Crufts Conspiracy quest). Can be bribed for 15 COIN
+     * (SHOW_RIGGING +5 Notoriety) or exposed via NewspaperSystem (−15 Marchetti respect).
+     * Passive; never attacks. Present only during dog show events.
+     * Speech: "Excellent form." / "A fine specimen." / "I've seen better."
+     *         / "The judging criteria are entirely above board." (nervous laugh)
+     */
+    JUDGE_NPC(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

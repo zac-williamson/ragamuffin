@@ -2614,6 +2614,82 @@ public enum AchievementType {
         "Petrol Head",
         "Filled a petrol can at the BP forecourt five times. Raj knows your face by now.",
         5
+    ),
+
+    // ── Issue #1132: Northfield Dog Grooming Parlour — Pawfect Cuts ───────────
+
+    /**
+     * Win the Northfield Dog Show legitimately (Bond ≥ 70 + GUARD trick + fresh groom).
+     * No bribery. No conspiracy. Just a well-groomed dog and a proud moment.
+     */
+    LEGITIMATE_CHAMPION(
+        "Legitimate Champion",
+        "Won the Northfield Dog Show the honest way. Bond ≥ 70, GUARD trick, fresh groom. Tracey cried.",
+        1
+    ),
+
+    /**
+     * Bribe the JUDGE_NPC at the Northfield Dog Show (SHOW_RIGGING, +5 Notoriety).
+     * The Crufts Conspiracy quest: Winston's secret revealed.
+     */
+    BENT_JUDGE(
+        "Fixed It",
+        "Slipped the judge a few quid at the dog show. Winston's owner looked furious. Good.",
+        1
+    ),
+
+    /**
+     * Expose the Crufts Conspiracy via NewspaperSystem headline (−15 Marchetti respect).
+     */
+    WHISTLEBLOWER(
+        "Whistleblower",
+        "Exposed the dog show rigging to The Daily Ragamuffin. The Marchetti Crew are not pleased.",
+        1
+    ),
+
+    /**
+     * Dog develops FLEA_INFESTATION debuff after 7 in-game days without grooming.
+     */
+    FLEA_MARKET(
+        "Flea Market",
+        "Your dog's developed fleas. The bed's infested. Tracey at Pawfect Cuts will be delighted.",
+        1
+    ),
+
+    /**
+     * Cure the FLEA_INFESTATION debuff using FLEA_POWDER.
+     */
+    FLEA_REMEDY(
+        "Sorted It",
+        "Treated the fleas. The powder smells terrible. The dog seems indifferent.",
+        1
+    ),
+
+    /**
+     * Purchase all four grooming services (Basic Wash, Full Groom, Medicated Bath, Nail Clipping).
+     */
+    PAMPERED_POOCH(
+        "Pampered Pooch",
+        "Used all four grooming services at Pawfect Cuts. That dog lives better than you do.",
+        1
+    ),
+
+    /**
+     * Buy an UNLICENSED_DOG from the DOG_DEALER and sell it to a DOG_OWNER for profit.
+     */
+    DOG_FLIPPER(
+        "Dog Flipper",
+        "Bought an unlicensed dog, sold it on for profit. No paperwork. Just vibes and a lead.",
+        1
+    ),
+
+    /**
+     * Attend the Northfield Dog Show (any placement).
+     */
+    SHOW_DAY(
+        "Show Day",
+        "Entered the Northfield Dog Show. The other dogs were impeccably groomed. Yours had a go.",
+        1
     );
 
     private final String name;

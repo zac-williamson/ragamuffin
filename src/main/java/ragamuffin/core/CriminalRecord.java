@@ -372,7 +372,17 @@ public class CriminalRecord {
          * button was not destroyed and Wayne is awake at Tier ≥ 2).
          * Penalty: +15 Notoriety, WantedSystem +2 stars.
          */
-        ARMED_ROBBERY("Armed robbery (till raid)");
+        ARMED_ROBBERY("Armed robbery (till raid)"),
+
+        // ── Issue #1132: Northfield Dog Grooming Parlour — Pawfect Cuts ──────────
+
+        /**
+         * Recorded when the player bribes the JUDGE_NPC at the Northfield Dog Show
+         * (15 COIN, +5 Notoriety per bribe). Part of the Crufts Conspiracy quest.
+         * Penalty: +5 Notoriety; increases Marchetti Crew respect by +2 (they appreciate
+         * the player playing dirty). Exposed by NewspaperSystem if a JOURNALIST is nearby.
+         */
+        SHOW_RIGGING("Dog show rigging (judge bribery)");
 
         private final String displayName;
 

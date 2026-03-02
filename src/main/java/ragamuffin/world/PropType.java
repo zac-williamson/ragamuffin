@@ -1828,7 +1828,53 @@ public enum PropType {
      * Destroying it (2 hits) prevents Wayne from triggering fast police response.
      * 2 hits; yields SCRAP_METAL.
      */
-    PANIC_BUTTON_PROP(0.15f, 0.15f, 0.10f, 2, Material.SCRAP_METAL);
+    PANIC_BUTTON_PROP(0.15f, 0.15f, 0.10f, 2, Material.SCRAP_METAL),
+
+    // ── Issue #1132: Northfield Dog Grooming Parlour — Pawfect Cuts ──────────
+
+    /**
+     * Grooming table — a padded stainless-steel grooming bench where dogs are
+     * brushed, dried, and trimmed. The primary interactive prop in Pawfect Cuts.
+     * Press E while standing adjacent to interact (requires DOG companion present).
+     * 5 hits; yields SCRAP_METAL.
+     */
+    GROOMING_TABLE_PROP(1.20f, 0.90f, 0.60f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Dog bath tub — a raised stainless-steel bathing tub used for washing dogs.
+     * Required for Basic Wash and Medicated Bath services at Pawfect Cuts.
+     * 6 hits; yields SCRAP_METAL.
+     */
+    DOG_BATH_TUB_PROP(1.00f, 0.70f, 0.60f, 6, Material.SCRAP_METAL),
+
+    /**
+     * Grooming tool rack — a wall-mounted display rack holding scissors, clippers,
+     * brushes, and other grooming equipment. Decorative in the parlour.
+     * 3 hits; yields SCRAP_METAL.
+     */
+    GROOMING_TOOL_RACK_PROP(0.90f, 1.40f, 0.20f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Pet treat display — a revolving counter-top display of DOG_TREAT items.
+     * Player can purchase DOG_TREATs (1 COIN each) by pressing E.
+     * 3 hits; yields WOOD.
+     */
+    PET_TREAT_DISPLAY_PROP(0.50f, 1.20f, 0.50f, 3, Material.WOOD),
+
+    /**
+     * Waiting area bench — a padded bench in the Pawfect Cuts waiting area.
+     * DOG_OWNER NPCs sit here with their dogs before appointments.
+     * 3 hits; yields WOOD.
+     */
+    WAITING_AREA_BENCH_PROP(1.60f, 0.80f, 0.50f, 3, Material.WOOD),
+
+    /**
+     * Dog show trophy cabinet — a glass-fronted display cabinet in Pawfect Cuts
+     * holding past Northfield Dog Show trophies and rosettes.
+     * Contains a DOG_SHOW_ROSETTE lootable item (unlocked after winning the show).
+     * 5 hits; yields GLASS.
+     */
+    DOG_SHOW_TROPHY_CABINET_PROP(0.80f, 1.80f, 0.40f, 5, Material.GLASS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

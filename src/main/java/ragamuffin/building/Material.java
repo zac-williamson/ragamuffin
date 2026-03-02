@@ -3223,7 +3223,61 @@ public enum Material {
      * on the world map. Single use; consumed on use.
      * Tooltip: "Northfield A–Z. Still relevant, apparently."
      */
-    MAP("Map");
+    MAP("Map"),
+
+    // ── Issue #1132: Northfield Dog Grooming Parlour — Pawfect Cuts ──────────
+
+    /**
+     * Dog Treat — a small bone-shaped biscuit treat sold at Pawfect Cuts
+     * from PET_TREAT_DISPLAY_PROP (1 COIN each).
+     * Feeding your dog a treat increases Bond Level by +1 (max +5 per day).
+     * Also used to bribe the DOG_SHOW_TROPHY_CABINET_PROP guard dog at the scrapyard.
+     * Tooltip: "A biscuit for a good boy. Or a bad boy. He doesn't judge."
+     */
+    DOG_TREAT("Dog Treat"),
+
+    /**
+     * Dog Show Rosette — awarded to the winner of the Northfield Dog Show
+     * held fortnightly in the park. Three tiers: 3rd Place (yellow), 2nd Place (blue),
+     * 1st Place (red). Carrying the red rosette seeds a LOCAL_EVENT rumour.
+     * Can be sold to the pawn shop for 5 COIN (1st Place) / 2 COIN (other tiers).
+     * Tooltip: "Northfield Dog Show, 1st Place. Tracey looked very proud."
+     */
+    DOG_SHOW_ROSETTE("Dog Show Rosette"),
+
+    /**
+     * Flea Powder — a craftable item (1 SOAP + 1 COIN) that cures the
+     * FLEA_INFESTATION debuff. Applied to the dog (press E while selected near dog)
+     * or used on the squat bed (press E at BED prop) to remove the sleep penalty.
+     * Tooltip: "Smells awful. The dog agrees."
+     */
+    FLEA_POWDER("Flea Powder"),
+
+    /**
+     * Scissors — general-purpose scissors carried by Tracey at Pawfect Cuts.
+     * Can be looted if Tracey is knocked out. Used in the Nail Clipping service.
+     * As a weapon: deals 3 damage per hit (counts as MELEE).
+     * Tooltip: "Don't run with these."
+     */
+    SCISSORS("Scissors"),
+
+    /**
+     * Dog Grooming Voucher — issued by Tracey after a Full Groom service.
+     * Redeemable for 50% off the next grooming service of equal or lesser value.
+     * Expires after 14 in-game days (one fortnight).
+     * Can be sold to other DOG_OWNER NPCs for 3 COIN.
+     * Tooltip: "Compliments of Pawfect Cuts. Tracey's handwriting is very neat."
+     */
+    DOG_GROOMING_VOUCHER("Dog Grooming Voucher"),
+
+    /**
+     * Unlicensed Dog — a dog of dubious provenance sold by the DOG_DEALER on
+     * Tuesday evenings. Costs 6 COIN; resellable to DOG_OWNER NPCs for 10 COIN
+     * (4 COIN profit). Carrying one adds +2 Notoriety if inspected by police.
+     * Cannot be adopted as a companion (already "owned" — it's complicated).
+     * Tooltip: "No papers. Don't ask. She's lovely though."
+     */
+    UNLICENSED_DOG("Unlicensed Dog");
 
     private final String displayName;
 
@@ -4024,6 +4078,20 @@ public enum Material {
             case MAP:                     return cs(0.88f, 0.82f, 0.62f,  // Parchment fold
                                                     0.35f, 0.55f, 0.35f); // Green roads
 
+            // Issue #1132: Dog Grooming Parlour
+            case DOG_TREAT:               return cs(0.85f, 0.65f, 0.35f,  // Biscuit brown
+                                                    0.70f, 0.50f, 0.25f); // Darker brown
+            case DOG_SHOW_ROSETTE:        return cs(0.90f, 0.10f, 0.10f,  // Red ribbon
+                                                    1.00f, 0.85f, 0.00f); // Gold centre
+            case FLEA_POWDER:             return cs(0.90f, 0.90f, 0.90f,  // White powder
+                                                    0.70f, 0.70f, 0.75f); // Lavender tint
+            case SCISSORS:                return cs(0.70f, 0.70f, 0.72f,  // Steel grey
+                                                    0.50f, 0.50f, 0.55f); // Dark handle
+            case DOG_GROOMING_VOUCHER:    return cs(0.95f, 0.80f, 0.60f,  // Cream card
+                                                    0.20f, 0.55f, 0.90f); // Blue text
+            case UNLICENSED_DOG:          return cs(0.55f, 0.40f, 0.28f,  // Brown dog fur
+                                                    0.30f, 0.20f, 0.12f); // Dark markings
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4428,6 +4496,13 @@ public enum Material {
             case CAR_WASH_TOKEN:
             case CIGARETTE_CARTON:
             case MAP:
+            // Issue #1132: Dog Grooming Parlour — not block items
+            case DOG_TREAT:
+            case DOG_SHOW_ROSETTE:
+            case FLEA_POWDER:
+            case SCISSORS:
+            case DOG_GROOMING_VOUCHER:
+            case UNLICENSED_DOG:
                 return false;
             default:
                 return true;
@@ -4549,6 +4624,13 @@ public enum Material {
             case CAR_WASH_TOKEN:
             case CIGARETTE_CARTON:
             case MAP:
+            // Issue #1132: Dog Grooming Parlour — small items sit on surfaces
+            case DOG_TREAT:
+            case DOG_SHOW_ROSETTE:
+            case FLEA_POWDER:
+            case SCISSORS:
+            case DOG_GROOMING_VOUCHER:
+            case UNLICENSED_DOG:
                 return true;
             default:
                 return false;
@@ -5257,6 +5339,20 @@ public enum Material {
                 return IconShape.BOX;         // rectangular carton
             case MAP:
                 return IconShape.FLAT_PAPER;  // folded road map
+
+            // Issue #1132: Dog Grooming Parlour
+            case DOG_TREAT:
+                return IconShape.FOOD;        // bone-shaped biscuit
+            case DOG_SHOW_ROSETTE:
+                return IconShape.CARD;        // circular ribbon rosette
+            case FLEA_POWDER:
+                return IconShape.BOTTLE;      // powder shaker bottle
+            case SCISSORS:
+                return IconShape.TOOL;        // scissor shape
+            case DOG_GROOMING_VOUCHER:
+                return IconShape.FLAT_PAPER;  // voucher card
+            case UNLICENSED_DOG:
+                return IconShape.BOX;         // dog-shaped silhouette
 
             default:
                 return IconShape.BOX;
