@@ -4804,6 +4804,43 @@ public enum AchievementType {
         "All the Fun of the Fair",
         "Experienced every attraction at the travelling fairground in a single visit.",
         1
+    ),
+
+    // ── Issue #1280: Northfield Nightclub — The Vaults ────────────────────────
+
+    /** Gain entry to The Vaults on 10 separate nights. */
+    VAULTS_REGULAR(
+        "Vaults Regular",
+        "Ten nights in The Vaults. Big Dave nods. That means something.",
+        10
+    ),
+
+    /** Win a freestyle battle on the dancefloor at The Vaults. */
+    DANCE_FLOOR_LEGEND(
+        "Dance Floor Legend",
+        "Owned the dancefloor at The Vaults. The crowd parted. The strobes agreed.",
+        1
+    ),
+
+    /** Broker peace between two fighting factions inside The Vaults. */
+    PEACEKEEPER(
+        "Peacekeeper",
+        "Stopped a brawl at The Vaults. For once, nobody got ejected. Almost disappointing.",
+        1
+    ),
+
+    /** Use the fire exit to smuggle goods out of The Vaults undetected. */
+    BACK_DOOR_MERCHANT(
+        "Back Door Merchant",
+        "Slipped out the fire exit with something you shouldn't have. No alarm. No conscience.",
+        1
+    ),
+
+    /** Still standing at closing time (02:45) on 3 separate nights. */
+    CLOSING_TIME_CHAMPION(
+        "Closing Time Champion",
+        "Last one standing at 02:45 three nights running. The kebab van knows your order.",
+        3
     );
 
     private final String name;
