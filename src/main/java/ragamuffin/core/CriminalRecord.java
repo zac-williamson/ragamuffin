@@ -467,7 +467,24 @@ public class CriminalRecord {
          * Recorded when a HOME_FAN catches the player selling a COUNTERFEIT_TICKET
          * (30% catch chance). Penalty: Notoriety +4.
          */
-        TOUT_SCAM("Ticket touting (counterfeit match ticket)");
+        TOUT_SCAM("Ticket touting (counterfeit match ticket)"),
+
+        // ── Issue #1167: Northfield Amateur Boxing Club ───────────────────────
+
+        /**
+         * Recorded when the player accepts a bout-fixing bribe from Wayne (FIGHT_PROMOTER)
+         * and the 30% grass chance fires — Wayne tips off officials.
+         * Penalty: Notoriety +5, ejection from BOXING_CLUB, banned from white-collar
+         * circuit for remainder of game session.
+         */
+        BOUT_FIXING("Bout fixing (underground boxing circuit)"),
+
+        /**
+         * Recorded when the player enters a bout with LOADED_GLOVE equipped
+         * and the 40% catch chance fires during pat-down.
+         * Penalty: Notoriety +3, ejection from current event, BOXING_CLUB banned 3 days.
+         */
+        FIGHT_FIXING("Fight fixing (loaded glove — illegal equipment)");
 
         private final String displayName;
 

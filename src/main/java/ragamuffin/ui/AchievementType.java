@@ -3446,6 +3446,80 @@ public enum AchievementType {
         "Wrong Colours",
         "Three away fans disagree with your fashion choices.",
         1
+    ),
+
+    // ── Issue #1167: Northfield Amateur Boxing Club ───────────────────────
+
+    /**
+     * Awarded on entering the first Friday Night Fight bout.
+     */
+    FIRST_BOUT(
+        "First Blood",
+        "You signed up. Now you've got to get in that ring.",
+        1
+    ),
+
+    /**
+     * Awarded for winning 3 Friday Night Fight bouts.
+     */
+    AMATEUR_CHAMPION(
+        "Local Hero",
+        "Three wins at Tommy's. You're the talk of Northfield.",
+        3
+    ),
+
+    /**
+     * Awarded for winning the underground white-collar circuit.
+     */
+    WHITE_COLLAR_WINNER(
+        "Gentleman Brawler",
+        "You knocked out a bloke in a polo shirt. Proper classy.",
+        1
+    ),
+
+    /**
+     * Awarded for accepting a bout-fixing bribe from Wayne and winning.
+     */
+    FIXED_FIGHT(
+        "Bent Promoter",
+        "Wayne's money, your fists. Worked out, didn't it.",
+        1
+    ),
+
+    /**
+     * Awarded when caught with LOADED_GLOVE during pat-down.
+     */
+    LOADED_GLOVES(
+        "Heavy Handed",
+        "A bit of extra metal never hurt anyone. Until it did.",
+        1
+    ),
+
+    /**
+     * Awarded for completing the Tommy's Trophy Quest.
+     */
+    TOMMY_BOY(
+        "Tommy's Boy",
+        "You did right by the old man. He won't forget it.",
+        1
+    ),
+
+    /**
+     * Awarded for returning the 1987 ABA trophy and gaining permanent membership.
+     */
+    LEGACY_OF_THE_RING(
+        "Legacy of the Ring",
+        "1987. The year Tommy was somebody. Now you are too.",
+        1
+    ),
+
+    /**
+     * Awarded for training at the bag 3 times in a single in-game day.
+     */
+    GYM_RAT(
+        "Gym Rat",
+        "Three sessions before teatime. Tommy's seen it all now.",
+        1
     );
 
     private final String name;
