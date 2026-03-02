@@ -2292,7 +2292,19 @@ public enum NPCType {
      * CHARITY_CLIPBOARD_STAND_PROP outside the charity shop. Manages the shift quota
      * and can hire the player as a chugger.
      */
-    CHUGGER_LEADER(20f, 0f, 0f, false);
+    CHUGGER_LEADER(20f, 0f, 0f, false),
+
+    // ── Issue #1252: Northfield TV Licensing ──────────────────────────────────
+
+    /**
+     * TV Licence Officer — named instance: Derek. Grey anorak, ID lanyard, clipboard.
+     * Makes targeted doorstep visits to known unlicensed addresses.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     * If assaulted: Notoriety +10, ASSAULT crime added, Wanted +2 stars.
+     * Derek despawns and re-visits 2 in-game days later.
+     * If bribed successfully: despawns for 7 in-game days.
+     */
+    TV_LICENCE_OFFICER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

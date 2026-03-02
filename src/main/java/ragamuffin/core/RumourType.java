@@ -545,5 +545,14 @@ public enum RumourType {
      * — seeded by MOTSystem when PASS_BRIBE outcome occurs for the first time.
      * Spreads via STREET_LAD and TYRE_KICKER NPCs. Adds +3 WatchAnger.
      * Adds BERTS_GARAGE to the DVSA_INSPECTOR's patrol route. */
-    BENT_GARAGE;
+    BENT_GARAGE,
+
+    // ── Issue #1252: Northfield TV Licensing ──────────────────────────────────
+
+    /** "The detector van's out — better get your licence sorted."
+     * — seeded by TvLicensingSystem when the DETECTOR_VAN_PROP spawns on the industrial
+     * estate street every Sunday 14:00–16:00.
+     * Spreads via PUBLIC and PENSIONER NPCs; panics unlicensed NPCs into fleeing.
+     * Atmospheric only — the van cannot actually detect anything. */
+    DETECTOR_VAN_SPOTTED;
 }

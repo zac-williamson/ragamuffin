@@ -2881,7 +2881,18 @@ public enum PropType {
      * a fake call that puts Bert into BERT_DISTRACTED state for 20 seconds while
      * Kyle fetches him. Can only be used once per in-game hour.
      */
-    GARAGE_PHONE_PROP(0.30f, 0.20f, 0.15f, 3, null);
+    GARAGE_PHONE_PROP(0.30f, 0.20f, 0.15f, 3, null),
+
+    // ── Issue #1252: Northfield TV Licensing ──────────────────────────────────
+
+    /**
+     * Detector Van — white Transit-style van with a dish aerial on the roof.
+     * Spawns on the street outside the industrial estate every Sunday 14:00–16:00.
+     * Purely atmospheric — the van is always empty (reflecting the real-world myth).
+     * Player interaction (E) triggers tooltip: "The van appears to have nobody in it."
+     * and unlocks the MYTH_BUSTER achievement.
+     */
+    DETECTOR_VAN_PROP(4.50f, 2.20f, 2.00f, 20, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

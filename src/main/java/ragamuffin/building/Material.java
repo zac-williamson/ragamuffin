@@ -4855,7 +4855,38 @@ public enum Material {
      * Sellable to the FenceSystem for 8 COIN each; max 3 per day.
      * Tooltip: "Someone who deals in mailing lists will pay good money for this."
      */
-    DONOR_LIST("Donor List");
+    DONOR_LIST("Donor List"),
+
+    // ── Issue #1252: Northfield TV Licensing ──────────────────────────────────
+
+    /**
+     * TV_ENFORCEMENT_NOTICE — escalated letter left by Derek when the player invokes
+     * rights (no warrant) or fails to answer the door. More serious than TV_LICENCE_LETTER.
+     * Tooltip: "A formal enforcement notice from TV Licensing. Ignore at your peril."
+     */
+    TV_ENFORCEMENT_NOTICE("TV Enforcement Notice"),
+
+    /**
+     * TV_LICENCE — a genuine BBC TV Licence purchased at the Post Office for 5 COIN.
+     * Prevents enforcement letters and Derek's visits. Expires after 52 in-game weeks.
+     * Also required as a non-consumed ingredient to craft FAKE_TV_LICENCE.
+     * Tooltip: "Congratulations. You are now a law-abiding television viewer."
+     */
+    TV_LICENCE("TV Licence"),
+
+    /**
+     * FAKE_TV_LICENCE — forged TV Licence crafted from TV_LICENCE + PRINTER_PAPER + PRINTER_PROP.
+     * Sellable to PUBLIC/PENSIONER NPCs for 3 COIN, or fenced for 2 COIN.
+     * Showing to Derek: accepted (50%) if suspicion &lt; 2; always rejected if suspicion ≥ 2.
+     * Rejection adds CriminalRecord.FORGED_DOCUMENT and Notoriety increase.
+     */
+    FAKE_TV_LICENCE("Fake TV Licence"),
+
+    /**
+     * PRINTER_PAPER — blank A4 paper used as ingredient for printing fake documents.
+     * Available at the internet café or stationers. Required for FAKE_TV_LICENCE recipe.
+     */
+    PRINTER_PAPER("Printer Paper");
 
     private final String displayName;
 
