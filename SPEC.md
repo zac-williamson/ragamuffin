@@ -44997,3 +44997,264 @@ Add to `AchievementType.java`:
 // Integration: ArrestSystem (intercept), WantedSystem, CriminalRecord, NotorietySystem,
 //              MagistratesCourtSystem, DisguiseSystem, StreetSkillSystem, DogCompanionSystem,
 //              RumourNetwork, NewspaperSystem, AchievementSystem, NoiseSystem, HealingSystem
+
+---
+
+## Add Northfield Bonfire Night — Penny for the Guy, Illegal Fireworks & the Tesco Car Park Display
+
+### Overview
+
+A seasonal annual event active only on **5 November** (in-game date, detected via `TimeSystem`).
+Bonfire Night transforms Northfield with a communal street bonfire in the park, a crowd
+of spectators, illegal fireworks being let off by YOUTH_GANG NPCs, and a string of
+opportunistic hustles. The player can collect "penny for the guy" donations, deal knocked-off
+fireworks from a holdall, sabotage the official display, or simply enjoy the chaos.
+
+New file: **`BonfireNightSystem.java`** in `ragamuffin.core`.
+
+### Activation Condition
+
+`BonfireNightSystem` is only active when `TimeSystem.getDayOfYear() == 309` (5 November)
+and `TimeSystem.getHour() >= 17.0f && TimeSystem.getHour() < 23.59f`.
+Outside this window the system idles (no NPCs spawned, no props active).
+
+### The Park Bonfire
+
+- A `BONFIRE_PROP` is placed at the park centre at 17:00. It ignites at 19:30 (YOUTH_GANG NPC
+  throws a lighter; `LIGHT_IT_UP` animation).
+- `CampfireSystem` warmth applies within 10 blocks (double the standard campfire radius).
+- `WheeliBinFireSystem` is suppressed within 20 blocks of the BONFIRE_PROP (fire engine
+  won't spawn for wheelie bin fires while the main bonfire is active — they're too busy).
+- The bonfire burns for 120 real-seconds (2 in-game hours) before dying down.
+- Weather effect: if `WeatherSystem` returns RAIN or THUNDERSTORM at 19:30, the bonfire
+  fails to light (YOUTH_GANG NPC: "Won't catch — wood's damp, innit").
+  Re-attempt at 20:00. If still raining, Bonfire Night is effectively cancelled (rare).
+
+### Penny for the Guy
+
+The player can craft a `GUY_PROP` by combining `NEWSPAPER` + `OLD_CLOTHES` + `HAT` at any
+crafting surface. Placing it via right-click near the park triggers the hustle:
+
+- `PUBLIC` and `PENSIONER` NPCs walking past have a 30% chance each minute to stop and
+  donate 1 COIN ("Lovely guy, that. Here you are, son.").
+- `YOUTH_GANG` NPCs have a 10% chance to kick the guy over (destroying it; yields nothing).
+- Maximum earned: 8 COIN per guy (donation cap reached when 8 NPCs have donated).
+- The player can place a maximum of 2 guys per Bonfire Night session.
+- `PENNY_FOR_THE_GUY` achievement fires on first successful 8-COIN harvest.
+
+### Fireworks Economy
+
+Knockoff fireworks are sold by Darren (`FIREWORK_DEALER_NPC`) from a holdall behind
+the off-licence between 17:00 and 21:00:
+
+- `FIREWORK` (standard): 2 COIN each, max 5 per transaction.
+- `ROCKET_FIREWORK`: 4 COIN each (new `Material.ROCKET_FIREWORK`).
+- `BANGER_FIREWORK`: 1 COIN each (new `Material.BANGER_FIREWORK`). Highest noise.
+- `ROMAN_CANDLE`: 3 COIN each (new `Material.ROMAN_CANDLE`).
+
+Player can use fireworks by holding one and pressing E near any open space:
+
+| Firework | Noise Level | Misfire % | Effect |
+|---|---|---|---|
+| `FIREWORK` | 5.0 | 5% | Light show; no damage |
+| `ROCKET_FIREWORK` | 7.0 | 10% | Hits NPCs in 8-block AoE for 3 damage on misfire |
+| `BANGER_FIREWORK` | 9.0 | 3% | Stuns NPCs within 4 blocks for 3 seconds |
+| `ROMAN_CANDLE` | 6.0 | 8% | Horizontal burst; +8 Notoriety if near public |
+
+Misfire mechanic: misfire chance doubles if `WeatherSystem` is DRIZZLE or RAIN.
+On misfire:
+- `NoiseSystem.emitNoise(position, level)` at double the normal level.
+- 20% chance to ignite nearby LEAVES/WOOD blocks → `FireStationSystem` escalation.
+- `REMEMBER_REMEMBER` achievement fires on first fire-starting misfire.
+
+**Letting off fireworks near POLICE** (`POLICE` NPC within 15 blocks):
+- First offence: verbal warning (NPC dialogue: "Oi! You'll have someone's eye out!"),
+  Notoriety +2.
+- Second offence: `CriminalRecord.CrimeType.FIREWORK_OFFENCE` recorded,
+  `WantedSystem` +1 star.
+
+### The Darren Hustle — Unofficial Fireworks Dealer
+
+Darren the `FIREWORK_DEALER_NPC` buys cheap stock from the scrapyard and resells.
+Player can cut into his trade:
+
+1. **Undercut Darren** (StreetSkillSystem TRADING ≥ 2): craft `BANGER_FIREWORK` from
+   `SCRAP_METAL` + `COIN` at workbench; sell to YOUTH_GANG NPCs for 1 COIN profit each.
+   Darren notices after 3 sales and enters HOSTILE state (attacks player, 25 HP).
+   `DARREN_TURF_WAR` rumour seeded via RumourNetwork.
+
+2. **Tip Darren to Police** (press E on Darren with POLICE NPC within 30 blocks after
+   a phone box call): `FIREWORK_DEALER_ARRESTED` crime added to Darren's record;
+   Darren despawns for 48 in-game hours; player receives `GRASSED_UP` rumour treatment
+   from STREET_LADS (Respect −5).
+
+3. **Rob Darren's Holdall** (STEALTH approach from behind, SCREWDRIVER in inventory,
+   hold E for 4 seconds while Darren is IDLE): steals 3 × ROCKET_FIREWORK + 2 × ROMAN_CANDLE.
+   `THEFT` CrimeType recorded. Darren becomes HOSTILE if he turns around during the steal.
+
+### The Official Display Sabotage
+
+The council's official display launches from the Tesco car park at 20:00 via a
+`FIREWORK_MORTAR_PROP` (new prop, 2 × 2 × 1 block, indestructible, yields nothing).
+
+- **Trigger early** (SCREWDRIVER + hold E for 3 seconds on `FIREWORK_MORTAR_PROP` before 20:00):
+  launches all fireworks at once at 19:50 (10 minutes early). Crowd cheers then complains.
+  `PARTY_POOPER` achievement fires.
+  Notoriety +3; `FIREWORK_PRANK` rumour seeded town-wide.
+
+- **Sabotage** (place `BANGER_FIREWORK` on `FIREWORK_MORTAR_PROP` before 20:00):
+  at 20:00 the display misfires catastrophically (HIGH noise level 9.0, radius 30 blocks).
+  All nearby NPCs scatter. `FIRE_ENGINE` spawned within 20 seconds.
+  `CRIMINAL_DAMAGE` + `PUBLIC_NUISANCE` CrimeType recorded.
+  `SABOTEUR` achievement fires (first successful sabotage).
+
+### Weather & Time Integration
+
+- `WeatherSystem` FROST: ground is icy; NPCs slide when startled by fireworks
+  (set NPC velocity to 1.5× for 2 seconds on any HIGH noise event).
+- `TimeSystem` post-22:00: `YOUTH_GANG` NPCs start using remaining fireworks as
+  weapons (throw `BANGER_FIREWORK` at each other, 2-second stun AoE).
+- `TimeSystem` 23:00: all bonfire-night specific NPCs despawn; `BONFIRE_PROP` replaced
+  with `COLD_EMBERS_PROP` (flavour prop, no interaction, decays after 24 in-game hours).
+
+### New NPCType Additions
+
+- `FIREWORK_DEALER` — Darren; positioned behind off-licence. 20 HP; HOSTILE if undercut
+  or robbed; drops 2 × BANGER_FIREWORK on death. Add to `NPCType.java`.
+
+### New PropType Additions
+
+Add to `PropType.java`:
+- `BONFIRE_PROP` (2.0f × 2.0f × 2.0f, 0 hits, indestructible, yields `SCRAP_METAL`
+  once cooled).
+- `COLD_EMBERS_PROP` (2.0f × 0.3f × 2.0f, 3 hits, yields `SCRAP_METAL`).
+- `GUY_PROP` (0.6f × 1.4f × 0.4f, 1 hit, yields `OLD_CLOTHES`).
+- `FIREWORK_MORTAR_PROP` (2.0f × 1.0f × 2.0f, 0 hits, indestructible, yields nothing).
+
+### New Items (Materials)
+
+Add to `Material.java`:
+- `ROCKET_FIREWORK` — "Whoooooosh — BANG. Classic." 4-COIN buy; sold to fence for 1 COIN.
+- `BANGER_FIREWORK` — "Sounds like a gunshot. Someone always calls the police."
+  1-COIN buy; craftable from `SCRAP_METAL` × 1 + `COIN` × 1 at workbench.
+- `ROMAN_CANDLE` — "Seven shots. Use them wisely." 3-COIN buy; sold to fence for 1 COIN.
+- `OLD_CLOTHES` — "Tatty jacket and trousers. Guy Fawkes would be ashamed."
+  Dropped by `WASHING_MACHINE` prop (10% chance alongside CLEAN_CLOTHES) or bought from
+  `CHARITY_SHOP` for 1 COIN.
+- `TOFFEE_APPLE` (if not already defined): 1 COIN at corner shop on Bonfire Night only.
+  Restores 5 health. "Sticky, sweet, and guaranteed to pull out a filling."
+
+### New RumourType Additions
+
+Add to `RumourType.java`:
+- `FIREWORK_CHAOS` — "Someone was letting off rockets in the precinct last night — right
+  outside the newsagent. Nearly had Norman's eye out." Seeded by BonfireNightSystem when
+  a `ROCKET_FIREWORK` is launched within 5 blocks of any PENSIONER NPC.
+  Spreads via PENSIONER and PUBLIC NPCs; Notoriety +2 ambient.
+- `DARREN_TURF_WAR` — "Darren's fuming — someone undercut him on the fireworks.
+  He's out looking for 'em." Seeded by BonfireNightSystem when the player undercuts
+  Darren's trade by 3+ sales. Spreads via STREET_LAD and YOUTH_GANG NPCs.
+- `FIREWORK_PRANK` — "Someone set the council display off early — Councillor Hicks
+  was furious. Half the crowd had gone home by the time it started." Seeded on
+  early-trigger sabotage. Spreads via PUBLIC NPCs; no police escalation.
+  NewspaperSystem headline eligible (p.3: "Bonfire Night Display Chaos").
+
+### Achievements
+
+Add to `AchievementType.java`:
+- `PENNY_FOR_THE_GUY` — "Entrepreneur of the Year" — "Collected 8 COIN from
+  your guy on Bonfire Night. The spirit of capitalism, right there." Fires on first
+  full-donation-cap harvest.
+- `PARTY_POOPER` — "Spoilsport" — "Triggered the Tesco car park display 10 minutes
+  early. Nobody was ready." Fires on first early-trigger.
+- `SABOTEUR` — "Remember, Remember" — "Sabotaged the official fireworks display.
+  Health and safety would like a word." Fires on first successful mortar sabotage.
+  (Note: `REMEMBER_REMEMBER` already defined in AchievementType for fire-starting misfire.)
+- `PYRO_NIGHT` — "No Health and Safety Here" — "Let off all 4 types of firework in
+  a single Bonfire Night session." Fires when player has used FIREWORK, ROCKET_FIREWORK,
+  BANGER_FIREWORK, and ROMAN_CANDLE in one Bonfire Night event (17:00–23:59 on 5 Nov).
+
+### Integrations
+
+- **TimeSystem**: activate only on day 309 (5 November), hours 17:00–23:59.
+- **WeatherSystem**: rain delays/cancels bonfire ignition; doubles misfire chance.
+- **CampfireSystem**: BONFIRE_PROP emits double warmth radius (10 blocks).
+- **WheeliBinFireSystem**: fire engine suppressed within 20 blocks of BONFIRE_PROP.
+- **NoiseSystem**: fireworks emit noise at levels 5–9 depending on type.
+- **FireStationSystem**: misfire-caused fires escalate to FireStationSystem normally.
+- **WantedSystem**: FIREWORK_OFFENCE (2nd offence) adds +1 star.
+- **CriminalRecord**: FIREWORK_OFFENCE, CRIMINAL_DAMAGE, PUBLIC_NUISANCE, THEFT.
+- **NotorietySystem**: +2 near PENSIONER with ROCKET; +3 for early display trigger;
+  +8 for mortar sabotage.
+- **RumourNetwork**: FIREWORK_CHAOS, DARREN_TURF_WAR, FIREWORK_PRANK seeded on events.
+- **NewspaperSystem**: headline eligible for FIREWORK_PRANK and mortar sabotage.
+- **StreetSkillSystem**: TRADING ≥ 2 unlocks Darren undercut; STEALTH ≥ 3 halves
+  detection chance when robbing Darren's holdall.
+- **FactionSystem**: STREET_LADS Respect −5 if Darren is tipped to police.
+- **DogCompanionSystem**: dog companion enters FRIGHTENED state during any HIGH noise
+  firework event (noise ≥ 7.0); player notified ("Rex is scared — get him inside").
+- **AchievementSystem**: PENNY_FOR_THE_GUY, PARTY_POOPER, SABOTEUR, PYRO_NIGHT,
+  REMEMBER_REMEMBER (existing, fires on misfire-caused fire).
+
+### Unit Tests
+
+- `BonfireNightSystem.isActive()` returns true only on day 309, hours 17–23:59.
+- `BonfireNightSystem.isActive()` returns false on day 308, day 310, and outside hours.
+- Bonfire fails to ignite when WeatherSystem returns RAIN at 19:30; re-attempts at 20:00.
+- Firework misfire probability doubles when weather is DRIZZLE.
+- Penny-for-the-guy donation cap: no more than 8 COIN total per GUY_PROP.
+- Darren enters HOSTILE after 3 undercutting sales (TRADING ≥ 2).
+- `FIREWORK_OFFENCE` only recorded on second offence (first is warning).
+- Mortar early-trigger requires SCREWDRIVER + 3-second hold; disabled after 20:00.
+- `PYRO_NIGHT` achievement fires only when all 4 firework types have been used.
+- `DogCompanionSystem` companion state transitions to FRIGHTENED at noise ≥ 7.0.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Bonfire Night activates on 5 November only**: Set TimeSystem to day 309 (5 Nov),
+   hour 18:00. Call `BonfireNightSystem.update()`. Verify `isActive()` returns true.
+   Verify `BONFIRE_PROP` is placed in the world near park centre. Set TimeSystem to
+   day 308 (4 Nov), hour 20:00. Verify `isActive()` returns false. Verify no
+   `BONFIRE_PROP` in world. Set day to 310, same hour. Verify `isActive()` false.
+
+2. **Penny-for-the-guy full cycle**: Set TimeSystem to day 309, 18:00 (dry weather).
+   Player crafts `GUY_PROP` from NEWSPAPER + OLD_CLOTHES + HAT. Places GUY_PROP near
+   park. Simulate 8 minutes (8 × 60-second cycles). Verify at least 1 PUBLIC NPC donated.
+   Simulate until 8 COIN earned. Verify further NPC approaches yield no more donations
+   (cap enforced). Verify `PENNY_FOR_THE_GUY` achievement fires.
+
+3. **Firework misfire starts fire — REMEMBER_REMEMBER achievement**: Set weather to RAIN
+   (doubles misfire chance). Give player a `ROCKET_FIREWORK`. Player uses firework facing
+   a LEAVES block at range 3. Run `launchFirework()` in a seeded loop until misfire occurs.
+   Verify LEAVES block is replaced with fire (or `FireStationSystem.isAlerted()` true).
+   Verify `REMEMBER_REMEMBER` achievement fires. Verify `NoiseSystem` received a noise
+   event at ≥ 10.0 (double noise on misfire).
+
+4. **Darren trade undercut triggers HOSTILE**: Set player TRADING skill ≥ 2. Give player
+   3 × BANGER_FIREWORK (crafted). Player sells 1 to a YOUTH_GANG NPC.
+   Verify `undercutSales` counter = 1. Sell 2 more. Verify counter = 3. Verify Darren's
+   NPCState transitions to HOSTILE. Verify `DARREN_TURF_WAR` rumour is in RumourNetwork.
+
+5. **Mortar sabotage — criminal record and noise event**: Set TimeSystem to day 309,
+   19:40 (before 20:00). Give player BANGER_FIREWORK. Player places it on
+   `FIREWORK_MORTAR_PROP` (E interaction). Advance to 20:00. Verify `NoiseSystem`
+   records noise ≥ 9.0 at mortar position. Verify `CriminalRecord` contains
+   `CRIMINAL_DAMAGE` and `PUBLIC_NUISANCE`. Verify FIRE_ENGINE NPC spawned within
+   20 simulated seconds. Verify `SABOTEUR` achievement fires.
+
+---
+
+// ── Issue #1317: Add Northfield Bonfire Night — Penny for the Guy, Illegal Fireworks & the Tesco Car Park Display ────
+// New: BonfireNightSystem.java in ragamuffin.core
+// New: BonfireNightSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1317BonfireNightIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: FIREWORK_DEALER — add to NPCType.java
+// Material: ROCKET_FIREWORK, BANGER_FIREWORK, ROMAN_CANDLE, OLD_CLOTHES, TOFFEE_APPLE (if absent) — add to Material.java
+// PropType: BONFIRE_PROP, COLD_EMBERS_PROP, GUY_PROP, FIREWORK_MORTAR_PROP — add to PropType.java
+// RumourType: FIREWORK_CHAOS, DARREN_TURF_WAR, FIREWORK_PRANK — add to RumourType.java
+// AchievementType: PENNY_FOR_THE_GUY, PARTY_POOPER, SABOTEUR, PYRO_NIGHT — add to AchievementType.java
+// CriminalRecord.CrimeType: FIREWORK_OFFENCE, PUBLIC_NUISANCE (if absent) — add to CriminalRecord.java
+// Integration: TimeSystem (activation), WeatherSystem, CampfireSystem, WheeliBinFireSystem,
+//              NoiseSystem, FireStationSystem, WantedSystem, CriminalRecord, NotorietySystem,
+//              RumourNetwork, NewspaperSystem, StreetSkillSystem, FactionSystem,
+//              DogCompanionSystem, AchievementSystem
