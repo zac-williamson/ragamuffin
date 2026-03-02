@@ -4643,7 +4643,29 @@ public enum Material {
      * IDENTITY_FRAUD on CriminalRecord, card confiscated.
      * Tooltip: "A convincing-looking Handy Builders trade card. The name on it is almost plausible."
      */
-    FAKE_TRADE_ACCOUNT_CARD("Fake Trade Account Card");
+    FAKE_TRADE_ACCOUNT_CARD("Fake Trade Account Card"),
+
+    // ── Issue #1231: Northfield ASBO System ──────────────────────────────────
+
+    /**
+     * ASBO_LETTER — an official Anti-Social Behaviour Order notification letter
+     * delivered to the player's letterbox by the MagistratesCourtSystem within
+     * 1 in-game day of asboPressure reaching 30. The player must open it to
+     * acknowledge ASBO proceedings. Ignoring it for 3 in-game days results in
+     * the order being granted in absentia.
+     * Tooltip: "An official-looking letter. Mum would be devastated."
+     */
+    ASBO_LETTER("ASBO Letter"),
+
+    /**
+     * ASBO_ORDER_DOCUMENT — the formal Anti-Social Behaviour Order document issued
+     * by Northfield Magistrates' Court after proceedings complete. Carried in the
+     * player's inventory as proof of the active order. Contains listed exclusion zones
+     * and the 28-day expiry. Can be shown to Margaret at CitizensAdviceSystem to
+     * begin an appeal (35% success rate → ASBO revoked).
+     * Tooltip: "The order. Laminated, naturally. Trevor looked very pleased with himself."
+     */
+    ASBO_ORDER_DOCUMENT("ASBO Order Document");
 
     private final String displayName;
 
@@ -5733,6 +5755,10 @@ public enum Material {
                                                   0.95f, 0.92f, 0.80f); // Cream text
             case FAKE_TRADE_ACCOUNT_CARD: return cs(0.15f, 0.35f, 0.20f, // Slightly off green
                                                   0.85f, 0.80f, 0.62f); // Slightly off cream
+            case ASBO_LETTER:           return cs(0.95f, 0.92f, 0.80f,  // Cream envelope
+                                                  0.20f, 0.30f, 0.80f); // Blue official stripe
+            case ASBO_ORDER_DOCUMENT:   return cs(0.88f, 0.85f, 0.75f,  // Off-white laminate
+                                                  0.20f, 0.30f, 0.80f); // Blue council stripe
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -7497,6 +7523,12 @@ public enum Material {
                 return IconShape.CARD;        // credit/account card
             case FAKE_TRADE_ACCOUNT_CARD:
                 return IconShape.CARD;        // forged account card
+
+            // Issue #1231: Northfield ASBO System
+            case ASBO_LETTER:
+                return IconShape.FLAT_PAPER;  // official court notification letter
+            case ASBO_ORDER_DOCUMENT:
+                return IconShape.FLAT_PAPER;  // laminated ASBO order document
 
             default:
                 return IconShape.BOX;

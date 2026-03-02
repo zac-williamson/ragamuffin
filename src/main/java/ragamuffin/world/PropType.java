@@ -2796,7 +2796,20 @@ public enum PropType {
      * workbench with tools, a trolley jack, and a car bonnet propped open. 2.0×1.2×2.0 AABB.
      * Destroyed by 8 punches; yields SCRAP_METAL.
      */
-    MECHANIC_PROP(2.00f, 1.20f, 2.00f, 8, Material.SCRAP_METAL);
+    MECHANIC_PROP(2.00f, 1.20f, 2.00f, 8, Material.SCRAP_METAL),
+
+    // ── Issue #1231: Northfield ASBO System ───────────────────────────────────
+
+    /**
+     * ASBO Exclusion Sign — an official council-issued cordon sign placed at the
+     * boundary of a landmark designated as an exclusion zone under an active ASBO.
+     * Marks 2–4 randomly selected landmarks (WETHERSPOONS, PUB, OFF_LICENCE,
+     * SKATE_PARK, FRIED_CHICKEN_SHOP, GREYHOUND_TRACK, NIGHTCLUB, BETTING_SHOP).
+     * The player triggers a 5-second countdown if they enter a marked zone.
+     * Non-destructible (council property); 0 hits; yields null.
+     * Removed automatically when the ASBO expires or is overturned.
+     */
+    ASBO_EXCLUSION_SIGN_PROP(0.60f, 1.40f, 0.10f, 0, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

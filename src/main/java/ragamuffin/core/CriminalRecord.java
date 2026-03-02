@@ -681,7 +681,32 @@ public class CriminalRecord {
          * while a TRADING_STANDARDS NPC is within 20 blocks of the sale.
          * Penalty: Notoriety +8; AchievementType.DODGY_MILEAGE awarded.
          */
-        CONSUMER_FRAUD("Consumer fraud (clocked odometer)");
+        CONSUMER_FRAUD("Consumer fraud (clocked odometer)"),
+
+        // ── Issue #1231: Northfield ASBO System ──────────────────────────────
+
+        /**
+         * Recorded each time the player enters an exclusion zone landmark while an
+         * active ASBO order is in effect and does not exit within the 5-second countdown.
+         * Three ASBO_BREACH entries in one order period triggers ASBO_CONTEMPT.
+         * Penalty: WantedSystem +2 stars.
+         */
+        ASBO_BREACH("ASBO breach (exclusion zone entered)"),
+
+        /**
+         * Recorded when the player accumulates three ASBO_BREACH entries within one
+         * order period (28 in-game days). Results in a 2-day custody lockout via
+         * ArrestSystem. Penalty: Notoriety +15, WantedSystem +3 stars.
+         */
+        ASBO_CONTEMPT("ASBO contempt (three breaches)"),
+
+        /**
+         * Recorded when the player successfully impersonates an official (e.g. wearing
+         * POLICE_UNIFORM or COUNCIL_JACKET) while subject to an active ASBO order,
+         * and is detected within 10 blocks of a POLICE NPC.
+         * Penalty: Notoriety +10, WantedSystem +1 star.
+         */
+        IMPERSONATION("Impersonation of a public official");
 
         private final String displayName;
 
