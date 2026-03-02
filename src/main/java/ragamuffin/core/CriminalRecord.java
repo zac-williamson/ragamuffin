@@ -736,6 +736,13 @@ public class CriminalRecord {
          */
         VEHICLE_FRAUD("Vehicle inspection fraud (forged MOT certificate)"),
 
+        /**
+         * Recorded when the player successfully strips a CATALYTIC_CONVERTER from
+         * a parked car (hold E with CROWBAR equipped for 8 seconds).
+         * Penalty: Notoriety +8 unwitnessed / +16 witnessed; WantedSystem +2 if witnessed.
+         */
+        CATALYTIC_THEFT("Catalytic converter theft"),
+
         // ── Issue #1259: Northfield Pub Quiz Night ────────────────────────────
 
         /**

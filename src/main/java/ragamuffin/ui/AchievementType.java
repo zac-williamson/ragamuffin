@@ -4931,6 +4931,69 @@ public enum AchievementType {
         "Gerald's Regular",
         "Gerald pays better than the pawn shop. Best not to ask why.",
         1
+    ),
+
+    // ── Issue #1291: Northfield Bert's Tyres & MOT ───────────────────────────
+
+    /**
+     * Awarded when the player passes a BROWN_ENVELOPE to Bert and receives a PASS_BRIBE
+     * outcome (corruption score ≥ 70). Requires COIN ≥ 2 and BROWN_ENVELOPE in inventory.
+     * Triggers UNROADWORTHY rumour. Records VEHICLE_FRAUD in CriminalRecord.
+     */
+    BROWN_ENVELOPE_TEST(
+        "Brown Envelope Test",
+        "You bribed Bert. The car definitely doesn't pass. But the certificate says it does.",
+        1
+    ),
+
+    /**
+     * Awarded when the player sells a STOLEN_TYRE to Bert.
+     * Triggers STOLEN_GOODS_TRADE rumour on first sale.
+     */
+    PART_WORN_PROFITEER(
+        "Part Worn Profiteer",
+        "Part worn. Part nicked. Bert's not fussy either way.",
+        1
+    ),
+
+    /**
+     * Awarded when the player steals 3+ CATALYTIC_CONVERTER items from parked cars.
+     * Triggers CATALYTIC_THEFT_SPREE rumour and NewspaperSystem headline.
+     */
+    CONVERTER_KING(
+        "Converter King",
+        "Three catalytic converters in a week. The exhaust fumes are someone else's problem.",
+        3
+    ),
+
+    /**
+     * Awarded when the player loots the INSPECTION_PIT_PROP while Bert is distracted.
+     * Requires BERT_DISTRACTED state. Records no crime unless caught.
+     */
+    PIT_STOP(
+        "Pit Stop",
+        "You had a rummage in Bert's inspection pit. Found some things. Best not say what.",
+        1
+    ),
+
+    /**
+     * Awarded when the player uses the GARAGE_PHONE_PROP to distract Bert via Kyle.
+     * Creates a 20-second BERT_DISTRACTED window. Once per in-game hour.
+     */
+    PHONE_A_FRIEND(
+        "Phone a Friend",
+        "You rang the garage phone. Kyle answered. Bert followed. Classic.",
+        1
+    ),
+
+    /**
+     * Awarded when the player tips Bert off about an incoming DVSA raid
+     * (STREET_LADS Respect ≥ 30). Seeds BERT_WARNED rumour. +5 STREET_LADS Respect.
+     */
+    TIP_OFF(
+        "Tip-Off",
+        "You warned Bert about the inspector. He owes you one. He probably won't pay.",
+        1
     );
 
     private final String name;
