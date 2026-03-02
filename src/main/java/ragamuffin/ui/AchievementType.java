@@ -4684,6 +4684,43 @@ public enum AchievementType {
         "Last Phone Standing",
         "Fixed the estate box. You're basically BT Openreach now.",
         1
+    ),
+
+    // ── Issue #1271: Northfield Tattoo Parlour ────────────────────────────────
+
+    /** Get first tattoo from Daz's tattoo parlour. */
+    FRESH_INK(
+        "Fresh Ink",
+        "Got your first tattoo from Daz. Looks proper, to be fair.",
+        1
+    ),
+
+    /** Get all 4 tattoo types (flash, custom, jailhouse, touch-up) in one playthrough. */
+    WALKING_CANVAS(
+        "Walking Canvas",
+        "Four different tattoos. You're basically a gallery at this point.",
+        4
+    ),
+
+    /** Complete 3 walk-in hustle sessions without getting caught. */
+    UNLICENSED_OPERATOR(
+        "Unlicensed Operator",
+        "Three sessions on Daz's kit. No licence, no problem — so far.",
+        3
+    ),
+
+    /** Survive the INFECTED_INK debuff — health reaches warning threshold, then cured. */
+    INFECTION_SURVIVOR(
+        "Infection Survivor",
+        "That jailhouse special nearly did you in. Nearly.",
+        1
+    ),
+
+    /** Use tattoo recognition reduction to evade a WANTED chase. */
+    LOOKING_PROPER_DIFFERENT(
+        "Looking Proper Different",
+        "The ink worked. Police walked right past. You look like a different person.",
+        1
     );
 
     private final String name;

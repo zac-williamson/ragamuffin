@@ -772,7 +772,17 @@ public class CriminalRecord {
          * Adds +1 Notoriety and +1 Wanted star via PhoneBoxSystem.
          * Council repairs the box after 2 in-game days.
          */
-        PHONE_BOX_VANDALISM("Phone box vandalism");
+        PHONE_BOX_VANDALISM("Phone box vandalism"),
+
+        // ── Issue #1271: Northfield Tattoo Parlour ────────────────────────────
+
+        /**
+         * Recorded when the HEALTH_INSPECTOR NPC arrives during an unlicensed tattoo
+         * session at Daz's station and the player does not vacate within 30 seconds.
+         * Penalty: WantedSystem +1 star, Notoriety +1 per session,
+         * NeighbourhoodSystem −2 Vibes if caught.
+         */
+        UNLICENSED_TATTOOING("Unlicensed tattooing");
 
         private final String displayName;
 
