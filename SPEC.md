@@ -38017,3 +38017,142 @@ Buy Barry a coffee (COFFEE material, 1 COIN — purchase from `GreasySpoonSystem
 //   CitizensAdviceSystem, NotorietySystem, CriminalRecord, RumourNetwork,
 //   WitnessSystem, WantedSystem, NeighbourhoodSystem, AchievementSystem,
 //   NoiseSystem, GreasySpoonSystem, CornerShopSystem
+
+---
+
+## Add Northfield Wheelwright Motors — Dodgy Car Lot, Clock & Swap & the VIN Plate Swap
+
+A new system: **Wheelwright Motors** (`LandmarkType.CAR_DEALERSHIP`) — Wayne's sun-bleached used car lot on the edge of the industrial estate, hemmed in by the scrapyard and the hand car wash. Bunting strings, laminated price cards on windscreens, and a portable cabin with a kettle and a lamintor. The `Car` entity and `CarDrivingSystem` already exist; this issue plugs into them to add a full dodgy car economy.
+
+### Building
+
+A 20×14-block tarmac forecourt (`ROAD` surface) surrounded by a low-brick wall (`BRICK_PROP`). Twelve `CAR_PROP` bays on the forecourt (mixed types). A `PORTACABIN_PROP` at the rear: `DESK_PROP`, `PHONE_PROP`, `FILE_CABINET_PROP`. `CAR_LOT_SIGN_PROP` on the front wall reading "Wheelwright Motors — No Reasonable Offer Refused". A `BUNTING_PROP` line stretched across the forecourt. One `CCTV_CAMERA_PROP` above the cabin door.
+
+**Opening hours**: Mon–Sat 09:00–18:00. **Closed Sundays** (but Wayne's still here Sat eve, doing paperwork and watching the racing).
+
+**NPCs**: `CAR_DEALER` Wayne — anchored to the forecourt during hours, cabin after 17:00. `CAR_LOT_MECHANIC` Bez — visible under a bonnet at MECHANIC_PROP from 09:00–16:00.
+
+### Core Mechanics
+
+#### 1. Buying a Car
+
+Press **E** on any `CAR_PROP` on the forecourt to inspect it. A panel shows: make/model (flavour), mileage, asking price (10–80 COIN), and a condition rating (MINT / TIDY / ROUGH / BANGER — determined seeded per car). Press E on Wayne to open the deal menu.
+
+**Haggling**: Player can offer below asking. Wayne accepts if: offer ≥ 80% of asking (MINT/TIDY), or offer ≥ 60% of asking (ROUGH/BANGER). Rejected offer: Wayne: "You're 'avin' a bubble." Awards `AchievementType.WHEELER_DEALER` on first successful haggle below asking price.
+
+**Finance option**: Wayne offers fake HP — 10 COIN deposit, 5 COIN per in-game day for 10 days. Missing a day triggers a visit from `REPO_MAN` NPC (like a mini-BAILIFF, takes the car back). Awards `AchievementType.ON_THE_NEVER_NEVER` on first finance purchase.
+
+**Cars purchased** are added to `CarManager` as player-owned, parked at a designated `PLAYER_CAR_BAY_PROP` near the squat. Player can then drive them via existing `CarDrivingSystem`.
+
+#### 2. Selling / Part-Exchanging
+
+Player can bring any car they own to the forecourt. Wayne inspects (simulated 20-second delay, Bez lifts the bonnet). Wayne offers 50–70% of retail value. Part-exchange accepted against a new purchase (difference in COIN).
+
+**Selling a stolen car**: if the car was nicked (flagged `stolen = true` on the `Car` entity), Wayne offers 40% of retail value but requires a `V5C_PROP` or `FAKE_V5C` (crafted from `BLANK_PAPER` + `PRINTER_INK` at Cybernet). Selling a stolen car without documents: Wayne calls the police (Notoriety +10, `HANDLING_STOLEN_GOODS` CriminalRecord entry). Selling with `FAKE_V5C`: `DOCUMENT_FRAUD` entry; Notoriety +5; `AchievementType.CLEAN_TITLE` awarded.
+
+#### 3. The Clock
+
+If a car's mileage is ROUGH or BANGER, the player can bribe Bez (5 COIN) to clock the odometer — sets condition rating to TIDY and bumps resale price +15 COIN. Clocking requires a `MILEAGE_CORRECTOR_PROP` (purchasable from the Indoor Market stall — Mo's knock-offs, 8 COIN). Clocked cars sold to a PUBLIC NPC (via `StreetEconomySystem`) yield +15 COIN over Wayne's price. If a TRADING_STANDARDS NPC is within 20 blocks when the sale completes: `CONSUMER_FRAUD` CriminalRecord entry, Notoriety +8, `AchievementType.DODGY_MILEAGE` awarded.
+
+#### 4. VIN Plate Swap
+
+With a ROUGH car + a `SCREWDRIVER` material: press E on a second BANGER car in the Scrapyard (with Gary's permission, or after hours with LOCKPICK). Swap the VIN plates. The car now appears unregistered to police checks. Clearance for 3 in-game days before ANPR flags it. Awards `AchievementType.VIN_SWAP`.
+
+**ANPR Police Check**: random 10% chance per in-game day that a POLICE NPC walks past the player's parked car and calls it in. If VIN is clean: nothing. If clocked/VIN-swapped: Wanted +1 star.
+
+#### 5. Repossession
+
+If player misses a finance payment:
+- 1st miss: `REPO_MAN` NPC spawns and calls player (PHONE_PROP event in squat). One-day grace.
+- 2nd miss: `REPO_MAN` appears at the player's registered address. Player can: **Pay arrears** (clears), **Scarper** (Notoriety +3, car repossessed from wherever parked), **Bribe** (5 COIN, 1-day extension).
+- 3rd miss: Car removed silently overnight. `AchievementType.REPOSSESSED` awarded.
+
+#### 6. Wayne's Banter
+
+Wayne cycles through 12 flavourful speech lines (45-second interval, same pattern as Terry). Lines include:
+- "Every car on that lot drives sweet as a nut, mate."
+- "That one's only had one previous owner. A nun. Honest."
+- "I'm losing money at that price. Killing myself here."
+- "Mileage? Oh, that's a genuine reading, that is."
+- "Don't listen to Bez. He's still learning."
+- "You want it valeted? Bez'll give it a quick once-over."
+- "Look, I don't ask questions, and neither should you."
+- "That one came in Saturday. Gone by Tuesday at that price."
+- "MOT runs out when? That's your problem, son."
+- "Full service history. Well, most of it."
+- "Lovely motor, that. My uncle had one. He loved it."
+- "Cash? Oh, we can talk about cash."
+
+### Weather & Atmosphere
+
+- **RAIN**: Wayne moves into the portacabin; player must follow to negotiate. Bez stops working on cars.
+- **SUNNY**: Extra 1–2 `TYRE_KICKER` NPCs (PUBLIC) wander the forecourt, look at cars, never buy. Wayne: "They're just lookers, them two."
+- **FROST**: Bez is inside, unavailable for clocking until 10:00.
+- **THUNDERSTORM**: Forecourt floods (visual only), Wayne closes 2 in-game hours early.
+
+### Integration Points
+
+- **CarDrivingSystem / CarManager**: purchased cars added to CarManager as player-owned; driving, crash, and traffic warden interactions all apply.
+- **ScrapyardSystem**: VIN plate swap requires scrapyard donor car (Gary's yard).
+- **TrafficWardenSystem**: unregistered / VIN-swapped cars flagged by ANPR patrol.
+- **IndoorMarketSystem**: `MILEAGE_CORRECTOR_PROP` sold by Mo at the Indoor Market.
+- **InternetCafeSystem / Cybernet**: `FAKE_V5C` printed at Cybernet back-room printer.
+- **FactionSystem**: Marchetti Crew Respect ≥ 50 → Wayne lets player park a Marchetti van in the compound for 5 COIN/day storage fee (no questions asked).
+- **StreetEconomySystem**: clocked cars sold peer-to-peer via deal prompt.
+- **NotorietySystem**: stolen-car sale without docs +10; VIN swap +3; clocked sale caught by Trading Standards +8.
+- **CriminalRecord**: `HANDLING_STOLEN_GOODS`, `DOCUMENT_FRAUD`, `CONSUMER_FRAUD` entries.
+- **WantedSystem**: ANPR check on VIN-swapped car +1 star.
+- **WitnessSystem**: Wayne and CCTV_CAMERA_PROP witness crimes on forecourt.
+- **RumourNetwork**: `LOCAL_EVENT` seeded on each car sale ("Heard someone flogged a motor round Wheelwright's — dodgy as."); `CRIMINAL_INTEL` seeded on VIN swap.
+- **AchievementSystem**: WHEELER_DEALER, ON_THE_NEVER_NEVER, CLEAN_TITLE, DODGY_MILEAGE, VIN_SWAP, REPOSSESSED — add to `AchievementType.java`.
+- **NeighbourhoodSystem**: Vibes −1 per CONSUMER_FRAUD discovered; Wayne complains to COUNCIL_MEMBER Derek.
+- **NoiseSystem**: car engine noise (level 1) when test driving on the forecourt.
+- **PropertySystem / SquatSystem**: repossessed car removed from player's registered parking bay.
+
+### NPC Dialogue
+
+- **Wayne** (`CAR_DEALER`): "What are you after, chief? Something nippy or something solid?" / "I'll do you a deal. Because you've got an honest face." / "Come on, meet me halfway." / "Look — that is a steal at that price. Genuinely." / "No reasonable offer refused. That's policy, that is."
+- **Bez** (`CAR_LOT_MECHANIC`): "Needs a new timing belt but she goes alright." / "Don't tell Wayne I said that." / "Five coin and I'll sort you out."
+- **Repo Man** (`REPO_MAN`): "I'm just here for the vehicle, mate." / "Don't make it awkward."
+
+### Unit Tests
+
+- `inspectCar(carProp_ROUGH, player)` → returns `CarInspectResult` with condition ROUGH, mileage > 80000.
+- `haggledPrice(askingPrice=40, offer=32, condition=TIDY)` → returns `ACCEPTED` (offer = 80% of asking).
+- `haggledPrice(askingPrice=40, offer=20, condition=TIDY)` → returns `REJECTED`.
+- `haggledPrice(askingPrice=40, offer=24, condition=BANGER)` → returns `ACCEPTED` (offer = 60% of asking).
+- `clockOdometer(car_ROUGH, inventory_with_MILEAGE_CORRECTOR, bribePaid=true)` → car condition set to TIDY; resale price +15; `DOCUMENT_FRAUD` flag set.
+- `vinSwap(car, donorCar, inventory_with_SCREWDRIVER)` → car `vinSwapped = true`; donor car VIN removed; `VIN_SWAP` achievement awarded.
+- `sellStolenCar(car_stolen, inventory_without_V5C)` → returns `POLICE_CALLED`; Notoriety +10; `HANDLING_STOLEN_GOODS` in CriminalRecord.
+- `sellStolenCar(car_stolen, inventory_with_FAKE_V5C)` → returns `SOLD_WITH_DOCS`; `DOCUMENT_FRAUD` in CriminalRecord; Notoriety +5.
+- `financePaymentMiss(missCount=1, player, repoMan=null)` → `REPO_MAN` NPC spawned; grace period set.
+- `financePaymentMiss(missCount=3, player, repoMan)` → car removed from CarManager; `REPOSSESSED` achievement awarded.
+- `anprCheck(car_vinSwapped, random=0.05f)` → Wanted +1 star (0.05 < 0.10 threshold).
+- `anprCheck(car_clean, random=0.05f)` → no effect.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Buy, drive, and sell a car**: Player approaches a CAR_PROP on the forecourt. Presses E to inspect (verifies make/model/price shown). Presses E on Wayne. Offers asking price. Verifies COIN deducted. Verifies car added to `CarManager` as player-owned. Player enters car via `CarDrivingSystem` (presses E near car). Drives 20 blocks (simulates WASD for 120 frames). Verifies player position changed. Player returns car to forecourt (drives to `PLAYER_CAR_BAY_PROP`). Sells car back to Wayne (part-exchange). Verifies car removed from `CarManager`. Verifies COIN added (50–70% of purchase price).
+
+2. **Successful haggle unlocks WHEELER_DEALER achievement**: Player inspects TIDY car priced at 40 COIN. Offers 32 COIN (exactly 80%). Verifies Wayne accepts. Verifies `AchievementType.WHEELER_DEALER` unlocked. Verifies `CarManager` contains player-owned car. Verifies COIN deducted 32 (not 40).
+
+3. **Clock and sell pipeline**: Player owns ROUGH car. Acquires `MILEAGE_CORRECTOR_PROP` from Indoor Market. Pays Bez 5 COIN bribe. Calls `clockOdometer()`. Verifies car condition now TIDY. Player sells car peer-to-peer via `StreetEconomySystem` to a PUBLIC NPC. Verifies sale price is 15 COIN above Wayne's offer. Verifies no `TRADING_STANDARDS` NPC within 20 blocks (no fraud entry). Repeats with `TRADING_STANDARDS` NPC within 10 blocks. Verifies `CONSUMER_FRAUD` in `CriminalRecord`. Verifies Notoriety +8. Verifies `AchievementType.DODGY_MILEAGE` awarded.
+
+4. **Finance repossession lifecycle**: Player buys BANGER on finance (10 COIN deposit, 5 COIN/day). Advance TimeSystem 2 in-game days without payment. Verify `REPO_MAN` NPC spawned on day 2. Advance 1 more day without paying. Verify car removed from `CarManager` overnight (car despawned from `PLAYER_CAR_BAY_PROP`). Verify `AchievementType.REPOSSESSED` awarded.
+
+5. **Stolen car sale triggers police call**: Player acquires a car flagged `stolen = true`. Player drives it to Wheelwright forecourt. Presses E on Wayne. Selects "Sell". Verifies Wayne's response branches on absence of `V5C_PROP` or `FAKE_V5C` in inventory. Verifies `POLICE` NPC spawned (police called). Verifies Notoriety increases by 10. Verifies `HANDLING_STOLEN_GOODS` entry in `CriminalRecord`.
+
+// ── Issue #1228: Northfield Wheelwright Motors — Dodgy Car Lot, Clock & Swap & the VIN Plate Swap ──
+// New: CarDealershipSystem.java in ragamuffin.core
+// New: CarDealershipSystemTest.java in src/test/java/ragamuffin/integration/
+// New LandmarkType: CAR_DEALERSHIP — add to LandmarkType.java; getDisplayName() → "Wheelwright Motors"
+// New NPC types: CAR_DEALER (Wayne), CAR_LOT_MECHANIC (Bez), REPO_MAN, TYRE_KICKER — add to NPCType.java
+// New AchievementTypes: WHEELER_DEALER, ON_THE_NEVER_NEVER, CLEAN_TITLE, DODGY_MILEAGE, VIN_SWAP, REPOSSESSED — add to AchievementType.java
+// New Materials: MILEAGE_CORRECTOR_PROP (tool/item), FAKE_V5C, V5C_PROP — add to Material.java
+// New PropTypes: CAR_LOT_SIGN_PROP, PORTACABIN_PROP, BUNTING_PROP, PLAYER_CAR_BAY_PROP, MECHANIC_PROP — add to PropType.java if absent
+// New CriminalRecord crime types: HANDLING_STOLEN_GOODS (if absent), CONSUMER_FRAUD — add to CriminalRecord.java
+// Extends Car entity: add `stolen` flag, `vinSwapped` flag, `clocked` flag, `condition` enum (MINT/TIDY/ROUGH/BANGER)
+// Integrates: CarDrivingSystem, CarManager, ScrapyardSystem, TrafficWardenSystem,
+//   IndoorMarketSystem, InternetCafeSystem, FactionSystem, StreetEconomySystem,
+//   NotorietySystem, CriminalRecord, WantedSystem, WitnessSystem, RumourNetwork,
+//   AchievementSystem, NeighbourhoodSystem, NoiseSystem, PropertySystem, SquatSystem
