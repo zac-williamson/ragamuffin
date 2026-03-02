@@ -29672,3 +29672,137 @@ night gate lock/unlock timing (locked at 23:00, open at 06:00).
 //               GRAVE_PLOT_PROP, OPEN_GRAVE_PROP, HEADSTONE_PROP already exist)
 // Existing achievements: GRAVE_ROBBER, CEMETERY_NIGHT_OWL (already in AchievementType.java)
 // LandmarkType: CEMETERY already exists
+
+---
+
+## Issue #1122: Add Northfield Tanning & Massage — Sun Kissed Studio, the Happy Ending Economy & the Marchetti Money Laundering Front
+
+**Landmark**: `SUN_KISSED_STUDIO` (add to `LandmarkType.java`)
+**System class**: `TanningSalonSystem.java` in `ragamuffin.core`
+**Display name**: `"Sun Kissed Studio"`
+
+### Overview
+
+A narrow 6×8×3 brick shopfront on the high street parade squeezed between the nail salon and the payday loan shop. Pink neon lettering above the frosted glass door. Run by Tracey (`SALON_OWNER` NPC), with two massage therapists — Jade and Tanya (`MASSAGE_THERAPIST` NPC) — working alternating shifts. Open Mon–Sat 09:00–21:00, Sun 11:00–18:00.
+
+The Studio is a legitimate tanning and beauty business on the surface. It also functions as a low-level money laundering front for the Marchetti Crew and offers a discreet "special services" menu for players with Street Rep ≥ 40. Police radar is elevated — a plainclothes officer (PCSO, NPC) passes the door every 60 in-game minutes.
+
+### Interior
+
+A 6×8-block floor plan:
+- `RECEPTION_DESK_PROP` near the door (Tracey behind it during opening hours)
+- Two `TANNING_BED_PROP` booths (curtained; player or NPC occupies for 5 in-game minutes)
+- One `MASSAGE_TABLE_PROP` in a side room separated by a `CURTAIN_PROP`
+- `CASH_REGISTER_PROP` at reception
+- `CCTV_CAMERA_PROP` pointing at the door (hackable or smashable)
+- `LAUNDRY_BAG_PROP` under the desk (Marchetti cash stash; lockpickable)
+- A small BACK_ROOM (2×3) behind a locked `DOOR_PROP`: contains `SAFE_PROP` and ledger (`MARCHETTI_LEDGER` material)
+
+Entrance on south face. Frosted glass frontage obscures interior from street.
+
+### Services & Pricing
+
+| Service | Cost | Duration | Effect |
+|---------|------|----------|--------|
+| 6-min sunbed | 2 COIN | 5 in-game min | Adds `TANNED` buff (−2 Notoriety display; 1 in-game day) |
+| 12-min sunbed | 3 COIN | 10 in-game min | Adds `DEEPLY_TANNED` buff (−3 Notoriety display; 2 in-game days) |
+| Swedish massage | 5 COIN | 8 in-game min | Restores 30 Health; removes `MUSCLE_ACHE` debuff |
+| Hot stone massage | 8 COIN | 10 in-game min | Restores 50 Health; adds `RELAXED` buff (−15% noise generation for 1 in-game hour) |
+| Special Services (Street Rep ≥ 40) | 10 COIN | 5 in-game min | Removes 10 Notoriety; no receipt; WitnessSystem disabled in the booth |
+
+WantedSystem Tier ≥ 2 — Tracey refuses service ("Sorry love, we're fully booked"). At Notoriety ≥ 60, the PCSO outside does a slow walk-past every 30 minutes instead of 60.
+
+### The Tanned Buff & DisguiseSystem Integration
+
+The `TANNED` buff provides a passive −2 Notoriety display modifier. When combined with a different `HairstyleType` (from the Barber), the DisguiseSystem recognition reduction stacks: TANNED + new hairstyle = −20% recognition. Police description strips the modifier: "suspect may have a tan".
+
+### Marchetti Money Laundering Front
+
+Tracey accepts cash drops from Marchetti Crew couriers twice daily (11:00 and 18:00). The `LAUNDRY_BAG_PROP` accumulates 5–15 COIN per drop. At Marchetti Respect ≥ 50, the player can:
+- **Intercept a drop** (E on courier NPC while courier holds `BROWN_ENVELOPE` material): steal the envelope (+15–25 COIN, Notoriety +10, Marchetti Respect −20)
+- **Deliver a drop** (fetch `BROWN_ENVELOPE` from drop point, bring to Tracey): +5 COIN, +3 Marchetti Respect per delivery
+
+The `MARCHETTI_LEDGER` in the back room, if stolen and delivered to the police station (TipOff mechanic), triggers a police raid on the studio within 24 in-game hours. Tracey despawns; studio closes 2 in-game days. The player receives `EVIDENCE_PROVIDED` CriminalRecord benefit (next charge reduced one tier) but Marchetti Crew mark the player as `GRASS` (Respect −40).
+
+### Weather Effects
+
+- **HOT / SUNNY**: 3 additional NPC customers queue outside; sunbed booth wait +2 customers; Tracey reduces 6-min bed to 1 COIN ("Summer promo, love")
+- **COLD_SNAP / FROST**: indoor warmth +8/min while inside (best warm shelter on the high street next to Greggs)
+- **RAIN / DRIZZLE**: Jade gossips freely (seeds 1 random `LOCAL_EVENT` rumour per visit)
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `BRONZED` | Use the sunbed 5 times total |
+| `SUN_KISSED` | Achieve `DEEPLY_TANNED` buff while holding less than 2 COIN (all in on the tanning) |
+| `CLEAN_MONEY` | Successfully deliver a Marchetti envelope to Tracey 5 times |
+| `LAUNDERED` | Steal the `MARCHETTI_LEDGER` and deliver it to the police station |
+| `SPECIAL_APPOINTMENT` | Use Special Services while WantedSystem tier is exactly 1 |
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `MARCHETTI_LEDGER` | Fenceable (FenceSystem: 20 COIN) or deliverable to police; icon: black notebook |
+| `BROWN_ENVELOPE` | Marchetti cash drop carrier; non-stackable; icon: brown rectangle |
+
+(Add to `Material.java`)
+
+### New NPC Types Required
+
+| NPCType | Notes |
+|---------|-------|
+| `SALON_OWNER` | Tracey; Mon–Sat 09:00–21:00, Sun 11:00–18:00; refuses service at Wanted Tier ≥ 2 |
+| `MASSAGE_THERAPIST` | Jade (Mon/Wed/Fri) and Tanya (Tue/Thu/Sat); alternating shifts 10:00–20:00 |
+
+(Add to `NPCType.java`)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `TANNING_BED_PROP` | Occupiable booth; player/NPC interacts for tanning |
+| `MASSAGE_TABLE_PROP` | Occupiable table; player/NPC interacts for massage |
+| `RECEPTION_DESK_PROP` | NPC anchor point; E to trigger service menu |
+| `LAUNDRY_BAG_PROP` | Lockpickable container; holds BROWN_ENVELOPE |
+
+(Add to `PropType.java`)
+
+### System Integrations
+
+- **DisguiseSystem**: `TANNED` buff grants recognition reduction; stacks with new hairstyle
+- **WarmthSystem**: interior is warm shelter (+6/min); COLD_SNAP is very comfortable here
+- **FactionSystem**: Marchetti drop delivery/interception mechanics; GRASS flag
+- **WantedSystem**: Tier ≥ 2 blocks entry; plainclothes PCSO patrol at elevated Notoriety
+- **NotorietySystem**: Special Services removes 10 Notoriety; intercept adds 10
+- **CriminalRecord**: `MARCHETTI_COLLABORATION` on first envelope delivery; `GRASS` if ledger handed over
+- **WitnessSystem**: CCTV_CAMERA_PROP captures crimes inside unless hacked/smashed
+- **RumourNetwork**: Jade seeds `LOCAL_EVENT` rumours on rainy days; ledger theft seeds `GANG_ACTIVITY` ("Someone's been into Marchetti's books")
+- **NewspaperSystem**: police raid generates headline "Police Raid High Street Beauty Studio"
+- **AchievementSystem**: `BRONZED`, `SUN_KISSED`, `CLEAN_MONEY`, `LAUNDERED`, `SPECIAL_APPOINTMENT`
+- **TimeSystem**: open 09:00–21:00 Mon–Sat, 11:00–18:00 Sun; drops at 11:00 and 18:00; PCSO patrol every 60 min
+- **StreetEconomySystem**: massage satisfies `PAIN` need for WORKER/PENSIONER NPCs
+- **NeighbourhoodSystem**: vibes +1 per day while salon is open; vibes −3 after police raid
+- **NoiseSystem**: TANNING_BED_PROP hum +5 ambient; smashing CCTV +40 noise
+
+**Unit tests**: Service price table and buff duration map correct; TANNED buff recognition reduction stacks with hairstyle change; Marchetti drop timer (11:00 and 18:00, correct COIN range 5–15); PCSO patrol interval (60 min standard, 30 min at Notoriety ≥ 60); wanted tier block (Tier ≥ 2 = service refused); Special Services notoriety reduction (−10, non-receipt, witness disabled); `MARCHETTI_LEDGER` fence value (20 COIN).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **TANNED buff reduces Notoriety display**: Give player 3 COIN. Place player at `RECEPTION_DESK_PROP`. Select 6-min sunbed. Advance time by 5 in-game minutes. Verify player has `TANNED` buff active. Verify Notoriety display value is 2 lower than base Notoriety value. Verify buff expires after 1 in-game day.
+
+2. **Service refused at Wanted Tier 2**: Set WantedSystem tier to 2. Place player at `RECEPTION_DESK_PROP`. Attempt to purchase a service. Verify service is refused (no COIN deducted, no buff applied). Verify Tracey NPC says "Sorry love, we're fully booked".
+
+3. **Marchetti envelope delivery earns Respect**: Advance time to 11:00. Verify a courier NPC spawns with `BROWN_ENVELOPE`. Give player `BROWN_ENVELOPE` (simulate intercept). Place player at `RECEPTION_DESK_PROP`. Interact (deliver envelope). Verify player COIN increased by 5. Verify Marchetti Respect increased by 3. Verify `MARCHETTI_COLLABORATION` entry added to CriminalRecord.
+
+4. **Ledger theft triggers raid and GRASS flag**: Give player LOCKPICK. Place player adjacent to back `DOOR_PROP`. Simulate lockpick open. Navigate to `SAFE_PROP`. Take `MARCHETTI_LEDGER`. Deliver to police station TipOff. Advance time 24 in-game hours. Verify studio landmark is flagged as CLOSED. Verify Marchetti Respect decreased by 40. Verify player has `GRASS` flag on CriminalRecord.
+
+5. **Warm shelter during COLD_SNAP**: Set weather to `COLD_SNAP`. Place player inside studio. Verify WarmthSystem warmth increases by ≥ 6 per real-second update tick. Verify warmth gain is higher than outdoors baseline.
+
+// New system: TanningSalonSystem.java in ragamuffin.core
+// New LandmarkType: SUN_KISSED_STUDIO (add to LandmarkType.java with display name "Sun Kissed Studio")
+// New materials: MARCHETTI_LEDGER, BROWN_ENVELOPE (add to Material.java)
+// New NPCTypes: SALON_OWNER, MASSAGE_THERAPIST (add to NPCType.java)
+// New PropTypes: TANNING_BED_PROP, MASSAGE_TABLE_PROP, RECEPTION_DESK_PROP, LAUNDRY_BAG_PROP (add to PropType.java)
+// New achievements: BRONZED, SUN_KISSED, CLEAN_MONEY, LAUNDERED, SPECIAL_APPOINTMENT (add to AchievementType.java)
