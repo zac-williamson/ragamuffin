@@ -31225,3 +31225,144 @@ The temp agency requires a name to register. Player can:
 //   LEAFLET_DROP_ZONE_PROP, AGENCY_VAN_PROP (add to PropType.java)
 // New Achievements: HONEST_DAY_S_WORK, TIMESHEET_FIDDLER, GLOVE_BOX_RAIDER, DOUBLE_DIP,
 //   PETTY_CASH, LEAFLET_LEGEND, HARD_HAT_REQUIRED, AGENCY_REGULAR (add to AchievementType.java)
+
+## Add Northfield RAOB Lodge — The Buffaloes, Secret Handshakes & the Old Boys' Network
+
+**Landmark**: New `LandmarkType.RAOB_LODGE` ("Northfield Buffaloes Lodge No. 347")
+Located on the quiet back street behind the church, between the Conservative Club and the Post Office — a narrow Victorian brick building with frosted-glass windows, a painted buffalo head above the door, and a hand-lettered sign: "Members Only. Strictly By Invitation." Open Tue & Thu 19:00–23:00, Sat 12:00–23:00. Closed Sundays and Mondays.
+
+The Royal Antediluvian Order of Buffaloes is Britain's second-largest fraternal order — less famous than the Masons, considerably shabbier, and deeply embedded in the local authority. Northfield Lodge No. 347 is where the council housing officer, the magistrate's clerk, the planning inspector, and the local bookmaker's owner all meet to drink Worthington's, perform confused rituals in regalia nobody quite understands, and quietly scratch each other's backs. The player can infiltrate the Lodge, rise through the ranks, exploit the old boys' network, or simply steal the ceremonial regalia and fence it.
+
+New system: `RAOBLodgeSystem.java` in `ragamuffin.core`.
+
+### Key NPCs
+- **Grand Primo Norman** (`RAOB_GRAND_PRIMO`) — Lodge chairman, 64, red-faced ex-plumber. Admits new members after two sponsor vouches. Suspicious of outsiders. Notoriety Tier ≥ 3: refuses entry entirely. Speech: "You can't just walk in, son — this is a lodge, not a Wetherspoons." / "Right, repeat after me: I swear on the sacred buffalo…" / "Someone's been in the regalia room. I can tell."
+- **Keith** (`RAOB_TREASURER`) — keeps the Lodge safe (see Safe Heist below). Jovial, easily flattered. Will accept a pint from the LODGE_BAR_PROP as a bribe. Speech: "The Lodge accounts are nobody's business but the Lodge, thank you very much." / "Another round, Norman? Don't mind if I do."
+- **Derek the Council Man** (`COUNCIL_MEMBER`) — already exists; appears at Lodge Sat 19:00–22:00. Backchannel contact: player can slip him a `PLANNING_BRIBE_ENVELOPE` here to fast-track property permissions.
+- **Big Bernard** (`RAOB_DOORMAN`) — the door. Refuses entry without a `MEMBERSHIP_CARD` or an NPC who vouches for the player. Distracted 20:00–20:30 (watch the telly in the bar). Speech: "Card?" / "You what?" / "On your way, pal."
+- **Lodge Members** (`RAOB_MEMBER`) × 4 — various occupations (MAGISTRATE_CLERK, HOUSING_OFFICER, PLANNING_INSPECTOR, BOOKMAKER). Passive; gossip freely once membership established. Each holds a piece of corruption mechanic (see below).
+
+### Entry & Membership Tiers
+
+| Tier | How to Unlock | Access |
+|---|---|---|
+| `NON_MEMBER` | Default | Bar area only if accompanied; ejected after 10 min |
+| `INITIATE` | Two sponsor vouches + 5 COIN fee + initiation ceremony | Bar + main hall |
+| `BROTHER_BUFFALO` | Complete one Lodge favour (see Favours) | All areas except regalia room |
+| `PRIMO` | Complete three Lodge favours + donate 20 COIN | All areas including regalia room + safe room |
+
+- **Sponsor vouches**: Player must befriend two `RAOB_MEMBER` NPCs (raise their personal relationship to ≥ 40 through conversation, buying drinks from `LODGE_BAR_PROP`, or sharing rumours). Each sponsor signs a `SPONSORSHIP_FORM` item given to Norman.
+- **Initiation ceremony**: Triggered at the `LODGE_ALTAR_PROP`. Norman reads a ritual from `RITUAL_BOOK_PROP`. Player must press E at correct prompt moment (3-second window, indicated by on-screen flash). Success: `MEMBERSHIP_CARD` added to inventory, `INITIATE` tier granted. Failure: ceremony must be repeated next session (cooldown = 2 in-game days).
+
+### The Old Boys' Network — Lodge Favours & Backchannel Mechanics
+
+Each `RAOB_MEMBER` NPC type offers a corruption mechanic at `BROTHER_BUFFALO` tier or above:
+
+| NPC | Favour | Reward |
+|---|---|---|
+| `HOUSING_OFFICER` Brian | Give Brian a `PREMIUM_LAGER_CRATE` (3 COIN) | `HOUSING_PRIORITY_LETTER` — jumps queue for council flat allocation (CouncilFlatsSystem integration: skip 2 weeks off waiting list) |
+| `MAGISTRATE_CLERK` Sandra | Give Sandra a `BOX_OF_CHOCOLATES` (2 COIN) | `CASE_DISMISSED_FORM` — removes one pending CriminalRecord fine (not custody offences) |
+| `PLANNING_INSPECTOR` Reg | Give Reg a COIN bribe (10 COIN, slipped via `E` on his `BRIEFCASE_PROP`) | `PLANNING_PERMISSION` — allows player to build/modify a property block without Notoriety penalty (PropertySystem integration) |
+| `BOOKMAKER_OWNER` Terry | Give Terry inside information (player must have `RACING_TIP` material from PigeonRacingSystem or HorseRacingSystem) | Terry doubles the player's next win at the bookies (BettingUI integration: BOOKIES_MULTIPLIER flag, × 2 on one race bet) |
+
+- `PREMIUM_LAGER_CRATE` available from the Off-Licence (3 COIN). `BOX_OF_CHOCOLATES` available from the Corner Shop (2 COIN). These items are new.
+- Backchannel bribes seed a `CORRUPTION` rumour in RumourNetwork (type: `NEIGHBOURHOOD`, text: "Heard there's dodgy business at the Lodge again"). 30% chance the `HOUSING_OFFICER` or `PLANNING_INSPECTOR` reports the bribe to police (Notoriety +5, `BRIBERY` CriminalRecord entry) if the player's Notoriety is already Tier ≥ 2.
+
+### The Lodge Safe Heist
+
+The `LODGE_SAFE_PROP` sits in Keith's back room (unlocked at `PRIMO` or via lockpick). Contains:
+- 30–50 COIN (Lodge dues kitty — seeded by `dayIndex * 7 % 30 + 30`)
+- One `LODGE_CHARTER_DOCUMENT` (fence at FenceSystem for 20 COIN, or use for `BLACKMAIL` mechanic below)
+- One `REGALIA_SET` item
+
+**Theft mechanics**:
+- Player must not be observed (WitnessSystem: Big Bernard and Keith are witnesses).
+- Big Bernard is distracted 20:00–20:30 → base detection 15% during window, 70% outside.
+- If caught: `THEFT` + `TRESPASS` in CriminalRecord, Notoriety +5, banned from Lodge permanently.
+- `SAFE_CRACKER` achievement on first successful safe theft.
+
+### The Blackmail Mechanic
+Player holding `LODGE_CHARTER_DOCUMENT` can approach any `RAOB_MEMBER` NPC and press E:
+- Threaten to report their Lodge membership + corrupt dealings to the local paper (NewspaperSystem integration: feeds a story).
+- NPC pays 10–15 COIN to stay quiet. One payout per NPC per in-game week.
+- If player uses it on `HOUSING_OFFICER` Brian: triggers an event where Brian fast-tracks the player's council flat application completely (CouncilFlatsSystem: immediate allocation without waiting list).
+- `GRUBBY_LEVERAGE` achievement on first successful blackmail.
+- Using on `MAGISTRATE_CLERK` Sandra: she wipes the player's entire pending fine list (not custody entries). One-time use.
+- 20% chance the threatened NPC calls police (Notoriety +8, `BLACKMAIL` CriminalRecord entry).
+
+### The Regalia Room
+At `PRIMO` tier, player can enter the `REGALIA_ROOM` through `REGALIA_ROOM_DOOR_PROP`:
+- Contains `BUFFALO_CHAIN_PROP` (wearable as disguise item), `CEREMONIAL_MALLET_PROP` (weapon), `RITUAL_BOOK_PROP` (readable), and a noticeboard with `MEMBER_LIST_ITEM` (reveals all RAOB_MEMBER NPC identities).
+- `REGALIA_SET` (stolen or borrowed) can be worn as a DisguiseSystem tier: "Lodge Regalia" disguise — reduces suspicion from `COUNCIL_MEMBER` NPCs by −30%, but triggers "Who ARE you?" reaction from any RAOB NPC who doesn't recognise the player.
+- `CEREMONIAL_MALLET_PROP` can be taken as a weapon item — deals 1.5× damage on hit but seeds `LODGE_VANDALISM` RumourType.LOCAL_EVENT rumour.
+
+### Items (add to `Material.java`)
+- `MEMBERSHIP_CARD` — Lodge ID; grants entry past Big Bernard; fenceable at 3 COIN.
+- `SPONSORSHIP_FORM` — paper item signed by a sponsor NPC; 2 required for initiation.
+- `LODGE_CHARTER_DOCUMENT` — founding document; used for blackmail or fenced at 20 COIN.
+- `REGALIA_SET` — ceremonial apron + sash; worn for Lodge Regalia disguise; fenceable at 8 COIN.
+- `CEREMONIAL_MALLET` — weapon; 1.5× hit damage; flags LODGE_VANDALISM rumour on use.
+- `PREMIUM_LAGER_CRATE` — gift item for Housing Officer Brian bribe; 3 COIN from Off-Licence.
+- `BOX_OF_CHOCOLATES` — gift item for Magistrate Clerk Sandra bribe; 2 COIN from Corner Shop.
+- `PLANNING_PERMISSION` — document; used via PropertySystem to skip build Notoriety check.
+- `CASE_DISMISSED_FORM` — removes one pending CriminalRecord non-custody fine.
+- `RACING_TIP` — generated by PigeonRacingSystem / HorseRacingSystem on a big win; used to bribe Terry the Bookmaker.
+
+### Props (add to `PropType.java`)
+- `LODGE_BAR_PROP` — bar counter; press E to buy a drink (1 COIN); builds NPC relationship +5 per round bought.
+- `LODGE_ALTAR_PROP` — ceremonial focal point; initiation ceremony triggers here.
+- `LODGE_SAFE_PROP` — back-room safe; lockpickable with LOCKPICK or accessible at PRIMO tier.
+- `REGALIA_ROOM_DOOR_PROP` — door to regalia room; locked below PRIMO, or lockpickable.
+- `RITUAL_BOOK_PROP` — readable prop; Norman reads it during initiation; contains comedy ritual text.
+- `NOTICE_BOARD_PROP` (lodge variant) — displays lodge schedule and meeting dates; player can read it to learn session times.
+
+### System Integrations
+- **FactionSystem**: `THE_COUNCIL` Respect +5 on each successful Lodge favour; −10 on being caught in safe theft. `MARCHETTI_CREW` Respect −5 on Lodge initiation (they view it as competition for corrupt influence). `STREET_LADS` Respect +10 if player steals the ceremonial mallet and uses it in a fight (word gets round).
+- **CouncilFlatsSystem**: `HOUSING_PRIORITY_LETTER` (from bribe or blackmail) skips 2 weeks off council flat waiting list. Full blackmail against Brian allocates a flat immediately.
+- **PropertySystem**: `PLANNING_PERMISSION` material skips the Notoriety check for block placement on owned properties.
+- **BettingUI / HorseRacingSystem / GreyhoundRacingSystem**: Terry's favour sets `BOOKIES_MULTIPLIER` flag — next single race bet pays × 2.
+- **MagistratesCourtSystem**: `CASE_DISMISSED_FORM` removes one pending fine in the player's CriminalRecord (court appearance queue); dialogue: "Your honour, I believe there may have been a clerical error..."
+- **NewspaperSystem**: Successful blackmail triggers a newspaper story ("Northfield Lodge rocked by bribery scandal") — seeds a `SCANDAL` rumour through RumourNetwork; Lodge temporarily closes for 3 in-game days.
+- **FenceSystem**: `LODGE_CHARTER_DOCUMENT` at 20 COIN; `REGALIA_SET` at 8 COIN; `MEMBERSHIP_CARD` at 3 COIN; `CEREMONIAL_MALLET` at 5 COIN.
+- **DisguiseSystem**: `REGALIA_SET` grants "Lodge Regalia" disguise tier — −30% suspicion from COUNCIL_MEMBER NPCs, but triggers recognition challenge from RAOB NPCs.
+- **WitnessSystem**: Keith and Big Bernard as primary witnesses for safe theft; any RAOB_MEMBER present as secondary witnesses.
+- **RumourNetwork**: Lodge corruption seeds `NEIGHBOURHOOD` rumours; Lodge closure seeds `LOCAL_EVENT` rumours; blackmail seeds `SCANDAL` rumours.
+- **PigeonRacingSystem / HorseRacingSystem**: `RACING_TIP` material generated on a winning bet ≥ 10 COIN; used to unlock Terry's bookmaker multiplier favour.
+- **NotorietySystem**: Initiation reduces Notoriety by −1 (you're now a "respectable" lodge member). Caught stealing / blackmail at 20% chance: Notoriety +5–8 and relevant CriminalRecord entries.
+- **TimeSystem**: Sessions Tue/Thu 19:00–23:00, Sat 12:00–23:00. Big Bernard distraction window 20:00–20:30 (fixed per session).
+
+### Achievements (add to `AchievementType.java`)
+| Achievement | Trigger |
+|---|---|
+| `BOTHER_BUFFALO` | Attain INITIATE membership tier (complete initiation ceremony) |
+| `OLD_BOYS_NETWORK` | Successfully use all four backchannel Lodge favour bribes |
+| `SAFE_CRACKER` | Steal the Lodge safe contents undetected |
+| `GRUBBY_LEVERAGE` | Successfully blackmail a Lodge member using the charter document |
+| `FULL_REGALIA` | Wear the REGALIA_SET disguise and walk into the police station without being arrested |
+| `GRAND_PRIMO` | Attain PRIMO membership tier |
+| `CEREMONIAL_VIOLENCE` | Win a fight using the CEREMONIAL_MALLET |
+
+**Unit tests**: Sponsor vouch count (2 required, 1 insufficient); initiation ceremony cooldown (2 in-game days between attempts); Lodge session hours open/closed (Tue 19:00–23:00, Sat 12:00–23:00, closed Sun/Mon); safe COIN range (30–50 COIN across 1000 seeds); detection probability during distraction window (15% base, 70% outside); backchannel bribe detection at Tier ≥ 2 Notoriety (30% chance); blackmail reward payout (10–15 COIN); bookmaker multiplier flag set/cleared correctly; RACING_TIP generation threshold (≥ 10 COIN win); CASE_DISMISSED_FORM removes exactly one pending fine.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Initiation ceremony grants MEMBERSHIP_CARD**: Befriend two RAOB_MEMBER NPCs to relationship ≥ 40. Collect two `SPONSORSHIP_FORM` items. Give both forms to Norman (E on `LODGE_ALTAR_PROP`). Pay 5 COIN fee. Trigger initiation ceremony: press E within the 3-second window. Verify `MEMBERSHIP_CARD` is in player inventory. Verify player tier is `INITIATE`. Verify Notoriety decreased by 1. Verify Big Bernard no longer ejects the player on entry.
+
+2. **Housing Officer bribe jumps council flat waiting list**: Attain `BROTHER_BUFFALO` tier. Purchase `PREMIUM_LAGER_CRATE` from the Off-Licence (costs 3 COIN). Give it to `HOUSING_OFFICER` Brian by pressing E while holding the item. Verify Brian hands over a `HOUSING_PRIORITY_LETTER`. Use the letter via CouncilFlatsSystem. Verify the player's position on the council flat waiting list is reduced by 2 weeks. Verify a `NEIGHBOURHOOD` rumour ("dodgy business at the Lodge") has been added to RumourNetwork.
+
+3. **Lodge safe theft during distraction window is low-detection**: Attain `PRIMO` tier. Set in-game time to 20:05 (Big Bernard distraction window). Navigate to the back room. Press E on `LODGE_SAFE_PROP`. Using a seeded Random that forces non-detection, verify COIN (30–50 range) and `LODGE_CHARTER_DOCUMENT` are added to player inventory. Verify `SAFE_CRACKER` achievement is unlocked. Set time to 22:00 (outside window). Attempt safe again (already empty). Verify safe is empty — no second reward per session.
+
+4. **Blackmail with charter document removes pending fine**: Give player the `LODGE_CHARTER_DOCUMENT`. Add a pending fine to the player's CriminalRecord (type: PETTY_THEFT, amount: 20 COIN). Approach `MAGISTRATE_CLERK` Sandra. Press E and select blackmail option. Using seeded Random forcing non-police-call. Verify `CASE_DISMISSED_FORM` is added to player inventory. Use the form via MagistratesCourtSystem. Verify the pending fine is removed from CriminalRecord. Verify `GRUBBY_LEVERAGE` achievement is unlocked. Verify `SCANDAL` rumour has been seeded in RumourNetwork.
+
+5. **Racing tip unlocks bookmaker multiplier**: Player wins a 12-COIN greyhound race bet (≥ 10 COIN threshold). Verify `RACING_TIP` material is added to inventory. Navigate to Lodge on a Sat session. Approach `BOOKMAKER_OWNER` Terry. Press E and give him the RACING_TIP. Verify Terry accepts it (item consumed). Verify `BOOKIES_MULTIPLIER` flag is set to `true` in RAOBLodgeSystem. Open BettingUI, place a bet at the bookies. Verify on win: payout is double the standard amount. Verify `BOOKIES_MULTIPLIER` flag is cleared after one use.
+
+// New system: RAOBLodgeSystem.java in ragamuffin.core
+// New landmark: RAOB_LODGE (add to LandmarkType.java) — "Northfield Buffaloes Lodge No. 347"
+// New NPCTypes: RAOB_GRAND_PRIMO, RAOB_TREASURER, RAOB_DOORMAN, RAOB_MEMBER (add to NPCType.java)
+// New Materials: MEMBERSHIP_CARD, SPONSORSHIP_FORM, LODGE_CHARTER_DOCUMENT, REGALIA_SET,
+//   CEREMONIAL_MALLET, PREMIUM_LAGER_CRATE, BOX_OF_CHOCOLATES, PLANNING_PERMISSION,
+//   CASE_DISMISSED_FORM, RACING_TIP (add to Material.java)
+// New PropTypes: LODGE_BAR_PROP, LODGE_ALTAR_PROP, LODGE_SAFE_PROP, REGALIA_ROOM_DOOR_PROP,
+//   RITUAL_BOOK_PROP (add to PropType.java)
+// New Achievements: BOTHER_BUFFALO, OLD_BOYS_NETWORK, SAFE_CRACKER, GRUBBY_LEVERAGE,
+//   FULL_REGALIA, GRAND_PRIMO, CEREMONIAL_VIOLENCE (add to AchievementType.java)
