@@ -39390,3 +39390,271 @@ Bert's is a corrugated-iron garage unit on the edge of the industrial estate. It
 // Integrates: CarDrivingSystem, WantedSystem, CriminalRecord, FenceSystem,
 //   StreetEconomySystem, NeighbourhoodWatchSystem, NotorietySystem, DisguiseSystem,
 //   RumourNetwork, AchievementSystem, NewspaperSystem, TimeSystem, NoiseSystem
+
+---
+
+## Issue #1245: Northfield Council Recycling Centre — The Tip, Dave the Attendant & the Restricted Items Hustle
+
+### Overview
+
+The **Northfield Household Recycling Centre** (universally referred to as "the tip") sits on the edge of the
+industrial estate, open Tue–Sun 08:00–18:00, closed Mondays. It is staffed by Dave (COUNCIL_TIP_ATTENDANT),
+a jobsworth in a hi-viz vest who checks for trade waste, van permits, and prohibited items. Dave enforces
+a strict banned-items list (asbestos, clinical waste, paint, gas canisters) and demands residents show a
+`RESIDENTS_PERMIT` before using the Trade Waste skip.
+
+The tip has four segregated skip bays: **GENERAL_WASTE**, **ELECTRONICS_SKIP** (WEEE), **TIMBER_SKIP**,
+and **METALS_SKIP**. Each bay generates lootable items every in-game hour during opening — residents dump
+furniture, broken appliances, and miscellaneous junk. The player can dive into any bay (press E on the skip
+edge) to salvage items, but Dave watches: if he sees the player taking items rather than depositing, he
+issues a verbal warning, then bans the player from the site for 1 in-game day on second offence, then calls
+the police (Notoriety +1) on third.
+
+The **hustle**: the player can deposit a `RESTRICTED_ITEM` (e.g., `PAINT_TIN`, `GAS_CANISTER`,
+`ASBESTOS_SAMPLE`) by bribing Dave (5 COIN) or waiting until Dave takes his `TEA_BREAK` (13:00–13:15 daily)
+and dumping it unseen. Restricted items in player inventory are a liability — if stopped by police with a
+`GAS_CANISTER` near Notoriety ≥ 30, it counts as UNSAFE_DISPOSAL intent. Getting rid of them at the tip is
+valuable. The player can also sell restricted items to a rival fence contact (Big Phil, who visits the tip
+car park on Saturdays 09:00–11:00) for inflated prices.
+
+A secondary mechanic: the player can **deliver tip loot** (salvaged electronics, timber, metal) to the
+ScrapyardSystem (metals), FenceSystem (electronics), or SquatSystem (timber for furnishings/Vibe). This
+creates a supply loop between the tip and other systems.
+
+---
+
+### Opening Hours & Schedule
+
+| Period | Detail |
+|---|---|
+| Tue–Sun | 08:00–18:00 |
+| Monday | CLOSED — sign on gate: "Site closed Mondays for maintenance. Sorry for any inconvenience." |
+| Tea Break | 13:00–13:15 daily — Dave at PORTAKABIN_PROP, skip bays unmonitored |
+| Saturday | Big Phil's car (FENCE_CAR_PROP) parked in car park 09:00–11:00 |
+| Bank Holiday | CLOSED — "Sorry, we're closed today for the Bank Holiday. Back tomorrow." |
+
+---
+
+### Skip Bays & Loot Tables
+
+**GENERAL_WASTE_SKIP** (4 items/cycle):
+- `OLD_SOFA` (×1), `BROKEN_TELLY` (×1), `BRIC_A_BRAC` (×1), `BIN_BAG_PROP` (×1)
+- Salvage yield: `SCRAP_METAL` (×1 from BROKEN_TELLY), `BRIC_A_BRAC` directly usable
+
+**ELECTRONICS_SKIP** (3 items/cycle):
+- `BROKEN_LAPTOP` (×1), `OLD_PRINTER` (×1), `CIRCUIT_BOARD` (×2)
+- Salvage yield: `COPPER_WIRE` (×1), `CIRCUIT_BOARD` (×1); fence value via FenceSystem: 8 COIN each
+
+**TIMBER_SKIP** (3 items/cycle):
+- `SCRAP_WOOD` (×2), `DOOR_FRAME_PROP` (×1), `PALLET_PROP` (×1)
+- Salvage yield: `SCRAP_WOOD` directly; Vibe +2 per SCRAP_WOOD installed in squat (SquatSystem)
+
+**METALS_SKIP** (2 items/cycle):
+- `SCRAP_METAL` (×2), `COPPER_PIPE` (×1), `OLD_RADIATOR` (×1)
+- Salvage yield: direct; sell to ScrapyardSystem weigh-bridge for standard prices
+
+Cycle: items refresh every in-game hour. Max 8 items per bay before bay is "full" (Dave calls council lorry
+— lorry arrives in 2 in-game hours to empty it, resetting the bay).
+
+---
+
+### Dave the Attendant
+
+`NPCType.COUNCIL_TIP_ATTENDANT` — open hours: Tue–Sun 08:00–18:00. Tea break 13:00–13:15 at portakabin.
+
+**Observation state machine**:
+- `WATCHING` (default) — Dave patrols the four bays on a 90-second circuit
+- `SUSPICIOUS` — triggered if player lingers >15 s near a skip without depositing; Dave walks toward player
+- `CONFRONTING` — player caught taking item: verbal warning logged; `TipWarningCount++`
+- `BANNING` — `TipWarningCount ≥ 2`: player banned from site for 1 in-game day; Dave calls it in ("I've
+  got your face on the camera, mate")
+- `TEA_BREAK` — 13:00–13:15; Dave returns to portakabin; WATCHING state suspended; bays unmonitored
+
+**Warning escalation**:
+| `TipWarningCount` | Consequence |
+|---|---|
+| 1 | Verbal warning only; player can continue |
+| 2 | Ejected from site; 1-day ban (CounselTipBanUntil day tracked) |
+| 3+ | Police called; Notoriety +1; `ANTISOCIAL_BEHAVIOUR` CrimeType added |
+
+**Bribery (press E on Dave)**:
+- Cost: 5 COIN → Dave enters `TEA_BREAK` state for 10 minutes regardless of time; `TipWarningCount` reset to 0
+- Requires: player `StreetReputation ≥ 20` OR NotorietySystem tier < 2 (Dave's a jobsworth, not corrupt
+  with known criminals)
+- Bribe dialogue: "Look, I'm going on me break. I haven't seen nothing. Ten minutes."
+
+**Restricted item deposit** (E on RESTRICTED_ITEMS_HATCH_PROP when Dave is watching):
+- Dave refuses and logs the item type ("That's clinical waste, mate. I can't take that.")
+- Bribed/tea-break state: deposit succeeds; `RESTRICTED_ITEM` removed from inventory; player +5 StreetRep
+  (neighbourhood: "at least he's not fly-tipping")
+
+---
+
+### Big Phil — Saturday Fence Contact
+
+`NPCType.TIP_FENCE_CONTACT` — spawns at FENCE_CAR_PROP in tip car park, Saturdays 09:00–11:00 only.
+
+**Buys from player**:
+| Item | Phil's Price |
+|---|---|
+| `BROKEN_LAPTOP` | 12 COIN |
+| `CIRCUIT_BOARD` | 6 COIN (×4 max) |
+| `COPPER_WIRE` | 4 COIN (×6 max) |
+| `GAS_CANISTER` (restricted) | 15 COIN |
+| `PAINT_TIN` (restricted) | 8 COIN |
+| `ASBESTOS_SAMPLE` (restricted) | 25 COIN |
+
+Phil's stock refreshes each Saturday. If player Notoriety ≥ 50, Phil drives away without trading
+("Too hot today, mate. Come back when you've cooled down."). If player completes 3 Saturday trades,
+Phil unlocks as a persistent FenceSystem contact (available outside Saturdays via a phone number).
+
+---
+
+### System Integrations
+
+- **ScrapyardSystem**: metals salvaged from METALS_SKIP sell at standard weigh-bridge prices; Gary
+  comments "You been divin' at the tip again?" if player sells 3+ tip-sourced items in one session.
+- **SquatSystem**: `SCRAP_WOOD` from TIMBER_SKIP grants Vibe +2 per unit when used as squat furnishing.
+  `DOOR_FRAME_PROP` reduces squat heat loss (WarmthSystem shelter bonus +2/sec).
+- **FenceSystem**: BROKEN_LAPTOP, CIRCUIT_BOARD fence for 8 COIN; COPPER_WIRE for 4 COIN.
+- **WantedSystem**: `TipWarningCount ≥ 3` triggers police call; Notoriety +1.
+- **CriminalRecord**: `ANTISOCIAL_BEHAVIOUR` when police are called by Dave; `ILLEGAL_DUMPING` if
+  restricted item deposited without bribe and police witness.
+- **NotorietySystem**: `COLD_SNAP_CAPITALIST` achievement possible — salvage from tip during FROST
+  weather and sell to fence within the same in-game day.
+- **NeighbourhoodWatchSystem**: fly-tipping outside the tip boundary (dropping RESTRICTED_ITEM on
+  ground within 10 blocks of tip perimeter) adds WatchAnger +8.
+- **SkipDivingSystem**: if player already has `SKIP_DIVER_REPUTATION` (earned via SkipDivingSystem),
+  Dave's `SUSPICIOUS` timer is halved (he expects it from regulars). Flavour only — no gameplay change.
+- **WeatherSystem**: during RAIN, TIMBER_SKIP loot degrades (SCRAP_WOOD becomes ROTTEN_WOOD, Vibe +0
+  only); ELECTRONICS_SKIP items shorting risk — salvage attempt during rain has 20% chance of electric
+  shock (−5 HP, `CLUMSY` debuff for 60 seconds).
+- **TimeSystem**: Dave clocks off at 18:00 sharp; gate locked (GATE_PROP collision active). Player
+  inside at close gets trapped until 08:00 — or can climb the fence (JUMP action over FENCE_PROP,
+  Agility check, NoiseSystem magnitude 0.3).
+- **RumourNetwork**: after player is banned, seed `ANTISOCIAL_INDIVIDUAL` rumour to nearest NPC
+  ("Heard they got banned from the tip. What kind of person gets banned from the tip?").
+- **NewspaperSystem**: if player dumps ASBESTOS_SAMPLE undetected 3× times: "Asbestos Fears at
+  Northfield Tip After Anonymous Tip-Off." If player tips off Environmental Health instead:
+  "Northfield Tip Gets Clean Bill of Health After Council Audit."
+- **EnvironmentalHealthSystem**: player can report illegal dumping witnessed at the tip; +5 StreetRep,
+  seeds COUNCIL_CRACKDOWN rumour.
+- **AchievementSystem**: achievements below.
+- **NoiseSystem**: council lorry emptying bays emits noise magnitude 0.6 for 30 seconds.
+- **DisguiseSystem**: COUNCIL_JACKET disguise makes Dave treat player as a fellow council worker —
+  restricted items accepted without bribe; Dave shares portakabin tea.
+
+### New Materials (add to Material.java)
+
+- `RESIDENTS_PERMIT` — "Your household waste permit. Dave needs to see this." Not stackable.
+- `BROKEN_LAPTOP` — "A broken laptop. Circuit board might be worth something." Stackable: yes (×2). Fence value: 8 COIN.
+- `CIRCUIT_BOARD` — "Green PCB. Copper content." Stackable: yes (×6). Fence value: 6 COIN.
+- `SCRAP_WOOD` — "Offcuts. Good for the squat." Stackable: yes (×8). Squat Vibe +2 per unit.
+- `ROTTEN_WOOD` — "Wet through. Useless for building; burns briefly in a campfire." Stackable: yes (×8).
+- `GAS_CANISTER` — "Empty(ish) propane. Dangerous." Not stackable. Police liability item.
+- `PAINT_TIN` — "Half-used Magnolia. Restricted waste." Stackable: yes (×2). Fence value: 8 COIN.
+- `ASBESTOS_SAMPLE` — "Do NOT open this bag." Not stackable. Police liability item. Fence value: 25 COIN.
+
+### New PropTypes (add to PropType.java)
+
+- `GENERAL_WASTE_SKIP(3.0f, 1.8f, 5.0f, 8, null)` — large general waste skip; player E to deposit or salvage.
+- `ELECTRONICS_SKIP(3.0f, 1.8f, 5.0f, 8, null)` — WEEE electronics skip.
+- `TIMBER_SKIP(3.0f, 1.8f, 5.0f, 8, null)` — timber/wood skip.
+- `METALS_SKIP(3.0f, 1.8f, 5.0f, 8, null)` — metals recycling skip.
+- `PORTAKABIN_PROP(4.0f, 2.5f, 3.0f, 0, null)` — Dave's site office; E opens dialogue.
+- `RESTRICTED_ITEMS_HATCH_PROP(1.2f, 1.5f, 0.5f, 0, null)` — hatch for prohibited items; Dave monitors.
+- `FENCE_CAR_PROP(4.0f, 1.5f, 2.0f, 0, null)` — Big Phil's car parked in tip car park on Saturdays.
+- `TIP_GATE_PROP(4.0f, 2.0f, 0.4f, 0, null)` — entrance gate; locked after 18:00.
+
+### New NPCTypes (add to NPCType.java)
+
+- `COUNCIL_TIP_ATTENDANT(25f, 0f, 0f, false)` — Dave; patrols bays during open hours; hi-viz; portakabin at tea break.
+- `TIP_FENCE_CONTACT(20f, 0f, 0f, false)` — Big Phil; Saturday car park fence; drives off at high notoriety.
+- `TIP_LORRY_DRIVER(20f, 0f, 0f, false)` — council lorry driver; arrives when bay full; empties skip.
+
+### New LandmarkType (add to LandmarkType.java)
+
+- `COUNCIL_TIP` — "Northfield Household Recycling Centre". Located on industrial estate, adjacent to SCRAPYARD.
+
+### Achievements (add to AchievementType.java)
+
+| Achievement | Condition |
+|---|---|
+| `ONE_MANS_TRASH` | Salvage 10 items from the tip in one visit |
+| `JOBSWORTH` | Bribe Dave successfully for the first time |
+| `RESTRICTED_AREA` | Deposit a RESTRICTED_ITEM without being caught |
+| `SATURDAY_BOY` | Complete 3 trades with Big Phil on Saturdays |
+| `ASBESTOS_Andy` | Carry ASBESTOS_SAMPLE for more than 1 in-game day without disposing of it |
+| `WHAT_GOES_AROUND` | Sell tip-salvaged copper wire to the scrapyard |
+| `LOCK_IN` | Get locked inside the tip overnight and escape by climbing the fence |
+
+### Unit Tests (implement in `CouncilTipSystemTest.java`)
+
+- `CouncilTipSystem.isOpen(TimeSystem(day=TUESDAY, hour=10f))` → true.
+- `CouncilTipSystem.isOpen(TimeSystem(day=MONDAY, hour=10f))` → false.
+- `CouncilTipSystem.isOpen(TimeSystem(day=TUESDAY, hour=18.5f))` → false (after close).
+- `CouncilTipSystem.isDaveOnTeaBreak(hour=13.1f)` → true; `isDaveOnTeaBreak(hour=13.2f)` → true; `isDaveOnTeaBreak(hour=13.16f)` → false.
+- `CouncilTipSystem.attemptBribe(player_streetRep=25, player_notorietyTier=1, coin=5)` → SUCCESS; Dave state = TEA_BREAK; player coin −5.
+- `CouncilTipSystem.attemptBribe(player_streetRep=10, player_notorietyTier=3, coin=5)` → REFUSED.
+- `CouncilTipSystem.salvageItem(skipType=ELECTRONICS_SKIP, rng=seeded, daveState=WATCHING)` → warns player; TipWarningCount = 1.
+- `CouncilTipSystem.salvageItem(skipType=ELECTRONICS_SKIP, rng=seeded, daveState=TEA_BREAK)` → item added to inventory; no warning.
+- `CouncilTipSystem.depositRestricted(item=GAS_CANISTER, daveState=WATCHING, playerCoin=0)` → REFUSED; "That's clinical waste, mate."
+- `CouncilTipSystem.depositRestricted(item=GAS_CANISTER, daveState=TEA_BREAK, playerCoin=0)` → SUCCESS; item removed from inventory.
+- `CouncilTipSystem.refreshBayLoot(bay=ELECTRONICS_SKIP, rng=seeded)` → bay contains BROKEN_LAPTOP + CIRCUIT_BOARD.
+- `CouncilTipSystem.isPhilPresent(day=SATURDAY, hour=10f)` → true; `isPhilPresent(day=SATURDAY, hour=11.5f)` → false.
+- `CouncilTipSystem.philBuy(item=ASBESTOS_SAMPLE, playerNotorietyTier=2)` → 25 COIN to player; item removed.
+- `CouncilTipSystem.philBuy(item=ASBESTOS_SAMPLE, playerNotorietyTier=4)` → REFUSED; Phil drives away.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Full legitimate tip visit — deposit and salvage during tea break**: Advance TimeSystem to Tuesday 13:05.
+   Verify Dave NPC state = TEA_BREAK. Player approaches ELECTRONICS_SKIP and presses E. Verify `CIRCUIT_BOARD`
+   (×2) added to player inventory. Verify no TipWarningCount increment. Player deposits `OLD_SOFA` into
+   GENERAL_WASTE_SKIP (E action). Verify OLD_SOFA removed from inventory. Advance time to 13:16. Verify
+   Dave state returns to WATCHING.
+
+2. **Dave catches player salvaging — escalation to ban**: Set TimeSystem to Wednesday 10:00, Dave state =
+   WATCHING. Player salvages from TIMBER_SKIP (E action). Verify Dave transitions to SUSPICIOUS, then
+   CONFRONTING. Verify TipWarningCount = 1. Player salvages a second time. Verify TipWarningCount = 2.
+   Verify player is ejected (position set outside site boundary). Verify CounselTipBanUntil = currentDay+1.
+   Player attempts to re-enter GENERAL_WASTE_SKIP. Verify action blocked with message "Dave's banned you
+   from the site for the day, mate."
+
+3. **Bribe Dave to dispose of restricted item**: Player has `GAS_CANISTER` in inventory and 10 COIN.
+   Press E on Dave. Select bribe option (5 COIN). Verify player coin reduced by 5. Verify Dave state =
+   TEA_BREAK. Player presses E on RESTRICTED_ITEMS_HATCH_PROP. Verify `GAS_CANISTER` removed from inventory.
+   Verify player StreetReputation +5. Verify no CriminalRecord entry added.
+
+4. **Big Phil Saturday trade — unlock persistent fence contact**: Advance to Saturday 09:30. Verify
+   `TIP_FENCE_CONTACT` NPC spawned at FENCE_CAR_PROP. Player has `BROKEN_LAPTOP` (×1) and `CIRCUIT_BOARD`
+   (×3). Press E on Phil. Sell all items. Verify player receives 12 + 18 = 30 COIN. Repeat trade on next
+   2 Saturdays. After third trade, verify Phil added to FenceSystem contact list. Verify Phil accessible
+   at FenceSystem outside Saturday hours.
+
+5. **Locked in overnight — fence escape**: Advance TimeSystem to Tuesday 17:55. Player is inside site
+   boundary. Advance to 18:01. Verify TIP_GATE_PROP collision is active (player cannot pass through gate).
+   Verify Dave NPC has despawned (end of shift). Player moves to FENCE_PROP at site perimeter. Trigger
+   JUMP action. Verify player position moves outside boundary. Verify NoiseSystem event created with
+   magnitude 0.3. Verify `LOCK_IN` achievement awarded.
+
+6. **Rainy weather degrades timber loot**: Set WeatherSystem to RAIN. Advance TimeSystem to trigger bay
+   refresh. Verify TIMBER_SKIP loot contains `ROTTEN_WOOD` instead of `SCRAP_WOOD`. Verify when player
+   salvages `ROTTEN_WOOD` and attempts squat installation (SquatSystem), Vibe +0 (no benefit). Verify
+   `SCRAP_WOOD` would grant +2 Vibe (control check with CLEAR weather).
+
+// ── Issue #1245: Northfield Council Recycling Centre ─────────────────────────
+// New: CouncilTipSystem.java in ragamuffin.core
+// New: Issue1245CouncilTipSystemTest.java in src/test/java/ragamuffin/integration/
+// New LandmarkType entry: COUNCIL_TIP (industrial estate, adjacent to SCRAPYARD)
+// New NPCTypes: COUNCIL_TIP_ATTENDANT, TIP_FENCE_CONTACT, TIP_LORRY_DRIVER — add to NPCType.java
+// New AchievementTypes: ONE_MANS_TRASH, JOBSWORTH, RESTRICTED_AREA, SATURDAY_BOY,
+//   ASBESTOS_ANDY, WHAT_GOES_AROUND, LOCK_IN — add to AchievementType.java
+// New CrimeTypes: ANTISOCIAL_BEHAVIOUR (if not present), ILLEGAL_DUMPING — add to CriminalRecord.java
+// New Materials: RESIDENTS_PERMIT, BROKEN_LAPTOP, CIRCUIT_BOARD, SCRAP_WOOD, ROTTEN_WOOD,
+//   GAS_CANISTER, PAINT_TIN, ASBESTOS_SAMPLE — add to Material.java
+// New PropTypes: GENERAL_WASTE_SKIP, ELECTRONICS_SKIP, TIMBER_SKIP, METALS_SKIP,
+//   PORTAKABIN_PROP, RESTRICTED_ITEMS_HATCH_PROP, FENCE_CAR_PROP, TIP_GATE_PROP — add to PropType.java
+// Integrates: ScrapyardSystem, SquatSystem, FenceSystem, WantedSystem, CriminalRecord,
+//   NotorietySystem, NeighbourhoodWatchSystem, SkipDivingSystem, WeatherSystem,
+//   TimeSystem, RumourNetwork, NewspaperSystem, EnvironmentalHealthSystem,
+//   AchievementSystem, NoiseSystem, DisguiseSystem, WarmthSystem
