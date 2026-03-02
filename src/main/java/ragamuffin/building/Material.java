@@ -4261,7 +4261,23 @@ public enum Material {
      * If found by Brenda during a home visit evidence search: instant CRIMINAL_REFERRAL.
      * Tooltip: "Don't let Brenda see this."
      */
-    CASH_IN_HAND_LEDGER("Cash-in-Hand Ledger");
+    CASH_IN_HAND_LEDGER("Cash-in-Hand Ledger"),
+
+    // ── Issue #1190: Information Broker ──────────────────────────────────────
+
+    /**
+     * Paper — a blank sheet of writing paper.
+     * Crafting component for RUMOUR_NOTE (with PEN).
+     * Found at the post office counter or newsagent.
+     */
+    PAPER("Paper"),
+
+    /**
+     * Pen — a biro.
+     * Crafting component for RUMOUR_NOTE (with PAPER).
+     * Found at the post office counter or newsagent.
+     */
+    PEN("Pen");
 
     private final String displayName;
 
@@ -6998,6 +7014,12 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official appeal letter
             case CASH_IN_HAND_LEDGER:
                 return IconShape.BOX;         // small notebook
+
+            // Issue #1190: Information Broker
+            case PAPER:
+                return IconShape.FLAT_PAPER;  // blank sheet
+            case PEN:
+                return IconShape.CYLINDER;    // biro pen
 
             default:
                 return IconShape.BOX;

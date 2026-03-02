@@ -2461,7 +2461,24 @@ public enum PropType {
      * Contents seeded daily by Random(dayNumber). Max 3 items taken per visit.
      * Player can also deposit items. Deposit 3+ items → REUSE_HERO achievement.
      */
-    REUSE_SHELF_PROP(1.20f, 1.00f, 0.40f, 5, null);
+    REUSE_SHELF_PROP(1.20f, 1.00f, 0.40f, 5, null),
+
+    // ── Issue #1190: Information Broker ──────────────────────────────────────
+
+    /**
+     * BEAD_CURTAIN_PROP — a strip curtain of plastic beads hanging in a doorway.
+     * Marks the entrance to Kenny Doyle's back-room booth in The Feathers.
+     * Passable (no collision blocking the player); provides visual division.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    BEAD_CURTAIN_PROP(0.90f, 2.00f, 0.05f, 1, null),
+
+    /**
+     * STASH_CRATE_PROP — a wooden crate spawned at a real world position by
+     * InformationBrokerSystem when a {@code STASH_SITE} IntelligenceLot is applied.
+     * Contains faction-appropriate loot. Destroyed by 3 punches; yields {@link Material#WOOD}.
+     */
+    STASH_CRATE_PROP(0.60f, 0.60f, 0.60f, 3, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
