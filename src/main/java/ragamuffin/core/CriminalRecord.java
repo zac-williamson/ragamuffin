@@ -484,7 +484,22 @@ public class CriminalRecord {
          * and the 40% catch chance fires during pat-down.
          * Penalty: Notoriety +3, ejection from current event, BOXING_CLUB banned 3 days.
          */
-        FIGHT_FIXING("Fight fixing (loaded glove — illegal equipment)");
+        FIGHT_FIXING("Fight fixing (loaded glove — illegal equipment)"),
+
+        /**
+         * Issue #1171: Recorded when the player is caught EVADING TV Licence obligations
+         * with a lit TV_PROP in range and the DETECTOR_VAN 25% detection chance fires.
+         * Also recorded on SUMMONED status auto-referral to MagistratesCourtSystem.
+         * Penalty: Notoriety +5, WantedSystem Tier 1.
+         */
+        TV_LICENCE_EVASION("TV licence evasion"),
+
+        /**
+         * Issue #1171: Recorded when an NPC reports a FORGED_TV_LICENCE sale to police.
+         * Seeds wanted level and links to FORGED_DOCUMENT in court proceedings.
+         * Penalty: Notoriety +8, WantedSystem Tier 2.
+         */
+        FORGED_DOCUMENT("Forged document (TV licence)");
 
         private final String displayName;
 

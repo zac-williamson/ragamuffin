@@ -3520,6 +3520,53 @@ public enum AchievementType {
         "Gym Rat",
         "Three sessions before teatime. Tommy's seen it all now.",
         1
+    ),
+
+    // ── Issue #1171: Northfield TV Licence ────────────────────────────────────
+
+    /**
+     * Awarded for paying for a TV licence at the LETTERBOX_PROP.
+     */
+    HONEST_TELLY(
+        "Licence to Watch",
+        "You paid your TV licence. The BBC thanks you. Seriously.",
+        1
+    ),
+
+    /**
+     * Awarded for reaching SUMMONED status without ever paying.
+     */
+    EVADER(
+        "Dodger",
+        "The van's been round three times. You still haven't paid.",
+        1
+    ),
+
+    /**
+     * Awarded for selling a FORGED_TV_LICENCE to an NPC.
+     */
+    BOGUS_INSPECTOR(
+        "Bogus Inspector",
+        "You sold a fake licence. The check's in the post.",
+        1
+    ),
+
+    /**
+     * Awarded for evading detection when the DETECTOR_VAN passes with a lit TV.
+     */
+    DETECTOR_PROOF(
+        "Detector Proof",
+        "The van went past. The telly was on. They didn't notice.",
+        1
+    ),
+
+    /**
+     * Awarded for selling 3 FORGED_TV_LICENCE items (the NewspaperSystem headline trigger).
+     */
+    LOWEST_OF_THE_LOW_TELLY(
+        "TV Licence Scammer",
+        "Three pensioners. Three fake licences. The Daily Ragamuffin knows your face.",
+        3
     );
 
     private final String name;
