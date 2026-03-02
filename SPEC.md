@@ -38698,3 +38698,172 @@ CriminalRecord discharge flag set. Notoriety reduced by 10.
 // Integrates: MagistratesCourtSystem, ArrestSystem, PropertySystem, ShelterDetector,
 //   FenceSystem, DisguiseSystem, WantedSystem, CriminalRecord, NotorietySystem,
 //   AchievementSystem, RumourNetwork, TimeSystem, WeatherSystem, NewspaperSystem
+
+## Issue #1235: Northfield Sporting & Social Club — Darts League, Meat Raffle & the AGM Stitch-Up
+
+**Background / Why This Exists**: `LandmarkType.SPORTING_SOCIAL_CLUB` is already defined (display name "Northfield Sporting & Social Club") and the building exists in the world, but `SportingSocialClubSystem.java` does not exist. The venue sits referenced in comments across FactionSystem and PubLockInSystem but has no behaviour. This issue brings it fully to life.
+
+**The Venue**: A single-storey red-brick members' club on the edge of the high street, backing onto the car park. Interior: main bar (BARMAN behind the counter), a darts alcove (DARTBOARD_PROP, two CHALK_SCORE_BOARD_PROP), a small stage (for karaoke on Saturday nights), a kitchen hatch (KITCHEN_HATCH_PROP), noticeboard (NOTICE_BOARD_PROP listing fixtures and AGM dates), and a back room behind a FROSTED_DOOR_PROP (pontoon table — Marchetti Crew territory). Open Mon–Fri 17:00–23:00, Sat 12:00–23:00, Sun 12:00–22:00. Closed to non-members; membership costs 3 COIN/week from the CLUB_SECRETARY NPC (Barry) at the bar. Members get a 30% discount on drinks vs the pub.
+
+### NPCs
+
+- **Barry** (`CLUB_SECRETARY`) — sits at the end of the bar Tue/Thu/Sat. Sells memberships, reads out raffle numbers, and chairs the AGM. Passive; ejects non-members.
+- **Dave** and **Kev** (`DARTS_PLAYER`) — regulars who practise darts Mon–Fri evenings. Challengeable to a 501 match.
+- **Irene** (`RAFFLE_ORGANISER`) — wheels out the MEAT_RAFFLE_TROLLEY_PROP on Fridays 20:00–21:00. Sells strips of tickets (2 COIN for 5).
+- **Councillor Hicks** (`COUNCIL_MEMBER`) — attends the AGM on the last Wednesday of the month; second agenda item is always suspicious.
+- 2–4 generic `PUBLIC` regulars at the bar most evenings.
+
+### Mechanics
+
+#### 1. Membership System
+- Non-members who enter get intercepted by Barry within 10 seconds: "Members only, pal." Player ejected.
+- Buy a weekly membership for 3 COIN. `isMember()` flag; expires after 7 in-game days.
+- WantedSystem ≥ 2 stars: Barry refuses membership ("I've seen your face in the paper, son").
+- DisguiseSystem score ≥ 3: Barry's recognition check has 50% miss rate.
+
+#### 2. Darts — 501 League
+- Press E on Dave or Kev to challenge to a game of 501.
+- Mini-game: power-bar fills/depletes (0.5s cycle); player presses E to release. Score = sector hit based on timing precision (perfect = treble 20, poor = 1 or miss). Double-out required.
+- Opponent auto-scores per turn using a seeded accuracy distribution (Dave avg 32/turn, Kev avg 24/turn).
+- Win: +5 COIN, +3 Street Rep (STREET_LADS faction), `BULLSEYE` achievement on first win.
+- Lose: −2 COIN (stakes agreed at start), "Hard luck, son." from opponent.
+- **Darts League**: join the Tuesday-night league (Barry signs you up; costs 2 COIN entry). 6-week season, 1 match/week. League table tracked in `ChampionshipLadder` (repurpose existing class for darts). Win the season → `DARTS_CHAMPION` achievement + 15 COIN prize + mention in NewspaperSystem ("Local Wins Northfield Darts Title").
+
+#### 3. Meat Raffle — Friday Night
+- Fridays 20:00–21:00: Irene sells RAFFLE_TICKET strips (2 COIN for 5 tickets). Player can hold up to 20 tickets.
+- 21:00: Barry calls 6 numbers aloud (speech log). Prizes: PORK_CHOPS (3 COIN value), CHICKEN_LEGS, SAUSAGES (Material items), MYSTERY_BOX (2 COIN cash equivalent).
+- **Raffle Rig**: if the player has a RIGGED_BARREL (already exists from FeteSystem), hold E on the raffle drum while Irene is facing away → guaranteed next number matches a ticket. Risk: if caught (15% base chance, reduced by DisguiseSystem), Notoriety +8, ejection, WantedSystem +1.
+- Win any raffle prize → `MEAT_RAFFLE_WINNER` achievement.
+- Win 3+ prizes in a single session → `LUCKY_SOD` achievement.
+
+#### 4. AGM Stitch-Up — Monthly
+- Last Wednesday of each month, 19:30–21:00. AGM agenda pinned to the NOTICE_BOARD_PROP.
+- 4 agenda items: (1) Darts fixture list, (2) Suspicious planning application by Councillor Hicks, (3) Bar pricing, (4) Any other business.
+- Player can attend if a member. Interact with the PODIUM_PROP to raise a point of order.
+- **Legitimate path**: vote against the planning application (costs Marchetti Crew −10 Respect if Hicks is their man). If player has INCRIMINATING_DOCUMENT material (from the InformationBroker or Scrapyard skip), can publicly expose Hicks → Notoriety −15, NewspaperSystem headline "Local Councillor Exposed at Sporting Club AGM", WantedSystem Hicks NPC state = FLEEING.
+- **Corrupt path**: Marchetti Crew Respect ≥ 50 → player can be paid 10 COIN by Hicks to stay quiet and shepherd the vote through. CriminalRecord entry `CORRUPTION`.
+- `AGM_WHISTLEBLOWER` achievement for exposing Hicks; `GOOD_OLD_BOYS` achievement for facilitating the stitch-up.
+
+#### 5. Back Room Pontoon (Marchetti Crew territory)
+- FROSTED_DOOR_PROP requires Marchetti Crew Respect ≥ 60 or a BACK_ROOM_KEY (fenced for 5 COIN).
+- Simple pontoon card game: bet 1–10 COIN per hand, dealt vs dealer (house edge 8%).
+- Bust (>21) → lose stake. Win → 1:1 payout. Pontoon (21 in two cards) → 2:1.
+- Game is rigged if the player is on a losing streak of 5+: dealer has a 20% extra advantage (coded as `cheatMode = true`). Player can spot this with StreetSkillSystem OBSERVE skill (Expert+) → exposes dealer → ejected but refunded last 3 hands.
+- `PONTOON_PLAYER` achievement on first win; `SHARP` achievement on catching the cheat.
+
+#### 6. Weather & Time Effects
+- RAIN/DRIZZLE adds +2 regulars (people sheltering).
+- After Sunday football (when MatchDaySystem reports a home result), the club fills to capacity (8 extra PUBLIC NPCs, queue at bar prop, 2x noise level).
+
+### NPC Dialogue Samples
+
+**Barry (CLUB_SECRETARY)**:
+- "You a member? No? That's two quid a week. Well, three now. Inflation."
+- "Right, settle down — item two on the agenda. Councillor Hicks has a few words..."
+- "Eyes down for a full house!"
+
+**Dave (DARTS_PLAYER)**:
+- "Double top to finish. Easy money."
+- "You play darts? I'll take your coins off you then."
+
+**Irene (RAFFLE_ORGANISER)**:
+- "Five tickets for two pound. You won't win but you might."
+- "Number forty-seven! Anyone? Lovely bit of pork that is."
+
+**Councillor Hicks (COUNCIL_MEMBER)**:
+- "The planning application is straightforward. Six weeks, in and out."
+- "I'd appreciate it if we kept this between ourselves."
+
+### System Integrations
+
+- **FactionSystem**: Marchetti Crew runs the back room; Respect ≥ 60 unlocks it.
+- **ChampionshipLadder**: repurposed for darts league table.
+- **FeteSystem / RIGGED_BARREL**: shared item used in raffle rig mechanic.
+- **NewspaperSystem**: darts win headline; AGM expose headline.
+- **WantedSystem**: membership refusal ≥ 2 stars; raffle rig ejection +1 star.
+- **CriminalRecord**: `CORRUPTION` entry for AGM stitch-up path.
+- **DisguiseSystem**: 50% miss rate on Barry's recognition check at score ≥ 3.
+- **NotorietySystem**: AGM expose −15; raffle rig caught +8.
+- **AchievementSystem**: `BULLSEYE`, `DARTS_CHAMPION`, `MEAT_RAFFLE_WINNER`, `LUCKY_SOD`, `AGM_WHISTLEBLOWER`, `GOOD_OLD_BOYS`, `PONTOON_PLAYER`, `SHARP`.
+- **RumourNetwork**: darts win seeded as `LOCAL_EVENT`; AGM expose seeded as `CRIMINAL_INTEL`.
+- **NoiseSystem**: post-match crowd = 2x noise.
+- **MatchDaySystem**: Sunday post-game influx trigger.
+- **WarmthSystem**: interior +5 Warmth/min (heated venue).
+- **WeatherSystem**: rain/drizzle adds regulars.
+- **StreetSkillSystem**: OBSERVE (Expert+) detects back-room cheat.
+
+### New Materials
+
+- `RAFFLE_TICKET` — "A strip of five raffle tickets. Ripped from the roll by Irene herself."
+- `PORK_CHOPS` — "A decent joint. Still a bit pink in the middle." (food; heals 10 HP)
+- `CHICKEN_LEGS` — "Two legs, wrapped in cling film. Win from the meat raffle." (food; heals 6 HP)
+- `SAUSAGES` — "Six thick pork bangers. You can smell them through the bag." (food; heals 4 HP)
+- `BACK_ROOM_KEY` — "A small brass key stamped 'No. 2'. Opens the back room at the Sporting Club."
+- `MEMBERSHIP_CARD` — "Northfield Sporting & Social Club. Member No. [N]. Valid this week only."
+- `INCRIMINATING_DOCUMENT` — "A photocopy of a planning application with some very interesting annotations in the margin." (reused across systems)
+
+### New PropTypes
+
+- `DARTBOARD_PROP` — wall-mounted dartboard in the darts alcove; press E to start a practice session.
+- `CHALK_SCORE_BOARD_PROP` — wall-mounted score slate; updated by system during matches.
+- `MEAT_RAFFLE_TROLLEY_PROP` — wheeled trolley bearing cling-filmed joints; Irene stands behind it.
+- `RAFFLE_DRUM_PROP` — the numbered barrel Irene spins; interactable for the rig mechanic.
+- `PODIUM_PROP` — small lecturn at the front of the room for the AGM.
+- `FROSTED_DOOR_PROP` — opaque glazed door to the back room; impassable without key or Respect.
+- `LEAGUE_BOARD_PROP` — corkboard showing the darts league standings.
+
+### Achievements
+
+| Achievement | Condition |
+|---|---|
+| `BULLSEYE` | Win your first darts match at the Sporting Club |
+| `DARTS_CHAMPION` | Win the 6-week Tuesday-night league |
+| `MEAT_RAFFLE_WINNER` | Win any prize in the Friday meat raffle |
+| `LUCKY_SOD` | Win 3 or more raffle prizes in a single Friday session |
+| `AGM_WHISTLEBLOWER` | Expose Councillor Hicks at the AGM using incriminating evidence |
+| `GOOD_OLD_BOYS` | Help Councillor Hicks steer the corrupt planning vote through |
+| `PONTOON_PLAYER` | Win your first hand of pontoon in the back room |
+| `SHARP` | Catch the dealer cheating in the back room and demand a refund |
+
+### Unit Tests
+
+- `SportingSocialClubSystem.buyMembership(player, coin=3, timeSystem)` → `isMember()` = true; COIN −3; `getMembershipExpiry()` = now + 7 days.
+- `SportingSocialClubSystem.buyMembership(player, wantedStars=2)` → refused; coin unchanged; Barry dialogue fired.
+- `SportingSocialClubSystem.playDarts(player, opponent=DAVE, aimAccuracy=0.95f)` → score ≥ 40; verify double-out requirement enforced (finishing on odd score rejects the dart).
+- `SportingSocialClubSystem.conductRaffle(rng=seeded, tickets=[47,12,3,88,6,21])` → 6 numbers drawn; prizes assigned only to matching tickets; player with ticket 47 wins PORK_CHOPS.
+- `SportingSocialClubSystem.rigRaffle(player, rigged=true, detectionRoll=0.0f)` → guaranteed win; no ejection.
+- `SportingSocialClubSystem.rigRaffle(player, rigged=true, detectionRoll=1.0f)` → ejection = true; Notoriety +8; WantedSystem +1.
+- `SportingSocialClubSystem.agmVote(player, choice=EXPOSE, document=INCRIMINATING_DOCUMENT)` → Hicks state = FLEEING; Notoriety −15; `AGM_WHISTLEBLOWER` achievement.
+- `SportingSocialClubSystem.agmVote(player, choice=FACILITATE, marchettiRespect=60)` → COIN +10; `CORRUPTION` CriminalRecord; `GOOD_OLD_BOYS` achievement.
+- `SportingSocialClubSystem.playPontoon(bet=5, hand=[10,11])` → pontoon detected; payout = 15 (2:1).
+- `SportingSocialClubSystem.playPontoon(bet=5, hand=[10,5,8])` → bust (23); loss = 5.
+- `SportingSocialClubSystem.detectCheat(player, observeSkill=EXPERT, cheatMode=true)` → cheatDetected = true; ejection = true; last 3 hands refunded.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Membership required for entry**: Non-member player walks to the SPORTING_SOCIAL_CLUB entrance at 18:00. Verify Barry intercepts within 10 seconds; player cannot proceed past the door. Player pays 3 COIN for membership. Verify `isMember()` = true; player can now enter. Advance TimeSystem 8 in-game days. Verify `isMember()` = false (expired). Verify player is intercepted again at the entrance.
+
+2. **Darts 501 match completes correctly**: Member player presses E on Dave at 19:00 Monday. Agree 2 COIN stakes. Simulate 5 player turns (aiming accuracy 0.85f) and 5 Dave auto-turns. Verify running score decrements from 501. When player reaches exactly 0 on a double, verify match ends with player as winner; COIN +5 − 2 net = +3; Street Rep (STREET_LADS) +3; `BULLSEYE` achievement. Verify CHALK_SCORE_BOARD_PROP reflects final scores.
+
+3. **Meat raffle draw and rig**: Member player buys 10 raffle tickets at 20:00 Friday (spends 4 COIN). Player holds RIGGED_BARREL. Wait until Irene faces away (10-second window). Hold E on RAFFLE_DRUM_PROP for 3 seconds. Verify next drawn number matches one of the player's tickets; player wins PORK_CHOPS. Verify `MEAT_RAFFLE_WINNER` achievement. Now test caught path: set detection roll to 1.0f; attempt rig again → Barry ejection dialogue; player moved to street; Notoriety +8; WantedSystem stars +1.
+
+4. **AGM expose path**: Member player attends the AGM on the last Wednesday of the month (TimeSystem set to correct time). Player has INCRIMINATING_DOCUMENT in inventory. Interact with PODIUM_PROP; select "Present evidence". Verify: Councillor Hicks NPC state = FLEEING; Notoriety −15; `AGM_WHISTLEBLOWER` achievement; NewspaperSystem next edition headline contains "Exposed at Sporting Club AGM"; Marchetti Crew Respect unchanged (Hicks not flagged as their asset unless Respect ≥ 50 — test with Respect = 30 for clean path).
+
+5. **Back room pontoon cheat detection**: Member player has Marchetti Crew Respect = 65 and StreetSkillSystem OBSERVE = EXPERT. Player enters back room via FROSTED_DOOR_PROP. Player loses 5 consecutive hands (cheatMode activates). Player triggers observe check (press E on dealer). Verify: `cheatDetected = true`; player receives refund for last 3 hands' stakes; player ejected from back room; `SHARP` achievement. Verify FROSTED_DOOR_PROP locks player out for remainder of session.
+
+// ── Issue #1235: Northfield Sporting & Social Club ──
+// New: SportingSocialClubSystem.java in ragamuffin.core
+// New: Issue1235SportingSocialClubTest.java in src/test/java/ragamuffin/integration/
+// LandmarkType.SPORTING_SOCIAL_CLUB already defined
+// New NPCTypes: CLUB_SECRETARY, DARTS_PLAYER, RAFFLE_ORGANISER — add to NPCType.java
+// New AchievementTypes: BULLSEYE, DARTS_CHAMPION, MEAT_RAFFLE_WINNER, LUCKY_SOD,
+//   AGM_WHISTLEBLOWER, GOOD_OLD_BOYS, PONTOON_PLAYER, SHARP — add to AchievementType.java
+// New CrimeType: CORRUPTION — add to CriminalRecord.java if not already present
+// New Materials: RAFFLE_TICKET, PORK_CHOPS, CHICKEN_LEGS, SAUSAGES, BACK_ROOM_KEY,
+//   MEMBERSHIP_CARD, INCRIMINATING_DOCUMENT — add to Material.java
+// New PropTypes: DARTBOARD_PROP, CHALK_SCORE_BOARD_PROP, MEAT_RAFFLE_TROLLEY_PROP,
+//   RAFFLE_DRUM_PROP, PODIUM_PROP, FROSTED_DOOR_PROP, LEAGUE_BOARD_PROP — add to PropType.java
+// Integrates: FactionSystem (Marchetti back room), ChampionshipLadder (darts league),
+//   FeteSystem (RIGGED_BARREL item), NewspaperSystem, WantedSystem, CriminalRecord,
+//   DisguiseSystem, NotorietySystem, AchievementSystem, RumourNetwork, NoiseSystem,
+//   MatchDaySystem, WarmthSystem, WeatherSystem, StreetSkillSystem
