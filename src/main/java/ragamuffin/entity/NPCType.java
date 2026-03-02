@@ -2378,7 +2378,17 @@ public enum NPCType {
      * Player collects by pressing E. Despawns after 10 minutes if uncollected.
      * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    MARCHETTI_RUNNER(30f, 0f, 0f, false);
+    MARCHETTI_RUNNER(30f, 0f, 0f, false),
+
+    // ── Issue #1271: Northfield Tattoo Parlour ────────────────────────────────
+
+    /**
+     * Health Inspector — a council official who may arrive during an unlicensed tattoo
+     * session (15% chance per walk-in hustle). The player must vacate Daz's station
+     * within 30 seconds or receive an UNLICENSED_TATTOOING crime.
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false (unless player ignores them).
+     */
+    HEALTH_INSPECTOR(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

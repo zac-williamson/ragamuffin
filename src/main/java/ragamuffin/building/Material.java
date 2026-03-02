@@ -5016,7 +5016,23 @@ public enum Material {
      * Acts as currency for calls from the phone box instead of COIN (card consumed on use).
      * Found in skip diving or charity shop loot pools.
      */
-    PHONE_CARD("Phone Card");
+    PHONE_CARD("Phone Card"),
+
+    // ── Issue #1271: Northfield Tattoo Parlour ────────────────────────────────
+
+    /**
+     * Biro Pen — a standard ballpoint pen. Used as an ingredient for the Jailhouse
+     * Special tattoo option at the tattoo parlour. Also found in stationery loot pools.
+     */
+    BIRO_PEN("Biro Pen"),
+
+    /**
+     * Tattoo Gun Kit — a makeshift tattoo device cobbled together from scrap.
+     * Crafted from 3 SCRAP_METAL + 1 BROKEN_PHONE.
+     * Allows the player to run unlicensed tattoo sessions at Daz's station
+     * during his lunch break (13:00–14:00).
+     */
+    TATTOO_GUN_KIT("Tattoo Gun Kit");
 
     private final String displayName;
 
