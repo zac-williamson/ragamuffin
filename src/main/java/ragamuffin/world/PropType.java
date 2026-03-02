@@ -3210,7 +3210,34 @@ public enum PropType {
      * 0.30×0.20×1.20; hitsToBreak = 6 (yields SCRAP_METAL).
      * Breaking it frees the dog but triggers LURCHER_DOG aggression.
      */
-    DOG_CHAIN_PROP(0.30f, 0.20f, 1.20f, 6, Material.SCRAP_METAL);
+    DOG_CHAIN_PROP(0.30f, 0.20f, 1.20f, 6, Material.SCRAP_METAL),
+
+    // ── Issue #1315: Prison Van Escape — The Paddy Wagon Hustle ───────────────
+
+    /**
+     * POLICE_VAN_PROP — the transit vehicle used to transport arrested players.
+     * 6.0×2.2×2.2; indestructible during transit (hitsToBreak = Integer.MAX_VALUE).
+     * Yields SCRAP_METAL when destroyed after despawn (not modelled in prop stats).
+     */
+    POLICE_VAN_PROP(6.0f, 2.2f, 2.2f, Integer.MAX_VALUE, null),
+
+    /**
+     * VAN_CELL_DOOR_PROP — rear cage door with a padlock; the lockpick and brute-force target.
+     * 1.0×2.0×0.1; hitsToBreak = 6 (yields SCRAP_METAL).
+     */
+    VAN_CELL_DOOR_PROP(1.0f, 2.0f, 0.1f, 6, Material.SCRAP_METAL),
+
+    /**
+     * VAN_BENCH_PROP — metal bench along the left wall; can be ripped loose for brute force.
+     * 1.8×0.5×0.4; hitsToBreak = 3 (yields VAN_BENCH item).
+     */
+    VAN_BENCH_PROP(1.8f, 0.5f, 0.4f, 3, Material.VAN_BENCH),
+
+    /**
+     * VAN_VENT_PROP — small roof vent; kick open with ≥ 30% strength skill.
+     * 0.4×0.4×0.1; hitsToBreak = 2 (yields nothing).
+     */
+    VAN_VENT_PROP(0.4f, 0.4f, 0.1f, 2, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

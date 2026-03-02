@@ -2562,7 +2562,17 @@ public enum NPCType {
      * </ul>
      * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    RSPCA_OFFICER(30f, 0f, 0f, false);
+    RSPCA_OFFICER(30f, 0f, 0f, false),
+
+    // ── Issue #1315: Prison Van Escape — The Paddy Wagon Hustle ───────────────
+
+    /**
+     * ESCORT_OFFICER — weakened POLICE variant seated in the back of the prison van.
+     * 25 HP, unarmed (0 attack damage). Not initially hostile; becomes hostile if
+     * bribe is refused or an escape attempt is detected and not interrupted.
+     * Can be bribed, distracted, or charmed during the PrisonVanSystem transit window.
+     */
+    ESCORT_OFFICER(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

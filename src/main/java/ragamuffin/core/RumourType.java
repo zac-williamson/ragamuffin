@@ -828,5 +828,21 @@ public enum RumourType {
      * — seeded by TravellerSiteSystem on a successful night caravan raid.
      * Spreads via STREET_LAD and PUBLIC NPCs.
      * Triggers NotorietySystem +5; if DOG_FIGHT_LEDGER taken, NewspaperSystem headline eligible. */
-    DOG_FIGHT_RAID;
+    DOG_FIGHT_RAID,
+
+    // ── Issue #1315: Prison Van Escape — The Paddy Wagon Hustle ───────────────
+
+    /** "Did you hear? Someone only legged it out the back of the police van —
+     * right on the ring road. Officers were fuming."
+     * Seeded by PrisonVanSystem on successful escape. Spreads via PUBLIC, STREET_LAD,
+     * and BARMAN NPCs town-wide. Adds +5 STREET_LADS Respect; NewspaperSystem headline
+     * eligible (front page: "Escape from the Paddy Wagon"). Police patrol frequency +1
+     * for 24 in-game hours. */
+    VAN_ESCAPE,
+
+    /** "Police are looking for someone who did a runner from their van on the
+     * industrial estate."
+     * Seeded simultaneously with VAN_ESCAPE. Spreads via POLICE NPCs; re-activates
+     * WANTED state after the 60-second grace window expires. */
+    CUSTODY_DODGER;
 }

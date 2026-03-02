@@ -5298,7 +5298,17 @@ public enum Material {
      * Accepted by TRAVELLER_BOSS at above-FenceSystem rates (8 COIN).
      * Also accepted by FenceSystem at standard rate (5 COIN).
      */
-    STOLEN_BIKE("Stolen Bike");
+    STOLEN_BIKE("Stolen Bike"),
+
+    // ── Issue #1315: Prison Van Escape — The Paddy Wagon Hustle ───────────────
+
+    /**
+     * VAN_BENCH — ripped-off metal bench from inside the police van.
+     * Improvised melee weapon; 3 durability; deals 4 damage per hit. Stacks to 1.
+     * Tooltip: "Cold, metal, and surprisingly motivating."
+     * Dropped by VAN_BENCH_PROP when destroyed during PrisonVanSystem escape.
+     */
+    VAN_BENCH("Van Bench");
 
     private final String displayName;
 
