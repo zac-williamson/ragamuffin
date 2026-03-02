@@ -454,7 +454,18 @@ public enum LandmarkType {
      * Features darts, quiz nights, AGM, back-room pontoon, and protection money
      * handover. Managed by SportingSocialClubSystem.
      */
-    SPORTING_SOCIAL_CLUB;
+    SPORTING_SOCIAL_CLUB,
+
+    // ── Issue #1114: Meredith & Sons Funeral Parlour ──────────────────────────
+
+    /**
+     * Meredith &amp; Sons Funeral Directors — a narrow, double-fronted Victorian brick
+     * building on the quiet side street between the church and the cemetery.
+     * Purple and black fascia, gold lettering. Open Mon–Fri 09:00–17:00, Sat 09:00–12:00.
+     * Run by Gerald Meredith (UNDERTAKER) and Dawn (FUNERAL_ASSISTANT).
+     * Managed by FuneralParlourSystem.
+     */
+    FUNERAL_PARLOUR;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -535,6 +546,7 @@ public enum LandmarkType {
             case INTERNET_CAFE:         return "Cybernet";
             case NIGHTCLUB:             return "The Vaults";
             case SPORTING_SOCIAL_CLUB:  return "Northfield Sporting & Social Club";
+            case FUNERAL_PARLOUR:       return "Meredith & Sons Funeral Directors";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
