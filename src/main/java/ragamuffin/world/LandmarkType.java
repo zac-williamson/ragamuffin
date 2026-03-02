@@ -589,7 +589,18 @@ public enum LandmarkType {
      *
      * <p>Managed by ProbationSystem.
      */
-    PROBATION_OFFICE;
+    PROBATION_OFFICE,
+
+    // ── Issue #1190: Northfield Information Broker ────────────────────────────
+
+    /**
+     * Issue #1190: The Feathers — a back-street pub housing Kenny Doyle's
+     * intelligence brokerage operation.
+     * Open 14:00–22:00. Kenny operates from a back-room booth behind a
+     * BEAD_CURTAIN_PROP. Players can buy and sell criminal intelligence here.
+     * Managed by InformationBrokerSystem.
+     */
+    INFO_BROKER_PUB;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -681,6 +692,7 @@ public enum LandmarkType {
             case BOXING_CLUB:           return "Tommy's Gym";
             case RECYCLING_CENTRE:      return "Northfield Tip";
             case PROBATION_OFFICE:      return "Northfield Probation Service";
+            case INFO_BROKER_PUB:       return "The Feathers";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

@@ -1992,7 +1992,16 @@ public enum NPCType {
      * Keith: 40s, terse, by-the-book. Only appears when suspicion ≥ 80.
      * Passive until player opens squat door; then initiates compliance interview.
      */
-    DWP_COMPLIANCE_OFFICER(30f, 0f, 0f, false);
+    DWP_COMPLIANCE_OFFICER(30f, 0f, 0f, false),
+
+    // ── Issue #1190: Information Broker ──────────────────────────────────────
+
+    /**
+     * Kenny Doyle — the information broker operating from the back-room booth
+     * of The Feathers pub. Passive; interacts via menu when player presses E.
+     * Buys and sells criminal intelligence via InformationBrokerSystem.
+     */
+    INFO_BROKER(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
