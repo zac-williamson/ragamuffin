@@ -3806,7 +3806,68 @@ public enum Material {
      * Present to Deborah to halve remaining NHS wait time. 25% catch chance at Notoriety ≥ 30.
      * Tooltip: "Looks official. Feels criminal. Welcome to Northfield."
      */
-    FORGED_WAITING_LIST_LETTER("Forged Waiting List Letter");
+    FORGED_WAITING_LIST_LETTER("Forged Waiting List Letter"),
+
+    // ── Issue #1157: Northfield Tesco Express ─────────────────────────────────
+
+    /**
+     * Tesco Sandwich — meal deal component. Hunger +20.
+     * Description: "Egg mayo. The egg is grey." Costs 2 COIN alone.
+     */
+    TESCO_SANDWICH("Tesco Sandwich"),
+
+    /**
+     * Tesco Pasta Pot — alternative sandwich slot in meal deal. Hunger +25.
+     * Description: "Room temperature pasta. Technically food."
+     */
+    TESCO_PASTA_POT("Tesco Pasta Pot"),
+
+    /**
+     * Tesco Orange Juice — meal deal drink slot. Thirst −15.
+     */
+    TESCO_ORANGE_JUICE("Tesco Orange Juice"),
+
+    /**
+     * Tesco Meal Deal Bag — completed meal deal containing sandwich + drink + snack.
+     * Opens into 3 separate items when consumed.
+     */
+    TESCO_MEAL_DEAL_BAG("Tesco Meal Deal Bag"),
+
+    /**
+     * Clubcard — Tesco loyalty card. Reduces meal deal price to 2 COIN.
+     * Grants +1 Clubcard point per COIN spent. Unstackable.
+     */
+    CLUBCARD("Clubcard"),
+
+    /**
+     * Clubcard Voucher — 1 COIN discount on next purchase. Single-use.
+     * Obtained when Clubcard points reach 10.
+     */
+    CLUBCARD_VOUCHER("Clubcard Voucher"),
+
+    /**
+     * Tesco Finest Wine — pricey item on top shelf. Cost 4 COIN.
+     * Drunkenness +3. Description: "On offer this week. It wasn't."
+     */
+    TESCO_FINEST_WINE("Tesco Finest Wine"),
+
+    /**
+     * Tesco Own Brand Vodka — 2 COIN. Drunkenness +4.
+     * HealingSystem: cures minor cuts (antiseptic grade).
+     */
+    TESCO_OWN_BRAND_VODKA("Tesco Own Brand Vodka"),
+
+    /**
+     * Ready Meal — 2 COIN. Requires MICROWAVE to eat (Hunger +30 when cooked, −5 if eaten cold).
+     * Description: "For one."
+     */
+    READY_MEAL("Ready Meal"),
+
+    /**
+     * Clubcard Statement — letter in player's squat mailbox: points total, vouchers available.
+     * Spawns every 7 in-game days if player has a Clubcard.
+     */
+    CLUBCARD_STATEMENT("Clubcard Statement");
 
     private final String displayName;
 
@@ -4775,6 +4836,25 @@ public enum Material {
             case FORGED_WAITING_LIST_LETTER: return cs(0.88f, 0.88f, 0.80f, // Slightly off-white
                                                     0.42f, 0.28f, 0.70f); // Suspicious purple hue
 
+            // Issue #1157: Northfield Tesco Express
+            case TESCO_SANDWICH:         return cs(0.90f, 0.85f, 0.70f,  // Bread beige
+                                                   0.60f, 0.80f, 0.30f); // Lettuce green
+            case TESCO_PASTA_POT:        return c(0.95f, 0.90f, 0.70f);  // Pasta yellow
+            case TESCO_ORANGE_JUICE:     return c(1.00f, 0.60f, 0.10f);  // Orange
+            case TESCO_MEAL_DEAL_BAG:    return cs(0.10f, 0.40f, 0.20f,  // Tesco dark green
+                                                   1.00f, 0.80f, 0.00f); // Tesco gold
+            case CLUBCARD:               return cs(0.10f, 0.40f, 0.20f,  // Tesco green
+                                                   0.80f, 0.80f, 0.80f); // Silver card
+            case CLUBCARD_VOUCHER:       return cs(0.10f, 0.40f, 0.20f,  // Green
+                                                   0.95f, 0.95f, 0.80f); // Yellow voucher
+            case TESCO_FINEST_WINE:      return cs(0.45f, 0.10f, 0.20f,  // Dark red wine
+                                                   0.85f, 0.75f, 0.30f); // Gold label
+            case TESCO_OWN_BRAND_VODKA:  return c(0.88f, 0.92f, 0.98f);  // Clear/blue
+            case READY_MEAL:             return cs(0.30f, 0.25f, 0.20f,  // Dark tray
+                                                   0.80f, 0.60f, 0.40f); // Food orange
+            case CLUBCARD_STATEMENT:     return cs(0.90f, 0.92f, 0.88f,  // White letter
+                                                   0.10f, 0.40f, 0.20f); // Tesco green header
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5242,6 +5322,17 @@ public enum Material {
             case DENTAL_APPOINTMENT_LETTER:
             case WAITING_LIST_LETTER:
             case FORGED_WAITING_LIST_LETTER:
+            // Issue #1157: Northfield Tesco Express — not block items
+            case TESCO_SANDWICH:
+            case TESCO_PASTA_POT:
+            case TESCO_ORANGE_JUICE:
+            case TESCO_MEAL_DEAL_BAG:
+            case CLUBCARD:
+            case CLUBCARD_VOUCHER:
+            case TESCO_FINEST_WINE:
+            case TESCO_OWN_BRAND_VODKA:
+            case READY_MEAL:
+            case CLUBCARD_STATEMENT:
                 return false;
             default:
                 return true;
@@ -6245,6 +6336,28 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official NHS letter
             case FORGED_WAITING_LIST_LETTER:
                 return IconShape.FLAT_PAPER;  // forged NHS letter
+
+            // Issue #1157: Northfield Tesco Express
+            case TESCO_SANDWICH:
+                return IconShape.FOOD;        // triangular sandwich pack
+            case TESCO_PASTA_POT:
+                return IconShape.FOOD;        // pasta pot with lid
+            case TESCO_ORANGE_JUICE:
+                return IconShape.BOTTLE;      // small OJ carton
+            case TESCO_MEAL_DEAL_BAG:
+                return IconShape.BOX;         // branded paper bag
+            case CLUBCARD:
+                return IconShape.CARD;        // loyalty card
+            case CLUBCARD_VOUCHER:
+                return IconShape.FLAT_PAPER;  // voucher slip
+            case TESCO_FINEST_WINE:
+                return IconShape.BOTTLE;      // wine bottle
+            case TESCO_OWN_BRAND_VODKA:
+                return IconShape.BOTTLE;      // vodka bottle
+            case READY_MEAL:
+                return IconShape.FOOD;        // plastic tray meal
+            case CLUBCARD_STATEMENT:
+                return IconShape.FLAT_PAPER;  // statement letter
 
             default:
                 return IconShape.BOX;

@@ -2245,7 +2245,22 @@ public enum PropType {
      * Press E with LOCKPICK to open (70% success) and steal GRANT_APPLICATION_FORM.
      * 5 hits to break; yields SCRAP_METAL.
      */
-    FILING_CABINET_PROP(0.55f, 1.30f, 0.50f, 5, Material.SCRAP_METAL);
+    FILING_CABINET_PROP(0.55f, 1.30f, 0.50f, 5, Material.SCRAP_METAL),
+
+    // ── Issue #1157: Northfield Tesco Express ─────────────────────────────────
+
+    /**
+     * MEAL_DEAL_COUNTER_PROP — waist-high display counter at the Tesco Express entrance.
+     * Press E to trigger the meal deal selection UI. 5 hits; yields WOOD.
+     */
+    MEAL_DEAL_COUNTER_PROP(1.20f, 0.90f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * WINE_CHILLER_PROP — glass-fronted refrigerated wine display unit.
+     * Press E to browse alcohol items: TESCO_FINEST_WINE × 3, TESCO_OWN_BRAND_VODKA × 2.
+     * LOCKED after 22:00 (Challenge 25 policy). 8 hits to break; yields GLASS.
+     */
+    WINE_CHILLER_PROP(0.80f, 1.80f, 0.40f, 8, Material.GLASS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
