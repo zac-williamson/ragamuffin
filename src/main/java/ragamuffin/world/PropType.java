@@ -1615,7 +1615,41 @@ public enum PropType {
      * Decorative; flavour tooltip: "Open until 10. Theoretically."
      * Destroyed by 3 punches; yields SCRAP_METAL.
      */
-    PHARMACY_SIGN_PROP(1.20f, 0.40f, 0.10f, 3, Material.SCRAP_METAL);
+    PHARMACY_SIGN_PROP(1.20f, 0.40f, 0.10f, 3, Material.SCRAP_METAL),
+
+    // ── Issue #1122: Sun Kissed Studio ────────────────────────────────────────
+
+    /**
+     * TANNING_BED_PROP — a horizontal UV tanning unit with a hinged lid.
+     * Press E to purchase a sunbed session from Tracey.
+     * Tooltip: "The Northfield Riviera."
+     * Destroyed by 4 punches; yields SCRAP_METAL.
+     */
+    TANNING_BED_PROP(2.00f, 0.80f, 1.00f, 4, Material.SCRAP_METAL),
+
+    /**
+     * MASSAGE_TABLE_PROP — a padded fold-out massage table in the back room.
+     * Press E near Jade or Tanya to book a massage.
+     * Tooltip: "Surprisingly professional."
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    MASSAGE_TABLE_PROP(1.80f, 0.70f, 0.80f, 3, Material.WOOD),
+
+    /**
+     * RECEPTION_DESK_PROP — Tracey's front-of-house desk with a price menu board.
+     * Press E to view the service menu.
+     * Tooltip: "Cash only. No cheques. No questions."
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    RECEPTION_DESK_PROP(1.50f, 1.00f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * LAUNDRY_BAG_PROP — a heavy-duty laundry bag kept behind the reception desk.
+     * Contains the MARCHETTI_LEDGER when the back-room safe has been raided.
+     * Tooltip: "Not towels."
+     * Destroyed by 2 punches; yields BROWN_ENVELOPE.
+     */
+    LAUNDRY_BAG_PROP(0.80f, 0.60f, 0.60f, 2, Material.BROWN_ENVELOPE);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

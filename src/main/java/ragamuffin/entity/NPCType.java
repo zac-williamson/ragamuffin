@@ -1311,7 +1311,25 @@ public enum NPCType {
      * Gossips freely about deceased estates; seeds INHERITANCE and WILL_LOCATION rumours.
      * Calls police if the casket is found disturbed.
      */
-    FUNERAL_ASSISTANT(20f, 0f, 0f, false);
+    FUNERAL_ASSISTANT(20f, 0f, 0f, false),
+
+    // ── Issue #1122: Sun Kissed Studio ────────────────────────────────────────
+
+    /**
+     * Salon Owner — Tracey, proprietor of Sun Kissed Studio.
+     * Anchored near the reception desk during open hours.
+     * Accepts Marchetti cash drops at 11:00 and 18:00 daily.
+     * Refuses service if player is GRASS (Marchetti Respect < 10).
+     */
+    SALON_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * Massage Therapist — Jade and Tanya, the therapists at Sun Kissed Studio.
+     * Patrol between massage tables and the reception area.
+     * Jade gossips on rainy days, seeding LOCAL_EVENT rumours.
+     * Tanya manages special service bookings for Street Rep ≥ 40.
+     */
+    MASSAGE_THERAPIST(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
