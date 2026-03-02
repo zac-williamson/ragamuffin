@@ -2367,7 +2367,18 @@ public enum NPCType {
      * Flees (NPCState.FLEEING) on police shutdown. 4–6 spawn per meet.
      * HP: 35f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    BOY_RACER(35f, 0f, 0f, false);
+    BOY_RACER(35f, 0f, 0f, false),
+
+    // ── Issue #1269: Northfield BT Phone Box ──────────────────────────────────
+
+    /**
+     * Marchetti Runner — a member of the Marchetti Crew dispatched after a
+     * dead-drop call from the phone box. Arrives at the phone box within 3
+     * in-game minutes carrying a random item from the Marchetti loot pool.
+     * Player collects by pressing E. Despawns after 10 minutes if uncollected.
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    MARCHETTI_RUNNER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -4992,7 +4992,31 @@ public enum Material {
      * deducted from the next top-up.
      * Tooltip: "Emergency credit. You've got til morning."
      */
-    EMERGENCY_CREDIT_NOTICE("Emergency Credit Notice");
+    EMERGENCY_CREDIT_NOTICE("Emergency Credit Notice"),
+
+    // ── Issue #1269: Northfield BT Phone Box ──────────────────────────────────
+
+    /**
+     * PHONE_BOX_KEY — a BT engineer's master key.
+     * Rare drop from UTILITY_WORKER NPC (3% pickpocket chance) or ScrapyardSystem.
+     * Lets the player lock the coin slot (no other NPC can use the box for 1 in-game day)
+     * or unlock a broken box without SCRAP_METAL. Also reveals the SCRAWLED_NUMBER sticker.
+     */
+    PHONE_BOX_KEY("BT Engineer Key"),
+
+    /**
+     * SCRAWLED_NUMBER — a scrap of paper with a shady contact number.
+     * Found inside the phone box on first use (or revealed by PHONE_BOX_KEY).
+     * Required to make the Marchetti dead-drop call from the phone box.
+     */
+    SCRAWLED_NUMBER("Scrawled Number"),
+
+    /**
+     * PHONE_CARD — a legacy BT phonecard.
+     * Acts as currency for calls from the phone box instead of COIN (card consumed on use).
+     * Found in skip diving or charity shop loot pools.
+     */
+    PHONE_CARD("Phone Card");
 
     private final String displayName;
 
@@ -7978,6 +8002,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // small plastic PAYG key
             case EMERGENCY_CREDIT_NOTICE:
                 return IconShape.FLAT_PAPER;  // paper emergency credit slip
+
+            // Issue #1269: Northfield BT Phone Box
+            case PHONE_BOX_KEY:
+                return IconShape.FLAT_PAPER;  // small BT engineer master key
+            case SCRAWLED_NUMBER:
+                return IconShape.FLAT_PAPER;  // scrap of paper with contact number
+            case PHONE_CARD:
+                return IconShape.FLAT_PAPER;  // legacy BT phonecard
 
             default:
                 return IconShape.BOX;

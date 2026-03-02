@@ -605,5 +605,22 @@ public enum RumourType {
     /** "Big Mick's been sniffing round the benefits office again — looking for someone skint."
      * — seeded by DWPSystem on benefit payment day when the player has an outstanding loan.
      * Spreads via PUBLIC and JOB_CENTRE_CLERK NPCs within 40 blocks of the JobCentre. */
-    BIG_MICK_DEBT;
+    BIG_MICK_DEBT,
+
+    // ── Issue #1269: Northfield BT Phone Box ──────────────────────────────────
+
+    /** "Someone grassed — police showed up looking for someone round [location]."
+     * — seeded by PhoneBoxSystem when the player makes an anonymous tip-off call.
+     * Spreads via PUBLIC and PENSIONER NPCs; nearby NPCs whisper "someone grassed". */
+    POLICE_TIP_OFF,
+
+    /** "Someone's been making calls from the phone box — Marchetti crew were seen nearby."
+     * — seeded by PhoneBoxSystem after a successful dead-drop call.
+     * Spreads via PUBLIC NPCs; Marchetti crew becomes temporarily wary (reduced patrol radius). */
+    MARCHETTI_CONTACT,
+
+    /** "That old phone box on the estate — someone actually fixed it."
+     * — seeded by PhoneBoxSystem when the player repairs PHONE_BOX_ESTATE.
+     * Spreads via PUBLIC and PENSIONER NPCs; marks the player as a local community figure. */
+    PHONE_BOX_REPAIR;
 }

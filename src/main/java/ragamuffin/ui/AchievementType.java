@@ -4640,6 +4640,50 @@ public enum AchievementType {
         "Big Mick Bounced",
         "Flogged his ledger to the Marchettis. Debt gone. Thugs incoming. Worth it.",
         1
+    ),
+
+    // ── Issue #1269: Northfield BT Phone Box ──────────────────────────────────
+
+    /**
+     * Awarded (instant) when the player makes their first successful anonymous tip-off
+     * from the phone box that leads to a POLICE NPC being dispatched.
+     * Triggers POLICE_TIP_OFF rumour. Reduces Wanted stars by 1.
+     */
+    GRASSIN_UP(
+        "Grassin' Up",
+        "Rang the Old Bill anonymously. That felt wrong. And right.",
+        1
+    ),
+
+    /**
+     * Awarded (instant) when the player successfully collects their first Marchetti
+     * dead-drop delivery from a MARCHETTI_RUNNER NPC.
+     * Requires Marchetti Respect >= 30 and SCRAWLED_NUMBER in inventory.
+     */
+    DEAD_DROP(
+        "Dead Drop",
+        "Someone left a package. You didn't ask what was in it.",
+        1
+    ),
+
+    /**
+     * Awarded (progress) when the player has made 10 total calls from the phone box.
+     * Tracks all call types combined. A regular on the payphone.
+     */
+    OFF_THE_BOOKS(
+        "Off the Books",
+        "Ten calls. All anonymous. All from a box nobody else uses.",
+        10
+    ),
+
+    /**
+     * Awarded (instant) when the player repairs the broken estate phone box
+     * using 3× SCRAP_METAL. Seeds PHONE_BOX_REPAIR rumour. +2 Neighbourhood Vibes.
+     */
+    LAST_PHONE_STANDING(
+        "Last Phone Standing",
+        "Fixed the estate box. You're basically BT Openreach now.",
+        1
     );
 
     private final String name;
