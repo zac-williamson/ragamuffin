@@ -39048,3 +39048,188 @@ CriminalRecord discharge flag set. Notoriety reduced by 10.
 // Integrates: TimeSystem, NPCManager, WantedSystem, CriminalRecord, NotorietySystem,
 //   DisguiseSystem, StreetSkillSystem, NewspaperSystem, RumourNetwork, NoiseSystem,
 //   WheeliBinFireSystem, CraftingSystem, FactionSystem, AchievementSystem, PropertySystem
+
+## Issue #1239: Northfield NHS Blood Donation Session — The Mobile Unit, the Biscuit Table & the Black Market Plasma Hustle
+
+**Background / Why This Exists**: The NHS Blood Donation Service runs a mobile unit out of a converted NHS van that parks in the Northfield Community Centre car park every fortnight (every 14 in-game days, Wednesday 09:00–17:00). It is staffed by two NHS volunteers — cheerful, patient Brenda (`NHS_DONOR_COORDINATOR` NPC) and nervous new recruit Tyler (`VOLUNTEER` NPC) — and a GP Nurse who handles the actual needle work (`GP_NURSE` NPC). This is peak British civic life: queuing for the privilege of losing a pint of blood, then being rewarded with a custard cream and a weak squash. The player can donate legitimately (receiving a modest HP heal from the post-donation biscuit table), or engage in various hustles: stealing blood bags from the van's refrigerated storage unit, forging the donor questionnaire to donate despite ineligibility, or pickpocketing the biscuit tin.
+
+**System file**: `src/main/java/ragamuffin/core/BloodDonationSystem.java`
+**Test file**: `src/test/java/ragamuffin/integration/Issue1239BloodDonationTest.java`
+
+---
+
+### The Van & Setting
+
+The NHS Blood Donation Van (`BLOOD_DONATION_VAN_PROP`) parks outside the Community Centre every 14 in-game days (Wednesday). It is a white van with a red cross on the side and a fold-out step. Inside: 2 DONOR_RECLINER_PROPs (padded chairs), a BISCUIT_TABLE_PROP stocked with BISCUIT items and ORANGE_SQUASH items, a BLOOD_FRIDGE_PROP (refrigerated storage holding 6 BLOOD_BAG items), a DONOR_QUESTIONNAIRE_PROP (clipboard on table), and a small PRIVACY_SCREEN_PROP.
+
+The van is open **Wednesday 09:00–17:00** every 14 in-game days. Outside those hours/days the van is absent (despawned). `BloodDonationSystem.isDonationDayActive(dayCount, hour)` returns true only during these windows.
+
+A small queue of 2–4 PUBLIC and PENSIONER NPCs forms outside the van between 09:30 and 13:00. They shuffle forward every 10 in-game minutes as slots open.
+
+---
+
+### Mechanics
+
+#### 1. Legitimate Blood Donation (press E on Brenda / `NHS_DONOR_COORDINATOR`)
+
+- Brenda hands the player a `DONOR_QUESTIONNAIRE` form (new Material).
+- Player must complete the questionnaire (text prompt: 5 yes/no questions: recent travel, tattoo within 6 months, medication, alcohol in last 24 hours, age over 17).
+- **Eligibility checks** (automatic, based on player state):
+  - If player has `HEAVILY_TATTOOED` buff active (≥ 3 tattoos in last 6 in-game months from TattooSystem): ineligible — Brenda: *"I'm sorry, we can't take you if you've had a tattoo in the last six months."*
+  - If player consumed alcohol in the last 24 in-game hours (alcoholLevel > 0 from Player): ineligible — Tyler (whispering): *"You smell a bit… we'll just say you're unwell."*
+  - If player Notoriety ≥ 40: Tyler flags it to Brenda (5% chance per visit); Brenda checks ID, ineligible that session.
+  - Otherwise: eligible.
+- Eligible player sits in DONOR_RECLINER_PROP (press E). GP Nurse performs donation: player HP −15 (blood loss), `DONOR_FATIGUE` debuff applied (movement speed −10% for 5 in-game minutes).
+- After donation: player receives from BISCUIT_TABLE_PROP automatically: 1 `BISCUIT` (+5 HP), 1 `ORANGE_SQUASH` (+5 HP). Net HP effect: −5 after biscuits.
+- `BloodDonationSystem.recordDonation(player)` — player logged; can only donate once per 84 in-game days (56-day NHS deferral period, approximated). Brenda: *"You're a lifesaver, love. Literally."*
+- Awards `GOOD_CITIZEN` achievement on first donation. Awards `REGULAR_DONOR` achievement on 3rd cumulative donation.
+- Seeds `RumourType.COMMUNITY_SPIRIT` rumour: *"Did you hear the blood donation van's back? Brenda says they're desperate for O-neg."*
+
+#### 2. Forged Donor Questionnaire (DisguiseSystem + CraftingSystem)
+
+- Player has `DONOR_QUESTIONNAIRE` form in inventory (picked up from clipboard by pressing E on DONOR_QUESTIONNAIRE_PROP while unobserved).
+- Player can use a `PHOTOCOPIER_PROP` (at the Internet Café or Primary School) to forge the questionnaire: `CraftingSystem.craft(DONOR_QUESTIONNAIRE + BLANK_FORM → FORGED_DONOR_QUESTIONNAIRE)`.
+- Present `FORGED_DONOR_QUESTIONNAIRE` to Brenda when ineligible: 70% success (Tyler doesn't check); 30% failure if Tyler is watching (within 3 blocks and facing player).
+- On failure: Tyler calls Brenda; player ejected; `HEALTH_FRAUD` CrimeType added to CriminalRecord; WantedSystem +1 star.
+- On success: donation proceeds as normal; `FORGED_THEIR_WAY_TO_A_BISCUIT` achievement awarded.
+
+#### 3. Blood Bag Theft (BLOOD_FRIDGE_PROP heist)
+
+The BLOOD_FRIDGE_PROP at the back of the van is locked (E-interact: "Secured unit. Authorised personnel only."). Contains 6 `BLOOD_BAG` items (each fence value: 10 COIN — sell to PawnShopSystem or FenceSystem; tooltip: *"A sealed NHS blood bag. Cold. This is probably very illegal."*).
+
+- **Distraction route**: Player speaks to Tyler (press E), choosing "Could you help me with something?" dialogue option. Tyler leaves his post for 30 seconds (DISTRACTED state). Player can then press E on BLOOD_FRIDGE_PROP → opens for 5 seconds → take up to 3 BLOOD_BAG items.
+- **Lockpick route**: StreetSkillSystem LOCKPICKING ≥ JOURNEYMAN; press E on BLOOD_FRIDGE_PROP while Brenda and Tyler both face away. Takes 4 seconds. If caught mid-pick: HEALTH_FRAUD CrimeType; WantedSystem +2 stars; Brenda: *"Oi! That's not for you! Tyler, call 999!"*
+- **Biscuit tin theft**: BISCUIT_TABLE_PROP holds a loose BISCUIT_TIN containing 8 COIN. Press E while unobserved to pocket it. If caught: Notoriety +3; Tyler guilt-trips player: *"Those biscuits are for the donors. Just… why?"*
+
+#### 4. Donation Deferral — Tattoo Interaction (TattooSystem Integration)
+
+- If player has received a tattoo from `TattooParlourSystem` within the last 6 in-game months (tracked by TattooSystem.lastTattooDay), `BloodDonationSystem.checkEligibility()` returns `DEFERRED_TATTOO`.
+- Brenda's dialogue: *"I'm afraid we can't take you today — recent tattoo. Come back after six months."*
+- This creates a real in-game trade-off: players who tattoo up for Notoriety/faction gains sacrifice blood donation (and `REGULAR_DONOR` achievement path) for several months.
+
+#### 5. Queue Jump & Social Pressure
+
+During 09:30–13:00, 2–4 NPC queuing. Player joins the queue by standing within 2 blocks of the van entrance and pressing E. If player has Notoriety ≥ 25, a PENSIONER NPC in the queue mutters: *"Some people have no shame. I've been waiting twenty minutes."*
+
+Player can **queue-jump** by pressing Shift+E (uses player's existing shoulder-barge mechanic or simply insert into queue): Notoriety +1; the displaced PENSIONER complains loudly → NoiseSystem event magnitude 20 → nearby PUBLIC NPCs glance over; no crime triggered but Brenda gives player a stern look (dialogue: *"There is a queue, you know."*).
+
+#### 6. Double-Donation Scam
+
+Player can attempt to donate twice in the same session by using DisguiseSystem score ≥ 3 to be unrecognised by Tyler (Brenda always recognises them). Second donation: HP −15 again, `DONOR_FATIGUE` stacks (movement speed −20%). Awards `TWICE_THE_HERO` achievement. Risk: 25% chance Tyler remembers the face → GP Nurse called; WantedSystem +1; player ejected.
+
+---
+
+### NPC Dialogue Samples
+
+**Brenda (`NHS_DONOR_COORDINATOR`)**:
+- "Welcome to the blood donation service! Have you donated with us before?"
+- "We're especially short on O-negative today. Every pint counts."
+- "Make sure you drink plenty of water after, love. And take a biscuit — you've earned it."
+- "I'm sorry, we can't take you today. But do come back!"
+- "Tyler! Eyes on the fridge please!"
+
+**Tyler (`VOLUNTEER`)**:
+- "Hi! Um. It's my third session. I'm getting better at the needle."
+- "Can I help you? There's, um, a form to fill in first."
+- "Please don't take the biscuits. They're for the donors."
+- "I think I need to call someone. Brenda!"
+
+**GP Nurse**:
+- "Small scratch. Keep still."
+- "That's you done. Well done. Don't drive for an hour."
+
+---
+
+### System Integrations
+
+- **TimeSystem**: fortnightly schedule (every 14 days, Wednesday); 09:00–17:00 window.
+- **NPCManager**: spawn/despawn Brenda, Tyler, GP Nurse, and queuing NPCs on schedule.
+- **HealingSystem**: HP −15 on donation; biscuit/squash restore HP.
+- **TattooSystem** (when implemented): 6-month deferral mechanic.
+- **DisguiseSystem**: double-donation scam recognition bypass; forged questionnaire Tyler detection.
+- **StreetSkillSystem**: LOCKPICKING for BLOOD_FRIDGE_PROP.
+- **FenceSystem / PawnShopSystem**: BLOOD_BAG fence value 10 COIN each.
+- **CriminalRecord**: HEALTH_FRAUD crime type (add if not present).
+- **WantedSystem**: caught blood bag theft (+2 stars); caught forged questionnaire (+1 star).
+- **NotorietySystem**: queue-jump (+1); biscuit tin theft if caught (+3).
+- **NoiseSystem**: PENSIONER complaint → magnitude 20 event.
+- **RumourNetwork**: COMMUNITY_SPIRIT rumour seeded on donation day open.
+- **AchievementSystem**: GOOD_CITIZEN, REGULAR_DONOR, FORGED_THEIR_WAY_TO_A_BISCUIT, TWICE_THE_HERO.
+- **CraftingSystem**: DONOR_QUESTIONNAIRE + BLANK_FORM → FORGED_DONOR_QUESTIONNAIRE.
+- **NewspaperSystem**: if 3+ BLOOD_BAGs stolen in a session: headline "Northfield Blood Van Raided — NHS Appeals for Calm."
+
+---
+
+### New Materials (add to Material.java)
+
+- `BLOOD_BAG` — "A sealed NHS blood bag, cold to the touch. This is almost certainly a crime." Fence value: 10 COIN. Not stackable.
+- `DONOR_QUESTIONNAIRE` — "An NHS blood donor questionnaire. Personal data on a clipboard. Nosy." Stackable: no.
+- `FORGED_DONOR_QUESTIONNAIRE` — "A filled-in donor questionnaire. All the right answers, none of them true." Stackable: no.
+- `ORANGE_SQUASH` — "Weak orange squash in a plastic cup. Tastes of NHS. +5 HP." Stackable: no.
+
+### New PropTypes (add to PropType.java)
+
+- `BLOOD_DONATION_VAN_PROP(4.0f, 2.2f, 2.0f, 0, null)` — the NHS van; exterior only; despawns on non-donation days.
+- `DONOR_RECLINER_PROP(0.8f, 1.0f, 1.8f, 4, Material.WOOD)` — padded donation recliner; press E to sit and begin donation.
+- `BLOOD_FRIDGE_PROP(0.8f, 1.2f, 0.8f, 6, Material.SCRAP_METAL)` — locked refrigerated unit; BLOOD_BAG storage.
+- `BISCUIT_TABLE_PROP(1.2f, 0.8f, 0.6f, 3, Material.WOOD)` — post-donation refreshment table; BISCUIT + ORANGE_SQUASH items on top.
+- `DONOR_QUESTIONNAIRE_PROP(0.4f, 0.8f, 0.1f, 1, null)` — clipboard with questionnaire form; press E to take DONOR_QUESTIONNAIRE item.
+
+### New NPCType (add to NPCType.java)
+
+- `NHS_DONOR_COORDINATOR(20f, 0f, 0f, false)` — Brenda; staffs the van during session hours; primary dialogue NPC for eligibility checks and donation flow.
+
+### Achievements (add to AchievementType.java)
+
+| Achievement | Condition |
+|---|---|
+| `GOOD_CITIZEN` | Complete your first legitimate blood donation |
+| `REGULAR_DONOR` | Donate blood 3 times across separate sessions |
+| `FORGED_THEIR_WAY_TO_A_BISCUIT` | Successfully donate using a forged questionnaire |
+| `TWICE_THE_HERO` | Double-donate in one session using a disguise |
+| `BISCUIT_TIN_BANDIT` | Steal the biscuit tin from the donation table |
+| `PLASMA_KING` | Fence 3 or more BLOOD_BAG items in a single session |
+
+### Unit Tests (implement in `BloodDonationSystemTest.java`)
+
+- `BloodDonationSystem.isDonationDayActive(dayCount=14, hour=10f)` → true; `isDonationDayActive(dayCount=14, hour=18f)` → false; `isDonationDayActive(dayCount=13, hour=12f)` → false; `isDonationDayActive(dayCount=28, hour=09f)` → true.
+- `BloodDonationSystem.checkEligibility(player, tattooedWithin6Months=false, alcoholLevel=0, notoriety=15)` → `ELIGIBLE`.
+- `BloodDonationSystem.checkEligibility(player, tattooedWithin6Months=true, ...)` → `DEFERRED_TATTOO`.
+- `BloodDonationSystem.checkEligibility(player, alcoholLevel=0.5f, ...)` → `DEFERRED_ALCOHOL`.
+- `BloodDonationSystem.recordDonation(player)` → `donationCount(player)` = 1; `canDonateAgain(player, currentDay=14, lastDonationDay=14)` → false; `canDonateAgain(player, currentDay=98, lastDonationDay=14)` → true.
+- `BloodDonationSystem.applyDonationEffects(player)` → player HP −15; movement speed −10% for 5 minutes; BISCUIT and ORANGE_SQUASH in inventory.
+- `BloodDonationSystem.attemptBloodFridgeDistraction(tyler, player)` → Tyler enters DISTRACTED state for 30 seconds; BLOOD_FRIDGE_PROP accessible.
+- `BloodDonationSystem.attemptBloodFridgeLockpick(player, lockpickSkill=JOURNEYMAN, rng=seeded_success)` → 3 BLOOD_BAG in inventory; BLOOD_FRIDGE_PROP locked.
+- `BloodDonationSystem.checkDoubleDonateFail(player, disguiseScore=3, rng=seeded_fail)` → WantedSystem +1; player ejected.
+- `FenceSystem.getValue(Material.BLOOD_BAG)` → 10.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Donation day spawn and legitimate donation flow**: Advance TimeSystem to a Wednesday (dayCount=14, hour=09:30). Verify `BloodDonationSystem.isDonationDayActive()` = true. Verify BLOOD_DONATION_VAN_PROP is present in world near COMMUNITY_CENTRE. Verify Brenda (`NHS_DONOR_COORDINATOR`) and Tyler (`VOLUNTEER`) NPCs are spawned within 5 blocks of the van. Verify 2–4 PUBLIC or PENSIONER NPCs are queuing. Player presses E on Brenda. Verify DONOR_QUESTIONNAIRE item added to player inventory. Player is eligible (no recent tattoo, alcoholLevel=0, Notoriety=5). Press E on DONOR_RECLINER_PROP. Verify player HP decreases by 15. Verify player receives BISCUIT and ORANGE_SQUASH. Verify `DONOR_FATIGUE` debuff active (speed −10%). Verify `GOOD_CITIZEN` achievement awarded. Verify `RumourNetwork` contains COMMUNITY_SPIRIT rumour.
+
+2. **Blood bag theft via Tyler distraction**: Advance to donation session (dayCount=14, hour=11:00). Player approaches Tyler and presses E, selects "Could you help me?" dialogue. Verify Tyler enters DISTRACTED state. Player presses E on BLOOD_FRIDGE_PROP. Verify 3 BLOOD_BAG items added to inventory within 5 seconds. Tyler returns to post after 30 seconds. Player visits FenceSystem. Verify each BLOOD_BAG fences for 10 COIN. Verify `PLASMA_KING` achievement awarded when 3rd BLOOD_BAG is fenced. Verify NewspaperSystem headline triggered (3+ stolen).
+
+3. **Forged questionnaire — Tyler catches the player**: Player is ineligible (alcoholLevel=0.8). Player picks up DONOR_QUESTIONNAIRE from DONOR_QUESTIONNAIRE_PROP. Player crafts FORGED_DONOR_QUESTIONNAIRE at a PHOTOCOPIER_PROP. Tyler is within 3 blocks and facing player when they present questionnaire (seeded RNG for failure). Verify `HEALTH_FRAUD` CrimeType added to CriminalRecord. Verify WantedSystem stars = 1. Verify player is ejected from the van.
+
+4. **Tattoo deferral interaction**: Use TattooSystem to apply a tattoo to the player at dayCount=10. Advance to dayCount=14 (donation day). Player approaches Brenda. Verify `BloodDonationSystem.checkEligibility()` returns `DEFERRED_TATTOO`. Verify Brenda's dialogue contains "recent tattoo". Verify no HP change and no DONOR_FATIGUE debuff applied.
+
+5. **Donation day despawn — van absent on non-Wednesday**: Advance TimeSystem to Thursday (dayCount=15, hour=10:00). Verify `BloodDonationSystem.isDonationDayActive()` = false. Verify BLOOD_DONATION_VAN_PROP is absent from the world. Verify Brenda and Tyler NPCs are despawned.
+
+// ── Issue #1239: Northfield NHS Blood Donation Session ────────────────────────
+// New: BloodDonationSystem.java in ragamuffin.core
+// New: Issue1239BloodDonationTest.java in src/test/java/ragamuffin/integration/
+// New LandmarkType entry: none (van uses COMMUNITY_CENTRE car park; no new landmark needed)
+// New NPCType: NHS_DONOR_COORDINATOR — add to NPCType.java
+// Existing NPCTypes used: VOLUNTEER (Tyler), GP_NURSE — already in NPCType.java
+// New AchievementTypes: GOOD_CITIZEN, REGULAR_DONOR, FORGED_THEIR_WAY_TO_A_BISCUIT,
+//   TWICE_THE_HERO, BISCUIT_TIN_BANDIT, PLASMA_KING — add to AchievementType.java
+// New CrimeType: HEALTH_FRAUD — add to CriminalRecord.java if not present
+// New Materials: BLOOD_BAG, DONOR_QUESTIONNAIRE, FORGED_DONOR_QUESTIONNAIRE,
+//   ORANGE_SQUASH — add to Material.java
+// Existing Materials used: BISCUIT — already in Material.java
+// New PropTypes: BLOOD_DONATION_VAN_PROP, DONOR_RECLINER_PROP, BLOOD_FRIDGE_PROP,
+//   BISCUIT_TABLE_PROP, DONOR_QUESTIONNAIRE_PROP — add to PropType.java
+// Integrates: TimeSystem, NPCManager, HealingSystem, TattooSystem, DisguiseSystem,
+//   StreetSkillSystem, FenceSystem, PawnShopSystem, CriminalRecord, WantedSystem,
+//   NotorietySystem, NoiseSystem, RumourNetwork, AchievementSystem, CraftingSystem,
+//   NewspaperSystem
