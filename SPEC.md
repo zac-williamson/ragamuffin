@@ -35143,3 +35143,131 @@ under-reporting UC retention calculation (declare half → exactly 10 COIN/fortn
 //   SquatFurnishingTracker, NeighbourhoodWatchSystem, WantedSystem, CriminalRecord,
 //   MagistratesCourtSystem, NotorietySystem, RumourNetwork, SkipDivingSystem,
 //   NoiseSystem, HoverTooltipSystem, AchievementSystem
+
+---
+
+## Phase 12t: Northfield Information Broker — Kenny's Tip-Off Economy, Selling Out & the Double-Cross Hustle
+
+**Landmark**: New `LandmarkType.INFO_BROKER_PUB` ("The Feathers Back Room") — a private booth in the back of The Feathers pub, accessed by pressing E on a `BEAD_CURTAIN_PROP`. Kenny Doyle (`INFO_BROKER` NPCType), a wiry 50-something in a shell suit, operates here from 14:00–22:00 daily.
+
+Kenny buys and sells criminal intelligence — rumours, gang locations, stash sites, police patrol routes. The player can monetise the `RumourNetwork` directly, sell out faction members for coin, or buy actionable tips. The system rewards players who actively harvest information and punishes those who get caught playing both sides.
+
+### The New System: `InformationBrokerSystem.java`
+
+Kenny maintains an `intelligenceMarket` — a list of up to 12 active `IntelligenceLot` objects refreshed daily. Each lot has:
+- `IntelType` enum: `GANG_LOCATION`, `STASH_SITE`, `PATROL_ROUTE`, `FACTION_MEETING`, `POLICE_TIP_OFF`, `CONTRABAND_SHIPMENT`, `RIVAL_WEAKNESS`
+- `sourceRumour`: the underlying `Rumour` from `RumourNetwork` that this intel is derived from
+- `buyPrice` (2–25 COIN, scaled by `IntelType` and freshness)
+- `sellValue` (what Kenny pays: 60–80% of buy price)
+- `factionOrigin`: which `Faction` the intel relates to
+- `isStale`: set true after 1 in-game day (price halved)
+- `isVerified`: Kenny vouches for it; unverified intel has 30% chance of being wrong
+
+### Selling Intel to Kenny
+
+The player harvests intel by carrying a `RUMOUR_NOTE` item (craftable: PAPER + PEN, same as APPEAL_LETTER_PROP recipe but distinct result) and pressing E on an NPC that has rumours matching types GANG_ACTIVITY, CONTRABAND_SHIPMENT, CRIME_SIGHTING, or POLICE_PRESENCE. This transcribes the rumour into a `RUMOUR_NOTE` item (max 3 carried at once, non-stackable).
+
+Player presses E on Kenny → "Got something for me?" → player selects a RUMOUR_NOTE from inventory. Kenny evaluates:
+- `GANG_ACTIVITY` note → `GANG_LOCATION` lot: 4–12 COIN depending on faction respect alignment
+- `CONTRABAND_SHIPMENT` note → `STASH_SITE` lot: 8–20 COIN
+- `CRIME_SIGHTING` note → `POLICE_TIP_OFF` lot: 3–8 COIN
+- `POLICE_PRESENCE` note → `PATROL_ROUTE` lot: 5–15 COIN
+
+Kenny refuses notes about factions with respect ≥ 75 toward player ("Can't touch that one, mate — they're friends of friends"). Selling intel about a faction reduces that faction's respect by 8. If respect falls below 20 as a result, that faction immediately seeds a `BETRAYAL` rumour naming the player.
+
+### Buying Intel from Kenny
+
+Player browses Kenny's `intelligenceMarket` UI (simple scrollable list). Each lot shows `IntelType`, vague description, price, and a freshness indicator.
+
+**What bought intel unlocks:**
+| IntelType | Effect |
+|---|---|
+| `GANG_LOCATION` | Reveals a faction lieutenant's current position on minimap for 1 in-game hour |
+| `STASH_SITE` | Adds a prop marker to world: a `STASH_CRATE_PROP` at a real location containing 3–6 random `Material` drops from that faction's pool |
+| `PATROL_ROUTE` | `WantedSystem.getSightChance()` reduced by 25% for 1 in-game hour (police route known) |
+| `FACTION_MEETING` | Reveals time + location of a faction mission briefing; player can gatecrash for bonus faction respect |
+| `POLICE_TIP_OFF` | Plant false lead: seeds `CRIME_SIGHTING` rumour with a fake player position, reducing active Wanted stars by 1 |
+| `RIVAL_WEAKNESS` | Adds +15 damage on next combat encounter vs that faction's NPCs (one use) |
+| `CONTRABAND_SHIPMENT` | Reveals exact time + location of `BootSaleSystem` lot arrival, allowing interception for full lot value without bidding |
+
+**Wrong intel** (30% chance on unverified lots): effect is reversed or null — `STASH_CRATE_PROP` spawns empty, `PATROL_ROUTE` reduction doesn't apply, etc. Kenny shrugs: *"Information's a volatile commodity, son."*
+
+### The Double-Cross Hustle
+
+If the player buys a `GANG_LOCATION` lot and then sells a `RUMOUR_NOTE` about *that same faction* to Kenny on the same day, Kenny notices:
+- "You're playing both ends, aren't ya." — Kenny's personal respect drops permanently; his buy prices drop 20%.
+- If this happens twice: Kenny refuses to deal with the player for 7 in-game days (`BLACKLISTED` status).
+- If Notoriety ≥ 50 when blacklisted: Kenny tips off that faction directly (+15 faction hostility, seeds `BETRAYAL` rumour).
+
+### The Undercover Problem
+
+There is a 10% chance per interaction that one of the `PUBLIC` NPCs in the pub is actually `UNDERCOVER_POLICE`. If the player sells intel to Kenny while an undercover officer is within 8 blocks:
+- `WantedSystem.addCrime(SELLING_INFORMATION)` — Wanted +1 star
+- The undercover officer transitions to `ARRESTING` state immediately
+- AchievementType.BURNED seeded if player escapes before arrest
+
+### NPCs & Dialogue
+
+- **Kenny** (`INFO_BROKER`): 50s, shell suit, nervous eyes, always nursing a pint. Speaks in euphemism. Dialogue: *"Information's like milk, son — it goes off fast."* / *"I'm just a middleman. Don't shoot the messenger."* / *"That'll cost you. Everything costs something."*
+- **Kenny's runner** (`STREET_LAD` NPC, passive): loiters outside the bead curtain, 10-block radius scout.
+
+### Items
+
+| Item | Acquisition | Use |
+|---|---|---|
+| `RUMOUR_NOTE` | Craft: PAPER + PEN; press E on rumour-carrying NPC | Sell to Kenny for COIN |
+| `STASH_CRATE_PROP` | Spawned by `STASH_SITE` intel | Break open (2 hits, FRAGILE) for loot |
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `DEEP_THROAT` | Sell intel to Kenny for the first time |
+| `INFORMATION_ECONOMY` | Sell 10 RUMOUR_NOTEs to Kenny |
+| `BURNED` | Escape arrest after being caught selling intel to Kenny |
+| `DOUBLE_AGENT` | Successfully buy and sell intel about the same faction on the same day (without getting caught) |
+| `MARKET_INTELLIGENCE` | Buy all 7 IntelTypes from Kenny at least once |
+
+### Integration with Other Systems
+
+- **RumourNetwork**: `RUMOUR_NOTE` items transcribe rumours from NPC to item; `BETRAYAL` rumour seeded on faction exposure; `POLICE_TIP_OFF` intel seeds false `CRIME_SIGHTING` rumour.
+- **FactionSystem**: selling intel reduces faction respect; `FACTION_MEETING` intel reveals mission briefing location.
+- **WantedSystem**: `PATROL_ROUTE` intel reduces sight chance; `POLICE_TIP_OFF` intel removes 1 Wanted star; SELLING_INFORMATION crime type added.
+- **BootSaleSystem**: `CONTRABAND_SHIPMENT` intel reveals lot arrival timing for interception.
+- **WitnessSystem**: undercover detection uses existing `UNDERCOVER_POLICE` NPC type.
+- **NotorietySystem**: `BLACKLISTED` + Notoriety ≥ 50 triggers faction tip-off.
+- **CraftingSystem**: PAPER + PEN → RUMOUR_NOTE recipe added.
+- **AchievementSystem**: five new achievements above.
+- **StreetSkillSystem**: INFLUENCE skill tier reduces Kenny's blacklist duration (Expert: 5 days; Legend: 3 days); TRADING skill reduces buy prices by 5% per tier above Novice.
+- **DisguiseSystem**: active disguise prevents undercover recognition check.
+
+**Unit tests**: `IntelligenceLot` stale flag set after 24 in-game hours; `sellValue` == 70% of `buyPrice` (default); faction respect reduction of 8 on note sale; wrong-intel 30% probability using seeded RNG; double-cross detection (same faction buy + sell same day); Kenny blacklist duration; undercover detection range (7 blocks: detected; 9 blocks: not detected); `PATROL_ROUTE` intel reduces `WantedSystem.getSightChance()` by exactly 25%.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Sell RUMOUR_NOTE to Kenny — COIN received and faction respect drops**: Enable UC off. Seed `RumourNetwork` with a `GANG_ACTIVITY` rumour from a `MARCHETTI_CREW` NPC. Give player a PAPER and PEN. Craft `RUMOUR_NOTE`. Press E on the rumour-carrying NPC to transcribe. Press E on Kenny. Select the note. Verify player receives ≥ 4 COIN. Verify `FactionSystem.getPlayerRespect(MARCHETTI_CREW)` decreased by 8 from baseline.
+
+2. **Buy STASH_SITE intel — crate spawns at real location**: Add a verified `STASH_SITE` lot to Kenny's market (seeded directly via `InformationBrokerSystem.addLot()`). Player presses E on Kenny, selects the lot, pays COIN. Verify a `STASH_CRATE_PROP` exists in the world at the lot's associated position. Break the crate (2 hits). Verify at least 1 `Material` item drops into world.
+
+3. **PATROL_ROUTE intel reduces Wanted sight chance**: Verify baseline `WantedSystem.getSightChance()` == 1.0f. Player buys a `PATROL_ROUTE` lot from Kenny. Verify `WantedSystem.getSightChance()` == 0.75f. Advance in-game time by 1 hour. Verify `WantedSystem.getSightChance()` returns to 1.0f.
+
+4. **Double-cross detected — buy prices drop 20%**: Set player faction respect to 50 (neutral) for STREET_LADS. Buy a `GANG_LOCATION` lot for STREET_LADS from Kenny. Immediately transcribe a STREET_LADS rumour to `RUMOUR_NOTE` and sell it to Kenny. Verify `InformationBrokerSystem.getBuyPriceModifier(player)` == 0.80f. Repeat on a second day. Verify `InformationBrokerSystem.isBlacklisted(player)` == true.
+
+5. **Undercover cop triggers arrest on intel sale**: Place an `UNDERCOVER_POLICE` NPC 6 blocks from Kenny's booth. Player sells a `RUMOUR_NOTE` to Kenny. Verify `WantedSystem.getCrimeLog()` contains `SELLING_INFORMATION`. Verify the `UNDERCOVER_POLICE` NPC transitions to `ARRESTING` state.
+
+6. **Stale intel — price halved**: Create an `IntelligenceLot` with `buyPrice` = 20 COIN. Advance in-game time by 25 hours. Verify `lot.getEffectivePrice()` == 10 COIN. Verify `lot.isStale()` == true.
+
+7. **POLICE_TIP_OFF intel removes 1 Wanted star**: Set `WantedSystem.setStarCount(2)`. Player buys a `POLICE_TIP_OFF` lot. Apply the effect via `InformationBrokerSystem.applyIntelEffect(player, lot)`. Verify `WantedSystem.getStarCount()` == 1. Verify `RumourNetwork` contains a `CRIME_SIGHTING` rumour with a position != player's actual position.
+
+// ── New: InformationBrokerSystem.java in ragamuffin.core
+// New: LandmarkType.INFO_BROKER_PUB ("The Feathers Back Room") — add to LandmarkType.java
+// New: NPCType.INFO_BROKER — add to NPCType.java (stats: 60f HP, 0f attack, 1.0f cooldown, false hostile)
+// New: Material.RUMOUR_NOTE — add to Material.java
+// New: PropType.BEAD_CURTAIN_PROP, STASH_CRATE_PROP — add to PropType.java
+// New: WantedSystem.CrimeType.SELLING_INFORMATION — add if absent
+// New: AchievementType: DEEP_THROAT, INFORMATION_ECONOMY, BURNED, DOUBLE_AGENT, MARKET_INTELLIGENCE
+// Recipe: PAPER + PEN → RUMOUR_NOTE — add to CraftingSystem
+// StreetSkillSystem: INFLUENCE/TRADING tier modifiers for Kenny interactions
+// WantedSystem: getSightChance() method + PATROL_ROUTE reduction hook
+// Integrates: RumourNetwork, FactionSystem, WantedSystem, BootSaleSystem, WitnessSystem,
+//   NotorietySystem, CraftingSystem, AchievementSystem, StreetSkillSystem, DisguiseSystem
