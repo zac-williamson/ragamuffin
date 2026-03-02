@@ -34809,3 +34809,130 @@ Advanced mechanic — rob the till:
 //   FenceSystem, NoiseSystem, NotorietySystem, WeatherSystem, TimeSystem
 // LandmarkType.PAYDAY_LOAN_SHOP already exists — no change needed
 // WorldGenerator: shop already placed on high-street parade — no change needed
+
+---
+
+## Phase 12s: Northfield Probation Office — Sign In, Tag Compliance & the Community Service Dodge
+
+**Goal**: Bring the `PROBATION_OFFICER`, `PROBATION_CLIENT`, and `PROBATION_RECEPTIONIST` NPC types (already defined in `NPCType.java`) to life with a fully interactive Northfield Probation Service office. After a Magistrates' Court conviction, the player is placed on a Probation Order requiring fortnightly sign-ins, possible electronic tagging with a curfew, and a choice of Community Service postings (litter-picking in the park, stacking at the Food Bank, painting the Community Centre). Missing appointments triggers a recall warrant; completing service hours earns Notoriety reduction and a clean criminal record notation.
+
+**Landmark**: `PROBATION_OFFICE` — a new entry in `LandmarkType.java`. A squat single-storey council-owned building on the edge of the town centre, between the Magistrates' Court and the JobCentre. Beige pebble-dash render, frosted glass windows, council logo above the door. Waiting area of six plastic chairs. Two consultation booths.
+
+### Building Layout
+
+A 10×8×3 block footprint:
+- **Exterior**: PAVEMENT approach, blue DOOR_PROP (always unlocked during opening hours), COUNCIL_LOGO_SIGN_PROP above door.
+- **Waiting Area**: four PLASTIC_CHAIR_PROPs in two rows, DOG-EARED_MAGAZINE_PROP stack on a side table (flavour). A RECEPTION_DESK_PROP with Carol the `PROBATION_RECEPTIONIST` NPC.
+- **Consultation Room A** (4×3): DESK_PROP, two CHAIR_PROPs. Dave (`PROBATION_OFFICER` NPC) occupies this room Mon–Thu 09:00–17:00.
+- **Consultation Room B** (4×3): same layout. Linda (`PROBATION_OFFICER` NPC) occupies Tue/Fri 09:00–17:00.
+- **Back Office** (3×3, locked DOOR_PROP): FILING_CABINET_PROP (lockpickable; contains player's probation file — readable prop), KETTLE_PROP, BISCUIT_TIN_PROP (flavour).
+- Open **Mon–Fri 09:00–17:00** only. Closed weekends and Bank Holidays.
+
+### Probation Order Mechanics
+
+A `ProbationOrder` is issued by `MagistratesCourtSystem` after a conviction producing a non-custodial sentence:
+
+| Conviction severity | Order type |
+|---|---|
+| Minor (Notoriety < 30) | Conditional Caution — single sign-in, then discharged |
+| Moderate (30–59) | Standard Order — fortnightly sign-ins for 6 in-game weeks |
+| Serious (60+) | Enhanced Order — weekly sign-ins + Community Service (see below) |
+
+- `ProbationSystem.hasProbationOrder(player)` — true if any order is active.
+- `ProbationSystem.getNextSignInDue()` — returns the in-game day number of the next required sign-in.
+- Sign-in: player presses **E** at Carol's RECEPTION_DESK_PROP → directed to available officer → 30-second consultation scene → order progress updated.
+- **Missed sign-in**: if the player fails to attend by midnight of the due day, Dave/Linda flags the breach. On second missed sign-in: `ArrestSystem.issueRecallWarrant(player)` — adds a RECALL_WARRANT entry to `CriminalRecord` and sets WantedSystem to 2 stars.
+- **Probation-free travel**: while on a Standard/Enhanced Order, WantedSystem star decay is capped at 1 star (police remain on alert).
+
+### Electronic Tagging (Ankle Tag)
+
+On Enhanced Orders, `ProbationSystem` equips the player with a `ANKLE_TAG` item (non-removable from inventory while order active; displayed as a UI badge on the HUD via `GameHUD`).
+
+- **Curfew**: 21:00–07:00. If the player is not within 20 blocks of their `SquatSystem.getHomeLocation()` during curfew, after a 2-minute grace period the tag transmits — +1 WantedSystem star and a CURFEW_BREACH entry in `CriminalRecord`.
+- **Tag removal**: Fence NPC at reputation ≥ 40 will offer to "cut" the tag for 15 COIN. Removes `ANKLE_TAG` and triggers immediate +3 star wanted level (tag transmits the cut signal). Adds TAG_TAMPER to CriminalRecord.
+- **Tag check at shop counter**: if player enters `TESCO_EXPRESS` or `WETHERSPOONS` during curfew, SHOP_WORKER / BOUNCER NPC may notice the tag blinking: 25% chance of calling police (adds 1 star, 30-second delay).
+
+### Community Service
+
+Enhanced Orders attach a community service obligation: 8 hours (8 × in-game 1-hour work blocks). Three posting options offered by Dave at the first sign-in:
+
+| Posting | Location | Mechanic | Reward |
+|---|---|---|---|
+| Litter Picking | Park (PARK landmark) | Pick up LITTER_PROP items using E; each piece = 5 minutes logged | −1 Notoriety per session |
+| Food Bank Sorting | FoodBankSystem | Report to FOOD_BANK_VOLUNTEER NPC; complete a sort mini-game (place items correctly) | +1 COIN per session + rumour |
+| Community Centre Painting | Community Centre | Stand adjacent to WALL_PROP for 3 in-game minutes per wall section | Unlocks COMMUNITY_CENTRE discount |
+
+- `ProbationSystem.logServiceHours(int minutes)` — called by each posting's system.
+- `ProbationSystem.getServiceHoursRemaining()` — hours left.
+- If player skips three consecutive service sessions: same breach escalation as a missed sign-in.
+- On completing all 8 hours: Dave notes "Good lad/lass" in the consultation; NotorietySystem −5; `COMMUNITY_SPIRIT` achievement unlocked.
+
+### NPC Personalities
+
+- **Carol** (`PROBATION_RECEPTIONIST`): brisk, slightly sympathetic. Checks appointments, hands out `SIGN_IN_FORM_PROP` (prop, no gameplay function beyond ambience). Dialogue: *"Sign the book. Dave'll be with you shortly."* / *"You're late. Again."*
+- **Dave** (`PROBATION_OFFICER`): world-weary, vaguely supportive. Asks canned questions about "keeping out of trouble." If Notoriety > 60: *"I have to be honest — this doesn't look great."* If Notoriety < 20: *"Good progress. Keep it up."* Visible disappointment animation when breach logged.
+- **Linda** (`PROBATION_OFFICER`): by-the-book, less forgiving. Breach threshold lower — 1 miss before recall.
+- **Other clients** (`PROBATION_CLIENT` NPCs, 1–3 in waiting area during office hours): shuffling, avoidant eye contact. Each carries one rumour from `RumourType.CRIMINAL_UNDERWORLD` or `RumourType.LOCAL_EVENT`. Press E to talk: 50% chance of rumour, 50% chance of hostile response (+5 Notoriety if fight started here).
+
+### Weather & Time Effects
+
+- **RAIN / DRIZZLE**: 1–2 extra `PROBATION_CLIENT` NPCs shelter in the waiting area; Carol offers a KIND_WORD if Notoriety < 25.
+- **HEATWAVE**: consultation rooms are stuffy — Dave's patience timer is shorter (breach flag triggers faster on lateness).
+- **FROST**: icy pavement outside — player movement to office takes longer; grace period for sign-in extended by 5 in-game minutes.
+- Office **closed on Bank Holidays** and weekends. Any sign-in due on a Bank Holiday is automatically rescheduled to next working day (no breach).
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `STRAIGHT_AND_NARROW` | Complete a full Probation Order without a single breach |
+| `COMMUNITY_SPIRIT` | Complete all 8 community service hours |
+| `DONE_MY_TIME` | Successfully cut the ankle tag and evade police for 10 in-game minutes afterward |
+| `REPEAT_OFFENDER` | Trigger a Recall Warrant for the third time |
+| `DONT_KNOW_YOU` | Have a PROBATION_CLIENT NPC start a fight in the waiting room |
+
+### Integration with Other Systems
+
+- **MagistratesCourtSystem**: issues `ProbationOrder` on sentencing; passes order to `ProbationSystem.attachOrder(player, order)`.
+- **ArrestSystem**: `issueRecallWarrant()` adds 2 wanted stars + RECALL_WARRANT to CriminalRecord.
+- **WantedSystem**: star decay capped at 1 while order active; curfew breach adds 1 star; tag cut adds 3 stars.
+- **CriminalRecord**: `PROBATION_BREACH`, `CURFEW_BREACH`, `RECALL_WARRANT`, `TAG_TAMPER` entries.
+- **SquatSystem**: home location used for curfew compliance check.
+- **FoodBankSystem**: `onPlayerArriveForService()` hook logs 1 service hour per session.
+- **NotorietySystem**: Community Service completion −5; GOOD_SAMARITAN actions during service −1 per session.
+- **RumourNetwork**: `PROBATION_CLIENT` NPCs seed `CRIMINAL_UNDERWORLD` rumours; Carol seeds `LOCAL_EVENT` ("That lad from the flats is on probation again").
+- **WeatherSystem**: rain adds clients; frost extends grace period; heatwave shortens Dave's patience.
+- **FenceSystem**: tag removal offer at reputation ≥ 40 for 15 COIN.
+- **GameHUD**: `ANKLE_TAG` displayed as red blinking badge when within curfew hours.
+- **AchievementSystem**: five new achievements (see table above).
+
+**Unit tests**: `ProbationOrder` tier assignment from Notoriety (< 30 → Conditional, 30–59 → Standard, 60+ → Enhanced); next sign-in day calculation (fortnightly = currentDay + 14); missed sign-in breach escalation (1 miss → flag, 2 miss → recall warrant); curfew distance check (player 21 blocks from home during curfew → grace timer starts; 19 blocks → no breach); service hours logging (8 sessions × 60 minutes = 480 minutes = 8 hours → order discharged); tag removal triggers +3 stars; Bank Holiday reschedule (sign-in due on day 7 (% 7 == 0) → rescheduled to day 8).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Standard Order — complete two sign-ins without breach**: Issue player a Standard Probation Order (Notoriety = 45). Verify `ProbationSystem.hasProbationOrder(player)` is true. Advance time to sign-in day. Place player within 3 blocks of RECEPTION_DESK_PROP. Player presses E → selects Dave → consult completes. Verify `ProbationSystem.getNextSignInDue()` is now current day + 14. Advance to next sign-in day, repeat. After both sign-ins verify `ProbationSystem.getSignInsCompleted()` == 2.
+
+2. **Missed sign-in triggers recall warrant on second miss**: Issue Enhanced Order. Advance time past first sign-in day without attending. Verify Dave has logged breach (`ProbationSystem.getBreachCount()` == 1). Advance past second sign-in day. Verify `ArrestSystem.hasRecallWarrant(player)` is true. Verify `WantedSystem.getStarCount()` >= 2. Verify `CriminalRecord` contains `RECALL_WARRANT`.
+
+3. **Ankle tag curfew breach**: Issue Enhanced Order (Notoriety = 65). Verify `ProbationSystem.isTagged(player)` is true. Set time to 22:00. Move player 25 blocks from `SquatSystem.getHomeLocation()`. Call `ProbationSystem.update(delta, timeSystem, ...)` for 2 in-game minutes + 1 second. Verify `WantedSystem.getStarCount()` increased by 1. Verify `CriminalRecord` contains `CURFEW_BREACH`.
+
+4. **Community service — litter picking logs hours**: Issue Enhanced Order. Dave assigns `LITTER_PICKING` posting. Spawn 5 `LITTER_PROP` items in park. Player presses E on each (5 × 5 = 25 minutes logged). Verify `ProbationSystem.getServiceHoursRemaining()` has decreased by 25 minutes. Verify Notoriety decreased by 1.
+
+5. **Fence tag removal triggers wanted level**: Issue Enhanced Order; `ProbationSystem.isTagged(player)` is true. Set `FenceSystem` reputation to 41. Player presses E at Fence NPC, selects "Cut Tag" for 15 COIN. Verify `ANKLE_TAG` removed from inventory. Verify `WantedSystem.getStarCount()` increased by 3. Verify `CriminalRecord` contains `TAG_TAMPER`.
+
+6. **Bank Holiday reschedules sign-in — no breach**: Issue Standard Order with next sign-in on day 7 (Bank Holiday; 7 % 7 == 0). Advance to day 7 without attending. Verify `ProbationSystem.getBreachCount()` == 0. Verify `ProbationSystem.getNextSignInDue()` == 8.
+
+7. **STRAIGHT_AND_NARROW achievement on clean completion**: Issue Standard Order. Complete all fortnightly sign-ins (3 sign-ins for a 6-week order) with zero breaches and zero community service skips. Verify `AchievementSystem.isUnlocked(STRAIGHT_AND_NARROW)` is true. Verify `ProbationSystem.hasProbationOrder(player)` is false (order discharged).
+
+// ── Issue #1187: Northfield Probation Office ──────────────────────────────────
+// New: ProbationSystem.java in ragamuffin.core
+// New: ProbationOrder.java in ragamuffin.core (data class: orderType, signInsRequired, signInsCompleted, serviceHoursRequired, serviceHoursLogged, breachCount, nextSignInDay, isTagged)
+// New: ProbationSystemTest.java in src/test/java/ragamuffin/integration/
+// LandmarkType: PROBATION_OFFICE — add to LandmarkType.java
+// NPCType: PROBATION_OFFICER, PROBATION_RECEPTIONIST, PROBATION_CLIENT already exist — no change
+// Material: ANKLE_TAG, SIGN_IN_FORM_PROP (prop item, non-craftable) — add to Material.java
+// CriminalRecord.CrimeType: PROBATION_BREACH, CURFEW_BREACH, RECALL_WARRANT, TAG_TAMPER — add if absent
+// AchievementType: STRAIGHT_AND_NARROW, COMMUNITY_SPIRIT, DONE_MY_TIME, REPEAT_OFFENDER, DONT_KNOW_YOU — add to AchievementType.java
+// Integrates: MagistratesCourtSystem, ArrestSystem, WantedSystem, CriminalRecord, SquatSystem,
+//   FoodBankSystem, NotorietySystem, RumourNetwork, WeatherSystem, FenceSystem, GameHUD, AchievementSystem
+// WorldGenerator: place PROBATION_OFFICE building between MAGISTRATES_COURT and JOB_CENTRE
