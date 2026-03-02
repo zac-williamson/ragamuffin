@@ -529,7 +529,7 @@ public class DWPSystem {
         if (success) {
             // Bluff succeeds: suspicion reduced
             suspicionScore = Math.max(0, suspicionScore - SUSPICION_BLUFF_SUCCESS_REDUCTION);
-            achievementCallback.onAchievementUnlocked(AchievementType.TALKED_MY_WAY_OUT);
+            achievementCallback.award(AchievementType.TALKED_MY_WAY_OUT);
             return VisitResult.BLUFFED_SUCCESS;
         } else {
             // Bluff fails: log BENEFIT_FRAUD and apply sanction
@@ -577,7 +577,7 @@ public class DWPSystem {
                     if (wantedSystem != null) {
                         wantedSystem.addWantedStars(2, 0, 0, 0, null);
                     }
-                    achievementCallback.onAchievementUnlocked(AchievementType.BENEFIT_FRAUDSTER);
+                    achievementCallback.award(AchievementType.BENEFIT_FRAUDSTER);
                     return;
                 }
                 addSuspicion(SUSPICION_CONTRABAND_FOUND);
@@ -599,7 +599,7 @@ public class DWPSystem {
             if (wantedSystem != null) {
                 wantedSystem.addWantedStars(2, 0, 0, 0, null);
             }
-            achievementCallback.onAchievementUnlocked(AchievementType.BENEFIT_FRAUDSTER);
+            achievementCallback.award(AchievementType.BENEFIT_FRAUDSTER);
         } else if (suspicionScore >= 70) {
             tier = SanctionTier.SUSPENSION;
         } else {
@@ -655,7 +655,7 @@ public class DWPSystem {
         record.resolveAppeal(currentDay, success);
 
         if (success) {
-            achievementCb.onAchievementUnlocked(AchievementType.APPEAL_UPHELD);
+            achievementCb.award(AchievementType.APPEAL_UPHELD);
         }
         return true;
     }
@@ -683,7 +683,7 @@ public class DWPSystem {
                 && consecutiveZeroDeclarations >= NOTHING_TO_DECLARE_TARGET
                 && !homeVisitScheduled) {
             nothingToDeclareUnlocked = true;
-            achievementCallback.onAchievementUnlocked(AchievementType.NOTHING_TO_DECLARE);
+            achievementCallback.award(AchievementType.NOTHING_TO_DECLARE);
         }
     }
 
@@ -697,7 +697,7 @@ public class DWPSystem {
     public void onDWPLetterPlaced(NotorietySystem.AchievementCallback achievementCallback) {
         if (!brownEnvelopeUnlocked) {
             brownEnvelopeUnlocked = true;
-            achievementCallback.onAchievementUnlocked(AchievementType.BROWN_ENVELOPE);
+            achievementCallback.award(AchievementType.BROWN_ENVELOPE);
         }
     }
 

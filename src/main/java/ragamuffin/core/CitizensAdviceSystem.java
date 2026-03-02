@@ -76,7 +76,7 @@ public class CitizensAdviceSystem {
      * @param time current in-game time
      */
     public void update(TimeSystem time) {
-        int dayOfWeek = time.getDayOfWeek(); // 0=Mon … 6=Sun
+        int dayOfWeek = time.getDayIndex() % 7; // 0=Mon … 6=Sun
         float hour = time.getHours() + time.getMinutes() / 60f;
         open = dayOfWeek < 5 && hour >= OPEN_HOUR && hour < CLOSE_HOUR;
     }

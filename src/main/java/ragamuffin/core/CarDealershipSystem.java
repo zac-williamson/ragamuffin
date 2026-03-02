@@ -9,6 +9,8 @@ import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
 import ragamuffin.ui.AchievementType;
+import ragamuffin.core.Rumour;
+import ragamuffin.core.RumourType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -421,7 +423,7 @@ public class CarDealershipSystem {
         // Award WHEELER_DEALER on first haggle below asking price
         if (offer < askingPrice && !wheelerDealerAwarded) {
             wheelerDealerAwarded = true;
-            if (cb != null) cb.onAchievementUnlocked(AchievementType.WHEELER_DEALER);
+            if (cb != null) cb.award(AchievementType.WHEELER_DEALER);
         }
 
         return HaggleResult.ACCEPTED;
@@ -456,7 +458,7 @@ public class CarDealershipSystem {
 
         if (!onTheNeverNeverAwarded) {
             onTheNeverNeverAwarded = true;
-            if (cb != null) cb.onAchievementUnlocked(AchievementType.ON_THE_NEVER_NEVER);
+            if (cb != null) cb.award(AchievementType.ON_THE_NEVER_NEVER);
         }
 
         return FinanceResult.APPROVED;
@@ -511,7 +513,7 @@ public class CarDealershipSystem {
 
             if (!repossessedAwarded) {
                 repossessedAwarded = true;
-                if (cb != null) cb.onAchievementUnlocked(AchievementType.REPOSSESSED);
+                if (cb != null) cb.award(AchievementType.REPOSSESSED);
             }
         }
         return missedPayments;
@@ -551,13 +553,13 @@ public class CarDealershipSystem {
             if (!hasV5C && !hasFakeV5C) {
                 // Police called
                 if (notorietySystem != null) {
-                    notorietySystem.addNotoriety(STOLEN_NO_DOCS_NOTORIETY);
+                    notorietySystem.addNotoriety(STOLEN_NO_DOCS_NOTORIETY, cb);
                 }
                 if (criminalRecord != null) {
                     criminalRecord.record(CriminalRecord.CrimeType.HANDLING_STOLEN_GOODS);
                 }
                 if (rumourNetwork != null) {
-                    rumourNetwork.seedEvent("Heard someone tried to flog a bent motor round Wheelwright's.");
+                    rumourNetwork.addRumour(null, new Rumour(RumourType.DODGY_DEAL, "Heard someone tried to flog a bent motor round Wheelwright's."));
                 }
                 return SellResult.POLICE_CALLED;
             }
@@ -565,7 +567,7 @@ public class CarDealershipSystem {
             if (hasFakeV5C) {
                 inventory.removeItem(Material.FAKE_V5C, 1);
                 if (notorietySystem != null) {
-                    notorietySystem.addNotoriety(STOLEN_FAKE_DOCS_NOTORIETY);
+                    notorietySystem.addNotoriety(STOLEN_FAKE_DOCS_NOTORIETY, cb);
                 }
                 if (criminalRecord != null) {
                     criminalRecord.record(CriminalRecord.CrimeType.DOCUMENT_FRAUD);
@@ -574,7 +576,7 @@ public class CarDealershipSystem {
                 inventory.addItem(Material.COIN, payment);
                 if (!cleanTitleAwarded) {
                     cleanTitleAwarded = true;
-                    if (cb != null) cb.onAchievementUnlocked(AchievementType.CLEAN_TITLE);
+                    if (cb != null) cb.award(AchievementType.CLEAN_TITLE);
                 }
                 seedSaleRumour();
                 return SellResult.SOLD_WITH_FAKE_DOCS;
@@ -647,14 +649,14 @@ public class CarDealershipSystem {
         if (car == null || !car.isClocked()) return;
         if (tradingStandardsNearby) {
             if (notorietySystem != null) {
-                notorietySystem.addNotoriety(CONSUMER_FRAUD_NOTORIETY);
+                notorietySystem.addNotoriety(CONSUMER_FRAUD_NOTORIETY, cb);
             }
             if (criminalRecord != null) {
                 criminalRecord.record(CriminalRecord.CrimeType.CONSUMER_FRAUD);
             }
             if (!dodgyMileageAwarded) {
                 dodgyMileageAwarded = true;
-                if (cb != null) cb.onAchievementUnlocked(AchievementType.DODGY_MILEAGE);
+                if (cb != null) cb.award(AchievementType.DODGY_MILEAGE);
             }
         }
     }
@@ -685,15 +687,15 @@ public class CarDealershipSystem {
         donorCar.setVinSwapped(true);
 
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(VIN_SWAP_NOTORIETY);
+            notorietySystem.addNotoriety(VIN_SWAP_NOTORIETY, cb);
         }
         if (rumourNetwork != null) {
-            rumourNetwork.seedEvent("Word is someone's been swapping plates round Pearce's yard.");
+            rumourNetwork.addRumour(null, new Rumour(RumourType.DODGY_DEAL, "Word is someone's been swapping plates round Pearce's yard."));
         }
 
         if (!vinSwapAwarded) {
             vinSwapAwarded = true;
-            if (cb != null) cb.onAchievementUnlocked(AchievementType.VIN_SWAP);
+            if (cb != null) cb.award(AchievementType.VIN_SWAP);
         }
 
         return VinSwapResult.SUCCESS;
@@ -785,8 +787,8 @@ public class CarDealershipSystem {
      */
     private void seedSaleRumour() {
         if (rumourNetwork != null) {
-            rumourNetwork.seedEvent(
-                "Heard someone flogged a motor round Wheelwright's — dodgy as.");
+            rumourNetwork.addRumour(null, new Rumour(RumourType.DODGY_DEAL,
+                "Heard someone flogged a motor round Wheelwright's — dodgy as."));
         }
     }
 
