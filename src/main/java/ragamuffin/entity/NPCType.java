@@ -1499,7 +1499,44 @@ public enum NPCType {
      * Speech: "Excuse me — unexpected item." / "Can you pop that back through, please."
      *         / "Ooh, is that a prawn ring? I love a prawn ring." / "Right, that's it."
      */
-    ICELAND_SECURITY(35f, 6f, 1.5f, false);
+    ICELAND_SECURITY(35f, 6f, 1.5f, false),
+
+    // ── Issue #1140: Northfield Flexistaff — Cash-in-Hand Day Labour ───────────
+
+    /**
+     * Temp Agency Manager — Darren, the agency owner.
+     * Anchored behind the AGENCY_DESK_PROP Mon–Fri 06:30–17:00.
+     * Assigns shift jobs to the player. Suspicious at Notoriety Tier ≥ 3.
+     * Refuses work if CriminalRecord contains ASSAULT_OF_EMPLOYER.
+     * Speech: "Sign here, mate." / "Don't be late or you're off the books." /
+     *         "No funny business on site, yeah?"
+     */
+    TEMP_AGENCY_MANAGER(25f, 0f, 0f, false),
+
+    /**
+     * Temp Agency Van Driver — Kev, who drives the AGENCY_VAN_PROP.
+     * Spawns at 06:45, departs 07:00 sharp.
+     * Can be bribed with 2 COIN for a 5-minute delay.
+     * Catches players searching the van glove box (06:50–07:00).
+     * Speech: "Get in then." / "Health and safety, yeah, watch your fingers." /
+     *         "I'm not supposed to, but go on."
+     */
+    TEMP_AGENCY_VAN_DRIVER(30f, 5f, 2.0f, false),
+
+    /**
+     * Temp Agency Site Foreman — Gavin, on-site overseer during warehouse/construction shifts.
+     * Patrols within 10 blocks of WORK_STATION_PROP.
+     * Notifies Darren if player is idle > 60 seconds near work station.
+     * Present only during active work shifts.
+     * Speech: "Look lively." / "Those boxes won't stack themselves." / "I've got my eye on you."
+     */
+    TEMP_AGENCY_SITE_FOREMAN(30f, 8f, 2.0f, false),
+
+    /**
+     * Temp Agency Worker — fellow day labourers (3–5 spawned per shift).
+     * Passive; freely share rumours. One carries a PAYSLIP_STUB that can be pickpocketed.
+     */
+    TEMP_AGENCY_WORKER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
