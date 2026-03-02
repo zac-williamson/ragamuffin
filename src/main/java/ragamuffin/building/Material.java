@@ -1883,6 +1883,34 @@ public enum Material {
      */
     TOOL_KIT("Tool Kit"),
 
+    // ── Issue #1118: Sultan's Kebab House ────────────────────────────────────
+
+    /**
+     * Mixed Kebab — purchased from KEBAB_COUNTER_PROP for 5 COIN.
+     * Hunger +75, Warmth +15. Premium item; only 3 available per night.
+     */
+    MIXED_KEBAB("Mixed Kebab"),
+
+    /**
+     * Garlic Bread — purchased from KEBAB_COUNTER_PROP for 1 COIN.
+     * Hunger +20, Warmth +5. Combo discount: any kebab + GARLIC_BREAD = −1 COIN total.
+     */
+    GARLIC_BREAD("Garlic Bread"),
+
+    /**
+     * Meat Card — laminated loyalty stamp card from Sultan's Kebab.
+     * Accumulates 1 stamp per in-game day. 5 stamps = free DONER_KEBAB;
+     * 10 stamps = free MIXED_KEBAB + Mehmet calls you by name.
+     * Forgeable at squat WORKBENCH with NEWSPAPER + COIN.
+     */
+    MEAT_CARD("Meat Card"),
+
+    /**
+     * Card School Invite — rare drop (5% chance) from STREET_LAD NPCs on interaction.
+     * Grants access to the back-room card school at Sultan's Kebab without needing Street Rep ≥ 30.
+     */
+    CARD_SCHOOL_INVITE("Card School Invite"),
+
     // ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
 
     /**
