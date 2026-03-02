@@ -4665,7 +4665,44 @@ public enum Material {
      * begin an appeal (35% success rate → ASBO revoked).
      * Tooltip: "The order. Laminated, naturally. Trevor looked very pleased with himself."
      */
-    ASBO_ORDER_DOCUMENT("ASBO Order Document");
+    ASBO_ORDER_DOCUMENT("ASBO Order Document"),
+
+    /**
+     * Issue #1235: PORK_CHOPS — prize from the Northfield Sporting &amp; Social Club
+     * Friday meat raffle. A tray of pork loin chops, still in the butcher's wrap.
+     * Worth 3 COIN at the fence. Tooltip: "Winner winner, pork chop dinner."
+     */
+    PORK_CHOPS("Pork Chops"),
+
+    /**
+     * Issue #1235: CHICKEN_LEGS — prize from the Northfield Sporting &amp; Social Club
+     * Friday meat raffle. A bag of chicken drumsticks, slightly freezer-burned.
+     * Worth 2 COIN at the fence.
+     */
+    CHICKEN_LEGS("Chicken Legs"),
+
+    /**
+     * Issue #1235: SAUSAGES — prize from the Northfield Sporting &amp; Social Club
+     * Friday meat raffle. A ring of pork sausages from the local butcher.
+     * Worth 2 COIN at the fence.
+     */
+    SAUSAGES("Sausages"),
+
+    /**
+     * Issue #1235: BACK_ROOM_KEY — brass Yale key to the back-room pontoon at the
+     * Northfield Sporting &amp; Social Club. Can be fenced for 5 COIN from dodgy contacts.
+     * Grants access without requiring Marchetti Crew Respect ≥ 60.
+     * Tooltip: "Someone left this behind. Their loss."
+     */
+    BACK_ROOM_KEY("Back Room Key"),
+
+    /**
+     * Issue #1235: INCRIMINATING_DOCUMENT — evidence of Councillor Hicks's corrupt
+     * planning application. Sourced from InformationBroker or Scrapyard.
+     * Present at the AGM to expose him: Notoriety −15, Hicks flees, newspaper headline.
+     * Tooltip: "Council planning application with someone else's signature on it."
+     */
+    INCRIMINATING_DOCUMENT("Incriminating Document");
 
     private final String displayName;
 
@@ -5759,6 +5796,14 @@ public enum Material {
                                                   0.20f, 0.30f, 0.80f); // Blue official stripe
             case ASBO_ORDER_DOCUMENT:   return cs(0.88f, 0.85f, 0.75f,  // Off-white laminate
                                                   0.20f, 0.30f, 0.80f); // Blue council stripe
+
+            // Issue #1235: Northfield Sporting & Social Club
+            case PORK_CHOPS:            return c(0.78f, 0.38f, 0.30f);  // Raw pork pink
+            case CHICKEN_LEGS:          return c(0.88f, 0.72f, 0.42f);  // Pale chicken yellow
+            case SAUSAGES:              return c(0.70f, 0.32f, 0.22f);  // Dark sausage brown
+            case BACK_ROOM_KEY:         return c(0.75f, 0.65f, 0.30f);  // Brass yellow
+            case INCRIMINATING_DOCUMENT: return cs(0.92f, 0.90f, 0.78f, // Cream paper
+                                                   0.60f, 0.10f, 0.10f); // Red stamp
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -7529,6 +7574,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official court notification letter
             case ASBO_ORDER_DOCUMENT:
                 return IconShape.FLAT_PAPER;  // laminated ASBO order document
+
+            // Issue #1235: Northfield Sporting & Social Club
+            case PORK_CHOPS:
+                return IconShape.BOX;         // butcher-wrapped tray
+            case CHICKEN_LEGS:
+                return IconShape.BOX;         // bag of drumsticks
+            case SAUSAGES:
+                return IconShape.CYLINDER;    // ring of sausages
+            case BACK_ROOM_KEY:
+                return IconShape.FLAT_PAPER;  // small brass Yale key
+            case INCRIMINATING_DOCUMENT:
+                return IconShape.FLAT_PAPER;  // folded planning document
 
             default:
                 return IconShape.BOX;

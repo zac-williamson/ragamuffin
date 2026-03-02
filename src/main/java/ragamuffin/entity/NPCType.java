@@ -2208,7 +2208,26 @@ public enum NPCType {
      * Non-hostile; spawned by CarDealershipSystem during SUNNY weather.
      * Speech: "What's the mileage on that one?" / "Bit steep, innit."
      */
-    TYRE_KICKER(20f, 0f, 0f, false);
+    TYRE_KICKER(20f, 0f, 0f, false),
+
+    /**
+     * Issue #1235: CLUB_SECRETARY — Barry, the officious secretary of the Northfield
+     * Sporting &amp; Social Club. Guards the door and enforces membership rules.
+     * Non-hostile; ejects non-members and players with Wanted ≥ 2 stars.
+     */
+    CLUB_SECRETARY(30f, 0f, 0f, false),
+
+    /**
+     * Issue #1235: DARTS_PLAYER — Dave or Kev, regular darts-league competitors.
+     * Press E to challenge them to a game of 501. Non-hostile.
+     */
+    DARTS_PLAYER(25f, 0f, 0f, false),
+
+    /**
+     * Issue #1235: RAFFLE_ORGANISER — Irene, who runs the Friday-evening meat raffle.
+     * Sells raffle tickets and draws numbers. Non-hostile.
+     */
+    RAFFLE_ORGANISER(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
