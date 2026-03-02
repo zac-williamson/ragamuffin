@@ -34539,3 +34539,138 @@ Advanced mechanic unlocked once the player has signed up for at least 1 direct d
 // CraftingSystem: CHARITY_TABARD recipe (FABRIC_SCRAP + MARKER_PEN) — register in CraftingSystem
 // Integrates: NotorietySystem, WantedSystem, CriminalRecord, DisguiseSystem,
 //   RumourNetwork, WeatherSystem, TimeSystem, CraftingSystem
+
+---
+
+## Phase 12q: Northfield Household Waste Recycling Centre — The Tip, Trade Waste Jobsworths & the Reuse Corner Hustle
+
+**Goal**: Implement `RecyclingCentreSystem.java` — Northfield's council-run Household Waste Recycling Centre (HWRC), colloquially "the tip". Open Tue–Sun 08:00–18:00 (closed Mondays). A beloved/loathed British institution staffed by hi-vis-clad site operatives who interrogate whether your load counts as trade waste, enforce the "one van-load per visit" rule, and direct you to the correct skip bay. The REUSE_CORNER is a free shelf where people leave items others can take — a prime source of unexpected loot. The WEEE (Waste Electrical and Electronic Equipment) skip contains discarded electronics with salvage value.
+
+### The Site
+
+The `RECYCLING_CENTRE` landmark (add to `LandmarkType`) sits on the edge of the industrial estate near the scrapyard. It contains several zones:
+- **Gate** — staffed by `TIP_ATTENDANT` NPC (Dave, the senior operative). Dave interrogates vehicles and enforces trade-waste rules.
+- **Skip bays** — `GENERAL_WASTE_SKIP`, `RECYCLING_SKIP`, `WEEE_SKIP`, `METAL_SKIP` (prop types, add to `PropType`). Player presses E to interact with each.
+- **Reuse Corner** — a `REUSE_SHELF_PROP` where items can be deposited or taken for free.
+- **Hardcore bay** — for rubble/hardcore. Locked unless the player has a `HARDCORE_PERMIT` (obtained from the council office).
+
+### Dave the Site Operative (TIP_ATTENDANT)
+
+Dave (add `TIP_ATTENDANT` to `NPCType`) patrols between the gate and the skip bays 08:00–18:00 Tue–Sun. His primary purpose in life is enforcing rules.
+
+**Trade waste interrogation**: When the player enters the gate (within 4 blocks), Dave stops them:
+- *"Household waste only, mate. Is this from a residential address?"*
+- Player response options:
+  - **Y — Yes (household)**: Dave waves them through. No fee. If player inventory contains `BUILDERS_RUBBLE` or `ASBESTOS_SHEET` (clearly trade waste), Dave is suspicious — 30% chance he re-checks: "Hang on, that looks like trade." If player has `HARDCORE_PERMIT`, rubble is allowed.
+  - **N — No (trade waste)**: Dave explains trade waste costs 15 COIN per visit. Player can pay or leave. Achievement `TRADE_WASTE_MOAN` on first trade waste visit.
+  - **F — Lie and flee**: Player walks past Dave without answering. Dave shouts "Oi! You need to sign in!" 40% chance Dave radios `COUNCIL_ENFORCEMENT` (a second NPC who arrives after 60 seconds and blocks the exit). If player escapes without paying: `CriminalRecord` logs `TRADE_WASTE_EVASION`.
+
+**Rules enforcement**: Dave will eject the player if they:
+- Put household items in the wrong bay (e.g. electronics in general waste) — speech: "That's the WEEE skip, mate. Over there."
+- Try to take more than 3 items from the Reuse Corner per visit — speech: "You can't just strip the whole shelf."
+- Attempt to use the hardcore bay without a `HARDCORE_PERMIT` — speech: "You need a permit for that, sunshine."
+
+### Skip Bay Interactions
+
+| Bay | Press E Action | Yields on Search | Restrictions |
+|---|---|---|---|
+| `GENERAL_WASTE_SKIP` | Dispose items (no return) | Old clothes (RAGS, CHARITY_BAG), broken items | None |
+| `RECYCLING_SKIP` | Dispose glass/paper/cans | Empty bottles (GLASS_BOTTLE ×1–3) | Glass/paper only |
+| `WEEE_SKIP` | Search (takes 3 seconds) | Electronics (CIRCUIT_BOARD, COPPER_WIRE, OLD_PHONE, BROKEN_KETTLE) | Dave suspicious if player lingers >10s |
+| `METAL_SKIP` | Search (takes 3 seconds) | SCRAP_METAL ×1–2, rarely COPPER_PIPE | Dave suspicious if player lingers >10s |
+| `REUSE_SHELF_PROP` | Take or deposit items | Random loot (see table below) | Max 3 taken per visit |
+
+**WEEE skip loot table** (each search draws 1–3 items, weighted):
+- 40%: `CIRCUIT_BOARD` (sellable to PhoneRepairSystem / FenceSystem)
+- 25%: `COPPER_WIRE` (sellable to ScrapyardSystem)
+- 20%: `OLD_PHONE` (unlocks PHONE_REPAIR quest if taken to FixMyPhone)
+- 10%: `BROKEN_KETTLE` (comedic item; CraftingSystem recipe: `BROKEN_KETTLE + COPPER_WIRE = IMPROVISED_TASER`)
+- 5%: `RETRO_CONSOLE` (high-value; sellable to FenceSystem for 8 COIN; achievement `TIP_TREASURE`)
+
+**Reuse Corner loot table** (items change every in-game day, seeded by `Random(dayNumber)`):
+- 1–4 items on the shelf each visit. Possible items: `CURTAINS`, `BOARD_GAME`, `BROKEN_LAMP`, `OLD_BIKE_WHEEL`, `COAT_HANGER_BUNDLE`, `CHARITY_BOOK`, `FOLDING_CHAIR`.
+- Depositing 3+ items in one visit: `REUSE_HERO` achievement. Other NPCs (PENSIONER, PUBLIC) also visit the reuse corner (10% chance per update).
+
+### The Hardcore Permit Hustle
+
+The `HARDCORE_PERMIT` is normally obtained from the council office (queuing 30 in-game minutes, free). But:
+- The council office is only open Mon–Fri 09:00–17:00 (ironic, as the tip is closed Mondays).
+- Player can **forge a permit**: `COUNCIL_LETTERHEAD + MARKER_PEN = HARDCORE_PERMIT (FORGED)`. If Dave checks the permit (15% chance): `CriminalRecord` logs `FORGED_COUNCIL_DOCUMENT`, Notoriety +6, Dave calls enforcement.
+- Player can **bribe Dave** directly (5 COIN): Dave looks the other way. Speech: "I didn't see nothing." Achievement `BACKHANDER_AT_THE_TIP`.
+
+### The Recycling Centre Hustle — Tip Tipping
+
+Advanced mechanic: the player can systematically loot the WEEE and metal skips for profit:
+
+- **Scale**: Each search of WEEE/metal skip yields items (as above). Items can be sold to FenceSystem, ScrapyardSystem, or PhoneRepairSystem.
+- **Dave's suspicion**: If the player visits the WEEE or metal skip more than 3 times in a single visit (tracked per gate entry), Dave confronts them: "You're not here to dispose, you're here to nick. Get out." Player is ejected; site barred for 2 in-game days.
+- **Night run**: The site is unguarded 18:00–08:00. Player can vault the fence (requires `BOLT_CUTTERS` on the gate chain — takes 5 seconds, `NoiseSystem` level 5). All skips accessible; richer loot (1–4 items per skip). `WantedSystem` +1 star if caught inside. Achievement `MOONLIGHT_TIP_RUN` on first successful night entry.
+
+### NPC Interactions
+
+- **PENSIONER NPCs** (2 per day, random times) arrive with car boots full of items to dispose. They always spend 10+ seconds chatting to Dave. If player helps a pensioner carry items to the right bay (interaction within 3 blocks): +1 Notoriety reduction; pensioner says *"Ooh, ta love."*
+- **COUNCIL_ENFORCEMENT** NPC (add to `NPCType`): Only spawns if Dave radios for backup. Blocks the site gate. Can be talked down (Notoriety < 20), bribed (3 COIN), or outrun (player velocity > 1.5x for 5 seconds escapes).
+- **OTHER_TIP_USER** (a PUBLIC sub-variant): Occasionally searches the reuse corner; competes with player for loot. 20% chance of confrontation if both reach the shelf simultaneously: NPC says "I was looking at that!" No violence; social embarrassment only (Notoriety +1 if player grabs first).
+
+### Weather & Time Effects
+
+- **RAIN / DRIZZLE**: Dave retreats to his cabin — reduced interrogation: 50% chance he waves player through without stopping. WEEE skip has a tarpaulin; searching takes +2 seconds.
+- **FROST**: Site opens late at 09:00. Dave wears extra layers; moves slowly (patrol range −5 blocks). Speech: "It's bitter out here. Just get it sorted and go."
+- **HEATWAVE**: Dave is irritable; trade waste enforcement at 100% (no leniency). Speech: "Don't push me today, son. It's too hot."
+- Site is **closed Mondays** (classic HWRC quirk). `RecyclingCentreSystem` checks `dayCount % 7 == 0` for Monday closure.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `TIP_TREASURE` | Find a `RETRO_CONSOLE` in the WEEE skip |
+| `REUSE_HERO` | Deposit 3+ items to the Reuse Corner in one visit |
+| `TRADE_WASTE_MOAN` | First trade waste visit (paid 15 COIN) |
+| `BACKHANDER_AT_THE_TIP` | Bribe Dave to use the hardcore bay |
+| `MOONLIGHT_TIP_RUN` | Successful night entry via bolt-cutters |
+| `CIRCUIT_BOARD_MILLIONAIRE` | Sell 10 CIRCUIT_BOARDs total (any session) |
+
+### Integration with Other Systems
+
+- **ScrapyardSystem**: `COPPER_WIRE` and `SCRAP_METAL` looted from the tip can be sold at the weigh-bridge. Gary at the scrapyard says: *"Getting it from the tip now, are we? Fair enough."*
+- **PhoneRepairSystem**: `OLD_PHONE` from WEEE skip triggers a "repair commission" from Fix My Phone — bring it in, earn 2 COIN.
+- **FenceSystem**: `RETRO_CONSOLE`, `CIRCUIT_BOARD` accepted. Fence remarks: "WEEE skip diving, nice. I'll take the lot."
+- **CraftingSystem**: `BROKEN_KETTLE + COPPER_WIRE = IMPROVISED_TASER` (recipe auto-unlocked when both items are in inventory). `COUNCIL_LETTERHEAD + MARKER_PEN = HARDCORE_PERMIT (FORGED)`.
+- **NoiseSystem**: Night fence-cutting triggers level 5 noise; lingers 30 seconds.
+- **WantedSystem**: Night trespass +1 star if caught. Trade waste evasion logged to `CriminalRecord`.
+- **NotorietySystem**: Helping pensioners −1 per assist (cap −2/day). Night trespass +3 if caught.
+- **WeatherSystem**: Rain reduces Dave's vigilance; frost delays opening; heatwave maxes enforcement.
+- **TimeSystem**: Tue–Sun 08:00–18:00 open; Mon closed; night access 18:00–08:00 via fence cut.
+
+**Unit tests**: Opening hours gate (Mon closed, Tue open at 08:00), trade waste detection (inventory check for BUILDERS_RUBBLE), Dave suspicion trigger (>3 WEEE searches in one visit), night fence-cut noise level, WEEE loot table weights (simulate 100 draws, verify RETRO_CONSOLE ≈ 5%), reuse shelf seeding by dayNumber, hardcore permit forgery detection (15% roll), pensioner help notoriety reduction (cap 2/day), bribe acceptance (5 COIN deducted, Dave ignores hardcore bay).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Trade waste costs 15 COIN**: Give player 20 COIN and add `BUILDERS_RUBBLE` to inventory. Spawn `TIP_ATTENDANT` at gate. Player enters within 4 blocks. Advance update. Verify `RecyclingCentreSystem.isGateInterceptActive()` is true. Player selects N (trade waste). Verify 15 COIN deducted. Verify player is permitted to enter (`RecyclingCentreSystem.hasEntryPermission(player)` is true). Verify `TRADE_WASTE_MOAN` achievement unlocked.
+
+2. **WEEE skip search yields items**: Player enters site (household, daytime). Player presses E on `WEEE_SKIP_PROP` 3 times. Verify inventory contains at least 1 item from the WEEE loot table (`CIRCUIT_BOARD`, `COPPER_WIRE`, `OLD_PHONE`, `BROKEN_KETTLE`, or `RETRO_CONSOLE`). 4th press: verify Dave enters `NPCState.AGGRESSIVE` and player is ejected (`RecyclingCentreSystem.hasEntryPermission(player)` is false).
+
+3. **Reuse Corner — max 3 items per visit**: Seed Reuse Corner with 4 items. Player takes items 1, 2, 3 — all succeed. Player attempts to take item 4: verify refusal (no item added to inventory) and Dave speech contains "can't just strip". Verify `REUSE_HERO` achievement unlocked after 3 deposits (separate test: player deposits 3 items to shelf).
+
+4. **Night run — bolt cutters open gate**: Set time to 21:00. Player approaches gate with `BOLT_CUTTERS` in inventory. Player presses E on gate. Verify `NoiseSystem.getCurrentLevel()` is 5. Verify `RecyclingCentreSystem.hasEntryPermission(player)` is true. Verify no `TIP_ATTENDANT` NPC is active. Player searches WEEE skip: verify 1–4 items (richer than day loot).
+
+5. **Rain reduces Dave's vigilance**: Set weather to `Weather.RAIN`. Advance 100 update frames with player at gate. Verify that across 100 approaches, Dave waves through (no intercept) approximately 50% of the time (test with seeded RNG: count intercepts ≤ 60 and ≥ 40 out of 100).
+
+6. **Pensioner help reduces Notoriety**: Set Notoriety to 20. Spawn `PENSIONER` NPC within 10 blocks of a skip bay. Player moves within 3 blocks of the pensioner while pensioner is carrying items (check `npc.isCarryingDisposalItems()`). Player presses E. Verify Notoriety decreases to 19. Repeat for second pensioner: Notoriety → 18. Third assist: verify Notoriety stays at 18 (cap 2/day).
+
+// ── Issue #1183: Northfield Household Waste Recycling Centre ─────────────────
+// New: RecyclingCentreSystem.java in ragamuffin.core
+// New: RecyclingCentreSystemTest.java in src/test/java/ragamuffin/core/
+// LandmarkType: RECYCLING_CENTRE — add to LandmarkType.java
+// PropType: GENERAL_WASTE_SKIP, RECYCLING_SKIP, WEEE_SKIP, METAL_SKIP, REUSE_SHELF_PROP — add to PropType.java
+// NPCType: TIP_ATTENDANT, COUNCIL_ENFORCEMENT — add to NPCType.java
+// Material: BUILDERS_RUBBLE, ASBESTOS_SHEET, CIRCUIT_BOARD, OLD_PHONE, BROKEN_KETTLE, RETRO_CONSOLE,
+//           CURTAINS, BOARD_GAME, BROKEN_LAMP, OLD_BIKE_WHEEL, COAT_HANGER_BUNDLE, CHARITY_BOOK,
+//           FOLDING_CHAIR, HARDCORE_PERMIT, COUNCIL_LETTERHEAD, IMPROVISED_TASER — add if absent to Material.java
+// CriminalRecord.CrimeType: TRADE_WASTE_EVASION, FORGED_COUNCIL_DOCUMENT — add if absent
+// AchievementType: TIP_TREASURE, REUSE_HERO, TRADE_WASTE_MOAN, BACKHANDER_AT_THE_TIP,
+//                  MOONLIGHT_TIP_RUN, CIRCUIT_BOARD_MILLIONAIRE — add to AchievementType.java
+// CraftingSystem: BROKEN_KETTLE + COPPER_WIRE = IMPROVISED_TASER; COUNCIL_LETTERHEAD + MARKER_PEN = HARDCORE_PERMIT
+// WorldGenerator: RECYCLING_CENTRE placed on edge of INDUSTRIAL_ESTATE zone
+// Integrates: ScrapyardSystem, PhoneRepairSystem, FenceSystem, CraftingSystem, NoiseSystem,
+//   WantedSystem, NotorietySystem, WeatherSystem, TimeSystem, CriminalRecord
