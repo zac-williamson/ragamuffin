@@ -1829,6 +1829,212 @@ the `CANAL` landmark; the system builds gameplay on top without touching world g
 
 ---
 
+## Add Northfield Police Station — Custody Suite, Desk Sergeant Bribe & the Evidence Locker Heist
+
+**Landmark**: `POLICE_STATION` (already registered in `LandmarkType`; no system exists)
+
+### Overview
+
+The police are central antagonists in Ragamuffin — ArrestSystem, WantedSystem, WitnessSystem,
+CriminalRecord and NotorietySystem all model police behaviour — yet the actual police station
+building does nothing when entered. A `PoliceStationSystem` turns it into a living hub of
+deterrence, corruption and opportunity.
+
+Northfield Police Station is a drab 1970s brick building on the edge of the town centre: blue
+lamp outside, a `POLICE_CREST_PROP` above the door, `CCTV_CAMERA_PROP` covering the entrance.
+Open 24/7. Interior: public reception desk, custody suite (locked door), evidence locker
+(second locked door), sergeant's office.
+
+### Key NPCs
+
+- **Desk Sergeant Dave** (`DESK_SERGEANT` NPCType): stationed at the reception counter 08:00–20:00.
+  Passive if Notoriety < 200. At 200+, demands ID and runs a check (30-second pause; if
+  WantedSystem stars ≥ 1, immediately arrests player). Bribeable for 25 COIN at Notoriety ≤ 400
+  (lowers Wanted stars by 1, seeds `POLICE_CORRUPTION` rumour).
+- **Night Custody Officer** (`POLICE` NPC sub-tagged `NIGHT_CUSTODY`): present 20:00–08:00;
+  patrols reception + front corridor. Less corruptible (bribe costs 40 COIN, only works at
+  Notoriety ≤ 300).
+- **Community Liaison Officer (CLO) Sandra** (`PCSO` sub-tagged `CLO`): present Mon/Wed/Fri
+  09:00–16:00 in the public waiting area. Pressing E opens a dialogue: she can clear 1 minor
+  offence from CriminalRecord (PETTY_THEFT or FARE_EVASION only) if player has ≥ 20 Community
+  Respect. One clear per in-game week. Speech: "We like to give people a second chance around here."
+- **2–3 PUBLIC NPC** in the waiting area at any hour (victims reporting crimes, not interactable).
+
+### Core Mechanics
+
+#### Voluntary Surrender
+
+If WantedSystem stars ≥ 2, the player can press `E` on the front desk to trigger a
+**Voluntary Surrender** dialogue:
+
+- Player offers to hand themselves in for any pending offences.
+- CriminalRecord charges are processed immediately (no court hearing); sentence is 30% lighter
+  than a MagistratesCourtSystem conviction.
+- Player is locked out of the game world for 2 in-game hours (custody; screen shows a cell
+  interior with a `SCRATCHED_WALL_PROP` and a `GREY_BLANKET_PROP`).
+- On release: WantedSystem cleared, Notoriety reduced by 50, CriminalRecord marked
+  `SERVED_SENTENCE`. Achievement `TURNED_MYSELF_IN` fires on first surrender.
+- Cannot surrender if carrying `STOLEN_GOODS` class items — Desk Sergeant finds them in
+  a search and doubles the sentence.
+
+#### Bail Application
+
+After any ArrestSystem arrest, instead of automatic custody, the player may immediately
+interact with a `BAIL_DESK_PROP` (placed 5 blocks inside the custody door):
+
+- Base bail cost: 15 COIN per pending charge (capped at 60 COIN total).
+- Marchetti Crew Respect ≥ 60: bail reduced by 30% (the Crew has a bent solicitor on retainer).
+- If player cannot pay, they serve 1 in-game hour of custody (ArrestSystem existing behaviour).
+- Bail jumping (not attending MagistratesCourtSystem hearing within 2 in-game days):
+  +2 Wanted stars, Notoriety +40.
+
+#### Evidence Locker Heist
+
+The evidence locker (behind a `LOCKED_DOOR_PROP`, requires `LOCKPICK` or stolen
+`CUSTODY_KEY` from the Desk Sergeant) contains:
+
+- A `EVIDENCE_SHELF_PROP` holding 3–6 confiscated items (drawn from player's previous
+  confiscated inventory plus random pool: STOLEN_PHONE, DODGY_DVD, COUNTERFEIT_NOTE,
+  LOCKPICK, BALACLAVA, up to 1 DIAMOND).
+- A `PROPERTY_REGISTER_PROP` (interactable — press E to view list of confiscated items;
+  provides one `LOOT_TIP` rumour per read).
+- Entry without the `CUSTODY_KEY` triggers an alarm (`NoiseSystem` level 10; all POLICE
+  NPCs on map enter CHASING state). Entry with the key takes 8 seconds of hold-E on the door.
+- Maximum 4 confiscated items can be carried out. Exiting with items: `CrimeType.EVIDENCE_TAMPERING`
+  (+20 Notoriety per item). The stolen evidence is NOT flagged as stolen for fence purposes
+  — if it was yours to begin with, you can sell it clean.
+- Achievement `HISTORY_DELETED` fires on first successful evidence locker raid.
+
+#### CCTV Blind Spot
+
+The `CCTV_CAMERA_PROP` outside covers the main entrance. Players with Notoriety ≥ 300 are
+auto-flagged on entry (Wanted +1). However:
+
+- DisguiseSystem `BUILDER_OVERALLS` or `COUNCIL_JACKET` bypasses CCTV flag entirely.
+- `BALACLAVA` triggers immediate CHASING response from Desk Sergeant (no delay).
+- Smashing the `CCTV_CAMERA_PROP` (2 hits) disables the flag for 30 in-game minutes but
+  adds `CrimeType.CRIMINAL_DAMAGE` (+5 Notoriety). A `COUNCIL_NOTICE` appears on the door
+  within 5 in-game minutes.
+
+### Physical Layout
+
+A 12×10×4 BRICK building on the south edge of town:
+
+- **Ground floor**: public reception (4×10), locked custody corridor (4×10), sergeant's
+  office (4×4 corner, locked).
+- **Roof**: flat; accessible by placing blocks or using a `ROPE_PROP` from an adjacent
+  building. A `SKYLIGHT_PROP` on the roof drops into the custody corridor — alternate
+  entry bypassing CCTV and the desk entirely (requires LOCKPICK to open skylight latch).
+- **Props**: BLUE_LAMP_PROP (outside, always lit), POLICE_CREST_PROP (above door),
+  RECEPTION_DESK_PROP, NOTICE_BOARD_PROP (wanted poster for local criminals, cosmetic),
+  BAIL_DESK_PROP, EVIDENCE_SHELF_PROP, PROPERTY_REGISTER_PROP, SCRATCHED_WALL_PROP
+  (cell interior), GREY_BLANKET_PROP (cell interior).
+
+### Integration with Existing Systems
+
+- **ArrestSystem**: after an arrest, player appears at the BAIL_DESK_PROP rather than
+  immediately entering custody; bail path runs through PoliceStationSystem.
+- **WantedSystem**: Desk Sergeant bribe clears 1 star; voluntary surrender clears all stars.
+- **CriminalRecord**: voluntary surrender marks offences `SERVED_SENTENCE`; evidence
+  tampering adds new offence type.
+- **NotorietySystem**: CCTV flag at 300+, voluntary surrender −50, evidence tampering
+  +20/item, desk bribe seeds `POLICE_CORRUPTION` rumour.
+- **DisguiseSystem**: BUILDER_OVERALLS / COUNCIL_JACKET bypass CCTV; BALACLAVA triggers
+  immediate response.
+- **NoiseSystem**: evidence locker break-in generates noise 10 (heard across the building).
+- **RumourNetwork**: desk bribe seeds `POLICE_CORRUPTION`; property register read seeds
+  `LOOT_TIP`; voluntary surrender seeds `PLAYER_SPOTTED` (local gossip).
+- **FactionSystem**: Marchetti Crew ≥60 Respect reduces bail by 30%; THE_COUNCIL ≥50
+  makes CLO Sandra available for offence clearing (she's technically a council employee).
+- **MagistratesCourtSystem**: bail jump adds 2 stars and routes through ArrestSystem.
+- **WeatherSystem**: rain at night means 1 extra `PUBLIC` NPC inside waiting area (shelter seekers).
+- **AchievementSystem**: `TURNED_MYSELF_IN`, `HISTORY_DELETED`, `BAIL_JUMPER`, `BENT_COPPER`.
+
+### New Items
+
+- `CUSTODY_KEY` — dropped by Desk Sergeant on bribe or pickpocket. Single use; opens
+  evidence locker door. Resets after 30 in-game minutes (new sergeant has a spare).
+
+### New NPCTypes
+
+- `DESK_SERGEANT` — reception NPC; day shift; ID check logic; corruptible.
+- `CLO` (Community Liaison Officer) — PCSO subtype; offence-clearing mechanic.
+
+### New CrimeType
+
+- `CriminalRecord.CrimeType.EVIDENCE_TAMPERING` — +20 Notoriety per item removed from
+  evidence locker.
+- `CriminalRecord.CrimeType.BAIL_JUMPING` — +2 Wanted stars, +40 Notoriety.
+
+### Achievements
+
+- `TURNED_MYSELF_IN` — Voluntarily surrender at the front desk for the first time.
+- `HISTORY_DELETED` — Successfully raid the evidence locker and escape with at least
+  one item.
+- `BENT_COPPER` — Successfully bribe the Desk Sergeant 3 times across any number of
+  play sessions.
+- `BAIL_JUMPER` — Fail to attend a Magistrates' Court hearing after posting bail.
+
+### Unit Tests
+
+- Voluntary surrender clears WantedSystem stars and reduces Notoriety by 50.
+- Bail cost calculation: 15 COIN × charges, capped at 60, −30% with Marchetti ≥60.
+- CCTV flag fires at Notoriety ≥ 300 on entry (non-disguised).
+- CCTV flag does NOT fire with BUILDER_OVERALLS or COUNCIL_JACKET disguise.
+- Evidence locker loot table draws from confiscated + random pool (3–6 items).
+- Bail jump detection triggers after 2 in-game days without attending court.
+- CLO offence clearing only applies to PETTY_THEFT and FARE_EVASION (not ASSAULT).
+- Night Custody Officer bribe costs 40 COIN (vs 25 for Desk Sergeant).
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Voluntary surrender clears wanted and reduces notoriety**: Set WantedSystem stars = 2,
+   Notoriety = 300. Place player at the front desk. Press `E` on `RECEPTION_DESK_PROP`.
+   Select "Hand myself in." Advance simulation 2 in-game hours. Verify WantedSystem stars = 0.
+   Verify Notoriety = 250 (reduced by 50). Verify CriminalRecord pending charges are marked
+   `SERVED_SENTENCE`. Verify achievement `TURNED_MYSELF_IN` fires.
+
+2. **Desk Sergeant ID check arrests wanted player**: Set Notoriety = 250 (≥200 threshold),
+   WantedSystem stars = 1. Place player within 2 blocks of `RECEPTION_DESK_PROP` at 10:00
+   (Desk Sergeant present). Advance 35 seconds. Verify ArrestSystem has triggered and player
+   is in custody state (WantedSystem clears, player position set to custody cell).
+
+3. **Desk Sergeant bribe reduces Wanted stars**: Set Notoriety = 150 (≤400), WantedSystem
+   stars = 1. Give player 25 COIN. Press `E` on Desk Sergeant and select "I think we can
+   sort this out." Verify player coin count decreases by 25. Verify WantedSystem stars = 0.
+   Verify a `POLICE_CORRUPTION` rumour exists in the RumourNetwork. Verify Notoriety is
+   unchanged (bribe does not itself add Notoriety).
+
+4. **Evidence locker raid with CUSTODY_KEY**: Give player a `CUSTODY_KEY`. Place player at
+   the evidence locker `LOCKED_DOOR_PROP`. Hold `E` for 8 seconds. Verify door is open.
+   Verify `EVIDENCE_SHELF_PROP` contains 3–6 items. Take 2 items. Verify player inventory
+   contains those 2 items. Verify `CrimeType.EVIDENCE_TAMPERING` appears twice in
+   CriminalRecord. Verify Notoriety increased by 40 (2 × 20). Verify `HISTORY_DELETED`
+   achievement fires.
+
+5. **CCTV flag triggers Wanted star at high notoriety**: Set Notoriety = 350 (≥300). Verify
+   player is not wearing a disguise. Place player outside police station entrance. Move player
+   through the entrance. Verify WantedSystem stars increased by 1 after entry. Verify the
+   `DESK_SERGEANT` NPC enters a SUSPICIOUS state (moves toward player).
+
+6. **Disguise bypasses CCTV**: Set Notoriety = 400. Give player `BUILDER_OVERALLS` via
+   DisguiseSystem. Place player at entrance. Move through entrance. Verify WantedSystem stars
+   are NOT increased (CCTV bypass active). Verify Desk Sergeant does NOT enter SUSPICIOUS state.
+
+7. **Bail mechanic after arrest**: Trigger an ArrestSystem arrest (set WantedSystem stars = 1,
+   place POLICE NPC adjacent to player). Verify player appears at `BAIL_DESK_PROP` position.
+   Give player 15 COIN (1 charge). Press `E` on `BAIL_DESK_PROP`. Verify coin count decreases
+   by 15. Verify player is released (not in custody state). Verify WantedSystem stars = 0.
+
+8. **CLO clears petty theft offence**: Set Community Respect ≥ 20. Add `CrimeType.PETTY_THEFT`
+   to CriminalRecord. Set in-game time to Wednesday 10:00 (CLO Sandra present). Place player
+   adjacent to CLO Sandra. Press `E`. Select "Can you help me out?" Verify `PETTY_THEFT`
+   offence is removed from CriminalRecord. Advance to the following Wednesday and repeat —
+   verify CLO refuses (1-per-week cooldown). Verify speech bubble: "We like to give people a
+   second chance around here."
+
+---
+
 ## Phase 9: CODE REVIEW
 
 **Goal**: Comprehensive code review of the entire codebase. This phase runs after
