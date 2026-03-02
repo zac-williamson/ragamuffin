@@ -5160,6 +5160,44 @@ public enum AchievementType {
         "Peg Warfare",
         "Assaulted three people with clothes pegs. Brigid would be proud.",
         3
+    ),
+
+    // ── Issue #1315: Prison Van Escape — The Paddy Wagon Hustle ───────────────
+
+    /**
+     * Fires on the first successful escape via brute force or lockpick.
+     */
+    ESCAPE_ARTIST(
+        "Doing a Ronnie Biggs",
+        "You escaped police custody. The hard way. Possibly the only way.",
+        1
+    ),
+
+    /**
+     * Fires on the first successful bribed escape.
+     */
+    BOUGHT_MY_WAY_OUT(
+        "Creative Accounting",
+        "You bribed your way out of a police van. The British justice system at its finest.",
+        1
+    ),
+
+    /**
+     * Fires on the first successful bluff escape.
+     */
+    SILVER_TONGUE(
+        "I Know My Rights",
+        "Fast talk got you out of the back of a police van. Probably shouldn't have worked, but here we are.",
+        1
+    ),
+
+    /**
+     * Fires on the third successful escape (any method). Target: 3.
+     */
+    REPEAT_ESCAPEE(
+        "Professional Liability",
+        "Third time escaping police custody. They really should just give up.",
+        3
     );
 
     private final String name;
