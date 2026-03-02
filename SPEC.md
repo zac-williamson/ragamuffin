@@ -44768,3 +44768,232 @@ Add to `RumourType.java`:
 //              NotorietySystem, RumourNetwork, NeighbourhoodSystem, FenceSystem,
 //              PawnShopSystem, CommunityCentreSystem (photocopier), NewspaperSystem,
 //              AchievementSystem, StreetSkillSystem, WeatherSystem
+
+---
+
+## Add Northfield Prison Van Escape — The Paddy Wagon Hustle
+
+### Overview
+
+When the player is arrested, instead of being instantly teleported back to the park, they
+are bundled into a `POLICE_VAN_PROP` by the arresting `POLICE` or `ARMED_RESPONSE` NPC.
+During the transit from the arrest location to the police station, a timed escape
+mini-game plays out inside the van. The player has four escape methods — lockpick, brute
+force, bribery, or bluff — and a 30-second window before the van arrives and they are
+processed at the station. Successful escape drops the player on the roadside, clears
+the current wanted stars and pauses re-arrest for 60 seconds. Failed escape or choosing not
+to attempt it results in full magistrates processing via `MagistratesCourtSystem`.
+
+This system wraps the existing `ArrestSystem.arrest()` outcome and replaces the
+"teleport to park" default with a richer, consequential flow. `ArrestSystem` is NOT modified
+structurally — `PrisonVanSystem` acts as an intercept layer called by `RagamuffinGame`
+between arrest and respawn.
+
+### New File
+
+- `PrisonVanSystem.java` in `ragamuffin.core`
+
+### Physical Layout
+
+`POLICE_VAN_PROP` (6.0f × 2.2f × 2.2f, indestructible during transit, yields `SCRAP_METAL`
+when destroyed after despawn). Two interior props accessible during the escape window:
+
+- `VAN_CELL_DOOR_PROP` — rear cage door with a padlock (lockpick target).
+- `VAN_BENCH_PROP` — metal bench along the left wall (can be ripped loose for brute force).
+- `VAN_VENT_PROP` — small roof vent (kick open with ≥ 30% strength skill; yields escape
+  via the roof).
+
+The exterior `ARRESTING_OFFICER_NPC` rides up front (obstructed, 0 detection during transit).
+One `ESCORT_OFFICER_NPC` (NPCType.POLICE, weakened — 25 HP, seated in the back, facing the
+cell door) monitors the player throughout the ride.
+
+### NPCType Additions
+
+- `ESCORT_OFFICER` — seated POLICE variant inside the van. Lower stats (25 HP, unarmed);
+  can be bribed, distracted, or charmed (see below). Hostile if bribe is refused. Add to
+  `NPCType.java`.
+
+### Escape Methods
+
+All methods share the same 30-second transit window (real-time). The window is visible as
+a countdown HUD strip. Once the timer hits 0 the van arrives; the escape window closes.
+
+1. **Lockpick** (`LOCKPICK` in inventory, holds E on `VAN_CELL_DOOR_PROP`, 8-second channel):
+   - Success: door swings open; player jumps from the rear; ESCORT_OFFICER enters PURSUING
+     state but cannot follow outside the van.
+   - Failure (interrupted by ESCORT_OFFICER within 2 blocks): lockpick confiscated,
+     Notoriety +2. Player can retry if ESCORT_OFFICER is distracted.
+
+2. **Brute Force** (StreetSkillSystem STRENGTH skill ≥ 3, holds E on `VAN_BENCH_PROP`, 5-second
+   channel, HIGH noise, 20-block radius):
+   - Rips the bench free (`VAN_BENCH` item added to inventory as makeshift weapon, 3 durability).
+   - Then use `VAN_BENCH` item on `VAN_CELL_DOOR_PROP` to batter it open (3 hits).
+   - If ESCORT_OFFICER is not knocked out, each hit triggers ALERT state and a 50% chance
+     the officer calls for backup (+1 wanted star after escape).
+   - `ESCAPE_ARTIST` achievement fires on first brute-force escape.
+
+3. **Bribery** (≥ 10 COIN, press E on ESCORT_OFFICER, DialogueUI opens):
+   - Pay 10 COIN → officer "looks the other way" for 15 seconds (enters IDLE, detection radius 0).
+   - Player must still lockpick or brute-force the door within those 15 seconds.
+   - If player takes too long, officer returns to alert state and the COIN is lost.
+   - `BOUGHT_MY_WAY_OUT` achievement fires on successful bribed escape.
+
+4. **Bluff** (DisguiseSystem score ≥ 2 OR StreetSkillSystem SOCIAL skill ≥ 4, press E on
+   ESCORT_OFFICER):
+   - Speech options: "I'm an informant — call DCI Briggs", "I think I'm going to be sick",
+     "My brief's outside — he'll have your badge."
+   - Success (DisguiseSystem ≥ 2 or SOCIAL ≥ 4 + random 60% roll): officer hesitates
+     (enters CONFUSED state, 10-second window). Player can lockpick during this window.
+   - Failure (roll fails or skills insufficient): officer becomes suspicious, disables
+     dialogue for the rest of the transit. Notoriety +1.
+
+**Choose Nothing / Fail All**: Van arrives at the police station. `MagistratesCourtSystem`
+processes the player's charges normally. Player respawns at the park via the existing
+`ArrestSystem.arrest()` outcome. Criminal record updated as usual.
+
+### Escape Consequences
+
+On **successful escape**:
+- Player spawned at a random ROAD block within 5–10 blocks of the van's current transit
+  path (simulated road position).
+- `WantedSystem` current wanted stars cleared to 0 (escaped before booking).
+- 60-second police-blind window: POLICE NPCs within 30 blocks cannot detect the player
+  (they haven't been told to look for them yet).
+- Notoriety +8 (escaping custody is notorious).
+- `ESCAPED_CUSTODY` added to `CriminalRecord`.
+- RumourType `VAN_ESCAPE` seeded town-wide (see below).
+- `StreetSkillSystem` STEALTH XP +10.
+- If player has dog companion (`DogCompanionSystem`), dog is also released (reunites
+  within 60 seconds; "Rex legged it too" flavour text).
+
+On **failed escape attempt (not successful)**:
+- Standard magistrates processing applies.
+- If brute force was attempted: additional `CRIMINAL_DAMAGE` added to record.
+- ESCORT_OFFICER's evidence (any witnessed escape attempt) raises the fine by 5 COIN at
+  `MagistratesCourtSystem`.
+
+### New PropType Additions
+
+Add to `PropType.java`:
+- `POLICE_VAN_PROP` (6.0f × 2.2f × 2.2f, indestructible, yields `SCRAP_METAL`)
+- `VAN_CELL_DOOR_PROP` (1.0f × 2.0f × 0.1f, 6 hits, yields `SCRAP_METAL`)
+- `VAN_BENCH_PROP` (1.8f × 0.5f × 0.4f, 3 hits, yields `VAN_BENCH` item)
+- `VAN_VENT_PROP` (0.4f × 0.4f × 0.1f, 2 hits, yields nothing)
+
+### New Items (Materials)
+
+- `VAN_BENCH` — ripped-off metal bench. Improvised melee weapon; 3 durability; deals
+  4 damage per hit. Stacks to 1. Tooltip: "Cold, metal, and surprisingly motivating."
+  Add to `Material.java`.
+- `LOCKPICK` (if not already present) — slim tool; 5 uses before breaking. Crafted from
+  `SCRAP_METAL` × 2 at workbench. Tooltip: "Hope this doesn't snap." Add to `Material.java`
+  if not already declared.
+
+### New RumourType Additions
+
+Add to `RumourType.java`:
+- `VAN_ESCAPE` — "Did you hear? Someone only legged it out the back of the police van —
+  right on the ring road. Officers were fuming." Seeded by `PrisonVanSystem` on successful
+  escape. Spreads via PUBLIC, STREET_LAD, and BARMAN NPCs town-wide. Adds +5 STREET_LADS
+  Respect; NewspaperSystem headline eligible (front page: "Escape from the Paddy Wagon").
+  Police patrol frequency +1 for 24 in-game hours.
+- `CUSTODY_DODGER` — "Police are looking for someone who did a runner from their van on the
+  industrial estate." Seeded simultaneously with `VAN_ESCAPE`. Spreads via POLICE NPCs;
+  re-activates WANTED state after the 60-second grace window expires.
+
+### Achievements
+
+Add to `AchievementType.java`:
+- `ESCAPE_ARTIST` — "Doing a Ronnie Biggs" — "You escaped police custody. The hard way.
+  Possibly the only way." Fires on first successful escape via brute force or lockpick.
+- `BOUGHT_MY_WAY_OUT` — "Creative Accounting" — "You bribed your way out of a police van.
+  The British justice system at its finest." Fires on first successful bribed escape.
+- `SILVER_TONGUE` — "I Know My Rights" — "Fast talk got you out of the back of a police van.
+  Probably shouldn't have worked, but here we are." Fires on first successful bluff escape.
+- `REPEAT_ESCAPEE` — "Professional Liability" — "Third time escaping police custody.
+  They really should just give up." Target: 3. Fires on third successful escape (any method).
+
+### Integrations
+
+- **ArrestSystem**: `PrisonVanSystem.interceptArrest(player, inventory, ...)` called
+  immediately after police initiate arrest handcuffs animation, before `ArrestSystem.arrest()`.
+  If player successfully escapes, `ArrestSystem.arrest()` is NOT called.
+  If player fails or skips, `ArrestSystem.arrest()` is called normally.
+- **WantedSystem**: successful escape clears current wanted stars; `CUSTODY_DODGER` rumour
+  re-triggers wanted state after 60-second grace window.
+- **CriminalRecord**: `ESCAPED_CUSTODY` added on success; `CRIMINAL_DAMAGE` added if brute
+  force was attempted regardless of outcome.
+- **NotorietySystem**: +8 on escape success; +2 on failed lockpick attempt.
+- **MagistratesCourtSystem**: failed escape routes player through normal magistrates
+  processing; evidence of escape attempt raises fine +5 COIN.
+- **DisguiseSystem**: score ≥ 2 unlocks Bluff escape option.
+- **StreetSkillSystem**: STRENGTH ≥ 3 unlocks Brute Force; SOCIAL ≥ 4 improves Bluff odds.
+  STEALTH XP +10 on escape; STRENGTH XP +5 on brute force attempt.
+- **DogCompanionSystem**: dog companion also released on escape; reunite mechanic.
+- **RumourNetwork**: `VAN_ESCAPE` and `CUSTODY_DODGER` seeded on escape.
+- **NewspaperSystem**: `VAN_ESCAPE` rumour eligible for front-page headline.
+- **AchievementSystem**: four achievements (above).
+- **NoiseSystem**: brute force triggers HIGH noise (≥ 4) at van position.
+- **HealingSystem**: transit window gives player 5% health restore (adrenaline mechanic —
+  "fight-or-flight"; flavour text: "Your heart's pounding.").
+
+### Unit Tests
+
+- Transit window correctly starts at 30 seconds and counts down via `update(delta)`.
+- Lockpick channel completes in 8 seconds; interrupted on ESCORT_OFFICER within 2 blocks.
+- Brute force requires STRENGTH ≥ 3; fails silently below threshold (no channel starts).
+- Bribery deducts 10 COIN from inventory; ESCORT_OFFICER enters IDLE for 15 seconds.
+- Bluff: DisguiseSystem ≥ 2 always succeeds; SOCIAL ≥ 4 succeeds at 60% roll rate (seeded RNG).
+- Successful escape clears wanted stars to 0 and sets 60-second grace timer.
+- Escape consequence seeds `VAN_ESCAPE` and `CUSTODY_DODGER` rumours in RumourNetwork.
+- Failed escape routes through `ArrestSystem.arrest()` (verify arrest respawn position).
+- `ESCAPED_CUSTODY` added to CriminalRecord on success; `CRIMINAL_DAMAGE` on brute force attempt.
+- Notoriety +8 on success; +2 on failed lockpick.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Lockpick escape — ESCORT_OFFICER out of range**: Trigger arrest on player with a
+   `LOCKPICK` in inventory. Verify `PrisonVanSystem` intercepts arrest (player not yet
+   teleported). Place ESCORT_OFFICER 5 blocks from `VAN_CELL_DOOR_PROP`. Hold E on the door
+   for 8 simulated seconds. Verify door opens. Verify player is spawned on a ROAD block
+   within 10 blocks of van. Verify `WantedSystem` wanted star count is 0. Verify Notoriety
+   has increased by 8. Verify `VAN_ESCAPE` rumour is in `RumourNetwork`. Verify
+   `ESCAPED_CUSTODY` in CriminalRecord. Verify `ESCAPE_ARTIST` achievement fires.
+
+2. **Bribery + lockpick combo**: Trigger arrest with 15 COIN in inventory. Press E on
+   ESCORT_OFFICER. Pay 10 COIN bribe. Verify ESCORT_OFFICER enters IDLE state and detection
+   radius is 0. Verify player inventory reduced by 10 COIN. Lockpick the door within 15
+   seconds. Verify successful escape. Verify `BOUGHT_MY_WAY_OUT` achievement fires.
+   Verify player retains remaining 5 COIN.
+
+3. **Brute force — noise and criminal damage**: Trigger arrest. Set STRENGTH ≥ 3. Hold E on
+   `VAN_BENCH_PROP` for 5 seconds. Verify `VAN_BENCH` added to inventory. Strike
+   `VAN_CELL_DOOR_PROP` 3 times. Verify door opens and player escapes. Verify `NoiseSystem`
+   registers HIGH noise (≥ 4) at van position. Verify `CRIMINAL_DAMAGE` added to
+   CriminalRecord. Verify `StreetSkillSystem` STRENGTH XP increased by 5.
+
+4. **Van arrives — magistrates processing**: Trigger arrest. Do nothing during 30-second
+   transit window. Advance 30 simulated seconds. Verify `PrisonVanSystem` does NOT escape
+   the player. Verify `ArrestSystem.arrest()` is called (player teleported to ARREST_RESPAWN).
+   Verify player health is 30 (ArrestSystem consequence). Verify no `VAN_ESCAPE` rumour
+   in `RumourNetwork`. Verify criminal record is updated by `MagistratesCourtSystem`.
+
+5. **Grace window prevents re-detection**: Trigger escape (any method). Verify 60-second
+   grace timer is active. Move a POLICE NPC within 5 blocks of the player. Verify POLICE
+   NPC does NOT enter CHASING state. Advance 61 simulated seconds. Verify POLICE NPC
+   now enters CHASING state when brought within 5 blocks (grace window expired).
+
+---
+
+// ── Issue #1316: Add Northfield Prison Van Escape — The Paddy Wagon Hustle ────
+// New: PrisonVanSystem.java in ragamuffin.core
+// New: PrisonVanSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1316PrisonVanEscapeIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: ESCORT_OFFICER — add to NPCType.java
+// Material: VAN_BENCH, LOCKPICK (if not already present) — add to Material.java
+// PropType: POLICE_VAN_PROP, VAN_CELL_DOOR_PROP, VAN_BENCH_PROP, VAN_VENT_PROP — add to PropType.java
+// RumourType: VAN_ESCAPE, CUSTODY_DODGER — add to RumourType.java
+// AchievementType: ESCAPE_ARTIST, BOUGHT_MY_WAY_OUT, SILVER_TONGUE, REPEAT_ESCAPEE — add to AchievementType.java
+// Integration: ArrestSystem (intercept), WantedSystem, CriminalRecord, NotorietySystem,
+//              MagistratesCourtSystem, DisguiseSystem, StreetSkillSystem, DogCompanionSystem,
+//              RumourNetwork, NewspaperSystem, AchievementSystem, NoiseSystem, HealingSystem
