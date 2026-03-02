@@ -790,6 +790,13 @@ public class SportingSocialClubSystem {
     }
 
     /**
+     * Directly activate or deactivate the back-room pontoon (for testing).
+     */
+    public void setBackRoomActive(boolean active) {
+        this.backRoomPontoonActive = active;
+    }
+
+    /**
      * Detect Mick's cheating at pontoon. Requires FENCE skill ≥ 10.
      *
      * @param playerInventory player's inventory (unused directly but required for context)

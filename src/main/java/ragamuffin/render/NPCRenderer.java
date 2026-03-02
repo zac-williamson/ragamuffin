@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.g3d.*;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.ModelBuilder;
+import com.badlogic.gdx.graphics.g3d.utils.shapebuilders.PatchShapeBuilder;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector3;
 import ragamuffin.entity.FacialExpression;
@@ -40,6 +41,15 @@ public class NPCRenderer {
     private static final long ATTRS = VertexAttributes.Usage.Position | VertexAttributes.Usage.Normal;
     private static final float WALK_SPEED = 6.0f; // animation cycle speed
     private static final float WALK_AMPLITUDE = 45f; // max limb swing in degrees
+
+    /**
+     * Issue #1295: Number of subdivisions per face when building body-part box geometry.
+     * Each face is subdivided into a BODY_SUBDIVISIONS×BODY_SUBDIVISIONS grid of quads,
+     * giving (BODY_SUBDIVISIONS²×2) triangles per face and (BODY_SUBDIVISIONS²×12) total
+     * triangles per body part — a significant increase over the plain 12-triangle box.
+     * Value of 3 gives 18 triangles per face (108 per part), up from 2 per face (12 per part).
+     */
+    public static final int BODY_SUBDIVISIONS = 3;
 
     // Humanoid proportions — detailed multi-polygon parts
     private static final float HEAD_W = 0.38f, HEAD_H = 0.38f, HEAD_D = 0.38f;
@@ -898,10 +908,56 @@ public class NPCRenderer {
     }
 
     private Model buildBox(float w, float h, float d, Color color) {
+        return buildSubdividedBox(w, h, d, color, BODY_SUBDIVISIONS);
+    }
+
+    /**
+     * Build a box model with subdivided faces (Issue #1295 — increased polygon count).
+     * Each of the 6 faces is tessellated into a {@code divs×divs} grid of quads using
+     * {@link PatchShapeBuilder}, giving {@code divs²×2} triangles per face and
+     * {@code divs²×12} triangles per part (vs 12 for a plain box).
+     *
+     * @param w    width  (X extent)
+     * @param h    height (Y extent)
+     * @param d    depth  (Z extent)
+     * @param color diffuse colour
+     * @param divs subdivisions per face edge (must be >= 1; 1 == plain box)
+     */
+    private Model buildSubdividedBox(float w, float h, float d, Color color, int divs) {
         mb.begin();
         Material mat = new Material(ColorAttribute.createDiffuse(color));
-        MeshPartBuilder mpb = mb.part("box", GL20.GL_TRIANGLES, ATTRS, mat);
-        mpb.box(w, h, d);
+        float hw = w / 2f, hh = h / 2f, hd = d / 2f;
+
+        // +Z face (front)
+        MeshPartBuilder front = mb.part("front", GL20.GL_TRIANGLES, ATTRS, mat);
+        PatchShapeBuilder.build(front,
+            -hw, -hh, hd,  hw, -hh, hd,  hw,  hh, hd,  -hw,  hh, hd,  0, 0, 1, divs, divs);
+
+        // -Z face (back)
+        MeshPartBuilder back = mb.part("back", GL20.GL_TRIANGLES, ATTRS, mat);
+        PatchShapeBuilder.build(back,
+             hw, -hh, -hd,  -hw, -hh, -hd,  -hw,  hh, -hd,   hw,  hh, -hd,  0, 0, -1, divs, divs);
+
+        // +X face (right)
+        MeshPartBuilder right = mb.part("right", GL20.GL_TRIANGLES, ATTRS, mat);
+        PatchShapeBuilder.build(right,
+            hw, -hh,  hd,  hw, -hh, -hd,  hw,  hh, -hd,   hw,  hh,  hd,  1, 0, 0, divs, divs);
+
+        // -X face (left)
+        MeshPartBuilder left = mb.part("left", GL20.GL_TRIANGLES, ATTRS, mat);
+        PatchShapeBuilder.build(left,
+            -hw, -hh, -hd,  -hw, -hh,  hd,  -hw,  hh,  hd,  -hw,  hh, -hd,  -1, 0, 0, divs, divs);
+
+        // +Y face (top)
+        MeshPartBuilder top = mb.part("top", GL20.GL_TRIANGLES, ATTRS, mat);
+        PatchShapeBuilder.build(top,
+            -hw, hh,  hd,   hw, hh,  hd,   hw, hh, -hd,  -hw, hh, -hd,  0, 1, 0, divs, divs);
+
+        // -Y face (bottom)
+        MeshPartBuilder bottom = mb.part("bottom", GL20.GL_TRIANGLES, ATTRS, mat);
+        PatchShapeBuilder.build(bottom,
+            -hw, -hh, -hd,   hw, -hh, -hd,   hw, -hh,  hd,  -hw, -hh,  hd,  0, -1, 0, divs, divs);
+
         return mb.end();
     }
 
