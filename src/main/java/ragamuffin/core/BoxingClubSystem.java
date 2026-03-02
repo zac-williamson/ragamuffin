@@ -505,7 +505,7 @@ public class BoxingClubSystem {
         if (inventory.getItemCount(Material.LOADED_GLOVE) > 0) {
             if (random.nextFloat() < LOADED_GLOVE_CATCH_CHANCE) {
                 criminalRecord.record(CriminalRecord.CrimeType.FIGHT_FIXING);
-                notoriety.addNotoriety(NOTORIETY_FIGHT_FIXING);
+                notoriety.addNotoriety(NOTORIETY_FIGHT_FIXING, null);
                 banExpiry = currentDay + LOADED_GLOVE_BAN_DAYS;
                 signedUpForFightNight = false;
                 if (cb != null) cb.award(AchievementType.LOADED_GLOVES);
@@ -589,7 +589,7 @@ public class BoxingClubSystem {
         if (inventory.getItemCount(Material.LOADED_GLOVE) > 0) {
             if (random.nextFloat() < LOADED_GLOVE_CATCH_CHANCE) {
                 criminalRecord.record(CriminalRecord.CrimeType.FIGHT_FIXING);
-                notoriety.addNotoriety(NOTORIETY_FIGHT_FIXING);
+                notoriety.addNotoriety(NOTORIETY_FIGHT_FIXING, null);
                 if (cb != null) cb.award(AchievementType.LOADED_GLOVES);
                 return BoutResult.DISQUALIFIED;
             }
@@ -640,7 +640,7 @@ public class BoxingClubSystem {
         if (random.nextFloat() < BOUT_FIX_GRASS_CHANCE) {
             // Wayne grasses
             criminalRecord.record(CriminalRecord.CrimeType.BOUT_FIXING);
-            notoriety.addNotoriety(NOTORIETY_BOUT_FIXING);
+            notoriety.addNotoriety(NOTORIETY_BOUT_FIXING, null);
             return FixResult.GRASSED;
         }
         // Bribe succeeds

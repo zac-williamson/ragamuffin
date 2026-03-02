@@ -3073,16 +3073,6 @@ public enum AchievementType {
     ),
 
     /**
-     * Awarded when the player calls in the drug den tip-off at the PAYPHONE_PROP,
-     * triggering an UNDERCOVER_POLICE raid on Garage 3.
-     */
-    GRASS(
-        "Grass",
-        "You made an anonymous call. Totally anonymous. Marchetti will find out.",
-        1
-    ),
-
-    /**
      * Awarded when the UNDERCOVER_POLICE raid completes after the player's tip-off
      * (stash cleared, MARCHETTI_CREW Respect -10).
      */
@@ -3185,16 +3175,6 @@ public enum AchievementType {
     ),
 
     // ── Issue #1153: Northfield Community Centre ──────────────────────────────
-
-    /**
-     * Awarded when the player reaches 100 NORTHFIELD_RESIDENTS faction sub-rep.
-     * Also grants NeighbourhoodSystem vibes +20 permanently.
-     */
-    COMMUNITY_PILLAR(
-        "Community Pillar",
-        "They actually like you here. You're on the noticeboard. With a photo. A good photo.",
-        1
-    ),
 
     /**
      * Awarded when the player completes an aerobics session scoring 6+ out of 8 prompts.

@@ -1661,27 +1661,11 @@ public enum PropType {
     TRIAGE_DESK_PROP(1.60f, 1.00f, 0.60f, 5, Material.SCRAP_METAL),
 
     /**
-     * Plastic waiting chair — one of 4–8 in the waiting room.
-     * Sitting accelerates queue timer. Patients gossip here.
-     * 2 hits; yields SCRAP_METAL.
-     */
-    WAITING_CHAIR_PROP(0.55f, 0.85f, 0.55f, 2, Material.SCRAP_METAL),
-
-    /**
      * NHS treatment cubicle — curtained bay where Dr. Okafor treats patients.
      * Player must be adjacent for emergency healing. 4 cubicles total.
      * Indestructible (hitPoints 99).
      */
     TREATMENT_CUBICLE_PROP(2.00f, 2.20f, 1.80f, 99, null),
-
-    /**
-     * Medicine cabinet — locked cabinet in the medicine room.
-     * Requires LOCKPICK (4 hits to open). Yields PARACETAMOL ×2, BANDAGE,
-     * ANTISEPTIC_CREAM; 15% chance MORPHINE_AMPOULE. Opening triggers
-     * MEDICINE_THEFT CriminalRecord, +8 Notoriety; Brenda calls police if
-     * she hears the lockpick. 8 hits with CROWBAR to destroy.
-     */
-    MEDICINE_CABINET_PROP(0.70f, 1.60f, 0.40f, 8, Material.PARACETAMOL),
 
     /**
      * Controlled drugs safe — reinforced safe in the medicine room.
@@ -2200,12 +2184,6 @@ public enum PropType {
      * 2 hits to break; yields WOOD.
      */
     STACKING_CHAIR_PROP(0.45f, 0.90f, 0.45f, 2, Material.WOOD),
-
-    /**
-     * TEA_URN_PROP — a large stainless-steel tea urn on the kitchen counter.
-     * Press E to get a free hot drink (+2 Warmth). 4 hits to break; yields SCRAP_METAL.
-     */
-    TEA_URN_PROP(0.35f, 0.55f, 0.35f, 4, Material.SCRAP_METAL),
 
     /**
      * BISCUIT_TIN_PROP — a decorative tin of assorted biscuits on the refreshments table.
