@@ -544,7 +544,38 @@ public class CriminalRecord {
          * (crafted from COUNCIL_LETTERHEAD + MARKER_PEN). 15% detection chance per check.
          * Penalty: Notoriety +6, WantedSystem +1 star, Dave calls COUNCIL_ENFORCEMENT.
          */
-        FORGED_COUNCIL_DOCUMENT("Forged council document (HWRC permit)");
+        FORGED_COUNCIL_DOCUMENT("Forged council document (HWRC permit)"),
+
+        // ── Issue #1186: Northfield Probation Office ──────────────────────────
+
+        /**
+         * Recorded when the player misses 2 or more fortnightly sign-in appointments
+         * at the Probation Office without a Bank Holiday exemption.
+         * Triggers ProbationSystem recall warrant escalation.
+         * Penalty: Notoriety +10, WantedSystem recall warrant issued.
+         */
+        PROBATION_BREACH("Probation order breach"),
+
+        /**
+         * Recorded when the player is detected outside the squat-home curfew zone
+         * (within 20 blocks) between 21:00 and 07:00 while wearing the ANKLE_TAG.
+         * Penalty: WantedSystem +1 star, Notoriety +5.
+         */
+        CURFEW_BREACH("Curfew breach (ankle tag)"),
+
+        /**
+         * Recorded when ProbationSystem issues a recall warrant after 2 missed sign-ins.
+         * Equivalent to a new arrest warrant — police will immediately pursue.
+         * Penalty: WantedSystem +2 stars, Notoriety +15.
+         */
+        RECALL_WARRANT("Recall to custody warrant"),
+
+        /**
+         * Recorded when the player pays the Fence (rep ≥ 40, 15 COIN) to cut the
+         * ANKLE_TAG device. Removes the curfew obligation but escalates police response.
+         * Penalty: WantedSystem +3 stars, Notoriety +20.
+         */
+        TAG_TAMPER("Electronic tag tampering");
 
         private final String displayName;
 
