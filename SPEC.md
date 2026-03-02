@@ -41154,3 +41154,178 @@ Three options:
 //   FactionSystem (THE_COUNCIL fine revenue), WeatherSystem (warden retreat, frost grip),
 //   NewspaperSystem (camera vandalism headline), RumourNetwork, AchievementSystem,
 //   TooltipSystem (first ticket + first frost drive tooltips)
+
+---
+
+## Issue #1263: Add Northfield Amusement Arcade — Token Economy, Penny Falls & the Nicked Tokens Hustle
+
+**File**: `src/main/java/ragamuffin/core/ArcadeSystem.java`
+**Test**: `src/test/java/ragamuffin/integration/Issue1263ArcadeSystemTest.java`
+
+### Overview
+Northfield's Amusement Arcade (trading as "Fun Zone") is a squat unit on the high street between the bookies and the off-licence — neon-lit, carpet sticky underfoot, smelling of hot electronics and disappointment. The arcade runs 10:00–22:00 daily. The attendant, **Keith** (NPC type `ARCADE_ATTENDANT`), sits in a token booth by the entrance. The player can buy tokens, play machines, win prize tickets, and trade tickets at the prize counter. The hustle angle: token tubes can be looted from the undersides of machines when Keith isn't watching.
+
+---
+
+### Constants
+
+```
+TOKEN_COST_COINS       = 1         // 1 COIN buys 1 ARCADE_TOKEN
+PENNY_FALLS_COST       = 1         // tokens per push
+FRUIT_MACHINE_COST     = 1         // tokens per spin (upgraded machines only)
+GRABBER_COST           = 2         // tokens per attempt
+TICKET_PER_WIN_SMALL   = 3         // tickets from a small penny-falls win (coins drop ≤ 5)
+TICKET_PER_WIN_LARGE   = 10        // tickets from a large penny-falls win (coins drop > 5)
+GRABBER_WIN_CHANCE     = 0.15      // 15% base grab success
+GRABBER_WIN_CHANCE_GOOD_ANGLE = 0.35  // 35% if player presses E at the optimal moment
+TOKEN_TUBE_LOOT_MIN    = 5         // minimum tokens in a looted tube
+TOKEN_TUBE_LOOT_MAX    = 20        // maximum tokens in a looted tube
+ATTENDANT_LOOK_INTERVAL = 30.0f    // seconds between Keith scanning the floor
+OPEN_HOUR              = 10
+CLOSE_HOUR             = 22
+PRIZE_COUNTER_RADIUS   = 8         // blocks from prize counter prop
+```
+
+---
+
+### Machines
+
+**1. Penny Falls** (`PENNY_FALLS_PROP` — new PropType, 1×2×1)
+- Spend 1 token; a coin pushes the pile.
+- Simulates a cliff-edge ledger with a `pendingCoins` counter (0–15 range).
+- Each push: `pendingCoins++` with 20% base chance the ledge tips and awards coins = `pendingCoins` (resets to 0). Coins awarded → converted to prize tickets.
+- Small win (coins ≤ 5): +3 tickets. Large win (coins > 5): +10 tickets.
+- "Jackpot" (coins ≥ 12): additionally drops 2 ARCADE_TOKEN items into the world.
+
+**2. Arcade Fruit Machine** (`ARCADE_FRUIT_MACHINE_PROP` — new PropType, 1×2×1)
+- Uses same `FruitMachine` logic but in token denomination (cost 1 token, wins in tickets not coins).
+- Triple match (1/27): +15 tickets. Pair (6/27): +5 tickets. No match: nothing.
+- Distinguishable from the pub fruit machine — located in arcade only.
+
+**3. Grabber Machine** (`GRABBER_MACHINE_PROP` — new PropType, 2×2×2)
+- Costs 2 tokens per attempt.
+- Base 15% success chance; improved to 35% if player presses E at the exact moment the grabber arm is centred (shown by a 2-second timing window when `grabberPhase == CENTRE`).
+- On win: drops one of: TEDDY_BEAR, KEY_RING, PLASTIC_TOY (new Materials — cheap items worth 1 COIN at fence).
+- On fail: no prize.
+- Keith resets the machine if the player wins 3 times consecutively (he tightens the claw tension).
+
+---
+
+### NPC: Keith the Attendant
+
+- Type: `ARCADE_ATTENDANT` (new NPCType)
+- Stationed at the token booth prop (`TOKEN_BOOTH_PROP`) during open hours.
+- State cycle: `AT_BOOTH` (idle 80% of the time) → `FLOOR_WALK` (patrols the floor for 15 seconds every 30s) → `AT_BOOTH`.
+- During `FLOOR_WALK`: if Keith is within 6 blocks of the player AND player is `LOOTING_MACHINE`, Keith intervenes: ejects player, +2 notoriety, seeds `CAUGHT_LOOTING_ARCADE` rumour.
+- Keith sells tokens: E on booth → buy tokens (1 COIN = 1 ARCADE_TOKEN, up to 20 at a time).
+- Keith can be bribed with a SAUSAGE_ROLL to take a 60-second smoke break (unlocks safe looting window).
+
+---
+
+### The Nicked Tokens Hustle
+
+While Keith is in `AT_BOOTH` state AND not facing the machine (probability check against Keith's `lookTimer`), the player can press E on any machine to loot the coin/token tube underneath:
+- Loot: 5–20 ARCADE_TOKEN items added to player inventory.
+- Risk: if Keith's `lookTimer` fires during the 3-second loot animation, Keith catches the player.
+- Penalty for being caught: +2 notoriety, 5 COIN fine (paid to Keith or ejected), `ARCADE_THEFT` CrimeType on record.
+- Successful loot seeds `SOMEONE_ROBBED_THE_ARCADE` rumour via RumourNetwork.
+
+---
+
+### Prize Counter
+
+- NPC `PRIZE_COUNTER_CLERK` (new NPCType, always female — use `SHOPKEEPER` model variant) staffs a counter prop (`PRIZE_COUNTER_PROP`).
+- Player trades ARCADE_TICKET items for prizes:
+
+| Tickets | Prize |
+|---------|-------|
+| 5       | PLASTIC_TOY |
+| 15      | TEDDY_BEAR |
+| 30      | KEY_RING (ironic — same value as grabber win) |
+| 50      | ARCADE_VOUCHER (redeemable at corner shop for 5 COIN discount) |
+| 100     | STOLEN_WATCH (fence value 15 COIN; "As seen in prizes — probably nicked from somewhere") |
+
+---
+
+### NPC Regular: Baz
+
+- NPC type `ARCADE_REGULAR` (reuse UNEMPLOYED model); always present during open hours, stationed at the penny falls machine.
+- Has 30 ARCADE_TOKEN in his pocket (pickpocketable — uses existing pickpocket mechanic).
+- Cycles through speech lines every 2 minutes:
+  - "Come on you beauty..."
+  - "I've put twenty quid in this thing today."
+  - "She's ready to drop, I can feel it."
+  - "Keith, this machine's rigged."
+  - "Don't you dare come near my machine."
+- If player wins the penny falls jackpot while Baz is watching, Baz goes to `ANGRY` state for 5 minutes and will shove the player (deals 1 damage, −1 Street Rep).
+
+---
+
+### Integration
+
+- `TimeSystem` — arcade open 10:00–22:00; Keith not present outside hours.
+- `NotorietySystem` — caught looting: +2; caught by Keith: +2; bribe Keith: −1.
+- `CriminalRecord` — new CrimeType: `ARCADE_THEFT`.
+- `RumourNetwork` — new RumourTypes: `SOMEONE_ROBBED_THE_ARCADE`, `CAUGHT_LOOTING_ARCADE`.
+- `FruitMachine` — reused for arcade fruit machine variant (ticket payout instead of coin).
+- `StreetEconomySystem` — TEDDY_BEAR, PLASTIC_TOY, KEY_RING tradeable as "tat" at market value 1 COIN each.
+- `FenceSystem` — STOLEN_WATCH fences at 15 COIN.
+- `AchievementSystem` — four new achievements (see below).
+- `TooltipSystem` — first token purchase: *"Tokens can't be exchanged for cash — that's how they get you."*; first grabber attempt: *"Press E at the right moment for a better grab."*
+- `WitnessSystem` — looting observed by Baz or other NPCs seeds rumour and can escalate notoriety.
+- `NeighbourhoodSystem` — arcade contributes −2 Neighbourhood Vibes (it attracts loitering youth).
+
+---
+
+### Achievements
+
+- `TOKEN_TOURIST` (instant) — buy tokens and play all three machine types in one session.
+- `CLEAN_SWEEP` (instant) — win on penny falls, fruit machine, and grabber in a single visit.
+- `CLAW_MASTER` (progressTarget=5) — win 5 grabber attempts total.
+- `STRIPPIN_THE_MACHINES` (instant) — successfully loot a token tube without being caught.
+
+---
+
+### New Materials to add (`Material.java`)
+`ARCADE_TOKEN`, `ARCADE_TICKET`, `ARCADE_VOUCHER`, `TEDDY_BEAR`, `KEY_RING`, `PLASTIC_TOY`, `STOLEN_WATCH`
+
+### New NPCTypes to add (`NPCType.java`)
+`ARCADE_ATTENDANT`, `PRIZE_COUNTER_CLERK`, `ARCADE_REGULAR`
+
+### New PropTypes to add (`PropType.java`)
+`PENNY_FALLS_PROP`, `ARCADE_FRUIT_MACHINE_PROP`, `GRABBER_MACHINE_PROP`, `TOKEN_BOOTH_PROP`, `PRIZE_COUNTER_PROP`
+
+### New AchievementTypes to add (`AchievementType.java`)
+`TOKEN_TOURIST`, `CLEAN_SWEEP`, `CLAW_MASTER`, `STRIPPIN_THE_MACHINES`
+
+### New RumourTypes to add (`RumourType.java`)
+`SOMEONE_ROBBED_THE_ARCADE`, `CAUGHT_LOOTING_ARCADE`
+
+### New CrimeType to add (`CriminalRecord.java`)
+`ARCADE_THEFT`
+
+---
+
+### Unit Tests
+
+1. `PennyFallsLedge_tipsOnWin` — simulate 20 pushes; when `pendingCoins ≥ 1` and win condition fires, verify ticket award matches expected (≤5 coins → 3 tickets; >5 coins → 10 tickets).
+2. `GrabberMachine_baseChance` — seed RNG for 100 grabs without optimal timing; verify win rate is between 10%–20%.
+3. `GrabberMachine_optimalTiming` — seed RNG for 100 grabs with `grabberPhase == CENTRE`; verify win rate is between 25%–45%.
+4. `KeithSmokeBreak_allowsLoot` — bribe Keith with SAUSAGE_ROLL; verify Keith state transitions to `SMOKE_BREAK`; verify loot attempt succeeds without notoriety penalty.
+5. `PrizeCounter_tradeTickets` — give player 50 ARCADE_TICKET; verify `ARCADE_VOUCHER` added and ticket count decremented to 0.
+6. `ArcadeClosedOutsideHours` — set `TimeSystem` to 22:30; verify `canEnterArcade()` returns false and Keith is not spawned.
+
+### Integration Tests
+
+1. **Full session — buy tokens, play, win prize**: Set `TimeSystem` to 14:00. Spawn arcade (Keith at booth, Baz at penny falls). Player has 10 COIN. Press E on TOKEN_BOOTH_PROP; buy 10 tokens (verify 10 COIN deducted, 10 ARCADE_TOKEN in inventory). Press E on `PENNY_FALLS_PROP` 10 times (seed RNG for guaranteed large win on push 8). Verify ARCADE_TICKET count ≥ 10. Move to PRIZE_COUNTER_PROP; trade 15 tickets for TEDDY_BEAR. Verify TEDDY_BEAR in inventory, ticket count reduced by 15.
+
+2. **Token tube loot — undetected**: Set `TimeSystem` to 14:00. Seed RNG so Keith's `lookTimer` does NOT fire during loot animation. Player presses E on `PENNY_FALLS_PROP` with no tokens (triggers loot attempt). Verify 5–20 ARCADE_TOKEN added to player inventory. Verify notoriety unchanged. Verify `SOMEONE_ROBBED_THE_ARCADE` rumour seeded.
+
+3. **Token tube loot — caught by Keith**: Seed RNG so Keith's `lookTimer` fires at t=1s into loot animation. Player presses E on machine. Verify player ejected from arcade. Verify notoriety increased by 2. Verify `CriminalRecord` contains `ARCADE_THEFT`. Verify `CAUGHT_LOOTING_ARCADE` rumour seeded.
+
+4. **Baz shoves player after jackpot**: Place Baz within 6 blocks of penny falls. Seed RNG for jackpot win (pendingCoins=12). Player pushes penny falls. Verify jackpot win fires. Verify Baz state transitions to `ANGRY`. Advance 1 frame; verify Baz moves toward player and player health decreases by 1.
+
+5. **Arcade closed at night**: Set `TimeSystem` to 22:30. Verify `ArcadeSystem.isOpen()` returns false. Verify Keith NPC is not in the world. Verify player cannot interact with any machine (E press returns no action).
+
+6. **Keith bribe enables safe looting**: Give player `SAUSAGE_ROLL`. Press E on Keith; select bribe. Verify `SAUSAGE_ROLL` consumed. Verify Keith state is `SMOKE_BREAK`. Verify looting machine for full 3-second animation completes without interruption. Verify tokens in player inventory.
+
