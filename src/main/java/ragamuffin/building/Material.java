@@ -3655,7 +3655,32 @@ public enum Material {
      * for 5 COIN/week. Grants access and allows use of GARAGE_SHELF_PROP.
      * Tooltip: "It's yours. For now. Keep up the payments."
      */
-    GARAGE_KEY_7("Garage Key 7");
+    GARAGE_KEY_7("Garage Key 7"),
+
+    // ── Issue #1151: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * Club Membership Card — sold by Ron (SOCIAL_CLUB_STEWARD) for 5 COIN.
+     * Grants access to the main bar, members' pricing on drinks, and all activities.
+     * Required for darts challenges, quiz entry, and back-room pontoon.
+     * Tooltip: "Membership has its privileges. Mostly cheaper beer."
+     */
+    CLUB_MEMBERSHIP_CARD("Club Membership Card"),
+
+    /**
+     * Darts Set — a set of steel-tip darts, awarded when beating Brian in a 501 match.
+     * Equipped to hotbar; improves darts accuracy by +1 tier when used at DARTBOARD_PROP.
+     * Tooltip: "Tungsten tips. Proper flights. You know what you're doing."
+     */
+    DARTS_SET("Darts Set"),
+
+    /**
+     * Quiz Answer Sheet — Maureen's master answer sheet for Thursday Quiz Night.
+     * Can be stolen from NOTICE_BOARD_PROP at 19:00–19:30 (before Maureen collects it).
+     * Using it during the quiz guarantees correct answers but has 30% chance of detection.
+     * Tooltip: "Capital of Peru? Lima. Everyone always forgets Lima."
+     */
+    QUIZ_ANSWER_SHEET("Quiz Answer Sheet");
 
     private final String displayName;
 
@@ -4579,6 +4604,14 @@ public enum Material {
             case GARAGE_KEY_7:            return cs(0.78f, 0.65f, 0.20f,  // Brass key
                                                     0.55f, 0.45f, 0.10f); // Darker brass
 
+            // Issue #1151: Northfield Sporting & Social Club
+            case CLUB_MEMBERSHIP_CARD:    return cs(0.10f, 0.30f, 0.70f,  // Club blue card
+                                                    0.05f, 0.15f, 0.45f); // Dark navy
+            case DARTS_SET:               return cs(0.50f, 0.50f, 0.52f,  // Steel grey
+                                                    0.25f, 0.25f, 0.28f); // Dark metal
+            case QUIZ_ANSWER_SHEET:       return cs(0.95f, 0.95f, 0.88f,  // Off-white paper
+                                                    0.20f, 0.20f, 0.60f); // Blue ink lines
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5035,6 +5068,10 @@ public enum Material {
             case BURNER_PHONE:
             case PIGEON_FEED_BAG:
             case GARAGE_KEY_7:
+            // Issue #1151: Northfield Sporting & Social Club — not block items
+            case CLUB_MEMBERSHIP_CARD:
+            case DARTS_SET:
+            case QUIZ_ANSWER_SHEET:
                 return false;
             default:
                 return true;
@@ -5992,6 +6029,14 @@ public enum Material {
                 return IconShape.BOX;         // large sack
             case GARAGE_KEY_7:
                 return IconShape.TOOL;        // small Yale key
+
+            // Issue #1151: Northfield Sporting & Social Club
+            case CLUB_MEMBERSHIP_CARD:
+                return IconShape.CARD;        // laminated membership card
+            case DARTS_SET:
+                return IconShape.TOOL;        // steel-tip darts
+            case QUIZ_ANSWER_SHEET:
+                return IconShape.FLAT_PAPER;  // answer sheet
 
             default:
                 return IconShape.BOX;
