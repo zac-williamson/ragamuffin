@@ -42453,3 +42453,164 @@ Big Terry's Cabs is the unlicensed minicab office on the Northfield high street 
 // StreetEconomySystem: touting income in HUSTLE category
 // NewspaperSystem: headline after 5 dodgy deliveries
 // DisguiseSystem: HI_VIS_VEST raises touting threshold
+
+---
+
+## Issue #1279: Add Northfield Travelling Fairground — Dodgems, Waltzers & the Strongman Hustle
+
+**Landmark**: `LandmarkType.TRAVELLING_FAIR` (displayed as "Northfield Fair")
+
+### Overview
+
+Once a fortnight (every other Friday evening from 18:00), a travelling fairground sets up on the park's east end — a chaos of flashing lights, diesel generators, candy floss, and families trying to get money off a rigged ring-toss. The fair runs Friday 18:00 through Sunday 22:00, then dismantles overnight. It's staffed by FAIRGROUND_WORKER NPCs (a close-knit travelling family), managed by Big Lenny (`FAIRGROUND_BOSS`), and brings a surge of PUBLIC and YOUTH_GANG NPCs to the area. When it rains heavily, attendance drops sharply but the rides keep running.
+
+### Rides & Stalls
+
+**Dodgems** (`DODGEMS_RIDE_PROP`) — 2 COIN per ride.
+- Press **E** on the ticket booth (staffed by `FAIRGROUND_WORKER` Shaz). Player gets a 30-second dodgems session (screen shake, directional input, collision with 3 NPC dodgem cars).
+- Ramming a NPC car head-on: Notoriety +1 per hit if a `POLICE_CONSTABLE` is within 20 blocks.
+- `DODGEMS_ACE` achievement: complete a session without being rammed.
+
+**Waltzers** (`WALTZER_RIDE_PROP`) — 2 COIN per ride.
+- Press **E** on the waltzer ticket booth (staffed by `FAIRGROUND_WORKER` Wayne).
+- 20-second ride: random camera spin effect. Post-ride player has `DIZZY` debuff (5-second walk penalty, slight direction drift).
+- Wayne spins the cars manually — if player tips 1 COIN (press E mid-ride), Wayne spins faster; dizzy debuff doubled but: `HIGH_ROLLER` achievement progress +1.
+
+**Strongman High-Striker** (`STRONGMAN_PROP`) — 1 COIN per go.
+- Press **E** to swing the mallet. Timing bar (same mechanic as `BattleBarMiniGame`). Hit the green zone to ring the bell (full score).
+- Base strength (Player stamina stat): determines minimum score floor.
+- Full bell score: win `FAIRGROUND_PRIZE` item; Notoriety −2 (crowd cheers, positive NPC reaction).
+- **Rig the Striker**: at `LOCALS` Faction Respect ≥ 50, player can bribe Big Lenny (5 COIN) to get a rigged `STRONGMAN_PROP` that always scores full. Bribe expires after 3 customers win in a row (too obvious). `RIGGED_GAME` crime added to CriminalRecord.
+
+**Hook-a-Duck** (`HOOK_A_DUCK_PROP`, reusing existing prop) — 1 COIN, same random win/loss mechanic as FeteSystem, but prize upgraded to `FAIRGROUND_PRIZE` on a win.
+
+**Candy Floss Stall** (`CANDY_FLOSS_STALL_PROP`) — staffed by `FAIRGROUND_WORKER` Donna.
+- Sells `CANDY_FLOSS` (1 COIN): +15 hunger, +5 warmth (sugar rush); `KIDS_TREAT` tooltip on first buy: "It's mostly air. Still worth it."
+- Sells `TOFFEE_APPLE` (1 COIN): +20 hunger.
+- Sells `FAIRGROUND_CANDYFLOSS_BAG` (3 COIN): bulk bag of 5 × CANDY_FLOSS for resale (StreetEconomySystem: resell individually for 1 COIN each = 5 COIN total, net +2).
+
+**Ring Toss** (`RING_TOSS_STALL_PROP`) — 1 COIN for 3 rings.
+- Throw 3 rings at bottles. Each ring: 25% base success + `STREET_SKILL` AGILITY modifier (if any). Land 2+ rings: `FAIRGROUND_PRIZE` item won.
+- **Always Rigged**: base success is actually 15% (not shown to player). `FairgroundSystem.isRigged()` always returns true. Player can deduce rigging by observing 5 consecutive NPC losses (tooltip: "These bottles are glued down.").
+- Player can knock over the stall (`RING_TOSS_STALL_PROP` destructible: 5 hits): scatters prizes, Big Lenny becomes hostile, `FAIRGROUND_TROUBLEMAKER` crime added to CriminalRecord.
+
+### The Strongman Hustle (Player Employment)
+
+Big Lenny (`FAIRGROUND_BOSS`) offers the player a cash-in-hand job running the Strongman High-Striker for 6 in-game hours (Friday/Saturday only, 18:00–00:00):
+- Press **E** on Big Lenny (notoriety < Tier 3 required: "I don't need trouble on my pitch.").
+- Shift earns 3 COIN/hour. Player stands at `STRONGMAN_PROP`; NPC customers queue (NPCState: QUEUING).
+- Player collects 1 COIN from each customer by pressing E. If player pockets 2 COIN without declaring (only possible if Big Lenny moves away 5+ blocks), skimming +1 COIN but: 20% chance Big Lenny notices → `DISMISSED_FROM_FAIR` flag (banned from employment for remainder of fair weekend, Notoriety +3).
+- Three honest shifts (no skimming) unlock `FAIRGROUND_WORKER_BADGE` achievement.
+
+### Pickpocket Mechanic (Integration with ExposureSystem)
+
+- Large crowd near Dodgems/Waltzers (6+ NPCs in 5-block radius): `ExposureSystem` pickpocket window active.
+- Player can pickpocket queuing NPCs (same mechanic as existing pickpocket): 60% success in crowd, caught = `THEFT` crime + `FAIRGROUND_TROUBLEMAKER` crime added.
+- Pickpocket yield: 1–3 COIN, occasionally `FAIRGROUND_TICKET` (loose ticket, sellable to FenceSystem for 1 COIN).
+
+### Generator Heist (Night Mechanic)
+
+After 23:00 Sunday (fair closing), a `DIESEL_GENERATOR_PROP` sits unattended near the fair perimeter for 30 in-game minutes before the fairground workers load it.
+- Player with SCRAP_METAL × 2 + LOCKPICK can strip the generator: yields `SCRAP_METAL` × 4 + `COPPER_WIRE` × 2.
+- Sell scrap to `SCRAPYARD` for up to 12 COIN.
+- 25% chance a `FAIRGROUND_WORKER` NPC catches the player: becomes hostile, seeds `GANG_ACTIVITY` rumour ("Someone stripped the fair's generator."), Notoriety +5.
+
+### Achievements
+
+| ID | Condition |
+|----|-----------|
+| `DODGEMS_ACE` | Complete a dodgems session without being rammed. |
+| `DIZZY_RASCAL` | Ride the waltzers 5 times in one fair weekend. |
+| `BELLRINGER` | Ring the bell on the Strongman High-Striker. |
+| `FAIRGROUND_WORKER_BADGE` | Complete 3 honest shifts for Big Lenny. |
+| `ALL_THE_FUN_OF_THE_FAIR` | Complete all 4 rides/stalls in a single fair visit. |
+
+### Integration Points
+
+- **WeatherSystem** — RAIN reduces NPC crowd size by 50%; THUNDERSTORM cancels the fair entirely (Big Lenny: "Health and safety, innit."); SUNNY doubles candy floss sales.
+- **FactionSystem** — `LOCALS` Respect ≥ 50 grants bribe access for rigged Strongman; `MARCHETTI_CREW` Respect ≥ 70 lets player fence `FAIRGROUND_PRIZE` directly to Marchetti fence for 5 COIN.
+- **TimeSystem** — Fair spawns Friday 18:00 biweekly; dismantles Sunday 22:00 overnight (props removed by Monday 06:00). `TRAVELLING_FAIR` landmark only active during fair window.
+- **WantedSystem** — Dodgem ramming near police +1 star; generator theft +2 stars.
+- **CriminalRecord** — `RIGGED_GAME`, `FAIRGROUND_TROUBLEMAKER` crime types (add to enum).
+- **StreetEconomySystem** — Candy floss resale, prize sale, shift income all tracked under `HUSTLE` category.
+- **RumourNetwork** — `LOCAL_EVENT` rumour "Fair's back on at the park this weekend" seeded 1 in-game day before arrival; `GANG_ACTIVITY` rumour on generator theft.
+- **NoiseSystem** — Fairground active: Noise level 3 during operating hours (18:00–22:00); generators at level 1 after closing.
+- **NeighbourhoodSystem** — Fair visit seeds positive vibes +5 for the weekend; noise complaints −3 if near residential blocks.
+- **NewspaperSystem** — Headline "Travelling Fair Returns to Northfield Park" on arrival Friday; "Vandals Target Fairground" if generator stripped.
+- **ExposureSystem** — Pickpocket window active near crowd.
+
+### Materials (add to `Material.java`)
+
+- `CANDY_FLOSS` — "Spun sugar on a stick. It's basically nothing."
+- `TOFFEE_APPLE` — "Hard toffee coat, sad apple inside."
+- `FAIRGROUND_PRIZE` — "A giant stuffed bear. Slightly cross-eyed."
+- `FAIRGROUND_CANDYFLOSS_BAG` — "Five bags of candyfloss. Resell individually."
+- `FAIRGROUND_TICKET` — "Loose fair ticket. Probably still valid."
+
+### NPCTypes (add to `NPCType.java`)
+
+- `FAIRGROUND_BOSS` — Big Lenny. Manages the fair; patrols rides 18:00–00:00.
+- `FAIRGROUND_WORKER` — Shaz (dodgems), Wayne (waltzers), Donna (candy floss stall). Close-knit group; if player attacks one, all three turn hostile.
+
+### PropTypes (add to `PropType.java`)
+
+- `DODGEMS_RIDE_PROP`, `WALTZER_RIDE_PROP`, `STRONGMAN_PROP`, `CANDY_FLOSS_STALL_PROP`, `RING_TOSS_STALL_PROP`, `DIESEL_GENERATOR_PROP`
+
+### AchievementType (add to `AchievementType.java`)
+
+- `DODGEMS_ACE`, `DIZZY_RASCAL`, `BELLRINGER`, `FAIRGROUND_WORKER_BADGE`, `ALL_THE_FUN_OF_THE_FAIR`
+
+### CriminalRecord (add to `CriminalRecord.CrimeType`)
+
+- `RIGGED_GAME`, `FAIRGROUND_TROUBLEMAKER`
+
+### LandmarkType (add to `LandmarkType.java`)
+
+- `TRAVELLING_FAIR` — `getDisplayName()` → `"Northfield Fair"`
+
+### Unit Tests (`FairgroundSystemTest.java`)
+
+1. `testFairOnlySpawnsOnFridayBiweekly` — set time to Friday Week 1 18:00; verify `FairgroundSystem.isFairActive()` true. Set time to Friday Week 2 18:00; verify still active biweekly. Set time to Saturday Week 1 12:00; verify active. Set time to Monday 06:00; verify NOT active.
+2. `testFairCancelledInThunderstorm` — set weather THUNDERSTORM on Friday 18:00; verify `isFairActive()` returns false; Big Lenny NPC absent.
+3. `testDodgemsDeductsCorrectCoin` — player has 5 COIN; press E on dodgems booth; verify COIN == 3.
+4. `testWaltzerAppliesDizzyDebuff` — ride waltzers; verify player has DIZZY debuff immediately after; verify debuff expires after 5 seconds real time.
+5. `testStrongmanFullScoreAwardsPrize` — mock timing bar to return green zone hit; verify player inventory contains `FAIRGROUND_PRIZE`; Notoriety −2.
+6. `testRiggedStrongmanAlwaysWins` — bribe Big Lenny with 5 COIN (Respect ≥ 50); confirm RIGGED state; 3 consecutive plays all return full score.
+7. `testRiggedStrongmanExpiresAfterThreeCustomers` — rig the striker; simulate 3 NPC customers winning; verify rig deactivated on 4th play.
+8. `testCandyFlossResaleEarns5Coin` — buy `FAIRGROUND_CANDYFLOSS_BAG`; resell all 5 units via StreetEconomySystem; verify total received == 5 COIN.
+9. `testGeneratorHeistYieldsScrap` — set time to Sunday 23:10 (fair closed); provide player with SCRAP_METAL×2 + LOCKPICK; trigger heist; verify inventory contains SCRAP_METAL×4 + COPPER_WIRE×2.
+10. `testPickpocketInCrowdHas60PercentSuccess` — seed RNG; place 6 NPCs within 5 blocks; verify 60 pickpocket attempts succeed ~60% of the time (± 10%).
+11. `testFairgroundWorkerGroupHostility` — attack FAIRGROUND_WORKER Shaz; verify FAIRGROUND_WORKER Wayne and Donna also become hostile (NPCState.FLEEING or ATTACKING).
+12. `testAllTheFunAchievementUnlockedAfterAllFour` — complete Dodgems, Waltzers, Strongman, Hook-a-Duck in one session; verify `ALL_THE_FUN_OF_THE_FAIR` achievement unlocked.
+
+### Integration Tests (`Issue1279FairgroundIntegrationTest.java`)
+
+1. **Full fair visit cycle**: Set time to Friday 18:00 (fair week). Verify `TRAVELLING_FAIR` landmark active; `FAIRGROUND_BOSS`, `FAIRGROUND_WORKER` × 3 NPCs present; `LOCAL_EVENT` rumour "Fair's back on" seeded. Player spends 2 COIN on Dodgems. Rides Waltzers (2 COIN). Wins Hook-a-Duck. Rings Strongman bell. Verify: `ALL_THE_FUN_OF_THE_FAIR` achievement unlocked; player COIN reduced by 7 (2+2+1+1 spent, −1 net from prize value not counting).
+
+2. **Strongman hustle shift**: Player presses E on Big Lenny; accepts shift. Simulates 6 hours (6 customer interactions, 1 COIN each collected). No skimming. Verify: player COIN +18 (3/hr × 6hr); `FAIRGROUND_WORKER_BADGE` progress incremented to 1/3.
+
+3. **Generator heist triggers newspaper**: Set time to Sunday 23:05. Player strips generator (SCRAP_METAL×2 + LOCKPICK, seed RNG to avoid catch). Advance 1 in-game day. Verify: NewspaperSystem contains headline "Vandals Target Fairground"; `GANG_ACTIVITY` rumour in RumourNetwork; WantedSystem stars +2.
+
+4. **Fair absent on non-fair week**: Set time to Friday (non-fair week) 18:00. Verify `isFairActive()` false; no `FAIRGROUND_BOSS` or `FAIRGROUND_WORKER` NPCs spawned; `TRAVELLING_FAIR` landmark shows no associated props.
+
+5. **Rain reduces crowd**: Set weather to RAIN on Saturday 19:00 (fair active). Verify NPC crowd count near `WALTZER_RIDE_PROP` is ≤ 3 (half of clear-weather baseline of 6+).
+
+// ── Issue #1279: Northfield Travelling Fairground ─────────────────────────
+// New: FairgroundSystem.java in ragamuffin.core
+// New: FairgroundSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1279FairgroundIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: CANDY_FLOSS, TOFFEE_APPLE, FAIRGROUND_PRIZE, FAIRGROUND_CANDYFLOSS_BAG, FAIRGROUND_TICKET — add to Material.java
+// PropType: DODGEMS_RIDE_PROP, WALTZER_RIDE_PROP, STRONGMAN_PROP, CANDY_FLOSS_STALL_PROP, RING_TOSS_STALL_PROP, DIESEL_GENERATOR_PROP — add to PropType.java
+// NPCType: FAIRGROUND_BOSS, FAIRGROUND_WORKER — add to NPCType.java
+// LandmarkType: TRAVELLING_FAIR — add to LandmarkType.java
+// AchievementType: DODGEMS_ACE, DIZZY_RASCAL, BELLRINGER, FAIRGROUND_WORKER_BADGE, ALL_THE_FUN_OF_THE_FAIR — add to AchievementType.java
+// CriminalRecord.CrimeType: RIGGED_GAME, FAIRGROUND_TROUBLEMAKER — add to CriminalRecord.java
+// WeatherSystem: THUNDERSTORM cancels fair; RAIN halves crowd; SUNNY boosts candy floss
+// TimeSystem: biweekly Fri 18:00–Sun 22:00 spawn window
+// NoiseSystem: Noise level 3 during fair hours; level 1 post-close generator hum
+// StreetEconomySystem: candy floss resale, shift income in HUSTLE category
+// FactionSystem: LOCALS Respect ≥ 50 for Strongman bribe; MARCHETTI Respect ≥ 70 for prize fence
+// ExposureSystem: pickpocket crowd window (6+ NPCs in 5-block radius)
+// NewspaperSystem: arrival headline + generator theft headline
+// RumourNetwork: LOCAL_EVENT on arrival; GANG_ACTIVITY on generator theft
+// NeighbourhoodSystem: vibes +5 during fair; noise complaint −3 near residential
