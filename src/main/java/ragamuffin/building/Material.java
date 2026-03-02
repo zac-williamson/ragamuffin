@@ -4886,7 +4886,45 @@ public enum Material {
      * PRINTER_PAPER — blank A4 paper used as ingredient for printing fake documents.
      * Available at the internet café or stationers. Required for FAKE_TV_LICENCE recipe.
      */
-    PRINTER_PAPER("Printer Paper");
+    PRINTER_PAPER("Printer Paper"),
+
+    // ── Issue #1257: Northfield Rag-and-Bone Man ──────────────────────────────
+
+    /**
+     * JUNK_ITEM — generic household junk (old iron, broken kettles, etc.).
+     * Sells to Barry for 1 COIN; fence value 0 COIN. Carried by PUBLIC NPCs at RAGBONE_STOPs.
+     * Tooltip: "Barry'll give you a penny for that."
+     */
+    JUNK_ITEM("Junk"),
+
+    /**
+     * GARDEN_ORNAMENT (material) — dropped by GARDEN_ORNAMENT prop or taken from NPC bags.
+     * Sells to Barry for 2 COIN. No questions asked.
+     * Tooltip: "Could've come from anywhere, couldn't it."
+     */
+    GARDEN_ORNAMENT("Garden Ornament"),
+
+    /**
+     * FORGED_LICENCE — a forged BARRY_LICENCE_STATUS document crafted at the InternetCafeSystem
+     * for 5 COIN. Prevents COUNCIL_ENFORCEMENT impounding Barry's van for the rest of the day.
+     * Tooltip: "Looks official enough. Probably."
+     */
+    FORGED_LICENCE("Forged Licence"),
+
+    /**
+     * RUBBER_TYRE — a replacement tyre for Barry's van after it has been slashed.
+     * Acquired from ScrapyardSystem or PropType.SCRAP_PILE. Required for BARRY_S_MATE achievement.
+     * Repairs the van when used on RAG_AND_BONE_VAN prop; rewards 10 COIN from Barry.
+     * Tooltip: "Just the right size for a flatbed Transit."
+     */
+    RUBBER_TYRE("Rubber Tyre"),
+
+    /**
+     * PENKNIFE — a small folding knife used to slash Barry's tyres (02:00–06:00).
+     * Single-use for the sabotage action; otherwise a weak melee weapon (2 damage).
+     * Tooltip: "Don't do anything daft with it."
+     */
+    PENKNIFE("Penknife");
 
     private final String displayName;
 
@@ -6010,6 +6048,15 @@ public enum Material {
                                                   0.80f, 0.20f, 0.10f); // Red terminal
             case INSPECTION_STICKER:    return c(0.20f, 0.65f, 0.20f);  // Green pass sticker
 
+            // Issue #1257: Northfield Rag-and-Bone Man
+            case JUNK_ITEM:             return c(0.45f, 0.40f, 0.35f);  // Rusty brown junk
+            case GARDEN_ORNAMENT:       return c(0.75f, 0.45f, 0.30f);  // Terracotta gnome
+            case FORGED_LICENCE:        return cs(0.95f, 0.95f, 0.85f,  // Off-white paper
+                                                  0.20f, 0.55f, 0.20f); // Green licence border
+            case RUBBER_TYRE:           return c(0.12f, 0.12f, 0.12f);  // Black rubber
+            case PENKNIFE:              return cs(0.60f, 0.60f, 0.55f,  // Steel blade
+                                                  0.35f, 0.22f, 0.12f); // Brown handle
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -6685,6 +6732,10 @@ public enum Material {
             // Issue #1181: Northfield Chugger Blitz — small items placed on surfaces
             case CHARITY_CLIPBOARD:
             case MARKER_PEN:
+            // Issue #1257: Northfield Rag-and-Bone Man
+            case JUNK_ITEM:
+            case GARDEN_ORNAMENT:
+            case PENKNIFE:
                 return true;
             default:
                 return false;
@@ -7817,6 +7868,18 @@ public enum Material {
                 return IconShape.BOX;         // rectangular battery
             case INSPECTION_STICKER:
                 return IconShape.FLAT_PAPER;  // windscreen sticker
+
+            // Issue #1257: Northfield Rag-and-Bone Man
+            case JUNK_ITEM:
+                return IconShape.BOX;         // miscellaneous household junk
+            case GARDEN_ORNAMENT:
+                return IconShape.BOX;         // ceramic gnome or ornament
+            case FORGED_LICENCE:
+                return IconShape.FLAT_PAPER;  // forged licence document
+            case RUBBER_TYRE:
+                return IconShape.BOX;         // rubber tyre
+            case PENKNIFE:
+                return IconShape.FLAT_PAPER;  // small folding knife
 
             default:
                 return IconShape.BOX;
