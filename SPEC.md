@@ -32805,3 +32805,141 @@ Looting the stockroom adds `THEFT_FROM_SHOP` to `CriminalRecord`. If done after
 //   (add to AchievementType.java)
 // WorldGenerator: TESCO_EXPRESS sited on the high street parade between
 //   CORNER_SHOP and LAUNDERETTE. 24-hour neon signage.
+
+---
+
+## Issue #1159: Northfield Angel Nails & Beauty — Gossip Economy, WAG Culture & the Acrylic Hustle
+
+**Landmark**: `LandmarkType.NAIL_SALON` (already exists, `getDisplayName()` returns `"Angel Nails & Beauty"`)
+**New system**: `NailSalonSystem.java` in `ragamuffin.core`
+
+### Overview
+
+Angel Nails & Beauty is a shoebox-sized Vietnamese-run nail salon on the high street parade, sandwiched between the tanning studio and the newsagent. It smells of acetone and pine air freshener, runs a bootleg Sky Sports stream on a wall-mounted telly, and is the undisputed gossip capital of Northfield. Every woman in the area passes through; every piece of local intel ends up here eventually.
+
+The salon runs a legitimate nail business, a lucrative manicure/pedicure/gel economy, doubles as a cash-in-hand gossip network, and — once the player earns sufficient Street Rep — reveals itself as a minor fence for stolen high-end goods passed in through the back door by Trang's cousin (a Marchetti associate).
+
+### Building
+
+8×6×3 RENDER_PINK shopfront. Interior: `NAIL_STATION_PROP` ×4 (two either side of a central aisle), `NAIL_DRYER_PROP` ×4, `COLOUR_WALL_PROP` (a wall of NAIL_POLISH items, decorative), `RECEPTION_DESK_PROP` at front, `WAITING_BENCH_PROP` (3 seats), TV showing football/soaps on a `TV_PROP`. Back room: `SUPPLY_CABINET_PROP` (locked, fenceable contents). Outside: pink `NAIL_SALON_SIGN_PROP`, `OPEN_CLOSED_SIGN_PROP`.
+
+### NPCs
+
+- **Trang** (`NAIL_TECH`, owner) — Vietnamese-British, deadpan delivery, knows everything, gives tips at Street Rep ≥ 20. Works Mon–Sat 09:00–19:00.
+- **Kim** (`NAIL_TECH`, junior) — gossips freely, shares `SALON_GOSSIP` rumours. Works Tue–Sat 10:00–18:00.
+- **2–4 CLIENT NPCs** (`PUBLIC`, `PENSIONER`, `WAG` types) — seated at stations during opening hours. Each carries a rumour (fetched from RumourNetwork); player proximity (≤2 blocks) triggers dialogue delivery.
+
+### Opening Hours
+
+Mon–Sat 09:00–19:00. Closed Sundays. Door locked outside hours.
+
+### Core Mechanics
+
+#### 1. Manicure / Pedicure Service
+Press **E** on a `NAIL_STATION_PROP` when a station is vacant. Choose:
+- **Manicure** (2 COIN) — cosmetic; changes player `HairstyleType` display tag (nails field added). No gameplay effect except -1 Notoriety display (smartened up).
+- **Gel Manicure** (5 COIN) — as above; +2 CHA bonus for 12 in-game hours (affects NPC dialogue unlock thresholds). Requires `GEL_SET_MATERIAL` in salon supply.
+- **Pedicure** (3 COIN) — purely flavour; Trang says *"Your feet are a disgrace, love."*
+- **Full Set Acrylics** (8 COIN) — unlocks `ACRYLICS_DONE` player flag; changes NPC reactions (WAG NPCs warm to player, gang NPCs mock). Wearing acrylics adds `DISGUISE_ACRYLIC` modifier (+10 recognition reduction with WANNABE_WAG and PENSIONER NPCs, −5 with STREET_LAD).
+
+#### 2. Gossip Economy
+Each CLIENT NPC seated at a station holds one pending rumour from `RumourNetwork`. When player sits in the adjacent `WAITING_BENCH_PROP` and presses **E**, a dialogue exchange occurs:
+- Player provides a piece of intel (selects from 3 topics generated from their known rumours).
+- Client responds with their rumour.
+- Gossip propagates: both rumours gain +2 spread ticks; `RumourType.SALON_GOSSIP` seeded at the salon origin.
+
+Trang seeds one `SALON_GOSSIP` rumour per game day at 09:00 (opening). At Street Rep ≥ 20, she also seeds a `CONTRABAND_SHIPMENT` rumour once per 3 game days if a relevant faction event is active.
+
+#### 3. The Back-Door Fence (Street Rep ≥ 30)
+At Street Rep ≥ 30, Trang's cousin drops off a package once per game day (random time 10:00–16:00, 40% chance). The `SUPPLY_CABINET_PROP` in the back room contains one of:
+- `NAIL_POLISH` ×6 (legitimate, worth 1 COIN each at FenceSystem)
+- `STOLEN_JEWELLERY` (flagged stolen; worth 8–15 COIN at FenceSystem, Notoriety +3 if caught)
+- `COUNTERFEIT_PERFUME` (worth 4 COIN per unit at FenceSystem; low risk)
+
+Player can access the back room if Trang trusts them (Street Rep ≥ 30) or via LOCKPICK (CriminalRecord: TRESPASS, Notoriety +2).
+
+#### 4. WAG Appointment Economy
+Every Saturday 10:00–12:00, 3 `WAG_NPC` types arrive for pre-weekend appointments. During this window:
+- Services cost 1.5× normal (premium weekend rate).
+- WAG NPCs carry higher-value gossip (`CONTRABAND_SHIPMENT`, faction intel).
+- One WAG is always **Stacey Marchetti** (if `FactionSystem` Marchetti Respect ≥ 40) — she mentions overheard Marchetti business, seeding a faction-level rumour.
+
+#### 5. Nail Polish Theft
+The `COLOUR_WALL_PROP` holds 12 `NAIL_POLISH` items. Player can pocket one per visit without interaction (flat 25% catch chance; if Kim is watching, chance rises to 60%). Caught: Trang bans player for 2 in-game days, Notoriety +2, `CriminalRecord.SHOPLIFTING`.
+
+#### 6. Closing-Time Hustle
+At 18:45 (15 min before close), Kim sweeps cash from the till into an `ENVELOPE_PROP` left on the reception desk for 2 minutes before pocketing it. Player can grab the envelope (15 COIN) — `CriminalRecord.THEFT`, Notoriety +4, Trang bans player permanently unless bribed (10 COIN, reduces to 5 in-game day ban).
+
+### Integrations
+
+- **RumourNetwork**: `SALON_GOSSIP`, `CONTRABAND_SHIPMENT`, `CRIME_SIGHTING` seeded here (types already defined in `RumourType.java`).
+- **FactionSystem**: Marchetti Respect unlocks Stacey Marchetti appointment; Trang's cousin fence.
+- **DisguiseSystem**: `DISGUISE_ACRYLIC` modifier from full set acrylics.
+- **WantedSystem**: Refuse entry at ≥3 stars (Trang: *"I'm not getting involved in whatever that is."*).
+- **NotorietySystem**: Manicure/gel set reduces display notoriety by 1 (player looks less scruffy).
+- **CriminalRecord**: `SHOPLIFTING` (nail polish theft), `TRESPASS` (back room without permission), `THEFT` (cash envelope grab).
+- **WeatherSystem**: Rain/drizzle adds 1 extra CLIENT NPC (people shelter inside, pretend to browse).
+- **NeighbourhoodSystem**: Salon vibes reflect neighbourhood health — at NeighbourVibes < 30, Trang boards up the window (exterior prop change), CLIENT count drops to 1.
+- **StreetEconomySystem**: `NAIL_POLISH` priced at 1 COIN base; spikes to 2 COIN during `COUNCIL_CRACKDOWN` market event.
+- **StreetSkillSystem**: Completing 5 manicure exchanges unlocks `GIFT_OF_THE_GAB` skill level 1 (player gossip exchanges yield +1 extra rumour spread tick).
+- **AchievementSystem**: New achievements below.
+
+### New Materials (add to `Material.java`)
+- `GEL_SET` ("Gel Set") — consumed by gel manicure service; Trang restocks daily.
+- `COUNTERFEIT_PERFUME` ("Counterfeit Perfume") — fenceable item; 4 COIN.
+- `NAIL_SALON_VOUCHER` ("Nail Salon Voucher") — given by Trang at Street Rep ≥ 50; one free manicure.
+
+### New PropTypes (add to `PropType.java`)
+- `NAIL_STATION_PROP` — interactive workstation.
+- `NAIL_DRYER_PROP` — decorative.
+- `COLOUR_WALL_PROP` — interactive; holds NAIL_POLISH stock.
+- `NAIL_SALON_SIGN_PROP` — exterior signage.
+
+### Achievements (add to `AchievementType.java`)
+
+| Achievement | Trigger |
+|---|---|
+| `SALON_REGULAR` | Visit Angel Nails 5 times |
+| `FULL_SET` | Get a full set of acrylics |
+| `GOSSIP_QUEEN` | Seed 10 SALON_GOSSIP rumours via the waiting bench exchange |
+| `FIVE_FINGER_DISCOUNT_DELUXE` | Steal nail polish without being caught |
+| `STACEY_INTEL` | Receive Marchetti faction intel from Stacey during a WAG Saturday |
+
+### Unit Tests
+
+- `NailSalonSystem.getServicePrice(SERVICE_MANICURE, isSaturday=false)` → 2.
+- `NailSalonSystem.getServicePrice(SERVICE_GEL, isSaturday=true)` → 8 (5 × 1.5, rounded up).
+- `NailSalonSystem.getNailPolishTheftCatchChance(kimWatching=false)` → 0.25f.
+- `NailSalonSystem.getNailPolishTheftCatchChance(kimWatching=true)` → 0.60f.
+- `NailSalonSystem.isBackRoomAccessible(streetRep=30)` → true; `isBackRoomAccessible(29)` → false.
+- `NailSalonSystem.isOpen(hour=09.0f, dayOfWeek=MONDAY)` → true; `isOpen(19.5f, MONDAY)` → false; `isOpen(12.0f, SUNDAY)` → false.
+- `NailSalonSystem.isWagSaturdayWindow(hour=10.5f, dayOfWeek=SATURDAY)` → true; `isWagSaturdayWindow(12.5f, SATURDAY)` → false.
+- `NailSalonSystem.getClientCount(weather=RAIN, vibes=50)` → base + 1 (rain modifier).
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Manicure reduces displayed Notoriety**: Set player Notoriety to 20. Set time to 11:00 (salon open). Enter salon. Press E on vacant `NAIL_STATION_PROP`. Select Manicure (2 COIN). Confirm. Verify 2 COIN deducted. Verify `NotorietySystem.getDisplayNotoriety(player)` returns 19 (−1 modifier applied). Verify `AchievementType.SALON_REGULAR` visit counter incremented by 1.
+
+2. **Gossip exchange seeds rumour**: Seed RumourNetwork with one known rumour on player. Seat a CLIENT NPC at a nail station. Press E on `WAITING_BENCH_PROP` adjacent to that station. Select a topic from the 3-option gossip menu. Verify CLIENT NPC's rumour is added to player's known rumours. Verify `RumourNetwork` contains a new `SALON_GOSSIP` rumour originating at `LandmarkType.NAIL_SALON`. Verify `GOSSIP_QUEEN` achievement counter incremented by 1.
+
+3. **Back-door fence accessible at Street Rep ≥ 30**: Set Street Rep to 30. Set time to 12:00. Trigger daily courier drop (force `hasCourierDroppedToday = false`, advance time to courier window). Enter back room via Trang dialogue. Press E on `SUPPLY_CABINET_PROP`. Verify inventory receives one of `{NAIL_POLISH ×6, STOLEN_JEWELLERY, COUNTERFEIT_PERFUME}`. Verify FenceSystem accepts `COUNTERFEIT_PERFUME` at 4 COIN.
+
+4. **Nail polish theft caught by Kim**: Set `kimWatching = true`. Press E on `COLOUR_WALL_PROP`. Seed RNG to guarantee catch (theft roll < 0.60). Verify `NAIL_POLISH` NOT added to inventory. Verify Trang dialogue fires ("Right, out. Don't come back."). Verify `isBannedFromSalon()` returns true with 2-day duration. Verify `CriminalRecord` contains `SHOPLIFTING`. Verify Notoriety increased by 2.
+
+5. **WAG Saturday seeds Marchetti faction rumour**: Set Marchetti Respect to 40. Set time to 10:30, day = SATURDAY. Trigger WAG appointment spawn. Verify Stacey Marchetti (`WAG_NPC` with flag `IS_STACEY_MARCHETTI = true`) is seated at a nail station. Press E on adjacent waiting bench. Verify the returned rumour is tagged with `MARCHETTI_CREW` faction. Verify `STACEY_INTEL` achievement unlocked.
+
+6. **Salon closes on Sundays**: Set time to 12:00, day = SUNDAY. Attempt to enter salon. Verify door interaction shows *"Closed — back Monday, love."* Verify no CLIENT or NAIL_TECH NPCs are spawned inside.
+
+// ── Issue #1159: Northfield Angel Nails & Beauty ─────────────────────────────
+// New: NailSalonSystem.java in ragamuffin.core
+// LandmarkType.NAIL_SALON already exists — getDisplayName() returns "Angel Nails & Beauty" ✓
+// NPCType.NAIL_TECH already exists ✓
+// Material.NAIL_POLISH already exists ✓
+// New Materials: GEL_SET, COUNTERFEIT_PERFUME, NAIL_SALON_VOUCHER (add to Material.java)
+// New PropTypes: NAIL_STATION_PROP, NAIL_DRYER_PROP, COLOUR_WALL_PROP,
+//   NAIL_SALON_SIGN_PROP (add to PropType.java)
+// New Achievements: SALON_REGULAR, FULL_SET, GOSSIP_QUEEN,
+//   FIVE_FINGER_DISCOUNT_DELUXE, STACEY_INTEL (add to AchievementType.java)
+// RumourType.SALON_GOSSIP, CONTRABAND_SHIPMENT, CRIME_SIGHTING already exist ✓
+// BuildingQuestRegistry already registers NAIL_SALON quest ✓
+// WAG NPCType: check NPCType.java for WAG_NPC — add if missing
