@@ -1858,7 +1858,17 @@ public enum NPCType {
      * Stacks shelves, operates till. Tyler barely awake — suspicion threshold +20.
      * Tyler sells TESCO_OWN_BRAND_VODKA without ID checks.
      */
-    TESCO_EXPRESS_WORKER(20f, 0f, 0f, false);
+    TESCO_EXPRESS_WORKER(20f, 0f, 0f, false),
+
+    // ── Issue #1165: Northfield Match Day ────────────────────────────────────
+    /** Home football fan — wears blue/claret colours, sings, buys pies. */
+    HOME_FAN(40f, 8f, 1.2f, false),
+    /** Away football fan — rival colours, hostile to HOME_FAN NPCs. */
+    AWAY_FAN(40f, 10f, 1.0f, false),
+    /** Tout selling knock-off scarves and counterfeit tickets. */
+    FOOTBALL_TOUT(30f, 0f, 0f, false),
+    /** Mounted police officer — extra intimidation radius. */
+    POLICE_HORSE_OFFICER(80f, 12f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

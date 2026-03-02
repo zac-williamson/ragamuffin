@@ -541,7 +541,16 @@ public enum LandmarkType {
      * Open Mon–Fri 08:30–17:30. Closed weekends.
      * Managed by NHSDentistSystem.
      */
-    NHS_DENTIST;
+    NHS_DENTIST,
+
+    // ── Issue #1165: Northfield Match Day ────────────────────────────────────
+
+    /**
+     * Issue #1165: Stadium coach park at the industrial estate edge.
+     * 4 coach parking bays with COACH_PROP spawns on match days.
+     * Managed by MatchDaySystem.
+     */
+    STADIUM_COACH_PARK;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -629,6 +638,7 @@ public enum LandmarkType {
             case TEMP_AGENCY:           return "Flexistaff Recruitment";
             case RAOB_LODGE:            return "Northfield Buffaloes Lodge No. 347";
             case COUNCIL_GARAGES:       return "Northfield Estate Garages";
+            case STADIUM_COACH_PARK:    return "Coach Park";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

@@ -3920,7 +3920,26 @@ public enum Material {
      * 10% chance to appear in the daily delivery. Fence value: 6 COIN.
      * Tooltip: "No label. No questions. Probably fine."
      */
-    WHOLESALE_SPIRITS("Wholesale Spirits");
+    WHOLESALE_SPIRITS("Wholesale Spirits"),
+
+    // ── Issue #1165: Northfield Match Day ────────────────────────────────────
+    /** Counterfeit match ticket — buy from FOOTBALL_TOUT for 2 COIN, sell to HOME_FAN for 4 COIN.
+     * 30% catch chance → Notoriety +4, TOUT_SCAM crime. */
+    COUNTERFEIT_TICKET("Counterfeit Ticket"),
+
+    /** Knock-off football scarf — wearable as disguise; while equipped AWAY_FAN NPCs are non-hostile.
+     * Craft from 2× FABRIC_SCRAP or buy from FOOTBALL_TOUT for 1 COIN. */
+    KNOCKOFF_SCARF("Knockoff Scarf"),
+
+    /** Match-day programme — picked from HOME_FAN/AWAY_FAN pockets; fence value 2 COIN. */
+    MATCH_PROGRAMME("Match Programme"),
+
+    /** Fan's wallet — yields 3–8 COIN when looted via pickpocket from a HOME_FAN or AWAY_FAN. */
+    WALLET_FAN("Fan's Wallet"),
+
+    /** Fabric scrap — drops from CHARITY_SHOP crates and LAUNDERETTE lost-property.
+     * Used to craft KNOCKOFF_SCARF (2× FABRIC_SCRAP = 1 scarf). */
+    FABRIC_SCRAP("Fabric Scrap");
 
     private final String displayName;
 
@@ -4913,6 +4932,17 @@ public enum Material {
             case OWN_BRAND_COLA:         return c(0.20f, 0.15f, 0.55f);  // Dark blue can
             case BARGAIN_BUCKET_CRISPS:  return c(0.75f, 0.55f, 0.18f);  // Brown value bag
             case WHOLESALE_SPIRITS:      return c(0.60f, 0.75f, 0.90f);  // Clear-blue glass
+
+            // Issue #1165: Northfield Match Day
+            case COUNTERFEIT_TICKET:     return cs(0.92f, 0.88f, 0.72f,  // Cream ticket paper
+                                                   0.18f, 0.35f, 0.72f); // Blue club colour
+            case KNOCKOFF_SCARF:         return cs(0.18f, 0.35f, 0.72f,  // Blue (home colours)
+                                                   0.88f, 0.72f, 0.18f); // Gold stripe
+            case MATCH_PROGRAMME:        return cs(0.20f, 0.45f, 0.80f,  // Club blue cover
+                                                   0.92f, 0.88f, 0.72f); // White/cream pages
+            case WALLET_FAN:             return cs(0.28f, 0.18f, 0.10f,  // Dark leather
+                                                   0.72f, 0.60f, 0.20f); // Gold trim
+            case FABRIC_SCRAP:           return c(0.72f, 0.65f, 0.58f);  // Grey fabric
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -6447,6 +6477,18 @@ public enum Material {
                 return IconShape.BOX;         // large crisp bag
             case WHOLESALE_SPIRITS:
                 return IconShape.BOTTLE;      // unlabelled bottle
+
+            // Issue #1165: Northfield Match Day
+            case COUNTERFEIT_TICKET:
+                return IconShape.FLAT_PAPER;  // paper ticket
+            case KNOCKOFF_SCARF:
+                return IconShape.FLAT_PAPER;  // folded scarf
+            case MATCH_PROGRAMME:
+                return IconShape.FLAT_PAPER;  // programme booklet
+            case WALLET_FAN:
+                return IconShape.CARD;        // flat wallet
+            case FABRIC_SCRAP:
+                return IconShape.FLAT_PAPER;  // scrap of fabric
 
             default:
                 return IconShape.BOX;
