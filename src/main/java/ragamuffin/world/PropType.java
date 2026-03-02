@@ -1636,12 +1636,12 @@ public enum PropType {
     MASSAGE_TABLE_PROP(1.80f, 0.70f, 0.80f, 3, Material.WOOD),
 
     /**
-     * RECEPTION_DESK_PROP — Tracey's front-of-house desk with a price menu board.
+     * SALON_RECEPTION_DESK_PROP — Tracey's front-of-house desk with a price menu board.
      * Press E to view the service menu.
      * Tooltip: "Cash only. No cheques. No questions."
      * Destroyed by 5 punches; yields WOOD.
      */
-    RECEPTION_DESK_PROP(1.50f, 1.00f, 0.60f, 5, Material.WOOD),
+    SALON_RECEPTION_DESK_PROP(1.50f, 1.00f, 0.60f, 5, Material.WOOD),
 
     /**
      * LAUNDRY_BAG_PROP — a heavy-duty laundry bag kept behind the reception desk.
@@ -2305,7 +2305,56 @@ public enum PropType {
      * Player can loot one item (press E) within the 2-minute window.
      * Destroyed by 5 punches; yields WOOD.
      */
-    PALLET_PROP(1.20f, 0.30f, 0.80f, 5, Material.WOOD);
+    PALLET_PROP(1.20f, 0.30f, 0.80f, 5, Material.WOOD),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1163: NHS Dentist props
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * RECEPTION_DESK_DENTAL_PROP — Deborah's front desk at the NHS Dental Practice.
+     * Press E during opening hours (Mon–Fri 08:30–17:00, excl. lunch 13:00–14:00)
+     * to register as an NHS patient or check appointment status.
+     * Destroyed by 8 punches; yields WOOD.
+     */
+    RECEPTION_DESK_DENTAL_PROP(1.40f, 1.10f, 0.60f, 8, Material.WOOD),
+
+    /**
+     * DENTAL_CHAIR_PROP — Dr. Rashid's reclining dental chair in the treatment room.
+     * Press E when an appointment is due to start treatment (Filling / Root Canal / Extraction).
+     * Destroyed by 6 punches; yields SCRAP_METAL.
+     */
+    DENTAL_CHAIR_PROP(0.70f, 1.20f, 1.80f, 6, Material.SCRAP_METAL),
+
+    /**
+     * IMPROVISED_DENTAL_CHAIR_PROP — Mirek's council-flat dental setup: a reclining
+     * car seat bolted to the floor. Press E to receive black-market dental treatment
+     * (5 COIN; 60 % success, 20 % INFECTION side effect, 40 % BOTCHED_JOB).
+     * Destroyed by 4 punches; yields SCRAP_METAL.
+     */
+    IMPROVISED_DENTAL_CHAIR_PROP(0.65f, 1.10f, 1.60f, 4, Material.SCRAP_METAL),
+
+    /**
+     * FILING_CABINET_PROP (dental practice) — grey metal filing cabinet in the
+     * NHS Dental Practice back office. Lock-pick to obtain WAITING_LIST_LETTER.
+     * Notoriety catch chance: 40 % if Deborah present; 60 % at Notoriety Tier ≥ 1.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    FILING_CABINET_DENTAL_PROP(0.55f, 1.30f, 0.50f, 5, Material.SCRAP_METAL),
+
+    /**
+     * DENTAL_SIGN_PROP — exterior NHS blue sign for the Northfield Dental Practice.
+     * Read-only flavour prop; press E to read: "NHS Dental Practice — Currently NOT
+     * TAKING NEW NHS PATIENTS." Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    DENTAL_SIGN_PROP(0.40f, 0.80f, 0.10f, 3, Material.SCRAP_METAL),
+
+    /**
+     * TOOTHPASTE_DISPLAY_PROP — a wire rack of toothpaste and mouthwash near the
+     * reception. Press E to browse; TOOTHBRUSH available for 1 COIN.
+     * Destroyed by 2 punches; yields WOOD.
+     */
+    TOOTHPASTE_DISPLAY_PROP(0.40f, 1.20f, 0.30f, 2, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
