@@ -3702,6 +3702,77 @@ public enum AchievementType {
         "I Don't Know You",
         "You paid the Fence to cut your tag. The police would like a word. Several words.",
         1
+    ),
+
+    // ── Issue #1188: Northfield DWP Home Visit ────────────────────────────
+
+    /**
+     * Issue #1188: Awarded when the player claims UC for 10 consecutive in-game
+     * weeks while also earning coin from street deals, fence sales, or boot sales.
+     */
+    BENEFIT_STREET(
+        "Benefits Street",
+        "Ten weeks claiming UC while earning on the side. The DWP hasn't noticed. Yet.",
+        1
+    ),
+
+    /**
+     * Issue #1188: Awarded the first time the player receives a DWP compliance
+     * notice (DWP_LETTER_PROP placed at squat door).
+     */
+    BROWN_ENVELOPE(
+        "Brown Envelope",
+        "A brown envelope from the DWP. Never good news. Never.",
+        1
+    ),
+
+    /**
+     * Issue #1188: Awarded when the player successfully bluffs Brenda during
+     * a DWP home visit (dice roll passes).
+     */
+    TALKED_MY_WAY_OUT(
+        "Talked My Way Out",
+        "You bluffed a DWP compliance officer. Brenda was not entirely convinced. But enough.",
+        1
+    ),
+
+    /**
+     * Issue #1188: Awarded when the player accumulates a CRIMINAL_REFERRAL
+     * sanction from the DWP (suspicion ≥ 90 + evidence found).
+     */
+    BENEFIT_FRAUDSTER(
+        "Benefit Fraudster",
+        "The DWP have referred you to the Magistrates' Court. You've made the big leagues.",
+        1
+    ),
+
+    /**
+     * Issue #1188: Awarded when the player wins an appeal against a DWP sanction.
+     */
+    APPEAL_UPHELD(
+        "Appeal Upheld",
+        "The DWP ruled in your favour. They hate doing that.",
+        1
+    ),
+
+    /**
+     * Issue #1188: Awarded when a NOSY_NEIGHBOUR NPC tips off the DWP,
+     * adding +15 suspicion score.
+     */
+    NOSY_NEIGHBOUR(
+        "Nosy Neighbour",
+        "Someone on your street rang the DWP. You know who it was.",
+        1
+    ),
+
+    /**
+     * Issue #1188: Awarded when the player declares 0 earnings for 5 consecutive
+     * fortnightly sign-ons without triggering a home visit.
+     */
+    NOTHING_TO_DECLARE(
+        "Nothing to Declare",
+        "Five fortnights. Zero declared earnings. Brenda hasn't knocked. Yet.",
+        1
     );
 
     private final String name;
