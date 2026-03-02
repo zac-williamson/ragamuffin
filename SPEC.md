@@ -42144,3 +42144,195 @@ council officer confrontation adds +1 Wanted star and `CAUGHT_ON_CAMERA` crime.
 // NewspaperSystem: add headline trigger when FlyTippingSystem.getActivePileCount() >= 3
 // RecyclingCentreSystem: add legal disposal interaction for fly-tip load
 // WheeliBinFireSystem: add burn-load cross-trigger
+
+---
+
+## Issue #1275: Northfield Pet Shop — Paws 'n' Claws, Puppy Farming & the Dodgy Pedigree Hustle
+
+**Landmark**: `PAWS_N_CLAWS` at `LandmarkType.PET_SHOP` — a cramped high-street shop run by
+**Bev** (`PET_SHOP_OWNER` NPC), open Mon–Sat 09:00–17:30. Smells of sawdust and regret.
+Window display shows caged animals (gerbils, budgies, a knackered tortoise).
+
+### Core Features
+
+**Legitimate Shop Loop**
+- Player can buy **dog food** (`DOG_FOOD_TIN`, 1 COIN) — feeds the DogCompanionSystem dog,
+  restoring 50 hunger (vs 30 from SAUSAGE_ROLL). Also: `DOG_COLLAR` (3 COIN, cosmetic),
+  `DOG_LEAD` (2 COIN, required for the "responsible owner" park-walk bonus),
+  `DOG_TREAT_BAG` (2 COIN, +10 bond when used vs +5 from SAUSAGE_ROLL).
+- Buy a **racing pigeon** (`RACING_PIGEON`, 8 COIN) — same item as PigeonRacingSystem acquisition
+  via PIGEON_FANCIER NPC; Bev acts as the shop-front alternative source. Max 1 per day.
+- Buy **budgie** (`BUDGIE`, 2 COIN, no gameplay function — flavour item, can be placed in squat
+  for +2 Vibes/day via SquatSystem).
+- **Vet referral** — if dog hunger < 20 or DogCompanionSystem reports dog injury,
+  Bev offers to refer to NORTHFIELD_VETS (reduces `DogCompanionSystem.dogHunger` to 80
+  and resets bond penalty; costs 5 COIN).
+
+**The Puppy Farming Hustle**
+The main hustle: Bev lets slip she "sometimes" sources dogs cheaply from "a bloke with a
+transit van outside Aldi." Player can either:
+
+1. **Source cheap pups** — visit `PUPPY_SOURCE_PROP` (Transit van parked behind industrial
+   estate, Mon & Thu 09:00–11:00 only). Buy a `MIXED_BREED_PUP` for 3 COIN from
+   `VAN_DOG_DEALER` NPC. Up to 2 pups per visit.
+
+2. **Forge pedigree papers** — combine `MIXED_BREED_PUP` + `BLANK_PEDIGREE_FORM` (found at
+   RAOB_LODGE prop table or bought from FenceSystem) + `PRINTER_INK` (CornerShopSystem) using
+   CraftingSystem to produce `PEDIGREE_PUP`. `BLANK_PEDIGREE_FORM` has a 20% chance of
+   being "inspected quality" (CriminalRecord risk reduced to 0%).
+
+3. **Sell pedigree pup** — press E near Bev or any PUBLIC/PENSIONER NPC to "sell pedigree
+   puppy". Pedigree pup sells for 15 COIN (Bev) or 18 COIN (random NPC, slower). Plain
+   mixed-breed sells for 5 COIN. Risk: 25% chance the buyer reports it to Trading Standards
+   within 2 in-game days → `TRADING_STANDARDS` officer NPC spawns, adds
+   `ANIMAL_FRAUD` to CriminalRecord, +3 Notoriety.
+
+**The Exotic Animal Smuggling Hustle**
+Rare interaction: once the player has Notoriety ≥ 200 (Tier 3+), the `VAN_DOG_DEALER` offers
+an `EXOTIC_ANIMAL_CRATE` (15 COIN). Player can:
+- Sell crate to FenceSystem for 25 COIN (no crime — fence deals with paperwork).
+- Open crate in the squat: chance table — 40% `BALL_PYTHON` (Squat +3 Vibes, SquatSystem),
+  30% `IGUANA` (+2 Vibes), 20% `PARROT` (+4 Vibes, parrots occasional dialogue clips),
+  10% `FIGHTING_COCK` (sells to BettingShopSystem for 20 COIN — cockfight side bet).
+- If opened anywhere that is NOT the squat, `ENVIRONMENTAL_HEALTH_OFFICER` NPC spawns
+  within 30 s, adds `ILLEGAL_ANIMAL_TRADE` CriminalRecord entry, WantedSystem +2 stars.
+
+### Named NPCs
+
+| NPC | Type | Notes |
+|---|---|---|
+| **Bev** | `PET_SHOP_OWNER` | Friendly, chatty; gossips about the neighbourhood; seeds `LOCAL_GOSSIP` rumours. Passive unless player steals. |
+| **Van Dog Dealer (Daz)** | `VAN_DOG_DEALER` | Appears only Mon/Thu 09:00–11:00 behind industrial estate. Flees (FLEEING) if police within 20 blocks. |
+| **Trading Standards Officer** | `TRADING_STANDARDS_OFFICER` | Passive enforcement; confronts player if `ANIMAL_FRAUD` active; issues `TRADING_STANDARDS_NOTICE` (10 COIN fine) or escalates to police. |
+
+### New Materials
+
+| Material | Description |
+|---|---|
+| `DOG_FOOD_TIN` | Restores 50 dog hunger. 1 COIN from Bev. |
+| `DOG_COLLAR` | Cosmetic; Bev sells for 3 COIN. |
+| `DOG_LEAD` | Required for park-walk "responsible owner" +1 bond/min bonus. 2 COIN. |
+| `DOG_TREAT_BAG` | +10 DogCompanionSystem bond. 2 COIN. |
+| `BUDGIE` | Flavour item; place in squat for +2 Vibes/day. 2 COIN. |
+| `MIXED_BREED_PUP` | Cheap crossbreed. Sells for 5 COIN to Bev / NPCs. |
+| `PEDIGREE_PUP` | Forged purebred. Sells for 15–18 COIN; 25% buyer-report risk. |
+| `BLANK_PEDIGREE_FORM` | Crafting ingredient for PEDIGREE_PUP. |
+| `EXOTIC_ANIMAL_CRATE` | Contains random exotic animal (see table). 15 COIN from Daz. |
+| `BALL_PYTHON` | Squat item: +3 Vibes/day. |
+| `IGUANA` | Squat item: +2 Vibes/day. |
+| `PARROT` | Squat item: +4 Vibes/day; plays dialogue clips. |
+| `FIGHTING_COCK` | Sell to BettingShopSystem for 20 COIN. |
+| `TRADING_STANDARDS_NOTICE` | Fine document: pay 10 COIN at court to clear ANIMAL_FRAUD. |
+
+### New PropType
+
+| PropType | Description |
+|---|---|
+| `PUPPY_SOURCE_PROP` | Transit van prop; spawns near industrial estate Mon/Thu 09:00–11:00 only. |
+| `ANIMAL_CRATE_PROP` | Display cage in Paws 'n' Claws (flavour, unbreakable). |
+
+### Achievements
+
+| AchievementType | Trigger |
+|---|---|
+| `TOP_DOG` | Sell 5 pedigree pups without being caught. |
+| `ANIMAL_MAGNETISM` | Own a dog, a pigeon, and an exotic animal simultaneously. |
+| `ALL CREATURES` | Have Bev refer your dog to the vet and pay the bill. |
+| `EXOTIC_CONTRABAND` | Open an exotic crate and get a fighting cock. |
+
+### Integration Points
+
+- **DogCompanionSystem** — `DOG_FOOD_TIN` feeds the dog (+50 hunger); `DOG_TREAT_BAG` +10 bond;
+  `DOG_LEAD` enables responsible-owner park-walk bonus (+1 bond/min extra).
+- **PigeonRacingSystem** — `RACING_PIGEON` purchased from Bev is a valid pigeon for races.
+- **CraftingSystem** — add recipe: `MIXED_BREED_PUP` + `BLANK_PEDIGREE_FORM` + `PRINTER_INK` → `PEDIGREE_PUP`.
+- **FenceSystem** — `EXOTIC_ANIMAL_CRATE` saleable for 25 COIN.
+- **SquatSystem** — `BUDGIE`, `BALL_PYTHON`, `IGUANA`, `PARROT` each add daily Vibes when placed.
+- **BettingShopSystem** — `FIGHTING_COCK` triggers a side-bet offer (20 COIN payout).
+- **RumourNetwork** — `LOCAL_GOSSIP` "Bev at the pet shop's got terrapins in the back — not the
+  legal kind." seeded when player has EXOTIC_ANIMAL_CRATE in inventory near Bev.
+- **NewspaperSystem** — headline "Northfield Pet Shop Owner Unaware of Backroom Smuggling Ring"
+  if player completes 3 exotic sales without being caught.
+- **WantedSystem** — `ILLEGAL_ANIMAL_TRADE` crime adds +2 stars if crate opened in public.
+- **CriminalRecord** — `ANIMAL_FRAUD`, `ILLEGAL_ANIMAL_TRADE` crime types added.
+- **TimeSystem** — `VAN_DOG_DEALER` only spawns Mon/Thu 09:00–11:00.
+- **EnvironmentalHealthSystem** — `ENVIRONMENTAL_HEALTH_OFFICER` spawns if crate opened outside squat.
+- **TooltipSystem** — first dog food purchase: "Bev knows her stuff. The tin's better than a sausage roll.";
+  forging pedigree: "Champion bloodline. Est. 2 minutes ago.";
+  crate-opened-parrot: "It knows one word. It's not a nice one.";
+  trading standards arrives: "Should've used better paper."
+
+### Unit Tests (`PetShopSystemTest.java`)
+
+1. `testDogFoodTinRestoresFiftyHunger` — adopt dog, reduce hunger to 10, apply DOG_FOOD_TIN;
+   verify hunger == 60 (capped at 100 if needed).
+2. `testPedigreeForgeRecipeProducesItem` — craft MIXED_BREED_PUP + BLANK_PEDIGREE_FORM +
+   PRINTER_INK; verify inventory contains PEDIGREE_PUP.
+3. `testPedigreeSaleReturns15Coin` — sell PEDIGREE_PUP to Bev; verify player COIN +15.
+4. `testMixedBreedSaleReturns5Coin` — sell MIXED_BREED_PUP to Bev; verify player COIN +5.
+5. `testBuyerReportTriggersAnimalFraud` — sell PEDIGREE_PUP; seed RNG to trigger 25% report;
+   advance 2 in-game days; verify ANIMAL_FRAUD in CriminalRecord; Notoriety +3.
+6. `testExoticCrateOpenInSquatNoOfficer` — open EXOTIC_ANIMAL_CRATE in squat; verify
+   ENVIRONMENTAL_HEALTH_OFFICER NOT spawned.
+7. `testExoticCrateOpenInPublicSpawnsOfficer` — open crate outside squat; verify
+   ENVIRONMENTAL_HEALTH_OFFICER spawned within 30 s.
+8. `testFightingCockSellsToBettingShop` — have FIGHTING_COCK; enter BettingShopSystem;
+   verify offer presented at 20 COIN.
+9. `testBudgieInSquatAdds2VibesPerDay` — place BUDGIE in squat; advance 1 day; verify
+   SquatSystem.getVibes() increased by 2.
+10. `testVanDealerDoesNotSpawnOutsideSchedule` — set time to Tuesday 12:00; verify
+    VAN_DOG_DEALER NPC absent; set time to Monday 09:30; verify present.
+11. `testDogLeadEnablesResponsibleOwnerBonus` — carry DOG_LEAD; walk in park 1 min; verify
+    bond gained > standard PARK_WALK_BOND_PER_MINUTE (extra +1).
+12. `testRacingPigeonFromBevIsUsableInRace` — buy RACING_PIGEON from Bev; register for
+    Neighbourhood Sprint; verify registration accepted.
+
+### Integration Tests (`Issue1275PetShopIntegrationTest.java`)
+
+1. **Full puppy hustle cycle**: Player visits Daz Mon 10:00. Buys MIXED_BREED_PUP (3 COIN).
+   Crafts PEDIGREE_PUP using BLANK_PEDIGREE_FORM + PRINTER_INK. Sells to Bev (15 COIN).
+   Seed RNG to avoid 25% report. Verify: player net +12 COIN; no crime in CriminalRecord;
+   `TOP_DOG` achievement progress incremented.
+
+2. **Buyer reports, Trading Standards arrives**: Sell PEDIGREE_PUP to NPC. Seed RNG to
+   trigger report. Advance 2 in-game days. Verify: TRADING_STANDARDS_OFFICER spawned;
+   `ANIMAL_FRAUD` in CriminalRecord; player Notoriety +3; officer offers fine (10 COIN).
+   Player pays fine. Verify: `ANIMAL_FRAUD` not escalated; WantedSystem stars unchanged.
+
+3. **Exotic crate sold to fence**: Player buys EXOTIC_ANIMAL_CRATE (15 COIN, Daz).
+   Sells to FenceSystem. Verify: player +25 COIN (net +10); no crime added; no officer spawns.
+
+4. **Exotic crate opened in squat**: Player buys crate, carries to squat. Opens crate.
+   Verify: one of BALL_PYTHON/IGUANA/PARROT/FIGHTING_COCK appears in inventory;
+   ENVIRONMENTAL_HEALTH_OFFICER NOT spawned; if FIGHTING_COCK received, BettingShopSystem
+   shows offer.
+
+5. **Dog companion integration**: Player has dog (hunger 15). Buys DOG_FOOD_TIN from Bev.
+   Uses tin. Verify: hunger ≥ 65; Bev seeds LOCAL_GOSSIP rumour about dog's coat looking
+   well after a proper feed.
+
+6. **ANIMAL_MAGNETISM achievement**: Player owns a DogCompanionSystem dog AND a
+   RACING_PIGEON AND one exotic animal item. Verify: `ANIMAL_MAGNETISM` achievement unlocked.
+
+// ── Issue #1275: Northfield Pet Shop — Paws 'n' Claws ───────────────────────
+// New: PetShopSystem.java in ragamuffin.core
+// New: PetShopSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1275PetShopIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: DOG_FOOD_TIN, DOG_COLLAR, DOG_LEAD, DOG_TREAT_BAG, BUDGIE, MIXED_BREED_PUP,
+//           PEDIGREE_PUP, BLANK_PEDIGREE_FORM, EXOTIC_ANIMAL_CRATE, BALL_PYTHON,
+//           IGUANA, PARROT, FIGHTING_COCK, TRADING_STANDARDS_NOTICE — add to Material.java
+// PropType: PUPPY_SOURCE_PROP, ANIMAL_CRATE_PROP — add to PropType.java
+// NPCType: PET_SHOP_OWNER, VAN_DOG_DEALER, TRADING_STANDARDS_OFFICER — add to NPCType.java
+// AchievementType: TOP_DOG, ANIMAL_MAGNETISM, ALL_CREATURES, EXOTIC_CONTRABAND — add to AchievementType.java
+// CriminalRecord.CrimeType: ANIMAL_FRAUD, ILLEGAL_ANIMAL_TRADE — add to CriminalRecord.java
+// CraftingSystem: add PEDIGREE_PUP recipe
+// DogCompanionSystem: add DOG_FOOD_TIN, DOG_TREAT_BAG, DOG_LEAD handling
+// PigeonRacingSystem: accept RACING_PIGEON sourced from PetShopSystem
+// SquatSystem: add Vibes bonus for BUDGIE, BALL_PYTHON, IGUANA, PARROT
+// BettingShopSystem: add FIGHTING_COCK side-bet offer
+// FenceSystem: add EXOTIC_ANIMAL_CRATE to fence valuation table
+// EnvironmentalHealthSystem: add ENVIRONMENTAL_HEALTH_OFFICER spawn trigger
+// RumourNetwork: LOCAL_GOSSIP trigger when EXOTIC_ANIMAL_CRATE near Bev
+// NewspaperSystem: headline after 3 exotic sales undetected
+// WantedSystem: +2 stars for ILLEGAL_ANIMAL_TRADE
+// TimeSystem: VAN_DOG_DEALER spawn restricted to Mon/Thu 09:00–11:00
