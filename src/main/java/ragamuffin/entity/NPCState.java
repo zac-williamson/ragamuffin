@@ -69,5 +69,10 @@ public enum NPCState {
     IDLE_SLEEPING,      // NPC is asleep at their post (Wayne night shift 01:00–03:00)
 
     // Issue #1246: Sunday League Football
-    SICK                // NPC is incapacitated (e.g. after eating a DODGY_PIE during the Sunday League match)
+    SICK,               // NPC is incapacitated (e.g. after eating a DODGY_PIE during the Sunday League match)
+
+    // Issue #1251: Northfield Street Chuggers
+    PATROL,             // Chugger NPC patrolling their zone on the high street
+    ACCOSTING,          // Chugger NPC approaching and pitching the player
+    DESPAWNING          // NPC is leaving the scene / end-of-shift despawn transition
 }
