@@ -2104,7 +2104,49 @@ public enum PropType {
      * (NoiseSystem +6, seeds CRIME_SPOTTED rumour if witnessed).
      * 3 hits to break; yields SCRAP_METAL.
      */
-    CASH_TIN_PROP(0.3f, 0.2f, 0.2f, 3, Material.SCRAP_METAL);
+    CASH_TIN_PROP(0.3f, 0.2f, 0.2f, 3, Material.SCRAP_METAL),
+
+    // ── Issue #1148: Northfield Council Estate Lock-Up Garages ───────────────
+
+    /**
+     * Garage Door Prop — the rolling shutter door on each council lock-up garage.
+     * Locked by default; opened via LOCKPICK (silent, 70%) or CROWBAR (noisy, 100%).
+     * Cannot be destroyed; yields no material on hit. 999 hits effectively indestructible.
+     */
+    GARAGE_DOOR_PROP(2.5f, 2.2f, 0.15f, 999, null),
+
+    /**
+     * Garage Shelf Prop — heavy metal shelving unit inside Garage 7 (player rental).
+     * Stores up to 30 item stacks as persistent world storage.
+     * 5 hits to break; yields SCRAP_METAL.
+     */
+    GARAGE_SHELF_PROP(1.8f, 2.0f, 0.4f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Amplifier Prop — a guitar amplifier in Garage 1 (band rehearsal).
+     * Produces NoiseSystem spike when powered. 4 hits to break; yields CABLE.
+     */
+    AMPLIFIER_PROP(0.55f, 0.60f, 0.45f, 4, Material.CABLE),
+
+    /**
+     * Drum Kit Prop — full drum kit in Garage 1 (band rehearsal).
+     * Player can interact (E) to join rehearsal if 3 previous sessions watched.
+     * 6 hits to break; yields DRUM_COMPONENT.
+     */
+    DRUM_KIT_PROP(1.20f, 1.10f, 1.00f, 6, Material.DRUM_COMPONENT),
+
+    /**
+     * Scales Prop — drug dealer's precision scales in Garage 3 (Marchetti drug den).
+     * Interacting with E triggers StreetEconomySystem deal UI.
+     * 3 hits to break; yields SCRAP_METAL.
+     */
+    SCALES_PROP(0.25f, 0.15f, 0.20f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Pigeon Coop Prop — a wooden pigeon loft in Garage 8 (pigeon fancier).
+     * Interacting triggers PigeonRacingSystem UI. 8 hits to break; yields WOOD.
+     */
+    PIGEON_COOP_PROP(1.80f, 1.60f, 0.90f, 8, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -3608,7 +3608,54 @@ public enum Material {
      * Adds FRAUDULENT_MOT to CriminalRecord if detected.
      * Tooltip: "Valid for 12 months. Or until the wheels fall off."
      */
-    MOT_CERT("MOT Certificate");
+    MOT_CERT("MOT Certificate"),
+
+    // ── Issue #1148: Northfield Council Estate Lock-Up Garages ───────────────
+
+    /**
+     * Bric-a-Brac — miscellaneous junk cleared from the hoarder's garage (Garage 2).
+     * Fenceable at FenceSystem for 2–5 COIN. Tooltip: "Someone's treasure. Mostly junk."
+     */
+    BRIC_A_BRAC("Bric-a-Brac"),
+
+    /**
+     * Vintage Record — rare vinyl found in the hoarder's clearance (Garage 2).
+     * Fenceable at FenceSystem for 8–15 COIN. Tooltip: "Still plays if you know someone with a deck."
+     */
+    VINTAGE_RECORD("Vintage Record"),
+
+    /**
+     * Drum Component — a piece of drum kit found in the band rehearsal garage (Garage 1).
+     * Used in crafting; Tooltip: "Keeps a beat. Annoys the neighbours."
+     */
+    DRUM_COMPONENT("Drum Component"),
+
+    /**
+     * Cable — audio/speaker cable from the band garage (Garage 1) or DIY garage (Garage 4).
+     * Fenceable for 2 COIN. Tooltip: "Metres of it. Tangled, obviously."
+     */
+    CABLE("Cable"),
+
+    /**
+     * Burner Phone — a cheap unregistered mobile from the Marchetti drug den (Garage 3).
+     * Triggers police interest if found on player during stop-and-search.
+     * Fenceable for 5 COIN. Tooltip: "Pay-as-you-go. No questions asked. One careful owner."
+     */
+    BURNER_PHONE("Burner Phone"),
+
+    /**
+     * Pigeon Feed Bag — a large bag of grain from the pigeon fancier's garage (Garage 8).
+     * Can be used to train racing pigeons (PigeonRacingSystem integration).
+     * Tooltip: "Thirty kilos of corn. For the birds. Literally."
+     */
+    PIGEON_FEED_BAG("Pigeon Feed Bag"),
+
+    /**
+     * Garage Key 7 — the key to player-rentable Garage 7, obtained from Dave the Caretaker
+     * for 5 COIN/week. Grants access and allows use of GARAGE_SHELF_PROP.
+     * Tooltip: "It's yours. For now. Keep up the payments."
+     */
+    GARAGE_KEY_7("Garage Key 7");
 
     private final String displayName;
 
@@ -4517,6 +4564,21 @@ public enum Material {
             case MOT_CERT:                return cs(0.92f, 0.92f, 0.88f,  // White certificate
                                                     0.12f, 0.55f, 0.22f); // Green PASS stamp
 
+            // Issue #1148: Northfield Council Estate Lock-Up Garages
+            case BRIC_A_BRAC:             return cs(0.70f, 0.55f, 0.38f,  // Dusty tan
+                                                    0.45f, 0.35f, 0.25f); // Brown shadow
+            case VINTAGE_RECORD:          return cs(0.10f, 0.10f, 0.12f,  // Black vinyl
+                                                    0.55f, 0.52f, 0.50f); // Label centre
+            case DRUM_COMPONENT:          return cs(0.72f, 0.20f, 0.15f,  // Red drum shell
+                                                    0.88f, 0.88f, 0.85f); // Chrome rim
+            case CABLE:                   return c(0.15f, 0.15f, 0.18f);  // Black cable
+            case BURNER_PHONE:            return cs(0.22f, 0.22f, 0.25f,  // Dark plastic
+                                                    0.65f, 0.65f, 0.62f); // Screen grey
+            case PIGEON_FEED_BAG:         return cs(0.85f, 0.80f, 0.60f,  // Hessian beige
+                                                    0.45f, 0.38f, 0.20f); // Shadow brown
+            case GARAGE_KEY_7:            return cs(0.78f, 0.65f, 0.20f,  // Brass key
+                                                    0.55f, 0.45f, 0.10f); // Darker brass
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4965,6 +5027,14 @@ public enum Material {
             case CAR_PART:
             case BLANK_LOGBOOK:
             case MOT_CERT:
+            // Issue #1148: Northfield Council Estate Lock-Up Garages — not block items
+            case BRIC_A_BRAC:
+            case VINTAGE_RECORD:
+            case DRUM_COMPONENT:
+            case CABLE:
+            case BURNER_PHONE:
+            case PIGEON_FEED_BAG:
+            case GARAGE_KEY_7:
                 return false;
             default:
                 return true;
@@ -5906,6 +5976,22 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official V5C document
             case MOT_CERT:
                 return IconShape.FLAT_PAPER;  // MOT pass certificate
+
+            // Issue #1148: Northfield Council Estate Lock-Up Garages
+            case BRIC_A_BRAC:
+                return IconShape.BOX;         // assorted junk
+            case VINTAGE_RECORD:
+                return IconShape.CYLINDER;    // vinyl record disc
+            case DRUM_COMPONENT:
+                return IconShape.CYLINDER;    // drum shell/hardware piece
+            case CABLE:
+                return IconShape.TOOL;        // coiled cable
+            case BURNER_PHONE:
+                return IconShape.CARD;        // flat phone shape
+            case PIGEON_FEED_BAG:
+                return IconShape.BOX;         // large sack
+            case GARAGE_KEY_7:
+                return IconShape.TOOL;        // small Yale key
 
             default:
                 return IconShape.BOX;

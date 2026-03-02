@@ -3048,6 +3048,88 @@ public enum AchievementType {
         "Clean Sheet",
         "A whole week. Legal car. Valid MOT. Not even a parking ticket. Who are you?",
         1
+    ),
+
+    // ── Issue #1148: Northfield Council Estate Lock-Up Garages ───────────────
+
+    /**
+     * Awarded when the player successfully picks the lock on any council garage
+     * (LOCKPICK method, 70% success, silent).
+     */
+    LOCKSMITH(
+        "Locksmith",
+        "In and out. Silent. Professional. Dave definitely didn't see a thing.",
+        1
+    ),
+
+    /**
+     * Awarded when the player breaks into a council garage with a CROWBAR
+     * (100% success, HIGH noise, 25-block radius).
+     */
+    CROWBAR_JUSTICE(
+        "Crowbar Justice",
+        "Subtle as a brick. Everyone on the estate heard that. Everyone.",
+        1
+    ),
+
+    /**
+     * Awarded when the player calls in the drug den tip-off at the PAYPHONE_PROP,
+     * triggering an UNDERCOVER_POLICE raid on Garage 3.
+     */
+    GRASS(
+        "Grass",
+        "You made an anonymous call. Totally anonymous. Marchetti will find out.",
+        1
+    ),
+
+    /**
+     * Awarded when the UNDERCOVER_POLICE raid completes after the player's tip-off
+     * (stash cleared, MARCHETTI_CREW Respect -10).
+     */
+    INFORMANT(
+        "Informant",
+        "The raid happened. The stash is gone. Sleep with one eye open.",
+        1
+    ),
+
+    /**
+     * Awarded when the player clears the hoarder's garage (Garage 2) and fences
+     * at least 10 items of BRIC_A_BRAC from the clearance quest.
+     */
+    BRIC_A_BRAC_BANDIT(
+        "Bric-a-Brac Bandit",
+        "You've emptied someone's life into a holdall and called it a favour.",
+        1
+    ),
+
+    /**
+     * Awarded when the player loots the stolen goods stash in Garage 5
+     * (HEAVY_PADLOCK secured; requires BOLT_CUTTERS or 2x CROWBAR attempts).
+     */
+    STASH_ROBBER(
+        "Stash Robber",
+        "Someone worked hard to nick all that. You worked harder to nick it from them.",
+        1
+    ),
+
+    /**
+     * Awarded when the player watches 3 rehearsals, takes the doorman role,
+     * and joins the band at MC_BATTLE rank >= 2.
+     */
+    GARAGE_BAND_MEMBER(
+        "Garage Band Member",
+        "Three rehearsals, one handshake, and you're in. Gigs pay 6 COIN. Don't be late.",
+        1
+    ),
+
+    /**
+     * Awarded when the player rents Garage 7 from Dave the Caretaker and
+     * successfully pays for 3 consecutive weeks without eviction.
+     */
+    LOCK_UP_LANDLORD(
+        "Lock-Up Landlord",
+        "5 COIN a week. It's not much. But it's yours. For now.",
+        1
     );
 
     private final String name;

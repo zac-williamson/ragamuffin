@@ -443,7 +443,23 @@ public class CriminalRecord {
          * at the MOT_RAMP_PROP (25% walk-in detection chance).
          * Penalty: Notoriety +8, WantedSystem +1 star.
          */
-        FRAUDULENT_MOT("Fraudulent MOT certificate");
+        FRAUDULENT_MOT("Fraudulent MOT certificate"),
+
+        // ── Issue #1148: Northfield Council Estate Lock-Up Garages ─────────────
+
+        /**
+         * Recorded when Dave the Caretaker (DAVE_CARETAKER NPC) witnesses the player
+         * breaking into a council garage (either LOCKPICK or CROWBAR method).
+         * Penalty: +6 Notoriety, WantedSystem +1 star; LOCK_UP_BREAK_IN rumour seeded.
+         */
+        GARAGE_BREAK_IN("Breaking and entering (council lock-up garages)"),
+
+        /**
+         * Recorded when UNDERCOVER_POLICE raid Garage 3 and the player is found
+         * inside with BURNER_PHONE or SCALES_PROP in proximity.
+         * Penalty: +15 Notoriety, WantedSystem +2 stars; POSSESSION added concurrently.
+         */
+        GARAGE_DRUG_POSSESSION("Found on drug premises (council garage)");
 
         private final String displayName;
 
