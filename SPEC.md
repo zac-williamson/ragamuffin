@@ -42336,3 +42336,120 @@ an `EXOTIC_ANIMAL_CRATE` (15 COIN). Player can:
 // NewspaperSystem: headline after 3 exotic sales undetected
 // WantedSystem: +2 stars for ILLEGAL_ANIMAL_TRADE
 // TimeSystem: VAN_DOG_DEALER spawn restricted to Mon/Thu 09:00–11:00
+
+---
+
+## Issue #1277: Add Northfield Minicab Office — Big Terry's Cabs, Cash-in-Hand Runs & the Unlicensed Driver Hustle
+
+**Landmark**: `LandmarkType.MINICAB_OFFICE` (displayed as "Big Terry's Cabs")
+
+### Overview
+
+Big Terry's Cabs is the unlicensed minicab office on the Northfield high street — a cramped room with a chip-fat smell, a dispatcher's radio, and drivers who definitely haven't passed an enhanced DBS check. It complements `TaxiSystem` (the licensed A1 Taxis rank) by offering cheaper, shadier transport with survival value and crime integration.
+
+### Core Mechanics
+
+**Terry the Dispatcher** (`NPCType.MINICAB_DISPATCHER`) sits behind a hatch, Mon–Sat 07:00–02:00, Sun 10:00–23:00.
+
+- Press **E** on Terry to request a ride. Three destinations: Park (3 COIN), High Street (2 COIN), Industrial Estate (4 COIN).
+- **5% cheaper** than A1 Taxis day rates. No night surcharge (unlike licensed taxis).
+- Terry **refuses Notoriety Tier 4+** ("I run a legitimate business."). Tier 3 accepted with flavour: "Don't cause me bother."
+- **TL_COUNCIL_PLATE** item: if player carries it, Terry ignores notoriety — "Licensed and everything. Jump in."
+
+**Two drivers** patrol outside: `NPCType.MINICAB_DRIVER` (Kenny) and `NPCType.MINICAB_DRIVER` (Jez). On fare accepted, one driver escorts player to destination over 8 seconds real time.
+
+**Cash-in-Hand Delivery Hustle**:
+- Terry occasionally asks player to deliver a `Material.DODGY_PACKAGE` to an address within 90 in-game seconds (time-critical).
+- Reward: 8 COIN + 1 Respect (FactionSystem, Marchetti faction).
+- `NPCType.UNDERCOVER_POLICE` has 15% chance of stopping player mid-delivery ("What's in the bag, son?"). Refusing inspection: +2 Wanted stars. Consenting and failing (if package flagged): `CriminalRecord.CrimeType.POSSESSION_OF_STOLEN_GOODS`.
+- Three successful deliveries in one session unlock `AchievementType.CASH_IN_HAND`.
+
+**Touting Hustle** (player earns from driving, not riding):
+- Player can stand outside the office and tout for fares from passing NPCs (`NPCType.PUBLIC`, `NPCType.WORKER`).
+- Each successful tout earns 3 COIN; `WantedSystem` +1 star after 3 touts if no `TL_COUNCIL_PLATE` (unlicensed touting).
+- `NPCType.TRAFFIC_WARDEN` NPC spawned nearby issues a `Material.FIXED_PENALTY_NOTICE` after 5 touts without plate. Fine: 15 COIN.
+
+**Radio Chatter** (ambient flavour):
+- Every 90 real seconds, Terry's radio plays one of 8 short flavour lines (stored in `MinicabSystem.RADIO_CHATTER` array). Shown as a subtitle HUD message.
+
+### Achievements
+
+| ID | Condition |
+|----|-----------|
+| `CASH_IN_HAND` | Complete 3 delivery runs in one session without being stopped. |
+| `UNLICENSED_OPERATOR` | Complete 10 touting jobs without a `TL_COUNCIL_PLATE`. |
+| `BIG_TERRYS_REGULAR` | Use Big Terry's Cabs for 5 paid rides. |
+
+### Integration Points
+
+- **TaxiSystem** — touting within 10 blocks of A1 Taxis rank seeds rumour `RumourType.TURF_WAR`: "Big Terry's boys are nicking A1's trade."
+- **WantedSystem** — `UNLICENSED_TOUTING` +1 star per 3 unlicensed touts; `POSSESSION_OF_STOLEN_GOODS` from failed delivery.
+- **CriminalRecord** — `UNLICENSED_TOUTING`, `POSSESSION_OF_STOLEN_GOODS` crime types (add to enum).
+- **FactionSystem** — 3 successful deliveries grant +1 Respect to Marchetti faction.
+- **RumourNetwork** — `TURF_WAR` rumour when touting near A1 Taxis; `LOCAL_GOSSIP` "Terry's boys'll take you anywhere, no questions asked." seeded after player's first ride.
+- **WarmthSystem** — office interior counts as warm shelter during cold snap.
+- **DisguiseSystem** — player wearing `Material.HI_VIS_VEST` reduces touting suspicion (TRAFFIC_WARDEN spawn threshold raised to 8 touts).
+- **NewspaperSystem** — headline "Northfield Minicab Office Linked to Late-Night Drug Runs" after player completes 5 dodgy deliveries.
+- **StreetEconomySystem** — touting contributes to HUSTLE income category.
+- **TimeSystem** — `MINICAB_DRIVER` NPCs only present during Terry's opening hours.
+
+### Materials (add to `Material.java`)
+
+- `TL_COUNCIL_PLATE` — "Taxi Licence Council Plate. Probably real."
+- (Reuses `DODGY_PACKAGE` and `FIXED_PENALTY_NOTICE` already in Material.java.)
+
+### NPCTypes (already declared — no new types needed)
+
+- `MINICAB_DISPATCHER` — Terry.
+- `MINICAB_DRIVER` — Kenny and Jez.
+
+### Achievements (add to `AchievementType.java`)
+
+- `CASH_IN_HAND`, `UNLICENSED_OPERATOR`, `BIG_TERRYS_REGULAR`
+
+### CriminalRecord (add to `CriminalRecord.CrimeType`)
+
+- `UNLICENSED_TOUTING`, `POSSESSION_OF_STOLEN_GOODS` (if not already present)
+
+### Unit Tests (`MinicabSystemTest.java`)
+
+1. `testTerryRefusesTierFourNotoriety` — set notoriety to Tier 4; press E on Terry; verify ride refused with "I run a legitimate business."
+2. `testTerryAcceptsTierThreeWithFlavour` — set notoriety to Tier 3; verify ride accepted + flavour text contains "bother".
+3. `testCouncilPlateBypassesNotorietyRefusal` — Tier 4 player carries `TL_COUNCIL_PLATE`; verify ride accepted.
+4. `testFareParkDayDeductsCoin` — player has 10 COIN; select Park destination; verify COIN == 7 after ride.
+5. `testDeliveryCompletionAwards8CoinAndRespect` — complete delivery within time limit; verify +8 COIN, Marchetti Respect +1.
+6. `testDeliveryUndercoverPoliceStop` — seed RNG to trigger police stop at 15%; refuse inspection; verify Wanted stars +2.
+7. `testThreeToutsWithoutPlateAddsWantedStar` — tout 3 times without `TL_COUNCIL_PLATE`; verify WantedSystem stars +1.
+8. `testHiVisReducesToutingThreshold` — player wears `HI_VIS_VEST`; tout 7 times; verify TRAFFIC_WARDEN not yet spawned.
+9. `testFiveToutsWithoutPlateSpawnsTrafficWarden` — tout 5 times without plate; verify `TRAFFIC_WARDEN` NPC spawned and `FIXED_PENALTY_NOTICE` issued.
+10. `testRadioChatterCyclesThroughLines` — advance time 90 s × 8; verify all 8 unique radio chatter lines displayed at least once.
+11. `testCashInHandAchievementAfterThreeDeliveries` — complete 3 deliveries without interception; verify `CASH_IN_HAND` achievement unlocked.
+12. `testTouringNearA1TaxisSeedsRumour` — tout within 10 blocks of `TAXI_RANK`; verify `RumourType.TURF_WAR` added to RumourNetwork.
+
+### Integration Tests (`Issue1277MinicabIntegrationTest.java`)
+
+1. **Full ride cycle**: Player approaches Terry at 10:00 Mon, presses E. Selects Industrial Estate (4 COIN). Verify: player COIN reduced by 4; player teleported to Industrial Estate position; `BIG_TERRYS_REGULAR` achievement progress incremented; `LOCAL_GOSSIP` rumour seeded.
+
+2. **Delivery run end-to-end**: Terry offers delivery at 14:00. Player accepts `DODGY_PACKAGE`. Seed RNG to avoid police stop. Player reaches target within 90 s. Verify: +8 COIN; Marchetti Respect +1; delivery count incremented; after third delivery `CASH_IN_HAND` achievement unlocked.
+
+3. **Unlicensed touting gets player fined**: Player touts 5 times outside office without `TL_COUNCIL_PLATE`. Verify: `TRAFFIC_WARDEN` NPC spawned; `FIXED_PENALTY_NOTICE` in player inventory; COIN −15 on payment; `UNLICENSED_TOUTING` in CriminalRecord.
+
+4. **Turf war rumour seeded**: Player stands within 10 blocks of A1 Taxis rank and touts once. Verify: `RumourType.TURF_WAR` present in RumourNetwork with source NPC set to nearby PUBLIC NPC.
+
+5. **Terry closed on Sunday after 23:00**: Set time to Sunday 23:30. Verify Terry NPC not present; office prop shows "CLOSED" state; player pressing E receives "We're closed, mate." message.
+
+// ── Issue #1277: Northfield Minicab Office — Big Terry's Cabs ───────────────
+// New: MinicabSystem.java in ragamuffin.core
+// New: MinicabSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1277MinicabIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: TL_COUNCIL_PLATE — add to Material.java
+// AchievementType: CASH_IN_HAND, UNLICENSED_OPERATOR, BIG_TERRYS_REGULAR — add to AchievementType.java
+// CriminalRecord.CrimeType: UNLICENSED_TOUTING, POSSESSION_OF_STOLEN_GOODS — add if absent
+// RumourType: TURF_WAR — add to RumourType.java
+// NPCType: MINICAB_DISPATCHER, MINICAB_DRIVER — already declared, no changes needed
+// LandmarkType: MINICAB_OFFICE — already declared, no changes needed
+// WantedSystem: UNLICENSED_TOUTING hook (+1 star per 3 touts)
+// FactionSystem: Marchetti Respect +1 per successful delivery
+// StreetEconomySystem: touting income in HUSTLE category
+// NewspaperSystem: headline after 5 dodgy deliveries
+// DisguiseSystem: HI_VIS_VEST raises touting threshold
