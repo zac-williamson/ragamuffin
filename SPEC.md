@@ -37744,3 +37744,143 @@ On cold/wet nights (RAIN, DRIZZLE, COLD_SNAP, FROST): +2 extra PUBLIC NPCs queue
 // Integrates: FactionSystem, StreetSkillSystem, WarmthSystem, NotorietySystem,
 //   CriminalRecord, WantedSystem, RumourNetwork, NeighbourhoodSystem, TimeSystem,
 //   DisguiseSystem, InformationBrokerSystem, AchievementSystem, NoiseSystem
+
+---
+
+## Issue #1224: Add Northfield Cybernet Internet Café — Online Marketplace Hustle, Fake Doc Printing & the Phishing Scam
+
+**Landmark**: `LandmarkType.INTERNET_CAFE` (already defined). Display name: `"Cybernet"`.
+**New system**: `InternetCafeSystem.java` in `ragamuffin.core`.
+**Test class**: `InternetCafeSystemTest.java` in `src/test/java/ragamuffin/integration/`.
+**Existing NPCs**: `INTERNET_CAFE_OWNER` (Asif, daytime), `INTERNET_CAFE_ASSISTANT` (Hamza, 18:00–23:00) — already in `NPCType.java`.
+
+### Overview
+
+Cybernet is a narrow 8×10×3 brick shopfront on the high street between the Off-Licence and Poundstretcher. Open daily 09:00–23:00. Asif runs the counter by day; his nephew Hamza covers evenings. Six `INTERNET_TERMINAL_PROP` booths in two rows, a `PRINTER_PROP` at the back, `VENDING_MACHINE_PROP` selling energy drinks and instant noodles (1 COIN), and a locked back room (`DOOR_PROP`) that Hamza can be bribed to open.
+
+Sessions cost **1 COIN for 5 in-game minutes** of terminal access. The player presses **E** on any terminal to open the `InternetCafeUI` (simple text-menu overlay). Once a session is active, all online activities below are available.
+
+### Terminal Activities
+
+#### 1. Online Marketplace (FlipIt — "the British eBay")
+
+The player can list items from their inventory for sale on FlipIt. Each listing costs nothing but the platform takes 10% commission.
+
+- Items sourced from `BootSaleSystem`, `CharityShopSystem`, `IndoorMarketSystem`, or `FenceSystem` sell for 1.5–3× their purchase price after a randomised delay (1–5 in-game hours, checked on next terminal session).
+- Listing a STOLEN_PHONE or COUNTERFEIT_NOTE risks a `COMPUTER_FRAUD` criminal record entry if Notoriety ≥ 40 and a POLICE NPC passes within 10 blocks of the café during the listing window.
+- Maximum 3 active listings at once. UI shows listing status (PENDING / SOLD / FLAGGED).
+- Achievement `DIGITAL_HUSTLER` on first successful sale; `POWERSELLER` on 10 total sales.
+
+#### 2. Fake Document Printing
+
+The `PRINTER_PROP` in the back room can be used (back room access required) to print forged documents. Requires `BLANK_PAPER` + `PRINTER_INK` (both from `PoundShopSystem` or `NewsagentSystem`):
+
+- **FORGED_UC_LETTER** (1 BLANK_PAPER + 1 PRINTER_INK): Bypass the 3-day `DWPSystem` waiting period; present at `JobCentreSystem` to claim benefits immediately. Chance of detection: 20% (COUNCIL NPC cross-checks).
+- **FAKE_REFERENCE_LETTER** (1 BLANK_PAPER + 1 PRINTER_INK): Use at `TempAgencySystem` to qualify for higher-paid shifts without prior work history.
+- **FORGED_TV_LICENCE** (1 BLANK_PAPER + 1 PRINTER_INK): Sell to PUBLIC/PENSIONER NPCs for 8 COIN each (StreetEconomy integration). Already in Material.java.
+- Printing outside the back room in Asif's sight triggers an ALERT; he calls police (WantedSystem +1 star).
+- Each forged item adds `DOCUMENT_FRAUD` to `CriminalRecord` if witnessed by Asif or Hamza.
+- Achievement `FORGER` on first successful print.
+
+#### 3. Phishing Scam (Passive Income Terminal)
+
+While at the terminal the player can run a phishing email campaign targeting fictional Northfield residents. Each 5-minute session yields:
+- **Base income**: 3–8 COIN (random, seeded per session).
+- **Skill modifier**: `StreetSkillSystem` TRADING XP ≥ 5 gives +2 COIN bonus.
+- **Risk**: 10% chance per session of a `CYBER_FRAUD` criminal record entry if Notoriety ≥ 50.
+- Achievement `NIGERIAN_PRINCE` on first phishing payout.
+
+#### 4. UC Online Sign-On (JobCentre Integration)
+
+Instead of physically attending the `JobCentreSystem`, the player can sign on remotely from any terminal once per in-game week. This counts as a valid sign-on, preventing benefit sanction. If the player has an active `ANKLE_TAG` curfew (from `ProbationSystem`), the terminal session counts as presence at home — satisfying the curfew condition.
+
+#### 5. Pirate Radio Remote Scheduling (PirateRadioSystem Integration)
+
+If the player has previously set up a `PirateRadioSystem` transmitter, they can schedule broadcasts remotely from the terminal: select a track slot 1–4 in-game hours in advance. The broadcast fires automatically at the scheduled time without the player needing to be physically present at the transmitter.
+
+#### 6. Burner Phone Top-Up Terminal
+
+A `PREPAID_CARD_READER_PROP` near the counter accepts 1 COIN to add 5 "units" of credit to a BURNER_PHONE (already in Material.java). Burner phone units are consumed when: placing anonymous tip-offs to `NewspaperSystem`, seeding anonymous rumours to `InformationBrokerSystem`, or sending threatening texts (seeds SCARED need spike to target NPC via `StreetEconomySystem.onCrimeEvent()`).
+
+### Back Room Access
+
+The back room houses the PRINTER_PROP and a `STASH_BOX_PROP` containing random loot (COIN ×3–8, USB_DRIVE, occasionally a STOLEN_PHONE). Access requires one of:
+- Hamza on shift (18:00–23:00) + **1 ENERGY_DRINK** bribe. Hamza speech: "Don't tell my uncle."
+- `LOCKPICK` item + 4-second hold on the DOOR_PROP. On success: TRESPASSING added to CriminalRecord if any NPC witnesses it.
+
+### Weather & Atmosphere
+
+- Rain/Drizzle: +2 extra PUBLIC NPCs occupy terminals (sheltering); chance of finding a session already occupied rises to 60%.
+- FROST/COLD_SNAP: Warmth +3/min while seated at terminal (warm indoors).
+- After 22:00: atmosphere dims; only Hamza present; 1–2 YOUTH_GANG NPCs lurk near the vending machine.
+
+### Integration Points
+
+- **FenceSystem / BootSaleSystem / CharityShopSystem / IndoorMarketSystem**: items sourced here sell for markup on FlipIt.
+- **JobCentreSystem / DWPSystem**: remote sign-on; FORGED_UC_LETTER bypass.
+- **PirateRadioSystem**: remote broadcast scheduling.
+- **ProbationSystem**: ankle tag curfew compliance via terminal session.
+- **PhoneRepairSystem**: unlocked BURNER_PHONE functionality.
+- **InformationBrokerSystem**: anonymous tip-off via burner phone.
+- **StreetSkillSystem**: TRADING XP +1 per completed FlipIt sale; STEALTH XP +1 per back room access without detection.
+- **NotorietySystem**: COMPUTER_FRAUD crime +5 Notoriety; printing forgeries +8 Notoriety if caught.
+- **CriminalRecord**: COMPUTER_FRAUD, DOCUMENT_FRAUD, CYBER_FRAUD, TRESPASSING entries.
+- **WantedSystem**: printing in plain sight +1 star; CYBER_FRAUD when Notoriety ≥ 50 +1 star.
+- **DisguiseSystem**: player wearing COUNCIL_JACKET reduces Asif suspicion threshold by 10%.
+- **WitnessSystem**: Asif (daytime) and Hamza (evening) are witnesses for all crimes in the café.
+- **RumourNetwork**: `LOCAL_EVENT` seeded after each successful FlipIt sale ("Some lad on FlipIt's been flogging dodgy gear out of Cybernet."); `GANG_ACTIVITY` seeded after COMPUTER_FRAUD crime.
+- **WeatherSystem**: rain shelter effect; frost warmth gain.
+- **NeighbourhoodSystem**: Vibes −2 per COMPUTER_FRAUD crime discovered in the neighbourhood.
+- **AchievementSystem**: DIGITAL_HUSTLER, POWERSELLER, NIGERIAN_PRINCE, FORGER.
+- **NoiseSystem**: printing noise (level 1) audible to NPCs within 4 blocks.
+
+### NPC Dialogue
+
+- **Asif** (`INTERNET_CAFE_OWNER`): "Terminal's 1 coin a session, mate." / "No dodgy stuff on my machines." / "I didn't see nothin'." (after back room bribe) / "Oi — what are you printing?" (if player uses printer in main room) / "Close at eleven, sort yourself out."
+- **Hamza** (`INTERNET_CAFE_ASSISTANT`): "Cheers mate." / "Don't tell my uncle." / "I'll put the word out." / "Back room's yours — but be quick." / "Energy drinks are a quid from the machine."
+
+### Unit Tests
+
+- `startSession(inventory_with_1_coin, timeSystem)`: returns `SESSION_STARTED`; player COIN = 0; session active.
+- `startSession(inventory_with_0_coin, timeSystem)`: returns `INSUFFICIENT_FUNDS`; no session started.
+- `listItem(SAUSAGE_ROLL, inventory, session)`: returns `LISTED`; item removed from inventory; listing added with status PENDING.
+- `listItem(STOLEN_PHONE, inventory, session)` at Notoriety 45 with police NPC within 10 blocks: returns `LISTED_RISKY`; `CriminalRecord.hasCrime(COMPUTER_FRAUD)` true after police proximity check.
+- `collectSaleProceeds(listing_SOLD, inventory)`: COIN added = floor(listPrice × 0.9); listing removed.
+- `printDocument(FORGED_UC_LETTER, inventory_with_blank_paper_and_ink)`: returns `PRINTED`; FORGED_UC_LETTER in inventory; DOCUMENT_FRAUD in CriminalRecord.
+- `printDocument(FORGED_UC_LETTER, inventory_missing_ink)`: returns `MISSING_MATERIALS`; no state change.
+- `runPhishingSession(random_seed_42, tradingXP_0)`: returns coin amount in range [3, 8].
+- `runPhishingSession(random_seed_42, tradingXP_5)`: returns coin amount in range [5, 10] (bonus applied).
+- `bribeHamza(inventory_with_energy_drink)`: returns `ACCESS_GRANTED`; ENERGY_DRINK removed; back room accessible.
+- `signOnRemotely(jobCentreRecord, timeSystem_correct_week)`: returns `SIGNED_ON`; sign-on recorded; no physical visit required.
+- `scheduleRadioBroadcast(pirateRadioSystem, slotHoursFromNow=2, timeSystem)`: returns `SCHEDULED`; broadcast fires at scheduled time.
+- `DIGITAL_HUSTLER` achievement awarded on first `collectSaleProceeds` with status SOLD.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Buy low, sell high on FlipIt**: Player buys WOOLLY_HAT_ECONOMY (2 COIN) from BootSaleSystem. Player enters Cybernet, pays 1 COIN for session. Lists WOOLLY_HAT_ECONOMY on FlipIt. Advance TimeSystem by 3 in-game hours. Player starts new session (1 COIN). Call `collectSaleProceeds()`. Verify player received between 2 and 6 COIN (1.5–3× source price, minus 10% commission). Verify `AchievementType.DIGITAL_HUSTLER` unlocked. Verify `StreetSkillSystem.getTradingXP()` increased by 1.
+
+2. **Forged UC Letter bypasses JobCentre waiting period**: Player has BLANK_PAPER and PRINTER_INK. Bribes Hamza (1 ENERGY_DRINK). Enters back room. Uses PRINTER_PROP. Calls `printDocument(FORGED_UC_LETTER)`. Verify FORGED_UC_LETTER in inventory. Player visits `JobCentreSystem`. Calls `claimBenefitWithForgedLetter(inventory)`. Verify benefit paid immediately without waiting 3 in-game days. Verify `CriminalRecord.hasCrime(DOCUMENT_FRAUD)` is true. Verify `AchievementType.FORGER` unlocked.
+
+3. **Printing in plain sight triggers police call**: Asif is present (TimeSystem set to 11:00). Player uses PRINTER_PROP in main room (not back room). Verify Asif enters ALERT state. Verify `WantedSystem.getWantedStars()` increases by 1. Verify NoiseSystem level-1 event emitted within 4 blocks of printer.
+
+4. **Remote UC sign-on via terminal**: Player has active `JobCentreRecord` requiring weekly sign-on. Player enters Cybernet (no physical JobCentre visit). Calls `signOnRemotely(record, timeSystem)`. Verify sign-on registered as valid. Advance TimeSystem by 1 in-game week. Verify no SANCTION recorded in `JobCentreRecord`. Verify benefits continue to be paid.
+
+5. **Burner phone anonymous tip-off**: Player tops up BURNER_PHONE at terminal (1 COIN). Player sends anonymous tip-off to `InformationBrokerSystem` via burner. Verify tip-off registered without revealing player identity (no Notoriety increase). Verify BURNER_PHONE units reduced by 1. Verify `RumourNetwork` contains a GANG_ACTIVITY rumour seeded anonymously (no NPC source attribution).
+
+// ── Issue #1224: Northfield Cybernet Internet Café ────────────────────────────
+// New: InternetCafeSystem.java in ragamuffin.core
+// New: InternetCafeSystemTest.java in src/test/java/ragamuffin/integration/
+// LandmarkType.INTERNET_CAFE already defined; getDisplayName() already returns "Cybernet"
+// Existing NPC types: INTERNET_CAFE_OWNER, INTERNET_CAFE_ASSISTANT — already in NPCType.java
+// Existing Materials: FAKE_ID, BURNER_PHONE, BLANK_PAPER, PRINTER_INK, FORGED_TV_LICENCE,
+//   ENERGY_DRINK, STOLEN_PHONE, COUNTERFEIT_NOTE — already in Material.java
+// New Materials: FORGED_UC_LETTER, FAKE_REFERENCE_LETTER — add to Material.java
+// New PropTypes: INTERNET_TERMINAL_PROP, PRINTER_PROP, VENDING_MACHINE_PROP,
+//   PREPAID_CARD_READER_PROP, STASH_BOX_PROP — add to PropType.java if absent
+// New AchievementTypes: DIGITAL_HUSTLER, POWERSELLER, NIGERIAN_PRINCE, FORGER — add to AchievementType.java
+// New CriminalRecord crime types: COMPUTER_FRAUD, DOCUMENT_FRAUD, CYBER_FRAUD — add if absent
+// Integrates: FenceSystem, BootSaleSystem, CharityShopSystem, IndoorMarketSystem,
+//   JobCentreSystem, DWPSystem, PirateRadioSystem, ProbationSystem, PhoneRepairSystem,
+//   InformationBrokerSystem, StreetSkillSystem, NotorietySystem, CriminalRecord,
+//   WantedSystem, DisguiseSystem, WitnessSystem, RumourNetwork, WeatherSystem,
+//   NeighbourhoodSystem, AchievementSystem, NoiseSystem, StreetEconomySystem
