@@ -30531,3 +30531,165 @@ New `Material` entries:
 // New Achievements: PAMPERED_POOCH, NORTHFIELD_CHAMPION, TWICE_THE_CHAMPION, LEGITIMATE_CHAMPION, CRUFTS_CORRUPTION, FLEA_MARKET, DOG_WHISPERER, TRACEYS_FAVOURITE (add to AchievementType.java)
 // New DogCompanionSystem flags: CLEAN_DOG, DOG_GROOMED, SHOW_READY, FLEA_INFESTATION, SNAGGED_LEAD
 // New CriminalRecord entries: SHOW_RIGGING, HANDLING_STOLEN_GOODS
+
+## Issue #1134: Add Patel's Newsagent — Paper Round, Scratch Card Addiction & the Magazine Rack Hustle
+
+**Theme**: Patel's News is the beating heart of any British neighbourhood — open before the sun comes up, run by Raj Patel who knows everything about everyone and judges you for buying Monster Munch at 7am. The newsagent is the one stop for the morning paper, scratch cards that never pay out, penny sweets that cost 40p, and a magazine rack that's half-blocked by the counter so you have to peer sideways at the top shelf. If you want the local rag, the racing form, or a Twix, Raj is your man.
+
+### New Landmark
+`NEWSAGENT` already exists in `LandmarkType.java` with display name `"Patel's News"` — **no new enum entry needed**. Open Mon–Sat 06:00–22:00, Sun 07:00–20:00.
+
+### New System
+**`NewsagentSystem.java`** in `ragamuffin.core`
+
+### Core Mechanics
+
+**Retail Counter** (press E on `NEWSAGENT_COUNTER_PROP`):
+
+| Item | Price | Notes |
+|------|-------|-------|
+| `NEWSPAPER` | 1 COIN | Today's `Daily Ragamuffin` (NewspaperSystem edition for the current day) |
+| `SCRATCH_CARD` | 1 COIN | See scratch-card mechanic below |
+| `PENNY_SWEETS` | 1 COIN | Restores 5 Hunger; Raj mutters "40p minimum, pal" if player tries to buy one (costs 1 COIN anyway) |
+| `CHOCOLATE_BAR` | 1 COIN | Restores 10 Hunger |
+| `CRISPS` | 1 COIN | Restores 8 Hunger |
+| `ENERGY_DRINK` | 2 COIN | Restores 20 Hunger; grants ENERGISED buff for 5 in-game minutes (movement speed +10%) |
+| `TOBACCO_POUCH` | 3 COIN | Required ingredient for `ROLLIE` (craftable); Raj won't sell if player looks under 18 (random 15% chance, overrideable by showing ID — no ID item exists, so it just fails) |
+| `LOTTERY_TICKET` | 2 COIN | Weekly draw (every 7 in-game days, Sunday evening); 1-in-50 chance of 25 COIN jackpot |
+| `BIRTHDAY_CARD` | 1 COIN | Fenceable to FenceSystem for 0 COIN ("no one wants a birthday card, mate"); usable as `FLYER` substitute in Molotov recipe |
+| `LOCAL_MAP` | 3 COIN | Reveals fog-of-war on the player's map UI for a 40-block radius around current position |
+
+**Scratch Card mechanic** (use `SCRATCH_CARD` from inventory — hold E for 2 in-game seconds):
+- 60% chance: nothing ("Better luck next time!" — Raj: "You knew it wouldn't pay out")
+- 25% chance: 1 COIN back (break-even)
+- 10% chance: 3 COIN win
+- 4% chance: 10 COIN win (Raj: "Bloody 'ell, someone's won! You won't win the next one though.")
+- 1% chance: 50 COIN jackpot — `SCRATCH_CARD_WINNER` achievement; Raj demands to inspect it; if WantedSystem tier ≥ 2, refuses to pay out ("I can't pay a wanted man, sorry son")
+
+`SCRATCH_CARD_ADDICTION` debuff: If player buys 5+ scratch cards in one in-game day, they gain the `SCRATCH_CARD_ADDICTION` status for 24 in-game hours. While active: each time they pass `NEWSAGENT_COUNTER_PROP`, a UI prompt "Buy a scratch card?" appears automatically (NeedType.BORED satisfaction urge). StreetEconomySystem tracks as compulsive spending.
+
+**Paper Round** (secondary income mechanic):
+- Available 05:30–07:00 daily; sign on at `NEWSAGENT_NOTICE_BOARD_PROP` inside shop
+- Player must have `NEWSPAPER_BAG_PROP` equipped (given by Raj on first sign-on; 0 COIN)
+- 8 delivery stops on a fixed route through terraced houses (TERRACED_HOUSE landmarks)
+- Each delivery: player presses E on a `LETTERBOX_PROP` within 2 blocks; progress ticks
+- Complete all 8 deliveries before 07:00: reward 4 COIN + RumourNetwork seeds `LOCAL_EVENT` ("the paper lad was out at 6am again, bless 'im")
+- Fail to complete by 07:00: Raj docks 1 COIN ("You're useless, that's the last time")
+- After completing 7 rounds total: `RELIABLE_PAPERBOY` achievement; Raj gives 10% loyalty discount on all purchases
+- NPCs on the street at 05:30–07:00: MILK_FLOAT_DRIVER NPC (ambient, passes every 15 in-game minutes), INSOMNIAC_PENSIONER NPC (standing outside in dressing gown regardless of weather)
+
+**Magazine Rack** (press E on `MAGAZINE_RACK_PROP`):
+- Top shelf (Notoriety ≥ 30 required to browse — Raj watches): contains `DODGY_MAGAZINE` (fenceable, 2 COIN)
+- Middle shelf: `RACING_FORM` (gives insider tip for HorseRacingSystem — +15% accuracy on next bet); `DIY_MONTHLY` (required for one CraftingSystem recipe: `NEWSPAPER` + `DIY_MONTHLY` = `PAPIER_MACHE_BRICK` — placeable fake brick block)
+- Bottom shelf: `PUZZLE_BOOK` (Warmth-neutral activity; player can "read" it to satisfy NeedType.BORED −20; NPCs comment "get a life mate")
+- Shoplifting: steal from magazine rack (3 FRAGILE hits); if successful, adds `SHOPLIFTING` CriminalRecord entry, Notoriety +2; Raj activates `BANNED_FROM_PATEL` flag for 7 in-game days (refused service)
+
+**Raj Patel** (NPC, `SHOPKEEPER` type, present all opening hours):
+- Gossip hub: seeds 1 `LOCAL_EVENT` rumour per 20 in-game minutes (he hears everything from customers)
+- Weather commentary: RAIN — "Dreadful out, isn't it. Still, good for business."; SUNNY — "Too warm. People stop buying hot drinks."
+- If player has `NEWSPAPER` in inventory: Raj comments on the headline (references NewspaperSystem's last edition topic)
+- Raj's respect: starts NEUTRAL. Buying from counter 10+ times → Raj becomes FRIENDLY (gives a free `CHOCOLATE_BAR` on the 10th purchase, and seeds a `LOOT_TIP` rumour about where to find easy items)
+- If player Notoriety ≥ 60: Raj refuses service ("I know who you are, love, and I don't want trouble")
+
+**Raj's side hustle** (discoverable at STREET_LADS Respect ≥ 40):
+- Raj quietly sells `TOBACCO_POUCH` ×3 for 5 COIN (bulk rate) — standard rate is 3 COIN each
+- If player asks about "the back room", Raj gives the player a `NEWSAGENT_KEY` item
+- `NEWSAGENT_KEY` opens the `STOCKROOM_DOOR_PROP` — contains a `CASH_BOX_PROP` (8–14 COIN, robbing it: `THEFT` CriminalRecord, Notoriety +4, Raj becomes permanently hostile)
+- Raj also accepts `STOLEN_PHONE` via counter (if player has one, a dialogue option appears): sells it on as `REFURBISHED_PHONE` to a market contact (player receives 4 COIN, no CriminalRecord entry — Raj handles the paperwork)
+
+### NPC Behaviour
+
+**Raj Patel** (`SHOPKEEPER`, 06:00–22:00 weekdays, 07:00–20:00 Sunday): Behind counter. Moans about the weather, government, and ungrateful customers. `SCRATCH_CARD_ADDICTION` debuff on player triggers specific dialogue: "You're back again? These things are a tax on the desperate, you know." At closing time says "Right, I'm shutting up shop, come back tomorrow."
+
+**MILK_FLOAT_DRIVER** (ambient NPC, 05:30–07:00, patrols road past newsagent every 15 in-game minutes): Whistles; nods at player if on paper round. No interaction beyond ambient speech. If player has WantedSystem tier ≥ 3, drives away faster.
+
+**INSOMNIAC_PENSIONER** (ambient NPC, name "Norman", outside newsagent 05:00–08:00 in dressing gown and slippers): Complains about modern life. Seeds `LOCAL_GOSSIP` rumour on player approach (1 free per visit). Unaffected by weather (too stubborn to go in). Drops `PUZZLE_BOOK` on death (if the player is barbaric).
+
+**EARLY_CUSTOMER NPCs** (1–3 COMMUTER/PUBLIC, present 06:00–08:30): Buying papers and rushing off. Occasionally argue about the price of bread.
+
+### Props
+New `PropType` entries:
+- `NEWSAGENT_COUNTER_PROP` — main interaction point; buy retail items
+- `NEWSAGENT_NOTICE_BOARD_PROP` — sign-on point for paper round
+- `MAGAZINE_RACK_PROP` — interactive shelf; see magazine rack mechanic
+- `NEWSPAPER_BUNDLE_PROP` — decorative stack of papers by the door (FRAGILE, 2 hits); yields 1 `NEWSPAPER` on break
+- `LOTTERY_DISPLAY_PROP` — decorative; interactable to buy `LOTTERY_TICKET`
+- `SWEET_COUNTER_PROP` — decorative; interactable for `PENNY_SWEETS`
+- `LETTERBOX_PROP` — on TERRACED_HOUSE doors; E to deliver newspaper on paper round
+- `STOCKROOM_DOOR_PROP` — locked door to back stockroom; opened by `NEWSAGENT_KEY`
+
+### Materials / Items
+New `Material` entries:
+- `SCRATCH_CARD` — single-use; scratch for random cash reward
+- `LOTTERY_TICKET` — hold for weekly draw result
+- `PENNY_SWEETS` — 10 Hunger restore
+- `TOBACCO_POUCH` — crafting ingredient for `ROLLIE`; also fenceable (2 COIN)
+- `BIRTHDAY_CARD` — novelty item; substitute for `FLYER` in Molotov recipe
+- `LOCAL_MAP` — reveals fog of war (40-block radius)
+- `RACING_FORM` — HorseRacingSystem tip (+15% bet accuracy for next single bet)
+- `DIY_MONTHLY` — crafting ingredient for `PAPIER_MACHE_BRICK`
+- `PUZZLE_BOOK` — satisfies NeedType.BORED −20 on use; Warmth-neutral
+- `DODGY_MAGAZINE` — top-shelf item; fenceable 2 COIN
+- `NEWSAGENT_KEY` — opens STOCKROOM_DOOR_PROP (one-use; consumed on first unlock)
+- `ROLLIE` — crafted cigarette (`TOBACCO_POUCH` + `NEWSPAPER` = `ROLLIE` ×5); smokeable: satisfies NeedType.BORED −15, small Warmth +2 buff; NPCs who smoke comment positively; police treat visible smoking as minor Notoriety −0 (not a crime)
+
+### Crafting Integration
+| Recipe | Inputs | Output | Notes |
+|--------|--------|--------|-------|
+| Roll-up cigarette | `TOBACCO_POUCH` + `NEWSPAPER` | `ROLLIE` ×5 | Smokes quickly |
+| Papier-mâché brick | `NEWSPAPER` + `DIY_MONTHLY` | `PAPIER_MACHE_BRICK` | Placeable; same collision as BRICK but low HP (2 hits to break) |
+
+### System Integrations
+- **NewspaperSystem**: `NEWSPAPER` purchased here is the current edition (today's headlines available to read in inventory); NewspaperSystem's daily publication routes through newsagent (NPCs come to buy papers at 18:00)
+- **HorseRacingSystem**: `RACING_FORM` grants +15% accuracy on next single bet
+- **WarmthSystem**: shop interior +3 Warmth/minute; paper round in FROST weather causes `FREEZING` debuff if player has no `WARM_COAT` item
+- **WeatherSystem**: RAIN increases customer count +2 (sheltering); SUNNY reduces customer count −1 (people skip the paper); FROST makes MILK_FLOAT_DRIVER arrive 10 in-game minutes late
+- **RumourNetwork**: Raj seeds `LOCAL_EVENT` every 20 in-game minutes; completing paper round seeds `LOCAL_EVENT`; Norman the pensioner seeds `LOCAL_GOSSIP` on player approach
+- **StreetEconomySystem**: `SCRATCH_CARD_ADDICTION` debuff tracked as compulsive spending; `TOBACCO_POUCH` and `ROLLIE` tradeable to NPCs with BORED need for 2 COIN each
+- **FenceSystem**: `DODGY_MAGAZINE` 2 COIN; `TOBACCO_POUCH` 2 COIN; `BIRTHDAY_CARD` 0 COIN (fence laughs); `LOTTERY_TICKET` 0 COIN (non-transferrable)
+- **WantedSystem**: Winning `SCRATCH_CARD` jackpot refused at tier ≥ 2; stockroom robbery: `THEFT` CriminalRecord, tier ≥ 1 police dispatch in 2 in-game minutes
+- **NotorietySystem**: shoplifting magazine rack +2; stockroom robbery +4; scratch card jackpot payout (legitimate) −1 (Raj celebrates, positive community moment)
+- **CriminalRecord**: `SHOPLIFTING`, `THEFT` new entries (or reuse existing)
+- **NeighbourhoodSystem**: completing 7 paper rounds +2 neighbourhood vibes; stockroom robbery −3 vibes
+- **DisguiseSystem**: `NEWSAGENT_APRON` (new Material; obtained from counter if Raj friendly) gives shop-worker disguise — StreetEconomySystem discount +10% at NEWSAGENT only
+- **NeedType**: `PUZZLE_BOOK` use satisfies BORED −20; `PENNY_SWEETS` satisfies HUNGRY −5; `CHOCOLATE_BAR` −10; `ROLLIE` satisfies BORED −15
+- **TimeSystem**: open Mon–Sat 06:00–22:00, Sun 07:00–20:00; paper round 05:30–07:00; lottery draw Sunday 20:00; MILK_FLOAT_DRIVER patrols 05:30–07:00 every 15 in-game minutes
+- **AchievementSystem**: new achievements (see below)
+- **PhoneRepairSystem**: Raj accepts `STOLEN_PHONE` for 4 COIN (quiet resale, no CriminalRecord entry — he knows a guy)
+
+### Achievements
+| Achievement | Trigger |
+|-------------|---------|
+| `SCRATCH_CARD_WINNER` | Win the 50 COIN scratch card jackpot |
+| `SCRATCH_CARD_ADDICTION` | Buy 5+ scratch cards in a single in-game day |
+| `RELIABLE_PAPERBOY` | Complete 7 paper rounds total |
+| `LOTTERY_WINNER` | Win the weekly lottery draw (25 COIN) |
+| `RAJS_FAVOURITE` | Buy from Raj 10 times (triggers free chocolate bar) |
+| `TOP_SHELF` | Steal a DODGY_MAGAZINE from the top shelf of the magazine rack |
+| `PAPIER_MACHE_ARCHITECT` | Place a PAPIER_MACHE_BRICK in the world |
+| `EARLY_BIRD` | Be at the newsagent before 06:05 on 3 consecutive in-game days |
+
+(Add to `AchievementType.java`)
+
+**Unit tests**: Scratch card probability distribution (1000 samples: 55–65% nothing, 22–28% 1 COIN, 8–12% 3 COIN, 3–5% 10 COIN, 0–2% 50 COIN); `SCRATCH_CARD_ADDICTION` debuff appears after exactly 5 purchases in one in-game day; paper round completes only when all 8 LETTERBOX_PROP interactions done before 07:00; lottery draw fires at Sunday 20:00 only (not Saturday 20:00); `TOBACCO_POUCH` sale refused when player looks-under-18 flag active; Raj friendly discount (10%) applied at 10+ purchases; `NEWSAGENT_KEY` consumed on first stockroom unlock (not reusable).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Buying a newspaper gives player today's edition and deducts 1 COIN**: Give player 3 COIN. Set time to Monday 09:00. Place player at `NEWSAGENT_COUNTER_PROP` with Raj present. Press E. Select NEWSPAPER from menu. Verify player COIN is now 2. Verify `NEWSPAPER` item in inventory. Verify that using `NEWSPAPER` in inventory shows text matching the last NewspaperSystem headline (or "No news today" if no crime occurred). Verify Raj purchase counter incremented by 1.
+
+2. **Scratch card addiction debuff activates after 5 cards in one day**: Give player 10 COIN. Set time to 10:00 Monday. Place player at newsagent counter. Buy 5 `SCRATCH_CARD` items sequentially (1 COIN each). Verify `SCRATCH_CARD_ADDICTION` debuff is active on player. Verify that moving within 3 blocks of `NEWSAGENT_COUNTER_PROP` triggers automatic "Buy a scratch card?" prompt UI. Advance time by 24 in-game hours. Verify `SCRATCH_CARD_ADDICTION` debuff has expired.
+
+3. **Paper round completes on time and rewards 4 COIN**: Set time to 05:30 Monday. Give player 0 COIN. Sign on at `NEWSAGENT_NOTICE_BOARD_PROP` (E). Verify `NEWSPAPER_BAG_PROP` is given. Place 8 `LETTERBOX_PROP` instances within the route. Simulate player pressing E at each letterbox in sequence (total 8). Set time to 06:55 (before 07:00). Trigger round completion check. Verify player receives 4 COIN. Verify RumourNetwork has a `LOCAL_EVENT` rumour seeded. Verify `NEWSPAPER_BAG_PROP` is removed from inventory.
+
+4. **Jackpot scratch card refused at WantedSystem tier ≥ 2**: Set WantedSystem tier to 2. Give player a `SCRATCH_CARD`. Force scratch card outcome to `JACKPOT` (mock Random). Use the scratch card (hold E for 2 seconds). Verify the jackpot win is detected (internal state WIN_JACKPOT true). Verify Raj refuses payout (returns `JACKPOT_REFUSED` result). Verify player COIN unchanged. Verify `SCRATCH_CARD_WINNER` achievement NOT unlocked. Set WantedSystem tier to 0. Use a new forced-jackpot `SCRATCH_CARD`. Verify player receives 50 COIN. Verify `SCRATCH_CARD_WINNER` achievement IS unlocked.
+
+5. **Magazine rack shoplifting adds CriminalRecord and triggers Raj hostility**: Place player adjacent to `MAGAZINE_RACK_PROP` with Raj present (notoriety < 30, so top shelf blocked — test against middle shelf). Set player Notoriety to 0. Punch `MAGAZINE_RACK_PROP` twice (FRAGILE = 2 hits). Verify `RACING_FORM` item added to inventory. Verify `SHOPLIFTING` entry added to CriminalRecord. Verify Notoriety increased by 2. Verify `BANNED_FROM_PATEL` flag set on player. Press E on `NEWSAGENT_COUNTER_PROP`. Verify Raj refuses service ("Banned" dialogue triggers, no purchase possible).
+
+// New system: NewsagentSystem.java in ragamuffin.core
+// No new landmark enum needed: NEWSAGENT already in LandmarkType.java
+// New NPCTypes: MILK_FLOAT_DRIVER, INSOMNIAC_PENSIONER (add to NPCType.java)
+// New Materials: SCRATCH_CARD, LOTTERY_TICKET, PENNY_SWEETS, TOBACCO_POUCH, BIRTHDAY_CARD, LOCAL_MAP, RACING_FORM, DIY_MONTHLY, PUZZLE_BOOK, DODGY_MAGAZINE, NEWSAGENT_KEY, ROLLIE, NEWSAGENT_APRON, PAPIER_MACHE_BRICK (add to Material.java)
+// New PropTypes: NEWSAGENT_COUNTER_PROP, NEWSAGENT_NOTICE_BOARD_PROP, MAGAZINE_RACK_PROP, NEWSPAPER_BUNDLE_PROP, LOTTERY_DISPLAY_PROP, SWEET_COUNTER_PROP, LETTERBOX_PROP, STOCKROOM_DOOR_PROP (add to PropType.java)
+// New Achievements: SCRATCH_CARD_WINNER, SCRATCH_CARD_ADDICTION, RELIABLE_PAPERBOY, LOTTERY_WINNER, RAJS_FAVOURITE, TOP_SHELF, PAPIER_MACHE_ARCHITECT, EARLY_BIRD (add to AchievementType.java)
+// New CriminalRecord entries: SHOPLIFTING (if not already present), THEFT (if not already present)
+// New player flags/buffs: SCRATCH_CARD_ADDICTION (timed debuff), ENERGISED (timed buff from ENERGY_DRINK), BANNED_FROM_PATEL (persistent until reset)
