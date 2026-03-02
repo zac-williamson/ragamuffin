@@ -4752,7 +4752,38 @@ public enum Material {
      * Present at the AGM to expose him: Notoriety −15, Hicks flees, newspaper headline.
      * Tooltip: "Council planning application with someone else's signature on it."
      */
-    INCRIMINATING_DOCUMENT("Incriminating Document");
+    INCRIMINATING_DOCUMENT("Incriminating Document"),
+
+    // ── Issue #1240: Northfield NHS Blood Donation Session ────────────────────
+
+    /**
+     * BLOOD_BAG — a sealed NHS blood donation bag.
+     * Dropped from BLOOD_FRIDGE_PROP in the mobile unit van. Fence value 10 COIN.
+     * Tooltip: "Still warm. The label says 'O+'. Handle with care."
+     */
+    BLOOD_BAG("Blood Bag"),
+
+    /**
+     * DONOR_QUESTIONNAIRE — the pre-donation eligibility form on the clipboard.
+     * Pick up from DONOR_QUESTIONNAIRE_PROP. Used at PHOTOCOPIER_PROP to craft
+     * FORGED_DONOR_QUESTIONNAIRE. Tooltip: "A checklist of awkward questions."
+     */
+    DONOR_QUESTIONNAIRE("Donor Questionnaire"),
+
+    /**
+     * FORGED_DONOR_QUESTIONNAIRE — a photocopied, altered eligibility form.
+     * Crafted from DONOR_QUESTIONNAIRE + BLANK_FORM at PHOTOCOPIER_PROP.
+     * Present to Brenda when ineligible: 70% success if Tyler not watching.
+     * Tooltip: "All the right boxes are ticked. You ticked them yourself."
+     */
+    FORGED_DONOR_QUESTIONNAIRE("Forged Donor Questionnaire"),
+
+    /**
+     * ORANGE_SQUASH — the complimentary drink given after donation.
+     * Heals +5 HP. Awarded automatically after legitimate donation.
+     * Tooltip: "Warm, slightly flat. Still appreciated."
+     */
+    ORANGE_SQUASH("Orange Squash");
 
     private final String displayName;
 
@@ -5854,6 +5885,15 @@ public enum Material {
             case BACK_ROOM_KEY:         return c(0.75f, 0.65f, 0.30f);  // Brass yellow
             case INCRIMINATING_DOCUMENT: return cs(0.92f, 0.90f, 0.78f, // Cream paper
                                                    0.60f, 0.10f, 0.10f); // Red stamp
+
+            // Issue #1240: Northfield NHS Blood Donation Session
+            case BLOOD_BAG:             return cs(0.75f, 0.08f, 0.08f,  // Blood red bag
+                                                  0.88f, 0.88f, 0.92f); // Clear plastic
+            case DONOR_QUESTIONNAIRE:   return cs(0.95f, 0.95f, 0.92f,  // White form
+                                                  0.20f, 0.50f, 0.20f); // NHS green header
+            case FORGED_DONOR_QUESTIONNAIRE: return cs(0.92f, 0.92f, 0.88f, // Slightly off-white
+                                                  0.20f, 0.50f, 0.20f); // NHS green header
+            case ORANGE_SQUASH:         return c(0.95f, 0.55f, 0.10f);  // Orange squash colour
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -7636,6 +7676,16 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // small brass Yale key
             case INCRIMINATING_DOCUMENT:
                 return IconShape.FLAT_PAPER;  // folded planning document
+
+            // Issue #1240: Northfield NHS Blood Donation Session
+            case BLOOD_BAG:
+                return IconShape.BOX;         // sealed blood donation bag
+            case DONOR_QUESTIONNAIRE:
+                return IconShape.FLAT_PAPER;  // clipboard eligibility form
+            case FORGED_DONOR_QUESTIONNAIRE:
+                return IconShape.FLAT_PAPER;  // photocopied altered form
+            case ORANGE_SQUASH:
+                return IconShape.CYLINDER;    // plastic cup of squash
 
             default:
                 return IconShape.BOX;

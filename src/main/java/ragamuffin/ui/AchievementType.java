@@ -4319,6 +4319,69 @@ public enum AchievementType {
         "Grass of the Year",
         "Tipped off a traffic warden during the school run. Earned 2 COIN. Worth it.",
         1
+    ),
+
+    // ── Issue #1240: Northfield NHS Blood Donation Session ────────────────────
+
+    /**
+     * Awarded on first legitimate blood donation to Brenda (NHS_DONOR_COORDINATOR).
+     * You sat in the recliner. You gave blood. You ate a biscuit. Northfield is proud.
+     */
+    GOOD_CITIZEN(
+        "Good Citizen",
+        "Donated blood at the NHS mobile unit. Brenda said you were very brave.",
+        1
+    ),
+
+    /**
+     * Awarded when the player completes 3 legitimate donations across separate sessions
+     * (84-day cooldown enforced between each).
+     * You are a regular. They know your name. They save you the good biscuits.
+     */
+    REGULAR_DONOR(
+        "Regular Donor",
+        "Donated blood three times. They've put your name on the biscuit tin.",
+        3
+    ),
+
+    /**
+     * Awarded when the player successfully presents a FORGED_DONOR_QUESTIONNAIRE to Brenda.
+     * The form was perfect. Tyler wasn't looking. You got a biscuit anyway.
+     */
+    FORGED_THEIR_WAY_TO_A_BISCUIT(
+        "Forged Their Way to a Biscuit",
+        "Submitted a forged questionnaire and got away with it. Worth it for the Hobnob.",
+        1
+    ),
+
+    /**
+     * Awarded when the player donates twice in one session using DisguiseSystem (score ≥ 3).
+     * Tyler didn't recognise you. The nurses did. They let it go — you seemed enthusiastic.
+     */
+    TWICE_THE_HERO(
+        "Twice the Hero",
+        "Donated blood twice in one session. Tyler was fooled. Brenda had her suspicions.",
+        1
+    ),
+
+    /**
+     * Awarded when the player steals the BISCUIT_TABLE_PROP tin while unobserved.
+     * Eight biscuits. Gone. Northfield's most audacious heist.
+     */
+    BISCUIT_TIN_BANDIT(
+        "Biscuit Tin Bandit",
+        "Nicked the donation tin when nobody was looking. Eight biscuits. No remorse.",
+        1
+    ),
+
+    /**
+     * Awarded when the player steals 3 or more BLOOD_BAGs from BLOOD_FRIDGE_PROP in one session.
+     * The van was raided. The Gazette ran it on the front page. You were long gone.
+     */
+    PLASMA_KING(
+        "Plasma King",
+        "Stole three blood bags from the NHS van. The Gazette called it 'audacious'.",
+        1
     );
 
     private final String name;
