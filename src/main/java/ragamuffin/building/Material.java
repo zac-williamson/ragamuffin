@@ -5308,7 +5308,40 @@ public enum Material {
      * Tooltip: "Cold, metal, and surprisingly motivating."
      * Dropped by VAN_BENCH_PROP when destroyed during PrisonVanSystem escape.
      */
-    VAN_BENCH("Van Bench");
+    VAN_BENCH("Van Bench"),
+
+    // ── Issue #1317: Northfield Bonfire Night ─────────────────────────────────
+
+    /**
+     * ROCKET_FIREWORK — a larger aerial firework purchased from Darren (FIREWORK_DEALER_NPC)
+     * behind the off-licence. Produces loud bang and colour burst. Noise level 9.0.
+     * Misfire chance: 10% (20% in rain). Triggers FIREWORK_OFFENCE on second police
+     * sighting. Cost: 4 COIN.
+     */
+    ROCKET_FIREWORK("Rocket Firework"),
+
+    /**
+     * BANGER_FIREWORK — a small explosive banger. Very loud (noise level 8.0).
+     * Misfire chance: 20% (40% in rain). Can be planted in FIREWORK_MORTAR_PROP
+     * for catastrophic sabotage (Notoriety +8, CRIMINAL_DAMAGE, FIRE_ENGINE response).
+     * Cost: 2 COIN.
+     */
+    BANGER_FIREWORK("Banger Firework"),
+
+    /**
+     * ROMAN_CANDLE — a multi-shot firework that fires coloured stars.
+     * Noise level 6.0. Misfire chance: 5% (10% in rain). Produces sustained light show.
+     * Cost: 3 COIN.
+     */
+    ROMAN_CANDLE("Roman Candle"),
+
+    /**
+     * OLD_CLOTHES — a bundle of worn clothing; one of the crafting ingredients for
+     * the GUY_PROP effigy (NEWSPAPER + OLD_CLOTHES + HAT).
+     * Looted from launderette dryers or charity shop rejects.
+     * Fence value: 1 COIN.
+     */
+    OLD_CLOTHES("Old Clothes");
 
     private final String displayName;
 
@@ -6501,6 +6534,16 @@ public enum Material {
                                                   0.80f, 0.75f, 0.20f); // Gold crown wire
             case STOLEN_BIKE:           return cs(0.20f, 0.40f, 0.70f,  // Blue frame
                                                   0.18f, 0.18f, 0.18f); // Black tyres
+
+            // Issue #1317: Northfield Bonfire Night
+            case ROCKET_FIREWORK:       return cs(0.90f, 0.15f, 0.10f,  // Red card tube
+                                                  0.95f, 0.85f, 0.10f); // Gold fuse
+            case BANGER_FIREWORK:       return cs(0.15f, 0.15f, 0.15f,  // Black wrapping
+                                                  0.85f, 0.18f, 0.10f); // Red label
+            case ROMAN_CANDLE:          return cs(0.55f, 0.20f, 0.70f,  // Purple tube
+                                                  0.95f, 0.75f, 0.10f); // Gold stars
+            case OLD_CLOTHES:           return cs(0.45f, 0.38f, 0.30f,  // Worn beige/brown
+                                                  0.35f, 0.28f, 0.22f); // Darker folds
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -8419,6 +8462,16 @@ public enum Material {
                 return IconShape.BOX;         // woven crown
             case STOLEN_BIKE:
                 return IconShape.BOX;         // bicycle
+
+            // Issue #1317: Northfield Bonfire Night
+            case ROCKET_FIREWORK:
+                return IconShape.CYLINDER;    // card tube firework
+            case BANGER_FIREWORK:
+                return IconShape.CYLINDER;    // small banger
+            case ROMAN_CANDLE:
+                return IconShape.CYLINDER;    // long tube
+            case OLD_CLOTHES:
+                return IconShape.BOX;         // bundled clothes
 
             default:
                 return IconShape.BOX;

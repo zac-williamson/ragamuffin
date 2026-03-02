@@ -3237,7 +3237,39 @@ public enum PropType {
      * VAN_VENT_PROP — small roof vent; kick open with ≥ 30% strength skill.
      * 0.4×0.4×0.1; hitsToBreak = 2 (yields nothing).
      */
-    VAN_VENT_PROP(0.4f, 0.4f, 0.1f, 2, null);
+    VAN_VENT_PROP(0.4f, 0.4f, 0.1f, 2, null),
+
+    // ── Issue #1317: Northfield Bonfire Night ─────────────────────────────────
+
+    /**
+     * BONFIRE_PROP — a communal park bonfire built from pallets and timber.
+     * 2.0×2.0×2.0; non-solid (cosmetic fire hazard). Emits warmth with double radius
+     * compared to a campfire (10 blocks). Flickering orange light. Extinguishable by
+     * FIRE_ENGINE response. Cannot be punched; yields nothing.
+     */
+    BONFIRE_PROP(2.0f, 2.0f, 2.0f, 0, null),
+
+    /**
+     * COLD_EMBERS_PROP — the burnt-out remains of the park bonfire after it dies down.
+     * Replaces BONFIRE_PROP after the event ends or when suppressed by FIRE_ENGINE.
+     * 2.0×0.3×2.0; purely cosmetic. Destroyed by 1 punch; yields SCRAP_METAL.
+     */
+    COLD_EMBERS_PROP(2.0f, 0.3f, 2.0f, 1, Material.SCRAP_METAL),
+
+    /**
+     * GUY_PROP — a penny-for-the-guy effigy crafted by the player from
+     * NEWSPAPER + OLD_CLOTHES + HAT. Placed in the park for donations.
+     * 0.6×1.8×0.4; destroyed by 3 punches (kicked over by YOUTH_GANG); yields nothing.
+     */
+    GUY_PROP(0.6f, 1.8f, 0.4f, 3, null),
+
+    /**
+     * FIREWORK_MORTAR_PROP — the official display launch tube at the Tesco car park.
+     * 0.4×0.6×0.4; indestructible during the event. Interactable (E) to trigger
+     * early launch (sabotage) or to plant a BANGER_FIREWORK inside.
+     * Yields SCRAP_METAL after the event ends.
+     */
+    FIREWORK_MORTAR_PROP(0.4f, 0.6f, 0.4f, Integer.MAX_VALUE, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

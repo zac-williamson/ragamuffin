@@ -5198,6 +5198,48 @@ public enum AchievementType {
         "Professional Liability",
         "Third time escaping police custody. They really should just give up.",
         3
+    ),
+
+    // ── Issue #1317: Northfield Bonfire Night ─────────────────────────────────
+
+    /**
+     * Fires when the player successfully collects at least 1 COIN donation from a
+     * PUBLIC or PENSIONER NPC while the GUY_PROP is placed in the park.
+     */
+    PENNY_FOR_THE_GUY(
+        "Penny for the Guy",
+        "Crafted a Guy and charmed the public out of their loose change. Every penny counts.",
+        1
+    ),
+
+    /**
+     * Fires when a YOUTH_GANG NPC kicks over the player's GUY_PROP (destroys it)
+     * during the Bonfire Night event.
+     */
+    PARTY_POOPER(
+        "Party Pooper",
+        "Your Guy got kicked over by a gang of youths. Classic Northfield.",
+        1
+    ),
+
+    /**
+     * Fires when the player plants a BANGER_FIREWORK in FIREWORK_MORTAR_PROP and
+     * triggers the catastrophic misfire (Notoriety +8, CRIMINAL_DAMAGE, FIRE_ENGINE response).
+     */
+    SABOTEUR(
+        "Saboteur",
+        "You ruined the Tesco car park display. The compère is not happy.",
+        1
+    ),
+
+    /**
+     * Fires when the player launches at least 3 fireworks (any type) during a single
+     * Bonfire Night event without triggering a FIREWORK_OFFENCE on the criminal record.
+     */
+    PYRO_NIGHT(
+        "Pyro Night",
+        "Three fireworks launched and not a single arrest. Bonfire Night, Northfield style.",
+        3
     );
 
     private final String name;

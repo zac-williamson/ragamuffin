@@ -892,7 +892,16 @@ public class CriminalRecord {
          * Penalty: Notoriety +8, WantedSystem +1 star if witnessed by police.
          * Evidence: DOG_FIGHT_LEDGER can be used to clear this from the record.
          */
-        DOG_FIGHTING_ATTENDANCE("Dog fighting attendance");
+        DOG_FIGHTING_ATTENDANCE("Dog fighting attendance"),
+
+        // ── Issue #1317: Northfield Bonfire Night ─────────────────────────────
+
+        /**
+         * Recorded on the second firework offence witnessed by a POLICE NPC during
+         * Bonfire Night (first offence is a warning only).
+         * Penalty: Notoriety +5, WantedSystem +1 star. Clears after 48 in-game hours.
+         */
+        FIREWORK_OFFENCE("Firework offence");
 
         private final String displayName;
 
