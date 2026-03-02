@@ -3277,7 +3277,77 @@ public enum Material {
      * Cannot be adopted as a companion (already "owned" — it's complicated).
      * Tooltip: "No papers. Don't ask. She's lovely though."
      */
-    UNLICENSED_DOG("Unlicensed Dog");
+    UNLICENSED_DOG("Unlicensed Dog"),
+
+    // ── Issue #1134: Patel's Newsagent ────────────────────────────────────────
+
+    /**
+     * Penny Sweets — a paper bag of assorted sweets from Patel's sweet counter.
+     * Costs 1 COIN. Satisfies HUNGRY need (−15). Tooltip: "Refreshers, cola bottles,
+     * a stray foam shrimp. The works."
+     */
+    PENNY_SWEETS("Penny Sweets"),
+
+    /**
+     * Local Map — a laminated A4 street map of Northfield sold at Patel's.
+     * Costs 2 COIN. Reveals fog of war in a 50-block radius of the player's current
+     * position on use. Tooltip: "Surprisingly accurate. Raj drew it himself."
+     */
+    LOCAL_MAP("Local Map"),
+
+    /**
+     * Racing Form — a specialist horse-racing magazine sold at Patel's magazine rack.
+     * Costs 2 COIN. Grants +15% bet accuracy in HorseRacingSystem for 1 in-game day.
+     * Tooltip: "Horse racing tips inside. Raj swears by the Tuesday edition."
+     */
+    RACING_FORM("Racing Form"),
+
+    /**
+     * DIY Monthly — a home-improvement magazine sold at Patel's magazine rack.
+     * Costs 2 COIN. Required as a crafting ingredient for PAPIER_MACHE_BRICK.
+     * Tooltip: "Twelve pages on grouting. Essential reading."
+     */
+    DIY_MONTHLY("DIY Monthly"),
+
+    /**
+     * Puzzle Book — a crossword and word-search compilation from Patel's rack.
+     * Costs 2 COIN. Satisfies BORED need (−20) on use.
+     * Tooltip: "A 2,000-word sudoku grid on page 47. You're going to need a pen."
+     */
+    PUZZLE_BOOK("Puzzle Book"),
+
+    /**
+     * Dodgy Magazine — an adult-interest publication kept behind the counter at
+     * Patel's News. Only sold to players with Notoriety ≥ 30. Costs 3 COIN.
+     * Satisfies BORED need (−25). Shoplifting one adds a SHOPLIFTING CriminalRecord
+     * entry, +2 Notoriety, and a 7-day BANNED_FROM_PATEL flag.
+     * Tooltip: "Top shelf. Raj keeps them behind the Sporting Life."
+     */
+    DODGY_MAGAZINE("Dodgy Magazine"),
+
+    /**
+     * Newsagent Key — the key to the Patel's News stockroom. Obtained from Raj at
+     * STREET_LADS Respect ≥ 40 as part of bulk-tobacco deal or can be pilfered.
+     * Unlocks STOCKROOM_DOOR_PROP to access the CASH_BOX_PROP (8–14 COIN robbery).
+     * Robbery = THEFT record + Notoriety +4.
+     * Tooltip: "A Yale key on a paper-clip fob. Don't lose it."
+     */
+    NEWSAGENT_KEY("Newsagent Key"),
+
+    /**
+     * Newsagent Apron — a blue tabard worn by Raj Patel behind the counter.
+     * Dropped if Raj is knocked unconscious. Equipping it reduces police recognition
+     * by 10% (same effect as SHOPKEEPER disguise).
+     * Tooltip: "Raj's apron. It says 'Patel's News — Est. 1991'."
+     */
+    NEWSAGENT_APRON("Newsagent Apron"),
+
+    /**
+     * Papier Mache Brick — a craftable placeable block made from NEWSPAPER + DIY_MONTHLY.
+     * Requires 2 punches to break. Looks like a brick but crumbles on close inspection.
+     * Tooltip: "Looks convincing from a distance. Very much from a distance."
+     */
+    PAPIER_MACHE_BRICK("Papier Mache Brick");
 
     private final String displayName;
 
@@ -4092,6 +4162,26 @@ public enum Material {
             case UNLICENSED_DOG:          return cs(0.55f, 0.40f, 0.28f,  // Brown dog fur
                                                     0.30f, 0.20f, 0.12f); // Dark markings
 
+            // Issue #1134: Patel's Newsagent
+            case PENNY_SWEETS:            return cs(0.92f, 0.30f, 0.55f,  // Pink paper bag
+                                                    0.80f, 0.20f, 0.45f); // Darker base
+            case LOCAL_MAP:               return cs(0.85f, 0.88f, 0.95f,  // Light blue paper
+                                                    0.60f, 0.62f, 0.70f); // Grey fold lines
+            case RACING_FORM:             return cs(0.88f, 0.82f, 0.35f,  // Yellow cover
+                                                    0.65f, 0.60f, 0.18f); // Darker spine
+            case DIY_MONTHLY:             return cs(0.20f, 0.55f, 0.25f,  // Green magazine
+                                                    0.12f, 0.38f, 0.15f); // Darker spine
+            case PUZZLE_BOOK:             return cs(0.75f, 0.75f, 0.90f,  // Pale purple
+                                                    0.55f, 0.55f, 0.72f); // Darker spine
+            case DODGY_MAGAZINE:          return cs(0.30f, 0.30f, 0.30f,  // Brown wrapper
+                                                    0.20f, 0.20f, 0.20f); // Dark edges
+            case NEWSAGENT_KEY:           return cs(0.78f, 0.72f, 0.35f,  // Brass key
+                                                    0.55f, 0.50f, 0.20f); // Darker shaft
+            case NEWSAGENT_APRON:         return cs(0.15f, 0.35f, 0.72f,  // Blue tabard
+                                                    0.10f, 0.25f, 0.55f); // Darker strap
+            case PAPIER_MACHE_BRICK:      return cs(0.78f, 0.50f, 0.38f,  // Pinkish brick
+                                                    0.62f, 0.38f, 0.28f); // Mortar grey
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4503,6 +4593,16 @@ public enum Material {
             case SCISSORS:
             case DOG_GROOMING_VOUCHER:
             case UNLICENSED_DOG:
+            // Issue #1134: Patel's Newsagent — not block items
+            case PENNY_SWEETS:
+            case LOCAL_MAP:
+            case RACING_FORM:
+            case DIY_MONTHLY:
+            case PUZZLE_BOOK:
+            case DODGY_MAGAZINE:
+            case NEWSAGENT_KEY:
+            case NEWSAGENT_APRON:
+            case PAPIER_MACHE_BRICK:
                 return false;
             default:
                 return true;
@@ -4631,6 +4731,16 @@ public enum Material {
             case SCISSORS:
             case DOG_GROOMING_VOUCHER:
             case UNLICENSED_DOG:
+            // Issue #1134: Patel's Newsagent — small items sit on surfaces
+            case PENNY_SWEETS:
+            case LOCAL_MAP:
+            case RACING_FORM:
+            case DIY_MONTHLY:
+            case PUZZLE_BOOK:
+            case DODGY_MAGAZINE:
+            case NEWSAGENT_KEY:
+            case NEWSAGENT_APRON:
+            case PAPIER_MACHE_BRICK:
                 return true;
             default:
                 return false;
@@ -5353,6 +5463,26 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // voucher card
             case UNLICENSED_DOG:
                 return IconShape.BOX;         // dog-shaped silhouette
+
+            // Issue #1134: Patel's Newsagent
+            case PENNY_SWEETS:
+                return IconShape.FOOD;        // small paper bag of sweets
+            case LOCAL_MAP:
+                return IconShape.FLAT_PAPER;  // folded street map
+            case RACING_FORM:
+                return IconShape.FLAT_PAPER;  // folded racing magazine
+            case DIY_MONTHLY:
+                return IconShape.FLAT_PAPER;  // glossy magazine
+            case PUZZLE_BOOK:
+                return IconShape.FLAT_PAPER;  // A5 book shape
+            case DODGY_MAGAZINE:
+                return IconShape.FLAT_PAPER;  // magazine in brown wrapper
+            case NEWSAGENT_KEY:
+                return IconShape.TOOL;        // small Yale key
+            case NEWSAGENT_APRON:
+                return IconShape.CARD;        // folded tabard
+            case PAPIER_MACHE_BRICK:
+                return IconShape.BOX;         // brick-shaped lump
 
             default:
                 return IconShape.BOX;
