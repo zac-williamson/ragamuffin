@@ -844,5 +844,29 @@ public enum RumourType {
      * industrial estate."
      * Seeded simultaneously with VAN_ESCAPE. Spreads via POLICE NPCs; re-activates
      * WANTED state after the 60-second grace window expires. */
-    CUSTODY_DODGER;
+    CUSTODY_DODGER,
+
+    // ── Issue #1317: Northfield Bonfire Night ─────────────────────────────────
+
+    /** "Fireworks going off all over the shop on the rec — it's bedlam out there.
+     * Someone nearly took someone's eye out."
+     * Seeded by BonfireNightSystem when a firework misfire causes a fire or injures
+     * a spectator NPC. Spreads via PUBLIC and BARMAN NPCs. Triggers NoiseSystem spike;
+     * adds +1 to FIREWORK_OFFENCE watch pressure. FireStationSystem callout probability +20%. */
+    FIREWORK_CHAOS,
+
+    /** "Darren's well annoyed — someone robbed his holdall and nicked all his stock.
+     * He's going mental behind the offie."
+     * Seeded by BonfireNightSystem when the player successfully robs Darren's holdall
+     * (STEALTH ≥ 2 approach). Spreads via STREET_LAD and BARMAN NPCs. Darren enters
+     * HOSTILE state; Marchetti Crew respect −1 (Darren supplies the crew). */
+    DARREN_TURF_WAR,
+
+    /** "Someone shoved a banger in the display mortar at the Tesco car park —
+     * went off early and nearly flattened the compère."
+     * Seeded by BonfireNightSystem when the player plants a BANGER_FIREWORK in
+     * FIREWORK_MORTAR_PROP. Spreads via PUBLIC, BARMAN, and YOUTH_GANG NPCs.
+     * NotorietySystem +8; NewspaperSystem headline eligible ("Bonfire Night Chaos at
+     * Tesco Car Park"). Triggers CRIMINAL_DAMAGE and FIRE_ENGINE response. */
+    FIREWORK_PRANK;
 }

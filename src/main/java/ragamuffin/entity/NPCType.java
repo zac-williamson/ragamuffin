@@ -2572,7 +2572,18 @@ public enum NPCType {
      * bribe is refused or an escape attempt is detected and not interrupted.
      * Can be bribed, distracted, or charmed during the PrisonVanSystem transit window.
      */
-    ESCORT_OFFICER(25f, 0f, 0f, false);
+    ESCORT_OFFICER(25f, 0f, 0f, false),
+
+    // ── Issue #1317: Northfield Bonfire Night ─────────────────────────────────
+
+    /**
+     * FIREWORK_DEALER_NPC — Darren, the dodgy firework trader who sets up behind
+     * the off-licence on Bonfire Night. Sells FIREWORK, ROCKET_FIREWORK,
+     * BANGER_FIREWORK, and ROMAN_CANDLE at inflated prices. Becomes HOSTILE if
+     * tipped off to police (WantedSystem) or robbed (holdall stolen with STEALTH ≥ 2).
+     * Non-hostile by default; unarmed.
+     */
+    FIREWORK_DEALER_NPC(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
