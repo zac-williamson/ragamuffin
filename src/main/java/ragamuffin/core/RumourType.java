@@ -784,5 +784,24 @@ public enum RumourType {
      * Spreads via CHUGGER_LEADER (Tracy), PUBLIC, and POLICE NPCs within 30 blocks.
      * Triggers Notoriety +6, WantedSystem +1, CHARITY_FRAUD in CriminalRecord.
      * NewspaperSystem headline eligible. */
-    CHARITY_FRAUD_RUMOUR;
+    CHARITY_FRAUD_RUMOUR,
+
+    // ── Issue #1303: Northfield Dave's Carpets ────────────────────────────────
+
+    /** "Heard someone's been brokering deals for Dave's Carpets — earning a coin a head bringing punters in."
+     * — seeded by CarpetShopSystem when the player successfully refers an NPC (5th referral).
+     * Spreads via STREET_LAD and PUBLIC NPCs; StreetSkillSystem +TRADING XP. */
+    DEAL_BROKER,
+
+    /** "Word is someone nicked a load of carpet from Dave's stockroom while the driver wasn't looking."
+     * — seeded by CarpetShopSystem when the player loots the CARPET_ROLL_PROP.
+     * Spreads via PUBLIC and STREET_LAD NPCs within 30 blocks.
+     * Triggers Notoriety +4, WantedSystem +1, THEFT in CriminalRecord.
+     * NewspaperSystem headline eligible. */
+    CARPET_THIEF,
+
+    /** "Apparently someone grassed Dave's Carpets up to Trading Standards — about bloody time."
+     * — seeded by CarpetShopSystem when the player reports Dave to Sandra.
+     * Spreads via PUBLIC, STREET_LAD NPCs; FactionSystem: Marchetti −1, Street Lads +1. */
+    DAVE_REPORTED;
 }

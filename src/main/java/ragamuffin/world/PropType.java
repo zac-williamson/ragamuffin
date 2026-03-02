@@ -3123,7 +3123,46 @@ public enum PropType {
      * Dropped item: CHARITY_CLIPBOARD (represents the leftover paperwork).
      * 1.50×0.90×0.60; hitsToBreak = 4 (yields CHARITY_CLIPBOARD).
      */
-    CHARITY_CLIPBOARD_STAND_PROP(1.50f, 0.90f, 0.60f, 4, Material.CHARITY_CLIPBOARD);
+    CHARITY_CLIPBOARD_STAND_PROP(1.50f, 0.90f, 0.60f, 4, Material.CHARITY_CLIPBOARD),
+
+    // ── Issue #1303: Northfield Dave's Carpets ────────────────────────────────
+
+    /**
+     * CLOSING_DOWN_BANNER_PROP — the sun-bleached banner draped across Dave's shopfront:
+     * "CLOSING DOWN — EVERYTHING MUST GO!!"
+     * Decorative; clicking it records a closing-down claim observation.
+     * 3.00×1.00×0.10; hitsToBreak = 2 (yields CARPET_OFFCUT).
+     */
+    CLOSING_DOWN_BANNER_PROP(3.00f, 1.00f, 0.10f, 2, Material.CARPET_OFFCUT),
+
+    /**
+     * CARPET_ROLL_PROP — a large roll of carpet in the stockroom.
+     * Lootable when Kev is distracted; yields CARPET_OFFCUT ×2–4 (random).
+     * 2.00×0.60×0.60; hitsToBreak = 3 (yields CARPET_OFFCUT).
+     */
+    CARPET_ROLL_PROP(2.00f, 0.60f, 0.60f, 3, Material.CARPET_OFFCUT),
+
+    /**
+     * SOFA_PROP — a second-hand sofa on the shop floor.
+     * Becomes a SOFA item in inventory after purchase; or can be physically pushed
+     * using SACK_TRUCK_PROP mechanics.
+     * 2.00×0.90×0.90; hitsToBreak = 8 (yields SOFA).
+     */
+    SOFA_PROP(2.00f, 0.90f, 0.90f, 8, Material.SOFA),
+
+    /**
+     * SACK_TRUCK_PROP — a fold-flat trolley in the stockroom.
+     * Interacting (E) adds a SACK_TRUCK to inventory. Lootable when Kev is distracted.
+     * 0.50×1.40×0.40; hitsToBreak = 4 (yields SACK_TRUCK).
+     */
+    SACK_TRUCK_PROP(0.50f, 1.40f, 0.40f, 4, Material.SACK_TRUCK),
+
+    /**
+     * TRADING_STANDARDS_WARNING — the formal warning notice issued by Sandra after Dave's
+     * claim is reported. Placed on the shopfront by Sandra; causes Dave to enter DEFLATED state.
+     * 0.60×0.40×0.05; hitsToBreak = 1 (yields null — just disappears).
+     */
+    TRADING_STANDARDS_WARNING(0.60f, 0.40f, 0.05f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
