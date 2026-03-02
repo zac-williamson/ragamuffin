@@ -44199,3 +44199,190 @@ When `YOUTH_GANG` enters `THREATENING` state within 4 blocks of Gary:
 //             StreetSkillSystem (SOCIAL/TRADING/STREET_SMARTS XP), StallSystem,
 //             MarketInspectorSystem (fake pitch bust), NoiseSystem, NewspaperSystem,
 //             DWPSystem (flavour)
+
+---
+
+## Issue #1305: Add Northfield Traveller Site — Tarmac Crew, Lucky Heather & the Scrap Metal Hustle
+
+### Overview
+
+`TravellerSiteSystem` introduces the Paddy Flynn Tarmac Crew — a group of Irish Travellers who pitch up on the wasteland adjacent to the industrial estate every 7–10 in-game days with their convoy of flatbed lorries, caravans, and scrap trailers. Their visit lasts 4–6 in-game days before the Council issues an enforcement notice and they move on. During their stay, the Travellers offer genuinely useful cash-in-hand work (tarmacking, scrap runs, kerb-hawking heather), fence scrap metal and stolen copper pipe at premium rates, and run a dog-fight ring in the evening that the player can bet on or disrupt. The crew brings its own internal economy, personality conflicts, and a tense coexistence with the existing `FactionSystem` — the Marchetti Crew views the site as competition while the Street Lads try to do business with them. Northfield Council's Enforcement Officer visits daily; the `NewspaperSystem` seeds a letters-page controversy; and the `NeighbourhoodWatchSystem` goes into overdrive.
+
+---
+
+### NPCs
+
+- **TRAVELLER_BOSS (Paddy Flynn)** — Big man, 52, in a flat cap and hi-vis. Present at `CARAVAN_PROP` 09:00–22:00. Offers the player work, buys scrap, sells dodgy tarmac contracts. Press E: `[Ask for work]`, `[Sell scrap]`, `[Buy a dog]`. Speech: *"Have I got a deal for you, pal."* / *"We're not here to cause trouble — we just need a few days."* Refuses work to players with Notoriety Tier ≥ 4.
+- **TRAVELLER_WORKER (3×)** — Young men (Liam, Seamus, Donal). Patrol site 08:00–20:00. Do tarmac jobs around the neighbourhood (see Activities). Carry `TARMAC_DRUM_PROP`. Hostile to player if player steals from site or disrupts dog fight.
+- **TRAVELLER_WOMAN (Brigid)** — Sells `LUCKY_HEATHER` and `CLOTHES_PEG_BUNDLE` to passing NPCs and player. 10:00–17:00, roams within 30 blocks of the site. Non-aggressive; passive-flees if Notoriety high.
+- **LURCHER_DOG** — Paddy's lurcher, chained at `DOG_CHAIN_PROP`. Attacks if player approaches within 2 blocks without Paddy's permission (`DOG_PERMISSION_FLAG`). Dog-fight participant Friday/Saturday 21:00–23:00.
+- **COUNCIL_ENFORCEMENT_OFFICER (Derek)** — Arrives 09:00–10:00 daily from day 2 onwards. Serves `ENFORCEMENT_NOTICE_PROP`; inspects for `SCRAP_PILE_PROP` violations. If player tips off council early (day 1), Derek arrives same afternoon.
+
+---
+
+### PropTypes (new)
+
+- `CARAVAN_PROP` — The boss's accommodation unit. Press E (non-hostile): Paddy's menu. Raid at night (02:00–04:00, unseen): yields `CASH_STASH_PROP` (8–15 COIN) + `DOG_FIGHT_LEDGER`. Notoriety +10 if caught.
+- `SCRAP_PILE_PROP` — Heap of copper pipe, steel rebar, old radiators. Lootable: yields 2–4 `COPPER_PIPE` or `SCRAP_METAL`. Takes 6 seconds; Notoriety +5 if caught by Traveller Worker.
+- `TARMAC_DRUM_PROP` — Barrel of cold-mix tarmac. Required for tarmac jobs. Can be stolen (THEFT crime); needed for DIY driveway repair (see Activities).
+- `DOG_FIGHT_RING_PROP` — Makeshift ring (rope + stakes) set up Friday/Saturday evenings. Betting window 20:00–21:00; fights 21:00–23:00. Player can watch, bet, or report to RSPCA (see Activities).
+- `ENFORCEMENT_NOTICE_PROP` — A4 laminated council notice attached to site entrance by Derek. After 3 notices, site clears in 2 in-game hours.
+- `DOG_CHAIN_PROP` — Chain post. DOG_PERMISSION_FLAG set to true after player does 2 jobs for Paddy.
+
+---
+
+### Materials (new)
+
+| Material | Description |
+|---|---|
+| `LUCKY_HEATHER` | Sold by Brigid for 1 COIN. Used in `HealingSystem`: holding grants +5% max health (placebo). Donate to CharityShop: +1 goodwill. NPCs given heather have 20% chance to be grateful (follow player briefly). |
+| `CLOTHES_PEG_BUNDLE` | Sold by Brigid for 1 COIN (5 pegs). Purely flavour/comic — but: throw at NPC (accuracy E key) = NPC enters ANNOYED state; comedy rumour `CLOTHES_PEG_INCIDENT` seeded. |
+| `COPPER_PIPE` | Looted from SCRAP_PILE_PROP. Fenceable to Paddy (3 COIN) or FenceSystem (2 COIN). Craftable: COPPER_PIPE + WRENCH = `MAKESHIFT_PIPE` (melee weapon, 6 damage). Weight: heavy. |
+| `TARMAC_MIX` | Bought from Paddy (2 COIN) or stolen from TARMAC_DRUM_PROP. Used for driveway repair (see Activities). Not fenceable. |
+| `DOG_FIGHT_LEDGER` | Found in CARAVAN_PROP (night raid) or from tipping off RSPCA. Counts as `EVIDENCE_ITEM`; hand to police for Notoriety −3 or to CriminalRecord clerk for RSPCA_RAID event. |
+| `LUCKY_HEATHER_CROWN` | Crafted from 5× LUCKY_HEATHER. Equipping grants SOCIAL XP +1 and dialogue option `[Show your crown]` with Brigid for a second-tier quest. Wearable cosmetic. |
+
+---
+
+### Activities
+
+#### Cash-in-Hand Tarmac Work
+1. Player presses E on Paddy → `[Ask for work]`. Paddy offers one of three job types each day:
+   - **Driveway job**: Paddy marks a TERRACED_HOUSE NPC on the map. Player walks there, presses E on `DRIVEWAY_PROP` with `TARMAC_MIX` in inventory → `[Re-tarmac driveway]` (8 seconds). Reward: +3 COIN cash-in-hand from resident; +1 TRADING XP; 15% chance resident complains about quality (SHODDY_WORK rumour seeded).
+   - **Scrap run**: Player collects 3× `SCRAP_METAL` or `COPPER_PIPE` from any source (skip-diving, scrapyard, loot) and returns to Paddy. Reward: +4 COIN; +1 STREET_SMARTS XP.
+   - **Kerb-hawking**: Player carries `LUCKY_HEATHER` ×3 and approaches 5 PUBLIC NPCs within 40 blocks (press E → `[Offer heather]`). Base accept 30%; +10% PENSIONER; −15% if Notoriety ≥ 20. Each sale: +1 COIN, +1 SOCIAL XP. After 5 sales: Paddy pays bonus 2 COIN. `HEATHER_VENDOR` achievement on first completion.
+2. Three tarmac jobs completed in a single site visit → `CASH_IN_HAND_KING` achievement.
+
+#### Scrap Metal Fence (Paddy's Rate)
+- Press E on Paddy → `[Sell scrap]`. Accepts: `SCRAP_METAL` (2→3 COIN), `COPPER_PIPE` (2→3 COIN), `STOLEN_BIKE` (3→5 COIN), `STOLEN_PHONE` (2→4 COIN). Paddy pays above `FenceSystem` rates but only while the site is present. Limit: 20 COIN total per site visit (Paddy runs out of cash).
+
+#### Dog Fight Betting (Friday/Saturday 21:00–23:00)
+1. DOG_FIGHT_RING_PROP active. Player approaches and presses E → `[Place bet]`: 1, 3, or 5 COIN on Dog A or Dog B.
+2. Two `LURCHER_DOG` NPCs fight for 60 in-game seconds. Winner determined by seeded RNG + optional player interference.
+3. Win: 2:1 payout. Lose: stake lost. `HIGH_ROLLER` achievement on single 5 COIN bet win.
+4. Player can press E on `DOG_FIGHT_RING_PROP` with `DOG_FIGHT_LEDGER` → `[Report to RSPCA]`: RSPCA_OFFICER NPC spawns within 3 in-game minutes, disperses ring, Paddy enters HOSTILE state, all Traveller Workers become FLEEING. Player Notoriety +0 but MARCHETTI_CREW Respect −2 (they had a side bet). Achievement: `ANIMAL_LOVER`.
+
+#### Council Tip-Off (Early Eviction)
+1. Player presses E on `ENFORCEMENT_NOTICE_PROP` (or phone box) → `[Report traveller site to council]`. Derek arrives within 2 hours instead of next morning.
+2. Derek serves third notice immediately; site clears within 2 in-game hours.
+3. NeighbourhoodSystem `COMMUNITY_RESPECT` +2 (with NEIGHBOURHOOD_WATCH faction); `STREET_LADS` Respect −1 (they liked doing business there). Achievement: `GOOD_NEIGHBOUR`.
+4. Paddy returns 6 in-game days later regardless.
+
+#### Night Caravan Raid
+1. Player enters site 02:00–04:00 (all Travellers asleep/off-site).
+2. Press E on `CARAVAN_PROP` → `[Search inside]` (LOCKPICK or CROWBAR required). 6-second attempt.
+3. Yields: `CASH_STASH_PROP` → 8–15 COIN + `DOG_FIGHT_LEDGER` (50% chance).
+4. If LURCHER_DOG not distracted (no DOG_PERMISSION_FLAG): dog wakes, attacks, Notoriety +5. With DOG_PERMISSION_FLAG: dog stays asleep.
+5. Escape undetected: no crime. Caught by returning Traveller Worker (20% chance per worker per 30s): THEFT crime, Notoriety +10.
+
+#### DIY Driveway Repair (Player's Own Property)
+1. Player with `TARMAC_MIX` in inventory presses E on any cracked `DRIVEWAY_PROP` near player's squat/property → `[Patch driveway]`.
+2. Increases property `COMFORT_SCORE` +5; NeighbourhoodSystem `COMMUNITY_RESPECT` +1.
+3. Achievement: `DIY_HERO`.
+
+---
+
+### Prices
+
+| Transaction | Amount |
+|---|---|
+| Driveway tarmac job | +3 COIN |
+| Scrap run reward | +4 COIN |
+| Kerb-hawking (per sale) | +1 COIN |
+| Kerb-hawking bonus (5 sales) | +2 COIN |
+| Sell SCRAP_METAL to Paddy | +3 COIN |
+| Sell COPPER_PIPE to Paddy | +3 COIN |
+| Sell STOLEN_BIKE to Paddy | +5 COIN |
+| Dog fight 5-COIN bet win | +10 COIN |
+| Night caravan raid | +8–15 COIN |
+| Buy LUCKY_HEATHER from Brigid | −1 COIN |
+| Buy TARMAC_MIX from Paddy | −2 COIN |
+
+---
+
+### Integration Points
+
+- **FactionSystem**: MARCHETTI_CREW Respect −2 on RSPCA tip-off; STREET_LADS Respect −1 on council tip-off; `TRAVELLER_CREW` faction added (new entry, Respect gate for scrap-premium rate ≥ 20).
+- **GangTerritorySystem**: Traveller site is a contested neutral zone for the duration of their stay; Marchetti Crew sends enforcers to collect "protection" on day 3 (Paddy refuses → brawl if Street Lads Respect < 30).
+- **NotorietySystem**: Caravan raid caught +10; Scrap pile loot caught +5; dog fight (attending) +0; dog fight (reporting) +0.
+- **WantedSystem**: THEFT on caught caravan raid; THEFT on caught scrap pile loot.
+- **CriminalRecord**: `THEFT` (caravan/scrap loot caught), `DOG_FIGHTING_ATTENDANCE` (attending dog fight three times without reporting; new CrimeType).
+- **RumourNetwork**: `TRAVELLERS_ARRIVED` (seeded on site spawn — "There's a load of travellers set up on the wasteland"); `SHODDY_WORK` (driveway job complaint — "Someone's had their driveway done by them lot and it's already sinking"); `CLOTHES_PEG_INCIDENT` (threw clothes pegs at NPC — "Someone lobbed a handful of pegs at Doris outside the post office"); `DOG_FIGHT_RAID` (RSPCA report — "RSPCA raided a dog fight near the industrial estate"). Add `TRAVELLERS_ARRIVED`, `SHODDY_WORK`, `CLOTHES_PEG_INCIDENT`, `DOG_FIGHT_RAID` to `RumourType.java`.
+- **StreetSkillSystem**: TRADING XP +1 per tarmac job; SOCIAL XP +1 per heather sale; STREET_SMARTS XP +1 per scrap run.
+- **NeighbourhoodSystem / NeighbourhoodWatchSystem**: Site arrival seeds NEIGHBOURHOOD_WATCH alert; council tip-off `COMMUNITY_RESPECT` +2.
+- **WarmthSystem**: Nights on the site (player loitering after 22:00 without shelter) drain warmth 25% faster (exposed wasteland).
+- **DogCompanionSystem**: Player's own dog companion, if present, becomes AGITATED near LURCHER_DOG (reduces DOG_PERMISSION_FLAG success chance).
+- **FenceSystem**: COPPER_PIPE and SCRAP_METAL added as standard fenceable items; Paddy offers premium over-fence rate while present.
+- **NoiseSystem**: Dog fight = HIGH noise radius 20 (NPC crowd cheering); tarmac work = MEDIUM noise 8.
+- **NewspaperSystem**: After site arrival, headline: "Residents Express Concern Over Traveller Encampment Near Industrial Estate." After RSPCA raid: "RSPCA Officers Break Up Dog-Fighting Ring at Northfield Traveller Site." After 3 tip-offs: "Council Spends £12,000 Evicting Repeatedly Returning Traveller Convoy."
+- **TimeSystem**: Site spawns every 7–10 in-game days; duration 4–6 days. All Traveller Worker NPC schedules follow working-hours pattern.
+- **WeatherSystem**: RAIN — tarmac job yield −1 COIN (quality excuse by homeowner); HEATWAVE — Brigid sells more heather (+10% NPC accept rate).
+- **HealingSystem**: LUCKY_HEATHER grants +5% max health while held (placebo).
+- **CharityShopSystem**: LUCKY_HEATHER donatable for +1 goodwill.
+- **SkipDivingSystem**: Traveller site occasionally leaves a skip overnight with increased COPPER_PIPE yield.
+
+---
+
+### Unit Tests (`TravellerSiteSystemTest.java`)
+
+1. `testSiteSpawnsEvery7To10Days` — advance `daysSinceLastVisit` to 7; call `update(delta, timeSystem)`; verify site is ACTIVE; Traveller NPCs spawned.
+2. `testSiteNotSpawnedBefore7Days` — `daysSinceLastVisit` = 6; call `update`; verify site NOT active.
+3. `testSiteClearesAfter4To6Days` — spawn site; advance `siteActiveDays` to 6; call `update`; verify site cleared; NPCs despawned.
+4. `testPaddyOffersWorkWhenAvailable` — Paddy present, player Notoriety = 5; call `requestWork(player, paddy)`; verify `currentJob` is not null.
+5. `testPaddyRefusesWorkHighNotoriety` — player Notoriety = 50 (Tier ≥ 4); call `requestWork`; verify result = `REFUSED_HIGH_NOTORIETY`.
+6. `testDrivewayJobPaysCoin` — player has TARMAC_MIX; call `completeDrivewayJob(player, residentNPC)`; verify player COIN +3; TRADING XP +1.
+7. `testScrapRunPaysCoin` — player has SCRAP_METAL ×3; call `completeScrapRun(player, paddy)`; verify player COIN +4; SCRAP_METAL removed from inventory.
+8. `testKerbHawkingFiveSalesGrantsBonus` — `herbSaleCount` = 4; simulate 5th NPC accept (seeded RNG < 0.30); verify player COIN +1 (sale) +2 (bonus) on 5th call; `HEATHER_VENDOR` achievement unlocked.
+9. `testScrapFenceRateAboveBaseRate` — call `sellScrapToPaddy(player, Material.SCRAP_METAL)`; verify COIN received = 3; verify FenceSystem base rate for SCRAP_METAL < 3.
+10. `testPaddyScrapCashCapAt20Coin` — set `paddyCashRemaining` = 2; player has SCRAP_METAL ×5; call `sellScrapToPaddy` for 5 items; verify total received ≤ 2 COIN (cap hit); remaining items unsold.
+11. `testDogFightBettingWinPays2To1` — `dogFightRingActive` = true; player bets 3 COIN on DogA; seed RNG so DogA wins; call `resolveDogFight`; verify player COIN = start − 3 + 6.
+12. `testDogFightBettingLossDeductsStake` — seed RNG so DogB wins; player bet on DogA (3 COIN); verify player COIN = start − 3.
+13. `testRSPCAReportDespersesRing` — `dogFightRingActive` = true; player has DOG_FIGHT_LEDGER; call `reportToRSPCA(player)`; verify RSPCA_OFFICER spawn queued; `dogFightRingActive` = false; all TRAVELLER_WORKER state = FLEEING; Paddy state = HOSTILE.
+14. `testCouncilTipOffSummonsDerekSameDay` — site on day 1; call `reportToCouncil(player)`; verify `derekArrivalDelay` = 2 hours (not next morning).
+15. `testThreeEnforcementNoticesClearsSite` — `enforcementNoticeCount` = 2; call `serveEnforcementNotice(derek)`; verify `siteActive` = false within 2 in-game hours.
+16. `testNightCaravanRaidYieldsCoins` — time 03:00; all Travellers off-site; player has CROWBAR; call `raidCaravan(player, rng)`; verify player COIN increases by 8–15; no crime recorded.
+17. `testCaravanRaidCaughtByWorker` — seed worker-return RNG to trigger; player in caravan at 03:00 without DOG_PERMISSION_FLAG; call `checkWorkerReturn(player, worker, rng)` with triggering seed; verify THEFT in CriminalRecord; Notoriety +10.
+18. `testLurclherDogAttacksWithoutPermission` — `dogPermissionFlag` = false; player within 2 blocks of `DOG_CHAIN_PROP`; call `checkDogAggression(player)`; verify LURCHER_DOG enters ATTACKING state.
+19. `testDogSleepsWithPermission` — `dogPermissionFlag` = true; player within 2 blocks; verify LURCHER_DOG state remains IDLE.
+20. `testCashInHandKingAchievementOnThreeJobs` — `tarmacJobsThisVisit` = 2; call `completeDrivewayJob` once more; verify `CASH_IN_HAND_KING` achievement unlocked.
+21. `testCommunityRespectOnCouncilTipOff` — call `reportToCouncil(player)`; verify NeighbourhoodSystem `COMMUNITY_RESPECT` +2; STREET_LADS Respect −1.
+22. `testMarchettiRespectOnRSPCATipOff` — call `reportToRSPCA(player)`; verify MARCHETTI_CREW Respect −2.
+23. `testTravellersArrivedRumourSeeded` — site spawns; call `onSiteSpawn(rng)`; verify `TRAVELLERS_ARRIVED` rumour present in RumourNetwork.
+24. `testDIYDrivewayBoostsComfort` — player has TARMAC_MIX; player's property exists; call `patchDriveway(player, propertySystem)`; verify COMFORT_SCORE +5; `COMMUNITY_RESPECT` +1; `DIY_HERO` achievement unlocked.
+
+---
+
+### Integration Tests (`Issue1305TravellerSiteIntegrationTest.java`)
+
+1. **Full tarmac work pipeline**: Day 8 (site present). Player presses E on Paddy → accepts driveway job. Player buys TARMAC_MIX from Paddy (−2 COIN). Player walks to target house. Player tarmacs driveway (E + 8 seconds). Verify: player COIN = start − 2 + 3 = net +1; TRADING XP +1; no crime recorded; SHODDY_WORK rumour NOT seeded (no complaint triggered with fair RNG seed).
+
+2. **Scrap metal premium fence pipeline**: Player has 3× SCRAP_METAL (obtained via skip-diving). Player presses E on Paddy → `[Sell scrap]`. Sells all 3. Verify: player COIN = start + 9; SCRAP_METAL removed from inventory; Paddy `cashRemaining` reduced by 9; STREET_SMARTS XP +1.
+
+3. **Dog fight → RSPCA report → Marchetti tension**: Friday 20:30. Player approaches DOG_FIGHT_RING_PROP, places 5-COIN bet on DogA. Fight resolves. Regardless of outcome, player presses E on ring with DOG_FIGHT_LEDGER → `[Report to RSPCA]`. RSPCA_OFFICER arrives within 3 in-game minutes. Verify: ring cleared; Paddy HOSTILE; all Traveller Workers FLEEING; MARCHETTI_CREW Respect = start − 2; `DOG_FIGHT_RAID` rumour seeded in RumourNetwork; `ANIMAL_LOVER` achievement unlocked.
+
+4. **Council tip-off early eviction pipeline**: Day 2, 11:00. Player approaches ENFORCEMENT_NOTICE_PROP → `[Report traveller site to council]`. Derek arrives within 2 in-game hours. Derek serves 3rd notice. Site clears within 2 more hours. Verify: all Traveller NPCs despawned; site not active; NeighbourhoodSystem `COMMUNITY_RESPECT` = start + 2; `GOOD_NEIGHBOUR` achievement unlocked; NewspaperSystem headline queued.
+
+5. **Night caravan raid → undetected escape**: Day 3, 03:00. All Travellers off-site confirmed. Player has CROWBAR + DOG_PERMISSION_FLAG (earned 2+ jobs). Player presses E on CARAVAN_PROP → `[Search inside]`. Loot: 10 COIN + DOG_FIGHT_LEDGER. Player exits site before worker-return check. Verify: player COIN = start + 10; player has DOG_FIGHT_LEDGER; no THEFT in CriminalRecord; Notoriety unchanged.
+
+---
+
+// ── Issue #1305: Add Northfield Traveller Site ───────────────────────────────
+// New: TravellerSiteSystem.java in ragamuffin.core
+// New: TravellerSiteSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1305TravellerSiteIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: TRAVELLER_BOSS, TRAVELLER_WORKER, TRAVELLER_WOMAN, LURCHER_DOG, COUNCIL_ENFORCEMENT_OFFICER — add to NPCType.java
+// Material: LUCKY_HEATHER, CLOTHES_PEG_BUNDLE, COPPER_PIPE, TARMAC_MIX, DOG_FIGHT_LEDGER, LUCKY_HEATHER_CROWN — add to Material.java
+// PropType: CARAVAN_PROP, SCRAP_PILE_PROP, TARMAC_DRUM_PROP, DOG_FIGHT_RING_PROP, ENFORCEMENT_NOTICE_PROP, DOG_CHAIN_PROP — add to PropType.java
+// LandmarkType: TRAVELLER_SITE — add to LandmarkType.java
+// RumourType: TRAVELLERS_ARRIVED, SHODDY_WORK, CLOTHES_PEG_INCIDENT, DOG_FIGHT_RAID — add to RumourType.java
+// AchievementType: HEATHER_VENDOR, CASH_IN_HAND_KING, HIGH_ROLLER, ANIMAL_LOVER, GOOD_NEIGHBOUR, DIY_HERO — add to AchievementType.java
+// CriminalRecord: DOG_FIGHTING_ATTENDANCE — add to CriminalRecord.CrimeType
+// Faction: TRAVELLER_CREW — add to FactionSystem (neutral third faction, respect-gated rates)
+// Integration: NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
+//             FactionSystem (MARCHETTI_CREW/STREET_LADS/TRAVELLER_CREW tension),
+//             GangTerritorySystem (contested neutral zone), StreetSkillSystem,
+//             NeighbourhoodSystem/NeighbourhoodWatchSystem, FenceSystem,
+//             DogCompanionSystem (agitation near LURCHER_DOG), WarmthSystem,
+//             HealingSystem (LUCKY_HEATHER placebo), CharityShopSystem,
+//             SkipDivingSystem (COPPER_PIPE yield increase), NoiseSystem,
+//             NewspaperSystem, TimeSystem (spawn/despawn cycle), WeatherSystem
