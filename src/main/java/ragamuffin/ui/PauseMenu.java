@@ -39,38 +39,73 @@ public class PauseMenu {
             return;
         }
 
-        // Draw semi-transparent background
+        // Full-screen darkening overlay
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(0, 0, 0, 0.7f);
+        shapeRenderer.setColor(0, 0, 0, 0.65f);
         shapeRenderer.rect(0, 0, screenWidth, screenHeight);
         shapeRenderer.end();
 
-        // Draw title
+        // Central menu panel
+        float panelW = 280f;
+        float panelH = 240f;
+        float panelX = screenWidth / 2f - panelW / 2f;
+        float panelY = screenHeight / 2f - panelH / 2f - 20f;
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(0.08f, 0.08f, 0.12f, 0.92f);
+        shapeRenderer.rect(panelX, panelY, panelW, panelH);
+        shapeRenderer.end();
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        shapeRenderer.setColor(0.35f, 0.35f, 0.45f, 1f);
+        shapeRenderer.rect(panelX, panelY, panelW, panelH);
+        shapeRenderer.end();
+
+        // Draw title above the panel
         spriteBatch.begin();
         font.setColor(Color.WHITE);
         font.getData().setScale(2.0f);
         String title = "PAUSED";
         GlyphLayout titleLayout = new GlyphLayout(font, title);
-        font.draw(spriteBatch, title, screenWidth / 2f - titleLayout.width / 2, screenHeight * 0.7f);
-        font.getData().setScale(1.2f);
+        font.draw(spriteBatch, title, screenWidth / 2f - titleLayout.width / 2, panelY + panelH + 50f);
 
-        // Draw options
-        float optionY = screenHeight * 0.5f;
+        // Draw options inside the panel
+        font.getData().setScale(1.2f);
+        float optionY = panelY + panelH - 40f;
         float optionSpacing = 50f;
 
         for (int i = 0; i < OPTIONS.length; i++) {
             String option = OPTIONS[i];
             if (i == selectedOption) {
-                font.setColor(Color.YELLOW);
-                option = "> " + option + " <";
+                font.setColor(1f, 0.9f, 0.2f, 1f); // Warm yellow for selected
+                // Draw a subtle highlight bar behind selected item
+                spriteBatch.end();
+                shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+                GlyphLayout selLayout = new GlyphLayout(font, option);
+                float barX = screenWidth / 2f - selLayout.width / 2f - 12f;
+                float barY = optionY - i * optionSpacing - 20f;
+                shapeRenderer.setColor(1f, 0.9f, 0.2f, 0.12f);
+                shapeRenderer.rect(barX, barY, selLayout.width + 24f, 32f);
+                shapeRenderer.end();
+                spriteBatch.begin();
+                font.setColor(1f, 0.9f, 0.2f, 1f);
             } else {
-                font.setColor(Color.WHITE);
+                font.setColor(0.75f, 0.75f, 0.75f, 1f);
             }
 
             GlyphLayout optionLayout = new GlyphLayout(font, option);
             font.draw(spriteBatch, option, screenWidth / 2f - optionLayout.width / 2, optionY - i * optionSpacing);
         }
 
+        // Navigation hint at bottom of panel
+        font.getData().setScale(0.7f);
+        font.setColor(0.4f, 0.4f, 0.4f, 1f);
+        String hint = "UP/DOWN  ENTER to select";
+        GlyphLayout hintLayout = new GlyphLayout(font, hint);
+        font.draw(spriteBatch, hint, screenWidth / 2f - hintLayout.width / 2f, panelY + 14f);
+
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
         spriteBatch.end();
     }
 

@@ -4,8 +4,10 @@ import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Manages the NPC rumour network for Phase 8b.
@@ -36,8 +38,16 @@ public class RumourNetwork {
     // Key: canonical pair id (smaller npc hashCode first).
     private final java.util.Map<Long, Float> exchangeCooldowns = new java.util.HashMap<>();
 
+    // Global log of all rumours added via addRumour() — used by getAllRumours() / getAllRumourTypes().
+    private final List<Rumour> allRumoursLog = new ArrayList<>();
+
     public RumourNetwork(Random random) {
         this.random = random;
+    }
+
+    /** Convenience no-arg constructor for testing. */
+    public RumourNetwork() {
+        this(new Random());
     }
 
     /**
@@ -169,7 +179,7 @@ public class RumourNetwork {
 
     /**
      * Add a new rumour directly to an NPC's buffer (e.g. world-gen seeding).
-     * Evicts oldest if the buffer is full.
+     * Evicts oldest if the buffer is full. Also logs to the global rumour list.
      */
     public void addRumour(NPC npc, Rumour rumour) {
         List<Rumour> rumours = npc.getRumours();
@@ -178,6 +188,43 @@ public class RumourNetwork {
             rumours.remove(0);
         }
         rumours.add(rumour);
+        allRumoursLog.add(rumour);
+    }
+
+    /**
+     * Return the rumours currently held by the given NPC.
+     * Convenience accessor for tests — equivalent to {@code npc.getRumours()}.
+     */
+    public List<Rumour> getRumoursFrom(NPC npc) {
+        return npc.getRumours();
+    }
+
+    /**
+     * Return the rumours currently held by the given NPC.
+     * Alias for {@link #getRumoursFrom(NPC)}.
+     */
+    public List<Rumour> getRumoursFor(NPC npc) {
+        return npc.getRumours();
+    }
+
+    /**
+     * Return all rumours that have been added via {@link #addRumour} since this
+     * network was created (global log, not de-duplicated).
+     */
+    public List<Rumour> getAllRumours() {
+        return new ArrayList<>(allRumoursLog);
+    }
+
+    /**
+     * Return the set of all distinct {@link RumourType}s across all rumours
+     * ever added to this network via {@link #addRumour}.
+     */
+    public Set<RumourType> getAllRumourTypes() {
+        Set<RumourType> types = new HashSet<>();
+        for (Rumour r : allRumoursLog) {
+            types.add(r.getType());
+        }
+        return types;
     }
 
     /**

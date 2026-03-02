@@ -1,8 +1,10 @@
 package ragamuffin.ui;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 /**
  * Displays the current in-game time and FPS on the HUD.
@@ -66,22 +68,48 @@ public class ClockHUD {
     }
 
     /**
-     * Render the clock on screen.
+     * Render the clock on screen with a subtle background panel for readability.
      */
     public void render(SpriteBatch batch, BitmapFont font, int screenWidth, int screenHeight) {
-        batch.begin();
+        render(batch, null, font, screenWidth, screenHeight);
+    }
 
-        // Draw date and day counter in top-right corner, below the weather text
+    /**
+     * Render the clock on screen. If shapeRenderer is provided, draws a
+     * semi-transparent backing panel behind the text for modern HUD readability.
+     */
+    public void render(SpriteBatch batch, ShapeRenderer shapeRenderer, BitmapFont font,
+                       int screenWidth, int screenHeight) {
         float x = screenWidth - 130;
         float y = screenHeight - 45;
+
+        // Background pill for readability (rendered only when shapeRenderer is available)
+        if (shapeRenderer != null) {
+            shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+            shapeRenderer.setColor(0f, 0f, 0f, 0.45f);
+            shapeRenderer.rect(x - 4, y - 60, 126, 70);
+            shapeRenderer.end();
+        }
+
+        batch.begin();
+        font.getData().setScale(0.9f);
+        font.setColor(Color.WHITE);
+
+        // Draw date and day counter in top-right corner, below the weather text
         font.draw(batch, dateString + " (Day " + dayCount + ")", x, y);
 
-        // Draw time below date
+        // Draw time in slightly larger text below date
+        font.getData().setScale(1.1f);
+        font.setColor(0.95f, 0.95f, 0.7f, 1f); // Warm white for clock
         font.draw(batch, timeString, x, y - 20);
 
-        // Draw FPS below the time
+        // Draw FPS below the time in smaller grey text
+        font.getData().setScale(0.75f);
+        font.setColor(0.5f, 0.5f, 0.5f, 1f);
         font.draw(batch, "FPS: " + fps, x, y - 40);
 
+        font.getData().setScale(1.0f);
+        font.setColor(Color.WHITE);
         batch.end();
     }
 }
