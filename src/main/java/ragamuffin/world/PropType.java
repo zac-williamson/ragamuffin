@@ -2892,7 +2892,41 @@ public enum PropType {
      * Player interaction (E) triggers tooltip: "The van appears to have nobody in it."
      * and unlocks the MYTH_BUSTER achievement.
      */
-    DETECTOR_VAN_PROP(4.50f, 2.20f, 2.00f, 20, Material.SCRAP_METAL);
+    DETECTOR_VAN_PROP(4.50f, 2.20f, 2.00f, 20, Material.SCRAP_METAL),
+
+    // ── Issue #952: Clucky's Fried Chicken ───────────────────────────────────
+
+    /**
+     * Industrial deep fryer at Clucky's. Press E to sabotage (Notoriety +15, ARSON crime).
+     * Destroyed by 6 hits; yields SCRAP_METAL. Generates NoiseSystem level 8 on smash.
+     */
+    FRYER_PROP(0.70f, 1.20f, 0.70f, 6, Material.SCRAP_METAL),
+
+    /**
+     * Cheap plastic table at Clucky's seating area.
+     * Destroyed by 2 hits; yields nothing. Seats the YOUTH_GANG NPC group.
+     */
+    PLASTIC_TABLE_PROP(0.90f, 0.75f, 0.90f, 2, null),
+
+    /**
+     * Cheap plastic chair at Clucky's seating area.
+     * Destroyed by 1 hit; yields nothing.
+     */
+    PLASTIC_CHAIR_PROP(0.50f, 0.85f, 0.50f, 1, null),
+
+    /**
+     * Rolling security grille on the Clucky's shopfront.
+     * Drops at 02:00 (closing time). Cannot be destroyed by the player.
+     * Acts as a solid collision barrier when closed.
+     */
+    SECURITY_GRILLE_PROP(8.00f, 4.00f, 0.10f, 0, null),
+
+    /**
+     * Clucky's Fried Chicken illuminated fascia sign above the entrance.
+     * Destroyed by 4 hits; yields nothing. High visibility — seeding a rumour
+     * that "the chicken sign is smashed" if witnessed.
+     */
+    CLUCKYS_SIGN_PROP(4.00f, 0.60f, 0.20f, 4, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

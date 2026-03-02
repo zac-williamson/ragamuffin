@@ -1204,6 +1204,26 @@ public enum AchievementType {
         5
     ),
 
+    /**
+     * Awarded after successfully refusing the Wing Tax 5 times without giving up chicken.
+     * (Stare-down or Run result; fight triggered or avoided — either counts as refusal.)
+     */
+    WING_DEFENDER(
+        "Not on My Watch",
+        "Refused to hand over your wings five times. The youth moved on. You did not.",
+        5
+    ),
+
+    /**
+     * Awarded after marking up the CHICKEN_BOX price to 6 COIN (NEGOTIATE ≥ 2)
+     * for the Late-Night Lockout Hustle on 3 separate occasions.
+     */
+    LATE_NIGHT_ENTREPRENEUR(
+        "Late-Night Entrepreneur",
+        "Sold a Chicken Box to a drunk at double the price. Three times. Capitalism.",
+        3
+    ),
+
     // ── Issue #963: Northfield Canal ──────────────────────────────────────────
 
     CANAL_CATCH(
