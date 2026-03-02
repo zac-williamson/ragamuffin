@@ -33739,3 +33739,152 @@ for 8 COIN each. Each sale: Notoriety +4, 20% chance NPC reports to police (adds
 // AchievementType: HONEST_TELLY, EVADER, BOGUS_INSPECTOR, DETECTOR_PROOF, LOWEST_OF_THE_LOW — add
 // Integrates: PropertySystem, NoiseSystem, MagistratesCourtSystem, NewspaperSystem,
 //   NeighbourhoodWatchSystem, RumourNetwork, DogCompanionSystem, WantedSystem, CriminalRecord
+
+## Issue #1173: Northfield Balti House — The Birmingham Classic, After-Pub Hunger & the Great Naan Heist
+
+**Landmark**: New `LandmarkType.BALTI_HOUSE` ("Mumtaz Baltis")
+
+**Display name**: "Mumtaz Baltis"
+
+The balti was born in Birmingham — invented on the Ladypool Road and perfected in the city's curry mile. Mumtaz Baltis is a narrow, steamed-up 8×14×4 restaurant tucked between the Chinese takeaway and the off-licence on the Northfield parade. Thirty years of grease on the ceiling tiles, mismatched chairs, and the world's best lamb balti at £6.50. It is the social hub of post-pub Northfield every Friday and Saturday night; families at lunchtime and a different crowd entirely after 22:00. Owner Mohammed (BALTI_OWNER NPC) runs the kitchen with his son Tariq (BALTI_WAITER NPC) taking orders.
+
+### Core Loop
+
+**Eat in (lunchtime 12:00–15:00 / evening 17:30–23:30)**
+- Player enters, presses E on MENU_BOARD_PROP to open `BaltiOrderUI`
+- Menu items (see Materials below) delivered to the RESTAURANT_TABLE_PROP nearest the player
+- Eating grants +40 Hunger, +15 Warmth, and removes any active `TOOTHACHE_DEBUFF` (spicy food = distraction)
+- Eating a full meal at Mumtaz seated with another NPC grants the `FULL_ENGLISH` (actually `FULL_BALTI`) achievement
+
+**Takeaway (all hours)**
+- Player can collect takeaway at the counter (TAKEAWAY_COUNTER_PROP); 5-minute in-game wait
+- Carrying `BALTI_BOX` or `NAAN_BAG` satisfies HUNGER need when consumed later
+- After-pub crowd (22:00–01:00 Fri/Sat): 6–8 PUBLIC/DRUNK NPCs queue at the counter; 30% chance of a queue fight breaking out (NoiseSystem alert, WantedSystem +1 if player started it)
+
+**Faction / Rumour integration**
+- At Marchetti Crew Respect ≥ 60: Mohammed gives you "the usual" 20% cheaper without ordering
+- Seated customers (CAFF_REGULAR reused or new BALTI_REGULAR NPC type) quietly exchange rumours at Proximity ≤ 2 blocks
+- Big family event on Sunday lunchtime: 3–5 FAMILY_GROUP NPCs, Mohammed's mood is cheerful (dialogue variant)
+
+**Criminal mechanics**
+- **Dine and dash**: Player eats full meal then sprints to exit → WantedSystem +1 star, Notoriety +5, CATERING_FRAUD CrimeType added; Mohammed shouts unique dialogue. Repeat offence → Northfield forever-banned (BANNED_FROM_MUMTAZ flag); Mohammed briefs the NEIGHBOURHOOD_WATCH.
+- **Great Naan Heist**: After 22:00, player can use LOCKPICK on the kitchen BACK_DOOR_PROP (Notoriety ≥ 20) → access the kitchen, steal up to 6 NAAN_BAG and a BALTI_CATERING_TIN (sellable at Pawn Shop for 8 COIN). Kitchen contains a HOT_TANDOOR_PROP (hazard: 10 damage on contact). If Mohammed is still on premises, 50% chance he confronts player (aggressive; BALTI_OWNER has 35 HP, 8 attack).
+- **Selling fake spice**: Player can craft FAKE_CURRY_POWDER (2 CHALK + 1 TURMERIC or YELLOW_DYE) and sell to Mohammed as a "bulk spice deal." He pays 6 COIN. If he cooks with it (seeded 30% next day), he gets 1-star hygiene violation, and Newspaper prints: *"Northfield Curry House Mystery Illness — Environmental Health Investigates."*
+
+### Building
+
+A narrow (8×14×4) brick shopfront. Interior:
+- 5× `RESTAURANT_TABLE_PROP` (seats 2 each) in a 2-column arrangement
+- `TAKEAWAY_COUNTER_PROP` at front near entrance, with `MENU_BOARD_PROP` above it
+- `CASH_REGISTER_PROP` behind counter
+- `BACK_DOOR_PROP` (locked; LOCKPICK target) leading to 4×6 kitchen
+- Kitchen: `HOT_TANDOOR_PROP`, `PREP_BENCH_PROP`, `FRIDGE_PROP`
+- Exterior: `RESTAURANT_SIGN_PROP` (lit, neon red/green), steamed windows (GLASS blocks with fog particle effect)
+- Pavement: `A-BOARD_PROP` with chalked daily special
+
+### Weather & Time Integration
+
+| Condition | Effect |
+|-----------|--------|
+| Rain/drizzle | +2 walk-in customers (shelter-seekers); Warmth bonus +5 |
+| Frost | Queue forms earlier (21:30 instead of 22:00) |
+| Heatwave | Fewer customers; Mohammed opens SIDE_DOOR_PROP |
+| Sunday | Family lunch crowd; Mohammed in good mood |
+| Closed (15:00–17:30 gap) | Mohammed visible through window; E key gives "Sorry, we're closed, come back at half five" |
+
+### Materials (add to `Material.java`)
+
+| Constant | Description | Value |
+|----------|-------------|-------|
+| `LAMB_BALTI` | Classic Birmingham balti, served in steel bowl | 7 COIN |
+| `CHICKEN_TIKKA_MASALA` | Tourist-friendly option (Tariq's mild version) | 6 COIN |
+| `VEGETABLE_BALTI` | Mohammed's wife's recipe; cheapest option | 5 COIN |
+| `NAAN_BREAD` | Fresh from the tandoor | 1 COIN |
+| `MANGO_CHUTNEY` | Tiny plastic pot | 0 (free with meal) |
+| `BALTI_BOX` | Takeaway container; stackable; satisfies HUNGER | — |
+| `NAAN_BAG` | Paper bag of naans; 2 uses | — |
+| `BALTI_CATERING_TIN` | Large stolen catering tin; fence value 8 COIN | — |
+| `FAKE_CURRY_POWDER` | Craftable (2 CHALK + 1 TURMERIC); sells as bulk spice | — |
+| `RESTAURANT_RECEIPT` | Proof of purchase; used for alibi in WitnessSystem | — |
+
+### New NPCTypes (add to `NPCType.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `BALTI_OWNER` | Mohammed; 35 HP, 8 attack; confronts thieves in kitchen |
+| `BALTI_WAITER` | Tariq; passive; takes orders; runs to phone on dine-and-dash |
+| `BALTI_REGULAR` | Seated rumour-source; 3–5 per session |
+
+### New CrimeTypes (add to `CriminalRecord.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `CATERING_FRAUD` | Dine and dash recorded offence |
+
+### Achievements (add to `AchievementType.java`)
+
+| Constant | Unlock condition |
+|----------|-----------------|
+| `FULL_BALTI` | Eat a full meal seated with at least one NPC at Mumtaz |
+| `DINE_AND_DASH` | Successfully leave without paying (WantedSystem must not catch you within 60s) |
+| `GREAT_NAAN_HEIST` | Steal 6+ NAAN_BAGs from the kitchen in one night |
+| `BULK_SPICE_MERCHANT` | Sell FAKE_CURRY_POWDER to Mohammed 3 times |
+| `LOCAL_REGULAR` | Eat at Mumtaz 7 times across different in-game days |
+
+### New PropType entries (add to `PropType.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `HOT_TANDOOR_PROP` | Kitchen hazard; deals 10 damage on contact |
+| `TAKEAWAY_COUNTER_PROP` | Counter where takeaway is collected |
+| `RESTAURANT_TABLE_PROP` | Seated eating surface (2 seats) |
+| `A_BOARD_PROP` | Pavement chalk sign outside restaurant |
+
+### New LandmarkType (add to `LandmarkType.java`)
+
+```
+BALTI_HOUSE  // "Mumtaz Baltis"
+```
+
+### Unit Tests (implement in `BaltiHouseSystemTest.java`)
+
+1. Eating `LAMB_BALTI` increases player Hunger by 40 and Warmth by 15.
+2. `TOOTHACHE_DEBUFF` is cleared on eating any balti menu item.
+3. Dine-and-dash: player eats meal without payment, triggers WantedSystem +1 and Notoriety +5, adds `CATERING_FRAUD` to CriminalRecord.
+4. After second dine-and-dash, `BANNED_FROM_MUMTAZ` flag set; E key on entrance returns ban dialogue.
+5. LOCKPICK on `BACK_DOOR_PROP` (Notoriety ≥ 20) grants kitchen access; `NAAN_BAG` available to steal.
+6. `HOT_TANDOOR_PROP` deals 10 damage when player moves into contact block.
+7. Fake spice sale: give player `FAKE_CURRY_POWDER`, press E on Mohammed → 6 COIN added, spice accepted.
+8. Seeded RNG roll < 0.30 on next day update triggers hygiene violation; `NewspaperSystem.hasPendingHeadline()` returns true.
+9. After-pub queue (22:00 Fri/Sat): `getNPCQueueSize()` returns 6–8 DRUNK/PUBLIC NPCs.
+10. Marchetti Respect ≥ 60: `getMenuPrice(LAMB_BALTI)` returns 6 (20% discount from 7).
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full-meal hunger loop**: Create `BaltiHouseSystem` with player Hunger = 20. Give player 7 COIN. Simulate pressing E on `MENU_BOARD_PROP`, selecting `LAMB_BALTI`. Advance 1 in-game minute (kitchen time). Press E on `RESTAURANT_TABLE_PROP`. Verify player Hunger = 60. Verify `RESTAURANT_RECEIPT` added to inventory. Verify `FULL_BALTI` achievement unlocked (a BALTI_REGULAR NPC must be seated nearby).
+
+2. **Dine-and-dash caught**: Give player `LAMB_BALTI` (already eaten, meal served flag set). Player moves to exit without payment trigger. Verify `WantedSystem.getWantedLevel()` increases by 1. Verify `CriminalRecord.hasCrime(CATERING_FRAUD)` returns true. Verify Notoriety increased by 5. Verify Tariq NPC enters FLEEING state (runs to phone). Advance 60 real seconds in simulation. Verify `POLICE` NPC spawned near BALTI_HOUSE landmark.
+
+3. **Naan Heist end-to-end**: Set time to 22:30. Give player a `LOCKPICK`. Set player Notoriety to 25. Simulate pressing E on `BACK_DOOR_PROP`. Verify kitchen area becomes accessible. Move player to `NAAN_BAG` prop. Simulate 6× pick-up actions. Verify player inventory contains 6 `NAAN_BAG` items. Verify `GREAT_NAAN_HEIST` achievement unlocked. If Mohammed NPC is on premises (seed RNG to 50% encounter), verify he enters FLEEING→AGGRESSIVE state transition.
+
+4. **Fake spice newspaper scandal**: Give player `FAKE_CURRY_POWDER`. Press E on Mohammed (sales dialogue). Verify 6 COIN added to player. Seed RNG so next-day roll = 0.20 (< 0.30 threshold). Call `BaltiHouseSystem.update(delta, timeSystem, ...)` past day boundary. Verify `NewspaperSystem.getLatestHeadline()` contains "Mystery Illness". Verify Mohammed NPC enters IDLE state with distressed dialogue variant.
+
+5. **After-pub crowd and queue fight**: Set time to 22:30, day = Friday (in-game). Call `update()` to trigger crowd spawn. Verify `getNPCQueueSize()` is between 6 and 8. Seed RNG so fight roll = 0.25 (< 0.30). Call `update()` again. Verify `NoiseSystem.getRecentAlerts()` contains an alert near `BALTI_HOUSE`. Verify two DRUNK NPCs are in FIGHTING state.
+
+// ── Issue #1173: Northfield Balti House ──────────────────────────────────────
+// New: BaltiHouseSystem.java in ragamuffin.core
+// New: BaltiHouseSystemTest.java in src/test/java/ragamuffin/core/
+// New: BaltiOrderUI.java in ragamuffin.ui (order screen with menu items)
+// LandmarkType: BALTI_HOUSE — add to LandmarkType.java with display name "Mumtaz Baltis"
+// NPCType: BALTI_OWNER, BALTI_WAITER, BALTI_REGULAR — add to NPCType.java
+// Material: LAMB_BALTI, CHICKEN_TIKKA_MASALA, VEGETABLE_BALTI, NAAN_BREAD, MANGO_CHUTNEY,
+//           BALTI_BOX, NAAN_BAG, BALTI_CATERING_TIN, FAKE_CURRY_POWDER, RESTAURANT_RECEIPT — add
+// PropType: HOT_TANDOOR_PROP, TAKEAWAY_COUNTER_PROP, RESTAURANT_TABLE_PROP, A_BOARD_PROP — add
+// CriminalRecord.CrimeType: CATERING_FRAUD — add
+// AchievementType: FULL_BALTI, DINE_AND_DASH, GREAT_NAAN_HEIST, BULK_SPICE_MERCHANT,
+//                  LOCAL_REGULAR — add
+// Player flag: BANNED_FROM_MUMTAZ (boolean on Player)
+// Integrates: HealingSystem (hunger/warmth), NHSDentistSystem (toothache clear), WantedSystem,
+//   NotorietySystem, CriminalRecord, NoiseSystem, WeatherSystem, TimeSystem, FactionSystem
+//   (Marchetti discount), RumourNetwork, NewspaperSystem, PawnShopSystem, WitnessSystem,
+//   NeighbourhoodWatchSystem, AchievementSystem, BaltiOrderUI
