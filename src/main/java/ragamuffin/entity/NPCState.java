@@ -63,5 +63,8 @@ public enum NPCState {
 
     // Issue #1202: Karaoke Night
     JEERING,            // NPC is jeering/booing a terrible karaoke performance
-    CELEBRATING         // NPC is celebrating a great karaoke performance (or other positive event)
+    CELEBRATING,        // NPC is celebrating a great karaoke performance (or other positive event)
+
+    // Issue #1211: BP Petrol Station
+    IDLE_SLEEPING       // NPC is asleep at their post (Wayne night shift 01:00–03:00)
 }
