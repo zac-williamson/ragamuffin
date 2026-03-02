@@ -2466,6 +2466,22 @@ public enum Material {
      */
     LOAN_LEAFLET("Loan Leaflet"),
 
+    /**
+     * Threatening Letter — sent by Fast Cash Finance (Barry) on first missed repayment.
+     * Dropped into the player's letterbox prop. Readable: "Dear Sir/Madam, this is your
+     * FINAL NOTICE before we take further action." Has no gameplay value but raises
+     * Notoriety +1 when found in inventory during a police stop-and-search.
+     */
+    THREATENING_LETTER("Threatening Letter"),
+
+    /**
+     * Debt Advice Letter — issued by CitizensAdviceSystem in exchange for LOAN_LEAFLET.
+     * Use at Fast Cash Finance counter before signing a new loan to apply a 20% interest
+     * reduction on that loan. One-time use; consumed on loan application.
+     * Tooltip: "Know your rights. You have some. Not many, but some."
+     */
+    DEBT_ADVICE_LETTER("Debt Advice Letter"),
+
     // ── Issue #1077: Northfield Chinese Takeaway — Golden Palace ─────────────
 
     /** Prawn Crackers — 1 COIN. Hunger −10. Also a litter prop near the Golden Palace 22:00–00:00. */
@@ -4686,6 +4702,8 @@ public enum Material {
             case RAFFLE_TICKET:      return c(0.88f, 0.20f, 0.20f); // Red raffle stub
             case MEAT_RAFFLE_PRIZE:  return c(0.88f, 0.88f, 0.92f); // Frozen/white chicken bag
             case LOAN_LEAFLET:       return c(0.98f, 0.85f, 0.10f); // Fluorescent yellow flyer
+            case THREATENING_LETTER: return c(0.92f, 0.92f, 0.92f); // Pale grey demand letter
+            case DEBT_ADVICE_LETTER: return c(0.75f, 0.88f, 0.72f); // Calm green CAB leaflet
             case HAIR_CLIPPERS:         return c(0.35f, 0.35f, 0.38f);   // Silver-grey
             case HAIR_CLIPPERS_BROKEN:  return c(0.20f, 0.20f, 0.22f);   // Dark grey, broken
             case NAIL_POLISH:    return c(0.92f, 0.18f, 0.55f);   // Hot pink
@@ -6961,6 +6979,10 @@ public enum Material {
             // Issue #1071: Northfield Fast Cash Finance
             case LOAN_LEAFLET:
                 return IconShape.FLAT_PAPER;  // fluorescent flyer
+            case THREATENING_LETTER:
+                return IconShape.FLAT_PAPER;  // demand letter in envelope
+            case DEBT_ADVICE_LETTER:
+                return IconShape.FLAT_PAPER;  // CAB advice letter
 
             // Issue #1081: Pet Shop items
             case DOG_TREATS:

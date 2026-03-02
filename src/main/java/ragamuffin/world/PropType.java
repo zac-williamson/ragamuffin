@@ -880,6 +880,15 @@ public enum PropType {
      */
     LEAFLET_RACK_PROP(0.30f, 1.20f, 0.30f, 2, Material.CARDBOARD),
 
+    // ── Issue #1225: Northfield Fast Cash Finance ─────────────────────────────
+
+    /**
+     * LOAN_DESK_PROP — Barry's garish counter at Fast Cash Finance.
+     * Press E to interact with LOAN_MANAGER NPC (Barry) to apply for or repay a loan.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    LOAN_DESK_PROP(1.20f, 0.90f, 0.60f, 5, Material.SCRAP_METAL),
+
     // ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
 
     /**
