@@ -1365,7 +1365,24 @@ public enum NPCType {
      * Attacking a paramedic forces WantedSystem to Tier 4 minimum.
      * Has above-average speed for rapid dispatch.
      */
-    PARAMEDIC(35f, 5f, 1.5f, false);
+    PARAMEDIC(35f, 5f, 1.5f, false),
+
+    // ── Issue #1130: Northfield BP Petrol Station ──────────────────────────────
+
+    /**
+     * Raj (day shift, 06:00–22:00) — runs the BP kiosk. Sells items, manages the
+     * till, and triggers panic button at WantedSystem Tier ≥ 2. Refuses service
+     * at Wanted Tier ≥ 3. Passive unless attacked or robbery attempted.
+     */
+    PETROL_STATION_ATTENDANT(25f, 0f, 0f, false),
+
+    /**
+     * Wayne (night shift, 22:00–06:00) — bored teenager behind the counter.
+     * Sleeps 01:00–03:00 (ignores crimes if NoiseSystem &lt; 15).
+     * Activates panic button at Wanted Tier ≥ 2 only when awake.
+     * Passive unless attacked.
+     */
+    PETROL_STATION_ASSISTANT(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

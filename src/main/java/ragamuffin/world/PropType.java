@@ -1744,7 +1744,91 @@ public enum PropType {
      * Sharps bin — yellow disposal container for used syringes.
      * Contains UNUSED_SYRINGE ×1 with 30% probability. 2 hits; yields PLASTIC.
      */
-    SHARPS_BIN_PROP(0.35f, 0.80f, 0.35f, 2, Material.PLASTIC);
+    SHARPS_BIN_PROP(0.35f, 0.80f, 0.35f, 2, Material.PLASTIC),
+
+    // ── Issue #1130: Northfield BP Petrol Station ──────────────────────────────
+
+    /**
+     * Till — cash register counter in the BP kiosk. Press E with CROWBAR to rob
+     * (yields 8–18 COIN; ARMED_ROBBERY record; Notoriety +15; police response 3 min).
+     * Wayne panic button cuts response to 30 seconds at Wanted Tier ≥ 2.
+     * 6 hits to destroy; yields SCRAP_METAL.
+     */
+    TILL_PROP(0.70f, 1.20f, 0.50f, 6, Material.SCRAP_METAL),
+
+    /**
+     * Lottery / scratch-card display — rotating rack near the till.
+     * Press E to buy a SCRATCH_CARD for 1 COIN. 3 hits; yields CARDBOARD.
+     */
+    LOTTERY_DISPLAY_PROP(0.50f, 1.40f, 0.30f, 3, Material.CARDBOARD),
+
+    /**
+     * Microwave — counter-top unit that heats MICROWAVE_PASTY items.
+     * Press E with a raw pasty to produce a heated MICROWAVE_PASTY.
+     * After 21:00 adds 30% food-poisoning risk. 4 hits; yields SCRAP_METAL.
+     */
+    MICROWAVE_PROP(0.55f, 0.40f, 0.45f, 4, Material.SCRAP_METAL),
+
+    /**
+     * Energy drink fridge — illuminated glass-door fridge stocked with ENERGY_DRINK.
+     * Press E to purchase for 1 COIN. 5 hits; yields GLASS.
+     */
+    ENERGY_DRINK_FRIDGE_PROP(0.70f, 1.80f, 0.70f, 5, Material.GLASS),
+
+    /**
+     * Confectionery shelf — wall-mounted shelf stocked with CHOCOLATE_BAR and CRISPS.
+     * Press E to browse and purchase. 3 hits; yields WOOD.
+     */
+    CONFECTIONERY_SHELF_PROP(1.20f, 1.00f, 0.25f, 3, Material.WOOD),
+
+    /**
+     * Cigarette cabinet — locked glass cabinet behind the counter.
+     * Breaking it (3 hits) yields CIGARETTE_CARTON ×2–3; adds NoiseSystem +25.
+     * 3 hits to destroy; yields GLASS.
+     */
+    CIGARETTE_CABINET_PROP(0.90f, 0.80f, 0.20f, 3, Material.GLASS),
+
+    /**
+     * Air pump — forecourt air pump for vehicle tyres.
+     * Interacting while crouched at night adds a SIPHONING cover state.
+     * 3 hits; yields SCRAP_METAL.
+     */
+    AIR_PUMP_PROP(0.30f, 1.40f, 0.30f, 3, Material.SCRAP_METAL),
+
+    /**
+     * Squeegee bucket — windscreen-cleaning station on the forecourt.
+     * Decorative; can be used as a distraction prop (splash on NPC).
+     * 2 hits; yields SCRAP_METAL (bucket).
+     */
+    SQUEEGEE_BUCKET_PROP(0.35f, 0.60f, 0.35f, 2, Material.SCRAP_METAL),
+
+    /**
+     * Stockroom shelf — shelving unit in the back stockroom.
+     * Searching (press E) yields random items: NEWSPAPER, CHOCOLATE_BAR, CRISPS,
+     * or the CASH_POUCH_PROP (5% chance). 4 hits; yields WOOD.
+     */
+    STOCKROOM_SHELF_PROP(1.00f, 2.00f, 0.30f, 4, Material.WOOD),
+
+    /**
+     * Cash pouch — vinyl money pouch kept in the stockroom.
+     * Taking it yields 5–12 COIN; records THEFT CriminalRecord; Notoriety +5.
+     * 1 hit; yields COIN (equivalent to its contents).
+     */
+    CASH_POUCH_PROP(0.20f, 0.10f, 0.30f, 1, Material.COIN),
+
+    /**
+     * Car wash token machine — coin-operated dispenser on the forecourt exterior.
+     * Insert 3 COIN (press E) to receive a CAR_WASH_TOKEN. 5 hits; yields SCRAP_METAL.
+     */
+    CAR_WASH_TOKEN_MACHINE_PROP(0.50f, 1.20f, 0.40f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Panic button — wall-mounted emergency button behind the till counter.
+     * Activated by Wayne at Wanted Tier ≥ 2; cuts police response from 3 min to 30 s.
+     * Destroying it (2 hits) prevents Wayne from triggering fast police response.
+     * 2 hits; yields SCRAP_METAL.
+     */
+    PANIC_BUTTON_PROP(0.15f, 0.15f, 0.10f, 2, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
