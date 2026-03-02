@@ -4386,7 +4386,91 @@ public enum Material {
      * WantedSystem +2 stars, FRAUD recorded in CriminalRecord.
      * Tooltip: "Someone's pending test result. Probably won't stand up to scrutiny."
      */
-    PENDING_TEST_RESULT_ITEM("Pending Test Result");
+    PENDING_TEST_RESULT_ITEM("Pending Test Result"),
+
+    // ── Issue #1209: Citizens Advice Bureau ───────────────────────────────────
+
+    /**
+     * BENEFIT_APPEAL_LETTER — an official CAB appeal letter produced by Margaret.
+     * Used at the DWPSystem hatch to appeal a benefit sanction (70% base success
+     * chance). Also grants +20% appeal success bonus to TrafficWardenSystem.submitAppeal()
+     * when held alongside a PENALTY_CHARGE_NOTICE.
+     * Tooltip: "A letter from the Citizens Advice. Might actually work."
+     */
+    BENEFIT_APPEAL_LETTER("Benefit Appeal Letter"),
+
+    /**
+     * DEBT_MANAGEMENT_LETTER — Margaret's debt management plan letter.
+     * Reduces StreetEconomySystem debt flag. Seeds LOCAL_EVENT rumour.
+     * Tooltip: "Managed debt plan. At least someone's keeping track."
+     */
+    DEBT_MANAGEMENT_LETTER("Debt Management Letter"),
+
+    /**
+     * EVICTION_LETTER — an official eviction notice obtained from PropertySystem.
+     * Must be presented at the CAB consultation desk to trigger Margaret's
+     * eviction-dispute mechanic (extends squat eviction deadline by 7 days).
+     * Tooltip: "The landlord's solicitors have been busy."
+     */
+    EVICTION_LETTER("Eviction Letter"),
+
+    /**
+     * BAILIFF_DISPUTE_LETTER — produced by Margaret after a BAILIFF_VISIT
+     * consultation. Suspends PropertySystem bailiff debt-recovery for 3 in-game days.
+     * Tooltip: "Formally disputes the bailiff's authority. For now."
+     */
+    BAILIFF_DISPUTE_LETTER("Bailiff Dispute Letter"),
+
+    /**
+     * GRIEVANCE_LETTER — employment dispute letter produced by Margaret after an
+     * EMPLOYMENT_RIGHTS consultation. Redeems 2 COIN refund from StreetEconomySystem
+     * if the player was underpaid on a runner job.
+     * Tooltip: "Rights in writing. Might get you your money back."
+     */
+    GRIEVANCE_LETTER("Grievance Letter"),
+
+    /**
+     * FORGED_BENEFIT_LETTER — an illicit forgery produced by Brian.
+     * Presented at the DWPSystem hatch to falsely claim a sanction was resolved:
+     * yields 5 COIN fraudulent payment. 25% detection chance per use; detected →
+     * CrimeType.BENEFIT_FRAUD recorded, WantedSystem +1 star, Brian suspended 7 days.
+     * Tooltip: "Looks almost official. Almost."
+     */
+    FORGED_BENEFIT_LETTER("Forged Benefit Letter"),
+
+    /**
+     * FORGED_LANDLORD_REFERENCE — an illicit forgery produced by Brian.
+     * Used at PropertySystem.applyForRental() to bypass the credit check and skip
+     * the 2-COIN deposit. 15% detection chance per use; detected → immediate eviction,
+     * NotorietySystem +5.
+     * Tooltip: "Your reference from 'Mr Patel'. He doesn't exist."
+     */
+    FORGED_LANDLORD_REFERENCE("Forged Landlord Reference"),
+
+    /**
+     * FORGED_COURT_SUMMONS — an illicit forgery produced by Brian.
+     * Delivered to a PUBLIC NPC to frighten them into NPCState.FLEEING for 60 seconds.
+     * No individual detection risk (NPC can't verify), but NeighbourhoodWatchSystem
+     * anger +8 if a witness NPC is present.
+     * Tooltip: "A fake summons with someone's name on it. Nasty."
+     */
+    FORGED_COURT_SUMMONS("Forged Court Summons"),
+
+    /**
+     * CAB_REFERRAL_FORM — a referral form from the Citizens Advice desk prop.
+     * Used in the Eviction Dodger waiting-room side-quest: hand it to the WAITING_CLIENT
+     * NPC to complete the quest (reward: 2 COIN).
+     * Tooltip: "A CAB referral form. Someone needs this more than you."
+     */
+    CAB_REFERRAL_FORM("CAB Referral Form"),
+
+    /**
+     * DEBT_STATEMENT_ITEM — produced by combining BLANK_PAPER with a DEBT_SPIRAL
+     * WAITING_CLIENT NPC's verbal statement in the Debt Chronicler side-quest.
+     * Hand it to Margaret to complete the quest (reward: LOCALS Respect +8, rumour seeded).
+     * Tooltip: "A written account of someone's debt situation."
+     */
+    DEBT_STATEMENT_ITEM("Debt Statement");
 
     private final String displayName;
 
@@ -7159,6 +7243,28 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // printed certificate
             case PENDING_TEST_RESULT_ITEM:
                 return IconShape.FLAT_PAPER;  // manila envelope
+
+            // Issue #1209: Citizens Advice Bureau
+            case BENEFIT_APPEAL_LETTER:
+                return IconShape.FLAT_PAPER;  // official CAB letter
+            case DEBT_MANAGEMENT_LETTER:
+                return IconShape.FLAT_PAPER;  // debt plan letter
+            case EVICTION_LETTER:
+                return IconShape.FLAT_PAPER;  // eviction notice
+            case BAILIFF_DISPUTE_LETTER:
+                return IconShape.FLAT_PAPER;  // dispute letter
+            case GRIEVANCE_LETTER:
+                return IconShape.FLAT_PAPER;  // employment grievance letter
+            case FORGED_BENEFIT_LETTER:
+                return IconShape.FLAT_PAPER;  // forged official letter
+            case FORGED_LANDLORD_REFERENCE:
+                return IconShape.FLAT_PAPER;  // forged reference letter
+            case FORGED_COURT_SUMMONS:
+                return IconShape.FLAT_PAPER;  // forged court document
+            case CAB_REFERRAL_FORM:
+                return IconShape.FLAT_PAPER;  // referral form
+            case DEBT_STATEMENT_ITEM:
+                return IconShape.FLAT_PAPER;  // handwritten statement
 
             default:
                 return IconShape.BOX;

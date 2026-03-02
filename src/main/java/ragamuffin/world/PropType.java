@@ -2643,7 +2643,30 @@ public enum PropType {
      * 30% chance Sandra flags it as fraud each use: WantedSystem +2 stars, FRAUD crime.
      * Destroyed by 5 punches; yields SCRAP_METAL.
      */
-    FILING_CABINET_PROP(0.50f, 1.30f, 0.40f, 5, Material.SCRAP_METAL);
+    FILING_CABINET_PROP(0.50f, 1.30f, 0.40f, 5, Material.SCRAP_METAL),
+
+    // ── Issue #1209: Citizens Advice Bureau ───────────────────────────────────
+
+    /**
+     * CONSULTATION_DESK_PROP — Margaret or Brian's desk in the Citizens Advice
+     * Bureau. Press E (with volunteer seated) to open the consultation topic menu.
+     * Destroyed by 6 punches; yields WOOD.
+     */
+    CONSULTATION_DESK_PROP(1.40f, 0.80f, 0.60f, 6, Material.WOOD),
+
+    /**
+     * LOW_PARTITION_PROP — a waist-high room divider separating the waiting area
+     * from the consultation desks. Walkable over (no collision above 0.9f).
+     * Decorative; yields WOOD on destruction (4 punches).
+     */
+    LOW_PARTITION_PROP(2.00f, 0.90f, 0.10f, 4, Material.WOOD),
+
+    /**
+     * CAB_REFERRAL_FORM_PROP — a paper pile on the consultation desk. Interact (E)
+     * to pick up a CAB_REFERRAL_FORM item. Used in the Eviction Dodger side-quest.
+     * Yields CAB_REFERRAL_FORM on destruction (1 punch).
+     */
+    CAB_REFERRAL_FORM_PROP(0.30f, 0.05f, 0.40f, 1, Material.CAB_REFERRAL_FORM);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

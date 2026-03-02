@@ -4006,6 +4006,55 @@ public enum AchievementType {
         "No Licence, No Problem",
         "The police disagree. Twenty percent chance. You hit the twenty percent.",
         1
+    ),
+
+    // ── Issue #1209: Citizens Advice Bureau ───────────────────────────────────
+
+    /**
+     * Awarded when the player uses the Citizens Advice Bureau for the first time
+     * (completes a consultation with Margaret or Brian).
+     */
+    ADVICE_SEEKER(
+        "Know Your Rights",
+        "First time at the CAB. Margaret looked genuinely pleased someone came in.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully appeals a benefit sanction via the CAB
+     * (BENEFIT_SANCTION consultation succeeds and DWPSystem sanction is lifted).
+     */
+    APPEAL_VICTORY(
+        "The System Works",
+        "Sanction lifted. Margaret punched the air. You pretended not to notice.",
+        1
+    ),
+
+    /**
+     * Awarded when the player skips the CAB queue via bribe or intimidation.
+     */
+    QUEUE_JUMPER(
+        "Queue Jumper",
+        "Three quid or a shove. Either way, you're next.",
+        1
+    ),
+
+    /**
+     * Awarded when Brian produces a forged letter for the player (first forgery).
+     */
+    PAPER_TRAIL(
+        "Paper Trail",
+        "Brian types with two fingers and a guilty conscience.",
+        1
+    ),
+
+    /**
+     * Awarded when the player receives 3 total forged documents from Brian.
+     */
+    SERIAL_FRAUDSTER(
+        "Serial Fraudster",
+        "Three forgeries. Brian keeps a copy for his own records. You didn't ask why.",
+        1
     );
 
     private final String name;

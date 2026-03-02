@@ -635,7 +635,19 @@ public enum LandmarkType {
      * outside with a car.
      * Managed by DrivingTestSystem.
      */
-    DVSA_TEST_CENTRE;
+    DVSA_TEST_CENTRE,
+
+    // ── Issue #1209: Northfield Citizens Advice Bureau ────────────────────────
+
+    /**
+     * Issue #1209: CITIZENS_ADVICE — the Northfield Citizens Advice Bureau, a
+     * narrow, strip-lit shopfront wedged between the JobCentre and the Magistrates'
+     * Court on the high street. A 6×4×3-block building with blue-and-white frontage.
+     * Open Mon–Fri 09:30–16:30.
+     * Staffed by Margaret (ADVICE_VOLUNTEER) and Brian (ADVICE_VOLUNTEER, Mon/Wed/Fri).
+     * Managed by CitizensAdviceSystem.
+     */
+    CITIZENS_ADVICE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -732,6 +744,7 @@ public enum LandmarkType {
             case COUNCIL_OFFICE:        return "Northfield Council Office";
             case VEHICLE_IMPOUND:       return "Vehicle Impound";
             case DVSA_TEST_CENTRE:      return "Northfield DVSA Test Centre";
+            case CITIZENS_ADVICE:       return "Northfield Citizens Advice";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
