@@ -696,7 +696,18 @@ public enum LandmarkType {
      * Visited by DVSA_INSPECTOR every 7 in-game days.
      * Managed by MOTSystem.java.
      */
-    BERTS_GARAGE;
+    BERTS_GARAGE,
+
+    // ── Issue #1263: Northfield Illegal Street Racing ─────────────────────────
+
+    /**
+     * Issue #1263: STREET_RACING_MEET — the Tesco car park where boy racers
+     * assemble on Friday and Saturday nights from 23:00. Marked with
+     * RACING_CONE_PROPs. Shane (RACE_ORGANISER) stands at the entrance collecting
+     * entry fees and managing the sprint schedule. Active only 23:00–03:00 Fri/Sat.
+     * Managed by StreetRacingSystem.java.
+     */
+    STREET_RACING_MEET;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -797,6 +808,7 @@ public enum LandmarkType {
             case DRIVING_SCHOOL:        return "BSM Driving School";
             case CLAIMS_MANAGEMENT:     return "Compensation Kings";
             case CAR_DEALERSHIP:        return "Wheelwright Motors";
+            case STREET_RACING_MEET:    return "Tesco Car Park (Meet)";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

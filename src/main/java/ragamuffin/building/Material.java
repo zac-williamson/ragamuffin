@@ -4933,7 +4933,26 @@ public enum Material {
      * Single-use for the sabotage action; otherwise a weak melee weapon (2 damage).
      * Tooltip: "Don't do anything daft with it."
      */
-    PENKNIFE("Penknife");
+    PENKNIFE("Penknife"),
+
+    // ── Issue #1263: Northfield Illegal Street Racing ─────────────────────────
+
+    /**
+     * NITROUS_CANISTER — a small nitrous oxide canister purchased from
+     * CarDealershipSystem (8 COIN). Press Space during a race for a 3-second
+     * speed burst. Single use per race. Reduces target's speed by 25% if the
+     * nitrous line is loosened with a SCREWDRIVER (sabotage hustle).
+     * Tooltip: "One shot. Make it count."
+     */
+    NITROUS_CANISTER("Nitrous Canister"),
+
+    /**
+     * RACING_TROPHY — awarded to the 1st-place finisher of a ring road sprint.
+     * A cheap plastic trophy engraved 'Northfield Ring Road Champion'.
+     * Can be fenced at StreetEconomySystem for 3 COIN, or kept for bragging rights.
+     * Tooltip: "You beat a load of boy racers. Outstanding."
+     */
+    RACING_TROPHY("Racing Trophy");
 
     private final String displayName;
 
@@ -6066,6 +6085,12 @@ public enum Material {
             case PENKNIFE:              return cs(0.60f, 0.60f, 0.55f,  // Steel blade
                                                   0.35f, 0.22f, 0.12f); // Brown handle
 
+            // Issue #1263: Northfield Illegal Street Racing
+            case NITROUS_CANISTER:      return cs(0.85f, 0.85f, 0.90f,  // Silver canister
+                                                  0.20f, 0.65f, 0.20f); // Green label
+            case RACING_TROPHY:         return cs(0.90f, 0.75f, 0.20f,  // Gold trophy
+                                                  0.60f, 0.45f, 0.15f); // Dark gold base
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -6745,6 +6770,9 @@ public enum Material {
             case JUNK_ITEM:
             case GARDEN_ORNAMENT:
             case PENKNIFE:
+            // Issue #1263: Northfield Illegal Street Racing
+            case NITROUS_CANISTER:
+            case RACING_TROPHY:
                 return true;
             default:
                 return false;
@@ -7889,6 +7917,12 @@ public enum Material {
                 return IconShape.BOX;         // rubber tyre
             case PENKNIFE:
                 return IconShape.FLAT_PAPER;  // small folding knife
+
+            // Issue #1263: Northfield Illegal Street Racing
+            case NITROUS_CANISTER:
+                return IconShape.CYLINDER;    // pressurised nitrous canister
+            case RACING_TROPHY:
+                return IconShape.BOX;         // plastic trophy
 
             default:
                 return IconShape.BOX;

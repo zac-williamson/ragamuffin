@@ -4551,6 +4551,51 @@ public enum AchievementType {
         "Horsebox Hustler",
         "Ten deals done off the back of a flatbed Transit.",
         10
+    ),
+
+    // ── Issue #1263: Northfield Illegal Street Racing ─────────────────────────
+
+    /**
+     * Awarded (instant) when the player wins a ring road sprint race in 1st place.
+     * Triggers on StreetRacingSystem race resolution with player in position 1.
+     */
+    RING_ROAD_KING(
+        "Ring Road King",
+        "Won a ring road sprint. Shane gave you a nod. The boy racers were sick.",
+        1
+    ),
+
+    /**
+     * Awarded (instant) when the player enters the race without any car modifications
+     * (no CarDealershipSystem upgrades) and finishes in any position.
+     * Proves you don't need the fancy gear.
+     */
+    STOCK_STANDARD(
+        "Stock Standard",
+        "Raced with no mods. Just the car and your nerve. Fair play.",
+        1
+    ),
+
+    /**
+     * Awarded (instant) on first successful nitrous-line sabotage (SCREWDRIVER on
+     * competitor's car) that directly contributes to a race win.
+     * The dirty tricks achievement.
+     */
+    DIRTY_TRICKS(
+        "Dirty Tricks",
+        "Loosened someone's nitrous line. They didn't finish. You did.",
+        1
+    ),
+
+    /**
+     * Awarded (instant) when the player tips off the police via PHONE_BOX_PROP
+     * about the illegal street racing meet (3 COIN delivered next day).
+     * Triggers GRASSED_UP rumour and +2 Notoriety.
+     */
+    GRASS(
+        "Grass",
+        "Rang the plod. Shane'll find out. They always find out.",
+        1
     );
 
     private final String name;

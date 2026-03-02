@@ -743,7 +743,18 @@ public class CriminalRecord {
          * during Quiz Night (40% catch chance on F press). The player is disqualified,
          * ejected from the quiz, and gains Notoriety +3.
          */
-        CHEATING_AT_PUB_QUIZ("Cheating at pub quiz");
+        CHEATING_AT_PUB_QUIZ("Cheating at pub quiz"),
+
+        // ── Issue #1263: Northfield Illegal Street Racing ─────────────────────
+
+        /**
+         * Recorded when the player participates in an illegal street race on the
+         * Northfield ring road. Also recorded if police arrive during a race the
+         * player is in (+2 Wanted stars mid-race) or if the player is within 30
+         * blocks of the racing cones when the police shutdown occurs (+1 Wanted star).
+         * Penalty: Notoriety +5 per participation. WantedSystem stars per spec.
+         */
+        ILLEGAL_STREET_RACING("Illegal street racing");
 
         private final String displayName;
 

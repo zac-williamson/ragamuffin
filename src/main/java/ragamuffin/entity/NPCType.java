@@ -2348,7 +2348,26 @@ public enum NPCType {
      * Auto-answers questions with Normal(μ=3, σ=1) accuracy per round.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    QUIZ_TEAM(20f, 0f, 0f, false);
+    QUIZ_TEAM(20f, 0f, 0f, false),
+
+    // ── Issue #1263: Northfield Illegal Street Racing ─────────────────────────
+
+    /**
+     * Shane the Race Organiser — runs the Friday/Saturday night illegal street
+     * racing meet at the Tesco car park from 23:00. Collects 5 COIN entry fees,
+     * manages racer registration, shouts 'SCATTER! PLOD!' on police shutdown.
+     * Bans players caught sabotaging competitors. Cannot be attacked (non-hostile).
+     * HP: 40f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    RACE_ORGANISER(40f, 0f, 0f, false),
+
+    /**
+     * Boy Racer — a Friday/Saturday-night street racer who assembles in the
+     * Tesco car park at 23:00. Has a named car with a base speed stat.
+     * Flees (NPCState.FLEEING) on police shutdown. 4–6 spawn per meet.
+     * HP: 35f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    BOY_RACER(35f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -2960,7 +2960,24 @@ public enum PropType {
      * Player presses E to register for the quiz (costs 1 COIN, open 19:30–20:00).
      * Yields QUIZ_SHEET on registration. Cannot be destroyed (hitsToBreak = 0).
      */
-    QUIZ_PODIUM_PROP(0.60f, 1.20f, 0.50f, 0, null);
+    QUIZ_PODIUM_PROP(0.60f, 1.20f, 0.50f, 0, null),
+
+    // ── Issue #1263: Northfield Illegal Street Racing ─────────────────────────
+
+    /**
+     * RACING_CONE_PROP — a traffic cone used to mark the start/finish line and
+     * course boundaries of the ring road sprint. Placed by Shane on meet nights.
+     * Can be kicked aside (hitsToBreak = 1, drops null). Cannot block vehicles.
+     */
+    RACING_CONE_PROP(0.30f, 0.70f, 0.30f, 1, null),
+
+    /**
+     * RACE_FINISH_BANNER_PROP — a cloth banner strung across the ring road
+     * marking the finish line of the illegal sprint. Shane deploys it at 23:15.
+     * Torn down automatically on police shutdown (or by player).
+     * hitsToBreak = 2, no material drop.
+     */
+    RACE_FINISH_BANNER_PROP(8.00f, 0.20f, 0.20f, 2, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
