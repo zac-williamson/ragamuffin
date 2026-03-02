@@ -32318,3 +32318,256 @@ CHARACTER_REFERENCE_LETTER reduces court sentence tier by 1.
 // New CriminalRecord entries: COUNCIL_THEFT, DECEPTION_OF_COUNCIL, OBTAINING_MONEY_BY_DECEPTION
 // New Achievements: COMMUNITY_PILLAR, STEP_TOGETHER, GRANT_GRABBER, BISCUIT_BANDIT,
 //   HONEST_CITIZEN, ANONYMOUS, CLEAN_EIGHT (add to AchievementType.java)
+
+## Add Northfield NHS Dentist — Six-Month Waits, Toothache Debuffs & the Back-Street Molar Job
+
+**Landmark**: New `LandmarkType.NHS_DENTIST` ("Northfield Dental Practice")
+**System file**: `src/main/java/ragamuffin/core/NHSDentistSystem.java`
+**Display name**: "Northfield Dental Practice"
+
+A tired 1970s brick building wedged between the GP Surgery and the pharmacy, with
+a faded blue NHS logo above the door and a hand-typed sign in the window: *"WE ARE
+NOT TAKING NEW NHS PATIENTS."* The quintessential British dental experience — a
+six-month wait for a routine check-up, a waiting room full of people pretending not
+to be in pain, and a receptionist who treats every request as an inconvenience.
+Run by **Dr. Rashid** (`DENTIST_NPC` NPCType) Mon–Fri 09:00–17:30.
+
+### The Toothache Debuff — Core Mechanic
+
+Eating sugary items accumulates a hidden `sugarDamage` float (0–100). The threshold
+is 50 by default, reduced to 35 at low health. When `sugarDamage` crosses the threshold
+a `TOOTHACHE` debuff is applied:
+
+- **TOOTHACHE** (mild, 0–30): −5 max Health cap, −3 Alertness. Speech: "Ow me tooth."
+- **TOOTHACHE** (severe, 31–60): −15 max Health cap, −8 Alertness, +2 Notoriety per in-game
+  hour (player visibly wincing). Eating anything → pain spike: −3 Health.
+- **TOOTHACHE** (abscess, 61+): −25 max Health cap, −15 Alertness, random stagger every 3
+  in-game minutes (player input locked for 0.5s). Cannot busk, MC battle, or pick locks
+  while at abscess level.
+
+Sugar items that raise `sugarDamage` (amount per item):
+
+| Item | Sugar damage |
+|------|-------------|
+| `SCRATCH_CARD` (chewing while idle) | +1 |
+| `CHOCOLATE_BAR` | +8 |
+| `CHOC_ICE` | +10 |
+| `CURRY_AND_RICE` (sugar in sauce) | +3 |
+| `CHEAP_SPIRITS` (mixers) | +5 |
+| `PINT` (stout) | +2 |
+| `FIZZY_DRINK` (new item) | +12 |
+| `HARIBO` (new item) | +15 |
+
+`sugarDamage` decays at −1 per in-game hour naturally (saliva, not brushing).
+Using `TOOTHBRUSH` (new item, sold at pharmacy for 1 COIN) decays −25 instantly.
+
+### Registering & the NHS Waiting List
+
+The practice is NOT taking new patients. To get NHS treatment the player must:
+
+1. **Register** — Press E on the `RECEPTION_DESK_PROP`. Receptionist (Deborah,
+   `DENTAL_RECEPTIONIST` NPCType) says: *"We've got a six-month wait, love. Leave your name."*
+   Player is placed on `waitingListDays` = 180 (in-game days).
+
+2. **Wait** — `waitingListDays` decrements once per in-game day. With a
+   `WAITING_LIST_LETTER` (see below) it decrements at 2× speed.
+
+3. **Appointment** — When `waitingListDays` reaches 0, a `DENTAL_APPOINTMENT_LETTER`
+   item appears in the player's squat/home mailbox (or is added to inventory if no
+   fixed home). Player has 3 in-game days to attend before it expires (Deborah
+   re-books, adding 90 more days).
+
+4. **Treatment** — Press E on Dr. Rashid. Pay **2 COIN** (NHS charge). Clears all
+   `sugarDamage`. Removes `TOOTHACHE` debuff at any severity. Seeds `LOCAL_EVENT`
+   rumour: *"Finally got an NHS dentist appointment. Only took six months."*
+
+### Skipping the Queue — Hustle Mechanics
+
+**Private Dentist Bribe**: Pay Deborah **15 COIN** in cash (E on reception desk,
+choose "Private appointment"). Skips the waiting list entirely. Dr. Rashid sees
+the player same day. Costs **8 COIN** for treatment (private rate). Deborah pockets
+2 COIN; `CriminalRecord.CrimeType.BRIBERY_OF_OFFICIAL` added if WantedSystem
+deems the exchange suspicious (20% base chance, ×2 at Notoriety ≥ 40).
+
+**The Waiting List Letter**: A `WAITING_LIST_LETTER` can be forged using the
+`PHOTOCOPIER_PROP` at the Community Centre (1 COIN) if the player has the authentic
+letter template stolen from the `FILING_CABINET_PROP` in the practice's back office.
+Presenting the forged letter to Deborah halves the remaining wait. If caught
+(25% chance at Notoriety ≥ 30), adds `OBTAINING_SERVICES_BY_DECEPTION` to
+`CriminalRecord`.
+
+**Back-Street Molar Job — Mirek**: At any time, the player can visit **Mirek**
+(`UNLICENSED_DENTIST` NPCType) — a Polish ex-dental-student who operates from
+his council flat kitchen (spawns in `COUNCIL_FLATS` landmark, ground floor flat,
+accessible 19:00–23:00). Mirek charges **5 COIN** for a tooth pull regardless of
+severity. Clears `TOOTHACHE` immediately. However:
+- 40% chance: successful, no side effects.
+- 35% chance: INFECTION debuff — reduces Health by 2/in-game hour for 3 in-game
+  days. Curable only at GP Surgery (ANTIBIOTICS item, 2 COIN).
+- 20% chance: BOTCHED_JOB — Health −15 immediately, INFECTION applied, and
+  `sugarDamage` reset but player cannot eat for 1 in-game day without −2 Health.
+- 5% chance: MIREK_ARRESTED — WantedSystem triggers raid on his flat the next
+  in-game day; Mirek disappears for 14 in-game days (player loses access).
+
+Mirek is found via a `LOCAL_EVENT` rumour seeded by pub NPCs: *"Mirek'll sort your
+tooth out for a fiver. Don't ask too many questions."* Rumour only triggers if
+player has had `TOOTHACHE` (any level) for ≥ 2 in-game days.
+
+### Props (add to `PropType.java`)
+
+- `DENTAL_CHAIR_PROP` — reclining dental chair; E starts treatment interaction with
+  Dr. Rashid. 5 hits; yields `SCRAP_METAL`.
+- `DENTAL_DRILL_PROP` — wall-mounted drill unit; flavour prop. E: ambient drill sound
+  (makes nearby NPCs wince).
+- `RECEPTION_DESK_PROP` — Deborah's desk; already exists generically — reuse.
+- `APPOINTMENT_BOARD_PROP` — whiteboard with appointment slots. Read-only; shows
+  next 3 booked slots (flavour names of NPCs).
+- `MOUTH_RINSE_DISPENSER_PROP` — small pink wall unit. E: use mouthwash → `sugarDamage`
+  −5. Once per visit. 3 hits; yields nothing.
+- `NHS_POSTER_PROP` — government dental-hygiene poster. Read-only; flavour text:
+  *"Brush twice a day. Visit your dentist regularly. (If you can get an appointment.)"*
+
+### Items (add to `Material.java`)
+
+- `DENTAL_APPOINTMENT_LETTER` — received when wait-list slot opens. Presented to
+  Deborah to trigger treatment. Single-use.
+- `WAITING_LIST_LETTER` — authentic letter confirming wait-list registration. Obtained
+  from `FILING_CABINET_PROP` in back office (LOCKPICK required or during quiet hours
+  when Deborah is on break 13:00–14:00). Used at `PHOTOCOPIER_PROP` to make
+  `FORGED_WAITING_LIST_LETTER`.
+- `FORGED_WAITING_LIST_LETTER` — halves remaining wait-list time when presented to Deborah.
+- `TOOTHBRUSH` — sold at pharmacy for 1 COIN. Decays `sugarDamage` −25. Stacks to 5.
+- `FIZZY_DRINK` — sold at `CORNER_SHOP`, `PETROL_STATION`, vending machines for 1 COIN.
+  Satisfies THIRSTY −20. `sugarDamage` +12.
+- `HARIBO` — sold at `NEWSAGENT`, `POUND_SHOP`, `CORNER_SHOP` for 1 COIN.
+  Satisfies HUNGRY −10. `sugarDamage` +15.
+- `ANTIBIOTICS` — dispensed at `GP_SURGERY` on prescription. Cures INFECTION debuff.
+  2 COIN with prescription; 8 COIN private at pharmacy. Unstackable (3-day course).
+
+### NPCs (add to `NPCType.java`)
+
+- `DENTIST_NPC` — Dr. Rashid; calm, professional, quietly exhausted by the NHS.
+  Present Mon–Fri 09:00–17:30. Refuses Notoriety Tier 4+ ("I can't treat you under
+  these circumstances. Please leave."). Only visible in treatment room during
+  appointments.
+- `DENTAL_RECEPTIONIST` — Deborah; harassed, phone always ringing, slightly passive-
+  aggressive. Manages registration and appointments. Calls police if player enters
+  back office.
+- `DENTAL_PATIENT` — 2–4 spawn in waiting room during opening hours. Sit on
+  `WAITING_BENCH_PROP`. Will share waiting-list commiseration rumours with the player
+  (E to chat: seeds `LOCAL_EVENT` rumour). 30% hold a `MAGAZINE_PROP` they stole from
+  the waiting room (sellable to charity shop for 1 COIN).
+- `UNLICENSED_DENTIST` — Mirek; friendly, Eastern European, in a tracksuit. Only
+  accessible via rumour chain in Council Flats at night. Disappears 14 days after
+  MIREK_ARRESTED event.
+
+### Achievements (add to `AchievementType.java`)
+
+| Achievement | Trigger |
+|---|---|
+| `BRITISH_SMILE` | Reach `TOOTHACHE` abscess level without seeing a dentist for 7 in-game days |
+| `DENTAL_TOURISM` | Pay Mirek for a tooth pull (any outcome) |
+| `QUEUE_JUMPED` | Successfully use a `FORGED_WAITING_LIST_LETTER` without being caught |
+| `BRUSHED_UP` | Use a `TOOTHBRUSH` every in-game day for 7 consecutive days |
+| `PRIVATE_PATIENT` | Use the private dentist bribe path at least once |
+| `NHS_SURVIVOR` | Complete the full 180-day NHS waiting list and attend the appointment |
+
+### System Integrations
+
+- **WarmthSystem**: Dental practice is a heated building; acts as warm shelter.
+- **HealingSystem**: Treatment (NHS or private) clears `TOOTHACHE`, restores Health cap.
+  Infection (from Mirek) reduces health over time — interacts with existing `heal()`/`update()`.
+- **StreetEconomySystem**: `FIZZY_DRINK` and `HARIBO` added as items satisfying THIRSTY/HUNGRY.
+- **NotorietySystem**: Abscess-level `TOOTHACHE` adds +2 Notoriety/hour (visible pain).
+  Bribery of Deborah: +3 Notoriety if caught.
+- **WantedSystem**: MIREK_ARRESTED event; `OBTAINING_SERVICES_BY_DECEPTION` crime.
+- **CriminalRecord**: `BRIBERY_OF_OFFICIAL`, `OBTAINING_SERVICES_BY_DECEPTION`.
+- **RumourNetwork**: Mirek referral seeded via pub NPCs after 2 days of toothache;
+  NHS appointment completion seeds `LOCAL_EVENT`; Deborah bribery caught seeds
+  `ANTISOCIAL_BEHAVIOUR` rumour.
+- **GPSurgerySystem**: ANTIBIOTICS obtainable on prescription; INFECTION debuff
+  cured there. `GPSurgerySystem` gains a new treatment path: `treatInfection()`.
+- **PharmacySystem**: `ANTIBIOTICS` available over-the-counter at 8 COIN (private
+  rate); `TOOTHBRUSH` stocked at 1 COIN.
+- **PawnsShopSystem / FenceSystem**: `DENTAL_APPOINTMENT_LETTER` unsellable. `WAITING_LIST_LETTER`
+  fenceable for 2 COIN (Gary: "Letters? What am I, a postman?").
+- **NoiseSystem**: `DENTAL_DRILL_PROP` interaction registers noise level 3 in a 6-block radius,
+  raising NeighbourhoodWatch annoyance.
+- **TimeSystem**: Opening hours 09:00–17:30 Mon–Fri. Lunch break 13:00–14:00 (Deborah absent
+  from desk — back-office accessible without triggering alert).
+- **AchievementSystem**: Six new achievements above.
+
+### Unit Tests
+
+- `sugarDamage` accumulation: eating a `CHOCOLATE_BAR` increments `sugarDamage` by 8;
+  eating a `HARIBO` increments by 15; natural decay is −1 per in-game hour.
+- `TOOTHACHE` threshold: `sugarDamage` = 50 → mild; = 81 → severe; = 111 → abscess.
+- Health cap reduction: mild = −5; severe = −15; abscess = −25; verified via
+  `player.getMaxHealth()` at each level.
+- Waiting list countdown: 1 call to `update(1.0f)` with 24 in-game hours elapsed
+  decrements `waitingListDays` by 1; with `FORGED_WAITING_LIST_LETTER` active, decrements by 2.
+- Mirek outcomes: over 1,000 seeds, success rate 40% ±3%, infection 35% ±3%,
+  botched 20% ±3%, arrested 5% ±2%.
+- Private bribe: 15 COIN deducted from inventory; appointment immediately available;
+  `BRIBERY_OF_OFFICIAL` added to `CriminalRecord` at 20% catch rate (verified over 500 seeds).
+- Deborah absent: at in-game time 13:30, `isReceptionistPresent()` returns false.
+- `TOOTHBRUSH` usage: `sugarDamage` reduced by 25 (floored at 0) on use; item quantity
+  decremented by 1.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Toothache accumulates from sugar and applies debuff**: Give the player 0
+   `sugarDamage`. Give them 4× `CHOCOLATE_BAR`. Eat all 4 (simulate 4 consume
+   actions). Verify `sugarDamage` = 32. Give them 3× `HARIBO`; eat all. Verify
+   `sugarDamage` = 77. Verify `TOOTHACHE` debuff is active at SEVERE level (>30).
+   Verify `player.getMaxHealth()` has decreased by 15. Verify player Alertness
+   has decreased by 8.
+
+2. **NHS waiting list full flow**: Press E on `RECEPTION_DESK_PROP` at 10:00 Monday.
+   Verify player is registered (`isOnWaitingList()` returns true). Verify
+   `waitingListDays` = 180. Advance 180 in-game days. Verify player inventory contains
+   `DENTAL_APPOINTMENT_LETTER`. Press E on Dr. Rashid (`DENTIST_NPC`). Pay 2 COIN.
+   Verify `sugarDamage` = 0. Verify `TOOTHACHE` debuff removed. Verify
+   `AchievementType.NHS_SURVIVOR` unlocked.
+
+3. **Mirek botched job infection chain**: Set `sugarDamage` = 80 (abscess level).
+   Seed RNG to produce BOTCHED_JOB outcome (20% branch). Visit Mirek at 20:00 in
+   Council Flats. Press E on Mirek. Pay 5 COIN. Verify player Health reduced by 15.
+   Verify INFECTION debuff active. Verify player cannot eat without −2 Health penalty.
+   Visit `GP_SURGERY`, obtain `ANTIBIOTICS`. Use `ANTIBIOTICS`. Verify INFECTION
+   debuff removed. Verify `AchievementType.DENTAL_TOURISM` unlocked.
+
+4. **Forged waiting list letter halves wait**: Register on waiting list
+   (`waitingListDays` = 180). Use LOCKPICK during lunch break (13:30) on back-office
+   door — verify no alarm fires. Take `WAITING_LIST_LETTER` from `FILING_CABINET_PROP`.
+   Use `PHOTOCOPIER_PROP` at Community Centre to create `FORGED_WAITING_LIST_LETTER`.
+   Present to Deborah. Verify `waitingListDays` now decrements at 2× rate: advance
+   10 in-game days and verify `waitingListDays` = 160 (i.e., decreased by 20, not 10).
+
+5. **Private bribe path**: Set Notoriety to 0. Give player 20 COIN. Press E on
+   `RECEPTION_DESK_PROP` → select "Private appointment". Verify 15 COIN deducted.
+   Verify appointment immediately available. Press E on Dr. Rashid. Pay 8 COIN.
+   Verify treatment applied (sugarDamage = 0). Verify total COIN now 20 − 15 − 8 = −3
+   (i.e. player has −3 or is blocked: implementation must check sufficient funds;
+   set player to 25 COIN to ensure they can afford). Set player COIN to 25, retry.
+   Verify `AchievementType.PRIVATE_PATIENT` unlocked.
+
+6. **Abscess Notoriety drain**: Set `sugarDamage` = 70 (abscess). Advance 3 in-game
+   hours. Verify player Notoriety has increased by 6 (2 per hour × 3 hours).
+
+// New system: NHSDentistSystem.java in ragamuffin.core
+// New LandmarkType: NHS_DENTIST (add to LandmarkType.java)
+// New NPCTypes: DENTIST_NPC, DENTAL_RECEPTIONIST, DENTAL_PATIENT, UNLICENSED_DENTIST
+//   (add to NPCType.java)
+// New Materials: DENTAL_APPOINTMENT_LETTER, WAITING_LIST_LETTER,
+//   FORGED_WAITING_LIST_LETTER, TOOTHBRUSH, FIZZY_DRINK, HARIBO, ANTIBIOTICS
+//   (add to Material.java)
+// New PropTypes: DENTAL_CHAIR_PROP, DENTAL_DRILL_PROP, APPOINTMENT_BOARD_PROP,
+//   MOUTH_RINSE_DISPENSER_PROP, NHS_POSTER_PROP (add to PropType.java)
+//   (RECEPTION_DESK_PROP and WAITING_BENCH_PROP already exist — reuse)
+// New debuffs: TOOTHACHE (3 severity levels), INFECTION, BOTCHED_JOB
+//   (implement as player status flags or a new StatusEffect enum)
+// New CriminalRecord entries: BRIBERY_OF_OFFICIAL, OBTAINING_SERVICES_BY_DECEPTION
+// New RumourTypes: MIREK_REFERRAL (seeded by pub NPCs after 2 days toothache)
+// New Achievements: BRITISH_SMILE, DENTAL_TOURISM, QUEUE_JUMPED, BRUSHED_UP,
+//   PRIVATE_PATIENT, NHS_SURVIVOR (add to AchievementType.java)
