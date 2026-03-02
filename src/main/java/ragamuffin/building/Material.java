@@ -4833,7 +4833,29 @@ public enum Material {
      * Automatically attached to the player's vehicle on PASS or PASS_BRIBE outcome.
      * Tooltip: "Stick it on the windscreen and hope for the best."
      */
-    INSPECTION_STICKER("MOT Inspection Sticker");
+    INSPECTION_STICKER("MOT Inspection Sticker"),
+
+    // ── Issue #1251: Northfield Street Chuggers ───────────────────────────────
+
+    /**
+     * CHARITY_WRISTBAND — cosmetic wristband received when donating to a chugger.
+     * While worn, lowers Notoriety by 1 (signals prosocial behaviour to NPCs).
+     */
+    CHARITY_WRISTBAND("Charity Wristband"),
+
+    /**
+     * CHARITY_CLIPBOARD — equippable clipboard issued to the player by Tracy when hired.
+     * Required to accost passersby during a CHUGGER_SHIFT.
+     * Confiscated by Tracy if fraud is detected at end of shift.
+     */
+    CHARITY_CLIPBOARD("Charity Clipboard"),
+
+    /**
+     * DONOR_LIST — a list of donor details harvested via skimmed sign-ups.
+     * Sellable to the FenceSystem for 8 COIN each; max 3 per day.
+     * Tooltip: "Someone who deals in mailing lists will pay good money for this."
+     */
+    DONOR_LIST("Donor List");
 
     private final String displayName;
 

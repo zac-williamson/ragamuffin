@@ -2277,7 +2277,22 @@ public enum NPCType {
      * Speech: "DVSA. I'll need to see your testing records." / "These certificates
      *          don't add up." / "Step away from the vehicle."
      */
-    DVSA_INSPECTOR(40f, 0f, 0f, false);
+    DVSA_INSPECTOR(40f, 0f, 0f, false),
+
+    // ── Issue #1251: Northfield Street Chuggers ───────────────────────────────
+
+    /**
+     * Chugger — charity mugger NPC patrolling the high street on weekdays 09:00–17:00.
+     * Acosts the player within 3 blocks; clipboard-wielding fundraiser.
+     */
+    CHUGGER(20f, 0f, 0f, false),
+
+    /**
+     * Chugger Leader — Tracy, the relentlessly positive team leader who stands near the
+     * CHARITY_CLIPBOARD_STAND_PROP outside the charity shop. Manages the shift quota
+     * and can hire the player as a chugger.
+     */
+    CHUGGER_LEADER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
