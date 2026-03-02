@@ -594,7 +594,7 @@ public class MinicabSystem {
         // Find a PUBLIC or WORKER NPC to tout at
         NPC target = null;
         for (NPC npc : nearbyNpcs) {
-            if (npc.getType() == NPCType.PUBLIC || npc.getType() == NPCType.WORKER) {
+            if (npc.getType() == NPCType.PUBLIC || npc.getType() == NPCType.COMMUTER) {
                 target = npc;
                 break;
             }

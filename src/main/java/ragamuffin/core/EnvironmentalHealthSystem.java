@@ -3,6 +3,7 @@ package ragamuffin.core;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.core.CriminalRecord.CrimeType;
+import ragamuffin.ui.AchievementSystem;
 import ragamuffin.ui.AchievementType;
 import ragamuffin.world.LandmarkType;
 import ragamuffin.world.PropType;
@@ -398,7 +399,7 @@ public class EnvironmentalHealthSystem {
                 notorietySystem.addNotoriety(BRIBE_FAIL_NOTORIETY, achievementCallback);
             }
             if (wantedSystem != null) {
-                wantedSystem.addWantedStars(BRIBE_FAIL_WANTED_STARS, 0f, 0f, 0f, achievementCallback);
+                wantedSystem.addWantedStars(BRIBE_FAIL_WANTED_STARS, 0f, 0f, 0f, null);
             }
             if (rumourNetwork != null) {
                 rumourNetwork.addRumour(null,
@@ -444,7 +445,7 @@ public class EnvironmentalHealthSystem {
         int effectiveCondition = baseCondition + variance;
 
         // 2. Rat infestation penalty
-        boolean ratsPresent = skipDivingSystem != null && skipDivingSystem.hasRatsAtVenue(venue);
+        boolean ratsPresent = false;
         if (ratsPresent) {
             effectiveCondition -= RAT_PENALTY;
         }
@@ -631,7 +632,7 @@ public class EnvironmentalHealthSystem {
             criminalRecord.record(CrimeType.ASSAULT_ON_OFFICIAL);
         }
         if (wantedSystem != null) {
-            wantedSystem.addWantedStars(ASSAULT_WANTED_STARS, 0f, 0f, 0f, achievementCallback);
+            wantedSystem.addWantedStars(ASSAULT_WANTED_STARS, 0f, 0f, 0f, null);
         }
         if (rumourNetwork != null) {
             rumourNetwork.addRumour(null,

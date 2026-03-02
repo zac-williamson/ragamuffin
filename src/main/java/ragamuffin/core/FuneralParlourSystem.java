@@ -605,7 +605,7 @@ public class FuneralParlourSystem {
         }
         if (wantedSystem != null) {
             wantedSystem.addWantedStars(HEARSE_OVERDUE_WANTED_SEVERITY,
-                    PARLOUR_SPAWN_X, PARLOUR_SPAWN_Y, PARLOUR_SPAWN_Z, null, null);
+                    PARLOUR_SPAWN_X, PARLOUR_SPAWN_Y, PARLOUR_SPAWN_Z, null);
         }
     }
 
@@ -680,7 +680,7 @@ public class FuneralParlourSystem {
             if (allNpcs != null) {
                 for (NPC npc : allNpcs) {
                     if (npc.getType() == NPCType.VICAR) {
-                        npc.setState(NPCState.HOSTILE);
+                        npc.setState(NPCState.AGGRESSIVE);
                     }
                 }
             }

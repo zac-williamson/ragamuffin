@@ -443,7 +443,7 @@ public class FlyTippingSystem {
             return 0;
         }
         int cost = loadCount * DISPOSAL_FEE_COIN;
-        if (inventory != null && inventory.countItem(Material.COIN) < cost) {
+        if (inventory != null && inventory.getItemCount(Material.COIN) < cost) {
             return -1; // not enough coin
         }
         if (inventory != null) {
@@ -573,9 +573,9 @@ public class FlyTippingSystem {
                         criminalRecord.record(CrimeType.CAUGHT_ON_CAMERA);
                     }
                     if (wantedSystem != null) {
-                        float px = player != null ? player.getX() : pile.position.x;
-                        float py = player != null ? player.getY() : pile.position.y;
-                        float pz = player != null ? player.getZ() : pile.position.z;
+                        float px = player != null ? player.getPosition().x : pile.position.x;
+                        float py = player != null ? player.getPosition().y : pile.position.y;
+                        float pz = player != null ? player.getPosition().z : pile.position.z;
                         wantedSystem.addWantedStars(CCTV_WANTED_STARS, px, py, pz, null);
                     }
                 }
@@ -651,8 +651,8 @@ public class FlyTippingSystem {
         // Find the pile whose officer is spawned and player is nearby
         for (FlyTipPile pile : activePiles) {
             if (!pile.officerSpawned) continue;
-            float dx = player.getX() - pile.position.x;
-            float dz = player.getZ() - pile.position.z;
+            float dx = player.getPosition().x - pile.position.x;
+            float dz = player.getPosition().z - pile.position.z;
             float dist = (float) Math.sqrt(dx * dx + dz * dz);
             if (dist <= OFFICER_CONFRONTATION_RANGE) {
                 // Issue fine
@@ -676,7 +676,7 @@ public class FlyTippingSystem {
      */
     public boolean payFine(FlyTipPile pile, Inventory inventory,
                            NotorietySystem.AchievementCallback achievementCallback) {
-        if (inventory != null && inventory.countItem(Material.COIN) < FIXED_PENALTY_COIN) {
+        if (inventory != null && inventory.getItemCount(Material.COIN) < FIXED_PENALTY_COIN) {
             return false;
         }
         if (inventory != null) {
@@ -702,9 +702,9 @@ public class FlyTippingSystem {
             criminalRecord.record(CrimeType.EVADING_ENFORCEMENT);
         }
         if (wantedSystem != null) {
-            float px = player != null ? player.getX() : 0f;
-            float py = player != null ? player.getY() : 0f;
-            float pz = player != null ? player.getZ() : 0f;
+            float px = player != null ? player.getPosition().x : 0f;
+            float py = player != null ? player.getPosition().y : 0f;
+            float pz = player != null ? player.getPosition().z : 0f;
             wantedSystem.addWantedStars(EVASION_WANTED_STARS, px, py, pz, null);
         }
 

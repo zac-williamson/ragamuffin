@@ -613,7 +613,7 @@ public class RagAndBoneSystem {
 
         // Record vandalism
         if (criminalRecord != null) {
-            criminalRecord.record(CriminalRecord.CrimeType.VANDALISM);
+            criminalRecord.record(CriminalRecord.CrimeType.CRIMINAL_DAMAGE);
         }
 
         return SlashTyresResult.SUCCESS;

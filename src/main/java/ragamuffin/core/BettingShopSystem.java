@@ -734,7 +734,7 @@ public class BettingShopSystem {
             notorietySystem.addNotoriety(NOTORIETY_FOBT_SMASH, achievementCallback);
         }
         if (neighbourhoodWatchSystem != null) {
-            neighbourhoodWatchSystem.onSmashExterior();
+            neighbourhoodWatchSystem.onPlayerSmashedExteriorWall();
         }
     }
 

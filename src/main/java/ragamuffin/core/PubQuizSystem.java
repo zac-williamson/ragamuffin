@@ -437,15 +437,15 @@ public class PubQuizSystem {
         }
 
         // Check entry fee
-        if (inventory.count(Material.COIN) < ENTRY_FEE_COIN) {
+        if (inventory.getItemCount(Material.COIN) < ENTRY_FEE_COIN) {
             if (derek != null) {
                 derek.setSpeechText("It's a quid to enter, love. Come back when you've got change.", 5f);
             }
             return RegistrationResult.INSUFFICIENT_FUNDS;
         }
 
-        inventory.remove(Material.COIN, ENTRY_FEE_COIN);
-        inventory.add(Material.QUIZ_SHEET, 1);
+        inventory.removeItem(Material.COIN, ENTRY_FEE_COIN);
+        inventory.addItem(Material.QUIZ_SHEET, 1);
         playerRegistered = true;
 
         if (derek != null) {
@@ -492,9 +492,9 @@ public class PubQuizSystem {
     public CheatSheetResult useCheatSheet(Inventory inventory, NPC gary) {
         if (!playerRegistered || playerDisqualified) return CheatSheetResult.NOT_ELIGIBLE;
         if (!questionActive) return CheatSheetResult.NO_QUESTION_ACTIVE;
-        if (inventory.count(Material.CHEAT_SHEET) < 1) return CheatSheetResult.NO_CHEAT_SHEET;
+        if (inventory.getItemCount(Material.CHEAT_SHEET) < 1) return CheatSheetResult.NO_CHEAT_SHEET;
 
-        inventory.remove(Material.CHEAT_SHEET, 1);
+        inventory.removeItem(Material.CHEAT_SHEET, 1);
 
         // 40% chance Derek catches the player
         if (random.nextFloat() < CHEAT_CATCH_CHANCE) {
@@ -520,10 +520,10 @@ public class PubQuizSystem {
      */
     public PlantCheatResult plantCheatSheet(Inventory inventory) {
         if (!playerRegistered || playerDisqualified) return PlantCheatResult.NOT_ELIGIBLE;
-        if (inventory.count(Material.CHEAT_SHEET) < 1) return PlantCheatResult.NO_CHEAT_SHEET;
+        if (inventory.getItemCount(Material.CHEAT_SHEET) < 1) return PlantCheatResult.NO_CHEAT_SHEET;
         if (rivalTeamCount == 0) return PlantCheatResult.NO_RIVALS;
 
-        inventory.remove(Material.CHEAT_SHEET, 1);
+        inventory.removeItem(Material.CHEAT_SHEET, 1);
         cheatSheetPlanted = true;
         plantedOnTeam = random.nextInt(rivalTeamCount);
 
@@ -542,7 +542,7 @@ public class PubQuizSystem {
             criminalRecord.record(CriminalRecord.CrimeType.CHEATING_AT_PUB_QUIZ);
         }
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(CHEAT_CATCH_NOTORIETY);
+            notorietySystem.addNotoriety(CHEAT_CATCH_NOTORIETY, null);
         }
         if (achievementSystem != null) {
             achievementSystem.unlock(AchievementType.CHEATS_NEVER_PROSPER);
@@ -647,8 +647,8 @@ public class PubQuizSystem {
 
         if (outcome == SessionOutcome.WINNER) {
             // Award prize envelope (contains 10 COIN)
-            inventory.add(Material.QUIZ_PRIZE_ENVELOPE, 1);
-            inventory.add(Material.COIN, PRIZE_COIN_VALUE);
+            inventory.addItem(Material.QUIZ_PRIZE_ENVELOPE, 1);
+            inventory.addItem(Material.COIN, PRIZE_COIN_VALUE);
 
             // Achievement: QUIZ_CHAMPION
             if (achievementSystem != null) {
@@ -671,7 +671,7 @@ public class PubQuizSystem {
             // Gary grants 1 free pint to the winner
             if (gary != null) {
                 gary.setSpeechText("Nice one — that one's on me.", 6f);
-                inventory.add(Material.PINT, 1);
+                inventory.addItem(Material.PINT, 1);
             }
 
             if (derek != null) {
@@ -679,7 +679,7 @@ public class PubQuizSystem {
             }
 
         } else if (outcome == SessionOutcome.CONSOLATION) {
-            inventory.add(Material.COIN, CONSOLATION_COIN_VALUE);
+            inventory.addItem(Material.COIN, CONSOLATION_COIN_VALUE);
             consecutiveWins = 0;
             if (derek != null) {
                 derek.setSpeechText("Not bad — here's a couple of quid. Buy yourself a drink.", 6f);

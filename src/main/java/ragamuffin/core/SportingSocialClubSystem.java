@@ -2,6 +2,7 @@ package ragamuffin.core;
 
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
+import ragamuffin.core.Faction;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;
@@ -805,7 +806,7 @@ public class SportingSocialClubSystem {
         }
         int fenceLevel = 0;
         if (streetSkillSystem != null) {
-            fenceLevel = streetSkillSystem.getSkillLevel(StreetSkillSystem.Skill.FENCE);
+            fenceLevel = streetSkillSystem.getSkillLevel(StreetSkillSystem.Skill.TRADING);
         }
         if (fenceLevel < FENCE_SKILL_DETECT_CHEAT) {
             return CheatDetectResult.SKILL_TOO_LOW;
@@ -813,7 +814,7 @@ public class SportingSocialClubSystem {
 
         // Cheat detected!
         if (streetSkillSystem != null) {
-            streetSkillSystem.awardXP(StreetSkillSystem.Skill.FENCE, 1);
+            streetSkillSystem.awardXP(StreetSkillSystem.Skill.TRADING, 1);
         }
 
         // Seed CARD_CHEAT rumour
@@ -825,7 +826,7 @@ public class SportingSocialClubSystem {
 
         // Reduce MARCHETTI_CREW Respect
         if (factionSystem != null) {
-            factionSystem.applyRespectDelta(FactionSystem.Faction.MARCHETTI_CREW,
+            factionSystem.applyRespectDelta(Faction.MARCHETTI_CREW,
                     -RESPECT_PENALTY_DETECT_MICK);
         }
 
@@ -967,7 +968,7 @@ public class SportingSocialClubSystem {
 
         // MARCHETTI_CREW Respect penalty
         if (factionSystem != null) {
-            factionSystem.applyRespectDelta(FactionSystem.Faction.MARCHETTI_CREW,
+            factionSystem.applyRespectDelta(Faction.MARCHETTI_CREW,
                     -RESPECT_PENALTY_ENVELOPE_THEFT);
         }
 
@@ -1016,7 +1017,7 @@ public class SportingSocialClubSystem {
 
         // MARCHETTI_CREW Respect penalty
         if (factionSystem != null) {
-            factionSystem.applyRespectDelta(FactionSystem.Faction.MARCHETTI_CREW,
+            factionSystem.applyRespectDelta(Faction.MARCHETTI_CREW,
                     -RESPECT_PENALTY_GRASS);
         }
 
@@ -1109,7 +1110,7 @@ public class SportingSocialClubSystem {
         if (acceptBribe) {
             playerInventory.addItem(Material.COIN, AGM_BRIBE_COIN);
             if (factionSystem != null) {
-                factionSystem.applyRespectDelta(FactionSystem.Faction.MARCHETTI_CREW,
+                factionSystem.applyRespectDelta(Faction.MARCHETTI_CREW,
                         RESPECT_BONUS_ACCEPT_BRIBE);
             }
             return AGMMotionResult.BRIBE_ACCEPTED;

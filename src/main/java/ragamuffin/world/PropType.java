@@ -2909,13 +2909,6 @@ public enum PropType {
     INSPECTION_HATCH_PROP(1.20f, 0.10f, 1.20f, 6, null),
 
     /**
-     * Tyre Stack — a stack of part-worn and stolen tyres against the rear wall.
-     * Press E to search: yields 0–2 STOLEN_TYRE items. Refreshes every 2 in-game days.
-     * Break resistance: 4 hits (tyres are heavy but rubber).
-     */
-    TYRE_STACK_PROP(1.20f, 1.60f, 1.20f, 4, Material.STOLEN_TYRE),
-
-    /**
      * Parts Shelf — industrial metal shelving holding CAR_BATTERY, spare parts,
      * and occasionally CATALYTIC_CONVERTER. Press E to search while Bert is
      * distracted (BERT_DISTRACTED state). Yields 1–3 items.
@@ -3107,25 +3100,11 @@ public enum PropType {
     PRESCRIPTION_RACK_PROP(0.80f, 1.80f, 0.40f, 3, Material.WOOD),
 
     /**
-     * DRUG_SAFE_PROP — the locked safe behind the STAFF_DOOR.
-     * Contains DIAZEPAM and NUROFEN_PLUS. Requires heist route to access.
-     * 0.8×1.0×0.7; hitsToBreak = 20 (yields DIAZEPAM via crowbar interaction).
-     */
-    DRUG_SAFE_PROP(0.80f, 1.00f, 0.70f, 20, Material.DIAZEPAM),
-
-    /**
      * METHADONE_FRIDGE_PROP — refrigerated unit storing the day's methadone doses.
      * Accessible 13:30–14:30; steal attempt: 40% success, WantedSystem +3, ROBBERY charge.
      * 0.8×1.6×0.7; hitsToBreak = 8 (yields SCRAP_METAL).
      */
     METHADONE_FRIDGE_PROP(0.80f, 1.60f, 0.70f, 8, Material.SCRAP_METAL),
-
-    /**
-     * MEDICINE_CABINET_PROP — wall-mounted OTC medicine display rack.
-     * Player browses with E; 2-per-visit OTC limits enforced by PharmacySystem.
-     * 1.2×1.8×0.3; hitsToBreak = 3 (yields WOOD).
-     */
-    MEDICINE_CABINET_PROP(1.20f, 1.80f, 0.30f, 3, Material.WOOD),
 
     /**
      * CHEMIST_CROSS_PROP — the green illuminated cross sign above the entrance.

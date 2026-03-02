@@ -4811,13 +4811,6 @@ public enum Material {
     FAIL_SHEET("MOT Failure Sheet"),
 
     /**
-     * BROWN_ENVELOPE — handed to Bert to secure a PASS_BRIBE outcome. Contains unspecified
-     * cash. Converts a FAIL into a PASS; bribe certificate is invalidated on DVSA raid.
-     * Tooltip: "Not a birthday card."
-     */
-    BROWN_ENVELOPE("Brown Envelope"),
-
-    /**
      * STOLEN_TYRE — a part-worn tyre of dubious provenance. Bert pays 8 COIN each.
      * Can be acquired from TYRE_STACK_PROP at unattended garages.
      * Tooltip: "Part-worn. Partly legal."
@@ -4851,13 +4844,6 @@ public enum Material {
      * While worn, lowers Notoriety by 1 (signals prosocial behaviour to NPCs).
      */
     CHARITY_WRISTBAND("Charity Wristband"),
-
-    /**
-     * CHARITY_CLIPBOARD — equippable clipboard issued to the player by Tracy when hired.
-     * Required to accost passersby during a CHUGGER_SHIFT.
-     * Confiscated by Tracy if fraud is detected at end of shift.
-     */
-    CHARITY_CLIPBOARD("Charity Clipboard"),
 
     /**
      * DONOR_LIST — a list of donor details harvested via skimmed sign-ups.
@@ -5104,12 +5090,6 @@ public enum Material {
     // ── Issue #1282: Northfield Day & Night Chemist ───────────────────────────
 
     /**
-     * PARACETAMOL — sold OTC at the chemist, 2-per-visit limit.
-     * Heals 5 HP. A staple of British hardship.
-     */
-    PARACETAMOL("Paracetamol"),
-
-    /**
      * CALPOL — children's paracetamol suspension. Sold OTC.
      * Heals 3 HP. "It's not just for kids."
      */
@@ -5128,12 +5108,6 @@ public enum Material {
     PLASTERS("Plasters"),
 
     /**
-     * VITAMIN_C_TABLETS — sold OTC, halves COLD debuff duration.
-     * "500mg. Effervescent. Tastes like orange-flavoured disappointment."
-     */
-    VITAMIN_C_TABLETS("Vitamin C Tablets"),
-
-    /**
      * CONDOMS — sold OTC. Causes NPC laugh reaction when seen in inventory.
      * "For medicinal purposes."
      */
@@ -5147,12 +5121,6 @@ public enum Material {
     NUROFEN_PLUS("Nurofen Plus"),
 
     /**
-     * PRESCRIPTION_MEDS — dispensed with valid PRESCRIPTION_SLIP from GPSurgerySystem.
-     * 10-second dispense time. Heals 20 HP.
-     */
-    PRESCRIPTION_MEDS("Prescription Medication"),
-
-    /**
      * FORGED_PRESCRIPTION — a forged prescription slip.
      * 60% chance of passing Janet's check. Fail = PRESCRIPTION_FRAUD crime logged.
      */
@@ -5164,13 +5132,6 @@ public enum Material {
      * FenceSystem value: 12 COIN.
      */
     STOLEN_METHADONE("Stolen Methadone"),
-
-    /**
-     * DIAZEPAM — from the DRUG_SAFE_PROP via heist route.
-     * FenceSystem/PawnShopSystem value: 12 COIN.
-     * Reduces anxiety, makes NPCs briefly friendly.
-     */
-    DIAZEPAM("Diazepam"),
 
     /**
      * WHITE_COAT — wearable disguise, reduces suspicion in the chemist by 60%.
@@ -6334,20 +6295,16 @@ public enum Material {
                                                   0.15f, 0.15f, 0.15f); // Black text/border
 
             // Issue #1282: Northfield Day & Night Chemist
-            case PARACETAMOL:           return c(0.95f, 0.95f, 0.95f);  // White tablet packaging
             case CALPOL:                return c(0.90f, 0.40f, 0.60f);  // Pink children's medicine
             case IBUPROFEN:             return c(0.85f, 0.30f, 0.20f);  // Red/orange packaging
             case PLASTERS:              return cs(0.90f, 0.72f, 0.58f,  // Skin tone strip
                                                   0.75f, 0.20f, 0.20f); // Red cross
-            case VITAMIN_C_TABLETS:     return c(0.95f, 0.70f, 0.10f);  // Orange effervescent
             case CONDOMS:               return c(0.20f, 0.60f, 0.25f);  // Green foil packet
             case NUROFEN_PLUS:          return cs(0.85f, 0.25f, 0.25f,  // Red packaging
                                                   0.95f, 0.95f, 0.95f); // White stripe
-            case PRESCRIPTION_MEDS:     return c(0.60f, 0.75f, 0.90f);  // Blue NHS bag
             case FORGED_PRESCRIPTION:   return cs(0.95f, 0.95f, 0.88f,  // Off-white paper
                                                   0.40f, 0.60f, 0.85f); // Blue NHS stripe
             case STOLEN_METHADONE:      return c(0.40f, 0.72f, 0.40f);  // Green liquid bottle
-            case DIAZEPAM:              return c(0.75f, 0.60f, 0.90f);  // Purple/lilac packaging
             case WHITE_COAT:            return c(0.96f, 0.96f, 0.96f);  // Clinical white
 
             default:             return c(0.5f, 0.5f, 0.5f);
@@ -8213,28 +8170,20 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // laminated taxi licence plate
 
             // Issue #1282: Northfield Day & Night Chemist
-            case PARACETAMOL:
-                return IconShape.BOX;         // small tablet box
             case CALPOL:
                 return IconShape.BOX;         // children's medicine bottle
             case IBUPROFEN:
                 return IconShape.BOX;         // tablet box
             case PLASTERS:
                 return IconShape.BOX;         // plaster tin
-            case VITAMIN_C_TABLETS:
-                return IconShape.CYLINDER;    // effervescent tablet tube
             case CONDOMS:
                 return IconShape.BOX;         // foil packet box
             case NUROFEN_PLUS:
                 return IconShape.BOX;         // small box
-            case PRESCRIPTION_MEDS:
-                return IconShape.BOX;         // NHS prescription bag
             case FORGED_PRESCRIPTION:
                 return IconShape.FLAT_PAPER;  // prescription slip
             case STOLEN_METHADONE:
                 return IconShape.CYLINDER;    // liquid bottle
-            case DIAZEPAM:
-                return IconShape.BOX;         // blister pack box
             case WHITE_COAT:
                 return IconShape.BOX;         // folded coat
 

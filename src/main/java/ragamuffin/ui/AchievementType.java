@@ -4344,17 +4344,6 @@ public enum AchievementType {
         1
     ),
 
-    /**
-     * Awarded when the player tips off the traffic warden about a double-parked car
-     * during school run chaos, earning 2 COIN.
-     * Northfield's most prolific informant. For hire.
-     */
-    INFORMANT(
-        "Grass of the Year",
-        "Tipped off a traffic warden during the school run. Earned 2 COIN. Worth it.",
-        1
-    ),
-
     // ── Issue #1240: Northfield NHS Blood Donation Session ────────────────────
 
     /**
@@ -4584,17 +4573,6 @@ public enum AchievementType {
     DIRTY_TRICKS(
         "Dirty Tricks",
         "Loosened someone's nitrous line. They didn't finish. You did.",
-        1
-    ),
-
-    /**
-     * Awarded (instant) when the player tips off the police via PHONE_BOX_PROP
-     * about the illegal street racing meet (3 COIN delivered next day).
-     * Triggers GRASSED_UP rumour and +2 Notoriety.
-     */
-    GRASS(
-        "Grass",
-        "Rang the plod. Shane'll find out. They always find out.",
         1
     ),
 

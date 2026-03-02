@@ -743,5 +743,25 @@ public enum RumourType {
      * — seeded by MOTSystem when a PASS_BRIBE cert is issued. Spreads via PUBLIC
      * and PENSIONER NPCs; NeighbourhoodSystem Vibes −2;
      * WantedSystem check trigger for Notoriety ≥ 25. */
-    UNROADWORTHY;
+    UNROADWORTHY,
+
+    // ── Issue #1293: Compensation Kings — ClaimsManagementSystem ─────────────
+
+    /** "Heard someone got a nice little payout from Compensation Kings — no-win no-fee, they said."
+     * — seeded by ClaimsManagementSystem on a successful claim payout.
+     * Spreads via PUBLIC and STREET_LAD NPCs within 30 blocks of CLAIMS_MANAGEMENT.
+     * Draws curious NPCs toward Compensation Kings for 60 seconds. */
+    INSURANCE_FRAUD,
+
+    /** "Someone round here's been filing dodgy injury claims — Compensation Kings are getting known."
+     * — seeded by ClaimsManagementSystem when the player exceeds 3 claims in 7 in-game days.
+     * Spreads via PUBLIC, PENSIONER, and STREET_LAD NPCs.
+     * Triggers INSURANCE_INVESTIGATOR spawn probability increase +20%. */
+    FRAUDULENT_CLAIMANT,
+
+    /** "Word is Gary at Compensation Kings got a little sweetener — all smoothed over, apparently."
+     * — seeded by ClaimsManagementSystem when the player pays the 10-COIN smooth-over bribe
+     * to Gary to reset the fraud threshold.
+     * Spreads via STREET_LAD and PUBLIC NPCs; MARCHETTI_CREW Respect +2. */
+    SMOOTH_OVER;
 }
