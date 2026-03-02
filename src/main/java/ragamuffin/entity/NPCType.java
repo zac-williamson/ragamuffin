@@ -1329,7 +1329,18 @@ public enum NPCType {
      * Jade gossips on rainy days, seeding LOCAL_EVENT rumours.
      * Tanya manages special service bookings for Street Rep ≥ 40.
      */
-    MASSAGE_THERAPIST(20f, 0f, 0f, false);
+    MASSAGE_THERAPIST(20f, 0f, 0f, false),
+
+    // ── Issue #1124: Salvation Army Citadel ───────────────────────────────────
+
+    /** Major Eileen Webb — runs the Citadel, offers tea at Wanted Tier 1–2, calls police at Tier ≥ 3. */
+    SALVATION_ARMY_OFFICER(25f, 0f, 0f, false),
+
+    /** Saturday Brass Band members who march with Eileen to the high-street junction. */
+    BRASS_BAND_MEMBER(20f, 0f, 0f, false),
+
+    /** Rough sleepers who path between park / Greggs / Citadel / sewer; driven indoors by cold weather. */
+    ROUGH_SLEEPER(15f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

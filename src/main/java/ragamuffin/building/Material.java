@@ -3079,7 +3079,38 @@ public enum Material {
      * to Tracey (+3 Respect, +5 COIN).
      * Tooltip: "The lifeblood of Northfield's informal economy."
      */
-    BROWN_ENVELOPE("Brown Envelope");
+    BROWN_ENVELOPE("Brown Envelope"),
+
+    // ── Issue #1124: Salvation Army Citadel ───────────────────────────────────
+
+    /**
+     * Brass Instrument — shared with BuskingSystem; required to join the Saturday Brass Band.
+     * Earns +1 COIN/min and −1 Notoriety per 2 minutes during band session (max −6/session).
+     * Tooltip: "The trombone of the downtrodden. Also useful for busking."
+     */
+    BRASS_INSTRUMENT("Brass Instrument"),
+
+    /**
+     * Salvation Army Uniform — stolen from UNIFORM_HOOK_PROP in the Citadel back room.
+     * Grants DisguiseSystem −25% recognition while worn.
+     * Stripped automatically on a Notoriety spike ≥ 10.
+     * Tooltip: "The Lord's armour. Dubiously acquired."
+     */
+    SALVATION_ARMY_UNIFORM("Salvation Army Uniform"),
+
+    /**
+     * Collection Ledger — records donations and expenditure at the Citadel.
+     * Can be sold at the Boot Sale for 5 COIN or used as evidence of charity fraud.
+     * Tooltip: "Columns of need and generosity, in biro."
+     */
+    COLLECTION_LEDGER("Collection Ledger"),
+
+    /**
+     * Soup Bowl — issued during meal service (12:00–14:00, 18:00–19:30); not portable on its own.
+     * Restores +25 Hunger and removes COLD debuff when filled with hot soup.
+     * Tooltip: "Thick vegetable soup. There is no shame in this."
+     */
+    SOUP_BOWL("Soup Bowl");
 
     private final String displayName;
 
@@ -3841,6 +3872,16 @@ public enum Material {
             case PROPERTY_DEED:        return cs(0.88f, 0.85f, 0.72f,  // Parchment
                                                   0.50f, 0.40f, 0.20f); // Ink brown
 
+            // Issue #1124: Salvation Army Citadel
+            case BRASS_INSTRUMENT:        return cs(0.85f, 0.72f, 0.20f,  // Brass gold
+                                                    0.70f, 0.55f, 0.10f); // Darker brass
+            case SALVATION_ARMY_UNIFORM:  return cs(0.12f, 0.20f, 0.60f,  // Navy blue jacket
+                                                    0.88f, 0.20f, 0.18f); // Red trim
+            case COLLECTION_LEDGER:       return cs(0.15f, 0.35f, 0.15f,  // Dark green cover
+                                                    0.88f, 0.84f, 0.72f); // Cream pages
+            case SOUP_BOWL:               return cs(0.80f, 0.55f, 0.30f,  // Terracotta bowl
+                                                    0.90f, 0.68f, 0.28f); // Warm soup
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4211,6 +4252,23 @@ public enum Material {
             case MANGO_LASSI:
             case BYO_LAGER_CORKAGE:
             case FOLDED_NOTE:
+            // Issue #1114: Funeral Parlour — not block items
+            case FUNERAL_FLOWERS:
+            case CONDOLENCES_CARD:
+            case MEMORIAL_CANDLE:
+            case ORNAMENT_VASE:
+            case WAR_MEDAL:
+            case SPARE_DENTURES:
+            case BISCUIT_TIN_SAVINGS:
+            case PROPERTY_DEED:
+            // Issue #1122: Tanning Salon — not block items
+            case MARCHETTI_LEDGER:
+            case BROWN_ENVELOPE:
+            // Issue #1124: Salvation Army Citadel — not block items
+            case BRASS_INSTRUMENT:
+            case SALVATION_ARMY_UNIFORM:
+            case COLLECTION_LEDGER:
+            case SOUP_BOWL:
                 return false;
             default:
                 return true;
