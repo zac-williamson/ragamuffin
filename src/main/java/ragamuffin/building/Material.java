@@ -5032,7 +5032,31 @@ public enum Material {
      * Allows the player to run unlicensed tattoo sessions at Daz's station
      * during his lunch break (13:00–14:00).
      */
-    TATTOO_GUN_KIT("Tattoo Gun Kit");
+    TATTOO_GUN_KIT("Tattoo Gun Kit"),
+
+    // ── Issue #1273: Northfield Fly-Tipping Ring ──────────────────────────────
+
+    /**
+     * GARDEN_WASTE_BAG — a green council sack filled with garden trimmings, leaves,
+     * and grass clippings. Collected from garden-rubbish clearance jobs.
+     * Loaded into the fly-tip load (max 10 items); pay: 3–6 COIN per job.
+     */
+    GARDEN_WASTE_BAG("Garden Waste Bag"),
+
+    /**
+     * RUBBLE_SACK — a heavy builder's rubble bag, half-full of concrete and plaster.
+     * Collected from builder's-rubble clearance jobs at TERRACED_HOUSE build sites.
+     * Loaded into the fly-tip load; pay: 8 COIN per job (3 bags per job).
+     */
+    RUBBLE_SACK("Rubble Sack"),
+
+    /**
+     * FIXED_PENALTY_NOTICE — a council Fixed Penalty Notice issued by COUNCIL_VAN_OFFICER
+     * Gary after a fly-tipping confrontation. Costs {@code FIXED_PENALTY_COIN} (15 COIN)
+     * to pay off via CitizensAdviceSystem. Clears the active fly-tip pile after 60 s
+     * and reduces Notoriety by 1.
+     */
+    FIXED_PENALTY_NOTICE("Fixed Penalty Notice");
 
     private final String displayName;
 
@@ -6176,6 +6200,14 @@ public enum Material {
                                                   0.70f, 0.15f, 0.10f); // Red "AGREEMENT" stamp
             case DEBT_LEDGER:           return cs(0.20f, 0.20f, 0.25f,  // Dark navy cover
                                                   0.85f, 0.75f, 0.30f); // Gold lettering
+
+            // Issue #1273: Northfield Fly-Tipping Ring
+            case GARDEN_WASTE_BAG:      return cs(0.25f, 0.55f, 0.20f,  // Council green bag
+                                                  0.35f, 0.45f, 0.25f); // Dark green detail
+            case RUBBLE_SACK:           return cs(0.55f, 0.48f, 0.38f,  // Dusty concrete grey
+                                                  0.40f, 0.35f, 0.28f); // Shadow base
+            case FIXED_PENALTY_NOTICE:  return cs(0.95f, 0.92f, 0.75f,  // Yellow council notice
+                                                  0.70f, 0.08f, 0.08f); // Red "PENALTY" stamp
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -8026,6 +8058,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // scrap of paper with contact number
             case PHONE_CARD:
                 return IconShape.FLAT_PAPER;  // legacy BT phonecard
+
+            // Issue #1273: Northfield Fly-Tipping Ring
+            case GARDEN_WASTE_BAG:
+                return IconShape.BOX;         // bulging green waste sack
+            case RUBBLE_SACK:
+                return IconShape.BOX;         // heavy builder's rubble bag
+            case FIXED_PENALTY_NOTICE:
+                return IconShape.FLAT_PAPER;  // council fixed penalty notice
 
             default:
                 return IconShape.BOX;

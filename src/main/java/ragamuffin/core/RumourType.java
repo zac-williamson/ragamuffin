@@ -622,5 +622,23 @@ public enum RumourType {
     /** "That old phone box on the estate — someone actually fixed it."
      * — seeded by PhoneBoxSystem when the player repairs PHONE_BOX_ESTATE.
      * Spreads via PUBLIC and PENSIONER NPCs; marks the player as a local community figure. */
-    PHONE_BOX_REPAIR;
+    PHONE_BOX_REPAIR,
+
+    // ── Issue #1273: Northfield Fly-Tipping Ring ──────────────────────────────
+
+    /** "Someone's been having a bonfire behind the garages again."
+     * — seeded by FlyTippingSystem when the player burns a fly-tip load near a
+     * CAMPFIRE_PROP or WHEELIE_BIN_FIRE_PROP. Spreads via PUBLIC NPCs within 30 blocks.
+     * Triggers NoiseSystem investigation by nearby POLICE. */
+    BONFIRE_BEHIND_GARAGES,
+
+    /** "Council cleared that pile down by the canal — bout time."
+     * — seeded by FlyTippingSystem when a FLY_TIP_PILE_PROP is removed (paid fine or decayed).
+     * Spreads via PUBLIC and PENSIONER NPCs; adds +1 NeighbourhoodSystem Vibes. */
+    FLY_TIP_CLEARED,
+
+    /** "Someone's been dumping rubbish on the wasteland again — it's disgusting."
+     * — seeded by FlyTippingSystem on the first fly-tip each in-game day.
+     * Spreads via PUBLIC, PENSIONER, COUNCIL_MEMBER NPCs; may trigger NeighbourhoodWatchSystem complaint. */
+    FLY_TIP_SPOTTED;
 }

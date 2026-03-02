@@ -2388,7 +2388,24 @@ public enum NPCType {
      * within 30 seconds or receive an UNLICENSED_TATTOOING crime.
      * HP: 30f, attack: 0f, cooldown: 0f, hostile: false (unless player ignores them).
      */
-    HEALTH_INSPECTOR(30f, 0f, 0f, false);
+    HEALTH_INSPECTOR(30f, 0f, 0f, false),
+
+    // ── Issue #1273: Northfield Fly-Tipping Ring ──────────────────────────────
+
+    /**
+     * Council Van Officer — Janet's colleague <b>Gary</b> — hi-vis jacket, clipboard,
+     * drives a white Transit van. Spawns near a {@link ragamuffin.world.PropType#FLY_TIP_PILE_PROP}
+     * within {@code FlyTippingSystem.FLY_TIP_RESPONSE_SECONDS} (120 s) of the dump.
+     * Active 07:00–20:00 only; no officer spawns overnight.
+     * <ul>
+     *   <li>Passive until pile detected; confronts player if within 8 blocks.</li>
+     *   <li>Issues a {@link ragamuffin.building.Material#FIXED_PENALTY_NOTICE} (15 COIN fine).</li>
+     *   <li>Becomes AGGRESSIVE if player evades (runs &gt;8 blocks away without paying).</li>
+     * </ul>
+     * Dialogue: "You're having a laugh mate, that didn't come from nowhere."
+     * HP: 35f, attack: 0f, cooldown: 0f, hostile: false (until evasion triggers aggression).
+     */
+    COUNCIL_VAN_OFFICER(35f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

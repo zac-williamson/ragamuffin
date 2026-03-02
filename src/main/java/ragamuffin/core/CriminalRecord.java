@@ -782,7 +782,30 @@ public class CriminalRecord {
          * Penalty: WantedSystem +1 star, Notoriety +1 per session,
          * NeighbourhoodSystem −2 Vibes if caught.
          */
-        UNLICENSED_TATTOOING("Unlicensed tattooing");
+        UNLICENSED_TATTOOING("Unlicensed tattooing"),
+
+        // ── Issue #1273: Northfield Fly-Tipping Ring ──────────────────────────────
+
+        /**
+         * Recorded when the player dumps a fly-tip load (presses E on wasteland/canal bank/
+         * back alley while carrying a fly-tip load). Penalty: Notoriety +2;
+         * spawns COUNCIL_VAN_OFFICER after 120 real-seconds.
+         */
+        FLY_TIPPING("Fly-tipping"),
+
+        /**
+         * Recorded when the player fly-tips within range of an active CCTV_PROP
+         * (within 6 blocks) and does not steal the tape within 60 s.
+         * Penalty: +1 WantedSystem star; added to council officer confrontation.
+         */
+        CAUGHT_ON_CAMERA("Caught on camera (fly-tip CCTV)"),
+
+        /**
+         * Recorded when the player runs more than 8 blocks from a COUNCIL_VAN_OFFICER
+         * confrontation without paying the fixed penalty notice.
+         * Penalty: +1 WantedSystem star; officer enters AGGRESSIVE state.
+         */
+        EVADING_ENFORCEMENT("Evading council enforcement");
 
         private final String displayName;
 

@@ -2977,7 +2977,27 @@ public enum PropType {
      * Torn down automatically on police shutdown (or by player).
      * hitsToBreak = 2, no material drop.
      */
-    RACE_FINISH_BANNER_PROP(8.00f, 0.20f, 0.20f, 2, null);
+    RACE_FINISH_BANNER_PROP(8.00f, 0.20f, 0.20f, 2, null),
+
+    // ── Issue #1273: Northfield Fly-Tipping Ring ──────────────────────────────
+
+    /**
+     * FLY_TIP_PILE_PROP — a heap of illegally dumped waste (black bags, broken furniture,
+     * rubble bags) spawned when the player fly-tips a load on wasteland, canal bank,
+     * or back alley. Persists for 2 in-game days, draining NeighbourhoodSystem Vibes −1/day.
+     * Cleared after 60 s if player pays the FIXED_PENALTY_NOTICE fine, or naturally decays.
+     * Player can destroy it manually (4 hits). No material drop (it just disappears).
+     * Within 10 blocks of a food venue: adds RAT_PENALTY to EnvironmentalHealthSystem inspection.
+     */
+    FLY_TIP_PILE_PROP(1.80f, 1.20f, 1.80f, 4, null),
+
+    /**
+     * CLEARANCE_JOB_BOARD_PROP — a community noticeboard outside the Pound Shop and
+     * Community Centre showing 0–3 available waste-clearance jobs. Player presses E
+     * to accept a job (House Clearance, Garden Rubbish, or Builder's Rubble).
+     * Cannot be destroyed (hitsToBreak = 0).
+     */
+    CLEARANCE_JOB_BOARD_PROP(0.60f, 1.40f, 0.10f, 0, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
