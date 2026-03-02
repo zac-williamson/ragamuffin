@@ -664,5 +664,13 @@ public enum RumourType {
     /** "Someone stripped the generator at the fair Sunday night — Big Lenny's fuming."
      * — seeded by FairgroundSystem when DIESEL_GENERATOR_PROP is stripped for scrap (Sunday 23:00+).
      * Spreads via PUBLIC and STREET_LAD NPCs; FAIRGROUND_BOSS becomes hostile for 24h. */
-    GENERATOR_STRIPPED;
+    GENERATOR_STRIPPED,
+
+    // ── Issue #1282: Northfield Day & Night Chemist ───────────────────────────
+
+    /** "Someone did over the chemist — ripped the drug safe right out. Police everywhere."
+     * — seeded by PharmacySystem when the DRUG_SAFE_PROP is crowbarred.
+     * Spreads via PUBLIC and PENSIONER NPCs; NeighbourhoodSystem Vibes −4;
+     * NewspaperSystem headline triggered. */
+    PHARMACY_RAID;
 }
