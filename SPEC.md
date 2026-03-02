@@ -29074,3 +29074,202 @@ bereaved pickpocket penalty (−10 Community Respect), inheritance heist window 
 //                   HEARSE_JOYRIDER, SPARE_DENTURES (add to AchievementType.java)
 // New RumourTypes: INHERITANCE, WILL_LOCATION (add to RumourType.java)
 // New LandmarkType: FUNERAL_PARLOUR (add to LandmarkType.java), display name "Meredith & Sons Funeral Directors"
+
+---
+
+## Add Northfield Pharmacy — Day & Night Chemist, the Prescription Economy & the Blank Script Scam
+
+**Landmark**: `PHARMACY` (add to `LandmarkType.java`)
+**System file**: `src/main/java/ragamuffin/core/PharmacySystem.java`
+**Display name**: "Day & Night Chemist"
+
+A brightly lit corner-unit chemist next to the GP Surgery — fluorescent lights, rotating
+display stands of own-brand vitamins, a bored pharmacist behind a frosted-glass hatch, and
+a suspiciously unlocked storeroom. The only place in Northfield open until 22:00 where you
+can buy PARACETAMOL, get a prescription filled, or, if you're creative, forge one.
+
+### NPCs
+
+- **Janet** (`PHARMACIST`) — the duty pharmacist. Mon–Sat 09:00–22:00, Sun 10:00–18:00.
+  Dispenses prescriptions at the PHARMACY_HATCH_PROP, sells OTC medicines, gives health
+  advice (press E for free ailment tip). Suspects forgery if BLANK_PRESCRIPTION_FORM
+  is presented with Notoriety ≥ 40 (40% detection chance). Calls police on confirmed fraud.
+  Seeds `LOCAL_HEALTH` rumours about flu season / vitamin shortages.
+
+- **Shop Assistant** (`SHOP_WORKER`) — stocks shelves 09:00–17:00 Mon–Fri. Patrols
+  the floor; catches shoplifting attempts within 4 blocks. Off-shift after 17:00,
+  leaving Janet alone and the storeroom more accessible.
+
+### Prescription Dispensing (PHARMACY_HATCH_PROP)
+
+The handoff point from GPSurgerySystem. Player with a valid `PRESCRIPTION` in inventory
+presses E at the hatch:
+
+- **ANTIBIOTICS** dispensed for MODERATE_ILLNESS prescriptions — heals 30 HP, clears stat debuffs.
+- **STRONG_MEDS** dispensed for SERIOUS_CONDITION prescriptions — heals 60 HP, warmth +30.
+  Tooltip: "Don't mix these with alcohol." (Drinking PINT within 10 in-game minutes drops Warmth by 20.)
+- Prescription has 2-in-game-day expiry; expired scripts are refused with flavour text:
+  "Sorry love, I can't dispense this one — it's out of date."
+- **Repeat prescription abuse**: more than once per in-game week triggers Notoriety +5
+  and a 2-week dispensing block (matches GPSurgerySystem constant `REPEAT_ABUSE_BLOCK_DAYS`).
+
+### OTC Counter Sales
+
+Janet sells over-the-counter items at the front counter (press E near counter):
+
+| Item | Price | Effect |
+|------|-------|--------|
+| `PARACETAMOL` | 2 COIN | Heals 15 HP; two can be taken per 6 in-game hours |
+| `COLD_AND_FLU_SACHET` | 3 COIN | Clears COLD_SNAP warmth debuff; Warmth +10 |
+| `ANTISEPTIC_CREAM` | 2 COIN | Stops bleed-out from fight wounds; health regen +5 for 60s |
+| `VITAMIN_C_TABLETS` | 1 COIN | Reduces illness probability by 20% for 1 in-game day |
+| `HAIR_DYE` | 4 COIN | Changes player appearance (DisguiseSystem: reduces NPC recognition by 30% for 1 day) |
+| `READING_GLASSES` | 3 COIN | Flavour item; tooltip: "You don't need these. But you feel wiser." |
+
+Stock resets daily. COLD_AND_FLU_SACHET sells out during COLD_SNAP/FROST events within
+2 in-game hours; Janet apologises and offers VITAMIN_C_TABLETS as substitute.
+
+### Blank Prescription Scam
+
+The `BLANK_PRESCRIPTION_FORM` (found in GP surgery waste bin, 30% chance) can be
+presented at the PHARMACY_HATCH_PROP to fraudulently obtain STRONG_MEDS:
+
+- **Detection**: Janet checks the script. Base detection 25%. +15% per Notoriety tier
+  above Tier 1. −10% with DisguiseSystem active (FAKE_GLASSES or HOOD disguise).
+- **Success**: STRONG_MEDS dispensed; Notoriety +8; criminal record entry PRESCRIPTION_FRAUD.
+  `BLANK_PRESCRIPTION_FORM` consumed regardless of outcome.
+- **Failure**: Janet confiscates the form; calls police; Notoriety +12;
+  PRESCRIPTION_FRAUD criminal record; WantedSystem Tier 2 alert.
+- Achievement: `FORGED_IT` — succeed at blank prescription scam once.
+
+### Shoplifting
+
+The display shelves (PHARMACY_SHELF_PROP) can be pocketed without purchase:
+
+- Press E facing a shelf while Shop Assistant is out of line of sight (> 4 blocks away,
+  not facing player). Yields random OTC item.
+- 30% chance Janet notices from behind the hatch (notoriety-adjusted: +10% per tier).
+- If caught: item removed, Notoriety +5, SHOPLIFTING criminal record entry.
+- Achievement: `FIVE_FINGER_DISCOUNT` — successfully pocket an item from pharmacy shelf.
+
+### Storeroom
+
+STOREROOM_DOOR_PROP at rear of pharmacy; locked. Lockpick (4 hits) or CROWBAR (2 hits)
+to force open. Contains:
+
+- `ANTIBIOTICS` ×3, `STRONG_MEDS` ×2, `PARACETAMOL` ×6 (randomised quantities ±1)
+- Breaking in: Notoriety +15, WantedSystem Tier 2, NoiseSystem +30.
+- Storeroom resets every 3 in-game days.
+
+### Weather Effects
+
+- **COLD_SNAP / FROST**: Patient queue 2–4 extra NPCs outside before opening;
+  COLD_AND_FLU_SACHET price ×1.5; Janet seeds `LOCAL_HEALTH` rumour about flu.
+- **RAIN / DRIZZLE**: 1 extra NPC shelters in shop without buying anything; tooltip
+  from Janet: "Not a library, love." Can linger for warmth (+5 warmth/min while inside).
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `FORGED_IT` | Successfully obtain STRONG_MEDS with a BLANK_PRESCRIPTION_FORM |
+| `FIVE_FINGER_DISCOUNT` | Pocket an item from a PHARMACY_SHELF_PROP undetected |
+| `MEDICINE_CABINET` | Buy every OTC product at least once (across any sessions) |
+| `JUST_IN_TIME` | Redeem a PRESCRIPTION on its last valid in-game day |
+| `OVERDONE_IT` | Take PARACETAMOL a third time within the 6-hour window (debuff: nausea, −10 HP) |
+
+(Add to `AchievementType.java`.)
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `COLD_AND_FLU_SACHET` | OTC; warms +10, clears cold debuff |
+| `ANTISEPTIC_CREAM` | OTC; stops bleed-out, triggers health regen |
+| `VITAMIN_C_TABLETS` | OTC; reduces illness chance |
+| `HAIR_DYE` | OTC; disguise effect via DisguiseSystem |
+| `READING_GLASSES` | Flavour only; unsellable |
+
+(Note: `PARACETAMOL` already exists in `Material.java`. Add remaining items.)
+
+### New NPC Types Required
+
+| NPCType | Notes |
+|---------|-------|
+| `PHARMACIST` | Janet; anchored at PHARMACY_HATCH_PROP during hours |
+| `SHOP_WORKER` | Already likely exists; verify or add |
+
+(Add `PHARMACIST` to `NPCType.java` if not present; reuse `SHOP_WORKER` if it exists.)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `PHARMACY_HATCH_PROP` | Already referenced in GPSurgerySystem — formalise here |
+| `PHARMACY_SHELF_PROP` | Shopliftable display stand |
+| `STOREROOM_DOOR_PROP` | Lockable rear storeroom door |
+| `PHARMACY_COUNTER_PROP` | OTC sales point |
+| `PHARMACY_SIGN_PROP` | Exterior sign |
+
+(Add to `PropType.java`.)
+
+### System Integrations
+
+- **GPSurgerySystem**: prescription handoff via `PRESCRIPTION` material; repeat abuse constants shared
+- **DisguiseSystem**: HAIR_DYE modifies NPC recognition; disguise reduces fraud detection
+- **WarmthSystem**: pharmacy interior is warm; COLD_AND_FLU_SACHET clears warmth debuff
+- **HealingSystem**: PARACETAMOL, ANTISEPTIC_CREAM, ANTIBIOTICS, STRONG_MEDS heal player
+- **NotorietySystem**: fraud, shoplifting, storeroom break-in add notoriety
+- **CriminalRecord**: PRESCRIPTION_FRAUD, SHOPLIFTING, BURGLARY entries
+- **WantedSystem**: storeroom break-in triggers Tier 2 alert; fraud detection triggers Tier 2
+- **NoiseSystem**: storeroom break-in alarm +30
+- **RumourNetwork**: Janet seeds `LOCAL_HEALTH` rumours (flu season, stock shortage)
+- **WeatherSystem**: COLD_SNAP triggers stock-out of COLD_AND_FLU_SACHET, patient queue spike
+- **JobCentreSystem**: SICK_NOTE from GP + ANTIBIOTICS from pharmacy together unlock SIGNED_OFF benefit uplift
+- **StreetSkillSystem**: `STEALTH` XP for successful shoplifting; `TRADING` XP for purchasing full OTC range
+- **TimeSystem**: open Mon–Sat 09:00–22:00, Sun 10:00–18:00; storeroom resets every 3 days
+- **NewspaperSystem**: storeroom raid generates "Northfield Chemist Raided — Drug Safe Emptied" headline
+- **AchievementSystem**: FORGED_IT, FIVE_FINGER_DISCOUNT, MEDICINE_CABINET, JUST_IN_TIME, OVERDONE_IT
+
+**Unit tests**: OTC price table, COLD_AND_FLU_SACHET stock-out during COLD_SNAP (2-hour sell-out),
+PARACETAMOL overdose debuff (3rd dose within 6 hours), prescription expiry check (2-day window),
+blank script detection probability by notoriety tier, storeroom stock quantities (random ±1),
+Janet's detection range (4 blocks) for shoplifting.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Prescription dispensed correctly**: Give player a valid `PRESCRIPTION` (obtained from
+   GPSurgerySystem, SERIOUS_CONDITION). Place player at PHARMACY_HATCH_PROP. Press E.
+   Verify `PRESCRIPTION` removed from inventory. Verify `STRONG_MEDS` added to inventory.
+   Verify no criminal record entry. Now use STRONG_MEDS. Verify player health increased by 60
+   and warmth increased by 30.
+
+2. **Blank prescription scam — caught**: Give player a `BLANK_PRESCRIPTION_FORM`. Set player
+   Notoriety = 55 (Tier 3). Place player at PHARMACY_HATCH_PROP. Force RNG to detection outcome.
+   Simulate press E, select fraud option. Verify `BLANK_PRESCRIPTION_FORM` removed from inventory.
+   Verify `STRONG_MEDS` NOT in inventory. Verify CriminalRecord contains PRESCRIPTION_FRAUD.
+   Verify Notoriety increased by 12. Verify WantedSystem shows Tier 2 alert.
+
+3. **Shoplifting undetected**: Place player at PHARMACY_SHELF_PROP. Move Shop Assistant NPC
+   > 4 blocks away facing opposite direction. Force RNG to no-detection outcome. Press E on shelf.
+   Verify one OTC item added to player inventory. Verify no SHOPLIFTING CriminalRecord entry.
+   Verify FIVE_FINGER_DISCOUNT achievement unlocked.
+
+4. **COLD_AND_FLU_SACHET sells out during COLD_SNAP**: Trigger COLD_SNAP weather event.
+   Advance time by 2 in-game hours. Verify COLD_AND_FLU_SACHET stock = 0. Place player at
+   PHARMACY_COUNTER_PROP, press E. Verify Janet offers VITAMIN_C_TABLETS as alternative.
+   Verify Janet seeds a `LOCAL_HEALTH` rumour into RumourNetwork.
+
+5. **PARACETAMOL overdose**: Give player `PARACETAMOL` ×3. Use first dose. Verify health +15.
+   Use second dose within 6 in-game hours. Verify health +15. Use third dose. Verify no health
+   gain. Verify player receives nausea debuff (−10 HP). Verify OVERDONE_IT achievement unlocked.
+
+// ── New: PharmacySystem.java in ragamuffin.core
+// New materials: COLD_AND_FLU_SACHET, ANTISEPTIC_CREAM, VITAMIN_C_TABLETS, HAIR_DYE,
+//                READING_GLASSES (add to Material.java; PARACETAMOL already exists)
+// New NPCTypes: PHARMACIST (add to NPCType.java; reuse SHOP_WORKER if present)
+// New PropTypes: PHARMACY_HATCH_PROP (formalise existing reference), PHARMACY_SHELF_PROP,
+//                STOREROOM_DOOR_PROP, PHARMACY_COUNTER_PROP, PHARMACY_SIGN_PROP (add to PropType.java)
+// New achievements: FORGED_IT, FIVE_FINGER_DISCOUNT, MEDICINE_CABINET, JUST_IN_TIME,
+//                   OVERDONE_IT (add to AchievementType.java)
+// New LandmarkType: PHARMACY (add to LandmarkType.java), display name "Day & Night Chemist"
