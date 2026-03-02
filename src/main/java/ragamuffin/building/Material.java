@@ -2067,6 +2067,56 @@ public enum Material {
      */
     PETTY_CASH_BOX("Petty Cash Box"),
 
+    // ── Issue #1237: Northfield St. Aidan's Primary School ───────────────────
+
+    /**
+     * Caretaker's Shed Key — pickpocketed from Derek (CARETAKER) with PICKPOCKET ≥ Apprentice
+     * and Notoriety &lt; 30, or obtained via LOCKPICKING ≥ Journeyman on the shed padlock.
+     * Use at CARETAKER_SHED_PROP to access shed contents.
+     * Tooltip: "A chunky key on a faded 'SHED' fob. Derek's pride and joy."
+     */
+    CARETAKER_SHED_KEY("Caretaker's Shed Key"),
+
+    /**
+     * Caretaker Master Key — looted from Derek's shed; opens the head's office filing cabinet.
+     * Fence value: 4 COIN. Tooltip: "Opens everything in the school. Derek doesn't know it's gone."
+     */
+    CARETAKER_MASTER_KEY("Caretaker Master Key"),
+
+    /**
+     * Ofsted Draft Report — looted from headteacher's office filing cabinet using CARETAKER_MASTER_KEY.
+     * Sell to a newspaper journalist NPC for 15 COIN; triggers OFSTED_PANIC chain.
+     * Tooltip: "Requires Improvement. Three pages of polite devastation."
+     */
+    OFSTED_DRAFT_REPORT("Ofsted Draft Report"),
+
+    /**
+     * School Report Form — blank official form from the headteacher's office.
+     * Use at Cybernet with COPIED_HOMEWORK to forge a FORGED_SCHOOL_REPORT.
+     * Tooltip: "Officially blank. Unofficially, full of possibilities."
+     */
+    SCHOOL_REPORT_FORM("School Report Form"),
+
+    /**
+     * Forged School Report — crafted from SCHOOL_REPORT_FORM at Cybernet.
+     * Sell to a SCHOOL_MUM NPC for 3 COIN; risks SCHOOL_FRAUD CrimeType if witnessed.
+     * Tooltip: "A*s across the board. Gary has never been prouder."
+     */
+    FORGED_SCHOOL_REPORT("Forged School Report"),
+
+    /**
+     * Photocopier Ink Cartridge — looted from Derek's shed.
+     * Fence value: 6 COIN. Tooltip: "Worth more than you'd think. Offices are desperate for these."
+     */
+    PHOTOCOPIER_INK_CARTRIDGE("Photocopier Ink Cartridge"),
+
+    /**
+     * Pram — prop item associated with SCHOOL_MUM NPCs during the school run.
+     * Sprinting through it earns the PUSHCHAIR_MENACE achievement.
+     * Tooltip: "A buggy loaded with half-eaten rice cakes and a sleeping toddler."
+     */
+    PRAM("Pram"),
+
     // ── Issue #1035: Northfield Nando's ───────────────────────────────────────
 
     /**
