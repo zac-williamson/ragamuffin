@@ -526,6 +526,18 @@ public enum NPCType {
      */
     MINICAB_DRIVER(20f, 0f, 0f, false),
 
+    // ── Issue #1207: Big Terry's Cabs ─────────────────────────────────────────
+
+    /**
+     * Big Terry — the dispatcher at Big Terry's Cabs.
+     * Sits behind the DISPATCHER_HATCH_PROP 07:00–03:00 every day.
+     * Refuses service to wanted players (stars ≥ 2) or Notoriety Tier 4+.
+     * Speech: "CHARLIE, PICK-UP AT ICELAND!" / "Listen mate, I don't do accounts."
+     *         / "No, I can't do a receipt." / "Cash only, obviously."
+     *         / "No animals, mate — Terry's allergic."
+     */
+    MINICAB_DISPATCHER(30f, 0f, 0f, false),
+
     // ── Issue #969: Northfield Cemetery ───────────────────────────────────────
 
     /**
