@@ -40422,3 +40422,133 @@ New `AchievementType` entries:
 //   CriminalRecord, WantedSystem, NotorietySystem, RumourNetwork,
 //   StreetSkillSystem (lie check), WitnessSystem, FenceSystem,
 //   AchievementSystem, TooltipSystem, NoiseSystem, NeighbourhoodWatchSystem
+
+## Add Northfield NHS Walk-In Centre — WalkInCentreSystem, Sick Note Hustle & the Drug Cabinet Raid
+
+**Background**: The NHS Walk-In Centre is one of the most quintessentially British emergency-care experiences — you don't need an appointment, you wait for two hours on a plastic chair under fluorescent lighting, and a triage nurse eventually sees you and tells you to take paracetamol and drink more water. The Northfield Walk-In Centre (referenced as `LandmarkType.NHS_WALK_IN_CENTRE`) is the only source of emergency medical treatment in town (the GP Surgery has a six-week wait), making it essential for survival — but also a target for the drug cabinet heist and the legendary "sick note hustle." This issue creates `WalkInCentreSystem.java`.
+
+**New system file**: `src/main/java/ragamuffin/core/WalkInCentreSystem.java`
+
+**Building**: A flat-roofed 1990s NHS building (16×12×4 blocks) on the high street next to the GP Surgery. BRICK exterior, white-painted interior, NHS_BLUE floor. Reception desk at the front, three curtained treatment bays (CURTAIN_PROP), WAITING_BENCH_PROP seating for 6, a WATER_COOLER_PROP (restores 5 hunger), and a locked MEDICINE_CABINET_PROP in the back corridor. An AMBULANCE_BAY_PROP with a PARAMEDIC_VEHICLE_PROP on the south side.
+
+### NPCs
+
+| NPC Type | Name | Role |
+|---|---|---|
+| `TRIAGE_NURSE` | Sharon | Greets player, assigns waiting priority, manages queue |
+| `DOCTOR` | Dr. Okonkwo | Treats patients in bays; appears 09:00–17:00 Mon–Fri |
+| `PARAMEDIC` | Two unnamed | Patrol ambulance bay, respond to street emergencies 24/7 |
+| `RECEPTIONIST` | Liz | Front desk; 08:00–22:00 Mon–Sat, 10:00–18:00 Sun |
+
+Open Mon–Sat 08:00–22:00, Sun 10:00–18:00. After-hours: the ambulance bay remains staffed by PARAMEDIC NPCs who will treat the player on the spot (reduced service — no surgery option).
+
+### Treatment System — Triage Queue
+
+When the player enters and presses E on the RECEPTIONIST:
+- Player joins the triage queue. Queue length: 1–6 PUBLIC/PENSIONER NPCs (seeded by `Random`). Wait time: `queueLength × 8` in-game minutes.
+- Tooltip: *"You've been booked in. Please take a seat. The wait is approximately [N] minutes."*
+- While waiting, the player can interact with other patients (rumour harvesting — each PENSIONER NPC in the waiting room has a 40% chance to reveal a LOCAL_EVENT rumour). WATER_COOLER_PROP restores 5 hunger when used (once per visit).
+- If the player's HP < 20f (critical), Sharon calls them in immediately (queue skip). Tooltip: *"You look terrible. Come through."*
+
+**Treatment tiers** (offered by Dr. Okonkwo based on HP deficit):
+| Tier | HP range | Treatment | Effect | Cost |
+|---|---|---|---|---|
+| Tier 1 — Minor | HP > 60 | Paracetamol + advice | Heals 15 HP | 0 COIN (free NHS) |
+| Tier 2 — Moderate | HP 30–60 | Wound dressing + observation | Heals 40 HP, removes `BLEEDING` status | 0 COIN |
+| Tier 3 — Serious | HP < 30 | Full treatment + sick note | Heals to 80 HP, +sick note item `FIT_NOTE` | 0 COIN |
+
+- Dr. Okonkwo also applies a `BANDAGED` status buff (+2 HP/s regen for 5 in-game minutes).
+- Notoriety ≥ 50: Sharon calls the police before treatment. A POLICE NPC arrives in 60 seconds. Player has 3 options: (1) Run before cop arrives; (2) Receive treatment + arrested if wanted; (3) Wait: cop checks wanted level, no action if clean.
+- Wanted level ≥ 2 stars: Liz presses the silent alarm on player entry. POLICE NPC dispatched immediately.
+
+### The Sick Note Hustle
+
+When the player receives a `FIT_NOTE` (Tier 3 treatment):
+- `FIT_NOTE` can be presented at `JobCentreSystem.claimBenefit()` to claim **double the standard dole amount** for 1 in-game week. Tooltip on first note: *"A fit note means they think you're too ill to work. That's good news for your benefits."*
+- The `FIT_NOTE` can also be **forged**: at the `INTERNET_CAFE` printer, combine `FIT_NOTE` (owned) + `PRINTER_PAPER` → `FORGED_FIT_NOTE`. Forged notes work 80% of the time at the JobCentre; a failed check adds `CriminalRecord.CrimeType.BENEFIT_FRAUD`.
+- Selling a `FIT_NOTE` to the `FENCE` yields 4 COIN. `FORGED_FIT_NOTE` yields 2 COIN.
+- `StreetSkillSystem` check: at LIE difficulty 4, the player can claim to Dr. Okonkwo that they have a pre-existing condition, always triggering Tier 3 treatment regardless of HP. Three successful lies unlock the `BENEFITS_STREET_SMART` achievement.
+
+### The Drug Cabinet Raid
+
+The `MEDICINE_CABINET_PROP` in the back corridor is locked (requires LOCKPICK item or hitting 8 times with a blunt weapon).
+
+**Contents** (seeded, randomised each Monday): 
+- `PAINKILLER` × 2–4 (restores 20 HP each)
+- `BANDAGE` × 1–3 (stops BLEEDING)
+- `ANTIBIOTICS` × 1 (cures INFECTED status — a debuff applied by dog bites and rusty objects)
+- `STRONG_PAINKILLERS` × 0–2 (restores 40 HP; also sellable to FENCE for 6 COIN each)
+
+Raiding the cabinet:
+- `WitnessSystem` triggers if any NPC is within 8 blocks of the back corridor.
+- If unwitnessed: player takes all contents, `CriminalRecord.CrimeType.THEFT` added, Notoriety +8. Cabinet respawns contents next Monday.
+- If witnessed: Sharon or Liz calls POLICE immediately. Wanted level +2.
+- Achievement `PHARMACY_BURGLAR` if raided without witness 3 times.
+
+### Paramedic Street Response
+
+PARAMEDIC NPCs respond to the player if their HP drops to 0 anywhere in the world (within 60 blocks of the Walk-In Centre). They are summoned by `WalkInCentreSystem.dispatchParamedics(playerPosition)`:
+- Two PARAMEDIC NPCs sprint to the player's location. Tooltip: *"An ambulance is on the way."*
+- On arrival (within 90 seconds): player is revived to 30 HP (replaces standard respawn if within range).
+- If the player is wanted (≥ 1 star): paramedics administer treatment but also radio POLICE. Cop arrives 2 minutes after treatment.
+- Paramedic response uses NoiseSystem siren event.
+
+### Key Constants (`public static final` in `WalkInCentreSystem`)
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `QUEUE_WAIT_PER_PATIENT_MINS` | `8` | In-game minutes per queued patient |
+| `CRITICAL_HP_QUEUE_SKIP` | `20f` | HP threshold for immediate treatment |
+| `TIER1_HEAL` | `15f` | HP restored by minor treatment |
+| `TIER2_HEAL` | `40f` | HP restored by moderate treatment |
+| `TIER3_HEAL_TO` | `80f` | HP target after serious treatment |
+| `BANDAGED_REGEN_RATE` | `2f` | HP/s regen while BANDAGED status active |
+| `BANDAGED_DURATION_MINS` | `5` | In-game minutes the BANDAGED buff lasts |
+| `NOTORIETY_THRESHOLD_POLICE` | `50` | Notoriety level at which Sharon calls police |
+| `PARAMEDIC_RESPONSE_MAX_DISTANCE` | `60f` | Max blocks from centre for paramedic dispatch |
+| `CABINET_RAID_NOTORIETY` | `8` | Notoriety gained from unwitnessed cabinet raid |
+| `FORGED_NOTE_SUCCESS_RATE` | `0.80f` | Probability forged fit note passes JobCentre check |
+| `LIE_SKILL_DIFFICULTY` | `4` | StreetSkillSystem difficulty for "pre-existing condition" lie |
+| `WAITING_ROOM_RUMOUR_CHANCE` | `0.40f` | Chance each PENSIONER shares a rumour |
+| `STRONG_PAINKILLERS_FENCE_VALUE` | `6` | COIN for selling STRONG_PAINKILLERS to fence |
+
+### Unit Test Assertions (method-level, no LibGDX)
+
+- `WalkInCentreSystem.getTreatmentTier(hp=75f)` → `TIER_1`
+- `WalkInCentreSystem.getTreatmentTier(hp=45f)` → `TIER_2`
+- `WalkInCentreSystem.getTreatmentTier(hp=15f)` → `TIER_3`
+- `WalkInCentreSystem.calcWaitTime(queueLength=3)` → `24` (in-game minutes)
+- `WalkInCentreSystem.isOpenNow(hour=10, day=SUNDAY)` → `true`; `hour=9, day=SUNDAY` → `false`
+- `WalkInCentreSystem.isOpenNow(hour=22, day=MONDAY)` → `false`; `hour=21, day=MONDAY)` → `true`
+- `WalkInCentreSystem.shouldCallPolice(notoriety=50)` → `true`; `notoriety=49` → `false`
+- `WalkInCentreSystem.applyTreatment(TIER_2, player_hp=40f)` → player HP = 80f (40 + 40, capped at max)
+- `WalkInCentreSystem.isWithinParamedicRange(playerPos, centrePos, maxDist=60f)` — 59 blocks → `true`; 61 blocks → `false`
+- `WalkInCentreSystem.isCabinetRaidWitnessed(nearbyNPCCount=0)` → `false`; `nearbyNPCCount=1` → `true`
+
+### Integration Tests — implement these exact scenarios
+
+1. **Player joins queue, waits, and is treated**: Set player HP to 50f. Enter NHS Walk-In Centre. Press E on Liz (RECEPTIONIST). Verify player joins queue. Seed queue with 2 patients. Advance TimeSystem by `2 × QUEUE_WAIT_PER_PATIENT_MINS` (16 in-game minutes). Verify `WalkInCentreSystem.isPlayerBeingTreated()` = `true`. Call `WalkInCentreSystem.applyTreatment(TIER_2, player)`. Verify player HP = 90f (50 + 40). Verify player has `BANDAGED` status effect. Verify player does NOT receive a `FIT_NOTE` (Tier 2 does not issue one).
+
+2. **Critical HP triggers immediate treatment**: Set player HP to 15f. Enter Walk-In Centre. Press E on Liz. Verify Sharon immediately calls player through (no queue wait). Call `applyTreatment(TIER_3, player)`. Verify player HP = 80f (`TIER3_HEAL_TO`). Verify player inventory contains 1 `FIT_NOTE`. Verify `FIT_NOTE` can be used at JobCentreSystem to double the next benefit payment.
+
+3. **High-notoriety player triggers police call**: Set player Notoriety = 55 (> threshold 50). Set Wanted = 0. Player enters Walk-In Centre. Call `WalkInCentreSystem.update(delta, player, wantedSystem, npcManager)`. Verify Sharon transitions to alerting state. Advance TimeSystem 60 seconds. Verify a `POLICE` NPC has been dispatched to Walk-In Centre location. Player HP set to 50f (Tier 2 treatment), treatment still applied before cop arrives.
+
+4. **Drug cabinet raid — unwitnessed**: Clear all NPCs within 8 blocks of back corridor. Player uses LOCKPICK on `MEDICINE_CABINET_PROP`. Verify cabinet unlocks. Verify player can take `PAINKILLER` items (seeded contents). Verify `CriminalRecord` contains `THEFT`. Verify Notoriety increased by `CABINET_RAID_NOTORIETY` (8). Verify no POLICE NPC dispatched. Advance TimeSystem to next Monday. Verify cabinet contents have been restocked.
+
+5. **Paramedic dispatch on player knockout**: Set player HP = 1f. Player takes 5 damage (HP reaches 0). Verify `WalkInCentreSystem.dispatchParamedics(playerPos)` is called automatically. Advance TimeSystem by 90 seconds (simulating paramedic arrival). Verify player HP = 30f (revived). Verify `NoiseSystem` has a SIREN event queued. Set Wanted level = 1 before knockout. Repeat: verify paramedics treat player AND POLICE NPC dispatched 2 minutes post-treatment.
+
+6. **Forged fit note — success and failure paths**: Player has Tier 3 treatment (HP < 30f). Verify `FIT_NOTE` in inventory. At `INTERNET_CAFE` printer, combine `FIT_NOTE` + `PRINTER_PAPER`. Verify `FORGED_FIT_NOTE` in inventory. Present `FORGED_FIT_NOTE` to `JobCentreSystem.claimBenefit()` with `rng=seeded_success`. Verify benefit doubled, no `CriminalRecord` entry added. Present second `FORGED_FIT_NOTE` with `rng=seeded_fail` (probability > `FORGED_NOTE_SUCCESS_RATE`). Verify `CriminalRecord.CrimeType.BENEFIT_FRAUD` added. Verify Notoriety +5.
+
+// ── New: WalkInCentreSystem.java in ragamuffin.core
+// ── New: Issue1254WalkInCentreSystemTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: TRIAGE_NURSE, DOCTOR, PARAMEDIC (if not present), RECEPTIONIST — add to NPCType.java
+// New Materials: FIT_NOTE, FORGED_FIT_NOTE, PAINKILLER, BANDAGE, ANTIBIOTICS, STRONG_PAINKILLERS — add to Material.java
+// New PropType: MEDICINE_CABINET_PROP, WATER_COOLER_PROP, AMBULANCE_BAY_PROP — add to PropType.java
+// New AchievementTypes: BENEFITS_STREET_SMART, PHARMACY_BURGLAR — add to AchievementType.java
+// New CriminalRecord.CrimeType: BENEFIT_FRAUD (if not present) — add to CriminalRecord.java
+// New status effects: BANDAGED, BLEEDING, INFECTED — integrate with HealingSystem
+// Integrates: HealingSystem (HP restoration, BANDAGED buff), JobCentreSystem (FIT_NOTE benefit boost),
+//   WantedSystem, CriminalRecord, NotorietySystem, RumourNetwork (waiting-room rumours),
+//   WitnessSystem, StreetSkillSystem (lie check), FenceSystem (STRONG_PAINKILLERS / FIT_NOTE sale),
+//   NoiseSystem (siren), TimeSystem, WeatherSystem, AchievementSystem, TooltipSystem,
+//   InternetCafeSystem (forged note printing), RespawnSystem (paramedic override)
