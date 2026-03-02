@@ -35581,3 +35581,162 @@ Volunteer cooks serve a rotating menu in the main hall. Entry: 2 COIN. Dishes se
 // Integrates: StreetSkillSystem, RumourNetwork, MagistratesCourtSystem, CriminalRecord,
 //   WantedSystem, NotorietySystem, NoiseSystem, WarmthSystem, WeatherSystem,
 //   PostOfficeSystem, TimeSystem, AchievementSystem, PawnShopSystem, SpeechLogUI
+
+---
+
+## Phase 12w: Northfield Environmental Health Officer — Surprise Inspections, Hygiene Ratings & the Sticker Forgery Racket
+
+**Background / Why This Exists**: Every British food venue — chippy, greasy spoon, kebab van, balti house, Chinese takeaway — is legally required to display a Food Hygiene Rating Scheme sticker (1–5 stars, issued by the council). This is a richly British institution with real gameplay potential: the fear of the surprise inspection is a constant in any food business, bribing inspectors is a known British scandal, and 5-star sticker forgery is a plausible low-level crime. `GreasySpoonSystem`, `ChippySystem`, `KebabVanSystem`, `ChineseTakeawaySystem`, and `NandosSystem` all exist as food-venue systems — none of them have an enforcement mechanic. This issue creates the `EnvironmentalHealthSystem` that binds them together.
+
+**New system file**: `src/main/java/ragamuffin/core/EnvironmentalHealthSystem.java`
+
+**New NPC**: `ENVIRONMENTAL_HEALTH_OFFICER` — one fixed instance: **Janet** (female, 50s, clipboard, hi-vis lanyard, sensible shoes). Spawned Mon–Fri 09:00–17:00. Visits one food venue per in-game day at a random time between 09:30 and 15:30 (seeded from `Random`). Her schedule is not telegraphed to the player. She walks briskly between venues; `NPCState` transitions: `IDLE` → `PATROLLING` (en route) → `INSPECTING` (inside venue) → `IDLE` (post-visit). Janet's HP: 25f, attack: 0f, cooldown: 0f, hostile: false. If assaulted she seeds a `COUNCIL_ENFORCEMENT` rumour, adds `ASSAULT_ON_OFFICIAL` CrimeType to `CriminalRecord`, and Wanted +3.
+
+**Venues inspected** (one random per day, cycling, weighted by how long since last inspection):
+- `LandmarkType.GREASY_SPOON` ("Pete's Café")
+- `LandmarkType.CHIPPY` ("Tony's Chip Shop")
+- `LandmarkType.KEBAB_VAN` (mobile, inspected at its daytime park spot 10:00–14:00 only)
+- `LandmarkType.CHINESE_TAKEAWAY` ("Golden Palace")
+- `LandmarkType.NANDOS` ("Nando's")
+- `LandmarkType.BALTI_HOUSE` ("Balti Village")
+
+---
+
+### Hygiene Rating Prop
+
+Each venue has a `HYGIENE_RATING_PROP` mounted near the front door (new `PropType`, 0.20×0.30×0.02m, breakable in 1 punch, drops `HYGIENE_STICKER_PROP`). The prop displays the venue's current rating (1–5). After each inspection, the rating is updated:
+
+| Rating | Internal condition score | Visual |
+|--------|--------------------------|--------|
+| 5 ★★★★★ | 80–100 | Green sticker |
+| 4 ★★★★ | 60–79 | Green sticker |
+| 3 ★★★ | 40–59 | Yellow sticker |
+| 2 ★★ | 20–39 | Amber sticker |
+| 1 ★ | 0–19 | Red sticker |
+
+Each venue starts at rating 4 (condition 65). Condition degrades by 5 per in-game week passively (simulating running a busy kitchen). Condition improves +10 if the player completes the "clean the kitchen" interaction (E on `KITCHEN_PROP` inside venue — new interaction, 5-second hold). Condition caps at 100.
+
+---
+
+### Inspection Mechanic
+
+When Janet enters a venue, `EnvironmentalHealthSystem.runInspection(venueLandmark, playerPresent, random)` runs:
+
+1. **Roll condition** — current condition + random variance (±10, seeded).
+2. **Rat factor** — if `SkipDivingSystem.hasRatsAtVenue(landmark)` is true (rats infest nearby skip), condition −15 for this inspection.
+3. **Determine rating** (see table above).
+4. **Update `HYGIENE_RATING_PROP`** at the venue entrance.
+5. **If rating ≤ 2**: Janet issues an `IMPROVEMENT_NOTICE_PROP` on the venue counter. The venue's food-selling NPC (`GREASY_SPOON_OWNER`, `CHIPPY_OWNER`, etc.) enters `WORRIED` state for 10 in-game minutes and refuses to serve the player during that period. Venue seeds a `FOOD_HYGIENE` rumour (new `RumourType`) — reduces NPC footfall at that venue by 30% for 3 in-game days.
+6. **If rating = 1**: venue is issued a `CLOSURE_NOTICE_PROP`. The venue NPC is force-closed for 1 in-game day. `NeighbourhoodSystem` Vibes −3. `NewspaperSystem` publishes "CHIPPY SHUT IN HYGIENE HORROR" (or venue name) headline.
+7. **If rating ≥ 4**: Janet praises the owner (dialogue: *"Lovely clean kitchen — keep it up."*). No rumour seeded.
+
+---
+
+### Player Interaction: Bribery
+
+If the player is **inside the venue when Janet arrives** and has ≥ 5 COIN in inventory, a context-sensitive dialogue option appears (E on Janet): **"[E] Offer Janet something for her trouble (5 COIN)"**.
+
+- Base success rate: 40%.
+- Success modifier: +10% per INFLUENCE skill tier; −20% if player Notoriety ≥ 30; −30% if player Notoriety ≥ 50.
+- **On success**: Janet accepts. Current condition capped at 80 for this inspection (minimum 3-star outcome). Player loses 5 COIN. `EnvironmentalHealthSystem.isBribed()` == true. No rumour seeded.
+- **On failure**: Janet refuses. Notoriety +3. `CriminalRecord.CrimeType.BRIBERY` added. `WantedSystem` +1 star. Janet leaves immediately without completing inspection — venue condition falls to 10 for this inspection (simulating her spite). Rumour `COUNCIL_ENFORCEMENT` seeded within 15-block radius.
+- Achievement `GREASY_PALM` (new): bribe Janet successfully on first attempt.
+
+---
+
+### Player Interaction: Tip-Off / Sabotage
+
+The player can trigger a surprise inspection of any food venue by visiting the Council Office (`LandmarkType.COUNCIL_OFFICE`, use the `SUGGESTION_BOX_PROP`, press E with `ANONYMOUS_NOTE` in inventory). This forces Janet to visit the tipped venue next working morning. Use cases:
+- Player is rivals with a venue owner (e.g., Faction turf conflict)
+- Player has sabotaged a venue (E on `KITCHEN_PROP` to scatter rubbish: condition −25, 3-second action, witnessed = `CRIMINAL_DAMAGE` CrimeType + Notoriety +5)
+- Player wants a 1-star closure to force the venue off the street, opening a power vacuum
+
+`ANONYMOUS_NOTE` is craftable: `BLANK_PAPER` + pen-like item — actually requires only `BLANK_PAPER` (fold and post). One tip-off per in-game week.
+
+---
+
+### Sticker Forgery Racket
+
+A 5-star `HYGIENE_STICKER_PROP` (droppable from the prop, or craftable) can be sold to any venue owner who just received a rating of 1–3. Mechanic:
+
+1. Break the `HYGIENE_RATING_PROP` at a rated venue (1 punch; drops `HYGIENE_STICKER_PROP` showing the old rating).
+2. At the `PHOTOCOPIER_PROP` (Community Centre or Post Office back room): use `HYGIENE_STICKER_PROP` + `BLANK_PAPER` → `FORGED_FIVE_STAR_STICKER` (new `Material`).
+3. Player can **sell `FORGED_FIVE_STAR_STICKER`** to a venue owner with rating ≤ 3 (E on owner NPC, dialogue: *"I've got something that'll cheer you up…"*) for 8 COIN. The venue owner's condition is NOT actually changed; it merely replaces the displayed prop. On Janet's next inspection, the condition is still low — she notices the forged sticker and issues a `CLOSURE_NOTICE_PROP` immediately. `EnvironmentalHealthSystem.isForgeryDetected()` == true. `WantedSystem` +2 stars. `CriminalRecord.CrimeType.FRAUD` added. `RumourNetwork` seeds `FOOD_HYGIENE` rumour.
+4. Achievement `FIVE_STAR_FRAUDSTER` (new): sell a forged sticker that subsequently fools Janet for at least one inspection (i.e., Janet inspects, condition check passes because player re-cleaned the kitchen after placing the sticker).
+
+---
+
+### Materials
+
+| Material | How obtained | Use |
+|----------|-------------|-----|
+| `HYGIENE_STICKER_PROP` (item version: `HYGIENE_STICKER`) | Break `HYGIENE_RATING_PROP` at any venue | Base for forging; collectible |
+| `FORGED_FIVE_STAR_STICKER` | `HYGIENE_STICKER` + `BLANK_PAPER` at photocopier | Sell to venue owners for 8 COIN |
+| `IMPROVEMENT_NOTICE` | Dropped by Janet on 1–2 star outcome | Fence value 1 COIN; or hand to venue owner for +5 Respect with them |
+| `ANONYMOUS_NOTE` | Crafted: `BLANK_PAPER` fold (no extra item needed) | Post to `SUGGESTION_BOX_PROP` at Council Office to trigger inspection |
+
+### NPCs & Dialogue
+
+- **Janet** (`ENVIRONMENTAL_HEALTH_OFFICER`): professional, polite, subtly menacing. *"Good morning — routine food hygiene inspection. Nothing to worry about."* / *"I'm afraid I'll need to issue an improvement notice."* / *"Did you just offer me money? I'm going to pretend I didn't hear that."* / *"Everything looks in order — keep it up, love."*
+- **Venue owners** on low rating: *"Two stars! Two bleedin' stars! We've been here twenty years!"* / *"Someone's been at the kitchen — I swear it."*
+- **Venue owners** to player offering forged sticker: *"Where did you get that? …How much did you say?"*
+
+---
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `GREASY_PALM` | Successfully bribe Janet on first attempt |
+| `FIVE_STAR_FRAUDSTER` | Sell a forged sticker that fools Janet for one inspection |
+| `CLEAN_KITCHEN` | Use the kitchen-cleaning interaction to raise a venue from rating 2 to rating 5 in a single inspection cycle |
+| `PUBLIC_HEALTH_HERO` | Tip off the Council about a genuinely rat-infested venue (SkipDivingSystem rats active + tip leads to closure) |
+
+---
+
+### Integration with Other Systems
+
+- **GreasySpoonSystem / ChippySystem / KebabVanSystem / ChineseTakeawaySystem / NandosSystem / BistaVillageSystem**: each venue has a `condition` field readable by `EnvironmentalHealthSystem`. Venues with `IMPROVEMENT_NOTICE_PROP` placed refuse to serve player until notice is removed (by owner interaction after 1 in-game day).
+- **SkipDivingSystem**: `hasRatsAtVenue(LandmarkType)` — if true, condition penalty applies at inspection. Seeded rats spread from skips near venue.
+- **NoiseSystem**: Janet entering a venue = no noise. Fight with Janet = level 5 noise event.
+- **WantedSystem**: failed bribe = +1 star; assault on Janet = +3 stars; forgery detected = +2 stars.
+- **CriminalRecord**: `BRIBERY` on failed bribe; `CRIMINAL_DAMAGE` on kitchen sabotage; `FRAUD` on detected sticker forgery.
+- **NotorietySystem**: failed bribe +3; sabotage +5; Janet's FOOD_HYGIENE rumour spreads via PUBLIC NPCs.
+- **RumourNetwork**: `FOOD_HYGIENE` (new RumourType) seeded on 1–2 star outcomes and forgery detection; `COUNCIL_ENFORCEMENT` seeded on Janet assault or failed bribe. Both spread via PUBLIC and PENSIONER NPCs.
+- **NewspaperSystem**: closure notice triggers "CHIPPY / CAFÉ / BALTI HOUSE SHUT IN HYGIENE HORROR" headline.
+- **NeighbourhoodSystem**: closure = −3 Vibes; venue re-opens after notice = +2 Vibes; clean-kitchen action = +1 Vibes.
+- **FactionSystem**: venue closure where Marchetti Crew hold turf = Marchetti Respect −5 (loss of protection income). Street Lads turf: they intimidate Janet away (inspection fails, condition unchanged).
+- **StreetSkillSystem**: INFLUENCE governs bribe success modifier; GRAFTING skill ≥ Apprentice required for kitchen-cleaning mini-interaction.
+- **AchievementSystem**: `GREASY_PALM`, `FIVE_STAR_FRAUDSTER`, `CLEAN_KITCHEN`, `PUBLIC_HEALTH_HERO` — new achievements; add to `AchievementType.java`.
+- **TimeSystem**: Janet active Mon–Fri 09:00–17:00; inspections 09:30–15:30; kebab van only inspected 10:00–14:00 at park spot.
+- **MagistratesCourtSystem**: repeated `BRIBERY` CrimeType entries (≥2) escalate to `CORRUPTION_OF_OFFICIAL` charge at magistrates; 15 COIN fine or community service.
+
+**Unit tests**: inspection condition calculation (base + variance + rat penalty); bribery success at Notoriety 0, 30, 50 (seeded RNG); forgery detection on Janet's follow-up inspection; venue NPC enters WORRIED state on 1–2 star; closure notice issued on rating 1; tip-off forces Janet's next target; kitchen-clean action raises condition +10; anonymous note crafted from BLANK_PAPER only.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Janet inspects and issues improvement notice**: Set `GreasySpoonSystem` condition to 25. It is Tuesday 11:00. Advance `EnvironmentalHealthSystem` to force inspection of `GREASY_SPOON`. Run `EnvironmentalHealthSystem.runInspection(GREASY_SPOON, playerPresent=false, new Random(0))`. Verify returned rating ≤ 2. Verify `IMPROVEMENT_NOTICE_PROP` placed at `GREASY_SPOON` venue. Verify `RumourNetwork` contains `FOOD_HYGIENE` rumour. Verify `GreasySpoonSystem.isServingPlayer()` == false for next 10 in-game minutes.
+
+2. **Successful bribe — rating floored at 3**: Set condition to 25. Give player 5 COIN and set Notoriety to 0. Seed Random so bribe succeeds (40% base). Player presses E on Janet. Verify player loses 5 COIN. Verify `EnvironmentalHealthSystem.isBribed()` == true. Run inspection. Verify returned rating ≥ 3. Verify no `FOOD_HYGIENE` rumour seeded. Verify `CriminalRecord` does NOT contain `BRIBERY`.
+
+3. **Failed bribe — Notoriety spike and Wanted star**: Set condition to 25. Give player 5 COIN. Set Notoriety to 0. Seed Random so bribe fails (roll > 0.40). Player presses E on Janet. Verify player retains 5 COIN (bribe refused). Verify `CriminalRecord` contains `BRIBERY`. Verify `WantedSystem.getStarCount()` ≥ 1. Verify `NotorietySystem.getNotoriety()` increased by 3.
+
+4. **Sticker forgery — place and fool Janet once**: Break `HYGIENE_RATING_PROP` at Chippy (rating 2). Verify `HYGIENE_STICKER` in inventory. Use `PHOTOCOPIER_PROP` with `HYGIENE_STICKER` + `BLANK_PAPER`. Verify `FORGED_FIVE_STAR_STICKER` in inventory. Clean Chippy kitchen (condition raised to 75). Sell sticker to `CHIPPY_OWNER` (E dialogue). Verify `HYGIENE_RATING_PROP` at Chippy shows 5 stars. Trigger Janet inspection with condition 75 (real condition now clean). Verify rating ≥ 4. Verify `EnvironmentalHealthSystem.isForgeryDetected()` == false. Verify `AchievementSystem.isUnlocked(FIVE_STAR_FRAUDSTER)` == true.
+
+5. **Kitchen sabotage triggers closure on inspection**: Give player `CROWBAR`. Player uses E on `KITCHEN_PROP` (sabotage mode, 3-second hold). Verify condition drops by 25. Trigger Janet inspection. Verify rating == 1. Verify `CLOSURE_NOTICE_PROP` placed at venue. Verify `NewspaperSystem.getLatestHeadline()` contains "HYGIENE". Verify `NeighbourhoodSystem.getVibes()` decreased by 3.
+
+6. **Rat infestation penalty**: Set `SkipDivingSystem.hasRatsAtVenue(CHINESE_TAKEAWAY)` == true. Set condition to 55 (would normally give rating 3). Run inspection with rat penalty (−15). Verify effective score == 40. Verify rating == 3. Tip off Council (`ANONYMOUS_NOTE` posted). Advance to next working morning. Verify Janet's next target is `CHINESE_TAKEAWAY`. Run inspection again. Verify `CLOSURE_NOTICE_PROP` issued. Verify `AchievementSystem.isUnlocked(PUBLIC_HEALTH_HERO)` == true.
+
+7. **Faction sabotage: Marchetti lose respect on closure**: Give Marchetti Crew ownership of `GREASY_SPOON` turf. Record `FactionSystem.getPlayerRespect(MARCHETTI_CREW)`. Set condition to 5. Run inspection. Verify rating == 1, closure issued. Verify `FactionSystem.getPlayerRespect(MARCHETTI_CREW)` decreased by 5.
+
+// ── New: EnvironmentalHealthSystem.java in ragamuffin.core
+// New NPCType: ENVIRONMENTAL_HEALTH_OFFICER (40f HP, 0f attack, 0f cooldown, false hostile) — add to NPCType.java
+// New Materials: HYGIENE_STICKER, FORGED_FIVE_STAR_STICKER, IMPROVEMENT_NOTICE, ANONYMOUS_NOTE — add to Material.java
+// New PropType: HYGIENE_RATING_PROP, IMPROVEMENT_NOTICE_PROP, CLOSURE_NOTICE_PROP, SUGGESTION_BOX_PROP — add to PropType.java
+// New RumourType: FOOD_HYGIENE — add to RumourType.java
+// New AchievementType: GREASY_PALM, FIVE_STAR_FRAUDSTER, CLEAN_KITCHEN, PUBLIC_HEALTH_HERO — add to AchievementType.java
+// New CriminalRecord.CrimeType: BRIBERY, CORRUPTION_OF_OFFICIAL — add if absent
+// Integrates: GreasySpoonSystem, ChippySystem, KebabVanSystem, ChineseTakeawaySystem,
+//   NandosSystem, BistaVillageSystem, SkipDivingSystem, NoiseSystem, WantedSystem,
+//   CriminalRecord, NotorietySystem, RumourNetwork, NewspaperSystem, NeighbourhoodSystem,
+//   FactionSystem, StreetSkillSystem, AchievementSystem, TimeSystem, MagistratesCourtSystem
