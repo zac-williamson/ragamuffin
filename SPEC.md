@@ -45258,3 +45258,176 @@ Add to `AchievementType.java`:
 //              NoiseSystem, FireStationSystem, WantedSystem, CriminalRecord, NotorietySystem,
 //              RumourNetwork, NewspaperSystem, StreetSkillSystem, FactionSystem,
 //              DogCompanionSystem, AchievementSystem
+
+---
+
+## Issue #1319: Add Northfield NatWest Cashpoint — The Dodgy ATM, Card Skimming & the Midnight Withdrawal Dash
+
+### Overview
+
+Every British high street has one: a battered cashpoint bolted to a wall outside a shuttered bank, its screen flickering at 2am while a queue of desperate people check their balance and silently pray. Northfield gets its first ATM system — the lone NatWest cashpoint on the High Street — complete with card-skimming, shoulder-surfing, a dodgy out-of-order machine you can crack open with the right tools, and a late-night money-mule hustle run by Kenny from the off-licence.
+
+### New Java File
+
+`src/main/java/ragamuffin/core/CashpointSystem.java` in package `ragamuffin.core`
+
+### New Unit Test File
+
+`src/test/java/ragamuffin/core/CashpointSystemTest.java`
+
+### New Integration Test File
+
+`src/test/java/ragamuffin/integration/Issue1319CashpointIntegrationTest.java`
+
+---
+
+### Mechanic 1 — Basic Withdrawal (always available, 24/7)
+
+- `CASHPOINT_PROP` placed on the High Street outside the boarded-up NatWest branch (`LandmarkType.HIGH_STREET`).
+- Press E to use: player withdraws 10–40 COIN (random range) — the "daily limit" framed as a narrative device.
+  - Once per in-game day (resets at 00:00 via `TimeSystem`).
+  - If player already withdrew today: machine displays "DAILY LIMIT REACHED" and dispenses nothing.
+- `CASHPOINT_FEE`: 1 COIN fee applied if player's total COIN < 20 at time of withdrawal (predatory charge; "£1.50 charge to access YOUR OWN MONEY").
+- First withdrawal ever: tooltip fires — *"Finally, some cash. The machine smells of chip fat and broken dreams."*
+- `AchievementType.CASHPOINT_REGULAR` — unlocked after 7 withdrawals on 7 different days.
+
+### Mechanic 2 — Shoulder-Surfing (STEALTH ≥ Apprentice)
+
+- When a `PUBLIC` NPC uses `CASHPOINT_PROP` (NPCs visit 09:00–21:00, every ~4 minutes), the player can stand within 1.5 blocks and press E while crouching to attempt a shoulder-surf.
+- Success chance: `0.25 + (STEALTH_tier × 0.10) − witness_penalty (0.15 per bystander NPC within 4 blocks)`.
+- Success: steal the NPC's PIN as `Material.STOLEN_PIN_NOTE` (a slip of paper). Also learn that NPC's card type: `Material.VICTIM_BANK_CARD` can subsequently be pickpocketed from that NPC (standard `StreetSkillSystem.pickpocket()` flow).
+- If player holds both `STOLEN_PIN_NOTE` and `VICTIM_BANK_CARD`: can visit the cashpoint at night (22:00–05:00 only, reduced witness chance) to withdraw 30–80 COIN as a fraudulent transaction.
+  - Fraudulent withdrawal: `CriminalRecord.CrimeType.CARD_FRAUD` recorded, `WantedSystem` +2 stars, Notoriety +12.
+  - `AchievementType.IDENTITY_THIEF` on first successful card fraud.
+- Failure: NPC notices, calls police — `WantedSystem` +1 star, `RumourNetwork` seeds `RumourType.LOCAL_CRIME`.
+
+### Mechanic 3 — Card Skimmer Hustle (STEALTH ≥ Journeyman, GRAFTING ≥ Apprentice)
+
+- Kenny (`NPCType.MONEY_MULE`) loiters near the cashpoint 20:00–23:00 on Friday/Saturday nights.
+- Press E on Kenny: he offers to sell a `Material.CARD_SKIMMER_DEVICE` for 25 COIN.
+- Player places `CARD_SKIMMER_DEVICE` on `CASHPOINT_PROP` (E interaction while holding device):
+  - Skimmer runs silently for 2 in-game hours, collecting data from any NPC who uses the machine.
+  - Each NPC who uses the machine during that window: 60% chance to yield 1 × `Material.CLONED_CARD_DATA` (a USB stick; fenceable for 15 COIN each via `FenceSystem`).
+  - After 2 hours (or if a police NPC comes within 8 blocks): skimmer auto-removes.
+  - If police detect skimmer (patrol passes within 3 blocks): `WantedSystem` +3 stars, `CriminalRecord.CrimeType.CARD_FRAUD` + `CriminalRecord.CrimeType.CRIMINAL_DAMAGE`, `RumourNetwork` seeds `RumourType.LOCAL_CRIME`.
+  - `AchievementType.SKIMMER_KING` on first successful harvest of 3+ `CLONED_CARD_DATA` in one session.
+
+### Mechanic 4 — The Out-of-Order Machine (once per week, random day)
+
+- On a random day each week, `CASHPOINT_PROP` displays "SORRY, OUT OF SERVICE".
+- The machine is physically openable: requires `Material.CROWBAR` + GRAFTING ≥ Apprentice (hold E for 4 seconds) OR `Material.ANGLE_GRINDER` (hold E for 1.5 seconds — faster but louder).
+- Contents: 80–150 COIN in cash, 1 × `Material.ENGINEER_ACCESS_CARD` (fenceable for 20 COIN).
+- Opening with crowbar: `NoiseSystem` noise event at 3.0 magnitude.
+- Opening with angle grinder: `NoiseSystem` noise event at 7.5 magnitude — nearby NPCs flee, police alerted if any within 20 blocks, `WantedSystem` +2 stars.
+- Whether attempted via crowbar or grinder: `CriminalRecord.CrimeType.CRIMINAL_DAMAGE` recorded, Notoriety +8.
+- `AchievementType.CASH_AND_CARRY` on first successful machine crack.
+- If `FireStationSystem` is already responding to another incident within 15 blocks, police response time doubles (overwhelmed services).
+
+### Mechanic 5 — Kenny's Money-Mule Run (INFLUENCE ≥ Apprentice)
+
+- Player can accept a "job" from Kenny: carry 50 COIN in a `Material.STUFFED_ENVELOPE` to a drop location (a bin prop 30 blocks south).
+- Time limit: 3 in-game minutes.
+- Reward: 15 COIN from Kenny on return.
+- If player is stopped by police while holding `STUFFED_ENVELOPE`: `CriminalRecord.CrimeType.MONEY_LAUNDERING` recorded, `WantedSystem` +2 stars.
+- `RumourNetwork` seeds `RumourType.ORGANISED_CRIME` after 3 completed mule runs.
+- `AchievementType.MONEY_MULE` after 5 completed runs.
+- `FactionSystem`: completing 3 runs increases STREET_LADS Respect +5; declining Kenny 3 times in a row decreases STREET_LADS Respect −3.
+
+### Achievements
+
+Add to `AchievementType.java`:
+- `CASHPOINT_REGULAR` — "Regular Customer" — "Made 7 withdrawals on 7 different days. The NatWest machine knows your face by now." Fires on 7th distinct-day withdrawal.
+- `IDENTITY_THIEF` — "Identity Crisis" — "Used someone else's card at the cashpoint. At least you've got bus fare home." Fires on first fraudulent withdrawal.
+- `SKIMMER_KING` — "Tap and Don't Pay" — "Harvested 3 cloned card data sets in a single skimming session. DWP would be proud." Fires on first harvest of 3+ CLONED_CARD_DATA.
+- `CASH_AND_CARRY` — "Unauthorised Access" — "Cracked open the cashpoint. It was out of order anyway." Fires on first successful machine crack.
+- `MONEY_MULE` — "Financial Services" — "Completed 5 of Kenny's envelope runs. You are basically a banker." Fires on 5th completed mule run.
+
+### New Materials
+
+Add to `Material.java`:
+- `STOLEN_PIN_NOTE` — "Scribbled PIN" — small paper scrap
+- `VICTIM_BANK_CARD` — "Contactless Card" — blue plastic card
+- `CARD_SKIMMER_DEVICE` — "Dodgy Card Reader" — grey plastic device
+- `CLONED_CARD_DATA` — "USB Stick" — small black USB
+- `STUFFED_ENVELOPE` — "Stuffed Envelope" — brown A5 envelope
+- `ENGINEER_ACCESS_CARD` — "NatWest Engineer Card" — laminated ID card
+
+### New NPC Type
+
+Add to `NPCType.java`:
+- `MONEY_MULE` — Kenny; movement speed standard; not hostile by default
+
+### New Prop Type
+
+Add to `PropType.java`:
+- `CASHPOINT_PROP` — dimensions ~0.6 × 1.8 × 0.4 m (narrow upright unit)
+
+### New Rumour Type
+
+Add to `RumourType.java`:
+- `CARD_SKIMMING_WARNING` — "Someone's been skimming cards at the cashpoint again. Use the one in Morrisons." Spread by PUBLIC NPCs who used the machine while skimmer was active.
+
+### New Crime Types
+
+Add to `CriminalRecord.CrimeType`:
+- `CARD_FRAUD` — "Card fraud" — if not already present
+- `MONEY_LAUNDERING` — "Money laundering" — if not already present
+
+### Integrations
+
+- **TimeSystem**: daily withdrawal limit resets at 00:00; Kenny spawns 20:00–23:00 Fri/Sat; fraudulent withdrawals 22:00–05:00 only.
+- **StreetSkillSystem**: shoulder-surf uses STEALTH; skimmer placement requires GRAFTING ≥ Apprentice + STEALTH ≥ Journeyman; Kenny job requires INFLUENCE ≥ Apprentice.
+- **WantedSystem**: card fraud +2 stars; skimmer detected +3 stars; machine crack (grinder) +2 stars; money mule arrested +2 stars.
+- **CriminalRecord**: CARD_FRAUD, CRIMINAL_DAMAGE, MONEY_LAUNDERING.
+- **NotorietySystem**: card fraud +12; machine crack +8; Kenny mule run ×3 seeds ORGANISED_CRIME.
+- **FenceSystem**: CLONED_CARD_DATA fenceable at 15 COIN; ENGINEER_ACCESS_CARD fenceable at 20 COIN.
+- **RumourNetwork**: LOCAL_CRIME on shoulder-surf failure or skimmer detection; CARD_SKIMMING_WARNING after successful skimmer harvest; ORGANISED_CRIME after 3 mule runs.
+- **NoiseSystem**: crowbar crack = 3.0; angle grinder = 7.5.
+- **FireStationSystem**: if responding within 15 blocks, police response time doubles.
+- **FactionSystem**: STREET_LADS Respect ±3/5 based on Kenny mule runs.
+- **AchievementSystem**: CASHPOINT_REGULAR, IDENTITY_THIEF, SKIMMER_KING, CASH_AND_CARRY, MONEY_MULE.
+- **TooltipSystem**: first-ever withdrawal tooltip.
+
+### Unit Tests
+
+- `CashpointSystem.canWithdraw()` returns true first call; returns false on second call same day; returns true after `TimeSystem` day advances.
+- `CashpointSystem.applyFee()` deducts 1 COIN when player balance < 20; does not deduct when balance ≥ 20.
+- Shoulder-surf success chance formula: base 0.25 + tier bonus − witness penalty; clamps to [0.05, 0.90].
+- Shoulder-surf failure: `WantedSystem` receives +1 star; `RumourType.LOCAL_CRIME` added to network.
+- Fraudulent withdrawal: `CriminalRecord` records `CARD_FRAUD`; `WantedSystem` +2 stars; Notoriety +12.
+- Fraudulent withdrawal blocked outside 22:00–05:00 window.
+- Skimmer: 2-hour harvest window; each NPC visit has 60% yield chance; auto-removes after 2 hours.
+- Skimmer detected by police: `WantedSystem` +3 stars; `CARD_FRAUD` + `CRIMINAL_DAMAGE` in `CriminalRecord`.
+- Out-of-order machine: crowbar crack yields 80–150 COIN + `ENGINEER_ACCESS_CARD`; noise at 3.0; `CRIMINAL_DAMAGE` recorded.
+- Angle grinder crack: noise at 7.5; police alerted if within 20 blocks.
+- Machine is only out-of-order on the designated random day; normal withdrawal works other days.
+- Kenny money-mule: reward 15 COIN on successful delivery; `MONEY_LAUNDERING` recorded if stopped by police.
+- MONEY_MULE achievement fires on 5th completed run (not 4th, not 6th).
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Daily withdrawal limit enforced**: Set `TimeSystem` to day 1, hour 10:00. Call `CashpointSystem.withdraw(player)`. Verify player COIN increased by 10–40. Call `withdraw(player)` again same day. Verify COIN unchanged and result is `DAILY_LIMIT_REACHED`. Advance `TimeSystem` to day 2, hour 10:00. Call `withdraw(player)` again. Verify COIN increases again.
+
+2. **Shoulder-surf → fraudulent withdrawal full cycle**: Set player STEALTH to Journeyman. Set `TimeSystem` to hour 14:00 (NPC active). Spawn a `PUBLIC` NPC at the cashpoint. Player crouches within 1.5 blocks, presses E. Seed random to force success. Verify player receives `STOLEN_PIN_NOTE`. Player pickpockets the NPC (seeded random, force success). Verify player holds `VICTIM_BANK_CARD`. Set `TimeSystem` to hour 23:00. Player uses cashpoint with both items. Verify COIN increases 30–80. Verify `CriminalRecord` contains `CARD_FRAUD`. Verify `WantedSystem` stars increased by 2. Verify `IDENTITY_THIEF` achievement fires.
+
+3. **Card skimmer harvest — 3 cloned cards**: Give player `CARD_SKIMMER_DEVICE`. Player places it on `CASHPOINT_PROP`. Spawn 5 PUBLIC NPCs and simulate each using the machine. Seed random to yield 3+ `CLONED_CARD_DATA`. Verify player inventory contains ≥ 3 `CLONED_CARD_DATA`. Verify `SKIMMER_KING` achievement fires. Verify `RumourType.CARD_SKIMMING_WARNING` is in `RumourNetwork`.
+
+4. **Out-of-order machine cracked with crowbar**: Force machine into out-of-order state. Give player `Material.CROWBAR`. Player holds E on `CASHPOINT_PROP` for 4 simulated seconds. Verify player COIN increased by 80–150. Verify player inventory contains `ENGINEER_ACCESS_CARD`. Verify `NoiseSystem` received noise event at magnitude 3.0 ± 0.1. Verify `CriminalRecord` contains `CRIMINAL_DAMAGE`. Verify `CASH_AND_CARRY` achievement fires. Verify machine returns to normal (non-crackable) state after crack.
+
+5. **Kenny mule run — 5 completions trigger achievement**: Set player INFLUENCE ≥ Apprentice. Set `TimeSystem` to Friday 21:00. Spawn Kenny (`NPCType.MONEY_MULE`) at cashpoint. Player presses E on Kenny, receives `STUFFED_ENVELOPE`. Player moves to drop bin location (30 blocks south). Simulate envelope deposit. Verify player receives 15 COIN. Repeat 4 more times (total 5). Verify `MONEY_MULE` achievement fires on 5th completion. Verify `RumourType.ORGANISED_CRIME` added to `RumourNetwork` after 3rd run.
+
+---
+
+// ── Issue #1319: Add Northfield NatWest Cashpoint — The Dodgy ATM, Card Skimming & the Midnight Withdrawal Dash ────
+// New: CashpointSystem.java in ragamuffin.core
+// New: CashpointSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1319CashpointIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: MONEY_MULE — add to NPCType.java
+// Material: STOLEN_PIN_NOTE, VICTIM_BANK_CARD, CARD_SKIMMER_DEVICE, CLONED_CARD_DATA, STUFFED_ENVELOPE, ENGINEER_ACCESS_CARD — add to Material.java
+// PropType: CASHPOINT_PROP — add to PropType.java
+// RumourType: CARD_SKIMMING_WARNING — add to RumourType.java
+// AchievementType: CASHPOINT_REGULAR, IDENTITY_THIEF, SKIMMER_KING, CASH_AND_CARRY, MONEY_MULE — add to AchievementType.java
+// CriminalRecord.CrimeType: CARD_FRAUD (if absent), MONEY_LAUNDERING (if absent) — add to CriminalRecord.java
+// Integration: TimeSystem, StreetSkillSystem, WantedSystem, CriminalRecord, NotorietySystem,
+//              FenceSystem, RumourNetwork, NoiseSystem, FireStationSystem, FactionSystem,
+//              AchievementSystem, TooltipSystem
