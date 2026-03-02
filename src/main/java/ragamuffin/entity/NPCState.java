@@ -59,5 +59,9 @@ public enum NPCState {
     CONGREGATING,       // Youth NPCs loitering outside Clucky's in a group (18:00–02:00)
 
     // Issue #1008: St. Mary's Church
-    INVESTIGATING       // NPC is investigating a loud noise source (e.g. bell ringing) — walks toward noise origin for 10 seconds
+    INVESTIGATING,      // NPC is investigating a loud noise source (e.g. bell ringing) — walks toward noise origin for 10 seconds
+
+    // Issue #1202: Karaoke Night
+    JEERING,            // NPC is jeering/booing a terrible karaoke performance
+    CELEBRATING         // NPC is celebrating a great karaoke performance (or other positive event)
 }

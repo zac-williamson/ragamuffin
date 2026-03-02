@@ -3914,6 +3914,48 @@ public enum AchievementType {
         "Public Health Hero",
         "You reported the rats. Nobody will thank you. But you did the right thing.",
         1
+    ),
+
+    // ── Issue #1202: Karaoke Night ─────────────────────────────────────────
+
+    /**
+     * Issue #1202: Awarded when the player scores 3/3 on the BattleBarMiniGame
+     * during a karaoke performance at Wetherspoons (Friday Karaoke Night).
+     */
+    KARAOKE_KING(
+        "Karaoke King",
+        "Nailed a karaoke performance at the Spoons. Bev nearly cracked a smile.",
+        1
+    ),
+
+    /**
+     * Issue #1202: Awarded when the player is hit by a thrown pint glass after
+     * scoring ≤1/3 in a karaoke performance (TERRIBLE result).
+     */
+    BOTTLED_IT(
+        "Bottled It",
+        "Got glassed for a terrible karaoke performance. In fairness, it was bad.",
+        1
+    ),
+
+    /**
+     * Issue #1202: Awarded when the player performs karaoke to a max-capacity pub
+     * (all NPC slots filled at Wetherspoons).
+     */
+    FULL_HOUSE(
+        "Full House",
+        "Performed to a packed pub. They weren't all there for you, but still.",
+        1
+    ),
+
+    /**
+     * Issue #1202: Awarded when the player steals the MICROPHONE_PROP from the
+     * karaoke booth while Bev is distracted during or after a rival's performance.
+     */
+    MIC_DROP(
+        "Mic Drop",
+        "Stole the mic mid-show. Bev is absolutely fuming.",
+        1
     );
 
     private final String name;
