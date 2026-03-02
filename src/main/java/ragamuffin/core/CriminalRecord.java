@@ -805,7 +805,22 @@ public class CriminalRecord {
          * confrontation without paying the fixed penalty notice.
          * Penalty: +1 WantedSystem star; officer enters AGGRESSIVE state.
          */
-        EVADING_ENFORCEMENT("Evading council enforcement");
+        EVADING_ENFORCEMENT("Evading council enforcement"),
+
+        // ── Issue #1276: Northfield Minicab Office — Big Terry's Cabs ─────────────
+
+        /**
+         * Recorded when the player touts for unlicensed taxi fares outside Big Terry's
+         * Cabs without holding a TL_COUNCIL_PLATE. +1 WantedSystem star per 3 touts.
+         */
+        UNLICENSED_TOUTING("Unlicensed touting"),
+
+        /**
+         * Recorded when the player consents to a UNDERCOVER_POLICE inspection during
+         * a dodgy package delivery and the package is flagged as stolen goods.
+         * Penalty: +15 Notoriety, +2 WantedSystem stars.
+         */
+        POSSESSION_OF_STOLEN_GOODS("Possession of stolen goods");
 
         private final String displayName;
 

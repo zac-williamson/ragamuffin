@@ -640,5 +640,12 @@ public enum RumourType {
     /** "Someone's been dumping rubbish on the wasteland again — it's disgusting."
      * — seeded by FlyTippingSystem on the first fly-tip each in-game day.
      * Spreads via PUBLIC, PENSIONER, COUNCIL_MEMBER NPCs; may trigger NeighbourhoodWatchSystem complaint. */
-    FLY_TIP_SPOTTED;
+    FLY_TIP_SPOTTED,
+
+    // ── Issue #1276: Northfield Minicab Office — Big Terry's Cabs ─────────────
+
+    /** "Big Terry's boys are nicking A1's trade."
+     * — seeded by MinicabSystem when the player touts for fares within 10 blocks of
+     * the A1 Taxis rank. Spreads via PUBLIC NPCs; puts TaxiSystem on alert. */
+    TURF_WAR;
 }

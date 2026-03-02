@@ -4758,6 +4758,15 @@ public enum AchievementType {
         "Burn It All",
         "Plan B was a bit much. But it worked.",
         1
+    ),
+
+    // ── Issue #1276: Northfield Minicab Office — Big Terry's Cabs ─────────────
+
+    /** Use Big Terry's Cabs for 5 paid rides. */
+    BIG_TERRYS_REGULAR(
+        "Big Terry's Regular",
+        "Five rides with Terry. He knows your face and your usual. You don't ask about the other passengers.",
+        5
     );
 
     private final String name;
