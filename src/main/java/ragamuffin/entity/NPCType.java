@@ -1581,7 +1581,49 @@ public enum NPCType {
      * Speech: "A word to the wise, son." / "Keep it between us, yeah?" /
      *         "The Lodge looks after its own." / "What is it you're after, exactly?"
      */
-    RAOB_MEMBER(30f, 0f, 0f, false);
+    RAOB_MEMBER(30f, 0f, 0f, false),
+
+    // ── Issue #1144: Northfield Probation Office ──────────────────────────────
+
+    /**
+     * Probation Officer — Karen, 45, permanently sceptical case officer.
+     * Stationed at PROBATION_DESK_PROP during office hours (09:00–17:00).
+     * Steps out 13:00–14:00 (lunch), leaving Debbie at reception distracted.
+     * Runs sign-on dialogue trees; fits ELECTRONIC_TAG at 3+ custody entries.
+     * Speech: "I need you to be honest with me." / "You're not doing yourself any favours." /
+     *         "I'll be frank — this isn't looking good." / "Any new offences to declare?"
+     */
+    PROBATION_OFFICER(30f, 0f, 0f, false),
+
+    /**
+     * Probation Receptionist — Debbie, 38, easily distracted admin.
+     * Stationed at the reception desk. During Karen's 13:00–14:00 lunch break,
+     * she is distracted by her phone (detection chance −40%).
+     * Issues COMMUNITY_SERVICE_VEST to player for service tasks.
+     * Speech: "Sign in please." / "Karen'll be with you in a minute." /
+     *         "Oh, sorry — hang on, just let me..." / "Take a seat in the waiting area."
+     */
+    PROBATION_RECEPTIONIST(20f, 0f, 0f, false),
+
+    /**
+     * Probation Client — one of the waiting room regulars (Daz, Spider, Big Tone, Leanne, Chantelle).
+     * 3–5 spawn in the waiting area during office hours.
+     * Each carries 1–2 CRIMINAL_INTEL rumours and trades TOBACCO, STOLEN_PHONE, or FAKE_ID.
+     * Spider also offers a ScrapyardSystem package lift for MARCHETTI_CREW Respect +5.
+     * Speech: varies per named client — local criminal gossip and black market chatter.
+     */
+    PROBATION_CLIENT(20f, 0f, 0f, false),
+
+    /**
+     * Community Service Supervisor — Gary, 50, seen-it-all council parks worker.
+     * Stationed at the park during community service hours (09:00–17:00).
+     * Assigns litter-picking, graffiti-cleaning, and bench-painting tasks.
+     * Checks for skiving: 50% detection chance if player absent 30+ minutes.
+     * Speech: "Right, there's litter down by the pond — sort it." /
+     *         "You bunking off? Because it looks like you're bunking off." /
+     *         "One more hour and you're done. Try to look enthusiastic."
+     */
+    COMMUNITY_SERVICE_SUPERVISOR(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
