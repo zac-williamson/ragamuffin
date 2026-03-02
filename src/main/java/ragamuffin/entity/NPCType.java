@@ -2468,14 +2468,14 @@ public enum NPCType {
     CARPET_SALESMAN(25f, 0f, 0f, false),
 
     /**
-     * DELIVERY_DRIVER — Kev, who mans the stockroom at Dave's Carpets.
+     * CARPET_STOCKROOM_WORKER — Kev, who mans the stockroom at Dave's Carpets.
      * <ul>
      *   <li>Present during shop hours; can be distracted with a CHOCOLATE_BAR for 90 seconds.</li>
      *   <li>Guards the CARPET_ROLL_PROP in the stockroom.</li>
      * </ul>
      * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    DELIVERY_DRIVER(25f, 0f, 0f, false),
+    CARPET_STOCKROOM_WORKER(25f, 0f, 0f, false),
 
     /**
      * TRADING_STANDARDS_OFFICER — Sandra, the Trading Standards inspector.

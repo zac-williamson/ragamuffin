@@ -5001,7 +5001,7 @@ public enum AchievementType {
      * Awarded when the player loots the CARPET_ROLL_PROP while Kev is distracted.
      * Yields CARPET_OFFCUT x2-4 and SACK_TRUCK. Seeds CARPET_THIEF rumour.
      */
-    FIVE_FINGER_DISCOUNT(
+    CARPET_ROLL_HEIST(
         "Five-Finger Discount",
         "Kev had a Twix. You had a carpet roll. Fair trade, really.",
         1
