@@ -40283,3 +40283,142 @@ New `AchievementType` entries:
 // Integrates: WeatherSystem, TimeSystem, WantedSystem, CriminalRecord,
 //   FenceSystem, RumourNetwork, WitnessSystem, NotorietySystem,
 //   StreetSkillSystem, AchievementSystem, TooltipSystem, BattleBarMiniGame
+
+## Add Northfield TV Licensing — The Detector Van, the Doorstep Visit & the Licence Dodger Hustle
+
+**Background**: The BBC TV Licensing authority is one of the most uniquely British institutions in existence — a quasi-official enforcement body with no actual police powers but a near-mythological reputation for "detector vans" that can supposedly sense an unlicensed TV from the street. In reality it runs on fear, strongly-worded letters, and occasional doorstep visits from officers with clipboards. This issue creates `TvLicensingSystem` — a gentle, persistent pressure system that operates on any player who has a `TELEVISION_PROP` in their squat without having paid for a TV licence.
+
+**New system file**: `src/main/java/ragamuffin/core/TvLicensingSystem.java`
+
+**New NPC**: `TV_LICENCE_OFFICER` — one named instance: **Derek** (male, 50s, grey anorak, ID lanyard, clipboard, perpetually disappointed expression). Derek does not patrol; he makes targeted doorstep visits to known unlicensed addresses. HP: 20f, attack: 0f, cooldown: 0f, hostile: false. If assaulted: Notoriety +10, `CriminalRecord.CrimeType.ASSAULT` added, Wanted +2 stars; Derek despawns and re-visits 2 in-game days later (he always comes back). If bribed successfully: despawns for 7 in-game days.
+
+### Licence & Enforcement Mechanics
+
+**Trigger condition**: `TvLicensingSystem` becomes active as soon as the player places a `TELEVISION_PROP` inside their squat (tracked via `SquatSystem.hasProp(PropType.TELEVISION_PROP)`). A licence flag `tvLicencePaid` starts `false`.
+
+**The enforcement letter cycle** — operates independently of Derek's visits:
+- At the start of each new in-game week (Monday 08:00), if `tvLicencePaid == false` and the player has a `TELEVISION_PROP`, a `TV_LICENCE_LETTER` item is spawned on the player's squat floor.
+- The letter reads: *"This is to inform you that our records show no TV Licence at this address. Failure to hold a valid TV Licence is a criminal offence punishable by a fine of up to £1,000."*
+- Up to 3 letters accumulate. On the 3rd unread letter: `TvLicensingSystem.escalate()` is called — Derek is scheduled to visit.
+- The player can **read** a letter (press E on `TV_LICENCE_LETTER`) to consume it and mark as read. Reading all letters resets the escalation counter to 0 (but doesn't stop the next week's letter arriving).
+- The player can also **bin** letters without reading them (`DROP` action). Each binned letter counts as unread for escalation purposes.
+
+**Derek's visit**:
+- Derek spawns at the squat entrance between 09:00–17:00 (weekdays only). He knocks (emits a `KNOCK_PROP` sound event via `NoiseSystem`). Tooltip on squat door: *"Someone's at the door."*
+- If the player opens the door (presses E on front door while Derek is present), dialogue triggers:
+  > *"Good morning. I'm calling from TV Licensing. Are you the occupant of this address?"*
+- **Player response options:**
+  1. **"Never heard of a television."** — Derek raises an eyebrow. He runs a visual check: if `TELEVISION_PROP` is within 3 blocks of the door (visible from doorstep), he immediately finds it. If not visible, he accepts the claim and leaves (visit counter reset, 14-day grace period). `TvLicensingSystem.isTelevisionVisible(squatLayout, doorPos)` → boolean.
+  2. **"I've already got a licence."** — Lie. Derek asks for the licence number. A `StreetSkillSystem` `LIE` check (difficulty 3) determines outcome: success → Derek accepts, 14-day grace. Fail → Derek doesn't believe you, escalates immediately. Each lie that fails adds +1 to Derek's suspicion permanently.
+  3. **"Come in and have a look then."** — Risky. If `TELEVISION_PROP` is present anywhere in squat, Derek finds it. Licence enforcement triggered. If no TV prop, Derek is satisfied and leaves (30-day grace).
+  4. **"You haven't got a warrant."** (Only available if player has `CriminalRecord` entries ≥ 1 — they've learned their rights.) — Derek cannot enter without consent. He leaves a formal `TV_ENFORCEMENT_NOTICE` (escalated letter). `CriminalRecord.CrimeType.TV_LICENCE_EVASION` added regardless. Visit not counted as a find.
+  5. **"Here, have a biscuit."** (Unlocked after `WetherspoonsSystem` has been visited ≥ 5 times — player has social skills.) — Offer `BISCUIT` item from inventory. Derek is briefly disarmed. Random (50%): he takes the biscuit and leaves, granting 7-day grace. Random (50%): "I can't accept refreshments, I'm afraid." Proceeds with visit.
+
+- **If Derek is NOT answered within 90 seconds** (player ignores door or is not home): Derek leaves a `TV_LICENCE_LETTER` (escalated tier) and schedules another visit in 3 in-game days.
+
+**Licence enforcement (Derek finds the TV)**:
+- `TvLicensingSystem.issueFine(player, inventory)`:
+  - Deducts 10 COIN from player inventory (the fine; if player has fewer than 10 COIN, it creates a debt tracked in `TvLicensingSystem.debtOwed`).
+  - Adds `CriminalRecord.CrimeType.TV_LICENCE_EVASION` to the player's record.
+  - Notoriety +5.
+  - Tooltip: *"That'll be a fine, I'm afraid. You'll receive the paperwork in the post."*
+  - Derek departs. No further visits for 30 in-game days (licence evasion on record acts as deterrent — "they know we know").
+
+**Buying a licence**:
+- At the `POST_OFFICE` landmark (`PostOfficeSystem`), a new transaction option: **"Buy TV Licence — 5 COIN"**.
+- On purchase: `tvLicencePaid = true`. No further letters or visits. `TvLicensingSystem.setLicencePaid(true)`.
+- Tooltip on purchase: *"Congratulations. You are now a law-abiding television viewer."*
+- The licence expires after 52 in-game weeks (1 in-game year). `TvLicensingSystem.checkLicenceExpiry(timeSystem)` resets `tvLicencePaid = false` on expiry.
+
+### The Detector Van
+
+Every Sunday between 14:00–16:00, a `DETECTOR_VAN_PROP` (new prop — white Transit van with aerial on roof) parks on the street outside the industrial estate for 20 in-game minutes. This is **purely atmospheric** — the van doesn't actually detect anything (reflecting the real-world myth). However:
+- `RumourNetwork` seeds a `DETECTOR_VAN_SPOTTED` rumour when the van appears, which panics nearby `PUBLIC` NPCs into dialogue: *"The detector van's out — better get your licence sorted."*
+- The `NEIGHBOURHOOD_WATCH` NPC reports any unlicensed squat they are aware of to Derek, adding a target to his visit queue immediately.
+- If the player approaches the van and presses E: *"The van appears to have nobody in it."* Achievement `MYTH_BUSTER` unlocked.
+
+### The Hustle — Selling Fake Licences
+
+Once the player has purchased 1 genuine TV licence (lifetime unlock), they can craft `FAKE_TV_LICENCE` documents:
+- Recipe: `TV_LICENCE` (own copy, not consumed) + `PRINTER_PAPER` + `PRINTER` prop (at `INTERNET_CAFE` or owned in squat) → 1 `FAKE_TV_LICENCE`.
+- `FAKE_TV_LICENCE` can be:
+  1. **Given to a `PUBLIC` or `PENSIONER` NPC** (press E while holding) for 3 COIN — they buy it as genuine. NPCs that are `NEIGHBOURHOOD_WATCH` refuse and report to `WitnessSystem`.
+  2. **Sold to the `FENCE`** for 2 COIN each (lower value — fence knows it's worthless but someone wants them).
+  3. **Shown to Derek during a visit** instead of a real licence. `TvLicensingSystem.verifyLicence(FAKE_TV_LICENCE, derekSuspicion)`: if Derek's suspicion level < 2, he accepts it (50% chance); if suspicion ≥ 2 (from previous lies), he always rejects it. Rejection: immediate fine + `CriminalRecord.FORGERY` added.
+
+### NPCType & Constants
+
+New `NPCType` entry: `TV_LICENCE_OFFICER`.
+
+New `Material` entries: `TV_LICENCE_LETTER`, `TV_ENFORCEMENT_NOTICE`, `TV_LICENCE`, `FAKE_TV_LICENCE`.
+
+New `PropType` entry: `DETECTOR_VAN_PROP`.
+
+New `AchievementType` entries:
+- `MYTH_BUSTER` — approach and interact with the detector van
+- `LAW_ABIDING_VIEWER` — buy a TV licence at the post office
+- `LICENCE_EVADER` — receive 3 enforcement letters without paying
+- `DEREK_S_NEMESIS` — successfully avoid Derek on 5 consecutive visits (either he doesn't find TV, or lie succeeds, or biscuit works)
+
+### Key Constants (`public static final` in `TvLicensingSystem`)
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `LICENCE_COST` | `5` | COIN to buy a licence at the Post Office |
+| `FINE_AMOUNT` | `10` | COIN deducted when Derek finds unlicensed TV |
+| `GRACE_PERIOD_DAYS_LIE_SUCCESS` | `14` | In-game days before next escalation after successful lie |
+| `GRACE_PERIOD_DAYS_BISCUIT` | `7` | In-game days after successful biscuit bribe |
+| `GRACE_PERIOD_DAYS_LICENCE_ISSUED` | `30` | In-game days before re-visit after fine |
+| `ESCALATION_LETTER_THRESHOLD` | `3` | Letters before Derek is scheduled |
+| `VISIT_WINDOW_START` | `9` | Hour Derek begins visits |
+| `VISIT_WINDOW_END` | `17` | Hour Derek ends visits |
+| `BISCUIT_SUCCESS_PROBABILITY` | `0.50f` | Chance biscuit gets rid of Derek |
+| `FAKE_LICENCE_ACCEPT_PROBABILITY` | `0.50f` | Chance Derek accepts fake if suspicion < 2 |
+| `LIE_SKILL_DIFFICULTY` | `3` | StreetSkillSystem difficulty for the "I've got a licence" lie |
+| `DETECTOR_VAN_DURATION_MINUTES` | `20` | How long the van stays parked |
+| `LICENCE_EXPIRY_WEEKS` | `52` | In-game weeks before licence expires |
+| `FAKE_LICENCE_NPC_VALUE` | `3` | COIN earned selling fake licence to public NPC |
+| `FAKE_LICENCE_FENCE_VALUE` | `2` | COIN earned selling fake to fence |
+
+### Unit Test Assertions (method-level, no LibGDX)
+
+- `TvLicensingSystem.isTelevisionVisible(squatLayout, doorPos)` where TV is 2 blocks from door → `true`; 4 blocks from door → `false`
+- `TvLicensingSystem.shouldEscalate(lettersUnread=3)` → `true`; `lettersUnread=2` → `false`
+- `TvLicensingSystem.issueFine(playerCoins=5, fineAmount=10)` → deducts 5 COIN and sets `debtOwed=5`
+- `TvLicensingSystem.issueFine(playerCoins=15, fineAmount=10)` → deducts 10 COIN, `debtOwed=0`
+- `TvLicensingSystem.checkLicenceExpiry(weeksPaid=0, weeksElapsed=52)` → returns `true` (expired)
+- `TvLicensingSystem.checkLicenceExpiry(weeksPaid=0, weeksElapsed=51)` → returns `false`
+- `TvLicensingSystem.verifyLicence(FAKE_TV_LICENCE, derekSuspicion=1, rng=seeded_accept)` → `true`
+- `TvLicensingSystem.verifyLicence(FAKE_TV_LICENCE, derekSuspicion=2, rng=any)` → `false`
+- `TvLicensingSystem.isDerekVisitWindow(hour=9)` → `true`; `hour=17)` → `false`; `hour=8)` → `false`
+- `TvLicensingSystem.isDerekVisitWindow(hour=14, dayOfWeek=SATURDAY)` → `false` (weekdays only)
+- `TvLicensingSystem.calcBiscuitOutcome(rng=seeded_success)` → `BISCUIT_ACCEPTED`
+- `TvLicensingSystem.calcBiscuitOutcome(rng=seeded_fail)` → `BISCUIT_REJECTED`
+
+### Integration Tests — implement these exact scenarios
+
+1. **Letters escalate to Derek visit**: Give player a squat with `TELEVISION_PROP`. Set `tvLicencePaid = false`. Advance `TimeSystem` to Monday 08:00 three times (3 weeks). Verify player inventory contains 3 `TV_LICENCE_LETTER` items. Call `TvLicensingSystem.update(timeSystem, squatSystem, npcManager)`. Verify `shouldEscalate()` returns `true`. Verify a `TV_LICENCE_OFFICER` NPC (Derek) is scheduled for a visit. Advance time to next weekday 10:00. Verify Derek NPC is spawned at squat entrance.
+
+2. **Derek finds TV — fine issued**: Player has squat with `TELEVISION_PROP` 1 block from door. Derek is at doorstep. Player opens door (simulates E press on door). Simulate player choosing response "Come in and have a look then." Call `TvLicensingSystem.processDerekVisit(player, squatSystem, doorPos=open)`. Verify `isTelevisionVisible` returns `true` (TV within 3 blocks). Verify `issueFine()` called: player loses 10 COIN. Verify `CriminalRecord` contains `TV_LICENCE_EVASION`. Verify Notoriety +5. Verify Derek NPC transitions to `NPCState.DESPAWNING`.
+
+3. **Player buys licence, letters stop**: Player at `POST_OFFICE` landmark. Call `TvLicensingSystem.buyLicence(player, postOfficeSystem)`. Verify player loses 5 COIN. Verify `tvLicencePaid == true`. Advance time 3 weeks (3 × Monday 08:00). Verify NO new `TV_LICENCE_LETTER` items are spawned. Verify Derek is NOT scheduled. Verify `LAW_ABIDING_VIEWER` achievement unlocked.
+
+4. **Successful "Never heard of a television" bluff (TV not visible)**: Player squat has `TELEVISION_PROP` at far corner (5 blocks from door). Derek at doorstep. Player chooses option 1. Call `TvLicensingSystem.isTelevisionVisible(squatLayout, doorPos)`. Verify returns `false` (too far from door). Verify Derek accepts claim and despawns. Verify no fine issued. Verify `DEREK_S_NEMESIS` progress incremented by 1.
+
+5. **Detector van spawns and seeds rumour**: Advance TimeSystem to Sunday 14:00. Call `TvLicensingSystem.update(delta, timeSystem, npcManager, rumourNetwork)`. Verify a `DETECTOR_VAN_PROP` is placed on the industrial estate street. Verify `RumourNetwork` contains a `DETECTOR_VAN_SPOTTED` rumour. Player approaches within 2 blocks of van and presses E. Verify tooltip: "The van appears to have nobody in it." Verify `MYTH_BUSTER` achievement unlocked.
+
+6. **Fake licence sold to public NPC; rejected by Derek on high suspicion**: Player owns `TV_LICENCE`. Craft `FAKE_TV_LICENCE` at `INTERNET_CAFE` printer. Sell to a `PENSIONER` NPC: verify player gains 3 COIN, NPC accepts. Separately: set `derekSuspicion = 2`. Simulate Derek visit. Player shows `FAKE_TV_LICENCE`. Call `TvLicensingSystem.verifyLicence(FAKE_TV_LICENCE, derekSuspicion=2, rng=new Random(0))`. Verify returns `false`. Verify `CriminalRecord` contains `FORGERY`. Verify Notoriety further increased.
+
+// ── New: TvLicensingSystem.java in ragamuffin.core
+// ── New: Issue1252TvLicensingSystemTest.java in src/test/java/ragamuffin/integration/
+// New NPCType: TV_LICENCE_OFFICER — add to NPCType.java
+// New Materials: TV_LICENCE_LETTER, TV_ENFORCEMENT_NOTICE, TV_LICENCE, FAKE_TV_LICENCE — add to Material.java
+// New PropType: DETECTOR_VAN_PROP — add to PropType.java
+// New AchievementTypes: MYTH_BUSTER, LAW_ABIDING_VIEWER, LICENCE_EVADER, DEREK_S_NEMESIS — add to AchievementType.java
+// New CriminalRecord.CrimeType: TV_LICENCE_EVASION, FORGERY (if not present) — add to CriminalRecord.java
+// New PostOffice transaction: buyTvLicence() — add to PostOfficeSystem.java
+// New RumourType: DETECTOR_VAN_SPOTTED — add to RumourType.java
+// Integrates: SquatSystem (TV prop detection), PostOfficeSystem (licence purchase),
+//   CriminalRecord, WantedSystem, NotorietySystem, RumourNetwork,
+//   StreetSkillSystem (lie check), WitnessSystem, FenceSystem,
+//   AchievementSystem, TooltipSystem, NoiseSystem, NeighbourhoodWatchSystem
