@@ -38321,6 +38321,200 @@ Terry (and Donna) have 12 cycling speech lines (45-second interval):
 
 5. **Fake trade card ID check caught on Saturday**: Player crafts FAKE_TRADE_ACCOUNT_CARD at Cybernet. Player enters Handy Builders on Saturday (Donna on duty). Player presses E on Donna. Attempts to buy PLANKS on account using fake card. Force Donna ID-check result = true (1-in-3 chance; use test override). Verify: Notoriety increased by 6. Verify `IDENTITY_FRAUD` in CriminalRecord. Verify Donna's dialogue contains "That's not right, is it." Verify FAKE_TRADE_ACCOUNT_CARD removed from inventory. Verify purchase fails.
 
+---
+
+## Issue #1231: Northfield ASBO System — Anti-Social Behaviour Orders, Exclusion Zones & the Breach Hustle
+
+**New system**: `ASBOSystem.java` in `ragamuffin.core`
+**New test**: `ASBOSystemTest.java` in `src/test/java/ragamuffin/integration/`
+**No new landmark** — the ASBO is a legal status applied to the player, not a location.
+
+### Overview
+
+The Anti-Social Behaviour Order (ASBO) is one of Britain's most iconic pieces of
+legislation — a court-issued civil order prohibiting specific behaviours or
+forbidding the subject from entering certain areas. In Northfield, accumulating
+enough minor criminal behaviour (GraffitiSystem, NeighbourhoodWatchSystem,
+NoiseSystem alerts, drunk & disorderly, wheelie bin fires) triggers a Section 1 ASBO
+application by the council via the MagistratesCourtSystem.
+
+An ASBO imposes exclusion zones on 2–4 randomly selected landmarks (e.g. the pub,
+Wetherspoons, skate park, or the off-licence) for 28 in-game days. Entering an
+exclusion zone while under ASBO is automatically detected (a NEIGHBOURHOOD_WATCH NPC
+or POLICE NPC in zone reports it); breach immediately adds `ASBO_BREACH` to
+CriminalRecord and triggers WantedSystem +2 stars. Repeat breaches escalate
+to a 48-hour custody sentence (player locked out for 2 in-game days).
+
+### ASBO Accumulation Mechanic
+
+A hidden `asboPressure` score tracks the player's anti-social behaviour. Each event
+adds pressure:
+
+| Trigger | Pressure |
+|---|---|
+| Graffiti tag placed (GraffitiSystem) | +3 |
+| NeighbourhoodWatch complaint lodged | +4 |
+| NoiseSystem level ≥ 2 alert near residential zone | +2 |
+| Drunk & disorderly (DRUNK state in public + witnessed) | +3 |
+| Littering (LITTER_PROP placed in non-designated zone, witnessed) | +2 |
+| Wheelie bin fire started (WheeliBinFireSystem) | +5 |
+| Any WANTED_CAUTION or above during STREET_LADS territory | +3 |
+| Resisting arrest (ArrestSystem `RESIST` path taken) | +6 |
+
+When `asboPressure ≥ 30`, the Magistrates' Court initiates ASBO proceedings:
+- Player receives `ASBO_LETTER` through nearest letterbox within 1 in-game day.
+- If player ignores it (no court appearance within 3 in-game days), order granted in absentia.
+- If player attends court (presses E on MagistratesCourtSystem NPC when summoned):
+  - Duty solicitor can argue down order (50% chance if Notoriety Tier < 3).
+  - Plea guilty: shorter duration (14 days instead of 28), fewer exclusion zones (1–2).
+  - Player can bribe COURT_USHER Trevor for 8 COIN (40% chance case dismissed).
+
+### Exclusion Zones
+
+When ASBO is granted, 2–4 landmarks are randomly selected from:
+`WETHERSPOONS`, `PUB`, `OFF_LICENCE`, `SKATE_PARK`, `FRIED_CHICKEN_SHOP`,
+`GREYHOUND_TRACK`, `NIGHTCLUB`, `BETTING_SHOP`.
+
+A `ASBO_EXCLUSION_SIGN_PROP` appears outside each restricted landmark.
+The ASBO HUD indicator (bottom-right corner) shows remaining days and restricted zones.
+
+Entering a restricted zone (within 5 blocks of landmark AABB boundary):
+- First time: POLICE NPC or NEIGHBOURHOOD_WATCH NPC triggers a 5-second warning countdown.
+- If player exits within countdown: no penalty ("clean breach").
+- If player stays: `ASBO_BREACH` in CriminalRecord; WantedSystem +2 stars; asboPressure reset to 15.
+
+### The Breach Hustle
+
+Skilled players can exploit ASBO restrictions for social capital:
+
+**Street Cred**: At STREET_LADS Respect ≥ 40, having an ASBO active grants
++5 Respect per clean breach (player exited zone before 5-second countdown expired).
+RumourType `ASBO_HOLDER` seeded: "That [player] got an ASBO. Respect."
+
+**Disguise Breach**: Use DisguiseSystem (HairstyleType change + different clothing
+prop in inventory) to enter restricted zone unrecognised. Detection chance drops
+from 100% to 30% if disguise score ≥ 2. If caught despite disguise: +2 stars,
+`IMPERSONATION` CriminalRecord entry, DisguiseSystem disguise burned.
+
+**ASBO Appeal**: After 7 in-game days on the order, player can appeal at the
+CitizensAdviceSystem (Margaret at CAB). Margaret files appeal paperwork (no cost).
+Roll: 35% appeal upheld (ASBO revoked), 65% refused. Success seeded as
+`LOCAL_EVENT` rumour ("Player got their ASBO overturned at the CAB. Result!").
+AchievementType `OVERTURNED` awarded on successful appeal.
+
+**Accumulate for Status**: Receiving 3 consecutive ASBOs (issued within same in-game
+month) awards AchievementType `THREE_TIME_ASBO` and permanently unlocks "Section 1"
+title in the player's street reputation display.
+
+### Weather & Time Effects
+
+- **RAIN / DRIZZLE**: NEIGHBOURHOOD_WATCH NPCs stay indoors — exclusion zone
+  detection radius reduced from 5 to 2 blocks.
+- **NIGHT (22:00–06:00)**: POLICE NPC patrol routes shift; 50% chance zone not
+  actively monitored if only NEIGHBOURHOOD_WATCH responsible.
+- **SUNDAY**: MagistratesCourtSystem closed; ASBO proceedings pause (court date
+  deferred 1 day).
+
+### NPC Dialogue Samples
+
+**POLICE NPC** (when breach detected):
+- "Oi! You're in breach of your order, son. Step back now."
+- "I've got you on camera entering a restricted zone. Don't push it."
+
+**NEIGHBOURHOOD_WATCH NPC** (Sandra, vigilant):
+- "You're not supposed to be here. I'm calling it in."
+- "I know who you are, don't think I don't."
+
+**COURT_USHER Trevor** (at Magistrates' Court):
+- "Between you and me, there's ways to make these things go away."
+- "Magistrate's not in yet. You've got five minutes if you want to sort something."
+
+**PUBLIC NPC** (in pub, when player is excluded):
+- "Can't believe they banned him from the pub. That's proper harsh."
+- "He's got an ASBO now, apparently. Should've seen it coming."
+
+**Margaret (CitizensAdviceSystem)**:
+- "These orders are often disproportionate. Let me look at the grounds."
+- "You have the right to appeal within 21 days of issue. Has that window passed?"
+
+### System Integrations
+
+- **MagistratesCourtSystem**: ASBO proceedings initiated; hearing date set; bribery / duty solicitor path.
+- **GraffitiSystem**: each tag placed +3 asboPressure.
+- **NeighbourhoodWatchSystem**: complaints feed asboPressure (+4 per complaint).
+- **NoiseSystem**: level-2 alerts near residential zones +2 asboPressure.
+- **WheeliBinFireSystem**: fire started +5 asboPressure.
+- **ArrestSystem**: resist path +6 asboPressure.
+- **CitizensAdviceSystem**: appeal filing mechanic (Margaret).
+- **DisguiseSystem**: disguise bypass for exclusion zones (30% detection when disguised).
+- **WantedSystem**: breach +2 stars; custody on repeat breach (3rd breach in same order period).
+- **CriminalRecord**: `ASBO_BREACH`, `ASBO_CONTEMPT` (3rd breach), `IMPERSONATION` entries.
+- **NotorietySystem**: ASBO active adds +5 display Notoriety while order active.
+- **FactionSystem (STREET_LADS)**: ASBO presence = +5 Respect per clean breach.
+- **RumourNetwork**: `ASBO_HOLDER` seeded on ASBO grant; `LOCAL_EVENT` on successful appeal; `CRIMINAL_INTEL` on bribery.
+- **AchievementSystem**: `ASBO_EARNED`, `OVERTURNED`, `THREE_TIME_ASBO`, `CLEAN_BREACH`, `SECTION_ONE`.
+- **NewspaperSystem**: ASBO granted → headline "Local Man Slapped With ASBO After Catalogue of Offences."
+- **HUD**: ASBO status indicator (restricted zone list, days remaining) in bottom-right corner.
+
+### New Materials
+
+- `ASBO_LETTER` — "A letter from Northfield Magistrates' Court. Not great news." Spawned in letterbox; triggers court summons.
+- `ASBO_ORDER_DOCUMENT` — "Anti-Social Behaviour Order No. 04-NF-2024. Court sealed." Held in inventory while order active.
+
+### New PropTypes
+
+- `ASBO_EXCLUSION_SIGN_PROP` — red-and-white board placed outside restricted landmarks; readable (press E); removed when order expires.
+
+### Achievements
+
+| Achievement | Condition |
+|---|---|
+| `ASBO_EARNED` | Receive your first ASBO from Northfield Magistrates' Court |
+| `OVERTURNED` | Successfully appeal an ASBO at the Citizens Advice Bureau |
+| `THREE_TIME_ASBO` | Receive 3 ASBOs within a single in-game month |
+| `CLEAN_BREACH` | Exit an exclusion zone before the 5-second countdown expires 5 times |
+| `SECTION_ONE` | Accumulate maximum asboPressure (60+) in a single in-game week |
+
+### Unit Tests
+
+- `ASBOSystem.addPressure(GRAFFITI_TAG)` → asboPressure = 3; `isASBOTriggered()` = false.
+- `ASBOSystem.addPressure(RESIST_ARREST)` × 5 → asboPressure = 30; `isASBOTriggered()` = true.
+- `ASBOSystem.grantOrder(landmarks=[WETHERSPOONS, PUB], durationDays=28)` → exclusionZones contains WETHERSPOONS and PUB; `isActive()` = true.
+- `ASBOSystem.isExcluded(WETHERSPOONS)` with active order including WETHERSPOONS → true; `isExcluded(GREGGS)` → false.
+- `ASBOSystem.detectBreach(landmark=WETHERSPOONS, disguiseScore=0, random=0.50f)` → returns `BREACH_DETECTED`; CriminalRecord contains `ASBO_BREACH`; WantedSystem stars +2.
+- `ASBOSystem.detectBreach(landmark=WETHERSPOONS, disguiseScore=2, random=0.25f)` → 0.25 < 0.30 → returns `BREACH_DETECTED` (disguise failed).
+- `ASBOSystem.detectBreach(landmark=WETHERSPOONS, disguiseScore=2, random=0.60f)` → 0.60 > 0.30 → returns `BREACH_EVADED`; no CriminalRecord entry; STREET_LADS Respect +5.
+- `ASBOSystem.attemptCleanExit(warningCountdownRemaining=2.0f)` → returns `CLEAN_BREACH`; no penalty; cleanBreachCount incremented.
+- `ASBOSystem.advanceDay(daysActive=28)` → `isActive()` = false; ASBO_ORDER_DOCUMENT removed from inventory; asboPressure reset to 0.
+- `ASBOSystem.attemptBribery(coin=8, random=0.35f)` → 0.35 < 0.40 → bribery success; `isActive()` = false; `CRIMINAL_INTEL` rumour seeded.
+- `ASBOSystem.attemptAppeal(random=0.20f)` → 0.20 < 0.35 → appeal upheld; `isActive()` = false; `OVERTURNED` achievement awarded; `LOCAL_EVENT` rumour seeded.
+- `ASBOSystem.getAsboPressure()` after WHEELIE_BIN_FIRE + GRAFFITI_TAG × 3 → pressure = 5 + 9 = 14.
+
+### Integration Tests — implement these exact scenarios
+
+1. **ASBO accumulation and in-absentia grant**: Seed `asboPressure` to 29 via `addPressure(RESIST_ARREST)` × 4 (24) + `addPressure(GRAFFITI_TAG)` × 2 (6) = 30. Verify `isASBOTriggered()` = true. Advance TimeSystem 1 in-game day. Verify `ASBO_LETTER` spawned at player's registered squat letterbox (PropertySystem). Do NOT attend court — advance TimeSystem 3 in-game days. Verify: ASBO granted in absentia; `isActive()` = true; 2–4 exclusion landmarks set; `ASBO_ORDER_DOCUMENT` in player inventory; NewspaperSystem has headline containing "ASBO". Verify `ASBO_EARNED` achievement awarded.
+
+2. **Exclusion zone breach detected and escalated**: Active ASBO with WETHERSPOONS excluded. Player walks within 5 blocks of WETHERSPOONS AABB. Verify POLICE NPC enters SUSPICIOUS state. Verify 5-second HUD countdown active. Do NOT exit zone. Advance 5 in-game seconds. Verify: `ASBO_BREACH` in CriminalRecord; WantedSystem stars = 2; `ASBO_HOLDER` rumour seeded in RumourNetwork; asboPressure reset to 15. Trigger 2 more breaches (same order period). Verify 3rd breach: `ASBO_CONTEMPT` in CriminalRecord; player locked out (custody) for 2 in-game days.
+
+3. **Disguise evades exclusion zone detection**: Active ASBO with OFF_LICENCE excluded. Player visits BarberSystem (new hairstyle). DisguiseSystem disguise score = 2. Player walks within 5 blocks of OFF_LICENCE. Call `detectBreach(landmark=OFF_LICENCE, disguiseScore=2, random=0.60f)`. Verify 0.60 > 0.30 → returns `BREACH_EVADED`; no CriminalRecord entry; STREET_LADS Respect += 5. Verify WantedSystem stars unchanged. Verify cleanBreachCount = 1.
+
+4. **CAB appeal overturns ASBO**: Active ASBO (granted 7 in-game days ago, 21 still remaining). Player presses E on Margaret (ADVICE_VOLUNTEER) at CitizensAdviceSystem. Select "Appeal ASBO" option. Force appeal random = 0.20f (< 0.35 → upheld). Verify: `isActive()` = false; `ASBO_ORDER_DOCUMENT` removed from inventory; `OVERTURNED` achievement awarded; `LOCAL_EVENT` rumour seeded containing "overturned at the CAB". Verify asboPressure reset to 0.
+
+5. **Court attendance with bribery**: Active ASBO proceedings initiated (asboPressure ≥ 30, letter sent). Player attends court within 3 in-game days (presses E on COURT_USHER Trevor). Player selects "Bribe" option with 8 COIN in inventory. Force bribery random = 0.30f (< 0.40 → success). Verify: COIN −8; `isActive()` = false (case dismissed); `CRIMINAL_INTEL` rumour seeded; Notoriety +3. Verify asboPressure reset to 10 (partial reset — Trevor keeps quiet but council suspicious).
+
+// ── Issue #1231: Northfield ASBO System — Anti-Social Behaviour Orders, Exclusion Zones & the Breach Hustle ──
+// New: ASBOSystem.java in ragamuffin.core
+// New: ASBOSystemTest.java in src/test/java/ragamuffin/integration/
+// No new LandmarkType required
+// New AchievementTypes: ASBO_EARNED, OVERTURNED, THREE_TIME_ASBO, CLEAN_BREACH, SECTION_ONE — add to AchievementType.java
+// New CriminalRecord crime types: ASBO_BREACH, ASBO_CONTEMPT, IMPERSONATION — add to CriminalRecord.java
+// New Materials: ASBO_LETTER, ASBO_ORDER_DOCUMENT — add to Material.java
+// New PropTypes: ASBO_EXCLUSION_SIGN_PROP — add to PropType.java
+// Integrates: MagistratesCourtSystem, GraffitiSystem, NeighbourhoodWatchSystem, NoiseSystem,
+//   WheeliBinFireSystem, ArrestSystem, CitizensAdviceSystem, DisguiseSystem,
+//   WantedSystem, CriminalRecord, NotorietySystem, FactionSystem (STREET_LADS),
+//   RumourNetwork, AchievementSystem, NewspaperSystem, PropertySystem (letterbox spawn)
+
 // ── Issue #1229: Northfield Handy Builders — Trade Counter, Builder's Credit & the Copper Pipe Hustle ──
 // New: BuildersMerchantSystem.java in ragamuffin.core
 // New: BuildersMerchantSystemTest.java in src/test/java/ragamuffin/integration/
