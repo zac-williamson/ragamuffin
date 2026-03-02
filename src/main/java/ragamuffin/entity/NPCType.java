@@ -1264,7 +1264,28 @@ public enum NPCType {
      * Passive under normal circumstances; never hostile.
      * Drops REFEREE_WHISTLE on destruction (10% chance).
      */
-    REFEREE(20f, 0f, 0f, false);
+    REFEREE(20f, 0f, 0f, false),
+
+    // ── Issue #1112: The Raj Mahal — Friday Night Curry ──────────────────────
+
+    /**
+     * Bashir — the proprietor of The Raj Mahal curry house (CURRY_HOUSE landmark).
+     * Stands at the front desk Tue–Sun during opening hours (17:00–23:30).
+     * Passive; greets diners and manages front-of-house.
+     * Notoriety-aware: refuses service at Notoriety ≥ 70.
+     * Speech: "Welcome to the Raj Mahal." / "Table for one, is it?"
+     *         / "We're closing in ten minutes, sir." / "I've seen the papers."
+     */
+    CURRY_HOUSE_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * Sanjay — a waiter at The Raj Mahal curry house.
+     * Patrols the dining tables. Enforces the BYO corkage rule (1 COIN or confiscation).
+     * Passive; never hostile unless back room is trespassed without faction access.
+     * Speech: "Ready to order?" / "Another naan, sir?" / "That's not on the menu, mate."
+     *         / "Back room's private — members only."
+     */
+    CURRY_WAITER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
