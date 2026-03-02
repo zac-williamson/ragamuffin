@@ -29806,3 +29806,149 @@ The `MARCHETTI_LEDGER` in the back room, if stolen and delivered to the police s
 // New NPCTypes: SALON_OWNER, MASSAGE_THERAPIST (add to NPCType.java)
 // New PropTypes: TANNING_BED_PROP, MASSAGE_TABLE_PROP, RECEPTION_DESK_PROP, LAUNDRY_BAG_PROP (add to PropType.java)
 // New achievements: BRONZED, SUN_KISSED, CLEAN_MONEY, LAUNDERED, SPECIAL_APPOINTMENT (add to AchievementType.java)
+
+---
+
+## Issue #1124: Add Northfield Salvation Army Citadel — Brass Band Saturday, Drop-In Shelter & the Hymn Book Hustle
+
+**Landmark**: `SALVATION_ARMY_CITADEL` (add to `LandmarkType.java`)
+**System class**: `SalvationArmySystem.java` in `ragamuffin.core`
+**Display name**: `"Northfield Salvation Army"`
+
+### Overview
+
+A squat Victorian brick hall with a red shield sign above the door, sandwiched between the charity shop and the post office on the high street. Run by Major Eileen Webb (`SALVATION_ARMY_OFFICER` NPC), assisted by volunteer Brian (`VOLUNTEER` NPC). Open daily 08:00–20:00 for the drop-in; brass band rehearsals Tuesdays 19:00–21:00; Saturday street collection 10:00–13:00.
+
+The Citadel is the last refuge for Northfield's rough sleepers. Up to 3 `ROUGH_SLEEPER` NPCs shelter here in cold or wet weather. The player can use the drop-in free of charge for warmth and a hot meal — but Eileen's sharp eye means crimes committed within 3 blocks of the Citadel generate double Notoriety.
+
+### Interior
+
+An 8×12-block floor plan:
+- `FOLDING_TABLE_PROP` row along the south wall (4 seats; free tea and soup served 12:00–14:00 and 18:00–19:30)
+- `LECTERN_PROP` at the far end (Eileen delivers short homily at 10:30 and 18:00 — 3-sentence procedural text from a pool of 10)
+- `HYMN_BOARD_PROP` on the wall (changeable numbers; collectible `HYMN_BOOK` material on pews)
+- `COLLECTION_BOX_PROP` near the entrance (smashable; yields 2–8 COIN; Notoriety +20; seeds `COMMUNITY_OUTRAGE` rumour)
+- `DONATION_BIN_PROP` (player can donate any Material; Notoriety −1 per item, max −5 per day)
+- `FIRST_AID_KIT_PROP` on the wall (useable once per 4-hour period; restores 20 Health)
+- `SLEEPING_BAG_PROP` rows along north wall (ROUGH_SLEEPER NPCs occupy at night)
+- Small locked `BACK_ROOM_DOOR` (Eileen's office; contains `COLLECTION_LEDGER` material — evidence of a legitimate donation trail)
+
+### Drop-In Services (free, no COIN required)
+
+| Service | Trigger | Effect |
+|---------|---------|--------|
+| Hot soup & bread | Player sits at FOLDING_TABLE_PROP during meal hours | +25 Hunger; removes `COLD` debuff |
+| First aid | Player uses FIRST_AID_KIT_PROP | +20 Health; once per 4 h |
+| Warm shelter | Player is inside | +7 Warmth/min (best free warmth in Northfield) |
+| Clothing donation appeal | Eileen asks player at Notoriety < 20 | Donate any item → Notoriety −1 |
+
+WantedSystem Tier ≥ 3 — Eileen calls police ("I'm sorry, but I have to keep everyone safe here"). She does NOT call police for Tier 1 or 2 — she offers tea instead.
+
+### Saturday Brass Band (10:00–13:00)
+
+On Saturdays, Eileen and 3 `BRASS_BAND_MEMBER` NPCs march from the Citadel to the high street junction, playing for 10 in-game minutes, then return. The player can:
+
+- **Join the band** (press E on Eileen while carrying a `BRASS_INSTRUMENT` material): player marches in formation; each in-game minute marching earns +1 COIN from the `COLLECTION_TIN_PROP` and seeds a `COMMUNITY_WIN` rumour. Notoriety −1 per 2 minutes marching (max −6 per session). NPCs react: PUBLIC NPCs clap; YOUTH_GANG NPCs jeer.
+- **Rob the collection tin** (punch or E on `COLLECTION_TIN_PROP` during march): +3–12 COIN; Notoriety +15; WitnessSystem fires (all nearby NPCs witness); BRASS_BAND_MEMBER NPCs stop playing and confront player; seeds `COMMUNITY_OUTRAGE` rumour.
+- **Steal a uniform** (E on `UNIFORM_HOOK_PROP` in back room): grants `SALVATION_ARMY_UNIFORM` disguise item; DisguiseSystem recognition −25% when worn; removed on Notoriety spike ≥ 10 in one event.
+
+### Rough Sleeper NPCs
+
+Up to 3 `ROUGH_SLEEPER` NPCs exist in the world. They path between: park bench → Greggs doorway (post-close) → Citadel drop-in → sewer tunnel entrance. In COLD_SNAP/FROST/RAIN weather they spend all hours inside the Citadel. The player can:
+
+- **Give food** (drop any food Material near a ROUGH_SLEEPER): ROUGH_SLEEPER picks it up; seeds `COMMUNITY_WIN` rumour; Notoriety −1; NeighbourhoodSystem vibes +1.
+- **Mug a rough sleeper** (punch): they have 0–2 COIN; Notoriety +8; ROUGH_SLEEPER NPCs permanently hostile; seeds `COMMUNITY_OUTRAGE` rumour; `LOWEST_OF_THE_LOW` achievement contribution.
+- **Learn a tip** (E on ROUGH_SLEEPER while Notoriety < 15): 40% chance they share a `LOOT_TIP` or `GANG_ACTIVITY` rumour — they see things that housed people don't.
+
+### The Hymn Book Hustle
+
+`HYMN_BOOK` spawns on 4 pew props inside the Citadel (Material, non-stackable). Bev at Paws 'n' Claws or the Boot Sale will buy one for 3 COIN ("lovely for the grandkids"). Taking HYMN_BOOK without donating first: Notoriety +2. Eileen notices if more than 2 books go missing ("I know it was you, love") — she bars the player for 1 in-game day and seeds a `ANTISOCIAL_BEHAVIOUR` rumour.
+
+### New Materials Required
+
+| Material | Notes |
+|----------|-------|
+| `HYMN_BOOK` | Small collectible; fenceable at Boot Sale for 3 COIN; icon: black book |
+| `BRASS_INSTRUMENT` | Trombone/cornet prop; purchased at the Scrapyard for 5 COIN or found in skip; required for band joining |
+| `SALVATION_ARMY_UNIFORM` | Disguise item (dark navy tunic + cap); DisguiseSystem −25% recognition |
+| `COLLECTION_LEDGER` | Evidence item; deliverable to police for EVIDENCE_PROVIDED benefit |
+| `SOUP_BOWL` | Consumable; +20 Hunger; granted free at FOLDING_TABLE_PROP during meal service |
+
+(Add to `Material.java`)
+
+### New NPC Types Required
+
+| NPCType | Notes |
+|---------|-------|
+| `SALVATION_ARMY_OFFICER` | Eileen; runs the Citadel; calls police at Wanted Tier ≥ 3; offers tea at lower tiers |
+| `BRASS_BAND_MEMBER` | 3 NPCs; active Sat 10:00–13:00; follow Eileen on march route |
+| `ROUGH_SLEEPER` | 3 persistent NPCs; cycle through park/Greggs/Citadel/sewer; carry 0–2 COIN |
+
+(Add to `NPCType.java`. `VOLUNTEER` already exists.)
+
+### New PropTypes Required
+
+| PropType | Notes |
+|----------|-------|
+| `FOLDING_TABLE_PROP` | Seating prop; player presses E to eat during meal hours |
+| `LECTERN_PROP` | NPC anchor point; Eileen delivers homily here |
+| `HYMN_BOARD_PROP` | Decorative wall prop; changeable number tiles |
+| `COLLECTION_BOX_PROP` | Destructible; yields 2–8 COIN on smash |
+| `DONATION_BIN_PROP` | Interactive; player presses E to donate items |
+| `SLEEPING_BAG_PROP` | ROUGH_SLEEPER anchor at night |
+| `UNIFORM_HOOK_PROP` | Back-room prop; holds SALVATION_ARMY_UNIFORM |
+| `COLLECTION_TIN_PROP` | Carried by BRASS_BAND_MEMBER on march; robbable |
+
+(Add to `PropType.java`)
+
+### System Integrations
+
+- **WarmthSystem**: interior is best free warmth in Northfield (+7/min); ROUGH_SLEEPER NPCs driven here by COLD_SNAP/FROST
+- **HealingSystem**: FIRST_AID_KIT_PROP restores 20 Health; SOUP_BOWL restores hunger and removes COLD debuff
+- **FoodBankSystem**: two systems complement each other — FoodBank covers material donations; Salvation Army covers hot meal service and warmth. If FoodBank is at capacity, FoodBank redirects player to Salvation Army ("Try Eileen's place, love")
+- **DisguiseSystem**: SALVATION_ARMY_UNIFORM grants −25% recognition; stacks with hat/hood; stripped on Notoriety spike
+- **BuskingSystem**: BRASS_INSTRUMENT material is shared; player holding BRASS_INSTRUMENT can busk OR join the band; busk revenue halved near the Citadel ("respect for the band")
+- **NotorietySystem**: double Notoriety gain within 3 blocks of Citadel; marching band reduces up to −6 per session; collection box smash +20
+- **WantedSystem**: Tier ≥ 3 triggers Eileen's police call; NPCs nearby auto-witness at double distance (community vigilance)
+- **NeighbourhoodSystem**: vibes +2 on band Saturday; vibes −3 if collection box smashed; vibes +1 per ROUGH_SLEEPER fed
+- **CriminalRecord**: `COLLECTION_BOX_THEFT` on box smash; `IMPERSONATING_CHARITY_WORKER` if player commits crime while wearing SALVATION_ARMY_UNIFORM
+- **RumourNetwork**: band march seeds `COMMUNITY_WIN` rumour each Saturday; box smash seeds `COMMUNITY_OUTRAGE`; rough sleeper fed seeds `COMMUNITY_WIN`; Eileen's homily seeds `LOCAL_EVENT` twice daily
+- **NewspaperSystem**: collection box theft generates headline "Salvation Army Collection Box Stolen — Community Rallies"
+- **FactionSystem**: Marchetti Crew find the Salvation Army useful (laundering small amounts through donations); at Marchetti Respect ≥ 40 Brian slips player intel via fake donation receipt
+- **StreetEconomySystem**: ROUGH_SLEEPER NPCs satisfy BORED need by feeding pigeons outside; SOUP_BOWL satisfies HUNGRY need for any NPC
+- **AchievementSystem**: new achievements (see below)
+- **TimeSystem**: drop-in 08:00–20:00; meals 12:00–14:00 and 18:00–19:30; band Sat 10:00–13:00; homily 10:30 and 18:00
+- **NoiseSystem**: brass band march generates +35 ambient noise while active; COLLECTION_BOX_PROP smash +25 noise
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `REFORMED_CHARACTER` | Reduce Notoriety by 6 in a single Saturday band march |
+| `SOUP_KITCHEN_REGULAR` | Use the drop-in hot meal service 7 times total |
+| `CHARITY_MUGGER` | Rob the collection box (one-time; contributes to LOWEST_OF_THE_LOW) |
+| `UNDERCOVER_ANGEL` | Commit a crime while wearing SALVATION_ARMY_UNIFORM |
+| `BRASS_NECK` | Join the Saturday band with Notoriety ≥ 40 |
+
+(Add to `AchievementType.java`)
+
+**Unit tests**: warmth gain rate (+7/min) confirmed in isolation; ROUGH_SLEEPER path schedule (park/Greggs/Citadel/sewer, weather override to Citadel on COLD_SNAP/FROST/RAIN); collection box loot range (2–8 COIN, 1000 samples within bounds); Notoriety double-radius (crime at 2 blocks = ×2, at 4 blocks = ×1); band march Notoriety reduction (−1 per 2 min, max −6 per session); HYMN_BOOK theft bar trigger (> 2 books missing); Eileen police call threshold (Tier ≥ 3 only).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Drop-in provides free warmth and meal**: Set weather to `COLD_SNAP`. Set player Warmth to 20. Place player inside Citadel. Advance time 1 in-game minute. Verify Warmth has increased by ≥ 7. Set time to 12:30. Verify player can press E at `FOLDING_TABLE_PROP` to eat. After eating, verify Hunger increased by 25 and `COLD` debuff is removed.
+
+2. **Brass band march reduces Notoriety**: Set day to Saturday. Set Notoriety to 30. Give player `BRASS_INSTRUMENT`. Place player at Citadel. Press E on Eileen at 10:00. Verify player enters march formation. Advance time 4 in-game minutes. Verify Notoriety decreased by 2. Verify player COIN increased by 4. Verify `COMMUNITY_WIN` rumour seeded in `RumourNetwork`.
+
+3. **Collection box smash generates community outrage**: Place player at `COLLECTION_BOX_PROP`. Simulate punch action. Verify COIN added (2–8 range). Verify Notoriety increased by 20. Verify `COMMUNITY_OUTRAGE` rumour seeded in `RumourNetwork`. Verify `COLLECTION_BOX_THEFT` in `CriminalRecord`. Verify `CHARITY_MUGGER` achievement unlocked.
+
+4. **Eileen calls police at Wanted Tier 3, offers tea at Tier 1**: Set WantedSystem tier to 1. Place player inside Citadel. Verify Eileen's dialogue is tea offer (no police called). Set tier to 3. Trigger Eileen interaction again. Verify WantedSystem receives a police call event. Verify player cannot use drop-in services during this visit.
+
+5. **Rough sleeper shares rumour when Notoriety low**: Set player Notoriety to 10. Place player adjacent to a `ROUGH_SLEEPER` NPC. Press E. Simulate 5 interaction attempts (RNG seed). Verify that across 5 attempts at least 2 produce a `LOOT_TIP` or `GANG_ACTIVITY` rumour (40% chance each → ~2 expected from 5). Verify Notoriety unchanged.
+
+// New system: SalvationArmySystem.java in ragamuffin.core
+// New LandmarkType: SALVATION_ARMY_CITADEL (add to LandmarkType.java with display name "Northfield Salvation Army")
+// New materials: HYMN_BOOK, BRASS_INSTRUMENT, SALVATION_ARMY_UNIFORM, COLLECTION_LEDGER, SOUP_BOWL (add to Material.java)
+// New NPCTypes: SALVATION_ARMY_OFFICER, BRASS_BAND_MEMBER, ROUGH_SLEEPER (add to NPCType.java)
+// New PropTypes: FOLDING_TABLE_PROP, LECTERN_PROP, HYMN_BOARD_PROP, COLLECTION_BOX_PROP, DONATION_BIN_PROP, SLEEPING_BAG_PROP, UNIFORM_HOOK_PROP, COLLECTION_TIN_PROP (add to PropType.java)
+// New achievements: REFORMED_CHARACTER, SOUP_KITCHEN_REGULAR, CHARITY_MUGGER, UNDERCOVER_ANGEL, BRASS_NECK (add to AchievementType.java)
