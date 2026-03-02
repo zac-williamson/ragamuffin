@@ -4834,6 +4834,20 @@ public enum Material {
      */
     ORANGE_SQUASH("Orange Squash"),
 
+    /**
+     * Issue #1311: DIGESTIVE_BISCUIT — an NHS digestive biscuit from the biscuit table.
+     * Restores 5% health when consumed. Stacks to 8.
+     * Tooltip: "An NHS biscuit. You earned this. Probably."
+     */
+    DIGESTIVE_BISCUIT("Digestive Biscuit"),
+
+    /**
+     * Issue #1311: ORANGE_JUICE — a small cup of orange juice from the biscuit table.
+     * Restores 10% health when consumed. Single use.
+     * Tooltip: "A small cup. It counts."
+     */
+    ORANGE_JUICE("Orange Juice"),
+
     // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────────
 
     /**
@@ -6395,6 +6409,8 @@ public enum Material {
             case FORGED_DONOR_QUESTIONNAIRE: return cs(0.92f, 0.92f, 0.88f, // Slightly off-white
                                                   0.20f, 0.50f, 0.20f); // NHS green header
             case ORANGE_SQUASH:         return c(0.95f, 0.55f, 0.10f);  // Orange squash colour
+            case DIGESTIVE_BISCUIT:     return c(0.82f, 0.68f, 0.42f);  // Pale biscuit tan
+            case ORANGE_JUICE:          return c(0.98f, 0.60f, 0.10f);  // Bright orange juice
 
             // Issue #1243: Northfield Bert's Tyres & MOT
             case MOT_CERTIFICATE:       return cs(0.95f, 0.95f, 0.85f,  // Off-white document
@@ -8277,6 +8293,10 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // photocopied altered form
             case ORANGE_SQUASH:
                 return IconShape.CYLINDER;    // plastic cup of squash
+            case DIGESTIVE_BISCUIT:
+                return IconShape.FLAT_PAPER;  // round biscuit
+            case ORANGE_JUICE:
+                return IconShape.CYLINDER;    // small plastic cup
 
             // Issue #1243: Northfield Bert's Tyres & MOT
             case MOT_CERTIFICATE:
