@@ -19,6 +19,18 @@ public class RespawnSystem {
     private String currentMessage;
     private float spawnY = PARK_CENTRE.y;
 
+    /** Whether the next respawn should be at the funeral parlour (pre-need arrangement). */
+    private boolean parlourRespawnPending = false;
+
+    /** Parlour respawn X coordinate. */
+    private float parlourSpawnX = 0f;
+
+    /** Parlour respawn Y coordinate. */
+    private float parlourSpawnY = PARK_CENTRE.y;
+
+    /** Parlour respawn Z coordinate. */
+    private float parlourSpawnZ = 0f;
+
     public RespawnSystem() {
         this.isRespawning = false;
         this.respawnTimer = 0;
@@ -73,14 +85,25 @@ public class RespawnSystem {
     }
 
     /**
-     * Respawn the player at park centre with restored stats.
+     * Respawn the player at park centre (or funeral parlour if pre-need arranged).
      * Inventory is preserved.
      */
     private void performRespawn(Player player) {
-        // Respawn at park centre using terrain-aware Y to avoid spawning inside solid blocks.
+        float spawnX, spawnActualY, spawnZ;
+        if (parlourRespawnPending) {
+            spawnX       = parlourSpawnX;
+            spawnActualY = parlourSpawnY;
+            spawnZ       = parlourSpawnZ;
+            parlourRespawnPending = false;
+        } else {
+            spawnX       = PARK_CENTRE.x;
+            spawnActualY = spawnY;
+            spawnZ       = PARK_CENTRE.z;
+        }
+
         // Use teleport() to atomically sync the AABB to the new position so collision
         // detection is correct on the very first frame after respawn (fixes #184).
-        player.teleport(PARK_CENTRE.x, spawnY, PARK_CENTRE.z);
+        player.teleport(spawnX, spawnActualY, spawnZ);
         player.setVerticalVelocity(0f);
 
         // Restore stats and revive
@@ -100,6 +123,32 @@ public class RespawnSystem {
 
     public float getRespawnTimer() {
         return respawnTimer;
+    }
+
+    /**
+     * Set a pending parlour respawn (from pre-need arrangement).
+     * The next respawn will place the player at the given coordinates.
+     *
+     * @param x parlour spawn X
+     * @param y parlour spawn Y
+     * @param z parlour spawn Z
+     */
+    public void setParlourRespawn(float x, float y, float z) {
+        this.parlourRespawnPending = true;
+        this.parlourSpawnX = x;
+        this.parlourSpawnY = y;
+        this.parlourSpawnZ = z;
+    }
+
+    /**
+     * Clear any pending parlour respawn (e.g. when pre-need flag is consumed).
+     */
+    public void clearParlourRespawn() {
+        this.parlourRespawnPending = false;
+    }
+
+    public boolean isParlourRespawnPending() {
+        return parlourRespawnPending;
     }
 
     /**

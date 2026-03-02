@@ -4894,6 +4894,43 @@ public enum AchievementType {
         "Glass Case Opportunist",
         "You couldn't wait, could you.",
         1
+    ),
+
+    // ── Issue #1289: Northfield Meredith & Sons Funeral Parlour ───────────────
+
+    /** Paid Gerald for a pre-need arrangement. */
+    PLAN_AHEAD(
+        "Plan Ahead",
+        "You've paid Gerald to sort your funeral in advance. He seemed pleased. You felt strange.",
+        1
+    ),
+
+    /** Looted items from a casket in the viewing room. */
+    GRAVE_GOODS_COLLECTOR(
+        "Grave Goods Collector",
+        "You rifled through someone's effects in the viewing room. They weren't using them.",
+        1
+    ),
+
+    /** Drove the hearse without crashing or being caught. */
+    DEAD_DELIVERY(
+        "Dead Delivery",
+        "You borrowed Meredith's hearse and returned it in one piece. Technically.",
+        1
+    ),
+
+    /** Gave a condolences card to a mourner during a funeral procession. */
+    COLD_COMFORT(
+        "Cold Comfort",
+        "You handed a condolences card to a grieving stranger. It probably helped. Probably.",
+        1
+    ),
+
+    /** Sold a war medal to Gerald (Gold Teeth Sideline). */
+    GERALD_S_REGULAR(
+        "Gerald's Regular",
+        "Gerald pays better than the pawn shop. Best not to ask why.",
+        1
     );
 
     private final String name;

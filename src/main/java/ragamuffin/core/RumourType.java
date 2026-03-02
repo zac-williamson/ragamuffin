@@ -700,5 +700,21 @@ public enum RumourType {
      * — seeded when Dave the Middleman completes 3+ transactions.
      * Spreads via STREET_LAD and YOUTH_GANG NPCs; StreetReputation FENCE +1 if player
      * involved; WantedSystem check trigger for Notoriety ≥ 30. */
-    BACK_ALLEY_TRADE;
+    BACK_ALLEY_TRADE,
+
+    // ── Issue #1289: Northfield Meredith & Sons Funeral Parlour ───────────────
+
+    /** "Someone's been nicking things out of the viewing room at the funeral parlour —
+     * right out of the caskets, apparently."
+     * — seeded by FuneralParlourSystem after a witnessed casket theft.
+     * Spreads via PUBLIC, MOURNER, and PENSIONER NPCs; NeighbourhoodSystem Vibes −2;
+     * WantedSystem check trigger for Notoriety ≥ 20. */
+    FUNERAL_THIEF,
+
+    /** "Gerald at the funeral parlour's been paying good money for old war medals —
+     * something to do with the gold in the teeth, apparently."
+     * — seeded by FuneralParlourSystem when player sells a WAR_MEDAL to Gerald.
+     * Spreads via STREET_LAD, PUBLIC, and PENSIONER NPCs; BootSale fence value +1
+     * for WAR_MEDAL; PawnShop tip unlocked. */
+    GOLD_TEETH_TRADE;
 }
