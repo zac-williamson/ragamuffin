@@ -1964,7 +1964,24 @@ public enum NPCType {
      * Aggressive refusal (punching) triggers FLEEING state.
      * Passive otherwise; never initiates combat.
      */
-    CHUGGER(20f, 0f, 0f, false);
+    CHUGGER(20f, 0f, 0f, false),
+
+    /**
+     * Issue #1183: TIP_ATTENDANT — Dave, the senior site operative at Northfield HWRC.
+     * Patrols the gate and skip bays 08:00–18:00 Tue–Sun. Interrogates players for
+     * trade waste, enforces skip bay rules, limits Reuse Corner takes, and can radio
+     * COUNCIL_ENFORCEMENT. Bribable for 5 COIN (BACKHANDER_AT_THE_TIP achievement).
+     * Rain: 50% less vigilant. Heatwave: max enforcement. Frost: slow patrol.
+     */
+    TIP_ATTENDANT(60f, 0f, 0f, false),
+
+    /**
+     * Issue #1183: COUNCIL_ENFORCEMENT — enforcement officer spawned when Dave radios
+     * for backup after a trade waste evasion attempt. Blocks the site gate. Can be
+     * talked down (Notoriety < 20), bribed (3 COIN), or outrun (velocity > 1.5x for
+     * 5 seconds). Only active while site gate is blocked.
+     */
+    COUNCIL_ENFORCEMENT(80f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

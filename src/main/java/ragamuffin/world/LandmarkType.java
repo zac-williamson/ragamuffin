@@ -561,7 +561,16 @@ public enum LandmarkType {
      * and BET_TABLE_PROP (underground circuit nights).
      * Managed by BoxingClubSystem.
      */
-    BOXING_CLUB;
+    BOXING_CLUB,
+
+    /**
+     * Issue #1183: RECYCLING_CENTRE — Northfield Household Waste Recycling Centre
+     * ("the Tip"). Located on the edge of the industrial estate near the scrapyard.
+     * Open Tue–Sun 08:00–18:00 (closed Mondays). Contains skip bays (GENERAL_WASTE,
+     * RECYCLING, WEEE, METAL), Reuse Corner shelf, and hardcore bay (permit required).
+     * Managed by RecyclingCentreSystem.
+     */
+    RECYCLING_CENTRE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -651,6 +660,7 @@ public enum LandmarkType {
             case COUNCIL_GARAGES:       return "Northfield Estate Garages";
             case STADIUM_COACH_PARK:    return "Coach Park";
             case BOXING_CLUB:           return "Tommy's Gym";
+            case RECYCLING_CENTRE:      return "Northfield Tip";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

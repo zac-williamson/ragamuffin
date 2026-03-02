@@ -4096,7 +4096,125 @@ public enum Material {
      * Used in the CHARITY_TABARD crafting recipe.
      * Tooltip: "Smells funny. Writes well."
      */
-    MARKER_PEN("Marker Pen");
+    MARKER_PEN("Marker Pen"),
+
+    // ── Issue #1183: Northfield Household Waste Recycling Centre ─────────────
+
+    /**
+     * Old Phone — discarded mobile handset looted from the WEEE skip.
+     * Can be taken to PhoneRepairSystem (Fix My Phone) for a 2 COIN repair commission.
+     * Tooltip: "Still got stuff on it, probably."
+     */
+    OLD_PHONE("Old Phone"),
+
+    /**
+     * Broken Kettle — a defunct electric kettle from the WEEE skip.
+     * Comedic item. Crafting ingredient: BROKEN_KETTLE + COPPER_WIRE = IMPROVISED_TASER.
+     * Tooltip: "It rattles. Something's definitely loose."
+     */
+    BROKEN_KETTLE("Broken Kettle"),
+
+    /**
+     * Retro Console — a vintage games console looted from the WEEE skip.
+     * High-value item. Sellable to FenceSystem for 8 COIN.
+     * Achievement TIP_TREASURE triggered on first find.
+     * Tooltip: "Someone's mum threw this away."
+     */
+    RETRO_CONSOLE("Retro Console"),
+
+    /**
+     * Curtains — a pair of old curtains from the Reuse Corner.
+     * Tooltip: "Brown. Floral. Indestructible."
+     */
+    CURTAINS("Curtains"),
+
+    /**
+     * Board Game — a battered board game from the Reuse Corner.
+     * Tooltip: "Probably missing half the pieces."
+     */
+    BOARD_GAME("Board Game"),
+
+    /**
+     * Broken Lamp — a cracked floor lamp from the Reuse Corner.
+     * Tooltip: "Flickering, but technically works."
+     */
+    BROKEN_LAMP("Broken Lamp"),
+
+    /**
+     * Old Bike Wheel — a bicycle wheel with a bent rim from the Reuse Corner.
+     * Tooltip: "Oval, really. More of a conceptual wheel."
+     */
+    OLD_BIKE_WHEEL("Old Bike Wheel"),
+
+    /**
+     * Coat Hanger Bundle — a tangled wad of wire coat hangers.
+     * From the Reuse Corner. Tooltip: "Reproduces in wardrobe conditions."
+     */
+    COAT_HANGER_BUNDLE("Coat Hanger Bundle"),
+
+    /**
+     * Charity Book — a donated paperback from the Reuse Corner.
+     * Tooltip: "Someone's holiday read. Agatha Christie, obviously."
+     */
+    CHARITY_BOOK("Charity Book"),
+
+    /**
+     * Hardcore Permit — official council document permitting use of the hardcore
+     * bay at the HWRC. Obtained by queuing at the council office (30 in-game minutes)
+     * or forged via COUNCIL_LETTERHEAD + MARKER_PEN. Forged version has 15% detection
+     * risk by Dave (FORGED_COUNCIL_DOCUMENT crime, Notoriety +6).
+     * Tooltip: "Laminated. Surprisingly official-looking."
+     */
+    HARDCORE_PERMIT("Hardcore Permit"),
+
+    /**
+     * Council Letterhead — official-looking blank council headed paper.
+     * Found in council offices or stolen from COUNCIL_OFFICER NPCs.
+     * Crafting ingredient: COUNCIL_LETTERHEAD + MARKER_PEN = HARDCORE_PERMIT (forged).
+     * Tooltip: "Northfield Metropolitan Borough Council. Est. 1974."
+     */
+    COUNCIL_LETTERHEAD("Council Letterhead"),
+
+    /**
+     * Improvised Taser — a jury-rigged stun device.
+     * Crafted from BROKEN_KETTLE + COPPER_WIRE. Single use; stuns target for 3 seconds.
+     * Tooltip: "Please don't ask how it works."
+     */
+    IMPROVISED_TASER("Improvised Taser"),
+
+    /**
+     * Builders Rubble — broken bricks, concrete chunks, and plaster debris.
+     * Clearly trade waste at the HWRC; triggers Dave's suspicion check.
+     * Tooltip: "Heavy, awkward, and definitely trade waste."
+     */
+    BUILDERS_RUBBLE("Builders Rubble"),
+
+    /**
+     * Asbestos Sheet — old corrugated asbestos roofing panel.
+     * Clearly trade waste at the HWRC; triggers Dave's suspicion check.
+     * Tooltip: "Do not break. Seriously."
+     */
+    ASBESTOS_SHEET("Asbestos Sheet"),
+
+    /**
+     * Glass Bottle — an empty glass bottle from the recycling skip.
+     * Deposited or found when searching RECYCLING_SKIP. Stackable 1–3.
+     * Tooltip: "Washed out. Probably."
+     */
+    GLASS_BOTTLE("Glass Bottle"),
+
+    /**
+     * Rags — old clothing fragments from the general waste skip.
+     * Tooltip: "Soft. Smells of someone else's life."
+     */
+    RAGS("Rags"),
+
+    /**
+     * Charity Bag — an unopened charity donation bag from the general waste skip.
+     * May contain random low-value items.
+     * Tooltip: "Someone never put it out."
+     */
+    CHARITY_BAG("Charity Bag");
 
     private final String displayName;
 

@@ -3599,6 +3599,66 @@ public enum AchievementType {
         "Chugger Dodger",
         "Three times. Three different methods. You are basically a black belt in clipboard avoidance.",
         3
+    ),
+
+    // ── Issue #1183: Northfield Household Waste Recycling Centre ─────────────
+
+    /**
+     * Issue #1183: Awarded when the player finds a RETRO_CONSOLE in the WEEE skip.
+     */
+    TIP_TREASURE(
+        "Tip Treasure",
+        "Someone's mum threw away a perfectly good games console. Your gain.",
+        1
+    ),
+
+    /**
+     * Issue #1183: Awarded when the player deposits 3 or more items to the Reuse Corner
+     * in a single visit to the HWRC.
+     */
+    REUSE_HERO(
+        "Reuse Hero",
+        "You gave back to the community. In the form of old curtains and a broken lamp.",
+        1
+    ),
+
+    /**
+     * Issue #1183: Awarded on the player's first trade waste visit (paid 15 COIN fee).
+     */
+    TRADE_WASTE_MOAN(
+        "Trade Waste Moan",
+        "Fifteen quid? For a bit of rubble? Dave has heard it before, mate.",
+        1
+    ),
+
+    /**
+     * Issue #1183: Awarded when the player bribes Dave (TIP_ATTENDANT) with 5 COIN
+     * to use the hardcore bay without a HARDCORE_PERMIT.
+     */
+    BACKHANDER_AT_THE_TIP(
+        "Backhander at the Tip",
+        "I didn't see nothing. Five quid says I still don't.",
+        1
+    ),
+
+    /**
+     * Issue #1183: Awarded on the player's first successful night entry to the HWRC
+     * via bolt-cutters on the gate chain (18:00–08:00).
+     */
+    MOONLIGHT_TIP_RUN(
+        "Moonlight Tip Run",
+        "In, loot the WEEE skip, out before sunrise. Very professional.",
+        1
+    ),
+
+    /**
+     * Issue #1183: Awarded when the player sells a total of 10 CIRCUIT_BOARDs
+     * (cumulative across all sessions).
+     */
+    CIRCUIT_BOARD_MILLIONAIRE(
+        "Circuit Board Millionaire",
+        "Ten circuit boards sold. Dave would be disgusted. Gary at the scrapyard is delighted.",
+        10
     );
 
     private final String name;
