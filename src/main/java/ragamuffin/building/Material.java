@@ -3762,7 +3762,51 @@ public enum Material {
      * Restores +3 Hunger, +2 Warmth.
      * Tooltip: "More of a palate cleanser than a drink. Still nice though."
      */
-    MANGO_LASSI("Mango Lassi");
+    MANGO_LASSI("Mango Lassi"),
+
+    // ── Issue #1155: Northfield NHS Dentist ──────────────────────────────────
+
+    /**
+     * Fizzy Drink — a can of fizzy pop, sold at corner shops and vending machines for 1 COIN.
+     * Restores +5 Energy, +5 Hunger. Adds +12 sugar damage to toothache system.
+     * Tooltip: "Lovely going down. Your teeth disagree."
+     */
+    FIZZY_DRINK("Fizzy Drink"),
+
+    /**
+     * Haribo — a bag of gummy sweets from the newsagent or pound shop for 1 COIN.
+     * Restores +8 Hunger. Adds +15 sugar damage to toothache system.
+     * Tooltip: "Kids love them. Dentists love them more."
+     */
+    HARIBO("Haribo"),
+
+    /**
+     * Toothbrush — sold at the pharmacy for 1 COIN.
+     * Reduces sugar damage by −25 when used (press E).
+     * Tooltip: "Your dentist wants you to use this twice a day. You won't."
+     */
+    TOOTHBRUSH("Toothbrush"),
+
+    /**
+     * Dental Appointment Letter — issued by Deborah after NHS registration.
+     * Required to attend an appointment with Dr. Rashid.
+     * Tooltip: "Northfield Dental Practice. Please arrive 10 minutes early."
+     */
+    DENTAL_APPOINTMENT_LETTER("Dental Appointment Letter"),
+
+    /**
+     * Waiting List Letter — stolen from the back-office filing cabinet at the dental practice.
+     * Can be photocopied at the Community Centre to create a FORGED_WAITING_LIST_LETTER.
+     * Tooltip: "Someone's entire place in the queue. In a manila folder."
+     */
+    WAITING_LIST_LETTER("Waiting List Letter"),
+
+    /**
+     * Forged Waiting List Letter — a photocopied WAITING_LIST_LETTER from the Community Centre.
+     * Present to Deborah to halve remaining NHS wait time. 25% catch chance at Notoriety ≥ 30.
+     * Tooltip: "Looks official. Feels criminal. Welcome to Northfield."
+     */
+    FORGED_WAITING_LIST_LETTER("Forged Waiting List Letter");
 
     private final String displayName;
 
@@ -4717,6 +4761,20 @@ public enum Material {
             case MANGO_LASSI:             return cs(0.98f, 0.78f, 0.25f,  // Mango orange-yellow
                                                     0.98f, 0.95f, 0.88f); // Creamy white
 
+            // Issue #1155: Northfield NHS Dentist
+            case FIZZY_DRINK:             return cs(0.88f, 0.10f, 0.10f,  // Red can
+                                                    0.98f, 0.95f, 0.88f); // White highlight
+            case HARIBO:                  return cs(0.98f, 0.85f, 0.10f,  // Bright yellow bag
+                                                    0.92f, 0.25f, 0.25f); // Red logo band
+            case TOOTHBRUSH:              return cs(0.20f, 0.65f, 0.90f,  // NHS blue handle
+                                                    0.95f, 0.95f, 0.95f); // White bristles
+            case DENTAL_APPOINTMENT_LETTER: return cs(0.90f, 0.92f, 0.98f, // NHS letter paper
+                                                    0.28f, 0.55f, 0.82f); // NHS blue header
+            case WAITING_LIST_LETTER:     return cs(0.92f, 0.92f, 0.88f,  // White paper
+                                                    0.28f, 0.55f, 0.82f); // NHS blue stamp
+            case FORGED_WAITING_LIST_LETTER: return cs(0.88f, 0.88f, 0.80f, // Slightly off-white
+                                                    0.42f, 0.28f, 0.70f); // Suspicious purple hue
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5177,6 +5235,13 @@ public enum Material {
             case CLUB_MEMBERSHIP_CARD:
             case DARTS_SET:
             case QUIZ_ANSWER_SHEET:
+            // Issue #1155: Northfield NHS Dentist — not block items
+            case FIZZY_DRINK:
+            case HARIBO:
+            case TOOTHBRUSH:
+            case DENTAL_APPOINTMENT_LETTER:
+            case WAITING_LIST_LETTER:
+            case FORGED_WAITING_LIST_LETTER:
                 return false;
             default:
                 return true;
@@ -6166,6 +6231,20 @@ public enum Material {
                 return IconShape.FOOD;        // triangular pastry
             case MANGO_LASSI:
                 return IconShape.BOTTLE;      // yoghurt drink cup
+
+            // Issue #1155: Northfield NHS Dentist
+            case FIZZY_DRINK:
+                return IconShape.BOTTLE;      // can of fizzy drink
+            case HARIBO:
+                return IconShape.BOX;         // bag of gummies
+            case TOOTHBRUSH:
+                return IconShape.TOOL;        // long-handled brush
+            case DENTAL_APPOINTMENT_LETTER:
+                return IconShape.FLAT_PAPER;  // NHS appointment letter
+            case WAITING_LIST_LETTER:
+                return IconShape.FLAT_PAPER;  // official NHS letter
+            case FORGED_WAITING_LIST_LETTER:
+                return IconShape.FLAT_PAPER;  // forged NHS letter
 
             default:
                 return IconShape.BOX;

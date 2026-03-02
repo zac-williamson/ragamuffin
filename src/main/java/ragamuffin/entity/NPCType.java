@@ -1815,7 +1815,34 @@ public enum NPCType {
      * Curry Cook — volunteers at the Saturday 18:00–21:00 curry night.
      * Sells CURRY_AND_RICE for 2 COIN (+12 Warmth, +15 Hunger). Passive.
      */
-    CURRY_COOK(20f, 0f, 0f, false);
+    CURRY_COOK(20f, 0f, 0f, false),
+
+    // ── Issue #1155: Northfield NHS Dentist ──────────────────────────────────
+
+    /**
+     * Dental Receptionist — Deborah. Registers NHS patients, manages the waiting list,
+     * books private appointments. Present Mon–Fri 08:30–17:00. Lunch 13:00–14:00 (back-office).
+     */
+    DENTAL_RECEPTIONIST(20f, 0f, 0f, false),
+
+    /**
+     * Dentist — Dr. Rashid. Performs dental treatment at DENTAL_CHAIR_PROP.
+     * Present Mon–Fri 09:00–17:30.
+     */
+    DENTIST(25f, 0f, 0f, false),
+
+    /**
+     * Unlicensed Dentist — Mirek. Found in the Council Flats via pub rumour chain.
+     * Offers 5 COIN treatment with 60% chance of INFECTION or BOTCHED_JOB side effects.
+     * Flees on sight of POLICE NPC.
+     */
+    UNLICENSED_DENTIST(20f, 4f, 2.0f, false),
+
+    /**
+     * Dental Patient — civilian waiting in the Northfield Dental Practice.
+     * May share TOOTHACHE-related rumours.
+     */
+    DENTAL_PATIENT(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
