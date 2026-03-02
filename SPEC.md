@@ -40079,3 +40079,207 @@ Upon site arrival, if `NeighbourhoodSystem.getVibes() >= 60`:
 //   EnvironmentalHealthSystem, WantedSystem, CriminalRecord, RumourNetwork,
 //   WeatherSystem, TimeSystem, NewspaperSystem, NotorietySystem, NoiseSystem,
 //   WarmthSystem, AchievementSystem, WitnessSystem, StreetEconomySystem
+
+---
+
+## Issue #1251: Northfield Street Chuggers — Charity Clipboard Patrol, Sign-Up Commission & the Donation Skimming Hustle
+
+**Goal**: Add a classic British pedestrian hazard — the charity mugger. A team of
+over-enthusiastic clipboard-wielding fundraisers (`CHUGGER` NPCs) patrols the
+Northfield high street on weekdays (09:00–17:00), accosting anyone who passes
+within 3 blocks. The player can avoid them, engage with them, or get hired as one
+to run their own clipboard hustle — pocketing sign-up commissions while siphoning
+donor details to the FenceSystem's contacts list.
+
+**`ChuggingSystem`** — new class in `ragamuffin.core`.
+
+### Patrol & Accosting Mechanic
+
+Weekdays 09:00–17:00, 3 `CHUGGER` NPCs are spawned on the high street (near the
+`CHARITY_SHOP` landmark). Each chugger has a patrol radius of 20 blocks centred on
+their spawn point and a **zone** (they do not overlap — the street is divided into
+thirds). When the player enters within 3 blocks of a chugger who is in `PATROL`
+state, the chugger transitions to `ACCOSTING` state and approaches. The player is
+shown the dialogue prompt:
+
+> *"Hi! Have you got two minutes for [charity]?"*
+
+(Charity name drawn randomly from a pool of 6: `BADGER_TRUST`, `CHILDREN_IN_NEED`,
+`DISASTER_RELIEF`, `DOGS_TRUST`, `CLEAN_OCEANS_UK`, `AMNESTY_INTERNATIONAL`.)
+
+**Player response options:**
+1. **Ignore / Walk past** — player walks past without pressing E. Chugger follows
+   for up to 5 seconds, then returns to patrol. No consequence.
+2. **"I'm already a member"** — chugger accepts, resumes patrol. StreetReputation +1
+   ("charming liar" micro-reward). Can only be used once per chugger per in-game day.
+3. **Listen** — triggers a 30-second donation pitch (BattleBarMiniGame, 2 bars, as
+   the player feigns interest). Score 2 hits → successfully deflect without donating
+   (StreetReputation +2). Score 0–1 hits → chugger guilt-trips player into donating
+   2 COIN (deducted automatically from inventory).
+4. **Donate** — voluntarily give 2 COIN. `ChuggingSystem.recordDonation()`. Player
+   gets a `CHARITY_WRISTBAND` item (cosmetic, lowers Notoriety by 1 while worn as it
+   signals prosocial behaviour to NPCs).
+5. **Sign up for direct debit** — player provides fake details. Chugger gets 5 COIN
+   commission (NPC is satisfied). Player gains nothing but avoids future accosts by
+   that chugger for 3 in-game days (chugger has you "on the books").
+
+**Avoidance mechanics:**
+- If the player is **running** (sprint state) they pass through a chugger's zone
+  without triggering accosting — chuggers cannot intercept a running player.
+- If the player **crosses to the opposite side of the road** (moves to the far
+  pavement block row) before entering the chugger's 3-block radius, they avoid
+  accost. `ChuggingSystem.isCrossedRoad(playerPos, streetCentreLine)` → boolean.
+- If the player is **on the phone** (holding `MOBILE_PHONE` item and in
+  `PHONE_CALL` state from a future phone system, or faking it via a keypress),
+  chugger approaches but then backs off: "Oh sorry, didn't mean to interrupt!"
+- `WeatherSystem`: In rain, chuggers retreat to the charity shop doorway and do
+  not accost. `ChuggingSystem.isPatrolActive(weather)` → false when raining.
+
+### Get Hired as a Chugger — The Commission Hustle
+
+The player can apply for a job at the chugger team by pressing E on the **Team
+Leader NPC** (`CHUGGER_LEADER` — **Tracy**, a relentlessly positive woman in a
+branded tabard). Tracy stands near `CHARITY_CLIPBOARD_STAND_PROP` outside the
+charity shop.
+
+**Hiring conditions:** Player must have StreetReputation ≥ 10 and no active
+`WantedSystem` level (Wanted Level must be 0). Tracy will refuse anyone visibly
+flagged by police.
+
+Once hired:
+- Player is given a `CHARITY_CLIPBOARD` item (prop, equippable in hotbar slot).
+- Player enters `CHUGGER_SHIFT` mode: 09:00–17:00. During shift, the player must
+  accost passersby (NPCs) themselves.
+- For each NPC successfully signed up (press E on NPC while holding clipboard,
+  NPC has ≥ 30% willingness based on their type — `PENSIONER` 60%, `PUBLIC` 30%,
+  `BUSINESSMAN` 15%, `YOUNG_LAD` 5%), player earns **3 COIN commission**.
+- Tracy checks sign-up count at 13:00 (mid-shift check) and 17:00 (end of shift).
+  Minimum quota: 4 sign-ups per shift. Fail quota twice → fired.
+
+**The Skimming Hustle:**
+- Instead of logging a sign-up with Tracy (which awards 3 COIN), the player can
+  instead press a secondary key (F) to **pocket the sign-up fee** — recording it
+  as a sign-up in `ChuggingSystem` without passing it to Tracy.
+  - Awards 5 COIN instead of 3 COIN (player pockets the difference + base fee).
+  - Reduces Tracy's count by 1 (makes quota harder to reach).
+  - If Tracy's total is < 2 at 17:00, she suspects fraud: 40% chance she calls
+    the police (`WantedSystem` tier +1, `CriminalRecord.FRAUD` added).
+  - `WitnessSystem`: any NEIGHBOURHOOD_WATCH NPC within 8 blocks who observes
+    3+ skimmed sign-ups seeds a `CRIME_TIP` rumour in `RumourNetwork`.
+- The donor details harvested via skimming can be **sold to the FenceSystem**
+  as `DONOR_LIST` material — worth 8 COIN per list, max 3 lists per day. The
+  fence's buyer is introduced as "someone who deals in mailing lists."
+
+### NPCType & Constants
+
+New `NPCType` entries: `CHUGGER`, `CHUGGER_LEADER`.
+
+New `Material` entries: `CHARITY_WRISTBAND`, `CHARITY_CLIPBOARD`, `DONOR_LIST`.
+
+New `PropType` entry: `CHARITY_CLIPBOARD_STAND_PROP`.
+
+New `AchievementType` entries:
+- `SOFT_TOUCH` — donate to a chugger 3 times
+- `ICY_BRUSH_OFF` — successfully avoid every chugger on the high street for a
+  full in-game day (all 3 chuggers never accost you)
+- `TOP_CHUGGER` — sign up 10 NPCs in a single shift
+- `CLIPBOARD_KINGPIN` — sell 3 donor lists to the fence in one day
+
+### Key Constants (`public static final` in `ChuggingSystem`)
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `ACCOST_RADIUS` | `3.0f` | Distance (blocks) at which chugger triggers |
+| `ACCOST_FOLLOW_SECONDS` | `5f` | How long chugger follows before giving up |
+| `DONATION_COST` | `2` | COIN deducted on guilt-trip or voluntary donate |
+| `COMMISSION_HONEST` | `3` | COIN earned per legitimate sign-up |
+| `COMMISSION_SKIMMED` | `5` | COIN earned per skimmed sign-up |
+| `QUOTA_PER_SHIFT` | `4` | Minimum sign-ups Tracy expects |
+| `DONOR_LIST_FENCE_VALUE` | `8` | COIN from fence per donor list |
+| `MAX_DONOR_LISTS_PER_DAY` | `3` | Fence won't buy more than 3/day |
+| `PATROL_HOURS_START` | `9` | Hour chuggers begin patrol |
+| `PATROL_HOURS_END` | `17` | Hour chuggers end patrol |
+| `FRAUD_CALL_PROBABILITY` | `0.40f` | Chance Tracy calls police if quota badly missed |
+| `PENSIONER_WILLINGNESS` | `0.60f` | Sign-up willingness for PENSIONER NPC |
+| `PUBLIC_WILLINGNESS` | `0.30f` | Sign-up willingness for generic PUBLIC NPC |
+| `BUSINESSMAN_WILLINGNESS` | `0.15f` | Sign-up willingness for BUSINESSMAN NPC |
+| `YOUNG_LAD_WILLINGNESS` | `0.05f` | Sign-up willingness for YOUNG_LAD NPC |
+
+### Unit Test Assertions (method-level, no LibGDX)
+
+- `ChuggingSystem.isPatrolActive(RAIN, 12)` → `false`
+- `ChuggingSystem.isPatrolActive(CLEAR, 12)` → `true`
+- `ChuggingSystem.isPatrolActive(CLEAR, 8)` → `false` (before patrol hours)
+- `ChuggingSystem.isPatrolActive(CLEAR, 17)` → `false` (after patrol hours)
+- `ChuggingSystem.isCrossedRoad(playerPos, streetCentreLine)` where player is
+  on far pavement → `true`; player is on near pavement → `false`
+- `ChuggingSystem.resolveSignUp(NPCType.PENSIONER, rng=seeded)` → returns `true`
+  in ≥ 55% of seeded runs (willingness 60%)
+- `ChuggingSystem.resolveSignUp(NPCType.YOUNG_LAD, rng=seeded)` → returns `true`
+  in ≤ 10% of seeded runs (willingness 5%)
+- `ChuggingSystem.calculateShiftEarnings(honest=3, skimmed=2)` → `19` (3×3 + 2×5)
+- `ChuggingSystem.isFraudSuspected(tracyCount=1, quota=4, rng=seeded_high)` →
+  `true` (count < quota/2 triggers check)
+- `ChuggingSystem.getDonorListFenceValue(lists=3)` → `24` (3×8)
+- `ChuggingSystem.getDonorListFenceValue(lists=4)` → `24` (capped at 3)
+
+### Integration Tests — implement these exact scenarios
+
+1. **Chuggers spawn and patrol on weekday**: Advance TimeSystem to Tuesday 10:00.
+   Call `ChuggingSystem.update(delta, timeSystem, weatherSystem, npcManager)`.
+   Verify 3 `CHUGGER` NPCs are active in the world near the `CHARITY_SHOP`
+   landmark. Verify each chugger is in `NPCState.PATROL`. Verify `CHUGGER_LEADER`
+   NPC (Tracy) is present at `CHARITY_CLIPBOARD_STAND_PROP`. Advance TimeSystem
+   to 17:01. Call `update` again. Verify all 3 `CHUGGER` NPCs transition to
+   `NPCState.DESPAWNING` (shift over). Verify `isPatrolActive()` returns `false`.
+
+2. **Chugger accosting triggers dialogue and guilt-trip donation**: Tuesday 11:00,
+   no rain. Place player within 2 blocks of a `CHUGGER` NPC. Call `update`. Verify
+   chugger transitions to `NPCState.ACCOSTING`. Verify dialogue prompt appears
+   (check `TooltipSystem` has queued the "Have you got two minutes?" message).
+   Set player to respond "Listen" (simulate BattleBarMiniGame score of 0). Verify
+   2 COIN deducted from player inventory. Verify `ChuggingSystem.getTotalDonations()`
+   = 1. Verify `RumourNetwork` has no new entry (private transaction).
+
+3. **Rain stops chugger patrol**: Tuesday 10:00, set `WeatherSystem` to RAIN.
+   Call `ChuggingSystem.update(delta, timeSystem, weatherSystem, npcManager)`.
+   Verify 0 `CHUGGER` NPCs are spawned in patrol state. Verify `isPatrolActive()`
+   = `false`. Change weather to CLEAR. Call `update` again. Verify 3 `CHUGGER`
+   NPCs now spawn and begin patrol.
+
+4. **Player avoids accost by running**: Tuesday 12:00. Place `CHUGGER` NPC at
+   position (50, 1, 50). Set player sprint state = true. Move player from (50,1,55)
+   to (50,1,47) passing through chugger's 3-block radius. Call `update` each step.
+   Verify chugger never transitions to `ACCOSTING` state. Verify player
+   `CHARITY_WRISTBAND` count in inventory = 0 (no interaction occurred).
+
+5. **Player skims sign-up, sells donor list to fence**: Hire player as chugger
+   (set hired state, give `CHARITY_CLIPBOARD`). Advance to 10:00. Accost 3 NPCs
+   (use seeded Random to ensure `PENSIONER` NPCs ≥ 2). Skim all 3 sign-ups
+   (press F path). Verify `ChuggingSystem.getSkim medCount()` = 3. Verify player
+   earned 15 COIN (3×5). Verify Tracy's count = 0 (none passed to her). Verify
+   player inventory contains 1 `DONOR_LIST`. Call `FenceSystem.buyItem(DONOR_LIST)`.
+   Verify player receives 8 COIN. Verify `CLIPBOARD_KINGPIN` achievement is NOT
+   yet unlocked (need 3 lists sold). Sell 2 more `DONOR_LIST` items. Verify
+   `CLIPBOARD_KINGPIN` achievement is now unlocked.
+
+6. **Tracy calls police on suspected fraud**: Hire player. Advance to 13:00
+   mid-shift check. `ChuggingSystem.tracyCheck(count=0, rng=seeded_high)`.
+   Verify warning issued: "Tracy's looking at you funny." Advance to 17:00 end
+   of shift. `ChuggingSystem.tracyCheck(count=0, rng=seeded_high)`. Verify
+   `WantedSystem.getWantedLevel()` increases by 1. Verify `CriminalRecord` now
+   contains a `FRAUD` entry. Verify `CHARITY_CLIPBOARD` removed from player
+   inventory (Tracy confiscates it). Verify `RumourNetwork` contains a `CRIME_TIP`
+   rumour referencing "clipboard fraud."
+
+// ── Issue #1251: Northfield Street Chuggers ───────────────────────────────────
+// New: ChuggingSystem.java in ragamuffin.core
+// New: Issue1251ChuggingSystemTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: CHUGGER, CHUGGER_LEADER — add to NPCType.java
+// New Materials: CHARITY_WRISTBAND, CHARITY_CLIPBOARD, DONOR_LIST — add to Material.java
+// New PropType: CHARITY_CLIPBOARD_STAND_PROP — add to PropType.java
+// New AchievementTypes: SOFT_TOUCH, ICY_BRUSH_OFF, TOP_CHUGGER, CLIPBOARD_KINGPIN
+//   — add to AchievementType.java
+// Integrates: WeatherSystem, TimeSystem, WantedSystem, CriminalRecord,
+//   FenceSystem, RumourNetwork, WitnessSystem, NotorietySystem,
+//   StreetSkillSystem, AchievementSystem, TooltipSystem, BattleBarMiniGame
