@@ -3555,7 +3555,7 @@ public enum AchievementType {
      * Awarded when the player donates to a CHUGGER NPC (2 COIN, −1 Notoriety).
      * Unlocked on first donation.
      */
-    GOOD_SAMARITAN(
+    CHUGGER_GOODWILL(
         "Good Samaritan",
         "You gave 2 quid to someone holding a clipboard. They were genuinely grateful. Briefly.",
         1
@@ -3759,7 +3759,7 @@ public enum AchievementType {
      * Issue #1188: Awarded when a NOSY_NEIGHBOUR NPC tips off the DWP,
      * adding +15 suspicion score.
      */
-    NOSY_NEIGHBOUR(
+    DWP_TIPOFF(
         "Nosy Neighbour",
         "Someone on your street rang the DWP. You know who it was.",
         1
