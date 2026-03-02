@@ -43560,3 +43560,165 @@ Bert is the most honest dodgy mechanic in Northfield — he'll fail your car bec
 //             CriminalRecord, WantedSystem, NotorietySystem, RumourNetwork, NewspaperSystem,
 //             NoiseSystem, StreetSkillSystem (GRAFTING XP), FactionSystem (STREET_LADS bluff/tip-off,
 //             MARCHETTI_CREW bulk converter sale), DisguiseSystem (HIGH_VIS_JACKET), WarmthSystem
+
+---
+
+## Issue #1294: Add Northfield Compensation Kings — ClaimsManagementSystem, Staged Accidents & the Insurance Investigator Hustle
+
+### Overview
+
+`ClaimsManagementSystem` brings `LandmarkType.CLAIMS_MANAGEMENT` — **Compensation Kings** on the high street — fully to life. The landmark, both NPCTypes (`CLAIMS_MANAGER` for Gary, `CLAIMS_ASSISTANT` for Chantelle, `INSURANCE_INVESTIGATOR`), all PropTypes (`GOLD_SIGN_PROP`, `PAMPHLET_RACK_PROP`), and all Materials (`NECK_BRACE`, `CLAIM_REFERENCE_SLIP`) are already defined and waiting. This issue implements the system that backs all those references.
+
+Gary's franchise of misery operates on a simple principle: where there's blame, there's a claim. He'll file a whiplash case from a bus stop slipway, a slip-and-fall from a wet pavement at Aldi, or a dog-bite incident with a STRAY_DOG. Gary takes thirty percent, doesn't ask questions, and only draws the line when the insurance investigator is already in the building. It is Britain's compo culture in fine-grained voxel form, and it smells of Lynx Africa and optimism.
+
+---
+
+### NPCs
+
+- **Gary** (`CLAIMS_MANAGER`) — proprietor, present Mon–Sat 09:00–17:00 at his `DESK_PROP`. Processes fraudulent claims; takes a 30% cut of each payout. Refuses service at Notoriety Tier ≥ 4 or when `FRAUD_SUSPECTED` threshold (3 claims in 7 in-game days) is reached. Enters `GARY_DISTRACTED` state (checking phone, 15 seconds) when the `PAMPHLET_RACK_PROP` is bumped (E). Dialogue: *"Leave it with me, mate." / "Thirty per cent — that's industry standard." / "You didn't hear this from me." / "Look, even I have limits."*
+- **Chantelle** (`CLAIMS_ASSISTANT`) — present Mon–Fri 09:00–17:00. Patrols a 4-block route behind the counter. Spots the player sprinting or fighting within 8 blocks during an active claim window and phones Gary → claim flagged SUSPICIOUS (catch-chance +20%). Dialogue: *"Have you got your ref number?" / "Gary's just with someone." / "Fill this in first, yeah?" / "Compensation's a human right, innit."*
+- **Insurance Investigator** (`INSURANCE_INVESTIGATOR`) — spawns 30–60 seconds after a claim is filed when CCTV coverage was detected (40% chance within 10 blocks of a `CCTV_PROP`). Follows the player at 8-block distance in plain clothes. Monitors for sprint/fight/block-break within 20 blocks. Can be bribed (5 COIN, 50% accept) or shaken (stay 60 blocks away for 5 in-game minutes). Caught → `INSURANCE_FRAUD` in CriminalRecord, claim invalidated, Notoriety +6, WantedSystem +1. Dialogue: *"Just passing through." / "Don't mind me." / "I've got all day, sunshine."*
+
+---
+
+### Activities
+
+#### Filing a Fraudulent Claim
+- Press E on Gary to browse available claim types. Gary must be present and the `FRAUD_SUSPECTED` counter must be below 3 claims in 7 in-game days. Rejected at Notoriety Tier ≥ 4.
+- **Claim types** (each costs 0 COIN to file; Gary deducts 30% from payout):
+
+| Claim Type | Base Payout | Required Condition | Evidence Bonus |
+|---|---|---|---|
+| `WHIPLASH_CLAIM` | 7 COIN | Player was recently in a car (`CAR_ENTITY`) | `NECK_BRACE` equipped: ×1.5 |
+| `SLIP_AND_FALL` | 5 COIN | Player near a `WET_FLOOR_SIGN_PROP` or on WATER/ICE block | None |
+| `DOG_BITE_CLAIM` | 6 COIN | Player was attacked by `STRAY_DOG` or `GUARD_DOG` NPC | `BANDAGE` equipped: ×1.2 |
+| `POTHOLE_CLAIM` | 4 COIN | Player within 5 blocks of a `ROAD` block with CRACK annotation | None |
+| `TRIP_CLAIM` | 4 COIN | Player on PAVEMENT or STONE surface | None (weakest claim) |
+
+- **Payout flow**: Gary issues a `CLAIM_REFERENCE_SLIP`. Player receives net payout after Gary's 30% cut, rounded down. Payout credited 2 in-game hours after filing (Gary "processes" it). If the INSURANCE_INVESTIGATOR catches the player in the window, payout is cancelled and `INSURANCE_FRAUD` is recorded.
+- Successful payout: Notoriety +2 (suspicion), `FRAUD_SUSPECTED` counter incremented. Achievement: `COMPENSATION_NATION` (first successful payout).
+- `NECK_BRACE` equipped on `WHIPLASH_CLAIM`: achievement `NECK_BRACE_BANDIT`. `NECK_BRACE` is consumed on claim settlement (Gary keeps it).
+
+#### Genuine Injury Fast-Track
+- If the player has been genuinely injured — health reduced by 20+ points in one hit from a `CAR_ENTITY` collision or an unprovoked `STRAY_DOG` bite — Gary waives his 30% cut and pays the full base payout immediately.
+- Genuine injury claims do NOT increment `FRAUD_SUSPECTED` counter and do NOT trigger INSURANCE_INVESTIGATOR.
+- Achievement: `GENUINE_VICTIM` (receive a full-payout genuine claim).
+
+#### Staged Accident Setup
+- Player can engineer the conditions for a higher-value claim:
+  - **Car clip**: Stand in the road near a moving `CAR_ENTITY` and allow it to make contact (≥ 10 damage from vehicle = WHIPLASH eligible). Risky — if health drops to 0, standard respawn applies.
+  - **Wet floor plant**: Player equips `MOP_BUCKET_PROP` item (purchasable at Pound Shop for 1 COIN) and places it on the floor inside `ALDI` or `GREGGS` to create a `WET_FLOOR_SIGN_PROP` condition. Then press E on Gary for `SLIP_AND_FALL`. Notoriety +1 for placing the hazard.
+  - **Pothole fabrication**: Player with `CROWBAR` crouches on a ROAD block and holds E for 4 seconds → ROAD block gains CRACK annotation visible to ClaimsManagementSystem. Notoriety +1. Claim eligible immediately.
+- Achievement: `SERIAL_FRAUDSTER` (3 different claim types filed successfully, no INSURANCE_FRAUD on record).
+
+#### Insurance Investigator Mechanics
+- INSURANCE_INVESTIGATOR spawns with 40% probability when CCTV within 10 blocks at time of filing.
+- Player has a 2-in-game-hour window between filing and payout during which the investigator monitors.
+- **Shaking the tail**: Stay 60+ blocks from the investigator for 5 consecutive in-game minutes → investigator despawns, claim proceeds. Achievement: `SHOOK_THE_TAIL`.
+- **Bribing the investigator**: Press E while adjacent (within 2 blocks) → offer 5 COIN. 50% accept; investigator despawns, claim proceeds, Notoriety −1 (investigator drops the case). 50% refuse → investigator immediately invalidates claim, `INSURANCE_FRAUD` in CriminalRecord, WantedSystem +1.
+- **Being caught**: Sprint, fight, or break a block within 20 blocks of investigator while claim is pending → `CAUGHT_IN_THE_ACT` event fires. Payout cancelled, `INSURANCE_FRAUD` recorded, Notoriety +6, WantedSystem +1, achievement `CAUGHT_IN_THE_ACT`.
+- Chantelle's tip-off: If Chantelle sees the player sprinting/fighting within 8 blocks, catch-chance of INSURANCE_INVESTIGATOR increases to 60%.
+
+#### Pamphlet Rack Distraction
+- Press E on `PAMPHLET_RACK_PROP` near Gary → bump it, scattering pamphlets across the floor. Gary enters `GARY_DISTRACTED` state (15 seconds) to pick them up. During this window, player can browse Gary's filing cabinet (off-screen mechanic — yields one `CLAIM_REFERENCE_SLIP` from a previous claimant, redeemable at Fence for 2 COIN).
+- Cooldown: once per in-game hour.
+- Achievement: `PAMPHLET_PUSHER` (use the pamphlet rack distraction 3 times).
+
+#### FRAUD_SUSPECTED Threshold & Ban Mechanic
+- After 3 successful claims in 7 in-game days, Gary refuses all new claims: *"I've had the fraud team on the phone about you."*
+- Player can pay 10 COIN to "smooth things over" (resets counter, seeds `INSURANCE_FRAUD` rumour).
+- Ban auto-lifts after 7 in-game days if no further claims.
+
+---
+
+### Prices
+
+| Transaction | Amount |
+|---|---|
+| `WHIPLASH_CLAIM` payout (Gary takes 30%) | 5 COIN net (7 base − 2 Gary) |
+| `WHIPLASH_CLAIM` with `NECK_BRACE` (×1.5) | 7 COIN net (10 base − 3 Gary) |
+| `DOG_BITE_CLAIM` payout | 4 COIN net (6 − 2) |
+| `DOG_BITE_CLAIM` with `BANDAGE` (×1.2) | 5 COIN net (7 − 2) |
+| `SLIP_AND_FALL` payout | 4 COIN net (5 − 1) |
+| `POTHOLE_CLAIM` payout | 3 COIN net (4 − 1) |
+| `TRIP_CLAIM` payout | 3 COIN net (4 − 1) |
+| Smooth-over bribe (reset FRAUD_SUSPECTED) | 10 COIN |
+| INSURANCE_INVESTIGATOR bribe | 5 COIN (50% success) |
+| `MOP_BUCKET_PROP` at Pound Shop | 1 COIN |
+
+---
+
+### Integration Points
+
+- **CarDrivingSystem**: Cars that collide with the player at speed (≥10 damage) set a `RECENTLY_IN_VEHICLE_COLLISION` flag on the player entity, valid for 2 in-game hours — required condition for `WHIPLASH_CLAIM`.
+- **WeatherSystem**: `RAIN` weather increases `SLIP_AND_FALL` base payout by 1 COIN (wet pavements); Gary notes: *"Weather's on our side today."*
+- **DogCompanionSystem / NPCManager**: `STRAY_DOG` and `GUARD_DOG` bites set a `RECENTLY_BITTEN` flag on the player entity, valid for 2 in-game hours — required condition for `DOG_BITE_CLAIM`.
+- **FenceSystem**: `CLAIM_REFERENCE_SLIP` (2 COIN) accepted by FenceSystem fences as stolen document.
+- **PawnShopSystem**: `NECK_BRACE` (1 COIN) accepted at pawn shop. `CLAIM_REFERENCE_SLIP` worthless (0 COIN) at pawn shop.
+- **NotorietySystem**: Fraudulent claim success +2; claim caught/invalidated +6; pothole fabrication +1; wet floor plant +1.
+- **WantedSystem**: INSURANCE_INVESTIGATOR catch +1; bribe refused +1.
+- **CriminalRecord**: `INSURANCE_FRAUD` (new CrimeType, add to CriminalRecord.java) on catch; payout with Notoriety Tier ≥ 3 seeds `FRAUDULENT_CLAIMANT` rumour.
+- **RumourNetwork**: `INSURANCE_FRAUD` rumour seeded after a caught claim (add `INSURANCE_FRAUD` and `FRAUDULENT_CLAIMANT` to RumourType.java); `SMOOTH_OVER` rumour seeded when player pays the 10-COIN reset bribe.
+- **NewspaperSystem**: "Local Man's Fifth Whiplash Claim Raises Eyebrows" after 5 total claims by the player; "Insurance Investigator Spotted on Northfield High Street" after first investigator spawn.
+- **NeighbourhoodSystem**: Successful genuine injury claim (full payout, Gary waives cut) grants COMMUNITY_RESPECT +2 (sympathy from neighbours).
+- **NoiseSystem**: Car-clip staged accident = HIGH noise (radius 12); pamphlet rack scatter = LOW noise.
+- **DWPSystem**: Active `CLAIM_REFERENCE_SLIP` in inventory grants DWP exemption from "Seeking Employment" check for 1 in-game week (Gary filed the sick-note paperwork).
+- **StreetSkillSystem**: `STREET_SMARTS XP +3` per successful payout (working the system).
+- **FactionSystem**: `STREET_LADS` Respect ≥ 30 unlocks Gary sharing a "CCTV blind-spot map" — reduces INSURANCE_INVESTIGATOR spawn chance from 40% to 20%.
+
+---
+
+### Unit Tests (`ClaimsManagementSystemTest.java`)
+
+1. `testWhiplashClaimPaysOutNetOf30Percent` — set `recentlyInVehicleCollision` = true; call `fileClaim(player, WHIPLASH_CLAIM, rng)`; verify `CLAIM_REFERENCE_SLIP` in inventory; advance 2 in-game hours; verify player gains 5 COIN (7 base − 2 Gary); `fraudSuspectedCount` = 1.
+2. `testNeckBraceMultipliesWhiplashPayout` — player equips `NECK_BRACE`; set collision flag; call `fileClaim(player, WHIPLASH_CLAIM, rng)`; advance 2 hours; verify player gains 7 COIN (10×0.7); `NECK_BRACE` removed from inventory.
+3. `testSlipAndFallRequiresWetFloorCondition` — `wetFloorCondition` = false; call `fileClaim(player, SLIP_AND_FALL, rng)`; verify `ClaimResult.CONDITION_NOT_MET`; player COIN unchanged.
+4. `testSlipAndFallSucceedsOnWaterBlock` — player standing on WATER block; call `fileClaim(player, SLIP_AND_FALL, rng)`; verify `CLAIM_REFERENCE_SLIP` issued.
+5. `testDogBiteClaimRequiresBiteFlag` — `recentlyBitten` = false; call `fileClaim(player, DOG_BITE_CLAIM, rng)`; verify `ClaimResult.CONDITION_NOT_MET`.
+6. `testGenuineInjuryClaimWaivesGaryCut` — set `genuineInjury` = true (≥20 damage from vehicle); call `fileClaim(player, WHIPLASH_CLAIM, rng)`; verify payout = 7 COIN (no Gary cut); `fraudSuspectedCount` unchanged.
+7. `testFraudSuspectedThresholdBlocksClaims` — set `fraudSuspectedCount` = 3; call `fileClaim(player, TRIP_CLAIM, rng)`; verify `ClaimResult.GARY_REFUSED`; player COIN unchanged.
+8. `testFraudSuspectedResetCosts10Coin` — `fraudSuspectedCount` = 3; player has 10 COIN; call `smoothOver(player)`; verify player COIN = 0; `fraudSuspectedCount` = 0; `INSURANCE_FRAUD` rumour seeded.
+9. `testInsuranceInvestigatorSpawnsOnCCTVPresence` — `cctvWithin10` = true; seed RNG < 0.40; call `fileClaim(player, WHIPLASH_CLAIM, rng)`; verify `insuranceInvestigatorActive` = true.
+10. `testInsuranceInvestigatorDoesNotSpawnWithoutCCTV` — `cctvWithin10` = false; call `fileClaim(player, WHIPLASH_CLAIM, rng)`; verify `insuranceInvestigatorActive` = false.
+11. `testCaughtInActInvalidatesClaim` — investigator active; player sprints within 20 blocks; call `onPlayerSprintedNearInvestigator(player)`; verify `INSURANCE_FRAUD` in CriminalRecord; payout cancelled; Notoriety +6; WantedSystem +1.
+12. `testInvestigatorBribeAccepted` — investigator active; seed RNG < 0.50 (accept); player has 5 COIN; call `bribeInvestigator(player, rng)`; verify player COIN = 0; investigator despawned; claim proceeds.
+13. `testInvestigatorBribeRefusedInvalidatesClaim` — seed RNG ≥ 0.50 (refuse); call `bribeInvestigator(player, rng)`; verify `INSURANCE_FRAUD` in CriminalRecord; WantedSystem +1; claim cancelled.
+14. `testShakingTailProceedsWithClaim` — investigator active; advance 5 in-game minutes with player 60+ blocks away; call `update(delta, timeSystem)`; verify investigator despawned; claim payout proceeds.
+15. `testPotholeFabricationAddsNotoriety` — player has `CROWBAR`; call `fabricatePothole(player)`; verify ROAD block gains CRACK annotation; Notoriety +1; `POTHOLE_CLAIM` condition valid.
+16. `testWetFloorPlantSetsCondition` — player has `MOP_BUCKET_PROP`; call `plantWetFloor(player, landmarkType=ALDI)`; verify `WET_FLOOR_SIGN_PROP` created; `SLIP_AND_FALL` condition valid at location; Notoriety +1.
+17. `testRainWeatherBonusCoin` — `WeatherSystem.currentWeather` = RAIN; call `fileClaim(player, SLIP_AND_FALL, rng)`; verify base payout = 6 (5+1 rain bonus) → net 4 COIN after Gary's cut.
+18. `testGaryRefusesHighNotoriety` — set Notoriety to 70 (Tier 4+); call `fileClaim(player, WHIPLASH_CLAIM, rng)`; verify `ClaimResult.GARY_REFUSED`; player COIN unchanged.
+19. `testPamphletRackDistractsGary` — call `triggerPamphletRack()`; verify Gary state = `GARY_DISTRACTED` for 15 seconds; `CLAIM_REFERENCE_SLIP` loot available from filing cabinet; cooldown timer > 0.
+20. `testDWPExemptionActiveWithPendingClaim` — player has `CLAIM_REFERENCE_SLIP`; call `isDWPExempt(player)`; verify = true; advance 7 in-game days; verify = false.
+
+---
+
+### Integration Tests (`Issue1294CompensationKingsIntegrationTest.java`)
+
+1. **Full whiplash claim pipeline with neck brace**: Player near `CAR_ENTITY` (takes ≥10 damage → `RECENTLY_IN_VEHICLE_COLLISION` set). Player equips `NECK_BRACE`. Player presses E on Gary (09:30 Mon, no CCTV within 10 blocks). `WHIPLASH_CLAIM` filed. `CLAIM_REFERENCE_SLIP` in inventory. Advance 2 in-game hours. Verify: player +7 COIN (×1.5 payout, net after 30%); `NECK_BRACE` removed; `fraudSuspectedCount` = 1; `COMPENSATION_NATION` achievement unlocked; `NECK_BRACE_BANDIT` achievement unlocked; Notoriety = start+2.
+
+2. **Insurance investigator spawn → tail shake → payout**: CCTV within 10 blocks. Player files `SLIP_AND_FALL` (standing on WATER block). RNG seeded < 0.40 → `INSURANCE_INVESTIGATOR` spawns 35 seconds later, 8 blocks from player. Player moves 65+ blocks away and stays there for 5 in-game minutes. Verify: investigator despawns; payout of 4 COIN arrives; `SHOOK_THE_TAIL` achievement unlocked; no `INSURANCE_FRAUD` in CriminalRecord.
+
+3. **Caught in the act pipeline**: CCTV within 10 blocks. Player files `WHIPLASH_CLAIM`. Investigator spawns. Player sprints within 20 blocks of investigator 30 seconds after filing. Verify: payout cancelled; `INSURANCE_FRAUD` in CriminalRecord; `CAUGHT_IN_THE_ACT` achievement unlocked; Notoriety = start+8 (+2 filing, +6 caught); WantedSystem stars = 1; `CLAIM_REFERENCE_SLIP` removed from inventory.
+
+4. **FRAUD_SUSPECTED threshold → smooth-over → reset**: Player files 3 successful claims over 3 in-game days (each with a unique condition). `fraudSuspectedCount` = 3. Attempt 4th claim: Gary refuses. Player pays 10 COIN to Gary for smooth-over. Verify: `fraudSuspectedCount` = 0; `INSURANCE_FRAUD` rumour seeded in RumourNetwork; Gary resumes service; NewspaperSystem headline "Local Man's Fifth Whiplash Claim Raises Eyebrows" after 5 total career claims.
+
+5. **Genuine injury fast-track (no Gary cut, no investigator)**: `STRAY_DOG` NPC attacks player, dealing 22 damage → `recentlyBitten` = true, `genuineInjury` = true. Player immediately files `DOG_BITE_CLAIM` (no CCTV required). Verify: full payout 6 COIN (no Gary cut); no INSURANCE_INVESTIGATOR spawned; `fraudSuspectedCount` unchanged; `GENUINE_VICTIM` achievement unlocked; NeighbourhoodSystem `COMMUNITY_RESPECT` +2.
+
+---
+
+// ── Issue #1294: Add Northfield Compensation Kings ────────────────────────────
+// New: ClaimsManagementSystem.java in ragamuffin.core
+// New: ClaimsManagementSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1294CompensationKingsIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: CLAIMS_MANAGER (Gary), CLAIMS_ASSISTANT (Chantelle), INSURANCE_INVESTIGATOR — already defined; no change needed
+// Material: NECK_BRACE, CLAIM_REFERENCE_SLIP — already defined; no change needed
+// PropType: GOLD_SIGN_PROP, PAMPHLET_RACK_PROP — already defined; no change needed
+// RumourType: INSURANCE_FRAUD, FRAUDULENT_CLAIMANT, SMOOTH_OVER — add to RumourType.java
+// AchievementType: COMPENSATION_NATION, CAUGHT_IN_THE_ACT, NECK_BRACE_BANDIT, GENUINE_VICTIM, SHOOK_THE_TAIL, SERIAL_FRAUDSTER, PAMPHLET_PUSHER — already defined; no change needed
+// CriminalRecord: INSURANCE_FRAUD — add to CriminalRecord.CrimeType
+// Integration: CarDrivingSystem (RECENTLY_IN_VEHICLE_COLLISION flag), WeatherSystem (rain bonus),
+//             DogCompanionSystem/NPCManager (RECENTLY_BITTEN flag), FenceSystem (CLAIM_REFERENCE_SLIP),
+//             PawnShopSystem (NECK_BRACE), NotorietySystem, WantedSystem, CriminalRecord,
+//             RumourNetwork, NewspaperSystem, NeighbourhoodSystem (genuine injury COMMUNITY_RESPECT),
+//             NoiseSystem, DWPSystem (exemption), StreetSkillSystem (STREET_SMARTS XP), FactionSystem
