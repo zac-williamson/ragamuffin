@@ -33550,3 +33550,192 @@ it to Tommy: +15 BOXING points, permanent free membership, `LEGACY_OF_THE_RING` 
 //     WantedSystem, WarmthSystem, WeatherSystem, RumourNetwork, AchievementSystem
 //   Unit tests in DogCompanionSystemTest.java
 //   Integration tests per Phase 39 spec scenarios
+
+---
+
+## Issue #1171: Northfield TV Licence — Threatening Letters, the Detector Van & the Evasion Economy
+
+**System file**: `src/main/java/ragamuffin/core/TVLicenceSystem.java`
+
+The BBC Licensing Authority is the most persistently threatening correspondence any
+working-class British household receives. A buff envelope arrives every 2 in-game weeks
+demanding £169.50. Ignore it and the letters escalate — caps lock, red ink, FINAL
+REMINDER, a visit from a licence officer, and eventually a summons to the magistrates'
+court. Pay it and you get a smug "Thank you" certificate you can frame on your squat wall.
+The real British experience: a third of the country doesn't have one and everyone's
+terrified of the mythical "detector van."
+
+### Core Mechanic — Licence Status
+
+The player has a `TVLicenceStatus` (enum: `UNLICENSED`, `WARNED`, `FINAL_NOTICE`,
+`SUMMONED`, `LICENSED`, `EVADING`). Default at game start: `UNLICENSED`.
+
+- **TV Licence fee**: 12 COIN (in-universe equivalent of £169.50/yr split quarterly).
+- **Pay** (press E on `LETTERBOX_PROP` in squat/council flat while holding `TV_LICENCE_LETTER`
+  and ≥12 COIN): status → `LICENSED`. Duration: 28 in-game days. A `TV_LICENCE_CERTIFICATE`
+  item appears in inventory (frame-able as a wall prop, gives +2 Community Respect when
+  placed). Awards `HONEST_TELLY` achievement.
+- **Ignore**: After each 7-day grace period, status escalates through WARNED → FINAL_NOTICE
+  → SUMMONED. `SUMMONED` → auto-referred to `MagistratesCourtSystem` (fine: 8 COIN +
+  Notoriety +5 + `TV_LICENCE_EVASION` criminal record entry).
+
+### Threatening Letters
+
+A `TV_LICENCE_LETTER` prop spawns on the nearest `LETTERBOX_PROP` to the player's
+current address (tracked via `PropertySystem`) every 7 in-game days while status ≠
+`LICENSED`. Each escalation level uses a distinct letter variant with escalating tone:
+
+| Level | Letter text snippet |
+|-------|---------------------|
+| `UNLICENSED` | *"Our records show your address has no TV licence. You need one."* |
+| `WARNED` | *"This is your OFFICIAL WARNING. An enforcement officer may visit."* |
+| `FINAL_NOTICE` | *"FINAL REMINDER. Failure to act may result in prosecution."* |
+| `SUMMONED` | *"You are required to attend Northfield Magistrates' Court."* |
+
+Reading a letter (press E) adds the `LICENCE_LETTER` tooltip: *"They've been sending
+these since 1946. Most people just chuck 'em."*
+
+### The Detector Van (the Myth)
+
+Every 14 in-game days a `DETECTOR_VAN` NPC vehicle spawns near the `COUNCIL_FLATS`
+or `SQUAT` landmark and drives slowly along the street. It has no actual detection
+ability — it is purely atmospheric and triggers NPC dialogue. PUBLIC NPCs say:
+*"Detector van's out again — better turn the telly off."* PENSIONER NPCs peer through
+curtains. YOUTH_GANG NPCs throw chips at it.
+
+However, if the player has `EVADING` status AND is in the same landmark as a lit
+`TV_PROP` (or `COMPUTER` prop playing a stream), there is a 25% chance per detector
+van pass that a `LICENCE_OFFICER` NPC knocks on the door (30-second warning, KNOCK
+sound effect), then enters and fines the player 8 COIN on the spot.
+
+### Licence Officer NPC
+
+`LICENCE_OFFICER` — a beleaguered middle-aged man in a hi-vis vest carrying a clipboard.
+Spawns only when triggered by evasion check or on SUMMONED escalation. Can be:
+
+- **Bribed** (E + ≥4 COIN while officer is at door): status resets to WARNED, officer
+  leaves, Notoriety +3, `BRIBED_OFFICIAL` criminal record.
+- **Intimidated** (player Notoriety ≥ Tier 2 or dog bond ≥ 50 + off-lead): officer
+  leaves, status stays EVADING, Notoriety +5, seeds `COMMUNITY_CONCERN` rumour.
+- **Let in and caught** (fail to act within 30s): fine 8 COIN, status → `LICENSED`
+  (forced), Notoriety +2, `TV_LICENCE_EVASION` entry.
+- **Arrested via WantedSystem** (Tier 3+): officer calls police on approach, player
+  gains wanted level.
+
+### Counter-Scam: Sell Fake Licences
+
+At StreetRep ≥ 40, the player can craft a `FORGED_TV_LICENCE` (PAPER + PRINTER_INK,
+requires `PRINTER_PROP` in current building). Sell to a `PUBLIC` or `PENSIONER` NPC
+for 8 COIN each. Each sale: Notoriety +4, 20% chance NPC reports to police (adds
+`FRAUD` criminal record). Selling 5+ triggers `BOGUS_INSPECTOR` achievement. The
+`NewspaperSystem` generates a headline after 3 sales to the same postcode:
+*"Pensioner Falls for Fake TV Licence Scam — Police Warn Northfield Residents."*
+
+### Integrations
+
+- **PropertySystem**: licence required per property — owning multiple properties
+  means multiple licences. Each un-licenced property escalates independently.
+- **NoiseSystem**: watching `TV_PROP` emits ambient noise level 0.1 — enough for
+  the LICENCE_OFFICER detection check.
+- **MagistratesCourtSystem**: SUMMONED status auto-creates a pending case.
+- **NewspaperSystem**: 3+ forged licences sold → scam headline.
+- **NeighbourhoodWatchSystem**: WatchAnger +5 when officer visits (draws attention
+  to the property).
+- **RumourNetwork**: first detector van pass seeds `LOCAL_EVENT` rumour:
+  *"Detector van was doing the rounds again last night."*
+- **DogCompanionSystem**: dog intimidation counts as INTIMIDATED outcome for officer.
+- **WantedSystem**: Tier 3+ wanted level causes officer to call police.
+
+### New Materials (add to `Material.java`)
+
+| Constant | Display name | Value |
+|----------|-------------|-------|
+| `TV_LICENCE_LETTER` | "TV Licence Letter" | 0 COIN |
+| `TV_LICENCE_CERTIFICATE` | "TV Licence Certificate" | 2 COIN |
+| `FORGED_TV_LICENCE` | "Forged TV Licence" | 8 COIN |
+
+### New PropTypes (add to `PropType.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `LICENCE_CERTIFICATE_FRAME_PROP` | Framed certificate, wall-mountable, +2 Community Respect |
+| `DETECTOR_VAN_PROP` | Slow-moving white van with dish on roof |
+
+### New NPCTypes (add to `NPCType.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `LICENCE_OFFICER` | Hi-vis, clipboard; spawns on evasion check / summons |
+
+### New CrimeTypes (add to `CriminalRecord.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `TV_LICENCE_EVASION` | Caught without a licence |
+| `BRIBED_OFFICIAL` | Bribed the licence officer (if not already present) |
+| `FORGED_DOCUMENT` | Crafted or sold a forged TV licence |
+
+### Achievements (add to `AchievementType.java`)
+
+| Constant | Unlock condition |
+|----------|-----------------|
+| `HONEST_TELLY` | Pay TV licence legitimately for the first time |
+| `EVADER` | Reach FINAL_NOTICE status without paying |
+| `BOGUS_INSPECTOR` | Sell 5+ forged TV licences |
+| `DETECTOR_PROOF` | Intimidate the licence officer with the dog |
+| `LOWEST_OF_THE_LOW` | Rob a pensioner who just bought a forged licence from you |
+
+### New RumourType (add to `RumourType.java`)
+
+- `LOCAL_EVENT` already covers the detector van rumour (reuse existing enum value with
+  new seed text: *"Detector van was doing the rounds again last night."*)
+
+### Unit Tests (implement in `TVLicenceSystemTest.java`)
+
+1. Status escalates UNLICENSED → WARNED → FINAL_NOTICE → SUMMONED after 3 missed 7-day cycles.
+2. Paying with 12 COIN while holding letter sets status `LICENSED`, deducts coin, adds certificate.
+3. Forged licence craft requires PAPER + PRINTER_INK; fails without PRINTER_PROP in landmark.
+4. Bribe outcome: officer spawned, player pays 4 COIN, status resets to WARNED, bribe recorded.
+5. Dog intimidation: bond ≥ 50, off-lead → INTIMIDATED outcome, Notoriety +5, no fine.
+6. Detector van detection check: `EVADING` + TV noise + 25% roll → officer spawns.
+7. SUMMONED status auto-creates a magistrates court case (mock `MagistratesCourtSystem`).
+8. Multiple properties each escalate independently.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Letter escalation end-to-end**: Create `TVLicenceSystem` with player owning one property.
+   Advance 7 in-game days. Verify `TV_LICENCE_LETTER` prop spawned at `LETTERBOX_PROP`.
+   Advance another 7 days without interaction. Verify status is `WARNED`. Advance another
+   7 days. Verify status `FINAL_NOTICE`. Advance 7 more. Verify status `SUMMONED` and
+   `MagistratesCourtSystem.hasPendingCase(player)` returns true.
+
+2. **Pay the licence**: Give player 12 COIN and `TV_LICENCE_LETTER`. Player presses E on
+   `LETTERBOX_PROP`. Verify COIN reduced by 12. Verify status `LICENSED`. Verify
+   `TV_LICENCE_CERTIFICATE` added to inventory. Verify `HONEST_TELLY` achievement unlocked.
+   Advance 28 in-game days. Verify status reverts to `UNLICENSED` (licence expired).
+
+3. **Officer bribe**: Set status `EVADING`. Spawn `LICENCE_OFFICER`. Give player 4 COIN.
+   Press E on officer within 30 seconds. Verify COIN reduced by 4. Verify status reset to
+   `WARNED`. Verify `CriminalRecord` contains `BRIBED_OFFICIAL`. Verify officer NPC removed
+   from world. Verify Notoriety increased by 3.
+
+4. **Dog intimidation**: Set status `EVADING`. Set dog bond to 60, `isOffLead = true`.
+   Spawn `LICENCE_OFFICER`. Verify `TVLicenceSystem.handleOfficerEncounter()` returns
+   outcome `INTIMIDATED`. Verify Notoriety increased by 5. Verify officer NPC despawns.
+   Verify `DETECTOR_PROOF` achievement unlocked (first dog intimidation).
+
+5. **Forged licence sale caught**: Craft `FORGED_TV_LICENCE` (give player PAPER + PRINTER_INK,
+   place `PRINTER_PROP` in landmark). Verify item in inventory. Sell to `PENSIONER` NPC.
+   Seed RNG so NPC reports (roll < 0.20). Verify `CriminalRecord` contains `FORGED_DOCUMENT`.
+   Verify Notoriety +4. Verify `WantedSystem.isWanted()` returns true after report.
+
+// ── Issue #1171: TV Licence System ────────────────────────────────────────────
+// New: TVLicenceSystem.java in ragamuffin.core
+// New enum: TVLicenceStatus (UNLICENSED, WARNED, FINAL_NOTICE, SUMMONED, LICENSED, EVADING)
+// NPCType: LICENCE_OFFICER — add to NPCType.java
+// Material: TV_LICENCE_LETTER, TV_LICENCE_CERTIFICATE, FORGED_TV_LICENCE — add to Material.java
+// PropType: LICENCE_CERTIFICATE_FRAME_PROP, DETECTOR_VAN_PROP — add to PropType.java
+// CriminalRecord.CrimeType: TV_LICENCE_EVASION, FORGED_DOCUMENT — add (BRIBED_OFFICIAL if absent)
+// AchievementType: HONEST_TELLY, EVADER, BOGUS_INSPECTOR, DETECTOR_PROOF, LOWEST_OF_THE_LOW — add
+// Integrates: PropertySystem, NoiseSystem, MagistratesCourtSystem, NewspaperSystem,
+//   NeighbourhoodWatchSystem, RumourNetwork, DogCompanionSystem, WantedSystem, CriminalRecord
