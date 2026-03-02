@@ -37343,3 +37343,154 @@ While the `INSTRUCTOR_CAR_PROP` is on its lesson route (08:30–17:30), the play
 // Integrates: DrivingTestSystem (Issue #1205), CarDrivingSystem, WantedSystem, CriminalRecord,
 //   NotorietySystem, RumourNetwork, AchievementSystem, WeatherSystem, StreetSkillSystem,
 //   FenceSystem, DWPSystem, TimeSystem, NPCManager
+
+---
+
+## Issue #1218: Northfield Claims Management Company — Injury Staging, Whiplash Payouts & the Insurance Fraud Investigation
+
+**ClaimsManagementSystem** — `CompensationKings.java` in `ragamuffin.core` — brings the `CLAIMS_MANAGEMENT` landmark to life as a late-capitalism hustle hub. "Compensation Kings" is a narrow, garish shopfront on the high street, sandwiched between the payday loan shop and the newsagent. Gold vinyl lettering: _"Where There's Blame, There's a Claim!"_ Run by **Gary** (`CLAIMS_MANAGER` NPC) and assistant **Chantelle** (`CLAIMS_ASSISTANT` NPC). Open **Mon–Sat 09:00–17:00**.
+
+### Building Layout
+
+An 8×6×3 block footprint:
+- **Exterior**: PAVEMENT approach, bright yellow DOOR_PROP (always open during hours), GOLD_SIGN_PROP above window.
+- **Reception**: RECEPTION_DESK_PROP (Chantelle), two PLASTIC_CHAIR_PROPs, a POT_PLANT_PROP, a PAMPHLET_RACK_PROP (press **E** for flavour text: _"Tripped on a paving slab? You could be owed THOUSANDS."_).
+- **Gary's Office** (4×3): DESK_PROP, COMPUTER_PROP, filing cabinet, one EXECUTIVE_CHAIR_PROP, a MOTIVATIONAL_POSTER_PROP ("CLAIM IT. BANK IT. REPEAT.").
+- Closed **Sundays and Bank Holidays**.
+
+### Staging an Accident (Core Mechanic)
+
+The player stages minor accidents in public spaces to generate fraudulent injury claims. Four accident types, each with a staging method and a payout tier:
+
+| Accident Type | Location | Method | Base Payout (COIN) |
+|---|---|---|---|
+| `SLIP_AND_FALL` | PAVEMENT / SUPERMARKET / PETROL_STATION | Press **E** on a WET_FLOOR_PROP or a LOOSE_PAVING_PROP (spawned by weather/age) to dramatise a fall | 8 |
+| `WHIPLASH_CLAIM` | Near any road | Stand in front of a moving `Car` entity, allowing a low-speed collision | 15 |
+| `SHELF_INCIDENT` | SUPERMARKET or ICELAND | Knock a SHELF_PROP with **E** so items fall on the player (25% chance to actually hit) | 10 |
+| `DOG_BITE` | PARK or anywhere a DOG NPC is present | Provoke a `STRAY_DOG` or an NPC's dog companion with **E** three times until it bites | 12 |
+
+- Each staged accident sets `incidentType` and `injuryStaged = true` on the `ClaimsManagementSystem`.
+- **Witness requirement**: a `PUBLIC` NPC must be within 12 blocks of the incident to substantiate the claim. If no witness is present, Gary rejects the claim: _"Can't do anything without a witness, mate."_
+- **CCTV risk**: if the incident occurs within 10 blocks of a `CCTV_PROP`, there is a 40% chance an `INSURANCE_INVESTIGATOR` NPC is dispatched (see below). CCTV at the petrol station, supermarket, and police station exterior.
+- **Notoriety check**: if Notoriety Tier ≥ 3, Gary recognises the player and adds a 5-COIN admin fee: _"You're a known face, mate. Gary's got overheads."_ At Tier 4+, Gary refuses all claims: _"We're a legitimate operation. Take your business elsewhere."_
+
+### Filing a Claim
+
+After staging an incident, visit Gary (press **E** on DESK_PROP):
+
+1. Gary asks which type of incident.
+2. Player selects incident type. Gary evaluates `injuryStaged`, `witnessPresent`, and `daySinceStagedIncident` (must be < 1 in-game day).
+3. `ClaimsManagementSystem.fileClaim(player, incidentType)` returns `ClaimResult`:
+   - `SUCCESS` — Gary processes the claim, takes a 30% cut, awards player `(basePayout * 0.7)` rounded down. Adds `CLAIM_FILED` to `CriminalRecord` (not a crime — legitimate, barely). Rumour seeded: `SOMEONE_GOT_PAID`.
+   - `INSUFFICIENT_EVIDENCE` — no witness or too much time elapsed.
+   - `CCTV_FLAGGED` — CCTV risk rolled positively; claim rejected; investigator dispatched.
+   - `FRAUD_SUSPECTED` — player has filed ≥ 3 claims in the past 7 in-game days; Gary drops out of character: _"Look, even I have limits."_ Refuses claim; seeds `FRAUD_RING` rumour.
+
+### The Insurance Investigator
+
+`INSURANCE_INVESTIGATOR` is a new `NPCType`: a bland man in a beige anorak with a digital camera (`CAMERA_PROP` model). He follows the player for up to 30 in-game minutes, attempting to photograph them performing active physical actions (sprinting, fighting, breaking blocks) that contradict the claimed injury.
+
+- **Spotted**: if the player sprints, attacks an NPC, or breaks a block while the investigator is within 20 blocks and has line of sight, `ClaimsManagementSystem.recordClaimInvalidated()` is called:
+  - Current pending claim is cancelled.
+  - `CriminalRecord.addCrime(CrimeType.INSURANCE_FRAUD)` recorded.
+  - WantedSystem +1 star.
+  - Notoriety +10.
+  - Achievement `CAUGHT_IN_THE_ACT` unlocked if this is the player's first invalidation.
+- **Shaking the investigator**: move more than 60 blocks away and keep out of line-of-sight for 5 continuous in-game minutes. `isBeingInvestigated` set to false. Claim proceeds normally.
+- **Bribing the investigator**: player with ≥ 5 COIN can press **E** on the investigator to offer a bribe. 50% acceptance (reduced to 20% if WantedSystem ≥ 1 star). On acceptance: investigator departs, claim proceeds, `BRIBE_PAID` crime added, Notoriety +5.
+- The investigator cannot be attacked (he is a witness; attacking him immediately sets WantedSystem +2 stars).
+
+### Legitimate Claim (Rare)
+
+If the player genuinely takes damage from an NPC vehicle (`Car.onCollision`) or from a `STRAY_DOG` biting them unprovoked (not instigated by the player), `ClaimsManagementSystem.recordGenuineInjury(damageSource)` is called automatically. Filing within 1 in-game day:
+- No CCTV risk.
+- No witness requirement (council records the incident).
+- No Notoriety impact.
+- Full payout (no Gary's cut — he waives it: _"This one's clean. Nice earner for both of us."_).
+
+### Payout Multipliers
+
+| Condition | Multiplier |
+|---|---|
+| Player wearing a `NECK_BRACE` item in inventory during claim filing | ×1.5 |
+| Rain weather at time of incident | ×1.25 ("Slippery conditions, mate") |
+| Second valid claim within 5 in-game days | ×0.75 (Gary notes suspicion) |
+| Street Reputation ≥ 60 (Gary knows player) | +1 COIN bonus flat |
+
+### NPC Dialogue
+
+- **Gary** (`CLAIMS_MANAGER`): mid-40s, polo shirt, gold sovereign ring. Speech: _"You've come to the right place."_ / _"Now tell me — how's the neck feeling?"_ / _"Beautiful. That'll be a nice little earner."_ / _"We need a witness, otherwise it's just your word against the universe, innit?"_
+- **Chantelle** (`CLAIMS_ASSISTANT`): files paperwork, asks the player to _"sign here, here, and here"_ (press **E** three times on FORM_PROP). Hands out a `CLAIM_REFERENCE_SLIP` material (flavour item; tooltip: _"Your reference number. Don't lose it. Not that it matters."_).
+
+### Items
+
+| Material | Source | Use |
+|---|---|---|
+| `NECK_BRACE` | Pharmacy (3 COIN), NHS Walk-In Centre (free if genuinely injured) | Worn during claim filing for payout multiplier; visible on player model |
+| `CLAIM_REFERENCE_SLIP` | Chantelle after filing | Flavour item; tooltip; sellable to FenceSystem for 0 COIN (worthless) |
+| `LOOSE_PAVING_PROP` | Pre-existing in world gen (spawned near park and estate pavements, 4–6 per world) | Interact with to stage `SLIP_AND_FALL`; persists in world |
+
+### Achievements
+
+| Achievement | Condition | Flavour text |
+|---|---|---|
+| `COMPENSATION_NATION` | File 5 successful claims | "Where there's blame, there's a claim." |
+| `CAUGHT_IN_THE_ACT` | Have a claim invalidated by the insurance investigator | "You were sprinting, mate. Sprinting." |
+| `NECK_BRACE_BANDIT` | File 3 claims wearing a NECK_BRACE | "Method acting." |
+| `GENUINE_VICTIM` | File a legitimate (unprovoked) injury claim | "For once, it wasn't your fault." |
+| `SHOOK_THE_TAIL` | Lose an investigator without being caught | "He lost you near Greggs." |
+
+### CrimeType Entries
+
+- `INSURANCE_FRAUD` — recorded when investigator catches the player performing physical activity during a pending claim.
+- `BRIBE_PAID` — recorded when bribing the insurance investigator (if not already present from other systems).
+
+### Integration Points
+
+- **WeatherSystem**: rain multiplies `SLIP_AND_FALL` payout ×1.25.
+- **CarDrivingSystem**: `WHIPLASH_CLAIM` triggered by Car collision events.
+- **DogCompanionSystem** / stray dog NPCs: `DOG_BITE` incident source.
+- **WantedSystem**: investigator catch → +1 star; investigator assault → +2 stars.
+- **NotorietySystem**: Tier 3 adds Gary's admin fee; Tier 4 blocks claims entirely.
+- **CriminalRecord**: `INSURANCE_FRAUD` and `BRIBE_PAID` crime types.
+- **RumourNetwork**: `SOMEONE_GOT_PAID` (successful claim), `FRAUD_RING` (3 claims in 7 days).
+- **FenceSystem**: `NECK_BRACE` sellable for 1 COIN; `CLAIM_REFERENCE_SLIP` worthless.
+- **HealingSystem / GPSurgerySystem**: genuine injury from unprovoked dog/car triggers `recordGenuineInjury`.
+- **StreetSkillSystem**: `HUSTLE` XP +3 per successful fraudulent claim.
+- **NeighbourhoodWatchSystem**: CCTV detection routes through `NeighbourhoodWatchSystem.isCCTVCovered(position)`.
+
+### Unit Tests
+
+- `fileClaim(SLIP_AND_FALL)` with `witnessPresent=true`, `injuryStaged=true`, notoriety tier 0: returns `SUCCESS`; player COIN increases by `floor(8 * 0.7) = 5`.
+- `fileClaim(WHIPLASH_CLAIM)` with no witness: returns `INSUFFICIENT_EVIDENCE`; no COIN change.
+- `fileClaim(SHELF_INCIDENT)` × 3 in 7 days: third call returns `FRAUD_SUSPECTED`; `FRAUD_RING` rumour seeded.
+- Investigator dispatched: player sprints within 20 blocks while `isBeingInvestigated=true`; `recordClaimInvalidated()` sets WantedSystem +1 star and records `INSURANCE_FRAUD` crime.
+- Bribe investigator: `COIN >= 5`, seeded Random forces acceptance; `isBeingInvestigated` set false, `BRIBE_PAID` crime added.
+- Neck brace multiplier: `fileClaim` with player inventory containing `NECK_BRACE`: payout = `floor(8 * 1.5 * 0.7) = 8`.
+- Rain multiplier: WeatherSystem set to RAIN; `SLIP_AND_FALL` base payout `floor(8 * 1.25 * 0.7) = 7`.
+- Tier 4 block: set Notoriety ≥ 80; `fileClaim()` returns `TIER_BLOCKED`.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Slip-and-fall with witness yields payout**: Set TimeSystem to Tuesday 11:00. Spawn 1 `PUBLIC` NPC within 12 blocks of a `LOOSE_PAVING_PROP` in the park. Player stands adjacent to `LOOSE_PAVING_PROP` and presses **E** (`stageAccident(SLIP_AND_FALL)`). `ClaimsManagementSystem.setInjuryStaged(true)` and `setWitnessPresent(true)`. Player walks to `CLAIMS_MANAGEMENT` landmark and presses **E** on Gary's DESK_PROP. Selects `SLIP_AND_FALL`. Verify `fileClaim()` returns `SUCCESS`. Verify player COIN increased by 5 (floor(8 × 0.7)). Verify `CriminalRecord` contains `CLAIM_FILED`. Verify `SOMEONE_GOT_PAID` rumour seeded in `RumourNetwork`. Verify `StreetSkillSystem.getHustleXP()` increased by 3.
+
+2. **CCTV triggers investigator dispatch**: Set TimeSystem to Wednesday 14:00. Place player within 8 blocks of `CCTV_PROP` at `PETROL_STATION`. Stage a `SLIP_AND_FALL`. Seed the `Random` to force CCTV detection (40% roll triggers). Verify `isBeingInvestigated` is true. Verify an `INSURANCE_INVESTIGATOR` NPC is spawned within 15 blocks of player. Visit Gary. Verify `fileClaim()` returns `CCTV_FLAGGED`. Verify no COIN awarded. Verify claim cancelled.
+
+3. **Investigator catches sprinting player**: Set `isBeingInvestigated=true`. INSURANCE_INVESTIGATOR NPC placed 15 blocks from player with line-of-sight. Player sprints. Call `ClaimsManagementSystem.update()`. Verify `recordClaimInvalidated()` was called. Verify `CriminalRecord.hasCrime(INSURANCE_FRAUD)` is true. Verify `WantedSystem.getStars()` increased by 1. Verify Notoriety increased by 10. Verify `AchievementSystem.isUnlocked(CAUGHT_IN_THE_ACT)` is true.
+
+4. **Rain multiplies slip-and-fall payout**: Set TimeSystem to Friday 10:00. Set `WeatherSystem` to RAIN. Stage `SLIP_AND_FALL` with `witnessPresent=true`, Notoriety Tier 0. Call `fileClaim(SLIP_AND_FALL)`. Verify payout = `floor(8 * 1.25 * 0.7) = 7` COIN.
+
+5. **Fraud suspected after three claims in seven days**: Player files 3 successful `SLIP_AND_FALL` claims over 6 in-game days (advance `TimeSystem` between each). On the third call, verify `fileClaim()` returns `FRAUD_SUSPECTED`. Verify no COIN awarded. Verify a `FRAUD_RING` rumour is seeded in `RumourNetwork`. Verify Gary's dialogue recorded as "Look, even I have limits."
+
+// ── Issue #1218: Northfield Claims Management Company ────────────────────────
+// New: ClaimsManagementSystem.java in ragamuffin.core
+// New: ClaimsManagementSystemTest.java in src/test/java/ragamuffin/core/
+// New LandmarkType: CLAIMS_MANAGEMENT — add to LandmarkType.java; getDisplayName() returns "Compensation Kings"
+// New NPCType: CLAIMS_MANAGER, CLAIMS_ASSISTANT, INSURANCE_INVESTIGATOR — add to NPCType.java
+// New Material: NECK_BRACE, CLAIM_REFERENCE_SLIP — add to Material.java
+// New PropType: GOLD_SIGN_PROP, PAMPHLET_RACK_PROP, LOOSE_PAVING_PROP — add to PropType.java
+// New AchievementType: COMPENSATION_NATION, CAUGHT_IN_THE_ACT, NECK_BRACE_BANDIT, GENUINE_VICTIM, SHOOK_THE_TAIL — add to AchievementType.java
+// New CrimeType: INSURANCE_FRAUD, BRIBE_PAID — add to CriminalRecord.java (if absent)
+// Integrates: WeatherSystem, CarDrivingSystem, DogCompanionSystem, WantedSystem,
+//   NotorietySystem, CriminalRecord, RumourNetwork, FenceSystem, HealingSystem,
+//   StreetSkillSystem, NeighbourhoodWatchSystem, TimeSystem, NPCManager
