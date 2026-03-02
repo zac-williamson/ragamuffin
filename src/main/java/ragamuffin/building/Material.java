@@ -4972,7 +4972,27 @@ public enum Material {
      * Sellable to the Marchetti Crew contact for 30 COIN (clears player debt).
      * Tooltip: "Names, numbers, the lot. Half the estate is in here."
      */
-    DEBT_LEDGER("Debt Ledger");
+    DEBT_LEDGER("Debt Ledger"),
+
+    // ── Issue #1267: Northfield Prepayment Meter ───────────────────────────────
+
+    /**
+     * METER_KEY — a prepayment electricity key (PAYG top-up token).
+     * Blank by default; loaded at CornerShopSystem or NewsagentSystem with
+     * 10 or 22 credit units. Insert at ELECTRIC_METER_PROP to top up.
+     * Key becomes blank again after insertion (reusable).
+     * Tooltip: "A tenner on the leccy. You're living the dream."
+     */
+    METER_KEY("Meter Key"),
+
+    /**
+     * EMERGENCY_CREDIT_NOTICE — a paper slip placed in the player's inventory
+     * when the prepayment meter auto-activates 1.5 units of emergency credit
+     * between 23:00–06:00. Reminds the player that 1.5 units of debt will be
+     * deducted from the next top-up.
+     * Tooltip: "Emergency credit. You've got til morning."
+     */
+    EMERGENCY_CREDIT_NOTICE("Emergency Credit Notice");
 
     private final String displayName;
 
@@ -7952,6 +7972,12 @@ public enum Material {
                 return IconShape.CYLINDER;    // pressurised nitrous canister
             case RACING_TROPHY:
                 return IconShape.BOX;         // plastic trophy
+
+            // Issue #1267: Northfield Prepayment Meter
+            case METER_KEY:
+                return IconShape.FLAT_PAPER;  // small plastic PAYG key
+            case EMERGENCY_CREDIT_NOTICE:
+                return IconShape.FLAT_PAPER;  // paper emergency credit slip
 
             default:
                 return IconShape.BOX;
