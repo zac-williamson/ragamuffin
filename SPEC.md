@@ -33318,3 +33318,215 @@ Add the following to `NPCType.java`:
 // Integrates: WetherspoonsSystem, PubLockInSystem, NoiseSystem, NeighbourhoodWatchSystem,
 //   WantedSystem, NotorietySystem, FactionSystem, WeatherSystem, StreetEconomySystem,
 //   CriminalRecord, RumourNetwork, AchievementSystem, NPCManager, PickpocketSystem
+
+---
+
+## Issue #1167: Northfield Amateur Boxing Club — Tommy's Gym, Friday Night Fights & the White-Collar Circuit
+
+**New system**: `BoxingClubSystem.java` in `ragamuffin.core`.
+
+Northfield Amateur Boxing Club (Tommy's Gym) is housed in a brick unit on the industrial
+estate — corrugated roof, faded signage reading "TOMMY'S BOXING GYM EST. 1973", smell of
+liniment and old sweat. A single `BOXING_RING_PROP` in the centre, four `BOXING_BAG_PROP`
+stations around the walls, a `SPEED_BAG_PROP` in the corner, and a battered trophy cabinet
+(`TROPHY_CABINET_PROP`).
+
+### Building / World Changes
+Add `LandmarkType.BOXING_CLUB` to `LandmarkType.java` with `getDisplayName()` → `"Tommy's Gym"`.
+Located on the industrial estate edge (near `SCRAPYARD`). Opening hours: Mon–Fri 10:00–21:00,
+Sat 09:00–14:00. Closed Sunday — door padlocked (`PADLOCK_PROP`).
+
+### NPCs
+All NPCTypes already exist or are added below. Add to `NPCType.java`:
+- `BOXING_AMATEUR(30f, 8f, 0f, false)` — sparring partner; attacks back in training mode only
+- `BOXING_PROSPECT(35f, 10f, 0f, false)` — tonight's opponent in the Friday Night Fights
+- `FIGHT_PROMOTER(25f, 0f, 0f, false)` — Wayne; fixes bouts, runs the underground circuit
+- `WHITE_COLLAR_BOXER(30f, 6f, 0f, false)` — office worker doing charity boxing; weaker than BOXING_AMATEUR
+
+`BOXING_COACH` (already in `NPCType.java`) is Tommy himself; present whenever gym is open.
+
+### Core Mechanics
+
+#### 1. Training
+Press E on `BOXING_BAG_PROP` to train: costs 0 COIN, awards 1 BOXING skill point
+(existing `StreetSkillSystem.awardSkillPoint(Skill.BOXING)`), +2 Stamina, +1 health.
+**Limit**: 3 training sessions per in-game day (resets at midnight). Exceeding the limit:
+Tommy says *"Rest up, son. Yer gonna do yerself a mischief."*
+
+Press E on `SPEED_BAG_PROP`: awards 0.5 BOXING skill XP (fractional, applied as accumulated
+until ≥1), +1 Dexterity (tracked as `boxingDexterityPoints` on player, used below).
+
+**Membership**: Press E on Tommy (`BOXING_COACH`) to pay 5 COIN/week for gym membership
+(`GYM_MEMBERSHIP_CARD` item). Non-members can use the bag once before Tommy stops them.
+`GYM_MEMBERSHIP_CARD` is checked on every bag interaction.
+
+#### 2. Sparring (`BOXING_AMATEUR` NPC)
+Press E on `BOXING_AMATEUR` to initiate a sparring session (requires membership).
+Sparring uses the `BattleBarMiniGame` system — 3 rounds of 30 seconds each.
+- Win: +2 BOXING points, Tommy says *"Nice work, son. You've got hands."*
+- Lose: −2 health, Tommy says *"Shake it off. Come back tomorrow."*
+- Draw: +1 BOXING point.
+`boxingDexterityPoints` (from speed bag) provide a dodge bonus: each point reduces incoming
+sparring damage by 0.5 (cap: 5 points = −2.5 damage).
+
+#### 3. Friday Night Fights
+Every Friday 20:00–23:00, Tommy runs an amateur fight card: 4 bouts. The player can
+enter as a competitor.
+
+**Sign-up**: Press E on Tommy between Mon–Thu to register for Friday (`FIGHT_ENTRY_FORM` item
+added to inventory; costs 0). Tommy checks BOXING skill ≥ 3 before allowing entry.
+
+**Fight resolution** — the player's bout uses `BattleBarMiniGame` against a `BOXING_PROSPECT`:
+- Prospect health = 40 + (BOXING skill tier × 5). Difficulty scales with the player's BOXING
+  skill (so the opponent always presents a fair challenge).
+- Win: +5 BOXING points, 8 COIN prize money, `AMATEUR_CHAMPION` achievement on 3rd win,
+  rumour seeded `STREET_TALENT` (local hero narrative).
+- Lose: −5 health, no prize. Consolation: Tommy gives the player a `PROTEIN_BAR` item.
+- The 4 NPC bouts are resolved automatically; player can watch (stand near ring) to gain
+  intel on opponents (revealed prospect health stat for next week).
+
+**Betting integration**: `BettingUI` / `HorseRacingSystem` pattern — players can bet on the
+NPC bouts (1–10 COIN, 2:1 odds). Wayne (`FIGHT_PROMOTER`) takes bets at the ringside table
+(`BET_TABLE_PROP`).
+
+#### 4. Underground White-Collar Circuit (Criminal Mechanic)
+Wayne (`FIGHT_PROMOTER`) approaches the player after their **2nd Friday win** with a proposition:
+*"I run a private thing. Offices lads wanting to feel like proper fighters. Good money.
+No questions asked."* Unlocks the White-Collar Circuit.
+
+**White-Collar Circuit**: Held every other Saturday 22:00 (alternating with `MatchDaySystem`
+home-game Saturdays, so they don't clash). Location: warehouse above Wetherspoons back room
+(uses `LandmarkType.WAREHOUSE`).
+
+Opponents are `WHITE_COLLAR_BOXER` NPCs (office workers — accountants, solicitors, estate
+agents). Lower skill but paying 15 COIN entry fee with 30 COIN prize.
+
+- **Fix a Bout**: Press E on Wayne before the fight. Pay 5 COIN bribe. 70% chance Wayne
+  agrees — opponent takes 150% damage (Wayne told the prospect to "go easy"). 30% chance
+  Wayne grasses: Notoriety +5, `BOUT_FIXING` CrimeType on `CriminalRecord`, `WantedSystem`
+  flag raised.
+- **Wire the Gloves** (advanced): Craft `LOADED_GLOVE` from `BOXING_GLOVES` + `SCRAP_METAL`
+  (1 COIN crafting cost). Using LOADED_GLOVE in the fight: damage ×1.5, but 40% chance
+  referee notices → `FIGHT_FIXING` CrimeType, ejection, 10 Notoriety.
+- Prize money goes to player inventory as `FIGHT_PURSE` item (converts to COIN at any
+  `PAWN_SHOP` or Wetherspoons bar).
+
+#### 5. Tommy's Side Quest — The Stolen Trophy
+`TROPHY_CABINET_PROP` contains Tommy's 1987 ABA trophy. Tommy mentions it was stolen last
+year. Player can investigate: examine `NOTICE_BOARD_PROP` in gym for leads, talk to
+`BOXING_AMATEUR` NPCs for rumours, trace it to a `TERRACED_HOUSE` nearby (Tommy's old rival
+Derek's house). Retrieving the trophy from Derek's house (lockpick required) and returning
+it to Tommy: +15 BOXING points, permanent free membership, `LEGACY_OF_THE_RING` achievement.
+
+### Warmth / Noise Interactions
+- Boxing club interior: permanently +3 Warmth (body heat from training).
+- Fight nights: `NoiseSystem` adds `FIGHT_NIGHT_NOISE` event (magnitude 55) at gym location
+  20:00–23:00 Friday. `NeighbourhoodWatchSystem` logs; vibes −2 from nearby NPCs.
+- Crowd noise during fights: if 4+ `BOXING_AMATEUR` or `WHITE_COLLAR_BOXER` NPCs are within
+  6 blocks of `BOXING_RING_PROP`, ambient noise +20.
+
+### New Materials (add to `Material.java`)
+- `GYM_MEMBERSHIP_CARD` (SMALL_ITEM, value 5, non-transferable — cannot be fenced)
+- `FIGHT_ENTRY_FORM` (SMALL_ITEM, value 0, consumed on fight night)
+- `BOXING_GLOVES` (TOOL/WEAPON, value 4, fence 2; increases punch damage by BOXING skill bonus when held)
+- `LOADED_GLOVE` (TOOL/WEAPON, value 2, fence 1; craftable; illegal)
+- `FIGHT_PURSE` (SMALL_ITEM, value 30, converts to COIN at pawn shop)
+- `PROTEIN_BAR` (FOOD, value 1, heals +3 health on consume)
+- `SPEED_BAG_CHALK` (CONSUMABLE, value 1; used on SPEED_BAG_PROP for +1 extra dexterity point)
+
+### PropTypes needed (add to `PropType.java`)
+- `SPEED_BAG_PROP` (0.25f × 0.25f × 0.35f, destroys to SCRAP_METAL)
+- `TROPHY_CABINET_PROP` (0.8f × 1.6f × 0.4f, contains TROPHY item; lockpickable)
+- `BET_TABLE_PROP` (1.2f × 0.8f × 0.8f, interactive for Wayne's betting)
+- `PADLOCK_PROP` (0.15f × 0.25f × 0.05f, STEEL; lockpickable with LOCKPICK)
+- `NOTICE_BOARD_PROP` (1.0f × 1.2f × 0.1f, readable for quest clues)
+
+### Achievements (add to `AchievementType.java`)
+
+| Achievement | Trigger |
+|---|---|
+| `FIRST_BOUT` | Win your first Friday Night Fight |
+| `AMATEUR_CHAMPION` | Win 3 Friday Night Fights |
+| `WHITE_COLLAR_WINNER` | Win a White-Collar Circuit bout |
+| `FIXED_FIGHT` | Successfully fix a bout via Wayne |
+| `LOADED_GLOVES` | Win a fight using LOADED_GLOVE without getting caught |
+| `TOMMY_BOY` | Complete Tommy's trophy side quest |
+| `LEGACY_OF_THE_RING` | Return Tommy's 1987 ABA trophy |
+| `GYM_RAT` | Use BOXING_BAG_PROP 3 times in a single day (daily cap) |
+
+### New CrimeTypes (add to `CriminalRecord.java`)
+- `BOUT_FIXING` — recorded when Wayne grasses after failed bribe
+- `FIGHT_FIXING` — recorded when referee catches LOADED_GLOVE
+
+### Rumour Seeds (add to `RumourType.java`)
+- `STREET_TALENT` (LOCAL_GOSSIP) — seeded after player's 3rd fight win; spreads "that lad from the estate is boxing now"
+- `UNDERGROUND_FIGHT` (CRIMINAL_GOSSIP) — seeded when White-Collar Circuit fires; makes POLICE NPCs patrol near warehouse
+
+### Unit Tests (implement in `BoxingClubSystemTest.java`)
+- `isOpen(MONDAY, 10.0f)` → true
+- `isOpen(MONDAY, 9.5f)` → false (opens at 10)
+- `isOpen(SUNDAY, 12.0f)` → false
+- `isOpen(SATURDAY, 13.5f)` → false (closes 14:00)
+- `getProspectHealth(boxingSkill=3)` → 55 (40 + 3×5)
+- `getProspectHealth(boxingSkill=7)` → 75
+- `isFightNight(FRIDAY, 20.5f)` → true
+- `isFightNight(FRIDAY, 23.5f)` → false
+- `isFightNight(SATURDAY, 20.5f)` → false
+- `isWhiteCollarNight(SATURDAY, 22.5f, dayCount=3)` → true (odd Saturday, not match day)
+- `isWhiteCollarNight(SATURDAY, 22.5f, dayCount=2)` → false (clashes with home match day)
+- `getTrainingSessionsRemaining(sessionsToday=2)` → 1
+- `getTrainingSessionsRemaining(sessionsToday=3)` → 0
+- `getBoutFixBribeChance()` → 0.70f
+- `getLoadedGloveCatchChance()` → 0.40f
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Membership gate enforced**: Place player at BOXING_CLUB. Ensure `GYM_MEMBERSHIP_CARD`
+   not in inventory. Press E on `BOXING_BAG_PROP`. Verify Tommy says membership required.
+   Verify no BOXING skill point awarded. Press E on Tommy, pay 5 COIN (verify COIN deducted).
+   Verify `GYM_MEMBERSHIP_CARD` added to inventory. Press E on `BOXING_BAG_PROP`. Verify
+   BOXING skill incremented by 1. Verify player health increased by 1.
+
+2. **Daily training cap enforced**: Hold `GYM_MEMBERSHIP_CARD`. Train 3 times on `BOXING_BAG_PROP`
+   (verify skill increments each time). Attempt 4th session same day. Verify Tommy refuses:
+   "Rest up, son." Verify skill count unchanged. Advance time past midnight. Verify 4th session
+   now allowed (cap reset).
+
+3. **Friday Night Fight end-to-end**: Set day to FRIDAY, time to 20:00. Ensure BOXING skill ≥ 3
+   and player has `FIGHT_ENTRY_FORM`. Press E on `BOXING_RING_PROP`. Seed `BattleBarMiniGame`
+   RNG for player win. Verify player COIN increases by 8. Verify BOXING skill increases by 5.
+   Verify `FIRST_BOUT` achievement unlocked. Verify `STREET_TALENT` rumour seeded into
+   `RumourNetwork`.
+
+4. **Bout fixing — Wayne grasses**: After 2nd fight win, press E on Wayne (`FIGHT_PROMOTER`).
+   Pay 5 COIN bribe. Seed RNG so Wayne grasses (roll ≥ 0.70). Verify `CriminalRecord` contains
+   `BOUT_FIXING`. Verify Notoriety increased by 5. Verify `WantedSystem.isWanted()` returns true.
+   Verify Wayne says *"I had to tell 'em, mate. Nothing personal."*
+
+5. **Loaded glove caught by referee**: Craft `LOADED_GLOVE` (BOXING_GLOVES + SCRAP_METAL).
+   Enter White-Collar Circuit with LOADED_GLOVE equipped. Seed RNG so referee catches it
+   (roll < 0.40). Verify player is ejected from `WAREHOUSE` landmark. Verify `CriminalRecord`
+   contains `FIGHT_FIXING`. Verify Notoriety +10. Verify `FIGHT_PURSE` NOT added to inventory.
+
+6. **Tommy's trophy quest**: Examine `NOTICE_BOARD_PROP` (verify clue text added to quest log).
+   Talk to 2 `BOXING_AMATEUR` NPCs (verify rumour about Derek's house). Travel to Derek's
+   `TERRACED_HOUSE`. Lockpick door (requires `LOCKPICK` in inventory). Find and take `TROPHY`
+   item. Return to Tommy, press E. Verify `GYM_MEMBERSHIP_CARD` duration set to permanent
+   (infinite). Verify BOXING skill +15. Verify `LEGACY_OF_THE_RING` achievement unlocked.
+
+// ── Issue #1167: Northfield Amateur Boxing Club ──────────────────────────────
+// New: BoxingClubSystem.java in ragamuffin.core
+// LandmarkType.BOXING_CLUB — add to LandmarkType.java + getDisplayName() → "Tommy's Gym"
+// NPCType: BOXING_AMATEUR, BOXING_PROSPECT, FIGHT_PROMOTER, WHITE_COLLAR_BOXER — add
+// Material: GYM_MEMBERSHIP_CARD, FIGHT_ENTRY_FORM, BOXING_GLOVES, LOADED_GLOVE,
+//   FIGHT_PURSE, PROTEIN_BAR, SPEED_BAG_CHALK — add to Material.java
+// PropType: SPEED_BAG_PROP, TROPHY_CABINET_PROP, BET_TABLE_PROP, PADLOCK_PROP,
+//   NOTICE_BOARD_PROP — add to PropType.java
+// AchievementType: FIRST_BOUT, AMATEUR_CHAMPION, WHITE_COLLAR_WINNER, FIXED_FIGHT,
+//   LOADED_GLOVES, TOMMY_BOY, LEGACY_OF_THE_RING, GYM_RAT — add
+// CriminalRecord.CrimeType: BOUT_FIXING, FIGHT_FIXING — add
+// RumourType: STREET_TALENT, UNDERGROUND_FIGHT — add
+// Integrates: StreetSkillSystem (BOXING), BattleBarMiniGame, BettingUI,
+//   WantedSystem, NotorietySystem, FactionSystem, NoiseSystem,
+//   NeighbourhoodWatchSystem, CriminalRecord, RumourNetwork, AchievementSystem,
+//   MatchDaySystem (White-Collar Saturday scheduling), PawnShopSystem
