@@ -531,7 +531,17 @@ public enum LandmarkType {
      * pigeon fancier (Garage 8).
      * Managed by LockUpGarageSystem.
      */
-    COUNCIL_GARAGES;
+    COUNCIL_GARAGES,
+
+    // ── Issue #1155: Northfield NHS Dentist ──────────────────────────────────
+
+    /**
+     * Issue #1155: Northfield Dental Practice — NHS dental care, six-month waiting lists,
+     * toothache debuffs, and back-street molar options.
+     * Open Mon–Fri 08:30–17:30. Closed weekends.
+     * Managed by NHSDentistSystem.
+     */
+    NHS_DENTIST;
 
     /**
      * Returns the display name shown on the building's sign.
