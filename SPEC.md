@@ -39233,3 +39233,160 @@ Player can attempt to donate twice in the same session by using DisguiseSystem s
 //   StreetSkillSystem, FenceSystem, PawnShopSystem, CriminalRecord, WantedSystem,
 //   NotorietySystem, NoiseSystem, RumourNetwork, AchievementSystem, CraftingSystem,
 //   NewspaperSystem
+
+---
+
+## Northfield Bert's Tyres & MOT — Dodgy Mechanic, Forged Certificates & the Failed-on-Purpose Hustle
+
+**Issue**: Add Northfield Bert's Tyres & MOT — a backstreet garage on the industrial estate where Bert Drummond performs MOT tests, tyre swaps, and repairs. The entire enterprise is a masterclass in creative invoicing.
+
+### Overview
+
+Bert's is a corrugated-iron garage unit on the edge of the industrial estate. It has a forecourt with 2 inspection pit props, a reception hatch, a tyre stack, and a parts shelf. Bert (the `DODGY_MECHANIC` NPC) runs it alone with occasional help from his nephew Kyle (`APPRENTICE_MECHANIC`). The system manages MOT certificate issuance, deliberate-failure-for-parts hustles, forged certificates, stolen-parts trade, and the DVSA inspector raid event.
+
+### Core Mechanics
+
+**MOT Testing Flow**
+- Player interacts with the INSPECTION_HATCH_PROP to request an MOT for their vehicle (requires the player to have driven a car into the forecourt zone).
+- Bert performs a 90-second "inspection" (timed, with idle animation on pit). 
+- Outcome determined by `MOTSystem.runInspection(vehicle, bert, rng)`:
+  - `PASS` — issue `MOT_CERTIFICATE` item (valid 12 in-game days).
+  - `FAIL_GENUINE` — vehicle has actual fault flags; issue `FAIL_SHEET` listing required repairs.
+  - `FAIL_ON_PURPOSE` — Bert invents a fault; repair parts cost quoted; if player pays, issues `MOT_CERTIFICATE` anyway (zero parts used).
+  - `PASS_BRIBE` — player offers `BROWN_ENVELOPE` (20 COIN) during inspection; Bert issues `MOT_CERTIFICATE` regardless.
+
+**Deliberately Failing the MOT**
+- `FAIL_ON_PURPOSE` probability scales with Bert's `corruptionLevel` (0–100, starts at 50).
+- Increases when: player has high notoriety, vehicle visibly undamaged (low fault flags), Bert in GREEDY mood state.
+- Decreases when: DVSA inspector recently visited, WatchAnger > 60.
+- Invented faults drawn from pool: "Needs new brake pads", "Exhaust emissions out of spec", "Wiper blades advisory", "Rear light cluster cracked".
+- Player can either: (a) pay the inflated parts cost (Bert pockets profit), (b) refuse and leave, or (c) press E on Bert a second time to call him out — if `StreetReputation >= 40`, Bert backs down and issues PASS for free.
+
+**Tyre Swap Service**
+- `TYRE_SWAP_PROP` in forecourt; player drives car over it and presses E.
+- Costs `TYRE_SWAP_COST` COIN (base: 15 COIN per tyre, 4 tyres = 60 COIN total).
+- Kyle performs swap (2 tyre animations, 30-second wait).
+- Stolen tyres (`STOLEN_TYRE` material) can be sold to Bert for 8 COIN each — he fits them to customer cars without declaring.
+
+**Parts Shelf Hustle**
+- `PARTS_SHELF_PROP` inside garage; player can loot it when Bert is distracted (BERT_DISTRACTED state — triggered by calling him to the phone via nearby `GARAGE_PHONE_PROP`).
+- Loot table: `CATALYTIC_CONVERTER` (high fence value: 35 COIN), `CAR_BATTERY` (20 COIN), `COPPER_WIRE` (8 COIN × 3), `BRAKE_PAD_SET` (12 COIN).
+- If caught looting: Bert enters AGGRESSIVE state, calls WantedSystem +2 stars, bars the player for 5 in-game hours.
+
+**DVSA Inspector Raid**
+- Triggers every 7 in-game days (randomised ±1 day) between 09:00–12:00.
+- `DVSA_INSPECTOR` NPC arrives, checks Bert's certificate log.
+- If player holds a `MOT_CERTIFICATE` issued via `PASS_BRIBE` or `FAIL_ON_PURPOSE` (flagged internally), and DVSA is present within 10 blocks: certificate is invalidated, WantedSystem +1 star, `VEHICLE_FRAUD` CrimeType added.
+- Bert bribes the inspector himself (−30 COIN from Bert's fund) to stay operational; if his fund < 30, garage closes for 1 in-game day.
+- Player can tip off the DVSA Inspector (press E) — triggers raid immediately, earns `CIVIC_DUTY` achievement but loses 10 StreetReputation with STREET_LADS.
+
+### NPC Dialogue (Bert Drummond)
+
+**Greeting**:
+- "All right? What you needing?"
+- "Leave it with me. Might be the catalytic converter. Usually is."
+
+**FAIL_ON_PURPOSE delivery**:
+- "Bad news mate. Failed on the brake pads. And your emissions are all over the shop. That's gonna be eighty quid, cash."
+- "Look, I'm not gonna lie to ya. It's borderline. Tell you what, leave it with me and I'll sort it for a ton."
+
+**Tyre swap**:
+- "Kyle! Get them off the back and get the pressure gun."
+
+**When bribed**:
+- "I'll sort the paperwork. Come back in twenty minutes. Don't tell anyone."
+
+**When called out (player has rep)**:
+- "Aight, aight. Look — I might've been a bit hasty. Tell you what, I'll pass it. Don't be telling people."
+
+### System Integrations
+
+- **CarDrivingSystem**: vehicle must be in FORECOURT zone for MOT / tyre swap; system reads vehicle fault flags.
+- **WantedSystem**: parts theft caught (+2 stars); DVSA certificate fraud (+1 star).
+- **CriminalRecord**: `VEHICLE_FRAUD` crime type; `RECEIVING_STOLEN_GOODS` for stolen tyre sale.
+- **FenceSystem / PawnShopSystem**: `CATALYTIC_CONVERTER` fence value 35 COIN; `CAR_BATTERY` 20 COIN.
+- **StreetEconomySystem**: Bert has GREEDY need that fluctuates daily; high GREEDY = higher FAIL_ON_PURPOSE probability.
+- **NeighbourhoodWatchSystem**: parts-shelf theft adds WatchAnger +5.
+- **NotorietySystem**: high notoriety triggers FAIL_ON_PURPOSE more often (Bert assumes easy mark).
+- **DisguiseSystem**: `COUNCIL_JACKET` disguise causes Bert to behave honestly (corruptionLevel temporarily 0).
+- **RumourNetwork**: after DVSA raid, seed COUNCIL_CRACKDOWN rumour to nearest NPC.
+- **AchievementSystem**: achievements below.
+- **NewspaperSystem**: if Bert's garage closes after inspector visit: "Northfield MOT Station Suspended After DVSA Swoop."
+- **TimeSystem**: MOT certificate expiry tracked in days; DVSA visit scheduled on 7-day cycle.
+- **NoiseSystem**: tyre swap emits noise magnitude 0.4 for 30 seconds.
+
+### New Materials (add to Material.java)
+
+- `MOT_CERTIFICATE` — "An MOT certificate. Valid for 12 days. Probably." Not stackable.
+- `FAIL_SHEET` — "An MOT failure sheet. A list of creative fiction from Bert." Not stackable.
+- `BROWN_ENVELOPE` — "A brown envelope with 20 COIN in it. Discretion assured." Stackable: no. Craft: 1 ENVELOPE_BLANK + 20 COIN.
+- `STOLEN_TYRE` — "A tyre of uncertain provenance. Probably fits." Stackable: yes (×4). Fence value: 8 COIN.
+- `CATALYTIC_CONVERTER` — "Scrap value. Do not get caught with this." Fence value: 35 COIN.
+- `CAR_BATTERY` — "12V. Heavy. Useful or fenceable." Fence value: 20 COIN.
+- `INSPECTION_STICKER` — "Official-looking. Bert prints these on his inkjet." Not stackable.
+
+### New PropTypes (add to PropType.java)
+
+- `INSPECTION_PIT_PROP(2.0f, 0.5f, 4.0f, 0, null)` — sunken inspection pit; vehicle drives over it for MOT.
+- `INSPECTION_HATCH_PROP(0.6f, 1.2f, 0.4f, 0, null)` — reception hatch; player presses E to book MOT.
+- `TYRE_STACK_PROP(1.0f, 1.2f, 1.0f, 4, Material.RUBBER)` — stack of tyres; decorative/lootable.
+- `PARTS_SHELF_PROP(2.0f, 1.8f, 0.4f, 6, Material.SCRAP_METAL)` — wall-mounted parts shelf; lootable.
+- `GARAGE_PHONE_PROP(0.3f, 0.6f, 0.3f, 1, null)` — wall phone; player presses E to call Bert away.
+
+### New NPCTypes (add to NPCType.java)
+
+- `DODGY_MECHANIC(30f, 0f, 0f, false)` — Bert; staffs the garage during 08:00–18:00; primary dialogue NPC.
+- `APPRENTICE_MECHANIC(20f, 0f, 0f, false)` — Kyle; performs tyre swaps; passive NPC.
+- `DVSA_INSPECTOR(25f, 0f, 0f, false)` — visits on 7-day cycle; checks certificates.
+
+### Achievements (add to AchievementType.java)
+
+| Achievement | Condition |
+|---|---|
+| `CALLED_HIS_BLUFF` | Successfully call out Bert's fake failure (StreetReputation ≥ 40) |
+| `ENVELOPE_ECONOMY` | Bribe Bert with a BROWN_ENVELOPE |
+| `CAT_BURGLAR` | Fence a CATALYTIC_CONVERTER |
+| `CIVIC_DUTY` | Tip off the DVSA Inspector |
+| `STOLEN_ON_STOLEN` | Sell 3 STOLEN_TYREs to Bert in one session |
+| `ROADWORTHY_ISH` | Hold a PASS_BRIBE MOT_CERTIFICATE when the DVSA arrives (certificate invalidated) |
+
+### Unit Tests (implement in `MOTSystemTest.java`)
+
+- `MOTSystem.runInspection(vehicle_faultFlags=0, corruptionLevel=80, rng=seeded_fail_on_purpose)` → outcome = `FAIL_ON_PURPOSE`.
+- `MOTSystem.runInspection(vehicle_faultFlags=3, corruptionLevel=50, rng=seeded_genuine)` → outcome = `FAIL_GENUINE`.
+- `MOTSystem.runInspection(vehicle_faultFlags=0, corruptionLevel=0, rng=any)` → outcome = `PASS`.
+- `MOTSystem.issueCertificate(player, currentDay=10, valid=true)` → `MOT_CERTIFICATE` in inventory; `MOTSystem.isCertificateValid(player, currentDay=21)` → false (expired after 12 days).
+- `MOTSystem.isCertificateValid(player, currentDay=15)` → true.
+- `MOTSystem.attemptCallout(player, streetReputation=40)` → true; `Bert.corruptionLevel` temporarily 0.
+- `MOTSystem.attemptCallout(player, streetReputation=25)` → false.
+- `MOTSystem.sellStolenTyre(bert, inventory_with_STOLEN_TYRE, rng=any)` → STOLEN_TYRE removed from inventory; player +8 COIN; `RECEIVING_STOLEN_GOODS` on CriminalRecord.
+- `MOTSystem.isDVSAVisitDay(dayCount=7)` → true; `isDVSAVisitDay(dayCount=3)` → false.
+- `MOTSystem.isBribeCertificate(certificate)` → true when issued via PASS_BRIBE; false for legitimate PASS.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Full honest MOT pass flow**: Player drives a car with zero fault flags into the FORECOURT zone near Bert's garage. Player presses E on INSPECTION_HATCH_PROP. Verify Bert enters WORKING state (90 seconds simulated). `MOTSystem.runInspection` returns `PASS` (seeded RNG, low corruption). Verify `MOT_CERTIFICATE` item added to player inventory. Verify certificate `isBribeCertificate()` = false. Verify `MOTSystem.isCertificateValid(player, currentDay + 11)` = true and `isCertificateValid(player, currentDay + 13)` = false.
+
+2. **FAIL_ON_PURPOSE — player pays up**: Set `bert.corruptionLevel = 90`. Seed RNG to produce `FAIL_ON_PURPOSE` outcome. Player presses E on hatch. Verify `FAIL_SHEET` added to inventory with one invented fault. Verify dialogue contains "gonna be". Player selects "Pay up" in dialogue. Verify 80 COIN deducted from player. Verify `MOT_CERTIFICATE` issued. Verify no parts consumed from `PARTS_SHELF_PROP`. Verify `isBribeCertificate()` = false (internal — he just lied, certificate is technically valid).
+
+3. **Callout mechanic — player with reputation**: Set player `StreetReputation = 45`. Trigger `FAIL_ON_PURPOSE`. Player presses E on Bert a second time (callout action). Verify `MOTSystem.attemptCallout()` returns true. Verify `MOT_CERTIFICATE` issued with zero coin cost. Verify Bert's dialogue contains "hasty". Verify `CALLED_HIS_BLUFF` achievement awarded.
+
+4. **Parts shelf loot via phone distraction**: Player presses E on `GARAGE_PHONE_PROP`. Verify Bert enters `BERT_DISTRACTED` state for 20 seconds. Player presses E on `PARTS_SHELF_PROP`. Verify player receives `CATALYTIC_CONVERTER` + `CAR_BATTERY` + `COPPER_WIRE` (×3) in inventory. Verify NoiseSystem has no new event (loot is silent). Player visits FenceSystem. Verify CATALYTIC_CONVERTER fences for 35 COIN.
+
+5. **DVSA visit — bribe certificate invalidated**: Player has a `MOT_CERTIFICATE` issued via `PASS_BRIBE`. Advance TimeSystem to day 7, hour 10:00. Verify `DVSA_INSPECTOR` NPC spawned within 10 blocks of garage. Verify certificate in player inventory is flagged invalid. Verify WantedSystem stars = 1. Verify `VEHICLE_FRAUD` CrimeType in CriminalRecord. Verify `ROADWORTHY_ISH` achievement awarded. If Bert fund < 30, verify garage closes for 1 in-game day (no hatch interaction available).
+
+// ── Issue #1243: Northfield Bert's Tyres & MOT ────────────────────────────────
+// New: MOTSystem.java in ragamuffin.core
+// New: Issue1243MOTSystemTest.java in src/test/java/ragamuffin/integration/
+// New LandmarkType entry: BERTS_GARAGE (on industrial estate, near SCRAPYARD)
+// New NPCTypes: DODGY_MECHANIC, APPRENTICE_MECHANIC, DVSA_INSPECTOR — add to NPCType.java
+// New AchievementTypes: CALLED_HIS_BLUFF, ENVELOPE_ECONOMY, CAT_BURGLAR, CIVIC_DUTY,
+//   STOLEN_ON_STOLEN, ROADWORTHY_ISH — add to AchievementType.java
+// New CrimeTypes: VEHICLE_FRAUD, RECEIVING_STOLEN_GOODS — add to CriminalRecord.java if not present
+// New Materials: MOT_CERTIFICATE, FAIL_SHEET, BROWN_ENVELOPE, STOLEN_TYRE,
+//   CATALYTIC_CONVERTER, CAR_BATTERY, INSPECTION_STICKER — add to Material.java
+// New PropTypes: INSPECTION_PIT_PROP, INSPECTION_HATCH_PROP, TYRE_STACK_PROP,
+//   PARTS_SHELF_PROP, GARAGE_PHONE_PROP — add to PropType.java
+// Integrates: CarDrivingSystem, WantedSystem, CriminalRecord, FenceSystem,
+//   StreetEconomySystem, NeighbourhoodWatchSystem, NotorietySystem, DisguiseSystem,
+//   RumourNetwork, AchievementSystem, NewspaperSystem, TimeSystem, NoiseSystem
