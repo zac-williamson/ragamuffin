@@ -31023,3 +31023,205 @@ Every pre-Christmas period (Dec 1–24), a `FROZEN_TURKEY_CRATE_PROP` appears in
 //   CHRISTMAS_CLUB_DESK_PROP, FROZEN_TURKEY_CRATE_PROP, ICELAND_STOCKROOM_DOOR_PROP (add to PropType.java)
 // New Achievements: UNEXPECTED_ITEM, PRAWN_RING_BAIT, THREE_FOR_A_FIVER, GREAT_TURKEY_HEIST,
 //   CHRISTMAS_CLUB_VILLAIN, CHRISTMAS_CLUB_HERO, MUMS_GONE_TO_ICELAND, NO_RECEIPT_NO_REFUND (add to AchievementType.java)
+
+---
+
+## Add Northfield Flexistaff — Cash-in-Hand Day Labour, the Timesheets Fiddle & the Van Driver Hustle
+
+**Landmark**: `TEMP_AGENCY` (add to `LandmarkType.java`) — display name `"Flexistaff Recruitment"`.
+Located on the high street near the JobCentre. Open Mon–Fri 06:00–18:00, Sat 06:00–12:00.
+
+Flexistaff is Northfield's only temp agency — a grim, strip-lit office staffed by Darren,
+who smells of cigarettes and broken promises. Every morning a van parks outside and takes day
+labourers to warehouse shifts, construction sites, or leaflet drops. Pay is cash-in-hand at the
+end of the shift. The timesheets can be fiddled. The van driver owes someone a favour. And
+Darren's petty cash tin is surprisingly easy to access.
+
+New system: `TempAgencySystem.java` in `ragamuffin.core`.
+
+### Key NPCs
+- **Darren** (`TEMP_AGENCY_MANAGER`) — agency owner, anchored behind the AGENCY_DESK_PROP
+  Mon–Fri 06:30–17:00. Assigns jobs to the player. Refuses work if CriminalRecord contains
+  `ASSAULT_OF_EMPLOYER`. Becomes suspicious at Notoriety Tier ≥ 3. Can be bribed with
+  5 COIN to overlook a criminal record check. Speech: "Sign here, mate." /
+  "Don't be late or you're off the books." / "No funny business on site, yeah?"
+- **Kev** (`TEMP_AGENCY_VAN_DRIVER`) — drives the AGENCY_VAN prop. Spawns at 06:45,
+  departs 07:00 sharp. Player must board before 07:00 or misses the shift.
+  Kev will wait an extra 5 minutes if bribed with 2 COIN or if player has STREET_LADS
+  Respect ≥ 30. Speech: "Get in then." / "Health and safety, yeah, watch your fingers." /
+  "I'm not supposed to, but go on."
+- **Gavin** (`TEMP_AGENCY_SITE_FOREMAN`) — on-site overseer during warehouse/factory shifts.
+  Patrols within 10 blocks of the `WORK_STATION_PROP`. Notifies Darren if the player slacks
+  (idle > 60 seconds near work station). Present only during active work shifts.
+  Speech: "Look lively." / "Those boxes won't stack themselves." / "I've got my eye on you."
+- **Workers** (`TEMP_AGENCY_WORKER`) × 3–5 — fellow day labourers, passive. Share rumours
+  freely. One carries a `PAYSLIP_STUB` that can be pickpocketed — used for timesheet fraud.
+
+### Shift Types & Pay
+Three shift types are offered on a rotating daily schedule (seeded by in-game day number):
+
+| Shift | Duration | Base Pay | Location |
+|---|---|---|---|
+| `WAREHOUSE_SHIFT` | 4 in-game hours (07:00–11:00) | 15 COIN | Off-site (player warped to WAREHOUSE_WORK_ZONE) |
+| `CONSTRUCTION_SHIFT` | 4 in-game hours (07:00–11:00) | 12 COIN | On high street edge (existing CONSTRUCTION_SITE landmark) |
+| `LEAFLET_DROP_SHIFT` | 2 in-game hours (07:00–09:00) | 8 COIN | Town streets (player walks a patrol route) |
+
+- **Working mechanics**: For WAREHOUSE and CONSTRUCTION shifts, player must interact with
+  `WORK_STATION_PROP` every 90 seconds (press E) to register progress. Missing 2 consecutive
+  prompts marks the player as "slacking" — Gavin confronts the player, shift ends with half pay.
+- **Leaflet drop**: Player must visit 6 `LEAFLET_DROP_ZONE_PROP` positions spread across the
+  street grid within the shift window. Each visited zone ticks off one delivery. Completing all 6
+  earns full pay; partial completions earn proportional pay (1–5 zones = 1–7 COIN).
+- **Pay day**: At shift end, Darren pays the player in cash (`WAGE_ENVELOPE` material, contains
+  COIN). Alternatively, player can demand immediate cash from Gavin (risky — Gavin has 5 COIN on
+  person, confrontation triggers Notoriety check).
+
+### The Timesheet Fiddle
+After completing a shift, the player can approach the AGENCY_DESK_PROP and interact with the
+`TIMESHEET_PROP`:
+- **Honest sign-off**: Confirms hours worked, receives stated pay.
+- **Fiddle hours**: Player falsely claims an extra 2 hours worked. Darren checks against Gavin's
+  report; 50% chance of detection. On detection: pay withheld, `FRAUD` entry in CriminalRecord,
+  +2 Notoriety. On success: +6 extra COIN, `TIMESHEET_FIDDLER` achievement.
+- **Use a PAYSLIP_STUB** (pickpocketed from a Worker): reduces detection chance to 10%. This is
+  the recommended route for seasoned villains.
+
+### The Petty Cash Tin
+The `PETTY_CASH_TIN_PROP` sits on Darren's desk. Player can steal it:
+- Contains 10–20 COIN.
+- Stealing triggers Darren's witness check (WitnessSystem, base detection 60%).
+  If Darren sees the theft: `THEFT` in CriminalRecord, +3 Notoriety, Darren refuses all future
+  work. If undetected: COIN added to inventory, +1 Notoriety.
+- Can be taken during LEAFLET_DROP_SHIFT (Darren is briefly away from desk 07:10–07:20).
+  This drops detection chance to 10%.
+
+### The Van Driver Hustle
+Kev's van is a `PROP_TYPE_VAN` that can be searched while Kev is loading workers:
+- Player presses E on the van cab while Kev is distracted (06:50–07:00 window).
+- Finds: 1–3 COIN, a `ROAD_MAP` item, and 20% chance of a `AGENCY_FUEL_CARD` (worth 5 COIN
+  when fenced, or used to fill a PETROL_CAN at the petrol station for free once).
+- If caught by Kev: shift refused for that day, +1 Notoriety.
+- `GLOVE_BOX_RAIDER` achievement: successfully search the van 3 times without being caught.
+
+### Identity & False Names
+The temp agency requires a name to register. Player can:
+- **Use real identity** (default): Darren runs a basic CriminalRecord check. Tier ≥ 2 crimes
+  auto-reject unless bribed.
+- **Provide false name** (requires `FAKE_ID` material): bypasses CriminalRecord check. If
+  discovered (10% per shift), `FRAUD` added to CriminalRecord, +3 Notoriety, Darren permanently
+  bans the player.
+- **Double-dip scam**: with FAKE_ID, player can sign up twice in one week under different names
+  and collect two wage envelopes. `DOUBLE_DIP` achievement.
+
+### Items (add to `Material.java`)
+- `WAGE_ENVELOPE` — contains 8–15 COIN depending on shift type and hours completed. Opens on use.
+- `TIMESHEET` — paper item; player receives one per shift; can be forged with PAYSLIP_STUB.
+- `PAYSLIP_STUB` — pickpocketed from `TEMP_AGENCY_WORKER` NPC; reduces timesheet fiddle detection to 10%.
+- `AGENCY_FUEL_CARD` — loot from van; fence for 5 COIN or use for one free PETROL_CAN fill.
+- `WORK_GLOVES` — optional equip; speeds up WAREHOUSE_SHIFT work station interactions (70s instead of 90s).
+- `HIGH_VIS_VEST` — optional equip; DisguiseSystem bonus: reduces site foreman suspicion by −20%.
+  Also gives player a "construction worker" disguise tier.
+- `HARD_HAT` — equippable; required for CONSTRUCTION_SHIFT without penalty (without it: half pay,
+  Gavin sends the player home citing safety rules).
+- `LEAFLETS` — 20-count stack; player receives at shift start; depleted by 3 per
+  `LEAFLET_DROP_ZONE_PROP` visited. Running out of leaflets ends the shift early.
+
+### Props (add to `PropType.java`)
+- `AGENCY_DESK_PROP` — Darren's front desk; press E to sign up for work, view pay, sign timesheet.
+- `TIMESHEET_PROP` — wall-mounted on the desk; press E to sign honest/fraudulent timesheet.
+- `PETTY_CASH_TIN_PROP` — on Darren's desk; takeable item containing COIN.
+- `WORK_STATION_PROP` — forklift anchor / crate stacking station in the warehouse zone; press E every 90s to register progress.
+- `LEAFLET_DROP_ZONE_PROP` × 6 — spread across street grid; player visits each one to register delivery.
+- `AGENCY_VAN_PROP` — parked outside 06:00–07:00; Kev boards workers; can be searched 06:50–07:00.
+
+### System Integrations
+- **JobCentreSystem**: completing 3 shifts unlocks a "Working Again" dialogue with the JobCentre
+  clerk; JSA payments are suspended while player has active shifts; job centre can refer player to
+  the agency (dialogue option "Do you know anywhere hiring?").
+- **FenceSystem**: `AGENCY_FUEL_CARD` fenceable at 5 COIN; `WAGE_ENVELOPE` (unopened) fenceable
+  at 60% value.
+- **DisguiseSystem**: `HIGH_VIS_VEST` + `HARD_HAT` = construction worker disguise tier (reduces
+  police suspicion near building sites, gives site access to restricted areas).
+- **CriminalRecord**: `FRAUD` entry for successful timesheet fiddle caught or fake ID caught;
+  `THEFT` for petty cash tin; `ASSAULT_OF_EMPLOYER` (pre-existing or new type) blocks agency sign-up.
+- **NotorietySystem**: +1 per undetected petty cash theft; +2 per caught timesheet fiddle; +3 per
+  fake ID bust; achievements unlock on clean shift completions.
+- **StreetEconomySystem**: WAGE_ENVELOPE satisfies BROKE NPC need; worker NPCs become more willing
+  to share rumours after working a shift together.
+- **RumourNetwork**: after shift, player can seed `LOCAL_EVENT` rumour "Heard something at the
+  warehouse today" (flavour only, seeds 1 rumour). Workers seed `NEIGHBOURHOOD` rumours.
+- **WeatherSystem**: RAIN during LEAFLET_DROP_SHIFT reduces delivery zones from 6 to 4 (people
+  bin the wet leaflets; pay reduced proportionally). FROST makes CONSTRUCTION_SHIFT pay +2 COIN
+  (hazard bonus).
+- **TimeSystem**: strict 07:00 van departure; shift schedule by day (Monday = WAREHOUSE, Tuesday =
+  CONSTRUCTION, Wednesday = LEAFLET_DROP, Thursday = WAREHOUSE, Friday = CONSTRUCTION,
+  Saturday = LEAFLET_DROP half-day); agency closed Sundays.
+- **BusSystem**: player can take the Number 47 to the industrial estate and walk to the warehouse
+  rather than taking Kev's van (avoids the van search window but misses the van loot opportunity).
+- **WitnessSystem**: petty cash theft witness check; Darren as primary witness; Gavin secondary
+  if on site.
+- **PirateRadioSystem**: Kev has a pirate radio station sticker on the van; RADIO_FREQUENCY item
+  found in glove box 10% of the time.
+
+### Achievements (add to `AchievementType.java`)
+| Achievement | Trigger |
+|---|---|
+| `HONEST_DAY_S_WORK` | Complete a full shift without slacking, timesheet fraud, or theft |
+| `TIMESHEET_FIDDLER` | Successfully fiddle the timesheet for extra pay (undetected) |
+| `GLOVE_BOX_RAIDER` | Successfully search Kev's van 3 times without being caught |
+| `DOUBLE_DIP` | Collect two wage envelopes in the same week using a fake ID |
+| `PETTY_CASH` | Steal the petty cash tin while Darren is away |
+| `LEAFLET_LEGEND` | Complete a full leaflet drop shift (all 6 zones) in heavy rain |
+| `HARD_HAT_REQUIRED` | Be sent home from CONSTRUCTION_SHIFT for not wearing a hard hat |
+| `AGENCY_REGULAR` | Complete 10 shifts across any type |
+
+**Unit tests**: Shift pay calculations (warehouse 15 COIN, construction 12 COIN, leaflet 8 COIN at 6/6 zones, proportional for partial); timesheet fiddle detection rates (50% base, 10% with PAYSLIP_STUB); van departure timer fires at 07:00 exactly (TimeSystem.getHour() boundary); petty cash tin COIN range (10–20 COIN in 1000 samples); RAIN weather reduces leaflet zones from 6 to 4; FROST adds +2 COIN to construction pay; HARD_HAT check (missing hard hat → half pay sent home); CriminalRecord tier check blocks signup at Tier ≥ 2 without bribe; bribe (5 COIN) successfully overrides CriminalRecord block.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Complete warehouse shift earns correct pay**: Set time to 06:30 Monday. Place player at
+   `AGENCY_DESK_PROP`. Press E, select WAREHOUSE_SHIFT. Confirm registration. Advance time to
+   06:59. Board `AGENCY_VAN_PROP` by pressing E. Advance time to 07:01 (van departs).
+   Verify player is in `WAREHOUSE_WORK_ZONE` area. Simulate 4 work-station interactions
+   at 90-second intervals (advance time and press E on `WORK_STATION_PROP` each time).
+   Advance time to 11:00. Verify player receives a `WAGE_ENVELOPE` containing exactly 15 COIN.
+   Verify no CriminalRecord entries were added.
+
+2. **Slacking triggers Gavin confrontation and half pay**: Set time to 06:30 Monday. Register
+   for WAREHOUSE_SHIFT and board the van. Advance time to 09:00 without interacting with the
+   `WORK_STATION_PROP` (2+ consecutive missed prompts). Verify Gavin's `confrontPlayer()` method
+   is called. Verify shift ends with player receiving 7 COIN (half of 15). Verify `SLACKER`
+   flag is set in TempAgencySystem (blocks same-day re-registration).
+
+3. **Timesheet fiddle with PAYSLIP_STUB succeeds at 90% rate**: Give player a `PAYSLIP_STUB`.
+   Complete a CONSTRUCTION_SHIFT honestly. At `TIMESHEET_PROP`, select "fiddle hours".
+   Using a seeded Random that produces values across the 0–100 range, run 100 iterations.
+   Verify that in ≥ 85 iterations (allowing for RNG variance) the fiddle succeeds and player
+   receives 12 + 6 = 18 COIN (or equivalent). Verify `TIMESHEET_FIDDLER` achievement is
+   unlocked on first success.
+
+4. **Petty cash tin theft during leaflet drop window**: Set time to 07:10. Player is on
+   LEAFLET_DROP_SHIFT (Darren away from desk). Press E on `PETTY_CASH_TIN_PROP`. Using a
+   seeded Random forcing non-detection, verify theft succeeds: COIN in range 10–20 added to
+   player inventory. Verify Notoriety increased by 1. Verify `PETTY_CASH` achievement unlocked.
+   Verify CriminalRecord contains `THEFT`. Set time to 07:21 (Darren returns). Press E on
+   `PETTY_CASH_TIN_PROP` again. Verify interaction is blocked ("Tin's empty, mate." or
+   equivalent) — the tin only yields once per day.
+
+5. **Van search finds fuel card, Kev catches player on second attempt**: Give player an empty
+   inventory. Set time to 06:52. Press E on `AGENCY_VAN_PROP`. Using seeded Random that
+   produces `AGENCY_FUEL_CARD`, verify fuel card added to inventory. Set time to 06:52 the
+   next in-game day. Press E on van. Using seeded Random that triggers Kev detection. Verify
+   Kev's `catchPlayer()` method is called. Verify shift refused for that day (shift sign-up
+   returns `SIGN_UP_RESULT.REFUSED_VAN_INCIDENT`). Verify Notoriety increased by 1.
+
+// New system: TempAgencySystem.java in ragamuffin.core
+// New landmark: TEMP_AGENCY (add to LandmarkType.java) — "Flexistaff Recruitment"
+// New NPCTypes: TEMP_AGENCY_MANAGER, TEMP_AGENCY_VAN_DRIVER, TEMP_AGENCY_SITE_FOREMAN,
+//   TEMP_AGENCY_WORKER (add to NPCType.java)
+// New Materials: WAGE_ENVELOPE, TIMESHEET, PAYSLIP_STUB, AGENCY_FUEL_CARD, WORK_GLOVES,
+//   HIGH_VIS_VEST, HARD_HAT, LEAFLETS (add to Material.java)
+// New PropTypes: AGENCY_DESK_PROP, TIMESHEET_PROP, PETTY_CASH_TIN_PROP, WORK_STATION_PROP,
+//   LEAFLET_DROP_ZONE_PROP, AGENCY_VAN_PROP (add to PropType.java)
+// New Achievements: HONEST_DAY_S_WORK, TIMESHEET_FIDDLER, GLOVE_BOX_RAIDER, DOUBLE_DIP,
+//   PETTY_CASH, LEAFLET_LEGEND, HARD_HAT_REQUIRED, AGENCY_REGULAR (add to AchievementType.java)
