@@ -754,7 +754,16 @@ public class CriminalRecord {
          * blocks of the racing cones when the police shutdown occurs (+1 Wanted star).
          * Penalty: Notoriety +5 per participation. WantedSystem stars per spec.
          */
-        ILLEGAL_STREET_RACING("Illegal street racing");
+        ILLEGAL_STREET_RACING("Illegal street racing"),
+
+        // ── Issue #1265: Northfield Loan Shark — Big Mick's Doorstep Lending ─────
+
+        /**
+         * Recorded when the player punches a DEBT_COLLECTOR NPC sent by Big Mick.
+         * Adds +2 Wanted stars and is logged by LoanSharkSystem when the collector
+         * is struck.
+         */
+        LOAN_SHARK_ASSAULT("Loan shark collector assault");
 
         private final String displayName;
 

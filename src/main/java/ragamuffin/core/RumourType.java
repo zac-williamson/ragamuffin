@@ -588,5 +588,22 @@ public enum RumourType {
     /** "Some dodgy business at the racing last night — someone messed with the nitrous."
      * — seeded by StreetRacingSystem on successful sabotage (SCREWDRIVER on competitor car).
      * Spreads via BOY_RACER NPCs within the meet. Player identified if caught by car owner. */
-    RACING_SABOTAGE;
+    RACING_SABOTAGE,
+
+    // ── Issue #1265: Northfield Loan Shark — Big Mick's Doorstep Lending ─────────
+
+    /** "Big Mick's lads are looking for someone who owes him — seen them round the estate."
+     * — seeded by LoanSharkSystem when a loan becomes overdue (first missed repayment day).
+     * Spreads via PUBLIC and PENSIONER NPCs. Causes DEBT_COLLECTOR to follow the player. */
+    LOAN_SHARK_LOOKING_FOR_YOU,
+
+    /** "Heard someone paid Big Mick back in full — he's moved on to the next mug."
+     * — seeded by LoanSharkSystem when the player fully repays the loan (principal + interest).
+     * Spreads via PUBLIC NPCs; despawns DEBT_COLLECTOR. */
+    LOAN_PAID_OFF,
+
+    /** "Big Mick's been sniffing round the benefits office again — looking for someone skint."
+     * — seeded by DWPSystem on benefit payment day when the player has an outstanding loan.
+     * Spreads via PUBLIC and JOB_CENTRE_CLERK NPCs within 40 blocks of the JobCentre. */
+    BIG_MICK_DEBT;
 }
