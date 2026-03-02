@@ -1656,7 +1656,40 @@ public enum NPCType {
      *         "Bring it back when you've sorted the exhaust." /
      *         "I can't pass that. Sorry."
      */
-    MOT_TESTER(25f, 0f, 0f, false);
+    MOT_TESTER(25f, 0f, 0f, false),
+
+    // ── Issue #1148: Northfield Council Estate Lock-Up Garages ───────────────
+
+    /**
+     * Dave the Caretaker — council estate caretaker who patrols the garage block
+     * 08:00–16:00 Mon–Fri. Witnesses break-ins and files TRESPASSING offences via
+     * WantedSystem. Also handles Garage 7 rental (5 COIN/week) and eviction notices.
+     * Speech: "You're not supposed to be in there, mate." /
+     *         "Rent's due Friday. Don't make me knock twice." /
+     *         "These garages are for residents only."
+     */
+    DAVE_CARETAKER(35f, 4f, 1.2f, false),
+
+    /**
+     * Undercover Police — plain-clothes officer who raids Garage 3 (Marchetti drug den)
+     * 1–3 in-game hours after the player's anonymous tip-off via PAYPHONE_PROP.
+     * Clears the stash, removes SCALES_PROP, and adds POSSESSION to CriminalRecord
+     * if player is found inside during the raid.
+     * Speech: "Armed police! Nobody move!" /
+     *         "On the ground. Now." /
+     *         "You didn't see anything. Understood?"
+     */
+    UNDERCOVER_POLICE(60f, 12f, 1.5f, true),
+
+    /**
+     * Garage Band Doorman — the band's informal doorman at Garage 1 rehearsals
+     * (Tues/Thurs/Sat 19:00–22:00). Lets regulars in, charges 1 COIN for new faces.
+     * After 3 sessions watched, player can take this role for 3 COIN/session.
+     * Speech: "You here for the band?" /
+     *         "That'll be a quid, mate." /
+     *         "You're alright, come in."
+     */
+    GARAGE_BAND_DOORMAN(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -379,5 +379,32 @@ public enum RumourType {
      *   any NPC is within 12 blocks.
      * Spreads via PUBLIC NPCs near the garage.
      * Minor Notoriety spike (+2) for player; no police escalation unless Wanted ≥ 1. */
-    GARAGE_THEFT;
+    GARAGE_THEFT,
+
+    // ── Issue #1148: Northfield Council Estate Lock-Up Garages ───────────────
+
+    /** "Someone's been breaking into the garages on the Northfield Estate."
+     * — seeded by LockUpGarageSystem when CROWBAR break-in occurs (HIGH noise, 25-block radius)
+     *   and any NPC is within 25 blocks. Also seeded if Dave the Caretaker witnesses a break-in.
+     * Spreads via PUBLIC and PENSIONER NPCs on the estate.
+     * Minor Notoriety spike (+3) for player; triggers WantedSystem TRESPASSING offence if Dave witnesses. */
+    LOCK_UP_BREAK_IN,
+
+    /** "Heard there's been a police raid over at the garages. Drug thing, apparently."
+     * — seeded by LockUpGarageSystem after UNDERCOVER_POLICE raid on Garage 3 completes.
+     * Spreads via PUBLIC, JOURNALIST, and BARMAN NPCs.
+     * Reduces MARCHETTI_CREW Respect -10 on fire; no direct player impact unless found inside. */
+    GARAGE_DRUG_RAID,
+
+    /** "There's a band practising in one of them lock-ups on the estate. Bit loud, like."
+     * — seeded by LockUpGarageSystem on first band rehearsal session (Garage 1, Tues/Thurs/Sat 19:00).
+     * Spreads via PUBLIC and YOUTH_GANG NPCs near the estate.
+     * Ambient flavour; directs curious players to COUNCIL_GARAGES landmark. */
+    GARAGE_BAND_RUMOUR,
+
+    /** "Old Barry's finally letting go of all that stuff in his garage. Clearance sale, like."
+     * — seeded by LockUpGarageSystem when the hoarder clearance quest is activated (Garage 2).
+     * Spreads via PENSIONER and PUBLIC NPCs.
+     * Directs player to Garage 2 for the BRIC_A_BRAC_BANDIT quest chain. */
+    HOARDER_CLEARANCE;
 }

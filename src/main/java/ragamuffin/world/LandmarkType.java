@@ -517,7 +517,21 @@ public enum LandmarkType {
      * Regalia Room (PRIMO tier), and the Lodge Bar.
      * Managed by RAOBLodgeSystem.
      */
-    RAOB_LODGE;
+    RAOB_LODGE,
+
+    // ── Issue #1148: Northfield Council Estate Lock-Up Garages ───────────────
+
+    /**
+     * Council Estate Lock-Up Garages — a row of eight numbered lock-up garages
+     * (GARAGE_1 through GARAGE_8) behind the Northfield Council Flats.
+     * Each garage has a distinct seeded tenant: band rehearsal (Garage 1),
+     * hoarder clearance (Garage 2), Marchetti drug den (Garage 3), DIY enthusiast
+     * (Garage 4), stolen goods stash with HEAVY_PADLOCK (Garage 5), council skip
+     * overflow (Garage 6, always open), player-rentable stash (Garage 7), and
+     * pigeon fancier (Garage 8).
+     * Managed by LockUpGarageSystem.
+     */
+    COUNCIL_GARAGES;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -604,6 +618,7 @@ public enum LandmarkType {
             case NHS_WALK_IN_CENTRE:    return "Northfield Walk-In Centre";
             case TEMP_AGENCY:           return "Flexistaff Recruitment";
             case RAOB_LODGE:            return "Northfield Buffaloes Lodge No. 347";
+            case COUNCIL_GARAGES:       return "Northfield Estate Garages";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
