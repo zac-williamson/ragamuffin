@@ -3347,7 +3347,25 @@ public enum Material {
      * Requires 2 punches to break. Looks like a brick but crumbles on close inspection.
      * Tooltip: "Looks convincing from a distance. Very much from a distance."
      */
-    PAPIER_MACHE_BRICK("Papier Mache Brick");
+    PAPIER_MACHE_BRICK("Papier Mache Brick"),
+
+    // ── Issue #1136: The Vaults Nightclub ─────────────────────────────────────
+
+    /**
+     * Smart Shirt — a collared dress shirt worn for nights out.
+     * Bypasses Big Dave's reputation door check at The Vaults. Slight warmth penalty
+     * (not warm outdoors). Obtainable from the charity shop or crafted.
+     * Tooltip: "You scrub up alright, to be fair."
+     */
+    SMART_SHIRT("Smart Shirt"),
+
+    /**
+     * Nightclub Master Key — the manager's master key to The Vaults' back office.
+     * Opens NIGHTCLUB_OFFICE_DOOR_PROP; one-use (consumed on door open).
+     * Looted from Terry (NIGHTCLUB_MANAGER) or hidden in the VIP area.
+     * Tooltip: "A chunky Yale key with a 'T' fob. Opens something important."
+     */
+    NIGHTCLUB_MASTER_KEY("Nightclub Master Key");
 
     private final String displayName;
 
@@ -4182,6 +4200,12 @@ public enum Material {
             case PAPIER_MACHE_BRICK:      return cs(0.78f, 0.50f, 0.38f,  // Pinkish brick
                                                     0.62f, 0.38f, 0.28f); // Mortar grey
 
+            // Issue #1136: The Vaults Nightclub
+            case SMART_SHIRT:             return cs(0.88f, 0.88f, 0.95f,  // White/pale shirt
+                                                    0.60f, 0.60f, 0.72f); // Collar shadow
+            case NIGHTCLUB_MASTER_KEY:    return cs(0.60f, 0.55f, 0.30f,  // Brass key
+                                                    0.38f, 0.35f, 0.18f); // Dark shaft
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4603,6 +4627,9 @@ public enum Material {
             case NEWSAGENT_KEY:
             case NEWSAGENT_APRON:
             case PAPIER_MACHE_BRICK:
+            // Issue #1136: The Vaults Nightclub — not block items
+            case SMART_SHIRT:
+            case NIGHTCLUB_MASTER_KEY:
                 return false;
             default:
                 return true;
@@ -4741,6 +4768,9 @@ public enum Material {
             case NEWSAGENT_KEY:
             case NEWSAGENT_APRON:
             case PAPIER_MACHE_BRICK:
+            // Issue #1136: The Vaults Nightclub
+            case SMART_SHIRT:
+            case NIGHTCLUB_MASTER_KEY:
                 return true;
             default:
                 return false;
@@ -5483,6 +5513,12 @@ public enum Material {
                 return IconShape.CARD;        // folded tabard
             case PAPIER_MACHE_BRICK:
                 return IconShape.BOX;         // brick-shaped lump
+
+            // Issue #1136: The Vaults Nightclub
+            case SMART_SHIRT:
+                return IconShape.CARD;        // folded shirt
+            case NIGHTCLUB_MASTER_KEY:
+                return IconShape.TOOL;        // Yale key
 
             default:
                 return IconShape.BOX;
