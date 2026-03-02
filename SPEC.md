@@ -35920,3 +35920,114 @@ The player can **fake a pay-and-display ticket** (GRAFTING skill ≥ Apprentice)
 // Integrates: CarDrivingSystem, CarManager, Car, WantedSystem, CriminalRecord, NotorietySystem,
 //   RumourNetwork, NoiseSystem, FactionSystem, MagistratesCourtSystem, NeighbourhoodSystem,
 //   NewspaperSystem, TaxiSystem, StreetSkillSystem, AchievementSystem, TimeSystem, ArrestSystem
+
+---
+
+## Issue #1200: Northfield Newsagent — Patel's News, Paper Round, Lottery Terminal & the Dodgy Magazine Under the Counter
+
+**Goal**: Bring `LandmarkType.NEWSAGENT` ("Patel's News") to life with a fully interactive `NewsagentSystem`. All materials (`LOTTERY_TICKET`, `PAPER_SATCHEL`, `NEWSAGENT_KEY`, `NEWSAGENT_APRON`, `DODGY_MAGAZINE`, `CHEWING_GUM`, `PHONE_CREDIT_VOUCHER`) and props (`NEWSAGENT_COUNTER_PROP`, `MAGAZINE_RACK_PROP`, `NEWSAGENT_NOTICE_BOARD_PROP`, `NEWSPAPER_BUNDLE_PROP`, `LOTTERY_DISPLAY_PROP`) are already defined — the system just needs implementing.
+
+### NPCs
+
+- **Patel** (`SHOPKEEPER` NPC) — behind the counter 06:00–20:00 Mon–Sat, 07:00–13:00 Sun. Cheerful, knows all local gossip. Shares one free `LOCAL_EVENT` rumour per visit if the player buys something.
+- **Raj** (`SHOPKEEPER` NPC) — Patel's nephew, covers 20:00–23:00 and Sundays. Less friendly; detects shoplifting more readily.
+- **Paper Round Kid** (`SCHOOL_KID` NPC) — arrives 05:30–06:30 to collect the `NEWSPAPER_BUNDLE_PROP`. Player can intercept the job.
+- 1–3 `PENSIONER` / `PUBLIC` NPCs queueing at the counter 07:00–09:00 (morning rush).
+
+### Shop Stock & Prices
+
+| Item | Price | Notes |
+|------|-------|-------|
+| `NEWSPAPER` | 1 COIN | Reduced notoriety on NPC interaction; ingredient in many crafting recipes |
+| `SCRATCH_CARD` | 1 COIN | Instant reveal: 15% 2 COIN, 5% 5 COIN, 1% 20 COIN; else blank |
+| `LOTTERY_TICKET` | 1 COIN | Resolved at 20:00 daily: 0.5% = 100 COIN jackpot; 8% = 5 COIN match-3 |
+| `CHEWING_GUM` | 1 COIN | Reduces Notoriety detection timer by 5 seconds while chewing |
+| `PHONE_CREDIT_VOUCHER` | 3 COIN | Satisfies NPC NEED_PHONE_CREDIT; tradeable street for 4 COIN |
+| `BIRTHDAY_CARD` | 2 COIN | Bribe fodder; sell to PUBLIC NPC for 1 COIN |
+| `CHOCOLATE_BAR` | 1 COIN | Hunger −15 |
+| `CRISPS` | 1 COIN | Hunger −10 |
+| `ENERGY_DRINK` | 2 COIN | Alertness +20, Hunger −5, crash after 5 min (Alertness −30) |
+| `TOBACCO_POUCH` | 3 COIN | Warmth +5, Alertness +5; reduces stress |
+| `DIY_MONTHLY` | 2 COIN | Ingredient in PAPIER_MACHE_BRICK craft recipe |
+| `DODGY_MAGAZINE` | 3 COIN | Only sold if player Notoriety < 30; from under the counter; triggers `DODGY_MAG_BUYER` achievement on first purchase |
+
+### Notice Board
+
+`NEWSAGENT_NOTICE_BOARD_PROP` (press E) shows 3–5 randomly seeded cards:
+- **Paper Round** card: accept job for the next morning's deliveries (05:30–07:00).
+- **Lost Cat** card: fetch `GINGER_CAT_PROP` from nearby location → 5 COIN reward.
+- **Odd Jobs** card: one random `BuildingQuestRegistry` odd-job pointer.
+- Cards rotate each in-game day.
+
+### Paper Round Mechanic
+
+1. Player accepts the paper round from the notice board the evening before (or intercepts the paper-round kid at 05:30).
+2. Patel hands over `PAPER_SATCHEL` (capacity 10 `NEWSPAPER`) and `NEWSAGENT_APRON`.
+3. 10 `LETTERBOX_PROP` targets are generated on the surrounding terraced houses.
+4. Player delivers one `NEWSPAPER` per house (press E at `LETTERBOX_PROP`); progress tracked by `NewsagentSystem`.
+5. Complete all 10 by 07:00 → earn 5 COIN + 1 Notoriety reduction + `PAPER_ROUND_DONE` achievement.
+6. Miss deadline → Patel deducts 2 COIN. Three missed rounds → Patel won't offer the job again (7-day ban).
+7. Shortcut: steal the `NEWSPAPER_BUNDLE_PROP` directly (Criminal Damage, Notoriety +4, `BANNED_FROM_PATEL` flag for 7 days).
+
+### Lottery Resolution
+
+At 20:00 each in-game day, `NewsagentSystem.resolveLotteryTickets()` iterates all `LOTTERY_TICKET` items in the player's inventory:
+- Roll seeded `Random`: 0.5% → jackpot 100 COIN + `LOTTERY_WINNER` achievement; 8% → 5 COIN; else void.
+- Winning ticket triggers `NewspaperSystem` headline: "LOCAL MAN WINS LOTTERY — BLOWS IT ON KEBABS".
+- Unclaimed after 24 in-game hours: ticket becomes `CARDBOARD`.
+
+### Shoplifting
+
+- Stealing from `MAGAZINE_RACK_PROP` or `NEWSAGENT_COUNTER_PROP` triggers Raj (not Patel) detection check.
+- Detection: Notoriety < 20 = 25% chance; 20–50 = 50%; > 50 = 85%.
+- Detected: Raj calls out, `THEFT` added to `CriminalRecord`, Notoriety +3, `BANNED_FROM_PATEL` flag 7 days.
+- `NEWSAGENT_KEY` (in back-office lockbox, pickable with LOCKPICK) opens `NEWSAGENT_BACK_DOOR_PROP` at night (closed 23:00–06:00). Inside: `CASH_BOX_PROP` (8–15 COIN), surplus stock.
+
+### Integration with Other Systems
+
+- **NewspaperSystem**: `NEWSPAPER` purchased here is the same ingredient used in `NewspaperSystem` for crafting; buying 5+ `NEWSPAPER` in a session seeds `LOCAL_EVENT` rumour.
+- **RumourNetwork**: Patel seeds one `NEIGHBOURHOOD` rumour per day; notice board `LOST_CAT` card seeds `LOCAL_EVENT`.
+- **NotorietySystem**: each `NEWSPAPER` purchase while Notoriety ≥ 40 gives Patel a mild suspicion flag (no immediate penalty); `NEWSAGENT_APRON` worn in public reduces detection tier by 1 (disguise).
+- **WantedSystem**: theft detected by Raj = +1 star; back-office break-in = +2 stars.
+- **CriminalRecord**: `THEFT` on shoplifting; `CRIMINAL_DAMAGE` on bundle theft; `TRESPASS` on back-office entry without key.
+- **StreetSkillSystem**: GRAFTING ≥ Journeyman required to attempt back-office lockpick. Paper round XP: +1 GRAFTING per completed round.
+- **NeighbourhoodSystem**: active paper round = +0.5 Vibes/day; bundle stolen = −2 Vibes; back-office burgled = −4 Vibes.
+- **WeatherSystem**: rain + RAIN_JACKET = newspapers delivered dry (no penalty); rain without jacket = 20% chance soggy paper (Patel deducts 1 COIN).
+- **TimeSystem**: shop open 06:00–20:00 (Patel) / 20:00–23:00 (Raj). Lottery resolves exactly 20:00. Paper round window 05:30–07:00.
+- **StreetEconomySystem**: `NEWSPAPER` satisfies `NEED_READ`; `SCRATCH_CARD` satisfies `NEED_GAMBLE`; `CHOCOLATE_BAR` satisfies `NEED_SNACK`.
+- **AchievementSystem**: `PAPER_ROUND_DONE`, `LOTTERY_WINNER`, `DODGY_MAG_BUYER`, `BANNED_FROM_PATEL`, `NEWSAGENT_BURGLAR` — add to `AchievementType.java`.
+
+### Materials (already defined in Material.java — reference only)
+`LOTTERY_TICKET`, `CHEWING_GUM`, `PHONE_CREDIT_VOUCHER`, `PAPER_SATCHEL`, `DODGY_MAGAZINE`, `NEWSAGENT_KEY`, `NEWSAGENT_APRON`
+
+### Unit Tests
+
+- Scratch card payout rates over 10,000 seeded rolls match expected percentages (±2%).
+- Lottery resolution at exactly 20:00: jackpot triggers on seeded roll ≤ 0.005; match-3 on roll 0.005–0.085.
+- Paper round deadline check: 10 deliveries by 06:59 = pass; 10 deliveries at 07:01 = fail (deduct 2 COIN).
+- Shoplifting detection probabilities at Notoriety 10, 30, 60 (seeded RNG).
+- BANNED_FROM_PATEL flag blocks purchase; flag expires after 7 in-game days.
+- Notice board card rotation: different cards generated on consecutive in-game days (seeded seed differs).
+
+### Integration Tests — implement these exact scenarios
+
+1. **Morning paper round — full delivery**: Seed world. Player accepts paper round from notice board at 19:00 the previous day. Receive `PAPER_SATCHEL` + 10 `NEWSPAPER`. Advance time to 05:30. Deliver all 10 newspapers to `LETTERBOX_PROP` targets (press E at each). Verify at 06:55: `NewsagentSystem.isRoundComplete()` == true. Verify player COIN increased by 5. Verify player Notoriety reduced by 1. Verify `AchievementSystem` has `PAPER_ROUND_DONE` unlocked.
+
+2. **Scratch card payout**: Give player 3 COIN. Player buys `SCRATCH_CARD` from counter (costs 1 COIN). Seed `Random` so win roll = 0.03 (< 0.15 → 2 COIN prize). Verify player COIN = 3 − 1 + 2 = 4 COIN. Verify `SCRATCH_CARD` removed from inventory.
+
+3. **Lottery ticket — jackpot resolution**: Player buys `LOTTERY_TICKET` at 12:00. Give player no other tickets. Seed `Random` so lottery roll = 0.002 (< 0.005 → jackpot). Advance `TimeSystem` to 20:00. Call `NewsagentSystem.resolveLotteryTickets(player)`. Verify player COIN increased by 100. Verify `LOTTERY_TICKET` removed from inventory. Verify `AchievementSystem` has `LOTTERY_WINNER` unlocked.
+
+4. **Shoplifting detected — theft recorded**: Set player Notoriety to 25. Seed `Random` so detection roll = 0.40 (< 0.50 → detected). Player steals `SCRATCH_CARD` from `MAGAZINE_RACK_PROP`. Call `NewsagentSystem.attemptShoplifting(player, ...)`. Verify `CriminalRecord` contains `THEFT`. Verify `NotorietySystem.getNotoriety()` increased by 3. Verify `NewsagentSystem.isBannedFromPatel(player)` == true. Verify `WantedSystem.getStarCount()` ≥ 1.
+
+5. **Banned flag blocks purchase**: Set `BANNED_FROM_PATEL` flag. Player presses E on `NEWSAGENT_COUNTER_PROP` and selects `NEWSPAPER`. Verify purchase is refused with message "Patel gives you a look. You're not welcome here." Verify player COIN unchanged.
+
+6. **Lottery ticket expires**: Player buys `LOTTERY_TICKET` at 08:00 day 1. Lottery resolves at 20:00 day 1 — ticket loses (seeded roll > 0.085). Advance to 08:01 day 2 (> 24 in-game hours since purchase). Verify `LOTTERY_TICKET` in player inventory has been replaced with `CARDBOARD`.
+
+// ── New: NewsagentSystem.java in ragamuffin.core
+// Uses existing NPCType.SHOPKEEPER for Patel and Raj; NPCType.SCHOOL_KID for paper-round kid
+// Uses existing LandmarkType.NEWSAGENT ("Patel's News")
+// New AchievementType: PAPER_ROUND_DONE, LOTTERY_WINNER, DODGY_MAG_BUYER, BANNED_FROM_PATEL, NEWSAGENT_BURGLAR — add to AchievementType.java
+// All Materials (LOTTERY_TICKET, CHEWING_GUM, PHONE_CREDIT_VOUCHER, PAPER_SATCHEL, DODGY_MAGAZINE, NEWSAGENT_KEY, NEWSAGENT_APRON) already defined in Material.java
+// All Props (NEWSAGENT_COUNTER_PROP, MAGAZINE_RACK_PROP, NEWSAGENT_NOTICE_BOARD_PROP, NEWSPAPER_BUNDLE_PROP, LOTTERY_DISPLAY_PROP) already defined in PropType.java
+// Integrates: NewspaperSystem, RumourNetwork, NotorietySystem, WantedSystem, CriminalRecord,
+//   StreetSkillSystem, NeighbourhoodSystem, WeatherSystem, TimeSystem, StreetEconomySystem, AchievementSystem
