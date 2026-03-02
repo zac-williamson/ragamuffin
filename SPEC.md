@@ -31608,4 +31608,139 @@ The `CASH_TIN_PROP` in Mick's office contains 20–40 COIN (replenished daily). 
 // New NPCTypes: MECHANIC, MECHANIC_APPRENTICE, MOT_TESTER (add to NPCType.java)
 // New Materials: TYRE, CAR_PART, BLANK_LOGBOOK, MOT_CERT (add to Material.java)
 // New PropTypes: MOT_RAMP_PROP, REPAIR_RAMP_PROP, TYRE_STACK_PROP, CAR_FOR_SALE_PROP, GARAGE_OFFICE_PROP, CASH_TIN_PROP (add to PropType.java)
+
+## Add Northfield Council Estate Lock-Up Garages — The Dark Economy, Band Rehearsal & the Garage Clearance Heist
+
+**Goal**: Add a row of **eight numbered lock-up garages** (`GARAGE_1` through `GARAGE_8`) behind the Northfield Council Flats — a quintessentially British dark-economy space. From the outside they look like anonymous corrugated-metal doors with padlocks; inside they contain wildly different contents depending on the tenant. A new `LockUpGarageSystem` manages garage tenancy, contents, and the player's ability to rent, break in, or take over a garage as a personal stash.
+
+A new landmark: **Northfield Council Estate Garages** — a long single-storey concrete block running along the back of the flats, eight roll-up doors facing a narrow alley. No signage. Weeds through the tarmac. One flickering strip light. Smells of oil and damp.
+
+### The Building & Layout
+
+- **Always accessible** from the alley (24/7), though individual garage doors are padlocked when not in use.
+- Eight garages in a row, each `GARAGE_DOOR_PROP` (roll-up corrugated steel). Door colour indicates status: grey = unoccupied, orange = rented by NPC tenant, green = rented by player.
+- Each garage interior is a 4×6 block space. Inside: a `GARAGE_SHELF_PROP` on the back wall (interactable storage), an optional `BARE_BULB_PROP` light source, and floor items depending on tenant.
+- NPCs: `GARAGE_TENANT` (each occupied garage has one who visits at unpredictable hours — roll daily schedule on world gen), `COUNCIL_CARETAKER` (Dave — does a slow patrol of the alley 08:00–16:00, reports anyone messing with padlocks), `STREET_LADS` (loiter in the alley 16:00–22:00), `PCSO` (patrol pass at 22:00 and 02:00).
+
+### Garage Contents — Eight Preset Tenants
+
+Each garage is seeded at world generation (fixed `Random` seed per garage number):
+
+| # | Tenant Type | Contents |
+|---|---|---|
+| 1 | **Band Rehearsal** (`GARAGE_BAND_TENANT`) | `AMPLIFIER_PROP`, `DRUM_KIT_PROP`, pile of `CABLE_PROP` items, 3–6 COIN in a biscuit tin |
+| 2 | **Collector's Hoard** (`GARAGE_HOARDER_TENANT`) | Shelves of `BRIC_A_BRAC` items (each worth 1–4 COIN at charity shop), random chance of `VINTAGE_RECORD` (worth 12 COIN at indoor market stall) |
+| 3 | **Drug Den** (`DRUG_DEN_TENANT`) — Marchetti-affiliated | Stash box containing `PILLS` × 4–8, `HASH_BLOCK` × 1–2; `SCALES_PROP`; `BURNER_PHONE` material; 8–20 COIN in a sock |
+| 4 | **DIY Enthusiast** (`GARAGE_DIY_TENANT`) | `POWER_DRILL_PROP`, stacks of `PLANK_PROP` (2 WOOD each if broken), `PAINT_TIN_PROP` (yields `SPRAY_CAN`), toolbox with CROWBAR + LOCKPICK (50% chance) |
+| 5 | **Stolen Goods Stash** (`FENCE_STASH_TENANT`) — FenceSystem overflow | 2–5 random high-value `Material` items (from FenceValuationTable, value 8–20 COIN each); padlock upgraded to HEAVY_PADLOCK (requires 2 LOCKPICK uses) |
+| 6 | **Council Skip Overflow** (unoccupied — council stores bulk items) | `COUNCIL_FURNITURE_PROP` × 3 (each breaks into 2 WOOD + 1 SCRAP_METAL); `PAINT_TIN_PROP` × 2; always unlocked (council lost the key) |
+| 7 | **Player's Garage** (available to rent) | Empty at start; player can store items here |
+| 8 | **Pigeon Fancier** (`PIGEON_FANCIER_TENANT`) | `PIGEON_COOP_PROP` (10 pigeons inside — interactable for PigeonRacingSystem); `PIGEON_FEED_BAG` material × 2; a `RACING_FORM` prop |
+
+### Garage Rental — Player Stash
+
+The player can rent **Garage 7** (or take over any vacated garage) from the council office:
+- **Rent**: 5 COIN per in-game week, collected automatically from inventory. First month free (council bureaucracy).
+- Renting: press E on Dave the Caretaker → `"Want to rent a lock-up? Five quid a week. Cash only."` → confirm → player receives `GARAGE_KEY_7` material.
+- `GARAGE_SHELF_PROP` inside garage 7 stores up to 30 item stacks (acts as persistent world storage — contents survive across sessions, flagged with player ownership).
+- **Eviction**: if player misses 3 consecutive rent payments, Dave appears (`COUNCIL_CARETAKER` state `EVICTING`), changes the lock (key invalidated), and the garage contents are transferred to a `COUNCIL_SEIZURE` event (items placed in Garage 6 as overflow for 2 in-game days before disappearing).
+
+### Break-In Mechanics
+
+Pressing E on any locked `GARAGE_DOOR_PROP` when the player has LOCKPICK or CROWBAR:
+- **LOCKPICK**: 10-second interaction (`PICKING_LOCK` state), 70% success. On success: door opens silently. On fail: try again (no noise unless Dave is within 20 blocks). Uses 1 LOCKPICK charge.
+- **CROWBAR**: 3-second interaction, 100% success but emits HIGH noise (25-block radius via NoiseSystem). WitnessSystem: Dave witnesses if within 30 blocks. `STREET_LADS` in alley witness if present.
+- **After break-in**: `GARAGE_BROKEN_INTO` flag on that garage. Dave notices a broken padlock on his next patrol and calls it in → WantedSystem TRESPASSING offence added (Wanted +1). Dave replaces the padlock within 1 in-game hour.
+- `LOCKSMITH` achievement on first successful lockpick of a garage.
+- `CROWBAR_JUSTICE` achievement on first crowbar break-in.
+
+### The Band Rehearsal Economy (Garage 1)
+
+The band (`GARAGE_BAND_TENANT` — 3 NPCs: `DRUMMER_KEITH`, `GUITARIST_SHANE`, `BASSIST_TRACE`) rehearse Tues/Thurs/Sat 19:00–22:00. During rehearsal, Garage 1 is **open** and emits HIGH noise (45-block radius, consistent with BuskingSystem noise levels).
+
+- Player can **watch** (enter garage, no interaction needed) → `BAND_WATCHER` flag → after 3 rehearsals watched, `GUITARIST_SHANE` offers the player a cut of their gig takings if they act as **doorman** (bouncer NPC role, 3 COIN per session kept safe).
+- Player can **join the band** if they have `MC_BATTLE` StreetSkill rank ≥ 2 (implying musical aptitude) → `GARAGE_BAND_MEMBER` flag → after joining, band plays The Vaults (Nightclub) on Saturday nights; player earns 6 COIN per gig.
+- Player can **steal the gear** when garage is unoccupied (Mon/Wed/Fri after 22:00): `AMPLIFIER_PROP` → 2 `SCRAP_METAL` + `CABLE` item when destroyed (5 hits, HARD material); `DRUM_KIT_PROP` → yields `DRUM_COMPONENT` × 3 (fenceable at 6 COIN each). NoiseSystem: breaking AMPLIFIER emits MEDIUM noise.
+
+### The Drug Den Exposure (Garage 3)
+
+Garage 3 is run by `MARCHETTI_CREW` NPC `JAYDEN` (visits 21:00–23:00 Mon–Fri). At `MARCHETTI_CREW` Respect < 20, Jayden treats the player as hostile. At Respect ≥ 20, Jayden sells `PILLS` at 4 COIN each (normal StreetEconomySystem price: 6 COIN).
+
+- **Tip off police**: player can report Garage 3 to the WantedSystem via a payphone (new interaction on existing `PAYPHONE_PROP`): `reportCrimeAnonymously(DRUG_DEN, garageLocation)` → within 1–3 in-game hours, a police raid occurs. `UNDERCOVER_POLICE` NPCs sweep Garage 3. Jayden's stash is cleared; Jayden spawns as `FLEEING` NPC for 10 in-game minutes. `MARCHETTI_CREW` Respect −10 permanently. `GRASS` achievement unlocked (or `INFORMANT` if player already has 3 tip-offs across all systems).
+- **Take over the stash**: after Jayden leaves, if no Marchetti Crew member is present, player can pocket the stash (PILLS + HASH_BLOCK + COIN). WitnessSystem: JAYDEN visits the next night, finds stash gone; `MARCHETTI_CREW` Respect −15 (`STASH_ROBBER` rumour seeded via RumourNetwork).
+
+### The Hoarder Clearance (Garage 2)
+
+`GARAGE_HOARDER_TENANT` (`BARRY` — visits erratically, 30% chance per in-game day) has been warned by the council to clear out. If Barry hasn't visited in 4 in-game days, Dave marks the garage for clearance. Player can:
+- **Help Barry clear** (press E on Barry when he's distressed outside → accept clearance quest): carry `BRIC_A_BRAC` items from shelf to a skip prop within 10 blocks (3 trips). Reward: Barry gives player `VINTAGE_RECORD` + 4 COIN + `BARRY_FAVOUR` flag (Barry becomes an ally; future WitnessSystem roll from Barry is auto-pass).
+- **Rob Barry blind** (enter during clearance, pocket items before Barry notices): each `BRIC_A_BRAC` taken while Barry is present has 25% chance Barry notices → `THEFT` WantedSystem offence. `BRIC_A_BRAC_BANDIT` achievement on clearing the shelf.
+
+### System Integrations
+
+- **FenceSystem**: `BRIC_A_BRAC` fenceable at 1–4 COIN; `VINTAGE_RECORD` at 12 COIN; `DRUM_COMPONENT` at 6 COIN; `CABLE` at 2 COIN; `BURNER_PHONE` at 5 COIN. `HASH_BLOCK` fenced at 8 COIN; `PILLS` at 4 COIN each.
+- **StreetEconomySystem**: Drug den prices undercut street-deal prices (Marchetti faction benefit); PILLS need-satisfaction mechanics unchanged.
+- **FactionSystem**: Garage 3 drug den seeded as Marchetti territory; tip-off/robbery reduces Marchetti Respect accordingly.
+- **WantedSystem**: Break-in → `TRESPASSING` offence (Wanted +1); drug tip-off → `INFORMANT` role; crowbar noise → police attention radius check.
+- **NoiseSystem**: Band rehearsal HIGH noise (45-block radius); crowbar break-in HIGH noise (25-block radius); amplifier theft MEDIUM noise (15-block radius).
+- **WitnessSystem**: Dave (within 30 blocks) witnesses break-ins; Barry witnesses item theft; Jayden witnesses stash robbery.
+- **RumourNetwork**: Successful garage break-in (not caught) seeds `CRIMINAL_INTEL` rumour ("Someone's been doing the lock-ups behind the flats."); drug den tip-off seeds `SCANDAL` rumour ("Police raided Marchetti's stash on the estate."); band gig seeds `LOCAL_EVENT` rumour ("That garage band's playing The Vaults Saturday.").
+- **PigeonRacingSystem**: Pigeon coop in Garage 8 is an alternative pigeon source; `PIGEON_FEED_BAG` prevents pigeons becoming `LOST` during the next race event.
+- **NotorietySystem**: Garage break-in (caught) Notoriety +3; drug den robbery Notoriety +8; successful drug tip-off Notoriety −2 (civic contribution).
+- **TimeSystem**: Band rehearsal Tues/Thurs/Sat 19:00–22:00; Jayden visits Mon–Fri 21:00–23:00; Dave patrols 08:00–16:00; PCSO patrol 22:00 and 02:00.
+- **PropertySystem**: Player garage rental tracked as a property; eviction mechanic mirrors squat eviction.
+- **AchievementSystem**: See below.
+- **BuskingSystem**: If player joins band, Saturday gig at The Vaults counts as a busking-equivalent performance (6 COIN reward, crowd reaction).
+
+### Items (add to `Material.java`)
+
+- `BRIC_A_BRAC` — miscellaneous junk; fenceable 1–4 COIN; fills charity shop stock table.
+- `VINTAGE_RECORD` — old LP; fenceable at 12 COIN (indoor market stall) or 6 COIN (charity shop).
+- `DRUM_COMPONENT` — part of a drum kit; fenceable at 6 COIN; no crafting use.
+- `CABLE` — electrical cable; fenceable 2 COIN; used in crafting `PIRATE_RADIO_TRANSMITTER` (existing recipe).
+- `BURNER_PHONE` — unregistered mobile; fenceable 5 COIN; reduces WantedSystem search radius by 10% when carried (police can't triangulate).
+- `PIGEON_FEED_BAG` — pigeon food; used at `PIGEON_COOP_PROP` to prevent `LOST` status.
+- `GARAGE_KEY_7` — key to Garage 7; obtained from Dave; invalidated on eviction.
+
+### Props (add to `PropType.java`)
+
+- `GARAGE_DOOR_PROP` — roll-up corrugated steel door; E to interact (open/pick/crowbar); colour state indicates occupancy.
+- `GARAGE_SHELF_PROP` — wall-mounted shelving; E to browse/store items; 30-slot storage for player garage.
+- `AMPLIFIER_PROP` — guitar amp in Garage 1; destroyable (5 hits, HARD) → 2 SCRAP_METAL + CABLE.
+- `DRUM_KIT_PROP` — full drum kit in Garage 1; destroyable (8 hits, HARD) → 3 DRUM_COMPONENT.
+- `SCALES_PROP` — drug scales in Garage 3; evidence item if found during police raid; triggers `DRUG_PARAPHERNALIA` CriminalRecord entry if player carrying it when searched.
+- `PIGEON_COOP_PROP` — pigeon loft in Garage 8; E to interact for PigeonRacingSystem.
+
+### Achievements (add to `AchievementType.java`)
+
+| Achievement | Trigger |
+|---|---|
+| `LOCKSMITH` | Successfully lockpick a garage door for the first time |
+| `CROWBAR_JUSTICE` | Break into a garage with a crowbar |
+| `GRASS` | Tip off police about the drug den via payphone |
+| `INFORMANT` | Make 3 or more anonymous tip-offs across all systems |
+| `BRIC_A_BRAC_BANDIT` | Clear Barry's shelf entirely (6+ items taken) |
+| `STASH_ROBBER` | Steal Jayden's drug stash from Garage 3 |
+| `GARAGE_BAND_MEMBER` | Join the rehearsal band in Garage 1 |
+| `LOCK_UP_LANDLORD` | Rent Garage 7 and store 10+ item stacks in it |
+
+**Unit tests**: Garage contents seeded deterministically per garage number; break-in noise radius (crowbar = 25 blocks, lockpick = 0 when successful); Dave patrol window (08:00–16:00); band rehearsal schedule (Tues/Thurs/Sat 19:00–22:00); drug stash range (PILLS 4–8, COIN 8–20); eviction trigger (3 missed payments); Barry clearance quest trigger (4 days no visit); Jayden visit window (Mon–Fri 21:00–23:00); rent auto-deduct weekly; `GARAGE_KEY_7` invalidated after eviction.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Lockpick break-in, Dave witnesses and files report**: Set time to 09:30 (Dave on patrol). Place Dave within 15 blocks of Garage 2. Equip LOCKPICK. Press E on `GARAGE_DOOR_PROP` of Garage 2. Use seeded Random forcing success (1 attempt). Verify door opens. Verify NoiseSystem has NO noise event (silent pick). Verify WitnessSystem registers Dave as witness. Verify WantedSystem adds `TRESPASSING` offence. Verify Dave's next patrol action replaces the padlock (within 1 in-game hour) — i.e., `GARAGE_BROKEN_INTO` flag clears and door is relocked.
+
+2. **Crowbar break-in triggers noise and police attention**: Equip CROWBAR. Press E on `GARAGE_DOOR_PROP` of Garage 5 (heavy padlock — note: crowbar always succeeds). Verify NoiseSystem emits HIGH noise event within 25 blocks. Verify WantedSystem registers `TRESPASSING`. Verify `CROWBAR_JUSTICE` achievement unlocked on first use. Verify that a PCSO NPC spawns within 30 blocks within 60 in-game seconds if noise was detected.
+
+3. **Drug den tip-off triggers raid and Marchetti Respect loss**: Set `MARCHETTI_CREW` Respect to 25. Verify Garage 3 contains `PILLS` × ≥ 4 and COIN ≥ 8 (from seeded world gen). Press E on a `PAYPHONE_PROP` and call `reportCrimeAnonymously(DRUG_DEN, garage3Location)`. Advance time 2 in-game hours. Verify `UNDERCOVER_POLICE` NPCs have spawned at Garage 3 location. Verify Garage 3 drug stash is cleared (PILLS = 0 in garage). Verify `MARCHETTI_CREW` Respect reduced by 10 (now 15). Verify `GRASS` achievement is unlocked. Verify RumourNetwork contains a `SCANDAL` rumour seeded about the raid.
+
+4. **Player rents Garage 7 and stores items**: Locate Dave (08:00–16:00 on a weekday). Press E → select "Rent lock-up". Verify `GARAGE_KEY_7` added to inventory. Verify `GARAGE_DOOR_PROP` of Garage 7 turns green. Press E on Garage 7 door — verify it opens without lockpick. Place 10 item stacks on `GARAGE_SHELF_PROP`. Verify `LOCK_UP_LANDLORD` achievement unlocked. Advance 7 in-game days. Verify 5 COIN has been deducted from player inventory (weekly rent). Verify items are still present in shelf storage.
+
+5. **Band join path — 3 rehearsals watched then Saturday gig**: Watch Garage 1 band rehearse on 3 separate Tues/Thurs/Sat sessions (simulate entering garage during 19:00–22:00 on each day). Verify `BAND_WATCHER` flag set after third session. Verify `GUITARIST_SHANE` offers doorman role (dialogue trigger fires). Accept doorman role. Advance to next Saturday 22:00 (after rehearsal). Verify player receives 3 COIN doorman payment. Now attain `MC_BATTLE` StreetSkill rank ≥ 2 and press E on Shane → accept "Join the Band". Advance to next Saturday 22:00. Verify `GARAGE_BAND_MEMBER` achievement unlocked. Verify player receives 6 COIN gig payment.
+
+// New system: LockUpGarageSystem.java in ragamuffin.core
+// New landmark: COUNCIL_GARAGES (add to LandmarkType.java) — "Northfield Council Estate Garages"
+// New NPCTypes: GARAGE_TENANT, COUNCIL_CARETAKER, GARAGE_BAND_TENANT, GARAGE_HOARDER_TENANT, DRUG_DEN_TENANT, PIGEON_FANCIER_TENANT (add to NPCType.java)
+// New Materials: BRIC_A_BRAC, VINTAGE_RECORD, DRUM_COMPONENT, CABLE, BURNER_PHONE, PIGEON_FEED_BAG, GARAGE_KEY_7 (add to Material.java)
+// New PropTypes: GARAGE_DOOR_PROP, GARAGE_SHELF_PROP, AMPLIFIER_PROP, DRUM_KIT_PROP, SCALES_PROP, PIGEON_COOP_PROP (add to PropType.java)
+// New Achievements: LOCKSMITH, CROWBAR_JUSTICE, GRASS, INFORMANT, BRIC_A_BRAC_BANDIT, STASH_ROBBER, GARAGE_BAND_MEMBER, LOCK_UP_LANDLORD (add to AchievementType.java)
 // New Achievements: RINGER, DODGY_MOT, DEATH_TRAP, GARAGE_THIEF, CHOP_SHOP, CLEAN_DRIVER (add to AchievementType.java)
