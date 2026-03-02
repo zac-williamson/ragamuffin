@@ -37633,3 +37633,114 @@ Mirrors existing `HorseRacingSystem` debt mechanic but tracked separately for FO
 // Integrates: HorseRacingSystem, GreyhoundRacingSystem, StreetEconomySystem,
 //   FactionSystem, WantedSystem, NotorietySystem, CriminalRecord, RumourNetwork,
 //   NeighbourhoodWatchSystem, StreetSkillSystem, TimeSystem, BettingUI, NPCManager
+
+---
+
+## Issue #1222: The Raj Mahal — Friday Night Curry House, BYO Lager & the Marchetti Back Room
+
+**Goal**: Implement `CurryHouseSystem.java` for The Raj Mahal, a classic British Indian restaurant on the Northfield high street. NPC stubs (`CURRY_HOUSE_OWNER`, `CURRY_WAITER`) and all food/item materials (CHICKEN_TIKKA_MASALA, LAMB_BALTI, SAAG_ALOO, NAAN_BREAD, POPPADOMS, MANGO_LASSI, BYO_LAGER_CORKAGE, FOLDED_NOTE) are already defined. Add `LandmarkType.CURRY_HOUSE` and build the full system.
+
+### The Raj Mahal — Overview
+
+A classic British-Indian curry house on the Northfield high street, run by Bashir (`CURRY_HOUSE_OWNER`) and waiter Sanjay (`CURRY_WAITER`). Open Tue–Sun 17:00–23:30. A 10×8×4 brick building with red flock-wallpaper interior, MENU_BOARD_PROP, 6 dining tables (TABLE_PROP × 6), and a BACK_ROOM_PROP partitioned by a BEAD_CURTAIN_PROP. The back room hosts Marchetti lieutenants on Thursday evenings.
+
+### Dining & Menu
+
+Player presses **E** on Sanjay to open the order menu:
+
+| Item | Price | Hunger | Warmth | Buff |
+|---|---|---|---|---|
+| POPPADOMS | 1 COIN | −10 | 0 | FULL_STOMACH |
+| SAAG_ALOO | 3 COIN | −40 | +5 | FULL_STOMACH |
+| NAAN_BREAD | 2 COIN | −25 | 0 | FULL_STOMACH |
+| MANGO_LASSI | 2 COIN | −15 | +5 | FULL_STOMACH |
+| CHICKEN_TIKKA_MASALA | 6 COIN | −70 | +15 | FULL_STOMACH |
+| LAMB_BALTI | 7 COIN | −80 | +20 | FULL_STOMACH |
+
+- `CurryHouseSystem.orderMeal(item, inventory)` deducts COIN, adds item, grants FULL_STOMACH buff.
+- Returns `OrderResult.ACCEPTED`, `INSUFFICIENT_FUNDS`, or `REFUSED` (Notoriety ≥ 70 → Bashir refuses service: "I've seen the papers.").
+- First curry order: achievement `NATIONAL_DISH`.
+- Ordering LAMB_BALTI when Warmth < 30: Sanjay adds a free NAAN_BREAD ("You look like you need warming up, mate.").
+
+### BYO Lager
+
+Bringing a `CAN_OF_LAGER` into the restaurant triggers the BYO corkage mechanic:
+
+- Sanjay intercepts: "That'll be a quid corkage, mate."
+- `CurryHouseSystem.payCorkage(inventory)` costs 1 COIN → adds `BYO_LAGER_CORKAGE` receipt to inventory.
+- At Street Lads Respect ≥ 50: corkage waived; Sanjay winks. Achievement `REGULAR_HARD` on first waiver.
+- Refusing to pay: Sanjay confiscates the can (removes from inventory). If the player is carrying 3+ cans: Notoriety +2, Sanjay calls Bashir who bans the player for 1 in-game day.
+
+### Thursday Back Room — Marchetti Meeting
+
+Every Thursday 19:00–22:00, 2 `FACTION_LIEUTENANT` NPCs dine in the BACK_ROOM. Entry requires Marchetti Crew Respect ≥ 40 or LOCKPICK to bypass the BEAD_CURTAIN_PROP.
+
+- Lieutenants carry `FOLDED_NOTE` items. STEALTH Expert+ can pickpocket one (press E from behind).
+- Delivering a FOLDED_NOTE to Kenny Doyle (INFO_BROKER_PUB): 8 COIN + InformationBrokerSystem intel point.
+- Confronting lieutenants directly: FactionSystem Marchetti Respect −10; FACTION_LIEUTENANT enters AGGRESSIVE state.
+- `CurryHouseSystem.isBackRoomActive(timeHour, dayOfWeek)` returns true on Thursdays 19:00–22:00.
+
+### Post-Pub Rush (Friday/Saturday 22:00–01:00)
+
+On Friday and Saturday nights after 22:00, a post-pub rush begins: 4–6 PUBLIC/DRUNK NPCs queue outside (NPCState.QUEUING). Bashir adds a £2 minimum spend rule. The kitchen is overwhelmed: 20% chance an order is "twenty minutes, mate" (delayed 60 real seconds). Kitchen chaos: if player is in kitchen (trespassing), can steal 1 food item per visit — `CriminalRecord.addCrime(THEFT)`; Notoriety +3.
+
+### Weather Modifier
+
+On cold/wet nights (RAIN, DRIZZLE, COLD_SNAP, FROST): +2 extra PUBLIC NPCs queue outside; Warmth restoration from all hot food increased by +5. Sanjay seeds a `WEATHER_TIP` rumour to the nearest NPC ("It's a miserable night — good curry weather though.").
+
+### Integration Points
+
+- **FactionSystem**: Back room entry at Marchetti Respect ≥ 40; pickpocket fortune alters respect if caught.
+- **StreetSkillSystem**: STEALTH XP +1 per successful pickpocket; TRADING XP +1 per meal ordered.
+- **WarmthSystem**: Hot food grants Warmth; bonus on cold-weather nights.
+- **NotorietySystem**: +2 on BYO ban, +3 on kitchen theft.
+- **CriminalRecord**: THEFT on kitchen food steal; TRESPASSING if caught in back room without access.
+- **RumourNetwork**: `NEIGHBOURHOOD` rumour seeded after each post-pub scuffle; `LOCAL_EVENT` seeded weekly ("Raj Mahal curry night — Bashir's doing his famous lamb balti again.").
+- **NeighbourhoodSystem**: Post-pub noise at 23:00+ seeds NoiseSystem level-3 event.
+- **WantedSystem**: Kitchen theft adds 1 wanted star if Sanjay witnesses it.
+- **TimeSystem**: Opening hours; Thursday back-room schedule; post-pub Friday/Saturday rush.
+- **DisguiseSystem**: Player wearing BALACLAVA refused entry by Bashir.
+- **AchievementSystem**: NATIONAL_DISH (first curry), REGULAR_HARD (corkage waived), CURRY_NIGHT_REGULAR (5 visits), FOLDED_UP (deliver a FOLDED_NOTE), and POST_PUB_PILLAR (order during the post-pub rush on Friday/Saturday).
+
+### NPC Dialogue
+
+- **Bashir** (`CURRY_HOUSE_OWNER`): "Welcome to the Raj Mahal." / "Table for one, is it?" / "We're closing in ten minutes, sir." / "I've seen the papers." (Notoriety ≥ 70) / "Lovely night for a curry." (cold weather) / "Back room's reserved, I'm afraid."
+- **Sanjay** (`CURRY_WAITER`): "Ready to order?" / "Another naan, sir?" / "That's not on the menu, mate." / "That'll be a quid corkage, mate." / "Kitchen's backed up — twenty minutes, mate." / "You look like you need warming up, mate."
+
+### Unit Tests
+
+- `orderMeal(CHICKEN_TIKKA_MASALA, inventory)` with 10 COIN: returns `ACCEPTED`; COIN = 4; CHICKEN_TIKKA_MASALA in inventory.
+- `orderMeal(CHICKEN_TIKKA_MASALA, inventory)` with 3 COIN: returns `INSUFFICIENT_FUNDS`; no state change.
+- `orderMeal(CHICKEN_TIKKA_MASALA, inventory)` at Notoriety 75: returns `REFUSED`; no state change.
+- `payCorkage(inventory)` with 2 COIN: returns `ACCEPTED`; COIN = 1; BYO_LAGER_CORKAGE in inventory.
+- `payCorkage(inventory)` with 0 COIN: returns `INSUFFICIENT_FUNDS`; CAN_OF_LAGER removed from inventory (confiscated).
+- `isBackRoomActive(20.0f, THURSDAY)`: returns true. `isBackRoomActive(20.0f, FRIDAY)`: returns false. `isBackRoomActive(18.5f, THURSDAY)`: returns false.
+- `NATIONAL_DISH` achievement unlocked on first `ACCEPTED` meal order.
+- Warmth bonus (+5) applied to hot food on RAIN weather night.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Dining a full meal**: Set `TimeSystem` to Thursday 18:00. Player has 20 COIN. Player presses E on Sanjay. Selects CHICKEN_TIKKA_MASALA (6 COIN). Call `orderMeal()`. Verify player COIN = 14. Verify CHICKEN_TIKKA_MASALA in inventory. Verify FULL_STOMACH buff active. Verify `AchievementType.NATIONAL_DISH` unlocked. Verify `StreetSkillSystem.getTradingXP()` increased by 1. Verify `RumourNetwork` contains `LOCAL_EVENT` rumour after first order.
+
+2. **BYO lager corkage on cold night**: Set weather to RAIN, TimeSystem to Friday 19:00. Player has CAN_OF_LAGER and 3 COIN. Player enters restaurant. Verify Sanjay intercepts within 2 blocks. Call `payCorkage(inventory)`. Verify player COIN = 2. Verify `BYO_LAGER_CORKAGE` in inventory. Verify `MANGO_LASSI` ordered afterward gains Warmth +20 (normal +15 plus +5 rain bonus). Verify `RumourType.WEATHER_TIP` seeded to nearest NPC.
+
+3. **Marchetti back room pickpocket on Thursday**: Set `TimeSystem` to Thursday 20:00. Player has STEALTH Expert (level 3+). Verify `isBackRoomActive(20.0f, THURSDAY)` == true. Player enters back room (Marchetti Respect ≥ 40). Two `FACTION_LIEUTENANT` NPCs present. Player presses E from behind a lieutenant (NPCState.IDLE, player not in lieutenant's sight cone). Verify `FOLDED_NOTE` added to player inventory. Verify `StreetSkillSystem.getStealthXP()` increased by 1. Player delivers FOLDED_NOTE to Kenny Doyle at INFO_BROKER_PUB. Verify player COIN increased by 8.
+
+4. **Post-pub rush kitchen theft**: Set `TimeSystem` to Friday 23:00. 4–6 PUBLIC/DRUNK NPCs queue outside. Player sneaks into kitchen (TRESPASSING). Player presses E on kitchen food prop. Verify 1 food item added to inventory. Verify `CriminalRecord.hasCrime(THEFT)` is true. Verify Notoriety increased by 3. Verify Sanjay enters ALERT state if within 5 blocks.
+
+5. **Refused service at high Notoriety**: Set player Notoriety = 75. Set `TimeSystem` to Saturday 19:00. Player enters restaurant. Player presses E on Sanjay. Verify `orderMeal(CHICKEN_TIKKA_MASALA, inventory)` returns `REFUSED`. Verify no COIN deducted. Verify Bashir speech: "I've seen the papers." Verify Notoriety not changed (refusal is passive). Verify `REFUSED` is logged but no crime added to `CriminalRecord`.
+
+// ── Issue #1222: The Raj Mahal — Friday Night Curry ──────────────────────────
+// New: CurryHouseSystem.java in ragamuffin.core
+// New: CurryHouseSystemTest.java in src/test/java/ragamuffin/core/
+// New: LandmarkType.CURRY_HOUSE — add to LandmarkType.java
+// New: LandmarkType.getDisplayName() case CURRY_HOUSE → "The Raj Mahal"
+// Existing NPC types: CURRY_HOUSE_OWNER, CURRY_WAITER — already in NPCType.java
+// Existing Materials: CHICKEN_TIKKA_MASALA, LAMB_BALTI, SAAG_ALOO, NAAN_BREAD,
+//   POPPADOMS, MANGO_LASSI, BYO_LAGER_CORKAGE, FOLDED_NOTE — already in Material.java
+// New AchievementTypes: NATIONAL_DISH, REGULAR_HARD, CURRY_NIGHT_REGULAR,
+//   FOLDED_UP, POST_PUB_PILLAR — add to AchievementType.java
+// New RumourType: (LOCAL_EVENT and NEIGHBOURHOOD already present; no new types needed)
+// Integrates: FactionSystem, StreetSkillSystem, WarmthSystem, NotorietySystem,
+//   CriminalRecord, WantedSystem, RumourNetwork, NeighbourhoodSystem, TimeSystem,
+//   DisguiseSystem, InformationBrokerSystem, AchievementSystem, NoiseSystem
