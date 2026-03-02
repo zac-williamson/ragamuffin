@@ -2452,7 +2452,40 @@ public enum NPCType {
      * </ul>
      * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    BIG_ISSUE_VENDOR(25f, 0f, 0f, false);
+    BIG_ISSUE_VENDOR(25f, 0f, 0f, false),
+
+    // ── Issue #1303: Northfield Dave's Carpets ────────────────────────────────
+
+    /**
+     * CARPET_SALESMAN — Dave Hogan, proprietor of Dave's Carpets.
+     * <ul>
+     *   <li>Stands outside the shop 09:00–17:00 Mon–Sat cycling through closing-down pitches.</li>
+     *   <li>Sells SOFA, CARPET_OFFCUT, SACK_TRUCK; goes DEFLATED for 24h after TRADING_STANDARDS_WARNING.</li>
+     *   <li>Enters DEFLATED state when reported to Trading Standards (Sandra's inspection).</li>
+     * </ul>
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    CARPET_SALESMAN(25f, 0f, 0f, false),
+
+    /**
+     * DELIVERY_DRIVER — Kev, who mans the stockroom at Dave's Carpets.
+     * <ul>
+     *   <li>Present during shop hours; can be distracted with a CHOCOLATE_BAR for 90 seconds.</li>
+     *   <li>Guards the CARPET_ROLL_PROP in the stockroom.</li>
+     * </ul>
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    DELIVERY_DRIVER(25f, 0f, 0f, false),
+
+    /**
+     * TRADING_STANDARDS_OFFICER — Sandra, the Trading Standards inspector.
+     * <ul>
+     *   <li>Spawned by CarpetShopSystem when the player reports Dave's closing-down claim (3rd repeat).</li>
+     *   <li>Issues TRADING_STANDARDS_WARNING prop; triggers Dave's DEFLATED state.</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    TRADING_STANDARDS_OFFICER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

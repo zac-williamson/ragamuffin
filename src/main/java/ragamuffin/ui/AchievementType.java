@@ -4972,6 +4972,71 @@ public enum AchievementType {
         "Tip-Off",
         "You warned Bert about the inspector. He owes you one. He probably won't pay.",
         1
+    ),
+
+    // ── Issue #1303: Northfield Dave's Carpets ────────────────────────────────
+
+    /**
+     * Awarded when the player earns commission by referring 5 NPCs to Dave's Carpets.
+     * Each referral with a CLOSING_DOWN_FLYER yields +1 COIN.
+     * Seeds DEAL_BROKER rumour on unlock.
+     */
+    CARPET_KING(
+        "Carpet King",
+        "Five suckers walked through Dave's door because of you. He's still closing down.",
+        5
+    ),
+
+    /**
+     * Awarded when the player delivers a SOFA to a squat AND has CARPET_OFFCUT flooring placed.
+     * Requires SACK_TRUCK for transport. +20 Vibe via SquatFurnishingTracker.
+     */
+    INTERIOR_DECORATOR(
+        "Interior Decorator",
+        "Sofa delivered. Carpet down. The squat has never looked so grim.",
+        1
+    ),
+
+    /**
+     * Awarded when the player loots the CARPET_ROLL_PROP while Kev is distracted.
+     * Yields CARPET_OFFCUT x2-4 and SACK_TRUCK. Seeds CARPET_THIEF rumour.
+     */
+    FIVE_FINGER_DISCOUNT(
+        "Five-Finger Discount",
+        "Kev had a Twix. You had a carpet roll. Fair trade, really.",
+        1
+    ),
+
+    /**
+     * Awarded when the player earns 8 COIN from their own fake closing-down pitch
+     * without Keith (MARKET_INSPECTOR) catching them.
+     * Requires CLOSING_DOWN_FLYERs and 4 sales before inspector spawn.
+     */
+    COPYCAT_DAVE(
+        "Copycat Dave",
+        "You set up your own closing-down sale. Dave's been doing it three years. You managed four sales.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully reports Dave to Sandra (Trading Standards).
+     * Dave enters DEFLATED state for 24h; TRADING_STANDARDS_WARNING prop placed.
+     * Seeds DAVE_REPORTED rumour.
+     */
+    REPORTED_DAVE(
+        "Reported Dave",
+        "You grassed up Dave to Trading Standards. Sandra was not amused. Dave was less so.",
+        1
+    ),
+
+    /**
+     * Awarded when the player interacts with Dave while he is in DEFLATED state
+     * (after Sandra's visit). Dave delivers a mournful speech.
+     */
+    STANDING_CUSTOMER_DAVE(
+        "Standing Customer",
+        "You visited Dave while he was at rock bottom. He appreciated it. Sort of.",
+        1
     );
 
     private final String name;

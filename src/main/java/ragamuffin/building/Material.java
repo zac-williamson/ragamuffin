@@ -5161,7 +5161,44 @@ public enum Material {
      * 5× BIG_ISSUE_MAG. Can be pickpocketed (55% detection base; −20% with
      * STREET_SMARTS ≥ 5).
      */
-    CANVAS_BAG("Canvas Bag");
+    CANVAS_BAG("Canvas Bag"),
+
+    // ── Issue #1303: Northfield Dave's Carpets ────────────────────────────────
+
+    /**
+     * CARPET_OFFCUT — a remnant piece of carpet from Dave's stockroom.
+     * Purchased for 4 COIN or looted (×2–4) from a CARPET_ROLL_PROP when Kev is distracted.
+     * Placed as flooring in the squat grants a warmth bonus (+2 Vibe/block via SquatFurnishingTracker).
+     */
+    CARPET_OFFCUT("Carpet Offcut"),
+
+    /**
+     * SOFA — a bulky second-hand sofa purchased from Dave for 12 COIN.
+     * Can be transported to a squat/property using a SACK_TRUCK.
+     * Grants +20 comfort (Vibe) via SquatFurnishingTracker on delivery.
+     * There is a 45% witness-calls-police risk while transporting it.
+     */
+    SOFA("Sofa"),
+
+    /**
+     * CLOSING_DOWN_FLYER — crafted from NEWSPAPER + MARKER_PEN.
+     * Hand to NPCs to refer them to Dave for +1 COIN commission each.
+     * Also used as a prop when setting up the player's own fake closing-down pitch.
+     */
+    CLOSING_DOWN_FLYER("Closing-Down Flyer"),
+
+    /**
+     * SACK_TRUCK — a fold-flat trolley purchased for 6 COIN from Dave or looted from
+     * the SACK_TRUCK_PROP in the stockroom. Required to transport a SOFA.
+     * Looting from stockroom requires Kev to be distracted.
+     */
+    SACK_TRUCK("Sack Truck"),
+
+    /**
+     * CARPET_SAMPLE_BOOK — a large ring-binder of carpet samples taken from the shop floor.
+     * Can be sold to FenceSystem for 3 COIN or used as a prop in the player's fake pitch.
+     */
+    CARPET_SAMPLE_BOOK("Carpet Sample Book");
 
     private final String displayName;
 
@@ -8226,6 +8263,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // counterfeit magazine
             case CANVAS_BAG:
                 return IconShape.BOX;         // shoulder bag
+
+            // Issue #1303: Northfield Dave's Carpets
+            case CARPET_OFFCUT:
+                return IconShape.BOX;         // rolled carpet offcut
+            case SOFA:
+                return IconShape.BOX;         // bulky sofa
+            case CLOSING_DOWN_FLYER:
+                return IconShape.FLAT_PAPER;  // printed flyer
+            case SACK_TRUCK:
+                return IconShape.BOX;         // fold-flat trolley
+            case CARPET_SAMPLE_BOOK:
+                return IconShape.BOX;         // ring-binder of samples
 
             default:
                 return IconShape.BOX;
