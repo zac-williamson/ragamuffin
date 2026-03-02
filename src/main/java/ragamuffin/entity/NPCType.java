@@ -1868,7 +1868,35 @@ public enum NPCType {
     /** Tout selling knock-off scarves and counterfeit tickets. */
     FOOTBALL_TOUT(30f, 0f, 0f, false),
     /** Mounted police officer — extra intimidation radius. */
-    POLICE_HORSE_OFFICER(80f, 12f, 0f, false);
+    POLICE_HORSE_OFFICER(80f, 12f, 0f, false),
+
+    // ── Issue #1167: Northfield Amateur Boxing Club ───────────────────────
+
+    /**
+     * Amateur boxer — regular club member at Tommy's Gym.
+     * Available Mon/Wed/Fri 18:00–21:00 and Friday fight nights.
+     * Press E to spar (requires BOXING_RING_PROP, BOXING skill ≥ 2).
+     */
+    BOXING_AMATEUR(35f, 6f, 1.8f, false),
+
+    /**
+     * Boxing prospect — Tommy's top pupil; harder opponent for white-collar bouts.
+     * Only spawns during Friday Night Fights (20:00–23:00).
+     */
+    BOXING_PROSPECT(45f, 9f, 1.5f, false),
+
+    /**
+     * Fight promoter — Wayne; anchored to BET_TABLE_PROP during underground
+     * white-collar circuit nights (alternate Saturdays 22:00+).
+     * Takes bets and offers bout-fixing bribes.
+     */
+    FIGHT_PROMOTER(30f, 0f, 0f, false),
+
+    /**
+     * White-collar boxer — office worker opponent in the underground circuit.
+     * Spawns on alternate Saturdays 22:00. Better funded, worse technique.
+     */
+    WHITE_COLLAR_BOXER(30f, 5f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

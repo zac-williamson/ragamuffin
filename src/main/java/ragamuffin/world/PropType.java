@@ -2371,7 +2371,47 @@ public enum PropType {
      * Destroyed by 4 punches; yields WOOD.
      * Press E to interact with the tout's wares.
      */
-    MATCH_DAY_STALL_PROP(1.20f, 0.80f, 0.60f, 4, Material.WOOD);
+    MATCH_DAY_STALL_PROP(1.20f, 0.80f, 0.60f, 4, Material.WOOD),
+
+    // ── Issue #1167: Northfield Amateur Boxing Club ───────────────────────
+
+    /**
+     * SPEED_BAG_PROP — wall-mounted speed bag at Tommy's Gym.
+     * Press E to train dexterity (max 3/day). Each session reduces incoming
+     * damage by 1 per SPEED_BAG_CHALK item consumed during sparring.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    SPEED_BAG_PROP(0.30f, 0.30f, 0.30f, 5, Material.SCRAP_METAL),
+
+    /**
+     * BET_TABLE_PROP — Wayne's betting table in the back room.
+     * Active only during underground white-collar circuit nights
+     * (alternate Saturdays 22:00–02:00). Press E to place bets or
+     * accept bout-fixing bribe offers.
+     * Destroyed by 4 punches; yields WOOD.
+     */
+    BET_TABLE_PROP(1.20f, 0.80f, 0.60f, 4, Material.WOOD),
+
+    /**
+     * PADLOCK_PROP — padlock on Derek's terraced-house door (trophy quest).
+     * Lockpick to enter. Press E to attempt lockpick.
+     * Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    PADLOCK_PROP(0.20f, 0.25f, 0.10f, 3, Material.SCRAP_METAL),
+
+    /**
+     * NOTICE_BOARD_PROP (boxing club) — cork notice board inside Tommy's Gym.
+     * Displays clues for the trophy quest and Friday Night Fight sign-up sheet.
+     * Press E to read / sign up. Destroyed by 3 punches; yields WOOD.
+     */
+    BOXING_NOTICE_BOARD_PROP(0.80f, 1.00f, 0.10f, 3, Material.WOOD),
+
+    /**
+     * BOXING_TROPHY_CABINET_PROP — glass-fronted trophy cabinet in Tommy's Gym.
+     * Contains the 1987 ABA trophy (or empty slot if stolen by Derek).
+     * Destroyed by 5 punches; yields GLASS.
+     */
+    BOXING_TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 5, Material.GLASS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -455,5 +455,18 @@ public enum RumourType {
      * — seeded by MatchDaySystem when POLICE_HORSE_OFFICER spawns.
      * Reduces NPC crime willingness by 10% for the duration.
      * Spreads via PUBLIC and AWAY_FAN NPCs. */
-    POLICE_PRESENCE;
+    POLICE_PRESENCE,
+
+    // ── Issue #1167: Northfield Amateur Boxing Club ───────────────────────
+
+    /** "That lad from Tommy's Gym — proper fighter. Word is he's got real talent."
+     * — seeded by BoxingClubSystem when the player wins a Friday Night Fight.
+     * Spreads via BOXING_AMATEUR and BOXING_COACH NPCs; boosts STREET_LADS Respect +3. */
+    STREET_TALENT,
+
+    /** "Heard there's an underground fight night on Saturday — serious money involved."
+     * — seeded by BoxingClubSystem when the white-collar circuit unlocks (2nd win).
+     * Spreads via FIGHT_PROMOTER and BOXING_PROSPECT NPCs within 20 blocks of BOXING_CLUB.
+     * Draws WHITE_COLLAR_BOXER NPCs toward the gym on alternate Saturdays. */
+    UNDERGROUND_FIGHT;
 }

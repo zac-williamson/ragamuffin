@@ -3939,7 +3939,41 @@ public enum Material {
 
     /** Fabric scrap — drops from CHARITY_SHOP crates and LAUNDERETTE lost-property.
      * Used to craft KNOCKOFF_SCARF (2× FABRIC_SCRAP = 1 scarf). */
-    FABRIC_SCRAP("Fabric Scrap");
+    FABRIC_SCRAP("Fabric Scrap"),
+
+    // ── Issue #1167: Northfield Amateur Boxing Club ───────────────────────
+
+    /** Gym membership card — 5 COIN/week from Tommy. Required after first training session.
+     * Allows unlimited bag training (up to 3/day) and entry to Friday Night Fights. */
+    GYM_MEMBERSHIP_CARD("Gym Membership Card"),
+
+    /** Fight entry form — signed up Mon–Thu at BOXING_NOTICE_BOARD_PROP for Friday Night Fights.
+     * Requires BOXING skill ≥ 3 and a valid GYM_MEMBERSHIP_CARD. */
+    FIGHT_ENTRY_FORM("Fight Entry Form"),
+
+    /** Boxing gloves — required for sparring and fight bouts.
+     * Purchased from Tommy for 3 COIN or found in the gym locker area. */
+    BOXING_GLOVES("Boxing Gloves"),
+
+    /** Loaded glove — BOXING_GLOVES + SCRAP_METAL crafted item.
+     * 40% chance of being caught on pat-down → ejection + FIGHT_FIXING crime. */
+    LOADED_GLOVE("Loaded Glove"),
+
+    /** Fight purse — cash prize from a bout win. 8 COIN for Friday Night Fights;
+     * 30 COIN for the underground white-collar circuit. */
+    FIGHT_PURSE("Fight Purse"),
+
+    /** Protein bar — consolation prize from Tommy after a Friday Night Fight loss.
+     * Restores 10 health. Tooltip: "It's not about the result, son." */
+    PROTEIN_BAR("Protein Bar"),
+
+    /** Speed-bag chalk — consumed during sparring to reduce incoming damage by 1 per piece.
+     * Found in gym supply cupboard or bought from Tommy for 1 COIN. */
+    SPEED_BAG_CHALK("Speed Bag Chalk"),
+
+    /** ABA Trophy 1987 — the stolen trophy from Tommy's display cabinet.
+     * Quest item: retrieve from Derek's house → return to Tommy → LEGACY_OF_THE_RING. */
+    ABA_TROPHY("ABA Trophy 1987");
 
     private final String displayName;
 
@@ -4943,6 +4977,21 @@ public enum Material {
             case WALLET_FAN:             return cs(0.28f, 0.18f, 0.10f,  // Dark leather
                                                    0.72f, 0.60f, 0.20f); // Gold trim
             case FABRIC_SCRAP:           return c(0.72f, 0.65f, 0.58f);  // Grey fabric
+
+            // Issue #1167: Northfield Amateur Boxing Club
+            case GYM_MEMBERSHIP_CARD:   return c(0.20f, 0.55f, 0.30f);  // Green card
+            case FIGHT_ENTRY_FORM:      return c(0.88f, 0.88f, 0.75f);  // Cream form paper
+            case BOXING_GLOVES:         return cs(0.80f, 0.10f, 0.10f,  // Red glove leather
+                                                  0.22f, 0.08f, 0.08f); // Dark trim
+            case LOADED_GLOVE:          return cs(0.55f, 0.55f, 0.58f,  // Grey metal weight
+                                                  0.80f, 0.10f, 0.10f); // Red leather outer
+            case FIGHT_PURSE:           return cs(0.82f, 0.68f, 0.15f,  // Gold coin
+                                                  0.28f, 0.20f, 0.08f); // Dark envelope
+            case PROTEIN_BAR:           return cs(0.38f, 0.25f, 0.08f,  // Brown wrapper
+                                                  0.92f, 0.75f, 0.15f); // Gold branding
+            case SPEED_BAG_CHALK:       return c(0.90f, 0.90f, 0.88f);  // White chalk dust
+            case ABA_TROPHY:            return cs(0.82f, 0.68f, 0.15f,  // Gold trophy body
+                                                  0.62f, 0.48f, 0.10f); // Dark gold base
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -6489,6 +6538,24 @@ public enum Material {
                 return IconShape.CARD;        // flat wallet
             case FABRIC_SCRAP:
                 return IconShape.FLAT_PAPER;  // scrap of fabric
+
+            // Issue #1167: Northfield Amateur Boxing Club
+            case GYM_MEMBERSHIP_CARD:
+                return IconShape.CARD;        // laminated gym card
+            case FIGHT_ENTRY_FORM:
+                return IconShape.FLAT_PAPER;  // official sign-up form
+            case BOXING_GLOVES:
+                return IconShape.BOX;         // pair of gloves
+            case LOADED_GLOVE:
+                return IconShape.BOX;         // weighted glove
+            case FIGHT_PURSE:
+                return IconShape.BOX;         // envelope with prize money
+            case PROTEIN_BAR:
+                return IconShape.FOOD;        // wrapped energy bar
+            case SPEED_BAG_CHALK:
+                return IconShape.BOX;         // chalk block
+            case ABA_TROPHY:
+                return IconShape.CYLINDER;    // trophy cup shape
 
             default:
                 return IconShape.BOX;

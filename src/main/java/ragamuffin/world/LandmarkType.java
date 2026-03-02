@@ -550,7 +550,18 @@ public enum LandmarkType {
      * 4 coach parking bays with COACH_PROP spawns on match days.
      * Managed by MatchDaySystem.
      */
-    STADIUM_COACH_PARK;
+    STADIUM_COACH_PARK,
+
+    // ── Issue #1167: Northfield Amateur Boxing Club ───────────────────────
+
+    /**
+     * Issue #1167: Tommy's Gym — Northfield Amateur Boxing Club.
+     * A brick unit on the industrial estate. Contains BOXING_BAG_PROP,
+     * BOXING_RING_PROP, SPEED_BAG_PROP, TROPHY_CABINET_PROP, NOTICE_BOARD_PROP,
+     * and BET_TABLE_PROP (underground circuit nights).
+     * Managed by BoxingClubSystem.
+     */
+    BOXING_CLUB;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -639,6 +650,7 @@ public enum LandmarkType {
             case RAOB_LODGE:            return "Northfield Buffaloes Lodge No. 347";
             case COUNCIL_GARAGES:       return "Northfield Estate Garages";
             case STADIUM_COACH_PARK:    return "Coach Park";
+            case BOXING_CLUB:           return "Tommy's Gym";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
