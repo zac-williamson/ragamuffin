@@ -2611,6 +2611,32 @@ public enum Material {
      */
     CYBERNET_MEMBERSHIP_CARD("Cybernet Membership Card"),
 
+    // ── Issue #1224: Northfield Cybernet Internet Café — Online Marketplace ──
+
+    /**
+     * Printer Ink — a cartridge of black ink for the PRINTER_PROP at Cybernet.
+     * Purchased from PoundShopSystem or NewsagentSystem (2 COIN).
+     * One cartridge = one document printed. Required for FORGED_UC_LETTER and
+     * FAKE_REFERENCE_LETTER; also needed for FORGED_TV_LICENCE.
+     */
+    PRINTER_INK("Printer Ink"),
+
+    /**
+     * Forged UC Letter — a forged Universal Credit letter printed at Cybernet's
+     * back-room PRINTER_PROP (1 BLANK_PAPER + 1 PRINTER_INK).
+     * Bypasses the DWPSystem 3-day waiting period when presented at JobCentreSystem.
+     * 20% detection chance; triggers DOCUMENT_FRAUD on CriminalRecord if caught.
+     */
+    FORGED_UC_LETTER("Forged UC Letter"),
+
+    /**
+     * Fake Reference Letter — a forged employment reference printed at Cybernet's
+     * back-room PRINTER_PROP (1 BLANK_PAPER + 1 PRINTER_INK).
+     * Presented at TempAgencySystem to qualify for higher-paid shifts without
+     * prior work history. Triggers DOCUMENT_FRAUD on CriminalRecord if detected.
+     */
+    FAKE_REFERENCE_LETTER("Fake Reference Letter"),
+
     // ── Issue #1087: The Vaults Nightclub ─────────────────────────────────────
 
     /**

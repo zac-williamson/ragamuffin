@@ -4139,6 +4139,48 @@ public enum AchievementType {
         "Ghost Protocol",
         "Gone in five minutes. The investigator went home. Gary was impressed.",
         1
+    ),
+
+    // ── Issue #1224: Northfield Cybernet Internet Café ────────────────────────
+
+    /**
+     * Awarded on the first successful FlipIt sale at Cybernet's online marketplace.
+     * The hustle doesn't sleep, even at 22:58 on a Tuesday.
+     */
+    DIGITAL_HUSTLER(
+        "Buy Low, Sell High, Stay Dodgy",
+        "Your first FlipIt sale. Asif nodded approvingly. Sort of.",
+        1
+    ),
+
+    /**
+     * Awarded after completing 10 total FlipIt sales at Cybernet.
+     * You've become a one-man grey-market logistics operation.
+     */
+    POWERSELLER(
+        "Feedback: A+++++ Would Scam Again",
+        "Ten sales on FlipIt. Hamza's impressed. Asif doesn't want to know.",
+        10
+    ),
+
+    /**
+     * Awarded on the first successful phishing session payout at Cybernet.
+     * A fictional Nigerian prince could not be reached for comment.
+     */
+    NIGERIAN_PRINCE(
+        "Congratulations, You Have Been Selected",
+        "You ran a phishing scam from Asif's terminal. The coins are real. The guilt is not.",
+        1
+    ),
+
+    /**
+     * Awarded on first successful document forgery at Cybernet's back-room printer.
+     * Hamza said "nice one" and then immediately went back to his phone.
+     */
+    FORGER(
+        "Ctrl+P, Ctrl+F Life",
+        "Printed your first forged document at Cybernet. Hamza looked the other way.",
+        1
     );
 
     private final String name;

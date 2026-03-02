@@ -631,7 +631,30 @@ public class CriminalRecord {
          * Penalty: WantedSystem +2 stars, Notoriety +40.
          * Achievement: BAIL_JUMPER.
          */
-        BAIL_JUMPING("Bail jumping (failure to surrender)");
+        BAIL_JUMPING("Bail jumping (failure to surrender)"),
+
+        // ── Issue #1224: Northfield Cybernet Internet Café ────────────────────
+
+        /**
+         * Recorded when a STOLEN_PHONE or COUNTERFEIT_NOTE listing on FlipIt is
+         * detected by police passing within 10 blocks of Cybernet at Notoriety ≥ 40.
+         * Penalty: WantedSystem +1 star, Notoriety +5.
+         */
+        COMPUTER_FRAUD("Computer fraud"),
+
+        /**
+         * Recorded when the player prints a forged document (FORGED_UC_LETTER,
+         * FAKE_REFERENCE_LETTER) at the Cybernet back-room PRINTER_PROP, witnessed
+         * by Asif or Hamza. Penalty: Notoriety +8 if caught printing in plain sight.
+         */
+        DOCUMENT_FRAUD("Document fraud"),
+
+        /**
+         * Recorded when the player runs a phishing scam session at Cybernet and
+         * Notoriety ≥ 50 triggers the 10% detection risk.
+         * Penalty: WantedSystem +1 star.
+         */
+        CYBER_FRAUD("Cyber fraud");
 
         private final String displayName;
 
