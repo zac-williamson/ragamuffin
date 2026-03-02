@@ -32943,3 +32943,136 @@ At 18:45 (15 min before close), Kim sweeps cash from the till into an `ENVELOPE_
 // RumourType.SALON_GOSSIP, CONTRABAND_SHIPMENT, CRIME_SIGHTING already exist ✓
 // BuildingQuestRegistry already registers NAIL_SALON quest ✓
 // WAG NPCType: check NPCType.java for WAG_NPC — add if missing
+
+---
+
+## Add Northfield Poundstretcher — Own-Brand Bargains, Shoplifting Security & the Bulk-Buy Hustle
+
+**Landmark**: `POUND_SHOP` (already registered in `LandmarkType`, `POUND_SHOP_MANAGER` NPC type already exists — no system yet)
+
+### Overview
+
+The Poundstretcher on Northfield High Street is a sacred institution: floor-to-ceiling shelving of own-brand cleaning products, value crisps, and suspicious chocolate. Sharon runs it with an iron fist, a hawk's eye, and a deeply personal relationship with the CCTV monitors. A `PoundShopSystem` brings this landmark to life.
+
+### Shop Inventory & Purchase System
+
+Sharon (`POUND_SHOP_MANAGER`) operates behind the `SHOPKEEPER_COUNTER_PROP`. The shop sells a fixed catalogue of own-brand goods, all priced at 1 COIN (the brand promise):
+
+| Item | Material | Effect |
+|------|----------|--------|
+| Value Crisps | `OWN_BRAND_CRISPS` | Hunger +8 |
+| No-Name Cola | `OWN_BRAND_COLA` | Hunger +5, energy +5 |
+| Washing Powder | `WASHING_POWDER` | Existing material |
+| Paracetamol | `PARACETAMOL` | Existing material |
+| Tin of Beans | `TIN_OF_BEANS` | Existing material |
+| Dodgy Pasty | `DODGY_PASTY` | Existing material; 15% chance of food poisoning (hunger −20) |
+| Bargain Bucket Crisps | `BARGAIN_BUCKET_CRISPS` | Hunger +25; 5 COIN; bulk buy |
+
+Press `E` on Sharon / the counter to open the `PoundShopUI` purchase menu. Requires sufficient COIN; no credit.
+
+**Bulk Buy Mechanic**: Purchase 5 of any item in one transaction (5× COIN) to receive 6 items — Sharon is contractually obliged to give a "deal" she silently resents.
+
+### Shoplifting & Sharon's Eagle Eye
+
+Every shelf prop (`CRATE_PROP`) is a steal target. Press `E` on a shelf when Sharon is not facing the player (LOS check) to attempt a pocket:
+
+- **Sharon LOS clear**: 30% base catch chance (CCTV). If caught: `CrimeType.SHOPLIFTING` criminal record entry, Notoriety +2, banned from Poundstretcher for 2 in-game days.
+- **Sharon watching**: 75% catch chance. On catch she says: *"I've seen you. I've always seen you. This is a £1 shop, love. Was it worth it?"*
+- **Notoriety Tier 2+**: Sharon pre-emptively calls police on player entry. Player has 20 seconds to leave before police arrive.
+- **Disguise (`GREGGS_APRON` or `HIGH_VIS_JACKET`)**: catch chance halved — Sharon is suspicious but not certain.
+- **CCTV Blind Spot**: One shelf unit per day is randomly designated the blind spot (no CCTV coverage). Sharon still has natural LOS range of 8 blocks. Stealing from the blind spot reduces base catch to 10%.
+
+### The Delivery Drop Hustle
+
+Every in-game day at 08:00 a `DELIVERY_DRIVER` NPC arrives at the loading bay (rear of building) with a `PALLET_PROP`. The pallet contains 2–4 random items from the shop catalogue plus a 10% chance of a `WHOLESALE_SPIRITS` item (fenceable at 6 COIN via FenceSystem — Sharon doesn't know it's on the manifest).
+
+Player can intercept the pallet at the loading bay **before** the driver brings it inside (2-minute window):
+- Press `E` on `PALLET_PROP` to loot one random item — driver is distracted by paperwork.
+- If driver catches the player: `CrimeType.THEFT` + Notoriety +3 + driver calls police.
+
+### Banned-Customer Economy
+
+If banned, a sympathetic `STREET_LAD_NPC` outside will offer proxy shopping: player gives them COIN, they buy the item and return it at a 50% markup. 30% chance the Street Lad runs off with the coins instead. Achievement `MIDDLE_MAN` on first successful proxy transaction.
+
+### Sharon's Dialogues
+
+Sharon cycles through 8 speech lines while on duty:
+
+```
+"Everything's a pound. Except that. That's £1.49."
+"No, we don't do refunds. Read the sign."
+"CCTV's recording, sweetheart."
+"Are you going to buy something or just breathe on the shelves?"
+"The pasties are today's. Mostly."
+"Yes, it's all own-brand. No, I don't know what's in the cola."
+"This isn't a library. Buy something."
+"Keep your hands where I can see them."
+```
+
+### New Materials
+
+- `OWN_BRAND_CRISPS` — hunger +8; sellable to Fence for 0 COIN (worthless).
+- `OWN_BRAND_COLA` — hunger +5, energy +5; sellable to Fence for 0 COIN.
+- `BARGAIN_BUCKET_CRISPS` — hunger +25; 5 COIN bulk item.
+- `WHOLESALE_SPIRITS` — fence-only; 6 COIN from FenceSystem.
+
+### New PropTypes
+
+- `SHOPKEEPER_COUNTER_PROP` — already exists (reuse if present, otherwise add).
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `EVERY_POUNDS_A_PRISONER` | Spend 20 COIN in Poundstretcher across any number of visits |
+| `FIVE_FINGER_DISCOUNT` | Successfully steal from Poundstretcher without being caught |
+| `SHARON_KNOWS` | Get caught shoplifting by Sharon 3 times |
+| `BULK_BUYER` | Trigger the bulk-buy 6-for-5 deal |
+| `MIDDLE_MAN` | Successful proxy purchase via Street Lad while banned |
+| `PALLET_PIRATE` | Intercept the delivery pallet before the driver gets inside |
+
+### Integrations
+
+- **FenceSystem**: `WHOLESALE_SPIRITS` added to buy table at 6 COIN.
+- **WitnessSystem**: A POLICE NPC within 6 blocks during a shoplifting catch auto-issues an arrest rather than a criminal record entry.
+- **NeighbourhoodSystem**: Shop boards windows when vibes < 30.
+- **DisguiseSystem**: `GREGGS_APRON` / `HIGH_VIS_JACKET` halve shoplifting catch chance.
+- **NotorietySystem**: Tier 2+ triggers pre-emptive police call on player entry.
+- **RumourNetwork**: Banned player generates `LOCAL_EVENT` rumour ("Sharon's got your face burned in her brain, mate.").
+- **NewspaperSystem**: Three consecutive thefts from Poundstretcher generates headline: *"High Street Poundstretcher Targeted by Prolific Shoplifter — Sharon Speaks Out."*
+- **BusSystem**: `DELIVERY_DRIVER` NPC arrives by bus at BUS_STOP_HIGH_STREET at 07:55 each day.
+
+### Unit Tests
+
+- `PoundShopSystem.getBaseTheftCatchChance(sharonWatching=false, disguise=false)` → 0.30f.
+- `PoundShopSystem.getBaseTheftCatchChance(sharonWatching=true, disguise=false)` → 0.75f.
+- `PoundShopSystem.getBaseTheftCatchChance(sharonWatching=false, disguise=true)` → 0.15f.
+- `PoundShopSystem.isOpen(hour=08.5f, dayOfWeek=MONDAY)` → true; `isOpen(19.0f, MONDAY)` → false; `isOpen(10.5f, SUNDAY)` → true; `isOpen(16.5f, SUNDAY)` → false.
+- `PoundShopSystem.getBulkBuyQuantity(itemCount=5)` → 6.
+- `PoundShopSystem.isBanned(daysSinceBan=1)` → true; `isBanned(daysSinceBan=2)` → false.
+- `PoundShopSystem.getDeliveryLootCount(rng=seeded)` → value between 2 and 4 inclusive.
+- `PoundShopSystem.isCctvBlindSpot(shelfIndex=dailyBlindSpot)` → true; `isCctvBlindSpot(otherShelf)` → false.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Buying an item deducts COIN and adds item**: Set player COIN to 3. Set time to 10:00 (shop open). Press E on counter. Select `OWN_BRAND_CRISPS` (1 COIN). Confirm purchase. Verify COIN count is now 2. Verify `OWN_BRAND_CRISPS` in player inventory count is 1. Verify Sharon says one of her 8 speech lines within 10 seconds.
+
+2. **Bulk buy gives 6 for 5**: Set player COIN to 5. Select bulk buy option for `OWN_BRAND_CRISPS` (5 COIN for 6). Confirm. Verify COIN is now 0. Verify `OWN_BRAND_CRISPS` count in inventory is 6. Verify `BULK_BUYER` achievement unlocked.
+
+3. **Shoplifting caught by Sharon triggers ban and criminal record**: Set Sharon NPC position facing the theft shelf (LOS active). Set RNG seed to guarantee catch (roll < 0.75). Press E on a `CRATE_PROP` shelf. Verify `OWN_BRAND_CRISPS` NOT added to inventory. Verify `CriminalRecord` contains `SHOPLIFTING`. Verify Notoriety increased by 2. Verify `PoundShopSystem.isBanned(daysSinceBan=0)` returns true. Verify Sharon's catch speech fired.
+
+4. **Shoplifting from CCTV blind spot succeeds at low catch rate**: Identify daily blind spot shelf index. Set RNG seed to guarantee success (roll ≥ 0.10). Press E on blind spot shelf. Verify item added to inventory. Verify `FIVE_FINGER_DISCOUNT` achievement unlocked.
+
+5. **Tier 2 Notoriety triggers police on player entry**: Set Notoriety to 200 (Tier 2). Set time to 11:00. Player enters Poundstretcher boundary. Verify Sharon says *"I'm calling the police."* within 5 seconds. Advance 20 in-game seconds. Verify at least one POLICE NPC has spawned at or near `LandmarkType.POUND_SHOP`.
+
+6. **Delivery pallet interception yields item**: Advance in-game time to 08:00 to trigger daily delivery. Verify `DELIVERY_DRIVER` NPC spawns at loading bay within 60 frames. Press E on `PALLET_PROP` within 2 in-game minutes. Verify player inventory receives one item from the catalogue. Verify `PALLET_PIRATE` achievement unlocked on first interception.
+
+// ── Issue #1161: Northfield Poundstretcher ────────────────────────────────
+// New: PoundShopSystem.java in ragamuffin.core
+// LandmarkType.POUND_SHOP already exists ✓
+// NPCType.POUND_SHOP_MANAGER already exists ✓
+// New Materials: OWN_BRAND_CRISPS, OWN_BRAND_COLA, BARGAIN_BUCKET_CRISPS, WHOLESALE_SPIRITS (add to Material.java)
+// New Achievements: EVERY_POUNDS_A_PRISONER, FIVE_FINGER_DISCOUNT, SHARON_KNOWS, BULK_BUYER, MIDDLE_MAN, PALLET_PIRATE (add to AchievementType.java)
+// CrimeType.SHOPLIFTING already exists ✓
+// RumourType.LOCAL_EVENT already exists ✓
+// DELIVERY_DRIVER NPCType: add if missing in NPCType.java
