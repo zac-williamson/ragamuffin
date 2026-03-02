@@ -763,5 +763,26 @@ public enum RumourType {
      * — seeded by ClaimsManagementSystem when the player pays the 10-COIN smooth-over bribe
      * to Gary to reset the fraud threshold.
      * Spreads via STREET_LAD and PUBLIC NPCs; MARCHETTI_CREW Respect +2. */
-    SMOOTH_OVER;
+    SMOOTH_OVER,
+
+    // ── Issue #1299: Northfield Street Chuggers ──────────────────────────────
+
+    /** "Heard someone signed up for a direct debit outside the charity shop — still paying it now."
+     * — seeded by ChuggerSystem when the player agrees to the STANDING_ORDER direct debit.
+     * Spreads via PUBLIC and PENSIONER NPCs within 20 blocks of the charity shop.
+     * Ambient flavour; minor sympathy penalty among STREET_LADS (−1 Respect). */
+    DIRECT_DEBIT,
+
+    /** "One of the chuggers outside the charity shop said someone actually stopped and chatted — proper nice of 'em."
+     * — seeded by ChuggerSystem when the player donates (−2 COIN), reducing Notoriety −1.
+     * Spreads via CHUGGER and PUBLIC NPCs; minor warm-fuzzy flavour, no gameplay effect. */
+    GRATEFUL_CHUGGER,
+
+    /** "Someone's been doing a fake charity collection on the high street — wearing a tabard and everything."
+     * — seeded by ChuggerSystem when the player is detected committing fake-tabard fraud
+     * (2nd suspicious donation near Tracy or POLICE).
+     * Spreads via CHUGGER_LEADER (Tracy), PUBLIC, and POLICE NPCs within 30 blocks.
+     * Triggers Notoriety +6, WantedSystem +1, CHARITY_FRAUD in CriminalRecord.
+     * NewspaperSystem headline eligible. */
+    CHARITY_FRAUD_RUMOUR;
 }

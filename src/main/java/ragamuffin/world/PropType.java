@@ -3111,7 +3111,19 @@ public enum PropType {
      * Decorative; indicates pharmacy is open.
      * 0.8×1.0×0.1; hitsToBreak = 2 (yields GLASS).
      */
-    CHEMIST_CROSS_PROP(0.80f, 1.00f, 0.10f, 2, Material.GLASS);
+    CHEMIST_CROSS_PROP(0.80f, 1.00f, 0.10f, 2, Material.GLASS),
+
+    // ── Issue #1299: Northfield Street Chuggers ──────────────────────────────
+
+    /**
+     * CHARITY_CLIPBOARD_STAND_PROP — a fold-out table with a charity banner outside the
+     * charity shop on Northfield High Street. Used as the spawn anchor for CHUGGER_LEADER
+     * (Tracy) and patrol origin for CHUGGER NPCs (Mon–Sat 10:00–17:00).
+     * Player can press E to interact with Tracy (hire as fake chugger, cancel direct debit).
+     * Dropped item: CHARITY_CLIPBOARD (represents the leftover paperwork).
+     * 1.50×0.90×0.60; hitsToBreak = 4 (yields CHARITY_CLIPBOARD).
+     */
+    CHARITY_CLIPBOARD_STAND_PROP(1.50f, 0.90f, 0.60f, 4, Material.CHARITY_CLIPBOARD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
