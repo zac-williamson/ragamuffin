@@ -34429,3 +34429,113 @@ queue jump, notoriety block at ≥ 60, weather price/queue modifiers.
 // Integrates: ChippyOrderUI (existing), WantedSystem, NotorietySystem, DisguiseSystem,
 //   HealingSystem, WarmthSystem, RumourNetwork, AchievementSystem, WeatherSystem,
 //   TimeSystem, PubLockInSystem (drunk NPCs join queue)
+
+---
+
+## Phase 12p: Northfield Chugger Blitz — Street Fundraisers, Clipboard Harassment & the Direct Debit Hustle
+
+**Goal**: Implement `ChuggerSystem.java` — roving charity fundraiser ("chugger") NPCs who patrol the high street between 09:00 and 17:00 on weekdays, intercepting the player and other NPCs with clipboard pitches, collecting donations, and reacting to various player strategies (donation, avoidance, aggressive refusal, costume disguise).
+
+### The Chuggers
+
+Two `CHUGGER` NPCs (add to `NPCType`) operate on the high street Monday–Friday 09:00–17:00:
+- **Kelly** — energetic, works for the "Children's Animal Trust" charity. Yellow tabard (`CHARITY_TABARD` material).
+- **Marcus** — persistent, works for "Rebuild the Coast" charity. Red tabard.
+
+Both spawn at the high street end near the park gates and patrol a 30-block beat. Each maintains a cooldown per-player/NPC: will not re-approach the same target for 5 in-game minutes after any outcome (donation, refusal, dodge, or being punched).
+
+### Intercept Mechanic
+
+When the player walks within 3 blocks of a CHUGGER NPC (and cooldown has expired), the chugger enters `NPCState.APPROACHING` and then stops the player:
+
+- **Clipboard out**: Chugger speech bubble: *"Hey, have you got a minute to talk about [charity name]?"*
+- A HUD prompt appears for 6 seconds:
+  - **D — Donate (2 COIN)**: Player donates 2 COIN. `NotorietySystem` reduces Notoriety by 1 (cap: −3/day from chugger donations). Chugger: *"Brilliant, thank you SO much!"* Achievement `GOOD_SAMARITAN` (first donation). `RumourType.LOCAL_HERO` seeded if player donates 3 separate times in one in-game day.
+  - **E — Engage (sign up for direct debit)**: Costs nothing now but deducts 1 COIN at the start of each subsequent in-game day for 3 days (`ChuggerSystem` tracks active subscriptions). Chugger: *"Amazing! I just need your details…"* Achievement `STANDING_ORDER` on first sign-up. Player can cancel by pressing E on any chugger (costs 1 COIN admin fee; speech: *"I'll put a note on the system."*).
+  - **R — Refuse**: Player says *"Not today, mate."* Chugger backs off. No penalty.
+  - **F — Flee** (player walks >4 blocks during the 6-second window): Player escapes without interaction. No consequence. Chugger shouts *"I know you saw me!"*
+- If the player does nothing for 6 seconds: treated as **Refuse**.
+- **Aggressive refusal** (player punches chugger): Chugger enters `NPCState.FLEEING`, drops `CHARITY_CLIPBOARD` item. `NotorietySystem` Notoriety +8. `WantedSystem` adds 1 star. `CriminalRecord` logs `ASSAULT`. Nearby PUBLIC NPCs enter `NPCState.ALARMED`. Speech from witness: *"You absolute animal, they were just doing their job!"* Achievement `CLIPBOARD_RAGE` unlocked.
+
+### Dodging Chuggers
+
+The player can avoid interception by:
+- **Crossing the road**: If the player is on a ROAD block (not PAVEMENT) when within 3 blocks of a chugger, no intercept is triggered (road-crossing dodge). Chugger shouts *"I saw that!"* with 40% probability.
+- **Moving fast**: If the player is running (velocity > 1.5x normal), the chugger starts APPROACHING but fails to reach them — intercept attempt consumes the cooldown without outcome. Chugger: *"Could've at least slowed down!"*
+- **DisguiseSystem**: If player is wearing `BUILDERS_HAT` or `HIGH_VIS_JACKET`, the chugger targets someone else instead (looks like a worker, not a civilian). Internally, `DisguiseSystem.isWearingWorkwear()` is checked.
+
+### Chugger NPC Interactions with Other NPCs
+
+Chuggers also approach PENSIONER and PUBLIC NPCs (70% chance per-NPC per patrol pass):
+- PENSIONER will stop and talk for 30 seconds (enjoys the company), sometimes donating (seeds `LOCAL_HERO` rumour 20% chance).
+- PUBLIC NPC either donates (30% chance) or dodges.
+- YOUTH_GANG NPCs will mock the chugger: *"Give over, yeah."* / *"Oi, is that charity for mugs?"* 25% chance of stealing the clipboard, causing chugger to enter `DISTRESSED` state for 60 seconds (no more intercepts). Chugger can call for help: seeds `THEFT_NEARBY` rumour.
+
+### The Direct Debit Hustle
+
+Advanced mechanic unlocked once the player has signed up for at least 1 direct debit:
+
+- Player can **impersonate a chugger** by equipping `CHARITY_TABARD` (looted from a fleeing/downed chugger, or crafted from `FABRIC_SCRAP + MARKER_PEN`):
+  - While wearing the tabard and holding `CHARITY_CLIPBOARD`, the player can approach PUBLIC or PENSIONER NPCs and collect "donations" (1 COIN each, max 8 per in-game day).
+  - Each fake donation: 15% chance the NPC becomes suspicious — `WantedSystem` +0 (no crime yet). If 2 suspicious reactions occur: NPC reports to police, Notoriety +12, `CriminalRecord` logs `FRAUD`.
+  - Achievement `DIRECT_DEBIT_HUSTLE` on first successful fake collection.
+- The legitimate chuggers recognise the disguise if they come within 5 blocks: *"Excuse me — who are you collecting for?"*. Roll: 50% they see through disguise, Notoriety +5 and they call for police.
+
+### Weather & Time Effects
+
+- **RAIN / DRIZZLE**: Chuggers carry clipboards in plastic folders. Intercept success rate unchanged but chugger speech: *"Horrible out here! Please make it worth it!"*
+- **FROST**: Chuggers don thermal tabards. Opening hour delayed to 10:00. Speech: *"Freezing my toes off for this."*
+- **HEATWAVE**: Chuggers offer a free bottle of water (adds `WATER_BOTTLE` to player inventory, +5 hydration) to anyone who stops. Increases donation rate for other NPCs by 20%.
+- Chuggers only operate **Mon–Fri** (weekday check via `dayCount % 7 < 5`). No chuggers on weekends.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `GOOD_SAMARITAN` | Donate to a chugger for the first time |
+| `STANDING_ORDER` | Sign up for a direct debit |
+| `CLIPBOARD_RAGE` | Punch a chugger (assault an NPC doing charity work) |
+| `DIRECT_DEBIT_HUSTLE` | Collect fake donations while impersonating a chugger |
+| `CHUGGER_DODGER` | Successfully dodge 10 chugger intercepts (any method) |
+
+### Integration with Other Systems
+
+- **NotorietySystem**: Donations reduce Notoriety −1 each (cap −3/day). Assault raises +8. Impersonation fraud raises +12.
+- **WantedSystem**: Assault → +1 star. Police called on 2nd suspicious fake donation.
+- **CriminalRecord**: Assault (ASSAULT), Fraud (FRAUD) logged.
+- **DisguiseSystem**: `BUILDERS_HAT` or `HIGH_VIS_JACKET` redirects chugger to another target.
+- **RumourNetwork**: `LOCAL_HERO` seeded on 3 donations in a day; `THEFT_NEARBY` on clipboard theft by YOUTH_GANG.
+- **TimeSystem**: Weekday-only; 09:00–17:00 (10:00 in FROST). Per-NPC cooldowns tracked per chugger instance.
+- **WeatherSystem**: FROST delays, HEATWAVE adds water bottle incentive.
+- **CraftingSystem**: `CHARITY_TABARD` recipe: `FABRIC_SCRAP + MARKER_PEN` (unlocked after first STANDING_ORDER).
+
+**Unit tests**: Intercept range check (3 blocks), cooldown enforcement (5 min), donation Notoriety reduction (cap 3/day), direct-debit deduction per day, assault Notoriety/Wanted/CriminalRecord, road-crossing dodge (ROAD block suppresses intercept), workwear disguise redirect, chugger weekend suppression (dayCount % 7 >= 5), YOUTH_GANG clipboard theft → DISTRESSED state, fake-collection fraud detection (2nd suspicious NPC triggers police report).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Donation reduces Notoriety and unlocks GOOD_SAMARITAN**: Set Notoriety to 30. Spawn a `CHUGGER` NPC within 3 blocks of the player. Advance 1 update frame. Verify HUD prompt appears (check `ChuggerSystem.isInterceptActive()`). Simulate player pressing `D`. Verify player COIN reduced by 2. Verify Notoriety is now 29. Verify `GOOD_SAMARITAN` achievement unlocked.
+
+2. **Direct debit deducts 1 COIN/day for 3 days**: Give player 5 COIN. Spawn chugger. Player presses `E` to sign up. Verify `ChuggerSystem.hasActiveSubscription(player)` is true. Call `ChuggerSystem.onNewDay()`. Verify player COIN is now 4. Call `onNewDay()` again. Verify COIN is 3. Call `onNewDay()` a third time. Verify COIN is 2. Call `onNewDay()` a fourth time. Verify COIN is still 2 (subscription expired after 3 days).
+
+3. **Road-crossing dodge suppresses intercept**: Place player on a ROAD block. Spawn chugger within 3 blocks. Advance update. Verify `ChuggerSystem.isInterceptActive()` is false. Move player to PAVEMENT block. Advance update. Verify `ChuggerSystem.isInterceptActive()` is true.
+
+4. **Punching chugger triggers assault consequence**: Spawn chugger NPC. Player punches chugger. Verify chugger enters `NPCState.FLEEING`. Verify player Notoriety increased by 8. Verify `WantedSystem.getStarCount()` increased by 1. Verify `CriminalRecord` contains `ASSAULT` entry. Verify `CLIPBOARD_RAGE` achievement unlocked.
+
+5. **Fake collection — second suspicious NPC reports fraud**: Equip player with `CHARITY_TABARD` and `CHARITY_CLIPBOARD`. Spawn 2 PUBLIC NPCs. Seed RNG to make first NPC suspicious and second NPC suspicious. Player interacts with first NPC: verify `suspicious count` = 1. Player interacts with second NPC: verify Notoriety increased by 12. Verify `CriminalRecord` contains `FRAUD` entry. Verify `WantedSystem` has been notified.
+
+6. **Workwear disguise redirects chugger**: Equip player with `BUILDERS_HAT`. Spawn chugger within 3 blocks and a PUBLIC NPC within 8 blocks. Advance update. Verify `ChuggerSystem.isInterceptActive()` is false. Verify chugger has targeted the PUBLIC NPC instead (chugger state is APPROACHING and target is the PUBLIC NPC).
+
+7. **Chugger does not operate on weekends**: Set `dayCount` to 5 (Saturday, since 5 % 7 = 5 ≥ 5). Call `ChuggerSystem.update(delta, timeSystem, ...)` with time set to 11:00. Verify no CHUGGER NPCs are active (all in WANDERING home-position or despawned).
+
+// ── Issue #1181: Northfield Chugger Blitz ────────────────────────────────────
+// New: ChuggerSystem.java in ragamuffin.core
+// New: ChuggerSystemTest.java in src/test/java/ragamuffin/core/
+// NPCType: CHUGGER — add to NPCType.java (named: Kelly, Marcus)
+// Material: CHARITY_TABARD, CHARITY_CLIPBOARD, WATER_BOTTLE — add to Material.java
+// CriminalRecord.CrimeType: FRAUD (if not present) — add
+// AchievementType: GOOD_SAMARITAN, STANDING_ORDER, CLIPBOARD_RAGE,
+//                  DIRECT_DEBIT_HUSTLE, CHUGGER_DODGER — add to AchievementType.java
+// RumourType: LOCAL_HERO (if not present) — add to RumourType.java
+// CraftingSystem: CHARITY_TABARD recipe (FABRIC_SCRAP + MARKER_PEN) — register in CraftingSystem
+// Integrates: NotorietySystem, WantedSystem, CriminalRecord, DisguiseSystem,
+//   RumourNetwork, WeatherSystem, TimeSystem, CraftingSystem
