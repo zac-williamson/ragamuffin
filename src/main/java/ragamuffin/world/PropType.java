@@ -2288,7 +2288,24 @@ public enum PropType {
      * Exterior signage for Angel Nails & Beauty — a pink illuminated sign above the shopfront.
      * Destroyed by 3 punches; yields SCRAP_METAL.
      */
-    NAIL_SALON_SIGN_PROP(1.60f, 0.50f, 0.15f, 3, Material.SCRAP_METAL);
+    NAIL_SALON_SIGN_PROP(1.60f, 0.50f, 0.15f, 3, Material.SCRAP_METAL),
+
+    // ── Issue #1161: Northfield Poundstretcher ────────────────────────────────
+
+    /**
+     * A Poundstretcher shelf crate — a waist-high display crate holding own-brand items.
+     * Press E to attempt shoplifting. Placed along the shop walls.
+     * Destroyed by 4 punches; yields WOOD.
+     */
+    CRATE_PROP(0.60f, 0.80f, 0.60f, 4, Material.WOOD),
+
+    /**
+     * A delivery pallet — a wooden pallet loaded with stock boxes from the delivery lorry.
+     * Spawned at the loading bay at 08:00 daily; despawns when brought inside.
+     * Player can loot one item (press E) within the 2-minute window.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    PALLET_PROP(1.20f, 0.30f, 0.80f, 5, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

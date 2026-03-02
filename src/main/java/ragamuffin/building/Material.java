@@ -3893,7 +3893,34 @@ public enum Material {
      * Clubcard Statement — letter in player's squat mailbox: points total, vouchers available.
      * Spawns every 7 in-game days if player has a Clubcard.
      */
-    CLUBCARD_STATEMENT("Clubcard Statement");
+    CLUBCARD_STATEMENT("Clubcard Statement"),
+
+    // ── Issue #1161: Northfield Poundstretcher ────────────────────────────────
+
+    /**
+     * Own-Brand Crisps — Poundstretcher own-label crisps. 1 COIN.
+     * Hunger +10. Tooltip: "Not Walkers. But close enough, isn't it?"
+     */
+    OWN_BRAND_CRISPS("Own-Brand Crisps"),
+
+    /**
+     * Own-Brand Cola — Poundstretcher own-label cola. 1 COIN.
+     * Thirst +15. Tooltip: "Tastes like cola. Sort of."
+     */
+    OWN_BRAND_COLA("Own-Brand Cola"),
+
+    /**
+     * Bargain Bucket Crisps — a large bag of mixed-flavour own-brand crisps. 1 COIN.
+     * Hunger +20. Tooltip: "An entire bag for a pound. Nobody's winning here."
+     */
+    BARGAIN_BUCKET_CRISPS("Bargain Bucket Crisps"),
+
+    /**
+     * Wholesale Spirits — a case of unlabelled spirit bottles from the delivery pallet.
+     * 10% chance to appear in the daily delivery. Fence value: 6 COIN.
+     * Tooltip: "No label. No questions. Probably fine."
+     */
+    WHOLESALE_SPIRITS("Wholesale Spirits");
 
     private final String displayName;
 
@@ -4881,6 +4908,12 @@ public enum Material {
             case CLUBCARD_STATEMENT:     return cs(0.90f, 0.92f, 0.88f,  // White letter
                                                    0.10f, 0.40f, 0.20f); // Tesco green header
 
+            // Issue #1161: Northfield Poundstretcher
+            case OWN_BRAND_CRISPS:       return c(0.88f, 0.72f, 0.22f);  // Golden yellow bag
+            case OWN_BRAND_COLA:         return c(0.20f, 0.15f, 0.55f);  // Dark blue can
+            case BARGAIN_BUCKET_CRISPS:  return c(0.75f, 0.55f, 0.18f);  // Brown value bag
+            case WHOLESALE_SPIRITS:      return c(0.60f, 0.75f, 0.90f);  // Clear-blue glass
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5364,6 +5397,11 @@ public enum Material {
             case GEL_SET:
             case COUNTERFEIT_PERFUME:
             case NAIL_SALON_VOUCHER:
+            // Issue #1161: Northfield Poundstretcher — not block items
+            case OWN_BRAND_CRISPS:
+            case OWN_BRAND_COLA:
+            case BARGAIN_BUCKET_CRISPS:
+            case WHOLESALE_SPIRITS:
                 return false;
             default:
                 return true;
@@ -6399,6 +6437,16 @@ public enum Material {
                 return IconShape.FOOD;        // plastic tray meal
             case CLUBCARD_STATEMENT:
                 return IconShape.FLAT_PAPER;  // statement letter
+
+            // Issue #1161: Northfield Poundstretcher
+            case OWN_BRAND_CRISPS:
+                return IconShape.BOX;         // crisp packet
+            case OWN_BRAND_COLA:
+                return IconShape.BOTTLE;      // cola can
+            case BARGAIN_BUCKET_CRISPS:
+                return IconShape.BOX;         // large crisp bag
+            case WHOLESALE_SPIRITS:
+                return IconShape.BOTTLE;      // unlabelled bottle
 
             default:
                 return IconShape.BOX;

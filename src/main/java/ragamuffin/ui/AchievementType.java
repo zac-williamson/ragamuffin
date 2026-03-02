@@ -3295,6 +3295,62 @@ public enum AchievementType {
         "Overheard at the Nail Bar",
         "Stacey Marchetti said something she probably shouldn't have. You were listening.",
         1
+    ),
+
+    // ── Issue #1161: Northfield Poundstretcher ────────────────────────────────
+
+    /**
+     * Awarded when the player is banned from Poundstretcher (caught shoplifting).
+     */
+    EVERY_POUNDS_A_PRISONER(
+        "Every Pound's a Prisoner",
+        "Banned from a pound shop. Sharon's seen things.",
+        1
+    ),
+
+    /**
+     * Awarded for successfully shoplifting from Poundstretcher without being caught.
+     */
+    POUNDSTRETCHER_FIVE_FINGER(
+        "Five-Finger Discount (Poundstretcher)",
+        "Nicked something from the shelf and walked right out. Sharon didn't even blink.",
+        1
+    ),
+
+    /**
+     * Awarded when Sharon catches the player shoplifting (she had line of sight).
+     */
+    SHARON_KNOWS(
+        "Sharon Knows",
+        "Sharon had eyes on you. Always did.",
+        1
+    ),
+
+    /**
+     * Awarded for completing the bulk-buy deal (5 COIN for 6 items).
+     */
+    BULK_BUYER(
+        "Bulk Buyer",
+        "Five coin for six items. Sharon's contractual obligation. You took it.",
+        1
+    ),
+
+    /**
+     * Awarded for using a Street Lad proxy while banned from Poundstretcher.
+     */
+    MIDDLE_MAN(
+        "Middle Man",
+        "Banned but not beaten. You found a workaround.",
+        1
+    ),
+
+    /**
+     * Awarded for looting the delivery pallet before it's brought inside.
+     */
+    PALLET_PIRATE(
+        "Pallet Pirate",
+        "Two minutes. One pallet. You were in and out before the driver finished his fag.",
+        1
     );
 
     private final String name;
