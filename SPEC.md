@@ -43865,3 +43865,157 @@ The player's high-value hustle. Requires `CHARITY_TABARD` + `CHARITY_CLIPBOARD` 
 //             COUNCIL_JACKET dodge), CharityShopSystem (patrol zone), StreetEconomySystem (flavour),
 //             WeatherSystem (rain → patrol radius reduction), NewspaperSystem, StreetSkillSystem,
 //             FactionSystem (STREET_LADS warn of Tracy), NoiseSystem, DWPSystem (flavour tooltip)
+
+---
+
+## Issue #1301: Add Northfield Big Issue Vendor — Gary's Pitch, the Counterfeit Copy Hustle & the Chav Intimidation Stand-Off
+
+### Overview
+
+`BigIssueSystem` brings Gary Milligan (`NPCType.BIG_ISSUE_VENDOR`) to life on Northfield High Street. Gary operates a `MAGAZINE_PITCH_PROP` outside Greggs on a 2-block strip of PAVEMENT, Mon–Sat 09:00–17:00, selling `Material.BIG_ISSUE_MAG` for 3 COIN. Gary is a 44-year-old ex-bricklayer, three years out of Winson Green. He wears a red tabard, carries a canvas bag, and addresses every passer-by as "Big Issue, mate?" in a voice that sounds optimistic and tired at the same time. The player can buy from him, steal his pitch, defend his pitch from `YOUTH_GANG` intimidation, or run a counterfeit copy hustle using the InternetCafeSystem printer. The system integrates with `RumourNetwork`, `NotorietySystem`, `WantedSystem`, `CharityShopSystem`, `DWPSystem`, `NeighbourhoodSystem`, `WeatherSystem`, and `StreetSkillSystem`.
+
+---
+
+### NPCs
+
+- **BIG_ISSUE_VENDOR (Gary Milligan)** — Stands at `MAGAZINE_PITCH_PROP` Mon–Sat 09:00–17:00. Sells `BIG_ISSUE_MAG` for 3 COIN (press E). Carries `CANVAS_BAG_PROP` (not lootable during trading). On rain: shelters under an awning 1 block away; sells at same pitch but says *"Even in this weather, mate."* On frost: does not appear (hypothermia risk). On hot days: *"Warm one today."* Dialogue: *"Big Issue, mate?" / "Help me help meself, yeah?" / "Every copy I sell goes towards my rent." / "Cheers, mate. Really." / "You look like you read."*
+- **YOUTH_GANG (intimidation variant)** — 2–3 YOUTH_GANG NPCs spawn near the pitch at random 3× per in-game week, 14:00–16:00. They enter `THREATENING` state toward Gary. If the player does not intervene within 60 seconds, Gary's `dailySaleCount` drops to 0 (intimidation ends session early, Gary exits). If the player intervenes (press E on any YOUTH_GANG NPC near Gary): 3 responses available — `CHALLENGE` (Notoriety +3, WantedSystem risk), `BRIBE` (−2 COIN to YOUTH_GANG leader, session continues), `REPORT` (call police — police arrive in 90 seconds; YOUTH_GANG flees on arrival; `COMMUNITY_RESPECT` +1 via NeighbourhoodSystem). Achievement: `GARY_S_GUARDIAN` on first successful intervention.
+
+---
+
+### PropTypes (new)
+
+- `MAGAZINE_PITCH_PROP` — A fold-out rack of magazines on a low stand, 0.80×0.40×1.20. Placed on PAVEMENT outside the Greggs landmark. Press E to interact with Gary. Loot when unattended (Gary absent): `BIG_ISSUE_MAG` ×1 (Notoriety +2, `PETTY_THEFT` crime if witnessed). Size: 0.80×0.40×1.20. Added to PropType.java.
+
+---
+
+### Materials (new)
+
+| Material | Description |
+|----------|-------------|
+| `BIG_ISSUE_MAG` | The Big Issue magazine. 3 COIN from Gary. Reading it (hold E for 3 seconds) grants a random RumourNetwork tip (1 of 5 `LOCAL_EVENT`-type rumours seeded into the player's knowledge). Fenceable at 1 COIN. Donatable to CharityShop for +1 goodwill. |
+| `COUNTERFEIT_BIG_ISSUE` | Printed at InternetCafeSystem: `PRINTER_PAPER×2 + PRINTER_PROP` → 3 copies. Looks identical to `BIG_ISSUE_MAG` but has 40% detection chance by Gary if player tries to sell near his pitch. If sold to an NPC: 30% NPC notices ("This isn't right...") → Notoriety +3, `FRAUD` CriminalRecord entry. Fenceable at 0 COIN (fence won't touch it). |
+| `CANVAS_BAG` | Gary's equipment bag — contains his float (3–6 COIN) + 5× `BIG_ISSUE_MAG`. Obtainable only by pickpocketing (StreetSkillSystem PICKPOCKET action). Detection: 55% base; −20% if player has STREET_SMARTS ≥ 5. On caught: `THEFT` crime, Notoriety +5, Gary enters `FLEEING`. |
+
+---
+
+### Activities
+
+#### Buying from Gary
+- Press E → "Big Issue, mate?" → `[Buy for 3 COIN]` / `[Not today]` / `[Have a chat]`.
+- Buying: −3 COIN, +1 `BIG_ISSUE_MAG`, seeds `GOOD_SAMARITAN` community goodwill (NeighbourhoodSystem `COMMUNITY_RESPECT` +1 every 3 purchases).
+- `STANDING_CUSTOMER` achievement on 5th purchase.
+
+#### Reading the Magazine
+- Hold E for 3 seconds on `BIG_ISSUE_MAG` in inventory. Reveals one of 5 rotating `LOCAL_EVENT` rumours (world events, scheduled activities, location hints). Reading grants `STREET_SMARTS XP +1` via StreetSkillSystem. Tooltip: *"There's something in here about the bypass planning application."*
+
+#### Defending Gary's Pitch (YOUTH_GANG intervention)
+When `YOUTH_GANG` enters `THREATENING` state within 4 blocks of Gary:
+- **CHALLENGE**: Player left-clicks on YOUTH_GANG leader OR presses E → selects `[Stand up for him]` → gang enters `FLEEING` if player Notoriety ≥ 30 (intimidation works) or `FIGHTING` if Notoriety < 30 (brawl). Notoriety +3. `GARY_S_GUARDIAN` achievement.
+- **BRIBE (−2 COIN)**: Gangers back off. No crime recorded. Gary says *"Cheers, mate. You didn't have to."*
+- **REPORT (call police)**: Player presses E on nearby `PUBLIC_PHONE_PROP` or presses E near any POLICE NPC and selects `[Report trouble]`. Police arrive in 90 seconds, gang disperses. NeighbourhoodSystem `COMMUNITY_RESPECT` +1. No Notoriety change.
+
+#### Pitch Takeover (Hustle)
+1. Gary must be absent (before 09:00, after 17:00, or Gary fled due to intimidation).
+2. Player stands at `MAGAZINE_PITCH_PROP` and presses E → selects `[Set up pitch]` if player has `BIG_ISSUE_MAG` ×3 OR `COUNTERFEIT_BIG_ISSUE` ×3 in inventory.
+3. While standing at pitch, passing NPCs (30% chance per NPC within 6 blocks) buy a copy: +2 COIN per sale (genuine) or +2 COIN per sale with 30% detection chance (counterfeit).
+4. If Gary returns while player is running pitch: Gary confronts player (*"Oi — that's my pitch!"*). Player options: `[Leave pitch]` (Gary resumes, no penalty); `[Refuse]` (Gary calls MARKET_INSPECTOR, Notoriety +6, `PITCH_THEFT` crime — new `CrimeType`). 
+5. MARKET_INSPECTOR Keith (`NPCType.MARKET_INSPECTOR`) spawns 2 minutes after Gary calls him. Verifies pitch licence. Player without licence: `UNLICENSED_TRADING` crime, Notoriety +4. Player with `STALL_LICENCE` (from StallSystem): no crime, but Gary still wants his pitch back.
+6. `MAGAZINE_BARON` achievement: sell 10 copies from Gary's pitch in one session.
+
+#### Counterfeit Copy Hustle
+1. Player visits InternetCafeSystem terminal (or squat PRINTER_PROP if installed): pays 1 COIN → produces 3× `COUNTERFEIT_BIG_ISSUE`.
+2. Sell copies from Gary's pitch (as above) or directly to wandering NPCs (press E, select `[Want a magazine?]`). 30% detection risk per sale.
+3. Accumulated `fraudSaleCount` ≥ 3: Gary notices supply inconsistency and calls MARKET_INSPECTOR (even if player is not at pitch). Notoriety +5.
+4. `DODGY_DISTRIBUTOR` achievement: 5 counterfeit copies sold without detection.
+
+---
+
+### Prices
+
+| Transaction | Amount |
+|---|---|
+| Buy `BIG_ISSUE_MAG` from Gary | −3 COIN |
+| Pitch-sale (genuine) | +2 COIN |
+| Pitch-sale (counterfeit) | +2 COIN (30% detection risk) |
+| Craft `COUNTERFEIT_BIG_ISSUE` ×3 | 1 COIN (printer) |
+| Bribe YOUTH_GANG off Gary's pitch | −2 COIN |
+| Pickpocket Gary's `CANVAS_BAG` | +3–6 COIN + 5× `BIG_ISSUE_MAG` |
+| Fence `BIG_ISSUE_MAG` | +1 COIN |
+| `BIG_ISSUE_MAG` donation to CharityShop | +1 goodwill |
+
+---
+
+### Integration Points
+
+- **NotorietySystem**: Pitch theft +6; counterfeit detection +3–5; challenge gang +3; steal pitch prop loot +2; pickpocket Gary (caught) +5.
+- **WantedSystem**: `CHALLENGE` brawl resulting in assault +1 star.
+- **CriminalRecord**: `PITCH_THEFT` (new CrimeType), `FRAUD` (counterfeit), `THEFT` (canvas bag pickpocket), `UNLICENSED_TRADING` (pitch without licence).
+- **RumourNetwork**: `BIG_ISSUE_EVICTION` rumour seeded if MARKET_INSPECTOR closes Gary down; `GARY_S_HERO` rumour seeded on successful youth gang intervention; `MAGAZINE_SCAM` rumour seeded after 3 counterfeit detections. Add `BIG_ISSUE_EVICTION`, `GARY_S_HERO`, `MAGAZINE_SCAM` to `RumourType.java`.
+- **StreetSkillSystem**: `STREET_SMARTS XP +1` per magazine read; `SOCIAL XP +1` per Gary chat; `PICKPOCKET XP +2` on successful canvas bag snatch.
+- **NeighbourhoodSystem**: `COMMUNITY_RESPECT +1` every 3 genuine purchases from Gary; +1 on successful gang intervention via REPORT. `COMMUNITY_RESPECT −2` if Gary is forced off his pitch by player.
+- **CharityShopSystem**: `BIG_ISSUE_MAG` accepted as donation item (counts as `BOOK`-category).
+- **DWPSystem**: Gary's `DWP_RECORD` shows `SELF_EMPLOYED_VENDOR` status. Player reading his magazine does NOT affect DWP record (flavour only). If Gary is evicted, DWP record updates: `SALES_INCOME_LOST`.
+- **WeatherSystem**: FROST = Gary absent (no spawn); RAIN = Gary shelters under awning (reduced patrol radius, same pitch); HEATWAVE = Gary sells better (+10% NPC purchase rate).
+- **StallSystem**: `STALL_LICENCE` used by player gives legitimate pitch access but Gary still has priority.
+- **FactionSystem**: `STREET_LADS` Respect ≥ 40: gang members will not intimidate Gary if player has defended him once. `MARCHETTI_CREW` Respect ≥ 60: Marchetti runner tips off player 10 minutes before YOUTH_GANG intimidation event (advance warning).
+- **InternetCafeSystem / SquatSystem**: Counterfeit recipe available at internet café terminal or squat PRINTER_PROP.
+- **NoiseSystem**: YOUTH_GANG intimidation event = MEDIUM noise radius 10; `CHALLENGE` brawl = HIGH noise radius 14.
+- **NewspaperSystem**: After 5 cumulative pitch-theft incidents (by player), headline: "High Street 'Big Issue' Pitch War: Vendors Under Pressure From Opportunist Touts."
+
+---
+
+### Unit Tests (`BigIssueSystemTest.java`)
+
+1. `testGarySpawnsMondayMorning` — set `TimeSystem` to Monday 09:00; call `update(delta, timeSystem)`; verify Gary NPC present at `MAGAZINE_PITCH_PROP` position.
+2. `testGaryAbsentOnFrost` — set `WeatherSystem.currentWeather` = FROST; call `update(delta, timeSystem)`; verify Gary NPC is NOT spawned.
+3. `testBuyingGrantsMagazineAndDeductsCoin` — player has 5 COIN; call `buyMagazine(player, gary)`; verify player COIN = 2; `BIG_ISSUE_MAG` in inventory.
+4. `testReadingMagazineSeedsRumour` — player has `BIG_ISSUE_MAG`; call `readMagazine(player)` (hold 3 seconds); verify one `LOCAL_EVENT` rumour seeded in RumourNetwork; `STREET_SMARTS XP` increased by 1.
+5. `testThirdPurchaseAddsCommunitytRespect` — call `buyMagazine(player, gary)` 3× (with sufficient COIN); verify NeighbourhoodSystem `COMMUNITY_RESPECT` +1.
+6. `testYouthGangIntimidationReducesDailySales` — spawn 2 YOUTH_GANG NPCs; set them `THREATENING` within 4 blocks of Gary; advance 60 in-game seconds without player intervention; verify Gary's `dailySaleCount` = 0; Gary state = `LEAVING`.
+7. `testChallengeGangHighNotoriety` — player Notoriety = 40; call `challengeGang(player, gang, rng)`; verify YOUTH_GANG state = `FLEEING`; Notoriety = 43 (+3); `GARY_S_GUARDIAN` achievement unlocked.
+8. `testBribeGangCostsCoin` — player has 5 COIN; call `bribeGang(player, gang)`; verify player COIN = 3; YOUTH_GANG exits `THREATENING`; no crime recorded.
+9. `testPitchTakeoverAllowedWhenGaryAbsent` — Gary not present (after 17:00); player has `BIG_ISSUE_MAG` ×3; call `setupPlayerPitch(player)`; verify `playerPitchActive` = true.
+10. `testGaryConfrontinPlayerAtPitchOffersLeaveOption` — `playerPitchActive` = true; Gary spawns (09:00 next day); call `update(delta, timeSystem)`; verify Gary state = `CONFRONTING`; `playerPitchActive` gets `LEAVE_OFFERED` event.
+11. `testPitchRefusalCallsMarketInspector` — player refuses to leave Gary's pitch; call `refusePitch(player)`; verify MARKET_INSPECTOR spawned; Notoriety +6; `PITCH_THEFT` in CriminalRecord.
+12. `testCounterfeitSaleDetectionAddsNotoriety` — seed RNG for detection (< 0.30); player presses E on NPC with `COUNTERFEIT_BIG_ISSUE`; call `sellCounterfeit(player, targetNPC, rng)`; verify Notoriety +3; `FRAUD` in CriminalRecord.
+13. `testCounterfeitSaleUndetectedGrantsCoin` — seed RNG for no detection (≥ 0.30); call `sellCounterfeit(player, targetNPC, rng)`; verify player COIN +2; no crime added.
+14. `testFraudSaleCountThresholdCallsInspector` — set `fraudSaleCount` = 2; call `sellCounterfeit` once more (success or fail); verify MARKET_INSPECTOR spawned; Notoriety +5; `MAGAZINE_SCAM` rumour seeded.
+15. `testPickpocketCanvasGagSucceeds` — seed StreetSkillSystem for success; call `pickpocketGary(player, rng)`; verify player gains 3–6 COIN + 5× `BIG_ISSUE_MAG`; Gary state = `FLEEING`.
+16. `testPickpocketCanvasBagDetected` — seed for detection (≥ 0.45 with no STREET_SMARTS bonus); call `pickpocketGary(player, rng)`; verify `THEFT` in CriminalRecord; Notoriety +5.
+17. `testRainSheltersGaryButPitchActive` — `WeatherSystem` = RAIN; call `update(delta, timeSystem)`; verify Gary position shifted 1 block to awning; `MAGAZINE_PITCH_PROP` still active; Gary `WANDERING` near awning (not `LEAVING`).
+18. `testHeatwaveBoostsPurchaseRate` — `WeatherSystem` = HEATWAVE; call `computeNPCPurchaseChance()`; verify result ≥ base chance × 1.10.
+19. `testStreetLadsProtectGaryAtRespect40` — FactionSystem STREET_LADS Respect = 40; Gary defended once (`garyDefendedFlag` = true); YOUTH_GANG approaches; call `update(delta, timeSystem)`; verify YOUTH_GANG does NOT enter `THREATENING` state.
+20. `testMagazineBarbonAchievementAt10Sales` — set `playerPitchSaleCount` = 9; sell one more copy from pitch; verify `MAGAZINE_BARON` achievement unlocked.
+
+---
+
+### Integration Tests (`Issue1301BigIssueVendorIntegrationTest.java`)
+
+1. **Full buy → read → rumour pipeline**: Monday 10:00, CLEAR weather. Player has 3 COIN. Player presses E on Gary → `[Buy for 3 COIN]`. Verify player COIN = 0; `BIG_ISSUE_MAG` in inventory; no crime. Player holds E on `BIG_ISSUE_MAG` for 3 seconds. Verify one `LOCAL_EVENT` rumour in player's known rumour set; `STREET_SMARTS XP` increased by 1; `STANDING_CUSTOMER` NOT yet unlocked (only 1 purchase).
+
+2. **Youth gang intimidation → REPORT → police dispersal → community respect**: Friday 15:00. 2 YOUTH_GANG NPCs spawn within 4 blocks of Gary. Player presses E on nearby NPC to call police (`[Report trouble]`). Advance 90 in-game seconds. Verify: POLICE NPC arrived at pitch; YOUTH_GANG NPCs in `FLEEING` state; Gary's `dailySaleCount` > 0 (session continues); NeighbourhoodSystem `COMMUNITY_RESPECT` = start+1; `GARY_S_HERO` rumour seeded; `GARY_S_GUARDIAN` achievement unlocked.
+
+3. **Counterfeit pitch hustle → detection → market inspector**: Player visits InternetCafeSystem terminal (10:30 Mon, after Gary departed due to FROST two days prior). Player pays 1 COIN → receives 3× `COUNTERFEIT_BIG_ISSUE`. Player stands at `MAGAZINE_PITCH_PROP` (Gary absent, FROST day). Player sells 3 counterfeit copies to passing NPCs; 3rd sale is seeded for detection (RNG < 0.30). Verify: after 3rd sale `fraudSaleCount` = 3 → `MAGAZINE_SCAM` rumour seeded → MARKET_INSPECTOR spawns within 2 in-game minutes → Notoriety = start+3 (from detection) +5 (from inspector threshold) = start+8; `FRAUD` in CriminalRecord; `DODGY_DISTRIBUTOR` NOT unlocked (only 2 undetected).
+
+4. **Gary confrontation → leave → no crime**: Player sets up pitch at 18:00 (Gary gone) with 3× `BIG_ISSUE_MAG`. Player sells 2 copies overnight. At 09:00 Tuesday Gary spawns and enters `CONFRONTING` state. Player selects `[Leave pitch]`. Verify: `playerPitchActive` = false; Gary resumes normal `WANDERING` at pitch; no crime in CriminalRecord; NeighbourhoodSystem `COMMUNITY_RESPECT` unchanged; Gary dialogue: *"Cheers mate. No hard feelings."*
+
+5. **Standing customer loyalty**: Player buys from Gary on Mon, Tue, Wed (3 purchases). Verify: NeighbourhoodSystem `COMMUNITY_RESPECT` = start+1 (on 3rd purchase). Player buys 2 more times (Thur, Fri). Verify: `STANDING_CUSTOMER` achievement unlocked; Gary gives player a `BIG_ISSUE_MAG` for free on 5th purchase (loyalty bonus); dialogue: *"Keep that one, mate. You're alright."*
+
+---
+
+// ── Issue #1301: Add Northfield Big Issue Vendor ─────────────────────────────
+// New: BigIssueSystem.java in ragamuffin.core
+// New: BigIssueSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1301BigIssueVendorIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: BIG_ISSUE_VENDOR — add to NPCType.java
+// Material: BIG_ISSUE_MAG, COUNTERFEIT_BIG_ISSUE, CANVAS_BAG — add to Material.java
+// PropType: MAGAZINE_PITCH_PROP — add to PropType.java
+// RumourType: BIG_ISSUE_EVICTION, GARY_S_HERO, MAGAZINE_SCAM — add to RumourType.java
+// AchievementType: GARY_S_GUARDIAN, STANDING_CUSTOMER, MAGAZINE_BARON, DODGY_DISTRIBUTOR — add to AchievementType.java
+// CriminalRecord: PITCH_THEFT, UNLICENSED_TRADING — add to CriminalRecord.CrimeType
+// Integration: NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
+//             StreetSkillSystem, NeighbourhoodSystem, CharityShopSystem,
+//             DWPSystem (flavour), WeatherSystem, StallSystem, FactionSystem,
+//             InternetCafeSystem (counterfeit recipe), SquatSystem (PRINTER_PROP),
+//             NoiseSystem, NewspaperSystem, MarketInspectorSystem (MARKET_INSPECTOR spawn)
