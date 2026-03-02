@@ -30904,3 +30904,122 @@ at closing time.
 //   NIGHTCLUB_PICKPOCKET, CLOSING_TIME, VIP_ACCESS, SOBER_IN_THE_VAULTS (add to AchievementType.java)
 // New player buffs: TIPSY, DRUNK, DANCING (timed; stored in player state or managed by NightclubSystem)
 // New CriminalRecord entries: DRUNK_AND_DISORDERLY (if not already present)
+
+---
+
+## Add Northfield Iceland — Frozen Aisle Economy, the Christmas Club Scam & the Great Turkey Heist
+
+**Landmark**: `ICELAND` (add to `LandmarkType.java`) — display name `"Iceland Foods"`.
+Located on the high street between the Pound Shop and the Wetherspoons. Open Mon–Sat 08:30–20:00, Sun 10:00–16:00.
+
+Iceland Foods is the quintessential British working-class frozen-food supermarket. Three-for-a-fiver party food, stacked chest freezers, laminated sign in the window: "PRAWN RING £1.99". The Christmas Club is a savings scam; the turkeys always run out; and someone's always trying to return something with no receipt.
+
+New system: `IcelandSystem.java` in `ragamuffin.core`.
+
+### Key NPCs
+- **Debbie** (`ICELAND_MANAGER`) — store manager. Anchored near the FREEZER_AISLE_PROP Mon–Sat 08:00–20:00. Calls police at Notoriety ≥ 60 or if shoplifting is detected. At STREET_LADS Respect ≥ 50 turns a blind eye to one shoplifted item per visit. Speech: "Everything alright there?" / "I'm watching you, love." / "No receipt, no refund. Simple."
+- **Sharon** (`ICELAND_CHECKOUT_STAFF`) — staffs the CHECKOUT_PROP during opening hours. Rings up items; triggers SECURITY_GUARD if self-checkout item count mismatches. Known for sharing LOCAL_GOSSIP rumours while scanning. Speech: "Got your club card?" / "That's not on the three-for-a-fiver." / "Did you hear about next door's extension?"
+- **Kevin** (`ICELAND_SECURITY`) — a bored security guard on a 10-block patrol. Present Mon–Sat 10:00–20:00. Detection radius 5 blocks. Confronts shoplifters, calls police at Notoriety Tier ≥ 2. Can be distracted for 30 seconds with a PRAWN_RING placed near the staff room door. Speech: "Oi — put that back." / "Mate, I've got eyes everywhere." / "You want me to call the manager?"
+- **Brenda** (`CHRISTMAS_CLUB_MEMBER`) × 4–6 — pensioner NPCs who queue outside on the first Monday of each (game) month to pay into the Christmas Club (3 COIN each per session). Passive; share LOCAL_EVENT rumours about missing Christmas funds. Speech: "Been paying in since March." / "Fifty quid, that is, put away." / "She better not have done a runner."
+
+### Store Layout & Core Mechanic
+The store has three zones:
+- **Checkout Zone**: `ICELAND_CHECKOUT_PROP` (pay for items) and `ICELAND_SELF_CHECKOUT_PROP` (steal by under-scanning).
+- **Freezer Aisle**: Rows of `FREEZER_PROP` units. Each contains 3–6 items drawn from the Iceland stock table. Player presses E to open and browse/take.
+- **Christmas Club Desk**: `CHRISTMAS_CLUB_DESK_PROP` at the back — Brenda's domain.
+
+**Three-for-a-Fiver deal**: Any 3 items from the `PARTY_FOOD` tag purchased together cost 3 COIN instead of 5 (normally 2 COIN each). Player must have all three in basket at checkout. If player has `FAKE_RECEIPT` item, can claim the deal was 4-for-a-fiver (fail check 30%).
+
+**Self-Checkout Scam**: Player uses `ICELAND_SELF_CHECKOUT_PROP` to scan items.
+- Scan correctly: pays normal price.
+- Skip a scan (press E then immediately confirm): 40% chance Kevin detects it (+1 Notoriety, confiscation); if Kevin is distracted with PRAWN_RING bait, detection drops to 0%.
+- Bag weight sensor mismatch triggers an automatic alert requiring Sharon to override — this is the "Unexpected Item" event (flavour text + 30-second delay).
+
+### The Christmas Club
+Iceland's Christmas Club is a notorious savings scheme where customers pay weekly/monthly into a pot that they collect before Christmas. In Ragamuffin, it's also a scam target.
+
+- From November (in-game month system), Brenda and other `CHRISTMAS_CLUB_MEMBER` NPCs visit the desk every Monday morning to pay in 3 COIN each.
+- At Christmas (Dec 20–24 in-game), Debbie distributes Christmas Club payouts: each member receives `(weeks_paid_in × 3) COIN` wrapped in a `CHRISTMAS_ENVELOPE` item.
+- **Player can run the scam**: if player has FactionSystem STREET_LADS Respect ≥ 40, they can talk to Debbie and offer to "manage the Christmas Club cash" (dialogue option). Debbie trusts the player with the `CHRISTMAS_CLUB_CASH_BOX` prop. Player can:
+  - Return it honestly at payout time: +5 STREET_LADS Respect, +2 StreetReputation.
+  - Steal it: `CHRISTMAS_CLUB_CASH_BOX` item worth 20–35 COIN depending on how many members paid in. Adds `THEFT` to CriminalRecord; Notoriety +8; seeds `LOCAL_SCANDAL` rumour ("CHRISTMAS CLUB ROBBED — PENSIONERS LEFT WITHOUT HOLIDAY FUND"). Debbie permanently refuses service.
+
+### The Great Turkey Heist
+Every pre-Christmas period (Dec 1–24), a `FROZEN_TURKEY_CRATE_PROP` appears in the stock room. It contains 6 `FROZEN_TURKEY` items (each worth 4 COIN to sell, or satisfies `HUNGRY` −60).
+
+- Stock room is accessed via `ICELAND_STOCKROOM_DOOR_PROP` (locked; requires 2 lockpick attempts or `ICELAND_STAFF_KEY` stolen from Kevin via pickpocket).
+- Stealing a turkey adds `THEFT` to CriminalRecord, +2 Notoriety per turkey.
+- If all 6 turkeys are stolen: seeds `LOCAL_SCANDAL` rumour ("TURKEY THIEF CLEANS OUT ICELAND — PENSIONERS FACE CHRISTMAS WITHOUT BIRD"). NewspaperSystem headline eligible: *"BRAZEN THIEF STEALS NORTHFIELD'S CHRISTMAS — ALL SIX TURKEYS GONE"*.
+- Player can sell stolen turkeys to the Fence at 3 COIN each (80% value), or to the KebabVanSystem for 2 COIN as anonymous stock.
+- `GREAT_TURKEY_HEIST` achievement: steal all 6 turkeys in a single session.
+
+### Items (add to `Material.java`)
+- `FROZEN_PIZZA` — party food; `HUNGRY` −25; 1 COIN at checkout.
+- `PRAWN_RING` — party food; `HUNGRY` −20; 2 COIN at checkout. Placing near staff room distracts Kevin for 30s.
+- `CHICKEN_NUGGETS` — party food; `HUNGRY` −20; 1 COIN at checkout.
+- `ICELAND_PRAWN_COCKTAIL` — party food; `HUNGRY` −15; 1 COIN at checkout.
+- `FROZEN_TURKEY` — large item; `HUNGRY` −60 (cooked); 4 COIN face value. Sell to fence for 3 COIN.
+- `CHRISTMAS_ENVELOPE` — contains 10–35 COIN depending on months paid in. Lootable from Brenda's handbag (pickpocket, WitnessSystem risk 50%).
+- `CHRISTMAS_CLUB_CASH_BOX` — entrusted to player or stolen from desk; contains 20–35 COIN.
+- `ICELAND_STAFF_KEY` — pickpocketed from Kevin; opens stockroom. One-use.
+- `FAKE_RECEIPT` — novelty item; can attempt to claim the 4-for-a-fiver scam (30% fail). Fenceable for 1 COIN.
+- `THREE_FOR_A_FIVER_DEAL` — virtual tag applied at checkout when 3 party food items are bought together.
+
+### Props (add to `PropType.java`)
+- `FREEZER_PROP` — open-top chest freezer; rows of 3–6 items visible; E to browse/take.
+- `ICELAND_CHECKOUT_PROP` — staffed checkout; Sharon rings up basket.
+- `ICELAND_SELF_CHECKOUT_PROP` — self-scan machine; scam zone.
+- `CHRISTMAS_CLUB_DESK_PROP` — savings desk at the back wall; Brenda's anchor.
+- `FROZEN_TURKEY_CRATE_PROP` — in stockroom Dec 1–24; contains 6 turkeys.
+- `ICELAND_STOCKROOM_DOOR_PROP` — locked door; lockpick or staff key.
+- `CHRISTMAS_CLUB_CASH_BOX` — entrusted prop on the desk; takeable.
+
+### System Integrations
+- **FenceSystem**: FROZEN_TURKEY at 3 COIN (80% value); CHRISTMAS_ENVELOPE fenced for 60% value.
+- **KebabVanSystem**: accepts FROZEN_TURKEY at 2 COIN (no questions asked).
+- **RumourNetwork**: Brenda seeds `LOCAL_SCANDAL` on Christmas Club theft; turkey heist seeds `LOCAL_SCANDAL`; Sharon seeds `LOCAL_GOSSIP` on each visit.
+- **NewspaperSystem**: turkey heist headline; Christmas Club theft headline.
+- **WantedSystem**: shoplifting detection +1 tier; Christmas Club theft +1 tier; turkey heist +1 tier.
+- **NotorietySystem**: +1 per self-checkout scam success; +2 per turkey stolen; +8 for Christmas Club theft.
+- **CriminalRecord**: `THEFT` entry for turkey heist and Christmas Club scam.
+- **WitnessSystem**: shoplifting checks; Kevin as primary witness; Sharon secondary.
+- **WeatherSystem**: FROST / COLD_SNAP weather increases CHRISTMAS_CLUB_MEMBER count by +2 (people coming in to warm up and pay in).
+- **TimeSystem**: open Mon–Sat 08:30–20:00, Sun 10:00–16:00; Christmas Club active Nov–Dec only; Turkey Crate active Dec 1–24.
+- **TaxiSystem**: no direct integration but the "Turkey dash" — stealing a turkey triggers Kevin chase for 90 real seconds.
+- **StreetEconomySystem**: three-for-a-fiver deal satisfies HUNGRY at reduced coin cost.
+
+### Achievements (add to `AchievementType.java`)
+| Achievement | Trigger |
+|---|---|
+| `UNEXPECTED_ITEM` | Trigger the "Unexpected Item in Bagging Area" event at self-checkout |
+| `PRAWN_RING_BAIT` | Distract Kevin with a PRAWN_RING and successfully self-checkout-scam an item |
+| `THREE_FOR_A_FIVER` | Purchase a three-for-a-fiver deal at checkout |
+| `GREAT_TURKEY_HEIST` | Steal all 6 turkeys from the stock room in a single session |
+| `CHRISTMAS_CLUB_VILLAIN` | Steal the Christmas Club cash box |
+| `CHRISTMAS_CLUB_HERO` | Return the Christmas Club cash box honestly at payout time |
+| `MUMS_GONE_TO_ICELAND` | Visit Iceland 10 times in total |
+| `NO_RECEIPT_NO_REFUND` | Attempt a return with no receipt (Debbie refuses) |
+
+**Unit tests**: Three-for-a-fiver deal applies only when 3+ party food items in basket; self-checkout scam detection rates (40% base, 0% when Kevin distracted); Kevin distraction timer (30s); Christmas Club payout formula (`weeks_paid × 3` COIN per member, correct total); turkey crate item count (6 per session); Notoriety increments (+2 per turkey, +8 for cash box); RumourNetwork receives `LOCAL_SCANDAL` type on turkey heist; NewspaperSystem headline eligible when all 6 turkeys stolen and Notoriety Tier ≥ 1.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Three-for-a-fiver deal applies at checkout**: Set time to 10:00 Monday. Give player 10 COIN. Place player at `ICELAND_CHECKOUT_PROP`. Add 3 `PARTY_FOOD`-tagged items to player basket (FROZEN_PIZZA, PRAWN_RING, CHICKEN_NUGGETS — total normal price 4 COIN). Press E at checkout. Verify total charged is 3 COIN (not 4). Verify 3 items are now in player inventory. Verify 3 COIN deducted from player balance.
+
+2. **Kevin detects self-checkout scam — notoriety increases**: Set time to 12:00. Set player Notoriety to 10. Place Kevin within 5 blocks of `ICELAND_SELF_CHECKOUT_PROP`. Using a seeded Random that forces detection, place player at self-checkout, add 1 FROZEN_PIZZA, skip the scan, confirm. Verify `THEFT` warning is triggered (not necessarily arrest). Verify Notoriety increased by 1 (to 11). Verify FROZEN_PIZZA is confiscated from player inventory.
+
+3. **Prawn ring bait distracts Kevin, scam succeeds**: Set time to 14:00. Place player adjacent to Kevin. Give player 1 PRAWN_RING. Drop PRAWN_RING near staff room door (E action). Verify Kevin transitions to `DISTRACTED` state and moves toward PRAWN_RING position. Within 5 in-game seconds, move player to `ICELAND_SELF_CHECKOUT_PROP`. Add 1 CHICKEN_NUGGETS, skip scan, confirm. Using a seeded Random that would normally detect, verify detection does NOT fire (Kevin distracted). Verify CHICKEN_NUGGETS added to inventory without payment. Verify `PRAWN_RING_BAIT` achievement unlocked.
+
+4. **Turkey heist triggers all 6 stolen, rumour and newspaper headline**: Set time to 15:00 December. Give player `ICELAND_STAFF_KEY`. Press E on `ICELAND_STOCKROOM_DOOR_PROP`. Verify door opens and key is consumed. Verify 6 `FROZEN_TURKEY` items are present in `FROZEN_TURKEY_CRATE_PROP`. Take all 6. Verify player inventory contains 6 FROZEN_TURKEY. Verify Notoriety increased by 12 (6 × 2). Verify CriminalRecord contains `THEFT`. Verify RumourNetwork contains a `LOCAL_SCANDAL` rumour. Verify NewspaperSystem marks the turkey heist headline as eligible. Verify `GREAT_TURKEY_HEIST` achievement unlocked.
+
+5. **Christmas Club theft triggers pensioner scandal rumour**: Set game month to November. Trigger IcelandSystem to give player `CHRISTMAS_CLUB_CASH_BOX` trust (set STREET_LADS Respect to 40, interact with Debbie). Verify player receives entrusted `CHRISTMAS_CLUB_CASH_BOX`. Simulate player keeping the box and triggering the theft outcome (call `IcelandSystem.stealChristmasClub(player)`). Verify COIN in range 20–35 is added to player. Verify `THEFT` in CriminalRecord. Verify Notoriety increased by 8. Verify RumourNetwork contains a `LOCAL_SCANDAL` rumour with text matching "Christmas" or "club". Verify `CHRISTMAS_CLUB_VILLAIN` achievement unlocked.
+
+// New system: IcelandSystem.java in ragamuffin.core
+// New landmark: ICELAND (add to LandmarkType.java)
+// New NPCTypes: ICELAND_MANAGER, ICELAND_CHECKOUT_STAFF, ICELAND_SECURITY, CHRISTMAS_CLUB_MEMBER (add to NPCType.java)
+// New Materials: FROZEN_PIZZA, PRAWN_RING, CHICKEN_NUGGETS, ICELAND_PRAWN_COCKTAIL, FROZEN_TURKEY,
+//   CHRISTMAS_ENVELOPE, CHRISTMAS_CLUB_CASH_BOX, ICELAND_STAFF_KEY, FAKE_RECEIPT (add to Material.java)
+// New PropTypes: FREEZER_PROP, ICELAND_CHECKOUT_PROP, ICELAND_SELF_CHECKOUT_PROP,
+//   CHRISTMAS_CLUB_DESK_PROP, FROZEN_TURKEY_CRATE_PROP, ICELAND_STOCKROOM_DOOR_PROP (add to PropType.java)
+// New Achievements: UNEXPECTED_ITEM, PRAWN_RING_BAIT, THREE_FOR_A_FIVER, GREAT_TURKEY_HEIST,
+//   CHRISTMAS_CLUB_VILLAIN, CHRISTMAS_CLUB_HERO, MUMS_GONE_TO_ICELAND, NO_RECEIPT_NO_REFUND (add to AchievementType.java)
