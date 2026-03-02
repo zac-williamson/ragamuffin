@@ -2577,7 +2577,32 @@ public enum PropType {
      * a PCN appeal. Press E (must hold PENALTY_CHARGE_NOTICE + BLANK_PAPER).
      * Staffed by COUNCIL_RECEPTIONIST Brenda. Appeal takes 2 in-game days.
      */
-    APPEAL_DESK_PROP(1.20f, 0.90f, 0.70f, 8, Material.SCRAP_METAL);
+    APPEAL_DESK_PROP(1.20f, 0.90f, 0.70f, 8, Material.SCRAP_METAL),
+
+    // ── Issue #1202: Karaoke Night ─────────────────────────────────────────
+
+    /**
+     * KARAOKE_BOOTH_PROP — DJ/karaoke booth at the back of Wetherspoons.
+     * Active Fridays 20:00–23:00. Press E to queue for a song (player must have
+     * Notoriety &lt; 50). Bev the compère manages the queue.
+     * Destroyed by 5 punches; yields SCRAP_METAL.
+     */
+    KARAOKE_BOOTH_PROP(1.20f, 1.80f, 0.80f, 5, Material.SCRAP_METAL),
+
+    /**
+     * FUSE_BOX_PROP — electrical fuse box in the back hallway of Wetherspoons.
+     * Interact while holding SCREWDRIVER to kill the PA system during a rival's
+     * performance. Notoriety +3 if witnessed. Destroyed by 5 punches; yields
+     * SCRAP_METAL.
+     */
+    FUSE_BOX_PROP(0.40f, 0.60f, 0.20f, 5, Material.SCRAP_METAL),
+
+    /**
+     * MICROPHONE_PROP — world prop version of the karaoke microphone on its stand.
+     * Grab while Bev is distracted (10-second window after each song). Yields
+     * MICROPHONE item. Destroyed by 2 punches; yields MICROPHONE material.
+     */
+    MICROPHONE_PROP(0.20f, 1.20f, 0.20f, 2, Material.MICROPHONE);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

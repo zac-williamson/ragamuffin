@@ -1163,6 +1163,35 @@ public class WetherspoonsSystem {
         this.curryClubActive = active;
     }
 
+    // ── KaraokeSystem integration ──────────────────────────────────────────────
+
+    /** Tracks whether a karaoke round-buying spike is active (set by KaraokeSystem). */
+    private boolean karaokeRoundBuyingActive = false;
+
+    /**
+     * Called by {@link KaraokeSystem} when the player scores GREAT on karaoke.
+     * Triggers a round-buying spike: each PUBLIC NPC in the pub buys a round,
+     * incrementing the drinks counter and seeding a positive vibe.
+     *
+     * @param pubNpcs the list of NPC patrons currently in the pub
+     */
+    public void serveRound(List<NPC> pubNpcs) {
+        if (pubNpcs == null) return;
+        karaokeRoundBuyingActive = true;
+        for (NPC npc : pubNpcs) {
+            if (npc != null && npc.getType() == NPCType.PUBLIC) {
+                totalDrinksPurchased++;
+                npc.setSpeechText("Get 'em in!", 4f);
+            }
+        }
+    }
+
+    /** Returns true if the karaoke round-buying spike is currently active. */
+    public boolean isKaraokeRoundBuyingActive() { return karaokeRoundBuyingActive; }
+
+    /** For testing: reset the karaoke round-buying flag. */
+    public void resetKaraokeRoundBuyingForTesting() { karaokeRoundBuyingActive = false; }
+
     // ── FeteSystem integration ─────────────────────────────────────────────────
 
     /** Number of extra patrons added by the post-fete surge. */
