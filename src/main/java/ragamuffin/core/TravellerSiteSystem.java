@@ -464,7 +464,7 @@ public class TravellerSiteSystem {
 
         // StreetSkillSystem XP
         if (streetSkillSystem != null) {
-            streetSkillSystem.addXp(StreetSkillSystem.Skill.TRADING, 5);
+            streetSkillSystem.awardXP(StreetSkillSystem.Skill.TRADING, 5);
         }
 
         // Seed rumour on poor-quality job (random 30% chance)
@@ -550,8 +550,8 @@ public class TravellerSiteSystem {
         if (dogFightRingDispersed) return DogFightResult.RING_INACTIVE;
 
         // Time check: Fri or Sat, 21:00–23:00
-        int dow = timeSystem.getDayOfWeek();
-        float hour = timeSystem.getHour();
+        int dow = timeSystem.getDayIndex() % 7;
+        float hour = timeSystem.getTime();
         if (dow != DOG_FIGHT_DAY_FRIDAY && dow != DOG_FIGHT_DAY_SATURDAY) {
             return DogFightResult.WRONG_TIME;
         }
@@ -569,7 +569,7 @@ public class TravellerSiteSystem {
             criminalRecord.record(CriminalRecord.CrimeType.DOG_FIGHTING_ATTENDANCE);
         }
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(DOG_FIGHT_NOTORIETY, paddyNpc);
+            notorietySystem.addNotoriety(DOG_FIGHT_NOTORIETY, achievementSystem != null ? achievementSystem::unlock : null);
         }
 
         // Place bet
@@ -617,7 +617,7 @@ public class TravellerSiteSystem {
 
         // Marchetti Respect penalty
         if (factionSystem != null) {
-            factionSystem.adjustRespect(Faction.MARCHETTI_CREW, RSPCA_REPORT_MARCHETTI_PENALTY);
+            factionSystem.applyRespectDelta(Faction.MARCHETTI_CREW, RSPCA_REPORT_MARCHETTI_PENALTY);
         }
 
         // Seed DOG_FIGHT_RAID rumour
@@ -661,12 +661,12 @@ public class TravellerSiteSystem {
 
         // Neighbourhood respect boost
         if (neighbourhoodSystem != null) {
-            neighbourhoodSystem.adjustCommunityRespect(COUNCIL_TIPOFF_COMMUNITY_RESPECT);
+            neighbourhoodSystem.setVibes(neighbourhoodSystem.getVibes() + COUNCIL_TIPOFF_COMMUNITY_RESPECT);
         }
 
         // Street Lads penalty
         if (factionSystem != null) {
-            factionSystem.adjustRespect(Faction.STREET_LADS, COUNCIL_TIPOFF_STREET_LADS_PENALTY);
+            factionSystem.applyRespectDelta(Faction.STREET_LADS, COUNCIL_TIPOFF_STREET_LADS_PENALTY);
         }
 
         // Achievement
@@ -692,7 +692,7 @@ public class TravellerSiteSystem {
     public NightRaidResult raidCaravan(Inventory inventory, TimeSystem timeSystem) {
         if (!siteActive) return NightRaidResult.SITE_INACTIVE;
 
-        float hour = timeSystem.getHour();
+        float hour = timeSystem.getTime();
         if (hour < NIGHT_RAID_START_HOUR || hour >= NIGHT_RAID_END_HOUR) {
             return NightRaidResult.WRONG_TIME;
         }
@@ -718,12 +718,12 @@ public class TravellerSiteSystem {
 
         // Notoriety
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(NIGHT_RAID_NOTORIETY, paddyNpc);
+            notorietySystem.addNotoriety(NIGHT_RAID_NOTORIETY, achievementSystem != null ? achievementSystem::unlock : null);
         }
 
         // Wanted
         if (wantedSystem != null) {
-            wantedSystem.addWantedStars(1);
+            wantedSystem.addWantedStars(1, 0f, 0f, 0f, null);
         }
 
         // Crime record
@@ -807,7 +807,7 @@ public class TravellerSiteSystem {
         inventory.removeItem(Material.CLOTHES_PEG_BUNDLE, 1);
 
         if (target != null) {
-            target.setState(NPCState.STARTLED);
+            target.setState(NPCState.FLEEING);
         }
 
         if (rumourNetwork != null && target != null) {
