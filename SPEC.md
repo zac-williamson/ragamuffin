@@ -39671,3 +39671,156 @@ Phil unlocks as a persistent FenceSystem contact (available outside Saturdays vi
 // Integrates: FactionSystem, WeatherSystem, NewspaperSystem, RumourNetwork,
 //   WantedSystem, NotorietySystem, SoundSystem, BusSystem, WetherspoonsSystem,
 //   PubLockInSystem, StreetEconomySystem, HorseRacingSystem (bet model)
+
+---
+
+## Northfield Sunday Car Boot Sale — Pound-a-Bag & the Dodgy Dealer
+
+**Issue**: Add Northfield Sunday Car Boot Sale — CarBootSaleSystem, Vera's Pitch, the Dodgy Dealers & the Trading Standards Raid.
+
+### Overview
+A proper British Sunday car boot sale takes place in the council car park (or a muddy field behind Morrisons) every Sunday 07:00–13:00 (setup from 06:30). This is a **legitimate public** event — completely distinct from the clandestine underground auction `BootSaleSystem`. Twenty to thirty car sellers (BOOT_SELLER NPCs) pitch up, flog junk from their car boots, and pack up sharpish at 13:00 before the rain comes in.
+
+The player can:
+1. **Browse as a buyer** — wander between pitches and buy items at low prices
+2. **Rent a pitch** (2 COIN) and **sell their own stuff** — list up to 12 items at whatever price they fancy
+3. **Haggle** with sellers — offers below ticket price accepted 40% of the time; desperate sellers (past 12:00) accept 70% of the time
+4. **Pickpocket** in the crowd — low-risk due to noise and crowds; each NPC carries 1–4 COIN
+5. **Introduce dodgy gear** — fenced/stolen items sell at boot sale for 60% market price, no Notoriety penalty (unless police attend the raid)
+6. **Trigger or survive a Trading Standards Raid** — 15% chance each Sunday; TRADING_STANDARDS NPC team arrives at a random time and inspects sellers for counterfeit goods
+
+### Location
+`BOOT_SALE_CAR_PARK` LandmarkType — a 30×20-block PAVEMENT area on the west side of the town centre (adjacent to the car wash). A makeshift car park that doubles as a boot sale venue Sundays only. When inactive (Mon–Sat), the car park serves as an overflow vehicle park.
+
+### Schedule & Setup
+- **Sunday 06:30–07:00**: 10–15 BOOT_SELLER NPCs spawn at CAR_PROP positions (their vehicles), each beside a TRESTLE_TABLE_PROP displaying their wares. A BURGER_VAN_PROP parks at the entrance (Rog's Rolls — bacon rolls 1 COIN, tea 1 COIN).
+- **Sunday 07:00–13:00**: Sale open. 2–4 BOOT_BUYER NPC visitors per active pitch wander between stalls.
+- **Sunday 13:00**: All NPCs pack up and despawn. Litter props (STYROFOAM_CUP, PLASTIC_BAG) remain until Monday.
+- **Rain/Drizzle**: Attendance drops 50%; Desperate Seller mode kicks in 30 min early (12:30).
+- **Thunderstorm**: Sale cancelled entirely; no NPCs spawn; BOOT_SALE_CANCELLED_SIGN_PROP appears.
+
+### Pitch Types (seeded per seller)
+| Seller | Stock | Special |
+|---|---|---|
+| Vera (always present) | Antiques, bric-a-brac, ANTIQUE_CLOCK | Shares rumours freely |
+| Terry | Power tools, DRILL, ANGLE_GRINDER (half-working) | Will buy scrap metal too |
+| Linda | Baby clothes, MUG, BISCUIT_TIN | If player wears DISGUISE, sells cheaper |
+| Dave | Dodgy DVDs, COUNTERFEIT_NOTE (hidden, 20% chance) | Wanted level check on purchase |
+| Mick | Vintage electronics, RADIO, CASSETTE_PLAYER | Recognises stolen goods; warns player |
+| Random sellers (x5–10) | Mixed junk from Material pool | Standard haggle |
+
+### Player Pitch Mechanic
+1. Press E on `PITCH_SIGN_PROP` (entrance) → pay 2 COIN to register pitch
+2. Player's CAR_PROP (if owned via CarDealershipSystem) spawns at an assigned bay, or a `FOLD_TABLE_PROP` if no car
+3. Player lists items from inventory via `CarBootUI` — sets asking price, up to 12 slots
+4. Each in-game minute: up to 2 BOOT_BUYER NPCs approach stall and attempt purchase at listed price
+5. Buyers reject items priced >150% of market value. Accept at ≤100%; 60% accept at 101–130%
+6. At session end (13:00) or when player leaves pitch: unsold items returned to inventory, COIN collected
+
+### Trading Standards Raid
+- 15% chance per Sunday — `TRADING_STANDARDS_OFFICER` (2× NPC) arrives 08:30–11:00
+- Checks all active pitches for `COUNTERFEIT_NOTE`, `STOLEN_PHONE`, `FORGED_CERTIFICATE`, `FAKE_GOODS`
+- Player pitch inspected: if any flagged items found → `CriminalRecord.CrimeType.TRADING_STANDARDS_VIOLATION`, Notoriety +10, all items confiscated
+- Dave's pitch always inspected; 80% chance he legs it → Dave FLEEING state, BOOT_BUYER NPCs scatter
+- Player can warn Dave (press E while raid approaching) → Dave: "Cheers mate" + StreetReputation +3
+
+### Integrations
+- `FenceSystem` — buying stolen goods from Dave; items flagged in FenceSystem's hot-goods tracker
+- `WantedSystem` — Trading Standards raid escalates if player is already wanted
+- `CarDealershipSystem` — player car spawns as pitch vehicle if owned
+- `WeatherSystem` — attendance modifier, cancellation on thunderstorm
+- `TimeSystem` — schedule enforcement, Desperate Seller state at 12:00
+- `RumourNetwork` — "Vera had a massive clear-out" (`LOCAL_EVENT`); raid seeds `POLICE_ACTIVITY` rumour
+- `NotorietySystem` — pickpocketing increments Notoriety; raid adds significant Notoriety
+- `StreetEconomySystem` — player pitch sales contribute to TRADING income
+- `BootSaleSystem` — **NOT** linked; this is public, that is clandestine
+- `WarmthSystem` — Rog's Rolls bacon roll: Warmth +5, Hunger +10
+- `NewspaperSystem` — "Trading Standards Swoop on Northfield Boot Sale" headline after raid
+- `AchievementSystem` — see achievements below
+- `CriminalRecord` — `TRADING_STANDARDS_VIOLATION` crime type
+- `NoiseSystem` — crowd generates noise 0.3 during event; raid causes spike to 0.7
+
+### New LandmarkType (add to LandmarkType.java)
+- `BOOT_SALE_CAR_PARK` — "Northfield Sunday Boot Sale", west side of town centre
+
+### New NPCTypes (add to NPCType.java)
+- `BOOT_SELLER` — pitched car boot seller, passive; becomes DESPERATE after 12:00
+- `BOOT_BUYER` — wandering browser, passive; carries 1–4 COIN
+- `TRADING_STANDARDS_OFFICER` — authoritative, triggers raid mechanic; calls police if resisted
+- `ROG_ROLLS_VENDOR` — burger van man; sells food, never moves
+
+### Achievements (add to AchievementType.java)
+
+| Achievement | Condition |
+|---|---|
+| `BOOT_SALE_REGULAR` | Attend the boot sale on 3 consecutive Sundays |
+| `VERA_S_BARGAIN` | Buy the ANTIQUE_CLOCK from Vera for 1 COIN and fence it for 10+ COIN |
+| `DODGY_DAVE` | Warn Dave about the Trading Standards raid |
+| `PITCH_PERFECT` | Earn 20+ COIN in a single pitch session |
+| `POUND_A_BAG` | Buy 5+ items from the boot sale in one Sunday |
+| `STICKY_FINGERS` | Successfully pickpocket 3 NPCs at the boot sale without being caught |
+| `BOOT_CAMP` | Survive a Trading Standards raid with no items confiscated |
+
+### New Materials (add to Material.java)
+- `TRESTLE_TABLE` — deployable surface prop (boot sale pitch context only)
+- `CASSETTE_PLAYER` — retro item; sells at Pawn Shop for 3 COIN; satisfies BORED need
+- `BACON_ROLL` — from Rog's Rolls; Warmth +5, Hunger +10
+- `FOLD_TABLE` — portable table; player pitch alternative if no car
+
+### New PropTypes (add to PropType.java)
+- `TRESTLE_TABLE_PROP`, `FOLD_TABLE_PROP` — seller pitch surfaces
+- `BURGER_VAN_PROP` — Rog's Rolls at entrance
+- `PITCH_SIGN_PROP` — entrance registration sign
+- `BOOT_SALE_CANCELLED_SIGN_PROP` — displayed on thunderstorm cancellation
+
+### Unit Tests (implement in `CarBootSaleSystemTest.java`)
+- `CarBootSaleSystem.isOpen(day=SUNDAY, hour=08f)` → true
+- `CarBootSaleSystem.isOpen(day=SUNDAY, hour=06f)` → false (before 07:00)
+- `CarBootSaleSystem.isOpen(day=MONDAY, hour=09f)` → false
+- `CarBootSaleSystem.isCancelled(weather=THUNDERSTORM)` → true; `isCancelled(weather=RAIN)` → false
+- `CarBootSaleSystem.isDesperateSeller(hour=12.1f, weather=CLEAR)` → true
+- `CarBootSaleSystem.isDesperateSeller(hour=11.9f, weather=RAIN)` → false; `isDesperateSeller(hour=12.4f, weather=RAIN)` → true (RAIN: 30 min early = 12:30... wait: Desperate Seller kicks in 30 min early during rain → 11:30)
+- `CarBootSaleSystem.hagglingAccepted(offerRatio=0.90f, isDesperateSeller=false, rng=seeded(1))` → determined by 40% base chance
+- `CarBootSaleSystem.hagglingAccepted(offerRatio=0.90f, isDesperateSeller=true, rng=seeded(1))` → determined by 70% desperate chance
+- `CarBootSaleSystem.playerSellPrice(askingPrice=10, buyerMaxRatio=1.5f)` → accepted; `playerSellPrice(askingPrice=16, buyerMaxRatio=1.5f)` → rejected
+- `CarBootSaleSystem.triggerRaid(rng=seeded, hour=09f)` → `TRADING_STANDARDS_OFFICER` NPC spawned; all pitches flagged for inspection
+- `CarBootSaleSystem.inspectPitch(items=[CASSETTE_PLAYER], flaggedTypes=[COUNTERFEIT_NOTE])` → clean; no violation
+- `CarBootSaleSystem.inspectPitch(items=[COUNTERFEIT_NOTE, MUG], flaggedTypes=[COUNTERFEIT_NOTE])` → violation; CriminalRecord entry
+- `CarBootSaleSystem.registerPlayerPitch(playerCoin=2)` → pitch registered; coin −2
+- `CarBootSaleSystem.registerPlayerPitch(playerCoin=1)` → rejected; "You'll need 2 quid for a pitch, mate."
+- `CarBootSaleSystem.rogSell(item=BACON_ROLL, playerCoin=2)` → Warmth +5, Hunger +10, coin −1
+- `CarBootSaleSystem.generateSellerStock(sellerType=VERA, rng=seeded)` → contains ANTIQUE_CLOCK
+- `CarBootSaleSystem.generateSellerStock(sellerType=DAVE, rng=seeded(fixed_counterfeit))` → may contain COUNTERFEIT_NOTE
+- `CarBootSaleSystem.warnDave(playerPosition=adjacent, daveState=PITCHING, raidActive=true)` → Dave state = FLEEING; StreetReputation +3
+
+### Integration Tests — implement these exact scenarios
+
+1. **Full boot sale session — buy, haggle, sell own pitch**: Advance TimeSystem to Sunday 07:00.
+   Verify 10+ BOOT_SELLER NPCs spawned at `BOOT_SALE_CAR_PARK` with TRESTLE_TABLE_PROP.
+   Player approaches Vera's pitch (E). Verify `ANTIQUE_CLOCK` listed at 1 COIN. Player buys it. Verify ANTIQUE_CLOCK added to inventory; player coin −1. Player approaches pitch registration (E on PITCH_SIGN_PROP, coin ≥ 2). Verify pitch registered; player coin −2. Player lists ANTIQUE_CLOCK at 5 COIN via CarBootUI. Advance time by 3 in-game minutes. Verify at least one BOOT_BUYER NPC attempted purchase. Advance to 13:00. Verify all BOOT_SELLER NPCs despawn. Verify LITTER props (≥2) remain on the ground.
+
+2. **Thunderstorm cancels sale**: Set WeatherSystem to THUNDERSTORM. Advance to Sunday 07:00. Verify zero BOOT_SELLER NPCs spawned. Verify `BOOT_SALE_CANCELLED_SIGN_PROP` present at `BOOT_SALE_CAR_PARK`. Advance to Sunday 08:00. Verify still no NPCs and sign remains.
+
+3. **Trading Standards raid — contraband detected**: Advance to Sunday 09:00. Force `triggerRaid()` (bypass 15% probability for test). Verify `TRADING_STANDARDS_OFFICER` NPC pair spawns. Player has `COUNTERFEIT_NOTE` in active pitch. Verify officer approaches player pitch. Verify player receives violation: `CriminalRecord.CrimeType.TRADING_STANDARDS_VIOLATION` added. Verify COUNTERFEIT_NOTE removed from inventory. Verify Notoriety +10. Verify `NewspaperSystem` headline queued: contains "Trading Standards". Verify `POLICE_ACTIVITY` rumour seeded to `RumourNetwork`.
+
+4. **Warn Dave before raid — street reputation reward**: Force `triggerRaid()` at 09:30. Dave (BOOT_SELLER with COUNTERFEIT_NOTE) is spawned. Player stands adjacent to Dave NPC and presses E before officers reach Dave's pitch. Verify Dave transitions to `NPCState.FLEEING`. Verify player StreetReputation +3. Verify Trading Standards inspect Dave's now-empty pitch → no item found, no violation for Dave.
+
+5. **Rain reduces attendance and triggers early desperate pricing**: Set WeatherSystem to RAIN. Advance to Sunday 07:30. Count spawned BOOT_SELLER NPCs; verify ≤ 8 (≤50% of clear-weather maximum of 15). Advance to Sunday 11:35. Attempt haggle with any BOOT_SELLER at 50% of ticket price. Verify haggling accepted (desperate seller threshold reached early at 11:30 in rain).
+
+6. **Rog's Rolls bacon roll — warmth and hunger gain**: Advance to Sunday 08:00. Player has 2 COIN. Player presses E on BURGER_VAN_PROP. Select BACON_ROLL (1 COIN). Verify player coin −1. Verify `WarmthSystem` receives +5. Verify player Hunger +10. Verify `Material.BACON_ROLL` appears in inventory if not consumed immediately.
+
+// ── Issue #1249: Northfield Sunday Car Boot Sale ──────────────────────────────
+// New: CarBootSaleSystem.java in ragamuffin.core
+// New: CarBootUI.java in ragamuffin.ui
+// New: Issue1249CarBootSaleSystemTest.java in src/test/java/ragamuffin/integration/
+// New LandmarkType entry: BOOT_SALE_CAR_PARK — add to LandmarkType.java
+// New NPCTypes: BOOT_SELLER, BOOT_BUYER, TRADING_STANDARDS_OFFICER, ROG_ROLLS_VENDOR — add to NPCType.java
+// New AchievementTypes: BOOT_SALE_REGULAR, VERA_S_BARGAIN, DODGY_DAVE, PITCH_PERFECT,
+//   POUND_A_BAG, STICKY_FINGERS, BOOT_CAMP — add to AchievementType.java
+// New CrimeType: TRADING_STANDARDS_VIOLATION — add to CriminalRecord.java
+// New Materials: TRESTLE_TABLE, CASSETTE_PLAYER, BACON_ROLL, FOLD_TABLE — add to Material.java
+// New PropTypes: TRESTLE_TABLE_PROP, FOLD_TABLE_PROP, BURGER_VAN_PROP,
+//   PITCH_SIGN_PROP, BOOT_SALE_CANCELLED_SIGN_PROP — add to PropType.java
+// Integrates: FenceSystem, WantedSystem, CarDealershipSystem, WeatherSystem,
+//   TimeSystem, RumourNetwork, NotorietySystem, StreetEconomySystem, WarmthSystem,
+//   NewspaperSystem, AchievementSystem, CriminalRecord, NoiseSystem, DisguiseSystem
