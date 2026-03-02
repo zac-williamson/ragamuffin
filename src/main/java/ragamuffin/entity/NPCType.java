@@ -1896,7 +1896,18 @@ public enum NPCType {
      * White-collar boxer — office worker opponent in the underground circuit.
      * Spawns on alternate Saturdays 22:00. Better funded, worse technique.
      */
-    WHITE_COLLAR_BOXER(30f, 5f, 2.0f, false);
+    WHITE_COLLAR_BOXER(30f, 5f, 2.0f, false),
+
+    // ── Issue #1171: Northfield TV Licence ────────────────────────────────────
+
+    /**
+     * TV Licence Officer — BBC Licensing Authority enforcement officer.
+     * Crawls residential streets as part of the DETECTOR_VAN patrol every 14 in-game days.
+     * Can knock on the player's door to conduct an inspection. Can be bribed (4 COIN),
+     * intimidated by the dog (bond ≥ 50 + off-lead), or let in (fines 8 COIN).
+     * Not hostile; does not pursue the player.
+     */
+    LICENCE_OFFICER(40f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

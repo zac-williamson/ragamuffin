@@ -3973,7 +3973,30 @@ public enum Material {
 
     /** ABA Trophy 1987 — the stolen trophy from Tommy's display cabinet.
      * Quest item: retrieve from Derek's house → return to Tommy → LEGACY_OF_THE_RING. */
-    ABA_TROPHY("ABA Trophy 1987");
+    ABA_TROPHY("ABA Trophy 1987"),
+
+    // ── Issue #1171: Northfield TV Licence ────────────────────────────────────
+
+    /**
+     * TV Licence Letter — buff envelope from the BBC Licensing Authority.
+     * Issued every 7 in-game days to unlicensed properties. Status escalates
+     * UNLICENSED → WARNED → FINAL_NOTICE → SUMMONED.
+     */
+    TV_LICENCE_LETTER("TV Licence Letter"),
+
+    /**
+     * TV Licence Certificate — proof of payment (12 COIN at LETTERBOX_PROP).
+     * Frameable on wall; grants +2 Community Respect. Valid for 28 in-game days.
+     */
+    TV_LICENCE_CERTIFICATE("TV Licence Certificate"),
+
+    /**
+     * Forged TV Licence — craftable at StreetRep ≥ 40 using BLANK_PAPER + PRINTER_INK
+     * via PRINTER_PROP. Sellable to PUBLIC/PENSIONER NPCs for 8 COIN each.
+     * 20% chance each sale reports it, seeding FORGED_DOCUMENT criminal record
+     * and wanted level. Three sales triggers a NewspaperSystem headline.
+     */
+    FORGED_TV_LICENCE("Forged TV Licence");
 
     private final String displayName;
 
@@ -4992,6 +5015,14 @@ public enum Material {
             case SPEED_BAG_CHALK:       return c(0.90f, 0.90f, 0.88f);  // White chalk dust
             case ABA_TROPHY:            return cs(0.82f, 0.68f, 0.15f,  // Gold trophy body
                                                   0.62f, 0.48f, 0.10f); // Dark gold base
+
+            // Issue #1171: Northfield TV Licence
+            case TV_LICENCE_LETTER:     return cs(0.88f, 0.88f, 0.75f,  // Cream envelope
+                                                  0.72f, 0.20f, 0.10f); // Red BBC stripe
+            case TV_LICENCE_CERTIFICATE: return cs(0.92f, 0.88f, 0.75f, // Official cream paper
+                                                   0.20f, 0.50f, 0.80f); // Blue official seal
+            case FORGED_TV_LICENCE:     return cs(0.82f, 0.78f, 0.65f,  // Fake cream paper
+                                                  0.55f, 0.15f, 0.10f); // Suspicious red marks
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -6556,6 +6587,14 @@ public enum Material {
                 return IconShape.BOX;         // chalk block
             case ABA_TROPHY:
                 return IconShape.CYLINDER;    // trophy cup shape
+
+            // Issue #1171: Northfield TV Licence
+            case TV_LICENCE_LETTER:
+                return IconShape.FLAT_PAPER;  // buff envelope
+            case TV_LICENCE_CERTIFICATE:
+                return IconShape.FLAT_PAPER;  // official certificate
+            case FORGED_TV_LICENCE:
+                return IconShape.FLAT_PAPER;  // forged certificate
 
             default:
                 return IconShape.BOX;
