@@ -505,7 +505,19 @@ public enum LandmarkType {
      * Open Mon–Fri 06:00–18:00, Sat 06:00–12:00. Closed Sundays.
      * Managed by TempAgencySystem.
      */
-    TEMP_AGENCY;
+    TEMP_AGENCY,
+
+    /**
+     * Issue #1142: Northfield Buffaloes Lodge No. 347 (RAOB).
+     * A secretive British fraternal lodge tucked behind St. Mary's Church.
+     * Open Tue/Thu 19:00–23:00, Sat 12:00–23:00. Members only; non-members need
+     * two sponsorship vouches + 5 COIN to begin initiation.
+     * THE_COUNCIL NPCs gather here to drink Worthington's and scratch each other's backs.
+     * Features: initiation rites, Old Boys' Network favours, safe heist, blackmail,
+     * Regalia Room (PRIMO tier), and the Lodge Bar.
+     * Managed by RAOBLodgeSystem.
+     */
+    RAOB_LODGE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -591,6 +603,7 @@ public enum LandmarkType {
             case SUN_KISSED_STUDIO:     return "Sun Kissed Studio";
             case NHS_WALK_IN_CENTRE:    return "Northfield Walk-In Centre";
             case TEMP_AGENCY:           return "Flexistaff Recruitment";
+            case RAOB_LODGE:            return "Northfield Buffaloes Lodge No. 347";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

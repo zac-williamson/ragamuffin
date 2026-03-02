@@ -2914,6 +2914,81 @@ public enum AchievementType {
         "Cold Chain Logistics",
         "Six turkeys, appropriately redistributed. Supply chain management at its finest.",
         1
+    ),
+
+    // ── Issue #1142: Northfield RAOB Lodge ────────────────────────────────────
+
+    /**
+     * Awarded when the player completes the RAOB initiation ceremony and becomes an INITIATE.
+     * Requires 2 SPONSORSHIP_FORMs + 5 COIN + ceremony at LODGE_ALTAR_PROP.
+     */
+    BOTHER_BUFFALO(
+        "Bother Buffalo",
+        "You took the oath. You wore the apron. You drank the Worthington's. Welcome, Brother.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully calls in all four Lodge Member favours
+     * (Brian's housing letter, Sandra's dismissal form, Reg's planning permission,
+     * Terry's betting multiplier) in a single Lodge membership.
+     */
+    OLD_BOYS_NETWORK(
+        "Old Boys' Network",
+        "Brian sorted the flat. Sandra wiped the fine. Reg stamped the permission. Terry fixed the odds. " +
+            "You didn't even buy a round.",
+        4
+    ),
+
+    /**
+     * Awarded when the player successfully loots the LODGE_SAFE_PROP
+     * (obtains LODGE_CHARTER_DOCUMENT + REGALIA_SET + COIN).
+     */
+    SAFE_CRACKER(
+        "Combination Plumber",
+        "The safe wasn't as secure as Norman thought. In fairness, neither was the Lodge.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully blackmails a RAOB_MEMBER using the LODGE_CHARTER_DOCUMENT.
+     */
+    GRUBBY_LEVERAGE(
+        "Grubby Leverage",
+        "It wasn't what they knew. It was what you knew. " +
+            "And what you knew was in a document that shouldn't exist.",
+        1
+    ),
+
+    /**
+     * Awarded when the player wears the REGALIA_SET (activates DisguiseSystem tier).
+     */
+    FULL_REGALIA(
+        "Full Regalia",
+        "Apron, collar, jewel, and sash. You look completely ridiculous. " +
+            "Somehow, no one questions you.",
+        1
+    ),
+
+    /**
+     * Awarded when the player reaches PRIMO membership tier (three favours + 20 COIN donation).
+     */
+    GRAND_PRIMO(
+        "Grand Primo",
+        "Three favours, twenty coin, and the trust of men who probably shouldn't trust anyone. " +
+            "You are, regrettably, a Primo.",
+        1
+    ),
+
+    /**
+     * Awarded when the player uses the CEREMONIAL_MALLET as a weapon in combat
+     * (deals 1.5× damage to an NPC).
+     */
+    CEREMONIAL_VIOLENCE(
+        "For Ceremonial Use Only",
+        "The inscription said 'ceremonial use only'. " +
+            "This was, in a sense, a ceremony.",
+        1
     );
 
     private final String name;

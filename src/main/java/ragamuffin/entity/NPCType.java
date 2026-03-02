@@ -1536,7 +1536,52 @@ public enum NPCType {
      * Temp Agency Worker — fellow day labourers (3–5 spawned per shift).
      * Passive; freely share rumours. One carries a PAYSLIP_STUB that can be pickpocketed.
      */
-    TEMP_AGENCY_WORKER(20f, 0f, 0f, false);
+    TEMP_AGENCY_WORKER(20f, 0f, 0f, false),
+
+    // ── Issue #1142: Northfield RAOB Lodge — Buffaloes, Secret Handshakes & Old Boys' Network ──
+
+    /**
+     * RAOB Grand Primo — Norman, 64, red-faced ex-plumber who chairs the Lodge.
+     * Present Tue/Thu 19:00–23:00 and Sat 12:00–23:00.
+     * Runs initiation ceremonies at the LODGE_ALTAR_PROP. Refuses entry to Notoriety Tier ≥3.
+     * Carries the RITUAL_BOOK_PROP key. Passive until ceremony or detection.
+     * Speech: "Evening all. Drinks are on the Lodge tonight." /
+     *         "The rite demands silence, dignity, and one pound fifty for the bar fund." /
+     *         "You're not a member. Get out." / "Norman doesn't forget a face, son."
+     */
+    RAOB_GRAND_PRIMO(50f, 8f, 1.0f, false),
+
+    /**
+     * RAOB Treasurer — Keith, jovial 58-year-old accountant who guards the back-room safe.
+     * Present Tue/Thu 19:00–23:00 and Sat 12:00–23:00.
+     * Patrols within 8 blocks of the LODGE_SAFE_PROP. Can be bribed with a PREMIUM_LAGER_CRATE
+     * to look the other way for 120 in-game seconds.
+     * Speech: "Books balance to the penny — well, approximately." /
+     *         "No one goes in the back room without my say-so." /
+     *         "Oh, go on then. One for the road."
+     */
+    RAOB_TREASURER(40f, 5f, 1.5f, false),
+
+    /**
+     * RAOB Doorman — Big Bernard, 52, former bouncer and current Lodge sergeant-at-arms.
+     * Guards the Lodge entrance. Checks for RAOB_MEMBERSHIP_CARD.
+     * Distracted 20:00–20:30 each session: detection chance drops to 15%.
+     * Outside distraction window: detection chance is 70%.
+     * Speech: "Members only, pal." / "Card?" / "Evening, Brother." /
+     *         "Has anyone seen my phone? I left it somewhere."
+     */
+    RAOB_DOORMAN(60f, 12f, 1.5f, false),
+
+    /**
+     * RAOB Member — one of the four Lodge members with corruption mechanics.
+     * Represents one of: Housing Officer Brian, Magistrate Clerk Sandra,
+     * Planning Inspector Reg, Bookmaker Terry (distinguished by sub-role in RAOBLodgeSystem).
+     * Present Tue/Thu 19:00–23:00 and Sat 12:00–23:00.
+     * Each will provide a favour in exchange for the appropriate bribe item.
+     * Speech: "A word to the wise, son." / "Keep it between us, yeah?" /
+     *         "The Lodge looks after its own." / "What is it you're after, exactly?"
+     */
+    RAOB_MEMBER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

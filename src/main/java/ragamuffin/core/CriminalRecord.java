@@ -397,7 +397,37 @@ public class CriminalRecord {
          * Recorded when the player steals the Christmas Club Cash Box from Iceland.
          * Penalty: +15 Notoriety, WantedSystem +1 star; LOCAL_SCANDAL rumour seeded.
          */
-        CHRISTMAS_CLUB_THEFT("Christmas Club savings theft");
+        CHRISTMAS_CLUB_THEFT("Christmas Club savings theft"),
+
+        // ── Issue #1142: Northfield RAOB Lodge ────────────────────────────────
+
+        /**
+         * Recorded when the player is caught stealing from the LODGE_SAFE_PROP.
+         * Penalty: +12 Notoriety, WantedSystem +1 star; THEFT + TRESPASSING rumour seeded.
+         */
+        LODGE_SAFE_THEFT("Theft from Lodge safe (RAOB)"),
+
+        /**
+         * Recorded when the player is caught trespassing in the Lodge back room
+         * without PRIMO tier access, or in the Regalia Room.
+         * Penalty: +5 Notoriety.
+         */
+        LODGE_TRESPASS("Lodge trespassing (restricted area)"),
+
+        /**
+         * Recorded when the player uses the LODGE_CHARTER_DOCUMENT to blackmail
+         * a RAOB_MEMBER NPC and the NPC calls the police (20% chance).
+         * Penalty: +8 Notoriety, WantedSystem +1 star; SCANDAL rumour seeded;
+         * 3-day Lodge closure triggered.
+         */
+        LODGE_BLACKMAIL("Blackmail (Lodge charter document)"),
+
+        /**
+         * Recorded when the player bribes a RAOB_MEMBER NPC (Brian, Sandra, Reg, or Terry)
+         * and the bribe is reported (20% chance on NPC calling police).
+         * Penalty: +5 Notoriety.
+         */
+        LODGE_BRIBERY("Corruption / lodge bribery");
 
         private final String displayName;
 
