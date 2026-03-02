@@ -716,5 +716,32 @@ public enum RumourType {
      * — seeded by FuneralParlourSystem when player sells a WAR_MEDAL to Gerald.
      * Spreads via STREET_LAD, PUBLIC, and PENSIONER NPCs; BootSale fence value +1
      * for WAR_MEDAL; PawnShop tip unlocked. */
-    GOLD_TEETH_TRADE;
+    GOLD_TEETH_TRADE,
+
+    // ── Issue #1291: Northfield Bert's Tyres & MOT ───────────────────────────
+
+    /** "Someone's been nicking tyres out the back of Bert's — half-worn ones, going cheap."
+     * — seeded by MOTSystem when the player steals from TYRE_STACK_PROP or sells
+     * STOLEN_TYRE to Bert. Spreads via STREET_LAD and PUBLIC NPCs; pawn shop tip
+     * for STOLEN_TYRE unlocked; FenceSystem STOLEN_TYRE price reduced −1. */
+    STOLEN_GOODS_TRADE,
+
+    /** "Someone tipped Bert off about the DVSA — he had an hour to hide the dodgy certs."
+     * — seeded by MOTSystem when the player warns Bert about an incoming DVSA raid
+     * (Respect STREET_LADS ≥ 30). Spreads via STREET_LAD and DODGY_MECHANIC NPCs;
+     * adds +5 STREET_LADS Respect for the player; prevents raid invalidation. */
+    BERT_WARNED,
+
+    /** "Someone's been doing catalytic converters round here — three cars in a week."
+     * — seeded by MOTSystem after the player steals 3+ CATALYTIC_CONVERTER items.
+     * Spreads via PUBLIC and PENSIONER NPCs; triggers NewspaperSystem headline;
+     * WantedSystem patrol frequency +1 in BERTS_GARAGE zone. */
+    CATALYTIC_THEFT_SPREE,
+
+    /** "Bert's been putting stickers on cars that wouldn't pass a look-round, never mind
+     * a proper test — someone's going to get hurt."
+     * — seeded by MOTSystem when a PASS_BRIBE cert is issued. Spreads via PUBLIC
+     * and PENSIONER NPCs; NeighbourhoodSystem Vibes −2;
+     * WantedSystem check trigger for Notoriety ≥ 25. */
+    UNROADWORTHY;
 }
