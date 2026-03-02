@@ -497,7 +497,15 @@ public enum LandmarkType {
      * PARAMEDIC NPCs in ambulance bay. Drug cabinet economy behind locked door.
      * Managed by WalkInCentreSystem.
      */
-    NHS_WALK_IN_CENTRE;
+    NHS_WALK_IN_CENTRE,
+
+    /**
+     * Issue #1140: Northfield Flexistaff — Cash-in-Hand Day Labour.
+     * Temp agency on the high street near the JobCentre.
+     * Open Mon–Fri 06:00–18:00, Sat 06:00–12:00. Closed Sundays.
+     * Managed by TempAgencySystem.
+     */
+    TEMP_AGENCY;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -582,6 +590,7 @@ public enum LandmarkType {
             case PHARMACY:              return "Day & Night Chemist";
             case SUN_KISSED_STUDIO:     return "Sun Kissed Studio";
             case NHS_WALK_IN_CENTRE:    return "Northfield Walk-In Centre";
+            case TEMP_AGENCY:           return "Flexistaff Recruitment";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
