@@ -40552,3 +40552,123 @@ PARAMEDIC NPCs respond to the player if their HP drops to 0 anywhere in the worl
 //   WitnessSystem, StreetSkillSystem (lie check), FenceSystem (STRONG_PAINKILLERS / FIT_NOTE sale),
 //   NoiseSystem (siren), TimeSystem, WeatherSystem, AchievementSystem, TooltipSystem,
 //   InternetCafeSystem (forged note printing), RespawnSystem (paramedic override)
+
+## Add Northfield Clucky's Fried Chicken — FriedChickenShopSystem, Wing Tax & the Late-Night Lockout Hustle
+
+**Background**: No British town would be complete without a fried chicken shop. Clucky's is open until 2am, attracting an eclectic mix of drunk youths, kebab-war rivals, and desperate late-night hunger sufferers. It's run by Devraj, who has seen everything and trusts nobody (especially anyone in a balaclava). The shop is a social hub after dark — the pavement outside becomes a flashpoint for YOUTH_GANG NPCs, the Wing Tax economy, and the classic late-night lockout where Devraj drops the security grille at exactly 02:00. This issue creates `FriedChickenShopSystem.java`.
+
+**New system file**: `src/main/java/ragamuffin/core/FriedChickenShopSystem.java`
+
+**Building**: A narrow high-street unit (8×6×4 blocks), BRICK exterior with a hand-painted CLUCKYS_SIGN_PROP above the door. Interior: CHIPPY_COUNTER_PROP at the front, two FRYER_PROP units behind the counter (METAL blocks with steam particles), four PLASTIC_TABLE_PROPs with PLASTIC_CHAIR_PROPs seating up to 8. A SECURITY_GRILLE_PROP on the shopfront that drops at 02:00. The floor outside spawns CHICKEN_BONE and EMPTY_CHICKEN_BOX litter props every 15 in-game minutes (cap 8 items).
+
+### NPCs
+
+| NPC Type | Name | Role |
+|---|---|---|
+| `DEVRAJ` | Devraj | Proprietor; serves food 10:00–02:00. Refuses service to BALACLAVA wearers. Seeds midnight gossip rumour at 00:00. |
+| `YOUTH_GANG` (2–4) | Unnamed | Spawn outside 20:00–02:00; have 30% chance each in-game hour to enter `FIGHTING_EACH_OTHER` state |
+
+Open daily 10:00–02:00. At 02:00: `SECURITY_GRILLE_PROP` drops (blocking entrance), Devraj mops the floor (IDLE animation), YOUTH_GANG NPCs despawn over 60 seconds.
+
+### Menu
+
+| Item | Cost | Effect | Availability |
+|---|---|---|---|
+| `CHICKEN_WINGS` | 2 COIN | +35 hunger | 10:00–02:00 |
+| `CHICKEN_BOX` | 4 COIN | +50 hunger | 10:00–02:00 |
+| `CHIPS_AND_GRAVY` | 1 COIN | +30 hunger | 20:00–02:00 (late special) |
+| `FLAT_COLA` | 1 COIN | +10 thirst | 10:00–02:00 |
+
+Tooltip on first `CHICKEN_WINGS` purchase: *"Still got the bone in. How it should be."*
+Tooltip on first `CHICKEN_BOX` purchase: *"Four pieces, chips, and a suspicious sauce."*
+Tooltip on first `CHIPS_AND_GRAVY` before 20:00: *"Not yet, mate. Come back after eight."*
+
+### The Wing Tax
+
+When the player is eating `CHICKEN_WINGS` or holding `CHICKEN_BOX` outside Clucky's:
+- A nearby `YOUTH_GANG` NPC (within 4 blocks) has a 40% chance each in-game minute to demand the food: *"Oi, lemme get a wing, bruv."*
+- Player choices:
+  1. **Give a wing** — lose `CHICKEN_WINGS` (or -1 from `CHICKEN_BOX` stack); `YOUTH_GANG` NPC enters `SATISFIED` state for 5 minutes and won't fight.
+  2. **Refuse** — 60% chance NPC attacks player (ASSAULT event). `NoiseSystem` FIGHT_NOISE triggered. `RumourNetwork.addRumour(npc, new Rumour(RumourType.FIGHT_NEARBY, "..."))`.
+  3. **Run** — player sprints away; NPC pursues for 30 seconds then gives up.
+- At StreetSkill `INTIMIDATE` level ≥ 3: new option: **Stare them down** — 80% chance NPC backs off, Notoriety +2.
+- `AchievementSystem.unlock(WING_DEFENDER)` if player successfully refuses/intimidates 5 times without being hit.
+
+### The Late-Night Lockout Hustle
+
+At 01:45 each day: a `DRUNK` NPC (spawned outside) tries to enter Clucky's but is refused by Devraj: *"We're closing in fifteen, mate. On your way."*
+- The DRUNK NPC wanders outside. If the player talks to them (E), the DRUNK offers to pay 3 COIN for the player to fetch them a `CHICKEN_BOX` (Devraj will still serve the player until 02:00).
+- Player can:
+  1. **Fetch the box** (costs 4 COIN, earn 3 COIN net = -1 COIN loss) — but Devraj will accept the player's order. Tooltip: *"You're a saint, you are. ...wait, you've done me."*
+  2. **Mark up the price** — charge the DRUNK 6 COIN (StreetSkill `NEGOTIATE` level ≥ 2 required). Net gain: +2 COIN. AchievementType `LATE_NIGHT_ENTREPRENEUR` progress +1.
+  3. **Pocket the money and walk away** — Notoriety +3, DRUNK NPC enters `ANGRY` state for 10 minutes.
+- `AchievementType.LATE_NIGHT_ENTREPRENEUR` unlocks after 3 successful mark-up sales.
+
+### Notoriety & Police Interaction
+
+- `BALACLAVA` worn on entry: Devraj says *"Not with that on. Get out."* — player refused service. If player doesn't leave within 5 seconds, Devraj presses the panic button: POLICE NPC dispatched within 60 seconds. `WantedSystem` +1 star.
+- FIGHT_NEARBY rumour seeded by `FriedChickenShopSystem` when 2+ YOUTH_GANG NPCs are in `FIGHTING_EACH_OTHER` state outside: *"There's a scrap kicking off outside Clucky's — someone's getting battered"*. POLICE NPC begins patrol of the area.
+- Smashing the `FRYER_PROP` (8 hits): fire starts inside — `NoiseSystem.FIRE` event. Devraj flees. `CriminalRecord.CrimeType.ARSON` added. Notoriety +15.
+- Robbing the `CHIPPY_COUNTER_PROP` till (8 hits): yields 8–15 COIN. `CriminalRecord.CrimeType.THEFT`. Notoriety +10. POLICE dispatched.
+
+### Key Constants (`public static final` in `FriedChickenShopSystem`)
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `OPEN_HOUR` | `10` | Opening time (hour) |
+| `CLOSE_HOUR` | `2` | Closing time (hour, next day) |
+| `GRILLE_DROP_HOUR` | `2` | Hour security grille drops |
+| `WING_TAX_CHANCE` | `0.40f` | Probability per minute a YOUTH_GANG demands food |
+| `WING_TAX_FIGHT_CHANCE` | `0.60f` | Probability NPC attacks if player refuses |
+| `STAREDOWN_SUCCESS_CHANCE` | `0.80f` | Chance stare-down works at INTIMIDATE ≥ 3 |
+| `LITTER_SPAWN_INTERVAL_MINS` | `15` | In-game minutes between litter spawns |
+| `LITTER_CAP` | `8` | Max litter props outside shop |
+| `YOUTH_GANG_FIGHT_CHANCE_PER_HOUR` | `0.30f` | Chance YOUTH_GANG enters FIGHTING state each in-game hour |
+| `DRUNK_LOCKOUT_TIME` | `1` | Hour (01:xx) when DRUNK NPC arrives refused entry |
+| `MARKUP_PRICE` | `6` | COIN charged for mark-up hustle |
+| `TILL_LOOT_MIN` | `8` | Minimum COIN from robbing till |
+| `TILL_LOOT_MAX` | `15` | Maximum COIN from robbing till |
+| `INTIMIDATE_SKILL_LEVEL` | `3` | StreetSkillSystem level required for stare-down |
+| `NEGOTIATE_SKILL_LEVEL` | `2` | StreetSkillSystem level required for mark-up hustle |
+| `PANIC_BUTTON_DELAY_SECS` | `5` | Seconds before Devraj calls police on balaclava wearers |
+
+### Unit Test Assertions (method-level, no LibGDX)
+
+- `FriedChickenShopSystem.isOpen(hour=10, minute=0)` → `true`
+- `FriedChickenShopSystem.isOpen(hour=2, minute=0)` → `false` (grille has dropped)
+- `FriedChickenShopSystem.isOpen(hour=1, minute=59)` → `true`
+- `FriedChickenShopSystem.isChipsAndGravyAvailable(hour=19)` → `false`; `hour=20` → `true`
+- `FriedChickenShopSystem.calcWingTaxOutcome(rng=seeded_fight, playerRefused=true)` → `FIGHT`
+- `FriedChickenShopSystem.calcWingTaxOutcome(rng=seeded_no_fight, playerRefused=true)` → `BACKS_OFF`
+- `FriedChickenShopSystem.shouldLitterSpawn(minutesSinceLastSpawn=15, litterCount=7)` → `true`
+- `FriedChickenShopSystem.shouldLitterSpawn(minutesSinceLastSpawn=14, litterCount=7)` → `false`
+- `FriedChickenShopSystem.shouldLitterSpawn(minutesSinceLastSpawn=20, litterCount=8)` → `false` (cap reached)
+- `FriedChickenShopSystem.calcMarkupHustleProfit(basePrice=4, markupPrice=6)` → `2`
+- `FriedChickenShopSystem.isBalaclavaWearer(player)` → `true` if player DisguiseSystem has BALACLAVA equipped
+
+### Integration Tests — implement these exact scenarios
+
+1. **Player buys chicken wings and box, hunger restored**: Set player hunger to 20. Set TimeSystem to 22:00. Player enters Clucky's. Press E on Devraj. Select `CHICKEN_WINGS` (2 COIN). Verify player loses 2 COIN. Verify `CHICKEN_WINGS` in player inventory. Use `CHICKEN_WINGS` (press E on item). Verify hunger increased by 35. Separately: buy `CHICKEN_BOX` (4 COIN). Verify hunger +50. Buy `CHIPS_AND_GRAVY` (1 COIN at 22:00). Verify available and hunger +30.
+
+2. **Late-night special unavailable before 20:00**: Set TimeSystem to 19:00. Player presses E on Devraj. Attempts to order `CHIPS_AND_GRAVY`. Verify order refused with tooltip *"Not yet, mate. Come back after eight."* Verify player's COIN unchanged. Verify `CHIPS_AND_GRAVY` not in inventory.
+
+3. **Wing Tax — YOUTH_GANG demands food, player refuses and fight starts**: Set TimeSystem to 22:30. Spawn a `YOUTH_GANG` NPC at 3 blocks from player. Give player `CHICKEN_WINGS`. Seed RNG with `seeded_fight` value. Advance `FriedChickenShopSystem` by 1 in-game minute. Verify `YOUTH_GANG` NPC enters demand dialogue: *"Oi, lemme get a wing, bruv."* Player selects "Refuse". Call `FriedChickenShopSystem.calcWingTaxOutcome(rng=seeded_fight, playerRefused=true)`. Verify result is `FIGHT`. Verify `NoiseSystem` contains a `FIGHT_NOISE` event. Verify `RumourNetwork` contains a `FIGHT_NEARBY` rumour.
+
+4. **Security grille drops at 02:00**: Set TimeSystem to 01:59. Verify `FriedChickenShopSystem.isOpen()` returns `true`. Advance TimeSystem by 1 in-game minute (to 02:00). Call `FriedChickenShopSystem.update(delta, timeSystem, propManager)`. Verify `SECURITY_GRILLE_PROP` state changes to `CLOSED`. Verify `FriedChickenShopSystem.isOpen()` returns `false`. Verify player attempting entry is blocked (collision on grille).
+
+5. **Balaclava wearer refused and police called**: Player equips `BALACLAVA` (via `DisguiseSystem`). Player enters Clucky's. Call `FriedChickenShopSystem.update(delta, timeSystem, player, npcManager, wantedSystem)`. Verify Devraj refuses service with speech *"Not with that on. Get out."* Advance 5 seconds (PANIC_BUTTON_DELAY_SECS). Verify a `POLICE` NPC has been dispatched. Verify `WantedSystem.getWantedStars()` == 1.
+
+6. **Late-night lockout hustle — mark-up profit**: Set TimeSystem to 01:45. Set player `NEGOTIATE` StreetSkill to level 2. Spawn `DRUNK` NPC outside Clucky's. Call `FriedChickenShopSystem.update(...)`. Verify Devraj refuses DRUNK entry with speech *"We're closing in fifteen, mate."* Player presses E on DRUNK. Verify DRUNK offers 3 COIN for a `CHICKEN_BOX`. Player selects mark-up option (6 COIN). Verify DRUNK pays 6 COIN. Player buys `CHICKEN_BOX` from Devraj (4 COIN). Delivers to DRUNK. Verify player net gain = +2 COIN. Verify `AchievementSystem` progress for `LATE_NIGHT_ENTREPRENEUR` incremented by 1.
+
+// ── New: FriedChickenShopSystem.java in ragamuffin.core
+// ── New: Issue952FriedChickenShopSystemTest.java in src/test/java/ragamuffin/integration/
+// New PropTypes: FRYER_PROP, PLASTIC_TABLE_PROP, PLASTIC_CHAIR_PROP, SECURITY_GRILLE_PROP, CLUCKYS_SIGN_PROP — add to PropType.java
+// Materials already defined: CHICKEN_WINGS, CHICKEN_BOX, CHIPS_AND_GRAVY, FLAT_COLA, CHICKEN_BONE, EMPTY_CHICKEN_BOX (Issue #952 in Material.java)
+// DEVRAJ NPC already defined (Issue #952 in NPCType.java)
+// RumourType.FIGHT_NEARBY already defined (Issue #952 in RumourType.java)
+// New AchievementTypes: WING_DEFENDER, LATE_NIGHT_ENTREPRENEUR — add to AchievementType.java
+// New CriminalRecord.CrimeType: ARSON (if not present) — add to CriminalRecord.java
+// Integrates: DisguiseSystem (balaclava check), WantedSystem, NotorietySystem, CriminalRecord,
+//   RumourNetwork (FIGHT_NEARBY), NoiseSystem (FIGHT_NOISE, FIRE), WitnessSystem,
+//   StreetSkillSystem (INTIMIDATE, NEGOTIATE), AchievementSystem, TooltipSystem,
+//   TimeSystem, NPCManager (YOUTH_GANG spawn), WeatherSystem, HungerSystem (food effects)
