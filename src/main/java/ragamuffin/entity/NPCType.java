@@ -2001,7 +2001,14 @@ public enum NPCType {
      * of The Feathers pub. Passive; interacts via menu when player presses E.
      * Buys and sells criminal intelligence via InformationBrokerSystem.
      */
-    INFO_BROKER(25f, 0f, 0f, false);
+    INFO_BROKER(25f, 0f, 0f, false),
+
+    /**
+     * Issue #1192: Mick the card dealer — runs the back-room Pontoon table at the
+     * Northfield Sporting &amp; Social Club on Friday/Saturday nights. Enters cheat mode
+     * after player wins 3 consecutive hands (hidden ace probability 0.6).
+     */
+    CARD_DEALER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
