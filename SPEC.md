@@ -30249,3 +30249,143 @@ NPCs in the waiting room have a 15% chance per visit to carry a `PRESCRIPTION_FO
 // New NPCTypes: TRIAGE_NURSE, WALK_IN_DOCTOR, PARAMEDIC (add to NPCType.java)
 // New PropTypes: TRIAGE_DESK_PROP, WAITING_CHAIR_PROP, TREATMENT_CUBICLE_PROP, MEDICINE_CABINET_PROP, CONTROLLED_DRUGS_SAFE_PROP, BLOOD_PRESSURE_MACHINE_PROP, AMBULANCE_BAY_PROP, NHS_SIGN_PROP, CIGARETTE_BIN_PROP, WALK_IN_MEDICINE_ROOM_DOOR_PROP, QUEUE_BOARD_PROP, X_RAY_VIEWER_PROP, SHARPS_BIN_PROP (add to PropType.java)
 // New achievements: FREQUENT_FLYER, MEDICINE_THIEF, NHS_GRATITUDE, AMBULANCE_CHASER, MALINGERER, CONTROLLED_SUBSTANCES (add to AchievementType.java)
+
+---
+
+## Issue #1130: Add Northfield BP Petrol Station — Late-Night Forecourt, Fuel Siphon Economy & the Microwave Pie
+
+**Landmark**: `PETROL_STATION` (already in `LandmarkType.java`)
+**System class**: `PetrolStationSystem.java` in `ragamuffin.core`
+**Display name**: `"BP Petrol Station"` (already in `LandmarkType.getDisplayName()`)
+
+### Overview
+
+The BP petrol station on the edge of Northfield's high street — the only shop in town that never closes. Fluorescent-lit canopy over four pump islands, a grubby forecourt strewn with discarded squeegee buckets, and a 24-hour kiosk smelling of burnt coffee and tarmac. Run by Raj (PETROL_STATION_ATTENDANT NPC) on the day shift and a bored teenager, Wayne (PETROL_STATION_ASSISTANT NPC), on nights.
+
+The forecourt is one of the most versatile locations in the game: buy overpriced snacks, fill a PETROL_CAN to fuel vehicles or start fires, siphon fuel from parked cars, rob the till, use the car wash token machine, and — at 3am — contemplate a stale microwave pasty while Wayne scrolls his phone behind the counter. It's a very British experience.
+
+A `CCTV_CAMERA_PROP` covers the forecourt; a second covers the kiosk interior. The pump area has four `FUEL_PUMP_PROP` props; the kiosk has a `TILL_PROP`, `LOTTERY_DISPLAY_PROP`, `MICROWAVE_PROP`, and `ENERGY_DRINK_FRIDGE_PROP`.
+
+### Building Layout (14×16×3 blocks)
+
+- **Forecourt canopy**: 4× `FUEL_PUMP_PROP` in two rows of two on PAVEMENT; overhead METAL canopy structure (METAL_RED blocks); `CCTV_CAMERA_PROP` on canopy pillar
+- **Kiosk** (6×8×3): GLASS and YELLOW_BRICK frontage; automatic `DOOR_PROP` (always open during business hours); `TILL_PROP` behind counter (Raj or Wayne); `LOTTERY_DISPLAY_PROP` with scratch cards and instant-win tickets; `MICROWAVE_PROP` on side counter; `ENERGY_DRINK_FRIDGE_PROP` (illuminated); `CONFECTIONERY_SHELF_PROP`; `CCTV_CAMERA_PROP` above the till; `CIGARETTE_CABINET_PROP` behind counter (high-value target)
+- **Forecourt extras**: `AIR_PUMP_PROP` (tyre inflation; free; ambient detail); `LITTER_BIN_PROP`; `SQUEEGEE_BUCKET_PROP` (interactive)
+- **Back store** (locked `DOOR_PROP`; lockpickable): `STOCKROOM_SHELF_PROP` containing bulk energy drinks (3× ENERGY_DRINK), cigarette cartons (CIGARETTE_CARTON ×1–2), `CASH_POUCH_PROP` (5–12 COIN, replenished each morning)
+
+### Core Mechanics
+
+**Buying from the kiosk (press E at TILL_PROP):**
+
+| Item | Cost | Effect |
+|------|------|--------|
+| `PETROL_CAN` (full) | 3 COIN | Fills PETROL_CAN with 1 unit of fuel |
+| `ENERGY_DRINK` | 2 COIN | +20 hunger, +15 energy; stacks to 3 |
+| `MICROWAVE_PASTY` | 2 COIN | +35 hunger; 30% FOOD_POISONING chance after 21:00 |
+| `CHOCOLATE_BAR` | 2 COIN | +15 hunger |
+| `CIGARETTE` | 1 COIN | Used in BuskingSystem social interactions |
+| `SCRATCH_CARD` | 1 COIN | 20% payout (1–5 COIN); existing scratch-card mechanic |
+| `NEWSPAPER` | 1 COIN | Existing mechanic (NewspaperSystem) |
+| `MAP` | 2 COIN | Reveals 3 nearby undiscovered landmarks on HUD |
+
+Service is refused at WantedSystem tier ≥ 3 (Wayne calls police; 90-second delay).
+
+**Filling a PETROL_CAN:**
+1. Player must have empty `PETROL_CAN` in inventory (or buy one from kiosk for 3 COIN)
+2. Press E at a `FUEL_PUMP_PROP` — prompts "Fill up? (3 COIN)"
+3. Confirm: `PETROL_CAN` becomes `PETROL_CAN_FULL`; 3 COIN deducted
+4. `PETROL_CAN_FULL` can be used to ignite `WHEELIE_BIN_FIRE` (WheeliBinFireSystem), craft `MOLOTOV_COCKTAIL`, or sold to FenceSystem for 2 COIN (below cost — but avoids kiosk interaction)
+
+**Fuel siphoning (criminal mechanic):**
+- At night (21:00–06:00) any parked `Car` entity on nearby road blocks can be siphoned
+- Player crouches (SHIFT) beside a Car, press E: siphon mini-game starts (5-second bar held without interruption)
+- Success: player receives `PETROL_CAN_FULL` free; `VEHICLE_TAMPERING` CriminalRecord entry; Notoriety +3
+- If CCTV camera has line-of-sight to the car being siphoned: WantedSystem tier +1 (CCTV evidence)
+- Wayne has 25% chance to notice from kiosk window (night only) if player siphons within 6 blocks of kiosk
+
+**Till robbery:**
+- Player can threaten Wayne/Raj with a weapon (hold CROWBAR + press E at TILL_PROP)
+- Raj/Wayne surrenders: `TILL_POP_PROP` opens; player receives 8–18 COIN; NPC drops to floor (COWERING state)
+- CCTV records event: WantedSystem tier +2; `ARMED_ROBBERY` CriminalRecord entry; Notoriety +15
+- Police response timer: 3 in-game minutes
+- If player already has WantedSystem tier ≥ 2 when entering kiosk, Wayne silently activates a `PANIC_BUTTON_PROP` (30-second police response; shorter than standard robbery)
+
+**Cigarette cabinet smash:**
+- Smash `CIGARETTE_CABINET_PROP` (3 hits, HARD material): yields `CIGARETTE_CARTON` ×2–3
+- `CIGARETTE_CARTON` → fenced at FenceSystem for 6 COIN each; carries `RECEIVING_STOLEN_GOODS` CriminalRecord
+- Generates NoiseSystem event (level 25); Raj/Wayne calls police immediately if present
+
+**Car wash token machine** (`CAR_WASH_TOKEN_MACHINE_PROP`):
+- Buy a `CAR_WASH_TOKEN` for 2 COIN — usable at the main `CAR_WASH` landmark
+- Token can also be sold at BootSaleSystem for 1 COIN ("I've got one I can't use, mate")
+
+### NPC Behaviour
+
+**Raj** (day, 07:00–19:00): Helpful, talkative, seeds LOCAL_EVENT rumours every 20 in-game minutes ("you hear about what happened up the road?"). At FactionSystem STREET_LADS Respect ≥ 60, Raj ignores small-time Notoriety (acts as if tier is 0 for refusal purposes). Raj walks to `STOCKROOM_DOOR_PROP` at 09:00 to restock shelves (turns back to player for 30 seconds — prime pickpocket/theft window).
+
+**Wayne** (night, 19:00–07:00): Bored, distracted, scrolling phone (IDLE animation). 25% slower to notice crimes than Raj. At 23:00 Wayne microwaves a pasty (MICROWAVE_PROP triggers ambient sound and COOKING_SMELL_PROP). Wayne sleeps 01:00–03:00 (seated at counter, head down; unresponsive to minor crimes but woken by NoiseSystem ≥ 15).
+
+### Crafting Integration
+
+New recipe unlocked via CraftingSystem:
+
+| Recipe | Inputs | Output | Notes |
+|--------|--------|--------|-------|
+| Molotov cocktail | `PETROL_CAN_FULL` + `FLYER` (rag) | `MOLOTOV_COCKTAIL` | Throwable; ignites target block for 10 seconds; NoiseSystem +30 on ignition |
+
+`MOLOTOV_COCKTAIL`: thrown with right-click while selected; travels in arc; lands on block and sets a 2×2 fire (FIRE_PROP) that spreads to adjacent WOOD/LEAVES blocks. Notoriety +20 on use near civilians; `ARSON` CriminalRecord entry.
+
+### System Integrations
+
+- **WheeliBinFireSystem**: `PETROL_CAN_FULL` + E on WHEELIE_BIN_PROP → instant fire, no ignition delay
+- **CarDrivingSystem**: `PETROL_CAN_FULL` repairs a stalled Car entity (10% chance per game-day cars stall and block roads); player can help (Notoriety −1, neighbour vibes +1) or ignore
+- **WantedSystem**: Till robbery +2 tiers; cigarette cabinet smash +1 tier; siphoning (with CCTV) +1 tier; panic button 30-second armed response
+- **CriminalRecord**: `VEHICLE_TAMPERING`, `ARMED_ROBBERY`, `ARSON`, `RECEIVING_STOLEN_GOODS` (new entries)
+- **NotorietySystem**: Robbery +15; siphoning +3; arson +20; helping stranded car driver −1
+- **FenceSystem**: `CIGARETTE_CARTON` 6 COIN; `PETROL_CAN_FULL` 2 COIN; `ENERGY_DRINK` ×3 1 COIN per unit
+- **WheeliBinFireSystem**: Petrol-boosted fire burns 3× longer; spreads to adjacent bin
+- **NoiseSystem**: Cabinet smash 25; Molotov ignition 30; till robbery 20
+- **RumourNetwork**: Till robbery seeds `COMMUNITY_OUTRAGE` ("that petrol station got done over last night"); Molotov seeds `COMMUNITY_OUTRAGE` ("there was a fire on the forecourt!"); Wayne napping seeds `LOCAL_EVENT` ("Wayne's asleep at the BP again, no surprise there")
+- **NewspaperSystem**: Till robbery → "Northfield Petrol Station Robbed: Armed Man Fleeces Wayne"; arson → "Forecourt Blaze: Northfield BP in Flames"
+- **NeighbourhoodSystem**: vibes −2 per robbery; −5 per arson; +1 if player buys from kiosk 5+ times (regular customer)
+- **SkipDivingSystem**: Kiosk dumpster (behind building): 10% chance of `ENERGY_DRINK` or `NEWSPAPER` (expired/discarded stock)
+- **WeatherSystem**: RAIN causes customers to shelter in kiosk (up to 3 extra NPCs); FROST causes two parked Cars to refuse start (siphon opportunity trigger)
+- **TaxiSystem**: Taxi drivers refuel at the petrol station 06:30 and 22:00 daily (ambient car arrival/departure)
+- **StreetEconomySystem**: Till robbery tracked as high-value violent crime income; petrol sales tracked as legitimate income
+- **AchievementSystem**: new achievements (see below)
+- **TimeSystem**: kiosk open 24 hours (no closure); fuel pump available 24/7; Raj 07:00–19:00, Wayne 19:00–07:00
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `MIDNIGHT_MECHANIC` | Siphon fuel from 3 different cars on the same night |
+| `HOLD_UP` | Rob the petrol station till (one-time) |
+| `MOLOTOV_MOMENT` | Throw a Molotov cocktail (one-time) |
+| `MICROWAVE_MILLIONAIRE` | Buy a microwave pasty after 23:00 (one-time; "you know you've hit rock bottom") |
+| `REGULAR_CUSTOMER` | Buy from the kiosk on 7 consecutive in-game days |
+| `PETROL_HEAD` | Fill a PETROL_CAN 10 times total |
+
+(Add to `AchievementType.java`)
+
+**Unit tests**: Petrol can fill deducts 3 COIN and sets PETROL_CAN_FULL state; siphon mini-game 5-second hold (test interrupt at 4.9s fails, 5.0s succeeds); CCTV line-of-sight detection for siphoning (behind car = no LoS, beside car = LoS); till robbery COIN range (8–18; 1000 samples within bounds); cigarette cabinet hit count (3 HARD hits to break); Wayne sleep window (01:00–03:00 unresponsive to crimes at noise < 15); Molotov recipe yields MOLOTOV_COCKTAIL from correct inputs; panic button police response timer (30 seconds, shorter than standard 180).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Buying petrol fills PETROL_CAN and deducts COIN**: Give player empty `PETROL_CAN` and 5 COIN. Place player at `FUEL_PUMP_PROP`. Press E. Verify prompt shown. Confirm purchase. Verify `PETROL_CAN_FULL` is now in player inventory (replacing `PETROL_CAN`). Verify player COIN is now 2 (5 − 3). Press E again. Verify "You need an empty petrol can first" message (no double-fill).
+
+2. **Fuel siphoning at night yields fuel, triggers CriminalRecord and Notoriety**: Set time to 23:30. Place a Car entity within 4 blocks of player (on road block). Place player beside the car, outside CCTV line-of-sight. Press E. Verify siphon mini-game begins (progress bar visible). Hold E for 5 simulated seconds. Verify `PETROL_CAN_FULL` added to inventory. Verify `VEHICLE_TAMPERING` in CriminalRecord. Verify Notoriety increased by 3. Verify WantedSystem tier is unchanged (no CCTV LoS).
+
+3. **Till robbery triggers Wanted tier increase and police dispatch**: Give player a `CROWBAR`. Place player at `TILL_PROP` with Wayne present. Hold CROWBAR + press E. Verify till opens and player receives 8–18 COIN (1000 samples within bounds). Verify WantedSystem tier increased by 2. Verify `ARMED_ROBBERY` CriminalRecord entry. Advance 3 in-game minutes. Verify at least one POLICE_OFFICER NPC has patrolled within 10 blocks of the petrol station.
+
+4. **Wayne sleeps 01:00–03:00 — crimes below noise threshold undetected**: Set time to 02:00. Place player in kiosk with Wayne seated (sleeping). Smash `CONFECTIONERY_SHELF_PROP` (NoiseSystem event level 10). Verify Wayne remains in SLEEPING state (does not wake). Now generate a NoiseSystem event of level 15 (threshold). Verify Wayne transitions to IDLE state (woken). Verify no police call was triggered during the sleep window for the shelf smash.
+
+5. **Molotov cocktail recipe produces throwable item and creates fire on use**: Give player `PETROL_CAN_FULL` and `FLYER`. Open crafting UI. Select Molotov recipe. Verify `MOLOTOV_COCKTAIL` in inventory and inputs consumed. Place player 3 blocks from a WOOD block. Right-click with `MOLOTOV_COCKTAIL` selected. Verify the WOOD block (or adjacent block at landing position) is set to a FIRE state within 1 second. Verify NoiseSystem event ≥ 30 generated. Verify `ARSON` in CriminalRecord. Verify Notoriety increased by 20.
+
+// New system: PetrolStationSystem.java in ragamuffin.core
+// Landmark PETROL_STATION already in LandmarkType.java with display name "BP Petrol Station"
+// New materials: PETROL_CAN_FULL, MICROWAVE_PASTY, CHOCOLATE_BAR, ENERGY_DRINK, CAR_WASH_TOKEN, CIGARETTE_CARTON, MOLOTOV_COCKTAIL, MAP (add to Material.java)
+// New NPCTypes: PETROL_STATION_ATTENDANT, PETROL_STATION_ASSISTANT (add to NPCType.java)
+// New PropTypes: FUEL_PUMP_PROP, TILL_PROP, LOTTERY_DISPLAY_PROP, MICROWAVE_PROP, ENERGY_DRINK_FRIDGE_PROP, CONFECTIONERY_SHELF_PROP, CIGARETTE_CABINET_PROP, AIR_PUMP_PROP, SQUEEGEE_BUCKET_PROP, STOCKROOM_SHELF_PROP, CASH_POUCH_PROP, CAR_WASH_TOKEN_MACHINE_PROP, PANIC_BUTTON_PROP (add to PropType.java)
+// New achievements: MIDNIGHT_MECHANIC, HOLD_UP, MOLOTOV_MOMENT, MICROWAVE_MILLIONAIRE, REGULAR_CUSTOMER, PETROL_HEAD (add to AchievementType.java)
+// New CriminalRecord entries: VEHICLE_TAMPERING, ARSON (add to CriminalRecord.CrimeType)
