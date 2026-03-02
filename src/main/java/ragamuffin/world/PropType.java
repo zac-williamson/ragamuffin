@@ -2185,7 +2185,67 @@ public enum PropType {
      * Stealing it (E during 19:55–20:00) triggers Tommy ambush + Wanted +3.
      * 1 hit to break; yields COIN (20).
      */
-    PROTECTION_ENVELOPE_PROP(0.20f, 0.05f, 0.12f, 1, Material.COIN);
+    PROTECTION_ENVELOPE_PROP(0.20f, 0.05f, 0.12f, 1, Material.COIN),
+
+    // ── Issue #1153: Northfield Community Centre ──────────────────────────────
+
+    /**
+     * MAT_PROP — a rolled foam exercise mat stacked at the hall wall.
+     * Present during aerobics sessions. 2 hits to break; yields nothing.
+     */
+    MAT_PROP(0.60f, 0.15f, 0.18f, 2, null),
+
+    /**
+     * STACKING_CHAIR_PROP — a blue plastic stacking chair used for support-group circles.
+     * 2 hits to break; yields WOOD.
+     */
+    STACKING_CHAIR_PROP(0.45f, 0.90f, 0.45f, 2, Material.WOOD),
+
+    /**
+     * TEA_URN_PROP — a large stainless-steel tea urn on the kitchen counter.
+     * Press E to get a free hot drink (+2 Warmth). 4 hits to break; yields SCRAP_METAL.
+     */
+    TEA_URN_PROP(0.35f, 0.55f, 0.35f, 4, Material.SCRAP_METAL),
+
+    /**
+     * BISCUIT_TIN_PROP — a decorative tin of assorted biscuits on the refreshments table.
+     * Press E to steal contents (awards BISCUIT_BANDIT if in a support-group session).
+     * 1 hit to break; yields nothing.
+     */
+    BISCUIT_TIN_PROP(0.22f, 0.16f, 0.22f, 1, null),
+
+    /**
+     * BOUNCY_CASTLE_PROP — an inflatable bouncy castle for the Toddler Playgroup (Tue/Thu).
+     * Decorative; deflates at session end. 5 hits to break; yields nothing.
+     */
+    BOUNCY_CASTLE_PROP(2.40f, 1.80f, 2.40f, 5, null),
+
+    /**
+     * PHOTOCOPIER_PROP — an office photocopier in the community centre back corridor.
+     * Press E with GRANT_APPLICATION_FORM to create FORGED_GRANT_APPLICATION.
+     * Generates HIGH noise (level 3.5, 15-block radius via NoiseSystem).
+     * 6 hits to break; yields SCRAP_METAL.
+     */
+    PHOTOCOPIER_PROP(0.70f, 1.10f, 0.60f, 6, Material.SCRAP_METAL),
+
+    /**
+     * SERVING_TABLE_PROP — a folding trestle table used for curry night food service.
+     * 3 hits to break; yields WOOD.
+     */
+    SERVING_TABLE_PROP(1.80f, 0.85f, 0.70f, 3, Material.WOOD),
+
+    /**
+     * POOL_TABLE_PROP — a full-size pool table unlocked by the legitimate grant application.
+     * Interacting (E) with COIN starts a game. 8 hits to break; yields WOOD.
+     */
+    POOL_TABLE_PROP(2.20f, 0.85f, 1.20f, 8, Material.WOOD),
+
+    /**
+     * FILING_CABINET_PROP — a grey metal filing cabinet in the community centre back corridor.
+     * Press E with LOCKPICK to open (70% success) and steal GRANT_APPLICATION_FORM.
+     * 5 hits to break; yields SCRAP_METAL.
+     */
+    FILING_CABINET_PROP(0.55f, 1.30f, 0.50f, 5, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

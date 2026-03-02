@@ -406,5 +406,32 @@ public enum RumourType {
      * — seeded by LockUpGarageSystem when the hoarder clearance quest is activated (Garage 2).
      * Spreads via PENSIONER and PUBLIC NPCs.
      * Directs player to Garage 2 for the BRIC_A_BRAC_BANDIT quest chain. */
-    HOARDER_CLEARANCE;
+    HOARDER_CLEARANCE,
+
+    // ── Issue #1153: Northfield Community Centre ──────────────────────────────
+
+    /** "Someone at the community centre had their photocopier going mad — heard it from the road."
+     * — seeded by CommunityCentreSystem when the player uses the PHOTOCOPIER_PROP to forge a grant
+     *   application (HIGH noise, 15-block radius).
+     * Spreads via PUBLIC and PENSIONER NPCs within 15 blocks of the community centre.
+     * Minor Notoriety spike (+2) if any NPC within radius. */
+    COMMUNITY_CENTRE_PHOTOCOPIER,
+
+    /** "Heard someone's been fiddling the council grant forms at the community centre."
+     * — seeded by CommunityCentreSystem when a FORGED_GRANT_APPLICATION is posted
+     *   and the 25% catch rate fires (×2 at Notoriety Tier 3+).
+     * Spreads via PUBLIC NPCs; triggers MagistratesCourtSystem OBTAINING_MONEY_BY_DECEPTION charge. */
+    GRANT_FRAUD,
+
+    /** "Brenda said someone came to the NA meeting who's been in all sorts of bother."
+     * — seeded by CommunityCentreSystem from Brenda (NA_CHAIR) after a player share-story
+     *   event when Notoriety ≥ 30. 15% chance to fire.
+     * Spreads via NA_ATTENDEE NPCs. */
+    NA_RECOGNITION,
+
+    /** "Curry night at the community centre Saturday — best food in Northfield for two coin."
+     * — seeded weekly by CommunityCentreSystem at 17:00 on Saturdays before curry night.
+     * Spreads via COMMUNITY_MEMBER and PUBLIC NPCs.
+     * Draws nearby NPCs toward the COMMUNITY_CENTRE landmark. */
+    CURRY_NIGHT;
 }

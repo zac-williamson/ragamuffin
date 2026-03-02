@@ -3182,6 +3182,72 @@ public enum AchievementType {
         "Grassed Up",
         "Tipped off the police about Tommy's collection. 40% chance they find out it was you. Good luck.",
         1
+    ),
+
+    // ── Issue #1153: Northfield Community Centre ──────────────────────────────
+
+    /**
+     * Awarded when the player reaches 100 NORTHFIELD_RESIDENTS faction sub-rep.
+     * Also grants NeighbourhoodSystem vibes +20 permanently.
+     */
+    COMMUNITY_PILLAR(
+        "Community Pillar",
+        "They actually like you here. You're on the noticeboard. With a photo. A good photo.",
+        1
+    ),
+
+    /**
+     * Awarded when the player completes an aerobics session scoring 6+ out of 8 prompts.
+     */
+    STEP_TOGETHER(
+        "Step Together",
+        "You kept up with Sandra. Well, mostly. She was too polite to say anything.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully posts a FORGED_GRANT_APPLICATION and collects the GRANT_CHEQUE.
+     */
+    GRANT_GRABBER(
+        "Grant Grabber",
+        "Thirty coin from the council. For a community pool table. That doesn't exist. Yet.",
+        1
+    ),
+
+    /**
+     * Awarded when the player steals the BISCUIT_TIN_PROP contents during a session.
+     */
+    BISCUIT_BANDIT(
+        "Biscuit Bandit",
+        "You nicked the Rich Tea. During a bereavement support group. Shameless.",
+        1
+    ),
+
+    /**
+     * Awarded when the player completes the legitimate grant application with Denise's help.
+     */
+    HONEST_CITIZEN(
+        "Honest Citizen",
+        "You did it properly. Filled in the forms. Waited three weeks. Denise is genuinely chuffed.",
+        1
+    ),
+
+    /**
+     * Awarded when the player shares their story at the Thursday NA meeting (first time).
+     */
+    ANONYMOUS(
+        "Anonymous",
+        "You shared. They listened. Nobody said a word afterwards. That's how it's supposed to work.",
+        1
+    ),
+
+    /**
+     * Awarded when the player attends 8 aerobics sessions (completing the full 8-week block).
+     */
+    CLEAN_EIGHT(
+        "Clean Eight",
+        "Eight sessions without missing one. Sandra saved you a spot at the front.",
+        8
     );
 
     private final String name;

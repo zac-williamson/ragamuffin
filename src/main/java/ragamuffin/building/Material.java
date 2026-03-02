@@ -3680,7 +3680,89 @@ public enum Material {
      * Using it during the quiz guarantees correct answers but has 30% chance of detection.
      * Tooltip: "Capital of Peru? Lima. Everyone always forgets Lima."
      */
-    QUIZ_ANSWER_SHEET("Quiz Answer Sheet");
+    QUIZ_ANSWER_SHEET("Quiz Answer Sheet"),
+
+    // ── Issue #1153: Northfield Community Centre ──────────────────────────────
+
+    /**
+     * Aerobics Pass — issued by Denise (COMMUNITY_CENTRE_MANAGER) for 1 COIN.
+     * Grants entry to Sandra's aerobics sessions. Expires after one session.
+     * Tooltip: "Sandra says bring a towel. She's not joking."
+     */
+    AEROBICS_PASS("Aerobics Pass"),
+
+    /**
+     * CAB Referral Letter — issued by Derek (CAB_VOLUNTEER) at the Tuesday drop-in.
+     * Halves the FoodBank waiting time when presented at the food bank counter.
+     * Tooltip: "Derek's signed it. That actually means something."
+     */
+    CAB_REFERRAL_LETTER("CAB Referral Letter"),
+
+    /**
+     * Character Reference Letter — issued by Derek (CAB_VOLUNTEER) at the Tuesday drop-in.
+     * Reduces MagistratesCourtSystem sentence by one tier when presented in court.
+     * Tooltip: "Northfield Community Centre confirms that you have been known to attend things."
+     */
+    CHARACTER_REFERENCE_LETTER("Character Reference Letter"),
+
+    /**
+     * Grant Application Form — stolen from the FILING_CABINET_PROP in the back corridor.
+     * Used at the PHOTOCOPIER_PROP to create a FORGED_GRANT_APPLICATION.
+     * Can also be legitimately submitted with Denise's help (trust ≥ 30).
+     * Tooltip: "Section 4b is surprisingly philosophical."
+     */
+    GRANT_APPLICATION_FORM("Grant Application Form"),
+
+    /**
+     * Forged Grant Application — a doctored copy of the GRANT_APPLICATION_FORM.
+     * Posted at POST_BOX_PROP. After 3 in-game days, yields GRANT_CHEQUE (30 COIN).
+     * 25% catch rate (×2 at Notoriety Tier 3+); if caught: OBTAINING_MONEY_BY_DECEPTION charge.
+     * Tooltip: "Community Pool Table — Equipment &amp; Installation. You've definitely planned this."
+     */
+    FORGED_GRANT_APPLICATION("Forged Grant Application"),
+
+    /**
+     * Grant Cheque — a council cheque for 30 COIN, received after a successful grant.
+     * Cashed at the Post Office or bank. Awards GRANT_GRABBER on legitimate use, or
+     * triggers prosecution if the forgery is discovered first.
+     * Tooltip: "Pay to the bearer: thirty pounds. For a pool table. Community benefit."
+     */
+    GRANT_CHEQUE("Grant Cheque"),
+
+    /**
+     * Counterfeit Flyer — a fake community event flyer used to mislead NPCs.
+     * Can be pinned to NOTICE_BOARD_PROP to redirect NPCs away from a heist area.
+     * Tooltip: "Free bingo night. Definitely real. Don't tell anyone."
+     */
+    COUNTERFEIT_FLYER("Counterfeit Flyer"),
+
+    /**
+     * Curry and Rice — a portion of community curry served at Saturday night curry night.
+     * Costs 2 COIN from CURRY_COOK NPC. Restores +12 Warmth and +15 Hunger.
+     * Tooltip: "Best meal in Northfield. Don't argue."
+     */
+    CURRY_AND_RICE("Curry and Rice"),
+
+    /**
+     * Naan — a side of naan bread from the Saturday curry night.
+     * Restores +5 Hunger. Free with TINNED_GOODS donation.
+     * Tooltip: "Freshly made. You can tell."
+     */
+    NAAN("Naan"),
+
+    /**
+     * Samosa — two vegetable samosas from the community curry night starters.
+     * Restores +4 Hunger, +2 Warmth.
+     * Tooltip: "Go on. They're only small."
+     */
+    SAMOSA("Samosa"),
+
+    /**
+     * Mango Lassi — a cold yoghurt drink from the curry night.
+     * Restores +3 Hunger, +2 Warmth.
+     * Tooltip: "More of a palate cleanser than a drink. Still nice though."
+     */
+    MANGO_LASSI("Mango Lassi");
 
     private final String displayName;
 
@@ -4611,6 +4693,29 @@ public enum Material {
                                                     0.25f, 0.25f, 0.28f); // Dark metal
             case QUIZ_ANSWER_SHEET:       return cs(0.95f, 0.95f, 0.88f,  // Off-white paper
                                                     0.20f, 0.20f, 0.60f); // Blue ink lines
+
+            // Issue #1153: Northfield Community Centre
+            case AEROBICS_PASS:           return cs(0.88f, 0.22f, 0.55f,  // Hot pink pass
+                                                    0.98f, 0.90f, 0.95f); // Light background
+            case CAB_REFERRAL_LETTER:     return cs(0.92f, 0.92f, 0.88f,  // White paper
+                                                    0.10f, 0.30f, 0.68f); // CAB blue stamp
+            case CHARACTER_REFERENCE_LETTER: return cs(0.92f, 0.92f, 0.88f, // White paper
+                                                    0.22f, 0.50f, 0.22f); // Green approving stamp
+            case GRANT_APPLICATION_FORM:  return cs(0.90f, 0.88f, 0.78f,  // Cream council paper
+                                                    0.10f, 0.28f, 0.65f); // Blue council header
+            case FORGED_GRANT_APPLICATION: return cs(0.88f, 0.82f, 0.68f, // Slightly off cream
+                                                    0.38f, 0.22f, 0.65f); // Suspicious purple hue
+            case GRANT_CHEQUE:            return cs(0.92f, 0.92f, 0.82f,  // Cheque cream
+                                                    0.10f, 0.48f, 0.22f); // Green bank stamp
+            case COUNTERFEIT_FLYER:       return cs(0.98f, 0.95f, 0.75f,  // Yellow flyer
+                                                    0.88f, 0.20f, 0.20f); // Red headline text
+            case CURRY_AND_RICE:          return cs(0.82f, 0.55f, 0.12f,  // Golden curry sauce
+                                                    0.92f, 0.88f, 0.72f); // White rice
+            case NAAN:                    return c(0.88f, 0.78f, 0.55f);  // Warm bread tan
+            case SAMOSA:                  return cs(0.78f, 0.62f, 0.30f,  // Pastry gold
+                                                    0.55f, 0.72f, 0.22f); // Pea green filling hint
+            case MANGO_LASSI:             return cs(0.98f, 0.78f, 0.25f,  // Mango orange-yellow
+                                                    0.98f, 0.95f, 0.88f); // Creamy white
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -6037,6 +6142,30 @@ public enum Material {
                 return IconShape.TOOL;        // steel-tip darts
             case QUIZ_ANSWER_SHEET:
                 return IconShape.FLAT_PAPER;  // answer sheet
+
+            // Issue #1153: Northfield Community Centre
+            case AEROBICS_PASS:
+                return IconShape.CARD;        // laminated day pass
+            case CAB_REFERRAL_LETTER:
+                return IconShape.FLAT_PAPER;  // official referral letter
+            case CHARACTER_REFERENCE_LETTER:
+                return IconShape.FLAT_PAPER;  // character reference form
+            case GRANT_APPLICATION_FORM:
+                return IconShape.FLAT_PAPER;  // council grant form
+            case FORGED_GRANT_APPLICATION:
+                return IconShape.FLAT_PAPER;  // forged form
+            case GRANT_CHEQUE:
+                return IconShape.FLAT_PAPER;  // council cheque
+            case COUNTERFEIT_FLYER:
+                return IconShape.FLAT_PAPER;  // A5 flyer
+            case CURRY_AND_RICE:
+                return IconShape.FOOD;        // curry portion in tray
+            case NAAN:
+                return IconShape.FOOD;        // flatbread
+            case SAMOSA:
+                return IconShape.FOOD;        // triangular pastry
+            case MANGO_LASSI:
+                return IconShape.BOTTLE;      // yoghurt drink cup
 
             default:
                 return IconShape.BOX;

@@ -112,7 +112,12 @@ public class StreetSkillSystem {
         /** Issue #1020: Darts — played at the social club DARTBOARD_PROP or pub dartboard.
          *  Raw integer points (0–10). Improves accuracy in 301 mini-game:
          *  level 0–2: baseline; 3–5: +1 scoring accuracy tier; 6+: double-out bonus. */
-        DARTS
+        DARTS,
+
+        /** Issue #1153: Aerobics — trained at Sandra's Mon/Wed/Fri class at the Community Centre.
+         *  Raw integer points (0–10). Improves rhythm prompt timing window:
+         *  level 0–2: baseline 0.4s window; 3–5: 0.55s window; 6+: 0.70s window. */
+        AEROBICS
     }
 
     // ── Tier enum ─────────────────────────────────────────────────────────────
