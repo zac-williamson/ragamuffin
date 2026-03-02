@@ -433,5 +433,13 @@ public enum RumourType {
      * — seeded weekly by CommunityCentreSystem at 17:00 on Saturdays before curry night.
      * Spreads via COMMUNITY_MEMBER and PUBLIC NPCs.
      * Draws nearby NPCs toward the COMMUNITY_CENTRE landmark. */
-    CURRY_NIGHT;
+    CURRY_NIGHT,
+
+    // ── Issue #1161: Northfield Poundstretcher ────────────────────────────────
+
+    /** "Sharon's banned someone from the Poundstretcher — saw it happen myself."
+     * — seeded by PoundShopSystem when a player is caught shoplifting by Sharon.
+     * Spreads via PUBLIC and PENSIONER NPCs within 20 blocks of the POUND_SHOP.
+     * Adds +2 patrol awareness near POUND_SHOP. */
+    SHOPLIFTING_BAN;
 }
