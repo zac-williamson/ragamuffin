@@ -93,6 +93,22 @@ public class Car {
     /** Current speed magnitude when driven by the player. */
     private float driverSpeed = 0f;
 
+    // ── Issue #1146: GarageSystem roadworthiness & stolen flag ────────────────
+
+    /**
+     * Roadworthiness score (0–100).  Fresh NPC cars default to 70.
+     * Stolen cars spawned on the forecourt start at 25–55.
+     * Falls to 0 on cut-and-shut failure; restored by Advisory Repairs (+15–20 per fix).
+     */
+    private int roadworthiness = 70;
+
+    /**
+     * True if this car has been flagged as stolen by the WantedSystem.
+     * WantedSystem plate-checks can seize the car when this is true.
+     * Cleared by Car Ringing at Mick's garage (BLANK_LOGBOOK + 25 COIN).
+     */
+    private boolean stolen = false;
+
     /**
      * Create a car on a road segment.
      *
