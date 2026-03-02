@@ -1981,7 +1981,18 @@ public enum NPCType {
      * talked down (Notoriety < 20), bribed (3 COIN), or outrun (velocity > 1.5x for
      * 5 seconds). Only active while site gate is blocked.
      */
-    COUNCIL_ENFORCEMENT(80f, 0f, 0f, false);
+    COUNCIL_ENFORCEMENT(80f, 0f, 0f, false),
+
+    // ── Issue #1188: Northfield DWP Home Visit ─────────────────────────────
+
+    /**
+     * Issue #1188: DWP Compliance Officer — Brenda or Keith, sent on unannounced
+     * home visits when the player's suspicion score reaches 60+.
+     * Brenda: 50s, anorak, clipboard. Disapproving but not unkind.
+     * Keith: 40s, terse, by-the-book. Only appears when suspicion ≥ 80.
+     * Passive until player opens squat door; then initiates compliance interview.
+     */
+    DWP_COMPLIANCE_OFFICER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

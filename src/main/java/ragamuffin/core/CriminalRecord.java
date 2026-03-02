@@ -575,7 +575,25 @@ public class CriminalRecord {
          * ANKLE_TAG device. Removes the curfew obligation but escalates police response.
          * Penalty: WantedSystem +3 stars, Notoriety +20.
          */
-        TAG_TAMPER("Electronic tag tampering");
+        TAG_TAMPER("Electronic tag tampering"),
+
+        // ── Issue #1188: Northfield DWP Home Visit ─────────────────────────────
+
+        /**
+         * Recorded when Brenda (DWP_COMPLIANCE_OFFICER) finds evidence during a home
+         * visit, or when the player fails a Bluff dice roll, or when the player evades
+         * and is logged for non-cooperation.
+         * Triggers MagistratesCourtSystem prosecution at CRIMINAL_REFERRAL tier.
+         * Penalty: Notoriety +15, WantedSystem +2 stars.
+         */
+        BENEFIT_FRAUD("Benefit fraud (DWP compliance failure)"),
+
+        /**
+         * Recorded when the player fails to open the door within 60 seconds of
+         * Brenda's knock (evasion). Adds +10 suspicion score to DWPSystem.
+         * Penalty: Notoriety +5.
+         */
+        BENEFIT_FRAUD_EVASION("Benefit fraud evasion (non-cooperation)");
 
         private final String displayName;
 

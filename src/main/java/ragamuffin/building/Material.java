@@ -4234,7 +4234,34 @@ public enum Material {
      * The player interacts with the PROBATION_RECEPTIONIST NPC to sign in.
      * Tooltip: "A4, ring-bound, smells of despair and Tipp-Ex."
      */
-    SIGN_IN_FORM_PROP("Sign-In Form");
+    SIGN_IN_FORM_PROP("Sign-In Form"),
+
+    // ── Issue #1188: Northfield DWP Home Visit ────────────────────────────
+
+    /**
+     * DWP Letter Prop — placed at the squat door when suspicion score reaches 60+.
+     * Readable via E: "You are required to attend a compliance interview or be
+     * available for a home visit. Failure to cooperate may result in your claim
+     * being suspended."
+     * HoverTooltip: "A brown envelope. Never good news."
+     */
+    DWP_LETTER_PROP("DWP Letter (Compliance Notice)"),
+
+    /**
+     * Appeal Letter Prop — crafted from NEWSPAPER (paper) + MARKER_PEN.
+     * Required to initiate an appeal against a DWP sanction.
+     * Press E on the JOB_CENTRE_CLERK while holding this to start the 2-week appeal.
+     * Tooltip: "A letter of appeal. Probably won't work. Worth a try."
+     */
+    APPEAL_LETTER_PROP("DWP Appeal Letter"),
+
+    /**
+     * Cash-in-Hand Ledger — a handwritten record of undeclared earnings.
+     * Found in skip (SkipDivingSystem, 5% chance) or bought from FenceSystem.
+     * If found by Brenda during a home visit evidence search: instant CRIMINAL_REFERRAL.
+     * Tooltip: "Don't let Brenda see this."
+     */
+    CASH_IN_HAND_LEDGER("Cash-in-Hand Ledger");
 
     private final String displayName;
 
@@ -5300,6 +5327,14 @@ public enum Material {
             case SIGN_IN_FORM_PROP:     return cs(0.95f, 0.95f, 0.92f,  // White A4 paper
                                                   0.20f, 0.40f, 0.75f); // Blue official ink
 
+            // Issue #1188: Northfield DWP Home Visit
+            case DWP_LETTER_PROP:       return cs(0.78f, 0.62f, 0.28f,  // Brown envelope
+                                                  0.22f, 0.35f, 0.68f); // Blue official stamp
+            case APPEAL_LETTER_PROP:    return cs(0.95f, 0.95f, 0.92f,  // White paper
+                                                  0.18f, 0.45f, 0.22f); // Green "Appeal" text
+            case CASH_IN_HAND_LEDGER:   return cs(0.32f, 0.22f, 0.12f,  // Brown notebook
+                                                  0.88f, 0.72f, 0.18f); // Gold lettering
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5809,6 +5844,10 @@ public enum Material {
             // Issue #1186: Northfield Probation Office — not block items
             case ANKLE_TAG:
             case SIGN_IN_FORM_PROP:
+            // Issue #1188: Northfield DWP Home Visit — not block items
+            case DWP_LETTER_PROP:
+            case APPEAL_LETTER_PROP:
+            case CASH_IN_HAND_LEDGER:
                 return false;
             default:
                 return true;
@@ -6951,6 +6990,14 @@ public enum Material {
                 return IconShape.BOX;         // black plastic device
             case SIGN_IN_FORM_PROP:
                 return IconShape.FLAT_PAPER;  // A4 sign-in register
+
+            // Issue #1188: Northfield DWP Home Visit
+            case DWP_LETTER_PROP:
+                return IconShape.FLAT_PAPER;  // brown envelope letter
+            case APPEAL_LETTER_PROP:
+                return IconShape.FLAT_PAPER;  // official appeal letter
+            case CASH_IN_HAND_LEDGER:
+                return IconShape.BOX;         // small notebook
 
             default:
                 return IconShape.BOX;
