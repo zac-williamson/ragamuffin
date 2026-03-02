@@ -34936,3 +34936,210 @@ Enhanced Orders attach a community service obligation: 8 hours (8 × in-game 1-h
 // Integrates: MagistratesCourtSystem, ArrestSystem, WantedSystem, CriminalRecord, SquatSystem,
 //   FoodBankSystem, NotorietySystem, RumourNetwork, WeatherSystem, FenceSystem, GameHUD, AchievementSystem
 // WorldGenerator: place PROBATION_OFFICE building between MAGISTRATES_COURT and JOB_CENTRE
+
+---
+
+## Issue #1189: Northfield DWP Home Visit — Benefit Fraud Snooper, Universal Credit Trap & the Undeclared Earnings Hustle
+
+### Overview
+
+The Department for Work and Pensions (DWP) has a presence in Northfield. If the
+player is claiming Universal Credit (via `JobCentreSystem`) while simultaneously
+earning coin through `StreetEconomySystem`, `FenceSystem`, or any other cash-in-hand
+hustle, a Compliance Officer (`DWP_COMPLIANCE_OFFICER` NPC type) may be dispatched
+to the player's squat for an unannounced home visit. The player must either hide
+their earnings/contraband or talk their way out of a fraud sanction.
+
+The new `DWPSystem` handles the full investigation lifecycle: suspicion accumulation,
+home-visit spawn, evidence search, sanction decision, mandatory reclaim, and the
+Undeclared Earnings Hustle (deliberately under-reporting to keep partial benefits).
+
+### DWP Suspicion Score
+
+`DWPSystem` maintains a `suspicionScore` (0–100) that accumulates when the player
+is both claiming UC and earning coin:
+
+| Trigger | Suspicion gained |
+|---|---|
+| Each `StreetEconomySystem` street-deal transaction while UC active | +3 |
+| Each `FenceSystem` item sale while UC active | +5 |
+| Each `BootSaleSystem` auction win while UC active | +4 |
+| Neighbour reports player carrying contraband (RumourType.LOCAL_SCANDAL, any NPC within 15 blocks of squat) | +8 |
+| Player spotted by POLICE within 10 blocks of squat while UC active | +6 |
+| Player's Notoriety crosses a new tier while UC active | +10 |
+| Player attends JobCentre sign-on after earning ≥ 20 COIN since last sign-on (detected heuristically) | +12 |
+| Player completes a day without earning anything (not detected) | −2 (decay) |
+| Player pays a COIN fine at MagistratesCourtSystem | −5 (visible compliance) |
+
+When `suspicionScore >= 60`: DWP schedules a home visit within the next 1–3 in-game
+days (random). A warning letter (`DWP_LETTER_PROP`) is placed at the squat door,
+readable via E: *"You are required to attend a compliance interview or be available
+for a home visit. Failure to cooperate may result in your claim being suspended."*
+
+### Home Visit
+
+Brenda (`DWP_COMPLIANCE_OFFICER`) and, if `suspicionScore >= 80`, her colleague
+Keith (`DWP_COMPLIANCE_OFFICER`) arrive at the player's squat door at a random time
+between 09:00 and 16:00. They knock (NoiseSystem level 3, propagation radius 20).
+The player has **60 real seconds** to respond before Brenda notes "No answer" and
+the visit is logged as evasion (`BENEFIT_FRAUD_EVASION` CrimeType, +10 suspicionScore).
+
+If the player opens the door (presses E on Brenda):
+
+**The Interview** — a branching dialogue with three stances:
+
+| Stance | Mechanic | Outcome |
+|---|---|---|
+| Cooperate | Answer truthfully: declare earnings | UC adjusted automatically; claim reduced proportionally; `suspicionScore` reset to 0; no crime |
+| Bluff | Roll dice: `rng.nextInt(100) < (100 − suspicionScore)` | Success: Brenda satisfied, visit closed, suspicion −20; Failure: BENEFIT_FRAUD logged, sanction applied |
+| Obstruct | Refuse to let Brenda in | Brenda calls Keith; joint assessment; +15 suspicionScore; 30% chance of POLICE arriving in 5 minutes |
+
+**Evidence Search** — if `suspicionScore >= 80`, Brenda requests permission to look
+around. If the player grants access, she checks a random sample of 4 props/items
+in the squat (sampled from `SquatFurnishingTracker`):
+
+- Finding `STOLEN_GOODS` props, `COUNTERFEIT_NOTE`, `DRUG_PARAPHERNALIA`, `STOLEN_PHONE`,
+  or `BOLT_CUTTERS` adds +20 suspicionScore per item found.
+- Finding a `HIGH_VIS_JACKET` and `CLIPBOARD_PROP` together: Brenda concludes "He's
+  self-employed" → applies `SELF_EMPLOYED` status, reducing UC by 40%.
+- Finding `CASH_IN_HAND_LEDGER` item (see below): instant BENEFIT_FRAUD charge.
+
+Brenda has a `SEARCH_RADIUS` constant — she only checks items within 8 blocks of the
+front door. Smart players hide contraband in back rooms before answering.
+
+### Sanction System
+
+`DWPSystem.SanctionTier` enum:
+
+| Tier | Trigger | Effect | Duration |
+|---|---|---|---|
+| `WARNING` | First suspected fraud, low evidence | UC reduced 20% | 4 in-game weeks |
+| `SUSPENSION` | `suspicionScore >= 70` at sanction | UC suspended entirely | 8 in-game weeks |
+| `CRIMINAL_REFERRAL` | `suspicionScore >= 90` + evidence found | `BENEFIT_FRAUD` CrimeType → MagistratesCourtSystem; fine = 3× undeclared earnings | Permanent record |
+
+Sanctions are tracked in a new `DWPRecord` data class (holds active tier, weeks
+remaining, total undeclared earning estimate, appeal status).
+
+**Appeal Mechanic**: Player can appeal at the JobCentre (press E on the JOB_CENTRE_CLERK
+while holding a `APPEAL_LETTER_PROP`). The appeal takes 2 in-game weeks. Success
+(50% base, +20% if player's Notoriety < 20, −20% if CRIMINAL_REFERRAL active) clears
+the sanction. Failure escalates to the next tier. `APPEAL_LETTER_PROP` is craftable:
+PAPER + PEN → APPEAL_LETTER_PROP.
+
+### The Undeclared Earnings Hustle
+
+`JobCentreSystem.reportEarnings(int coinEarned)` is an existing hook (stubbed).
+`DWPSystem` implements it: the player can under-report earnings at their fortnightly
+JobCentre sign-on. Under-reporting allows partial UC retention:
+
+- Declare 0: keep full UC (20 COIN/fortnight), but suspicionScore += 8 per fortnight
+- Declare half: keep 50% UC (10 COIN/fortnight), suspicionScore += 3 per fortnight
+- Declare all: UC tapers off proportionally, suspicionScore resets toward 0
+
+Each fortnightly sign-on presents a `DECLARE_EARNINGS_PROP` prompt (numeric selector
+0–99 COIN). The figure feeds into suspicion accumulation rates above.
+
+### Benefit Fraud Informant
+
+`NOSY_NEIGHBOUR` NPC type (already exists as `NEIGHBOUR` in NPCType): if
+`NeighbourhoodWatchSystem.isActive()` and player's squat is in watch zone, one
+NOSY_NEIGHBOUR NPC may tip off the DWP independently (adds +15 suspicionScore once
+per in-game week). Player can bribe the neighbour (5 COIN, press E) to prevent the
+tip-off for 7 in-game days, or intimidate them (WantedSystem +1, neighbour becomes
+HOSTILE for the rest of the day).
+
+### NPCs & Dialogue
+
+- **Brenda** (`DWP_COMPLIANCE_OFFICER`): 50s, anorak, clipboard. Disapproving but
+  not unkind. Dialogue: *"I just need to ask you a few questions, love."* / *"We've
+  had a report, that's all."* / *"Your records show some inconsistencies."*
+- **Keith** (`DWP_COMPLIANCE_OFFICER`): 40s, terse, by-the-book. Only appears when
+  suspicion ≥ 80. Says little; writes notes on clipboard prop.
+- **Julie** (`JOB_CENTRE_CLERK`, existing): gains new dialogue branch when
+  `DWPSystem.hasSanction(player)`: *"You need to fill this in properly, love, or
+  they'll stop your money."*
+
+### Items
+
+| Item | Acquisition | Use |
+|---|---|---|
+| `DWP_LETTER_PROP` | Appears at squat door on suspicion ≥ 60 | Readable prop; triggers HoverTooltip: *"A brown envelope. Never good news."* |
+| `APPEAL_LETTER_PROP` | Craft: PAPER + PEN | Required to initiate appeal at JobCentre |
+| `CASH_IN_HAND_LEDGER` | Found in skip (SkipDivingSystem, 5% chance) or bought from Fence | If found during home visit → instant CRIMINAL_REFERRAL |
+
+### Weather & Time Effects
+
+- **RAIN / DRIZZLE**: Brenda is more sympathetic (Bluff success probability +10%).
+- **HEATWAVE**: Keith stays in the car; home visit is Brenda-only regardless of
+  suspicion level.
+- **FROST**: Brenda offers player a cup of tea prop (flavour only); grace period to
+  open the door extended to 90 seconds.
+- Home visits never occur on weekends or Bank Holidays.
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `BENEFIT_STREET` | Claim UC for 10 consecutive in-game weeks while also dealing on the street |
+| `BROWN_ENVELOPE` | Receive a DWP letter for the first time |
+| `TALKED_MY_WAY_OUT` | Successfully Bluff Brenda during a home visit |
+| `BENEFIT_FRAUDSTER` | Accumulate a CRIMINAL_REFERRAL sanction |
+| `APPEAL_UPHELD` | Win an appeal against a DWP sanction |
+| `NOSY_NEIGHBOUR` | Have the nosy neighbour tip off the DWP |
+| `NOTHING_TO_DECLARE` | Declare 0 earnings for 5 consecutive fortnightly sign-ons without triggering a home visit |
+
+### Integration with Other Systems
+
+- **JobCentreSystem**: `reportEarnings()` hook wired to suspicion accumulation;
+  fortnightly declaration UI; `hasBenefitSanction()` check used by JobCentreUI.
+- **StreetEconomySystem**: each street-deal while UC active notifies `DWPSystem.onEarning()`.
+- **FenceSystem / BootSaleSystem**: item sale while UC active notifies `DWPSystem.onEarning()`.
+- **SquatSystem**: `getHomeLocation()` for Brenda's visit destination; `SquatFurnishingTracker` for evidence search prop sampling.
+- **NeighbourhoodWatchSystem**: active watch zone enables nosy-neighbour tip-off.
+- **WantedSystem**: neighbour intimidation adds 1 star; CRIMINAL_REFERRAL adds 2 stars after court.
+- **CriminalRecord**: `BENEFIT_FRAUD`, `BENEFIT_FRAUD_EVASION` CrimeTypes.
+- **MagistratesCourtSystem**: CRIMINAL_REFERRAL tier triggers prosecution; fine = 3× estimated undeclared earnings.
+- **NotorietySystem**: Notoriety tier-up while UC active contributes suspicion; clean period decays it.
+- **RumourNetwork**: NOSY_NEIGHBOUR tip seeds `LOCAL_SCANDAL` rumour; Brenda's visit seeds `LOCAL_EVENT` rumour.
+- **SkipDivingSystem**: 5% chance to find `CASH_IN_HAND_LEDGER` in skips.
+- **NoiseSystem**: Brenda's knock = level 3 noise event.
+- **AchievementSystem**: seven new achievements (see table above).
+- **HoverTooltipSystem**: DWP_LETTER_PROP tooltip.
+
+**Unit tests**: suspicion accumulation per trigger type; sanction tier assignment at
+thresholds (59→none, 60→visit, 70→SUSPENSION, 90→CRIMINAL_REFERRAL); Bluff dice roll
+using seeded RNG; evidence search radius (item at 7 blocks found, item at 9 blocks
+missed); appeal success probability modifiers; decay of suspicion over idle days;
+under-reporting UC retention calculation (declare half → exactly 10 COIN/fortnight).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Suspicion accumulates and triggers DWP letter**: Enable UC claim (`JobCentreSystem.setClaimActive(player, true)`). Call `DWPSystem.onEarning(player, 5)` (street deal) 12 times. Verify `DWPSystem.getSuspicionScore(player)` == 36 (12 × 3). Call `DWPSystem.onEarning(player, 10)` (fence sale) 5 times. Total suspicion = 36 + 25 = 61. Verify `DWPSystem.isHomeVisitScheduled(player)` is true. Verify a `DWP_LETTER_PROP` has been placed at `SquatSystem.getHomeLocation()`.
+
+2. **Home visit — successful bluff**: Schedule a home visit. Set `suspicionScore` to 50 (so Bluff roll uses `rng.nextInt(100) < 50`). Seed `DWPSystem` with a `Random(42)` — `new Random(42).nextInt(100)` == 0 (pass). Simulate player pressing E on Brenda. Select Bluff stance. Verify `CriminalRecord` does NOT contain `BENEFIT_FRAUD`. Verify `DWPSystem.getSuspicionScore(player)` decreased by 20. Verify `AchievementSystem.isUnlocked(TALKED_MY_WAY_OUT)` is true.
+
+3. **Evidence search finds contraband — triggers CRIMINAL_REFERRAL**: Set `suspicionScore` to 85. Place `STOLEN_PHONE` prop within 7 blocks of squat front door. Simulate player granting Brenda search access. Verify suspicionScore increases by 20 (now ≥ 90 → CRIMINAL_REFERRAL). Verify `DWPSystem.getSanctionTier(player)` == `CRIMINAL_REFERRAL`. Verify `CriminalRecord` contains `BENEFIT_FRAUD`. Verify `WantedSystem.getStarCount()` is ≥ 2.
+
+4. **Appeal at JobCentre succeeds**: Apply `WARNING` sanction. Craft `APPEAL_LETTER_PROP` (PAPER + PEN in inventory). Player presses E on JOB_CENTRE_CLERK while holding `APPEAL_LETTER_PROP`. Advance time 2 in-game weeks. Seed RNG so appeal succeeds. Verify `DWPSystem.getSanctionTier(player)` == `NONE`. Verify `AchievementSystem.isUnlocked(APPEAL_UPHELD)` is true.
+
+5. **Nosy neighbour tip-off**: Enable `NeighbourhoodWatchSystem.setActive(true)`. Place player's squat in watch zone. Advance 7 in-game days. Verify `DWPSystem.getSuspicionScore(player)` increased by 15. Bribe the `NOSY_NEIGHBOUR` NPC (5 COIN). Advance another 7 days. Verify suspicion did NOT increase a second time (bribe suppressed tip-off). Verify `AchievementSystem.isUnlocked(NOSY_NEIGHBOUR)` is true.
+
+6. **Undeclared earnings — partial retention**: Player is on UC. At fortnightly sign-on, player declares 0 earnings. Verify `JobCentreSystem.getPendingUCPayment(player)` == 20 COIN (full). Verify `DWPSystem.getSuspicionScore(player)` increased by 8. Repeat: player declares half (50 COIN out of 100 earned). Verify UC payment == 10 COIN. Verify suspicion increased by 3. Repeat: player declares all. Verify UC payment is proportionally reduced. Verify suspicion decayed (not increased).
+
+7. **Evasion on no-answer**: Schedule home visit. Do not press E within 60 real seconds of Brenda's knock. Verify `CriminalRecord` contains `BENEFIT_FRAUD_EVASION`. Verify `DWPSystem.getSuspicionScore(player)` increased by 10.
+
+// ── Issue #1189: Northfield DWP Home Visit ────────────────────────────────────
+// New: DWPSystem.java in ragamuffin.core
+// New: DWPRecord.java in ragamuffin.core (data class: sanctionTier, weeksRemaining, undeclaredEarningsEstimate, appealStatus, isAppealPending)
+// New: DWPSystemTest.java in src/test/java/ragamuffin/integration/
+// NPCType: DWP_COMPLIANCE_OFFICER — add to NPCType.java
+// Material: DWP_LETTER_PROP, APPEAL_LETTER_PROP, CASH_IN_HAND_LEDGER — add to Material.java
+// CriminalRecord.CrimeType: BENEFIT_FRAUD, BENEFIT_FRAUD_EVASION — add if absent
+// AchievementType: BENEFIT_STREET, BROWN_ENVELOPE, TALKED_MY_WAY_OUT, BENEFIT_FRAUDSTER,
+//   APPEAL_UPHELD, NOSY_NEIGHBOUR, NOTHING_TO_DECLARE — add to AchievementType.java
+// Recipe: PAPER + PEN → APPEAL_LETTER_PROP — add to CraftingSystem
+// JobCentreSystem: wire reportEarnings() stub to DWPSystem.onEarning(); add getPendingUCPayment()
+// Integrates: JobCentreSystem, StreetEconomySystem, FenceSystem, BootSaleSystem, SquatSystem,
+//   SquatFurnishingTracker, NeighbourhoodWatchSystem, WantedSystem, CriminalRecord,
+//   MagistratesCourtSystem, NotorietySystem, RumourNetwork, SkipDivingSystem,
+//   NoiseSystem, HoverTooltipSystem, AchievementSystem
