@@ -5056,7 +5056,18 @@ public enum Material {
      * to pay off via CitizensAdviceSystem. Clears the active fly-tip pile after 60 s
      * and reduces Notoriety by 1.
      */
-    FIXED_PENALTY_NOTICE("Fixed Penalty Notice");
+    FIXED_PENALTY_NOTICE("Fixed Penalty Notice"),
+
+    // ── Issue #1276: Northfield Minicab Office — Big Terry's Cabs ─────────────
+
+    /**
+     * TL_COUNCIL_PLATE — a taxi licence council plate. Probably real.
+     * Carried by the player to bypass Big Terry's notoriety refusal:
+     * "Licensed and everything. Jump in."
+     * Also raises the TRAFFIC_WARDEN touting threshold from 5 to 8 unlicensed touts,
+     * and suppresses WantedSystem star accumulation from touting.
+     */
+    TL_COUNCIL_PLATE("Taxi Licence Council Plate. Probably real.");
 
     private final String displayName;
 
@@ -6208,6 +6219,10 @@ public enum Material {
                                                   0.40f, 0.35f, 0.28f); // Shadow base
             case FIXED_PENALTY_NOTICE:  return cs(0.95f, 0.92f, 0.75f,  // Yellow council notice
                                                   0.70f, 0.08f, 0.08f); // Red "PENALTY" stamp
+
+            // Issue #1276: Northfield Minicab Office — Big Terry's Cabs
+            case TL_COUNCIL_PLATE:      return cs(0.85f, 0.82f, 0.20f,  // Yellow licence plate
+                                                  0.15f, 0.15f, 0.15f); // Black text/border
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -8066,6 +8081,10 @@ public enum Material {
                 return IconShape.BOX;         // heavy builder's rubble bag
             case FIXED_PENALTY_NOTICE:
                 return IconShape.FLAT_PAPER;  // council fixed penalty notice
+
+            // Issue #1276: Northfield Minicab Office — Big Terry's Cabs
+            case TL_COUNCIL_PLATE:
+                return IconShape.FLAT_PAPER;  // laminated taxi licence plate
 
             default:
                 return IconShape.BOX;
