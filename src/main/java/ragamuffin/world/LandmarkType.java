@@ -683,7 +683,20 @@ public enum LandmarkType {
      * Staffed by Wayne (CAR_DEALER) and Bez (CAR_LOT_MECHANIC).
      * Managed by CarDealershipSystem.java.
      */
-    CAR_DEALERSHIP;
+    CAR_DEALERSHIP,
+
+    // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────────
+
+    /**
+     * Issue #1243: BERTS_GARAGE — Bert's Tyres &amp; MOT, a backstreet garage on
+     * the industrial estate near the SCRAPYARD. A 16×10-block corrugated-iron
+     * unit with an INSPECTION_PIT_PROP, TYRE_STACK_PROP, PARTS_SHELF_PROP, and
+     * GARAGE_PHONE_PROP. Open Mon–Sat 08:00–17:00.
+     * Staffed by Bert (DODGY_MECHANIC) and Kyle (APPRENTICE_MECHANIC).
+     * Visited by DVSA_INSPECTOR every 7 in-game days.
+     * Managed by MOTSystem.java.
+     */
+    BERTS_GARAGE;
 
     /**
      * Returns the display name shown on the building's sign.

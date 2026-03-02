@@ -4783,7 +4783,57 @@ public enum Material {
      * Heals +5 HP. Awarded automatically after legitimate donation.
      * Tooltip: "Warm, slightly flat. Still appreciated."
      */
-    ORANGE_SQUASH("Orange Squash");
+    ORANGE_SQUASH("Orange Squash"),
+
+    // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────────
+
+    /**
+     * MOT_CERTIFICATE — an official DVLA MOT certificate issued by Bert's Tyres &amp; MOT.
+     * Valid for 12 in-game days. Bribed certificates are marked invalid after a DVSA raid.
+     * Tooltip: "Roadworthy. Allegedly."
+     */
+    MOT_CERTIFICATE("MOT Certificate"),
+
+    /**
+     * FAIL_SHEET — the official DVSA failure notice Bert prints when he fails a car,
+     * genuine or fabricated. Lists the invented fault.
+     * Tooltip: "A list of problems. Some of them real."
+     */
+    FAIL_SHEET("MOT Failure Sheet"),
+
+    /**
+     * BROWN_ENVELOPE — handed to Bert to secure a PASS_BRIBE outcome. Contains unspecified
+     * cash. Converts a FAIL into a PASS; bribe certificate is invalidated on DVSA raid.
+     * Tooltip: "Not a birthday card."
+     */
+    BROWN_ENVELOPE("Brown Envelope"),
+
+    /**
+     * STOLEN_TYRE — a part-worn tyre of dubious provenance. Bert pays 8 COIN each.
+     * Can be acquired from TYRE_STACK_PROP at unattended garages.
+     * Tooltip: "Part-worn. Partly legal."
+     */
+    STOLEN_TYRE("Stolen Tyre"),
+
+    /**
+     * CATALYTIC_CONVERTER — stripped from a parked car. Fence value: 35 COIN.
+     * Very high notoriety if witnessed. Tooltip: "Worth more than the car."
+     */
+    CATALYTIC_CONVERTER("Catalytic Converter"),
+
+    /**
+     * CAR_BATTERY — pulled from a vehicle or bought from PARTS_SHELF_PROP.
+     * Fence value: 20 COIN. Also used in crafting recipes.
+     * Tooltip: "Still got a bit of charge in it."
+     */
+    CAR_BATTERY("Car Battery"),
+
+    /**
+     * INSPECTION_STICKER — a windscreen sticker showing pass date and expiry.
+     * Automatically attached to the player's vehicle on PASS or PASS_BRIBE outcome.
+     * Tooltip: "Stick it on the windscreen and hope for the best."
+     */
+    INSPECTION_STICKER("MOT Inspection Sticker");
 
     private final String displayName;
 
@@ -5894,6 +5944,18 @@ public enum Material {
             case FORGED_DONOR_QUESTIONNAIRE: return cs(0.92f, 0.92f, 0.88f, // Slightly off-white
                                                   0.20f, 0.50f, 0.20f); // NHS green header
             case ORANGE_SQUASH:         return c(0.95f, 0.55f, 0.10f);  // Orange squash colour
+
+            // Issue #1243: Northfield Bert's Tyres & MOT
+            case MOT_CERTIFICATE:       return cs(0.95f, 0.95f, 0.85f,  // Off-white document
+                                                  0.10f, 0.45f, 0.10f); // Green DVLA stripe
+            case FAIL_SHEET:            return cs(0.98f, 0.90f, 0.85f,  // Pink failure notice
+                                                  0.75f, 0.15f, 0.10f); // Red header
+            case BROWN_ENVELOPE:        return c(0.62f, 0.45f, 0.22f);  // Brown envelope
+            case STOLEN_TYRE:           return c(0.15f, 0.15f, 0.15f);  // Rubber black
+            case CATALYTIC_CONVERTER:   return c(0.65f, 0.65f, 0.60f);  // Silvery grey metal
+            case CAR_BATTERY:           return cs(0.12f, 0.12f, 0.14f,  // Black casing
+                                                  0.80f, 0.20f, 0.10f); // Red terminal
+            case INSPECTION_STICKER:    return c(0.20f, 0.65f, 0.20f);  // Green pass sticker
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -7686,6 +7748,22 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // photocopied altered form
             case ORANGE_SQUASH:
                 return IconShape.CYLINDER;    // plastic cup of squash
+
+            // Issue #1243: Northfield Bert's Tyres & MOT
+            case MOT_CERTIFICATE:
+                return IconShape.FLAT_PAPER;  // official certificate
+            case FAIL_SHEET:
+                return IconShape.FLAT_PAPER;  // failure notice form
+            case BROWN_ENVELOPE:
+                return IconShape.FLAT_PAPER;  // brown envelope
+            case STOLEN_TYRE:
+                return IconShape.BOX;         // rubber tyre
+            case CATALYTIC_CONVERTER:
+                return IconShape.CYLINDER;    // cylindrical exhaust part
+            case CAR_BATTERY:
+                return IconShape.BOX;         // rectangular battery
+            case INSPECTION_STICKER:
+                return IconShape.FLAT_PAPER;  // windscreen sticker
 
             default:
                 return IconShape.BOX;

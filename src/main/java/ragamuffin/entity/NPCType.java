@@ -2245,7 +2245,39 @@ public enum NPCType {
      * 14 in-game days (Wednesday 09:00–17:00). Manages the eligibility questionnaire
      * and oversees the donation session. Non-hostile.
      */
-    NHS_DONOR_COORDINATOR(30f, 0f, 0f, false);
+    NHS_DONOR_COORDINATOR(30f, 0f, 0f, false),
+
+    // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────────
+
+    /**
+     * Issue #1243: DODGY_MECHANIC — Bert, owner of Bert's Tyres &amp; MOT on the
+     * industrial estate. Runs MOT inspections with variable corruption (0–100).
+     * At corruption ≥ 50 he deliberately fails cars to pocket repair costs.
+     * Press E once to start MOT, E again (StreetReputation ≥ 40) to call his bluff.
+     * Buys STOLEN_TYRE at 8 COIN each. Non-hostile unless attacked.
+     * Speech: "She'll need a new manifold, mate." / "Cash only, no receipts."
+     *         "I'm doing you a favour here." / "DVSA never come round this way."
+     */
+    DODGY_MECHANIC(45f, 5f, 1.5f, false),
+
+    /**
+     * Issue #1243: APPRENTICE_MECHANIC — Kyle, Bert's apprentice. Wanders the
+     * workshop, picks up STOLEN_TYRE items, and can be distracted via GARAGE_PHONE_PROP.
+     * When Bert enters BERT_DISTRACTED state, Kyle covers the desk but is easily
+     * distracted himself. Non-hostile.
+     * Speech: "Bert! Phone for ya!" / "Don't touch that, mate." / "Is it serious?"
+     */
+    APPRENTICE_MECHANIC(25f, 0f, 0f, false),
+
+    /**
+     * Issue #1243: DVSA_INSPECTOR — government vehicle-standards inspector who raids
+     * Bert's Tyres &amp; MOT every 7 in-game days. Invalidates PASS_BRIBE certificates,
+     * records VEHICLE_FRAUD in CriminalRecord, and adds WantedSystem +2 stars if
+     * player is present. Non-hostile but triggers police escalation on interference.
+     * Speech: "DVSA. I'll need to see your testing records." / "These certificates
+     *          don't add up." / "Step away from the vehicle."
+     */
+    DVSA_INSPECTOR(40f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -4382,6 +4382,68 @@ public enum AchievementType {
         "Plasma King",
         "Stole three blood bags from the NHS van. The Gazette called it 'audacious'.",
         1
+    ),
+
+    // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────────
+
+    /**
+     * Awarded when the player uses the callout mechanic (E twice, StreetReputation ≥ 40)
+     * and Bert is forced to issue a free pass.
+     */
+    CALLED_HIS_BLUFF(
+        "Called His Bluff",
+        "Called out Bert's fake failure. He issued a free pass and said nothing.",
+        1
+    ),
+
+    /**
+     * Awarded when the player passes a BROWN_ENVELOPE to Bert and receives a PASS_BRIBE
+     * MOT certificate.
+     */
+    ENVELOPE_ECONOMY(
+        "Envelope Economy",
+        "Slipped Bert a brown envelope. Certificate signed, no questions asked.",
+        1
+    ),
+
+    /**
+     * Awarded when the player loots a CATALYTIC_CONVERTER from the INSPECTION_PIT_PROP
+     * while Bert is distracted.
+     */
+    CAT_BURGLAR(
+        "Cat Burglar",
+        "Nicked a catalytic converter from Bert's pit. Worth thirty-five quid.",
+        1
+    ),
+
+    /**
+     * Awarded when the player is present during a DVSA_INSPECTOR raid and does not
+     * interfere, letting the inspector do their job.
+     */
+    CIVIC_DUTY(
+        "Civic Duty",
+        "Watched the DVSA raid Bert's garage and did absolutely nothing to stop it.",
+        1
+    ),
+
+    /**
+     * Awarded when the player sells a STOLEN_TYRE to Bert while Bert is himself
+     * in possession of another STOLEN_TYRE.
+     */
+    STOLEN_ON_STOLEN(
+        "Stolen on Stolen",
+        "Sold a stolen tyre to a man who already had one. Economics of the estate.",
+        1
+    ),
+
+    /**
+     * Awarded when the player's PASS_BRIBE certificate survives a DVSA inspection
+     * without being invalidated.
+     */
+    ROADWORTHY_ISH(
+        "Roadworthy-ish",
+        "Bert's bribe certificate passed the DVSA check. Technically, you're legal.",
+        1
     );
 
     private final String name;

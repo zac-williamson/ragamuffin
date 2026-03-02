@@ -724,7 +724,17 @@ public class CriminalRecord {
          * to a newspaper journalist while a POLICE NPC is within 15 blocks.
          * Penalty: Notoriety +10, WantedSystem +1 star.
          */
-        SCHOOL_FRAUD("School document fraud");
+        SCHOOL_FRAUD("School document fraud"),
+
+        // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────
+
+        /**
+         * Recorded when the DVSA_INSPECTOR invalidates a bribe-obtained MOT certificate
+         * (PASS_BRIBE outcome). Triggered in MOTSystem on raid completion if the player
+         * holds an INSPECTION_STICKER linked to a PASS_BRIBE session.
+         * Penalty: Notoriety +12, WantedSystem +2 stars.
+         */
+        VEHICLE_FRAUD("Vehicle inspection fraud (forged MOT certificate)");
 
         private final String displayName;
 

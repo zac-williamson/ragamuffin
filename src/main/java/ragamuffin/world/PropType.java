@@ -2844,7 +2844,44 @@ public enum PropType {
      * Interacting gives player option to help decorate (Notoriety −2) or steal draft.
      * Disappears when inspection ends.
      */
-    OFSTED_NOTICE_PROP(0.60f, 0.90f, 0.05f, 0, null);
+    OFSTED_NOTICE_PROP(0.60f, 0.90f, 0.05f, 0, null),
+
+    // ── Issue #1243: Northfield Bert's Tyres & MOT ───────────────────────────
+
+    /**
+     * Inspection Pit — the below-floor vehicle inspection bay at Bert's garage.
+     * Player can crouch into it to loot CATALYTIC_CONVERTER, CAR_BATTERY items
+     * when Bert is distracted. Bert returns to check the pit every 45 seconds.
+     */
+    INSPECTION_PIT_PROP(3.00f, 1.20f, 6.00f, 0, null),
+
+    /**
+     * Inspection Hatch — the hinged steel floor hatch giving access to the pit.
+     * Press E to open/close. Stays open for 20 seconds then auto-closes.
+     * Opening while Bert is watching adds +5 to his suspicion counter.
+     */
+    INSPECTION_HATCH_PROP(1.20f, 0.10f, 1.20f, 6, null),
+
+    /**
+     * Tyre Stack — a stack of part-worn and stolen tyres against the rear wall.
+     * Press E to search: yields 0–2 STOLEN_TYRE items. Refreshes every 2 in-game days.
+     * Break resistance: 4 hits (tyres are heavy but rubber).
+     */
+    TYRE_STACK_PROP(1.20f, 1.60f, 1.20f, 4, Material.STOLEN_TYRE),
+
+    /**
+     * Parts Shelf — industrial metal shelving holding CAR_BATTERY, spare parts,
+     * and occasionally CATALYTIC_CONVERTER. Press E to search while Bert is
+     * distracted (BERT_DISTRACTED state). Yields 1–3 items.
+     */
+    PARTS_SHELF_PROP(2.40f, 2.00f, 0.50f, 6, Material.CAR_BATTERY),
+
+    /**
+     * Garage Phone — the wall-mounted phone at Bert's desk. Press E to trigger
+     * a fake call that puts Bert into BERT_DISTRACTED state for 20 seconds while
+     * Kyle fetches him. Can only be used once per in-game hour.
+     */
+    GARAGE_PHONE_PROP(0.30f, 0.20f, 0.15f, 3, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
