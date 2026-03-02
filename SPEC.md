@@ -37494,3 +37494,142 @@ If the player genuinely takes damage from an NPC vehicle (`Car.onCollision`) or 
 // Integrates: WeatherSystem, CarDrivingSystem, DogCompanionSystem, WantedSystem,
 //   NotorietySystem, CriminalRecord, RumourNetwork, FenceSystem, HealingSystem,
 //   StreetSkillSystem, NeighbourhoodWatchSystem, TimeSystem, NPCManager
+
+---
+
+## Issue #1220: Northfield Ladbrokes — BettingShopSystem, FOBT Terminal & the Race Fix
+
+**BettingShopSystem** — `BettingShopSystem.java` in `ragamuffin.core` — brings the `BETTING_SHOP` (`LandmarkType.BETTING_SHOP`, display name "Ladbrokes") landmark to life. The scaffolding for this system already exists: props (`FOBT_TERMINAL`, `RACING_POST_PROP`), materials (`BETTING_SLIP_BLANK`, `RACING_POST`), and achievements (`FIRST_FLUTTER`, `RACING_CERT`, `FOBT_RAGE`, `SURE_THING`, `FOLDED`, `BETTING_SLIP_BLUES`) are all defined. The `GreyhoundRacingSystem` already has a `raceFixed` flag stub reserved for this system. Only the implementing class is missing.
+
+Run by **Derek** (`NPCType.BOOKIES_CLERK`): late 50s, cardigan, Racing Post folded under arm. Open **Mon–Sat 09:00–22:00, Sun 10:00–18:00**.
+
+### Building Layout (8×5×3 footprint)
+
+- **Exterior**: PAVEMENT approach, red-on-yellow LADBROKES_SIGN_PROP above fascia, WINDOW_PROP with odds displayed, CCTV_PROP above door.
+- **Interior**: long COUNTER_PROP (Derek behind it), 4× `FOBT_TERMINAL` props against the far wall, `RACING_POST_PROP` on the counter, a TV_SCREEN prop showing live race results, 2× BET_SLIP dispenser PROP (wall-mounted).
+- **After-hours break-in**: picking the lock (10s hold, requires SCREWDRIVER) grants access to Derek's FLOAT_TRAY_PROP — contains 5–15 COIN + 1 BETTING_SLIP_BLANK. Each break-in adds `CrimeType.BURGLARY` and Notoriety +8. Triggers CCTV detection (see NeighbourhoodWatchSystem).
+
+### Horse Racing Integration (Core Betting Loop)
+
+`BettingShopSystem` wraps the existing `HorseRacingSystem` for over-counter bets:
+
+- Player presses **E** on Derek or the counter to open `BettingUI` (already implemented).
+- Select a race and horse; enter stake (1–50 COIN; 100 on Benefit Day via `StreetEconomySystem`).
+- `BettingShopSystem.placeBet(race, horseIndex, stake, inventory)` returns `BetResult`:
+  - `ACCEPTED` — `BET_SLIP` added to inventory; COIN deducted.
+  - `INSUFFICIENT_FUNDS` — no COIN change.
+  - `RACE_CLOSED` — race already resolved; rejected.
+- On race resolution, `BettingShopSystem.resolveBets(timeSystem, inventory, rumourNetwork, callback)` is called:
+  - Winning bets: `payout = stake × oddsNumerator`; COIN added to inventory; `BET_SLIP` consumed.
+  - Losing bets: `BET_SLIP` consumed, nothing awarded.
+  - On any win ≥ 10 COIN: achievement `RACING_CERT` unlocked; rumour `BIG_WIN_AT_BOOKIES` seeded into 3 NPCs.
+  - On first ever bet: achievement `FIRST_FLUTTER`.
+  - Holding 3 losing slips simultaneously: achievement `BETTING_SLIP_BLUES`.
+
+### Reading the Racing Post
+
+Pressing **E** on `RACING_POST_PROP` calls `BettingShopSystem.readRacingPost(inventory)`:
+- Consumes 1 RACING_POST from world prop (replenishes at 09:00 each day).
+- Sets `formGuideActive = true` for the remainder of the in-game day.
+- While `formGuideActive`, the next horse bet (if on a favourite with odds ≤ 4/1) pays +5% bonus payout.
+- Tooltip: "Knowledge is power. Probably."
+
+### FOBT Terminal (Fixed-Odds Betting Terminal)
+
+Pressing **E** on `FOBT_TERMINAL` opens a virtual roulette mini-game:
+
+| Outcome | Probability | Payout |
+|---|---|---|
+| Red/Black correct | 18/38 (~47%) | 2× stake |
+| Single number | 1/38 (~2.6%) | 36× stake |
+| Loss | remainder | 0 |
+
+- Stake: 1–20 COIN per spin.
+- `BettingShopSystem.playFOBT(betType, stake, inventory, random)` executes one spin.
+- Losing 10+ COIN total across a session: achievement `FOBT_RAGE`.
+- StreetSkillSystem `GAMBLING` XP +1 per spin (regardless of outcome).
+- FOBT terminals can be smashed (8 hits, HARD material): drops 0–8 COIN (random), SCRAP_METAL ×1. Triggers NeighbourhoodWatchSystem `ANGER_SMASH_EXTERIOR`. Notoriety +5.
+
+### The Race Fix (Marchetti Crew Mechanic)
+
+Once per in-game week, a `MARCHETTI_LIEUTENANT` NPC approaches the player outside the bookies and offers a fixed race:
+
+- Player accepts via dialogue: `BettingShopSystem.acceptRaceFix(race)`.
+- Sets `GreyhoundRacingSystem.setRaceFixed(true)` (stub already exists) **or** the fixed greyhound race picks a rigged winner.
+- The "fixed" horse/dog wins with certainty. Stake limit for fixed race: 30 COIN.
+- If the player bets on the fixed race and wins: achievement `SURE_THING`; FactionSystem respect +10 for MARCHETTI_CREW; Notoriety +5.
+- 20% chance the fix is spotted by Derek: `CriminalRecord.addCrime(CrimeType.FRAUD)`, WantedSystem +1 star, fix cancelled.
+- If the player rats out the fix to a nearby POLICE NPC (press E while fix offer is pending): WantedSystem clears 1 star, MARCHETTI_CREW respect −20, achievement `GRASS`.
+
+### Debt Spiral (Loan Shark Integration)
+
+Mirrors existing `HorseRacingSystem` debt mechanic but tracked separately for FOBT losses:
+
+- Cumulative net FOBT loss ≥ 30 COIN in one session: `LOAN_SHARK` NPC spawns outside bookies entrance.
+- Loan offer: 15 COIN, repay 25 within 2 in-game days. Same hostile-enforcement mechanic as `HorseRacingSystem`.
+- `BettingShopSystem.getFOBTSessionLoss()` returns cumulative session loss (reset when player leaves bookies area).
+
+### After-Hours State
+
+- Outside opening hours, CLOSED_SIGN_PROP blocks the front door.
+- After-hours break-in drops `BETTING_SLIP_BLANK` (fenceable for 4 COIN) + COIN from float tray.
+- Achievement `FOLDED` on first successful break-in.
+- CCTV_PROP triggers 40% chance of `UNDERCOVER_POLICE` NPC patrol the following in-game morning.
+
+### NPC Dialogue
+
+- **Derek** (`BOOKIES_CLERK`): "Alright son, what's your fancy today?" / "The machine giveth and the machine taketh away, mate." / "I'm not supposed to give tips, but... look at the form on number four." / "We're closing up. Come back tomorrow." (after hours).
+- **Marchetti Lieutenant**: "Oi. I've got something that might interest you. Proper cert, this one." / "You didn't hear this from me."
+
+### Integration Points
+
+- **HorseRacingSystem**: `BettingShopSystem` delegates race schedule and resolution to it; shares `BET_SLIP` material.
+- **GreyhoundRacingSystem**: `setRaceFixed(true)` stub already present; `BettingShopSystem.acceptRaceFix()` calls it.
+- **StreetEconomySystem**: `isBenefitDay()` doubles max stake to 100 COIN.
+- **FactionSystem**: MARCHETTI_CREW respect +10 on race fix win; −20 on grass.
+- **WantedSystem**: fix spotted → +1 star; grass → −1 star.
+- **NotorietySystem**: +5 on race fix win; +8 on break-in; +5 on FOBT smash.
+- **CriminalRecord**: `BURGLARY` on break-in; `FRAUD` if fix spotted by Derek.
+- **RumourNetwork**: `BIG_WIN_AT_BOOKIES` on win ≥ 10 COIN; `DODGY_DEAL` on race fix accepted.
+- **NeighbourhoodWatchSystem**: CCTV_PROP triggers after break-in; FOBT smash adds `ANGER_SMASH_EXTERIOR`.
+- **StreetSkillSystem**: `GAMBLING` XP +1 per FOBT spin, +2 per horse bet placed.
+- **TimeSystem**: opening hours check; Racing Post daily replenish at 09:00.
+
+### Unit Tests
+
+- `placeBet(race0, horse2, 5, inventory)` with 10 COIN: returns `ACCEPTED`; inventory COIN = 5; inventory contains `BET_SLIP`.
+- `placeBet(race0, horse2, 5, inventory)` with 3 COIN: returns `INSUFFICIENT_FUNDS`; no state change.
+- `resolveBets()` on a won bet (horse2 won, odds 3/1, stake 5): inventory COIN += 15; BET_SLIP removed.
+- `playFOBT(RED, 10, inventory, new Random(seed_wins))`: inventory COIN += 10 (stake returned + 10 profit).
+- `playFOBT(RED, 5, inventory, new Random(seed_loses))` × 10: `getFOBTSessionLoss() >= 10`; `FOBT_RAGE` achievement unlocked.
+- `acceptRaceFix(race)`: sets `greyhoundRacingSystem.isRaceFixed() == true`. Fixed race winner is guaranteed.
+- `readRacingPost(inventory)`: `formGuideActive == true`. Next favourite bet payout multiplied by 1.05.
+- After-hours break-in: inventory contains `BETTING_SLIP_BLANK`; `CriminalRecord.hasCrime(BURGLARY)` true; Notoriety +8.
+- `BETTING_SLIP_BLUES` achievement: place 3 bets, all lose → achievement unlocked.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Placing and winning a horse bet**: Set `TimeSystem` to Monday 10:30 (before first race at 11:00). Player has 20 COIN. Player presses E on counter. `BettingUI` opens. Player selects Race 1, Horse 3 (odds 5/1). Stake = 4. Call `placeBet()`. Verify player COIN = 16. Verify `BET_SLIP` in inventory. Advance `TimeSystem` to 11:00. Force Horse 3 to win (seed random). Call `resolveBets()`. Verify player COIN = 16 + (4 × 5) = 36. Verify `BET_SLIP` removed. Verify `AchievementType.FIRST_FLUTTER` unlocked. Verify `RACING_CERT` unlocked (win ≥ 10 COIN). Verify `BIG_WIN_AT_BOOKIES` rumour seeded into `RumourNetwork`.
+
+2. **FOBT rage — losing 10+ COIN unlocks achievement**: Player has 30 COIN. Seed `Random` to force 10 consecutive losses. Play 10 FOBT spins at 1 COIN stake each (`playFOBT(RED, 1, ...)` × 10). Verify `getFOBTSessionLoss() == 10`. Verify `AchievementType.FOBT_RAGE` unlocked. Verify `StreetSkillSystem.getGamblingXP()` increased by 10.
+
+3. **Race fix win awards Sure Thing achievement**: Spawn `MARCHETTI_LIEUTENANT` NPC outside bookies. Player presses E on NPC. Select "Accept". Call `acceptRaceFix(race1)`. Verify `greyhoundRacingSystem.isRaceFixed()` is true. Player bets 20 COIN on fixed race. Advance `TimeSystem` to race time. Call `resolveBets()`. Verify payout received. Verify `AchievementType.SURE_THING` unlocked. Verify `FactionSystem.getRespect(MARCHETTI_CREW)` increased by 10. Verify `RumourNetwork` contains `DODGY_DEAL` rumour.
+
+4. **After-hours break-in yields float tray loot**: Set `TimeSystem` to Monday 23:00 (outside 09:00–22:00 hours). Player has `SCREWDRIVER`. Player presses E on bookies door. Simulate 10-second hold (600 frames at 1/60 delta). Verify door opens. Verify player COIN increased by 5–15 (float tray drop). Verify `BETTING_SLIP_BLANK` in inventory. Verify `CriminalRecord.hasCrime(CrimeType.BURGLARY)` is true. Verify Notoriety increased by 8. Verify `AchievementType.FOLDED` unlocked.
+
+5. **Holding three losing slips unlocks Betting Slip Blues**: Player has 30 COIN. Place 3 bets on 3 different races (all before their start times). Verify inventory contains 3 `BET_SLIP` items. Advance `TimeSystem` to after all races. Force all 3 to lose (seed random). Call `resolveBets()`. Verify all 3 `BET_SLIP` items consumed. Verify player COIN reduced by total stakes. Verify `AchievementType.BETTING_SLIP_BLUES` unlocked.
+
+// ── Issue #1220: Northfield Ladbrokes — BettingShopSystem ────────────────────
+// New: BettingShopSystem.java in ragamuffin.core
+// New: BettingShopSystemTest.java in src/test/java/ragamuffin/core/
+// Props already defined: FOBT_TERMINAL, RACING_POST_PROP in PropType.java
+// Materials already defined: BETTING_SLIP_BLANK, RACING_POST in Material.java
+// Achievements already defined: FIRST_FLUTTER, RACING_CERT, FOBT_RAGE, SURE_THING,
+//   FOLDED, BETTING_SLIP_BLUES in AchievementType.java
+// Greyhound fix hook already defined: GreyhoundRacingSystem.setRaceFixed()
+// New NPCType: BOOKIES_CLERK — add to NPCType.java
+// New CrimeType: (BURGLARY and FRAUD already likely present; verify before adding)
+// New AchievementType: GRASS — add to AchievementType.java
+// Integrates: HorseRacingSystem, GreyhoundRacingSystem, StreetEconomySystem,
+//   FactionSystem, WantedSystem, NotorietySystem, CriminalRecord, RumourNetwork,
+//   NeighbourhoodWatchSystem, StreetSkillSystem, TimeSystem, BettingUI, NPCManager
