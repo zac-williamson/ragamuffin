@@ -324,7 +324,7 @@ public class DWPSystem {
 
                 if (!nosyNeighbourUnlocked) {
                     nosyNeighbourUnlocked = true;
-                    achievementCallback.onAchievementUnlocked(AchievementType.NOSY_NEIGHBOUR);
+                    achievementCallback.award(AchievementType.DWP_TIPOFF);
                 }
             }
         }
