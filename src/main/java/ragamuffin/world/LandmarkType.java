@@ -647,7 +647,19 @@ public enum LandmarkType {
      * Staffed by Margaret (ADVICE_VOLUNTEER) and Brian (ADVICE_VOLUNTEER, Mon/Wed/Fri).
      * Managed by CitizensAdviceSystem.
      */
-    CITIZENS_ADVICE;
+    CITIZENS_ADVICE,
+
+    // ── Issue #1216: Northfield Driving Instructor ────────────────────────────
+
+    /**
+     * Issue #1216: DRIVING_SCHOOL — Dave's BSM franchise office, a 6×4-block
+     * unit above the newsagent on the high street. Interior: DRIVING_SCHOOL_DESK_PROP
+     * (booking counter), THEORY_TEST_POSTER_PROP (flavour), WHITEBOARD_PROP and
+     * NOTICE_BOARD_PROP outside listing lesson prices.
+     * Open Mon–Fri 08:00–18:00.
+     * Staffed by Dave (DRIVING_INSTRUCTOR). Managed by DrivingInstructorSystem.
+     */
+    DRIVING_SCHOOL;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -745,6 +757,7 @@ public enum LandmarkType {
             case VEHICLE_IMPOUND:       return "Vehicle Impound";
             case DVSA_TEST_CENTRE:      return "Northfield DVSA Test Centre";
             case CITIZENS_ADVICE:       return "Northfield Citizens Advice";
+            case DRIVING_SCHOOL:        return "BSM Driving School";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
