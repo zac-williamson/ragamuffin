@@ -37189,3 +37189,157 @@ On HEAVY_RAIN or SNOW day: `TrafficWardenSystem.isCliveOnDuty()` returns false. 
 //   AchievementSystem, WeatherSystem, NoiseSystem, TaxiSystem (tow logic),
 //   CarDrivingSystem, BlockBreaker (clamp crowbar), CitizensAdviceSystem,
 //   TimeSystem, WitnessSystem, FactionSystem
+
+---
+
+## Add Northfield Driving Instructor — Dave's BSM Franchise, the Dual-Control Kerb Crawl & the Licence Shortcut Hustle
+
+**Issue**: Add Northfield Driving Instructor — Dave's BSM Corsa, Lesson Booking, Kerb-Mounts & the Forged Pass Certificate Hustle
+
+### Overview
+
+`DrivingInstructorSystem.java` implements **Dave** — Northfield's sole BSM franchise instructor, a prematurely grey man in a polo shirt who has spent fifteen years teaching people to stall on roundabouts. His white dual-control Vauxhall Corsa (`INSTRUCTOR_CAR_PROP`) circulates on a fixed lesson route through the town 08:00–18:00 Monday–Friday. Players can book lessons at the `DRIVING_SCHOOL_DESK_PROP` to legitimately work toward a `FULL_DRIVING_LICENCE` (without the DVSA test detour), sabotage live lessons for chaos and notoriety, steal the dual-control car, or commission a forged pass certificate.
+
+This system is the natural upstream complement to Issue #1205 (DVSA Test Centre). A `FULL_DRIVING_LICENCE` obtained via lessons costs more (5 lessons × 15 COIN = 75 COIN) but avoids the risk of failing the DVSA practical test. The forged pass certificate (20 COIN, Notoriety Tier ≥ 2) is cheaper but carries criminal risk.
+
+**Location**: `LandmarkType.DRIVING_SCHOOL` — a 6×4-block unit above the newsagent on the high street. Interior: a `DRIVING_SCHOOL_DESK_PROP` (booking counter), a `THEORY_TEST_POSTER_PROP` (flavour; readable), a `WHITEBOARD_PROP` showing "Next test: Friday", 2 `PLASTIC_CHAIR_PROP` in a waiting area. A `NOTICE_BOARD_PROP` outside lists lesson prices (15 COIN/lesson, block-booked 5-lesson course 60 COIN).
+
+**Opening hours**: Mon–Fri 08:00–18:00. No weekends — Dave coaches his son's under-11 football team.
+
+### NPCs
+
+- **Dave** (`DRIVING_INSTRUCTOR` NPCType) — the instructor. Greets everyone with "Right then, mirrors, signal, manoeuvre." Present at the `DRIVING_SCHOOL_DESK_PROP` when not on a lesson. During lessons, occupies the passenger seat of `INSTRUCTOR_CAR_PROP` (the NPC is associated with the car entity). Passive unless player steals his car or assaults him; enters `NPCState.CHASING` for 30 seconds and calls `RumourType.POLICE_TIP` when car is stolen. Speech (6 idle lines): "Mirrors, signal, manoeuvre — that's the mantra."; "I've had a pupil stall on every roundabout in this town."; "The theory test is the easy bit."; "Got a new pupil starting Monday. God help him."; "Dual controls are there for a reason, mate."; "You're not ready for the A38 yet."
+- **Learner NPCs** (`LEARNER_DRIVER` NPCType, 1 per active lesson) — spawn at `DRIVING_SCHOOL_DESK_PROP` at lesson start, board the car, depart on the route. Passive during lesson; stumble out shaking when the lesson ends. 3 random names drawn from a pool (Barry, Denise, Tyler, Kaz, Nadine, Clinton, Sharon, Liam). Speech: "I've only stalled it six times today."; "I think I clipped the kerb."; "Is it always this scary?"
+- **Examiner Cross-Reference**: When player holds a `FORGED_PASS_CERTIFICATE` and presents it at the DVSA Test Centre (`DrivingTestSystem`), Derek the examiner has a 35% chance of detecting the forgery (Criminal Record + LICENCE_FRAUD crime). If undetected, player receives `FULL_DRIVING_LICENCE` without sitting the practical test.
+
+### Mechanics
+
+#### Lesson Booking (Press E on `DRIVING_SCHOOL_DESK_PROP`)
+
+| Option | Cost | Duration | Result |
+|---|---|---|---|
+| Single lesson | 15 COIN | Instant (advances lesson count) | +1 `lessonsCompleted` |
+| Block-book 5-lesson course | 60 COIN | Instant (all 5 credited) | +5 `lessonsCompleted` |
+
+- Dave refuses to teach players with Notoriety Tier ≥ 4: "Sorry, mate — insurance won't cover it."
+- After `lessonsCompleted` reaches 5: `FULL_DRIVING_LICENCE` added to player inventory. Dave's speech: "Right then — you're done. Don't let me down."
+- Achievement `ROAD_LEGAL` unlocked on receiving `FULL_DRIVING_LICENCE` via lessons.
+- Each lesson completed increments `StreetSkillSystem` DRIVING track by 1 XP (matches DVSA test XP rate).
+
+#### Forged Pass Certificate Hustle (Notoriety Tier ≥ 2, Dave not present)
+
+- Player presses E on `DRIVING_SCHOOL_DESK_PROP` when Dave is away on a lesson (08:30–17:30, 30-minute lesson windows).
+- `DrivingInstructorSystem.canAccessForgedCertificate()` returns true if: Dave is on a lesson (`isOnLesson = true`) AND Notoriety Tier ≥ 2 AND player has not already obtained a `FORGED_PASS_CERTIFICATE` today.
+- Player accesses the filing cabinet behind the desk (internal `FILING_CABINET_PROP` interaction): costs 20 COIN (slipped to a `TEMP_AGENCY_WORKER` contact as a cash-in-hand introduction fee, consuming 20 COIN from inventory).
+- Produces `FORGED_PASS_CERTIFICATE` material item.
+- `CriminalRecord.CrimeType.DOCUMENT_FRAUD` recorded.
+- Notoriety +8.
+- If the `LEARNER_DRIVER` NPC returns mid-interaction (lesson ends): 60% detection → Notoriety +15 → `WantedSystem` +1 star.
+- Achievement `SHORTCUT_TO_NOWHERE` unlocked on first forgery.
+
+#### Live Lesson Sabotage
+
+While the `INSTRUCTOR_CAR_PROP` is on its lesson route (08:30–17:30), the player can interact with it:
+
+- **Beep and flash headlights** (player in any car within 6 blocks): Learner driver panics — `LEARNER_DRIVER` speech "Oh god" — lesson fails; Dave exits car, confronts player. Notoriety +5. `WantedSystem` alert from any nearby `PCSO` within 20 blocks. `RumourType.ANTISOCIAL_BEHAVIOUR` seeded. Achievement `BACK_SEAT_DRIVER` on first successful sabotage.
+- **Cut in front on a junction** (player car in front of `INSTRUCTOR_CAR_PROP` at a junction marker): Lesson delayed 5 in-game minutes (Dave pulls over). Notoriety +3. No crime recorded if no witnesses; `DANGEROUS_DRIVING` if `PCSO` or `POLICE` within 15 blocks.
+- **Park blocking the route** (player car stationary on the lesson route for > 2 in-game minutes): Dave honks (plays `SoundEffect.CAR_HORN`), waits 1 minute, routes around. Notoriety +2.
+
+#### Instructor Car Theft (21:00–06:00 only)
+
+- Dave parks the `INSTRUCTOR_CAR_PROP` outside the `DRIVING_SCHOOL` overnight.
+- Player can enter and attempt to start: dual-control override check. Player needs `SCREWDRIVER` to bypass ignition (10-second interact), or `CAR_KEY_COPY` (instant).
+- **Dual-control penalty**: If no `FULL_DRIVING_LICENCE`, max speed is capped at 60% (dual brake can be felt — flavour only). `CarDrivingSystem.isDualControl()` flag.
+- Stealing triggers `CriminalRecord.CrimeType.VEHICLE_THEFT`.
+- Notoriety +10 on successful theft.
+- Dave notices at next morning's lesson window (08:00): seeds `RumourType.CRIME_SPOTTED` across 5 NPCs. Spawns 1 `POLICE` NPC at `DRIVING_SCHOOL` landmark.
+- Selling to `FENCE` NPC yields 12 COIN (recognisable vehicle — reduced value). Fence line: "It's got L-plates on it, you muppet."
+- Achievement `TAKING_THE_WHEEL` on first theft.
+
+#### Weather Integration
+
+- **FOG** weather: Dave cancels lessons (too dangerous). `isOnLesson = false`; Dave stays at desk all day. Speech: "Can't take a learner out in this — visibility's rubbish." Forgery window therefore unavailable (Dave present all day).
+- **FROST** / `COLD_SNAP`: Lesson runs but Dave mentions black ice. Learner kerb-mount chance doubles (flavour; `KERB_MOUNT` counter increments for achievement purposes).
+- **HEATWAVE**: Dave complains about the Corsa's air-con. Adds 1 speech line: "The air-con's gone in this thing. Sweltering."
+
+#### Integration Points
+
+- **DrivingTestSystem** (Issue #1205): `FULL_DRIVING_LICENCE` from lessons is identical to the one granted on passing the practical. `FORGED_PASS_CERTIFICATE` accepted with 35% detection risk.
+- **CarDrivingSystem**: Stolen `INSTRUCTOR_CAR_PROP` has `isDualControl = true`, caps speed at 60%.
+- **WantedSystem**: Sabotage near `POLICE`/`PCSO` adds DANGEROUS_DRIVING; car theft adds VEHICLE_THEFT.
+- **CriminalRecord**: `DOCUMENT_FRAUD` (forgery), `VEHICLE_THEFT` (stolen car), `DANGEROUS_DRIVING` (junction cut-in with witness).
+- **StreetSkillSystem**: DRIVING XP on each lesson.
+- **FenceSystem**: `INSTRUCTOR_CAR_PROP` sellable for 12 COIN. `FORGED_PASS_CERTIFICATE` sellable for 5 COIN.
+- **RumourNetwork**: `CRIME_SPOTTED` on car theft; `ANTISOCIAL_BEHAVIOUR` on lesson sabotage.
+- **DWPSystem**: Holding a `FULL_DRIVING_LICENCE` unlocks "Delivery Driver" job on `UNIVERSAL_JOBMATCH_PROFILE` mission — increases UC by 2 COIN/day while active.
+- **NotorietySystem**: Tier ≥ 4 blocks lesson booking; sabotage adds escalating notoriety.
+
+### New PropType entries (add to `PropType.java`)
+
+- `DRIVING_SCHOOL_DESK_PROP` — booking counter; press E to book lessons or (if Dave absent) access filing cabinet.
+- `THEORY_TEST_POSTER_PROP` — wall poster; press E to read flavour text ("Speed limits. You might want to know these.").
+- `INSTRUCTOR_CAR_PROP` — Dave's dual-control Vauxhall Corsa; L-plates; moveable car entity with `isDualControl = true`.
+- `FILING_CABINET_PROP` — behind desk; accessible when Dave is absent (on lesson); yields `FORGED_PASS_CERTIFICATE`.
+
+### New Material entries (add to `Material.java`)
+
+- `FORGED_PASS_CERTIFICATE` — counterfeit DVSA pass slip; accepted at DrivingTestSystem (35% detection chance); sellable to Fence (5 COIN).
+- `CAR_KEY_COPY` — spare key cut from Dave's original (available via Fence for 8 COIN on day 3+); bypasses screwdriver hotwire step.
+
+### New NPCType entries (add to `NPCType.java`)
+
+- `DRIVING_INSTRUCTOR` — Dave; passive; confrontational if car stolen; 60hp, 5dmg, 3.0f speed, non-aggressive.
+- `LEARNER_DRIVER` — lesson passenger; passive; flees on lesson disruption; 40hp, 2dmg, 2.5f speed, non-aggressive.
+
+### New LandmarkType entry (add to `LandmarkType.java`)
+
+- `DRIVING_SCHOOL` — `getDisplayName()` returns `"BSM Driving School"`.
+
+### New AchievementType entries (add to `AchievementType.java`)
+
+- `ROAD_LEGAL` — Passed 5 driving lessons and received a FULL_DRIVING_LICENCE from Dave. "Mirrors, signal, manoeuvre."
+- `SHORTCUT_TO_NOWHERE` — Forged a pass certificate. "Why learn when you can forge?"
+- `BACK_SEAT_DRIVER` — Sabotaged a live driving lesson. "You absolute menace."
+- `TAKING_THE_WHEEL` — Stole Dave's dual-control Corsa. "L-plates and all."
+
+### New CrimeType entries (add to `CriminalRecord.java`)
+
+- `DOCUMENT_FRAUD` — forging the pass certificate.
+- `DANGEROUS_DRIVING` — cutting in front of the lesson car near a witness.
+
+### Unit Tests
+
+- Lesson completion: Call `bookLesson()` 5 times. Verify `lessonsCompleted == 5`. Verify `player.getInventory().hasItem(Material.FULL_DRIVING_LICENCE)` is true. Verify `AchievementSystem.isUnlocked(AchievementType.ROAD_LEGAL)` is true.
+- Block-book: Call `bookBlockCourse()`. Verify `lessonsCompleted == 5` and player COIN reduced by 60.
+- Dave refusal: Set Notoriety Tier to 4. Call `bookLesson()`. Verify it returns `REFUSED_NOTORIETY` and lesson count is unchanged.
+- Forgery access: Set `isOnLesson = true`, Notoriety Tier 2, player has 20 COIN. Call `canAccessForgedCertificate()` → true. Call `accessFilingCabinet()`. Verify player COIN reduced by 20. Verify `Material.FORGED_PASS_CERTIFICATE` in inventory.
+- Forgery blocked (Dave present): Set `isOnLesson = false`. Call `canAccessForgedCertificate()` → false.
+- Foggy day: Set WeatherSystem to FOG. Call `update()`. Verify `isOnLesson == false` all day. Verify `canAccessForgedCertificate()` returns false.
+- Lesson sabotage: set `isOnLesson = true`. Call `sabotageByBeeping(player, instructorCar)`. Verify Notoriety increased by 5. Verify `AchievementSystem.isUnlocked(AchievementType.BACK_SEAT_DRIVER)`.
+- Car theft detection: Advance `TimeSystem` to 08:00 next morning. Verify `RumourNetwork` contains a `CRIME_SPOTTED` rumour. Verify 1 `POLICE` NPC spawned at `DRIVING_SCHOOL`.
+- DVSA forgery detection: Seed `DrivingTestSystem(new Random(seed))` to force detection path. Call `presentForgedCertificate()`. Verify `CriminalRecord.hasCrime(CrimeType.DOCUMENT_FRAUD)`. Verify `WantedSystem.getStars()` increased by 1. Verify `FORGED_PASS_CERTIFICATE` removed from inventory.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Five lessons yield a driving licence**: Set `TimeSystem` to Monday 09:00. Dave is present (`isOnLesson = false`). Player has 75 COIN. Player presses E on `DRIVING_SCHOOL_DESK_PROP` 5 times, selecting "Single lesson (15 COIN)" each time. Verify player COIN is now 0. Verify `DrivingInstructorSystem.getLessonsCompleted()` == 5. Verify `player.getInventory().hasItem(Material.FULL_DRIVING_LICENCE)` is true. Verify `AchievementSystem.isUnlocked(AchievementType.ROAD_LEGAL)` is true. Verify `StreetSkillSystem.getDrivingXP()` increased by 5.
+
+2. **Forged certificate shortcut — undetected at DVSA**: Set `TimeSystem` to Wednesday 10:30. Force `isOnLesson = true`. Player has 20 COIN and Notoriety 30 (Tier 2). Player presses E on `DRIVING_SCHOOL_DESK_PROP`. Select "Access filing cabinet". Verify player COIN reduced by 20. Verify `player.getInventory().hasItem(Material.FORGED_PASS_CERTIFICATE)` is true. Verify `CriminalRecord.hasCrime(CrimeType.DOCUMENT_FRAUD)` is true. Verify Notoriety increased by 8. Now: seed `DrivingTestSystem(new Random(99))` to force *no detection*. Player presses E at DVSA `EXAMINER_DESK_PROP` and selects "Present pass certificate". Verify `player.getInventory().hasItem(Material.FULL_DRIVING_LICENCE)` is true. Verify `AchievementSystem.isUnlocked(AchievementType.SHORTCUT_TO_NOWHERE)` is true.
+
+3. **Lesson sabotage — beeping near PCSO adds DANGEROUS_DRIVING**: Set `TimeSystem` to Thursday 14:00. Lesson is active (`isOnLesson = true`). Place a `PCSO` NPC 12 blocks from `INSTRUCTOR_CAR_PROP`. Player is in a separate car within 6 blocks of `INSTRUCTOR_CAR_PROP`. Player beeps. Call `DrivingInstructorSystem.update()`. Verify Notoriety increased by 5. Verify `CriminalRecord.hasCrime(CrimeType.DANGEROUS_DRIVING)` is true. Verify `AchievementSystem.isUnlocked(AchievementType.BACK_SEAT_DRIVER)` is true. Verify a `ANTISOCIAL_BEHAVIOUR` rumour is seeded in `RumourNetwork`.
+
+4. **Car theft overnight — Dave reports it next morning**: Set `TimeSystem` to Friday 23:00. `INSTRUCTOR_CAR_PROP` parked outside `DRIVING_SCHOOL`. Player has `SCREWDRIVER`. Player presses E on car (10-second hotwire). Simulate 10 seconds. Verify player enters car (`isDualControl = true`). Drive car away (simulate movement 30 blocks). Verify `CriminalRecord.hasCrime(CrimeType.VEHICLE_THEFT)` is true. Verify Notoriety increased by 10. Advance `TimeSystem` to Saturday 08:00. Call `DrivingInstructorSystem.update()`. Verify `RumourNetwork` contains `CRIME_SPOTTED` rumour seeded within 5 NPCs. Verify 1 `POLICE` NPC is spawned at `DRIVING_SCHOOL`. Verify `AchievementSystem.isUnlocked(AchievementType.TAKING_THE_WHEEL)` is true.
+
+5. **Fog cancels lessons — forgery window blocked**: Set `TimeSystem` to Tuesday 11:00. Set `WeatherSystem` to FOG. Call `DrivingInstructorSystem.update()`. Verify `DrivingInstructorSystem.isOnLesson()` is false. Verify `DrivingInstructorSystem.canAccessForgedCertificate()` returns false (Dave present all day). Verify Dave's speech log contains "visibility's rubbish". Player presses E on `DRIVING_SCHOOL_DESK_PROP`. Verify lesson booking is available (Dave is present and willing). Player selects "Single lesson (15 COIN)". Verify `lessonsCompleted` incremented by 1.
+
+// ── New: DrivingInstructorSystem.java in ragamuffin.core
+// New LandmarkType: DRIVING_SCHOOL — add to LandmarkType.java; getDisplayName() returns "BSM Driving School"
+// New NPCTypes: DRIVING_INSTRUCTOR, LEARNER_DRIVER — add to NPCType.java
+// New PropTypes: DRIVING_SCHOOL_DESK_PROP, THEORY_TEST_POSTER_PROP, INSTRUCTOR_CAR_PROP,
+//   FILING_CABINET_PROP — add to PropType.java
+// New Material: FORGED_PASS_CERTIFICATE, CAR_KEY_COPY — add to Material.java
+// New AchievementType: ROAD_LEGAL, SHORTCUT_TO_NOWHERE, BACK_SEAT_DRIVER, TAKING_THE_WHEEL
+//   — add to AchievementType.java
+// New CrimeType: DOCUMENT_FRAUD, DANGEROUS_DRIVING — add to CriminalRecord.java
+// Integrates: DrivingTestSystem (Issue #1205), CarDrivingSystem, WantedSystem, CriminalRecord,
+//   NotorietySystem, RumourNetwork, AchievementSystem, WeatherSystem, StreetSkillSystem,
+//   FenceSystem, DWPSystem, TimeSystem, NPCManager
