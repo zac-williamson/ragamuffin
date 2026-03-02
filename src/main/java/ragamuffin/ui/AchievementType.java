@@ -4721,6 +4721,43 @@ public enum AchievementType {
         "Looking Proper Different",
         "The ink worked. Police walked right past. You look like a different person.",
         1
+    ),
+
+    // --- Issue #1273: Northfield Fly-Tipping Ring ---
+
+    /** Complete the first waste-clearance job. */
+    GRIM_REAPER(
+        "Grim Reaper",
+        "You cleared their rubbish for cash. Doesn't matter where it ends up.",
+        1
+    ),
+
+    /** Fly-tip 5 loads without getting caught. */
+    THE_ENVIRONMENT_THOUGH(
+        "The Environment, Though",
+        "Five loads, no council. Someone else's problem now.",
+        5
+    ),
+
+    /** Dispose of 3 loads legitimately at the Recycling Centre. */
+    CIVIC_PRIDE(
+        "Civic Pride",
+        "Three trips to the tip. You're practically a councillor.",
+        3
+    ),
+
+    /** Trigger the 'Fly-Tipping Crisis Hits Northfield' newspaper headline. */
+    HEADLINE_SHAME(
+        "Headline Shame",
+        "Front page of the Ragamuffin. Mum is not pleased.",
+        1
+    ),
+
+    /** Burn a load near a wheelie bin fire and have the fire brigade show up. */
+    BURN_IT_ALL(
+        "Burn It All",
+        "Plan B was a bit much. But it worked.",
+        1
     );
 
     private final String name;
