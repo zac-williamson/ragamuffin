@@ -35271,3 +35271,176 @@ There is a 10% chance per interaction that one of the `PUBLIC` NPCs in the pub i
 // WantedSystem: getSightChance() method + PATROL_ROUTE reduction hook
 // Integrates: RumourNetwork, FactionSystem, WantedSystem, BootSaleSystem, WitnessSystem,
 //   NotorietySystem, CraftingSystem, AchievementSystem, StreetSkillSystem, DisguiseSystem
+
+---
+
+## Phase 12u: Northfield Sporting & Social Club — Members-Only Bar, Darts League, Back-Room Pontoon & the AGM Scam
+
+**Landmark**: Existing `LandmarkType.SPORTING_SOCIAL_CLUB` ("Northfield Sporting & Social Club") — a single-storey 1970s red-brick members' club tucked on a quiet side road between the pub and the community centre. Accessed by pressing E on the FRONT_DOOR_PROP; non-members are turned away by Ron the Steward (`SOCIAL_CLUB_STEWARD` NPC). Managed by a new `SportingSocialClubSystem.java`.
+
+### Joining the Club
+
+Membership costs 5 COIN (one-off) and produces `Material.CLUB_MEMBERSHIP_CARD` in the player's inventory. Ron checks for the card on every entry attempt. Without it, the player cannot enter — but can overhear muffled dialogue and see through the GLASS_WINDOW_PROP. Membership gives:
+- Access to the members' bar (subsidised drinks: 1 COIN/pint vs 2 COIN at the pub)
+- Eligibility to enter the Thursday Darts League
+- Access to the back-room Pontoon game (Fri/Sat 21:00–00:00)
+- Right to attend and vote at the AGM
+
+### Ron the Steward
+
+Ron (`SOCIAL_CLUB_STEWARD`) mans the door 17:00–23:00 on weekdays, 12:00–23:00 on weekends. He also pours drinks, gossips, and tracks the darts league scoreboard. Ron has:
+- `respectLevel` toward the player (0–100): starts at 50
+- Below 30: Ron refuses entry even to members ("I'm not letting you in dressed like that")
+- Above 80: Ron tips the player off about upcoming police visits ("Word is the old bill are due a sniff round Saturday")
+- Ron can be bribed with 3 COIN to overlook non-member entry once; repeated bribes raise Notoriety +1 each
+
+### Members' Bar
+
+A `BAR_COUNTER_PROP` behind which Ron serves. Three `BARSTOOL_PROP` NPCs (regulars: ARTHUR, DEREK, BRENDA — distinct names, `PUBLIC` type) who gossip freely. Each regular has a seeded `RumourType` they're prone to: ARTHUR knows GANG_ACTIVITY, Derek knows LOCAL_SCANDAL, Brenda knows POLICE_PRESENCE. Chatting (E key) triggers rumour transfer with no drunkTimer requirement.
+
+Drinks menu:
+| Drink | Cost | Effect |
+|---|---|---|
+| `PINT_OF_BITTER` | 1 COIN | Warmth +5, hunger +3 |
+| `HALF_OF_LAGER` | 1 COIN | Warmth +3, hunger +2 |
+| `PORT_AND_LEMON` | 1 COIN | Warmth +4, morale boost: Ron respect +2 |
+| `SOFT_DRINK` | 1 COIN | Hunger +5 |
+
+### Thursday Darts League — The 501 Night
+
+Every Thursday 19:30–22:00. Entry fee: 2 COIN. The league has 8 NPC competitors (`DARTS_PLAYER` type — these can be `PUBLIC` NPCs re-labelled for the session). The player competes in a round-robin bracket (4 rounds of best-of-3 legs, each leg 501 count-down, double-out required).
+
+**Darts mini-game mechanic** (new `DartsMinigame` inner class, reusable from `PubLockInSystem` where it already exists — wire the same logic):
+- Player aims with mouse; a circular accuracy ring shrinks and expands over ~2 seconds
+- Left-click fires when the ring is at desired size; smaller ring = tighter accuracy
+- Score deducted from 501; must finish on a double (even number landing on double ring)
+- Three darts per turn; miss double-out = bust, score resets to start of turn
+
+**NPC opponents** have accuracy scaled by `StreetSkillSystem.getDartsAccuracyBonus()`:
+- Novice: NPC misses 40% of shots
+- Apprentice: NPC misses 30%
+- Skilled: NPC misses 20%
+- Expert: NPC misses 10%
+- Legend: NPC never misses
+
+**Prizes**:
+- League winner (best record across 4 rounds): 15 COIN + `DARTS_TROPHY_PROP` placed in squat
+- Runner-up: 6 COIN
+- Losing in the first round: consolation 1 COIN
+
+**Side betting**: Before each match the player can stake 1–10 COIN with a bystander NPC. If `StreetSkillSystem.DARTS` ≥ Skilled: NPC refuses to bet ("You're too good, mate").
+
+### Back-Room Pontoon (Fri/Sat 21:00–00:00)
+
+A `CARD_TABLE_PROP` in the back room behind a `BEAD_CURTAIN_PROP`. Accessible only to members. Run by `CARD_DEALER` NPC (Mick, who shuffles with a cigarette in his mouth).
+
+**Pontoon rules** (British Blackjack — target 21, banker = Mick):
+- Player stakes 1–20 COIN per hand
+- Two cards dealt; player chooses Twist (hit) or Stick (stand)
+- 5-card trick (5 cards under 21) beats everything including pontoon (Ace + picture card)
+- Royal Pontoon (Ace + Jack of same suit) pays 3:1; regular pontoon pays 2:1; 5-card trick pays 2:1
+- Bust (>21): lose stake immediately
+- Mick cheats if player wins 3 hands in a row: `cheatMode = true` — he deals himself a hidden ace with probability 0.6 for the next 2 hands; player can catch him (E on Mick mid-hand) if `StreetSkillSystem.STREETWISE` ≥ Skilled
+
+**Catching Mick cheating**:
+- Success: Mick pays back 2× the last 3 hands' losses; `CARD_CHEAT` rumour seeded into `RumourNetwork`; Mick's `respectLevel` drops to 0 for 7 days; AchievementType.CAUGHT_THE_CHEAT unlocked
+- Failure (wrong accusation): thrown out of back room for the night; Ron respect −10
+
+**Pontoon events** (15% chance per hand):
+- `POLICE_KNOCK`: Ron bangs on back-room door; all players freeze for 10 seconds; Mick hides cards under false table bottom
+- `ARGUMENT_BREAKS_OUT`: two NPC players come to blows; player can intervene (BRAWL_STARTED CrimeType if police present) or ignore
+
+### The AGM Scam
+
+The Annual General Meeting occurs on the first Sunday of each in-game month, 14:00–17:00. Twelve `SOCIAL_CLUB_CHAIRMAN` and `SOCIAL_CLUB_BARMAN` type NPCs attend. The agenda:
+1. Minutes of previous meeting (rubber-stamped)
+2. Treasurer's report — `AGM_ACCOUNTS_PROP` placed on the table
+3. Committee election — player can stand for `TREASURER` role
+
+**Treasurer role**:
+- Player standing requires Ron's respect ≥ 60 and membership of at least 2 in-game weeks
+- If elected (majority vote of attending NPCs — influenced by respect level and 1 COIN per NPC bribe up to 5 COIN total), player becomes `CLUB_TREASURER`
+- As Treasurer, player can cook the books once per month: `SportingSocialClubSystem.embezzleFunds(amount)` — steal 1–15 COIN from the club account
+- Embezzlement discovered if Notoriety ≥ 40 OR if `NOSY_NEIGHBOUR` NPC is in attendance: probability = `Notoriety / 100`
+- Discovered: CriminalRecord entry `FRAUD`, WantedSystem +2 stars, ejected from membership; AchievementType.COOKING_THE_BOOKS unlocked
+
+### Protection Money
+
+The Marchetti Crew extort 10 COIN/in-game week from Ron. The player can:
+1. **Intercept the collector** (`MARCHETTI_THUG` NPC who arrives Wednesday 20:00): fight him off (5 hits) → Marchetti Respect −15, Ron Respect +20, AchievementType.CLUB_PROTECTOR unlocked
+2. **Pay on Ron's behalf**: costs 10 COIN → Ron Respect +10 for the week
+3. **Tip off Marchetti** that Ron has extra cash: Ron loses 20 COIN, Marchetti Respect +5, Ron Respect −30 (permanent), Ron remembers and ejects player
+
+### NPCs & Dialogue
+
+- **Ron** (`SOCIAL_CLUB_STEWARD`): flat cap, cardigan, perpetually suspicious. *"Members only, son."* / *"Put that pint down, you've had enough."* / *"I've been running this bar since 1987 and I won't stand for it."*
+- **Arthur** (`PUBLIC`): former trades union man, 70s, flat cap. Knows gang rumours.
+- **Derek** (`PUBLIC`): retired postman, 60s, always moaning. Knows scandal rumours.
+- **Brenda** (`PUBLIC`): runs the tombola, eagle-eyed. Knows police rumours.
+- **Mick** (`CARD_DEALER`): wiry, chain-smoking, unreadable. *"Twist or stick?"*
+
+### Items & Props
+
+| Item/Prop | Acquisition | Use |
+|---|---|---|
+| `CLUB_MEMBERSHIP_CARD` | Buy from Ron (5 COIN) | Entry token |
+| `DARTS_SET` | Existing material | Required to enter darts league (if not already carried, Ron lends one) |
+| `DARTS_TROPHY_PROP` | Win darts league | Placed in squat as decoration |
+| `AGM_ACCOUNTS_PROP` | On the AGM table | Examine to see club finances; cook if Treasurer |
+| `CARD_TABLE_PROP` | Back room prop | Pontoon mini-game |
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `CLUB_MEMBER` | Join the Sporting & Social Club |
+| `DARTS_HUSTLER_CLUB` | Win Thursday Darts League with a side bet on every match |
+| `BACK_ROOM_BANKER` | Win 50 COIN total across Pontoon sessions |
+| `CAUGHT_THE_CHEAT` | Catch Mick cheating at Pontoon |
+| `COOKING_THE_BOOKS` | Embezzle funds as Club Treasurer |
+| `CLUB_PROTECTOR` | Intercept the Marchetti protection collector |
+
+### Integration with Other Systems
+
+- **StreetSkillSystem**: `DARTS` skill level gates NPC opponent difficulty and side-bet availability; `STREETWISE` skill enables catching Mick cheating; `INFLUENCE` skill adds 1 vote per tier in AGM election.
+- **FactionSystem**: intercepting Marchetti collector reduces Marchetti Respect; paying adds neutral; tipping Marchetti adds Respect.
+- **RumourNetwork**: regulars share rumours freely; `CARD_CHEAT` rumour seeded on catching Mick; `POLICE_PRESENCE` rumour from Brenda.
+- **WantedSystem**: embezzlement adds 2 stars; AGM fraud + CRIMINAL_REFERRAL adds more.
+- **CriminalRecord**: `FRAUD` CrimeType on embezzlement discovery; `BRAWL` CrimeType on pontoon argument intervention.
+- **NotorietySystem**: repeated bribing Ron +1 Notoriety each; embezzlement discovered probability scales with Notoriety.
+- **WarmthSystem**: members' bar interior counts as warm shelter.
+- **NoiseSystem**: Wednesday protection confrontation (brawl) = level 4 noise event.
+- **TimeSystem**: AGM first Sunday of month; Pontoon Fri/Sat 21:00–00:00; Darts Thursday 19:30–22:00; Ron on door 17:00–23:00 weekdays / 12:00–23:00 weekends.
+- **AchievementSystem**: six new achievements above.
+- **PubLockInSystem**: `DartsMinigame` inner class reused (or extracted to shared utility) to avoid duplicating 501 logic.
+
+**Unit tests**: membership card check on entry; Ron respect gating (< 30 = refused); bribe Notoriety increment; darts leg scoring (501 count-down, bust detection, double-out requirement); 5-card trick beats pontoon; Mick cheat mode activates after 3 consecutive wins (seeded RNG); embezzlement discovery probability at Notoriety = 40 vs 0; AGM vote count with bribe modifier; protection intercepted = Marchetti respect −15.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Join club and enter**: Give player 5 COIN. Press E on Ron. Verify `CLUB_MEMBERSHIP_CARD` added to inventory. Verify `SportingSocialClubSystem.isMember(player)` == true. Simulate player pressing E on front door again. Verify player enters (interior blocks accessible). Verify Ron's respect == 50 (unchanged at join).
+
+2. **Darts league — win and collect prize**: It is Thursday 19:30. Player holds `DARTS_SET`, is a member, pays 2 COIN entry. Seed `DartsMinigame` with a `Random(1)` that produces perfect throws (always double-out in one visit). Run 4 rounds of 3 legs each (player wins all). Verify `SportingSocialClubSystem.getDartsLeagueWinner()` == player. Verify player receives 15 COIN. Verify `DARTS_TROPHY_PROP` placed at `SquatSystem.getHomeLocation()`.
+
+3. **Pontoon — Mick cheats and player catches him**: Deal 3 winning hands to player (seed RNG). Verify `SportingSocialClubSystem.isMickCheating()` == true. Player presses E on Mick. Verify `StreetSkillSystem.getSkillLevel(STREETWISE)` ≥ Skilled succeeds. Verify player receives 2× last 3 hands' losses. Verify `RumourNetwork` contains `CARD_CHEAT` rumour. Verify `AchievementSystem.isUnlocked(CAUGHT_THE_CHEAT)` == true.
+
+4. **AGM election and embezzlement**: Advance to first Sunday of month at 14:00. Player has been a member ≥ 2 in-game weeks and Ron respect ≥ 60. Player stands for Treasurer. Bribe 5 NPCs (1 COIN each). Verify player wins election (`SportingSocialClubSystem.isClubTreasurer(player)` == true). Call `SportingSocialClubSystem.embezzleFunds(player, 10)`. Set Notoriety to 0. Verify player gains 10 COIN. Verify no `CriminalRecord` entry (Notoriety 0 = no discovery). Set Notoriety to 100. Call `embezzleFunds` again. Verify `CriminalRecord` contains `FRAUD`. Verify `WantedSystem.getStarCount()` ≥ 2.
+
+5. **Protection money — intercept Marchetti**: Advance to Wednesday 20:00. Verify `MARCHETTI_THUG` NPC spawns within 20 blocks of club entrance. Simulate player hitting the thug 5 times. Verify thug HP ≤ 0 (defeated). Verify `FactionSystem.getPlayerRespect(MARCHETTI_CREW)` decreased by 15. Verify `SportingSocialClubSystem.getRonRespect()` increased by 20. Verify `AchievementSystem.isUnlocked(CLUB_PROTECTOR)` == true.
+
+6. **Ron refuses entry below respect threshold**: Set Ron's respect to 25. Simulate player (with membership card) pressing E on front door. Verify player is NOT allowed entry. Verify dialogue contains refusal message. Bribe Ron 3 COIN (once). Verify player CAN enter. Verify `NotorietySystem.getNotoriety()` increased by 1.
+
+7. **Rumour harvest from regulars**: Enter the club. Press E on Arthur. Verify `RumourNetwork.getKnownRumours(player)` gains a `GANG_ACTIVITY` rumour. Press E on Brenda. Verify a `POLICE_PRESENCE` rumour is added. Verify both rumours accessible without any drunkTimer check.
+
+// ── New: SportingSocialClubSystem.java in ragamuffin.core
+// LandmarkType.SPORTING_SOCIAL_CLUB already defined — no change needed
+// New: NPCType.CARD_DEALER — add to NPCType.java (stats: 20f HP, 0f attack, 0f cooldown, false hostile)
+// New: AchievementType: CLUB_MEMBER, DARTS_HUSTLER_CLUB, BACK_ROOM_BANKER, CAUGHT_THE_CHEAT,
+//   COOKING_THE_BOOKS, CLUB_PROTECTOR — add to AchievementType.java
+// New: CriminalRecord.CrimeType: FRAUD — add if absent
+// Material.CLUB_MEMBERSHIP_CARD — already present (referenced in existing Material.java)
+// Material.DARTS_SET — already present
+// PropType: CARD_TABLE_PROP, DARTS_TROPHY_PROP, AGM_ACCOUNTS_PROP, BARSTOOL_PROP — add to PropType.java if absent
+// StreetSkillSystem: DARTS, STREETWISE, INFLUENCE — all existing skills; no change needed
+// Integrates: StreetSkillSystem, FactionSystem, RumourNetwork, WantedSystem, CriminalRecord,
+//   NotorietySystem, WarmthSystem, NoiseSystem, TimeSystem, AchievementSystem, PubLockInSystem
