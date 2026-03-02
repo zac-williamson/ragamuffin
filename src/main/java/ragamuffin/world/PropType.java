@@ -1582,7 +1582,40 @@ public enum PropType {
      * Press E to reveal the LOCKBOX_PROP underneath.
      * Non-destructible; decorative until revealed.
      */
-    HIDING_SPOT_PROP(0.80f, 0.10f, 0.80f, 99, null);
+    HIDING_SPOT_PROP(0.80f, 0.10f, 0.80f, 99, null),
+
+    // ── Issue #1116: Northfield Pharmacy — Day & Night Chemist ───────────────
+
+    /**
+     * PHARMACY_SHELF_PROP — rotating display stand of own-brand vitamins and OTC items.
+     * Press E (while Shop Assistant &gt; 4 blocks away) to shoplift a random OTC item.
+     * 30% base chance Janet notices (+10% per notoriety tier).
+     * Destroyed by 3 punches; yields WOOD.
+     */
+    PHARMACY_SHELF_PROP(0.60f, 1.50f, 0.60f, 3, Material.WOOD),
+
+    /**
+     * STOREROOM_DOOR_PROP — locked wooden door at the rear of the pharmacy.
+     * Lockpick (4 hits) or CROWBAR (2 hits) to force open.
+     * Breaking in: Notoriety +15, WantedSystem Tier 2, NoiseSystem +30.
+     * Resets every 3 in-game days.
+     * Destroyed by 4 punches; yields WOOD.
+     */
+    STOREROOM_DOOR_PROP(0.10f, 2.00f, 1.00f, 4, Material.WOOD),
+
+    /**
+     * PHARMACY_COUNTER_PROP — OTC sales counter at the front of the shop.
+     * Press E to open the over-the-counter purchase menu.
+     * Destroyed by 5 punches; yields WOOD.
+     */
+    PHARMACY_COUNTER_PROP(1.50f, 1.00f, 0.50f, 5, Material.WOOD),
+
+    /**
+     * PHARMACY_SIGN_PROP — illuminated exterior sign reading "Day &amp; Night Chemist".
+     * Decorative; flavour tooltip: "Open until 10. Theoretically."
+     * Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    PHARMACY_SIGN_PROP(1.20f, 0.40f, 0.10f, 3, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -2493,6 +2493,43 @@ public enum AchievementType {
         "Walking Artform",
         "Turned up to sign-on absolutely covered in ink. The case worker had opinions.",
         1
+    ),
+
+    // ── Issue #1116: Northfield Pharmacy — Day & Night Chemist ───────────────
+
+    /** Successfully obtain STRONG_MEDS with a BLANK_PRESCRIPTION_FORM. */
+    FORGED_IT(
+        "Doctor's Orders",
+        "Used a blank prescription form and walked out with the strong stuff. Janet didn't even blink.",
+        1
+    ),
+
+    /** Pocket an item from a PHARMACY_SHELF_PROP undetected. */
+    FIVE_FINGER_PHARMACY(
+        "Five Finger Pharmacy",
+        "Helped yourself to something off the shelf. Janet was busy. The shelf was not.",
+        1
+    ),
+
+    /** Buy every OTC product at the pharmacy counter at least once. */
+    MEDICINE_CABINET(
+        "Medicine Cabinet",
+        "Purchased every item Janet sells over the counter. You are very committed to your health.",
+        6
+    ),
+
+    /** Redeem a PRESCRIPTION on its last valid in-game day. */
+    JUST_IN_TIME(
+        "Just In Time",
+        "Handed in your prescription on the very last day it was valid. Cutting it fine.",
+        1
+    ),
+
+    /** Take PARACETAMOL a third time within the 6-hour window. */
+    OVERDONE_IT(
+        "Overdone It",
+        "Three paracetamol in six hours. Janet would be appalled. Your stomach agrees with her.",
+        1
     );
 
     private final String name;

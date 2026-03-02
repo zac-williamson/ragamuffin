@@ -1234,6 +1234,44 @@ public enum Material {
      */
     NEON_LEAFLET("Neon Leaflet"),
 
+    // ── Issue #1116: Northfield Pharmacy — Day & Night Chemist ───────────────
+
+    /**
+     * Cold and Flu Sachet — OTC remedy sold at the pharmacy counter.
+     * Clears COLD_SNAP warmth debuff; Warmth +10.
+     * Stock sells out within 2 in-game hours during COLD_SNAP/FROST.
+     * Tooltip: "Just add hot water and self-pity."
+     */
+    COLD_AND_FLU_SACHET("Cold & Flu Sachet"),
+
+    /**
+     * Antiseptic Cream — OTC first-aid item sold at the pharmacy counter.
+     * Stops bleed-out from fight wounds; health regen +5 for 60 seconds.
+     * Tooltip: "Stings a bit. Good."
+     */
+    ANTISEPTIC_CREAM("Antiseptic Cream"),
+
+    /**
+     * Vitamin C Tablets — OTC supplement sold at the pharmacy counter.
+     * Reduces illness probability by 20% for 1 in-game day.
+     * Tooltip: "One a day. Not the whole packet."
+     */
+    VITAMIN_C_TABLETS("Vitamin C Tablets"),
+
+    /**
+     * Hair Dye — OTC cosmetic sold at the pharmacy counter.
+     * Applied via DisguiseSystem: reduces NPC recognition by 30% for 1 in-game day.
+     * Tooltip: "A new you. For twenty minutes."
+     */
+    HAIR_DYE("Hair Dye"),
+
+    /**
+     * Reading Glasses — flavour item sold at the pharmacy counter.
+     * Unsellable. No mechanical effect.
+     * Tooltip: "You don't need these. But you feel wiser."
+     */
+    READING_GLASSES("Reading Glasses"),
+
     // ── Issue #975: Northfield Post Office ────────────────────────────────────
 
     /**
@@ -3528,6 +3566,18 @@ public enum Material {
             case NEON_LEAFLET:          return cs(0.20f, 0.82f, 0.45f,   // Bright green NHS leaflet
                                                    0.10f, 0.62f, 0.28f); // Darker green accent
 
+            // Issue #1116: Northfield Pharmacy
+            case COLD_AND_FLU_SACHET:  return cs(0.12f, 0.55f, 0.82f,   // Blue sachet packet
+                                                   0.08f, 0.38f, 0.60f); // Darker blue
+            case ANTISEPTIC_CREAM:     return cs(0.92f, 0.92f, 0.88f,   // White cream tube
+                                                   0.72f, 0.72f, 0.68f); // Grey cap
+            case VITAMIN_C_TABLETS:    return cs(0.98f, 0.70f, 0.10f,   // Orange tablet pot
+                                                   0.82f, 0.50f, 0.05f); // Darker orange
+            case HAIR_DYE:             return cs(0.72f, 0.18f, 0.62f,   // Purple dye box
+                                                   0.50f, 0.08f, 0.42f); // Darker purple
+            case READING_GLASSES:      return cs(0.15f, 0.15f, 0.18f,   // Dark frame
+                                                   0.70f, 0.85f, 0.92f); // Lens tint
+
             // Issue #975: Northfield Post Office
             case BENEFITS_BOOK:         return cs(0.12f, 0.38f, 0.70f,   // Royal blue DWP booklet
                                                    0.92f, 0.88f, 0.80f); // Cream page interior
@@ -4013,6 +4063,12 @@ public enum Material {
             case SICK_NOTE:
             case BLANK_PRESCRIPTION_FORM:
             case NEON_LEAFLET:
+            // Issue #1116: Northfield Pharmacy (not block items)
+            case COLD_AND_FLU_SACHET:
+            case ANTISEPTIC_CREAM:
+            case VITAMIN_C_TABLETS:
+            case HAIR_DYE:
+            case READING_GLASSES:
             // Issue #975: Northfield Post Office (not block items)
             case BENEFITS_BOOK:
             case PARCEL:
@@ -4169,6 +4225,12 @@ public enum Material {
             case SICK_NOTE:
             case BLANK_PRESCRIPTION_FORM:
             case NEON_LEAFLET:
+            // Issue #1116: Northfield Pharmacy — OTC items sit on surfaces
+            case COLD_AND_FLU_SACHET:
+            case ANTISEPTIC_CREAM:
+            case VITAMIN_C_TABLETS:
+            case HAIR_DYE:
+            case READING_GLASSES:
             // Issue #975: Northfield Post Office — paper/parcel items sit on surfaces
             case BENEFITS_BOOK:
             case PARCEL:
@@ -4673,6 +4735,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // blank paper form
             case NEON_LEAFLET:
                 return IconShape.FLAT_PAPER;  // folded leaflet
+
+            // Issue #1116: Northfield Pharmacy
+            case COLD_AND_FLU_SACHET:
+                return IconShape.BOX;         // blue sachet packet
+            case ANTISEPTIC_CREAM:
+                return IconShape.CYLINDER;    // cream tube
+            case VITAMIN_C_TABLETS:
+                return IconShape.CYLINDER;    // tablet pot
+            case HAIR_DYE:
+                return IconShape.BOX;         // dye box
+            case READING_GLASSES:
+                return IconShape.FLAT_PAPER;  // glasses (flat depiction)
 
             // Issue #975: Northfield Post Office
             case BENEFITS_BOOK:

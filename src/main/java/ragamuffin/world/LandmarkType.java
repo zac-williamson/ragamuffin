@@ -465,7 +465,17 @@ public enum LandmarkType {
      * Run by Gerald Meredith (UNDERTAKER) and Dawn (FUNERAL_ASSISTANT).
      * Managed by FuneralParlourSystem.
      */
-    FUNERAL_PARLOUR;
+    FUNERAL_PARLOUR,
+
+    // ── Issue #1116: Northfield Pharmacy — Day & Night Chemist ───────────────
+
+    /**
+     * Day &amp; Night Chemist — a brightly lit corner-unit chemist on the high street
+     * next to the GP Surgery. Open Mon–Sat 09:00–22:00, Sun 10:00–18:00.
+     * Staffed by Janet (PHARMACIST) and a SHOP_WORKER.
+     * Managed by PharmacySystem.
+     */
+    PHARMACY;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -547,6 +557,7 @@ public enum LandmarkType {
             case NIGHTCLUB:             return "The Vaults";
             case SPORTING_SOCIAL_CLUB:  return "Northfield Sporting & Social Club";
             case FUNERAL_PARLOUR:       return "Meredith & Sons Funeral Directors";
+            case PHARMACY:              return "Day & Night Chemist";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
