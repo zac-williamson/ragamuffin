@@ -2567,6 +2567,53 @@ public enum AchievementType {
         "Special Appointment",
         "Booked in for the full treatment. The kind that doesn't go on the price board.",
         1
+    ),
+
+    // ── Issue #1130: Northfield BP Petrol Station ──────────────────────────────
+
+    /**
+     * Siphon fuel from a parked car between 21:00 and 06:00.
+     */
+    MIDNIGHT_MECHANIC(
+        "Midnight Mechanic",
+        "Siphoned petrol from a parked car in the dead of night. Wayne didn't see a thing. Probably.",
+        1
+    ),
+
+    /**
+     * Rob the BP till with a CROWBAR.
+     */
+    HOLD_UP(
+        "This Is a Robbery",
+        "Used a crowbar on the BP till. Raj would be disappointed. Wayne was asleep.",
+        1
+    ),
+
+    /**
+     * Throw a MOLOTOV_COCKTAIL crafted from a PETROL_CAN_FULL + FLYER.
+     */
+    MOLOTOV_MOMENT(
+        "Molotov Moment",
+        "Threw a homemade incendiary. It went well, by which we mean it went very badly for everyone.",
+        1
+    ),
+
+    /**
+     * Eat a MICROWAVE_PASTY from the BP kiosk after 21:00.
+     */
+    MICROWAVE_MILLIONAIRE(
+        "Midnight Feast",
+        "Ate a forecourt pasty after 21:00. Your stomach lodged a formal complaint.",
+        1
+    ),
+
+    /**
+     * Fill a PETROL_CAN at the BP pump 5 times legitimately.
+     */
+    PETROL_HEAD(
+        "Petrol Head",
+        "Filled a petrol can at the BP forecourt five times. Raj knows your face by now.",
+        5
     );
 
     private final String name;

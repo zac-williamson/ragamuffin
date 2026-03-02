@@ -3192,7 +3192,38 @@ public enum Material {
      * to obtain prescription items. Triggers PRESCRIPTION_FRAUD if caught.
      * Tooltip: "Someone else's problem, briefly."
      */
-    PRESCRIPTION_FORM("Prescription Form");
+    PRESCRIPTION_FORM("Prescription Form"),
+
+    // ── Issue #1130: Northfield BP Petrol Station ──────────────────────────────
+
+    /**
+     * Microwave Pasty — heated in the MICROWAVE_PROP at the BP kiosk for 2 COIN.
+     * Restores +25 Hunger. After 21:00 there is a 30% chance of food poisoning
+     * debuff: −10 HP over 30s. Tooltip: "Technically a meal. Technically."
+     */
+    MICROWAVE_PASTY("Microwave Pasty"),
+
+    /**
+     * Car Wash Token — purchased from CAR_WASH_TOKEN_MACHINE_PROP for 3 COIN.
+     * Redeemed at the automated car wash bay. Can be sold to the Fence for 2 COIN.
+     * Tooltip: "Good for one wash. Car not included."
+     */
+    CAR_WASH_TOKEN("Car Wash Token"),
+
+    /**
+     * Cigarette Carton — looted from CIGARETTE_CABINET_PROP after 3 hits.
+     * Contains 20 cigarettes. Fenceable for 6 COIN per carton.
+     * Tooltip: "Twenty reasons your lungs hate you."
+     */
+    CIGARETTE_CARTON("Cigarette Carton"),
+
+    /**
+     * Map — bought from the BP kiosk for 2 COIN.
+     * Using it (press E while selected) reveals 3 nearby undiscovered landmarks
+     * on the world map. Single use; consumed on use.
+     * Tooltip: "Northfield A–Z. Still relevant, apparently."
+     */
+    MAP("Map");
 
     private final String displayName;
 
@@ -3983,6 +4014,16 @@ public enum Material {
             case DISCHARGE_LETTER:        return c(0.95f, 0.98f, 0.92f);   // Off-white NHS paper
             case PRESCRIPTION_FORM:       return c(0.85f, 0.92f, 0.98f);   // Light blue form
 
+            // Issue #1130: Northfield BP Petrol Station
+            case MICROWAVE_PASTY:         return cs(0.88f, 0.62f, 0.22f,  // Golden pasty
+                                                    0.65f, 0.40f, 0.15f); // Darker crust
+            case CAR_WASH_TOKEN:          return cs(0.30f, 0.58f, 0.82f,  // Blue token
+                                                    0.20f, 0.42f, 0.65f); // Dark rim
+            case CIGARETTE_CARTON:        return cs(0.90f, 0.15f, 0.15f,  // Red carton
+                                                    0.95f, 0.90f, 0.85f); // White band
+            case MAP:                     return cs(0.88f, 0.82f, 0.62f,  // Parchment fold
+                                                    0.35f, 0.55f, 0.35f); // Green roads
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4382,6 +4423,11 @@ public enum Material {
             case UNUSED_SYRINGE:
             case DISCHARGE_LETTER:
             case PRESCRIPTION_FORM:
+            // Issue #1130: Northfield BP Petrol Station — not block items
+            case MICROWAVE_PASTY:
+            case CAR_WASH_TOKEN:
+            case CIGARETTE_CARTON:
+            case MAP:
                 return false;
             default:
                 return true;
@@ -4498,6 +4544,11 @@ public enum Material {
             case UNUSED_SYRINGE:
             case DISCHARGE_LETTER:
             case PRESCRIPTION_FORM:
+            // Issue #1130: Northfield BP Petrol Station — small items sit on surfaces
+            case MICROWAVE_PASTY:
+            case CAR_WASH_TOKEN:
+            case CIGARETTE_CARTON:
+            case MAP:
                 return true;
             default:
                 return false;
@@ -5196,6 +5247,16 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official letter paper
             case PRESCRIPTION_FORM:
                 return IconShape.FLAT_PAPER;  // NHS prescription slip
+
+            // Issue #1130: Northfield BP Petrol Station
+            case MICROWAVE_PASTY:
+                return IconShape.FOOD;        // pasty / savoury parcel
+            case CAR_WASH_TOKEN:
+                return IconShape.BOX;         // round token
+            case CIGARETTE_CARTON:
+                return IconShape.BOX;         // rectangular carton
+            case MAP:
+                return IconShape.FLAT_PAPER;  // folded road map
 
             default:
                 return IconShape.BOX;

@@ -346,7 +346,33 @@ public class CriminalRecord {
          * (caught condition: NoiseSystem ≥ 20).
          * Penalty: +15 Notoriety, WantedSystem +2 stars.
          */
-        POISONING("Food poisoning (Bake-Off sabotage)");
+        POISONING("Food poisoning (Bake-Off sabotage)"),
+
+        // ── Issue #1130: Northfield BP Petrol Station ────────────────────────
+
+        /**
+         * Recorded when the player siphons fuel from a parked car at the BP
+         * forecourt between 21:00–06:00. Also recorded if CCTV_PROP is active
+         * and the player is within its line of sight.
+         * Penalty: +3 Notoriety; CCTV adds WantedSystem +1 star.
+         */
+        VEHICLE_TAMPERING("Vehicle tampering (fuel siphoning)"),
+
+        /**
+         * Recorded when the player throws a MOLOTOV_COCKTAIL and fire is
+         * started. Also triggered by WheeliBinFireSystem when a petrol-boosted
+         * fire is lit with a crafted incendiary.
+         * Penalty: +20 Notoriety, WantedSystem +1 star.
+         */
+        ARSON("Arson"),
+
+        /**
+         * Recorded when the player robs the TILL_PROP at the BP kiosk using
+         * a CROWBAR. Triggers a 3-minute police response (30 seconds if panic
+         * button was not destroyed and Wayne is awake at Tier ≥ 2).
+         * Penalty: +15 Notoriety, WantedSystem +2 stars.
+         */
+        ARMED_ROBBERY("Armed robbery (till raid)");
 
         private final String displayName;
 
