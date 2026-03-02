@@ -40,6 +40,20 @@ public class Car {
     }
 
     /**
+     * Condition rating of the car, visible during inspection at Wheelwright Motors.
+     * Determines haggling thresholds and resale price in CarDealershipSystem (Issue #1227).
+     * <ul>
+     *   <li>MINT — showroom condition, full price; haggle threshold 80%.</li>
+     *   <li>TIDY — minor wear; haggle threshold 80%.</li>
+     *   <li>ROUGH — visible wear, some issues; haggle threshold 60%. Can be clocked.</li>
+     *   <li>BANGER — poor condition, MOT borderline; haggle threshold 60%. Can be clocked.</li>
+     * </ul>
+     */
+    public enum CarCondition {
+        MINT, TIDY, ROUGH, BANGER
+    }
+
+    /**
      * Heading of the car in degrees.
      * 0 = travelling in +Z, 90 = +X, 180 = -Z, 270 = -X.
      */
@@ -94,6 +108,8 @@ public class Car {
     private float driverSpeed = 0f;
 
     // ── Issue #1146: GarageSystem roadworthiness & stolen flag ────────────────
+    // (Note: stolen flag and roadworthiness declared below; Issue #1227 flags
+    //  vinSwapped, clocked, condition, vinSwapDaysElapsed also declared below)
 
     /**
      * Roadworthiness score (0–100).  Fresh NPC cars default to 70.
@@ -108,6 +124,38 @@ public class Car {
      * Cleared by Car Ringing at Mick's garage (BLANK_LOGBOOK + 25 COIN).
      */
     private boolean stolen = false;
+
+    // ── Issue #1227: CarDealershipSystem — dodgy car economy ─────────────────
+
+    /**
+     * True if the VIN plates on this car have been swapped with a donor car from
+     * the Scrapyard (Issue #1227). The car appears unregistered to ANPR checks for
+     * 3 in-game days; after that it is flagged. 10% daily chance of ANPR detection
+     * by a patrolling POLICE NPC.
+     */
+    private boolean vinSwapped = false;
+
+    /**
+     * True if this car's odometer has been tampered with by Bez at Wheelwright Motors
+     * (MILEAGE_CORRECTOR_PROP + 5 COIN bribe). Sets condition to TIDY; resale price
+     * increases by 15 COIN. Selling while TRADING_STANDARDS NPC is nearby records
+     * CONSUMER_FRAUD; Notoriety +8.
+     */
+    private boolean clocked = false;
+
+    /**
+     * The car's condition rating, used for haggling thresholds and resale pricing at
+     * Wheelwright Motors (Issue #1227). Defaults to TIDY for fresh NPC cars.
+     * Can be upgraded by clocking (ROUGH/BANGER → TIDY).
+     */
+    private CarCondition condition = CarCondition.TIDY;
+
+    /**
+     * Number of in-game days since VIN plate was swapped. Once this reaches 3,
+     * ANPR detection becomes active (no longer a 3-day grace). Ticked by
+     * CarDealershipSystem.update() each in-game day.
+     */
+    private int vinSwapDaysElapsed = 0;
 
     /**
      * Create a car on a road segment.
@@ -372,6 +420,48 @@ public class Car {
     public float getDriverSpeed() {
         return driverSpeed;
     }
+
+    // ── Issue #1146 accessors: roadworthiness & stolen ────────────────────────
+
+    /** Returns the roadworthiness score (0–100). */
+    public int getRoadworthiness() { return roadworthiness; }
+
+    /** Sets the roadworthiness score (0–100). Clamped to [0, 100]. */
+    public void setRoadworthiness(int roadworthiness) {
+        this.roadworthiness = Math.max(0, Math.min(100, roadworthiness));
+    }
+
+    /** Returns true if this car is flagged as stolen. */
+    public boolean isStolen() { return stolen; }
+
+    /** Sets the stolen flag on this car. */
+    public void setStolen(boolean stolen) { this.stolen = stolen; }
+
+    // ── Issue #1227 accessors: VIN swap, clocking, condition ─────────────────
+
+    /** Returns true if the VIN plates on this car have been swapped. */
+    public boolean isVinSwapped() { return vinSwapped; }
+
+    /** Sets the VIN-swapped flag. */
+    public void setVinSwapped(boolean vinSwapped) { this.vinSwapped = vinSwapped; }
+
+    /** Returns true if this car's odometer has been clocked. */
+    public boolean isClocked() { return clocked; }
+
+    /** Sets the clocked flag on this car. */
+    public void setClocked(boolean clocked) { this.clocked = clocked; }
+
+    /** Returns the condition rating of this car. */
+    public CarCondition getCondition() { return condition; }
+
+    /** Sets the condition rating of this car. */
+    public void setCondition(CarCondition condition) { this.condition = condition; }
+
+    /** Returns the number of in-game days elapsed since VIN plate swap. */
+    public int getVinSwapDaysElapsed() { return vinSwapDaysElapsed; }
+
+    /** Increments the VIN swap day counter by one. */
+    public void incrementVinSwapDays() { this.vinSwapDaysElapsed++; }
 
     /**
      * Update the car when driven by the player.

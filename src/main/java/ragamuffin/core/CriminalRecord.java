@@ -671,7 +671,17 @@ public class CriminalRecord {
          * Crew. Seeds LOCAL_EVENT rumour to nearby NPCs.
          * Penalty: Notoriety +5.
          */
-        LOAN_DEFAULT("Loan default (Fast Cash Finance)");
+        LOAN_DEFAULT("Loan default (Fast Cash Finance)"),
+
+        // ── Issue #1227: Northfield Wheelwright Motors ────────────────────────
+
+        /**
+         * Recorded when the player clocks a car's odometer (with Bez and a
+         * MILEAGE_CORRECTOR_PROP) and sells it to a civilian via StreetEconomySystem
+         * while a TRADING_STANDARDS NPC is within 20 blocks of the sale.
+         * Penalty: Notoriety +8; AchievementType.DODGY_MILEAGE awarded.
+         */
+        CONSUMER_FRAUD("Consumer fraud (clocked odometer)");
 
         private final String displayName;
 

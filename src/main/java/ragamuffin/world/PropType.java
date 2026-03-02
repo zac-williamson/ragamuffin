@@ -2760,7 +2760,43 @@ public enum PropType {
      * random loot: 3–8 COIN + USB_DRIVE + occasional STOLEN_PHONE.
      * One-time loot per in-game day; resets at 09:00. Destroyed by 2 punches; yields null.
      */
-    STASH_BOX_PROP(0.50f, 0.35f, 0.40f, 2, null);
+    STASH_BOX_PROP(0.50f, 0.35f, 0.40f, 2, null),
+
+    // ── Issue #1227: Wheelwright Motors — Dodgy Car Lot ──────────────────────
+
+    /**
+     * CAR_LOT_SIGN_PROP — large billboard-style sign on the front wall of Wheelwright
+     * Motors reading "Wheelwright Motors — No Reasonable Offer Refused". 2.0×1.2×0.15
+     * AABB. Destroyed by 6 punches (sturdy); yields SCRAP_METAL.
+     */
+    CAR_LOT_SIGN_PROP(2.00f, 1.20f, 0.15f, 6, Material.SCRAP_METAL),
+
+    /**
+     * PORTACABIN_PROP — Wayne's site office at the rear of the forecourt. Contains a
+     * kettle, laminator, and DESK_PROP. 3.5×2.5×4.0 AABB. Wayne retreats here after
+     * 17:00 and during RAIN. Destroyed by 20 punches; yields WOOD.
+     */
+    PORTACABIN_PROP(3.50f, 2.50f, 4.00f, 20, Material.WOOD),
+
+    /**
+     * BUNTING_PROP — decorative string of triangular flags stretched across the Wheelwright
+     * Motors forecourt. Visual only (no collision). Destroyed by 1 punch; yields null.
+     */
+    BUNTING_PROP(8.00f, 0.20f, 0.20f, 1, null),
+
+    /**
+     * PLAYER_CAR_BAY_PROP — a painted tarmac bay marker near the player's squat where
+     * purchased cars are parked. Not collidable. Removed when repossessed car is taken.
+     * Yields null on destruction.
+     */
+    PLAYER_CAR_BAY_PROP(2.00f, 0.05f, 4.00f, 1, null),
+
+    /**
+     * MECHANIC_PROP — Bez's workstation on the Wheelwright Motors forecourt: an oil-stained
+     * workbench with tools, a trolley jack, and a car bonnet propped open. 2.0×1.2×2.0 AABB.
+     * Destroyed by 8 punches; yields SCRAP_METAL.
+     */
+    MECHANIC_PROP(2.00f, 1.20f, 2.00f, 8, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

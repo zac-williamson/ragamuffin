@@ -2170,7 +2170,45 @@ public enum NPCType {
      * but… look at the form on number four." / "We're closing up. Come back
      * tomorrow."
      */
-    BOOKIES_CLERK(40f, 0f, 0f, false);
+    BOOKIES_CLERK(40f, 0f, 0f, false),
+
+    /**
+     * Issue #1227: CAR_DEALER — Wayne, the owner of Wheelwright Motors. Sun-bleached
+     * tie, cheap suit, clipboard with laminated price cards. Anchored to the forecourt
+     * during opening hours (09:00–18:00 Mon–Sat), moves into the portacabin after 17:00.
+     * Non-hostile; dispenses banter and dodgy deals.
+     * Speech: "Every car on that lot drives sweet as a nut, mate." /
+     *         "I'm losing money at that price. Killing myself here." /
+     *         "Look, I don't ask questions, and neither should you."
+     */
+    CAR_DEALER(40f, 0f, 0f, false),
+
+    /**
+     * Issue #1227: CAR_LOT_MECHANIC — Bez, Wayne's mechanic. Overalls, spanner,
+     * perpetually under a bonnet from 09:00–16:00. Available to clock odometers
+     * for a 5 COIN bribe (requires MILEAGE_CORRECTOR_PROP in player inventory).
+     * Non-hostile; knows more than he lets on.
+     * Speech: "Needs a new timing belt but she goes alright." /
+     *         "Don't tell Wayne I said that." / "Five coin and I'll sort you out."
+     */
+    CAR_LOT_MECHANIC(30f, 0f, 0f, false),
+
+    /**
+     * Issue #1227: REPO_MAN — visits the player's registered address when finance
+     * payments are missed (PaydayLoanSystem/CarDealershipSystem). Like a mini-BAILIFF.
+     * Spawns after 1st missed payment, escalates; removes car on 3rd miss.
+     * Non-hostile until Scarper chosen; becomes mildly aggressive (low damage).
+     * Speech: "I'm just here for the vehicle, mate." / "Don't make it awkward."
+     */
+    REPO_MAN(50f, 5f, 0f, false),
+
+    /**
+     * Issue #1227: TYRE_KICKER — casual browser NPC who wanders Wheelwright Motors
+     * forecourt on sunny days (1–2 NPCs), looks at cars, asks prices, never buys.
+     * Non-hostile; spawned by CarDealershipSystem during SUNNY weather.
+     * Speech: "What's the mileage on that one?" / "Bit steep, innit."
+     */
+    TYRE_KICKER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -672,7 +672,18 @@ public enum LandmarkType {
      * Staffed by Gary (CLAIMS_MANAGER) and Chantelle (CLAIMS_ASSISTANT).
      * Managed by ClaimsManagementSystem (CompensationKings.java).
      */
-    CLAIMS_MANAGEMENT;
+    CLAIMS_MANAGEMENT,
+
+    /**
+     * Issue #1227: CAR_DEALERSHIP — Wheelwright Motors, Wayne's sun-bleached used
+     * car lot on the edge of the industrial estate. A 20×14-block tarmac forecourt
+     * with 12 CAR_PROP bays, a PORTACABIN_PROP at the rear, CAR_LOT_SIGN_PROP on
+     * the front wall, and a BUNTING_PROP line stretched across the forecourt.
+     * Open Mon–Sat 09:00–18:00.
+     * Staffed by Wayne (CAR_DEALER) and Bez (CAR_LOT_MECHANIC).
+     * Managed by CarDealershipSystem.java.
+     */
+    CAR_DEALERSHIP;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -772,6 +783,7 @@ public enum LandmarkType {
             case CITIZENS_ADVICE:       return "Northfield Citizens Advice";
             case DRIVING_SCHOOL:        return "BSM Driving School";
             case CLAIMS_MANAGEMENT:     return "Compensation Kings";
+            case CAR_DEALERSHIP:        return "Wheelwright Motors";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
