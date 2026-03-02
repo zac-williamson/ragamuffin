@@ -42664,3 +42664,144 @@ New CriminalRecord.CrimeType: `DRUG_POSSESSION` (if absent), `AFFRAY`
 // NeighbourhoodWatchSystem: Anger +5 per open night if Watch Anger > 30
 // NewspaperSystem: headline "Brawl at The Vaults" when fight triggers police attendance
 // DisguiseSystem: DISGUISE_KIT zeroes Notoriety check at door
+
+---
+
+## Issue #1283: Add Northfield Day & Night Chemist — PharmacySystem, Prescription Runs & the Methadone Queue
+
+**Landmark**: `LandmarkType.PHARMACY` ("Day & Night Chemist") — declared in `LandmarkType.java`; no `PharmacySystem.java` exists. Implement the full system.
+
+The **Day & Night Chemist** is a brightly lit corner-unit chemist on the high street next to the GP Surgery. Open Mon–Sat 09:00–22:00, Sun 10:00–18:00. Staffed by Janet (PHARMACIST) at the dispensary counter and a SHOP_WORKER stacking shelves. The chemist is Northfield's nexus for prescribed desperation, over-the-counter relief, and grey-market pharmaceuticals.
+
+### Building Layout
+A 8×10×4 brick frontage (white-painted render) with green CHEMIST_CROSS_PROP sign above the door.
+- Front-of-house: 4 `SHOP_SHELF_PROP` rows stocking OTC items; `TILL_COUNTER_PROP` near the door
+- Dispensary: `DISPENSARY_COUNTER_PROP` (locked hatch, impassable), `PRESCRIPTION_RACK_PROP`, `DRUG_SAFE_PROP` (heavy padlock)
+- Back room (locked `STAFF_DOOR_PROP`): `METHADONE_FRIDGE_PROP`, `MEDICINE_CABINET_PROP`
+
+### Schedule
+- **09:00** — Opens; Janet takes dispensary; SHOP_WORKER restocks shelves
+- **12:00** — Lunchtime peak: +2 PENSIONER and +1 PRESCRIPTION_HOLDER NPC
+- **13:30** — Methadone queue: 1–3 METHADONE_CLIENT NPCs form outside; Janet dispenses at counter
+- **18:00** — Evening rush: 1–2 WORKING_PARENT NPCs buying calpol / paracetamol
+- **22:00 / 18:00 Sun** — Closes; SHOP_WORKER locks up
+
+### Over-the-Counter (OTC) Economy
+The front shelves stock items the player can legitimately buy:
+- `PARACETAMOL` — 1 COIN (limit 2 per visit; British pharmacy box rule)
+- `CALPOL` — 2 COIN (child medicine; can be sold via StreetEconomySystem to SCHOOL_MUM for 3 COIN)
+- `IBUPROFEN` — 1 COIN
+- `PLASTERS` — 1 COIN (restores 5 HP slowly over 60s)
+- `VITAMIN_C_TABLETS` — 1 COIN (reduces COLD debuff duration by 50%)
+- `CONDOMS` — 1 COIN (no gameplay effect; guaranteed laugh from nearby NPCs)
+- `NUROFEN_PLUS` — 2 COIN (contains codeine; player may develop DEPENDENCY debuff after 5+ uses in 24h)
+
+**Shoplifting**: Pocket an OTC item by holding E near shelf for 2s; 20% chance Janet notices (WantedSystem +1 SHOPLIFTING). If SHOP_WORKER is stacking the same aisle, detection chance doubles. CCTV_CAMERA_PROP covers 70% of the shop floor.
+
+### Prescription Dispensing
+Players with a valid `PRESCRIPTION_SLIP` (obtained from GPSurgerySystem appointment) can collect at the dispensary counter:
+- Press E on `DISPENSARY_COUNTER_PROP` → Janet verifies slip → dispensing animation (10s)
+- Valid prescription yields: `PRESCRIPTION_MEDS` (restores 40 HP over 120s)
+- Forged prescriptions (`FORGED_PRESCRIPTION`): 60% pass rate; on fail → PRESCRIPTION_FRAUD added to CriminalRecord + WantedSystem +2 + Janet calls police
+
+**Prescription-selling hustle**: Sell `PRESCRIPTION_MEDS` to FENCE NPC for 5 COIN (50% of street value). `StreetEconomySystem` category: HUSTLE.
+
+### Methadone Queue (13:30–14:30)
+A uniquely British tableau. 1–3 `METHADONE_CLIENT` NPCs queue outside. Janet dispenses via a small hatch prop.
+- `collectMethadone(NPC client, TimeSystem time)` — verifies client is registered; returns `MethadoneResult` enum: DISPENSED, MISSED_WINDOW, NOT_REGISTERED
+- Player can **stand in queue** and observe: overhearing conversations seeds `LOCAL_HEALTH` rumour with 3 new lines (flavour only)
+- **Steal the methadone**: tackle a METHADONE_CLIENT after they collect (E press when client turns away); 40% success; yields `STOLEN_METHADONE`; WantedSystem +3; CriminalRecord: ROBBERY; NPCState target → FLEEING for 60s
+
+### Drug Safe Heist
+The `DRUG_SAFE_PROP` in the back room holds:
+- `PRESCRIPTION_MEDS` × 3
+- `NUROFEN_PLUS` × 5  
+- `DIAZEPAM` (high value fence item: 12 COIN at PawnShopSystem or FenceSystem)
+
+Access requires:
+1. Distract Janet: press E on `TILL_COUNTER_PROP` three times ("Excuse me, quick question") — SHOP_WORKER also moves to assist after 3rd request (20s window)
+2. Unlock `STAFF_DOOR_PROP` with LOCKPICK (3 hits)
+3. Use CROWBAR on `DRUG_SAFE_PROP` — HIGH noise (radius 20); 30% chance POLICE nearby is alerted
+
+On successful heist: `PHARMACY_RAID` rumour seeded; NewspaperSystem headline "Break-In at Day & Night Chemist"; WantedSystem +3 stars; CriminalRecord: BURGLARY.
+
+### Nurofen Plus Dependency System
+`addNurofenPlusDose(Player player)`:
+- Tracks daily dose count in `pharmacyDoseCount` field
+- Dose 1–4: normal pain relief (+15 HP)
+- Dose 5+: `DEPENDENCY` debuff applied; screen edges yellow-tint; WarmthSystem warmth bonus
+- DEPENDENCY debuff: player suffers −5 HP/minute when NUROFEN_PLUS not consumed within 4 in-game hours
+- **Cure**: visit GPSurgerySystem and select "I need help" option → Dr. Nair prescribes withdrawal plan → removes DEPENDENCY after 2 in-game days of cold turkey (player tolerance displayed in HUD)
+
+### NPCType Additions
+- `PHARMACIST` — Janet; stands behind dispensary counter; passive; calls police immediately on heist detection
+- `METHADONE_CLIENT` — queues 13:30–14:30; passive; FLEEING if attacked; carries `STOLEN_METHADONE` after collection
+- `PRESCRIPTION_HOLDER` — elderly PUBLIC variant carrying `PRESCRIPTION_SLIP`; victim for prescription theft
+
+### Integration
+- **GPSurgerySystem**: `PRESCRIPTION_SLIP` is the handoff item from GP appointment → pharmacy collection
+- **WarmthSystem**: Pharmacy is heated interior (Warmth +3/min); during FROST/SNOW, 2 extra PENSIONER NPCs shelter inside
+- **WeatherSystem**: RAIN/SNOW increases OTC cold medicine demand (+1 PENSIONER buyer NPC)
+- **HealingSystem**: `PLASTERS` and `PRESCRIPTION_MEDS` integrate with healing item consumption
+- **FenceSystem**: `DIAZEPAM` and `PRESCRIPTION_MEDS` fenceable at `FENCE` NPC for reduced value
+- **PawnShopSystem**: `DIAZEPAM` yields 12 COIN (pawnbroker no questions asked)
+- **NotorietySystem**: Heist +15 Notoriety; shoplifting +3; prescription fraud +8
+- **CriminalRecord**: New crime types: `PRESCRIPTION_FRAUD`, `PHARMACY_BURGLARY`
+- **WantedSystem**: Heist → +3 stars; fraud fail → +2 stars; shoplifting catch → +1 star
+- **RumourNetwork**: `LOCAL_HEALTH` seeded from queue gossip; `PHARMACY_RAID` on heist
+- **NeighbourhoodSystem**: Pharmacy open keeps vibes +2 (essential service); if raided, vibes −4 for 2 days
+- **NoiseSystem**: CROWBAR on safe emits HIGH noise (radius 20); Jimmy on door emits MEDIUM (radius 10)
+- **DisguiseSystem**: WHITE_COAT item (craft: CLOTH × 3 + BUTTON) reduces suspicion in dispensary area by 60%
+- **AchievementSystem**: `PROPER_ILL` (buy all 7 OTC items in one visit); `NUROFEN_NIGHTMARE` (reach DEPENDENCY debuff); `BACK-STREET_PHARMACIST` (fence DIAZEPAM 3 times)
+- **NewspaperSystem**: "Chemist Break-In: Police Appeal for Witnesses" on heist; "Prescription Fraud Ring Uncovered" if 3+ PRESCRIPTION_FRAUD in CriminalRecord
+
+### Unit Tests (`PharmacySystemTest.java`)
+
+1. `testOTCPurchaseLimitTwoParacetamol` — buy PARACETAMOL twice; third attempt returns `PurchaseResult.LIMIT_REACHED`
+2. `testValidPrescriptionDispensingYieldsMeds` — give player valid PRESCRIPTION_SLIP; press E on counter; verify `PRESCRIPTION_MEDS` in inventory after 10s
+3. `testForgedPrescriptionFailCausesCriminalRecord` — seed RNG to fail; submit FORGED_PRESCRIPTION; verify CriminalRecord contains PRESCRIPTION_FRAUD; WantedSystem stars == 2
+4. `testMethadoneCollectionRegisteredClient` — register METHADONE_CLIENT; set time 13:45; call `collectMethadone()`; verify result DISPENSED
+5. `testMethadoneCollectionMissedWindow` — call `collectMethadone()` at 15:00; verify result MISSED_WINDOW
+6. `testNurofenPlusDependencyAfterFiveDoses` — call `addNurofenPlusDose()` five times; verify player has DEPENDENCY debuff
+7. `testDependencyDebuffDamageWithoutDose` — apply DEPENDENCY; advance time 4+ hours; verify player HP decreases at −5/min rate
+8. `testHeistDistractJanetOpensWindow` — press E on TILL_COUNTER_PROP three times; verify SHOP_WORKER repositioned; STAFF_DOOR lockpickable; distract window = 20s
+9. `testDrugSafeHeistSeedsPharmacyRaidRumour` — complete heist successfully; verify RumourNetwork contains PHARMACY_RAID rumour seeded from PHARMACIST NPC
+10. `testShopliftingCaughtAddsCriminalRecord` — seed RNG to detect; pocket CALPOL; verify WantedSystem +1; SHOPLIFTING in CriminalRecord
+11. `testCondomPurchaseTriggersNPCReaction` — buy CONDOMS while PENSIONER NPC within 3 blocks; verify NPC speech event fires
+12. `testWhiteCoatDisguiseReducesSuspicion` — equip WHITE_COAT; enter dispensary area; verify exposure chance reduced by 60% vs baseline
+
+### Integration Tests (`Issue1283PharmacyIntegrationTest.java`)
+
+1. **Full OTC shop visit**: Player enters pharmacy, buys PARACETAMOL (1 COIN), PLASTERS (1 COIN), VITAMIN_C_TABLETS (1 COIN). Verifies: COIN deducted by 3; items in inventory; Warmth +3/min while inside; PENSIONER NPC present at 12:00 peak.
+
+2. **Prescription handoff chain (GP → Pharmacy)**: Trigger GPSurgerySystem appointment; receive PRESCRIPTION_SLIP. Enter pharmacy, press E on dispensary counter; wait 10s. Verify: PRESCRIPTION_MEDS in inventory; PRESCRIPTION_SLIP consumed; Janet speech "Here you go, love" logged.
+
+3. **Drug safe heist full flow**: Distract Janet 3 times. Lockpick STAFF_DOOR (3 hits). Crowbar DRUG_SAFE_PROP. Verify: DIAZEPAM × 1 + NUROFEN_PLUS × 5 in player inventory; `PHARMACY_RAID` rumour in RumourNetwork; NewspaperSystem headline queued; WantedSystem stars == 3; NeighbourhoodSystem vibes reduced by 4.
+
+4. **Dependency and cure arc**: Player takes NUROFEN_PLUS 5× across one in-game day. Verifies DEPENDENCY debuff active. Player visits GP and selects withdrawal plan. Advances 2 in-game days without NUROFEN_PLUS. Verifies DEPENDENCY debuff cleared; `NUROFEN_NIGHTMARE` achievement unlocked.
+
+5. **Methadone queue atmosphere**: Set time to 13:35. Verify 1–3 METHADONE_CLIENT NPCs present outside pharmacy. Player stands in queue (within 3 blocks) for 30 in-game seconds. Verify `LOCAL_HEALTH` rumour seeded in RumourNetwork.
+
+// ── Issue #1283: Add Northfield Day & Night Chemist ───────────────────────
+// New: PharmacySystem.java in ragamuffin.core
+// New: PharmacySystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1283PharmacyIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: PARACETAMOL, CALPOL, IBUPROFEN, PLASTERS, VITAMIN_C_TABLETS, CONDOMS, NUROFEN_PLUS,
+//           PRESCRIPTION_MEDS, FORGED_PRESCRIPTION, STOLEN_METHADONE, DIAZEPAM, WHITE_COAT — add to Material.java
+// PropType: DISPENSARY_COUNTER_PROP, PRESCRIPTION_RACK_PROP, DRUG_SAFE_PROP, METHADONE_FRIDGE_PROP,
+//           MEDICINE_CABINET_PROP, CHEMIST_CROSS_PROP — add to PropType.java
+// NPCType: PHARMACIST, METHADONE_CLIENT, PRESCRIPTION_HOLDER — add to NPCType.java
+// AchievementType: PROPER_ILL, NUROFEN_NIGHTMARE, BACK_STREET_PHARMACIST — add to AchievementType.java
+// CriminalRecord.CrimeType: PRESCRIPTION_FRAUD, PHARMACY_BURGLARY — add to CriminalRecord.java
+// RumourType: PHARMACY_RAID — add to RumourType.java
+// GPSurgerySystem: PRESCRIPTION_SLIP item handoff integration
+// HealingSystem: PLASTERS and PRESCRIPTION_MEDS healing integration
+// FenceSystem / PawnShopSystem: DIAZEPAM fencing economy
+// WarmthSystem: heated interior +3/min; pensioner shelter during FROST/SNOW
+// WeatherSystem: RAIN/SNOW cold medicine demand modifier
+// NotorietySystem / WantedSystem / CriminalRecord: heist, fraud, shoplifting escalation
+// RumourNetwork: LOCAL_HEALTH (queue), PHARMACY_RAID (heist)
+// NeighbourhoodSystem: vibes +2 open, −4 post-raid
+// NoiseSystem: safe crowbar = HIGH noise; door jimmy = MEDIUM noise
+// DisguiseSystem: WHITE_COAT reduces dispensary-area suspicion 60%
+// NewspaperSystem: "Chemist Break-In" + "Prescription Fraud Ring" headlines
