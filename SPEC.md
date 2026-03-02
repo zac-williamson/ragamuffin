@@ -34089,3 +34089,171 @@ public static final float GENUINE_UPSELL_SUCCESS = 0.70f;
 // Integrates: WitnessSystem, WantedSystem, NotorietySystem, CriminalRecord, NoiseSystem,
 //   TimeSystem, WeatherSystem, FactionSystem, RumourNetwork, AchievementSystem,
 //   ArgosOrderUI (existing), CraftingSystem (FORGED_RECEIPT recipe)
+
+---
+
+## Phase 12n: Northfield Sunday Car Park Market — Dodgy Traders, Council Enforcement & the Van Unload Heist
+
+**Goal**: Add the Northfield Co-op car park Sunday market — a weekly open-air event where
+unlicensed traders set up from vans, selling knock-offs, second-hand junk, and stolen goods.
+Distinct from `IndoorMarketSystem` (covered hall, Tue/Fri/Sat) and `BootSaleSystem`
+(underground auction). This is the chaotic, wind-battered Sunday morning institution:
+plastic bags blowing past rows of fold-up tables, a man selling DVDs from a cardboard box,
+someone flogging half a greenhouse of bedding plants, and a Council enforcement van circling
+like a shark.
+
+### Operating Hours & Location
+
+- **Sundays only, 07:30–13:00**. The `LandmarkType.SUNDAY_MARKET` zone is the Co-op car
+  park (a flat paved area ~20×15 blocks, pre-existing PAVEMENT). Outside hours, the car
+  park is empty — no stalls, no crowds.
+- At 07:15 (setup window), 5–8 `MARKET_TRADER` NPCs drive in (car props appear at the
+  lot entrance) and place `MARKET_STALL_PROP` tables laden with items.
+- At 13:00 (or if rain from `WeatherSystem` is THUNDERSTORM), traders pack up and leave.
+  Abandoned items (10% chance per stall) drop on the ground as lootable `SmallItem`s.
+
+### Traders & Stock
+
+Five named traders with fixed stall positions and specialisms:
+
+| Trader NPC | Stock | Notes |
+|---|---|---|
+| **Terry** | DVDs, VHS_TAPE, BROKEN_TELLY | Also buys stolen electronics at 40% value |
+| **Pauline** | Second-hand CLOTHING, COAT, WOOLLY_HAT | Free WOOLLY_HAT if player looks visibly cold (warmth < 30) |
+| **Mick** | TOOLS_BAG, WRENCH, BOLT_CUTTERS, PIPE | No questions asked; 20% cheaper than hardware shop |
+| **Sandra** | FRUIT_BAG, VEG_BOX, JAM_JAR | Rumour hub: freely shares rumours without drunkTimer requirement |
+| **Big Ron** | KNOCKED_OFF_PERFUME, FAKE_WATCH, COUNTERFEIT_SUNGLASSES | Disappears (FLEEING) the moment any COUNCIL_OFFICER or POLICE NPC enters the lot |
+
+### Council Enforcement
+
+A `PropType.COUNCIL_VAN` circles the car park perimeter on a patrol route (every 4
+in-game minutes). If a `COUNCIL_OFFICER` NPC exits the van and reaches any stall:
+
+1. **Licensed traders** (Terry, Pauline, Sandra — they have permits): pay a 3 COIN fine,
+   speech bubble "Can't a man earn a living?" — trade continues.
+2. **Unlicensed traders** (Mick, Big Ron): confiscation event — their stock is removed and
+   they enter FLEEING state. The stall prop is removed. Stall count drops.
+3. **Player stall** (see below): if player has no `MARKET_LICENCE` item in inventory,
+   `CriminalRecord.hasCrime(UNLICENSED_TRADING)` is set, Notoriety +8, stall confiscated.
+
+**Bribing the Officer**: Press **E** on a `COUNCIL_OFFICER` NPC while they're on patrol
+(not yet at a stall). Pay 5 COIN → officer returns to van and skips this patrol round.
+Notoriety −1. Achievement `GREASE_THE_WHEELS` if done 3 times total.
+
+**Market Licence hustle**: Player can obtain a `MARKET_LICENCE` by:
+- Buying from `LandmarkType.COUNCIL_OFFICES` NPC for 15 COIN (legitimate).
+- Forging one: combine `BLANK_RECEIPT` + `COUNCIL_STAMP` at the crafting table
+  (produces `FORGED_LICENCE`). If officer checks and detects forgery (40% chance),
+  Notoriety +15, Wanted +2 stars, FRAUD crime added.
+
+### Player Stall
+
+Press **E** on any empty `MARKET_STALL_PROP` (table with no NPC assigned) while holding
+≥ 1 item to set up a player stall:
+
+- Player can list up to 6 items for sale.
+- `MARKET_PUNTER` NPCs browse every 3 in-game minutes; each rolls to buy at list price.
+  Purchase chance: 60% for common items, 30% for suspicious items (STOLEN_JACKET, etc.).
+- Player earns COIN directly to inventory when a punter buys.
+- If player wanders more than 15 blocks from the stall, a punter may steal an item
+  (30% chance per browse cycle while absent). Speech bubble from punter: "Free country, innit."
+- **MARKET_TRADER achievement** for first successful stall sale.
+
+### The Van Unload Heist
+
+At 07:15 during setup, each trader's van prop is briefly unloaded (2-minute window).
+The van boot is an interactable prop (`MARKET_VAN_PROP`) containing the trader's
+restocked inventory for the day. If the player interacts (E) with an unattended van
+boot while the trader is distracted (busy placing the stall table):
+
+- Steal 1–3 random items from the trader's stock.
+- Detection chance: 40% base, −20% if no other NPC within 8 blocks, +30% if
+  `NoiseSystem.noiseLevel > 0.4`.
+- On detection: trader NPC enters AGGRESSIVE state, speech bubble "Oi! Get out of my van!",
+  `WantedSystem` adds 1 star, Notoriety +12.
+- On success: items added to player inventory silently. Achievement `UNLOAD_ARTIST` on
+  first successful theft.
+- Each van can only be raided once per Sunday.
+
+### Weather Effects
+
+- **DRIZZLE / RAIN**: Crowd thins — `MARKET_PUNTER` NPC count halved. Pauline adds a
+  UMBRELLA to stock at double price. Sandra gives 1 free rumour on approach ("miserable
+  day for it, but did you hear...").
+- **THUNDERSTORM**: Market shuts early — all traders enter FLEEING state immediately,
+  stall props despawn, loot scatters.
+- **HEATWAVE**: Crowd peaks — `MARKET_PUNTER` count doubled. Mick adds a PADDLING_POOL
+  (inflatable) to stock. Big Ron sells COUNTERFEIT_SUNGLASSES at 2× demand (punters
+  buy immediately).
+- **FROST**: Market opens 30 minutes late (08:00). Terry complains via speech bubble:
+  "Frozen solid, mate. Fingers won't work." All prices 10% lower (traders desperate).
+
+### Rumour Network Integration
+
+Sandra's stall is a free rumour source — any rumour in the `RumourNetwork` that has
+been spread to ≥ 3 NPCs is available from Sandra without drunkTimer requirement.
+Additionally, completing the van heist seeds a new rumour: `RumourType.MARKET_THEFT`
+("Someone half-inched Big Ron's stock from his Transit this morning").
+
+### Achievements
+
+| Achievement | Trigger |
+|---|---|
+| `SUNDAY_REGULAR` | Visit the Sunday market on 3 consecutive Sundays |
+| `MARKET_TRADER` | Complete first player stall sale |
+| `UNLOAD_ARTIST` | Steal from a trader's van undetected |
+| `GREASE_THE_WHEELS` | Bribe the Council officer 3 times |
+| `EVERYTHING_MUST_GO` | Buy from all 5 named traders in a single Sunday session |
+| `FAKE_IT` | Successfully use a FORGED_LICENCE without detection |
+
+**Unit tests**: Market hours (Sunday-only gate), trader spawn count (5–8), council patrol
+cycle timing, player stall sale probability, van heist detection formula, weather crowd
+multipliers, Big Ron FLEEING trigger on officer approach, Sandra rumour availability,
+achievement trigger conditions, forged licence detection roll.
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Market opens Sunday and closes weekday**: Set `TimeSystem` to Sunday 08:00. Call
+   `update()`. Verify `getActiveTraderCount()` ≥ 5 and ≤ 8. Verify at least one
+   `MARKET_STALL_PROP` is present in the world. Set time to Monday 08:00. Call
+   `update()`. Verify `getActiveTraderCount() == 0` and no `MARKET_STALL_PROP` in world.
+
+2. **Van heist succeeds undetected**: Set time to Sunday 07:20 (setup window). Seed RNG
+   so detection roll = 0.70 (> 0.40 threshold, no nearby NPCs). Player interacts (E)
+   with `MARKET_VAN_PROP` (Terry's van). Verify 1–3 items added to player inventory.
+   Verify Terry NPC remains in WANDERING state. Verify `UNLOAD_ARTIST` achievement
+   unlocks. Verify `RumourType.MARKET_THEFT` rumour seeded in `RumourNetwork`.
+
+3. **Van heist detected, wanted star added**: Set time to Sunday 07:20. Seed RNG so
+   detection roll = 0.20 (< 0.40 base threshold). Player interacts with van prop.
+   Verify trader NPC enters AGGRESSIVE state. Verify `WantedSystem.getStarCount() == 1`.
+   Verify `NotorietySystem.getNotoriety()` increased by 12. Verify no items added to
+   player inventory.
+
+4. **Council officer confiscates Big Ron's stall**: Spawn a `COUNCIL_OFFICER` NPC and
+   move to Big Ron's stall position. Call `update()`. Verify Big Ron enters FLEEING
+   state. Verify Big Ron's `MARKET_STALL_PROP` is removed from the world. Verify
+   `getActiveTraderCount()` has decreased by 1.
+
+5. **Player bribes officer and skips patrol**: Give player 5 COIN. Spawn a
+   `COUNCIL_OFFICER` NPC on patrol (not yet at a stall). Player presses E on officer.
+   Verify player COIN reduced by 5. Verify officer returns to `COUNCIL_VAN` prop
+   (enters WANDERING toward van). Verify next patrol cycle is skipped (advance time by
+   4 in-game minutes; verify officer does not reach any stall). Verify Notoriety
+   decreased by 1.
+
+// ── Issue #1177: Northfield Sunday Car Park Market ───────────────────────────
+// New: SundayMarketSystem.java in ragamuffin.core
+// New: SundayMarketSystemTest.java in src/test/java/ragamuffin/core/
+// LandmarkType: SUNDAY_MARKET — add if not present
+// NPCType: MARKET_TRADER, MARKET_PUNTER, COUNCIL_OFFICER — add to NPCType.java
+// Material: KNOCKED_OFF_PERFUME, FAKE_WATCH, COUNTERFEIT_SUNGLASSES, MARKET_LICENCE,
+//           FORGED_LICENCE, COUNCIL_STAMP, VHS_TAPE, FRUIT_BAG, VEG_BOX, JAM_JAR,
+//           TOOLS_BAG, PADDLING_POOL — add to Material.java
+// PropType: MARKET_STALL_PROP, MARKET_VAN_PROP, COUNCIL_VAN — add to PropType.java
+// CriminalRecord.CrimeType: UNLICENSED_TRADING, FRAUD (if not present) — add
+// AchievementType: SUNDAY_REGULAR, MARKET_TRADER, UNLOAD_ARTIST, GREASE_THE_WHEELS,
+//                  EVERYTHING_MUST_GO, FAKE_IT — add
+// RumourType: MARKET_THEFT — add to RumourType.java
+// Integrates: WeatherSystem, TimeSystem, WantedSystem, NotorietySystem, CriminalRecord,
+//   NoiseSystem, RumourNetwork, AchievementSystem, CraftingSystem (FORGED_LICENCE recipe)
