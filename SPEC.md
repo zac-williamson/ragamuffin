@@ -31873,3 +31873,190 @@ Every weekday 09:00–16:30, 2–4 `TEST_CANDIDATE` NPCs spawn in the waiting ro
 // New PropTypes: THEORY_TEST_BOOTH_PROP, RECEPTION_DESK_PROP, GIVE_WAY_SIGN_PROP, HIGHWAY_CODE_BOOK_PROP, HANDBAG_PROP, WALLET_PROP (add to PropType.java)
 // New CriminalRecord entries: DRIVING_WITHOUT_LICENCE, BRIBERY_OF_PUBLIC_OFFICIAL, UNLICENSED_DANGEROUS_DRIVING, FAKE_DOCUMENT (add to CriminalRecord.java)
 // New Achievements: ROAD_LEGAL, GREASED_WHEELS, SERIAL_FAILER, CHEAT_SHEET, FAKE_ID, UNLICENSED, DEREK_MIDTEST (add to AchievementType.java)
+
+---
+
+## Add Northfield Sporting & Social Club — Darts, Quiz Nights, the Members' Bar & the Protection Handover
+
+### Overview
+
+The **Northfield Sporting & Social Club** (already declared as `SPORTING_SOCIAL_CLUB` in
+`LandmarkType.java`) has no backing system. This issue implements `SportingSocialClubSystem.java`
+and all associated mechanics for a quintessentially British working men's club — darts nights,
+weekly quiz, members-only bar, back-room pontoon, and the protection money handover that ties the
+Marchetti Crew to the club's finances.
+
+### Building
+
+A squat, single-storey mid-century brick building (14×18×4 blocks) set back from the high street
+behind the Wetherspoons on a side road. Exterior features a `CLUB_SIGN_PROP` (white lettering on
+green: "NORTHFIELD SPORTING & SOCIAL CLUB — MEMBERS ONLY"), a `FLAGPOLE_PROP` outside (St George's
+Cross), and a `NOTICE_BOARD_PROP` at the entrance showing the week's events.
+
+Interior layout:
+- **Main bar** (14×10 left wing): `BAR_COUNTER_PROP`, four `BAR_STOOL_PROP`s, `BEER_PUMP_PROP`
+  (3 handles: Mild, Bitter, Stout), `CIGARETTE_MACHINE_PROP` on the back wall.
+- **Concert lounge / function room** (14×8 right wing): `STAGE_PROP` (small raised platform),
+  eight `ROUND_TABLE_PROP`s with seating, `MICROPHONE_STAND_PROP`.
+- **Darts alcove**: two `DARTBOARD_PROP`s mounted on a brick wall with a `CHALK_SCOREBOARD_PROP`
+  between them; three `BAR_STOOL_PROP`s.
+- **Back room** (6×6, locked `DOOR_PROP`): `CARD_TABLE_PROP` (pontoon), `SAFE_PROP` (Marchetti
+  protection cash), `FILING_CABINET_PROP` (member ledger — rents/debts).
+
+### NPCs
+
+- **Ron** (`SOCIAL_CLUB_STEWARD`): behind the bar Mon–Sat 11:00–23:00, Sun 12:00–22:30.
+  Knows everyone's business; shares a free LOCAL_EVENT rumour per visit.
+- **Brian** (`SOCIAL_CLUB_MEMBER`): permanent fixture; professional darts player (Fri/Sat darts
+  nights). Offers the player darts challenges.
+- **Maureen** (`QUIZ_HOST`): appears Thursday 19:30–22:00 to run the quiz. Wanders the pub
+  at other times.
+- **4–8 `CLUB_REGULAR` NPCs**: increase to 6–12 on quiz nights and darts nights.
+- **Tommy Marchetti** (`MARCHETTI_ENFORCER`): visits every Monday 20:00–21:30 to collect the
+  protection envelope. If the club can't pay, Ron issues a distress dialogue that unlocks the
+  "intervene" option for the player.
+
+### Membership Economy
+
+Non-members may enter the foyer only. Ron blocks passage to the main bar without a
+`CLUB_MEMBERSHIP_CARD`. Membership costs **5 COIN one-time fee** (press E on Ron → "I'd like to
+join"). Once joined, `CLUB_MEMBERSHIP_CARD` is added to inventory and persists.
+
+Benefits of membership:
+- Cheap drinks: Mild 1 COIN, Bitter 1 COIN, Stout 2 COIN (half pub prices).
+- Access to darts challenges, quiz nights, back-room pontoon.
+- Ron's rumour intel (one per visit).
+
+### Darts Night (Friday & Saturday 19:00–23:00)
+
+When `TimeSystem` reports Fri/Sat and 19:00–23:00, `DARTS_NIGHT` event is active. Brian is at the
+dartboard and 6–10 `CLUB_REGULAR` NPCs fill the bar.
+
+**Darts mini-game** (press E on `DARTBOARD_PROP` when event active):
+- Player starts at 501; must reach exactly 0. Turn: throw 3 darts.
+- Each dart: a simple random skill check. Base accuracy = 50%; modified by
+  `StreetSkillSystem.DARTS_SKILL` (starts 0, max 100; +5 per win up to cap).
+- Scoring: accurate throw → player's aimed sector ±1 sector (seeded RNG); inaccurate → random
+  sector. Sectors: 1–20, bullseye (50), outer bull (25).
+- **Brian challenge**: press E on Brian → wager 3–10 COIN; Brian's accuracy 80%. Win → COIN +
+  wager; lose → COIN − wager; DARTS_SKILL +5. First win → `TREBLE_TOP` achievement.
+- **Leg-and-a-bit rule**: if player busts (score goes negative), turn is void; score unchanged.
+- Solo practice (no wager, 1 COIN table fee) available at any time while event is active.
+
+### Quiz Night (Thursday 19:30–22:00)
+
+Maureen hosts. 8 rounds × 5 questions drawn from a seeded pool of 40 British general-knowledge
+questions (local topics, football, EastEnders, 80s music, and "Name That Council Estate").
+
+**Quiz mechanic**: press E on `ROUND_TABLE_PROP` to enter quiz. Multiple-choice (4 options). 1
+COIN entry fee; prize pot = entry fees × participants (4–8 NPCs + player). Winner: most correct
+answers. Tie-break: fastest buzzer (first press after question displayed).
+
+**Cheating options**:
+- **Phone-a-friend**: if player has `MOBILE_PHONE` material in inventory, can look up one answer
+  per round. Maureen has 30% chance to notice → ejected from quiz, `CHEATING_AT_QUIZ` CriminalRecord
+  entry (Wanted +1).
+- **Steal the answer sheet**: during setup (18:30–19:30) Maureen leaves `QUIZ_ANSWER_SHEET_PROP` on
+  the `NOTICE_BOARD_PROP` in the back corridor; player can pocket it (E). Reveals all answers that
+  round; 50% chance Ron witnesses → ejected + banned for 2 in-game days.
+
+### Back-Room Pontoon (Sat 20:00–23:00 only)
+
+Accessible via locked back-room `DOOR_PROP` (requires: member + Sat 20:00+, or LOCKPICK).
+Stakes: 1–5 COIN per hand. Standard pontoon rules. 3–4 `MARCHETTI_CREW` NPC opponents. House
+edge 5% (Ron takes a cut per pot). Win 5 consecutive hands → `PONTOON_KING` achievement.
+
+### Protection Money Handover (Monday 20:00–21:30)
+
+Tommy Marchetti (`MARCHETTI_ENFORCER`) enters at 20:00. Ron produces `PROTECTION_ENVELOPE_PROP`
+from beneath the bar (contains 20 COIN). Tommy pockets it and leaves.
+
+**Player interventions**:
+1. **Steal the envelope first** (pick up `PROTECTION_ENVELOPE_PROP` off bar when Ron turns away,
+   19:55–20:00 window): Tommy arrives, demands payment; Ron panics. If player has envelope:
+   Tommy targets player → `AMBUSH` aggro state. Wanted +3. If player escapes, +20 COIN, Marchetti
+   Faction Respect −15, `ENVELOPE_THIEF` achievement.
+2. **Pay Ron's debt** (if Ron has run dry): Ron asks player for help (only if FactionSystem
+   `STREET_LADS` Respect ≥ 50). Player can hand 20 COIN → Tommy satisfied; Ron's Loyalty +30;
+   `GOOD_SAMARITAN` achievement entry. Marchetti Crew Respect +5.
+3. **Grass to police**: player can tip off `POLICE_STATION` (press E on POLICE_OFFICER in station
+   → "I know about a protection racket") → sets up an ambush (WantedSystem STING_OPERATION event
+   Mon 20:00); Tommy arrested; Marchetti Faction Respect −30; Northfield `NEIGHBOURHOOD` vibes +10;
+   CriminalRecord entry `ASSISTING_POLICE` (Notoriety −5). Risk: 40% chance Marchetti learn who
+   snitched → immediate Wanted +4 `GRASS` flag.
+
+### System Integrations
+
+- **FactionSystem**: Marchetti Crew Respect gates back-room access (Respect ≥ 30 to join pontoon
+  without lockpick). Tommy's protection run seeds `CRIMINAL_INTEL` rumour on completion.
+- **StreetSkillSystem**: `DARTS_SKILL` (new skill, max 100); each win +5; displayed in SkillsUI.
+- **RumourNetwork**: Ron seeds one `LOCAL_EVENT` rumour per player visit; quiz winner seeds a
+  `LOCAL_EVENT` rumour ("Did you hear? [Name] won the quiz. Knew every question about EastEnders.").
+- **NotorietySystem**: ejection from quiz → Notoriety +2; cheating witnessed → +5.
+- **WantedSystem**: `ENVELOPE_THIEF` → Wanted +3; `CHEATING_AT_QUIZ` → Wanted +1;
+  `GRASS` flag → Wanted +4.
+- **CriminalRecord**: `CHEATING_AT_QUIZ`, `THEFT_FROM_SOCIAL_CLUB`, `ASSISTING_POLICE`.
+- **AchievementSystem**: see below.
+- **WeatherSystem**: rain/drizzle → +2 `CLUB_REGULAR` NPCs (shelter-seeking). Fog → NOTICE_BOARD
+  event text is illegible (player must speak to Ron).
+- **NeighbourhoodSystem**: if Neighbourhood vibes < 30 → club temporarily closed (board on door);
+  Tommy's protection demands increase by 50%.
+- **NoiseSystem**: darts crowd → MEDIUM noise 19:00–23:00 Fri/Sat; quiz night → LOW noise
+  19:30–22:00 Thu; back-room pontoon → LOW noise; brawl (rare 10%/night) → HIGH noise.
+- **TimeSystem**: club opens Mon–Sat 11:00–23:00, Sun 12:00–22:30.
+- **NewspaperSystem**: if player grasses on Tommy and Marchetti retaliate violently →
+  `"PROTECTION RACKET EXPOSED AT NORTHFIELD SOCIAL CLUB"` headline eligible at Notoriety ≥ Tier 2.
+
+### Items (add to `Material.java`)
+
+- `CLUB_MEMBERSHIP_CARD` — laminated card; required for main bar entry.
+- `PROTECTION_ENVELOPE_PROP` — brown envelope; contains 20 COIN; interactable off bar.
+- `DARTS_SET` — three-dart set; held in hotbar; required for solo darts practice (purchased from
+  Ron for 3 COIN or dropped by Brian if beaten).
+- `QUIZ_ANSWER_SHEET` — Maureen's crib sheet; reveals quiz answers for one night.
+
+### Props (add to `PropType.java`)
+
+- `DARTBOARD_PROP` — wall-mounted dartboard; E to play.
+- `CHALK_SCOREBOARD_PROP` — standing chalk board; shows darts scores.
+- `BAR_PUMP_PROP` — beer pump handle; decorative, but E pours a drink (costs COIN).
+- `CIGARETTE_MACHINE_PROP` — wall machine; dispenses `CIGARETTES` for 2 COIN.
+- `CLUB_SIGN_PROP` — external green signboard.
+- `NOTICE_BOARD_PROP` — corkboard; displays week's events; `QUIZ_ANSWER_SHEET_PROP` spawns here.
+- `STAGE_PROP` — raised platform (1 block high); future use for MC Battle / karaoke.
+- `PROTECTION_ENVELOPE_PROP` — brown envelope on bar; interactable during handover window.
+
+### Achievements (add to `AchievementType.java`)
+
+| Achievement | Trigger |
+|---|---|
+| `TREBLE_TOP` | Beat Brian at darts |
+| `QUIZ_CHAMPION` | Win the Thursday quiz |
+| `PONTOON_KING` | Win 5 consecutive pontoon hands |
+| `ENVELOPE_THIEF` | Steal the protection envelope before Tommy arrives |
+| `SOCIAL_PILLAR` | Attend the club 10 times as a member |
+| `GRASSED_UP` | Tip off police about Tommy's protection run |
+
+**Unit tests**: membership gating (non-member blocked from bar); darts bust rule (score goes negative → void turn); quiz answer pool (40 questions, 8×5 drawn without replacement per night, seeded RNG); pontoon house edge (5% cut per pot verifiable over ≥1000 hands); Tommy arrival window (exactly 20:00–21:30 Monday); protection envelope theft window (19:55–20:00); darts skill cap (100); Marchetti respect gate for back room (≥30); weather NPC count modifier (+2 regulars in rain).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Membership purchase gates bar access**: Set time to Monday 15:00. Place player at club entrance. Verify pressing W toward the main bar is blocked (non-member). Press E on Ron, select "I'd like to join" (spend 5 COIN). Verify `CLUB_MEMBERSHIP_CARD` added to inventory. Verify player can now walk into the main bar. Verify COIN balance reduced by 5.
+
+2. **Darts night active on Friday evening**: Set time to Friday 20:00. Verify `DARTS_NIGHT` event flag is active in SportingSocialClubSystem. Verify Brian NPC is present at the dartboard. Verify `CLUB_REGULAR` NPC count is ≥ 6. Press E on `DARTBOARD_PROP` (player is member). Verify darts mini-game initialises with player score = 501.
+
+3. **Quiz night: win and prize awarded**: Set time to Thursday 19:30. Become a member. Join quiz at `ROUND_TABLE_PROP` (spend 1 COIN). Seed RNG so player answers all 40/40 correctly. Simulate all 8 rounds. Verify player wins (highest score). Verify prize pot COIN awarded to player inventory. Verify `QUIZ_CHAMPION` achievement unlocked. Verify RumourNetwork receives a `LOCAL_EVENT` rumour referencing the player winning.
+
+4. **Protection envelope theft and Tommy confrontation**: Set time to Monday 19:55. Become a member. Steal `PROTECTION_ENVELOPE_PROP` from bar. Set time to 20:00 (Tommy arrives). Verify Tommy NPC enters the building. Verify Ron's distress dialogue fires. Verify Tommy's state becomes `AMBUSH` aggro targeting player. Verify WantedSystem Wanted level increments by 3. Verify `ENVELOPE_THIEF` achievement unlocked after player exits with the envelope.
+
+5. **Grassing on Tommy — police sting setup**: Set FactionSystem `STREET_LADS` Respect ≥ 50. Interact with POLICE_OFFICER at police station, select tip-off option. Advance time to Monday 20:00. Verify `STING_OPERATION` event fires (Tommy intercepted). Verify Tommy NPC is arrested (removed from active NPC list). Verify Marchetti Faction Respect decremented by 30. Verify NeighbourhoodSystem vibes incremented by 10. Verify `GRASSED_UP` achievement unlocked.
+
+// New system: SportingSocialClubSystem.java in ragamuffin.core
+// New UI: (darts mini-game rendered within existing HUD overlay; quiz uses existing BettingUI-style panel)
+// New landmark: SPORTING_SOCIAL_CLUB already declared in LandmarkType.java
+// New NPCTypes: SOCIAL_CLUB_STEWARD, QUIZ_HOST, CLUB_REGULAR, MARCHETTI_ENFORCER (add to NPCType.java)
+// New Materials: CLUB_MEMBERSHIP_CARD, DARTS_SET, QUIZ_ANSWER_SHEET (add to Material.java)
+// New PropTypes: DARTBOARD_PROP, CHALK_SCOREBOARD_PROP, BAR_PUMP_PROP, CIGARETTE_MACHINE_PROP, CLUB_SIGN_PROP, NOTICE_BOARD_PROP, STAGE_PROP, PROTECTION_ENVELOPE_PROP (add to PropType.java)
+// New StreetSkill: DARTS_SKILL (add to StreetSkillSystem)
+// New CriminalRecord entries: CHEATING_AT_QUIZ, THEFT_FROM_SOCIAL_CLUB, ASSISTING_POLICE (add to CriminalRecord.java)
+// New Achievements: TREBLE_TOP, QUIZ_CHAMPION, PONTOON_KING, ENVELOPE_THIEF, SOCIAL_PILLAR, GRASSED_UP (add to AchievementType.java)
