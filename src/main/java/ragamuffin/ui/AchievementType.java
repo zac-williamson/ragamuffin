@@ -4033,7 +4033,7 @@ public enum AchievementType {
     /**
      * Awarded when the player skips the CAB queue via bribe or intimidation.
      */
-    QUEUE_JUMPER(
+    CAB_QUEUE_JUMPER(
         "Queue Jumper",
         "Three quid or a shove. Either way, you're next.",
         1

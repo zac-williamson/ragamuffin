@@ -2647,12 +2647,12 @@ public enum PropType {
     INSTRUCTOR_CAR_PROP(2.50f, 1.50f, 4.50f, 10, Material.SCRAP_METAL),
 
     /**
-     * FILING_CABINET_PROP — a grey metal filing cabinet in the back office.
+     * MOT_BACK_OFFICE_FILING_CABINET_PROP — a grey metal filing cabinet in the back office of the MOT centre.
      * LOCKPICK required; 3 hits to open; yields PENDING_TEST_RESULT_ITEM (forged cert).
      * 30% chance Sandra flags it as fraud each use: WantedSystem +2 stars, FRAUD crime.
      * Destroyed by 5 punches; yields SCRAP_METAL.
      */
-    FILING_CABINET_PROP(0.50f, 1.30f, 0.40f, 5, Material.SCRAP_METAL),
+    MOT_BACK_OFFICE_FILING_CABINET_PROP(0.50f, 1.30f, 0.40f, 5, Material.SCRAP_METAL),
 
     // ── Issue #1209: Citizens Advice Bureau ───────────────────────────────────
 
