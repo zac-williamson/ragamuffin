@@ -3162,7 +3162,55 @@ public enum PropType {
      * claim is reported. Placed on the shopfront by Sandra; causes Dave to enter DEFLATED state.
      * 0.60×0.40×0.05; hitsToBreak = 1 (yields null — just disappears).
      */
-    TRADING_STANDARDS_WARNING(0.60f, 0.40f, 0.05f, 1, null);
+    TRADING_STANDARDS_WARNING(0.60f, 0.40f, 0.05f, 1, null),
+
+    // ── Issue #1306: Northfield Traveller Site ────────────────────────────────
+
+    /**
+     * CARAVAN_PROP — Paddy's static caravan, the main site structure.
+     * 4.50×2.80×2.00; hitsToBreak = 12 (yields SCRAP_METAL).
+     * Player presses E to attempt night raid (02:00–04:00 only, requires CROWBAR or LOCKPICK).
+     * LURCHER_DOG wakes if player lacks DOG_PERMISSION_FLAG.
+     */
+    CARAVAN_PROP(4.50f, 2.80f, 2.00f, 12, Material.SCRAP_METAL),
+
+    /**
+     * SCRAP_PILE_PROP — a mound of scrap metal and salvaged parts near the caravan.
+     * 1.80×1.20×1.80; hitsToBreak = 4 (yields SCRAP_METAL).
+     * Player presses E to search (4 seconds): yields SCRAP_METAL ×1–3, rarely COPPER_PIPE.
+     * NOTE: A SCRAP_PILE_PROP already exists in the scrapyard. This one is traveller-specific
+     * and can yield STOLEN_BIKE (5% chance).
+     */
+    TRAVELLER_SCRAP_PILE_PROP(1.80f, 1.20f, 1.80f, 4, Material.SCRAP_METAL),
+
+    /**
+     * TARMAC_DRUM_PROP — barrel of cold-lay tarmac beside the caravan.
+     * 0.60×1.00×0.60; hitsToBreak = 5 (yields TARMAC_MIX).
+     * Player presses E to purchase TARMAC_MIX for 5 COIN when Paddy is present.
+     */
+    TARMAC_DRUM_PROP(0.60f, 1.00f, 0.60f, 5, Material.TARMAC_MIX),
+
+    /**
+     * DOG_FIGHT_RING_PROP — makeshift ring in a corner of the site.
+     * 2.40×0.60×2.40; hitsToBreak = 3 (yields SCRAP_METAL).
+     * Active Fri/Sat 21:00–23:00. Player presses E to place bets (2:1 payout).
+     * Dispersed by RSPCA_OFFICER when dog fight is reported.
+     */
+    DOG_FIGHT_RING_PROP(2.40f, 0.60f, 2.40f, 3, Material.SCRAP_METAL),
+
+    /**
+     * ENFORCEMENT_NOTICE_PROP — council enforcement notice posted by Derek.
+     * 0.60×0.40×0.05; hitsToBreak = 1 (yields null — just disappears).
+     * Placed on the CARAVAN_PROP when eviction is triggered.
+     */
+    ENFORCEMENT_NOTICE_PROP(0.60f, 0.40f, 0.05f, 1, null),
+
+    /**
+     * DOG_CHAIN_PROP — heavy chain anchoring LURCHER_DOG to the caravan.
+     * 0.30×0.20×1.20; hitsToBreak = 6 (yields SCRAP_METAL).
+     * Breaking it frees the dog but triggers LURCHER_DOG aggression.
+     */
+    DOG_CHAIN_PROP(0.30f, 0.20f, 1.20f, 6, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

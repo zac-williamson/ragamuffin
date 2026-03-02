@@ -2485,7 +2485,74 @@ public enum NPCType {
      * </ul>
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    TRADING_STANDARDS_OFFICER(20f, 0f, 0f, false);
+    TRADING_STANDARDS_OFFICER(20f, 0f, 0f, false),
+
+    // ── Issue #1306: Northfield Traveller Site ────────────────────────────────
+
+    /**
+     * TRAVELLER_BOSS — Paddy Flynn, head of the tarmac crew.
+     * <ul>
+     *   <li>Spawns at the industrial estate wasteland every 7–10 in-game days.</li>
+     *   <li>Assigns cash-in-hand driveway jobs, scrap runs, or kerb-hawking heather.</li>
+     *   <li>Runs the scrap metal fence — pays above FenceSystem rates for SCRAP_METAL,
+     *       COPPER_PIPE, STOLEN_BIKE, STOLEN_PHONE (capped 20 COIN per visit).</li>
+     *   <li>Goes HOSTILE if player reports dog fight to RSPCA.</li>
+     * </ul>
+     * HP: 60f, attack: 12f, cooldown: 1.2f, hostile: false.
+     */
+    TRAVELLER_BOSS(60f, 12f, 1.2f, false),
+
+    /**
+     * TRAVELLER_WORKER — Liam/Seamus/Donal from Paddy's tarmac crew.
+     * <ul>
+     *   <li>3× present at the site during visit window.</li>
+     *   <li>Carry out driveway jobs and scrap runs assigned by TRAVELLER_BOSS.</li>
+     * </ul>
+     * HP: 40f, attack: 8f, cooldown: 1.5f, hostile: false.
+     */
+    TRAVELLER_WORKER(40f, 8f, 1.5f, false),
+
+    /**
+     * TRAVELLER_WOMAN — Brigid, sells Lucky Heather from a basket.
+     * <ul>
+     *   <li>Present during site visit; sells LUCKY_HEATHER for 2 COIN.</li>
+     *   <li>Sells CLOTHES_PEG_BUNDLE for 1 COIN (comedy throw item).</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    TRAVELLER_WOMAN(20f, 0f, 0f, false),
+
+    /**
+     * LURCHER_DOG — Paddy's lurcher, chained near the CARAVAN_PROP.
+     * <ul>
+     *   <li>Barks at player within 6 blocks; attacks if player enters caravan without
+     *       DOG_PERMISSION_FLAG.</li>
+     *   <li>Sleeps 02:00–04:00 if player has DOG_PERMISSION_FLAG.</li>
+     * </ul>
+     * HP: 25f, attack: 10f, cooldown: 1.0f, hostile: false.
+     */
+    LURCHER_DOG(25f, 10f, 1.0f, false),
+
+    /**
+     * COUNCIL_ENFORCEMENT_OFFICER — Derek, the council enforcement officer.
+     * <ul>
+     *   <li>Spawned by TravellerSiteSystem on day 3 (or same afternoon if tipped off day 1).</li>
+     *   <li>Issues ENFORCEMENT_NOTICE_PROP and begins eviction process.</li>
+     *   <li>Bribable for 10 COIN to delay eviction by 1 day.</li>
+     * </ul>
+     * HP: 50f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    COUNCIL_ENFORCEMENT_OFFICER(50f, 0f, 0f, false),
+
+    /**
+     * RSPCA_OFFICER — RSPCA inspector spawned after player reports dog fight.
+     * <ul>
+     *   <li>Disperses the DOG_FIGHT_RING_PROP and takes LURCHER_DOG into care.</li>
+     *   <li>Triggers TRAVELLER_BOSS to enter HOSTILE state.</li>
+     * </ul>
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    RSPCA_OFFICER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
