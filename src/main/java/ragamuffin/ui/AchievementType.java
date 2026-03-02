@@ -2989,6 +2989,65 @@ public enum AchievementType {
         "The inscription said 'ceremonial use only'. " +
             "This was, in a sense, a ceremony.",
         1
+    ),
+
+    // ── Issue #1146: Mick's MOT & Tyre Centre ────────────────────────────────
+
+    /**
+     * Awarded when the player successfully rings a car at Mick's garage
+     * (clears the stolen flag using BLANK_LOGBOOK + 25 COIN).
+     */
+    RINGER(
+        "Ringer",
+        "New plates, new log book, new you. The DVLA remains unconvinced.",
+        1
+    ),
+
+    /**
+     * Awarded when the player obtains a Dodgy MOT certificate at MOT_RAMP_PROP.
+     */
+    DODGY_MOT(
+        "Technically Roadworthy",
+        "The certificate says PASS. The car says otherwise. Terry has been bribed.",
+        1
+    ),
+
+    /**
+     * Awarded when the player drives a Cut-and-Shut car that subsequently suffers
+     * engine failure (20% risk per journey after the fusion).
+     */
+    DEATH_TRAP(
+        "She'll Be Fine",
+        "You drove a cut-and-shut. It wasn't fine. You knew this going in.",
+        1
+    ),
+
+    /**
+     * Awarded when the player steals the cash tin from Mick's garage office.
+     */
+    GARAGE_THIEF(
+        "Till Thief",
+        "Nicked Mick's petty cash. He had it coming. Probably.",
+        1
+    ),
+
+    /**
+     * Awarded when the player chops a car for parts in Bay 2 (first chop).
+     */
+    CHOP_SHOP(
+        "Parts Is Parts",
+        "Reduced a perfectly good car to components. Allegedly. Parts are parts.",
+        1
+    ),
+
+    /**
+     * Awarded when the player drives a car with roadworthiness ≥ 90 and no
+     * stolen flag for a full in-game week without being plate-checked.
+     */
+    CLEAN_DRIVER(
+        "Clean Sheet",
+        "A whole week. Legal car. Valid MOT. Not even a parking ticket. Who are you?",
+        1
     );
 
     private final String name;

@@ -3577,7 +3577,38 @@ public enum Material {
      * Press E at a PARK_BENCH while holding this to register 1 community service hour.
      * Tooltip: "British Racing Green. For benches, apparently."
      */
-    TIN_OF_PAINT("Tin of Paint");
+    TIN_OF_PAINT("Tin of Paint"),
+
+    // ── Issue #1146: Mick's MOT & Tyre Centre ────────────────────────────────
+
+    /**
+     * Tyre — a car tyre removed during Advisory Repairs or chopped from a scrapped car.
+     * Used as a repair component at REPAIR_RAMP_PROP (+15–20 roadworthiness).
+     * Fenceable for 3 COIN. Tooltip: "One careful owner. One careless one."
+     */
+    TYRE("Tyre"),
+
+    /**
+     * Car Part — a generic salvage component yielded by the chop-shop in Bay 2.
+     * Fenceable at FenceSystem for 8–12 COIN.
+     * Tooltip: "Could be anything. Probably wasn't legal to remove it."
+     */
+    CAR_PART("Car Part"),
+
+    /**
+     * Blank Logbook — a clean V5C document sold by Mick at MARCHETTI_CREW Respect ≥ 50.
+     * Required for the Car Ringing service (clears stolen flag for 25 COIN + this item).
+     * Tooltip: "An empty history. Brand new past. The DVLA would disagree."
+     */
+    BLANK_LOGBOOK("Blank Logbook"),
+
+    /**
+     * MOT Certificate — issued after a Dodgy MOT at MOT_RAMP_PROP.
+     * Clears the UNROADWORTHY flag; 25% Terry walk-in detection risk.
+     * Adds FRAUDULENT_MOT to CriminalRecord if detected.
+     * Tooltip: "Valid for 12 months. Or until the wheels fall off."
+     */
+    MOT_CERT("MOT Certificate");
 
     private final String displayName;
 
@@ -4476,6 +4507,16 @@ public enum Material {
             case TIN_OF_PAINT:            return cs(0.18f, 0.50f, 0.22f,  // British Racing Green
                                                     0.65f, 0.60f, 0.55f); // Tin silver
 
+            // Issue #1146: Mick's MOT & Tyre Centre
+            case TYRE:                    return cs(0.18f, 0.18f, 0.18f,  // Rubber black
+                                                    0.42f, 0.42f, 0.45f); // Steel rim
+            case CAR_PART:                return cs(0.48f, 0.52f, 0.55f,  // Oily steel
+                                                    0.30f, 0.28f, 0.25f); // Grime shadow
+            case BLANK_LOGBOOK:           return cs(0.88f, 0.88f, 0.85f,  // Official cream
+                                                    0.10f, 0.30f, 0.60f); // DVLA blue stamp
+            case MOT_CERT:                return cs(0.92f, 0.92f, 0.88f,  // White certificate
+                                                    0.12f, 0.55f, 0.22f); // Green PASS stamp
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4919,6 +4960,11 @@ public enum Material {
             case CASE_FILE_DOCUMENT:
             case WIRE_CUTTERS:
             case TIN_OF_PAINT:
+            // Issue #1146: Mick's MOT & Tyre Centre — not block items
+            case TYRE:
+            case CAR_PART:
+            case BLANK_LOGBOOK:
+            case MOT_CERT:
                 return false;
             default:
                 return true;
@@ -5850,6 +5896,16 @@ public enum Material {
                 return IconShape.TOOL;        // cutting tool
             case TIN_OF_PAINT:
                 return IconShape.CYLINDER;    // paint tin
+
+            // Issue #1146: Mick's MOT & Tyre Centre
+            case TYRE:
+                return IconShape.CYLINDER;    // round rubber tyre
+            case CAR_PART:
+                return IconShape.BOX;         // generic salvage part
+            case BLANK_LOGBOOK:
+                return IconShape.FLAT_PAPER;  // official V5C document
+            case MOT_CERT:
+                return IconShape.FLAT_PAPER;  // MOT pass certificate
 
             default:
                 return IconShape.BOX;

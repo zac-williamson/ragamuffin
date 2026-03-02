@@ -363,5 +363,21 @@ public enum RumourType {
      * — seeded by INSOMNIAC_PENSIONER Norman outside Patel's News between 05:00 and 08:00.
      *   Spreads via PUBLIC and PENSIONER NPCs.
      *   Minor ambient flavour; no direct gameplay effect. */
-    LOCAL_GOSSIP;
+    LOCAL_GOSSIP,
+
+    // ── Issue #1146: Mick's MOT & Tyre Centre ────────────────────────────────
+
+    /** "Heard someone got a dodgy MOT sorted over at Mick's — car's an absolute death trap."
+     * — seeded by GarageSystem when a JOURNALIST NPC is within 20 blocks during a Dodgy MOT
+     *   or when the 15% tip-off risk fires during Car Ringing.
+     * Spreads via JOURNALIST and PUBLIC NPCs.
+     * Seeds a NewspaperSystem headline and reduces Marchetti Respect −5 on fire. */
+    DODGY_PAPERWORK,
+
+    /** "Someone nicked Mick's petty cash. Broad daylight an' all."
+     * — seeded by GarageSystem when CROWBAR is used on CASH_TIN_PROP (noisy heist) and
+     *   any NPC is within 12 blocks.
+     * Spreads via PUBLIC NPCs near the garage.
+     * Minor Notoriety spike (+2) for player; no police escalation unless Wanted ≥ 1. */
+    GARAGE_THEFT;
 }

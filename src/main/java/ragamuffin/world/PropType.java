@@ -2056,7 +2056,55 @@ public enum PropType {
      * Press E to receive community service task assignment and sign in/out.
      * 3 hits to break; yields WOOD.
      */
-    COMMUNITY_SERVICE_STATION_PROP(0.80f, 1.60f, 0.20f, 3, Material.WOOD);
+    COMMUNITY_SERVICE_STATION_PROP(0.80f, 1.60f, 0.20f, 3, Material.WOOD),
+
+    // ── Issue #1146: Mick's MOT & Tyre Centre ────────────────────────────────
+
+    /**
+     * MOT Ramp Prop — the hydraulic ramp in Bay 1 used for MOT testing.
+     * Press E to access the MOT menu: Official MOT (Terry present only,
+     * Mon/Wed/Fri 09:00–12:00, 5 COIN), Dodgy MOT (15 COIN, instant pass,
+     * 25% Terry walk-in risk), Advisory Repairs (3–8 COIN, requires SCRAP_METAL/TYRE).
+     * 12 hits to break; yields SCRAP_METAL.
+     */
+    MOT_RAMP_PROP(3.0f, 1.2f, 6.0f, 12, Material.SCRAP_METAL),
+
+    /**
+     * Repair Ramp Prop — the second hydraulic ramp in Bay 2 used for chop-shop work.
+     * Press E to access the Chop Shop menu: "Chop for parts" yields 2–4 SCRAP_METAL
+     * + 1 TYRE + 1 CAR_PART. "Cut and shut" fuses two cars.
+     * 12 hits to break; yields SCRAP_METAL.
+     */
+    REPAIR_RAMP_PROP(3.0f, 1.2f, 6.0f, 12, Material.SCRAP_METAL),
+
+    /**
+     * Tyre Stack Prop — a stack of part-worn tyres leaning against the garage wall.
+     * Press E to buy: 1 TYRE for 2 COIN each (up to 4 per visit).
+     * 4 hits to break; yields TYRE.
+     */
+    TYRE_STACK_PROP(1.0f, 1.5f, 0.5f, 4, Material.TYRE),
+
+    /**
+     * Car For Sale Prop — one of three bangers on the forecourt (roadworthiness 25–55).
+     * Press E to inspect: shows price (20–40 COIN) and visible defects.
+     * 8 hits to break; yields SCRAP_METAL.
+     */
+    CAR_FOR_SALE_PROP(2.0f, 1.5f, 4.5f, 8, Material.SCRAP_METAL),
+
+    /**
+     * Garage Office Prop — the tiny office at the back of the garage.
+     * Contains a pegboard with car keys and the CASH_TIN_PROP.
+     * 6 hits to break; yields WOOD.
+     */
+    GARAGE_OFFICE_PROP(2.5f, 2.5f, 2.5f, 6, Material.WOOD),
+
+    /**
+     * Cash Tin Prop — Mick's petty cash tin on the office desk.
+     * Contains 20–40 COIN. Open silently with LOCKPICK or noisily with CROWBAR
+     * (NoiseSystem +6, seeds CRIME_SPOTTED rumour if witnessed).
+     * 3 hits to break; yields SCRAP_METAL.
+     */
+    CASH_TIN_PROP(0.3f, 0.2f, 0.2f, 3, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

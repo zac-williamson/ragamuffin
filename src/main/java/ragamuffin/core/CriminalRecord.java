@@ -427,7 +427,23 @@ public class CriminalRecord {
          * and the bribe is reported (20% chance on NPC calling police).
          * Penalty: +5 Notoriety.
          */
-        LODGE_BRIBERY("Corruption / lodge bribery");
+        LODGE_BRIBERY("Corruption / lodge bribery"),
+
+        // ── Issue #1146: Mick's MOT & Tyre Centre ─────────────────────────────
+
+        /**
+         * Recorded when the WantedSystem plate-checks the player's car and finds
+         * either the stolen flag set or roadworthiness < 30.
+         * Penalty: +5 Notoriety; car seized if Wanted ≥ 1.
+         */
+        DRIVING_UNREGISTERED("Driving an unregistered/unroadworthy vehicle"),
+
+        /**
+         * Recorded when Terry (MOT_TESTER) witnesses a Dodgy MOT being obtained
+         * at the MOT_RAMP_PROP (25% walk-in detection chance).
+         * Penalty: Notoriety +8, WantedSystem +1 star.
+         */
+        FRAUDULENT_MOT("Fraudulent MOT certificate");
 
         private final String displayName;
 

@@ -1623,7 +1623,40 @@ public enum NPCType {
      *         "You bunking off? Because it looks like you're bunking off." /
      *         "One more hour and you're done. Try to look enthusiastic."
      */
-    COMMUNITY_SERVICE_SUPERVISOR(25f, 0f, 0f, false);
+    COMMUNITY_SERVICE_SUPERVISOR(25f, 0f, 0f, false),
+
+    // ── Issue #1146: Mick's MOT & Tyre Centre ────────────────────────────────
+
+    /**
+     * Mechanic — Mick, the gruff proprietor of Mick's MOT &amp; Tyre Centre.
+     * Stands in Bay 1 during opening hours (Mon–Sat 08:00–18:00).
+     * Offers Official MOT (Mon/Wed/Fri 09:00–12:00 only), Dodgy MOT, Advisory Repairs,
+     * Car Ringing (MARCHETTI_CREW Respect ≥ 50), and Chop Shop services.
+     * Refuses service if player Notoriety ≥ 80.
+     * Speech: "What've you brought in?" / "She'll never pass, mate." /
+     *         "I'm not asking questions and you shouldn't either."
+     */
+    MECHANIC(40f, 6f, 2.0f, false),
+
+    /**
+     * Mechanic Apprentice — Kyle, Mick's 19-year-old apprentice.
+     * Stationed in Bay 2 during opening hours. Performs chop-shop work
+     * and manages the tyre stack. Never directly involved in MOT fraud.
+     * Speech: "Mick handles all the paperwork." / "I just do the tyres, mate."
+     */
+    MECHANIC_APPRENTICE(25f, 3f, 2.5f, false),
+
+    /**
+     * MOT Tester — Terry, the legitimate MOT tester (Mon/Wed/Fri only).
+     * Arrives at 09:00 and leaves at 12:00. During those hours, Official MOTs
+     * are available at the MOT_RAMP_PROP for 5 COIN.
+     * If Terry witnesses a Dodgy MOT in progress (25% chance), he reports it:
+     * FRAUDULENT_MOT recorded, Notoriety +8, Wanted +1.
+     * Speech: "She's got advisory on the nearside brake." /
+     *         "Bring it back when you've sorted the exhaust." /
+     *         "I can't pass that. Sorry."
+     */
+    MOT_TESTER(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
