@@ -1907,7 +1907,30 @@ public enum NPCType {
      * intimidated by the dog (bond ≥ 50 + off-lead), or let in (fines 8 COIN).
      * Not hostile; does not pursue the player.
      */
-    LICENCE_OFFICER(40f, 0f, 0f, false);
+    LICENCE_OFFICER(40f, 0f, 0f, false),
+
+    // ── Issue #1173: Northfield Balti House ──────────────────────────────────
+
+    /**
+     * Balti Owner — Mohammed; runs the kitchen at Mumtaz Baltis.
+     * 35 HP, deals 8 damage per hit. Confronts thieves in the kitchen;
+     * 50% chance of confrontation if present during the Naan Heist.
+     * Enters distressed dialogue after a hygiene violation (fake spice mechanic).
+     */
+    BALTI_OWNER(35f, 8f, 1.5f, false),
+
+    /**
+     * Balti Waiter — Tariq; Mohammed's son. Takes orders and runs to the phone
+     * on a dine-and-dash event. Passive; not hostile.
+     */
+    BALTI_WAITER(20f, 0f, 0f, false),
+
+    /**
+     * Balti Regular — seated rumour-source; 3–5 per session (12:00–15:00 / 17:30–23:30).
+     * Proximity ≤ 2 blocks: quietly exchanges rumours with nearby NPCs.
+     * Required for the FULL_BALTI achievement.
+     */
+    BALTI_REGULAR(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

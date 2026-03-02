@@ -3996,7 +3996,52 @@ public enum Material {
      * 20% chance each sale reports it, seeding FORGED_DOCUMENT criminal record
      * and wanted level. Three sales triggers a NewspaperSystem headline.
      */
-    FORGED_TV_LICENCE("Forged TV Licence");
+    FORGED_TV_LICENCE("Forged TV Licence"),
+
+    // ── Issue #1173: Northfield Balti House ──────────────────────────────────
+
+    /**
+     * Vegetable Balti — 5 COIN. Mohammed's wife's recipe; cheapest option.
+     * Hunger +40, Warmth +15. Clears TOOTHACHE_DEBUFF on consumption.
+     */
+    VEGETABLE_BALTI("Vegetable Balti"),
+
+    /**
+     * Mango Chutney — free with any meal. Tiny plastic pot.
+     * No direct effect; accompanies seated meal.
+     */
+    MANGO_CHUTNEY("Mango Chutney"),
+
+    /**
+     * Balti Box — takeaway container; stackable; satisfies HUNGER when consumed.
+     * Holds one portion. Carry-out variant of seated meal.
+     */
+    BALTI_BOX("Balti Box"),
+
+    /**
+     * Naan Bag — paper bag of naans; 2 uses. Stolen from kitchen during Naan Heist.
+     * Hunger +20 per use. Fence value: 1 COIN each.
+     */
+    NAAN_BAG("Naan Bag"),
+
+    /**
+     * Balti Catering Tin — large stolen catering tin from Mumtaz kitchen.
+     * No direct use; fence value 8 COIN at PawnShopSystem.
+     */
+    BALTI_CATERING_TIN("Balti Catering Tin"),
+
+    /**
+     * Fake Curry Powder — craftable from 2 CHALK + 1 TURMERIC.
+     * Sell to Mohammed as a "bulk spice deal" for 6 COIN.
+     * 30% chance next day: hygiene violation + NewspaperSystem headline.
+     */
+    FAKE_CURRY_POWDER("Fake Curry Powder"),
+
+    /**
+     * Restaurant Receipt — proof of purchase from Mumtaz Baltis.
+     * Used as alibi in WitnessSystem. Given on successful payment.
+     */
+    RESTAURANT_RECEIPT("Restaurant Receipt");
 
     private final String displayName;
 
@@ -5024,6 +5069,21 @@ public enum Material {
             case FORGED_TV_LICENCE:     return cs(0.82f, 0.78f, 0.65f,  // Fake cream paper
                                                   0.55f, 0.15f, 0.10f); // Suspicious red marks
 
+            // Issue #1173: Northfield Balti House
+            case VEGETABLE_BALTI:       return cs(0.40f, 0.62f, 0.22f,  // Green curry sauce
+                                                  0.72f, 0.52f, 0.18f); // Steel balti bowl
+            case MANGO_CHUTNEY:         return c(0.95f, 0.72f, 0.15f);  // Orange-gold chutney
+            case BALTI_BOX:             return cs(0.82f, 0.72f, 0.55f,  // Cardboard box
+                                                  0.20f, 0.60f, 0.25f); // Green logo
+            case NAAN_BAG:              return cs(0.92f, 0.88f, 0.72f,  // Toasted dough colour
+                                                  0.70f, 0.60f, 0.45f); // Brown bag
+            case BALTI_CATERING_TIN:    return cs(0.75f, 0.78f, 0.80f,  // Brushed steel
+                                                  0.50f, 0.52f, 0.55f); // Dark steel rim
+            case FAKE_CURRY_POWDER:     return cs(0.95f, 0.85f, 0.12f,  // Bright yellow
+                                                  0.88f, 0.70f, 0.08f); // Turmeric shade
+            case RESTAURANT_RECEIPT:    return cs(0.95f, 0.95f, 0.90f,  // White till paper
+                                                  0.35f, 0.35f, 0.35f); // Grey printed text
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5512,6 +5572,14 @@ public enum Material {
             case OWN_BRAND_COLA:
             case BARGAIN_BUCKET_CRISPS:
             case WHOLESALE_SPIRITS:
+            // Issue #1173: Northfield Balti House — not block items
+            case VEGETABLE_BALTI:
+            case MANGO_CHUTNEY:
+            case BALTI_BOX:
+            case NAAN_BAG:
+            case BALTI_CATERING_TIN:
+            case FAKE_CURRY_POWDER:
+            case RESTAURANT_RECEIPT:
                 return false;
             default:
                 return true;
@@ -5657,6 +5725,14 @@ public enum Material {
             case SIGN_ON_LETTER:
             case CASE_FILE_DOCUMENT:
             case FAKE_SIGNAL_CHIP:
+            // Issue #1173: Northfield Balti House — food/small items sit on surfaces
+            case VEGETABLE_BALTI:
+            case MANGO_CHUTNEY:
+            case BALTI_BOX:
+            case NAAN_BAG:
+            case BALTI_CATERING_TIN:
+            case FAKE_CURRY_POWDER:
+            case RESTAURANT_RECEIPT:
                 return true;
             default:
                 return false;
@@ -6595,6 +6671,22 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official certificate
             case FORGED_TV_LICENCE:
                 return IconShape.FLAT_PAPER;  // forged certificate
+
+            // Issue #1173: Northfield Balti House
+            case VEGETABLE_BALTI:
+                return IconShape.FOOD;        // balti bowl
+            case MANGO_CHUTNEY:
+                return IconShape.FOOD;        // small condiment pot
+            case BALTI_BOX:
+                return IconShape.BOX;         // cardboard takeaway box
+            case NAAN_BAG:
+                return IconShape.FLAT_PAPER;  // paper naan bag
+            case BALTI_CATERING_TIN:
+                return IconShape.CYLINDER;    // large catering tin
+            case FAKE_CURRY_POWDER:
+                return IconShape.BOX;         // spice packet
+            case RESTAURANT_RECEIPT:
+                return IconShape.FLAT_PAPER;  // till receipt
 
             default:
                 return IconShape.BOX;
