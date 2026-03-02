@@ -1340,7 +1340,32 @@ public enum NPCType {
     BRASS_BAND_MEMBER(20f, 0f, 0f, false),
 
     /** Rough sleepers who path between park / Greggs / Citadel / sewer; driven indoors by cold weather. */
-    ROUGH_SLEEPER(15f, 0f, 0f, false);
+    ROUGH_SLEEPER(15f, 0f, 0f, false),
+
+    // ── Issue #1128: Northfield NHS Walk-In Centre ─────────────────────────────
+
+    /**
+     * Triage Nurse Brenda — stationed at TRIAGE_DESK_PROP, 08:00–22:00 Mon–Sat
+     * and 10:00–18:00 Sun. Assesses incoming patients and assigns queue position.
+     * Calls police immediately if she hears a lockpick near the medicine room.
+     * Will not attack player directly.
+     */
+    TRIAGE_NURSE(30f, 0f, 0f, false),
+
+    /**
+     * Dr. Yusuf Okafor — Walk-In Centre doctor. Moves between TREATMENT_CUBICLE_PROPs,
+     * issues DISCHARGE_LETTER on treatment. Passive unless attacked (then calls
+     * WantedSystem). Same hours as TRIAGE_NURSE.
+     */
+    WALK_IN_DOCTOR(30f, 0f, 0f, false),
+
+    /**
+     * Paramedic (Andy or Sue) — based at AMBULANCE_BAY_PROP. Responds to NPC
+     * casualties (HP ≤ 5, noise ≥ 30): tends injured for 60 seconds then returns.
+     * Attacking a paramedic forces WantedSystem to Tier 4 minimum.
+     * Has above-average speed for rapid dispatch.
+     */
+    PARAMEDIC(35f, 5f, 1.5f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
