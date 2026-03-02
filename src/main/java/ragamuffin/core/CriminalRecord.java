@@ -866,13 +866,23 @@ public class CriminalRecord {
          * and Janet catches the fraud (40% fail rate).
          * Penalty: +15 Notoriety, +1 WantedSystem star.
          */
-        PRESCRIPTION_FRAUD("Prescription fraud"),
+        CHEMIST_PRESCRIPTION_FRAUD("Chemist prescription fraud"),
 
         /**
          * Recorded when the player crowbars the DRUG_SAFE_PROP at the chemist.
          * Penalty: +30 Notoriety, +3 WantedSystem stars; PHARMACY_RAID rumour seeded.
          */
-        PHARMACY_BURGLARY("Pharmacy burglary");
+        PHARMACY_BURGLARY("Pharmacy burglary"),
+
+        // ── Issue #1293: Compensation Kings — ClaimsManagementSystem ─────────
+
+        /**
+         * Recorded when the INSURANCE_INVESTIGATOR catches the player sprinting,
+         * fighting, or breaking blocks within 20 blocks during the 2-hour payout
+         * window following a claim filing. Cancels the pending payout.
+         * Penalty: Notoriety +15, WantedSystem +1 star.
+         */
+        INSURANCE_FRAUD("Insurance fraud (fraudulent personal injury claim)");
 
         private final String displayName;
 

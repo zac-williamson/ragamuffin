@@ -504,8 +504,8 @@ public class KaraokeSystem {
         if (nearbyNpcs != null) {
             for (NPC npc : nearbyNpcs) {
                 if (npc == null) continue;
-                float dx = npc.getX() - playerX;
-                float dz = npc.getZ() - playerZ;
+                float dx = npc.getPosition().x - playerX;
+                float dz = npc.getPosition().z - playerZ;
                 float dist = (float) Math.sqrt(dx * dx + dz * dz);
                 if (dist <= WITNESS_RADIUS) {
                     witnessed = true;
@@ -520,7 +520,7 @@ public class KaraokeSystem {
                 notorietySystem.addNotoriety(NOTORIETY_SABOTAGE_WITNESSED, cb);
             }
             if (wantedSystem != null) {
-                wantedSystem.addWantedStars(1, playerX, 0f, playerZ, cb);
+                wantedSystem.addWantedStars(1, playerX, 0f, playerZ, null);
             }
             return SabotageResult.CUT_WITNESSED;
         }
@@ -553,9 +553,8 @@ public class KaraokeSystem {
         }
 
         // Wanted star
-        AchievementCallback cb = achievementCallback();
         if (wantedSystem != null) {
-            wantedSystem.addWantedStars(1, playerX, 0f, playerZ, cb);
+            wantedSystem.addWantedStars(1, playerX, 0f, playerZ, null);
         }
 
         // Achievement

@@ -507,7 +507,7 @@ public class InternetCafeSystem {
         inventory.removeItem(Material.ENERGY_DRINK, 1);
         backRoomAccess = true;
         if (hamza != null) {
-            hamza.setSpeechText("Don't tell my uncle.");
+            hamza.setSpeechText("Don't tell my uncle.", 5f);
         }
         return BribeResult.ACCESS_GRANTED;
     }
@@ -538,8 +538,8 @@ public class InternetCafeSystem {
         // Check printing in plain sight
         if (!inBackRoom && asifWatching) {
             if (asif != null) {
-                asif.setState(NPCState.ALERT);
-                asif.setSpeechText("Oi — what are you printing?");
+                asif.setState(NPCState.AGGRESSIVE);
+                asif.setSpeechText("Oi — what are you printing?", 5f);
             }
             if (wantedSystem != null) {
                 wantedSystem.addWantedStars(PRINTING_CAUGHT_WANTED_STARS,
@@ -635,8 +635,7 @@ public class InternetCafeSystem {
                 criminalRecord.record(CriminalRecord.CrimeType.CYBER_FRAUD);
             }
             if (wantedSystem != null) {
-                wantedSystem.addWantedStars(1, 0f, 0f, 0f,
-                        WantedSystem.CrimeContext.CRIMINAL_DAMAGE);
+                wantedSystem.addWantedStars(1, 0f, 0f, 0f, null);
             }
         }
 

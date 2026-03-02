@@ -10,6 +10,7 @@ import ragamuffin.entity.NPCType;
 import ragamuffin.ui.AchievementSystem;
 import ragamuffin.ui.AchievementType;
 import ragamuffin.world.PropType;
+import ragamuffin.core.Faction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -563,7 +564,7 @@ public class FootballSystem {
 
     private float computeRoversChance(Weather weather) {
         float chance = BASE_GOAL_CHANCE;
-        if (factionSystem != null && factionSystem.getRespect(FactionSystem.Faction.STREET_LADS) >= 60) {
+        if (factionSystem != null && factionSystem.getRespect(Faction.STREET_LADS) >= 60) {
             chance += FACTION_RESPECT_BUFF;
         }
         if (weather == Weather.RAIN || weather == Weather.DRIZZLE) {
@@ -577,7 +578,7 @@ public class FootballSystem {
 
     private float computeCouncilChance(Weather weather) {
         float chance = BASE_GOAL_CHANCE;
-        if (factionSystem != null && factionSystem.getRespect(FactionSystem.Faction.THE_COUNCIL) >= 60) {
+        if (factionSystem != null && factionSystem.getRespect(Faction.THE_COUNCIL) >= 60) {
             chance += FACTION_RESPECT_BUFF;
         }
         if (weather == Weather.RAIN || weather == Weather.DRIZZLE) {
@@ -652,10 +653,10 @@ public class FootballSystem {
         if (factionSystem != null) {
             if (score[0] > score[1]) {
                 // Rovers win
-                factionSystem.applyRespectDelta(FactionSystem.Faction.STREET_LADS, 3);
+                factionSystem.applyRespectDelta(Faction.STREET_LADS, 3);
             } else if (score[1] > score[0]) {
                 // Council FC win
-                factionSystem.applyRespectDelta(FactionSystem.Faction.THE_COUNCIL, 3);
+                factionSystem.applyRespectDelta(Faction.THE_COUNCIL, 3);
             }
         }
 
@@ -799,7 +800,7 @@ public class FootballSystem {
                     notorietySystem.addNotoriety(NOTORIETY_RED_CARD, achievementCb);
                 }
                 if (factionSystem != null) {
-                    factionSystem.applyRespectDelta(FactionSystem.Faction.THE_COUNCIL, -5);
+                    factionSystem.applyRespectDelta(Faction.THE_COUNCIL, -5);
                 }
                 return TackleResult.RED_CARD;
             }
@@ -881,7 +882,7 @@ public class FootballSystem {
         playerCardCount = 2;
         // WantedSystem +2 stars — we use duck typing to avoid hard dependency
         if (wantedSystem instanceof WantedSystem) {
-            ((WantedSystem) wantedSystem).addStars(2);
+            ((WantedSystem) wantedSystem).addWantedStars(2, 0f, 0f, 0f, null);
         }
     }
 

@@ -356,7 +356,7 @@ public class PrimarySchoolSystem {
      * @return true if within school run hours
      */
     public boolean isSchoolRunActive(TimeSystem timeSystem) {
-        float hour = timeSystem.getHour();
+        float hour = timeSystem.getTime();
         return (hour >= SCHOOL_RUN_MORNING_START && hour < SCHOOL_RUN_MORNING_END)
                 || (hour >= SCHOOL_RUN_AFTERNOON_START && hour < SCHOOL_RUN_AFTERNOON_END);
     }
@@ -426,7 +426,7 @@ public class PrimarySchoolSystem {
      * @return true if within canteen hours
      */
     public boolean isCanteenOpen(TimeSystem timeSystem) {
-        float hour = timeSystem.getHour();
+        float hour = timeSystem.getTime();
         return hour >= CANTEEN_OPEN_HOUR && hour < CANTEEN_CLOSE_HOUR;
     }
 
@@ -481,7 +481,7 @@ public class PrimarySchoolSystem {
             // Caught: Ms. Pearson alerted, wanted stars added
             if (wantedSystem != null) {
                 wantedSystem.addWantedStars(PICKPOCKET_CAUGHT_WANTED_STARS,
-                        0f, 0f, 0f, false, false, null);
+                        0f, 0f, 0f, null);
             }
             if (criminalRecord != null) {
                 criminalRecord.record(CriminalRecord.CrimeType.SCHOOL_INTRUDER);
@@ -624,7 +624,7 @@ public class PrimarySchoolSystem {
      * Returns true if it is Monday morning (day % 7 == 1 and hour before 12:00).
      */
     public static boolean isMondayMorning(int dayNumber, TimeSystem timeSystem) {
-        return (dayNumber % 7 == 1) && (timeSystem.getHour() < 12.0f);
+        return (dayNumber % 7 == 1) && (timeSystem.getTime() < 12.0f);
     }
 
     /**
@@ -743,7 +743,7 @@ public class PrimarySchoolSystem {
         }
         if (wantedSystem != null) {
             wantedSystem.addWantedStars(OFSTED_SABOTAGE_WANTED_STARS,
-                    0f, 0f, 0f, false, false, null);
+                    0f, 0f, 0f, null);
         }
         if (!ofstedSaboteurAwarded && achievementSystem != null) {
             achievementSystem.unlock(AchievementType.OFSTED_SABOTEUR);
@@ -765,7 +765,7 @@ public class PrimarySchoolSystem {
      * @return true if within gate hours
      */
     public boolean isGateOpen(TimeSystem timeSystem) {
-        float hour = timeSystem.getHour();
+        float hour = timeSystem.getTime();
         return hour >= GATE_OPEN_HOUR && hour < GATE_CLOSE_HOUR;
     }
 
@@ -811,7 +811,7 @@ public class PrimarySchoolSystem {
         }
         if (wantedSystem != null) {
             wantedSystem.addWantedStars(INTRUDER_WANTED_STARS,
-                    0f, 0f, 0f, false, false, null);
+                    0f, 0f, 0f, null);
         }
         if (notorietySystem != null) {
             notorietySystem.addNotoriety(INTRUDER_NOTORIETY, null);

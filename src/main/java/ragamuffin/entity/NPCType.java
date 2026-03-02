@@ -2282,12 +2282,6 @@ public enum NPCType {
     // ── Issue #1251: Northfield Street Chuggers ───────────────────────────────
 
     /**
-     * Chugger — charity mugger NPC patrolling the high street on weekdays 09:00–17:00.
-     * Acosts the player within 3 blocks; clipboard-wielding fundraiser.
-     */
-    CHUGGER(20f, 0f, 0f, false),
-
-    /**
      * Chugger Leader — Tracy, the relentlessly positive team leader who stands near the
      * CHARITY_CLIPBOARD_STAND_PROP outside the charity shop. Manages the shift quota
      * and can hire the player as a chugger.
@@ -2324,15 +2318,6 @@ public enum NPCType {
      * HP: 30f, attack: 3f, cooldown: 2.0f, hostile: true.
      */
     RIVAL_RAGBONE_MAN(30f, 3f, 2.0f, true),
-
-    /**
-     * Council Enforcement Officer — patrols on Fridays (55% chance). Checks whether
-     * Barry has BARRY_LICENCE_STATUS. If not, impounds the van for 48 in-game hours
-     * and flees Barry. Player can warn Barry, bribe with TIN_OF_BEANS (60% success),
-     * or forged licence clears the stop.
-     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
-     */
-    COUNCIL_ENFORCEMENT(20f, 0f, 0f, false),
 
     // ── Issue #1259: Northfield Pub Quiz Night ────────────────────────────────
 
@@ -2434,18 +2419,6 @@ public enum NPCType {
     FAIRGROUND_WORKER(35f, 4f, 2.0f, false),
 
     // ── Issue #1282: Northfield Day & Night Chemist ───────────────────────────
-
-    /**
-     * PHARMACIST — Janet, the Day &amp; Night Chemist pharmacist.
-     * <ul>
-     *   <li>Staffs Mon–Sat 09:00–22:00, Sun 10:00–18:00.</li>
-     *   <li>Dispenses PRESCRIPTION_MEDS for valid PRESCRIPTION_SLIP (10s wait).</li>
-     *   <li>Detects shoplifting at 20% base rate (doubled if a SHOP_WORKER is in the aisle).</li>
-     *   <li>Must be distracted 3× at the till counter to open the STAFF_DOOR heist route.</li>
-     * </ul>
-     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
-     */
-    PHARMACIST(30f, 0f, 0f, false),
 
     /**
      * METHADONE_CLIENT — queues at the chemist for methadone dispensing (13:30–14:30).
