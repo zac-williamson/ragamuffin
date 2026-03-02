@@ -39824,3 +39824,258 @@ The player can:
 // Integrates: FenceSystem, WantedSystem, CarDealershipSystem, WeatherSystem,
 //   TimeSystem, RumourNetwork, NotorietySystem, StreetEconomySystem, WarmthSystem,
 //   NewspaperSystem, AchievementSystem, CriminalRecord, NoiseSystem, DisguiseSystem
+
+---
+
+## Add Northfield Travellers' Site — Sudden Arrival, Horse Fair & the Tarmac Scam
+
+**Issue**: Add a Northfield Travellers' Site — an emergent, temporary landmark that
+materialises on the edge of town every 5–8 in-game days. Caravans roll in overnight,
+bringing horse-trading, fortune telling, aggressive tarmacing offers, and a frantic
+NeighbourhoodWatch response. The council eventually issues an eviction notice and sends
+bailiffs, giving the player a tight window to trade, scam, or help the community before
+it disappears.
+
+### Overview
+The travellers' site is not a fixed landmark — it **appears dynamically** on the wasteland
+between the industrial estate and the canal towpath. The `TravellersSystem` manages the
+full lifecycle: overnight arrival → active trading days → council notice → bailiff eviction
+→ site cleared. At Vibes ≥ 60 the NeighbourhoodWatch mobilises within 30 in-game minutes
+of arrival, regardless of any actual wrongdoing.
+
+New system: `TravellersSystem.java` in `ragamuffin.core`.
+New landmark type: `TRAVELLERS_SITE` (dynamic, does not persist between sessions).
+
+### Lifecycle
+| Phase | Trigger | Duration |
+|---|---|---|
+| **Arrival** | Random (5–8 day interval, midnight) | 1 in-game hour setup |
+| **Active** | Site fully set up | 3–5 in-game days |
+| **Noticed** | Council NPC files complaint | 1 in-game day |
+| **Eviction Notice** | After "Noticed" phase | 1 in-game day |
+| **Bailiff Arrival** | After notice expires | Site cleared in 30 min |
+| **Gone** | All NPCs despawn, props removed | — |
+
+### Key NPCs
+- **Big Paddy** (`TRAVELLER_PATRIARCH`) — the elder of the group. Sits by the main
+  fire (`CAMPFIRE_PROP`) outside the largest caravan. Buys and sells: scrap metal,
+  copper pipe, horses (HORSE prop, figurative). Will fence `SCRAP_METAL` at 20%
+  above StreetEconomy rate, no questions asked. If player has Notoriety ≥ 50, Paddy
+  treats them as a peer and offers the **Tarmac Partnership** (see below).
+- **Bridie** (`TRAVELLER_FORTUNE_TELLER`) — a fortune teller in a small tent
+  (`FORTUNE_TENT_PROP`). Press E, pay 2 COIN. She gives a random prophecy that
+  hints at an upcoming event (rumour from `RumourNetwork` delivered as mystical
+  metaphor). One free reading per site visit if player has a `LUCKY_HEATHER` item.
+- **Young Lads** (`TRAVELLER_YOUTH`) × 3–5 — cheeky but not hostile unless provoked.
+  Will trade `LUCKY_HEATHER` items for small COIN. If the player attacks one, the
+  entire group becomes HOSTILE and Paddy refuses further trade.
+- **Tarmac Crew** (`TRAVELLER_TARMAC_CREW`) × 2 — wander the residential blocks
+  adjacent to the site during Active phase (08:00–18:00), knocking on doors
+  (press E on house DOOR_PROP within 20 blocks of any PENSIONER NPC) and offering
+  "to do your drive for a good price, love." Each crew member can complete one
+  tarmac job per in-game day, earning 8 COIN paid to `TravellersSystem` funds.
+- **Horse** (`TRAVELLER_HORSE`) × 1–2 — a horse tethered by rope near the caravans
+  (`HORSE_TETHER_PROP`). Press E to "untether" — the horse wanders freely. If
+  police see an untethered horse on a road, `NoiseSystem` spike 0.5 and all nearby
+  NPCs stop and stare. Tethered horse can be sold via FenceSystem for 15 COIN as
+  a `HORSE_DEED` item (morally questionable; -5 StreetReputation with travellers).
+
+### Player Activities
+1. **Sell scrap** — bring `SCRAP_METAL`, `COPPER_PIPE`, or `CIRCUIT_BOARD` to Big Paddy.
+   He buys at 120% of StreetEconomy rate. No Notoriety check, no WitnessSystem risk.
+   Limit: 20 COIN worth per site visit.
+
+2. **Get a fortune** — pay Bridie 2 COIN. She delivers a cryptic reading that paraphrases
+   one genuine upcoming `RumourNetwork` event (e.g. "I see a great race... a dog will
+   lose who should have won" when a fixed greyhound race is scheduled). First visit
+   free if holding `LUCKY_HEATHER`.
+
+3. **Buy Lucky Heather** — `TRAVELLER_YOUTH` NPCs sell `LUCKY_HEATHER` bunches for
+   1 COIN. Item satisfies `NeedType.BORED` (−5) and acts as a passive charm: +5% haggle
+   success rate across all systems while in inventory. Limited stock: 3 per site visit.
+
+4. **Tarmac Partnership** (Notoriety ≥ 50 required) — Big Paddy offers the player a
+   cut: join the tarmac crew for one in-game day. Player knocks on PENSIONER doors,
+   initiates the tarmac offer dialogue. Player earns 4 COIN per successful job (Paddy
+   keeps the rest). Each job takes 2 in-game minutes. `CriminalRecord.CrimeType.FRAUD`
+   added if a PENSIONER NPC reports the overcharge (30% chance per job, if player
+   does not immediately leave after payment).
+
+5. **Tip off / Side with the community** — at the "Noticed" phase, the player can:
+   - **Tip off NeighbourhoodWatch** (press E on NEIGHBOURHOOD_WATCH NPC while site is
+     active): site jumps directly to Eviction Notice phase; NeighbourhoodWatch Anger −10
+     (they consider it a win); Paddy's dialogue becomes hostile if he learns the player
+     grassed (WitnessSystem check).
+   - **Warn Big Paddy** (press E on Paddy while council NPC is nearby filing complaint):
+     Paddy immediately starts packing (skips Noticed phase, site leaves 1 day early);
+     StreetReputation +5; `LUCKY_HEATHER` gifted free; NeighbourhoodWatch Anger +5.
+
+6. **Stand against the bailiffs** — when bailiffs arrive (2× `BAILIFF` NPCs), the player
+   can physically obstruct them (stand in their path, break their line of sight). Each
+   blockage delays the eviction by 30 in-game seconds. Delaying by 3+ minutes gives
+   Paddy time to get the last caravan hitched and leave voluntarily (no forced eviction).
+   Award: `STAND_YOUR_GROUND` achievement. Risk: Wanted Tier 1 for obstruction.
+
+### Tarmac Scam Mechanic (Detail)
+The Tarmac Crew approach PENSIONER NPCs on residential streets. Dialogue:
+
+> *"Leftover tarmac from a job down the road, love — do your whole drive for a tenner."*
+
+- PENSIONER accepts with 60% probability (higher if `WARMTH` of NPC is low — cold, grateful
+  for attention).
+- Accepted: PENSIONER pays 8 COIN (deducted from a notional `PENSIONER_SAVINGS` pool).
+  Drive prop (`HOUSE_DRIVE_PROP`) texture changes to fresh tarmac (cosmetic only).
+  30% chance NPC reports overcharge next in-game day — `CriminalRecord.CrimeType.FRAUD`.
+- Declined: crew moves on. No consequence.
+- **EnvironmentalHealthSystem** tracks: if ≥ 3 complaints logged, EHO Officer spawns and
+  investigates — Paddy gets a `CriminalRecord.CrimeType.FRAUD` entry; crew despawn early.
+
+### NeighbourhoodWatch Response
+Upon site arrival, if `NeighbourhoodSystem.getVibes() >= 60`:
+- A `NEIGHBOURHOOD_WATCH` NPC (Mrs Partridge) appears within 30 in-game minutes at the
+  edge of the site, clipboard in hand, peering at caravans.
+- She spawns a `POLICE_ACTIVITY` rumour: *"Those travellers are back — nothing good ever
+  comes of it."*
+- She calls the Council NPC within 2 in-game hours → triggers the "Noticed" phase.
+- If player has spoken to Mrs Partridge more than twice (any reason), she recognises
+  them and asks: *"You're not with them, are you?"* — social check: deny (lie) or admit.
+  Admitting reduces Watch Anger by 5 (they respect honesty); denying has no effect.
+
+### Newspaper
+- **Arrival headline**: *"Travellers Set Up Camp Near Northfield Industrial Estate"*
+  (seeded 1 in-game day after arrival; `NewspaperSystem`).
+- **Eviction headline** (if bailiffs used): *"Council Moves On Northfield Travellers After
+  Complaints"*
+- **Resistance headline** (if player delayed bailiffs 3+ min): *"Mystery Figure Helps
+  Travellers Dodge Bailiffs — Council Fumes"*
+
+### Integrations
+- `NeighbourhoodSystem` — site arrival triggers Watch Anger +10; departure releases it
+- `NeighbourhoodWatchSystem` — Mrs Partridge response to site presence
+- `FenceSystem` — Paddy buys scrap at premium; horse deed sellable
+- `EnvironmentalHealthSystem` — fraud complaint escalation
+- `WantedSystem` — bailiff obstruction → Wanted Tier 1
+- `CriminalRecord` — `FRAUD` crime type (tarmac scam)
+- `RumourNetwork` — arrival and eviction seed `LOCAL_EVENT` and `POLICE_ACTIVITY` rumours
+- `WeatherSystem` — rain: tarmac crew stay inside caravans (no door-knocking); thunder:
+  arrival postponed by 1 day
+- `TimeSystem` — lifecycle phase transitions keyed to in-game clock and day counter
+- `NewspaperSystem` — arrival/eviction/resistance headlines
+- `NotorietySystem` — Notoriety ≥ 50 unlocks Tarmac Partnership
+- `NoiseSystem` — untethered horse on road: noise spike 0.5; campfire: ambient 0.2
+- `WarmthSystem` — campfire at site provides standard warmth radius (+40/min within 4 blocks)
+- `AchievementSystem` — see below
+- `WitnessSystem` — tarmac fraud detection; horse theft witnessed
+
+### New LandmarkType (add to LandmarkType.java)
+- `TRAVELLERS_SITE` — dynamic; appears on wasteland between industrial estate and canal
+
+### New NPCTypes (add to NPCType.java)
+- `TRAVELLER_PATRIARCH` — Big Paddy; elder, trader, fence contact
+- `TRAVELLER_FORTUNE_TELLER` — Bridie; fortune readings for 2 COIN
+- `TRAVELLER_YOUTH` — multiple; sell Lucky Heather, hostile if attacked
+- `TRAVELLER_TARMAC_CREW` — 2 NPC workers; roam residential streets during site Active phase
+- `TRAVELLER_HORSE` — tethered animal prop/NPC; untethering causes chaos
+
+### New AchievementTypes (add to AchievementType.java)
+| Achievement | Condition |
+|---|---|
+| `HEATHER_SELLER` | Buy Lucky Heather from the travellers 3 times across different site visits |
+| `MYSTIC_MEG` | Have a fortune reading that accurately predicts an in-game event |
+| `TARMAC_KING` | Complete 5 tarmac jobs in a single site visit without a fraud complaint |
+| `STAND_YOUR_GROUND` | Delay the bailiff eviction for 3+ minutes, allowing voluntary departure |
+| `PADDY_S_MATE` | Warn Big Paddy about the council 3 times across separate site visits |
+| `HORSE_LIBERATOR` | Untether a horse and let it wander into a police NPC's path |
+
+### New Materials (add to Material.java)
+- `LUCKY_HEATHER` — small charm; sold by TRAVELLER_YOUTH for 1 COIN; +5% haggle rate passive
+- `HORSE_DEED` — fenceable item from untethering horse; sold at FenceSystem for 15 COIN
+
+### New PropTypes (add to PropType.java)
+- `CARAVAN_PROP` — large static prop; traveller residence (4×2×3 blocks)
+- `FORTUNE_TENT_PROP` — small canvas tent (2×2×2); Bridie's workspace
+- `HORSE_TETHER_PROP` — rope post with horse graphic
+- `HOUSE_DRIVE_PROP` — cosmetic driveway surface; tarmac crew "upgrade" target
+
+### Unit Tests (implement in `TravellersSystemTest.java`)
+- `TravellersSystem.shouldArrive(daysSinceLastVisit=4, rng=seeded)` → false (< 5 days)
+- `TravellersSystem.shouldArrive(daysSinceLastVisit=6, rng=seeded)` → determined by arrival probability
+- `TravellersSystem.isActive()` → true during Active phase; false during Gone phase
+- `TravellersSystem.getPhase(daysSinceArrival=0)` → ARRIVAL
+- `TravellersSystem.getPhase(daysSinceArrival=2)` → ACTIVE
+- `TravellersSystem.getPhase(daysSinceArrival=4)` → NOTICED (after council NPC visit)
+- `TravellersSystem.sellScrap(items=[SCRAP_METAL×3], economyRate=5)` → player receives 18 COIN (120% × 3 × 5)
+- `TravellersSystem.sellScrap(items=[SCRAP_METAL×5], economyRate=5)` → capped at 20 COIN worth; partial sale
+- `TravellersSystem.fortuneReading(rng=seeded, rumour=UPCOMING_RACE_FIXED)` → returns metaphor string containing race/dog reference
+- `TravellersSystem.tarmacJob(npcType=PENSIONER, warmth=30, rng=seeded)` → accepted (warmth < 50 increases acceptance)
+- `TravellersSystem.tarmacJob(npcType=PENSIONER, warmth=80, rng=seeded)` → probabilistic based on 60% base rate
+- `TravellersSystem.tarmacFraudCheck(rng=seeded)` → CriminalRecord.FRAUD added with 30% probability
+- `TravellersSystem.untetherhorse()` → TRAVELLER_HORSE state = WANDERING; NoiseSystem event magnitude 0.5
+- `TravellersSystem.warnPaddy(councilNearby=true)` → phase jumps to GONE_VOLUNTARY; StreetReputation +5
+- `TravellersSystem.tipOffWatch(watchPresent=true)` → phase jumps to EVICTION_NOTICE; WatchAnger −10
+- `TravellersSystem.delayBailiff(totalDelaySeconds=180)` → isVoluntaryDeparture() = true; STAND_YOUR_GROUND unlocked
+
+### Integration Tests — implement these exact scenarios
+
+1. **Site arrives overnight — caravans and NPCs spawn correctly**: Advance TimeSystem by
+   6 in-game days (sufficient to clear the 5-day minimum interval). Force
+   `TravellersSystem.forceArrival()`. Advance TimeSystem 1 in-game hour (arrival setup).
+   Verify `TRAVELLERS_SITE` landmark registered at wasteland coordinates. Verify ≥ 3
+   `CARAVAN_PROP` props spawned. Verify `TRAVELLER_PATRIARCH` NPC (Big Paddy) is present at
+   the CAMPFIRE_PROP. Verify `TRAVELLER_FORTUNE_TELLER` (Bridie) present at FORTUNE_TENT_PROP.
+   Verify 2× `TRAVELLER_TARMAC_CREW` NPCs present. Verify `TRAVELLER_HORSE` NPC tethered
+   at HORSE_TETHER_PROP.
+
+2. **Sell scrap to Big Paddy at premium rate**: Active phase. Set StreetEconomySystem scrap
+   rate to 5 COIN/unit. Give player 4× `SCRAP_METAL`. Press E on Paddy (TRAVELLER_PATRIARCH).
+   Select sell option. Verify player receives 24 COIN (4 × 5 × 1.2 = 24). Verify scrap removed
+   from inventory. Sell another 2× SCRAP_METAL. Verify transaction limited: only 20 COIN
+   worth accepted total per visit; excess returned. Verify RumourNetwork has no new entry
+   (no WitnessSystem event for legitimate trade with Paddy).
+
+3. **Tarmac crew scam triggers fraud complaint**: Active phase. Advance TimeSystem to 10:00.
+   Verify a `TRAVELLER_TARMAC_CREW` NPC has left the site and is within 20 blocks of a
+   PENSIONER NPC. The crew NPC interacts with the pensioner (2-minute job). Verify
+   `HOUSE_DRIVE_PROP` texture updated to tarmac state. Advance 1 in-game day. Verify
+   30% probability of `CriminalRecord.CrimeType.FRAUD` entry. If 3 FRAUD entries exist,
+   verify `EnvironmentalHealthSystem` has spawned an EHO Officer NPC and `TRAVELLER_TARMAC_CREW`
+   NPCs are in DESPAWNING state.
+
+4. **NeighbourhoodWatch mobilises and accelerates eviction**: Set `NeighbourhoodSystem.vibes`
+   to 65. Force site arrival. Advance 30 in-game minutes. Verify `NEIGHBOURHOOD_WATCH` NPC
+   (Mrs Partridge) has spawned at site boundary. Verify `RumourNetwork` contains a
+   `POLICE_ACTIVITY` rumour with text referencing travellers. Advance 2 in-game hours.
+   Verify `TravellersSystem.getPhase()` = NOTICED. Verify a `COUNCIL_MEMBER` NPC has visited
+   the site. Verify `NewspaperSystem` headline queued contains "Travellers".
+
+5. **Player delays bailiff — voluntary departure**: Advance phase to BAILIFF_ARRIVAL.
+   Verify 2× `BAILIFF` NPCs spawned at site perimeter. Player stands in BAILIFF path.
+   Simulate player blocking both bailiffs (each 90-second block). Verify total delay ≥ 180
+   seconds. Verify `TravellersSystem.isVoluntaryDeparture()` = true. Verify all traveller NPCs
+   transition to `NPCState.DESPAWNING` (packed up voluntarily). Verify `STAND_YOUR_GROUND`
+   achievement awarded. Verify player WantedSystem tier +1 (bailiff obstruction). Verify
+   NewspaperSystem headline queued contains "Mystery Figure".
+
+6. **Warn Paddy — site leaves early, player rewarded**: Active phase with COUNCIL_MEMBER
+   NPC within 10 blocks of site. Player presses E on Big Paddy. Select "Warn him about the
+   council." Verify `TravellersSystem.getPhase()` = GONE (voluntary departure). Verify all
+   CARAVAN_PROP props despawned within 5 in-game minutes. Verify player StreetReputation +5.
+   Verify `LUCKY_HEATHER` (×1) added to player inventory. Verify third warning across 3
+   separate site visits awards `PADDY_S_MATE` achievement.
+
+// ── Issue #1250: Northfield Travellers' Site ──────────────────────────────────
+// New: TravellersSystem.java in ragamuffin.core
+// New: Issue1250TravellersSystemTest.java in src/test/java/ragamuffin/integration/
+// New LandmarkType entry: TRAVELLERS_SITE (dynamic) — add to LandmarkType.java
+// New NPCTypes: TRAVELLER_PATRIARCH, TRAVELLER_FORTUNE_TELLER, TRAVELLER_YOUTH,
+//   TRAVELLER_TARMAC_CREW, TRAVELLER_HORSE — add to NPCType.java
+// New AchievementTypes: HEATHER_SELLER, MYSTIC_MEG, TARMAC_KING, STAND_YOUR_GROUND,
+//   PADDY_S_MATE, HORSE_LIBERATOR — add to AchievementType.java
+// New CrimeType: FRAUD (if not present) — add to CriminalRecord.java
+// New Materials: LUCKY_HEATHER, HORSE_DEED — add to Material.java
+// New PropTypes: CARAVAN_PROP, FORTUNE_TENT_PROP, HORSE_TETHER_PROP,
+//   HOUSE_DRIVE_PROP — add to PropType.java
+// Integrates: NeighbourhoodSystem, NeighbourhoodWatchSystem, FenceSystem,
+//   EnvironmentalHealthSystem, WantedSystem, CriminalRecord, RumourNetwork,
+//   WeatherSystem, TimeSystem, NewspaperSystem, NotorietySystem, NoiseSystem,
+//   WarmthSystem, AchievementSystem, WitnessSystem, StreetEconomySystem
