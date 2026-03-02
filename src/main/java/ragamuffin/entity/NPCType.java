@@ -2008,7 +2008,16 @@ public enum NPCType {
      * Northfield Sporting &amp; Social Club on Friday/Saturday nights. Enters cheat mode
      * after player wins 3 consecutive hands (hidden ace probability 0.6).
      */
-    CARD_DEALER(30f, 0f, 0f, false);
+    CARD_DEALER(30f, 0f, 0f, false),
+
+    // ── Issue #1196: Environmental Health Officer ─────────────────────────────
+
+    /**
+     * Janet — Council Environmental Health Officer. Inspects food venues Mon–Fri
+     * 09:30–15:30. Passive; if assaulted seeds COUNCIL_ENFORCEMENT rumour, adds
+     * ASSAULT_ON_OFFICIAL crime, Wanted +3. HP 25f, no attack, not hostile.
+     */
+    ENVIRONMENTAL_HEALTH_OFFICER(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

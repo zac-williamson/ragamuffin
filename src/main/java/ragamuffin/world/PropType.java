@@ -2502,7 +2502,44 @@ public enum PropType {
      * InformationBrokerSystem when a {@code STASH_SITE} IntelligenceLot is applied.
      * Contains faction-appropriate loot. Destroyed by 3 punches; yields {@link Material#WOOD}.
      */
-    STASH_CRATE_PROP(0.60f, 0.60f, 0.60f, 3, Material.WOOD);
+    STASH_CRATE_PROP(0.60f, 0.60f, 0.60f, 3, Material.WOOD),
+
+    // ── Issue #1196: Environmental Health Officer ─────────────────────────────
+
+    /**
+     * HYGIENE_RATING_PROP — a Food Hygiene Rating Scheme sticker mounted near a
+     * food venue's front door. Displays current rating (1–5 stars). Breakable in
+     * 1 punch, drops HYGIENE_STICKER. Updated by EnvironmentalHealthSystem after
+     * each inspection.
+     */
+    HYGIENE_RATING_PROP(0.20f, 0.30f, 0.02f, 1, Material.HYGIENE_STICKER),
+
+    /**
+     * IMPROVEMENT_NOTICE_PROP — an official improvement notice placed by Janet on
+     * the venue counter after a rating ≤ 2 inspection. Venue NPC refuses to serve
+     * player while this is present (up to 1 in-game day).
+     */
+    IMPROVEMENT_NOTICE_PROP(0.30f, 0.04f, 0.21f, 1, Material.IMPROVEMENT_NOTICE),
+
+    /**
+     * CLOSURE_NOTICE_PROP — a red closure notice placed by Janet after a rating 1
+     * inspection. Venue is force-closed for 1 in-game day.
+     */
+    CLOSURE_NOTICE_PROP(0.30f, 0.04f, 0.21f, 1, null),
+
+    /**
+     * SUGGESTION_BOX_PROP — a wooden suggestion box at the Council Office.
+     * Player can post ANONYMOUS_NOTE (E interaction) to force Janet's next
+     * inspection to target a specific venue. One tip-off per in-game week.
+     */
+    SUGGESTION_BOX_PROP(0.25f, 0.30f, 0.25f, 5, null),
+
+    /**
+     * KITCHEN_PROP — a commercial kitchen interior fixture present in food venues.
+     * E-hold (5 s, GRAFTING ≥ Apprentice) raises venue condition +10.
+     * Crowbar sabotage variant: condition −25, CRIMINAL_DAMAGE CrimeType.
+     */
+    KITCHEN_PROP(1.20f, 1.00f, 0.80f, 10, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

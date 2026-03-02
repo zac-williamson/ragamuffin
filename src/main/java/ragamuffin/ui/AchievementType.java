@@ -3831,6 +3831,47 @@ public enum AchievementType {
         "Club Protector",
         "You saw off the Marchetti collector. Ron shook your hand. It was awkward but sincere.",
         1
+    ),
+
+    // ── Issue #1196: Environmental Health Officer ─────────────────────────────
+
+    /**
+     * Issue #1196: Awarded when the player successfully bribes Janet on first attempt.
+     */
+    GREASY_PALM(
+        "Greasy Palm",
+        "You slipped Janet a fiver. She took it without breaking eye contact. Respect.",
+        1
+    ),
+
+    /**
+     * Issue #1196: Awarded when the player sells a forged sticker that subsequently
+     * fools Janet for at least one inspection (real condition passed due to re-cleaning).
+     */
+    FIVE_STAR_FRAUDSTER(
+        "Five Star Fraudster",
+        "Your forged sticker fooled the inspector. Briefly. Probably.",
+        1
+    ),
+
+    /**
+     * Issue #1196: Awarded when the player uses the kitchen-cleaning interaction to
+     * raise a venue from rating 2 to rating 5 in a single inspection cycle.
+     */
+    CLEAN_KITCHEN(
+        "Clean Kitchen",
+        "You scrubbed that kitchen until it sparkled. Janet was almost impressed.",
+        1
+    ),
+
+    /**
+     * Issue #1196: Awarded when the player tips off the Council about a genuinely
+     * rat-infested venue (SkipDivingSystem rats active + tip leads to closure).
+     */
+    PUBLIC_HEALTH_HERO(
+        "Public Health Hero",
+        "You reported the rats. Nobody will thank you. But you did the right thing.",
+        1
     );
 
     private final String name;

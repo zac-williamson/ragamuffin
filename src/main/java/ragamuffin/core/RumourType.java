@@ -476,5 +476,18 @@ public enum RumourType {
      * — seeded by SportingSocialClubSystem when player catches CARD_DEALER cheating.
      * Spreads via SOCIAL_CLUB_STEWARD and CLUB_REGULAR NPCs.
      * Reduces MARCHETTI_CREW Respect by 5 (they run Mick). */
-    CARD_CHEAT;
+    CARD_CHEAT,
+
+    // ── Issue #1196: Environmental Health Officer ─────────────────────────────
+
+    /** "That [venue] got a one-star hygiene rating — I'm never eating there again."
+     * — seeded by EnvironmentalHealthSystem on 1–2 star inspection outcomes and
+     * on forgery detection. Reduces NPC footfall at the affected venue by 30%
+     * for 3 in-game days. Spreads via PUBLIC and PENSIONER NPCs. */
+    FOOD_HYGIENE,
+
+    /** "Council environmental health have been round — something's going on."
+     * — seeded on Janet assault or failed bribe within 15-block radius.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    COUNCIL_ENFORCEMENT;
 }

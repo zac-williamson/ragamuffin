@@ -4277,7 +4277,35 @@ public enum Material {
      * Crafting component for RUMOUR_NOTE (with PAPER).
      * Found at the post office counter or newsagent.
      */
-    PEN("Pen");
+    PEN("Pen"),
+
+    // ── Issue #1196: Environmental Health Officer ─────────────────────────────
+
+    /**
+     * Hygiene Sticker — peeled from a HYGIENE_RATING_PROP (1 punch) or collected.
+     * Base material for forging a FORGED_FIVE_STAR_STICKER at the PHOTOCOPIER_PROP.
+     */
+    HYGIENE_STICKER("Hygiene Sticker"),
+
+    /**
+     * Forged Five-Star Sticker — crafted from HYGIENE_STICKER + BLANK_PAPER at
+     * PHOTOCOPIER_PROP. Sell to a venue owner with rating ≤ 3 for 8 COIN.
+     * On Janet's follow-up inspection, forgery is detected → FRAUD crime, Wanted +2.
+     */
+    FORGED_FIVE_STAR_STICKER("Forged Five-Star Sticker"),
+
+    /**
+     * Improvement Notice — issued by Janet on a rating ≤ 2 inspection.
+     * Fence value 1 COIN; or hand to venue owner for +5 Respect with them.
+     */
+    IMPROVEMENT_NOTICE("Improvement Notice"),
+
+    /**
+     * Anonymous Note — craftable from BLANK_PAPER alone (fold and post).
+     * Post to SUGGESTION_BOX_PROP at Council Office to force Janet's next
+     * inspection to target a specific venue. One tip-off per in-game week.
+     */
+    ANONYMOUS_NOTE("Anonymous Note");
 
     private final String displayName;
 
@@ -7020,6 +7048,16 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // blank sheet
             case PEN:
                 return IconShape.CYLINDER;    // biro pen
+
+            // Issue #1196: Environmental Health Officer
+            case HYGIENE_STICKER:
+                return IconShape.FLAT_PAPER;  // small sticker
+            case FORGED_FIVE_STAR_STICKER:
+                return IconShape.FLAT_PAPER;  // forged sticker
+            case IMPROVEMENT_NOTICE:
+                return IconShape.FLAT_PAPER;  // official notice
+            case ANONYMOUS_NOTE:
+                return IconShape.FLAT_PAPER;  // folded note
 
             default:
                 return IconShape.BOX;
