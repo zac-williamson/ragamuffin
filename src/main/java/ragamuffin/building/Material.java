@@ -4214,7 +4214,27 @@ public enum Material {
      * May contain random low-value items.
      * Tooltip: "Someone never put it out."
      */
-    CHARITY_BAG("Charity Bag");
+    CHARITY_BAG("Charity Bag"),
+
+    // ── Issue #1186: Northfield Probation Office ──────────────────────────────
+
+    /**
+     * Ankle Tag — an electronic monitoring device fitted by the Probation Officer
+     * on Enhanced Orders. Appears in the HUD while active.
+     * Curfew: 21:00–07:00, must remain within 20 blocks of the player's squat home.
+     * Breach (leaving curfew zone): WantedSystem +1 star, CURFEW_BREACH criminal record.
+     * Cutting the tag (FenceSystem, rep ≥ 40, 15 COIN): WantedSystem +3 stars, TAG_TAMPER record.
+     * Tooltip: "You can hear it beeping if you listen carefully."
+     */
+    ANKLE_TAG("Ankle Tag"),
+
+    /**
+     * Sign-In Form (Prop) — the official sign-in register at the probation office.
+     * Used internally to track fortnightly sign-in appointments.
+     * The player interacts with the PROBATION_RECEPTIONIST NPC to sign in.
+     * Tooltip: "A4, ring-bound, smells of despair and Tipp-Ex."
+     */
+    SIGN_IN_FORM_PROP("Sign-In Form");
 
     private final String displayName;
 
@@ -5274,6 +5294,12 @@ public enum Material {
             case MARKER_PEN:            return cs(0.10f, 0.10f, 0.10f,  // Black marker body
                                                   0.85f, 0.20f, 0.20f); // Red cap
 
+            // Issue #1186: Northfield Probation Office
+            case ANKLE_TAG:             return cs(0.12f, 0.12f, 0.18f,  // Black plastic casing
+                                                  0.22f, 0.68f, 0.22f); // Green LED indicator
+            case SIGN_IN_FORM_PROP:     return cs(0.95f, 0.95f, 0.92f,  // White A4 paper
+                                                  0.20f, 0.40f, 0.75f); // Blue official ink
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -5780,6 +5806,9 @@ public enum Material {
             case CHARITY_TABARD:
             case CHARITY_CLIPBOARD:
             case MARKER_PEN:
+            // Issue #1186: Northfield Probation Office — not block items
+            case ANKLE_TAG:
+            case SIGN_IN_FORM_PROP:
                 return false;
             default:
                 return true;
@@ -6916,6 +6945,12 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // clipboard with form
             case MARKER_PEN:
                 return IconShape.CYLINDER;    // marker pen
+
+            // Issue #1186: Northfield Probation Office
+            case ANKLE_TAG:
+                return IconShape.BOX;         // black plastic device
+            case SIGN_IN_FORM_PROP:
+                return IconShape.FLAT_PAPER;  // A4 sign-in register
 
             default:
                 return IconShape.BOX;

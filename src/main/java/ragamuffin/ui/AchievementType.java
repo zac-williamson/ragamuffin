@@ -3659,6 +3659,49 @@ public enum AchievementType {
         "Circuit Board Millionaire",
         "Ten circuit boards sold. Dave would be disgusted. Gary at the scrapyard is delighted.",
         10
+    ),
+
+    // ── Issue #1186: Northfield Probation Office ──────────────────────────────
+
+    /**
+     * Issue #1186: Awarded when the player completes all fortnightly sign-ins
+     * without missing one (entire probation order without breach).
+     */
+    STRAIGHT_AND_NARROW(
+        "Straight and Narrow",
+        "You signed in every fortnight. Every single one. Karen is almost impressed.",
+        1
+    ),
+
+    /**
+     * Issue #1186: Awarded when the player completes all 8 hours of community service
+     * across the three available postings (park litter, Food Bank sorting, Community
+     * Centre painting). Triggered by ProbationSystem.logServiceHours.
+     */
+    COMMUNITY_SPIRIT(
+        "Community Spirit",
+        "Eight hours of unpaid labour for the good of Northfield. You absolute legend.",
+        1
+    ),
+
+    /**
+     * Issue #1186: Awarded when the player's probation order is fully discharged
+     * (all sign-ins completed or 8-hour community service total reached).
+     */
+    DONE_MY_TIME(
+        "Done My Time",
+        "Order discharged. You are, technically, a model citizen. For now.",
+        1
+    ),
+
+    /**
+     * Issue #1186: Awarded when the player pays the Fence to cut the ANKLE_TAG,
+     * triggering TAG_TAMPER crime and the +3 star wanted escalation.
+     */
+    DONT_KNOW_YOU(
+        "I Don't Know You",
+        "You paid the Fence to cut your tag. The police would like a word. Several words.",
+        1
     );
 
     private final String name;

@@ -570,7 +570,26 @@ public enum LandmarkType {
      * RECYCLING, WEEE, METAL), Reuse Corner shelf, and hardcore bay (permit required).
      * Managed by RecyclingCentreSystem.
      */
-    RECYCLING_CENTRE;
+    RECYCLING_CENTRE,
+
+    // ── Issue #1186: Northfield Probation Office ──────────────────────────────
+
+    /**
+     * Issue #1186: Northfield Probation Office — Sign-In Orders, Ankle Tag Curfew
+     * &amp; Community Service Dodge.
+     *
+     * A 10×8×3 beige pebble-dash building placed between the Magistrates' Court
+     * and the JobCentre. Open Mon–Fri 09:00–17:00.
+     *
+     * <p>NPCs: PROBATION_OFFICER (Dave/Linda), PROBATION_RECEPTIONIST (Carol),
+     * 1–3 PROBATION_CLIENT in the waiting area.
+     *
+     * <p>Mechanics: fortnightly sign-in scheduling, breach escalation (2 misses →
+     * recall warrant), community service hour logging, ankle tag curfew (21:00–07:00).
+     *
+     * <p>Managed by ProbationSystem.
+     */
+    PROBATION_OFFICE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -661,6 +680,7 @@ public enum LandmarkType {
             case STADIUM_COACH_PARK:    return "Coach Park";
             case BOXING_CLUB:           return "Tommy's Gym";
             case RECYCLING_CENTRE:      return "Northfield Tip";
+            case PROBATION_OFFICE:      return "Northfield Probation Service";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
