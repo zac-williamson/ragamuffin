@@ -5067,7 +5067,39 @@ public enum Material {
      * Also raises the TRAFFIC_WARDEN touting threshold from 5 to 8 unlicensed touts,
      * and suppresses WantedSystem star accumulation from touting.
      */
-    TL_COUNCIL_PLATE("Taxi Licence Council Plate. Probably real.");
+    TL_COUNCIL_PLATE("Taxi Licence Council Plate. Probably real."),
+
+    // ── Issue #1278: Northfield Travelling Fairground ─────────────────────────
+
+    /**
+     * Candy Floss — purchased from CANDY_FLOSS_STALL_PROP for 2 COIN.
+     * Satisfies HUNGRY −8. Bulk-bag 5× into FAIRGROUND_CANDYFLOSS_BAG for resale hustle.
+     */
+    CANDY_FLOSS("Candy Floss"),
+
+    /**
+     * Toffee Apple — purchased from CANDY_FLOSS_STALL_PROP for 2 COIN.
+     * Satisfies HUNGRY −10.
+     */
+    TOFFEE_APPLE("Toffee Apple"),
+
+    /**
+     * Fairground Prize — won at STRONGMAN_PROP or RING_TOSS_STALL_PROP.
+     * Can be fenced for 3–5 COIN. A garish stuffed toy.
+     */
+    FAIRGROUND_PRIZE("Fairground Prize"),
+
+    /**
+     * Fairground Candy Floss Bag — crafted from 5× CANDY_FLOSS.
+     * Resale hustle: sell to NPCs near the fairground for 12 COIN (cost 10 = 2 COIN profit).
+     */
+    FAIRGROUND_CANDYFLOSS_BAG("Bag of Candy Floss"),
+
+    /**
+     * Fairground Ticket — purchased from Big Lenny (FAIRGROUND_BOSS) for 1 COIN per ride.
+     * Required to access Dodgems, Waltzers, or Strongman. One use.
+     */
+    FAIRGROUND_TICKET("Fairground Ticket");
 
     private final String displayName;
 

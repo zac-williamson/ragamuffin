@@ -725,7 +725,19 @@ public enum LandmarkType {
      * fault mechanic — 50% chance UTILITY_WORKER NPC repairs it next morning 08:00–10:00).
      * Repairing it awards LAST_PHONE_STANDING achievement and seeds PHONE_BOX_REPAIR rumour.
      */
-    PHONE_BOX_ESTATE;
+    PHONE_BOX_ESTATE,
+
+    // ── Issue #1278: Northfield Travelling Fairground ─────────────────────────
+
+    /**
+     * Travelling Fair — the biweekly travelling fairground that sets up on the park's
+     * east end. Present Friday 18:00 – Sunday 22:00 every fortnight.
+     * Managed by Big Lenny (FAIRGROUND_BOSS) and three FAIRGROUND_WORKER NPCs.
+     * Not a permanent landmark; used as a position tag for NPC spawning, police patrol
+     * awareness, and pickpocket crowd detection (6+ NPCs window).
+     * Managed by FairgroundSystem.java.
+     */
+    TRAVELLING_FAIR;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -829,6 +841,7 @@ public enum LandmarkType {
             case STREET_RACING_MEET:    return "Tesco Car Park (Meet)";
             case PHONE_BOX_HIGH_STREET: return "BT Phone Box";
             case PHONE_BOX_ESTATE:      return "BT Phone Box (Out of Order)";
+            case TRAVELLING_FAIR:       return "Northfield Travelling Fair";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

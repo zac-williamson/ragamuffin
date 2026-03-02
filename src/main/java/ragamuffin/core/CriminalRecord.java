@@ -820,7 +820,23 @@ public class CriminalRecord {
          * a dodgy package delivery and the package is flagged as stolen goods.
          * Penalty: +15 Notoriety, +2 WantedSystem stars.
          */
-        POSSESSION_OF_STOLEN_GOODS("Possession of stolen goods");
+        POSSESSION_OF_STOLEN_GOODS("Possession of stolen goods"),
+
+        // ── Issue #1278: Northfield Travelling Fairground ─────────────────────
+
+        /**
+         * Recorded when the player operates a rigged RING_TOSS_STALL_PROP and is caught
+         * by a FAIRGROUND_BOSS or POLICE NPC.
+         * Penalty: +8 Notoriety, RIGGED_GAME_EXPOSED rumour seeded to nearby NPCs.
+         */
+        RIGGED_GAME("Running a rigged game (ring toss)"),
+
+        /**
+         * Recorded when the player causes trouble at the travelling fairground:
+         * punching a FAIRGROUND_WORKER, destroying a ride prop, or triggering a crowd brawl.
+         * Penalty: +10 Notoriety, +1 WantedSystem star.
+         */
+        FAIRGROUND_TROUBLEMAKER("Fairground troublemaker");
 
         private final String displayName;
 

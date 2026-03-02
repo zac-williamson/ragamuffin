@@ -647,5 +647,22 @@ public enum RumourType {
     /** "Big Terry's boys are nicking A1's trade."
      * — seeded by MinicabSystem when the player touts for fares within 10 blocks of
      * the A1 Taxis rank. Spreads via PUBLIC NPCs; puts TaxiSystem on alert. */
-    TURF_WAR;
+    TURF_WAR,
+
+    // ── Issue #1278: Northfield Travelling Fairground ─────────────────────────
+
+    /** "The fair's in town this weekend — park's east end. Dodgems, waltzers, the lot."
+     * — seeded by FairgroundSystem when the fair opens (Friday 18:00).
+     * Spreads via PUBLIC and YOUTH_GANG NPCs; draws foot traffic toward TRAVELLING_FAIR. */
+    FAIR_IN_TOWN,
+
+    /** "Someone got nicked at the fair for rigging the ring toss — always knew it was bent."
+     * — seeded by FairgroundSystem when RIGGED_GAME is recorded in CriminalRecord.
+     * Spreads via PUBLIC NPCs within 30 blocks; adds +1 patrol awareness near TRAVELLING_FAIR. */
+    RIGGED_GAME_EXPOSED,
+
+    /** "Someone stripped the generator at the fair Sunday night — Big Lenny's fuming."
+     * — seeded by FairgroundSystem when DIESEL_GENERATOR_PROP is stripped for scrap (Sunday 23:00+).
+     * Spreads via PUBLIC and STREET_LAD NPCs; FAIRGROUND_BOSS becomes hostile for 24h. */
+    GENERATOR_STRIPPED;
 }
