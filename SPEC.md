@@ -30107,3 +30107,145 @@ If the player destroys evidence while WantedSystem tier ≥ 2, a POLICE_OFFICER 
 // New NPCTypes: RECYCLING_CENTRE_MANAGER, RECYCLING_CENTRE_WORKER (add to NPCType.java)
 // New PropTypes: SKIP_LARGE_PROP, RECYCLING_BIN_PROP, REUSE_SHELF_PROP, EWASTE_SKIP_PROP, COMPACTOR_PROP, GENERAL_WASTE_BAY_PROP, SITE_MANAGER_DESK_PROP, KETTLE_PROP (add to PropType.java)
 // New achievements: SKIP_ARCHAEOLOGIST, LATE_NIGHT_REGULAR, EVIDENCE_DESTROYED, CIVIC_DUTY, TIPPING_POINT (add to AchievementType.java)
+
+---
+
+## Issue #1128: Add Northfield NHS Walk-In Centre — Emergency Triage, the Four-Hour Wait & the Drug Cabinet Raid
+
+**Landmark**: `NHS_WALK_IN_CENTRE` (add to `LandmarkType.java`)
+**System class**: `WalkInCentreSystem.java` in `ragamuffin.core`
+**Display name**: `"Northfield Walk-In Centre"`
+
+### Overview
+
+A squat, brutalist NHS health centre on the edge of the town — just far enough from the high street to feel inconvenient. Flickering strip-lit waiting room, laminated "PLEASE DO NOT ABUSE OUR STAFF" signs, a blood pressure machine nobody uses correctly, and a small triage desk behind a perspex screen. Run by Triage Nurse Brenda (`TRIAGE_NURSE` NPC) and Dr. Yusuf Okafor (`WALK_IN_DOCTOR` NPC). Open 08:00–22:00 Monday–Saturday, 10:00–18:00 Sunday.
+
+The Walk-In Centre is the only place in the game where the player can receive **emergency healing** above and beyond the passive rest-based HealingSystem rate. When health drops below 25%, the player is notified "You need medical attention — find the Walk-In Centre." The wait time mechanic simulates the genuine British NHS experience: you'll wait 15–90 in-game minutes depending on how busy it is, and there's every chance you'll be sitting next to a PENSIONER with a verruca.
+
+An exterior-facing `AMBULANCE_BAY_PROP` is where the town's PARAMEDIC NPCs return after attending violent crime scenes — creating a visual feedback loop showing the consequences of the game's violence economy.
+
+### Building Layout (10×14×4 blocks)
+
+- **Exterior**: NHS blue and white BRICK facade; `AMBULANCE_BAY_PROP` to the left (single bay); `NHS_SIGN_PROP` above entrance; `CIGARETTE_BIN_PROP` by the door (grimly ironic)
+- **Reception & waiting room**: `TRIAGE_DESK_PROP` (Brenda behind it; perspex screen); 6× `WAITING_CHAIR_PROP` arranged in two rows; `LEAFLET_RACK_PROP` with NHS pamphlets; `VENDING_MACHINE_PROP` (overpriced chocolate bars — 2 COIN); `BLOOD_PRESSURE_MACHINE_PROP` (usable; gives random systolic reading)
+- **Treatment corridor**: 2× `TREATMENT_CUBICLE_PROP` (curtained; enter by pressing E after being called); `X_RAY_VIEWER_PROP` (decorative); `SHARPS_BIN_PROP` (locked)
+- **Drug/medicine room** (locked `DOOR_PROP`; lockpickable): `MEDICINE_CABINET_PROP` (yields `PARACETAMOL` ×2, `BANDAGE`, `ANTISEPTIC_CREAM`, `MORPHINE_AMPOULE` — rare; lockpickable separately); `CONTROLLED_DRUGS_SAFE_PROP` (requires CROWBAR; yields `TRAMADOL` ×1–2, `DIAZEPAM` ×1)
+- **Back exit** (fire door; alwasy unlocked from inside): leads to the car park; `DUMPSTER_PROP` containing disposed medical waste; 10% chance of `UNUSED_SYRINGE` material inside
+
+### Core Mechanics: Triage & Emergency Healing
+
+**Arriving at the Walk-In:**
+1. Player enters the building and presses E at `TRIAGE_DESK_PROP`
+2. Brenda performs triage. Wait time is calculated: `baseWait = 15 + random(0, 75)` in-game minutes; if WantedSystem tier ≥ 2, Brenda delays calling police for 1 in-game minute (observational duty of care) but adds 30 min to wait
+3. Player must remain within 8 blocks of the building; leaving resets the triage queue
+4. When called (wait expires), player enters a `TREATMENT_CUBICLE_PROP`; pressing E triggers Dr. Okafor's treatment dialogue
+5. **Healing outcome**: player is healed to 80% max HP; hunger is reduced by 15 (treatment uses energy); player receives `DISCHARGE_LETTER` material
+
+**Treatments available at the cubicle (press E with Dr. Okafor):**
+| Condition | Trigger | Effect |
+|-----------|---------|--------|
+| Emergency trauma | HP ≤ 25% | +55 HP; hunger −15; 20 in-game min recovery |
+| Minor injury | HP 26–60% | +35 HP; hunger −5; 10 in-game min recovery |
+| Well-being check | HP > 60% | Brenda gives mild scolding; +5 HP; no real benefit; `TIME_WASTER` rumour seeded |
+| Drug interaction (player has TRAMADOL or MORPHINE_AMPOULE in inventory) | Any visit | Dr. Okafor confiscates one unit; adds `SUBSTANCE_ABUSE` to CriminalRecord if player refuses |
+
+**Wait time display**: A `QUEUE_BOARD_PROP` above the desk shows the current wait in fake NHS format: "Current approximate wait: 2 hrs 15 mins". The displayed time is deliberately pessimistic — always 25% longer than actual wait.
+
+### Paramedic NPCs
+
+Two `PARAMEDIC` NPCs (Andy and Sue) are based at the `AMBULANCE_BAY_PROP`. They respond to violence events:
+
+- When any NPC reaches HP ≤ 5 from player attack (and the fight generates a noise event ≥ 30), a PARAMEDIC NPC spawns at the scene within 2 in-game minutes
+- PARAMEDIC carries `DEFIB_PROP` (decorative); kneels over injured NPC for 60 seconds (`TENDING_INJURED_NPC` state); then escorted-NPC disappears (treated) and PARAMEDIC returns to AMBULANCE_BAY_PROP
+- If player attacks a PARAMEDIC, WantedSystem jumps directly to Tier 4 (minimum); generates headline: "Northfield Thug Attacks NHS Paramedic — Community Outrage"
+- At Wanted Tier ≥ 3, if player enters the Walk-In, Brenda secretly triggers police call (2-minute delay; roleplay of "no, stay calm, I'm calling 999")
+
+### Drug Cabinet Economy
+
+The locked medicine room is the most lucrative legitimate pharmacy alternative in the game:
+
+| Material | Source | Sale value |
+|----------|--------|------------|
+| `PARACETAMOL` | `MEDICINE_CABINET_PROP` ×2 | 1 COIN at PharmacySystem (street price below retail) |
+| `BANDAGE` | `MEDICINE_CABINET_PROP` ×1 | 2 COIN at Boot Sale; heals 10 HP on use |
+| `ANTISEPTIC_CREAM` | `MEDICINE_CABINET_PROP` ×1 | 1 COIN; reduces infection debuff duration |
+| `MORPHINE_AMPOULE` | `MEDICINE_CABINET_PROP` rare (15%) | 12 COIN at FenceSystem; CriminalRecord `POSSESSION_CONTROLLED_DRUG` |
+| `TRAMADOL` | `CONTROLLED_DRUGS_SAFE_PROP` | 8 COIN at FenceSystem; `POSSESSION_CONTROLLED_DRUG`; suppresses pain debuff 10 min |
+| `DIAZEPAM` | `CONTROLLED_DRUGS_SAFE_PROP` | 6 COIN at FenceSystem; `POSSESSION_CONTROLLED_DRUG`; reduces Notoriety build-up rate −20% for 15 min (calm effect) |
+| `UNUSED_SYRINGE` | Dumpster (10% chance) | Used in PirateRadioSystem prop-making; 1 COIN at Scrapyard (hazmat disposal) |
+
+Raiding the medicine cabinet triggers:
+- `MEDICINE_THEFT` CriminalRecord entry
+- Notoriety +8
+- If Brenda is in the building and the lockpick sound is generated (NoiseSystem ≥ 20): Brenda calls police immediately (no delay)
+
+### Additional Interactions
+
+- **Blood pressure machine** (`BLOOD_PRESSURE_MACHINE_PROP`): Press E; receive a random systolic reading (90–180). If ≥ 160: "You should see a doctor." If player then queues and sees Dr. Okafor, a `HIGH_BP_ADVICE` tooltip appears and hunger drain rate reduced by 10% for 30 in-game minutes (resting heart rate mechanic)
+- **Vending machine** (overpriced): CHOCOLATE_BAR for 2 COIN; +8 hunger. Standard vending mechanic.
+- **Discharge letter** (`DISCHARGE_LETTER`): Fenceable to LaunderetteSystem (fraud document; +2 COIN as a dodgy alibi); also accepted by JobCentreSystem as a sick note for 1 week's extended benefit claim without interview (same as GP_SICK_NOTE)
+- **CIGARETTE_BIN_PROP**: A small cylindrical prop outside the entrance. Press E to scavenge — 20% chance of 1–2 `CIGARETTE` materials (partially smoked; used in BuskingSystem social interactions)
+
+### NPC Waiting Room Behaviour
+
+4–8 `PENSIONER` and `PUBLIC` NPCs occupy the waiting room between 09:00–20:00. They cycle through states:
+- **WAITING** (seated; occasionally check watch; grumble about the wait)
+- **CALLED** (walk to treatment corridor when their wait expires)
+- **BORED** (after 30 in-game min; start talking to nearby NPCs; gossip seeded into RumourNetwork)
+
+NPCs in the waiting room have a 15% chance per visit to carry a `PRESCRIPTION_FORM` in their inventory (pickpocketable via player's existing pick-pocket mechanic). Each stolen prescription = `PRESCRIPTION_THEFT` CriminalRecord entry.
+
+### System Integrations
+
+- **HealingSystem**: WalkInCentreSystem calls `healingSystem.resetRestingTime()` on treatment completion; treatment heals directly via `player.heal(amount)` (bypassing HealingSystem's rest requirement)
+- **WantedSystem**: Tier ≥ 2 triggers delayed police call on Walk-In entry; PARAMEDIC attack = instant Tier 4; `MEDICINE_THEFT` criminal record is flagged as aggravated at Tier ≥ 3 (custodial risk at court)
+- **CriminalRecord**: `MEDICINE_THEFT`, `POSSESSION_CONTROLLED_DRUG`, `ATTACKING_NHS_STAFF`, `PRESCRIPTION_THEFT` (new entries)
+- **NotorietySystem**: Entering Walk-In with HP ≤ 25% and high Notoriety (≥ 50) generates `CASUALTY_OF_CRIME` rumour; Notoriety −3 (sympathy effect: "he's only human")
+- **GPSurgerySystem**: Players who have an active GP appointment cannot jump the Walk-In queue; the two systems share `DISCHARGE_LETTER` and `PRESCRIPTION_FORM` as common materials
+- **PharmacySystem**: `PARACETAMOL` and `BANDAGE` from medicine cabinet sell at below-retail prices at the pharmacy (Phil recognises NHS packaging: "I can't buy these back, love")
+- **FenceSystem**: `MORPHINE_AMPOULE`, `TRAMADOL`, `DIAZEPAM` accepted; valued at 12/8/6 COIN respectively; `CONTROLLED_DRUG_TRAFFICKING` CriminalRecord if fence deal exceeds 3 units in one session
+- **PirateRadioSystem**: `UNUSED_SYRINGE` used in transmitter prop-making recipe (antenna insulation); 2× CIRCUIT_BOARD + 1× UNUSED_SYRINGE → MAKESHIFT_TRANSMITTER_UPGRADE
+- **JobCentreSystem**: `DISCHARGE_LETTER` accepted as sick note for extended benefits — same weight as GP_SICK_NOTE; 1-week benefit extension, no interview required
+- **LaunderetteSystem**: `DISCHARGE_LETTER` traded for 2 COIN as alibi document (Don behind the counter handles dodgy paperwork on Fridays)
+- **RumourNetwork**: seeing Dr. Okafor seeds `LOCAL_EVENT` ("that lad was in A&E again last night — fighting, I reckon"); PARAMEDIC dispatched seeds `COMMUNITY_CONCERN` ("there was an ambulance outside earlier"); medicine cabinet raid seeds `COMMUNITY_OUTRAGE`
+- **NewspaperSystem**: PARAMEDIC attack generates headline; 3+ medicine thefts in one day → "NHS Walk-In Targeted — Drugs Stolen in Northfield"
+- **NeighbourhoodSystem**: vibes −1 if PARAMEDIC attacked; vibes +1 per 7-day period the player visits for legitimate treatment; vibes −2 per medicine cabinet raid
+- **WeatherSystem**: heavy RAIN adds +2 waiting NPCs (seeking shelter as much as treatment); COLD_SNAP adds +1; FROST causes Brenda to offer hot tea from `KETTLE_PROP` (ambient detail — no gameplay effect)
+- **StreetEconomySystem**: `MORPHINE_AMPOULE` and controlled drugs tracked as high-value illicit income; `DISCHARGE_LETTER` sale tracked as low-level fraud income
+- **AchievementSystem**: new achievements (see below)
+- **TimeSystem**: open 08:00–22:00 Mon–Sat, 10:00–18:00 Sun; PARAMEDIC response timer 2 in-game min after trigger; cabinet reset every 48 in-game hours (restocked overnight by NHS logistics)
+- **NoiseSystem**: Brenda calling police generates +10 noise (phone call); PARAMEDIC arrival generates +20 noise (radio chatter)
+
+### Achievements
+
+| Achievement | Trigger |
+|-------------|---------|
+| `FREQUENT_FLYER` | Visit the Walk-In for emergency treatment 5 times total |
+| `MEDICINE_THIEF` | Steal from the medicine cabinet (one-time; contributes to LOWEST_OF_THE_LOW) |
+| `NHS_GRATITUDE` | Receive emergency treatment with HP ≤ 10% (survived on the wire) |
+| `AMBULANCE_CHASER` | Witness a PARAMEDIC attend an injured NPC you caused |
+| `MALINGERER` | Use the Well-Being check (HP > 60%) — time-waster |
+| `CONTROLLED_SUBSTANCES` | Fence 3+ controlled drug units in one session |
+
+(Add to `AchievementType.java`)
+
+**Unit tests**: Triage wait time range (15–90 in-game minutes; 1000 samples within bounds); WantedSystem tier ≥ 2 adds exactly 30 min to wait; medicine cabinet loot (PARACETAMOL always present ×2, MORPHINE_AMPOULE at 15% — 1000 samples); CONTROLLED_DRUGS_SAFE yields TRAMADOL and DIAZEPAM (1 each per raid); PARAMEDIC response trigger (HP ≤ 5 AND noise ≥ 30); cabinet restock period (48 in-game hours); DISCHARGE_LETTER accepted by JobCentreSystem (same flag as GP_SICK_NOTE).
+
+**Integration tests — implement these exact scenarios:**
+
+1. **Emergency triage heals player to 80% HP**: Set player HP to 15 (≤ 25%). Place player at `TRIAGE_DESK_PROP`. Press E. Verify triage dialogue shown and wait time assigned (15–90 min). Advance in-game time by the assigned wait duration. Press E at `TREATMENT_CUBICLE_PROP`. Verify player HP is now at 80% of max HP. Verify hunger decreased by 15. Verify `DISCHARGE_LETTER` is in player inventory.
+
+2. **Medicine cabinet yields correct loot and triggers CriminalRecord**: Lockpick `WALK_IN_MEDICINE_ROOM_DOOR_PROP`. Open `MEDICINE_CABINET_PROP`. Verify inventory contains `PARACETAMOL` ×2 and `BANDAGE` ×1 (always present). Verify `MEDICINE_THEFT` entry added to CriminalRecord. Verify Notoriety increased by 8. Verify `MEDICINE_THIEF` achievement unlocked.
+
+3. **PARAMEDIC responds to NPC combat and returns to ambulance bay**: Place player adjacent to a `PUBLIC` NPC. Reduce NPC HP to 3 (simulate 5 punches). Verify NoiseSystem ≥ 30. Advance 2 in-game minutes. Verify a `PARAMEDIC` NPC has spawned within 10 blocks of the attack scene. Advance 60 more seconds. Verify the injured NPC is removed from the active NPC list (treated). Verify the PARAMEDIC has returned to a position within 3 blocks of `AMBULANCE_BAY_PROP`.
+
+4. **Wanted Tier ≥ 2 triggers police call on Walk-In entry**: Set WantedSystem tier to 2. Place player at the Walk-In entrance. Press E at `TRIAGE_DESK_PROP`. Verify Brenda's triage dialogue includes a warning ("I have to let them know you're here"). Advance 1 in-game minute. Verify WantedSystem receives a police-call event. Verify a POLICE_OFFICER NPC is dispatched toward the Walk-In within 3 in-game minutes.
+
+5. **Discharge letter accepted as sick note at JobCentre**: Give player a `DISCHARGE_LETTER`. Place player at `JOBCENTRE_DESK_PROP` in JobCentreSystem. Press E. Select "I've been unwell — here's my discharge letter". Verify JobCentreSystem records a 1-week sick note extension (same as GP_SICK_NOTE). Verify benefit payments continue for 7 in-game days without an interview requirement. Verify `DISCHARGE_LETTER` is consumed from inventory.
+
+// New system: WalkInCentreSystem.java in ragamuffin.core
+// New LandmarkType: NHS_WALK_IN_CENTRE (add to LandmarkType.java with display name "Northfield Walk-In Centre")
+// New materials: PARACETAMOL, BANDAGE, ANTISEPTIC_CREAM, MORPHINE_AMPOULE, TRAMADOL, DIAZEPAM, UNUSED_SYRINGE, DISCHARGE_LETTER (add to Material.java)
+// New NPCTypes: TRIAGE_NURSE, WALK_IN_DOCTOR, PARAMEDIC (add to NPCType.java)
+// New PropTypes: TRIAGE_DESK_PROP, WAITING_CHAIR_PROP, TREATMENT_CUBICLE_PROP, MEDICINE_CABINET_PROP, CONTROLLED_DRUGS_SAFE_PROP, BLOOD_PRESSURE_MACHINE_PROP, AMBULANCE_BAY_PROP, NHS_SIGN_PROP, CIGARETTE_BIN_PROP, WALK_IN_MEDICINE_ROOM_DOOR_PROP, QUEUE_BOARD_PROP, X_RAY_VIEWER_PROP, SHARPS_BIN_PROP (add to PropType.java)
+// New achievements: FREQUENT_FLYER, MEDICINE_THIEF, NHS_GRATITUDE, AMBULANCE_CHASER, MALINGERER, CONTROLLED_SUBSTANCES (add to AchievementType.java)
