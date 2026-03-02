@@ -42805,3 +42805,135 @@ On successful heist: `PHARMACY_RAID` rumour seeded; NewspaperSystem headline "Br
 // NoiseSystem: safe crowbar = HIGH noise; door jimmy = MEDIUM noise
 // DisguiseSystem: WHITE_COAT reduces dispensary-area suspicion 60%
 // NewspaperSystem: "Chemist Break-In" + "Prescription Fraud Ring" headlines
+
+## Issue #1285: Add Northfield BrightHouse — Rent-to-Own Trap, the Weekly Collector & the Repo Man Hustle
+
+**Goal**: Add Northfield's beloved rent-to-own shop — "BrightChoice Home Furnishings" — as a distinct landmark on the high street. Run by **Karen** (`RENT_TO_OWN_CLERK` NPCType), a cheerful-but-relentless clerk who genuinely believes she's doing you a favour. BrightChoice sells TVs, washing machines, sofas and microwaves on weekly HP agreements at eye-watering effective APR. Once you're in the system, **Colin the Weekly Collector** (`WEEKLY_COLLECTOR` NPCType) comes knocking every in-game Monday at 09:00. Miss two payments and he sends **the Repo Man** (`REPO_MAN` NPCType) — a large, efficient NPC who removes items from your squat and is not interested in excuses.
+
+This creates a persistent weekly obligation mechanic that interweaves with SquatSystem, PropertySystem, DWPSystem, and JobCentreSystem — the player is always one bad week away from losing their TV.
+
+### BrightChoiceSystem — Core Mechanics
+
+A new `BrightChoiceSystem` class (`ragamuffin/core/BrightChoiceSystem.java`) manages:
+
+- **Hire Purchase Agreements**: Each agreement stores: `item`, `totalPrice`, `weeklyPayment`, `weeksRemaining`, `weeksMissed`, `isRepossessed`
+- **Payment tracking**: Colin visits every Monday 09:00; calls `collectPayment(player, agreement)`. If player has coin, deducts automatically. If not, increments `weeksMissed`.
+- **Repossession trigger**: `weeksMissed >= 2` → spawn REPO_MAN NPC; he pathfinds to player's squat, removes the prop item from `SquatSystem.getFurnishings()`, seeds `REPOSSESSION` rumour.
+- **Price table**: All items priced at 2–3× normal fence value with tiny weekly instalments that stretch 8–16 in-game weeks.
+
+#### Item Catalogue (press E on `BRIGHTCHOICE_COUNTER_PROP`)
+
+| Item | Total HP Price | Weekly Payment | Weeks | Item Type |
+|---|---|---|---|---|
+| `COLOUR_TV` | 24 COIN | 3 COIN/week | 8 | `SmallItem` / squat furnishing |
+| `MICROWAVE` | 16 COIN | 2 COIN/week | 8 | `SmallItem` / squat furnishing |
+| `WASHING_MACHINE` | 32 COIN | 4 COIN/week | 8 | `PropType.WASHING_MACHINE_PROP` |
+| `SOFA` | 24 COIN | 3 COIN/week | 8 | `PropType.SOFA_PROP` |
+| `GAMES_CONSOLE` | 20 COIN | 3 COIN/week | 7 | `SmallItem` — fenceable at CashConverters |
+
+All items are tagged with `BrightChoiceAgreement` so the Repo Man can identify them in the squat.
+
+#### Hustle Mechanics
+
+**1. Dodge the Collector**
+Colin arrives at the squat Monday 09:00. If player is NOT inside the squat and has `weeksMissed == 0`, Colin knocks, waits 3 in-game minutes, then leaves — no payment taken. This counts as a **grace** (first miss only); player receives a paper `MISSED_PAYMENT_NOTICE` on the door prop next visit. Deliberately absent for two consecutive weeks → `weeksMissed = 2` → Repo Man triggered.
+
+**2. The Partial Payment Stall**
+`offerPartialPayment(player, amount)` — if amount >= 50% of weekly payment, Colin accepts with grumbled speech ("I'll let it go this once") and `weeksMissed` is NOT incremented. Creates tension when player has 1 COIN short of the full weekly.
+
+**3. Fence the Agreement Items**
+Player can sell a `GAMES_CONSOLE` (or other portable item) to `CashConverters` (`CashConvertersSystem`) or `FenceSystem` before it's repossessed. The agreement remains live — Colin still expects payment. If Repo Man arrives and item is gone, he seizes the replacement value in COIN from the player directly (20 COIN penalty). If player has no coin, `BRIGHTCHOICE_DEBT` flag set; Marchetti loan sharks notified (FactionSystem integration).
+
+**4. The Fake Name Agreement**
+Player can open an agreement under a false name (`DisguiseSystem` disguise tier ≥ 2). `isAgreementFraud` flag set. Karen doesn't check. Colin can't find the address. Agreement items arrive but no collector ever comes. However: if `CriminalRecord` already contains `PRESCRIPTION_FRAUD` or `BENEFIT_FRAUD`, Karen's terminal flags the player and refuses: "Sorry, our system's saying... can you wait there a minute?" — WantedSystem +1.
+
+**5. The Repo Man Standoff**
+When Repo Man enters the squat:
+- **Pay up** (full remaining balance): Repo Man leaves, agreement cleared, no mark on CriminalRecord.
+- **Block the door** (player stands in doorway 5 seconds): Repo Man issues warning; second time he calls police (WantedSystem +1, `OBSTRUCTION` CriminalRecord entry).
+- **Attack the Repo Man**: Repo Man is `REPO_MAN` NPCType with 80 HP; fighting skill high (blocks 40% of punches). On defeat: he drops `BrightChoice_CLIPBOARD` evidence item. If found by police: CriminalRecord `ASSAULT`.
+- **Hide the item** (move tagged furnishing to a different prop position before Repo Man arrives): He can't find it — searches for 2 minutes then leaves with partial seizure (takes COIN equivalent of 1 week payment). 
+
+#### NPCType Additions
+- `RENT_TO_OWN_CLERK` — Karen; behind counter; friendly opener; passive; calls police on fraud detection.
+- `WEEKLY_COLLECTOR` — Colin; spawns Monday 09:00 at player's squat entrance; polite but persistent; non-violent; FLEEING if attacked (calls police).
+- `REPO_MAN` — spawns on `weeksMissed == 2`; large NPC (80 HP); purposeful walk; uses REPO_MAN_CLIPBOARD prop; FLEEING only after losing 60+ HP.
+
+#### PropType Additions
+- `BRIGHTCHOICE_COUNTER_PROP` — shop counter (1.4f × 1.1f × 0.6f, WOOD, 8 hits). Press E to open catalogue UI.
+- `PAYMENT_NOTICE_PROP` — paper notice stuck to squat door; spawned by Colin on missed payment.
+- `REPO_MAN_CLIPBOARD` — carried by Repo Man; evidence item (CriminalRecord use if player attacked him).
+
+#### Material / SmallItem Additions
+- `COLOUR_TV` — squat furnishing; improves `BOREDOM` need by −3/min while in squat.
+- `MICROWAVE` — squat furnishing; allows heating `COLD_CHIPS` and `TINNED_BEANS` (yields `HOT_FOOD` with +10 HP heal).
+- `WASHING_MACHINE` — reduces `STENCH_LEVEL` debuff accumulation rate by 50% while in squat.
+- `GAMES_CONSOLE` — squat furnishing; reduces BOREDOM need −5/min; fenceable at `CashConvertersSystem` for 8 COIN.
+- `BRIGHTCHOICE_CATALOGUE` — item given on entry; flavour only ("The APR is 69.9%. Karen seems proud of this.").
+
+#### Integration
+- **SquatSystem**: Tagged furnishings (`COLOUR_TV`, `SOFA`, `WASHING_MACHINE`) added to squat via `SquatFurnishingTracker`. Repo Man calls `SquatSystem.removeTaggedFurnishing(agreementId)`.
+- **DWPSystem / JobCentreSystem**: Karen enquires about income: "Are you working? Even casual?" Player can lie (StreetRep ≥ 20) — opens agreement. Lie detected at `weeksMissed == 1`: Karen flags `BENEFIT_FRAUD` suspicion but doesn't act.
+- **FactionSystem / Marchetti**: `BRIGHTCHOICE_DEBT` flag triggers Marchetti NPC contact at day 2 of debt ("Karen called us. We're very reasonable people.").
+- **CashConvertersSystem**: `GAMES_CONSOLE` and `COLOUR_TV` accepted; serial number check fails if Repo Man has filed report (Notoriety ≥ 30 threshold).
+- **WarmthSystem**: `COLOUR_TV` in squat provides +1 Warmth/min (it runs hot); during FROST, DWP NPC notices TV on home visit — benefit fraud flag risk.
+- **RumourNetwork**: `REPOSSESSION` rumour seeded to neighbour NPC on Repo Man visit ("Did you see the repo man round at number 14?"); `AGREEMENT_FRAUD` if fake-name agreement discovered.
+- **NotorietySystem**: Repo Man assault +10 Notoriety; blocking doorway twice +3 Notoriety.
+- **CriminalRecord**: `OBSTRUCTION`, `HIRE_PURCHASE_FRAUD`, `ASSAULT_REPO_MAN` as new crime types.
+- **WantedSystem**: Fraud detection → +1 star; Repo Man assault → +2 stars.
+- **NeighbourhoodSystem**: Repo Man visit → Community Vibes −2 (the shame of it); neighbours witness event.
+- **NewspaperSystem**: "Bailiffs Busy on Northfield Estate — Residents Owe Millions" headline if 5+ agreements in arrears game-wide.
+- **AchievementSystem**: `NEVER_OWN_ANYTHING` (have 3 items repossessed); `LEGITIMATE_PURCHASE` (pay off a full HP agreement); `DODGY_DODGE` (successfully hide item from Repo Man).
+- **DisguiseSystem**: Fake name agreement requires disguise tier ≥ 2; tier checked at agreement signup.
+- **NoiseSystem**: Repo Man knocking emits MEDIUM noise (radius 8); player attack on Repo Man = HIGH noise (radius 15).
+
+### Unit Tests (`BrightChoiceSystemTest.java`)
+
+1. `testWeeklyPaymentDeductedOnCollection` — open COLOUR_TV agreement (3 COIN/week); give player 5 COIN; call `collectPayment()`; verify player COIN == 2; `weeksRemaining` decremented by 1.
+2. `testMissedPaymentIncrementsMissedCount` — give player 0 COIN; call `collectPayment()`; verify `weeksMissed == 1`; COIN unchanged.
+3. `testTwoMissedPaymentsTriggersRepoMan` — call `collectPayment()` twice with 0 COIN; verify `isRepoManSpawned()` returns true.
+4. `testPartialPaymentAcceptedAtFiftyPercent` — weekly payment = 4 COIN; give player 2 COIN; call `offerPartialPayment(player, 2)`; verify `weeksMissed` NOT incremented; player COIN == 0.
+5. `testPartialPaymentRejectedBelowFiftyPercent` — weekly payment = 4 COIN; give player 1 COIN; call `offerPartialPayment(player, 1)`; verify rejection result returned; `weeksMissed` incremented.
+6. `testFakeNameAgreementBypassesCollector` — set `isAgreementFraud = true`; call `spawnWeeklyCollector()`; verify no WEEKLY_COLLECTOR NPC spawned.
+7. `testFakeNameBlockedByExistingFraudRecord` — add `PRESCRIPTION_FRAUD` to CriminalRecord; attempt fake-name agreement; verify `AgreementResult.FRAUD_FLAGGED`; WantedSystem stars == 1.
+8. `testRepoManPayFullBalanceClearsAgreement` — trigger repo man; call `payFullBalance(player)`; verify agreement `isActive == false`; Repo Man NPC removed; no CriminalRecord entry.
+9. `testHideItemPreventsRepossession` — trigger repo man; call `hideTaggedItem(agreement)`; simulate repo man search (2 min timeout); verify item NOT removed from `SquatFurnishingTracker`; player COIN reduced by 1 weekly payment.
+10. `testGamesConsoleFenceableAtCashConverters` — give player GAMES_CONSOLE; call `CashConvertersSystem.sellItem(GAMES_CONSOLE)`; verify player receives 8 COIN; item removed from inventory.
+11. `testRepoManAssaultAddsCriminalRecord` — attack REPO_MAN NPC until defeated; verify CriminalRecord contains `ASSAULT_REPO_MAN`; WantedSystem stars == 2.
+12. `testFullAgreementPayoffAwardsAchievement` — make 8 weekly payments on time; verify `AchievementType.LEGITIMATE_PURCHASE` unlocked; agreement `isActive == false`.
+
+### Integration Tests (`Issue1285BrightChoiceIntegrationTest.java`)
+
+1. **Full HP agreement and payoff**: Player enters BrightChoice, presses E on counter, selects COLOUR_TV (24 COIN total / 3 COIN/week). Verify: agreement created in `BrightChoiceSystem`; `COLOUR_TV` added to squat furnishings via `SquatFurnishingTracker`; `BOREDOM` need drain rate decreased while player in squat. Advance 8 in-game Mondays (simulate Colin visits with player having ≥ 3 COIN each time). Verify: agreement cleared; `LEGITIMATE_PURCHASE` achievement awarded; no REPO_MAN ever spawned.
+
+2. **Missed payments → Repo Man → standoff**: Player opens WASHING_MACHINE agreement. Simulate 2 missed Monday collections (player has 0 COIN). Verify `REPO_MAN` NPC spawned and pathfinding to squat. Repo Man enters squat. Verify `WASHING_MACHINE_PROP` removed from `SquatFurnishingTracker`. Verify `REPOSSESSION` rumour seeded in `RumourNetwork`. Verify `NeighbourhoodSystem` community vibes reduced by 2.
+
+3. **Fence the console before repo**: Player buys GAMES_CONSOLE on HP. Sells it to `CashConvertersSystem` (8 COIN). Two Mondays pass with 0 COIN. Repo Man spawned. Repo Man finds no GAMES_CONSOLE in squat. Verify player loses 20 COIN (or `BRIGHTCHOICE_DEBT` flag if < 20 COIN). Verify `FactionSystem` Marchetti contact triggered.
+
+4. **Fake name agreement with clean record**: Player equips disguise (tier 2). Opens SOFA agreement under fake name. Advance 3 in-game Mondays. Verify no WEEKLY_COLLECTOR NPC spawned (Colin can't find "John Smith"). Verify SOFA prop present in squat. Verify no CriminalRecord entry from Karen.
+
+5. **Warmth and welfare integration**: Player has COLOUR_TV in squat. During FROST weather, verify squat WarmthSystem provides +1/min from TV. Simulate DWP home visit (advance to DWP visit trigger). Verify DWP inspector NPC notices TV (within 3 blocks); `BENEFIT_FRAUD` suspicion flag set on `DWPRecord`.
+
+// ── Issue #1285: Add Northfield BrightChoice Home Furnishings ─────────────────
+// New: BrightChoiceSystem.java in ragamuffin.core
+// New: BrightChoiceSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1285BrightChoiceIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: COLOUR_TV, MICROWAVE, WASHING_MACHINE, GAMES_CONSOLE, BRIGHTCHOICE_CATALOGUE — add to Material.java
+// PropType: BRIGHTCHOICE_COUNTER_PROP, PAYMENT_NOTICE_PROP, REPO_MAN_CLIPBOARD,
+//           WASHING_MACHINE_PROP, SOFA_PROP (if not present) — add to PropType.java
+// NPCType: RENT_TO_OWN_CLERK, WEEKLY_COLLECTOR, REPO_MAN — add to NPCType.java
+// AchievementType: NEVER_OWN_ANYTHING, LEGITIMATE_PURCHASE, DODGY_DODGE — add to AchievementType.java
+// CriminalRecord.CrimeType: OBSTRUCTION, HIRE_PURCHASE_FRAUD, ASSAULT_REPO_MAN — add to CriminalRecord.java
+// RumourType: REPOSSESSION, AGREEMENT_FRAUD — add to RumourType.java
+// SquatSystem / SquatFurnishingTracker: tagged furnishing integration; removeTaggedFurnishing(agreementId)
+// DWPSystem: benefit fraud suspicion flag on TV spotted during home visit
+// FactionSystem: BRIGHTCHOICE_DEBT flag triggers Marchetti contact
+// CashConvertersSystem: GAMES_CONSOLE / COLOUR_TV serial check; Notoriety ≥ 30 flag
+// WarmthSystem: COLOUR_TV passive warmth +1/min in squat
+// RumourNetwork: REPOSSESSION (Repo Man visit), AGREEMENT_FRAUD (fraud caught)
+// NotorietySystem: Repo Man assault +10; doorway blocking × 2 +3
+// WantedSystem: fraud detection +1; Repo Man assault +2
+// NeighbourhoodSystem: Repo Man visit vibes −2
+// NoiseSystem: knocking = MEDIUM (radius 8); fight = HIGH (radius 15)
+// NewspaperSystem: "Bailiffs Busy on Northfield Estate" headline if 5+ arrears
+// AchievementSystem: NEVER_OWN_ANYTHING, LEGITIMATE_PURCHASE, DODGY_DODGE
