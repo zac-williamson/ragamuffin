@@ -2431,7 +2431,42 @@ public enum NPCType {
      * </ul>
      * HP: 35f, attack: 4f, cooldown: 2.0f, hostile: false (until triggered).
      */
-    FAIRGROUND_WORKER(35f, 4f, 2.0f, false);
+    FAIRGROUND_WORKER(35f, 4f, 2.0f, false),
+
+    // ── Issue #1282: Northfield Day & Night Chemist ───────────────────────────
+
+    /**
+     * PHARMACIST — Janet, the Day &amp; Night Chemist pharmacist.
+     * <ul>
+     *   <li>Staffs Mon–Sat 09:00–22:00, Sun 10:00–18:00.</li>
+     *   <li>Dispenses PRESCRIPTION_MEDS for valid PRESCRIPTION_SLIP (10s wait).</li>
+     *   <li>Detects shoplifting at 20% base rate (doubled if a SHOP_WORKER is in the aisle).</li>
+     *   <li>Must be distracted 3× at the till counter to open the STAFF_DOOR heist route.</li>
+     * </ul>
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    PHARMACIST(30f, 0f, 0f, false),
+
+    /**
+     * METHADONE_CLIENT — queues at the chemist for methadone dispensing (13:30–14:30).
+     * <ul>
+     *   <li>1–3 present during the methadone window.</li>
+     *   <li>Player can steal methadone: 40% success, WantedSystem +3, ROBBERY charge.</li>
+     *   <li>Despawns after collection.</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    METHADONE_CLIENT(20f, 0f, 0f, false),
+
+    /**
+     * PRESCRIPTION_HOLDER — an NPC presenting a valid prescription.
+     * <ul>
+     *   <li>Queues at the dispensary counter during opening hours.</li>
+     *   <li>Carries a PRESCRIPTION_MEDS item.</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    PRESCRIPTION_HOLDER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

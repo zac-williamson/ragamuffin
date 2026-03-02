@@ -3078,7 +3078,51 @@ public enum PropType {
      * Strippable for SCRAP_METAL on Sunday 23:00+ when fairground is closed.
      * 1.5×1.2×0.8; hitsToBreak = 10 (yields SCRAP_METAL).
      */
-    DIESEL_GENERATOR_PROP(1.50f, 1.20f, 0.80f, 10, Material.SCRAP_METAL);
+    DIESEL_GENERATOR_PROP(1.50f, 1.20f, 0.80f, 10, Material.SCRAP_METAL),
+
+    // ── Issue #1282: Northfield Day & Night Chemist ───────────────────────────
+
+    /**
+     * DISPENSARY_COUNTER_PROP — Janet's main counter where prescriptions are dispensed.
+     * Player presses E to submit PRESCRIPTION_SLIP; 10s dispense timer begins.
+     * 2.0×1.1×0.8; indestructible (hitsToBreak = 0).
+     */
+    DISPENSARY_COUNTER_PROP(2.00f, 1.10f, 0.80f, 0, null),
+
+    /**
+     * PRESCRIPTION_RACK_PROP — the rack holding bagged prescriptions awaiting collection.
+     * Player presses E to look for their name; forged prescription attempt made here.
+     * 0.8×1.8×0.4; hitsToBreak = 3 (yields WOOD).
+     */
+    PRESCRIPTION_RACK_PROP(0.80f, 1.80f, 0.40f, 3, Material.WOOD),
+
+    /**
+     * DRUG_SAFE_PROP — the locked safe behind the STAFF_DOOR.
+     * Contains DIAZEPAM and NUROFEN_PLUS. Requires heist route to access.
+     * 0.8×1.0×0.7; hitsToBreak = 20 (yields DIAZEPAM via crowbar interaction).
+     */
+    DRUG_SAFE_PROP(0.80f, 1.00f, 0.70f, 20, Material.DIAZEPAM),
+
+    /**
+     * METHADONE_FRIDGE_PROP — refrigerated unit storing the day's methadone doses.
+     * Accessible 13:30–14:30; steal attempt: 40% success, WantedSystem +3, ROBBERY charge.
+     * 0.8×1.6×0.7; hitsToBreak = 8 (yields SCRAP_METAL).
+     */
+    METHADONE_FRIDGE_PROP(0.80f, 1.60f, 0.70f, 8, Material.SCRAP_METAL),
+
+    /**
+     * MEDICINE_CABINET_PROP — wall-mounted OTC medicine display rack.
+     * Player browses with E; 2-per-visit OTC limits enforced by PharmacySystem.
+     * 1.2×1.8×0.3; hitsToBreak = 3 (yields WOOD).
+     */
+    MEDICINE_CABINET_PROP(1.20f, 1.80f, 0.30f, 3, Material.WOOD),
+
+    /**
+     * CHEMIST_CROSS_PROP — the green illuminated cross sign above the entrance.
+     * Decorative; indicates pharmacy is open.
+     * 0.8×1.0×0.1; hitsToBreak = 2 (yields GLASS).
+     */
+    CHEMIST_CROSS_PROP(0.80f, 1.00f, 0.10f, 2, Material.GLASS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

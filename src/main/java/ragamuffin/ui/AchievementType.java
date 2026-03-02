@@ -4841,6 +4841,29 @@ public enum AchievementType {
         "Closing Time Champion",
         "Last one standing at 02:45 three nights running. The kebab van knows your order.",
         3
+    ),
+
+    // ── Issue #1282: Northfield Day & Night Chemist ───────────────────────────
+
+    /** Acquire any OTC item from the Day & Night Chemist. */
+    PROPER_ILL(
+        "Proper Ill",
+        "You bought something from the chemist. Self-medication is the British way.",
+        1
+    ),
+
+    /** Reach the DEPENDENCY debuff via Nurofen Plus overconsumption. */
+    NUROFEN_NIGHTMARE(
+        "Nurofen Nightmare",
+        "Five doses of Nurofen Plus in 24 hours. The codeine giveth. The codeine taketh.",
+        1
+    ),
+
+    /** Complete the drug safe heist — obtain DIAZEPAM from the DRUG_SAFE_PROP. */
+    BACK_STREET_PHARMACIST(
+        "Back Street Pharmacist",
+        "Crowbarred open the drug safe at the chemist. Janet is absolutely fuming.",
+        1
     );
 
     private final String name;

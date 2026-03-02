@@ -850,7 +850,22 @@ public class CriminalRecord {
          * Recorded when the player is caught with PILLS by an UNDERCOVER_OFFICER
          * in the club toilets. Penalty: +20 Notoriety, +2 WantedSystem stars.
          */
-        DRUG_POSSESSION("Drug possession (nightclub)");
+        DRUG_POSSESSION("Drug possession (nightclub)"),
+
+        // ── Issue #1282: Northfield Day & Night Chemist ───────────────────────
+
+        /**
+         * Recorded when the player presents a forged prescription at the chemist
+         * and Janet catches the fraud (40% fail rate).
+         * Penalty: +15 Notoriety, +1 WantedSystem star.
+         */
+        PRESCRIPTION_FRAUD("Prescription fraud"),
+
+        /**
+         * Recorded when the player crowbars the DRUG_SAFE_PROP at the chemist.
+         * Penalty: +30 Notoriety, +3 WantedSystem stars; PHARMACY_RAID rumour seeded.
+         */
+        PHARMACY_BURGLARY("Pharmacy burglary");
 
         private final String displayName;
 
