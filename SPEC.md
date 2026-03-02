@@ -32571,3 +32571,237 @@ player has had `TOOTHACHE` (any level) for ≥ 2 in-game days.
 // New RumourTypes: MIREK_REFERRAL (seeded by pub NPCs after 2 days toothache)
 // New Achievements: BRITISH_SMILE, DENTAL_TOURISM, QUEUE_JUMPED, BRUSHED_UP,
 //   PRIVATE_PATIENT, NHS_SURVIVOR (add to AchievementType.java)
+
+---
+
+## Add Northfield Tesco Express — Meal Deals, Self-Checkout Fraud & the Clubcard Hustle
+
+**Landmark**: `LandmarkType.TESCO_EXPRESS` (already present, no system implemented)
+
+Every British street corner has one. The Tesco Express is a brightly lit, over-priced, 24-hour convenience store that sells the same meal deal for £3.99 that you could make at home for 70p, employs one permanently suspicious `SECURITY_GUARD` named Kevin, and has a `SELF_CHECKOUT_PROP` that accuses you of an unexpected item in the bagging area every single time. It is open **24 hours, 7 days a week** — which makes it the only supermarket-format shop accessible at 3am, after the kebab van has shut and before the off-licence opens.
+
+This fills a genuine gap: the game has Aldi (spec exists, no system), but Tesco Express is a different beast — smaller, pricier, and visited for convenience rather than budget. Its **meal deal mechanic**, **Clubcard loyalty economy**, and **self-checkout cat-and-mouse** create a completely different feel to the Aldi trolley-heist.
+
+### TescoExpressSystem — Core Mechanics
+
+A new `TescoExpressSystem` class manages all shop state.
+
+#### Meal Deal (the core hook)
+
+- Press E on the `MEAL_DEAL_COUNTER_PROP` or E on any sandwich/drink/snack shelf.
+- A MEAL_DEAL consists of: 1 × sandwich + 1 × drink + 1 × snack. Each component
+  is priced individually (sandwich: 2 COIN, drink: 1 COIN, snack: 1 COIN = 4 COIN).
+  Buying all three as a **Meal Deal** costs **3 COIN** — a saving of 1 COIN shown
+  in the interaction UI.
+- **Clubcard discount**: If player has a `CLUBCARD` item in inventory, meal deal
+  costs **2 COIN** (Clubcard price). Clubcard grants +1 CLUBCARD_POINT per COIN spent.
+  At 10 points, a `CLUBCARD_VOUCHER` is added to inventory (worth 1 COIN of store
+  credit on the next visit).
+
+#### Sandwiches & items
+
+New materials (add to `Material.java`):
+
+| Material | Description |
+|---|---|
+| `TESCO_SANDWICH` | Meal deal component. Hunger +20. Description: *"Egg mayo. The egg is grey."* 1 COIN alone. |
+| `TESCO_PASTA_POT` | Alternative to sandwich in meal deal. Hunger +25. *"Room temperature pasta. Technically food."* |
+| `TESCO_ORANGE_JUICE` | Meal deal drink slot. Thirst −15. |
+| `TESCO_MEAL_DEAL_BAG` | Completed meal deal — contains sandwich + drink + snack. Opens into 3 separate items when consumed. |
+| `CLUBCARD` | Loyalty card. Reduces prices. Grants points. Unstackable. Obtained at till (press E, request card — 1-in-3 chance Kevin "can't find the forms"). |
+| `CLUBCARD_VOUCHER` | 1 COIN discount on next purchase. Single-use. |
+| `TESCO_FINEST_WINE` | Pricey item on top shelf. Cost 4 COIN. Drunk: Drunkenness +3. *"On offer this week. It wasn't."* |
+| `TESCO_OWN_BRAND_VODKA` | 2 COIN. Drunkenness +4. HealingSystem: cures minor cuts (antiseptic grade). |
+| `READY_MEAL` | 2 COIN. Requires MICROWAVE to eat (Hunger +30 when cooked, −5 if eaten cold). *"For one."* |
+| `CLUBCARD_STATEMENT` | Letter in player's squat mailbox: points total, vouchers available. Spawns every 7 in-game days if player has a Clubcard. |
+
+#### Self-Checkout (the minigame)
+
+The `SELF_CHECKOUT_PROP` (already exists in PropType) lets the player buy items
+without Kevin watching directly — but the machine is suspicious.
+
+- Player stands at `SELF_CHECKOUT_PROP`, press E to start session.
+- Each item scanned: 70% chance of smooth scan. 30% chance: **"Unexpected item in
+  bagging area"** — player must press E again (re-scan). If this happens 3 times
+  in one session, Kevin walks over and supervises (player cannot steal during
+  supervised session).
+- **Self-checkout fraud**: Player can "forget" to scan an item by moving past the
+  bagging sensor without scanning. Each unscanned item: 40% base catch chance per
+  item, modified by:
+  - Kevin distracted (talking to colleague) → −20%
+  - CCTV broken (destroyed earlier) → −15%
+  - Notoriety Tier 3+ → +20% (Kevin already watches you)
+  - Busy period (07:00–09:00, 12:00–14:00, 17:00–19:00) → −10% (queue pressure)
+- Caught stealing: `CriminalRecord.CrimeType.SHOPLIFTING`, Notoriety +8,
+  WantedSystem +1 star. Kevin calls police; player has 90 seconds to leave before
+  patrol arrives. Banned from Tesco Express for 3 in-game days.
+
+#### Kevin — The Security Guard NPC
+
+**Kevin** (`SECURITY_GUARD` NPCType, already exists) anchors to the self-checkout
+area. He has a patrol circuit: self-checkout → front door → alcohol aisle → repeat.
+At Notoriety Tier 2+, Kevin's suspicion radius is 4 blocks (normal 2). He can be:
+
+- **Distracted**: Talk to Kevin (E key) — he'll respond briefly. During the 8-second
+  conversation window, self-checkout fraud catch chance drops by 20%.
+- **Bribed**: Give Kevin a `TESCO_SANDWICH` (not a meal deal bag) — he wanders to the
+  break room for 60 seconds. No theft checks during absence. Only works once per
+  in-game day.
+- **Baited**: Throw a `CAN_OF_LAGER` near the back of the shop (E to throw). If
+  Kevin hears the noise (rolls NoiseSystem check), he investigates. 45-second window.
+
+#### Stockroom (the after-hours heist)
+
+Behind the `STOCKROOM_DOOR_PROP` (locked, requires LOCKPICK or key card), the
+stockroom contains `STOCKROOM_SHELF_PROP` ×4 loaded with full cases:
+
+- `CRISPS` × 6, `TIN_OF_BEANS` × 6, `ENERGY_DRINK` × 4, `READY_MEAL` × 4,
+  `TESCO_FINEST_WINE` × 3, `TESCO_OWN_BRAND_VODKA` × 2 per shelf.
+
+The **Store Manager Key Card** (`KEYCARD` item tagged `TESCO_KEYCARD`) is found:
+- On `MANAGER_DAVE` NPC's body (pickpocket at NotorietySystem Tier 0–1 only).
+- Or in `FILING_CABINET_PROP` in the tiny office off the stockroom (already unlocked
+  during day if player has LOCKPICK — but the office CCTV records the entry).
+
+Looting the stockroom adds `THEFT_FROM_SHOP` to `CriminalRecord`. If done after
+02:00 (quiet hours) the chance of WitnessSystem logging drops to 10%.
+
+#### NPCs (add to `NPCType.java`)
+
+- `TESCO_EXPRESS_MANAGER` — Dave; tired, middle-management, clings to procedure.
+  Present Mon–Fri 07:00–18:00. Checks for shoplifting flags. At Notoriety Tier 3+:
+  *"I'm going to have to ask you to leave the store."* Calls police if refused.
+- `TESCO_EXPRESS_WORKER` — Sharon (day) / Tyler (night). Stack shelves, operate till.
+  Night shift Tyler (22:00–07:00) is barely awake: Notoriety threshold for suspicion
+  +20 (Tyler doesn't care). Tyler sells `TESCO_OWN_BRAND_VODKA` without ID checks.
+
+  Note: `SECURITY_GUARD` NPCType (Kevin) already exists — reuse.
+
+#### Props (add to `PropType.java`)
+
+- `MEAL_DEAL_COUNTER_PROP` — waist-high display counter at shop entrance. E to
+  trigger meal deal UI. 5 hits; yields WOOD.
+- `WINE_CHILLER_PROP` — glass-fronted refrigerated wine display. E to browse
+  alcohol items. Contains `TESCO_FINEST_WINE` × 3, `TESCO_OWN_BRAND_VODKA` × 2.
+  LOCKED after 22:00 (Challenge 100 order — underage prevention). 8 hits; yields
+  GLASS + SCRAP_METAL.
+- `STOCKROOM_DOOR_PROP` — heavy door. LOCKED; requires TESCO_KEYCARD or LOCKPICK.
+  Enters stockroom area.
+
+  Note: `SELF_CHECKOUT_PROP`, `SHELF_CAN`, `SHELF_BOTTLE`, `SHELF_BOX`,
+  `CCTV_PROP`, `CHECKOUT_PROP`, `FILING_CABINET_PROP`, `STOCKROOM_SHELF_PROP`
+  already exist — reuse.
+
+#### Integrations
+
+- **HealingSystem**: `TESCO_OWN_BRAND_VODKA` — if player has BLEEDING status,
+  pouring vodka on wound (use from inventory while BLEEDING) reduces bleed rate
+  50%. Vodka consumed.
+- **WarmthSystem**: Tesco Express is heated; +1 Warmth/min inside. Particularly
+  useful in winter as a 24-hour warming shelter.
+- **WantedSystem**: Shoplifting caught → +1 star. Banning enforced by Kevin for
+  3 days; entering while banned triggers immediate police call.
+- **NotorietySystem**: Being caught shoplifting by Kevin → +8 Notoriety.
+  Bribing Kevin → no Notoriety change (he's just a security guard).
+- **CriminalRecord**: `SHOPLIFTING`, `THEFT_FROM_SHOP` crime types.
+- **WitnessSystem**: CCTV logs all theft; CCTV_PROP can be destroyed (2 hits) to
+  prevent logging. Destroying CCTV: +3 Notoriety.
+- **NoiseSystem**: Bait throw registers noise at level 2 in 6-block radius.
+- **RumourNetwork**: First successful stockroom raid seeds `LOCAL_EVENT` rumour:
+  *"Someone did over the Tesco stockroom. Tyler was asleep."*
+- **StreetEconomySystem**: `TESCO_SANDWICH`, `ENERGY_DRINK`, `CAN_OF_LAGER`,
+  `READY_MEAL` buyable without stat penalty. `TESCO_FINEST_WINE` satisfies
+  THIRSTY −10 and adds DRUNK +3.
+- **FenceSystem**: `TESCO_FINEST_WINE` (bulk) fetchable by Gary at 2 COIN/unit
+  (Gary: *"This is supermarket plonk, mate. Not exactly the wine cellar."*).
+- **SupermarketSystem**: `TescoExpressSystem` and `SupermarketSystem` (Aldi) share
+  `SHOPLIFTING` crime type and Kevin/security guard behavioural model. They are
+  distinct systems — no shared state — but both update the same `CriminalRecord`.
+- **TimeSystem**: Open 24 hours. Kevin works 07:00–22:00; Tyler 22:00–07:00.
+  Wine chiller locked 22:00–07:00.
+- **AchievementSystem**: New achievements below.
+
+#### Achievements (add to `AchievementType.java`)
+
+| Achievement | Trigger |
+|---|---|
+| `MEAL_DEAL_DEVOTEE` | Buy 10 meal deals from Tesco Express |
+| `UNEXPECTED_ITEM` | Trigger the "unexpected item in bagging area" message 5 times in one session |
+| `KEVIN_BRIBED` | Successfully distract Kevin with a sandwich |
+| `NIGHT_SHIFT_LARRY` | Buy alcohol from Tyler after midnight without being asked for ID |
+| `STOCKROOM_RAIDER` | Loot the Tesco Express stockroom without being caught |
+| `CLUBCARD_MILLIONAIRE` | Accumulate 50 Clubcard points (redeeming vouchers counts toward total) |
+
+### Unit Tests
+
+- `TescoExpressSystem.getMealDealPrice(hasClubcard=false)` returns 3; `getMealDealPrice(true)` returns 2.
+- Self-checkout fraud base catch rate: single item, no modifiers → 0.40f.
+- Self-checkout fraud with Kevin distracted + CCTV broken: `getFraudCatchChance(kevinDistracted=true, cctvBroken=true, notorietyTier=1, busyPeriod=false)` → max(0, 0.40 − 0.20 − 0.15) = 0.05f.
+- Kevin bribe: `canBribeKevin(inventory, inGameDay=1)` returns true when `TESCO_SANDWICH` in inventory and `kevinBribedToday` is false; returns false after bribe used.
+- Clubcard points: spending 3 COIN (meal deal) adds 3 points; at 10 points `CLUBCARD_VOUCHER` added to inventory and points reset to 0.
+- Wine chiller locked: `isWineChillerAccessible(timeHour=21.5f)` returns true; `isWineChillerAccessible(22.5f)` returns false.
+- Stockroom entry without key: `canEnterStockroom(inventory, hasLockpick=false, hasKeycard=false)` returns false; `canEnterStockroom(inventory, hasLockpick=true, hasKeycard=false)` returns true.
+- Tyler suspicion threshold: `getSuspicionThresholdModifier(npc=TYLER)` returns +20; `getSuspicionThresholdModifier(npc=KEVIN)` returns 0.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Meal deal purchase with Clubcard discount**: Give player 5 COIN and a `CLUBCARD`.
+   Press E on `MEAL_DEAL_COUNTER_PROP`. Verify meal deal UI opens showing 3 components.
+   Select sandwich + OJ + crisps. Confirm. Verify COIN deducted by 2 (Clubcard price).
+   Verify player inventory contains `TESCO_MEAL_DEAL_BAG`. Open bag. Verify it
+   yields `TESCO_SANDWICH`, `TESCO_ORANGE_JUICE`, `CRISPS`. Verify
+   `AchievementType.MEAL_DEAL_DEVOTEE` counter incremented by 1.
+
+2. **Self-checkout fraud caught triggers ban**: Give player 1 `ENERGY_DRINK`.
+   Seed RNG to guarantee catch (fraud roll < 0.40). Press E on `SELF_CHECKOUT_PROP`.
+   Do NOT scan the energy drink — move past sensor. Verify Kevin approaches player.
+   Verify `CriminalRecord` contains `SHOPLIFTING`. Verify `isBannedFromTesco()` returns
+   true. Verify Notoriety increased by 8. Press E on shop entrance next frame. Verify
+   player cannot enter (banned message displayed).
+
+3. **Kevin bribe creates theft window**: Give player 1 `TESCO_SANDWICH` and 2
+   `ENERGY_DRINK`. Press E on Kevin. Select bribe option. Verify `TESCO_SANDWICH`
+   removed from inventory. Verify `kevinPatrolling` is false (Kevin in break room).
+   Move to self-checkout. Scan 0 of 2 energy drinks (pass sensor without scanning).
+   Verify no theft check fires (Kevin absent). Verify both energy drinks in inventory.
+   Advance time 61 in-game seconds. Verify Kevin resumes patrol.
+
+4. **Stockroom raid during night shift**: Set time to 02:30 (Tyler on shift, quiet).
+   Give player a LOCKPICK. Approach `STOCKROOM_DOOR_PROP`. Press E. Verify door
+   opens (lockpick consumed). Enter stockroom. Press E on `STOCKROOM_SHELF_PROP`.
+   Verify `CRISPS` × 6, `TIN_OF_BEANS` × 6 added to inventory (first shelf). Verify
+   `CriminalRecord` contains `THEFT_FROM_SHOP`. Verify WitnessSystem CCTV catch
+   chance is ≤ 0.10 (night rate). Verify `AchievementType.STOCKROOM_RAIDER` unlocked.
+
+5. **Wine chiller locks at 22:00**: Set time to 21:45. Press E on `WINE_CHILLER_PROP`.
+   Verify items listed (accessible). Advance time to 22:05. Press E on
+   `WINE_CHILLER_PROP`. Verify interaction blocked — display shows *"Age restricted
+   products cannot be sold after 10pm."* Verify no items dispensed.
+
+6. **Tyler night shift ignores ID check**: Set time to 01:00 (Tyler on duty).
+   Set player Notoriety to 0. Press E on `CHECKOUT_PROP` with `TESCO_FINEST_WINE`
+   in hand. Verify purchase completes without ID check prompt. Verify
+   `AchievementType.NIGHT_SHIFT_LARRY` unlocked. Set time to 10:00 (Dave on duty).
+   Repeat. Verify Dave requests ID (player has none — purchase blocked, "We operate
+   a Challenge 25 policy." message displayed).
+
+// ── Issue #1157: Northfield Tesco Express ─────────────────────────────────────
+// New: TescoExpressSystem.java in ragamuffin.core
+// LandmarkType.TESCO_EXPRESS already exists — add `getDisplayName()` case:
+//   "Tesco Express"
+// New NPCType: TESCO_EXPRESS_MANAGER, TESCO_EXPRESS_WORKER (add to NPCType.java)
+//   (SECURITY_GUARD already exists — reuse for Kevin)
+// New Materials: TESCO_SANDWICH, TESCO_PASTA_POT, TESCO_ORANGE_JUICE,
+//   TESCO_MEAL_DEAL_BAG, CLUBCARD, CLUBCARD_VOUCHER, TESCO_FINEST_WINE,
+//   TESCO_OWN_BRAND_VODKA, READY_MEAL, CLUBCARD_STATEMENT (add to Material.java)
+// New PropTypes: MEAL_DEAL_COUNTER_PROP, WINE_CHILLER_PROP, STOCKROOM_DOOR_PROP
+//   (add to PropType.java)
+//   (SELF_CHECKOUT_PROP, SHELF_CAN, SHELF_BOTTLE, SHELF_BOX, CCTV_PROP,
+//    CHECKOUT_PROP, FILING_CABINET_PROP, STOCKROOM_SHELF_PROP already exist)
+// New CriminalRecord entries: SHOPLIFTING (may already exist — check),
+//   THEFT_FROM_SHOP
+// New Achievements: MEAL_DEAL_DEVOTEE, UNEXPECTED_ITEM, KEVIN_BRIBED,
+//   NIGHT_SHIFT_LARRY, STOCKROOM_RAIDER, CLUBCARD_MILLIONAIRE
+//   (add to AchievementType.java)
+// WorldGenerator: TESCO_EXPRESS sited on the high street parade between
+//   CORNER_SHOP and LAUNDERETTE. 24-hour neon signage.
