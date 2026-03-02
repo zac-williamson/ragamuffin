@@ -44565,3 +44565,206 @@ this mechanic. Implementation:
 //             HealingSystem (LUCKY_HEATHER placebo), CharityShopSystem,
 //             SkipDivingSystem (COPPER_PIPE yield increase), NoiseSystem,
 //             NewspaperSystem, TimeSystem (spawn/despawn cycle), WeatherSystem
+
+---
+
+## Add Northfield NHS Blood Donation Session — Brenda's Mobile Unit, the Forged Questionnaire & the Biscuit Tin Heist
+
+### Overview
+
+The NHS Blood Donation mobile unit parks in the Community Centre car park every 14 in-game
+days (Wednesday 09:00–17:00). Brenda (`NHS_DONOR_COORDINATOR` NPC) runs eligibility screening
+via a paper questionnaire; Tyler (`NHS_VOLUNTEER` NPC) manages the waiting area and keeps an
+eye on the biscuit table. Players can legitimately donate blood, submit a forged questionnaire
+to donate again within the same cooldown period, nick the biscuit tin, or steal `BLOOD_BAG`
+items from the `BLOOD_FRIDGE_PROP` and fence them to `FENCE` or `PAWN_SHOP`.
+
+This system already has NPCType (`NHS_DONOR_COORDINATOR`), AchievementType entries
+(`GOOD_CITIZEN`, `REGULAR_DONOR`, `FORGED_THEIR_WAY_TO_A_BISCUIT`, `TWICE_THE_HERO`,
+`BISCUIT_TIN_BANDIT`), and Material (`BLOOD_BAG`) pre-declared.
+The `NHSBloodDonationSystem.java` and associated props/tests do not yet exist.
+
+### New File
+
+- `NHSBloodDonationSystem.java` in `ragamuffin.core`
+
+### Physical Layout
+
+The mobile unit is represented by a `BLOOD_DONATION_VAN_PROP` (large, 6×3×3, parked
+perpendicular to the Community Centre wall). Interior props accessible via E on the van door:
+
+- `DONATION_BED_PROP` — three reclining chairs in a row (press E to lie down and donate).
+- `BLOOD_FRIDGE_PROP` — compact refrigerator holding 3 `BLOOD_BAG` items; restocks each session.
+- `BISCUIT_TABLE_PROP` — folding table with orange juice and biscuits; gives `ORANGE_JUICE`
+  and `DIGESTIVE_BISCUIT` items on interaction; stolen by punching (yields 8 biscuits).
+- `QUESTIONNAIRE_DESK_PROP` — Brenda's screening desk; press E to start donation flow.
+- `WAITING_CHAIR_PROP` × 4 — NHS blue plastic chairs; Tyler patrols between them.
+
+### NPCType Additions
+
+- `NHS_DONOR_COORDINATOR` (already declared): Brenda. Manages screening; open 09:00–17:00
+  on session days. Hostile if biscuit tin is stolen or blood fridge raided during session.
+  Speech: "Have you donated before?" / "Just a little scratch." / "Help yourself to a biscuit,
+  love." / "I'm going to need you to leave."
+- `NHS_VOLUNTEER` — Tyler. Young volunteer; patrols waiting area; 6-block detection radius.
+  Reduced to 3 blocks while distracted by a `SCHOOL_KID` or `PENSIONER` NPC.
+  Add to `NPCType.java`.
+
+### Donation Flow
+
+1. Player presses E on `QUESTIONNAIRE_DESK_PROP` → Brenda runs eligibility screening.
+2. Eligibility check: passes if `HealingSystem` health ≥ 60%, no `COVERED_IN_BLOOD` debuff,
+   no active `WANTED_STAR` in `WantedSystem`, and 84-day cooldown (`TimeSystem`) since last donation.
+3. On pass: player lies on `DONATION_BED_PROP` (8-second wait), health reduced by 15%,
+   receives `ORANGE_JUICE` + `DIGESTIVE_BISCUIT` from Tyler, `GOOD_CITIZEN` achievement fires
+   on first donation; `REGULAR_DONOR` fires on third across separate sessions.
+4. On fail (cooldown active): Brenda says "We have you on our records, love — too soon."
+   Player can forge a `FORGED_DONOR_QUESTIONNAIRE` (requires `PRINTER_PAPER` + `PEN` in
+   inventory, uses `CommunityCentreSystem.PHOTOCOPIER_PROP`). Submit to Brenda; if Tyler is
+   not within 4 blocks, forgery succeeds → second donation; `FORGED_THEIR_WAY_TO_A_BISCUIT`
+   fires. If Tyler is within 4 blocks: Brenda notices inconsistency → `FRAUD` in CriminalRecord,
+   Notoriety +3, WantedSystem +1.
+5. `DisguiseSystem` score ≥ 3 bypasses the cooldown check entirely (Brenda doesn't recognise
+   the player). Second successful donation this way awards `TWICE_THE_HERO`.
+
+### Biscuit Tin Heist
+
+- Punch `BISCUIT_TABLE_PROP` while Tyler is > 6 blocks away → yields 8 `DIGESTIVE_BISCUIT`.
+  `BISCUIT_TIN_BANDIT` achievement fires. Brenda becomes permanently hostile for the session.
+- Each `DIGESTIVE_BISCUIT` restores 5% health when consumed via right-click.
+
+### Blood Fridge Raid
+
+- Lockpick or crowbar `BLOOD_FRIDGE_PROP` (HIGH noise, 15-block radius): yields 3 `BLOOD_BAG`.
+- Caught by Brenda or Tyler → `THEFT` in CriminalRecord, Notoriety +5, WantedSystem +1.
+- `BLOOD_BAG` fence value: 10 COIN at `FENCE` NPC; 6 COIN at `PAWN_SHOP`.
+
+### New Items (Materials)
+
+- `DIGESTIVE_BISCUIT` — restores 5% health. Stacks to 8. Tooltip: "An NHS biscuit. You earned
+  this. Probably." Add to `Material.java`.
+- `ORANGE_JUICE` — restores 10% health. Single use. Tooltip: "A small cup. It counts."
+  Add to `Material.java`.
+- `FORGED_DONOR_QUESTIONNAIRE` — single-use crafted item. Requires `PRINTER_PAPER` + `PEN`
+  at `CommunityCentreSystem.PHOTOCOPIER_PROP`. Add to `Material.java`.
+
+### New PropType Additions
+
+Add to `PropType.java`:
+- `BLOOD_DONATION_VAN_PROP` (6.0f × 3.0f × 3.0f, 10 hits, yields `SCRAP_METAL`)
+- `DONATION_BED_PROP` (1.0f × 1.0f × 2.0f, 5 hits, yields `SCRAP_METAL`)
+- `BLOOD_FRIDGE_PROP` (0.6f × 1.4f × 0.6f, 4 hits, yields `SCRAP_METAL`)
+- `BISCUIT_TABLE_PROP` (1.2f × 0.8f × 0.6f, 3 hits, yields `DIGESTIVE_BISCUIT` × 8)
+- `QUESTIONNAIRE_DESK_PROP` (1.0f × 0.8f × 0.6f, 5 hits, yields `SCRAP_METAL`)
+
+### New RumourType Additions
+
+Add to `RumourType.java`:
+- `NHS_BLOOD_SESSION` — "NHS blood van's over at the community centre today — free biscuits."
+  Seeded by `NHSBloodDonationSystem` at 08:45 on session days. Spreads via PUBLIC and PENSIONER
+  NPCs; draws foot traffic toward COMMUNITY_CENTRE landmark.
+- `BLOOD_FRIDGE_RAIDED` — "Someone only went and nicked the blood bags from that NHS van —
+  absolute animal." Seeded on `BLOOD_FRIDGE_PROP` break-in. Spreads via PUBLIC and PENSIONER
+  NPCs; NeighbourhoodSystem Vibes −3; NewspaperSystem headline eligible.
+- `BISCUIT_THEFT` — "Someone nicked all the biscuits from the blood donation table.
+  Brenda was gutted." Seeded on `BISCUIT_TABLE_PROP` punch. Ambient flavour; minor sympathy
+  penalty among PUBLIC NPCs (−1 Respect).
+
+### Achievements
+
+(Pre-declared in `AchievementType.java` — just wire them up in `NHSBloodDonationSystem`):
+- `GOOD_CITIZEN` — first legitimate donation.
+- `REGULAR_DONOR` — three donations across separate sessions.
+- `FORGED_THEIR_WAY_TO_A_BISCUIT` — forged questionnaire accepted by Brenda.
+- `TWICE_THE_HERO` — donated twice in one session via `DisguiseSystem`.
+- `BISCUIT_TIN_BANDIT` — stole the biscuit tin while Tyler wasn't watching.
+
+### Integrations
+
+- **HealingSystem**: donation reduces health −15%; `DIGESTIVE_BISCUIT` restores +5%;
+  `ORANGE_JUICE` restores +10%.
+- **TimeSystem**: 84-day (real: ~7-minute) donation cooldown; session spawns every 14 days.
+- **DisguiseSystem**: score ≥ 3 bypasses eligibility cooldown check.
+- **WantedSystem/CriminalRecord**: forged questionnaire caught → FRAUD; fridge raid → THEFT.
+- **NotorietySystem**: fridge raid +5; forgery caught +3; biscuit theft +1.
+- **RumourNetwork**: `NHS_BLOOD_SESSION`, `BLOOD_FRIDGE_RAIDED`, `BISCUIT_THEFT` rumours.
+- **NeighbourhoodSystem**: fridge raid seeds Vibes −3; biscuit theft seeds Vibes −1.
+- **FenceSystem**: `BLOOD_BAG` fenced at 10 COIN.
+- **PawnShopSystem**: `BLOOD_BAG` sold at 6 COIN.
+- **CommunityCentreSystem**: `PHOTOCOPIER_PROP` crafts `FORGED_DONOR_QUESTIONNAIRE`.
+- **NewspaperSystem**: `BLOOD_FRIDGE_RAIDED` rumour eligible for headline.
+- **AchievementSystem**: five achievements (above).
+- **StreetSkillSystem**: SOCIAL XP +2 per legitimate donation; STEALTH XP +3 per undetected
+  biscuit tin steal.
+- **WeatherSystem**: RAIN/DRIZZLE increases session attendance by 2 extra DONOR NPCs (people
+  duck inside the van to shelter).
+
+### Unit Tests
+
+- Session only spawns on Wednesday every 14 in-game days.
+- Eligibility check: health ≥ 60% passes; < 60% fails with correct speech.
+- Eligibility check: WANTED_STAR present → fail.
+- 84-day cooldown enforced; second attempt within cooldown → fail.
+- Forged questionnaire: Tyler > 4 blocks → accepted; Tyler ≤ 4 blocks → caught, FRAUD recorded.
+- DisguiseSystem score ≥ 3 bypasses cooldown.
+- Biscuit table punch while Tyler > 6 blocks → 8 `DIGESTIVE_BISCUIT` awarded.
+- Biscuit table punch while Tyler ≤ 6 blocks → Tyler enters ALERT state, Brenda hostile.
+- Blood fridge break-in: correct items yielded; Notoriety +5; THEFT in CriminalRecord.
+- `DIGESTIVE_BISCUIT` consumption restores 5% health; `ORANGE_JUICE` restores 10%.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Legitimate donation — health reduction and biscuit reward**: Spawn `BLOOD_DONATION_VAN_PROP`
+   at Community Centre. Set TimeSystem to a valid session Wednesday 10:00. Set player health to
+   80%. Press E on `QUESTIONNAIRE_DESK_PROP`. Verify Brenda's eligibility prompt fires.
+   Advance 8 simulated seconds (donation duration). Verify player health is now 65% (−15%).
+   Verify player inventory contains 1 `ORANGE_JUICE` and 1 `DIGESTIVE_BISCUIT`.
+   Verify `GOOD_CITIZEN` achievement fires. Verify `NHS_BLOOD_SESSION` rumour is in the
+   `RumourNetwork`. Attempt a second E press on the desk. Verify Brenda refuses with
+   cooldown speech. Verify no additional health reduction.
+
+2. **Forged questionnaire — Tyler distracted**: Set 84-day cooldown as active. Craft
+   `FORGED_DONOR_QUESTIONNAIRE` (player has `PRINTER_PAPER` and `PEN`; use
+   `CommunityCentreSystem.PHOTOCOPIER_PROP`). Place Tyler 8 blocks from the desk. Press E
+   on `QUESTIONNAIRE_DESK_PROP` with forged questionnaire in inventory. Verify Brenda
+   accepts it (Tyler out of range). Verify `FORGED_THEIR_WAY_TO_A_BISCUIT` achievement fires.
+   Verify player health reduced by 15%. Verify `FORGED_DONOR_QUESTIONNAIRE` removed from
+   inventory.
+
+3. **Forged questionnaire — Tyler catches it**: Place Tyler 3 blocks from desk. Submit
+   `FORGED_DONOR_QUESTIONNAIRE`. Verify `FRAUD` added to CriminalRecord. Verify Notoriety
+   increased by 3. Verify WantedSystem star count increased by 1. Verify Brenda enters
+   HOSTILE state. Verify `FORGED_THEIR_WAY_TO_A_BISCUIT` achievement does NOT fire.
+
+4. **Biscuit tin heist — undetected**: Place Tyler 10 blocks from `BISCUIT_TABLE_PROP`.
+   Punch the table 3 times (destroy it). Verify player inventory gains 8 `DIGESTIVE_BISCUIT`.
+   Verify `BISCUIT_TIN_BANDIT` achievement fires. Verify `BISCUIT_THEFT` rumour seeded in
+   `RumourNetwork`. Verify Brenda enters HOSTILE state for the remainder of the session.
+   Consume one `DIGESTIVE_BISCUIT` (right-click). Verify player health increased by 5%.
+
+5. **Blood fridge raid — noise and consequences**: Give player `CROWBAR`. Face
+   `BLOOD_FRIDGE_PROP`. Use crowbar (break-in). Verify player gains 3 `BLOOD_BAG`.
+   Verify `NoiseSystem` registers HIGH noise (≥ 4) at the van position.
+   Verify `THEFT` recorded in CriminalRecord. Verify Notoriety increased by 5.
+   Verify `BLOOD_FRIDGE_RAIDED` rumour seeded in `RumourNetwork`.
+   Verify `NeighbourhoodSystem` Vibes reduced by 3.
+   Give `BLOOD_BAG` to `FENCE` NPC. Verify player receives 10 COIN per bag (30 COIN total).
+
+---
+
+// ── Issue #1240: Add Northfield NHS Blood Donation Session ────────────────────
+// New: NHSBloodDonationSystem.java in ragamuffin.core
+// New: NHSBloodDonationSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1240NHSBloodDonationIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: NHS_DONOR_COORDINATOR (already declared), NHS_VOLUNTEER — add NHS_VOLUNTEER to NPCType.java
+// Material: DIGESTIVE_BISCUIT, ORANGE_JUICE, FORGED_DONOR_QUESTIONNAIRE — add to Material.java
+//           BLOOD_BAG already declared in Material.java
+// PropType: BLOOD_DONATION_VAN_PROP, DONATION_BED_PROP, BLOOD_FRIDGE_PROP,
+//           BISCUIT_TABLE_PROP, QUESTIONNAIRE_DESK_PROP — add to PropType.java
+// RumourType: NHS_BLOOD_SESSION, BLOOD_FRIDGE_RAIDED, BISCUIT_THEFT — add to RumourType.java
+// AchievementType: GOOD_CITIZEN, REGULAR_DONOR, FORGED_THEIR_WAY_TO_A_BISCUIT,
+//                  TWICE_THE_HERO, BISCUIT_TIN_BANDIT — already declared, wire up in system
+// Integration: HealingSystem, TimeSystem, DisguiseSystem, WantedSystem, CriminalRecord,
+//              NotorietySystem, RumourNetwork, NeighbourhoodSystem, FenceSystem,
+//              PawnShopSystem, CommunityCentreSystem (photocopier), NewspaperSystem,
+//              AchievementSystem, StreetSkillSystem, WeatherSystem
