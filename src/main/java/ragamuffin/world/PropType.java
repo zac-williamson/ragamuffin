@@ -2727,7 +2727,31 @@ public enum PropType {
      * SLIP_AND_FALL accident via ClaimsManagementSystem.stageAccident(). The prop
      * remains in the world after use. Destroyed by 5 punches; yields STONE.
      */
-    LOOSE_PAVING_PROP(0.80f, 0.10f, 0.80f, 5, Material.STONE);
+    LOOSE_PAVING_PROP(0.80f, 0.10f, 0.80f, 5, Material.STONE),
+
+    // ── Issue #1224: Northfield Cybernet Internet Café ────────────────────────
+
+    /**
+     * PRINTER_PROP — a battered inkjet printer on the back-room desk at Cybernet.
+     * Press E (requires back-room access + BLANK_PAPER + PRINTER_INK) to print
+     * forged documents. Printing in main room in Asif's sight triggers ALERT.
+     * Noise level 1 within 4 blocks. Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    PRINTER_PROP(0.50f, 0.40f, 0.40f, 3, Material.SCRAP_METAL),
+
+    /**
+     * PREPAID_CARD_READER_PROP — a chunky card reader near Cybernet's front counter.
+     * Press E with BURNER_PHONE in inventory and 1 COIN to add 5 units to the phone.
+     * Cannot be destroyed (bolted to counter; hitsToBreak = 99).
+     */
+    PREPAID_CARD_READER_PROP(0.30f, 0.25f, 0.20f, 99, null),
+
+    /**
+     * STASH_BOX_PROP — a battered cardboard box in Cybernet's back room containing
+     * random loot: 3–8 COIN + USB_DRIVE + occasional STOLEN_PHONE.
+     * One-time loot per in-game day; resets at 09:00. Destroyed by 2 punches; yields null.
+     */
+    STASH_BOX_PROP(0.50f, 0.35f, 0.40f, 2, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
