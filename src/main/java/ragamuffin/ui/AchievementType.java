@@ -5037,6 +5037,97 @@ public enum AchievementType {
         "Standing Customer",
         "You visited Dave while he was at rock bottom. He appreciated it. Sort of.",
         1
+    ),
+
+    // ── Issue #1306: Northfield Traveller Site ────────────────────────────────
+
+    /**
+     * Awarded when the player completes 2 cash-in-hand jobs for Paddy Flynn,
+     * unlocking DOG_PERMISSION_FLAG.
+     */
+    PADDYS_GRAFTER(
+        "Paddy's Grafter",
+        "Did two jobs for Paddy. You're practically family. Practically.",
+        1
+    ),
+
+    /**
+     * Awarded when the player sells SCRAP_METAL, COPPER_PIPE, STOLEN_BIKE, or STOLEN_PHONE
+     * to Paddy's scrap fence and reaches the 20 COIN cap in a single visit.
+     */
+    SCRAP_KING(
+        "Scrap King",
+        "Maxed out Paddy's scrap budget in one visit. He's impressed. You should be worried.",
+        1
+    ),
+
+    /**
+     * Awarded when the player reports the dog fight ring to the RSPCA,
+     * triggering dispersal of the ring and RSPCA_OFFICER spawn.
+     */
+    RSPCA_GRASS(
+        "RSPCA Grass",
+        "You reported Paddy's dog fight to the RSPCA. The dogs are fine. Paddy is not.",
+        1
+    ),
+
+    /**
+     * Awarded when the player tips off the council on day 1, causing Derek
+     * to arrive same afternoon instead of day 3.
+     * NeighbourhoodSystem COMMUNITY_RESPECT +2.
+     */
+    COMMUNITY_WATCH_HERO(
+        "Community Watch Hero",
+        "Got the travellers shifted before they'd even set up properly. The neighbours are delighted.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully raids the caravan between 02:00 and 04:00,
+     * obtaining at least 8 COIN and the DOG_FIGHT_LEDGER.
+     */
+    NIGHT_RAIDER(
+        "Night Raider",
+        "Turned over Paddy's caravan in the small hours. The lurcher didn't even notice.",
+        1
+    ),
+
+    /**
+     * Awarded when the player wins a bet at the DOG_FIGHT_RING_PROP (2:1 payout).
+     */
+    DIRTY_MONEY(
+        "Dirty Money",
+        "Won a few quid at Paddy's dog fight. Keep it quiet.",
+        1
+    ),
+
+    /**
+     * Awarded when the player applies TARMAC_MIX to their own property driveway.
+     * COMFORT_SCORE +5.
+     */
+    SMOOTH_DRIVEWAY(
+        "Smooth Driveway",
+        "Laid your own tarmac. It's not perfect but it's yours.",
+        1
+    ),
+
+    /**
+     * Awarded when the player crafts a LUCKY_HEATHER_CROWN from 5× LUCKY_HEATHER.
+     */
+    HEATHER_ROYALTY(
+        "Heather Royalty",
+        "Fashioned yourself a crown of lucky heather. You look ridiculous. You feel invincible.",
+        1
+    ),
+
+    /**
+     * Awarded when the player throws CLOTHES_PEG_BUNDLE at 3 different NPCs.
+     * Tracks progress (3 unique peg targets).
+     */
+    PEG_WARFARE(
+        "Peg Warfare",
+        "Assaulted three people with clothes pegs. Brigid would be proud.",
+        3
     );
 
     private final String name;

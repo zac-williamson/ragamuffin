@@ -882,7 +882,17 @@ public class CriminalRecord {
          * window following a claim filing. Cancels the pending payout.
          * Penalty: Notoriety +15, WantedSystem +1 star.
          */
-        INSURANCE_FRAUD("Insurance fraud (fraudulent personal injury claim)");
+        INSURANCE_FRAUD("Insurance fraud (fraudulent personal injury claim)"),
+
+        // ── Issue #1306: Northfield Traveller Site ────────────────────────────
+
+        /**
+         * Recorded when the player attends the dog fight ring at DOG_FIGHT_RING_PROP
+         * (Fri/Sat 21:00–23:00) and places a bet.
+         * Penalty: Notoriety +8, WantedSystem +1 star if witnessed by police.
+         * Evidence: DOG_FIGHT_LEDGER can be used to clear this from the record.
+         */
+        DOG_FIGHTING_ATTENDANCE("Dog fighting attendance");
 
         private final String displayName;
 

@@ -803,5 +803,30 @@ public enum RumourType {
     /** "Apparently someone grassed Dave's Carpets up to Trading Standards — about bloody time."
      * — seeded by CarpetShopSystem when the player reports Dave to Sandra.
      * Spreads via PUBLIC, STREET_LAD NPCs; FactionSystem: Marchetti −1, Street Lads +1. */
-    DAVE_REPORTED;
+    DAVE_REPORTED,
+
+    // ── Issue #1306: Northfield Traveller Site ────────────────────────────────
+
+    /** "Heard the travellers have pitched up on the industrial estate again — Paddy's mob."
+     * — seeded by TravellerSiteSystem when the site appears (day 1).
+     * Spreads via PUBLIC, STREET_LAD, PENSIONER NPCs.
+     * NeighbourhoodSystem awareness flag set; Marchetti Crew alerted. */
+    TRAVELLERS_ARRIVED,
+
+    /** "Someone got a driveway done off them travellers — looks like it's already falling apart."
+     * — seeded by TravellerSiteSystem when a cash-in-hand job is completed with low quality.
+     * Spreads via PENSIONER and PUBLIC NPCs within 25 blocks.
+     * StreetSkillSystem: TRADING XP −1 for player if they referred the job. */
+    SHODDY_WORK,
+
+    /** "Saw someone pelting Doris with clothes pegs outside the post office — had me in stitches."
+     * — seeded by TravellerSiteSystem when the player throws CLOTHES_PEG_BUNDLE at an NPC.
+     * Spreads via PUBLIC NPCs; NPC target enters STARTLED state; comedy flavour only. */
+    CLOTHES_PEG_INCIDENT,
+
+    /** "Word is someone turned over the travellers' caravan in the middle of the night."
+     * — seeded by TravellerSiteSystem on a successful night caravan raid.
+     * Spreads via STREET_LAD and PUBLIC NPCs.
+     * Triggers NotorietySystem +5; if DOG_FIGHT_LEDGER taken, NewspaperSystem headline eligible. */
+    DOG_FIGHT_RAID;
 }

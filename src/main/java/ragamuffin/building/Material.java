@@ -5198,7 +5198,53 @@ public enum Material {
      * CARPET_SAMPLE_BOOK — a large ring-binder of carpet samples taken from the shop floor.
      * Can be sold to FenceSystem for 3 COIN or used as a prop in the player's fake pitch.
      */
-    CARPET_SAMPLE_BOOK("Carpet Sample Book");
+    CARPET_SAMPLE_BOOK("Carpet Sample Book"),
+
+    // ── Issue #1306: Northfield Traveller Site ────────────────────────────────
+
+    /**
+     * LUCKY_HEATHER — sprig of heather sold by Brigid (TRAVELLER_WOMAN).
+     * Costs 2 COIN. Placebo effect: +5% max HP for the current visit.
+     * Can be crafted into LUCKY_HEATHER_CROWN (5×).
+     */
+    LUCKY_HEATHER("Lucky Heather"),
+
+    /**
+     * CLOTHES_PEG_BUNDLE — bundle of wooden clothes pegs sold by Brigid for 1 COIN.
+     * Comedy throw item: throw at NPCs to trigger a brief STARTLED state and laughter
+     * rumour (CLOTHES_PEG_INCIDENT). No damage; harmless but memorable.
+     */
+    CLOTHES_PEG_BUNDLE("Clothes Peg Bundle"),
+
+    /**
+     * TARMAC_MIX — bag of cold-lay tarmac mix purchased from Paddy (5 COIN).
+     * Use on player's own property driveway to apply DIY repair: COMFORT_SCORE +5.
+     * Required for SMOOTH_DRIVEWAY achievement.
+     */
+    TARMAC_MIX("Tarmac Mix"),
+
+    /**
+     * DOG_FIGHT_LEDGER — evidence notebook found in CARAVAN_PROP during night raid.
+     * Contains records of dog fights and bets. Can be reported to RSPCA (triggers
+     * RSPCA_OFFICER spawn and dispersal of dog fight ring; Paddy goes HOSTILE,
+     * Marchetti Respect −2). Also usable as evidence with POLICE for WantedSystem
+     * reduction.
+     */
+    DOG_FIGHT_LEDGER("Dog Fight Ledger"),
+
+    /**
+     * LUCKY_HEATHER_CROWN — wreath crafted from 5× LUCKY_HEATHER.
+     * Equippable headgear: +10% max HP, Notoriety −2 (looks harmless/eccentric).
+     * Unlocks HEATHER_ROYALTY achievement.
+     */
+    LUCKY_HEATHER_CROWN("Lucky Heather Crown"),
+
+    /**
+     * STOLEN_BIKE — a stolen bicycle recovered from the Northfield area.
+     * Accepted by TRAVELLER_BOSS at above-FenceSystem rates (8 COIN).
+     * Also accepted by FenceSystem at standard rate (5 COIN).
+     */
+    STOLEN_BIKE("Stolen Bike");
 
     private final String displayName;
 
@@ -6375,6 +6421,20 @@ public enum Material {
                                                   0.75f, 0.75f, 0.75f); // Grey washed-out text
             case CANVAS_BAG:            return cs(0.55f, 0.48f, 0.30f,  // Worn khaki canvas
                                                   0.40f, 0.35f, 0.20f); // Dark strap
+
+            // Issue #1306: Northfield Traveller Site
+            case LUCKY_HEATHER:         return cs(0.72f, 0.30f, 0.65f,  // Purple heather
+                                                  0.50f, 0.75f, 0.30f); // Green stem
+            case CLOTHES_PEG_BUNDLE:    return cs(0.72f, 0.50f, 0.22f,  // Pale wood peg
+                                                  0.55f, 0.35f, 0.12f); // Dark wood grain
+            case TARMAC_MIX:            return cs(0.20f, 0.20f, 0.20f,  // Black tarmac
+                                                  0.45f, 0.45f, 0.45f); // Grey aggregate
+            case DOG_FIGHT_LEDGER:      return cs(0.20f, 0.25f, 0.35f,  // Dark navy cover
+                                                  0.82f, 0.12f, 0.10f); // Red "PRIVATE" label
+            case LUCKY_HEATHER_CROWN:   return cs(0.72f, 0.30f, 0.65f,  // Purple heather
+                                                  0.80f, 0.75f, 0.20f); // Gold crown wire
+            case STOLEN_BIKE:           return cs(0.20f, 0.40f, 0.70f,  // Blue frame
+                                                  0.18f, 0.18f, 0.18f); // Black tyres
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -8275,6 +8335,20 @@ public enum Material {
                 return IconShape.BOX;         // fold-flat trolley
             case CARPET_SAMPLE_BOOK:
                 return IconShape.BOX;         // ring-binder of samples
+
+            // Issue #1306: Northfield Traveller Site
+            case LUCKY_HEATHER:
+                return IconShape.FLAT_PAPER;  // small sprig
+            case CLOTHES_PEG_BUNDLE:
+                return IconShape.BOX;         // bundle of pegs
+            case TARMAC_MIX:
+                return IconShape.BOX;         // heavy bag
+            case DOG_FIGHT_LEDGER:
+                return IconShape.FLAT_PAPER;  // notebook
+            case LUCKY_HEATHER_CROWN:
+                return IconShape.BOX;         // woven crown
+            case STOLEN_BIKE:
+                return IconShape.BOX;         // bicycle
 
             default:
                 return IconShape.BOX;
