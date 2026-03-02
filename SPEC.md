@@ -43722,3 +43722,146 @@ Gary's franchise of misery operates on a simple principle: where there's blame, 
 //             PawnShopSystem (NECK_BRACE), NotorietySystem, WantedSystem, CriminalRecord,
 //             RumourNetwork, NewspaperSystem, NeighbourhoodSystem (genuine injury COMMUNITY_RESPECT),
 //             NoiseSystem, DWPSystem (exemption), StreetSkillSystem (STREET_SMARTS XP), FactionSystem
+
+---
+
+## Issue #1299: Add Northfield Street Chuggers — ChuggerSystem, Direct Debit Hustle & the Fake Tabard Scam
+
+### Overview
+
+`ChuggerSystem` brings `NPCType.CHUGGER` and `NPCType.CHUGGER_LEADER` (Tracy) fully to life on Northfield High Street. These NPCs, their achievements (`CHUGGER_GOODWILL`, `STANDING_ORDER`, `CLIPBOARD_RAGE`, `DIRECT_DEBIT_HUSTLE`, `CHUGGER_DODGER`), and their Materials (`CHARITY_TABARD`, `CHARITY_CLIPBOARD`, `MARKER_PEN`) are already defined and waiting. This issue implements the backing system.
+
+Chugging is one of Britain's most recognisable forms of ambient social friction — clipboard-wielding charity fundraisers who materialise from nowhere, make eye contact, and call you "mate" before you've had a chance to stare at your phone. In Northfield, Tracy leads a three-person team on the high street pavement, operating a lucrative direct-debit harvesting operation on behalf of `SaveTheSomething`. The player can donate, ignore, dodge, punch, or — most lucratively — steal a tabard and run the same scam themselves.
+
+---
+
+### NPCs
+
+- **CHUGGER** (×2 on shift) — positioned on a 4-block stretch of PAVEMENT outside the charity shop, Mon–Sat 10:00–17:00. Approaches the player within 6 blocks: transitions to `INTERCEPTING` state, walks alongside the player and delivers dialogue. Gives up after 12 seconds if no interaction. Carries `CHARITY_CLIPBOARD` (lootable). Dialogue: *"Hiya mate, have you got a quick minute?" / "It's just a tiny direct debit, honestly." / "You look like a caring person." / "I get it — you're busy. You always will be."*
+- **CHUGGER_LEADER (Tracy)** — stands at the `CHARITY_CLIPBOARD_STAND_PROP` (new PropType: a fold-out table with a banner, 1.20×1.20×0.80, loot: `CHARITY_CLIPBOARD`). Present Mon–Sat 10:00–17:00. Can hire the player as a fake chugger (give `CHARITY_TABARD` + `CHARITY_CLIPBOARD` for 0 COIN — she thinks you're legitimate). Triggers `FRAUD_FLAGGED` state if she sees the player accepting COIN from an NPC while wearing the tabard. Dialogue: *"Sign-up target today: eight. Eight people change the world." / "Don't take no personally — it's just statistics." / "You look keen. You want to do a shift?" / "Wait — are you... collecting actual money?"*
+
+---
+
+### PropTypes (new)
+
+- `CHARITY_CLIPBOARD_STAND_PROP` — fold-out table + charity banner outside charity shop. Press E to steal `CHARITY_CLIPBOARD` (Notoriety +1 if Tracy is within 10 blocks). Size: 1.20×1.20×0.80. Drop: `CHARITY_CLIPBOARD`. Added to PropType.java.
+
+---
+
+### Activities
+
+#### Responding to Approach
+When a CHUGGER enters `INTERCEPTING` state within 6 blocks, the player has four options:
+
+| Response | Method | Outcome |
+|---|---|---|
+| Donate | Press E, select "Donate 2 COIN" | −2 COIN, Notoriety −1, `CHUGGER_GOODWILL` achievement, CHUGGER exits satisfied |
+| Sign up for Direct Debit | Press E, select "Sign Up" | `STANDING_ORDER` achievement; −1 COIN/day for 3 in-game days; seeds `DIRECT_DEBIT` rumour |
+| Punch | Left-click on CHUGGER during `INTERCEPTING` | CHUGGER enters `FLEEING`; Notoriety +8; WantedSystem +1; `CLIPBOARD_RAGE` achievement; CHARITY_CLIPBOARD drops |
+| Dodge | Sprint away, cross the road (block-row transition), or equip `COUNCIL_JACKET` while CHUGGER approaches | CHUGGER gives up (`WANDERING`); dodge count incremented (3 dodges = `CHUGGER_DODGER` achievement) |
+
+- **Dodge mechanics**: road-crossing (player moves from PAVEMENT to ROAD block while CHUGGER is in `INTERCEPTING`) counts as 1 dodge. Sprint-escape (player speed > 4.5 m/s for 3 seconds while CHUGGER is pursuing) counts as 1 dodge. Equipping `COUNCIL_JACKET` before the approach counts as 1 dodge (CHUGGER mistakes player for council worker and backs off).
+
+#### Direct Debit Drain
+- After signing up: a `DIRECT_DEBIT_ACTIVE` flag is set on the player. Once per in-game day for 3 consecutive days, 1 COIN is automatically deducted on login/midnight tick. Counter displayed as tooltip on COIN item: "Direct debit active (X days remaining)".
+- Player can cancel by returning to Tracy and pressing E: *"I want to cancel." → Tracy tears up the form.* No coin refund. Flag cleared.
+
+#### Fake Charity Tabard Scam
+The player's high-value hustle. Requires `CHARITY_TABARD` + `CHARITY_CLIPBOARD` in inventory.
+
+1. **Gear up**: Equip `CHARITY_TABARD`. Carry `CHARITY_CLIPBOARD`. Sources: steal from `CHARITY_CLIPBOARD_STAND_PROP`; loot from punched CHUGGER; craft `CHARITY_TABARD` from `FABRIC_SCRAP×1 + MARKER_PEN×1`.
+2. **Redirecting real chugging**: While wearing `CHARITY_TABARD`, real CHUGGER NPCs do not approach the player (they treat you as a colleague). Effect: all CHUGGERs on shift redirect to the nearest non-player NPC.
+3. **Collecting fake donations**: Press E on any wandering NPC while wearing `CHARITY_TABARD` + holding `CHARITY_CLIPBOARD`. 60% chance NPC donates 1 COIN (sympathetic). 40% chance NPC ignores (busy). Fraud detection: on the 2nd suspicious collection within 5 blocks of Tracy or a POLICE NPC, fraud is detected — Tracy shouts, CHUGGER_LEADER transitions to `FRAUD_FLAGGED`, POLICE called, Notoriety +6, `DIRECT_DEBIT_HUSTLE` achievement. Player must drop `CHARITY_TABARD` or flee.
+4. **Undetected collection cap**: Player can collect up to 4 COIN per shift (10:00–17:00) before Tracy or POLICE suspicion chance rises from base 40% to 80%.
+5. **Tracy hire route**: If Tracy hires the player (E on Tracy → she gives `CHARITY_TABARD` freely), the fraud detection threshold is raised to 6 COIN (she vouched for you). But getting caught while Tracy-hired adds `CHARITY_FRAUD` to CriminalRecord.
+
+#### Sign-Up Quota (Tracy's mechanic)
+- Tracy tracks how many sign-ups happen per shift. If 0 sign-ups by 14:00, she becomes `STRESSED` state — slightly faster walking, pushier dialogue. If the player signs up 3 NPCs themselves (persuasion: E on NPC near Tracy, press "Sign Them Up"), Tracy rewards 3 COIN and seeds a `GRATEFUL_CHUGGER` rumour. Achievement: `QUOTA_HERO`.
+
+---
+
+### Prices
+
+| Transaction | Amount |
+|---|---|
+| Donate to CHUGGER | −2 COIN |
+| Direct Debit drain | −1 COIN/day × 3 days |
+| Fake donation collection | +1 COIN per NPC (60% success) |
+| Tracy hire — tabard grant | 0 COIN |
+| `CHARITY_TABARD` craft | `FABRIC_SCRAP×1 + MARKER_PEN×1` |
+| Steal `CHARITY_CLIPBOARD_STAND_PROP` | +1 `CHARITY_CLIPBOARD`, Notoriety +1 (if Tracy nearby) |
+| Sign up 3 NPCs for Tracy | +3 COIN reward |
+
+---
+
+### Integration Points
+
+- **NotorietySystem**: Punch CHUGGER +8; detected fake-collection +6; steal clipboard near Tracy +1; donate −1.
+- **WantedSystem**: Punch CHUGGER +1 star; detected fraud (POLICE nearby) +1 star.
+- **CriminalRecord**: `CHARITY_FRAUD` (new CrimeType) on detected fraud while Tracy-hired; `ASSAULT` on CHUGGER punch.
+- **RumourNetwork**: `DIRECT_DEBIT` rumour seeded on sign-up; `GRATEFUL_CHUGGER` rumour on helping Tracy hit quota; `CHARITY_FRAUD` rumour on bust. Add `DIRECT_DEBIT`, `GRATEFUL_CHUGGER`, `CHARITY_FRAUD` to RumourType.java.
+- **DisguiseSystem**: `CHARITY_TABARD` acts as a disguise tier (CHUGGER-redirect effect); `COUNCIL_JACKET` acts as CHUGGER-dodge trigger.
+- **CharityShopSystem**: CHUGGER NPCs are thematically linked to the charity shop landmark; their patrol zone is the 10-block radius outside it.
+- **StreetEconomySystem**: CHUGGER COIN donation satisfies the BROKE NPC need by proxy (CHUGGER's donation proceeds go to NPCs with DESPERATE need state — flavour only).
+- **WeatherSystem**: RAIN causes CHUGGER NPCs to stand under awning (patrol radius reduced to 2 blocks); no approaches during rain.
+- **NewspaperSystem**: After 5 total fake-collection incidents on the player's record, headline: "Northfield High Street Charity Scam: 'I Thought He Was Legitimate,' Says Victim."
+- **StreetSkillSystem**: `STREET_SMARTS XP +2` per successful fake donation; `SOCIAL XP +1` per genuine donation.
+- **FactionSystem**: `STREET_LADS` Respect ≥ 25 makes gang members warn the player if Tracy is watching — reduces fraud detection by 15%.
+- **NoiseSystem**: CHUGGER punch = MEDIUM noise radius 8; clipboard scatter = LOW noise radius 4.
+- **DWPSystem**: `DIRECT_DEBIT_ACTIVE` flag adds tooltip: DWP adviser notes the outgoing — no effect on benefits, just flavour.
+
+---
+
+### Unit Tests (`ChuggerSystemTest.java`)
+
+1. `testChuggerApproachesWithin6Blocks` — place CHUGGER at (10,1,10), player at (10,1,15); call `update(delta, timeSystem)`; verify CHUGGER state = `INTERCEPTING`.
+2. `testChuggerGivesUpAfter12Seconds` — CHUGGER in `INTERCEPTING`; advance 12 in-game seconds without player response; verify CHUGGER state = `WANDERING`.
+3. `testDonation2CoinReducesNotoriety` — player has 5 COIN, Notoriety = 20; call `donateToChugger(player, chugger)`; verify player COIN = 3; Notoriety = 19; `CHUGGER_GOODWILL` achievement unlocked.
+4. `testDirectDebitActiveFlag` — call `signUpDirectDebit(player)`; verify `DIRECT_DEBIT_ACTIVE` = true; `STANDING_ORDER` achievement unlocked; advance 1 in-game day; verify player COIN −1.
+5. `testDirectDebitDrainsFor3Days` — sign up; advance 3 in-game days; verify total COIN drained = 3; `DIRECT_DEBIT_ACTIVE` = false.
+6. `testDirectDebitCancelledByTracy` — `DIRECT_DEBIT_ACTIVE` = true; call `cancelDirectDebit(player, tracyNPC)`; verify `DIRECT_DEBIT_ACTIVE` = false; no COIN refunded.
+7. `testPunchChuggerTriggersFleeingAndNotoriety` — player left-clicks on CHUGGER in `INTERCEPTING`; call `onChuggerPunched(player, chugger)`; verify CHUGGER state = `FLEEING`; Notoriety +8; WantedSystem +1; `CLIPBOARD_RAGE` achievement; `CHARITY_CLIPBOARD` dropped.
+8. `testRoadCrossingCountsDodge` — CHUGGER `INTERCEPTING`; player moves from PAVEMENT to ROAD block; call `onPlayerBlockChanged(player, ROAD)`; verify `dodgeCount` = 1; CHUGGER exits `INTERCEPTING`.
+9. `testSprintEscapeCountsDodge` — CHUGGER `INTERCEPTING`; player speed = 5.0f for 3 seconds; call `update(delta, timeSystem)`; verify `dodgeCount` incremented.
+10. `testCouncilJacketDodge` — player equips `COUNCIL_JACKET`; CHUGGER approaches; call `onPlayerEquip(player, COUNCIL_JACKET)`; verify CHUGGER backs off; `dodgeCount` +1.
+11. `test3DodgesUnlockAchievement` — set `dodgeCount` = 2; trigger one more dodge; verify `CHUGGER_DODGER` achievement unlocked.
+12. `testFakeCollectionGrantsCoin` — player equips `CHARITY_TABARD` + `CHARITY_CLIPBOARD`; seed RNG < 0.60; call `collectFakeDonation(player, targetNPC, rng)`; verify player COIN +1.
+13. `testFraudDetectedNearTracy` — player wears `CHARITY_TABARD`; `fraudCollectionCount` = 1 (first suspicious contact); call `collectFakeDonation` near Tracy (≤ 5 blocks); verify `fraudDetected` = true; Notoriety +6; `DIRECT_DEBIT_HUSTLE` achievement.
+14. `testCharityTabardRedirectsChuggersFromPlayer` — player equips `CHARITY_TABARD`; call `update(delta, timeSystem)` with CHUGGER approaching; verify CHUGGER redirects to nearest non-player NPC; does NOT enter `INTERCEPTING` for player.
+15. `testFakeCollectionCapAt4CoinPerShift` — player collects 4 COIN (fake); call `collectFakeDonation` again; verify suspicion chance = 0.80f (raised from 0.40f).
+16. `testTracyHireRaisesDetectionThreshold` — Tracy hires player (gives `CHARITY_TABARD`); verify `fraudDetectionThreshold` = 6 COIN (vs default 4).
+17. `testTracyHireFraudAddsCrimeToRecord` — Tracy-hired; fraud detected; verify `CHARITY_FRAUD` in CriminalRecord.
+18. `testSignUpNPCForTracyGrantsCoin` — player signs up 3 NPCs (3× `signUpNPCForTracy(player, npc)`); verify player COIN +3; `GRATEFUL_CHUGGER` rumour seeded; `QUOTA_HERO` achievement (if defined).
+19. `testRainReducesChuggerPatrolRadius` — `WeatherSystem.currentWeather` = RAIN; call `update(delta, timeSystem)`; verify each CHUGGER patrol radius ≤ 2 blocks; no `INTERCEPTING` state triggered.
+20. `testChuggerDoesNotApproachDuringRain` — weather = RAIN; place player 4 blocks from CHUGGER; call `update(delta, timeSystem)`; verify CHUGGER state ≠ `INTERCEPTING`.
+
+---
+
+### Integration Tests (`Issue1299ChuggerBlitzIntegrationTest.java`)
+
+1. **Full dodge → achievement pipeline**: Three CHUGGER NPCs on shift (10:30 Mon). Player uses road-crossing dodge on first, sprint-escape on second, COUNCIL_JACKET on third. Verify: `dodgeCount` = 3; `CHUGGER_DODGER` achievement unlocked; all three CHUGGERs in `WANDERING` state; no COIN lost.
+
+2. **Direct debit sign-up → 3-day drain**: Player signs up at 10:00 Mon. `STANDING_ORDER` achievement unlocked. Advance to 00:00 Tue, Wed, Thu. Verify: player COIN decremented by 1 on each midnight tick (total −3); `DIRECT_DEBIT_ACTIVE` = false after 3rd drain; no further deductions on Fri tick.
+
+3. **Fake tabard scam → Tracy catches player**: Player crafts `CHARITY_TABARD` (FABRIC_SCRAP + MARKER_PEN) + has `CHARITY_CLIPBOARD`. Player equips tabard. Player presses E on 2 NPCs near Tracy (≤ 5 blocks), RNG seeded accept (< 0.60). Second collection triggers `fraudDetected`. Tracy enters `FRAUD_FLAGGED`. Verify: Notoriety = start+6; `DIRECT_DEBIT_HUSTLE` achievement unlocked; POLICE called (WantedSystem +1); `CHARITY_FRAUD` in CriminalRecord.
+
+4. **Punch → CHARITY_CLIPBOARD loot → sell to fence**: Player left-clicks CHUGGER during `INTERCEPTING`. CHUGGER enters `FLEEING`. `CHARITY_CLIPBOARD` drops. Notoriety = start+8. WantedSystem +1 star. Player picks up `CHARITY_CLIPBOARD`. Player takes clipboard to FenceSystem fence. Verify: fence accepts clipboard for 1 COIN; `CLIPBOARD_RAGE` achievement unlocked.
+
+5. **Tracy hire → undetected run → quota reward**: Player presses E on Tracy (09:45, no POLICE within 20 blocks). Tracy gives `CHARITY_TABARD`. Player collects 3 COIN from NPCs (all ≤ 4 undetected cap, no Tracy nearby). Player signs up 3 further NPCs for Tracy. Tracy at 14:00 is NOT `STRESSED` (quota met). Verify: player gained 3 COIN fake donations + 3 COIN Tracy reward = +6 COIN; `GRATEFUL_CHUGGER` rumour seeded in RumourNetwork; no `CHARITY_FRAUD` in CriminalRecord.
+
+---
+
+// ── Issue #1299: Add Northfield Street Chuggers ───────────────────────────────
+// New: ChuggerSystem.java in ragamuffin.core
+// New: ChuggerSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1299ChuggerBlitzIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: CHUGGER, CHUGGER_LEADER (Tracy) — already defined; no change needed
+// Material: CHARITY_TABARD, CHARITY_CLIPBOARD, MARKER_PEN — already defined; no change needed
+// PropType: CHARITY_CLIPBOARD_STAND_PROP — add to PropType.java
+// RumourType: DIRECT_DEBIT, GRATEFUL_CHUGGER, CHARITY_FRAUD — add to RumourType.java
+// AchievementType: CHUGGER_GOODWILL, STANDING_ORDER, CLIPBOARD_RAGE, DIRECT_DEBIT_HUSTLE, CHUGGER_DODGER — already defined; no change needed
+// CriminalRecord: CHARITY_FRAUD — add to CriminalRecord.CrimeType
+// Integration: NotorietySystem, WantedSystem, CriminalRecord, DisguiseSystem (CHARITY_TABARD redirect,
+//             COUNCIL_JACKET dodge), CharityShopSystem (patrol zone), StreetEconomySystem (flavour),
+//             WeatherSystem (rain → patrol radius reduction), NewspaperSystem, StreetSkillSystem,
+//             FactionSystem (STREET_LADS warn of Tracy), NoiseSystem, DWPSystem (flavour tooltip)
