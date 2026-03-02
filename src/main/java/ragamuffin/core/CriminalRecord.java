@@ -593,7 +593,28 @@ public class CriminalRecord {
          * Brenda's knock (evasion). Adds +10 suspicion score to DWPSystem.
          * Penalty: Notoriety +5.
          */
-        BENEFIT_FRAUD_EVASION("Benefit fraud evasion (non-cooperation)");
+        BENEFIT_FRAUD_EVASION("Benefit fraud evasion (non-cooperation)"),
+
+        // ── Issue #1196: Environmental Health Officer ─────────────────────────
+
+        /**
+         * Recorded when the player attempts to bribe Janet (EnvironmentalHealthSystem)
+         * and she refuses. Notoriety +3, WantedSystem +1 star.
+         * Two or more BRIBERY entries escalate to CORRUPTION_OF_OFFICIAL at magistrates.
+         */
+        BRIBERY("Bribery of a council official"),
+
+        /**
+         * Escalated charge raised by MagistratesCourtSystem when the player
+         * accumulates ≥ 2 BRIBERY entries. Penalty: 15 COIN fine or community service.
+         */
+        CORRUPTION_OF_OFFICIAL("Corruption of a public official"),
+
+        /**
+         * Recorded when the player assaults Janet (ENVIRONMENTAL_HEALTH_OFFICER).
+         * WantedSystem +3 stars; COUNCIL_ENFORCEMENT rumour seeded.
+         */
+        ASSAULT_ON_OFFICIAL("Assault on a council official");
 
         private final String displayName;
 
