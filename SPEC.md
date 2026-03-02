@@ -40672,3 +40672,207 @@ At 01:45 each day: a `DRUNK` NPC (spawned outside) tries to enter Clucky's but i
 //   RumourNetwork (FIGHT_NEARBY), NoiseSystem (FIGHT_NOISE, FIRE), WitnessSystem,
 //   StreetSkillSystem (INTIMIDATE, NEGOTIATE), AchievementSystem, TooltipSystem,
 //   TimeSystem, NPCManager (YOUTH_GANG spawn), WeatherSystem, HungerSystem (food effects)
+
+---
+
+## Northfield Rag-and-Bone Man — Barry's Round, the Horsebox Hustle & the Council Impoundment
+
+**Issue title:** Add Northfield Rag-and-Bone Man — RagAndBoneSystem, Barry's Round & the Horsebox Hustle
+
+### Overview
+
+Barry Dodd is Northfield's last rag-and-bone man. He drives a battered flatbed
+transit (the "horsebox") on a fixed weekly route Monday–Saturday, 07:30–13:00,
+calling out *"Any old iroooon! Rag and booone!"* on a loudspeaker as he trundles
+through the streets at 1.5 blocks/second. He stops for 90 seconds at each of six
+designated kerb-side spots (RAGBONE_STOP props) around the neighbourhood. Residents
+spawn carrying junk items and approach to sell; the player can do the same — or
+exploit Barry's operation in several ways.
+
+Barry won't operate on Sundays (he's at the pub), and disappears if it rains
+(`WeatherSystem` RAIN or STORM active). His route resumes the following morning.
+
+### Key Mechanics
+
+**Barry's Route & Kerb-Side Stops**
+- 6 `RAGBONE_STOP` props placed around the world at kerb-side positions
+- Barry's transit (`RAG_AND_BONE_VAN` prop) moves between stops on a fixed path
+- At each stop Barry calls out via `SoundSystem` (ambient shout, range 20 blocks)
+- Residents (PUBLIC NPCs within 15 blocks, at most 3 per stop) spawn carrying
+  JUNK_ITEM and walk to Barry; each sale takes 8 seconds
+- Player can queue up (press E when within 3 blocks of van)
+
+**Selling Scrap to Barry**
+- Barry buys `JUNK_ITEM` (1 COIN), `SCRAP_METAL` (2 COIN), `COPPER_WIRE` (4 COIN,
+  no questions asked — unlike the scrapyard), `LEAD_FLASHING` (5 COIN),
+  `OLD_WASHING_MACHINE` prop interaction (3 COIN, requires SPANNER),
+  `GARDEN_ORNAMENT` (2 COIN)
+- Barry refuses `EVIDENCE_ITEM` types; if player attempts to sell stolen goods
+  with Notoriety ≥ 60, Barry calls police (WantedSystem +1 star)
+- If player sells 3+ COPPER_WIRE in one visit, Barry mutters *"You been at the
+  lampposts again, 'ave ya?"* and NotorietySystem +5
+
+**The Horsebox Hustle (player side-hustles)**
+1. **Garden Ornament Pinch** — During 22:00–06:00, GARDEN_ORNAMENT props appear in
+   front gardens. Player can take them (CriminalRecord THEFT, WitnessSystem check)
+   and sell to Barry next morning for 2 COIN each. StreetEconomy demand fluctuates.
+2. **Rival Route Sabotage** — Player can slash Barry's tyres (PENKNIFE on van,
+   02:00–06:00). Barry's van is immobilised for the day; `RIVAL_RAGBONE_MAN` NPC
+   (Terry) spawns and works the route instead at lower prices. Player can then offer
+   Barry roadside assistance (RUBBER_TYRE prop from ScrapyardSystem, 10 COIN reward
+   + `BARRY_S_MATE` achievement) or let Terry muscle in for WantedSystem consequences.
+3. **Junk Pre-buy** — Player can knock on doors (E on residential front doors,
+   07:00–09:00) before Barry arrives, buying JUNK_ITEM from residents for 0 COIN
+   (charity appeal) or 1 COIN, then reselling to Barry at his standard prices.
+   TooltipSystem: *"Beat Barry to the door and pocket the difference."*
+
+**Council Enforcement & Impoundment**
+- `COUNCIL_ENFORCEMENT` NPC patrols Barry's route on Fridays (probability
+  `ENFORCEMENT_FRIDAY_CHANCE = 0.55f`)
+- If Barry is caught operating without a valid Waste Carrier Licence
+  (`BARRY_LICENCE_STATUS` flag), his van is impounded (prop state → IMPOUNDED,
+  Barry enters FLEEING state, operation suspended for 48 in-game hours)
+- Player can: (a) warn Barry in advance (E near van, speech *"Council's about mate"*)
+  — Barry skips that stop and pays player 3 COIN; (b) distract the officer (E near
+  COUNCIL_ENFORCEMENT while holding TIN_OF_BEANS — triggers BRIBE_ATTEMPT; 60%
+  success, Notoriety +3 on failure); (c) forge a replacement licence
+  (PRINTER prop at InternetCafeSystem, costs 5 COIN, FORGED_LICENCE material)
+- If van is impounded, `RumourNetwork` spreads `BARRY_NICKED` rumour; all PUBLIC
+  NPCs within 30 blocks react with sadness dialogue
+
+**Sound & Atmosphere**
+- Barry's call-out plays every 30 seconds while moving: ambient positional shout
+- OLD_WASHING_MACHINE prop rattles on van (NoiseSystem +0.3 while van is moving)
+- Van engine at idle: NoiseSystem +0.1 at stops
+- Impoundment event: SIREN sound, NoiseSystem spike 0.8
+
+**NPC Personality**
+- Barry (`RAG_AND_BONE_MAN` NPCType, health 80, non-hostile) greets player with
+  regional phrases: *"Alright mate, whatcha got for me?"*; *"I'll take that off
+  yer 'ands."*; *"Blimey, where d'you find that?"*
+- Terry (`RIVAL_RAGBONE_MAN`, health 80, hostile if player interferes with his
+  route) offers 10% lower prices and has a 25% chance of stealing from the player
+  if they stand next to his van
+
+### Key Constants
+
+| Constant | Value | Description |
+|---|---|---|
+| `OPEN_HOUR` | `7.5f` | Barry starts at 07:30 |
+| `CLOSE_HOUR` | `13.0f` | Barry's round ends at 13:00 |
+| `STOP_DURATION_SECONDS` | `90f` | Time Barry lingers at each stop |
+| `VAN_SPEED` | `1.5f` | Van movement speed (blocks/second) |
+| `SHOUT_INTERVAL_SECONDS` | `30f` | How often Barry calls out |
+| `SHOUT_RANGE_BLOCKS` | `20f` | Audio range of Barry's shout |
+| `RESIDENT_SPAWN_RADIUS` | `15f` | Radius to spawn queuing PUBLIC NPCs |
+| `MAX_RESIDENT_QUEUE` | `3` | Max NPCs queuing per stop |
+| `RESIDENT_SELL_DURATION` | `8f` | Seconds per NPC sale |
+| `PRICE_JUNK_ITEM` | `1` | COIN paid for JUNK_ITEM |
+| `PRICE_SCRAP_METAL` | `2` | COIN paid for SCRAP_METAL |
+| `PRICE_COPPER_WIRE` | `4` | COIN paid for COPPER_WIRE |
+| `PRICE_LEAD_FLASHING` | `5` | COIN paid for LEAD_FLASHING |
+| `PRICE_WASHING_MACHINE` | `3` | COIN paid for OLD_WASHING_MACHINE prop |
+| `PRICE_GARDEN_ORNAMENT` | `2` | COIN paid for GARDEN_ORNAMENT |
+| `COPPER_SUSPICION_THRESHOLD` | `3` | COPPER_WIRE sales before notoriety spike |
+| `NOTORIETY_COPPER_SPIKE` | `5` | Notoriety added on copper suspicion |
+| `ENFORCEMENT_FRIDAY_CHANCE` | `0.55f` | Probability of council enforcement on Friday |
+| `BRIBE_SUCCESS_CHANCE` | `0.60f` | Chance TIN_OF_BEANS bribe succeeds |
+| `BRIBE_FAIL_NOTORIETY` | `3` | Notoriety added on failed bribe |
+| `WARN_BARRY_REWARD` | `3` | COIN reward for tipping Barry off |
+| `TERRY_STEAL_CHANCE` | `0.25f` | Terry's chance of stealing from player |
+| `TERRY_PRICE_DISCOUNT` | `0.90f` | Terry pays 90% of Barry's prices |
+| `TYRE_SLASH_HOUR_START` | `2.0f` | Tyre slashing allowed from 02:00 |
+| `TYRE_SLASH_HOUR_END` | `6.0f` | Tyre slashing allowed until 06:00 |
+| `IMPOUND_DURATION_HOURS` | `48f` | In-game hours van is impounded |
+| `DOOR_KNOCK_START` | `7.0f` | Earliest door-knock hour |
+| `DOOR_KNOCK_END` | `9.0f` | Latest door-knock hour |
+| `NOISE_VAN_MOVING` | `0.3f` | NoiseSystem level while van moves |
+| `NOISE_VAN_IDLE` | `0.1f` | NoiseSystem level at stops |
+
+### Unit Test Assertions (method-level, no LibGDX)
+
+- `RagAndBoneSystem.isOpen(hour=7.5f, day=MONDAY, weather=CLEAR)` → `true`
+- `RagAndBoneSystem.isOpen(hour=7.5f, day=SUNDAY, weather=CLEAR)` → `false` (Sunday)
+- `RagAndBoneSystem.isOpen(hour=7.5f, day=MONDAY, weather=RAIN)` → `false` (rain)
+- `RagAndBoneSystem.isOpen(hour=13.0f, day=MONDAY, weather=CLEAR)` → `false` (closed)
+- `RagAndBoneSystem.calcSellPrice(Material.COPPER_WIRE)` → `4`
+- `RagAndBoneSystem.calcSellPrice(Material.JUNK_ITEM)` → `1`
+- `RagAndBoneSystem.calcSellPrice(Material.LEAD_FLASHING)` → `5`
+- `RagAndBoneSystem.shouldSuspectCopper(copperSoldThisVisit=3)` → `true`
+- `RagAndBoneSystem.shouldSuspectCopper(copperSoldThisVisit=2)` → `false`
+- `RagAndBoneSystem.isBribeSuccessful(rng=seeded_success)` → `true`
+- `RagAndBoneSystem.isBribeSuccessful(rng=seeded_fail)` → `false`
+- `RagAndBoneSystem.canSlashTyres(hour=3.0f)` → `true`
+- `RagAndBoneSystem.canSlashTyres(hour=7.0f)` → `false`
+- `RagAndBoneSystem.terryWillSteal(rng=seeded_steal)` → `true`
+- `RagAndBoneSystem.terryWillSteal(rng=seeded_no_steal)` → `false`
+
+### Integration Tests — implement these exact scenarios
+
+1. **Player sells SCRAP_METAL and COPPER_WIRE to Barry**: Set TimeSystem to Monday
+   08:00, weather CLEAR. Advance `RagAndBoneSystem` to first stop. Give player 2
+   `SCRAP_METAL` and 1 `COPPER_WIRE`. Player presses E on van. Verify sell menu
+   appears. Player sells 2 SCRAP_METAL (2 × 2 = 4 COIN). Player sells 1
+   COPPER_WIRE (4 COIN). Verify player receives total 8 COIN. Verify both
+   materials removed from inventory. Verify `RagAndBoneSystem.copperSoldThisVisit`
+   == 1 (no suspicion yet).
+
+2. **Copper suspicion triggers notoriety spike**: Set TimeSystem to Monday 08:00,
+   weather CLEAR. Give player 5 `COPPER_WIRE`. Player sells all 5 to Barry one
+   by one. Verify after the 3rd sale Barry utters *"You been at the lampposts
+   again, 'ave ya?"*. Verify `NotorietySystem.getNotoriety()` increased by 5.
+   Verify remaining 2 sales still succeed (Barry buys but stays suspicious).
+
+3. **Council enforcement impounds van on Friday**: Set TimeSystem to Friday 09:00.
+   Set `BARRY_LICENCE_STATUS = false`. Spawn `COUNCIL_ENFORCEMENT` NPC on Barry's
+   route. Advance `RagAndBoneSystem.update(delta, ...)` until COUNCIL_ENFORCEMENT
+   NPC reaches Barry. Verify Barry's van prop state changes to `IMPOUNDED`. Verify
+   Barry NPC enters `FLEEING` state. Verify `RumourNetwork` contains a
+   `BARRY_NICKED` rumour. Verify `RagAndBoneSystem.isOpen()` returns `false` for
+   the next 48 in-game hours.
+
+4. **Player warns Barry and receives reward**: Set TimeSystem to Friday 08:30.
+   Set `BARRY_LICENCE_STATUS = false`. Spawn `COUNCIL_ENFORCEMENT` NPC 50 blocks
+   from Barry's current stop. Player approaches Barry's van (within 3 blocks).
+   Player presses E and selects *"Council's about mate"*. Verify Barry skips that
+   stop (van immediately advances to next stop). Verify player receives 3 COIN.
+   Verify `COUNCIL_ENFORCEMENT` NPC finds empty stop and despawns. Verify Barry's
+   van is NOT impounded.
+
+5. **Tyre slash spawns Terry and Terry steals**: Set TimeSystem to 03:00 Monday.
+   Player equips PENKNIFE. Player approaches Barry's parked van (02:00–06:00
+   parked at depot). Player uses PENKNIFE on van (E action). Verify
+   `RagAndBoneSystem.barryVanMobilised` == `false`. Advance TimeSystem to 07:30.
+   Verify `RIVAL_RAGBONE_MAN` (Terry) NPC spawns on Barry's route. Give player
+   `SCRAP_METAL`. Player stands within 2 blocks of Terry's van for 10 seconds.
+   Seed RNG with `seeded_steal` value. Verify `SCRAP_METAL` removed from player
+   inventory (Terry stole it). Verify Terry's van has SCRAP_METAL in its loot.
+
+6. **Door-knock pre-buy hustle**: Set TimeSystem to Monday 07:15, weather CLEAR.
+   Player approaches a residential front door (within 2 blocks). Player presses E
+   (door knock). Verify a PUBLIC NPC opens door and offers JUNK_ITEM for 1 COIN
+   or free (charity). Player buys for 1 COIN. Verify JUNK_ITEM in player inventory.
+   Advance TimeSystem to 08:00. Barry arrives at nearest stop. Player sells JUNK_ITEM
+   to Barry for 1 COIN. Verify net profit = 0 COIN (break even). Player repeats with
+   free acquisition (charity) on second door. Sells to Barry for 1 COIN. Verify net
+   profit = +1 COIN. Verify `AchievementSystem` progress for `KNOCKER_BOY` incremented.
+
+// ── New: RagAndBoneSystem.java in ragamuffin.core
+// ── New: Issue1257RagAndBoneSystemTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: RAG_AND_BONE_MAN (80hp, 5dmg, 1.2s cooldown, non-hostile),
+//   RIVAL_RAGBONE_MAN (80hp, 8dmg, 0.8s cooldown, hostile) — add to NPCType.java
+// New PropTypes: RAGBONE_STOP (1×1×1, 0 hits, null drop), RAG_AND_BONE_VAN (2×2×4,
+//   10 hits, SCRAP_METAL drop), GARDEN_ORNAMENT (1×1×1, 3 hits, GARDEN_ORNAMENT drop)
+//   — add to PropType.java
+// New Materials: JUNK_ITEM, GARDEN_ORNAMENT, FORGED_LICENCE — add to Material.java
+// New RumourType: BARRY_NICKED — add to RumourType.java
+// New AchievementTypes: BARRY_S_MATE (instant), KNOCKER_BOY (progressTarget=5),
+//   HORSEBOX_HUSTLER (progressTarget=10) — add to AchievementType.java
+// Integrates: WeatherSystem (rain check), TimeSystem (hours + day-of-week),
+//   ScrapyardSystem (shared material types), WantedSystem (notoriety sell check),
+//   NotorietySystem (copper suspicion spike), WitnessSystem (garden theft),
+//   CriminalRecord (THEFT on ornament pinch), RumourNetwork (BARRY_NICKED),
+//   NoiseSystem (van movement + impoundment), SoundSystem (shout + siren),
+//   InternetCafeSystem (FORGED_LICENCE crafting), StreetEconomySystem (demand),
+//   NPCManager (resident queue spawn, Terry spawn), TooltipSystem (door-knock hint),
+//   AchievementSystem
