@@ -36576,3 +36576,156 @@ If the player is witnessed, `WantedSystem` +1 and rival driver spawns as a hosti
 // Integrates: TaxiSystem, WantedSystem, CarDrivingSystem, Pathfinder, WeatherSystem,
 //   CriminalRecord, NotorietySystem, StreetEconomySystem, FactionSystem, RumourNetwork,
 //   AchievementSystem, TimeSystem, NoiseSystem, DogCompanionSystem, NPCManager
+
+---
+
+## Northfield Citizens Advice Bureau — Debt Surgery, Benefit Appeals & the Dodgy Letter Racket
+
+**Issue**: Add Northfield Citizens Advice — Margaret's Advice Surgery, the Waiting Room Queue & the Forged Letter Hustle
+
+### Overview
+
+`CitizensAdviceSystem.java` brings the **Northfield Citizens Advice Bureau** to life — a narrow, strip-lit shopfront wedged between the JobCentre and the Magistrates' Court on the high street, staffed by unpaid volunteers who dispense advice on debt, benefits, housing, and consumer rights. This is the last resort for Northfield's dispossessed: when the DWP sanctions you, your landlord locks you out, or a bailiff notice arrives through the door, the CAB is where you go.
+
+The system functions as an **information broker for legal/civic matters** — complementing `InformationBrokerSystem` (which covers street intelligence) and `DWPSystem` (which handles benefit bureaucracy). It introduces a **Forged Letter Racket** where the player can have Margaret produce official-looking correspondence for a fee, and an **Appeal Victory** mechanic that can overturn benefit sanctions, parking fines, and criminal convictions.
+
+**Location**: `LandmarkType.CITIZENS_ADVICE` — a 6×4×3-block building, blue-and-white frontage, with a sun-faded poster reading "FREE IMPARTIAL ADVICE". Interior: a 4-seat waiting area with plastic chairs, a LEAFLET_RACK_PROP stuffed with leaflets on housing rights and consumer law, a LOW_PARTITION_PROP separating the waiting area from the consultation desks, and two CONSULTATION_DESK_PROPs.
+
+**Opening hours**: Mon–Fri 09:30–16:30. Closed weekends. Closed on bank holidays (24 Dec, 25 Dec, 1 Jan — tracked via `TimeSystem`).
+
+### NPCs
+
+- **Margaret** (`NPCType.ADVICE_VOLUNTEER`) — lead volunteer, 60s, sensible cardigan. Present Mon–Fri 09:30–16:30. Has 8 idle speech lines ("Take a seat love, we'll be with you"; "The system doesn't make it easy, does it"; "Have you got your reference number?"; "Right. Let's see what we can do."; "Tea? No, sorry, the kettle's broken again."; "We're all volunteers here, you know."; "Write it all down. Courts like paperwork."; "You're not alone — half of Northfield is in the same boat."). Margaret is unhelpful to WANTED players (wanted stars ≥ 2): *"I'm afraid we can't help with active criminal matters, love — you'd need a solicitor."*
+- **Brian** (`NPCType.ADVICE_VOLUNTEER`) — second volunteer, 50s, retired teacher. Present Mon/Wed/Fri 10:00–14:00. Specialises in housing disputes. Away on Tuesdays ("Brian's at the food bank on Tuesdays").
+- **1–3 WAITING_CLIENT** NPCs (reuse `NPCType.PUBLIC`) — sit in the waiting area during opening hours. Each has a problem type drawn from `AdviceProblemType` enum. They can offer side-quests (see below).
+
+### `AdviceProblemType` enum (inner class or separate file)
+
+```
+BENEFIT_SANCTION, DEBT_SPIRAL, EVICTION_NOTICE, BAILIFF_VISIT,
+CONSUMER_COMPLAINT, PARKING_FINE_APPEAL, NEIGHBOUR_DISPUTE,
+EMPLOYMENT_RIGHTS
+```
+
+### Mechanics
+
+#### Consultation (Press E on Margaret or Brian)
+
+Player selects a topic from a menu. Each topic resolves differently:
+
+| Topic | Outcome | Requirements |
+|---|---|---|
+| `BENEFIT_SANCTION` | Generates a `BENEFIT_APPEAL_LETTER` (see Materials). Takes 2 in-game days to process. If `DWPSystem.isSanctioned()` is true, sanction is lifted on success (70% base chance). | Player must not be WANTED. |
+| `DEBT_SPIRAL` | Margaret writes a `DEBT_MANAGEMENT_LETTER`. Reduces `StreetEconomySystem` debt flag. Generates rumour `RumourType.LOCAL_EVENT` ("The CAB's dead good with debt, they got Karen out of it"). | None |
+| `EVICTION_NOTICE` | If player has `SQUAT` and `SquatSystem.isEvictionPending()`, Margaret lodges a formal objection. Extends eviction delay by 7 in-game days. | Player must present `EVICTION_LETTER` (obtained from `PropertySystem`). |
+| `BAILIFF_VISIT` | Produces `BAILIFF_DISPUTE_LETTER`. Suspends `PropertySystem` bailiff debt-recovery for 3 in-game days. | None |
+| `PARKING_FINE_APPEAL` | Adds +20% appeal success bonus to `TrafficWardenSystem.submitAppeal()` if player holds a `BENEFIT_APPEAL_LETTER` or `DEBT_MANAGEMENT_LETTER`. | Player must hold a `PENALTY_CHARGE_NOTICE`. |
+| `NEIGHBOUR_DISPUTE` | Seeds `RumourType.LOCAL_EVENT` rumour about a neighbour; reduces `NeighbourhoodWatchSystem.getWatchAnger()` by 10 if > 0. | None |
+| `EMPLOYMENT_RIGHTS` | If player recently did a runner job (via `MinicabOfficeSystem`) and was underpaid, Margaret writes a `GRIEVANCE_LETTER` — grants 2 COIN refund. | Requires evidence of underpayment in `StreetEconomySystem`. |
+
+Consultations during **opening hours** only. Each topic has a **1 in-game day cooldown** per topic (can't return the same day for the same issue). If Brian is present and the topic is `EVICTION_NOTICE` or `NEIGHBOUR_DISPUTE`, Brian handles it (same outcome, slightly better dialogue).
+
+#### Queue System
+
+NPCs queue in the waiting area. When the player arrives, they join the queue. Queue position determines wait time (each NPC ahead = 5 in-game minutes). Player can skip the queue by:
+- Offering Margaret 3 COIN ("I've got an appointment, love") — reduces wait to 0, no crime recorded.
+- Intimidation (punch any queuing NPC into fleeing) — Notoriety +3, NeighbourhoodWatch anger +5, `CrimeType.COMMON_ASSAULT` recorded.
+
+#### Forged Letter Racket
+
+**Unlock condition**: player has `NOTORIETY_TIER_2` (notoriety ≥ 30) and has successfully used Margaret at least once.
+
+Player talks to Brian in a quiet moment (no other NPCs within 4 blocks). A unique dialogue option appears: *"Brian... you reckon you could write something official for me? Off the books, like."* Brian hesitates (40% refuse outright, resets after 24 in-game hours). On agreement:
+
+`CitizensAdviceSystem.requestForgeryPackage()` — Brian produces a **fake official letter** for 4 COIN. Three letter types available (player chooses):
+
+1. **`FORGED_BENEFIT_LETTER`** — presented at `DWPSystem` hatch to falsely claim a sanction was resolved. Gives 5 COIN fraudulent payment. 25% detection chance per use; detected → `CrimeType.BENEFIT_FRAUD` recorded, Wanted +1, Brian becomes unavailable for 7 days.
+2. **`FORGED_LANDLORD_REFERENCE`** — presented to `PropertySystem.applyForRental()` to bypass the credit check. Skips the 2-COIN deposit. 15% detection chance; detected → eviction immediately, Notoriety +5.
+3. **`FORGED_COURT_SUMMONS`** — a fake court summons with a target NPC's name on it. Delivered to an NPC to frighten them into `NPCState.FLEEING` for 60 seconds (e.g., used to clear a queue or scatter a crowd). No detection risk (NPC can't verify), but `NeighbourhoodWatchSystem` anger +8 if witnessed.
+
+Brian can produce at most 2 forgeries per in-game week. After 3 total forgeries, Brian becomes permanently suspicious: *"I've done enough for you. Don't come to me with that again."* Further requests are refused unless the player provides a `BLANK_PAPER` item (re-opens the dialogue once more).
+
+#### Waiting Room Side-Quests
+
+Each `WAITING_CLIENT` NPC has a 50% chance of offering a side-quest:
+
+- **Benefit Chaser** (NPC in `BENEFIT_SANCTION` state): *"Could you nip to the DWP and ask about my claim? I've been waiting 6 weeks."* Player presents `DWP_RECORD` (obtained from `DWPSystem`) to Margaret → quest complete. Reward: 3 COIN + `LOCALS` faction Respect +5.
+- **Eviction Dodger** (NPC in `EVICTION_NOTICE` state): *"Can you grab a form from the desk? My hands are full."* Player picks up `CAB_REFERRAL_FORM_PROP` and hands it to NPC. Reward: 2 COIN.
+- **Debt Chronicler** (NPC in `DEBT_SPIRAL` state): *"Write this down for me, will ya? My memory's shot."* Player must have `BLANK_PAPER` in inventory; combines with NPC's spoken details to produce `DEBT_STATEMENT_ITEM` and hand it to Margaret. Reward: `LOCALS` Respect +8, `RumourNetwork.addRumour()` with `RumourType.LOCAL_EVENT`.
+
+### Materials (add to `Material.java`)
+
+- `BENEFIT_APPEAL_LETTER` — official CAB appeal letter; used at `DWPSystem` hatch.
+- `DEBT_MANAGEMENT_LETTER` — debt plan letter; cancels debt-recovery NPCs.
+- `EVICTION_LETTER` — obtained from PropertySystem; triggers Margaret's eviction-dispute mechanic.
+- `BAILIFF_DISPUTE_LETTER` — suspends bailiff visits.
+- `GRIEVANCE_LETTER` — employment dispute; redeems 2 COIN from StreetEconomySystem.
+- `FORGED_BENEFIT_LETTER` — illicit; used at DWP for fraudulent payment.
+- `FORGED_LANDLORD_REFERENCE` — illicit; bypasses PropertySystem credit check.
+- `FORGED_COURT_SUMMONS` — illicit; causes NPC to flee.
+- `CAB_REFERRAL_FORM` — fetch-quest item from the consultation desk prop.
+- `DEBT_STATEMENT_ITEM` — produced by player + NPC for the Debt Chronicler side-quest.
+
+### New LandmarkType entry (add to `LandmarkType.java`)
+
+- `CITIZENS_ADVICE` — "Northfield Citizens Advice"
+
+### New NPCType entries (add to `NPCType.java`)
+
+- `ADVICE_VOLUNTEER` — seated desk worker; handles consultation menus.
+- `WAITING_CLIENT` — uses existing `PUBLIC` NPC archetype with `AdviceProblemType` annotation.
+
+### New PropType entries (add to `PropType.java`)
+
+- `CONSULTATION_DESK_PROP` — press E to begin consultation when NPC is seated.
+- `LOW_PARTITION_PROP` — visual divider (walkable), separates waiting area from desks.
+- `CAB_REFERRAL_FORM_PROP` — interactable paper pile on the desk; yields `CAB_REFERRAL_FORM`.
+
+### New AchievementType entries (add to `AchievementType.java`)
+
+- `ADVICE_SEEKER` — Used the Citizens Advice Bureau for the first time.
+- `APPEAL_VICTORY` — Successfully appealed a benefit sanction via the CAB.
+- `QUEUE_JUMPER` — Skipped the CAB queue (bribe or intimidation).
+- `PAPER_TRAIL` — Had Brian produce a forged letter.
+- `SERIAL_FRAUDSTER` — Received 3 forged documents from Brian.
+
+### Unit Tests
+
+- Consultation cooldown: `canConsult(BENEFIT_SANCTION, currentDay)` returns false if already consulted on `currentDay`; true the next day.
+- Queue position: 3 NPCs in queue → wait time = 15 in-game minutes; 0 NPCs → 0 wait.
+- Queue bribe: `attemptQueueBribe(3)` with 3 COIN → deducts 3 COIN, wait time = 0, no crime recorded.
+- Intimidation: NPC in queue → punch → `NeighbourhoodWatchSystem.getWatchAnger()` increases by 5; `CriminalRecord` contains `COMMON_ASSAULT`.
+- Forgery unlock: `canRequestForgery()` false below Tier 2 notoriety or 0 prior consultations; true at Tier 2 + ≥ 1 consultation.
+- Forgery refusal: `CitizensAdviceSystem(new Random(seed))` where seed forces refusal path → `requestForgeryPackage()` returns `REFUSED` 40% of trials (10,000 trials ±2%).
+- `FORGED_BENEFIT_LETTER` detection: `applyForgedBenefitLetter()` with seeded RNG forcing detection → `CriminalRecord` contains `BENEFIT_FRAUD`, Wanted stars +1.
+- Eviction extension: `SquatSystem.isEvictionPending()` true + player holds `EVICTION_LETTER` → `lodgeEvictionObjection()` → eviction deadline extended by 7 days.
+- Parking appeal bonus: player holds `BENEFIT_APPEAL_LETTER` + `PENALTY_CHARGE_NOTICE` → `getAppealSuccessBonus()` returns 20.
+- `WAITING_CLIENT` side-quest: 50% presence rate seeded over 1000 NPCs (±5%); quest completion awards correct COIN and Respect.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Benefit sanction appealed via CAB**: Set `DWPSystem.setSanctioned(true)`. Set `TimeSystem` to Monday 10:00. Player presses E on `CONSULTATION_DESK_PROP` (Margaret present). Player selects `BENEFIT_SANCTION` topic. Wait 2 in-game days (advance `TimeSystem`). Seed `CitizensAdviceSystem(new Random(9001))` so appeal succeeds. Verify `DWPSystem.isSanctioned()` is now false. Verify player inventory contains no `BENEFIT_APPEAL_LETTER` (consumed on use). Verify `AchievementSystem.isUnlocked(AchievementType.APPEAL_VICTORY)` is true.
+
+2. **Queue bribe skips wait**: Spawn 3 `WAITING_CLIENT` NPCs in the waiting area. Player has 5 COIN. Player presses E on Margaret. Select bribe option (cost 3 COIN). Verify `CitizensAdviceSystem.getQueueWaitMinutes(player)` == 0. Verify player COIN count is now 2 (3 deducted). Verify `CriminalRecord` does NOT contain `COMMON_ASSAULT`. Verify `AchievementSystem.isUnlocked(AchievementType.QUEUE_JUMPER)` is true.
+
+3. **Forged court summons causes NPC to flee**: Unlock forgery (set notoriety ≥ 30, prior consultations ≥ 1). No NPCs within 4 blocks of Brian. Player presses E on Brian; dialogue option shown. Seed `CitizensAdviceSystem` to force agreement. Select `FORGED_COURT_SUMMONS`. Verify player COIN reduced by 4. Verify `player.getInventory().hasItem(Material.FORGED_COURT_SUMMONS)`. Player presses E on a `PUBLIC` NPC with the item. Verify NPC's `NPCState` == `FLEEING` for at least 60 seconds. Verify `NeighbourhoodWatchSystem.getWatchAnger()` increased by 8 (if a witness NPC was present).
+
+4. **Eviction extension requires EVICTION_LETTER**: Set `SquatSystem.isEvictionPending(true)`. Player does NOT have `EVICTION_LETTER` in inventory. Player selects `EVICTION_NOTICE` topic at `CONSULTATION_DESK_PROP`. Verify Margaret's response contains "bring us the letter". Verify eviction deadline unchanged. Now give player `EVICTION_LETTER`. Player re-selects topic. Verify `SquatSystem.getEvictionDeadlineDay()` has increased by 7.
+
+5. **Benefit fraud detection — wanted star and criminal record**: Player has `FORGED_BENEFIT_LETTER`. Player presses E at `DWPSystem` hatch while holding it. Seed `DWPSystem` / `CitizensAdviceSystem` so detection fires (fraud detected). Verify `WantedSystem.getStars()` increased by 1. Verify `CriminalRecord` contains `CrimeType.BENEFIT_FRAUD`. Verify `CitizensAdviceSystem.isBrianAvailable()` == false (Brian suspended 7 days). Verify the forged letter is removed from player inventory.
+
+// ── New: CitizensAdviceSystem.java in ragamuffin.core
+// New LandmarkType: CITIZENS_ADVICE — add to LandmarkType.java
+// New NPCType: ADVICE_VOLUNTEER — add to NPCType.java
+// New PropType: CONSULTATION_DESK_PROP, LOW_PARTITION_PROP, CAB_REFERRAL_FORM_PROP
+//   — add to PropType.java
+// New Material: BENEFIT_APPEAL_LETTER, DEBT_MANAGEMENT_LETTER, EVICTION_LETTER,
+//   BAILIFF_DISPUTE_LETTER, GRIEVANCE_LETTER, FORGED_BENEFIT_LETTER,
+//   FORGED_LANDLORD_REFERENCE, FORGED_COURT_SUMMONS, CAB_REFERRAL_FORM,
+//   DEBT_STATEMENT_ITEM — add to Material.java
+// New AchievementType: ADVICE_SEEKER, APPEAL_VICTORY, QUEUE_JUMPER, PAPER_TRAIL,
+//   SERIAL_FRAUDSTER — add to AchievementType.java
+// Integrates: DWPSystem, PropertySystem, SquatSystem, TrafficWardenSystem,
+//   NeighbourhoodWatchSystem, StreetEconomySystem, MinicabOfficeSystem,
+//   RumourNetwork, CriminalRecord, NotorietySystem, WantedSystem,
+//   AchievementSystem, TimeSystem, FactionSystem, NPCManager
