@@ -631,7 +631,16 @@ public class CriminalRecord {
          * Penalty: WantedSystem +2 stars, Notoriety +40.
          * Achievement: BAIL_JUMPER.
          */
-        BAIL_JUMPING("Bail jumping (failure to surrender)");
+        BAIL_JUMPING("Bail jumping (failure to surrender)"),
+
+        // ── Issue #1215: Northfield Traffic Warden ────────────────────────────
+
+        /**
+         * Recorded when Clive (TRAFFIC_WARDEN) issues a Penalty Charge Notice to
+         * the player's parked car. WantedSystem +0 stars; Notoriety +2 on first,
+         * +3 on second offence. Accumulate ≥ 3 → MagistratesCourtSystem hearing.
+         */
+        CIVIL_ENFORCEMENT_NOTICE("Parking violation — civil enforcement notice");
 
         private final String displayName;
 

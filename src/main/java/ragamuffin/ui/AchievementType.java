@@ -4055,6 +4055,58 @@ public enum AchievementType {
         "Serial Fraudster",
         "Three forgeries. Brian keeps a copy for his own records. You didn't ask why.",
         1
+    ),
+
+    // ── Issue #1215: Northfield Traffic Warden — Clive ───────────────────────
+
+    /**
+     * Awarded when Clive applies a WHEEL_CLAMP_PROP to the player's parked car
+     * for the first time (second PCN offence).
+     */
+    CLAMPED(
+        "Clamped",
+        "Clive clamped your car. Humiliating. He wrote a note on the windscreen too.",
+        1
+    ),
+
+    /**
+     * Awarded when the player uses Clive's Terminal to silently remove a wheel clamp
+     * (80% success path — no criminal record, no noise).
+     */
+    CLAMP_EVADER(
+        "Clamp Evader",
+        "You used Clive's own terminal against him. He'll never know. Probably.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully appeals a Penalty Charge Notice at the
+     * COUNCIL_OFFICE APPEAL_DESK_PROP and gets the fine refunded.
+     */
+    BUREAUCRAT_BESTED(
+        "Bureaucrat Bested",
+        "You won the appeal. Brenda looked personally offended. The system works.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully uses a FORGED_PARKING_TICKET to avoid
+     * a PCN from Clive (Clive fails to detect the forgery).
+     */
+    TICKET_FORGER(
+        "Ticket Forger",
+        "Clive checked the ticket and walked away. He should have looked more closely.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully bribes Clive on the first attempt
+     * (bribe roll ≤ 0.35 with base 35% chance).
+     */
+    VERBAL_WARNING(
+        "Verbal Warning",
+        "Clive pocketed your fiver without breaking eye contact. Professional.",
+        1
     );
 
     private final String name;

@@ -78,6 +78,36 @@ public class Car {
      */
     private boolean parked = false;
 
+    // ── Issue #1215: TrafficWardenSystem parking enforcement ──────────────────
+
+    /**
+     * True when Clive has issued a Penalty Charge Notice against this car.
+     * Cleared when the player pays the fine, wins an appeal, or the car is towed.
+     */
+    private boolean hasPCN = false;
+
+    /**
+     * True when a WHEEL_CLAMP_PROP has been applied to this car by Clive.
+     * A clamped car cannot be driven until the clamp is removed (pay fine,
+     * crowbar, or CLIVE_TERMINAL).
+     */
+    private boolean clamped = false;
+
+    /**
+     * True when this car has been towed to the VEHICLE_IMPOUND after a third
+     * unresolved parking offence.
+     */
+    private boolean impounded = false;
+
+    public boolean hasPCN()            { return hasPCN; }
+    public void setPCN(boolean pcn)    { this.hasPCN = pcn; }
+
+    public boolean isClamped()         { return clamped; }
+    public void setClamped(boolean c)  { this.clamped = c; }
+
+    public boolean isImpounded()            { return impounded; }
+    public void setImpounded(boolean imp)   { this.impounded = imp; }
+
     /** Maximum speed when driven by the player (blocks/sec). */
     public static final float PLAYER_MAX_SPEED = 12.0f;
 
