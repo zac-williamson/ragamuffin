@@ -4596,6 +4596,50 @@ public enum AchievementType {
         "Grass",
         "Rang the plod. Shane'll find out. They always find out.",
         1
+    ),
+
+    // ── Issue #1265: Northfield Loan Shark — Big Mick's Doorstep Lending ─────
+
+    /**
+     * Awarded (instant) when the player takes out their first loan from Big Mick.
+     * Triggers on LoanSharkSystem.borrow() with any tier. Welcome to the red.
+     */
+    IN_THE_RED(
+        "In the Red",
+        "Borrowed off Big Mick. Everyone does it once. Most do it twice.",
+        1
+    ),
+
+    /**
+     * Awarded (instant) when the player's debt reaches the compounded maximum
+     * (2× original loan) and the collector seizes a hotbar item.
+     * The point of no return.
+     */
+    SPIRAL(
+        "Spiral",
+        "Debt hit the cap. Collector's been round. You knew it would come to this.",
+        1
+    ),
+
+    /**
+     * Awarded (instant) when the player fully repays their loan (principal + all
+     * accrued interest) via LoanSharkSystem.repay(). Clean slate — for now.
+     */
+    CLEARED_UP(
+        "Cleared Up",
+        "Paid Big Mick back every penny. He's already looking for your replacement.",
+        1
+    ),
+
+    /**
+     * Awarded (instant) when the player completes the Ledger Job hustle: steals the
+     * DEBT_LEDGER from Big Mick's desk and sells it to the Marchetti Crew contact.
+     * Clears the debt but triggers 2 THUG NPCs for 5 in-game days.
+     */
+    BIG_MICK_BOUNCED(
+        "Big Mick Bounced",
+        "Flogged his ledger to the Marchettis. Debt gone. Thugs incoming. Worth it.",
+        1
     );
 
     private final String name;

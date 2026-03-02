@@ -4952,7 +4952,27 @@ public enum Material {
      * Can be fenced at StreetEconomySystem for 3 COIN, or kept for bragging rights.
      * Tooltip: "You beat a load of boy racers. Outstanding."
      */
-    RACING_TROPHY("Racing Trophy");
+    RACING_TROPHY("Racing Trophy"),
+
+    // ── Issue #1265: Northfield Loan Shark — Big Mick's Doorstep Lending ─────
+
+    /**
+     * LOAN_AGREEMENT — a crumpled, barely-legible two-page contract issued by
+     * Big Mick when the player borrows money. Contains the loan amount, ruinous
+     * APR, and a "security clause" written in tiny print.
+     * Given to the player on borrow(); surrendered on full repayment.
+     * Tooltip: "The small print says he can take your stuff. He wasn't joking."
+     */
+    LOAN_AGREEMENT("Loan Agreement"),
+
+    /**
+     * DEBT_LEDGER — Big Mick's handwritten accounts book, kept in a locked desk
+     * at the Loan Shark Office. Lists every outstanding debt with names, amounts,
+     * and collection notes. Extremely incriminating.
+     * Sellable to the Marchetti Crew contact for 30 COIN (clears player debt).
+     * Tooltip: "Names, numbers, the lot. Half the estate is in here."
+     */
+    DEBT_LEDGER("Debt Ledger");
 
     private final String displayName;
 
@@ -6091,6 +6111,12 @@ public enum Material {
             case RACING_TROPHY:         return cs(0.90f, 0.75f, 0.20f,  // Gold trophy
                                                   0.60f, 0.45f, 0.15f); // Dark gold base
 
+            // Issue #1265: Northfield Loan Shark — Big Mick's Doorstep Lending
+            case LOAN_AGREEMENT:        return cs(0.95f, 0.92f, 0.80f,  // Yellowed paper
+                                                  0.70f, 0.15f, 0.10f); // Red "AGREEMENT" stamp
+            case DEBT_LEDGER:           return cs(0.20f, 0.20f, 0.25f,  // Dark navy cover
+                                                  0.85f, 0.75f, 0.30f); // Gold lettering
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -6773,6 +6799,9 @@ public enum Material {
             // Issue #1263: Northfield Illegal Street Racing
             case NITROUS_CANISTER:
             case RACING_TROPHY:
+            // Issue #1265: Northfield Loan Shark — Big Mick's Doorstep Lending
+            case LOAN_AGREEMENT:
+            case DEBT_LEDGER:
                 return true;
             default:
                 return false;
