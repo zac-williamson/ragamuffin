@@ -4444,6 +4444,47 @@ public enum AchievementType {
         "Roadworthy-ish",
         "Bert's bribe certificate passed the DVSA check. Technically, you're legal.",
         1
+    ),
+
+    // ── Issue #1252: Northfield TV Licensing ──────────────────────────────────
+
+    /**
+     * Awarded when the player approaches and interacts with the DETECTOR_VAN_PROP
+     * to discover it is unmanned — debunking the great TV Licensing myth.
+     */
+    MYTH_BUSTER(
+        "Myth Buster",
+        "The detector van was empty. It always was.",
+        1
+    ),
+
+    /**
+     * Awarded when the player purchases a TV Licence at the Post Office.
+     */
+    LAW_ABIDING_VIEWER(
+        "Law-Abiding Viewer",
+        "You paid for your TV Licence. Your mum would be proud.",
+        1
+    ),
+
+    /**
+     * Awarded when the player receives 3 enforcement letters without paying
+     * the TV Licence fee.
+     */
+    LICENCE_EVADER(
+        "Licence Evader",
+        "Three letters from TV Licensing. You haven't read a single one.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully avoids Derek on 5 consecutive visits
+     * (TV not visible, successful lie, or biscuit accepted).
+     */
+    DEREK_S_NEMESIS(
+        "Derek's Nemesis",
+        "Five times Derek knocked. Five times he left empty-handed.",
+        5
     );
 
     private final String name;
