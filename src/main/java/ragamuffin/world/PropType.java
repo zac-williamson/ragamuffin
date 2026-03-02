@@ -2031,7 +2031,32 @@ public enum PropType {
      * Press E (as PRIMO+) to read Lodge lore.
      * 2 hits to break; yields PLANKS (the wooden lectern).
      */
-    RITUAL_BOOK_PROP(0.2f, 0.35f, 0.15f, 2, Material.PLANKS);
+    RITUAL_BOOK_PROP(0.2f, 0.35f, 0.15f, 2, Material.PLANKS),
+
+    // ── Issue #1144: Northfield Probation Office ──────────────────────────────
+
+    /**
+     * Probation Desk — Karen's sign-on check-in desk in the case officer's office.
+     * Press E to begin the sign-on dialogue tree with Karen.
+     * 8 hits to break; yields WOOD.
+     */
+    PROBATION_DESK_PROP(1.40f, 0.80f, 0.70f, 8, Material.WOOD),
+
+    /**
+     * Case File Cabinet — a grey metal filing cabinet in Karen's office.
+     * Accessible only 13:00–14:00 (Karen's lunch break; Debbie distracted).
+     * Contains 1–3 CASE_FILE_DOCUMENT items. CCTV_CAMERA_PROP records access.
+     * 5 hits to break; yields SCRAP_METAL.
+     */
+    CASE_FILE_CABINET_PROP(0.50f, 1.20f, 0.40f, 5, Material.SCRAP_METAL),
+
+    /**
+     * Community Service Station — the task assignment board in the park.
+     * Gary (COMMUNITY_SERVICE_SUPERVISOR) stands nearby.
+     * Press E to receive community service task assignment and sign in/out.
+     * 3 hits to break; yields WOOD.
+     */
+    COMMUNITY_SERVICE_STATION_PROP(0.80f, 1.60f, 0.20f, 3, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

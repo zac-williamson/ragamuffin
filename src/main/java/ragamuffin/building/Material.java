@@ -3521,7 +3521,63 @@ public enum Material {
      * greyhound or horse racing win. Activates BOOKIES_MULTIPLIER flag doubling next bet payout.
      * Tooltip: "Dog four in the 8:30. Terry says it's a cert. Terry says that every time."
      */
-    RACING_TIP("Racing Tip");
+    RACING_TIP("Racing Tip"),
+
+    // ── Issue #1144: Northfield Probation Office ──────────────────────────────
+
+    /**
+     * Sign-On Letter — appointment letter from the Probation Service delivered via
+     * PostOfficeSystem. Triggers sign-on obligation at the Probation Office within
+     * 3 in-game days. Tooltip: "Please report to the Probation Office within 3 days.
+     * Failure to attend will be considered a breach."
+     */
+    SIGN_ON_LETTER("Sign-On Letter"),
+
+    /**
+     * Electronic Tag — ankle-worn GPS tag fitted by Karen (PROBATION_OFFICER).
+     * Enforces a 21:00–07:00 curfew: player must be indoors. Outdoor detection triggers
+     * WantedSystem +2 and RECALL_TO_CUSTODY. Can be cut with WIRE_CUTTERS.
+     * Tooltip: "You're tethered. Metaphorically and literally."
+     */
+    ELECTRONIC_TAG("Electronic Tag"),
+
+    /**
+     * Fake Signal Chip — signal-spoofing device craftable from BROKEN_PHONE + WIRE at a
+     * WORKBENCH. Gives a 2-hour window in which the tag reports the player as home even while
+     * outdoors. 30% chance Karen notices the discrepancy at next sign-on.
+     * Tooltip: "Two hours of freedom. Probably."
+     */
+    FAKE_SIGNAL_CHIP("Fake Signal Chip"),
+
+    /**
+     * Community Service Vest — hi-vis vest issued at sign-on for community service tasks.
+     * DisguiseSystem: −15% PCSO/POLICE suspicion, +20% FENCE/DEALER suspicion.
+     * Tooltip: "You're giving something back. Whether you want to or not."
+     */
+    COMMUNITY_SERVICE_VEST("Community Service Vest"),
+
+    /**
+     * Case File Document — a client case file stolen from Karen's CASE_FILE_CABINET_PROP.
+     * Fenceable at FenceSystem for 5 COIN each, or use for blackmail.
+     * CCTV records the theft.
+     * Tooltip: "Someone's whole life of bad decisions. In a manila folder."
+     */
+    CASE_FILE_DOCUMENT("Case File Document"),
+
+    /**
+     * Wire Cutters — heavy-duty cutting tool available from ScrapyardSystem.
+     * Cuts the ELECTRONIC_TAG (sets ABSCONDED flag, Notoriety +10).
+     * Also used for general wire-cutting tasks.
+     * Tooltip: "For cutting wire. Or, technically, other things."
+     */
+    WIRE_CUTTERS("Wire Cutters"),
+
+    /**
+     * Tin of Paint — a tin of community service paint used for bench-painting tasks.
+     * Press E at a PARK_BENCH while holding this to register 1 community service hour.
+     * Tooltip: "British Racing Green. For benches, apparently."
+     */
+    TIN_OF_PAINT("Tin of Paint");
 
     private final String displayName;
 
@@ -4404,6 +4460,22 @@ public enum Material {
             case RACING_TIP:              return cs(0.92f, 0.88f, 0.72f,  // Cream slip
                                                     0.88f, 0.18f, 0.18f); // Red racing ink
 
+            // Issue #1144: Northfield Probation Office
+            case SIGN_ON_LETTER:          return cs(0.92f, 0.92f, 0.88f,  // White paper
+                                                    0.18f, 0.38f, 0.72f); // Blue official stamp
+            case ELECTRONIC_TAG:          return cs(0.12f, 0.12f, 0.18f,  // Black device
+                                                    0.22f, 0.68f, 0.22f); // Green LED light
+            case FAKE_SIGNAL_CHIP:        return cs(0.30f, 0.30f, 0.38f,  // Circuit grey
+                                                    0.18f, 0.55f, 0.78f); // Blue chip trace
+            case COMMUNITY_SERVICE_VEST:  return cs(0.90f, 0.82f, 0.05f,  // Hi-vis yellow
+                                                    0.88f, 0.45f, 0.05f); // Orange trim
+            case CASE_FILE_DOCUMENT:      return cs(0.82f, 0.68f, 0.42f,  // Manila folder
+                                                    0.20f, 0.20f, 0.22f); // Dark text
+            case WIRE_CUTTERS:            return cs(0.45f, 0.45f, 0.50f,  // Steel grey
+                                                    0.22f, 0.18f, 0.12f); // Dark handle
+            case TIN_OF_PAINT:            return cs(0.18f, 0.50f, 0.22f,  // British Racing Green
+                                                    0.65f, 0.60f, 0.55f); // Tin silver
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -4828,6 +4900,25 @@ public enum Material {
             // Issue #1136: The Vaults Nightclub — not block items
             case SMART_SHIRT:
             case NIGHTCLUB_MASTER_KEY:
+            // Issue #1142: Northfield RAOB Lodge — not block items
+            case RAOB_MEMBERSHIP_CARD:
+            case SPONSORSHIP_FORM:
+            case LODGE_CHARTER_DOCUMENT:
+            case REGALIA_SET:
+            case CEREMONIAL_MALLET:
+            case PREMIUM_LAGER_CRATE:
+            case BOX_OF_CHOCOLATES:
+            case PLANNING_PERMISSION:
+            case CASE_DISMISSED_FORM:
+            case RACING_TIP:
+            // Issue #1144: Northfield Probation Office — not block items
+            case SIGN_ON_LETTER:
+            case ELECTRONIC_TAG:
+            case FAKE_SIGNAL_CHIP:
+            case COMMUNITY_SERVICE_VEST:
+            case CASE_FILE_DOCUMENT:
+            case WIRE_CUTTERS:
+            case TIN_OF_PAINT:
                 return false;
             default:
                 return true;
@@ -4969,6 +5060,10 @@ public enum Material {
             // Issue #1136: The Vaults Nightclub
             case SMART_SHIRT:
             case NIGHTCLUB_MASTER_KEY:
+            // Issue #1144: Northfield Probation Office — small items sit on surfaces
+            case SIGN_ON_LETTER:
+            case CASE_FILE_DOCUMENT:
+            case FAKE_SIGNAL_CHIP:
                 return true;
             default:
                 return false;
@@ -5739,6 +5834,22 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // court dismissal form
             case RACING_TIP:
                 return IconShape.FLAT_PAPER;  // small paper tip slip
+
+            // Issue #1144: Northfield Probation Office
+            case SIGN_ON_LETTER:
+                return IconShape.FLAT_PAPER;  // appointment letter
+            case ELECTRONIC_TAG:
+                return IconShape.CARD;        // ankle device
+            case FAKE_SIGNAL_CHIP:
+                return IconShape.CARD;        // chip component
+            case COMMUNITY_SERVICE_VEST:
+                return IconShape.FLAT_PAPER;  // folded hi-vis vest
+            case CASE_FILE_DOCUMENT:
+                return IconShape.FLAT_PAPER;  // manila folder contents
+            case WIRE_CUTTERS:
+                return IconShape.TOOL;        // cutting tool
+            case TIN_OF_PAINT:
+                return IconShape.CYLINDER;    // paint tin
 
             default:
                 return IconShape.BOX;
