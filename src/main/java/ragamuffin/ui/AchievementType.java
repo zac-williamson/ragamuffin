@@ -3130,6 +3130,58 @@ public enum AchievementType {
         "Lock-Up Landlord",
         "5 COIN a week. It's not much. But it's yours. For now.",
         1
+    ),
+
+    // ── Issue #1151: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * Awarded when the player beats Brian the resident darts pro in a 501 match.
+     * Requires full 501 game completed at DARTBOARD_PROP with a double-out finish.
+     */
+    TREBLE_TOP(
+        "Treble Top",
+        "Beat Brian at darts. He's been club champion for eleven years. Not any more.",
+        1
+    ),
+
+    /**
+     * Awarded when the player wins Thursday Quiz Night with the highest score.
+     * Must enter (1 COIN), complete all 8 rounds, and finish top of the leaderboard.
+     */
+    PONTOON_KING(
+        "Pontoon King",
+        "Cleaned out three Marchetti boys at the back-room card table. Diplomatically unwise. Financially excellent.",
+        1
+    ),
+
+    /**
+     * Awarded when the player steals the protection envelope before Tommy's enforcer arrives.
+     * Must grab the envelope from PROTECTION_ENVELOPE_PROP during the 19:55–20:00 window.
+     */
+    ENVELOPE_THIEF(
+        "Envelope Thief",
+        "Nicked Tommy Marchetti's protection money. The consequences will be significant.",
+        1
+    ),
+
+    /**
+     * Awarded when the player pays Ron's debt (requires STREET_LADS Respect >= 50)
+     * and buys a round for the whole club. A genuine pillar of the community. Almost.
+     */
+    SOCIAL_PILLAR(
+        "Social Pillar",
+        "Paid Ron's debt and bought the house a round. You're basically a local celebrity now.",
+        1
+    ),
+
+    /**
+     * Awarded when the player grasses Tommy Marchetti to the police station,
+     * triggering the sting operation that gets him arrested.
+     */
+    GRASSED_UP(
+        "Grassed Up",
+        "Tipped off the police about Tommy's collection. 40% chance they find out it was you. Good luck.",
+        1
     );
 
     private final String name;

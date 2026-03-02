@@ -1689,7 +1689,46 @@ public enum NPCType {
      *         "That'll be a quid, mate." /
      *         "You're alright, come in."
      */
-    GARAGE_BAND_DOORMAN(30f, 0f, 0f, false);
+    GARAGE_BAND_DOORMAN(30f, 0f, 0f, false),
+
+    // ── Issue #1151: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * Ron — steward of the Northfield Sporting &amp; Social Club.
+     * Sells CLUB_MEMBERSHIP_CARD for 5 COIN. Mans the front desk Mon–Sat 11:00–23:00.
+     * Blocks non-members from the main bar. Knows about the protection arrangement but
+     * stays quiet unless the player has Respect ≥ 50 with STREET_LADS faction.
+     * Speech: "Members only, mate." / "Fiver for the card." /
+     *         "Ron's the name. I just work here." / "I don't want any trouble."
+     */
+    SOCIAL_CLUB_STEWARD(30f, 3f, 2.0f, false),
+
+    /**
+     * Maureen — quiz host at the Thursday Quiz Night (19:30–22:00).
+     * Carries the QUIZ_ANSWER_SHEET which can be stolen from the notice board.
+     * Announces rounds, reads questions, and tallies scores.
+     * Speech: "Right, question one..." / "No phones!" /
+     *         "Put that away, I can see you." / "And the winner is..."
+     */
+    QUIZ_HOST(25f, 0f, 0f, false),
+
+    /**
+     * Club Regular — a rank-and-file member of the social club.
+     * Attends darts nights, quiz nights, and general socialising.
+     * On Fri/Sat 19:00–23:00, one will issue a darts wager challenge.
+     * Speech: "You any good at darts?" / "Double top for the win." /
+     *         "I've been coming here thirty years." / "Best bitter in Northfield."
+     */
+    CLUB_REGULAR(25f, 2f, 2.0f, false),
+
+    /**
+     * Tommy Marchetti's enforcer — collects the 20 COIN protection envelope Mon 20:00–21:30.
+     * Becomes hostile if the player steals the envelope or grasses to the police.
+     * At HOSTILE state: attacks on sight; triggers Wanted +3 if player is spotted.
+     * Speech: "Tommy sends his regards." / "Is it ready?" /
+     *         "Don't make this difficult." / "You've made a very big mistake."
+     */
+    MARCHETTI_ENFORCER(60f, 14f, 1.8f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

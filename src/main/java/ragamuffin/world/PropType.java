@@ -2146,7 +2146,46 @@ public enum PropType {
      * Pigeon Coop Prop — a wooden pigeon loft in Garage 8 (pigeon fancier).
      * Interacting triggers PigeonRacingSystem UI. 8 hits to break; yields WOOD.
      */
-    PIGEON_COOP_PROP(1.80f, 1.60f, 0.90f, 8, Material.WOOD);
+    PIGEON_COOP_PROP(1.80f, 1.60f, 0.90f, 8, Material.WOOD),
+
+    // ── Issue #1151: Northfield Sporting & Social Club ────────────────────────
+
+    /**
+     * CHALK_SCOREBOARD_PROP — a wall-mounted chalk scoreboard beside the dartboard.
+     * Displays current 501 scores for the active darts game.
+     * Press E to view; non-interactive during matches. 3 hits to break; yields WOOD.
+     */
+    CHALK_SCOREBOARD_PROP(0.80f, 1.20f, 0.05f, 3, Material.WOOD),
+
+    /**
+     * BAR_PUMP_PROP — a row of hand-pull beer pumps behind the members' bar.
+     * Press E to order a drink (BITTER, MILD, or LAGER_TOP) if holding COIN.
+     * Members get half-price; non-members cannot order.
+     * 6 hits to break; yields SCRAP_METAL.
+     */
+    BAR_PUMP_PROP(0.60f, 1.20f, 0.30f, 6, Material.SCRAP_METAL),
+
+    /**
+     * CIGARETTE_MACHINE_PROP — a wall-mounted cigarette vending machine near the entrance.
+     * Press E to buy a pack for 3 COIN. Not tied to any system mechanic; flavour prop.
+     * 4 hits to break; yields SCRAP_METAL.
+     */
+    CIGARETTE_MACHINE_PROP(0.50f, 1.40f, 0.30f, 4, Material.SCRAP_METAL),
+
+    /**
+     * CLUB_SIGN_PROP — the external sign above the front door:
+     * "Northfield Sporting &amp; Social Club — Members Only".
+     * Press E for flavour text. 2 hits to break; yields WOOD.
+     */
+    CLUB_SIGN_PROP(1.50f, 0.50f, 0.10f, 2, Material.WOOD),
+
+    /**
+     * PROTECTION_ENVELOPE_PROP — a brown envelope on the back-room table containing 20 COIN.
+     * Appears Mon 19:55; collected by MARCHETTI_ENFORCER at 20:00.
+     * Stealing it (E during 19:55–20:00) triggers Tommy ambush + Wanted +3.
+     * 1 hit to break; yields COIN (20).
+     */
+    PROTECTION_ENVELOPE_PROP(0.20f, 0.05f, 0.12f, 1, Material.COIN);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
