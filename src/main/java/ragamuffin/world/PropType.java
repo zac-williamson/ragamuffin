@@ -1519,6 +1519,30 @@ public enum PropType {
      */
     EVIDENCE_PROP(0.30f, 0.20f, 0.20f, 99, null),
 
+    // ── Issue #1192: Additional Sporting & Social Club props ──────────────────
+
+    /**
+     * DARTS_TROPHY_PROP — a scratched silver trophy on the bar shelf above the
+     * dartboard. Awarded to the Thursday Darts League winner. Press E to read
+     * engraved names. Destroyed by 3 punches; yields SCRAP_METAL.
+     */
+    DARTS_TROPHY_PROP(0.30f, 0.40f, 0.20f, 3, Material.SCRAP_METAL),
+
+    /**
+     * AGM_ACCOUNTS_PROP — a ring-bound booklet of club accounts placed on the
+     * committee table during the first-Sunday-of-month AGM. Press E to inspect
+     * as Treasurer; embezzlement options displayed if player holds CLUB_MEMBERSHIP_CARD
+     * and is standing for Treasurer. Destroyed by 2 punches; yields nothing (paper).
+     */
+    AGM_ACCOUNTS_PROP(0.25f, 0.30f, 0.15f, 2, null),
+
+    /**
+     * BARSTOOL_PROP — a worn vinyl-topped barstool at the Members' Bar. Named
+     * regulars (Arthur, Derek, Brenda) are seated here. Press E to start a
+     * conversation and receive seeded rumours. Destroyed by 3 punches; yields WOOD.
+     */
+    BARSTOOL_PROP(0.40f, 0.70f, 0.40f, 3, Material.WOOD),
+
     // ── Issue #1114: Meredith & Sons Funeral Parlour ──────────────────────────
 
     /**

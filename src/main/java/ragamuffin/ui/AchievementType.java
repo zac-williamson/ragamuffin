@@ -3773,6 +3773,64 @@ public enum AchievementType {
         "Nothing to Declare",
         "Five fortnights. Zero declared earnings. Brenda hasn't knocked. Yet.",
         1
+    ),
+
+    // ── Issue #1192: Northfield Sporting & Social Club ─────────────────────────
+
+    /**
+     * Issue #1192: Awarded when the player successfully joins the Northfield
+     * Sporting &amp; Social Club by paying 5 COIN for a CLUB_MEMBERSHIP_CARD.
+     */
+    CLUB_MEMBER(
+        "Members Only",
+        "You're a card-carrying member of the Northfield Sporting & Social Club. Ron gave you a nod.",
+        1
+    ),
+
+    /**
+     * Issue #1192: Awarded when the player wins a side-bet darts match at the
+     * Thursday Darts League at the social club.
+     * (DARTS_HUSTLER_CLUB already present — this entry has been merged into it.)
+     */
+
+    /**
+     * Issue #1192: Awarded when the player wins 3+ consecutive hands in the
+     * back-room Pontoon session.
+     */
+    BACK_ROOM_BANKER(
+        "Back Room Banker",
+        "Three on the spin at Mick's table. He wasn't pleased. Nobody ever is.",
+        1
+    ),
+
+    /**
+     * Issue #1192: Awarded when the player catches Mick the card dealer cheating
+     * using STREETWISE &ge; Journeyman skill.
+     */
+    CAUGHT_THE_CHEAT(
+        "Caught the Cheat",
+        "Caught Mick slipping an ace from his sleeve. He looked you dead in the eye. Said nothing.",
+        1
+    ),
+
+    /**
+     * Issue #1192: Awarded when the player embezzles club funds as Treasurer
+     * at the AGM without being caught.
+     */
+    COOKING_THE_BOOKS(
+        "Cooking the Books",
+        "You've been embezzling from the social club's petty cash. In fairness, so was Derek.",
+        1
+    ),
+
+    /**
+     * Issue #1192: Awarded when the player successfully intercepts the Marchetti
+     * Crew protection collector, landing 5 hits to drive them off.
+     */
+    CLUB_PROTECTOR(
+        "Club Protector",
+        "You saw off the Marchetti collector. Ron shook your hand. It was awkward but sincere.",
+        1
     );
 
     private final String name;

@@ -468,5 +468,13 @@ public enum RumourType {
      * — seeded by BoxingClubSystem when the white-collar circuit unlocks (2nd win).
      * Spreads via FIGHT_PROMOTER and BOXING_PROSPECT NPCs within 20 blocks of BOXING_CLUB.
      * Draws WHITE_COLLAR_BOXER NPCs toward the gym on alternate Saturdays. */
-    UNDERGROUND_FIGHT;
+    UNDERGROUND_FIGHT,
+
+    // ── Issue #1192: Northfield Sporting & Social Club ────────────────────────
+
+    /** "Mick at the social club back room was dealing from the bottom of the deck."
+     * — seeded by SportingSocialClubSystem when player catches CARD_DEALER cheating.
+     * Spreads via SOCIAL_CLUB_STEWARD and CLUB_REGULAR NPCs.
+     * Reduces MARCHETTI_CREW Respect by 5 (they run Mick). */
+    CARD_CHEAT;
 }
