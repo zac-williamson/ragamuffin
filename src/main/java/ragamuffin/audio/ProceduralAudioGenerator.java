@@ -47,6 +47,8 @@ public class ProceduralAudioGenerator {
             case POLICE_SIREN:      return generatePoliceSiren();
             case PIRATE_RADIO_MUSIC: return generatePirateRadioMusic();
             case ICE_CREAM_JINGLE: return generateIceCreamJingle();
+            case LIFT_CREAK:    return generateLiftCreak();
+            case CROWD_CHEER:   return generateCrowdCheer();
             case AMBIENT_PARK:
             case AMBIENT_STREET:
             default:
@@ -539,6 +541,41 @@ public class ProceduralAudioGenerator {
         double alpha = dt / (rc + dt);
         double lp = lpState + alpha * (input - lpState);
         return input - lp;
+    }
+
+    /** LIFT_CREAK: 0.5s, low rumble + metallic creak (FM sine) */
+    private byte[] generateLiftCreak() {
+        double dur = 0.5;
+        short[] samples = allocSamples(dur);
+        double lpState = 0;
+        for (int i = 0; i < samples.length; i++) {
+            double t = (double) i / SAMPLE_RATE;
+            double env = expDecay(t, 0.15);
+            // Low rumble
+            double rumble = sine(40.0 * t) * 0.4;
+            // Metallic creak: FM synthesis
+            double mod = sine(7.0 * t) * 200.0;
+            double creak = sine((300.0 + mod) * t) * 0.6;
+            double mix = (rumble + creak) * env;
+            lpState = lowPass(mix, lpState, 2500);
+            samples[i] = clampToShort(lpState * 0.8);
+        }
+        return toWav(samples);
+    }
+
+    /** CROWD_CHEER: 1.0s, filtered noise burst with rising envelope */
+    private byte[] generateCrowdCheer() {
+        double dur = 1.0;
+        short[] samples = allocSamples(dur);
+        double lpState = 0;
+        for (int i = 0; i < samples.length; i++) {
+            double t = (double) i / SAMPLE_RATE;
+            double env = envelope(t, dur, 0.1, 0.2, 0.7, 0.3);
+            double n = noise();
+            lpState = lowPass(n, lpState, 4000);
+            samples[i] = clampToShort(lpState * env * 0.7);
+        }
+        return toWav(samples);
     }
 
     // ── WAV encoding ──────────────────────────────────────────────

@@ -353,7 +353,7 @@ public class FeteSystem {
 
     private void onSetup(Weather weather, List<NPC> allNpcs, AchievementCallback achCallback) {
         // Weather cancellation
-        if (weather == Weather.THUNDERSTORM || weather == Weather.HEAVY_RAIN) {
+        if (weather == Weather.THUNDERSTORM || weather == Weather.RAIN) {
             feteCancelled = true;
             seedRumour("Fete's been called off — typical.");
             return;
@@ -449,7 +449,7 @@ public class FeteSystem {
             int prize = raffleRigged ? 0 : random.nextInt(3);
             if (prize == 0) {
                 // 1st prize
-                playerInventory.addItem(Material.BOTTLE_OF_WINE, 1);
+                playerInventory.addItem(Material.CAN_OF_LAGER, 1);
                 playerInventory.addItem(Material.COIN, 10);
             } else if (prize == 1) {
                 // 2nd prize
@@ -475,7 +475,7 @@ public class FeteSystem {
         // NPC dispersal
         for (NPC npc : feteNpcs) {
             if (npc.isAlive()) {
-                npc.setState(NPCState.WALKING);
+                npc.setState(NPCState.WANDERING);
             }
         }
 
@@ -500,7 +500,7 @@ public class FeteSystem {
         if (roll < TOMBOLA_BISCUIT_CHANCE) {
             prize = Material.BISCUIT;
         } else if (roll < TOMBOLA_BISCUIT_CHANCE + TOMBOLA_WINE_CHANCE) {
-            prize = Material.BOTTLE_OF_WINE;
+            prize = Material.CAN_OF_LAGER;
         } else if (roll < TOMBOLA_BISCUIT_CHANCE + TOMBOLA_WINE_CHANCE + TOMBOLA_KETTLE_CHANCE) {
             prize = Material.KETTLE;
         } else if (roll < TOMBOLA_BISCUIT_CHANCE + TOMBOLA_WINE_CHANCE + TOMBOLA_KETTLE_CHANCE + TOMBOLA_TOY_CHANCE) {
@@ -581,7 +581,7 @@ public class FeteSystem {
                             achCallback != null ? t -> { if (achievementSystem != null) achievementSystem.unlock(t); } : null);
                 }
                 if (criminalRecord != null) {
-                    criminalRecord.record(CriminalRecord.CrimeType.PETTY_THEFT);
+                    criminalRecord.record(CriminalRecord.CrimeType.THEFT);
                 }
 
                 if (achCallback != null) achCallback.award(AchievementType.CAKE_THIEF);
@@ -596,8 +596,8 @@ public class FeteSystem {
     // ── Bric-a-brac rummage ────────────────────────────────────────────────────
 
     private static final Material[] BRIC_A_BRAC_LOOT = {
-        Material.COAT, Material.OLD_BOOK, Material.PUZZLE_BOOK,
-        Material.ORNAMENT, Material.BROKEN_TOASTER, Material.RETRO_CASSETTE
+        Material.COAT, Material.TEXTBOOK, Material.HYMN_BOOK,
+        Material.ORNAMENT, Material.TOASTER, Material.RETRO_CASSETTE
     };
 
     /**
@@ -628,7 +628,7 @@ public class FeteSystem {
                         achCallback != null ? t -> { if (achievementSystem != null) achievementSystem.unlock(t); } : null);
             }
             if (criminalRecord != null) {
-                criminalRecord.record(CriminalRecord.CrimeType.PETTY_THEFT);
+                criminalRecord.record(CriminalRecord.CrimeType.THEFT);
             }
         }
         return found;
@@ -729,7 +729,7 @@ public class FeteSystem {
                         achCallback != null ? t -> { if (achievementSystem != null) achievementSystem.unlock(t); } : null);
             }
             if (criminalRecord != null) {
-                criminalRecord.record(CriminalRecord.CrimeType.FRAUD);
+                criminalRecord.record(CriminalRecord.CrimeType.BINGO_CHEATING);
             }
             if (achCallback != null) achCallback.award(AchievementType.RIGGED);
             if (achievementSystem != null) achievementSystem.unlock(AchievementType.RIGGED);

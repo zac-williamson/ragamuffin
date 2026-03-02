@@ -36,7 +36,7 @@ public class NPCManager {
     private int previousSchoolBand = -1; // -1 = uninitialised; 0=out-of-school, 1=going-to-school, 2=at-school, 3=leaving-school
 
     // Maximum NPC count to prevent lag
-    private static final int MAX_NPCS = 100;
+    private static final int MAX_NPCS = 200;
 
     // Park boundaries (assumed centered at 0,0)
     private static final float PARK_MIN_X = -20;

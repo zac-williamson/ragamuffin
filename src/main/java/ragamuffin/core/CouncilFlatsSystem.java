@@ -258,9 +258,9 @@ public class CouncilFlatsSystem {
      */
     public void update(float delta, TimeSystem time, List<NPC> allNpcs,
                        float playerX, float playerZ, int playerFloor) {
-        float currentHour = time.getHour();
+        float currentHour = time.getTime();
         int   currentDay  = time.getDayIndex();
-        int   dayOfWeek   = time.getDayOfWeek(); // 0=Mon … 5=Sat, 6=Sun
+        int   dayOfWeek   = time.getDayIndex() % 7; // 0=Mon … 5=Sat, 6=Sun
 
         // ── Claustrophobic debuff countdown ───────────────────────────────────
         if (playerTrapped && claustrophobicTimer > 0) {

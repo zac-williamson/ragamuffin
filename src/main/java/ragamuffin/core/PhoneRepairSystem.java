@@ -846,8 +846,8 @@ public class PhoneRepairSystem {
         if (inventory != null && inventory.hasItem(Material.STOLEN_PHONE, 1)) {
             policeKnockActive = true;
             policeKnockTimer = POLICE_KNOCK_ESCAPE_WINDOW;
-            policeKnockPlayerX = player.getX();
-            policeKnockPlayerZ = player.getZ();
+            policeKnockPlayerX = player.getPosition().x;
+            policeKnockPlayerZ = player.getPosition().z;
             // Award CRACKED_SCREEN achievement
             if (achievementSystem != null) {
                 achievementSystem.unlock(AchievementType.CRACKED_SCREEN);
@@ -877,8 +877,8 @@ public class PhoneRepairSystem {
 
         // Speech bubble if player is nearby
         if (player != null) {
-            float dx = player.getX() - tariq.getPosition().x;
-            float dz = player.getZ() - tariq.getPosition().z;
+            float dx = player.getPosition().x - tariq.getPosition().x;
+            float dz = player.getPosition().z - tariq.getPosition().z;
             float dist = (float) Math.sqrt(dx * dx + dz * dz);
             if (dist <= TARIQ_RUMOUR_HEAR_DISTANCE) {
                 tariq.setSpeechText(rumourText, 5.0f);
@@ -894,7 +894,8 @@ public class PhoneRepairSystem {
         if (wantedSystem != null && player != null) {
             wantedSystem.addWantedStars(POLICE_CATCH_WANTED_STARS,
                     player.getPosition().x, player.getPosition().y,
-                    player.getPosition().z, callback);
+                    player.getPosition().z,
+                    callback != null ? callback::award : null);
         }
         if (newspaperSystem != null) {
             NewspaperSystem.InfamyEvent event = new NewspaperSystem.InfamyEvent(

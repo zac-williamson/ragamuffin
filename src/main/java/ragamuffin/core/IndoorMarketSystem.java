@@ -540,7 +540,7 @@ public class IndoorMarketSystem {
             notorietySystem.addNotoriety(20, achievementCallback);
         }
         if (wantedSystem != null && playerInventory != null) {
-            wantedSystem.addWantedStars(1, 0f, 0f, 0f, null, null, null);
+            wantedSystem.addWantedStars(1, 0f, 0f, 0f, null);
         }
         if (criminalRecord != null) {
             criminalRecord.record(CriminalRecord.CrimeType.TRADING_STANDARDS_RAID);

@@ -1049,7 +1049,7 @@ public enum PropType {
      * Waiting Bench — a wooden bench for customers awaiting their turn.
      * Seats up to 3 NPC customers. Destroyed by 3 punches; yields WOOD.
      */
-    WAITING_BENCH_PROP(1.40f, 1.00f, 0.60f, 3, Material.WOOD),
+    BARBER_WAITING_BENCH_PROP(1.40f, 1.00f, 0.60f, 3, Material.WOOD),
 
     // ── Issue #1041: Northfield Argos ─────────────────────────────────────────
 
@@ -1264,7 +1264,7 @@ public enum PropType {
      * Press E to browse dogs for purchase (opens the dog purchase menu).
      * Interaction triggers PetShopSystem.browseKennel(). Not destroyable.
      */
-    DOG_KENNEL_PROP(1.20f, 1.00f, 1.20f, 999, null),
+    PET_SHOP_KENNEL_PROP(1.20f, 1.00f, 1.20f, 999, null),
 
     /**
      * Consulting Table — the examination table in Northfield Vets.

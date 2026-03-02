@@ -373,7 +373,7 @@ public class NandosSystem {
         if (material == Material.PERI_PERI_CHICKEN || material == Material.CHICKEN_WRAP) {
             mealsEaten++;
             if (achievementSystem != null) {
-                achievementSystem.recordProgress(AchievementType.NANDOS_REGULAR);
+                achievementSystem.increment(AchievementType.NANDOS_REGULAR);
             }
         }
 
@@ -466,7 +466,7 @@ public class NandosSystem {
                                              float currentHour) {
         if (safeLooted) return SafeHeistResult.ALREADY_LOOTED;
         if (isManagerPresent(currentHour)) return SafeHeistResult.MANAGER_PRESENT;
-        if (inventory.getCount(Material.LOCKPICK) <= 0) return SafeHeistResult.NO_LOCKPICK;
+        if (inventory.getItemCount(Material.LOCKPICK) <= 0) return SafeHeistResult.NO_LOCKPICK;
 
         // Consume LOCKPICK
         inventory.removeItem(Material.LOCKPICK, 1);

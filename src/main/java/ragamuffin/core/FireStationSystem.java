@@ -238,7 +238,7 @@ public class FireStationSystem {
      * @param player  the player entity (may be null in tests)
      * @param npcs    all active NPCs in the world (may be null)
      */
-    public void update(float delta, Player player, List<NPC> npcs) {
+    public void update(float delta, Player player, List<NPC> npcs, Inventory inventory) {
         // ── Callout return ────────────────────────────────────────────────────
         if (engineDeployed) {
             calloutTimer += delta;
@@ -283,8 +283,8 @@ public class FireStationSystem {
 
         // ── Loiter timer ──────────────────────────────────────────────────────
         if (player != null) {
-            boolean wearingHelmet = player.getInventory() != null
-                    && player.getInventory().hasItem(Material.FIREFIGHTER_HELMET, 1);
+            boolean wearingHelmet = inventory != null
+                    && inventory.hasItem(Material.FIREFIGHTER_HELMET, 1);
             if (!wearingHelmet) {
                 loiterTimer += delta;
                 if (loiterTimer >= LOITER_ALERT_SECONDS && npcs != null) {
@@ -442,7 +442,7 @@ public class FireStationSystem {
         if (npcs != null) {
             for (NPC npc : npcs) {
                 if (npc.getType() == NPCType.WATCH_COMMANDER) {
-                    npc.setState(NPCState.ALERT);
+                    npc.setState(NPCState.SUSPICIOUS);
                     break;
                 }
             }
@@ -488,7 +488,7 @@ public class FireStationSystem {
      * @param currentHour  current in-game hour (0–24)
      * @return true if the crusher event completed this tick
      */
-    public boolean onScrapyardDwellTick(Player player, float currentHour) {
+    public boolean onScrapyardDwellTick(Player player, float currentHour, Inventory inventory) {
         if (!engineStolen) return false;
 
         boolean inWindow = currentHour >= CRUSH_WINDOW_START || currentHour < CRUSH_WINDOW_END;
@@ -503,8 +503,8 @@ public class FireStationSystem {
             engineStolen        = false;
 
             // Pay out COIN
-            if (player != null && player.getInventory() != null) {
-                player.getInventory().addItem(Material.COIN, CRUSHER_PAYOUT_COIN);
+            if (player != null && inventory != null) {
+                inventory.addItem(Material.COIN, CRUSHER_PAYOUT_COIN);
             }
 
             // Clear the crime record
@@ -536,7 +536,7 @@ public class FireStationSystem {
      * @param npcs      active NPCs (checked for nearby FIREFIGHTERs)
      * @return pickup result
      */
-    public ExtinguisherPickupResult attemptPickupExtinguisher(Player player, List<NPC> npcs) {
+    public ExtinguisherPickupResult attemptPickupExtinguisher(Player player, List<NPC> npcs, Inventory inventory) {
         if (!extinguisherAvailable) {
             return ExtinguisherPickupResult.NONE_AVAILABLE;
         }
@@ -571,8 +571,8 @@ public class FireStationSystem {
 
         // Undetected — give extinguisher to player
         extinguisherAvailable = false;
-        if (player.getInventory() != null) {
-            player.getInventory().addItem(Material.FIRE_EXTINGUISHER, 1);
+        if (inventory != null) {
+            inventory.addItem(Material.FIRE_EXTINGUISHER, 1);
         }
         return ExtinguisherPickupResult.PICKED_UP;
     }
@@ -588,15 +588,16 @@ public class FireStationSystem {
      */
     public boolean useFireExtinguisher(Player player,
                                        com.badlogic.gdx.math.Vector3 firePos,
-                                       NotorietySystem.AchievementCallback achievementCallback) {
-        if (player.getInventory() == null
-                || !player.getInventory().hasItem(Material.FIRE_EXTINGUISHER, 1)) {
+                                       NotorietySystem.AchievementCallback achievementCallback,
+                                       Inventory inventory) {
+        if (inventory == null
+                || !inventory.hasItem(Material.FIRE_EXTINGUISHER, 1)) {
             return false;
         }
         if (wheeliBinFireSystem == null) return false;
 
         boolean extinguished = wheeliBinFireSystem.extinguishWithFireExtinguisher(
-                firePos, player.getInventory(), notorietySystem, achievementCallback, null, null);
+                firePos, player, inventory, null, null, null, null, achievementCallback);
 
         if (extinguished) {
             // −2 Notoriety for civic action
@@ -660,9 +661,9 @@ public class FireStationSystem {
      * @return true if delivery was accepted (player had ANTIDEPRESSANTS and
      *         a WATCH_COMMANDER was present)
      */
-    public boolean deliverAntidepressants(Player player, List<NPC> npcs) {
-        if (player.getInventory() == null
-                || !player.getInventory().hasItem(Material.ANTIDEPRESSANTS, 1)) {
+    public boolean deliverAntidepressants(Player player, List<NPC> npcs, Inventory inventory) {
+        if (inventory == null
+                || !inventory.hasItem(Material.ANTIDEPRESSANTS, 1)) {
             return false;
         }
 
@@ -679,8 +680,8 @@ public class FireStationSystem {
         if (watchCommander == null) return false;
 
         // Accept delivery
-        player.getInventory().removeItem(Material.ANTIDEPRESSANTS, 1);
-        player.getInventory().addItem(Material.COIN, ANTIDEPRESSANTS_QUEST_COIN);
+        inventory.removeItem(Material.ANTIDEPRESSANTS, 1);
+        inventory.addItem(Material.COIN, ANTIDEPRESSANTS_QUEST_COIN);
 
         // Neighbourhood vibes boost
         if (neighbourhoodSystem != null) {
@@ -725,9 +726,9 @@ public class FireStationSystem {
      * @param player the player (must have FIRE_EXTINGUISHER in inventory)
      * @return true if the distraction was accepted
      */
-    public boolean distractWatchCommander(Player player) {
-        if (player.getInventory() == null
-                || !player.getInventory().hasItem(Material.FIRE_EXTINGUISHER, 1)) {
+    public boolean distractWatchCommander(Player player, Inventory inventory) {
+        if (inventory == null
+                || !inventory.hasItem(Material.FIRE_EXTINGUISHER, 1)) {
             return false;
         }
         watchCommanderDistracted    = true;
@@ -786,7 +787,7 @@ public class FireStationSystem {
     private void alertWatchCommander(List<NPC> npcs) {
         for (NPC npc : npcs) {
             if (npc.getType() == NPCType.WATCH_COMMANDER) {
-                npc.setState(NPCState.ALERT);
+                npc.setState(NPCState.SUSPICIOUS);
                 return;
             }
         }

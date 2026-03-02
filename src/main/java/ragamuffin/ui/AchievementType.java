@@ -1895,7 +1895,7 @@ public enum AchievementType {
         "You've visited Kosta's Barbers five times. He knows your order.",
         5
     ),
-    QUEUE_JUMPER(
+    BARBER_QUEUE_JUMPER(
         "Queue Jumper",
         "You jumped the waiting queue at the barber. They were not happy.",
         1
@@ -2345,7 +2345,7 @@ public enum AchievementType {
         "Slipped a Dodgy Pie to an opposition player. Council FC's striker spent half-time in the bushes.",
         1
     ),
-    PUNTER(
+    FOOTBALL_PUNTER(
         "Two to One. Easy Money.",
         "Won a pitch-side bet at the Northfield Sunday League. The bookie looked gutted.",
         1

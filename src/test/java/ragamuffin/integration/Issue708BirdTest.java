@@ -86,10 +86,10 @@ class Issue708BirdTest {
     @Test
     void birdDoesNotExceedNPCCap() {
         NPCManager manager = new NPCManager();
-        // Spawn up to cap (100); birds should be included in the cap
-        for (int i = 0; i < 110; i++) {
+        // Spawn up to cap (200); birds should be included in the cap
+        for (int i = 0; i < 210; i++) {
             manager.spawnNPC(NPCType.BIRD, i, 1f, i);
         }
-        assertTrue(manager.getNPCs().size() <= 100, "NPC cap must be respected when spawning birds");
+        assertTrue(manager.getNPCs().size() <= 200, "NPC cap must be respected when spawning birds");
     }
 }

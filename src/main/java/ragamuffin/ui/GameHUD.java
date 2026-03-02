@@ -1243,7 +1243,7 @@ public class GameHUD {
      * Return a short human-readable description of an NPC state.
      * Used in the NPC detail panel (Issue #1082).
      */
-    static String describeNPCState(NPCState state) {
+    public static String describeNPCState(NPCState state) {
         switch (state) {
             case IDLE:               return "Standing around";
             case WANDERING:          return "Wandering";

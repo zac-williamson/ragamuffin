@@ -3549,8 +3549,6 @@ public enum Material {
                                                0.92f, 0.38f, 0.18f); // Orange-red fins
             case FISH_PIKE:          return cs(0.35f, 0.52f, 0.32f,  // Dark olive-green body
                                                0.65f, 0.72f, 0.45f); // Yellow-green belly
-            case ROPE:               return cs(0.72f, 0.60f, 0.35f,  // Natural hemp tan
-                                               0.55f, 0.42f, 0.20f); // Darker twisted strand
 
             // Issue #965: Northfield Snooker Hall
             case CUE:                return cs(0.75f, 0.55f, 0.22f,  // Light ash wood shaft
@@ -4941,8 +4939,6 @@ public enum Material {
             // Issue #1055: Northfield War Memorial — StatueSystem
             case BREAD_CRUMBS:
                 return IconShape.FOOD;        // scattered crumbs
-            case ROPE:
-                return IconShape.TOOL;        // coiled rope
             case CHAIN:
                 return IconShape.TOOL;        // chain links
             case FIREWORK:

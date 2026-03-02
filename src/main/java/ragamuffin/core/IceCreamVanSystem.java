@@ -293,7 +293,7 @@ public class IceCreamVanSystem {
     // ── Spawn / Despawn ───────────────────────────────────────────────────────
 
     private boolean isShouldBeActive(float hour, Weather weather) {
-        if (weather != Weather.SUNNY && weather != Weather.OVERCAST) {
+        if (weather != Weather.CLEAR && weather != Weather.OVERCAST) {
             return false;
         }
         float normHour = hour % 24.0f;
@@ -741,7 +741,7 @@ public class IceCreamVanSystem {
             default:                   base = 1; break;
         }
         // SUNNY heatwave uplift: +1 COIN
-        if (weather == Weather.SUNNY) {
+        if (weather == Weather.CLEAR) {
             base += 1;
         }
         return base;
@@ -815,18 +815,16 @@ public class IceCreamVanSystem {
      * @param streetRep player's street reputation points
      */
     public void forceSpawn(int streetRep) {
-        if (!vanActive) {
-            vanActive = true;
-            stock = INITIAL_STOCK;
-            queue.clear();
-            playerInQueue = false;
-            playerQueueIndex = -1;
-            serveTimer = 0f;
-            kidsMobActive = false;
-            driveby = false;
-            dave = new NPC(NPCType.ICE_CREAM_MAN, 0f, 1f, 0f);
-            sideHatchOpen = streetRep >= SIDE_HATCH_STREET_REP_THRESHOLD;
-        }
+        vanActive = true;
+        stock = INITIAL_STOCK;
+        queue.clear();
+        playerInQueue = false;
+        playerQueueIndex = -1;
+        serveTimer = 0f;
+        kidsMobActive = false;
+        driveby = false;
+        dave = new NPC(NPCType.ICE_CREAM_MAN, 0f, 1f, 0f);
+        sideHatchOpen = streetRep >= SIDE_HATCH_STREET_REP_THRESHOLD;
     }
 
     /**

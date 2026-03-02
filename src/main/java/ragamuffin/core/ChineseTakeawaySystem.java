@@ -360,7 +360,7 @@ public class ChineseTakeawaySystem {
         if (price < 0) return false;
 
         // Check player has enough COIN
-        int coinCount = inventory.getCount(Material.COIN);
+        int coinCount = inventory.getItemCount(Material.COIN);
         if (coinCount < price) return false;
 
         // Deduct COIN
@@ -375,7 +375,7 @@ public class ChineseTakeawaySystem {
 
         // Crispy Duck connoisseur progress
         if (material == Material.CRISPY_DUCK && achievementSystem != null) {
-            achievementSystem.recordProgress(AchievementType.CRISPY_DUCK_CONNOISSEUR);
+            achievementSystem.increment(AchievementType.CRISPY_DUCK_CONNOISSEUR);
         }
 
         // Free prawn crackers bonus (order >= 5 COIN, notoriety <= 30)
@@ -448,10 +448,10 @@ public class ChineseTakeawaySystem {
      * @return the fortune string, or null if no FORTUNE_COOKIE in inventory
      */
     public String useFortuneCookie(Inventory inventory) {
-        if (inventory.getCount(Material.FORTUNE_COOKIE) <= 0) return null;
+        if (inventory.getItemCount(Material.FORTUNE_COOKIE) <= 0) return null;
         inventory.removeItem(Material.FORTUNE_COOKIE, 1);
         if (achievementSystem != null) {
-            achievementSystem.recordProgress(AchievementType.FORTUNE_SEEKER);
+            achievementSystem.increment(AchievementType.FORTUNE_SEEKER);
         }
         return getFortune(0L);
     }
@@ -474,7 +474,7 @@ public class ChineseTakeawaySystem {
         // Set attracted state on all BIRD NPCs
         for (NPC bird : birds) {
             if (bird.getType() == NPCType.BIRD) {
-                bird.setState(NPCState.ATTRACTED);
+                bird.setState(NPCState.INVESTIGATING);
             }
         }
 
@@ -489,7 +489,7 @@ public class ChineseTakeawaySystem {
 
         // Achievement progress
         if (achievementSystem != null) {
-            achievementSystem.recordProgress(AchievementType.PRAWN_CRACKER_PIGEON_FEEDER);
+            achievementSystem.increment(AchievementType.PRAWN_CRACKER_PIGEON_FEEDER);
         }
 
         return true;
@@ -513,7 +513,7 @@ public class ChineseTakeawaySystem {
         if (isDeliveryBlocked(notoriety)) return false;
 
         int price = calculateOrderPrice(material, coldSnap) + DELIVERY_SURCHARGE;
-        int coinCount = inventory.getCount(Material.COIN);
+        int coinCount = inventory.getItemCount(Material.COIN);
         if (coinCount < price) return false;
 
         for (int i = 0; i < price; i++) {

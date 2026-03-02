@@ -90,7 +90,7 @@ class Issue1069IceCreamVanTest {
 
         // ── Van spawns in good weather during operating hours ─────────────────
 
-        vanSystem.update(0.016f, 14.0f, Weather.SUNNY,
+        vanSystem.update(0.016f, 14.0f, Weather.CLEAR,
                 nearbyNpcs, player, inventory, 0);
 
         assertTrue(vanSystem.isVanActive(),
@@ -115,13 +115,13 @@ class Issue1069IceCreamVanTest {
         // ── Non-Wanted player buys 99 Flake ───────────────────────────────────
 
         // Clear wanted status (simulate player losing stars)
-        wantedSystem.clearWanted();
+        wantedSystem.setWantedStarsForTesting(0);
         assertEquals(0, wantedSystem.getWantedStars(), "Player should have 0 wanted stars");
 
         inventory.addItem(Material.COIN, IceCreamVanSystem.BASE_PRICE_99_FLAKE + 1); // Sunny = +1
         IceCreamVanSystem.BuyResult buyResult = vanSystem.buyItem(
                 inventory, Material.NINETY_NINE_FLAKE,
-                vanSystem.getItemPrice(Material.NINETY_NINE_FLAKE, Weather.SUNNY));
+                vanSystem.getItemPrice(Material.NINETY_NINE_FLAKE, Weather.CLEAR));
 
         assertEquals(IceCreamVanSystem.BuyResult.SUCCESS, buyResult,
                 "Non-Wanted player should be served");
@@ -135,7 +135,7 @@ class Issue1069IceCreamVanTest {
         // Reset van
         vanSystem.resetVanState();
         // Force despawn by updating at 20:00
-        vanSystem.update(0.016f, 20.0f, Weather.SUNNY, nearbyNpcs, player, inventory, 0);
+        vanSystem.update(0.016f, 20.0f, Weather.CLEAR, nearbyNpcs, player, inventory, 0);
         assertFalse(vanSystem.isVanActive(),
                 "Van should NOT be active at 20:00 (outside 12:00–19:30)");
     }

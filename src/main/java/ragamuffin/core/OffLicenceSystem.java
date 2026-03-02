@@ -681,7 +681,7 @@ public class OffLicenceSystem {
             imran.setSpeechText("Oi! Put that back!", 3f);
         }
         if (declan != null && declan.isAlive()) {
-            declan.setState(NPCState.CHASING);
+            declan.setState(NPCState.CHASING_PLAYER);
         }
         if (shopliftDetections >= SHOPLIFT_BAN_THRESHOLD) {
             permanentlyBanned = true;
@@ -895,11 +895,11 @@ public class OffLicenceSystem {
                 declanLoiterTimer += delta;
                 if (declanLoiterTimer >= DECLAN_LOITER_HOSTILE_SECONDS) {
                     declan.setSpeechText("You gonna buy something or what?", 4f);
-                    declan.setState(NPCState.HOSTILE);
+                    declan.setState(NPCState.AGGRESSIVE);
                 }
             } else {
                 declanLoiterTimer = 0f;
-                if (declan.getState() == NPCState.HOSTILE) {
+                if (declan.getState() == NPCState.AGGRESSIVE) {
                     declan.setState(NPCState.IDLE);
                 }
             }

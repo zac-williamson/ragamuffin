@@ -495,9 +495,9 @@ class Issue769StreetEconomyTest {
         assertNotNull(AchievementType.COLD_SNAP_CAPITALIST, "COLD_SNAP_CAPITALIST should exist");
         assertNotNull(AchievementType.DODGY_AS_THEY_COME, "DODGY_AS_THEY_COME should exist");
 
-        // Verify all MarketEvents exist (6 original + ICE_CREAM_FRENZY)
-        assertEquals(7, MarketEvent.values().length,
-            "There should be exactly 7 MarketEvents");
+        // Verify all MarketEvents exist (6 original + ICE_CREAM_FRENZY + CONSOLE_DROP + SCHOOLHOLIDAYS)
+        assertEquals(9, MarketEvent.values().length,
+            "There should be exactly 9 MarketEvents");
 
         // 6 NPCs with high desperate compound state
         for (int i = 0; i < 6; i++) {

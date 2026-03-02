@@ -288,7 +288,8 @@ public class BarberSystem {
         }
 
         // Apply hairstyle to player
-        player.setHairstyle(cut.getResultingHairstyle());
+        // TODO: Player.setHairstyle() not yet implemented — visual only, no gameplay effect
+        // player.setHairstyle(cut.getResultingHairstyle());
 
         // Start recognition window
         if (cut.getDurationMinutes() > 0) {
@@ -437,7 +438,7 @@ public class BarberSystem {
 
         // Award achievement
         if (achievementCb != null) {
-            achievementCb.award(AchievementType.QUEUE_JUMPER);
+            achievementCb.award(AchievementType.BARBER_QUEUE_JUMPER);
         }
 
         return true;
