@@ -41974,3 +41974,173 @@ If the player has a `TATTOO_GUN_KIT` in their inventory (craftable: 3 SCRAP_META
 // Recipe: TATTOO_GUN_KIT (3 SCRAP_METAL + 1 BROKEN_PHONE) — add to CraftingSystem.java
 // PropType: TATTOO_CHAIR_PROP, FLASH_SHEET_PROP, TATTOO_STATION_PROP already defined — no changes needed
 // WorldGenerator: place TATTOO_PARLOUR landmark on High Street between off-licence and chippy
+
+## Issue #1273: Northfield Fly-Tipping Ring — Dodgy Waste Disposal, Enforcement Vans & the White Van Hustle
+
+### Overview
+The player can run an unlicensed waste-clearance operation: door-knocking NPCs (or accepting
+inbound requests) to haul away their junk for cash, then fly-tipping the load on wasteland,
+down the canal towpath, or behind the industrial estate — anywhere that isn't a licensed
+tip. Integrates with `EnvironmentalHealthSystem`, `NeighbourhoodSystem`, `WantedSystem`,
+`CriminalRecord`, and `NewspaperSystem`.
+
+**New class:** `FlyTippingSystem.java` in `ragamuffin.core`.
+
+### The White Van Hustle
+
+1. **Collect a job**: Press E on a `RESIDENTIAL_NPC` or interact with a `CLEARANCE_JOB_BOARD_PROP`
+   (one boards appears outside the Pound Shop and one on the Community Centre noticeboard).
+   Job types:
+   - **House Clearance**: collect 4–8 JUNK_ITEM props from a house; pay: 6–12 COIN (random).
+   - **Garden Rubbish**: collect 2–4 GARDEN_WASTE_BAG items; pay: 3–6 COIN.
+   - **Builder's Rubble**: collect 3 RUBBLE_SACK items from a TERRACED_HOUSE build site; pay: 8 COIN.
+
+2. **Load the van** (conceptual inventory: `flyTipLoad`, max 10 items):
+   Player walks over `JUNK_ITEM` / `GARDEN_WASTE_BAG` / `RUBBLE_SACK` props and presses E to load
+   them. Each item added increments `loadCount`. When `loadCount == jobRequired`, the job is
+   complete; customer pays immediately.
+
+3. **Dump the load** — player must dispose of the collected waste. Three outcomes:
+   - **Fly-tip it** (press E on any WASTELAND/CANAL_BANK/BACK_ALLEY zone block while carrying
+     load): instant; spawns `FLY_TIP_PILE_PROP`; seeds `FLY_TIPPING` crime in `CriminalRecord`
+     (+2 Notoriety); spawns `COUNCIL_VAN_NPC` after `FLY_TIP_RESPONSE_SECONDS` (120 s).
+   - **Proper disposal** (drive load to `RECYCLING_CENTRE` and pay `DISPOSAL_FEE_COIN` = 3
+     per item): legal; no crime; slow/expensive but grants `COMMUNITY_WIN` rumour (+1 Vibes).
+   - **Burn it** (place load near `CAMPFIRE_PROP` / `WHEELIE_BIN_FIRE_PROP` and press E):
+     generates `NoiseSystem` level 6; 30% chance `FIRE_BRIGADE_NPC` spawns; `ARSON` crime if
+     fire spreads to adjacent blocks; satisfying crackle SFX.
+
+### Council Enforcement Van
+
+- `COUNCIL_VAN_NPC` (new NPC type: `NPCType.COUNCIL_VAN_OFFICER`) spawns near the `FLY_TIP_PILE_PROP`
+  within `FLY_TIP_RESPONSE_SECONDS` (default 120 real-seconds).
+- Officer examines the pile. If player is within 8 blocks: confrontation.
+  - Fine: `FLY_TIP_FIXED_PENALTY_NOTICE` CrimeType; deduct `FIXED_PENALTY_COIN` (15 COIN).
+  - If player runs: `EVADING_ENFORCEMENT` CrimeType; +1 Wanted star; officer calls WantedSystem.
+  - If player pays fine: pile cleared after 60 s; Notoriety −1.
+- Pile stays for 2 in-game days if unaddressed; `NeighbourhoodSystem` Vibes −1 per day it persists.
+- If 3+ piles exist simultaneously: `NewspaperSystem` headline "Fly-Tipping Crisis Hits Northfield".
+
+### Evidence Mechanic
+
+`CCTV_PROP` within 6 blocks of the dump site records the event.
+If tape not stolen (player presses E on CCTV within 60 s): `CCTV_EVIDENCE` flag set;
+council officer confrontation adds +1 Wanted star and `CAUGHT_ON_CAMERA` crime.
+
+### NPCs
+
+- `NPCType.COUNCIL_VAN_OFFICER` — **Janet's colleague Gary** — hi-vis jacket, clipboard, drives a
+  white transit van. Passive until pile detected; becomes AGGRESSIVE if player evades.
+  Dialogue lines include: "You're having a laugh mate, that didn't come from nowhere."
+
+### Materials / Props
+
+| New Item | Source | Notes |
+|---|---|---|
+| `JUNK_ITEM` | Spawned by clearance jobs (house prop) | Generic rubbish prop |
+| `GARDEN_WASTE_BAG` | Spawned by garden-rubbish jobs | Green sack prop |
+| `RUBBLE_SACK` | Spawned by builder's-rubble jobs | Heavy, half-full bag |
+| `FLY_TIP_PILE_PROP` | Created on dump action | World prop; decays after 2 days |
+| `CLEARANCE_JOB_BOARD_PROP` | Fixed outside Pound Shop / Community Centre | Shows 0–3 available jobs |
+| `FIXED_PENALTY_NOTICE` | Dropped by COUNCIL_VAN_OFFICER | Evidence item; pay via CitizensAdviceSystem |
+
+### Achievements
+
+| AchievementType | Trigger |
+|---|---|
+| `GRIM_REAPER` | Complete first clearance job |
+| `THE_ENVIRONMENT_THOUGH` | Fly-tip 5 loads without getting caught |
+| `CIVIC_PRIDE` | Dispose of 3 loads at Recycling Centre legitimately |
+| `HEADLINE_SHAME` | Trigger the "Fly-Tipping Crisis" newspaper headline |
+| `BURN_IT_ALL` | Burn a load and have the fire brigade show up |
+
+### Integration Points
+
+- **EnvironmentalHealthSystem** — active `FLY_TIP_PILE_PROP` within 10 blocks of a food venue
+  adds `RAT_PENALTY` (−15 condition) to next inspection; Janet references it in dialogue.
+- **NeighbourhoodSystem** — Vibes −1/day per uncleared pile; cleared pile = +1 Vibes.
+- **WantedSystem** — evading officer adds +1 star; caught on camera adds +1 star.
+- **CriminalRecord** — `FLY_TIPPING` and `CAUGHT_ON_CAMERA` crime types added.
+- **NewspaperSystem** — headline at 3+ simultaneous piles.
+- **RumourNetwork** — after burning load, nearby NPC seeds `LOCAL_GOSSIP` "Someone's been having
+  a bonfire behind the garages again."
+- **RecyclingCentreSystem** — legal disposal route (pay DISPOSAL_FEE_COIN per item).
+- **WheeliBinFireSystem** — burning a load via wheelie bin fire cross-triggers this system.
+- **TimeSystem** — Council enforcement only active 07:00–20:00; no officer spawns overnight
+  (player can tip freely after hours, but pile still generates Vibes penalty at dawn).
+- **CarDrivingSystem** — optional: if player owns a van (CAR_TYPE_VAN), job capacity doubles
+  (max 20 items) and clearance pay increases by 50%.
+- **TooltipSystem** — first dump: "Out of sight, out of mind. Mostly.";
+  officer confrontation: "That's yours, mate. I can see the receipt.";
+  burning load: "What the nose doesn't know..."; fire brigade arrives: "Plan B was a bit much."
+
+### Unit Tests (`FlyTippingSystemTest.java`)
+
+1. `testClearanceJobPaysOnCompletion` — create job requiring 4 JUNK_ITEM; load 4 items; verify
+   player COIN increases by job pay amount.
+2. `testFlyTipAddsNotoriety` — fly-tip a load; verify Notoriety +2; verify `FLY_TIPPING` in
+   CriminalRecord.
+3. `testFlyTipSpawnsPile` — fly-tip; verify `FLY_TIP_PILE_PROP` exists at dump coords.
+4. `testCouncilVanSpawnsAfterDelay` — fly-tip; advance 119 real-seconds; verify no van; advance
+   1 more second; verify `COUNCIL_VAN_OFFICER` NPC exists near pile.
+5. `testPayFineClears CrimeFlag` — officer confrontation; player pays `FIXED_PENALTY_COIN`;
+   verify `FLY_TIPPING` crime not escalated; Notoriety −1.
+6. `testEvadingOfficerAddsWantedStar` — officer confrontation; player moves >8 blocks away
+   before paying; verify `EVADING_ENFORCEMENT` in CriminalRecord; WantedSystem stars +1.
+7. `testProperDisposalGrantsCommunityWin` — dispose at Recycling Centre; verify no crime
+   added; verify `COMMUNITY_WIN` rumour seeded.
+8. `testBurnLoadGeneratesNoise` — burn load near campfire; verify `NoiseSystem.getLevel()` ≥ 6.
+9. `testBurnLoadFireBrigadeChance` — seed RNG to trigger 30%; burn load; verify
+   `FIRE_BRIGADE_NPC` spawned.
+10. `testCctvEvidenceAddsWantedStar` — CCTV_PROP within 6 blocks; fly-tip; do NOT steal tape;
+    officer confrontation; verify Wanted stars include `CAUGHT_ON_CAMERA` +1.
+11. `testPileVibesPenalty` — fly-tip pile; advance 1 in-game day; verify
+    `NeighbourhoodSystem.getVibes()` −1.
+12. `testThreePilesHeadline` — create 3 simultaneous piles; verify `NewspaperSystem` has
+    headline containing "Fly-Tipping Crisis".
+13. `testPileNearFoodVenuePenalisesHygiene` — place pile within 10 blocks of Greasy Spoon;
+    run `EnvironmentalHealthSystem` inspection; verify condition includes `RAT_PENALTY`.
+14. `testLoadCapacityBase10` — attempt to load 11th item; verify result == `LOAD_FULL`.
+
+### Integration Tests (`Issue1273FlyTippingIntegrationTest.java`)
+
+1. **Full hustle cycle**: Player takes a clearance job (4 JUNK_ITEM). Loads all 4 items.
+   Receives payment (+8 COIN). Fly-tips load on wasteland. Waits 120 s. `COUNCIL_VAN_OFFICER`
+   spawns. Player pays `FIXED_PENALTY_COIN` (15 COIN). Verify: CriminalRecord contains
+   `FLY_TIPPING`; pile cleared after 60 s; Notoriety net +1 (was +2, −1 on payment).
+
+2. **Evasion escalates wanted level**: Player fly-tips load. Officer spawns. Player runs >8
+   blocks. Verify: `EVADING_ENFORCEMENT` crime; WantedSystem 1 star; officer enters CHASE state.
+
+3. **Legitimate disposal keeps record clean**: Player accepts garden-rubbish job (2 bags). Loads
+   items. Travels to `RECYCLING_CENTRE`. Pays disposal fee. Verify: no crime in CriminalRecord;
+   `COMMUNITY_WIN` rumour in RumourNetwork; `CIVIC_PRIDE` achievement progress.
+
+4. **CCTV capture adds extra star**: CCTV_PROP placed 5 blocks from dump site. Player fly-tips.
+   Does not destroy camera. Officer confronts player. Verify Wanted stars = 2 (1 for fly-tip,
+   1 for camera evidence) and `CAUGHT_ON_CAMERA` in CriminalRecord.
+
+5. **Three piles trigger newspaper headline**: Player fly-tips 3 separate loads in 3 different
+   locations without clearing any. Advance 1 in-game day. Verify `NewspaperSystem` headline
+   contains "Fly-Tipping Crisis Hits Northfield". Verify `HEADLINE_SHAME` achievement unlocked.
+
+6. **Burning load triggers fire brigade**: Player loads rubble sack. Drags it to
+   `WHEELIE_BIN_FIRE_PROP`. Presses E to burn. Seed RNG to guarantee fire brigade trigger.
+   Verify `FIRE_BRIGADE_NPC` spawned within 60 s. Verify `BURN_IT_ALL` achievement unlocked.
+
+// ── Issue #1273: Northfield Fly-Tipping Ring ────────────────────────────────
+// New: FlyTippingSystem.java in ragamuffin.core
+// New: FlyTippingSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1273FlyTippingIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: JUNK_ITEM, GARDEN_WASTE_BAG, RUBBLE_SACK, FIXED_PENALTY_NOTICE — add to Material.java
+// PropType: FLY_TIP_PILE_PROP, CLEARANCE_JOB_BOARD_PROP — add to PropType.java
+// NPCType: COUNCIL_VAN_OFFICER — add to NPCType.java
+// LandmarkType: no new landmark needed (reuses WASTELAND, INDUSTRIAL_ESTATE, CANAL etc.)
+// AchievementType: GRIM_REAPER, THE_ENVIRONMENT_THOUGH, CIVIC_PRIDE, HEADLINE_SHAME,
+//                  BURN_IT_ALL — add to AchievementType.java
+// CriminalRecord.CrimeType: FLY_TIPPING, CAUGHT_ON_CAMERA, EVADING_ENFORCEMENT — add to CriminalRecord.java
+// EnvironmentalHealthSystem: add pile proximity check in inspection logic
+// NeighbourhoodSystem: add daily Vibes penalty for each active FLY_TIP_PILE_PROP
+// NewspaperSystem: add headline trigger when FlyTippingSystem.getActivePileCount() >= 3
+// RecyclingCentreSystem: add legal disposal interaction for fly-tip load
+// WheeliBinFireSystem: add burn-load cross-trigger
