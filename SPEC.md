@@ -37884,3 +37884,136 @@ The back room houses the PRINTER_PROP and a `STASH_BOX_PROP` containing random l
 //   InformationBrokerSystem, StreetSkillSystem, NotorietySystem, CriminalRecord,
 //   WantedSystem, DisguiseSystem, WitnessSystem, RumourNetwork, WeatherSystem,
 //   NeighbourhoodSystem, AchievementSystem, NoiseSystem, StreetEconomySystem
+
+---
+
+## Add Northfield Fast Cash Finance — Payday Loan Spiral, Bailiff Visits & the Marchetti Debt Sale
+
+A new system: **Fast Cash Finance** (`LandmarkType.PAYDAY_LOAN_SHOP`) — Barry's garish payday loan shop on the Northfield parade, squeezed between the charity shop and the bookies. The landmark, NPCType, and achievements are already defined; this issue implements `PaydayLoanSystem.java` and wires everything together.
+
+### Building
+
+A 6×4×3 block shopfront with bright red PLASTIC_SIGN_PROP and neon OPEN sign. Interior: LOAN_DESK_PROP (Barry's desk, centre-rear), LEAFLET_RACK_PROP by the door (free LOAN_LEAFLET material), CCTV_CAMERA_PROP above the entrance. Open Mon–Fri 09:00–18:00, Sat 10:00–16:00. Closed Sundays.
+
+**NPCs**: `LOAN_MANAGER` Barry — anchored to LOAN_DESK_PROP. Wears a polyester tie. Speaks in cheerful corporate euphemism. Suspiciously observant of the player's wallet.
+
+### Core Mechanics
+
+#### 1. Loan Application
+
+Press **E** on Barry (or LOAN_DESK_PROP) to open the loan menu. Loans available:
+- **Quick Fifty** — 50 COIN, repay 65 COIN within 3 in-game days. APR: 1,294% (flavour text).
+- **Ton Up** — 100 COIN, repay 135 COIN within 5 in-game days.
+- **Proper Wedge** — 200 COIN, repay 280 COIN within 7 in-game days.
+
+Eligibility rules:
+- Player must not have an existing active loan (only one loan at a time).
+- Refused if Notoriety ≥ 60 (Barry: "Can't help you today, son.").
+- **HIGH_ROLLER_NOTICE** bonus: if player won ≥ 50 COIN at `BettingShopSystem` or `GreyhoundRacingSystem` within the last in-game day, Barry proactively offers the next loan tier up (max Proper Wedge). Awards `AchievementType.HIGH_ROLLER_NOTICE`.
+- Awards `AchievementType.IN_DEBT` on first loan taken.
+
+Loan state stored in `PaydayLoanSystem`: amount owed, due-day, missed repayments count (0–3+).
+
+#### 2. Repayment
+
+Press **E** on Barry with sufficient COIN in inventory. Barry deducts the owed amount. Clears the loan record. Barry: "Lovely stuff. Come back any time."
+
+**Early repayment discount**: repay within 1 in-game day → 10% discount (Barry shrugs, still takes it).
+
+#### 3. Missed Repayments & Escalation
+
+The `update(float delta, TimeSystem)` loop checks whether the due-day has passed without repayment:
+
+| Missed | Event |
+|--------|-------|
+| 1st miss | Barry sends a THREATENING_LETTER (appears in player's SQUAT/COUNCIL_FLAT letterbox next morning). Barry speech on next visit: "Still owe me, mate." |
+| 2nd miss | `DEBT_COLLECTOR` NPC spawned — Darren from the Marchetti Crew — who tracks the player's last-known location and confronts them (demands payment or takes COIN/items from inventory up to 75% of debt). Awards `AchievementType.DEBT_SPIRAL`. Seeds `CRIMINAL_INTEL` rumour in `RumourNetwork`. |
+| 3rd miss | BAILIFF NPC (`NPCType.BAILIFF`) spawned. Visits player's registered address (SQUAT or COUNCIL_FLAT). Seizes any COIN present at the address (up to full debt). If player is present: dialogue menu — **Pay up** (clears debt), **Bribe** (10 COIN + `AchievementType.BAILIFF_BRIBED` + Notoriety +2), **Attack** (Wanted Tier 2 + `AchievementType.BAILIFF_ASSAULT` + `ASSAULT` CriminalRecord entry). |
+| 4th miss | Debt sold to Marchetti Crew: `FactionSystem` Marchetti hostility set to MAX regardless of prior respect; GANG_DEBT flag added; `AchievementType.MARCHETTI_MONEY` awarded. Marchetti Crew NPCs now demand payment on sight (≤6 blocks): pay full debt or fight. |
+
+#### 4. Loan Leaflet Economy
+
+Free LOAN_LEAFLET from LEAFLET_RACK_PROP (limit 1 per visit). Item is otherwise useless — unless:
+- Taken to the `CitizensAdviceSystem` (CAB): the volunteer reads it and adds DEBT_ADVICE_LETTER to inventory → next loan's interest rate reduced by 20% (one-use modifier).
+- Used to roll a cigarette with ROLLING_TOBACCO (yields ROLLED_CIGARETTE; leaflet consumed).
+- Handed to a PENSIONER NPC: seeds LOCAL_EVENT rumour ("Did you see that sign in the window? 1,294% APR, I ask you.").
+
+#### 5. Barry's Info Economy
+
+Buy Barry a coffee (COFFEE material, 1 COIN — purchase from `GreasySpoonSystem` or `CornerShopSystem`) to unlock a rumour:
+- Barry's rumour pool: LOCAL_EVENT, CRIMINAL_INTEL, NEIGHBOURHOOD — leaning heavily toward who's in financial trouble locally. Pool of 8 flavour rumours.
+- Refreshes every 24 in-game hours.
+
+### Weather & Atmosphere
+
+- **RAIN/DRIZZLE**: 1–2 extra PUBLIC NPCs shelter inside, browsing leaflets; Barry is chattier.
+- **FROST**: Barry offers free INSTANT_COFFEE prop at LOAN_DESK_PROP — Warmth +5.
+- After 17:00 Mon–Fri: LEAFLET_RACK_PROP is locked (no free leaflets); Barry is packing up, only repayments accepted.
+
+### Integration Points
+
+- **DWPSystem / JobCentreSystem**: DEBT_ADVICE_LETTER from CAB → loan interest −20%. UC claimant loans capped at 50 COIN (Barry: "Benefits don't cover the big ones, mate.").
+- **BettingShopSystem / GreyhoundRacingSystem**: win ≥50 COIN triggers HIGH_ROLLER_NOTICE loan offer upgrade.
+- **FactionSystem (Marchetti)**: 4th missed repayment → GANG_DEBT; Marchetti demand payment on sight.
+- **ArrestSystem / WantedSystem**: bailiff assault → Wanted Tier 2; ASSAULT CriminalRecord entry.
+- **PropertySystem / SquatSystem**: bailiff visits registered address; THREATENING_LETTER delivered to letterbox.
+- **CitizensAdviceSystem**: LOAN_LEAFLET → DEBT_ADVICE_LETTER (interest discount).
+- **StreetSkillSystem**: none (loan is financial, not a skill grind).
+- **NotorietySystem**: bailing out on debt seeds CRIMINAL_INTEL rumour; Notoriety +3 per missed repayment if a JOURNALIST NPC is within 20 blocks.
+- **CriminalRecord**: new `ASSAULT_ON_ENFORCEMENT_AGENT` entry (bailiff assault); `LOAN_DEFAULT` entry (4th miss).
+- **RumourNetwork**: `LOCAL_EVENT` seed on each loan taken ("Heard someone's just taken out a ton from Fast Cash."); `CRIMINAL_INTEL` seed when debt sold to Marchetti ("Marchetti lot are collecting on debts for that dodgy loan place now.").
+- **WitnessSystem**: Barry and the CCTV_CAMERA_PROP are witnesses for crimes inside the shop.
+- **WantedSystem**: bailiff assault → Wanted +2 stars.
+- **NeighbourhoodSystem**: Vibes −1 per LOAN_DEFAULT discovered; Barry complains to COUNCIL_MEMBER Derek.
+- **AchievementSystem**: IN_DEBT, DEBT_SPIRAL, BAILIFF_BRIBED, BAILIFF_ASSAULT, MARCHETTI_MONEY, HIGH_ROLLER_NOTICE — all already defined in AchievementType.java.
+- **NoiseSystem**: bailiff knock level 2 audible within 6 blocks.
+
+### NPC Dialogue
+
+- **Barry** (`LOAN_MANAGER`): "What can I do you for today, chief?" / "Representative APR of 1,294%. T's and C's apply." / "You're a bit late with that, aren't you, son." / "I'll have to pass that on if you don't sort it." / "Look — I'm a businessman, not a charity. Sort. It. Out."
+- **Bailiff** (`BAILIFF`): "Morning. I'm here regarding an outstanding debt." / "You can pay now, or we can do this the other way." / "I'm just doing my job, mate."
+- **DEBT_COLLECTOR** (Marchetti): "Barry sends his regards. You owe us now."
+
+### Unit Tests
+
+- `applyForLoan(QUICK_FIFTY, inventory, notoriety_30, existingLoan_false)` → returns `LOAN_APPROVED`; player COIN += 50; loan record active.
+- `applyForLoan(QUICK_FIFTY, inventory, notoriety_65, existingLoan_false)` → returns `REFUSED_HIGH_NOTORIETY`; no state change.
+- `applyForLoan(QUICK_FIFTY, inventory, notoriety_30, existingLoan_true)` → returns `REFUSED_EXISTING_LOAN`; no state change.
+- `repay(inventory_with_65_coin, loanRecord_QUICK_FIFTY_day1)` → returns `REPAID`; COIN deducted 65; loan cleared.
+- `repay(inventory_with_65_coin, loanRecord_QUICK_FIFTY_day1_within_1_day)` → returns `REPAID_EARLY`; COIN deducted 58 (10% discount); loan cleared.
+- `repay(inventory_with_30_coin, loanRecord_QUICK_FIFTY)` → returns `INSUFFICIENT_FUNDS`; no state change.
+- `update(delta, timeSystem_past_due_by_1_day, loanRecord_missed0)` → missedRepayments becomes 1; THREATENING_LETTER queued for letterbox; rumour seeded.
+- `update(delta, timeSystem_past_due_by_2_days, loanRecord_missed1)` → DEBT_COLLECTOR NPC spawned; `AchievementType.DEBT_SPIRAL` awarded.
+- `update(delta, timeSystem_past_due_by_3_days, loanRecord_missed2)` → BAILIFF NPC spawned at player address.
+- `bribeBailiff(inventory_with_10_coin)` → returns `BRIBED`; COIN −10; bailiff despawns; `AchievementType.BAILIFF_BRIBED` awarded; Notoriety +2.
+- `attackBailiff(bailiffNPC, player)` → returns `ASSAULTED`; WantedSystem +2; `ASSAULT_ON_ENFORCEMENT_AGENT` CriminalRecord entry; `AchievementType.BAILIFF_ASSAULT` awarded.
+- `highRollerCheck(bettingWin=60, timeSystem_within_1_day)` → returns true; next loan offer upgraded by one tier.
+- `getLeaflet(LEAFLET_RACK_PROP, leafletTakenThisVisit_false)` → returns LOAN_LEAFLET; leafletTakenThisVisit set true.
+- `getLeaflet(LEAFLET_RACK_PROP, leafletTakenThisVisit_true)` → returns `ALREADY_TAKEN`; no item added.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Full loan lifecycle — borrow, miss, bailiff, pay**: Player enters Fast Cash Finance. Presses E on LOAN_DESK_PROP. Selects QUICK_FIFTY. Verify player COIN +50, loan record active, `AchievementType.IN_DEBT` unlocked. Advance TimeSystem 4 in-game days (past 3-day due). Call `update()` each day. Verify: after day 4, missedRepayments = 1 (THREATENING_LETTER queued); after day 5, DEBT_COLLECTOR spawned, `DEBT_SPIRAL` unlocked; after day 6, BAILIFF NPC spawned at player's registered address. Player approaches bailiff. Calls `repay()` with full amount. Verify loan cleared, bailiff despawns, no CriminalRecord entry.
+
+2. **Early repayment discount**: Player takes QUICK_FIFTY loan. Advance TimeSystem by 12 in-game hours (< 1 day). Player presses E on Barry with 65 COIN. Verify repayment deducts 58 COIN (10% early discount). Verify loan cleared. Verify `REPAID_EARLY` result.
+
+3. **Marchetti debt escalation**: Player takes QUICK_FIFTY loan. Advance TimeSystem 7 days (4 missed repayments). Call `update()` each day. Verify after 4th miss: `AchievementType.MARCHETTI_MONEY` awarded; `FactionSystem.getMarchettiHostility()` = MAX; `GANG_DEBT` flag set. Spawn a Marchetti NPC within 5 blocks of player. Verify NPC enters ALERT/CHASE state and demands payment.
+
+4. **HIGH_ROLLER_NOTICE upgrade**: Simulate player winning 60 COIN at `BettingShopSystem` (call `onPlayerBettingWin(60, timeSystem)`). Player enters Fast Cash Finance. Calls `applyForLoan(TON_UP, ...)`. Verify the loan menu shows PROPER_WEDGE as next tier offered. Verify `AchievementType.HIGH_ROLLER_NOTICE` unlocked. Verify Barry's dialogue includes "I heard you had a good day."
+
+5. **Loan leaflet → CAB debt advice discount**: Player picks up LOAN_LEAFLET from LEAFLET_RACK_PROP. Player visits `CitizensAdviceSystem`. Presses E on advice volunteer with LOAN_LEAFLET in inventory. Verify DEBT_ADVICE_LETTER added to inventory; LOAN_LEAFLET removed. Player returns to Fast Cash Finance and takes a new QUICK_FIFTY loan. Verify owed amount = 58 COIN (20% interest reduction applied). Verify DEBT_ADVICE_LETTER consumed.
+
+// ── Issue #1226: Northfield Fast Cash Finance — Payday Loan Spiral & Marchetti Debt Sale ──
+// New: PaydayLoanSystem.java in ragamuffin.core
+// New: PaydayLoanSystemTest.java in src/test/java/ragamuffin/integration/
+// LandmarkType.PAYDAY_LOAN_SHOP already defined; getDisplayName() returns "Fast Cash Finance"
+// Existing NPC types: LOAN_MANAGER (Barry), BAILIFF, DEBT_COLLECTOR — already in NPCType.java
+// Existing AchievementTypes: IN_DEBT, DEBT_SPIRAL, BAILIFF_BRIBED, BAILIFF_ASSAULT, MARCHETTI_MONEY, HIGH_ROLLER_NOTICE — already in AchievementType.java
+// New CriminalRecord crime types: ASSAULT_ON_ENFORCEMENT_AGENT, LOAN_DEFAULT — add to CriminalRecord.java
+// New Materials: LOAN_LEAFLET, DEBT_ADVICE_LETTER, THREATENING_LETTER — add to Material.java if absent
+// New PropTypes: LOAN_DESK_PROP, LEAFLET_RACK_PROP, CCTV_CAMERA_PROP — add to PropType.java if absent
+// Integrates: DWPSystem, JobCentreSystem, BettingShopSystem, GreyhoundRacingSystem,
+//   FactionSystem, ArrestSystem, WantedSystem, PropertySystem, SquatSystem,
+//   CitizensAdviceSystem, NotorietySystem, CriminalRecord, RumourNetwork,
+//   WitnessSystem, WantedSystem, NeighbourhoodSystem, AchievementSystem,
+//   NoiseSystem, GreasySpoonSystem, CornerShopSystem
