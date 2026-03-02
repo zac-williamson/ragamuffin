@@ -2332,7 +2332,23 @@ public enum NPCType {
      * or forged licence clears the stop.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    COUNCIL_ENFORCEMENT(20f, 0f, 0f, false);
+    COUNCIL_ENFORCEMENT(20f, 0f, 0f, false),
+
+    // ── Issue #1259: Northfield Pub Quiz Night ────────────────────────────────
+
+    /**
+     * Derek the Quiz Master — runs Wednesday Quiz Night at The Rusty Anchor.
+     * Stands at the QUIZ_PODIUM_PROP 19:30–22:00, reads questions, catches cheaters.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    QUIZ_MASTER(20f, 0f, 0f, false),
+
+    /**
+     * A rival pub quiz team (2–4 NPCs per team) seated at a PUB_TABLE_PROP.
+     * Auto-answers questions with Normal(μ=3, σ=1) accuracy per round.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    QUIZ_TEAM(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

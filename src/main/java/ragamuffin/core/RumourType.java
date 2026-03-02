@@ -562,5 +562,12 @@ public enum RumourType {
      * — seeded by RagAndBoneSystem when COUNCIL_ENFORCEMENT impounds the RAG_AND_BONE_VAN.
      * Spreads via PUBLIC and PENSIONER NPCs within 30 blocks of the last known stop.
      * Barry despawns for 48 in-game hours; RIVAL_RAGBONE_MAN Terry takes over. */
-    BARRY_NICKED;
+    BARRY_NICKED,
+
+    // ── Issue #1259: Northfield Pub Quiz Night ────────────────────────────────
+
+    /** "Someone cleaned up at quiz night — answered every question right. Derek was fuming."
+     * — seeded by PubQuizSystem when the player wins Quiz Night with a perfect or winning score.
+     * Spreads via PUBLIC and BARMAN NPCs within the pub and nearby streets. */
+    QUIZ_CHAMPION_RUMOUR;
 }

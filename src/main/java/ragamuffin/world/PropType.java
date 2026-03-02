@@ -2951,7 +2951,16 @@ public enum PropType {
      * Sellable to Barry next morning for 2 COIN, or fenced for 1 COIN.
      * Destroyed by 3 hits; yields nothing.
      */
-    GARDEN_ORNAMENT(0.40f, 0.60f, 0.40f, 3, null);
+    GARDEN_ORNAMENT(0.40f, 0.60f, 0.40f, 3, null),
+
+    // ── Issue #1259: Northfield Pub Quiz Night ────────────────────────────────
+
+    /**
+     * Derek's quiz podium — a tall wooden lectern at the front of the quiz area.
+     * Player presses E to register for the quiz (costs 1 COIN, open 19:30–20:00).
+     * Yields QUIZ_SHEET on registration. Cannot be destroyed (hitsToBreak = 0).
+     */
+    QUIZ_PODIUM_PROP(0.60f, 1.20f, 0.50f, 0, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
