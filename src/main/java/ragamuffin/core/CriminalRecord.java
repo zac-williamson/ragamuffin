@@ -763,7 +763,16 @@ public class CriminalRecord {
          * Adds +2 Wanted stars and is logged by LoanSharkSystem when the collector
          * is struck.
          */
-        LOAN_SHARK_ASSAULT("Loan shark collector assault");
+        LOAN_SHARK_ASSAULT("Loan shark collector assault"),
+
+        // ── Issue #1269: Northfield BT Phone Box ──────────────────────────────
+
+        /**
+         * Recorded when the player smashes the phone box (8 hits).
+         * Adds +1 Notoriety and +1 Wanted star via PhoneBoxSystem.
+         * Council repairs the box after 2 in-game days.
+         */
+        PHONE_BOX_VANDALISM("Phone box vandalism");
 
         private final String displayName;
 

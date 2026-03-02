@@ -707,7 +707,25 @@ public enum LandmarkType {
      * entry fees and managing the sprint schedule. Active only 23:00–03:00 Fri/Sat.
      * Managed by StreetRacingSystem.java.
      */
-    STREET_RACING_MEET;
+    STREET_RACING_MEET,
+
+    // ── Issue #1269: Northfield BT Phone Box ──────────────────────────────────
+
+    /**
+     * Issue #1269: PHONE_BOX_HIGH_STREET — the single functioning red BT phone box
+     * on Northfield High Street, near the bus stop. Managed by PhoneBoxSystem.java.
+     * Provides anonymous tip-offs, DWP calls, Marchetti dead-drops, and other calls.
+     * Sealed 23:00–05:00 ("vandalism prevention" by the council).
+     */
+    PHONE_BOX_HIGH_STREET,
+
+    /**
+     * Issue #1269: PHONE_BOX_ESTATE — a broken red BT phone box on the estate.
+     * Out of order until repaired with 3× SCRAP_METAL (or via PhoneBoxSystem report
+     * fault mechanic — 50% chance UTILITY_WORKER NPC repairs it next morning 08:00–10:00).
+     * Repairing it awards LAST_PHONE_STANDING achievement and seeds PHONE_BOX_REPAIR rumour.
+     */
+    PHONE_BOX_ESTATE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -809,6 +827,8 @@ public enum LandmarkType {
             case CLAIMS_MANAGEMENT:     return "Compensation Kings";
             case CAR_DEALERSHIP:        return "Wheelwright Motors";
             case STREET_RACING_MEET:    return "Tesco Car Park (Meet)";
+            case PHONE_BOX_HIGH_STREET: return "BT Phone Box";
+            case PHONE_BOX_ESTATE:      return "BT Phone Box (Out of Order)";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
