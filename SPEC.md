@@ -43399,3 +43399,164 @@ The funeral parlour is the **quietest building on the high street** — and the 
 //             NeighbourhoodSystem (COMMUNITY_RESPECT), NoiseSystem, WantedSystem, CriminalRecord,
 //             NotorietySystem, RumourNetwork, NewspaperSystem, BootSaleSystem, StreetReputation,
 //             WarmthSystem, StreetEconomySystem
+
+---
+
+## Issue #1292: Add Northfield Bert's Tyres & MOT — MOTSystem, Dodgy Certificates, the DVSA Raid & the Catalytic Converter Hustle
+
+### Overview
+
+`MOTSystem` brings `LandmarkType.BERTS_GARAGE` — Bert's Tyres & MOT on the industrial estate — fully to life. The landmark, both NPCTypes (`DODGY_MECHANIC` for Bert, `APPRENTICE_MECHANIC` for Kyle, `DVSA_INSPECTOR`), all PropTypes (`INSPECTION_PIT_PROP`, `INSPECTION_HATCH_PROP`, `TYRE_STACK_PROP`, `PARTS_SHELF_PROP`, `GARAGE_PHONE_PROP`), and all Materials (`MOT_CERTIFICATE`, `FAIL_SHEET`, `STOLEN_TYRE`, `CATALYTIC_CONVERTER`, `CAR_BATTERY`, `INSPECTION_STICKER`) are already defined and waiting. This issue implements the system that backs all those references.
+
+Bert is the most honest dodgy mechanic in Northfield — he'll fail your car because of a "cracked manifold heat shield" that doesn't exist, charge for parts he never fit, and sign off a write-off if the price is right. Kyle is useless but distractable. The DVSA turn up every week like clockwork. It's Britain's shadow economy on four wheels, and it smells of oil and burnt toast.
+
+---
+
+### NPCs
+
+- **Bert** (`DODGY_MECHANIC`) — proprietor, present Mon–Sat 08:00–17:00. Corruption score 0–100 (seeded from `Random`). At corruption ≥ 50 he **deliberately fails** cars and invents required repairs. Press E to request MOT (costs 2 COIN). Buys `STOLEN_TYRE` for 8 COIN each (max 4/day). Enters `BERT_DISTRACTED` state for 20 seconds when `GARAGE_PHONE_PROP` is triggered. Dialogue: *"She'll need a new manifold, mate." / "Cash only, no receipts." / "I'm doing you a favour here." / "DVSA never come round this way."*
+- **Kyle** (`APPRENTICE_MECHANIC`) — wanders the workshop. Fetches Bert when phone rings (runs to `GARAGE_PHONE_PROP`, shouts "Bert! Phone for ya!"). During `BERT_DISTRACTED`, covers the desk and can be distracted himself with any `FOOD` material (E to offer). Dialogue: *"Don't touch that, mate." / "Is it serious?" / "Bert! Phone for ya!"*
+- **DVSA Inspector** (`DVSA_INSPECTOR`) — arrives at 10:00 every 7 in-game days. Walks to `INSPECTION_PIT_PROP`, checks certification records. Invalidates all `PASS_BRIBE` certificates in the world. Records `VEHICLE_FRAUD` in CriminalRecord if player is present with a `PASS_BRIBE` cert. Adds WantedSystem +2 if player interferes. Dialogue: *"DVSA. I'll need to see your testing records." / "These certificates don't add up." / "Step away from the vehicle."*
+
+---
+
+### Activities
+
+#### MOT Request
+- Press E on Bert to request an MOT (costs 2 COIN; Bert must be present and not distracted).
+- **Outcome determined by Bert's corruption score (0–100)**:
+  - `GENUINE_PASS` (corruption 0–39, 80% chance): `MOT_CERTIFICATE` + `INSPECTION_STICKER` added to inventory. Valid 12 in-game days.
+  - `GENUINE_FAIL` (corruption 0–39, 20% chance): `FAIL_SHEET` added. Bert lists 1–3 invented faults. Player can pay 5 COIN to "fix" them (corruption < 40: actually reduces car damage; corruption ≥ 40: cosmetic only).
+  - `DELIBERATE_FAIL` (corruption 40–79): `FAIL_SHEET` added. Bert invents a fault. Player can call his bluff (E again with `STREET_LADS` Respect ≥ 40): 70% chance Bert backs down and issues `GENUINE_PASS`; 30% Bert gets angry → Notoriety +2, player ejected.
+  - `PASS_BRIBE` (corruption 80–100, player offers `BROWN_ENVELOPE` worth 5 COIN): `MOT_CERTIFICATE` issued immediately, flagged as bribe cert. Invalidated by DVSA Inspector on next raid. Achievement: `BROWN_ENVELOPE_TEST`.
+- Notoriety −1 for a legitimate pass (player has a legal vehicle). Notoriety +3 for `PASS_BRIBE` if DVSA Inspector later invalidates it.
+
+#### Stolen Tyre Trade
+- Press E on `TYRE_STACK_PROP` while Bert is distracted or absent: yields 0–2 `STOLEN_TYRE` items. Refreshes every 2 in-game days.
+- Sell `STOLEN_TYRE` to Bert: 8 COIN each, max 4/day. Seeds `STOLEN_GOODS_TRADE` rumour if a police NPC is within 20 blocks.
+- Sell `STOLEN_TYRE` at `PAWN_SHOP`: 5 COIN each (less than Bert's price — Bert is the preferred buyer).
+- Achievement: `PART_WORN_PROFITEER` (sell 5 stolen tyres to Bert across separate visits).
+
+#### Catalytic Converter Hustle
+- Player equips a `CROWBAR` (already in game) and crouches at a parked car (any `CAR_ENTITY` in the world).
+- Hold E for 8 seconds to strip `CATALYTIC_CONVERTER`. Unwitnessed: Notoriety +8, `CATALYTIC_THEFT` in CriminalRecord. Witnessed (any NPC within 12 blocks): Notoriety +16, WantedSystem +2, NoiseSystem HIGH (radius 15).
+- Sell `CATALYTIC_CONVERTER` to Bert: 35 COIN. Bert only buys if no police within 20 blocks and his corruption ≥ 30.
+- Sell at `SCRAPYARD`: 28 COIN (less than Bert's price).
+- `NewspaperSystem` headline "Catalytic Converter Theft Epidemic Hits Northfield" after 3+ converters stolen.
+- Achievement: `CONVERTER_KING` (strip and sell 3 catalytic converters).
+
+#### Inspection Pit Loot
+- `INSPECTION_PIT_PROP` accessible when Bert is in `BERT_DISTRACTED` state or absent.
+- Press E on `INSPECTION_HATCH_PROP` to open (20-second window; auto-closes).
+- While hatch is open, press E on `INSPECTION_PIT_PROP`: yields 1 item from loot table: `CAR_BATTERY` (40%), `CATALYTIC_CONVERTER` (25%), `SCRAP_METAL` ×2 (20%), `MOTOR_OIL` (15%).
+- Bert returns to check pit every 45 seconds. If player is in pit when Bert arrives: WantedSystem +1, `TRESPASSING` in CriminalRecord, NoiseSystem MEDIUM.
+- Achievement: `PIT_STOP` (loot the inspection pit 3 times without being caught).
+
+#### Parts Shelf Theft
+- `PARTS_SHELF_PROP` accessible while Bert is distracted or Kyle is offered `FOOD` material.
+- Press E on `PARTS_SHELF_PROP`: yields 1–3 items (mix of `CAR_BATTERY`, `CATALYTIC_CONVERTER`, `SCRAP_METAL`).
+- Kyle line-of-sight detection: 60% catch chance if Kyle is within 8 blocks and not distracted. Caught: Notoriety +5, banned from garage 3 in-game days.
+
+#### Garage Phone Distraction
+- Press E on `GARAGE_PHONE_PROP` once per in-game hour to trigger a fake call.
+- Kyle runs to Bert, shouts "Bert! Phone for ya!" — Bert enters `BERT_DISTRACTED` state for 20 seconds.
+- During `BERT_DISTRACTED`, player can access `TYRE_STACK_PROP`, `PARTS_SHELF_PROP`, and `INSPECTION_HATCH_PROP`.
+- Achievement: `PHONE_A_FRIEND` (use the garage phone to distract Bert successfully 3 times).
+
+#### DVSA Raid Mechanics
+- DVSA Inspector arrives every 7 in-game days at 10:00.
+- Checks all `MOT_CERTIFICATE` items on players within 30 blocks. `PASS_BRIBE` certificates are invalidated (removed from inventory, `FAIL_SHEET` added, Notoriety +3 per cert).
+- If player is present during raid: `VEHICLE_FRAUD` added to CriminalRecord, WantedSystem +2 stars.
+- If player warns Bert about incoming DVSA (E on Bert with `STREET_LADS` Respect ≥ 30): Bert destroys bribe records, player gains +5 Respect, `BERT_WARNED` rumour seeded.
+- Achievement: `TIP_OFF` (warn Bert about a DVSA raid before it happens).
+
+---
+
+### Prices
+
+| Transaction | Amount |
+|-------------|--------|
+| MOT request (Bert) | 2 COIN |
+| Repair "faults" (Bert) | 5 COIN |
+| `PASS_BRIBE` (player's `BROWN_ENVELOPE`) | 5 COIN (spent) |
+| `STOLEN_TYRE` → Bert | 8 COIN |
+| `STOLEN_TYRE` → Pawn Shop | 5 COIN |
+| `CATALYTIC_CONVERTER` → Bert | 35 COIN |
+| `CATALYTIC_CONVERTER` → Scrapyard | 28 COIN |
+| `CAR_BATTERY` → Pawn Shop | 20 COIN |
+
+---
+
+### Integration Points
+
+- **CarDrivingSystem**: MOT certificate validity check when player enters a vehicle — expired or missing cert seeds `UNROADWORTHY` rumour from any NPC that spots the car.
+- **ScrapyardSystem**: `CAR_BATTERY` (15 COIN), `CATALYTIC_CONVERTER` (28 COIN) accepted as scrap.
+- **FenceSystem**: `STOLEN_TYRE` (4 COIN), `CAR_BATTERY` (15 COIN), `CATALYTIC_CONVERTER` (30 COIN) accepted by FenceSystem fences.
+- **PawnShopSystem**: `STOLEN_TYRE` (5 COIN), `CAR_BATTERY` (20 COIN) at pawn shop.
+- **CriminalRecord**: `CATALYTIC_THEFT` (converter strip); `VEHICLE_FRAUD` (invalid cert during DVSA raid); `TRESPASSING` (caught in pit); `HANDLING_STOLEN_GOODS` (if caught selling stolen tyres with police nearby).
+- **WantedSystem**: Witnessed converter theft +2; DVSA inspection of player with bribe cert +2; caught in pit +1.
+- **NotorietySystem**: Legitimate MOT pass −1; bribe cert invalidated +3; converter theft +8 (unwitnessed) or +16 (witnessed).
+- **RumourNetwork**: `STOLEN_GOODS_TRADE` seeded on tyre sale near police; `BERT_WARNED` on DVSA tip-off; `CATALYTIC_THEFT_SPREE` seeded after 3+ converters stolen; `UNROADWORTHY` seeded by NPCs spotting player with no valid cert.
+- **NewspaperSystem**: "Catalytic Converter Theft Epidemic Hits Northfield" after 3+ converters stolen; "DVSA Shuts Down Northfield Garage" if Bert is caught with bribe records.
+- **NoiseSystem**: Witnessed converter theft HIGH radius 15; caught in pit MEDIUM; Bert angry ejection MEDIUM.
+- **StreetSkillSystem**: `GRAFTING XP +5` per shift of legitimate tyre/battery work (selling tyres, completing MOT run-through).
+- **FactionSystem**: `STREET_LADS` Respect ≥ 30 unlocks DVSA tip-off; ≥ 40 unlocks call-Bert's-bluff on deliberate fail; `MARCHETTI_CREW` Respect ≥ 50 unlocks a bulk catalytic converter sale to Marchetti contact for 40 COIN per converter (no police risk).
+- **DisguiseSystem**: `HIGH_VIS_JACKET` reduces Kyle's line-of-sight catch chance from 60% to 25%.
+- **WarmthSystem**: Garage interior provides Warmth +1/min (heated workshop).
+
+---
+
+### Unit Tests (`MOTSystemTest.java`)
+
+1. `testGenuinePassIssuedAtLowCorruption` — set corruption to 20; seed RNG for PASS (< 0.80); call `requestMOT(player, rng)`; verify `MOT_CERTIFICATE` in inventory; `INSPECTION_STICKER` in inventory; player COIN reduced by 2.
+2. `testDeliberateFailAtHighCorruption` — set corruption to 60; call `requestMOT(player, rng)`; verify `FAIL_SHEET` in inventory; no `MOT_CERTIFICATE`; `isCertDeliberate()` = true.
+3. `testCallBluffSucceedsWithReputation` — set corruption 60, `STREET_LADS` Respect = 45; seed RNG < 0.70 (bluff succeeds); call `callBluff(player, rng)`; verify `MOT_CERTIFICATE` added; `FAIL_SHEET` removed.
+4. `testCallBluffFailsAngersEjectsPlayer` — set corruption 60, Respect = 45; seed RNG ≥ 0.70; call `callBluff(player, rng)`; verify Notoriety +2; player flagged ejected; no cert added.
+5. `testPassBribeIssuedAndFlaggedAtHighCorruption` — set corruption to 85; player has `BROWN_ENVELOPE`; call `requestBribe(player)`; verify `MOT_CERTIFICATE` flagged as `PASS_BRIBE`; `BROWN_ENVELOPE` removed; Bert corruption reward +5 COIN.
+6. `testDVSAInspectorInvalidatesBribeCert` — player has `MOT_CERTIFICATE` with `PASS_BRIBE` flag; call `onDVSAInspection(player)`; verify `MOT_CERTIFICATE` removed; `FAIL_SHEET` added; Notoriety +3; `VEHICLE_FRAUD` in CriminalRecord.
+7. `testDVSAInspectorIgnoresLegitCert` — player has `MOT_CERTIFICATE` without bribe flag; call `onDVSAInspection(player)`; verify cert unchanged; no CriminalRecord entry.
+8. `testStolenTyreSaleAccepted` — player has 2 `STOLEN_TYRE`; call `sellStolenTyres(player, 2)`; verify player gains 16 COIN (8×2); inventory has 0 tyres; `stolenTyreDayCount` = 2.
+9. `testStolenTyreDailyLimitEnforced` — `stolenTyreDayCount` = 4; call `sellStolenTyres(player, 1)`; verify `SaleResult.DAILY_LIMIT_REACHED`; player COIN unchanged.
+10. `testCatalyticTheftUnwitnessedAddsNotoriety` — no NPC within 12 blocks; call `stripCatalyticConverter(player, false)`; verify `CATALYTIC_CONVERTER` in inventory; Notoriety +8; `CATALYTIC_THEFT` in CriminalRecord.
+11. `testCatalyticTheftWitnessedRaisesWanted` — NPC within 12 blocks; call `stripCatalyticConverter(player, true)`; verify Notoriety +16; WantedSystem +2; NoiseSystem = HIGH.
+12. `testInspectionPitLootWhileDistracted` — Bert in `BERT_DISTRACTED` state; hatch open; call `lootInspectionPit(player, rng)`; verify one item from loot table added to inventory.
+13. `testInspectionPitCaughtByBert` — Bert NOT distracted; call `checkPitOccupancy(player)`; verify WantedSystem +1; `TRESPASSING` in CriminalRecord; NoiseSystem = MEDIUM.
+14. `testGaragePhoneDistractsBertFor20Seconds` — call `triggerGaragePhone()`; verify Bert state = `BERT_DISTRACTED`; `bertDistractedTimer` = 20f; `phoneCooldownTimer` > 0.
+15. `testPhoneCooldownPreventsSpam` — `phoneCooldownTimer` = 30f (cooldown active); call `triggerGaragePhone()`; verify `PhoneResult.ON_COOLDOWN`; Bert state unchanged.
+16. `testBertAbsentOutsideHours` — set time to 17:30 weekday; verify `isBertPresent()` = false; set to 08:30 weekday; verify `isBertPresent()` = true.
+17. `testDVSARaidCycleEvery7Days` — set `daysSinceLastRaid` = 7; call `update(delta, timeSystem)`; verify `isDVSAPresent()` = true; `daysSinceLastRaid` reset to 0.
+18. `testWarnBertAboutDVSAGrantsRespect` — `STREET_LADS` Respect = 35; DVSA scheduled within 1 in-game day; call `warnBertAboutDVSA(player)`; verify `BERT_WARNED` rumour seeded; Respect +5; Bert destroys bribe records.
+19. `testKyleDistractedByFoodOpensPitAccess` — Kyle within 8 blocks; player has `SAUSAGE_ROLL`; call `offerFoodToKyle(player, NPC_KYLE)`; verify Kyle state = `DISTRACTED`; `partsShelfAccess` = true.
+20. `testHighVisJacketReducesKyleCatchChance` — player wearing `HIGH_VIS_JACKET`; call `getKyleCatchChance()`; verify result = 0.25f (25%).
+
+---
+
+### Integration Tests (`Issue1292BertsGarageIntegrationTest.java`)
+
+1. **Full MOT bribe → DVSA invalidation pipeline**: Player has 2 COIN + `BROWN_ENVELOPE`. Bert's corruption = 90. Player presses E on Bert (10:00 Mon). `PASS_BRIBE` outcome: `MOT_CERTIFICATE` (bribe-flagged) issued. Advance 7 in-game days to next DVSA raid (10:00). DVSA Inspector arrives at `BERTS_GARAGE`. Verify: `MOT_CERTIFICATE` removed from player; `FAIL_SHEET` added; Notoriety = start+3; `VEHICLE_FRAUD` in CriminalRecord; WantedSystem stars = 2.
+
+2. **Phone distraction → pit loot → escape pipeline**: Time 10:30 (Bert present). Player presses E on `GARAGE_PHONE_PROP`. Kyle runs to Bert. Bert enters `BERT_DISTRACTED` (20 seconds). Player opens `INSPECTION_HATCH_PROP`. Player loots `INSPECTION_PIT_PROP` (RNG seeded → `CAR_BATTERY`). Player exits before 45-second pit check. Verify: `CAR_BATTERY` in inventory; no `TRESPASSING` in CriminalRecord; Bert returns to normal state after 20 seconds; phone cooldown timer > 0.
+
+3. **Catalytic converter → Bert sale → newspaper headline**: Player equips `CROWBAR`. Player holds E on parked car for 8 seconds (no NPC within 12 blocks). `CATALYTIC_CONVERTER` added to inventory. Notoriety = start+8. Player sells converter to Bert (corruption ≥ 30, no police within 20 blocks): player gains 35 COIN. Repeat until 3 converters stripped total. Verify: `NewspaperSystem` headline "Catalytic Converter Theft Epidemic Hits Northfield"; `CONVERTER_KING` achievement pending (3 sold).
+
+4. **Stolen tyre trade daily limit**: Player acquires 5 `STOLEN_TYRE` from `TYRE_STACK_PROP` (over 2 refreshes). Player sells 4 to Bert (32 COIN). Attempt to sell 5th tyre same in-game day. Verify: sale refused with `DAILY_LIMIT_REACHED`; player still has 1 tyre; Bert coin count unchanged.
+
+5. **Call Bert's bluff with StreetLads rep**: Player with `STREET_LADS` Respect = 45. Bert corruption = 65 (deliberate fail guaranteed). Player requests MOT: gets `FAIL_SHEET`. Player presses E again (bluff). RNG seeded < 0.70 (bluff succeeds). Verify: `FAIL_SHEET` removed from inventory; `MOT_CERTIFICATE` added (genuine, not bribe-flagged); Notoriety unchanged; Bert remains non-hostile.
+
+---
+
+// ── Issue #1292: Add Northfield Bert's Tyres & MOT ────────────────────────────
+// New: MOTSystem.java in ragamuffin.core
+// New: MOTSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1292BertsGarageIntegrationTest.java in src/test/java/ragamuffin/integration/
+// NPCType: DODGY_MECHANIC (Bert), APPRENTICE_MECHANIC (Kyle), DVSA_INSPECTOR — already defined; no change needed
+// Material: MOT_CERTIFICATE, FAIL_SHEET, STOLEN_TYRE, CATALYTIC_CONVERTER, CAR_BATTERY, INSPECTION_STICKER — already defined; no change needed
+// PropType: INSPECTION_PIT_PROP, INSPECTION_HATCH_PROP, TYRE_STACK_PROP, PARTS_SHELF_PROP, GARAGE_PHONE_PROP — already defined; no change needed
+// RumourType: STOLEN_GOODS_TRADE, BERT_WARNED, CATALYTIC_THEFT_SPREE, UNROADWORTHY — add to RumourType.java
+// AchievementType: BROWN_ENVELOPE_TEST, PART_WORN_PROFITEER, CONVERTER_KING, PIT_STOP, PHONE_A_FRIEND, TIP_OFF — add to AchievementType.java
+// CriminalRecord: CATALYTIC_THEFT, VEHICLE_FRAUD — add to CriminalRecord.CrimeType
+// Integration: CarDrivingSystem (cert validity), ScrapyardSystem (battery/converter scrap),
+//             FenceSystem (stolen goods), PawnShopSystem (tyre/battery prices),
+//             CriminalRecord, WantedSystem, NotorietySystem, RumourNetwork, NewspaperSystem,
+//             NoiseSystem, StreetSkillSystem (GRAFTING XP), FactionSystem (STREET_LADS bluff/tip-off,
+//             MARCHETTI_CREW bulk converter sale), DisguiseSystem (HIGH_VIS_JACKET), WarmthSystem
