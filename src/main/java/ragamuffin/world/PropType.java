@@ -2018,6 +2018,42 @@ public enum PropType {
      */
     NIGHTCLUB_MIRROR_BALL_PROP(0.40f, 0.40f, 0.40f, 0, null),
 
+    // ── Issue #1280: Northfield Nightclub — The Vaults ────────────────────────
+
+    /**
+     * STROBE_LIGHT_PROP — ceiling-mounted strobe light above the dancefloor at The Vaults.
+     * Decorative; contributes to atmosphere. Non-destructible; 0 hits; yields null.
+     */
+    STROBE_LIGHT_PROP(0.30f, 0.30f, 0.30f, 0, null),
+
+    /**
+     * BOUNCER_BOOTH_PROP — Big Dave's entry booth at the front door of The Vaults.
+     * Press E to attempt entry (checked by NightclubSystem.canEnter).
+     * 6 hits to break; yields SCRAP_METAL.
+     */
+    BOUNCER_BOOTH_PROP(0.80f, 1.20f, 0.50f, 6, Material.SCRAP_METAL),
+
+    /**
+     * VELVET_ROPE_PROP — the queue barrier at The Vaults front door.
+     * Marks the queue area; non-destructible; 0 hits; yields null.
+     */
+    VELVET_ROPE_PROP(0.10f, 1.00f, 0.10f, 0, null),
+
+    /**
+     * PRIVATE_BOOTH_PROP — a VIP seating booth in The Vaults.
+     * Press E (with VIP access or MARCHETTI Respect >= 50) to sit.
+     * Seeds GANG_ACTIVITY rumour; Tracker mission triggers at Respect >= 50.
+     * 4 hits to break; yields WOOD.
+     */
+    PRIVATE_BOOTH_PROP(1.20f, 1.00f, 0.80f, 4, Material.WOOD),
+
+    /**
+     * FIRE_EXIT_DOOR_PROP — the back-alley fire exit at The Vaults.
+     * Press E to attempt smuggling exit; 30% alarm trigger chance.
+     * 5 hits to break; yields SCRAP_METAL.
+     */
+    FIRE_EXIT_DOOR_PROP(0.20f, 2.10f, 1.00f, 5, Material.SCRAP_METAL),
+
     // ── Issue #1142: Northfield RAOB Lodge ────────────────────────────────────
 
     /**

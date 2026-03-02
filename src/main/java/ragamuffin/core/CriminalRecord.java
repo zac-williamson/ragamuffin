@@ -836,7 +836,21 @@ public class CriminalRecord {
          * punching a FAIRGROUND_WORKER, destroying a ride prop, or triggering a crowd brawl.
          * Penalty: +10 Notoriety, +1 WantedSystem star.
          */
-        FAIRGROUND_TROUBLEMAKER("Fairground troublemaker");
+        FAIRGROUND_TROUBLEMAKER("Fairground troublemaker"),
+
+        // ── Issue #1280: Northfield Nightclub — The Vaults ────────────────────
+
+        /**
+         * Recorded when the player is caught fighting inside The Vaults or its vicinity.
+         * Penalty: +12 Notoriety, +1 WantedSystem star; ejection from club.
+         */
+        NIGHTCLUB_AFFRAY("Affray (nightclub brawl)"),
+
+        /**
+         * Recorded when the player is caught with PILLS by an UNDERCOVER_OFFICER
+         * in the club toilets. Penalty: +20 Notoriety, +2 WantedSystem stars.
+         */
+        DRUG_POSSESSION("Drug possession (nightclub)");
 
         private final String displayName;
 

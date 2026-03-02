@@ -655,4 +655,25 @@ public class TaxiSystem {
     public int getLastDestination() {
         return lastDestination;
     }
+
+    // ── Issue #1280: Nightclub closing-time surge ──────────────────────────────
+
+    private boolean closingTimeSurge = false;
+
+    /**
+     * Activate or deactivate the closing-time surge pricing mode.
+     * Called by {@code NightclubSystem} at 02:45 each night.
+     * When active, Dave's Minicab fare is doubled and A1 Taxis has no available cabs
+     * for 10 in-game minutes (simulating post-club demand spike).
+     *
+     * @param active {@code true} to enable surge pricing, {@code false} to cancel
+     */
+    public void setClosingTimeSurge(boolean active) {
+        this.closingTimeSurge = active;
+    }
+
+    /** @return {@code true} if closing-time surge is currently active */
+    public boolean isClosingTimeSurge() {
+        return closingTimeSurge;
+    }
 }
