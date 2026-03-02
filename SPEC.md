@@ -38529,3 +38529,172 @@ title in the player's street reputation display.
 //   InternetCafeSystem, SkipDivingSystem, NotorietySystem, CriminalRecord,
 //   WantedSystem, WitnessSystem, RumourNetwork, AchievementSystem,
 //   NeighbourhoodSystem, NoiseSystem, KebabShopSystem, WeatherSystem
+
+// ── Issue #1233: Northfield Probation Service — Sign-In Schedule, Community Service & the Ankle Tag Hustle ──
+
+### Overview
+
+Northfield Probation Service is the city's busiest civic building for repeat offenders.
+After receiving a custodial sentence (ArrestSystem custody path), the MagistratesCourtSystem
+can impose a suspended sentence or community order — managed by ProbationSystem.
+
+The building is a 10×8×3 beige pebble-dash structure between the Magistrates' Court and the
+JobCentre, open Mon–Fri 09:00–17:00. Staffed by PROBATION_OFFICER (Dave / Linda, alternating
+by week), PROBATION_RECEPTIONIST Carol at the front desk, and 1–3 PROBATION_CLIENT NPCs in
+the waiting area with weary expressions.
+
+### Probation Order Mechanic
+
+When MagistratesCourtSystem issues a community order (instead of or alongside custody),
+ProbationSystem.activateOrder(durationWeeks, communityServiceHours, ankleTag) is called:
+
+| Parameter | Typical value |
+|---|---|
+| `durationWeeks` | 4–12 weeks (set by magistrate sentencing) |
+| `communityServiceHours` | 8–40 hours total |
+| `ankleTag` | true if Notoriety ≥ Tier 3 at sentencing |
+
+**Fortnightly sign-in**: Player must visit the Probation Office and press E on Carol
+(PROBATION_RECEPTIONIST) every 14 in-game days. Failure to sign in:
+- 1 missed appointment → warning letter in letterbox (PropertySystem).
+- 2 missed appointments → ProbationSystem.issueRecallWarrant() called:
+  - WantedSystem +3 stars; CriminalRecord `RECALL_WARRANT` entry.
+  - PROBATION_OFFICER Dave begins active patrol near the player's last known squat.
+
+### Community Service Postings
+
+Three postings are available (player selects one per session via Carol):
+
+| Posting | Location | Duration | Reward |
+|---|---|---|---|
+| Park Litter Pick | Park landmark AABB | 2 in-game hours | +5 Notoriety reduction, `LITTER_BAG_PROP` spawns |
+| Food Bank Sorting | FOOD_BANK landmark | 2 in-game hours | +3 COIN donation (community goodwill) |
+| Community Centre Painting | COMMUNITY_CENTRE landmark | 2 in-game hours | `PAINT_ROLLER_PROP` used, interior wall colour set to MAGNOLIA |
+
+Each session advances communityServiceHoursCompleted by 2. Completing all hours:
+- CriminalRecord: order discharged notice
+- AchievementType `COMMUNITY_SPIRIT` awarded (completing all hours)
+- AchievementType `DONE_MY_TIME` awarded (order fully discharged)
+
+During a service session the player cannot interact with NPCs, open inventory, or use
+the hotbar (action-locked). An on-screen timer HUD shows "Community Service — X mins
+remaining". Leaving the posting area before time expires resets that session (no hours
+credited) and PROBATION_OFFICER Dave enters SUSPICIOUS state for 60 seconds.
+
+### Ankle Tag Curfew
+
+If `ankleTag = true`, player receives `ANKLE_TAG` Material item in inventory.
+Curfew window: 21:00–07:00. Within curfew:
+- Player must stay within 20 blocks of their registered squat (PropertySystem).
+- Every 30 in-game seconds, ShelterDetector checks distance to squat origin.
+- Breach (> 20 blocks during curfew): CriminalRecord `CURFEW_BREACH`; WantedSystem +2 stars; asboPressure +4.
+- Curfew HUD indicator (top-right): padlock icon + countdown to curfew end.
+
+### The Ankle Tag Hustle
+
+**FenceSystem cut**: Player can offer the ANKLE_TAG to the Fence (FenceSystem). Fence
+charges 15 COIN. If paid, tag is removed from inventory. Curfew obligations lifted immediately.
+But the Probation Service detects the cut within 1 in-game day (tamper sensor signal lost).
+Result: CriminalRecord `TAG_TAMPER`; WantedSystem +3 stars; new magistrate hearing issued.
+AchievementType `DONT_KNOW_YOU` awarded on first successful tag cut.
+
+**Disguise dodge**: If DisguiseSystem disguise score ≥ 3, patrol checks have 40% miss rate.
+
+**Legitimate discharge**: ProbationSystem.dischargeOrder() called when all sign-ins completed
+and communityServiceHoursCompleted ≥ required. ANKLE_TAG (if present) auto-removed.
+CriminalRecord discharge flag set. Notoriety reduced by 10.
+
+### NPC Dialogue Samples
+
+**Carol (PROBATION_RECEPTIONIST)**:
+- "Sign-in for today noted. Same time in a fortnight."
+- "You missed your last appointment. Consider this a verbal warning."
+- "Pick a community service posting from the board and I'll log you on."
+
+**Dave (PROBATION_OFFICER)**:
+- "You're three minutes late. I'm noting it."
+- "That tag better still be on your ankle when I check next week."
+- "Community service is not optional, son. It's the law."
+
+**Waiting PROBATION_CLIENT NPCs**:
+- "Been here since half nine. They said fifteen minutes."
+- "I've got to do forty hours picking up crisp packets. Forty."
+- "Tag's going mental every time I go near the off-licence."
+
+### System Integrations
+
+- **MagistratesCourtSystem**: triggers `activateOrder()` on conviction with community order.
+- **ArrestSystem**: custody path optionally deferred to community order via ProbationSystem.
+- **PropertySystem**: squat location used for curfew boundary and letterbox deliveries.
+- **ShelterDetector**: curfew proximity checks during 21:00–07:00 window.
+- **FenceSystem**: ANKLE_TAG cut mechanic; 15 COIN; triggers TAG_TAMPER escalation.
+- **DisguiseSystem**: reduces patrol detection by 40% if disguise score ≥ 3.
+- **WantedSystem**: recall warrant +3 stars; curfew breach +2 stars; tag tamper +3 stars.
+- **CriminalRecord**: `PROBATION_BREACH`, `CURFEW_BREACH`, `RECALL_WARRANT`, `TAG_TAMPER` entries.
+- **NotorietySystem**: community service reduces Notoriety (park litter pick −5; discharge −10).
+- **AchievementSystem**: `COMMUNITY_SERVICE`, `COMMUNITY_SERVICE_HERO`, `COMMUNITY_SPIRIT`, `DONE_MY_TIME`, `DONT_KNOW_YOU`.
+- **RumourNetwork**: recall warrant seeded as `CRIMINAL_INTEL` ("Player's skipped their probation sign-in. Cops are after them.").
+- **TimeSystem**: fortnightly sign-in deadlines; curfew window 21:00–07:00; service session timers.
+- **WeatherSystem**: RAIN reduces PROBATION_OFFICER Dave's patrol speed by 30%; all service postings still run regardless.
+- **NewspaperSystem**: TAG_TAMPER → headline "Local Man Cuts Ankle Tag After 48 Hours — Probation Service Furious."
+
+### New Materials
+
+- `ANKLE_TAG` — "A bulky black electronic tag fitted to your ankle. Don't go too far." (worn as equipment item; cannot be dropped; removed on discharge or FenceSystem cut).
+- `WARNING_LETTER` (probation) — "A formal warning from the Northfield Probation Service. They are not pleased." Spawned in letterbox after 1 missed appointment.
+- `COMMUNITY_SERVICE_LOG` — "Your community service record sheet. Stamp it each session." Stamped by Carol; tracks hours completed.
+
+### New PropTypes
+
+- `PROBATION_DESK_PROP` — Carol's reception desk; E to interact for sign-in and posting selection.
+- `COMMUNITY_SERVICE_NOTICE_BOARD_PROP` — wall-mounted board listing three postings; readable.
+- `ANKLE_TAG_READER_PROP` — desk-mounted device; Carol scans tag on sign-in.
+- `LITTER_PICK_BAG_PROP` — spawns during park litter pick community service session.
+
+### Achievements
+
+| Achievement | Condition |
+|---|---|
+| `COMMUNITY_SERVICE` | Complete your first community service session (2 hours) |
+| `COMMUNITY_SERVICE_HERO` | Complete all 3 posting types in a single order period |
+| `COMMUNITY_SPIRIT` | Log all required community service hours (order minimum met) |
+| `DONE_MY_TIME` | Discharge a probation order through legitimate means |
+| `DONT_KNOW_YOU` | Pay the Fence to cut your ankle tag |
+
+### Unit Tests
+
+- `ProbationSystem.activateOrder(8, 8, false)` → `isActive()` = true; `getWeeksRemaining()` = 8; `getHoursRequired()` = 8; `ankleTagFitted` = false.
+- `ProbationSystem.signIn(timeSystem)` on valid day → `getSignInStreak()` = 1; no breach; `getNextSignInDue()` advanced by 14 days.
+- `ProbationSystem.signIn(timeSystem)` when overdue → `getMissedCount()` = 1; warning letter spawned; no recall warrant yet.
+- `ProbationSystem.signIn(timeSystem)` with missedCount already 1 → `getMissedCount()` = 2; `issueRecallWarrant()` called; WantedSystem stars +3; `RECALL_WARRANT` CriminalRecord entry.
+- `ProbationSystem.logServiceHours(2, PARK_LITTER)` → `communityServiceHoursCompleted` = 2; Notoriety −5.
+- `ProbationSystem.logServiceHours(8, COMMUNITY_CENTRE_PAINTING)` (cumulative) → `COMMUNITY_SPIRIT` achievement awarded.
+- `ProbationSystem.checkCurfew(playerPos, squadPos, time=22_30, ankleTag=true)` player > 20 blocks → `CURFEW_BREACH` CriminalRecord; WantedSystem +2 stars.
+- `ProbationSystem.checkCurfew(playerPos, squat, time=14_00, ankleTag=true)` → no breach (outside curfew hours).
+- `ProbationSystem.cutTagAtFence(coin=15, inventory)` → ANKLE_TAG removed; `TAG_TAMPER` CriminalRecord queued for +1 day detection; `DONT_KNOW_YOU` achievement.
+- `ProbationSystem.dischargeOrder()` with all sign-ins complete and hours met → `isActive()` = false; ANKLE_TAG auto-removed; Notoriety −10; `DONE_MY_TIME` achievement.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Probation order activated and fortnightly sign-in required**: MagistratesCourtSystem convicts player; sentence = community order 8 weeks, 8 hours community service, no ankle tag. Verify `ProbationSystem.isActive()` = true. Advance TimeSystem to sign-in day (day 14). Player presses E on Carol (PROBATION_RECEPTIONIST). Verify `getSignInStreak()` = 1; no `PROBATION_BREACH` in CriminalRecord. Advance to day 28 WITHOUT signing in. Verify `getMissedCount()` = 1; WARNING_LETTER spawned in player squat letterbox. Advance to day 42 WITHOUT signing in. Verify `getMissedCount()` = 2; `RECALL_WARRANT` in CriminalRecord; WantedSystem stars = 3; PROBATION_OFFICER Dave NPC state = ACTIVE_PATROL.
+
+2. **Community service session completes and awards achievement**: Active probation order (8 hours required). Player presses E on Carol, selects "Park Litter Pick". Action-lock applied (inventory key I does nothing). Advance TimeSystem 2 in-game hours. Verify `communityServiceHoursCompleted` = 2; player's Notoriety reduced by 5; `COMMUNITY_SERVICE` achievement awarded. Repeat with "Food Bank Sorting" (+2h) and "Community Centre Painting" (+2h, wall prop colour = MAGNOLIA). Verify `COMMUNITY_SERVICE_HERO` achievement; total hours = 6. Final 2-hour session: `COMMUNITY_SPIRIT` achievement on hours complete. Call `dischargeOrder()`: verify `DONE_MY_TIME` achievement; Notoriety −10.
+
+3. **Ankle tag curfew breach escalates wanted level**: Active probation order with ankleTag = true; player inventory contains ANKLE_TAG. Player squat at position (100, 1, 100). Advance TimeSystem to 22:00 (curfew active). Move player to position (125, 1, 125) — 25 blocks from squat. ShelterDetector: distance = 35.3 > 20. Verify `CURFEW_BREACH` in CriminalRecord; WantedSystem stars = 2; asboPressure += 4. Curfew HUD indicator visible (padlock icon shown). Player moves back within 20 blocks. Verify no further breach logged for that 30-second window.
+
+4. **FenceSystem tag cut triggers TAG_TAMPER escalation**: Active probation order with ANKLE_TAG in inventory. Player visits FenceSystem (fence NPC). Player has ≥ 15 COIN. Player selects "Cut ankle tag — 15 COIN". Verify: COIN −15; ANKLE_TAG removed from inventory; curfew obligations lifted. Advance TimeSystem 1 in-game day. Verify: `TAG_TAMPER` CriminalRecord entry; WantedSystem stars = 3; new magistrate hearing date set; `DONT_KNOW_YOU` achievement awarded; NewspaperSystem headline contains "Ankle Tag".
+
+5. **Full order discharge through legitimate sign-ins and community service**: Active 4-week order (8 hours required, no tag). Player signs in on days 14 and 28 (both correct). Player completes 4 × 2-hour community service sessions (two park litter, one food bank, one community centre). Verify cumulative hours = 8 ≥ required. Call `dischargeOrder()`. Verify: `isActive()` = false; `DONE_MY_TIME` achievement; Notoriety −10; Carol dialogue becomes "Your order is discharged. Stay out of trouble now."
+
+// ── Issue #1233: Northfield Probation Service ──
+// New: ProbationSystem.java in ragamuffin.core
+// New: ProbationSystemTest.java in src/test/java/ragamuffin/integration/
+// LandmarkType.PROBATION_OFFICE already defined
+// New NPCTypes: PROBATION_OFFICER, PROBATION_RECEPTIONIST, PROBATION_CLIENT — add to NPCType.java
+// New AchievementTypes: COMMUNITY_SERVICE, COMMUNITY_SERVICE_HERO, COMMUNITY_SPIRIT, DONE_MY_TIME, DONT_KNOW_YOU — already defined in AchievementType.java (verify and wire up)
+// New CrimeTypes: PROBATION_BREACH, CURFEW_BREACH, RECALL_WARRANT, TAG_TAMPER — already defined in CriminalRecord.java (verify and wire up)
+// New Materials: ANKLE_TAG, WARNING_LETTER (probation variant), COMMUNITY_SERVICE_LOG — add to Material.java
+// New PropTypes: PROBATION_DESK_PROP, COMMUNITY_SERVICE_NOTICE_BOARD_PROP, ANKLE_TAG_READER_PROP, LITTER_PICK_BAG_PROP — add to PropType.java
+// Integrates: MagistratesCourtSystem, ArrestSystem, PropertySystem, ShelterDetector,
+//   FenceSystem, DisguiseSystem, WantedSystem, CriminalRecord, NotorietySystem,
+//   AchievementSystem, RumourNetwork, TimeSystem, WeatherSystem, NewspaperSystem
