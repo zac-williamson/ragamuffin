@@ -36307,3 +36307,146 @@ A 16×10×5 block brick arch. Main floor (12×10): a central dancefloor (`DANCE_
 //   WantedSystem, CriminalRecord, NeighbourhoodSystem, NoiseSystem,
 //   TaxiSystem, KebabVanSystem, DisguiseSystem, RumourNetwork, AchievementSystem,
 //   StreetSkillSystem, TimeSystem, WeatherSystem, DogCompanionSystem, FactionSystem
+
+---
+
+## Northfield DVSA Test Centre — Driving Theory, Practical Exam & the Backhander Economy
+
+**Issue**: Add Northfield DVSA Driving Test Centre — Theory Test, Practical Exam, Dodgy Instructor & the Examiner Bribe Hustle
+
+### Overview
+
+The `DrivingTestSystem.java` brings a fully functioning DVSA test centre to Northfield, gating full legal car access behind a British rite of passage. Until the player holds a `DRIVING_LICENCE`, their Notoriety gain from driving is doubled and police are more likely to pull them over (`WantedSystem` +1 on any traffic violation while unlicensed). Passing the test permanently removes the unlicensed penalty and unlocks the `StreetSkillSystem.Skill.DRIVING` cap increase.
+
+**Location**: `LandmarkType.DVSA_TEST_CENTRE` — a squat 1970s beige pebble-dash building on the industrial estate, sandwiched between the scrapyard and the bus depot. Open Mon–Fri 08:00–17:00. Sat 08:00–13:00.
+
+### Building Layout
+
+A 10×8×3-block building. Reception area (5×8): `RECEPTION_DESK_PROP`, `WAITING_CHAIR_PROP` × 4, `THEORY_TERMINAL_PROP` × 2, `NOTICEBOARD_PROP` (pass rates, theory revision tips). Examiner's office (5×8): `EXAMINER_DESK_PROP`, `FILING_CABINET_PROP` (lockpickable — holds pending test results).
+
+### NPCs
+
+- **Sandra** (`NPCType.DVSA_EXAMINER`) — at her desk 09:00–16:00. Refuses tests to WANTED players (wanted stars ≥ 2). Can be bribed (see below).
+- **Keith** (`NPCType.DRIVING_INSTRUCTOR`) — outside in a dual-control INSTRUCTOR_CAR prop Mon–Fri 09:00–16:30. Offers informal paid lessons (3 COIN/session) that raise `StreetSkillSystem.Skill.DRIVING` XP.
+- **1–2 COMMUTER** NPCs in the waiting area on weekday mornings.
+
+### Mechanics
+
+#### Theory Test
+
+Press E on `THEORY_TERMINAL_PROP` to begin. Costs **2 COIN**. A sequence of **10 multiple-choice questions** drawn from a pool of 30 hardcoded British Highway Code questions (displayed one at a time via `BattleBarMiniGame`-style input: keys 1–4 = answers A–D). The player must score ≥ 8/10 to pass. A seeded RNG per-session ensures reproducible outcomes in tests.
+
+- Pass: `THEORY_PASS_CERTIFICATE` added to inventory. `StreetSkillSystem.Skill.DRIVING` XP +10. `AchievementSystem.unlock(THEORY_PASSMARK)`.
+- Fail: No certificate. Player must wait **1 in-game day** before re-sitting (cooldown enforced by `TimeSystem`). A `RumourType.LOCAL_EVENT` rumour is seeded ("heard someone failed their theory three times in a row").
+
+#### Practical Test
+
+Requires `THEORY_PASS_CERTIFICATE` in inventory. Press E on `EXAMINER_DESK_PROP` to book. Costs **5 COIN**. Sandra (the examiner NPC) boards the player's nearest car (or the `INSTRUCTOR_CAR` if the player has no car nearby). The practical test is a timed 90-second drive along a fixed waypoint route through 3 checkpoints in Northfield (`BUS_STOP_HIGH_STREET` → `PARK` → back to `DVSA_TEST_CENTRE`).
+
+**Assessment criteria** (each fault adds to a fault counter):
+- Exceeding in-game speed limit (blocks/s > `SPEED_LIMIT`) — 1 fault per infraction.
+- Colliding with any block or NPC — 3 faults (immediate test abort on second collision).
+- Failing to pass through all 3 checkpoints in order — automatic fail.
+- Reaching `DVSA_TEST_CENTRE` with ≤ 15 faults = **Pass**; > 15 = **Fail**.
+
+Pass outcomes:
+- `DRIVING_LICENCE` added to inventory (permanent item, not consumed).
+- `StreetSkillSystem.Skill.DRIVING` XP +25.
+- `NotorietySystem` unlicensed-driving penalty disabled.
+- `AchievementSystem.unlock(ROAD_LEGAL)`.
+- Newspaper headline via `NewspaperSystem`: "Local Passes Driving Test on Sixth Attempt".
+
+Fail outcomes:
+- 1-day cooldown before rebook.
+- Sandra's failure speech: "I'm afraid that's a fail. You clipped a bin lorry on the roundabout."
+- `RumourNetwork.addRumour(...)` seeds `RumourType.LOCAL_EVENT` rumour.
+
+#### Examiner Bribe Hustle
+
+If the player has `StreetSkillSystem.Skill.CHARISMA` ≥ 2 and offers **15 COIN** to Sandra while she is at her desk and no other NPC is within 6 blocks, a hidden bribe prompt appears. Success (70% base chance, −20% per existing `CriminalRecord` conviction, +10% per `FactionSystem.Marchetti` Respect tier) causes Sandra to mark the practical as passed without driving. `CriminalRecord.CrimeType.BRIBERY` is logged. `WantedSystem` +1. `NotorietySystem` +8. `AchievementSystem.unlock(PALM_GREASED)`.
+
+If the bribe is refused (Sandra reports it), `WantedSystem` +2 immediately, `CriminalRecord.CrimeType.BRIBERY_ATTEMPT` logged, Sandra permanently refuses further tests.
+
+#### Keith's Driving Lessons
+
+Press E on `DRIVING_INSTRUCTOR` NPC Keith while outside the test centre. Pay 3 COIN per lesson. Each lesson is a 60-second free-drive session in the `INSTRUCTOR_CAR` around a short circuit (waypoints near the industrial estate). Completing the circuit awards `StreetSkillSystem.Skill.DRIVING` XP +5. Keith has 5 idle speech lines ("Keep your eyes on the road, son.", "That roundabout was a disaster, mate.", etc.). After 3 lessons (tracked in `DrivingTestSystem.lessonsCompleted`), the player gains a passive −5 fault reduction on the next practical attempt.
+
+#### Filing Cabinet Heist
+
+The `FILING_CABINET_PROP` in Sandra's office holds `PENDING_TEST_RESULT_ITEM` — a forged pass certificate that can be used instead of genuinely passing the practical. Requires `LOCKPICK` (3 hits). Witnessed: `WantedSystem` +1, `CriminalRecord.CrimeType.TRESPASS`. Unwitnessed: `PENDING_TEST_RESULT_ITEM` added to inventory. Using this item at the counter substitutes for `THEORY_PASS_CERTIFICATE` (allowing practical booking) but if Sandra's dialogue flags it inconsistent (30% chance each visit), `WantedSystem` +2, `CriminalRecord.CrimeType.FRAUD`.
+
+### Integration
+
+- **`CarDrivingSystem`**: if player lacks `DRIVING_LICENCE`, every time `tryEnterCar()` succeeds and `WantedSystem.getStars() == 0`, there is a 20% per in-game minute chance of a police `NPCType.POLICE` NPC being spawned nearby and initiating a traffic stop. Notoriety +3 per traffic stop without licence.
+- **`WantedSystem`**: wanted stars ≥ 2 block test booking at the reception.
+- **`TrafficWardenSystem`**: examiner car parked in loading bay is exempt from parking tickets (coded into `TrafficWardenSystem.isExempt()`).
+- **`StreetSkillSystem`**: DRIVING XP gated unlock for `StreetSkillSystem.Skill.DRIVING` rank 4+.
+- **`RumourNetwork`**: theory fail/pass seeds `RumourType.LOCAL_EVENT`; bribe attempt seeds `RumourType.POLICE_ACTIVITY`.
+- **`NewspaperSystem`**: practical pass generates a human-interest headline.
+- **`CriminalRecord`**: bribery, trespass, fraud entries.
+- **`NotorietySystem`**: unlicensed-driving penalty modifier toggled by licence status.
+- **`FactionSystem`**: Marchetti Respect affects bribe success chance.
+- **`AchievementSystem`**: new achievements (see below).
+- **`TimeSystem`**: opening hours, exam cooldown enforcement.
+- **`WeatherSystem`**: heavy rain/thunderstorm causes Sandra to postpone practical ("Road conditions, love — we'll have to reschedule."); theory test unaffected.
+
+### New LandmarkType entry (add to `LandmarkType.java`)
+- `DVSA_TEST_CENTRE` — "Northfield DVSA Test Centre"
+
+### New NPCType entries (add to `NPCType.java`)
+- `DVSA_EXAMINER` — passive desk-sitter; participant in practical test logic.
+- `DRIVING_INSTRUCTOR` — lesson-giver NPC outside the centre.
+
+### New PropType entries (add to `PropType.java`)
+- `THEORY_TERMINAL_PROP`
+- `EXAMINER_DESK_PROP`
+- `RECEPTION_DESK_PROP` (if not already present)
+- `INSTRUCTOR_CAR_PROP` — static dual-control car prop outside the centre.
+- `FILING_CABINET_PROP` (if not already present)
+
+### New Material entries (add to `Material.java`)
+- `DRIVING_LICENCE` — permanent inventory item; disables unlicensed penalty.
+- `THEORY_PASS_CERTIFICATE` — consumed when booking practical.
+- `PENDING_TEST_RESULT_ITEM` — forged, stolen from filing cabinet; risky substitution.
+
+### New AchievementType entries (add to `AchievementType.java`)
+- `THEORY_PASSMARK` — Passed the theory test.
+- `ROAD_LEGAL` — Passed the practical driving test legitimately.
+- `PALM_GREASED` — Bribed the examiner successfully.
+- `BACKSEAT_DRIVER` — Failed the practical three times.
+- `DRIVING_WITHOUT_DUE_CARE` — Collided with an NPC during the practical exam.
+
+### Unit Tests
+
+- Theory test: score ≥ 8 = PASS, score 7 = FAIL (boundary tests with seeded RNG).
+- Practical fault counter: collision adds 3 faults; speed infraction adds 1; ≤ 15 = pass; > 15 = fail.
+- Cooldown: `canRebook()` returns false within 1 in-game day of last fail; true after.
+- Bribe: CHARISMA < 2 = prompt not shown; CHARISMA ≥ 2 + 15 COIN = prompt shown; seeded RNG 70% success rate (10000 trials, ±2%).
+- Unlicensed driving: no licence → police spawn probability 20%/minute; with licence → 0%.
+- Keith's lessons: 3 lessons → `lessonsCompleted == 3`; fault reduction applied on next practical.
+- Sandra refusal: wanted stars ≥ 2 → `tryBookTest()` returns `REFUSED_WANTED`.
+
+### Integration Tests — implement these exact scenarios
+
+1. **Theory test pass grants certificate**: Set `TimeSystem` to Monday 10:00. Player presses E on `THEORY_TERMINAL_PROP`. Seed question/answer sequence via `DrivingTestSystem(new Random(42))` so that player answers all 10 questions correctly. Verify `player.getInventory().hasItem(Material.THEORY_PASS_CERTIFICATE)`. Verify `StreetSkillSystem.getSkillXP(Skill.DRIVING)` increased by 10. Verify `AchievementSystem.isUnlocked(AchievementType.THEORY_PASSMARK)` is true.
+
+2. **Practical test pass grants driving licence**: Give player `THEORY_PASS_CERTIFICATE`. Set `TimeSystem` to Tuesday 10:00. Player books practical (E on `EXAMINER_DESK_PROP`, 5 COIN deducted). Simulate player driving through all 3 waypoints within 90 seconds with 0 collisions. Verify `DrivingTestSystem.getFaultCount()` == 0. Verify `player.getInventory().hasItem(Material.DRIVING_LICENCE)`. Verify `AchievementSystem.isUnlocked(AchievementType.ROAD_LEGAL)`. Verify `NotorietySystem.isUnlicensedPenaltyActive()` == false.
+
+3. **Unlicensed driving — police spawn**: Player has no `DRIVING_LICENCE`. Player calls `tryEnterCar()` successfully. Advance simulation 10 real-time frames with `WantedSystem.getStars() == 0`. Verify that after enough ticks to trigger the 20%/minute check, `NPCManager.getActiveNPCs()` contains at least one NPC of type `NPCType.POLICE`. Verify `NotorietySystem.getNotoriety()` increased.
+
+4. **Examiner bribe success — witnessed prevention**: Set player CHARISMA ≥ 2. No other NPCs within 6 blocks of Sandra. Player offers 15 COIN to Sandra. Seed `DrivingTestSystem` with `Random` that forces success (mock `isBribeSuccessful()` returning true). Verify `player.getInventory().getItemCount(Material.DRIVING_LICENCE)` == 1. Verify `CriminalRecord` has `CrimeType.BRIBERY` entry. Verify `WantedSystem.getStars()` == 1. Verify `AchievementSystem.isUnlocked(AchievementType.PALM_GREASED)`.
+
+5. **Practical fail — cooldown enforced**: Player fails practical (> 15 faults). Verify `DrivingTestSystem.canRebook()` returns false immediately. Advance `TimeSystem` by < 1 in-game day. Verify `canRebook()` still false. Advance `TimeSystem` past the 1-day mark. Verify `canRebook()` returns true.
+
+// ── New: DrivingTestSystem.java in ragamuffin.core
+// New LandmarkType: DVSA_TEST_CENTRE — add to LandmarkType.java
+// New NPCType: DVSA_EXAMINER, DRIVING_INSTRUCTOR — add to NPCType.java
+// New PropType: THEORY_TERMINAL_PROP, EXAMINER_DESK_PROP, INSTRUCTOR_CAR_PROP,
+//   FILING_CABINET_PROP, RECEPTION_DESK_PROP — add to PropType.java (if not already present)
+// New Material: DRIVING_LICENCE, THEORY_PASS_CERTIFICATE, PENDING_TEST_RESULT_ITEM
+//   — add to Material.java
+// New AchievementType: THEORY_PASSMARK, ROAD_LEGAL, PALM_GREASED, BACKSEAT_DRIVER,
+//   DRIVING_WITHOUT_DUE_CARE — add to AchievementType.java
+// Integrates: CarDrivingSystem, WantedSystem, TrafficWardenSystem, StreetSkillSystem,
+//   RumourNetwork, NewspaperSystem, CriminalRecord, NotorietySystem, FactionSystem,
+//   AchievementSystem, TimeSystem, WeatherSystem, NPCManager, BattleBarMiniGame
