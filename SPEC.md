@@ -41868,3 +41868,109 @@ The player can **tamper with a competitor's car** to sabotage their race:
 // DWPSystem: calling social advances next payment by 1 day (once per week)
 // NeighbourhoodSystem: estate box repair +2 Vibes; working box smash −3 Vibes
 // WorldGenerator: place PHONE_BOX prop at PHONE_BOX_HIGH_STREET and PHONE_BOX_ESTATE
+
+---
+
+## Issue #1271: Add Northfield Tattoo Parlour — Flash Sheets, Dodgy Ink & the Walk-In Hustle
+
+**Landmark:** `LandmarkType.TATTOO_PARLOUR` — a narrow shopfront on the High Street between the off-licence and the chippy. Open 11:00–20:00 Tuesday–Saturday. Props already defined: `TATTOO_CHAIR_PROP`, `FLASH_SHEET_PROP`, `TATTOO_STATION_PROP`.
+
+**New class:** `TattooSystem.java` in `ragamuffin.core`.
+
+### Tattooist NPC
+
+- `NPCType.TATTOOIST` — **Daz**, mid-30s, arms sleeved out, radio on, perpetually doing a tattoo on a walk-in.
+- Daz is a low-level information broker: he knows everyone because everyone's been through his chair. After the player gets a tattoo, Daz will **gossip freely** — his dialogue cycles through `TATTOO_GOSSIP_LINES` seeded into `RumourNetwork` as `RumourType.LOCAL_GOSSIP`.
+- If player Notoriety ≥ TIER_2, Daz will **refuse to serve** unless the player wears a disguise (hat/hoodie to cover distinguishable features).
+
+### Tattoo Menu (press E on TATTOO_CHAIR_PROP)
+
+| Option | Cost | Effect |
+|---|---|---|
+| Flash design (basic) | 5 COIN | `TATTOOED` buff; −1 recognition chance (permanent until `TATTOO_REMOVAL`) |
+| Custom piece (premium) | 15 COIN | `HEAVILY_TATTOOED` buff; −2 recognition chance; Daz needs 90 real-seconds |
+| Jailhouse special | 3 COIN + 1 BIRO_PEN | +1 Street Respect (FactionSystem, STREET_LADS); 20% infection risk (health −10) |
+| Touch-up existing | 2 COIN | Removes `FADED_INK` debuff; refreshes recognition modifier |
+
+**Recognition modifier:** Each tattoo reduces NPC recognition probability by a small flat amount (applied in `WantedSystem.isPlayerRecognised()`). Stacks up to −4 (4 tattoos). Effect is negated if player has high Notoriety (TIER_3+) and no disguise — "everyone knows who you are regardless of the ink".
+
+**Infection risk (Jailhouse special):** 20% chance on completion. If triggered, player receives `INFECTED_INK` debuff: health drains −1 per in-game minute for 10 minutes. Cured by visiting `GPSurgerySystem` or using `PARACETAMOL` ×2.
+
+### The Walk-In Hustle
+
+If the player has a `TATTOO_GUN_KIT` in their inventory (craftable: 3 SCRAP_METAL + 1 BROKEN_PHONE), they can press E on the `TATTOO_STATION_PROP` while Daz is away (lunch break 13:00–14:00 or after close) to **run an unlicensed session**:
+
+- Attract up to 3 `PUBLIC` NPCs over 5 in-game minutes (each pays 3 COIN, no questions asked).
+- Each session has a 15% chance of a `HEALTH_INSPECTOR` NPC arriving (spawned by `NeighbourhoodSystem`); if so, player must vacate in 30 seconds or receive `UNLICENSED_TATTOOING` CrimeType in `CriminalRecord` (+1 Wanted star).
+- Daz returns at 14:00/next morning and notices if his station was used (random 60% detection): he becomes HOSTILE to the player for 1 in-game day and refuses service.
+
+### Crafting
+
+| Recipe | Ingredients | Output |
+|---|---|---|
+| Tattoo Gun Kit | 3 SCRAP_METAL + 1 BROKEN_PHONE | TATTOO_GUN_KIT |
+| Biro Pen | already exists in Material | (no new recipe needed) |
+
+### Integration Points
+
+- **DisguiseSystem** — `HEAVILY_TATTOOED` buff reduces disguise effectiveness (tattoos are distinctive); Daz refuses TIER_2+ players without hat/hoodie.
+- **WantedSystem** — tattoos reduce `isPlayerRecognised()` probability by 5% per tattoo (stacks to −20%); Jailhouse special may trigger `UNLICENSED_TATTOOING` crime.
+- **FactionSystem** — Jailhouse special grants +1 STREET_LADS Respect; Custom piece grants +1 GENERAL_PUBLIC sympathy.
+- **GPSurgerySystem** — `INFECTED_INK` debuff clears on GP visit (requires appointment).
+- **RumourNetwork** — after any tattoo, Daz seeds 1 `LOCAL_GOSSIP` rumour from a pool of 20 lines about local characters.
+- **NotorietySystem** — running unlicensed walk-in sessions: +1 Notoriety per session (minor hustle).
+- **NeighbourhoodSystem** — walk-in hustle health inspector visit: −2 Vibes if player caught.
+- **CriminalRecord** — `UNLICENSED_TATTOOING` crime type added.
+- **TimeSystem** — Daz's lunch 13:00–14:00; shop hours 11:00–20:00 Tue–Sat; closed Sun–Mon.
+- **TooltipSystem** — first chair interaction: "Daz can make you look a lot less like yourself."; jailhouse special: "Sterile? Probably not. Worth it? Definitely."; infection triggered: "That's not supposed to look like that."; Daz hostile: "Come back when you haven't been nicking my clients."
+
+### Achievements
+
+| AchievementType | Trigger |
+|---|---|
+| `FRESH_INK` | Get first tattoo |
+| `WALKING_CANVAS` | Get all 4 tattoo types in one playthrough |
+| `UNLICENSED_OPERATOR` | Complete 3 walk-in hustle sessions without getting caught |
+| `INFECTION_SURVIVOR` | Survive `INFECTED_INK` debuff (health reaches zero warning threshold, then cured) |
+| `LOOKING_PROPER_DIFFERENT` | Use tattoo recognition reduction to evade a WANTED chase |
+
+### Unit Tests (`TattooSystemTest.java`)
+
+1. `testFlashDesignCostsCoin` — player has 5 COIN; get flash tattoo; verify COIN −5; verify `TATTOOED` buff active.
+2. `testCustomPieceTakes90Seconds` — start custom piece; advance 89 real-seconds; verify not complete; advance 1 more; verify complete and `HEAVILY_TATTOOED` buff active.
+3. `testJailhouseSpecialCostsBiroPen` — player has 3 COIN + 1 BIRO_PEN; get jailhouse special; verify BIRO_PEN consumed; verify STREET_LADS Respect +1.
+4. `testJailhouseInfectionRisk` — seed RNG to trigger infection (20%); get jailhouse special; verify `INFECTED_INK` debuff on player.
+5. `testInfectedInkDrainsHealth` — player has `INFECTED_INK` debuff; advance 1 in-game minute; verify player health −1.
+6. `testParacetamolCuresInfection` — player has `INFECTED_INK` + 2 PARACETAMOL; use paracetamol (×2); verify debuff cleared.
+7. `testTattooReducesRecognition` — player has 2 tattoos; call `WantedSystem.isPlayerRecognised()` 100 times with seeded RNG; verify recognition rate < base rate.
+8. `testDazRefusesHighNotoriety` — set Notoriety to TIER_2; attempt to use chair without disguise; verify result = `REFUSED_HIGH_PROFILE`.
+9. `testDazServesWithDisguise` — Notoriety TIER_2; equip hat/hoodie disguise; attempt chair use; verify not refused.
+10. `testWalkInHustleEarnsCoins` — TATTOO_GUN_KIT in inventory; Daz at lunch; start walk-in; advance 5 in-game minutes; verify 3 PUBLIC NPCs served; verify COIN +9.
+11. `testWalkInHustleHealthInspector` — seed RNG to 15% trigger; start walk-in; verify HEALTH_INSPECTOR NPC spawned.
+12. `testWalkInCaughtAddsWantedStar` — HEALTH_INSPECTOR arrives; player does not vacate in 30 seconds; verify `UNLICENSED_TATTOOING` in CriminalRecord; verify Wanted stars +1.
+13. `testDazDetectsStationUsed` — complete walk-in; advance time past 14:00; seed RNG to 60% detection; verify Daz is HOSTILE.
+14. `testGossipRumourSeeded` — complete any tattoo; verify RumourNetwork contains 1 new `LOCAL_GOSSIP` rumour from Daz.
+
+### Integration Tests (`Issue1271TattooIntegrationTest.java`)
+
+1. **Tattoo reduces recognition in wanted chase**: Player gets 4 tattoos (recognition −20%). Trigger wanted level (1 star). Spawn POLICE NPC. Run `WantedSystem.isPlayerRecognised()` 200 times. Verify recognition rate is ≤ 80% of untattoed baseline.
+2. **Jailhouse infection cured at GP**: Player gets jailhouse special with infection-seeded RNG. Verify `INFECTED_INK` debuff. Player visits `GPSurgerySystem` and books appointment. Advance time. Verify debuff cleared and health stable.
+3. **Walk-in hustle full session**: Player crafts TATTOO_GUN_KIT (3 SCRAP_METAL + 1 BROKEN_PHONE). Set time to 13:00 (Daz at lunch). Player interacts with TATTOO_STATION_PROP. Advance 5 in-game minutes. Verify 3 PUBLIC NPCs paid (COIN +9). Verify Notoriety +1. Verify `UNLICENSED_OPERATOR` achievement progress.
+4. **Walk-in caught by health inspector**: Walk-in session starts. Seed RNG to trigger health inspector (15%). Advance 30 seconds without player vacating. Verify `UNLICENSED_TATTOOING` in CriminalRecord. Verify `NeighbourhoodSystem.getVibes()` −2. Verify Wanted stars +1.
+5. **Daz gossip seeds rumour**: Player gets flash tattoo. Press E on Daz post-tattoo (TALKING state). Verify RumourNetwork gains exactly 1 `LOCAL_GOSSIP` entry. Verify rumour text is one of the 20 predefined `TATTOO_GOSSIP_LINES`.
+6. **Shop closed outside hours**: Set time to 21:00. Player presses E on TATTOO_CHAIR_PROP. Verify result = `CLOSED` and tooltip "Come back tomorrow. Daz needs his beauty sleep." Set time to 11:01. Press E again. Verify chair menu opens normally.
+
+// ── Issue #1271: Northfield Tattoo Parlour ──────────────────────────────────
+// New: TattooSystem.java in ragamuffin.core
+// New: TattooSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1271TattooIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: TATTOO_GUN_KIT, BIRO_PEN — add to Material.java (BIRO_PEN may already exist; verify)
+// LandmarkType: TATTOO_PARLOUR — add to LandmarkType.java
+// NPCType: TATTOOIST — add to NPCType.java
+// AchievementType: FRESH_INK, WALKING_CANVAS, UNLICENSED_OPERATOR, INFECTION_SURVIVOR, LOOKING_PROPER_DIFFERENT — add to AchievementType.java
+// RumourType: LOCAL_GOSSIP — add to RumourType.java (if not already present)
+// CriminalRecord.CrimeType: UNLICENSED_TATTOOING — add to CriminalRecord.java
+// WantedSystem: add tattoo recognition reduction in isPlayerRecognised()
+// Recipe: TATTOO_GUN_KIT (3 SCRAP_METAL + 1 BROKEN_PHONE) — add to CraftingSystem.java
+// PropType: TATTOO_CHAIR_PROP, FLASH_SHEET_PROP, TATTOO_STATION_PROP already defined — no changes needed
+// WorldGenerator: place TATTOO_PARLOUR landmark on High Street between off-licence and chippy
