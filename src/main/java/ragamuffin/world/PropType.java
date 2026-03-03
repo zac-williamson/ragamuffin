@@ -3883,7 +3883,47 @@ public enum PropType {
      * Contains BUCKET_AND_CHAMOIS (stealable). Indestructible for gameplay purposes.
      * 4.5×1.8×2.0m.
      */
-    WINDOW_CLEANING_VAN_PROP(4.5f, 1.8f, 2.0f, 99, null);
+    WINDOW_CLEANING_VAN_PROP(4.5f, 1.8f, 2.0f, 99, null),
+
+    // ── Issue #1402: Northfield Severn Trent Road Dig ─────────────────────────
+
+    /**
+     * ROAD_TRENCH_PROP — Open trench cut across Northfield Road by Severn Trent.
+     * 4 blocks wide, 2 blocks deep. Blocks pedestrian and vehicle movement.
+     * Present for the duration of the dig event (5 in-game days from Monday 08:00).
+     * 4.0×2.0×4.0m; indestructible (99 hits) — only removed when dig ends.
+     */
+    ROAD_TRENCH_PROP(4.0f, 2.0f, 4.0f, 99, null),
+
+    /**
+     * ORANGE_BARRIER_PROP — Plastic traffic barrier (12 placed around trench perimeter).
+     * Kickable: hold E for 1 second to remove. Can be re-placed by player.
+     * 1.2×1.0×0.5m; 1 hit to kick over (not destroyed — just displaced).
+     */
+    ORANGE_BARRIER_PROP(1.2f, 1.0f, 0.5f, 1, null),
+
+    /**
+     * TEMP_TRAFFIC_LIGHT_PROP — Temporary traffic signal on a 90-second cycle.
+     * Can be sabotaged (BattleBarMiniGame EASY) to stick both lights on green.
+     * 0.3×2.5×0.3m; 8 hits to destroy; drops null (it's council property).
+     */
+    TEMP_TRAFFIC_LIGHT_PROP(0.3f, 2.5f, 0.3f, 8, null),
+
+    /**
+     * WELFARE_CABIN_PROP — Site welfare unit (portable cabin) on the pavement.
+     * Contains loot (THERMOS always, others probabilistic). Locked 08:00–22:00 (E shows "Locked").
+     * Night raid (22:00–05:00): press E to loot — CrimeType.THEFT_FROM_WORKSITE, Notoriety +3.
+     * 6.0×2.8×2.4m; indestructible (99 hits).
+     */
+    WELFARE_CABIN_PROP(6.0f, 2.8f, 2.4f, 99, null),
+
+    /**
+     * BURIED_STASH_PROP — Hidden under one of the trench blocks.
+     * Location revealed by CONTRACTOR_GOODWILL ≥ 40 or BRIBE_HIGH.
+     * Contains 5–10 COIN + MYSTERY_OBJECT. Press E to loot.
+     * 0.5×0.5×0.5m; 1 hit (fragile mud cover); drops MYSTERY_OBJECT.
+     */
+    BURIED_STASH_PROP(0.5f, 0.5f, 0.5f, 1, Material.MYSTERY_OBJECT);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

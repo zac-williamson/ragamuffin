@@ -3086,7 +3086,24 @@ public enum NPCType {
     /** DESPERATE_PARKER_NPC — a desperate driver who will buy a PARKING_PERMIT from the player
      * for up to 12 COIN (scalping mechanic). Triggers HMRC income tracking.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
-    DESPERATE_PARKER_NPC(20f, 0f, 0f, false);
+    DESPERATE_PARKER_NPC(20f, 0f, 0f, false),
+
+    // ── Issue #1402: Northfield Severn Trent Road Dig ─────────────────────────
+
+    /** CONTRACTOR_STEVE — senior Severn Trent contractor. On site 08:00–16:00 during dig event.
+     * Bribeable (BRIBE_LOW/MID/HIGH). Carries THERMOS. Can be threatened if Notoriety &lt; 20.
+     * HP: 22f, attack: 5f, cooldown: 0f, hostile: false. */
+    CONTRACTOR_STEVE(22f, 5f, 0f, false),
+
+    /** CONTRACTOR_PHIL — junior contractor. Tea-break vulnerable; on site 08:00–16:00.
+     * Will ask for THERMOS when player is in contractor disguise. Calls police if threatened at high Notoriety.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    CONTRACTOR_PHIL(20f, 0f, 0f, false),
+
+    /** ROAD_RAGE_NPC — angry driver spawned when car enters ROAD_TRENCH_PROP closure or traffic chaos.
+     * Brawls with other ROAD_RAGE_NPCs; aggressive toward player. Despawns after 5 in-game minutes.
+     * HP: 25f, attack: 10f, cooldown: 0f, hostile: true. */
+    ROAD_RAGE_NPC(25f, 10f, 0f, true);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -6583,6 +6583,53 @@ public enum AchievementType {
         "Forger in Residence",
         "Comic Sans fooled the man. The bar for document security in Zone S is not high.",
         1
+    ),
+
+    // ── Issue #1402: Northfield Severn Trent Road Dig ─────────────────────────
+
+    /**
+     * CERTIFIED_JOBSWORTH — kick ≥ 3 ORANGE_BARRIER_PROPs then place a diversion sign pointing the wrong way.
+     */
+    CERTIFIED_JOBSWORTH(
+        "Certified Jobsworth",
+        "You kicked over the barriers and redirected traffic into a cul-de-sac. Marvellous.",
+        1
+    ),
+
+    /**
+     * GREEN_FOR_EVERYONE — successfully sabotage both temporary traffic lights in a single dig event.
+     */
+    GREEN_FOR_EVERYONE(
+        "Green for Everyone",
+        "Both lights. Green. Simultaneously. The junction held a very brief carnival.",
+        1
+    ),
+
+    /**
+     * BILLED_THE_COUNCIL — successfully claim a variation order from the council kiosk.
+     */
+    BILLED_THE_COUNCIL(
+        "Billed the Council",
+        "Emergency asbestos survey. They didn't even ask for a receipt.",
+        1
+    ),
+
+    /**
+     * CONTRACTOR_ALLIANCE — bribe CONTRACTOR_STEVE with BRIBE_HIGH (15 COIN) during a live dig event.
+     */
+    CONTRACTOR_ALLIANCE(
+        "Contractor Alliance",
+        "Fifteen quid. Steve pocketed it, winked, and handed you the shovel. Solidarity.",
+        1
+    ),
+
+    /**
+     * BURIED_TREASURE — find and loot the BURIED_STASH_PROP hidden under the trench.
+     */
+    BURIED_TREASURE(
+        "Buried Treasure",
+        "Under three weeks of Severn Trent spoil: mystery, coin, and the faint smell of drains.",
+        1
     );
 
     private final String name;

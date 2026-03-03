@@ -1317,5 +1317,37 @@ public enum RumourType {
     /** "Terry was chatting to Dot about number twelve — apparently they've been at it again."
      * Seeded by WindowCleanerSystem during payment exchanges within 4 blocks of player.
      * Spreads via PUBLIC, PENSIONER NPCs. Notoriety < 25 requirement. */
-    NEIGHBOURHOOD_GOSSIP;
+    NEIGHBOURHOOD_GOSSIP,
+
+    // ── Issue #1402: Northfield Severn Trent Road Dig ─────────────────────────
+
+    /** "Severn Trent are up again on Northfield Road. Three weeks this time apparently."
+     * Seeded by SevTrentRoadDigSystem when the dig event starts (Monday 08:00).
+     * Spreads via PUBLIC, PENSIONER, SHOPKEEPER NPCs. */
+    ROAD_DIG_CHAOS,
+
+    /** "Someone's kicked all the barriers over on the roadworks. Absolute carnage."
+     * Seeded by SevTrentRoadDigSystem when player kicks ≥ 3 ORANGE_BARRIER_PROPs.
+     * Notoriety +2 (traffic disruption). Spreads via PUBLIC, DRIVER NPCs. */
+    TRAFFIC_CHAOS,
+
+    /** "Someone's had the cabin on the roadworks. Nicked the radio and everything."
+     * Seeded by SevTrentRoadDigSystem when player loots WELFARE_CABIN_PROP at night.
+     * Spreads via PUBLIC, PENSIONER, POLICE NPCs. */
+    SITE_THEFT,
+
+    /** "Those Severn Trent lads are well bent. Fifty pence and they'll do anything."
+     * Seeded by SevTrentRoadDigSystem when player bribes CONTRACTOR_STEVE or CONTRACTOR_PHIL.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    CONTRACTOR_BRIBED,
+
+    /** "Someone's been billing the council for ghost work on the roadworks. Ballsy."
+     * Seeded by SevTrentRoadDigSystem on successful variation-order submission.
+     * Spreads via PUBLIC, JOURNALIST NPCs. */
+    COUNCIL_FRAUD,
+
+    /** "Lights on Church Road have been green both ways for an hour. It's carnage."
+     * Seeded by SevTrentRoadDigSystem when traffic lights are sabotaged into chaos mode.
+     * Spreads via PUBLIC, DRIVER, POLICE NPCs. */
+    LIGHTS_JAMMED;
 }
