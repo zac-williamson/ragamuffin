@@ -49709,3 +49709,190 @@ muscle in on her turf.
 // Integration: RumourNetwork, NeedType.BORED, StreetSkillSystem, NotorietySystem,
 //   CriminalRecord, WantedSystem, FenceSystem, NeighbourhoodSystem, TimeSystem,
 //   AchievementSystem, PropertySystem (caravan spawn at market corner)
+
+---
+
+## Northfield's Got Talent — The Pub Talent Contest, the Fixed Vote & the Prize Heist
+
+### Overview
+
+Once a month (on the last Saturday of each in-game month), The Ragamuffin Arms hosts
+**Northfield's Got Talent** — a three-act community talent show compered by Barry
+(`TALENT_SHOW_HOST_NPC`), a medallion-wearing man in his 60s who has never forgiven
+himself for not auditioning for Stars in Their Eyes in 1993. Entry is 1 COIN (free to
+watch). The prize is a `TALENT_SHOW_TROPHY` prop and **25 COIN** cash, paid from a
+sealed envelope behind the bar.
+
+### New System: TalentShowSystem.java (ragamuffin.core)
+
+### Schedule
+- Runs the last Saturday of each in-game month (use `TimeSystem` to calculate
+  `dayOfMonth` vs month length; last Saturday = last occurrence of `dayOfWeek == 6`).
+- Doors open 18:30; show starts 19:00; judging at 21:00; closes 22:30.
+- If `WeatherSystem` is `THUNDERSTORM`, show is cancelled; Barry seeds a
+  `LOCAL_EVENT` rumour: "Weather ruined the talent show again. Fourth year running."
+
+### Acts
+Six NPC acts perform before/after the player (if entering):
+1. **Derek the Magician** (`PENSIONER` NPC) — card tricks. Always gets 3/6 crowd approval.
+2. **Shazza** (`PUBLIC` NPC) — singing. Score based on seeded RNG: 1–5/6.
+3. **Kyle & Lee** (`STREET_LAD` NPCs) — break-dancing. Score: 2–4/6. Heckled by pensioners.
+4. **Brenda** (`PENSIONER` NPC) — accordion. Always gets 2/6. She is dreadful. Everyone knows it.
+5. **The Marchetti Brothers** (`MARCHETTI_CREW` NPCs) — "comedy duo". Score: 1–3/6 (threatening humour).
+6. **Barry's Nephew** (`PUBLIC` NPC, name: Darren) — singing. **Always wins if not interfered with.**
+   Barry's judging is rigged: Darren gets +3 added to his crowd score regardless.
+
+### Mechanic 1 — Player Performance
+
+- Press E on `TALENT_SHOW_SIGNUP_PROP` (a clipboard on a table near the bar) before 18:50 to enter.
+  Cost: 1 COIN entry.
+- Player's act uses three rounds of `BattleBarMiniGame` (MEDIUM difficulty), summing a score 0–6.
+  - If `KaraokeSystem.totalSongsPerformed >= 3`: +1 bonus to score (crowd recognises stage presence).
+  - If `MCBattleSystem.getMCRank() >= 2`: +1 bonus to score (reputation precedes them).
+- Score mapping:
+  - 0–1: EMBARRASSING — crowd boos. Notoriety +2. Barry's tooltip: "Well. That happened."
+  - 2–3: MEDIOCRE — polite silence. Notoriety +0.
+  - 4–5: GOOD — genuine applause. Notoriety +5. Seeds `LOCAL_EVENT` rumour: "That player had a right go."
+  - 6 (+ bonuses): OUTSTANDING — standing ovation. Notoriety +10. Achievement: `STAR_OF_NORTHFIELD`.
+- Barry's rigged judging applies to Darren's score unless interfered with (see Mechanic 2).
+
+### Mechanic 2 — Rigging the Vote
+
+Three interference routes available before judging (21:00):
+
+**A. Bribe Barry**
+- Press E on Barry (host NPC) between 19:00–20:30 and select "Have a word about the judging."
+  Barry demands 10 COIN. Paying:
+  - Darren's +3 bonus removed. Barry announces "an upset" dramatically.
+  - Achievement: `BOUGHT_THE_JUDGE`. Notoriety +3 (exploitation of entertainment).
+  - 30% chance Darren catches on → seeds `LOCAL_EVENT` rumour: "That judge was bought off at the talent show."
+
+**B. Sabotage Darren**
+- Find Darren in the pub between 18:30–20:00. He is drinking nervously at the bar.
+- Press E and select "Spill his drink" (requires STEALTH ≥ Apprentice from `StreetSkillSystem`).
+  Darren's `ANXIOUS` state triggers: his performance score drops to 1/6 automatically.
+  - 40% detection chance → Notoriety +5, Barry ejects the player for the rest of the evening.
+  - 60% success → Achievement: `SABOTEUR`. NeighbourhoodSystem VIBES −1 (the neighbourhood knows).
+
+**C. Swap the Judging Envelope**
+- The prize envelope is behind the bar in `PRIZE_ENVELOPE_PROP`. Pickpocket barmaid Linda
+  for `BAR_MASTER_KEY` (STEALTH check, 50% success), or bribe her with 3 COIN.
+  With the key, sneak into the bar storage room (after 20:30, Linda is on a break):
+  - Swap envelope contents: replace 25 COIN with 1 COIN + `COUNTERFEIT_NOTE`.
+  - The winner discovers the shortfall at prize time. Chaos ensues. All NPCs argue.
+  - Achievement: `EMPTY_ENVELOPE`. CrimeType: `THEFT`. Notoriety +6.
+  - Coin gained: 25 (the real prize money now in player inventory).
+  - Linda discovers the swap on a 35% random check → `THEFT` flagged, WantedSystem +1.
+
+### Mechanic 3 — Winning & Aftermath
+
+- If player wins (highest combined crowd + judge score after any interference):
+  - Barry awards `TALENT_SHOW_TROPHY` prop (can be placed in the player's garage/squat).
+  - Player receives 25 COIN from envelope (unless already swapped).
+  - Achievement: `NORTHFIELD_CHAMPION`. NeighbourhoodSystem VIBES +5.
+  - `FactionSystem`: STREET_LADS Respect +5 (they respect the audacity), COUNCIL Respect +3.
+  - Seeds `LOCAL_EVENT` rumour: "Did you hear about the talent show? That newcomer won."
+  - Tooltip: "Barry didn't look happy about it."
+
+- If Darren wins (unrigged, default outcome):
+  - Barry beams. Darren takes the trophy home. NPCs nearby seed a mild
+    `LOCAL_EVENT` rumour: "Barry's nephew won again. What a surprise."
+  - No consequence for the player unless they entered and lost.
+
+- If the envelope was swapped and Darren wins:
+  - Darren opens the envelope on stage. Silence. Then uproar.
+  - 3–5 NPCs argue loudly. Barry loses composure. Random NPC punches another.
+  - `NoiseSystem` level 7 event (35-block radius). Police patrol rate +25% for 30 minutes.
+  - Achievement: `THE_ENVELOPE_PLEASE` (triggered on witnessing the reveal — player in range).
+
+### New Materials
+- `TALENT_SHOW_TROPHY` — prop item (holdable). FenceSystem value: 4 COIN. Tooltip: "It's got your name on it. Allegedly."
+- `BAR_MASTER_KEY` — pickpocketed from Linda. Single use.
+- `COUNTERFEIT_NOTE` — one fake £10 note. Held item. FenceSystem value: 0 COIN (worthless alone).
+  Can be combined in a fake bundle (5× COUNTERFEIT_NOTE → `DODGY_WEDGE`) for sale at Fence for 3 COIN.
+
+### New PropTypes
+- `TALENT_SHOW_SIGNUP_PROP` — clipboard on table. Present only on event night.
+- `PRIZE_ENVELOPE_PROP` — brown A4 envelope behind bar. Interactable only via bar access.
+- `TALENT_SHOW_STAGE_PROP` — temporary stage extension at front of pub. Destructible (hardness 2).
+
+### New NPCType
+- `TALENT_SHOW_HOST_NPC` — Barry. HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+  Present only on talent show night. Non-combatant; calls BOUNCER on attack (no police).
+  Carries 5 COIN (pickpocketable — petty sabotage, no CrimeType triggered).
+
+### New AchievementTypes
+- `STAR_OF_NORTHFIELD` — score 6+ in the talent show (one-shot).
+- `NORTHFIELD_CHAMPION` — win the talent show (one-shot).
+- `BOUGHT_THE_JUDGE` — bribe Barry to rig the results (one-shot).
+- `SABOTEUR` — successfully sabotage Darren's performance (one-shot).
+- `EMPTY_ENVELOPE` — swap the prize envelope before the ceremony (one-shot).
+- `THE_ENVELOPE_PLEASE` — witness the reveal when the swapped envelope is opened (one-shot).
+
+### New RumourTypes
+- `TALENT_SHOW_RIGGED` — "The talent show at The Arms is bent. Barry always gives it to his nephew."
+- `TALENT_SHOW_UPSET` — "Someone actually beat Darren at the talent show. Barry was fuming."
+
+### Unit Tests
+- `testShowOnlyOnLastSaturday`: Set TimeSystem to a Saturday that is NOT the last of the month (e.g. 22nd when month has 31 days). Verify `TalentShowSystem.isShowNight()` = false. Set to the last Saturday (e.g. 29th). Verify `isShowNight()` = true.
+- `testCancelledOnThunderstorm`: Set to last Saturday, WeatherSystem = THUNDERSTORM. Verify `isCancelled()` = true and Barry is not spawned.
+- `testPlayerScoreBonus`: Create a TalentShowSession with `karaokePerformed = 3`, `mcRank = 0`. Score 3 hits. Verify effective score = 4 (3 + 1 karaoke bonus). Create session with `mcRank = 2`. Score 3 hits. Verify effective score = 5.
+- `testDarrenRiggedBonus`: Create a TalentShowSession. Set Darren's raw crowd score to 3. Verify `getDarrenFinalScore()` = 6 (3 + 3 rig bonus). Call `removeDarrenRig()`. Verify `getDarrenFinalScore()` = 3.
+- `testBribeBarryCostsCoins`: Give player 10 COIN. Trigger `bribeBarry()`. Verify player has 0 COIN. Verify `darrenRigRemoved` = true. Verify Notoriety increased by 3.
+- `testSabotageDarrenWithStealth`: Set STEALTH skill to Apprentice. Force sabotage rng < 0.60f (success). Call `sabotageAttempt()`. Verify Darren's performance score = 1. Verify `darrenSabotaged` = true.
+- `testSabotageCaughtAddsNotoriety`: Set STEALTH to Novice (below Apprentice — attempt fails immediately with detection). Verify Notoriety +5. Verify player ejection flag set.
+- `testEnvelopeSwapStealsCoins`: Give player 0 COIN. Call `swapEnvelope()`. Verify player has 25 COIN. Verify `envelopeSwapped` = true. Verify `THEFT` in CriminalRecord.
+- `testEnvelopeRevealTriggersNoise`: Mark `envelopeSwapped = true`. Darren wins. Advance to prize reveal. Verify `NoiseSystem.getLevel()` = 7. Verify 3–5 NPCs are in `ARGUING` state. Verify THE_ENVELOPE_PLEASE achievement unlocked for player in range.
+- `testPlayerWinGrantsTrophy`: Player score (after bonuses) > all NPC scores. Verify `TALENT_SHOW_TROPHY` in player inventory. Verify 25 COIN added. Verify NORTHFIELD_CHAMPION achievement unlocked. Verify NeighbourhoodSystem VIBES +5.
+- `testDarrenDefaultWinSedsRumour`: Do not interfere. Advance to judging. Verify Darren wins. Verify `LOCAL_EVENT` rumour seeded: "Barry's nephew won again. What a surprise." Verify TALENT_SHOW_RIGGED rumour seeded into RumourNetwork.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full show night lifecycle**: Set TimeSystem to the last Saturday of month at 18:30.
+   Advance 1 tick. Verify Barry (`TALENT_SHOW_HOST_NPC`) is present at the pub.
+   Verify `TALENT_SHOW_SIGNUP_PROP` is visible. Give player 2 COIN. Press E on signup board.
+   Verify player is registered (1 COIN deducted). Advance to 19:00 (show start). Verify
+   six NPC acts appear in sequence. Advance to 21:00 (judging). Verify judging resolves
+   and a winner is announced. Verify `TALENT_SHOW_RIGGED` rumour is seeded into the barman's
+   rumour buffer. Advance to 22:30. Verify Barry despawns and `TALENT_SHOW_SIGNUP_PROP`
+   is removed.
+
+2. **Player wins after bribing judge**: Set TimeSystem to last Saturday 19:30. Give player
+   15 COIN. Press E on Barry and select "Have a word about the judging." Pay 10 COIN.
+   Verify `darrenRigRemoved` = true and player has 5 COIN. In `BattleBarMiniGame`, force
+   all 6 hits (perfect score). Advance to judging at 21:00. Verify player score beats all
+   NPCs. Verify player inventory contains `TALENT_SHOW_TROPHY`. Verify player has 30 COIN
+   (5 + 25 prize). Verify BOUGHT_THE_JUDGE and NORTHFIELD_CHAMPION achievements unlocked.
+
+3. **Envelope swap and reveal chaos**: Set TimeSystem to last Saturday 20:35. Give player
+   `BAR_MASTER_KEY`. Use it to access bar storage. Call `swapEnvelope()`. Verify player
+   gains 25 COIN and THEFT is in CriminalRecord. Do NOT interfere with performance.
+   Advance to 21:00. Verify Darren wins (normal outcome). Verify reveal scene plays:
+   NoiseSystem level ≥ 7. Verify 3+ NPCs in ARGUING state. Verify THE_ENVELOPE_PLEASE
+   achievement unlocked (player within 15 blocks of stage). Verify police patrol rate
+   increased for subsequent 30 in-game minutes.
+
+4. **Thunderstorm cancellation and rumour**: Set WeatherSystem to THUNDERSTORM on last
+   Saturday. Advance to 19:00. Verify Barry does NOT spawn. Verify `TALENT_SHOW_SIGNUP_PROP`
+   is absent. Verify `LOCAL_EVENT` rumour is seeded containing "Weather ruined the talent
+   show again." Verify show flag `isCancelled()` = true.
+
+5. **Neighbourhood integration**: Win the talent show cleanly (no sabotage, no bribery).
+   Verify `NeighbourhoodSystem.getVibes()` increased by 5 from baseline. Verify
+   `LOCAL_EVENT` rumour containing "That newcomer won" is present in the rumour network.
+   Verify STREET_LADS Respect toward player increased by 5 via FactionSystem. Verify
+   COUNCIL Respect toward player increased by 3 via FactionSystem.
+
+// ── Issue #1377: Add Northfield's Got Talent — The Pub Talent Contest, the Fixed Vote & the Prize Heist ──
+// New: TalentShowSystem.java in ragamuffin.core
+// New: TalentShowSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1377TalentShowIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: TALENT_SHOW_TROPHY, BAR_MASTER_KEY, COUNTERFEIT_NOTE, DODGY_WEDGE
+// New PropTypes: TALENT_SHOW_SIGNUP_PROP, PRIZE_ENVELOPE_PROP, TALENT_SHOW_STAGE_PROP
+// New NPCTypes: TALENT_SHOW_HOST_NPC
+// New AchievementTypes: STAR_OF_NORTHFIELD, NORTHFIELD_CHAMPION, BOUGHT_THE_JUDGE,
+//   SABOTEUR, EMPTY_ENVELOPE, THE_ENVELOPE_PLEASE
+// New RumourTypes: TALENT_SHOW_RIGGED, TALENT_SHOW_UPSET
+// Integration: BattleBarMiniGame, KaraokeSystem, MCBattleSystem, NeighbourhoodSystem,
+//   NotorietySystem, FactionSystem, RumourNetwork, CriminalRecord, WantedSystem,
+//   WeatherSystem, NoiseSystem, FenceSystem, AchievementSystem, TimeSystem
