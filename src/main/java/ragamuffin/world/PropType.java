@@ -3533,7 +3533,26 @@ public enum PropType {
      * (Vibes −1 if witnessed). Dropped by chaos: 0–3 WATER_CUP items scatter nearby.
      * Drops WATER_CUP on destroy.
      */
-    WATER_STATION_PROP(1.00f, 0.90f, 0.50f, 4, Material.WATER_CUP);
+    WATER_STATION_PROP(1.00f, 0.90f, 0.50f, 4, Material.WATER_CUP),
+
+    // ── Issue #1359: Northfield HMRC Tax Investigation ────────────────────────
+
+    /**
+     * HMRC_NOTICE_BOARD_PROP — an official HMRC notice board mounted near the player's
+     * address after a TAX_DEMAND_LETTER is issued. Displays the outstanding tax demand
+     * amount and deadline. Press E to read the full demand notice. Cannot be destroyed
+     * (hitsToBreak: 999). Removed automatically when demand is settled or 7 days expire.
+     * Drops nothing.
+     */
+    HMRC_NOTICE_BOARD_PROP(0.60f, 1.20f, 0.10f, 999, null),
+
+    /**
+     * BACK_WINDOW_PROP — a ground-floor rear window available as an escape route during
+     * the dawn raid (day 5, 06:30). Press E to climb out and flee the property, awarding
+     * DAWN_RAID_SURVIVOR achievement. Destructible by player (hitsToBreak: 2, GLASS).
+     * Drops GLASS on destroy.
+     */
+    BACK_WINDOW_PROP(0.80f, 1.00f, 0.10f, 2, Material.GLASS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

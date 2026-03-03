@@ -1073,5 +1073,18 @@ public enum RumourType {
     /** "Someone cut the corner on the charity run — a jogger saw the whole
      * thing." — seeded by CharityFunRunSystem when a JOGGER witnesses course-cutting.
      * Triggers NeighbourhoodSystem Vibes −3. Spreads via JOGGER and PUBLIC NPCs. */
-    COURSE_CUTTING;
+    COURSE_CUTTING,
+
+    // ── Issue #1359: Northfield HMRC Tax Investigation ────────────────────────
+
+    /** "Word is someone round here's had a visit from the taxman — paying cash
+     * in hand catches up with you eventually." — seeded by HMRCSystem when Sandra
+     * serves a TAX_DEMAND_LETTER. Triggers NeighbourhoodSystem Vibes −2.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    TAX_TROUBLES,
+
+    /** "Heard someone tipped off the taxman about a mate's dealings — that loan
+     * shark's been busy." — seeded by HMRCSystem when LOAN_SHARK_CLERK tips off
+     * HMRC below the 150 COIN threshold. Spreads via PUBLIC and LOAN_SHARK_CLERK. */
+    HMRC_TIPPED_OFF;
 }

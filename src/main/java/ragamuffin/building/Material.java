@@ -5754,7 +5754,34 @@ public enum Material {
      * Consuming it restores +5 Hunger. Can also be tipped over for chaos.
      * Tooltip: "A paper cup of lukewarm water. Essential fuel."
      */
-    WATER_CUP("Water Cup");
+    WATER_CUP("Water Cup"),
+
+    // ── Issue #1359: Northfield HMRC Tax Investigation ────────────────────────
+
+    /**
+     * TAX_DEMAND_LETTER — an official HMRC demand notice served by Sandra Watts
+     * (HMRC_INSPECTOR). Amount is 30% of untaxed earnings, capped at 80 COIN.
+     * Player must pay within 2 in-game days or face distraint (bailiff Derek).
+     * Can be challenged via CitizensAdvice for 40% reduction.
+     * Tooltip: "HMRC demands payment. Ignoring this will not make it go away."
+     */
+    TAX_DEMAND_LETTER("Tax Demand Letter"),
+
+    /**
+     * CLEAN_BILL_OF_HEALTH — an HMRC clearance letter issued after the player
+     * pays their full tax demand. Grants 7 in-game days of immunity from Sandra.
+     * Tooltip: "All clear from HMRC. For now."
+     */
+    CLEAN_BILL_OF_HEALTH("Clean Bill of Health"),
+
+    /**
+     * CASH_BRIBE_ENVELOPE — a brown envelope stuffed with coin used to bribe
+     * Sandra (HMRC_INSPECTOR). 60% success chance; on success seeds BENT_OFFICIAL
+     * rumour. On failure logs BRIBERY_OF_PUBLIC_OFFICIAL crime and adds Wanted +2.
+     * Crafted from COIN (10) + BROWN_ENVELOPE (already in inventory if available).
+     * Tooltip: "A discreet envelope. Best offered quietly."
+     */
+    CASH_BRIBE_ENVELOPE("Cash Bribe Envelope");
 
     private final String displayName;
 
@@ -7047,6 +7074,14 @@ public enum Material {
             case WATER_CUP:             return cs(0.90f, 0.90f, 0.90f,  // White paper cup
                                                   0.30f, 0.55f, 0.85f); // Blue branding
 
+            // Issue #1359: Northfield HMRC Tax Investigation
+            case TAX_DEMAND_LETTER:     return cs(0.95f, 0.95f, 0.85f,  // Cream HMRC paper
+                                                  0.80f, 0.10f, 0.10f); // Red HMRC logo
+            case CLEAN_BILL_OF_HEALTH:  return cs(0.90f, 0.95f, 0.90f,  // Light green clearance
+                                                  0.20f, 0.60f, 0.20f); // Green tick/border
+            case CASH_BRIBE_ENVELOPE:   return cs(0.60f, 0.45f, 0.25f,  // Brown envelope
+                                                  0.85f, 0.70f, 0.10f); // Gold coin hint
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -7503,6 +7538,10 @@ public enum Material {
             case SPONSOR_SHEET:
             case WINNERS_MEDAL:
             case WATER_CUP:
+            // Issue #1359: Northfield HMRC Tax Investigation — not block items
+            case TAX_DEMAND_LETTER:
+            case CLEAN_BILL_OF_HEALTH:
+            case CASH_BRIBE_ENVELOPE:
             // Issue #1144: Northfield Probation Office — not block items
             case SIGN_ON_LETTER:
             case ELECTRONIC_TAG:
@@ -7767,6 +7806,10 @@ public enum Material {
             case SPONSOR_SHEET:
             case WINNERS_MEDAL:
             case WATER_CUP:
+            // Issue #1359: Northfield HMRC Tax Investigation — small items sit on surfaces
+            case TAX_DEMAND_LETTER:
+            case CLEAN_BILL_OF_HEALTH:
+            case CASH_BRIBE_ENVELOPE:
                 return true;
             default:
                 return false;
@@ -9094,6 +9137,14 @@ public enum Material {
                 return IconShape.CYLINDER;    // medal on a ribbon
             case WATER_CUP:
                 return IconShape.CYLINDER;    // paper cup of water
+
+            // Issue #1359: Northfield HMRC Tax Investigation
+            case TAX_DEMAND_LETTER:
+                return IconShape.FLAT_PAPER;  // official HMRC letter
+            case CLEAN_BILL_OF_HEALTH:
+                return IconShape.FLAT_PAPER;  // HMRC clearance letter
+            case CASH_BRIBE_ENVELOPE:
+                return IconShape.FLAT_PAPER;  // brown envelope
 
             default:
                 return IconShape.BOX;

@@ -2830,7 +2830,27 @@ public enum NPCType {
      * embezzlement path also available (press E while wearing HIGH_VIS_JACKET).
      * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    FUN_RUN_MARSHAL(25f, 0f, 0f, false);
+    FUN_RUN_MARSHAL(25f, 0f, 0f, false),
+
+    // ── Issue #1359: Northfield HMRC Tax Investigation ────────────────────────
+
+    /**
+     * HMRC_INSPECTOR — Sandra Watts, HMRC compliance inspector. Spawns at the
+     * player's address at 09:00 on a weekday when {@code totalUntaxedEarnings >= 150 COIN}.
+     * Attempts to serve a TAX_DEMAND_LETTER (30% of untaxed earnings, capped at 80 COIN).
+     * Invincible (cannot be killed). Will not pursue if player flees.
+     * HP: Float.MAX_VALUE, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    HMRC_INSPECTOR(Float.MAX_VALUE, 0f, 0f, false),
+
+    /**
+     * DISTRAINT_OFFICER — Derek, court-appointed distraint (bailiff) officer. Spawns
+     * after the player ignores the TAX_DEMAND_LETTER for 2 in-game days. Seizes goods
+     * from the player's inventory up to the value of the tax demand. On day 5 (dawn
+     * raid at 06:30), Derek arrives with 2× HMRC_INSPECTOR + enforcement officer.
+     * HP: 40f, attack: 5f, cooldown: 1.5f, hostile: false (becomes hostile only on assault).
+     */
+    DISTRAINT_OFFICER(40f, 5f, 1.5f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

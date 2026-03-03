@@ -5810,6 +5810,58 @@ public enum AchievementType {
         "Walkies Winner",
         "You finished the charity fun run with your dog. Best in show.",
         1
+    ),
+
+    // ── Issue #1359: Northfield HMRC Tax Investigation ────────────────────────
+
+    /**
+     * Fires when the player pays their full tax demand to Sandra (HMRC_INSPECTOR)
+     * and receives a CLEAN_BILL_OF_HEALTH. Awarded in HMRCSystem on successful payment.
+     */
+    TAX_COMPLIANT(
+        "Tax Compliant",
+        "You paid your taxes. Sandra looked almost impressed.",
+        1
+    ),
+
+    /**
+     * Fires when the player uses a CitizensAdvice letter to reduce the tax demand by 40%.
+     * Awarded in HMRCSystem on successful CitizensAdvice challenge.
+     */
+    KNOWS_HIS_RIGHTS(
+        "Knows His Rights",
+        "You challenged the tax demand. The system blinked first.",
+        1
+    ),
+
+    /**
+     * Fires when the player successfully bribes Sandra (HMRC_INSPECTOR) with a
+     * CASH_BRIBE_ENVELOPE (60% success chance). Awarded in HMRCSystem on bribe success.
+     */
+    GREASED_PALM(
+        "Greased Palm",
+        "Sandra pocketed the envelope. She's been in this job too long.",
+        1
+    ),
+
+    /**
+     * Fires when Derek (DISTRAINT_OFFICER) seizes goods from the player's inventory
+     * after 2 days of ignoring the TAX_DEMAND_LETTER. Awarded in HMRCSystem on distraint.
+     */
+    BAILED_ON(
+        "Bailed On",
+        "Derek came round and took your stuff. Should have opened the letter.",
+        1
+    ),
+
+    /**
+     * Fires when the player escapes the dawn raid (day 5, 06:30) via the BACK_WINDOW_PROP.
+     * Awarded in HMRCSystem on successful back-window escape during the dawn raid.
+     */
+    DAWN_RAID_SURVIVOR(
+        "Dawn Raid Survivor",
+        "You went out the back window. Never look back.",
+        1
     );
 
     private final String name;
