@@ -917,6 +917,18 @@ public class CommunityCentreSystem {
         return curryNightEntryPaid;
     }
 
+    /**
+     * Returns true if the player has completed at least one community activity
+     * (aerobics session, NA share, Bring &amp; Buy purchase, or curry night attendance).
+     * Used by DefibrillatorSystem to gate Denise's cabinet code disclosure.
+     */
+    public boolean hasCompletedAnyActivity() {
+        return consecutiveAerobicsSessions > 0
+                || hasSharedAtNA
+                || bringBuyItemsPurchased > 0
+                || curryNightEntryPaid;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Testing helpers
     // ─────────────────────────────────────────────────────────────────────────

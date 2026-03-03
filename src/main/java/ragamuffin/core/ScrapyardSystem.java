@@ -80,6 +80,9 @@ public class ScrapyardSystem {
     /** Sell price of COPPER_BALE via FENCE only (too hot for Gary). */
     public static final int PRICE_COPPER_BALE_FENCE = 15;
 
+    /** Sell price of COPPER_CABLE (from defibrillator cabinet) at the weigh-bridge. */
+    public static final int PRICE_COPPER_CABLE = 4;
+
     // ── Notoriety threshold ───────────────────────────────────────────────────
 
     /**
@@ -162,7 +165,8 @@ public class ScrapyardSystem {
     public static final List<Material> COPPER_ITEMS = Collections.unmodifiableList(
             Arrays.asList(
                     Material.COPPER_WIRE,
-                    Material.LEAD_FLASHING
+                    Material.LEAD_FLASHING,
+                    Material.COPPER_CABLE
             )
     );
 
@@ -271,6 +275,7 @@ public class ScrapyardSystem {
             case SCRAP_METAL:             return PRICE_SCRAP_METAL;
             case PIPE:                    return PRICE_PIPE;
             case COPPER_WIRE:             return PRICE_COPPER_WIRE;
+            case COPPER_CABLE:            return PRICE_COPPER_CABLE;
             case LEAD_FLASHING:           return PRICE_LEAD_FLASHING;
             case COMPUTER:                return PRICE_COMPUTER;
             case BROKEN_TELLY:            return PRICE_BROKEN_TELLY;

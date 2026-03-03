@@ -742,6 +742,63 @@ public class ClaimsManagementSystem {
         return pendingDogBiteDamage;
     }
 
+    // ── Issue #1479: Northfield Public Defibrillator — Liability Nightmare ──────
+
+    /** Payout for showing Gary a NOTICE_OF_DEFICIENCY_PROP (emotional distress). */
+    public static final int DEFIB_NOTICE_PAYOUT = 12;
+
+    /**
+     * Outcome of presenting the NOTICE_OF_DEFICIENCY_PROP to Gary.
+     */
+    public enum DefibNoticeResult {
+        /** Payout accepted — 12 COIN added to inventory. Achievement: AMBULANCE_CHASER. */
+        PAYOUT_ACCEPTED,
+        /** Gary is not present (outside opening hours). */
+        GARY_NOT_PRESENT,
+        /** Player does not have the NOTICE_OF_DEFICIENCY_PROP in inventory. */
+        NO_NOTICE,
+        /** Player has already claimed this payout. */
+        ALREADY_CLAIMED,
+    }
+
+    /** Whether the defib notice payout has already been claimed. */
+    private boolean defibNoticeClaimed = false;
+
+    /**
+     * Present a NOTICE_OF_DEFICIENCY_PROP to Gary for a 12 COIN emotional
+     * distress payout. Achievement: {@link ragamuffin.ui.AchievementType#AMBULANCE_CHASER}.
+     *
+     * @param inventory           player inventory (must contain NOTICE_OF_DEFICIENCY_PROP)
+     * @param hour                current in-game hour
+     * @param achievementCallback callback to award achievements
+     * @return result of the interaction
+     */
+    public DefibNoticeResult claimDefibNotice(Inventory inventory, float hour,
+            NotorietySystem.AchievementCallback achievementCallback) {
+        if (hour < OPEN_HOUR || hour >= CLOSE_HOUR) {
+            return DefibNoticeResult.GARY_NOT_PRESENT;
+        }
+        if (defibNoticeClaimed) {
+            return DefibNoticeResult.ALREADY_CLAIMED;
+        }
+        if (inventory.getItemCount(Material.NOTICE_OF_DEFICIENCY_PROP) < 1) {
+            return DefibNoticeResult.NO_NOTICE;
+        }
+        // Remove the notice prop item and pay out
+        inventory.removeItem(Material.NOTICE_OF_DEFICIENCY_PROP, 1);
+        inventory.addItem(Material.COIN, DEFIB_NOTICE_PAYOUT);
+        defibNoticeClaimed = true;
+        if (achievementCallback != null) {
+            achievementCallback.award(AchievementType.AMBULANCE_CHASER);
+        }
+        return DefibNoticeResult.PAYOUT_ACCEPTED;
+    }
+
+    /** Returns true if the defib notice payout has already been claimed. */
+    public boolean isDefibNoticeClaimed() {
+        return defibNoticeClaimed;
+    }
+
     // ── Private helpers ─────────────────────────────────────────────────────
 
     private int getBasePayout(ClaimType claimType) {

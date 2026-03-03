@@ -7431,6 +7431,58 @@ public enum AchievementType {
         "Undoing All the Good",
         "Fly-tipped more than you collected at the litter pick. Janet's tally says so.",
         1
+    ),
+
+    // ── Issue #1479: Northfield Public Defibrillator ───────────────────────────
+
+    /**
+     * SHOCK_TREATMENT — use the defibrillator on a CARDIAC_VICTIM and save their life.
+     * Awarded on first successful revive (Notoriety −10, NeighbourhoodVibes +5).
+     */
+    SHOCK_TREATMENT(
+        "Shock Treatment",
+        "You used the defibrillator correctly. Phil would be proud. Phil moved to Stoke.",
+        1
+    ),
+
+    /**
+     * UNLICENSED_PRACTITIONER — abandon a CPR training course mid-session, triggering
+     * student refund demands and a FRAUD charge.
+     */
+    UNLICENSED_PRACTITIONER(
+        "Unlicensed Practitioner",
+        "You charged for CPR training and legged it. The students want their fivers back.",
+        1
+    ),
+
+    /**
+     * COMMUNITY_FIRST_AIDER — successfully complete a full CPR training session.
+     * All students receive their certificates; player receives one per student.
+     */
+    COMMUNITY_FIRST_AIDER(
+        "Community First Aider",
+        "You stood there for a whole minute. Technically, that counts as teaching.",
+        1
+    ),
+
+    /**
+     * DID_A_RUNNER — the achievement for abandoning a CPR course (same trigger as
+     * UNLICENSED_PRACTITIONER, awarded on session abandonment with students present).
+     */
+    DID_A_RUNNER(
+        "Did a Runner",
+        "You vanished before the students could form an orderly queue for refunds.",
+        1
+    ),
+
+    /**
+     * AMBULANCE_CHASER — show the NOTICE_OF_DEFICIENCY_PROP to Gary at the Claims
+     * Management office for a 12 COIN emotional distress payout.
+     */
+    AMBULANCE_CHASER(
+        "Ambulance Chaser",
+        "You claimed emotional distress over a defibrillator you looted. Gary said fair enough.",
+        1
     );
 
     private final String name;

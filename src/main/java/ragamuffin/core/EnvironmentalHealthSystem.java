@@ -719,6 +719,30 @@ public class EnvironmentalHealthSystem {
         parkFlyTipCount = 0;
     }
 
+    // ── Issue #1479: Northfield Public Defibrillator ─────────────────────────
+
+    /** Whether the defibrillator cabinet has been reported as looted. */
+    private boolean defibLooted = false;
+
+    /**
+     * Called by {@code DefibrillatorSystem} when a looted cabinet is combined
+     * with a nearby cardiac death. Triggers spawning of NOTICE_OF_DEFICIENCY_PROP
+     * and NeighbourhoodSystem Vibes −3/day while the notice is present.
+     */
+    public void notifyDefibLooted() {
+        defibLooted = true;
+    }
+
+    /** Whether the defibrillator cabinet has been reported as looted. */
+    public boolean isDefibLooted() {
+        return defibLooted;
+    }
+
+    /** Reset the defib looted flag (e.g. when cabinet is restocked). */
+    public void resetDefibLooted() {
+        defibLooted = false;
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /** Returns the display name of a food venue. */
