@@ -1600,6 +1600,15 @@ public enum Material {
      */
     CANDLE("Candle"),
 
+    // ── Issue #1331: Power Cut System ─────────────────────────────────────────
+
+    /**
+     * Torch — "A rag-wrapped metal torch. Burns for 20 in-game minutes, 5-block light radius."
+     * Crafted from SCRAP_METAL × 1 + CLOTH × 1.
+     * Provides warm yellow light; essential indoors during a power cut.
+     */
+    TORCH("Torch"),
+
     /**
      * Tablecloth — "Beige, floral. Smells of moth balls."
      * Wearable as a disguise component: +1 Disguise tier for 5 minutes if draped over player (press E to wear).
@@ -6067,6 +6076,8 @@ public enum Material {
             case CLOTH:                 return c(0.72f, 0.62f, 0.52f);   // Off-white rag
             case CANDLE:                return cs(0.95f, 0.92f, 0.72f,   // Cream wax body
                                                   0.98f, 0.78f, 0.20f);  // Yellow flame
+            case TORCH:                 return cs(0.55f, 0.38f, 0.22f,   // Dark metal handle
+                                                  0.98f, 0.72f, 0.18f);  // Warm orange flame
             case PADLOCK:               return c(0.52f, 0.52f, 0.58f);   // Metal grey padlock
             case MYSTERY_BOX:           return cs(0.72f, 0.58f, 0.32f,   // Cardboard brown box
                                                   0.88f, 0.20f, 0.12f);  // Red question mark
@@ -6944,6 +6955,7 @@ public enum Material {
             case MOP:
             case CLOTH:
             case CANDLE:
+            case TORCH:
             case PADLOCK:
             case MYSTERY_BOX:
             case SLIPPERY_FLOOR_TRAP:
@@ -7233,6 +7245,7 @@ public enum Material {
             case WASHING_UP_LIQUID:
             case CLOTH:
             case CANDLE:
+            case TORCH:
             case PADLOCK:
             case MYSTERY_BOX:
             // Issue #1028: Northfield Cash Converters — small electronics sit on shelves
@@ -7883,6 +7896,8 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // flat fabric square
             case CANDLE:
                 return IconShape.CYLINDER;    // candle cylinder
+            case TORCH:
+                return IconShape.TOOL;        // torch/rod shape
             case PADLOCK:
                 return IconShape.BOX;         // padlock body
             case MYSTERY_BOX:
