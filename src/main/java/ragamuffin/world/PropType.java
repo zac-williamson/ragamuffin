@@ -4099,7 +4099,38 @@ public enum PropType {
      * CCTV_PORTACABIN_PROP — Keith's base behind the JobCentre. Lockable.
      * Dims: 4.0 × 3.0 × 6.0; 8 hits to break; drops WOOD.
      */
-    CCTV_PORTACABIN_PROP(4.0f, 3.0f, 6.0f, 8, ragamuffin.building.Material.WOOD);
+    CCTV_PORTACABIN_PROP(4.0f, 3.0f, 6.0f, 8, ragamuffin.building.Material.WOOD),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1433: Northfield Easter Weekend
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * EASTER_EGG_PROP — A hidden foil egg placed by Brenda during the council egg hunt.
+     * Dims: 0.3 × 0.2 × 0.3; 1 hit to break; drops FOIL_EASTER_EGG.
+     * Player collects by pressing E within 1 block.
+     */
+    EASTER_EGG_PROP(0.3f, 0.2f, 0.3f, 1, ragamuffin.building.Material.FOIL_EASTER_EGG),
+
+    /**
+     * EASTER_BANNER_PROP — Northfield Easter Weekend decorative banner strung across streets.
+     * Dims: 3.0 × 0.5 × 0.1; 2 hits to break; drops WOOD.
+     */
+    EASTER_BANNER_PROP(3.0f, 0.5f, 0.1f, 2, ragamuffin.building.Material.WOOD),
+
+    /**
+     * MOTORBIKE_PROP — A parked charity-parade motorbike.
+     * Dims: 2.0 × 1.2 × 0.8; 5 hits to break; drops BIKER_JACKET (via EasterSystem logic).
+     * STEALTH ≥ 2 required for 3-second E-hold steal.
+     */
+    MOTORBIKE_PROP(2.0f, 1.2f, 0.8f, 5, ragamuffin.building.Material.BIKER_JACKET),
+
+    /**
+     * CHARITY_BUCKET_PROP — Easter Egg Run charity collection bucket at park entrance.
+     * Dims: 0.4 × 0.5 × 0.4; 1 hit to break; drops CHARITY_BUCKET_EASTER.
+     * Donate or steal — theft triggers Notoriety +8, Wanted +1, all BIKER_NPCs HOSTILE.
+     */
+    CHARITY_BUCKET_PROP(0.4f, 0.5f, 0.4f, 1, ragamuffin.building.Material.CHARITY_BUCKET_EASTER);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

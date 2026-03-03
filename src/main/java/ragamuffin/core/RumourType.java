@@ -1530,5 +1530,19 @@ public enum RumourType {
     /** "Saw someone actually finish the whole sponsored walk. Fair play."
      * — seeded by SponsoredWalkSystem when player completes all 20 waypoints and returns to Brenda.
      * Spreads via PUBLIC and COMMUNITY_CENTRE_CLERK NPCs. */
-    WALK_HERO;
+    WALK_HERO,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1433: Northfield Easter Weekend
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** "I heard Brenda hid some of the Easter eggs near the pond — good spot."
+     * — seeded by EasterSystem when egg hunt opens (day 92, 10:00).
+     * Spreads via SCHOOL_KID and PUBLIC NPCs. */
+    EASTER_EGG_HIDDEN,
+
+    /** "There's a load of bikers coming through Northfield Sunday for charity."
+     * — seeded by EasterSystem when parade begins (day 93, 11:00).
+     * Spreads via PUBLIC and BIKER_NPC NPCs. */
+    BIKER_PARADE;
 }

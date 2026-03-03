@@ -6605,7 +6605,72 @@ public enum Material {
      *   <li>Used to bribe Keith (CCTV_OPERATOR) with 80% success for 15-minute camera blindspot.</li>
      * </ul>
      */
-    MEAL_DEAL_ITEM("Meal Deal");
+    MEAL_DEAL_ITEM("Meal Deal"),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1433: Northfield Easter Weekend
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * HOT_CROSS_BUN — Fresh from Greggs on Good Friday morning.
+     * <ul>
+     *   <li>Obtained from the Greggs queue on day 91 (Good Friday), 08:00–10:00.</li>
+     *   <li>Heals 5 HP when consumed. Stack size 12.</li>
+     * </ul>
+     */
+    HOT_CROSS_BUN("Hot Cross Bun"),
+
+    /**
+     * CHOCOLATE_EGG — Filched from the Easter Bunny's pocket.
+     * <ul>
+     *   <li>Obtained by pickpocketing {@link ragamuffin.entity.NPCType#EASTER_BUNNY_NPC} (×3 per lift).</li>
+     *   <li>Heals 3 HP. Fenceable for 2 COIN each.</li>
+     * </ul>
+     */
+    CHOCOLATE_EGG("Chocolate Egg"),
+
+    /**
+     * FOIL_EASTER_EGG — A shiny foil-wrapped egg from the council egg hunt.
+     * <ul>
+     *   <li>Collected by pressing E within 1 block of an {@link ragamuffin.world.PropType#EASTER_EGG_PROP}.</li>
+     *   <li>Not consumable; counts toward {@link ragamuffin.ui.AchievementType#EASTER_EGG_BARON}.</li>
+     * </ul>
+     */
+    FOIL_EASTER_EGG("Foil Easter Egg"),
+
+    /**
+     * EASTER_BASKET — Wicker basket for egg collection.
+     * <ul>
+     *   <li>Crafted item; increases egg-carrying capacity during the hunt.</li>
+     * </ul>
+     */
+    EASTER_BASKET("Easter Basket"),
+
+    /**
+     * BIKER_JACKET — Heavy leather jacket lifted from a parked motorbike.
+     * <ul>
+     *   <li>Requires STEALTH ≥ 2 and 3-second E-hold on {@link ragamuffin.world.PropType#MOTORBIKE_PROP}.</li>
+     *   <li>Provides 2 armour. Fenceable for 15 COIN.</li>
+     * </ul>
+     */
+    BIKER_JACKET("Biker Jacket"),
+
+    /**
+     * CHARITY_BUCKET_EASTER — The collection bucket at the park entrance during the motorbike parade.
+     * <ul>
+     *   <li>Stealing triggers Notoriety +8, Wanted +1, and all {@link ragamuffin.entity.NPCType#BIKER_NPC} become HOSTILE.</li>
+     *   <li>Donating grants StreetRep +3 and BIKER respect +5.</li>
+     * </ul>
+     */
+    CHARITY_BUCKET_EASTER("Charity Bucket"),
+
+    /**
+     * BIKERS_VOUCHER — A complimentary voucher handed out by bikers after a generous donation.
+     * <ul>
+     *   <li>Redeemable at KebabVan for a free kebab.</li>
+     * </ul>
+     */
+    BIKERS_VOUCHER("Bikers' Voucher");
 
     private final String displayName;
 
@@ -8037,6 +8102,21 @@ public enum Material {
                                                     0.80f, 0.10f, 0.10f); // Blinking red LED
             case MEAL_DEAL_ITEM:          return cs(0.90f, 0.85f, 0.70f, // Sandwich wrapper
                                                     0.20f, 0.55f, 0.25f); // Green crisps packet
+
+            // Issue #1433: Northfield Easter Weekend
+            case HOT_CROSS_BUN:           return cs(0.75f, 0.50f, 0.20f, // Baked bun
+                                                    0.60f, 0.30f, 0.10f); // Cross icing
+            case CHOCOLATE_EGG:           return cs(0.35f, 0.20f, 0.05f, // Dark chocolate
+                                                    0.80f, 0.60f, 0.20f); // Foil wrap
+            case FOIL_EASTER_EGG:         return cs(0.90f, 0.80f, 0.10f, // Bright gold foil
+                                                    0.20f, 0.80f, 0.30f); // Green ribbon
+            case EASTER_BASKET:           return cs(0.75f, 0.55f, 0.20f, // Wicker
+                                                    0.20f, 0.65f, 0.25f); // Grass filler
+            case BIKER_JACKET:            return c(0.10f, 0.10f, 0.10f);  // Black leather
+            case CHARITY_BUCKET_EASTER:   return cs(0.20f, 0.45f, 0.80f, // Blue bucket
+                                                    0.95f, 0.85f, 0.10f); // Yellow label
+            case BIKERS_VOUCHER:          return cs(0.90f, 0.90f, 0.90f, // White slip
+                                                    0.10f, 0.10f, 0.50f); // Blue print
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -10424,6 +10504,22 @@ public enum Material {
                 return IconShape.BOX;         // hollow plastic camera unit
             case MEAL_DEAL_ITEM:
                 return IconShape.BOX;         // bundled bag with sandwich, crisps, drink
+
+            // Issue #1433: Northfield Easter Weekend
+            case HOT_CROSS_BUN:
+                return IconShape.FOOD;        // baked bun
+            case CHOCOLATE_EGG:
+                return IconShape.FOOD;        // foil-wrapped egg
+            case FOIL_EASTER_EGG:
+                return IconShape.FOOD;        // shiny collectible egg
+            case EASTER_BASKET:
+                return IconShape.BOX;         // wicker basket
+            case BIKER_JACKET:
+                return IconShape.FLAT_PAPER;  // flat jacket icon
+            case CHARITY_BUCKET_EASTER:
+                return IconShape.CYLINDER;    // collection bucket
+            case BIKERS_VOUCHER:
+                return IconShape.FLAT_PAPER;  // paper voucher
 
             default:
                 return IconShape.BOX;

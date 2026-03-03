@@ -6971,6 +6971,60 @@ public enum AchievementType {
         "Dodged Brenda",
         "Escape Brenda after committing charity fraud.",
         1
+    ),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1433: Northfield Easter Weekend
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * HOT_CROSS_HERO — Get a hot cross bun from the Greggs queue on Good Friday.
+     * Awarded by EasterSystem when player successfully obtains a HOT_CROSS_BUN.
+     */
+    HOT_CROSS_HERO(
+        "Hot Cross Hero",
+        "Brave the Greggs queue on Good Friday for a hot cross bun.",
+        1
+    ),
+
+    /**
+     * EASTER_EGG_BARON — Collect 5 or more foil Easter eggs during the egg hunt.
+     * Awarded by EasterSystem when player's foil egg count reaches 5.
+     */
+    EASTER_EGG_BARON(
+        "Easter Egg Baron",
+        "Collect 5 or more foil Easter eggs during the council egg hunt.",
+        5
+    ),
+
+    /**
+     * CHARITY_SKIMMER — Steal the charity bucket during the Easter motorbike parade.
+     * Awarded by EasterSystem on charity bucket theft.
+     */
+    CHARITY_SKIMMER(
+        "Charity Skimmer",
+        "Steal the charity collection bucket during the Easter Egg Run parade.",
+        1
+    ),
+
+    /**
+     * BIKER_BLAG — Steal a biker jacket from a parked motorbike during the parade.
+     * Awarded by EasterSystem when player successfully lifts a BIKER_JACKET.
+     */
+    BIKER_BLAG(
+        "Biker Blag",
+        "Steal a biker jacket from a parked motorbike during the Easter Egg Run.",
+        1
+    ),
+
+    /**
+     * NOTHING_IS_OPEN — Attempt 5 or more closed shops on Easter Monday.
+     * Awarded by EasterSystem when player tries 5+ shops and finds them all shut.
+     */
+    NOTHING_IS_OPEN(
+        "Nothing Is Open",
+        "Discover that absolutely everything is shut on Easter Monday.",
+        5
     );
 
     private final String name;
