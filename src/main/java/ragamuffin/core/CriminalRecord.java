@@ -1303,7 +1303,29 @@ public class CriminalRecord {
          * from the Raj Mahal kitchen while Bashir has line-of-sight.
          * Penalty: Notoriety +3, chase triggered, police called after 10 seconds.
          */
-        RESTAURANT_THEFT("Theft from a restaurant kitchen");
+        RESTAURANT_THEFT("Theft from a restaurant kitchen"),
+
+        // ── Issue #1459: Northfield Church Hall Jumble Sale ───────────────────
+
+        /**
+         * JUMBLE_SHOPLIFTING — recorded when caught pocketing an item at Dot's jumble sale.
+         * Penalty: Notoriety +4, ejected from hall; JUMBLE_THIEF rumour seeded.
+         */
+        JUMBLE_SHOPLIFTING("Shoplifting (jumble sale)"),
+
+        /**
+         * JUMBLE_BREAKING_AND_ENTERING — recorded when forcing the back window of the
+         * Community Centre during the pre-opening window (08:45–09:00).
+         * Penalty: Notoriety +5; WantedSystem +1 if CCTV active.
+         */
+        JUMBLE_BREAKING_AND_ENTERING("Breaking and entering (community centre)"),
+
+        /**
+         * JUMBLE_HANDLING_STOLEN_GOODS — recorded when a volunteer recognises stolen
+         * items on the player's rented stall (Notoriety ≥ 40, 20% scrutiny chance).
+         * Penalty: WantedSystem +1.
+         */
+        JUMBLE_HANDLING_STOLEN_GOODS("Handling stolen goods (jumble sale stall)");
 
         private final String displayName;
 

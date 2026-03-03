@@ -1661,5 +1661,22 @@ public enum RumourType {
     /** "They've boarded up the Crown for good. Flats going in. It's a disgrace."
      * — seeded by SaveOurPubSystem on a Developer Win at the committee vote.
      * Spreads via PUBLIC and PENSIONER NPCs. */
-    CROWN_ANCHOR_GONE;
+    CROWN_ANCHOR_GONE,
+
+    // ── Issue #1459: Northfield Church Hall Jumble Sale ───────────────────────
+
+    /** "Some pensioner elbowed me out the way at the jumble sale. Did me nut in."
+     * — seeded by JumbleSaleSystem when a PENSIONER beats the player to an item.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    JUMBLE_QUEUE_JUMPED,
+
+    /** "Someone got caught pocketing stuff at Dot's jumble sale. Got marched out by a volunteer in a tabard."
+     * — seeded by JumbleSaleSystem on shoplifting detection.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    JUMBLE_THIEF,
+
+    /** "Someone broke into the community centre before the jumble sale even opened. The cheek of it."
+     * — seeded by JumbleSaleSystem on pre-opening break-in; also triggers NewspaperSystem headline.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    JUMBLE_BREAK_IN;
 }
