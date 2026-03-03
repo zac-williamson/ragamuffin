@@ -3014,7 +3014,29 @@ public enum NPCType {
      * Buys ST_GEORGE_FLAG_PROP for 5 COIN, ROOF_FLAG_PROP for 12 COIN.
      * Present all day on St George's Day.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
-    MIREK_FENCE(20f, 0f, 0f, false);
+    MIREK_FENCE(20f, 0f, 0f, false),
+
+    // ── Issue #1394: England Match Night ─────────────────────────────────────
+
+    /** MATCH_BOOKIE — Barry; takes scoreline bets before kick-off (before 20:00).
+     * Flees pub at full-time if England lost and player bet on OPPOSITION_WIN.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    MATCH_BOOKIE(20f, 0f, 0f, false),
+
+    /** PUB_STEWARD — Terry; patrols the Wetherspoons doorway during England matches.
+     * Ejects players with Notoriety ≥ 100. Can be bribed (5 COIN).
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false. */
+    PUB_STEWARD(25f, 0f, 0f, false),
+
+    /** RIVAL_FAN — 1–2 NPCs wearing opposition colours; spawns if England concede.
+     * Goads the crowd; 60% chance of triggering a CROWD_BRAWL.
+     * HP: 20f, attack: 5f, cooldown: 2.0f, hostile: false. */
+    RIVAL_FAN(20f, 5f, 2.0f, false),
+
+    /** WETHERSPOONS_CROWD — dense passive crowd NPC packed into the pub for the match.
+     * Reacts to goal events, half-time, and full-time. State = WATCHING_MATCH.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    WETHERSPOONS_CROWD(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

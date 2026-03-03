@@ -6334,6 +6334,63 @@ public enum AchievementType {
         "Northfield Conker Champion",
         "Won the Annual Conker Championship fair and square. Well, mostly fair.",
         1
+    ),
+
+    // ── Issue #1394: England Match Night ─────────────────────────────────────
+
+    /**
+     * SABOTEUR — pull off the TV sabotage during half-time without Dave noticing.
+     */
+    SABOTEUR(
+        "It Was the Aerial",
+        "The pub went dark. You were already walking away. Technical fault, mate.",
+        1
+    ),
+
+    /**
+     * TROPHY_HUNTER — steal all three trophy cabinet items in one match night.
+     */
+    TROPHY_HUNTER(
+        "Trophy Hunter",
+        "Terry will never fully recover from this.",
+        1
+    ),
+
+    /**
+     * DIPLOMATIC_INCIDENT — plant a German flag in the pub during an England match.
+     */
+    DIPLOMATIC_INCIDENT(
+        "Diplomatic Incident",
+        "You did it. You actually did it. You've had to move to a different estate.",
+        1
+    ),
+
+    /**
+     * CROWD_HERO — kick the spare football prop into the pub TV during a goal celebration
+     * while wearing ENGLAND_SHIRT disguise.
+     */
+    CROWD_HERO(
+        "Crowd Hero",
+        "For one glorious second, the crowd thought you scored.",
+        1
+    ),
+
+    /**
+     * ITS_COMING_HOME — win an ENGLAND_WIN bet with odds ≥ 2:1.
+     */
+    ITS_COMING_HOME(
+        "It's Coming Home",
+        "It came home. Barry did not.",
+        1
+    ),
+
+    /**
+     * MATCH_FIXER — use the MATCH_FIX_ITEM and profit from the result.
+     */
+    MATCH_FIXER(
+        "Marchetti's Man",
+        "A sealed envelope, a bent result, a 20% cut for the crew. Business as usual in Northfield.",
+        1
     );
 
     private final String name;
