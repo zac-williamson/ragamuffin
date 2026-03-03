@@ -54139,3 +54139,17 @@ All already defined:
 
 // All enum entries (Material, PropType, AchievementType, RumourType) already exist.
 // HalloweenSystem.java must be created as the sole new source file.
+
+---
+
+## Proposed Next: Issue #1432 — Add Northfield Christmas Lights Switch-On (ChristmasLightsSystem)
+
+**Summary**: Implement `ChristmasLightsSystem` based on the pre-existing spec at Issue #1343. This is a high-street annual event on the first Saturday of December (17:00–20:00) where ex-Big Brother contestant Wayne Stubbs flicks the switch and the neighbourhood briefly pretends to be festive. The spec and all required enum entries (NPCType: CELEBRITY, SECURITY_GUARD; Material: MULLED_WINE, CHRISTMAS_LIGHTS_BULB, WAYNE_STUBBS_AUTOGRAPH, CELEBRITY_WALLET, FREEBIE_WRISTBAND; PropType: XMAS_MARKET_CHALET_PROP, SANTA_GROTTO_PROP, CAROL_SONG_BOARD_PROP, GROTTO_TIN, FAIRY_LIGHT_PROP) are defined at Issue #1343 in SPEC.md. Still required: add RumourType entries (SEASONAL_CHEER, LIGHTS_FAILURE, NORTHFIELD_STAMPEDE) and AchievementType entries (CHRISTMAS_SABOTEUR, COMPETENT_SPARKY, CHRISTMAS_ENTREPRENEUR, CELEBRITY_MUGGER, LIGHTS_ON). Then create `ChristmasLightsSystem.java`, unit tests, and integration tests exactly as specified.
+
+**Key mechanics**:
+1. Setup at 16:00: FAIRY_LIGHT_PROPs strung across HIGH_STREET, four MULLED_WINE_STALL props, COUNCIL_ANNOUNCEMENT_BOARD_PROP.
+2. Switch-on at 17:00: 20% random failure chance (Marchetti shoddy wiring); player can tamper (STEALTH ≥ 2) to guarantee failure, or reinforce (WIRE_CUTTERS/SPANNER) to guarantee success.
+3. Lights failure: crowd chaos, 3 YOUTH_GANG pickpockets spawn, Street Lads Respect +15, Marchetti Respect −15, newspaper headline.
+4. Celebrity (Wayne Stubbs): pickpocketable for CELEBRITY_WALLET (Notoriety +8 if caught), autograph-signable, calls SECURITY_GUARD for Notoriety ≥ 3 players.
+5. Mulled wine economy: buy 2 COIN, unattended stall free-take after 18:00, stall takeover (TRADING ≥ 2 + MARKET_LICENCE).
+6. Crowd crush at 18:30 if 70+ NPCs: 2 NPCs go FALLEN, FireStationSystem call-out, police triple, Notoriety penalty −50% for 5 minutes.
