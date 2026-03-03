@@ -2643,7 +2643,30 @@ public enum NPCType {
      * Notoriety ≥ 70 (known bike thief reputation).
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    CYCLE_SHOP_OWNER(20f, 0f, 0f, false);
+    CYCLE_SHOP_OWNER(20f, 0f, 0f, false),
+
+    // ── Issue #1337: Northfield Police Station — The Nick ─────────────────────
+
+    /**
+     * DESK_SERGEANT — Geoff, the public-facing desk sergeant at Northfield B Division.
+     * Staffs the ENQUIRY_COUNTER_PROP 08:00–20:00. Passive toward the player unless
+     * bribed (unlocks with COIN at Notoriety ≤ 400) or intimidated via INTIMIDATION
+     * street skill (StreetSkillSystem BRAWLING Expert+). Can arrange voluntary
+     * surrender (reduces sentence tier by one step in MagistratesCourtSystem).
+     * Not armed; calls for backup if attacked.
+     * HP: 30f, attack: 5f, cooldown: 2.0f, hostile: false.
+     */
+    DESK_SERGEANT(30f, 5f, 2.0f, false),
+
+    /**
+     * CUSTODY_SERGEANT — the night-custody officer staffing the station 20:00–08:00.
+     * Takes over from Geoff at the ENQUIRY_COUNTER_PROP. Slightly more suspicious
+     * than the DESK_SERGEANT; bribe cost 40 COIN (Notoriety ≤ 300 only). Does not
+     * offer voluntary surrender outside of DESK_SERGEANT hours. Not armed; calls for
+     * backup if attacked. Provides access to the custody suite for processing.
+     * HP: 30f, attack: 5f, cooldown: 2.0f, hostile: false.
+     */
+    CUSTODY_SERGEANT(30f, 5f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

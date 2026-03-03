@@ -5467,6 +5467,75 @@ public enum AchievementType {
         "Cycle to Work",
         "Pedal power. Saving the planet one shift at a time.",
         1
+    ),
+
+    // ── Issue #1337: Northfield Police Station — The Nick ─────────────────────
+
+    /**
+     * Fires when the player voluntarily surrenders at the ENQUIRY_COUNTER_PROP
+     * and Geoff (DESK_SERGEANT) confirms the surrender (08:00–20:00 only).
+     * Reduces the next MagistratesCourtSystem sentence tier by one step.
+     */
+    CAME_IN_QUIETLY(
+        "Came In Quietly",
+        "Walked into the nick and handed yourself in. Geoff was genuinely surprised.",
+        1
+    ),
+
+    /**
+     * Fires when the player successfully completes the evidence locker heist —
+     * takes at least one item from the EVIDENCE_LOCKER_PROP and exits the
+     * station without being caught (no EVIDENCE_TAMPERING in CriminalRecord
+     * this session).
+     */
+    EVIDENCE_GONE(
+        "Evidence? What Evidence?",
+        "Cleaned out the evidence locker and walked out clean. The CPS are not pleased.",
+        1
+    ),
+
+    /**
+     * Fires when the player completes the evidence locker heist using the
+     * fire alarm distraction route specifically (pressed E on FIRE_ALARM_PROP
+     * and then accessed EVIDENCE_LOCKER_PROP within the 90-second evacuation window).
+     */
+    INSIDE_JOB(
+        "Inside Job",
+        "Fire alarm, empty station, full locker. Textbook.",
+        1
+    ),
+
+    /**
+     * Fires when the player enters the station, reaches the public enquiry counter,
+     * and Geoff (DESK_SERGEANT) fails to recognise the player due to a currently
+     * active disguise (DisguiseSystem score ≥ 3). Player must then successfully exit.
+     */
+    HIDING_IN_PLAIN_SIGHT(
+        "Hiding in Plain Sight",
+        "Walked straight past Geoff wearing someone else's face. He said good morning.",
+        1
+    ),
+
+    /**
+     * Fires when the player successfully recovers an impounded vehicle from the
+     * POLICE_GARAGE_PROP by either: paying 20 COIN + DRIVING_LICENCE at the
+     * enquiry counter, OR breaking the garage door at night.
+     */
+    GOT_ME_MOTOR_BACK(
+        "Got Me Motor Back",
+        "Reclaimed your vehicle from the impound. One way or another.",
+        1
+    ),
+
+    /**
+     * Fires when the player successfully bribes Geoff (DESK_SERGEANT) at the
+     * ENQUIRY_COUNTER_PROP for the first time (25 COIN, Notoriety ≤ 400).
+     * Records BRIBERY_OF_OFFICER in CriminalRecord and seeds POLICE_CORRUPTION rumour.
+     */
+    BENT_COPPER(
+        "Bent Copper",
+        "Slipped Geoff a few coins. He didn't look you in the eye after.",
+        1
     );
 
     private final String name;

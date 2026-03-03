@@ -964,7 +964,34 @@ public class CriminalRecord {
          * Penalty: Notoriety +5; WantedSystem +1 star if witnessed by any NPC.
          * Evidence: STOLEN_BIKE in inventory increases stop-and-search probability.
          */
-        BIKE_THEFT("Bike theft");
+        BIKE_THEFT("Bike theft"),
+
+        // ── Issue #1337: Northfield Police Station — The Nick ─────────────────
+
+        /**
+         * Recorded when the player breaks into the police station custody area,
+         * evidence locker, or impound garage without authorisation (e.g. by
+         * breaking the CUSTODY_DOOR_PROP, BACK_WINDOW_PROP, or POLICE_GARAGE_PROP).
+         * Penalty: WantedSystem +3 stars, Notoriety +20; station-wide hostile alert.
+         */
+        BREAKING_AND_ENTERING_POLICE_STATION("Breaking and entering (police station)"),
+
+        /**
+         * Recorded when the player successfully bribes the DESK_SERGEANT (25 COIN)
+         * or CUSTODY_SERGEANT (40 COIN) at the enquiry counter.
+         * Penalty: Notoriety +10; POLICE_CORRUPTION rumour seeded nearby.
+         * Achievement: BENT_COPPER on first successful bribe.
+         */
+        BRIBERY_OF_OFFICER("Bribery of a police officer"),
+
+        /**
+         * Recorded when the player attempts to recover an impounded vehicle from
+         * POLICE_GARAGE_PROP by breaking the garage door at night without paying
+         * the 20 COIN + DRIVING_LICENCE fee.
+         * Penalty: WantedSystem +2 stars, Notoriety +8.
+         * Achievement: GOT_ME_MOTOR_BACK on successful night-time recovery.
+         */
+        VEHICLE_RECOVERY_OFFENCE("Vehicle recovery offence (impound garage break-in)");
 
         private final String displayName;
 
