@@ -3299,6 +3299,29 @@ public enum PropType {
      */
     FIREWORK_MORTAR_PROP(0.4f, 0.6f, 0.4f, Integer.MAX_VALUE, Material.SCRAP_METAL),
 
+    // ── Issue #1381: Northfield Halloween ─────────────────────────────────────
+
+    /**
+     * JACK_O_LANTERN_PROP — a carved pumpkin placed by the player from CARVED_PUMPKIN.
+     * 0.4×0.4×0.4m; emits orange ambient glow via LightingSystem (+1 Neighbourhood VIBES).
+     * Placed by right-clicking with CARVED_PUMPKIN.
+     */
+    JACK_O_LANTERN_PROP(0.4f, 0.4f, 0.4f, 3, Material.PUMPKIN_INNARDS),
+
+    /**
+     * EGGED_DOOR_PROP — a splattered egg decal applied to a door or car after being
+     * hit with RAW_EGG. 0.1×0.8×0.8m; purely cosmetic, triggers NeighbourhoodSystem
+     * VIBES loss and NoiseSystem event.
+     */
+    EGGED_DOOR_PROP(0.1f, 0.8f, 0.8f, 1, null),
+
+    /**
+     * ARGOS_MOTION_SENSOR_PROP — Dave's security motion sensor that arms at 17:30
+     * on Halloween night. 0.2×0.2×0.2m; indestructible during event. Egging Dave's
+     * car while armed triggers level-15 noise and Dave spawns angry.
+     */
+    ARGOS_MOTION_SENSOR_PROP(0.2f, 0.2f, 0.2f, Integer.MAX_VALUE, null),
+
     // ── Issue #1319: NatWest Cashpoint — The Dodgy ATM ───────────────────────
 
     /**
