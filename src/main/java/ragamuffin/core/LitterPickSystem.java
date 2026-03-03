@@ -511,7 +511,7 @@ public class LitterPickSystem {
 
             // Police called — wanted stars + POSSESSION
             if (wantedSystem != null) {
-                wantedSystem.addWantedStars(CRACK_PIPE_WANTED_STARS, 0f, 0f, 0f, achievementCallback);
+                wantedSystem.addWantedStars(CRACK_PIPE_WANTED_STARS, 0f, 0f, 0f, null);
             }
             if (criminalRecord != null) {
                 criminalRecord.record(CrimeType.POSSESSION);
