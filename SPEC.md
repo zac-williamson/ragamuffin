@@ -49498,3 +49498,214 @@ player can back any candidate through volunteering, sabotage, and fraud — or j
 //   NotorietySystem, CriminalRecord, WantedSystem, RumourNetwork, NewspaperSystem,
 //   WetherspoonsSystem, FenceSystem, OffLicenceSystem, StreetSkillSystem, AchievementSystem,
 //   DisguiseSystem, NeighbourhoodSystem
+
+---
+
+## Northfield Mystic Maureen's Psychic Readings — The Cold Reading, the Crystal Ball Hustle & the Trading Standards Sting
+
+**New system class**: `MysticMaureenSystem.java` in `ragamuffin.core`
+
+Mystic Maureen (a `PSYCHIC_NPC` variant of `PUBLIC` with custom speech lines) operates a
+`PSYCHIC_CARAVAN_PROP` at the corner of the indoor market every Saturday and Sunday,
+09:00–17:00. She is one of Northfield's worst-kept secrets: technically a fraud, genuinely
+well-connected, and absolutely not above gassing you up to the Trading Standards if you
+muscle in on her turf.
+
+### Mechanic 1 — Maureen's Readings (Disguised Intelligence)
+
+- Press **E** on Maureen during opening hours to receive a reading. Cost: 3 COIN.
+- The reading is flavour text wrapping the top unread `RumourType` from the `RumourNetwork`
+  nearest to the player's current zone. If no rumour is available, Maureen delivers a generic
+  cold-reading line ("I see... trouble ahead. Near water. Or a car park. One of them.").
+- Maureen holds up to 5 rumours (she is a passive rumour sink, like the BARMAN, but
+  weekend-only). NPCs passing within 5 blocks of the `PSYCHIC_CARAVAN_PROP` on Saturday/Sunday
+  automatically share their top rumour with her (no `drunkTimer` required — she asks probing
+  questions).
+- Each reading has a 30% chance of granting a `BORED` need reduction of 20 points to the
+  nearest 3 pedestrian NPCs within 8 blocks (the entertainment value of watching someone get
+  their fortune told is universal).
+- Tooltip on first reading: "She's probably just nosy. Still, she knew about the Greggs thing."
+
+### Mechanic 2 — Player Psychic Scam (Crystal Ball Hustle)
+
+- The `CRYSTAL_BALL` item is available at the charity shop for 5 COIN (random stock; restocks
+  every 7 in-game days).
+- While holding `CRYSTAL_BALL` in the active hotbar slot, pressing **E** on any NPC whose
+  `BORED` need score ≥ 40 initiates a "reading":
+  - A skill check against `StreetSkillSystem.Skill.PERSUASION` (if skill ≥ Apprentice: 80%
+    success; otherwise 55% success). Roll performed by `MysticMaureenSystem.attemptReading()`.
+  - **Success**: NPC pays 3 COIN. `BORED` need reset to 0. Notoriety +2 (exploitation of
+    credulity is still morally dubious). Tooltip on first success: "Easy money. They want
+    to believe."
+  - **Failure**: NPC becomes `SUSPICIOUS_STATE` for 60 seconds, refuses future readings, and
+    has a 25% chance to gossip to a nearby NPC (seeding a `PLAYER_SPOTTED` rumour tagged
+    "dodgy bloke with a crystal ball").
+- **Repeat victim penalty**: If the player targets the same NPC twice within 30 in-game
+  minutes, the NPC calls for a `POLICE` NPC. Adds `FRAUD` to `CriminalRecord`. Notoriety +6.
+  Tooltip: "She's not stupid. She just wanted to believe."
+- **Maureen's turf**: If the player performs a reading within 10 blocks of the
+  `PSYCHIC_CARAVAN_PROP` while Maureen is present, she detects the competition (40% chance
+  per reading) and immediately calls Trading Standards (`tradingStandardsAlerted = true`).
+  She shouts "Oi! That's my pitch!" and enters `HOSTILE_SPEECH` state.
+
+### Mechanic 3 — Trading Standards Raid & Counter-Play
+
+- A `TRADING_STANDARDS_OFFICER_NPC` (Val, plain clothes, clipboard) arrives at Maureen's
+  caravan every 14 in-game days (or immediately if `tradingStandardsAlerted = true`) at
+  10:00. Val patrols within 12 blocks of the `PSYCHIC_CARAVAN_PROP` for 30 in-game minutes.
+- **If Maureen is operating**: Val issues a `IMPROVEMENT_NOTICE` (flavour prop on the caravan).
+  Maureen must pay a 5 COIN fine (deducted automatically) and close for 1 in-game day.
+  Maureen's Respect toward the player increases by 5 if Val was tipped off by the player
+  (because rivals are worse than inspectors).
+- **Player tip-off mechanic**: Press **E** on Val and select "Actually, I've seen something
+  dodgy going on over there" to trigger an immediate raid on Maureen's caravan. If the player
+  has performed their own Crystal Ball readings in the last 24 in-game hours, Val also
+  investigates the player: 60% chance the player receives a `TRADING_STANDARDS_WARNING`
+  (no criminal record, but Notoriety +3 and tooltip "She squealed. Should've tipped better.").
+- **Warn Maureen instead**: Press **E** on Maureen when `tradingStandardsVisitDue` is
+  within 60 in-game minutes. Maureen packs up early (caravan closes for the day), Val
+  finds nothing, Maureen's Respect toward player +10, and she shares her best rumour for
+  free. Achievement: `PROFESSIONAL_COURTESY`.
+- **Neighbourhood impact**: Each successfully completed raid (Val issues the notice) seeds
+  a `TRADING_STANDARDS_VISIT` rumour into the `RumourNetwork` ("They're cracking down on
+  the market this weekend") — `NeighbourhoodSystem` VIBES +2 (the neighbourhood approves
+  of enforcement, briefly).
+
+### New Materials
+- `CRYSTAL_BALL` — held item. Charity shop stock. Enables Crystal Ball Hustle mechanic.
+  No combat use. FenceSystem value: 2 COIN (novelty).
+- `TAROT_DECK` — optional alternative to CRYSTAL_BALL. Same mechanics. Found in charity
+  shop or dropped by Maureen on defeat (she never fights back, but if hit 1 time she
+  drops it and flees). FenceSystem value: 1 COIN.
+- `IMPROVEMENT_NOTICE` — prop item (not holdable). Appears on `PSYCHIC_CARAVAN_PROP` after
+  Val's raid. Purely cosmetic after placement.
+
+### New PropTypes
+- `PSYCHIC_CARAVAN_PROP` — Maureen's caravan. Appears at market corner Sat/Sun 09:00–17:00.
+  Dimensions approx 3×2×2 blocks. Destructible (hardness 4, drops WOOD + SCRAP_METAL).
+  Destroying it: Maureen enters FLEEING, Notoriety +10, `CRIMINAL_DAMAGE` CrimeType,
+  NeighbourhoodSystem VIBES −3. Achievement: `SPOILSPORT`.
+- `CRYSTAL_BALL_TABLE_PROP` — small table inside/beside the caravan. Purely decorative.
+
+### New NPCType
+- `PSYCHIC_NPC` — Maureen. HP: 15f, attack: 0f, cooldown: 0f, hostile: false.
+  Present only Sat–Sun 09:00–17:00 at `PSYCHIC_CARAVAN_PROP`. Non-combatant; flees on
+  first hit. Holds up to 5 rumours (rumour sink, weekend-only).
+- `TRADING_STANDARDS_OFFICER` — Val. HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+  Calls POLICE if attacked (does not fight back). Appears on schedule or on tip-off.
+
+### New AchievementTypes
+- `BELIEVERS_GONNA_BELIEVE` — earn 10 COIN total from Crystal Ball readings (one-shot).
+- `COLD_READER` — successfully read the same NPC three times across three separate in-game
+  days (one-shot; requires tracking last-successful-day per NPC).
+- `PROFESSIONAL_COURTESY` — warn Maureen about Val's impending visit (one-shot).
+- `SPOILSPORT` — destroy the `PSYCHIC_CARAVAN_PROP` (one-shot).
+- `TRADING_STANDARDS` — tip off Val and trigger a successful raid on Maureen (one-shot).
+
+### New RumourTypes
+- `TRADING_STANDARDS_VISIT` — "They're cracking down on the market this weekend. Watch your step."
+- `CRYSTAL_BALL_HUSTLE` — "Some lad's going round pretending to be a psychic. Done Mrs Patel twice."
+
+### Unit Tests
+- `testMaureenOpenSaturdayOnly`: Set TimeSystem to Monday 10:00; verify Maureen's caravan
+  is NOT present. Set to Saturday 10:00; verify `PSYCHIC_CARAVAN_PROP` spawned and
+  `PSYCHIC_NPC` (Maureen) present.
+- `testMaureenClosedOutsideHours`: Set Saturday 17:01; verify Maureen's `isOpen()` = false;
+  verify pressing E shows "Closed" response rather than reading.
+- `testReadingCostsCoinsAndReturnsRumour`: Give player 5 COIN. Seed a `LOOT_TIP` rumour
+  into Maureen's buffer. Press E on Maureen at Saturday 11:00. Verify player has 2 COIN
+  (3 spent). Verify the reading text contains the LOOT_TIP content. Verify the rumour
+  remains in Maureen's buffer (not consumed).
+- `testReadingGenericWhenNoRumour`: Give player 3 COIN. Ensure Maureen's buffer is empty.
+  Press E. Verify reading text is a generic cold-reading line (contains "I see" or
+  "trouble"). Verify player has 0 COIN.
+- `testCrystalBallSuccessOnBoredNPC`: Give player CRYSTAL_BALL in hotbar. Create a PUBLIC
+  NPC with BORED need = 60. Set rng seed for 100% persuasion success. Press E on NPC.
+  Verify player received 3 COIN. Verify NPC BORED need = 0. Verify Notoriety increased by 2.
+- `testCrystalBallFailureSeatsRumour`: Set persuasion rng for failure. Press E on NPC with
+  BORED=60. Verify NPC enters SUSPICIOUS_STATE. Verify no COIN added to player. Verify 25%
+  chance of PLAYER_SPOTTED rumour seeded (test with forced rng ≥ 0.75f → rumour present).
+- `testRepeatVictimCallsPolice`: Press E on same NPC twice within 30 in-game minutes. Verify
+  second press triggers POLICE response. Verify FRAUD in CriminalRecord. Verify Notoriety
+  increased by 6.
+- `testMaureenDetectsCompetitionOnTurf`: Stand within 10 blocks of PSYCHIC_CARAVAN_PROP.
+  Force detection rng < 0.40f. Press E on bored NPC. Verify `tradingStandardsAlerted` = true.
+  Verify Maureen enters HOSTILE_SPEECH state.
+- `testTradingStandardsSpawnsOnSchedule`: Set in-game day counter to 14 (period elapsed).
+  Advance to 10:00. Verify `TRADING_STANDARDS_OFFICER` NPC (Val) spawned within 12 blocks
+  of `PSYCHIC_CARAVAN_PROP`.
+- `testWarnMaureenPreventsRaid`: Set `tradingStandardsVisitDue` timer to 30 in-game minutes.
+  Press E on Maureen and select "warn". Verify Maureen's caravan closes (is_open = false).
+  Advance to Val's arrival time. Verify Val finds nothing (no IMPROVEMENT_NOTICE placed).
+  Verify Maureen Respect toward player increased by 10. Verify PROFESSIONAL_COURTESY
+  achievement unlocked.
+- `testTipOffValTriggersRaid`: Press E on Val and select tip-off. Verify Val immediately
+  moves to caravan. Verify IMPROVEMENT_NOTICE prop placed. Verify TRADING_STANDARDS_VISIT
+  rumour seeded. Verify NeighbourhoodSystem VIBES increased by 2. Verify TRADING_STANDARDS
+  achievement unlocked.
+- `testTipOffValInvestigatesPlayerIfGuilty`: Player performed a Crystal Ball reading 12
+  in-game hours ago. Tip off Val. Force investigation rng < 0.60f. Verify player receives
+  TRADING_STANDARDS_WARNING. Verify Notoriety +3.
+- `testBelieversAchievementAt10Coins`: Perform Crystal Ball readings until cumulative earnings
+  reach 10 COIN. Verify BELIEVERS_GONNA_BELIEVE achievement unlocked at exactly the
+  10th coin threshold.
+- `testDestroyCaravanGrantsSpoilsportAchievement`: Hit PSYCHIC_CARAVAN_PROP until destroyed.
+  Verify drops include WOOD and SCRAP_METAL. Verify Notoriety +10. Verify CRIMINAL_DAMAGE
+  in CriminalRecord. Verify SPOILSPORT achievement unlocked. Verify NeighbourhoodSystem
+  VIBES decreased by 3.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Maureen's weekend schedule and rumour pipeline**: Set TimeSystem to Saturday 09:00.
+   Advance 1 tick. Verify `PSYCHIC_CARAVAN_PROP` has spawned at the market corner and
+   `PSYCHIC_NPC` (Maureen) is present. Create 2 PUBLIC NPCs with LOOT_TIP and GANG_ACTIVITY
+   rumours. Move them within 5 blocks of the caravan. Advance 10 frames. Verify Maureen's
+   rumour buffer contains both rumours. Give player 3 COIN, press E on Maureen. Verify
+   the reading text corresponds to one of the two seeded rumours. Advance TimeSystem to
+   Monday 09:00. Verify `PSYCHIC_CARAVAN_PROP` is no longer present (packed up).
+
+2. **Crystal Ball Hustle full flow**: Give player 1 CRYSTAL_BALL in hotbar slot 1 and
+   0 COIN. Select slot 1. Create a PUBLIC NPC with BORED=70 within 3 blocks. Force
+   persuasion rng < 0.55f (guaranteed success even without PERSUASION skill). Press E on
+   NPC. Verify player has 3 COIN. Verify NPC BORED need = 0. Verify Notoriety is 2.
+   Verify tooltip "Easy money. They want to believe." has fired. Wait 20 in-game minutes
+   (under 30-minute cooldown). Press E on same NPC again. Verify FRAUD added to
+   CriminalRecord. Verify Notoriety is now 8 (original 2 + 6 for fraud). Verify a POLICE
+   NPC is now approaching the player's position.
+
+3. **Maureen's turf protection triggers Trading Standards**: Stand within 10 blocks of
+   `PSYCHIC_CARAVAN_PROP` while Maureen is present. Force Maureen detection rng < 0.40f.
+   Press E on a BORED NPC to initiate a Crystal Ball reading. Verify `tradingStandardsAlerted`
+   = true. Verify Maureen's speech bubble contains "Oi! That's my pitch!". Advance time
+   to next 10:00 tick. Verify `TRADING_STANDARDS_OFFICER` NPC spawns within 12 blocks of
+   the caravan. Verify IMPROVEMENT_NOTICE prop placed on caravan. Verify `TRADING_STANDARDS_VISIT`
+   rumour seeded into RumourNetwork.
+
+4. **Professional Courtesy — warn Maureen before raid**: Set `tradingStandardsVisitDue` to
+   45 in-game minutes (within the 60-minute warn window). Place player within 3 blocks of
+   Maureen. Press E and select "Heads up, Trading Standards are on their way". Verify Maureen
+   closes early (`isOpen()` = false). Verify Maureen's Respect toward player is +10 above
+   baseline. Verify Maureen shares her top rumour for free (rumour text appears in speech
+   log, no COIN charged). Verify PROFESSIONAL_COURTESY achievement unlocked. Advance past
+   Val's scheduled arrival. Verify no IMPROVEMENT_NOTICE was placed.
+
+5. **Neighbourhood impact of raid**: Generate the world. Ensure Maureen is operating and
+   a scheduled Val visit is imminent. Press E on Val and tip off. Verify the raid executes
+   (IMPROVEMENT_NOTICE placed). Verify `NeighbourhoodSystem.getVibes()` has increased by 2.
+   Verify `TRADING_STANDARDS_VISIT` rumour is present in the barman's rumour buffer after
+   Maureen shares it with him on her next pub visit (advance to pub visit time, verify
+   barman has the rumour). Verify TRADING_STANDARDS achievement is unlocked.
+
+// ── Issue #1375: Add Northfield Mystic Maureen's Psychic Readings ─────────────────────────────
+// New: MysticMaureenSystem.java in ragamuffin.core
+// New: MysticMaureenSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1375MysticMaureenIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: CRYSTAL_BALL, TAROT_DECK, IMPROVEMENT_NOTICE
+// New PropTypes: PSYCHIC_CARAVAN_PROP, CRYSTAL_BALL_TABLE_PROP
+// New NPCTypes: PSYCHIC_NPC, TRADING_STANDARDS_OFFICER
+// New AchievementTypes: BELIEVERS_GONNA_BELIEVE, COLD_READER, PROFESSIONAL_COURTESY,
+//   SPOILSPORT, TRADING_STANDARDS
+// New RumourTypes: TRADING_STANDARDS_VISIT, CRYSTAL_BALL_HUSTLE
+// Integration: RumourNetwork, NeedType.BORED, StreetSkillSystem, NotorietySystem,
+//   CriminalRecord, WantedSystem, FenceSystem, NeighbourhoodSystem, TimeSystem,
+//   AchievementSystem, PropertySystem (caravan spawn at market corner)
