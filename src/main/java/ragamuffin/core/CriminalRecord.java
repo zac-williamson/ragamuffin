@@ -1207,7 +1207,15 @@ public class CriminalRecord {
          * match result. Requires Marchetti Crew Respect ≥ 60.
          * Penalty: associated with MATCH_FIXING crime in CriminalRecord.
          */
-        ENGLAND_MATCH_FIXING("Fixing of an England international match result");
+        ENGLAND_MATCH_FIXING("Fixing of an England international match result"),
+
+        // ── Issue #1398: Northfield Window Cleaner ────────────────────────────────
+
+        /**
+         * Recorded when the player climbs Terry's LADDER_PROP to enter an upstairs window.
+         * Penalty: Notoriety +6, WantedSystem +1 star.
+         */
+        LADDER_BURGLARY("Burglary via window cleaner's ladder");
 
         private final String displayName;
 

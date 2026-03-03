@@ -3866,7 +3866,24 @@ public enum PropType {
      * Interactable 09:00–18:00 on strike days to start unofficial courier mode.
      * 4.5×1.8×2.0m; indestructible for gameplay purposes.
      */
-    COURIER_VAN_PROP(4.5f, 1.8f, 2.0f, 99, null);
+    COURIER_VAN_PROP(4.5f, 1.8f, 2.0f, 99, null),
+
+    // ── Issue #1398: Northfield Window Cleaner ────────────────────────────────
+
+    /**
+     * LADDER_PROP — Terry's aluminium extension ladder leaned against a house wall.
+     * Climbable by the player (burglary route to upstairs windows). Present for 90 in-game
+     * seconds at each property. Removed when Terry moves on.
+     * 0.6×4.0×0.2m; 99 hits (indestructible — Terry takes it with him).
+     */
+    LADDER_PROP(0.6f, 4.0f, 0.2f, 99, null),
+
+    /**
+     * WINDOW_CLEANING_VAN_PROP — Terry's white Transit van parked on the street near his route.
+     * Contains BUCKET_AND_CHAMOIS (stealable). Indestructible for gameplay purposes.
+     * 4.5×1.8×2.0m.
+     */
+    WINDOW_CLEANING_VAN_PROP(4.5f, 1.8f, 2.0f, 99, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
