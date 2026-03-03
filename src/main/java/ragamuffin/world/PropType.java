@@ -4211,7 +4211,49 @@ public enum PropType {
      * LIBRARY_REGULAR NPC sits, chatting to Keith and creating a distraction.
      * Dims: 0.6 × 0.9 × 0.6; 2 hits to destroy; drops nothing.
      */
-    LIBRARY_REGULAR_SEAT_PROP(0.6f, 0.9f, 0.6f, 2, null);
+    LIBRARY_REGULAR_SEAT_PROP(0.6f, 0.9f, 0.6f, 2, null),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1451: Northfield Balti House — The Raj Mahal
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * BALTI_HOUSE_COUNTER_PROP — Bashir's worn formica counter at the front of
+     * The Raj Mahal. Press E during Mon–Sat 17:00–23:00 to access the dine-in
+     * menu. Dims: 1.8 × 1.0 × 0.6; 5 hits to destroy; drops WOOD.
+     */
+    BALTI_HOUSE_COUNTER_PROP(1.8f, 1.0f, 0.6f, 5, Material.WOOD),
+
+    /**
+     * BALTI_HOUSE_HATCH_PROP — the alley-side takeaway serving hatch of The Raj Mahal.
+     * Press E to order a BALTI_BOX; collect after a 3-in-game-minute wait.
+     * Peak-hours queue (18:00–20:00): queue-jumping has 40% detection → Notoriety +1.
+     * Dims: 1.0 × 0.8 × 0.2; 3 hits to destroy; drops WOOD.
+     */
+    BALTI_HOUSE_HATCH_PROP(1.0f, 0.8f, 0.2f, 3, Material.WOOD),
+
+    /**
+     * BALTI_KITCHEN_PROP — the industrial kitchen shelving unit inside The Raj Mahal.
+     * Accessible during closed hours (23:00–17:00). Holds BALTI_CATERING_TIN on shelf.
+     * Fence value 6 COIN, pawn 4 COIN. If Bashir has line-of-sight: RESTAURANT_THEFT
+     * crime, Notoriety +3, chase triggered.
+     * Dims: 1.6 × 1.8 × 0.5; 4 hits to destroy; drops SCRAP_METAL.
+     */
+    BALTI_KITCHEN_PROP(1.6f, 1.8f, 0.5f, 4, Material.SCRAP_METAL),
+
+    /**
+     * BALTI_HOUSE_DOOR_PROP — the front door of The Raj Mahal. Bashir locks it
+     * during lock-in (Fri/Sat 23:00–01:00). HARD 8 hits to break down.
+     * Dims: 1.0 × 2.1 × 0.1; 8 HARD hits to break; drops WOOD.
+     */
+    BALTI_HOUSE_DOOR_PROP(1.0f, 2.1f, 0.1f, 8, Material.WOOD),
+
+    /**
+     * BALTI_BACK_DOOR_PROP — the back door of The Raj Mahal leading to the kitchen.
+     * Accessible during closed hours (23:00–17:00) via HARD 8 hits or 4-second lockpick.
+     * Dims: 0.9 × 2.1 × 0.1; 8 HARD hits to break; drops WOOD.
+     */
+    BALTI_BACK_DOOR_PROP(0.9f, 2.1f, 0.1f, 8, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -771,7 +771,19 @@ public enum LandmarkType {
      * WELCOME_SIGN — the large physical town welcome sign at the main park entrance,
      * reading "Welcome to Northfield". A 3D prop landmark rather than a building.
      */
-    WELCOME_SIGN;
+    WELCOME_SIGN,
+
+    // ── Issue #1451: Northfield Balti House ───────────────────────────────────
+
+    /**
+     * The Raj Mahal — Northfield's premier balti house, run by Bashir (CURRY_HOUSE_OWNER).
+     * Open Mon–Sat 17:00–23:00. A 10×12×4 brick building on the high street.
+     * Features a dining area (BALTI_HOUSE_COUNTER_PROP), a takeaway hatch on the
+     * alley side (BALTI_HOUSE_HATCH_PROP), kitchen (BALTI_KITCHEN_PROP), front door
+     * (BALTI_HOUSE_DOOR_PROP), and back door (BALTI_BACK_DOOR_PROP).
+     * Managed by BaltiHouseSystem.
+     */
+    BALTI_HOUSE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -879,6 +891,7 @@ public enum LandmarkType {
             case TRAVELLING_FAIR:       return "Northfield Travelling Fair";
             case CYCLE_SHOP:            return "Dave's Cycle Centre";
             case WELCOME_SIGN:          return "Welcome to Northfield";
+            case BALTI_HOUSE:           return "The Raj Mahal";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
