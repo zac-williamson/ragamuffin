@@ -3774,7 +3774,30 @@ public enum PropType {
      * Provides basic rain cover over the trestle tables.
      * 3.0×0.1×2.0m; fragile.
      */
-    TARPAULIN_PROP(3.0f, 0.1f, 2.0f, 2, null);
+    TARPAULIN_PROP(3.0f, 0.1f, 2.0f, 2, null),
+
+    // ── Issue #1383: Northfield Boxing Day Sales ──────────────────────────────
+
+    /**
+     * SALE_QUEUE_BARRIER_PROP — retractable crowd-control barrier outside Iceland.
+     * Spawned at 05:30 on Boxing Day; defines the queue lane.
+     * 1.2×0.9×0.1m; sturdy.
+     */
+    SALE_QUEUE_BARRIER_PROP(1.2f, 0.9f, 0.1f, 8, null),
+
+    /**
+     * WAYNE_VAN_PROP — Wayne's white Transit van parked outside Iceland.
+     * Active 06:30–12:00 on Boxing Day. Player can buy, rob (CROWBAR), or undercut Wayne.
+     * 4.0×2.0×2.0m; very sturdy.
+     */
+    WAYNE_VAN_PROP(4.0f, 2.0f, 2.0f, 20, null),
+
+    /**
+     * SALE_SIGN_PROP — bright red A-board sign: "BOXING DAY SALE — UP TO 50% OFF".
+     * Spawned outside ICELAND, POUND_SHOP, and CHARITY_SHOP at 06:00. Despawns at 18:00.
+     * 0.6×1.2×0.1m; fragile.
+     */
+    SALE_SIGN_PROP(0.6f, 1.2f, 0.1f, 2, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
