@@ -56542,3 +56542,110 @@ Terry at the canal is a known birdwatcher — he's even got a `BIRDWATCHING_TIP`
 5. **Destroying parakeet tree ends event**: trigger event; verify `isEventActive()` == true; simulate 3 hits on `PARAKEET_TREE_PROP`; call `onTreeDestroyed(eventSystem)`; verify `isEventActive()` == false; verify `eventEndReason` == `EventEndReason.TREE_DESTROYED`; verify all `TWITCHER` NPCs despawn.
 
 // `RareBirdAlertSystem.java` must be created as the sole new source file. `NPCType.CANAL_TWITCHER` already exists as a stub (associated with CanalSystem via `BIRDWATCHING_TIP` material). `NPCType.TWITCHER` must be added as a new entry. `Material.BIRDWATCHING_TIP` stub already exists and is now fully implemented by this system. New materials required: `BINOCULARS`, `BIRD_PHOTO`, `FAKE_BIRD_PHOTO`, `BIRD_GUIDE_BOOK`, `FAKE_BIRDWATCHING_TIP`. New `PropType.PARAKEET_TREE_PROP` required. New `RumourType` entries: `RARE_BIRD_SPOTTED`, `DODGY_TIPSTER`. New `AchievementType` entries: `GOOSE_CHASE`, `TWITCHER_WRANGLER`, `NATURE_CORRESPONDENT`, `PRESS_FABRICATOR`.
+
+---
+
+## Issue #1477: Add Northfield Warm Hub — Shirley's Free Tea, the Heating Scam & the Cold Snap Queue
+
+The council has pinned a laminated A4 notice in the library and the charity shop: "NORTHFIELD WARM HUB — Open during cold spells. Free hot drinks. Charging points. Everyone welcome." Shirley, a retired dinner lady turned community stalwart, runs it out of the community centre on winter days when the weather turns nasty. The player can come in and genuinely warm up, exploit the free resources, scam the donations tin, pocket the biscuits, or stage a mock medical emergency to clear the place out.
+
+### Mechanic 1 — The Warm Hub Opens
+
+- `WarmHubSystem` activates automatically when `WeatherSystem` reports `Weather.COLD_SNAP` or `Weather.FROST` between `HUB_OPEN_HOUR` = 9.0f and `HUB_CLOSE_HOUR` = 17.0f. The hub is a designated zone inside the community centre (the main hall area).
+- `NPCType.WARM_HUB_VOLUNTEER` (Shirley) spawns at `PropType.WARM_HUB_TABLE_PROP` when the hub is open. She greets the player: "Come in, love. It's bitter out there."
+- 3–8 `NPCType.WARM_HUB_VISITOR` NPCs enter the hub over the first `VISITOR_ARRIVAL_WINDOW_SECONDS` = 30 real seconds, sitting on chairs, cradling cups, minding their own business. Mix of `ROUGH_SLEEPER`, `PENSIONER`, and `UNEMPLOYED_NPC` types.
+- The hub closes if weather improves (weather changes to non-cold type): Shirley announces "Looks like it's brightening up, everyone." and all visitors leave over `CLOSING_DRAIN_SECONDS` = 60 seconds. `HubCloseReason.WEATHER_IMPROVED`.
+- If `CommunityCentreSystem` is also active (Denise's events), the hub reduces available event space: events requiring `HALL_CAPACITY` > `REDUCED_CAPACITY` = 8 are postponed.
+
+### Mechanic 2 — Free Hot Drinks and Charging
+
+- Press E on Shirley (or the `WARM_HUB_TABLE_PROP`) to receive `Material.HUB_TEA` (free, once every `TEA_COOLDOWN_SECONDS` = 120 real seconds per player visit). `Material.HUB_TEA` restores `HUB_TEA_WARMTH` = 25 warmth and `HUB_TEA_HUNGER` = 8 hunger. Tooltip: "Weak. Three sugars though. God bless Shirley."
+- `PropType.CHARGING_POINT_PROP` (a power strip duct-taped to the wall) is present in the hub. Player interacts with it (hold E for `CHARGE_DURATION_SECONDS` = 20 real seconds) to charge `Material.BURNER_PHONE` or `Material.SMARTPHONE` (restoring full charge, represented as a `chargeLevel` field on the item). If player already has a fully charged phone, Shirley says: "There's others needing that, love."
+- `Material.HUB_BISCUIT` (Rich Tea, obviously) sits on the table: player can pocket 1 per visit without consequence. Taking 2+ triggers Shirley: "I saw that." Notoriety +1 per extra biscuit. The tin can be stolen wholesale (hold E for `TIN_STEAL_SECONDS` = 4 seconds while unobserved): yields 3–6 `HUB_BISCUIT` + `DONATIONS_TIN` (empty, sellable at PawnShop for 1 COIN). Witnesses seed `RumourType.STOLE_FROM_WARM_HUB`.
+
+### Mechanic 3 — The Donations Tin Scam
+
+- A `PropType.DONATIONS_TIN_PROP` sits on the table. It accumulates `TIN_FILL_RATE` = 2 COIN per in-game hour (visitors drop change in). Max capacity: `TIN_MAX_COIN` = 20 COIN.
+- Player can **donate** to the tin (press E → donate, 1–5 COIN): Notoriety −1 per 3 COIN donated, NeighbourhoodVibes +1. Achievement: `WARM_HEARTED` on first donation.
+- Player can **steal** from the tin (hold E for `TIN_ROB_SECONDS` = 3 seconds while unobserved). Yields all accumulated COIN. Detected by Shirley (20-block line of sight): Notoriety +8, WantedSystem +1, `CrimeType.THEFT`, `RumourType.STOLE_FROM_WARM_HUB`. Achievement: `BOTTOM_OF_THE_BARREL` on first steal.
+- Player can craft a `Material.FAKE_DONATIONS_FORM` (`BLANK_PRESCRIPTION_FORM` + `PEN` = `FAKE_DONATIONS_FORM`). Show it to Shirley (press E): she hands over the current tin contents thinking it's a council collection. Result: `DonationsScamResult.COLLECTED`. No crime recorded (she gave it willingly). Notoriety +3 for general dodginess. Achievement: `SHIRL_S_BEEN_HAD`.
+
+### Mechanic 4 — The Fake Medical Emergency
+
+- Player holds `Material.HUB_TEA` and presses E on a `WARM_HUB_VISITOR` NPC to "accidentally" spill it, staging a scalding incident (hold E for `SPILL_SETUP_SECONDS` = 2 seconds, unobserved). The visitor cries out. Shirley calls 999. All visitors exit the hub in `EVACUATION_DRAIN_SECONDS` = 20 seconds. Hub closes for `POST_INCIDENT_CLOSURE_MINUTES` = 30 in-game minutes. Player has the empty hub to themselves: the `DONATIONS_TIN_PROP` is unguarded. Result: `IncidentResult.CLEARED`.
+- Detection chance (Shirley or a visitor witnesses setup): `WITNESSED_SPILL_CHANCE` = 0.40f. If witnessed: Notoriety +6, WantedSystem +1, `CrimeType.ASSAULT`, `RumourType.WARM_HUB_INCIDENT`. Achievement: `999_FOR_BISCUITS`.
+- Ambulance NPC (`NPCType.PARAMEDIC`) arrives `AMBULANCE_ARRIVAL_SECONDS` = 45 real seconds after the call. If player is still in the hub when paramedic arrives and notoriety ≥ `PARAMEDIC_SUSPICION_THRESHOLD` = 50: paramedic recognises them and calls police. If player has left: incident resolves quietly.
+
+### Mechanic 5 — Squatters' Rights
+
+- If the hub closes due to weather improvement but `ROUGH_SLEEPER` NPCs remain (they have nowhere else to go), they become `LINGERING_VISITOR` state. Shirley tries to usher them out for `USHERING_DURATION_SECONDS` = 60 seconds. Player can intervene: press E on Shirley to "stand up for the lingerers." Shirley backs down (RepResult.STOOD_UP_FOR_ROUGH_SLEEPERS), Notoriety −3, NeighbourhoodVibes +2, `RumourType.COMMUNITY_WIN` seeded. Achievement: `EVERYONE_WELCOME`.
+- Alternatively, player can help Shirley: E on each lingering NPC to escort them out (must do all of them within `ESCORT_TIME_LIMIT_SECONDS` = 90 real seconds). Shirley rewards with `Material.HOMEMADE_CAKE_SLICE` (hunger +20, warmth +10). Achievement: `SHIRLEY_S_FAVOURITE`.
+- Player can pickpocket `ROUGH_SLEEPER` NPCs while they sleep in the hub (overnight if hub remains accessible after closing): success chance `SLEEPING_PICKPOCKET_CHANCE` = 0.50f. Yield: 0–2 COIN. Failure: NPC wakes up angry, shouts, Notoriety +2.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `HUB_OPEN_HOUR` | 9.0f |
+| `HUB_CLOSE_HOUR` | 17.0f |
+| `VISITOR_ARRIVAL_WINDOW_SECONDS` | 30.0f |
+| `VISITOR_COUNT_MIN` | 3 |
+| `VISITOR_COUNT_MAX` | 8 |
+| `CLOSING_DRAIN_SECONDS` | 60.0f |
+| `REDUCED_CAPACITY` | 8 |
+| `TEA_COOLDOWN_SECONDS` | 120.0f |
+| `HUB_TEA_WARMTH` | 25.0f |
+| `HUB_TEA_HUNGER` | 8.0f |
+| `CHARGE_DURATION_SECONDS` | 20.0f |
+| `TIN_STEAL_SECONDS` | 3.0f |
+| `TIN_ROB_SECONDS` | 3.0f |
+| `TIN_FILL_RATE_COINS_PER_HOUR` | 2 |
+| `TIN_MAX_COIN` | 20 |
+| `TIN_STEAL_NOTORIETY` | 8 |
+| `SPILL_SETUP_SECONDS` | 2.0f |
+| `EVACUATION_DRAIN_SECONDS` | 20.0f |
+| `POST_INCIDENT_CLOSURE_MINUTES` | 30.0f |
+| `WITNESSED_SPILL_CHANCE` | 0.40f |
+| `AMBULANCE_ARRIVAL_SECONDS` | 45.0f |
+| `PARAMEDIC_SUSPICION_THRESHOLD` | 50 |
+| `USHERING_DURATION_SECONDS` | 60.0f |
+| `ESCORT_TIME_LIMIT_SECONDS` | 90.0f |
+| `SLEEPING_PICKPOCKET_CHANCE` | 0.50f |
+
+### New Entities Required
+
+- `NPCType.WARM_HUB_VOLUNTEER` — Shirley. Present at `WARM_HUB_TABLE_PROP` while hub is open. 20f HP, 0 aggro. Calls police on theft/assault.
+- `NPCType.WARM_HUB_VISITOR` — generic hub visitor (drawn from ROUGH_SLEEPER, PENSIONER, UNEMPLOYED_NPC archetypes). Sits on chairs, drinks tea.
+- `Material.HUB_TEA` — "Weak. Three sugars though. God bless Shirley." Warmth +25, Hunger +8.
+- `Material.HUB_BISCUIT` — "Rich Tea. The backbone of British charity." Hunger +3.
+- `Material.DONATIONS_TIN` — stolen empty tin. Fence value 1 COIN.
+- `Material.FAKE_DONATIONS_FORM` — crafted: `BLANK_PRESCRIPTION_FORM` + `PEN`. Tricks Shirley into handing over tin contents.
+- `Material.HOMEMADE_CAKE_SLICE` — Shirley's reward for good behaviour. Hunger +20, Warmth +10.
+- `PropType.WARM_HUB_TABLE_PROP` — fold-out table with tea urn and biscuit tin. 3 hits, drops `METAL_SCRAP`.
+- `PropType.DONATIONS_TIN_PROP` — standalone tin on the table edge. 1 hit to destroy, yields `DONATIONS_TIN`.
+- `PropType.CHARGING_POINT_PROP` — power strip on the wall. Non-destructible.
+- `RumourType.STOLE_FROM_WARM_HUB` — "Someone nicked from the warm hub donations tin. During a cold snap. Incredible."
+- `RumourType.WARM_HUB_INCIDENT` — "There was a scene at the warm hub. Someone got scalded apparently."
+
+### New AchievementType Entries Required
+
+- `WARM_HEARTED` — "Donated to Shirley's warm hub donations tin. You're not completely beyond saving." Target 1.
+- `BOTTOM_OF_THE_BARREL` — "Robbed the warm hub donations tin during a cold snap. This is a new low." Target 1.
+- `SHIRL_S_BEEN_HAD` — "Conned Shirley into handing over the donations tin with a fake council form." Target 1.
+- `999_FOR_BISCUITS` — "Staged a fake medical emergency at the warm hub to clear the place out." Target 1.
+- `EVERYONE_WELCOME` — "Stood up for the rough sleepers when Shirley tried to usher them out." Target 1.
+- `SHIRLEY_S_FAVOURITE` — "Escorted all lingering rough sleepers out of the hub for Shirley. She gave you cake." Target 1.
+
+### Integration Tests
+
+1. **Hub opens during COLD_SNAP and Shirley spawns**: create `WarmHubSystem`; set weather to `Weather.COLD_SNAP`; set time to 10:00; call `update(delta, timeSystem, weatherSystem, npcManager, communityCentreSystem)`; verify `isHubOpen()` == true; verify `npcManager.getNPCsByType(NPCType.WARM_HUB_VOLUNTEER).size()` == 1; verify visitor count between `VISITOR_COUNT_MIN` and `VISITOR_COUNT_MAX` after `VISITOR_ARRIVAL_WINDOW_SECONDS`.
+
+2. **Free tea restores warmth and respects cooldown**: open hub; set player warmth to 30f; call `dispenseTea(player, inventory, timeSystem)`; verify player warmth increased by `HUB_TEA_WARMTH`; verify `inventory.getItemCount(Material.HUB_TEA)` == 1; call `dispenseTea(...)` again immediately; verify result == `TeaResult.ON_COOLDOWN`; advance time by `TEA_COOLDOWN_SECONDS`; call again; verify result == `TeaResult.DISPENSED`.
+
+3. **Robbing the donations tin yields COIN and triggers police call**: open hub; advance time so tin has `TIN_MAX_COIN` COIN; call `robTin(player, inventory, notorietySystem, wantedSystem, criminalRecord, random_unobserved)`; verify `inventory.getItemCount(Material.COIN)` == `TIN_MAX_COIN`; verify `notorietySystem.getNotoriety()` increased by `TIN_STEAL_NOTORIETY`; verify `wantedSystem.getWantedStars()` >= 1; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == true.
+
+4. **Fake donations form tricks Shirley**: open hub; fill tin with 10 COIN; give player `FAKE_DONATIONS_FORM`; call `presentDonationsForm(player, inventory, shirleyNpc, tinProp)`; verify result == `DonationsScamResult.COLLECTED`; verify `inventory.getItemCount(Material.COIN)` increased by 10; verify no crime recorded on `criminalRecord`; verify `notorietySystem.getNotoriety()` increased by 3.
+
+5. **Hub closes when weather improves**: open hub with `COLD_SNAP`; verify `isHubOpen()` == true; change weather to `Weather.SUNNY`; call `update(...)`; verify `isHubOpen()` == false after `CLOSING_DRAIN_SECONDS`; verify `hubCloseReason` == `HubCloseReason.WEATHER_IMPROVED`; verify all `WARM_HUB_VISITOR` NPCs have despawned.
+
+// `WarmHubSystem.java` must be created as the sole new source file. `WarmHubSystem` integrates with `WarmthSystem`, `WeatherSystem`, `CommunityCentreSystem`, `NotorietySystem`, `WantedSystem`, `CriminalRecord`, `RumourNetwork`, and `AchievementSystem`. New `NPCType` entries required: `WARM_HUB_VOLUNTEER`, `WARM_HUB_VISITOR`. New `Material` entries required: `HUB_TEA`, `HUB_BISCUIT`, `DONATIONS_TIN`, `FAKE_DONATIONS_FORM`, `HOMEMADE_CAKE_SLICE`. New `PropType` entries required: `WARM_HUB_TABLE_PROP`, `DONATIONS_TIN_PROP`, `CHARGING_POINT_PROP`. New `RumourType` entries: `STOLE_FROM_WARM_HUB`, `WARM_HUB_INCIDENT`. New `AchievementType` entries: `WARM_HEARTED`, `BOTTOM_OF_THE_BARREL`, `SHIRL_S_BEEN_HAD`, `999_FOR_BISCUITS`, `EVERYONE_WELCOME`, `SHIRLEY_S_FAVOURITE`. `Material.BLANK_PRESCRIPTION_FORM` and `Material.PEN` already exist. `NPCType.ROUGH_SLEEPER`, `NPCType.PENSIONER` already exist. `NPCType.PARAMEDIC` must be added if not already present.
