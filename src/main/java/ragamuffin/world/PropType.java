@@ -3985,7 +3985,34 @@ public enum PropType {
      * Player interacts (E) to distract Sharon for 25 in-game seconds.
      * 0.3×1.2×0.3m; indestructible (99 hits); drops null.
      */
-    TABLOID_RACK_PROP(0.3f, 1.2f, 0.3f, 99, null);
+    TABLOID_RACK_PROP(0.3f, 1.2f, 0.3f, 99, null),
+
+    // ── Issue #1420: Northfield Post Office Horizon Scandal ──────────────────
+
+    /**
+     * SHORTFALL_LETTER_PROP — A4 demand letter pinned to the Post Office counter.
+     * Readable via E-interaction: displays "Post Office Ltd demands repayment of £340 shortfall
+     * recorded by Horizon system. Failure to comply within 14 days may result in prosecution."
+     * Stealing it (hold-E) records {@code AUDIT_OBSTRUCTION} crime.
+     * Dims: 0.3 × 0.02 × 0.4; indestructible; drops {@link ragamuffin.building.Material#SHORTFALL_LETTER}.
+     */
+    SHORTFALL_LETTER_PROP(0.3f, 0.02f, 0.4f, 99, Material.SHORTFALL_LETTER),
+
+    /**
+     * TRANSACTION_LOG_PROP — stack of Horizon terminal printouts in the Post Office back-room
+     * filing cabinet. Contains 3 collectible {@link ragamuffin.building.Material#TRANSACTION_LOG}
+     * units. Accessible with Maureen's trust (COMMUNITY_RESPECT ≥ 20) or by LOCKPICK/CROWBAR
+     * break-in while Derek is absent.
+     * Dims: 0.4 × 0.05 × 0.3; breaks in 1 hit; drops TRANSACTION_LOG.
+     */
+    TRANSACTION_LOG_PROP(0.4f, 0.05f, 0.3f, 1, Material.TRANSACTION_LOG),
+
+    /**
+     * WITNESS_BOX_PROP — the witness stand in MagistratesCourtSystem where the player
+     * testifies on day 17. Press E within 5 blocks to deliver testimony.
+     * Dims: 1.0 × 1.2 × 1.0; indestructible; drops null.
+     */
+    WITNESS_BOX_PROP(1.0f, 1.2f, 1.0f, 99, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

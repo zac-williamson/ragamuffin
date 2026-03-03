@@ -3173,7 +3173,48 @@ public enum NPCType {
      * </ul>
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    SPEEDING_DRIVER_NPC(20f, 0f, 0f, false);
+    SPEEDING_DRIVER_NPC(20f, 0f, 0f, false),
+
+    // ── Issue #1420: Northfield Post Office Horizon Scandal ──────────────────
+
+    /**
+     * POST_OFFICE_INVESTIGATOR — Derek Swann. Suit-wearing, briefcase. Arrives day 14 at 09:30
+     * to serve Maureen the Horizon shortfall letter.
+     * <ul>
+     *   <li>Non-aggressive unless player obstructs audit (then calls police, WantedSystem +1).</li>
+     *   <li>Audits the back room 10:00–12:00 daily until tribunal day 17.</li>
+     *   <li>Leaves after tribunal regardless of outcome.</li>
+     * </ul>
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    POST_OFFICE_INVESTIGATOR(25f, 0f, 0f, false),
+
+    /**
+     * IT_CONTRACTOR — Pete. Polo shirt, lanyard, nervous demeanour.
+     * Arrives day 15 at 11:00 in a rented Astra to verify the Horizon system logs.
+     * <ul>
+     *   <li>Carries {@link ragamuffin.building.Material#IT_CONTRACTOR_ID_BADGE} and
+     *       {@link ragamuffin.building.Material#USB_STICK} — both pickpocketable.</li>
+     *   <li>Flees if threatened (enters NPCState.FLEEING).</li>
+     *   <li>Can be bribed for 10 COIN to alter his report (peteReportAltered = true).</li>
+     *   <li>Assaulting him records {@code AUDIT_OBSTRUCTION} and delays report by 1 day.</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    IT_CONTRACTOR(20f, 0f, 0f, false),
+
+    /**
+     * REGIONAL_AUDITOR — unnamed suit. Loiters outside the Post Office from day 14.
+     * <ul>
+     *   <li>Pays 12 COIN for {@link ragamuffin.building.Material#TRANSACTION_LOG} items
+     *       (fence value otherwise 4 COIN).</li>
+     *   <li>Selling logs to this NPC seeds {@link ragamuffin.core.RumourType#DODGY_AUDIT} and
+     *       flips tribunal outcome to CONVICTED.</li>
+     *   <li>Departs after tribunal day 17.</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    REGIONAL_AUDITOR(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

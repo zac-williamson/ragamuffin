@@ -6860,6 +6860,84 @@ public enum AchievementType {
         "Another Identity",
         "Darren might recognise you. Might not. It's fifty-fifty, really.",
         1
+    ),
+
+    // ── Issue #1420: Northfield Post Office Horizon Scandal ──────────────────
+
+    /**
+     * HORIZON_HERO — collect 3 TRANSACTION_LOG items, deliver them via Citizens Advice or
+     * journalist NPC, and testify at the day-17 tribunal. Maureen is acquitted.
+     * Awarded by HorizonScandalSystem when tribunal resolves to ACQUITTED via player testimony.
+     */
+    HORIZON_HERO(
+        "Horizon Hero",
+        "You stood up for Maureen when it mattered. The software was guilty all along.",
+        1
+    ),
+
+    /**
+     * HORIZON_OPPORTUNIST — crack the Post Office safe during the 90-second audit window
+     * (25–50 COIN + stamps bundle). Awarded on successful safe crack during audit window.
+     */
+    HORIZON_OPPORTUNIST(
+        "Horizon Opportunist",
+        "While everyone was arguing about the computer, you were counting the cash.",
+        1
+    ),
+
+    /**
+     * SOLD_HER_OUT — sell the transaction logs to the REGIONAL_AUDITOR for 12 COIN,
+     * flipping the tribunal outcome to guilty. Community respect −8.
+     * Awarded by HorizonScandalSystem when sellLogsToAuditor() is called.
+     */
+    SOLD_HER_OUT(
+        "Sold Her Out",
+        "Twelve quid. That's what Maureen's livelihood was worth to you.",
+        1
+    ),
+
+    /**
+     * NOT_MY_PROBLEM — tribunal fires on day 17 without player testimony or evidence.
+     * Maureen is convicted. Post Office runs on a temp clerk for 3 days.
+     * Awarded by HorizonScandalSystem when tribunal resolves to CONVICTED with no player involvement.
+     */
+    NOT_MY_PROBLEM(
+        "Not My Problem",
+        "You were busy. Maureen understands. She doesn't, but she'd never say.",
+        1
+    ),
+
+    /**
+     * DODGY_AUDIT — bribe Pete (IT_CONTRACTOR) for 10 COIN to alter his report,
+     * flipping the tribunal outcome to ACQUITTED even without evidence.
+     * Awarded by HorizonScandalSystem when bribePete() is called successfully.
+     */
+    DODGY_AUDIT(
+        "Dodgy Audit",
+        "Pete's report now says the Horizon system is 'fine, actually'. He's sweating.",
+        1
+    ),
+
+    /**
+     * STICKY_FINGERS_PETE — pickpocket the USB_STICK from Pete (IT_CONTRACTOR).
+     * The USB stick can be delivered to the journalist for 18 COIN or to Maureen for free.
+     * Awarded by HorizonScandalSystem when USB_STICK is pickpocketed from IT_CONTRACTOR.
+     */
+    STICKY_FINGERS_PETE(
+        "Sticky Fingers Pete",
+        "Pete had 4GB of audit logs and 2GB of questionable music on there. Respect.",
+        1
+    ),
+
+    /**
+     * TOOK_IT_OUT_ON_PETE — assault Pete (IT_CONTRACTOR) before he files his report,
+     * delaying the report by 1 in-game day. Records AUDIT_OBSTRUCTION crime.
+     * Awarded by HorizonScandalSystem on first assault of IT_CONTRACTOR NPC.
+     */
+    TOOK_IT_OUT_ON_PETE(
+        "Took It Out on Pete",
+        "Pete was just following orders. You made that his problem too.",
+        1
     );
 
     private final String name;
