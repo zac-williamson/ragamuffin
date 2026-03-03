@@ -4551,7 +4551,38 @@ public enum PropType {
      * boundary in the park during the annual dog show.
      * Collision: 0.10w × 1.00h × 0.10d. Health: 2 hits. Drops WOOD.
      */
-    SHOW_RING_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.WOOD);
+    SHOW_RING_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.WOOD),
+
+    // ── Issue #1495: Northfield Karate Club ───────────────────────────────────
+
+    /**
+     * DOJO_MAT_PROP — a 10×6 padded mat area defining the dojo session boundary
+     * in the Community Centre main hall. Laid out by Gary (KARATE_INSTRUCTOR)
+     * on Wednesdays from 18:00. Collision: 10.0w × 0.10h × 6.0d. Health: indestructible (999 hits). No drop.
+     */
+    DOJO_MAT_PROP(10.0f, 0.10f, 6.0f, 999, null),
+
+    /**
+     * BACK_OFFICE_DOOR_PROP — the lockable door to the Community Centre back
+     * office where the trophy cabinet is kept. Can be opened silently with
+     * LOCKPICK (2 charges) or forced open with CROWBAR (3 hits, loud).
+     * Collision: 0.10w × 2.20h × 1.00d. Health: 3 hits. Drops WOOD.
+     */
+    BACK_OFFICE_DOOR_PROP(0.10f, 2.20f, 1.00f, 3, Material.WOOD),
+
+    /**
+     * KARATE_TROPHY_PROP — the club's regional competition trophy kept in the
+     * back office. Fenceable for 10 COIN. Heist target during Wednesday session.
+     * Collision: 0.20w × 0.40h × 0.20d. Health: 2 hits. Drops KARATE_TROPHY_PROP material.
+     */
+    KARATE_TROPHY_PROP(0.20f, 0.40f, 0.20f, 2, Material.KARATE_TROPHY_PROP),
+
+    /**
+     * REGIONAL_CHAMPION_SHIELD_PROP — the Northfield Regional Champion shield
+     * displayed in the back office. Fenceable for 20 COIN or pawnable for 12 COIN.
+     * Collision: 0.30w × 0.50h × 0.10d. Health: 2 hits. Drops REGIONAL_CHAMPION_SHIELD_PROP material.
+     */
+    REGIONAL_CHAMPION_SHIELD_PROP(0.30f, 0.50f, 0.10f, 2, Material.REGIONAL_CHAMPION_SHIELD_PROP);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

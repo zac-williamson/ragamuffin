@@ -7592,6 +7592,48 @@ public enum AchievementType {
         "Depot Raider",
         "You emptied Dave's fridge and rifled his desk. Forty-eight pints and a tenner.",
         1
+    ),
+
+    // ── Issue #1495: Northfield Karate Club ───────────────────────────────────
+
+    /**
+     * CONSUMER_CHAMPION — report Gary's grading scam to the TRADING_STANDARDS_OFFICER.
+     * Triggers RumourType.GRADING_SCAM seeded across KARATE_KID/parent NPCs.
+     */
+    CONSUMER_CHAMPION(
+        "Consumer Champion",
+        "You reported Gary's grading scam to Trading Standards. Civic duty: discharged.",
+        1
+    ),
+
+    /**
+     * DOJO_RAIDER — steal both KARATE_TROPHY_PROP and REGIONAL_CHAMPION_SHIELD_PROP
+     * from the Community Centre back office unwitnessed during a Wednesday session.
+     */
+    DOJO_RAIDER(
+        "Dojo Raider",
+        "Cleaned out the back room while Gary was shouting Kiai. Two trophies, zero witnesses.",
+        1
+    ),
+
+    /**
+     * NORTHFIELD_CHAMPION — win all 3 rounds of the adult sparring mini-game
+     * against a PUBLIC NPC during the Wednesday 19:30–20:00 session.
+     */
+    NORTHFIELD_CHAMPION(
+        "Northfield Champion",
+        "Three rounds, three wins. Gary looked almost impressed.",
+        1
+    ),
+
+    /**
+     * HONOURABLE_THIEF — steal the trophy cabinet contents then voluntarily
+     * return them to Gary. Gary gives a FREE_SESSION_TOKEN and RumourType.HONOURABLE_THIEF is seeded.
+     */
+    HONOURABLE_THIEF(
+        "Honourable Thief",
+        "You nicked Gary's trophy and gave it back. He didn't know whether to thank you or ban you.",
+        1
     );
 
     private final String name;
