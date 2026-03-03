@@ -4012,7 +4012,24 @@ public enum PropType {
      * testifies on day 17. Press E within 5 blocks to deliver testimony.
      * Dims: 1.0 × 1.2 × 1.0; indestructible; drops null.
      */
-    WITNESS_BOX_PROP(1.0f, 1.2f, 1.0f, 99, null);
+    WITNESS_BOX_PROP(1.0f, 1.2f, 1.0f, 99, null),
+
+    // ── Issue #1422: Northfield Charity Sponsored Walk ────────────────────────
+
+    /**
+     * ROUTE_CONE_PROP — orange traffic cone, 20 placed along the walk route at 20-block intervals.
+     * Removable by player (2 punches). Becomes {@link ragamuffin.building.Material#TRAFFIC_CONE}
+     * Material in inventory.
+     * Dims: 0.3 × 0.6 × 0.3.
+     */
+    ROUTE_CONE_PROP(0.3f, 0.6f, 0.3f, 2, ragamuffin.building.Material.TRAFFIC_CONE),
+
+    /**
+     * PRIZE_ENVELOPE_PROP — brown envelope on trestle table outside the Community Centre.
+     * Contains 15–25 COIN + {@link ragamuffin.building.Material#CHARITY_RAFFLE_TICKET}.
+     * Dims: 0.2 × 0.02 × 0.12. Indestructible (grabbed via E interact).
+     */
+    PRIZE_ENVELOPE_PROP(0.2f, 0.02f, 0.12f, 99, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

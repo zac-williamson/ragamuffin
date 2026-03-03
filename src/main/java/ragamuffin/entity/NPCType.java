@@ -3214,7 +3214,24 @@ public enum NPCType {
      * </ul>
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    REGIONAL_AUDITOR(20f, 0f, 0f, false);
+    REGIONAL_AUDITOR(20f, 0f, 0f, false),
+
+    // ── Issue #1422: Northfield Charity Sponsored Walk ────────────────────────
+
+    /**
+     * WALK_ORGANISER — Brenda. Hi-vis tabard, clipboard, sensible shoes.
+     * Friendly until wronged; then relentless pursuer. Non-violent but calls police on contact.
+     * Spawned by SponsoredWalkSystem on day 10 at 08:30 outside the Community Centre.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    WALK_ORGANISER(20f, 0f, 0f, false),
+
+    /**
+     * SPONSORED_WALKER — generic public NPC variant: hi-vis bib, trainers, number pinned to chest.
+     * 8–12 spawned for the walk on day 10; despawn at 10:30.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    SPONSORED_WALKER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

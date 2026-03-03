@@ -6438,7 +6438,28 @@ public enum Material {
      * questionable music." Stack size 1. Journalist trade value 18 COIN; also tradeable
      * to Maureen (free) to strengthen her tribunal case.
      */
-    USB_STICK("USB Stick");
+    USB_STICK("USB Stick"),
+
+    // ── Issue #1422: Northfield Charity Sponsored Walk ────────────────────────
+
+    /**
+     * SPONSOR_FORM — "Official Northfield Hospice Sponsored Walk form. Six names, six promises."
+     * Stack size 1. Not fenceable.
+     */
+    SPONSOR_FORM("Sponsor Form"),
+
+    /**
+     * TRAFFIC_CONE — "Orange traffic cone. Surprisingly heavy. Surprisingly tempting."
+     * Stack size 4. Fence value 1 COIN. Obtained by punching ROUTE_CONE_PROP twice.
+     */
+    TRAFFIC_CONE("Traffic Cone"),
+
+    /**
+     * CHARITY_RAFFLE_TICKET — "Raffle ticket No. 47. First prize: a hamper from Iceland."
+     * Stack size 1. No fence value; tradeable to SPONSORED_WALKER NPCs for 1 COIN goodwill.
+     * Obtained alongside COIN when grabbing the PRIZE_ENVELOPE_PROP.
+     */
+    CHARITY_RAFFLE_TICKET("Charity Raffle Ticket");
 
     private final String displayName;
 
