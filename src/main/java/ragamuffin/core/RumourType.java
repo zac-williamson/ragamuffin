@@ -1820,5 +1820,19 @@ public enum RumourType {
      * — seeded by DogShowSystem when the player tips off the journalist after
      * the bribery exposé path. Spreads via PUBLIC and JOURNALIST NPCs;
      * costs Marchetti −15 reputation and unlocks WHISTLEBLOWER. */
-    DOG_SHOW_RIGGING;
+    DOG_SHOW_RIGGING,
+
+    // ── Issue #1493: Northfield Amateur Photography Club ─────────────────────
+
+    /** "Derek won again. Norman's in the council's pocket. That competition's been rigged for years."
+     * — seeded by AmateurPhotographySystem when the player fails a bribe attempt on Norman
+     * or when Derek wins for the nth consecutive year. Spreads via PUBLIC, BARMAN, and
+     * PHOTO_CLUB_MEMBER NPCs; Vibes −3. */
+    PHOTO_CLUB_RIGGED,
+
+    /** "Council want to knock down the bandstand for a car park. Got the paperwork to prove it."
+     * — seeded by AmateurPhotographySystem when the player tips off the newspaper with the
+     * PLANNING_APPLICATION_DOCUMENT. Spreads via PUBLIC, PENSIONER, JOURNALIST, and
+     * COUNCIL_MEMBER NPCs; Vibes +10. */
+    BANDSTAND_UNDER_THREAT;
 }

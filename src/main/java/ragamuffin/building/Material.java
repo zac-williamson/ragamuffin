@@ -7234,7 +7234,46 @@ public enum Material {
      * Lists all 12 delivery addresses, making the milk round job easier to
      * complete optimally.
      */
-    FLOAT_MANIFEST("Float Manifest");
+    FLOAT_MANIFEST("Float Manifest"),
+
+    // ── Issue #1493: Northfield Amateur Photography Club ─────────────────────
+
+    /**
+     * DISPOSABLE_CAMERA — a single-use camera with 3 charges. Available from the
+     * newsagent (4 COIN) or occasionally found via skip diving. Photographs NPCs
+     * or scenic props within 4 blocks to produce a DEVELOPED_PHOTOGRAPH when developed.
+     */
+    DISPOSABLE_CAMERA("Disposable Camera"),
+
+    /**
+     * DEVELOPED_PHOTOGRAPH — a printed photograph developed from a DISPOSABLE_CAMERA.
+     * Carries a quality score (0–100) set at photograph time. Entered into the
+     * Northfield Amateur Photography Club competition by handing it to Norman
+     * (PHOTO_CLUB_CHAIR) before 19:00 on meeting day.
+     */
+    DEVELOPED_PHOTOGRAPH("Developed Photograph"),
+
+    /**
+     * PLANNING_APPLICATION_DOCUMENT — the council's secret planning application to
+     * demolish the park bandstand and replace it with a car park. Found in Norman's
+     * locked darkroom (PLANNING_APPLICATION_FOLDER_PROP) during the 20:30–21:00 heist window.
+     * Fence value: 15 COIN. Tipping to newspaper triggers CIVIC_HERO achievement.
+     */
+    PLANNING_APPLICATION_DOCUMENT("Planning Application Document"),
+
+    /**
+     * WINNERS_CERTIFICATE_PROP — awarded to the player on winning the photography
+     * competition legitimately (score &gt; 72) alongside 8 COIN prize.
+     * Tooltip: "1st Place, Northfield Amateur Photography Club."
+     */
+    WINNERS_CERTIFICATE_PROP("Winner's Certificate"),
+
+    /**
+     * DARKROOM_KEY — Norman Briggs's key to his locked darkroom at the Community Centre.
+     * Can be pickpocketed from the PHOTO_CLUB_CHAIR NPC. Opens DARKROOM_DOOR_PROP
+     * without consuming a LOCKPICK.
+     */
+    DARKROOM_KEY("Darkroom Key");
 
     private final String displayName;
 

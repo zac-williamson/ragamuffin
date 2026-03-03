@@ -4551,7 +4551,49 @@ public enum PropType {
      * boundary in the park during the annual dog show.
      * Collision: 0.10w × 1.00h × 0.10d. Health: 2 hits. Drops WOOD.
      */
-    SHOW_RING_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.WOOD);
+    SHOW_RING_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.WOOD),
+
+    // ── Issue #1493: Northfield Amateur Photography Club ─────────────────────
+
+    /**
+     * DARKROOM_DOOR_PROP — the locked door to Norman Briggs's darkroom in the
+     * Community Centre basement. Can be opened with a LOCKPICK (8-second hold-E)
+     * or with the DARKROOM_KEY pickpocketed from Norman.
+     * Collision: 1.00w × 2.10h × 0.10d. Health: 8 hits. Drops WOOD.
+     */
+    DARKROOM_DOOR_PROP(1.00f, 2.10f, 0.10f, 8, Material.WOOD),
+
+    /**
+     * PHOTO_DEVELOPER_PROP — darkroom developing equipment inside Norman's darkroom.
+     * Press E with a DISPOSABLE_CAMERA (hold 5 seconds) to self-develop photos
+     * at +10 quality bonus vs chemist development.
+     * Collision: 0.80w × 1.20h × 0.50d. Health: 5 hits. Drops SCRAP_METAL.
+     */
+    PHOTO_DEVELOPER_PROP(0.80f, 1.20f, 0.50f, 5, Material.SCRAP_METAL),
+
+    /**
+     * SUBMISSION_BOX_PROP — the competition entry box at the photography club meeting.
+     * Press E to enter the player's DEVELOPED_PHOTOGRAPH (before 19:00).
+     * Press hold-E (3 seconds) to swap Derek's submission — unwitnessed = no crime;
+     * witnessed (NPC within 5 blocks) = PETTY_THEFT crime + Notoriety +4.
+     * Collision: 0.40w × 0.50h × 0.40d. Health: 3 hits. Drops WOOD.
+     */
+    SUBMISSION_BOX_PROP(0.40f, 0.50f, 0.40f, 3, Material.WOOD),
+
+    /**
+     * PROJECTOR_PROP — the slide projector used to display photographs at the
+     * club meeting. Purely cosmetic; the judging results are shown via it.
+     * Collision: 0.40w × 0.30h × 0.60d. Health: 3 hits. Drops SCRAP_METAL.
+     */
+    PROJECTOR_PROP(0.40f, 0.30f, 0.60f, 3, Material.SCRAP_METAL),
+
+    /**
+     * PLANNING_APPLICATION_FOLDER_PROP — a manila folder containing the council's
+     * secret planning application to demolish the park bandstand. Found on Norman's
+     * desk in the locked darkroom. Press E to take the PLANNING_APPLICATION_DOCUMENT.
+     * Collision: 0.30w × 0.05h × 0.40d. Health: 1 hit. Drops PLANNING_APPLICATION_DOCUMENT.
+     */
+    PLANNING_APPLICATION_FOLDER_PROP(0.30f, 0.05f, 0.40f, 1, Material.PLANNING_APPLICATION_DOCUMENT);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

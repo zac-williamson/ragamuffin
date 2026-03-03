@@ -7592,6 +7592,46 @@ public enum AchievementType {
         "Depot Raider",
         "You emptied Dave's fridge and rifled his desk. Forty-eight pints and a tenner.",
         1
+    ),
+
+    // ── Issue #1493: Northfield Amateur Photography Club ─────────────────────
+
+    /**
+     * CANDID_WINNER — Win the Northfield Amateur Photography Club competition
+     * legitimately with a score above Derek's fixed 72.
+     */
+    CANDID_WINNER(
+        "Candid Winner",
+        "You beat Derek fair and square. Norman looked genuinely surprised.",
+        1
+    ),
+
+    /**
+     * DARKROOM_SABOTEUR — Swap Derek's submission unwitnessed before the members arrive.
+     */
+    DARKROOM_SABOTEUR(
+        "Darkroom Saboteur",
+        "Derek's entry replaced. He didn't even notice until judging started.",
+        1
+    ),
+
+    /**
+     * BENT_LENS — Win the photography competition via a successful bribe of Norman.
+     */
+    BENT_LENS(
+        "Bent Lens",
+        "A brown envelope and a handshake. The winner's certificate still has your name on it.",
+        1
+    ),
+
+    /**
+     * CIVIC_HERO — Tip off the newspaper with the PLANNING_APPLICATION_DOCUMENT,
+     * exposing the council's plan to demolish the park bandstand for a car park.
+     */
+    CIVIC_HERO(
+        "Civic Hero",
+        "You gave the document to the Ragamuffin. The bandstand's saved. For now.",
+        1
     );
 
     private final String name;

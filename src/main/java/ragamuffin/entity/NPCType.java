@@ -3494,7 +3494,24 @@ public enum NPCType {
      * Annual Tournament. Accept 1–10 COIN wagers on the Grudge Match (1.5× payout).
      * Spread BOWLS_GRUDGE_MATCH rumours after the match concludes.
      */
-    BOWLS_SPECTATOR(20f, 0f, 0f, false);
+    BOWLS_SPECTATOR(20f, 0f, 0f, false),
+
+    // ── Issue #1493: Northfield Amateur Photography Club ─────────────────────
+
+    /**
+     * PHOTO_CLUB_CHAIR — Norman Briggs, chair of the Northfield Amateur Photography Club.
+     * Runs the fortnightly meeting at the Community Centre (day 12 of 14-day cycle, 19:00–21:00).
+     * Carries the DARKROOM_KEY. Can be bribed pre-judging or pickpocketed for the key.
+     * Not hostile. HP: 20, attack: 0, cooldown: 0.
+     */
+    PHOTO_CLUB_CHAIR(20f, 0f, 0f, false),
+
+    /**
+     * PHOTO_CLUB_MEMBER — a generic attendee of the Northfield Amateur Photography Club.
+     * 4–6 per meeting; passive. Can witness the player swapping Derek's submission.
+     * HP: 20, attack: 0, cooldown: 0.
+     */
+    PHOTO_CLUB_MEMBER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

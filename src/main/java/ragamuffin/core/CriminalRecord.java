@@ -1392,7 +1392,16 @@ public class CriminalRecord {
          * VEHICLE_THEFT — recorded when the player boards and drives away the
          * milk float from Dave's round. Notoriety +8, WantedSystem +1.
          */
-        VEHICLE_THEFT("Vehicle theft (milk float)");
+        VEHICLE_THEFT("Vehicle theft (milk float)"),
+
+        // ── Issue #1493: Northfield Amateur Photography Club ─────────────────
+
+        /**
+         * PLANNING_DOCUMENT_THEFT — recorded when the player steals the
+         * PLANNING_APPLICATION_DOCUMENT from Norman's darkroom while witnessed.
+         * Notoriety +5 if witnessed; no crime if unwitnessed.
+         */
+        PLANNING_DOCUMENT_THEFT("Theft of council planning documents");
 
         private final String displayName;
 
