@@ -3519,6 +3519,23 @@ public enum Material {
      */
     NIGHTCLUB_MASTER_KEY("Nightclub Master Key"),
 
+    // ── Issue #1325: Northfield Nightclub — The Vaults ────────────────────────
+
+    /**
+     * Cheap Lager — sold at The Vaults bar for 2 COIN.
+     * On consumption: +5 HP, sets DrunkLevel to TIPSY (or higher if already tipsy).
+     * Tooltip: "It's flat, it's warm, it's two quid. Welcome to The Vaults."
+     */
+    CHEAP_LAGER("Cheap Lager"),
+
+    /**
+     * Stethoscope — medical instrument repurposed for safe-cracking.
+     * Required for the NIGHTCLUB_SAFE_PROP heist (hold E 6 seconds).
+     * Fenceable for 8 COIN.
+     * Tooltip: "Not borrowed from the NHS. Definitely not."
+     */
+    STETHOSCOPE("Stethoscope"),
+
     // ── Issue #1138: Northfield Iceland ───────────────────────────────────────
 
     /**
