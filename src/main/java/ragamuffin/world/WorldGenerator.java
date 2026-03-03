@@ -4297,6 +4297,13 @@ public class WorldGenerator {
         // Heroic monument in the park (offset from centre to avoid blocking player spawn at 0,0)
         addProp(world, 5f, y, 5f, PropType.STATUE, 0f);
 
+        // ── Issue #1439: Welcome sign ─────────────────────────────────────────
+        // Large "Welcome to Northfield" sign just south of the main park entrance.
+        // The park south fence is at z=-15; the entrance gap is at x=0/-1.
+        // The sign is placed at z=-18 (3 blocks beyond the entrance) facing north.
+        addProp(world, -0.5f, y, -18f, PropType.WELCOME_SIGN, 0f);
+        world.addLandmark(new Landmark(LandmarkType.WELCOME_SIGN, -2, 0, -19, 4, 2, 1));
+
         // ── Issue #909: Bookies interior props ───────────────────────────────
         // TV_SCREEN (for BettingUI interaction) and FRUIT_MACHINE inside the
         // bookies. We look up the landmark position so we correctly follow the

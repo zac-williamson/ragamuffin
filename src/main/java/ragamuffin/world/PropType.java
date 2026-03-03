@@ -4144,7 +4144,16 @@ public enum PropType {
      * Graffiti-able (GraffitiSystem): Notoriety +3, CrimeType CRIMINAL_DAMAGE.
      * Keith re-erects the sign next session with "AND RESPECT COMMUNITY VOLUNTEERS."
      */
-    SPEEDWATCH_SIGN_PROP(0.5f, 1.2f, 0.4f, 1, ragamuffin.building.Material.WOOD);
+    SPEEDWATCH_SIGN_PROP(0.5f, 1.2f, 0.4f, 1, ragamuffin.building.Material.WOOD),
+
+    // ── Issue #1439: Welcome sign ─────────────────────────────────────────────
+
+    /**
+     * WELCOME_SIGN — a large physical town welcome sign placed at the main entrance
+     * to the park, reading "Welcome to Northfield". Two wooden posts support a wide
+     * green sign panel. Dims: 4.0 × 2.0 × 0.3 m; hardness 5; drops WOOD.
+     */
+    WELCOME_SIGN(4.0f, 2.0f, 0.3f, 5, ragamuffin.building.Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
