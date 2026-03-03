@@ -7634,6 +7634,60 @@ public enum AchievementType {
         "Honourable Thief",
         "You nicked Gary's trophy and gave it back. He didn't know whether to thank you or ban you.",
         1
+    ),
+
+    // ── Issue #1501: Northfield Pub Darts League ──────────────────────────────
+
+    /**
+     * DARTS_CHAMP_NORTHFIELD — win 5 of 8 league fixtures in a season.
+     * Dave presents the trophy at the Ragamuffin Arms. League speech: "Champion."
+     * Unlocks county final invite.
+     */
+    DARTS_CHAMP_NORTHFIELD(
+        "Northfield Darts Champion",
+        "Won the Northfield & District Pub Darts League. Dave nearly smiled.",
+        1
+    ),
+
+    /**
+     * WOODEN_SPOON — lose all 8 league fixtures in a season without winning once.
+     * Dave hands over an actual wooden spoon from behind the bar. Awarded silently.
+     */
+    WOODEN_SPOON(
+        "Wooden Spoon",
+        "Lost every single league match. Dave found an actual wooden spoon. He's not wrong.",
+        1
+    ),
+
+    /**
+     * FLETCHER — sabotage 3 rivals' darts with BENT_FLIGHTS in a single season,
+     * all unwitnessed. Triggers RumourType.DART_CHEAT (Vibes −4).
+     */
+    FLETCHER(
+        "The Fletcher",
+        "Bent the flights on three rivals' darts sets in one season. Undetected. You monster.",
+        1
+    ),
+
+    /**
+     * DARTS_VILLAIN — steal the COUNTY_FINAL_TROPHY_PROP during the county final event
+     * unwitnessed (30% detection, everyone watching).
+     * Seeds RumourType.TROPHY_GONE (Vibes −2).
+     */
+    DARTS_VILLAIN(
+        "Darts Villain",
+        "Nicked the county trophy while the whole room was watching. They still don't know how.",
+        1
+    ),
+
+    /**
+     * SPORTSMANSHIP — voluntarily return the COUNTY_FINAL_TROPHY_PROP to Dave.
+     * Dave grants permanent free league entry. RumourType.TROPHY_GONE cleared.
+     */
+    SPORTSMANSHIP(
+        "Sportsmanship",
+        "You gave the county trophy back. Dave's given you free entry for life. Probably feels weird.",
+        1
     );
 
     private final String name;

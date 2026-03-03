@@ -1419,7 +1419,17 @@ public class CriminalRecord {
          * poaching violation (fishing match water without MATCH_DAY_CARD, witnessed
          * by a MATCH_ANGLER within 10 blocks). First violation is a verbal warning.
          */
-        MATCH_POACHING("Poaching (fishing match water without a match day card)");
+        MATCH_POACHING("Poaching (fishing match water without a match day card)"),
+
+        // ── Issue #1501: Northfield Pub Darts League ──────────────────────────
+
+        /**
+         * HANDICAP_FRAUD — recorded when the player bribes Ted (LEAGUE_SECRETARY)
+         * to lower the player's handicap by 16 POINTS, and is subsequently caught.
+         * Results in +9 Notoriety and Dave refusing to speak for 3 in-game days.
+         * Seeds RumourType.DART_CHEAT (Vibes −4).
+         */
+        HANDICAP_FRAUD("Handicap fraud (darts league)");
 
         private final String displayName;
 

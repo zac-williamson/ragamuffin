@@ -3538,7 +3538,17 @@ public enum NPCType {
      * Witness diorama theft at WITNESS_RANGE_NORMAL (reduced to WITNESS_RANGE_DERAILMENT
      * during derailment).
      */
-    RAILWAY_MEMBER(20f, 0f, 0f, false);
+    RAILWAY_MEMBER(20f, 0f, 0f, false),
+
+    // ── Issue #1501: Northfield Pub Darts League ──────────────────────────────
+
+    /**
+     * LEAGUE_SECRETARY — Ted, the corrupt Northfield &amp; District Pub Darts League
+     * secretary. Stationed at the bar of the Ragamuffin Arms on Thursday evenings.
+     * Can be bribed 8 COIN to lower the player's handicap by 16.
+     * Caught during HANDICAP_FRAUD → permanently hostile.
+     */
+    LEAGUE_SECRETARY(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
