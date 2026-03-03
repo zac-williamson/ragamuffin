@@ -739,9 +739,9 @@ public class BonfireNightSystem {
         if (notorietySystem != null && callback != null) {
             notorietySystem.addNotoriety(FIREWORK_OFFENCE_NOTORIETY, callback);
         }
-        if (wantedSystem != null && callback != null) {
+        if (wantedSystem != null) {
             wantedSystem.addWantedStars(FIREWORK_OFFENCE_WANTED_STARS,
-                    playerX, playerY, playerZ, callback);
+                    playerX, playerY, playerZ, null);
         }
         return true;
     }

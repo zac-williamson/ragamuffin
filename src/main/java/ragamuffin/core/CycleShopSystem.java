@@ -487,7 +487,7 @@ public class CycleShopSystem {
 
         // Wanted stars if witnessed
         if (witnessed && wantedSystem != null) {
-            wantedSystem.addWantedStars(1);
+            wantedSystem.addWantedStars(1, 0f, 0f, 0f, null);
         }
 
         // Seed rumour
@@ -658,7 +658,7 @@ public class CycleShopSystem {
             notorietySystem.addNotoriety(CYCLING_OFFENCE_NOTORIETY, achievementCallback);
         }
         if (wantedSystem != null) {
-            wantedSystem.addWantedStars(1);
+            wantedSystem.addWantedStars(1, 0f, 0f, 0f, null);
         }
 
         return CyclingStopResult.OFFENCE_RECORDED;

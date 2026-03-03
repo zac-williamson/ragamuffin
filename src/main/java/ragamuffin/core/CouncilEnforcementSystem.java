@@ -358,7 +358,7 @@ public class CouncilEnforcementSystem {
             notorietySystem.addNotoriety(10, achievementCb);
         }
         if (wantedSystem != null) {
-            wantedSystem.addWantedStars(2, playerX, playerY, playerZ, achievementCb);
+            wantedSystem.addWantedStars(2, playerX, playerY, playerZ, null);
         }
         citationsThisSweep++;
         return DvlaCheckResult.VEHICLE_TOWED;
@@ -388,7 +388,7 @@ public class CouncilEnforcementSystem {
             traineeErrorFiredThisSweep = true;
             freeParkingWindowActive = true;
             freeParkingWindowRemaining = FREE_PARKING_WINDOW_SECONDS;
-            achievementCb.onAchievement(AchievementType.WARDEN_CHAOS);
+            achievementCb.award(AchievementType.WARDEN_CHAOS);
             return TraineeInspectResult.WRONG_CAR_TICKETED;
         }
         return TraineeInspectResult.NO_ERROR;
@@ -412,7 +412,7 @@ public class CouncilEnforcementSystem {
         }
         chaosExploitsThisSweep++;
         if (chaosExploitsThisSweep == 1) {
-            achievementCb.onAchievement(AchievementType.CHAOS_WINDOW);
+            achievementCb.award(AchievementType.CHAOS_WINDOW);
         }
         return true;
     }
@@ -431,7 +431,7 @@ public class CouncilEnforcementSystem {
         if (!noticePropPosted) {
             return false;
         }
-        achievementCb.onAchievement(AchievementType.FOREWARNED);
+        achievementCb.award(AchievementType.FOREWARNED);
         return true;
     }
 
@@ -458,7 +458,7 @@ public class CouncilEnforcementSystem {
                 NPC firstNpc = npcs.get(0);
                 wantedSystem.addWantedStars(BENEFIT_FRAUD_WANTED_STARS,
                     firstNpc.getPosition().x, firstNpc.getPosition().y,
-                    firstNpc.getPosition().z, achievementCb);
+                    firstNpc.getPosition().z, null);
             }
             if (notorietySystem != null) {
                 notorietySystem.addNotoriety(15, achievementCb);
@@ -476,7 +476,7 @@ public class CouncilEnforcementSystem {
     private void onSweepComplete(NotorietySystem.AchievementCallback achievementCb) {
         if (citationsThisSweep == 0 && !layLowAwardedThisSweep) {
             layLowAwardedThisSweep = true;
-            achievementCb.onAchievement(AchievementType.LAY_LOW);
+            achievementCb.award(AchievementType.LAY_LOW);
         }
 
         if (newspaperSystem != null) {

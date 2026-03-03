@@ -180,6 +180,9 @@ public class MagistratesCourtSystem {
     /** The CrimeType that triggered the current summons (may be null). */
     private CriminalRecord.CrimeType pendingCharge = null;
 
+    /** Whether the player voluntarily surrendered, reducing the next sentence tier. */
+    private boolean voluntarySurrenderMitigation = false;
+
     // ── Dependencies ──────────────────────────────────────────────────────────
 
     private NotorietySystem notorietySystem;
@@ -517,6 +520,19 @@ public class MagistratesCourtSystem {
         if (achievementSystem != null) {
             achievementSystem.unlock(AchievementType.CONTEMPT_OF_COURT);
         }
+    }
+
+    /**
+     * Mark that the player voluntarily surrendered at the police station.
+     * This reduces the next sentence tier by one step at the magistrates' court hearing.
+     */
+    public void markVoluntarySurrender() {
+        voluntarySurrenderMitigation = true;
+    }
+
+    /** Returns true if voluntary surrender mitigation is active for the current case. */
+    public boolean isVoluntarySurrenderMitigationActive() {
+        return voluntarySurrenderMitigation;
     }
 
     // ── Accessors ─────────────────────────────────────────────────────────────

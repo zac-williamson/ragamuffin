@@ -405,6 +405,15 @@ public class CraftingSystem {
             Map.of(Material.GREGGS_PASTRY, 1),
             Map.of(Material.BREAD_CRUST, 1)
         ));
+
+        // ── Issue #1377: Northfield BP Petrol Station ─────────────────────────────
+
+        // MOLOTOV_COCKTAIL: PETROL_CAN_FULL×1 + FLYER×1 → MOLOTOV_COCKTAIL×1
+        // (Throwable incendiary; creates 2×2 fire, NoiseSystem +30, Notoriety +20, ARSON record.)
+        recipes.add(new Recipe(
+            Map.of(Material.PETROL_CAN_FULL, 1, Material.FLYER, 1),
+            Map.of(Material.MOLOTOV_COCKTAIL, 1)
+        ));
     }
 
     /**

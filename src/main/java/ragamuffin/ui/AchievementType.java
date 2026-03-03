@@ -407,11 +407,6 @@ public enum AchievementType {
         "Escaped police by running 80 blocks and breaking line of sight for 60 seconds. Pure bottle.",
         1
     ),
-    BENT_COPPER(
-        "Bent Copper",
-        "Cultivated a corrupt PCSO with three flasks of tea. Everyone has a price.",
-        1
-    ),
     CLEAN_GETAWAY_PURSUIT(
         "Clean Getaway",
         "Lost the police and let your wanted level decay to zero. Not a trace.",
@@ -2124,11 +2119,6 @@ public enum AchievementType {
         "Toppled the war memorial statue. Northfield will never forget.",
         1
     ),
-    LEST_WE_FORGET(
-        "Lest We Forget",
-        "Attended the full Remembrance Sunday silence without causing any disturbance.",
-        1
-    ),
     REMEMBER_REMEMBER(
         "Remember Remember",
         "Triggered a firework misfire that started a fire on Bonfire Night.",
@@ -2343,11 +2333,6 @@ public enum AchievementType {
     DOG_OWNER(
         "Man's Best Friend",
         "Purchased a dog from Bev at Paws 'n' Claws. He's looking at you like you're the best person in the world. You're not.",
-        1
-    ),
-    BEST_IN_SHOW(
-        "Crufts, Eventually",
-        "Brought a vaccinated dog with a vet record to the Boot Sale. Bev would be proud.",
         1
     ),
     VET_BILLS(
@@ -3366,15 +3351,6 @@ public enum AchievementType {
     BISCUIT_BANDIT(
         "Biscuit Bandit",
         "You nicked the Rich Tea. During a bereavement support group. Shameless.",
-        1
-    ),
-
-    /**
-     * Awarded when the player completes the legitimate grant application with Denise's help.
-     */
-    HONEST_CITIZEN(
-        "Honest Citizen",
-        "You did it properly. Filled in the forms. Waited three weeks. Denise is genuinely chuffed.",
         1
     ),
 
@@ -5630,16 +5606,6 @@ public enum AchievementType {
     NIMBY(
         "NIMBY",
         "You've enraged the residents' association. Margaret will not forget this.",
-        1
-    ),
-
-    /**
-     * Fires when the player uses the Calm the Room speech option to successfully
-     * block a planning application at the Residents' Association meeting.
-     */
-    COMMUNITY_CHAMPION(
-        "Community Champion",
-        "You spoke sense at the residents' meeting. Briefly, they listened.",
         1
     ),
 

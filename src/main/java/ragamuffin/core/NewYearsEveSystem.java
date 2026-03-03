@@ -532,7 +532,7 @@ public class NewYearsEveSystem {
     public boolean attemptPickpocket(Inventory playerInventory, AchievementCallback callback) {
         float chance = PICKPOCKET_BASE_CHANCE;
         if (streetSkillSystem != null) {
-            int tier = streetSkillSystem.getTier(Skill.STEALTH);
+            int tier = streetSkillSystem.getTierLevel(Skill.STEALTH);
             chance += tier * 0.05f;
         }
 
