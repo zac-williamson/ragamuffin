@@ -57976,3 +57976,119 @@ The `PLANNING_APPLICATION_DOCUMENT` can be:
 5. **Unwitnessed van break-in during match window yields ANGLING_TROPHY and cash, awards KEEPNET_RAIDER**: create system; give player `Material.LOCKPICK` (3 charges); set time to Sunday 08:00 (match in progress); ensure no NPCs within `ANGLER_AWARENESS_RANGE`; call `breakIntoVan(player, inventory, nearbyNpcs=[], timeSystem)`; verify `inventory.contains(Material.ANGLING_TROPHY_PROP)` == true; verify `inventory.getItemCount(Material.COIN)` increased by at least 24; verify `achievementCallback` received `AchievementType.KEEPNET_RAIDER`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == false.
 
 // `AnglingClubSystem.java` must be created as the sole new source file. Integrates with `CanalSystem` (existing fishing mechanics, `CANAL_FISH`, `FISHING_ROD`, `FISHING_WATER_DISTANCE`), `TimeSystem` (fortnightly Sunday schedule), `CriminalRecord` (new `CHEATING_AT_ANGLING`, `MATCH_POACHING`; existing `BURGLARY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `DODGY_ANGLER`, `VAN_THIEF`, `REPENTANT_THIEF`, `CANAL_CHAMPION`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (`ANGLING_TROPHY_FENCE_VALUE`), `PawnShopSystem` (`ANGLING_TROPHY_PAWN_VALUE`), `AchievementSystem`, and `NoiseSystem` (van crowbar hits). New NPCTypes: `ANGLING_CLUB_CHAIR`, `MATCH_ANGLER`. New Materials: `MATCH_DAY_CARD`, `KEEPNET`, `GRUDGING_THANKS_TOKEN`. New PropTypes: `PEBBLE_PEG_PROP`, `WEIGH_TABLE_PROP`, `WEIGH_SCALES_PROP`, `RESULTS_BOARD_PROP`, `TRANSIT_VAN_PROP`, `VAN_BOOT_PROP`, `KEEPNET_PROP`, `ANGLING_TROPHY_PROP`. New RumourTypes: `DODGY_ANGLER`, `VAN_THIEF`, `REPENTANT_THIEF`, `CANAL_CHAMPION`. New CrimeTypes: `CHEATING_AT_ANGLING`, `MATCH_POACHING`. New AchievementTypes: `CANAL_CHAMPION`, `EARLY_BIRD_POACHER`, `KEEPNET_RAIDER`, `RETURNED_THE_TROPHY`.
+
+---
+
+## Issue #1499: Add Northfield Model Railway Club — Derek's Layout, the Charity Raffle Scam & the Signal Box Heist
+
+### Overview
+
+Every third Saturday (starting day 21), Derek Hodges opens the Northfield Model Railway Club's community hall layout to the public from 10:00–16:00. Club members admire locos, squabble over scale, and sell raffle tickets at 1 COIN each to raise funds. The star prize is the prized `SIGNAL_BOX_DIORAMA_PROP` — a hand-built detailed model Derek spent three years on. The player can buy raffle tickets legitimately, rig the draw by swapping the barrel (unwitnessed), or outright steal the diorama during the chaos of Derek's famous `LAYOUT_DERAILMENT_EVENT` distraction.
+
+### Operational Schedule
+
+- Open days: every 3rd Saturday (day 21, 24, 27… modulo `OPEN_DAY_INTERVAL` = 3), 10:00–16:00, at `LandmarkType.COMMUNITY_CENTRE`.
+- Outside open days: club meets on Tuesday evenings 19:00–21:30 (members only; player who enters triggers `CrimeType.TRESPASS`).
+- `LAYOUT_DERAILMENT_EVENT` fires once per open day at a random time between 12:00 and 14:00 — Derek panics, all NPCs cluster around the layout for 90 seconds. This is the prime theft window.
+
+### Raffle Mechanics
+
+- Raffle tickets sold by `NPCType.RAFFLE_VOLUNTEER` (Pauline) at the door, 1 COIN each. Max 3 per player per open day.
+- Draw happens at 15:30. Derek (`NPCType.MODEL_RAILWAY_CHAIR`) draws from the `RAFFLE_BARREL_PROP`.
+- Normal win probability = (player tickets held) / `TOTAL_RAFFLE_TICKETS` (typically 40–60 drawn from `rng`).
+- Prizes in draw order: `SIGNAL_BOX_DIORAMA_PROP` (1st), `LOCO_MODEL_PROP` (2nd), `TRACK_PACK_PROP` (3rd). Remaining draws yield `RAFFLE_CONSOLATION_VOUCHER`.
+
+### The Barrel Swap Scam
+
+- Before the draw (any time between 10:00 and 15:20), player can press E on `RAFFLE_BARREL_PROP` to swap tickets — if no NPC within `BARREL_WITNESS_RANGE` (= 4.0f blocks).
+- Successful swap: `anglingClubSystem.isRaffleRigged()` — player's ticket stub (identified by `RAFFLE_TICKET` Material, uses item's internal ID) is placed on top of the barrel; draw always yields player first. Notoriety stays 0.
+- Witnessed: `CrimeType.RAFFLE_FRAUD`; Notoriety +4; Derek bans player from future open days; `RumourType.RAFFLE_CHEAT` seeded.
+
+### The Diorama Heist
+
+- `SIGNAL_BOX_DIORAMA_PROP` is on the `DISPLAY_TABLE_PROP` in the main hall (collisionWidth = 0.8, hitsToBreak = 0, i.e. pickable via E interaction, not breakable).
+- Player can pick up diorama (press E) during `LAYOUT_DERAILMENT_EVENT` window when all NPCs face the layout — their backs are turned, effective `WITNESS_RANGE_DERAILMENT` = 1.5f (reduced from normal 5.0f).
+- Outside derailment window: `WITNESS_RANGE_NORMAL` = 5.0f; grab witnessed → `CrimeType.THEFT`; Notoriety +6; Derek calls police.
+- Fence value: 20 COIN (`DIORAMA_FENCE_VALUE`). Pawn value: 14 COIN (`DIORAMA_PAWN_VALUE`).
+- Achievement: `AchievementType.SIGNAL_GONE` (steal unwitnessed during derailment).
+- Player can return the diorama to Derek (press E with diorama in inventory, at Derek's position, 16:00 after draw): Derek gives `CLUB_MEMBERSHIP_TOKEN` (free entry to all future open days) and seeds `RumourType.DIORAMA_RETURNED`. Achievement: `AchievementType.DECENT_SORT`.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `OPEN_DAY_INTERVAL` | 3 |
+| `OPEN_DAY_START_HOUR` | 10.0f |
+| `OPEN_DAY_END_HOUR` | 16.0f |
+| `CLUB_NIGHT_START_HOUR` | 19.0f |
+| `CLUB_NIGHT_END_HOUR` | 21.5f |
+| `RAFFLE_TICKET_COST_COIN` | 1 |
+| `MAX_TICKETS_PER_PLAYER` | 3 |
+| `RAFFLE_DRAW_HOUR` | 15.5f |
+| `DERAILMENT_WINDOW_START` | 12.0f |
+| `DERAILMENT_WINDOW_END` | 14.0f |
+| `DERAILMENT_DURATION_SECONDS` | 90.0f |
+| `BARREL_WITNESS_RANGE` | 4.0f |
+| `WITNESS_RANGE_NORMAL` | 5.0f |
+| `WITNESS_RANGE_DERAILMENT` | 1.5f |
+| `DIORAMA_FENCE_VALUE` | 20 |
+| `DIORAMA_PAWN_VALUE` | 14 |
+| `RAFFLE_FRAUD_NOTORIETY` | 4 |
+| `DIORAMA_THEFT_NOTORIETY` | 6 |
+
+### Entities Required
+
+**New NPCTypes required:**
+- `NPCType.MODEL_RAILWAY_CHAIR` — Derek Hodges. Runs the layout, presides over the draw at 15:30. Hostile if theft is witnessed. Passive during `LAYOUT_DERAILMENT_EVENT` (facing the layout).
+- `NPCType.RAFFLE_VOLUNTEER` — Pauline. Sells raffle tickets at the door on open days. Witnesses barrel tampering within `BARREL_WITNESS_RANGE`.
+- `NPCType.RAILWAY_MEMBER` — club member. 4–6 spawned on open days; gather around layout during derailment event. Witness theft at `WITNESS_RANGE_NORMAL` (reduced during derailment).
+
+**New Materials required:**
+- `Material.RAFFLE_TICKET` — issued on purchase (1 COIN). Holds internal stub ID used by barrel swap logic. Consumed at draw.
+- `Material.LOCO_MODEL_PROP` — 2nd prize loco model. Fenceable 8 COIN, pawnable 5 COIN.
+- `Material.TRACK_PACK_PROP` — 3rd prize track pack. Fenceable 3 COIN, pawnable 2 COIN.
+- `Material.RAFFLE_CONSOLATION_VOUCHER` — "Better luck next time" printed slip. Worth 0 COIN.
+- `Material.CLUB_MEMBERSHIP_TOKEN` — free entry to future open days; grants `IS_MEMBER` flag on player. Worth 0 COIN but prevents trespass charge on club nights.
+
+**New PropTypes required:**
+- `PropType.RAFFLE_BARREL_PROP` — wooden tombola barrel on a stand. Press E to interact. Located near the door, 1.0×1.0×1.0 collision.
+- `PropType.DISPLAY_TABLE_PROP` — long trestle table holding the layout. 3.0×0.8×1.0 collision (blocks access to layout).
+- `PropType.SIGNAL_BOX_DIORAMA_PROP` — Derek's prize diorama. On display table. Press E to pick up. hitsToBreak = 0; not breakable — E interaction only. Material drop = `Material.SIGNAL_BOX_DIORAMA_PROP` (same-named).
+- `PropType.LOCO_DISPLAY_PROP` — display case of model locos. Press E to view; no item drop (decorative).
+
+**New RumourTypes required:**
+- `RumourType.RAFFLE_CHEAT` — "Someone got caught fiddling the barrel at the Model Railway Club raffle. Derek threw them out. Three years he spent on that signal box." Vibes −3. Seeds among `RAILWAY_MEMBER` and `PUBLIC` NPCs.
+- `RumourType.DIORAMA_NICKED` — "The signal box diorama's gone from the model railway club. Derek's absolutely devastated. Took him three years, that." Vibes −2. Seeds among `RAILWAY_MEMBER` and `PUBLIC` NPCs.
+- `RumourType.DIORAMA_RETURNED` — "Some lad brought Derek's signal box back. Derek shook his hand and gave him a life membership. Didn't ask any questions." Vibes +2. Seeds among `RAILWAY_MEMBER` and `PUBLIC` NPCs.
+- `RumourType.RAFFLE_WINNER` — "Player won the signal box diorama at the model railway raffle. Derek looked sick as a dog." Vibes +1. Seeds on legitimate win.
+
+**New CrimeTypes required (in CriminalRecord):**
+- `CrimeType.RAFFLE_FRAUD` — tampering with the raffle barrel when witnessed.
+
+**New AchievementTypes required:**
+- `AchievementType.SIGNAL_GONE` — steal the signal box diorama unwitnessed during the derailment window.
+- `AchievementType.LUCKY_DIP` — win the diorama legitimately via the raffle draw.
+- `AchievementType.DECENT_SORT` — return the stolen diorama to Derek.
+- `AchievementType.BARREL_RIGGER` — successfully rig the raffle barrel unwitnessed.
+
+**Already defined — no new entries needed:**
+- `Material.COIN` — raffle ticket cost, barrel tamper logic.
+- `Material.LOCKPICK` — for locked hall cabinet (Tuesday night trespass route).
+- `CrimeType.THEFT` — diorama grab witnessed outside derailment window.
+- `CrimeType.TRESPASS` — entering on Tuesday club night without `CLUB_MEMBERSHIP_TOKEN`.
+- `LandmarkType.COMMUNITY_CENTRE` — where the club meets.
+- `NPCType.PCSO` — called by Derek on witnessed theft.
+
+### Integration Tests
+
+1. **Buying 3 raffle tickets on an open day costs 3 COIN and grants 3 RAFFLE_TICKET items**: create `ModelRailwaySystem`; give player 5 COIN; set time to open day Saturday 10:30; call `buyRaffleTicket(player, inventory, paulineNpc, timeSystem)` × 3; verify `inventory.getItemCount(Material.RAFFLE_TICKET)` == 3; verify `inventory.getItemCount(Material.COIN)` == 2; call `buyRaffleTicket` a 4th time; verify result == `BuyResult.MAX_TICKETS_REACHED`; verify ticket count still 3.
+
+2. **Unrigged draw with 3 player tickets out of 50 total: player wins at correct probability**: create system; give player 3 `RAFFLE_TICKET` items; seed `rng` so player's stub is drawn first; advance time to 15:30 open day; call `conductDraw(player, inventory, rng)`; verify `inventory.contains(Material.SIGNAL_BOX_DIORAMA_PROP)` == true (via Material enum); verify `achievementCallback` received `AchievementType.LUCKY_DIP`; verify `rumourNetwork` received `RumourType.RAFFLE_WINNER`.
+
+3. **Unwitnessed barrel swap before draw rigged flag is set**: create system; give player 1 `RAFFLE_TICKET`; set time to open day 11:00; ensure no NPCs within `BARREL_WITNESS_RANGE`; call `swapBarrel(player, inventory, nearbyNpcs=[], timeSystem)`; verify `modelRailwaySystem.isRaffleRigged()` == true; verify `criminalRecord.hasCrime(CrimeType.RAFFLE_FRAUD)` == false; advance to 15:30 and call `conductDraw`; verify player wins first prize.
+
+4. **Diorama theft unwitnessed during derailment window awards SIGNAL_GONE**: create system; set time to open day 12:30 (derailment active); set all NPCs facing layout (backed away from player); ensure no NPC within `WITNESS_RANGE_DERAILMENT`; call `pickUpDiorama(player, inventory, nearbyNpcs=[], timeSystem)`; verify `inventory.contains(Material.SIGNAL_BOX_DIORAMA_PROP)` == true; verify `achievementCallback` received `AchievementType.SIGNAL_GONE`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == false.
+
+5. **Returning the diorama to Derek after theft grants CLUB_MEMBERSHIP_TOKEN and DECENT_SORT**: create system; give player `Material.SIGNAL_BOX_DIORAMA_PROP`; advance time to 16:05 open day (after draw); call `returnDiorama(player, inventory, derekNpc, timeSystem)`; verify `inventory.contains(Material.SIGNAL_BOX_DIORAMA_PROP)` == false; verify `inventory.contains(Material.CLUB_MEMBERSHIP_TOKEN)` == true; verify `achievementCallback` received `AchievementType.DECENT_SORT`; verify `rumourNetwork` received `RumourType.DIORAMA_RETURNED`.
+
+// `ModelRailwaySystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (open day schedule, club night schedule, derailment window), `CriminalRecord` (new `RAFFLE_FRAUD`; existing `THEFT`, `TRESPASS`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `RAFFLE_CHEAT`, `DIORAMA_NICKED`, `DIORAMA_RETURNED`, `RAFFLE_WINNER`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (`DIORAMA_FENCE_VALUE`, `LOCO_MODEL` fence values), `PawnShopSystem` (`DIORAMA_PAWN_VALUE`), `AchievementSystem`, and `NoiseSystem`. New NPCTypes: `MODEL_RAILWAY_CHAIR`, `RAFFLE_VOLUNTEER`, `RAILWAY_MEMBER`. New Materials: `RAFFLE_TICKET`, `LOCO_MODEL_PROP`, `TRACK_PACK_PROP`, `RAFFLE_CONSOLATION_VOUCHER`, `CLUB_MEMBERSHIP_TOKEN`. New PropTypes: `RAFFLE_BARREL_PROP`, `DISPLAY_TABLE_PROP`, `SIGNAL_BOX_DIORAMA_PROP`, `LOCO_DISPLAY_PROP`. New RumourTypes: `RAFFLE_CHEAT`, `DIORAMA_NICKED`, `DIORAMA_RETURNED`, `RAFFLE_WINNER`. New CrimeTypes: `RAFFLE_FRAUD`. New AchievementTypes: `SIGNAL_GONE`, `LUCKY_DIP`, `DECENT_SORT`, `BARREL_RIGGER`.
