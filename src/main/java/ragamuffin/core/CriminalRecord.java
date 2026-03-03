@@ -1083,7 +1083,30 @@ public class CriminalRecord {
          * stealing TICKET_CASH_BOX_PROP. Penalty: Notoriety +5, WantedSystem +1 star.
          * Triggers NAODS_DRAMA_DISASTER rumour.
          */
-        PRODUCTION_SABOTAGE("Production sabotage (NAODS opening night)");
+        PRODUCTION_SABOTAGE("Production sabotage (NAODS opening night)"),
+
+        // ── Issue #1355: Northfield NHS Walk-In Centre ────────────────────────
+
+        /**
+         * Recorded when the player breaks into the medicine room and loots the
+         * {@link ragamuffin.world.PropType#CONTROLLED_DRUGS_SAFE_PROP} using a CROWBAR.
+         * Penalty: +12 Notoriety, +2 WantedSystem stars.
+         * Also triggers PHARMACY_RAID rumour seeded within 50 blocks.
+         */
+        MEDICINE_THEFT("Medicine theft (NHS Walk-In Centre drug safe)"),
+
+        /**
+         * Recorded when the player fences 3+ units of controlled drugs (TRAMADOL or
+         * DIAZEPAM) obtained from the CONTROLLED_DRUGS_SAFE_PROP in a single session.
+         * Penalty: +8 Notoriety, +1 WantedSystem star.
+         */
+        CONTROLLED_DRUG_TRAFFICKING("Controlled drug trafficking"),
+
+        /**
+         * Recorded when the player attacks a PARAMEDIC NPC during an active callout.
+         * Penalty: WantedSystem minimum Tier 4, immediate police alert.
+         */
+        ASSAULTING_NHS_STAFF("Assaulting NHS staff (paramedic)");
 
         private final String displayName;
 

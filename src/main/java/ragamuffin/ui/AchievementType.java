@@ -5753,6 +5753,19 @@ public enum AchievementType {
         "Stage Fright",
         "You forgot your lines. In front of everyone. There were boos.",
         1
+    ),
+
+    // ── Issue #1355: Northfield NHS Walk-In Centre ─────────────────────────────
+
+    /**
+     * Fires when the player drives the ambulance off the AMBULANCE_BAY_PROP lot
+     * during a paramedic callout or while both paramedics are inside.
+     * Awarded in WalkInCentreSystem on successful ambulance theft/drive-off.
+     */
+    BLUE_LIGHT_SPECIAL(
+        "Blue Light Special",
+        "You drove an NHS ambulance off the lot. Andy is absolutely livid.",
+        1
     );
 
     private final String name;
