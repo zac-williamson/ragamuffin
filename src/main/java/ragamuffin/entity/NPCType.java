@@ -3396,7 +3396,30 @@ public enum NPCType {
      * Will buy a BIRD_PHOTO for 5 COIN and give BIRDWATCHING_TIP for free from that point forward.
      * HP: 40, attack: 0, cooldown: 0, not hostile.
      */
-    CANAL_TWITCHER(40f, 0f, 0f, false);
+    CANAL_TWITCHER(40f, 0f, 0f, false),
+
+    // ── Issue #1477: Northfield Warm Hub ──────────────────────────────────────
+
+    /**
+     * WARM_HUB_VOLUNTEER — Shirley, a retired dinner lady who runs the council-funded
+     * warm hub out of the community centre during COLD_SNAP or FROST weather.
+     * Stationary at WARM_HUB_TABLE_PROP. Press E to receive HUB_TEA (120s cooldown).
+     * Becomes suspicious if player takes more than 1 HUB_BISCUIT.
+     * Calls 999 if a fake medical emergency is staged.
+     * Non-hostile unless the DONATIONS_TIN is stolen (then triggers Notoriety warning).
+     * HP: 30, attack: 0, cooldown: 0, not hostile.
+     */
+    WARM_HUB_VOLUNTEER(30f, 0f, 0f, false),
+
+    /**
+     * WARM_HUB_VISITOR — a visitor to Shirley's warm hub during cold weather.
+     * Drawn from rough sleepers, pensioners, and the unemployed.
+     * Sits quietly near the WARM_HUB_TABLE_PROP; may linger after hub closes.
+     * Can be targeted for the fake medical emergency mechanic (hold E for 2s).
+     * ROUGH_SLEEPER sub-type lingers when hub closes; can be escorted out or
+     * stood up for (player's choice). HP: 15, attack: 0, cooldown: 0, not hostile.
+     */
+    WARM_HUB_VISITOR(15f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
