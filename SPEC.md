@@ -45706,3 +45706,147 @@ All enum entries (Materials, NPCTypes, CriminalRecord.CrimeType, AchievementType
 // Integration: TimeSystem, PostOfficeSystem, CraftingSystem, InternetCafeSystem, DogCompanionSystem,
 //              WantedSystem, CriminalRecord, NotorietySystem, RumourNetwork, WitnessSystem,
 //              NewspaperSystem, NoiseSystem, AchievementSystem, TooltipSystem
+
+---
+
+## Issue #1330: Add Northfield Traffic Warden — Clive's Rounds, Wheel Clamping & the PCN Appeal Hustle
+
+### Overview
+
+Clive (`NPCType.TRAFFIC_WARDEN`) is Northfield's sole traffic warden: a pedantic, hi-vis-jacketed bureaucrat who patrols the COUNCIL_CAR_PARK and surrounding residential streets Mon–Sat 08:00–18:00, issuing Penalty Charge Notices, clamping repeat offenders, and triggering vehicle impounding on a third strike. Players can buy genuine PAY_AND_DISPLAY_TICKETs, forge them at the photocopier, sell forgeries to commuters, knock Clive out to grab his terminal, or navigate the appeals process at the COUNCIL_OFFICE.
+
+All required enum entries (Materials, NPCTypes, PropTypes, LandmarkType entries, CriminalRecord crime types, AchievementType entries) are already defined in their respective files. `TrafficWardenSystem.java` is the missing implementation.
+
+### New Java File
+
+`src/main/java/ragamuffin/core/TrafficWardenSystem.java` in package `ragamuffin.core`
+
+### New Unit Test File
+
+`src/test/java/ragamuffin/core/TrafficWardenSystemTest.java`
+
+### New Integration Test File
+
+`src/test/java/ragamuffin/integration/Issue1330TrafficWardenIntegrationTest.java`
+
+---
+
+### Mechanic 1 — Clive's Patrol & PCN Issuance
+
+- Clive (`NPCType.TRAFFIC_WARDEN`) spawns at the COUNCIL_CAR_PARK entrance at 08:00 Mon–Sat, despawns at 18:00.
+- He patrols on a fixed 20-block circuit: COUNCIL_CAR_PARK → High Street → residential side streets → back.
+- At each parked car prop (`CAR_PROP` or player's vehicle within the patrol zone):
+  - **Valid PAY_AND_DISPLAY_TICKET on dashboard** (player placed via E on car while holding ticket): Clive passes without action. Ticket valid for the purchased hours (1 COIN/hr, max 4 hrs).
+  - **Expired ticket or no ticket**: Clive issues `Material.PENALTY_CHARGE_NOTICE`. PCN added to player inventory. `CriminalRecord.CrimeType.PARKING_OFFENCE` recorded. Notoriety +2.
+    - Discounted rate (3 COIN) if paid within 2 in-game days; standard 6 COIN thereafter.
+  - **Second circuit violation (PCN already outstanding on same car)**: Clive applies `WHEEL_CLAMP_PROP` to the car. Car cannot be moved until clamp is removed (see Mechanic 3). Notoriety +4 additional.
+  - **Third circuit violation**: Clive calls a BAILIFF NPC (spawns within 5 minutes); car is towed to VEHICLE_IMPOUND. Retrieval costs 20 COIN at VEHICLE_IMPOUND Mon–Fri 09:00–17:00.
+- Clive mutters contextual speech lines during patrol (10 hardcoded lines cycling at 60-second intervals).
+
+### Mechanic 2 — Pay-and-Display Machine
+
+- `PAY_AND_DISPLAY_MACHINE_PROP` at COUNCIL_CAR_PARK. Press E to purchase a PAY_AND_DISPLAY_TICKET.
+- Cost: 1 COIN per hour, max 4 hours (4 COIN max). Player selects duration 1–4 with number keys.
+- Ticket has embedded expiry (hours from purchase). Clive checks the expiry timestamp on each patrol pass.
+- Machine can be broken (6 hits, FRAGILE hardness). When broken: no tickets sold; Clive still patrols but cannot issue PCNs to any car within 10 blocks of the broken machine (reasonable doubt). `CriminalRecord.CrimeType.CRIMINAL_DAMAGE` if broken. `NoiseSystem` event 3.0. Machine auto-repairs after 2 in-game days.
+
+### Mechanic 3 — Wheel Clamp Removal
+
+- `WHEEL_CLAMP_PROP` applied by Clive to a clamped car. Car movement blocked while clamped.
+- Removal options:
+  - **Pay the fine** at COUNCIL_OFFICE: 8 COIN. WHEEL_CLAMP_PROP removed within 2 in-game hours.
+  - **Grind the clamp** (SCREWDRIVER + 3-second hold E on WHEEL_CLAMP_PROP): 70% success; drops `Material.WHEEL_CLAMP` item; `CriminalRecord.CrimeType.CRIMINAL_DAMAGE` + Notoriety +5 + WantedSystem +1 star. 30% fail: Clive is notified (if within 20 blocks) and calls police.
+  - **Steal Clive's terminal** (knock Clive out — requires 4 hits; drops `Material.CLIVE_TERMINAL`): Use CLIVE_TERMINAL on PCN-marked car; 80% success chance voids the PCN and removes the clamp. Clive spawns again the following day with no memory. CLIVE_TERMINAL sellable at pawn shop for 5 COIN.
+
+### Mechanic 4 — PCN Appeal at COUNCIL_OFFICE
+
+- Player visits COUNCIL_OFFICE, interacts with `APPEAL_DESK_PROP` while holding `Material.PENALTY_CHARGE_NOTICE` + `Material.BLANK_PAPER`.
+- Submit appeal: 2 in-game day waiting period. Base appeal success: 30%.
+  - +20% if PAY_AND_DISPLAY_MACHINE_PROP was broken at time of offence.
+  - +15% if no prior PARKING_OFFENCE in CriminalRecord.
+  - +10% if player has CITIZENS_ADVICE_LETTER (issued by CitizensAdviceSystem).
+- On success: PCN cancelled, COIN refunded if already paid, Notoriety −1. Fires `AchievementType.APPEAL_SUCCESS` on first successful appeal.
+- On failure: notice filed, no further appeal. Player must pay or ignore at mounting cost.
+- Brenda (COUNCIL_RECEPTIONIST) at front desk; open Mon–Fri 09:00–17:00 only.
+
+### Mechanic 5 — Forged Parking Ticket Hustle
+
+- Craft `FORGED_PARKING_TICKET` at `PHOTOCOPIER_PROP` (requires GRAFTING skill ≥ Apprentice): `PAY_AND_DISPLAY_TICKET` + `BLANK_PAPER` → `FORGED_PARKING_TICKET`.
+- Place on another car: the forgery reads as a valid ticket 40% of the time. 60% chance Clive detects it on inspection: `CriminalRecord.CrimeType.FRAUD` + Notoriety +6 + fresh `PENALTY_CHARGE_NOTICE` issued.
+- Sell to `COMMUTER` or `CAFF_REGULAR` NPCs near the car park for 1 COIN each. 5 sales in one in-game day fires `AchievementType.TICKET_TOUT`.
+
+### Mechanic 6 — Clamped Car Fence
+
+- Dropped `Material.WHEEL_CLAMP` (from grinding) is fenceable at SCRAPYARD for 2 COIN (stolen goods, Notoriety +1 per fence).
+- `CLIVE_TERMINAL` fenceable at pawn shop for 5 COIN.
+
+### New `CriminalRecord.CrimeType` Entries (add if absent)
+
+- `PARKING_OFFENCE` — PCN issued by Clive for unpaid parking.
+- `FRAUD` — already expected to exist; forged parking ticket detected.
+
+### New `AchievementType` Entries (add if absent)
+
+- `TICKET_TOUT` — sell 5 FORGED_PARKING_TICKETs in one day.
+- `APPEAL_SUCCESS` — successfully appeal a PCN at the COUNCIL_OFFICE.
+- `CLAMPED` — first time the player's car is wheel-clamped by Clive.
+- `CLAMP_DODGER` — remove a wheel clamp with the grinder without being caught.
+- `TERMINAL_THIEF` — obtain Clive's terminal by knocking him out.
+
+### New `LandmarkType` Entry (add if absent)
+
+- `COUNCIL_CAR_PARK` — the council-run car park adjacent to the High Street. Contains `PAY_AND_DISPLAY_MACHINE_PROP` and parking spaces (car props). Adjacent to `COUNCIL_OFFICE`. Already referenced in `PropType.PAY_AND_DISPLAY_MACHINE_PROP` javadoc.
+
+### Clive's Speech Lines (10 lines, cycling every 60 seconds)
+
+1. "Ticket. Need a ticket. Simple concept."
+2. "Oh lovely. Lovely. No ticket, no parking. It's the law, mate."
+3. "This'll be a lovely little PCN."
+4. "I've got all day. Have you got all day? I have."
+5. "The machine's right there. One pound. One hour. Not complicated."
+6. "You know what I love? When people argue about the double yellow. Makes my morning."
+7. "I don't make the rules. I just enforce them. Enthusiastically."
+8. "Another one. Another day. Another PCN. Like poetry."
+9. "You'd be surprised how many people think crying helps. It doesn't."
+10. "Right then. Name? Address? Too late, I'll put down 'not cooperating.'"
+
+### Unit Tests
+
+- `TrafficWardenSystem.isPatrolHour(dayOfWeek, hour)`: true Mon–Sat 08:00–17:59; false Sun; false Mon 07:59; false Mon 18:00.
+- `TrafficWardenSystem.checkCar(car, timeSystem)`: returns `CLEAR` when valid ticket not expired; `PCN_ISSUED` when no ticket; `CLAMPED` when PCN already outstanding; `TOWED` when third violation.
+- PCN issued: `CriminalRecord.PARKING_OFFENCE` recorded, Notoriety +2, `PENALTY_CHARGE_NOTICE` added to inventory.
+- Clamp applied: `WHEEL_CLAMP_PROP` added to car position, car movement blocked.
+- Clamp grind success (seeded random): `WHEEL_CLAMP` drops, `CRIMINAL_DAMAGE` recorded, WantedSystem +1.
+- Clamp grind fail: if Clive within 20 blocks, police notified.
+- PCN appeal: base 30% success (seeded random); +20% for broken machine; +15% no prior offence; correct combination yields ≥65% with seeded success.
+- FORGED_PARKING_TICKET placed: 40% valid (seeded); 60% detected → FRAUD + Notoriety +6 + new PCN.
+- TICKET_TOUT achievement fires on 5th daily sale (not 4th, not 6th).
+- Machine broken (6 hits): `CRIMINAL_DAMAGE` recorded; `NoiseSystem` event 3.0 ± 0.1.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **PCN issued for unticketted car**: Set TimeSystem to Monday 10:00. Spawn Clive. Place player car at COUNCIL_CAR_PARK with no PAY_AND_DISPLAY_TICKET. Advance Clive's patrol to the car position. Verify `PENALTY_CHARGE_NOTICE` added to player inventory. Verify `CriminalRecord` contains `PARKING_OFFENCE`. Verify Notoriety increased by 2. Verify player COIN unchanged (not fined yet — PCN is the notice, not immediate deduction).
+
+2. **Valid ticket prevents PCN**: Give player PAY_AND_DISPLAY_TICKET (2-hour validity). Player presses E on their car to place ticket on dashboard. Advance TimeSystem by 1 in-game hour. Advance Clive's patrol to the car position. Verify result is `CLEAR`. Verify `CriminalRecord` does NOT contain `PARKING_OFFENCE`. Advance TimeSystem 1.5 more hours (ticket expired). Advance Clive's patrol again. Verify `PENALTY_CHARGE_NOTICE` now issued.
+
+3. **Wheel clamp cycle — clamp, grind, escape**: Give player outstanding PCN on their car. Advance Clive patrol to car on a second circuit. Verify `WHEEL_CLAMP_PROP` applied to car. Verify car movement is blocked. Give player SCREWDRIVER. Player holds E on `WHEEL_CLAMP_PROP` for 3 simulated seconds. Seed random for grind success. Verify `WHEEL_CLAMP` item in player inventory. Verify `CriminalRecord` contains `CRIMINAL_DAMAGE`. Verify WantedSystem stars +1. Verify car movement is now unblocked.
+
+4. **Successful PCN appeal**: Give player PENALTY_CHARGE_NOTICE + BLANK_PAPER. Player visits COUNCIL_OFFICE during 09:00–17:00 Mon–Fri. Player presses E on APPEAL_DESK_PROP. Seed random for appeal success (force 30%+ base success path). Advance TimeSystem 2 in-game days. Verify PCN cleared from CriminalRecord. Verify APPEAL_SUCCESS achievement fires. Verify if player had paid the 6 COIN fine, COIN is refunded.
+
+5. **Ticket tout — 5 forgeries in one day**: Give player PAY_AND_DISPLAY_TICKET + 5× BLANK_PAPER + PHOTOCOPIER_PROP access (GRAFTING ≥ Apprentice). Craft 5× FORGED_PARKING_TICKET. Seed random for NPC-accepts=true and detection=false for all 5 sales. Sell to 5 COMMUTER NPCs near car park. Verify player COIN +5. Verify TICKET_TOUT achievement fires after 5th sale. Verify it does NOT fire after 4th sale.
+
+---
+
+// ── Issue #1330: Add Northfield Traffic Warden — Clive's Rounds, Wheel Clamping & the PCN Appeal Hustle ────
+// New: TrafficWardenSystem.java in ragamuffin.core
+// New: TrafficWardenSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1330TrafficWardenIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Materials: PAY_AND_DISPLAY_TICKET, PENALTY_CHARGE_NOTICE, FORGED_PARKING_TICKET, WHEEL_CLAMP, CLIVE_TERMINAL — all in Material.java
+// NPCType: TRAFFIC_WARDEN — already in NPCType.java
+// PropType: PAY_AND_DISPLAY_MACHINE_PROP, WHEEL_CLAMP_PROP, APPEAL_DESK_PROP — all in PropType.java
+// LandmarkType: COUNCIL_OFFICE, VEHICLE_IMPOUND — already in LandmarkType.java; COUNCIL_CAR_PARK needs adding
+// CriminalRecord.CrimeType: PARKING_OFFENCE, FRAUD — add if absent
+// AchievementType: TICKET_TOUT, APPEAL_SUCCESS, CLAMPED, CLAMP_DODGER, TERMINAL_THIEF — add if absent
+// Integration: TimeSystem, WantedSystem, CriminalRecord, NotorietySystem, NoiseSystem,
+//              StreetSkillSystem, CraftingSystem, ScrapyardSystem, PawnShopSystem,
+//              CitizensAdviceSystem, CarDrivingSystem, AchievementSystem, WitnessSystem
