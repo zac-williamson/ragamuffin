@@ -52898,4 +52898,52 @@ bagStolenToday = true;
 // ── Bug #1410: Fix BARRY_BANDIT achievement in CatalogueManSystem ─────────────────────────────
 // File: src/main/java/ragamuffin/core/CatalogueManSystem.java
 // Fix: swap order of `bagStolenToday = true` assignment and `if (!bagStolenToday)` check
+
+---
+
+## Bug: CatalogueManSystem references missing enum values — compilation failure
+
+**Root cause**: `CatalogueManSystem.java` (added in #1408) references enum constants that were
+never added to their respective enums. The build will fail to compile until these are added.
+
+### Missing `RumourType` entries (used in `CatalogueManSystem.java`):
+- `BARRY_SUSPICIOUS` — seeded when Barry spots the thief or a witness sees the bag stolen
+- `BARRY_REPORTED` — seeded when player reports Barry to Trading Standards
+- `RIVAL_CATALOGUE` — seeded when player sells from a knockoff catalogue and is witnessed
+- `COUNTERFEIT_CAUGHT` — seeded when Trading Standards catches the player during a rival round
+
+### Missing `AchievementType` entries (used in `CatalogueManSystem.java`):
+- `BARRY_BANDIT` — steal Barry's bag on 3 separate days
+- `DEBT_DODGER` — successfully impersonate a debt collector 5 times
+- `LOAN_SHARK_INFORMANT` — tip off the Loan Shark 3 times
+- `CIVIC_CRUSADER` — report Barry to Trading Standards
+- `SILENT_PARTNER` — blackmail Barry (first blackmail)
+- `CATALOGUE_KING` — sell from rival catalogue on 5 separate days
+
+### Missing `CriminalRecord.CrimeType` entries (used in `CatalogueManSystem.java`):
+- `CATALOGUE_THEFT` — recorded when player steals Barry's bag
+- `EXTORTION` — recorded on second blackmail attempt
+- `COUNTERFEIT_GOODS_SELLING` — recorded when caught running a rival catalogue round
+
+### Fix required:
+1. Add `BARRY_SUSPICIOUS`, `BARRY_REPORTED`, `RIVAL_CATALOGUE`, `COUNTERFEIT_CAUGHT` to `RumourType.java`
+   with appropriate Javadoc comments following the established pattern.
+2. Add `BARRY_BANDIT`, `DEBT_DODGER`, `LOAN_SHARK_INFORMANT`, `CIVIC_CRUSADER`, `SILENT_PARTNER`,
+   `CATALOGUE_KING` to `AchievementType.java` with display names, descriptions, and appropriate
+   rarity/XP values consistent with similarly-scoped achievements.
+3. Add `CATALOGUE_THEFT`, `EXTORTION`, `COUNTERFEIT_GOODS_SELLING` to `CriminalRecord.CrimeType`
+   with appropriate sentencing severity values.
+
+### Integration tests:
+1. **Compile guard**: `./gradlew build -x test` must pass after the fix — confirms all three enums
+   now satisfy `CatalogueManSystem.java`'s references.
+2. **BARRY_BANDIT awarded after 3 steal days**: construct `CatalogueManSystem`, call `stealBag()`
+   with Barry out of range on 3 separate simulated rounds; verify `AchievementType.BARRY_BANDIT`
+   is passed to the callback on the third steal.
+3. **CIVIC_CRUSADER awarded on Trading Standards report**: set `witnessedDeliveries` ≥ 5,
+   add `CATALOGUE_SAMPLE` to inventory, call `reportToTradingStandards()`; verify
+   `AchievementType.CIVIC_CRUSADER` is awarded.
+4. **EXTORTION recorded on second blackmail**: call `blackmailBarry()` twice (first with
+   `CATALOGUE_SAMPLE` in inventory); verify second call returns `EXTORTION_TRIGGERED` and
+   `CrimeType.EXTORTION` is recorded in the `CriminalRecord`.
 // Update: CatalogueManSystemTest.java — remove setBagStolenDays() workaround, add organic tests
