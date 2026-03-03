@@ -3951,7 +3951,32 @@ public enum PropType {
      * Also used for CIVIC_MINDED + SNITCH rumour tip-off mechanic.
      * 1.2×1.0×0.6m; indestructible (99 hits); drops null.
      */
-    TRADING_STANDARDS_OFFICE_PROP(1.2f, 1.0f, 0.6f, 99, null);
+    TRADING_STANDARDS_OFFICE_PROP(1.2f, 1.0f, 0.6f, 99, null),
+
+    // ── Issue #1416: Northfield Mobile Speed Camera Van ───────────────────────
+
+    /**
+     * SPEED_CAMERA_VAN_PROP — Sharon's mobile speed camera GATSO van.
+     * Parked near Northfield school weekdays 08:00–09:30 and 15:30–17:00.
+     * Hold E for 4 seconds while Sharon is distracted to steal SPEED_CAMERA_SD_CARD.
+     * Can be disabled via GraffitiSystem (lens fogging), CROWBAR (tyre slash), or LIGHTER (arson).
+     * 5.5×2.2×2.0m; indestructible (99 hits); drops null.
+     */
+    SPEED_CAMERA_VAN_PROP(5.5f, 2.2f, 2.0f, 99, null),
+
+    /**
+     * HANDWRITTEN_WARNING_SIGN_PROP — a player-crafted cardboard warning sign placed on the road.
+     * Crafted from MARKER_PEN + CARDBOARD. Warns drivers automatically for 10 in-game minutes.
+     * 0.4×0.6×0.05m; 1 hit (fragile card); drops HANDWRITTEN_WARNING_SIGN.
+     */
+    HANDWRITTEN_WARNING_SIGN_PROP(0.4f, 0.6f, 0.05f, 1, ragamuffin.building.Material.HANDWRITTEN_WARNING_SIGN),
+
+    /**
+     * TABLOID_RACK_PROP — a tabloid newspaper rack near Sharon's van.
+     * Player interacts (E) to distract Sharon for 25 in-game seconds.
+     * 0.3×1.2×0.3m; indestructible (99 hits); drops null.
+     */
+    TABLOID_RACK_PROP(0.3f, 1.2f, 0.3f, 99, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -1427,5 +1427,32 @@ public enum RumourType {
      *   check (doRivalCatalogueSale catch path).
      * Spreads via PUBLIC, PENSIONER, and MARKET_TRADER NPCs.
      * Triggers COUNTERFEIT_GOODS_SELLING CriminalRecord entry and COUNTERFEIT_FINE deduction. */
-    COUNTERFEIT_CAUGHT;
+    COUNTERFEIT_CAUGHT,
+
+    // ── Issue #1416: Northfield Mobile Speed Camera Van ───────────────────────
+
+    /** "That camera van's been flashing again all morning — half the school run got caught."
+     * — seeded by SpeedCameraVanSystem when a car is photographed by the GATSO (flashCount increments).
+     * Spreads via PUBLIC and PENSIONER NPCs near the school-run zone.
+     * Raises local awareness; drivers slow down for 5 in-game minutes. */
+    CAMERA_FLASH_RUMOUR,
+
+    /** "A bloke warned me about that camera van this morning. Absolute legend."
+     * — seeded by SpeedCameraVanSystem when a SPEEDING_DRIVER_NPC buys the SD card from the player.
+     * Spreads via PUBLIC and CAR_DRIVER NPCs.
+     * Reduces police patrol frequency by 1 for the day. */
+    GRATEFUL_DRIVER,
+
+    /** "Someone's sold footage from that speed camera to the Gazette. Turns out it photographed
+     *   something it shouldn't have."
+     * — seeded by SpeedCameraVanSystem when the player sells the SD card to a journalist via phone box.
+     * Spreads via PUBLIC, NEWSAGENT, and POLICE NPCs.
+     * Triggers police patrol increase and Wanted +1. */
+    EXPOSE_RUMOUR,
+
+    /** "Speed camera van's been torched. Just the shell left. Police are calling it deliberate."
+     * — seeded by SpeedCameraVanSystem when the player burns the van with a LIGHTER.
+     * Spreads via ALL NPC types in a wide radius.
+     * Triggers ARSON crime, newspaper headline, Notoriety +20, Wanted +3. */
+    VAN_FIRE_RUMOUR;
 }

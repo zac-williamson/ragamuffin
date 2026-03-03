@@ -6376,7 +6376,31 @@ public enum Material {
      * Run a rival round: 35% accept rate, 4 COIN/sale.
      * Monthly Trading Standards check (last Friday 14:00) has 20% catch chance.
      */
-    KNOCKOFF_CATALOGUE("Knockoff Catalogue");
+    KNOCKOFF_CATALOGUE("Knockoff Catalogue"),
+
+    // ── Issue #1416: Northfield Mobile Speed Camera Van ───────────────────────
+
+    /**
+     * SPEED_CAMERA_SD_CARD — the SD card from Sharon's GATSO speed camera.
+     * Stolen by holding E on SPEED_CAMERA_VAN_PROP for 4 seconds while Sharon is distracted.
+     * Sell to FenceSystem (20 COIN), a SPEEDING_DRIVER_NPC (15 COIN + GRATEFUL_DRIVER rumour),
+     * or a journalist via phone box (30 COIN, triggers police patrol increase).
+     * Achievement: CANDID_CAMERA after 3 steals.
+     */
+    SPEED_CAMERA_SD_CARD("Speed Camera SD Card"),
+
+    /**
+     * SPEEDING_FINE_NOTICE — an official speeding fine notice photographed by the GATSO.
+     * Produced when a car is flashed. Sellable or usable as evidence.
+     */
+    SPEEDING_FINE_NOTICE("Speeding Fine Notice"),
+
+    /**
+     * HANDWRITTEN_WARNING_SIGN — a cardboard sign warning drivers of the speed camera ahead.
+     * Crafted from MARKER_PEN + CARDBOARD. Placed as HANDWRITTEN_WARNING_SIGN_PROP on the road.
+     * Automatically warns approaching SPEEDING_DRIVER_NPCs for 10 in-game minutes.
+     */
+    HANDWRITTEN_WARNING_SIGN("Handwritten Warning Sign");
 
     private final String displayName;
 
@@ -7764,6 +7788,13 @@ public enum Material {
             case ROOF_SLATE_BAG:        return cs(0.28f, 0.28f, 0.30f, // Dark slate grey
                                                    0.48f, 0.42f, 0.38f); // Worn canvas bag
 
+            // Issue #1416: Northfield Mobile Speed Camera Van
+            case SPEED_CAMERA_SD_CARD:  return c(0.20f, 0.20f, 0.22f);  // Dark plastic card
+            case SPEEDING_FINE_NOTICE:  return cs(0.95f, 0.90f, 0.70f, // Cream paper
+                                                   0.15f, 0.25f, 0.60f); // Blue police heading
+            case HANDWRITTEN_WARNING_SIGN: return cs(0.75f, 0.62f, 0.38f, // Cardboard
+                                                     0.05f, 0.05f, 0.05f); // Black marker text
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -8358,6 +8389,11 @@ public enum Material {
             case CASH_ENVELOPE:
             case ROOF_SLATE_BAG:
                 return false;
+            // Issue #1416: Northfield Mobile Speed Camera Van — not block items
+            case SPEED_CAMERA_SD_CARD:
+            case SPEEDING_FINE_NOTICE:
+            case HANDWRITTEN_WARNING_SIGN:
+                return false;
             default:
                 return true;
         }
@@ -8564,6 +8600,10 @@ public enum Material {
             case RAW_PUMPKIN:
             case CARVED_PUMPKIN:
             case PUMPKIN_INNARDS:
+            // Issue #1416: Northfield Mobile Speed Camera Van — small items sit on surfaces
+            case SPEED_CAMERA_SD_CARD:
+            case SPEEDING_FINE_NOTICE:
+            case HANDWRITTEN_WARNING_SIGN:
                 return true;
             default:
                 return false;
@@ -10075,6 +10115,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // bulging manila envelope
             case ROOF_SLATE_BAG:
                 return IconShape.BOX;         // heavy canvas bag of slates
+
+            // Issue #1416: Northfield Mobile Speed Camera Van
+            case SPEED_CAMERA_SD_CARD:
+                return IconShape.FLAT_PAPER;  // small plastic SD card
+            case SPEEDING_FINE_NOTICE:
+                return IconShape.FLAT_PAPER;  // official notice document
+            case HANDWRITTEN_WARNING_SIGN:
+                return IconShape.FLAT_PAPER;  // cardboard sign with marker text
 
             default:
                 return IconShape.BOX;

@@ -1247,7 +1247,21 @@ public class CriminalRecord {
          * Penalty: Notoriety +8, WantedSystem +1 star; COUNTERFEIT_FINE deducted from COIN.
          * COUNTERFEIT_CAUGHT rumour seeded to nearby NPCs.
          */
-        COUNTERFEIT_GOODS_SELLING("Selling counterfeit catalogue goods");
+        COUNTERFEIT_GOODS_SELLING("Selling counterfeit catalogue goods"),
+
+        // ── Issue #1416: Northfield Mobile Speed Camera Van ───────────────────
+
+        /**
+         * CAMERA_TAMPERING — Recorded when the player interferes with the speed camera or van:
+         * <ul>
+         *   <li>Stealing the SD card (hold-E heist) — Notoriety +6.</li>
+         *   <li>Spraying paint on the camera lens (GraffitiSystem) — Notoriety +4.</li>
+         *   <li>Slashing the van tyres with CROWBAR — Notoriety +6, WantedSystem +1.</li>
+         *   <li>Burning the van with LIGHTER — Notoriety +20, WantedSystem +3.</li>
+         * </ul>
+         * Having a CAMERA_TAMPERING record blocks the Legitimate Operator Licence application.
+         */
+        CAMERA_TAMPERING("Interference with a speed enforcement device");
 
         private final String displayName;
 
