@@ -3036,7 +3036,13 @@ public enum NPCType {
     /** WETHERSPOONS_CROWD — dense passive crowd NPC packed into the pub for the match.
      * Reacts to goal events, half-time, and full-time. State = WATCHING_MATCH.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
-    WETHERSPOONS_CROWD(20f, 0f, 0f, false);
+    WETHERSPOONS_CROWD(20f, 0f, 0f, false),
+
+    /** KEVINS_DAD — Gary, Kevin's competitive father. Spawns only at Sports Day.
+     * Cheats blatantly at Parents' Race (shoves NPCs, cuts corners). 85% win rate
+     * if not bribed or tripped. Quote: "It's not about winning, Kevin. Yes it is."
+     * HP: 22f, attack: 0f, cooldown: 0f, hostile: false. */
+    KEVINS_DAD(22f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

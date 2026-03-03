@@ -1270,5 +1270,25 @@ public enum RumourType {
     /** "They were saying the Wetherspoons screening's off tonight — something about the satellite dish."
      * Seeded by EnglandMatchSystem when THUNDERSTORM cancels the match day screening.
      * Spreads via PUBLIC NPCs. */
-    MATCH_CANCELLED_RAIN;
+    MATCH_CANCELLED_RAIN,
+
+    /** "Someone swapped Tyler's egg for a raw one at Sports Day. Went everywhere. Race had to stop."
+     * Seeded by SportsDaySystem on egg-swap mechanic. Notoriety +3.
+     * Spreads via SCHOOL_MUM, PUBLIC NPCs. */
+    EGG_SWAP_DRAMA,
+
+    /** "Gary cheated at the Parents' Race again. Elbowed Dave straight into the bunting."
+     * Seeded by SportsDaySystem when KEVINS_DAD (Gary) completes the race.
+     * Spreads via SCHOOL_MUM, PUBLIC NPCs. */
+    GARY_CHEATED,
+
+    /** "Twelve cones went missing from the Sports Day course. Derek's absolutely furious."
+     * Seeded by SportsDaySystem when ≥4 cones are stolen.
+     * Spreads via SCHOOL_MUM, PUBLIC NPCs. */
+    CONE_THIEF_SPOTTED,
+
+    /** "Sports Day ruined by wasps. Six people stung. Dot got the worst of it."
+     * Seeded by SportsDaySystem on wasp incident trigger.
+     * Spreads via SCHOOL_MUM, PUBLIC, JOURNALIST NPCs. Triggers NewspaperSystem headline. */
+    WASP_INCIDENT;
 }
