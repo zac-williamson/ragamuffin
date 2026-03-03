@@ -57067,3 +57067,98 @@ At 05:30 every morning, a cream-coloured electric milk float trundles out of the
 5. **Depot break-in yields fridge stock and cashbox**: create system; set time to 02:00 (depot locked); call `breakInDepot(player, inventory)` using `CROWBAR`×6; verify `inventory.getItemCount(Material.MILK_BOTTLE)` == `DEPOT_FRIDGE_BOTTLES`; verify `inventory.getItemCount(Material.COIN)` increased by value in range `[DEPOT_CASHBOX_COIN_MIN, DEPOT_CASHBOX_COIN_MAX]`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == true.
 
 // `MilkFloatSystem.java` must be created as the sole new source file. Integrates with `CarDrivingSystem` (float as slow electric vehicle), `WeatherSystem` (frost freezing bottles, cold-snap bonus pay), `CampfireSystem` and `GreasySpoonSystem` (thawing frozen milk / bulk sale), `FenceSystem` (float scrap value, bottle sale), `NewsagentSystem` (shared delivery address targets via `FLOAT_MANIFEST`), `NotorietySystem`, `WantedSystem`, `CriminalRecord` (new `MILK_THEFT` and `VEHICLE_THEFT` crime types — `VEHICLE_THEFT` may already exist), `RumourNetwork`, `NeighbourhoodSystem`, `TimeSystem`, `WitnessSystem`, and `AchievementSystem`. `NPCType.MILK_FLOAT_DRIVER` already exists. `NPCType.INSOMNIAC_PENSIONER` already exists (witness at early hours). `LandmarkType.INDUSTRIAL_ESTATE` already exists (depot is adjacent). `LandmarkType.MILK_DEPOT` must be added to `LandmarkType.java`. `CrimeType.MILK_THEFT` must be added to `CriminalRecord.java`.
+
+---
+
+## Issue #1357 — Northfield Charity Fun Run — Janet's Bibs, the Course Shortcut & the Registration Pot Pinch
+
+Every year on day 21 (a Saturday), the Northfield Community Centre hosts its annual Charity Fun Run in aid of the Northfield Hospice. Janet (`NPCType.FUN_RUN_MARSHAL`) sets up the inflatable `START_FINISH_ARCH_PROP` outside the Community Centre at 08:30 and hands out race number bibs to anyone willing to pay the entry fee. Eight orange `FUN_RUN_CHECKPOINT_PROP` markers are placed around a 1km loop through the park and back. Twenty participants (a mix of `JOGGER`, `PENSIONER`, and `PUBLIC` NPCs) turn up in a motley assortment of running gear. Someone always wears a fancy dress costume. Janet brings a tin of Quality Street and keeps the registration money in a bum bag.
+
+`CharityFunRunSystem` manages `LandmarkType.COMMUNITY_CENTRE` and the 08:30–10:30 event window on day 21 (repeating every 28 days).
+
+### Mechanic 1 — Registration (08:30–09:00)
+
+- Janet spawns at `START_FINISH_ARCH_PROP` at 08:30. Player pays `ENTRY_FEE` = 2 COIN and receives `Material.RACE_NUMBER_BIB` + `Material.SPONSOR_SHEET`.
+- Before the race starts (09:00 gun), player can approach up to `MAX_SPONSOR_NPCS` = 8 NPCs with the `SPONSOR_SHEET` to collect pledges. Each NPC approached: `PENSIONER` 80% chance for 2 COIN pledge, `PUBLIC` 50% chance for 1 COIN pledge, `CHUGGER` always refuses. Maximum total pledgeable = `MAX_SPONSOR_COIN` = 20 COIN.
+- Fraud path: player can present `SPONSOR_SHEET` to Janet after the race without having run. If `notorietySystem.getNotoriety()` ≥ 5 and a `JOGGER` NPC is within `WITNESS_RADIUS_BLOCKS` = 15.0f: detected — `CrimeType.CHARITY_FRAUD` recorded, Notoriety +4, `RumourType.CHARITY_FRAUD_RUMOUR` seeded.
+- Cancellation: if `WeatherSystem.getWeather()` == `Weather.HEAVY_RAIN` at 08:30, Janet calls it off. `RumourType.FUN_RUN_CANCELLED` seeded. All registered players receive `AchievementType.RAINED_OFF`.
+
+### Mechanic 2 — The Race (09:00–10:30)
+
+- Race gun fires at 09:00. Timer starts for the player on crossing the `START_FINISH_ARCH_PROP`.
+- Eight `FUN_RUN_CHECKPOINT_PROP` markers placed around the park loop. Player must pass within `CHECKPOINT_RADIUS` = 2.0f blocks of each in order (1→8).
+- NPCs run the course at speeds between `NPC_SLOW_SPEED` = 3.0f and `NPC_FAST_SPEED` = 6.0f blocks/second, with random variance.
+- Finish: cross `START_FINISH_ARCH_PROP` after all 8 checkpoints. If time ≤ `WINNER_TIME_SECONDS` = 25 × 60 in-game seconds: receive `Material.WINNERS_MEDAL` + `AchievementType.COMMUNITY_RUNNER_ELITE`. Sponsor pledges paid out by Janet: player collects pledge total as COIN.
+- Dog companion bonus: if player finishes with `DogCompanionSystem.hasActiveDog()` == true: `AchievementType.WALKIES_WINNER` awarded.
+- `WATER_STATION_PROP` at checkpoint 4: press E to receive `WATER_CUP` (+5 Hunger). Tip it over (E + sprint within 1 block): `Vibes −1` if witnessed by any NPC; scatters 0–3 `WATER_CUP` items.
+
+### Mechanic 3 — Course Cutting
+
+- Player skips one or more checkpoints and crosses the finish: `CharityFunRunSystem` detects the skipped checkpoints.
+- If a `JOGGER` NPC is within `WITNESS_RADIUS_BLOCKS` = 15.0f of the shortcut point: `RumourType.COURSE_CUTTER` seeded (Vibes −3), Notoriety +2, achievement `SHAMELESS_SHORTCUT` not awarded.
+- If no witness: `AchievementType.SHAMELESS_SHORTCUT` awarded. Sponsor pledges still paid (Janet doesn't know). Notoriety unchanged.
+
+### Mechanic 4 — Pickpocketing Janet's Registration Pot
+
+- Janet's bum bag accumulates `ENTRY_FEE` × number of registered participants (up to `MAX_PARTICIPANTS` = 20 = 40 COIN total).
+- Pickpocket Janet (press E behind her while she's distracted by a runner): `THEFT_FROM_PERSON` crime. Steals up to `MAX_POT_STEAL` = 40 COIN. Notoriety +5. If witnessed: `WantedSystem` +1.
+- Alternative embezzlement: if player has `Material.HIGH_VIS_JACKET` in inventory, they can volunteer as registration assistant (press E while equipped). Janet hands them the pot to "take to the Community Centre". Player can keep it instead — same crime flags but Janet takes `VOLUNTEER_SUSPICION_DELAY_SECONDS` = 30.0f to notice, giving a head start. `AchievementType.CHARITY_CROOK` is NOT awarded for this (it's for the raffle scam); instead no specific achievement — just the crime.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `ENTRY_FEE` | 2 |
+| `MAX_SPONSOR_NPCS` | 8 |
+| `MAX_SPONSOR_COIN` | 20 |
+| `CHECKPOINT_RADIUS` | 2.0f |
+| `WINNER_TIME_SECONDS` | 1500.0f |
+| `NPC_SLOW_SPEED` | 3.0f |
+| `NPC_FAST_SPEED` | 6.0f |
+| `WITNESS_RADIUS_BLOCKS` | 15.0f |
+| `MAX_PARTICIPANTS` | 20 |
+| `MAX_POT_STEAL` | 40 |
+| `VOLUNTEER_SUSPICION_DELAY_SECONDS` | 30.0f |
+| `RACE_INTERVAL_DAYS` | 28 |
+| `RACE_START_HOUR` | 9.0f |
+| `REGISTRATION_OPEN_HOUR` | 8.5f |
+| `RACE_END_HOUR` | 10.5f |
+
+### Entities Required (already defined — no new entries needed)
+
+- `NPCType.FUN_RUN_MARSHAL` — Janet. Already defined.
+- `NPCType.JOGGER`, `NPCType.PENSIONER`, `NPCType.PUBLIC` — participant types. Already defined.
+- `Material.RACE_NUMBER_BIB` — race number bib. Already defined.
+- `Material.SPONSOR_SHEET` — sponsor pledge clipboard sheet. Already defined.
+- `Material.WINNERS_MEDAL` — first-place medal. Already defined.
+- `Material.WATER_CUP` — paper cup of water. Already defined.
+- `Material.HIGH_VIS_JACKET` — volunteer disguise. Already defined.
+- `PropType.FUN_RUN_CHECKPOINT_PROP` — numbered checkpoint cone. Already defined.
+- `PropType.START_FINISH_ARCH_PROP` — inflatable start/finish arch. Already defined.
+- `PropType.WATER_STATION_PROP` — water table at checkpoint 4. Already defined.
+- `RumourType.FUN_RUN_CANCELLED` — rained-off rumour. Already defined.
+- `AchievementType.COMMUNITY_RUNNER_ELITE` — sub-25-minute finish. Already defined.
+- `AchievementType.SHAMELESS_SHORTCUT` — unwitnessed course cut. Already defined.
+- `AchievementType.RAINED_OFF` — event cancelled by rain. Already defined.
+- `AchievementType.WALKIES_WINNER` — finish with dog companion. Already defined.
+- `CrimeType.CHARITY_FRAUD` — already defined in `CriminalRecord.java`.
+- `RumourType.CHARITY_FRAUD_RUMOUR` — already defined.
+- `LandmarkType.COMMUNITY_CENTRE` — already defined.
+
+### New RumourType Entry Required
+
+- `COURSE_CUTTER` — "Someone cut the corner on the charity run — a jogger saw the whole thing." Seeded on witnessed course-cutting. Vibes −3.
+
+### Integration Tests
+
+1. **Registering for the run issues bib and sponsor sheet**: create `CharityFunRunSystem`; set time to 08:45 (registration open); give player 2 COIN; call `register(player, inventory)`; verify `inventory.contains(Material.RACE_NUMBER_BIB)` == true; verify `inventory.contains(Material.SPONSOR_SHEET)` == true; verify `inventory.getItemCount(Material.COIN)` decreased by `ENTRY_FEE`.
+
+2. **Finishing the run in time awards medal and sponsor money**: create system; register player; set time to 09:00; mark all 8 checkpoints visited in order; call `finishRun(player, inventory, timeElapsedSeconds)`  with `timeElapsedSeconds` = 1200 (< `WINNER_TIME_SECONDS`); seed 3 sponsor pledges worth 5 COIN total; verify `inventory.contains(Material.WINNERS_MEDAL)` == true; verify `inventory.getItemCount(Material.COIN)` increased by 5; verify `achievementSystem` received `COMMUNITY_RUNNER_ELITE`.
+
+3. **Witnessed course cutting seeds rumour and adds notoriety**: create system; register player; place a `JOGGER` NPC within `WITNESS_RADIUS_BLOCKS`; call `detectCoursecut(player, checkpointsSkipped=2, joggerNpc, rumourNetwork, notorietySystem)`; verify `rumourNetwork` contains `RumourType.COURSE_CUTTER`; verify `notorietySystem.getNotoriety()` increased by 2; verify `achievementSystem` did NOT receive `SHAMELESS_SHORTCUT`.
+
+4. **Unwitnessed course cutting awards shameless shortcut**: create system; register player; ensure no `JOGGER` NPC within `WITNESS_RADIUS_BLOCKS`; call `detectCoursecut(player, checkpointsSkipped=3, null, rumourNetwork, notorietySystem)`; verify `rumourNetwork` does NOT contain `COURSE_CUTTER`; verify `achievementSystem` received `SHAMELESS_SHORTCUT`; verify `notorietySystem.getNotoriety()` unchanged.
+
+5. **Rain cancellation seeds rumour and awards achievement**: create system; set weather to `Weather.HEAVY_RAIN`; call `update(delta, timeSystem)` at 08:30; verify event is cancelled; verify `rumourNetwork` contains `RumourType.FUN_RUN_CANCELLED`; verify `achievementSystem` received `AchievementType.RAINED_OFF`; verify `charityFunRunSystem.isActive()` == false.
+
+// `CharityFunRunSystem.java` must be created as the sole new source file. Integrates with `WeatherSystem` (rain cancellation), `DogCompanionSystem` (WALKIES_WINNER check), `NotorietySystem`, `WantedSystem`, `CriminalRecord` (`CHARITY_FRAUD` and `THEFT_FROM_PERSON`), `RumourNetwork`, `NeighbourhoodSystem` (Vibes), `TimeSystem`, `WitnessSystem`, and `AchievementSystem`. All `NPCType`, `Material`, `PropType`, `RumourType`, and `AchievementType` entries required are already defined — no new enum entries needed except `RumourType.COURSE_CUTTER`.
