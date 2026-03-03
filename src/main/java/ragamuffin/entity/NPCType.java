@@ -2786,7 +2786,38 @@ public enum NPCType {
      * day 4 of non-repayment. Marchetti Crew FRIENDLY respect doubles loan cap to 80 COIN.
      * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    LOAN_SHARK_CLERK(30f, 0f, 0f, false);
+    LOAN_SHARK_CLERK(30f, 0f, 0f, false),
+
+    // ── Issue #1353: Northfield Amateur Dramatics Society ─────────────────────
+
+    /**
+     * DRAMA_DIRECTOR — Patricia, director of the Northfield Amateur Dramatics Society
+     * (NAODS). Oversees rehearsals at the community centre on Wednesdays and Thursdays
+     * 19:00–22:00, and the public production on the last Saturday of the month.
+     * OBSERVANT: 80% catch rate for pickpocketing during rehearsals. Present at
+     * the GP Surgery on Tuesday 13:00–17:00 (opening the costume heist window).
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    DRAMA_DIRECTOR(30f, 0f, 0f, false),
+
+    /**
+     * NAODS_LEAD_ACTOR — Mario, a Marchetti lieutenant moonlighting as lead actor
+     * in the NAODS production of Blood Brothers. Takes a notes break 21:15–21:20
+     * during rehearsal nights — eavesdropping on him during this window seeds the
+     * MARCHETTI_SECRETS rumour (faction intel). Accepts sabotage contract for 15 COIN
+     * if player has MARCHETTI Respect ≥ 20.
+     * HP: 35f, attack: 5f, cooldown: 1.5f, hostile: false.
+     */
+    NAODS_LEAD_ACTOR(35f, 5f, 1.5f, false),
+
+    /**
+     * NAODS_MEMBER — a rank-and-file member of the Northfield Amateur Dramatics
+     * Society. Attends rehearsals and the public production. Can spot non-cast
+     * wearers of STAGE_COSTUME with a 40% chance, triggering a confrontation.
+     * 8–12 members attend each rehearsal — prime pickpocket opportunity.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    NAODS_MEMBER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

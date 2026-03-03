@@ -3455,7 +3455,59 @@ public enum PropType {
      * Despawns naturally at 23:59 on Remembrance Sunday.
      * Drops POPPY (×3–5) when destroyed.
      */
-    WREATH_PROP(0.60f, 0.30f, 0.60f, 3, Material.POPPY);
+    WREATH_PROP(0.60f, 0.30f, 0.60f, 3, Material.POPPY),
+
+    // ── Issue #1353: Northfield Amateur Dramatics Society ─────────────────────
+
+    /**
+     * AUDITION_NOTICE_PROP — a paper notice pinned on the community centre noticeboard
+     * advertising open auditions for the NAODS production of Blood Brothers. Pressing E
+     * on Tuesdays triggers the BattleBarMiniGame audition sequence (3 cues). Available
+     * every Tuesday until the last Saturday production of the month.
+     * Indestructible (pinned notice).
+     */
+    AUDITION_NOTICE_PROP(0.50f, 0.40f, 0.02f, Integer.MAX_VALUE, null),
+
+    /**
+     * STAGE_MARK_PROP — a taped X on the community centre stage floor marking actor
+     * positions during Blood Brothers rehearsals. Pressing E while standing on one
+     * grants STEALTH XP (stage presence). 8–12 marks placed during rehearsal setup.
+     * Indestructible (tape on floor).
+     */
+    STAGE_MARK_PROP(0.40f, 0.05f, 0.40f, Integer.MAX_VALUE, null),
+
+    /**
+     * COSTUME_CUPBOARD_PROP — a tall wooden wardrobe in the community centre back room
+     * storing 3–5 STAGE_COSTUME items. Lockpickable (requires LOCKPICK) during the
+     * Tuesday 13:00–17:00 heist window while Patricia is at the GP Surgery.
+     * Awards BEST_IN_SHOW achievement on successful heist.
+     * Drops STAGE_COSTUME on destroy.
+     */
+    COSTUME_CUPBOARD_PROP(0.80f, 1.80f, 0.50f, 8, Material.STAGE_COSTUME),
+
+    /**
+     * TICKET_BOOTH_PROP — a small wooden booth at the community centre entrance where
+     * NAODS members sell opening night tickets (2 COIN each, 20 total). Player can
+     * attempt to tout (resell at 4 COIN, risk enforcement) or present forged tickets
+     * (30% caught). Present on the last Saturday of the month from 18:30.
+     * Indestructible (built-in booth).
+     */
+    TICKET_BOOTH_PROP(0.80f, 1.20f, 0.80f, Integer.MAX_VALUE, null),
+
+    /**
+     * TICKET_CASH_BOX_PROP — a metal cash box behind the TICKET_BOOTH_PROP containing
+     * 40 COIN from ticket sales. Stealable as part of Mario's sabotage options.
+     * 6 hits to break open; drops COIN if destroyed.
+     */
+    TICKET_CASH_BOX_PROP(0.30f, 0.20f, 0.20f, 6, Material.COIN),
+
+    /**
+     * PROP_GUN_PROP — a locked cabinet on the community centre stage storing the
+     * PROP_GUN used in the Blood Brothers production. Can be unlocked (press E) or
+     * smashed open (6 hits). Mario's sabotage option: swap PROP_GUN with AIRGUN.
+     * Drops PROP_GUN on destroy.
+     */
+    PROP_GUN_PROP(0.50f, 0.80f, 0.30f, 6, Material.PROP_GUN);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
