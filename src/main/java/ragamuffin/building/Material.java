@@ -5877,7 +5877,14 @@ public enum Material {
      * BOOT_SALE_VENDOR. Base value 2 COIN. Equipping it gives player a subtle
      * speed +5% (motivational music effect). Tooltip: "Press play. It still works."
      */
-    CASSETTE_PLAYER("Cassette Player");
+    CASSETTE_PLAYER("Cassette Player"),
+
+    // ── Issue #1367: Northfield Speed Awareness Course ────────────────────────
+
+    /** Section 172 Notice of Intended Prosecution from a speed camera or Clive.
+     * Issued to inventory when the player drives above SPEED_LIMIT_THRESHOLD.
+     * Player has 2 in-game days to pay fine, book course, or face COURT_SUMMONS. */
+    SPEEDING_NOTICE("Speeding Notice");
 
     private final String displayName;
 
@@ -9241,6 +9248,10 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // HMRC clearance letter
             case CASH_BRIBE_ENVELOPE:
                 return IconShape.FLAT_PAPER;  // brown envelope
+
+            // Issue #1367: Northfield Speed Awareness Course
+            case SPEEDING_NOTICE:
+                return IconShape.FLAT_PAPER;  // Section 172 NIP letter
 
             default:
                 return IconShape.BOX;

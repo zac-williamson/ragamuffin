@@ -3611,7 +3611,23 @@ public enum PropType {
      * SALE — EVERY SUNDAY 6AM". Stapled to the car park entrance fence post.
      * 3 hits to remove. Drops null (sign tears). Press E to read event details.
      */
-    BOOT_SALE_SIGN_PROP(0.20f, 0.50f, 0.05f, 3, null);
+    BOOT_SALE_SIGN_PROP(0.20f, 0.50f, 0.05f, 3, null),
+
+    // ── Issue #1367: Northfield Speed Awareness Course ────────────────────────
+
+    /**
+     * SPEED_CAMERA_PROP — a pole-mounted Gatso speed camera on the high street.
+     * 0.40×2.50×0.40m; 10 hits to destroy; drops nothing (council property).
+     * Active 24/7. Triggers SPEEDING_NOTICE when player drives above threshold.
+     */
+    SPEED_CAMERA_PROP(0.40f, 2.50f, 0.40f, 10, null),
+
+    /**
+     * SPEED_AWARENESS_BOARD_PROP — wall-mounted presentation board at the front
+     * of Community Centre Room B. 2.0×1.5×0.1m; 3 hits to remove; drops nothing.
+     * Player must be within 10 blocks during the course to count as attending.
+     */
+    SPEED_AWARENESS_BOARD_PROP(2.0f, 1.5f, 0.1f, 3, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
