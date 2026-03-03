@@ -5448,7 +5448,63 @@ public enum Material {
      * Notoriety +5, permanent employer blacklist.
      * Tooltip: "Glowing references from people who definitely exist."
      */
-    FORGED_REFERENCE("Forged Reference");
+    FORGED_REFERENCE("Forged Reference"),
+
+    // ── Issue #1335: Northfield Cycle Centre — Dave's Bikes ───────────────────
+
+    /**
+     * BIKE_REPAIR_KIT — a compact kit containing tyre levers, patches, and a
+     * small pump. Purchased from Dave's Cycle Centre or crafted (RUBBER_PATCH +
+     * SCRAP_METAL). Used to fix punctures while riding; removes the PUNCTURE
+     * debuff in 5 seconds. Tooltip: "Every cyclist's best mate."
+     */
+    BIKE_REPAIR_KIT("Bike Repair Kit"),
+
+    /**
+     * BIKE_LOCK — a D-lock or chain lock used to secure a bike to a
+     * BIKE_RACK_PROP or lamp post. Three tiers: basic (3 hits to cut),
+     * standard (5 hits), heavy-duty (8 hits). Purchased from Dave's Cycle Centre.
+     * Tooltip: "Only as secure as the post it's locked to."
+     */
+    BIKE_LOCK("Bike Lock"),
+
+    /**
+     * BIKE_LIGHT_FRONT — a white LED front light that clips to the handlebars.
+     * Required after dark to avoid a CYCLING_OFFENCE stop by PCSO.
+     * Purchased from Dave's Cycle Centre. Battery lasts 3 in-game nights.
+     * Tooltip: "See and be seen. Or don't. Up to you."
+     */
+    BIKE_LIGHT_FRONT("Bike Light (Front)"),
+
+    /**
+     * BIKE_LIGHT_REAR — a red flashing rear light. Required after dark alongside
+     * BIKE_LIGHT_FRONT to avoid a CYCLING_OFFENCE stop. Purchased from Dave's
+     * Cycle Centre. Tooltip: "The blink of 'don't kill me'."
+     */
+    BIKE_LIGHT_REAR("Bike Light (Rear)"),
+
+    /**
+     * BIKE_HELMET — a foam-and-plastic cycling helmet. Not legally required but
+     * reduces collision damage by 50% when mounted. Triggers CYCLE_TO_WORK
+     * achievement when worn to an employer. Tooltip: "Stylist? No. Alive? Hopefully."
+     */
+    BIKE_HELMET("Bike Helmet"),
+
+    /**
+     * DELIVERY_BAG — a large insulated courier bag in JustEat orange.
+     * Required to accept delivery missions from JUST_EAT_DELIVERY_BOARD_PROP.
+     * Holds up to 4 food orders simultaneously. Purchased from Dave's Cycle Centre.
+     * Tooltip: "The unmistakable bag of the gig economy."
+     */
+    DELIVERY_BAG("Delivery Bag"),
+
+    /**
+     * COLD_DELIVERY_BAG — a delivery bag where the insulation has failed.
+     * Orders delivered in this bag count as cold (reduced payout: 2 COIN instead
+     * of 4 COIN). Crafted by using DELIVERY_BAG 20+ times without repair.
+     * Tooltip: "It's cold. The food is cold. Everything is cold."
+     */
+    COLD_DELIVERY_BAG("Cold Delivery Bag");
 
     private final String displayName;
 
@@ -6654,6 +6710,22 @@ public enum Material {
                                                   0.95f, 0.75f, 0.10f); // Gold stars
             case OLD_CLOTHES:           return cs(0.45f, 0.38f, 0.30f,  // Worn beige/brown
                                                   0.35f, 0.28f, 0.22f); // Darker folds
+
+            // Issue #1335: Northfield Cycle Centre — Dave's Bikes
+            case BIKE_REPAIR_KIT:       return cs(0.85f, 0.35f, 0.10f,  // Orange pouch
+                                                  0.20f, 0.20f, 0.20f); // Black zip
+            case BIKE_LOCK:             return cs(0.18f, 0.18f, 0.18f,  // Black D-lock
+                                                  0.65f, 0.65f, 0.65f); // Silver bar
+            case BIKE_LIGHT_FRONT:      return cs(0.92f, 0.90f, 0.82f,  // White LED lens
+                                                  0.20f, 0.20f, 0.20f); // Black body
+            case BIKE_LIGHT_REAR:       return cs(0.90f, 0.10f, 0.10f,  // Red LED lens
+                                                  0.20f, 0.20f, 0.20f); // Black body
+            case BIKE_HELMET:           return cs(0.15f, 0.65f, 0.90f,  // Blue foam shell
+                                                  0.85f, 0.85f, 0.85f); // White strap
+            case DELIVERY_BAG:          return cs(0.95f, 0.45f, 0.05f,  // JustEat orange
+                                                  0.10f, 0.10f, 0.10f); // Black logo
+            case COLD_DELIVERY_BAG:     return cs(0.60f, 0.30f, 0.05f,  // Faded orange
+                                                  0.35f, 0.35f, 0.35f); // Grey worn seam
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -8602,6 +8674,22 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // thick envelope
             case ENGINEER_ACCESS_CARD:
                 return IconShape.FLAT_PAPER;  // laminated access card
+
+            // Issue #1335: Northfield Cycle Centre — Dave's Bikes
+            case BIKE_REPAIR_KIT:
+                return IconShape.BOX;         // compact repair pouch
+            case BIKE_LOCK:
+                return IconShape.BOX;         // D-lock or chain
+            case BIKE_LIGHT_FRONT:
+                return IconShape.BOX;         // clip-on LED unit
+            case BIKE_LIGHT_REAR:
+                return IconShape.BOX;         // clip-on LED unit
+            case BIKE_HELMET:
+                return IconShape.BOX;         // foam shell helmet
+            case DELIVERY_BAG:
+                return IconShape.BOX;         // large insulated courier bag
+            case COLD_DELIVERY_BAG:
+                return IconShape.BOX;         // worn insulated bag
 
             default:
                 return IconShape.BOX;

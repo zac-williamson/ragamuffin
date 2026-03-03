@@ -2632,7 +2632,18 @@ public enum NPCType {
      * Non-hostile. Provides Notoriety reduction on each completed volunteer shift.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    CHARITY_VOLUNTEER_LEADER(20f, 0f, 0f, false);
+    CHARITY_VOLUNTEER_LEADER(20f, 0f, 0f, false),
+
+    // ── Issue #1335: Northfield Cycle Centre — Dave's Bikes ───────────────────
+
+    /**
+     * CYCLE_SHOP_OWNER — Dave, who runs Dave's Cycle Centre on the high street.
+     * Sells bikes, components, and accessories; issues delivery jobs via the
+     * JUST_EAT_DELIVERY_BOARD_PROP. Non-hostile. Will not sell to players with
+     * Notoriety ≥ 70 (known bike thief reputation).
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    CYCLE_SHOP_OWNER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
