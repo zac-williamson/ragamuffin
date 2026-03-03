@@ -1060,7 +1060,30 @@ public class CriminalRecord {
          * Penalty: WantedSystem +1 star, debt written off.
          * Cross-references CRIMINAL_DAMAGE if player also damages property.
          */
-        BAILIFF_ASSAULT("Assault of a court bailiff");
+        BAILIFF_ASSAULT("Assault of a court bailiff"),
+
+        // ── Issue #1353: Northfield Amateur Dramatics Society ─────────────────
+
+        /**
+         * Recorded when the player steals STAGE_COSTUME items from the
+         * COSTUME_CUPBOARD_PROP at the community centre. Penalty: Notoriety +3,
+         * WantedSystem +1 star.
+         */
+        COSTUME_THEFT("Costume theft (NAODS community centre)"),
+
+        /**
+         * Recorded when the player presents a FORGED_TICKET at the TICKET_BOOTH_PROP
+         * and is caught (30% chance). Penalty: Notoriety +2, WantedSystem +1 star.
+         */
+        TICKET_FRAUD("Ticket fraud (forged NAODS opening night ticket)"),
+
+        /**
+         * Recorded when the player executes any of Mario's sabotage options on opening
+         * night: cutting power at FUSE_BOX_PROP, swapping PROP_GUN with AIRGUN, or
+         * stealing TICKET_CASH_BOX_PROP. Penalty: Notoriety +5, WantedSystem +1 star.
+         * Triggers NAODS_DRAMA_DISASTER rumour.
+         */
+        PRODUCTION_SABOTAGE("Production sabotage (NAODS opening night)");
 
         private final String displayName;
 

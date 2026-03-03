@@ -5717,6 +5717,42 @@ public enum AchievementType {
         "Last Post",
         "You bought a poppy off Doris and wore it with something approaching dignity.",
         1
+    ),
+
+    // ── Issue #1353: Northfield Amateur Dramatics Society ─────────────────────
+
+    /**
+     * Fires when the player scores 2+ on the BattleBarMiniGame audition and is
+     * cast as Lead Understudy in the NAODS production of Blood Brothers.
+     * Awarded in AmateurDramaticsSystem on audition completion.
+     */
+    BREAK_A_LEG(
+        "Break a Leg",
+        "Lead Understudy in Blood Brothers. Patricia's exact words were 'passable'.",
+        1
+    ),
+
+    /**
+     * Fires when the player successfully executes the costume heist — lockpicking
+     * the COSTUME_CUPBOARD_PROP during the Tuesday 13:00–17:00 window while Patricia
+     * is at the GP Surgery and taking 3–5 STAGE_COSTUMEs.
+     * Awarded in AmateurDramaticsSystem on heist completion.
+     */
+    BEST_IN_SHOW(
+        "Best in Show",
+        "You robbed the drama group's costume cupboard. Curtain up.",
+        1
+    ),
+
+    /**
+     * Fires when the player freezes during the BattleBarMiniGame on stage — scoring
+     * 0 on the opening night performance, causing boos and losing 1 SOCIAL XP.
+     * Awarded in AmateurDramaticsSystem on opening night disaster performance.
+     */
+    STAGE_FRIGHT(
+        "Stage Fright",
+        "You forgot your lines. In front of everyone. There were boos.",
+        1
     );
 
     private final String name;

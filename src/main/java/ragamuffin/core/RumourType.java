@@ -1039,5 +1039,27 @@ public enum RumourType {
      * full with stolen goods. Didn't seem to bother him." — seeded by
      * PaydayLoanSystem when loan repaid with fenced goods.
      * Spreads via BARMAN and PUBLIC NPCs. */
-    LOAN_SHARK;
+    LOAN_SHARK,
+
+    // ── Issue #1353: Northfield Amateur Dramatics Society ─────────────────────
+
+    /** "There was an absolute disaster at the drama do — power cut, prop gun mix-up,
+     * cash box gone. The whole thing fell apart." — seeded by AmateurDramaticsSystem
+     * when any of Mario's sabotage options are executed on opening night.
+     * Triggers NeighbourhoodSystem Vibes −4 town-wide. Spreads via PUBLIC, BARMAN,
+     * and PENSIONER NPCs. Leads to NewspaperSystem headline next day. */
+    NAODS_DRAMA_DISASTER,
+
+    /** "Someone was listening in at drama rehearsal — reckon they got something on
+     * Marchetti." — seeded by AmateurDramaticsSystem when player eavesdrops on
+     * Mario during his 21:15–21:20 notes break.
+     * Grants MARCHETTI_CREW −5 Respect (surveillance detected). Spreads via
+     * BARMAN and STREET_LAD NPCs as faction intel. */
+    MARCHETTI_SECRETS,
+
+    /** "Patricia's had a load of people auditioning for the drama group — Blood Brothers
+     * apparently." — seeded by AmateurDramaticsSystem when player completes the
+     * audition BattleBarMiniGame (any score ≥ 1).
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    NAODS_CASTING;
 }

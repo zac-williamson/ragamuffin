@@ -5684,7 +5684,45 @@ public enum Material {
      * or fenceable for 1 COIN each.
      * Tooltip: "Needs a firm hand and the right fuse."
      */
-    CHRISTMAS_LIGHTS_BULB("Christmas Lights Bulb");
+    CHRISTMAS_LIGHTS_BULB("Christmas Lights Bulb"),
+
+    // ── Issue #1353: Northfield Amateur Dramatics Society ─────────────────────
+
+    /**
+     * STAGE_COSTUME — a theatrical costume from the NAODS production of Blood Brothers.
+     * Gives −2 police suspicion while worn (costume = 'not a criminal'). Flips to +1
+     * suspicion if player is Wanted ≥ 2. Non-cast wearers are spotted by NAODS_MEMBER
+     * NPCs with a 40% chance, triggering a confrontation. 3–5 costumes are stored in the
+     * lockpickable COSTUME_CUPBOARD_PROP. Sellable at charity shop for 3 COIN or via
+     * fence for 8 COIN.
+     * Tooltip: "You could be anyone in this. That's rather the point."
+     */
+    STAGE_COSTUME("Stage Costume"),
+
+    /**
+     * REHEARSAL_SCHEDULE — a printed rehearsal timetable issued to cast members by
+     * Patricia (DRAMA_DIRECTOR). Sets the NAODS_MEMBER flag on the player and confirms
+     * rehearsal nights (Wed/Thu 19:00–22:00). Leaving a rehearsal early removes the
+     * player from the cast.
+     * Tooltip: "Wednesday and Thursday. Don't be late."
+     */
+    REHEARSAL_SCHEDULE("Rehearsal Schedule"),
+
+    /**
+     * FORGED_TICKET — a forged NAODS opening night ticket craftable from
+     * PRINTER_PAPER + INK_BOTTLE. Admits entry to the production at a saving of 2 COIN.
+     * 30% chance of being caught at the TICKET_BOOTH_PROP, recording TICKET_FRAUD.
+     * Tooltip: "Printed on a home printer. It'll probably work."
+     */
+    FORGED_TICKET("Forged Ticket"),
+
+    /**
+     * PROP_GUN — a realistic-looking stage prop revolver used in the Blood Brothers
+     * production. Can be swapped with AIRGUN as part of Mario's sabotage plan, causing
+     * chaos on stage. Stored in the PROP_GUN_PROP cabinet.
+     * Tooltip: "It's not real. Probably best not to wave it around, though."
+     */
+    PROP_GUN("Prop Gun");
 
     private final String displayName;
 
@@ -6957,6 +6995,16 @@ public enum Material {
             case CHRISTMAS_LIGHTS_BULB: return cs(0.95f, 0.80f, 0.10f,  // Warm yellow glow
                                                   0.85f, 0.25f, 0.10f); // Red base
 
+            // Issue #1353: Northfield Amateur Dramatics Society
+            case STAGE_COSTUME:         return cs(0.75f, 0.20f, 0.55f,  // Theatrical purple
+                                                  0.95f, 0.90f, 0.80f); // Cream lace trim
+            case REHEARSAL_SCHEDULE:    return cs(0.92f, 0.92f, 0.88f,  // Off-white paper
+                                                  0.20f, 0.35f, 0.60f); // Blue ink header
+            case FORGED_TICKET:         return cs(0.90f, 0.85f, 0.70f,  // Cream ticket card
+                                                  0.80f, 0.15f, 0.20f); // Red border
+            case PROP_GUN:              return cs(0.18f, 0.18f, 0.18f,  // Black prop body
+                                                  0.65f, 0.60f, 0.55f); // Silver barrel
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -7403,6 +7451,11 @@ public enum Material {
             // Issue #1351: Northfield QuickFix Loans — not block items
             case FINAL_DEMAND_LETTER:
             case FORGED_ID:
+            // Issue #1353: Northfield Amateur Dramatics Society — not block items
+            case STAGE_COSTUME:
+            case REHEARSAL_SCHEDULE:
+            case FORGED_TICKET:
+            case PROP_GUN:
             // Issue #1144: Northfield Probation Office — not block items
             case SIGN_ON_LETTER:
             case ELECTRONIC_TAG:
@@ -7657,6 +7710,11 @@ public enum Material {
             // Issue #1351: Northfield QuickFix Loans
             case FINAL_DEMAND_LETTER:
             case FORGED_ID:
+            // Issue #1353: Northfield Amateur Dramatics Society — small items sit on surfaces
+            case STAGE_COSTUME:
+            case REHEARSAL_SCHEDULE:
+            case FORGED_TICKET:
+            case PROP_GUN:
                 return true;
             default:
                 return false;
@@ -8964,6 +9022,16 @@ public enum Material {
                 return IconShape.CYLINDER;    // cloth wristband
             case CHRISTMAS_LIGHTS_BULB:
                 return IconShape.CYLINDER;    // small bulb
+
+            // Issue #1353: Northfield Amateur Dramatics Society
+            case STAGE_COSTUME:
+                return IconShape.BOX;         // folded theatrical costume
+            case REHEARSAL_SCHEDULE:
+                return IconShape.FLAT_PAPER;  // printed timetable sheet
+            case FORGED_TICKET:
+                return IconShape.FLAT_PAPER;  // home-printed ticket
+            case PROP_GUN:
+                return IconShape.BOX;         // stage prop revolver
 
             default:
                 return IconShape.BOX;
