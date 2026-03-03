@@ -7178,7 +7178,52 @@ public enum Material {
      * Required to enter Grudge Match spectator area or enter the Annual Tournament.
      * Tooltip: "Member No. 47. Reg signed it himself."
      */
-    BOWLS_CLUB_MEMBERSHIP("Bowls Club Membership");
+    BOWLS_CLUB_MEMBERSHIP("Bowls Club Membership"),
+
+    // ── Issue #1485: Northfield Milk Float ────────────────────────────────────
+
+    /**
+     * MILK_BOTTLE — a pint of full-fat milk, fresh off Dave's float.
+     * Heals 2 HP when consumed. Sells to FenceSystem for 1 COIN or
+     * GreasySpoonSystem for 2 COIN. Stolen from doorstep loot window
+     * or walk-in fridge at the MILK_DEPOT.
+     */
+    MILK_BOTTLE("Milk Bottle"),
+
+    /**
+     * FROZEN_MILK_BOTTLE — a MILK_BOTTLE frozen solid during FROST or COLD_SNAP
+     * weather (30% chance per delivered bottle). Can be thawed at a
+     * CampfireSystem fire or GreasySpoonSystem counter, becoming MILK_BOTTLE.
+     */
+    FROZEN_MILK_BOTTLE("Frozen Milk Bottle"),
+
+    /**
+     * MILK_CRATE_STOLEN — a full crate of 6 MILK_BOTTLEs lifted from Dave's float
+     * (4-second hold, 70% detection chance). Sells to FenceSystem for 6 COIN.
+     * CrimeType.MILK_THEFT; if caught: Notoriety +4, WantedSystem +1.
+     */
+    MILK_CRATE_STOLEN("Stolen Milk Crate"),
+
+    /**
+     * MILK_ROUND_CARD — a job card issued by the DEPOT_NOTICEBOARD_PROP confirming
+     * the player has signed up to do Dave's milk round today. Required to collect
+     * the payout (6 COIN + Notoriety −1 + MILK_ROUND_HERO).
+     */
+    MILK_ROUND_CARD("Milk Round Card"),
+
+    /**
+     * FLOAT_KEYS_DUPLICATE — a duplicate set of float keys found in Dave's office
+     * at the MILK_DEPOT. Allows the player to board and drive the milk float
+     * without the 4-second boarding animation.
+     */
+    FLOAT_KEYS_DUPLICATE("Duplicate Float Keys"),
+
+    /**
+     * FLOAT_MANIFEST — a printed delivery manifest found in Dave's office.
+     * Lists all 12 delivery addresses, making the milk round job easier to
+     * complete optimally.
+     */
+    FLOAT_MANIFEST("Float Manifest");
 
     private final String displayName;
 

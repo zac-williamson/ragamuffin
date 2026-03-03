@@ -849,7 +849,45 @@ public enum LandmarkType {
      *
      * <p>Managed by BowlsClubSystem.
      */
-    BOWLS_CLUB;
+    BOWLS_CLUB,
+
+    // ── Issue #1485: Northfield Milk Float ────────────────────────────────────
+
+    /**
+     * MILK_DEPOT — Dave's Dairy depot at the edge of the industrial estate.
+     *
+     * <p>Operating hours 04:00–08:00. Dave ({@code MILK_FLOAT_DRIVER}) departs at 05:30
+     * with 12 crates (6 bottles each) on his silent electric float.
+     *
+     * <ul>
+     *   <li><b>Mechanic 1 — Dave's Round</b>: Float follows a 12-stop residential
+     *       route (same houses as NewsagentSystem paper round). Dave parks, walks
+     *       3 blocks to doorstep, places 1–2 bottles, returns.
+     *       FROST/COLD_SNAP weather freezes 30% of bottles to FROZEN_MILK_BOTTLE.</li>
+     *   <li><b>Mechanic 2 — Milk Round Job</b>: Sign up at DEPOT_NOTICEBOARD_PROP
+     *       (04:30–05:20). Receive MILK_ROUND_CARD. Deliver to all 12 stops before
+     *       Dave: 6 COIN + Notoriety −1 + MILK_ROUND_HERO. Cold bonus: +2 COIN
+     *       if temperature &lt; 2°C. Banned 7 days after 3 bottle thefts in a week.</li>
+     *   <li><b>Mechanic 3 — Stealing Milk</b>: Doorstep bottles live loot for 45s.
+     *       Each stolen bottle: CrimeType.MILK_THEFT, Notoriety +1 if witnessed.
+     *       MILK_BOTTLE heals 2 HP; sells to FenceSystem (1 COIN) or GreasySpoon
+     *       (2 COIN). Stealing full crate off float (4s hold, 70% detection):
+     *       6 bottles; if caught Notoriety +4, WantedSystem +1.
+     *       Achievement FULL_CRATE_BANDIT.</li>
+     *   <li><b>Mechanic 4 — Jacking the Float</b>: Float unattended 60s while Dave
+     *       delivers. Board with E, drive at 5 blocks/sec. Police detection radius
+     *       halved (silent motor). Crash: 50% bottles per crate smashed. Sell to
+     *       scrapyard: 18 COIN (CrimeType.VEHICLE_THEFT, Notoriety +8). Evade
+     *       police 120s: ELECTRIC_GETAWAY achievement.</li>
+     *   <li><b>Mechanic 5 — Depot Break-In</b>: Break locked side door (6 CROWBAR
+     *       hits). Walk-in fridge: 48 MILK_BOTTLE. Dave's office:
+     *       FLOAT_KEYS_DUPLICATE, FLOAT_MANIFEST, 10–15 COIN cashbox. Alarm after
+     *       30s. Achievement DEPOT_RAIDER.</li>
+     * </ul>
+     *
+     * <p>Managed by MilkFloatSystem.
+     */
+    MILK_DEPOT;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -962,6 +1000,7 @@ public enum LandmarkType {
             case CLOSING_DOWN_SHOP:     return "Dave's Electronics & Electrical — FINAL WEEK";
             case DRIVING_TEST_CENTRE:   return "Northfield DVSA Driving Test Centre";
             case BOWLS_CLUB:            return "Reg's Green — Northfield Crown Green Bowls Club";
+            case MILK_DEPOT:            return "Dave's Dairy — Northfield Milk Depot";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

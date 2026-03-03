@@ -7540,6 +7540,58 @@ public enum AchievementType {
         "The Dynasty",
         "Three years running. Reg made you Vice-Secretary. You could tell it hurt.",
         3
+    ),
+
+    // ── Issue #1485: Northfield Milk Float ────────────────────────────────────
+
+    /**
+     * MILK_ROUND_HERO — complete Dave's full 12-stop milk round before Dave
+     * finishes, earning 6 COIN + Notoriety −1.
+     */
+    MILK_ROUND_HERO(
+        "Milk Round Hero",
+        "You did the full round before Dave. Every bottle on every doorstep. Hero.",
+        1
+    ),
+
+    /**
+     * FULL_CRATE_BANDIT — steal a full crate (6 bottles) off Dave's float
+     * in a single 4-second heist.
+     */
+    FULL_CRATE_BANDIT(
+        "Full Crate Bandit",
+        "You half-inched a full crate off Dave's float. Six bottles in four seconds flat.",
+        1
+    ),
+
+    /**
+     * MILK_RUN_GONE_WRONG — get caught stealing milk three times in a single
+     * in-game week, triggering the 7-day ban.
+     */
+    MILK_RUN_GONE_WRONG(
+        "Milk Run Gone Wrong",
+        "Three thefts in a week. Dave's banned you. You're getting your milk from Iceland.",
+        1
+    ),
+
+    /**
+     * ELECTRIC_GETAWAY — evade police for 120 seconds while driving the milk float.
+     * (Silent electric motor halves police detection radius.)
+     */
+    ELECTRIC_GETAWAY(
+        "Electric Getaway",
+        "Two minutes outrunning the law in a milk float. Britain's most unlikely car chase.",
+        1
+    ),
+
+    /**
+     * DEPOT_RAIDER — break into the MILK_DEPOT, loot the walk-in fridge and
+     * Dave's office before the alarm clears.
+     */
+    DEPOT_RAIDER(
+        "Depot Raider",
+        "You emptied Dave's fridge and rifled his desk. Forty-eight pints and a tenner.",
+        1
     );
 
     private final String name;

@@ -4485,7 +4485,56 @@ public enum PropType {
      * BOWLS_GRUDGE_MATCH rumour and adds Notoriety +2.
      * Collision: 1.20w × 1.80h × 0.40d. Health: 6 hits. Drops GLASS.
      */
-    BOWLS_TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 6, Material.GLASS);
+    BOWLS_TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 6, Material.GLASS),
+
+    // ── Issue #1485: Northfield Milk Float ────────────────────────────────────
+
+    /**
+     * MILK_FLOAT_PROP — Dave's silent electric milk float. Parked at the
+     * MILK_DEPOT until 05:30; follows the delivery route thereafter.
+     * Press E to board and drive (5 blocks/sec). Police detection radius
+     * halved. Crash smashes 50% of bottles per crate.
+     * Collision: 3.0w × 2.0h × 5.0d. Health: 20 hits. Drops SCRAP_METAL.
+     */
+    MILK_FLOAT_PROP(3.0f, 2.0f, 5.0f, 20, Material.SCRAP_METAL),
+
+    /**
+     * MILK_CRATE_PROP — a crate of 6 MILK_BOTTLEs on the float or at the depot.
+     * Press E to attempt to lift (4-second hold, 70% detection chance).
+     * Success: receive MILK_CRATE_STOLEN + 6 MILK_BOTTLEs.
+     * Collision: 0.60w × 0.40h × 0.40d. Health: 3 hits. Drops MILK_BOTTLE.
+     */
+    MILK_CRATE_PROP(0.60f, 0.40f, 0.40f, 3, Material.MILK_BOTTLE),
+
+    /**
+     * DEPOT_NOTICEBOARD_PROP — the job-sign noticeboard inside the MILK_DEPOT.
+     * Press E between 04:30–05:20 to sign up for the milk round and receive
+     * a MILK_ROUND_CARD.
+     * Collision: 1.0w × 1.4h × 0.15d. Health: 4 hits. Drops WOOD.
+     */
+    DEPOT_NOTICEBOARD_PROP(1.0f, 1.4f, 0.15f, 4, Material.WOOD),
+
+    /**
+     * DEPOT_SIDE_DOOR_PROP — the locked side door of the MILK_DEPOT.
+     * Requires 6 CROWBAR hits to break open. Triggers the 30-second alarm.
+     * Collision: 1.0w × 2.2h × 0.15d. Health: 6 hits. Drops WOOD.
+     */
+    DEPOT_SIDE_DOOR_PROP(1.0f, 2.2f, 0.15f, 6, Material.WOOD),
+
+    /**
+     * WALK_IN_FRIDGE_PROP — the large refrigerated storage unit inside the depot.
+     * Contains 48 MILK_BOTTLEs accessible after breaking in. Press E to loot.
+     * Collision: 3.0w × 2.5h × 2.0d. Health: 15 hits. Drops nothing.
+     */
+    WALK_IN_FRIDGE_PROP(3.0f, 2.5f, 2.0f, 15, null),
+
+    /**
+     * DEPOT_OFFICE_DESK_PROP — Dave's office desk inside the MILK_DEPOT.
+     * Contains FLOAT_KEYS_DUPLICATE, FLOAT_MANIFEST, and a cashbox
+     * with 10–15 COIN. Press E to search (only accessible after break-in).
+     * Collision: 1.5w × 0.85h × 0.80d. Health: 5 hits. Drops WOOD.
+     */
+    DEPOT_OFFICE_DESK_PROP(1.5f, 0.85f, 0.80f, 5, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
