@@ -7043,6 +7043,21 @@ public enum AchievementType {
         "Community Policing Ends Here",
         "Steal Keith's speed gun mid-session. He paid £180 for that on eBay.",
         1
+    ),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1445: Northfield Salvation Army Citadel
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * SOUP_KITCHEN_REGULAR — Use the Salvation Army soup kitchen 5 times.
+     * Awarded by SalvationArmyCitadelSystem after the player receives a CUP_OF_TEA
+     * on 5 separate days (teaReceivedCount reaches 5).
+     */
+    SOUP_KITCHEN_REGULAR(
+        "Soup Kitchen Regular",
+        "Had five cups of tea at the Salvation Army. Major Eileen knows your name now.",
+        5
     );
 
     private final String name;

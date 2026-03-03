@@ -4153,7 +4153,20 @@ public enum PropType {
      * to the park, reading "Welcome to Northfield". Two wooden posts support a wide
      * green sign panel. Dims: 4.0 × 2.0 × 0.3 m; hardness 5; drops WOOD.
      */
-    WELCOME_SIGN(4.0f, 2.0f, 0.3f, 5, ragamuffin.building.Material.WOOD);
+    WELCOME_SIGN(4.0f, 2.0f, 0.3f, 5, ragamuffin.building.Material.WOOD),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1445: Northfield Salvation Army Citadel
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * SHELTER_BED_PROP — a folding single-frame camp bed with a thin mattress and
+     * scratchy blanket, set up in the Salvation Army Citadel night shelter.
+     * Spawned by SalvationArmyCitadelSystem (Fri–Sat 20:00–08:00); 4 beds maximum.
+     * Player can sleep in an unoccupied bed (+20 Warmth, +20 HP over 60 seconds).
+     * Dims: 0.8 × 0.5 × 2.0; indestructible (hitsToBreak: 999); drops nothing.
+     */
+    SHELTER_BED_PROP(0.8f, 0.5f, 2.0f, 999, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
