@@ -7367,7 +7367,31 @@ public enum Material {
      * nights. Worth 0 COIN but prevents future trespass charges.
      * Tooltip: "Northfield Model Railway Club life membership. Derek's handwriting."
      */
-    CLUB_MEMBERSHIP_TOKEN("Club Membership Token");
+    CLUB_MEMBERSHIP_TOKEN("Club Membership Token"),
+
+    // ── Issue #1501: Northfield Pub Darts League ──────────────────────────────
+
+    /**
+     * LEAGUE_MEMBERSHIP_CARD — laminated card issued by Dave on payment of 2 COIN
+     * on a Thursday. Required to enter league fixtures. Assigned handicap 32 on issue.
+     * Tooltip: "Northfield &amp; District Pub Darts League. Member card. Don't lose it."
+     */
+    LEAGUE_MEMBERSHIP_CARD("League Membership Card"),
+
+    /**
+     * BENT_FLIGHTS — darts flights with subtly bent vanes, swapped in for a rival's
+     * DARTS_SET to impose −30% accuracy. Crafted by the player from DARTS_SET
+     * + a sabotage action. Tooltip: "Flights with a slight… kink. Hard to prove."
+     */
+    BENT_FLIGHTS("Bent Flights"),
+
+    /**
+     * HANDICAP_LEDGER — the league's official handicap ledger, stolen from the
+     * back room of the Ragamuffin Arms (LOCKPICK required). Alterable unwitnessed
+     * to lower the player's handicap. Fenceable for 4 COIN.
+     * Tooltip: "Ted's handicap ledger. His handwriting is suspiciously neat."
+     */
+    HANDICAP_LEDGER("Handicap Ledger");
 
     private final String displayName;
 
@@ -8918,6 +8942,14 @@ public enum Material {
                                                     0.68f, 0.22f, 0.18f); // Red printed text
             case CLUB_MEMBERSHIP_TOKEN:   return cs(0.10f, 0.25f, 0.55f, // Club navy blue
                                                     0.92f, 0.92f, 0.88f); // White text area
+
+            // Issue #1501: Northfield Pub Darts League
+            case LEAGUE_MEMBERSHIP_CARD:  return cs(0.12f, 0.35f, 0.62f, // League navy blue
+                                                    0.92f, 0.92f, 0.88f); // White text area
+            case BENT_FLIGHTS:            return cs(0.72f, 0.20f, 0.18f, // Red flight vane
+                                                    0.82f, 0.72f, 0.62f); // Pale bent shaft
+            case HANDICAP_LEDGER:         return cs(0.75f, 0.65f, 0.48f, // Buff ledger cover
+                                                    0.30f, 0.22f, 0.12f); // Dark ink lines
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -11384,6 +11416,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // printed consolation slip
             case CLUB_MEMBERSHIP_TOKEN:
                 return IconShape.FLAT_PAPER;  // laminated membership token
+
+            // Issue #1501: Northfield Pub Darts League
+            case LEAGUE_MEMBERSHIP_CARD:
+                return IconShape.FLAT_PAPER;  // laminated league card
+            case BENT_FLIGHTS:
+                return IconShape.FLAT_PAPER;  // bent flight vanes
+            case HANDICAP_LEDGER:
+                return IconShape.BOX;         // hardback ledger book
 
             default:
                 return IconShape.BOX;

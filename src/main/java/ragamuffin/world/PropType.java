@@ -4678,7 +4678,37 @@ public enum PropType {
      * Centre hall. Decorative; press E to view. No item drop.
      * Collision: 1.2w × 1.5h × 0.4d.
      */
-    LOCO_DISPLAY_PROP(1.2f, 1.5f, 0.4f, 0, null);
+    LOCO_DISPLAY_PROP(1.2f, 1.5f, 0.4f, 0, null),
+
+    // ── Issue #1501: Northfield Pub Darts League ──────────────────────────────
+
+    /**
+     * DARTBOARD_LEAGUE_PROP — the official league dartboard mounted on the back
+     * wall of the Ragamuffin Arms. League fixtures are played at this board on
+     * Thursday evenings. Not breakable by fist; hitsToBreak = 0 (E-interact).
+     * No item drop.
+     * Collision: 0.5w × 0.5h × 0.10d.
+     */
+    DARTBOARD_LEAGUE_PROP(0.50f, 0.50f, 0.10f, 0, null),
+
+    /**
+     * HANDICAP_LEDGER_PROP — Ted's official handicap ledger kept in the back room
+     * of the Ragamuffin Arms. Requires LOCKPICK to access the room.
+     * Press E to steal (drops Material.HANDICAP_LEDGER).
+     * hitsToBreak = 0 (E-interact only).
+     * Collision: 0.35w × 0.05h × 0.25d.
+     */
+    HANDICAP_LEDGER_PROP(0.35f, 0.05f, 0.25f, 0, Material.HANDICAP_LEDGER),
+
+    /**
+     * COUNTY_FINAL_TROPHY_PROP — the gleaming county darts championship trophy
+     * displayed in the Community Centre every 56 days during the county final.
+     * Press E to attempt theft (30% detection during event, 10% after close).
+     * Drops Material.HANDICAP_LEDGER (reusing as generic trophy material).
+     * hitsToBreak = 0 (E-interact only).
+     * Collision: 0.30f × 0.45f × 0.20f.
+     */
+    COUNTY_FINAL_TROPHY_PROP(0.30f, 0.45f, 0.20f, 0, Material.HANDICAP_LEDGER);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

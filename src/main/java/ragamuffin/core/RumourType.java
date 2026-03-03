@@ -1906,5 +1906,25 @@ public enum RumourType {
      * Derek looked sick as a dog."
      * — seeded by ModelRailwaySystem on legitimate raffle win (LUCKY_DIP).
      * Spreads on legitimate raffle win. Vibes +1. */
-    RAFFLE_WINNER;
+    RAFFLE_WINNER,
+
+    // ── Issue #1501: Northfield Pub Darts League ──────────────────────────────
+
+    /** "Someone's been fiddling the handicap at the darts league.
+     * Ted's been taking bribes. Dave's absolutely furious."
+     * — seeded by DartsLeagueSystem when HANDICAP_FRAUD is recorded.
+     * Spreads via DARTS_PLAYER and PUBLIC NPCs. Vibes −4. */
+    DART_CHEAT,
+
+    /** "Dave's banned them from the league. Six months minimum.
+     * You don't mess with the darts in Northfield."
+     * — seeded by DartsLeagueSystem when player banned from league (3-day Dave refusal).
+     * Spreads via DARTS_PLAYER and PUBLIC NPCs. Vibes −3. */
+    LEAGUE_BANNED,
+
+    /** "The county final trophy's gone from the Community Centre.
+     * Right off the display table. Who does that?"
+     * — seeded by DartsLeagueSystem when COUNTY_FINAL_TROPHY_PROP is stolen.
+     * Spreads via PUBLIC and DARTS_PLAYER NPCs. Vibes −2. */
+    TROPHY_GONE;
 }
