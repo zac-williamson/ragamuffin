@@ -6440,6 +6440,55 @@ public enum AchievementType {
         "Wasp Whisperer",
         "You stood perfectly still while everyone else ran screaming. The wasps respected that.",
         1
+    ),
+
+    // ── Issue #1396: Northfield Royal Mail Strike ─────────────────────────────
+
+    /**
+     * UNION_SOLIDARITY — complete a full tea run (all 3 strikers receive MUG_OF_TEA).
+     * Mutually exclusive with SCAB.
+     */
+    UNION_SOLIDARITY(
+        "Solidarity Forever",
+        "You brought the lads tea on the picket line. Unheard of. Absolutely unheard of.",
+        1
+    ),
+
+    /**
+     * SCAB — complete a full scab delivery shift (4 parcels delivered in HI_VIS_VEST).
+     * Mutually exclusive with UNION_SOLIDARITY.
+     */
+    SCAB(
+        "Scab",
+        "Crossed the picket line for 36 COIN. The whole estate knows. You're going to need a new pub.",
+        1
+    ),
+
+    /**
+     * PARCEL_PANIC — steal 10 or more parcels from the overflow depot in one visit.
+     */
+    PARCEL_PANIC(
+        "Parcel Panic",
+        "Half the depot out the back door in twenty minutes. Amazon Prime wishes it was this reliable.",
+        1
+    ),
+
+    /**
+     * LOST_IN_TRANSIT — steal all 20 parcels from the overflow depot in one visit.
+     */
+    LOST_IN_TRANSIT(
+        "Lost in Transit",
+        "Every single one. The depot is empty. Royal Mail will blame the sorting algorithm.",
+        1
+    ),
+
+    /**
+     * ENTREPRENEURIAL_SPIRIT — complete 8 unofficial courier deliveries in one day.
+     */
+    ENTREPRENEURIAL_SPIRIT(
+        "Entrepreneurial Spirit",
+        "64 COIN. Cash in hand. HMRC are very interested in meeting you.",
+        1
     );
 
     private final String name;

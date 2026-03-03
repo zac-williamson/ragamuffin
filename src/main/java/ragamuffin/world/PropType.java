@@ -3849,7 +3849,24 @@ public enum PropType {
      * memorabilia (SIGNED_SHIRT, FA_CUP_REPLICA, GOLDEN_BOOT_PROP). Smashable with
      * GLASS_CUTTER (silent) or CROWBAR (loud, 30-block noise radius). 1.2×1.8×0.4m; glass.
      */
-    TROPHY_CABINET_PROP(1.2f, 1.8f, 0.4f, 3, null);
+    TROPHY_CABINET_PROP(1.2f, 1.8f, 0.4f, 3, null),
+
+    // ── Issue #1396: Northfield Royal Mail Strike ─────────────────────────────
+
+    /**
+     * OVERFLOW_DEPOT_PROP — locked building prop behind the sorting office.
+     * Contains 20 PARCEL items during the strike. Requires CROWBAR (3 uses) or
+     * BOLT_CUTTER (1 use) to open. Drops nothing on destruction.
+     * 3.0×2.5×3.0m; very sturdy (20 hits).
+     */
+    OVERFLOW_DEPOT_PROP(3.0f, 2.5f, 3.0f, 20, null),
+
+    /**
+     * COURIER_VAN_PROP — battered Transit van parked outside the corner shop.
+     * Interactable 09:00–18:00 on strike days to start unofficial courier mode.
+     * 4.5×1.8×2.0m; indestructible for gameplay purposes.
+     */
+    COURIER_VAN_PROP(4.5f, 1.8f, 2.0f, 99, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
