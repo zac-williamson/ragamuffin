@@ -7390,6 +7390,47 @@ public enum AchievementType {
         "Never Closing Down",
         "Witnessed all four phases of Dave's closing-down cycle. You've outlasted the signs.",
         4
+    ),
+
+    // ── Issue #1473: Northfield Community Litter Pick ─────────────────────────
+
+    /**
+     * TIDY_STREETS — hand in a full quota bag (≥ 8 litter items) to Janet
+     * at the end of the community litter pick.
+     */
+    TIDY_STREETS(
+        "Tidy Streets",
+        "Met your litter quota and handed the bag back to Janet. She looked almost proud.",
+        1
+    ),
+
+    /**
+     * JANET_S_MORNING — slip a CRACK_PIPE into your COUNCIL_RUBBISH_BAG before handing in.
+     * Janet opens the bag, screams, and the police are called.
+     */
+    JANET_S_MORNING(
+        "Janet's Morning",
+        "Slipped a crack pipe into the litter bag. Janet's having a lie-down.",
+        1
+    ),
+
+    /**
+     * FIT_UP — plant a CRACK_PIPE in a volunteer's bag undetected so they get the blame.
+     */
+    FIT_UP(
+        "Fit Up",
+        "Planted a crack pipe in a volunteer's bag. They got nicked. You did not.",
+        1
+    ),
+
+    /**
+     * UNDOING_ALL_THE_GOOD — fly-tip more BIN_BAG items than you collected litter during
+     * the event. Environmental Health is not amused.
+     */
+    UNDOING_ALL_THE_GOOD(
+        "Undoing All the Good",
+        "Fly-tipped more than you collected at the litter pick. Janet's tally says so.",
+        1
     );
 
     private final String name;

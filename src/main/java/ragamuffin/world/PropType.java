@@ -4370,7 +4370,22 @@ public enum PropType {
      * Disappears after looting; reappears on the next GENUINELY_CLOSING_TOMORROW day.
      * Indestructible while stocked; drops nothing.
      */
-    STOCKROOM_CRATE_PROP(0.80f, 0.80f, 0.80f, Integer.MAX_VALUE, null);
+    STOCKROOM_CRATE_PROP(0.80f, 0.80f, 0.80f, Integer.MAX_VALUE, null),
+
+    // ── Issue #1473: Northfield Community Litter Pick ─────────────────────────
+
+    /**
+     * LITTER_PICK_TENT_PROP — Janet's event gazebo outside the park gates.
+     * Indestructible during the event. Press E to sign up for the litter pick.
+     */
+    LITTER_PICK_TENT_PROP(2.0f, 1.2f, 1.0f, Integer.MAX_VALUE, null),
+
+    /**
+     * LITTER_PROP — a piece of rubbish scattered around the park during the
+     * litter pick event. Press E with LITTER_PICKER_STICK equipped to collect.
+     * Spawned by LitterPickSystem (10–18 per event). Drops nothing when collected.
+     */
+    LITTER_PROP(0.30f, 0.05f, 0.30f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
