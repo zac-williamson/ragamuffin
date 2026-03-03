@@ -54349,3 +54349,136 @@ None — reuses `NEIGHBOURHOOD_WATCH` (Keith), `PENSIONER` (Brenda, Malcolm), `S
 
 // All new enum entries (Material, PropType, AchievementType, RumourType) must be added.
 // CommunitySpeedwatchSystem.java must be created as the sole new source file.
+
+---
+
+## Northfield Suspicious Unattended Bag — The If You See It Say It Incident, the Cordon Blag & the Bomb Disposal Stand-Off
+
+### Overview
+
+It is a Tuesday morning on the Northfield high street. An elderly man has left a Lidl bag-for-life next to a bin outside Greggs and gone in to use the toilet. Within four minutes, a PCSO has called it in, police tape is going up, shops are evacuating, and a Transit van from the West Midlands Police Explosive Ordnance Disposal unit is en route. This is `SuspiciousBagSystem`.
+
+The player can trigger the event organically by leaving a bag prop in a public space, or the event fires randomly (10% chance on any weekday between 09:00–16:00 once the world reaches Day 3+). It creates a 40-block police cordon, evacuates all NPCs from affected shops, and opens a brief window for looting, scamming, or escalation. The bomb disposal robot's arrival — and subsequent anticlimactic "it's a bag of shopping" conclusion — is the centrepiece.
+
+---
+
+### Mechanics
+
+#### 1. Trigger Conditions
+
+- **Organic trigger**: Player drops a `SUSPICIOUS_BAG_PROP` (crafted from `CARRIER_BAG` + any 2 wired items, e.g. `PHONE_CHARGER`, `CLOCK_RADIO`, `BATTERY`) in any public area with ≥3 NPCs within 10 blocks.
+- **Random trigger**: Each weekday game-tick between 09:00–16:00, roll 10% chance. If triggered, a random `PENSIONER` NPC near the high street is assigned as the Bag Owner and the bag spawns at their last seated/standing position.
+- **Cooldown**: 72 in-game hours between events.
+- Only one active incident at a time.
+
+#### 2. Escalation Phases
+
+**Phase 1 — Spotter (0–2 min)**: A random nearby NPC (SHOPPER, PENSIONER, or CHUGGER) notices the bag and stands 2 blocks away, looking at it. After 30 seconds, they call it in (animation: phone to ear). A `PCSO` NPC spawns at the edge of the high street and jogs toward the bag.
+
+**Phase 2 — Cordon (2–5 min)**: PCSO places `POLICE_TAPE_PROP` in a 40-block radius around the bag. All shop NPCs (SHOPKEEPER, GREGGS_STAFF, etc.) are instructed to evacuate their premises and cluster 50 blocks from the cordon. A second police unit (POLICE NPC in car) arrives from the south.
+
+**Phase 3 — Controlled Area (5–15 min)**: The cordon is active. Shops inside the cordon are locked (player cannot enter). Any player who crosses the tape gets a warning ("MOVE BACK, SIR") and +1 Notoriety; on second crossing: arrested, charged with `OBSTRUCTION`. NPC civilians press against the tape watching.
+
+**Phase 4 — EOD Arrival (15–20 min)**: A `BOMB_DISPOSAL_NPC` arrives in a large van (`EOD_VAN_PROP`). They wheel out a `DISPOSAL_ROBOT_PROP` which trundles toward the bag at 0.5 blocks/s. The robot examines the bag for 2 in-game minutes (a tense, slow animation).
+
+**Phase 5 — Resolution (20–22 min)**: Robot returns to the van.  
+- If player-planted bag: 60% chance classified as **suspicious device** → full 2-star Wanted, player character described on police radio, shops remain closed 30 min, `COUNTER_TERROR_CHARGE` added to `CriminalRecord`. 40% chance declared safe.  
+- If random/pensioner bag: always declared safe. Bag Owner NPC walks sheepishly back through the cordon to retrieve their shopping. Crowd disperses. One NPC mutters "Classic Northfield."
+
+---
+
+### Player Interactions
+
+**Planting a bag** (Organic trigger):  
+- Craft `SUSPICIOUS_BAG_PROP` or use any held bag-type item + E to place it in a qualifying public area.  
+- Notoriety +5 immediately on placement if any NPC witnesses it.  
+- If EOD classifies it as suspicious: Wanted +2, `BOMB_HOAX` CrimeType, fine of 500 COIN via `MagistratesCourtSystem`.
+
+**Crossing the cordon**:  
+- First cross: Warning, Notoriety +2, PCSO blocks path.  
+- Second cross: Arrest, `OBSTRUCTION` charge.  
+- Stealth cross (STEALTH ≥3, crouch during Phase 2 before POLICE NPC arrives): no warning; player is inside the cordon undetected. Gives 5-minute window to loot evacuated shops (normal `BlockBreaker` mechanics apply to shop doors and windows with no witnesses).
+
+**Talking to the PCSO during Phase 1** (E key):  
+- Option A: "I saw who left it — it was that bloke in the tracksuit." → Seeds a false `LOCAL_GRIPE` rumour attributed to a random NPC; PCSO radios description, target NPC gets temporarily detained (NPCState.DETAINED).  
+- Option B: "I left it. It's just my shopping." → If StreetRep ≥20 and carrying ≥1 bag-type item: believed, incident defuses immediately (bag owner exonerated, cordon cancelled). Notoriety +10. Achievement `TOOK_THE_BLAME`.  
+- Option C: "Can I be of assistance? I used to be in the army." → If player has `ARMY_SURPLUS_JACKET` equipped: PCSO assigns player a 10-block "perimeter guard" role. Player earns 2 COIN/minute standing in assigned zone; if player moves >10 blocks from zone, role revoked.
+
+**EOD Robot interaction** (during Phase 4, if player is inside cordon via stealth):  
+- Approach robot within 2 blocks: can hold E for 3 seconds to **redirect the robot** to a different prop (e.g. send it to examine a parked car).  
+- Robot re-examining wrong target adds 5 min to the event, draws additional police response (Wanted +1 if seen doing this).
+
+**Bag Owner NPC** (if random trigger, during Phase 5):  
+- E to speak: "That's my Lidl bag! I only nipped in for a wee!" → Leads to a short dialogue with 3 options:  
+  - Sympathise: +5 StreetRep with PENSIONER faction.  
+  - Mock them: NoiseSystem noise 3.0f, crowd laughs (ambient).  
+  - Steal the bag from them while they're distracted by police paperwork: bag contains random `LIDL_SHOPPING` item (bread, tin of soup, biscuits). Notoriety +3, `THEFT_FROM_PERSON` CrimeType.
+
+---
+
+### Integration with Existing Systems
+
+- **`WantedSystem`**: planting → +2 stars if classified suspicious; cordon crossing (2nd) → arrest.
+- **`NotorietySystem`**: planting witnessed → +5; first cordon cross → +2; mocking Bag Owner → +1.
+- **`WitnessSystem`**: any NPC in Phase 1 spotter role or watching the cordon can witness player planting.
+- **`PoliceStationSystem`**: `BOMB_HOAX` charge; bail set at 200 COIN, trial at MagistratesCourtSystem.
+- **`MagistratesCourtSystem`**: `BOMB_HOAX` conviction → 500 COIN fine + 30 notoriety.
+- **`CriminalRecord`**: `BOMB_HOAX`, `OBSTRUCTION`, `THEFT_FROM_PERSON`, `COUNTER_TERROR_CHARGE` entries.
+- **`FenceSystem`**: `DISPOSAL_ROBOT_PROP` (if somehow obtained) fences for 0 COIN — fence refuses: "I'm not touching that, mate."
+- **`RumourNetwork`**: `SUSPICIOUS_PACKAGE` seeded on Phase 2 start; `POLICE_CORDON` seeded at Phase 3; `IT_WAS_SHOPPING` seeded on safe resolution.
+- **`NewspaperSystem`**: headline triggered if player-planted and classified suspicious: "NORTHFIELD HIGH STREET CLEARED IN BOMB SCARE." Player notoriety multiplier ×1.5 for 48 in-game hours.
+- **`NoiseSystem`**: EOD robot motor noise 2.0f during Phase 4; crowd noise 1.5f during Phases 2–4.
+- **`WeatherSystem`**: RAIN during Phase 4 increases robot's navigation delay by 30 seconds (slippery pavement).
+- **`StreetSkillSystem`**: successful stealth cordon breach awards +1 STEALTH XP.
+- **`CraftingSystem`**: `SUSPICIOUS_BAG_PROP` recipe: `CARRIER_BAG` + `PHONE_CHARGER` + `CLOCK_RADIO` (or any wired item pair).
+
+---
+
+### New NPCType Entries Required
+
+- `BOMB_DISPOSAL_NPC` — EOD officer in full bomb suit. Does not react to the player, cannot be attacked (NPCState.WORKING). Drives `EOD_VAN_PROP`.
+- `BAG_OWNER_NPC` — Spawned for random-trigger events only; subtype of PENSIONER. Has unique embarrassed/flustered idle animation state.
+
+### New PropType Entries Required
+
+- `SUSPICIOUS_BAG_PROP` — a carrier bag with visible wires/objects. 0.3×0.3×0.4 blocks. Hardness: 0 (can be kicked — E to nudge 1 block in facing direction, which resets Phase timer). Kicks cause PCSO nervous radio call.
+- `EOD_VAN_PROP` — large white Transit van. 4×2×2 blocks. Indestructible during event.
+- `DISPOSAL_ROBOT_PROP` — small tracked robot. 0.8×0.6×0.5 blocks. Indestructible during event.
+- `POLICE_TAPE_PROP` — yellow/black police cordon tape on posts. Placed in a ring. Passable (no collision) but crossing triggers detection.
+
+### New Material Entries Required
+
+- `SUSPICIOUS_BAG` — "A carrier bag. It's got wires in it. You put them there. This was probably a mistake."
+- `LIDL_SHOPPING` — "A bag of shopping. Bread, soup, Digestives. Someone's Tuesday just got very complicated."
+- `DISPOSAL_ROBOT_REMOTE` — (loot from EOD Van if broken into during event) "A chunky yellow remote control. Two joysticks. No labels. Could be for anything, really."
+
+### New AchievementType Entries Required
+
+- `BOMB_HOAX` — successfully trigger a full EOD response with a player-planted bag.
+- `CORDON_CREEPER` — breach the police cordon undetected (STEALTH ≥3 method).
+- `TOOK_THE_BLAME` — defuse the incident by claiming the bag as your own.
+- `PERIMETER_DUTY` — complete a full 10-minute perimeter guard shift as an army veteran volunteer.
+- `IT_WAS_ONLY_SHOPPING` — witness all 5 phases of the event in a single incident (as spectator — do not cross cordon or interact with bag).
+
+### New RumourType Entries Required
+
+- `SUSPICIOUS_PACKAGE` — seeded at Phase 2 start; spreads panic through nearby NPCs (SCARED state for 5 minutes).
+- `POLICE_CORDON` — seeded at Phase 3; redirects all NPC foot traffic away from the cordon zone.
+- `IT_WAS_SHOPPING` — seeded on safe resolution; NPCs mock the incident; Bag Owner NPC gets -10 reputation with all nearby NPCs.
+
+### New CrimeType Entries Required (CriminalRecord)
+
+- `BOMB_HOAX` — planting a suspicious bag that triggers EOD response.
+- `COUNTER_TERROR_CHARGE` — bag classified as a suspicious device post-EOD examination.
+
+### Integration Tests
+
+1. **Random trigger spawns bag and PCSO**: set world time to Day 5, 11:00 (weekday), with ≥3 NPCs on high street; seed random to force 10% trigger; call `SuspiciousBagSystem.update(delta, timeSystem, world, npcManager, weatherSystem)`; verify `SUSPICIOUS_BAG_PROP` exists within 15 blocks of the Greggs landmark, one NPC in SPOTTER state, and a PCSO NPC is pathfinding toward the bag.
+2. **Cordon seals shops after Phase 2**: advance time 3 in-game minutes past trigger; call update repeatedly; verify `POLICE_TAPE_PROP` forms a ring of radius ≥35 blocks around bag, all SHOPKEEPER NPCs within that radius are in EVACUATED state, and `SuspiciousBagSystem.isCordonActive()` returns true.
+3. **Player crossing cordon twice triggers arrest**: place player 41 blocks from bag (just outside tape); simulate E-cross (step over tape); verify Notoriety +2 and PCSO dialogue fires; simulate second E-cross; verify `ArrestSystem.isPlayerArrested()` returns true and `CriminalRecord` contains `OBSTRUCTION`.
+4. **EOD robot trundles to bag during Phase 4**: advance time to Phase 4 (15 in-game minutes after trigger); verify `DISPOSAL_ROBOT_PROP` exists and its position is moving toward `SUSPICIOUS_BAG_PROP` at ≤0.5 blocks/s; after 2 in-game minutes of movement, verify robot has reached bag position (within 1 block).
+5. **Safe resolution restores shops and seeds rumour**: advance to Phase 5 (random trigger); trigger safe resolution; verify all SHOPKEEPER NPCs return to IDLE state inside their shop bounds, `POLICE_TAPE_PROP` is removed from world, `IT_WAS_SHOPPING` rumour exists in `RumourNetwork`, and one NPC has `"Classic Northfield"` dialogue line queued.
+6. **Stealth cordon breach awards STEALTH XP**: give player STEALTH skill level 3; set player to crouch during Phase 2 before POLICE NPC arrives; simulate player moving through tape position; verify `WantedSystem.getStars() == 0`, no arrest triggered, player enters cordon zone, and `StreetSkillSystem.getSkillXP(STEALTH)` has increased by 1.
+
+// All new enum entries (NPCType, Material, PropType, AchievementType, RumourType, CrimeType) must be added.
+// SuspiciousBagSystem.java must be created as the sole new source file.
