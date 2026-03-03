@@ -1044,7 +1044,23 @@ public class CriminalRecord {
          * Triggers outrage speech bubbles from nearby PUBLIC NPCs.
          * NewspaperSystem headline the next day: 'Local yob disrupts Remembrance ceremony'.
          */
-        SILENCE_BREACH("Silence breach (Remembrance Sunday two-minute silence)");
+        SILENCE_BREACH("Silence breach (Remembrance Sunday two-minute silence)"),
+
+        // ── Issue #1351: Northfield QuickFix Loans ────────────────────────────
+
+        /**
+         * Recorded when Darren (LOAN_SHARK_CLERK) catches the player using a
+         * {@link ragamuffin.building.Material#FORGED_ID} at the QuickFix Loans counter
+         * (30% detection chance). Penalty: Notoriety +10, WantedSystem +1 star.
+         */
+        LOAN_FRAUD("Loan fraud (forged ID at QuickFix Loans)"),
+
+        /**
+         * Recorded when the player assaults Terry (BAILIFF_NPC) during a doorstep visit.
+         * Penalty: WantedSystem +1 star, debt written off.
+         * Cross-references CRIMINAL_DAMAGE if player also damages property.
+         */
+        BAILIFF_ASSAULT("Assault of a court bailiff");
 
         private final String displayName;
 

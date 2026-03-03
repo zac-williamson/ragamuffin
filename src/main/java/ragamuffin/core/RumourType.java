@@ -1020,5 +1020,24 @@ public enum RumourType {
      * planning application. Apparently the Buffaloes have first refusal on the snooker room."
      * — seeded during Grand Ceremony by RAOBLodgeSystem (active RAOB_MEMBER players overhear).
      * Spreads slowly via RAOB_LODGE_MEMBER and COUNCILLOR_MEMBER NPCs. */
-    FACTION_RUMOUR;
+    FACTION_RUMOUR,
+
+    // ── Issue #1351: Northfield QuickFix Loans ──────────────────────────────
+
+    /** "Someone round here's in serious financial bother — bailiff's been spotted on
+     * the estate." — seeded by PaydayLoanSystem when BAILIFF_NPC arrives at squat.
+     * Triggers NeighbourhoodSystem Vibes −3. Spreads via PUBLIC and PENSIONER NPCs. */
+    DEBT_TROUBLE,
+
+    /** "I heard someone owes money to both the loan sharks AND the Marchettis.
+     * That's two sets of heavies after them." — seeded by PaydayLoanSystem when
+     * player simultaneously has a QuickFix Loans debt and a Marchetti Crew debt.
+     * Grants STREET_LADS Respect +5. Spreads via PUBLIC and STREET_LAD NPCs. */
+    DOUBLE_DEBTOR,
+
+    /** "Darren was telling the barman about some customer who paid him back in
+     * full with stolen goods. Didn't seem to bother him." — seeded by
+     * PaydayLoanSystem when loan repaid with fenced goods.
+     * Spreads via BARMAN and PUBLIC NPCs. */
+    LOAN_SHARK;
 }
