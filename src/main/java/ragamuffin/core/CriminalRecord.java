@@ -1152,7 +1152,29 @@ public class CriminalRecord {
          * wearing ROSETTE_ITEM and is spotted by POLLING_OFFICER_NPC (Barry).
          * Penalty: Notoriety +8; Barry calls police (WantedSystem +1 star).
          */
-        BREACH_OF_POLLING_STATION_EXCLUSION("Breach of polling station exclusion zone");
+        BREACH_OF_POLLING_STATION_EXCLUSION("Breach of polling station exclusion zone"),
+
+        // ── Issue #1386: Northfield St George's Day ───────────────────────────
+
+        /**
+         * Recorded when the player steals ST_GEORGE_FLAG_PROP from the Wetherspoons bar
+         * by climbing BAR_STOOL_PROP and pressing E on the flag.
+         * Penalty: Notoriety +3, ejection from pub, 3-day Wetherspoons ban.
+         */
+        FLAG_THEFT("Theft of a licensed premises fixture (St George flag)"),
+
+        /**
+         * Recorded when the player takes ROOF_FLAG_PROP from the Wetherspoons rooftop
+         * via DRAINPIPE_PROP climb. Requires CCTV disabled.
+         * Penalty: Notoriety +5, WantedSystem +1 star.
+         */
+        ROOFTOP_FLAG_THEFT("Rooftop theft (flag from licensed premises roof)"),
+
+        /**
+         * Recorded when the player steals MORRIS_STICK_PROP from a MORRIS_DANCER NPC.
+         * Penalty: Notoriety +1, WantedSystem +1 star; all 6 dancers pursue.
+         */
+        MORRIS_STICK_THEFT("Theft of a Morris dancing prop");
 
         private final String displayName;
 

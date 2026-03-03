@@ -1193,5 +1193,31 @@ public enum RumourType {
      * Seeded by HalloweenSystem when WantedSystem reaches 2+ stars during event.
      * Triggers NeighbourhoodSystem VIBES −3 + NewspaperSystem headline.
      * Spreads via PUBLIC, PENSIONER, NEIGHBOURHOOD_WATCH NPCs. */
-    HALLOWEEN_CHAOS;
+    HALLOWEEN_CHAOS,
+
+    // ── Issue #1386: Northfield St George's Day ───────────────────────────────
+
+    /** "Someone nicked the flag off the Wetherspoons wall. In broad daylight."
+     * Seeded by StGeorgesDaySystem when player takes ST_GEORGE_FLAG_PROP from bar.
+     * Triggers Notoriety +3 + 3-day Wetherspoons ban.
+     * Spreads via PUBLIC, BARMAN NPCs. */
+    FLAG_HEIST,
+
+    /** "Some lad climbed up the drainpipe and had the roof flag away. On St George's Day of all days."
+     * Seeded by StGeorgesDaySystem when player successfully takes ROOF_FLAG_PROP.
+     * Triggers Notoriety +5 + NewspaperSystem headline if filmed.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    ROOF_FLAG_TAKEN,
+
+    /** "It kicked off in the park — English lads and the counter-protesters going at each other."
+     * Seeded by StGeorgesDaySystem when CROWD_SCUFFLE fires at 14:00.
+     * Triggers NoiseSystem level 8 + POLICE response in 30 seconds.
+     * Spreads via PUBLIC, PENSIONER, JOURNALIST NPCs. */
+    COMMUNITY_OUTRAGE,
+
+    /** "Morris dancer got his stick nicked by some tourist-looking bloke. Absolute scenes."
+     * Seeded by StGeorgesDaySystem when player steals MORRIS_STICK_PROP.
+     * Triggers all 6 MORRIS_DANCER NPCs to pursue player.
+     * Spreads via PUBLIC NPCs. */
+    MORRIS_STICK_THEFT;
 }

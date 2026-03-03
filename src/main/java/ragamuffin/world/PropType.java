@@ -3797,7 +3797,43 @@ public enum PropType {
      * Spawned outside ICELAND, POUND_SHOP, and CHARITY_SHOP at 06:00. Despawns at 18:00.
      * 0.6×1.2×0.1m; fragile.
      */
-    SALE_SIGN_PROP(0.6f, 1.2f, 0.1f, 2, null);
+    SALE_SIGN_PROP(0.6f, 1.2f, 0.1f, 2, null),
+
+    // ── Issue #1386: Northfield St George's Day ───────────────────────────────
+
+    /**
+     * MORRIS_DANCE_AREA_PROP — a rope-off circle in the park where Morris Dancers perform.
+     * Active 11:00–15:00 on St George's Day (dayCount % 365 == 113).
+     * 4.0×0.1×4.0m; indestructible.
+     */
+    MORRIS_DANCE_AREA_PROP(4.0f, 0.1f, 4.0f, 999, null),
+
+    /**
+     * ST_GEORGE_MENU_PROP — laminated A4 "St George's Day Special" menu above the Wetherspoons bar.
+     * Present all day on St George's Day. Not interactable directly.
+     * 0.3×0.4×0.05m; fragile.
+     */
+    ST_GEORGE_MENU_PROP(0.3f, 0.4f, 0.05f, 1, null),
+
+    /**
+     * BAR_STOOL_PROP — tall wooden bar stool in Wetherspoons. Player can climb it (press E)
+     * to reach the ST_GEORGE_FLAG_PROP mounted above the bar. Sturdy.
+     * 0.4×0.8×0.4m; 5 hits.
+     */
+    BAR_STOOL_PROP(0.4f, 0.8f, 0.4f, 5, Material.WOOD),
+
+    /**
+     * DRAINPIPE_PROP — cast-iron drainpipe running up the back of the Wetherspoons building.
+     * Hold E for 3 seconds to climb to the roof. Present year-round; only meaningful on
+     * St George's Day. 0.3×4.0×0.3m; sturdy.
+     */
+    DRAINPIPE_PROP(0.3f, 4.0f, 0.3f, 10, null),
+
+    /**
+     * ROOF_FLAG_MOUNT_PROP — flag mount on the roof of Wetherspoons holding the ROOF_FLAG_PROP.
+     * Press E to take the flag (CCTV must be disabled). 0.2×0.5×0.2m; sturdy.
+     */
+    ROOF_FLAG_MOUNT_PROP(0.2f, 0.5f, 0.2f, 8, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
