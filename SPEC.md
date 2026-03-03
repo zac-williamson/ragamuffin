@@ -48086,3 +48086,152 @@ Using `Material.FORGED_ID` at the counter:
 //   CitizensAdviceSystem, ClaimsManagementSystem, CriminalRecord, WantedSystem,
 //   ArrestSystem, NotorietySystem, RumourNetwork, DisguiseSystem, CouncilFlatsSystem,
 //   SoundSystem, NoiseSystem, NewspaperSystem, StreetSkillSystem, NeighbourhoodSystem
+
+## Issue #1361: Add Northfield St. Margaret's Church Hall Jumble Sale — The Early Bird, the Mystery Box & the Vicar's Blind Eye
+
+### Overview
+
+Every Saturday morning from 09:00–13:00, St. Margaret's Church Hall hosts Northfield's beloved jumble sale. Organised by Margaret Platt (the NeighbourhoodWatchSystem chairwoman moonlighting as a community stalwart), it is a chaotic affair: long trestle tables groaning with bric-a-brac, a donation drop-off zone the vicar manages with cheerful incompetence, a mystery box auction at noon, and Margaret's homemade jam stall. Punters queue from 08:30. Early arrivals get first pick; late arrivals get the broken jigsaws.
+
+The player can buy bargains, run a stall, volunteer to sort donations (and skim the best items before they go out), fence stolen goods through clueless church-lady intermediaries, or rig the noon mystery box auction with a planted item and a bribed auctioneer.
+
+### Core Mechanics
+
+#### The Doors Open — Early Bird Rush (09:00)
+- At 09:00, 6–10 `PENSIONER` NPCs and 2–3 `STREET_LAD` NPCs (the dealers) flood in.
+- A `FIRST_TO_TABLE` event fires: the first NPC or player to reach a JUMBLE_TABLE_PROP within 5 seconds of opening gets a 30% price discount on all items that round.
+- If the player uses a ELBOW_THROUGH crowd mechanic (punch without hostility, just jostle) they can guarantee `FIRST_TO_TABLE`. If a `PENSIONER` witnesses the shove they seed an `ANTISOCIAL_BEHAVIOUR` rumour and Margaret docks the player's stall permit for the day.
+
+#### The Donation Drop-Off (08:00–09:00, before opening)
+- Players can arrive early, interact with the `DONATION_BOX_PROP` to donate items, OR volunteer by pressing E on Reverend Dave (the `VICAR` NPC).
+- As a volunteer (10 min shift), player sorts donation bags — each sort action has a 40% chance to yield a `JUMBLE_FIND` item and a 20% chance to yield a `VALUABLE_DONATION` item (worth 3× fence value).
+- If caught pocketing by Reverend Dave (15% chance per VALUABLE_DONATION taken): `CAUGHT_NICKING_DONATIONS` CrimeType logged; Notoriety +8; banned from volunteering for 7 in-game days.
+
+#### The Stall (Player-Run, optional)
+- Player can hire a trestle table for 2 COIN (press E on Margaret before 09:00).
+- Stall holds up to 8 items. Each item sells for `fenceValue × 0.7` per in-game minute to NPC browsers.
+- Selling counterfeit items (`FORGED_RECEIPT` attached): 30% catch risk per sale. If caught: Margaret confiscates stall, seeds `MARKET_RAID`-style rumour.
+- Stall earns `TRADING` StreetSkill XP per sale.
+
+#### The Mystery Box Auction (12:00)
+- At 12:00, Reverend Dave auctioneer runs a sealed-bid auction for 3 `MYSTERY_BOX_PROP` items.
+- Each box contains random loot: base tier (JUNK: old clothes, broken items), mid tier (USEFUL: tools, food), rare tier (SCORE: DIAMOND, STOLEN_PHONE, WAR_MEDAL).
+- Player bids by pressing number keys 1–5 (1=1 COIN, 2=3 COIN, 3=6 COIN, 4=10 COIN, 5=pass).
+- The highest bidder among player + 2 NPC bidders wins.
+- **Rigging**: if the player plants a `BAIT_ITEM` inside a box before 11:00 (STEALTH approach: requires Notoriety < 30), all NPC bidders over-bid that box by 50%, pushing it out of price range — player wins cheaply.
+- **Bribing Reverend Dave**: 5 COIN bribe (press E during 11:30–12:00). Dave reveals which box is the SCORE tier. `BRIBED_THE_VICAR` achievement. If bribe is witnessed by Margaret: Notoriety +10, player ejected.
+
+#### The Homemade Jam Economy
+- Margaret sells `JAM_JAR` items at her table (2 COIN each). Restores 20 hunger.
+- `JAM_JAR` can be used as a distraction projectile (throw at a `PENSIONER` NPC crowd) causing STARTLED state and a 15-second window of unattended stalls.
+- Stealing a `JAM_JAR` without paying: `PETTY_THEFT` CrimeType; Margaret enters HOSTILE state permanently; seeds `ANTISOCIAL_BEHAVIOUR` rumour.
+
+#### The Church Ladies Network (Cross-system integration)
+- Two `CHURCH_LADY` NPCs operate the till — they are the unwitting fence intermediaries.
+- Player can sell items to the till for 60% fence value (no questions asked, up to 3 items/session).
+- If item has `STOLEN` flag and `WATCH_MEMBER` NPC is within 10 blocks, 25% chance of `STOLEN_GOODS` CrimeType + Notoriety +5.
+- Church ladies seed `COMMUNITY_WIN` rumours every session (regardless of player behaviour).
+
+### Integration
+- `NeighbourhoodWatchSystem`: Margaret's presence reduces Watch Anger by 2 for the duration. Crimes committed at the jumble +3 Watch Anger.
+- `NeighbourhoodSystem`: successful sessions (player buys or sells) add +1 Community Vibes.
+- `CharityShopSystem`: items donated at the jumble reappear in the charity shop's inventory next Monday.
+- `FenceSystem`: `VALUABLE_DONATION` items have a 20% price premium at the pawn shop.
+- `NewspaperSystem`: `MYSTERY_BOX` SCORE tier win generates a 'Local man wins big at church jumble' headline.
+- `RumourNetwork`: jump-the-queue jostle seeds `ANTISOCIAL_BEHAVIOUR`; donation theft seeds `LOCAL_SCANDAL`; bribed vicar seeds `COMMUNITY_OUTRAGE` if witnessed.
+- `WarmthSystem`: church hall interior counts as shelter (warm building).
+- `TimeSystem`: event runs Saturday 09:00–13:00 only; setup 08:00–09:00.
+- `StreetSkillSystem`: stall sales grant TRADING XP; STEALTH approach to box-rigging grants STEALTH XP.
+
+### New Types Required
+
+**New NPCType** (add to `NPCType.java`):
+```
+VICAR(20f, 0f, 0f, false),       // Reverend Dave — runs donation drop-off and noon auction; passive
+CHURCH_LADY(15f, 0f, 0f, false), // Two till operators; unwitting fence intermediaries
+```
+
+**New Materials** (add to `Material.java`):
+```
+JAM_JAR("Homemade Jam"),               // Sold by Margaret; hunger restore + distraction throw
+MYSTERY_BOX("Mystery Box"),            // Auction prize container; holds random loot
+BAIT_ITEM("Planted Bait"),             // Used to rig the Mystery Box auction
+VALUABLE_DONATION("Valuable Donation"),// High-value item skimmed from donation sort
+JUMBLE_FIND("Jumble Find"),            // Random low-value item from donation sort
+```
+
+**New PropType** (add to `PropType.java`):
+```
+JUMBLE_TABLE_PROP,       // Long trestle table with items; interactable for browsing
+DONATION_BOX_PROP,       // Donation intake point; interactive during 08:00–09:00
+MYSTERY_BOX_PROP,        // Sealed auction box; 3 spawn at 11:00 near auctioneer
+```
+
+**New RumourTypes** (add to `RumourType.java`):
+```
+/** "Someone got caught nicking from the donation bags at St. Margaret's — vicar's devastated."
+ * — seeded by JumbleSaleSystem on CAUGHT_NICKING_DONATIONS. Spreads via CHURCH_LADY and PENSIONER NPCs. */
+DONATION_THEFT,
+
+/** "That church jumble's worth a look Saturday — apparently someone won an absolute gem in the mystery box."
+ * — seeded by JumbleSaleSystem on MYSTERY_BOX SCORE tier win.
+ * Spreads via PUBLIC and PENSIONER NPCs; draws foot traffic Saturday AM. */
+JUMBLE_BARGAIN,
+```
+
+**New AchievementTypes** (add to `AchievementType.java`):
+```
+BRIBED_THE_VICAR("Blessed Are the Flexible",
+    "Reverend Dave has surprisingly negotiable theology.", 1),
+JUMBLE_SALE_KING("Table Cleared",
+    "You've sold enough tat at the jumble to fill a skip.", 10),
+EARLY_BIRD("Queue Jumper (Legitimate)",
+    "First to the tables at the St. Margaret's jumble. Elbows and all.", 1),
+```
+
+**New CrimeTypes** (add to `CriminalRecord.java`):
+```
+CAUGHT_NICKING_DONATIONS,
+```
+
+### New Java Files
+- `JumbleSaleSystem.java` in `ragamuffin.core` — main system
+- `JumbleSaleSystemTest.java` in `src/test/java/ragamuffin/core/`
+- `Issue1361JumbleSaleIntegrationTest.java` in `src/test/java/ragamuffin/integration/`
+
+### Unit Tests
+- `testEarlyBirdFirstToTable`: Simulate doors opening, player arrives within 3 seconds, verify `firstToTableBonus` = true and item prices discounted 30%.
+- `testVolunteerSortYieldsItems`: Run 5 sort actions, verify at least 1 `JUMBLE_FIND` in player inventory (probabilistic: seed rng).
+- `testVolunteerCaughtPocketing`: Force `VALUABLE_DONATION` with rigged rng (always pocket); verify `CAUGHT_NICKING_DONATIONS` in criminal record and Notoriety +8.
+- `testStallSellsItems`: Add 3 items to stall, advance 3 in-game minutes, verify at least 1 item sold and COIN increased.
+- `testMysteryBoxAuctionPlayerWins`: Set player bid = 10 COIN, NPC bids = 3 COIN; verify player wins box and receives its loot.
+- `testBaitItemRigsAuction`: Player plants `BAIT_ITEM` in box 2 before 11:00; verify NPC bids on box 2 are inflated × 1.5; player wins box 1 cheaply.
+- `testBribedVicarRevealsScoreBox`: Pay 5 COIN bribe before noon; verify `getScoreBoxIndex()` returns non-null box index.
+- `testJamJarHungerRestore`: Add `JAM_JAR` to inventory, use it; verify player hunger += 20.
+- `testChurchLadyTillAcceptsItems`: Sell 2 items to till; verify COIN increased by `fenceValue × 0.6 × 2`; verify items removed from inventory.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full jumble sale morning**: Set time to Saturday 08:30. Verify `JUMBLE_TABLE_PROP` and `DONATION_BOX_PROP` props exist within 5 blocks of `CHURCH_HALL` landmark. At 09:00, verify 6–10 `PENSIONER` NPCs and 2–3 `STREET_LAD` NPCs have spawned at the hall. Player interacts with a `JUMBLE_TABLE_PROP` within 3 seconds of 09:00. Verify `firstToTableBonus` = true and at least one item price is reduced by 30%.
+
+2. **Volunteer donation sort and theft detection**: Set time to 08:10 Saturday. Player presses E on `VICAR` NPC. Confirm volunteer shift active. Force rng to yield `VALUABLE_DONATION` on first sort action. Force `getVicarCatchCheck()` to return true. Verify `CAUGHT_NICKING_DONATIONS` logged in `CriminalRecord`. Verify Notoriety increased by 8. Verify player is barred from volunteer shift for 7 in-game days.
+
+3. **Mystery box auction — player wins SCORE tier**: Set time to 11:50 Saturday. Spawn 3 `MYSTERY_BOX_PROP` items. Force box index 1 to SCORE tier (`DIAMOND`). At 12:00, player bids 10 COIN on box 1. Verify player COIN reduced by 10. Verify `DIAMOND` added to player inventory. Verify `JUMBLE_BARGAIN` rumour seeded in `RumourNetwork`. Verify `NewspaperSystem.hasPendingHeadline()` is true next in-game morning.
+
+4. **Church lady till — stolen goods detection**: Give player 1 item with `stolen = true`. Place a `WATCH_MEMBER` NPC within 8 blocks of the till. Interact with `CHURCH_LADY` NPC to sell item. Force `getWatchDetectionCheck()` to return true. Verify `STOLEN_GOODS` CrimeType in `CriminalRecord`. Verify Notoriety +5. Verify item removed from player inventory but no COIN awarded.
+
+5. **Cross-system: charity shop restocking from donations**: Player donates `COMPUTER` item via `DONATION_BOX_PROP` at 08:30 Saturday. Advance time to Monday 09:00. Verify `CharityShopSystem.hasItemInStock(Material.COMPUTER)` returns true.
+
+// ── Issue #1361: Add Northfield St. Margaret's Church Hall Jumble Sale ────────────────────────────────
+// New: JumbleSaleSystem.java in ragamuffin.core
+// New: JumbleSaleSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1361JumbleSaleIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: VICAR, CHURCH_LADY
+// New Materials: JAM_JAR, MYSTERY_BOX, BAIT_ITEM, VALUABLE_DONATION, JUMBLE_FIND
+// New PropTypes: JUMBLE_TABLE_PROP, DONATION_BOX_PROP, MYSTERY_BOX_PROP
+// New RumourTypes: DONATION_THEFT, JUMBLE_BARGAIN
+// New CrimeTypes: CAUGHT_NICKING_DONATIONS
+// New AchievementTypes: BRIBED_THE_VICAR, JUMBLE_SALE_KING, EARLY_BIRD
+// Integration: NeighbourhoodWatchSystem, NeighbourhoodSystem, CharityShopSystem,
+//   FenceSystem, NewspaperSystem, RumourNetwork, WarmthSystem, TimeSystem,
+//   StreetSkillSystem, CriminalRecord, NotorietySystem, WantedSystem
