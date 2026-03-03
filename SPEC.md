@@ -58348,3 +58348,133 @@ The Ragamuffin Arms hosts the Northfield & District Pub Darts League, running ev
 5. **Stealing county final trophy unwitnessed during the event awards DARTS_VILLAIN**: create system; set time to Saturday county final day 15:30; set `nearbyNpcs = []` (all watching match); call `stealFinalTrophy(player, inventory, nearbyNpcs, timeSystem)`; verify `inventory.contains(Material.COUNTY_FINAL_TROPHY_PROP)` via `PropType.COUNTY_FINAL_TROPHY_PROP`; verify `achievementCallback` received `AchievementType.DARTS_VILLAIN`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == false; verify `rumourNetwork` received `RumourType.TROPHY_GONE`.
 
 // `DartsLeagueSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Thursday league nights, county final schedule), `BattleBarMiniGame` (leg mini-game), `PubLockInSystem` (mirrors 301 scoring), `CriminalRecord` (new `HANDICAP_FRAUD`; existing `THEFT`, `BRIBERY`, `BURGLARY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `DART_CHEAT`, `LEAGUE_BANNED`, `TROPHY_GONE`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (trophy fence values), `PawnShopSystem` (trophy pawn value), `AchievementSystem`, and `NoiseSystem` (lockpick on back room entry). New NPCType: `LEAGUE_SECRETARY`. New Materials: `LEAGUE_MEMBERSHIP_CARD`, `BENT_FLIGHTS`, `HANDICAP_LEDGER`. New PropTypes: `DARTBOARD_LEAGUE_PROP`, `HANDICAP_LEDGER_PROP`, `COUNTY_FINAL_TROPHY_PROP`. New RumourTypes: `DART_CHEAT`, `LEAGUE_BANNED`, `TROPHY_GONE`. New CrimeType: `HANDICAP_FRAUD`. New AchievementTypes: `DARTS_CHAMP_NORTHFIELD`, `WOODEN_SPOON`, `FLETCHER`, `DARTS_VILLAIN`, `SPORTSMANSHIP`.
+
+---
+
+## Issue #1505: Add Northfield Save Our Pub — Baz's Last Pint, the Planning Permission Heist & the Underground Lock-In
+
+The Crown & Anchor — a beloved but run-down Northfield boozer — has been served a demolition notice by property developer Lenny Sharpe. Landlord Baz Hartley is mounting a community campaign to save it. The player can help Baz (organise petitions, disrupt the planning committee, burn the permission docs), side with Lenny (fence the petition board, sell Baz's secrets), or simply loot the pub dry during the chaos. If the developer wins, the building is demolished and replaced with flats; if the community wins, it reopens as the Crown & Anchor with a memorial plaque to the campaign.
+
+### Schedule & Constants
+
+| Constant | Value |
+|---|---|
+| `CAMPAIGN_DURATION_DAYS` | 14 |
+| `COMMITTEE_VOTE_DAY` | Day 14, 18:00 |
+| `LOCK_IN_DAYS` | Friday, Saturday |
+| `LOCK_IN_START` | 22:00 |
+| `LOCK_IN_END` | 02:00 |
+| `LOCK_IN_MIN_ATTENDANCE` | 3 |
+| `LOCK_IN_DRINK_COST` | 1 |
+| `PETITION_SIGNATURES_NEEDED` | 20 |
+| `LENNY_BRIBE_VALUE` | 25 |
+| `PLANNING_DOC_FENCE_VALUE` | 12 |
+| `PLANNING_DOC_BURN_DELAY` | 120 |
+| `LOOT_SESSION_THRESHOLD` | 5 |
+| `WITNESS_RANGE` | 5.0f |
+| `BRIBE_DETECT_RANGE` | 4.0f |
+| `COMMITTEE_SWING_PER_SIGNATURE` | 2 |
+| `COMMITTEE_SWING_BURN` | 10 |
+| `COMMITTEE_SWING_LOCK_IN` | 5 |
+| `NOTORIETY_PETITION_NICKED` | 4 |
+| `NOTORIETY_PLANNING_BURN` | 6 |
+
+### Mechanic 1 — The Petition Drive
+
+- Baz (`NPCType.LANDLORD`) stands outside the Crown & Anchor with a `PETITION_BOARD_PROP` from Day 1.
+- Player can press E on the board to add a signature (if 5 blocks or fewer from Baz): `SigResult.SIGNED` — increases community vote tally by `COMMITTEE_SWING_PER_SIGNATURE`.
+- Player can also recruit PUBLIC and PENSIONER NPCs by talking to them (press E) within the pub's surrounding streets: each recruited NPC adds 1 signature and a `COMMUNITY_NPC_SIGNED` flag.
+- Once `PETITION_SIGNATURES_NEEDED` (20) reached: `PetitionResult.COMPLETE` — seeds `PUB_PETITION_COMPLETE` rumour; community vote tally +5 bonus.
+- Player can steal the petition board (approach within 2 blocks, no LOS from Baz) and fence it to Lenny for `PLANNING_DOC_FENCE_VALUE` COIN, seeding `PUB_PETITION_NICKED` rumour (Vibes −4), +`NOTORIETY_PETITION_NICKED` notoriety. Lenny pays double if the board contains ≥10 signatures.
+
+### Mechanic 2 — The Underground Lock-In
+
+- Baz runs illegal after-hours lock-ins on Friday and Saturday nights (22:00–02:00) during the campaign.
+- Player must knock on the back door of the Crown & Anchor (press E on `BACK_DOOR_PROP`): Baz lets the player in if campaign is active.
+- Inside: buy drinks for `LOCK_IN_DRINK_COST` COIN each; NPC regulars (`NPCType.DRUNK`, `BARMAN` Baz) exchange rumours, hand out leaflets.
+- Each successfully held lock-in (≥ `LOCK_IN_MIN_ATTENDANCE` NPCs present) seeds `UNDERGROUND_LOCK_IN` rumour and swings vote by `COMMITTEE_SWING_LOCK_IN`.
+- After the third lock-in: Vibes +3 in the neighbourhood; `UNDERGROUND_PUBLICAN` achievement unlocked.
+- Police may raid if `NoiseSystem` noise level exceeds threshold (3+ DRUNK NPCs talking inside): `ArrestSystem` applied to all present including player unless player hides in back room.
+
+### Mechanic 3 — The Planning Permission Heist
+
+- Lenny Sharpe (`NPCType.PROPERTY_DEVELOPER`) keeps the signed `PLANNING_PERMISSION_DOC` prop in the council planning office (at `LandmarkType.COUNCIL_OFFICES`) from Day 5.
+- Player can steal the document (requires `LOCKPICK` or force entry via `CROWBAR` — noisy): `HeistResult.SUCCESS` or `HeistResult.CAUGHT`.
+- Stolen doc options:
+  - Burn it in a `CAMPFIRE` or `WHEELIE_BIN_FIRE` within `PLANNING_DOC_BURN_DELAY` seconds: seeds `PUB_SAVED_TEMPORARILY` rumour; community vote tally swings +`COMMITTEE_SWING_BURN`; +`NOTORIETY_PLANNING_BURN` notoriety.
+  - Fence it to a rival developer (via `FenceSystem`): `PLANNING_DOC_FENCE_VALUE` COIN; developer vote +10 (double swing against community).
+  - Return it to Baz for free: Baz is grateful, unlocks `LANDLORD_FAVOUR` status (free drinks for life).
+- Unwitnessed burn: no crime. Witnessed: `CrimeType.ARSON` + `CrimeType.THEFT` logged.
+
+### Mechanic 4 — Looting the Crown & Anchor
+
+- The Crown & Anchor contains lootable props: `BEER_BARREL_PROP`, `BAR_OPTICS_PROP`, `DARTBOARD_PROP`, `JUKEBOX_PROP`, `POOL_TABLE_PROP`, `PUB_SIGN_PROP`.
+- Each lootable item drops a material (barrel → `BEER_BARREL`, optics → `SPIRITS_BOTTLE`, dartboard → `DARTBOARD`, etc.).
+- Player must break props (hit counts vary: fragile = 2, hard = 8) while unwitnessed.
+- Loot 5 items in a single session: `CROWN_ANCHOR_LAST_ORDERS` achievement (already defined).
+- Baz witnesses theft: hostile for remainder of campaign; severs all petition/lock-in cooperation.
+
+### Mechanic 5 — The Committee Vote
+
+- At Day 14 18:00 the planning committee vote occurs automatically.
+- `SaveOurPubSystem` tallies: community votes (signatures × `COMMITTEE_SWING_PER_SIGNATURE` + lock-in bonus + burn bonus) vs developer votes (base 30 + any fenced-doc bonus).
+- Community wins (community tally > developer tally): `CROWN_ANCHOR_SAVED` rumour; pub reopens with plaque; Baz gives player 10 COIN and `CROWN_ANCHOR_REGULAR_CARD`; `PUB_HERO` achievement.
+- Developer wins: `CROWN_ANCHOR_GONE` rumour; demolition begins (blocks replaced by scaffolding over 3 days); `NIMBY` achievement if player helped developer; neighbourhood Vibes −5.
+
+### New Entities Required
+
+**New NPCTypes required:**
+- `NPCType.PROPERTY_DEVELOPER` — Lenny Sharpe. Appears near council offices and building site. Hostile if player is known to help community. Buys petition board and planning docs.
+
+**New Materials required:**
+- `Material.PLANNING_PERMISSION_DOC` — stolen planning document. Burns in campfire or can be fenced. Fence value: 12 COIN.
+- `Material.PETITION_BOARD` — already defined (used by `MobileLibrarySystem`). Reused here for pub campaign; fence value 6–12 COIN depending on signature count.
+- `Material.BEER_BARREL` — from looting the pub. Pawn value 4 COIN.
+- `Material.SPIRITS_BOTTLE` — from looting the pub optics. Consumable (+1 health, −1 warmth). Pawn value 2 COIN.
+- `Material.CROWN_ANCHOR_REGULAR_CARD` — free entry and permanent discount at reopened pub.
+
+**New PropTypes required:**
+- `PLANNING_PERMISSION_DOC_PROP` — framed document on wall in council offices. 2 HARD hits to pull down; drops `PLANNING_PERMISSION_DOC`.
+- `BACK_DOOR_PROP` — Crown & Anchor rear entrance. Press E to knock during lock-in hours.
+- `BEER_BARREL_PROP` — 8 hits (HARD); drops `BEER_BARREL`.
+- `BAR_OPTICS_PROP` — 2 hits (FRAGILE); drops `SPIRITS_BOTTLE`.
+- `PUB_SIGN_PROP` — 5 hits (SOFT); drops `PUB_SIGN_PLANK` material (fence value 3).
+- `CAMPAIGN_PLAQUE_PROP` — spawned after community win; decorative, no interaction.
+
+**New RumourTypes required:**
+- `PUB_PETITION_COMPLETE` — "Baz got his twenty signatures. The Crown & Anchor petition is in to the council." Vibes +2. Seeds among PUBLIC and PENSIONER NPCs.
+
+**New CrimeTypes required (in CriminalRecord):**
+- `CrimeType.ARSON` — burning the planning permission document if witnessed.
+
+**New AchievementTypes required:**
+- `PUB_HERO` — community wins the committee vote with player assistance (petition ≥ 10 signatures or planning doc burned).
+- `UNDERGROUND_PUBLICAN` — attend three underground lock-ins at the Crown & Anchor during the campaign.
+
+**Already defined — no new entries needed:**
+- `Material.LOCKPICK`, `Material.CROWBAR` — council office entry.
+- `Material.COIN` — Lenny's bribe, Baz's reward, drinks.
+- `CrimeType.THEFT` — witnessed petition board or planning doc theft.
+- `CrimeType.BURGLARY` — witnessed council office break-in.
+- `RumourType.PUB_PETITION_NICKED`, `UNDERGROUND_LOCK_IN`, `PUB_SAVED_TEMPORARILY`, `CROWN_ANCHOR_SAVED`, `CROWN_ANCHOR_GONE` — already defined.
+- `AchievementType.CROWN_ANCHOR_LAST_ORDERS`, `NIMBY` — already defined.
+- `NPCType.LANDLORD` — Baz, already defined.
+- `NPCType.BARMAN`, `NPCType.DRUNK` — regulars at lock-in.
+- `LandmarkType.PUB` — Crown & Anchor location.
+- `LandmarkType.COMMUNITY_CENTRE` — campaign leaflet drop-off point.
+- `PropType.PETITION_BOARD_PROP` — reused from MobileLibrarySystem.
+- `WitnessSystem`, `NoiseSystem`, `ArrestSystem`, `FenceSystem`, `PawnShopSystem`, `RumourNetwork`, `NeighbourhoodSystem`, `NotorietySystem`, `WantedSystem`, `AchievementSystem`.
+
+### Integration Tests
+
+1. **Collecting 20 petition signatures triggers PUB_PETITION_COMPLETE rumour and vote bonus**: create `SaveOurPubSystem`; set day to Day 3; call `addSignature(player, petitionBoard, bazNpc)` × 20; verify `saveOurPubSystem.getSignatureCount()` == 20; verify `saveOurPubSystem.petitionComplete()` == true; verify `rumourNetwork` received `RumourType.PUB_PETITION_COMPLETE`; verify `saveOurPubSystem.getCommunityVotes()` includes the +5 petition completion bonus.
+
+2. **Stealing petition board and fencing to Lenny triggers PUB_PETITION_NICKED and notoriety**: create system; give player `PETITION_BOARD` material (10 signatures); set no NPCs within `WITNESS_RANGE` of Baz; call `fencePetitionBoard(player, inventory, lennyNpc, sigCount=10)`; verify `inventory.contains(Material.PETITION_BOARD)` == false; verify `inventory.getItemCount(Material.COIN)` increased by `PLANNING_DOC_FENCE_VALUE * 2` (double for ≥10 sigs); verify `rumourNetwork` received `RumourType.PUB_PETITION_NICKED`; verify `notorietySystem.getNotoriety()` increased by `NOTORIETY_PETITION_NICKED` (4).
+
+3. **Burning planning permission unwitnessed swings vote and seeds PUB_SAVED_TEMPORARILY**: create system; give player `PLANNING_PERMISSION_DOC`; call `burnPlanningDoc(player, inventory, campfireProp, nearbyNpcs=[])` within `PLANNING_DOC_BURN_DELAY` seconds; verify `inventory.contains(Material.PLANNING_PERMISSION_DOC)` == false; verify `saveOurPubSystem.getCommunityVotes()` increased by `COMMITTEE_SWING_BURN` (10); verify `rumourNetwork` received `RumourType.PUB_SAVED_TEMPORARILY`; verify `criminalRecord.hasCrime(CrimeType.ARSON)` == false.
+
+4. **Third underground lock-in with 3+ NPCs awards UNDERGROUND_PUBLICAN achievement**: create system; set time to Friday 23:00; call `holdLockIn(player, attendingNpcs=[drunk1, drunk2, drunk3], timeSystem)` × 3; verify `saveOurPubSystem.getLockInCount()` == 3; verify `achievementCallback` received `AchievementType.UNDERGROUND_PUBLICAN`; verify neighbourhood Vibes increased by 3; verify `saveOurPubSystem.getCommunityVotes()` increased by `COMMITTEE_SWING_LOCK_IN * 3` (15 total).
+
+5. **Community wins committee vote: CROWN_ANCHOR_SAVED rumour and PUB_HERO achievement**: create system; set `saveOurPubSystem.communityVotes` to 50; set `saveOurPubSystem.developerVotes` to 30; set `playerAssistedCampaign` to true (≥10 signatures collected); advance time to Day 14 18:00; call `resolveVote(timeSystem, achievementCallback, rumourNetwork)`; verify result == `VoteResult.COMMUNITY_WIN`; verify `rumourNetwork` received `RumourType.CROWN_ANCHOR_SAVED`; verify `achievementCallback` received `AchievementType.PUB_HERO`; verify `saveOurPubSystem.isPubSaved()` == true.
+
+// `SaveOurPubSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (14-day campaign, lock-in schedule, vote day), `WitnessSystem` (petition theft, planning doc theft, loot detection), `NoiseSystem` (lock-in noise triggers police raid), `ArrestSystem` (police raid during lock-in), `FenceSystem` (petition board, planning doc, pub loot), `PawnShopSystem` (barrel, spirits pawn values), `CriminalRecord` (new `ARSON`; existing `THEFT`, `BURGLARY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `PUB_PETITION_COMPLETE`; existing `PUB_PETITION_NICKED`, `UNDERGROUND_LOCK_IN`, `PUB_SAVED_TEMPORARILY`, `CROWN_ANCHOR_SAVED`, `CROWN_ANCHOR_GONE`), `NeighbourhoodSystem` (Vibes), `AchievementSystem` (new `PUB_HERO`, `UNDERGROUND_PUBLICAN`; existing `CROWN_ANCHOR_LAST_ORDERS`, `NIMBY`). New NPCType: `PROPERTY_DEVELOPER`. New Materials: `PLANNING_PERMISSION_DOC`, `BEER_BARREL`, `SPIRITS_BOTTLE`, `CROWN_ANCHOR_REGULAR_CARD`. New PropTypes: `PLANNING_PERMISSION_DOC_PROP`, `BACK_DOOR_PROP`, `BEER_BARREL_PROP`, `BAR_OPTICS_PROP`, `PUB_SIGN_PROP`, `CAMPAIGN_PLAQUE_PROP`. New RumourType: `PUB_PETITION_COMPLETE`. New CrimeType: `ARSON`. New AchievementTypes: `PUB_HERO`, `UNDERGROUND_PUBLICAN`.
