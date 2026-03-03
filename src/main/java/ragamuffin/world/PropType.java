@@ -3552,7 +3552,35 @@ public enum PropType {
      * DAWN_RAID_SURVIVOR achievement. Destructible by player (hitsToBreak: 2, GLASS).
      * Drops GLASS on destroy.
      */
-    BACK_WINDOW_PROP(0.80f, 1.00f, 0.10f, 2, Material.GLASS);
+    BACK_WINDOW_PROP(0.80f, 1.00f, 0.10f, 2, Material.GLASS),
+
+    // ── Issue #1361: Northfield St. Margaret's Church Hall Jumble Sale ─────────
+
+    /**
+     * JUMBLE_TABLE_PROP — a long trestle table laden with bric-a-brac.
+     * Present in St. Margaret's Church Hall from 08:00 Saturday. Interactable
+     * for browsing (press E). First player/NPC to reach one within 5 s of 09:00
+     * opening gets the EARLY_BIRD 30% discount. Indestructible (hitsToBreak: 999).
+     * Drops nothing.
+     */
+    JUMBLE_TABLE_PROP(2.00f, 0.90f, 0.60f, 999, null),
+
+    /**
+     * DONATION_BOX_PROP — the donation intake point managed by Reverend Dave during
+     * 08:00–09:00. Press E to donate items or start a volunteer sort shift. Items
+     * donated here appear in the charity shop stock next Monday. Indestructible.
+     * Drops nothing.
+     */
+    DONATION_BOX_PROP(0.80f, 1.00f, 0.80f, 999, null),
+
+    /**
+     * MYSTERY_BOX_PROP — one of three sealed auction boxes spawned near Reverend Dave
+     * at 11:00. Contains random loot (junk/useful/SCORE tier). Player can plant a
+     * BAIT_ITEM before 11:00. Revealed and distributed at 12:00 auction. Indestructible
+     * by normal means (hitsToBreak: 999). Drops its contained MYSTERY_BOX material on
+     * auction win.
+     */
+    MYSTERY_BOX_PROP(0.60f, 0.60f, 0.60f, 999, Material.MYSTERY_BOX);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
