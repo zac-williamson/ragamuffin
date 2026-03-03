@@ -52947,3 +52947,96 @@ never added to their respective enums. The build will fail to compile until thes
    `CATALOGUE_SAMPLE` in inventory); verify second call returns `EXTORTION_TRIGGERED` and
    `CrimeType.EXTORTION` is recorded in the `CriminalRecord`.
 // Update: CatalogueManSystemTest.java — remove setBagStolenDays() workaround, add organic tests
+
+
+---
+
+## Feature: Northfield Local Election — The Campaign, the Polling Day Stitch-Up & the Count Night Blag
+
+**New file**: `src/main/java/ragamuffin/core/LocalElectionSystem.java`
+
+All supporting infrastructure already exists: `NPCType.CANDIDATE_NPC`, `CANVASSER_NPC`, `POLLING_OFFICER_NPC`, `COUNT_OBSERVER`; `PropType.ELECTION_POSTER_BLUE_PROP`, `ELECTION_POSTER_RED_PROP`, `ELECTION_POSTER_INDEPENDENT_PROP`, `CANVASSING_TABLE_PROP`, `POLLING_STATION_PROP`, `BALLOT_BOX_PROP`, `CANDIDATE_TABLE_PROP`, `VOTE_COUNT_TABLE_PROP`; `RumourType.ELECTION_CANVASSING`, `ELECTION_UPSET`; `AchievementType.FIRST_VOTER`, `TACTICAL_VOTER`, `BALLOT_STUFFER`; `CriminalRecord.CrimeType.BREACH_OF_POLLING_STATION_EXCLUSION`. The system that ties it all together is missing.
+
+### Election Calendar
+
+The election runs over an 8-day cycle (days 83–90 of the in-game calendar):
+- **Days 83–89 (Canvassing Week)**: three candidates campaign across Northfield.
+- **Day 90 (Polling Day)**: polling station open 07:00–22:00.
+- **Day 90 night (Count Night)**: results declared at the community centre from 22:30.
+
+### Mechanic 1 — Canvassing Week
+
+Three named candidates:
+- **Holt** (Blue, `CANDIDATE_TABLE_PROP` near High Street) — promises parking crackdown.
+- **Brannigan** (Red, `CANDIDATE_TABLE_PROP` near JobCentre) — promises more benefits.
+- **Patel** (Independent, `CANDIDATE_TABLE_PROP` near Mosque) — promises a community hub.
+
+Each `CANDIDATE_NPC` is escorted by `CANVASSER_NPC` NPCs who approach PUBLIC/PENSIONER NPCs and seed `ELECTION_CANVASSING` rumours. Player can:
+- **Pledge support** (E on `CANDIDATE_NPC`): fills in a `CAMPAIGN_LEAFLET` stack prop; all three pledges unlock `TACTICAL_VOTER`.
+- **Steal campaign leaflets** from `CANDIDATE_TABLE_PROP` (hold E, 2-second channel): yields `CAMPAIGN_LEAFLET` item (fence value 1 COIN, no Notoriety). Candidate becomes briefly IRRITATED.
+- **Deface election posters** using `GraffitiSystem` spray: `ELECTION_POSTER_BLUE/RED/INDEPENDENT_PROP` → `DEFACED_POSTER_PROP`; +3 Notoriety if witnessed.
+- **Bribe a canvasser** (2 COIN, E on `CANVASSER_NPC` when alone): that canvasser seeds false rumours favouring a rival candidate for the rest of the day.
+
+### Mechanic 2 — Postal Vote Fraud
+
+During Canvassing Week, player can obtain a `POSTAL_VOTE_BUNDLE` from the Post Office (costs 1 COIN; max 1/day). Player fills it in at any desk prop:
+- 15% detection risk (reduced to 5% with SLEIGHT_OF_HAND ≥ Journeyman).
+- Success: 5 votes added to chosen candidate's tally; awards `BALLOT_STUFFER`.
+- Detection: `CAUGHT_POSTAL_FRAUD` crime + Notoriety +10 + `POSTAL_VOTE_FRAUD` rumour seeded.
+
+### Mechanic 3 — Polling Day
+
+`POLLING_STATION_PROP` activates. `POLLING_OFFICER_NPC` Barry patrols 10-block exclusion zone.
+- **Cast vote** (E on `POLLING_STATION_PROP`): choose candidate; awards `FIRST_VOTER` on first use.
+- **Steal ballot box** (hold E on `BALLOT_BOX_PROP` for 3 seconds, Barry must be distracted): yields `BALLOT_BOX` item; voids election result; +15 Notoriety + `BREACH_OF_POLLING_STATION_EXCLUSION` crime + WantedSystem +2.
+- **Wearing ROSETTE_ITEM** within exclusion zone: Barry spots it, triggers `BREACH_OF_POLLING_STATION_EXCLUSION` + WantedSystem +1.
+
+### Mechanic 4 — Count Night
+
+Community centre hosts `COUNT_OBSERVER` and returning officers around `VOTE_COUNT_TABLE_PROP`.
+- **Watch result** (E on `VOTE_COUNT_TABLE_PROP`): winner declared; `ELECTION_UPSET` rumour seeded if Independent Patel wins.
+- **Grass up a THUG attempting box-stuffing** (E on `POLLING_OFFICER_NPC` Barry while THUG is within 3 blocks): awards `STREET_SMART` achievement; THUG apprehended.
+- **Steal the count sheet** (hold E on `VOTE_COUNT_TABLE_PROP` for 2 seconds): yields `COUNT_SHEET` item (fence value 5 COIN); causes result delay narrative; +5 Notoriety.
+
+### Post-Election Effects (7-day window)
+
+Winning candidate's faction gets a bonus: Holt → Police cooperation +20%; Brannigan → DWP payment +10%; Patel → NeighbourhoodSystem Vibes +5. These decay over 7 in-game days.
+
+### Constants (all public static final)
+
+- `CANVASSING_START_DAY = 83`, `POLLING_DAY = 90`
+- `POLLING_STATION_OPEN_HOUR = 7.0f`, `POLLING_STATION_CLOSE_HOUR = 22.0f`
+- `COUNT_START_HOUR = 22.5f`
+- `POSTAL_VOTE_DETECTION_BASE = 0.15f`, `POSTAL_VOTE_DETECTION_SLEIGHT = 0.05f`
+- `BALLOT_BOX_STEAL_SECONDS = 3.0f`, `BALLOT_BOX_NOTORIETY = 15`
+- `LEAFLET_STEAL_SECONDS = 2.0f`
+- `POST_ELECTION_EFFECT_DAYS = 7`
+- `BRIBE_CANVASSER_COST = 2`
+- `DEFACED_POSTER_NOTORIETY = 3`
+- `POSTAL_VOTE_BUNDLE_COST = 1`, `POSTAL_VOTES_ADDED = 5`
+- `POSTAL_FRAUD_NOTORIETY = 10`
+
+### Integration
+
+- `TimeSystem` — canvassing/polling/count windows
+- `GraffitiSystem` — poster defacement
+- `WantedSystem` — +1/+2 stars on election crimes
+- `CriminalRecord` — `BREACH_OF_POLLING_STATION_EXCLUSION`, `POSTAL_VOTE_FRAUD`
+- `NotorietySystem` — poster defacement, ballot box theft, postal fraud
+- `RumourNetwork` — `ELECTION_CANVASSING`, `ELECTION_UPSET`, `POSTAL_VOTE_FRAUD`
+- `NewspaperSystem` — headline on Independent win upset; headline on ballot box theft
+- `NeighbourhoodSystem` — post-election Vibes bonus (Patel win)
+- `DWPSystem` — post-election DWP payment bonus (Brannigan win)
+- `AchievementSystem` — `FIRST_VOTER`, `TACTICAL_VOTER`, `BALLOT_STUFFER`, `STREET_SMART`
+
+### Integration Tests
+
+1. **Canvassing spawns candidate NPCs days 83–89**: advance time to day 83 08:00, call `update()`; verify three `CANDIDATE_NPC` instances exist at their respective table props.
+2. **TACTICAL_VOTER awarded after pledging to all three**: call `pledgeSupport(HOLT)`, `pledgeSupport(BRANNIGAN)`, `pledgeSupport(PATEL)`; verify `TACTICAL_VOTER` achievement awarded on third pledge.
+3. **Polling station active day 90, closed before and after**: advance to day 90 10:00; verify `isPollingStationOpen()` returns true. Advance to day 91; verify it returns false.
+4. **FIRST_VOTER awarded on first vote**: call `castVote(player, HOLT)`; verify `FIRST_VOTER` is awarded. Call again; verify no duplicate award.
+5. **BALLOT_STUFFER awarded on successful postal fraud (mocked 0% detection)**: set detection to 0 (or seed RNG), call `submitPostalVote(player, PATEL)`, verify `BALLOT_STUFFER` awarded and Patel vote tally incremented by `POSTAL_VOTES_ADDED`.
+6. **Post-election Brannigan win raises DWP payment**: simulate Brannigan winning; call `applyPostElectionEffects()`; verify `DWPSystem.getPaymentMultiplier() > 1.0f`.
+
+// Enum additions required: none — all NPCType, PropType, AchievementType, RumourType, CriminalRecord.CrimeType entries are already present.
+// New Material entries needed: POSTAL_VOTE_BUNDLE, CAMPAIGN_LEAFLET, BALLOT_BOX, COUNT_SHEET.
