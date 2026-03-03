@@ -50395,3 +50395,176 @@ At 22:00 the formal event ends, but:
 // Integration: DisguiseSystem, NeighbourhoodSystem, NoiseSystem, WeatherSystem, WantedSystem,
 //   RumourNetwork, NewspaperSystem, BonfireNightSystem, WheeliBinFireSystem, TimeSystem,
 //   LightingSystem, AllotmentSystem, SkipDivingSystem, AchievementSystem
+
+---
+
+## Issue #1385: Add Northfield Boxing Day Sales — The 6am Iceland Scrum, the Scalper's Hustle & the CCTV Blackout
+
+**Landmark**: No new landmark. The event plays out across `ICELAND`, `POUND_SHOP`, `CHARITY_SHOP`, and `SUPERMARKET` landmarks. The scrum focuses primarily on Iceland (traditionally the biggest Boxing Day queue in Northfield).
+**System class**: `BoxingDaySalesSystem.java` in `ragamuffin.core`
+
+### Background
+
+26 December. Northfield's most chaotic retail event of the year. Sharon's stayed up until 3am refreshing the Iceland website. Wayne's borrowed his brother-in-law's van to shift "surplus stock" he bought at wholesale. The charity shop — inexplicably — has its longest queue of the year because Brenda heard they've got a George Foreman grill for 50p. The queue forms outside Iceland at 05:30. By 05:45 there are 14 people, a thermos flask, and mild hypothermia. Doors open at 06:00. Within 90 seconds the frozen prawn ring display has been stripped bare.
+
+The event runs from `dayCount % 365 == 359` (Boxing Day — day 359 of the in-game year, the day after Christmas Day 358). Core chaos window: 06:00–10:00. Residual discounts persist until 18:00.
+
+### Mechanic 1 — The Queue (05:30–06:00 outside Iceland)
+
+At 05:30 a queue of 8–12 NPCs of mixed types (`PENSIONER`, `SCHOOL_MUM`, `COUNCIL_BUILDER`, `PUBLIC`) forms outside the `ICELAND` landmark entrance. NPCs carry visible `THERMOS_FLASK_PROP` cosmetically. The queue is ordered and NPC positions are tracked (`queuePosition` 0–11).
+
+**Player queue joining**: Player can join the back of the queue by pressing E near the entrance. Queue position is tracked. Earlier position = earlier access to limited-stock items when doors open.
+
+**Queue-jumping hustle**: Player can attempt to push to a higher position:
+- Walk to desired position and press E on the NPC ahead: player "nudges" forward. NPC reacts based on type:
+  - `PENSIONER`: complains but accepts (NoiseSystem level 2, −1 Neighbourhood VIBES).
+  - `SCHOOL_MUM`: refuses with "Do you mind?!" — player knocked back. NoiseSystem level 4.
+  - `COUNCIL_BUILDER`: shoves player back (NoiseSystem level 6, minor fight — not Wanted unless player retaliates).
+  - `PUBLIC` (general): 50% accept (intimidated, −1 Reputation with that NPC), 50% refuse.
+- Notoriety Tier 2+: some NPCs step back voluntarily (intimidation). 
+- Gerald (`NEIGHBOURHOOD_WATCH`): if present, queue-jumping in his LoS adds +5 Watch Anger.
+- Tooltip on first queue-jump attempt: "It's Boxing Day. They started queuing at half five. You were tucking into leftover sprouts."
+
+**Cold mechanic**: Standing in the queue outside before 06:00 reduces Warmth by −1 every 30 seconds (standard `WarmthSystem` interaction). `THERMOS_FLASK` item (buyable at `CORNER_SHOP` for 1 COIN the day before) halves Warmth drain while queuing.
+
+### Mechanic 2 — The Iceland Sale (06:00–10:00)
+
+When doors open at 06:00, all queued NPCs rush in simultaneously. A rush event is simulated: NPCs crowd the aisles, collision detection is looser (NPCs clip through each other — simulating the chaos). The following limited-stock items are on sale at 50% off standard price:
+
+| Item | Normal Price | Sale Price | Stock | Notes |
+|------|-------------|-----------|-------|-------|
+| `FROZEN_PRAWN_RING` | 4 COIN | 2 COIN | 6 units | Gone within 60s |
+| `PARTY_FOOD_PLATTER` | 6 COIN | 3 COIN | 4 units | |
+| `LUXURY_BISCUIT_TIN` | 5 COIN | 2 COIN | 8 units | |
+| `SELECTION_BOX` | 3 COIN | 1 COIN | 12 units | Still on shelves at 08:00 |
+| `GEORGE_FOREMAN_GRILL` | 0 COIN (display) | 8 COIN | 1 unit | Rarest item — triggers fight if 2 NPCs reach it simultaneously |
+
+NPCs autonomously path to items based on their type preference (PENSIONER → LUXURY_BISCUIT_TIN; SCHOOL_MUM → GEORGE_FOREMAN_GRILL). When two NPCs reach the same last-unit item simultaneously, a `SALE_DISPUTE` event fires: both NPCs enter ARGUING state (NoiseSystem level 7), player can intervene (press E to arbitrate: awards item to winner, +3 Respect from winner, −3 from loser) or steal the item during the distraction.
+
+**Shoplifting in the melee**: Detection probability halved during 06:00–07:30 rush window (Sharon is overwhelmed). Player can lift `FROZEN_PRAWN_RING` (×1–2) without triggering standard shoplift mechanic at `ICELAND` (probability override during rush). After 07:30 Sharon recovers and normal detection resumes.
+
+**Sharon's distraction**: If the player previously triggered Kevin's distraction (from `IcelandSystem`), Sharon is already rattled — detection probability halved for the entire 06:00–10:00 window.
+
+### Mechanic 3 — Wayne's Van: The Scalper's Hustle
+
+Wayne (`CAR_LOT_MECHANIC`) parks his brother-in-law's transit van outside the Iceland at 06:30. He has a card table and a selection of items sourced from "a mate at the cash and carry":
+
+| Item | Wayne's Price | Real value |
+|------|--------------|------------|
+| `LUXURY_BISCUIT_TIN` | 4 COIN | 5 COIN (IcelandSystem normal) |
+| `HDMI_CABLE` | 3 COIN | 1 COIN (found at scrapyard) |
+| `PHONE_CASE_ASSORTED` | 2 COIN | 0.5 COIN equivalent |
+| `GEORGE_FOREMAN_GRILL` (if he has one) | 15 COIN | 8 COIN in Iceland |
+
+Wayne sources his `GEORGE_FOREMAN_GRILL` by joining the queue at position 0 (he arrived at 04:00 — off-screen) and buying the unit at sale price. Player can:
+1. **Buy from Wayne** at inflated prices (legitimate).
+2. **Rob Wayne's van** — press E on van (Wayne away from it during 06:30–07:00 peak), requires `CROWBAR`. Yields `LUXURY_BISCUIT_TIN` ×2, `GEORGE_FOREMAN_GRILL` (if present), `HDMI_CABLE` ×3. WantedSystem +2. `BOXING_DAY_VILLAIN` achievement.
+3. **Undercut Wayne** — if player secured a `GEORGE_FOREMAN_GRILL` legitimately (queue position 0 or stolen from Iceland), press E near Wayne's table: player can sell it to NPCs in the queue for 14 COIN (NPCs buy at −1 COIN vs Wayne's price). Wayne calls player a "cheeky bastard" and refuses to deal with them further. `SALE_SHARK` achievement.
+
+### Mechanic 4 — The Charity Shop Scrum (09:00–13:00)
+
+Brenda (`PENSIONER` NPC, regular charity shop patron) has told everyone there's a `GEORGE_FOREMAN_GRILL` donated to the charity shop. This is a rumour — the truth is there's only a `BREAD_MAKER` (worth 2 COIN at PawnShop) priced at 50p (1 COIN). However:
+
+A queue of 6–8 NPCs forms outside `CHARITY_SHOP` from 08:45. On opening at 09:00:
+- NPCs stream in and compete for `BREAD_MAKER` (the "good deal"), `SELECTION_BOX` remnants, and a `VINYL_RECORD_BOX` (5 COIN fenceable, random quality).
+- Player can join the charity shop queue and:
+  - Buy `BREAD_MAKER` for 1 COIN → sell at `PAWN_SHOP` for 2 COIN (legitimate flip).
+  - Steal `VINYL_RECORD_BOX` during chaos — standard shoplift mechanic applies but with −30% detection (volunteer distracted).
+  - Find a `GENUINE_FIRST_PRESSING` vinyl (5% chance from `VINYL_RECORD_BOX`) worth 8 COIN at pawn shop → `CHARITY_SHOP_TREASURE` achievement. Tooltip: "Buried under a box of Cliff Richard. Worth every penny."
+
+### Mechanic 5 — The CCTV Blackout Opportunity
+
+At 07:15, the Iceland CCTV system goes briefly offline (Sharon trips over the DVR cable in the rush). A `CCTV_OFFLINE_NOTICE` system event fires. During the 07:15–07:45 window:
+- Iceland CCTV detection is fully disabled.
+- Player can loot from shelves with 0% detection from `IcelandSystem`.
+- If player is in Iceland and has `CCTV_TAPE` in their inventory (planted earlier), the `EVIDENCE_PLANTED` interaction is suppressed.
+- At 07:45 Sharon notices and plugs it back in. Tooltip on entering during window: "Sharon's tripped over the DVR cable. You've got 30 seconds."
+
+If player smashes the DVR manually (requires `HAMMER`, found in `SCRAPYARD` or `BERTS_GARAGE`): extends blackout by 15 minutes but triggers `CRIMINAL_DAMAGE` crime record entry and NoiseSystem level 10.
+
+### System Integrations
+
+- `IcelandSystem`: Detection probability overrides during rush window; Sharon distraction state carries over; CCTV blackout event at 07:15.
+- `PoundShopSystem`: 30% off all stock during 06:00–18:00. Staff member Phil overwhelmed — shoplift detection −20% all day.
+- `CharityShopSystem`: Special Boxing Day stock; queue mechanics; volunteer distracted state.
+- `WarmthSystem`: Queue exposure reduces Warmth −1/30s; `THERMOS_FLASK` halves drain.
+- `NoiseSystem`: Sale dispute level 7; queue fight level 6; Wayne robbery level 10.
+- `NeighbourhoodSystem`: Queue-jumping at a PENSIONER −1 VIBES; arbitrating a sale dispute fairly +2 VIBES.
+- `WantedSystem`: Van robbery +2; DVR smash (+1 for criminal damage); punching in queue +1.
+- `CriminalRecord`: `THEFT` on van robbery; `CRIMINAL_DAMAGE` on DVR smash; `ASSAULT` on queue fight escalation.
+- `RumourNetwork`: Post-event seeds below.
+- `NewspaperSystem`: Next morning's paper prints headline if: `GEORGE_FOREMAN_GRILL` fight occurred ("Boxing Day Brawl at Iceland, Northfield — Two Women Fight Over Grill"); Wayne's van robbed ("Boxing Day Chaos as Transit Van Looted Outside Iceland").
+- `TimeSystem`: Event triggers on `dayCount % 365 == 359`; queue forms 05:30; doors 06:00; rush ends 07:30; Wayne departs 12:00.
+- `StreetSkillSystem`: FENCE XP +1 per successful van sale; PICKPOCKET XP +1 per stolen item during rush.
+- `AchievementSystem`: new achievements below.
+
+### New Materials (add to Material.java)
+- `FROZEN_PRAWN_RING` — "The centrepiece of every Northfield party spread." Food item; Hunger −30. Sold by Iceland normally (4 COIN), on sale Boxing Day (2 COIN).
+- `PARTY_FOOD_PLATTER` — "An assortment of beige things on a plastic tray." Food item; Hunger −50. Sold by Iceland.
+- `LUXURY_BISCUIT_TIN` — "A festive tin of biscuits. The good ones will be gone by Boxing Day afternoon." Fenceable (3 COIN). Sold by Iceland; also in Wayne's van.
+- `GEORGE_FOREMAN_GRILL` — "The Holy Grail of the Boxing Day sale. Wayne has one. He paid full price at Argos in October." Fenceable (8 COIN at PawnShop). Limited 1-unit stock at Iceland.
+- `THERMOS_FLASK` — "Leftover tea from Christmas morning. Cuts the chill." Usable item; halves `WarmthSystem` drain while stationary (queuing). Buy at `CORNER_SHOP` 1 COIN.
+- `BREAD_MAKER` — "Bought in hope. Used once. Donated immediately." Fenceable (2 COIN at PawnShop). Stocked in `CHARITY_SHOP` Boxing Day.
+- `VINYL_RECORD_BOX` — "A box of someone's dad's records. Mostly Engelbert Humperdinck." Container fenceable (2–8 COIN range at PawnShop based on `GENUINE_FIRST_PRESSING` chance).
+- `GENUINE_FIRST_PRESSING` — "You found it buried under a box of Cliff Richard. Worth every penny." Fenceable (8 COIN). 5% chance from `VINYL_RECORD_BOX`.
+- `HDMI_CABLE` — "Sold by Wayne. Doesn't fit anything. Still, three for a fiver." Fenceable (1 COIN).
+
+### New PropTypes (add to PropType.java)
+- `SALE_QUEUE_BARRIER_PROP` — temporary barriers marking the queue line outside Iceland/Charity Shop; despawned after doors open.
+- `WAYNE_VAN_PROP` — Wayne's transit van with card table; spawns at 06:30 outside Iceland; despawns at 12:00.
+- `SALE_SIGN_PROP` — "50% OFF TODAY ONLY" sign in Iceland window during event.
+
+### New AchievementTypes (add to AchievementType.java)
+- `EARLY_BIRD` — join the Iceland queue before 05:45 on Boxing Day (target=1). Name: "Up With the Larks". Desc: "You joined the Iceland queue at half five in the morning. For frozen prawn rings. Happy Christmas."
+- `SALE_SHARK` — undercut Wayne's van prices by selling a GEORGE_FOREMAN_GRILL directly to queue NPCs (target=1). Name: "Wayne's Worst Nightmare". Desc: "You stood outside Iceland and undercut Wayne. He's furious. You're £14 up."
+- `BOXING_DAY_VILLAIN` — rob Wayne's van (target=1). Name: "The Ghost of Christmas Present". Desc: "You robbed a man's transit van on Boxing Day. The George Foreman Grill is yours now."
+- `CHARITY_SHOP_TREASURE` — find a GENUINE_FIRST_PRESSING vinyl at the charity shop (target=1). Name: "One Man's Junk". Desc: "Buried under a box of Cliff Richard. Worth every penny."
+- `SALE_MEDIATOR` — arbitrate a sale dispute between two NPCs over the last GEORGE_FOREMAN_GRILL (target=1). Name: "Peace in Our Time". Desc: "Two grown women were fighting over a grill. You sorted it. One of them still hates you."
+- `BLACKOUT_BANDIT` — loot from Iceland during the 07:15 CCTV blackout window (target=1). Name: "Sharon's Having a Nightmare". Desc: "Sharon tripped over the DVR cable. You cleaned out the prawn rings. She'll never know."
+
+### New RumourTypes (add to RumourType.java — verify if any exist already)
+- `SALE_CHAOS` — "It was absolute carnage at Iceland this morning. Someone got elbowed in the face over a biscuit tin." Seeded post-rush at 08:00 by any NPC who was in the queue.
+- `VAN_ROBBERY` — "Wayne's van got done over on Boxing Day. All his stock gone. Serves him right for scalping." Seeded when player robs Wayne's van.
+
+### Unit Tests
+- `testBoxingDayTrigger`: call `isBoxingDay(dayCount)` for days 358, 359, 360. Verify true only for 359.
+- `testQueueFormationAt0530`: set `dayCount = 359`. Advance time to 05:30. Verify 8–12 NPCs of correct types spawned and queued at ICELAND entrance. Verify each NPC has a valid `queuePosition` (0–11, unique).
+- `testQueueJumpPensioner`: create queue with PENSIONER at position 3. Player at position 4. Call `attemptQueueJump(player, pensionerNpc)`. Verify player moves to position 3. Verify NoiseSystem event level 2 emitted. Verify VIBES −1.
+- `testQueueJumpCouncilBuilderShoveBack`: create queue with COUNCIL_BUILDER at position 2. Player at position 3. Call `attemptQueueJump(player, builderNpc)`. Verify player remains at position 3. Verify NoiseSystem event level 6 emitted.
+- `testQueueColdDrain`: set time to 05:40 (pre-opening). Simulate 30-second wait. Verify player Warmth decreased by 1. Give player THERMOS_FLASK. Simulate another 30-second wait. Verify Warmth decreased by only 0.5 (halved).
+- `testIcelandRushLimitedStock`: set `dayCount = 359`. Advance to 06:00. Verify `GEORGE_FOREMAN_GRILL` stock == 1. Have 2 NPCs path to item simultaneously. Verify `SALE_DISPUTE` event fired. Verify both NPCs in ARGUING state.
+- `testShopliftDetectionReduced`: set time to 06:15 (rush window). Call `getShopliftDetectionProbability()`. Verify return value is ≤ 50% of baseline. Set time to 08:00 (post-rush). Verify detection restored to baseline.
+- `testCctvBlackoutAt0715`: advance to 07:15. Verify `isCctvOnline()` == false. Advance to 07:46. Verify `isCctvOnline()` == true.
+- `testWayneVanSpawnsAt0630`: advance to 06:30. Verify `WAYNE_VAN_PROP` present within 15 blocks of ICELAND entrance. Verify Wayne NPC spawned adjacent. Advance to 12:01. Verify van despawned.
+- `testUndercuts WayneAchievement`: give player `GEORGE_FOREMAN_GRILL`. Set time to 07:00. Call `sellToQueueNpc(player, grill, targetNpc)`. Verify player receives 14 COIN. Verify `SALE_SHARK` achievement unlocked. Verify Wayne NPC enters ANGRY state.
+- `testVanRobberyOutcome`: give player `CROWBAR`. Set Wayne away from van. Call `robWayneVan(player)`. Verify player receives `LUXURY_BISCUIT_TIN` ×2 and `HDMI_CABLE` ×3. Verify WantedSystem +2. Verify `BOXING_DAY_VILLAIN` achievement unlocked.
+- `testCharityShopVinylLootTable`: run `openVinylRecordBox(new Random(seed))` 200 times. Verify `GENUINE_FIRST_PRESSING` appears in 8–12 cases (5% ± tolerance). Verify `CHARITY_SHOP_TREASURE` unlocked on first GENUINE_FIRST_PRESSING found.
+- `testSaleSignSpawnAndDespawn`: advance to 06:00. Verify `SALE_SIGN_PROP` present at ICELAND. Advance to 18:01. Verify `SALE_SIGN_PROP` despawned.
+- `testNewspaperHeadlineGrillFight`: trigger `SALE_DISPUTE` over `GEORGE_FOREMAN_GRILL`. Let it resolve unmediated (NPC wins). Advance to next day 18:00. Verify `NewspaperSystem` headline contains "Boxing Day Brawl at Iceland".
+- `testPoundShopDiscountAllDay`: set `dayCount = 359`. Verify `PoundShopSystem.getSalePrice(material)` returns 70% of normal for all items.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full queue-to-grill pipeline**: Set `dayCount = 359`. Advance to 05:30. Join Iceland queue (player at position 0 — force-set for test). Verify player queued. Advance to 06:00 (doors open). Walk to `GEORGE_FOREMAN_GRILL` display before any NPC reaches it. Press E (purchase). Verify `GEORGE_FOREMAN_GRILL` added to inventory. Verify stock == 0. Advance to 06:30 (Wayne's van spawns). Walk to Wayne's van. Press E to sell grill to queue NPC. Verify player receives 14 COIN. Verify `SALE_SHARK` achievement unlocked. Verify Wayne NPC enters ANGRY state.
+
+2. **CCTV blackout shoplifting window**: Set `dayCount = 359`. Advance to 07:15. Verify `isCctvOnline() == false`. Enter Iceland. Pick up `FROZEN_PRAWN_RING` ×2. Verify no shoplift detection event triggered (WantedSystem unchanged). Advance to 07:46. Verify `isCctvOnline() == true`. Attempt to take another `FROZEN_PRAWN_RING`. Verify standard shoplift detection mechanic active (probability > 0). Verify `BLACKOUT_BANDIT` achievement unlocked from the first theft.
+
+3. **Queue fight escalation seeds rumour and newspaper**: Set `dayCount = 359`. Give two NPCs (`SCHOOL_MUM` and `COUNCIL_BUILDER`) the same target (`GEORGE_FOREMAN_GRILL`). Advance to 06:00 (both path to last unit simultaneously). Verify `SALE_DISPUTE` fires, both in ARGUING state, NoiseSystem level 7. Do NOT intervene (let dispute resolve). Verify `SALE_CHAOS` rumour seeded into `RumourNetwork` at 08:00. Advance to next day 18:00. Verify `NewspaperSystem` headline contains "Boxing Day Brawl at Iceland".
+
+4. **Wayne's van robbery triggers Wanted stars and news headline**: Set `dayCount = 359`. Advance to 06:45 (Wayne away from van during peak). Give player `CROWBAR`. Walk to `WAYNE_VAN_PROP`. Press E. Verify looting interaction. Verify player receives at minimum `LUXURY_BISCUIT_TIN` ×2 and `HDMI_CABLE` ×3. Verify `WantedSystem.getStars() == 2`. Verify `VAN_ROBBERY` rumour seeded. Advance to next day 18:00. Verify `NewspaperSystem` headline contains "Boxing Day Chaos as Transit Van Looted Outside Iceland". Verify `BOXING_DAY_VILLAIN` achievement unlocked.
+
+5. **Cold queue exposure and thermos mitigation**: Set `dayCount = 359`. Record player Warmth baseline. Advance to 05:30. Place player at Iceland queue position 8 (outdoors, no shelter). Advance 60 seconds (2× 30s Warmth ticks). Verify Warmth decreased by 2. Give player `THERMOS_FLASK`. Advance another 60 seconds. Verify Warmth decreased by only 1 (halved drain). Verify `WarmthSystem` still registers player as cold (no full shelter from thermos alone).
+
+// ── Issue #1385: Add Northfield Boxing Day Sales ───────────────────────────────────────────────────
+// New: BoxingDaySalesSystem.java in ragamuffin.core
+// New: BoxingDaySalesSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1385BoxingDaySalesIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: FROZEN_PRAWN_RING, PARTY_FOOD_PLATTER, LUXURY_BISCUIT_TIN, GEORGE_FOREMAN_GRILL,
+//   THERMOS_FLASK, BREAD_MAKER, VINYL_RECORD_BOX, GENUINE_FIRST_PRESSING, HDMI_CABLE
+// New PropTypes: SALE_QUEUE_BARRIER_PROP, WAYNE_VAN_PROP, SALE_SIGN_PROP
+// New AchievementTypes: EARLY_BIRD, SALE_SHARK, BOXING_DAY_VILLAIN, CHARITY_SHOP_TREASURE,
+//   SALE_MEDIATOR, BLACKOUT_BANDIT
+// New RumourTypes: SALE_CHAOS, VAN_ROBBERY
+// Integration: IcelandSystem, PoundShopSystem, CharityShopSystem, WarmthSystem, NoiseSystem,
+//   NeighbourhoodSystem, WantedSystem, CriminalRecord, RumourNetwork, NewspaperSystem,
+//   TimeSystem, StreetSkillSystem, AchievementSystem, NeighbourhoodWatchSystem
