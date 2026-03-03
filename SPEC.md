@@ -47473,3 +47473,103 @@ The Lodge meets **Monday and Thursday evenings 19:00–22:30**. Outside meeting 
 //              DisguiseSystem, NotorietySystem, WantedSystem, CriminalRecord, StreetSkillSystem,
 //              BattleBarMiniGame, RumourNetwork, NeighbourhoodSystem, NoiseSystem,
 //              NewspaperSystem, WetherspoonsSystem, SoundSystem, TimeSystem
+
+---
+
+## Issue #1351: Add Northfield QuickFix Loans — The Payday Trap, the Debt Spiral & the Bailiff Standoff
+
+**QuickFix Loans** is a fluorescent-lit payday loan shop squeezed between the bookies and the off-licence on Northfield High Street. Run by **Darren** (`NPCType.LOAN_SHARK_CLERK`), it offers instant cash at criminally high APR — a lifeline for the broke and a trap for the desperate. Open Monday–Saturday 09:00–17:00.
+
+### Core Loan Mechanic
+
+- Player can borrow **10, 20, or 40 COIN** instantly.
+- Repayment due after **2 in-game days**: principal + 50% interest (e.g. 40 COIN borrowed → 60 COIN owed).
+- If not repaid within **4 in-game days**, a `BAILIFF_NPC` (`NPCType.BAILIFF`) is dispatched to the player's squat or last known address.
+- Player can hold **one active loan** at a time. Darren refuses a second loan while one is outstanding (unless the player has `DISGUISE` active or fakes ID).
+- Repayment via: cash at the counter, or **Bank Transfer** at the Cashpoint (if the player has enough COIN).
+
+### Bailiff Standoff
+
+When the `BAILIFF_NPC` (Terry) arrives:
+- He spawns at the squat/property entrance and knocks (`KNOCK_PROP` interaction).
+- Player has **3 in-game minutes** to either: pay the debt (Terry leaves), flee (Terry waits 10 minutes before leaving, debt escalates +10 COIN), or **physically eject** Terry (assault: Wanted +1, debt written off but `CRIMINAL_DAMAGE` charge).
+- If player is not home, Terry leaves a **red final demand letter** (`Material.FINAL_DEMAND_LETTER`) as a prop on the door. On the third such letter: `EVICTION_NOTICE` triggers `PropertySystem` to revoke tenancy.
+- Terry can be bribed for **20 COIN** to report the loan as paid to Darren (50% chance Darren discovers the lie next visit, adds +10 Notoriety).
+
+### Loan Fraud Mechanic
+
+Using `Material.FORGED_ID` at the counter:
+- Darren's check passes on a 70% chance → loan approved, player is never personally liable (loan defaults silently after 4 days; no bailiff).
+- Darren catches it (30%) → `CrimeType.LOAN_FRAUD`, Notoriety +10, WantedSystem +1.
+- Requires `Material.FORGED_ID` (crafted: STOLEN_PHONE + PRINTER_PAPER + INK_BOTTLE via CraftingSystem).
+
+### Debt Collector Network
+
+- After a bailiff visit, **two DEBT_COLLECTOR NPCs** (heavies) are also added to Marchetti Crew's known associates list, creating cross-faction pressure.
+- `RumourType.DEBT_TROUBLE` seeded to nearby NPCs when bailiff arrives at squat: neighbours gossip, NeighbourhoodSystem Vibes −3.
+- If player owes money to both QuickFix Loans AND has a Marchetti Crew debt simultaneously: `RumourType.DOUBLE_DEBTOR` seeded; STREET_LADS Respect +5 (enemy of my enemy).
+
+### Integration
+
+- `DWPSystem` — benefits claimants can borrow (Darren accepts UC payment as partial repayment); fraudulent loan applications cross-referenced with DWP records.
+- `EmploymentSystem` — employed player gets 10% interest discount ("proof of income").
+- `PropertySystem` — three final demand letters trigger eviction notice.
+- `FactionSystem` — MARCHETTI_CREW Respect ≥ FRIENDLY_THRESHOLD: Darren "doesn't ask questions" (no ID check, doubles max loan to 80 COIN).
+- `CriminalRecord` — `LOAN_FRAUD` (forged ID), `BAILIFF_ASSAULT` (attacking Terry).
+- `NotorietySystem` — loan fraud caught +10; bailiff assault +5; bribe discovered +10.
+- `WantedSystem` — bailiff assault +1 star; loan fraud caught +1 star.
+- `RumourNetwork` — `DEBT_TROUBLE`, `DOUBLE_DEBTOR`, `LOAN_SHARK` (seeded when Darren talks to barman about a customer who paid in full with stolen goods).
+- `NeighbourhoodSystem` — bailiff arrival −3 Vibes; paying loan off early (same day) +2 Vibes ("responsible borrower").
+- `PawnShopSystem` / `FenceSystem` — common pipeline: borrow 40 COIN → gamble at bookies → lose → fence stolen goods to repay.
+- `CashpointSystem` — bank transfer repayment option.
+- `WarmthSystem` / `HealingSystem` — player with active unpaid debt suffers −5 Warmth passive drain (stress mechanic: "can't sleep for the worry").
+- `NewspaperSystem` — headline "NORTHFIELD LOAN SHARK PREYING ON VULNERABLE" if player exposes Darren's books to Citizens Advice.
+- `StreetSkillSystem` — INFLUENCE XP +3 on successfully bribing Terry; FENCE XP +2 on forged-ID loan success.
+- `SoundSystem` — `SoundEffect.KNOCK_DOOR` plays when bailiff arrives; `SoundEffect.PAPER_RUSTLE` on final demand letter pickup.
+- `TimeSystem` — loan due dates tracked in in-game days; bailiff dispatched on day 4 of default.
+
+### New Types Required
+
+- `NPCType.LOAN_SHARK_CLERK` (Darren)
+- `NPCType.BAILIFF` (Terry)
+- `NPCType.DEBT_COLLECTOR` (heavies)
+- `Material.LOAN_AGREEMENT` — item added to inventory when loan taken
+- `Material.FINAL_DEMAND_LETTER` — item/prop left by bailiff on door
+- `Material.FORGED_ID` — crafted from STOLEN_PHONE + PRINTER_PAPER + INK_BOTTLE
+- `CrimeType.LOAN_FRAUD`
+- `CrimeType.BAILIFF_ASSAULT`
+- `RumourType.DEBT_TROUBLE`
+- `RumourType.DOUBLE_DEBTOR`
+- `RumourType.LOAN_SHARK`
+- `AchievementType.DEBT_FREE` — repay a loan within the same in-game day it was taken
+- `AchievementType.ON_THE_NEVER_NEVER` — have 4 bailiff visits in a single playthrough
+- `AchievementType.LOAN_SHARK_EXPOSED` — deliver Darren's ledger to Citizens Advice
+- `LandmarkType.QUICKFIX_LOANS`
+
+### New Java Files
+
+- `src/main/java/ragamuffin/core/PaydayLoanSystem.java`
+- `src/test/java/ragamuffin/core/PaydayLoanSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1351PaydayLoanIntegrationTest.java`
+
+### Unit Tests
+
+- `PaydayLoanSystem.isOpen(hour, dayOfWeek)`: Mon 09:00 → true; Mon 17:00 → false; Sun 12:00 → false.
+- `PaydayLoanSystem.takeLoan(amount, inventory, currentDay)`: valid 20 COIN loan → inventory +20 COIN, LOAN_AGREEMENT added, active loan recorded; second call while loan active → returns `LoanResult.LOAN_ALREADY_ACTIVE`.
+- `PaydayLoanSystem.repayLoan(inventory, currentDay)`: repaying on day 1 (same day as borrow) → interest waived for same-day repay? No — interest always applies; 20 COIN borrowed, 30 COIN owed; inventory has 30+ COIN → returns `LoanResult.REPAID`, inventory −30 COIN, LOAN_AGREEMENT removed.
+- `PaydayLoanSystem.getAmountOwed(currentDay)`: borrowed 40 COIN on day 1; check on day 1 → 60 COIN; check on day 5 (overdue) → 60 COIN + escalation penalty 10 = 70 COIN.
+- `PaydayLoanSystem.isBailiffDue(currentDay)`: loan taken day 1; day 4 → true; day 3 → false.
+- `PaydayLoanSystem.attemptFraudLoan(amount, inventory, random_seed_always_pass)`: forged ID present, RNG always passes → loan approved, no personal liability flag set; verify `fraudulentLoan` flag true.
+- `PaydayLoanSystem.onBailiffAssaulted(player, criminalRecord, wantedSystem)`: records `BAILIFF_ASSAULT`, adds +1 wanted star, writes off debt.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full loan cycle — borrow, wait, repay**: Give player 0 COIN. Call `takeLoan(20, inventory, day=1)`. Verify inventory contains 20 COIN and `LOAN_AGREEMENT`. Advance game to day 3 (within repayment window). Give player 30 COIN. Call `repayLoan(inventory, day=3)`. Verify inventory has 20 COIN (30 paid back). Verify `LOAN_AGREEMENT` removed. Verify `isBailiffDue(day=4)` returns false.
+
+2. **Bailiff dispatched on day 4**: Give player 0 COIN. Call `takeLoan(40, inventory, day=1)`. Do NOT repay. Advance to day 4. Call `update(day=4, ...)`. Verify `isBailiffDue()` returns true. Verify a `BAILIFF_NPC` has been spawned at the player's squat entrance (check `NPCManager` for an NPC of type `BAILIFF` within 3 blocks of property entrance). Verify `DEBT_TROUBLE` rumour seeded in `RumourNetwork`. Verify `NeighbourhoodSystem` Vibes decreased by 3.
+
+3. **Bailiff assault writes off debt**: Spawn `BAILIFF_NPC` Terry. Simulate player punching Terry 5 times (using `NPCHitDetector`). Verify Terry transitions to `NPCState.FLEEING`. Verify `CriminalRecord` contains `BAILIFF_ASSAULT`. Verify `WantedSystem` Wanted star count increased by 1. Verify `PaydayLoanSystem.isLoanActive()` returns false (debt written off). Verify `AchievementType.ON_THE_NEVER_NEVER` NOT yet awarded (requires 4 visits total).
+
+4. **Forged ID loan approved — no bailiff on default**: Give player a `FORGED_ID` in inventory. Seed Random with value that produces fraud-pass (< 0.70). Call `takeLoan(20, inventory, day=1)` with forged ID active. Verify loan approved, `fraudulentLoan` flag is true. Advance to day 5. Call `update(day=5, ...)`. Verify no `BAILIFF_NPC` spawned. Verify no `DEBT_TROUBLE` rumour seeded. Verify `FORGED_ID` consumed from inventory.
+
+5. **Employment discount applies**: Wire `EmploymentSystem` with player employed (any job). Call `getAmountOwed(currentDay)` on a 20 COIN loan on day 2. Verify owed amount is `ceil(20 * 1.40)` = 28 COIN (50% interest reduced to 40% for employed). Verify Darren's dialogue includes "Proof of income gets you a better rate, mate."
