@@ -7154,6 +7154,58 @@ public enum AchievementType {
         "Grass the Tattooist",
         "Tipped off the council about Skin Deep. Very civic-minded of you.",
         1
+    ),
+
+    // --- Issue #1457: Save Our Pub ---
+
+    /**
+     * SOLD_THE_LOCAL — Awarded when the player fences Baz's petition clipboard
+     * to Lenny the property developer.
+     */
+    SOLD_THE_LOCAL(
+        "Sold the Local",
+        "Sold Baz's petition to the developer. You absolute traitor.",
+        1
+    ),
+
+    /**
+     * LAST_ORDERS — Awarded when the player loots 5 items from the Crown &amp; Anchor
+     * in a single session.
+     */
+    LAST_ORDERS(
+        "Last Orders",
+        "Looted five things from the Crown & Anchor. Cheers for the memories.",
+        5
+    ),
+
+    /**
+     * LAST_LANDLORD — Awarded when the player hosts 3 lock-ins at the squatted
+     * Crown &amp; Anchor and the community wins the vote.
+     */
+    LAST_LANDLORD(
+        "Last Landlord",
+        "Hosted three lock-ins at the squatted Crown & Anchor and saved the pub.",
+        3
+    ),
+
+    /**
+     * RED_TAPE — Awarded when the player steals and destroys the planning permission
+     * documents, delaying the committee vote.
+     */
+    RED_TAPE(
+        "Red Tape",
+        "Stole and destroyed the planning documents. The developers are fuming.",
+        1
+    ),
+
+    /**
+     * PEOPLE_S_PUB — Awarded when the player's squat lock-ins force a community win
+     * at the committee vote.
+     */
+    PEOPLE_S_PUB(
+        "People's Pub",
+        "Your squat lock-ins convinced the council to save the Crown & Anchor.",
+        1
     );
 
     private final String name;
