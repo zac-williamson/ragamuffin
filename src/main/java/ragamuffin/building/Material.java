@@ -7234,7 +7234,72 @@ public enum Material {
      * Lists all 12 delivery addresses, making the milk round job easier to
      * complete optimally.
      */
-    FLOAT_MANIFEST("Float Manifest");
+    FLOAT_MANIFEST("Float Manifest"),
+
+    // ── Issue #1494: Northfield Detectorists Club ─────────────────────────────
+
+    /**
+     * METAL_DETECTOR — the player's primary digging tool.
+     * Obtained from Keith (25 COIN) or found in the allotment shed.
+     * Must be equipped (hotbar) to use the E-key dig mechanic on dirt/grass blocks.
+     * Tooltip: "Beeps louder than it should. Keith insists it's a good one."
+     */
+    METAL_DETECTOR("Metal Detector"),
+
+    /**
+     * DIG_PERMISSION_SLIP — issued by Keith Nuttall (free) to authorise the player
+     * to dig at ALLOTMENT_FIELD_PROP. Consumed on first dig action.
+     * Without it, digging constitutes CrimeType.FIELD_TRESPASS + Notoriety +3.
+     * Tooltip: "Signed by Keith. 'Permission to detect.' Very official."
+     */
+    DIG_PERMISSION_SLIP("Dig Permission Slip"),
+
+    /**
+     * BOTTLE_TOP — the most common find at the dig site (50% probability).
+     * Zero coin value. Tooltip: "A bottle top. Happens to everyone."
+     */
+    BOTTLE_TOP("Bottle Top"),
+
+    /**
+     * IRON_BUCKLE — a medieval iron buckle, uncommon find (10% probability).
+     * Worth 5 COIN at the fence. Tooltip: "Iron buckle. Medieval, probably."
+     */
+    IRON_BUCKLE("Iron Buckle"),
+
+    /**
+     * MUSKET_BALL — a lead musket ball, rare find (5% probability).
+     * Worth 8 COIN at the fence. Tooltip: "Lead ball. Civil War era, maybe."
+     */
+    MUSKET_BALL("Musket Ball"),
+
+    /**
+     * SILVER_BROOCH — a silver Anglo-Saxon brooch, very rare find (3% probability).
+     * Worth 15 COIN at the fence. Tooltip: "Silver brooch. Definitely recordable."
+     */
+    SILVER_BROOCH("Silver Brooch"),
+
+    /**
+     * ROMAN_COIN — a Roman denarius, extremely rare find (1% probability).
+     * The trigger for the HOARD_LOCATION_PROP spawn (3× ROMAN_COIN + ROMAN_BROOCH
+     * + 12 COIN in a buried chest 2 blocks underground).
+     * Worth 10 COIN each at the fence.
+     * Tooltip: "Roman denarius. Keith says you have to report this."
+     */
+    ROMAN_COIN("Roman Coin"),
+
+    /**
+     * ROMAN_BROOCH — a Roman fibula brooch found in the HOARD_LOCATION_PROP.
+     * Declaring it to Janet (PAS_OFFICER) yields 20 COIN + AchievementType.HOARD_FINDER.
+     * Fencing it instead triggers CrimeType.TREASURE_DODGING + Notoriety +8.
+     * Tooltip: "Roman brooch. Absolutely reportable under the Treasure Act."
+     */
+    ROMAN_BROOCH("Roman Brooch"),
+
+    /**
+     * PAS_RECEIPT — issued by Janet after declaring the ROMAN_BROOCH.
+     * Proof of compliance. Tooltip: "Portable Antiquities Scheme receipt. You did the right thing."
+     */
+    PAS_RECEIPT("PAS Receipt");
 
     private final String displayName;
 

@@ -7592,6 +7592,38 @@ public enum AchievementType {
         "Depot Raider",
         "You emptied Dave's fridge and rifled his desk. Forty-eight pints and a tenner.",
         1
+    ),
+
+    // ── Issue #1494: Northfield Detectorists Club ─────────────────────────────
+
+    /**
+     * HOARD_FINDER — declare the ROMAN_BROOCH from the hidden hoard to Janet
+     * (PAS_OFFICER) and receive the 20 COIN Portable Antiquities Scheme reward.
+     */
+    HOARD_FINDER(
+        "Hoard Finder",
+        "Roman brooch, declared properly. Janet gave you twenty quid and a certificate. You're basically Indiana Jones.",
+        1
+    ),
+
+    /**
+     * TREASURE_HUNTER — steal the DETECTORISTS_TROPHY_PROP from Keith's house
+     * unwitnessed during the Sunday dig window (09:00–16:00).
+     */
+    TREASURE_HUNTER(
+        "Treasure Hunter",
+        "Nicked the detectorists' trophy while Keith was in a field waving a beeper. Respect.",
+        1
+    ),
+
+    /**
+     * FIELD_ENFORCER — report the RIVAL_DETECTORIST (Dave from Saltley) to Keith
+     * before Dave finds the hoard first.
+     */
+    FIELD_ENFORCER(
+        "Field Enforcer",
+        "You grassed Dave up to Keith before he nicked the hoard. Keith says you're an honorary member.",
+        1
     );
 
     private final String name;

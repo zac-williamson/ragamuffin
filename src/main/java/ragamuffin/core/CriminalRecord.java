@@ -1392,7 +1392,22 @@ public class CriminalRecord {
          * VEHICLE_THEFT — recorded when the player boards and drives away the
          * milk float from Dave's round. Notoriety +8, WantedSystem +1.
          */
-        VEHICLE_THEFT("Vehicle theft (milk float)");
+        VEHICLE_THEFT("Vehicle theft (milk float)"),
+
+        // ── Issue #1494: Northfield Detectorists Club ─────────────────────────
+
+        /**
+         * FIELD_TRESPASS — recorded when the player digs at ALLOTMENT_FIELD_PROP
+         * without holding a DIG_PERMISSION_SLIP. Notoriety +3.
+         */
+        FIELD_TRESPASS("Trespass on allotment field (detecting without permit)"),
+
+        /**
+         * TREASURE_DODGING — recorded when the player fences ROMAN_BROOCH without
+         * declaring it to Janet (PAS_OFFICER). Notoriety +8 + WantedSystem +2
+         * if Janet witnesses the transaction.
+         */
+        TREASURE_DODGING("Failure to declare Treasure (Portable Antiquities Scheme)");
 
         private final String displayName;
 

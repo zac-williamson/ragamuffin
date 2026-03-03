@@ -4551,7 +4551,45 @@ public enum PropType {
      * boundary in the park during the annual dog show.
      * Collision: 0.10w × 1.00h × 0.10d. Health: 2 hits. Drops WOOD.
      */
-    SHOW_RING_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.WOOD);
+    SHOW_RING_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.WOOD),
+
+    // ── Issue #1494: Northfield Detectorists Club ─────────────────────────────
+
+    /**
+     * CLUB_NOTICE_PROP — pinboard outside the allotment gate listing dig dates,
+     * permission requirements, and the code of conduct.
+     * Press E to read; contains hint about DIG_PERMISSION_SLIP requirement.
+     * Collision: 0.80w × 1.20h × 0.10d. Health: 3 hits. Drops WOOD.
+     */
+    CLUB_NOTICE_PROP(0.80f, 1.20f, 0.10f, 3, Material.WOOD),
+
+    /**
+     * FINDS_TABLE_PROP — a folding table where detectorists lay out the day's finds
+     * for show-and-tell at the end of the session (15:00–16:00).
+     * Press E while Keith is present to display your own finds and receive a tip
+     * (1–5 COIN) based on rarity. Required for HOARD_FINDER achievement path.
+     * Collision: 1.50w × 0.80h × 0.60d. Health: 4 hits. Drops WOOD.
+     */
+    FINDS_TABLE_PROP(1.50f, 0.80f, 0.60f, 4, Material.WOOD),
+
+    /**
+     * HOARD_LOCATION_PROP — a hidden underground chest spawned 2 blocks below the
+     * dig site when the player unearths a ROMAN_COIN (1% chance).
+     * Contains 3× ROMAN_COIN + ROMAN_BROOCH + 12 COIN.
+     * Requires METAL_DETECTOR and DIG_PERMISSION_SLIP (or trespass) to access.
+     * Collision: 0.60w × 0.40h × 0.60d. Health: 3 hits. Drops ROMAN_COIN.
+     */
+    HOARD_LOCATION_PROP(0.60f, 0.40f, 0.60f, 3, Material.ROMAN_COIN),
+
+    /**
+     * DETECTORISTS_TROPHY_PROP — the club's engraved pewter trophy kept in Keith's
+     * living room. Heistable during Sunday 09:00–16:00 while Keith is at the dig,
+     * using CROWBAR or LOCKPICK. Witnessed by NOSY_NEIGHBOUR within 15 blocks →
+     * CrimeType.BURGLARY + Notoriety +8. Unwitnessed → AchievementType.TREASURE_HUNTER.
+     * Voluntarily returned to Keith → GOOD_SAMARITAN rumour + Vibes +3 + 4 permission slips.
+     * Collision: 0.30w × 0.50h × 0.30d. Health: 2 hits. Drops SCRAP_METAL.
+     */
+    DETECTORISTS_TROPHY_PROP(0.30f, 0.50f, 0.30f, 2, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

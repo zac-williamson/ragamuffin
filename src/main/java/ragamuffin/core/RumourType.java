@@ -1820,5 +1820,28 @@ public enum RumourType {
      * — seeded by DogShowSystem when the player tips off the journalist after
      * the bribery exposé path. Spreads via PUBLIC and JOURNALIST NPCs;
      * costs Marchetti −15 reputation and unlocks WHISTLEBLOWER. */
-    DOG_SHOW_RIGGING;
+    DOG_SHOW_RIGGING,
+
+    // ── Issue #1494: Northfield Detectorists Club ─────────────────────────────
+
+    /** "Word is someone fenced a Roman brooch through the market — didn't declare it
+     * to the Portable Antiquities Scheme. That's a criminal offence, that is."
+     * — seeded by DetectoristsSystem when player fences ROMAN_BROOCH without
+     * declaring to Janet. Spreads via PUBLIC and SHOPKEEPER NPCs;
+     * triggers CrimeType.TREASURE_DODGING + Notoriety +8. */
+    TREASURE_DODGER,
+
+    /** "Some lad from Saltley was detected on the allotment without permission.
+     * Keith's absolutely furious — he's been poaching the best spots."
+     * — seeded by DetectoristsSystem when the RIVAL_DETECTORIST is spotted poaching
+     * (player reports to Keith or Dave is chased off). Spreads via PUBLIC and
+     * DETECTORIST NPCs; increases Keith's trust by +5 if player reported him. */
+    SALTLEY_POACHER,
+
+    /** "Someone found Keith's trophy in the allotment ditch and handed it straight back.
+     * Keith nearly cried. Said he'd give them dig permits for life."
+     * — seeded by DetectoristsSystem when the player voluntarily returns the
+     * DETECTORISTS_TROPHY_PROP. Spreads via PUBLIC and PENSIONER NPCs;
+     * Vibes +3 and 4 free DIG_PERMISSION_SLIPs. */
+    GOOD_SAMARITAN;
 }

@@ -3494,7 +3494,43 @@ public enum NPCType {
      * Annual Tournament. Accept 1–10 COIN wagers on the Grudge Match (1.5× payout).
      * Spread BOWLS_GRUDGE_MATCH rumours after the match concludes.
      */
-    BOWLS_SPECTATOR(20f, 0f, 0f, false);
+    BOWLS_SPECTATOR(20f, 0f, 0f, false),
+
+    // ── Issue #1494: Northfield Detectorists Club ─────────────────────────────
+
+    /**
+     * DETECTORIST_CHAIR — Keith Nuttall, chairman of the Northfield Detectorists Club.
+     * Leads the Sunday dig at ALLOTMENT_FIELD_PROP (09:00–16:00).
+     * Issues DIG_PERMISSION_SLIP (free) on request. Sells METAL_DETECTOR for 25 COIN.
+     * Returns to his house after 16:00; his DETECTORISTS_TROPHY_PROP is heistable
+     * during the dig window. Receives trophy voluntarily returned for a GOOD_SAMARITAN
+     * reward (Vibes +3, 4 permission slips).
+     */
+    DETECTORIST_CHAIR(30f, 0f, 0f, false),
+
+    /**
+     * DETECTORIST — regular club member attending the Sunday dig.
+     * Digs in ALLOTMENT_FIELD_PROP with a METAL_DETECTOR during 09:00–16:00.
+     * Can be chatted to for dig tips; occasionally digs up BOTTLE_TOP or OLD_COIN.
+     */
+    DETECTORIST(20f, 0f, 0f, false),
+
+    /**
+     * PAS_OFFICER — Janet, the Portable Antiquities Scheme liaison officer.
+     * Attends the dig 11:00–13:00 every Sunday of the fortnight dig.
+     * Declaring a ROMAN_BROOCH to her yields 20 COIN + AchievementType.HOARD_FINDER.
+     * If she witnesses a FENCE transaction involving ROMAN_BROOCH, triggers
+     * CrimeType.TREASURE_DODGING + Notoriety +8 + WantedSystem +2.
+     */
+    PAS_OFFICER(25f, 0f, 0f, false),
+
+    /**
+     * RIVAL_DETECTORIST — Dave from Saltley, who poaches the allotment field on
+     * day 2 of the fortnightly dig cycle. Player can report him to Keith, let him
+     * dig (5% chance per frame he finds the hoard), or chase him off
+     * (CrimeType.AFFRAY if witnessed).
+     */
+    RIVAL_DETECTORIST(25f, 4f, 1.5f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
