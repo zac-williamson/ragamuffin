@@ -54142,6 +54142,50 @@ All already defined:
 
 ---
 
+## Proposed: Issue #1434 — Add Northfield Easter Weekend — The Egg Hunt, the Hot Cross Bun Run & the Charity Motorbike Parade (EasterSystem)
+
+**Summary**: Implement `EasterSystem` covering Good Friday through Easter Monday (day-of-year 91–94, approximate fixed mapping since Easter varies; game uses fixed calendar). Four interlinked mechanics across four in-game days: Greggs hot cross bun queue on Good Friday, council-run Easter egg hunt in the park on Saturday, a charity motorbike parade (the Northfield Easter Egg Run) on Sunday, and the classic British "everything is shut" Easter Monday survival challenge.
+
+**New enum entries required**:
+- `Material`: `HOT_CROSS_BUN`, `CHOCOLATE_EGG`, `FOIL_EASTER_EGG`, `EASTER_BASKET`, `BIKER_JACKET`, `CHARITY_BUCKET_EASTER`, `BIKERS_VOUCHER`
+- `NPCType`: `BIKER_NPC`, `EASTER_BUNNY_NPC`, `EASTER_EGG_HUNT_WARDEN`
+- `PropType`: `EASTER_EGG_PROP`, `EASTER_BANNER_PROP`, `MOTORBIKE_PROP`, `CHARITY_BUCKET_PROP`
+- `RumourType`: `EASTER_EGG_HIDDEN`, `BIKER_PARADE`
+- `AchievementType`: `HOT_CROSS_HERO` (first in queue for hot cross buns), `EASTER_EGG_BARON` (find 5+ eggs), `CHARITY_SKIMMER` (steal from charity bucket), `BIKER_BLAG` (steal BIKER_JACKET from parked motorbike), `NOTHING_IS_OPEN` (attempt to buy from 5 different closed shops on Easter Monday)
+
+**Mechanic 1 — Good Friday: Greggs Hot Cross Bun Queue (day 91, 08:00–10:00)**
+`NPCType.PUBLIC` and `NPCType.PENSIONER` NPCs form a queue outside Greggs from 07:45. Only 12 `HOT_CROSS_BUN` items available (GREGGS_STOCK = 12). Player joins back of queue via E; queue position determines if buns remain. Pushing in (stand within 1 block of front NPC) adds QUEUE_JUMP crime if witnessed. Buying bun for 1 COIN satisfies HUNGRY need. First bun purchase unlocks `HOT_CROSS_HERO`. Being last in queue when stock runs out triggers "Sorry love, we're all out" dialogue. Greggs closes 10:00–12:00 then reopens; Church runs a special Good Friday service 11:00–12:30 (doubled congregation).
+
+**Mechanic 2 — Easter Saturday: Council Egg Hunt in the Park (day 92, 10:00–13:00)**
+`EASTER_EGG_HUNT_WARDEN` Brenda spawns at park centre with `EASTER_BANNER_PROP`. 15 `EASTER_EGG_PROP` items are hidden at random within park boundary (ground level ±2 Y from surface). Player presses E within 1 block to collect `FOIL_EASTER_EGG` items into inventory. 3–5 `SCHOOL_KID` NPCs compete and collect eggs every 45 seconds. Collecting 5+ eggs before kids take them unlocks `EASTER_EGG_BARON`. `EASTER_BUNNY_NPC` (council volunteer in a costume) patrols the park; pickpocketing yields `CHOCOLATE_EGG` ×3 and sets EASTER_BUNNY_MUGGED flag (NeighbourhoodWatchSystem anger +10, Notoriety +4). `FOIL_EASTER_EGG` items fence at 3 COIN each.
+
+**Mechanic 3 — Easter Sunday: Northfield Easter Egg Run Charity Motorbike Parade (day 93, 11:00–14:00)**
+12 `BIKER_NPC` NPCs (using existing MOTORBIKE_PROP) assemble at the industrial estate at 10:30, parade along the main road through the HIGH_STREET at 11:00, stop at the park at 11:30. `CHARITY_BUCKET_PROP` placed at park entrance; NPCs donate 1 COIN per minute while present. Player can donate (COIN into bucket) to gain StreetReputation +3 and BIKER faction respect +5. Player can steal `CHARITY_BUCKET_PROP` contents (min 8 COIN inside) → `CHARITY_SKIMMER` achievement, Notoriety +8, Wanted +1, all BIKER_NPCs become HOSTILE. Each parked MOTORBIKE_PROP has a `BIKER_JACKET` item stealable with STEALTH ≥ 2 (E hold 3s); theft adds Notoriety +3 per jacket and unlocks `BIKER_BLAG` on first steal. `BIKERS_VOUCHER` drops from friendly bikers — redeemable at the chip shop for free chips.
+
+**Mechanic 4 — Easter Monday: Everything Is Shut (day 94, all day)**
+All shops (CornerShopSystem, PoundShopSystem, IcelandSystem, SupermarketSystem, OffLicenceSystem, CharityShopSystem) are CLOSED. Attempting to interact with any closed landmark triggers "We're shut. It's Easter Monday." dialogue. Player must survive the day using only inventory resources. Kebab van is still open (no British holiday closes a kebab van). Wetherspoons opens at 12:00. Attempting 5+ different closed shops unlocks `NOTHING_IS_OPEN`. Off-licence has a CLOSED_SIGN_PROP on the door — breakable (PETTY_THEFT, Notoriety +3).
+
+**Integration with existing systems**:
+- `WeatherSystem` — THUNDERSTORM cancels egg hunt (Brenda retreats with banner); parade continues regardless (bikers are hardcore)
+- `TimeSystem` — event schedule across 4 consecutive days starting day 91
+- `ChurchSystem` — extended Good Friday service with 2× congregation count
+- `StreetEconomySystem` — HUNGRY need spikes on Easter Monday (no shops open); hot cross buns satisfy HUNGRY
+- `NotorietySystem.AchievementCallback` — all 5 achievements
+- `RumourNetwork` — `EASTER_EGG_HIDDEN` seeded Saturday morning; `BIKER_PARADE` seeded Friday evening
+
+### Integration Tests
+
+1. **Greggs queue depletes on Good Friday**: advance time to day 91, 07:50; call `EasterSystem.update(delta, timeSystem, world, npcs, player)`; verify 4+ `PUBLIC` NPCs are queued outside Greggs; simulate player joining queue and 12 E-presses over 12 NPCs; verify `HOT_CROSS_BUN` stock reaches 0 and last-NPC dialogue fires.
+2. **Egg hunt places 15 eggs and player can collect**: advance to day 92, 10:00; call `EasterSystem.update`; verify 15 `EASTER_EGG_PROP` items are placed within park boundary; place player at first egg position; call `collectEgg(player, eggPos)`; verify player inventory contains `FOIL_EASTER_EGG` ×1 and egg prop removed.
+3. **EASTER_EGG_BARON unlocks at 5 eggs**: call `collectEgg(player, pos)` five times with valid egg positions; verify `EASTER_EGG_BARON` achievement is unlocked after fifth collection.
+4. **Charity bucket theft triggers BIKER hostility**: advance to day 93, 12:00 with 8 COIN in bucket; call `stealCharityBucket(player, bucketPos)`; verify player inventory gains 8 COIN, `CHARITY_SKIMMER` achievement unlocked, Notoriety increased by 8, all BIKER_NPCs have state `NPCState.HOSTILE`.
+5. **Easter Monday closes shops**: advance to day 94, 14:00; call `EasterSystem.update`; verify `isShopClosed(LandmarkType.CORNER_SHOP)` returns true; verify `isShopClosed(LandmarkType.KEBAB_VAN)` returns false (kebab van remains open).
+
+// All new enum entries must be added to Material, NPCType, PropType, RumourType, AchievementType.
+// EasterSystem.java must be created as the sole new source file.
+
+---
+
 ## Proposed Next: Issue #1432 — Add Northfield Christmas Lights Switch-On (ChristmasLightsSystem)
 
 **Summary**: Implement `ChristmasLightsSystem` based on the pre-existing spec at Issue #1343. This is a high-street annual event on the first Saturday of December (17:00–20:00) where ex-Big Brother contestant Wayne Stubbs flicks the switch and the neighbourhood briefly pretends to be festive. The spec and all required enum entries (NPCType: CELEBRITY, SECURITY_GUARD; Material: MULLED_WINE, CHRISTMAS_LIGHTS_BULB, WAYNE_STUBBS_AUTOGRAPH, CELEBRITY_WALLET, FREEBIE_WRISTBAND; PropType: XMAS_MARKET_CHALET_PROP, SANTA_GROTTO_PROP, CAROL_SONG_BOARD_PROP, GROTTO_TIN, FAIRY_LIGHT_PROP) are defined at Issue #1343 in SPEC.md. Still required: add RumourType entries (SEASONAL_CHEER, LIGHTS_FAILURE, NORTHFIELD_STAMPEDE) and AchievementType entries (CHRISTMAS_SABOTEUR, COMPETENT_SPARKY, CHRISTMAS_ENTREPRENEUR, CELEBRITY_MUGGER, LIGHTS_ON). Then create `ChristmasLightsSystem.java`, unit tests, and integration tests exactly as specified.
