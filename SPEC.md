@@ -56085,3 +56085,149 @@ The NAODS cycle runs weekly — auditions on Tuesdays, rehearsals Wed/Thu 19:00�
 5. **Forged ticket caught at 30% rate**: give player 10 `FORGED_TICKET` items; seed RNG to guarantee catch (probability > FORGED_TICKET_CATCH_CHANCE threshold); call `AmateurDramaticsSystem.presentForgedTicket(player, inventory, rng_always_catch, criminalRecord, notorietySystem, wantedSystem)` once; verify `criminalRecord.hasCrime(CrimeType.TICKET_FRAUD)` == true; verify `notorietySystem.getNotoriety()` increased by 2; verify `wantedSystem.getWantedStars()` ≥ 1.
 
 // `AmateurDramaticsSystem.java` must be created as the sole new source file. All `NPCType`, `Material`, `PropType`, `RumourType`, and `CriminalRecord.CrimeType` entries are already defined. New `AchievementType` entries required: `DRAMA_REGULAR`, `CURTAIN_CALL`, `FRONT_ROW_FRED`. New `PropType` entry required: `FUSE_BOX_PROP`. `LandmarkType.COMMUNITY_CENTRE` and `LandmarkType.GP_SURGERY` already defined.
+
+## Northfield Second-Hand Record Shop — Spin City, the Crate Dig & the Rare Pressings Racket
+
+### Overview
+
+**Spin City Records** is a cramped, musty 6×10×4 brick shopfront crammed floor-to-ceiling with vinyl in cardboard dividers on `RECORD_SHELF_PROP`s. Run by Clive (`RECORD_SHOP_OWNER` NPC), open Tue–Sat 10:00–17:30. Clive is a 58-year-old obsessive who will talk at length about obscure Northern Soul pressings while simultaneously being deeply suspicious of anyone who looks like they might steal something.
+
+`VINYL_RECORD` and `BOX_OF_RECORDS` items that already exist in the game (from skip diving, charity shop donations, and boot sale finds) now have a dedicated buyer and trade economy here.
+
+A `RECORD_COLLECTOR` NPC (Trevor) visits every Wednesday 13:00–16:00, hunting for specific genres. The `PirateRadioSystem` gains a new broadcast option: play a `VINYL_RECORD` on-air for a listener surge.
+
+### Mechanic 1 — Shop Stock & Crate Digging (Tue–Sat 10:00–17:30)
+
+- Spin City has 12–18 `VINYL_RECORD` items in its bins (randomised genre tags: NORTHERN_SOUL, MOD, REGGAE, PUNK, GLAM_ROCK, NEW_WAVE, RAVE).
+- Press E on a `RECORD_SHELF_PROP` to browse: reveals 3 records at a time; each browse takes 5 in-game seconds.
+- Standard price: 2 COIN per record. Clive charges 4 COIN for anything tagged RARE_PRESSING.
+- **Crate Dig mechanic**: hold E for 6 seconds (`CRATE_DIG_HOLD_SECONDS`) on any `RECORD_SHELF_PROP` for a thorough rummage — 12% chance (`RARE_FIND_CHANCE`) of finding a `RARE_PRESSING` record at standard price (2 COIN) before Clive notices. If Clive sees the player rummaging (within `CLIVE_SPOT_RADIUS` = 5 blocks), he charges the marked-up price.
+- Clive refuses to serve: Notoriety ≥ `CLIVE_REFUSE_NOTORIETY` (40), or player wearing `BALACLAVA`.
+- `BOX_OF_RECORDS` can be examined (press E in inventory) to unbox into 4–6 individual `VINYL_RECORD` items.
+
+### Mechanic 2 — Selling to Clive
+
+- Press E on Clive while holding `VINYL_RECORD` to sell.
+- Standard VINYL_RECORD: 1 COIN (Clive's buy price). RARE_PRESSING: 6 COIN.
+- If player has TRADING Skill ≥ Journeyman: +1 COIN per record sold (haggle perk).
+- Clive refuses stolen records if `WantedSystem` stars ≥ 2.
+- Sell 10+ records total → `AchievementType.CLEARING_OUT` achievement.
+
+### Mechanic 3 — Trevor the Collector (Wednesdays 13:00–16:00)
+
+- `RECORD_COLLECTOR` NPC Trevor wanders the shop and browsing area.
+- Each Wednesday a `TREVOR_WANT` genre is randomly assigned (one of the 7 genres).
+- Press E on Trevor while holding a VINYL_RECORD of the matching genre → Trevor pays `TREVOR_PREMIUM` (5 COIN) regardless of RARE_PRESSING status.
+- RARE_PRESSING of matching genre: Trevor pays `TREVOR_RARE_PREMIUM` (12 COIN).
+- Trevor has `TREVOR_BUDGET` (30 COIN) per session; depleted budget → Trevor leaves early.
+- Achievement: `TREVOR_REGULAR` — sell Trevor his wanted genre on 5 separate Wednesdays.
+- Trevor shares one free `RumourType.LOCAL_EVENT` rumour per session (overheard gossip from Clive).
+
+### Mechanic 4 — The Rare Pressings Racket
+
+- Player can craft `FAKE_RARE_LABEL` from `Material.PRINTER_PAPER` + `Material.INK_BOTTLE` at InternetCafe.
+- Applying `FAKE_RARE_LABEL` to a standard `VINYL_RECORD` (hold E while both in inventory) creates a `VINYL_RECORD` tagged as RARE_PRESSING.
+- Selling faked rare record to Clive: 35% catch chance (`FAKE_LABEL_CATCH_CHANCE`). Caught → `CrimeType.FRAUD`, Notoriety +`FAKE_LABEL_NOTORIETY` (6), Clive HOSTILE for 48 in-game hours, banned from Spin City for remainder of day.
+- Selling faked rare record to Trevor: 50% catch chance (`TREVOR_CATCH_CHANCE`). Caught → Trevor HOSTILE, `CrimeType.FRAUD`, Notoriety +8, `RumourType.TRADING_SCAM` seeded; Trevor does not return for 3 Wednesdays.
+- Successful fake sale to Clive 3 times → `AchievementType.CLIVE_KNOWS_NOTHING` achievement.
+
+### Mechanic 5 — Pirate Radio Tie-In
+
+- Press E on the pirate radio `TRANSMITTER_PROP` while holding a `VINYL_RECORD` to broadcast it on-air (requires `PirateRadioSystem` to be active).
+- Result: seeds `RumourType.PIRATE_RADIO_SET` (existing rumour type) immediately; draws +3 extra `LISTENER` NPCs to the transmitter location; `NEIGHBOURHOOD_WATCH` NPC Gerald spawns at `PIRATE_RADIO_GERALD_SPAWN_CHANCE` (25%) to investigate noise complaint.
+- RARE_PRESSING broadcast: +6 LISTENER NPCs; `NeighbourhoodSystem` Vibes +2 town-wide (cultural contribution).
+- Achievement: `ON_AIR_DJ` — broadcast 5 different vinyl records across 5 separate pirate radio sessions.
+
+### Integration with Existing Systems
+
+- **`SkipDivingSystem`**: `BOX_OF_RECORDS` skip find now has a direct sell route (Clive, 6 COIN per box) in addition to the existing fence value. Pigeon Fancier NPC's pre-claimed `BOX_OF_RECORDS` is the same item type.
+- **`CharityShopSystem`**: donating `VINYL_RECORD` or `BOX_OF_RECORDS` to the charity shop adds them to the charity shop stock at 1 COIN; Clive visits the charity shop every Thursday 09:00–10:00 as a customer NPC (before Spin City opens), meaning player can buy records from the charity shop before Clive restocks at 10:00 for a 1-COIN price advantage.
+- **`CarBootSaleSystem`**: `VINYL_RECORD` now appears in boot sale vendor tables at 1–3 COIN. `BOX_OF_RECORDS` appears at 4–6 COIN (price decay applies per existing boot sale rules).
+- **`FenceSystem`**: existing `FenceValuationTable` fence price for `BOX_OF_RECORDS` (8 COIN) remains; `VINYL_RECORD` fence value: 1 COIN standard, 4 COIN RARE_PRESSING.
+- **`PirateRadioSystem`**: vinyl broadcast action (Mechanic 5) hooks into existing `TRANSMITTER_PROP` interaction; Gerald spawn ties into existing `NEIGHBOURHOOD_WATCH` NPC logic.
+- **`StreetSkillSystem`**: successful Trevor sales grant TRADING XP (`TREVOR_TRADE_XP` = 10 per sale); crate-dig rare finds grant GRAFTING XP (`CRATE_DIG_XP` = 5).
+- **`RumourNetwork`**: `LOCAL_EVENT` from Trevor; `TRADING_SCAM` on caught fake sale; `PIRATE_RADIO_SET` on vinyl broadcast.
+- **`NotorietySystem`**: fraud catches add to notoriety; RARE_PRESSING broadcast adds neighbourhood vibes.
+- **`NeighbourhoodSystem`**: RARE_PRESSING broadcast Vibes +2; caught fake sale triggers `TRADING_SCAM` rumour with Vibes −2.
+- **`WeatherSystem`**: RAIN boosts Spin City attendance +2 browsing NPCs (people shelter indoors); SUNNY reduces it by 1.
+- **`TimeSystem`**: Clive opens Tue–Sat 10:00–17:30; Trevor visits Wednesdays 13:00–16:00; Clive's charity shop visit Thursdays 09:00–10:00.
+- **`WantedSystem`**: refused entry at ≥ 2 stars; caught fake sale +1 star.
+- **`CriminalRecord`**: `CrimeType.FRAUD` already defined.
+- **`AchievementSystem`**: 4 new achievements required (see below).
+
+### Constants Required
+
+- `CRATE_DIG_HOLD_SECONDS = 6f` — hold-E duration for a thorough crate rummage.
+- `RARE_FIND_CHANCE = 0.12f` — probability of finding a RARE_PRESSING in a standard crate dig.
+- `CLIVE_SPOT_RADIUS = 5` — blocks within which Clive notices a crate-dig and charges marked-up price.
+- `CLIVE_REFUSE_NOTORIETY = 40` — Notoriety threshold above which Clive refuses service.
+- `STANDARD_BUY_PRICE = 2` — COIN price for a standard VINYL_RECORD.
+- `RARE_BUY_PRICE = 4` — COIN price Clive charges for a RARE_PRESSING.
+- `CLIVE_SELL_PRICE = 1` — COIN Clive pays per standard VINYL_RECORD.
+- `CLIVE_RARE_SELL_PRICE = 6` — COIN Clive pays per RARE_PRESSING.
+- `TREVOR_VISIT_DAY = 3` — day-of-week (Wednesday) Trevor visits (dayCount % 7 == 3).
+- `TREVOR_VISIT_START = 13.0f` — in-game hour Trevor arrives.
+- `TREVOR_VISIT_END = 16.0f` — in-game hour Trevor leaves.
+- `TREVOR_PREMIUM = 5` — COIN Trevor pays for his wanted genre.
+- `TREVOR_RARE_PREMIUM = 12` — COIN Trevor pays for a RARE_PRESSING of his wanted genre.
+- `TREVOR_BUDGET = 30` — total COIN Trevor can spend per session.
+- `TREVOR_CATCH_CHANCE = 0.50f` — probability Trevor detects a fake rare label.
+- `FAKE_LABEL_CATCH_CHANCE = 0.35f` — probability Clive detects a fake rare label.
+- `FAKE_LABEL_NOTORIETY = 6` — Notoriety added on caught fake sale to Clive.
+- `TREVOR_FAKE_NOTORIETY = 8` — Notoriety added on caught fake sale to Trevor.
+- `TREVOR_RETURN_DELAY_WEEKS = 3` — Wednesdays Trevor skips after catching a fake.
+- `CLIVE_HOSTILE_HOURS = 48` — in-game hours Clive remains hostile after catching a fake.
+- `BOX_UNBOX_MIN = 4` — minimum VINYL_RECORD items from unboxing a BOX_OF_RECORDS.
+- `BOX_UNBOX_MAX = 6` — maximum VINYL_RECORD items from unboxing a BOX_OF_RECORDS.
+- `CLEARING_OUT_THRESHOLD = 10` — total records sold to Clive to unlock CLEARING_OUT achievement.
+- `TREVOR_REGULAR_THRESHOLD = 5` — Wednesday sales to Trevor to unlock TREVOR_REGULAR achievement.
+- `FAKE_SALE_SUCCESS_THRESHOLD = 3` — successful fake sales to Clive to unlock CLIVE_KNOWS_NOTHING.
+- `ON_AIR_DJ_THRESHOLD = 5` — vinyl broadcasts to unlock ON_AIR_DJ achievement.
+- `PIRATE_RADIO_GERALD_SPAWN_CHANCE = 0.25f` — probability Gerald spawns on any vinyl broadcast.
+- `PIRATE_RADIO_LISTENER_BONUS = 3` — extra LISTENER NPCs drawn on standard vinyl broadcast.
+- `PIRATE_RADIO_RARE_LISTENER_BONUS = 6` — extra LISTENER NPCs drawn on RARE_PRESSING broadcast.
+- `RARE_BROADCAST_VIBES_BONUS = 2` — NeighbourhoodSystem Vibes added on RARE_PRESSING broadcast.
+- `TREVOR_TRADE_XP = 10` — TRADING XP per successful Trevor sale.
+- `CRATE_DIG_XP = 5` — GRAFTING XP per crate-dig rare find.
+- `STOCK_MIN = 12` — minimum VINYL_RECORD items in Spin City on open.
+- `STOCK_MAX = 18` — maximum VINYL_RECORD items in Spin City on open.
+- `CLIVE_CHARITY_VISIT_START = 9.0f` — in-game hour Clive visits charity shop (Thursday).
+- `CLIVE_CHARITY_VISIT_END = 10.0f` — in-game hour Clive leaves charity shop (Thursday).
+
+### New LandmarkType Entry Required
+
+- `RECORD_SHOP` — Spin City Records. A cramped vinyl emporium between the charity shop and the bookies.
+
+### New NPCType Entries Required
+
+- `RECORD_SHOP_OWNER` — Clive. 58-year-old obsessive behind the counter. Passive; refuses BALACLAVA wearers and Notoriety ≥ 40. Shares one free LOCAL_EVENT rumour per visit if player buys at least one record.
+- `RECORD_COLLECTOR` — Trevor. Visits Wednesdays 13:00–16:00. Passive, never hostile unless sold a detected fake.
+
+### New PropType Entry Required
+
+- `RECORD_SHELF_PROP` — A floor-to-ceiling wooden shelf unit crammed with vinyl dividers. Press E to browse (3 records revealed per interaction); hold E for 6s to crate-dig. Indestructible. Dimensions: 1.00×2.20×0.40.
+
+### New Material Entry Required
+
+- `FAKE_RARE_LABEL` — A printed sticker made from `PRINTER_PAPER` + `INK_BOTTLE` at InternetCafe. Consumed on application to a `VINYL_RECORD`. No fence value.
+
+### New AchievementType Entries Required
+
+- `CLEARING_OUT` — "Sold 10 vinyl records to Clive. He's running out of shelf space." Target 10.
+- `TREVOR_REGULAR` — "Sold Trevor his wanted genre on 5 separate Wednesdays. He knows your face now." Target 5.
+- `CLIVE_KNOWS_NOTHING` — "Successfully passed off 3 fake rare pressings to Clive. He doesn't know his Motown from his Mozart." Target 3.
+- `ON_AIR_DJ` — "Broadcast 5 different vinyl records on the pirate radio. The streets have taste." Target 5.
+
+### Integration Tests
+
+1. **Unboxing BOX_OF_RECORDS yields VINYL_RECORDs**: give player 1 `BOX_OF_RECORDS`; call `RecordShopSystem.unboxRecords(player, inventory, rng_max_records)`; verify `inventory.hasItem(Material.BOX_OF_RECORDS)` == false; verify `inventory.getItemCount(Material.VINYL_RECORD)` == `BOX_UNBOX_MAX` (6).
+
+2. **Crate dig rare find at 12% rate**: create `RecordShopSystem`; place player at `RECORD_SHELF_PROP` within 5 blocks; seed RNG to guarantee rare find (< RARE_FIND_CHANCE threshold); call `RecordShopSystem.crateDig(player, inventory, rng_always_rare, cliveNpc_far_away)`; verify result is `CrateDigResult.RARE_FOUND`; verify GRAFTING XP increased by `CRATE_DIG_XP`.
+
+3. **Crate dig spotted by Clive charges marked-up price**: place player at `RECORD_SHELF_PROP`; place Clive within `CLIVE_SPOT_RADIUS` (3 blocks); call `RecordShopSystem.crateDig(player, inventory, rng_always_rare, cliveNpc_nearby)`; verify result is `CrateDigResult.CLIVE_SPOTTED`; verify purchase price is `RARE_BUY_PRICE` (4 COIN) not standard crate price.
+
+4. **Selling fake rare to Trevor triggers fraud on catch**: give player `VINYL_RECORD` with FAKE_RARE_LABEL applied; create `RecordShopSystem` with `TREVOR_WANT` genre matching the record's genre; seed RNG to guarantee catch; call `RecordShopSystem.sellToTrevor(player, inventory, rng_always_catch, trevorNpc, criminalRecord, notorietySystem, wantedSystem, rumourNetwork)`; verify `criminalRecord.hasCrime(CrimeType.FRAUD)` == true; verify `notorietySystem.getNotoriety()` increased by `TREVOR_FAKE_NOTORIETY`; verify `trevorNpc.getState()` == `NPCState.HOSTILE`; verify `rumourNetwork` contains `RumourType.TRADING_SCAM`.
+
+5. **Vinyl broadcast on pirate radio draws listeners**: give player 1 `VINYL_RECORD`; set `PirateRadioSystem` active; call `RecordShopSystem.broadcastVinyl(player, inventory, pirateRadioSystem, npcManager, rumourNetwork, neighbourhoodSystem, rng_no_gerald)`; verify `inventory.hasItem(Material.VINYL_RECORD)` == false (consumed); verify `npcManager.getSpawnedCount(NPCType.LISTENER)` >= `PIRATE_RADIO_LISTENER_BONUS`; verify `rumourNetwork` contains `RumourType.PIRATE_RADIO_SET`.
+
+// `RecordShopSystem.java` must be created as the sole new source file. New `LandmarkType.RECORD_SHOP`, `NPCType.RECORD_SHOP_OWNER`, `NPCType.RECORD_COLLECTOR`, `PropType.RECORD_SHELF_PROP`, and `Material.FAKE_RARE_LABEL` entries are required. New `AchievementType` entries required: `CLEARING_OUT`, `TREVOR_REGULAR`, `CLIVE_KNOWS_NOTHING`, `ON_AIR_DJ`. `VINYL_RECORD`, `BOX_OF_RECORDS`, `PRINTER_PAPER`, `INK_BOTTLE`, `CrimeType.FRAUD`, `RumourType.LOCAL_EVENT`, `RumourType.TRADING_SCAM`, `RumourType.PIRATE_RADIO_SET` already defined.
