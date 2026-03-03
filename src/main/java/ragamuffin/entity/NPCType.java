@@ -3103,7 +3103,34 @@ public enum NPCType {
     /** ROAD_RAGE_NPC — angry driver spawned when car enters ROAD_TRENCH_PROP closure or traffic chaos.
      * Brawls with other ROAD_RAGE_NPCs; aggressive toward player. Despawns after 5 in-game minutes.
      * HP: 25f, attack: 10f, cooldown: 0f, hostile: true. */
-    ROAD_RAGE_NPC(25f, 10f, 0f, true);
+    ROAD_RAGE_NPC(25f, 10f, 0f, true),
+
+    // ── Issue #1404: Northfield Community Litter Pick ─────────────────────────
+
+    /**
+     * LITTER_PICK_COORDINATOR — Janet, who runs the Northfield Tidy Streets community litter pick.
+     * <ul>
+     *   <li>Spawns at LITTER_PICK_TENT_PROP outside park gates every second Saturday 09:00–11:00.</li>
+     *   <li>Hands out LITTER_PICKER_STICK + COUNCIL_RUBBISH_BAG on press E (before 09:15).</li>
+     *   <li>Refuses equipment if player arrives after 09:15.</li>
+     *   <li>Issues up to 2 trespassing warnings; on 3rd violation ejects player (Notoriety +2).</li>
+     *   <li>Calls police immediately if returned bag contains CRACK_PIPE.</li>
+     *   <li>Recognises GARDEN_ORNAMENT in player inventory (Notoriety +5, police alert; bribable with CHOCOLATE_BAR 50%).</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    LITTER_PICK_COORDINATOR(20f, 0f, 0f, false),
+
+    /**
+     * VOLUNTEER_PICKER — community volunteer at the litter pick event.
+     * <ul>
+     *   <li>Wanders park area collecting LITTER_PROP items 09:00–11:00.</li>
+     *   <li>Distracted while bending down (60% pickpocket success, yields 1–3 COIN).</li>
+     *   <li>Can have COUNCIL_RUBBISH_BAG stolen for up to 5 pre-collected items toward quota.</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    VOLUNTEER_PICKER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
