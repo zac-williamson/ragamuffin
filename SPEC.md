@@ -50880,3 +50880,163 @@ Scoring: `ENGLAND_SHIRT_CONDITION` stat (starts 100, degrades with each fight or
 // Integration: WetherspoonsSystem, TimeSystem, NoiseSystem, WantedSystem, FactionSystem,
 //   NeighbourhoodSystem, RumourNetwork, NewspaperSystem, DisguiseSystem, StreetSkillSystem,
 //   AchievementSystem, PoundShopSystem, CharityShopSystem, BistaVillageSystem, PowerCutSystem
+
+---
+
+## Issue #1391: Add Northfield Dog Show — The Grooming Arms Race, the Bent Judge & the Best in Show Heist
+
+**Landmark**: `PARK` (no new LandmarkType needed — the show occupies the south end of the park).
+
+**Trigger**: Day-of-year 196 (15 July), Saturday only (`dayCount % 7 == 5`). Runs 10:00–15:00. THUNDERSTORM or HEAVY_RAIN cancels (props despawn immediately; `CANCELLED_DOG_SHOW` rumour seeded). DRIZZLE does not cancel.
+
+**Goal**: Add an annual Northfield Dog Show to the park, deeply integrated with the existing `DogCompanionSystem`. The player can enter their Staffy companion, groom it, sabotage rivals, bribe the judge, and either win legitimately or steal the prize rosette. Five NPC competitors each bring a `SHOW_DOG_NPC` with a breed and a score. A bent judge, `JUDGE_NPC` Clive, takes bribes. The WI stall sells tea and Victoria sponge. Trophy is fenceable.
+
+### DogShowSystem — Core Class
+
+New class `DogShowSystem` in `ragamuffin.core`:
+
+```
+DogShowSystem(TimeSystem, World, DogCompanionSystem, WantedSystem, NotorietySystem.AchievementCallback,
+              RumourNetwork, NewspaperSystem, FactionSystem, StreetSkillSystem, Inventory playerInventory)
+void update(float delta, TimeSystem timeSystem, Player player)
+boolean isShowDay(int dayCount)           // dayCount % 365 == 196 && dayCount % 7 == 5
+boolean canEnterShow(Player player)       // has dog companion, bond ≥ 40, dog not hungry
+void groomDog(Player player)             // requires DOG_BRUSH item; sets GROOMED flag for 2 hours
+void enterCompetition(Player player)
+void bribeJudge(Player player, int coinAmount)  // ≥ 5 COIN; judge's BRIBED flag set; Wanted +1 if witnessed
+void sabotageRival(Player player, NPC rivalOwner)  // distract rival's dog (SAUSAGE_ROLL on ground)
+JudgingResult runJudgingRound()          // called at 13:30; produces ranked results
+void awardPrizes(Player player, JudgingResult result)
+void stealRosette(Player player)         // grab BEST_IN_SHOW_ROSETTE_PROP from JUDGE's table; Notoriety +6
+```
+
+### Schedule
+
+- **09:30** — Props spawn in south park area: `SHOW_RING_PROP` (rope boundary), `JUDGES_TABLE_PROP`, `WI_STALL_PROP` (tea + Victoria sponge), `SHOW_BANNER_PROP`. Weather check.
+- **09:45** — `JUDGE_NPC` Clive arrives. 5 `SHOW_DOG_OWNER_NPC` competitors arrive each with a leashed `SHOW_DOG_NPC`. Breed names seeded from `Random(dayCount)`.
+- **10:00** — Show opens. `VICAR_NPC` from ChurchSystem makes welcome announcement. Player can enter show (if eligible), groom dog, interact with owners, browse WI stall.
+- **10:30** — **Heats round**: Clive inspects each dog in turn. Each `SHOW_DOG_NPC` assigned a base score (seeded `Random(dayCount + 1)`): range 50–90. Player dog base score = `DogCompanionSystem.getBondLevel()` + 10. GROOMED bonus: +15. BRIBED judge: player score ×1.5.
+- **11:00–13:00** — **Sabotage window**: Player can drop `SAUSAGE_ROLL` near rival show ring to cause rival dog to bolt (lowers rival score −20); SHOW_DOG_OWNER becomes SUSPICIOUS. PCSO `NEIGHBOURHOOD_WATCH_NPC` patrols — if caught dropping food: `DISRUPTING_PUBLIC_EVENT` offence, Wanted +1.
+- **13:30** — **Final judging**: `runJudgingRound()` called. Rankings announced. Winner's `SHOW_DOG_OWNER_NPC` and dog parade the ring.
+- **13:45** — **Prize ceremony**: 1st place: `BEST_IN_SHOW_ROSETTE_PROP` + 20 COIN. 2nd: `RESERVE_ROSETTE_PROP` + 8 COIN. 3rd: `THIRD_PLACE_ROSETTE_PROP` + 3 COIN. If player wins, `NewspaperSystem` headline next day: "Local Staffy Scoops Best in Show at Northfield Dog Show".
+- **14:00** — **Rosette theft window**: `JUDGES_TABLE_PROP` is unattended for 15 in-game minutes (Clive goes to WI stall for tea). Player can grab `BEST_IN_SHOW_ROSETTE_PROP` if they did NOT win it.
+- **15:00** — Show closes. Props despawn. Competitors and dogs depart.
+
+### Mechanic 1 — Dog Grooming
+
+New item `DOG_BRUSH` (buy from `CORNER_SHOP` for 2 COIN, or `CHARITY_SHOP` occasionally). Using it on the player's dog (press E while holding `DOG_BRUSH` and dog is present, bond ≥ 10) sets the `GROOMED` flag for 120 in-game minutes. The flag degrades: rolling in `MUD_BLOCK` (any water-adjacent dirt) removes the flag instantly. NPCs comment: `SHOW_DOG_OWNER_NPC` says "Oh, your dog scrubs up lovely." GROOMED bonus: +15 to show score.
+
+### Mechanic 2 — The Bribe
+
+`JUDGE_NPC` Clive is corrupt. Press E on Clive between 10:00–13:00. If player has ≥ 5 COIN: dialogue option "Nice judging today, Clive. Keep the change." Clive's `BRIBED` flag set; player score ×1.5 in final judging. Cost: 5–15 COIN (Clive haggles — random 5, 8, 10, or 15 COIN from `Random(dayCount + 3)`). If `NEIGHBOURHOOD_WATCH_NPC` is within 8 blocks when bribe is accepted: `BRIBERY_WITNESSED` → Wanted +1, Clive immediately refunds bribe and denies everything. Achievement `UNDER_THE_TABLE` unlocked on successful bribe.
+
+### Mechanic 3 — Sabotage (Sausage Roll Distraction)
+
+Hold E near any `SHOW_DOG_NPC` rival (within 3 blocks) while holding `SAUSAGE_ROLL`. Dog owner is looking away (random 30% chance per 10-second tick): drop the sausage roll; rival dog breaks from heel, score −20. If owner sees it: transitions to `ANGRY`, reports to Clive. Clive ejection: player loses eligibility for final judging that day. PCSO patrol catches: `DISRUPTING_PUBLIC_EVENT` + Wanted +1.
+
+### Mechanic 4 — Rosette Heist
+
+After prize ceremony (13:45), the `BEST_IN_SHOW_ROSETTE_PROP` sits on `JUDGES_TABLE_PROP`. Clive visits WI stall 14:00–14:15 (15-minute window). Player can take the rosette with E: Notoriety +6, `ROSETTE_THEFT` rumour seeded. `BEST_IN_SHOW_ROSETTE_PROP` is fenceable to `FENCE` NPC for 10 COIN or `PAWN_SHOP` for 7 COIN. Achievement `OFF THE LEAD AND OFF WITH IT` unlocked.
+
+### Mechanic 5 — WI Stall
+
+`WI_STALL_PROP` run by `WI_VOLUNTEER_NPC` Margaret. Sells `VICTORIA_SPONGE_SLICE` (2 COIN, Hunger +35, Warmth +5) and `CUP_OF_TEA` (1 COIN, Warmth +20). Stealing from stall while Margaret is away: `PETTY_THEFT`, Notoriety +3. At show end, Margaret carries remaining stock home — player can pickpocket.
+
+### System Integrations
+
+- `DogCompanionSystem`: bond level, GROOMED flag, `hasAdoptedDog()` check for entry eligibility; dog hunger check (hungry dog disqualified).
+- `TimeSystem`: trigger `dayCount % 365 == 196 && dayCount % 7 == 5`; schedule 09:30–15:00.
+- `WantedSystem`: bribery witnessed +1; sabotage caught +1; rosette theft +1 (if PCSO present).
+- `NotorietySystem`: rosette theft +6; cake/stall theft +3.
+- `FactionSystem`: `COUNCIL_ESTATE` faction +2 on legitimate win; `MARCHETTI_FAMILY` −1 if player wins (they wanted Terry's dog to win).
+- `NeighbourhoodSystem`: VIBES +2 on legitimate win; VIBES −1 on sabotage caught.
+- `RumourNetwork`: `BEST_IN_SHOW` seeded on player win; `RIGGED_DOG_SHOW` seeded if bribe succeeded and player won; `ROSETTE_THEFT` seeded on heist.
+- `NewspaperSystem`: "Local Staffy Scoops Best in Show" headline day+1 on win; "Dog Show Disruption" if sabotage or heist occurred at Notoriety ≥ 2.
+- `StreetSkillSystem`: GRAFT XP +1 per successful sabotage; FENCE XP +1 on rosette fence.
+- `CriminalRecord`: `DISRUPTING_PUBLIC_EVENT` on sabotage-caught; `PETTY_THEFT` on stall theft; `BRIBERY_WITNESSED` on caught bribe.
+- `IceCreamVanSystem`: Dave's van arrives at 13:00 if weather is SUNNY/OVERCAST (as per existing IceCreamVanSystem operating rules), parks near show entrance.
+- `WeatherSystem`: THUNDERSTORM / HEAVY_RAIN cancels event.
+- `AchievementSystem`: achievements below.
+- `CornerShopSystem` / `CharityShopSystem`: stock `DOG_BRUSH`.
+
+### New Materials (add to Material.java)
+
+- `DOG_BRUSH` — "A slicker brush. Mostly used on the Staffy. Occasionally on the carpet." Tool. Buy: CORNER_SHOP (2 COIN). Required for GROOMED buff.
+- `VICTORIA_SPONGE_SLICE` — "Light, fluffy, Margaret's finest. Competition-grade jam." Food. Hunger +35, Warmth +5. Sold at WI_STALL.
+- `BEST_IN_SHOW_ROSETTE_PROP` — "Red, white and royal blue. 'Best in Show — Northfield 20XX.' Clive signed it." Fenceable: FENCE 10 COIN, PAWN_SHOP 7 COIN. Stolen or awarded to player.
+- `RESERVE_ROSETTE_PROP` — "Blue rosette. Almost the best. Close, but no Bonio." Fenceable: FENCE 5 COIN.
+- `THIRD_PLACE_ROSETTE_PROP` — "Yellow rosette. Bronze of dog shows." Fenceable: FENCE 2 COIN.
+- `SHOW_SCHEDULE_FLYER` — "Northfield Annual Dog Show. All breeds welcome. Clive judging. Bring a brush." Readable prop; no mechanical effect.
+
+### New PropTypes (add to PropType.java)
+
+- `SHOW_RING_PROP` — rope-and-post boundary; spawns at south park on show day.
+- `JUDGES_TABLE_PROP` — Clive's scoring table; unattended 14:00–14:15 (heist window).
+- `WI_STALL_PROP` — Women's Institute tea-and-cake stall.
+- `SHOW_BANNER_PROP` — overhead banner reading "NORTHFIELD ANNUAL DOG SHOW".
+
+### New NPCTypes (verify / add to NPCType.java if absent)
+
+- `SHOW_DOG_OWNER_NPC` — 5 competitors; each has a leashed `SHOW_DOG_NPC`.
+- `SHOW_DOG_NPC` — leashed companion prop-NPC for each owner.
+- `WI_VOLUNTEER_NPC` — Margaret at the WI stall.
+
+### New AchievementTypes (add to AchievementType.java)
+
+- `BEST_IN_SHOW` — win the dog show legitimately (no bribe, no GROOMED-only win: bond ≥ 60 required). Name: "Best in Show". Desc: "Your Staffy beat five pedigrees and a sniffy Labrador. Clive was genuinely moved."
+- `UNDER_THE_TABLE` — successfully bribe Clive without being witnessed. Name: "Under the Table". Desc: "You paid Clive 10 COIN to look the other way. He looked the other way. Very professionally."
+- `OFF_THE_LEAD_AND_OFF_WITH_IT` — steal the Best in Show rosette from the judges' table. Name: "Off the Lead and Off With It". Desc: "The rosette was just sitting there. Clive was eating cake. You did what you had to do."
+- `SABOTEUR_DOG` — successfully sabotage 2 rival dogs in one show day. Name: "Dirty Tricks". Desc: "Two sausage rolls. Two ruined heats. You're a monster. A strategic monster."
+- `GROOMED_TO_WIN` — win the show after grooming the dog (GROOMED flag active at judging). Name: "Best Dressed Beast". Desc: "You brushed him. You entered him. He destroyed the competition. Margaret cried."
+
+### New RumourTypes (add to RumourType.java)
+
+- `BEST_IN_SHOW` — "That Staffy won Best in Show at the dog show. I didn't even know there was a dog show." Seeded on player win.
+- `RIGGED_DOG_SHOW` — "The dog show was rigged. Clive took a bung, apparently. Everyone knows." Seeded if bribe succeeded and player won.
+- `ROSETTE_THEFT` — "Someone nicked the Best in Show rosette at the dog show. Clive is devastated. He bought a frame for it and everything." Seeded on heist.
+
+### Unit Tests (DogShowSystemTest.java)
+
+- `testShowDayTrigger`: call `isShowDay(dayCount)` for `dayCount = 195`, `196` (wrong weekday), `196` (correct Saturday). Verify only the Saturday at day 196 returns true.
+- `testGroomingSetsFlagAndBonus`: adopt dog, bond = 50. Call `groomDog(player)`. Verify `GROOMED` flag true. Verify show score += 15. Advance 121 in-game minutes. Verify `GROOMED` flag still true (2-hour window). Advance to 122 minutes. Verify flag cleared.
+- `testMudRemovesGroomedFlag`: set `GROOMED` = true. Move player onto `MUD_BLOCK`. Call `update(delta)`. Verify `GROOMED` = false.
+- `testBribeJudge`: give player 10 COIN. Call `bribeJudge(player, 10)`. Verify `JUDGE_NPC.BRIBED` = true. Verify player loses 10 COIN. Verify `runJudgingRound()` returns player score = baseScore × 1.5.
+- `testBribeWitnessedByPCSO`: place `NEIGHBOURHOOD_WATCH_NPC` within 8 blocks. Call `bribeJudge(player, 10)`. Verify `BRIBED` = false. Verify WantedSystem increased by 1. Verify player coin unchanged (refunded).
+- `testSabotageReducesRivalScore`: place rival `SHOW_DOG_OWNER_NPC` looking away. Give player `SAUSAGE_ROLL`. Call `sabotageRival(player, rivalOwner)`. Verify rival `SHOW_DOG_NPC` score −20. Verify player `SAUSAGE_ROLL` removed from inventory.
+- `testSabotageSeenByOwnerEjectsPlayer`: set rival owner looking toward player. Call `sabotageRival(player, rivalOwner)`. Verify owner state = `ANGRY`. Verify player ejected from judging (eligibility = false).
+- `testCannotEnterWithHungryDog`: set dog hunger = 10. Call `canEnterShow(player)`. Verify returns false.
+- `testCannotEnterWithoutDog`: no dog adopted. Call `canEnterShow(player)`. Verify returns false.
+- `testCannotEnterWithLowBond`: adopt dog, bond = 30. Call `canEnterShow(player)`. Verify returns false (bond < 40).
+- `testLegitimateWinAchievement`: bond = 70, GROOMED = true, no bribe. Seed 5 rivals with `Random(196 + 1)` all ≤ 80. Call `runJudgingRound()`. Verify player wins. Verify `BEST_IN_SHOW` achievement unlocked. Verify `NewspaperSystem` win flag set.
+- `testRosetteHeistWindow`: advance time to 14:05 (within 14:00–14:15 window). Verify `JUDGES_TABLE_PROP` is unattended (Clive not present). Call `stealRosette(player)`. Verify player receives `BEST_IN_SHOW_ROSETTE_PROP`. Verify Notoriety +6. Verify `ROSETTE_THEFT` rumour seeded.
+- `testRosetteNotStealableOutsideWindow`: advance time to 13:30 (Clive present). Call `stealRosette(player)`. Verify player does NOT receive rosette (Clive present; action blocked).
+- `testWeatherCancellationThunderstorm`: set weather to THUNDERSTORM. Call `update(delta)` at 09:30. Verify no props spawned. Verify `CANCELLED_DOG_SHOW` rumour seeded. Verify `isShowActive()` = false.
+- `testWiStallPurchase`: advance to 10:00. Buy `VICTORIA_SPONGE_SLICE` (2 COIN). Verify player hunger +35. Verify player Warmth +5. Verify player coin −2.
+- `testSaboteurAchievementTwice`: successfully sabotage 2 rivals in same show day. Verify `SABOTEUR_DOG` achievement unlocked.
+
+### Integration Tests (Issue1391DogShowIntegrationTest.java)
+
+1. **Legitimate win pipeline**: Set `dayCount = 196`. Adopt dog; set bond = 65, hunger = 80. Buy `DOG_BRUSH` from CornerShop (2 COIN). Use `DOG_BRUSH` on dog. Verify `GROOMED` flag. Advance time to 10:00. Call `enterCompetition(player)`. Seed 5 rivals with `Random(197)` — verify all base scores ≤ 80. Advance to 13:30. Call `runJudgingRound()`. Verify player score = 65 + 10 + 15 = 90 (bond + base + GROOMED). Verify player is first. Verify player receives `BEST_IN_SHOW_ROSETTE_PROP` and 20 COIN. Verify `BEST_IN_SHOW` and `GROOMED_TO_WIN` achievements unlocked. Verify `BEST_IN_SHOW` rumour seeded. Advance to day+1 18:00. Verify NewspaperSystem headline contains "Best in Show".
+
+2. **Bribe judge, win, rumour seeded**: Set `dayCount = 196`. Adopt dog, bond = 42, hunger = 80, GROOMED = false. Advance to 10:30. Give player 15 COIN. Call `bribeJudge(player, 10)`. Verify `BRIBED` = true, player has 5 COIN. Advance to 13:30. Call `runJudgingRound()`. Seed rivals with `Random(197)` — base scores ≤ 80. Player base = 42 + 10 = 52; ×1.5 = 78. Verify player wins if 78 > all rival scores. Verify `RIGGED_DOG_SHOW` rumour seeded. Verify `UNDER_THE_TABLE` achievement unlocked.
+
+3. **Sabotage two rivals, get ejected on third attempt**: Set `dayCount = 196`. Enter competition. Sabotage rival A (owner looking away) — rival A score −20. Sabotage rival B (looking away) — rival B score −20. Verify `SABOTEUR_DOG` achievement unlocked after second sabotage. Attempt rival C — owner looking at player. Verify player ejected from judging (eligibility = false). Advance to 13:30. Verify player does NOT appear in final results.
+
+4. **Rosette heist and fence to Fence NPC**: Set `dayCount = 196`. Do NOT enter competition. Advance time to 14:05. Locate `JUDGES_TABLE_PROP`. Press E. Verify player receives `BEST_IN_SHOW_ROSETTE_PROP`. Verify Notoriety +6. Verify `ROSETTE_THEFT` rumour seeded. Walk player to `FENCE` NPC. Press E. Verify player receives 10 COIN. Verify `OFF_THE_LEAD_AND_OFF_WITH_IT` achievement unlocked. Verify FENCE XP +1 (StreetSkillSystem).
+
+5. **Thunderstorm cancels show**: Set `dayCount = 196`. Set weather to THUNDERSTORM. Advance to 09:30. Verify `isShowActive()` = false. Verify no `SHOW_RING_PROP`, `JUDGES_TABLE_PROP`, or `WI_STALL_PROP` present in world. Verify `CANCELLED_DOG_SHOW` rumour seeded. Verify `SHOW_DOG_OWNER_NPC` instances = 0.
+
+// ── Issue #1391: Add Northfield Dog Show ─────────────────────────────────────────────────────
+// New: DogShowSystem.java in ragamuffin.core
+// New: DogShowSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1391DogShowIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: DOG_BRUSH, VICTORIA_SPONGE_SLICE, BEST_IN_SHOW_ROSETTE_PROP,
+//   RESERVE_ROSETTE_PROP, THIRD_PLACE_ROSETTE_PROP, SHOW_SCHEDULE_FLYER
+// New PropTypes: SHOW_RING_PROP, JUDGES_TABLE_PROP, WI_STALL_PROP, SHOW_BANNER_PROP
+// New NPCTypes: SHOW_DOG_OWNER_NPC, SHOW_DOG_NPC, WI_VOLUNTEER_NPC
+// New AchievementTypes: BEST_IN_SHOW, UNDER_THE_TABLE, OFF_THE_LEAD_AND_OFF_WITH_IT,
+//   SABOTEUR_DOG, GROOMED_TO_WIN
+// New RumourTypes: BEST_IN_SHOW, RIGGED_DOG_SHOW, ROSETTE_THEFT
+// Integration: DogCompanionSystem, TimeSystem, WantedSystem, NotorietySystem, FactionSystem,
+//   NeighbourhoodSystem, RumourNetwork, NewspaperSystem, StreetSkillSystem, CriminalRecord,
+//   IceCreamVanSystem, WeatherSystem, AchievementSystem, CornerShopSystem, CharityShopSystem
