@@ -572,4 +572,24 @@ public class DogCompanionSystem {
             default:    return 100;
         }
     }
+
+    // ── Testing helpers ───────────────────────────────────────────────────────
+
+    /** Force-adopt a dog for testing (skips inventory check). */
+    public void adoptDogForTesting() {
+        hasDog = true;
+        dogHunger = 100f;
+        dogBondLevel = 0;
+        isOffLead = false;
+    }
+
+    /** Force-set the dog bond level for testing. */
+    public void setDogBondForTesting(int bond) {
+        dogBondLevel = Math.max(0, Math.min(100, bond));
+    }
+
+    /** Force-set the off-lead status for testing. */
+    public void setOffLeadForTesting(boolean offLead) {
+        isOffLead = offLead;
+    }
 }
