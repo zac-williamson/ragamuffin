@@ -1219,5 +1219,23 @@ public enum RumourType {
      * Seeded by StGeorgesDaySystem when player steals MORRIS_STICK_PROP.
      * Triggers all 6 MORRIS_DANCER NPCs to pursue player.
      * Spreads via PUBLIC NPCs. */
-    MORRIS_STICK_THEFT;
+    MORRIS_STICK_THEFT,
+
+    // ── Issue #1390: Northfield Annual Conker Championship ───────────────────
+
+    /** "Someone got disqualified at the conker championship — Derek found a hardened one."
+     * Seeded by ConkerSystem when Derek catches the player with a HARDENED_CONKER.
+     * Triggers Notoriety +2 and CHEATING_AT_CONKERS CriminalRecord entry.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    CONKER_CHEAT_CAUGHT,
+
+    /** "Little Tyler won the conker championship! Nine years old and beat the lot of them."
+     * Seeded by ConkerSystem when Tyler wins the tournament (player threw match or lost).
+     * Triggers NewspaperSystem headline. Spreads via PUBLIC, PENSIONER NPCs. */
+    TYLER_WON_IT,
+
+    /** "Someone's nicked the conker trophy off the prize table. Right under Derek's nose."
+     * Seeded by ConkerSystem when player takes CONKER_TROPHY from TROPHY_TABLE_PROP.
+     * Triggers Notoriety +5. Spreads via PUBLIC, PENSIONER NPCs. */
+    CONKER_TROPHY_NICKED;
 }

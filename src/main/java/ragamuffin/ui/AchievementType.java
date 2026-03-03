@@ -6292,6 +6292,48 @@ public enum AchievementType {
         "Lock-In Legend",
         "Made it to 2am in a Wetherspoons lock-in while the police knocked on the door. Respect.",
         1
+    ),
+
+    // ── Issue #1390: Northfield Annual Conker Championship ────────────────────
+
+    /**
+     * INCOGNITO_CONKER — DisguiseSystem blocks Derek's spot-check during the
+     * Northfield Annual Conker Championship (target=1).
+     */
+    INCOGNITO_CONKER(
+        "Incognito Conker",
+        "Passed Derek's spot-check in full disguise. The vinegar smell nearly gave it away.",
+        1
+    ),
+
+    /**
+     * LET_THE_KID_WIN — player deliberately throws the duel against Tyler (age 9),
+     * granting VIBES +2 (target=1).
+     */
+    LET_THE_KID_WIN(
+        "Let the Kid Win",
+        "You could have smashed Tyler's conker. You chose not to. A rare act of mercy.",
+        1
+    ),
+
+    /**
+     * TOOK_THE_LOT — player steals CONKER_TROPHY from TROPHY_TABLE_PROP during the
+     * unattended heist window 15:30–15:45 while Derek is at Margaret's WI stall (target=1).
+     */
+    TOOK_THE_LOT(
+        "Took the Lot",
+        "Nicked the Conker Championship trophy while Derek was eating a jacket potato.",
+        1
+    ),
+
+    /**
+     * NORTHFIELD_CONKER_CHAMPION — player wins the Northfield Annual Conker
+     * Championship outright, receiving trophy + 25 COIN (target=1).
+     */
+    NORTHFIELD_CONKER_CHAMPION(
+        "Northfield Conker Champion",
+        "Won the Annual Conker Championship fair and square. Well, mostly fair.",
+        1
     );
 
     private final String name;
