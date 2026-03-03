@@ -48235,3 +48235,241 @@ CAUGHT_NICKING_DONATIONS,
 // Integration: NeighbourhoodWatchSystem, NeighbourhoodSystem, CharityShopSystem,
 //   FenceSystem, NewspaperSystem, RumourNetwork, WarmthSystem, TimeSystem,
 //   StreetSkillSystem, CriminalRecord, NotorietySystem, WantedSystem
+
+
+---
+
+## Issue #1363: Add Northfield Sunday Car Boot Sale — The 6am Rush, the Dodgy Vendor & the Stolen Goods Sting
+
+### Overview
+
+Every Sunday morning, the council car park next to Northfield Community Centre transforms into a sprawling car boot sale. Vendors back their Vauxhall Cavaliers, Transit vans, and Ford Mondeos up to numbered pitches and flog tat from their boots: old VHS tapes, mismatched crockery, '90s exercise equipment, and occasionally something genuinely worth having. It runs 06:00–12:00, with a frenzied early-bird hour (06:00–07:00) where experienced punters elbow past each other for first pick. By 10:00 the serious sellers are packing up; by noon the council sends CLIVE_WARDEN to chase off anyone still lingering.
+
+The player can attend as a buyer, set up their own pitch as a vendor (3 COIN pitch fee paid to `BOOT_SALE_ORGANISER` Barry), hunt for hidden gems, fence stolen goods through dodgy vendor Derek (`DODGY_VENDOR` NPC), or trigger a Trading Standards sting if they get greedy.
+
+This is entirely distinct from the existing underground `BootSaleSystem` (which is a clandestine black-market auction on wasteland). The Sunday car boot is a legitimate, busy, public event — but with plenty of scope for criminality under the surface.
+
+---
+
+### Operating Hours & Weather
+
+- **Active**: Sundays only, 06:00–12:00.
+- **Setup phase**: 05:30–06:00 — vendors arrive; player can pay pitch fee early.
+- **Early-bird window**: 06:00–07:00 — public admitted; first-pick rush; item prices at 100% (no discount yet).
+- **Main trading**: 07:00–10:00 — prices start dropping (–10% per in-game hour after 07:00).
+- **Wind-down**: 10:00–12:00 — remaining vendors pack up; desperate sellers accept –40% off.
+- **Cancelled** if weather is `THUNDERSTORM` or `HEAVY_RAIN`.
+- **Reduced** (4 vendors instead of 8) on `FROST` or `COLD_SNAP`.
+
+---
+
+### Venue & Props
+
+The event occupies `COUNCIL_CAR_PARK` landmark (Issue #1329). New prop requirements:
+
+- `BOOT_SALE_TABLE_PROP` — folding table with items spread on it; interactable for browsing.
+- `CAR_BOOT_PROP` — open car boot with items; interactable as an extension of the vendor's stock.
+- `PITCH_MARKER_PROP` — numbered tarmac marking (1–8); shows pitch status (occupied / available).
+- `BOOT_SALE_SIGN_PROP` — hand-painted A-board at the car park entrance: "CAR BOOT SALE TODAY – SELLERS £3, BUYERS FREE".
+
+---
+
+### Key NPCs
+
+#### `BOOT_SALE_ORGANISER` — Barry
+- Collects pitch fees (3 COIN, via `E` interaction) at the car park entrance 05:30–06:15.
+- After 06:15, refuses new vendors ("Sorry love, you've missed it").
+- Passive. Speech: "Pitch 7's free, that one." / "No food vans, it's not a funfair." / "Pack up by noon or I'm calling the council."
+
+#### `BOOT_SALE_VENDOR` (4–8 spawned, named)
+- Each vendor has a seeded stock of 5–10 items drawn from `Material` pool:
+  `VHS_TAPE`, `CROCKERY_SET`, `EXERCISE_BIKE`, `OLD_CURTAINS`, `BOARD_GAME`,
+  `BROKEN_TOASTER`, `PAPERBACK_BOOK`, `CASSETTE_PLAYER`, `GARDEN_GNOME`,
+  `FONDUE_SET` (rare), `BETAMAX_PLAYER` (very rare, fenceable for 15 COIN).
+- Price negotiation: player presses `E` on a vendor to enter dialogue. Offer 60–90% of asking price. Vendor accepts/rejects based on `rng` seeded per vendor per item.
+- Vendor `Derek` (`DODGY_VENDOR`) has a hidden stock of stolen items (`STOLEN_GOODS` flag). At Street Rep ≥ 30, Derek whispers "Got some bits round the back." Side-stock: `LAPTOP`, `POWER_TOOL`, `MOBILE_PHONE`.
+
+#### `BOOT_SALE_PUNTER` (6–12 NPC buyers)
+- Wander between pitches; compete with player for items (snatch items after 30s if player hasn't bought).
+- During early-bird window (06:00–07:00), move at 1.5× speed; aggressive queue-push on crowded tables.
+- PENSIONER punters have first pick of `CROCKERY_SET` and `PAPERBACK_BOOK`.
+- `SCHOOL_KID` punters pester vendors for VHS tapes; distraction opportunity for theft.
+
+#### `TRADING_STANDARDS_OFFICER` — Sandra
+- Spawns at 09:00 with 30% probability, or guaranteed if player sells 3+ `STOLEN_GOODS` items.
+- Patrols pitches; 10-block detection radius for `stolen = true` items on display.
+- Player can bribe Sandra for 8 COIN (Notoriety +4, seeds `CORRUPTION` rumour).
+- On detection: confiscates pitch, adds `TRADING_STANDARDS_BUST` to `CriminalRecord`, Notoriety +10, seeds `LOCAL_SCANDAL` rumour.
+
+---
+
+### Player Mechanics
+
+#### Buying
+- Interact (`E`) with a `BOOT_SALE_TABLE_PROP` or `CAR_BOOT_PROP` to browse 3–5 items.
+- Items displayed with asking price (fluctuating with time-of-day discount).
+- `HAGGLE` action: offer 70% of price. 50% acceptance rate; 20% chance vendor gets annoyed and refuses further haggling this visit (must return after 5 in-game minutes).
+- Items added to `Inventory`; `COIN` deducted.
+- **Gem find**: 5% chance per table browse to find a `FONDUE_SET` (value 12 COIN) or `BETAMAX_PLAYER` (value 15 COIN). These grant `BOOT_SALE_TREASURE` achievement.
+
+#### Selling (Vendor Pitch)
+- Pay 3 COIN pitch fee to Barry before 06:15. Player occupies `PITCH_MARKER_PROP` number 7 (always reserved for player if available).
+- Player places up to 8 items from inventory onto the `BOOT_SALE_TABLE_PROP` via the inventory UI (drag-and-drop or a dedicated "Set up stall" action).
+- Every 2 in-game minutes, a `BOOT_SALE_PUNTER` may purchase one item at asking price (auto-determined by `FenceValuationTable`).
+- Player can manually set prices (50–200% of base value). Higher price → slower sales. Lower price → NPC punters swarm the table.
+- `STOLEN_GOODS` items on display: 20%/min detection by `TRADING_STANDARDS_OFFICER` Sandra if she's present.
+- `BOOT_SALE_SELLER` achievement awarded after first successful sale from pitch.
+
+#### Derek's Back-Stock (Fencing)
+- Approach `DODGY_VENDOR` Derek with Street Rep ≥ 30.
+- Sell stolen items to Derek at 50% of base fence value (lower than `FenceSystem` but no Notoriety penalty — unless `NEIGHBOURHOOD_WATCH` member is within 12 blocks).
+- Buy Derek's stolen stock at 60% markup (resellable for profit at `PawnShopSystem`).
+- If `NeighbourhoodWatchSystem` patrol is active (Tier 2+), there's a 25% chance a WATCH_MEMBER spots the transaction and reports it: Notoriety +6, seeds `STOLEN_GOODS_MARKET` rumour.
+
+#### Early-Bird Rush
+- At exactly 06:00, the gate opens. `BOOT_SALE_PUNTER` NPCs surge to tables.
+- Player can join the rush: sprint to a table within 30 seconds of 06:00 to claim first-pick rights (–15% price bonus).
+- If the player shoves a `PENSIONER` punter aside (sprint collision), Notoriety +2 and `PENSIONER_SHOVED` rumour seeded.
+
+---
+
+### Events
+
+| Event | Trigger | Effect |
+|-------|---------|--------|
+| `TRADING_STANDARDS_STING` | Player sells 3+ stolen items, or Sandra spawns at 09:00 (30% chance) | Pitch confiscated; CriminalRecord entry; Notoriety +10 |
+| `PUNTER_SWARMS_TABLE` | Player sets price < 50% of base | 4+ punters converge; item sold in 10s; chaos, possible theft |
+| `VENDOR_DISPUTE` | Player haggles same vendor 3× unsuccessfully | Vendor NPC becomes AGGRESSIVE; shouts; 30% chance of brawl |
+| `RAIN_STOPS_PLAY` | Weather changes to `HEAVY_RAIN` mid-event | All vendors pack up within 5 in-game minutes; event ends early |
+| `DOG_LEADS_CHAOS` | Player's dog companion approaches any vendor | Vendor speech: "Keep that dog away from me tables!"; crowd scatters slightly |
+| `CLIVE_CLEARS_PITCH` | Still trading after 12:00 | `TRAFFIC_WARDEN` Clive issues PCN and initiates eviction; same mechanics as TrafficWardenSystem |
+
+---
+
+### Integration
+
+- `CharityShopSystem`: Items bought at the boot sale can be donated to `CHARITY_SHOP` (donation box) for +2 Notoriety reduction per item.
+- `PawnShopSystem`: `BETAMAX_PLAYER` and `FONDUE_SET` fenceable at Cash4Gold for 60–70% of value.
+- `FenceSystem`: `DODGY_VENDOR` Derek's back-stock items are priced via `FenceValuationTable`.
+- `NeighbourhoodWatchSystem`: Tier 2+ patrols the car park on Sunday mornings; Tier 3+ has WATCH_MEMBER at the gate.
+- `TrafficWardenSystem`: Clive patrols `COUNCIL_CAR_PARK` until 08:00 before being reassigned for the sale; returns at 12:00 sharp.
+- `WeatherSystem`: Thunderstorm/heavy rain cancels; frost reduces vendor count.
+- `DogCompanionSystem`: Dog causes `DOG_LEADS_CHAOS` event at any vendor table.
+- `RumourNetwork`: Multiple rumour seeds (see events table).
+- `NotorietySystem`: Thefts, stolen goods sales, pensioner shoving all add notoriety.
+- `CriminalRecord`: `TRADING_STANDARDS_BUST` crime type added.
+- `StreetSkillSystem`: Successful haggling grants TRADING XP (+5/haggle win); early-bird first pick grants AWARENESS XP (+10).
+- `TimeSystem`: Sunday 06:00–12:00 window.
+- `NewspaperSystem`: `TRADING_STANDARDS_BUST` seeds "Local man's car boot stall raided by Trading Standards" headline.
+
+---
+
+### New Types Required
+
+**New NPCType** (add to `NPCType.java`):
+```
+BOOT_SALE_ORGANISER(20f, 0f, 0f, false), // Barry — collects pitch fees at gate; passive
+DODGY_VENDOR(25f, 0f, 0f, false),        // Derek — sells stolen back-stock; passive until confronted
+BOOT_SALE_VENDOR(20f, 0f, 0f, false),    // Generic vendor NPC; 4–8 spawn per event
+BOOT_SALE_PUNTER(20f, 0f, 0f, false),    // Buyer NPC; competes with player
+TRADING_STANDARDS_OFFICER(30f, 0f, 0f, false), // Sandra — patrols for stolen goods
+```
+
+**New Materials** (add to `Material.java`):
+```
+VHS_TAPE("VHS Tape"),                   // Common junk; worth 1 COIN; nostalgic flavour
+CROCKERY_SET("Crockery Set"),           // Common junk; worth 2 COIN
+BOARD_GAME("Board Game"),               // Common junk; 1–3 COIN
+BETAMAX_PLAYER("Betamax Player"),       // Rare; fenceable 15 COIN
+FONDUE_SET("Fondue Set"),               // Uncommon gem; fenceable 12 COIN
+GARDEN_GNOME("Garden Gnome"),           // Decoration item; worth 1 COIN; throwable as distraction
+CASSETTE_PLAYER("Cassette Player"),     // Worth 2 COIN; gives BUSKING XP if used near BUSKER
+```
+
+**New PropType** (add to `PropType.java`):
+```
+BOOT_SALE_TABLE_PROP,    // Folding table; browseable stock
+CAR_BOOT_PROP,           // Open car boot; browseable stock
+PITCH_MARKER_PROP,       // Numbered tarmac pitch (1–8)
+BOOT_SALE_SIGN_PROP,     // A-board at entrance
+```
+
+**New RumourTypes** (add to `RumourType.java`):
+```
+/** "Someone's flogging nicked gear at the Sunday car boot — bold as brass."
+ * Seeded on 3+ stolen item sales at player pitch. Spreads via PENSIONER and PUBLIC NPCs. */
+STOLEN_GOODS_MARKET,
+
+/** "That lad at the car boot proper shoved an old dear out the way for first dibs."
+ * Seeded on PENSIONER_SHOVED event. Spreads via PENSIONER NPCs; increases NeighbourhoodWatch anger. */
+PENSIONER_SHOVED,
+```
+
+**New AchievementTypes** (add to `AchievementType.java`):
+```
+BOOT_SALE_TREASURE("Boot Sale Treasure",
+    "Found something worth having in a sea of tat.", 1),
+BOOT_SALE_SELLER("Sunday Trader",
+    "Shifted your first bit of junk at the car boot.", 1),
+FIRST_PICK("Early Bird",
+    "First to the tables at the Sunday car boot. Elbows and all.", 1),
+BOOT_SALE_HUSTLER("Market Value",
+    "Bought from the car boot and flipped it at the pawn shop for profit.", 1),
+```
+
+**New CrimeTypes** (add to `CriminalRecord.java`):
+```
+TRADING_STANDARDS_BUST,
+```
+
+---
+
+### New Java Files
+- `CarBootSaleSystem.java` in `ragamuffin.core` — main system
+- `CarBootSaleSystemTest.java` in `src/test/java/ragamuffin/core/`
+- `Issue1363CarBootSaleIntegrationTest.java` in `src/test/java/ragamuffin/integration/`
+
+---
+
+### Unit Tests
+- `testPitchFeeDeducted`: Pay 3 COIN fee to Barry before 06:15; verify COIN reduced by 3 and `pitchActive = true`.
+- `testPitchFeeLateRejected`: Attempt to pay after 06:15; verify Barry refuses and COIN unchanged.
+- `testBuyItemHagglingAccepted`: Set vendor `rng` to always accept; offer 70% price; verify item in inventory and correct COIN deducted.
+- `testHagglingRefusal`: Set vendor `rng` to always refuse; offer 70% price 3×; verify `vendorAggravated = true` on third attempt.
+- `testTimePriceDiscount`: At 08:00 (1h into main trading), verify item price is 90% of base. At 10:00, verify 60% of base.
+- `testPunterCompetesForItem`: Place item on table; advance 30 seconds without player purchase; verify item removed by PUNTER NPC.
+- `testDerekBackStockRequiresStreetRep`: At Street Rep 29, verify Derek's back-stock unavailable. At 30, verify accessible.
+- `testTradingStandardsStingOnThreeItems`: Sell 3 stolen items from pitch; verify `TRADING_STANDARDS_BUST` in CriminalRecord; Notoriety increased by 10.
+- `testEarlyBirdFirstPickDiscount`: Player arrives at table within 30s of 06:00; verify –15% price applied.
+- `testDogCompanionChaosEvent`: Set `dogCompanionSystem.isFollowing() = true`; player approaches vendor; verify `DOG_LEADS_CHAOS` event flag; vendor speech triggered.
+- `testWeatherCancellation`: Set weather to `THUNDERSTORM`; verify `isSaleActive()` returns false.
+- `testVendorDisputeBrawl`: Force `rng` to trigger brawl after 3 failed haggles; verify vendor NPC state = `ATTACKING`.
+- `testGemFindAchievement`: Force `rng` to yield `BETAMAX_PLAYER` on browse; verify `BOOT_SALE_TREASURE` achievement unlocked.
+
+---
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full Sunday morning sale**: Set time to Sunday 06:00. Verify `BOOT_SALE_SIGN_PROP` exists within 5 blocks of `COUNCIL_CAR_PARK` landmark. Verify 4–8 `BOOT_SALE_VENDOR` NPCs have spawned with stock. Verify 6–12 `BOOT_SALE_PUNTER` NPCs active. Player browses a `BOOT_SALE_TABLE_PROP` within 30 seconds; verify item list is non-empty and prices reflect early-bird (no discount yet).
+
+2. **Player sells stolen goods and triggers Trading Standards**: Player pays 3 COIN pitch fee. Place 3 items with `stolen = true` on pitch table. Verify `TRADING_STANDARDS_OFFICER` Sandra spawns within 5 in-game minutes. Force `getDetectionCheck()` to return true. Verify `TRADING_STANDARDS_BUST` in `CriminalRecord`. Verify Notoriety increased by 10. Verify `STOLEN_GOODS_MARKET` rumour seeded in `RumourNetwork`. Verify `NewspaperSystem.hasPendingHeadline()` is true next morning.
+
+3. **Derek's back-stock fence transaction**: Set player Street Rep = 35. Approach `DODGY_VENDOR` NPC Derek. Verify back-stock contains at least one item with `stolen = true`. Player buys `LAPTOP` at Derek's price (60% markup on base fence value). Verify `LAPTOP` in player inventory. Verify COIN deducted by correct amount. Player then sells `LAPTOP` to `PawnShopSystem`; verify profit margin is positive.
+
+4. **Early-bird rush — first pick discount**: Set time to Sunday 05:59. At 06:00, simulate player sprint to nearest `BOOT_SALE_TABLE_PROP` within 30 seconds. Verify `firstPickBonus = true`. Verify item price presented to player is 85% of base (–15% discount). Verify `FIRST_PICK` achievement unlocked.
+
+5. **Weather cancels event**: Set time to Sunday 05:30 with weather `THUNDERSTORM`. Verify `isSaleActive()` returns false. Verify no `BOOT_SALE_VENDOR` NPCs spawned. Verify no `BOOT_SALE_TABLE_PROP` props placed at `COUNCIL_CAR_PARK`. Change weather to `CLEAR` and re-check at 06:00 — verify sale activates normally.
+
+// ── Issue #1363: Add Northfield Sunday Car Boot Sale ─────────────────────────────────────────────────
+// New: CarBootSaleSystem.java in ragamuffin.core
+// New: CarBootSaleSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1363CarBootSaleIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: BOOT_SALE_ORGANISER, DODGY_VENDOR, BOOT_SALE_VENDOR, BOOT_SALE_PUNTER, TRADING_STANDARDS_OFFICER
+// New Materials: VHS_TAPE, CROCKERY_SET, BOARD_GAME, BETAMAX_PLAYER, FONDUE_SET, GARDEN_GNOME, CASSETTE_PLAYER
+// New PropTypes: BOOT_SALE_TABLE_PROP, CAR_BOOT_PROP, PITCH_MARKER_PROP, BOOT_SALE_SIGN_PROP
+// New RumourTypes: STOLEN_GOODS_MARKET, PENSIONER_SHOVED
+// New CrimeTypes: TRADING_STANDARDS_BUST
+// New AchievementTypes: BOOT_SALE_TREASURE, BOOT_SALE_SELLER, FIRST_PICK, BOOT_SALE_HUSTLER
+// Integration: NeighbourhoodWatchSystem, CharityShopSystem, PawnShopSystem, FenceSystem,
+//   TrafficWardenSystem, WeatherSystem, DogCompanionSystem, RumourNetwork, NotorietySystem,
+//   CriminalRecord, StreetSkillSystem, TimeSystem, NewspaperSystem
