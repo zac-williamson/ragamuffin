@@ -477,8 +477,7 @@ public class TattooSystem {
                 break;
             case MUM:
                 if (neighbourhoodWatchSystem != null) {
-                    int currentVibes = neighbourhoodWatchSystem.getVibes();
-                    neighbourhoodWatchSystem.setVibes(currentVibes + MUM_COMMUNITY_RESPECT);
+                    neighbourhoodWatchSystem.addAnger(-MUM_COMMUNITY_RESPECT);
                 }
                 break;
             case NORTHFIELD_4_EVER:
@@ -683,8 +682,7 @@ public class TattooSystem {
 
         // Community Respect bonus
         if (neighbourhoodWatchSystem != null) {
-            int currentVibes = neighbourhoodWatchSystem.getVibes();
-            neighbourhoodWatchSystem.setVibes(currentVibes + TIP_OFF_COMMUNITY_RESPECT);
+            neighbourhoodWatchSystem.addAnger(-TIP_OFF_COMMUNITY_RESPECT);
         }
 
         if (achievementSystem != null) {
