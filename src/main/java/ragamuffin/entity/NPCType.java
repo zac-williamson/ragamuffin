@@ -2850,7 +2850,26 @@ public enum NPCType {
      * raid at 06:30), Derek arrives with 2× HMRC_INSPECTOR + enforcement officer.
      * HP: 40f, attack: 5f, cooldown: 1.5f, hostile: false (becomes hostile only on assault).
      */
-    DISTRAINT_OFFICER(40f, 5f, 1.5f, false);
+    DISTRAINT_OFFICER(40f, 5f, 1.5f, false),
+
+    // ── Issue #1361: Northfield St. Margaret's Church Hall Jumble Sale ─────────
+
+    /**
+     * VICAR — Reverend Dave, the cheerfully incompetent auctioneer and donation
+     * drop-off manager at St. Margaret's Church Hall. Runs the donation volunteer
+     * shift 08:00–09:00 and the Mystery Box auction at 12:00. Passive (never
+     * attacks). Can be bribed with 5 COIN to reveal the SCORE mystery box.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    VICAR(20f, 0f, 0f, false),
+
+    /**
+     * CHURCH_LADY — one of two till operators at St. Margaret's Church Hall jumble
+     * sale. Acts as an unwitting fence intermediary; buys items at 60% fence value
+     * (no questions asked, up to 3 items per session). Seeds COMMUNITY_WIN rumours.
+     * HP: 15f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    CHURCH_LADY(15f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -5781,7 +5781,49 @@ public enum Material {
      * Crafted from COIN (10) + BROWN_ENVELOPE (already in inventory if available).
      * Tooltip: "A discreet envelope. Best offered quietly."
      */
-    CASH_BRIBE_ENVELOPE("Cash Bribe Envelope");
+    CASH_BRIBE_ENVELOPE("Cash Bribe Envelope"),
+
+    // ── Issue #1361: Northfield St. Margaret's Church Hall Jumble Sale ─────────
+
+    /**
+     * JAM_JAR — Margaret's homemade jam sold at St. Margaret's jumble sale till.
+     * Costs 2 COIN. Consuming restores 20 hunger. Can be thrown at a PENSIONER
+     * crowd as a distraction, causing STARTLED state and a 15-second unattended
+     * stall window. Stealing without paying: PETTY_THEFT + Margaret HOSTILE.
+     * Tooltip: "Homemade jam. Goes well on toast. Or as a projectile."
+     */
+    JAM_JAR("Homemade Jam"),
+
+    /**
+     * MYSTERY_BOX — sealed auction container used in the noon Mystery Box Auction
+     * at St. Margaret's. Three spawn at 11:00 near Reverend Dave. Contains random
+     * loot: junk / useful / SCORE tier (DIAMOND, WAR_MEDAL, STOLEN_PHONE).
+     * Cannot be sold before opening; opens on auction win.
+     */
+    MYSTERY_BOX("Mystery Box"),
+
+    /**
+     * BAIT_ITEM — planted inside a MYSTERY_BOX_PROP before 11:00 using a STEALTH
+     * approach (requires Notoriety < 30) to inflate NPC bids on that box by ×1.5,
+     * driving it out of NPC budget and letting the player win the other cheaply.
+     * Tooltip: "Looks tempting. That's the point."
+     */
+    BAIT_ITEM("Planted Bait"),
+
+    /**
+     * VALUABLE_DONATION — high-value item skimmed from donation bags during the
+     * volunteer sort shift (08:00–09:00). Worth 3× normal fence value. If Reverend
+     * Dave catches the player pocketing one (15% risk): CAUGHT_NICKING_DONATIONS
+     * crime + Notoriety +8 + 7-day volunteer ban.
+     */
+    VALUABLE_DONATION("Valuable Donation"),
+
+    /**
+     * JUMBLE_FIND — random low-value item yielded from sorting donation bags during
+     * the volunteer shift. 40% chance per sort action. No crime risk; honest perk
+     * of volunteering.
+     */
+    JUMBLE_FIND("Jumble Find");
 
     private final String displayName;
 
