@@ -1024,6 +1024,17 @@ public class NeighbourhoodSystem {
         this.previousVibesState = getCurrentVibesState();
     }
 
+    /**
+     * Add (or subtract) a delta to the current Vibes score, clamping to [0, 100].
+     * Used by external systems (e.g. DefibrillatorSystem) to adjust neighbourhood
+     * mood without a full recalculation.
+     *
+     * @param delta positive to improve vibes, negative to reduce them
+     */
+    public void addVibes(int delta) {
+        setVibes(this.vibes + delta);
+    }
+
     /** Returns the current VibesState based on the Vibes score. */
     public VibesState getCurrentVibesState() {
         if (vibes >= VIBES_THRIVING) return VibesState.THRIVING;

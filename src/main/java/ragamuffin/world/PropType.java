@@ -4385,7 +4385,39 @@ public enum PropType {
      * litter pick event. Press E with LITTER_PICKER_STICK equipped to collect.
      * Spawned by LitterPickSystem (10–18 per event). Drops nothing when collected.
      */
-    LITTER_PROP(0.30f, 0.05f, 0.30f, 1, null);
+    LITTER_PROP(0.30f, 0.05f, 0.30f, 1, null),
+
+    // ── Issue #1479: Northfield Public Defibrillator ───────────────────────────
+
+    /**
+     * DEFIBRILLATOR_CABINET_PROP — a bright green defibrillator cabinet bolted to the
+     * wall outside the community centre. Press E to enter the 4-digit code (1984).
+     * Contains DEFIBRILLATOR_UNIT + 3× COPPER_CABLE. Inspected by Denise weekly.
+     * Collision: 0.50w × 0.80h × 0.20d. Health: 10 hits. Drops nothing on destruction.
+     */
+    DEFIBRILLATOR_CABINET_PROP(0.50f, 0.80f, 0.20f, 10, null),
+
+    /**
+     * CPR_SESSION_PROP — a placeholder prop placed at the community centre during a
+     * CPR training session. Marks the active session area (4-block radius).
+     * Present only while a CPR session is running; removed on completion or abandonment.
+     */
+    CPR_SESSION_PROP(0.30f, 0.05f, 0.30f, 1, null),
+
+    /**
+     * CPR_MANNEQUIN_PROP — a CPR training mannequin stolen from the sports store
+     * cupboard. Required prop for the CPR training session mechanic.
+     * Collision: 0.50w × 0.60h × 0.30d. Health: 4 hits. Drops nothing.
+     */
+    CPR_MANNEQUIN_PROP(0.50f, 0.60f, 0.30f, 4, null),
+
+    /**
+     * NOTICE_OF_DEFICIENCY_PROP — a council notice posted after a looted defibrillator
+     * cabinet combined with a nearby cardiac death. Spawned by EnvironmentalHealthSystem.
+     * Causes NeighbourhoodSystem Vibes −3/day while present.
+     * Show to Gary (ClaimsManagementSystem) for a 12 COIN emotional distress payout.
+     */
+    NOTICE_OF_DEFICIENCY_PROP(0.40f, 0.60f, 0.05f, 2, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

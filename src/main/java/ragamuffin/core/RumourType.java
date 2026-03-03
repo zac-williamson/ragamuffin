@@ -1712,5 +1712,22 @@ public enum RumourType {
     /** "That litter pick on Saturday — apparently someone hid something nasty in their bag. Police were called."
      * — seeded by LitterPickSystem on the Crack Pipe Incident (player or volunteer bag reveal).
      * Spreads via PUBLIC, PENSIONER, and BARMAN NPCs; triggers a brief crime-scene rumour surge. */
-    SCANDAL_RUMOUR;
+    SCANDAL_RUMOUR,
+
+    // ── Issue #1479: Northfield Public Defibrillator ───────────────────────────
+
+    /** "Someone used the defibrillator on that bloke who collapsed outside the Co-op. Saved his life."
+     * — seeded by DefibrillatorSystem when the player successfully revives a CARDIAC_VICTIM.
+     * Spreads via PUBLIC, PENSIONER, and BARMAN NPCs; reduces Notoriety by 10 passively. */
+    DEFIB_HERO,
+
+    /** "That defibrillator outside the community centre — useless. Someone collapsed, nobody used it."
+     * — seeded by DefibrillatorSystem when a CARDIAC_VICTIM's timer expires with nobody intervening.
+     * Spreads via PUBLIC, PENSIONER, and NEIGHBOURHOOD_WATCH NPCs; adds Notoriety +3 if player was nearby. */
+    DEFIB_UNUSED,
+
+    /** "The defibrillator cabinet's been raided — someone nicked the cables. They're actually dangerous."
+     * — seeded by DefibrillatorSystem when a CARDIAC_VICTIM dies because the copper cable was missing.
+     * Spreads via PUBLIC, PENSIONER, COUNCIL_WORKER, and POLICE NPCs; raises Notoriety +15. */
+    DEFIB_SABOTAGED;
 }

@@ -3419,7 +3419,25 @@ public enum NPCType {
      * ROUGH_SLEEPER sub-type lingers when hub closes; can be escorted out or
      * stood up for (player's choice). HP: 15, attack: 0, cooldown: 0, not hostile.
      */
-    WARM_HUB_VISITOR(15f, 0f, 0f, false);
+    WARM_HUB_VISITOR(15f, 0f, 0f, false),
+
+    // ── Issue #1479: Northfield Public Defibrillator ───────────────────────────
+
+    /**
+     * CARDIAC_VICTIM — a PUBLIC or PENSIONER NPC who has collapsed from a cardiac
+     * event. Spawned by DefibrillatorSystem at 2% chance per in-game hour.
+     * Has a 5-minute timer; player must apply defibrillator before it expires.
+     * Not hostile; cannot move. HP: 1, attack: 0, cooldown: 0.
+     */
+    CARDIAC_VICTIM(1f, 0f, 0f, false),
+
+    /**
+     * CPR_STUDENT — an NPC who arrives for a player-run CPR training session.
+     * 3–6 spawn at the community centre notice board the evening after the player
+     * pins a CPR_TRAINING_FLYER. Pay 5 COIN each; expect 60 seconds of instruction.
+     * HP: 20, attack: 0, cooldown: 0, not hostile.
+     */
+    CPR_STUDENT(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

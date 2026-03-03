@@ -7022,7 +7022,53 @@ public enum Material {
      * Achievement: SHIRLEY_S_FAVOURITE on receipt.
      * Tooltip: "Victoria sponge. Shirley says it's her mum's recipe."
      */
-    HOMEMADE_CAKE_SLICE("Homemade Cake Slice");
+    HOMEMADE_CAKE_SLICE("Homemade Cake Slice"),
+
+    // ── Issue #1479: Northfield Public Defibrillator ───────────────────────────
+
+    /**
+     * DEFIBRILLATOR_UNIT — the portable defibrillator from the community cabinet.
+     * Retrieved by entering the correct code (1984) on DEFIBRILLATOR_CABINET_PROP.
+     * Used on a CARDIAC_VICTIM (6-second hold): Notoriety −10, NeighbourhoodVibes +5.
+     * If cable is missing: use time ×3, 25% chance of total failure.
+     * Tooltip: "Northfield Community Defibrillator. Phil registered it. Phil moved to Stoke."
+     */
+    DEFIBRILLATOR_UNIT("Defibrillator Unit"),
+
+    /**
+     * COPPER_CABLE — the internal copper wiring from the defibrillator cabinet.
+     * Yields 3 per cabinet opening. Scrap value 4 COIN each at the scrapyard.
+     * Can be crafted into REWIRED_EXTENSION_LEAD (car boot value 8 COIN).
+     * Taking it adds CrimeType.CABINET_THEFT and Notoriety +5.
+     * If cable is missing when a cardiac event fires, defibrillator use time triples
+     * and there is a 25% chance of total failure.
+     * Tooltip: "Copper cable. Technically it belongs to the defibrillator."
+     */
+    COPPER_CABLE("Copper Cable"),
+
+    /**
+     * CPR_TRAINING_FLYER — crafted from BLANK_PAPER + MARKER_PEN.
+     * Pin to community centre notice board to schedule a CPR training session.
+     * The following evening 3–6 CPR_STUDENT NPCs will arrive and pay 5 COIN each.
+     * Tooltip: "Learn CPR! Community Centre, 7pm. Bring £5. Cert included."
+     */
+    CPR_TRAINING_FLYER("CPR Training Flyer"),
+
+    /**
+     * CPR_CERTIFICATE — awarded to each CPR_STUDENT who completes the session.
+     * Player receives one per student on successful course completion.
+     * Achievement: COMMUNITY_FIRST_AIDER on first completion.
+     * Tooltip: "Certified First Aider (CPR). Signed by the instructor."
+     */
+    CPR_CERTIFICATE("CPR Certificate"),
+
+    /**
+     * REWIRED_EXTENSION_LEAD — crafted from COPPER_CABLE.
+     * Looks legitimate; sells for 8 COIN at car boot sales.
+     * If inspected, reveals it was wired from a public defibrillator cabinet.
+     * Tooltip: "Extension lead. Very well-made, actually."
+     */
+    REWIRED_EXTENSION_LEAD("Rewired Extension Lead");
 
     private final String displayName;
 

@@ -1352,7 +1352,21 @@ public class CriminalRecord {
          * Penalty: no additional Notoriety; reward is halved to
          * {@link ragamuffin.core.ClosingDownSaleSystem#TS_CONFLICT_REWARD_COINS}.
          */
-        CAUTION("Caution (conflict of interest — TS tip-off after shill work)");
+        CAUTION("Caution (conflict of interest — TS tip-off after shill work)"),
+
+        // ── Issue #1479: Northfield Public Defibrillator ─────────────────────────
+
+        /**
+         * CABINET_THEFT — recorded when the player takes COPPER_CABLE from the
+         * public defibrillator cabinet. Notoriety +5.
+         */
+        CABINET_THEFT("Theft from public defibrillator cabinet"),
+
+        /**
+         * FRAUD — recorded when the player abandons a CPR training session mid-course,
+         * triggering student refund demands. Each abandonment adds one count.
+         */
+        DEFIB_CPR_FRAUD("Fraud (abandoned CPR training session, students demand refund)");
 
         private final String displayName;
 
