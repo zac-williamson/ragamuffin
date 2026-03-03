@@ -56945,3 +56945,125 @@ At the edge of the park, behind a low privet hedge and a chipped white-painted g
 5. **Tournament champion receives prize and trophy**: create system; advance to Tournament day at 14:00; call `enterTournament(player, inventory)`; seed rng to guarantee player wins all 3 rounds; call `resolveTournament(rng)`; verify `inventory.getItemCount(Material.COIN)` increased by `TOURNAMENT_PRIZE`; verify `inventory.contains(Material.BOWLS_TROPHY)` == true; verify `achievementSystem` received `NORTHFIELD_BOWLS_CHAMPION`.
 
 // `BowlsClubSystem.java` must be created as the sole new source file. Integrates with `BattleBarMiniGame` (end timing mechanics), `FenceSystem` (jack/weighted bowl trade), `NotorietySystem`, `WantedSystem`, `CriminalRecord` (new `CHEATING_AT_BOWLS` crime type), `RumourNetwork`, `NeighbourhoodSystem`, `WeatherSystem` (closing hours), `TimeSystem`, `AchievementSystem`, and `SquatFurnishingTracker` (trophy placement). New `NPCType` entries: `BOWLS_CLUB_SECRETARY`, `BOWLS_RIVAL`, `BOWLS_CLUB_PLAYER`, `BOWLS_SPECTATOR`. New `Material` entries: `BOWLS_SET`, `STOLEN_BOWLS_SET`, `JACK`, `CHAMPIONSHIP_JACK`, `WEIGHTED_BOWL`, `BOWLS_TROPHY`, `BOWLS_CLUB_MEMBERSHIP`. New `PropType` entries: `BOWLS_GREEN_PROP`, `PAVILION_PROP`, `BOWLS_BAG_PROP`, `BOWLS_TROPHY_CABINET_PROP`. New `RumourType` entries: `BOWLS_GRUDGE_MATCH`, `MISSING_JACK`, `CHAMPIONSHIP_SABOTAGE`, `BOWLS_DYNASTY`. New `AchievementType` entries: `CARD_CARRYING_MEMBER`, `PARKS_DEPARTMENT_BOOKIE`, `LOADED_JACK`, `FINDERS_KEEPERS`, `NORTHFIELD_BOWLS_CHAMPION`, `THE_DYNASTY`. `LandmarkType.BOWLS_CLUB` must be added to `LandmarkType.java`. `CrimeType.CHEATING_AT_BOWLS` must be added to `CriminalRecord.java`. `NPCType.PCSO` already exists. `Material.SCREWDRIVER` already exists. `FenceSystem` already handles trade.
+
+---
+
+## Issue #1485 — Northfield Milk Float — Dave's Round, the Bottle Racket & the Silent Getaway
+
+At 05:30 every morning, a cream-coloured electric milk float trundles out of the Northfield Dairy Depot (`LandmarkType.MILK_DEPOT`) on the edge of the industrial estate and winds through the residential streets at a top speed of 5 km/h. Dave (`NPCType.MILK_FLOAT_DRIVER`) has been doing this round for twenty-two years. He is quiet, philosophical, and almost certainly dealing in something on the side. The float is silent — its electric motor makes it the only thing in Northfield that doesn't announce its own arrival. In the wrong hands, this is a significant advantage.
+
+`MilkFloatSystem` manages `LandmarkType.MILK_DEPOT` and the daily patrol route of Dave's float (`PropType.MILK_FLOAT_PROP`).
+
+### Mechanic 1 — Dave's Round (05:30–07:30)
+
+- Dave departs the depot at 05:30 with `ROUND_CRATE_COUNT` = 12 crates of milk bottles (`PropType.MILK_CRATE_PROP`), each holding `BOTTLES_PER_CRATE` = 6 `Material.MILK_BOTTLE` items.
+- Float follows a fixed 12-stop patrol route (residential street `LETTERBOX_PROP` targets, same as NewsagentSystem paper round houses). Dave's float moves at `FLOAT_SPEED_BLOCKS_PER_SECOND` = 1.5f.
+- At each house Dave parks, walks 3 blocks to the step, places 1–2 bottles, returns. Full delivery loop takes `DELIVERY_PAUSE_SECONDS` = 8.0f per stop.
+- Weather effects: `FROST` or `COLD_SNAP` → bottles left on step have a 30% chance of freezing (`Material.FROZEN_MILK_BOTTLE`). Frozen milk is inedible as-is but can be thawed in `CampfireSystem` or `GreasySpoonSystem`.
+- Dave's float returns to depot by 07:30. If player has stolen or damaged the float and it cannot return, Dave walks back on foot — takes `DAVE_WALK_BACK_SECONDS` = 300f — and seeds `RumourType.FLOAT_NICKED` (Vibes −3).
+
+### Mechanic 2 — The Milk Round Job
+
+- Sign up at `PropType.DEPOT_NOTICEBOARD_PROP` inside the depot (accessible from 04:30–05:20 only). Receive `Material.MILK_ROUND_CARD`.
+- With `MILK_ROUND_CARD` in inventory, player can accompany Dave on the float and perform deliveries by pressing E at each house target within `DELIVERY_RADIUS` = 3.0f blocks.
+- Complete all 12 deliveries before Dave reaches them: earn `ROUND_PAY` = 6 COIN, Notoriety −1, `AchievementType.MILK_ROUND_HERO`. Miss more than 4 stops: Dave grumbles, pay docked to 3 COIN.
+- Night delivery bonus: complete the full round on a night where `WeatherSystem` temperature < 2°C → bonus 2 COIN + `RumourType.HARD_WORKER_RUMOUR` seeded (Vibes +1).
+- Banned from round if caught stealing bottles three times in one week (7-day ban, `MILK_ROUND_BAN_DAYS` = 7).
+
+### Mechanic 3 — Stealing Milk
+
+- Bottles left on doorsteps are live loot for `DOORSTEP_LOOT_WINDOW_SECONDS` = 45.0f after Dave places them.
+- Picking up a bottle before the household NPC collects it: `CrimeType.MILK_THEFT` (minor; Notoriety +1 per bottle if witnessed by any awake NPC within `WITNESS_RADIUS` = 10.0f blocks). After-hours NPCs (`INSOMNIAC_PENSIONER` Norman, `MILK_FLOAT_DRIVER` Dave himself) count as witnesses.
+- `Material.MILK_BOTTLE` heals 2 HP. Can be sold to `FenceSystem` for 1 COIN each, or to `GreasySpoonSystem` for 2 COIN each (greasy spoon pays a premium for bulk dairy).
+- `STOLEN_MILK_CRATE` (`Material.MILK_CRATE_STOLEN`): if player steals a full crate off the float (hold E for `CRATE_STEAL_SECONDS` = 4.0f while float is parked), receives 6 `MILK_BOTTLE` items. Dave notices missing crate with `CRATE_NOTICE_CHANCE` = 0.70f — if noticed, Notoriety +4, `CrimeType.THEFT`, and `WantedSystem` +1. If 3 crates stolen in one session: `RumourType.FLOAT_LOOTED` seeded, NeighbourhoodSystem Vibes −2, Dave becomes mildly hostile for remainder of day. Achievement `FULL_CRATE_BANDIT` on stealing first complete crate undetected.
+
+### Mechanic 4 — Jacking the Float
+
+- The float is left running unattended for `FLOAT_UNATTENDED_SECONDS` = 60.0f while Dave makes a delivery (he leaves keys in).
+- Player can climb aboard (press E on `MILK_FLOAT_PROP`) and drive the float. The float uses the same `CarDrivingSystem` controls but at `FLOAT_MAX_SPEED` = 5.0f (blocks/sec), one-third of a normal car's speed. Handling is sluggish: `FLOAT_TURN_RADIUS` = 4.0f.
+- Crashing the float into a wall or NPC: each crate on board has a `CRASH_BOTTLE_SMASH_CHANCE` = 0.50f per bottle (broken glass, lost loot). Crashing into an NPC: NPC becomes `NPCState.HOSTILE` if unhurt, injured if health < 20f.
+- Drive the float to the `FenceSystem` (scrapyard) to sell it for `FLOAT_SCRAP_VALUE` = 18 COIN. `CrimeType.VEHICLE_THEFT`, Notoriety +8, WantedSystem +2. Achievement `MILK_RUN_GONE_WRONG` on first float theft.
+- The float is nearly silent: police-detection radius for driving it is reduced by 50% compared to a car. This makes it ideal for quiet early-morning getaways. If player has active WantedLevel ≥ 2 and evades police for `FLOAT_EVASION_SECONDS` = 120f while driving the float: Achievement `ELECTRIC_GETAWAY`.
+
+### Mechanic 5 — The Depot Break-In
+
+- The Milk Depot (`LandmarkType.MILK_DEPOT`) is locked 07:30–04:30. A rusted padlock on `PropType.DEPOT_SIDE_DOOR_PROP` can be broken with 6 CROWBAR hits or picked with a STOLEN_KEYS variant.
+- Inside: walk-in fridge (`PropType.WALK_IN_FRIDGE_PROP`) containing `DEPOT_FRIDGE_BOTTLES` = 48 `MILK_BOTTLE` items. Each taken: `CrimeType.BURGLARY`, Notoriety +2 per entry (flat, not per bottle). Alarm triggers after `DEPOT_ALARM_SECONDS` = 30.0f if player is still inside.
+- Dave's back office: `PropType.DEPOT_OFFICE_DESK_PROP` holds a `Material.FLOAT_KEYS_DUPLICATE` (allows driving any float without the E-hold wait), a `Material.FLOAT_MANIFEST` (reveals all 12 delivery addresses — helps optimise paper round), and `DEPOT_CASHBOX_COIN` = 10–15 COIN in a till.
+- Locking the door on the way out (requires `FLOAT_KEYS_DUPLICATE` or SCREWDRIVER to re-engage lock) reduces `CrimeType.BURGLARY` Notoriety by 2 (Vibes penalty halved — "tidy burglar" logic).
+- Achievement `DEPOT_RAIDER` on first successful depot break-in.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `ROUND_CRATE_COUNT` | 12 |
+| `BOTTLES_PER_CRATE` | 6 |
+| `FLOAT_SPEED_BLOCKS_PER_SECOND` | 1.5f |
+| `DELIVERY_PAUSE_SECONDS` | 8.0f |
+| `DELIVERY_RADIUS` | 3.0f |
+| `ROUND_PAY` | 6 |
+| `MILK_ROUND_BAN_DAYS` | 7 |
+| `DOORSTEP_LOOT_WINDOW_SECONDS` | 45.0f |
+| `WITNESS_RADIUS` | 10.0f |
+| `CRATE_STEAL_SECONDS` | 4.0f |
+| `CRATE_NOTICE_CHANCE` | 0.70f |
+| `FLOAT_UNATTENDED_SECONDS` | 60.0f |
+| `FLOAT_MAX_SPEED` | 5.0f |
+| `FLOAT_TURN_RADIUS` | 4.0f |
+| `CRASH_BOTTLE_SMASH_CHANCE` | 0.50f |
+| `FLOAT_SCRAP_VALUE` | 18 |
+| `FLOAT_EVASION_SECONDS` | 120.0f |
+| `DAVE_WALK_BACK_SECONDS` | 300.0f |
+| `DEPOT_FRIDGE_BOTTLES` | 48 |
+| `DEPOT_ALARM_SECONDS` | 30.0f |
+| `DEPOT_CASHBOX_COIN_MIN` | 10 |
+| `DEPOT_CASHBOX_COIN_MAX` | 15 |
+| `FROST_FREEZE_CHANCE` | 0.30f |
+| `BOTTLE_HEAL_HP` | 2 |
+| `BOTTLE_FENCE_VALUE` | 1 |
+| `BOTTLE_GREASY_SPOON_VALUE` | 2 |
+| `NIGHT_DELIVERY_TEMP_THRESHOLD` | 2.0f |
+| `NIGHT_DELIVERY_BONUS_COIN` | 2 |
+
+### New Entities Required
+
+- `NPCType.MILK_FLOAT_DRIVER` — Dave. Already defined. Manages the float route, places bottles, returns to depot. Mildly hostile if float is stolen or 3+ crates looted.
+- `Material.MILK_BOTTLE` — "A pint of full-fat. Semi-skimmed is for people who've given up." Heals 2 HP. Stackable.
+- `Material.FROZEN_MILK_BOTTLE` — "You'd need a chisel. Or a campfire." Inedible cold. Thaws to `MILK_BOTTLE` via `CampfireSystem` or greasy spoon.
+- `Material.MILK_CRATE_STOLEN` — "Six bottles in a plastic crate. Suspiciously cold to hold." Contains 6 `MILK_BOTTLE` items. Non-stackable.
+- `Material.MILK_ROUND_CARD` — "You're on the round. Don't be late." Grants job eligibility. Non-stackable.
+- `Material.FLOAT_KEYS_DUPLICATE` — "A duplicate set. Dave probably doesn't know." Removes E-hold wait to board float.
+- `Material.FLOAT_MANIFEST` — "All 12 addresses. Useful for paper rounds too." Provides delivery address list.
+- `PropType.MILK_FLOAT_PROP` — the electric float vehicle. Driveable; holds up to `ROUND_CRATE_COUNT` crates visibly.
+- `PropType.MILK_CRATE_PROP` — a crate of 6 bottles on the float or a doorstep. Stealable.
+- `PropType.DEPOT_NOTICEBOARD_PROP` — inside depot; sign-up board for the milk round job.
+- `PropType.DEPOT_SIDE_DOOR_PROP` — locked side door. Breakable or pickable.
+- `PropType.WALK_IN_FRIDGE_PROP` — cold storage. Contains 48 bottles.
+- `PropType.DEPOT_OFFICE_DESK_PROP` — Dave's desk. Holds keys, manifest, cashbox.
+- `RumourType.FLOAT_NICKED` — "Someone nicked the milk float. Dave had to walk back." Vibes −3.
+- `RumourType.FLOAT_LOOTED` — "Someone's been helping themselves off Dave's float." Vibes −2.
+- `RumourType.HARD_WORKER_RUMOUR` — "That person was out at half five doing the milk round in the snow." Vibes +1.
+- `LandmarkType.MILK_DEPOT` — the Northfield Dairy Depot. Small building on the edge of the industrial estate. Dave's base of operations.
+
+### New AchievementType Entries Required
+
+- `MILK_ROUND_HERO` — "Completed all 12 deliveries before Dave got there. You're basically his apprentice." Target 1.
+- `FULL_CRATE_BANDIT` — "Nicked a full crate off the float without Dave noticing. Six pints, no witnesses." Target 1.
+- `MILK_RUN_GONE_WRONG` — "Stole the milk float. Dave had to call his wife for a lift." Target 1.
+- `ELECTRIC_GETAWAY` — "Evaded the police for 2 minutes in a stolen milk float. It topped out at 5 mph." Target 1.
+- `DEPOT_RAIDER` — "Broke into the dairy depot. Forty-eight bottles. You were not thirsty." Target 1.
+
+### Integration Tests
+
+1. **Completing the round on time pays out correctly**: create `MilkFloatSystem`; give player `MILK_ROUND_CARD`; set time to 05:30; seed float route with 12 stops; call `playerDeliversAtStop(player, inventory, stop)` for all 12 stops before Dave reaches them; call `completeRound(player, inventory)`; verify `inventory.getItemCount(Material.COIN)` increased by `ROUND_PAY`; verify `notorietySystem.getNotoriety()` decreased by 1; verify `achievementSystem` received `MILK_ROUND_HERO`.
+
+2. **Stealing a crate triggers crime when detected**: create system; set time to 06:00 with Dave parked at stop 3; seed `rng` to force `CRATE_NOTICE_CHANCE` detection; call `stealCrateFromFloat(player, inventory, rng)`; verify `inventory.contains(Material.MILK_CRATE_STOLEN)` == true; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == true; verify `notorietySystem.getNotoriety()` increased by 4; verify `wantedSystem.getWantedLevel()` >= 1.
+
+3. **Jacking the float during unattended window succeeds**: create system; set float state to `PARKED_UNATTENDED` (Dave at delivery); call `boardFloat(player)`; verify result == `BoardResult.SUCCESS`; verify player is driving float; verify `criminalRecord.hasCrime(CrimeType.VEHICLE_THEFT)` == false (not yet — crime logged on departure from route only).
+
+4. **Float crash smashes bottles**: create system; give float 2 crates (12 bottles); seed `rng` to guarantee all `CRASH_BOTTLE_SMASH_CHANCE` checks fail (all bottles smash); call `crashFloat(player, inventory, rng)`; verify total `MILK_BOTTLE` items in inventory == 0; verify float `crateCount` == 0.
+
+5. **Depot break-in yields fridge stock and cashbox**: create system; set time to 02:00 (depot locked); call `breakInDepot(player, inventory)` using `CROWBAR`×6; verify `inventory.getItemCount(Material.MILK_BOTTLE)` == `DEPOT_FRIDGE_BOTTLES`; verify `inventory.getItemCount(Material.COIN)` increased by value in range `[DEPOT_CASHBOX_COIN_MIN, DEPOT_CASHBOX_COIN_MAX]`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == true.
+
+// `MilkFloatSystem.java` must be created as the sole new source file. Integrates with `CarDrivingSystem` (float as slow electric vehicle), `WeatherSystem` (frost freezing bottles, cold-snap bonus pay), `CampfireSystem` and `GreasySpoonSystem` (thawing frozen milk / bulk sale), `FenceSystem` (float scrap value, bottle sale), `NewsagentSystem` (shared delivery address targets via `FLOAT_MANIFEST`), `NotorietySystem`, `WantedSystem`, `CriminalRecord` (new `MILK_THEFT` and `VEHICLE_THEFT` crime types — `VEHICLE_THEFT` may already exist), `RumourNetwork`, `NeighbourhoodSystem`, `TimeSystem`, `WitnessSystem`, and `AchievementSystem`. `NPCType.MILK_FLOAT_DRIVER` already exists. `NPCType.INSOMNIAC_PENSIONER` already exists (witness at early hours). `LandmarkType.INDUSTRIAL_ESTATE` already exists (depot is adjacent). `LandmarkType.MILK_DEPOT` must be added to `LandmarkType.java`. `CrimeType.MILK_THEFT` must be added to `CriminalRecord.java`.
