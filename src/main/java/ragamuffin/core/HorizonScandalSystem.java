@@ -543,7 +543,7 @@ public class HorizonScandalSystem {
         playerInventory.addItem(Material.IT_CONTRACTOR_ID_BADGE, 1);
 
         if (achievementCallback != null) {
-            achievementCallback.onAchievement(AchievementType.STICKY_FINGERS_PETE);
+            achievementCallback.award(AchievementType.STICKY_FINGERS_PETE);
         }
         return true;
     }
@@ -561,10 +561,10 @@ public class HorizonScandalSystem {
             criminalRecord.record(CrimeType.AUDIT_OBSTRUCTION);
         }
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(AUDIT_OBSTRUCTION_NOTORIETY);
+            notorietySystem.addNotoriety(AUDIT_OBSTRUCTION_NOTORIETY, achievementCallback);
         }
         if (achievementCallback != null) {
-            achievementCallback.onAchievement(AchievementType.TOOK_IT_OUT_ON_PETE);
+            achievementCallback.award(AchievementType.TOOK_IT_OUT_ON_PETE);
         }
     }
 
@@ -608,7 +608,7 @@ public class HorizonScandalSystem {
             }
             // Horizon hero achievement (only if player testified or delivered logs)
             if (achievementCallback != null && (playerTestified || tribunalEvidenceStrength == EvidenceStrength.STRONG)) {
-                achievementCallback.onAchievement(AchievementType.HORIZON_HERO);
+                achievementCallback.award(AchievementType.HORIZON_HERO);
             }
         } else {
             // Seed HORIZON_CONVICTION rumour
@@ -622,7 +622,7 @@ public class HorizonScandalSystem {
             if (achievementCallback != null && !playerTestified
                     && tribunalEvidenceStrength == EvidenceStrength.NONE
                     && !peteReportAltered && !logsSoldToAuditor) {
-                achievementCallback.onAchievement(AchievementType.NOT_MY_PROBLEM);
+                achievementCallback.award(AchievementType.NOT_MY_PROBLEM);
             }
         }
 

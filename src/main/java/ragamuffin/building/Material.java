@@ -6405,6 +6405,13 @@ public enum Material {
     // ── Issue #1420: Northfield Post Office Horizon Scandal ──────────────────
 
     /**
+     * CITIZENS_ADVICE_LEAFLET — Citizens Advice Bureau leaflet given to Maureen to initiate
+     * the whistleblower path. "Know your rights. Post Office employees are not alone."
+     * Stack size 1. Not fenceable.
+     */
+    CITIZENS_ADVICE_LEAFLET("Citizens Advice Leaflet"),
+
+    /**
      * SHORTFALL_LETTER — the official Post Office Ltd demand notice served to Maureen on day 14.
      * "Post Office Ltd demand notice. Horizon deficit: £340." Stack size 1. Not fenceable.
      * Exists as both inventory item and as SHORTFALL_LETTER_PROP pinned to the counter.
@@ -8094,6 +8101,8 @@ public enum Material {
                                                      0.05f, 0.05f, 0.05f); // Black marker text
 
             // Issue #1420: Northfield Post Office Horizon Scandal
+            case CITIZENS_ADVICE_LEAFLET: return cs(0.10f, 0.45f, 0.20f, // Green CAB branding
+                                                    0.92f, 0.92f, 0.88f); // White leaflet paper
             case SHORTFALL_LETTER:        return cs(0.95f, 0.90f, 0.70f, // Cream paper
                                                     0.15f, 0.25f, 0.55f); // Blue Post Office heading
             case TRANSACTION_LOG:         return cs(0.92f, 0.92f, 0.88f, // White paper
@@ -8110,7 +8119,6 @@ public enum Material {
                                                     0.05f, 0.45f, 0.15f); // Green PowerSave logo
             case CRAIG_WITNESS_STATEMENT: return cs(0.92f, 0.92f, 0.88f, // White paper
                                                     0.25f, 0.55f, 0.25f); // Green pen notes
-            case BURNER_PHONE:            return c(0.15f, 0.15f, 0.15f);  // Near-black cheap plastic
             case DAVE_DEBT_LIST:          return cs(0.92f, 0.90f, 0.80f, // Yellowed paper
                                                     0.10f, 0.10f, 0.10f); // Black biro scrawl
             case REPLACEMENT_CLIPBOARD:   return c(0.78f, 0.65f, 0.40f);  // Bare wood clipboard
@@ -8756,6 +8764,7 @@ public enum Material {
             case HANDWRITTEN_WARNING_SIGN:
                 return false;
             // Issue #1420: Northfield Post Office Horizon Scandal — not block items
+            case CITIZENS_ADVICE_LEAFLET:
             case SHORTFALL_LETTER:
             case TRANSACTION_LOG:
             case STAMPS_BUNDLE:
@@ -8766,7 +8775,6 @@ public enum Material {
             case TOUT_CLIPBOARD:
             case SMART_METER_KIT:
             case CRAIG_WITNESS_STATEMENT:
-            case BURNER_PHONE:
             case DAVE_DEBT_LIST:
             case REPLACEMENT_CLIPBOARD:
             case FANCIER_FAVOUR:
@@ -8982,6 +8990,7 @@ public enum Material {
             case SPEEDING_FINE_NOTICE:
             case HANDWRITTEN_WARNING_SIGN:
             // Issue #1420: Northfield Post Office Horizon Scandal — small items sit on surfaces
+            case CITIZENS_ADVICE_LEAFLET:
             case SHORTFALL_LETTER:
             case TRANSACTION_LOG:
             case STAMPS_BUNDLE:
@@ -10450,8 +10459,6 @@ public enum Material {
             // Issue #1398: Northfield Window Cleaner
             case BUCKET_AND_CHAMOIS:
                 return IconShape.BOX;         // yellow bucket with chamois cloth
-            case SQUEEGEE:
-                return IconShape.TOOL;        // telescopic squeegee handle
             case TERRY_DEBT_NOTE:
                 return IconShape.FLAT_PAPER;  // handwritten note
 
@@ -10508,6 +10515,8 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // cardboard sign with marker text
 
             // Issue #1420: Northfield Post Office Horizon Scandal
+            case CITIZENS_ADVICE_LEAFLET:
+                return IconShape.FLAT_PAPER;  // tri-fold CAB leaflet
             case SHORTFALL_LETTER:
                 return IconShape.FLAT_PAPER;  // A4 demand notice
             case TRANSACTION_LOG:
@@ -10526,8 +10535,6 @@ public enum Material {
                 return IconShape.BOX;         // boxed kit
             case CRAIG_WITNESS_STATEMENT:
                 return IconShape.FLAT_PAPER;  // handwritten statement
-            case BURNER_PHONE:
-                return IconShape.CARD;        // cheap handset
             case DAVE_DEBT_LIST:
                 return IconShape.FLAT_PAPER;  // scrawled list
             case REPLACEMENT_CLIPBOARD:
