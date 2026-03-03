@@ -2882,6 +2882,10 @@ public class RagamuffinGame extends ApplicationAdapter {
         // Issue #813: Update campfire system (extinguish in rain, sync positions)
         campfireSystem.update(world, weatherSystem.getCurrentWeather(), delta);
 
+        // Issue #1464: Sync campfire point lights into lighting environment
+        lightingSystem.updatePointLights(campfireSystem.getCampfirePositions(),
+                campfireSystem.getCurrentLightIntensity());
+
         // Issue #807: Update warmth/wetness survival system
         if (!player.isDead()) {
             boolean nearCampfire = campfireSystem.isNearCampfire(player.getPosition());

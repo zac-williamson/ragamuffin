@@ -359,7 +359,7 @@ public class BaltiHouseSystem {
         if (isMain && isCurryClubThursday(dayOfWeek) && !curryClubbedFirstVisit) {
             curryClubbedFirstVisit = true;
             if (achievementSystem != null) {
-                achievementSystem.unlock(AchievementType.CURRY_CLUB);
+                achievementSystem.unlock(AchievementType.RAJ_MAHAL_CURRY_CLUB);
             }
         }
 
@@ -462,7 +462,7 @@ public class BaltiHouseSystem {
             lockInActive = false;
             if (playerPresent && !lockInLegendAwarded && achievementSystem != null) {
                 lockInLegendAwarded = true;
-                achievementSystem.unlock(AchievementType.LOCK_IN_LEGEND);
+                achievementSystem.unlock(AchievementType.RAJ_MAHAL_LOCK_IN);
             }
         }
     }
