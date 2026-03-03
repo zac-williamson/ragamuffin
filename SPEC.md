@@ -46889,6 +46889,210 @@ public void update(float delta, TimeSystem timeSystem)
 
 ---
 
+---
+
+## Issue #1343: Add Northfield Christmas Lights Switch-On — The Has-Been, the Dodgy Contract & the Crowd Crush
+
+**Goal**: Implement `ChristmasLightsSystem` — an annual December evening event held on the high street, where a faded local celebrity flicks the switch, Northfield's residents briefly pretend they live somewhere nice, and the player exploits the resulting chaos. Think Blackpool Illuminations by way of a budget council procurement fiasco. One night of magical disorder.
+
+---
+
+### The Event
+
+Occurs on the **first Saturday of December** at **17:00**, on the high street (`LandmarkType.HIGH_STREET`). The event runs until **20:00** or until the lights fail (see below).
+
+The setup begins at **16:00**: council workers string `FAIRY_LIGHT_PROP` decorations across the street between `STREET_LAMP` props. Four `MULLED_WINE_STALL` props are placed along the pavement. At 16:30, a `COUNCIL_ANNOUNCEMENT_BOARD_PROP` appears with the celebrity's name.
+
+At **17:00**: `CELEBRITY_NPC` (Wayne Stubbs — ex-Big Brother contestant, series 4, week 2 eviction) arrives in a `COUNCIL_MINIBUS_PROP`. He presses E on a `SWITCH_BOX_PROP` to illuminate the lights. If successful:
+- `FAIRY_LIGHT_PROP`s shift to an emissive orange-white render state
+- 50–80 `PUBLIC`, `PENSIONER`, `SCHOOL_KID` NPCs are present on the high street
+- Crowd density triggers the pickpocket-crowd window (identical mechanic to `FairgroundSystem`)
+- `SEASONAL_CHEER` rumour seeded into the `RumourNetwork`
+
+---
+
+### The Factions & the Dodgy Contract
+
+The **Marchetti Crew** won the Christmas lights electrical contract (Respect +10 at event start if Marchetti Respect ≥ 50). The **Council** signed off on a wiring spec nobody checked. The **Street Lads** are furious they didn't get the cash-in-hand work.
+
+**Before the switch-on** (16:00–17:00):
+- The player can interact with the `SWITCH_BOX_PROP` (exposed junction box mounted on the nearest building wall). Options:
+  1. **Tamper** (hold E, 4 seconds, STEALTH ≥ 2): sabotages the lights. At 17:00, the lights fail: darkness, crowd chaos, 3 YOUTH_GANG NPCs immediately spawn and begin pickpocketing. Street Lads Respect +15, Council Respect −20, Marchetti Respect −15. `LIGHTS_FAILURE` rumour seeded. Wayne Stubbs is humiliated: he delivers a speech ("This is well out of order") and leaves early. `NewspaperSystem` headline next morning: "NORTHFIELD XMAS LIGHTS FIASCO — WHO'S TO BLAME?".
+  2. **Reinforce the wiring** (hold E, 6 seconds, requires `WIRE_CUTTERS` or `SPANNER` in inventory): prevents the 20% random failure chance (see below). Council Respect +10. `COMPETENT_SPARKY` achievement if the lights hold all night.
+
+- **Random failure chance**: Even untampered, there is a 20% chance the lights fail at 17:00 due to Marchetti's shoddy workmanship. Same consequences as tampering, but no Notoriety gain for the player (it's not their fault).
+
+---
+
+### The Celebrity
+
+**Wayne Stubbs** (`NPCType.CELEBRITY`) arrives at 17:00, does the switch-on, and wanders the event until 19:00. He:
+- Will sign autographs (press E → `WAYNE_STUBBS_AUTOGRAPH` item, sellable at PawnShop for 1 COIN, tradeable with `JOURNALIST` NPC for INFLUENCE XP +5)
+- Can be pickpocketed for `CELEBRITY_WALLET` (contains 8–12 COIN, `FREEBIE_WRISTBAND`, `ENERGY_DRINK`). Very high Notoriety +8 if caught; only 1 attempt allowed.
+- If the player's Notoriety is ≥ 3 and they approach within 3 blocks, Wayne says "I know your type, mate" and calls security (spawns `SECURITY_GUARD` NPC, identical stats to BOUNCER).
+- At 19:30, Wayne's minibus leaves. If the player has the `COUNCIL_MINIBUS_PROP` key (obtained by lockpicking the minibus, STEALTH ≥ 3), they can delay his departure and extend the event until 20:30. The extra 30 minutes double the crowd pickpocket window.
+
+---
+
+### Mulled Wine Economy
+
+Four `MULLED_WINE_STALL` props are operated by `MARKET_TRADER` NPCs (Frank, Sandra, Terry, and one that's mysteriously unattended after 18:00).
+
+- **Buy**: 2 COIN for `MULLED_WINE` item. Consuming gives Warmth +25, Hunger +5; lasts 60 in-game seconds. Tooltip on first purchase: "Tastes like Ribena and regret."
+- **The unattended stall** (after 18:00, the fourth trader leaves for a "toilet break" that lasts 45 in-game minutes): player can take up to 3 `MULLED_WINE` for free (Notoriety +3 per theft if witnessed by passing PUBLIC NPC within 10 blocks). PETTY_THEFT on criminal record if witnessed.
+- **Stall takeover** (hold E on unattended stall for 5 seconds, requires TRADING ≥ 2 from `StreetSkillSystem`): player runs the stall, selling mulled wine at 3 COIN each. Each NPC served earns 3 COIN. Police patrol every 10 minutes — no licence = `TRADING_WITHOUT_LICENCE` offence + stall confiscated. Buy a `MARKET_LICENCE` from the council stall (20 COIN) beforehand to operate legally. `CHRISTMAS_ENTREPRENEUR` achievement for earning 20+ COIN running the stall.
+
+---
+
+### Crowd Chaos & Disorder
+
+When 50+ NPCs are on the high street simultaneously, `NoiseSystem.noiseLevel` spikes to 0.9. This:
+- Opens the crowd pickpocket window (identical to `FairgroundSystem` — STEALTH XP per success)
+- Draws `DRUNK` NPCs from `WetherspoonsSystem` (3 extra DRUNK NPCs wander onto the high street)
+- Irritates `NEIGHBOURHOOD_WATCH_SYSTEM` (Anger +10 from the noise, even for a legal event)
+
+**The Crowd Crush** (rare event, 10% chance at 18:30 if 70+ NPCs are present): 2 NPCs fall over near the stage area (represented by NPCState.FALLEN). The `FIRE_STATION_SYSTEM` automatically spawns a single `FIRE_ENGINE_NPC` that parks at the end of the street, blocking vehicle exits. Police presence triples for 5 minutes. While police are distracted: Notoriety penalty for all crimes −50% for those 5 minutes (cops too busy). `NORTHFIELD_STAMPEDE` rumour seeded.
+
+---
+
+### New Class: `ChristmasLightsSystem`
+
+Located at `src/main/java/ragamuffin/core/ChristmasLightsSystem.java`.
+
+Constructor: `ChristmasLightsSystem(TimeSystem, FactionSystem, NotorietySystem, RumourNetwork, NewspaperSystem, NeighbourhoodWatchSystem, FireStationSystem, NoiseSystem, WarmthSystem, StreetSkillSystem, AchievementSystem, Random)`
+
+Key methods:
+
+```java
+/** Returns true if today is the first Saturday of December. */
+public boolean isEventNight(int dayCount)
+
+/** Begin setup phase at 16:00: spawn props, stalls, council workers. */
+public void beginSetup(List<NPC> worldNpcs, World world)
+
+/** Attempt to tamper with the switch box. Returns TamperResult (SUCCESS, FAILED, WITNESSED). */
+public TamperResult tamperSwitchBox(Player player, StreetSkillSystem skills, Random rand)
+
+/** Reinforce the wiring. Returns true if successful. */
+public boolean reinforceWiring(Player player, Inventory inventory)
+
+/** Execute the switch-on at 17:00. Returns true if lights illuminate, false if failure. */
+public boolean executeSwitchOn(Random rand)
+
+/** Returns whether the lights are currently on. */
+public boolean areLightsOn()
+
+/** Begin stall takeover at unattended stall. Returns true on success. */
+public boolean takeoverStall(Player player, StreetSkillSystem skills)
+
+/** Process one stall customer. Returns coin earned (0 if no customer). */
+public int serveStallCustomer(List<NPC> nearbyNpcs, Inventory playerInventory)
+
+/** Check and trigger crowd crush event if conditions met. */
+public void checkCrowdCrush(int npcCount, List<NPC> worldNpcs)
+
+/** Pickpocket Wayne Stubbs. Returns WaynePickpocketResult (STOLEN, CAUGHT, COOLDOWN). */
+public WaynePickpocketResult pickpocketCelebrity(Player player, Random rand)
+
+/** Close the event at 20:00 (or 20:30 if extended): despawn props and NPCs. */
+public void closeEvent(boolean lightsSucceeded)
+
+/** Call each frame: tick crowd count, stall timer, Wayne departure timer. */
+public void update(float delta, TimeSystem timeSystem, List<NPC> worldNpcs)
+```
+
+---
+
+### New NPCType (add to `NPCType.java`)
+
+| NPC | Stats | Description |
+|-----|-------|-------------|
+| `CELEBRITY` | 25f HP, 0 dmg, passive | Wayne Stubbs — passive unless Notoriety ≥ 3; calls SECURITY_GUARD then. |
+| `SECURITY_GUARD` | 45f HP, 12f dmg, aggressive | Wayne's personal security; chases high-Notoriety players near the celebrity. |
+
+---
+
+### New Materials (add to `Material.java`)
+
+| Material | Description | Fence value |
+|----------|-------------|-------------|
+| `MULLED_WINE` | Hot seasonal drink; Warmth +25, Hunger +5 | 1 COIN |
+| `WAYNE_STUBBS_AUTOGRAPH` | Signed piece of paper; sellable or tradeable for INFLUENCE XP | 1 COIN |
+| `CELEBRITY_WALLET` | Pickpocketed from Wayne; contains 8–12 COIN + bonus items | n/a (container) |
+| `FREEBIE_WRISTBAND` | Found in celebrity wallet; grants free entry to one Wetherspoons session | 0 COIN (use item) |
+| `CHRISTMAS_LIGHTS_BULB` | Drops from destroyed FAIRY_LIGHT_PROP; craftable into CAMPFIRE substitute (2 bulbs = 1 FAIRY_CAMPFIRE giving Warmth +20) | 1 COIN |
+
+---
+
+### New RumourTypes (add to `RumourType.java`)
+
+| Type | Template | Seeded when |
+|------|----------|-------------|
+| `SEASONAL_CHEER` | "The lights are on in town — actually quite nice" | Lights successfully illuminate at 17:00 |
+| `LIGHTS_FAILURE` | "Northfield's Christmas lights failed — Marchetti Crew's fault apparently" | Lights fail (tamper or random) |
+| `NORTHFIELD_STAMPEDE` | "Someone nearly got crushed at the lights switch-on — chaos" | Crowd crush event fires |
+
+---
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Achievement | Condition |
+|-------------|-----------|
+| `CHRISTMAS_SABOTEUR` | Successfully tamper with the switch box, causing the lights to fail |
+| `COMPETENT_SPARKY` | Reinforce the wiring and the lights hold all night |
+| `CHRISTMAS_ENTREPRENEUR` | Earn 20+ COIN running the mulled wine stall |
+| `CELEBRITY_MUGGER` | Successfully pickpocket Wayne Stubbs |
+| `LIGHTS_ON` | Attend the switch-on and lights illuminate successfully (no tampering) |
+
+---
+
+### Unit Tests
+
+- `ChristmasLightsSystem.isEventNight(dayCount)`: first Saturday of December → true; second Saturday → false; first Saturday of July → false; Sunday in December → false.
+- `ChristmasLightsSystem.executeSwitchOn(rand)`: with reinforced wiring, seeded rand → always true; without reinforce and rand seeded to < 0.2 failure → false; rand seeded to ≥ 0.2 → true.
+- `ChristmasLightsSystem.tamperSwitchBox(player, skills, rand)`: STEALTH ≥ 2, unwitnessed, rand succeeds → SUCCESS, Notoriety set; STEALTH < 2 → FAILED; witnessed → WITNESSED, Notoriety + offence added.
+- `ChristmasLightsSystem.serveStallCustomer(npcs, inv)`: NPC with HUNGER need within 5 blocks and inventory has MULLED_WINE → returns 3, inventory −1 MULLED_WINE; no NPCs → returns 0.
+- `ChristmasLightsSystem.checkCrowdCrush(75, npcs)`: 70+ NPCs → crowd crush fires, 2 NPCs set to FALLEN, `NORTHFIELD_STAMPEDE` rumour seeded; < 70 NPCs → no crush.
+- `ChristmasLightsSystem.pickpocketCelebrity(player, rand)`: first attempt, rand succeeds → STOLEN, `CELEBRITY_WALLET` in inventory, Notoriety +8; attempt on cooldown → COOLDOWN, no change.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Lights illuminate on successful switch-on**: Set `dayCount` to first Saturday of December. Call `beginSetup()`. Advance time to 17:00. Call `executeSwitchOn(new Random(99))` (seed produces success). Verify `areLightsOn()` is true. Verify `FAIRY_LIGHT_PROP`s render state is EMISSIVE. Verify `SEASONAL_CHEER` rumour seeded in `RumourNetwork`. Verify 50+ NPC count on high street.
+
+2. **Lights failure triggers crowd chaos**: Set `dayCount` to first Saturday of December. Call `beginSetup()`. Call `tamperSwitchBox(player, skills, rand)` with STEALTH ≥ 2. Advance to 17:00. Call `executeSwitchOn(rand)`. Verify `areLightsOn()` is false. Verify `LIGHTS_FAILURE` rumour seeded. Verify at least 3 YOUTH_GANG NPCs have spawned. Verify Street Lads Respect increased by 15. Verify Marchetti Respect decreased by 15. Verify `NewspaperSystem` has a pending headline containing "FIASCO".
+
+3. **Stall takeover earns coin**: Give player `MARKET_LICENCE`. Set player TRADING ≥ 2. Call `beginSetup()`. Advance to 18:00 (stall owner leaves at 18:00). Call `takeoverStall(player, skills)`. Verify return is true. Spawn 5 NPCs with elevated HUNGER need within 5 blocks. Call `serveStallCustomer()` 5 times. Verify player coin increased by 15 (3 × 5). Verify `CHRISTMAS_ENTREPRENEUR` achievement unlocked after cumulative 20+ COIN. Verify no `TRADING_WITHOUT_LICENCE` offence added (player has licence).
+
+4. **Wayne Stubbs pickpocket succeeds**: Call `beginSetup()`. Advance to 17:00. Spawn `CELEBRITY` NPC as Wayne Stubbs. Place player within 1.5 blocks behind Wayne (not in Wayne's forward arc). Call `pickpocketCelebrity(player, new Random(42))` (seed produces success). Verify result is STOLEN. Verify `CELEBRITY_WALLET` in player inventory. Verify player Notoriety +8. Verify Wayne's pickpocket cooldown is set. Verify `CELEBRITY_MUGGER` achievement flagged.
+
+5. **Crowd crush fires at 70+ NPCs**: Call `beginSetup()`. Advance to 18:30. Call `checkCrowdCrush(75, worldNpcs)` with seeded `Random(7)` (forces crush). Verify 2 NPCs in `worldNpcs` have state FALLEN. Verify `NoiseSystem.noiseLevel` ≥ 0.9. Verify `NORTHFIELD_STAMPEDE` rumour seeded. Verify `FireStationSystem` has a pending call-out. Verify police NPC count triples within 60 simulated frames.
+
+---
+
+// ── Issue #1343: Add Northfield Christmas Lights Switch-On ─────────────────────────
+// New: ChristmasLightsSystem.java in ragamuffin.core
+// New: ChristmasLightsSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1343ChristmasLightsIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: CELEBRITY, SECURITY_GUARD — add to NPCType.java
+// New Materials: MULLED_WINE, WAYNE_STUBBS_AUTOGRAPH, CELEBRITY_WALLET, FREEBIE_WRISTBAND,
+//                CHRISTMAS_LIGHTS_BULB — add to Material.java
+// New RumourTypes: SEASONAL_CHEER, LIGHTS_FAILURE, NORTHFIELD_STAMPEDE — add to RumourType.java
+// New AchievementTypes: CHRISTMAS_SABOTEUR, COMPETENT_SPARKY, CHRISTMAS_ENTREPRENEUR,
+//                       CELEBRITY_MUGGER, LIGHTS_ON — add to AchievementType.java
+// Integration: FactionSystem (Marchetti contract, Respect deltas),
+//              NotorietySystem (tamper, pickpocket, stall theft penalties),
+//              RumourNetwork (SEASONAL_CHEER, LIGHTS_FAILURE, NORTHFIELD_STAMPEDE seeding),
+//              NewspaperSystem (lights failure headline),
+//              NeighbourhoodWatchSystem (noise Anger +10),
+//              FireStationSystem (crowd crush call-out),
+//              NoiseSystem (crowd spike to 0.9),
+//              WarmthSystem (MULLED_WINE warmth bonus),
+//              StreetSkillSystem (STEALTH for tamper, TRADING for stall takeover),
+//              CriminalRecord (TRADING_WITHOUT_LICENCE, PETTY_THEFT),
+//              WantedSystem (celebrity wallet theft),
+//              WetherspoonsSystem (post-event patron surge + DRUNK NPC bleed),
+//              AchievementSystem, TimeSystem, NPCManager
+
 // ── Issue #1341: Add Northfield Residents' Association Meeting ─────────────────────
 // New: ResidentsAssociationSystem.java in ragamuffin.core
 // New: ResidentsAssociationSystemTest.java in src/test/java/ragamuffin/core/
