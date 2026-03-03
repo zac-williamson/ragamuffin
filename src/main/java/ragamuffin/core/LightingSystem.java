@@ -4,16 +4,30 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g3d.Environment;
 import com.badlogic.gdx.graphics.g3d.attributes.ColorAttribute;
 import com.badlogic.gdx.graphics.g3d.environment.DirectionalLight;
+import com.badlogic.gdx.graphics.g3d.environment.PointLight;
 import com.badlogic.gdx.math.Vector3;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Manages dynamic lighting based on time of day.
  * Adjusts directional light (sun/moon) and ambient light to simulate day/night cycle.
+ * Also manages dynamic point lights for campfires and other light-emitting objects.
  */
 public class LightingSystem {
 
+    /** Radius of campfire point light in world units. */
+    public static final float CAMPFIRE_LIGHT_RADIUS = 6.0f;
+
+    /** Base campfire light colour (orange-yellow). */
+    private static final Color CAMPFIRE_COLOR = new Color(1.0f, 0.55f, 0.1f, 1.0f);
+
     private final Environment environment;
     private final DirectionalLight directionalLight;
+
+    /** Point lights currently active in the environment (one per campfire). */
+    private final List<PointLight> pointLights = new ArrayList<>();
 
     // Lighting colors for different times of day
     private static final Color DAY_DIRECTIONAL = new Color(1.0f, 1.0f, 0.95f, 1.0f);      // Bright white-yellow
@@ -176,11 +190,58 @@ public class LightingSystem {
     }
 
     /**
+     * Synchronise dynamic point lights with the given campfire positions and intensity.
+     * Adds or updates one PointLight per campfire; removes lights for extinguished campfires.
+     *
+     * @param campfirePositions active campfire world positions
+     * @param intensity         current flicker intensity (from CampfireSystem.getCurrentLightIntensity())
+     */
+    public void updatePointLights(List<Vector3> campfirePositions, float intensity) {
+        // Remove all existing point lights from the environment
+        for (PointLight pl : pointLights) {
+            environment.remove(pl);
+        }
+        pointLights.clear();
+
+        // Add one point light per active campfire
+        for (Vector3 pos : campfirePositions) {
+            PointLight light = new PointLight();
+            light.set(
+                CAMPFIRE_COLOR.r * intensity,
+                CAMPFIRE_COLOR.g * intensity,
+                CAMPFIRE_COLOR.b * intensity,
+                pos.x, pos.y + 0.5f, pos.z,   // slightly above the block
+                CAMPFIRE_LIGHT_RADIUS
+            );
+            environment.add(light);
+            pointLights.add(light);
+        }
+    }
+
+    /**
+     * Remove all point lights managed by this system from the environment.
+     */
+    public void clearPointLights() {
+        for (PointLight pl : pointLights) {
+            environment.remove(pl);
+        }
+        pointLights.clear();
+    }
+
+    /**
+     * Get the list of active point lights (for testing/inspection).
+     */
+    public List<PointLight> getPointLights() {
+        return pointLights;
+    }
+
+    /**
      * Remove this system's directional light from the environment.
      * Call this before discarding the LightingSystem to avoid accumulating
      * duplicate lights in the shared Environment across restarts.
      */
     public void dispose() {
+        clearPointLights();
         environment.remove(directionalLight);
     }
 

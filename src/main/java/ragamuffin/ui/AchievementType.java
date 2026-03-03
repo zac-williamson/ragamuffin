@@ -7098,20 +7098,20 @@ public enum AchievementType {
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * CURRY_CLUB — Visit the Raj Mahal on a Thursday and order a main during Curry Club.
+     * RAJ_MAHAL_CURRY_CLUB — Visit the Raj Mahal on a Thursday and order a main during Curry Club.
      * Awarded by BaltiHouseSystem on the first Thursday Curry Club order.
      */
-    CURRY_CLUB(
+    RAJ_MAHAL_CURRY_CLUB(
         "Curry Club",
         "Attended your first Curry Club Thursday at the Raj Mahal. Bashir gave you a free poppadom.",
         1
     ),
 
     /**
-     * LOCK_IN_LEGEND — Survive a full Friday or Saturday lock-in at the Raj Mahal.
+     * RAJ_MAHAL_LOCK_IN — Survive a full Friday or Saturday lock-in at the Raj Mahal.
      * Awarded by BaltiHouseSystem when the lock-in ends (01:00) and player is still inside.
      */
-    LOCK_IN_LEGEND(
+    RAJ_MAHAL_LOCK_IN(
         "Lock-In Legend",
         "Made it through Bashir's lock-in. You remember most of it.",
         1
@@ -7202,10 +7202,10 @@ public enum AchievementType {
     ),
 
     /**
-     * LAST_ORDERS — Awarded when the player loots 5 items from the Crown &amp; Anchor
+     * CROWN_ANCHOR_LAST_ORDERS — Awarded when the player loots 5 items from the Crown &amp; Anchor
      * in a single session.
      */
-    LAST_ORDERS(
+    CROWN_ANCHOR_LAST_ORDERS(
         "Last Orders",
         "Looted five things from the Crown & Anchor. Cheers for the memories.",
         5
