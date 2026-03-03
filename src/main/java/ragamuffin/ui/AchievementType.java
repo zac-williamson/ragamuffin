@@ -316,6 +316,29 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #1325: Northfield Nightclub — The Vaults ────────────────────────
+
+    FIRST_TIMER(
+        "First Night Out",
+        "Talked your way past Big Dave and made it into The Vaults. You're practically a local.",
+        1
+    ),
+    LAST_MAN_STANDING(
+        "Last Man Standing",
+        "Won three dancefloor brawls in a single night. Security are writing a report about you.",
+        3
+    ),
+    CRACKING_THE_VAULTS(
+        "Cracking The Vaults",
+        "Cracked the manager's safe. Terry's going to have a very bad morning.",
+        1
+    ),
+    BARRED_FOR_LIFE(
+        "Barred for Life",
+        "Ejected from The Vaults on three separate nights. Big Dave's got a photo of you behind the bar.",
+        3
+    ),
+
     // ── Issue #765: Witness & Evidence System ──────────────────────────────────
 
     CLEAN_GETAWAY(

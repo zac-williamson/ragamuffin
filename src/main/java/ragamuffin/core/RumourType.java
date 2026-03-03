@@ -883,5 +883,10 @@ public enum RumourType {
      * Seeded by CashpointSystem after the player completes 3 envelope-drop runs.
      * Spreads via STREET_LAD and BARMAN NPCs.
      * Flags ORGANISED_CRIME in CriminalRecord; STREET_LADS Respect +2 on seeding. */
-    ORGANISED_CRIME;
+    ORGANISED_CRIME,
+
+    /** "Proper hard nut about — clocked someone in the club last night, absolute scenes."
+     * Seeded by NightclubSystem when player notoriety ≥ 50 enters The Vaults.
+     * Spreads via NIGHTCLUB_PUNTER and BOUNCER NPCs. */
+    HARD_NUT_IN_TOWN;
 }
