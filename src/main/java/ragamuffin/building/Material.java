@@ -6705,7 +6705,31 @@ public enum Material {
      * Awarded by Keith when player recovers the stolen clipboard from the confrontation driver.
      * When worn: grants "Volunteer" title in StreetReputation display (StreetSkillSystem).
      */
-    SPEEDWATCH_LANYARD("Speedwatch Lanyard");
+    SPEEDWATCH_LANYARD("Speedwatch Lanyard"),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1447: Northfield Street Hustler — Danny's Three-Card Monte
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * RIGGED_CARD_DECK — "A bent deck with a marked queen. Property of Danny Doyle. Do not touch."
+     * <ul>
+     *   <li>Pickpocketable from {@link ragamuffin.entity.NPCType#STREET_HUSTLER_NPC} (PICKPOCKET ≥ Apprentice, 25% success).</li>
+     *   <li>Stored at LOCK_UP_GARAGE_PROP 02:00–05:00.</li>
+     *   <li>Deploy own game via E on pavement ({@link ragamuffin.world.PropType#MAKESHIFT_TABLE_PROP}).</li>
+     *   <li>Fence value: 3 COIN. Cannot be sold at CharityShopSystem.</li>
+     * </ul>
+     */
+    RIGGED_CARD_DECK("Rigged Card Deck"),
+
+    /**
+     * LOOKOUT_CUT — "Folded notes, quickly counted. Don't ask where they came from."
+     * <ul>
+     *   <li>Awarded to the player per 10 in-game minutes while acting as lookout for Danny.</li>
+     *   <li>4 COIN value; auto-converts to COIN on pickup; not a persistent item.</li>
+     * </ul>
+     */
+    LOOKOUT_CUT("Lookout Cut");
 
     private final String displayName;
 
@@ -8163,6 +8187,12 @@ public enum Material {
                                                     0.10f, 0.25f, 0.55f); // Blue police-style heading
             case SPEEDWATCH_LANYARD:      return cs(0.85f, 0.72f, 0.20f, // Yellow hi-vis lanyard
                                                     0.88f, 0.92f, 0.88f); // White ID card
+
+            // Issue #1447: Northfield Street Hustler
+            case RIGGED_CARD_DECK:        return cs(0.10f, 0.10f, 0.12f, // Black card back
+                                                    0.85f, 0.10f, 0.10f); // Red marked queen
+            case LOOKOUT_CUT:             return cs(0.72f, 0.62f, 0.10f, // Folded notes
+                                                    0.60f, 0.50f, 0.08f); // Darker crease
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -10565,6 +10595,12 @@ public enum Material {
                 return IconShape.CYLINDER;    // collection bucket
             case BIKERS_VOUCHER:
                 return IconShape.FLAT_PAPER;  // paper voucher
+
+            // Issue #1447: Northfield Street Hustler
+            case RIGGED_CARD_DECK:
+                return IconShape.FLAT_PAPER;  // deck of cards
+            case LOOKOUT_CUT:
+                return IconShape.FLAT_PAPER;  // folded notes
 
             default:
                 return IconShape.BOX;
