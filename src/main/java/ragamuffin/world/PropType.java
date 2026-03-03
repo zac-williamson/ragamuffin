@@ -4077,7 +4077,29 @@ public enum PropType {
      * Same E-interaction as {@code COMMUNITY_NOTICE_BOARD} but indoors.
      * Dims: 0.5 × 1.0 × 0.4; 4 hits to break; drops WOOD.
      */
-    WHATSAPP_FEED_TERMINAL_PROP(0.5f, 1.0f, 0.4f, 4, ragamuffin.building.Material.WOOD);
+    WHATSAPP_FEED_TERMINAL_PROP(0.5f, 1.0f, 0.4f, 4, ragamuffin.building.Material.WOOD),
+
+    // ── Issue #1428: Northfield Council CCTV Audit ───────────────────────────
+
+    /**
+     * CCTV_MONITOR_PROP — stack of four small monitors in Keith's portacabin.
+     * Press E to view live feeds (reveals all live camera IDs). Achievement: BACK_ROOM_ACCESS.
+     * Dims: 0.8 × 0.6 × 0.4; 3 hits to break; drops SCRAP_METAL.
+     */
+    CCTV_MONITOR_PROP(0.8f, 0.6f, 0.4f, 3, ragamuffin.building.Material.SCRAP_METAL),
+
+    /**
+     * CCTV_TAPE_UNFILED_PROP — glowing VHS tape on Keith's desk.
+     * 5-minute retrieval window after a taped crime. Press E to steal.
+     * Dims: 0.15 × 0.10 × 0.20; 1 hit to break; drops CCTV_FOOTAGE.
+     */
+    CCTV_TAPE_UNFILED_PROP(0.15f, 0.10f, 0.20f, 1, ragamuffin.building.Material.CCTV_FOOTAGE),
+
+    /**
+     * CCTV_PORTACABIN_PROP — Keith's base behind the JobCentre. Lockable.
+     * Dims: 4.0 × 3.0 × 6.0; 8 hits to break; drops WOOD.
+     */
+    CCTV_PORTACABIN_PROP(4.0f, 3.0f, 6.0f, 8, ragamuffin.building.Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
