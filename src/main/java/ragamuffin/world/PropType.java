@@ -4417,7 +4417,41 @@ public enum PropType {
      * Causes NeighbourhoodSystem Vibes −3/day while present.
      * Show to Gary (ClaimsManagementSystem) for a 12 COIN emotional distress payout.
      */
-    NOTICE_OF_DEFICIENCY_PROP(0.40f, 0.60f, 0.05f, 2, null);
+    NOTICE_OF_DEFICIENCY_PROP(0.40f, 0.60f, 0.05f, 2, null),
+
+    // ── Issue #1481: Northfield Driving Test Centre ───────────────────────────
+
+    /**
+     * TEST_CENTRE_DESK_PROP — the DVSA reception counter staffed by Sandra
+     * (TEST_CENTRE_RECEPTIONIST). Press E to book a test (5 COIN) or cancel.
+     * Collision: 1.20w × 1.00h × 0.60d. Health: 8 hits. Drops nothing.
+     */
+    TEST_CENTRE_DESK_PROP(1.20f, 1.00f, 0.60f, 8, null),
+
+    /**
+     * TEST_CAR_PROP — the DVSA test vehicle used during the practical examination.
+     * Keith (DRIVING_EXAMINER) boards this for the 8-step BattleBarMiniGame route.
+     * Located in the test centre car park. Collision: 2.00w × 1.20h × 4.00d.
+     * Health: 20 hits. Drops nothing (government property).
+     */
+    TEST_CAR_PROP(2.00f, 1.20f, 4.00f, 20, null),
+
+    /**
+     * TEST_CENTRE_REAR_EXIT_PROP — the rear fire-door exit of the Driving Test Centre.
+     * Keith (DRIVING_EXAMINER) lingers here 17:00–17:30 after a player test failure.
+     * Press E with BROWN_ENVELOPE (≥ 12 COIN) to attempt a bribe.
+     * Collision: 1.00w × 2.00h × 0.20d. Health: 6 hits. Drops nothing.
+     */
+    TEST_CENTRE_REAR_EXIT_PROP(1.00f, 2.00f, 0.20f, 6, null),
+
+    /**
+     * TEST_CENTRE_PHONE_BOX_PROP — a BT phone box adjacent to the Driving Test Centre.
+     * Press E to make an anonymous tip to the DVSA inspector, seeding
+     * BENT_EXAMINER_RUMOUR and triggering the inspector's visit next morning at 09:30.
+     * Achievement: INSPECTOR_CALLED.
+     * Collision: 0.90w × 2.20h × 0.90d. Health: 4 hits. Drops nothing.
+     */
+    TEST_CENTRE_PHONE_BOX_PROP(0.90f, 2.20f, 0.90f, 4, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
