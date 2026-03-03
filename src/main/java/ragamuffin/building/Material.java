@@ -5534,7 +5534,54 @@ public enum Material {
      * (GRAFTING ≥ Apprentice; 15% detection chance at the enquiry counter).
      * Tooltip: "Full UK licence. Photo may or may not resemble you."
      */
-    DRIVING_LICENCE("Driving Licence");
+    DRIVING_LICENCE("Driving Licence"),
+
+    // ── Issue #1341: Northfield Residents' Association Meeting ─────────────────
+
+    /**
+     * NOISE_ABATEMENT_LETTER — an official letter from the council confirming that
+     * a noise abatement order has been issued against the player's property.
+     * Used in ResidentsAssociationSystem to dismiss a noise complaint from the
+     * meeting agenda (E on Kevin with this in inventory counts as official proof).
+     * Obtainable from EnvironmentalHealthSystem after 3+ NOISE_COMPLAINT CriminalRecord
+     * entries, or crafted using COUNCIL_LETTERHEAD + MARKER_PEN (forgery).
+     * Tooltip: "If you're this loud, it's getting reported."
+     */
+    NOISE_ABATEMENT_LETTER("Noise Abatement Letter"),
+
+    /**
+     * PETTY_CASH_TIN — Pauline's lockable tin containing the Residents' Association's
+     * petty cash float (20 COIN). Can be pickpocketed from Pauline during the meeting
+     * (STEALTH vs Pauline's OBSERVANT) for 20 COIN + Notoriety +5, or redirected to
+     * the player via a legitimate budget motion. Tooltip: "Association funds. Hands off."
+     */
+    PETTY_CASH_TIN("Petty Cash Tin"),
+
+    /**
+     * MYSTERY_HAMPER — the monthly raffle's first prize: a wicker hamper of
+     * assorted local produce. Won by the player at 70% chance if a RIGGED_BARREL
+     * is used; otherwise 25% base chance. Worth 8 COIN at the pawn shop.
+     * Awards COMMUNITY_SCROUNGER achievement on first win.
+     * Tooltip: "Contains several things from the Co-op and one mystery item."
+     */
+    MYSTERY_HAMPER("Mystery Hamper"),
+
+    /**
+     * GARDEN_VOUCHER — the monthly raffle's second prize: a 5 COIN voucher for
+     * Northfield Garden Centre. Won by non-first-place raffle draw.
+     * Worth face value (5 COIN) at the garden centre.
+     * Tooltip: "Valid for one calendar year. No cash alternative."
+     */
+    GARDEN_VOUCHER("Garden Centre Voucher"),
+
+    /**
+     * RIGGED_BARREL — a specially weighted raffle barrel drum that tips the odds
+     * in the player's favour (70% win chance vs 25% base) when substituted for
+     * the meeting's standard barrel. Must be placed unwitnessed (STEALTH ≥ 2)
+     * before the raffle begins (Agenda slot 4). Awards RIGGED_RAFFLE achievement.
+     * Tooltip: "Weighted for results. Very community-minded."
+     */
+    RIGGED_BARREL("Rigged Raffle Barrel");
 
     private final String displayName;
 
@@ -6764,6 +6811,18 @@ public enum Material {
                                                   0.50f, 0.50f, 0.50f); // Grey hook
             case DRIVING_LICENCE:       return cs(0.18f, 0.40f, 0.70f,  // DVLA blue card
                                                   0.90f, 0.85f, 0.75f); // Cream face
+
+            // Issue #1341: Residents' Association
+            case NOISE_ABATEMENT_LETTER: return cs(0.90f, 0.90f, 0.80f,  // Cream paper
+                                                   0.20f, 0.40f, 0.70f); // Council blue text
+            case PETTY_CASH_TIN:        return cs(0.70f, 0.45f, 0.10f,  // Tan metal tin
+                                                  0.30f, 0.65f, 0.30f); // Green lid
+            case MYSTERY_HAMPER:        return cs(0.70f, 0.50f, 0.25f,  // Wicker brown
+                                                  0.85f, 0.20f, 0.20f); // Red bow
+            case GARDEN_VOUCHER:        return cs(0.30f, 0.65f, 0.30f,  // Garden green
+                                                  0.95f, 0.90f, 0.75f); // Cream voucher
+            case RIGGED_BARREL:         return cs(0.45f, 0.28f, 0.12f,  // Dark wood barrel
+                                                  0.60f, 0.60f, 0.60f); // Metal hoop
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }

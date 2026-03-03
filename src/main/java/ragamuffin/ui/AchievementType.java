@@ -5583,6 +5583,79 @@ public enum AchievementType {
         "Forewarned",
         "You heard about the sweep the night before. Local knowledge is everything.",
         1
+    ),
+
+    // ── Issue #1341: Northfield Residents' Association Meeting ─────────────────
+
+    /**
+     * Fires when the NIMBY_FURY rumour is seeded — when the player stirs up fear
+     * at a Residents' Association planning meeting or triggers Margaret's wrath via
+     * the Walkout Gambit.
+     */
+    NIMBY(
+        "NIMBY",
+        "You've enraged the residents' association. Margaret will not forget this.",
+        1
+    ),
+
+    /**
+     * Fires when the player uses the Calm the Room speech option to successfully
+     * block a planning application at the Residents' Association meeting.
+     */
+    COMMUNITY_CHAMPION(
+        "Community Champion",
+        "You spoke sense at the residents' meeting. Briefly, they listened.",
+        1
+    ),
+
+    /**
+     * Fires when the player wins the monthly raffle at the Residents' Association
+     * meeting and claims the MYSTERY_HAMPER prize.
+     */
+    COMMUNITY_SCROUNGER(
+        "Community Scrounger",
+        "You won the raffle. Legitimate this time? Probably not.",
+        1
+    ),
+
+    /**
+     * Fires when the player substitutes a RIGGED_BARREL before the Agenda slot 4
+     * raffle draw and it is used undetected, winning the MYSTERY_HAMPER.
+     */
+    RIGGED_RAFFLE(
+        "Rigged Raffle",
+        "The barrel was weighted. The hamper is yours. No one suspects a thing.",
+        1
+    ),
+
+    /**
+     * Fires when the Walkout Gambit succeeds — 2+ RESIDENTS_MEMBER NPCs leave the
+     * meeting, dropping attendance below quorum and dissolving all pending agenda items.
+     */
+    MEETING_DISSOLVED(
+        "Meeting Dissolved",
+        "Two members walked out. No quorum. Meeting dissolved. Margaret is livid.",
+        1
+    ),
+
+    /**
+     * Fires when the player successfully blackmails Kevin (RESIDENTS_SECRETARY) for
+     * 10 COIN to remove the noise complaint from the agenda.
+     */
+    BLACKMAILER(
+        "Blackmailer",
+        "Ten quid and Kevin's keeping quiet about your noise complaint.",
+        1
+    ),
+
+    /**
+     * Fires when the player steals Kevin's clipboard (STEALTH ≥ 2, unwitnessed) and
+     * rewrites an agenda item to trigger false council enforcement on a rival NPC.
+     */
+    AGENDA_SETTER(
+        "Agenda Setter",
+        "You rewrote the agenda. Someone else is getting a council enforcement visit.",
+        1
     );
 
     private final String name;
