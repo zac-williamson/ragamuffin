@@ -77,6 +77,12 @@ public class Car {
     /** When true the car is waiting for the path ahead to clear. */
     private boolean stopped = false;
 
+    /** Vertical velocity (blocks/sec, positive = up) used for gravity simulation. */
+    private float verticalVelocity = 0f;
+
+    /** Gravitational acceleration applied to vehicles (blocks/sec²). */
+    public static final float GRAVITY = 9.8f;
+
     /** Cooldown in seconds before this car can damage the player again. */
     private float damageCooldown = 0f;
     private static final float DAMAGE_COOLDOWN_DURATION = 1.5f;
@@ -364,6 +370,28 @@ public class Car {
         position.x += (float) Math.sin(rad) * BOUNCE_PUSHBACK;
         position.z += (float) Math.cos(rad) * BOUNCE_PUSHBACK;
         aabb.setPosition(position, getWidth(), getHeight(), getDepth());
+    }
+
+    // ── Gravity ───────────────────────────────────────────────────────────────
+
+    /** Returns the current vertical velocity (blocks/sec). */
+    public float getVerticalVelocity() {
+        return verticalVelocity;
+    }
+
+    /** Sets the vertical velocity directly (used by gravity/landing resolution). */
+    public void setVerticalVelocity(float v) {
+        verticalVelocity = v;
+    }
+
+    /** Accelerates the car downward by gravity for one frame. */
+    public void applyGravity(float delta) {
+        verticalVelocity -= GRAVITY * delta;
+    }
+
+    /** Zeroes the vertical velocity (called on landing). */
+    public void resetVerticalVelocity() {
+        verticalVelocity = 0f;
     }
 
     // ── Player driving ────────────────────────────────────────────────────────

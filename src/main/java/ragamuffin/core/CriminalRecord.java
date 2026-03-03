@@ -247,7 +247,7 @@ public class CriminalRecord {
          * Recorded when a POLICE NPC is within 20 blocks during the Marchetti voucher
          * scam at Angel Nails & Beauty. Penalty: +8 Notoriety.
          */
-        MONEY_LAUNDERING("Money laundering"),
+        VOUCHER_FRAUD("Voucher fraud"),
 
         // ── Issue #1057: Northfield Canal ─────────────────────────────────────────
 

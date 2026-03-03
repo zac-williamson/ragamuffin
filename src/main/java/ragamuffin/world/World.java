@@ -576,6 +576,77 @@ public class World {
         }
     }
 
+    /**
+     * Fix #1322: Apply gravity and vertical collision to a vehicle (Car).
+     * Vehicles fall under gravity until they land on a solid block.
+     *
+     * @param car   the vehicle to apply gravity to
+     * @param delta seconds since last frame
+     */
+    public void applyGravityAndVerticalCollision(ragamuffin.entity.Car car, float delta) {
+        AABB aabb = car.getAABB();
+
+        // Check if the car is resting on solid ground
+        int minX = (int) Math.floor(aabb.getMinX());
+        int maxX = (int) Math.floor(aabb.getMaxX());
+        int minZ = (int) Math.floor(aabb.getMinZ());
+        int maxZ = (int) Math.floor(aabb.getMaxZ());
+        int belowFeetY = (int) Math.floor(aabb.getMinY()) - 1;
+
+        boolean onGround = false;
+        for (int bx = minX; bx <= maxX && !onGround; bx++) {
+            for (int bz = minZ; bz <= maxZ && !onGround; bz++) {
+                if (isBlockSolid(bx, belowFeetY, bz)) {
+                    float blockTop = belowFeetY + 1.0f;
+                    if (Math.abs(aabb.getMinY() - blockTop) < 0.05f) {
+                        onGround = true;
+                    }
+                }
+            }
+        }
+
+        if (onGround && car.getVerticalVelocity() <= 0) {
+            car.resetVerticalVelocity();
+        } else {
+            car.applyGravity(delta);
+        }
+
+        // Apply vertical movement
+        float verticalMove = car.getVerticalVelocity() * delta;
+        car.getPosition().y += verticalMove;
+        car.getAABB().setPosition(car.getPosition(), car.getWidth(), car.getHeight(), car.getDepth());
+
+        // Check for collision after vertical movement (landing resolution)
+        if (verticalMove < 0) {
+            AABB newAabb = car.getAABB();
+            int nMinX = (int) Math.floor(newAabb.getMinX());
+            int nMaxX = (int) Math.floor(newAabb.getMaxX());
+            int nMinZ = (int) Math.floor(newAabb.getMinZ());
+            int nMaxZ = (int) Math.floor(newAabb.getMaxZ());
+            int feetY  = (int) Math.floor(newAabb.getMinY());
+
+            int highestSolidY = Integer.MIN_VALUE;
+            for (int bx = nMinX; bx <= nMaxX; bx++) {
+                for (int bz = nMinZ; bz <= nMaxZ; bz++) {
+                    for (int by = feetY; by >= feetY - 3; by--) {
+                        if (isBlockSolid(bx, by, bz)) {
+                            if (by > highestSolidY) highestSolidY = by;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (highestSolidY != Integer.MIN_VALUE) {
+                float blockTop = highestSolidY + 1.0f;
+                if (car.getPosition().y < blockTop) {
+                    car.getPosition().y = blockTop;
+                    car.getAABB().setPosition(car.getPosition(), car.getWidth(), car.getHeight(), car.getDepth());
+                    car.resetVerticalVelocity();
+                }
+            }
+        }
+    }
+
     public Vector3 moveWithCollision(Player player, float dx, float dy, float dz, float delta, float speed) {
         tmpOriginalPos.set(player.getPosition());
 

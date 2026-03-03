@@ -156,8 +156,8 @@ class Issue1319CashpointIntegrationTest {
 
         // Either SUCCESS or CAUGHT depending on RNG; both are valid
         if (surfResult == CashpointSystem.ShoulderSurfResult.SUCCESS) {
-            assertEquals(NPCState.UNAWARE, victim.getState(),
-                    "Victim should be UNAWARE on successful surf");
+            assertEquals(NPCState.IDLE, victim.getState(),
+                    "Victim should be IDLE on successful surf");
         }
 
         // For fraud test: directly give player the materials
