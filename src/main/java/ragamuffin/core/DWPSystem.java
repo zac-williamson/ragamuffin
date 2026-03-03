@@ -201,6 +201,9 @@ public class DWPSystem {
     /** Whether NOTHING_TO_DECLARE achievement has been unlocked. */
     private boolean nothingToDeclareUnlocked = false;
 
+    /** Post-election payment multiplier (applied by LocalElectionSystem when Brannigan wins). */
+    private float paymentMultiplier = 1.0f;
+
     // ── Construction ──────────────────────────────────────────────────────────
 
     public DWPSystem(Random random) {
@@ -801,5 +804,23 @@ public class DWPSystem {
             homeVisitScheduled = true;
             visitElapsedSeconds = 0f;
         }
+    }
+
+    // ── Post-election multiplier (Issue #1414: LocalElectionSystem) ───────────
+
+    /**
+     * Get the current UC payment multiplier.  Normally 1.0f; set above 1.0f by
+     * {@link ragamuffin.core.LocalElectionSystem} when Brannigan (Red) wins the election.
+     */
+    public float getPaymentMultiplier() {
+        return paymentMultiplier;
+    }
+
+    /**
+     * Set the UC payment multiplier (called by LocalElectionSystem post-election).
+     * @param multiplier new multiplier value (e.g. 1.10f for +10%)
+     */
+    public void setPaymentMultiplier(float multiplier) {
+        this.paymentMultiplier = multiplier;
     }
 }
