@@ -46019,3 +46019,171 @@ When `isPowerOn == false`:
 //              LightingSystem, InternetCafeSystem, CriminalRecord, NotorietySystem,
 //              NoiseSystem, RumourNetwork, NewspaperSystem, TooltipSystem,
 //              WeatherSystem, WarmthSystem, AchievementSystem, WitnessSystem
+
+---
+
+## Issue #1333: Add Northfield Employment System — Job Interviews, Wages, Getting the Sack & the Forged Reference
+
+### Overview
+
+There is currently no way for the player to hold legitimate employment in Northfield. The `JobCentreSystem` manages Universal Credit and sanctions; the `PostOfficeSystem` has a single shift mini-game; but there is no general **employment loop**. This issue adds `EmploymentSystem.java`, connecting to five local employers (Greggs, Iceland, Corner Shop, Greasy Spoon, Charity Shop). The player applies for a job, attends a wooden-chair interview with a local manager, starts shifts, earns wages — and can be sacked for theft, lateness, or aggression. A `FORGED_REFERENCE` material lets the player blag a job they're underqualified for. Employment affects DWP sanctions, faction reputation, and gives the first genuinely honest income path in the game.
+
+### New Java File
+
+`src/main/java/ragamuffin/core/EmploymentSystem.java` in package `ragamuffin.core`
+
+### New Unit Test File
+
+`src/test/java/ragamuffin/core/EmploymentSystemTest.java`
+
+### New Integration Test File
+
+`src/test/java/ragamuffin/integration/Issue1333EmploymentIntegrationTest.java`
+
+---
+
+### Mechanic 1 — Applying for a Job
+
+- Player presses E on a `JOB_VACANCY_BOARD_PROP` (placed outside each employer). Five employers with vacancies and requirements:
+
+| Employer | LandmarkType | Wage / Shift | Requirement | Interview NPC |
+|---|---|---|---|---|
+| Greggs | `GREGGS` | 4 COIN / shift | Notoriety < 20 | `GREGGS_MANAGER` |
+| Iceland | `ICELAND` | 5 COIN / shift | Notoriety < 30 | `ICELAND_MANAGER` |
+| Corner Shop | `CORNER_SHOP` | 3 COIN / shift | None | `CORNER_SHOP_OWNER` |
+| Greasy Spoon | `GREASY_SPOON` | 3 COIN / shift | None | `GREASY_SPOON_OWNER` |
+| Charity Shop | `CHARITY_SHOP` | 0 COIN / shift (volunteer) | CriminalRecord CLEAN | `CHARITY_VOLUNTEER_LEADER` |
+
+- Applying costs nothing. Player receives a `JOB_APPLICATION_FORM` material.
+- Pressing E on the vacancy board while already employed returns: *"You've already got a job. Don't be greedy."*
+- Player must present `JOB_APPLICATION_FORM` to the interview NPC during business hours.
+
+### Mechanic 2 — The Interview
+
+- Interview NPC runs a 3-question dialogue mini-game (simple multiple-choice, no typing):
+  - **Q1 — Experience**: "Have you worked in a similar role before?" → A: "Yes, loads" (lie: 30% catch chance) / B: "No, but I'm keen" (honest, passes) / C: (say nothing, fail immediately).
+  - **Q2 — Reliability**: "Can you do early starts?" → A: "Absolutely" / B: "Depends on the morning" (fail if Greggs/Iceland strict manager) / C: (yawn, Notoriety modifier, fail).
+  - **Q3 — Criminal Record**: "Any unspent convictions?" → A: "No" (lie: CriminalRecord checked — caught if 3+ entries, 5+ entries → rejected on the spot) / B: "Yes" (honest, polite rejection unless Corner Shop) / C: "None of your business" (rejection, Notoriety +1).
+- **Outcome scoring**: 3 correct → `JOB_OFFERED`; 2 → 50% chance; 1 → reject; 0 → reject and interview NPC marks player down in `JOB_BLACKLIST` for that employer (permanent, unless `FORGED_REFERENCE` used).
+- **`FORGED_REFERENCE`**: Craftable at `LibrarySystem` (BLANK_PAPER × 1 + PHOTOCOPIER_INK_CARTRIDGE × 1, FORGERY ≥ Apprentice). Presented during interview → adds +2 to outcome score. If detected (30% base, −10% per FORGERY level above Apprentice): `FRAUD` CriminalRecord entry, Notoriety +5, blacklisted from that employer permanently.
+
+### Mechanic 3 — Shifts & Wages
+
+- On hire, player receives `STAFF_ID_BADGE` material and is assigned a shift schedule (3 shifts/in-game week, Mon/Wed/Fri at employer-specific times):
+  - Greggs: 06:00–09:00 (early bake run)
+  - Iceland: 09:00–13:00 (stock replenishment)
+  - Corner Shop: 14:00–18:00 (afternoon cover)
+  - Greasy Spoon: 07:00–11:00 (breakfast rush)
+  - Charity Shop: 10:00–14:00 (volunteer shift)
+- Player must arrive within 15 in-game minutes of shift start wearing `STAFF_ID_BADGE` and press E on a `STAFF_CLOCK_IN_PROP` inside the building.
+- **During a shift**: player must stay within the employer's landmark boundary. A simple task appears: press E on `STOCK_CRATE_PROP` or `SERVING_COUNTER_PROP` every 2 in-game minutes to log progress. Missing 3 tasks in one shift = `SKIVING` warning.
+- **End-of-shift**: press E on `STAFF_CLOCK_IN_PROP` again to clock out. Wages paid immediately into inventory as COIN.
+- **Late arrival** (>15 min): verbal warning logged. Two verbal warnings = written warning. Three written warnings = `DISMISSED`.
+- **Missing a shift entirely**: verbal warning. Two missed shifts = `DISMISSED`.
+
+### Mechanic 4 — Getting the Sack
+
+Reasons for `DISMISSED`:
+- Caught stealing from employer (`OffLicenceSystem.shopliftDuringCut`, `IcelandSystem.lootDuringCut`, or BlockBreaker on employer prop while on shift): instant dismissal + `THEFT_FROM_EMPLOYER` CriminalRecord entry + Notoriety +4.
+- Three late arrivals or two missed shifts.
+- Notoriety exceeds employer threshold (Greggs: 20, Iceland: 30, others: 40) mid-employment.
+- Starting a fight within 20 blocks of employer during shift hours.
+
+On `DISMISSED`: `STAFF_ID_BADGE` removed, job board clears vacancy (re-posts after 2 in-game days), `JOB_BLACKLIST` entry added (permanent for theft, 7-day cooldown for other reasons). `DWPSystem`/`JobCentreSystem` notified — player can re-claim UC without penalty if dismissed for non-theft reasons.
+
+### Mechanic 5 — DWP Integration
+
+- While employed: `DWPSystem` marks player as `EMPLOYED`; UC payments suspended. If player fails to disclose employment to DWP and continues claiming UC: `BENEFIT_FRAUD` CriminalRecord entry (added after 2 in-game days of employment without disclosure). Disclosure presses E on COUNCIL_RECEPTIONIST at `COUNCIL_OFFICE`.
+- Voluntary resignation: player presses E on manager → "I quit" dialogue. DWP notified; UC re-claimable after 7-day waiting period (reduced to 3 days if BUREAUCRACY ≥ Apprentice).
+
+### Mechanic 6 — Perks & Flavour
+
+- **Greggs employee**: 50% discount on all Greggs items during shift. Temptation mechanic: 20% chance per shift of SAUSAGE_ROLL appearing in inventory (free) — if player takes it and manager NPC catches them, instant dismissal for theft.
+- **Iceland employee**: 1 free FROZEN_PIZZA per shift (legitimate perk). If `PowerCutSystem.isPowerOn() == false`, player's shift is cancelled (power cut closure); wages still paid for half shift.
+- **Charity Shop volunteer**: no wages, but Notoriety −1 per completed shift, and Community Respect +2 (affects `NeighbourhoodSystem`). Each completed volunteer shift seeds `RumourType.COMMUNITY_SPIRIT` rumour.
+- **Achievement `FIRST_DAY`**: complete first shift at any employer.
+- **Achievement `MODEL_EMPLOYEE`**: complete 10 consecutive shifts without a warning.
+- **Achievement `WALKED_OUT`**: quit a job mid-shift (clock out before shift ends).
+- **Achievement `HIRED_AND_FIRED`**: be dismissed from 3 employers.
+- **Achievement `ON_THE_FIDDLE`**: claim UC while employed for 2+ in-game days without disclosing.
+
+### New Materials (add to `Material.java`)
+
+| Material | Description |
+|---|---|
+| `JOB_APPLICATION_FORM` | Collected from JOB_VACANCY_BOARD_PROP. Presented to interview NPC. |
+| `STAFF_ID_BADGE` | Required to clock in to shifts. Removed on dismissal. |
+| `FORGED_REFERENCE` | Crafted: BLANK_PAPER + PHOTOCOPIER_INK_CARTRIDGE. +2 interview score; 30% detection risk. |
+
+### New Prop Types (add to `PropType.java`)
+
+| PropType | Location | Interaction |
+|---|---|---|
+| `JOB_VACANCY_BOARD_PROP` | Outside each employer | E to collect JOB_APPLICATION_FORM |
+| `STAFF_CLOCK_IN_PROP` | Inside each employer | E to clock in/out of shift |
+| `STOCK_CRATE_PROP` | Inside each employer | E every 2 in-game min during shift (productivity task) |
+
+### New NPC Types (add to `NPCType.java`)
+
+- `GREGGS_MANAGER` — runs Greggs interview and monitors shifts. Hostile to player if notoriety Tier 3+.
+- `ICELAND_MANAGER` — runs Iceland interview. Calls PCSO if player fights on premises.
+- `CHARITY_VOLUNTEER_LEADER` — runs Charity Shop volunteer interview. Non-hostile. Provides Notoriety reduction on completed shift.
+
+### New Rumour Type (add to `RumourType.java`)
+
+- `COMMUNITY_SPIRIT` — seeded when player completes a charity volunteer shift; reduces NeighbourhoodWatch anger by 2 for 1 in-game day.
+
+### New Achievement Types (add to `AchievementType.java`)
+
+| Achievement | Condition | Flavour Text |
+|---|---|---|
+| `FIRST_DAY` | Complete first shift at any employer | "Minimum wage. Maximum dignity." |
+| `MODEL_EMPLOYEE` | 10 consecutive shifts without a warning | "They said you'd never amount to anything." |
+| `WALKED_OUT` | Quit a job by clocking out before shift ends | "Life's too short for this." |
+| `HIRED_AND_FIRED` | Dismissed from 3 employers | "Reference available on request. Not recommended." |
+| `ON_THE_FIDDLE` | Claim UC while employed 2+ days without disclosure | "The oldest hustle in the book." |
+
+### New CriminalRecord.CrimeType (add to `CriminalRecord.java` if absent)
+
+- `THEFT_FROM_EMPLOYER` — recorded on stealing from employer during shift.
+- `BENEFIT_FRAUD` — recorded on claiming UC while employed without disclosure.
+
+### Unit Tests
+
+- `EmploymentSystem.applyForJob(employer, inventory)`: returns `NO_VACANCY` if no vacancy; returns `APPLICATION_FORM_ISSUED` when vacancy exists; returns `ALREADY_EMPLOYED` if player already has `STAFF_ID_BADGE`.
+- `EmploymentSystem.conductInterview(answers, criminalRecord, forgedRef)`: 3 correct answers → `JOB_OFFERED`; 0 correct → `REJECTED`; forgedReference with seeded detection=true → `FRAUD_DETECTED` + Notoriety +5.
+- `EmploymentSystem.clockIn(time, badge)`: on time → `CLOCKED_IN`; >15 min late → `LATE_WARNING`; no badge → `NO_BADGE`.
+- `EmploymentSystem.clockOut(tasksCompleted, time)`: 3+ tasks → `SHIFT_COMPLETE`, wages added; <3 tasks → `SKIVING_WARNING`.
+- `EmploymentSystem.dismiss(reason)`: `STAFF_ID_BADGE` removed from inventory; `JOB_BLACKLIST` entry added; `DWPSystem.setEmployed(false)` called.
+- DWP fraud: call `EmploymentSystem.setEmployed(true)` + `DWPSystem.claimUC()` for 2 consecutive sign-on cycles without disclosure → `BENEFIT_FRAUD` CriminalRecord entry.
+- Greggs perks: during shift, `EmploymentSystem.applyShiftPerks(inventory)` adds 50% discount flag; random sausage roll temptation triggers with seeded random=detect → dismissal.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full hire-to-wages cycle at Corner Shop**: Give player JOB_APPLICATION_FORM. Set TimeSystem to Mon 14:00. Player presses E on CORNER_SHOP_OWNER. Play through 3-question interview with all correct answers (seeded). Verify `JOB_OFFERED` result. Verify `STAFF_ID_BADGE` added to inventory. Advance TimeSystem to Mon 14:00 (next shift). Player presses E on `STAFF_CLOCK_IN_PROP`. Verify `CLOCKED_IN`. Simulate 3 E-presses on `STOCK_CRATE_PROP` at 2-minute intervals. Advance TimeSystem to 18:00. Player presses E to clock out. Verify `SHIFT_COMPLETE`. Verify inventory COIN increased by 3 (Corner Shop wage).
+
+2. **Late arrival warning and dismissal chain**: Hire player at Greggs (seed interview to pass). Advance TimeSystem to first shift start (Mon 06:00) + 20 minutes (too late). Player attempts clock-in. Verify `LATE_WARNING` result. Verify warning count = 1. Repeat for next two shifts (2 more late arrivals). Verify third late arrival triggers `DISMISSED`. Verify `STAFF_ID_BADGE` removed from inventory. Verify `JOB_BLACKLIST` contains Greggs entry with 7-day cooldown.
+
+3. **Dismissed for theft**: Hire player at Iceland (seed interview to pass). During active shift, simulate player pressing E on an Iceland stock shelf prop to shoplift. Verify `EmploymentSystem.onTheftDuringShift()` fires `DISMISSED`. Verify `THEFT_FROM_EMPLOYER` added to CriminalRecord. Verify Notoriety increased by 4. Verify `STAFF_ID_BADGE` removed. Verify Greggs JOB_BLACKLIST entry is permanent (cooldown = Integer.MAX_VALUE).
+
+4. **Forged reference gets player hired despite blacklist**: Player blacklisted from Greggs (previous dismissal). Give player `FORGED_REFERENCE`. Player presents forged reference in interview. Seed random so detection = false. Verify interview outcome `JOB_OFFERED` (blacklist bypassed). Verify `STAFF_ID_BADGE` added. Now seed random so detection = true on second attempt. Verify `FRAUD_DETECTED`: `FRAUD` CriminalRecord entry added, Notoriety +5, permanent blacklist for Greggs.
+
+5. **Benefit fraud detection**: Hire player at Corner Shop. Player visits COUNCIL_OFFICE but does NOT press E on COUNCIL_RECEPTIONIST to disclose employment. Player signs on at JobCentreSystem twice (advance TimeSystem by 6 days). Verify `BENEFIT_FRAUD` CriminalRecord entry added after 2nd sign-on. Verify DWP debt of 6 COIN (two UC payments) flagged for repayment. Verify DEBT_COLLECTOR NPC spawns within 30 seconds.
+
+---
+
+// ── Issue #1333: Add Northfield Employment System — Job Interviews, Wages, Getting the Sack & the Forged Reference ────
+// New: EmploymentSystem.java in ragamuffin.core
+// New: EmploymentSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1333EmploymentIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: JOB_APPLICATION_FORM, STAFF_ID_BADGE, FORGED_REFERENCE — add to Material.java
+// New PropTypes: JOB_VACANCY_BOARD_PROP, STAFF_CLOCK_IN_PROP, STOCK_CRATE_PROP — add to PropType.java
+// New NPCTypes: GREGGS_MANAGER, ICELAND_MANAGER, CHARITY_VOLUNTEER_LEADER — add to NPCType.java
+// New RumourType: COMMUNITY_SPIRIT — add to RumourType.java
+// New CrimeTypes: THEFT_FROM_EMPLOYER, BENEFIT_FRAUD — add to CriminalRecord.java
+// New AchievementTypes: FIRST_DAY, MODEL_EMPLOYEE, WALKED_OUT, HIRED_AND_FIRED, ON_THE_FIDDLE — add to AchievementType.java
+// Integration: TimeSystem, DWPSystem, JobCentreSystem, NotorietySystem, CriminalRecord,
+//              WantedSystem, NeighbourhoodSystem, RumourNetwork, NewspaperSystem,
+//              OffLicenceSystem, IcelandSystem, CharityShopSystem, GreggsRaidSystem,
+//              CornerShopSystem, GreasySpoonSystem, LibrarySystem, PowerCutSystem,
+//              AchievementSystem, WitnessSystem, DisguiseSystem, StreetSkillSystem
