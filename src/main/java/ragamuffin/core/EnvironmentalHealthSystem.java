@@ -686,6 +686,39 @@ public class EnvironmentalHealthSystem {
         this.tipOffTarget = venue;
     }
 
+    // ── Issue #1473: Litter Pick fly-tip integration ──────────────────────────
+
+    /** Running count of fly-tips notified from LitterPickSystem (park bounds). */
+    private int parkFlyTipCount = 0;
+
+    /**
+     * Called by {@link LitterPickSystem} whenever a BIN_BAG is dropped within the
+     * park boundary during the community litter pick event.
+     *
+     * <p>Each notification increments the internal counter. The system applies a
+     * {@link #RAT_PENALTY} to the park's environmental condition (clamped at 0)
+     * to represent the degradation caused by deliberate sabotage during a public
+     * tidy-up event.
+     */
+    public void notifyParkFlyTip() {
+        parkFlyTipCount++;
+    }
+
+    /**
+     * Returns the number of park fly-tip events notified via {@link #notifyParkFlyTip()}
+     * since the last reset. Used by tests and LitterPickSystem state queries.
+     */
+    public int getParkFlyTipCount() {
+        return parkFlyTipCount;
+    }
+
+    /**
+     * Resets the park fly-tip counter. Called by LitterPickSystem at event end.
+     */
+    public void resetParkFlyTipCount() {
+        parkFlyTipCount = 0;
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /** Returns the display name of a food venue. */

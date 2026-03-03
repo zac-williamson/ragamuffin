@@ -1700,5 +1700,17 @@ public enum RumourType {
     /** "Word is there's a back room at the off-licence — Gary knows about it. Mentioned it once."
      * — seeded by StreetPreacherSystem when player asks about the off-licence (one-time).
      * Spreads via PUBLIC NPCs only. */
-    OFF_LICENCE_BACK_ROOM;
+    OFF_LICENCE_BACK_ROOM,
+
+    // ── Issue #1473: Northfield Community Litter Pick ─────────────────────────
+
+    /** "Someone got caught going through the pockets of a litter pick volunteer — broad daylight."
+     * — seeded by LitterPickSystem when a pickpocket attempt is witnessed (detection roll fails).
+     * Spreads via PUBLIC and PENSIONER NPCs; raises police patrol awareness near the park. */
+    PICKPOCKET_SPOTTED,
+
+    /** "That litter pick on Saturday — apparently someone hid something nasty in their bag. Police were called."
+     * — seeded by LitterPickSystem on the Crack Pipe Incident (player or volunteer bag reveal).
+     * Spreads via PUBLIC, PENSIONER, and BARMAN NPCs; triggers a brief crime-scene rumour surge. */
+    SCANDAL_RUMOUR;
 }
