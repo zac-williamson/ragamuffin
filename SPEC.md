@@ -54482,3 +54482,155 @@ The player can trigger the event organically by leaving a bag prop in a public s
 
 // All new enum entries (NPCType, Material, PropType, AchievementType, RumourType, CrimeType) must be added.
 // SuspiciousBagSystem.java must be created as the sole new source file.
+
+---
+
+## Issue #1439: Northfield Bank Holiday Street Party — The Pavement BBQ, Gerald's Permit Row & the Grease Fire
+
+### Overview
+
+On any **bank holiday** (`day % 7 == 0`, 12:00–20:00), a spontaneous street party erupts on the residential street south of the park. `NEIGHBOURHOOD_WATCH` NPC Gerald (self-appointed chairman) is both the party's reluctant organiser and its most likely antagonist. Five mechanics govern the event: the permit scramble, the BBQ cook-off, Gerald's noise enforcement, the grease fire escalation, and the post-party clear-up dispute.
+
+This system creates `StreetPartySystem.java` — resolving the stub referenced by `RumourType.CORRUPT_OFFICIAL`, `RumourType.GERALD_DOWN`, `RumourType.FIRE_HAZARD`, and achievements `BANK_HOLIDAY_REGULAR`, `GERALD_DOWN`, `BBQ_ARSONIST`, `STREET_PARTY_GOOD_NEIGHBOUR`.
+
+---
+
+### Event Schedule
+
+| Time  | Phase         | Description                                                                                    |
+|-------|---------------|------------------------------------------------------------------------------------------------|
+| 11:30 | SETUP         | `TRESTLE_TABLE_PROP` × 3, `PLASTIC_CHAIR_PROP` × 8, `BUNTING_PROP` × 2 spawned on the road. |
+| 12:00 | OPEN          | `DISPOSABLE_BBQ_PROP` lit (LIT state). `PUBLIC` × 6, `PENSIONER` × 4, `SCHOOL_KID` × 3 spawn.|
+| 13:00 | PEAK          | BBQ cooks auto-queued `RAW_SAUSAGE`; noise level rises to 4.0f.                               |
+| 14:00 | RISK_WINDOW   | 20% chance per in-game minute that BBQ escalates to OUT_OF_CONTROL state.                     |
+| 18:00 | WIND_DOWN     | Gerald starts demanding everyone goes home; noise compliance check every 5 minutes.           |
+| 20:00 | CLEANUP       | Event ends; litter props (`LITTER_PROP`) spawned; Gerald issues final warning.                 |
+
+HEAVY_RAIN or THUNDERSTORM cancels from SETUP phase. DRIZZLE does not cancel (British stubbornness).
+
+---
+
+### Mechanic 1 — Gerald's Permit Row
+
+`NEIGHBOURHOOD_WATCH` Gerald spawns at 11:00 outside the party area. He requires a `ROAD_CLOSURE_PERMIT` (obtained from `CouncilEnforcementSystem` for 5 COIN during weekday office hours) before he'll stand down.
+
+**Without a permit (default)**:
+- Gerald patrols the party perimeter shouting noise complaints every 3 in-game minutes.
+- At 13:00, Gerald calls the council (phone animation). Council sends `COUNCIL_ENFORCEMENT_OFFICER` Derek at 14:30.
+- Derek issues `FIXED_PENALTY_NOTICE` (10 COIN) to the player if they're within 5 blocks of the `TRESTLE_TABLE_PROP`.
+- Player can **bribe Gerald** (press E, select "Sort him out" — costs 10 COIN, requires no prior `ASSAULT` crime against Gerald today). Seeds `CORRUPT_OFFICIAL` rumour. Gerald backs off until 18:00. Achievement condition for `BANK_HOLIDAY_REGULAR` counts this as a valid attendance.
+- Player can **punch Gerald** (attack NPC). Triggers `ASSAULT` crime, Notoriety +8, WantedSystem +1. Seeds `GERALD_DOWN` rumour. Gerald goes `FLEEING`, Derek arrives in 5 minutes instead of at 14:30.
+
+**With a permit**:
+- Gerald grudgingly approves. Noise enforcement deferred to 19:00. Derek does not arrive. NeighbourhoodSystem Vibes +2.
+- Achievement `STREET_PARTY_GOOD_NEIGHBOUR` awarded if party runs undisturbed to 20:00.
+
+---
+
+### Mechanic 2 — The BBQ Cook-Off
+
+`DISPOSABLE_BBQ_PROP` starts in LIT state at 12:00. The player can:
+- Press E to place `RAW_SAUSAGE` from inventory → starts a 90-second cook timer.
+- Collect `COOKED_SAUSAGE` after timer completes. +25 hunger. Sellable to attending NPCs for 2 COIN each (max 6/party).
+- Over-cook (leave >180 seconds): yields `BURNT_SAUSAGE` (new `Material` entry — "A charcoal brick. Even the dog won't eat it."). NPCs react with disgust speech bubbles; NoiseSystem complaint noise 1.5f.
+- Steal from `TRESTLE_TABLE_PROP` (hold E, 1.5 seconds): 3× `SAUSAGE_ROLL` (no notoriety if no witness within 6 blocks, else +3 Notoriety, `PETTY_THEFT` crime).
+
+---
+
+### Mechanic 3 — The Grease Fire
+
+From 14:00, every in-game minute: 20% random chance OR player pours `PETROL_CANISTER` on BBQ → `DISPOSABLE_BBQ_PROP` transitions to **OUT_OF_CONTROL** state.
+
+**OUT_OF_CONTROL** effects:
+- `WheeliBinFireSystem` integration: if a `WHEELIE_BIN` prop is within 4 blocks, it catches fire (chains into that system's full burning sequence).
+- Fire spreads to adjacent `TRESTLE_TABLE_PROP` within 2 blocks, destroying it and all food items on it.
+- NoiseSystem level 8.0f (screaming). All `PUBLIC` and `PENSIONER` NPCs go `FLEEING`.
+- `FIRE_HAZARD` rumour seeded.
+- `FireStationSystem` notified: fire engine arrives in 90 seconds.
+- Spreads to 3+ blocks (voxel fire propagation using `BlockType.FIRE` on any adjacent `WOOD` blocks): triggers `BBQ_ARSONIST` achievement and `ARSON` `CrimeType`, Notoriety +10, WantedSystem +1.
+- Player can douse with `WATER_BUCKET` (3 uses to extinguish). Earns `FIRE_WARDEN` achievement if extinguished before fire engine arrives.
+- `EnvironmentalHealthSystem` gets a penalty flag for the street block (affects any nearby food vendor inspection for 2 in-game days).
+
+---
+
+### Mechanic 4 — Warm Lager Economy
+
+`STALL_NPC` Terry spawns at 12:00 with a cool box full of canned lager (sold at 3 COIN each, max 12 cans). Terry runs out if player buys 4+ or if 12:00–15:00 period passes without the player intervening.
+
+- `CAN_OF_LAGER` (existing material): consuming raises player's `DRUNK` debuff level by 1. At level 3+ DRUNK, the player's punch accuracy drops 30%, `ASSAULT` crimes are witnessed more leniently (WantedSystem only +0 for the first punch if victim is YOUTH_GANG or TRAVELLER_BOSS).
+- Player can steal Terry's cool box (hold E for 2 seconds, Terry distracted): yields 4× `CAN_OF_LAGER`. Notoriety +4, `THEFT_FROM_PERSON` crime if witnessed.
+- **LAGER GONE WARM**: if HEATWAVE weather and Terry sells out, `WARM_LAGER_CRISIS` rumour seeded; all attending NPCs gain BORED need +20 and disperse 1 hour early.
+
+---
+
+### Mechanic 5 — Post-Party Clear-Up Dispute
+
+At 20:00, `LITTER_PROP` × 5 spawns around the event area. Gerald reappears demanding someone clear up.
+
+- Player can collect all 5 `LITTER_PROP`s (hold E, 1 second each) and put them in the nearest `WHEELIE_BIN`. Earns `COMMUNITY_WIN` rumour, NeighbourhoodSystem Vibes +3. Achievement `STREET_PARTY_GOOD_NEIGHBOUR` requires this AND undisturbed party.
+- Player can **leave the litter**: `FlyTippingSystem` tags the block as a `FLY_TIP_PILE_PROP` equivalent; Vibes −1/day until cleared.
+- Player can **blame Gerald** (E dialogue on Gerald): if player has `PARTY_POOPER` achievement NOT earned: starts argument. 3 PUBLIC NPCs witness; 50% chance Gerald storms off, 50% chance he calls council again (Derek re-arrives at 08:00 next day, issues 15 COIN fine to player).
+
+---
+
+### Integration with Existing Systems
+
+- **`NoiseSystem`**: party noise 4.0f at PEAK; 8.0f on OUT_OF_CONTROL BBQ; 1.5f for burned sausage complaints.
+- **`WheeliBinFireSystem`**: BBQ OUT_OF_CONTROL within 4 blocks of a bin → full WheeliBinFireSystem ignition chain.
+- **`NeighbourhoodWatchSystem`**: Gerald's anger tracks independently; player-bribed Gerald bypasses watch anger accumulation.
+- **`NeighbourhoodSystem`**: party with permit → Vibes +2; post-party cleanup → Vibes +3; OUT_OF_CONTROL fire → Vibes −5.
+- **`CouncilEnforcementSystem`**: `ROAD_CLOSURE_PERMIT` issued here; Derek's fixed-penalty mechanism reused.
+- **`WantedSystem`**: Gerald punch → +1; cordon crossing (second time) → arrest; arson → +1.
+- **`FlyTippingSystem`**: uncleaned litter at 20:00 registers as a fly-tip pile.
+- **`EnvironmentalHealthSystem`**: fire flag affects nearby food vendor inspection rating for 2 in-game days.
+- **`FireStationSystem`**: OUT_OF_CONTROL BBQ triggers a fire engine call.
+- **`WeatherSystem`**: HEAVY_RAIN/THUNDERSTORM cancels; HEATWAVE triggers warm-lager crisis; DRIZZLE ignored.
+- **`RumourNetwork`**: `CORRUPT_OFFICIAL` on bribe; `GERALD_DOWN` on punch; `FIRE_HAZARD` on OUT_OF_CONTROL; `WARM_LAGER_CRISIS` on heat-induced stock out; `COMMUNITY_WIN` on full cleanup.
+- **`CriminalRecord`**: `ASSAULT` on punch; `PETTY_THEFT` on food theft; `THEFT_FROM_PERSON` on cool box; `ARSON` on 3+ block fire.
+- **`NewspaperSystem`**: if fire reaches 3+ blocks: headline "BANK HOLIDAY BBQ LEAVES NORTHFIELD STREET SCORCHED."
+- **`TimeSystem`**: event active on `day % 7 == 0` (bank holiday), 12:00–20:00.
+- **`HMRCSystem`**: Terry's lager sales logged as informal cash-in-hand; player's sausage sales similarly tracked.
+- **`AchievementSystem`**: `BANK_HOLIDAY_REGULAR` (attend 3 parties), `GERALD_DOWN` (punch Gerald), `BBQ_ARSONIST` (3+ block fire), `STREET_PARTY_GOOD_NEIGHBOUR` (undisturbed party + cleanup), `PARTY_POOPER` (disrupt 3 parties).
+
+---
+
+### New Material Entries Required
+
+- `BURNT_SAUSAGE` — "A charcoal brick. Even the dog won't eat it." Inedible; throwable for 0 COIN fence value.
+- `ROAD_CLOSURE_PERMIT` — "Official council permit for a temporary road closure. Costs 5 COIN. Gerald can't argue with it. (He'll try.)" Consumed on use.
+
+### New PropType Entries Required
+
+All props (`DISPOSABLE_BBQ_PROP`, `TRESTLE_TABLE_PROP`, `BUNTING_PROP`, `PLASTIC_CHAIR_PROP`) are already defined in `PropType.java`. No new props required.
+
+### New NPCType Entries Required
+
+`NEIGHBOURHOOD_WATCH` is already defined as Gerald. `COUNCIL_ENFORCEMENT_OFFICER` (Derek) already defined. `STALL_NPC` (Terry) is a new subtype of existing STALL_NPC or a reuse of the existing `STALL_NPC` entry. No new NPC types required.
+
+### New RumourType Entries Required
+
+`CORRUPT_OFFICIAL`, `GERALD_DOWN`, `FIRE_HAZARD` are already defined in `RumourType.java`.  
+New: `WARM_LAGER_CRISIS` — "Terry ran out of cold lager by half two. Half the street went home."
+
+### New AchievementType Entries Required
+
+All achievements (`BANK_HOLIDAY_REGULAR`, `GERALD_DOWN`, `BBQ_ARSONIST`, `STREET_PARTY_GOOD_NEIGHBOUR`, `PARTY_POOPER`) are already defined in `AchievementType.java`. No new achievements required.
+
+---
+
+### Integration Tests
+
+1. **Party spawns on bank holiday**: set `day = 7` (bank holiday), time 12:00; call `StreetPartySystem.update(delta, timeSystem, world, npcManager, weatherSystem, noiseSystem)`; verify `DISPOSABLE_BBQ_PROP` exists within 20 blocks of the residential street landmark, ≥4 `PUBLIC` NPCs are spawned in party area, and `StreetPartySystem.isActive()` returns true.
+
+2. **No party on non-bank-holiday**: set `day = 8`, time 12:00; call update; verify `StreetPartySystem.isActive()` returns false and no `DISPOSABLE_BBQ_PROP` exists in the party zone.
+
+3. **Gerald calls Derek without permit**: start party without permit; advance time to 14:30; call update; verify a `COUNCIL_ENFORCEMENT_OFFICER` NPC exists and is pathfinding toward the trestle table area.
+
+4. **Bribe Gerald prevents Derek**: give player 10 COIN and no prior assault record; simulate E on Gerald and select bribe option; verify `CORRUPT_OFFICIAL` rumour is in `RumourNetwork`, Gerald's state is `IDLE`, and Derek does NOT spawn when time advances to 14:30.
+
+5. **BBQ fire spreads to wheelie bin**: place `WHEELIE_BIN` prop 3 blocks from `DISPOSABLE_BBQ_PROP`; trigger OUT_OF_CONTROL state manually; call update; verify `WheeliBinFireSystem.isAnyBinBurning()` returns true and the bin prop has been replaced with `BURNING_BIN`.
+
+6. **Cooked sausage requires 90-second cook**: place `RAW_SAUSAGE` in player inventory; simulate E on BBQ; advance time by 89 seconds; verify BBQ interaction returns no `COOKED_SAUSAGE`; advance 1 more second; verify `COOKED_SAUSAGE` is added to player inventory and `RAW_SAUSAGE` is consumed.
+
+// `StreetPartySystem.java` must be created as the sole new source file.
+// All referenced enum entries already exist; only `BURNT_SAUSAGE`, `ROAD_CLOSURE_PERMIT` (Materials) and `WARM_LAGER_CRISIS` (RumourType) are new and must be added.
