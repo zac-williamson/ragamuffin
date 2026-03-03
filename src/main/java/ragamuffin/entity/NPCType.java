@@ -2583,7 +2583,24 @@ public enum NPCType {
      * tipped off to police (WantedSystem) or robbed (holdall stolen with STEALTH ≥ 2).
      * Non-hostile by default; unarmed.
      */
-    FIREWORK_DEALER_NPC(30f, 0f, 0f, false);
+    FIREWORK_DEALER_NPC(30f, 0f, 0f, false),
+
+    // ── Issue #1319: NatWest Cashpoint — The Dodgy ATM ───────────────────────
+
+    /**
+     * MONEY_MULE — Kenny, the local money-mule handler who operates around the
+     * NatWest cashpoint on the High Street.
+     * <ul>
+     *   <li>Sells {@link ragamuffin.building.Material#CARD_SKIMMER_DEVICE} for 25 COIN
+     *       on Friday and Saturday evenings (20:00–23:00).</li>
+     *   <li>Offers envelope-drop jobs (carry
+     *       {@link ragamuffin.building.Material#STUFFED_ENVELOPE} 30 blocks south in
+     *       3 minutes for 15 COIN reward).</li>
+     *   <li>Non-hostile by default; flees if WantedSystem ≥ 2 stars within 10 blocks.</li>
+     * </ul>
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    MONEY_MULE(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

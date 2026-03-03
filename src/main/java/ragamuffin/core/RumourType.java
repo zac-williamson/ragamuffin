@@ -868,5 +868,20 @@ public enum RumourType {
      * FIREWORK_MORTAR_PROP. Spreads via PUBLIC, BARMAN, and YOUTH_GANG NPCs.
      * NotorietySystem +8; NewspaperSystem headline eligible ("Bonfire Night Chaos at
      * Tesco Car Park"). Triggers CRIMINAL_DAMAGE and FIRE_ENGINE response. */
-    FIREWORK_PRANK;
+    FIREWORK_PRANK,
+
+    // ── Issue #1319: NatWest Cashpoint — The Dodgy ATM ───────────────────────
+
+    /** "Word is there's a dodgy reader on the NatWest machine on the High Street —
+     * been nicking card details off everyone who uses it."
+     * Seeded by CashpointSystem when a CARD_SKIMMER_DEVICE session yields 2+ CLONED_CARD_DATA.
+     * Spreads via PUBLIC and BARMAN NPCs. Police patrol frequency near CASHPOINT_PROP +1.
+     * Triggers +1 WantedSystem star if the skimmer is still active when rumour propagates. */
+    CARD_SKIMMING_WARNING,
+
+    /** "Three Kenny sightings this week near the cashpoint — that man is on one."
+     * Seeded by CashpointSystem after the player completes 3 envelope-drop runs.
+     * Spreads via STREET_LAD and BARMAN NPCs.
+     * Flags ORGANISED_CRIME in CriminalRecord; STREET_LADS Respect +2 on seeding. */
+    ORGANISED_CRIME;
 }

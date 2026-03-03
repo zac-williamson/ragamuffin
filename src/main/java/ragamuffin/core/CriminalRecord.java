@@ -901,7 +901,24 @@ public class CriminalRecord {
          * Bonfire Night (first offence is a warning only).
          * Penalty: Notoriety +5, WantedSystem +1 star. Clears after 48 in-game hours.
          */
-        FIREWORK_OFFENCE("Firework offence");
+        FIREWORK_OFFENCE("Firework offence"),
+
+        // ── Issue #1319: NatWest Cashpoint — The Dodgy ATM ───────────────────
+
+        /**
+         * Recorded on a successful fraudulent withdrawal using STOLEN_PIN_NOTE +
+         * VICTIM_BANK_CARD at the CASHPOINT_PROP, or when a CARD_SKIMMER_DEVICE
+         * session is detected by a POLICE NPC.
+         * Penalty: Notoriety +12, WantedSystem +2 stars per occurrence.
+         */
+        CARD_FRAUD("Card fraud"),
+
+        /**
+         * Recorded when the player is stopped by police while carrying
+         * STUFFED_ENVELOPE during a Kenny money-mule run.
+         * Penalty: Notoriety +15, WantedSystem +2 stars.
+         */
+        MONEY_LAUNDERING("Money laundering");
 
         private final String displayName;
 

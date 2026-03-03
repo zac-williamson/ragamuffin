@@ -3269,7 +3269,26 @@ public enum PropType {
      * early launch (sabotage) or to plant a BANGER_FIREWORK inside.
      * Yields SCRAP_METAL after the event ends.
      */
-    FIREWORK_MORTAR_PROP(0.4f, 0.6f, 0.4f, Integer.MAX_VALUE, Material.SCRAP_METAL);
+    FIREWORK_MORTAR_PROP(0.4f, 0.6f, 0.4f, Integer.MAX_VALUE, Material.SCRAP_METAL),
+
+    // ── Issue #1319: NatWest Cashpoint — The Dodgy ATM ───────────────────────
+
+    /**
+     * CASHPOINT_PROP — the lone NatWest cashpoint on the High Street.
+     * 0.6×1.8×0.4m; highly durable (indestructible under normal conditions,
+     * requires CROWBAR or ANGLE_GRINDER when out-of-service).
+     * <ul>
+     *   <li>Press E to interact (withdraw COIN, attach skimmer, or crack open
+     *       when the machine is out of service).</li>
+     *   <li>When cracked open with CROWBAR: 4s hold, noise 3.0, yields
+     *       80–150 COIN + ENGINEER_ACCESS_CARD.</li>
+     *   <li>When cracked open with ANGLE_GRINDER: 1.5s hold, noise 7.5,
+     *       attracts POLICE within 20 blocks.</li>
+     *   <li>Drops SCRAP_METAL when fully destroyed (indestructible during
+     *       normal operation; only becomes destructible in OUT_OF_SERVICE mode).</li>
+     * </ul>
+     */
+    CASHPOINT_PROP(0.6f, 1.8f, 0.4f, Integer.MAX_VALUE, Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
