@@ -58092,3 +58092,128 @@ Every third Saturday (starting day 21), Derek Hodges opens the Northfield Model 
 5. **Returning the diorama to Derek after theft grants CLUB_MEMBERSHIP_TOKEN and DECENT_SORT**: create system; give player `Material.SIGNAL_BOX_DIORAMA_PROP`; advance time to 16:05 open day (after draw); call `returnDiorama(player, inventory, derekNpc, timeSystem)`; verify `inventory.contains(Material.SIGNAL_BOX_DIORAMA_PROP)` == false; verify `inventory.contains(Material.CLUB_MEMBERSHIP_TOKEN)` == true; verify `achievementCallback` received `AchievementType.DECENT_SORT`; verify `rumourNetwork` received `RumourType.DIORAMA_RETURNED`.
 
 // `ModelRailwaySystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (open day schedule, club night schedule, derailment window), `CriminalRecord` (new `RAFFLE_FRAUD`; existing `THEFT`, `TRESPASS`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `RAFFLE_CHEAT`, `DIORAMA_NICKED`, `DIORAMA_RETURNED`, `RAFFLE_WINNER`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (`DIORAMA_FENCE_VALUE`, `LOCO_MODEL` fence values), `PawnShopSystem` (`DIORAMA_PAWN_VALUE`), `AchievementSystem`, and `NoiseSystem`. New NPCTypes: `MODEL_RAILWAY_CHAIR`, `RAFFLE_VOLUNTEER`, `RAILWAY_MEMBER`. New Materials: `RAFFLE_TICKET`, `LOCO_MODEL_PROP`, `TRACK_PACK_PROP`, `RAFFLE_CONSOLATION_VOUCHER`, `CLUB_MEMBERSHIP_TOKEN`. New PropTypes: `RAFFLE_BARREL_PROP`, `DISPLAY_TABLE_PROP`, `SIGNAL_BOX_DIORAMA_PROP`, `LOCO_DISPLAY_PROP`. New RumourTypes: `RAFFLE_CHEAT`, `DIORAMA_NICKED`, `DIORAMA_RETURNED`, `RAFFLE_WINNER`. New CrimeTypes: `RAFFLE_FRAUD`. New AchievementTypes: `SIGNAL_GONE`, `LUCKY_DIP`, `DECENT_SORT`, `BARREL_RIGGER`.
+
+---
+
+## Issue #1501: Add Northfield Brass Band — Reg's Rehearsal, the Contest Circuit & the Instrument Van Raid
+
+### Overview
+
+Every other Sunday from 14:00–16:00, the Northfield Brass Band perform a public concert at the park bandstand under the baton of Reg Butterworth (`NPCType.BRASS_BAND_CONDUCTOR`). Rehearsals are held Tuesday and Thursday evenings 19:30–21:00 at `LandmarkType.COMMUNITY_CENTRE`. The band's instrument collection — packed into a `TRANSIT_VAN_PROP` outside the community centre overnight — is worth serious coin at the fence. Alternatively, the player can join as a stand-in percussionist, earn respectable standing, and collect the `CONCERT_COLLECTION_TIN_PROP` proceeds. Or simply busk using a stolen instrument and claim the band's patch.
+
+### Operational Schedule
+
+- **Public concerts**: every 2nd Sunday (day % 14 == 0), 14:00–16:00, at `LandmarkType.PARK_BANDSTAND`.
+- **Rehearsals**: Tue + Thu 19:30–21:00, at `LandmarkType.COMMUNITY_CENTRE` (Room B). Members only; player who enters without `BAND_ASSOCIATE_CARD` triggers `CrimeType.TRESPASS`.
+- **Van overnight**: van parked outside community centre each rehearsal night from 21:00 until 07:00 next day.
+- **Collection tin**: Reg passes `CONCERT_COLLECTION_TIN_PROP` among spectators 15:45–16:00 during concerts. 1–3 COIN per PUBLIC NPC. Player can press E to donate (Vibes +1) or steal the whole tin (12–20 COIN, `CrimeType.THEFT`, Notoriety +3).
+
+### Mechanic 1 — Joining as Stand-In Percussionist
+
+- Reg asks for a stand-in snare player at the start of each concert if fewer than `MIN_BAND_MEMBERS` (= 6) are present.
+- Player presses E on Reg to volunteer; Reg hands out `BAND_ASSOCIATE_CARD`.
+- Stand-in play uses `BattleBarMiniGame` (EASY difficulty) — 8 timing prompts. Score 0–4: Reg is disappointed (no benefit). Score 5–7: crowd applauds (Vibes +2, 2 COIN honorarium). Score 8: perfect performance (Vibes +3, 4 COIN, `AchievementType.BRASSED_OFF` unlocked).
+- Attending 3 concerts as stand-in: `AchievementType.HONORARY_MEMBER` + permanent `BAND_ASSOCIATE_CARD` (no need to ask again).
+
+### Mechanic 2 — Busking with a Stolen Instrument
+
+- The `BRASS_INSTRUMENT_CASE_PROP` van contains `Material.TUBA`, `Material.CORNET`, and `Material.EUPHONIUM`.
+- Stolen instrument equipped in hotbar → player can busk at any high-street location using the existing `BuskingSystem`.
+- **Turf conflict**: if player busks within `BAND_PATCH_RANGE` (= 30f blocks) of the park bandstand during a concert, `NPCType.BRASS_BAND_MEMBER` NPCs become hostile and call for `NPCType.PCSO`. Seeds `RumourType.INSTRUMENT_THIEF`.
+- Stolen instrument fences for `TUBA_FENCE_VALUE` (= 18 COIN), `CORNET_FENCE_VALUE` (= 14 COIN), `EUPHONIUM_FENCE_VALUE` (= 16 COIN). Pawn values 60% of fence value.
+- Player can return stolen instrument to Reg (press E with instrument in inventory, at Reg's position before next rehearsal): instrument removed, Reg gives `BAND_ASSOCIATE_CARD` + seeds `RumourType.INSTRUMENT_RETURNED`. `AchievementType.DECENT_BRASS` unlocked.
+
+### Mechanic 3 — The Instrument Van Raid
+
+- `TRANSIT_VAN_PROP` is locked (`VAN_LOCK_PROP`, hitsToSmash = 4 for crowbar, or `Material.LOCKPICK` opens silently).
+- Inside: 1× `Material.TUBA`, 2× `Material.CORNET`, 1× `Material.EUPHONIUM`, plus `SHEET_MUSIC_FOLDER_PROP` (fences 3 COIN) and a 10–16 COIN cash tin.
+- **Witness radius**: `VAN_WITNESS_RANGE` = 8.0f blocks. Any `BRASS_BAND_MEMBER` or `PUBLIC` NPC within range triggers `CrimeType.BURGLARY` + Notoriety +5.
+- Optimal window: 22:30–02:00 (band gone, streets quiet); reduces ambient NPC count to 0–1.
+- `NoiseSystem`: crowbar hits emit `NOISE_LEVEL` = 3 per hit; lockpick emits 0.
+- `AchievementType.LAST_NIGHT_OF_THE_PROMS` — loot all 4 instruments unwitnessed in one raid.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `CONCERT_INTERVAL_DAYS` | 14 |
+| `CONCERT_START_HOUR` | 14.0f |
+| `CONCERT_END_HOUR` | 16.0f |
+| `REHEARSAL_START_HOUR` | 19.5f |
+| `REHEARSAL_END_HOUR` | 21.0f |
+| `MIN_BAND_MEMBERS` | 6 |
+| `COLLECTION_TIN_START_HOUR` | 15.75f |
+| `BAND_PATCH_RANGE` | 30.0f |
+| `VAN_WITNESS_RANGE` | 8.0f |
+| `VAN_SMASH_HITS` | 4 |
+| `TUBA_FENCE_VALUE` | 18 |
+| `CORNET_FENCE_VALUE` | 14 |
+| `EUPHONIUM_FENCE_VALUE` | 16 |
+| `TIN_STEAL_NOTORIETY` | 3 |
+| `VAN_RAID_NOTORIETY` | 5 |
+| `STANDIN_SCORE_GOOD` | 5 |
+| `STANDIN_SCORE_PERFECT` | 8 |
+| `STANDIN_HONORARIUM_GOOD` | 2 |
+| `STANDIN_HONORARIUM_PERFECT` | 4 |
+| `CONCERTS_FOR_HONORARY` | 3 |
+
+### Entities Required
+
+**New NPCTypes required:**
+- `NPCType.BRASS_BAND_CONDUCTOR` — Reg Butterworth. Organises concerts and rehearsals. Hostile if theft witnessed. Passive during concert (facing bandstand). Gives `BAND_ASSOCIATE_CARD` to stand-in volunteers.
+- `NPCType.BRASS_BAND_MEMBER` — 5–7 band members. Attend rehearsals and concerts. Hostile if instrument theft is witnessed or player busks within `BAND_PATCH_RANGE`.
+
+**New Materials required:**
+- `Material.TUBA` — large brass instrument. Fences `TUBA_FENCE_VALUE`. Equippable for busking.
+- `Material.CORNET` — small brass instrument. Fences `CORNET_FENCE_VALUE`. Equippable for busking.
+- `Material.EUPHONIUM` — mid-range brass instrument. Fences `EUPHONIUM_FENCE_VALUE`. Equippable for busking.
+- `Material.BAND_ASSOCIATE_CARD` — grants legitimate entry to rehearsals and stand-in status. Prevents `TRESPASS` crime.
+- `Material.SHEET_MUSIC_FOLDER` — folder of handwritten arrangements. Fences 3 COIN at pawn shop (no fence value).
+
+**New PropTypes required:**
+- `PropType.PARK_BANDSTAND_PROP` — raised hexagonal platform in the park. 4.0×4.0×0.8 collision; band NPCs stand on it during concerts.
+- `PropType.BRASS_INSTRUMENT_CASE_PROP` — instrument storage unit inside the van. Press E (with lockpick or after smash) to loot instruments.
+- `PropType.CONCERT_COLLECTION_TIN_PROP` — Reg's donation tin. Press E to donate or steal. Spawns only during 15:45–16:00 concert window.
+- `PropType.SHEET_MUSIC_STAND_PROP` — decorative stand used during rehearsals. No interaction.
+
+**New RumourTypes required:**
+- `RumourType.INSTRUMENT_THIEF` — "Someone's been busking on the bandstand with a nicked tuba from the brass band. Reg is livid." Vibes −3. Seeds among `BRASS_BAND_MEMBER` and park-area `PUBLIC` NPCs.
+- `RumourType.INSTRUMENT_RETURNED` — "The tuba turned up outside the community centre with a sorry note. Reg said he'd say no more about it." Vibes +2. Seeds among `BRASS_BAND_MEMBER` NPCs.
+- `RumourType.BAND_CONCERT` — "Brass band's on in the park Sunday afternoon. Reg says they're doing Land of Hope and Glory." Vibes +1. Seeds each Friday at 17:00 before a concert Sunday.
+- `RumourType.VAN_RAIDED` — "Someone cleaned out the brass band's van overnight. All four instruments gone. Reg had to cancel the concert." Vibes −2. Seeds among `BRASS_BAND_MEMBER` and `PUBLIC` NPCs after successful raid.
+
+**New CrimeTypes required (in CriminalRecord):**
+- `CrimeType.CONCERT_TIN_THEFT` — stealing the collection tin witnessed.
+
+**New AchievementTypes required:**
+- `AchievementType.BRASSED_OFF` — achieve a perfect score (8/8) as stand-in percussionist.
+- `AchievementType.HONORARY_MEMBER` — attend 3 concerts as stand-in percussionist.
+- `AchievementType.LAST_NIGHT_OF_THE_PROMS` — loot all 4 instruments from the van unwitnessed in a single raid.
+- `AchievementType.DECENT_BRASS` — return a stolen instrument to Reg before the next rehearsal.
+
+**Already defined — no new entries needed:**
+- `Material.LOCKPICK` — silent van entry.
+- `Material.CROWBAR` — forced van entry (noisy).
+- `Material.COIN` — honorarium, donation.
+- `CrimeType.THEFT` — collection tin steal (witnessed).
+- `CrimeType.TRESPASS` — rehearsal entry without `BAND_ASSOCIATE_CARD`.
+- `CrimeType.BURGLARY` — witnessed van raid.
+- `LandmarkType.COMMUNITY_CENTRE` — rehearsal venue.
+- `LandmarkType.PARK` — concert venue / bandstand position.
+- `NPCType.PCSO` — called by band members on turf conflict / theft witness.
+- `BuskingSystem` — player busking with stolen instrument reuses existing system.
+- `NoiseSystem` — crowbar hits emit noise during van raid.
+
+### Integration Tests
+
+1. **Volunteering as stand-in when band is short-handed grants BAND_ASSOCIATE_CARD**: create `BrassBandSystem`; set band member count to `MIN_BAND_MEMBERS − 1`; set time to concert Sunday 13:55; call `volunteerAsStandin(player, inventory, regNpc, timeSystem)`; verify result == `VolunteerResult.ACCEPTED`; verify `inventory.contains(Material.BAND_ASSOCIATE_CARD)` == true.
+
+2. **Perfect stand-in performance (8/8) awards honorarium and BRASSED_OFF**: create system; give player `BAND_ASSOCIATE_CARD`; mock `BattleBarMiniGame` to return score 8; call `performAsStandin(player, inventory, timeSystem, mockMiniGame)`; verify `inventory.getItemCount(Material.COIN)` increased by `STANDIN_HONORARIUM_PERFECT` (4); verify `achievementCallback` received `AchievementType.BRASSED_OFF`; verify neighbourhood Vibes increased by 3.
+
+3. **Attending 3 concerts as stand-in unlocks HONORARY_MEMBER and permanent card**: create system; call `recordStandinAttendance(player)` × 3; verify `brassBandSystem.getStandinCount(player)` == 3; verify `achievementCallback` received `AchievementType.HONORARY_MEMBER`; verify `brassBandSystem.hasHonoraryStatus(player)` == true.
+
+4. **Unwitnessed van raid during quiet window (23:00) loots all instruments and awards LAST_NIGHT_OF_THE_PROMS**: create system; give player `Material.LOCKPICK` (4 charges); set time to rehearsal Tuesday 23:00; ensure no NPCs within `VAN_WITNESS_RANGE`; call `raidInstrumentVan(player, inventory, nearbyNpcs=[], timeSystem)`; verify `inventory.contains(Material.TUBA)` == true; verify `inventory.contains(Material.CORNET)` == true; verify `inventory.contains(Material.EUPHONIUM)` == true; verify `achievementCallback` received `AchievementType.LAST_NIGHT_OF_THE_PROMS`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == false.
+
+5. **Returning stolen instrument to Reg before next rehearsal removes it from inventory and awards DECENT_BRASS**: create system; give player `Material.TUBA`; set time to Tuesday 19:00 (before rehearsal); call `returnInstrument(player, inventory, regNpc, timeSystem, Material.TUBA)`; verify `inventory.contains(Material.TUBA)` == false; verify `inventory.contains(Material.BAND_ASSOCIATE_CARD)` == true; verify `achievementCallback` received `AchievementType.DECENT_BRASS`; verify `rumourNetwork` received `RumourType.INSTRUMENT_RETURNED`.
+
+// `BrassBandSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (concert/rehearsal schedule, van overnight window), `BuskingSystem` (stolen instrument busking, turf conflict detection), `BattleBarMiniGame` (stand-in performance), `CriminalRecord` (new `CONCERT_TIN_THEFT`; existing `THEFT`, `TRESPASS`, `BURGLARY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `INSTRUMENT_THIEF`, `INSTRUMENT_RETURNED`, `BAND_CONCERT`, `VAN_RAIDED`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (instrument fence values), `PawnShopSystem` (`SHEET_MUSIC_FOLDER` pawn value), `AchievementSystem`, and `NoiseSystem` (crowbar raid hits). New NPCTypes: `BRASS_BAND_CONDUCTOR`, `BRASS_BAND_MEMBER`. New Materials: `TUBA`, `CORNET`, `EUPHONIUM`, `BAND_ASSOCIATE_CARD`, `SHEET_MUSIC_FOLDER`. New PropTypes: `PARK_BANDSTAND_PROP`, `BRASS_INSTRUMENT_CASE_PROP`, `CONCERT_COLLECTION_TIN_PROP`, `SHEET_MUSIC_STAND_PROP`. New RumourTypes: `INSTRUMENT_THIEF`, `INSTRUMENT_RETURNED`, `BAND_CONCERT`, `VAN_RAIDED`. New CrimeTypes: `CONCERT_TIN_THEFT`. New AchievementTypes: `BRASSED_OFF`, `HONORARY_MEMBER`, `LAST_NIGHT_OF_THE_PROMS`, `DECENT_BRASS`.
