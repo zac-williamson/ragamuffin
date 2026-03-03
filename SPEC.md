@@ -47703,3 +47703,131 @@ Using `Material.FORGED_ID` at the counter:
 //              WantedSystem, CriminalRecord, RumourNetwork, NeighbourhoodSystem,
 //              StreetSkillSystem, BattleBarMiniGame, SoundSystem, NewspaperSystem,
 //              WitnessSystem, TimeSystem
+
+---
+
+## Issue #1355: Add Northfield NHS Walk-In Centre — Triage Queue, Drug Safe Heist & the Ambulance Hustle
+
+**Northfield Walk-In Centre** (LandmarkType `NHS_WALK_IN_CENTRE`) is a busy NHS minor-injuries facility on the high street. Open 08:00–22:00 Mon–Sat, 10:00–18:00 Sun. Staffed by **Triage Nurse Brenda** (`TRIAGE_NURSE`), **Dr. Yusuf Okafor** (`WALK_IN_DOCTOR`), and paramedics **Andy & Sue** (`PARAMEDIC`) stationed at the `AMBULANCE_BAY_PROP` outside. The props (`TRIAGE_DESK_PROP`, `TREATMENT_CUBICLE_PROP`, `CONTROLLED_DRUGS_SAFE_PROP`, `BLOOD_PRESSURE_MACHINE_PROP`, `AMBULANCE_BAY_PROP`, `LEAFLET_RACK_PROP`, `PHARMACY_HATCH_PROP`, `CIGARETTE_BIN_PROP`) and NPCTypes (`TRIAGE_NURSE`, `WALK_IN_DOCTOR`, `PARAMEDIC`) are already defined; this issue implements `WalkInCentreSystem.java`.
+
+### Core Mechanics
+
+**Triage Queue**
+- Player presses E on `TRIAGE_DESK_PROP` to join the queue. Queue length: 1–5 CIVILIAN_PATIENT NPCs (spawned dynamically, each waiting 5–12 in-game minutes before their turn).
+- Estimated wait displayed to player: `"Wait: ~{n} minutes"`.
+- When it's the player's turn, Dr. Okafor treats them: restores HP to full (capped at max HP). Grants `DISCHARGE_LETTER` item (clears 1 outstanding `CRIMINAL_RECORD` charge if shown at `MagistratesCourtSystem` — "unfit to stand trial" excuse, one-use).
+- Treatment only available if HP < 70% max. Attempting to queue at full health: Brenda says *"You look fine to me, love. Seat's needed."*
+- Achievement `WAITING_LIST`: sit in the waiting room (stand within 3 blocks of `TRIAGE_DESK_PROP`) for 30 continuous in-game minutes without queuing.
+
+**Blood Pressure Machine**
+- Player presses E on `BLOOD_PRESSURE_MACHINE_PROP`. Returns flavour reading: low/normal/high (weighted: 20% low, 60% normal, 20% high). High reading: grants `SPRINT_BUFF` buff (reduces sprint fatigue by 20% for 5 in-game minutes). Low reading: gains tooltip "You're barely alive as it is."
+
+**Cigarette Bin**
+- Press E to search: 40% chance finds `CIGARETTE` ×1–3. Triggers Brenda's disgust dialogue if she is within 6 blocks.
+
+**Leaflet Rack**
+- Press E on `LEAFLET_RACK_PROP` for a random collectible LEAFLET item (flavour text items: "Living With Debt", "Are You Getting Enough Sleep?", "Five Fruit and Veg", "Stop Smoking Today"). No gameplay effect.
+
+**Queue-Jumping Hustle**
+- Player can bribe Brenda: 5 COIN → jump to front of queue immediately.
+- Success: treatment on next frame; no crime recorded.
+- Refusal (Notoriety ≥ 10): Brenda calls for security (spawns `POLICE` NPC at entrance in 30 seconds).
+- Achievement `QUEUE_JUMPER_NHS`: successfully bribe Brenda once (reuses `QUEUE_JUMPER` name with new title if already taken, else new type).
+
+**Fetch-Prescription Quest**
+- Brenda occasionally (10:00–14:00 daily) has a quest: deliver `PRESCRIPTION_MEDS` from `PHARMACY_HATCH_PROP` to a named CIVILIAN_PATIENT NPC seated in the waiting room.
+- Reward: 3 COIN + 5 NeighbourhoodSystem Vibes + `GOOD_SAMARITAN` achievement progress.
+- Player can steal the meds instead (sell at `FenceSystem` for 4 COIN). Triggers `MEDICINE_THEFT` crime + Brenda hostile (calls police).
+
+**Controlled Drugs Safe Heist**
+- `CONTROLLED_DRUGS_SAFE_PROP` in the medicine room behind a locked door (`WALK_IN_MEDICINE_ROOM_DOOR_PROP`).
+- Lockpicking door (5 seconds): Noise level 3; Brenda detects at ≤ 10 blocks with 60% chance.
+- `CONTROLLED_DRUGS_SAFE_PROP`: 20 hits with `CROWBAR` (or 30 without). Yields `TRAMADOL` ×1–2, `DIAZEPAM` ×1.
+- `TRAMADOL`: heals 15 HP; fenceable 6–10 COIN; triggers `CONTROLLED_DRUG_TRAFFICKING` crime type if found on player by `POLICE`.
+- `DIAZEPAM`: reduces `WarmthSystem` anxiety debuff by 10; fenceable 5–8 COIN.
+- Opening safe: `MEDICINE_THEFT` + `CONTROLLED_DRUG_TRAFFICKING` to `CriminalRecord`, +12 Notoriety, +2 WantedSystem stars, `PHARMACY_RAID` rumour seeded to 5 NPCs. Achievement `SURGERY_RAIDER`.
+
+**Ambulance Hustle**
+- Andy & Sue's ambulance is parked at `AMBULANCE_BAY_PROP`. When both paramedics are away on a callout (triggered 2× daily at random between 10:00–20:00, lasting 5 in-game minutes), the ambulance is unattended.
+- Player can loot the ambulance (press E, 3-second interaction): yields `FIRST_AID_KIT` ×1, `PRESCRIPTION_MEDS` ×1–2. Triggers `MEDICINE_THEFT` crime, +5 Notoriety.
+- Driving the ambulance away (via `CarDrivingSystem`): `VEHICLE_THEFT` crime, Wanted +2 stars, `MAJOR_THEFT` rumour.
+- Achievement: `BLUE_LIGHT_SPECIAL` — drive the ambulance off the lot.
+
+**Paramedic Callout Response**
+- When any NPC is at HP ≤ 5 within 50 blocks and NoiseSystem ≥ 20: a `PARAMEDIC` NPC dispatches from `AMBULANCE_BAY_PROP`, moves to the injured NPC, "treats" them (NPC HP set to 15) over 60 seconds, then returns.
+- If player attacks a `PARAMEDIC`: `WantedSystem` forced to Tier 4 minimum; `ASSAULTING_NHS_STAFF` crime recorded; Notoriety +20.
+
+### Integration
+
+- `HealingSystem` — full HP restore on treatment; `TRAMADOL` heals 15 HP; `DIAZEPAM` reduces anxiety debuff.
+- `MagistratesCourtSystem` — `DISCHARGE_LETTER` used as "unfit to stand trial" excuse to clear 1 charge.
+- `FenceSystem` — `TRAMADOL` fences for 6–10 COIN; `DIAZEPAM` for 5–8 COIN; `PRESCRIPTION_MEDS` for 4 COIN.
+- `WantedSystem` — safe heist +2 stars; ambulance theft +2 stars; assaulting paramedic → Tier 4 minimum.
+- `NotorietySystem` — safe heist +12; medicine theft +5; prescription theft +5; assaulting paramedic +20.
+- `CriminalRecord` — `MEDICINE_THEFT`, `CONTROLLED_DRUG_TRAFFICKING`, `VEHICLE_THEFT`, `ASSAULTING_NHS_STAFF`.
+- `RumourNetwork` — `PHARMACY_RAID` (seeded on safe heist); `WITNESS_SIGHTING` (if witnessed entering medicine room).
+- `NeighbourhoodSystem` — fetch quest completion +5 Vibes; safe heist −5 Vibes; ambulance theft −8 Vibes.
+- `NoiseSystem` — lockpicking door: level 3; crowbar on safe: level 6; ambulance alarm: level 8.
+- `WitnessSystem` — any crime inside witnessed by CIVILIAN_PATIENT → `WITNESS_SIGHTING` seeded.
+- `TimeSystem` — opening hours enforced; paramedic callout timing; prescription quest window 10:00–14:00.
+- `SoundSystem` — `SoundEffect.AMBULANCE_SIREN` on paramedic callout; `SoundEffect.ALARM` on safe breach.
+- `StreetSkillSystem` — `STEALTH` XP +1 on undetected medicine room entry; `FENCE` XP +1 on selling controlled drug.
+- `CarDrivingSystem` — ambulance is driveable when Andy and Sue are on callout.
+
+### New Types Required
+
+- `CriminalRecord.CrimeType.MEDICINE_THEFT` — stealing prescription meds or looting ambulance.
+- `CriminalRecord.CrimeType.CONTROLLED_DRUG_TRAFFICKING` — possessing TRAMADOL or DIAZEPAM when searched by police.
+- `CriminalRecord.CrimeType.ASSAULTING_NHS_STAFF` — hitting TRIAGE_NURSE, WALK_IN_DOCTOR, or PARAMEDIC.
+- `AchievementType.SURGERY_RAIDER` — already defined ("Highly Irregular"); crack the controlled drugs safe.
+- `AchievementType.GOOD_SAMARITAN` — already defined; complete 3 fetch-prescription quests.
+- `AchievementType.WAITING_LIST` — already defined; sit in waiting room for 30 in-game minutes.
+- `AchievementType.BLUE_LIGHT_SPECIAL` — drive the ambulance off the lot.
+- `Material.FIRST_AID_KIT` — heals 10 HP; looted from ambulance; fenceable 3 COIN.
+- `PropType.WALK_IN_MEDICINE_ROOM_DOOR_PROP` — lockpickable door to medicine room (if not already in PropType).
+
+### New Java Files
+
+- `src/main/java/ragamuffin/core/WalkInCentreSystem.java`
+- `src/test/java/ragamuffin/core/WalkInCentreSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1355WalkInCentreIntegrationTest.java`
+
+### Unit Tests
+
+- `WalkInCentreSystem.isOpen(dayOfWeek, hour)`: Monday 10:00 → true; Monday 07:59 → false; Sunday 12:00 → true; Sunday 09:59 → false; Monday 22:01 → false.
+- `WalkInCentreSystem.joinQueue(player, queueLength)`: HP < 70% → queued, estimated wait returned; HP ≥ 70% → returns `QueueResult.NOT_INJURED`.
+- `WalkInCentreSystem.treatPlayer(player)`: HP set to full; `DISCHARGE_LETTER` added to inventory.
+- `WalkInCentreSystem.bribeBrend(player, inventory, notoriety)`: notoriety < 10, inventory ≥ 5 COIN → queue-jump success, −5 COIN; notoriety ≥ 10 → `BribeResult.REFUSED`, `POLICE` spawn triggered.
+- `WalkInCentreSystem.crackDrugsSafe(player, inventory, hasCrowbar)`: crowbar present → `TRAMADOL` + `DIAZEPAM` added; `MEDICINE_THEFT` + `CONTROLLED_DRUG_TRAFFICKING` recorded; +12 Notoriety, +2 Wanted; no crowbar → 30-hit fallback registered.
+- `WalkInCentreSystem.onParamedicCallout(npcManager, targetNpc)`: paramedic moves to `targetNpc`; `targetNpc` HP set to 15 after 60 seconds; paramedic returns to `AMBULANCE_BAY_PROP`.
+- `WalkInCentreSystem.lootAmbulance(player, inventory, isAmbulanceUnattended)`: unattended → `FIRST_AID_KIT` + `PRESCRIPTION_MEDS` ×1–2 added; `MEDICINE_THEFT` recorded; +5 Notoriety; attended → returns `LootResult.BLOCKED`.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full treatment cycle**: Set player HP to 30 (< 70% of max 100). Set game time Monday 10:00. Call `joinQueue(player, 2)` — verify `QueueResult.QUEUED` returned. Advance game time 10 in-game minutes. Call `treatPlayer(player)`. Verify player HP equals maxHP (100). Verify `DISCHARGE_LETTER` in player inventory.
+
+2. **Controlled drugs safe heist**: Set game time Monday 14:00. Player has `CROWBAR` and `LOCKPICK` in inventory. Simulate lockpicking `WALK_IN_MEDICINE_ROOM_DOOR_PROP` (5 seconds; Brenda >10 blocks). Verify door opens. Call `crackDrugsSafe(...)`. Verify player inventory contains `TRAMADOL` and `DIAZEPAM`. Verify `CriminalRecord` has `MEDICINE_THEFT` and `CONTROLLED_DRUG_TRAFFICKING`. Verify `WantedSystem` star count increased by 2. Verify `NotorietySystem` increased by 12. Verify `PHARMACY_RAID` rumour seeded to `RumourNetwork`.
+
+3. **Paramedic callout response**: Spawn NPC at HP 4 within 30 blocks. Set NoiseSystem to 25. Call `update(delta, timeSystem, npcManager, ...)`. Verify `PARAMEDIC` NPC is dispatched (state `MOVING_TO_TARGET`). Advance 60 seconds. Verify injured NPC HP = 15. Verify paramedic returns to `AMBULANCE_BAY_PROP`.
+
+4. **Ambulance loot — unattended**: Trigger paramedic callout (both Andy and Sue dispatched). Verify `isAmbulanceUnattended()` returns true. Call `lootAmbulance(player, inventory, true)`. Verify `FIRST_AID_KIT` in inventory. Verify `PRESCRIPTION_MEDS` ×1–2 in inventory. Verify `CriminalRecord` contains `MEDICINE_THEFT`. Verify Notoriety increased by 5.
+
+5. **Bribe Brenda — rejected at high notoriety**: Set player Notoriety to 15. Player has 5 COIN. Call `bribeBrenda(player, inventory, 15)`. Verify `BribeResult.REFUSED` returned. Verify player inventory still has 5 COIN (no deduction). Verify `NPCManager` has a `POLICE` NPC scheduled to spawn at entrance within 30 in-game seconds.
+
+// ── Issue #1355: Add Northfield NHS Walk-In Centre ────────────────────────────────────
+// New: WalkInCentreSystem.java in ragamuffin.core
+// New: WalkInCentreSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1355WalkInCentreIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Existing NPCTypes used: TRIAGE_NURSE, WALK_IN_DOCTOR, PARAMEDIC
+// Existing PropTypes used: TRIAGE_DESK_PROP, TREATMENT_CUBICLE_PROP,
+//   CONTROLLED_DRUGS_SAFE_PROP, BLOOD_PRESSURE_MACHINE_PROP, AMBULANCE_BAY_PROP,
+//   LEAFLET_RACK_PROP, PHARMACY_HATCH_PROP, CIGARETTE_BIN_PROP
+// New PropType (if missing): WALK_IN_MEDICINE_ROOM_DOOR_PROP
+// New Materials: FIRST_AID_KIT (if not already defined)
+// New CrimeTypes: MEDICINE_THEFT, CONTROLLED_DRUG_TRAFFICKING, ASSAULTING_NHS_STAFF
+// New AchievementType: BLUE_LIGHT_SPECIAL
+// Existing achievements used: SURGERY_RAIDER, GOOD_SAMARITAN, WAITING_LIST
+// Integration: HealingSystem, MagistratesCourtSystem, FenceSystem, WantedSystem,
+//   NotorietySystem, CriminalRecord, RumourNetwork, NeighbourhoodSystem,
+//   NoiseSystem, WitnessSystem, TimeSystem, SoundSystem, StreetSkillSystem,
+//   CarDrivingSystem
