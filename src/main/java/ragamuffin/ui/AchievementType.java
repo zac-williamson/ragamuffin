@@ -6172,15 +6172,6 @@ public enum AchievementType {
         3
     ),
 
-    /**
-     * NIGHT_OWL — still on the estate after midnight on Halloween (target=1).
-     */
-    NIGHT_OWL(
-        "Night Owl",
-        "Still out after midnight on Halloween. The estate is yours. Almost.",
-        1
-    ),
-
     // ── Issue #1383: Northfield Boxing Day Sales ──────────────────────────────
 
     /**
@@ -6285,15 +6276,6 @@ public enum AchievementType {
         1
     ),
 
-    /**
-     * LOCK_IN_LEGEND — survive the Wetherspoons lock-in from midnight to 02:00 (target=1).
-     */
-    LOCK_IN_LEGEND(
-        "Lock-In Legend",
-        "Made it to 2am in a Wetherspoons lock-in while the police knocked on the door. Respect.",
-        1
-    ),
-
     // ── Issue #1390: Northfield Annual Conker Championship ────────────────────
 
     /**
@@ -6337,15 +6319,6 @@ public enum AchievementType {
     ),
 
     // ── Issue #1394: England Match Night ─────────────────────────────────────
-
-    /**
-     * SABOTEUR — pull off the TV sabotage during half-time without Dave noticing.
-     */
-    SABOTEUR(
-        "It Was the Aerial",
-        "The pub went dark. You were already walking away. Technical fault, mate.",
-        1
-    ),
 
     /**
      * TROPHY_HUNTER — steal all three trophy cabinet items in one match night.

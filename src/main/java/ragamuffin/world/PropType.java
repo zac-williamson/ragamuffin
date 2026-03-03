@@ -3853,13 +3853,6 @@ public enum PropType {
      */
     PUB_TV_PROP(1.8f, 1.2f, 0.15f, 10, null),
 
-    /**
-     * TROPHY_CABINET_PROP — locked glass cabinet inside Wetherspoons containing football
-     * memorabilia (SIGNED_SHIRT, FA_CUP_REPLICA, GOLDEN_BOOT_PROP). Smashable with
-     * GLASS_CUTTER (silent) or CROWBAR (loud, 30-block noise radius). 1.2×1.8×0.4m; glass.
-     */
-    TROPHY_CABINET_PROP(1.2f, 1.8f, 0.4f, 3, null),
-
     // ── Issue #1396: Northfield Royal Mail Strike ─────────────────────────────
 
     /**

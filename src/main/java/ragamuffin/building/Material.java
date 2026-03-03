@@ -6505,17 +6505,6 @@ public enum Material {
     CRAIG_WITNESS_STATEMENT("Craig's Witness Statement"),
 
     /**
-     * BURNER_PHONE — Cheap unregistered Nokia-style handset.
-     * "Bought from a bloke called Dave. Probably belonged to another bloke called Dave."
-     * <ul>
-     *   <li>Fence value: 9 COIN.</li>
-     *   <li>Dropped by {@link ragamuffin.entity.NPCType#TOUT_ENFORCER} (Dave) on defeat.</li>
-     * </ul>
-     * Stack size 1.
-     */
-    BURNER_PHONE("Burner Phone"),
-
-    /**
      * DAVE_DEBT_LIST — A scrawled list of names and addresses in Dave's handwriting.
      * "Several crossed out. Several circled. 'Outstanding: £40' written next to your address."
      * <ul>

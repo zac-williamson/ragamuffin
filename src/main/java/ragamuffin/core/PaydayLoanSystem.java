@@ -523,7 +523,7 @@ public class PaydayLoanSystem {
                 }
                 inventory.removeItem(Material.COIN, BAILIFF_BRIBE_COST);
                 if (terryNpc != null) {
-                    terryNpc.setState(NPCState.LEAVING);
+                    terryNpc.setState(NPCState.DESPAWNING);
                     terryNpc.setSpeechText("Go on then. I didn't see nothing.", 3f);
                 }
                 if (rumourNetwork != null && terryNpc != null) {
@@ -560,7 +560,7 @@ public class PaydayLoanSystem {
                 loanTotal     = loanTotal * 2;
                 loanInterest  = loanTotal - loanPrincipal;
                 if (terryNpc != null) {
-                    terryNpc.setState(NPCState.LEAVING);
+                    terryNpc.setState(NPCState.DESPAWNING);
                     terryNpc.setSpeechText("You can't hide forever, mate.", 3f);
                 }
                 if (rumourNetwork != null && terryNpc != null) {
@@ -601,7 +601,7 @@ public class PaydayLoanSystem {
      */
     public LootResult lootCashDrawer(Inventory inventory, float currentHour,
                                      AchievementCallback achievementCallback) {
-        if (!inventory.getItemCount(Material.CROWBAR) > 0) {
+        if (inventory.getItemCount(Material.CROWBAR) <= 0) {
             return LootResult.NO_TOOL;
         }
         if (!isDarrenOnLunch(currentHour)) {
