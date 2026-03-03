@@ -46719,3 +46719,190 @@ public void update(float delta, TimeSystem timeSystem)
 //              RumourNetwork (ENFORCEMENT_SWEEP seeding),
 //              NewspaperSystem (next-day headline),
 //              AchievementSystem, TimeSystem, NPCManager
+
+---
+
+## Issue #1341: Add Northfield Residents' Association Meeting — The Town Hall Farce, Planning Objections & the Sabotage Agenda
+
+**Goal**: Implement `ResidentsAssociationSystem` — a monthly evening meeting at the community centre where Northfield's most vocal NIMBYs gather to debate, object to planning applications, pass motions (often illegally), and air grievances. It is British local democracy at its most absurdist: a room of people who have nothing better to do, wielding the illusion of power. For the player, it is a social engineering goldmine.
+
+---
+
+### The Meeting
+
+Meetings occur on the **first Wednesday of each month** at **19:30**, in the community centre (`LandmarkType.COMMUNITY_CENTRE`). They last until **21:30** or until quorum collapses (fewer than 4 members remain).
+
+The meeting convenes with:
+
+| NPC | Role | Behaviour |
+|---|---|---|
+| `RESIDENTS_CHAIR` (Margaret) | Chairwoman | Controls agenda; hostile to player unless Notoriety ≤ 1 or disguised. Calls security if quorum lost. |
+| `RESIDENTS_SECRETARY` (Kevin) | Secretary | Takes minutes on a `CLIPBOARD_PROP`; blackmailable with stolen minutes. |
+| `RESIDENTS_TREASURER` (Pauline) | Treasurer | Controls the petty cash tin (20 COIN); can be bribed or pickpocketed. |
+| 3–6 `RESIDENTS_MEMBER` NPCs | Members | Drawn from the PUBLIC/PENSIONER pool. Each has a `GRIEVANCE` (noise, parking, hedges, foxes, etc.) they will raise if the agenda item allows. |
+
+The player can attend as a **guest** (press E on the door). If Notoriety ≥ 3: denied entry unless wearing `SUIT_JACKET` disguise (buys one meeting before Margaret recognises them). If Notoriety ≥ 5: banned permanently; must manipulate from outside.
+
+---
+
+### The Agenda
+
+The agenda has **4 fixed slots** + **1 Any Other Business (AOB)** slot:
+
+1. **Planning Application Review** — Margaret presents a planning application (randomly chosen each meeting from: new shop, satellite dish removal, kebab van licence, social housing extension, speed bump removal). Members vote FOR or AGAINST. Player can speak (press E → speak at microphone) to swing 1–2 votes per speech. Speech options: *Stir up Fear*, *Calm the Room*, *Introduce False Evidence*.
+
+2. **Budget Review** — Pauline presents spending. Player can propose a motion to investigate the accounts (needs 3 votes). If passed → NewspaperSystem headline next day; Pauline loses 5 Notoriety; but the funds trail leads to a new mission from `STREET_LADS` faction.
+
+3. **Noise Complaint Agenda Item** — directly targets the player's known address if they have 3+ `NOISE_COMPLAINT` entries in `CriminalRecord`. If targeted: members vote to refer to council enforcement. Player can deny (speech), produce a `NOISE_ABATEMENT_LETTER` (from `EnvironmentalHealthSystem`), or bribe Kevin to lose the minutes (10 COIN).
+
+4. **Monthly Raffle Draw** — Kevin draws raffle tickets. Player buys tickets from Pauline (1 COIN each, max 5). Prizes: `BOTTLE_OF_WINE`, `BISCUIT_TIN`, `GARDEN_VOUCHER`, `MYSTERY_HAMPER`. Player can swap the barrel (prop interaction, requires 3-second hold) for rigged draw — 70% chance win, but 25% chance Kevin notices. `RIGGED_RAFFLE` achievement on success.
+
+5. **AOB** — any member can raise a grievance. If `NEIGHBOURHOOD_WATCH_SYSTEM` anger > 50: a motion to hire a private security firm is proposed (costs the community 30 COIN — reduces `LockUpGarageSystem` income if `THE_COUNCIL` faction controls it). Player can object (speech) or support (doing so + having helped with enforcement sweeps grants `COMMUNITY_CHAMPION` achievement).
+
+---
+
+### Key Mechanics
+
+**The Agenda Sabotage**: The player can steal Kevin's `CLIPBOARD_PROP` (press E, unwitnessed, requires STEALTH ≥ 2) before the meeting. With the minutes in hand, they can:
+- **Rewrite an agenda item** (needs `PEN` in inventory): insert a false complaint naming a rival NPC or faction — triggers council enforcement visit to that location next day.
+- **Blackmail Kevin** (hold E on Kevin during meeting): pay 8 COIN to Kevin or he "loses" the noise complaint item. If Kevin refuses, Kevin whispers Kevin's dark secret as a `LOCAL_EVENT` rumour.
+
+**The Walkout Gambit**: If the player speaks and rolls a critical failure (or deliberately), they can trigger a walkout — 2+ members storm out, breaking quorum. The meeting dissolves. All pending agenda items fail. Margaret is furious (Notoriety +3 from Margaret personally). But any planned council enforcement from the noise complaint item is now cancelled.
+
+**The Petty Cash Tin**: Pauline keeps 20 COIN in a `PETTY_CASH_TIN_PROP` on the table. Pickpocket (STEALTH check vs Pauline's OBSERVANT trait): success → 20 COIN, Notoriety +5, `PETTY_THIEF` crime if witnessed. Alternatively: propose a motion to fund "community beautification" (needs 3 votes) — money redirected to player's pocket: Notoriety 0, `COMMUNITY_SCROUNGER` achievement.
+
+**Post-Meeting**: At 21:30, members move to The Rusty Anchor (Wetherspoons) in a group. This is the only time `RESIDENTS_CHAIR`, `RESIDENTS_SECRETARY`, and `RESIDENTS_TREASURER` NPCs are outside the community centre together — prime time for pickpocketing or following to gather blackmail material.
+
+---
+
+### New Class: `ResidentsAssociationSystem`
+
+Located at `src/main/java/ragamuffin/core/ResidentsAssociationSystem.java`.
+
+Constructor: `ResidentsAssociationSystem(TimeSystem, CriminalRecord, NotorietySystem, RumourNetwork, NewspaperSystem, NeighbourhoodWatchSystem, EnvironmentalHealthSystem, WantedSystem, StreetSkillSystem, AchievementSystem, Random)`
+
+Key methods:
+
+```java
+/** Returns true if today is a meeting night (first Wednesday of month). */
+public boolean isMeetingNight(int dayCount)
+
+/** Open the meeting: spawn NPCs, set agenda. Call at 19:30 on meeting night. */
+public void openMeeting(List<NPC> worldNpcs, Player player)
+
+/** Returns current quorum count (members still present). */
+public int getQuorumCount()
+
+/** Player speaks on current agenda item. Returns SpeechResult (SWAYED, NO_EFFECT, WALKOUT). */
+public SpeechResult playerSpeak(SpeechOption option, Random rand)
+
+/** Player proposes motion. Returns MotionResult (PASSED, FAILED, NO_QUORUM). */
+public MotionResult proposeMotion(MotionType motion)
+
+/** Player steals Kevin's clipboard (unwitnessed). Returns true on success. */
+public boolean stealClipboard(Player player, StreetSkillSystem skills)
+
+/** Rewrite agenda item with player's alternate content. Requires clipboard + PEN. */
+public void rewriteAgendaItem(int slot, String fakeComplaint, Inventory inventory)
+
+/** Blackmail Kevin: remove noise complaint from agenda in exchange for coin. */
+public BlackmailResult blackmailSecretary(int coinOffered, Player player)
+
+/** Trigger walkout: if 2+ members leave, returns true and dissolves meeting. */
+public boolean triggerWalkout(List<NPC> members)
+
+/** Attempt petty cash tin pickpocket. Returns STOLEN, WITNESSED, or FAILED. */
+public PettyCashResult pickpocketTin(Player player, StreetSkillSystem skills, Random rand)
+
+/** Close the meeting: despawn npcs, fire post-meeting pub walk. Call at 21:30. */
+public void closeMeeting(boolean playerArrested, int playerCitationsToday)
+
+/** Call each frame: ticks raffle, agenda timers, quorum checks. */
+public void update(float delta, TimeSystem timeSystem)
+```
+
+---
+
+### New NPCTypes (add to `NPCType.java`)
+
+| NPC | Description |
+|---|---|
+| `RESIDENTS_CHAIR` | Margaret — formidable, pearled, disapproves of everything. Hostile to high-notoriety players. |
+| `RESIDENTS_SECRETARY` | Kevin — nervous, easily blackmailed, carries clipboard. |
+| `RESIDENTS_TREASURER` | Pauline — controls petty cash; sharp-eyed (OBSERVANT trait). |
+| `RESIDENTS_MEMBER` | Generic meeting attendee. Carries one GRIEVANCE from a fixed pool. |
+
+---
+
+### New Materials (add to `Material.java`)
+
+- `NOISE_ABATEMENT_LETTER` — obtained from `EnvironmentalHealthSystem`; clears noise complaints at meeting
+- `PETTY_CASH_TIN` — container item; holds 20 COIN; obtained from Pauline's pickpocket
+- `MYSTERY_HAMPER` — raffle prize; contains 3 random food items + 1 COIN
+- `GARDEN_VOUCHER` — raffle prize; fenceable at PawnShop for 4 COIN
+- `RIGGED_BARREL` — crafted (BARREL + SPRING); used to fix raffle draw
+
+---
+
+### New RumourTypes (add to `RumourType.java`)
+
+- `NIMBY_FURY` — seeded when planning application rejected due to player speech; spreads "They're blocking everything again"
+- `BENT_TREASURER` — seeded when budget investigation motion passes; spreads "Pauline's been cooking the books"
+- `MEETING_CHAOS` — seeded on walkout; spreads "The meeting fell apart, Margaret went mental"
+
+---
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Achievement | Condition |
+|---|---|
+| `NIMBY` | Successfully oppose 3 planning applications at meetings |
+| `COMMUNITY_CHAMPION` | Support the AOB security motion with enforcement sweep experience |
+| `COMMUNITY_SCROUNGER` | Redirect petty cash to yourself via motion |
+| `RIGGED_RAFFLE` | Win the raffle with a swapped barrel |
+| `MEETING_DISSOLVED` | Trigger a walkout and dissolve the meeting |
+| `BLACKMAILER` | Successfully blackmail Kevin |
+| `AGENDA_SETTER` | Rewrite an agenda item that triggers a council enforcement visit |
+
+---
+
+### Unit Tests
+
+- `ResidentsAssociationSystem.isMeetingNight(dayCount)`: day 1 (first Wed) → true; day 8 (second Wed) → false; day 3 (non-Wed) → false; day 29 (first Wed of next month) → true.
+- `ResidentsAssociationSystem.getQuorumCount()`: 6 members at open → 6; 2 members walk out → 4; 2 more leave → 2 (below quorum threshold of 4); `triggerWalkout()` returns true.
+- `ResidentsAssociationSystem.playerSpeak(STIR_UP_FEAR, rand)`: seeded rand near threshold → SWAYED; 2 members change vote to AGAINST; planning application REJECTED.
+- `ResidentsAssociationSystem.proposeMotion(INVESTIGATE_BUDGET)`: 3+ members vote for → PASSED; `NewspaperSystem` headline queued; Pauline Notoriety set −5.
+- `ResidentsAssociationSystem.pickpocketTin(player, skills, rand)`: STEALTH ≥ 2, unwitnessed → STOLEN, 20 COIN added, Notoriety +5; STEALTH < 2 → FAILED.
+- `ResidentsAssociationSystem.blackmailSecretary(10, player)`: coin ≥ 8 → noise complaint removed from agenda, BLACKMAILER achievement flagged.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Planning application blocked by player speech**: Set `dayCount` to first Wednesday. Call `openMeeting()`. Advance time to 19:30. Verify 4–9 NPCs present (3 officers + 1–6 members). Current agenda item is PLANNING_APPLICATION. Player presses E → selects "Stir up Fear" speech. Verify at least 1 member changes vote to AGAINST. Verify final vote count AGAINST > FOR. Verify planning application result is REJECTED. Verify `NIMBY_FURY` rumour seeded in `RumourNetwork`. Verify NIMBY achievement counter +1.
+
+2. **Quorum collapse dissolves meeting**: Set `dayCount` to first Wednesday. Call `openMeeting()` with 5 members. Simulate 3 members leaving (call `triggerWalkout()` twice). Verify `getQuorumCount()` == 2. Verify meeting state is DISSOLVED. Verify all pending agenda items (including noise complaint) are cancelled. Verify `MEETING_CHAOS` rumour seeded. Verify Margaret hostility flag set (Notoriety +3 applied to player).
+
+3. **Petty cash redirected via motion**: Set `dayCount` to first Wednesday. Call `openMeeting()`. Player proposes `INVESTIGATE_BUDGET` motion. Seed `Random(42)` so 3 members vote FOR. Verify `MotionResult.PASSED`. Verify 20 COIN added to player inventory. Verify `COMMUNITY_SCROUNGER` achievement unlocked. Verify `BENT_TREASURER` rumour seeded. Verify `NewspaperSystem` has a pending headline containing "BUDGET".
+
+4. **Noise complaint dismissed by blackmail**: Give player 3 `NOISE_COMPLAINT` entries in `CriminalRecord`. Set `dayCount` to first Wednesday. Call `openMeeting()`. Verify NOISE_COMPLAINT agenda item present. Player holds E on Kevin → blackmail option. Player pays 10 COIN. Verify `BlackmailResult.REMOVED`. Verify noise complaint agenda item no longer present. Verify player coin reduced by 10. Verify `BLACKMAILER` achievement flagged.
+
+5. **Post-meeting pub walk to Wetherspoons**: Call `closeMeeting(false, 0)` at 21:30. Verify `RESIDENTS_CHAIR`, `RESIDENTS_SECRETARY`, `RESIDENTS_TREASURER` NPCs all transition to `NPCState.WALKING_TO_LANDMARK`. Verify their target landmark is `LandmarkType.WETHERSPOONS`. Verify all 3 NPCs arrive at Wetherspoons within 120 simulated frames. Verify `WetherspoonsSystem` patron count increases by 3.
+
+---
+
+// ── Issue #1341: Add Northfield Residents' Association Meeting ─────────────────────
+// New: ResidentsAssociationSystem.java in ragamuffin.core
+// New: ResidentsAssociationSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1341ResidentsAssociationIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: RESIDENTS_CHAIR, RESIDENTS_SECRETARY, RESIDENTS_TREASURER, RESIDENTS_MEMBER — add to NPCType.java
+// New Materials: NOISE_ABATEMENT_LETTER, PETTY_CASH_TIN, MYSTERY_HAMPER, GARDEN_VOUCHER, RIGGED_BARREL — add to Material.java
+// New RumourTypes: NIMBY_FURY, BENT_TREASURER, MEETING_CHAOS — add to RumourType.java
+// New AchievementTypes: NIMBY, COMMUNITY_CHAMPION, COMMUNITY_SCROUNGER, RIGGED_RAFFLE,
+//                       MEETING_DISSOLVED, BLACKMAILER, AGENDA_SETTER — add to AchievementType.java
+// Integration: CriminalRecord (NOISE_COMPLAINT check), NotorietySystem (Margaret hostility, Pauline),
+//              RumourNetwork (NIMBY_FURY, BENT_TREASURER, MEETING_CHAOS),
+//              NewspaperSystem (budget investigation headline),
+//              NeighbourhoodWatchSystem (security motion hook),
+//              EnvironmentalHealthSystem (NOISE_ABATEMENT_LETTER source),
+//              WetherspoonsSystem (post-meeting patron surge),
+//              StreetSkillSystem (STEALTH check for clipboard steal, pickpocket),
+//              AchievementSystem, TimeSystem, WantedSystem
