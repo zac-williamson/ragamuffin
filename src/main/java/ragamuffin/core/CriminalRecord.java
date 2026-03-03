@@ -918,7 +918,23 @@ public class CriminalRecord {
          * STUFFED_ENVELOPE during a Kenny money-mule run.
          * Penalty: Notoriety +15, WantedSystem +2 stars.
          */
-        MONEY_LAUNDERING("Money laundering");
+        MONEY_LAUNDERING("Money laundering"),
+
+        // ── Issue #1329: Northfield Traffic Warden ────────────────────────────
+
+        /**
+         * Recorded when Clive (TRAFFIC_WARDEN) issues a PENALTY_CHARGE_NOTICE to
+         * the player's vehicle in the COUNCIL_CAR_PARK or surrounding streets.
+         * Penalty: Notoriety +3. Cleared if PCN appeal succeeds.
+         */
+        PARKING_OFFENCE("Parking offence (PCN issued)"),
+
+        /**
+         * Recorded when Clive (TRAFFIC_WARDEN) detects a FORGED_PARKING_TICKET
+         * on the player's vehicle.
+         * Penalty: Notoriety +6, WantedSystem +1 star.
+         */
+        PARKING_TICKET_FRAUD("Forged parking ticket fraud");
 
         private final String displayName;
 

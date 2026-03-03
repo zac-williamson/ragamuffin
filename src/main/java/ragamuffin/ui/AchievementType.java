@@ -5314,6 +5314,53 @@ public enum AchievementType {
         "Money Mule",
         "Five envelope runs for Kenny. You didn't ask what was in them. Wise.",
         5
+    ),
+
+    // ── Issue #1329: Northfield Traffic Warden ────────────────────────────────
+
+    /**
+     * Fires when the player sells FORGED_PARKING_TICKET to 5 commuters in a single day.
+     */
+    TICKET_TOUT(
+        "Ticket Tout",
+        "Five forged parking tickets flogged in one day. Clive would not be impressed.",
+        1
+    ),
+
+    /**
+     * Fires when the player's PCN appeal at APPEAL_DESK_PROP is upheld.
+     */
+    APPEAL_SUCCESS(
+        "Appeal Upheld",
+        "You fought the council and the council lost. Briefly.",
+        1
+    ),
+
+    /**
+     * Fires the first time Clive applies a WHEEL_CLAMP_PROP to the player's vehicle.
+     */
+    CLAMPED(
+        "Clamped",
+        "Clive has clamped your motor. That's going to ruin your day.",
+        1
+    ),
+
+    /**
+     * Fires when the player removes a wheel clamp without paying the release fee.
+     */
+    CLAMP_DODGER(
+        "Clamp Dodger",
+        "You got the clamp off without paying. Probably won't end there.",
+        1
+    ),
+
+    /**
+     * Fires when the player steals Clive's terminal by knocking him out.
+     */
+    TERMINAL_THIEF(
+        "Terminal Thief",
+        "You nicked Clive's terminal. He'll have to fill out a form about that.",
+        1
     );
 
     private final String name;
