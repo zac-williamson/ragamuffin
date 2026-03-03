@@ -3437,7 +3437,38 @@ public enum NPCType {
      * pins a CPR_TRAINING_FLYER. Pay 5 COIN each; expect 60 seconds of instruction.
      * HP: 20, attack: 0, cooldown: 0, not hostile.
      */
-    CPR_STUDENT(20f, 0f, 0f, false);
+    CPR_STUDENT(20f, 0f, 0f, false),
+
+    // ── Issue #1481: Northfield Driving Test Centre ───────────────────────────
+
+    /**
+     * TEST_CENTRE_RECEPTIONIST — Sandra, the DVSA reception desk clerk at the
+     * Driving Test Centre. Stationary at TEST_CENTRE_DESK_PROP during 09:00–17:00
+     * Mon–Fri. Press E to book a test (5 COIN) or cancel an existing booking.
+     */
+    TEST_CENTRE_RECEPTIONIST(30f, 0f, 0f, false),
+
+    /**
+     * DRIVING_EXAMINER — Keith, the DVSA driving examiner. Conducts the practical
+     * test route (BattleBarMiniGame, MEDIUM difficulty, 8 steps). Lingers at
+     * TEST_CENTRE_REAR_EXIT_PROP 17:00–17:30 after a test failure (bribery window).
+     * Becomes hostile after 3 test failures by the same player.
+     */
+    DRIVING_EXAMINER(40f, 6f, 1.5f, false),
+
+    /**
+     * TEST_SLOT_SCALPER — Wayne, a tout who loiters outside the Driving Test Centre.
+     * Sells 1-day advance slots for 8 COIN (15% fraud-detection risk). Buys
+     * CANCELLED_SLOT_VOUCHERs from the player for 6 COIN and resells to learners.
+     */
+    TEST_SLOT_SCALPER(25f, 0f, 0f, false),
+
+    /**
+     * LEARNER_DRIVER — nervous learners who congregate outside the test centre
+     * 08:30–09:00 and 15:00–16:00. Will buy CANCELLED_SLOT_VOUCHERs for 10 COIN.
+     * Press E to offer a slot; 3 sales in one day triggers SLOT_SHARK achievement.
+     */
+    LEARNER_DRIVER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

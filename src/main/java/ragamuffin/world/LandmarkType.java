@@ -803,7 +803,19 @@ public enum LandmarkType {
      * a yellowed CLOSING_DOWN_SIGN_PROP A-frame in the window. Adjacent to
      * PAVEMENT blocks. Managed by ClosingDownSaleSystem.
      */
-    CLOSING_DOWN_SHOP;
+    CLOSING_DOWN_SHOP,
+
+    // ── Issue #1481: Northfield Driving Test Centre ───────────────────────────
+
+    /**
+     * DRIVING_TEST_CENTRE — the Northfield DVSA Driving Test Centre on the
+     * industrial estate. A squat 1970s beige pebble-dash building.
+     * Open Mon–Fri 09:00–17:00.
+     * Staffed by Sandra (TEST_CENTRE_RECEPTIONIST) at the reception desk and
+     * Keith (DRIVING_EXAMINER) as test examiner. Wayne (TEST_SLOT_SCALPER)
+     * loiters outside. Managed by DrivingTestSystem.
+     */
+    DRIVING_TEST_CENTRE;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -914,6 +926,7 @@ public enum LandmarkType {
             case BALTI_HOUSE:           return "The Raj Mahal";
             case RECORD_SHOP:           return "Spin City Records";
             case CLOSING_DOWN_SHOP:     return "Dave's Electronics & Electrical — FINAL WEEK";
+            case DRIVING_TEST_CENTRE:   return "Northfield DVSA Driving Test Centre";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

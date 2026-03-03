@@ -7068,7 +7068,58 @@ public enum Material {
      * If inspected, reveals it was wired from a public defibrillator cabinet.
      * Tooltip: "Extension lead. Very well-made, actually."
      */
-    REWIRED_EXTENSION_LEAD("Rewired Extension Lead");
+    REWIRED_EXTENSION_LEAD("Rewired Extension Lead"),
+
+    // ── Issue #1481: Northfield Driving Test Centre ───────────────────────────
+
+    /**
+     * TEST_APPOINTMENT_CARD — official DVSA test appointment card issued by Sandra
+     * at the reception desk on booking. Costs 5 COIN; slot is 3 in-game days out.
+     * Present to Keith to begin the practical test. Single-use.
+     * Tooltip: "Driving test appointment. Don't be late."
+     */
+    TEST_APPOINTMENT_CARD("Test Appointment Card"),
+
+    /**
+     * FORGED_APPOINTMENT_CARD — crafted at the InternetCafeSystem using BLANK_CARD
+     * + INK_CARTRIDGE. Functions identically to TEST_APPOINTMENT_CARD but carries a
+     * 25% detection chance; caught → WantedSystem +1, CrimeType.IDENTITY_FRAUD.
+     * Tooltip: "Looks official. Probably fine."
+     */
+    FORGED_APPOINTMENT_CARD("Forged Appointment Card"),
+
+    /**
+     * CANCELLED_SLOT_VOUCHER — issued by Sandra when the player cancels a booking
+     * (3 COIN partial refund). Sell to Wayne (TEST_SLOT_SCALPER) for 6 COIN, or
+     * directly to LEARNER_DRIVER NPCs for 10 COIN.
+     * Tooltip: "Someone's cancelled slot. Worth more to the right person."
+     */
+    CANCELLED_SLOT_VOUCHER("Cancelled Slot Voucher"),
+
+    /**
+     * INVALID_LICENCE — the player's DRIVING_LICENCE after it has been invalidated
+     * by the DVSA inspector following a bribed-pass discovery. Cannot be used to
+     * reduce police-stop chance. Can be shown to the solicitor for a refund dispute.
+     * Tooltip: "Driving licence — INVALID. Signed by the DVSA."
+     */
+    INVALID_LICENCE("Invalid Licence"),
+
+    /**
+     * FAKE_PROVISIONAL_LICENCE — crafted from BLANK_CARD + LAMINATOR_POUCH +
+     * STOLEN_PASSPORT_PHOTO. Allows booking a test under a false identity.
+     * Detected at 25% chance by Sandra; caught → WantedSystem +1, IDENTITY_FRAUD.
+     * Tooltip: "Fake provisional. The laminate is a bit bubbly."
+     */
+    FAKE_PROVISIONAL_LICENCE("Fake Provisional Licence"),
+
+    /**
+     * L_PLATE_PROPS — a pair of magnetic L-plates sold at the corner shop for 1 COIN.
+     * Equip to drive unlicensed; reduces police stop chance by 30%.
+     * Remove while being watched → CrimeType.DRIVING_UNINSURED + Notoriety +3.
+     * Can be stuck on NPC cars (2-second E hold) as a prank.
+     * Tooltip: "Learner plates. Surprisingly effective."
+     */
+    L_PLATE_PROPS("L-Plate Props");
 
     private final String displayName;
 

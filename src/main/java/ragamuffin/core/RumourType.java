@@ -1729,5 +1729,28 @@ public enum RumourType {
     /** "The defibrillator cabinet's been raided — someone nicked the cables. They're actually dangerous."
      * — seeded by DefibrillatorSystem when a CARDIAC_VICTIM dies because the copper cable was missing.
      * Spreads via PUBLIC, PENSIONER, COUNCIL_WORKER, and POLICE NPCs; raises Notoriety +15. */
-    DEFIB_SABOTAGED;
+    DEFIB_SABOTAGED,
+
+    // ── Issue #1481: Northfield Driving Test Centre ───────────────────────────
+
+    /** "That examiner at the test centre — Keith — he's taking backhanders. Brown envelope,
+     * back door, half-five. Everyone knows."
+     * — seeded by DrivingTestSystem when the player tips off the DVSA via
+     * TEST_CENTRE_PHONE_BOX_PROP. Spreads via PUBLIC, PENSIONER, and BARMAN NPCs;
+     * triggers the DVSA inspector's early visit next morning at 09:30. */
+    BENT_EXAMINER_RUMOUR,
+
+    /** "Some lad outside the test centre flogging cancelled slots. Ten quid a go.
+     * Absolute liberty."
+     * — seeded by DrivingTestSystem after 3 CANCELLED_SLOT_VOUCHER sales to LEARNER_DRIVER
+     * NPCs in a single in-game day. Spreads via PUBLIC and PENSIONER NPCs;
+     * triggers WantedSystem +1. */
+    SLOT_TOUT_RUMOUR,
+
+    /** "Someone stuck L-plates on Dave's motor while he was in the chippy.
+     * He drove all the way to his mum's before he noticed."
+     * — seeded by DrivingTestSystem when the player successfully sticks L_PLATE_PROPS
+     * on a civilian NPC's car. Spreads via PUBLIC and BARMAN NPCs;
+     * awards AchievementType.LEARNER_LEGS. */
+    L_PLATE_PRANK_RUMOUR;
 }
