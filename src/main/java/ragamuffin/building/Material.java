@@ -1816,7 +1816,6 @@ public enum Material {
      * Contains a random loot item. Seeds a LOOT_TIP rumour when opened.
      * Tooltip: "Could be anything. Probably isn't great."
      */
-    MYSTERY_BOX("Mystery Box"),
 
     /**
      * Slippery Floor Trap — crafted trap: WASHING_UP_LIQUID×1 + MOP×1.
@@ -2557,7 +2556,6 @@ public enum Material {
      * Raffle Ticket — you've probably not won.
      * Purchased from the Social Club raffle draw for 1 COIN each (up to 3).
      */
-    RAFFLE_TICKET("Raffle Ticket"),
 
     /**
      * Meat Raffle Prize — a frozen chicken. Still in the bag.
@@ -2908,7 +2906,6 @@ public enum Material {
      * Can be crafted with TOBACCO into a ROLLIE (achievement: POLITICAL_SMOKER).
      * Tooltip: "Technically you're supposed to deliver these, not smoke them."
      */
-    CAMPAIGN_LEAFLET("Campaign Leaflet"),
 
     /**
      * Nomination Form — issued by the RETURNING_OFFICER NPC to the player when
@@ -3018,7 +3015,6 @@ public enum Material {
      * Single use. Triggers CrimeType.FRAUD on successful swap.
      * Tooltip: "Looks like a barrel. Isn't quite a barrel."
      */
-    RIGGED_BARREL("Rigged Barrel"),
 
     // ── Issue #1100: Northfield Council Flats — Kendrick House ───────────────
 
@@ -4371,7 +4367,6 @@ public enum Material {
      * Board Game — a battered board game from the Reuse Corner.
      * Tooltip: "Probably missing half the pieces."
      */
-    BOARD_GAME("Board Game"),
 
     /**
      * Broken Lamp — a cracked floor lamp from the Reuse Corner.
@@ -4597,7 +4592,6 @@ public enum Material {
      * rank 4+ cap in StreetSkillSystem. Permanent item; not consumed on use.
      * Tooltip: "Full UK driving licence. Sandra was reluctant but the Highway Code was clear."
      */
-    DRIVING_LICENCE("Driving Licence"),
 
     /**
      * Theory Pass Certificate — a laminated DVSA theory pass certificate.
@@ -9250,8 +9244,6 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // laminated key card
             case ROPE_AND_HOOK:
                 return IconShape.BOX;         // coiled rope with hook
-            case DRIVING_LICENCE:
-                return IconShape.FLAT_PAPER;  // photocard licence
 
             // Issue #1335: Northfield Cycle Centre — Dave's Bikes
             case BIKE_REPAIR_KIT:

@@ -560,7 +560,7 @@ public class EmploymentSystem {
             result = ClockOutResult.SKIVING_WARNING;
         } else if (earlyExit) {
             consecutiveCleanShifts = 0;
-            achievementCallback.onAchievement(AchievementType.WALKED_OUT);
+            achievementCallback.award(AchievementType.WALKED_OUT);
             result = ClockOutResult.WALKED_OUT;
         } else {
             // Successful shift
@@ -582,12 +582,12 @@ public class EmploymentSystem {
             // FIRST_DAY achievement
             if (!firstDayAchievementFired) {
                 firstDayAchievementFired = true;
-                achievementCallback.onAchievement(AchievementType.FIRST_DAY);
+                achievementCallback.award(AchievementType.FIRST_DAY);
             }
 
             // MODEL_EMPLOYEE after 10 consecutive clean shifts
             if (consecutiveCleanShifts >= 10) {
-                achievementCallback.onAchievement(AchievementType.MODEL_EMPLOYEE);
+                achievementCallback.award(AchievementType.MODEL_EMPLOYEE);
             }
         }
 
@@ -619,12 +619,12 @@ public class EmploymentSystem {
 
             case CHARITY_SHOP:
                 // Notoriety reduction and community respect
-                notorietySystem.reduceNotoriety(CHARITY_SHIFT_NOTORIETY_REDUCTION);
+                notorietySystem.reduceNotoriety(CHARITY_SHIFT_NOTORIETY_REDUCTION, achievementCallback);
                 // Seed COMMUNITY_SPIRIT rumour (NPC selection is caller's responsibility)
                 rumourNetwork.addRumour(null,
                         new Rumour(RumourType.COMMUNITY_SPIRIT,
                                    "They've been up at the charity shop every week — proper legend."));
-                achievementCallback.onAchievement(AchievementType.FIRST_DAY); // already guarded above
+                achievementCallback.award(AchievementType.FIRST_DAY); // already guarded above
                 break;
 
             default:
@@ -756,7 +756,7 @@ public class EmploymentSystem {
 
         // Achievement tracking
         totalDismissals++;
-        achievementCallback.onAchievement(AchievementType.HIRED_AND_FIRED);
+        achievementCallback.award(AchievementType.HIRED_AND_FIRED);
     }
 
     // ── Mechanic 5: DWP Integration ───────────────────────────────────────────
@@ -790,7 +790,7 @@ public class EmploymentSystem {
         undisclosedSignOnCycles++;
         if (undisclosedSignOnCycles >= DWP_DISCLOSURE_GRACE_CYCLES) {
             criminalRecord.record(CrimeType.BENEFIT_FRAUD);
-            achievementCallback.onAchievement(AchievementType.ON_THE_FIDDLE);
+            achievementCallback.award(AchievementType.ON_THE_FIDDLE);
             return true;
         }
         return false;

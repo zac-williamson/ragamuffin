@@ -710,7 +710,6 @@ public enum PropType {
      * Saturday: −2 Notoriety, +5 FOOD_BANK Respect. Tooltip: "You're not all bad."
      * Destroyed by 5 punches; yields CARDBOARD.
      */
-    DONATION_BOX_PROP(0.60f, 0.80f, 0.60f, 5, Material.CARDBOARD),
 
     // ── Issue #1008: St. Mary's Church ────────────────────────────────────────
 
@@ -3430,7 +3429,6 @@ public enum PropType {
      * punches (+50 noise). Provides entry to the evidence room without triggering
      * the custody door alarm. Drops GLASS when destroyed.
      */
-    BACK_WINDOW_PROP(0.70f, 0.80f, 0.10f, 3, Material.GLASS),
 
     // ── Issue #1339: Council Enforcement Day ──────────────────────────────────
 

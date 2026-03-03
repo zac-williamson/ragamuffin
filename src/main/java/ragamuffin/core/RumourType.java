@@ -1096,6 +1096,10 @@ public enum RumourType {
      * HMRC below the 150 COIN threshold. Spreads via PUBLIC and LOAN_SHARK_CLERK. */
     HMRC_TIPPED_OFF,
 
+    /** "Sandra from the taxman took a brown envelope off someone on Northfield Road."
+     * — seeded by HMRCSystem when bribeSandra() succeeds. Spreads via PUBLIC NPCs. */
+    BENT_OFFICIAL,
+
     // ── Issue #1363: Northfield Sunday Car Boot Sale ───────────────────────────
 
     /** "Word is someone's been flogging knocked-off gear down the car boot —

@@ -437,10 +437,10 @@ public class RemembranceSundaySystem {
 
         // Apply penalties
         if (notoriety != null) {
-            notoriety.addNotoriety(SILENCE_BREACH_NOTORIETY);
+            notoriety.addNotoriety(SILENCE_BREACH_NOTORIETY, null);
         }
         if (wanted != null) {
-            wanted.addWantedStars(SILENCE_BREACH_WANTED);
+            wanted.addWantedStars(SILENCE_BREACH_WANTED, 0f, 0f, 0f, null);
         }
         if (criminalRecord != null) {
             criminalRecord.record(CrimeType.SILENCE_BREACH);
@@ -545,10 +545,10 @@ public class RemembranceSundaySystem {
         inventory.addItem(Material.POPPY, 3 + random.nextInt(3)); // 3–5 POPPYs from wreath
 
         if (notoriety != null) {
-            notoriety.addNotoriety(WREATH_THEFT_NOTORIETY);
+            notoriety.addNotoriety(WREATH_THEFT_NOTORIETY, null);
         }
         if (wanted != null) {
-            wanted.addWantedStars(WREATH_THEFT_WANTED);
+            wanted.addWantedStars(WREATH_THEFT_WANTED, 0f, 0f, 0f, null);
         }
         if (criminalRecord != null) {
             criminalRecord.record(CrimeType.MEMORIAL_VANDALISM);
@@ -667,7 +667,7 @@ public class RemembranceSundaySystem {
             // VETERANs emit Goose Green speech before leaving
             for (NPC npc : ceremonyNpcs) {
                 if (npc.getType() == NPCType.VETERAN) {
-                    npc.setSpeechBubble(GOOSE_GREEN_SPEECH);
+                    npc.setSpeechText(GOOSE_GREEN_SPEECH, 4f);
                 }
             }
         }
@@ -682,7 +682,7 @@ public class RemembranceSundaySystem {
         if (npcs == null) return;
         for (NPC npc : npcs) {
             if (npc.getType() == NPCType.PUBLIC || npc.getType() == NPCType.PENSIONER) {
-                npc.setSpeechBubble("Have some respect!");
+                npc.setSpeechText("Have some respect!", 4f);
             }
         }
     }

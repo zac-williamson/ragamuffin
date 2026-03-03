@@ -759,7 +759,11 @@ public enum LandmarkType {
      * Managed by CycleShopSystem; owner NPC is CYCLE_SHOP_OWNER (Dave).
      * Open 09:00–17:30 Mon–Sat.
      */
-    CYCLE_SHOP;
+    CYCLE_SHOP,
+
+    ICELAND,
+
+    GREASY_SPOON;
 
     /**
      * Returns the display name shown on the building's sign.

@@ -369,6 +369,35 @@ public class WantedSystem {
         }
     }
 
+    /**
+     * Reduce wanted stars by the given amount (minimum 0). Clears pursuit if stars reach 0.
+     *
+     * @param stars number of stars to remove
+     */
+    public void reduceWantedStars(int stars) {
+        if (stars <= 0) return;
+        wantedStars = Math.max(0, wantedStars - stars);
+        if (wantedStars == 0) {
+            clearPursuit();
+        }
+    }
+
+    /**
+     * Increase wanted stars by the given amount (capped at {@link #MAX_WANTED_STARS}).
+     *
+     * @param stars number of stars to add
+     */
+    public void increaseWantedStars(int stars) {
+        addWantedStars(stars, 0f, 0f, 0f, null);
+    }
+
+    /**
+     * Clear the wanted level entirely, ending any active pursuit.
+     */
+    public void clearWantedLevel() {
+        clearPursuit();
+    }
+
     // ── Hiding mechanic ────────────────────────────────────────────────────────
 
     /**

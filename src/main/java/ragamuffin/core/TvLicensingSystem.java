@@ -495,8 +495,8 @@ public class TvLicensingSystem {
             }
             if (wantedSystem != null && player != null) {
                 wantedSystem.addWantedStars(1,
-                    player.getX(), player.getY(), player.getZ(),
-                    achievementCallback != null ? achievementCallback::award : null);
+                    player.getPosition().x, player.getPosition().y, player.getPosition().z,
+                    null);
             }
             awardAchievement(AchievementType.LICENCE_EVADER);
         }
@@ -531,13 +531,13 @@ public class TvLicensingSystem {
             criminalRecord.record(CriminalRecord.CrimeType.CRIMINAL_DAMAGE);
         }
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(NOTORIETY_DESTROY_VAN, achievementCallback != null
-                ? achievementCallback::award : null);
+            notorietySystem.addNotoriety(NOTORIETY_DESTROY_VAN,
+                achievementCallback != null ? achievementCallback::award : null);
         }
         if (wantedSystem != null && player != null) {
             wantedSystem.addWantedStars(WANTED_DESTROY_VAN,
-                player.getX(), player.getY(), player.getZ(),
-                achievementCallback != null ? achievementCallback::award : null);
+                player.getPosition().x, player.getPosition().y, player.getPosition().z,
+                null);
         }
         if (noiseSystem != null) {
             noiseSystem.addNoise(VAN_DESTROY_NOISE);
@@ -645,11 +645,11 @@ public class TvLicensingSystem {
         if (random.nextFloat() < BOGUS_DETECTION_CHANCE) {
             if (wantedSystem != null && player != null) {
                 wantedSystem.addWantedStars(1,
-                    player.getX(), player.getY(), player.getZ(),
-                    achievementCallback != null ? achievementCallback::award : null);
+                    player.getPosition().x, player.getPosition().y, player.getPosition().z,
+                    null);
             }
             if (witnessSystem != null) {
-                witnessSystem.notifyCrime(player.getX(), player.getZ());
+                witnessSystem.notifyCrime(player.getPosition().x, player.getPosition().z);
             }
             if (criminalRecord != null) {
                 criminalRecord.record(CriminalRecord.CrimeType.TV_LICENCE_EVASION);
@@ -707,8 +707,8 @@ public class TvLicensingSystem {
             }
             if (wantedSystem != null && player != null) {
                 wantedSystem.addWantedStars(1,
-                    player.getX(), player.getY(), player.getZ(),
-                    achievementCallback != null ? achievementCallback::award : null);
+                    player.getPosition().x, player.getPosition().y, player.getPosition().z,
+                    null);
             }
             return DoorKnockResult.ENFORCEMENT_NOTICE;
         }
@@ -722,13 +722,13 @@ public class TvLicensingSystem {
             criminalRecord.record(CriminalRecord.CrimeType.TV_LICENCE_EVASION);
         }
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(notorietyAmount, achievementCallback != null
-                ? achievementCallback::award : null);
+            notorietySystem.addNotoriety(notorietyAmount,
+                achievementCallback != null ? achievementCallback::award : null);
         }
         if (wantedSystem != null && player != null) {
             wantedSystem.addWantedStars(1,
-                player.getX(), player.getY(), player.getZ(),
-                achievementCallback != null ? achievementCallback::award : null);
+                player.getPosition().x, player.getPosition().y, player.getPosition().z,
+                null);
         }
     }
 

@@ -518,11 +518,11 @@ public class NightclubSystem {
                 if (criminalRecord != null) {
                     criminalRecord.record(CriminalRecord.CrimeType.NIGHTCLUB_AFFRAY);
                 }
-                float px = (player != null) ? player.getX() : 0f;
-                float py = (player != null) ? player.getY() : 0f;
-                float pz = (player != null) ? player.getZ() : 0f;
+                float px = (player != null) ? player.getPosition().x : 0f;
+                float py = (player != null) ? player.getPosition().y : 0f;
+                float pz = (player != null) ? player.getPosition().z : 0f;
                 if (wantedSystem != null) {
-                    wantedSystem.addWantedStars(1, px, py, pz, achievementCallback);
+                    wantedSystem.addWantedStars(1, px, py, pz, null);
                 }
                 eject(dayCount);
                 scheduleNextBrawl();
@@ -629,11 +629,11 @@ public class NightclubSystem {
 
         // Check if Terry is nearby (catching the player)
         if (isTerryNearby(player, nearbyNpcs)) {
-            float px = (player != null) ? player.getX() : 0f;
-            float py = (player != null) ? player.getY() : 0f;
-            float pz = (player != null) ? player.getZ() : 0f;
+            float px = (player != null) ? player.getPosition().x : 0f;
+            float py = (player != null) ? player.getPosition().y : 0f;
+            float pz = (player != null) ? player.getPosition().z : 0f;
             if (wantedSystem != null) {
-                wantedSystem.addWantedStars(2, px, py, pz, achievementCallback);
+                wantedSystem.addWantedStars(2, px, py, pz, null);
             }
             if (criminalRecord != null) {
                 criminalRecord.record(CriminalRecord.CrimeType.TRESPASSING);
@@ -673,8 +673,8 @@ public class NightclubSystem {
         if (player == null || nearbyNpcs == null) return false;
         for (NPC npc : nearbyNpcs) {
             if (npc.getType() == NPCType.NIGHTCLUB_MANAGER) {
-                float dx = npc.getX() - player.getX();
-                float dz = npc.getZ() - player.getZ();
+                float dx = npc.getPosition().x - player.getPosition().x;
+                float dz = npc.getPosition().z - player.getPosition().z;
                 if (dx * dx + dz * dz <= 9.0f) { // within 3 blocks
                     return true;
                 }
@@ -714,8 +714,8 @@ public class NightclubSystem {
         if (player == null || nearbyNpcs == null) return;
         for (NPC npc : nearbyNpcs) {
             if (npc.getType() == NPCType.NIGHTCLUB_MANAGER) {
-                float dx = npc.getX() - player.getX();
-                float dz = npc.getZ() - player.getZ();
+                float dx = npc.getPosition().x - player.getPosition().x;
+                float dz = npc.getPosition().z - player.getPosition().z;
                 if (dx * dx + dz * dz <= MARCHETTI_OVERHEAR_RADIUS * MARCHETTI_OVERHEAR_RADIUS) {
                     marchettiOverheardThisSession = true;
                     if (rumourNetwork != null) {

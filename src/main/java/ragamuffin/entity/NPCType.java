@@ -723,7 +723,6 @@ public enum NPCType {
      * if WantedSystem stars ≥ 1, immediately arrests. Bribeable for 25 COIN at
      * Notoriety ≤ 400 (lowers Wanted stars by 1, seeds POLICE_CORRUPTION rumour).
      */
-    DESK_SERGEANT(40f, 8f, 1.0f, false),
 
     /**
      * Community Liaison Officer Sandra — PCSO subtype present Mon/Wed/Fri 09:00–16:00.
@@ -779,7 +778,6 @@ public enum NPCType {
      * Speech: "God loves everyone, even you." / "Service starts at ten, if you're interested."
      *         / "Soup's on — come and get it while it's hot."
      */
-    VICAR(15f, 0f, 0f, false),
 
     // ── Issue #1012: Skin Deep Tattoos ────────────────────────────────────────
     /** Kev — taciturn ex-con running Skin Deep Tattoos. Passive, speech-rich. */
@@ -2495,7 +2493,6 @@ public enum NPCType {
      * </ul>
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    TRADING_STANDARDS_OFFICER(20f, 0f, 0f, false),
 
     // ── Issue #1306: Northfield Traveller Site ────────────────────────────────
 
