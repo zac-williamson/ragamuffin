@@ -52869,3 +52869,33 @@ Barry (`CATALOGUE_MAN` NPC) operates Monday, Wednesday, and Friday between **10:
 // Integration: TimeSystem, NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
 //   HMRCSystem, FenceSystem, InternetCafeSystem, LoanSharkSystem (tip-off),
 //   DodgyRooferSystem (TRADING_STANDARDS_OFFICE_PROP reuse), AchievementSystem
+
+## Bug #1410: CatalogueManSystem — BARRY_BANDIT achievement impossible to earn organically
+
+**File**: `src/main/java/ragamuffin/core/CatalogueManSystem.java`, method `stealBag()`, lines 524 and 556.
+
+**Root cause**: In `stealBag()`, `bagStolenToday` is set to `true` at line 524 (immediately after confirming a successful theft). At line 556 the code checks `if (!bagStolenToday)` to increment `bagStolenDays`. Because `bagStolenToday` is already `true` at that point, the branch is **never taken** — `bagStolenDays` is never incremented through normal gameplay. As a result the `BARRY_BANDIT` achievement (steal bag on 3 separate days) can never be earned organically.
+
+The existing unit test `achievement_barryBandit_after3StolenDays` works around the bug by calling `setBagStolenDays(3)` directly, so the test passes despite the production code being broken.
+
+**Fix**: Move the `bagStolenToday = true` assignment to **after** the `bagStolenDays` increment check:
+
+```java
+// Track bag-steal days for BARRY_BANDIT (must check BEFORE setting bagStolenToday)
+if (!bagStolenToday) {
+    bagStolenDays++;
+}
+bagPlaced = false;
+bagStolenToday = true;
+```
+
+**Tests to add / update**:
+
+- `testBagStolenDaysIncrementedOnFirstDailySteal`: start round (bagStolenToday=false), call `stealBag()` with Barry out of range, verify `getBagStolenDays() == 1`.
+- `testBagStolenDaysNotIncrementedOnSecondStealSameDay`: call `stealBag()` twice in same round (place bag again via `setBagPlaced(true)` without resetting `bagStolenToday`), verify `getBagStolenDays()` == 1 (not 2).
+- `testBarryBanditAwardedAfterThreeSeparateDays`: simulate a new round start (which resets `bagStolenToday`) three times, calling `stealBag()` once per round; verify `BARRY_BANDIT` achievement awarded on the third day without any `setBagStolenDays()` shortcut.
+
+// ── Bug #1410: Fix BARRY_BANDIT achievement in CatalogueManSystem ─────────────────────────────
+// File: src/main/java/ragamuffin/core/CatalogueManSystem.java
+// Fix: swap order of `bagStolenToday = true` assignment and `if (!bagStolenToday)` check
+// Update: CatalogueManSystemTest.java — remove setBagStolenDays() workaround, add organic tests
