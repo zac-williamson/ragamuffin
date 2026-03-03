@@ -5891,7 +5891,37 @@ public enum Material {
     /** Small purse dropped by Sharon (DRUNK NPC) near the park entrance on NYE.
      * Contains 4–8 COIN. Returning to Sharon: Respect +3, HONEST_FINDER achievement.
      * Keeping it: THEFT_FROM_PERSON CriminalRecord, Notoriety +4. */
-    PURSE("Purse");
+    PURSE("Purse"),
+
+    // ── Issue #1371: Northfield Christmas Market ──────────────────────────────
+
+    /** Grilled bratwurst sausage sold by Dietmar at the Christmas Market.
+     * Consuming heals +10 HP. Available 10:00–20:00 on market days (335–356). */
+    BRATWURST("Bratwurst"),
+
+    /** Small festive trinket (novelty decoration, snow globe, etc.) sold by Linda.
+     * Giving one to a PENSIONER NPC: Community Respect +2. */
+    CHRISTMAS_TRINKET("Christmas Trinket"),
+
+    /** Traditional candy cane; sold at various stalls and in Santa's Grotto.
+     * Small sugar rush (+2 HP, minor energy boost). */
+    CANDY_CANE("Candy Cane"),
+
+    /** Numbered paper raffle ticket sold by Margaret at the charity stall.
+     * Resolved at 19:30; 10% chance of winning a CHRISTMAS_HAMPER. */
+    RAFFLE_TICKET("Raffle Ticket"),
+
+    /** Wicker hamper filled with festive goods — the raffle jackpot prize.
+     * High barter value; sellable to FENCE for 12 COIN. */
+    CHRISTMAS_HAMPER("Christmas Hamper"),
+
+    /** Counterfeit designer scarf sold by Colin (DODGY_TRADER).
+     * Triggers Trading Standards mechanic when in inventory during Janet's inspection. */
+    FAKE_DESIGNER_SCARF("Fake Designer Scarf"),
+
+    /** Clip-on "I'M SANTA" badge pickpocketed from Terry in costume.
+     * Unlocks MUGGED_FATHER_CHRISTMAS achievement. Tradeable novelty item. */
+    SANTA_BADGE("Santa Badge");
 
     private final String displayName;
 
@@ -9259,6 +9289,22 @@ public enum Material {
             // Issue #1367: Northfield Speed Awareness Course
             case SPEEDING_NOTICE:
                 return IconShape.FLAT_PAPER;  // Section 172 NIP letter
+
+            // Issue #1371: Northfield Christmas Market
+            case BRATWURST:
+                return IconShape.CYLINDER;    // grilled sausage in a bun
+            case CHRISTMAS_TRINKET:
+                return IconShape.BOX;         // small festive knick-knack
+            case CANDY_CANE:
+                return IconShape.CYLINDER;    // striped sugar cane
+            case RAFFLE_TICKET:
+                return IconShape.FLAT_PAPER;  // numbered paper strip
+            case CHRISTMAS_HAMPER:
+                return IconShape.BOX;         // wicker hamper with ribbon
+            case FAKE_DESIGNER_SCARF:
+                return IconShape.BOX;         // folded counterfeit scarf
+            case SANTA_BADGE:
+                return IconShape.FLAT_PAPER;  // clip-on "I'M SANTA" badge
 
             default:
                 return IconShape.BOX;

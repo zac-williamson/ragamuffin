@@ -3657,7 +3657,43 @@ public enum PropType {
      * home after the NYE lock-in. 3.0×3.0×3.0m; indestructible. Player must walk
      * within 5 blocks to complete the "help home" interaction.
      */
-    LANDLORD_HOUSE_PROP(3.0f, 3.0f, 3.0f, 999, null);
+    LANDLORD_HOUSE_PROP(3.0f, 3.0f, 3.0f, 999, null),
+
+    // ── Issue #1371: Northfield Christmas Market ──────────────────────────────
+
+    /**
+     * XMAS_MARKET_CHALET_PROP — a wooden market chalet (stall booth) used by
+     * all six Christmas Market vendors near the war memorial. 2.0×2.5×1.5m;
+     * indestructible during event. Drops WOOD when broken after event ends.
+     */
+    XMAS_MARKET_CHALET_PROP(2.0f, 2.5f, 1.5f, 999, Material.WOOD),
+
+    /**
+     * SANTA_GROTTO_PROP — a decorated grotto booth where SANTA_CLAUS (Terry)
+     * receives SCHOOL_KID visitors. Hosts the GROTTO_TIN. 3.0×3.0×2.0m;
+     * indestructible during event.
+     */
+    SANTA_GROTTO_PROP(3.0f, 3.0f, 2.0f, 999, null),
+
+    /**
+     * CAROL_SONG_BOARD_PROP — a board with printed carol lyrics where
+     * CAROL_SINGER NPCs gather 17:00–19:00. 0.5×1.5×0.1m; fragile.
+     */
+    CAROL_SONG_BOARD_PROP(0.5f, 1.5f, 0.1f, 3, null),
+
+    /**
+     * RAFFLE_TICKET_DRUM_PROP — Margaret's charity raffle drum. Can be swapped
+     * by the player (FENCE ≥ Journeyman) to guarantee winning ticket.
+     * 0.6×0.8×0.6m; moderate durability.
+     */
+    RAFFLE_TICKET_DRUM_PROP(0.6f, 0.8f, 0.6f, 5, null),
+
+    /**
+     * GROTTO_TIN — the collection tin placed inside Santa's Grotto that
+     * accumulates 1 COIN per SCHOOL_KID visitor (max 20/day). Stealable when
+     * Terry is distracted. 0.2×0.3×0.2m; fragile.
+     */
+    GROTTO_TIN(0.2f, 0.3f, 0.2f, 2, Material.COIN);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -2928,7 +2928,33 @@ public enum NPCType {
      * reacts angrily if the display is sabotaged. Non-hostile.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    EVENT_COMPERE(20f, 0f, 0f, false);
+    EVENT_COMPERE(20f, 0f, 0f, false),
+
+    // ── Issue #1371: Northfield Christmas Market ──────────────────────────────
+
+    /**
+     * SANTA_CLAUS — Terry in full Father Christmas costume manning Santa's Grotto.
+     * Non-hostile (it's Christmas). Pickpocketable for SANTA_BADGE.
+     * Becomes distracted when grotto queue ≥ 3 (enabling GROTTO_TIN theft).
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    SANTA_CLAUS(30f, 0f, 0f, false),
+
+    /**
+     * CAROL_SINGER — one of 3–5 volunteer carol singers performing at the
+     * CAROL_SONG_BOARD_PROP 17:00–19:00. Pickpocketable (SLEIGHT_OF_HAND).
+     * Flees on firework disruption. Non-hostile.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    CAROL_SINGER(20f, 0f, 0f, false),
+
+    /**
+     * XMAS_STALL_VENDOR — generic Christmas market stall vendor (Carol, Dietmar,
+     * Linda, Margaret). Non-hostile traders who staff their XMAS_MARKET_CHALET_PROP
+     * during market hours 10:00–20:00.
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    XMAS_STALL_VENDOR(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

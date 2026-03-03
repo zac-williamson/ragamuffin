@@ -5950,6 +5950,79 @@ public enum AchievementType {
         "Honest Finder",
         "You found her purse and gave it back. Northfield noticed.",
         1
+    ),
+
+    // ── Issue #1371: Northfield Christmas Market ──────────────────────────────
+
+    /**
+     * Awarded when the player steals the GROTTO_TIN from Santa's Grotto while
+     * Terry is distracted by a queue of ≥ 3 SCHOOL_KID NPCs. Notoriety +10.
+     */
+    CHRISTMAS_VILLAIN(
+        "Christmas Villain",
+        "You robbed Santa's collection tin. Northfield will never forgive you.",
+        1
+    ),
+
+    /**
+     * Awarded when the player returns the GROTTO_TIN within 30 in-game minutes
+     * of stealing it, reversing the theft and redeeming themselves.
+     */
+    CHRISTMAS_REDEMPTION(
+        "Christmas Redemption",
+        "You put the tin back. Christmas is saved. Probably.",
+        1
+    ),
+
+    /**
+     * Awarded when the player pickpockets SANTA_BADGE from Terry while he is in
+     * his SANTA_CLAUS costume at the grotto.
+     */
+    MUGGED_FATHER_CHRISTMAS(
+        "Mugged Father Christmas",
+        "You nicked Santa's badge. That's a new low, even for you.",
+        1
+    ),
+
+    /**
+     * Awarded when the player disrupts the carol singers with a firework and all
+     * CAROL_SINGER NPCs flee. Notoriety +8 and WantedSystem +1.
+     */
+    CAROL_CRASHER(
+        "Carol Crasher",
+        "You scared off the carol singers. Bah humbug.",
+        1
+    ),
+
+    /**
+     * Awarded when the player is caught attempting to rig the charity raffle drum
+     * (FENCE skill ≥ Journeyman) while Margaret is watching. Records FRAUD crime.
+     */
+    CHARITY_CROOK(
+        "Charity Crook",
+        "Caught rigging the raffle. Margaret will never let this go.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully rigs the RAFFLE_TICKET_DRUM_PROP while
+     * Margaret is distracted, guaranteeing the CHRISTMAS_HAMPER jackpot.
+     */
+    RIGGED_IT(
+        "Rigged It",
+        "The hamper was always yours. Margaret suspects nothing.",
+        1
+    ),
+
+    /**
+     * Awarded when the player tips off Janet (TRADING_STANDARDS_OFFICER) with
+     * evidence of Colin's FAKE_DESIGNER_SCARF operation, getting him ejected.
+     * Notoriety −4, Community Respect bonus.
+     */
+    COMMUNITY_CHAMPION(
+        "Community Champion",
+        "You grassed up Colin's dodgy scarf stall. Northfield thanks you.",
+        1
     );
 
     private final String name;

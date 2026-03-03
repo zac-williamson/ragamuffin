@@ -1115,5 +1115,21 @@ public enum RumourType {
     /** "Absolute carnage out there last night. Police everywhere."
      * Seeded at midnight on day 1 (after NYE). Spreads via PUBLIC, DRUNK.
      * Spread velocity +3. */
-    NYE_CHAOS;
+    NYE_CHAOS,
+
+    // ── Issue #1371: Northfield Christmas Market ──────────────────────────────
+
+    /** "The Christmas Market's on down by the war memorial — mulled wine,
+     * bratwurst, the lot. It's actually quite nice this year."
+     * Seeded by ChristmasMarketSystem when market opens (10:00, days 335–356).
+     * Triggers NeighbourhoodSystem Vibes +3/hr while active.
+     * Spreads via PUBLIC, PENSIONER, and SCHOOL_KID NPCs. */
+    CHRISTMAS_CHEER,
+
+    /** "The Christmas Market's been cancelled — bucketing it down, no vendors
+     * bothered showing up."
+     * Seeded by ChristmasMarketSystem when HEAVY_RAIN or THUNDERSTORM cancels
+     * the market. Triggers NeighbourhoodSystem Vibes −2.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    XMAS_MARKET_CANCELLED;
 }
