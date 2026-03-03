@@ -53622,3 +53622,132 @@ The event integrates with `CharityShopSystem` (donation target), `NeighbourhoodS
 //   `BRENDA_CONNED`, `WALK_CANCELLED`, `WALK_HERO` (RumourType);
 //   `WALKED_THE_WALK`, `CHARITY_MUGGER`, `CONE_THIEF`, `DODGED_BRENDA` (AchievementType);
 //   `CHARITY_FRAUD` (CriminalRecord.CrimeType).
+
+---
+
+## Issue #1424: Add Northfield Doorstep Energy Tout — The Meter Read Scam, the Switch Blag & the Smart Meter Shakedown
+
+### Overview
+
+Every 4 in-game days (first occurrence on day 5), a **doorstep energy tout** event triggers between 10:00–15:00. **Craig** (`NPCType.ENERGY_TOUT`) — polo shirt, branded tabard, clipboard — knocks on doors along the terrace street, offering to "read your meter" and "save you hundreds on your bills". In reality Craig is running a doorstep scam: pocketing meter-read fees, signing residents up to predatory tariffs, and upselling unnecessary smart-meter installations.
+
+The player can participate legitimately (let Craig in, lose 8 COIN), get scammed and fight back, steal Craig's clipboard (with all mark addresses), or run the tout racket themselves.
+
+Integrates with `PropertySystem` (tenant/occupant status), `NeighbourhoodSystem` (vibes), `WantedSystem`, `FenceSystem`, `NewspaperSystem`, `NotorietySystem`, and `CriminalRecord`.
+
+---
+
+### Mechanic 1 — Craig's Doorstep Knock
+
+- Craig spawns at 10:00 at the far end of the terrace and walks door to door, knocking every 2 in-game minutes.
+- At each door he says "Morning — just here to do your meter read, save you a few quid love." He targets `PUBLIC` NPCs (residents) who let him in 70% of the time.
+- Each successful entry: the resident NPC pays 8 COIN (meter-read fee) and is switched to the `PREDATORY_TARIFF` status flag in `PropertySystem`. Resident says "I thought he was from the council" the next day.
+- If the player's squat or rented property is on Craig's route, Craig knocks on the player's door at a scripted time (day 5, 12:00). The player is presented with a dialogue choice:
+  - **"Come in"** — Craig enters, player loses 8 COIN, gains `SWITCHED_TARIFF` flag. Achievement: `STITCH_UP_ACCEPTED`.
+  - **"No thanks"** — Craig tries social engineering: "It's mandatory, mate. Ofgem rules." Player can press E again to refuse a second time; Craig leaves and marks the address as DECLINED (no penalty).
+  - **"Show us your ID"** — Craig fumbles his fake badge; Notoriety of Craig's badge increases 1 level; player can then report him (see Mechanic 3).
+
+---
+
+### Mechanic 2 — Three Player Paths
+
+#### Path A — The Righteous Whistleblower
+
+- After demanding Craig's ID (`requestCraigID(player)`) and him fumbling, the player can tail Craig for his full route, observing him enter 3+ homes.
+- Delivering `CRAIG_WITNESS_STATEMENT` (crafted from `SCRAP_PAPER` + `BIRO`) to `Citizens Advice` (CitizensAdviceSystem) flags Craig in the `EnvironmentalHealthSystem`.
+- On next in-game day, `COUNCIL_INSPECTOR` arrives and issues Craig a `TRADING_STANDARDS_NOTICE`. Craig is removed from the world for 5 in-game days; residents recover 4 COIN each (partial refund).
+- Achievement: `CONSUMER_CHAMPION` — "Report the energy tout to Trading Standards."
+- `NeighbourhoodSystem` vibes +6; rumour `CRAIG_CAUGHT` seeded.
+
+#### Path B — The Clipboard Heist (Recommended scammer path)
+
+- Craig's `TOUT_CLIPBOARD_PROP` contains the full address list of targets with expected payout amounts. It sits on his belt and can be pickpocketed (Stealth ≥ 1) or snatched by assaulting Craig (WantedSystem +1).
+- `TOUT_CLIPBOARD` Material: fence value 12 COIN (to `FENCE_CONTACT_NPC`) **or** use it to run Craig's round yourself:
+  - Player visits each address on the clipboard list, knocks (E on door), claims to be "the meter man". Each resident who opens: 50% chance to pay 8 COIN (if Notoriety < 3), 50% chance to slam the door. Notoriety ≥ 3: ALL doors slammed; police called on 3rd attempt.
+  - Running the full clipboard round (6 addresses) yields up to 48 COIN.
+  - Achievement: `OUT-CRAIGD_CRAIG` — "Run Craig's doorstep round and collect more than Craig earns in a day."
+- If Craig reports the clipboard stolen: WantedSystem +1; Craig returns 2 days later with a `REPLACEMENT_CLIPBOARD_PROP` and increased suspicion radius.
+
+#### Path C — Smart Meter Sabotage
+
+- Craig carries a `SMART_METER_KIT_PROP` (bag of kit) for his premium upsell: he charges residents 35 COIN for a smart meter that doesn't work.
+- Player can steal the `SMART_METER_KIT_PROP` from Craig's van (`ENERGY_VAN_PROP`, parked on the road) by breaking in (2 GLASS hits on van window; NoiseSystem spike 1.0).
+  - Kit fences for 18 COIN, **or** player can "install" fake smart meters in their own squat (`SquatSystem`): +2 fake prestige, no actual utility saving. Achievement: `DIY_SMART_METER`.
+- If van window broken: `CriminalRecord` records `VEHICLE_BREAK_IN`; if NPC witnesses it, WantedSystem +1.
+- Smart meter kit can also be handed to the `PIGEON_FANCIER` (who repurposes it as a pigeon-tracker transmitter) for 10 COIN and the `FANCIER_FAVOUR` flag.
+
+---
+
+### Mechanic 3 — Craig's Escalation
+
+- If the player steals Craig's clipboard OR breaks into his van, Craig enters `NPCState.ANGRY` and calls a mate (`TOUT_ENFORCER` NPC) who arrives within 3 in-game minutes.
+- `TOUT_ENFORCER` Dave: aggressive, will engage in a fight (health 40, damage 6/hit). Dropping Dave yields `BURNER_PHONE` Material (fence value 9 COIN) and `DAVE_DEBT_LIST` (readable: 6 NPCs who owe Craig money — side information only).
+- If player reports Craig but then ALSO steals the clipboard: `CitizensAdvice` refuses the witness statement ("Bit rich, love"). Player must choose one path or the other.
+
+---
+
+### Mechanic 4 — Aftermath
+
+- **Craig runs full round uninterrupted**: `NewspaperSystem` publishes "RESIDENTS WARNED ABOUT DOORSTEP ENERGY SCAM" on day 7; `NeighbourhoodSystem` vibes −3.
+- **Craig reported**: "NORTHFIELD TOUT SHUT DOWN BY TRADING STANDARDS". Vibes +6. Two residents outside the terrace say "Good on ya" to the player.
+- **Player ran the clipboard round**: if player earned 30+ COIN from it, Notoriety +1; rumour `PLAYER_RUNNING_SCAMS` seeded. The `COUNCIL_INSPECTOR` may now include the player in the Trading Standards investigation (WantedSystem +1 if high notoriety).
+- **Craig's van broken into and nobody witnesses**: no immediate consequence; van is removed at 15:00.
+
+---
+
+### New NPCType entries required
+
+- `ENERGY_TOUT` — Craig. Polo shirt, branded tabard ("PowerSave UK"), clipboard, fake badge. Friendly until confronted; then nervous and evasive. Calls enforcer if robbed.
+- `TOUT_ENFORCER` — Dave. Tracksuit, aggressive. Spawns 3 in-game minutes after Craig's clipboard/van is stolen. Drops BURNER_PHONE and DAVE_DEBT_LIST on defeat.
+
+### New PropType entries required
+
+- `TOUT_CLIPBOARD_PROP` — Carried by Craig. Dims: 0.25 × 0.02 × 0.3. Pickpocketable (Stealth ≥ 1) or dropped when Craig is assaulted.
+- `SMART_METER_KIT_PROP` — In Craig's van. Bag of kit. Dims: 0.4 × 0.3 × 0.3. Breakable from van (2 GLASS hits on van window).
+- `ENERGY_VAN_PROP` — White Transit van, parked on road. Dims: 2.0 × 1.8 × 4.5. Windows breakable (GLASS hardness). Contains SMART_METER_KIT_PROP.
+
+### New Material entries required
+
+- `TOUT_CLIPBOARD` — "PowerSave UK address list. Twelve houses, twelve mugs." Stack size 1. Fence value 12 COIN. Usable to run clipboard round.
+- `SMART_METER_KIT` — "Box of cheap Chinese smart-meter parts. Probably fine." Stack size 1. Fence value 18 COIN. Alt use: fake squat installation; pigeon-fancier trade for 10 COIN.
+- `CRAIG_WITNESS_STATEMENT` — "Handwritten account of Craig's doorstep activities. Damning." Stack size 1. Crafted: SCRAP_PAPER + BIRO. Not fenceable. Deliver to CitizensAdvice.
+- `BURNER_PHONE` — "Unregistered Nokia. Eleven missed calls from 'The Gaffer'." Stack size 1. Fence value 9 COIN.
+- `DAVE_DEBT_LIST` — "Craig's handwritten debt ledger. Six names, six amounts. Purely informational." Stack size 1. Not fenceable.
+- `REPLACEMENT_CLIPBOARD` — "Craig came back with a new one. Madman." Stack size 1. Fence value 12 COIN (same as original).
+
+### New RumourType entries required
+
+- `CRAIG_CAUGHT` — "That dodgy meter man got done by Trading Standards. Saw it meself."
+- `PLAYER_RUNNING_SCAMS` — "Heard someone's been knocking doors pretending to be the meter man. Bold as brass."
+- `ENERGY_SCAM_WARNING` — "Don't answer the door to anyone in a PowerSave tabard. Total blag."
+
+### New AchievementType entries required
+
+- `STITCH_UP_ACCEPTED` — "Let the doorstep energy tout into your home. That's on you."
+- `CONSUMER_CHAMPION` — "Report Craig the energy tout to Citizens Advice and get him shut down."
+- `OUT-CRAIGD_CRAIG` — "Run Craig's clipboard round yourself and out-earn him on his own patch."
+- `DIY_SMART_METER` — "Install a stolen smart meter kit in your squat. Completely non-functional."
+- `DAVE_FLOORED` — "Drop Craig's enforcer Dave before he drops you."
+
+### New CriminalRecord.CrimeType entries required
+
+- `DOORSTEP_FRAUD` — recorded when player completes 3+ clipboard-round door knocks impersonating a meter reader.
+- `VEHICLE_BREAK_IN` — recorded when player breaks into Craig's van window.
+
+### Integration Tests
+
+1. **Craig spawns at 10:00 on day 5**: advance `TimeSystem` to day 5, 10:00; call `update()`; verify `ENERGY_TOUT` NPC spawns at the start of the terrace street and `ENERGY_VAN_PROP` is placed on the adjacent road.
+2. **Craig collects fee from willing resident**: call `craigKnocksOnDoor(residentNpc)` with resident `willingToAnswer = true`; verify resident loses 8 COIN, gains `SWITCHED_TARIFF` flag, and Craig's internal `coinsCollected` increases by 8.
+3. **Clipboard heist — pickpocket succeeds with Stealth ≥ 1**: set player `stealthLevel = 1`; call `pickpocketClipboard(player, craig)`; verify `TOUT_CLIPBOARD` added to player inventory and Craig enters `NPCState.ANGRY`.
+4. **Player clipboard round — 4 successful door conversions yield ≥ 32 COIN**: place `TOUT_CLIPBOARD` in player inventory; call `runClipboardRound(player)` with 4 of 6 target doors answering; verify player gains ≥ 32 COIN and `DOORSTEP_FRAUD` recorded in `CriminalRecord`.
+5. **Whistleblower path — witness statement delivered to CitizensAdvice removes Craig**: craft `CRAIG_WITNESS_STATEMENT`; call `deliverWitnessStatement(player, citAdviceNpc)`; verify Craig's `isRemoved() == true` for 5 in-game days, `NeighbourhoodSystem` vibes increased by 6, and `NewspaperSystem` has queued the Trading Standards headline.
+6. **Van break-in yields smart meter kit and records crime**: set player position adjacent to `ENERGY_VAN_PROP`; call `breakVanWindow(player, hits=2)`; verify `SMART_METER_KIT` added to player inventory, `VEHICLE_BREAK_IN` recorded in `CriminalRecord`, and `NoiseSystem` noise level == `NOISE_BLOCK_BREAK` (1.0).
+
+// Enum additions required: `TOUT_CLIPBOARD`, `SMART_METER_KIT`, `CRAIG_WITNESS_STATEMENT`,
+//   `BURNER_PHONE`, `DAVE_DEBT_LIST`, `REPLACEMENT_CLIPBOARD` (Material);
+//   `TOUT_CLIPBOARD_PROP`, `SMART_METER_KIT_PROP`, `ENERGY_VAN_PROP` (PropType);
+//   `ENERGY_TOUT`, `TOUT_ENFORCER` (NPCType);
+//   `CRAIG_CAUGHT`, `PLAYER_RUNNING_SCAMS`, `ENERGY_SCAM_WARNING` (RumourType);
+//   `STITCH_UP_ACCEPTED`, `CONSUMER_CHAMPION`, `OUT_CRAIGD_CRAIG`, `DIY_SMART_METER`,
+//   `DAVE_FLOORED` (AchievementType);
+//   `DOORSTEP_FRAUD`, `VEHICLE_BREAK_IN` (CriminalRecord.CrimeType).
