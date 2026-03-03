@@ -45431,3 +45431,165 @@ Add to `CriminalRecord.CrimeType`:
 // Integration: TimeSystem, StreetSkillSystem, WantedSystem, CriminalRecord, NotorietySystem,
 //              FenceSystem, RumourNetwork, NoiseSystem, FireStationSystem, FactionSystem,
 //              AchievementSystem, TooltipSystem
+
+---
+
+## Issue #1326: Add Northfield Nightclub — The Vaults — Big Dave's Door, the Dancefloor Brawl & the Manager's Safe Heist
+
+### Overview
+
+The Vaults is Northfield's only nightclub — a converted railway arch near the Wetherspoons, open Thursday–Sunday 22:00–03:00. The LandmarkType.NIGHTCLUB, all the props (NIGHTCLUB_BAR_PROP, NIGHTCLUB_SAFE_PROP, NIGHTCLUB_VIP_TABLE_PROP, BOUNCER_BOOTH_PROP, VELVET_ROPE_PROP, PRIVATE_BOOTH_PROP, NIGHTCLUB_SPEAKER_PROP, NIGHTCLUB_MIRROR_BALL_PROP, NIGHTCLUB_QUEUE_PROP, STROBE_LIGHT_PROP, NIGHTCLUB_OFFICE_DOOR_PROP), the crime type NIGHTCLUB_AFFRAY, the NIGHTCLUB_MASTER_KEY material, and NPCTypes BOUNCER, NIGHTCLUB_MANAGER, NIGHTCLUB_PUNTER are all already defined. NightclubSystem.java is the missing implementation.
+
+### New Java File
+
+`src/main/java/ragamuffin/core/NightclubSystem.java` in package `ragamuffin.core`
+
+### New Unit Test File
+
+`src/test/java/ragamuffin/core/NightclubSystemTest.java`
+
+### New Integration Test File
+
+`src/test/java/ragamuffin/integration/Issue1326NightclubIntegrationTest.java`
+
+---
+
+### Mechanic 1 — Entry & Big Dave the Bouncer
+
+- The Vaults is open Thu–Sun only, 22:00–03:00 (wraps midnight; hour < 3 counts as open night). Closed all other times.
+- Player presses E on BOUNCER_BOOTH_PROP to attempt entry.
+  - Entry costs 3 COIN (cover charge). If player has < 3 COIN: Dave says "You ain't got the readies, mate" — no entry.
+  - If player WantedSystem stars ≥ 2: Dave refuses ("You're barred.") — no entry. Notoriety penalty: 0 (Dave just shakes his head).
+  - If player is wearing DISGUISE (DisguiseSystem.isDisguised() == true): WantedSystem check bypassed for this visit only.
+  - Notoriety ≥ 50 but WantedSystem stars < 2: Dave lets player in but seeds RumourType.HARD_NUT_IN_TOWN into RumourNetwork.
+  - Successful entry: player COIN −3, player enters NIGHTCLUB interior zone, achievement FIRST_TIMER fires on first ever entry.
+
+### Mechanic 2 — Inside the Club: Bar, Dancefloor, NPCs
+
+- While inside, 8–15 NIGHTCLUB_PUNTER NPCs present; they wander the dancefloor, visit the bar, and occasionally interact with PRIVATE_BOOTH_PROP.
+- Bar interaction (E on NIGHTCLUB_BAR_PROP): player can buy drinks.
+  - CHEAP_LAGER (2 COIN): restores 5 HP; adds DRUNK effect (movement speed −10%, random lurch every 30s).
+  - DOUBLE_VODKA (3 COIN): restores 3 HP; stronger DRUNK effect (movement speed −20%, random lurch every 15s); stacks up to 3 times.
+  - First drink of the night: tooltip "You're in The Vaults. Try not to get glassed."
+- DRUNK effect wears off after 20 in-game minutes per drink consumed.
+- Dancefloor: if player enters the dancefloor area (central 8×8 block zone), MCBattleSystem.isActiveMCBattle() is checked — if an MC battle is active, player can join and earn MC XP.
+
+### Mechanic 3 — The Dancefloor Brawl
+
+- Every 30–60 in-game minutes (random), a NIGHTCLUB_PUNTER NPC initiates a brawl (state → HOSTILE, targets player or another NPC).
+- Player can:
+  - **Intervene** (attack the hostile NPC): chance to end brawl; if player wins, earns BOUNCER_RESPECT +1 (tracked by NightclubSystem); if player loses, player takes 15 damage.
+  - **Avoid** (move away from brawl zone): brawl resolves in 30s without player involvement; BOUNCER arrives and ejects the NPC.
+  - **Start brawl** (hit any NIGHTCLUB_PUNTER without provocation): immediate NIGHTCLUB_AFFRAY CriminalRecord entry; WantedSystem +1 star; BOUNCER ejects player; player barred for remainder of night (BARRED_TONIGHT flag).
+- If player started brawl while DRUNK: NIGHTCLUB_AFFRAY recorded, NoiseSystem noise event at 4.0, WitnessSystem notified.
+- AchievementType.LAST_MAN_STANDING: win 3 brawls in a single night without being ejected.
+
+### Mechanic 4 — The Manager's Safe Heist (STEALTH ≥ Journeyman, GRAFTING ≥ Apprentice)
+
+- Terry the NIGHTCLUB_MANAGER NPC patrols 22:00–03:00 between the bar and NIGHTCLUB_OFFICE_DOOR_PROP.
+- NIGHTCLUB_OFFICE_DOOR_PROP requires NIGHTCLUB_MASTER_KEY (loot from Terry via pickpocket, StreetSkillSystem.pickpocket() flow) OR 3× LOCKPICK attempts (each attempt: 30% success chance, each failure: −1 LOCKPICK from inventory).
+- Inside the office: NIGHTCLUB_SAFE_PROP. Crack requires STETHOSCOPE (fenceable item, or buy from PawnShopSystem) — hold E for 6 in-game seconds. Success: 50–100 COIN + 1× PILLS (Material).
+  - NoiseSystem noise event at 2.0 on crack attempt.
+  - If Terry catches player in office: WantedSystem +2 stars, CriminalRecord TRESPASS + BURGLARY, player ejected.
+  - AchievementType.CRACKING_THE_VAULTS: first successful safe crack.
+
+### Mechanic 5 — VIP Booth & the Marchetti Connection
+
+- PRIVATE_BOOTH_PROP in VIP area: press E to sit if FactionSystem Marchetti Respect ≥ 50 OR player holds NIGHTCLUB_MASTER_KEY.
+- Sitting in VIP booth: seeds RumourType.GANG_ACTIVITY into RumourNetwork. Tony Marchetti (NPCType NPC at PRIVATE_BOOTH_PROP) offers a FactionMission if Respect ≥ 60.
+- If player overhears Marchetti conversation (within 3 blocks, not in booth): seeds RumourType.ORGANISED_CRIME; WantedSystem marks player as PERSON_OF_INTEREST (no stars, but NotorietySystem +5).
+
+### Mechanic 6 — Closing Time & Taxi Surge
+
+- At 03:00, the club closes. All NIGHTCLUB_PUNTER NPCs stream out of NIGHTCLUB landmark.
+- TaxiSystem.triggerNightclubSurge() is called (already referenced in TaxiSystem.java line 665) — taxi fares 2× for 30 in-game minutes.
+- KebabVanSystem: if a KEBAB_VAN landmark exists, it spawns a KEBAB_VAN_VENDOR NPC near NIGHTCLUB at 03:00.
+- Player outside after closing: if DRUNK effect still active, player stumbles toward BUS_STOP_HIGH_STREET.
+
+### Achievements
+
+Add to `AchievementType.java`:
+- `FIRST_TIMER` — "First Night Out" — "Got into The Vaults for the first time. Big Dave gave you the nod." Fires on first successful entry.
+- `LAST_MAN_STANDING` — "Last Man Standing" — "Won 3 brawls in a single night at The Vaults without being thrown out." Fires on 3rd brawl win in one session.
+- `CRACKING_THE_VAULTS` — "Cracking The Vaults" — "Cracked Terry's safe. You cleaned him out." Fires on first successful safe crack.
+- `BARRED_FOR_LIFE` — "Barred for Life" — "Got thrown out of The Vaults 3 nights in a row." Fires on 3rd ejection.
+
+### New Materials
+
+No new materials required; PILLS and NIGHTCLUB_MASTER_KEY already exist in Material.java. STETHOSCOPE: add if absent.
+
+Add to `Material.java` (if absent):
+- `STETHOSCOPE` — "Stethoscope" — medical instrument, used for safe cracking; fenceable for 8 COIN.
+
+### Drunk Effect
+
+Add to Player or a simple inner enum/class in NightclubSystem:
+- `DrunkLevel` { SOBER, TIPSY, DRUNK, SMASHED }
+- DrunkLevel tracked in NightclubSystem; cleared at 00:10 after last drink × 20 min.
+
+### New Crime Types (if absent)
+
+- `NIGHTCLUB_AFFRAY` — already defined in CriminalRecord.java.
+- `TRESPASS` — "Trespassing" — if not already present.
+- `BURGLARY` — "Burglary" — if not already present.
+
+### Integrations
+
+- **TimeSystem**: open Thu–Sun 22:00–03:00 only; drunk effect timer; brawl interval timer; closing time at 03:00.
+- **WantedSystem**: barred entry ≥ 2 stars; brawl +1 star; office intrusion +2 stars; mule stopped +2 stars.
+- **CriminalRecord**: NIGHTCLUB_AFFRAY, TRESPASS, BURGLARY.
+- **DisguiseSystem**: bypasses WantedSystem check at door.
+- **NotorietySystem**: entry with Notoriety ≥ 50 seeds HARD_NUT_IN_TOWN; Marchetti overheard +5.
+- **FactionSystem**: VIP booth requires Marchetti Respect ≥ 50; mission offered at ≥ 60.
+- **MCBattleSystem**: dancefloor MC battle integration.
+- **TaxiSystem**: triggerNightclubSurge() at 03:00.
+- **KebabVanSystem**: kebab van spawns at 03:00 near NIGHTCLUB.
+- **RumourNetwork**: HARD_NUT_IN_TOWN, GANG_ACTIVITY, ORGANISED_CRIME.
+- **WitnessSystem**: brawl while drunk.
+- **NoiseSystem**: brawl noise 4.0; safe crack 2.0.
+- **StreetSkillSystem**: pickpocket Terry for NIGHTCLUB_MASTER_KEY; STEALTH gating for office.
+- **PawnShopSystem**: STETHOSCOPE purchasable.
+- **AchievementSystem**: FIRST_TIMER, LAST_MAN_STANDING, CRACKING_THE_VAULTS, BARRED_FOR_LIFE.
+- **TooltipSystem**: first drink tooltip.
+
+### Unit Tests
+
+- `NightclubSystem.isOpen(TimeSystem)` returns true Thu–Sun 22:00–02:59; false Mon–Wed any time; false Thu–Sun 04:00.
+- `NightclubSystem.canEnter(player, wantedSystem)`: false if stars ≥ 2 (unless disguised); false if COIN < 3; true otherwise.
+- Entry deducts 3 COIN from player; fires FIRST_TIMER achievement on first call only.
+- Bar purchase: CHEAP_LAGER deducts 2 COIN, restores 5 HP, sets DrunkLevel ≥ TIPSY.
+- Drunk stack: 3× DOUBLE_VODKA sets DrunkLevel to SMASHED.
+- Drunk timer: after 20 in-game minutes, DrunkLevel decrements by one step.
+- Brawl triggered between 30–60 min (seeded random); player intervention win increments BOUNCER_RESPECT.
+- BARRED_TONIGHT flag set on player-initiated brawl; Dave refuses re-entry same night.
+- Manager's office: without key or lockpick, NIGHTCLUB_OFFICE_DOOR_PROP interaction returns ACCESS_DENIED.
+- Safe crack: 6-second hold required; yields 50–100 COIN + PILLS; NoiseSystem event 2.0.
+- Safe crack interrupted by Terry: WantedSystem +2 stars; TRESPASS + BURGLARY in CriminalRecord.
+- BARRED_FOR_LIFE achievement fires on 3rd ejection (not 2nd, not 4th).
+- TaxiSystem.triggerNightclubSurge() called exactly once at 03:00.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Entry denied when barred, granted when clean**: Set WantedSystem stars = 2. Set player COIN = 10. Set TimeSystem to Thursday 22:30. Player presses E on BOUNCER_BOOTH_PROP. Verify result is BARRED and COIN unchanged. Set WantedSystem stars = 0. Player presses E on BOUNCER_BOOTH_PROP. Verify result is ENTRY_GRANTED, player COIN = 7 (10 − 3), and FIRST_TIMER achievement fires.
+
+2. **Dancefloor brawl full cycle**: Enter club (stars = 0, COIN ≥ 3). Seed random to trigger a brawl at 30 in-game minutes. Player attacks the hostile NIGHTCLUB_PUNTER NPC. Simulate combat until NPC is defeated. Verify BOUNCER_RESPECT incremented by 1. Simulate player hitting a peaceful NIGHTCLUB_PUNTER (unprovoked). Verify CriminalRecord contains NIGHTCLUB_AFFRAY. Verify WantedSystem stars +1. Verify BARRED_TONIGHT flag is set and re-entry attempt returns BARRED_TONIGHT.
+
+3. **Manager's safe heist — full cycle**: Enter club. Pickpocket Terry (seed random for success). Verify player holds NIGHTCLUB_MASTER_KEY. Player uses key on NIGHTCLUB_OFFICE_DOOR_PROP. Verify door opens. Player holds E on NIGHTCLUB_SAFE_PROP for 6 simulated seconds. Verify player COIN increased by 50–100. Verify player inventory contains PILLS. Verify NoiseSystem received event at magnitude 2.0 ± 0.1. Verify CRACKING_THE_VAULTS achievement fires.
+
+4. **Closing time triggers taxi surge and kebab van**: Set TimeSystem to Sunday 02:59. Advance 1 in-game minute to 03:00. Verify NightclubSystem.isClosed() returns true. Verify TaxiSystem.isSurging() returns true. Verify a KEBAB_VAN_VENDOR NPC has spawned within 15 blocks of NIGHTCLUB landmark. Verify NIGHTCLUB_PUNTER NPCs are no longer in the NIGHTCLUB zone.
+
+5. **Barred for Life achievement — 3 ejections**: Enter club 3 separate nights. Each night, player hits a NIGHTCLUB_PUNTER unprovoked. Verify ejection occurs each night (BARRED_TONIGHT set). After 3rd ejection, verify BARRED_FOR_LIFE achievement fires. Verify re-entry on 4th night returns BARRED result even with WantedSystem stars = 0 and COIN ≥ 3.
+
+---
+
+// ── Issue #1326: Add Northfield Nightclub — The Vaults ────────────────────────────────────────────
+// New: NightclubSystem.java in ragamuffin.core
+// New: NightclubSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1326NightclubIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Material: STETHOSCOPE (if absent) — add to Material.java
+// AchievementType: FIRST_TIMER, LAST_MAN_STANDING, CRACKING_THE_VAULTS, BARRED_FOR_LIFE — add to AchievementType.java
+// CriminalRecord.CrimeType: TRESPASS, BURGLARY (if absent) — add to CriminalRecord.java
+// Integration: TimeSystem, WantedSystem, CriminalRecord, DisguiseSystem, NotorietySystem,
+//              FactionSystem, MCBattleSystem, TaxiSystem, KebabVanSystem, RumourNetwork,
+//              WitnessSystem, NoiseSystem, StreetSkillSystem, PawnShopSystem,
+//              AchievementSystem, TooltipSystem
