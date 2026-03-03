@@ -53502,3 +53502,123 @@ A new NPC, **Derek Swann** (`NPCType.POST_OFFICE_INVESTIGATOR`), arrives at the 
 //   `HORIZON_HERO`, `HORIZON_OPPORTUNIST`, `SOLD_HER_OUT`, `NOT_MY_PROBLEM`,
 //   `DODGY_AUDIT` (AchievementType — note: reuse name for bribe route);
 //   `AUDIT_OBSTRUCTION`, `POST_OFFICE_SAFE_ROBBERY` (CriminalRecord.CrimeType).
+
+---
+
+## Issue #1422: Add Northfield Charity Sponsored Walk — The Sponsor Form Racket, the Route Shortcut & the Organiser Showdown
+
+### Overview
+
+Once per playthrough, on in-game day 10 (a Saturday), the **Northfield Hospice Sponsored Walk** sets off from outside the Community Centre. **Brenda** (`NPCType.WALK_ORGANISER`) marshals 8–12 `SPONSORED_WALKER` NPCs along a 400-block loop of pavement through the town centre. The player can participate legitimately, exploit the sponsor pledge system for a quick blag, or sabotage the route to pocket the prize kitty.
+
+The event integrates with `CharityShopSystem` (donation target), `NeighbourhoodSystem` (community respect), `NotorietySystem`, `NewspaperSystem`, and `CriminalRecord`.
+
+---
+
+### Mechanic 1 — Getting a Sponsor Form
+
+- Brenda stands outside the Community Centre from 08:30 on day 10. Press **E** to receive a `SPONSOR_FORM` item.
+- The form lists 6 NPC sponsors: 3 `PUBLIC` NPCs (pledge 2 COIN each), 2 `SHOP_KEEPER` NPCs (pledge 3 COIN each), 1 `COMMUNITY_CENTRE_CLERK` (pledges 5 COIN).
+- Player collects pledges by pressing **E** on each sponsor NPC while holding the `SPONSOR_FORM`. Each pledge is recorded; the NPC says "I'll sponsor ya, love — bring me the form when you're done."
+- **Full sponsorship collected** = 20 COIN potential earnings (all 6 sponsors).
+
+---
+
+### Mechanic 2 — Three Player Paths
+
+#### Path A — Complete the Walk Legitimately
+
+- The walk route is a 400-block pavement loop marked by `ROUTE_CONE_PROP` (orange traffic cone) props placed by Brenda at 20-block intervals.
+- Player must pass through all 20 `ROUTE_CONE_PROP` waypoints in order (within 3 blocks of each cone activates it). Waypoint progress tracked in `SponsoredWalkSystem`.
+- Completing the full route and returning to Brenda within 90 in-game minutes (before 10:00) unlocks the **collect pledges** step: visit each sponsor NPC and press **E**; they hand over their pledged COIN.
+- Brenda matches 50% of pledges as a "charity top-up" (rounds down). Player keeps all sponsor COIN; Brenda's top-up goes to the charity donation tally in `CharityShopSystem`.
+- Achievement: `WALKED_THE_WALK` — "Complete the Northfield Sponsored Walk and collect all pledges."
+- `COMMUNITY_RESPECT` +8; `NewspaperSystem` publishes "LOCAL HERO COMPLETES HOSPICE WALK" if all 6 sponsors were pledged.
+
+#### Path B — The Sponsor Form Racket (Collect and Scarper)
+
+- Player collects all 6 pledges on the form but **does not complete the walk route** — instead presses **E** on each sponsor after registering their pledge but before walking, falsely claiming completion.
+- Each sponsor checks: `walkCompleted == false`. If Notoriety < 2, they pay up (they trust the player). If Notoriety ≥ 2, they refuse and say "I've heard about you. Get away from me." and Anger in `NeighbourhoodWatchSystem` +3.
+- After collecting from 3+ sponsors without completing, Brenda is notified (via rumour) and enters `NPCState.ANGRY`. She calls the police (WantedSystem +1).
+- Achievement: `CHARITY_MUGGER` — "Collect sponsored walk pledges without finishing the route."
+- `CriminalRecord` records `CHARITY_FRAUD`.
+
+#### Path C — Route Sabotage and Prize Kitty Heist
+
+- The walk prize kitty is a `PRIZE_ENVELOPE_PROP` on the trestle table outside the Community Centre, containing `PRIZE_KITTY_MIN`–`PRIZE_KITTY_MAX` COIN (15–25 COIN).
+- While all walkers and Brenda are on the route (08:40–09:55), the table is unguarded.
+- Player can grab the `PRIZE_ENVELOPE_PROP` (E interact): awarded between 15–25 COIN + `CHARITY_RAFFLE_TICKET` Material. `CriminalRecord` records `THEFT`.
+- Alternatively, player can **remove 5 or more `ROUTE_CONE_PROP`** markers (punch twice to pick up, goes to inventory as `TRAFFIC_CONE` Material). Walkers lose their way; they mill about confused; the walk is abandoned at 09:45.
+  - Cones sold to `FenceSystem` at 1 COIN each; or placed elsewhere to cause traffic chaos triggering `TrafficWardenSystem`.
+  - Achievement: `CONE_THIEF` — "Steal 5 route cones from the sponsored walk."
+- Without a valid route, Brenda cancels the walk, returns to Community Centre, posts a `NOTICE_BOARD_PROP` "WALK CANCELLED — VANDALS". `NeighbourhoodSystem` vibes −5.
+
+---
+
+### Mechanic 3 — Brenda's Showdown
+
+- If the player commits `CHARITY_FRAUD` or steals the prize kitty and is still within 30 blocks of the route at 10:15:
+  - Brenda enters `NPCState.ANGRY`, shouts "OI! That's for the hospice, you horrible little get!" and chases the player for 60 in-game seconds.
+  - If Brenda catches up (within 1.5 blocks): she grabs the player (movement speed −60% for 3 seconds), calls police (WantedSystem +1), and a crowd of `SPONSORED_WALKER` NPCs circles.
+  - If player escapes Brenda: `StreetReputation` gains `DODGED_BRENDA` tag; a rumour `BRENDA_CONNED` is seeded in the network.
+- Brenda can be **apologised to** (hold G Grovel for 2 seconds while facing her): Anger de-escalates, WantedSystem −1, but `CriminalRecord` record stands.
+
+---
+
+### Mechanic 4 — Aftermath
+
+- **Walk completed**: `CharityShopSystem` donation target reduced by Brenda's top-up amount. Community Centre noticeboard updated "THANK YOU TO ALL WALKERS".
+- **Walk abandoned**: `CharityShopSystem` donation target unaffected; `NewspaperSystem` publishes "VANDALS RUIN HOSPICE WALK — COUNCIL VOWS ACTION". `NeighbourhoodSystem` vibes −5.
+- **Fraud discovered**: `NewspaperSystem` publishes "SPONSORED WALK FRAUD — NORTHFIELD RESIDENT NAMED". Notoriety +1 passively until next in-game week.
+
+---
+
+### New NPCType entries required
+
+- `WALK_ORGANISER` — Brenda. Hi-vis tabard, clipboard, sensible shoes. Friendly until wronged; then relentless pursuer. Non-violent but calls police on contact.
+- `SPONSORED_WALKER` — generic public NPC variant: hi-vis bib, trainers, number pinned to chest. 8–12 spawned for the walk; despawn at 10:30.
+
+### New PropType entries required
+
+- `ROUTE_CONE_PROP` — orange traffic cone, 20 placed along the walk route. Dims: 0.3 × 0.6 × 0.3. Removable by player (2 punches). Becomes `TRAFFIC_CONE` Material in inventory.
+- `PRIZE_ENVELOPE_PROP` — brown envelope on trestle table. Dims: 0.2 × 0.02 × 0.12. Contains 15–25 COIN + `CHARITY_RAFFLE_TICKET`.
+- `NOTICE_BOARD_PROP` — community notice board. Dims: 0.6 × 1.2 × 0.1. Already used by `NeighbourhoodWatchSystem`; reuse if present.
+
+### New Material entries required
+
+- `SPONSOR_FORM` — "Official Northfield Hospice Sponsored Walk form. Six names, six promises." Stack size 1. Not fenceable.
+- `TRAFFIC_CONE` — "Orange traffic cone. Surprisingly heavy. Surprisingly tempting." Stack size 4. Fence value 1 COIN.
+- `CHARITY_RAFFLE_TICKET` — "Raffle ticket No. 47. First prize: a hamper from Iceland." Stack size 1. No fence value; tradeable to `SPONSORED_WALKER` NPCs for 1 COIN goodwill.
+
+### New RumourType entries required
+
+- `BRENDA_CONNED` — "Someone did Brenda from the Hospice Walk out of her pledges. Proper wrong that."
+- `WALK_CANCELLED` — "Sponsored walk got abandoned — someone nicked all the cones."
+- `WALK_HERO` — "Saw someone actually finish the whole sponsored walk. Fair play."
+
+### New AchievementType entries required
+
+- `WALKED_THE_WALK` — "Complete the Northfield Hospice Sponsored Walk and collect all pledges."
+- `CHARITY_MUGGER` — "Collect sponsored walk pledges without finishing the route."
+- `CONE_THIEF` — "Steal 5 or more route cones from the sponsored walk."
+- `DODGED_BRENDA` — "Escape Brenda after committing charity fraud."
+
+### New CriminalRecord.CrimeType entries required
+
+- `CHARITY_FRAUD` — recorded when player collects pledges from 3+ sponsors without completing the route.
+
+### Integration Tests
+
+1. **Walk starts on day 10 at 08:30**: advance `TimeSystem` to day 10, 08:30; call `update()`; verify `WALK_ORGANISER` NPC is spawned within 5 blocks of `COMMUNITY_CENTRE` landmark and 20 `ROUTE_CONE_PROP` props exist along the route.
+2. **Completing all 20 waypoints sets walkCompleted flag**: call `activateWaypoint(player, i)` for i = 0..19 in order; verify `walkCompleted == true` and `waypointsReached == 20`.
+3. **Legitimate walk — all 6 pledges collected**: set `walkCompleted = true`; call `collectPledge(player, sponsor)` for all 6 sponsors; verify player COIN increased by 20 and `WALKED_THE_WALK` achievement is unlocked.
+4. **Scarper path — collecting 3 pledges without completing triggers Brenda anger**: call `collectPledge(player, sponsor)` for sponsors 1, 2, 3 with `walkCompleted == false`; verify `brenda.getState() == NPCState.ANGRY` and `WantedSystem.getStars() >= 1` and `CHARITY_FRAUD` recorded.
+5. **Prize kitty heist yields correct COIN range**: advance time to 09:00 day 10; call `grabPrizeEnvelope(player)`; verify player receives between `PRIZE_KITTY_MIN` (15) and `PRIZE_KITTY_MAX` (25) COIN and `THEFT` recorded in `CriminalRecord`.
+6. **Removing 5 cones abandons the walk**: call `removeCone(player, coneIndex)` for 5 cones; call `update()` at 09:45; verify walk state is `ABANDONED`, vibes decreased by 5 in `NeighbourhoodSystem`, and `NewspaperSystem` has queued the "VANDALS RUIN HOSPICE WALK" headline.
+
+// Enum additions required: `SPONSOR_FORM`, `TRAFFIC_CONE`, `CHARITY_RAFFLE_TICKET` (Material);
+//   `ROUTE_CONE_PROP`, `PRIZE_ENVELOPE_PROP` (PropType);
+//   `WALK_ORGANISER`, `SPONSORED_WALKER` (NPCType);
+//   `BRENDA_CONNED`, `WALK_CANCELLED`, `WALK_HERO` (RumourType);
+//   `WALKED_THE_WALK`, `CHARITY_MUGGER`, `CONE_THIEF`, `DODGED_BRENDA` (AchievementType);
+//   `CHARITY_FRAUD` (CriminalRecord.CrimeType).
