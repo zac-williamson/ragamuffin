@@ -1106,7 +1106,24 @@ public class CriminalRecord {
          * Recorded when the player attacks a PARAMEDIC NPC during an active callout.
          * Penalty: WantedSystem minimum Tier 4, immediate police alert.
          */
-        ASSAULTING_NHS_STAFF("Assaulting NHS staff (paramedic)");
+        ASSAULTING_NHS_STAFF("Assaulting NHS staff (paramedic)"),
+
+        // ── Issue #1359: Northfield HMRC Tax Investigation ────────────────────
+
+        /**
+         * Recorded when the player's total untaxed earnings reach or exceed 150 COIN
+         * and Sandra (HMRC_INSPECTOR) serves a TAX_DEMAND_LETTER that is subsequently
+         * ignored for 5+ in-game days without payment, appeal, or bribe.
+         * Penalty: Notoriety +8, WantedSystem +1 star; debt carried forward.
+         */
+        TAX_EVASION("Tax evasion (HMRC cash-in-hand investigation)"),
+
+        /**
+         * Recorded when the player offers a CASH_BRIBE_ENVELOPE to Sandra (HMRC_INSPECTOR)
+         * and the bribe fails (40% failure chance). Triggers WantedSystem +2 stars,
+         * Notoriety +10, and HMRC_TIPPED_OFF rumour.
+         */
+        BRIBERY_OF_PUBLIC_OFFICIAL("Bribery of a public official (HMRC inspector)");
 
         private final String displayName;
 
