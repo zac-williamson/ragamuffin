@@ -3304,7 +3304,25 @@ public enum NPCType {
      * Hides 15 EASTER_EGG_PROPs in the park on day 92 before 10:00.
      * HP: 50, attack: 0, cooldown: 0, not hostile.
      */
-    EASTER_EGG_HUNT_WARDEN(50f, 0f, 0f, false);
+    EASTER_EGG_HUNT_WARDEN(50f, 0f, 0f, false),
+
+    // ── Issue #1449: Northfield Mobile Library ───────────────────────────────
+
+    /**
+     * MOBILE_LIBRARIAN — Keith, a gentle ex-social-worker who drives the mobile library van.
+     * Parks outside the community centre Wednesday 10:00–13:00 and Saturday 10:00–12:00.
+     * Issues LIBRARY_CARD on first visit; tracks overdue fines; runs weekly amnesty event.
+     * HP: 60, attack: 0, cooldown: 0, not hostile.
+     */
+    MOBILE_LIBRARIAN(60f, 0f, 0f, false),
+
+    /**
+     * LIBRARY_REGULAR — a habitual mobile library visitor who distracts Keith with chat.
+     * When present and in conversation with Keith, creates a no-line-of-sight window for
+     * the RARE_BOOK_SHELF_PROP theft (3s hold-E). Sits in LIBRARY_REGULAR_SEAT_PROP.
+     * HP: 50, attack: 0, cooldown: 0, not hostile.
+     */
+    LIBRARY_REGULAR(50f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
