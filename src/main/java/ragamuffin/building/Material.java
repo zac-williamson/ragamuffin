@@ -6317,7 +6317,43 @@ public enum Material {
      * Found in HIDDEN_STASH_PROP (10% chance). Triggers DRUG_POSSESSION CrimeType if player
      * is searched or if returned in bag to Janet. Can be fenced for 2 COIN.
      * Possession triggers JANETS_WORST_DAY achievement when returned in bag. */
-    CRACK_PIPE("Crack Pipe");
+    CRACK_PIPE("Crack Pipe"),
+
+    // ── Issue #1406: Northfield Dodgy Roofer ──────────────────────────────────
+
+    /**
+     * BUCKET_OF_SEALANT — "Grey sealant compound. Could fix guttering. Probably won't."
+     * Always present in ROOFER_VAN_PROP loot. Required item for Mechanic 3 (rival cold-calling).
+     * Buy from corner shop or steal from Kenny's van. */
+    BUCKET_OF_SEALANT("Bucket of Sealant"),
+
+    /**
+     * LATEX_GLOVES — "Box of disposable gloves. Unbranded, obviously."
+     * Required alongside BUCKET_OF_SEALANT for Mechanic 3 (rival cold-calling round).
+     * Buy from corner shop. */
+    LATEX_GLOVES("Latex Gloves"),
+
+    /**
+     * SCAFFOLDING_SPANNER — "Heavy steel podger. 50% chance in Kenny's van loot."
+     * Fenceable for 5 COIN. Can also be used as a weapon (counts as IMPROVISED_TOOL). */
+    SCAFFOLDING_SPANNER("Scaffolding Spanner"),
+
+    /**
+     * INVOICE_PAD — "Printed invoice forms. 'KR Roofing Solutions' header. Looks almost legit."
+     * 35% chance in Kenny's van loot. Required for Mechanic 5 (invoice fraud).
+     * Used to forge follow-up invoices at recently-worked houses. */
+    INVOICE_PAD("Invoice Pad"),
+
+    /**
+     * CASH_ENVELOPE — "Thick envelope. You can feel the notes inside."
+     * 20% chance in Kenny's van loot. Contains 10–20 COIN on use.
+     * Triggers CrimeType.VEHICLE_BREAK_IN if found without prior crime recording. */
+    CASH_ENVELOPE("Cash Envelope"),
+
+    /**
+     * ROOF_SLATE_BAG — "Canvas bag of second-hand roofing slates. Heavy."
+     * 15% chance in Kenny's van loot. Fenceable for 8 COIN. */
+    ROOF_SLATE_BAG("Roof Slate Bag");
 
     private final String displayName;
 
@@ -7691,6 +7727,20 @@ public enum Material {
             case CRACK_PIPE:            return cs(0.78f, 0.88f, 0.92f, // Pale glass tube
                                                    0.62f, 0.35f, 0.15f); // Amber scorch marks
 
+            // Issue #1406: Northfield Dodgy Roofer
+            case BUCKET_OF_SEALANT:     return cs(0.50f, 0.50f, 0.52f, // Grey bucket body
+                                                   0.72f, 0.70f, 0.65f); // Silver lid
+            case LATEX_GLOVES:          return cs(0.92f, 0.88f, 0.75f, // Off-white rubber glove
+                                                   0.75f, 0.72f, 0.60f); // Darker cuff band
+            case SCAFFOLDING_SPANNER:   return cs(0.45f, 0.45f, 0.48f, // Steel grey body
+                                                   0.62f, 0.58f, 0.52f); // Worn metal highlight
+            case INVOICE_PAD:           return cs(0.92f, 0.92f, 0.88f, // White paper
+                                                   0.72f, 0.55f, 0.30f); // Brown cardboard back
+            case CASH_ENVELOPE:         return cs(0.88f, 0.82f, 0.62f, // Manila envelope
+                                                   0.25f, 0.55f, 0.25f); // Green cash visible
+            case ROOF_SLATE_BAG:        return cs(0.28f, 0.28f, 0.30f, // Dark slate grey
+                                                   0.48f, 0.42f, 0.38f); // Worn canvas bag
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -8276,6 +8326,14 @@ public enum Material {
             case LITTER_PICKER_STICK:
             case COUNCIL_RUBBISH_BAG:
             case CRACK_PIPE:
+                return false;
+            // Issue #1406: Northfield Dodgy Roofer — not block items
+            case BUCKET_OF_SEALANT:
+            case LATEX_GLOVES:
+            case SCAFFOLDING_SPANNER:
+            case INVOICE_PAD:
+            case CASH_ENVELOPE:
+            case ROOF_SLATE_BAG:
                 return false;
             default:
                 return true;
@@ -9980,6 +10038,20 @@ public enum Material {
                 return IconShape.BOX;         // large black bag
             case CRACK_PIPE:
                 return IconShape.CYLINDER;    // glass tube pipe
+
+            // Issue #1406: Northfield Dodgy Roofer
+            case BUCKET_OF_SEALANT:
+                return IconShape.CYLINDER;    // grey sealant bucket
+            case LATEX_GLOVES:
+                return IconShape.FLAT_PAPER;  // flat glove box
+            case SCAFFOLDING_SPANNER:
+                return IconShape.TOOL;        // heavy steel podger
+            case INVOICE_PAD:
+                return IconShape.FLAT_PAPER;  // pad of invoice forms
+            case CASH_ENVELOPE:
+                return IconShape.FLAT_PAPER;  // bulging manila envelope
+            case ROOF_SLATE_BAG:
+                return IconShape.BOX;         // heavy canvas bag of slates
 
             default:
                 return IconShape.BOX;

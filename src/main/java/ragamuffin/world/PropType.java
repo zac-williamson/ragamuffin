@@ -3923,7 +3923,35 @@ public enum PropType {
      * Contains 5–10 COIN + MYSTERY_OBJECT. Press E to loot.
      * 0.5×0.5×0.5m; 1 hit (fragile mud cover); drops MYSTERY_OBJECT.
      */
-    BURIED_STASH_PROP(0.5f, 0.5f, 0.5f, 1, Material.MYSTERY_OBJECT);
+    BURIED_STASH_PROP(0.5f, 0.5f, 0.5f, 1, Material.MYSTERY_OBJECT),
+
+    // ── Issue #1406: Northfield Dodgy Roofer ──────────────────────────────────
+
+    /**
+     * ROOFER_VAN_PROP — Kenny's white transit van parked outside target properties.
+     * Unattended while Kenny is on a doorstep or up a ladder (BUSY state).
+     * CROWBAR + 3-second hold to break in — yields loot table (BUCKET_OF_SEALANT always,
+     * SCAFFOLDING_SPANNER 50%, INVOICE_PAD 35%, CASH_ENVELOPE 20%, ROOF_SLATE_BAG 15%).
+     * CrimeType.VEHICLE_BREAK_IN + Notoriety +6 on successful break-in.
+     * 5.5×2.2×2.0m; indestructible (99 hits); drops null.
+     */
+    ROOFER_VAN_PROP(5.5f, 2.2f, 2.0f, 99, null),
+
+    /**
+     * INVOICE_PROP — Forged follow-up invoice left at a recently-worked house door.
+     * Created via Mechanic 5 (INVOICE_PAD required). 30% acceptance → 8 COIN.
+     * Triggers CrimeType.FRAUD + Notoriety +5 on use.
+     * 0.3×0.4×0.05m; 1 hit (paper); drops INVOICE_PAD (partial use).
+     */
+    INVOICE_PROP(0.3f, 0.4f, 0.05f, 1, Material.INVOICE_PAD),
+
+    /**
+     * TRADING_STANDARDS_OFFICE_PROP — Front desk prop for the Trading Standards office.
+     * Player can report Kenny here (Notoriety &lt; 25) for Notoriety −3 + PUBLIC_SPIRITED achievement.
+     * Also used for CIVIC_MINDED + SNITCH rumour tip-off mechanic.
+     * 1.2×1.0×0.6m; indestructible (99 hits); drops null.
+     */
+    TRADING_STANDARDS_OFFICE_PROP(1.2f, 1.0f, 0.6f, 99, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
