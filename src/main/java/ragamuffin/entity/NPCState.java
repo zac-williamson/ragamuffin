@@ -83,5 +83,8 @@ public enum NPCState {
     HOSTILE_TO_PLAYER,  // NPC is hostile toward player (e.g. after German flag plant)
 
     // ── Issue #1422: Northfield Charity Sponsored Walk ────────────────────────
-    ANGRY               // NPC is angry at the player (e.g. Brenda after charity fraud detected)
+    ANGRY,              // NPC is angry at the player (e.g. Brenda after charity fraud detected)
+
+    // ── Issue #1430: Halloween ────────────────────────────────────────────────
+    ROWDY               // NPC is rowdy/disruptive (e.g. YOUTH_GANG during Halloween wind-down)
 }
