@@ -977,5 +977,22 @@ public enum RumourType {
      * RESIDENTS_MEMBER NPCs leave, dropping attendance below quorum).
      * Spreads via PUBLIC and PENSIONER NPCs town-wide.
      * Awards MEETING_DISSOLVED achievement on first seeding. */
-    MEETING_CHAOS;
+    MEETING_CHAOS,
+
+    // ── Issue #1347: Northfield Remembrance Sunday ────────────────────────────
+
+    /** "They're doing the remembrance do at the war memorial again Sunday morning — Reverend
+     * Dave, the Buffaloes, the lot. Silence at eleven."
+     * — seeded by RemembranceSundaySystem at 09:00 on Remembrance Sunday (second Sunday
+     * of November). Spreads via PUBLIC, PENSIONER, and BARMAN NPCs.
+     * Awards LEST_WE_FORGET achievement on first ceremony attendance by the player. */
+    REMEMBRANCE_CEREMONY,
+
+    /** "Someone only went and made a racket right in the middle of the two-minute silence.
+     * The whole town's talking about it."
+     * — seeded by RemembranceSundaySystem when the player breaks the silence (moves,
+     * attacks, or breaks a block during 11:00–11:02 on Remembrance Sunday).
+     * Spreads via PUBLIC, PENSIONER, and VETERAN NPCs town-wide.
+     * Triggers NewspaperSystem headline: 'Local yob disrupts Remembrance ceremony'. */
+    SILENCE_BREACH;
 }
