@@ -2733,7 +2733,37 @@ public enum NPCType {
      * if 2+ members leave).
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    RESIDENTS_MEMBER(20f, 0f, 0f, false);
+    RESIDENTS_MEMBER(20f, 0f, 0f, false),
+
+    // ── Issue #1347: Northfield Remembrance Sunday ────────────────────────────
+
+    /**
+     * VETERAN — ex-serviceman attending the Remembrance Sunday ceremony at the war
+     * memorial (STATUE prop in the park). Attends from 10:30; salutes at wreath-laying
+     * (11:02); floods The Ragamuffin Arms after 12:00.
+     * Defends the POPPY_SELLER and the war memorial — turns hostile if either is
+     * attacked or if the silence (11:00–11:02) is broken.
+     * Post-ceremony: good pickpocket window in the pub.
+     * HP: 35f, attack: 6f, cooldown: 1.5f, hostile: false.
+     */
+    VETERAN(35f, 6f, 1.5f, false),
+
+    /**
+     * POPPY_SELLER — Doris, stationed outside St. Mary's Church from 09:00 on
+     * Remembrance Sunday. Sells POPPY items for 1 COIN each via press-E interaction.
+     * Defended by nearby VETERANs. Despawns at 12:30 once ceremony is over.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    POPPY_SELLER(20f, 0f, 0f, false),
+
+    /**
+     * RAOB_LODGE_MEMBER — a rank-and-file member of the Royal Antediluvian Order of
+     * Buffaloes who marches in the Remembrance Sunday parade from the Lodge to the
+     * war memorial. Wears a suit and RAOB sash. Passive during the ceremony.
+     * Moves to The Ragamuffin Arms after 12:00 along with VETERANs.
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    RAOB_LODGE_MEMBER(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -5656,6 +5656,32 @@ public enum AchievementType {
         "Agenda Setter",
         "You rewrote the agenda. Someone else is getting a council enforcement visit.",
         1
+    ),
+
+    // ── Issue #1347: Northfield Remembrance Sunday ────────────────────────────
+
+    /**
+     * Fires when the player attends the full Remembrance Sunday ceremony — present at
+     * the war memorial from at least 10:30 through the two-minute silence (11:00–11:02)
+     * and the wreath-laying at 11:02, without breaching the silence.
+     * Awarded in RemembranceSundaySystem.
+     */
+    LEST_WE_FORGET(
+        "Lest We Forget",
+        "You stood in silence and meant it. Almost.",
+        1
+    ),
+
+    /**
+     * Fires when the player buys a POPPY from the POPPY_SELLER (Doris) outside
+     * St. Mary's Church on Remembrance Sunday, wearing it for the full ceremony.
+     * Wearing a poppy grants −1 star suspicion and +5 charm bonus for the day.
+     * Awarded in RemembranceSundaySystem.
+     */
+    LAST_POST(
+        "Last Post",
+        "You bought a poppy off Doris and wore it with something approaching dignity.",
+        1
     );
 
     private final String name;

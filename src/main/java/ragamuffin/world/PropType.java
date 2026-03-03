@@ -3414,7 +3414,19 @@ public enum PropType {
      * achievement on first interaction. Removed at 08:00 on the sweep day.
      * Indestructible (pinned notice).
      */
-    COUNCIL_NOTICE_PROP(0.60f, 0.40f, 0.02f, Integer.MAX_VALUE, null);
+    COUNCIL_NOTICE_PROP(0.60f, 0.40f, 0.02f, Integer.MAX_VALUE, null),
+
+    // ── Issue #1347: Northfield Remembrance Sunday ────────────────────────────
+
+    /**
+     * WREATH_PROP — a large poppy wreath laid at the base of the war memorial
+     * (STATUE prop in the park) by the VICAR at 11:02 on Remembrance Sunday.
+     * Stealing it (press E after 11:30) records MEMORIAL_VANDALISM in CriminalRecord,
+     * adds Notoriety +10 and WantedSystem +2. Fenceable at PawnShop for 8–12 COIN.
+     * Despawns naturally at 23:59 on Remembrance Sunday.
+     * Drops POPPY (×3–5) when destroyed.
+     */
+    WREATH_PROP(0.60f, 0.30f, 0.60f, 3, Material.POPPY);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

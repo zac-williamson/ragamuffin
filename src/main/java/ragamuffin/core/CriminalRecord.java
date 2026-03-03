@@ -1016,7 +1016,27 @@ public class CriminalRecord {
          * +2 Notoriety the following day.
          * Penalty: Notoriety +2 per entry.
          */
-        NOISE_COMPLAINT("Noise complaint (residents' association)");
+        NOISE_COMPLAINT("Noise complaint (residents' association)"),
+
+        // ── Issue #1347: Northfield Remembrance Sunday ────────────────────────
+
+        /**
+         * Recorded when the player steals the WREATH_PROP from the war memorial
+         * (STATUE prop in the park) after 11:30 on Remembrance Sunday.
+         * Penalty: Notoriety +10, WantedSystem +2 stars.
+         * Fenceable at PawnShop for 8–12 COIN.
+         * VETERAN NPCs turn hostile and pursue the player.
+         */
+        MEMORIAL_VANDALISM("Memorial vandalism (Remembrance wreath theft)"),
+
+        /**
+         * Recorded when the player moves, attacks, or breaks a block during the
+         * two-minute silence (11:00–11:02 game time) on Remembrance Sunday.
+         * Penalty: Notoriety +5, WantedSystem +1 star.
+         * Triggers outrage speech bubbles from nearby PUBLIC NPCs.
+         * NewspaperSystem headline the next day: 'Local yob disrupts Remembrance ceremony'.
+         */
+        SILENCE_BREACH("Silence breach (Remembrance Sunday two-minute silence)");
 
         private final String displayName;
 
