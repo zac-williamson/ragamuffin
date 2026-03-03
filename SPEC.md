@@ -50568,3 +50568,161 @@ If player smashes the DVR manually (requires `HAMMER`, found in `SCRAPYARD` or `
 // Integration: IcelandSystem, PoundShopSystem, CharityShopSystem, WarmthSystem, NoiseSystem,
 //   NeighbourhoodSystem, WantedSystem, CriminalRecord, RumourNetwork, NewspaperSystem,
 //   TimeSystem, StreetSkillSystem, AchievementSystem, NeighbourhoodWatchSystem
+
+---
+
+## Issue #1387: Add Northfield Pancake Day — The Greasy Spoon Race, the Batter War & the Lemon Squeezer Heist
+
+**Landmark**: No new landmark. The event plays out on the high street outside `GREASY_SPOON` and spills into `CORNER_SHOP` and `NEWSAGENT`. The pancake race course runs 80 blocks along the main pavement strip.
+**System class**: `PancakeDaySystem.java` in `ragamuffin.core`
+
+### Background
+
+Shrove Tuesday. Day 47 of the in-game year. Carol from the Greasy Spoon has organised Northfield's annual charity pancake race. Entry is 1 COIN, winner gets a TROPHY and a free full English for a week. The council has blocked off the pavement. Derek from the canal has entered. Brenda is here with a frying pan she borrowed from the charity shop. The prize TROPHY is locked in Carol's counter drawer. Dave has already bought all the lemons from the corner shop out of spite — he doesn't even like pancakes.
+
+The event runs from `dayCount % 365 == 47` (Shrove Tuesday). Core window: 11:00–14:00 (race at 12:00 sharp; pancake sales all day).
+
+### Mechanic 1 — The Pancake Race (12:00–12:30)
+
+A 80-block foot race along the high street. Racers must hold a `FRYING_PAN_PROP` cosmetically and "flip" their pancake every 15 blocks (press E while running — if missed, runner stumbles and loses 0.5 seconds). 6 NPC racers + player option:
+
+| Racer | NPC Type | Base Speed | Quirk |
+|-------|----------|-----------|-------|
+| Carol | `GREASY_SPOON_OWNER` | medium | Starts first; gets cramp at 60 blocks |
+| Derek | `CANAL_BOAT_OWNER` | slow | Trips on the kerb; recovers at 40 blocks |
+| Brenda | `PENSIONER` | very slow | Actually wins if no interference (sympathy vote fixed result) |
+| Dave | `NEIGHBOURHOOD_WATCH` | fast | Cheats — pockets his pancake; disqualified if caught |
+| `SCHOOL_MUM` ×2 | competitive | medium | Push each other at 30-block mark, NoiseSystem level 4 |
+
+**Player participation**: Press E at `RACE_REGISTRATION_PROP` (spawns at 11:30) and pay 1 COIN. Player runs with standard movement speed. Flip events at 15, 30, 45, 60 block markers (`PANCAKE_FLIP_MARKER_PROP`) — press E within 2 blocks of each marker to flip. Miss a flip: stumble penalty (−0.8 blocks/s for 3 seconds). Win: receive `PANCAKE_RACE_TROPHY` (fenceable 6 COIN at pawn shop) + `RACE_WINNER` achievement + `PANCAKE_CHAMPION` rumour seeded. Tooltip on registration: "It's for charity. The charity is Carol's new deep fat fryer."
+
+**Sabotage options** (player does not have to race to use these):
+- **Trip Dave**: Press E on Dave mid-race → Dave stumbles, loses 3 seconds. Dave enters ANGRY state post-race if player witnessed (NoiseSystem level 5). If Dave was cheating (pancake pocketed), tripling him causes him to drop his pocketed pancake — `DAVE_CAUGHT_CHEATING` achievement, WantedSystem unchanged (witnessed by NPCs who cheer).
+- **Banana peel** (`BANANA_SKIN_PROP`, craftable from `BANANA` + nothing): Place on the course before 12:00. Any NPC crossing it has 60% chance to slip (NoiseSystem level 6, NPC stumbles, race time +4s). Player can slip too. Placing: −1 Neighbourhood VIBES. Achievement `CLASSIC_PRATFALL` on first NPC slip.
+- **Bribe Brenda**: Give Brenda 3 COIN before 11:50. She deliberately slows down and lets you past at 50-block mark. Brenda enters NEUTRAL state; Carol notices and is SUSPICIOUS of player (but can't prove anything). Achievement `FIX_IS_IN`.
+- **Steal the trophy early**: The `PANCAKE_RACE_TROPHY` is in Carol's counter drawer (same mechanic as till robbery in `GreasySpoonSystem` — requires `LOCKPICK` or distraction). If stolen before 12:30, Carol discovers it missing at prize-giving; NoiseSystem level 8 (outrage), WantedSystem +1, `RACE_RIGGED` rumour seeded. Achievement `TOOK_THE_TROPHY`.
+
+### Mechanic 2 — The Pancake Sales (11:00–14:00, Greasy Spoon)
+
+Carol sells pancakes to a queue of 8–14 NPCs from 11:00. Three topping options:
+
+| Item | Price | Effect |
+|------|-------|--------|
+| `PANCAKE_LEMON_SUGAR` | 2 COIN | Hunger −25, mood +5 (NPC) |
+| `PANCAKE_NUTELLA` | 3 COIN | Hunger −35, mood +8 (NPC) |
+| `PANCAKE_PLAIN` | 1 COIN | Hunger −15 |
+
+**Lemon shortage**: Dave bought all lemons from the corner shop at 09:00 (automated pre-event). Carol's `PANCAKE_LEMON_SUGAR` is unavailable until player retrieves lemons:
+- Option A: Find Dave's `SHOPPING_BAG` (he left it by his front door prop) — contains `LEMON` ×4. Steal it (WantedSystem +1 if witnessed) or buy from Dave for 5 COIN (he knows you know he bought them to be difficult).
+- Option B: Buy `LEMON` from `CORNER_SHOP` if Dave missed one (10% chance Raj has one left). 
+- Option C: Steal `LEMON` from `GREASY_SPOON` kitchen storage (back-room heist, same mechanic as PrimarySchoolSystem shed).
+Returning lemons to Carol: she restocks `PANCAKE_LEMON_SUGAR`, gives player 1 free pancake + Notoriety −1. Achievement `LEMON_HERO`.
+
+**Batter theft**: Carol's large mixing bowl (`PANCAKE_BATTER_PROP`) is on the counter. Grab it (press E) and run — Hunger −80 if consumed (full bowl), fenceable for 1 COIN. Carol screams (NoiseSystem level 9), WantedSystem +1. Achievement `BATTER_THIEF`.
+
+**DIY pancakes**: Player can craft `PANCAKE_PLAIN` using `FLOUR` (from corner shop, 1 COIN) + `MILK` (from Iceland, 1 COIN) + `EGG` (existing item) at any `CAMPFIRE_PROP` (uses `CampfireSystem` interaction). Tooltip: "You've made a pancake. On a campfire. On Shrove Tuesday. In Northfield. Peak existence."
+
+### Mechanic 3 — The Lemon Squeezer Heist
+
+Dave owns a vintage `CHROME_LEMON_SQUEEZER` (fence value: 4 COIN, or 8 COIN to the right buyer — Mirek, the unlicensed dentist at `BISTRO_VILLAGE`, who collects kitchenware). Dave leaves it on his windowsill (visible through `GLASS` block of his terraced house window, spawns as `LEMON_SQUEEZER_PROP`).
+
+Access methods:
+1. **Wait for Dave to open his door** (he leaves for the race at 11:55) — 15-second window to enter and grab it. Standard trespass mechanic (WantedSystem +1 if spotted by neighbour Gerald). 
+2. **Smash window** — `CROWBAR` or fist (2 hits on GLASS block). NoiseSystem level 10, WantedSystem +2, `CRIMINAL_DAMAGE` record. Gerald is definitely watching.
+3. **Distract Gerald** first (offer Gerald a `PANCAKE_NUTELLA` — he accepts, moves away for 60 seconds).
+
+Achievement `LEMON_SQUEEZER_THIEF` on acquiring it. Mirek's tooltip on sale: "Is solid chrome. Very good for the teeth also."
+
+### System Integrations
+
+- `GreasySpoonSystem`: Pancake menu items; Carol distracted state (race time); till robbery opportunity for trophy.
+- `CornerShopSystem`: Dave's lemon purchase pre-event; Raj's 10% lemon stock-out.
+- `CampfireSystem`: Pancake crafting at campfire props.
+- `TimeSystem`: Event trigger `dayCount % 365 == 47`; race at 12:00; sales 11:00–14:00.
+- `NoiseSystem`: Race sabotage events (levels 4–10); batter theft level 9.
+- `WantedSystem`: Batter theft +1; trophy heist +1; window smash +2; lemon bag theft +1 (witnessed).
+- `NeighbourhoodSystem`: VIBES −1 for banana peel; VIBES +2 for returning lemons to Carol.
+- `WarmthSystem`: Eating pancakes provides +3 Warmth (brief warming effect).
+- `RumourNetwork`: Post-race rumours seeded below.
+- `NewspaperSystem`: Next day headline if: player wins race ("Northfield Local Scoops Pancake Race — Carol Vows Revenge"); Dave disqualified for cheating ("Race Cheat Dave: 'I was Holding it for a Friend'"); trophy stolen ("Pancake Day Prize Gone: Carol Heartbroken").
+- `DisguiseSystem`: Wearing `GREASY_SPOON_APRON` (obtainable from Carol's kitchen) grants +10 disguise score inside Greasy Spoon.
+- `StreetSkillSystem`: PICKPOCKET XP +1 for lemon bag theft; FENCE XP +1 per squeezer sold to Mirek.
+- `AchievementSystem`: new achievements below.
+
+### New Materials (add to Material.java)
+- `PANCAKE_LEMON_SUGAR` — "Classic. The thin crispy ones, not the fat American abominations." Food item; Hunger −25. Sold by Carol at Greasy Spoon on Pancake Day; craftable.
+- `PANCAKE_NUTELLA` — "Carol charges 3 quid for this. It's cheaper at the supermarket. You're paying for the ambience." Food item; Hunger −35. Sold by Carol.
+- `PANCAKE_PLAIN` — "A blank canvas for your disappointment." Food item; Hunger −15. Craftable (FLOUR + MILK + EGG at campfire).
+- `FLOUR` — "Self-raising. Don't ask why it's in the skip." Crafting ingredient. Sold at corner shop (1 COIN); found in skips.
+- `MILK` — "Full fat. From Iceland, ironically." Crafting ingredient. Sold at Iceland (1 COIN); existing DAIRY category.
+- `LEMON` — "Sour. Like Dave." Crafting/trade ingredient. Sold at corner shop (1 COIN); 4× in Dave's shopping bag.
+- `CHROME_LEMON_SQUEEZER` — "Solid chrome. Dave paid too much for it. You paid nothing." Fenceable (4 COIN general, 8 COIN to Mirek). Spawns on Dave's windowsill on Pancake Day.
+- `PANCAKE_RACE_TROPHY` — "A small plastic cup with a golden frying pan on top. Carol had it engraved in advance. Your name isn't on it." Fenceable (6 COIN at pawn shop). Prize for race winner; also in Carol's drawer.
+- `BANANA` — "One bruised banana. Nutritional value: minimal. Chaos potential: high." Food item (Hunger −5). Found in skips, sold at corner shop. Used to craft BANANA_SKIN_PROP (place on ground).
+
+### New PropTypes (add to PropType.java)
+- `RACE_REGISTRATION_PROP` — sign-up desk outside Greasy Spoon; spawns 11:30, despawns 12:05.
+- `PANCAKE_FLIP_MARKER_PROP` — orange cone at 15/30/45/60-block race markers; spawns 11:45, despawns 12:30.
+- `PANCAKE_BATTER_PROP` — large mixing bowl on Carol's counter during event.
+- `LEMON_SQUEEZER_PROP` — on Dave's windowsill; removable.
+- `BANANA_SKIN_PROP` — placeable on pavement; causes slip chance for NPCs crossing it.
+
+### New AchievementTypes (add to AchievementType.java)
+- `RACE_WINNER` — win the pancake race legitimately (target=1). Name: "Faster Than Brenda". Desc: "You beat Brenda in the pancake race. She's 74. Carol is furious."
+- `DAVE_CAUGHT_CHEATING` — trip Dave mid-race and expose his pocketed pancake (target=1). Name: "Dave's a Cheat". Desc: "Dave pocketed his pancake. You tripped him. The crowd cheered. He'll remember this."
+- `FIX_IS_IN` — bribe Brenda to slow down (target=1). Name: "Match Fixing". Desc: "You paid a pensioner 3 quid to throw a pancake race. Northfield's own Mr. Big."
+- `LEMON_HERO` — return lemons to Carol to restore the lemon sugar pancakes (target=1). Name: "Gave Carol Lemons". Desc: "Dave bought all the lemons. You got them back. Carol made lemonade. Sort of."
+- `BATTER_THIEF` — steal Carol's mixing bowl of pancake batter (target=1). Name: "Took the Batter". Desc: "You grabbed Carol's batter bowl and legged it. She's been crying. You had a lovely pancake."
+- `CLASSIC_PRATFALL` — cause an NPC to slip on a banana skin during the race (target=1). Name: "Classic". Desc: "A banana skin. On a pavement. In 2024. Still funny."
+- `LEMON_SQUEEZER_THIEF` — steal Dave's chrome lemon squeezer (target=1). Name: "Life Gave Dave Lemons". Desc: "Dave lost his lemons AND his squeezer on Pancake Day. Karma is real."
+- `TOOK_THE_TROPHY` — steal the trophy from Carol's drawer before prize-giving (target=1). Name: "Winner Before the Race". Desc: "The trophy was in the drawer. You took it. Carol is heartbroken. Was it worth it? Yes."
+
+### New RumourTypes (add to RumourType.java — verify if any exist already)
+- `PANCAKE_RACE_DRAMA` — "The pancake race was an absolute shambles this year. Dave got disqualified / someone nicked the trophy / Brenda won again." Seeded post-race at 12:30.
+- `DAVE_LEMON_SPITE` — "Dave bought every lemon in Northfield just to be difficult. What a man." Seeded when lemon shortage discovered (11:00).
+
+### Unit Tests
+- `testPancakeDayTrigger`: call `isPancakeDay(dayCount)` for days 46, 47, 48. Verify true only for 47.
+- `testRaceNpcSpawnAtEleven30`: set `dayCount = 47`. Advance time to 11:30. Verify 6 NPC racers of correct types spawned at race start position. Verify `RACE_REGISTRATION_PROP` present within 5 blocks of Greasy Spoon.
+- `testPlayerRaceRegistration`: set `dayCount = 47`, time 11:35. Give player 1 COIN. Press E on `RACE_REGISTRATION_PROP`. Verify player COIN decreased by 1. Verify `playerRegistered == true`.
+- `testFlipMarkerSpawn`: advance to 11:45. Verify 4× `PANCAKE_FLIP_MARKER_PROP` present at 15/30/45/60-block positions along race course.
+- `testMissedFlipPenalty`: register player. Start race (12:00). Pass 15-block marker without pressing E. Verify player speed reduced by 0.8 blocks/s for 3 seconds. Verify stumble animation state set.
+- `testDaveCheatingExposed`: set Dave racing with `pancakePocketed = true`. Call `tripDave(player, daveNpc)`. Verify Dave enters STUMBLE state. Verify `pancakePocketed` item drops as `PANCAKE_PLAIN` prop. Verify `DAVE_CAUGHT_CHEATING` achievement unlocked.
+- `testBriberBrenda`: give player 3 COIN. Call `bribeBrenda(player, brendaNpc)`. Verify player COIN decreased by 3. Verify `brendaBribed = true`. Verify `FIX_IS_IN` achievement unlocked.
+- `testLemonShortagePreEvent`: set `dayCount = 47`. Advance time to 09:01. Verify `CornerShopSystem.getStock(LEMON)` == 0 (Dave bought all). Verify `PANCAKE_LEMON_SUGAR` unavailable in Carol's menu (`getLemonSugarAvailable() == false`).
+- `testReturnLemonsToCarol`: give player `LEMON` ×4. Call `returnLemonsToCarol(player)`. Verify player loses 4 LEMON. Verify `getLemonSugarAvailable() == true`. Verify player Notoriety reduced by 1. Verify `LEMON_HERO` achievement unlocked.
+- `testBatterTheft`: call `stealPancakeBatter(player)`. Verify `PANCAKE_BATTER_PROP` removed from Greasy Spoon counter. Verify player receives `PANCAKE_BATTER_ITEM`. Verify NoiseSystem event level 9 emitted. Verify WantedSystem +1.
+- `testBananaSkinSlip`: place `BANANA_SKIN_PROP` on race course at block 20. Seed Random(99) (deterministic). Run 100 NPC crossing simulations. Verify slip occurs in 55–65% of cases (60% base rate). Verify NoiseSystem level 6 on slip.
+- `testLemonSqueezerSellToMirek`: give player `CHROME_LEMON_SQUEEZER`. Call `sellToMirek(player)`. Verify player receives 8 COIN. Verify FENCE XP +1. Verify `LEMON_SQUEEZER_THIEF` achievement does NOT re-unlock (already unlocked from steal).
+- `testDIYPancakeCraft`: give player FLOUR + MILK + EGG. Call `craftAtCampfire(player, CAMPFIRE_PROP_pos)`. Verify player receives `PANCAKE_PLAIN`. Verify FLOUR, MILK, EGG consumed.
+- `testNewspaperHeadlineWinner`: player wins race (finishes first). Advance to next day 18:00. Verify `NewspaperSystem` headline contains "Northfield Local Scoops Pancake Race".
+- `testNewsHeadlineDaveCheating`: Dave disqualified (pancake pocketed exposed). Advance to next day. Verify headline contains "Race Cheat Dave".
+- `testTrophyHeistNewspaper`: steal `PANCAKE_RACE_TROPHY` from Carol's drawer pre-race. Advance to next day. Verify headline contains "Pancake Day Prize Gone".
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full race win pipeline**: Set `dayCount = 47`. Advance to 11:30. Give player 1 COIN. Press E on `RACE_REGISTRATION_PROP`. Verify registered. Advance to 12:00 (race starts). Run player to each `PANCAKE_FLIP_MARKER_PROP` (15/30/45/60 blocks), pressing E at each. Seed NPC speeds with `Random(42)` so player wins by 2 seconds (force-set Brenda's cramp at 70 blocks). Verify player finishes first. Verify `PANCAKE_RACE_TROPHY` added to inventory. Verify `RACE_WINNER` achievement unlocked. Verify `PANCAKE_RACE_DRAMA` rumour seeded at 12:30.
+
+2. **Dave cheat exposure mid-race**: Set `dayCount = 47`. Advance to 12:05 (mid-race). Set Dave `pancakePocketed = true`. Player walks to Dave's position. Press E on Dave (trip). Verify Dave enters STUMBLE state. Verify pocketed `PANCAKE_PLAIN` drops. Verify Carol (race organiser) transitions to ANGRY. Verify Dave disqualified from results. Verify `DAVE_CAUGHT_CHEATING` achievement unlocked. Advance to next day. Verify NewspaperSystem headline contains "Race Cheat Dave".
+
+3. **Lemon shortage to hero pipeline**: Set `dayCount = 47`. Advance to 09:01. Verify `CornerShopSystem.getStock(LEMON) == 0`. Verify Carol's `PANCAKE_LEMON_SUGAR` unavailable. Locate Dave's `SHOPPING_BAG` prop (at his front door). Press E to steal (player unwitnessed — Gerald inside at this hour). Verify player receives `LEMON` ×4. Walk to Carol. Press E (give lemons interaction). Verify Carol's `PANCAKE_LEMON_SUGAR` restocked. Verify player Notoriety −1. Verify `LEMON_HERO` achievement. Verify `DAVE_LEMON_SPITE` rumour seeded.
+
+4. **Banana skin sabotage causes race chaos**: Set `dayCount = 47`. Give player `BANANA`. Craft `BANANA_SKIN_PROP` (in player crafting inventory). Place prop at 30-block race marker before 12:00. Advance to 12:00 (race starts). Seed `Random(7)` so first NPC to cross (SCHOOL_MUM NPC) rolls slip (< 0.6). Verify SCHOOL_MUM enters STUMBLE state. Verify NoiseSystem level 6 emitted. Verify Neighbourhood VIBES −1 (banana peel placed). Verify `CLASSIC_PRATFALL` achievement unlocked.
+
+5. **Dave's lemon squeezer heist via distraction**: Set `dayCount = 47`. Give player `PANCAKE_NUTELLA`. Advance time to 11:50 (Dave leaves for race at 11:55 — not yet gone). Locate Gerald (`NEIGHBOURHOOD_WATCH` NPC). Press E on Gerald with `PANCAKE_NUTELLA` in hand. Verify Gerald accepts pancake, transitions to EATING state for 60 seconds, moves away from Dave's house. Advance 5 seconds. Dave leaves for race (11:55 trigger). Enter Dave's house (door unlocked — Dave forgot to lock it in a hurry). Locate `LEMON_SQUEEZER_PROP` on windowsill. Press E to pick up. Verify player receives `CHROME_LEMON_SQUEEZER`. Verify no WantedSystem increase (Gerald distracted, no other witnesses). Verify `LEMON_SQUEEZER_THIEF` achievement unlocked. Walk to Mirek at Bistro Village. Press E (sell interaction). Verify player receives 8 COIN. Verify FENCE XP +1.
+
+// ── Issue #1387: Add Northfield Pancake Day ──────────────────────────────────────────────────────
+// New: PancakeDaySystem.java in ragamuffin.core
+// New: PancakeDaySystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1387PancakeDayIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: PANCAKE_LEMON_SUGAR, PANCAKE_NUTELLA, PANCAKE_PLAIN, FLOUR, MILK, LEMON,
+//   CHROME_LEMON_SQUEEZER, PANCAKE_RACE_TROPHY, BANANA
+// New PropTypes: RACE_REGISTRATION_PROP, PANCAKE_FLIP_MARKER_PROP, PANCAKE_BATTER_PROP,
+//   LEMON_SQUEEZER_PROP, BANANA_SKIN_PROP
+// New AchievementTypes: RACE_WINNER, DAVE_CAUGHT_CHEATING, FIX_IS_IN, LEMON_HERO,
+//   BATTER_THIEF, CLASSIC_PRATFALL, LEMON_SQUEEZER_THIEF, TOOK_THE_TROPHY
+// New RumourTypes: PANCAKE_RACE_DRAMA, DAVE_LEMON_SPITE
+// Integration: GreasySpoonSystem, CornerShopSystem, CampfireSystem, TimeSystem, NoiseSystem,
+//   WantedSystem, NeighbourhoodSystem, WarmthSystem, RumourNetwork, NewspaperSystem,
+//   DisguiseSystem, StreetSkillSystem, AchievementSystem, NeighbourhoodWatchSystem,
+//   BistaVillageSystem (Mirek fencing outlet)
