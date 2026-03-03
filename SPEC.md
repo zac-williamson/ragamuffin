@@ -51223,3 +51223,177 @@ Margaret's stall sells `JACKET_POTATO` (3 COIN, Hunger +50, Warmth +15) and `VIM
 // Integration: TimeSystem, WantedSystem, NotorietySystem, StreetSkillSystem, RumourNetwork,
 //   NewspaperSystem, CriminalRecord, NeighbourhoodSystem, DisguiseSystem, CornerShopSystem,
 //   WeatherSystem, FenceSystem, PawnShopSystem, AchievementSystem
+
+---
+
+## Issue #1394: Add Northfield England Match Night — The Wetherspoons Viewing Party, the Broken TV Bet & the Trophy Cabinet Heist
+
+**Theme**: England is playing in the Euros or World Cup. The whole of Northfield piles into the Wetherspoons for the big screen. Patriotism, desperation, and extremely poor decision-making follow. The player can ride the wave of mob euphoria, manipulate outcomes for profit, sabotage the viewing experience for maximum chaos, or quietly loot the neighbourhood while everyone's inside screaming at the TV.
+
+### Event Trigger
+
+- `EnglandMatchSystem` activates on specific in-game days (`ENGLAND_MATCH_DAYS` list: days 170, 175, 180, 185, 188, 191, 195).
+- Kick-off at **20:00** in-game time; match runs **90 in-game minutes** (real-time configurable, default `MATCH_DURATION_REAL_SECONDS = 300`).
+- **Pre-match atmosphere**: 18:30–20:00 — NPCs flood the Wetherspoons; queue forms at 19:30; bouncers let max `CROWD_CAP` (40) inside.
+- Cancelled if `WeatherSystem` returns `THUNDERSTORM` before 18:00 on match day (seed `MATCH_CANCELLED_RAIN` rumour).
+
+### NPCs
+
+- **Crowd (WETHERSPOONS_CROWD)**: 30–40 PUBLIC/STREET_LAD/PENSIONER NPCs packed into the pub, all facing the `PUB_TV_PROP`. State = `WATCHING_MATCH`. React to goals, half-time, and full-time.
+- **Barry the Bookie** (`NPCType.MATCH_BOOKIE`): stands at the bar end. Takes bets on scorelines before kick-off only. Runs away at full-time if England lost badly.
+- **Dave the Landlord** (`NPCType.LANDLORD`, existing): sets drink prices ×1.5 during match; refuses service to BALACLAVA wearers.
+- **Terry the Steward** (`NPCType.PUB_STEWARD`): new NPC. Patrols the doorway. Ejects players with Notoriety ≥ 100. Can be bribed (5 COIN).
+- **Rival Fan** (`NPCType.RIVAL_FAN`): 1–2 spawn if England concede a goal; goads the crowd, 60% chance of triggering a `CROWD_BRAWL`.
+
+### Pub TV Prop — `PUB_TV_PROP`
+
+- Existing prop showing the match. `sabotageTV(player)` method:
+  - Requires `CROWBAR` or `CABLE` item (hot-wire the aerial connection).
+  - Takes 5 seconds (hold E) behind the bar — Dave must not be watching (blind spot window: 20:45–21:00 in-game during half-time).
+  - On success: TV goes black, `PUB_TV_PROP` state = `BROKEN`. All `WETHERSPOONS_CROWD` NPCs enter `AGITATED` state for `AGITATION_DURATION_SECONDS = 120`.
+  - During agitation: `CROWD_BRAWL` fires every 30 seconds; police spawned after second brawl.
+  - Player earns `SABOTEUR` achievement. Seeds `TELLY_SABOTAGE` rumour (wide radius, spreads via PUBLIC NPCs).
+  - Dave notices on 50% chance — if witnessed: WantedSystem +2 stars, Notoriety +10.
+  - A `RIVAL_FAN` NPC is blamed 35% of the time (Dave accuses wrong person).
+
+### Match Engine
+
+- Three-phase result: `ENGLAND_WIN`, `ENGLAND_DRAW`, `ENGLAND_LOSS`.
+- Result seeded from `Random(dayCount * 31 + 7)` — deterministic per save.
+- **Goal events** at random intervals (average 1 per 25 real seconds):
+  - `ENGLAND_GOAL`: all `WETHERSPOONS_CROWD` state = `CELEBRATING` (15s). Crowd spills into street momentarily — shop doors left unattended for `SHOP_UNATTENDED_WINDOW = 20` real seconds.
+  - `OPPOSITION_GOAL`: all crowd = `GROANING` (10s). `CROWD_BRAWL` 25% chance. Notoriety −2 if player joins the commiseration cheer.
+- **Half-time** (45 in-game minutes): crowd mills outside for 10 real seconds. Dave's blind spot window opens for TV sabotage.
+- **Full-time**:
+  - `ENGLAND_WIN`: Victory riot — `CROWD_BRAWL` across 20-block radius. Shops within 30 blocks have 40% chance of unattended door for `VICTORY_CHAOS_DURATION = 180` seconds. Seeds `ENGLAND_WIN_RIOT` rumour. NewspaperSystem headline day+1: "Northfield Goes Mental — England Through!"
+  - `ENGLAND_LOSS`: Mass depression. Crowd disperses. `RIVAL_FAN` NPCs taunt crowd and trigger fights. `PUB_LOCKOUT_ACTIVATED` — Terry locks door to prevent further unrest. Seeds `ENGLAND_LOSS_DESPAIR` rumour. Newspaper: "Another Heartbreak: Northfield Fans Left Devastated."
+  - `ENGLAND_DRAW`: Half-joy. Half-argument. Terry confiscates someone's vuvuzela. Newspaper: "A Point's A Point, Says Terry."
+
+### Betting System
+
+- Before kick-off only (before 20:00): press E on `MATCH_BOOKIE` Barry.
+- Bet options: `ENGLAND_WIN` (2:1), `DRAW` (4:1), `OPPOSITION_WIN` (6:1).
+- Max bet: `MAX_BET_COINS = 30`. Barry refuses bets over 30 COIN.
+- `MATCH_FIX_ITEM` (new Material): obtained from Marchetti Crew Respect ≥ 60 (costs 50 COIN). Using it before 20:00 flips result to `ENGLAND_LOSS` regardless of seed — Marchetti take a 20% cut of any resulting bet win.
+- Barry flees the pub after a `ENGLAND_WIN` result if player bet on `OPPOSITION_WIN` (Barry suspects match fixing).
+
+### Trophy Cabinet Heist
+
+- `TROPHY_CABINET_PROP` inside the Wetherspoons: glass case containing 3 football memorabilia items:
+  - `SIGNED_SHIRT` (fenceable: 25 COIN)
+  - `FA_CUP_REPLICA` (fenceable: 20 COIN)
+  - `GOLDEN_BOOT_PROP` (fenceable: 30 COIN; also pawnable: 18 COIN)
+- Cabinet is `LOCKED_PROP`. Requires `GLASS_CUTTER` (silent) or 3 CROWBAR hits (loud, 30-block NoiseSystem).
+- Best theft window: during `ENGLAND_GOAL` celebration (crowd distracted) or during TV sabotage chaos.
+- Full cabinet theft: awards `TROPHY_HUNTER` achievement. Seeds `TROPHY_CABINET_NICKED` rumour. Notoriety +8. NewspaperSystem: "Brazen Thief Clears Out Northfield Wetherspoons Trophy Cabinet During England Match."
+- Dave notices missing cabinet within 10 real seconds of full-time — police investigation opens.
+
+### German Flag Mechanic
+
+- `GERMAN_FLAG` item (new Material, craftable: 2 FABRIC + RED_DYE). Also found in Charity Shop.
+- Planting it on the pub noticeboard during the match: 100% of `WETHERSPOONS_CROWD` NPCs enter `HOSTILE_TO_PLAYER` state for 30 seconds. Wanted +1.
+- Seeds `GERMAN_FLAG_OUTRAGE` rumour (highest propagation rumour in the game — every PUBLIC, PENSIONER, JOURNALIST, BARMAN NPC receives it within 5 in-game minutes).
+- Achievement: `DIPLOMATIC_INCIDENT`.
+
+### System Integrations
+
+- `TimeSystem`: trigger on `ENGLAND_MATCH_DAYS` list at 18:30 (pre-match), 20:00 (kick-off), match end.
+- `WetherspoonsSystem`: crowd cap override during match; price multiplier ×1.5; Terry NPC spawned.
+- `FootballSystem`: `EnglandMatchSystem` delegates goal probability to `FootballSystem.rollGoalChance()`.
+- `WantedSystem`: TV sabotage +2; trophy theft +1 per item; German flag +1; brawl participation +1.
+- `NotorietySystem`: TV sabotage +10; full cabinet heist +8; German flag placement +5; joining ENGLAND_WIN riot −2 (crowd approves).
+- `RumourNetwork`: `ENGLAND_WIN_RIOT`, `ENGLAND_LOSS_DESPAIR`, `TELLY_SABOTAGE`, `GERMAN_FLAG_OUTRAGE`, `TROPHY_CABINET_NICKED`, `MATCH_CANCELLED_RAIN` rumours.
+- `NewspaperSystem`: next-day headline based on result + any crimes during match.
+- `CriminalRecord`: `TV_SABOTAGE`, `TROPHY_THEFT`, `MATCH_FIXING` offences.
+- `NeighbourhoodSystem`: victory riot: VIBES −5; England loss: VIBES −2; unattended shop raid: VIBES −1 per shop.
+- `FenceSystem`: `SIGNED_SHIRT`, `FA_CUP_REPLICA`, `GOLDEN_BOOT_PROP` all fenceable.
+- `BettingShopSystem` / `HorseRacingSystem`: `MATCH_FIX_ITEM` integration with Marchetti Crew.
+- `FactionSystem`: Marchetti Crew Respect gates `MATCH_FIX_ITEM`; Street Lads respect −5 if player sabotages TV (they were enjoying it).
+- `WeatherSystem`: THUNDERSTORM cancels event.
+- `DisguiseSystem`: `ENGLAND_SHIRT` disguise (new Material) blends player into crowd; reduces Terry detection to 10%; required for `CROWD_HERO` achievement (score a "goal" by kicking a football prop into the TV).
+- `AchievementSystem`: achievements below.
+- `SoundSystem`: cheering SFX on ENGLAND_GOAL; collective groan on OPPOSITION_GOAL; silence on TV sabotage (then chaos).
+
+### New Materials (add to `Material.java`)
+
+- `ENGLAND_SHIRT` — "Three lions. Polyester. Optimism sold separately." Wearable (chest slot). Sold at Newsagent (8 COIN). Provides crowd-blend disguise during England match.
+- `MATCH_FIX_ITEM` — "A sealed envelope. The less you know, the better. Marchetti sends his regards." Obtained from Marchetti at Respect ≥ 60 for 50 COIN. Single-use.
+- `GERMAN_FLAG` — "Black, red, gold. Bring it to a Wetherspoons on match night. See what happens." Craftable or charity shop find.
+- `SIGNED_SHIRT` — "Signed by someone. Authenticity certificate missing. Terry says it's genuine." Lootable from `TROPHY_CABINET_PROP`.
+- `FA_CUP_REPLICA` — "A plastic FA Cup. Gold-painted. Terry won it at the fair in 1997. He insists it's real." Trophy cabinet loot.
+- `GOLDEN_BOOT_PROP` — "A spray-painted boot on a plinth. 'Top Scorer 1991.' No name. Dave won't say whose." Trophy cabinet loot.
+
+### New PropTypes (add to `PropType.java`)
+
+- `PUB_TV_PROP` — large wall-mounted screen. Displays match. Sabotable with CROWBAR/CABLE. State: `FUNCTIONAL` / `BROKEN`.
+- `TROPHY_CABINET_PROP` — locked glass cabinet. 3 item slots. Smashable. Present in Wetherspoons.
+
+### New NPCTypes (add to `NPCType.java`)
+
+- `MATCH_BOOKIE` — Barry; takes scoreline bets before kick-off. Flees on suspicious results.
+- `PUB_STEWARD` — Terry; door NPC. Checks Notoriety; ejectable via bribe.
+- `RIVAL_FAN` — 1–2 NPCs; triggers crowd brawls on opposition goals. Wears opposition colours.
+- `WETHERSPOONS_CROWD` — dense passive NPC; reacts to goal events. Used only during match.
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+- `SABOTEUR` — pull off the TV sabotage during half-time without Dave noticing. Name: "It Was the Aerial". Desc: "The pub went dark. You were already walking away. Technical fault, mate."
+- `TROPHY_HUNTER` — steal all three trophy cabinet items in one match night. Name: "Trophy Hunter". Desc: "Terry will never fully recover from this."
+- `DIPLOMATIC_INCIDENT` — plant a German flag in the pub during an England match. Name: "Diplomatic Incident". Desc: "You did it. You actually did it. You've had to move to a different estate."
+- `CROWD_HERO` — kick the spare football prop into the pub TV during a goal celebration (in ENGLAND_SHIRT disguise). Name: "Crowd Hero". Desc: "For one glorious second, the crowd thought you scored."
+- `ITS_COMING_HOME` — win a ENGLAND_WIN bet with odds ≥ 2:1. Name: "It's Coming Home". Desc: "It came home. Barry did not."
+- `MATCH_FIXER` — use the `MATCH_FIX_ITEM` and profit from the result. Name: "Marchetti's Man". Desc: "A sealed envelope, a bent result, a 20% cut for the crew. Business as usual in Northfield."
+
+### New RumourTypes (add to `RumourType.java`)
+
+- `ENGLAND_WIN_RIOT` — "England went through and half the town went mental. Dave's got a broken window." Seeded on ENGLAND_WIN full-time.
+- `ENGLAND_LOSS_DESPAIR` — "England lost again. The pub was in silence for twenty minutes. It were like a funeral." Seeded on ENGLAND_LOSS full-time.
+- `TELLY_SABOTAGE` — "Someone cut the aerial cable at the Wetherspoons. Mid-match. On a penalty." Seeded on successful TV sabotage.
+- `GERMAN_FLAG_OUTRAGE` — "Someone brought a German flag into the Wetherspoons during the England match. Police got called." Widest propagation rumour. Seeded on German flag plant.
+- `TROPHY_CABINET_NICKED` — "Someone had the Wetherspoons trophy cabinet away. In the middle of the match. Terry's devastated." Seeded on full heist.
+- `MATCH_CANCELLED_RAIN` — "They were saying the Wetherspoons screening's off tonight — something about the satellite dish." Seeded on THUNDERSTORM cancellation.
+
+### Unit Tests (`EnglandMatchSystemTest.java`)
+
+- `testMatchDaysContainExpectedCount`: verify `ENGLAND_MATCH_DAYS` has 7 entries.
+- `testResultDetermination`: call `determineResult(170)` and `determineResult(175)`. Verify results are deterministic (same seed → same result).
+- `testGoalEventCrowdReaction`: inject ENGLAND_GOAL event. Verify all `WETHERSPOONS_CROWD` NPCs enter `CELEBRATING` state.
+- `testTVSabotageWithCrowbar`: give player `CROWBAR`. Simulate hold-E for 5 seconds (mock timer). Call `sabotageTV(player)`. Verify `PUB_TV_PROP` state = `BROKEN`. Verify Notoriety +10. Verify `TELLY_SABOTAGE` rumour seeded.
+- `testTVSabotageWitnessedByDave`: set `daveWatching = true`. Call `sabotageTV(player)`. Verify WantedSystem +2. Verify `SABOTEUR` achievement NOT awarded.
+- `testBetBeforeKickoff`: place bet on `ENGLAND_WIN` for 20 COIN before 20:00. Verify bet registered. Verify COIN deducted.
+- `testBetRefusedAfterKickoff`: attempt bet at 20:05. Verify `BetResult.BETTING_CLOSED` returned.
+- `testMaxBetEnforced`: place bet for 31 COIN. Verify `BetResult.MAX_BET_EXCEEDED` returned.
+- `testTrophyCabinetFullHeist`: steal all 3 items from `TROPHY_CABINET_PROP`. Verify `TROPHY_HUNTER` achievement awarded. Verify `TROPHY_CABINET_NICKED` rumour seeded. Verify Notoriety +8.
+- `testGermanFlagOutrage`: give player `GERMAN_FLAG`. Call `plantFlag(player)`. Verify all `WETHERSPOONS_CROWD` NPCs enter `HOSTILE_TO_PLAYER`. Verify `DIPLOMATIC_INCIDENT` achievement awarded. Verify `GERMAN_FLAG_OUTRAGE` rumour seeded.
+- `testEnglandWinVictoryRiot`: set result to `ENGLAND_WIN`. Advance to full-time. Verify `CROWD_BRAWL` fired within 180 seconds. Verify NeighbourhoodSystem VIBES −5. Verify `ENGLAND_WIN_RIOT` rumour seeded.
+- `testMatchCancellationOnThunderstorm`: set weather to `THUNDERSTORM` before 18:00. Call `update(delta)`. Verify `isMatchActive()` = false. Verify `MATCH_CANCELLED_RAIN` rumour seeded.
+- `testMatchFixItemFlipsResult`: give player `MATCH_FIX_ITEM`. Call `applyMatchFix(player)`. Verify result forced to `ENGLAND_LOSS`. Verify `MATCH_FIX_ITEM` removed from inventory. Verify Marchetti Crew Respect check ≥ 60 enforced.
+
+### Integration Tests (`Issue1394EnglandMatchNightIntegrationTest.java`)
+
+1. **Full match night, England win**: Set `dayCount = 170`. Advance time to 20:00. Verify `isMatchActive()` = true. Verify 30+ `WETHERSPOONS_CROWD` NPCs spawned inside Wetherspoons. Place bet on `ENGLAND_WIN` (10 COIN). Advance to full-time with `ENGLAND_WIN` result. Verify player receives 20 COIN (2:1 payout). Verify `ENGLAND_WIN_RIOT` rumour seeded. Verify VIBES −5. Verify NewspaperSystem has headline containing "England" on day+1.
+
+2. **TV sabotage during half-time**: Set `dayCount = 175`. Advance to 20:45 (half-time). Verify Dave blind spot is active (`isDaveBlindSpot()` = true). Give player `CABLE` item. Simulate 5-second hold-E on `PUB_TV_PROP`. Verify `PUB_TV_PROP` state = `BROKEN`. Verify `TELLY_SABOTAGE` rumour seeded. Verify `SABOTEUR` achievement awarded. Verify WantedSystem unchanged (not witnessed). Advance 120 seconds. Verify `WETHERSPOONS_CROWD` exits `AGITATED` state.
+
+3. **Trophy cabinet heist during goal chaos**: Set `dayCount = 180`. Advance to 20:00. Inject `ENGLAND_GOAL` event. Verify crowd enters `CELEBRATING`. Give player `GLASS_CUTTER`. Call `breakTrophyCabinet(player)`. Verify `SIGNED_SHIRT`, `FA_CUP_REPLICA`, `GOLDEN_BOOT_PROP` all in player inventory. Verify Notoriety +8. Verify `TROPHY_HUNTER` achievement awarded.
+
+4. **German flag plants diplomatic incident**: Set `dayCount = 185`. Give player `GERMAN_FLAG`. Advance to 20:30. Call `plantFlag(player)`. Verify all `WETHERSPOONS_CROWD` NPCs hostile. Verify Wanted +1. Verify `GERMAN_FLAG_OUTRAGE` rumour seeded to every PUBLIC NPC within 5 in-game minutes. Verify `DIPLOMATIC_INCIDENT` achievement awarded.
+
+5. **Match fix with Marchetti**: Set Marchetti Crew Respect to 60. Give player `MATCH_FIX_ITEM`. Set `dayCount = 188`. Place bet on `ENGLAND_LOSS` (30 COIN). Call `applyMatchFix(player)`. Verify result = `ENGLAND_LOSS`. Advance to full-time. Verify player receives 180 COIN (6:1 odds). Verify Marchetti cut (36 COIN) deducted from payout. Verify `MATCH_FIXER` achievement awarded. Verify `CriminalRecord.MATCH_FIXING` added.
+
+// ── Issue #1394: Add Northfield England Match Night ───────────────────────────
+// New: EnglandMatchSystem.java in ragamuffin.core
+// New: EnglandMatchSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1394EnglandMatchNightIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: ENGLAND_SHIRT, MATCH_FIX_ITEM, GERMAN_FLAG, SIGNED_SHIRT, FA_CUP_REPLICA,
+//   GOLDEN_BOOT_PROP
+// New PropTypes: PUB_TV_PROP, TROPHY_CABINET_PROP
+// New NPCTypes: MATCH_BOOKIE, PUB_STEWARD, RIVAL_FAN, WETHERSPOONS_CROWD
+// New AchievementTypes: SABOTEUR, TROPHY_HUNTER, DIPLOMATIC_INCIDENT, CROWD_HERO,
+//   ITS_COMING_HOME, MATCH_FIXER
+// New RumourTypes: ENGLAND_WIN_RIOT, ENGLAND_LOSS_DESPAIR, TELLY_SABOTAGE,
+//   GERMAN_FLAG_OUTRAGE, TROPHY_CABINET_NICKED, MATCH_CANCELLED_RAIN
+// Integration: TimeSystem, WetherspoonsSystem, FootballSystem, WantedSystem,
+//   NotorietySystem, RumourNetwork, NewspaperSystem, CriminalRecord, NeighbourhoodSystem,
+//   FenceSystem, BettingShopSystem, FactionSystem, WeatherSystem, DisguiseSystem,
+//   AchievementSystem, SoundSystem
