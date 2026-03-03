@@ -52730,3 +52730,142 @@ small car at the industrial estate and checks `ROOFER_VAN_PROP` for unlicensed t
 // Integration: BattleBarMiniGame, TimeSystem, NotorietySystem, WantedSystem, CriminalRecord,
 //   RumourNetwork, HMRCSystem, FenceSystem, ScrapyardSystem, NeighbourhoodWatchSystem,
 //   WindowCleanerSystem (LADDER_PROP reuse), AchievementSystem
+
+## Issue #1408: Add Northfield Catalogue Man — Barry's Round, the Owed Debt & the Trading Standards Trap
+
+**Goal**: Implement `CatalogueManSystem` — Barry Dent, Northfield's door-to-door catalogue salesman (Betterware-style), who trudges his round three days a week collecting weekly payments and dropping off dodgy knockoff goods. The player can shadow him to learn which houses have valuable catalogue deliveries, intercept overdue debts, or expose (or exploit) his counterfeit racket.
+
+### CatalogueManSystem
+
+Barry (`CATALOGUE_MAN` NPC) operates Monday, Wednesday, and Friday between **10:00–16:00**. He starts from the industrial estate at 10:00, visits **10 residential properties** per day (each visit takes 90 seconds), collects payments (2–5 COIN per household), drops off catalogue items if an order is due, then returns to the estate at 16:00.
+
+#### Mechanic 1 — Barry's Round (shadowing and doorstep theft)
+
+- Barry's route is fixed per day of week (Mon/Wed/Fri have different property sequences, seeded from `Random`).
+- While Barry is at a doorstep (state = `COLLECTING`), the **back door of the adjacent property is briefly unlocked** for 60 seconds — the game's signal that the resident has answered the front door. Player entering via back door triggers `CrimeType.BURGLARY`; if unwitnessed, Notoriety +4.
+- Barry's **sample bag** (`CATALOGUE_BAG_PROP` placed on the pavement beside him during each visit) can be stolen with a 2-second hold-E. Yields 1–3 random catalogue items (`CATALOGUE_TRINKET`, `CATALOGUE_TOOL`, `CATALOGUE_TEXTILE`) worth 2–6 COIN at fence. Witnessed theft: Wanted +1, `CATALOGUE_THEFT` crime.
+- Barry becomes `HOSTILE` if he spots the player within 5 blocks while holding `CATALOGUE_BAG_PROP` items. He shouts and calls police after 10 seconds.
+- **`BARRY_SUSPICIOUS`** rumour seeded to 2 nearby NPCs each time Barry is robbed.
+- Achievement: **`Barry_BANDIT`** — steal the sample bag on 3 separate days.
+
+#### Mechanic 2 — The Owed Debt (debt collection hustle)
+
+- 3 of Barry's 10 daily stops are **defaulting households** — residents who haven't paid for 2+ weeks. Barry argues at the door for 30 seconds, then leaves empty-handed (state = `DEJECTED`).
+- The player can approach a defaulting door **after Barry leaves** and press E to impersonate a debt collector. Success depends on player Notoriety: ≤20 = 70% success, 21–40 = 40% success, >40 = 10% success.
+  - **Success**: resident pays 4–8 COIN (overdue amount), player keeps it all. `INTIMIDATION` crime if Notoriety >30 at time of collection. HMRCSystem logs the income.
+  - **Failure**: resident slams door, Notoriety +1.
+- Alternatively, the player can **tip off the `LOAN_SHARK` NPC** about a defaulter (press E on Loan Shark while holding `CATALOGUE_RECEIPT` item). Loan Shark pays the player a 3 COIN finder's fee. This seeds `DEBT_COLLECTOR` rumour in RumourNetwork.
+- Achievement: **`DEBT_DODGER`** — successfully collect from 5 defaulting households.
+- Achievement: **`LOAN_SHARK_INFORMANT`** — tip off the Loan Shark about 3 defaulters.
+
+#### Mechanic 3 — The Trading Standards Trap (counterfeit goods racket)
+
+- Barry's catalogue contains counterfeit goods. After shadowing Barry for a full round (witnessing ≥5 deliveries without being spotted), the player receives the `CATALOGUE_SAMPLE` item — a knockoff product with a suspiciously incorrect brand logo.
+- The player has three choices:
+  1. **Report to Trading Standards** (press E on `TRADING_STANDARDS_OFFICE_PROP`, which is shared with `DodgyRooferSystem`): Notoriety −3, 10 COIN reward, `BARRY_REPORTED` rumour seeded. Barry is absent for 3 in-game days (suspended). Achievement: **`CIVIC_CRUSADER`**.
+  2. **Blackmail Barry** (press E on Barry while holding `CATALOGUE_SAMPLE`): Barry pays 8 COIN to stay quiet. He becomes `HOSTILE` if player approaches again within 1 in-game day. If blackmailed twice, Barry reports the player — `EXTORTION` crime, Wanted +1. Achievement: **`SILENT_PARTNER`** (blackmail once).
+  3. **Run a rival catalogue** (use `CATALOGUE_SAMPLE` + `PRINTER_PAPER` at the `INTERNET_CAFE` prop to produce `KNOCKOFF_CATALOGUE`): Player can door-knock 5 houses per day, 35% accept rate, 4 COIN per sale. Barry becomes permanently `HOSTILE` if he spots the player with `KNOCKOFF_CATALOGUE`. Trading Standards monthly check (last Friday of the month, 14:00) has 20% chance of catching the player mid-sale — `COUNTERFEIT_GOODS` crime, Notoriety +5, 20 COIN fine. Achievement: **`CATALOGUE_KING`** — sell from rival catalogue on 5 separate days.
+
+#### State Machine
+
+| State | Description |
+|---|---|
+| `IDLE` | Barry is at depot (before 10:00 or after 16:00, or non-operating day) |
+| `EN_ROUTE` | Travelling between properties |
+| `COLLECTING` | At a doorstep; back door unlocked window active |
+| `DELIVERING` | Dropping catalogue item at door (30s) |
+| `DEJECTED` | Left a defaulting house without payment |
+| `HOSTILE` | Spotted theft or rival catalogue; calls police after 10s |
+| `SUSPENDED` | Reported to Trading Standards; absent 3 in-game days |
+
+#### New Items
+
+| Material | Description |
+|---|---|
+| `CATALOGUE_BAG_PROP` | Barry's sample bag; placed as prop during visits; yields catalogue items when stolen |
+| `CATALOGUE_TRINKET` | Cheap knockoff novelty item (ceramic hedgehog, etc.); fence value 2 COIN |
+| `CATALOGUE_TOOL` | Knockoff power screwdriver or similar; fence value 4 COIN |
+| `CATALOGUE_TEXTILE` | Knockoff fleece blanket or cushion set; fence value 3 COIN |
+| `CATALOGUE_RECEIPT` | Proof of debt; used to tip off Loan Shark |
+| `CATALOGUE_SAMPLE` | Dodgy counterfeit sample; triggers Mechanic 3 |
+| `KNOCKOFF_CATALOGUE` | Player's rival catalogue; produced at InternetCafe with PRINTER_PAPER |
+
+#### New PropTypes
+
+| PropType | Description |
+|---|---|
+| `CATALOGUE_BAG_PROP` | Barry's pavement sample bag (active during COLLECTING/DELIVERING state) |
+| `CATALOGUE_ORDER_BOX_PROP` | Cardboard delivery box left at door after DELIVERING state |
+
+#### New NPCType
+
+| NPCType | HP | Attack | Hostile |
+|---|---|---|---|
+| `CATALOGUE_MAN` | 50 | 4 | false (turns HOSTILE on robbery/rival spotted) |
+
+#### New AchievementTypes
+
+| ID | Trigger |
+|---|---|
+| `BARRY_BANDIT` | Steal Barry's sample bag on 3 separate operating days |
+| `DEBT_DODGER` | Successfully impersonate debt collector at 5 defaulting households |
+| `LOAN_SHARK_INFORMANT` | Tip off Loan Shark about 3 separate defaulters |
+| `CIVIC_CRUSADER` | Report Barry's counterfeit goods to Trading Standards |
+| `SILENT_PARTNER` | Blackmail Barry at least once |
+| `CATALOGUE_KING` | Sell from rival knockoff catalogue on 5 separate operating days |
+
+#### New RumourTypes
+
+| ID | Seeded When | Example Text |
+|---|---|---|
+| `BARRY_SUSPICIOUS` | Player steals sample bag | "Someone's been nicking stuff out of the catalogue bloke's bag on his round." |
+| `DEBT_COLLECTOR` | Player tips Loan Shark about defaulter | "Loan shark's been calling at doors. Someone grassed up the people behind on the catalogue." |
+| `BARRY_REPORTED` | Player reports to Trading Standards | "They've suspended that catalogue man. Turns out the stuff was all knocked off." |
+| `RIVAL_CATALOGUE` | Player sells 3+ rival catalogue items | "There's two catalogue men doing the same street now. One of them's definitely dodgy." |
+| `COUNTERFEIT_CAUGHT` | Player caught mid-sale by Trading Standards | "Trading Standards had someone away for selling dodgy catalogues. In broad daylight, too." |
+
+### Unit Tests (`CatalogueManSystemTest.java`)
+
+- `testBarryOnlyOperatesMonWedFri`: verify `isBarryActive()` = false on Tuesday and Sunday at 12:00; true on Monday 11:00, Wednesday 13:00, Friday 15:00.
+- `testBarryNotActiveOutsideHours`: verify `isBarryActive()` = false at 09:59 and 16:00 on an operating day; true at 10:00.
+- `testBackDoorUnlockedDuringCollecting`: set Barry state to `COLLECTING`; verify `isBackDoorUnlocked(propertyIndex)` = true; advance 61 seconds; verify returns false.
+- `testDefaultingHouseholdCount`: generate Barry's route for a day (seeded rng); verify exactly 3 of 10 stops are flagged as defaulting.
+- `testDebtCollectionSuccessRate`: simulate 1000 collection attempts with Notoriety=10 (seeded rng); verify success rate ≈70% ±4%.
+- `testDebtCollectionLowSuccessHighNotoriety`: simulate 1000 attempts with Notoriety=50; verify success rate ≈10% ±3%.
+- `testLoanSharkTipYieldsThreeCoins`: call `tipOffLoanShark(defaulterIndex)`; verify player COIN +3 and `DEBT_COLLECTOR` rumour seeded.
+- `testCatalogueSampleUnlocksAfterFiveWitnesses`: witness 4 deliveries undetected — verify `CATALOGUE_SAMPLE` not in inventory; witness 5th — verify `CATALOGUE_SAMPLE` added.
+- `testBlackmailBarryPays`: hold `CATALOGUE_SAMPLE`; press E on Barry; verify player COIN +8 and Barry state = `HOSTILE` for 1 in-game day.
+- `testBlackmailTwiceTriggersExtortion`: blackmail Barry twice; verify `EXTORTION` crime in CriminalRecord and Wanted star +1.
+- `testKnockoffCatalogueAcceptRate`: simulate 1000 door-knocks with rival catalogue (seeded rng); verify accept rate ≈35% ±4%.
+- `testTradingStandardsCheckChance`: simulate 1000 in-game months; count how many last-Friday-14:00 checks catch player mid-sale (seeded active sale); verify ≈20% ±4%.
+- `testBarrySuspendedAfterReport`: call `reportToTradingStandards()`; verify Barry state = `SUSPENDED`; advance 3 in-game days; verify Barry state = `IDLE` (returned).
+- `testBarryHostileOnRivalCatalogueSpotted`: player holds `KNOCKOFF_CATALOGUE`; Barry within 5 blocks; call `update()`; verify Barry state = `HOSTILE`.
+- `testSampleBagLootTableAlwaysHasItem`: call `rollSampleBagLoot(rng)` 100 times; verify every result contains at least 1 catalogue item.
+
+### Integration Tests (`Issue1408CatalogueManIntegrationTest.java`)
+
+1. **Barry's daily round completes**: advance to Monday 10:00. Verify `CATALOGUE_MAN` NPC spawned at industrial estate. Simulate Barry reaching property index 0. Verify Barry state = `COLLECTING`, `CATALOGUE_BAG_PROP` placed at pavement beside property. Advance 90 seconds. Verify Barry state = `EN_ROUTE` and `CATALOGUE_BAG_PROP` removed. Advance to 16:00. Verify Barry state = `IDLE`.
+
+2. **Doorstep theft triggers crime and notoriety**: advance to operating day 11:00. Barry is in `COLLECTING` state at a property. No witnesses within 20 blocks. Player holds `CATALOGUE_BAG_PROP` items and uses hold-E (2s) on `CATALOGUE_BAG_PROP`. Verify `CATALOGUE_THEFT` crime in CriminalRecord. Verify Notoriety increased by 4. Verify `BARRY_SUSPICIOUS` rumour seeded in RumourNetwork. Verify Barry enters `HOSTILE` state when he returns to pavement and spots player within 5 blocks.
+
+3. **Debt collection impersonation — success path**: advance to operating day. Barry finishes a defaulting stop (state = `DEJECTED`). Player approaches door with Notoriety = 15 (seeded accept outcome). Player presses E on door. Verify player receives 4–8 COIN. Verify HMRCSystem has logged income. Verify `DEBT_DODGER` achievement counter incremented.
+
+4. **Trading Standards report suspends Barry**: player witnesses 5 deliveries undetected — verify `CATALOGUE_SAMPLE` in inventory. Player presses E on `TRADING_STANDARDS_OFFICE_PROP`. Verify Notoriety −3. Verify player COIN +10. Verify Barry state = `SUSPENDED`. Verify `BARRY_REPORTED` rumour seeded. Advance 3 in-game days. Verify Barry state = `IDLE` (back on round).
+
+5. **Rival catalogue sale caught by Trading Standards monthly check**: player crafts `KNOCKOFF_CATALOGUE` at InternetCafe. Player door-knocks 3 houses (seeded accept). Advance to last Friday of in-game month at 14:00. Seed active mid-sale state. Simulate Trading Standards catch (seeded catch outcome). Verify `COUNTERFEIT_GOODS` crime in CriminalRecord. Verify Notoriety +5. Verify player COIN −20 (fine deducted). Verify `COUNTERFEIT_CAUGHT` rumour seeded.
+
+// ── Issue #1408: Add Northfield Catalogue Man ─────────────────────────────────────────────────
+// New System File: CatalogueManSystem.java in ragamuffin.core
+// New Test Files: CatalogueManSystemTest.java in src/test/java/ragamuffin/core/
+//                Issue1408CatalogueManIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: CATALOGUE_TRINKET, CATALOGUE_TOOL, CATALOGUE_TEXTILE, CATALOGUE_RECEIPT,
+//   CATALOGUE_SAMPLE, KNOCKOFF_CATALOGUE
+// New PropTypes: CATALOGUE_BAG_PROP, CATALOGUE_ORDER_BOX_PROP
+// New NPCTypes: CATALOGUE_MAN
+// New AchievementTypes: BARRY_BANDIT, DEBT_DODGER, LOAN_SHARK_INFORMANT, CIVIC_CRUSADER,
+//   SILENT_PARTNER, CATALOGUE_KING
+// New RumourTypes: BARRY_SUSPICIOUS, DEBT_COLLECTOR, BARRY_REPORTED, RIVAL_CATALOGUE,
+//   COUNTERFEIT_CAUGHT
+// Integration: TimeSystem, NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
+//   HMRCSystem, FenceSystem, InternetCafeSystem, LoanSharkSystem (tip-off),
+//   DodgyRooferSystem (TRADING_STANDARDS_OFFICE_PROP reuse), AchievementSystem
