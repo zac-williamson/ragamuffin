@@ -53378,3 +53378,127 @@ All already defined: `LOAN_SHARK_CLERK` (Darren), `LOAN_MANAGER` (Barry), `BAILI
 //   `FIRST_LOAN`, `DEBT_FREE`, `BOTTLED_THE_BAILIFF`, `DEBT_SPIRAL`, `BURNING_DEBT`,
 //   `LOAN_RANGER`, `ANOTHER_IDENTITY` (AchievementType);
 //   `LOAN_DEFAULTED`, `IDENTITY_FRAUD` (CriminalRecord.CrimeType).
+
+---
+
+## Issue #1420: Add Northfield Post Office Horizon Scandal — The Shortfall Letter, the Tribunal Fight & the IT Contractor Shakedown
+
+### Overview
+
+Maureen, the postmistress at the Northfield Post Office, receives a letter from Post Office Ltd demanding she repay a £340 "shortfall" flagged by the Horizon IT system — money she never took. The player can help her fight the injustice, exploit the chaos for personal gain, or sabotage her case entirely. This event fires once per playthrough on in-game day 14, integrating deeply with the existing `PostOfficeSystem`, `NewspaperSystem`, `CitizensAdviceSystem`, `MagistratesCourtSystem`, and `WitnessSystem`.
+
+A new NPC, **Derek Swann** (`NPCType.POST_OFFICE_INVESTIGATOR`), arrives at the Post Office on day 14 at 09:30 and serves the shortfall letter to Maureen. The player witnesses the confrontation if they are within 15 blocks.
+
+---
+
+### Mechanic 1 — The Shortfall Letter
+
+- On day 14 at 09:30, Derek Swann (`POST_OFFICE_INVESTIGATOR`) arrives and presents Maureen with a `SHORTFALL_LETTER` prop (pinned to the COUNTER_PROP).
+- Maureen enters a distressed dialogue loop; the Post Office closes for 2 in-game hours (no counter service).
+- `RumourType.HORIZON_SCANDAL` is seeded in the rumour network from Maureen and from Derek's colleague NPC `REGIONAL_AUDITOR` who loiters outside.
+- **Player can read the letter** (press E on `SHORTFALL_LETTER_PROP`): shows "Post Office Ltd demands repayment of £340 shortfall recorded by Horizon system. Failure to comply within 14 days may result in prosecution."
+
+---
+
+### Mechanic 2 — Three Player Paths
+
+#### Path A — The Whistleblower (Help Maureen)
+
+- Player fetches `CITIZENS_ADVICE_LEAFLET` from `CitizensAdviceSystem` and gives it to Maureen (E interaction while holding leaflet).
+- Maureen asks the player to gather evidence: collect **3 TRANSACTION_LOG items** from the `FILING_CABINET_PROP` in the Post Office back room (requires either Maureen's trust — COMMUNITY_RESPECT ≥ 20 — or a LOCKPICK/CROWBAR break-in while Derek is absent).
+- Player delivers the logs to **Sandra at Citizens Advice** (existing `CITIZENS_ADVICE_CLERK` NPC) or directly to the `JOURNALIST` NPC outside the Wetherspoons.
+- **Tribunal day** fires on day 17 at 10:00: player must attend `MagistratesCourtSystem` as a character witness (press E on witness box within 5 blocks of `WITNESS_BOX_PROP`). Testifying awards `COMMUNITY_RESPECT` +5, `STREET_SMARTS` XP +20. Maureen wins; Post Office closes for 1 day, newspapers run the headline. Achievement: `HORIZON_HERO`.
+
+#### Path B — The Shakedown (Exploit the Chaos)
+
+- While Maureen is distressed and Derek is in the back room auditing, the Post Office safe is left accessible for a 90-second window (12:30–14:00 audit window, daily).
+- Break into the safe via `CROWBAR` (6 hits) or `SAFE_CRACKER_TOOL` (3-second mini-game, 65% success): yields `SAFE_CASH_MIN`–`SAFE_CASH_MAX` COIN (25–50 COIN) + `STAMPS_BUNDLE` Material (fenceable for 8 COIN).
+- CCTV within 8 blocks records the heist; Derek will investigate if Notoriety ≥ 2 at time of heist. Achievement: `HORIZON_OPPORTUNIST`.
+- Selling the transaction logs to the `REGIONAL_AUDITOR` NPC for 12 COIN deepens Maureen's case against her (`REGIONAL_AUDITOR` pays 12 COIN; Maureen's tribunal outcome flips to guilty; `COMMUNITY_RESPECT` −8). Achievement: `SOLD_HER_OUT`.
+
+#### Path C — Do Nothing
+
+- Tribunal fires on day 17 regardless. Without the player's testimony or evidence, Maureen is found guilty. Post Office closes permanently for 3 in-game days; benefits-book cashing unavailable. `RumourType.HORIZON_CONVICTION` seeded. Achievement: `NOT_MY_PROBLEM`.
+
+---
+
+### Mechanic 3 — The IT Contractor
+
+- **Pete** (`NPCType.IT_CONTRACTOR`) arrives at the Post Office on day 15 at 11:00 in a rented Astra, wearing a lanyard and carrying a `LAPTOP_BAG_PROP`. He is there to "verify the Horizon system logs".
+- Pete can be **bribed** (10 COIN): he alters his report to show no shortfall. Tribunal outcome guaranteed win for Maureen even without evidence logs. Achievement: `DODGY_AUDIT`.
+- Pete can be **pickpocketed** for the `IT_CONTRACTOR_ID_BADGE` (fenceable 6 COIN) and `USB_STICK` Material (contains log data: deliver to Journalist for 18 COIN or Maureen for free). Achievement: `STICKY_FINGERS_PETE`.
+- If Pete is assaulted before the report is filed: he flees, report is delayed 1 in-game day, WantedSystem +1, achievement `TOOK_IT_OUT_ON_PETE`.
+
+---
+
+### Mechanic 4 — Aftermath Headlines
+
+- **Maureen wins**: `NewspaperSystem` publishes "LOCAL POSTMISTRESS CLEARED — HORIZON SYSTEM BLAMED". NPC PUBLIC comments include "About bloody time" and "My cousin had the same thing". Post Office re-opens with Maureen offering a 10% discount on stamp purchases for 2 days.
+- **Maureen loses**: headline "NORTHFIELD POSTMISTRESS FOUND GUILTY — COURT ORDERS REPAYMENT". Maureen enters `NPCState.GRIEVING` for 3 in-game days. Post Office run by temp worker `TEMP_POSTAL_CLERK` with 20% slower service.
+- **Player helped & bribed Pete**: secret outcome — headline reads "POST OFFICE DROPS CHARGES AFTER AUDITOR U-TURN" with no public credit to player.
+
+---
+
+### New LandmarkType entries required
+
+- None (uses existing `POST_OFFICE`)
+
+### New NPCType entries required
+
+- `POST_OFFICE_INVESTIGATOR` — Derek Swann. Suit-wearing, briefcase. Non-aggressive unless player obstructs audit (then calls police).
+- `IT_CONTRACTOR` — Pete. Polo shirt, lanyard, nervous demeanour. Flees if threatened.
+- `REGIONAL_AUDITOR` — unnamed suit. Loiters outside, pays for transaction logs.
+
+### New PropType entries required
+
+- `SHORTFALL_LETTER_PROP` — A4 letter pinned to counter. Readable. Dims: 0.3 × 0.02 × 0.4.
+- `TRANSACTION_LOG_PROP` — stack of printouts in back-room filing cabinet. 3 collectible units.
+- `WITNESS_BOX_PROP` — wooden dock in magistrates court (already at `MagistratesCourtSystem`; reuse if present, otherwise add). Dims: 1.0 × 1.2 × 0.8.
+
+### New Material entries required
+
+- `SHORTFALL_LETTER` — "Post Office Ltd demand notice. Horizon deficit: £340." Stack size 1. Not fenceable.
+- `TRANSACTION_LOG` — "Horizon terminal printout. Columns of numbers, none of which add up." Stack size 3. Fence value 4 COIN (to `REGIONAL_AUDITOR` only: 12 COIN).
+- `STAMPS_BUNDLE` — "Strip of 12 first-class stamps, inexplicably outside the till." Stack size 1. Fence value 8 COIN.
+- `IT_CONTRACTOR_ID_BADGE` — "Pete's ID. Photo makes him look like he's confessing." Stack size 1. Fence value 6 COIN.
+- `USB_STICK` — "USB drive from Pete's laptop bag. Contains 4GB of Horizon audit logs and 2GB of questionable music." Stack size 1. Journalist trade value 18 COIN.
+
+### New RumourType entries required
+
+- `HORIZON_SCANDAL` — "Maureen from the Post Office has been accused of stealing. It's that bloody computer system again."
+- `HORIZON_CONVICTION` — "They've found Maureen guilty. Fit-up if you ask me."
+- `HORIZON_CLEARED` — "Maureen got off! Post Office had it all wrong — it was the software."
+- `DODGY_AUDIT` — "Heard the IT bloke from the Post Office took a bung and changed his report."
+
+### New AchievementType entries required
+
+- `HORIZON_HERO` — "Give testimony at Maureen's tribunal and secure her acquittal."
+- `HORIZON_OPPORTUNIST` — "Rob the Post Office safe while the Horizon investigation is in progress."
+- `SOLD_HER_OUT` — "Sell Maureen's transaction logs to the Regional Auditor."
+- `NOT_MY_PROBLEM` — "Let Maureen be convicted without lifting a finger."
+- `DODGY_AUDIT` — "Bribe Pete the IT contractor to alter his report."
+- `STICKY_FINGERS_PETE` — "Pickpocket Pete's USB stick."
+- `TOOK_IT_OUT_ON_PETE` — "Assault Pete before he files his report."
+
+### New CriminalRecord.CrimeType entries required
+
+- `AUDIT_OBSTRUCTION` — recorded if player assaults Pete or steals the SHORTFALL_LETTER_PROP before the tribunal.
+- `POST_OFFICE_SAFE_ROBBERY` — recorded on successful safe crack during the Horizon audit window.
+
+### Integration Tests
+
+1. **Horizon event fires on day 14**: advance `TimeSystem` to day 14, 09:30; call `update()`; verify `POST_OFFICE_INVESTIGATOR` NPC has been spawned within 5 blocks of `POST_OFFICE` landmark and `SHORTFALL_LETTER_PROP` exists at counter position.
+2. **Whistleblower path — giving leaflet to Maureen sets evidence-gathering flag**: call `giveLeafletToMaureen(player)` with `CITIZENS_ADVICE_LEAFLET` in inventory; verify `horizonEvidenceRequested == true` and Maureen's dialogue state equals `DISTRESSED_SEEKING_HELP`.
+3. **Collecting 3 transaction logs enables tribunal testimony**: place 3 `TRANSACTION_LOG` items in player inventory; call `deliverLogsToSandra(player)`; verify `tribunalEvidenceStrength == STRONG` and tribunal outcome resolves to `ACQUITTED`.
+4. **Safe crack yields correct COIN range during audit window**: advance time to 13:00 day 15; call `attemptSafeCrack(player, crowbar=true, hits=6)`; verify player receives between `SAFE_CASH_MIN` (25) and `SAFE_CASH_MAX` (50) COIN and `POST_OFFICE_SAFE_ROBBERY` is recorded.
+5. **Bribe Pete flips outcome**: call `bribePete(player, amount=10)`; verify `peteReportAltered == true` and tribunal fires as `ACQUITTED` even with `tribunalEvidenceStrength == NONE`.
+6. **Selling logs to auditor reduces community respect and flips tribunal**: call `sellLogsToAuditor(player)`; verify `communityRespect` decreased by 8 and tribunal outcome resolves to `CONVICTED`.
+
+// Enum additions required: `SHORTFALL_LETTER`, `TRANSACTION_LOG`, `STAMPS_BUNDLE`,
+//   `IT_CONTRACTOR_ID_BADGE`, `USB_STICK` (Material);
+//   `SHORTFALL_LETTER_PROP`, `TRANSACTION_LOG_PROP`, `WITNESS_BOX_PROP` (PropType);
+//   `POST_OFFICE_INVESTIGATOR`, `IT_CONTRACTOR`, `REGIONAL_AUDITOR` (NPCType);
+//   `HORIZON_SCANDAL`, `HORIZON_CONVICTION`, `HORIZON_CLEARED`, `DODGY_AUDIT` (RumourType);
+//   `HORIZON_HERO`, `HORIZON_OPPORTUNIST`, `SOLD_HER_OUT`, `NOT_MY_PROBLEM`,
+//   `DODGY_AUDIT` (AchievementType — note: reuse name for bribe route);
+//   `AUDIT_OBSTRUCTION`, `POST_OFFICE_SAFE_ROBBERY` (CriminalRecord.CrimeType).
