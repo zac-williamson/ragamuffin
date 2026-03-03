@@ -595,6 +595,15 @@ public class CriminalRecord {
          */
         BENEFIT_FRAUD_EVASION("Benefit fraud evasion (non-cooperation)"),
 
+        // ── Issue #1333: Northfield Employment System ─────────────────────────
+
+        /**
+         * Recorded when the player steals from their employer during an active shift
+         * (EmploymentSystem onTheftDuringShift). Triggers instant dismissal,
+         * permanent JOB_BLACKLIST entry for that employer, and Notoriety +4.
+         */
+        THEFT_FROM_EMPLOYER("Theft from employer during shift"),
+
         // ── Issue #1196: Environmental Health Officer ─────────────────────────
 
         /**

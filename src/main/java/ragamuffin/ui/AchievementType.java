@@ -5361,6 +5361,56 @@ public enum AchievementType {
         "Terminal Thief",
         "You nicked Clive's terminal. He'll have to fill out a form about that.",
         1
+    ),
+
+    // ── Issue #1333: Northfield Employment System ─────────────────────────────
+
+    /**
+     * Fires when the player completes their very first shift at any employer.
+     */
+    FIRST_DAY(
+        "First Day",
+        "Minimum wage. Maximum dignity.",
+        1
+    ),
+
+    /**
+     * Fires when the player completes 10 consecutive shifts without receiving
+     * any warning (late arrival, skiving, or dismissal).
+     */
+    MODEL_EMPLOYEE(
+        "Model Employee",
+        "They said you'd never amount to anything.",
+        10
+    ),
+
+    /**
+     * Fires when the player voluntarily clocks out before the shift end time
+     * (i.e. quits mid-shift by pressing E on STAFF_CLOCK_IN_PROP early).
+     */
+    WALKED_OUT(
+        "Walked Out",
+        "Life's too short for this.",
+        1
+    ),
+
+    /**
+     * Fires when the player has been dismissed from 3 different employers.
+     */
+    HIRED_AND_FIRED(
+        "Hired and Fired",
+        "Reference available on request. Not recommended.",
+        3
+    ),
+
+    /**
+     * Fires when the player claims UC while employed for 2+ in-game days
+     * without disclosing employment to the DWP (COUNCIL_RECEPTIONIST).
+     */
+    ON_THE_FIDDLE(
+        "On the Fiddle",
+        "The oldest hustle in the book.",
+        1
     );
 
     private final String name;

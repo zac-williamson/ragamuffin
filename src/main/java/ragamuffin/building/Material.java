@@ -5420,7 +5420,35 @@ public enum Material {
      * CASHPOINT_PROP (out-of-service machine). Fenceable at 20 COIN.
      * Tooltip: "Someone important lost this. Lucky you found it."
      */
-    ENGINEER_ACCESS_CARD("Engineer Access Card");
+    ENGINEER_ACCESS_CARD("Engineer Access Card"),
+
+    // ── Issue #1333: Northfield Employment System ─────────────────────────────
+
+    /**
+     * JOB_APPLICATION_FORM — collected from JOB_VACANCY_BOARD_PROP outside each
+     * employer. Must be presented to the interview NPC during business hours to
+     * begin the 3-question interview mini-game.
+     * Tooltip: "Fill it in. Don't mention the convictions."
+     */
+    JOB_APPLICATION_FORM("Job Application Form"),
+
+    /**
+     * STAFF_ID_BADGE — issued on hire. Player must wear it (carry in inventory)
+     * to clock in to shifts at STAFF_CLOCK_IN_PROP. Removed on dismissal or
+     * voluntary resignation. Cannot be sold or fenced.
+     * Tooltip: "You're one of us now. Don't embarrass the brand."
+     */
+    STAFF_ID_BADGE("Staff ID Badge"),
+
+    /**
+     * FORGED_REFERENCE — craftable at LibrarySystem (BLANK_PAPER ×1 +
+     * PHOTOCOPIER_INK_CARTRIDGE ×1, FORGERY ≥ Apprentice). Presented during
+     * interview to add +2 to outcome score. Detection risk: 30% base (−10% per
+     * FORGERY level above Apprentice). If detected: FRAUD CriminalRecord entry,
+     * Notoriety +5, permanent employer blacklist.
+     * Tooltip: "Glowing references from people who definitely exist."
+     */
+    FORGED_REFERENCE("Forged Reference");
 
     private final String displayName;
 

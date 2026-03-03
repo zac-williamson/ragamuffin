@@ -2600,7 +2600,39 @@ public enum NPCType {
      * </ul>
      * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    MONEY_MULE(30f, 0f, 0f, false);
+    MONEY_MULE(30f, 0f, 0f, false),
+
+    // ── Issue #1333: Northfield Employment System ─────────────────────────────
+
+    /**
+     * GREGGS_MANAGER — runs the Greggs bakery, conducts job interviews, and
+     * monitors shifts. Becomes hostile to player at Notoriety Tier 3+.
+     * Dismisses player on the spot for theft or fighting on premises.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    GREGGS_MANAGER(20f, 0f, 0f, false),
+
+    /**
+     * CORNER_SHOP_OWNER — runs the corner shop, conducts job interviews.
+     * Accepts players regardless of criminal record (no criminal record check).
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    CORNER_SHOP_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * GREASY_SPOON_OWNER — runs the greasy spoon café, conducts breakfast-shift
+     * interviews. Non-hostile. No strict requirements beyond basic reliability.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    GREASY_SPOON_OWNER(20f, 0f, 0f, false),
+
+    /**
+     * CHARITY_VOLUNTEER_LEADER — runs the charity shop volunteer programme.
+     * Conducts volunteer interviews; requires a clean criminal record.
+     * Non-hostile. Provides Notoriety reduction on each completed volunteer shift.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    CHARITY_VOLUNTEER_LEADER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
