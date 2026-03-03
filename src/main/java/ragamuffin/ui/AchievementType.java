@@ -5536,6 +5536,53 @@ public enum AchievementType {
         "Bent Copper",
         "Slipped Geoff a few coins. He didn't look you in the eye after.",
         1
+    ),
+
+    // ── Issue #1339: Council Enforcement Day ──────────────────────────────────
+
+    /**
+     * Fires when the player successfully avoids all citations during a full
+     * Council Enforcement Day sweep (08:00–17:00 on day 14, 28, 42…) — i.e.
+     * no PCN, no TV-licence fine, no DVLA tow, and no benefit-fraud detection
+     * during that day. Requires the sweep to have been active.
+     */
+    LAY_LOW(
+        "Lay Low",
+        "Got through the entire enforcement sweep without a single citation. Ninja.",
+        1
+    ),
+
+    /**
+     * Fires when the WARDEN_TRAINEE makes a ticketing error during a Council
+     * Enforcement Day sweep — they ticket the wrong car, creating a 5-minute
+     * free-parking window while Clive is distracted. First occurrence only.
+     */
+    WARDEN_CHAOS(
+        "Warden Chaos",
+        "The trainee ticketed the wrong car. Clive is not best pleased.",
+        1
+    ),
+
+    /**
+     * Fires when the player exploits the Chaos Window — either robbing a till
+     * at an inspected venue while CCTV is unplugged, or parking for free during
+     * the warden-trainee distraction window. First occurrence only.
+     */
+    CHAOS_WINDOW(
+        "Chaos Window",
+        "You made the most of the council's own mess. Opportunist.",
+        1
+    ),
+
+    /**
+     * Fires when the player hears the ENFORCEMENT_SWEEP rumour (seeded the
+     * evening before a sweep) for the first time — i.e. they were forewarned
+     * by the community noticeboard or word-of-mouth before the sweep began.
+     */
+    FOREWARNED(
+        "Forewarned",
+        "You heard about the sweep the night before. Local knowledge is everything.",
+        1
     );
 
     private final String name;

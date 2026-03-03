@@ -991,7 +991,17 @@ public class CriminalRecord {
          * Penalty: WantedSystem +2 stars, Notoriety +8.
          * Achievement: GOT_ME_MOTOR_BACK on successful night-time recovery.
          */
-        VEHICLE_RECOVERY_OFFENCE("Vehicle recovery offence (impound garage break-in)");
+        VEHICLE_RECOVERY_OFFENCE("Vehicle recovery offence (impound garage break-in)"),
+
+        // ── Issue #1339: Council Enforcement Day ──────────────────────────────
+
+        /**
+         * Recorded when DVLA_OFFICER Karen catches the player driving without a
+         * DRIVING_LICENCE during a Council Enforcement Day sweep. Triggers vehicle
+         * tow (car removed from world until reclaimed), Notoriety +10, WantedSystem +2.
+         * Penalty multiplier ×1.5 applies on Enforcement Day.
+         */
+        NO_INSURANCE_DRIVING("No insurance / unlicensed driving (DVLA enforcement)");
 
         private final String displayName;
 
