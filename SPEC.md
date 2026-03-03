@@ -55216,3 +55216,111 @@ Outside hours the van is parked at the `COUNCIL_DEPOT_PROP` near the industrial 
 // `MOBILE_LIBRARIAN`, `LIBRARY_REGULAR` (NPCType) are new and must be added.
 // `LIBRARY_AMNESTY`, `LIBRARY_SAVED`, `PETITION_NICKED`, `LIBRARY_THEFT_SPOTTED` (RumourType) are new and must be added.
 // `OVERDUE_FOREVER`, `COMMUNITY_HERO`, `NIGHT_RAID` (AchievementType) are new and must be added.
+
+---
+
+## Northfield Balti House — The Raj Mahal, Bashir's Lock-In & the Catering Tin Heist
+
+### Overview
+
+The **Raj Mahal** (`BALTI_HOUSE` landmark, `BaltiHouseSystem.java`) is Northfield's beloved Indian curry house, run by Bashir (`CURRY_HOUSE_OWNER` NPC — already defined in `NPCType`). Open Mon–Sat 17:00–23:00, Fri–Sat with an unofficial lock-in until 01:00. The game already has balti materials (`LAMB_BALTI`, `CHICKEN_TIKKA_MASALA`, `NAAN_BREAD`, `BALTI_BOX`, `BALTI_CATERING_TIN`) and the `CURRY_HOUSE_OWNER` NPCType but no system to drive them.
+
+---
+
+### Mechanic 1 — Dine In
+
+- Press **E** on `BALTI_HOUSE_COUNTER_PROP` during opening hours to open a menu.
+- Menu items: `LAMB_BALTI` (8 COIN), `CHICKEN_TIKKA_MASALA` (7 COIN), `VEGETABLE_BALTI` (5 COIN), `NAAN_BREAD` (2 COIN), `CURRY_AND_RICE` (4 COIN).
+- Eating restores Hunger +20 and Warmth +10; `LAMB_BALTI` grants temporary Street Rep +1 (once per visit).
+- **Curry Club Thursday**: every Thursday, all mains −2 COIN (`CURRY_CLUB_SPECIAL` item already exists in Material); first Thursday visit awards `CURRY_CLUB` achievement.
+- Bashir greets the player by name after 3 visits: "Back again? I'll put the usual on."
+
+### Mechanic 2 — Lock-In (Friday/Saturday 23:00–01:00)
+
+- After closing, 3–5 `REGULAR_DRINKER` NPCs remain. Bashir locks the front door.
+- Player inside at 23:00 is trapped in the lock-in. Door is `BALTI_HOUSE_DOOR_PROP`: HARD (8 hits) to break out, or wait until 01:00.
+- Bashir serves `CAN_OF_LAGER` (2 COIN) and `WHISKY` (3 COIN) from a back shelf during lock-in.
+- Consuming 3+ drinks in lock-in triggers a `CURRY_LOCK_IN_BRAWL` event: one `REGULAR_DRINKER` starts a fight. Player can intervene (Street Rep +2) or hide (cowardly, no change).
+- Lock-in is known by rumour: `BALTI_LOCK_IN` seeded Friday 22:00.
+
+### Mechanic 3 — Takeaway (Collection Hatch)
+
+- `BALTI_HOUSE_HATCH_PROP` is open Mon–Sat 17:00–23:00, accessible from the alley.
+- Order: pay COIN, return after 3 in-game minutes. `BALTI_BOX` added to inventory when collected.
+- During peak hours (18:00–20:00), queue of 2–4 `TAKEAWAY_CUSTOMER` NPCs forms at the hatch.
+- **Jump the queue**: press E while NPCs are queuing → 40% chance Bashir notices → Notoriety +1; 60% get your food first. Each successful jump awards `QUEUE_JUMPER` rumour.
+
+### Mechanic 4 — Catering Tin Heist
+
+- The kitchen (`BALTI_KITCHEN_PROP`, accessible only during closed hours 23:00–17:00) holds a `BALTI_CATERING_TIN` on a shelf.
+- Break in via back door (`BALTI_BACK_DOOR_PROP`): HARD (8 hits) or `LOCKPICK` (4s hold).
+- `BALTI_CATERING_TIN` has fence value: 6 COIN (`FenceSystem`), 4 COIN (`PawnShopSystem`). Tooltip: "A catering-size tin of Bashir's secret masala base. Worth something to the right buyer."
+- If Bashir is present (lock-in hours), has line-of-sight, and catches the player: `RESTAURANT_THEFT` crime + Notoriety +3 + `BASHIR_CAUGHT_THIEF` rumour. Bashir chases (FLEEING → PURSUING) and calls police after 10 seconds.
+- If undetected: no crime. `UNSOLVED_THEFT` rumour seeded.
+
+---
+
+### Integration with Existing Systems
+
+- **`WantedSystem`**: back door break-in with line-of-sight +1; Bashir calls police after 10s +1.
+- **`NotorietySystem`**: catering tin theft detected +3; queue jump detected +1; lock-in brawl intervention −1 (community respect).
+- **`CriminalRecord`**: `RESTAURANT_THEFT` (catering tin detected); `BREAKING_AND_ENTERING` (back door forced).
+- **`RumourNetwork`**: `BALTI_LOCK_IN` (seeded Friday 22:00); `BASHIR_CAUGHT_THIEF` (caught stealing); `UNSOLVED_THEFT` (undetected theft); `QUEUE_JUMPER` (successful queue skip).
+- **`WitnessSystem`**: line-of-sight checks on catering tin theft and back-door break-in.
+- **`StreetReputation`**: lock-in brawl intervention +2; Lamb Balti first visit +1.
+- **`FenceSystem`** / **`PawnShopSystem`**: `BALTI_CATERING_TIN` fence values.
+- **`AchievementSystem`**: `CURRY_CLUB` (first Thursday curry club visit); `LOCK_IN_LEGEND` (survive a lock-in brawl); `SECRET_MASALA` (steal catering tin undetected).
+- **`TimeSystem`**: open Mon–Sat 17:00–23:00; lock-in Fri–Sat 23:00–01:00; kitchen accessible 23:00–17:00.
+- **`WeatherSystem`**: RAIN increases takeaway orders by 2; HEATWAVE reduces dine-in traffic, Bashir props back door open (no lockpick needed for kitchen access).
+- **`NewspaperSystem`**: `RESTAURANT_THEFT` detected headline: "RAJ MAHAL BURGLED — BASHIR SAYS 'THEY TOOK THE MASALA BASE BUT LEFT THE POPPADOMS'."
+- **`NoiseSystem`**: lock-in brawl emits noise level 0.7 for 30 seconds.
+
+---
+
+### New LandmarkType Entry Required
+
+- `BALTI_HOUSE` — "The Raj Mahal". Open Mon–Sat 17:00–23:00 (lock-in Fri/Sat until 01:00). Run by Bashir (`CURRY_HOUSE_OWNER`).
+
+### New PropType Entries Required
+
+- `BALTI_HOUSE_COUNTER_PROP` — Service counter. Non-breakable. E to open menu.
+- `BALTI_HOUSE_HATCH_PROP` — Takeaway collection hatch on alley side. E to order/collect.
+- `BALTI_KITCHEN_PROP` — Kitchen area marker. Non-breakable. Inaccessible during open hours.
+- `BALTI_HOUSE_DOOR_PROP` — Front door. Locked during lock-in. HARD (8 hits) to break.
+- `BALTI_BACK_DOOR_PROP` — Back door. HARD (8 hits) or lockpick 4s.
+
+### New RumourType Entries Required
+
+- `BALTI_LOCK_IN` — "Bashir does a lock-in at the Raj Mahal on Fridays. Gets a bit lively apparently."
+- `BASHIR_CAUGHT_THIEF` — "Someone tried to nick Bashir's masala base. He chased them down the alley in his apron."
+- `UNSOLVED_THEFT` — "Someone broke into the Raj Mahal. Bashir thinks it was that lot from the chippy."
+- `QUEUE_JUMPER` — "There's always some muppet who tries to jump the takeaway queue at Bashir's."
+
+### New AchievementType Entries Required
+
+- `CURRY_CLUB` — "Had the Curry Club Special on a Thursday at the Raj Mahal. Bashir gave you extra naan." Target 1.
+- `LOCK_IN_LEGEND` — "Survived a lock-in brawl at the Raj Mahal. Bashir poured you a free whisky after." Target 1.
+- `SECRET_MASALA` — "Stole Bashir's secret catering masala base without being caught." Target 1.
+
+---
+
+### Integration Tests
+
+1. **Restaurant opens at 17:00**: set in-game time to Mon 16:59; verify `BaltiHouseSystem.isOpen()` returns false; advance to 17:01; verify `isOpen()` returns true; verify `BALTI_HOUSE_COUNTER_PROP` is interactable.
+
+2. **Dine-in deducts coin and restores hunger**: give player 10 COIN; call `BaltiHouseSystem.orderMeal(player, inventory, Material.LAMB_BALTI)`; verify inventory has 2 COIN remaining (10 − 8); verify player hunger increased by ≥ 20; verify player warmth increased by ≥ 10.
+
+3. **Curry Club Thursday discount applies**: set in-game day to Thursday; call `BaltiHouseSystem.getMenuPrice(Material.LAMB_BALTI, timeSystem)`; verify price == 6 (8 − 2 discount).
+
+4. **Lock-in triggers at 23:00 on Friday**: set time to Friday 23:01; verify `BaltiHouseSystem.isLockInActive()` returns true; verify `BALTI_HOUSE_DOOR_PROP` reports `isLocked() == true`; verify `BALTI_LOCK_IN` rumour exists in `RumourNetwork`.
+
+5. **Catering tin theft detected adds crime**: ensure Bashir has line-of-sight to player; attempt to take `BALTI_CATERING_TIN` during kitchen access hours; verify `CriminalRecord` contains `RESTAURANT_THEFT`; verify `WantedSystem.getStars() >= 1`; verify `BASHIR_CAUGHT_THIEF` rumour in `RumourNetwork`; verify `NotorietySystem.getNotoriety()` increased by 3.
+
+6. **Queue jump succeeds silently 60% of time**: seed `Random(42)` (produces queue-jump-success outcome); call `BaltiHouseSystem.jumpQueue(player, inventory, rumourNetwork, notorietySystem)`; verify player receives `BALTI_BOX` in inventory without notoriety increase; verify `QUEUE_JUMPER` rumour seeded.
+
+// `BaltiHouseSystem.java` must be created as the sole new source file.
+// `BALTI_HOUSE` (LandmarkType) is new and must be added.
+// `BALTI_HOUSE_COUNTER_PROP`, `BALTI_HOUSE_HATCH_PROP`, `BALTI_KITCHEN_PROP`, `BALTI_HOUSE_DOOR_PROP`, `BALTI_BACK_DOOR_PROP` (PropType) are new and must be added.
+// `BALTI_LOCK_IN`, `BASHIR_CAUGHT_THIEF`, `UNSOLVED_THEFT`, `QUEUE_JUMPER` (RumourType) are new and must be added.
+// `CURRY_CLUB`, `LOCK_IN_LEGEND`, `SECRET_MASALA` (AchievementType) are new and must be added.
+// `CURRY_HOUSE_OWNER` (NPCType) already exists — no new NPCType required.
