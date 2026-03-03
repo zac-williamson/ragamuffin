@@ -58217,3 +58217,134 @@ Every other Sunday from 14:00–16:00, the Northfield Brass Band perform a publi
 5. **Returning stolen instrument to Reg before next rehearsal removes it from inventory and awards DECENT_BRASS**: create system; give player `Material.TUBA`; set time to Tuesday 19:00 (before rehearsal); call `returnInstrument(player, inventory, regNpc, timeSystem, Material.TUBA)`; verify `inventory.contains(Material.TUBA)` == false; verify `inventory.contains(Material.BAND_ASSOCIATE_CARD)` == true; verify `achievementCallback` received `AchievementType.DECENT_BRASS`; verify `rumourNetwork` received `RumourType.INSTRUMENT_RETURNED`.
 
 // `BrassBandSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (concert/rehearsal schedule, van overnight window), `BuskingSystem` (stolen instrument busking, turf conflict detection), `BattleBarMiniGame` (stand-in performance), `CriminalRecord` (new `CONCERT_TIN_THEFT`; existing `THEFT`, `TRESPASS`, `BURGLARY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `INSTRUMENT_THIEF`, `INSTRUMENT_RETURNED`, `BAND_CONCERT`, `VAN_RAIDED`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (instrument fence values), `PawnShopSystem` (`SHEET_MUSIC_FOLDER` pawn value), `AchievementSystem`, and `NoiseSystem` (crowbar raid hits). New NPCTypes: `BRASS_BAND_CONDUCTOR`, `BRASS_BAND_MEMBER`. New Materials: `TUBA`, `CORNET`, `EUPHONIUM`, `BAND_ASSOCIATE_CARD`, `SHEET_MUSIC_FOLDER`. New PropTypes: `PARK_BANDSTAND_PROP`, `BRASS_INSTRUMENT_CASE_PROP`, `CONCERT_COLLECTION_TIN_PROP`, `SHEET_MUSIC_STAND_PROP`. New RumourTypes: `INSTRUMENT_THIEF`, `INSTRUMENT_RETURNED`, `BAND_CONCERT`, `VAN_RAIDED`. New CrimeTypes: `CONCERT_TIN_THEFT`. New AchievementTypes: `BRASSED_OFF`, `HONORARY_MEMBER`, `LAST_NIGHT_OF_THE_PROMS`, `DECENT_BRASS`.
+
+---
+
+## Issue #1503: Add Northfield Pub Darts League — Dave's Thursday Fixture, the Handicap Fiddle & the County Final Heist
+
+The Ragamuffin Arms hosts the Northfield & District Pub Darts League, running every Thursday night. Dave and Kev (existing `NPCType.DARTS_PLAYER`) are regulars. The league runs in an 8-week season, with a county final in the village hall. The league secretary is notoriously corrupt with the handicap system.
+
+### Schedule & Constants
+
+| Constant | Value |
+|---|---|
+| `LEAGUE_NIGHT_DAY` | Thursday |
+| `LEAGUE_NIGHT_START` | 19:30 |
+| `LEAGUE_NIGHT_END` | 23:00 |
+| `COUNTY_FINAL_INTERVAL_DAYS` | 56 (every 8 weeks) |
+| `COUNTY_FINAL_DAY` | Saturday |
+| `COUNTY_FINAL_START` | 14:00 |
+| `SEASON_GAMES` | 8 |
+| `JOIN_FEE_COIN` | 2 |
+| `MATCH_STAKE_MIN` | 1 |
+| `MATCH_STAKE_MAX` | 10 |
+| `COUNTY_FINAL_PRIZE` | 30 |
+| `SABOTAGE_DETECT_RANGE` | 3.0f |
+| `SECRETARY_BRIBE_COST` | 8 |
+| `HANDICAP_FRAUD_NOTORIETY` | 9 |
+| `TROPHY_FENCE_VALUE` | 18 |
+| `TROPHY_PAWN_VALUE` | 10 |
+| `TROPHY_RANSOM_VALUE` | 12 |
+
+### Mechanic 1 — Joining the League
+
+- Interact with Dave (`NPCType.DARTS_PLAYER`) at the pub on a Thursday before 20:00 to pay `JOIN_FEE_COIN` and register.
+- Receive `LEAGUE_MEMBERSHIP_CARD` material.
+- Player is assigned a handicap of 32 (legs advantage) by `LEAGUE_SECRETARY` NPC.
+- Without the card, attempting to play a league match yields `JoinResult.NOT_A_MEMBER`.
+- Player already registered: `JoinResult.ALREADY_REGISTERED`.
+
+### Mechanic 2 — League Match (BattleBarMiniGame)
+
+- Each Thursday night, one fixture is available against a random DARTS_PLAYER NPC.
+- Game uses 301 legs (reuses `PubLockInSystem.DartsGame` logic or mirrors it).
+- Win the leg → 1 point. First to 2 legs wins the match.
+- Post-match: wager (1–10 COIN) paid/collected if agreed pre-match.
+- Win 5 of 8 season matches → `DARTS_CHAMP_NORTHFIELD` achievement + invited to county final.
+- Lose ≥ 5 matches → `WOODEN_SPOON` rumour seeded (Vibes −1).
+
+### Mechanic 3 — The Handicap Fiddle
+
+- `LEAGUE_SECRETARY` NPC (Ted) present Thursday evenings from 19:00.
+- Player can bribe Ted (`SECRETARY_BRIBE_COST` COIN) to lower own handicap by 16 (big advantage).
+- Alternatively: steal Ted's `HANDICAP_LEDGER_PROP` from the pub's back room (requires LOCKPICK), alter the entry, return it — no COIN cost, no crime if unwitnessed.
+- Caught bribing within 5 blocks of any NPC: `CrimeType.BRIBERY`, `HANDICAP_FRAUD_NOTORIETY` notoriety, Dave refuses to speak for 3 days.
+- Caught stealing ledger: `CrimeType.THEFT`, `HANDCIAP_LEDGER_STOLEN` rumour, banned from league for 1 season (56 days).
+
+### Mechanic 4 — Arrow Sabotage
+
+- During a league night, player can pick up a rival's `DARTS_SET` from the bar (within 2 blocks, no NPC line-of-sight) and swap flights (replace with `BENT_FLIGHTS` material).
+- Rival NPC with `BENT_FLIGHTS` darts has 30% accuracy penalty for the match.
+- Witnessed: `CrimeType.THEFT`, +4 notoriety, `DODGY_DARTS_PLAYER` rumour (Vibes −2).
+- Unwitnessed sabotage of 3 rivals in one season: `FLETCHER` achievement.
+
+### Mechanic 5 — The County Final Heist
+
+- Every 56 days (Saturday 14:00), county final held at `LandmarkType.COMMUNITY_CENTRE`.
+- `COUNTY_FINAL_TROPHY_PROP` displayed on a table from 13:00 (1 hour before start).
+- Player can steal it during the event (everyone distracted watching) or after close (22:00).
+- During event: 30% detection chance (crowded room — `SABOTAGE_DETECT_RANGE` reduced).
+- After close: 10% detection chance, requires LOCKPICK for back room door.
+- Fence value: 18 COIN; pawn: 10 COIN; ransom to league secretary: 12 COIN.
+- Unwitnessed trophy theft during the final: `DARTS_VILLAIN` achievement + `TROPHY_GONE` rumour.
+- Return trophy to Dave voluntarily: `SPORTSMANSHIP` achievement + permanent free league entry.
+
+### New Entities Required
+
+**New NPCTypes:**
+- `LEAGUE_SECRETARY` — Ted, the corrupt darts league secretary. Present Thursdays 19:00–22:00 at the pub.
+
+**New Materials:**
+- `LEAGUE_MEMBERSHIP_CARD` — required to enter league matches.
+- `BENT_FLIGHTS` — sabotaged dart flights, reduces accuracy by 30%.
+- `HANDICAP_LEDGER` — stolen document; can be altered to adjust handicap.
+
+**New PropTypes:**
+- `DARTBOARD_LEAGUE_PROP` — the official league dartboard at the pub (distinct from casual PROP_DARTBOARD).
+- `HANDICAP_LEDGER_PROP` — Ted's ledger, kept on the bar. Pickpocketable or stealable from back room.
+- `COUNTY_FINAL_TROPHY_PROP` — large silver cup, displayed at the community centre on final day.
+
+**New RumourTypes:**
+- `DART_CHEAT` — player sabotaged arrows, seeded by any witness.
+- `LEAGUE_BANNED` — player banned for ledger theft, seeded by Ted.
+- `TROPHY_GONE` — county final trophy stolen; seeded by any NPC present at final.
+
+**New CrimeTypes:**
+- `HANDICAP_FRAUD` — bribery of league secretary detected.
+
+**New AchievementTypes:**
+- `DARTS_CHAMP_NORTHFIELD` — win 5 of 8 league matches in a season.
+- `WOODEN_SPOON` — lose 5+ matches in a season (comedic, displayed as shame).
+- `FLETCHER` — sabotage 3 rival darts sets unwitnessed in one season.
+- `DARTS_VILLAIN` — steal the county final trophy unwitnessed during the event.
+- `SPORTSMANSHIP` — return the stolen county final trophy to Dave voluntarily.
+
+**Already defined — no new entries needed:**
+- `Material.DARTS_SET` — player's darts, already exists.
+- `Material.LOCKPICK` — silent back-room entry.
+- `Material.COIN` — league fee, wager, bribe.
+- `CrimeType.THEFT` — witnessed darts/ledger theft.
+- `CrimeType.BRIBERY` — bribing Ted.
+- `CrimeType.BURGLARY` — witnessed trophy theft at community centre.
+- `LandmarkType.PUB` — The Ragamuffin Arms, league night venue.
+- `LandmarkType.COMMUNITY_CENTRE` — county final venue.
+- `NPCType.DARTS_PLAYER` — Dave and Kev, the regulars (already defined, Issue #1235).
+- `NPCType.PCSO` — called on witnessed sabotage/theft.
+- `BattleBarMiniGame` — darts leg mini-game.
+- `PubLockInSystem.DartsGame` — 301 scoring logic to mirror.
+- `NoiseSystem` — lockpick noise, crowbar noise on back room entry.
+- `WitnessSystem` — sabotage detection, trophy theft detection.
+
+### Integration Tests
+
+1. **Joining the league on a Thursday evening issues LEAGUE_MEMBERSHIP_CARD**: create `DartsLeagueSystem`; set time to Thursday 19:45; call `joinLeague(player, inventory, daveNpc, coin=2, timeSystem)`; verify result == `JoinResult.JOINED`; verify `inventory.contains(Material.LEAGUE_MEMBERSHIP_CARD)` == true; verify `dartsLeagueSystem.getPlayerHandicap(player)` == 32.
+
+2. **Winning a league match with a stake transfers COIN**: create system; give player `LEAGUE_MEMBERSHIP_CARD`; set time to Thursday 20:00; mock `BattleBarMiniGame` to return player wins both legs; call `playLeagueMatch(player, inventory, kevNpc, stake=5, timeSystem, mockMiniGame)`; verify result == `MatchResult.WIN`; verify `inventory.getItemCount(Material.COIN)` increased by 5; verify `dartsLeagueSystem.getSeasonWins(player)` == 1.
+
+3. **Bribing Ted reduces handicap but triggers HANDICAP_FRAUD if witnessed**: create system; give player `LEAGUE_MEMBERSHIP_CARD` and 8 COIN; set time to Thursday 19:30; place a PUBLIC NPC within 5 blocks; call `bribeSecretary(player, inventory, tedNpc, nearbyNpcs, timeSystem)`; verify result == `BribeResult.CAUGHT`; verify `criminalRecord.hasCrime(CrimeType.HANDICAP_FRAUD)` == true; verify `notorietySystem.getNotoriety()` increased by `HANDICAP_FRAUD_NOTORIETY` (9); verify `inventory.getItemCount(Material.COIN)` unchanged (COIN not spent on caught bribe).
+
+4. **Unwitnessed arrow sabotage applies BENT_FLIGHTS and triggers FLETCHER on third**: create system; give player `LEAGUE_MEMBERSHIP_CARD`; ensure no NPCs within `SABOTAGE_DETECT_RANGE`; call `sabotageArrows(player, kevNpc, nearbyNpcs=[], timeSystem)` × 3 (three different NPCs across the season); verify on 3rd call `achievementCallback` received `AchievementType.FLETCHER`; verify each target NPC has `dartsLeagueSystem.hasBentFlights(npc)` == true.
+
+5. **Stealing county final trophy unwitnessed during the event awards DARTS_VILLAIN**: create system; set time to Saturday county final day 15:30; set `nearbyNpcs = []` (all watching match); call `stealFinalTrophy(player, inventory, nearbyNpcs, timeSystem)`; verify `inventory.contains(Material.COUNTY_FINAL_TROPHY_PROP)` via `PropType.COUNTY_FINAL_TROPHY_PROP`; verify `achievementCallback` received `AchievementType.DARTS_VILLAIN`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == false; verify `rumourNetwork` received `RumourType.TROPHY_GONE`.
+
+// `DartsLeagueSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Thursday league nights, county final schedule), `BattleBarMiniGame` (leg mini-game), `PubLockInSystem` (mirrors 301 scoring), `CriminalRecord` (new `HANDICAP_FRAUD`; existing `THEFT`, `BRIBERY`, `BURGLARY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `DART_CHEAT`, `LEAGUE_BANNED`, `TROPHY_GONE`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (trophy fence values), `PawnShopSystem` (trophy pawn value), `AchievementSystem`, and `NoiseSystem` (lockpick on back room entry). New NPCType: `LEAGUE_SECRETARY`. New Materials: `LEAGUE_MEMBERSHIP_CARD`, `BENT_FLIGHTS`, `HANDICAP_LEDGER`. New PropTypes: `DARTBOARD_LEAGUE_PROP`, `HANDICAP_LEDGER_PROP`, `COUNTY_FINAL_TROPHY_PROP`. New RumourTypes: `DART_CHEAT`, `LEAGUE_BANNED`, `TROPHY_GONE`. New CrimeType: `HANDICAP_FRAUD`. New AchievementTypes: `DARTS_CHAMP_NORTHFIELD`, `WOODEN_SPOON`, `FLETCHER`, `DARTS_VILLAIN`, `SPORTSMANSHIP`.
