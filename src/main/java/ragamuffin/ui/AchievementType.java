@@ -7058,6 +7058,41 @@ public enum AchievementType {
         "Soup Kitchen Regular",
         "Had five cups of tea at the Salvation Army. Major Eileen knows your name now.",
         5
+    ),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1451: Northfield Balti House — The Raj Mahal
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * CURRY_CLUB — Visit the Raj Mahal on a Thursday and order a main during Curry Club.
+     * Awarded by BaltiHouseSystem on the first Thursday Curry Club order.
+     */
+    CURRY_CLUB(
+        "Curry Club",
+        "Attended your first Curry Club Thursday at the Raj Mahal. Bashir gave you a free poppadom.",
+        1
+    ),
+
+    /**
+     * LOCK_IN_LEGEND — Survive a full Friday or Saturday lock-in at the Raj Mahal.
+     * Awarded by BaltiHouseSystem when the lock-in ends (01:00) and player is still inside.
+     */
+    LOCK_IN_LEGEND(
+        "Lock-In Legend",
+        "Made it through Bashir's lock-in. You remember most of it.",
+        1
+    ),
+
+    /**
+     * SECRET_MASALA — Successfully steal a BALTI_CATERING_TIN from the kitchen
+     * without being detected by Bashir.
+     * Awarded by BaltiHouseSystem on undetected catering tin theft.
+     */
+    SECRET_MASALA(
+        "Secret Masala",
+        "Nicked a catering tin from the Raj Mahal kitchen. Bashir has no idea.",
+        1
     );
 
     private final String name;

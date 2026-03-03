@@ -1294,7 +1294,16 @@ public class CriminalRecord {
          * window (12:30–14:00, days 14–17). Requires CROWBAR or LOCKPICK; 6 hits to open safe.
          * Yields 25–50 COIN and STAMPS_BUNDLE. Penalty: Notoriety +10, WantedSystem +1.
          */
-        POST_OFFICE_SAFE_ROBBERY("Robbery of Post Office safe during Horizon audit");
+        POST_OFFICE_SAFE_ROBBERY("Robbery of Post Office safe during Horizon audit"),
+
+        // ── Issue #1451: Northfield Balti House ───────────────────────────────
+
+        /**
+         * RESTAURANT_THEFT — recorded when the player steals the BALTI_CATERING_TIN
+         * from the Raj Mahal kitchen while Bashir has line-of-sight.
+         * Penalty: Notoriety +3, chase triggered, police called after 10 seconds.
+         */
+        RESTAURANT_THEFT("Theft from a restaurant kitchen");
 
         private final String displayName;
 

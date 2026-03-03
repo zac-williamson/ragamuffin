@@ -1578,5 +1578,31 @@ public enum RumourType {
     /** "Saw someone half-inch a book from the back of Keith's van. Bold as brass."
      * — seeded by MobileLibrarySystem when the player is caught stealing the RARE_BOOK.
      * Spreads via PUBLIC and LIBRARY_REGULAR NPCs. */
-    LIBRARY_THEFT_SPOTTED;
+    LIBRARY_THEFT_SPOTTED,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1451: Northfield Balti House — The Raj Mahal
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** "Bashir's doing a lock-in tonight — if you know, you know."
+     * — seeded by BaltiHouseSystem on Friday at 22:00.
+     * Spreads via PUBLIC and CURRY_HOUSE_OWNER NPCs. */
+    BALTI_LOCK_IN,
+
+    /** "Bashir caught someone nicking a catering tin from the kitchen. Chased them down the alley."
+     * — seeded by BaltiHouseSystem when Bashir has line-of-sight during kitchen theft.
+     * Triggers RESTAURANT_THEFT crime, Notoriety +3, chase sequence.
+     * Spreads via PUBLIC, CURRY_HOUSE_OWNER NPCs. */
+    BASHIR_CAUGHT_THIEF,
+
+    /** "Someone got into the Raj Mahal kitchen last night — catering tin's gone. Bashir's fuming."
+     * — seeded by BaltiHouseSystem when player steals BALTI_CATERING_TIN undetected.
+     * Spreads via PUBLIC and LOCAL_TRADER NPCs. */
+    UNSOLVED_THEFT,
+
+    /** "Someone jumped the queue at the Raj Mahal hatch — Bashir noticed, mind."
+     * — seeded by BaltiHouseSystem when queue-jump is detected at BALTI_HOUSE_HATCH_PROP
+     *   during peak hours (18:00–20:00). Notoriety +1.
+     * Spreads via PUBLIC NPCs near the hatch. */
+    QUEUE_JUMPER;
 }
