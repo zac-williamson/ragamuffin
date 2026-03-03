@@ -46187,3 +46187,182 @@ On `DISMISSED`: `STAFF_ID_BADGE` removed, job board clears vacancy (re-posts aft
 //              OffLicenceSystem, IcelandSystem, CharityShopSystem, GreggsRaidSystem,
 //              CornerShopSystem, GreasySpoonSystem, LibrarySystem, PowerCutSystem,
 //              AchievementSystem, WitnessSystem, DisguiseSystem, StreetSkillSystem
+
+---
+
+## Issue #1335: Add Northfield Cycle Centre — Dave's Bikes, Riding Mechanics, Bike Theft & the JustEat Delivery Hustle
+
+### Overview
+
+Bikes exist as materials (`SECOND_HAND_BIKE`, `STOLEN_BIKE`, `KIDS_BIKE`, `OLD_BIKE_WHEEL`) but there is no shop to buy them, no riding mechanic, and no bike-related gameplay. This issue adds `CycleShopSystem.java` — Dave's Cycle Centre on the high street — along with a first-person **bicycle riding mechanic** (faster movement, new physics), a **bike theft loop** (locked bikes on lamp posts around town), a **JustEat-style food delivery side hustle**, and classic British police interaction (no lights after dark, riding on the pavement).
+
+### New Java File
+
+`src/main/java/ragamuffin/core/CycleShopSystem.java` in package `ragamuffin.core`
+
+### New Unit Test File
+
+`src/test/java/ragamuffin/core/CycleShopSystemTest.java`
+
+### New Integration Test File
+
+`src/test/java/ragamuffin/integration/Issue1335CycleShopIntegrationTest.java`
+
+---
+
+### Mechanic 1 — Dave's Cycle Centre
+
+- `LandmarkType.CYCLE_SHOP` on the high street. Open Mon–Sat 08:00–17:30 (Sun closed).
+- NPC: Dave (`CYCLE_SHOP_OWNER`) — behind the counter during opening hours; outside oiling chains 10:00–11:00.
+- **Stock** (press E on `BIKE_RACK_PROP` or Dave directly):
+
+| Item | Price | Condition |
+|---|---|---|
+| `SECOND_HAND_BIKE` | 8 COIN | Rideable; puncture chance 15%/km |
+| `KIDS_BIKE` | 5 COIN | Speed −30%; fits player; police won't stop adult rider |
+| `BIKE_REPAIR_KIT` | 2 COIN | Fixes one puncture |
+| `BIKE_LOCK` | 3 COIN | Secures bike to prop; requires BOLT_CUTTERS or 5 hits to break |
+| `BIKE_LIGHT_FRONT` | 1 COIN | Required after dark to avoid PCSO stop |
+| `BIKE_LIGHT_REAR` | 1 COIN | Required after dark to avoid PCSO stop |
+| `BIKE_HELMET` | 3 COIN | −20% injury on collision; no legal requirement but PCSO comment |
+
+- Dave buys secondhand bikes back at 40% of purchase price.
+- Dave **refuses** to buy `STOLEN_BIKE` ("I don't want to know where that's been, mate.").
+- Notoriety ≥ 40: Dave refuses all transactions.
+
+### Mechanic 2 — Riding a Bike
+
+- **Mount**: hold `SECOND_HAND_BIKE`, `KIDS_BIKE`, or `STOLEN_BIKE` in hotbar; press E while not blocked = `MOUNTED` state.
+- **Mounted movement**: WASD steers; speed ×2.0 vs walking. Cannot jump. Cannot enter buildings (dismount required — press E again or collide with door).
+- **Momentum**: acceleration ramps up over 1 second; braking distance 1.5 blocks. Colliding with a wall or NPC at speed > 1.5 m/s: player takes 5 HP collision damage; NPC becomes `HOSTILE`.
+- **Pavement riding**: if player on `PAVEMENT` block while mounted, 30% chance per 10 seconds that a `PUBLIC` NPC shouts *"Get off the pavement!"*. PCSO within 15 blocks: automatic Notoriety +1 and verbal warning. Second offence in-session: `CYCLING_OFFENCE` CriminalRecord entry + 5 COIN fine.
+- **No lights penalty**: 20:00–06:00 while mounted without `BIKE_LIGHT_FRONT` + `BIKE_LIGHT_REAR` in inventory: PCSO within 20 blocks stops player (triggers `WantedSystem` soft-stop); issues `CYCLING_OFFENCE` + 5 COIN fine.
+- **Puncture**: `SECOND_HAND_BIKE` has a 15% puncture chance per 200 blocks ridden (tracked in `CycleShopSystem.distanceRidden`). On puncture: speed drops to ×0.5; tooltip *"Puncture! You'll need a repair kit."*. Fix with `BIKE_REPAIR_KIT` (press E while stationary) or push (dismounted, bike in inventory, speed normal).
+- **Dismount**: press E, or collide with door block, or enter water block (instant dismount, no damage).
+- **Locking bike**: while dismounted near a `LAMP_POST_PROP` or `BIKE_RACK_PROP`, hold E for 2 seconds with `BIKE_LOCK` in inventory → bike locked to prop. Locked bike persists in world as `LOCKED_BIKE_PROP`.
+
+### Mechanic 3 — Bike Theft Loop
+
+- 4–6 `LOCKED_BIKE_PROP` props spawn around town at world gen (on lamp posts near shops, park, bus stops). Each has a random lock tier: CHEAP_LOCK (3 hits), STANDARD_LOCK (5 hits), D_LOCK (8 hits, requires `BOLT_CUTTERS`).
+- Player hits lock with any item: on success (hits met), `LOCKED_BIKE_PROP` → removed; `STOLEN_BIKE` added to inventory.
+- **Witnessed**: 60% chance PUBLIC NPC calls police; `BIKE_THEFT` CriminalRecord entry; Notoriety +5; WantedSystem Tier 1.
+- **Unwitnessed** (night, no NPCs within 12 blocks): no crime recorded, Notoriety +2 only.
+- **PCSO on patrol 22:00–06:00** increases witness radius by 50% near any `LOCKED_BIKE_PROP`.
+- Dave at the Cycle Centre will buy `STOLEN_BIKE` for 0 COIN — he flat refuses. Only the TravellerSiteSystem (existing, 8 COIN) accepts stolen bikes.
+- `STOLEN_BIKE` in inventory reduces PCSO stop threshold by 10 points (they're alert for bike thieves).
+- New achievement: `LOCK_CUTTER` — steal 3 bikes without being witnessed.
+
+### Mechanic 4 — JustEat Delivery Hustle
+
+- `JUST_EAT_DELIVERY_BOARD_PROP` outside the kebab van (`KebabVanSystem`) and chippy (`ChippySystem`) — open 17:00–23:00.
+- Player presses E: collects `DELIVERY_BAG` (contains 1–3 hot food items). Receive delivery target: a `LETTERBOX_PROP` within 150 blocks, marked on HUD.
+- **Requirement**: player must be mounted on a bike (any type) to accept delivery.
+- **Timer**: 3 in-game minutes to deliver (tolerance 5 in-game minutes before bag marked `COLD_DELIVERY_BAG`).
+- On-time delivery: 4 COIN + DELIVERY_DRIVER achievement progress.
+- Late delivery (3–5 min): 2 COIN + tooltip *"Still warm enough, I suppose."*
+- Cold delivery (>5 min): 0 COIN + customer complaint seeds `POOR_SERVICE` rumour.
+- Player can eat contents of `DELIVERY_BAG` (theft): +hunger, no pay, `THEFT_FROM_EMPLOYER`-style Notoriety +3, banned from board for 1 in-game day.
+- **5 successful deliveries**: unlock `GIG_ECONOMY` achievement.
+- **Interaction with `EmploymentSystem`**: if player is employed elsewhere and takes deliveries, DWP notified of "self-employed income" — triggers `BENEFIT_FRAUD` check same as EmploymentSystem.
+
+### Mechanic 5 — Police Interactions & Riding Offences
+
+- `CYCLING_OFFENCE` is a new `CriminalRecord.CrimeType` (misdemeanour, does not increase Wanted stars but adds to criminal record).
+- PCSO (`NPCType.PCSO`) stops player on bike if:
+  - No lights 20:00–06:00 (within 20 blocks)
+  - Riding on pavement with 2+ prior warnings this session
+  - Carrying `STOLEN_BIKE` (40% stop chance on sight)
+- On stop: player is forced to dismount (`MOUNTED` state cleared). PCSO issues fixed-penalty notice: `CYCLING_OFFENCE` CrimeType + 5 COIN deducted. If player flees (re-mounts within 5 seconds): Notoriety +3, PCSO calls for backup (WantedSystem Tier 1).
+- Achievement `BEAT_COPPER_ON_BIKE`: flee a PCSO stop successfully 3 times.
+
+### New Materials (add to `Material.java`)
+
+| Material | Description |
+|---|---|
+| `BIKE_REPAIR_KIT` | Fixes one puncture on SECOND_HAND_BIKE. Single use. |
+| `BIKE_LOCK` | Secures bike to LAMP_POST_PROP or BIKE_RACK_PROP. Consumed on use. |
+| `BIKE_LIGHT_FRONT` | Required after dark while cycling. Single-use battery (3 in-game nights). |
+| `BIKE_LIGHT_REAR` | Required after dark while cycling. Single-use battery (3 in-game nights). |
+| `BIKE_HELMET` | Reduces collision damage by 20%. Worn as equipment. |
+| `DELIVERY_BAG` | Holds hot food for JustEat delivery. Contains 1–3 food items. |
+| `COLD_DELIVERY_BAG` | DELIVERY_BAG after 5 in-game minutes — no payout. |
+
+### New Prop Types (add to `PropType.java`)
+
+| PropType | Location | Interaction |
+|---|---|---|
+| `BIKE_RACK_PROP` | Outside cycle shop and parks | E to lock bike; E to browse stock |
+| `LOCKED_BIKE_PROP` | Spawned around town | Hit to break lock (3/5/8 hits) → STOLEN_BIKE |
+| `JUST_EAT_DELIVERY_BOARD_PROP` | Outside KebabVan and Chippy | E (mounted) to accept delivery job |
+
+### New NPC Type (add to `NPCType.java`)
+
+- `CYCLE_SHOP_OWNER` — Dave. Friendly, non-hostile. Refuses stolen bikes. Provides bike lore tooltips on first interaction.
+
+### New LandmarkType (add to `LandmarkType.java`)
+
+- `CYCLE_SHOP` — "Dave's Cycle Centre". Small unit on the high street between the newsagent and charity shop.
+
+### New CriminalRecord.CrimeType (add to `CriminalRecord.java`)
+
+- `CYCLING_OFFENCE` — issued for no lights, pavement riding, fleeing PCSO on bike.
+- `BIKE_THEFT` — issued for breaking a bike lock.
+
+### New RumourType (add to `RumourType.java`)
+
+- `BIKE_THEFT_RUMOUR` — seeded when player steals a bike with a witness. Increases PCSO patrol frequency near bike racks for 1 in-game day.
+- `POOR_SERVICE` — seeded when a cold delivery is made. Reduces KebabVanSystem and ChippySystem customer NPC counts by 1 for that evening.
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Achievement | Condition | Flavour Text |
+|---|---|---|
+| `LOCK_CUTTER` | Steal 3 bikes without being witnessed | "Five-finger discount. Two wheels included." |
+| `GIG_ECONOMY` | Complete 5 successful deliveries | "Zero hours. Zero dignity. Four stars." |
+| `BEAT_COPPER_ON_BIKE` | Successfully flee a PCSO stop 3 times | "Tour de Northfield." |
+| `NO_LIGHTS` | Receive 3 CYCLING_OFFENCE entries in one session | "Basic road safety, mate." |
+| `CYCLE_TO_WORK` | Ride a bike to clock in for a shift (EmploymentSystem integration) | "At least you're not on the bus." |
+
+### Unit Tests
+
+- `CycleShopSystem.buyBike(type, inventory, coin)`: correct COIN deducted; bike added to inventory; `INSUFFICIENT_FUNDS` returned if not enough coin; `NOTORIETY_BLOCKED` if Notoriety ≥ 40.
+- `CycleShopSystem.mount(bikeType, player)`: `MOUNTED` state set; speed modifier ×2.0 applied; `NOT_HOLDING_BIKE` if no bike in hotbar.
+- `CycleShopSystem.checkPunctureRoll(distanceRidden, random)`: seeded random = puncture threshold → returns `PUNCTURED`; below threshold → `OK`.
+- `CycleShopSystem.repairPuncture(inventory)`: `BIKE_REPAIR_KIT` consumed; speed restored; `NO_REPAIR_KIT` if absent.
+- `CycleShopSystem.lockBike(propType, inventory)`: `BIKE_LOCK` consumed; `LOCKED_BIKE_PROP` placed; `NO_LOCK_ITEM` if no lock in inventory.
+- `CycleShopSystem.stealBike(lockTier, hits, hasWitness, criminalRecord)`: hits < required → `LOCK_HOLDS`; hits met with witness → `BIKE_THEFT` crime added, Notoriety +5; hits met unwitnessed → Notoriety +2 only.
+- `CycleShopSystem.acceptDelivery(isMounted)`: `NOT_MOUNTED` if player not on bike; `DELIVERY_BAG` issued if mounted; `BOARD_CLOSED` outside 17:00–23:00.
+- `CycleShopSystem.completeDelivery(elapsedMinutes, inventory)`: ≤3 min → 4 COIN; 3–5 min → 2 COIN; >5 min → 0 COIN + `COLD_DELIVERY_BAG`; bag stolen (missing from inventory) → Notoriety +3.
+- `CycleShopSystem.checkNightLightStop(hasFrontLight, hasRearLight, hour, pcsoDistance)`: both lights present → `NO_STOP`; missing + PCSO < 20 blocks + night hours → `CYCLING_OFFENCE` issued, 5 COIN fine.
+- DWP integration: `CycleShopSystem.recordDeliveryIncome(dwpSystem)` marks self-employed income; DWP `BENEFIT_FRAUD` check fires after 2 days if UC active.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Buy and ride a bike**: Give player 8 COIN. Player presses E on Dave (`CYCLE_SHOP_OWNER`). Verify `SECOND_HAND_BIKE` added to inventory and 8 COIN deducted. Place player at (50, 1, 50). Player selects bike in hotbar and presses E to mount. Verify `CycleShopSystem.isMounted()` == true. Simulate pressing W for 30 frames (0.5 seconds). Verify player has moved at least twice the distance a walking player would in the same frames. Press E to dismount. Verify `isMounted()` == false.
+
+2. **Pavement riding triggers PCSO stop**: Mount player on `SECOND_HAND_BIKE`. Place player on a `PAVEMENT` block at (60, 1, 60). Place PCSO NPC at (65, 1, 60) (within 15 blocks). Simulate riding for 10 seconds. Verify PCSO stop triggered: `isMounted()` == false (forced dismount). Verify `CriminalRecord` contains `CYCLING_OFFENCE`. Verify player inventory reduced by 5 COIN (fine). Verify Notoriety increased by 1.
+
+3. **Bike theft — witnessed vs unwitnessed**: Spawn `LOCKED_BIKE_PROP` (CHEAP_LOCK, 3 hits) at (70, 1, 70). Place PUBLIC NPC at (75, 1, 70) (within 12 blocks) facing the bike. Player hits lock 3 times. Verify `BIKE_THEFT` CrimeType added to CriminalRecord. Verify `STOLEN_BIKE` added to player inventory. Verify `LOCKED_BIKE_PROP` removed. Verify Notoriety increased by 5. Verify `RumourNetwork` contains `BIKE_THEFT_RUMOUR`. Now reset: spawn another `LOCKED_BIKE_PROP` at (70, 1, 100) with no NPCs within 20 blocks. Player hits lock 3 times. Verify NO `BIKE_THEFT` CrimeType added (crime not recorded unwitnessed). Verify Notoriety increased by only 2.
+
+4. **JustEat delivery — on time pays full**: Mount player on `SECOND_HAND_BIKE` at (80, 1, 80). Press E on `JUST_EAT_DELIVERY_BOARD_PROP`. Verify `DELIVERY_BAG` added to inventory. Record player COIN count. Advance TimeSystem by 2 in-game minutes. Player presses E on target `LETTERBOX_PROP`. Verify `DELIVERY_BAG` removed from inventory. Verify COIN count increased by 4. Verify no `POOR_SERVICE` rumour seeded.
+
+5. **No lights at night — PCSO interaction**: Give player `SECOND_HAND_BIKE` but NOT `BIKE_LIGHT_FRONT` or `BIKE_LIGHT_REAR`. Set TimeSystem to 22:00. Player mounts bike. Place PCSO at (90, 1, 90), player at (95, 1, 90). Simulate riding toward PCSO. Verify PCSO stop: `isMounted()` == false. Verify `CYCLING_OFFENCE` CrimeType added. Verify 5 COIN deducted. Now give player both lights. Reset position. Simulate riding past PCSO again. Verify NO stop triggered, no offence recorded.
+
+---
+
+// ── Issue #1335: Add Northfield Cycle Centre — Dave's Bikes, Riding Mechanics, Bike Theft & the JustEat Delivery Hustle ────
+// New: CycleShopSystem.java in ragamuffin.core
+// New: CycleShopSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1335CycleShopIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: BIKE_REPAIR_KIT, BIKE_LOCK, BIKE_LIGHT_FRONT, BIKE_LIGHT_REAR, BIKE_HELMET, DELIVERY_BAG, COLD_DELIVERY_BAG — add to Material.java
+// New PropTypes: BIKE_RACK_PROP, LOCKED_BIKE_PROP, JUST_EAT_DELIVERY_BOARD_PROP — add to PropType.java
+// New NPCType: CYCLE_SHOP_OWNER — add to NPCType.java
+// New LandmarkType: CYCLE_SHOP — add to LandmarkType.java
+// New CrimeTypes: CYCLING_OFFENCE, BIKE_THEFT — add to CriminalRecord.java
+// New RumourTypes: BIKE_THEFT_RUMOUR, POOR_SERVICE — add to RumourType.java
+// New AchievementTypes: LOCK_CUTTER, GIG_ECONOMY, BEAT_COPPER_ON_BIKE, NO_LIGHTS, CYCLE_TO_WORK — add to AchievementType.java
+// Integration: TimeSystem, WantedSystem, NotorietySystem, CriminalRecord, WitnessSystem,
+//              NPCManager (PCSO stop logic), KebabVanSystem, ChippySystem,
+//              TravellerSiteSystem (STOLEN_BIKE sell), EmploymentSystem (CYCLE_TO_WORK achievement),
+//              DWPSystem (delivery income disclosure), RumourNetwork, NewspaperSystem,
+//              AchievementSystem, HealingSystem (collision damage), StreetSkillSystem
