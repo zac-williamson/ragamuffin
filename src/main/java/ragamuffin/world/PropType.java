@@ -3507,7 +3507,33 @@ public enum PropType {
      * smashed open (6 hits). Mario's sabotage option: swap PROP_GUN with AIRGUN.
      * Drops PROP_GUN on destroy.
      */
-    PROP_GUN_PROP(0.50f, 0.80f, 0.30f, 6, Material.PROP_GUN);
+    PROP_GUN_PROP(0.50f, 0.80f, 0.30f, 6, Material.PROP_GUN),
+
+    // ── Issue #1357: Northfield Charity Fun Run ────────────────────────────────
+
+    /**
+     * FUN_RUN_CHECKPOINT_PROP — a numbered orange cone/flag waypoint marker on the
+     * charity fun run course. Eight placed around the route. Player must pass through
+     * all 8 in order to complete the run legitimately; skipping any counts as
+     * course-cutting. Indestructible during the event. Drops nothing.
+     */
+    FUN_RUN_CHECKPOINT_PROP(0.40f, 1.20f, 0.40f, 999, null),
+
+    /**
+     * START_FINISH_ARCH_PROP — the inflatable start/finish arch at the Northfield
+     * Community Centre car park. Janet (FUN_RUN_MARSHAL) stands beside it.
+     * Press E to register (2 COIN). Cross it to start/finish the run timer.
+     * Indestructible during the event. Drops nothing.
+     */
+    START_FINISH_ARCH_PROP(2.00f, 2.50f, 0.30f, 999, null),
+
+    /**
+     * WATER_STATION_PROP — a trestle table with paper cups of water on the course.
+     * Press E to take WATER_CUP (+5 Hunger). Tip it over (press E + sprint) for chaos
+     * (Vibes −1 if witnessed). Dropped by chaos: 0–3 WATER_CUP items scatter nearby.
+     * Drops WATER_CUP on destroy.
+     */
+    WATER_STATION_PROP(1.00f, 0.90f, 0.50f, 4, Material.WATER_CUP);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

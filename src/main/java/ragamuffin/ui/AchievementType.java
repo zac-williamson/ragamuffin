@@ -5766,6 +5766,50 @@ public enum AchievementType {
         "Blue Light Special",
         "You drove an NHS ambulance off the lot. Andy is absolutely livid.",
         1
+    ),
+
+    // ── Issue #1357: Northfield Charity Fun Run ────────────────────────────────
+
+    /**
+     * Fires when the player finishes the charity fun run in under 25 in-game minutes,
+     * hitting all 8 FUN_RUN_CHECKPOINT_PROPs in order.
+     * Awarded in CharityFunRunSystem on crossing the finish line within the time limit.
+     */
+    COMMUNITY_RUNNER_ELITE(
+        "Community Runner Elite",
+        "You finished the fun run in under 25 minutes. Janet was visibly moved.",
+        1
+    ),
+
+    /**
+     * Fires when the player cuts the course (skips checkpoints) and is NOT witnessed
+     * by a JOGGER NPC.
+     * Awarded in CharityFunRunSystem on unwitnessed course-cutting.
+     */
+    SHAMELESS_SHORTCUT(
+        "Shameless Shortcut",
+        "You cut the course. Nobody saw. You're calling it a personal best.",
+        1
+    ),
+
+    /**
+     * Fires when the run is cancelled due to HEAVY_RAIN at 08:30.
+     * Awarded in CharityFunRunSystem on rain cancellation (all registered players).
+     */
+    RAINED_OFF(
+        "Rained Off",
+        "The fun run was cancelled due to heavy rain. Very British.",
+        1
+    ),
+
+    /**
+     * Fires when the player finishes the fun run with a dog from DogCompanionSystem.
+     * Awarded in CharityFunRunSystem on finishing with an active dog companion.
+     */
+    WALKIES_WINNER(
+        "Walkies Winner",
+        "You finished the charity fun run with your dog. Best in show.",
+        1
     );
 
     private final String name;

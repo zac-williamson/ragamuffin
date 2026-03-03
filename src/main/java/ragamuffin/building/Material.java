@@ -5722,7 +5722,39 @@ public enum Material {
      * chaos on stage. Stored in the PROP_GUN_PROP cabinet.
      * Tooltip: "It's not real. Probably best not to wave it around, though."
      */
-    PROP_GUN("Prop Gun");
+    PROP_GUN("Prop Gun"),
+
+    // ── Issue #1357: Northfield Charity Fun Run ────────────────────────────────
+
+    /**
+     * RACE_NUMBER_BIB — an official race number bib issued by Janet the FUN_RUN_MARSHAL
+     * on registration (2 COIN entry fee). Required to participate in the charity fun run.
+     * Tooltip: "Your official race number. Pin it on and try not to embarrass yourself."
+     */
+    RACE_NUMBER_BIB("Race Number Bib"),
+
+    /**
+     * SPONSOR_SHEET — a clipboard sponsor sheet issued with the race number bib.
+     * Player can solicit pledges from NPCs before the race (PENSIONER: 80% chance,
+     * CHUGGER: refuses). Presenting post-finish pays up to 20 COIN.
+     * Fraud path: presenting without finishing caught if Notoriety ≥ 5.
+     * Tooltip: "Get as many signatures as you can before the race."
+     */
+    SPONSOR_SHEET("Sponsor Sheet"),
+
+    /**
+     * WINNERS_MEDAL — awarded to the player for finishing the fun run in under
+     * 25 in-game minutes. A cheap gold-coloured medal on a ribbon.
+     * Tooltip: "First place. You may feel smug about this."
+     */
+    WINNERS_MEDAL("Winner's Medal"),
+
+    /**
+     * WATER_CUP — a paper cup of water from a fun run water station.
+     * Consuming it restores +5 Hunger. Can also be tipped over for chaos.
+     * Tooltip: "A paper cup of lukewarm water. Essential fuel."
+     */
+    WATER_CUP("Water Cup");
 
     private final String displayName;
 
@@ -7005,6 +7037,16 @@ public enum Material {
             case PROP_GUN:              return cs(0.18f, 0.18f, 0.18f,  // Black prop body
                                                   0.65f, 0.60f, 0.55f); // Silver barrel
 
+            // Issue #1357: Northfield Charity Fun Run
+            case RACE_NUMBER_BIB:       return cs(0.92f, 0.92f, 0.88f,  // White bib
+                                                  0.80f, 0.15f, 0.20f); // Red number
+            case SPONSOR_SHEET:         return cs(0.94f, 0.94f, 0.90f,  // Cream paper
+                                                  0.20f, 0.40f, 0.70f); // Blue text
+            case WINNERS_MEDAL:         return cs(0.85f, 0.70f, 0.10f,  // Gold medal
+                                                  0.80f, 0.20f, 0.20f); // Red ribbon
+            case WATER_CUP:             return cs(0.90f, 0.90f, 0.90f,  // White paper cup
+                                                  0.30f, 0.55f, 0.85f); // Blue branding
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -7456,6 +7498,11 @@ public enum Material {
             case REHEARSAL_SCHEDULE:
             case FORGED_TICKET:
             case PROP_GUN:
+            // Issue #1357: Northfield Charity Fun Run — not block items
+            case RACE_NUMBER_BIB:
+            case SPONSOR_SHEET:
+            case WINNERS_MEDAL:
+            case WATER_CUP:
             // Issue #1144: Northfield Probation Office — not block items
             case SIGN_ON_LETTER:
             case ELECTRONIC_TAG:
@@ -7715,6 +7762,11 @@ public enum Material {
             case REHEARSAL_SCHEDULE:
             case FORGED_TICKET:
             case PROP_GUN:
+            // Issue #1357: Northfield Charity Fun Run — small items sit on surfaces
+            case RACE_NUMBER_BIB:
+            case SPONSOR_SHEET:
+            case WINNERS_MEDAL:
+            case WATER_CUP:
                 return true;
             default:
                 return false;
@@ -9032,6 +9084,16 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // home-printed ticket
             case PROP_GUN:
                 return IconShape.BOX;         // stage prop revolver
+
+            // Issue #1357: Northfield Charity Fun Run
+            case RACE_NUMBER_BIB:
+                return IconShape.FLAT_PAPER;  // pinned race number bib
+            case SPONSOR_SHEET:
+                return IconShape.FLAT_PAPER;  // clipboard sponsor sheet
+            case WINNERS_MEDAL:
+                return IconShape.CYLINDER;    // medal on a ribbon
+            case WATER_CUP:
+                return IconShape.CYLINDER;    // paper cup of water
 
             default:
                 return IconShape.BOX;

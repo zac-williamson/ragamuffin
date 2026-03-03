@@ -1061,5 +1061,17 @@ public enum RumourType {
      * apparently." — seeded by AmateurDramaticsSystem when player completes the
      * audition BattleBarMiniGame (any score ≥ 1).
      * Spreads via PUBLIC and PENSIONER NPCs. */
-    NAODS_CASTING;
+    NAODS_CASTING,
+
+    // ── Issue #1357: Northfield Charity Fun Run ────────────────────────────────
+
+    /** "That charity fun run got rained off this morning — Janet was gutted,
+     * apparently." — seeded by CharityFunRunSystem when HEAVY_RAIN cancels at 08:30.
+     * Triggers NeighbourhoodSystem Vibes −1. Spreads via PUBLIC and PENSIONER NPCs. */
+    FUN_RUN_CANCELLED,
+
+    /** "Someone cut the corner on the charity run — a jogger saw the whole
+     * thing." — seeded by CharityFunRunSystem when a JOGGER witnesses course-cutting.
+     * Triggers NeighbourhoodSystem Vibes −3. Spreads via JOGGER and PUBLIC NPCs. */
+    COURSE_CUTTING;
 }
