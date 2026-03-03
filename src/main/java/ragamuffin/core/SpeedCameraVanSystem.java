@@ -481,7 +481,7 @@ public class SpeedCameraVanSystem {
         if (!sharonRadioedPolice && tipOffCount >= TIP_OFFS_BEFORE_POLICE_CALL) {
             sharonRadioedPolice = true;
             if (wantedSystem != null) {
-                wantedSystem.addWantedStars(1, 0f, 0f, 0f, cb);
+                wantedSystem.addWantedStars(1, 0f, 0f, 0f, cb != null ? cb::award : null);
             }
             return TipOffResult.SHARON_RADIOED_POLICE;
         }
@@ -601,7 +601,7 @@ public class SpeedCameraVanSystem {
 
         // Police patrol increase
         if (wantedSystem != null) {
-            wantedSystem.addWantedStars(1, 0f, 0f, 0f, cb);
+            wantedSystem.addWantedStars(1, 0f, 0f, 0f, cb != null ? cb::award : null);
         }
 
         // Seed exposé rumour
@@ -661,7 +661,7 @@ public class SpeedCameraVanSystem {
             notorietySystem.addNotoriety(TYRE_SLASH_NOTORIETY, cb);
         }
         if (wantedSystem != null) {
-            wantedSystem.addWantedStars(TYRE_SLASH_WANTED_STARS, 0f, 0f, 0f, cb);
+            wantedSystem.addWantedStars(TYRE_SLASH_WANTED_STARS, 0f, 0f, 0f, cb != null ? cb::award : null);
         }
 
         if (!flatTyreSharonAwarded) {
@@ -700,7 +700,7 @@ public class SpeedCameraVanSystem {
             notorietySystem.addNotoriety(VAN_FIRE_NOTORIETY, cb);
         }
         if (wantedSystem != null) {
-            wantedSystem.addWantedStars(VAN_FIRE_WANTED_STARS, 0f, 0f, 0f, cb);
+            wantedSystem.addWantedStars(VAN_FIRE_WANTED_STARS, 0f, 0f, 0f, cb != null ? cb::award : null);
         }
         if (rumourNetwork != null) {
             // Use a dummy NPC for seeding — supply the sharon NPC for location

@@ -625,7 +625,8 @@ public class EnglandMatchSystem {
         if (witnessed && !rivalBlamedInstead) {
             // Dave saw the player
             if (wantedSystem != null) {
-                wantedSystem.addWantedStars(WANTED_TV_SABOTAGE_WITNESSED, 0, 0, 0, achievementCb);
+                final WantedSystem.AchievementCallback wantedCb = achievementCb != null ? achievementCb::award : null;
+                wantedSystem.addWantedStars(WANTED_TV_SABOTAGE_WITNESSED, 0, 0, 0, wantedCb);
             }
             if (notorietySystem != null) {
                 notorietySystem.addNotoriety(NOTORIETY_TV_SABOTAGE, achievementCb);
@@ -652,7 +653,7 @@ public class EnglandMatchSystem {
 
         // Street Lads faction loses 5 respect (they were enjoying it)
         if (factionSystem != null) {
-            factionSystem.modifyRespect(FactionSystem.Faction.STREET_LADS, -5);
+            factionSystem.applyRespectDelta(Faction.STREET_LADS, -5);
         }
 
         return true;

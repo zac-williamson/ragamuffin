@@ -590,7 +590,7 @@ public class EasterSystem {
         if (pushIn) {
             if (witnessNpc != null) {
                 if (criminalRecord != null) {
-                    criminalRecord.recordCrime(CrimeType.QUEUE_JUMP);
+                    criminalRecord.record(CrimeType.DISORDERLY_CONDUCT);
                 }
                 if (notorietySystem != null) {
                     notorietySystem.addNotoriety(2, callback);
@@ -598,7 +598,7 @@ public class EasterSystem {
             }
             // Still get the bun on a push-in
             bunsRemaining--;
-            inventory.add(Material.HOT_CROSS_BUN, 1);
+            inventory.addItem(Material.HOT_CROSS_BUN, 1);
             checkHotCrossHero(callback);
             if (bunsRemaining <= 0) {
                 queueSoldOut = true;
@@ -610,7 +610,7 @@ public class EasterSystem {
 
         // Normal queue join — only award bun if player is at front (simplified: always award one)
         bunsRemaining--;
-        inventory.add(Material.HOT_CROSS_BUN, 1);
+        inventory.addItem(Material.HOT_CROSS_BUN, 1);
         checkHotCrossHero(callback);
         if (bunsRemaining <= 0) {
             queueSoldOut = true;
@@ -654,7 +654,7 @@ public class EasterSystem {
         }
         eggsRemaining--;
         foilEggsCollected++;
-        inventory.add(Material.FOIL_EASTER_EGG, 1);
+        inventory.addItem(Material.FOIL_EASTER_EGG, 1);
         checkEasterEggBaron(callback);
         return EggCollectResult.EGG_COLLECTED;
     }
@@ -689,7 +689,7 @@ public class EasterSystem {
         if (!playerHasSkill) {
             return BunnyPickpocketResult.NO_SKILL;
         }
-        inventory.add(Material.CHOCOLATE_EGG, BUNNY_PICKPOCKET_YIELD);
+        inventory.addItem(Material.CHOCOLATE_EGG, BUNNY_PICKPOCKET_YIELD);
         if (notorietySystem != null) {
             notorietySystem.addNotoriety(BUNNY_PICKPOCKET_NOTORIETY, callback);
         }
@@ -722,7 +722,7 @@ public class EasterSystem {
         charityBucketInteracted = true;
         if (steal) {
             charityBucketStolen = true;
-            inventory.add(Material.CHARITY_BUCKET_EASTER, 1);
+            inventory.addItem(Material.CHARITY_BUCKET_EASTER, 1);
             if (notorietySystem != null) {
                 notorietySystem.addNotoriety(CHARITY_THEFT_NOTORIETY, callback);
             }
@@ -730,11 +730,11 @@ public class EasterSystem {
                 wantedSystem.increaseWantedStars(CHARITY_THEFT_WANTED);
             }
             if (criminalRecord != null) {
-                criminalRecord.recordCrime(CrimeType.THEFT);
+                criminalRecord.record(CrimeType.THEFT);
             }
             // Make all parade bikers hostile
             for (NPC biker : paradeNpcs) {
-                biker.setState(NPCState.HOSTILE);
+                biker.setState(NPCState.HOSTILE_TO_PLAYER);
             }
             if (!charitySkimmerAwarded && callback != null) {
                 charitySkimmerAwarded = true;
@@ -743,7 +743,7 @@ public class EasterSystem {
             return CharityBucketResult.STOLEN;
         } else {
             // Donation — grant voucher as token of appreciation
-            inventory.add(Material.BIKERS_VOUCHER, 1);
+            inventory.addItem(Material.BIKERS_VOUCHER, 1);
             return CharityBucketResult.DONATED;
         }
     }
@@ -781,7 +781,7 @@ public class EasterSystem {
         // Hold complete — steal the jacket
         jacketStealHoldTime = 0f;
         bikerJacketsStolen++;
-        inventory.add(Material.BIKER_JACKET, 1);
+        inventory.addItem(Material.BIKER_JACKET, 1);
         if (!bikerBlagAwarded && callback != null) {
             bikerBlagAwarded = true;
             callback.award(AchievementType.BIKER_BLAG);
@@ -827,10 +827,10 @@ public class EasterSystem {
         }
         closedSignBroken = true;
         if (criminalRecord != null) {
-            criminalRecord.recordCrime(CrimeType.PETTY_THEFT);
+            criminalRecord.record(CrimeType.PETTY_THEFT);
         }
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(CLOSED_SIGN_NOTORIETY);
+            notorietySystem.addNotoriety(CLOSED_SIGN_NOTORIETY, null);
         }
         return true;
     }
