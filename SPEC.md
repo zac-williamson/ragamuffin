@@ -53751,3 +53751,121 @@ Integrates with `PropertySystem` (tenant/occupant status), `NeighbourhoodSystem`
 //   `STITCH_UP_ACCEPTED`, `CONSUMER_CHAMPION`, `OUT_CRAIGD_CRAIG`, `DIY_SMART_METER`,
 //   `DAVE_FLOORED` (AchievementType);
 //   `DOORSTEP_FRAUD`, `VEHICLE_BREAK_IN` (CriminalRecord.CrimeType).
+
+---
+
+## Issue #1426: Add Northfield Neighbourhood WhatsApp Group — The Lost Cat Alert, the Passive-Aggressive Parking Row & the Social Engineering Exploit
+
+### Overview
+
+The **Northfield Residents WhatsApp Group** (`WhatsAppGroupSystem`) is a persistent in-game social feed that runs 24/7 on the `COMMUNITY_NOTICE_BOARD_PROP` outside the Community Centre and optionally on a `BURNER_PHONE` in the player's inventory. The group has 12–15 resident members who post messages autonomously based on in-game events (lost pets, parking grievances, suspicious strangers, council complaints). The player can read posts, post fake messages impersonating residents, exploit the information to gain advantages, or deliberately poison the group's trust to manipulate NPC behaviour.
+
+Integrates with `RumourNetwork`, `NeighbourhoodSystem`, `NewspaperSystem`, `WantedSystem`, `PropertySystem`, `NotorietySystem`, and `CriminalRecord`.
+
+---
+
+### Mechanic 1 — The Feed (Passive Reading)
+
+- The board receives auto-generated posts every 4–8 in-game minutes during waking hours (07:00–23:00). Posts are drawn from a weighted pool tied to active world events:
+  - **LOST_PET_POST** — "Has anyone seen a tabby cat called Whiskers? Last seen Carnation Road. Very friendly." Spawns `LOST_CAT_NPC` near the stated location.
+  - **PARKING_GRIEVANCE_POST** — "Whoever keeps parking their van on the pavement outside No. 14, it's a FIRE HAZARD. You know who you are." If the player's vehicle is near No. 14, they are the target; ignoring for 1 in-game day triggers `PARKING_COMPLAINT_FINE` (5 COIN via CouncilEnforcementSystem).
+  - **SUSPICIOUS_STRANGER_POST** — Posted after player commits a crime witnessed by any NPC. Description matches player's current outfit. WantedSystem passive +0.5 heat for 1 in-game day.
+  - **COUNCIL_COMPLAINT_POST** — Posted by `DISGRUNTLED_RESIDENT` NPC after a fly-tip, noise event, or graffiti near their property. Triggers `COUNCIL_INSPECTOR` visit 1 day later.
+  - **SCAM_WARNING_POST** — Auto-posted after an energy tout, dodgy roofer, or catalogue man event concludes. Warns residents; reduces NPC gullibility by 20% for 2 in-game days (fewer openings for player scams).
+  - **NEIGHBOURHOOD_WATCH_ALERT** — Posted by `NEIGHBOURHOOD_WATCH_CAPTAIN` (already in `NeighbourhoodWatchSystem`). Doubles NPC report radius to 16 blocks for 30 in-game minutes.
+
+- Player reads the board by pressing E on `COMMUNITY_NOTICE_BOARD_PROP`. Feed is shown as scrolling `SpeechLogUI` entries attributed to named residents.
+
+---
+
+### Mechanic 2 — Fake Posting (Social Engineering)
+
+The player can post fake messages to the group from a `BURNER_PHONE` (already in inventory from various systems) or from `INTERNET_CAFE_TERMINAL_PROP`:
+
+- **Fake Suspicious Stranger Post**: Player names an NPC (targeting any `PUBLIC` NPC within 30 blocks). Within 3 in-game minutes, 2–4 `NEIGHBOURHOOD_WATCH_NPC` residents converge on that NPC and follow them for 5 minutes. The targeted NPC enters `NPCState.NERVOUS`. This can be used to clear NPCs from an area before committing a crime. Cost: 1 BURNER_PHONE charge (phone tracks up to 5 posts per unit).
+  - If WantedSystem stars ≥ 2: the post backfires — `COUNCIL_INSPECTOR` cross-references with CCTV and adds WantedSystem +1. Achievement: `DIGITAL_GRASS`.
+
+- **Fake Lost Pet Post**: Player invents a lost pet at an address. The `RESIDENT_NPC` at that address is drawn outside for 10 in-game minutes (searching), leaving their back door unlocked. Classic distraction burglary setup. Achievement: `WHISKERS_GAMBIT` (successfully burgle a house using the lost pet distraction).
+  - If the same NPC is targeted twice: they become `NPCState.SUSPICIOUS`, call police, and the post is flagged as fake by `NEIGHBOURHOOD_WATCH_CAPTAIN`. WantedSystem +1.
+
+- **Fake Council Meeting Cancellation Post**: Posts that the scheduled Community Centre meeting is cancelled. `COMMUNITY_CENTRE_MEETING` event (from `CommunityCentreSystem`) is skipped; NPCs who would have attended instead mill around outside. This creates a crowd outside the Community Centre — player can pickpocket or run a busking performance to exploit the gathered crowd.
+  - Achievement: `MEETING_CANCELLED` — "Fake-cancel a community meeting via the WhatsApp group."
+
+- **Fake Parking Grievance Post**: Targets a specific `RESIDENT_NPC` by name with a passive-aggressive parking complaint. That NPC and their immediate neighbour enter a 2-day `NEIGHBOUR_DISPUTE` state (they avoid each other, won't answer each other's doors). Useful for isolating a target NPC before approaching them.
+  - 3 fake posts in one in-game day triggers `COMMUNICATIONS_HARASSMENT` crime in `CriminalRecord`. `NEIGHBOURHOOD_WATCH_CAPTAIN` traces the posts to the player's phone/terminal.
+
+---
+
+### Mechanic 3 — The Lost Cat Side Quest
+
+When a `LOST_CAT_POST` appears, the player can:
+- **Find and return Whiskers**: Search within 20 blocks of the stated location for the `LOST_CAT_NPC`. Press E to pick up (Whiskers enters inventory as `STRAY_CAT` item). Deliver to owner's door → 3 COIN + `NEIGHBOURHOOD_HERO` rumour seeded + `NeighbourhoodSystem` vibes +2. Achievement: `CAT_RETURNED`.
+- **Keep Whiskers**: `STRAY_CAT` Material in inventory. Sell to `PET_SHOP_NPC` (if one exists) for 5 COIN, or trade to `DOG_COMPANION_SYSTEM` owner for `DOG_TREAT_ITEM`. The owner NPC enters `NPCState.GRIEVING` for 1 in-game day and posts increasingly desperate follow-up messages. `NeighbourhoodSystem` vibes −1/day until cat returned or 3 days pass.
+- **Ransom the cat**: Post a ransom demand (1 COIN, anonymous) via `BURNER_PHONE`. Owner NPC leaves 1 COIN on their doorstep. Player collects it. Achievement: `CAT_NAPPER`. `CriminalRecord` records `EXTORTION`.
+- **Post fake "found it!" reply** and pocket nothing: Owner NPC celebrates for 10 minutes then re-posts "False alarm — still missing." Vibes −1; `NEIGHBOURHOOD_WATCH_CAPTAIN` adds player's number to the suspicious list.
+
+---
+
+### Mechanic 4 — Group Implosion
+
+If the player causes 5 or more fake posts in a single in-game week:
+- The `NEIGHBOURHOOD_WATCH_CAPTAIN` posts: "Right, that's it — I'm taking over admin. No more anonymous posts."
+- The group enters `LOCKDOWN_MODE` for 2 in-game days: only `NEIGHBOURHOOD_WATCH_CAPTAIN` can post; all player fake-post options are disabled.
+- After lockdown, the group resumes but the player's phone number is `FLAGGED` — all future fake posts have a 40% detection chance (vs. 10% baseline).
+- Full implosion: if the player posts 10 fake messages total across the whole game, the group disbands entirely. The `COMMUNITY_NOTICE_BOARD_PROP` is removed and replaced with a `NOTICE_BOARD_PROP` containing a hand-written sign: "GROUP DISBANDED. THANKS FOR NOTHING. — JANET." `NeighbourhoodSystem` vibes permanent −5.
+- Achievement: `NUKED_THE_GROUP` — "Cause the Northfield Residents WhatsApp Group to permanently disband."
+
+---
+
+### New NPCType entries required
+
+- `WHATSAPP_GROUP_ADMIN` — Janet. Cardigan, reading glasses, phone permanently in hand. Passive unless provoked. Admin of the group; enforces LOCKDOWN_MODE. Non-violent; calls police if harassed (WantedSystem +1).
+- `LOST_CAT_NPC` — Whiskers. Small tabby cat sprite (re-uses animal NPC logic). Wanders within 20 blocks of spawn. Interactable (E to pick up → `STRAY_CAT` Material).
+
+### New PropType entries required
+
+- `COMMUNITY_NOTICE_BOARD_PROP` — Already referenced in earlier systems. Add `WhatsAppGroupSystem` as a second listener on this prop's E-interaction if not already present. Dims: 0.6 × 1.2 × 0.1.
+- `WHATSAPP_FEED_TERMINAL_PROP` — Alternative access terminal at the library or internet café. Same interaction as the notice board but indoors. Dims: 0.5 × 1.0 × 0.4.
+
+### New Material entries required
+
+- `STRAY_CAT` — "Whiskers. Very friendly. Slightly damp." Stack size 1. Fence value 0. Tradeable. Deliverable to owner for 3 COIN reward.
+- `CAT_RANSOM_NOTE` — "Anon note: 'Your cat is safe. Leave 1 COIN on the step.'" Stack size 1. Crafted: SCRAP_PAPER + BIRO. Not fenceable. Used by `EXTORTION` ransom path.
+
+### New RumourType entries required
+
+- `NEIGHBOURHOOD_HERO` — "Someone found old Whiskers and brought him back. Lovely that."
+- `WHATSAPP_TROUBLEMAKER` — "Someone's been stirring on the residents' WhatsApp. Police are involved apparently."
+- `GROUP_DISBANDED` — "Northfield Residents WhatsApp group is no more. Janet lost the plot apparently."
+- `FAKE_POST_SPOTTED` — "Someone posted a load of rubbish on the community group. Watch out."
+
+### New AchievementType entries required
+
+- `CAT_RETURNED` — "Return a lost cat to its owner via the WhatsApp group."
+- `CAT_NAPPER` — "Ransom a lost cat for 1 COIN via the residents' WhatsApp group."
+- `WHISKERS_GAMBIT` — "Use a fake lost-pet post to distract a resident and burgle their home."
+- `DIGITAL_GRASS` — "Post a fake suspicious-stranger alert that backfires."
+- `MEETING_CANCELLED` — "Fake-cancel a community meeting via the WhatsApp group."
+- `NUKED_THE_GROUP` — "Post enough fake messages to permanently destroy the WhatsApp group."
+
+### New CriminalRecord.CrimeType entries required
+
+- `COMMUNICATIONS_HARASSMENT` — recorded when player posts 3+ fake messages in one in-game day via WhatsApp group.
+
+### Integration Tests
+
+1. **Feed generates LOST_CAT_POST and spawns cat NPC**: call `generatePost(world, PostType.LOST_PET_POST, rng)` on `WhatsAppGroupSystem`; verify a `LOST_CAT_NPC` is spawned within 20 blocks of the Carnation Road landmark and the feed contains one entry of type `LOST_PET_POST`.
+2. **Fake suspicious-stranger post diverts watch NPCs**: place 3 `NEIGHBOURHOOD_WATCH_NPC` NPCs within 30 blocks; call `postFakeMessage(player, FakePostType.SUSPICIOUS_STRANGER, targetNpc)`; advance time 3 in-game minutes; verify all 3 watch NPCs are within 5 blocks of `targetNpc` and `targetNpc.getState() == NPCState.NERVOUS`.
+3. **Fake lost-pet post unlocks target door**: call `postFakeMessage(player, FakePostType.LOST_PET, residentNpc)`; verify `residentNpc.getState() == NPCState.SEARCHING` and `PropertySystem.isBackDoorUnlocked(residentNpc.getHome()) == true` for 10 in-game minutes.
+4. **Returning Whiskers yields reward and vibes**: place `STRAY_CAT` in player inventory; call `returnCatToOwner(player, ownerNpc)`; verify player gains 3 COIN, `NeighbourhoodSystem.getVibes()` increases by 2, `NEIGHBOURHOOD_HERO` rumour is seeded, and `CAT_RETURNED` achievement is unlocked.
+5. **Ransoming cat records EXTORTION crime**: call `ransomCat(player, ownerNpc)`; verify `CriminalRecord` contains `EXTORTION`, player gains 1 COIN after `collectRansom(player, ownerDoorPos)`.
+6. **5 fake posts in one week triggers LOCKDOWN_MODE**: call `postFakeMessage(...)` 5 times within 7 in-game days; verify `WhatsAppGroupSystem.isInLockdownMode() == true`, `WHATSAPP_GROUP_ADMIN` has posted "No more anonymous posts" in the feed, and `postFakeMessage(player, ...)` returns `POST_BLOCKED` on the 6th attempt.
+
+// Enum additions required: `STRAY_CAT`, `CAT_RANSOM_NOTE` (Material);
+//   `COMMUNITY_NOTICE_BOARD_PROP` (PropType — reuse or add if absent),
+//   `WHATSAPP_FEED_TERMINAL_PROP` (PropType);
+//   `WHATSAPP_GROUP_ADMIN`, `LOST_CAT_NPC` (NPCType);
+//   `NEIGHBOURHOOD_HERO`, `WHATSAPP_TROUBLEMAKER`, `GROUP_DISBANDED`, `FAKE_POST_SPOTTED` (RumourType);
+//   `CAT_RETURNED`, `CAT_NAPPER`, `WHISKERS_GAMBIT`, `DIGITAL_GRASS`,
+//   `MEETING_CANCELLED`, `NUKED_THE_GROUP` (AchievementType);
+//   `COMMUNICATIONS_HARASSMENT` (CriminalRecord.CrimeType).
