@@ -3742,6 +3742,26 @@ public enum Material {
      */
     CEREMONIAL_CANE("Ceremonial Cane"),
 
+    // ── Issue #1351: Northfield QuickFix Loans ────────────────────────────────
+
+    /**
+     * Final Demand Letter — a red-bordered official letter left by Terry (BAILIFF_NPC)
+     * on the door of the player's squat when they are absent during a bailiff visit.
+     * Three final demand letters trigger PropertySystem eviction.
+     * Plays SoundEffect.PAPER_RUSTLE on pickup.
+     * Tooltip: "FINAL DEMAND. Pay within 48 hours or face possession proceedings."
+     */
+    FINAL_DEMAND_LETTER("Final Demand Letter"),
+
+    /**
+     * Forged ID — a convincing-but-fake identity document crafted from
+     * STOLEN_PHONE + PRINTER_PAPER + INK_BOTTLE via CraftingSystem.
+     * Used at QuickFix Loans counter for a no-liability loan (70% pass, 30% catch).
+     * Consumed on use (whether caught or not).
+     * Tooltip: "It'll probably work. Probably."
+     */
+    FORGED_ID("Forged ID"),
+
     // ── Issue #1144: Northfield Probation Office ──────────────────────────────
 
     /**
@@ -6564,6 +6584,12 @@ public enum Material {
             case CEREMONIAL_CANE:         return cs(0.10f, 0.08f, 0.08f,  // Ebony shaft
                                                     0.82f, 0.78f, 0.72f); // Silver buffalo head
 
+            // Issue #1351: Northfield QuickFix Loans
+            case FINAL_DEMAND_LETTER:     return cs(0.88f, 0.12f, 0.08f,  // Red-bordered paper
+                                                    0.95f, 0.90f, 0.80f); // White body
+            case FORGED_ID:               return cs(0.88f, 0.85f, 0.82f,  // Off-white card
+                                                    0.28f, 0.42f, 0.68f); // Fake blue detail
+
             // Issue #1144: Northfield Probation Office
             case SIGN_ON_LETTER:          return cs(0.92f, 0.92f, 0.88f,  // White paper
                                                     0.18f, 0.38f, 0.72f); // Blue official stamp
@@ -7374,6 +7400,9 @@ public enum Material {
             case KOMPROMAT_LEDGER:
             case BUFFALO_TOKEN:
             case CEREMONIAL_CANE:
+            // Issue #1351: Northfield QuickFix Loans — not block items
+            case FINAL_DEMAND_LETTER:
+            case FORGED_ID:
             // Issue #1144: Northfield Probation Office — not block items
             case SIGN_ON_LETTER:
             case ELECTRONIC_TAG:
@@ -7625,6 +7654,9 @@ public enum Material {
             // Issue #1265: Northfield Loan Shark — Big Mick's Doorstep Lending
             case LOAN_AGREEMENT:
             case DEBT_LEDGER:
+            // Issue #1351: Northfield QuickFix Loans
+            case FINAL_DEMAND_LETTER:
+            case FORGED_ID:
                 return true;
             default:
                 return false;

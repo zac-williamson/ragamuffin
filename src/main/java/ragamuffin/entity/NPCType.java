@@ -2775,7 +2775,18 @@ public enum NPCType {
      * inside the Lodge.
      * HP: 45f, attack: 6f, cooldown: 1.2f, hostile: false.
      */
-    RAOB_PRIMO_REGENT(45f, 6f, 1.2f, false);
+    RAOB_PRIMO_REGENT(45f, 6f, 1.2f, false),
+
+    // ── Issue #1351: Northfield QuickFix Loans ────────────────────────────────
+
+    /**
+     * LOAN_SHARK_CLERK — Darren, who runs QuickFix Loans on Northfield High Street.
+     * Offers payday loans of 10, 20, or 40 COIN at 50% interest (40% if player is
+     * employed). Open Monday–Saturday 09:00–17:00. Dispatches BAILIFF Terry on
+     * day 4 of non-repayment. Marchetti Crew FRIENDLY respect doubles loan cap to 80 COIN.
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    LOAN_SHARK_CLERK(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
