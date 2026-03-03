@@ -51825,3 +51825,137 @@ At 17:00 on day 3, `POSTAL_MANAGER` NPC spawns. Outcome depends on player's acti
 // Integration: PostOfficeSystem, TimeSystem, NeighbourhoodSystem, NotorietySystem, WantedSystem,
 //   CriminalRecord, RumourNetwork, NewspaperSystem, EmploymentSystem, HMRCSystem, FenceSystem,
 //   SoundSystem, AchievementSystem
+
+---
+
+## Issue #1399: Add Northfield Window Cleaner — Terry's Round, the Ladder Shortcut & the Nosy Neighbour Hustle
+
+**Goal**: Implement `WindowCleanerSystem.java` — a peripatetic small-business NPC (Terry, the window cleaner) who runs a weekly residential round across Northfield with a bucket, chamois, and an extendable ladder propped against houses. The player can work Terry's round for cash-in-hand wages, use the unattended ladder to access upstairs windows for burglary, or undercut Terry by starting a rival round.
+
+### Mechanic 1 — Terry's Weekly Round (Mon–Fri 08:30–16:00)
+
+Terry (`NPCType.WINDOW_CLEANER`) follows a fixed route calling at 12 residential properties per day, spending 90 in-game seconds at each. While at a property he:
+
+- Places a `LADDER_PROP` against the front wall (accessible by player — allows reaching second-storey windows).
+- Cleans `WINDOW_PROP` blocks (visual state: dirty → clean; no gameplay effect beyond flavour).
+- Knocks on door and waits for a `HOUSEHOLDER` NPC to pay: payment is `WINDOW_CLEAN_PAYMENT` = 2 COIN per house.
+- If householder refuses payment (20% chance, `NONPAYMENT_CHANCE`), Terry grumbles a contextual speech line and marks the address as `DEFAULTER`.
+
+`DEFAULTER` properties can be reported to Terry by the player (press E on Terry) for `SNITCH_REWARD` = 1 COIN per address; seeds `NONPAYMENT_GOSSIP` rumour.
+
+### Mechanic 2 — Cash-in-Hand Employment
+
+Press E on Terry to request work. If Notoriety < `MAX_NOTORIETY_FOR_EMPLOYMENT` = 40:
+
+- Player is assigned the remaining houses on today's route.
+- At each house, mini-game: 6-step `BattleBarMiniGame` (EASY difficulty). Score ≥ 4 = clean window, earn `WAGE_PER_HOUSE` = 3 COIN. Score < 4 = smeared window, Terry angry, no pay for that house.
+- Complete full day's route (≥ 8 houses cleaned): `ROUND_COMPLETED` flag set, `DAYS_WORKED_FOR_TERRY` incremented. Achievement `WINDOW_LAD` on first full day.
+- Work 5 full days: `TRUSTED_WORKER` flag set — Terry lends the player his `BUCKET_AND_CHAMOIS` item.
+- Terry deducts `HMRC_GRASS_CHANCE` = 15% chance of reporting cash income to `HMRCSystem` if player earns > 30 COIN/day (Terry is cautious but not totally bent).
+
+### Mechanic 3 — The Ladder Shortcut (Burglary Route)
+
+When Terry's `LADDER_PROP` is placed against a building, the player can climb it to access an upstairs `WINDOW_PROP`. The window is unlocked (Terry opened it to clean). This gives entry to upstairs rooms of residential properties — bypassing front-door locks entirely.
+
+- Entering via ladder window: `CrimeType.BURGLARY` recorded; Notoriety +6; WantedSystem +1 star.
+- If player is seen on the ladder by any NPC within 8 blocks: Notoriety +3, NPC calls police.
+- Terry is oblivious to ladder use while cleaning (facing the wall); only `HOUSEHOLDER` or `NEIGHBOURHOOD_WATCH` NPCs can spot the player.
+- `LADDER_PROP` removed when Terry moves to next property (90-second window).
+- Climbing the ladder with Terry absent (after hours) = `CrimeType.TRESPASS` only.
+
+### Mechanic 4 — Rival Round Hustle
+
+Player can buy `BUCKET_AND_CHAMOIS` from corner shop (8 COIN) or steal Terry's. With item in hand, press E on any residential `WINDOW_PROP` between 08:00–17:00 to offer window cleaning.
+
+- 60% of householders pay `RIVAL_CLEAN_PAYMENT` = 2 COIN (same as Terry).
+- 30% refuse.
+- 10% recognise the player as not Terry and call him to complain: Terry becomes `HOSTILE` toward player for 1 in-game day; seeds `RIVAL_CLEANER` rumour.
+- After 5 houses cleaned in one day without Terry spotting you: achievement `UNDERCUTTING_TERRY`.
+- If Terry spots player cleaning on his patch (within 12 blocks): Terry shouts, becomes HOSTILE for 24h; seeds `TURF_WAR` rumour.
+- Income from rival round is tracked by `HMRCSystem` same as legitimate work.
+
+### Mechanic 5 — Nosy Neighbour Intel
+
+Householders who chat with Terry seed random `NEIGHBOURHOOD_GOSSIP` rumours during payment. Player standing within 4 blocks of the payment exchange (without being spotted as loitering — Notoriety < 25) overhears the rumour and it is added to the player's `RumourNetwork` automatically. Achievement `CURTAIN_TWITCHER` on 5 overheard rumours.
+
+### New Materials (add to `Material.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `BUCKET_AND_CHAMOIS` | Tool item; required for rival round; stackable ×1 |
+| `SQUEEGEE` | Rare upgrade sold by Terry after 5 days worked; improves BattleBarMiniGame EASY→MEDIUM but raises `RIVAL_CLEAN_PAYMENT` to 3 COIN |
+| `TERRY_DEBT_NOTE` | IOU from defaulter householder; fence to Terry for 1 COIN or sell to `FenceSystem` for 0.5 COIN |
+
+### New PropTypes (add to `PropType.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `LADDER_PROP` | Climbable prop placed against building walls; removed when Terry moves on |
+| `WINDOW_CLEANING_VAN_PROP` | Terry's van parked at round start; lootable for `BUCKET_AND_CHAMOIS` and `SQUEEGEE` |
+
+### New NPCTypes (add to `NPCType.java` if absent)
+
+| Constant | Stats | Notes |
+|----------|-------|-------|
+| `WINDOW_CLEANER` | 25f, 4f, 1.2f, false | Terry; follows fixed daily route; becomes HOSTILE if rival spotted |
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Constant | Unlock Condition |
+|----------|-----------------|
+| `WINDOW_LAD` | Complete a full day's round for Terry (≥ 8 houses) |
+| `UNDERCUTTING_TERRY` | Clean 5 houses on rival round without Terry spotting you |
+| `CURTAIN_TWITCHER` | Overhear 5 neighbour gossip exchanges at Terry's payment stops |
+| `UP_THE_LADDER` | Enter a house via the unattended ladder shortcut |
+| `BUCKET_AND_SPADE` | Earn 20+ COIN from legitimate window cleaning across career |
+
+### New RumourTypes (add to `RumourType.java`)
+
+| Constant | Seeded When | Sample Text |
+|----------|-------------|-------------|
+| `NONPAYMENT_GOSSIP` | Player reports defaulter to Terry | "Number 14 hasn't paid Terry in three weeks. Tight as a drum." |
+| `RIVAL_CLEANER` | Householder recognises non-Terry cleaner | "Some lad with a bucket's been doing the windows. Terry's not happy." |
+| `TURF_WAR` | Terry spots player on his patch | "Terry had a face like thunder this morning. Someone's nicking his round." |
+| `LADDER_INCIDENT` | Player spotted climbing ladder | "Police were called to Birchfield Road. Someone climbing in through a window." |
+
+### Unit Tests (`WindowCleanerSystemTest.java`)
+
+- `testTerryRouteGeneration`: verify route contains exactly 12 properties; no duplicate addresses; all within world bounds.
+- `testPaymentCycle`: advance Terry to a property, trigger payment; verify householder pays 2 COIN with probability `1 - NONPAYMENT_CHANCE`, or refuses with probability `NONPAYMENT_CHANCE`.
+- `testLadderPlacedAtProperty`: after Terry arrives at a property, verify `LADDER_PROP` exists adjacent to wall; removed after Terry departs.
+- `testEmploymentNotorietyCap`: player Notoriety = 41, request work; verify `canEmployPlayer` returns false.
+- `testMiniGameCleanResult`: score ≥ 4 → `WAGE_PER_HOUSE` = 3 COIN added; score < 4 → 0 COIN; Terry anger flag set.
+- `testFullDayAchievement`: complete 8 houses → `ROUND_COMPLETED` true, `WINDOW_LAD` achievement queued.
+- `testTrustedWorkerUnlock`: 5 full days worked → `TRUSTED_WORKER` true, `BUCKET_AND_CHAMOIS` granted.
+- `testRivalRoundPaymentDistribution`: roll 1000 householder payments with seeded Random; verify ≈60% pay, ≈30% refuse, ≈10% complain, within 5% tolerance.
+- `testRivalRoundTerryHostile`: player cleans within 12 blocks of Terry; verify Terry state = HOSTILE, `TURF_WAR` rumour seeded.
+- `testGossipOverhear`: player within 4 blocks, Notoriety 20; verify rumour added to RumourNetwork after payment exchange completes.
+- `testGossipBlockedHighNotoriety`: player Notoriety = 26; verify rumour NOT overheard (too suspicious).
+- `testBurglaryViaLadder`: player climbs ladder, enters window; verify `CrimeType.BURGLARY` recorded, Notoriety +6, WantedSystem star added.
+- `testHMRCTriggerRivalRound`: player earns 35 COIN in one day from rival round; verify `HMRCSystem.recordCashIncome` called with correct amount.
+- `testDefaulterReportReward`: player presses E on Terry with a defaulter in list; verify 1 COIN paid, `NONPAYMENT_GOSSIP` seeded.
+
+### Integration Tests (`Issue1399WindowCleanerIntegrationTest.java`)
+
+1. **Terry's round runs and ladders appear**: advance game to Monday 08:30. Verify `WINDOW_CLEANER` NPC (Terry) spawns at `WINDOW_CLEANING_VAN_PROP`. Advance 90 game-seconds. Verify `LADDER_PROP` exists adjacent to first property. Advance another 90 seconds. Verify ladder removed from first property and placed at second.
+
+2. **Burglary via ladder shortcut**: wait for Terry to place ladder at a residential property. Have player climb ladder. Verify player Y position ≥ ground + 3 blocks (upstairs). Enter window. Verify `CrimeType.BURGLARY` in `CriminalRecord`. Verify Notoriety increased by 6. Verify `UP_THE_LADDER` achievement unlocked.
+
+3. **Full employment day earns wages**: player presses E on Terry (Notoriety = 10). Complete 8 house mini-games scoring ≥ 4 each. Verify player coin balance increased by 24 (8 × 3). Verify `WINDOW_LAD` achievement unlocked. Verify `ROUND_COMPLETED` flag true. Verify HMRC NOT triggered (income < 30 COIN threshold).
+
+4. **Rival round triggers turf war**: player buys `BUCKET_AND_CHAMOIS`. Cleans 3 houses outside Terry's current position. Then cleans a house within 12 blocks of Terry. Verify Terry state = HOSTILE. Verify `TURF_WAR` rumour in `RumourNetwork`. Verify Terry remains HOSTILE for next 24 in-game hours.
+
+5. **Gossip overhear seeds rumour**: player stands 3 blocks from a property at Terry's payment time. Notoriety = 15. Advance through payment exchange. Verify `NEIGHBOURHOOD_GOSSIP` rumour added to player-accessible rumours. Repeat until 5 overheard. Verify `CURTAIN_TWITCHER` achievement unlocked.
+
+// ── Issue #1399: Add Northfield Window Cleaner ────────────────────────────────
+// New System File: WindowCleanerSystem.java in ragamuffin.core
+// New Test Files: WindowCleanerSystemTest.java in src/test/java/ragamuffin/core/
+//                Issue1399WindowCleanerIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: BUCKET_AND_CHAMOIS, SQUEEGEE, TERRY_DEBT_NOTE
+// New PropTypes: LADDER_PROP, WINDOW_CLEANING_VAN_PROP
+// New NPCTypes: WINDOW_CLEANER
+// New AchievementTypes: WINDOW_LAD, UNDERCUTTING_TERRY, CURTAIN_TWITCHER, UP_THE_LADDER, BUCKET_AND_SPADE
+// New RumourTypes: NONPAYMENT_GOSSIP, RIVAL_CLEANER, TURF_WAR, LADDER_INCIDENT
+// Integration: BattleBarMiniGame, PropertySystem, TimeSystem, NotorietySystem, WantedSystem,
+//   CriminalRecord, RumourNetwork, NeighbourhoodSystem, NeighbourhoodWatchSystem, HMRCSystem,
+//   FenceSystem, EmploymentSystem, SoundSystem, AchievementSystem
