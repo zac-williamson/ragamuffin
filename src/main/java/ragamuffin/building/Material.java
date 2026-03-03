@@ -5581,7 +5581,49 @@ public enum Material {
      * before the raffle begins (Agenda slot 4). Awards RIGGED_RAFFLE achievement.
      * Tooltip: "Weighted for results. Very community-minded."
      */
-    RIGGED_BARREL("Rigged Raffle Barrel");
+    RIGGED_BARREL("Rigged Raffle Barrel"),
+
+    // ── Issue #1343: Northfield Christmas Lights Switch-On ────────────────────
+
+    /**
+     * MULLED_WINE — a warm spiced red wine served at the Christmas lights event
+     * stalls. Consuming it restores +25 Warmth. Purchasable for 2 COIN from any
+     * MULLED_WINE_STALL_PROP, or taken free from the unattended stall after 18:00.
+     * Tooltip: "Hot, sweet, and dangerously festive."
+     */
+    MULLED_WINE("Mulled Wine"),
+
+    /**
+     * WAYNE_STUBBS_AUTOGRAPH — a signed selfie from CELEBRITY_NPC Wayne Stubbs,
+     * ex-Big Brother contestant. Given freely by Wayne when the player interacts
+     * with him (if Notoriety &lt; 3). Fenceable for 3 COIN.
+     * Tooltip: "Series 7. He came eighth."
+     */
+    WAYNE_STUBBS_AUTOGRAPH("Wayne Stubbs Autograph"),
+
+    /**
+     * CELEBRITY_WALLET — Wayne Stubbs's wallet, containing 8–12 COIN. Obtained
+     * by successfully pickpocketing the CELEBRITY_NPC (STEALTH ≥ 2 required).
+     * Awards CELEBRITY_MUGGER achievement.
+     * Tooltip: "Full of crisp twenties and a Greggs loyalty card."
+     */
+    CELEBRITY_WALLET("Celebrity Wallet"),
+
+    /**
+     * FREEBIE_WRISTBAND — a cloth wristband handed out by event staff at the
+     * Christmas lights switch-on. Gives the player free access to the mulled wine
+     * stall once. Dropped by SECURITY_GUARD NPCs on defeat.
+     * Tooltip: "VIP access. Mostly meaningless."
+     */
+    FREEBIE_WRISTBAND("Freebie Wristband"),
+
+    /**
+     * CHRISTMAS_LIGHTS_BULB — a replacement festive bulb salvaged from the
+     * SWITCH_BOX_PROP or dropped when the lights fail. Used as craft ingredient
+     * or fenceable for 1 COIN each.
+     * Tooltip: "Needs a firm hand and the right fuse."
+     */
+    CHRISTMAS_LIGHTS_BULB("Christmas Lights Bulb");
 
     private final String displayName;
 
@@ -6823,6 +6865,18 @@ public enum Material {
                                                   0.95f, 0.90f, 0.75f); // Cream voucher
             case RIGGED_BARREL:         return cs(0.45f, 0.28f, 0.12f,  // Dark wood barrel
                                                   0.60f, 0.60f, 0.60f); // Metal hoop
+
+            // Issue #1343: Northfield Christmas Lights Switch-On
+            case MULLED_WINE:           return cs(0.55f, 0.05f, 0.10f,  // Deep red wine
+                                                  0.70f, 0.40f, 0.15f); // Spiced amber
+            case WAYNE_STUBBS_AUTOGRAPH: return cs(0.95f, 0.95f, 0.85f, // Cream paper
+                                                  0.20f, 0.40f, 0.80f); // Blue ink
+            case CELEBRITY_WALLET:      return cs(0.15f, 0.10f, 0.08f,  // Black leather
+                                                  0.85f, 0.75f, 0.20f); // Gold trim
+            case FREEBIE_WRISTBAND:     return cs(0.20f, 0.60f, 0.25f,  // Christmas green
+                                                  0.90f, 0.20f, 0.20f); // Red stripe
+            case CHRISTMAS_LIGHTS_BULB: return cs(0.95f, 0.80f, 0.10f,  // Warm yellow glow
+                                                  0.85f, 0.25f, 0.10f); // Red base
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -8795,6 +8849,18 @@ public enum Material {
                 return IconShape.BOX;         // large insulated courier bag
             case COLD_DELIVERY_BAG:
                 return IconShape.BOX;         // worn insulated bag
+
+            // Issue #1343: Northfield Christmas Lights Switch-On
+            case MULLED_WINE:
+                return IconShape.CYLINDER;    // small cup / beaker
+            case WAYNE_STUBBS_AUTOGRAPH:
+                return IconShape.FLAT_PAPER;  // signed photo
+            case CELEBRITY_WALLET:
+                return IconShape.FLAT_PAPER;  // leather billfold
+            case FREEBIE_WRISTBAND:
+                return IconShape.CYLINDER;    // cloth wristband
+            case CHRISTMAS_LIGHTS_BULB:
+                return IconShape.CYLINDER;    // small bulb
 
             default:
                 return IconShape.BOX;
