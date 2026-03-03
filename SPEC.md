@@ -45593,3 +45593,116 @@ Add to Player or a simple inner enum/class in NightclubSystem:
 //              FactionSystem, MCBattleSystem, TaxiSystem, KebabVanSystem, RumourNetwork,
 //              WitnessSystem, NoiseSystem, StreetSkillSystem, PawnShopSystem,
 //              AchievementSystem, TooltipSystem
+
+---
+
+## Issue #1327: Add Northfield TV Licensing — Derek's Door-Knock, the Detector Van & the Forged Licence Hustle
+
+### Overview
+
+The BBC TV Licensing Authority maintains a grudging stranglehold on Northfield's television-watching population. Derek (NPCType.LICENCE_OFFICER) conducts door-to-door inspection rounds on a 14-day cycle. The DETECTOR_VAN_PROP trundles through residential streets every Sunday 14:00–16:00, seeding panic and rumour — but is entirely unmanned (the great British TV Licensing myth). Players can pay for a genuine TV_LICENCE at the Post Office, craft FAKE_TV_LICENCE to dodge Derek, forge and sell TV licences to gullible NPCs, or simply lie through their teeth.
+
+All enum entries (Materials, NPCTypes, CriminalRecord.CrimeType, AchievementType, RumourType, PropType) are already defined. `TvLicensingSystem.java` is the missing implementation.
+
+### New Java File
+
+`src/main/java/ragamuffin/core/TvLicensingSystem.java` in package `ragamuffin.core`
+
+### New Unit Test File
+
+`src/test/java/ragamuffin/core/TvLicensingSystemTest.java`
+
+### New Integration Test File
+
+`src/test/java/ragamuffin/integration/Issue1327TvLicensingIntegrationTest.java`
+
+---
+
+### Mechanic 1 — TV Licence Purchase & Status
+
+- Player can purchase `Material.TV_LICENCE` at the Post Office (PostOfficeSystem) for 5 COIN. Licence valid for 365 in-game days from purchase date. TvLicensingSystem tracks `licencePurchaseDay` and `licenceValid` (boolean).
+- Crafting: `FAKE_TV_LICENCE` = `TV_LICENCE` (template) + `PRINTER_PAPER` + PRINTER_PROP interaction (CraftingSystem). Usable in place of a genuine licence for one door-knock only; consumed on use.
+- `FORGED_TV_LICENCE` is created at the internet cafe (InternetCafeSystem already handles creation). It can be sold to NPC neighbours for 3 COIN each. Each sale: `CriminalRecord.CrimeType.TV_LICENCE_EVASION` + Notoriety +3. Third sale triggers `NewspaperSystem` headline "Fraudster Selling Fake TV Licences Door-to-Door in Northfield" + AchievementType.LOWEST_OF_THE_LOW_TELLY fires.
+
+### Mechanic 2 — Derek's Door-Knock Round
+
+- Derek (`NPCType.LICENCE_OFFICER`) spawns at the residential street entrance every 14 in-game days at 10:00. He patrols 6 residential doors over 2 in-game hours (one door every 20 in-game minutes).
+- At each door, Derek knocks (prop interaction on nearest FLAT_DOOR_PROP or TERRACED_HOUSE zone entry):
+  - **No one home / player absent**: Derek leaves a `TV_LICENCE_LETTER` (enforcement warning) in the letterbox. After 3 letters total (across all visits): `CriminalRecord.TV_LICENCE_EVASION` + WantedSystem +1 star + AchievementType.LICENCE_EVADER.
+  - **Player answers (E on door while Derek is within 3 blocks)**:
+    - Player holds genuine `TV_LICENCE` or `TV_LICENCE_CERTIFICATE`: Derek leaves satisfied; seeds positive LOCAL_EVENT rumour; AchievementType.LAW_ABIDING_VIEWER fires on first successful inspection.
+    - Player presents `FAKE_TV_LICENCE`: 70% chance Derek accepts (licence consumed); 30% chance Derek notices ("This doesn't look right, mate") — CriminalRecord.TV_LICENCE_EVASION + Notoriety +5 + WantedSystem +1 star.
+    - Player has no licence: Derek demands payment (5 COIN fine, paid immediately) or issues enforcement notice. Paying: Notoriety −1; refusing: TV_LICENCE_EVASION + WantedSystem +1 star.
+    - Player offers BISCUIT (Material.BISCUIT, or GARIBALDI if present): Derek accepts and leaves without checking; "Ooh lovely, cheers." — no crime, no fine. AchievementType.DEREK_S_NEMESIS progress +1.
+    - Dog companion present (DogCompanionSystem.isFollowing() && bond ≥ 50 && isOffLead): Derek backs away ("Alright, alright, I'm going") — no inspection. Notoriety unchanged.
+    - Player lies ("I don't have a telly"): 50% success (Derek leaves with a sceptical grunt); 50% failure (Derek checks — treat as no licence). Success seeds LOCAL_EVENT rumour "One of them on Kendrick Row claimed they didn't own a telly."
+  - Five consecutive successful avoidances (any method) in a single Derek visit cycle fires AchievementType.DEREK_S_NEMESIS.
+
+### Mechanic 3 — The Detector Van (It's a Myth)
+
+- Every Sunday 14:00–16:00, `DETECTOR_VAN_PROP` spawns at the industrial estate road and drives a slow route through residential streets over 2 in-game hours (moves 1 block/in-game minute).
+- Any PUBLIC or PENSIONER NPC within 20 blocks of the van: panics, mutters "The detector van's out!", state → FLEEING for 30 seconds. `RumourType.DETECTOR_VAN_SPOTTED` seeded in RumourNetwork.
+- The van is **entirely unmanned** — pressing E on `DETECTOR_VAN_PROP` reveals it is empty. AchievementType.MYTH_BUSTER fires on first discovery. No actual detection of unlicensed TVs occurs.
+- Destroying DETECTOR_VAN_PROP (full durability: 20 hits): CriminalRecord.CRIMINAL_DAMAGE + WantedSystem +2 stars + Notoriety +8. NoiseSystem event at 5.0. AchievementType.DETECTOR_PROOF fires (not because they detected you — they didn't — but because you smashed the van).
+- If player has no TV_LICENCE and a lit `TV_PROP` is within 3 blocks when the van passes within 15 blocks: 25% random chance of CriminalRecord.TV_LICENCE_EVASION + Notoriety +3 + AchievementType.EVADER (it's a myth but sometimes the paperwork catches up with you anyway).
+
+### Mechanic 4 — Bogus Inspector Hustle
+
+- Player can knock on NPC residential doors (E on FLAT_DOOR_PROP or TERRACED_HOUSE zone) wearing a SUIT_JACKET + holding a forged TV licence document.
+- If NPC answers (random 60% chance during 10:00–17:00):
+  - Player presses E to sell FORGED_TV_LICENCE for 3 COIN per NPC.
+  - 20% chance the NPC notices the forgery and calls the police (WantedSystem +1 star; WitnessSystem notified with TV_LICENCE_EVASION).
+  - AchievementType.BOGUS_INSPECTOR fires on first successful sale.
+  - AchievementType.LOWEST_OF_THE_LOW_TELLY fires on 3rd sale.
+- Without SUIT_JACKET: NPC slams door (no transaction); no crime.
+
+### Achievements (all already defined in AchievementType.java)
+
+- `LAW_ABIDING_VIEWER` — first successful Derek inspection with genuine licence.
+- `LICENCE_EVADER` — 3 enforcement letters received.
+- `DEREK_S_NEMESIS` — 5 consecutive successful avoidances in one cycle.
+- `MYTH_BUSTER` — first interaction with unmanned DETECTOR_VAN_PROP.
+- `EVADER` — TV_LICENCE_EVASION recorded while van passes (the paperwork getting you).
+- `BOGUS_INSPECTOR` — first FORGED_TV_LICENCE sold to a resident.
+- `LOWEST_OF_THE_LOW_TELLY` — 3 FORGED_TV_LICENCE items sold.
+- `DETECTOR_PROOF` — DETECTOR_VAN_PROP destroyed.
+
+### Unit Tests
+
+- `TvLicensingSystem.isLicenceValid(dayCount)`: true within 365 days; false after 365 days; false if never purchased.
+- `TvLicensingSystem.isDoorKnockDay(dayCount)`: true on multiples of 14; false otherwise.
+- `TvLicensingSystem.handleDoorKnock(player, inventory, ...)`: ACCEPTED on genuine TV_LICENCE; FAKE_ACCEPTED/FAKE_REJECTED for FAKE_TV_LICENCE with seeded random; BRIBED_WITH_BISCUIT on BISCUIT; DOG_DETERRED when dog present; LIE_SUCCEEDED/LIE_FAILED with seeded random.
+- After 3 `TV_LICENCE_LETTER` items received, LICENCE_EVADER achievement fires.
+- After 5 consecutive successful avoidances, DEREK_S_NEMESIS fires.
+- DETECTOR_VAN_PROP interaction returns MYTH_REVEALED; MYTH_BUSTER fires on first call only.
+- Bogus inspector sale with FORGED_TV_LICENCE + SUIT_JACKET: COIN +3, TV_LICENCE_EVASION recorded; BOGUS_INSPECTOR achievement fires on first sale; LOWEST_OF_THE_LOW_TELLY fires on 3rd sale.
+- Van detection (25% chance with seeded random and lit TV nearby): TV_LICENCE_EVASION added to CriminalRecord.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Genuine licence passes Derek's inspection**: Purchase TV_LICENCE at Post Office (deduct 5 COIN, add TV_LICENCE to inventory). Advance TimeSystem to day 14 (Derek patrol day), hour 10:00. Spawn Derek (LICENCE_OFFICER) within 3 blocks of player. Player presses E on door. Verify result is ACCEPTED. Verify CriminalRecord does NOT contain TV_LICENCE_EVASION. Verify LAW_ABIDING_VIEWER achievement fires.
+
+2. **Three enforcement letters trigger LICENCE_EVADER**: Set player absent for 3 Derek patrol visits (advance TimeSystem by 14 days × 3). Each patrol, verify TV_LICENCE_LETTER is added to player inventory (total 3). After 3rd letter, verify CriminalRecord contains TV_LICENCE_EVASION. Verify WantedSystem stars increased by 1. Verify LICENCE_EVADER achievement fires.
+
+3. **Detector van is empty — MYTH_BUSTER**: Set TimeSystem to Sunday 14:00. Verify DETECTOR_VAN_PROP spawns at industrial estate road. Player moves to DETECTOR_VAN_PROP and presses E. Verify result is MYTH_REVEALED. Verify MYTH_BUSTER achievement fires. Verify RumourType.DETECTOR_VAN_SPOTTED is in RumourNetwork (seeded by NPC panic, not the van itself).
+
+4. **Bogus Inspector — 3 sales trigger newspaper headline**: Give player FORGED_TV_LICENCE × 3, SUIT_JACKET × 1. Player approaches 3 different FLAT_DOOR_PROPs during 10:00–17:00. Seed random for NPC-answers=true and detection=false each time. Player presses E each time. Verify player COIN +9 total. Verify CriminalRecord contains TV_LICENCE_EVASION × 3 entries. Verify NewspaperSystem has headline containing "Fraudster Selling Fake TV Licences". Verify LOWEST_OF_THE_LOW_TELLY achievement fires.
+
+5. **Dog deters Derek — DEREK_S_NEMESIS progress**: Adopt dog companion (DogCompanionSystem, bond = 60, off-lead). Advance TimeSystem through 5 Derek patrol cycles (days 14, 28, 42, 56, 70). Each cycle, player answers door with dog present. Verify each result is DOG_DETERRED. Verify no TV_LICENCE_EVASION in CriminalRecord after all 5. Verify DEREK_S_NEMESIS achievement fires after 5th deterrence.
+
+---
+
+// ── Issue #1327: Add Northfield TV Licensing — Derek's Door-Knock, the Detector Van & the Forged Licence Hustle ────
+// New: TvLicensingSystem.java in ragamuffin.core
+// New: TvLicensingSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1327TvLicensingIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Materials: TV_LICENCE, FAKE_TV_LICENCE, FORGED_TV_LICENCE, TV_LICENCE_LETTER, TV_LICENCE_CERTIFICATE — all already in Material.java
+// NPCType: LICENCE_OFFICER (TV Licence Officer), TV_LICENCE_OFFICER — already in NPCType.java
+// PropType: DETECTOR_VAN_PROP — already in PropType.java
+// CriminalRecord.CrimeType: TV_LICENCE_EVASION — already in CriminalRecord.java
+// RumourType: DETECTOR_VAN_SPOTTED — already in RumourType.java
+// AchievementType: MYTH_BUSTER, LAW_ABIDING_VIEWER, LICENCE_EVADER, DEREK_S_NEMESIS, EVADER,
+//                  BOGUS_INSPECTOR, LOWEST_OF_THE_LOW_TELLY, DETECTOR_PROOF — all already in AchievementType.java
+// Integration: TimeSystem, PostOfficeSystem, CraftingSystem, InternetCafeSystem, DogCompanionSystem,
+//              WantedSystem, CriminalRecord, NotorietySystem, RumourNetwork, WitnessSystem,
+//              NewspaperSystem, NoiseSystem, AchievementSystem, TooltipSystem
