@@ -6295,7 +6295,29 @@ public enum Material {
     /**
      * MYSTERY_OBJECT — "You're not sure what this is. Looks old. Possibly valuable."
      * Found in BURIED_STASH_PROP under the trench. Fenceable for 8 COIN. */
-    MYSTERY_OBJECT("Mystery Object");
+    MYSTERY_OBJECT("Mystery Object"),
+
+    // ── Issue #1404: Northfield Community Litter Pick ─────────────────────────
+
+    /**
+     * LITTER_PICKER_STICK — "Bright orange reacher-grabber. Smells of council storage."
+     * Handed out by Janet (LITTER_PICK_COORDINATOR) at the start of the event.
+     * Required to collect LITTER_PROP items (press E). Cannot be sold or fenced. */
+    LITTER_PICKER_STICK("Litter Picker Stick"),
+
+    /**
+     * COUNCIL_RUBBISH_BAG — "Large black sack with 'NORTHFIELD TIDY STREETS' printed on the side."
+     * Handed out by Janet alongside LITTER_PICKER_STICK. Tracks collected litter count (0–30+).
+     * Return to Janet with ≥ 8 items for Notoriety −5 + GOOD_CITIZEN buff.
+     * If bag contains CRACK_PIPE: Janet screams, police called, Notoriety +8. */
+    COUNCIL_RUBBISH_BAG("Council Rubbish Bag"),
+
+    /**
+     * CRACK_PIPE — "Scorched glass pipe. Nobody's going to think you found it on the floor."
+     * Found in HIDDEN_STASH_PROP (10% chance). Triggers DRUG_POSSESSION CrimeType if player
+     * is searched or if returned in bag to Janet. Can be fenced for 2 COIN.
+     * Possession triggers JANETS_WORST_DAY achievement when returned in bag. */
+    CRACK_PIPE("Crack Pipe");
 
     private final String displayName;
 
@@ -7661,6 +7683,14 @@ public enum Material {
             case MYSTERY_OBJECT:        return cs(0.45f, 0.38f, 0.28f, // Earthy brown (dirty)
                                                   0.62f, 0.55f, 0.40f); // Lighter soil highlight
 
+            // Issue #1404: Northfield Community Litter Pick
+            case LITTER_PICKER_STICK:   return cs(0.92f, 0.48f, 0.05f, // Hi-vis orange shaft
+                                                   0.75f, 0.72f, 0.68f); // Silver grabber tip
+            case COUNCIL_RUBBISH_BAG:   return cs(0.12f, 0.12f, 0.14f, // Black bag body
+                                                   0.85f, 0.88f, 0.92f); // White printed text
+            case CRACK_PIPE:            return cs(0.78f, 0.88f, 0.92f, // Pale glass tube
+                                                   0.62f, 0.35f, 0.15f); // Amber scorch marks
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -8242,6 +8272,10 @@ public enum Material {
             case CONTRACTOR_CLIPBOARD:
             case HARD_HAT:
             case MYSTERY_OBJECT:
+            // Issue #1404: Northfield Community Litter Pick — not block items
+            case LITTER_PICKER_STICK:
+            case COUNCIL_RUBBISH_BAG:
+            case CRACK_PIPE:
                 return false;
             default:
                 return true;
@@ -9938,6 +9972,14 @@ public enum Material {
                 return IconShape.BOX;         // safety helmet
             case MYSTERY_OBJECT:
                 return IconShape.BOX;         // unidentified lump
+
+            // Issue #1404: Northfield Community Litter Pick
+            case LITTER_PICKER_STICK:
+                return IconShape.TOOL;        // long orange grabber tool
+            case COUNCIL_RUBBISH_BAG:
+                return IconShape.BOX;         // large black bag
+            case CRACK_PIPE:
+                return IconShape.CYLINDER;    // glass tube pipe
 
             default:
                 return IconShape.BOX;
