@@ -50726,3 +50726,157 @@ Achievement `LEMON_SQUEEZER_THIEF` on acquiring it. Mirek's tooltip on sale: "Is
 //   WantedSystem, NeighbourhoodSystem, WarmthSystem, RumourNetwork, NewspaperSystem,
 //   DisguiseSystem, StreetSkillSystem, AchievementSystem, NeighbourhoodWatchSystem,
 //   BistaVillageSystem (Mirek fencing outlet)
+
+## Issue #1389: Add Northfield St George's Day — The Morris Dancers Nobody Asked For, the Wetherspoons Lock-In & the Flag Heist
+
+**Theme**: April 23rd. St George's Day in Northfield. Half the town has draped England flags from their windows and filled the pub by noon. The other half are pretending it's a normal Tuesday. Wetherspoons has a special (warm Doom Bar, £2.80 per pint), the Morris dancing troupe from Redditch has turned up uninvited on the high street, and someone has nicked the giant Cross of St George from the Wetherspoons roof — which is either an act of patriotism, vandalism, or both, depending on who you ask.
+
+**Trigger**: `dayCount % 365 == 113` (April 23rd). Runs 11:00–02:00 next day.
+
+**Landmark anchor**: `WETHERSPOONS` pub + `HIGH_STREET` + `PARK` (Morris dancers set up in the park clearing).
+
+---
+
+### Mechanic 1 — The Morris Dancers (11:00–15:00, Park)
+
+A troupe of 6 `MORRIS_DANCER` NPCs arrive in the park at 11:00 and perform for 4 hours. They carry `MORRIS_STICK_PROP` and wear `BELL_PADS` (jingle audible within 20 blocks via `NoiseSystem` level 3). They are deeply earnest. Nobody else is.
+
+**Player interactions**:
+- **Watch the display** (stand within 8 blocks for 60 seconds): player receives `MORRIS_APPRECIATION` flag (joke buff, no mechanical effect). Seeds `LOCAL_GOSSIP` rumour: "There's Morris dancers in the park. Proper ones. With bells."
+- **Steal a `MORRIS_STICK_PROP`**: press E on any dancer while they're mid-routine. Dancer transitions to ANGRY. All 6 dancers pursue player for 30 seconds (not hostile — they just wave their sticks threateningly). NoiseSystem level 6. WantedSystem +1 if PCSO is in range. Achievement `STOLE_THE_STICK`.
+- **Join in** (press E with no stick): player avatar does the Morris dance animation for 10 seconds. All 6 dancers cheer (`HAPPY` state). Neighbourhood VIBES +1. Achievement `NORTHERN_SPIRIT`.
+- **Sabotage** (place `BANANA_SKIN_PROP` in dance path): first dancer to cross slips. All 6 enter STUMBLE. Crowd NPCs laugh (IDLE→brief LAUGH animation). NoiseSystem level 7. WantedSystem +1.
+
+**Departure**: Morris dancers leave at 15:00. If any sticks were stolen, lead dancer `GRAHAM_THE_MORRIS_CAPTAIN` lingers until 17:00 looking for them.
+
+---
+
+### Mechanic 2 — The Wetherspoons St George's Day Lock-In (11:00–02:00)
+
+Wetherspoons is at triple capacity all day. Special `ST_GEORGE_MENU_PROP` at the bar: Doom Bar Pint (2 COIN, +20 Hunger, +15 Warmth, Notoriety −1 per pint, max 3 pints before drunk state). After 3 pints player enters `DRUNK_STATE`: movement ±0.3 blocks wobble, speech slurred, pick-pocket success rate +15% (easier targets), punch accuracy −30%.
+
+**The Lock-In Mechanic** (00:00–02:00):
+Wetherspoons calls last orders at 23:00 but the landlord (`LANDLORD_TERRY` NPCType `BARMAN`) offers a lock-in to anyone he trusts (Notoriety Tier ≤ 2). After midnight, doors lock — `WantedSystem` police check at 00:30: if player is inside and WANTED ≥ 2, POLICE spawn outside, lock-in becomes a liability.
+
+**Flag above the bar**: a decorative `ST_GEORGE_FLAG_PROP` is mounted above the bar. Can be taken via `E` while standing on a `BAR_STOOL_PROP` (climb mechanic: stand on stool for 1 second, then interact). Penalty: ejected from pub, `BANNED_FROM_WETHERSPOONS` status (locked out for 3 in-game days). Achievement `TOOK_THE_FLAG`. Sell to Mirek (BistaVillageSystem) for 5 COIN.
+
+---
+
+### Mechanic 3 — The Flag on the Wetherspoons Roof (Rooftop Heist)
+
+A large `ROOF_FLAG_PROP` (the "signature" Wetherspoons St George's Cross) is mounted on the flat roof. It can be taken at any time but the rooftop is accessed via a drainpipe on the back alley (`DRAINPIPE_PROP`): 3-second hold-E climb. CCTV camera covers the back alley — player must either:
+1. **Wait for the Power Cut window**: `PowerCutSystem.isCCTVDown()` — if a power cut is active, no CCTV.
+2. **Spray-paint the lens** (hold E with `SPRAY_CAN` for 2s): CCTV disabled for 10 minutes. `CRIMINAL_DAMAGE` + WantedSystem +1.
+3. **Distract the landlord** (send Terry to the cellar — trigger `CELLAR_ERRAND_EVENT` by telling him "the barrel's off" via E dialogue): Terry leaves bar for 5 minutes. Without Terry watching the CCTV monitor, no alert.
+
+Taking the `ROOF_FLAG_PROP`: NoiseSystem silent (no alarm). Fence to Mirek for 12 COIN. Achievement `OFF_THE_ROOF`.
+
+---
+
+### Mechanic 4 — The Nationalist vs. Everyone Else Tension
+
+`ENGLAND_FLAG_NPC` (variant of PUBLIC, wearing `ENGLAND_SHIRT_PROP`): 4–6 spawn near Wetherspoons from 12:00. They are loudly patriotic (speech lines), not hostile — unless Notoriety Tier ≥ 3, in which case they become mildly aggressive (push the player: damage 1, `ALTERCATION` record).
+
+`COUNTER_PROTEST_NPC` (2–3 spawn at 14:00 near the park entrance with `HASTILY_MADE_SIGN_PROP`): neutral to player, hostile to `ENGLAND_FLAG_NPC`. If the two groups come within 5 blocks, a `CROWD_SCUFFLE` event triggers: NoiseSystem level 8, POLICE spawn within 30 seconds, 4 NPCs arrested. Player can:
+- **Join in** on either side: Notoriety +3, 1 punch action.
+- **Film it** (press I to bring up phone prop — `MOBILE_PHONE` from inventory): seeds `COMMUNITY_OUTRAGE` rumour; NewspaperSystem "St George's Day Scuffle on Northfield High Street". Journalism XP +1.
+- **Stay back**: no consequence.
+
+---
+
+### Mechanic 5 — The Best England Shirt Competition (15:00)
+
+`TERRY` announces a competition at 15:00: best England shirt wins a bar tab (15 COIN). Player can enter if wearing `ENGLAND_SHIRT_PROP` (buyable at PoundShopSystem for 3 COIN on St George's Day, or found in CharityShopSystem).
+
+Scoring: `ENGLAND_SHIRT_CONDITION` stat (starts 100, degrades with each fight or spill). Competitors: 4 NPCs with randomised scores (seeded `Random(dayCount)`). Player wins if condition ≥ 85 AND no `DRUNK_STATE` active. Prize: 15 COIN. Achievement `BEST_DRESSED_PATRIOT`.
+
+---
+
+### System Integrations
+
+- `WetherspoonsSystem`: St George's menu, lock-in mechanic, flag props, Terry landlord behaviour.
+- `TimeSystem`: Event trigger `dayCount % 365 == 113`; schedule 11:00–02:00.
+- `NoiseSystem`: Morris dancers level 3; stick theft level 6; sabotage level 7; scuffle level 8.
+- `WantedSystem`: Stick theft +1; flag heist from bar +1 (if witnessed); spray-paint CCTV +1; scuffle +1.
+- `FactionSystem`: MARCHETTI_FAMILY +2 if player films scuffle (they like chaos); STREET_LADS +2 if player joins nationalist side; COUNCIL_ESTATE −1 if player joins counter-protest.
+- `NeighbourhoodSystem`: VIBES +1 for joining Morris dance; VIBES −2 for causing scuffle.
+- `RumourNetwork`: `ST_GEORGE_DRAMA` seeded post-scuffle; `MORRIS_GOSSIP` seeded on dancer arrival.
+- `NewspaperSystem`: "St George's Day Scuffle" headline if scuffle filmed; "Flag Stolen from Wetherspoons Roof" if `ROOF_FLAG_PROP` taken and player Notoriety ≥ 2 (witnessed).
+- `DisguiseSystem`: Wearing `ENGLAND_SHIRT_PROP` grants +5 disguise score among `ENGLAND_FLAG_NPC`; wearing `GREASY_SPOON_APRON` grants −10 (immediately identifiable as a local).
+- `StreetSkillSystem`: PICKPOCKET XP +1 per drunk NPC successfully pickpocketed; FENCE XP +1 per flag sold to Mirek.
+- `AchievementSystem`: new achievements below.
+- `PoundShopSystem`: stocks `ENGLAND_SHIRT_PROP` ×10 from 09:00 on St George's Day only.
+- `CharityShopSystem`: small chance to find `ENGLAND_SHIRT_PROP` in general stock.
+- `BistaVillageSystem`: Mirek buys `ST_GEORGE_FLAG_PROP` (5 COIN), `ROOF_FLAG_PROP` (12 COIN), `MORRIS_STICK_PROP` (3 COIN).
+- `PowerCutSystem`: CCTV blind window opportunity for rooftop heist.
+
+### New Materials (add to Material.java)
+- `DOOM_BAR_PINT` — "Slightly warm. Slightly flat. Completely worth it at £2.80." Food/drink. Hunger +20, Warmth +15, Notoriety −1 (social lubricant). Sold by Terry at Wetherspoons on St George's Day.
+- `ENGLAND_SHIRT_PROP` — "Three lions. Machine-washed so many times the crest is basically a smear." Wearable. Buyable at PoundShop (3 COIN) or CharityShop. Required for shirt competition.
+- `MORRIS_STICK_PROP` — "A varnished stick with ribbons. Graham wants it back." Fenceable (3 COIN). Stolen from dancers.
+- `ST_GEORGE_FLAG_PROP` — "A full-size Cross of St George. Previously above the Wetherspoons bar." Fenceable (5 COIN to Mirek). Stolen from inside Wetherspoons.
+- `ROOF_FLAG_PROP` — "The big one. Roof-mounted. Twelve coins if Mirek's in a good mood." Fenceable (12 COIN to Mirek). From Wetherspoons roof.
+- `HASTILY_MADE_SIGN_PROP` — "Written in marker on the back of a pizza box." Prop carried by counter-protest NPC. Not fenceable.
+
+### New PropTypes (add to PropType.java)
+- `MORRIS_DANCE_AREA_PROP` — marked dance area in park; spawns 10:50, despawns 15:15.
+- `ST_GEORGE_MENU_PROP` — chalkboard in Wetherspoons; spawns 10:55, despawns at close.
+- `BAR_STOOL_PROP` — climbable stool inside Wetherspoons; always present, used for flag climbing.
+- `DRAINPIPE_PROP` — back-alley climb point; always present, usable on St George's Day.
+- `ROOF_FLAG_MOUNT_PROP` — mounting bracket for roof flag; removable when flag taken.
+
+### New AchievementTypes (add to AchievementType.java)
+- `NORTHERN_SPIRIT` — join in with the Morris dancers. Name: "One of Us". Desc: "You did the Morris dance. With bells. Willingly. Graham was moved to tears."
+- `STOLE_THE_STICK` — steal a Morris dancer's stick. Name: "Graham's Stick". Desc: "You robbed a Morris dancer. He was devastated. He drove from Redditch."
+- `TOOK_THE_FLAG` — steal the flag from inside Wetherspoons. Name: "Off the Wall". Desc: "You climbed on a bar stool and nicked the flag. Terry is furious. You are 5 COIN richer."
+- `OFF_THE_ROOF` — steal the roof flag. Name: "St George Was Busy". Desc: "You scaled the Wetherspoons roof and took the flag. Mirek says it will look lovely in his restaurant."
+- `BEST_DRESSED_PATRIOT` — win the best England shirt competition. Name: "Three Lions, One Winner". Desc: "Terry handed you 15 COIN. Your shirt is immaculate. You've never felt more British."
+- `LOCK_IN_LEGEND` — remain in the Wetherspoons lock-in until 02:00. Name: "Last Man Standing". Desc: "You survived the St George's Day lock-in. Terry shook your hand. You cannot feel your legs."
+
+### New RumourTypes (add to RumourType.java — verify if any exist already)
+- `ST_GEORGE_DRAMA` — "The St George's Day thing in Northfield got proper out of hand. Police everywhere." Seeded post-scuffle at 14:30.
+- `MORRIS_GOSSIP` — "There were actual Morris dancers in the park today. From Redditch. Bells and everything." Seeded at 11:00.
+- `FLAG_STOLEN` — "Someone nicked the flag off the Wetherspoons roof. Terry's offering 20 COIN reward." Seeded if `ROOF_FLAG_PROP` taken while Notoriety ≥ 2.
+
+### Unit Tests
+- `testStGeorgeDayTrigger`: call `isStGeorgesDay(dayCount)` for days 112, 113, 114. Verify true only for 113.
+- `testMorrisDancerSpawnAtEleven`: set `dayCount = 113`. Advance time to 11:00. Verify 6 `MORRIS_DANCER` NPCs spawned in park. Verify `MORRIS_DANCE_AREA_PROP` present within 10 blocks of park centre.
+- `testMorrisStickSteal`: spawn 1 `MORRIS_DANCER` in IDLE state. Call `stealMorrisStick(player, dancer)`. Verify dancer transitions to ANGRY. Verify player receives `MORRIS_STICK_PROP`. Verify WantedSystem increased by 1 (PCSO in range). Verify `STOLE_THE_STICK` achievement unlocked.
+- `testJoinMorrisDance`: player stands within 8 blocks of `MORRIS_DANCE_AREA_PROP` for 60 seconds. Verify `MORRIS_APPRECIATION` flag set. Verify Neighbourhood VIBES +1. Verify `NORTHERN_SPIRIT` achievement unlocked.
+- `testDoomBarPintDrunkState`: give player 3 `DOOM_BAR_PINT`. Call `consumePint()` three times. Verify `DRUNK_STATE` active after third pint. Verify player movement wobble ±0.3 applied. Verify pickpocket success rate +15%.
+- `testLockInEligibility`: set Notoriety tier to 2. Set time to 00:00. Verify `isEligibleForLockIn(player)` returns true. Set Notoriety tier to 3. Verify returns false.
+- `testBarStoolFlagClimb`: place `BAR_STOOL_PROP` below `ST_GEORGE_FLAG_PROP`. Stand player on stool for 1 second. Press E. Verify player receives `ST_GEORGE_FLAG_PROP`. Verify player ejected from pub. Verify `BANNED_FROM_WETHERSPOONS` status set for 3 in-game days. Verify `TOOK_THE_FLAG` achievement unlocked.
+- `testRooftopDrainpipeClimb`: stand player at `DRAINPIPE_PROP`. Hold E for 3 seconds. Verify player position transitions to rooftop elevation. Verify `ROOF_FLAG_PROP` accessible via E.
+- `testCCTVSprayPaint`: give player `SPRAY_CAN`. Hold E on CCTV camera for 2 seconds. Verify CCTV disabled for 600 in-game seconds (10 minutes). Verify `CRIMINAL_DAMAGE` record added. Verify WantedSystem +1.
+- `testCrowdScuffle`: spawn 2 `ENGLAND_FLAG_NPC` and 2 `COUNTER_PROTEST_NPC` within 5 blocks. Call `checkScuffleProximity()`. Verify `CROWD_SCUFFLE` event fires. Verify NoiseSystem level 8. Verify POLICE spawn queued within 30 game-seconds.
+- `testShirtCompetitionPlayerWins`: set player `ENGLAND_SHIRT_CONDITION` = 90. Set player `DRUNK_STATE` = false. Seed NPC competitors with `Random(113)` (all score ≤ 85). Call `judgeShirtCompetition(player)`. Verify player wins. Verify player receives 15 COIN. Verify `BEST_DRESSED_PATRIOT` achievement unlocked.
+- `testShirtCompetitionDrunkFails`: set player `ENGLAND_SHIRT_CONDITION` = 92, `DRUNK_STATE` = true. Call `judgeShirtCompetition(player)`. Verify player does NOT win.
+- `testMorrisDancersDespawnAt15`: advance time to 15:00. Verify all 6 `MORRIS_DANCER` NPCs despawned. Verify `MORRIS_DANCE_AREA_PROP` removed.
+- `testFlagRumourSeeded`: player takes `ROOF_FLAG_PROP` with Notoriety tier 2 (witnessed). Verify `FLAG_STOLEN` rumour seeded in `RumourNetwork`.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Morris dancer stick heist and fence to Mirek**: Set `dayCount = 113`. Advance time to 11:05. Verify 6 `MORRIS_DANCER` NPCs present in park. Walk player to within 3 blocks of lead dancer. Press E (steal stick). Verify dancer transitions to ANGRY. Verify all 6 dancers pursue player. Verify player has `MORRIS_STICK_PROP` in inventory. Walk player to Mirek at Bistro Village. Press E (sell). Verify player receives 3 COIN. Verify FENCE XP +1. Verify `STOLE_THE_STICK` achievement unlocked.
+
+2. **Wetherspoons lock-in until 02:00**: Set `dayCount = 113`. Advance time to 11:00. Walk player to Wetherspoons. Buy 3 `DOOM_BAR_PINT` from Terry. Verify `DRUNK_STATE` active after third pint. Set Notoriety tier to 1. Advance time to 23:00. Verify Terry offers lock-in dialogue (press E). Accept lock-in. Advance time to 00:30. Spawn POLICE 10 blocks outside pub. Verify police do NOT enter (lock-in doors locked). Advance to 02:00. Verify player successfully exits. Verify `LOCK_IN_LEGEND` achievement unlocked.
+
+3. **Rooftop flag heist via CCTV distraction**: Set `dayCount = 113`. Advance time to 14:00. Give player `SPRAY_CAN`. Locate `CCTV_CAMERA_PROP` on back alley. Hold E for 2 seconds on camera. Verify camera disabled. Verify WantedSystem +1. Locate `DRAINPIPE_PROP`. Hold E for 3 seconds. Verify player reaches rooftop. Press E on `ROOF_FLAG_MOUNT_PROP`. Verify player receives `ROOF_FLAG_PROP`. Walk player to Mirek. Press E. Verify player receives 12 COIN. Verify `OFF_THE_ROOF` achievement unlocked. Verify `FLAG_STOLEN` rumour NOT seeded (CCTV was disabled, no witness).
+
+4. **Crowd scuffle filmed for newspaper**: Set `dayCount = 113`. Advance time to 14:05. Spawn 2 `ENGLAND_FLAG_NPC` and 2 `COUNTER_PROTEST_NPC` at adjacent positions (4 blocks apart). Call `checkScuffleProximity()`. Verify `CROWD_SCUFFLE` event fires. Verify NoiseSystem level 8. Give player `MOBILE_PHONE`. Press I (phone action). Verify `ST_GEORGE_DRAMA` rumour seeded in `RumourNetwork`. Verify `COMMUNITY_OUTRAGE` rumour seeded. Advance to next day 18:00. Verify NewspaperSystem headline contains "St George's Day Scuffle".
+
+5. **Best England shirt competition pipeline**: Set `dayCount = 113`. Walk player to PoundShopSystem. Verify `ENGLAND_SHIRT_PROP` in stock (10 units). Buy for 3 COIN. Wear shirt (set `wearingEnglandShirt = true`, condition 100). Do NOT consume any `DOOM_BAR_PINT`. Advance time to 15:00. Verify Terry announces shirt competition. Press E on Terry. Seed NPC competitor scores with `Random(113)` — verify all ≤ 85. Verify player condition 100 > 85 → player wins. Verify player receives 15 COIN. Verify `BEST_DRESSED_PATRIOT` achievement unlocked.
+
+// ── Issue #1389: Add Northfield St George's Day ────────────────────────────────────────────────
+// New: StGeorgesDaySystem.java in ragamuffin.core
+// New: StGeorgesDaySystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1389StGeorgesDayIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: DOOM_BAR_PINT, ENGLAND_SHIRT_PROP, MORRIS_STICK_PROP, ST_GEORGE_FLAG_PROP,
+//   ROOF_FLAG_PROP, HASTILY_MADE_SIGN_PROP
+// New PropTypes: MORRIS_DANCE_AREA_PROP, ST_GEORGE_MENU_PROP, BAR_STOOL_PROP,
+//   DRAINPIPE_PROP, ROOF_FLAG_MOUNT_PROP
+// New AchievementTypes: NORTHERN_SPIRIT, STOLE_THE_STICK, TOOK_THE_FLAG, OFF_THE_ROOF,
+//   BEST_DRESSED_PATRIOT, LOCK_IN_LEGEND
+// New RumourTypes: ST_GEORGE_DRAMA, MORRIS_GOSSIP, FLAG_STOLEN
+// Integration: WetherspoonsSystem, TimeSystem, NoiseSystem, WantedSystem, FactionSystem,
+//   NeighbourhoodSystem, RumourNetwork, NewspaperSystem, DisguiseSystem, StreetSkillSystem,
+//   AchievementSystem, PoundShopSystem, CharityShopSystem, BistaVillageSystem, PowerCutSystem
