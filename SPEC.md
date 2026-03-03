@@ -53997,3 +53997,145 @@ With `SCREWDRIVER` (existing material) + Street Skill `REPAIR` ≥ 1, the player
 //   `TAPE_GONE`, `NOTHING_TO_SEE_HERE`, `WATCHED_BY_NOTHING` (AchievementType);
 //   `EVIDENCE_TAMPERING` (CriminalRecord.CrimeType);
 //   `CCTV_FOOTAGE_MISSING` (RumourType).
+
+---
+
+## Issue #1430: Add Northfield Halloween — Trick-or-Treat, the Egg Run & the Estate Pumpkin Carver
+
+### Overview
+
+It's 31 October in Northfield. As dusk falls, the estate transforms: SCHOOL_KID NPCs in costumes shuffle door-to-door with bucket bags, Darren from the off-licence has rigged his front garden with a smoke machine, and the Neighbourhood Watch are out in force convinced the whole night is a cover for criminal activity (they're not entirely wrong). `HalloweenSystem.java` manages the seasonal event: trick-or-treat routes, pumpkin carving, egg vandalism, the costume shop pop-up at the charity shop, and the chaotic 11pm wind-down that tips into ANTI_SOCIAL_BEHAVIOUR territory.
+
+The event runs on day-of-year 304 (31 October), **18:00–23:59**. A THUNDERSTORM does not cancel it — this is Northfield, they go out in all weathers — but it halves the number of trick-or-treaters.
+
+---
+
+### Mechanic 1 — Trick-or-Treat Route
+
+From 18:00–21:30, up to 8 `SCHOOL_KID` NPCs in costume (randomly assigned `WITCH_COSTUME` or `PUMPKIN_HEAD_MASK` visual flag) follow a pre-generated trick-or-treat route — a sequence of 6 residential doors within 50 blocks of the park.
+
+- At each door, an NPC knocks (animation + sound). Door opens after 3 in-game seconds with 70% probability; `PENSIONER` or `PUBLIC` NPC answers and drops a `TRICK_OR_TREAT_BAG` into the queue.
+- The player can **join the route**: equip `WITCH_COSTUME` or `PUMPKIN_HEAD_MASK` and press **E** at any participating door while kids are queuing. Resident gives player 1 COIN worth of sweets (added as `TRICK_OR_TREAT_BAG` Material). If the player is Wanted (any stars), resident slams door — no reward. Achievement: `TRICK_OR_TREATER` on completing all 6 doors.
+- **Intercept the route**: player (no costume required) can push to the front of a queue and grab the `TRICK_OR_TREAT_BAG` off the doorstep before the kids get it → `PETTY_THEFT`, Notoriety +3, `SCHOOL_KID` NPCs enter `NPCState.UPSET`. Rumour `ANTI_SOCIAL_BEHAVIOUR` seeded.
+- **No-answer doors**: 30% of doors are dark (residents out or ignoring it). Kids move on after 5 seconds; player can check if the door is unlocked (10% chance) — if so, entering counts as trespass (`TRESPASS` CrimeType).
+
+---
+
+### Mechanic 2 — Egg Run
+
+`RAW_EGG` items spawn in the following locations on Halloween night:
+- 6× `RAW_EGG` in `ICELAND_PROP` shop (buyable for 0 COIN — they're on the floor near the broken fridge, a nod to `IcelandSystem`).
+- 3× `RAW_EGG` near the wheelie bins behind Greggs (they've been there a while).
+- Up to 5× from trick-or-treating — kids drop them at a 15% rate per door if not rewarded (no-answer doors).
+
+**Using a `RAW_EGG`**: right-click to throw (5-block range). On hit:
+- Door/wall/car block → `EGGED_DOOR_PROP` decal applied. Noise 3. `CRIMINAL_DAMAGE` CrimeType. Notoriety +2.
+- NPC hit → NPC enters `NPCState.UPSET` for 2 in-game minutes; if NPC is `NEIGHBOURHOOD_WATCH`, immediately triggers WantedSystem +1 and NPC calls police.
+- `NEIGHBOURHOOD_WATCH` NPC witnesses egg throw (within 10 blocks) → WantedSystem +1.
+
+Achievement `HALLOWEEN_VANDAL`: egg 5 doors, cars, or NPCs during Halloween night.
+
+**EGGED_DOOR_PROP persistence**: the decal remains until the next in-game morning (06:00 on 1 November), when residents clean up. `NeighbourhoodSystem` VIBES −1 per 3 egged surfaces.
+
+---
+
+### Mechanic 3 — Pumpkin Carving & Jack-o-Lantern Placement
+
+`RAW_PUMPKIN` items are available from:
+- The corner shop (`CORNER_SHOP_PROP`) from 17:00 on 31 October: 2 COIN each, max 4 stock.
+- One free `RAW_PUMPKIN` sits on the allotment (from `AllotmentSystem`).
+
+**Carving**: hold `RAW_PUMPKIN` in hotbar + press **E** near any flat surface (table, wall ledge) to carve. Requires no tool (bare hands, it's a pumpkin). Yields `CARVED_PUMPKIN` + `PUMPKIN_INNARDS`. `PUMPKIN_INNARDS` can be composted at the allotment (+1 soil quality).
+
+**Placing**: right-click `CARVED_PUMPKIN` on any block face → places `JACK_O_LANTERN_PROP` (glows with a warm orange light at night; 3-block light radius). Achievement `PUMPKIN_KING`: place 3 `JACK_O_LANTERN_PROP`s in one Halloween night.
+
+**Theft**: other NPCs (YOUTH_GANG type) have a 5% per-minute chance to kick over an unattended jack-o-lantern → prop destroyed, `PUMPKIN_INNARDS` dropped. Player within 6 blocks and witnesses it → can confront YOUTH_GANG NPC (E prompt: "Oi, that's mine.") — NPC either backs off (60% if player Notoriety < 30) or turns hostile.
+
+---
+
+### Mechanic 4 — Costume Shop Pop-up (Charity Shop Extension)
+
+From 15:00–20:00 on 31 October, `CharityShopSystem` activates a Halloween sub-mode: a trestle table appears outside the charity shop stocked with 3 `WITCH_COSTUME` (2 COIN each) and 2 `PUMPKIN_HEAD_MASK` (2 COIN each). Stock is not replenished.
+
+- **Wearing a costume**: `WITCH_COSTUME` or `PUMPKIN_HEAD_MASK` equipped as head/body item gives `DISGUISED` status for the duration of Halloween night. While `DISGUISED`:
+  - `DisguiseSystem` reduces NPC recognition by 40% (existing mechanic).
+  - Committing a crime while `DISGUISED` during Halloween unlocks `COSTUME_CRIME` achievement: "Method Acting — Commit a crime while in a Halloween costume."
+  - Police NPCs see through costume at Notoriety Tier 4+.
+- **Selling stolen goods in costume**: `FenceSystem` fence rate +10% while wearing costume on Halloween (fences think you're "just a kid messing about").
+
+---
+
+### Mechanic 5 — Midnight Wind-down & Estate Chaos
+
+At **22:00**, YOUTH_GANG NPCs (3–5 spawn near the estate entrance) enter `NPCState.ROWDY`:
+- They throw `RAW_EGG` items at random props and NPCs every 45 in-game seconds.
+- `NoiseSystem` level rises to 6.0 in the estate zone.
+- `NeighbourhoodWatchSystem.addAnger(15)` — the Watch escalates.
+- `NEIGHBOURHOOD_WATCH` Captain spawns and leads a patrol.
+
+At **23:00**, police response escalates: 2 `POLICE` NPCs begin a sweep of the estate. Any player with WantedSystem ≥ 1 star is immediately chased.
+
+**Achievement `NIGHT_OWL`**: still on the estate (within 40 blocks of `COUNCIL_FLATS_PROP`) after 00:00 on 1 November.
+
+If `WantedSystem` reaches 2+ stars during the event window: rumour `HALLOWEEN_CHAOS` seeded → `NewspaperSystem` generates: _"NORTHFIELD HALLOWEEN: POLICE CALLED THREE TIMES AS YOUTHS RUN AMOK."_ `NeighbourhoodSystem` VIBES −3.
+
+---
+
+### Integration Points
+
+- **`DisguiseSystem`**: `WITCH_COSTUME` and `PUMPKIN_HEAD_MASK` apply the existing disguise mechanic; recognition −40% for duration of event.
+- **`CharityShopSystem`**: Halloween sub-mode stock swap 15:00–20:00 on 31 October.
+- **`AllotmentSystem`**: `PUMPKIN_INNARDS` usable as compost (+1 soil quality).
+- **`IcelandSystem`**: `RAW_EGG` supply on Halloween night references Iceland floor stock.
+- **`NeighbourhoodWatchSystem`**: `addAnger(15)` at 22:00; police escalation at 23:00.
+- **`NoiseSystem`**: egg throws at noise 3.0; ROWDY YOUTH_GANG activity at noise 6.0.
+- **`CriminalRecord`**: `CRIMINAL_DAMAGE` for egging; `TRESPASS` for entering dark house; `PETTY_THEFT` for intercepting trick-or-treat bags.
+- **`WantedSystem`**: +1 star when NEIGHBOURHOOD_WATCH witnesses egg throw; +1 star when resident door knocked after midnight.
+- **`NewspaperSystem`**: chaos headline if Wanted ≥ 2 stars during event.
+- **`NeighbourhoodSystem`**: VIBES −1 per 3 egged surfaces; VIBES −3 on chaos headline.
+- **`WeatherSystem`**: THUNDERSTORM halves trick-or-treater count (4 NPCs instead of 8).
+- **`TimeSystem`**: event window 18:00–23:59 day-of-year 304; cleanup at 06:00 day 305.
+- **`FenceSystem`**: +10% fence rate while in costume during event.
+
+---
+
+### New NPCType entries required
+
+None — reuses `SCHOOL_KID`, `PENSIONER`, `PUBLIC`, `YOUTH_GANG`, `NEIGHBOURHOOD_WATCH`, `POLICE`.
+
+### New PropType entries required
+
+- `JACK_O_LANTERN_PROP` — already defined. Ensure light emission (3-block radius, warm orange).
+- `EGGED_DOOR_PROP` — already defined. Persists until 06:00 next day.
+
+### New Material entries required
+
+All materials already defined:
+- `RAW_EGG`, `TRICK_OR_TREAT_BAG`, `WITCH_COSTUME`, `PUMPKIN_HEAD_MASK`, `RAW_PUMPKIN`, `CARVED_PUMPKIN`, `PUMPKIN_INNARDS`
+
+### New AchievementType entries required
+
+All already defined:
+- `TRICK_OR_TREATER` — complete the full trick-or-treat route on Halloween night.
+- `HALLOWEEN_VANDAL` — egg 5 houses, cars, or NPCs during Halloween.
+- `COSTUME_CRIME` — wear a Halloween costume while committing a crime.
+- `PUMPKIN_KING` — place 3 `JACK_O_LANTERN_PROP`s in one Halloween night.
+- `NIGHT_OWL` — still on the estate after midnight on Halloween.
+
+### New RumourType entries required
+
+All already defined:
+- `ANTI_SOCIAL_BEHAVIOUR` — seeded when player eggs a house, car, or NPC.
+- `HALLOWEEN_CHAOS` — seeded when WantedSystem reaches 2+ stars during the event.
+
+### Integration Tests
+
+1. **Trick-or-treat route spawns kids and delivers bags**: advance time to 18:00 day 304; call `HalloweenSystem.update(delta, timeSystem, world)`; verify 8 `SCHOOL_KID` NPCs have spawned within 50 blocks of park centre, and at least 1 `TRICK_OR_TREAT_BAG` is placed at a residential doorstep within 60 in-game seconds.
+2. **Player completes full trick-or-treat route**: equip player with `WITCH_COSTUME`; call `completeTrickOrTreatRoute(player, world)` for all 6 doors; verify player inventory contains 6 `TRICK_OR_TREAT_BAG` items and `TRICK_OR_TREATER` achievement is unlocked.
+3. **Egg throw creates EGGED_DOOR_PROP and triggers crime**: give player `RAW_EGG`; call `throwEgg(player, targetDoorPos, world)`; verify `EGGED_DOOR_PROP` exists at `targetDoorPos`, `CriminalRecord` contains `CRIMINAL_DAMAGE`, and Notoriety has increased by 2.
+4. **Pumpkin carving yields carved pumpkin and innards**: give player `RAW_PUMPKIN`; call `carvePumpkin(player)`; verify player inventory contains `CARVED_PUMPKIN` and `PUMPKIN_INNARDS`; then call `placeJackOLantern(player, wallPos, world)`; verify `JACK_O_LANTERN_PROP` exists at `wallPos`.
+5. **PUMPKIN_KING achievement on third placement**: call `placeJackOLantern(...)` three times on different blocks; verify `PUMPKIN_KING` achievement is unlocked after the third placement.
+6. **ROWDY youth gang spawns at 22:00 and adds Watch anger**: advance time to 22:00; call `HalloweenSystem.update(delta, timeSystem, world)`; verify 3–5 `YOUTH_GANG` NPCs are in `NPCState.ROWDY`, `NeighbourhoodWatchSystem.getAnger() >= 15`, and `NoiseSystem.getNoiseLevel(estatePos) >= 6.0f`.
+
+// All enum entries (Material, PropType, AchievementType, RumourType) already exist.
+// HalloweenSystem.java must be created as the sole new source file.
