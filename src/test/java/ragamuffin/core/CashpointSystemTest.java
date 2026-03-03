@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import ragamuffin.core.CashpointSystem.MuleRunResult;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -232,8 +234,8 @@ class CashpointSystemTest {
 
         // With tier 4 and seed 1, the first nextFloat() should be < 0.65
         if (result == CashpointSystem.ShoulderSurfResult.SUCCESS) {
-            assertEquals(NPCState.UNAWARE, target.getState(),
-                    "Target NPC should be set to UNAWARE on successful shoulder-surf");
+            assertEquals(NPCState.IDLE, target.getState(),
+                    "Target NPC should be set to IDLE on successful shoulder-surf");
         }
         // Either SUCCESS or CAUGHT is acceptable; just verify no unexpected result
         assertTrue(result == CashpointSystem.ShoulderSurfResult.SUCCESS

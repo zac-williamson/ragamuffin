@@ -215,6 +215,10 @@ public class CarManager {
             // Issue #773: player-driven cars are controlled by CarDrivingSystem — skip AI
             // Issue #991: parked cars have no driver and do not move — skip AI
             if (car.isDrivenByPlayer() || car.isParked()) {
+                // Gravity still applies to parked and player-driven cars (Issue #1322)
+                if (world != null) {
+                    world.applyGravityAndVerticalCollision(car, delta);
+                }
                 // Player-driven cars still collide with NPCs (Issue #884)
                 if (npcs != null) {
                     applyNPCCollisions(car, npcs);
@@ -232,6 +236,11 @@ public class CarManager {
 
             // --- 3: physics step ---
             car.update(delta);
+
+            // --- gravity: vehicles fall under gravity like other entities ---
+            if (world != null) {
+                world.applyGravityAndVerticalCollision(car, delta);
+            }
 
             // --- 4: intersection turning ---
             if (!car.isStopped()) {
