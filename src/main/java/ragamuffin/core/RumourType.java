@@ -922,5 +922,21 @@ public enum RumourType {
      * ×2.0 within 5 blocks of a PUBLIC or PENSIONER NPC) or rides on the pavement.
      * Spreads via PUBLIC and PENSIONER NPCs.
      * NotorietySystem +3; seeds a PCSO patrol near the offence location. */
-    RECKLESS_CYCLIST;
+    RECKLESS_CYCLIST,
+
+    // ── Issue #1337: Northfield Police Station — The Nick ─────────────────────
+
+    /** "Someone only went and turned over the nick — walked straight into the evidence locker."
+     * — seeded by PoliceStationSystem on a successful evidence locker heist (any route).
+     * Spreads via STREET_LAD and BARMAN NPCs town-wide.
+     * STREET_LADS Respect +5 for the player; NewspaperSystem headline eligible.
+     * Police patrol frequency across all landmarks +1 for 24 in-game hours. */
+    STATION_BREAK_IN,
+
+    /** "Heard someone walked into the nick and gave themselves up — turned themselves in."
+     * — seeded by PoliceStationSystem when the player voluntarily surrenders at the
+     * ENQUIRY_COUNTER_PROP. Spreads via PUBLIC and PENSIONER NPCs.
+     * MagistratesCourtSystem reduces sentence tier by one step on the next hearing.
+     * Notoriety −10 on seeding; awards CAME_IN_QUIETLY achievement. */
+    TURNED_YOURSELF_IN;
 }

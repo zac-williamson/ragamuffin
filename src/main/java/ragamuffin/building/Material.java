@@ -5504,7 +5504,37 @@ public enum Material {
      * of 4 COIN). Crafted by using DELIVERY_BAG 20+ times without repair.
      * Tooltip: "It's cold. The food is cold. Everything is cold."
      */
-    COLD_DELIVERY_BAG("Cold Delivery Bag");
+    COLD_DELIVERY_BAG("Cold Delivery Bag"),
+
+    // ── Issue #1337: Northfield Police Station — The Nick ─────────────────────
+
+    /**
+     * POLICE_KEY_CARD — a laminated access card belonging to a DESK_SERGEANT or
+     * CUSTODY_SERGEANT. Required for the key-card route into the evidence locker.
+     * Obtained by pickpocketing (STEALTH Expert+) or purchasing from the Fence
+     * (30 COIN, Marchetti Respect ≥ 40). Single-use; destroyed on entry.
+     * Tooltip: "B Division, Northfield. Keep on person at all times."
+     */
+    POLICE_KEY_CARD("Police Key Card"),
+
+    /**
+     * ROPE_AND_HOOK — a grappling rope used for the back-window route into the
+     * evidence locker. Crafted from ROPE_LADDER + SCRAP_METAL (3 hits at
+     * WORKBENCH). Allows the player to enter the evidence locker via the small
+     * first-floor window on the rear of the station. Single-use.
+     * Tooltip: "Hooks on anything. Whether you should is another matter."
+     */
+    ROPE_AND_HOOK("Rope and Hook"),
+
+    /**
+     * DRIVING_LICENCE — a photocard driving licence. Required (with 20 COIN) to
+     * reclaim an impounded vehicle from the police garage during opening hours
+     * (08:00–18:00). Also accepted by CarDrivingSystem as proof of entitlement.
+     * Obtainable from the DVLA office (by quest) or forged at the PHOTOCOPIER_PROP
+     * (GRAFTING ≥ Apprentice; 15% detection chance at the enquiry counter).
+     * Tooltip: "Full UK licence. Photo may or may not resemble you."
+     */
+    DRIVING_LICENCE("Driving Licence");
 
     private final String displayName;
 
@@ -6726,6 +6756,14 @@ public enum Material {
                                                   0.10f, 0.10f, 0.10f); // Black logo
             case COLD_DELIVERY_BAG:     return cs(0.60f, 0.30f, 0.05f,  // Faded orange
                                                   0.35f, 0.35f, 0.35f); // Grey worn seam
+
+            // Issue #1337: Northfield Police Station — The Nick
+            case POLICE_KEY_CARD:       return cs(0.10f, 0.25f, 0.60f,  // Police blue card
+                                                  0.85f, 0.85f, 0.85f); // Silver chip
+            case ROPE_AND_HOOK:         return cs(0.55f, 0.38f, 0.20f,  // Brown rope
+                                                  0.50f, 0.50f, 0.50f); // Grey hook
+            case DRIVING_LICENCE:       return cs(0.18f, 0.40f, 0.70f,  // DVLA blue card
+                                                  0.90f, 0.85f, 0.75f); // Cream face
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -8674,6 +8712,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // thick envelope
             case ENGINEER_ACCESS_CARD:
                 return IconShape.FLAT_PAPER;  // laminated access card
+
+            // Issue #1337: Northfield Police Station — The Nick
+            case POLICE_KEY_CARD:
+                return IconShape.FLAT_PAPER;  // laminated key card
+            case ROPE_AND_HOOK:
+                return IconShape.BOX;         // coiled rope with hook
+            case DRIVING_LICENCE:
+                return IconShape.FLAT_PAPER;  // photocard licence
 
             // Issue #1335: Northfield Cycle Centre — Dave's Bikes
             case BIKE_REPAIR_KIT:

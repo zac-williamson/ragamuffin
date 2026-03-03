@@ -3345,7 +3345,63 @@ public enum PropType {
      * Shows job destination, food type, time limit, and payout tier.
      * Indestructible.
      */
-    JUST_EAT_DELIVERY_BOARD_PROP(0.6f, 0.9f, 0.1f, Integer.MAX_VALUE, null);
+    JUST_EAT_DELIVERY_BOARD_PROP(0.6f, 0.9f, 0.1f, Integer.MAX_VALUE, null),
+
+    // ── Issue #1337: Northfield Police Station — The Nick ─────────────────────
+
+    /**
+     * ENQUIRY_COUNTER_PROP — the public-side enquiry counter in the front lobby.
+     * Staffed by DESK_SERGEANT Geoff (08:00–20:00) or CUSTODY_SERGEANT (20:00–08:00).
+     * Press E to interact: voluntary surrender, information requests, or bribery.
+     * Indestructible.
+     */
+    ENQUIRY_COUNTER_PROP(1.80f, 1.10f, 0.60f, Integer.MAX_VALUE, null),
+
+    /**
+     * CUSTODY_DOOR_PROP — the heavy reinforced door between the public lobby and
+     * the custody suite. Normally locked; opened by DESK_SERGEANT on voluntary
+     * surrender or by the player using a POLICE_KEY_CARD. Can be broken open
+     * (12 hits with CROWBAR) but triggers a station-wide alert.
+     * Drops SCRAP_METAL when destroyed.
+     */
+    CUSTODY_DOOR_PROP(1.00f, 2.20f, 0.20f, 12, Material.SCRAP_METAL),
+
+    /**
+     * EVIDENCE_LOCKER_PROP — a floor-to-ceiling metal cage in the evidence storage
+     * room. Contains 3–6 confiscated items. Opened via three routes: POLICE_KEY_CARD,
+     * ROPE_AND_HOOK (back window), or FIRE_ALARM_PROP distraction.
+     * Breaking it (10 hits with CROWBAR) records EVIDENCE_TAMPERING.
+     * Drops SCRAP_METAL when destroyed.
+     */
+    EVIDENCE_LOCKER_PROP(1.40f, 2.10f, 0.80f, 10, Material.SCRAP_METAL),
+
+    /**
+     * POLICE_GARAGE_PROP — the vehicle impound garage door on the side of the
+     * station. Impounded vehicles are stored behind this door. Can be opened
+     * by paying 20 COIN + presenting a DRIVING_LICENCE at the enquiry counter
+     * (during 08:00–18:00), or broken open with a CROWBAR at night (8 hits).
+     * Breaking it records VEHICLE_RECOVERY_OFFENCE.
+     * Drops SCRAP_METAL when destroyed.
+     */
+    POLICE_GARAGE_PROP(2.00f, 2.40f, 0.20f, 8, Material.SCRAP_METAL),
+
+    /**
+     * FIRE_ALARM_PROP — a wall-mounted red break-glass fire alarm unit inside the
+     * station corridor. Pressing E triggers a station evacuation for 90 seconds,
+     * clearing all NPCs from the evidence room. One-time use per game session.
+     * Records FALSE_ALARM in CriminalRecord if the player is caught near it.
+     * Drops SCRAP_METAL when destroyed (4 hits).
+     */
+    FIRE_ALARM_PROP(0.30f, 0.30f, 0.12f, 4, Material.SCRAP_METAL),
+
+    /**
+     * BACK_WINDOW_PROP — a small frosted-glass window on the rear wall of the
+     * station, one floor up. Accessible via ROPE_AND_HOOK from the back alley.
+     * Broken silently with GLASS_CUTTER (1 hit, zero noise) or noisily with 3
+     * punches (+50 noise). Provides entry to the evidence room without triggering
+     * the custody door alarm. Drops GLASS when destroyed.
+     */
+    BACK_WINDOW_PROP(0.70f, 0.80f, 0.10f, 3, Material.GLASS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
