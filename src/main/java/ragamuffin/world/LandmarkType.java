@@ -763,7 +763,15 @@ public enum LandmarkType {
 
     ICELAND,
 
-    GREASY_SPOON;
+    GREASY_SPOON,
+
+    // ── Issue #1439: Welcome sign ─────────────────────────────────────────────
+
+    /**
+     * WELCOME_SIGN — the large physical town welcome sign at the main park entrance,
+     * reading "Welcome to Northfield". A 3D prop landmark rather than a building.
+     */
+    WELCOME_SIGN;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -870,6 +878,7 @@ public enum LandmarkType {
             case PHONE_BOX_ESTATE:      return "BT Phone Box (Out of Order)";
             case TRAVELLING_FAIR:       return "Northfield Travelling Fair";
             case CYCLE_SHOP:            return "Dave's Cycle Centre";
+            case WELCOME_SIGN:          return "Welcome to Northfield";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

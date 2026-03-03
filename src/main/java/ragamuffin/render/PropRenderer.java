@@ -148,6 +148,9 @@ public class PropRenderer {
         if (!propModels.containsKey(PropType.SHELF_CAN))    propModels.put(PropType.SHELF_CAN,    buildShelfCan());
         if (!propModels.containsKey(PropType.SHELF_BOTTLE)) propModels.put(PropType.SHELF_BOTTLE, buildShelfBottle());
         if (!propModels.containsKey(PropType.SHELF_BOX))    propModels.put(PropType.SHELF_BOX,    buildShelfBox());
+
+        // ── Issue #1439: Welcome sign ─────────────────────────────────────────
+        if (!propModels.containsKey(PropType.WELCOME_SIGN)) propModels.put(PropType.WELCOME_SIGN, buildWelcomeSign());
     }
 
     /**
@@ -724,6 +727,88 @@ public class PropRenderer {
         MeshPartBuilder label = mb.part("box_label", GL20.GL_TRIANGLES, ATTRS, printMat);
         label.setVertexTransform(new Matrix4().setToTranslation(0f, 0.07f, 0.065f));
         label.box(0.12f, 0.06f, 0.01f);
+
+        return mb.end();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1439: Welcome sign
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * A large town welcome sign reading "Welcome to Northfield".
+     *
+     * Composed of:
+     * - Two dark wooden support posts (left and right)
+     * - A wide green sign panel
+     * - A white border/trim strip around the panel edge
+     * - A cream text band in the middle representing the lettering
+     *
+     * The sign is 4 m wide, 2 m tall, centred on the prop origin.
+     */
+    private Model buildWelcomeSign() {
+        mb.begin();
+        Color post       = new Color(0.30f, 0.18f, 0.08f, 1f); // dark wood posts
+        Color green      = new Color(0.15f, 0.40f, 0.12f, 1f); // British racing green panel
+        Color border     = new Color(0.92f, 0.88f, 0.72f, 1f); // cream border
+        Color textBand   = new Color(0.95f, 0.93f, 0.80f, 1f); // cream text band
+        Color postTop    = new Color(0.40f, 0.25f, 0.12f, 1f); // slightly lighter post cap
+
+        Material postMat    = new Material(ColorAttribute.createDiffuse(post));
+        Material greenMat   = new Material(ColorAttribute.createDiffuse(green));
+        Material borderMat  = new Material(ColorAttribute.createDiffuse(border));
+        Material textMat    = new Material(ColorAttribute.createDiffuse(textBand));
+        Material capMat     = new Material(ColorAttribute.createDiffuse(postTop));
+
+        // Left post — stands 2.2 m tall, centred at x = -1.7
+        MeshPartBuilder lPost = mb.part("post_left", GL20.GL_TRIANGLES, ATTRS, postMat);
+        lPost.setVertexTransform(new Matrix4().setToTranslation(-1.70f, 1.10f, 0f));
+        lPost.box(0.18f, 2.20f, 0.18f);
+
+        // Left post cap
+        MeshPartBuilder lCap = mb.part("post_left_cap", GL20.GL_TRIANGLES, ATTRS, capMat);
+        lCap.setVertexTransform(new Matrix4().setToTranslation(-1.70f, 2.26f, 0f));
+        lCap.box(0.24f, 0.12f, 0.24f);
+
+        // Right post
+        MeshPartBuilder rPost = mb.part("post_right", GL20.GL_TRIANGLES, ATTRS, postMat);
+        rPost.setVertexTransform(new Matrix4().setToTranslation(1.70f, 1.10f, 0f));
+        rPost.box(0.18f, 2.20f, 0.18f);
+
+        // Right post cap
+        MeshPartBuilder rCap = mb.part("post_right_cap", GL20.GL_TRIANGLES, ATTRS, capMat);
+        rCap.setVertexTransform(new Matrix4().setToTranslation(1.70f, 2.26f, 0f));
+        rCap.box(0.24f, 0.12f, 0.24f);
+
+        // Main green panel (3.4 m wide, 1.4 m tall, 0.10 m deep)
+        MeshPartBuilder panel = mb.part("panel", GL20.GL_TRIANGLES, ATTRS, greenMat);
+        panel.setVertexTransform(new Matrix4().setToTranslation(0f, 1.50f, 0f));
+        panel.box(3.40f, 1.40f, 0.10f);
+
+        // Cream border — top strip
+        MeshPartBuilder bTop = mb.part("border_top", GL20.GL_TRIANGLES, ATTRS, borderMat);
+        bTop.setVertexTransform(new Matrix4().setToTranslation(0f, 2.14f, 0.04f));
+        bTop.box(3.42f, 0.10f, 0.04f);
+
+        // Cream border — bottom strip
+        MeshPartBuilder bBot = mb.part("border_bot", GL20.GL_TRIANGLES, ATTRS, borderMat);
+        bBot.setVertexTransform(new Matrix4().setToTranslation(0f, 0.86f, 0.04f));
+        bBot.box(3.42f, 0.10f, 0.04f);
+
+        // Cream border — left strip
+        MeshPartBuilder bLeft = mb.part("border_left", GL20.GL_TRIANGLES, ATTRS, borderMat);
+        bLeft.setVertexTransform(new Matrix4().setToTranslation(-1.61f, 1.50f, 0.04f));
+        bLeft.box(0.10f, 1.28f, 0.04f);
+
+        // Cream border — right strip
+        MeshPartBuilder bRight = mb.part("border_right", GL20.GL_TRIANGLES, ATTRS, borderMat);
+        bRight.setVertexTransform(new Matrix4().setToTranslation(1.61f, 1.50f, 0.04f));
+        bRight.box(0.10f, 1.28f, 0.04f);
+
+        // Cream text band representing "Welcome to Northfield" lettering
+        MeshPartBuilder text = mb.part("text_band", GL20.GL_TRIANGLES, ATTRS, textMat);
+        text.setVertexTransform(new Matrix4().setToTranslation(0f, 1.50f, 0.055f));
+        text.box(2.80f, 0.44f, 0.02f);
 
         return mb.end();
     }
