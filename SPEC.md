@@ -53869,3 +53869,131 @@ If the player causes 5 or more fake posts in a single in-game week:
 //   `CAT_RETURNED`, `CAT_NAPPER`, `WHISKERS_GAMBIT`, `DIGITAL_GRASS`,
 //   `MEETING_CANCELLED`, `NUKED_THE_GROUP` (AchievementType);
 //   `COMMUNICATIONS_HARASSMENT` (CriminalRecord.CrimeType).
+
+---
+
+## Issue #1428: Add Northfield Council CCTV Audit — Keith's Portacabin, the Dummy Camera Scam & the Footage Heist
+
+### Overview
+
+The council has just completed a much-publicised "Safe Streets Northfield" CCTV rollout. Eight new cameras have been installed across the neighbourhood. The problem: the budget was slashed mid-project, so only 4 of the 8 cameras are live; the other 4 are dummy units with a blinking red LED powered by a single AA battery. The whole operation is monitored by Keith (`CCTV_OPERATOR` NPC), a former Traffic Warden who sits in a cold portacabin behind the JobCentre for 12-hour shifts (08:00–20:00), watching four tiny monitors and eating meal-deal sandwiches. When Keith is off-shift, the control room is unmanned.
+
+`CctvAuditSystem.java` manages camera state, Keith's patrol/monitoring loop, evidence recording, bribe interactions, and the footage-heist mechanic.
+
+---
+
+### Mechanic 1 — Camera Survey (Know Your Cameras)
+
+Eight `CCTV_CAMERA_PROP` props are placed around the neighbourhood at spawn: two near the high street shops, one outside the Post Office, one at the park entrance, one on the estate stairwell, one covering the car park, one over the alley behind Greggs, and one outside the JobCentre.
+
+- Each camera has a hidden `boolean live` flag (4 live, 4 dummy), randomised per world seed.
+- **Dummy detection**: A player with Street Skill `OBSERVATION` ≥ 2 can press **E** on any camera to inspect it. Result: `"Live — avoid this one."` or `"Dummy — just a blinking light. Classic council."` Correct identification of all 4 dummies in a single session unlocks achievement `DUMMY_SPOTTER`.
+- **Without OBSERVATION ≥ 2**: player cannot distinguish live from dummy; all cameras look identical.
+- **Live camera range**: 12-block cone in front of the camera, 60° field of view. Player in range while committing a crime → `CCTV_FOOTAGE` evidence item generated (see Mechanic 3).
+- **Dummy cameras**: do nothing. No evidence, no risk.
+- Keith's portacabin contains a `CCTV_MONITOR_PROP` (press **E** to view live feeds if Keith is absent or bribed into leaving). Viewing the monitor reveals which camera IDs are live (all 4 shown on screen). Achievement: `BACK_ROOM_ACCESS`.
+
+---
+
+### Mechanic 2 — Keith's Shift (Bribe, Distract & Manipulate)
+
+Keith (`CCTV_OPERATOR`) patrols between his portacabin and a 20-block perimeter check route once per in-game hour. During perimeter checks he is away from the monitors for 8 in-game minutes — a window the player can exploit.
+
+**Bribe options** (press **E** on Keith):
+- **Meal deal bribe** (`MEAL_DEAL_ITEM`, crafted: SANDWICH + CRISPS + FIZZY_DRINK — all existing materials): Keith accepts with 80% probability. He "looks the other way" for 15 in-game minutes: all live cameras in his zone are temporarily flagged `ignored`, no evidence generated. Notoriety +1. Achievement: `MEAL_DEAL_MAN` on first successful bribe.
+- **Cash bribe** (5 COIN): Keith accepts with 60% probability. Same 15-minute effect. `BRIBERY` CrimeType recorded. WantedSystem +1 star if Keith refuses and calls it in.
+- **Distract with pigeon** (hold `PIGEON` item — from `PigeonRacingSystem` — press **E** on Keith): Keith chases the escaped pigeon for 6 in-game minutes. Portacabin unguarded. No crime recorded. Achievement: `PIGEON_DISTRACTION`.
+
+**Keith off-shift (20:00–08:00)**: portacabin locked. Player with LOCKPICK item can break in (BURGLARY CrimeType; WantedSystem +1 if witnessed). Inside: `CCTV_MONITOR_PROP` + filing cabinet with `CCTV_FOOTAGE` tapes (see Mechanic 3).
+
+---
+
+### Mechanic 3 — The Footage Heist (Clear Your Name)
+
+When the player commits a crime within range of a live camera, `CctvAuditSystem` generates a `CCTV_FOOTAGE` item representing the evidence tape. Keith files it in his cabinet within 5 in-game minutes of witnessing the incident. Once filed:
+
+- The tape counts as evidence against the player in `CriminalRecord`. If police catch the player within 24 in-game hours of a taped crime, the `CCTV_FOOTAGE` adds a mandatory +1 sentence tier at `MagistratesCourtSystem`.
+- **Tape retrieval window**: player has 5 in-game minutes after the crime to reach Keith's portacabin and steal the tape before it is filed. During this window a `CCTV_TAPE_UNFILED` prop glows on Keith's desk.
+- **Stealing the unfiled tape**: press **E** on `CCTV_TAPE_UNFILED_PROP` while Keith is absent or distracted. Tape added to inventory as `CCTV_FOOTAGE` material. `EVIDENCE_TAMPERING` CrimeType recorded (silent — no immediate Wanted increase). Achievement: `TAPE_GONE` on first successful retrieval.
+- **Destroying the tape**: hold `CCTV_FOOTAGE` + interact with any `CAMPFIRE_PROP` or `WHEELIE_BIN_FIRE_PROP` (both existing props). Tape destroyed, evidence cleared. Achievement: `NOTHING_TO_SEE_HERE` if player destroys 3 tapes across a session.
+- **Selling the tape**: fence `CCTV_FOOTAGE` via `FenceSystem` at 4 COIN ("some people pay good money for this"). `FenceValuationTable` entry: CCTV_FOOTAGE = 4 COIN, flagged stolen.
+
+**Newspaper headline**: If the player destroys 5+ tapes across a session, `NewspaperSystem` generates: _"COUNCIL CCTV FOOTAGE GOES MISSING — 'EQUIPMENT FAILURE' SAYS KEITH."_ Vibes −2 (public trust eroded). Keith gets a formal warning from the Council (seeded as `COUNCIL_NOTICE` rumour).
+
+---
+
+### Mechanic 4 — The Dummy Camera Scam (Secondary Hustle)
+
+With `SCREWDRIVER` (existing material) + Street Skill `REPAIR` ≥ 1, the player can remove a dummy camera from its bracket (8 seconds, visible action — witnesses trigger CRIMINAL_DAMAGE):
+
+- **Sell the dummy**: fence the `DUMMY_CCTV_CAMERA` item for 2 COIN.
+- **Re-install as decoy**: place the dummy on any wall block. NPCs within 8 blocks of the decoy become `NPCState.NERVOUS` (they think they're being watched). Useful for clearing an area. Two decoys placed within 20 blocks → NPCs flee the area for 5 in-game minutes. Achievement: `WATCHED_BY_NOTHING`.
+- **Council reaction**: if all 4 dummies are removed, Keith files a report. `COUNCIL_INSPECTOR` visits within 1 in-game day. If the player's `CriminalRecord` already contains `CRIMINAL_DAMAGE`, WantedSystem +1 star.
+
+---
+
+### Integration Points
+
+- **`WantedSystem`**: +1 star per `CCTV_FOOTAGE` tape filed against player. Tape destruction clears the star retroactively.
+- **`ExposureSystem`**: live camera in range counts as +20 Exposure per second while player is `SUSPICIOUS` or `WANTED`.
+- **`FlyTippingSystem`**: already references CCTV; `CctvAuditSystem.isCameraLive(x, z)` is the canonical query.
+- **`NeighbourhoodSystem`**: Vibes −2 on newspaper headline (footage destruction story). Vibes +3 if player reports a genuinely broken camera to Council (new "report fault" option with Keith or at JobCentre desk).
+- **`CouncilEnforcementSystem`**: Keith's formal warning feeds into a broader Council enforcement narrative.
+- **`NoiseSystem`**: portacabin break-in at noise level 4 (muffled alarm); 30% chance of `COUNCIL_ENFORCEMENT_OFFICER` response.
+- **`MagistratesCourtSystem`**: `CCTV_FOOTAGE` in `CriminalRecord` at time of sentencing adds +1 sentence tier.
+- **`NewspaperSystem`**: 5+ tapes destroyed → specific headline seeded.
+- **`RumourNetwork`**: Keith's formal warning → `COUNCIL_NOTICE` rumour; first dummy removed → `GANG_ACTIVITY` rumour ("Someone's been nicking the cameras off the walls round here").
+
+---
+
+### New NPCType entries required
+
+- `CCTV_OPERATOR` — Keith. Portacabin dweller. High-vis vest, thermos flask, slightly defeated expression. Passive unless bribed. Off-shift 20:00–08:00. Perimeter patrol every in-game hour (8-minute absence). Responds to `PIGEON` distraction. Calls police on refused cash bribe.
+
+### New PropType entries required
+
+- `CCTV_CAMERA_PROP` — Wall-mounted camera unit. Dims: 0.3 × 0.3 × 0.5. Has `live` boolean and `orientation` (N/S/E/W). Inspectable via E with OBSERVATION ≥ 2.
+- `CCTV_MONITOR_PROP` — Stack of four small monitors in portacabin. Press E to view live feeds (reveals live camera IDs). Dims: 0.8 × 0.6 × 0.4.
+- `CCTV_TAPE_UNFILED_PROP` — Glowing VHS tape on Keith's desk. 5-minute retrieval window after crime. Press E to steal.
+- `CCTV_PORTACABIN_PROP` — Keith's base. Lockable. Dims: 4 × 3 × 6.
+
+### New Material entries required
+
+- `CCTV_FOOTAGE` — "VHS tape. Keith's handwriting on the label. Best destroyed." Stack size 1. Fence value 4 COIN. Flagged stolen.
+- `DUMMY_CCTV_CAMERA` — "A hollow plastic camera with a dead battery inside. Classic." Stack size 1. Fence value 2 COIN.
+- `MEAL_DEAL_ITEM` — "Sandwich, crisps, drink. The ultimate council bribe." Stack size 1. Crafted: SANDWICH + CRISPS + FIZZY_DRINK. Not fenceable.
+
+### New AchievementType entries required
+
+- `DUMMY_SPOTTER` — "Correctly identify all 4 dummy CCTV cameras in one session."
+- `BACK_ROOM_ACCESS` — "View the live CCTV feeds from inside Keith's portacabin."
+- `MEAL_DEAL_MAN` — "Successfully bribe Keith with a meal deal."
+- `PIGEON_DISTRACTION` — "Distract Keith with an escaped pigeon."
+- `TAPE_GONE` — "Steal an unfiled CCTV tape from Keith's desk."
+- `NOTHING_TO_SEE_HERE` — "Destroy 3 CCTV tapes in a single session."
+- `WATCHED_BY_NOTHING` — "Install two dummy cameras to clear an area of NPCs."
+
+### New CriminalRecord.CrimeType entries required
+
+- `EVIDENCE_TAMPERING` — recorded when player steals an unfiled CCTV tape.
+
+### New RumourType entries required
+
+- `CCTV_FOOTAGE_MISSING` — "They reckon someone's been half-inching the council's camera tapes. Keith's in bother."
+
+### Integration Tests
+
+1. **Live camera generates evidence on crime**: place player within a live camera's 12-block cone; call `commitCrime(player, CrimeType.THEFT, world)`; verify `CctvAuditSystem.hasPendingFootage(player) == true` and a `CCTV_TAPE_UNFILED_PROP` exists in Keith's portacabin.
+2. **Dummy camera generates no evidence**: place player within a dummy camera's range; call `commitCrime(player, CrimeType.THEFT, world)`; verify `CctvAuditSystem.hasPendingFootage(player) == false`.
+3. **Meal deal bribe disables cameras**: give player a `MEAL_DEAL_ITEM`; call `bribeKeith(player, BribeType.MEAL_DEAL)`; verify `CctvAuditSystem.areAllCamerasIgnored() == true` for 15 in-game minutes; after 15 minutes verify cameras return to active.
+4. **Tape destruction clears WantedSystem star**: file a `CCTV_FOOTAGE` tape against the player (WantedSystem should be at +1); give player `CCTV_FOOTAGE` in inventory; call `destroyTape(player, campfirePos)`; verify `WantedSystem.getStars() == 0` and `CriminalRecord` no longer contains the CCTV evidence entry.
+5. **Pigeon distraction leaves portacabin unguarded**: give player a `PIGEON` item; call `distractKeith(player)`; verify `keithNpc.getState() == NPCState.DISTRACTED` for 6 in-game minutes and portacabin `isGuarded() == false`.
+6. **Removing dummy camera and re-installing causes NPC nervousness**: call `removeDummyCamera(player, cameraPos)`; verify `DUMMY_CCTV_CAMERA` in player inventory; call `installDecoyCamera(player, wallPos)`; place 3 NPCs within 8 blocks; verify all 3 NPCs have state `NPCState.NERVOUS`.
+
+// Enum additions required: `CCTV_FOOTAGE`, `DUMMY_CCTV_CAMERA`, `MEAL_DEAL_ITEM` (Material);
+//   `CCTV_CAMERA_PROP`, `CCTV_MONITOR_PROP`, `CCTV_TAPE_UNFILED_PROP`, `CCTV_PORTACABIN_PROP` (PropType);
+//   `CCTV_OPERATOR` (NPCType);
+//   `DUMMY_SPOTTER`, `BACK_ROOM_ACCESS`, `MEAL_DEAL_MAN`, `PIGEON_DISTRACTION`,
+//   `TAPE_GONE`, `NOTHING_TO_SEE_HERE`, `WATCHED_BY_NOTHING` (AchievementType);
+//   `EVIDENCE_TAMPERING` (CriminalRecord.CrimeType);
+//   `CCTV_FOOTAGE_MISSING` (RumourType).
