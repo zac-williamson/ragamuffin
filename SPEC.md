@@ -53040,3 +53040,171 @@ Winning candidate's faction gets a bonus: Holt → Police cooperation +20%; Bran
 
 // Enum additions required: none — all NPCType, PropType, AchievementType, RumourType, CriminalRecord.CrimeType entries are already present.
 // New Material entries needed: POSTAL_VOTE_BUNDLE, CAMPAIGN_LEAFLET, BALLOT_BOX, COUNT_SHEET.
+
+---
+
+## Feature: Northfield Mobile Speed Camera Van — The GATSO Trap, the Tip-Off Racket & the SD Card Heist
+
+**New file**: `src/main/java/ragamuffin/core/SpeedCameraVanSystem.java`
+
+A West Midlands Police mobile speed camera GATSO van parks on Northfield Road near the school
+(weekdays 08:00–09:30 and 15:30–17:00 — school run windows). `CAMERA_OPERATOR_NPC` Sharon sits
+inside reading a tabloid. The van flashes passing cars above 30 mph (tracked by `CarDrivingSystem`).
+Fined cars spawn a `SPEEDING_FINE_NOTICE` prop at the relevant driver's house door.
+
+### Mechanic 1 — The GATSO Trap (passive income for chaos)
+
+- Every car exceeding `SPEED_LIMIT_MPH = 30` within `CAMERA_RANGE_BLOCKS = 12` blocks of
+  `SPEED_CAMERA_VAN_PROP` is photographed: `flashCount` increments, `CAMERA_FLASH_RUMOUR` seeded.
+- Sharon can see the player within `OPERATOR_SIGHT_RANGE = 8` blocks. If the player is within
+  range when any sabotage is attempted, Sharon exits the van and calls police (WantedSystem +1).
+- **Distract Sharon**: press E on `TABLOID_RACK_PROP` near the van (spawned at van arrival) — she
+  looks away for `TABLOID_DISTRACT_SECONDS = 25` seconds. One use per session.
+
+### Mechanic 2 — Tip-Off Racket
+
+Player can warn approaching drivers:
+- **Wave down** (E on approaching `CAR_NPC` within 6 blocks while van is active): driver slows;
+  player receives `TIP_OFF_COIN_REWARD = 2` COIN per warned car. After 5 warnings in one session
+  Sharon radios in and police spawn (WantedSystem +1).
+- **Warning Sign**: place `HANDWRITTEN_WARNING_SIGN_PROP` (crafted from MARKER_PEN + CARDBOARD)
+  on the road 15–30 blocks before the van. Sign warns drivers automatically; lasts 10 in-game
+  minutes before a `COUNCIL_WORKER_NPC` removes it. Achievement: `SPEED_ANGEL` (place 3 signs).
+
+### Mechanic 3 — SD Card Heist
+
+The camera's evidence SD card is the big score:
+- **Access camera housing** (hold E on `SPEED_CAMERA_VAN_PROP` for `SD_ACCESS_SECONDS = 4`
+  while Sharon is distracted): yields `SPEED_CAMERA_SD_CARD` item.
+  - Sharon not distracted: WantedSystem +2, `CAMERA_TAMPERING` crime.
+  - Sharon distracted: silent theft; Sharon notices at end of session (WantedSystem +1, rumour seeded).
+- **Sell SD card** to `FenceSystem` for `SD_CARD_FENCE_VALUE = 20` COIN, OR to a `SPEEDING_DRIVER_NPC`
+  (any driver who was flashed that session) for `SD_CARD_DRIVER_VALUE = 15` COIN and `GRATEFUL_DRIVER`
+  rumour, OR to a tabloid journalist contact (spawned after 3 heists; phone box call) for
+  `SD_CARD_JOURNALIST_VALUE = 30` COIN but triggers `EXPOSÉ_RUMOUR` (police increase patrols +20%
+  for 3 days).
+- Achievement: `CANDID_CAMERA` (steal SD card 3 separate sessions).
+
+### Mechanic 4 — Lens Fogging & Van Vandalism
+
+- **Fog the lens** (use GraffitiSystem SPRAY_PAINT on `SPEED_CAMERA_VAN_PROP` front): camera
+  blinded for `FOGGED_DURATION_MINUTES = 30` in-game minutes; no flashes while fogged;
+  Notoriety +`LENS_FOG_NOTORIETY = 4`; `CAMERA_TAMPERING` crime if witnessed.
+- **Slash tyres** (CROWBAR + hold E on `SPEED_CAMERA_VAN_PROP` for 3 seconds): van immobilised;
+  Sharon calls RAC (van removed after 60 in-game minutes); Notoriety +`TYRE_SLASH_NOTORIETY = 6`,
+  WantedSystem +1, `CRIMINAL_DAMAGE` crime. Achievement: `FLAT_TYRE_SHARON`.
+- **Burn the van** (LIGHTER on `SPEED_CAMERA_VAN_PROP` while Sharon is absent):
+  `FireStationSystem` responds; massive Notoriety +20, WantedSystem +3, `ARSON` crime;
+  `VAN_FIRE_RUMOUR` seeded; `NewspaperSystem` headline "Speed Camera Van Torched: Northfield's
+  Roads Now a Free-For-All". Achievement: `SPEED_LIMIT_ABOLISHED`.
+
+### Mechanic 5 — Legitimate Hustle (Operator Licence)
+
+Player can apply at the `POLICE_STATION_PROP` to become a licensed camera operator (costs 5 COIN
++ no active `CAMERA_TAMPERING` crime on record). Licensed operator:
+- Sits beside Sharon Mon–Fri; earns `OPERATOR_HOURLY_COIN = 1` COIN per in-game hour.
+- Can issue a `SPEEDING_FINE_NOTICE` manually (E on driver NPC within range) — 2 COIN fine
+  revenue share. HMRC logs this income.
+- If player has stolen an SD card previously, licence application rejected automatically.
+- Achievement: `POACHER_TURNED_GAMEKEEPER` (earn 10 COIN as licensed operator after committing
+  any camera crime in a previous session).
+
+### Constants (all public static final)
+
+- `SPEED_LIMIT_MPH = 30`, `CAMERA_RANGE_BLOCKS = 12f`, `OPERATOR_SIGHT_RANGE = 8f`
+- `TABLOID_DISTRACT_SECONDS = 25f`, `SD_ACCESS_SECONDS = 4f`
+- `TIP_OFF_COIN_REWARD = 2`, `TIP_OFF_POLICE_THRESHOLD = 5`
+- `SD_CARD_FENCE_VALUE = 20`, `SD_CARD_DRIVER_VALUE = 15`, `SD_CARD_JOURNALIST_VALUE = 30`
+- `LENS_FOG_NOTORIETY = 4`, `TYRE_SLASH_NOTORIETY = 6`
+- `FOGGED_DURATION_MINUTES = 30f`
+- `OPERATOR_HOURLY_COIN = 1`, `OPERATOR_LICENCE_COST = 5`
+- `SESSION_HOURS_MORNING_START = 8.0f`, `SESSION_HOURS_MORNING_END = 9.5f`
+- `SESSION_HOURS_AFTERNOON_START = 15.5f`, `SESSION_HOURS_AFTERNOON_END = 17.0f`
+
+### Integration
+
+- `CarDrivingSystem` — car speed queries, `flashCount` per session
+- `GraffitiSystem` — lens fogging via spray paint
+- `FireStationSystem` — van arson response
+- `WantedSystem` — +1/+2/+3 stars for escalating offences
+- `CriminalRecord` — `CAMERA_TAMPERING`, `CRIMINAL_DAMAGE`, `ARSON`
+- `NotorietySystem` — lens fog, tyre slash, arson
+- `FenceSystem` — SD card sale
+- `HMRCSystem` — operator licence income logging
+- `NewspaperSystem` — van fire headline
+- `RumourNetwork` — `CAMERA_FLASH_RUMOUR`, `GRATEFUL_DRIVER`, `EXPOSÉ_RUMOUR`, `VAN_FIRE_RUMOUR`
+- `TimeSystem` — school-run session windows (weekdays only)
+- `StreetSkillSystem` — `STREET_SMARTS` XP for successful SD card heist
+- `AchievementSystem` — `SPEED_ANGEL`, `CANDID_CAMERA`, `FLAT_TYRE_SHARON`,
+  `SPEED_LIMIT_ABOLISHED`, `POACHER_TURNED_GAMEKEEPER`
+
+### New NPCType entries required
+
+- `CAMERA_OPERATOR_NPC` — Sharon, sits in van during sessions. Exits to call police if sabotage
+  spotted. Stats: 20f HP, 0f attack, passive.
+- `SPEEDING_DRIVER_NPC` — a flashed car driver who exits their vehicle to complain or buy the
+  SD card. Stats: 20f HP, 0f attack, passive.
+
+### New PropType entries required
+
+- `SPEED_CAMERA_VAN_PROP` — white Transit van with roof-mounted GATSO. Dims: 4.5 × 1.8 × 2.0.
+  Durability 99. Drops SCRAP_METAL on destruction. Flash animation on camera trigger.
+- `HANDWRITTEN_WARNING_SIGN_PROP` — cardboard sign on a stick. Dims: 0.4 × 0.9 × 0.05.
+  Durability 1. Placed by player; removed by COUNCIL_WORKER_NPC after 10 minutes.
+- `TABLOID_RACK_PROP` — folding table with tabloid newspapers. Dims: 0.6 × 0.9 × 0.4.
+  Durability 2. Interactable for Sharon distraction.
+
+### New Material entries required
+
+- `SPEED_CAMERA_SD_CARD` — "Speed Camera SD Card. Best not examined too closely."
+  Stack size 1. Fence value 20 COIN.
+- `SPEEDING_FINE_NOTICE` — "Fixed Penalty Notice. £100. Payable within 28 days."
+  Stack size 5. Fence value 0 (no value). Can be forged with PRINTER_INK.
+- `HANDWRITTEN_WARNING_SIGN` — craft: 1 MARKER_PEN + 1 CARDBOARD → 1 HANDWRITTEN_WARNING_SIGN.
+
+### New RumourType entries required
+
+- `CAMERA_FLASH_RUMOUR` — "That speed camera van got another one."
+- `GRATEFUL_DRIVER` — "Someone sold me the photo from that camera. Legend."
+- `EXPOSÉ_RUMOUR` — "A journalist's got hold of the camera footage. Police aren't happy."
+- `VAN_FIRE_RUMOUR` — "Someone torched the speed camera van on Northfield Road."
+
+### New AchievementType entries required
+
+- `SPEED_ANGEL` — "Place 3 handwritten warning signs near the speed camera van."
+- `CANDID_CAMERA` — "Steal the speed camera SD card on 3 separate sessions."
+- `FLAT_TYRE_SHARON` — "Slash the speed camera van's tyres."
+- `SPEED_LIMIT_ABOLISHED` — "Burn the speed camera van to the ground."
+- `POACHER_TURNED_GAMEKEEPER` — "Earn 10 COIN as a licensed camera operator after a prior camera crime."
+
+### New CriminalRecord.CrimeType entries required
+
+- `CAMERA_TAMPERING` — recorded on lens fogging (witnessed) or SD card theft (discovered).
+
+### Integration Tests
+
+1. **Van spawns on school-run windows weekdays only**: advance time to a weekday 08:00; call
+   `update()`; verify `SPEED_CAMERA_VAN_PROP` is placed at school road position and
+   `CAMERA_OPERATOR_NPC` (Sharon) exists. Advance to Saturday 08:00; verify van is absent.
+2. **Car above speed limit triggers flash**: set a car's speed to 35 mph, call `update()` with
+   car within `CAMERA_RANGE_BLOCKS`; verify `flashCount` increments by 1 and
+   `CAMERA_FLASH_RUMOUR` is seeded.
+3. **CANDID_CAMERA awarded after 3 SD card steals**: call `stealSdCard(player)` three times
+   (with Sharon distracted each time); verify `CANDID_CAMERA` achievement is awarded on the
+   third steal.
+4. **Tip-off police threshold**: call `waveDownDriver(player)` five times in one session;
+   verify `WantedSystem.getStars() >= 1` after the fifth warning.
+5. **Lens fogging blinds camera**: apply lens fog (mocked GraffitiSystem spray action); verify
+   `isCameraBlinded()` returns true; advance `FOGGED_DURATION_MINUTES` in-game time; verify
+   `isCameraBlinded()` returns false.
+6. **Licence rejected if CAMERA_TAMPERING on record**: add `CAMERA_TAMPERING` to player's
+   `CriminalRecord`; call `applyForOperatorLicence(player)`; verify it returns
+   `LicenceResult.REJECTED_PRIOR_OFFENCE`.
+
+// Enum additions required: CAMERA_OPERATOR_NPC, SPEEDING_DRIVER_NPC (NPCType);
+//   SPEED_CAMERA_VAN_PROP, HANDWRITTEN_WARNING_SIGN_PROP, TABLOID_RACK_PROP (PropType);
+//   SPEED_CAMERA_SD_CARD, SPEEDING_FINE_NOTICE, HANDWRITTEN_WARNING_SIGN (Material);
+//   CAMERA_FLASH_RUMOUR, GRATEFUL_DRIVER, EXPOSÉ_RUMOUR, VAN_FIRE_RUMOUR (RumourType);
+//   SPEED_ANGEL, CANDID_CAMERA, FLAT_TYRE_SHARON, SPEED_LIMIT_ABOLISHED,
+//   POACHER_TURNED_GAMEKEEPER (AchievementType);
+//   CAMERA_TAMPERING (CriminalRecord.CrimeType).
