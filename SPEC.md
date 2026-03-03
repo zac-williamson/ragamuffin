@@ -55678,3 +55678,136 @@ The `CLOSED_PUB` landmark (`LandmarkType.CLOSED_PUB`) represents the boarded-up 
 5. **Document theft delays vote**: give player `PLANNING_PERMISSION` item; advance time to within 120s of theft; call `SaveOurPubSystem.destroyPlanningDocument(player, inventory, timeSystem, rumourNetwork)`; verify `SaveOurPubSystem.getVoteDelayDays()` == 7; verify `RumourNetwork` contains `PUB_SAVED_TEMPORARILY`.
 
 // `SaveOurPubSystem.java` must be created as the sole new source file. New enum entries required: `RumourType` (5 entries), `AchievementType` (5 entries). Supporting types already defined: `NPCType.PROPERTY_DEVELOPER`, `NPCType.PUB_LANDLORD`, `Material.PLANNING_PERMISSION`, `Material.PETITION_BOARD`, `Material.SPIRITS_BOTTLE`, `Material.POOL_BALL`, `Material.REAL_ALE_KEG`, `PropType.PETITION_BOARD_PROP`, `PropType.FRUIT_MACHINE_PROP`, `LandmarkType.CLOSED_PUB`, `LandmarkType.COUNCIL_OFFICE`.
+
+---
+
+## Northfield Church Hall Jumble Sale — Dot's Tables, the Premium Rummage & the Bring-and-Buy Fiddle
+
+**System**: `JumbleSaleSystem.java` (new file)
+
+The Community Centre hosts a jumble sale on the last Saturday of each in-game month (09:00–13:00). Run by Dot (`NPCType.JUMBLE_SALE_ORGANISER`), with three volunteer helpers (`NPCType.JUMBLE_SALE_VOLUNTEER`). Fifteen tables of second-hand goods are laid out; early birds queue from 08:30; latecomers find only the dregs. The player can buy legitimately, run a stall of their own, or pocket items when the volunteers aren't watching.
+
+### Overview
+
+The jumble sale is a monthly chaos event at `LandmarkType.COMMUNITY_CENTRE`. Tables are generated procedurally from a pool of second-hand items (`Material.JUMBLE_*`). Six PUBLIC NPCs and four PENSIONER NPCs attend as shoppers. Dot walks a circuit between the entrance desk and the tea urn; her three volunteers each patrol two tables apiece. The player arrives and must navigate the social dynamics of competitive British jumble-sale etiquette.
+
+### Mechanic 1 — Entry & Table Layout
+
+- From 08:45 a queue of NPCs forms outside. Press E on Dot at the entrance desk: pay `ENTRY_FEE_COIN = 1` COIN, receive `JUMBLE_ENTRY_TICKET` in inventory.
+- Without a ticket: Dot challenges the player — bluff (50% success, `NotorietySystem` +2 on fail), pay, or scarper.
+- Fifteen `JUMBLE_TABLE_PROP` objects are placed in a 5×3 grid. Each table holds 4–8 items drawn from the jumble pool.
+- **Premium table** (table 3, nearest the door): contains `Material.JUMBLE_ORNAMENT`, `Material.JUMBLE_CLOCK`, `Material.JUMBLE_BOOK_LOT` — higher fence value.
+- **Tat table** (tables 13–15): `Material.JUMBLE_CASSETTE`, `Material.JUMBLE_VHS_TAPE`, `Material.JUMBLE_COAT` — low value, but `JUMBLE_COAT` confers +15 warmth when equipped.
+
+### Mechanic 2 — Legitimate Shopping
+
+- Press E on any table item → purchase for `ITEM_BASE_PRICE` (1–4 COIN depending on item type).
+- Pensioner NPC shoppers have priority: if a PENSIONER and the player both attempt to buy the same item in the same frame, the PENSIONER wins, seeds `JUMBLE_QUEUE_JUMPED` rumour, player pushed back 1 block.
+- Haggling: press E on Dot while holding an item from the table → 30% chance of −1 COIN discount (`HAGGLE_SUCCESS_CHANCE`). Failure: Dot becomes IRRITATED for 120 real seconds (no further haggling during that period).
+- Achievement: `JUMBLE_REGULAR` (attend 3 consecutive monthly jumble sales).
+- Achievement: `BARGAIN_HUNTER` (purchase 5 items in a single sale).
+
+### Mechanic 3 — Pocket the Stock (Shoplifting)
+
+- Any table item can be pocketed without paying. Volunteer NPC line-of-sight check per item:
+  - If no volunteer within 8 blocks AND volunteer not facing player: 0% detection. Item stolen silently.
+  - If volunteer within 8 blocks, facing away: `VOLUNTEER_DISTRACTED_DETECTION = 0.15f`.
+  - If volunteer within 8 blocks, facing player: `VOLUNTEER_ALERT_DETECTION = 0.70f`.
+- On detection: volunteer shouts at player, Dot goes HOSTILE, player is ejected from hall; `JUMBLE_THEFT` CrimeType recorded, Notoriety +4, `JUMBLE_THIEF` rumour seeded.
+- **Distraction mechanic**: player can place `Material.TEA_CUP` (purchased 1 COIN from the tea urn at one end of the hall) near a volunteer → volunteer moves to investigate for `TEA_DISTRACTION_SECONDS = 20f`.
+- Achievement: `FIVE_FINGER_DISCOUNT` (pocket 3 items in one sale without detection).
+
+### Mechanic 4 — Running a Stall
+
+- One spare table (table 15) is available for the player to rent from Dot for `STALL_RENT_COIN = 3` COIN before 09:15.
+- Player can place up to 8 items from their inventory on the table (press E → place item → set price 1–10 COIN).
+- Every 5 in-game minutes, a shopper NPC browses the player's stall. Purchase chance = `BASE_SHOPPER_INTEREST = 0.35f` per item, modified by price (−5% per COIN above item base value, +10% per COIN below).
+- Player earns COIN per sale; Dot takes `STALL_COMMISSION_RATE = 10`% (rounded down, min 1 per item).
+- Selling stolen items at the stall: if Notoriety ≥ 40, one VOLUNTEER_NPC will scrutinise the stall every 10 minutes — 20% chance of recognising a stolen item → `CrimeType.HANDLING_STOLEN_GOODS`, WantedSystem +1.
+- Achievement: `MARKET_TRADER` (earn 15 COIN from a single stall session).
+
+### Mechanic 5 — The Premium Rummage (08:45–09:00 Window)
+
+- Dot unlocks the hall doors at exactly 09:00. However, a back window can be forced open with a CROWBAR (2s hold-E) during the 08:45–09:00 window.
+- Breaking in early: player gets 15 in-game minutes alone with all tables. `BREAKING_AND_ENTERING` CrimeType, Notoriety +5.
+- No NPCs are inside yet, so no detection risk — but `CCTV_ACTIVE = true` in the community centre. If `CouncilCCTVSystem` is active: WantedSystem +1 and `JUMBLE_BREAK_IN` rumour seeded via `NewspaperSystem` ("NORTHFIELD VILLAIN STRIKES AT JUMBLE SALE BEFORE DOORS OPEN").
+- Achievement: `EARLY_BIRD` (pocket at least 4 items during the pre-opening window).
+
+### Mechanic 6 — The Bring-and-Buy Fiddle
+
+- Punters can donate items to Dot at the start of the event (press E on Dot while holding any `Material.JUMBLE_*` item before 09:30): item goes to a table.
+- **Fiddle**: donate a low-value item, immediately buy it back from the table — difference is laundered COIN (spend 1, buy back at 1; but item now has clean provenance). Notoriety on that item cleared.
+- Alternatively: donate a `STOLEN_BIKE` or `KNOCKED_OFF_GEAR` item, receive a `JUMBLE_RECEIPT_PROP` — valid as proof of legitimate purchase, clearing `STOLEN` flag from that item.
+- Dot has a 20% chance per session of noticing repeat donate-and-buy behaviour (`FIDDLE_DETECTION_CHANCE = 0.20f`): if detected, ejected and Notoriety +5.
+- Achievement: `THROUGH_THE_BOOKS` (successfully launder 3 items in a single jumble sale).
+
+### Integration with Existing Systems
+
+- **`CommunityCentreSystem`**: JumbleSaleSystem hooks into the community centre's monthly calendar; Dot is the same as or a sister NPC to the CommunityCentreSystem organiser. The COMMUNITY_CENTRE landmark is reused.
+- **`CharityShopSystem`**: items leftover at close (13:00) are donated to the charity shop (if slot count < charity shop capacity): `CharityShopSystem.donateJumbleSurplus(List<Material>)`.
+- **`BootSaleSystem`**: cannot run in the same in-game week as the monthly car boot sale. If schedules clash, BootSaleSystem takes precedence and JumbleSale is skipped.
+- **`NoiseSystem`**: jumble sale noise level 3 during event; Dot's PA announcements ("Could the owner of the Blue Vectra…") pulse noise to 5 every 20 minutes.
+- **`NeighbourhoodWatchSystem`**: attending and buying legitimately: +1 Community Respect. Getting ejected: −2 Community Respect.
+- **`NotorietySystem`**: ticket bluff failure +2; shoplifting detected +4; pre-opening break-in +5; fiddle caught +5.
+- **`WantedSystem`**: CCTV break-in +1; selling stolen goods at stall (if recognised) +1.
+- **`CriminalRecord`**: `SHOPLIFTING` (pocketing items, detected); `BREAKING_AND_ENTERING` (pre-opening window entry); `HANDLING_STOLEN_GOODS` (stall with recognised stolen stock).
+- **`RumourNetwork`**: `JUMBLE_QUEUE_JUMPED`, `JUMBLE_THIEF`, `JUMBLE_BREAK_IN` (new RumourType entries required).
+- **`NewspaperSystem`**: break-in during pre-opening window triggers "NORTHFIELD VILLAIN STRIKES AT JUMBLE SALE BEFORE DOORS OPEN" headline (minor, page 3).
+- **`FenceSystem`**: `JUMBLE_ORNAMENT` fence value 3 COIN; `JUMBLE_CLOCK` fence value 5 COIN; `JUMBLE_BOOK_LOT` fence value 2 COIN; `JUMBLE_VHS_TAPE` fence value 1 COIN.
+- **`WeatherSystem`**: RAIN → attendance down 40% (fewer NPC shoppers); HEATWAVE → attendance up 20%, Dot becomes IRRITATED 30% faster.
+- **`TimeSystem`**: last Saturday of each in-game month; 08:45 queue form; 09:00 doors open; 13:00 close.
+- **`DisguiseSystem`**: wearing `JUMBLE_COAT` from the tat table makes the player appear as a regular shopper (PUBLIC NPC appearance) — reduces volunteer alert detection by 20%.
+
+### Constants Required
+
+- `ENTRY_FEE_COIN = 1` — COIN cost of entry ticket.
+- `TABLE_COUNT = 15` — total jumble tables generated.
+- `PREMIUM_TABLE_INDEX = 3` — index of the high-value table.
+- `TAT_TABLE_START = 13` — first index of tat tables.
+- `ITEM_BASE_PRICE_MIN = 1` — minimum item purchase price in COIN.
+- `ITEM_BASE_PRICE_MAX = 4` — maximum item purchase price in COIN.
+- `HAGGLE_SUCCESS_CHANCE = 0.30f` — probability Dot accepts a haggle attempt.
+- `VOLUNTEER_ALERT_DETECTION = 0.70f` — detection chance when volunteer faces player.
+- `VOLUNTEER_DISTRACTED_DETECTION = 0.15f` — detection chance when volunteer looks away.
+- `VOLUNTEER_LOS_RADIUS = 8` — block radius for volunteer LOS check.
+- `TEA_DISTRACTION_SECONDS = 20f` — seconds a volunteer is distracted by tea cup.
+- `STALL_RENT_COIN = 3` — COIN to rent the spare stall.
+- `STALL_COMMISSION_RATE = 10` — percentage Dot takes from stall sales.
+- `BASE_SHOPPER_INTEREST = 0.35f` — base probability a shopper buys a stall item per cycle.
+- `STALL_BROWSE_INTERVAL_SECONDS = 300f` — seconds between shopper browse cycles (5 in-game min).
+- `FIDDLE_DETECTION_CHANCE = 0.20f` — chance Dot notices repeat donate-and-buy behaviour.
+- `PRE_OPENING_WINDOW_START = 8.75f` — in-game hour from which back window can be forced (08:45).
+- `DOORS_OPEN_HOUR = 9.0f` — in-game hour doors open.
+- `SALE_CLOSE_HOUR = 13.0f` — in-game hour sale ends.
+- `QUEUE_FORM_HOUR = 8.5f` — in-game hour NPC queue begins forming.
+- `STALL_CUTOFF_HOUR = 9.25f` — latest time player can rent table 15 (09:15).
+- `PENSIONER_WIN_RADIUS = 1` — block radius within which a PENSIONER beats the player to an item.
+
+### New RumourType Entries Required
+
+- `JUMBLE_QUEUE_JUMPED` — "Some pensioner elbowed me out the way at the jumble sale. Did me nut in."
+- `JUMBLE_THIEF` — "Someone got caught pocketing stuff at Dot's jumble sale. Got marched out by a volunteer in a tabard."
+- `JUMBLE_BREAK_IN` — "Someone broke into the community centre before the jumble sale even opened. The cheek of it."
+
+### New AchievementType Entries Required
+
+- `JUMBLE_REGULAR` — "Attended three consecutive monthly jumble sales. A creature of routine." Target 3.
+- `BARGAIN_HUNTER` — "Bought five items in a single jumble sale. Dot will be pleased." Target 5.
+- `FIVE_FINGER_DISCOUNT` — "Pocketed three items at the jumble sale without being spotted. Mind the volunteers." Target 3.
+- `MARKET_TRADER` — "Earned 15 COIN from your stall at a single jumble sale. Entrepreneur." Target 15.
+- `EARLY_BIRD` — "Broke into the community centre and pocketed four items before the doors opened. Shameless." Target 4.
+- `THROUGH_THE_BOOKS` — "Laundered three stolen items through the bring-and-buy. Very professional." Target 3.
+
+### Integration Tests
+
+1. **Entry ticket required**: set time to 09:10; create `JumbleSaleSystem` in OPEN state; call `JumbleSaleSystem.attemptEntry(player, inventory, dot, notorietySystem)` without `JUMBLE_ENTRY_TICKET` in inventory; verify player is not inside hall (`JumbleSaleSystem.isPlayerInside()` == false); give player `JUMBLE_ENTRY_TICKET`; call again; verify `isPlayerInside()` == true.
+
+2. **Volunteer LOS detection fires correctly**: place volunteer NPC 6 blocks from player, facing player; call `JumbleSaleSystem.attemptPocketItem(player, table3, item0, rng, npcManager, notorietySystem, criminalRecord, rumourNetwork)` 10 times (seeded RNG); verify at least 5 detections occur (≥ 50% — expected ~7 from `VOLUNTEER_ALERT_DETECTION = 0.70f`); verify `criminalRecord.hasCrime(CrimeType.SHOPLIFTING)` after first detection.
+
+3. **Tea distraction reduces detection**: place volunteer NPC 6 blocks from player, facing player; call `JumbleSaleSystem.placeTeaCupDistraction(player, inventory, volunteer, timeSystem)`; verify volunteer state transitions away from watching; call `attemptPocketItem` during distraction window; verify detection uses `VOLUNTEER_DISTRACTED_DETECTION` rate.
+
+4. **Stall sale earns COIN minus commission**: rent table 15; place `JUMBLE_ORNAMENT` at price 3 COIN; advance `STALL_BROWSE_INTERVAL_SECONDS`; seed RNG to guarantee shopper purchase; call `JumbleSaleSystem.processStallBrowse(player, inventory, rng, timeSystem)`; verify player COIN increased by 2 (3 COIN − 10% commission = 2.7, floor = 2); verify `JUMBLE_ORNAMENT` removed from stall.
+
+5. **Bring-and-buy clears stolen flag**: give player `STOLEN_BIKE`; call `JumbleSaleSystem.donateAndBuyBack(player, inventory, Material.STOLEN_BIKE, dot, timeSystem)`; verify `inventory.isStolen(Material.STOLEN_BIKE)` == false; verify player holds `JUMBLE_RECEIPT_PROP`.
+
+// `JumbleSaleSystem.java` must be created as the sole new source file. New enum entries required: `RumourType` (3 entries), `AchievementType` (6 entries). Supporting types already defined: `LandmarkType.COMMUNITY_CENTRE`, `NPCType.PENSIONER`, `NPCType.PUBLIC`. New NPCType entries required: `JUMBLE_SALE_ORGANISER` (Dot), `JUMBLE_SALE_VOLUNTEER`. New Material entries required: `JUMBLE_ENTRY_TICKET`, `JUMBLE_ORNAMENT`, `JUMBLE_CLOCK`, `JUMBLE_BOOK_LOT`, `JUMBLE_CASSETTE`, `JUMBLE_VHS_TAPE`, `JUMBLE_COAT`, `JUMBLE_RECEIPT_PROP`. New PropType entries required: `JUMBLE_TABLE_PROP`.
