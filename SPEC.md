@@ -46563,3 +46563,159 @@ The evidence locker (`EVIDENCE_LOCKER_PROP`) stores items confiscated during any
 //              StreetSkillSystem (INTIMIDATION check on Geoff),
 //              RumourNetwork, NewspaperSystem,
 //              AchievementSystem, TimeSystem
+
+---
+
+## Issue #1339: Add Northfield Council Enforcement Day — The Coordinated Sweep, Lying Low & the Chaos Window
+
+**Goal**: Implement `CouncilEnforcementSystem` — a recurring, scheduled event that triggers a coordinated multi-agency enforcement sweep across Northfield every 14 in-game days. Enforcement Day is the council at its most organised (which isn't very). It creates genuine survival pressure for the player while simultaneously opening a short window of opportunity: the enforcement teams are so focused on each other that they ignore opportunistic crime happening in their blind spots.
+
+---
+
+### The Sweep
+
+Enforcement Day triggers automatically at **08:00** on day 14, 28, 42, etc. (every `dayCount % 14 == 0`). A `COUNCIL_NOTICE_PROP` appears on the community centre noticeboard the evening before (19:00 on day 13): *"NORTHFIELD COUNCIL — COMMUNITY SAFETY OPERATION — TOMORROW 08:00–17:00 — YOUR COOPERATION IS APPRECIATED."* The `RumourNetwork` seeds `ENFORCEMENT_SWEEP` rumour at 17:00 on day 13 (spreads to all PUBLIC NPCs overnight).
+
+Five enforcement teams deploy simultaneously at 08:00:
+
+| Team | NPC | Route | Mechanic |
+|---|---|---|---|
+| **TV Licensing** | Derek (`TV_LICENSING_INSPECTOR`) | Double rounds — 2 visits per street block instead of 1 | Same as `TvLicensingSystem` but doubled frequency; on Enforcement Day Derek is accompanied by a `COUNCIL_OFFICER` who records any refusals |
+| **Traffic Wardens** | Clive (`TRAFFIC_WARDEN`) + trainee `WARDEN_TRAINEE` | Full high-street coverage plus industrial estate | Clamping threshold reduced: 30 min overstay (normally 60). Trainee has 50% chance to make a mistake (gives PCN to wrong car — comedy) |
+| **DVLA Spot Checks** | `DVLA_OFFICER` NPC (Karen) | Stationary at 3 road junctions checking plates | Any car driven by player with no `DRIVING_LICENCE` in inventory → immediate tow + `CriminalRecord` `NO_INSURANCE_DRIVING`. Car with clocked mileage (`MILEAGE_CORRECTOR_PROP` used) has 20% detection chance |
+| **Benefits Fraud Unit** | `BENEFITS_INVESTIGATOR` NPC (Phil) | Visits registered squat/council flat addresses, then JobCentre | If player is at home + has `STOLEN_GOODS` in inventory → search warrant trigger, `THEFT` recorded, Notoriety +8. Phil cross-references `DWPSystem` records — if player is working (via `EmploymentSystem`) while claiming benefits: `BENEFIT_FRAUD` crime, WantedSystem +2 stars |
+| **Environmental Health** | Janet (`ENVIRONMENTAL_HEALTH_OFFICER`) | Inspects all food venues in one day (normally 1/day) | All venues get inspected; results as per `EnvironmentalHealthSystem`. Random venue fails due to Enforcement Day stress: `NOISE_COMPLAINT` rumour seeded |
+
+---
+
+### The Player Experience
+
+**Lying Low**: The player can choose to stay inside during 08:00–17:00. No enforcement team will enter a building to find them (they need a warrant, and it's just a council sweep, not a police raid). Safe locations: squat, church, community centre, library, any shop interior.
+
+**The Warning**: The RumourNetwork warning at 19:00 the day before gives the player time to:
+- Pay off outstanding PCNs at the traffic warden office (before Clive arrives)
+- Return the TV licence form (before Derek doubles his rounds)
+- Move stolen goods out of the squat (hide in `LOCK_UP_GARAGE_SYSTEM`)
+- Ditch the uninsured car (park it out of town)
+
+**The Chaos Window (08:30–16:00)**: While all enforcement teams are busy, two exploitation mechanics open:
+1. **The CCTV Distraction**: `EnvironmentalHealthSystem`'s inspection team unplugs CCTV at two food venues during inspection (prop access). Player can rob those venues' tills during this window with no CCTV record. Verified by `WitnessSystem` only.
+2. **The Trainee Mistake**: If the `WARDEN_TRAINEE` gives a PCN to the wrong car (50% chance), the angry `PUBLIC` NPC argues with Clive for 5 in-game minutes. During this confrontation, Clive is distracted and cannot clamp — player can park anywhere freely for 5 minutes. Achievement `WARDEN_CHAOS` on witnessing the argument.
+
+**Penalty for Being Caught Out**: If player is caught by any team on Enforcement Day (as opposed to a normal day), the penalty is ×1.5. The enforcement teams have backup: a `POLICE_PATROL` NPC escorts each team and can arrest on the spot (no warning stage).
+
+---
+
+### End of Day
+
+At 17:00, all enforcement NPCs despawn. `NewspaperSystem` generates a headline the next morning based on outcomes:
+- 0 players caught: *"NORTHFIELD SAFETY OPERATION: A GREAT SUCCESS, SAYS COUNCIL"*
+- 1 citation: *"NORTHFIELD CRACKDOWN CATCHES ONE OFFENDER"*
+- 3+ citations: *"COUNCIL BLITZ DESCENDS ON NORTHFIELD HIGH STREET"*
+- Player arrested: *"LOCAL MAN NABBED IN COUNCIL SWEEP"* (player's notoriety name used)
+
+---
+
+### New Class: `CouncilEnforcementSystem`
+
+Located at `src/main/java/ragamuffin/core/CouncilEnforcementSystem.java`.
+
+Constructor: `CouncilEnforcementSystem(TimeSystem, TrafficWardenSystem, TvLicensingSystem, DWPSystem, EnvironmentalHealthSystem, WantedSystem, NotorietySystem, CriminalRecord, RumourNetwork, NewspaperSystem, Random)`
+
+Key methods:
+
+```java
+/** Returns true if today is an Enforcement Day (dayCount % 14 == 0). */
+public boolean isEnforcementDay(int dayCount)
+
+/** Trigger evening warning: spawn notice prop, seed rumour. Call at 19:00 on eve of sweep. */
+public void triggerEveningWarning(int dayCount)
+
+/** Begin the sweep: spawn all enforcement teams, set chaos window flag. Call at 08:00 on sweep day. */
+public void beginSweep(List<NPC> worldNpcs)
+
+/** End sweep: despawn teams, generate newspaper headline. Call at 17:00. */
+public void endSweep(int playerCitationsToday, boolean playerArrested)
+
+/** Returns true if the CCTV chaos window is active (08:30–16:00 on sweep day). */
+public boolean isCctvWindowActive(float currentHour)
+
+/** Apply Enforcement Day citation penalty (×1.5 multiplier). */
+public int applyEnforcementPenalty(int basePenalty)
+
+/** Returns true if warden trainee distraction is active (after a trainee mistake). */
+public boolean isWardenDistractionActive()
+
+/** Call each game frame during sweep: ticks trainee mistake timer, warden distraction window. */
+public void update(float delta, TimeSystem timeSystem)
+```
+
+---
+
+### New NPCTypes (add to `NPCType.java`)
+
+| NPC | Description |
+|---|---|
+| `DVLA_OFFICER` | Karen — stationary at road junctions 08:00–17:00 on Enforcement Day only. Fleet fleece, clipboard, checking plates. Passive unless player drives past. |
+| `BENEFITS_INVESTIGATOR` | Phil — visits residential addresses. Brown suit, briefcase. Cross-references `DWPSystem`; spawns only on Enforcement Day. |
+| `WARDEN_TRAINEE` | A nervous trainee accompanying Clive. 50% error rate. Flees if the player attacks Clive. |
+| `COUNCIL_OFFICER` | Generic enforcement backup accompanying each team. Calls police if player argues. |
+
+---
+
+### New RumourType (add to `RumourType.java`)
+
+- `ENFORCEMENT_SWEEP` — seeded the evening before. NPC dialogue: *"Heard the council's doing a full sweep tomorrow. Might keep me head down."* / *"They're all out tomorrow — traffic, licensing, the lot. Mental."*
+
+---
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Achievement | Condition |
+|---|---|
+| `LAY_LOW` | Survive an Enforcement Day without a single citation or arrest |
+| `WARDEN_CHAOS` | Witness the trainee warden ticket the wrong car |
+| `CHAOS_WINDOW` | Rob a till during the CCTV chaos window on Enforcement Day |
+| `FOREWARNED` | Act on the evening warning to clear all outstanding offences before the sweep |
+
+---
+
+### Unit Tests
+
+- `CouncilEnforcementSystem.isEnforcementDay(dayCount)`: day 0 → false; day 14 → true; day 13 → false; day 28 → true; day 15 → false.
+- `CouncilEnforcementSystem.applyEnforcementPenalty(basePenalty)`: base 10 → 15; base 5 → 8 (rounded); base 0 → 0.
+- `CouncilEnforcementSystem.isCctvWindowActive(hour)`: 08:29 → false; 08:30 → true; 16:00 → true; 16:01 → false; outside sweep day → false.
+- `CouncilEnforcementSystem.isWardenDistractionActive()`: initially false; after `triggerTraineeMistake()` → true for 5 minutes; after 5 minutes elapsed → false.
+- Benefits fraud check: player working + claiming benefits → `BENEFIT_FRAUD` crime recorded, WantedSystem +2 stars.
+- DVLA check: player driving + no `DRIVING_LICENCE` → `NO_INSURANCE_DRIVING` recorded + car towed.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Evening warning seeds rumour**: Set `dayCount = 13`. Advance TimeSystem to 19:00. Call `update()`. Verify `RumourNetwork` contains at least one `ENFORCEMENT_SWEEP` rumour. Verify `COUNCIL_NOTICE_PROP` exists at community centre noticeboard position. Verify at least 3 PUBLIC NPCs carry `ENFORCEMENT_SWEEP` rumour by 08:00 day 14.
+
+2. **Enforcement teams deploy and track player**: Set `dayCount = 14`. Call `beginSweep()` at 08:00. Verify 5 enforcement NPCs spawned (DVLA_OFFICER, BENEFITS_INVESTIGATOR, WARDEN_TRAINEE, COUNCIL_OFFICER ×2). Give player no `DRIVING_LICENCE`. Simulate player entering a car and driving past `DVLA_OFFICER` position. Verify `CriminalRecord` contains `NO_INSURANCE_DRIVING`. Verify car removed from world (towed).
+
+3. **CCTV chaos window enables unwitnessed till rob**: Set `dayCount = 14`. Call `beginSweep()`. Advance time to 09:00. Verify `isCctvWindowActive(9.0f)` == true. Break `TILL_PROP` at a venue whose CCTV is unplugged during inspection. Verify `WantedSystem` penalty does NOT include CCTV evidence (+0 stars from camera, only witness-based). Advance time to 17:00. Call `endSweep()`. Verify CCTV window inactive.
+
+4. **Surviving clean earns LAY_LOW achievement**: Set `dayCount = 14`. Begin sweep. Player stays inside squat for entire 08:00–17:00. Call `endSweep(0, false)`. Verify `AchievementType.LAY_LOW` unlocked. Verify newspaper headline next morning contains "A GREAT SUCCESS".
+
+5. **Phil catches benefit fraud**: Give player `EmploymentSystem` active job (working at Greggs). Set `DWPSystem` showing player as claiming JSA. Set `dayCount = 14`. Call `beginSweep()`. Phil pathfinds to player's registered address. Simulate Phil arriving and pressing E on door. Verify `CriminalRecord` contains `BENEFIT_FRAUD`. Verify WantedSystem tier +2. Verify `DWPSystem` benefit suspended.
+
+---
+
+// ── Issue #1339: Add Northfield Council Enforcement Day — Coordinated Sweep ─────────
+// New: CouncilEnforcementSystem.java in ragamuffin.core
+// New: CouncilEnforcementSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1339CouncilEnforcementIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: DVLA_OFFICER, BENEFITS_INVESTIGATOR, WARDEN_TRAINEE, COUNCIL_OFFICER — add to NPCType.java
+// New RumourType: ENFORCEMENT_SWEEP — add to RumourType.java
+// New AchievementTypes: LAY_LOW, WARDEN_CHAOS, CHAOS_WINDOW, FOREWARNED — add to AchievementType.java
+// Integration: TrafficWardenSystem (double clamping, trainee distraction),
+//              TvLicensingSystem (doubled Derek rounds),
+//              DWPSystem (benefit fraud cross-check),
+//              EnvironmentalHealthSystem (mass inspection day, CCTV unplug window),
+//              WantedSystem (Enforcement Day ×1.5 penalty multiplier),
+//              CriminalRecord (NO_INSURANCE_DRIVING, BENEFIT_FRAUD),
+//              RumourNetwork (ENFORCEMENT_SWEEP seeding),
+//              NewspaperSystem (next-day headline),
+//              AchievementSystem, TimeSystem, NPCManager
