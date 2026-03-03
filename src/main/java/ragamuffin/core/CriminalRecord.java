@@ -1325,7 +1325,15 @@ public class CriminalRecord {
          * items on the player's rented stall (Notoriety ≥ 40, 20% scrutiny chance).
          * Penalty: WantedSystem +1.
          */
-        JUMBLE_HANDLING_STOLEN_GOODS("Handling stolen goods (jumble sale stall)");
+        JUMBLE_HANDLING_STOLEN_GOODS("Handling stolen goods (jumble sale stall)"),
+
+        // ── Issue #1461: Northfield Street Preacher ───────────────────────────
+
+        /**
+         * BREACH_OF_PEACE — recorded when the player heckles Brother Gary and noise
+         * level reaches ≥ 7, summoning a PCSO. Penalty: WantedSystem +1.
+         */
+        BREACH_OF_PEACE("Breach of the peace (heckling)");
 
         private final String displayName;
 

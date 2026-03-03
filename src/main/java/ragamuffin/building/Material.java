@@ -6877,7 +6877,25 @@ public enum Material {
      * JUMBLE_RECEIPT_PROP — handwritten receipt from Dot's bring-and-buy table.
      * Valid proof of legitimate purchase; clears the STOLEN flag from a donated item.
      */
-    JUMBLE_RECEIPT_PROP("Jumble Receipt");
+    JUMBLE_RECEIPT_PROP("Jumble Receipt"),
+
+    // ── Issue #1461: Northfield Street Preacher ───────────────────────────────
+
+    /**
+     * MEGAPHONE — Brother Gary's hand-held megaphone.
+     * Stolen by pickpocket (25% base, PICKPOCKET Apprentice required) or taken freely
+     * during the 12:30–13:00 thermos break window. Fence value: 8 COIN.
+     * When used by the player, broadcasts noise at 20-block radius for NPC distraction.
+     */
+    MEGAPHONE("Megaphone"),
+
+    /**
+     * BLESSED_WATER_BOTTLE — small bottle of "holy water" sold by Brother Gary
+     * for 3 COIN as a scam (0 HP restore, no real effect).
+     * Can be used as evidence at the COUNCIL_OFFICE to trigger the Trading Standards sting.
+     * Holding it as evidence earns a 5 COIN whistleblower reward.
+     */
+    BLESSED_WATER_BOTTLE("Blessed Water Bottle");
 
     private final String displayName;
 

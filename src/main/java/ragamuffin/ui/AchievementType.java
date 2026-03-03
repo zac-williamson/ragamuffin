@@ -7262,6 +7262,58 @@ public enum AchievementType {
         "Through the Books",
         "Laundered three stolen items through the bring-and-buy. Very professional.",
         3
+    ),
+
+    // ── Issue #1461: Northfield Street Preacher ───────────────────────────────
+
+    /**
+     * HEARD_THE_WORD — triggered when the player first hears Brother Gary's sermon
+     * (within 20-block radius during active sermon circuit).
+     */
+    HEARD_THE_WORD(
+        "Heard the Word",
+        "Stood close enough to Brother Gary to catch a full sermon. Whether you wanted to or not.",
+        1
+    ),
+
+    /**
+     * HONEST_SINNER — triggered when the player shows respect to Brother Gary
+     * and Notoriety is reduced by 1.
+     */
+    HONEST_SINNER(
+        "Honest Sinner",
+        "Showed respect to a street preacher. Notoriety reduced. The Lord works in mysterious ways.",
+        1
+    ),
+
+    /**
+     * VOICE_OF_NORTHFIELD — triggered when the player uses the stolen MEGAPHONE
+     * to broadcast at 20-block radius for NPC distraction.
+     */
+    VOICE_OF_NORTHFIELD(
+        "Voice of Northfield",
+        "Used a stolen megaphone to distract half the high street. Power to the people.",
+        1
+    ),
+
+    /**
+     * NORTHFIELD_HECKLER — triggered when the player heckles Brother Gary and
+     * DRUNK NPCs join in, escalating noise sufficiently.
+     */
+    NORTHFIELD_HECKLER(
+        "Northfield Heckler",
+        "Heckled a street preacher until the drunks joined in. Pure Northfield.",
+        1
+    ),
+
+    /**
+     * BY_THE_BOOK — triggered when the Trading Standards sting removes Gary
+     * and the player has a clean criminal record (0 crimes recorded).
+     */
+    BY_THE_BOOK(
+        "By the Book",
+        "Reported the dodgy blessed water seller to Trading Standards with a clean record. Very civic-minded.",
+        1
     );
 
     private final String name;

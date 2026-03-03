@@ -1678,5 +1678,27 @@ public enum RumourType {
     /** "Someone broke into the community centre before the jumble sale even opened. The cheek of it."
      * — seeded by JumbleSaleSystem on pre-opening break-in; also triggers NewspaperSystem headline.
      * Spreads via PUBLIC and PENSIONER NPCs. */
-    JUMBLE_BREAK_IN;
+    JUMBLE_BREAK_IN,
+
+    // ── Issue #1461: Northfield Street Preacher ───────────────────────────────
+
+    /** "That fella with the megaphone's back outside the Pound Shop. Brother Gary, they call him."
+     * — seeded by StreetPreacherSystem when player ignores the dialogue option.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    STREET_PREACHER_SPOTTED,
+
+    /** "Someone nicked Brother Gary's megaphone right out of his hand. Bold as brass."
+     * — seeded by StreetPreacherSystem on megaphone theft.
+     * Spreads via PUBLIC, PENSIONER, and YOUTH_GANG NPCs. */
+    MEGAPHONE_STOLEN,
+
+    /** "Gary's sermon kicked off a right ruck — PCSO had to come and break it up."
+     * — seeded by StreetPreacherSystem when heckling escalates noise to ≥ 7 and PCSO is summoned.
+     * Spreads via PUBLIC and YOUTH_GANG NPCs. */
+    HECKLE_CROWD_DISPERSAL,
+
+    /** "Word is there's a back room at the off-licence — Gary knows about it. Mentioned it once."
+     * — seeded by StreetPreacherSystem when player asks about the off-licence (one-time).
+     * Spreads via PUBLIC NPCs only. */
+    OFF_LICENCE_BACK_ROOM;
 }
