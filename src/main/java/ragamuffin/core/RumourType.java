@@ -1544,5 +1544,15 @@ public enum RumourType {
     /** "There's a load of bikers coming through Northfield Sunday for charity."
      * — seeded by EasterSystem when parade begins (day 93, 11:00).
      * Spreads via PUBLIC and BIKER_NPC NPCs. */
-    BIKER_PARADE;
+    BIKER_PARADE,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1435: Northfield Community Speedwatch
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** "The road's basically a car park on Tuesday mornings now."
+     * — seeded by CommunitySpeedwatchSystem when SpeedCameraVanSystem and
+     * CommunitySpeedwatchSystem are simultaneously active on the same road.
+     * Spreads via PUBLIC and SPEEDING_DRIVER_NPC NPCs. */
+    DOUBLE_ENFORCEMENT;
 }

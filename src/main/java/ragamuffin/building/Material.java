@@ -6670,7 +6670,46 @@ public enum Material {
      *   <li>Redeemable at KebabVan for a free kebab.</li>
      * </ul>
      */
-    BIKERS_VOUCHER("Bikers' Voucher");
+    BIKERS_VOUCHER("Bikers' Voucher"),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1435: Northfield Community Speedwatch
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * SPEED_GUN — A calibrated Stalker II speed gun. Technically police-grade.
+     * Keith bought his off eBay.
+     * Stolen from TRIPOD_SPEED_GUN_PROP by holding E for 4 seconds while Keith is distracted.
+     * Fence value: 12 COIN (FenceSystem). Sell to SPEEDING_DRIVER_NPC: 8 COIN.
+     * Alt use: hold E to measure passing car speeds for 60 seconds (flavour dialogue).
+     * Achievement: COMMUNITY_POLICING_ENDS_HERE on theft.
+     */
+    SPEED_GUN("Speed Gun"),
+
+    /**
+     * SPEEDWATCH_CLIPBOARD — Laminated sheet, 3 columns: TIME, PLATE, SPEED.
+     * Keith's handwriting is surprisingly neat.
+     * Given to player on joining as a volunteer (E on Keith with HI_VIS_VEST, Notoriety ≤ 25).
+     * Used to record passing vehicles during session (E within 5 seconds of vehicle passing).
+     * Can be abused outside session to send FAKE_SPEEDWATCH_LETTER items.
+     */
+    SPEEDWATCH_CLIPBOARD("Speedwatch Clipboard"),
+
+    /**
+     * SPEEDWATCH_WARNING_LETTER — A politely worded letter explaining that you were observed
+     * exceeding the speed limit. It is not a fine. It is, Keith notes, just as effective.
+     * Delivered 2 in-game days after detection by CommunitySpeedwatchSystem.
+     * Receiving 3 letters triggers NotorietySystem community reputation −2 and LOCAL_GOSSIP rumour.
+     */
+    SPEEDWATCH_WARNING_LETTER("Speedwatch Warning Letter"),
+
+    /**
+     * SPEEDWATCH_LANYARD — Honorary Community Speedwatch Member. Keith laminated it himself.
+     * It says 'DO NOT DUPLICATE'.
+     * Awarded by Keith when player recovers the stolen clipboard from the confrontation driver.
+     * When worn: grants "Volunteer" title in StreetReputation display (StreetSkillSystem).
+     */
+    SPEEDWATCH_LANYARD("Speedwatch Lanyard");
 
     private final String displayName;
 
@@ -8117,6 +8156,16 @@ public enum Material {
                                                     0.95f, 0.85f, 0.10f); // Yellow label
             case BIKERS_VOUCHER:          return cs(0.90f, 0.90f, 0.90f, // White slip
                                                     0.10f, 0.10f, 0.50f); // Blue print
+
+            // Issue #1435: Northfield Community Speedwatch
+            case SPEED_GUN:               return cs(0.25f, 0.25f, 0.28f, // Dark grey body
+                                                    0.60f, 0.60f, 0.65f); // Silver barrel
+            case SPEEDWATCH_CLIPBOARD:    return cs(0.88f, 0.92f, 0.88f, // White laminated sheet
+                                                    0.85f, 0.72f, 0.20f); // Yellow hi-vis trim
+            case SPEEDWATCH_WARNING_LETTER: return cs(0.95f, 0.92f, 0.88f, // Cream paper
+                                                    0.10f, 0.25f, 0.55f); // Blue police-style heading
+            case SPEEDWATCH_LANYARD:      return cs(0.85f, 0.72f, 0.20f, // Yellow hi-vis lanyard
+                                                    0.88f, 0.92f, 0.88f); // White ID card
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }

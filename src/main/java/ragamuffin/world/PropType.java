@@ -4130,7 +4130,28 @@ public enum PropType {
      * Dims: 0.4 × 0.5 × 0.4; 1 hit to break; drops CHARITY_BUCKET_EASTER.
      * Donate or steal — theft triggers Notoriety +8, Wanted +1, all BIKER_NPCs HOSTILE.
      */
-    CHARITY_BUCKET_PROP(0.4f, 0.5f, 0.4f, 1, ragamuffin.building.Material.CHARITY_BUCKET_EASTER);
+    CHARITY_BUCKET_PROP(0.4f, 0.5f, 0.4f, 1, ragamuffin.building.Material.CHARITY_BUCKET_EASTER),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1435: Northfield Community Speedwatch
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * TRIPOD_SPEED_GUN_PROP — Keith's calibrated speed gun on an aluminium tripod stand.
+     * Dims: 1.0 × 1.5 × 1.0; 2 hits to destroy (aluminium frame); drops SCRAP_METAL.
+     * Spawned by CommunitySpeedwatchSystem at SPEEDWATCH_POSITION during active sessions.
+     * Can be stolen by holding E for 4 seconds while Keith is distracted.
+     * Theft: CrimeType THEFT, Notoriety +6, WantedSystem +1, session ends immediately.
+     */
+    TRIPOD_SPEED_GUN_PROP(1.0f, 1.5f, 1.0f, 2, ragamuffin.building.Material.SCRAP_METAL),
+
+    /**
+     * SPEEDWATCH_SIGN_PROP — Roadside A-board: "COMMUNITY SPEEDWATCH IN OPERATION. SLOW DOWN."
+     * Dims: 0.5 × 1.2 × 0.4; 1 hit to destroy; drops WOOD.
+     * Graffiti-able (GraffitiSystem): Notoriety +3, CrimeType CRIMINAL_DAMAGE.
+     * Keith re-erects the sign next session with "AND RESPECT COMMUNITY VOLUNTEERS."
+     */
+    SPEEDWATCH_SIGN_PROP(0.5f, 1.2f, 0.4f, 1, ragamuffin.building.Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
