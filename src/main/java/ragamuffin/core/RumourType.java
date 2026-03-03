@@ -1110,5 +1110,10 @@ public enum RumourType {
      * CarBootSaleSystem during the EARLY_BIRD_RUSH event when a PENSIONER NPC
      * is displaced. Triggers NeighbourhoodSystem Vibes −1.
      * Spreads via PENSIONER and PUBLIC NPCs. */
-    PENSIONER_SHOVED;
+    PENSIONER_SHOVED,
+
+    /** "Absolute carnage out there last night. Police everywhere."
+     * Seeded at midnight on day 1 (after NYE). Spreads via PUBLIC, DRUNK.
+     * Spread velocity +3. */
+    NYE_CHAOS;
 }
