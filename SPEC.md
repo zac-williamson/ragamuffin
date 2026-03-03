@@ -47958,3 +47958,131 @@ Using `Material.FORGED_ID` at the counter:
 // Integration: TimeSystem, WeatherSystem, NeighbourhoodSystem, StreetSkillSystem,
 //   NotorietySystem, CriminalRecord, WitnessSystem, RumourNetwork, DogCompanionSystem,
 //   FenceSystem, SoundSystem, NoiseSystem, WantedSystem, NewspaperSystem
+
+---
+
+## Issue #1359: Add Northfield HMRC Tax Investigation — The Cash-in-Hand Reckoning, the Dawn Raid & the Offshore Escape
+
+**Theme**: HMRC Inspector Sandra Watts has been tipped off about suspicious cash activity in Northfield. If the player has accumulated enough untaxed income across cash-in-hand jobs, fence sales, market stalls, and underground economy dealings, Sandra opens a tax investigation. The player must choose: cooperate and pay up, find creative accounting tricks, bribe the inspector, or go full fugitive.
+
+**Trigger**: `HMRCSystem.checkInvestigationThreshold(player)` — investigation opens when `player.totalUntaxedEarnings >= INVESTIGATION_THRESHOLD` (default: 150 COIN). Threshold resets to 0 if player successfully pays a `TAX_DEMAND` or achieves `CLEAN_BILL_OF_HEALTH`.
+
+**Untaxed Earnings Tracking**: Each of the following systems contributes to `totalUntaxedEarnings` when the player earns:
+- `FenceSystem` — any sale (100% untaxed)
+- `StallSystem` — market stall revenue (100% untaxed)
+- `BuskingSystem` — busking income (100% untaxed)
+- `BootSaleSystem` — auction winnings resold (75% untaxed)
+- `EmploymentSystem` — cash-in-hand jobs: PAYE tracked but the dodgy jobs (e.g. `CASH_IN_HAND_LABOURER`) are 100% untaxed
+- `StreetEconomySystem` — all street hustles untaxed
+
+### The Investigation
+
+**Opening**: At 09:00 on any weekday after threshold is crossed, an `HMRC_INSPECTOR` NPC (Sandra Watts, grey trouser suit, briefcase) spawns outside the player's last known address (nearest `COUNCIL_FLATS` or `SQUAT` landmark). She holds a `TAX_DEMAND_LETTER` prop. NoiseSystem ambient "official business" −5 (quiet tension).
+
+**The Demand Letter**: Sandra approaches within 3 blocks and attempts to serve notice. `TAX_DEMAND_LETTER` appears in player inventory if player does not run. Demand amount: `min(totalUntaxedEarnings * 0.3, 80)` COIN (i.e. 30% tax on untaxed earnings, capped at 80 COIN). Player has 2 in-game days to pay at `CASHPOINT_PROP` or by pressing E on Sandra.
+
+**Compliance — Pay Up**: Player presses E on Sandra or cashpoint with sufficient COIN. COIN deducted. `CLEAN_BILL_OF_HEALTH` material added to inventory (useful: HMRC cannot re-investigate for 7 days). StreetSkillSystem GRAFTING XP +3. Achievement `TAX_COMPLIANT`.
+
+**Negotiated Settlement**: If player has `CITIZENS_ADVICE_LETTER` (from CitizensAdviceSystem): demand reduced by 40% (HMRC backs down on appeal). Sandra's dialogue: *"Fine. But we'll be watching you, Mr… whoever you are."* Achievement `KNOWS_HIS_RIGHTS`.
+
+**Bribery**: Player offers `CASH_BRIBE_ENVELOPE` (requires 15 COIN + `ENVELOPE` material crafted at any surface) to Sandra. 60% chance: Sandra pockets it, investigation dropped, `BENT_OFFICIAL` rumour seeded in RumourNetwork. 40% chance: Sandra refuses, Notoriety +10, `BRIBERY_OF_PUBLIC_OFFICIAL` crime added, Wanted +2. Achievement `GREASED_PALM` on success.
+
+**Ignoring the Demand**: After 2 in-game days of non-payment, Sandra returns with a `DISTRAINT_OFFICER` NPC (Derek, bailiff). Derek attempts to seize items: removes up to demand-value of sellable materials from player inventory (random selection from fenceable items). WitnessSystem: nearby NPCs seed `TAX_TROUBLES` rumour. Achievement `BAILED_ON`: first bailiff visit.
+
+**Hiding Cash**: Player can distribute COIN across `LOCKUP_SAFE_PROP` (if rented via LockUpGarageSystem) before Sandra arrives. Coins in lockup are not counted toward demand. However: if Sandra witnesses the player at the lockup within 30 seconds of her spawning, she becomes `SUSPICIOUS` (detection state); Notoriety +5, `TAX_EVASION` crime.
+
+**Going Fugitive (Dawn Raid)**: If player ignores two successive demands, Sandra escalates. At 06:30 on day 5, `HMRC_DAWN_RAID` event: 2× `HMRC_INSPECTOR` NPCs + 1× `COUNCIL_ENFORCEMENT_OFFICER` spawn outside player address. Wanted +2. Player must exit the building without being intercepted (stealth exit: use `BACK_WINDOW_PROP` from CouncilFlatsSystem, or disguise). If caught: ArrestSystem triggered, `TAX_EVASION` on criminal record, fine = full untaxed earnings. Achievement `DAWN_RAID_SURVIVOR` if player escapes.
+
+**Information Tip-off**: `LOAN_SHARK_CLERK` NPC (from ClaimsManagementSystem) will tip off HMRC for a fee of 5 COIN if the player owes the loan shark money and refuses to pay — seeding the investigation automatically regardless of threshold. `HMRC_TIPPED_OFF` rumour seeded.
+
+### Inspector Sandra's NPC Behaviour
+
+- Patrols a 20-block radius of player's last known address at 1.2f speed
+- Detection radius 6 blocks; sight-based (blocked by walls)
+- If player wears `SUIT_JACKET` disguise (from CouncilFlatsSystem): Sandra's detection range reduced to 2 blocks
+- State machine: `PATROLLING` → `APPROACHING` (within 6 blocks) → `SERVING_NOTICE` (within 3) → `WAITING_FOR_PAYMENT` (2-day timer) → `ESCALATING` (bailiff call)
+- Sandra cannot be attacked (invincible). Attempting to punch her: `ASSAULT_ON_PUBLIC_OFFICIAL` crime, Wanted +3, auto-`FLEEING` state — Sandra calls for backup and police spawn
+
+### Integration
+
+- `FenceSystem` — tracks COIN from sales; `CLEAN_BILL_OF_HEALTH` skips fence suspicion for 1 day
+- `EmploymentSystem` — PAYE jobs subtract from untaxed pool; cash-in-hand jobs add to it
+- `LockUpGarageSystem` — lockup safe conceals COIN from Sandra's demand calculation
+- `DWPSystem` — claiming benefits while under HMRC investigation: DWP cross-reference flags player; demand += 20 COIN
+- `CitizensAdviceSystem` — `CITIZENS_ADVICE_LETTER` reduces demand 40%
+- `ClaimsManagementSystem` / `LoanSharkSystem` — debt triggers tip-off
+- `CriminalRecord` — `TAX_EVASION`, `BRIBERY_OF_PUBLIC_OFFICIAL` crimes
+- `WantedSystem` — dawn raid: Wanted +2; bribery refusal: Wanted +2
+- `ArrestSystem` — triggered on dawn raid if caught
+- `NotorietySystem` — bribery failure +10; Sandra punch +3 per frame until fled
+- `RumourNetwork` — `TAX_TROUBLES` (spreads via PENSIONER, NEIGHBOUR NPCs); `BENT_OFFICIAL` (spreads via FACTION NPCs); `HMRC_TIPPED_OFF`
+- `DisguiseSystem` — `SUIT_JACKET` reduces Sandra detection range
+- `CouncilFlatsSystem` — `BACK_WINDOW_PROP` used as dawn raid escape route
+- `SoundSystem` — `OFFICIAL_KNOCK` (Sandra at door); `DOORBELL` (bailiff); `CROWD_MURMUR` (dawn raid spectators)
+- `NoiseSystem` — dawn raid: level 20 (helicopters, shouting)
+- `NewspaperSystem` — headline: "Northfield man hit with shock tax bill" (on demand served); "Local scrote does runner from HMRC" (on dawn raid escape)
+- `StreetSkillSystem` — GRAFTING XP +3 on compliant payment; STEALTH XP +10 on dawn raid escape
+- `NeighbourhoodSystem` — compliant payment Vibes +2 (law-abiding citizen); dawn raid −5 Vibes (brings heat to the street)
+
+### New Types Required
+
+- `NPCType.HMRC_INSPECTOR` — Sandra Watts; 999f HP (invincible); 0f attack; 1.2f speed; detection radius 6 blocks
+- `NPCType.DISTRAINT_OFFICER` — Derek the bailiff; 40f HP; 0f attack; 1.0f speed
+- `Material.TAX_DEMAND_LETTER` — document item; shows demand amount; consumed on payment
+- `Material.CLEAN_BILL_OF_HEALTH` — document; HMRC immunity for 7 in-game days
+- `Material.CASH_BRIBE_ENVELOPE` — craftable (15 COIN + ENVELOPE); one-use consumable
+- `Material.CITIZENS_ADVICE_LETTER` — already exists in CitizensAdviceSystem (reuse)
+- `PropType.HMRC_NOTICE_BOARD_PROP` — spawns outside address during investigation; tippable for `TAX_TROUBLES` rumour
+- `RumourType.TAX_TROUBLES` — spreads via PENSIONER, NEIGHBOUR; Vibes −2
+- `RumourType.BENT_OFFICIAL` — already exists (reuse existing or add new)
+- `RumourType.HMRC_TIPPED_OFF` — spreads via LOAN_SHARK and GANG NPCs
+- `CrimeType.TAX_EVASION` — on criminal record; fine = full untaxed earnings
+- `CrimeType.BRIBERY_OF_PUBLIC_OFFICIAL` — serious offence; Wanted +2
+- `AchievementType.TAX_COMPLIANT` — pay a tax demand voluntarily
+- `AchievementType.KNOWS_HIS_RIGHTS` — use Citizens Advice letter to reduce demand
+- `AchievementType.GREASED_PALM` — successfully bribe Sandra
+- `AchievementType.BAILED_ON` — first bailiff visit (Derek seizes goods)
+- `AchievementType.DAWN_RAID_SURVIVOR` — escape a dawn raid without arrest
+
+### New Java Files
+
+- `src/main/java/ragamuffin/core/HMRCSystem.java`
+- `src/test/java/ragamuffin/core/HMRCSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1359HMRCIntegrationTest.java`
+
+### Unit Tests
+
+- `HMRCSystem.checkInvestigationThreshold(totalUntaxedEarnings)`: 149 COIN → false; 150 COIN → true; 300 COIN → true.
+- `HMRCSystem.calculateDemand(totalUntaxedEarnings)`: 150 COIN → 45 COIN (30%); 500 COIN → 80 COIN (capped); 0 COIN → 0 COIN.
+- `HMRCSystem.applyAdviceLetter(demand, hasCitizensAdviceLetter)`: demand=60, true → 36 COIN; demand=60, false → 60 COIN.
+- `HMRCSystem.attemptBribe(random_seed_success, inspector, player)`: success seed → investigation dropped, `BENT_OFFICIAL` rumour seeded; failure seed → Notoriety +10, `BRIBERY_OF_PUBLIC_OFFICIAL` crime recorded.
+- `HMRCSystem.seizeGoods(inventory, demandAmount)`: inventory with 50 COIN of fenceable items, demand=30 → items worth ≥30 COIN removed; empty inventory → returns `SeizureResult.INSUFFICIENT_GOODS`.
+- `HMRCSystem.checkLockupConcealment(playerCoin, lockupCoin, demand)`: 40 player + 60 lockup, demand=50 → demand satisfied from player coin only (lockup excluded); 40 player + 0 lockup, demand=50 → `DemandResult.UNDERPAYMENT`.
+- `HMRCSystem.triggerDawnRaid(player, gameState)`: player at home address → `DawnRaidResult.TRAPPED`; player uses `BACK_WINDOW_PROP` → `DawnRaidResult.ESCAPED`; player wearing `SUIT_JACKET` + Notoriety < 5 → `DawnRaidResult.SLIPPED_PAST`.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full investigation cycle — pay and clear**: Set `player.totalUntaxedEarnings = 160`. Advance to 09:00 weekday. Verify `HMRC_INSPECTOR` NPC spawns within 10 blocks of player address. Verify `TAX_DEMAND_LETTER` in player inventory after Sandra walks within 3 blocks. Verify demand amount = 48 COIN (30% of 160). Give player 60 COIN. Press E on Sandra. Verify COIN reduced by 48. Verify `CLEAN_BILL_OF_HEALTH` added to inventory. Verify `TAX_COMPLIANT` achievement awarded. Verify `totalUntaxedEarnings` reset to 0.
+
+2. **Bailiff seizure after non-payment**: Set demand = 30 COIN. Player has 0 COIN but carries `SCRAP_METAL` (fence value 10 COIN) × 5 items. Do not pay for 2 in-game days. Verify `DISTRAINT_OFFICER` spawns. Verify items worth ≥ 30 COIN removed from player inventory. Verify `TAX_TROUBLES` rumour in `RumourNetwork`. Verify `BAILED_ON` achievement awarded.
+
+3. **Citizens Advice letter reduces demand**: Player has `CITIZENS_ADVICE_LETTER` in inventory. Demand calculated = 60 COIN. Player presses E on Sandra with letter in inventory. Verify `applyAdviceLetter` reduces demand to 36 COIN. Verify dialogue line contains "appeal". Verify `KNOWS_HIS_RIGHTS` achievement awarded.
+
+4. **Dawn raid escape via back window**: Non-payment for 5 in-game days. Advance clock to 06:30 day 5. Verify 2× `HMRC_INSPECTOR` + 1× `COUNCIL_ENFORCEMENT_OFFICER` spawn outside address. Player position set inside `COUNCIL_FLATS` building, `BACK_WINDOW_PROP` present. Simulate player interacting with `BACK_WINDOW_PROP`. Verify player position moves outside building to alley side. Verify `DawnRaidResult.ESCAPED`. Verify `DAWN_RAID_SURVIVOR` achievement. Verify `STEALTH XP` +10 awarded.
+
+5. **Loan shark tip-off triggers investigation below threshold**: Set `player.totalUntaxedEarnings = 80` (below 150 threshold). Player owes `LOAN_SHARK_CLERK` debt. Simulate `LOAN_SHARK_CLERK.triggerHMRCTipOff(player)`. Verify `HMRC_INSPECTOR` spawns despite threshold not met. Verify `HMRC_TIPPED_OFF` rumour seeded. Verify demand calculated on actual earnings (80 × 0.3 = 24 COIN).
+
+// ── Issue #1359: Add Northfield HMRC Tax Investigation ────────────────────────────────
+// New: HMRCSystem.java in ragamuffin.core
+// New: HMRCSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1359HMRCIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: HMRC_INSPECTOR (Sandra Watts, invincible), DISTRAINT_OFFICER (Derek)
+// New Materials: TAX_DEMAND_LETTER, CLEAN_BILL_OF_HEALTH, CASH_BRIBE_ENVELOPE
+// New PropType: HMRC_NOTICE_BOARD_PROP
+// New RumourTypes: TAX_TROUBLES, HMRC_TIPPED_OFF
+// New CrimeTypes: TAX_EVASION, BRIBERY_OF_PUBLIC_OFFICIAL
+// New AchievementTypes: TAX_COMPLIANT, KNOWS_HIS_RIGHTS, GREASED_PALM, BAILED_ON, DAWN_RAID_SURVIVOR
+// Integration: FenceSystem, EmploymentSystem, LockUpGarageSystem, DWPSystem,
+//   CitizensAdviceSystem, ClaimsManagementSystem, CriminalRecord, WantedSystem,
+//   ArrestSystem, NotorietySystem, RumourNetwork, DisguiseSystem, CouncilFlatsSystem,
+//   SoundSystem, NoiseSystem, NewspaperSystem, StreetSkillSystem, NeighbourhoodSystem
