@@ -48854,3 +48854,163 @@ SPEED_CAMERA_CLOCKED,
 //   PostOfficeSystem, MagistratesCourtSystem, CriminalRecord, NotorietySystem,
 //   WantedSystem, FireStationSystem, StreetSkillSystem, AchievementSystem,
 //   RumourNetwork, TimeSystem, WeatherSystem
+
+---
+
+## Issue #1369: Add Northfield New Year's Eve — The Countdown, the Midnight Mayhem & the First Footing Hustle
+
+**Day-of-year**: 365 (31 December). Active period: 20:00 on day 365 through 02:00 on day 1 of the new year.
+
+### Overview
+
+Northfield erupts on New Year's Eve. The park fills for a midnight fireworks display, The Ragamuffin Arms pub lock-in
+kicks off at 23:00 and runs until 02:00, the kebab van pulls double shifts, Dave's taxis charge triple fare,
+and the player can run a "First Footing" door-knock hustle for coin. A `THUNDERSTORM` cancels the fireworks but
+not the pub lock-in.
+
+### Mechanic 1 — Park Countdown & Fireworks
+
+`NYE_STAGE_PROP` spawns at the bandstand at 20:00. `EVENT_COMPERE` NPC (Darren from the Christmas lights,
+repurposed) counts down from 10 at 23:59:50. At midnight (hour 0.0 on day 1), 6 `FIREWORK_ROCKET_PROP`
+props launch sequentially at 3-second intervals from the park edge, each triggering a `ParticleSystem`
+burst + `SoundEffect.FIREWORK_BANG`. Attending 20+ NPCs in a 20-block radius earns
+`AchievementType.SAW_IN_THE_NEW_YEAR`.
+
+A `PICKPOCKET_WINDOW` opens during the 10-second countdown (crowd distracted): 25% success chance
+(scales with `StreetSkillSystem.Skill.SLEIGHT_OF_HAND`). Getting caught triggers `THEFT_FROM_PERSON`
+CriminalRecord + Notoriety +5.
+
+### Mechanic 2 — Pub Lock-In (Extended NYE Edition)
+
+`PubLockInSystem` is extended: on day 365 the lock-in begins at 23:00 (instead of the usual 23:00),
+stays open until 02:00, and Terry sells drinks at **full price** (NYE premium). The police raid chance
+increases to 40% per 10-minute cycle (up from 20%). Surviving past 00:30 without a raid unlocks
+`AchievementType.SURVIVED_THE_LOCK_IN`.
+
+### Mechanic 3 — First Footing Hustle
+
+Between 00:01 and 01:30 on day 1, player can knock on any residential door prop (`FRONT_DOOR_PROP`)
+with a `COAL` item in inventory (holdable; also sold by CornerShopSystem for 2 COIN from December).
+`PENSIONER` and `PUBLIC` NPCs answer 70% of the time and pay 3–5 COIN (good luck tradition).
+`YOUTH_GANG` NPCs answer 30% of the time and demand 2 COIN or turn hostile.
+More than 5 successful first footings in a night unlocks `AchievementType.FIRST_FOOTER`.
+If player knocks without COAL, NPCs refuse ("Yer can't come in without coal, love!").
+
+### Mechanic 4 — Taxi & Kebab Van Surge
+
+Between 23:00–02:00, `TaxiSystem.SURGE_MULTIPLIER` is raised to `3.0f` (normal: 1.5f on Fri/Sat).
+Dave's cab queue fills to 8 NPCs waiting; if the player steals a waiting NPC's spot the NPC turns
+hostile (Notoriety +2). `KebabVanSystem` spawns an extra `KEBAB_VAN_PROP` at the park exit and
+prices raise by 1 COIN per item. Running the van stall (player owns the second pitch from
+`EmploymentSystem`) yields double the normal rate.
+
+### Mechanic 5 — Drunk NPCs & Street Chaos
+
+NYE raises `DRUNK` NPC spawn rate by 300% between 23:00–02:00. Three named drunk NPCs appear:
+- **Kevin** — `DRUNK` NPC, wanders into traffic on the road; if hit by a car the player witnesses
+  a `DRUNK_DRIVING_INCIDENT` and can call 999 (payphone / phone box) for Notoriety −2.
+- **Sharon** — `DRUNK` NPC, drops a `PURSE` item (contains 4–8 COIN) near the park entrance.
+  Returning it to Sharon: Community Respect +3, `AchievementType.HONEST_FINDER`. Keeping it:
+  `THEFT_FROM_PERSON` CriminalRecord, Notoriety +4.
+- **Big Terry** (from the pub) — stumbles outside at 02:00, sits on the kerb. Player can press E
+  to "help Terry home" (walk within 5 blocks of his house `LANDLORD_HOUSE_PROP`): +Terry favour,
+  pub tab discount of 1 COIN per drink for 7 in-game days.
+
+### Integration
+
+- `TimeSystem` — triggers on `getDayOfYear() == 365`; midnight wraps to day 1.
+- `PubLockInSystem` — extended hours + higher raid chance on day 365.
+- `TaxiSystem` — `NYE_SURGE_MULTIPLIER` constant applied during NYE window.
+- `KebabVanSystem` — extra prop + price increase.
+- `WarmthSystem` — outdoor NYE counts as exposed cold (FROST/COLD weather likely December 31).
+- `WeatherSystem` — THUNDERSTORM cancels fireworks, not pub lock-in.
+- `NotorietySystem` / `CriminalRecord` — pickpocket window, theft of Sharon's purse.
+- `RumourNetwork` — `NYE_CHAOS` rumour seeded at midnight (+3 spread velocity).
+- `ParticleSystem` — firework bursts at midnight.
+- `SoundSystem` — `SoundEffect.FIREWORK_BANG` (new), `SoundEffect.CROWD_CHEER` (new).
+- `CornerShopSystem` — sells COAL from December (day 335 onwards).
+- `EmploymentSystem` — kebab van extra pitch job.
+- `AchievementSystem` — 4 new achievements.
+
+### New Types Required
+
+**New Material** (add to `Material.java`):
+```
+COAL("Coal"),                      // First Footing item; sold at CornerShopSystem from December
+```
+
+**New PropType** (add to `PropType.java`):
+```
+NYE_STAGE_PROP(3.0f, 1.0f, 3.0f, 5, null),           // Event stage at the bandstand
+FIREWORK_ROCKET_PROP(0.3f, 1.5f, 0.3f, 1, null),     // Decorative rocket (auto-launches at midnight)
+```
+
+**New NPCType** — none required (reuses EVENT_COMPERE, DRUNK, LANDLORD, PUBLIC, PENSIONER, YOUTH_GANG).
+
+**New AchievementTypes** (add to `AchievementType.java`):
+```
+SAW_IN_THE_NEW_YEAR,      // Present in park at midnight with 20+ NPCs
+SURVIVED_THE_LOCK_IN,     // In pub lock-in past 00:30 without a raid
+FIRST_FOOTER,             // Successful first-footing at 5+ doors
+HONEST_FINDER,            // Returned Sharon's purse
+```
+
+**New RumourType** (add to `RumourType.java`):
+```
+/** "Absolute carnage out there last night. Police everywhere."
+ * Seeded at midnight on day 1 (after NYE). Spreads via PUBLIC, DRUNK. */
+NYE_CHAOS,
+```
+
+**New SoundEffects** (add to `SoundEffect.java` or equivalent enum):
+```
+FIREWORK_BANG,
+CROWD_CHEER,
+```
+
+### New Java Files
+- `NewYearsEveSystem.java` in `ragamuffin.core` — main system
+- `NewYearsEveSystemTest.java` in `src/test/java/ragamuffin/core/`
+- `Issue1369NewYearsEveIntegrationTest.java` in `src/test/java/ragamuffin/integration/`
+
+### Unit Tests
+- `testNYEActiveOnDay365`: Set `getDayOfYear()` = 365, hour = 21.0; verify `isNYEActive()` returns true.
+- `testNYEInactiveOnOtherDays`: Set dayOfYear = 308; verify returns false.
+- `testFireworksLaunchAtMidnight`: Advance to day 1, hour 0.0; verify 6 `FIREWORK_ROCKET_PROP` spawned.
+- `testFireworksCancelledByThunderstorm`: Set weather = THUNDERSTORM; verify no fireworks launched.
+- `testPickpocketWindowOpenDuringCountdown`: Set hour = 23.999f (last 10 seconds); verify `pickpocketWindowOpen = true`.
+- `testFirstFootingWithCoalAccepted`: Player holds COAL; press E on FRONT_DOOR_PROP, hour 00:30; PENSIONER NPC answers; verify 3–5 COIN awarded.
+- `testFirstFootingWithoutCoalRefused`: No COAL in inventory; press E on FRONT_DOOR_PROP; verify no COIN awarded, "Yer can't come in without coal, love!" dialogue.
+- `testFiveFootingsUnlocksAchievement`: Simulate 5 successful first-footings; verify `FIRST_FOOTER` achievement.
+- `testSharonPurseReturn`: Player picks up PURSE near park entrance; returns to Sharon; verify Community Respect +3, `HONEST_FINDER` achievement.
+- `testSharonPurseKept`: Player keeps PURSE; verify `THEFT_FROM_PERSON` in CriminalRecord, Notoriety +4.
+- `testNYESurgeTaxiFareTripled`: Advance to day 365, 23:30; request taxi; verify fare = base × 3.0f.
+- `testDrunkNPCSpawnRateTripled`: Set day 365, hour 23:30; verify DRUNK NPC count ≥ 3× normal baseline.
+- `testHelperTerryHomeGrantsDiscount`: Walk Terry to within 5 blocks of LANDLORD_HOUSE_PROP; verify pub tab discount set to 1.
+- `testSurviveLockInAchievement`: Player in pub at 00:30 with no raid triggered; verify `SURVIVED_THE_LOCK_IN` achievement.
+- `testSawInNewYearAchievement`: 20+ NPCs within 20 blocks at midnight; verify `SAW_IN_THE_NEW_YEAR` achievement.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Fireworks go off at midnight**: Generate world. Set `TimeSystem` to day 365, hour 23:59. Advance 1 in-game minute. Verify `NYE_STAGE_PROP` was present at 23:59. Verify `EVENT_COMPERE` NPC spawned at bandstand. Advance to hour 0.0 (day 1). Verify 6 `FIREWORK_ROCKET_PROP` entities exist in the world. Verify `ParticleSystem` has ≥ 6 burst events queued. Verify `SoundEffect.FIREWORK_BANG` was triggered at least once.
+
+2. **First Footing end-to-end**: Player buys COAL from CornerShopSystem (day 335+ or day 1 of new year). Advance to day 1, hour 00:15. Walk player to any residential door prop. Press E. Verify PENSIONER or PUBLIC NPC opens door. Verify 3–5 COIN added to inventory. Repeat 4 more times (5 total). Verify `FIRST_FOOTER` achievement unlocked.
+
+3. **NYE pub lock-in extended hours**: Advance to day 365, hour 22:45. PubLockInSystem confirms lock-in scheduled. Advance to 23:00. Verify pub door locked and Terry present. Advance to 01:30 (past normal close). Verify pub still in lock-in state. Verify no automatic eviction until 02:00.
+
+4. **Sharon's purse — honest return flow**: Advance to day 365, 23:45. Verify `PURSE` prop appears near park entrance (Sharon DRUNK NPC drops it). Player walks over it (auto-collect). Player locates Sharon NPC. Player presses E near Sharon. Verify PURSE removed from inventory. Verify Community Respect increased by 3. Verify `HONEST_FINDER` achievement. Verify `THEFT_FROM_PERSON` NOT in CriminalRecord.
+
+5. **NYE chaos rumour seeded at midnight**: Advance to day 1 (midnight). Verify `RumourNetwork` contains a rumour of type `NYE_CHAOS`. Verify rumour spread count starts at 0. Advance 5 in-game minutes. Verify ≥ 2 PUBLIC NPCs now carry the `NYE_CHAOS` rumour.
+
+// ── Issue #1369: Add Northfield New Year's Eve ───────────────────────────────────────────────────
+// New: NewYearsEveSystem.java in ragamuffin.core
+// New: NewYearsEveSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1369NewYearsEveIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Material: COAL
+// New PropTypes: NYE_STAGE_PROP, FIREWORK_ROCKET_PROP
+// New AchievementTypes: SAW_IN_THE_NEW_YEAR, SURVIVED_THE_LOCK_IN, FIRST_FOOTER, HONEST_FINDER
+// New RumourType: NYE_CHAOS
+// New SoundEffects: FIREWORK_BANG, CROWD_CHEER
+// Integration: TimeSystem, PubLockInSystem, TaxiSystem, KebabVanSystem, WarmthSystem,
+//   WeatherSystem, NotorietySystem, CriminalRecord, RumourNetwork, ParticleSystem,
+//   SoundSystem, CornerShopSystem, EmploymentSystem, AchievementSystem
