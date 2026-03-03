@@ -55324,3 +55324,125 @@ The **Raj Mahal** (`BALTI_HOUSE` landmark, `BaltiHouseSystem.java`) is Northfiel
 // `BALTI_LOCK_IN`, `BASHIR_CAUGHT_THIEF`, `UNSOLVED_THEFT`, `QUEUE_JUMPER` (RumourType) are new and must be added.
 // `CURRY_CLUB`, `LOCK_IN_LEGEND`, `SECRET_MASALA` (AchievementType) are new and must be added.
 // `CURRY_HOUSE_OWNER` (NPCType) already exists — no new NPCType required.
+
+---
+
+## Northfield Skin Deep Tattoos — Kev's Flash Sheets, the Prison Tattoo Parlour & the Health Inspector Bust
+
+**Issue**: Add `TattooSystem.java` — the full gameplay implementation for the `TATTOO_PARLOUR` landmark (already defined in `LandmarkType`). All supporting enums (`TATTOOIST` NPC, `TATTOO_CHAIR_PROP` / `FLASH_SHEET_PROP` / `TATTOO_STATION_PROP` props, `TATTOO_GUN` / `INK_BOTTLE` / `NEEDLE` materials) are already present; only the system class is missing.
+
+Skin Deep Tattoos is a narrow 4×6×3 shopfront on the high street between the nail salon and the barber. Run by Kev (`NPCType.TATTOOIST`), open Tue–Sat 11:00–18:00.
+
+### Mechanic 1 — Getting Tattooed (Diegetic Disguise)
+
+- Press E on `TATTOO_CHAIR_PROP` during open hours to open Kev's flash sheet menu.
+- Four designs (chosen via keys 1–4):
+  - **Bulldog** (5 COIN) — British patriot look: −5 effective Notoriety display for 2 in-game days.
+  - **Teardrop** (8 COIN) — Criminal intimidation: THUG/GANG NPCs treat player as HOSTILE_NEUTRAL (won't start fights unprovoked) for 3 days; POLICE Suspicion +10.
+  - **MUM** (3 COIN) — Sentimental: Community Respect +2; NPCs comment ("Nice tat, mate").
+  - **NORTHFIELD 4 EVER** (6 COIN) — Local rep: StreetReputation +5 permanently.
+- First tattoo awards `AchievementType.FIRST_INK`.
+- Getting all four designs awards `AchievementType.FULL_SLEEVE`.
+- Each tattoo lasts `TATTOO_DURATION_DAYS` (default: permanent except Bulldog/Teardrop which are timed buffs).
+- Kev refuses service to players with Notoriety Tier ≥ 4 ("Sorry mate, can't be having the heat in here").
+
+### Mechanic 2 — DIY Prison Tattoo (Mirror Prop)
+
+- Press E on `MIRROR_PROP` (inside the parlour or player's squat) while holding `NEEDLE` + `INK_BOTTLE` to attempt a prison tattoo.
+- Dice roll: `rng.nextInt(100) < PRISON_TATTOO_SUCCESS_CHANCE` (60%).
+  - **Success**: grants TEARDROP effect as above but without cost; `PRISON_TATTOO` achievement.
+  - **Failure**: −10 HP (infection), `INFECTED_WOUND` debuff active until player visits `GP_SURGERY`; `AchievementType.DODGY_BIRO`.
+- If `HEALTH_INSPECTOR` NPC is present (see Mechanic 4) and witnesses this: `UNLICENSED_TATTOOING` crime + Notoriety +8 + WantedSystem +1.
+
+### Mechanic 3 — Tattoo Gun Heist
+
+- After-hours (18:00–11:00), the `TATTOO_STATION_PROP` contains a `TATTOO_GUN`.
+- Access via front door: FRAGILE (2 hits on glass door) or lockpick (3s, LOCKPICKING ≥ Apprentice).
+- `TATTOO_GUN` fence value: 12 COIN (`FenceSystem`), 8 COIN (`PawnShopSystem`).
+- `TATTOO_GUN_KIT` (craftable from `TATTOO_GUN` + `INK_BOTTLE` + `NEEDLE`) enables unlimited DIY prison tattoos without failure risk — but CCTV detection in any public area raises Notoriety +5.
+- If Kev has line-of-sight (early open or closing time ±5 min): `THEFT_FROM_BUSINESS` crime + Kev goes HOSTILE + WantedSystem +1.
+- `CCTV_CAMERA_PROP` (already defined) monitors the display area — if operational, theft without destroying it first adds +1 wanted star and `CCTV_EVIDENCE` CriminalRecord entry.
+
+### Mechanic 4 — Health Inspector Bust
+
+- Every 5 in-game days (random offset `rng.nextInt(3)` days), a `HEALTH_INSPECTOR` NPC (already defined in `NPCType`) visits during open hours (11:00–17:00).
+- The inspector walks to `TATTOO_STATION_PROP` and spends 60 seconds inspecting.
+- **Player can bribe**: press E on Health Inspector while holding `BROWN_ENVELOPE` (≥ 10 COIN) — Inspector pockets it, leaves, Kev gives player a free tattoo of their choice. `BACKHANDER` achievement.
+- **Player can tip off council before visit**: press E on `COUNCIL_OFFICE` desk → forces a visit on the next working day. Kev is temporarily closed 1 day; `NeighbourhoodWatchSystem` Community Respect +2 (clean business). Player earns `GRASS_THE_TATTOOIST` achievement.
+- **If no bribe and station is dirty** (player previously placed `STOLEN_GOODS_PROP` nearby): inspector files report → Kev closed 2 days + Notoriety −5 neighbourhood-wide (community happy). Seeds `HEALTH_SCARE` rumour.
+- **Inspection passes** (station is clean): Inspector leaves, nothing happens.
+
+---
+
+### Integration with Existing Systems
+
+- **`DisguiseSystem`**: Bulldog tattoo reduces NPC recognition window by 20% when combined with changed hairstyle (stacks with `TanningSalonSystem` TANNED buff for combined −35%).
+- **`WantedSystem`**: tattoo gun theft with line-of-sight +1; prison tattoo witnessed by Health Inspector +1; CCTV evidence +1.
+- **`NotorietySystem`**: TEARDROP tattoo effect (POLICE Suspicion +10); bribery success −0 Notoriety; health scare closure −5 neighbourhood Notoriety.
+- **`CriminalRecord`**: `THEFT_FROM_BUSINESS` (tattoo gun theft detected); `UNLICENSED_TATTOOING` (prison tattoo witnessed by Health Inspector); `CCTV_EVIDENCE` (CCTV undefeated during theft).
+- **`RumourNetwork`**: `TATTOO_PARLOUR_BUST` seeded after Health Inspector files report; `TATTOO_HEIST` seeded after gun theft detected; `PRISON_TATTOO_RUMOUR` seeded after DIY tattoo (any outcome).
+- **`GPSurgerySystem`**: `INFECTED_WOUND` debuff from failed prison tattoo treated at GP_SURGERY (1 COIN, 2-minute wait).
+- **`FenceSystem`** / **`PawnShopSystem`**: `TATTOO_GUN` fence/pawn values.
+- **`StreetSkillSystem`**: completing tattoo gun heist undetected awards 1 LOCKPICKING XP.
+- **`AchievementSystem`**: `FIRST_INK`, `FULL_SLEEVE`, `PRISON_TATTOO`, `DODGY_BIRO`, `BACKHANDER`, `GRASS_THE_TATTOOIST`.
+- **`TimeSystem`**: open Tue–Sat 11:00–18:00; inspection every 5 days.
+- **`WeatherSystem`**: RAIN → foot traffic up 20% (people loitering); HEATWAVE → Kev props door open (no lockpick needed outside hours).
+- **`NewspaperSystem`**: `HEALTH_SCARE` headline: "SKIN DEEP TATTOOS SHUT DOWN — NORTHFIELD RESIDENTS WARNED ABOUT 'RUSTY NEEDLE' RISK".
+- **`NeighbourhoodWatchSystem`**: tip-off before inspection +2 Community Respect; tattoo heist detected −1.
+
+---
+
+### Constants Required
+
+- `PRISON_TATTOO_SUCCESS_CHANCE = 60` — % chance DIY prison tattoo succeeds.
+- `HEALTH_INSPECTOR_INTERVAL_DAYS = 5` — days between inspector visits.
+- `HEALTH_INSPECTOR_INSPECT_SECONDS = 60f` — time inspector spends at station.
+- `BRIBE_COST_COIN = 10` — COIN cost of `BROWN_ENVELOPE` bribe.
+- `TATTOO_GUN_FENCE_VALUE = 12` — fence value of stolen tattoo gun.
+- `TATTOO_GUN_PAWN_VALUE = 8` — pawn value of stolen tattoo gun.
+- `BULLDOG_NOTORIETY_REDUCTION = 5` — effective Notoriety display reduction.
+- `BULLDOG_DURATION_DAYS = 2` — days Bulldog timed effect lasts.
+- `TEARDROP_INTIMIDATION_DAYS = 3` — days Teardrop intimidation effect lasts.
+- `TEARDROP_POLICE_SUSPICION = 10` — POLICE Suspicion added by Teardrop.
+- `MUM_COMMUNITY_RESPECT = 2` — Community Respect bonus from MUM tattoo.
+- `NORTHFIELD_STREET_REP = 5` — permanent StreetReputation bonus.
+- `NOTORIETY_UNLICENSED_TATTOOING = 8` — Notoriety added for witnessed prison tattoo.
+- `CCTV_NOTORIETY_THEFT = 5` — Notoriety added for CCTV-captured theft.
+- `INFECTION_HP_DAMAGE = 10` — HP lost on failed prison tattoo.
+
+---
+
+### New RumourType Entries Required
+
+- `TATTOO_PARLOUR_BUST` — "The Health Inspector shut down Skin Deep. Kev's doing home visits now apparently."
+- `TATTOO_HEIST` — "Someone nicked Kev's tattoo gun. He's not happy about it."
+- `PRISON_TATTOO_RUMOUR` — "Did you see that bloke giving himself a tattoo with a biro and a sewing needle?"
+- `HEALTH_SCARE` — "Apparently someone got an infection from Skin Deep. The council shut them down."
+
+### New AchievementType Entries Required
+
+- `FIRST_INK` — "Got your first tattoo at Skin Deep. Kev did a nice job." Target 1.
+- `FULL_SLEEVE` — "Got all four of Kev's designs. You're a canvas, mate." Target 4.
+- `PRISON_TATTOO` — "Gave yourself a tattoo in the mirror. It's not bad actually." Target 1.
+- `DODGY_BIRO` — "Gave yourself a tattoo and it got infected. Should've gone to Kev." Target 1.
+- `BACKHANDER` — "Bribed the Health Inspector. Kev gave you a free tat as thanks." Target 1.
+- `GRASS_THE_TATTOOIST` — "Tipped off the council about Kev's tattoo station. You absolute grass." Target 1.
+
+---
+
+### Integration Tests
+
+1. **Parlour opens at 11:00 on Tuesday**: set in-game time to Tue 10:59; verify `TattooSystem.isOpen()` returns false; advance to 11:01; verify `isOpen()` returns true; verify `TATTOO_CHAIR_PROP` is interactable.
+
+2. **Bulldog tattoo costs 5 COIN and grants timed debuff**: give player 10 COIN; call `TattooSystem.getTattooed(player, inventory, TattooDesign.BULLDOG, timeSystem)`; verify inventory has 5 COIN remaining; verify player has `BULLDOG_BUFF` active; verify `NotorietySystem.getEffectiveNotoriety()` is `NotorietySystem.getNotoriety() - BULLDOG_NOTORIETY_REDUCTION`.
+
+3. **Prison tattoo success (mocked 45% roll < 60%)**: seed `Random` to produce value 45; call `TattooSystem.attemptPrisonTattoo(player, inventory, rng)`; verify player receives TEARDROP effect; verify `PRISON_TATTOO` achievement unlocked; verify no HP damage.
+
+4. **Prison tattoo failure (mocked 75% roll ≥ 60%)**: seed `Random` to produce value 75; call `TattooSystem.attemptPrisonTattoo(player, inventory, rng)`; verify player HP decreased by `INFECTION_HP_DAMAGE`; verify `DODGY_BIRO` achievement unlocked; verify `INFECTED_WOUND` debuff flag set.
+
+5. **Tattoo gun theft detected adds crime**: place Kev NPC at line-of-sight distance; call `TattooSystem.stealTattooGun(player, inventory, criminalRecord, wantedSystem, notorietySystem)`; verify `CriminalRecord` contains `THEFT_FROM_BUSINESS`; verify `WantedSystem.getStars() >= 1`; verify `TATTOO_HEIST` rumour in `RumourNetwork`.
+
+6. **Health inspector bribe succeeds**: give player `BROWN_ENVELOPE` (≥ 10 COIN); spawn `HEALTH_INSPECTOR` NPC and begin inspection; call `TattooSystem.bribeInspector(player, inventory, inspector, achievementSystem)`; verify inspector NPC state is LEAVING; verify `BACKHANDER` achievement unlocked; verify player receives free tattoo offer flag.
+
+// `TattooSystem.java` must be created as the sole new source file.
+// All supporting enums (`TATTOO_PARLOUR` LandmarkType, `TATTOOIST` NPCType, `TATTOO_CHAIR_PROP` / `FLASH_SHEET_PROP` / `TATTOO_STATION_PROP` PropType, `TATTOO_GUN` / `INK_BOTTLE` / `NEEDLE` Material, `HEALTH_INSPECTOR` NPCType) are already defined — no new enum entries required except RumourType and AchievementType as listed above.
