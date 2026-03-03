@@ -6550,7 +6550,30 @@ public enum Material {
      * </ul>
      * Stack size 1.
      */
-    FANCIER_FAVOUR("Fancier's Favour");
+    FANCIER_FAVOUR("Fancier's Favour"),
+
+    // ── Issue #1426: Northfield Neighbourhood WhatsApp Group ─────────────────
+
+    /**
+     * STRAY_CAT — "Whiskers. Very friendly. Slightly damp."
+     * <ul>
+     *   <li>Obtained by pressing E on {@link ragamuffin.entity.NPCType#LOST_CAT_NPC} (Whiskers).</li>
+     *   <li>Stack size 1. Fence value 0. Tradeable.</li>
+     *   <li>Deliverable to owner's door for 3 COIN reward via {@code WhatsAppGroupSystem.returnCatToOwner()}.</li>
+     *   <li>Sellable to {@link ragamuffin.entity.NPCType#PET_SHOP_OWNER} for 5 COIN.</li>
+     * </ul>
+     */
+    STRAY_CAT("Stray Cat"),
+
+    /**
+     * CAT_RANSOM_NOTE — "Anon note: 'Your cat is safe. Leave 1 COIN on the step.'"
+     * <ul>
+     *   <li>Crafted from {@code SCRAP_PAPER} + {@code BIRO_PEN}.</li>
+     *   <li>Stack size 1. Not fenceable.</li>
+     *   <li>Used by the EXTORTION ransom path in {@code WhatsAppGroupSystem.ransomCat()}.</li>
+     * </ul>
+     */
+    CAT_RANSOM_NOTE("Cat Ransom Note");
 
     private final String displayName;
 
@@ -7968,6 +7991,12 @@ public enum Material {
             case REPLACEMENT_CLIPBOARD:   return c(0.78f, 0.65f, 0.40f);  // Bare wood clipboard
             case FANCIER_FAVOUR:          return cs(0.88f, 0.82f, 0.62f, // Racing Post paper
                                                     0.55f, 0.28f, 0.10f); // Brown ink handwriting
+
+            // Issue #1426: Northfield Neighbourhood WhatsApp Group
+            case STRAY_CAT:               return cs(0.70f, 0.55f, 0.35f, // Tabby orange-brown
+                                                    0.25f, 0.20f, 0.15f); // Darker stripe
+            case CAT_RANSOM_NOTE:         return cs(0.92f, 0.90f, 0.80f, // Cream paper
+                                                    0.10f, 0.10f, 0.10f); // Black biro scrawl
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }

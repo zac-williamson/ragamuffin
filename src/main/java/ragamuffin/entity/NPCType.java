@@ -3262,7 +3262,24 @@ public enum NPCType {
      * </ul>
      * HP: 40f, attack: 8f, cooldown: 1.5f, hostile: true.
      */
-    TOUT_ENFORCER(40f, 8f, 1.5f, true);
+    TOUT_ENFORCER(40f, 8f, 1.5f, true),
+
+    // ── Issue #1426: Northfield Neighbourhood WhatsApp Group ─────────────────
+
+    /**
+     * WHATSAPP_GROUP_ADMIN — Janet. Cardigan, reading glasses, phone permanently in hand.
+     * Passive unless provoked; admin of the residents WhatsApp group and enforces LOCKDOWN_MODE.
+     * Non-violent: calls police if harassed (WantedSystem +1).
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    WHATSAPP_GROUP_ADMIN(20f, 0f, 0f, false),
+
+    /**
+     * LOST_CAT_NPC — Whiskers. Small tabby cat sprite (re-uses animal NPC logic).
+     * Wanders within 20 blocks of spawn. Interactable (E to pick up → {@code STRAY_CAT} Material).
+     * HP: 5f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    LOST_CAT_NPC(5f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

@@ -4068,7 +4068,16 @@ public enum PropType {
      * </ul>
      * Dims: 2.0 × 1.8 × 4.5; 8 hits (body) / 2 hits (window); drops {@code SCRAP_METAL}.
      */
-    ENERGY_VAN_PROP(2.0f, 1.8f, 4.5f, 8, ragamuffin.building.Material.SCRAP_METAL);
+    ENERGY_VAN_PROP(2.0f, 1.8f, 4.5f, 8, ragamuffin.building.Material.SCRAP_METAL),
+
+    // ── Issue #1426: Northfield Neighbourhood WhatsApp Group ─────────────────
+
+    /**
+     * WHATSAPP_FEED_TERMINAL_PROP — Alternative access terminal at the library or internet café.
+     * Same E-interaction as {@code COMMUNITY_NOTICE_BOARD} but indoors.
+     * Dims: 0.5 × 1.0 × 0.4; 4 hits to break; drops WOOD.
+     */
+    WHATSAPP_FEED_TERMINAL_PROP(0.5f, 1.0f, 0.4f, 4, ragamuffin.building.Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
