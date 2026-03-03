@@ -56750,3 +56750,87 @@ There's a bright green defibrillator cabinet bolted to the wall outside the comm
 5. **CPR course pays out and awards certificate**: create system; give player `CPR_TRAINING_FLYER` and `CPR_MANNEQUIN_PROP` in inventory; call `pinFlyer(player, inventory, noticeBoardProp)`; advance time to 18:00; verify 3–6 `CPR_STUDENT` NPCs spawned; advance by `COURSE_DURATION_SECONDS` with player within 4 blocks; call `completeCourse(player, inventory, students)`; verify `inventory.getItemCount(Material.COIN)` increased by `CPR_COURSE_FEE * studentCount`; verify each student holds `Material.CPR_CERTIFICATE`.
 
 // `DefibrillatorSystem.java` must be created as the sole new source file. Integrates with `CommunityCentreSystem` (Denise code-reveal), `ClaimsManagementSystem` (ambulance chaser payout), `EnvironmentalHealthSystem` (notifyDefibLooted), `NeighbourhoodSystem` (vibes penalty), `WantedSystem`, `CriminalRecord`, `NotorietySystem`, `RumourNetwork`, `ScrapyardSystem`, and `AchievementSystem`. New `NPCType` entries: `CARDIAC_VICTIM`, `CPR_STUDENT`. New `Material` entries: `DEFIBRILLATOR_UNIT`, `COPPER_CABLE`, `CPR_TRAINING_FLYER`, `CPR_CERTIFICATE`, `REWIRED_EXTENSION_LEAD`. New `PropType` entries: `DEFIBRILLATOR_CABINET_PROP`, `CPR_SESSION_PROP`, `CPR_MANNEQUIN_PROP`, `NOTICE_OF_DEFICIENCY_PROP`. New `RumourType` entries: `DEFIB_HERO`, `DEFIB_UNUSED`, `DEFIB_SABOTAGED`. New `AchievementType` entries: `SHOCK_TREATMENT`, `UNLICENSED_PRACTITIONER`, `COMMUNITY_FIRST_AIDER`, `DID_A_RUNNER`, `AMBULANCE_CHASER`. `NPCType.PARAMEDIC`, `Material.BLANK_PAPER`, `Material.MARKER_PEN`, `Material.SCREWDRIVER` already exist. `LandmarkType.COMMUNITY_CENTRE` already exists.
+
+---
+
+## Issue #1481 — Northfield Driving Test Centre — Keith's Nervous Pass, the Cancellation Scalper & the Bent Examiner
+
+`DrivingTestSystem` implements the Northfield DVSA Driving Test Centre at `LandmarkType.DRIVING_TEST_CENTRE`.
+
+### Mechanic 1 — Booking a Test (09:00–17:00, Mon–Fri)
+
+- Reception desk (`PropType.TEST_CENTRE_DESK_PROP`). Press E to speak to Sandra (`NPCType.TEST_CENTRE_RECEPTIONIST`).
+- Book a test for 5 COIN; first available slot is 3 in-game days out. Player receives `Material.TEST_APPOINTMENT_CARD`.
+- Cancellation scalping: a `NPCType.TEST_SLOT_SCALPER` (Wayne) loiters outside and offers sold-on slots for 8 COIN — 1-day turnaround but `CrimeType.FRAUD` risk (15% chance Sandra recognises the dodgy booking, Notoriety +4, card confiscated).
+- Forged appointment: craft `Material.FORGED_APPOINTMENT_CARD` at `InternetCafeSystem` (requires `Material.BLANK_CARD` + `Material.INK_CARTRIDGE`). 25% detection chance on arrival → WantedSystem +1, `CrimeType.IDENTITY_FRAUD`.
+
+### Mechanic 2 — The Test Route (BattleBarMiniGame, MEDIUM difficulty)
+
+- Test begins when player boards `PropType.TEST_CAR_PROP` with examiner Keith (`NPCType.DRIVING_EXAMINER`).
+- 8-step `BattleBarMiniGame`: each step represents a manoeuvre (roundabout, emergency stop, bay park, etc.).
+- Pass threshold: `TEST_PASS_SCORE` (6/8). Score < 6 → fail, 3 COIN refund, Achievement `FAILED_AGAIN`. Score == 8 → Achievement `CLEAN_SHEET_DRIVER`.
+- Pass → `Material.DRIVING_LICENCE` added to inventory. Driving licence halves `CarDrivingSystem` police-stop chance. Achievement `FULL_LICENCE`.
+- Examiner Keith notes faults aloud (flavour text per failed step). After 3 failures Keith becomes mildly hostile ("I'll be honest, son, the roads aren't safe with you on them").
+
+### Mechanic 3 — Bribing the Examiner
+
+- After the first failed test, Keith lingers by `PropType.TEST_CENTRE_REAR_EXIT_PROP` 17:00–17:30.
+- Press E with `Material.BROWN_ENVELOPE` (≥ 12 COIN inside) → guaranteed pass, `Material.DRIVING_LICENCE` issued. `CrimeType.BRIBERY` crime logged. Notoriety +6. Keith gains BRIBED flag for 7 in-game days.
+- If Keith is already BRIBED and player offers another envelope (< 12 COIN): Keith turns hostile, calls police. Achievement `CHEAP_BRIBE`.
+- DVSA inspector visits every 10 in-game days at 09:30. If Keith has BRIBED flag: Keith arrested, test centre closes for 2 days, all `DRIVING_LICENCE` items gained via bribe flagged as `Material.INVALID_LICENCE`. Achievement `INSPECTOR_CALLED` if player tipped off the inspector.
+- Tip off inspector: approach `PropType.TEST_CENTRE_PHONE_BOX_PROP` (outside), press E → anonymous tip seeds `RumourType.BENT_EXAMINER_RUMOUR`. Inspector arrives next morning 09:30 regardless of 10-day cycle.
+
+### Mechanic 4 — Cancellation Scalping Racket
+
+- Once player has `Material.TEST_APPOINTMENT_CARD`, they can cancel via Sandra → refund 3 COIN + receive `Material.CANCELLED_SLOT_VOUCHER`.
+- Sell `CANCELLED_SLOT_VOUCHER` to Wayne (scalper) for 6 COIN. Buying three vouchers from Wayne and reselling them to desperate learners at 10 COIN each earns Achievement `SLOT_SHARK`.
+- `NPCType.LEARNER_DRIVER` NPCs appear outside 08:30–09:00 and 15:00–16:00 (pre/post school run hours). Press E on a distressed learner → offer slot at 10 COIN (Notoriety +1 if witnessed, `CrimeType.TOUT`). Three sales in one day → `RumourType.SLOT_TOUT_RUMOUR` spreads, WantedSystem +1.
+
+### Mechanic 5 — Fake Provisional Licence & the L-Plate Hustle
+
+- `Material.FAKE_PROVISIONAL_LICENCE` can be crafted (requires `Material.BLANK_CARD` + `Material.LAMINATOR_POUCH` + `Material.STOLEN_PASSPORT_PHOTO`). Allows booking a test under a false identity.
+- Equip `Material.L_PLATE_PROPS` (sold at corner shop, 1 COIN) and drive a car without a licence → police-stop chance reduced by 30% while L-plates are displayed. Removing L-plates while watched: `CrimeType.DRIVING_UNINSURED` + Notoriety +3.
+- L-plate prank: stick L-plates on an NPC's car without them noticing (approach from behind, 2-second hold E). If NPC is `POLICE` type: WantedSystem +2. If NPC is civilian: seeds `RumourType.L_PLATE_PRANK_RUMOUR`, Achievement `LEARNER_LEGS`.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `TEST_BOOKING_COST` | 5 |
+| `SCALPER_SLOT_COST` | 8 |
+| `TEST_PASS_SCORE` | 6 |
+| `TEST_STEPS` | 8 |
+| `BRIBE_MINIMUM_COIN` | 12 |
+| `BRIBE_NOTORIETY` | 6 |
+| `DVSA_INSPECTION_INTERVAL_DAYS` | 10 |
+| `SCALPER_RESALE_PRICE` | 10 |
+| `CANCELLED_SLOT_REFUND` | 3 |
+| `TOUT_SALES_THRESHOLD` | 3 |
+| `L_PLATE_POLICE_STOP_REDUCTION` | 0.30f |
+| `FORGED_CARD_DETECT_CHANCE` | 0.25f |
+| `BRIBED_EXAM_DURATION_DAYS` | 7 |
+| `TEST_CENTRE_CLOSE_DAYS` | 2 |
+
+### New entities required
+
+- `NPCType`: `TEST_CENTRE_RECEPTIONIST`, `DRIVING_EXAMINER`, `TEST_SLOT_SCALPER`, `LEARNER_DRIVER`
+- `Material`: `TEST_APPOINTMENT_CARD`, `DRIVING_LICENCE`, `INVALID_LICENCE`, `CANCELLED_SLOT_VOUCHER`, `FAKE_PROVISIONAL_LICENCE`, `L_PLATE_PROPS`, `FORGED_APPOINTMENT_CARD`
+- `PropType`: `TEST_CENTRE_DESK_PROP`, `TEST_CAR_PROP`, `TEST_CENTRE_REAR_EXIT_PROP`, `TEST_CENTRE_PHONE_BOX_PROP`
+- `RumourType`: `BENT_EXAMINER_RUMOUR`, `SLOT_TOUT_RUMOUR`, `L_PLATE_PRANK_RUMOUR`
+- `AchievementType`: `FAILED_AGAIN`, `CLEAN_SHEET_DRIVER`, `FULL_LICENCE`, `CHEAP_BRIBE`, `INSPECTOR_CALLED`, `SLOT_SHARK`, `LEARNER_LEGS`
+- `LandmarkType`: `DRIVING_TEST_CENTRE`
+- `CrimeType`: `TOUT` (add to `CriminalRecord`)
+
+### Integration tests
+
+1. **Passing the test grants a driving licence**: create system; give player `TEST_APPOINTMENT_CARD`; seed random to guarantee 8/8 score; call `startTest(player, inventory, rng)`; verify `inventory.contains(Material.DRIVING_LICENCE)`; verify `achievementSystem` received `AchievementType.FULL_LICENCE`; verify `achievementSystem` received `AchievementType.CLEAN_SHEET_DRIVER`.
+
+2. **Failing three times makes Keith hostile**: create system; seed random to guarantee 0/8 score; call `startTest(...)` three times; verify Keith's NPC state is `NPCState.HOSTILE`.
+
+3. **Bribe below minimum is rejected**: create system; fail test once; advance time to 17:10; give player `BROWN_ENVELOPE` containing 5 COIN (< `BRIBE_MINIMUM_COIN`); call `offerBribe(player, inventory, keith)`; verify result is `BribeResult.REJECTED`; verify `wantedSystem.getWantedLevel()` increased; verify player does NOT hold `Material.DRIVING_LICENCE`.
+
+4. **Cancellation scalping racket pays out**: create system; give player `TEST_APPOINTMENT_CARD`; call `cancelBooking(player, inventory)` → verify player receives `CANCELLED_SLOT_VOUCHER` and 3 COIN refund; call `sellVoucherToScalper(player, inventory, wayne)` → verify player receives 6 COIN and voucher removed from inventory; call `resellToLearner(player, inventory, learner)` three times → verify `notorietySystem.getNotoriety()` increased; verify achievement `SLOT_SHARK` was unlocked.
+
+5. **DVSA inspection invalidates bribed licence**: create system; bribe Keith (supply valid `BROWN_ENVELOPE`); verify `Material.DRIVING_LICENCE` in inventory; advance time by `DVSA_INSPECTION_INTERVAL_DAYS` days; trigger inspection via `triggerDVSAInspection(system)`; verify `Material.DRIVING_LICENCE` replaced with `Material.INVALID_LICENCE` in inventory; verify test centre `closedUntilDay` is set `TEST_CENTRE_CLOSE_DAYS` days ahead.
+
+// `DrivingTestSystem.java` must be created as the sole new source file. Integrates with `CarDrivingSystem` (licence reduces police-stop chance), `MOTSystem` (shared `BROWN_ENVELOPE` bribe mechanic), `InternetCafeSystem` (forged card crafting), `BattleBarMiniGame` (test route minigame), `CriminalRecord` (new `TOUT` crime type), `WantedSystem`, `NotorietySystem`, `RumourNetwork`, `DisguiseSystem` (examiner recognises disguised player at 25% chance), `HMRCSystem` (scalping income tracked), and `AchievementSystem`. `Material.BROWN_ENVELOPE`, `Material.BLANK_CARD`, `Material.INK_CARTRIDGE`, `Material.LAMINATOR_POUCH`, `Material.STOLEN_PASSPORT_PHOTO` already exist. `NPCType.POLICE` already exists. `LandmarkType.DRIVING_TEST_CENTRE` must be added to `LandmarkType.java`.
