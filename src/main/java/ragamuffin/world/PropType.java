@@ -3288,7 +3288,30 @@ public enum PropType {
      *       normal operation; only becomes destructible in OUT_OF_SERVICE mode).</li>
      * </ul>
      */
-    CASHPOINT_PROP(0.6f, 1.8f, 0.4f, Integer.MAX_VALUE, Material.SCRAP_METAL);
+    CASHPOINT_PROP(0.6f, 1.8f, 0.4f, Integer.MAX_VALUE, Material.SCRAP_METAL),
+
+    // ── Issue #1333: Northfield Employment System ─────────────────────────────
+
+    /**
+     * JOB_VACANCY_BOARD_PROP — a small corkboard outside each employer with
+     * vacancy cards pinned to it. Press E to collect a JOB_APPLICATION_FORM.
+     * Indestructible under normal conditions.
+     */
+    JOB_VACANCY_BOARD_PROP(0.6f, 0.9f, 0.1f, Integer.MAX_VALUE, null),
+
+    /**
+     * STAFF_CLOCK_IN_PROP — a wall-mounted punch-card / electronic clock-in
+     * terminal inside each employer. Press E to clock in at shift start and
+     * clock out at shift end.
+     */
+    STAFF_CLOCK_IN_PROP(0.3f, 0.5f, 0.1f, Integer.MAX_VALUE, null),
+
+    /**
+     * STOCK_CRATE_PROP — a wooden pallet or plastic crate of stock inside
+     * the employer. Player must press E on this every 2 in-game minutes
+     * during a shift to log productivity. Missing 3 tasks = SKIVING warning.
+     */
+    STOCK_CRATE_PROP(0.8f, 0.8f, 0.8f, 5, Material.CARDBOARD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

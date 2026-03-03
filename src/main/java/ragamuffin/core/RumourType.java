@@ -888,5 +888,14 @@ public enum RumourType {
     /** "Proper hard nut about — clocked someone in the club last night, absolute scenes."
      * Seeded by NightclubSystem when player notoriety ≥ 50 enters The Vaults.
      * Spreads via NIGHTCLUB_PUNTER and BOUNCER NPCs. */
-    HARD_NUT_IN_TOWN;
+    HARD_NUT_IN_TOWN,
+
+    // ── Issue #1333: Northfield Employment System ─────────────────────────────
+
+    /** "Did you hear? So-and-so's been up at the charity shop every week, giving back
+     * to the community. Legend, apparently."
+     * Seeded by EmploymentSystem when player completes a Charity Shop volunteer shift.
+     * Spreads via PUBLIC and PENSIONER NPCs. Reduces NeighbourhoodWatch anger by 2
+     * for 1 in-game day. Community Respect +2. */
+    COMMUNITY_SPIRIT;
 }
