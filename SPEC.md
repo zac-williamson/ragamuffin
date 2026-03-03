@@ -55446,3 +55446,103 @@ Skin Deep Tattoos is a narrow 4×6×3 shopfront on the high street between the n
 
 // `TattooSystem.java` must be created as the sole new source file.
 // All supporting enums (`TATTOO_PARLOUR` LandmarkType, `TATTOOIST` NPCType, `TATTOO_CHAIR_PROP` / `FLASH_SHEET_PROP` / `TATTOO_STATION_PROP` PropType, `TATTOO_GUN` / `INK_BOTTLE` / `NEEDLE` Material, `HEALTH_INSPECTOR` NPCType) are already defined — no new enum entries required except RumourType and AchievementType as listed above.
+
+---
+
+## Northfield Dodgy Roofer — Kenny's Round, the Van Raid & the Trading Standards Trap
+
+**System**: `DodgyRooferSystem.java` (new file)
+
+All supporting enum entries are already defined across `NPCType` (DODGY_ROOFER), `PropType` (ROOFER_VAN_PROP, LADDER_PROP), `Material` (BUCKET_OF_SEALANT, LATEX_GLOVES, SCAFFOLDING_SPANNER, INVOICE_PAD, CASH_ENVELOPE, ROOF_SLATE_BAG), `RumourType` (KENNY_SCAM, KENNY_ARGUMENT, RIVAL_ROOFER, TURF_DISPUTE, KENNY_REPORTED, KENNY_FINED, SNITCH, BOTCHED_JOB), and `AchievementType` (COWBOY_BUILDER, UNDERCUTTING_KENNY, TOOLS_DOWN, PUBLIC_SPIRITED, TIP_OFF_KENNY, CIVIC_MINDED). No new enum entries are required.
+
+### Overview
+
+Kenny (`NPCType.DODGY_ROOFER`) drives his `ROOFER_VAN_PROP` on a fixed 8-stop route through the residential streets, weekdays 09:00–16:00, cold-calling pensioners about fabricated roof or guttering faults. He's the quintessential British cowboy builder: convincing, shifty, never does the actual work.
+
+### Mechanic 1 — Kenny's Round
+
+- Kenny visits 8 `TERRACED_HOUSE` landmarks in sequence; spends `STOP_DURATION_SECONDS` (45s) at each doorstep in COLLECTING state.
+- At each stop: `rng.nextFloat() < PENSIONER_ACCEPTANCE_RATE` (35%) → PENSIONER NPC answers, Kenny collects 6 COIN, places `LADDER_PROP`, 'works' for 30 seconds (no actual repair), removes ladder, moves on.
+- `KENNY_SCAM` rumour seeded on each successful scam pitch. `BOTCHED_JOB` rumour seeded 2 in-game minutes after a successful 'repair'.
+- **Player observation window**: while Kenny is on a doorstep or up a ladder, his `ROOFER_VAN_PROP` is unattended — a vehicle break-in window opens for 45 seconds.
+- Kenny goes HOSTILE if he spots the player within 15 blocks while mid-pitch; seeds `KENNY_ARGUMENT` rumour; WantedSystem +0 (territorial dispute, not a crime).
+
+### Mechanic 2 — Van Raid
+
+- While Kenny is mid-pitch, player can break into `ROOFER_VAN_PROP` with a 3-second hold-E (no lockpick required — Kenny left it unlocked).
+- Loot table: `BUCKET_OF_SEALANT` (always), `SCAFFOLDING_SPANNER` (50%), `INVOICE_PAD` (35%), `CASH_ENVELOPE` (20%), `ROOF_SLATE_BAG` (15%).
+- `CASH_ENVELOPE` contains 10–20 COIN on use; triggers `CrimeType.VEHICLE_BREAK_IN`.
+- If Kenny returns while player is inside van: Kenny goes HOSTILE immediately; WantedSystem +1; `KENNY_ARGUMENT` rumour seeded.
+- Achievement: `TOOLS_DOWN` (first successful van raid without Kenny catching you).
+
+### Mechanic 3 — Run a Rival Round
+
+- After obtaining `BUCKET_OF_SEALANT` + `LATEX_GLOVES`, player can cold-call pensioners at any residential door (09:00–16:00 only).
+- Press E on a residential door → rival pitch dialogue: `rng.nextFloat() < RIVAL_ACCEPT_RATE` (40%) → PENSIONER accepts; player earns 4 COIN; `RIVAL_ROOFER` rumour seeded.
+- If Kenny is within 20 blocks during a rival call: `TURF_DISPUTE` rumour seeded; Kenny goes HOSTILE with 3× anger duration.
+- Achievement: `UNDERCUTTING_KENNY` after 6 rival calls without Kenny spotting the player.
+- Achievement: `COWBOY_BUILDER` on first successful rival call (acceptance chance < 35% → botched result variant, player earns 1 COIN instead of 4).
+
+### Mechanic 4 — Invoice Fraud
+
+- Player holds `INVOICE_PAD` and presses E on a house that Kenny recently 'worked' on (within 1 in-game day).
+- 60% chance the resident opens door and pays a fake follow-up invoice: 3 COIN.
+- 40% chance the resident is suspicious: Notoriety +5; `CrimeType.FRAUD` recorded.
+- If player attempts fraud at a house with Notoriety ≥ 50: resident calls police immediately; WantedSystem +1.
+
+### Mechanic 5 — Report to Trading Standards
+
+- Trading Standards weekly check: every Friday 11:00, a `TRADING_STANDARDS_OFFICER` NPC (spawned by this system) drives past Kenny's van on its route.
+- **Player can report early**: press E on `PHONE_BOX_HIGH_STREET` before Friday 10:50 → `KENNY_REPORTED` rumour seeded; Trading Standards visit guaranteed at 11:00.
+- At 11:00: if officer spots `ROOFER_VAN_PROP` within 10 blocks of Kenny, Kenny is fined and van impounded for 1 in-game day. `KENNY_FINED` rumour seeded.
+- Achievement: `PUBLIC_SPIRITED` (player reports Kenny while Notoriety < 25).
+- Achievement: `CIVIC_MINDED` (player reports Kenny's location during a weekly check, resulting in van impoundment). `SNITCH` rumour seeded — YOUTH_GANG NPCs temporarily hostile for 30 in-game minutes.
+
+### Mechanic 6 — Tip Off Kenny
+
+- Alternatively, player can warn Kenny about the Friday Trading Standards visit (E on Kenny before 10:50): Kenny thanks the player, gives 10 COIN tip, moves van out of area.
+- Achievement: `TIP_OFF_KENNY`.
+
+### Integration with Existing Systems
+
+- **`TrafficWardenSystem`**: impounded van uses existing `VEHICLE_IMPOUND` landmark logic; Clive issues `PENALTY_CHARGE_NOTICE` if van is parked on double yellows.
+- **`WantedSystem`**: van raid +0 stars (unless Kenny witnesses it); invoice fraud detected +1 star.
+- **`NotorietySystem`**: invoice fraud suspicious door −0, caught +5; rival roofing scam detected by NEIGHBOURHOOD_WATCH +3.
+- **`CriminalRecord`**: `VEHICLE_BREAK_IN` (van raid); `FRAUD` (invoice fraud caught).
+- **`RumourNetwork`**: all 8 rumour types seeded as per RumourType Javadoc.
+- **`NeighbourhoodWatchSystem`**: rival cold-calling within Watch patrol range triggers WatchAnger +2.
+- **`FenceSystem`**: `SCAFFOLDING_SPANNER` fence value 5 COIN; `ROOF_SLATE_BAG` fence value 8 COIN.
+- **`WeatherSystem`**: RAIN → Kenny does not operate (van stays parked outside Chippy all day); FROST → Kenny starts 30 min late (09:30).
+- **`NewspaperSystem`**: `KENNY_FINED` headline: "TRADING STANDARDS SWOOP ON 'KR ROOFING SOLUTIONS' — NORTHFIELD RESIDENTS WARNED".
+- **`TimeSystem`**: active weekdays 09:00–16:00 only; Trading Standards check Fridays 11:00.
+
+### Constants Required
+
+- `STOP_DURATION_SECONDS = 45f` — seconds Kenny spends at each doorstep.
+- `LADDER_WORK_SECONDS = 30f` — seconds Kenny 'works' up the ladder.
+- `PENSIONER_ACCEPTANCE_RATE = 0.35f` — chance a pensioner accepts the pitch.
+- `RIVAL_ACCEPT_RATE = 0.40f` — chance a pensioner accepts the player's rival pitch.
+- `KENNY_SPOT_RADIUS = 15` — block radius within which Kenny spots a rival mid-pitch.
+- `INVOICE_FRAUD_SUCCESS_RATE = 0.60f` — chance invoice fraud succeeds at a recently worked house.
+- `KENNY_SCAM_COIN = 6` — coins Kenny collects per successful pitch.
+- `RIVAL_CALL_COIN = 4` — coins player earns per successful rival call.
+- `TIP_OFF_REWARD_COIN = 10` — coins Kenny pays for an early tip-off.
+- `TRADING_STANDARDS_HOUR = 11.0f` — in-game hour of weekly Trading Standards check.
+- `TRADING_STANDARDS_DAY = 4` — day-of-week index for Trading Standards check (Fri = 4, Mon=0).
+- `VAN_RAID_HOLD_SECONDS = 3f` — hold-E duration for van break-in.
+- `CASH_ENVELOPE_MIN = 10` — minimum COIN in CASH_ENVELOPE.
+- `CASH_ENVELOPE_MAX = 20` — maximum COIN in CASH_ENVELOPE.
+
+### Integration Tests
+
+1. **Kenny completes a scam pitch**: set time to Wed 10:00; place PENSIONER NPC at stop 1; call `DodgyRooferSystem.update(delta, timeSystem, npcManager, rumourNetwork)`; advance 90s; verify PENSIONER NPC state entered IDLE (door answered); verify `RumourNetwork` contains `KENNY_SCAM`; verify `BOTCHED_JOB` rumour seeded after further 120s.
+
+2. **Van raid yields correct loot**: seed `Random` to produce van-loot rolls; place player adjacent to `ROOFER_VAN_PROP` while Kenny is COLLECTING at doorstep; simulate 3s hold-E; verify `inventory.getItemCount(Material.BUCKET_OF_SEALANT) == 1`; verify `CriminalRecord` contains `VEHICLE_BREAK_IN`.
+
+3. **Kenny goes hostile when spotted during rival pitch**: give player `BUCKET_OF_SEALANT` + `LATEX_GLOVES`; place Kenny within 10 blocks; call `DodgyRooferSystem.attemptRivalPitch(player, inventory, kenny, rumourNetwork, wantedSystem)`; verify Kenny NPC state is HOSTILE; verify `TURF_DISPUTE` rumour in `RumourNetwork`.
+
+4. **Trading Standards impounds van on report**: set time to Fri 10:30; call `DodgyRooferSystem.reportToTradingStandards(player, criminalRecord, rumourNetwork, wantedSystem, notorietySystem)`; verify `KENNY_REPORTED` rumour seeded; advance time to 11:00; call `DodgyRooferSystem.update(delta, timeSystem, ...)`; verify `ROOFER_VAN_PROP` flagged as impounded; verify `KENNY_FINED` rumour seeded; verify `CIVIC_MINDED` achievement unlocked.
+
+5. **Player tip-off earns reward**: set time to Fri 10:45; give player interaction range to Kenny NPC; call `DodgyRooferSystem.tipOffKenny(player, inventory, kenny, timeSystem, achievementSystem)`; verify player inventory has 10 COIN more than before; verify `TIP_OFF_KENNY` achievement unlocked; advance to 11:00; verify Kenny's van is NOT at its usual Friday location (moved away).
+
+// `DodgyRooferSystem.java` must be created as the sole new source file. All supporting enums are already defined in NPCType, PropType, Material, RumourType, and AchievementType — no new enum entries required.
