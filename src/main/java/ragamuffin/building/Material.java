@@ -6265,7 +6265,37 @@ public enum Material {
     /**
      * STOLEN_PRINTER_INK — "HP DeskJet cartridge. Still in the sealed box. Almost certainly nicked."
      * Crafting ingredient for FORGED_PARKING_PERMIT. Found in office blocks or bought from fence. */
-    STOLEN_PRINTER_INK("Stolen Printer Ink");
+    STOLEN_PRINTER_INK("Stolen Printer Ink"),
+
+    // ── Issue #1402: Northfield Severn Trent Road Dig ─────────────────────────
+
+    /**
+     * THERMOS — "Battered red thermos. Still warm. Smells of builder's tea."
+     * Always present in welfare cabin loot. Restores +8 warmth when consumed.
+     * Can be handed to CONTRACTOR_STEVE or CONTRACTOR_PHIL to raise CONTRACTOR_GOODWILL (+20 each). */
+    THERMOS("Thermos"),
+
+    /**
+     * SITE_RADIO — "Roberts radio covered in plaster dust. Tuned to Radio 2."
+     * 60% chance in welfare cabin loot. Fenceable for 4 COIN.
+     * Also usable to listen to pirate radio (PirateRadioSystem). */
+    SITE_RADIO("Site Radio"),
+
+    /**
+     * CONTRACTOR_CLIPBOARD — "Severn Trent job pack. Mostly blank variation-order forms."
+     * 40% chance in welfare cabin loot. Key item for council billing scam (Mechanic 4).
+     * Also buyable at InternetCafe for 2 COIN. */
+    CONTRACTOR_CLIPBOARD("Contractor Clipboard"),
+
+    /**
+     * HARD_HAT — "White hard hat. 'SEVERN TRENT' stencilled on the back in marker pen."
+     * Part of contractor disguise (with HI_VIS_JACKET). Bought at corner shop for 2 COIN. */
+    HARD_HAT("Hard Hat"),
+
+    /**
+     * MYSTERY_OBJECT — "You're not sure what this is. Looks old. Possibly valuable."
+     * Found in BURIED_STASH_PROP under the trench. Fenceable for 8 COIN. */
+    MYSTERY_OBJECT("Mystery Object");
 
     private final String displayName;
 
@@ -7620,6 +7650,17 @@ public enum Material {
             case STOLEN_PRINTER_INK:     return cs(0.18f, 0.18f, 0.22f, // Black cartridge body
                                                    0.55f, 0.15f, 0.62f); // Purple HP logo accent
 
+            // Issue #1402: Northfield Severn Trent Road Dig
+            case THERMOS:               return cs(0.72f, 0.15f, 0.10f, // Red thermos body
+                                                  0.85f, 0.82f, 0.75f); // Silver cup cap
+            case SITE_RADIO:            return cs(0.15f, 0.15f, 0.18f, // Plaster-dusty dark grey
+                                                  0.88f, 0.75f, 0.25f); // Tuner dial gold
+            case CONTRACTOR_CLIPBOARD:  return cs(0.72f, 0.55f, 0.30f, // Brown clipboard board
+                                                  0.92f, 0.92f, 0.88f); // White paper
+            case HARD_HAT:              return c(0.95f, 0.95f, 0.92f);  // White hard hat
+            case MYSTERY_OBJECT:        return cs(0.45f, 0.38f, 0.28f, // Earthy brown (dirty)
+                                                  0.62f, 0.55f, 0.40f); // Lighter soil highlight
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -8195,6 +8236,12 @@ public enum Material {
             case FORGED_PARKING_PERMIT:
             case WHEEL_CLAMP_KEY:
             case STOLEN_PRINTER_INK:
+            // Issue #1402: Northfield Severn Trent Road Dig — not block items
+            case THERMOS:
+            case SITE_RADIO:
+            case CONTRACTOR_CLIPBOARD:
+            case HARD_HAT:
+            case MYSTERY_OBJECT:
                 return false;
             default:
                 return true;
@@ -9879,6 +9926,18 @@ public enum Material {
                 return IconShape.TOOL;        // small release key
             case STOLEN_PRINTER_INK:
                 return IconShape.BOX;         // sealed inkjet cartridge box
+
+            // Issue #1402: Northfield Severn Trent Road Dig
+            case THERMOS:
+                return IconShape.CYLINDER;    // red flask
+            case SITE_RADIO:
+                return IconShape.BOX;         // portable radio
+            case CONTRACTOR_CLIPBOARD:
+                return IconShape.FLAT_PAPER;  // clipboard with forms
+            case HARD_HAT:
+                return IconShape.BOX;         // safety helmet
+            case MYSTERY_OBJECT:
+                return IconShape.BOX;         // unidentified lump
 
             default:
                 return IconShape.BOX;
