@@ -54634,3 +54634,150 @@ All achievements (`BANK_HOLIDAY_REGULAR`, `GERALD_DOWN`, `BBQ_ARSONIST`, `STREET
 
 // `StreetPartySystem.java` must be created as the sole new source file.
 // All referenced enum entries already exist; only `BURNT_SAUSAGE`, `ROAD_CLOSURE_PERMIT` (Materials) and `WARM_LAGER_CRISIS` (RumourType) are new and must be added.
+
+---
+
+## Issue #1443: Northfield Buffaloes Lodge No. 347 — The Initiation, the Old Boys' Network & the Lodge Safe Heist
+
+### Overview
+
+The `RAOB_LODGE` landmark (`LandmarkType.RAOB_LODGE`, "Northfield Buffaloes Lodge No. 347") has all its supporting enum entries fully defined across `NPCType`, `Material`, `PropType`, `AchievementType`, and `RumourType`, but the system class `RAOBLodgeSystem.java` has never been created. This issue implements it.
+
+The Buffaloes Lodge is a quintessential British male-only fraternal drinking club operating out of a converted Victorian terraced house. Thursday evenings are Lodge Night; the rest of the week the bar is open to members only. The Lodge is a web of mutual favours, minor corruption, and territorial secrecy — the old boys' network made flesh and carpeted in burgundy.
+
+---
+
+### Opening Hours & Access
+
+| Day       | Hours       | Who's Admitted                                            |
+|-----------|-------------|-----------------------------------------------------------|
+| Mon–Wed   | Closed      | —                                                         |
+| Thursday  | 19:30–23:00 | Members + initiates (Lodge Night — full ceremony)        |
+| Fri–Sat   | 18:00–23:00 | Members bar only (Big Bernard on door, RAOB_MEMBERSHIP_CARD or BUFFALO_MEMBERSHIP_CARD required) |
+| Sunday    | 12:00–15:00 | Members Sunday session (cheap pint, quiz sheet, rumours) |
+
+`RAOB_DOORMAN` NPC Big Bernard checks for a valid membership card at `LODGE_DOOR_PROP`. Without one:
+- Press E on Bernard: player can attempt to bluff (Notoriety < 20 = 40% success), present a `SPONSORSHIP_FORM` (bypasses — initiates only), or walk away.
+- Bluff failure: Bernard blocks entry; Notoriety +2 if player argues.
+- Force entry (`LODGE_DOOR_PROP` 10 hits): `LODGE_TRESPASS` CrimeType, WantedSystem +2, RAOB_INITIATION rumour seeded ("Someone tried to barge into the Lodge. Bernard had words.").
+
+---
+
+### Mechanic 1 — The Sponsorship Hustle (Obtaining SPONSORSHIP_FORMs)
+
+Two `SPONSORSHIP_FORM` items are required to trigger the initiation. Each is obtained by completing a favour for a different `RAOB_LODGE_MEMBER` NPC:
+
+- **Ron** (Primo Regent, always in the Lodge on Thursday): gives form after player delivers `CASE_DISMISSED_FORM` from Sandra **or** pays 10 COIN bribe.
+- **Brian** (Housing Officer, found in `COUNCIL_OFFICE` Mon–Fri 09:00–17:00): gives form if player delivers a `CRATE_OF_WINE` **or** completes a fetch errand (collect his `PRESCRIPTION_MEDS` from `GPSurgerySystem` `PHARMACY_HATCH_PROP`).
+- **Terry** (Bookmaker, at `BETTING_SHOP` Mon–Sat 10:00–20:00): gives form if player wins ≥10 COIN at the bookies in a single session (verified by `BettingShopSystem`).
+- **Councillor Walsh** (`COUNCIL_MEMBER`, at `COUNCIL_OFFICE` Tue/Thu only 14:00–16:00): gives form if player fetches `PLANNING_PERMISSION_FORM` from `PropertySystem` — but Walsh's form is only valid if the player's Notoriety is < 30.
+
+Player needs any **two** of the four forms. This creates natural replay variety.
+
+---
+
+### Mechanic 2 — The Initiation Ceremony (Thursday Lodge Night, 20:00–21:00)
+
+With 2 × `SPONSORSHIP_FORM` + 10 COIN in inventory:
+- Press E on `INITIATION_ALTAR_PROP` to trigger `BattleBarMiniGame` (existing system) — the "oath timing test".
+- `BattleBarMiniGame` success: player receives `BUFFALO_MEMBERSHIP_CARD`, `BUFFALO_FEZ`, and `RAOB_MEMBER` player flag. Achievement `BUFFALO_SOLDIER` unlocked.
+- `BattleBarMiniGame` failure: 5-COIN forfeit, must wait until next Thursday. Seeds `RAOB_INITIATION` rumour.
+
+**Ceremony atmosphere**: during the ceremony, `RAOB_LODGE_MEMBER` NPCs (×4) stand at `LODGE_ALTAR_PROP`, cycling through ceremonial dialogue lines. The `LightingSystem` dims to 30% ambient during the ceremony window. `SoundSystem` plays `SoundEffect.CEREMONIAL_DRONE` (existing effect, or falls back to `AMBIENT_INDOOR`).
+
+---
+
+### Mechanic 3 — The Lodge Bar (Members Only)
+
+Once admitted as a member, the Lodge bar is a unique social hub:
+- **Cheap pint**: `RON_LODGE_BARMAN` NPC sells `CAN_OF_LAGER` for 1 COIN (cheaper than pub). Consuming grants `LODGE_MEMBER_BUFF`: +5 HP, Notoriety −1 (to a minimum of current Notoriety −5 per session).
+- **Rumour sink**: `RAOB_LODGE_MEMBER` NPCs share rumours freely. On each interaction, 50% chance of receiving one of: `COMMITTEE_CONSPIRACY`, `POLICE_TIP`, `BIG_WIN_AT_BOOKIES`, or `GENTRIFICATION` rumours.
+- **Secret handshake**: pressing E on any `RAOB_LODGE_MEMBER` NPC with `RAOB_MEMBER` flag triggers secret handshake dialogue, granting `LOCALS` Faction Respect +3. Usable once per NPC per in-game day.
+- **Blackmail via LODGE_CHARTER_DOCUMENT**: if player has `KOMPROMAT_LEDGER` (from safe heist), pressing E on any named RAOB member unlocks a blackmail dialogue option — 10 COIN reward + target NPC goes `FRIGHTENED` (wait: uses `NPCState.FLEEING`) + `GRUBBY_LEVERAGE` achievement. Notoriety +5. WantedSystem +0 (off the books). Seeds `COMMITTEE_CONSPIRACY` rumour.
+
+---
+
+### Mechanic 4 — The Lodge Safe Heist
+
+`LODGE_SAFE_PROP` is in the back room, accessible only after the bar clears (23:00 on Thursdays, 23:30 Fri/Sat). Big Bernard leaves at 23:15.
+
+- **Forced entry**: 12 hits with any tool; yields `SCRAP_METAL` on break. Very loud (NoiseSystem 7.0f); police respond in 90 seconds.
+- **Combination**: player can eavesdrop on Ron (hold E near Ron during 20:00–20:30 distraction window when Ron is arguing with Brian) to hear combination digits in dialogue — uses `SoundSystem.AMBIENT_INDOOR` close-proximity mechanic. With combination: open silently (E on safe, 3-second animation).
+- **Safe contents**: 30–50 COIN, `LODGE_CHARTER_DOCUMENT`, `REGALIA_SET`, `KOMPROMAT_LEDGER`.
+  - `KOMPROMAT_LEDGER` unlocks blackmail options (above) and can be sold to `CitizensAdviceSystem` or `PoliceStationSystem` for 30 COIN + Notoriety −5 + `NewspaperSystem` headline: "LOCAL LODGE SECRETS EXPOSED: COUNCILLOR WALSH 'DEEPLY CONCERNED'".
+  - `LODGE_CHARTER_DOCUMENT` can be sold to `FenceSystem` for 20 COIN or used for blackmail.
+  - `REGALIA_SET` wearable via `DisguiseSystem`: −30% COUNCIL_MEMBER suspicion for 1 in-game day.
+- **Detection window**: 15% if player opens safe during Ron's 20:00–20:30 distraction. 70% outside it. On detection: `LODGE_BURGLARY` CrimeType, Notoriety +15, WantedSystem +2, `LODGE_BURGLARY` rumour seeded.
+- Achievement `SAFE_CRACKER` on successful loot.
+
+---
+
+### Mechanic 5 — The Old Boys' Network (Ongoing Passive Benefits)
+
+Once the player holds `BUFFALO_MEMBERSHIP_CARD`:
+- **Housing queue skip**: present `BUFFALO_MEMBERSHIP_CARD` to Brian at `COUNCIL_OFFICE` for a `HOUSING_PRIORITY_LETTER` (skips 1-week wait in `PropertySystem`).
+- **Magistrates shortcut**: present `BUFFALO_MEMBERSHIP_CARD` to Sandra at `MAGISTRATES_COURT` for a 30% chance of `CASE_DISMISSED_FORM` on any pending fine ≤ 15 COIN.
+- **Planning fast-track**: present card + 10 COIN to Reg (Planning Inspector `RAOB_LODGE_MEMBER`, at `COUNCIL_OFFICE` Mon/Wed 10:00–12:00) for `PLANNING_PERMISSION_FORM` bypassing `PropertySystem` Notoriety check.
+- **Bookies tip**: Terry (`RAOB_LODGE_MEMBER`) gives a `HOT_TIP` once per week (doubles payout on one `BettingShopSystem` bet, via `INSIDER_RACING_TIP` flag).
+- All favours cost either COIN bribes or relationship capital — never free. This preserves the game's economy.
+
+---
+
+### Integration with Existing Systems
+
+- **`BattleBarMiniGame`**: reused for initiation ceremony timing test.
+- **`DisguiseSystem`**: `REGALIA_SET` and `BUFFALO_FEZ` as disguise tiers.
+- **`BettingShopSystem`**: Terry sponsor favour, weekly hot tip.
+- **`GPSurgerySystem`**: Brian fetch errand (collect prescription).
+- **`PropertySystem`**: housing letter, planning fast-track.
+- **`MagistratesCourtSystem`**: Sandra case dismissed favour.
+- **`CitizensAdviceSystem`** / **`PoliceStationSystem`**: `KOMPROMAT_LEDGER` sale destinations.
+- **`NoiseSystem`**: safe forced entry 7.0f; bar noise 2.0f on Lodge Night.
+- **`LightingSystem`**: ceremony dims to 30% ambient.
+- **`NewspaperSystem`**: Lodge burglary headline; kompromat exposure headline.
+- **`RumourNetwork`**: `RAOB_INITIATION`, `LODGE_BURGLARY`, `COMMITTEE_CONSPIRACY`.
+- **`CriminalRecord`**: `LODGE_TRESPASS` (force entry), `LODGE_BURGLARY` (safe heist detected).
+- **`WantedSystem`**: trespass +2; burglary detection +2; blackmail +0.
+- **`NotorietySystem`**: bluff failure +2; safe detected +15; blackmail +5; pint −1/session.
+- **`FactionSystem`**: `LOCALS` +3 per handshake; Lodge Night attendance +1/session.
+- **`StreetSkillSystem`**: STEALTH XP +1 on silent safe open; FENCE XP +1 on kompromat sale.
+- **`NeighbourhoodSystem`**: Vibes +1 per Lodge Night attended without incident; −3 on burglary.
+- **`TimeSystem`**: Thursday Lodge Night 19:30–23:00; Fri–Sat bar 18:00–23:00; Sunday 12:00–15:00.
+- **`HMRCSystem`**: Lodge bar income logged as members' club (informal).
+- **`AchievementSystem`**: `BUFFALO_SOLDIER` (initiation), `SAFE_CRACKER` (lodge safe), `GRUBBY_LEVERAGE` (blackmail), `BOTHER_BUFFALO` (original RAOB initiation path if also implemented).
+
+---
+
+### New Material Entries Required
+
+All referenced materials (`BUFFALO_MEMBERSHIP_CARD`, `BUFFALO_FEZ`, `KOMPROMAT_LEDGER`, `LODGE_CHARTER_DOCUMENT`, `REGALIA_SET`, `RAOB_MEMBERSHIP_CARD`, `SPONSORSHIP_FORM`, `CRATE_OF_WINE`, `BOX_OF_CHOCOLATES`, `CASE_DISMISSED_FORM`, `HOUSING_PRIORITY_LETTER`, `PLANNING_PERMISSION_FORM`) are already defined in `Material.java`. No new entries required.
+
+### New PropType Entries Required
+
+All referenced props (`LODGE_BAR_PROP`, `LODGE_ALTAR_PROP`, `LODGE_SAFE_PROP`, `BUFFALO_LODGE_PLAQUE`, `INITIATION_ALTAR_PROP`, `LODGE_DOOR_PROP`, `CEREMONIAL_CANDLE_PROP`) are already defined in `PropType.java`. No new entries required.
+
+### New NPCType Entries Required
+
+`RAOB_LODGE_MEMBER`, `RAOB_DOORMAN` are already defined in `NPCType.java`. No new entries required.
+
+### New RumourType Entries Required
+
+`RAOB_INITIATION`, `LODGE_BURGLARY`, `COMMITTEE_CONSPIRACY` are already defined in `RumourType.java`. No new entries required.
+
+### New AchievementType Entries Required
+
+`BUFFALO_SOLDIER`, `SAFE_CRACKER`, `GRUBBY_LEVERAGE`, `BOTHER_BUFFALO` are already defined in `AchievementType.java`. No new entries required.
+
+---
+
+### Integration Tests
+
+1. **Lodge entry denied without card**: place player at `LODGE_DOOR_PROP`; verify Big Bernard NPC blocks entry; simulate E on Bernard with no card and Notoriety 30 (above 20 bluff threshold); verify player remains outside and Notoriety increases by 2 after argument.
+2. **Two SPONSORSHIP_FORMs unlock initiation**: give player 2 × `SPONSORSHIP_FORM` + 10 COIN; set time to Thursday 20:00; call `RAOBLodgeSystem.update(delta, timeSystem, world, npcManager, ...)`; simulate E on `INITIATION_ALTAR_PROP`; verify `BattleBarMiniGame` starts (not null, not completed).
+3. **Successful initiation grants membership**: complete `BattleBarMiniGame` (simulate win); verify player inventory contains `BUFFALO_MEMBERSHIP_CARD` and `BUFFALO_FEZ`; verify `RAOBLodgeSystem.isPlayerMember()` returns true; verify `BUFFALO_SOLDIER` achievement unlocked.
+4. **Silent safe open via overheard combination**: simulate player within 2 blocks of Ron during 20:00–20:30 window; call update; verify `RAOBLodgeSystem.isCombinationKnown()` returns true; simulate E on `LODGE_SAFE_PROP`; verify 3-second animation starts and `NoiseSystem` level remains 0 (silent).
+5. **Forced safe entry triggers detection and rumour**: at 21:00 (outside distraction window), simulate 12 hits on `LODGE_SAFE_PROP`; verify `NoiseSystem` level ≥ 7.0f; verify `LODGE_BURGLARY` CrimeType added to `CriminalRecord`; verify `LODGE_BURGLARY` rumour exists in `RumourNetwork`; verify `WantedSystem.getStars() >= 2`.
+6. **Kompromat ledger sold to Citizens Advice triggers headline**: give player `KOMPROMAT_LEDGER`; simulate E on Citizens Advice NPC; select sell option; verify player receives 30 COIN, Notoriety decreases by 5, and `NewspaperSystem` has headline containing "LODGE SECRETS EXPOSED".
+
+// `RAOBLodgeSystem.java` must be created as the sole new source file.
+// All enum entries referenced above are already defined — no new enum values required.
