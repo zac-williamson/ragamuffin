@@ -949,5 +949,33 @@ public enum RumourType {
      * Spreads via PUBLIC, BARMAN, and PENSIONER NPCs.
      * Awards FOREWARNED achievement on first seeding the player hears.
      * Gives the player time to pre-empt citations (lay low, move cars, hide TVs). */
-    ENFORCEMENT_SWEEP;
+    ENFORCEMENT_SWEEP,
+
+    // ── Issue #1341: Northfield Residents' Association Meeting ────────────────
+
+    /** "Margaret from the residents' association is absolutely furious — going on about
+     * some planning application. You can hear her from the car park."
+     * — seeded by ResidentsAssociationSystem when the player uses the Stir up Fear
+     * speech option during Agenda slot 1 (Planning Application Review), or when the
+     * Walkout Gambit fires and Margaret gives Notoriety +3.
+     * Spreads via PUBLIC, PENSIONER, and BARMAN NPCs within 30 blocks.
+     * Awards NIMBY achievement on first seeding. */
+    NIMBY_FURY,
+
+    /** "Word is the residents' association treasurer has been helping herself to the
+     * petty cash tin. Twenty quid a month, month after month. Kevin knows."
+     * — seeded by ResidentsAssociationSystem when the player successfully pickpockets
+     * Pauline's PETTY_CASH_TIN (Notoriety +5) OR when the budget motion to investigate
+     * finances passes in Agenda slot 2 (Budget Review).
+     * Spreads via BARMAN, PUBLIC, and RESIDENTS_MEMBER NPCs.
+     * Triggers NewspaperSystem headline + STREET_LADS mission hook. */
+    BENT_TREASURER,
+
+    /** "Complete chaos at the residents' meeting last night — half of them walked out,
+     * agenda never finished. Margaret looked like she was about to burst."
+     * — seeded by ResidentsAssociationSystem when the Walkout Gambit succeeds (2+
+     * RESIDENTS_MEMBER NPCs leave, dropping attendance below quorum).
+     * Spreads via PUBLIC and PENSIONER NPCs town-wide.
+     * Awards MEETING_DISSOLVED achievement on first seeding. */
+    MEETING_CHAOS;
 }

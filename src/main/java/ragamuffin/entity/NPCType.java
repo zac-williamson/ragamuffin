@@ -2697,7 +2697,43 @@ public enum NPCType {
      * when the error fires.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    WARDEN_TRAINEE(20f, 0f, 0f, false);
+    WARDEN_TRAINEE(20f, 0f, 0f, false),
+
+    // ── Issue #1341: Northfield Residents' Association Meeting ────────────────
+
+    /**
+     * RESIDENTS_CHAIR — Margaret, chair of the Northfield Residents' Association.
+     * Hostile to the player at Notoriety ≥ 3. Awards NIMBY achievement when she
+     * ejects the player from a meeting. Walks to Wetherspoons at 21:30 post-meeting.
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    RESIDENTS_CHAIR(30f, 0f, 0f, false),
+
+    /**
+     * RESIDENTS_SECRETARY — Kevin, secretary of the Residents' Association.
+     * Carries a clipboard with the meeting agenda. Blackmailable for 10 COIN to
+     * remove a noise complaint from the agenda; whispers his dark secret as a
+     * LOCAL_EVENT rumour on refusal. Walks to Wetherspoons at 21:30.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    RESIDENTS_SECRETARY(20f, 0f, 0f, false),
+
+    /**
+     * RESIDENTS_TREASURER — Pauline, treasurer of the Residents' Association.
+     * Guards the 20 COIN petty cash tin. Has the OBSERVANT trait that counters
+     * STEALTH pickpocket attempts. Walks to Wetherspoons at 21:30.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    RESIDENTS_TREASURER(20f, 0f, 0f, false),
+
+    /**
+     * RESIDENTS_MEMBER — a rank-and-file attendee of the Residents' Association
+     * meeting. Each member carries a GRIEVANCE item. 3–6 members spawn per meeting.
+     * Can be persuaded to walk out to trigger the Walkout Gambit (dissolves meeting
+     * if 2+ members leave).
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    RESIDENTS_MEMBER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

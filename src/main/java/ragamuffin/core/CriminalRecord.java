@@ -1001,7 +1001,22 @@ public class CriminalRecord {
          * tow (car removed from world until reclaimed), Notoriety +10, WantedSystem +2.
          * Penalty multiplier ×1.5 applies on Enforcement Day.
          */
-        NO_INSURANCE_DRIVING("No insurance / unlicensed driving (DVLA enforcement)");
+        NO_INSURANCE_DRIVING("No insurance / unlicensed driving (DVLA enforcement)"),
+
+        // ── Issue #1341: Northfield Residents' Association Meeting ─────────────
+
+        /**
+         * Recorded when the player generates a noise complaint that reaches the
+         * Residents' Association agenda — typically through repeated late-night
+         * disturbances, block-breaking near residential buildings, or WarmthSystem
+         * fire-making near occupied properties.
+         * Three or more NOISE_COMPLAINT entries cause the complaint to appear on the
+         * meeting agenda (Agenda slot 3). Dismissible via NOISE_ABATEMENT_LETTER
+         * or by bribing Kevin (10 COIN). If unaddressed, triggers council enforcement
+         * +2 Notoriety the following day.
+         * Penalty: Notoriety +2 per entry.
+         */
+        NOISE_COMPLAINT("Noise complaint (residents' association)");
 
         private final String displayName;
 
