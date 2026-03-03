@@ -52120,3 +52120,206 @@ with `PARKING_NEED` flag active when their car is in danger of clamping) for up 
 //   PropertySystem, TimeSystem, NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
 //   NeighbourhoodWatchSystem, HMRCSystem, FenceSystem, InternetCafeSystem, SoundSystem,
 //   AchievementSystem, CraftingSystem
+
+---
+
+## Issue #1402: Add Northfield Severn Trent Road Dig — The Weeks-Long Hole, the Night-Site Raid & the Council Contractor Scam
+
+### Overview
+
+Severn Trent Water have been "investigating a leak" on Northfield Road for going on three weeks.
+They've dug a 4-block-wide trench across the high street, erected a maze of orange barriers,
+deployed a temporary traffic light (on a 90-second cycle that's been green both ways since Tuesday),
+and parked an unmanned welfare cabin on the pavement since Day 1. Work only visibly happens
+between 08:00–16:00 when the two contractors (Steve and Phil) are on site; the rest of the time
+the hole just sits there, cones everywhere, a generator humming. The player can loot the site
+at night, sabotage the temporary lights, bribe the contractors, forge a hi-vis-jacket "official"
+identity, or run a scam billing the council for phantom extra work.
+
+### Mechanic 1 — The Road Dig Event
+
+The dig triggers once per in-game week (Monday 08:00), lasts `DIG_DURATION_DAYS` = 5 in-game
+days, then the hole is filled (road restored, barriers removed). While active:
+- A `ROAD_TRENCH_PROP` (4 blocks wide, 2 deep) is placed across Northfield Road, dividing the
+  high street — pedestrian NPCs re-route around it. Car traffic is blocked; any car that drives
+  into the closure spawns a `ROAD_RAGE_NPC` variant.
+- `ORANGE_BARRIER_PROP` surrounds the trench (12 barriers). `TEMP_TRAFFIC_LIGHT_PROP` placed at
+  each end with `WELFARE_CABIN_PROP` on the pavement.
+- `CONTRACTOR_STEVE_NPC` and `CONTRACTOR_PHIL_NPC` (CONTRACTOR type) are present 08:00–16:00,
+  drinking tea, occasionally tapping the ground with a shovel. At 16:00 they lock the cabin and
+  leave for the pub.
+- After 16:00 and before 08:00 the site is unattended (no NPCs within 20 blocks).
+
+### Mechanic 2 — Night-Site Raid
+
+Between 22:00 and 05:00 the player can loot the unattended welfare cabin (press E on
+`WELFARE_CABIN_PROP`). Contents drawn from `SITE_LOOT_TABLE`:
+- `THERMOS` (always present)
+- `SITE_RADIO` (60% chance, fenceable at 4 COIN)
+- `CONTRACTOR_CLIPBOARD` (40% chance — key item for Mechanic 4)
+- `ANGLE_GRINDER` (20% chance, high fence value 12 COIN)
+- `HI_VIS_JACKET` (50% chance — key item for Mechanic 3)
+
+Looting the cabin: `CrimeType.THEFT_FROM_WORKSITE`, Notoriety +3. CCTV within 8 blocks records
+it. If NeighbourhoodWatch anger ≥ 50, there's a `NIGHT_WATCH_CHANCE` = 30% a nosy neighbour
+sees the player and phones the police.
+
+Barriers can also be kicked (`BARRIER_KICK_PROP` action, hold E 1 second): each kicked barrier
+is removed. 3+ barriers removed: `BARRIER_CHAOS` rumour seeded, `TRAFFIC_CHAOS` Notoriety +2.
+Kicked barriers can be placed back (the player can set up an impromptu "diversion" sign pointing
+into a dead end for laughs — achievement `CERTIFIED_JOBSWORTH`).
+
+### Mechanic 3 — Hi-Vis Identity & Contractor Impersonation
+
+Player holding `HI_VIS_JACKET` (from site loot, skip, or corner shop) and `HARD_HAT` (corner
+shop, 2 COIN) can **enter Contractor Disguise** (press E on either prop in inventory with both
+equipped). While disguised:
+- NPCs and Police do not challenge the player standing near the trench during working hours.
+- Player can press E on the `ROAD_TRENCH_PROP` to "work" (fake digging) — generates no output
+  but satisfies the disguise cover check.
+- `CONTRACTOR_PHIL_NPC` and `CONTRACTOR_STEVE_NPC` will ask for tea ("Mate, put the kettle on"):
+  player can hand them a `THERMOS` to raise their `CONTRACTOR_GOODWILL` score (+20 per thermos).
+  At `GOODWILL_UNLOCK` = 40, Steve and Phil reveal the location of a `BURIED_STASH_PROP`
+  (randomly placed under one of the trench blocks: contains 5–10 COIN and a `MYSTERY_OBJECT`
+  fenceable for 8 COIN).
+- Police Wanted ≥ 2: disguise immediately blown regardless of outfit.
+
+### Mechanic 4 — Council Contractor Billing Scam
+
+Player holding `CONTRACTOR_CLIPBOARD` (looted from cabin or bought at InternetCafe for 2 COIN)
+can approach the `COUNCIL_OFFICE_KIOSK` (or `BRENDA_NPC` if available) and submit a fake
+`VARIATION_ORDER` for phantom extra work:
+- Claim types: `EMERGENCY_NIGHT_WORK` (6 COIN), `ASBESTOS_SURVEY` (9 COIN),
+  `EXTRA_REINSTATEMENT` (12 COIN).
+- Each claim has a `SCRUTINY_CHANCE` = 25%: council scrutinises the form. If scrutinised,
+  Brenda phones to verify — player has 60 seconds to leave the area (> 20 blocks from kiosk)
+  before `CrimeType.FRAUD` is recorded (Notoriety +6, Wanted +1).
+- Max `MAX_CLAIMS_PER_DIG` = 3 claims per dig event (council gets suspicious after that).
+- Total income tracked by `HMRCSystem` (threshold `HMRC_DAILY_THRESHOLD` = 30 COIN).
+- Achievement `BILLED_THE_COUNCIL` on first successful variation-order payout.
+
+### Mechanic 5 — Temporary Traffic Light Sabotage
+
+The `TEMP_TRAFFIC_LIGHT_PROP` can be tampered with:
+- Player crouches and holds E for 2 seconds on the light's control box → enters the
+  `SABOTAGE_MINI_GAME` (BattleBarMiniGame, EASY). Success: both lights stuck on GREEN (chaos
+  mode). Failure: light gives an electric shock — player loses 5 health.
+- Chaos mode lasts `CHAOS_DURATION_HOURS` = 1 in-game hour. During chaos:
+  - Passing cars collide at the junction every `CAR_COLLISION_INTERVAL` = 45 in-game seconds,
+    spawning `ROAD_RAGE_NPC` who brawl with each other (+5 Notoriety spectacle bonus).
+  - Police are alerted after the first collision; officer arrives in 90 seconds to fix the light.
+- Achievement `GREEN_FOR_EVERYONE` on first successful sabotage.
+- Notoriety +4 if caught tampering (CCTV within 6 blocks).
+
+### Mechanic 6 — The Contractor Solidarity Shakedown
+
+During working hours Steve and Phil take regular tea breaks at `WELFARE_CABIN_PROP`. Player can:
+- Press E on `CONTRACTOR_STEVE_NPC` to start a conversation. Offer to "sort them out" with
+  `BRIBE_AMOUNT` COIN:
+  - `BRIBE_LOW` = 2 COIN: Phil and Steve speed up the dig (completes 1 day early); no crime.
+  - `BRIBE_MID` = 6 COIN: they "accidentally" leave the cabin unlocked overnight for 1 night —
+    no crime triggered when player loots it.
+  - `BRIBE_HIGH` = 15 COIN: they reveal the `BURIED_STASH_PROP` location immediately AND leave
+    the lights stuck on green. Achievement `CONTRACTOR_ALLIANCE`.
+- Alternatively, player can threaten to report them to the council (`REPORT_THREAT` dialogue):
+  - If player Notoriety < 20: Steve looks worried, drops `SITE_RADIO` and leaves early.
+  - If player Notoriety ≥ 20: Phil laughs and calls police. Notoriety +2.
+
+### New Materials (add to `Material.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `THERMOS` | Flask of tea; usable for warmth (+8 warmth); tradeable with contractors |
+| `SITE_RADIO` | Portable radio; fenceable for 4 COIN; also usable to listen to pirate radio |
+| `CONTRACTOR_CLIPBOARD` | Site documentation; used for variation-order billing scam |
+| `ANGLE_GRINDER` | Power tool; fenceable for 12 COIN; also breaks hard blocks in 3 hits instead of 8 |
+| `HARD_HAT` | PPE headgear; part of contractor disguise; bought at corner shop for 2 COIN |
+| `MYSTERY_OBJECT` | Unidentified item from buried stash; fenceable for 8 COIN |
+
+### New PropTypes (add to `PropType.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `ROAD_TRENCH_PROP` | Open trench across road; blocks pedestrian/vehicle movement; 4 wide, 2 deep |
+| `ORANGE_BARRIER_PROP` | Traffic barrier; kickable; replaceable by player; suppresses vehicle access |
+| `TEMP_TRAFFIC_LIGHT_PROP` | Temporary traffic light; can be sabotaged to stick on green |
+| `WELFARE_CABIN_PROP` | Site cabin; locker inside with loot; locked 16:00–08:00 unless bribed |
+| `BURIED_STASH_PROP` | Hidden under trench block; contains COIN + MYSTERY_OBJECT |
+
+### New NPCTypes (add to `NPCType.java` if absent)
+
+| Constant | Stats | Notes |
+|----------|-------|-------|
+| `CONTRACTOR_STEVE` | 22f, 5f, 0f, false | Senior contractor; bribeable; carries THERMOS; on site 08:00–16:00 |
+| `CONTRACTOR_PHIL` | 20f, 0f, 0f, false | Junior contractor; tea-break vulnerable; on site 08:00–16:00 |
+| `ROAD_RAGE_NPC` | 25f, 10f, 0f, true | Angry driver spawned by blocked road or traffic light chaos; aggressive |
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Constant | Unlock Condition |
+|----------|-----------------|
+| `CERTIFIED_JOBSWORTH` | Kick ≥ 3 barriers then place a diversion sign pointing the wrong way |
+| `GREEN_FOR_EVERYONE` | Successfully sabotage both temporary traffic lights in a single dig event |
+| `BILLED_THE_COUNCIL` | Successfully claim a variation order from the council |
+| `CONTRACTOR_ALLIANCE` | Bribe Steve with BRIBE_HIGH (15 COIN) during a live dig event |
+| `BURIED_TREASURE` | Find and loot the BURIED_STASH_PROP in a trench |
+
+### New RumourTypes (add to `RumourType.java`)
+
+| Constant | Seeded When | Sample Text |
+|----------|-------------|-------------|
+| `ROAD_DIG_CHAOS` | Dig event starts | "Severn Trent are up again on Northfield Road. Three weeks this time apparently." |
+| `TRAFFIC_CHAOS` | Player kicks 3+ barriers | "Someone's kicked all the barriers over on the roadworks. Absolute carnage." |
+| `SITE_THEFT` | Player loots welfare cabin | "Someone's had the cabin on the roadworks. Nicked the radio and everything." |
+| `CONTRACTOR_BRIBED` | Player bribes Steve/Phil | "Those Severn Trent lads are well bent. Fifty pence and they'll do anything." |
+| `COUNCIL_FRAUD` | Player submits variation order | "Someone's been billing the council for ghost work on the roadworks. Ballsy." |
+| `LIGHTS_JAMMED` | Player sabotages traffic lights | "Lights on Church Road have been green both ways for an hour. It's carnage." |
+
+### Unit Tests (`SevTrentRoadDigSystemTest.java`)
+
+- `testDigEventSchedule`: advance time system to Monday 08:00; verify `isDigActive()` returns true; advance to Saturday 08:00 of same week; verify `isDigActive()` returns false (dig ended after 5 days).
+- `testLootTableContentsAlwaysIncludeThermos`: call `generateSiteLoot()` 100 times with seeded Random; verify `THERMOS` present in every result.
+- `testLootTableAngleGrinderRate`: 1000 loot rolls; verify `ANGLE_GRINDER` present ≈20% of time, within 4% tolerance.
+- `testNightTimeIsUnattended`: set time to 22:30; verify `isSiteUnattended()` returns true; set to 08:30; verify false.
+- `testLootCabinRecordsCrime`: player loots cabin; verify `CrimeType.THEFT_FROM_WORKSITE` in `CriminalRecord`, Notoriety +3.
+- `testBarrierKick3SeedsRumour`: kick 3 barriers; verify `RumourType.TRAFFIC_CHAOS` seeded to nearest NPC.
+- `testHiVisDisguiseCheckClear`: equip `HI_VIS_JACKET` + `HARD_HAT`, Wanted = 0; verify `isContractorDisguiseActive()` returns true.
+- `testHiVisDisguiseBrokenAtWanted2`: equip disguise; set Wanted stars = 2; verify `isContractorDisguiseActive()` returns false.
+- `testVariationOrderScrutinyRate`: 1000 variation-order submissions with seeded Random; verify ≈25% scrutinised, within 4% tolerance.
+- `testVariationOrderMaxThreeClaims`: submit 3 claims; verify all succeed (scrutiny aside); attempt 4th; verify `MAX_CLAIMS_PER_DIG` reached, claim rejected.
+- `testBribeHighRevealsStashAndSticksLights`: bribe Steve with 15 COIN; verify `BURIED_STASH_PROP` position revealed; verify both `TEMP_TRAFFIC_LIGHT_PROP` stuck-green flags set.
+- `testTrafficLightSabotageMiniGameSuccess`: simulate BattleBarMiniGame success; verify both lights enter `CHAOS_MODE`; advance `CHAOS_DURATION_HOURS`; verify lights restored to normal.
+- `testTrafficLightSabotageFail`: simulate BattleBarMiniGame failure; verify player loses `SHOCK_DAMAGE` = 5 health; verify lights NOT in chaos mode.
+- `testContractorGoodwillUnlocksBuriedStash`: hand 2 `THERMOS` items to Steve/Phil (total goodwill 40); verify `BURIED_STASH_PROP` location revealed.
+- `testHMRCTracksVariationOrderIncome`: claim `EXTRA_REINSTATEMENT` (12 COIN) × 3 = 36 COIN; verify `HMRCSystem.recordCashIncome` called with 36.
+- `testReportThreatLowNotorietyDropsRadio`: player Notoriety = 10; use REPORT_THREAT dialogue on Steve; verify `SITE_RADIO` dropped, Steve departs site early.
+- `testReportThreatHighNotorietyCallsPolice`: player Notoriety = 25; use REPORT_THREAT dialogue on Phil; verify police alerted, Notoriety +2.
+
+### Integration Tests (`Issue1402SevTrentRoadDigIntegrationTest.java`)
+
+1. **Road dig blocks high street traffic**: advance game to Monday 08:00. Verify `ROAD_TRENCH_PROP` placed on Northfield Road. Verify `CONTRACTOR_STEVE_NPC` and `CONTRACTOR_PHIL_NPC` present within 10 blocks. Place player car at trench entrance. Simulate car driving forward for 60 frames. Verify car has not passed through trench (blocked by prop collision). Verify `ROAD_RAGE_NPC` spawned.
+
+2. **Night-site raid full flow**: advance time to 22:30. Approach `WELFARE_CABIN_PROP`. Press E. Verify `THERMOS` in player inventory. Verify `CrimeType.THEFT_FROM_WORKSITE` in `CriminalRecord`. Verify Notoriety increased by 3. If CCTV prop within 8 blocks, verify `CCTV_EVIDENCE` flag set. Advance to 08:00. Verify cabin is re-locked (player pressing E gets "locked" response).
+
+3. **Contractor disguise and buried stash**: player equips `HI_VIS_JACKET` + `HARD_HAT`. Advance to 10:00 (working hours). Stand next to `CONTRACTOR_STEVE_NPC`. Verify no police challenge within 60 frames. Hand Steve 2 `THERMOS` items. Verify `CONTRACTOR_GOODWILL` = 40. Verify `BURIED_STASH_PROP` location announced. Navigate to stash. Press E. Verify COIN + `MYSTERY_OBJECT` in player inventory. Verify `BURIED_TREASURE` achievement unlocked.
+
+4. **Traffic light sabotage causes road rage cascade**: player crouches at `TEMP_TRAFFIC_LIGHT_PROP`. Holds E for 2 seconds. Simulate BattleBarMiniGame EASY success. Verify both lights enter `CHAOS_MODE`. Advance 45 in-game seconds. Verify car collision event triggered, `ROAD_RAGE_NPC` spawned at junction. Advance 90 in-game seconds. Verify police officer NPC arrives at junction. Verify `GREEN_FOR_EVERYONE` achievement unlocked.
+
+5. **Variation-order billing scam full cycle**: player loots `CONTRACTOR_CLIPBOARD` from cabin. Approaches `COUNCIL_OFFICE_KIOSK`. Selects `EXTRA_REINSTATEMENT` (12 COIN). Force scrutiny roll to 'no scrutiny' (seeded Random). Verify 12 COIN added to player balance. Verify `BILLED_THE_COUNCIL` achievement unlocked. Verify `COUNCIL_FRAUD` rumour seeded in `RumourNetwork`. Submit two more claims. Attempt a fourth. Verify rejected with `MAX_CLAIMS_PER_DIG` message.
+
+// ── Issue #1402: Add Northfield Severn Trent Road Dig ─────────────────────────
+// New System File: SevTrentRoadDigSystem.java in ragamuffin.core
+// New Test Files: SevTrentRoadDigSystemTest.java in src/test/java/ragamuffin/core/
+//                Issue1402SevTrentRoadDigIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: THERMOS, SITE_RADIO, CONTRACTOR_CLIPBOARD, ANGLE_GRINDER, HARD_HAT, MYSTERY_OBJECT
+// New PropTypes: ROAD_TRENCH_PROP, ORANGE_BARRIER_PROP, TEMP_TRAFFIC_LIGHT_PROP,
+//   WELFARE_CABIN_PROP, BURIED_STASH_PROP
+// New NPCTypes: CONTRACTOR_STEVE, CONTRACTOR_PHIL, ROAD_RAGE_NPC
+// New AchievementTypes: CERTIFIED_JOBSWORTH, GREEN_FOR_EVERYONE, BILLED_THE_COUNCIL,
+//   CONTRACTOR_ALLIANCE, BURIED_TREASURE
+// New RumourTypes: ROAD_DIG_CHAOS, TRAFFIC_CHAOS, SITE_THEFT, CONTRACTOR_BRIBED,
+//   COUNCIL_FRAUD, LIGHTS_JAMMED
+// Integration: BattleBarMiniGame, CarDrivingSystem, TimeSystem, NotorietySystem, WantedSystem,
+//   CriminalRecord, RumourNetwork, NeighbourhoodWatchSystem, HMRCSystem, FenceSystem,
+//   CouncilEnforcementSystem, DisguiseSystem, WarmthSystem, SoundSystem, AchievementSystem,
+//   ResidentsParkingSystem, TrafficWardenSystem
