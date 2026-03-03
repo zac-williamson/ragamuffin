@@ -783,7 +783,17 @@ public enum LandmarkType {
      * (BALTI_HOUSE_DOOR_PROP), and back door (BALTI_BACK_DOOR_PROP).
      * Managed by BaltiHouseSystem.
      */
-    BALTI_HOUSE;
+    BALTI_HOUSE,
+
+    // ── Issue #1469: Northfield Second-Hand Record Shop ───────────────────────
+
+    /**
+     * RECORD_SHOP — Spin City Records, a cramped vinyl emporium on the high street.
+     * Operated by Clive (RECORD_SHOP_OWNER NPC). Open Tue–Sat 10:00–17:30.
+     * Features RECORD_SHELF_PROPs for crate digging and a dedicated trade economy
+     * for VINYL_RECORD and RARE_PRESSING items. Managed by RecordShopSystem.
+     */
+    RECORD_SHOP;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -892,6 +902,7 @@ public enum LandmarkType {
             case CYCLE_SHOP:            return "Dave's Cycle Centre";
             case WELCOME_SIGN:          return "Welcome to Northfield";
             case BALTI_HOUSE:           return "The Raj Mahal";
+            case RECORD_SHOP:           return "Spin City Records";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

@@ -3341,7 +3341,27 @@ public enum NPCType {
      * Becomes distracted by TEA_CUP for 20 real seconds. Wears a tabard.
      * HP: 40, attack: 0, cooldown: 0, not hostile.
      */
-    JUMBLE_SALE_VOLUNTEER(40f, 0f, 0f, false);
+    JUMBLE_SALE_VOLUNTEER(40f, 0f, 0f, false),
+
+    // ── Issue #1469: Northfield Second-Hand Record Shop ───────────────────────
+
+    /**
+     * Clive — proprietor of Spin City Records, a cramped vinyl emporium.
+     * Anchored behind the counter; patrols a 4-block route when the shop is open.
+     * Catches FAKE_RARE_LABEL fraud 35% of the time (Notoriety +6, bans player for the day).
+     * Visits CHARITY_SHOP as a customer every Thursday 09:00–10:00.
+     * HP: 60, attack: 0, cooldown: 0, not hostile.
+     */
+    RECORD_SHOP_OWNER(60f, 0f, 0f, false),
+
+    /**
+     * Trevor — an obsessive vinyl collector who visits Spin City Records every Wednesday
+     * 13:00–16:00, hunting a randomly assigned genre. Has a 30-COIN session budget.
+     * Catches FAKE_RARE_LABEL fraud 50% of the time (becomes HOSTILE, seeds
+     * TRADING_SCAM rumour, skips 3 Wednesdays).
+     * HP: 55, attack: 0, cooldown: 0, not hostile.
+     */
+    RECORD_COLLECTOR(55f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
