@@ -56649,3 +56649,104 @@ The council has pinned a laminated A4 notice in the library and the charity shop
 5. **Hub closes when weather improves**: open hub with `COLD_SNAP`; verify `isHubOpen()` == true; change weather to `Weather.SUNNY`; call `update(...)`; verify `isHubOpen()` == false after `CLOSING_DRAIN_SECONDS`; verify `hubCloseReason` == `HubCloseReason.WEATHER_IMPROVED`; verify all `WARM_HUB_VISITOR` NPCs have despawned.
 
 // `WarmHubSystem.java` must be created as the sole new source file. `WarmHubSystem` integrates with `WarmthSystem`, `WeatherSystem`, `CommunityCentreSystem`, `NotorietySystem`, `WantedSystem`, `CriminalRecord`, `RumourNetwork`, and `AchievementSystem`. New `NPCType` entries required: `WARM_HUB_VOLUNTEER`, `WARM_HUB_VISITOR`. New `Material` entries required: `HUB_TEA`, `HUB_BISCUIT`, `DONATIONS_TIN`, `FAKE_DONATIONS_FORM`, `HOMEMADE_CAKE_SLICE`. New `PropType` entries required: `WARM_HUB_TABLE_PROP`, `DONATIONS_TIN_PROP`, `CHARGING_POINT_PROP`. New `RumourType` entries: `STOLE_FROM_WARM_HUB`, `WARM_HUB_INCIDENT`. New `AchievementType` entries: `WARM_HEARTED`, `BOTTOM_OF_THE_BARREL`, `SHIRL_S_BEEN_HAD`, `999_FOR_BISCUITS`, `EVERYONE_WELCOME`, `SHIRLEY_S_FAVOURITE`. `Material.BLANK_PRESCRIPTION_FORM` and `Material.PEN` already exist. `NPCType.ROUGH_SLEEPER`, `NPCType.PENSIONER` already exist. `NPCType.PARAMEDIC` must be added if not already present.
+
+---
+
+## Issue #1479: Add Northfield Public Defibrillator — the Cabinet Heist, the CPR Training Racket & the Copper Wire Inside
+
+There's a bright green defibrillator cabinet bolted to the wall outside the community centre. A laminated sheet next to it reads "NORTHFIELD COMMUNITY DEFIBRILLATOR — Maintained by volunteers. In an emergency dial 999 first." It's been there four years. Nobody knows the cabinet code. The council website has the wrong number. Phil, the volunteer who registered it, moved to Stoke. The player can figure out the code, use the defibrillator in an actual emergency (or a fake one), nick the copper wire inside, or run a cynical CPR training course out of the community centre with a mannequin they absolutely should not have.
+
+### Mechanic 1 — The Cabinet & The Code
+
+- `DefibrillatorSystem` manages a `PropType.DEFIBRILLATOR_CABINET_PROP` bolted to the outside wall of the community centre at `LandmarkType.COMMUNITY_CENTRE`. Cabinet state: `LOCKED`, `OPEN`, `LOOTED`, `EMPTY`.
+- The cabinet code is a 4-digit PIN (`CABINET_CODE` = 1984, fixed). It can be discovered three ways:
+  - Inspect the cabinet (press E): tooltip "The sticker says 'Code: see parish notice board'." The parish notice board (`PropType.NOTICE_BOARD_PROP`) is inside the library. It shows a faded printout — but the last digit is obscured by a coffee ring. The player gets digits 1, 9, 8 and must trial-and-error the last digit.
+  - Ask `NPCType.COMMUNITY_CENTRE_RECEPTIONIST` Denise (from `CommunityCentreSystem`) — she gives the full code after the player completes any community centre activity. Result: `CodeDiscoveryMethod.DENISE`.
+  - Pickpocket `NPCType.NEIGHBOURHOOD_WATCH_MEMBER` — 35% chance their notebook contains it. Result: `CodeDiscoveryMethod.PICKPOCKET`.
+- Enter code at cabinet (press E, then input 4-digit sequence via interaction): on correct code, cabinet opens. On wrong code: nothing happens (no lockout — it's a defibrillator, not a safe). Cabinet open yields access to `Material.DEFIBRILLATOR_UNIT` and `Material.COPPER_CABLE`.
+
+### Mechanic 2 — Genuine Use & the Moral Hazard
+
+- `NPCType.CARDIAC_VICTIM` spawns with `COLLAPSE_CHANCE` = 0.02f per in-game hour (random PUBLIC or PENSIONER NPC collapses, state → `COLLAPSED`, speech bubble: "Ugh. Chest."). A 5-minute timer starts.
+- If the player retrieves `Material.DEFIBRILLATOR_UNIT` from the cabinet and uses it on a `COLLAPSED` NPC (press E within 2 blocks, hold for `DEFIB_USE_SECONDS` = 6 seconds): NPC is revived. Reward: Notoriety −10, NeighbourhoodVibes +5, `RumourType.DEFIB_HERO` seeded, Achievement: `SHOCK_TREATMENT`. Paramedic NPC (`NPCType.PARAMEDIC`) spawns and takes over.
+- If the timer expires without intervention: NPC dies (despawns, `RumourType.DEFIB_UNUSED` seeded — "Someone had a heart attack outside the community centre. The defibrillator was locked."). Notoriety +3 if player was within 20 blocks and did nothing.
+- The player can also **stage a fake collapse**: press E on any PENSIONER NPC while holding `DEFIBRILLATOR_UNIT` and notoriety < `FAKE_EMERGENCY_NOTORIETY_THRESHOLD` = 30 — NPC does not actually need it; 40% chance NPC reacts angrily (Notoriety +4, `CrimeType.WASTING_EMERGENCY_SERVICES`), 60% chance it passes without incident.
+
+### Mechanic 3 — The Copper Wire Inside
+
+- `Material.COPPER_CABLE` (3 units) is inside the cabinet alongside the defibrillator unit. Taking it adds `CrimeType.CABINET_THEFT` to the criminal record, Notoriety +5. Sell to `ScrapyardSystem` for `COPPER_CABLE_SCRAP_VALUE` = 4 COIN each, or use in crafting (`COPPER_CABLE` + `SCREWDRIVER` → `REWIRED_EXTENSION_LEAD`, sellable at car boot for 8 COIN).
+- If the cabinet is subsequently needed for a genuine `CARDIAC_VICTIM` event and the cable is missing: `DEFIB_USE_SECONDS` increases to `DEFIB_BROKEN_SECONDS` = 20 seconds (it won't start properly without the lead), and a 25% chance the unit fails entirely (`DefibResult.CABLE_MISSING`), NPC dies, Notoriety +15, `RumourType.DEFIB_SABOTAGED` seeded.
+- Cabinet restock: a `NPCType.COMMUNITY_CENTRE_RECEPTIONIST` NPC inspects the cabinet once per in-game week (Saturday 09:30). If looted, she calls the council. Cabinet is restocked after `RESTOCK_DELAY_DAYS` = 3 in-game days.
+
+### Mechanic 4 — The CPR Training Racket
+
+- The player can craft `Material.CPR_TRAINING_FLYER` (`BLANK_PAPER` + `MARKER_PEN`) and place it on the `NOTICE_BOARD_PROP` inside the community centre. This spawns a `CPR_SESSION_PROP` (a fold-out table with a training mannequin) in the community centre hall.
+- The mannequin must be acquired first: `PropType.CPR_MANNEQUIN_PROP` is locked in the sports store cupboard (`PropType.STORE_CUPBOARD_PROP`, 6 CROWBAR hits or SCREWDRIVER pick). Taking it: Notoriety +3, `CrimeType.THEFT` if witnessed.
+- On the in-game day after the flyer is placed, 3–6 `NPCType.CPR_STUDENT` NPCs arrive at 18:00. Each pays `CPR_COURSE_FEE` = 5 COIN to "attend." The course runs for `COURSE_DURATION_SECONDS` = 60 real seconds while the player stands within 4 blocks of the mannequin (no actual input required — just presence).
+- Fraud variant: player can charge the fee, then leave before the course ends. If all students wait `STUDENT_PATIENCE_SECONDS` = 30 real seconds without the player: they demand a refund. Player must return and pay back or face Notoriety +2 per student and `CrimeType.FRAUD`. Achievement: `UNLICENSED_PRACTITIONER` on first completed course; `DID_A_RUNNER` on abandoning one.
+- Legitimate completion awards `Material.CPR_CERTIFICATE` (one per student). Certificates have no in-game use but can be sold back to students who lost theirs for 2 COIN each, or placed as wall decorations on the squat (`SquatFurnishingTracker`). Achievement: `COMMUNITY_FIRST_AIDER` on 3 completed courses.
+
+### Mechanic 5 — The Council's Liability Nightmare
+
+- If the cabinet is in `LOOTED` state and a `CARDIAC_VICTIM` event fires within 30 blocks, `EnvironmentalHealthSystem.notifyDefibLooted()` is called. The council issues a `NOTICE_OF_DEFICIENCY_PROP` on the community centre wall. `NeighbourhoodSystem` Vibes −3/day until cabinet is restocked.
+- Player can exploit this: show `NOTICE_OF_DEFICIENCY_PROP` to `NPCType.CLAIMS_MANAGER` Gary (from `ClaimsManagementSystem`) and claim "emotional distress from watching the collapse and being unable to help." Requires a `COLLAPSE_INCIDENT` on the criminal record (auto-generated as a witness report if player was present). Payout: 12 COIN, Notoriety −2. Achievement: `AMBULANCE_CHASER`.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `CABINET_CODE` | 1984 |
+| `COLLAPSE_CHANCE_PER_HOUR` | 0.02f |
+| `COLLAPSE_TIMER_MINUTES` | 5.0f |
+| `DEFIB_USE_SECONDS` | 6.0f |
+| `DEFIB_BROKEN_SECONDS` | 20.0f |
+| `FAKE_EMERGENCY_NOTORIETY_THRESHOLD` | 30 |
+| `COPPER_CABLE_SCRAP_VALUE` | 4 |
+| `RESTOCK_DELAY_DAYS` | 3 |
+| `CPR_COURSE_FEE` | 5 |
+| `COURSE_DURATION_SECONDS` | 60.0f |
+| `STUDENT_PATIENCE_SECONDS` | 30.0f |
+| `DEFIB_HERO_NOTORIETY_REDUCTION` | 10 |
+| `DEFIB_HERO_VIBES_BONUS` | 5 |
+| `CABINET_THEFT_NOTORIETY` | 5 |
+| `COUNCIL_INSPECTION_DAY` | 5 (Saturday) |
+| `COUNCIL_INSPECTION_HOUR` | 9.5f |
+
+### New Entities Required
+
+- `NPCType.CARDIAC_VICTIM` — collapsed NPC (any PUBLIC or PENSIONER in COLLAPSED state). 5-minute despawn timer. Cannot be punched or interacted with except by defibrillator use.
+- `NPCType.CPR_STUDENT` — attends the player's CPR course. Pays upfront. Leaves if instructor absent for `STUDENT_PATIENCE_SECONDS`.
+- `Material.DEFIBRILLATOR_UNIT` — "AED. Technically you need training. You have YouTube." Single-use on CARDIAC_VICTIM. Non-stackable.
+- `Material.COPPER_CABLE` — "3m of heavy copper cable. Worth more than the device it came from." Scrap value 4 COIN each.
+- `Material.CPR_TRAINING_FLYER` — crafted: `BLANK_PAPER` + `MARKER_PEN`. Places course session when pinned to notice board.
+- `Material.CPR_CERTIFICATE` — "Certificate of Completion — Basic Life Support." Wall decoration or resale item.
+- `Material.REWIRED_EXTENSION_LEAD` — crafted: `COPPER_CABLE` + `SCREWDRIVER`. Sells at car boot for 8 COIN.
+- `PropType.DEFIBRILLATOR_CABINET_PROP` — green wall-mounted cabinet. States: LOCKED, OPEN, LOOTED, EMPTY. 1 hit to destroy once open (yields `COPPER_CABLE` x1 if not already looted).
+- `PropType.CPR_SESSION_PROP` — fold-out table + training mannequin. Non-destructible while course is active.
+- `PropType.CPR_MANNEQUIN_PROP` — in store cupboard. Stealable. Required for course.
+- `PropType.NOTICE_OF_DEFICIENCY_PROP` — council notice on wall. Spawns when cabinet is looted and victim dies nearby.
+- `RumourType.DEFIB_HERO` — "Someone actually used the defibrillator outside the community centre. It worked."
+- `RumourType.DEFIB_UNUSED` — "Bloke had a heart attack outside the community centre. Defibrillator was locked."
+- `RumourType.DEFIB_SABOTAGED` — "The defibrillator outside the community centre had the cable nicked. Someone died."
+
+### New AchievementType Entries Required
+
+- `SHOCK_TREATMENT` — "Used the community defibrillator to save someone's life. The cabinet code was 1984." Target 1.
+- `UNLICENSED_PRACTITIONER` — "Ran an unsanctioned CPR course in the community centre. Nobody died. Probably." Target 1.
+- `COMMUNITY_FIRST_AIDER` — "Completed 3 CPR courses. You are now Northfield's leading unlicensed paramedic." Target 3.
+- `DID_A_RUNNER` — "Took the course fees and left before teaching anything. Classic." Target 1.
+- `AMBULANCE_CHASER` — "Claimed emotional distress compensation because you watched someone collapse. Gary approved it." Target 1.
+
+### Integration Tests
+
+1. **Cabinet opens on correct code and yields items**: create `DefibrillatorSystem`; set cabinet state to `LOCKED`; call `enterCode(1984)`; verify `getCabinetState()` == `CabinetState.OPEN`; verify `collectItems(player, inventory)` adds `Material.DEFIBRILLATOR_UNIT` (count 1) and `Material.COPPER_CABLE` (count 3) to inventory; verify `getCabinetState()` == `CabinetState.LOOTED`.
+
+2. **Wrong code does not open cabinet**: create `DefibrillatorSystem`; call `enterCode(1234)`; verify `getCabinetState()` == `CabinetState.LOCKED`; call `enterCode(1983)`; verify still `LOCKED`; call `enterCode(1984)`; verify `CabinetState.OPEN`.
+
+3. **Defibrillator saves cardiac victim**: create system; spawn `CARDIAC_VICTIM` NPC; give player `DEFIBRILLATOR_UNIT`; call `useDefibrillator(player, inventory, cardiacVictim, delta)` for `DEFIB_USE_SECONDS` total delta; verify `DefibResult.REVIVED`; verify NPC state no longer `COLLAPSED`; verify `inventory.getItemCount(Material.DEFIBRILLATOR_UNIT)` == 0 (consumed); verify `notorietySystem.getNotoriety()` decreased by `DEFIB_HERO_NOTORIETY_REDUCTION`.
+
+4. **Missing copper cable causes defibrillator failure**: create system; loot cabinet (take `COPPER_CABLE`, leave `DEFIBRILLATOR_UNIT` behind — use `collectCopperOnly(player, inventory)`); spawn `CARDIAC_VICTIM`; seed random to force failure path; call `useDefibrillator(...)` for `DEFIB_BROKEN_SECONDS`; verify result == `DefibResult.CABLE_MISSING`; verify NPC despawned; verify `rumourNetwork` contains `RumourType.DEFIB_SABOTAGED`.
+
+5. **CPR course pays out and awards certificate**: create system; give player `CPR_TRAINING_FLYER` and `CPR_MANNEQUIN_PROP` in inventory; call `pinFlyer(player, inventory, noticeBoardProp)`; advance time to 18:00; verify 3–6 `CPR_STUDENT` NPCs spawned; advance by `COURSE_DURATION_SECONDS` with player within 4 blocks; call `completeCourse(player, inventory, students)`; verify `inventory.getItemCount(Material.COIN)` increased by `CPR_COURSE_FEE * studentCount`; verify each student holds `Material.CPR_CERTIFICATE`.
+
+// `DefibrillatorSystem.java` must be created as the sole new source file. Integrates with `CommunityCentreSystem` (Denise code-reveal), `ClaimsManagementSystem` (ambulance chaser payout), `EnvironmentalHealthSystem` (notifyDefibLooted), `NeighbourhoodSystem` (vibes penalty), `WantedSystem`, `CriminalRecord`, `NotorietySystem`, `RumourNetwork`, `ScrapyardSystem`, and `AchievementSystem`. New `NPCType` entries: `CARDIAC_VICTIM`, `CPR_STUDENT`. New `Material` entries: `DEFIBRILLATOR_UNIT`, `COPPER_CABLE`, `CPR_TRAINING_FLYER`, `CPR_CERTIFICATE`, `REWIRED_EXTENSION_LEAD`. New `PropType` entries: `DEFIBRILLATOR_CABINET_PROP`, `CPR_SESSION_PROP`, `CPR_MANNEQUIN_PROP`, `NOTICE_OF_DEFICIENCY_PROP`. New `RumourType` entries: `DEFIB_HERO`, `DEFIB_UNUSED`, `DEFIB_SABOTAGED`. New `AchievementType` entries: `SHOCK_TREATMENT`, `UNLICENSED_PRACTITIONER`, `COMMUNITY_FIRST_AIDER`, `DID_A_RUNNER`, `AMBULANCE_CHASER`. `NPCType.PARAMEDIC`, `Material.BLANK_PAPER`, `Material.MARKER_PEN`, `Material.SCREWDRIVER` already exist. `LandmarkType.COMMUNITY_CENTRE` already exists.
