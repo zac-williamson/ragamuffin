@@ -6241,7 +6241,31 @@ public enum Material {
     /**
      * TERRY_DEBT_NOTE — "Payment refused. Property: 14 Acacia Ave. Amount: 2 COIN. Date noted."
      * Given to player after reporting a defaulter to Terry. Redeemable for 1 COIN + gossip. */
-    TERRY_DEBT_NOTE("Terry's Debt Note");
+    TERRY_DEBT_NOTE("Terry's Debt Note"),
+
+    // ── Issue #1400: Northfield Residents' Parking Permit Racket ─────────────
+
+    /**
+     * PARKING_PERMIT — "Zone S Residents' Parking Permit. Valid 168 hours. Do not bend."
+     * Sold by Brenda (COUNCIL_CLERK) at the COUNCIL_OFFICE_KIOSK for 4 COIN.
+     * Valid 168 in-game hours; prevents Barry from clamping the player's car. */
+    PARKING_PERMIT("Parking Permit"),
+
+    /**
+     * FORGED_PARKING_PERMIT — "Zone S Residents' Parking Permit. Printed in Comic Sans."
+     * Crafted from STOLEN_PRINTER_INK + CARDBOARD (or at internet café).
+     * 20% detection chance when Barry inspects → CrimeType.DOCUMENT_FRAUD, Notoriety +5. */
+    FORGED_PARKING_PERMIT("Forged Parking Permit"),
+
+    /**
+     * WHEEL_CLAMP_KEY — "Barry's release key. Feels wrong to have it."
+     * Used to attempt clamp removal without paying 10 COIN; failure = Notoriety +6, WantedStar +1. */
+    WHEEL_CLAMP_KEY("Wheel Clamp Key"),
+
+    /**
+     * STOLEN_PRINTER_INK — "HP DeskJet cartridge. Still in the sealed box. Almost certainly nicked."
+     * Crafting ingredient for FORGED_PARKING_PERMIT. Found in office blocks or bought from fence. */
+    STOLEN_PRINTER_INK("Stolen Printer Ink");
 
     private final String displayName;
 
@@ -7586,6 +7610,16 @@ public enum Material {
                                                    0.82f, 0.72f, 0.10f); // Gold label
             case HDMI_CABLE:             return c(0.18f, 0.18f, 0.20f);  // Dark grey/black cable
 
+            // Issue #1400: Northfield Residents' Parking Permit Racket
+            case PARKING_PERMIT:         return cs(0.88f, 0.92f, 0.70f, // Pale green permit
+                                                   0.18f, 0.35f, 0.18f); // Dark green text
+            case FORGED_PARKING_PERMIT:  return cs(0.88f, 0.92f, 0.70f, // Same pale green
+                                                   0.85f, 0.55f, 0.10f); // Suspicious orange text
+            case WHEEL_CLAMP_KEY:        return cs(0.15f, 0.15f, 0.18f, // Dark metal
+                                                   0.72f, 0.62f, 0.18f); // Brass key tip
+            case STOLEN_PRINTER_INK:     return cs(0.18f, 0.18f, 0.22f, // Black cartridge body
+                                                   0.55f, 0.15f, 0.62f); // Purple HP logo accent
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -8156,6 +8190,11 @@ public enum Material {
             case VINYL_RECORD_BOX:
             case GENUINE_FIRST_PRESSING:
             case HDMI_CABLE:
+            // Issue #1400: Northfield Residents' Parking Permit Racket — not block items
+            case PARKING_PERMIT:
+            case FORGED_PARKING_PERMIT:
+            case WHEEL_CLAMP_KEY:
+            case STOLEN_PRINTER_INK:
                 return false;
             default:
                 return true;
@@ -9830,6 +9869,16 @@ public enum Material {
                 return IconShape.TOOL;        // telescopic squeegee handle
             case TERRY_DEBT_NOTE:
                 return IconShape.FLAT_PAPER;  // handwritten note
+
+            // Issue #1400: Northfield Residents' Parking Permit Racket
+            case PARKING_PERMIT:
+                return IconShape.FLAT_PAPER;  // laminated permit card
+            case FORGED_PARKING_PERMIT:
+                return IconShape.FLAT_PAPER;  // dodgy-looking permit card
+            case WHEEL_CLAMP_KEY:
+                return IconShape.TOOL;        // small release key
+            case STOLEN_PRINTER_INK:
+                return IconShape.BOX;         // sealed inkjet cartridge box
 
             default:
                 return IconShape.BOX;

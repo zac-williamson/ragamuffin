@@ -3063,7 +3063,30 @@ public enum NPCType {
      * Follows a fixed 12-property route, spending 90 in-game seconds at each. Places LADDER_PROP
      * against walls. Oblivious to player on ladder (facing wall). Becomes HOSTILE if player
      * poaches his round. HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
-    WINDOW_CLEANER(20f, 0f, 0f, false);
+    WINDOW_CLEANER(20f, 0f, 0f, false),
+
+    // ── Issue #1400: Northfield Residents' Parking Permit Racket ─────────────
+
+    /** TRAFFIC_WARDEN_BARRY — Barry, the RPZ traffic warden who patrols every 20 in-game minutes
+     * 08:00–18:00 and clamps unregistered cars with WHEEL_CLAMP_PROP.
+     * Can be bribed (3/8/20 COIN) or observed seeding BENT_WARDEN rumour.
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false. */
+    TRAFFIC_WARDEN_BARRY(25f, 0f, 0f, false),
+
+    /** COUNCIL_CLERK — Brenda, the council office clerk who sells PARKING_PERMIT for 4 COIN.
+     * Stationed at the COUNCIL_OFFICE_KIOSK prop. Passive NPC.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    COUNCIL_CLERK(20f, 0f, 0f, false),
+
+    /** REPAIR_CREW_NPC — council repair crew member who restores defaced RPZ_SIGN_PROP
+     * back to RPZ_SIGN_PROP after 3 in-game hours. Arrives 30 in-game minutes after sign is defaced.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    REPAIR_CREW_NPC(20f, 0f, 0f, false),
+
+    /** DESPERATE_PARKER_NPC — a desperate driver who will buy a PARKING_PERMIT from the player
+     * for up to 12 COIN (scalping mechanic). Triggers HMRC income tracking.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    DESPERATE_PARKER_NPC(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
