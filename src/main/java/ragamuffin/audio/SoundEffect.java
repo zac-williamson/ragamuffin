@@ -46,5 +46,9 @@ public enum SoundEffect {
     LIFT_CREAK,  // Creaking lift cable SFX; played while the lift is travelling between floors
 
     // Issue #1096: Sunday League Football
-    CROWD_CHEER  // Crowd cheer on goal scored during Sunday League match
+    CROWD_CHEER,  // Crowd cheer on goal scored during Sunday League match
+
+    // Issue #1369: Northfield New Year's Eve
+    FIREWORK_BANG,  // Firework rocket detonation at midnight on NYE
+    NYE_CROWD_CHEER  // Crowd cheering at midnight on NYE (distinct from football cheer)
 }

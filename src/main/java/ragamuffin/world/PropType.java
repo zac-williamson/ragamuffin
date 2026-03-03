@@ -3627,7 +3627,37 @@ public enum PropType {
      * of Community Centre Room B. 2.0×1.5×0.1m; 3 hits to remove; drops nothing.
      * Player must be within 10 blocks during the course to count as attending.
      */
-    SPEED_AWARENESS_BOARD_PROP(2.0f, 1.5f, 0.1f, 3, null);
+    SPEED_AWARENESS_BOARD_PROP(2.0f, 1.5f, 0.1f, 3, null),
+
+    // ── Issue #1369: Northfield New Year's Eve ────────────────────────────────
+
+    /**
+     * NYE_STAGE_PROP — temporary event stage erected at the park bandstand on
+     * New Year's Eve. 3.0×1.0×3.0m; survives the night (indestructible, 999 hits).
+     * Spawned at 20:00 on day 365; EVENT_COMPERE Darren uses it for the countdown.
+     */
+    NYE_STAGE_PROP(3.0f, 1.0f, 3.0f, 999, null),
+
+    /**
+     * FIREWORK_ROCKET_PROP — decorative launch tube placed at the park edge.
+     * 0.3×1.5×0.3m; 1 hit to remove; auto-launches at midnight triggering a
+     * ParticleSystem burst + SoundEffect.FIREWORK_BANG.
+     */
+    FIREWORK_ROCKET_PROP(0.3f, 1.5f, 0.3f, 1, null),
+
+    /**
+     * FRONT_DOOR_PROP — the front door of a residential terraced house.
+     * 1.0×2.0×0.1m; indestructible. Player presses E while holding COAL to
+     * attempt a First Footing knock between 00:01–01:30 on day 1 of the new year.
+     */
+    FRONT_DOOR_PROP(1.0f, 2.0f, 0.1f, 999, null),
+
+    /**
+     * LANDLORD_HOUSE_PROP — Terry's house, the destination for helping Big Terry
+     * home after the NYE lock-in. 3.0×3.0×3.0m; indestructible. Player must walk
+     * within 5 blocks to complete the "help home" interaction.
+     */
+    LANDLORD_HOUSE_PROP(3.0f, 3.0f, 3.0f, 999, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

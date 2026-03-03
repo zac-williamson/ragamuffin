@@ -5884,7 +5884,14 @@ public enum Material {
     /** Section 172 Notice of Intended Prosecution from a speed camera or Clive.
      * Issued to inventory when the player drives above SPEED_LIMIT_THRESHOLD.
      * Player has 2 in-game days to pay fine, book course, or face COURT_SUMMONS. */
-    SPEEDING_NOTICE("Speeding Notice");
+    SPEEDING_NOTICE("Speeding Notice"),
+
+    // ── Issue #1369: Northfield New Year's Eve ────────────────────────────────
+
+    /** Small purse dropped by Sharon (DRUNK NPC) near the park entrance on NYE.
+     * Contains 4–8 COIN. Returning to Sharon: Respect +3, HONEST_FINDER achievement.
+     * Keeping it: THEFT_FROM_PERSON CriminalRecord, Notoriety +4. */
+    PURSE("Purse");
 
     private final String displayName;
 

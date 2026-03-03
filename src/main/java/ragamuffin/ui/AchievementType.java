@@ -5908,6 +5908,48 @@ public enum AchievementType {
         "Boot Sale Hustler",
         "Five haggled down. You should be on a market stall.",
         5
+    ),
+
+    // ── Issue #1369: Northfield New Year's Eve ────────────────────────────────
+
+    /**
+     * Awarded when the player is in the park at midnight on NYE with 20+ NPCs
+     * within a 20-block radius. Present for the countdown and fireworks display.
+     */
+    SAW_IN_THE_NEW_YEAR(
+        "Saw In The New Year",
+        "Up at midnight, in the cold, surrounded by Northfield. Worth it.",
+        1
+    ),
+
+    /**
+     * Awarded when the player survives the NYE pub lock-in past 00:30 without
+     * a police raid. Terry's finest hour; yours too.
+     */
+    SURVIVED_THE_LOCK_IN(
+        "Survived The Lock-In",
+        "Still standing at half twelve. Terry's impressed.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully completes 5 or more First Footing
+     * door knocks on New Year's Day with COAL in inventory.
+     */
+    FIRST_FOOTER(
+        "First Footer",
+        "Coal in hand, coin in pocket. Northfield's luckiest caller.",
+        5
+    ),
+
+    /**
+     * Awarded when the player returns Sharon's dropped PURSE to her on NYE
+     * rather than keeping the coin inside.
+     */
+    HONEST_FINDER(
+        "Honest Finder",
+        "You found her purse and gave it back. Northfield noticed.",
+        1
     );
 
     private final String name;
