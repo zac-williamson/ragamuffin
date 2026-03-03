@@ -3322,7 +3322,26 @@ public enum NPCType {
      * the RARE_BOOK_SHELF_PROP theft (3s hold-E). Sits in LIBRARY_REGULAR_SEAT_PROP.
      * HP: 50, attack: 0, cooldown: 0, not hostile.
      */
-    LIBRARY_REGULAR(50f, 0f, 0f, false);
+    LIBRARY_REGULAR(50f, 0f, 0f, false),
+
+    // ── Issue #1459: Northfield Church Hall Jumble Sale ───────────────────────
+
+    /**
+     * Dot — organiser of the monthly jumble sale at the Community Centre.
+     * Manages the entrance desk, tea urn, and fifteen tables of second-hand goods.
+     * Runs the entry-ticket desk (09:00–09:15) and the bring-and-buy desk.
+     * Becomes HOSTILE if shoplifting is detected; IRRITATED on failed haggle (120s).
+     * HP: 60, attack: 0, cooldown: 0, not hostile.
+     */
+    JUMBLE_SALE_ORGANISER(60f, 0f, 0f, false),
+
+    /**
+     * Volunteer helper at Dot's jumble sale — one of three patrol volunteers who each
+     * cover two tables apiece. Detects shoplifting via line-of-sight checks.
+     * Becomes distracted by TEA_CUP for 20 real seconds. Wears a tabard.
+     * HP: 40, attack: 0, cooldown: 0, not hostile.
+     */
+    JUMBLE_SALE_VOLUNTEER(40f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

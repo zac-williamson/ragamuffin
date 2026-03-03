@@ -6826,7 +6826,58 @@ public enum Material {
      *   <li>Steal the board (7 HARD hits): service cut 5 days, Notoriety +3, Vibes −5.</li>
      * </ul>
      */
-    PETITION_BOARD("Petition Board");
+    PETITION_BOARD("Petition Board"),
+
+    // ── Issue #1459: Northfield Church Hall Jumble Sale ───────────────────────
+
+    /**
+     * JUMBLE_ENTRY_TICKET — paper entry ticket from Dot for 1 COIN.
+     * Required to enter the Community Centre during jumble sale (09:00–13:00).
+     */
+    JUMBLE_ENTRY_TICKET("Jumble Sale Entry Ticket"),
+
+    /**
+     * JUMBLE_ORNAMENT — china ornament from the premium table (table 3).
+     * Fence value: 3 COIN. Item base price: 2 COIN.
+     */
+    JUMBLE_ORNAMENT("Ornament"),
+
+    /**
+     * JUMBLE_CLOCK — old mantle clock from the premium table.
+     * Fence value: 5 COIN. Item base price: 3 COIN.
+     */
+    JUMBLE_CLOCK("Old Clock"),
+
+    /**
+     * JUMBLE_BOOK_LOT — bundle of paperbacks from the premium table.
+     * Fence value: 2 COIN. Item base price: 1 COIN.
+     */
+    JUMBLE_BOOK_LOT("Book Bundle"),
+
+    /**
+     * JUMBLE_CASSETTE — cassette tape from the tat tables (13–15).
+     * Fence value: 0 COIN. Item base price: 1 COIN.
+     */
+    JUMBLE_CASSETTE("Cassette Tape"),
+
+    /**
+     * JUMBLE_VHS_TAPE — VHS tape from the tat tables.
+     * Fence value: 1 COIN. Item base price: 1 COIN.
+     */
+    JUMBLE_VHS_TAPE("VHS Tape"),
+
+    /**
+     * JUMBLE_COAT — second-hand coat from the tat tables.
+     * Confers +15 warmth when equipped; reduces volunteer detection 20%.
+     * Item base price: 2 COIN.
+     */
+    JUMBLE_COAT("Second-Hand Coat"),
+
+    /**
+     * JUMBLE_RECEIPT_PROP — handwritten receipt from Dot's bring-and-buy table.
+     * Valid proof of legitimate purchase; clears the STOLEN flag from a donated item.
+     */
+    JUMBLE_RECEIPT_PROP("Jumble Receipt");
 
     private final String displayName;
 

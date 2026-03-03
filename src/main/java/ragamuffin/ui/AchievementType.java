@@ -7206,6 +7206,62 @@ public enum AchievementType {
         "People's Pub",
         "Your squat lock-ins convinced the council to save the Crown & Anchor.",
         1
+    ),
+
+    // ── Issue #1459: Northfield Church Hall Jumble Sale ───────────────────────
+
+    /**
+     * JUMBLE_REGULAR — attend 3 consecutive monthly jumble sales.
+     */
+    JUMBLE_REGULAR(
+        "Jumble Regular",
+        "Attended three consecutive monthly jumble sales. A creature of routine.",
+        3
+    ),
+
+    /**
+     * BARGAIN_HUNTER_JUMBLE — purchase 5 items in a single jumble sale.
+     */
+    BARGAIN_HUNTER_JUMBLE(
+        "Bargain Hunter",
+        "Bought five items in a single jumble sale. Dot will be pleased.",
+        5
+    ),
+
+    /**
+     * FIVE_FINGER_JUMBLE — pocket 3 items at the jumble sale without detection.
+     */
+    FIVE_FINGER_JUMBLE(
+        "Five Finger Discount",
+        "Pocketed three items at the jumble sale without being spotted. Mind the volunteers.",
+        3
+    ),
+
+    /**
+     * MARKET_TRADER_JUMBLE — earn 15 COIN from a single stall session.
+     */
+    MARKET_TRADER_JUMBLE(
+        "Market Trader",
+        "Earned 15 COIN from your stall at a single jumble sale. Entrepreneur.",
+        15
+    ),
+
+    /**
+     * EARLY_BIRD_JUMBLE — pocket 4+ items during pre-opening break-in window.
+     */
+    EARLY_BIRD_JUMBLE(
+        "Early Bird",
+        "Broke into the community centre and pocketed four items before the doors opened. Shameless.",
+        4
+    ),
+
+    /**
+     * THROUGH_THE_BOOKS — launder 3 stolen items through the bring-and-buy in one session.
+     */
+    THROUGH_THE_BOOKS(
+        "Through the Books",
+        "Laundered three stolen items through the bring-and-buy. Very professional.",
+        3
     );
 
     private final String name;
