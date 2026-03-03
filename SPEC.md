@@ -51569,3 +51569,259 @@ Margaret's stall sells `JACKET_POTATO` (3 COIN, Hunger +50, Warmth +15) and `VIM
 // Integration: TimeSystem, PrimarySchoolSystem, WeatherSystem, FenceSystem, WantedSystem,
 //   NotorietySystem, RumourNetwork, NewspaperSystem, CriminalRecord, NeighbourhoodSystem,
 //   IceCreamVanSystem, SoundSystem, AchievementSystem
+
+## Issue #1397: Add Northfield Royal Mail Strike — The Picket Line, the Parcel Mountain & the Scab Run
+
+A 3-day industrial-action event triggered once per in-game 60-day cycle (random day within
+the window, never on a Sunday). The Post Office closes, POSTMAN NPCs form a picket line
+outside the sorting-office door, parcels pile up in a locked overflow depot round the back,
+and the player can choose solidarity, scabbing, or outright theft.
+
+### RoyalMailStrikeSystem — Core Class
+
+`src/main/java/ragamuffin/core/RoyalMailStrikeSystem.java`
+
+```
+public class RoyalMailStrikeSystem {
+    public static final int STRIKE_DURATION_DAYS   = 3;
+    public static final int STRIKE_CYCLE_DAYS      = 60;   // minimum gap between strikes
+    public static final float PICKET_START_HOUR    = 7.0f;
+    public static final float PICKET_END_HOUR      = 18.0f;
+    public static final int   DEPOT_PARCEL_COUNT   = 20;   // parcels piled in overflow depot
+    public static final int   SCAB_PAY_PER_PARCEL  = 9;    // triple normal shift pay
+    public static final int   SOLIDARITY_TEA_COST  = 1;    // cost of a mug of tea (MUG_OF_TEA material)
+    public static final int   SOLIDARITY_TIP_COUNT = 3;    // tip-offs granted per tea run
+    public static final float STRIKE_BREAK_NOTORIETY = 3f; // notoriety per scab delivery
+    public static final int   VIBES_PENALTY_SCAB   = -5;   // NeighbourhoodSystem VIBES on scab
+    public static final int   VIBES_BONUS_SOLIDARITY = 3;  // NeighbourhoodSystem VIBES on solidarity
+    public static final int   DEPOT_GUARD_COUNT    = 1;    // SECURITY_GUARD NPC guarding depot
+    public static final float DEPOT_GUARD_BLIND_HOUR = 12.5f; // guard on lunch 12:30–13:00
+    public static final int   UNOFFICIAL_COURIER_DELIVER_LIMIT = 8; // per-day cap on unofficial deliveries
+}
+```
+
+### Event Trigger
+
+`RoyalMailStrikeSystem.isStrikeDay(dayCount, cycleOffset)`:
+- Strike triggers on `dayCount % STRIKE_CYCLE_DAYS == cycleOffset` (cycleOffset seeded from
+  `new Random(worldSeed + 17).nextInt(STRIKE_CYCLE_DAYS)`, never 0 mod 7 = Sunday).
+- Strike lasts exactly `STRIKE_DURATION_DAYS` consecutive in-game days.
+- `isStrikeActive(dayCount)` returns true for all three days.
+
+### Schedule (each strike day)
+
+| Time  | Event |
+|-------|-------|
+| 07:00 | `STRIKER` NPCs (3×) spawn at sorting-office door with PLACARD_PROP; begin slow patrol loop |
+| 07:00 | Post Office counter closes — Maureen puts up `CLOSED_SIGN_PROP`, refuses all E-interactions |
+| 07:00 | Overflow depot (`OVERFLOW_DEPOT_PROP`, behind sorting office) spawns with 20 PARCEL items inside |
+| 07:30 | `NEWSPAPER_HEADLINE` set: "Royal Mail workers walk out — parcels delayed" |
+| 08:00 | Angry PENSIONER NPCs arrive at the Post Office front door, mill about, complain |
+| 09:00 | `COURIER_VAN_PROP` appears outside the corner shop — player can interact to start unofficial courier mode |
+| 12:30 | `SECURITY_GUARD` NPC leaves depot on lunch break until 13:00 (DEPOT_GUARD_BLIND_HOUR window) |
+| 18:00 | Picket line disperses; strikers go to The Ragamuffin Arms |
+| Day 3 only, 17:00 | Management NPC (`POSTAL_MANAGER`) arrives — strike ends or continues based on outcome flags |
+
+### Mechanic 1 — The Picket Line & Solidarity
+
+- Player brings `MUG_OF_TEA` (crafted from KETTLE_PROP + TEABAG material, or bought at GreasySpoonSystem)
+  to a `STRIKER` NPC and presses E → `receivedTea` flag set on that striker.
+- When all 3 strikers have received tea: `allStrikersTea = true` → each striker NPC whispers one
+  tip-off about the depot contents (`SOLIDARITY_TIP_COUNT` tip-offs granted):
+  the tip-offs are speech-bubble rumours of the form "There's a PlayStation in Bay 3", pointing
+  to a specific PARCEL in the depot.
+- `NeighbourhoodSystem` VIBES `+VIBES_BONUS_SOLIDARITY` on first full tea run.
+- `RumourType.STRIKE_TEA_RUN` seeded into the RumourNetwork.
+- Awards `AchievementType.UNION_SOLIDARITY` on first complete tea run.
+
+### Mechanic 2 — The Scab Run
+
+- Player wears `HI_VIS_VEST` (existing material), approaches the **closed** Post Office back door,
+  and presses E → `scabSignOn()` prompt appears.
+- Accepting: player gets a `SCAB_PARCEL_BAG` (a special PARCEL subset of 4 items) and is tasked
+  with delivering them to 4 residential doors within 20 in-game minutes.
+- Pay: `SCAB_PAY_PER_PARCEL` (9 COIN) per delivery, but each delivery adds
+  `STRIKE_BREAK_NOTORIETY` (3) Notoriety and reduces NeighbourhoodSystem VIBES by 1.
+- `STRIKER` NPCs within 6 blocks become `HOSTILE` (state = ANGRY) on seeing a scab player;
+  they do not attack unless player attacks first — they shout "Scab!" speech bubbles.
+- Total scab pay cap: 4 deliveries × 9 COIN = 36 COIN per shift (one shift per day).
+- Awards `AchievementType.SCAB` on completing a full scab shift. Cannot coexist with
+  `UNION_SOLIDARITY` achievement (mutually exclusive; first one claimed locks the other out).
+- `RumourType.SCAB_SPOTTED` seeded on first scab sign-on.
+- `CriminalRecord.CrimeType.STRIKE_BREAKING` added (not illegal — but tracked for faction rep).
+
+### Mechanic 3 — The Parcel Mountain Heist
+
+- The `OVERFLOW_DEPOT_PROP` is a locked building prop behind the sorting office.
+- Normal entry: locked (same CROWBAR mechanic as HeistSystem door; requires 3 CROWBAR uses or
+  a BOLT_CUTTER if player has one).
+- Guard blind window (12:30–13:00): `SECURITY_GUARD` NPC is absent; player has 30 in-game minutes
+  to loot without being seen.
+- Inside: 20 PARCEL props with randomised contents from `rollDepotParcelContents(Random)`:
+  - 35%: HOUSEHOLD_GOODS (2 COIN fence value)
+  - 25%: ELECTRONICS (8 COIN fence value)
+  - 20%: CLOTHING (3 COIN fence value)
+  - 10%: PRESCRIPTION_MEDS (5 COIN fence value, +2 Notoriety to carry)
+  - 10%: VALUABLE_ITEM — GOLD_CHAIN, LAPTOP, or CAMERA_PROP (12–18 COIN fence value)
+- Each parcel stolen: `CrimeType.PARCEL_THEFT`, Notoriety +2 (existing PostOfficeSystem crime).
+- If `SECURITY_GUARD` is present and spots player: WANTED +2, flees to call police.
+- Stealing ≥10 parcels in one visit awards `AchievementType.PARCEL_PANIC`.
+- All 20 parcels stolen awards `AchievementType.LOST_IN_TRANSIT`.
+
+### Mechanic 4 — Unofficial Courier Business
+
+- Player interacts with `COURIER_VAN_PROP` at the corner shop (09:00–18:00 window) → prompt to
+  start `UnofficiailCourierMode`.
+- While active: frustrated PENSIONER and PUBLIC NPCs at Post Office can be spoken to (E) →
+  they give the player a `HANDWRITTEN_PARCEL` (a special item) and pay 5 COIN upfront; player
+  delivers it to a named door within 10 in-game minutes for +3 COIN bonus (8 COIN total).
+- Cap of `UNOFFICIAL_COURIER_DELIVER_LIMIT` (8) deliveries per day.
+- Maximum per-day courier income: 8 × 8 = 64 COIN.
+- `EmploymentSystem.recordShift("UNOFFICIAL_COURIER", wage)` called for tax purposes
+  (HMRC investigation trigger if income > 40 COIN/day for 3 consecutive days).
+- `RumourType.UNOFFICIAL_COURIER_SPOTTED` seeded after first 3 deliveries.
+- Awards `AchievementType.ENTREPRENEURIAL_SPIRIT` on completing 8 deliveries in one day.
+
+### Mechanic 5 — Strike Resolution (Day 3)
+
+At 17:00 on day 3, `POSTAL_MANAGER` NPC spawns. Outcome depends on player's actions:
+- **Scab path**: if player completed ≥2 scab shifts → Manager offers to hire player as
+  permanent POSTMAN (same mechanics as PostOfficeSystem delivery shift, unlocked permanently).
+  Strikers permanently hostile until player completes `APOLOGY_GESTURE` (buy round at pub = 15 COIN).
+- **Solidarity path**: if `allStrikersTea = true` on all 3 days → strikers win improved pay;
+  post office reopens; player gets `UNION_HERO_BADGE` item (wearable, reduces PCSO suspicion −1 star).
+- **Neutral/heist path**: strike simply ends; post office reopens; no special outcome.
+- `NewspaperSystem` next-day headline reflects the outcome.
+
+### System Integrations
+
+- `PostOfficeSystem`: `isStrikeActive()` checked in counter/shift sign-on to block interactions.
+  `PostOfficeSystem.POSTMAN` NPCs re-assigned to `STRIKER` NPC type during strike; restored on
+  strike end.
+- `TimeSystem`: strike day check, picket hours, depot blind window, manager spawn.
+- `NeighbourhoodSystem`: VIBES adjustments on scab/solidarity actions.
+- `NotorietySystem`: scab run notoriety per delivery; depot heist notoriety per parcel.
+- `WantedSystem`: depot security guard alert triggers WANTED +2.
+- `CriminalRecord`: `PARCEL_THEFT` (existing), `STRIKE_BREAKING` (new, non-criminal but tracked).
+- `RumourNetwork`: `STRIKE_TEA_RUN`, `SCAB_SPOTTED`, `UNOFFICIAL_COURIER_SPOTTED` rumours.
+- `NewspaperSystem`: day-1 headline; day-3 resolution headline.
+- `EmploymentSystem`: unofficial courier income recorded for HMRC trigger.
+- `HMRCSystem`: investigation if unofficial courier income > 40 COIN/day for 3 days.
+- `FenceSystem`: depot parcel contents fenceable at standard rates.
+- `SoundSystem`: `PLACARD_CHANT_SFX` ambient at picket line; `CROWD_GRUMBLE_SFX` at Post Office door.
+- `AchievementSystem`: `UNION_SOLIDARITY`, `SCAB`, `PARCEL_PANIC`, `LOST_IN_TRANSIT`,
+  `ENTREPRENEURIAL_SPIRIT`.
+
+### New Materials (add to `Material.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `MUG_OF_TEA` | Hot mug of tea — craft or buy at greasy spoon. Consumed on solidarity gesture. |
+| `TEABAG` | Ingredient for MUG_OF_TEA. Found in kitchen cupboard props. |
+| `SCAB_PARCEL_BAG` | Temporary item given during scab shift; removed on shift end. |
+| `HANDWRITTEN_PARCEL` | Unofficial courier parcel given by NPC. Single-use delivery item. |
+| `UNION_HERO_BADGE` | Wearable reward for full solidarity path. Reduces PCSO suspicion. |
+| `BOLT_CUTTER` | Tool — bypasses locked doors/props in 1 use (vs. 3 CROWBAR uses). Fenceable. |
+
+### New PropTypes (add to `PropType.java`)
+
+| Constant | Description |
+|----------|-------------|
+| `OVERFLOW_DEPOT_PROP` | Locked building prop behind sorting office; contains 20 parcels during strike. |
+| `PLACARD_PROP` | Held/carried by STRIKER NPCs; prop spawned with "FAIR PAY NOW" text. |
+| `COURIER_VAN_PROP` | Parked outside corner shop; activates unofficial courier mode. |
+| `CLOSED_SIGN_PROP` | Hung on Post Office door during strike; blocks E-interaction. |
+
+### New NPCTypes (add to `NPCType.java` if absent)
+
+| Constant | Stats | Notes |
+|----------|-------|-------|
+| `STRIKER` | 20f, 3f, 1.5f, false | Patrol near Post Office; become HOSTILE to scab player |
+| `POSTAL_MANAGER` | 20f, 0f, 0f, false | Day-3-only NPC; passive; triggers resolution dialogue |
+| `SECURITY_GUARD` | 35f, 6f, 1.2f, false | Guards overflow depot; absent 12:30–13:00 |
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Constant | Unlock Condition |
+|----------|-----------------|
+| `UNION_SOLIDARITY` | Complete a full tea run (all 3 strikers receive tea) |
+| `SCAB` | Complete a full scab delivery shift |
+| `PARCEL_PANIC` | Steal ≥10 parcels from the overflow depot in one visit |
+| `LOST_IN_TRANSIT` | Steal all 20 parcels from the overflow depot |
+| `ENTREPRENEURIAL_SPIRIT` | Complete 8 unofficial courier deliveries in one day |
+
+### New RumourTypes (add to `RumourType.java`)
+
+| Constant | Seeded When | Sample Text |
+|----------|-------------|-------------|
+| `ROYAL_MAIL_STRIKE` | Strike begins | "Royal Mail's on strike again. Third time this year." |
+| `STRIKE_TEA_RUN` | Player completes full tea run | "Someone actually brought the lads tea on the picket line. Unheard of." |
+| `SCAB_SPOTTED` | Player signs on for scab shift | "You see who was crossing the picket line this morning? Disgraceful." |
+| `UNOFFICIAL_COURIER_SPOTTED` | Player completes 3 unofficial deliveries | "Some lad's been charging a fiver to hand-deliver letters. Cheeky sod." |
+| `STRIKE_OVER` | Strike ends | "Post office is back open. Only took three days and a national embarrassment." |
+
+### Unit Tests (`RoyalMailStrikeSystemTest.java`)
+
+- `testStrikeDayDetection`: verify `isStrikeDay` returns true for days 0–2 of trigger cycle,
+  false on day 3+, false on Sunday trigger.
+- `testPostOfficeClosedDuringStrike`: verify `PostOfficeSystem.isOpen()` returns false when
+  `isStrikeActive()` is true.
+- `testSolidarityTeaRun`: give player 3 `MUG_OF_TEA` items; call `giveTea(player, striker1/2/3)`;
+  verify `allStrikersTea == true`, VIBES `+3`, `UNION_SOLIDARITY` achievement queued.
+- `testSolidarityMutualExclusion`: complete tea run first → `SCAB` achievement locked;
+  complete scab shift → `UNION_SOLIDARITY` locked.
+- `testScabSignOn`: equip `HI_VIS_VEST`, call `scabSignOn(player)`; verify `SCAB_PARCEL_BAG`
+  in inventory, Notoriety +3 per delivery, VIBES −1 per delivery.
+- `testDepotLootGuardPresent`: `SECURITY_GUARD` present, player enters depot → `WANTED +2`,
+  police called flag set.
+- `testDepotLootBlindWindow`: hour = 12.5f (guard on lunch), player enters depot → no WANTED
+  triggered, parcels lootable.
+- `testDepotParcelContentsDistribution`: roll 1000 parcels with seeded Random; verify
+  HOUSEHOLD_GOODS ≈35%, ELECTRONICS ≈25%, within 5% tolerance.
+- `testUnofficiailCourierDailyCap`: after 8 deliveries, `canDeliver()` returns false.
+- `testHMRCTrigger`: unofficial courier income > 40 COIN/day for 3 consecutive days →
+  `HMRCSystem.triggerInvestigation()` called.
+- `testStrikeResolutionScabPath`: ≥2 scab shifts completed on day 3 → `POSTAL_MANAGER` spawns,
+  permanent POSTMAN unlock offered.
+- `testStrikeResolutionSolidarityPath`: full tea run on all 3 days →
+  `UNION_HERO_BADGE` awarded, post office reopens.
+- `testBoltCutterBypassesDepot`: player has `BOLT_CUTTER` → depot door opens in 1 use vs 3
+  for CROWBAR.
+
+### Integration Tests (`Issue1397RoyalMailStrikeIntegrationTest.java`)
+
+1. **Strike triggers and Post Office closes**: advance game to strike day. Verify 3 `STRIKER`
+   NPCs at sorting-office door with `PLACARD_PROP`. Verify pressing E on Maureen shows "CLOSED"
+   message. Verify `OVERFLOW_DEPOT_PROP` exists behind sorting office with 20 parcels.
+   Verify `NewspaperSystem.getTodaysHeadlines()` contains "Royal Mail".
+
+2. **Full solidarity path**: bring `MUG_OF_TEA` to each striker on all 3 strike days. Verify
+   on day 3 VIBES total net `+9`. Verify `UNION_SOLIDARITY` achievement unlocked. Verify `POSTAL_MANAGER`
+   spawns at 17:00 day 3 and post office reopens. Verify `UNION_HERO_BADGE` in player inventory.
+   Verify `SCAB` achievement is NOT available.
+
+3. **Scab run consequences**: equip `HI_VIS_VEST`. Sign on for scab shift day 1. Complete 4
+   deliveries. Verify Notoriety +12 total. Verify VIBES −4 total. Verify strikers are in HOSTILE
+   state when within 6 blocks of player. Verify `SCAB` achievement unlocked after first full shift.
+
+4. **Depot blind-window heist**: advance time to 12:30. Verify `SECURITY_GUARD` absent from
+   depot. Break in via CROWBAR (3 uses). Loot 10 parcels. Verify `PARCEL_PANIC` achievement
+   unlocked. Verify `CrimeType.PARCEL_THEFT` recorded 10 times. Loot remaining 10. Verify
+   `LOST_IN_TRANSIT` achievement unlocked. Verify `FenceSystem` accepts all 20 parcels.
+
+5. **Unofficial courier daily cap**: interact with `COURIER_VAN_PROP`. Complete 8 deliveries.
+   Verify total income = 64 COIN. Attempt 9th delivery. Verify `canDeliver()` returns false and
+   prompt is refused. Verify `ENTREPRENEURIAL_SPIRIT` achievement unlocked.
+
+// ── Issue #1397: Add Northfield Royal Mail Strike ──────────────────────────────
+// New System File: RoyalMailStrikeSystem.java in ragamuffin.core
+// New Test Files: RoyalMailStrikeSystemTest.java in src/test/java/ragamuffin/core/
+//                Issue1397RoyalMailStrikeIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: MUG_OF_TEA, TEABAG, SCAB_PARCEL_BAG, HANDWRITTEN_PARCEL, UNION_HERO_BADGE, BOLT_CUTTER
+// New PropTypes: OVERFLOW_DEPOT_PROP, PLACARD_PROP, COURIER_VAN_PROP, CLOSED_SIGN_PROP
+// New NPCTypes: STRIKER, POSTAL_MANAGER, SECURITY_GUARD
+// New AchievementTypes: UNION_SOLIDARITY, SCAB, PARCEL_PANIC, LOST_IN_TRANSIT, ENTREPRENEURIAL_SPIRIT
+// New RumourTypes: ROYAL_MAIL_STRIKE, STRIKE_TEA_RUN, SCAB_SPOTTED, UNOFFICIAL_COURIER_SPOTTED, STRIKE_OVER
+// Integration: PostOfficeSystem, TimeSystem, NeighbourhoodSystem, NotorietySystem, WantedSystem,
+//   CriminalRecord, RumourNetwork, NewspaperSystem, EmploymentSystem, HMRCSystem, FenceSystem,
+//   SoundSystem, AchievementSystem
