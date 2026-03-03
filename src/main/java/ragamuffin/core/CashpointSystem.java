@@ -575,8 +575,8 @@ public class CashpointSystem {
         chance = Math.max(0f, Math.min(1f, chance));
 
         if (random.nextFloat() < chance) {
-            // Mark target as pickpocketable for VICTIM_BANK_CARD
-            targetNpc.setState(NPCState.UNAWARE);
+            // Mark target as unaware (idle) for VICTIM_BANK_CARD shoulder-surf
+            targetNpc.setState(NPCState.IDLE);
             return ShoulderSurfResult.SUCCESS;
         }
         return ShoulderSurfResult.CAUGHT;

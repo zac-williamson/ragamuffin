@@ -158,6 +158,7 @@ public class InteractionSystem {
 
     /**
      * Handle food/consumable use (right-click with item in hotbar).
+     * Fix #1320: Hot food and drinks now restore warmth as well as hunger.
      * @return true if item was consumed
      */
     public boolean consumeFood(Material food, Player player, Inventory inventory) {
@@ -167,18 +168,23 @@ public class InteractionSystem {
 
         lastConsumeMessage = null;
         float hungerRestored = 0;
+        float warmthRestored = 0;
 
         if (food == Material.SAUSAGE_ROLL) {
             hungerRestored = 30;
+            warmthRestored = 5; // Hot from the oven
             lastConsumeMessage = "You eat the sausage roll. Warm, flaky, perfect.";
         } else if (food == Material.STEAK_BAKE) {
             hungerRestored = 35;
+            warmthRestored = 5; // Piping hot pastry
             lastConsumeMessage = "You wolf down the steak bake. Greggs delivers again.";
         } else if (food == Material.CHIPS) {
             hungerRestored = 25;
+            warmthRestored = 8; // Hot chips warm the soul
             lastConsumeMessage = "You eat the chips. Slightly soggy, but beggars can't be choosers.";
         } else if (food == Material.KEBAB) {
             hungerRestored = 40;
+            warmthRestored = 10; // Late-night warmth from a proper kebab
             lastConsumeMessage = "You demolish the kebab. Mysterious meat, no questions asked.";
         } else if (food == Material.CRISPS) {
             hungerRestored = 10;
@@ -192,10 +198,12 @@ public class InteractionSystem {
             lastConsumeMessage = "You neck the energy drink. Your heart is now vibrating.";
         } else if (food == Material.PINT) {
             hungerRestored = 15;
+            warmthRestored = 10; // Liquid warmth, however fleeting
             player.restoreEnergy(20); // Liquid courage
             lastConsumeMessage = "You down the pint. Dutch courage, British problems.";
         } else if (food == Material.PERI_PERI_CHICKEN) {
             hungerRestored = 45; // Cheeky Nandos is top-tier sustenance
+            warmthRestored = 15; // Peri-peri heat warms you right up
             lastConsumeMessage = "Cheeky Nandos. Even out here, it hits different.";
         } else if (food == Material.PARACETAMOL) {
             hungerRestored = 0;
@@ -230,13 +238,62 @@ public class InteractionSystem {
             hungerRestored = 20; // Some nourishment
             player.heal(50); // Dodgy Pasty restores 50 HP (Fix #687)
             lastConsumeMessage = "You scoff the dodgy pasty. Questionable provenance, undeniable results.";
+        // Fix #1320: Hot food and drinks from cafés and pubs — warming mechanisms
+        } else if (food == Material.MUG_OF_TEA) {
+            warmthRestored = 25; // Proper builder's tea warms you instantly
+            lastConsumeMessage = "You sip the mug of tea. Instantly better.";
+        } else if (food == Material.BUILDER_S_TEA) {
+            warmthRestored = 30; // Strong brew, proper warmth
+            lastConsumeMessage = "You drink the builder's tea. That's the stuff.";
+        } else if (food == Material.FULL_ENGLISH) {
+            hungerRestored = 60;
+            warmthRestored = 20; // Hot plate warms you from the inside
+            lastConsumeMessage = "You demolish the full English. Vera's done it again.";
+        } else if (food == Material.BACON_BUTTY) {
+            hungerRestored = 35;
+            warmthRestored = 10; // Warm bap, warm soul
+            lastConsumeMessage = "You eat the bacon butty. Brown sauce. Obviously.";
+        } else if (food == Material.BEANS_ON_TOAST) {
+            hungerRestored = 30;
+            warmthRestored = 8; // Hot beans take the edge off
+            lastConsumeMessage = "You eat the beans on toast. Comfort food.";
+        } else if (food == Material.FRIED_BREAD) {
+            hungerRestored = 15;
+            warmthRestored = 5; // Greasy warmth
+            lastConsumeMessage = "You eat the fried bread. Terrible for you. Worth it.";
+        } else if (food == Material.CURRY_CLUB_SPECIAL) {
+            hungerRestored = 80;
+            warmthRestored = 20; // Curry night at the Rusty Anchor
+            lastConsumeMessage = "You tuck into the curry. Four quid well spent.";
+        } else if (food == Material.SOUP_CUP) {
+            hungerRestored = 25;
+            warmthRestored = 5; // Hot soup from the church kitchen
+            lastConsumeMessage = "You drink the soup. Reverend Dave's finest.";
+        } else if (food == Material.CURRY_AND_RICE) {
+            hungerRestored = 15;
+            warmthRestored = 12; // Best meal in Northfield
+            lastConsumeMessage = "Best meal in Northfield. Don't argue.";
+        } else if (food == Material.SAMOSA) {
+            hungerRestored = 4;
+            warmthRestored = 2; // Go on. They're only small.
+            lastConsumeMessage = "Go on. They're only small.";
+        } else if (food == Material.WATER_BOTTLE) {
+            hungerRestored = 10;
+            warmthRestored = 5; // Room temperature at least
+            lastConsumeMessage = "You drink the water. Basic, but essential.";
+        } else if (food == Material.CHOCOLATE_BAR) {
+            hungerRestored = 20;
+            lastConsumeMessage = "You eat the chocolate bar. Small mercies.";
         } else {
             // Not a consumable item
             return false;
         }
 
-        // Consume the item
+        // Consume the item — apply hunger, warmth, and remove from inventory
         player.eat(hungerRestored);
+        if (warmthRestored > 0) {
+            player.restoreWarmth(warmthRestored);
+        }
         inventory.removeItem(food, 1);
         return true;
     }
@@ -270,6 +327,7 @@ public class InteractionSystem {
 
     /**
      * Check if a material is food or consumable.
+     * Fix #1320: Added hot food and drink items that restore warmth.
      */
     public boolean isFood(Material material) {
         return material == Material.SAUSAGE_ROLL || material == Material.STEAK_BAKE
@@ -279,7 +337,13 @@ public class InteractionSystem {
             || material == Material.PERI_PERI_CHICKEN || material == Material.PARACETAMOL
             || material == Material.FIRE_EXTINGUISHER || material == Material.WASHING_POWDER
             || material == Material.SCRATCH_CARD || material == Material.ANTIDEPRESSANTS
-            || material == Material.DODGY_PASTY;
+            || material == Material.DODGY_PASTY
+            || material == Material.MUG_OF_TEA || material == Material.BUILDER_S_TEA
+            || material == Material.FULL_ENGLISH || material == Material.BACON_BUTTY
+            || material == Material.BEANS_ON_TOAST || material == Material.FRIED_BREAD
+            || material == Material.CURRY_CLUB_SPECIAL || material == Material.SOUP_CUP
+            || material == Material.CURRY_AND_RICE || material == Material.SAMOSA
+            || material == Material.WATER_BOTTLE || material == Material.CHOCOLATE_BAR;
     }
 
     /**
