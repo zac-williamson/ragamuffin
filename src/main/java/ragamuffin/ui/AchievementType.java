@@ -7093,6 +7093,67 @@ public enum AchievementType {
         "Secret Masala",
         "Nicked a catering tin from the Raj Mahal kitchen. Bashir has no idea.",
         1
+    ),
+
+    // ── Issue #1453: Northfield Skin Deep Tattoos — Kev's Flash Sheets ───────
+
+    /**
+     * FIRST_INK — Awarded when the player gets their first tattoo from Kev.
+     */
+    FIRST_INK(
+        "First Ink",
+        "Got your first tattoo from Kev. He's done worse.",
+        1
+    ),
+
+    /**
+     * FULL_SLEEVE — Awarded when the player has collected all four tattoo designs
+     * from Kev (Bulldog, Teardrop, MUM, NORTHFIELD 4 EVER).
+     */
+    FULL_SLEEVE(
+        "Full Sleeve",
+        "Got every design on Kev's flash sheet. He's proud of you, in his way.",
+        4
+    ),
+
+    /**
+     * PRISON_TATTOO — Awarded when the player successfully performs a DIY prison
+     * tattoo at MIRROR_PROP using NEEDLE + INK_BOTTLE (60% success path).
+     */
+    PRISON_TATTOO(
+        "Doing Bird Ink",
+        "Gave yourself a tattoo with a needle and an ink bottle. Somehow it worked.",
+        1
+    ),
+
+    /**
+     * DODGY_BIRO — Awarded when the player fails the DIY prison tattoo and receives
+     * the INFECTED_WOUND debuff.
+     */
+    DODGY_BIRO(
+        "Dodgy Biro",
+        "DIY tattoo went wrong. Very wrong. See the GP.",
+        1
+    ),
+
+    /**
+     * BACKHANDER — Awarded when the player bribes the Health Inspector with a
+     * BROWN_ENVELOPE (10 COIN) to avoid a bust.
+     */
+    BACKHANDER(
+        "Backhander",
+        "Slipped the health inspector a brown envelope. What happens in Skin Deep stays in Skin Deep.",
+        1
+    ),
+
+    /**
+     * GRASS_THE_TATTOOIST — Awarded when the player tips off the council to force
+     * closure of Skin Deep Tattoos early, earning Community Respect.
+     */
+    GRASS_THE_TATTOOIST(
+        "Grass the Tattooist",
+        "Tipped off the council about Skin Deep. Very civic-minded of you.",
+        1
     );
 
     private final String name;
