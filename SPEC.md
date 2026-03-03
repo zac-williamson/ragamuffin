@@ -57162,3 +57162,99 @@ Every year on day 21 (a Saturday), the Northfield Community Centre hosts its ann
 5. **Rain cancellation seeds rumour and awards achievement**: create system; set weather to `Weather.HEAVY_RAIN`; call `update(delta, timeSystem)` at 08:30; verify event is cancelled; verify `rumourNetwork` contains `RumourType.FUN_RUN_CANCELLED`; verify `achievementSystem` received `AchievementType.RAINED_OFF`; verify `charityFunRunSystem.isActive()` == false.
 
 // `CharityFunRunSystem.java` must be created as the sole new source file. Integrates with `WeatherSystem` (rain cancellation), `DogCompanionSystem` (WALKIES_WINNER check), `NotorietySystem`, `WantedSystem`, `CriminalRecord` (`CHARITY_FRAUD` and `THEFT_FROM_PERSON`), `RumourNetwork`, `NeighbourhoodSystem` (Vibes), `TimeSystem`, `WitnessSystem`, and `AchievementSystem`. All `NPCType`, `Material`, `PropType`, `RumourType`, and `AchievementType` entries required are already defined — no new enum entries needed except `RumourType.COURSE_CUTTER`.
+
+---
+
+## Issue #1489 — Northfield Hospice Sponsored Walk — Brenda's Route, the Pledge Fraud & the Cone Heist
+
+Every year on day 10 (a Sunday), Brenda (`NPCType.WALK_ORGANISER`) sets up a 20-waypoint charity sponsored walk around Northfield in aid of the local hospice. She assembles outside the Community Centre at 08:30, hands out `Material.SPONSOR_FORM` clipboards, and sends 8–12 `NPCType.SPONSORED_WALKER` participants around the route, which is marked by 20 `PropType.ROUTE_CONE_PROP` orange cones at 20-block intervals. The walk runs 09:00–10:30 on the same day-21 cycle as the Fun Run (separate event: both can co-exist). A `PropType.PRIZE_ENVELOPE_PROP` hangs from a pinboard at the finish containing `Material.CHARITY_RAFFLE_TICKET` + 3 COIN for the first finisher.
+
+`SponsoredWalkSystem` manages `LandmarkType.COMMUNITY_CENTRE` and the 08:30–10:30 event window on day 10, repeating every 28 days.
+
+### Mechanic 1 — Registration & Sponsorship (08:30–09:00)
+
+- Player approaches Brenda (press E) to get `Material.SPONSOR_FORM`. No fee required — this is for charity.
+- With `SPONSOR_FORM` in inventory, player can approach up to `MAX_SPONSORS` = 6 NPCs before the 09:00 start. Each NPC approached: `PENSIONER` 90% chance pledges 2 COIN, `PUBLIC` 60% chance pledges 1 COIN, `CHUGGER` always refuses.
+- Total pledgeable = `MAX_PLEDGE_COIN` = 14 COIN. Pledges are tracked internally; not paid until player returns to Brenda post-walk.
+- Pledge fraud: player collects from 3+ sponsors and does NOT finish the route (i.e., calls `collectPledges(player, inventory, walkCompleted=false)` from Brenda): `CrimeType.CHARITY_FRAUD` recorded, Notoriety +3. Brenda gives a 60-second chase; if player escapes beyond `BRENDA_PURSUIT_RADIUS` = 40f blocks: `RumourType.BRENDA_CONNED` seeded, `AchievementType.DODGED_BRENDA` awarded.
+
+### Mechanic 2 — The Walk (09:00–10:30)
+
+- Walk gun goes off at 09:00. Player timer starts on crossing waypoint 1.
+- 20 `ROUTE_CONE_PROP` waypoints placed at 20-block intervals along a loop through the park and back. Player must pass within `WAYPOINT_RADIUS` = 3.0f blocks of each in order (1→20).
+- `SPONSORED_WALKER` NPCs walk at `NPC_WALK_SPEED` = 2.5f blocks/second.
+- Finish: return to Brenda after all 20 waypoints. Brenda pays pledge total as COIN. First player across collects `Material.CHARITY_RAFFLE_TICKET` + 3 COIN from `PropType.PRIZE_ENVELOPE_PROP`. `AchievementType.WALKED_THE_WALK` awarded.
+- Weather: if `WeatherSystem.getWeather()` == `Weather.HEAVY_RAIN` at 09:00, walk still proceeds (British resilience — unlike the Fun Run it does NOT cancel). But Brenda gives Warmth −2 "moral support" penalty to the player if they quit early.
+
+### Mechanic 3 — Cone Theft & Walk Sabotage
+
+- Each `ROUTE_CONE_PROP` can be punched twice to yield `Material.TRAFFIC_CONE` (1 per cone). Cones have `CONE_HP` = 2 hits.
+- Removing a cone does not immediately cancel the walk, but `SPONSORED_WALKER` NPCs become confused — they stop at the missing waypoint for `WALKER_CONFUSED_SECONDS` = 10.0f.
+- If `CONE_ABANDON_THRESHOLD` = 5 or more cones are removed: walk is officially abandoned. Brenda calls police (WantedLevel +1). `RumourType.WALK_CANCELLED` seeded (Vibes −3). No pledges paid.
+- `TRAFFIC_CONE` can be sold to `FenceSystem` for 1 COIN each.
+
+### Mechanic 4 — Pledge Collection Fraud (Post-Walk)
+
+- If player completes the walk legitimately and has 3+ pledge sponsors: Brenda pays `MAX_PLEDGE_COIN` accumulated. `RumourType.WALK_HERO` seeded (Vibes +2). `AchievementType.WALKED_THE_WALK` awarded.
+- If player collects pledges without finishing: `CHARITY_MUGGER` achievement awarded when player successfully collects from 3+ sponsors before walk end and never returns to Brenda.
+- Brenda's clipboard: pickpocketable (press E behind her, Stealth cooldown 3s). Contains `SPONSOR_FORM` + 6 COIN (all sponsor cash). `CrimeType.THEFT_FROM_PERSON`. Notoriety +4. Brenda immediately calls police if spotted.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `MAX_SPONSORS` | 6 |
+| `MAX_PLEDGE_COIN` | 14 |
+| `WAYPOINT_COUNT` | 20 |
+| `WAYPOINT_RADIUS` | 3.0f |
+| `WAYPOINT_INTERVAL_BLOCKS` | 20 |
+| `NPC_WALK_SPEED` | 2.5f |
+| `BRENDA_PURSUIT_RADIUS` | 40.0f |
+| `BRENDA_PURSUIT_SECONDS` | 60.0f |
+| `WALKER_CONFUSED_SECONDS` | 10.0f |
+| `CONE_HP` | 2 |
+| `CONE_ABANDON_THRESHOLD` | 5 |
+| `CONE_FENCE_VALUE` | 1 |
+| `PRIZE_ENVELOPE_COIN` | 3 |
+| `WALK_INTERVAL_DAYS` | 28 |
+| `WALK_START_HOUR` | 9.0f |
+| `REGISTRATION_OPEN_HOUR` | 8.5f |
+| `WALK_END_HOUR` | 10.5f |
+| `PLEDGE_FRAUD_NOTORIETY` | 3 |
+| `CLIPBOARD_THEFT_NOTORIETY` | 4 |
+| `CLIPBOARD_COIN` | 6 |
+
+### Entities Required (already defined — no new entries needed)
+
+- `NPCType.WALK_ORGANISER` — Brenda. Already defined.
+- `NPCType.SPONSORED_WALKER` — walk participants. Already defined.
+- `Material.SPONSOR_FORM` — sponsorship clipboard. Already defined.
+- `Material.TRAFFIC_CONE` — dropped by smashed ROUTE_CONE_PROP. Already defined.
+- `Material.CHARITY_RAFFLE_TICKET` — first-finisher prize. Already defined.
+- `PropType.ROUTE_CONE_PROP` — 20 waypoint markers. Already defined.
+- `RumourType.BRENDA_CONNED` — pledge fraud rumour. Already defined.
+- `RumourType.WALK_CANCELLED` — cone sabotage rumour. Already defined.
+- `RumourType.WALK_HERO` — completed walk rumour. Already defined.
+- `AchievementType.WALKED_THE_WALK` — completed walk + all pledges. Already defined.
+- `AchievementType.CHARITY_MUGGER` — collected pledges without finishing. Already defined.
+- `AchievementType.DODGED_BRENDA` — escaped Brenda after fraud. Already defined.
+- `CrimeType.CHARITY_FRAUD` — already defined in `CriminalRecord.java`.
+- `LandmarkType.COMMUNITY_CENTRE` — already defined.
+
+### New Entities Required
+
+- `PropType.PRIZE_ENVELOPE_PROP` — pinboard envelope at the finish line. Contains `CHARITY_RAFFLE_TICKET` + 3 COIN. Interactable once.
+
+### Integration Tests
+
+1. **Registration gives sponsor form and tracks pledges**: create `SponsoredWalkSystem`; set time to 08:45; call `register(player, inventory)`; verify `inventory.contains(Material.SPONSOR_FORM)` == true; approach 4 NPCs (`PENSIONER`×2, `PUBLIC`×2) with seeded RNG forcing all accept; call `collectSponsors(player, inventory, npcs)`; verify `pendingPledges` == 6 COIN (2+2+1+1).
+
+2. **Completing the walk pays pledges and seeds hero rumour**: create system; register player; mark all 20 waypoints visited in order; seed 3 sponsors for 5 COIN total; call `finishWalk(player, inventory)`; verify `inventory.getItemCount(Material.COIN)` increased by 5; verify `rumourNetwork` contains `RumourType.WALK_HERO`; verify `achievementSystem` received `WALKED_THE_WALK`.
+
+3. **Pledge fraud with 3+ sponsors triggers charity fraud crime and Brenda pursuit**: create system; register player; seed 3 sponsors accepted; call `collectPledges(player, inventory, walkCompleted=false)`; verify `criminalRecord.hasCrime(CrimeType.CHARITY_FRAUD)` == true; verify `notorietySystem.getNotoriety()` increased by `PLEDGE_FRAUD_NOTORIETY`; verify Brenda state is `NPCState.FLEEING` (pursuit mode).
+
+4. **Removing 5+ cones abandons the walk and seeds rumour**: create system; start walk at 09:00; call `removeCone(player, inventory)` × 5; verify `isActive()` == false; verify `rumourNetwork` contains `RumourType.WALK_CANCELLED`; verify `wantedSystem.getWantedLevel()` >= 1.
+
+5. **Escaping Brenda after fraud awards DODGED_BRENDA**: create system; trigger fraud; set player position > `BRENDA_PURSUIT_RADIUS` blocks from Brenda; call `update(delta=61f, timeSystem)`; verify `achievementSystem` received `AchievementType.DODGED_BRENDA`; verify `rumourNetwork` contains `RumourType.BRENDA_CONNED`.
+
+// `SponsoredWalkSystem.java` must be created as the sole new source file. All `NPCType`, `Material`, `PropType`, `RumourType`, and `AchievementType` entries required are already defined — only `PropType.PRIZE_ENVELOPE_PROP` needs to be added. Integrates with `NotorietySystem`, `WantedSystem`, `CriminalRecord` (`CHARITY_FRAUD`, `THEFT_FROM_PERSON`), `RumourNetwork`, `NeighbourhoodSystem` (Vibes), `TimeSystem`, `WitnessSystem`, `WeatherSystem`, `FenceSystem`, and `AchievementSystem`.
