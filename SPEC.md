@@ -55811,3 +55811,143 @@ The jumble sale is a monthly chaos event at `LandmarkType.COMMUNITY_CENTRE`. Tab
 5. **Bring-and-buy clears stolen flag**: give player `STOLEN_BIKE`; call `JumbleSaleSystem.donateAndBuyBack(player, inventory, Material.STOLEN_BIKE, dot, timeSystem)`; verify `inventory.isStolen(Material.STOLEN_BIKE)` == false; verify player holds `JUMBLE_RECEIPT_PROP`.
 
 // `JumbleSaleSystem.java` must be created as the sole new source file. New enum entries required: `RumourType` (3 entries), `AchievementType` (6 entries). Supporting types already defined: `LandmarkType.COMMUNITY_CENTRE`, `NPCType.PENSIONER`, `NPCType.PUBLIC`. New NPCType entries required: `JUMBLE_SALE_ORGANISER` (Dot), `JUMBLE_SALE_VOLUNTEER`. New Material entries required: `JUMBLE_ENTRY_TICKET`, `JUMBLE_ORNAMENT`, `JUMBLE_CLOCK`, `JUMBLE_BOOK_LOT`, `JUMBLE_CASSETTE`, `JUMBLE_VHS_TAPE`, `JUMBLE_COAT`, `JUMBLE_RECEIPT_PROP`. New PropType entries required: `JUMBLE_TABLE_PROP`.
+
+---
+
+## Northfield Street Preacher — Brother Gary, the Megaphone & the Trading Standards Sting
+
+**System**: `StreetPreacherSystem.java` (new file)
+
+Brother Gary (`NPCType.STREET_PREACHER`) is a fixture on Northfield High Street, stationed outside the entrance to the Pound Shop with a MEGAPHONE_PROP and a hand-painted SANDWICH_BOARD_PROP reading "REPENT — THE WAGES OF SIN IS DEATH (AND A £60 PARKING FINE)". He broadcasts fire-and-brimstone sermons from 09:00 to 17:00 Monday–Saturday, pausing only for a thermos of tea at 12:30. Gary's amplified output disrupts nearby NPCs, attracts hecklers, and his megaphone is a valuable item if the player can relieve him of it.
+
+### Overview
+
+Gary is a passive NPC in the `PREACHING` state who cycles through sermon phrases every `SERMON_PHRASE_INTERVAL_SECONDS = 12f`. His megaphone broadcasts at `MEGAPHONE_NOISE_RADIUS = 20` blocks (NoiseSystem level 4). Nearby PUBLIC NPCs either cluster to listen (`LISTENER_CURIOSITY_CHANCE = 0.25f`), flee in embarrassment (`FLEE_EMBARRASSMENT_CHANCE = 0.40f`), or ignore him. PENSIONER NPCs are more likely to engage (`PENSIONER_ENGAGE_CHANCE = 0.55f`).
+
+The player can: (1) listen to the sermon for free RumourType content; (2) engage Gary in dialogue using the E key; (3) steal the MEGAPHONE_PROP; (4) trigger a Trading Standards complaint using the CITIZENS_ADVICE_LEAFLET; or (5) join in as a heckler, gaining street reputation at the cost of Notoriety.
+
+### Mechanic 1 — The Sermon Circuit (09:00–17:00, Mon–Sat)
+
+- Gary stands at `LandmarkType.POUND_SHOP` entrance (outside, PAVEMENT block).
+- He cycles through a pool of `SERMON_PHRASES` (10 fixed strings, e.g. *"Turn from your wicked ways, Northfield!"*, *"The fruit machine is the Devil's abacus!"*, *"The off-licence is Mammon's temple!"*).
+- Each phrase triggers a `NoiseSystem.broadcast(MEGAPHONE_NOISE_RADIUS, 4)` call.
+- NPCs within range respond per their type: PENSIONER may nod (`+0.2f engagement`); DRUNK may shout abuse (`HECKLER_CHANCE_DRUNK = 0.65f`); YOUTH_GANG makes rude gestures (no mechanical effect).
+- At `THERMOS_BREAK_HOUR = 12.5f` (12:30) Gary sits on a bench, megaphone resting on the ground — theft window opens with no noise detection.
+- At 17:00 Gary packs up and leaves (`NPCState.LEAVING`).
+- Achievement: `HEARD_THE_WORD` (stand within 5 blocks of Gary for 3 consecutive sermon phrases without moving).
+
+### Mechanic 2 — Engage & Dialogue
+
+- Press E within 3 blocks of Gary: player gets 3 dialogue options:
+  1. **"Leave me alone, mate"** — Gary responds with a blessing; seeds `STREET_PREACHER_SPOTTED` rumour into the nearest NPC.
+  2. **"Is it true what they say about the off-licence?"** — Gary delivers the `OFF_LICENCE_RANT` rumour (exposes that the OffLicenceSystem has a `BACK_ROOM` loot cache, if not already known). One-time trigger.
+  3. **"Fair enough, carry on"** — Gary continues; Notoriety −1 (showing respect). Cooldown: `RESPECT_COOLDOWN_SECONDS = 300f` (once per 5 in-game minutes).
+- If Notoriety ≥ `GARY_FLEE_NOTORIETY = 50`: Gary recognises the player as trouble and transitions to `NPCState.FLEEING` toward the church.
+- Achievement: `HONEST_SINNER` (receive Notoriety −1 from Gary 5 times across separate sessions).
+
+### Mechanic 3 — Steal the Megaphone
+
+- MEGAPHONE_PROP rests on the ground during the `THERMOS_BREAK_HOUR` window (12:30–13:00).
+- Outside the break window: megaphone is in Gary's hand — pickpocket requires PICKPOCKET skill ≥ Apprentice with `MEGAPHONE_PICKPOCKET_CHANCE = 0.25f`.
+- On successful steal (either method):
+  - Player gains `Material.MEGAPHONE` in inventory.
+  - Gary transitions to `NPCState.DISTRESSED` and shouts *"Oi! That's the Lord's property!"*.
+  - `CriminalRecord.CrimeType.THEFT` recorded; Notoriety +3.
+  - If witnessed: `MEGAPHONE_STOLEN` rumour seeded into nearest NPC; `WantedSystem` +1.
+  - Gary cannot preach without megaphone — he lingers in `DISTRESSED` state until event reset (midnight).
+- **Megaphone use**: player holds MEGAPHONE and presses E → broadcasts current speech/shout (any queued NPC interaction dialogue) at `MEGAPHONE_NOISE_RADIUS = 20` blocks. Usable for: distracting NPCs, triggering NoiseSystem events, clearing an area before a heist.
+- FenceSystem: MEGAPHONE fence value `MEGAPHONE_FENCE_VALUE = 8` COIN.
+- Achievement: `VOICE_OF_NORTHFIELD` (use the stolen megaphone to distract at least 5 NPCs simultaneously).
+
+### Mechanic 4 — Heckling
+
+- Player presses E while Gary is mid-sermon (outside dialogue range, 3–10 blocks): initiates **heckling mode** for `HECKLE_DURATION_SECONDS = 30f`.
+- Each 5 seconds of heckling: Notoriety +1, Street Reputation +2 with `YOUTH_GANG` NPCs present nearby.
+- DRUNK NPCs within 15 blocks join in (`DRUNK_HECKLE_JOIN_CHANCE = 0.50f`), escalating `NoiseSystem` by +1 level per drunk.
+- If heckling escalates to noise level ≥ 7: `PCSO` NPC is summoned (if present in town), `WantedSystem` +1, `HECKLE_CROWD_DISPERSAL` rumour seeded.
+- Achievement: `NORTHFIELD_HECKLER` (heckle Gary for the full 30 seconds without being moved on by police).
+
+### Mechanic 5 — The Trading Standards Sting
+
+- Gary sells `Material.BLESSED_WATER_BOTTLE` (a scam) for `BLESSED_WATER_PRICE = 3` COIN: press E while holding COIN ≥ 3. Item grants 0 HP but the player's inventory tooltip reads *"Guaranteed pure spiritual water. No refunds."*
+- Player can take the `CITIZENS_ADVICE_LEAFLET` (from `CitizensAdviceSystem`) to the `COUNCIL_OFFICE` landmark and file a complaint: call `StreetPreacherSystem.fileTradingStandardsComplaint(player, inventory, timeSystem, criminalRecord, notorietySystem)`.
+- Outcome: `TRADING_STANDARDS_OFFICER` NPC arrives at Gary's pitch within `TS_RESPONSE_HOURS_MIN = 1`–`TS_RESPONSE_HOURS_MAX = 4` in-game hours. The officer issues a Cease & Desist; Gary is forced off the street for the rest of the in-game day.
+- If the player also holds `BLESSED_WATER_BOTTLE` as evidence: officer confirms it's a scam → player receives `TS_WHISTLEBLOWER_REWARD = 5` COIN.
+- Gary away: his pitch is vacant; SANDWICH_BOARD_PROP and BENCH remain as lootable props.
+- Achievement: `BY_THE_BOOK` (get Gary removed via Trading Standards without any prior criminal record on this game day).
+
+### Integration with Existing Systems
+
+- **`ChurchSystem`**: Gary is a satellite NPC of the church; on Sundays 10:00–11:00 he is inside the church (not on the street). His street presence and church attendance link thematically.
+- **`NoiseSystem`**: megaphone broadcasts at level 4, 20-block radius; heckling escalation raises noise further.
+- **`OffLicenceSystem`**: Gary's `OFF_LICENCE_RANT` dialogue references the off-licence, seeding `BACK_ROOM_RUMOUR` RumourType which unlocks the OffLicence back-room loot cache trigger.
+- **`NotorietySystem`**: Notoriety −1 for respectful dialogue (cooldown); Notoriety +1/5s heckling; Notoriety +3 megaphone theft.
+- **`WantedSystem`**: witnessed megaphone theft +1; heckling escalation to noise ≥ 7 +1.
+- **`CriminalRecord`**: `THEFT` on megaphone steal (witnessed or pickpocket); `BREACH_OF_PEACE` if PCSO intervention during heckle.
+- **`CitizensAdviceSystem`**: CITIZENS_ADVICE_LEAFLET is the trigger item for the Trading Standards complaint.
+- **`RumourNetwork`**: `STREET_PREACHER_SPOTTED`, `MEGAPHONE_STOLEN`, `HECKLE_CROWD_DISPERSAL`, `OFF_LICENCE_BACK_ROOM` (new RumourType entries required).
+- **`NeighbourhoodWatchSystem`**: heckling escalation → WatchAnger +5; Gary successfully removed via TS → WatchAnger −3.
+- **`WeatherSystem`**: RAIN → Gary packs up early (at start of RAIN event, Gary leaves regardless of time); HEATWAVE → Gary adds extra sermon phrases about divine wrath.
+- **`FenceSystem`**: `MEGAPHONE` fence value 8 COIN; `BLESSED_WATER_BOTTLE` fence value 0 COIN (worthless to fence).
+- **`TimeSystem`**: active Mon–Sat 09:00–17:00; thermos break 12:30–13:00; Sunday inside church.
+- **`DisguiseSystem`**: wearing CLERGY_COLLAR item (from ChurchSystem) causes Gary to treat player as an ally — no FLEEING at high Notoriety, extra dialogue option: *"Glad to have you, Brother."*
+
+### Constants Required
+
+- `SERMON_PHRASE_INTERVAL_SECONDS = 12f` — seconds between sermon phrases.
+- `MEGAPHONE_NOISE_RADIUS = 20` — block radius of megaphone broadcast.
+- `MEGAPHONE_NOISE_LEVEL = 4` — NoiseSystem level of each broadcast.
+- `THERMOS_BREAK_HOUR = 12.5f` — in-game hour Gary takes his tea break (12:30).
+- `THERMOS_BREAK_END_HOUR = 13.0f` — in-game hour Gary resumes preaching.
+- `SERMON_START_HOUR = 9.0f` — in-game hour Gary arrives and begins.
+- `SERMON_END_HOUR = 17.0f` — in-game hour Gary packs up.
+- `LISTENER_CURIOSITY_CHANCE = 0.25f` — probability a nearby PUBLIC NPC stops to listen.
+- `FLEE_EMBARRASSMENT_CHANCE = 0.40f` — probability a nearby PUBLIC NPC walks away.
+- `PENSIONER_ENGAGE_CHANCE = 0.55f` — probability a nearby PENSIONER engages positively.
+- `HECKLER_CHANCE_DRUNK = 0.65f` — probability a DRUNK NPC starts heckling.
+- `GARY_FLEE_NOTORIETY = 50` — Notoriety threshold at which Gary flees on player approach.
+- `MEGAPHONE_PICKPOCKET_CHANCE = 0.25f` — base chance to pickpocket megaphone mid-sermon.
+- `MEGAPHONE_FENCE_VALUE = 8` — COIN value when fenced.
+- `RESPECT_COOLDOWN_SECONDS = 300f` — cooldown on Notoriety −1 dialogue option.
+- `HECKLE_DURATION_SECONDS = 30f` — maximum seconds of heckling per session.
+- `HECKLE_NOTORIETY_PER_TICK = 1` — Notoriety gained per 5-second heckle tick.
+- `HECKLE_REP_PER_TICK = 2` — Street Reputation gained per 5-second heckle tick (YOUTH_GANG).
+- `DRUNK_HECKLE_JOIN_CHANCE = 0.50f` — probability a DRUNK NPC joins heckling.
+- `HECKLE_NOISE_ESCALATION = 1` — NoiseSystem level added per drunk heckler.
+- `HECKLE_POLICE_NOISE_THRESHOLD = 7` — total noise level that triggers PCSO summons.
+- `BLESSED_WATER_PRICE = 3` — COIN cost of the scam item.
+- `TS_RESPONSE_HOURS_MIN = 1` — minimum in-game hours before Trading Standards officer arrives.
+- `TS_RESPONSE_HOURS_MAX = 4` — maximum in-game hours before Trading Standards officer arrives.
+- `TS_WHISTLEBLOWER_REWARD = 5` — COIN reward for filing complaint with BLESSED_WATER_BOTTLE evidence.
+- `ENGAGE_DIALOGUE_RANGE = 3` — block radius for E-key dialogue with Gary.
+- `HECKLE_RANGE_MIN = 3` — minimum block distance to initiate heckling.
+- `HECKLE_RANGE_MAX = 10` — maximum block distance for heckling.
+
+### New RumourType Entries Required
+
+- `STREET_PREACHER_SPOTTED` — "That fella with the megaphone is at it again outside the Pound Shop. Giving it all 'repent ye sinners'."
+- `MEGAPHONE_STOLEN` — "Someone half-inched that preacher's megaphone. He's absolutely gutted, stood there whispering."
+- `HECKLE_CROWD_DISPERSAL` — "Big scene outside the Pound Shop — some lad was heckling the God-botherer and the PCSO turned up."
+- `OFF_LICENCE_BACK_ROOM` — "That preacher reckons the off-licence has a back room with all sorts. Says the Lord showed him. Might be worth a look."
+
+### New AchievementType Entries Required
+
+- `HEARD_THE_WORD` — "Stood within five blocks of Brother Gary for three consecutive sermon phrases. Blessed." Target 3.
+- `HONEST_SINNER` — "Received a Notoriety reduction from Gary's respectful dialogue five times. At least you're polite." Target 5.
+- `VOICE_OF_NORTHFIELD` — "Used Gary's stolen megaphone to distract five NPCs at once. The Lord's work." Target 1.
+- `NORTHFIELD_HECKLER` — "Heckled Brother Gary for the full thirty seconds without police intervention. Committed." Target 1.
+- `BY_THE_BOOK` — "Got Gary removed via Trading Standards with a clean record. The right way round." Target 1.
+
+### Integration Tests
+
+1. **Sermon broadcasts noise at interval**: create `StreetPreacherSystem` with Gary at position (50, 1, 50); set time to 10:00 (Mon); call `update(12f, timeSystem, noiseSystem, npcManager, rumourNetwork)`; verify `noiseSystem.getNoiseLevel(50, 1, 50)` ≥ 4; verify Gary's state is `NPCState.PREACHING`.
+
+2. **Thermos break opens theft window**: set time to 12:30; call `update(1f, ...)`; verify `StreetPreacherSystem.isTheftWindowOpen()` == true; attempt `attemptMegaphoneSteal(player, inventory, rng_always_success, notorietySystem, criminalRecord, wantedSystem, rumourNetwork, npcManager)`; verify `inventory.contains(Material.MEGAPHONE)` == true; verify `notorietySystem.getNotoriety()` increased by 3; verify Gary state is `NPCState.DISTRESSED`.
+
+3. **Respectful dialogue reduces Notoriety**: set player Notoriety to 10; set time to 10:00; Gary NOT in FLEEING state; call `StreetPreacherSystem.engageDialogue(player, DialogueChoice.CARRY_ON, notorietySystem, timeSystem, rumourNetwork)`; verify `notorietySystem.getNotoriety()` == 9; call again within `RESPECT_COOLDOWN_SECONDS`; verify Notoriety unchanged (cooldown active).
+
+4. **Heckling escalates noise and raises Wanted**: place DRUNK NPC within 15 blocks; seed RNG to guarantee DRUNK joins; call `StreetPreacherSystem.heckle(player, 30f, noiseSystem, notorietySystem, wantedSystem, criminalRecord, npcManager, rumourNetwork, rng)`; verify `noiseSystem.getNoiseLevel(...)` ≥ `HECKLE_POLICE_NOISE_THRESHOLD`; verify `wantedSystem.getWantedStars()` ≥ 1; verify `rumourNetwork` contains `HECKLE_CROWD_DISPERSAL`.
+
+5. **Trading Standards complaint removes Gary**: give player `CITIZENS_ADVICE_LEAFLET` and `BLESSED_WATER_BOTTLE`; call `StreetPreacherSystem.fileTradingStandardsComplaint(player, inventory, timeSystem, criminalRecord, notorietySystem)`; advance time by `TS_RESPONSE_HOURS_MAX` in-game hours; verify `StreetPreacherSystem.isGaryPresent()` == false; verify player COIN increased by `TS_WHISTLEBLOWER_REWARD`.
+
+// `StreetPreacherSystem.java` must be created as the sole new source file. New enum entries required: `RumourType` (4 entries), `AchievementType` (5 entries). New Material entries required: `MEGAPHONE`, `BLESSED_WATER_BOTTLE`. New PropType entries required: `MEGAPHONE_PROP`, `SANDWICH_BOARD_PROP`. `NPCType.STREET_PREACHER` already defined. `LandmarkType.POUND_SHOP` assumed present (from PoundShopSystem). New NPCType entry required: `TRADING_STANDARDS_OFFICER`.
