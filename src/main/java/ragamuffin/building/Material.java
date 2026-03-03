@@ -6196,7 +6196,34 @@ public enum Material {
     /**
      * FIZZY_DRINK_CAN — "Full, unopened. Could be thrown. Probably shouldn't be."
      * Throwable item. Throwing at WASP_NEST_PROP disperses wasps faster (3 NPCs stung, Wanted +1). */
-    FIZZY_DRINK_CAN("Fizzy Drink Can");
+    FIZZY_DRINK_CAN("Fizzy Drink Can"),
+
+    // ── Issue #1396: Northfield Royal Mail Strike ─────────────────────────────
+
+    /**
+     * TEABAG — "Proper Yorkshire. Found in the kitchen cupboard. Kettle-ready."
+     * Ingredient for crafting MUG_OF_TEA (KETTLE_PROP + TEABAG). Found in kitchen cupboard props. */
+    TEABAG("Teabag"),
+
+    /**
+     * SCAB_PARCEL_BAG — "Royal Mail sack. Four deliveries inside. Shame in every one."
+     * Temporary item given during the scab shift; removed on shift end or abandonment. */
+    SCAB_PARCEL_BAG("Scab Parcel Bag"),
+
+    /**
+     * HANDWRITTEN_PARCEL — "Brown paper, string, biro address. Pensioner special."
+     * Unofficial courier parcel given by a frustrated PENSIONER or PUBLIC NPC. Single-use delivery item. */
+    HANDWRITTEN_PARCEL("Handwritten Parcel"),
+
+    /**
+     * UNION_HERO_BADGE — "TUC solidarity pin badge. Reduces PCSO suspicion by 1 star."
+     * Wearable reward for completing the full solidarity path on day 3. */
+    UNION_HERO_BADGE("Union Hero Badge"),
+
+    /**
+     * BOLT_CUTTER — "Heavy-duty. One snip and you're in. Single use."
+     * Tool — bypasses locked doors/props in 1 use (vs. 3 CROWBAR uses). Fenceable. */
+    BOLT_CUTTER("Bolt Cutter");
 
     private final String displayName;
 
@@ -9765,6 +9792,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // A5 flyer
             case CUP_OF_TEA:
                 return IconShape.CYLINDER;    // mug of tea
+
+            // Issue #1396: Northfield Royal Mail Strike
+            case TEABAG:
+                return IconShape.BOX;         // small square teabag
+            case SCAB_PARCEL_BAG:
+                return IconShape.BOX;         // Royal Mail sack
+            case HANDWRITTEN_PARCEL:
+                return IconShape.BOX;         // brown-paper parcel
+            case UNION_HERO_BADGE:
+                return IconShape.FLAT_PAPER;  // pin badge / flat disc
+            case BOLT_CUTTER:
+                return IconShape.TOOL;        // heavy-duty cutting tool
 
             default:
                 return IconShape.BOX;

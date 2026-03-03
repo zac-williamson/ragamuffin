@@ -3042,7 +3042,20 @@ public enum NPCType {
      * Cheats blatantly at Parents' Race (shoves NPCs, cuts corners). 85% win rate
      * if not bribed or tripped. Quote: "It's not about winning, Kevin. Yes it is."
      * HP: 22f, attack: 0f, cooldown: 0f, hostile: false. */
-    KEVINS_DAD(22f, 0f, 0f, false);
+    KEVINS_DAD(22f, 0f, 0f, false),
+
+    // ── Issue #1396: Northfield Royal Mail Strike ─────────────────────────────
+
+    /** STRIKER — Postal worker on the picket line outside the sorting office.
+     * Patrols slowly with PLACARD_PROP. Becomes HOSTILE (state=ANGRY) on seeing a
+     * scab player but does not attack unless attacked first. Shouts "Scab!" speech bubbles.
+     * HP: 20f, attack: 3f, cooldown: 1.5f, hostile: false. */
+    STRIKER(20f, 3f, 1.5f, false),
+
+    /** POSTAL_MANAGER — management representative who arrives at 17:00 on strike day 3.
+     * Passive NPC; triggers strike resolution dialogue. No combat capability.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    POSTAL_MANAGER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
