@@ -622,7 +622,7 @@ public class BaltiHouseSystem {
                 notorietySystem.addNotoriety(RESTAURANT_THEFT_NOTORIETY, null);
             }
             if (bashir != null) {
-                bashir.setState(NPCState.CHASING);
+                bashir.setState(NPCState.CHASING_PLAYER);
             }
             // Seed caught-thief rumour
             if (rumourNetwork != null && npcs != null && !npcs.isEmpty()) {
