@@ -1159,5 +1159,25 @@ public enum RumourType {
      * Seeded day after results for 7-day post-election effect window.
      * Triggers faction bonuses based on winning faction.
      * Spreads via PUBLIC, PENSIONER NPCs. */
-    ELECTION_AFTERMATH;
+    ELECTION_AFTERMATH,
+
+    // ── Issue #1381: Northfield Bank Holiday Street Party ─────────────────────
+
+    /** "Heard Gerald took a bung to keep quiet at the do."
+     * Seeded by StreetPartySystem when player bribes Gerald.
+     * Triggers THE_COUNCIL −5 respect.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    CORRUPT_OFFICIAL,
+
+    /** "Someone lamped Gerald from Neighbourhood Watch at the street party. Unbelievable scenes."
+     * Seeded by StreetPartySystem when player punches Gerald.
+     * Triggers ASSAULT crime + Notoriety +8 + WantedSystem +1.
+     * Spreads via PUBLIC NPCs. */
+    GERALD_DOWN,
+
+    /** "The BBQ at the street party went up. Half the road was on fire."
+     * Seeded by StreetPartySystem when BBQ goes OUT_OF_CONTROL and spreads to 3+ blocks.
+     * Triggers ARSON crime + Notoriety +10 + NeighbourhoodSystem VIBES −5.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    FIRE_HAZARD;
 }

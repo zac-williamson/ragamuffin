@@ -6067,6 +6067,62 @@ public enum AchievementType {
         "Democracy Denier",
         "You single-handedly tanked a candidate's campaign. Churchill is spinning.",
         1
+    ),
+
+    // ── Issue #1381: Northfield Bank Holiday Street Party ─────────────────────
+
+    /**
+     * BANK_HOLIDAY_REGULAR — attend 3 street parties (target=3).
+     */
+    BANK_HOLIDAY_REGULAR(
+        "All the Fun of the Street",
+        "You've been to three Northfield street parties. You've had warm lager at all of them.",
+        3
+    ),
+
+    /**
+     * STREET_PARTY_GOOD_NEIGHBOUR — party runs to 20:00 uninterrupted (target=1).
+     */
+    STREET_PARTY_GOOD_NEIGHBOUR(
+        "Community Spirit",
+        "You helped keep the peace. Gerald is still annoying.",
+        1
+    ),
+
+    /**
+     * GERALD_DOWN — punch Gerald the Neighbourhood Watch chairman (target=1).
+     */
+    GERALD_DOWN(
+        "Someone Had to Do It",
+        "Gerald from Neighbourhood Watch has been on the floor. He asked for it.",
+        1
+    ),
+
+    /**
+     * RAFFLE_THIEF — steal the prize box (target=1).
+     */
+    RAFFLE_THIEF(
+        "Eyes on the Prize",
+        "You stole the raffle prizes at a street party. Brenda is devastated.",
+        1
+    ),
+
+    /**
+     * BBQ_ARSONIST — cause a 3+ block BBQ fire (target=1).
+     */
+    BBQ_ARSONIST(
+        "Hazard Warning",
+        "A disposable BBQ. An entire road. Good work.",
+        1
+    ),
+
+    /**
+     * COMMEMORATIVE_COLLECTOR — win the commemorative mug (target=1).
+     */
+    COMMEMORATIVE_COLLECTOR(
+        "Where Were You in 2014?",
+        "You won a mug. It commemorates nothing important. You treasure it.",
+        1
     );
 
     private final String name;
