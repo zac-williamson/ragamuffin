@@ -625,6 +625,17 @@ public enum LandmarkType {
      */
     VEHICLE_IMPOUND,
 
+    // ── Issue #1329: Northfield Traffic Warden ────────────────────────────────
+
+    /**
+     * Issue #1329: COUNCIL_CAR_PARK — the pay-and-display car park adjacent to
+     * the Council Office. Contains PAY_AND_DISPLAY_MACHINE_PROP. Clive (TRAFFIC_WARDEN)
+     * patrols here and surrounding streets on a 20-block circuit (Mon–Sat 08:00–18:00),
+     * issuing PENALTY_CHARGE_NOTICE for unticketted vehicles.
+     * Managed by TrafficWardenSystem.
+     */
+    COUNCIL_CAR_PARK,
+
     // ── Issue #1205: Northfield DVSA Test Centre ──────────────────────────────
 
     /**
@@ -833,6 +844,7 @@ public enum LandmarkType {
             case INFO_BROKER_PUB:       return "The Feathers";
             case COUNCIL_OFFICE:        return "Northfield Council Office";
             case VEHICLE_IMPOUND:       return "Vehicle Impound";
+            case COUNCIL_CAR_PARK:      return "Council Car Park";
             case DVSA_TEST_CENTRE:      return "Northfield DVSA Test Centre";
             case CITIZENS_ADVICE:       return "Northfield Citizens Advice";
             case DRIVING_SCHOOL:        return "BSM Driving School";
