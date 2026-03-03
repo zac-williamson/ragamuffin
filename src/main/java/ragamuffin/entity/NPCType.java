@@ -3559,7 +3559,35 @@ public enum NPCType {
      * sell the stolen PLANNING_PERMISSION_DOC, or provoke him to boost community
      * sympathy. Becomes hostile if attacked. Passive otherwise.
      */
-    PROPERTY_DEVELOPER(30f, 5f, 0f, false);
+    PROPERTY_DEVELOPER(30f, 5f, 0f, false),
+
+    // ── Issue #1506: Northfield Wargames & Tabletop Society ───────────────────
+
+    /**
+     * WARGAMES_CHAIRMAN — Brian Schofield, chairman of the Northfield Wargames &amp;
+     * Tabletop Society. Runs Saturday sessions 14:00–18:00 in the community centre
+     * back room. Collects membership fees (3 COIN), keeps the TOURNAMENT_LEDGER in
+     * his bag. Opens the rare miniature cabinet at 15:30 to show off to visitors.
+     * Calls police at Notoriety ≥ 3 when witnessing theft; becomes hostile after
+     * caught pickpocket.
+     */
+    WARGAMES_CHAIRMAN(30f, 3f, 1.5f, false),
+
+    /**
+     * WARGAMES_MEMBER — one of six regular hobbyists attending Saturday sessions.
+     * Pushes painted miniatures, argues about historical accuracy, drinks tea.
+     * Becomes IRRITATED at Brian if the tournament rig is exposed.
+     * Spreads WARGAMES_MATCH_WIN and TOURNAMENT_RIGGED_EXPOSED rumours.
+     */
+    WARGAMES_MEMBER(20f, 2f, 2.0f, false),
+
+    /**
+     * WARGAMES_RINGER — hired ringer brought in by Brian for the quarterly
+     * tournament. Appears only on tournament days. Has an artificially suppressed
+     * win chance (RIGGED_WIN_CHANCE = 0.2) under Brian's rig, 0.5 when rig is
+     * exposed. Passive; leaves after the tournament concludes.
+     */
+    WARGAMES_RINGER(20f, 2f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

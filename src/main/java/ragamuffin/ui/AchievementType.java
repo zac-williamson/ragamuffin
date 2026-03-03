@@ -7709,6 +7709,68 @@ public enum AchievementType {
         "Sportsmanship",
         "You gave the county trophy back. Dave's given you free entry for life. Probably feels weird.",
         1
+    ),
+
+    // ── Issue #1506: Northfield Wargames & Tabletop Society ───────────────────
+
+    /**
+     * HOBBY_GENERAL — win 5 games against WARGAMES_MEMBER NPCs at the society.
+     * Brian begrudgingly acknowledges your ability. Seeds WARGAMES_MATCH_WIN.
+     */
+    HOBBY_GENERAL(
+        "Hobby General",
+        "Won 5 games at the Saturday wargames club. Brian didn't clap but he nearly did.",
+        5
+    ),
+
+    /**
+     * MINIATURE_MAESTRO — complete 5 painting sessions at PAINTING_TABLE_PROP.
+     * Each session produces a PAINTED_MINIATURE and awards CRAFTING XP.
+     */
+    MINIATURE_MAESTRO(
+        "Miniature Maestro",
+        "Painted 5 miniatures. Your brushwork is suspiciously good for someone who lives in a squat.",
+        5
+    ),
+
+    /**
+     * WARGAMES_CHAMPION — win the quarterly society tournament.
+     * Awarded on resolving the final round; grants 20 COIN + WARGAMES_TROPHY.
+     */
+    WARGAMES_CHAMPION(
+        "Wargames Champion",
+        "Won the Northfield Wargames &amp; Tabletop Society quarterly tournament. Brian is livid.",
+        1
+    ),
+
+    /**
+     * RESTORED_ORDER — win the tournament after exposeRig() was called, i.e. the
+     * bracket reverted to fair 50% and the player still won.
+     */
+    RESTORED_ORDER(
+        "Restored Order",
+        "Won the wargames tournament fair and square after exposing Brian's rigging. Honour restored.",
+        1
+    ),
+
+    /**
+     * MINIATURE_HEIST — steal the RARE_MINIATURE_SET from the cabinet unwitnessed.
+     * Cabinet must be accessed during the 15:30 window or with a LOCKPICK outside hours.
+     */
+    MINIATURE_HEIST(
+        "Miniature Heist",
+        "Nicked the Northfield Wargames Society's rare Napoleonic set. Brian will never recover.",
+        1
+    ),
+
+    /**
+     * SILENT_INFORMANT — sell the TOURNAMENT_LEDGER to the fence without having
+     * publicly exposed the rig via exposeRig().
+     */
+    SILENT_INFORMANT(
+        "Silent Informant",
+        "Sold Brian's dodgy ledger to a fence without making a scene. Very professional.",
+        1
     );
 
     private final String name;

@@ -1931,5 +1931,35 @@ public enum RumourType {
      * Right off the display table. Who does that?"
      * — seeded by DartsLeagueSystem when COUNTY_FINAL_TROPHY_PROP is stolen.
      * Spreads via PUBLIC and DARTS_PLAYER NPCs. Vibes −2. */
-    TROPHY_GONE;
+    TROPHY_GONE,
+
+    // ── Issue #1506: Northfield Wargames & Tabletop Society ──────────────────
+
+    /** "Someone's been beating the regulars at the Saturday wargames."
+     * — seeded by WargamesSystem on a GAME_VICTORY.
+     * Spreads via WARGAMES_MEMBER and PUBLIC NPCs. Vibes +1. */
+    WARGAMES_MATCH_WIN,
+
+    /** "Brian's been rigging the wargames tournament for years. The ledger proves it."
+     * — seeded by WargamesSystem.exposeRig() when TOURNAMENT_LEDGER is held at
+     * tournament start. Spreads via WARGAMES_MEMBER, PUBLIC, JOURNALIST.
+     * Notoriety contribution +6 on Brian. Vibes +2. */
+    TOURNAMENT_RIGGED_EXPOSED,
+
+    /** "Someone nicked the Northfield society's rare Napoleonic set."
+     * — seeded by WargamesSystem when RARE_MINIATURE_SET is stolen unwitnessed
+     * and later discovered missing. Spreads via WARGAMES_MEMBER and PUBLIC.
+     * Notoriety contribution +5. */
+    MINIATURE_HEIST_RUMOUR,
+
+    /** "NORTHFIELD WARGAMES BOSS RIGGED TOURNAMENT FOR YEARS — EXCLUSIVE"
+     * — seeded by WargamesSystem when TOURNAMENT_LEDGER is sold to JOURNALIST.
+     * Spreads via PUBLIC and JOURNALIST. Triggers NewspaperSystem headline. */
+    TOURNAMENT_SCANDAL_HEADLINE,
+
+    /** "The wargames tournament was finally won fair and square after Brian's
+     * cheating was exposed."
+     * — seeded by WargamesSystem when player wins tournament after exposeRig().
+     * Spreads via WARGAMES_MEMBER and PUBLIC. Vibes +3. */
+    FAIR_WIN_RUMOUR;
 }

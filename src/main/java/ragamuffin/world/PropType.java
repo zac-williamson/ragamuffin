@@ -4708,7 +4708,54 @@ public enum PropType {
      * hitsToBreak = 0 (E-interact only).
      * Collision: 0.30f × 0.45f × 0.20f.
      */
-    COUNTY_FINAL_TROPHY_PROP(0.30f, 0.45f, 0.20f, 0, Material.HANDICAP_LEDGER);
+    COUNTY_FINAL_TROPHY_PROP(0.30f, 0.45f, 0.20f, 0, Material.HANDICAP_LEDGER),
+
+    // ── Issue #1506: Northfield Wargames & Tabletop Society ──────────────────
+
+    /**
+     * GAME_TABLE_PROP — a felt-covered trestle table used for wargame battles
+     * in the community centre back room. Press E to play a game against a
+     * WARGAMES_MEMBER (requires WARGAMES_MEMBERSHIP_CARD).
+     * hitsToBreak = 0 (E-interact only). No material drop.
+     * Collision: 1.20w × 0.80h × 0.60d.
+     */
+    GAME_TABLE_PROP(1.20f, 0.80f, 0.60f, 0, null),
+
+    /**
+     * PAINTING_TABLE_PROP — a cluttered table covered in paints, brushes and
+     * half-finished miniatures. Press E to start a 3-minute painting session
+     * (requires WARGAMES_MEMBERSHIP_CARD). Produces PAINTED_MINIATURE and XP.
+     * hitsToBreak = 0 (E-interact only). No material drop.
+     * Collision: 1.00w × 0.80h × 0.50d.
+     */
+    PAINTING_TABLE_PROP(1.00f, 0.80f, 0.50f, 0, null),
+
+    /**
+     * MINIATURE_CABINET_PROP — a locked glass display cabinet containing the
+     * RARE_MINIATURE_SET_PROP. Normally locked; openable with LOCKPICK outside
+     * session hours, or freely during the 5-minute window at 15:30 on Saturdays.
+     * Press E to interact (open/loot).
+     * hitsToBreak = 0 (E-interact only). Drops RARE_MINIATURE_SET when looted.
+     * Collision: 0.60w × 1.40h × 0.30d.
+     */
+    MINIATURE_CABINET_PROP(0.60f, 1.40f, 0.30f, 0, Material.RARE_MINIATURE_SET),
+
+    /**
+     * RARE_MINIATURE_SET_PROP — the boxed first-edition Napoleonic Grande Armée
+     * set displayed inside MINIATURE_CABINET_PROP. Decorative; replaced by
+     * MINIATURE_CABINET_PROP for loot interaction.
+     * hitsToBreak = 0 (display only). No drop (loot handled by cabinet).
+     * Collision: 0.40w × 0.20h × 0.30d.
+     */
+    RARE_MINIATURE_SET_PROP(0.40f, 0.20f, 0.30f, 0, null),
+
+    /**
+     * TOURNAMENT_BRACKET_PROP — a printed bracket sheet pinned to the back-room
+     * noticeboard on tournament days. Purely decorative; press E to view bracket.
+     * hitsToBreak = 0 (E-interact only). No material drop.
+     * Collision: 0.60w × 0.80h × 0.05d.
+     */
+    TOURNAMENT_BRACKET_PROP(0.60f, 0.80f, 0.05f, 0, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -86,5 +86,8 @@ public enum NPCState {
     ANGRY,              // NPC is angry at the player (e.g. Brenda after charity fraud detected)
 
     // ── Issue #1430: Halloween ────────────────────────────────────────────────
-    ROWDY               // NPC is rowdy/disruptive (e.g. YOUTH_GANG during Halloween wind-down)
+    ROWDY,              // NPC is rowdy/disruptive (e.g. YOUTH_GANG during Halloween wind-down)
+
+    // ── Issue #1506: Northfield Wargames & Tabletop Society ───────────────────
+    IRRITATED           // NPC is irritated/disgruntled (e.g. WARGAMES_MEMBER after rig exposed)
 }
