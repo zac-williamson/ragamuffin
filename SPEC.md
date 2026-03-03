@@ -57703,3 +57703,132 @@ The `PLANNING_APPLICATION_DOCUMENT` can be:
 5. **Unwitnessed trespass three times sets BANNED_FROM_CLUB flag**: create system; ensure no NPCs within `TRESPASS_WITNESS_RANGE`; call `digWithoutPermission(player, inventory, nearbyNpcs=[], rng)` × `BANNED_TRESPASS_COUNT`; verify `detectoristsSystem.isBannedFromClub()` == true; then call `joinDig(player, inventory, keithNpc, timeSystem)`; verify result == `JoinResult.BANNED`.
 
 // `DetectoristsSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Sunday schedule, Janet window), `FenceSystem` (finds fence values, `TREASURE_DODGING` trigger), `CriminalRecord` (new `FIELD_TRESPASS`, `TREASURE_DODGING`; existing `BURGLARY`, `AFFRAY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `TREASURE_DODGER`, `SALTLEY_POACHER`, `GOOD_SAMARITAN`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `AllotmentSystem` (field bounds), `ScrapyardSystem` (no direct dependency, but `OLD_COIN`/`IRON_BUCKLE` are fenceable at scrapyard), and `AchievementSystem`. New NPCTypes: `DETECTORIST_CHAIR`, `DETECTORIST`, `PAS_OFFICER`, `RIVAL_DETECTORIST`. New Materials: `METAL_DETECTOR`, `DIG_PERMISSION_SLIP`, `BOTTLE_TOP`, `OLD_COIN`, `IRON_BUCKLE`, `MUSKET_BALL`, `SILVER_BROOCH`, `ROMAN_COIN`, `ROMAN_BROOCH`, `PAS_RECEIPT`. New PropTypes: `CLUB_NOTICE_PROP`, `FINDS_TABLE_PROP`, `HOARD_LOCATION_PROP`, `DETECTORISTS_TROPHY_PROP`. New RumourTypes: `TREASURE_DODGER`, `SALTLEY_POACHER`, `GOOD_SAMARITAN`. New CrimeTypes: `FIELD_TRESPASS`, `TREASURE_DODGING`. New AchievementTypes: `HOARD_FINDER`, `TREASURE_HUNTER`, `FIELD_ENFORCER`.
+
+---
+
+## Issue #1497: Add Northfield Karate Club — Sensei Gary's Wednesday Dojo, the Belt Grading Scam & the Trophy Cabinet Heist
+
+**Overview**: Every Wednesday from 18:30–20:00, Sensei Gary Stubbs (`NPCType.KARATE_INSTRUCTOR`) runs the Northfield Shotokan Karate Club in the main hall of the Community Centre (`LandmarkType.COMMUNITY_CENTRE`). Four to six junior students (`NPCType.KARATE_KID`) arrive in their gis, bow at the door, and run through katas. At 19:30 a seniors session begins with two adult `PUBLIC` NPCs who take themselves very seriously. The club hosts a belt grading every three in-game weeks (day 21, 42, etc.) at 14:00 on a Sunday — Gary charges 8 COIN per student for "examination fees" even though he issues whatever belt he feels like. The player can join legitimately, pay for accelerated grading, exploit the grading scam, or steal the club's trophy cabinet while Gary is teaching.
+
+### Schedule (repeats weekly)
+
+- **Wednesday 18:00** — Gary arrives at Community Centre, sets up `DOJO_MAT_PROP` (a 10×6 area of the main hall).
+- **Wednesday 18:30** — 4–6 `KARATE_KID` NPCs arrive; session starts. Gary demonstrates katas (`KARATE_INSTRUCTOR` speech: "Kiai!" etc.).
+- **Wednesday 19:30** — Adults join; juniors continue in background.
+- **Wednesday 20:00** — Session ends; NPCs disperse. Gary locks the `TROPHY_CABINET_PROP`.
+- **Day 21/42/63 (Sunday 14:00–16:00)** — Belt Grading event. All registered students attend.
+
+### Mechanic 1 — Joining the Club (legitimate path)
+
+- Player approaches Gary (press E) during a session or up to 30 minutes before it starts.
+- Join fee: `MEMBERSHIP_FEE_COIN` = 5 COIN. Gary gives `CLUB_MEMBERSHIP_CARD`.
+- Player must hold `KARATE_GI` (purchasable from `LEISURE_CENTRE` for 4 COIN, or charity shop for 1 COIN with 40% chance of ill-fitting). Without it, Gary says "You can't train in jeans, son." and refuses entry.
+- Once joined, player can attend sessions and earn `BELT_GRADE_XP` per session (1 XP per session attended; belt advances at 3 XP per grade). Starting belt: WHITE. Order: WHITE → YELLOW → ORANGE → GREEN.
+- Gary awards the next belt via speech: "Right lad, that's your [colour] belt. Don't let me down."
+
+### Mechanic 2 — The Belt Grading Scam
+
+- Every grading day (Sunday 14:00), Gary charges every attending student `GRADING_FEE_COIN` = 8 COIN for the examination.
+- Gary always passes everyone regardless of ability — the "grading" is purely a revenue stream.
+- **Player exploit**: with `PRINTING_PRESS` item (from `ScrapyardSystem` or crafted: 2 WOOD + 1 INK_CARTRIDGE), player can forge `FORGED_GRADE_CERTIFICATE` and sell it to `KARATE_KID` NPCs for 6 COIN each (max 3 per grading day, as parents get suspicious).
+- Selling forged certificates: `CrimeType.FRAUD` in CriminalRecord; if Gary witnesses the transaction (within `GARY_WITNESS_RANGE` = 10.0f blocks), `WantedSystem` +1 and Gary becomes hostile (NPCState.HOSTILE). Unwitnessed: no crime beyond CriminalRecord entry.
+- **Reporting Gary**: player can report the grading scam to `TRADING_STANDARDS_OFFICER` NPC (spawns at Community Centre on grading days 10:00–12:00). Report triggers `RumourType.GRADING_SCAM` seeded across all `KARATE_KID`/parent NPCs; Gary receives a warning notice (prop on his door). Achievement: `AchievementType.CONSUMER_CHAMPION`.
+- Alternatively, player can blackmail Gary (approach with evidence of 2+ witnessed grading fees collected → press E → "Pay me 10 coin or I'm calling Trading Standards"): Gary pays 10 COIN; `CrimeType.BLACKMAIL` recorded; `RumourType.CLUB_SNITCH` seeded (Vibes −2). Gary becomes permanently hostile after paying once.
+
+### Mechanic 3 — The Trophy Cabinet Heist
+
+- Gary keeps the club's `KARATE_TROPHY_PROP` and `REGIONAL_CHAMPION_SHIELD_PROP` in a locked `TROPHY_CABINET_PROP` in the back office of the Community Centre.
+  - `KARATE_TROPHY_PROP`: fenceable for 10 COIN.
+  - `REGIONAL_CHAMPION_SHIELD_PROP`: fenceable for 20 COIN, or pawnable for 12 COIN.
+- **Heist window**: Wednesday 18:30–20:00 (Gary is on the mat, not in the back office). Back office has `BACK_OFFICE_DOOR_PROP` (lockable; `LOCKPICK` silent, 2 charges; or CROWBAR 3 hits, loud).
+- CCTV: a `CCTV_CAMERA_PROP` covers the corridor to the back office. Player must hold `CCTV_TAPE` (looted from `CCTV_CAMERA_PROP` using SCREWDRIVER + 1 punch; tape becomes blank `BLANK_TAPE`) or wear `HOODIE_UP` to reduce camera detection to 0%.
+- Unwitnessed heist (no NPC within `COMMUNITY_CENTRE_WITNESS_RANGE` = 8.0f blocks, CCTV dealt with): yields both trophies. Achievement: `AchievementType.DOJO_RAIDER`.
+- Witnessed: `CrimeType.BURGLARY` + Notoriety +8 + WantedSystem +2.
+- If player returns trophy to Gary voluntarily (press E with trophy in inventory): `RumourType.HONOURABLE_THIEF` seeded; Gary respects player (+1 free session, `FREE_SESSION_TOKEN` item given). Achievement: `AchievementType.HONOURABLE_THIEF`.
+
+### Mechanic 4 — The Sparring Incident
+
+- During the adult session (Wed 19:30–20:00), player can challenge an adult `PUBLIC` NPC to spar (press E on NPC wearing gi while holding `CLUB_MEMBERSHIP_CARD`). NPC accepts.
+- Spar: 3-round mini-game. Each round: player presses E at right time (0.5–1.0s window after Gary calls "Hajime!"). Win round = NPCState.STUNNED on opponent for 2s; lose = player takes `SPAR_DAMAGE` = 3 damage.
+- Win all 3: opponent embarrassed; `RumourType.KARATE_CHAMPION` seeded (Vibes +2); `AchievementType.NORTHFIELD_CHAMPION`.
+- Lose 2+: player knocked to floor for 3s; NPC laughs; `RumourType.GOT_BATTERED_AT_KARATE` seeded (Vibes −1).
+- If player attacks an opponent outside the spar mechanic (left-click NPC in the dojo): Gary intervenes immediately (NPCState.HOSTILE), calls PCSO within 30s. `CrimeType.AFFRAY`.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `MEMBERSHIP_FEE_COIN` | 5 |
+| `GRADING_FEE_COIN` | 8 |
+| `BELT_GRADES_XP_PER_BELT` | 3 |
+| `FORGED_CERT_SALE_PRICE` | 6 |
+| `MAX_FORGED_CERTS_PER_GRADING` | 3 |
+| `GARY_WITNESS_RANGE` | 10.0f |
+| `COMMUNITY_CENTRE_WITNESS_RANGE` | 8.0f |
+| `BLACKMAIL_PAYMENT` | 10 |
+| `KARATE_TROPHY_FENCE_VALUE` | 10 |
+| `REGIONAL_SHIELD_FENCE_VALUE` | 20 |
+| `REGIONAL_SHIELD_PAWN_VALUE` | 12 |
+| `SPAR_DAMAGE` | 3 |
+| `SESSION_START_HOUR` | 18.5f |
+| `SESSION_END_HOUR` | 20.0f |
+| `GRADING_START_HOUR` | 14.0f |
+| `GRADING_END_HOUR` | 16.0f |
+| `GRADING_DAY_INTERVAL` | 21 |
+
+### Entities Required
+
+**Reused NPCTypes (already defined — no new entries needed):**
+- `NPCType.KARATE_INSTRUCTOR` — Gary Stubbs, Sensei. Runs sessions. Hostile if provoked or caught witnessing fraud.
+- `NPCType.KARATE_KID` — junior students (4–6 per session).
+- `NPCType.PUBLIC` — adult sparring partners (2 per adult session).
+- `NPCType.TRADING_STANDARDS_OFFICER` — already defined; spawns on grading day mornings.
+
+**New Materials required:**
+- `Material.KARATE_GI` — clothing item; required to join club. Purchasable or looted.
+- `Material.CLUB_MEMBERSHIP_CARD` — issued by Gary on joining. Required for sparring.
+- `Material.FORGED_GRADE_CERTIFICATE` — crafted from PRINTING_PRESS + BLANK_PAPER. Sellable to KARATE_KID NPCs.
+- `Material.FREE_SESSION_TOKEN` — given by Gary if trophy returned. Waives membership fee for 1 session.
+- `Material.KARATE_TROPHY_PROP` — heist target; fenceable 10 COIN. (Also add as `PropType.KARATE_TROPHY_PROP`.)
+- `Material.REGIONAL_CHAMPION_SHIELD_PROP` — heist target; fenceable 20 COIN, pawnable 12 COIN.
+
+**New PropTypes required:**
+- `PropType.DOJO_MAT_PROP` — 10×6 mat area in Community Centre main hall. Defines session boundary.
+- `PropType.BACK_OFFICE_DOOR_PROP` — lockable door to Community Centre back office.
+- `PropType.KARATE_TROPHY_PROP` — trophy in cabinet.
+- `PropType.REGIONAL_CHAMPION_SHIELD_PROP` — shield in cabinet.
+
+**New RumourTypes required:**
+- `RumourType.GRADING_SCAM` — "Gary at the karate club's been charging 8 quid a time for belts he gives out for nothing. Trading Standards have had a word." Seeds among KARATE_KID/PUBLIC NPCs. Vibes 0 (neutral).
+- `RumourType.CLUB_SNITCH` — "Someone grassed Gary up over the grading fees. Or tried to blackmail him. Either way, he's not happy." Vibes −2.
+- `RumourType.KARATE_CHAMPION` — "Some lad smashed Derek at sparring on Wednesday. Gary was dead impressed." Vibes +2.
+- `RumourType.GOT_BATTERED_AT_KARATE` — "That muppet challenged Derek to a spar and got dropped in the first round. Gary had to stop it." Vibes −1.
+- `RumourType.HONOURABLE_THIEF` — "Someone broke into the dojo back room and then brought the trophy back. Gary gave them a free lesson." Vibes +3.
+
+**New CrimeTypes required (in CriminalRecord):**
+- `CrimeType.BLACKMAIL` — threatening Gary with Trading Standards unless he pays up.
+
+**Already defined — no new entries needed:**
+- `CrimeType.FRAUD` — used for forged certificate sales.
+- `CrimeType.BURGLARY` — trophy cabinet break-in if witnessed.
+- `CrimeType.AFFRAY` — unsanctioned dojo fighting.
+- `AchievementType.CONSUMER_CHAMPION` — reporting the grading scam (already defined).
+
+**New AchievementTypes required:**
+- `AchievementType.DOJO_RAIDER` — steal both trophies unwitnessed.
+- `AchievementType.NORTHFIELD_CHAMPION` — win the sparring contest.
+- `AchievementType.HONOURABLE_THIEF` — return the stolen trophy to Gary.
+
+### Integration Tests
+
+1. **Joining with KARATE_GI and paying 5 COIN grants CLUB_MEMBERSHIP_CARD**: create `KarateSystem`; give player 5 COIN and `Material.KARATE_GI`; set time to Wednesday 18:20 (pre-session); call `joinClub(player, inventory, garyNpc, timeSystem)`; verify result == `JoinResult.SUCCESS`; verify `inventory.contains(Material.CLUB_MEMBERSHIP_CARD)` == true; verify `inventory.getItemCount(Material.COIN)` == 0.
+
+2. **Attending 3 sessions advances belt from WHITE to YELLOW**: create system; join club; call `attendSession(player, timeSystem)` × 3 (simulating 3 separate Wednesday sessions with day advances between); verify `karateSystem.getBeltGrade(player)` == `BeltGrade.YELLOW`; verify Gary's speech contains "yellow belt".
+
+3. **Selling 3 forged certificates unwitnessed records FRAUD 3 times**: create system; give player `Material.FORGED_GRADE_CERTIFICATE` × 3; set no NPCs within `GARY_WITNESS_RANGE`; call `sellForgedCert(player, inventory, kidNpc, criminalRecord, garyNpc)` × 3; verify `criminalRecord.countCrime(CrimeType.FRAUD)` == 3; verify `inventory.getItemCount(Material.COIN)` == 18 (3 × 6 COIN); verify `wantedSystem.getStars()` == 0 (unwitnessed).
+
+4. **Witnessed forged cert sale sets WantedSystem +1 and Gary goes HOSTILE**: create system; position garyNpc within `GARY_WITNESS_RANGE`; call `sellForgedCert(player, inventory, kidNpc, criminalRecord, garyNpc)`; verify `wantedSystem.getStars()` >= 1; verify `garyNpc.getState()` == `NPCState.HOSTILE`.
+
+5. **Unwitnessed back-office break-in yields both trophies and DOJO_RAIDER achievement**: create system; give player `Material.LOCKPICK` with 2 charges; ensure no NPCs within `COMMUNITY_CENTRE_WITNESS_RANGE` and CCTV disabled (blank tape inserted); call `breakInToBackOffice(player, inventory, nearbyNpcs=[], cameraDisabled=true)`; verify `inventory.contains(Material.KARATE_TROPHY_PROP)` == true; verify `inventory.contains(Material.REGIONAL_CHAMPION_SHIELD_PROP)` == true; verify `achievementCallback` received `AchievementType.DOJO_RAIDER`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == false.
+
+// `KarateSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Wednesday session schedule, grading day), `CriminalRecord` (new `BLACKMAIL`; existing `FRAUD`, `BURGLARY`, `AFFRAY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `GRADING_SCAM`, `CLUB_SNITCH`, `KARATE_CHAMPION`, `GOT_BATTERED_AT_KARATE`, `HONOURABLE_THIEF`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (trophy fence values), `PawnShopSystem` (shield pawn value), `AchievementSystem`, and `HealingSystem` (spar damage). New Materials: `KARATE_GI`, `CLUB_MEMBERSHIP_CARD`, `FORGED_GRADE_CERTIFICATE`, `FREE_SESSION_TOKEN`. New PropTypes: `DOJO_MAT_PROP`, `BACK_OFFICE_DOOR_PROP`, `KARATE_TROPHY_PROP`, `REGIONAL_CHAMPION_SHIELD_PROP`. New RumourTypes: `GRADING_SCAM`, `CLUB_SNITCH`, `KARATE_CHAMPION`, `GOT_BATTERED_AT_KARATE`, `HONOURABLE_THIEF`. New CrimeType: `BLACKMAIL`. New AchievementTypes: `DOJO_RAIDER`, `NORTHFIELD_CHAMPION`, `HONOURABLE_THIEF`. Reused NPCTypes: `KARATE_INSTRUCTOR`, `KARATE_KID`, `PUBLIC`, `TRADING_STANDARDS_OFFICER`.
