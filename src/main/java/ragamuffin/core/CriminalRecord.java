@@ -1123,7 +1123,14 @@ public class CriminalRecord {
          * and the bribe fails (40% failure chance). Triggers WantedSystem +2 stars,
          * Notoriety +10, and HMRC_TIPPED_OFF rumour.
          */
-        BRIBERY_OF_PUBLIC_OFFICIAL("Bribery of a public official (HMRC inspector)");
+        BRIBERY_OF_PUBLIC_OFFICIAL("Bribery of a public official (HMRC inspector)"),
+
+        /**
+         * Recorded when Trading Standards Officer catches the player selling 3+
+         * stolen goods at the Sunday car boot sale. Triggers Notoriety +10,
+         * NewspaperSystem headline, and STOLEN_GOODS_MARKET rumour.
+         */
+        TRADING_STANDARDS_BUST("Selling stolen goods at a car boot sale (Trading Standards bust)");
 
         private final String displayName;
 

@@ -2869,7 +2869,48 @@ public enum NPCType {
      * (no questions asked, up to 3 items per session). Seeds COMMUNITY_WIN rumours.
      * HP: 15f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    CHURCH_LADY(15f, 0f, 0f, false);
+    CHURCH_LADY(15f, 0f, 0f, false),
+
+    // ── Issue #1363: Northfield Sunday Car Boot Sale ───────────────────────────
+
+    /**
+     * BOOT_SALE_ORGANISER — Barry the car boot sale organiser. Collects pitch
+     * fees (3 COIN) from vendors before 06:15, manages the council car park
+     * site (06:00–12:00 Sundays), and calls Clive (TRAFFIC_WARDEN) after noon
+     * to clear remaining pitches. HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    BOOT_SALE_ORGANISER(25f, 0f, 0f, false),
+
+    /**
+     * DODGY_VENDOR — Derek the dodgy vendor. Offers stolen goods to players
+     * with Street Rep ≥ 30. Buys and sells at 50% fence value with no notoriety
+     * unless NEIGHBOURHOOD_WATCH is nearby. Retreats from TRADING_STANDARDS_OFFICER
+     * NPCs. HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    DODGY_VENDOR(20f, 0f, 0f, false),
+
+    /**
+     * BOOT_SALE_VENDOR — one of 4–8 regular vendors at the Sunday car boot
+     * sale. Sells junk items from a folding table and open car boot. Can be
+     * haggled with (70% price, 50% acceptance rate). After 3 failed haggles
+     * becomes VENDOR_DISPUTE hostile. HP: 20f, attack: 3f, cooldown: 2f, hostile: false.
+     */
+    BOOT_SALE_VENDOR(20f, 3f, 2f, false),
+
+    /**
+     * BOOT_SALE_PUNTER — one of 6–12 bargain-hunting punters competing with
+     * the player for items at the Sunday car boot sale. Auto-buys from player
+     * pitches every 2 in-game minutes. HP: 15f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    BOOT_SALE_PUNTER(15f, 0f, 0f, false),
+
+    /**
+     * TRADING_STANDARDS_OFFICER — spawns during TRADING_STANDARDS_STING event
+     * when 3+ stolen goods have been sold openly. Records TRADING_STANDARDS_BUST
+     * crime, adds Notoriety +10, triggers NewspaperSystem headline. HP: 30f,
+     * attack: 0f, cooldown: 0f, hostile: false.
+     */
+    TRADING_STANDARDS_OFFICER(30f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

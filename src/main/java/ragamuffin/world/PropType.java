@@ -3580,7 +3580,38 @@ public enum PropType {
      * by normal means (hitsToBreak: 999). Drops its contained MYSTERY_BOX material on
      * auction win.
      */
-    MYSTERY_BOX_PROP(0.60f, 0.60f, 0.60f, 999, Material.MYSTERY_BOX);
+    MYSTERY_BOX_PROP(0.60f, 0.60f, 0.60f, 999, Material.MYSTERY_BOX),
+
+    // ── Issue #1363: Northfield Sunday Car Boot Sale ───────────────────────────
+
+    /**
+     * BOOT_SALE_TABLE_PROP — a folding trestle table loaded with boot sale
+     * junk. Spawned per BOOT_SALE_VENDOR pitch in the council car park on
+     * Sundays 06:00–12:00. Player can browse items by pressing E. Takes 5
+     * hits to overturn (drops its current stock items). Width/depth: 1.0f×0.5f.
+     */
+    BOOT_SALE_TABLE_PROP(1.0f, 0.80f, 0.50f, 5, null),
+
+    /**
+     * CAR_BOOT_PROP — open car boot (hatchback rear section) serving as
+     * vendor storage display at the car boot sale. Decorative collision zone;
+     * 8 hits to break. Drops VHS_TAPE on destruction.
+     */
+    CAR_BOOT_PROP(1.80f, 1.20f, 0.80f, 8, Material.VHS_TAPE),
+
+    /**
+     * PITCH_MARKER_PROP — painted kerb stone or chalked square marking a
+     * vendor pitch slot in the car park. Indestructible (hitsToBreak: 999).
+     * No material drop. Used by CarBootSaleSystem to track pitch assignments.
+     */
+    PITCH_MARKER_PROP(0.30f, 0.10f, 0.30f, 999, null),
+
+    /**
+     * BOOT_SALE_SIGN_PROP — A4 laminated sign reading "NORTHFIELD CAR BOOT
+     * SALE — EVERY SUNDAY 6AM". Stapled to the car park entrance fence post.
+     * 3 hits to remove. Drops null (sign tears). Press E to read event details.
+     */
+    BOOT_SALE_SIGN_PROP(0.20f, 0.50f, 0.05f, 3, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

@@ -5862,6 +5862,52 @@ public enum AchievementType {
         "Dawn Raid Survivor",
         "You went out the back window. Never look back.",
         1
+    ),
+
+    // ── Issue #1363: Northfield Sunday Car Boot Sale ───────────────────────────
+
+    /**
+     * Awarded when the player buys an item at the car boot sale and discovers
+     * a hidden gem (BETAMAX_PLAYER or FONDUE_SET with 5% gem-find chance).
+     * Fires in CarBootSaleSystem on the gem-find roll succeeding.
+     */
+    BOOT_SALE_TREASURE(
+        "Boot Sale Treasure",
+        "You found something valuable inside that old box. Result.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully sells all 8 items from their pitch
+     * at the Sunday car boot sale (pitch sells out completely before noon).
+     * Fires in CarBootSaleSystem when pitchItemsSold reaches 8.
+     */
+    BOOT_SALE_SELLER(
+        "Boot Sale Seller",
+        "Cleared your pitch by 11. Not bad for 6am on a Sunday.",
+        1
+    ),
+
+    /**
+     * Awarded when the player sprints to a table within 30 seconds of 06:00
+     * and receives the –15% early-bird first-pick discount.
+     * Fires in CarBootSaleSystem when earlyBirdDiscountApplied is set true.
+     */
+    FIRST_PICK(
+        "First Pick",
+        "Up before the sun. First to the table. Legend.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully haggles 5 different items down to
+     * 70% price at the car boot sale across any number of sessions.
+     * Tracked by hagglesSucceeded counter; fires at count == 5.
+     */
+    BOOT_SALE_HUSTLER(
+        "Boot Sale Hustler",
+        "Five haggled down. You should be on a market stall.",
+        5
     );
 
     private final String name;
