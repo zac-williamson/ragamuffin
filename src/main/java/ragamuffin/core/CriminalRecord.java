@@ -1261,7 +1261,23 @@ public class CriminalRecord {
          * </ul>
          * Having a CAMERA_TAMPERING record blocks the Legitimate Operator Licence application.
          */
-        CAMERA_TAMPERING("Interference with a speed enforcement device");
+        CAMERA_TAMPERING("Interference with a speed enforcement device"),
+
+        // ── Issue #1418: Northfield QuickFix Loans (PaydayLoanSystem) ─────────
+
+        /**
+         * Recorded when the player defaults on a QuickFix Loans debt (Day 3 overdue).
+         * Triggers WantedSystem +1 star, permanent ban from QuickFix Loans, and
+         * DEBT_SPIRAL achievement. Penalty: +5 Notoriety.
+         */
+        LOAN_DEFAULTED("Loan default (QuickFix Loans)"),
+
+        /**
+         * Recorded when the player uses a FAKE_ID to take out a loan while banned
+         * from QuickFix Loans. 15% chance Darren recognises the player, triggering
+         * WantedSystem +1. Penalty: +5 Notoriety on detection.
+         */
+        IDENTITY_FRAUD("Identity fraud (QuickFix Loans)");
 
         private final String displayName;
 

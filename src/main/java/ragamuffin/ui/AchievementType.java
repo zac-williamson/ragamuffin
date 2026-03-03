@@ -6807,6 +6807,59 @@ public enum AchievementType {
         "Poacher Turned Gamekeeper",
         "You've gone legit. Sharon seems quietly pleased. HMRC has been notified.",
         1
+    ),
+
+    // ── Issue #1418: Northfield QuickFix Loans (PaydayLoanSystem) ────────────
+
+    /**
+     * FIRST_LOAN — take out the first loan from Darren at QuickFix Loans.
+     * Awarded by PaydayLoanSystem when the first LOAN_AGREEMENT is issued.
+     */
+    FIRST_LOAN(
+        "In Hock",
+        "Borrowed money from a man with a tattoo of a pound sign on his neck. Promising start.",
+        1
+    ),
+
+    /**
+     * BOTTLED_THE_BAILIFF — attack Terry the bailiff when he comes knocking.
+     * Awarded by PaydayLoanSystem on first assault of BAILIFF NPC.
+     * Consequence: WantedSystem +2, BAILIFF_ASSAULT in CriminalRecord.
+     */
+    BOTTLED_THE_BAILIFF(
+        "Bottled the Bailiff",
+        "Terry was only doing his job. You were only doing yours.",
+        1
+    ),
+
+    /**
+     * BURNING_DEBT — use LIGHTER on the FILING_CABINET_PROP to wipe an active loan via arson.
+     * Awarded by PaydayLoanSystem on successful filing cabinet fire.
+     */
+    BURNING_DEBT(
+        "Burning Debt",
+        "Technically the records no longer exist. Neither does the filing cabinet.",
+        1
+    ),
+
+    /**
+     * LOAN_RANGER — photograph loan terms with STOLEN_PHONE and sell to journalist.
+     * Awarded by PaydayLoanSystem when 15 COIN is received from the journalist tip-off.
+     */
+    LOAN_RANGER(
+        "Loan Ranger",
+        "Hi-yo, Silver — you've done the investigative journalism Northfield deserves.",
+        1
+    ),
+
+    /**
+     * ANOTHER_IDENTITY — use FAKE_ID to apply for a loan while banned.
+     * Awarded by PaydayLoanSystem on first FAKE_ID loan application (regardless of detection).
+     */
+    ANOTHER_IDENTITY(
+        "Another Identity",
+        "Darren might recognise you. Might not. It's fifty-fifty, really.",
+        1
     );
 
     private final String name;
