@@ -6179,6 +6179,63 @@ public enum AchievementType {
         "Night Owl",
         "Still out after midnight on Halloween. The estate is yours. Almost.",
         1
+    ),
+
+    // ── Issue #1383: Northfield Boxing Day Sales ──────────────────────────────
+
+    /**
+     * BOXING_DAY_EARLY_BIRD — join the Iceland queue before 06:00 on Boxing Day (target=1).
+     */
+    BOXING_DAY_EARLY_BIRD(
+        "Boxing Day Early Bird",
+        "You queued at 5:30am outside Iceland in December. For a prawn ring. Respect.",
+        1
+    ),
+
+    /**
+     * SALE_SHARK — undersell Wayne by selling a self-acquired GEORGE_FOREMAN_GRILL to
+     * queue NPCs for 14 COIN (target=1).
+     */
+    SALE_SHARK(
+        "Sale Shark",
+        "Undercut Wayne's van operation. He won't forget this.",
+        1
+    ),
+
+    /**
+     * BOXING_DAY_VILLAIN — rob Wayne's van with a CROWBAR during the Boxing Day sale (target=1).
+     */
+    BOXING_DAY_VILLAIN(
+        "Boxing Day Villain",
+        "Robbed Wayne's Boxing Day van. The queue slow-clapped. Mixed reviews.",
+        1
+    ),
+
+    /**
+     * CHARITY_SHOP_TREASURE — pull a GENUINE_FIRST_PRESSING from Brenda's VINYL_RECORD_BOX (target=1).
+     */
+    CHARITY_SHOP_TREASURE(
+        "Charity Shop Treasure",
+        "Found a genuine first pressing in Brenda's record box. She had no idea.",
+        1
+    ),
+
+    /**
+     * SALE_MEDIATOR — step in to resolve a SALE_DISPUTE fight over the GEORGE_FOREMAN_GRILL (target=1).
+     */
+    SALE_MEDIATOR(
+        "Sale Mediator",
+        "Broke up a Boxing Day brawl over a George Foreman Grill. Diplomatically.",
+        1
+    ),
+
+    /**
+     * BLACKOUT_BANDIT — exploit the CCTV blackout window at Iceland on Boxing Day (target=1).
+     */
+    BLACKOUT_BANDIT(
+        "Blackout Bandit",
+        "Took full advantage of the CCTV outage. Sharon tripped over the cable. Timing is everything.",
+        1
     );
 
     private final String name;

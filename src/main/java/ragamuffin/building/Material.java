@@ -6015,7 +6015,50 @@ public enum Material {
     POINTY_HAT("Pointy Hat"),
 
     /** Wearable costume accessory — part of the witch/vampire costume set. */
-    BLACK_CAPE("Black Cape");
+    BLACK_CAPE("Black Cape"),
+
+    // ── Issue #1383: Northfield Boxing Day Sales ──────────────────────────────
+
+    /**
+     * Frozen Prawn Ring — "A ring of frozen prawns. A Boxing Day staple."
+     * Iceland sale item; 50% off during rush window (06:00–07:30). */
+    FROZEN_PRAWN_RING("Frozen Prawn Ring"),
+
+    /**
+     * Party Food Platter — "Assorted party snacks on a plastic tray."
+     * Iceland sale item; 50% off during rush window. */
+    PARTY_FOOD_PLATTER("Party Food Platter"),
+
+    /**
+     * Luxury Biscuit Tin — "A large tin of assorted biscuits. Someone will eat all the nice ones first."
+     * Iceland sale item, limited stock (8 units); scalped by Wayne outside. */
+    LUXURY_BISCUIT_TIN("Luxury Biscuit Tin"),
+
+    /**
+     * George Foreman Grill — "The one everyone wants. There's only one left."
+     * Iceland sale item, strictly 1 unit; triggers SALE_DISPUTE fight if two NPCs reach it.
+     * Wayne scalps it for 15 COIN. Selling one to queue NPCs for 14 COIN awards SALE_SHARK. */
+    GEORGE_FOREMAN_GRILL("George Foreman Grill"),
+
+    /**
+     * Bread Maker — "Not what anyone queued for. Still, it's something."
+     * Charity shop Boxing Day stock; actually useful — flip at PawnShop for 2 COIN. */
+    BREAD_MAKER("Bread Maker"),
+
+    /**
+     * Vinyl Record Box — "A cardboard box of mixed records. Mostly rubbish."
+     * Charity shop Boxing Day stock; 5% chance contains a GENUINE_FIRST_PRESSING. */
+    VINYL_RECORD_BOX("Vinyl Record Box"),
+
+    /**
+     * Genuine First Pressing — "Rare. 8 COIN at PawnShop. Brenda has no idea."
+     * Hidden inside VINYL_RECORD_BOX (5% chance). Awards CHARITY_SHOP_TREASURE. */
+    GENUINE_FIRST_PRESSING("Genuine First Pressing"),
+
+    /**
+     * HDMI Cable — "Found near the DVR. Suspiciously tangled."
+     * Looted near Iceland DVR; connection to the CCTV Blackout incident. */
+    HDMI_CABLE("HDMI Cable");
 
     private final String displayName;
 
@@ -7345,6 +7388,21 @@ public enum Material {
             case POINTY_HAT:        return c(0.10f, 0.08f, 0.12f); // Black witch hat
             case BLACK_CAPE:        return c(0.08f, 0.08f, 0.10f); // Deep black cape
 
+            // Issue #1383: Northfield Boxing Day Sales
+            case FROZEN_PRAWN_RING:      return c(0.88f, 0.62f, 0.55f); // Pale pink/peach
+            case PARTY_FOOD_PLATTER:     return cs(0.92f, 0.88f, 0.78f, // Cream platter
+                                                   0.88f, 0.22f, 0.18f); // Red food items
+            case LUXURY_BISCUIT_TIN:     return cs(0.72f, 0.12f, 0.12f, // Deep red tin
+                                                   0.85f, 0.72f, 0.10f); // Gold embossing
+            case GEORGE_FOREMAN_GRILL:   return cs(0.20f, 0.22f, 0.25f, // Dark grey grill body
+                                                   0.65f, 0.65f, 0.68f); // Silver grill plate
+            case BREAD_MAKER:            return c(0.72f, 0.70f, 0.65f);  // Off-white plastic
+            case VINYL_RECORD_BOX:       return cs(0.75f, 0.62f, 0.38f, // Brown cardboard
+                                                   0.10f, 0.10f, 0.10f); // Black record peek
+            case GENUINE_FIRST_PRESSING: return cs(0.10f, 0.10f, 0.10f, // Black vinyl
+                                                   0.82f, 0.72f, 0.10f); // Gold label
+            case HDMI_CABLE:             return c(0.18f, 0.18f, 0.20f);  // Dark grey/black cable
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -7906,6 +7964,15 @@ public enum Material {
             case PUMPKIN_INNARDS:
             case POINTY_HAT:
             case BLACK_CAPE:
+            // Issue #1383: Northfield Boxing Day Sales — not block items
+            case FROZEN_PRAWN_RING:
+            case PARTY_FOOD_PLATTER:
+            case LUXURY_BISCUIT_TIN:
+            case GEORGE_FOREMAN_GRILL:
+            case BREAD_MAKER:
+            case VINYL_RECORD_BOX:
+            case GENUINE_FIRST_PRESSING:
+            case HDMI_CABLE:
                 return false;
             default:
                 return true;
@@ -9512,6 +9579,24 @@ public enum Material {
                 return IconShape.BOX;         // pointed hat
             case BLACK_CAPE:
                 return IconShape.FLAT_PAPER;  // folded cape
+
+            // Issue #1383: Northfield Boxing Day Sales
+            case FROZEN_PRAWN_RING:
+                return IconShape.FOOD;        // ring of frozen prawns
+            case PARTY_FOOD_PLATTER:
+                return IconShape.BOX;         // flat plastic platter
+            case LUXURY_BISCUIT_TIN:
+                return IconShape.BOX;         // round biscuit tin
+            case GEORGE_FOREMAN_GRILL:
+                return IconShape.BOX;         // compact electric grill
+            case BREAD_MAKER:
+                return IconShape.BOX;         // boxy kitchen appliance
+            case VINYL_RECORD_BOX:
+                return IconShape.BOX;         // cardboard box of records
+            case GENUINE_FIRST_PRESSING:
+                return IconShape.CYLINDER;    // rare vinyl disc
+            case HDMI_CABLE:
+                return IconShape.TOOL;        // cable / lead shape
 
             default:
                 return IconShape.BOX;
