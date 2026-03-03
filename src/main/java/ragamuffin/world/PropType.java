@@ -3401,7 +3401,20 @@ public enum PropType {
      * punches (+50 noise). Provides entry to the evidence room without triggering
      * the custody door alarm. Drops GLASS when destroyed.
      */
-    BACK_WINDOW_PROP(0.70f, 0.80f, 0.10f, 3, Material.GLASS);
+    BACK_WINDOW_PROP(0.70f, 0.80f, 0.10f, 3, Material.GLASS),
+
+    // ── Issue #1339: Council Enforcement Day ──────────────────────────────────
+
+    /**
+     * COUNCIL_NOTICE_PROP — an official council enforcement notice pinned to the
+     * community centre noticeboard the evening before a Council Enforcement Day
+     * (at 19:00 on days 13, 27, 41…). The notice warns residents of the next
+     * day's multi-agency sweep. Pressing E reads the notice and seeds the
+     * ENFORCEMENT_SWEEP rumour if not already seeded. Awards FOREWARNED
+     * achievement on first interaction. Removed at 08:00 on the sweep day.
+     * Indestructible (pinned notice).
+     */
+    COUNCIL_NOTICE_PROP(0.60f, 0.40f, 0.02f, Integer.MAX_VALUE, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

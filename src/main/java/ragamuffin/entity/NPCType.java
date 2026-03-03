@@ -2666,7 +2666,38 @@ public enum NPCType {
      * backup if attacked. Provides access to the custody suite for processing.
      * HP: 30f, attack: 5f, cooldown: 2.0f, hostile: false.
      */
-    CUSTODY_SERGEANT(30f, 5f, 2.0f, false);
+    CUSTODY_SERGEANT(30f, 5f, 2.0f, false),
+
+    // ── Issue #1339: Council Enforcement Day ──────────────────────────────────
+
+    /**
+     * DVLA_OFFICER — Karen, the DVLA enforcement officer deployed on Council
+     * Enforcement Day (every 14 in-game days, 08:00–17:00). Checks vehicle
+     * registration plates at road junctions. If the player has no DRIVING_LICENCE
+     * in inventory, the vehicle is towed and NO_INSURANCE_DRIVING is recorded.
+     * Escorted by a POLICE_PATROL during the sweep.
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    DVLA_OFFICER(25f, 0f, 0f, false),
+
+    /**
+     * BENEFITS_INVESTIGATOR — Phil, the DWP benefits investigator deployed on
+     * Council Enforcement Day. Cross-references DWPSystem with EmploymentSystem;
+     * if the player is working while claiming benefits, records BENEFIT_FRAUD and
+     * adds +2 to WantedSystem. Escorted by a POLICE_PATROL.
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    BENEFITS_INVESTIGATOR(25f, 0f, 0f, false),
+
+    /**
+     * WARDEN_TRAINEE — an inexperienced trainee deployed alongside Clive
+     * (TRAFFIC_WARDEN) on Council Enforcement Day. Has a 50% error rate — may
+     * ticket the wrong car. Their mistake creates a 5-minute free-parking window
+     * while Clive is distracted sorting it out. Awards WARDEN_CHAOS achievement
+     * when the error fires.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    WARDEN_TRAINEE(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

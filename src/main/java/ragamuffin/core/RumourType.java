@@ -938,5 +938,16 @@ public enum RumourType {
      * ENQUIRY_COUNTER_PROP. Spreads via PUBLIC and PENSIONER NPCs.
      * MagistratesCourtSystem reduces sentence tier by one step on the next hearing.
      * Notoriety −10 on seeding; awards CAME_IN_QUIETLY achievement. */
-    TURNED_YOURSELF_IN;
+    TURNED_YOURSELF_IN,
+
+    // ── Issue #1339: Council Enforcement Day ──────────────────────────────────
+
+    /** "Council's doing one of their big enforcement sweeps tomorrow — TV licensing,
+     * traffic wardens, DVLA, the lot. Posted a notice on the community centre board."
+     * — seeded by CouncilEnforcementSystem at 19:00 the evening before each sweep day
+     * (days 13, 27, 41… — i.e. one day before the actual enforcement on days 14, 28, 42…).
+     * Spreads via PUBLIC, BARMAN, and PENSIONER NPCs.
+     * Awards FOREWARNED achievement on first seeding the player hears.
+     * Gives the player time to pre-empt citations (lay low, move cars, hide TVs). */
+    ENFORCEMENT_SWEEP;
 }
