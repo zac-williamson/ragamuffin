@@ -56231,3 +56231,113 @@ A `RECORD_COLLECTOR` NPC (Trevor) visits every Wednesday 13:00–16:00, hunting 
 5. **Vinyl broadcast on pirate radio draws listeners**: give player 1 `VINYL_RECORD`; set `PirateRadioSystem` active; call `RecordShopSystem.broadcastVinyl(player, inventory, pirateRadioSystem, npcManager, rumourNetwork, neighbourhoodSystem, rng_no_gerald)`; verify `inventory.hasItem(Material.VINYL_RECORD)` == false (consumed); verify `npcManager.getSpawnedCount(NPCType.LISTENER)` >= `PIRATE_RADIO_LISTENER_BONUS`; verify `rumourNetwork` contains `RumourType.PIRATE_RADIO_SET`.
 
 // `RecordShopSystem.java` must be created as the sole new source file. New `LandmarkType.RECORD_SHOP`, `NPCType.RECORD_SHOP_OWNER`, `NPCType.RECORD_COLLECTOR`, `PropType.RECORD_SHELF_PROP`, and `Material.FAKE_RARE_LABEL` entries are required. New `AchievementType` entries required: `CLEARING_OUT`, `TREVOR_REGULAR`, `CLIVE_KNOWS_NOTHING`, `ON_AIR_DJ`. `VINYL_RECORD`, `BOX_OF_RECORDS`, `PRINTER_PAPER`, `INK_BOTTLE`, `CrimeType.FRAUD`, `RumourType.LOCAL_EVENT`, `RumourType.TRADING_SCAM`, `RumourType.PIRATE_RADIO_SET` already defined.
+
+## Northfield Closing-Down Sale — Dave's Everything Must Go, the Shill Shift & the Liquidation Heist
+
+### Overview
+
+**Dave's Electronics & Electrical** has been "closing down" for three years. The handwritten A-frame outside reads "FINAL WEEK — EVERYTHING MUST GO — UP TO 70% OFF" and has visibly yellowed in the window. Dave (`CLOSING_DOWN_DAVE` NPC) runs the perpetual fake-sale from a cramped shopfront on the high street, cycling his "closing down" signs every 30 in-game days while quietly restocking the shelves. He sells a rotating stock of knockoff electronics — hair dryers, extension leads, dodgy phone chargers, a suspiciously light "laptop" — at "reduced" prices that are, in fact, higher than RRP.
+
+`LandmarkType.CLOSING_DOWN_SHOP` is open Mon–Sat 09:00–17:30. On Sundays Dave is always "stock-taking" (visibly eating a pasty in the back, glimpsed through the bead curtain). Every 30 in-game days the shop cycles its CLOSING_DOWN_PHASE (values: FINAL_WEEK, LAST_FEW_DAYS, GENUINELY_CLOSING_TOMORROW, REOPENED_UNDER_NEW_MANAGEMENT — then loops back to FINAL_WEEK).
+
+### Mechanic 1 — Shopping the Fake Sale (Mon–Sat 09:00–17:30)
+
+- Dave stocks 8–12 `KNOCKOFF_ELECTRONIC` items per day (randomised from: KNOCKOFF_HAIRDRYER, KNOCKOFF_EXTENSION_LEAD, KNOCKOFF_CHARGER, KNOCKOFF_TELLY, KNOCKOFF_LAPTOP, KNOCKOFF_KETTLE).
+- Each item has a `SALE_PRICE` (2–8 COIN) which is the "70% off" tag. Actual market value (fence/resale value) is 50–80% of the sale price — the player is never getting a bargain.
+- Pressing E on Dave opens a buy menu. Dave insists each item is "going today, mate, definitely going today."
+- `KNOCKOFF_LAPTOP` is special: fence value 3 COIN, but can be traded to `INTERNET_CAFE_OWNER` (internet café) for `INTERNET_CAFE_DISCOUNT_CARD` — 2 free internet sessions.
+- Dave refuses Notoriety ≥ `DAVE_REFUSE_NOTORIETY` (50) or players carrying any POLICE_BADGE item.
+
+### Mechanic 2 — Shill Shift (available Mon–Fri 09:30–13:00)
+
+Dave offers the player a cash-in-hand shill job: stand near the A-frame outside and tell passing NPCs the sale ends today.
+
+- Press E on Dave, select "Any work going?" → Dave hires player as shill for `SHILL_WAGE` (2 COIN + 1 COIN tip per punter who enters and buys something).
+- During the shill shift, player must stay within `SHILL_RADIUS` (12 blocks) of the shopfront. Leaving for more than `SHILL_LEAVE_SECONDS` (30 seconds) ends the shift — Dave deducts the tip bonus.
+- Shill action: press E on any `WANDERING` or `BORED` NPC within shill radius → dialogue choice: "Mate, that closing-down shop is proper selling out — last chance today." Success rate `SHILL_PERSUASION_BASE` (55%), modified −15% if player Notoriety Tier ≥ 3 (NPCs already suspicious).
+- Each persuaded NPC who enters the shop triggers a `PUNTER_ENTERS` event; Dave tracks entries for tip calculation.
+- Shift ends at 13:00. Dave pays: base wage + (tips × entries). If player persuaded 0 NPCs: Dave docks the base wage to `SHILL_FAILURE_WAGE` (1 COIN) with the line "You're useless, mate."
+- `COUNCIL_ENFORCEMENT_OFFICER` NPC (Gary) patrols the high street and has a `GARY_CHALLENGE_CHANCE` (35%) per pass of challenging the player's shill patter as "misleading advertising." Options: show FAKE_ID (Gary accepts, no consequence), run (`OBSTRUCTION_CHARGE` crime, Notoriety +2, ends shift), or argue (50% success; failure = `MISLEADING_ADVERTISING` crime + `WantedSystem` +1 star).
+- Achievement: `HUMAN_SANDWICH_BOARD` — complete 5 shill shifts without Gary catching you.
+
+### Mechanic 3 — Trading Standards Tip-Off
+
+After the player witnesses Dave's closing-down phase cycle once (i.e., sees the shop reopen under "NEW MANAGEMENT" then flip back to FINAL_WEEK), the player's journal unlocks a "Report Dave" option.
+
+- Interact with any Trading Standards NPC (at `LandmarkType.COUNCIL_OFFICES`, during their Mon/Wed/Fri 09:30–12:30 patrol) and select "Report a misleading sale."
+- Player submits the report: requires they have witnessed `TS_EVIDENCE_VISITS` (3) separate CLOSING_DOWN_PHASE transitions (tracked internally).
+- Result: `TRADING_STANDARDS_INVESTIGATION` event triggers. Dave is issued a `PROHIBITION_NOTICE`. Shop closes for `TS_CLOSURE_DAYS` (4 in-game days). Dave is visibly furious when he reopens ("It was a misunderstanding, they've got no evidence") and briefly refuses to hire shills.
+- Reward: `TS_REWARD_COINS` (15 COIN) + Notoriety −3 (civic contribution). Achievement: `TRADING_STANDARDS_HERO` — "Dobbed in Dave's perpetual closing-down sale. He was back up on Monday."
+- Caveat: if player has previously completed any shill shifts for Dave, the TS officer notes the conflict of interest — reward is halved (8 COIN) and player receives a mild `CAUTION` entry in `CriminalRecord`.
+
+### Mechanic 4 — The Liquidation Heist
+
+On the last day of each `CLOSING_DOWN_PHASE` cycle (the "GENUINELY_CLOSING_TOMORROW" phase, day 29 of 30), Dave genuinely does receive a liquidation delivery: a `STOCKROOM_CRATE_PROP` appears in the back of the shop containing `LIQUIDATION_LOOT_COUNT` (6) random `KNOCKOFF_ELECTRONIC` items plus 1 guaranteed `BRAND_NAME_TELLY` (fence value 20 COIN — the one item in Dave's life that is actually worth something).
+
+- The stockroom (`STOCKROOM_PROP`) is behind the bead curtain. During opening hours Dave stands at the counter (always within `DAVE_COUNTER_RADIUS` = 4 blocks of the till). The stockroom is unwatched 09:00–10:00 while Dave is outside changing the sign.
+- **Heist window**: 09:00–10:00 on GENUINELY_CLOSING_TOMORROW day. Player must enter the shop, pass through the bead curtain (no lock), reach the `STOCKROOM_CRATE_PROP`, and hold E for `CRATE_LOOT_HOLD_SECONDS` (4s) to loot it.
+- If Dave returns early (he returns at 10:00 sharp; a `DAVE_SIGN_CHANGE_DELAY` random variance of ±5 minutes applies), Dave catches the player → `CrimeType.THEFT`, Notoriety +5, Wanted +2, Dave HOSTILE, banned from shop for remainder of phase.
+- Successful heist: player receives all 6 knockoffs + `BRAND_NAME_TELLY`. `RumourType.SHOP_BURGLARY` seeded to 3 nearby NPCs. Achievement: `EVERYTHING_MUST_GO` — "Helped Dave's sale along. Every last thing."
+- Optional: player can tip off `FENCE_NPC` (Della or Barry) beforehand for `FENCE_ADVANCE_COINS` (5 COIN) guaranteed payout on the `BRAND_NAME_TELLY`, regardless of the normal fence value roll.
+
+### Constants
+
+- `PHASE_CYCLE_DAYS = 30` — in-game days per full closing-down phase cycle.
+- `DAVE_REFUSE_NOTORIETY = 50` — notoriety threshold above which Dave refuses to serve.
+- `SHILL_WAGE = 2` — base COIN paid for a completed shill shift.
+- `SHILL_TIP_PER_PUNTER = 1` — COIN tip per persuaded punter who enters and buys.
+- `SHILL_FAILURE_WAGE = 1` — COIN paid when player persuades 0 punters.
+- `SHILL_RADIUS = 12` — blocks from shopfront within which player must stay during shill shift.
+- `SHILL_LEAVE_SECONDS = 30f` — real seconds player may leave shill radius before shift is forfeited.
+- `SHILL_PERSUASION_BASE = 0.55f` — base probability of persuading a passing NPC.
+- `SHILL_PERSUASION_PENALTY = 0.15f` — probability deducted at Notoriety Tier ≥ 3.
+- `GARY_CHALLENGE_CHANCE = 0.35f` — probability per Gary patrol pass of challenging the shill.
+- `GARY_ARGUE_SUCCESS = 0.50f` — probability of winning the argument with Gary.
+- `TS_EVIDENCE_VISITS = 3` — number of phase transitions player must witness to unlock tip-off.
+- `TS_CLOSURE_DAYS = 4` — in-game days shop is closed after Trading Standards action.
+- `TS_REWARD_COINS = 15` — COIN reward for successful Trading Standards tip-off.
+- `TS_CONFLICT_REWARD_COINS = 8` — reduced reward if player has previously worked as shill.
+- `LIQUIDATION_LOOT_COUNT = 6` — number of knockoff items in the stockroom crate.
+- `CRATE_LOOT_HOLD_SECONDS = 4f` — hold-E duration to loot the stockroom crate.
+- `DAVE_SIGN_CHANGE_DELAY = 5` — in-game minute variance on Dave's sign-change return time.
+- `FENCE_ADVANCE_COINS = 5` — guaranteed advance payout for pre-arranging BRAND_NAME_TELLY fence.
+- `BRAND_NAME_TELLY_FENCE_VALUE = 20` — base fence value of the BRAND_NAME_TELLY.
+
+### New NPCType Entry Required
+
+- `CLOSING_DOWN_DAVE` — Dave. Mid-50s, permanent look of weary optimism, always has a price gun in his breast pocket. Passive behind the counter; aggressive (HOSTILE) if player caught in stockroom. Shares one free `RumourType.LOCAL_GOSSIP` per conversation (always about his ongoing "liquidation").
+
+### New LandmarkType Entry Required
+
+- `CLOSING_DOWN_SHOP` — Dave's Electronics & Electrical. 8×6×3 shopfront on the high street. Always has the CLOSING_DOWN_SIGN_PROP in the window. Adjacent to `PAVEMENT` blocks.
+
+### New PropType Entries Required
+
+- `CLOSING_DOWN_SIGN_PROP` — the yellowed A-frame sign. Press E (during trading hours, player alone) to read current phase text. Indestructible. Changes text every `PHASE_CYCLE_DAYS` days.
+- `STOCKROOM_CRATE_PROP` — a battered cardboard packing crate. Hold E for `CRATE_LOOT_HOLD_SECONDS` to loot during the heist window. Disappears after looting; reappears on next GENUINELY_CLOSING_TOMORROW day.
+
+### New Material Entries Required
+
+- `KNOCKOFF_ELECTRONIC` — generic knockoff item (supertype for fence/trade purposes). Fence value 1–4 COIN. Usable as prop in crafting recipes (e.g., 3× KNOCKOFF_ELECTRONIC → 1 DISTRACTION_DEVICE at workbench).
+- `BRAND_NAME_TELLY` — the real deal, accidentally stocked. Fence value 20 COIN. Can be placed as a prop in player-owned squat (decorative; raises Squat Comfort by 5).
+
+### New AchievementType Entries Required
+
+- `HUMAN_SANDWICH_BOARD` — "Completed 5 shill shifts for Dave without Trading Standards catching you. You've got the gift of the gab." Target 5.
+- `TRADING_STANDARDS_HERO` — "Reported Dave's perpetual closing-down sale. He was back open on Monday." Target 1.
+- `EVERYTHING_MUST_GO` — "Looted Dave's stockroom on liquidation day. He would've wanted it this way." Target 1.
+- `NEVER_CLOSING_DOWN` — "Witnessed all four phases of Dave's closing-down cycle. You've outlasted the signs." Target 4.
+
+### Integration Tests
+
+1. **Phase cycle advances after PHASE_CYCLE_DAYS days**: create `ClosingDownSaleSystem`; set `phase = FINAL_WEEK`; advance time by `PHASE_CYCLE_DAYS` in-game days; call `ClosingDownSaleSystem.update(delta, timeSystem)`; verify `getPhase()` == `LAST_FEW_DAYS`; advance another `PHASE_CYCLE_DAYS` days; verify `getPhase()` == `GENUINELY_CLOSING_TOMORROW`.
+
+2. **Shill shift persuasion pays tip**: create `ClosingDownSaleSystem`; call `startShillShift(player, timeSystem_09:30)`; seed RNG to guarantee persuasion success; call `attemptShillPersuasion(player, wanderingNpc, rng_always_persuade, notoriety_tier1, npcManager)`; verify `npcManager` routes `wanderingNpc` to shop entrance; end shift via `endShillShift(player, timeSystem_13:00)`; verify player COIN increased by `SHILL_WAGE + SHILL_TIP_PER_PUNTER`.
+
+3. **Gary challenge caught triggers MISLEADING_ADVERTISING**: start shill shift; call `handleGaryChallenge(player, garyNpc, rng_always_challenge, rng_argue_fail, inventory_no_fake_id, criminalRecord, notorietySystem, wantedSystem)`; verify `criminalRecord.hasCrime(CrimeType.MISLEADING_ADVERTISING)` == true; verify `wantedSystem.getWantedStars()` >= 1; verify shill shift is no longer active.
+
+4. **TS tip-off succeeds after 3 phase transitions with shill conflict**: mark player as having completed 1 prior shill shift; record 3 phase transitions via `recordPhaseTransitionWitnessed()`; call `submitTSReport(player, criminalRecord, notorietySystem, rng_ts_success)`; verify `isShopClosed()` == true; verify player COIN increased by `TS_CONFLICT_REWARD_COINS` (not full reward); verify `criminalRecord.hasCrime(CrimeType.CAUTION)` == true; verify `notorietySystem.getNotoriety()` decreased by 3.
+
+5. **Liquidation heist succeeds in sign-change window**: set phase to `GENUINELY_CLOSING_TOMORROW`; set time to 09:30; verify `isHeistWindowOpen(timeSystem)` == true; call `attemptLootStockroom(player, inventory, rng_dave_late, notorietySystem, wantedSystem, criminalRecord, rumourNetwork)`; verify `inventory.getItemCount(Material.KNOCKOFF_ELECTRONIC)` == `LIQUIDATION_LOOT_COUNT`; verify `inventory.hasItem(Material.BRAND_NAME_TELLY)` == true; verify `rumourNetwork` contains `RumourType.SHOP_BURGLARY`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == true.
+
+// `ClosingDownSaleSystem.java` must be created as the sole new source file. New `LandmarkType.CLOSING_DOWN_SHOP`, `NPCType.CLOSING_DOWN_DAVE`, `PropType.CLOSING_DOWN_SIGN_PROP`, `PropType.STOCKROOM_CRATE_PROP`, `Material.KNOCKOFF_ELECTRONIC`, and `Material.BRAND_NAME_TELLY` entries are required. New `AchievementType` entries required: `HUMAN_SANDWICH_BOARD`, `TRADING_STANDARDS_HERO`, `EVERYTHING_MUST_GO`, `NEVER_CLOSING_DOWN`. `CrimeType.THEFT`, `CrimeType.FRAUD`, `RumourType.SHOP_BURGLARY`, `RumourType.LOCAL_GOSSIP` already defined. New `CrimeType.MISLEADING_ADVERTISING` and `CrimeType.CAUTION` entries are required.
