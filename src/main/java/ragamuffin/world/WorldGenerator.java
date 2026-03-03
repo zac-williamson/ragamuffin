@@ -2945,6 +2945,16 @@ public class WorldGenerator {
                 world.setBlock(x + dx, 1, z + dz, BlockType.TABLE);
             }
         }
+
+        // Issue #1463: Wall decorations — sport posters and beer chalkboard
+        // Sport poster on the left wall, mid-depth
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + depth / 2.0f,
+            PropType.PUB_SPORT_POSTER, 90f));
+        // Beer pump sign on the right wall near the bar
+        world.addPropPosition(new PropPosition(
+            x + width - 1.01f, 2.5f, z + depth - 4.0f,
+            PropType.BEER_PUMP_SIGN, 270f));
     }
 
     private void generateLibraryInterior(World world, int x, int z, int width, int depth) {
@@ -2966,6 +2976,11 @@ public class WorldGenerator {
         // Front desk
         world.setBlock(x + width / 2, 1, z + 1, BlockType.COUNTER);
         world.setBlock(x + width / 2 + 1, 1, z + 1, BlockType.COUNTER);
+
+        // Issue #1463: Wall decorations — library rules near the entrance
+        world.addPropPosition(new PropPosition(
+            x + 2.5f, 2.5f, z + 0.01f,
+            PropType.LIBRARY_RULES, 0f));
     }
 
     private void generateOfficeInterior(World world, int x, int z, int width, int depth) {
@@ -2987,6 +3002,14 @@ public class WorldGenerator {
         for (int dx = 2; dx < width - 2; dx++) {
             world.setBlock(x + dx, 1, z + 1, BlockType.COUNTER);
         }
+
+        // Issue #1463: Wall decorations — H&S notice and fire escape plan
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + 3.5f,
+            PropType.HEALTH_SAFETY_NOTICE, 90f));
+        world.addPropPosition(new PropPosition(
+            x + width - 1.01f, 2.5f, z + 3.5f,
+            PropType.FIRE_ESCAPE_PLAN, 270f));
     }
 
     // ==================== Issue #732: NEW BUILDING INTERIORS ====================
@@ -3024,6 +3047,14 @@ public class WorldGenerator {
             world.setBlock(x + 1, 1, z + dz, BlockType.BOOKSHELF);
             world.setBlock(x + width - 2, 1, z + dz, BlockType.BOOKSHELF);
         }
+
+        // Issue #1463: Wall decorations — H&S notice and fire escape plan on opposite side walls
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + 5.5f,
+            PropType.HEALTH_SAFETY_NOTICE, 90f));
+        world.addPropPosition(new PropPosition(
+            x + width - 1.01f, 2.5f, z + 5.5f,
+            PropType.FIRE_ESCAPE_PLAN, 270f));
     }
 
     /**
@@ -3065,6 +3096,11 @@ public class WorldGenerator {
         // Baptismal font near entrance (stone plinth)
         world.setBlock(x + 2, 1, z + 2, BlockType.STONE);
         world.setBlock(x + width - 3, 1, z + 2, BlockType.STONE);
+
+        // Issue #1463: Wall decorations — hymn board on the side wall near the altar
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + depth - 5.0f,
+            PropType.HYMN_BOARD, 90f));
     }
 
     /**
@@ -3097,6 +3133,14 @@ public class WorldGenerator {
         // Notice board shelves near entrance
         world.setBlock(x + 1, 1, z + 2, BlockType.BOOKSHELF);
         world.setBlock(x + 1, 2, z + 2, BlockType.BOOKSHELF);
+
+        // Issue #1463: Wall decorations — fire escape plan and H&S notice
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + 6.5f,
+            PropType.FIRE_ESCAPE_PLAN, 90f));
+        world.addPropPosition(new PropPosition(
+            x + width - 1.01f, 2.5f, z + 6.5f,
+            PropType.HEALTH_SAFETY_NOTICE, 270f));
     }
 
     /**
@@ -3127,6 +3171,14 @@ public class WorldGenerator {
         // Small office desk at back corner
         world.setBlock(x + width - 3, 1, z + depth - 3, BlockType.TABLE);
         world.setBlock(x + width - 3, 1, z + depth - 2, BlockType.COUNTER);
+
+        // Issue #1463: Wall decorations — safety signs on both side walls
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + depth / 2.0f,
+            PropType.SAFETY_SIGN, 90f));
+        world.addPropPosition(new PropPosition(
+            x + width - 1.01f, 2.5f, z + depth / 2.0f,
+            PropType.SAFETY_SIGN, 270f));
     }
 
     /**
@@ -3153,6 +3205,14 @@ public class WorldGenerator {
         for (int dz = 3; dz < depth - 2; dz += 2) {
             world.setBlock(x + 1, 1, z + dz, BlockType.BOOKSHELF);
         }
+
+        // Issue #1463: Wall decorations — alphabet chart and world map on the front wall
+        world.addPropPosition(new PropPosition(
+            x + width / 2.0f - 1.0f, 2.5f, z + 0.01f,
+            PropType.ALPHABET_CHART, 0f));
+        world.addPropPosition(new PropPosition(
+            x + width / 2.0f + 1.5f, 2.5f, z + 0.01f,
+            PropType.WORLD_MAP, 0f));
     }
 
     /**
@@ -3188,6 +3248,14 @@ public class WorldGenerator {
             world.setBlock(x + dx, 1, z + depth - 2, BlockType.BOOKSHELF);
             world.setBlock(x + dx, 2, z + depth - 2, BlockType.BOOKSHELF);
         }
+
+        // Issue #1463: Wall decorations — mugshot board and shift rota in the officer area
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + 7.5f,
+            PropType.MUGSHOT_BOARD, 90f));
+        world.addPropPosition(new PropPosition(
+            x + width - 1.01f, 2.5f, z + 7.5f,
+            PropType.SHIFT_ROTA, 270f));
     }
 
     /**
@@ -3227,6 +3295,14 @@ public class WorldGenerator {
             world.setBlock(x + width - 2, 1, z + dz, BlockType.SHELF);
             world.setBlock(x + width - 2, 2, z + dz, BlockType.SHELF);
         }
+
+        // Issue #1463: Wall decorations — shift rota and H&S notice in the crew room
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + depth * 0.75f,
+            PropType.SHIFT_ROTA, 90f));
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + depth * 0.75f + 2.0f,
+            PropType.HEALTH_SAFETY_NOTICE, 90f));
     }
 
     /**
@@ -3311,6 +3387,14 @@ public class WorldGenerator {
         for (int dx = 2; dx < width - 2; dx += 3) {
             world.setBlock(x + dx, 1, z + depth - 2, BlockType.SHELF);
         }
+
+        // Issue #1463: Wall decorations — swim timetable and fire escape plan in reception
+        world.addPropPosition(new PropPosition(
+            x + 1.01f, 2.5f, z + 1.5f,
+            PropType.SWIM_TIMETABLE, 90f));
+        world.addPropPosition(new PropPosition(
+            x + width - 1.01f, 2.5f, z + 1.5f,
+            PropType.FIRE_ESCAPE_PLAN, 270f));
     }
 
     // ==================== STREET FURNITURE ====================

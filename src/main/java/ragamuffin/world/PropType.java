@@ -4253,7 +4253,92 @@ public enum PropType {
      * Accessible during closed hours (23:00–17:00) via HARD 8 hits or 4-second lockpick.
      * Dims: 0.9 × 2.1 × 0.1; 8 HARD hits to break; drops WOOD.
      */
-    BALTI_BACK_DOOR_PROP(0.9f, 2.1f, 0.1f, 8, Material.WOOD);
+    BALTI_BACK_DOOR_PROP(0.9f, 2.1f, 0.1f, 8, Material.WOOD),
+
+    // ── Issue #1463: Building interior wall decorations ───────────────────────
+
+    /**
+     * HEALTH_SAFETY_NOTICE — a laminated green-and-white Health &amp; Safety
+     * Executive notice mounted on the wall of offices, warehouses, and public
+     * buildings. Purely decorative. Destroyed by 1 punch; yields nothing.
+     */
+    HEALTH_SAFETY_NOTICE(0.60f, 0.80f, 0.02f, 1, null),
+
+    /**
+     * FIRE_ESCAPE_PLAN — a framed fluorescent floor-plan diagram showing the
+     * fire-evacuation route. Found in offices, schools, and public buildings.
+     * Purely decorative. Destroyed by 1 punch; yields nothing.
+     */
+    FIRE_ESCAPE_PLAN(0.60f, 0.80f, 0.02f, 1, null),
+
+    /**
+     * PUB_SPORT_POSTER — a worn beer-brand football or darts poster pinned to
+     * a pub wall. Often features a Premier League club crest or a darts world
+     * champion. Purely decorative. Destroyed by 1 punch; yields nothing.
+     */
+    PUB_SPORT_POSTER(0.50f, 0.70f, 0.02f, 1, null),
+
+    /**
+     * BEER_PUMP_SIGN — a hand-chalked blackboard sign behind the bar listing
+     * today's real ales and their prices. Purely decorative.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    BEER_PUMP_SIGN(0.60f, 0.80f, 0.02f, 1, null),
+
+    /**
+     * ALPHABET_CHART — a brightly coloured classroom wall chart showing the
+     * alphabet with illustrated examples (A is for Apple, etc.).
+     * Found in the primary school. Destroyed by 1 punch; yields nothing.
+     */
+    ALPHABET_CHART(0.80f, 0.60f, 0.02f, 1, null),
+
+    /**
+     * WORLD_MAP — a large laminated world map on a classroom wall.
+     * Found in the primary school. Destroyed by 1 punch; yields nothing.
+     */
+    WORLD_MAP(1.00f, 0.70f, 0.02f, 1, null),
+
+    /**
+     * MUGSHOT_BOARD — a corkboard covered in photofit images and police
+     * intelligence printouts inside the police station. Purely decorative.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    MUGSHOT_BOARD(0.80f, 0.60f, 0.02f, 1, null),
+
+    /**
+     * SHIFT_ROTA — a laminated duty-rota sheet pinned to the wall of the police
+     * station or fire station. Purely decorative.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    SHIFT_ROTA(0.60f, 0.80f, 0.02f, 1, null),
+
+    /**
+     * HYMN_BOARD — a wooden hymn-number board mounted on a church wall.
+     * Displays four slide-in wooden number tiles showing today's hymns.
+     * Purely decorative. Destroyed by 2 punches; yields WOOD.
+     */
+    HYMN_BOARD(0.60f, 0.80f, 0.10f, 2, Material.WOOD),
+
+    /**
+     * LIBRARY_RULES — a framed list of library rules on the wall near the
+     * entrance (Silence, No Food, Return Books, etc.).
+     * Purely decorative. Destroyed by 1 punch; yields nothing.
+     */
+    LIBRARY_RULES(0.50f, 0.70f, 0.02f, 1, null),
+
+    /**
+     * SWIM_TIMETABLE — a large laminated timetable of pool sessions on the wall
+     * of the leisure centre reception. Purely decorative.
+     * Destroyed by 1 punch; yields nothing.
+     */
+    SWIM_TIMETABLE(0.80f, 0.60f, 0.02f, 1, null),
+
+    /**
+     * SAFETY_SIGN — a yellow-and-black industrial safety sign (e.g. "Hard Hat
+     * Area", "Forklift Operating") on a warehouse wall.
+     * Purely decorative. Destroyed by 1 punch; yields nothing.
+     */
+    SAFETY_SIGN(0.60f, 0.60f, 0.02f, 1, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
