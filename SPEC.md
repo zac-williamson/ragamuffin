@@ -50075,3 +50075,154 @@ NoiseSystem event level 25; Raj/Wayne calls police immediately if present.
 // Integration: WheeliBinFireSystem, CarDrivingSystem, CraftingSystem, WantedSystem,
 //   FenceSystem, RumourNetwork, NewspaperSystem, NeighbourhoodSystem, WeatherSystem,
 //   TaxiSystem, SkipDivingSystem, NoiseSystem, TimeSystem, AchievementSystem
+
+---
+
+## Issue #1381: Add Northfield Bank Holiday Street Party — The Trestle Tables, the BBQ Disaster & the Neighbours' War
+
+**Landmark**: Uses the residential street block adjacent to `COUNCIL_FLATS` and `TERRACED_HOUSE` landmarks (no new landmark needed; event spawns in the road).
+**System class**: `StreetPartySystem.java` in `ragamuffin.core`
+
+### Background
+
+Every 30 in-game days (days 30, 60, 90…) — representing a Bank Holiday Monday — the residents of Northfield's terraced street organise a street party. Brenda from No. 14 has been planning it for weeks; Dave from No. 7 has bought too much Carling; the Neighbourhood Watch chairman Gerald has submitted a road-closure application to the council (which he both organised AND approved). The party runs 12:00–20:00. It is chaos. It is Britain.
+
+Bunting (`BUNTING_PROP`) is strung between lamp-posts at 11:30. Trestle tables (`TRESTLE_TABLE_PROP`) are laid with crisps, sausage rolls, and warm lager. A disposable BBQ (`DISPOSABLE_BBQ_PROP`) burns in the middle of the road. At 18:00, Brenda initiates the prize raffle (`RAFFLE_DRUM_PROP`). At dusk, Gerald tries to shut it down.
+
+### Mechanic 1 — Attend & Socialise (press E at any NPC during the party)
+
+- Up to 12 `PUBLIC` NPCs, 2 `PENSIONER`, 2 `SCHOOL_KID`, and 1 `DOG` attend.
+- Each conversation interaction yields 1 `RUMOUR` item (drawn from `RumourNetwork` local gossip pool).
+- Eating food from the trestle table (`SAUSAGE_ROLL`, `CRISP_PACKET`, `WARM_LAGER`) is free but each item has a 20% chance of causing a food-poisoning debuff (3-minute debuff: −2 health/minute, animation sway).
+- `WARM_LAGER`: +10 hunger, +5 energy, −5 inhibition (lowers player's assault detection threshold by 1 tier for 5 in-game minutes). Tooltip: "It's flat. It's warm. It's British."
+
+### Mechanic 2 — BBQ Disaster (interact with DISPOSABLE_BBQ_PROP)
+
+The disposable BBQ has three states:
+- **UNLIT** (12:00–12:30): Press E to light it; requires `LIGHTER` or `PETROL_CAN_FULL` (instant light + NoiseSystem event level 5). If no player lights it in 30 minutes, Dave lights it at 12:30.
+- **LIT** (burning normally): Press E to cook a `RAW_SAUSAGE` → `COOKED_SAUSAGE` (30-second cook; +25 hunger). If `PETROL_CAN_FULL` is used to light it, cooking speed increases 2× but there is a 40% chance of an out-of-control fire (`NoiseSystem` event level 30, `FIRE_HAZARD` crime, −5 Neighbourhood vibes, police investigate).
+- **OUT_OF_CONTROL** (after petrol light or random 5% chance/minute from 14:00): BBQ spreads to adjacent `ROAD` blocks as fire. `WheeliBinFireSystem` fire rules apply; auto-extinguishes after 60 seconds or on rain. If fire spreads to 3+ blocks: `CriminalRecord.CrimeType.ARSON`, Notoriety +10.
+
+### Mechanic 3 — The Raffle (18:00, press E at RAFFLE_DRUM_PROP)
+
+Brenda hosts the raffle at 18:00. The player may:
+- **Buy a ticket** (1 COIN) for a draw at 18:10. Six prizes drawn:
+  - 35%: `SELECTION_BOX` (holiday food item; +30 hunger)
+  - 25%: `NOVELTY_TOWEL` (wearable; counts as a disguise modifier: −2 recognition for 1 in-game day)
+  - 20%: `BOTTLE_OF_WINE` (drinkable; reduces inhibition, fenceable for 3 COIN)
+  - 15%: `TOOLKIT` (crafting ingredient, functions as `SCREWDRIVER` + `SPANNER`)
+  - 5%: `COMMEMORATIVE_MUG` (rarest; tooltip: "Northfield's 2014 Bank Holiday. Someone still has it.")
+- **Rig the draw** (requires `STICKY_FINGERS` skill tier 2): while standing beside `RAFFLE_DRUM_PROP` unobserved, press E + crouch to mark your ticket. Guarantees `BOTTLE_OF_WINE` or better. If witnessed: Notoriety +5, `RAFFLE_FRAUD` rumour seeded.
+- **Steal the prize box** (run away with `PRIZE_BOX_PROP` in hand): Notoriety +8, `CriminalRecord.CrimeType.THEFT`, `LOCAL_SCANDAL` rumour seeded, `RAFFLE_THIEF` achievement.
+
+### Mechanic 4 — Gerald's Shutdown Attempt (18:30)
+
+Gerald (`NEIGHBOURHOOD_WATCH` NPC) appears at 18:30 with a `CLIPBOARD_PROP` and begins issuing noise complaints. He has a 3-minute countdown before calling the council: if NoiseSystem level > 20 when he calls, the party is shut down (all NPCs leave, props despawn at 19:00). The player can:
+- **Bribe Gerald** (5 COIN): Gerald pockets it and retreats until 20:00. `CORRUPT_OFFICIAL` rumour seeded.
+- **Distract Gerald** with food (press E on Gerald holding `SAUSAGE_ROLL`): Gerald eats it (IDLE state 60s). `GOOD_NEIGHBOUR` achievement if party runs to 20:00 uninterrupted.
+- **Punch Gerald**: `ASSAULT` crime, Notoriety +8, WantedSystem +1, `GERALD_DOWN` rumour seeded town-wide. Party attendees scatter.
+- **Ignore him**: Council team (COUNCIL_OFFICER NPC) arrives at 19:00. Disperses attendees, ends party early.
+
+### Mechanic 5 — The Dog Incident (random, 60% chance, 14:00–17:00)
+
+Trevor's dog Tyke (existing `DOG` NPC) escapes from a garden and runs into the party. If not caught within 2 in-game minutes:
+- Tyke knocks over the trestle table: food props scatter, NoiseSystem level 10.
+- Tyke runs up to 20% chance of biting a `PENSIONER` NPC (minor health loss, PENSIONER enters PANIC state).
+- Player can catch Tyke by pressing E within 2 blocks (no items needed). Returns Tyke to Trevor → FactionSystem +3 respect from `THE_COUNCIL` (Gerald and Trevor are both council faction-aligned).
+- If player ignores Tyke: after 2 minutes Tyke is contained by Dave, no faction impact.
+
+### System Integrations
+
+- `NeighbourhoodSystem`: party running to 20:00 uninterrupted: VIBES +5; shut down early by Gerald/council: VIBES −3; BBQ fire: VIBES −5; player catches Tyke: VIBES +2.
+- `NoiseSystem`: BBQ lit with petrol: level 30; trestle table knocked over: level 10; raffle prize theft: level 15; punch Gerald: level 25.
+- `WeatherSystem`: RAIN/THUNDERSTORM cancels party (announces via `LOCAL_EVENT` rumour at 10:00 if rain forecast); SUNNY increases attendee count +4; DRIZZLE adds an improvised plastic-sheet shelter (TARPAULIN_PROP spawns).
+- `WantedSystem`: punch Gerald +1; BBQ fire (if arson threshold) +1; steal prize box +1.
+- `FactionSystem`: catch Tyke → THE_COUNCIL +3; bribe Gerald → THE_COUNCIL −5 (corruption rumour); punch Gerald → THE_COUNCIL −10.
+- `RumourNetwork`: party seeds `LOCAL_EVENT` "There's a do on the street this weekend"; raffle theft → `LOCAL_SCANDAL`; Gerald bribed → `CORRUPT_OFFICIAL`; Gerald punched → `GERALD_DOWN`; out-of-control BBQ → `FIRE_HAZARD` rumour.
+- `NewspaperSystem`: out-of-control BBQ making 3+ blocks fire → headline "Bank Holiday BBQ Gets Out of Hand in Northfield"; raffle theft → "Street Party Soured by Prize Heist".
+- `CampfireSystem`: BBQ mechanic reuses `CampfireSystem.cookItem()` logic for sausage cooking.
+- `WheeliBinFireSystem`: BBQ out-of-control fire uses same spread rules.
+- `TimeSystem`: event triggers on `dayCount % 30 == 0`; specific phases at 11:30, 12:00, 12:30, 14:00, 17:00, 18:00, 18:30, 19:00, 20:00.
+- `PetrolStationSystem`: `PETROL_CAN_FULL` used to light BBQ feeds into PetrolStationSystem's usage tracking (counts toward `PETROL_HEAD` achievement).
+- `AchievementSystem`: new achievements below.
+
+### New Materials (add to Material.java)
+- `WARM_LAGER` — Tooltip: "It's flat. It's warm. It's British."
+- `SAUSAGE_ROLL` — party-specific; tooltip: "Greggs does it better but they're not here."
+- `CRISP_PACKET` — empty after eating; tooltip: "Ready Salted. The safe choice."
+- `RAW_SAUSAGE` — cookable on BBQ; tooltip: "Pink in the middle is fine. Probably."
+- `COOKED_SAUSAGE` — +25 hunger; tooltip: "Slightly charred. The British standard."
+- `SELECTION_BOX` — raffle prize; +30 hunger (eat individually).
+- `NOVELTY_TOWEL` — wearable; disguise modifier −2 recognition.
+- `BOTTLE_OF_WINE` — drinkable / fenceable (3 COIN); tooltip: "Lidl Merlot. It's a special occasion."
+- `TOOLKIT` — crafting ingredient; functions as SCREWDRIVER + SPANNER combined.
+- `COMMEMORATIVE_MUG` — raffle rarest prize (5%); tooltip: "Northfield's 2014 Bank Holiday. Someone still has it."
+- `RAFFLE_TICKET` — single-use; consumed at draw.
+
+### New PropTypes (add to PropType.java)
+- `TRESTLE_TABLE_PROP` — knocked over by Tyke; food items spawn on it.
+- `DISPOSABLE_BBQ_PROP` — three-state: UNLIT / LIT / OUT_OF_CONTROL.
+- `RAFFLE_DRUM_PROP` — interactive; Brenda operates it at 18:00.
+- `PRIZE_BOX_PROP` — stealable; contains raffle prize.
+- `TARPAULIN_PROP` — spawns in drizzle weather; overhead cover prop.
+
+### New NPCTypes (add to NPCType.java — verify if any exist already)
+- `NEIGHBOURHOOD_WATCH` (20f, 0f, 0f, false) — Gerald; clipboard-wielding shutdown enforcer; already partially referenced via `NeighbourhoodWatchSystem`.
+
+### New AchievementTypes (add to AchievementType.java)
+- `BANK_HOLIDAY_REGULAR` — attend 3 street parties (target=3). Name: "All the Fun of the Street". Desc: "You've been to three Northfield street parties. You've had warm lager at all of them."
+- `GOOD_NEIGHBOUR` — party runs to 20:00 uninterrupted (target=1). Name: "Community Spirit". Desc: "You helped keep the peace. Gerald is still annoying."
+- `GERALD_DOWN` — punch Gerald (target=1). Name: "Someone Had to Do It". Desc: "Gerald from Neighbourhood Watch has been on the floor. He asked for it."
+- `RAFFLE_THIEF` — steal the prize box (target=1). Name: "Eyes on the Prize". Desc: "You stole the raffle prizes at a street party. Brenda is devastated."
+- `BBQ_ARSONIST` — cause a 3+ block BBQ fire (target=1). Name: "Hazard Warning". Desc: "A disposable BBQ. An entire road. Good work."
+- `COMMEMORATIVE_COLLECTOR` — win the commemorative mug (target=1). Name: "Where Were You in 2014?". Desc: "You won a mug. It commemorates nothing important. You treasure it."
+
+### New RumourTypes (add to RumourType.java)
+- `LOCAL_SCANDAL` — already exists; reused for raffle theft.
+- `CORRUPT_OFFICIAL` — seeded when Gerald is bribed. "Heard Gerald took a bung to keep quiet at the do."
+- `GERALD_DOWN` — seeded when Gerald is punched. "Someone lamped Gerald from Neighbourhood Watch at the street party. Unbelievable scenes."
+- `FIRE_HAZARD` — seeded on out-of-control BBQ. "The BBQ at the street party went up. Half the road was on fire."
+
+### Unit Tests
+- `testPartySchedule`: call `isPartyDay(day)` for day=0, 30, 60, 90. Verify true for 30, 60, 90; false for 0, 1, 29.
+- `testBBQLitWithLighter`: set BBQ state to UNLIT. Call `lightBBQ(player, lighter)`. Verify state transitions to LIT, NoiseSystem event level 5.
+- `testBBQLitWithPetrolCanFireChance`: set Random seed 42. Call `lightBBQ(player, petrolCanFull)` 100 times. Verify approximately 40% (38–42) result in OUT_OF_CONTROL state.
+- `testCookSausageOnLitBBQ`: set BBQ state to LIT. Place `RAW_SAUSAGE` in player inventory. Advance 30 seconds. Verify `COOKED_SAUSAGE` in inventory and `RAW_SAUSAGE` removed.
+- `testCookSausageOnUnlitBBQ`: set BBQ state to UNLIT. Attempt to cook. Verify no `COOKED_SAUSAGE` added and "BBQ isn't lit yet" message returned.
+- `testRaffleWinDistribution`: run `drawRaffle(random)` 10000 times with seed iteration. Verify SELECTION_BOX ~35%, NOVELTY_TOWEL ~25%, BOTTLE_OF_WINE ~20%, TOOLKIT ~15%, COMMEMORATIVE_MUG ~5% (within ±3% tolerance).
+- `testRiggedRaffleGuaranteesWine`: set player `STICKY_FINGERS` skill tier 2. Call `rigRaffle(player)`. Draw raffle. Verify result is BOTTLE_OF_WINE or COMMEMORATIVE_MUG (≥ BOTTLE_OF_WINE tier).
+- `testGeraldBribeSuppressesShutdown`: set Gerald to SHUTDOWN_PENDING. Call `bribeGerald(player, 5)`. Verify player loses 5 COIN, Gerald state = IDLE, shutdown timer cleared, `CORRUPT_OFFICIAL` rumour seeded.
+- `testGeraldPunchWantedAndRecord`: punch Gerald. Verify WantedSystem +1, `ASSAULT` in CriminalRecord, Notoriety +8, `GERALD_DOWN` rumour seeded.
+- `testTykeCaughtCouncilFactionBonus`: spawn Tyke in escape state. Press E within 2 blocks. Verify Tyke captured, FactionSystem THE_COUNCIL +3.
+- `testRainCancelsParty`: set weather to RAIN on party day. Call `checkAndTriggerParty()`. Verify party does NOT start; `LOCAL_EVENT` rumour "rained off" seeded.
+- `testSunnyDayBonusAttendees`: set weather to SUNNY on party day. Trigger party. Verify NPC count ≥ baseline + 4.
+- `testBBQFireSpreadThreeBlocksArson`: trigger OUT_OF_CONTROL BBQ. Advance 60 seconds without rain. Verify fire spreads to 3+ adjacent ROAD blocks; `ARSON` in CriminalRecord; Notoriety +10.
+- `testVibesOnSuccessfulParty`: record baseline VIBES. Party runs 12:00–20:00 uninterrupted. Verify `NeighbourhoodSystem.getVibes()` increased by 5.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Party spawns on schedule and despawns after 20:00**: Set `dayCount = 30`. Advance time to 11:30. Verify `BUNTING_PROP` spawns adjacent to `COUNCIL_FLATS`. Advance to 12:00. Verify `TRESTLE_TABLE_PROP`, `DISPOSABLE_BBQ_PROP`, `RAFFLE_DRUM_PROP` are present. Verify 10–12 NPCs of appropriate types are present within 15 blocks. Advance to 20:01. Verify all party props have despawned and NPC count returns to baseline.
+
+2. **BBQ out-of-control fire with petrol triggers arson and newspaper headline**: Give player `PETROL_CAN_FULL`. Place player at `DISPOSABLE_BBQ_PROP` (UNLIT state). Press E with `PETROL_CAN_FULL` equipped. Advance 60 seconds (fire spread simulation). Verify fire covers ≥ 3 `ROAD` blocks. Verify `CriminalRecord.CrimeType.ARSON` recorded. Verify Notoriety increased by 10. Verify `NewspaperSystem` headline contains "Bank Holiday BBQ Gets Out of Hand in Northfield" in next morning's paper.
+
+3. **Raffle buy, win prize, and steal prize box triggers LOCAL_SCANDAL rumour**: Give player 1 COIN. Press E on `RAFFLE_DRUM_PROP`. Confirm ticket purchase. Verify `RAFFLE_TICKET` in inventory. Advance to 18:10 (draw time). Verify player receives one of the six prize items. Now test steal path: place player adjacent to `PRIZE_BOX_PROP` with prizes inside. Pick up `PRIZE_BOX_PROP`. Verify `THEFT` in CriminalRecord. Verify Notoriety +8. Verify `LOCAL_SCANDAL` rumour seeded into `RumourNetwork`. Verify `RAFFLE_THIEF` achievement unlocked.
+
+4. **Gerald shutdown averted by bribery keeps party running and seeds rumour**: Advance time to 18:30 on party day. Verify Gerald (`NEIGHBOURHOOD_WATCH` NPC) spawns and enters SHUTDOWN_PENDING state. Give player 5 COIN. Press E on Gerald. Confirm bribe. Verify player COIN decreases by 5. Verify Gerald transitions to IDLE. Verify shutdown timer is cleared. Verify `CORRUPT_OFFICIAL` rumour seeded into `RumourNetwork`. Advance to 20:00. Verify party has run to full duration. Verify `GOOD_NEIGHBOUR` achievement unlocked.
+
+5. **Neighbourhood vibes integration**: Record `NeighbourhoodSystem.getVibes()` baseline on party day at 11:00. Run party to full uninterrupted completion (mock time to 20:01). Verify VIBES increased by exactly 5. Now run a second party (day 60) but trigger OUT_OF_CONTROL BBQ spreading to 3 blocks. Verify VIBES decreased by 5 from that party's BBQ fire. Verify `FIRE_HAZARD` rumour present in `RumourNetwork`.
+
+// ── Issue #1381: Add Northfield Bank Holiday Street Party ──────────────────────────────────────────
+// New: StreetPartySystem.java in ragamuffin.core
+// New: StreetPartySystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1381StreetPartyIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: WARM_LAGER, SAUSAGE_ROLL, CRISP_PACKET, RAW_SAUSAGE, COOKED_SAUSAGE,
+//   SELECTION_BOX, NOVELTY_TOWEL, BOTTLE_OF_WINE, TOOLKIT, COMMEMORATIVE_MUG, RAFFLE_TICKET
+// New PropTypes: TRESTLE_TABLE_PROP, DISPOSABLE_BBQ_PROP, RAFFLE_DRUM_PROP,
+//   PRIZE_BOX_PROP, TARPAULIN_PROP
+// New NPCTypes: NEIGHBOURHOOD_WATCH (Gerald — verify not already defined)
+// New AchievementTypes: BANK_HOLIDAY_REGULAR, GOOD_NEIGHBOUR, GERALD_DOWN,
+//   RAFFLE_THIEF, BBQ_ARSONIST, COMMEMORATIVE_COLLECTOR
+// New RumourTypes: CORRUPT_OFFICIAL, GERALD_DOWN, FIRE_HAZARD (LOCAL_SCANDAL reused for raffle theft)
+// Integration: NeighbourhoodSystem, NoiseSystem, WeatherSystem, WantedSystem,
+//   FactionSystem, RumourNetwork, NewspaperSystem, CampfireSystem, WheeliBinFireSystem,
+//   PetrolStationSystem, TimeSystem, AchievementSystem, CriminalRecord
