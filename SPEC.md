@@ -55056,3 +55056,163 @@ No system class `StreetHustlerSystem.java` has ever been created. This issue imp
 // `STREET_HUSTLER_NPC`, `SHILL_NPC`, `VICE_PCSO_NPC` (NPCType) are new and must be added.
 // `HUSTLER_CONFRONTATION`, `HUSTLER_FEUD`, `DANNY_NICKED`, `PLAYER_GRASSED`, `VICE_BRIBED` (RumourType) are new and must be added.
 // `MUGGED_OFF`, `AGAINST_THE_ODDS`, `EYES_PEELED`, `DEALER_DEALER`, `COPPER_S_NAR` (AchievementType) are new and must be added.
+
+---
+
+## Issue #1449: Add Northfield Mobile Library — Keith's Van, the Overdue Fines Amnesty & the Rare Book Heist
+
+### Overview
+
+Northfield's **mobile library van** — a battered green Bedford TM driven by **Keith** (a gentle, bearded ex-social-worker who has been running the route for 22 years) — parks outside the estate community centre every **Wednesday 10:00–13:00** and **Saturday 10:00–12:00**. It carries a modest selection of battered paperbacks, a rare-books shelf, and an ancient Teletext terminal Keith uses to check overdue items. The council has threatened to cut the service for three consecutive in-game weeks, creating a community campaign subplot. Players can borrow books (gaining stat buffs), steal rare editions (high fence value), or help Keith campaign against the cuts.
+
+No system class `MobileLibrarySystem.java` has ever been created. This issue implements it.
+
+---
+
+### Opening Hours & Location
+
+| Day        | Hours       | Location                                                   |
+|------------|-------------|-------------------------------------------------------------|
+| Wednesday  | 10:00–13:00 | Outside `COMMUNITY_CENTRE` landmark                        |
+| Saturday   | 10:00–12:00 | Outside `COMMUNITY_CENTRE` landmark                        |
+
+Outside hours the van is parked at the `COUNCIL_DEPOT_PROP` near the industrial estate (Keith does maintenance there 08:00–09:30 on operating days). Players who break into the depot can access the van early.
+
+---
+
+### Mechanic 1 — Borrowing Books
+
+- Press E on the van door during opening hours to open the `MobileLibraryUI` (simple list of titles).
+- Player must present a `LIBRARY_CARD` item. If absent, Keith issues one free (one per game).
+- Stock: 6 standard titles (rotate daily from a pool of 12) + 1 rare title.
+- Each standard book grants a **stat buff on read** (read via inventory: press E on book in slot):
+  - `SELF_HELP_PAPERBACK` — "You Are Enough. Probably." — Notoriety −1 (max once per day).
+  - `LOCAL_HISTORY_BOOK` — "Northfield: A History of Quiet Decline." — reveals 2 hidden `RUMOUR_TYPE` facts in `RumourNetwork` (overheard from Keith).
+  - `CRIME_FICTION` — "Rizzoli & Isles: The Northfield Files." — StreetSkill PICKPOCKET XP +1.
+  - `JOB_SKILLS_GUIDE` — "CV Writing for the Modern Age." — `EmploymentSystem` interview success chance +5% for 2 in-game days.
+  - `GARDENING_ENCYCLOPEDIA` — "RHS Allotment Bible." — `AllotmentSystem` yield multiplier ×1.2 for 1 grow cycle.
+  - `COOKBOOK` — "Vera's Caff: The Unofficial Recipe Book." — `GreasySpoonSystem` MUG_OF_TEA costs 1 COIN less for 1 day.
+- Books must be **returned** within 7 in-game days. Unreturned books accrue **fines** of 1 COIN per day overdue (capped at 5 COIN per book).
+- On return: press E on van, select "Return". Fine auto-deducted from COIN.
+- **Overdue amnesty event**: once per run, Keith announces (via `SpeechLogUI`) a one-day amnesty on Wednesday. All outstanding fines waived; seeds `LIBRARY_AMNESTY` rumour.
+
+---
+
+### Mechanic 2 — The Rare Book
+
+- One `RARE_BOOK` item is always in stock (different title each visit, from pool of 5):
+  - `RARE_BOOK` titles: "1972 Northfield Telephone Directory", "Signed Margaret Thatcher Autobiography", "First Edition Beano Annual 1942", "Police Federation Handbook 1988", "Original Northfield Estate Plans".
+- Borrowable normally (requires `LIBRARY_CARD`, must be returned).
+- Alternatively, **steal it**: the `RARE_BOOK_SHELF_PROP` is on the van's rear shelf. When Keith's attention is on another customer (`LIBRARY_REGULAR` NPC present), press and hold E for 3 seconds to pocket the book without triggering crime *unless* Keith is facing the player (line-of-sight check via `WitnessSystem`).
+  - Undetected: `RARE_BOOK` in inventory. Fence value at `PawnShopSystem`: 18 COIN; at `FenceSystem`: 12 COIN.
+  - Detected: `LIBRARY_THEFT` CrimeType in `CriminalRecord`, WantedSystem +1, Keith calls `NEIGHBOURHOOD_WATCH_NPC` (spawned within 2 minutes), `LIBRARY_CARD` confiscated (Keith records the card number).
+- Achievement: `OVERDUE_FOREVER` on first successful rare book theft (never returning it).
+- Keith bans the player from the van for 3 in-game weeks on detection; player can redeem by speaking to Keith at `COMMUNITY_CENTRE` after ban and paying a `GOODWILL_DONATION` of 5 COIN.
+
+---
+
+### Mechanic 3 — Save the Mobile Library (Community Campaign)
+
+- Starting in-game week 3 (day 14+), Keith displays a petition board (`PETITION_BOARD_PROP`) by the van.
+- Player can press E to sign: adds player to the `PETITION_SIGNATURES` counter. Signing costs 0 COIN, takes 2 seconds.
+- Keith needs 20 signatures total (NPC patrons count as 1 each per visit; player counts as 3 if Notoriety < 20, or 1 if Notoriety ≥ 20 — player is known trouble).
+- Each Wednesday, if signatures < 20, Keith reports progress and Neighbourhood Vibes −1.
+- At 20 signatures: `CommunityCentreSystem` announces a council reprieve; Neighbourhood Vibes +3; `LIBRARY_SAVED` rumour seeded; Keith gives player a `LIBRARY_VOUCHER` (5 COIN off at `CharityShopSystem`).
+- **Counter-option**: player can *steal the petition board* (7 hits, HARD; drops `PETITION_BOARD_PROP` item):
+  - Keith despairs; council cuts confirmed; van service ends for 5 in-game days; Notoriety +3; `PETITION_NICKED` rumour seeded; Neighbourhood Vibes −5.
+  - The stolen `PETITION_BOARD_PROP` can be sold at `ScrapyardSystem` for 2 COIN (scrap value only).
+
+---
+
+### Mechanic 4 — Break Into the Depot (Off-Hours Access)
+
+- The `COUNCIL_DEPOT_PROP` is locked (padlock: 8 HARD hits or `LOCKPICK` tool: 4 seconds hold).
+- Inside during 20:00–08:00: player can access van stock for free (no `LIBRARY_CARD` needed).
+- `CCTV_CAMERA_PROP` is mounted above the depot gate: if operational (not broken), WantedSystem +1 on forced entry.
+- Smashing the CCTV first (2 FRAGILE hits) and then breaking in: no immediate wanted stars, but `CouncilEnforcementSystem` flags the depot for an audit within 2 in-game days.
+- Keith arrives at 08:00; if the padlock is broken he calls the council and reports a break-in — WantedSystem +1 added at 08:00 regardless of when the break-in occurred (delayed consequence).
+
+---
+
+### Integration with Existing Systems
+
+- **`WantedSystem`**: rare book theft detected +1; depot break-in with CCTV +1; depot break-in Keith reports +1.
+- **`NotorietySystem`**: rare book theft detected +3; petition stolen +3; petition signed −1 (one-time community goodwill).
+- **`CriminalRecord`**: `LIBRARY_THEFT` (rare book theft detected); `BREAKING_AND_ENTERING` (depot break-in).
+- **`RumourNetwork`**: `LIBRARY_AMNESTY` (Wednesday amnesty announced); `LIBRARY_SAVED` (20 signatures reached); `PETITION_NICKED` (petition stolen); `LIBRARY_THEFT_SPOTTED` (Keith catches player stealing).
+- **`NeighbourhoodSystem`**: Vibes +3 on service saved; Vibes −1 per week without signatures; Vibes −5 on petition stolen.
+- **`PawnShopSystem`** / **`FenceSystem`**: `RARE_BOOK` fence values (18 / 12 COIN).
+- **`GreasySpoonSystem`**: `COOKBOOK` buff reduces MUG_OF_TEA cost.
+- **`EmploymentSystem`**: `JOB_SKILLS_GUIDE` buff increases interview success.
+- **`AllotmentSystem`**: `GARDENING_ENCYCLOPEDIA` buff increases yield.
+- **`StreetSkillSystem`**: `CRIME_FICTION` grants PICKPOCKET XP.
+- **`CommunityCentreSystem`**: service-saved announcement triggers council reprieve.
+- **`WitnessSystem`**: line-of-sight checks on rare book theft and depot break-in.
+- **`TimeSystem`**: van present Wed 10:00–13:00, Sat 10:00–12:00; Keith at depot 08:00–09:30 on operating days.
+- **`WeatherSystem`**: HEAVY_RAIN adds 1 extra `LIBRARY_REGULAR` (they shelter in the van); HEATWAVE — Keith leaves van door open (no line-of-sight check needed for theft, Keith distracted by portable fan).
+- **`NewspaperSystem`**: council cuts headline: "NORTHFIELD MOBILE LIBRARY FACES AXE — KEITH VOWS TO CHAIN HIMSELF TO THE VAN". Petition-stolen headline: "LIBRARY PETITION VANDALISED — KEITH CALLS IT 'AN ACT OF CULTURAL VANDALISM'."
+- **`AchievementSystem`**: `OVERDUE_FOREVER` (rare book theft); `COMMUNITY_HERO` (petition saved, if not already defined); `NIGHT_RAID` (depot break-in undetected).
+
+---
+
+### New Material Entries Required
+
+- `LIBRARY_CARD` — "Northfield Mobile Library Card No. 4471. Still valid. Somehow." Free from Keith. Allows borrowing. Confiscated on detected theft.
+- `RARE_BOOK` — "An item of genuine cultural value. Probably." Fence: 18 COIN (pawn), 12 COIN (fence). Must be borrowed or stolen from van. Not craftable.
+- `SELF_HELP_PAPERBACK` — "You Are Enough. Probably." Buff: Notoriety −1 on read (once per day). Return to van within 7 days.
+- `LOCAL_HISTORY_BOOK` — "Northfield: A History of Quiet Decline." Buff: reveals 2 rumour facts. Return within 7 days.
+- `CRIME_FICTION` — "Rizzoli & Isles: The Northfield Files." Buff: PICKPOCKET XP +1. Return within 7 days.
+- `JOB_SKILLS_GUIDE` — "CV Writing for the Modern Age." Buff: interview success +5% for 2 days. Return within 7 days.
+- `GARDENING_ENCYCLOPEDIA` — "RHS Allotment Bible." Buff: allotment yield ×1.2 for 1 cycle. Return within 7 days.
+- `COOKBOOK` — "Vera's Caff: The Unofficial Recipe Book." Buff: MUG_OF_TEA −1 COIN for 1 day. Return within 7 days.
+- `LIBRARY_VOUCHER` — "5 COIN off at the charity shop. Keith's thanks." 5 COIN discount at `CharityShopSystem`. Single use.
+- `PETITION_BOARD` — "Save Northfield Mobile Library! Sign below." Prop item when carried (stolen). Sells at scrapyard for 2 COIN.
+
+### New PropType Entries Required
+
+- `MOBILE_LIBRARY_VAN_PROP` — The Bedford TM van. Dims: 2.0 × 2.2 × 5.0; non-breakable (it's a vehicle). Green livery. Interactable (E opens MobileLibraryUI).
+- `RARE_BOOK_SHELF_PROP` — Rear shelf inside van. Dims: 1.0 × 0.3 × 0.8; non-breakable. Hold E 3s to steal.
+- `PETITION_BOARD_PROP` — Wooden board with signature sheet. Dims: 0.6 × 1.2 × 0.1; HARD (7 hits). Drops `PETITION_BOARD` on break.
+- `COUNCIL_DEPOT_PROP` — Lockable depot gate. HARD padlock (8 hits or lockpick 4s).
+- `LIBRARY_REGULAR_SEAT_PROP` — A fold-out chair inside the van used by `LIBRARY_REGULAR` NPC. Dims: 0.5 × 0.9 × 0.5; non-breakable.
+
+### New NPCType Entries Required
+
+- `MOBILE_LIBRARIAN` — Keith. Bearded, mid-50s, plaid shirt and fleece. Friendly-passive at all Notoriety levels (< 40); sad/despairing if service threatened. HP: 30f, attack: 0f (pacifist), hostile: false. Gives `LIBRARY_CARD` on first E interaction.
+- `LIBRARY_REGULAR` — 1–3 patrons who use the van during opening hours. Help draw Keith's attention (enabling theft window). HP: 20f, attack: 0f, hostile: false.
+
+### New RumourType Entries Required
+
+- `LIBRARY_AMNESTY` — "Keith's doing an overdue fines amnesty this Wednesday. Might as well return those three Maeve Binchys."
+- `LIBRARY_SAVED` — "They've saved the mobile library. Keith actually cried apparently. On the van."
+- `PETITION_NICKED` — "Someone nicked the petition to save the library. Keith was devastated. Even the lads said that was low."
+- `LIBRARY_THEFT_SPOTTED` — "Keith caught someone nicking a book from his van. Said he was more disappointed than angry. Which was worse."
+
+### New AchievementType Entries Required
+
+- `OVERDUE_FOREVER` — "Stole a rare book from Keith's mobile library. He had it on reserve for a schoolkid." Target 1.
+- `COMMUNITY_HERO` — "Helped save Northfield Mobile Library by collecting 20 petition signatures." Target 1. (Add if not already defined.)
+- `NIGHT_RAID` — "Broke into the council depot and raided the mobile library after hours without being caught." Target 1.
+
+---
+
+### Integration Tests
+
+1. **Van appears Wednesday 10:00**: set in-game time to Wednesday 10:05; call `MobileLibrarySystem.update(delta, timeSystem, world, npcManager, ...)`; verify `isVanActive()` returns true; verify `MOBILE_LIBRARY_VAN_PROP` exists at `COMMUNITY_CENTRE` landmark; verify `MOBILE_LIBRARIAN` NPC is present within 3 blocks of the van.
+
+2. **Book borrowing grants buff and adds overdue tracking**: give player a `LIBRARY_CARD`; press E on van during opening hours; select `SELF_HELP_PAPERBACK`; verify item added to player inventory; verify `MobileLibrarySystem.getOverdueItems()` contains the book with `dueDayOffset == 7`; use the book (E in inventory); verify `NotorietySystem.getNotoriety()` decreased by 1.
+
+3. **Overdue fine accumulates and is collected on return**: borrow `CRIME_FICTION`; advance time by 9 in-game days (2 days overdue); verify `MobileLibrarySystem.calculateFine(player) == 2`; open van (Wednesday), select "Return"; verify 2 COIN deducted from player inventory; verify `getOverdueItems()` no longer contains the book.
+
+4. **Rare book theft undetected**: spawn a `LIBRARY_REGULAR` NPC within 2 blocks of Keith (draws his attention away); verify `WitnessSystem.hasLineOfSight(Keith, player)` returns false; hold E on `RARE_BOOK_SHELF_PROP` for 3 seconds; verify `RARE_BOOK` in player inventory; verify `CriminalRecord` does NOT contain `LIBRARY_THEFT`; verify `WantedSystem.getStars() == 0`.
+
+5. **Rare book theft detected triggers ban and crime**: remove all `LIBRARY_REGULAR` NPCs; ensure Keith has line-of-sight to player; hold E on `RARE_BOOK_SHELF_PROP` for 3 seconds; verify `CriminalRecord` contains `LIBRARY_THEFT`; verify `WantedSystem.getStars() >= 1`; verify `MobileLibrarySystem.isPlayerBanned()` returns true; verify `LIBRARY_CARD` removed from player inventory; verify `LIBRARY_THEFT_SPOTTED` rumour exists in `RumourNetwork`.
+
+6. **Petition saved at 20 signatures reaches council reprieve**: advance to day 14; verify `PETITION_BOARD_PROP` exists at van; simulate 17 `LIBRARY_REGULAR` NPC visits (each contributing 1 signature); call `MobileLibrarySystem.playerSignPetition(player)` (contributes 3 signatures, Notoriety < 20); verify `getPetitionSignatures() >= 20`; verify `LIBRARY_SAVED` rumour in `RumourNetwork`; verify player inventory contains `LIBRARY_VOUCHER`; verify `NeighbourhoodSystem.getVibes()` increased by 3; verify `isServiceCut()` returns false.
+
+// `MobileLibrarySystem.java` must be created as the sole new source file.
+// `LIBRARY_CARD`, `RARE_BOOK`, `SELF_HELP_PAPERBACK`, `LOCAL_HISTORY_BOOK`, `CRIME_FICTION`, `JOB_SKILLS_GUIDE`, `GARDENING_ENCYCLOPEDIA`, `COOKBOOK`, `LIBRARY_VOUCHER`, `PETITION_BOARD` (Material) are new and must be added.
+// `MOBILE_LIBRARY_VAN_PROP`, `RARE_BOOK_SHELF_PROP`, `PETITION_BOARD_PROP`, `COUNCIL_DEPOT_PROP`, `LIBRARY_REGULAR_SEAT_PROP` (PropType) are new and must be added.
+// `MOBILE_LIBRARIAN`, `LIBRARY_REGULAR` (NPCType) are new and must be added.
+// `LIBRARY_AMNESTY`, `LIBRARY_SAVED`, `PETITION_NICKED`, `LIBRARY_THEFT_SPOTTED` (RumourType) are new and must be added.
+// `OVERDUE_FOREVER`, `COMMUNITY_HERO`, `NIGHT_RAID` (AchievementType) are new and must be added.
