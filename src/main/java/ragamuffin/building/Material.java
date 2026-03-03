@@ -6914,7 +6914,28 @@ public enum Material {
      * Trevor catches it 50% of the time (HOSTILE, TRADING_SCAM rumour, skips 3 Wednesdays).
      * Successfully fool Clive 3 times → CLIVE_KNOWS_NOTHING achievement.
      */
-    FAKE_RARE_LABEL("Fake Rare Label");
+    FAKE_RARE_LABEL("Fake Rare Label"),
+
+    // ── Issue #1471: Northfield Closing-Down Sale — Dave's Everything Must Go ──
+
+    /**
+     * KNOCKOFF_ELECTRONIC — a generic knockoff electronic item (hairdryer, extension
+     * lead, phone charger, telly, laptop, or kettle) sold at Dave's perpetual
+     * closing-down sale at "70% off" prices that are actually above RRP.
+     * Fence value: 1–4 COIN. Can be used as a component in crafting recipes
+     * (e.g. 3× KNOCKOFF_ELECTRONIC → 1 DISTRACTION_DEVICE at a workbench).
+     * The KNOCKOFF_LAPTOP variant can be traded to INTERNET_CAFE_OWNER for
+     * INTERNET_CAFE_DISCOUNT_CARD (2 free internet sessions).
+     */
+    KNOCKOFF_ELECTRONIC("Knockoff Electronic"),
+
+    /**
+     * BRAND_NAME_TELLY — the one item in Dave's life that is actually worth
+     * something: a genuine brand-name television accidentally stocked in the
+     * liquidation delivery. Fence value: 20 COIN. Can be placed as a decorative
+     * prop in a player-owned squat, raising Squat Comfort by 5.
+     */
+    BRAND_NAME_TELLY("Brand Name Telly");
 
     private final String displayName;
 
@@ -8412,6 +8433,12 @@ public enum Material {
                                                     0.88f, 0.72f, 0.10f); // Gold label
             case FAKE_RARE_LABEL:         return cs(0.88f, 0.72f, 0.10f, // Gold foil
                                                     0.88f, 0.92f, 0.88f); // White paper backing
+
+            // Issue #1471: Northfield Closing-Down Sale
+            case KNOCKOFF_ELECTRONIC:     return cs(0.35f, 0.35f, 0.40f, // Grey plastic casing
+                                                    0.88f, 0.15f, 0.12f); // Red "SALE" sticker
+            case BRAND_NAME_TELLY:        return cs(0.12f, 0.12f, 0.15f, // Black TV body
+                                                    0.55f, 0.78f, 0.92f); // Blue screen glow
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }

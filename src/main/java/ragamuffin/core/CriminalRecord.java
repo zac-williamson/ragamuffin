@@ -1333,7 +1333,26 @@ public class CriminalRecord {
          * BREACH_OF_PEACE — recorded when the player heckles Brother Gary and noise
          * level reaches ≥ 7, summoning a PCSO. Penalty: WantedSystem +1.
          */
-        BREACH_OF_PEACE("Breach of the peace (heckling)");
+        BREACH_OF_PEACE("Breach of the peace (heckling)"),
+
+        // ── Issue #1471: Northfield Closing-Down Sale — Dave's Everything Must Go ──
+
+        /**
+         * Recorded when the player loses an argument with Gary (COUNCIL_ENFORCEMENT_OFFICER)
+         * while doing shill work for Dave's closing-down sale (ClosingDownSaleSystem).
+         * Also recorded on a failed GARY_ARGUE outcome during the Shill Shift.
+         * Penalty: WantedSystem +1 star, Notoriety +2, shill shift ends immediately.
+         */
+        MISLEADING_ADVERTISING("Misleading advertising (shill for fake closing-down sale)"),
+
+        /**
+         * Recorded when the player submits a Trading Standards tip-off against Dave's
+         * closing-down sale having previously worked as a shill for him.
+         * The TS officer notes the conflict of interest and issues a mild caution.
+         * Penalty: no additional Notoriety; reward is halved to
+         * {@link ragamuffin.core.ClosingDownSaleSystem#TS_CONFLICT_REWARD_COINS}.
+         */
+        CAUTION("Caution (conflict of interest — TS tip-off after shill work)");
 
         private final String displayName;
 

@@ -793,7 +793,17 @@ public enum LandmarkType {
      * Features RECORD_SHELF_PROPs for crate digging and a dedicated trade economy
      * for VINYL_RECORD and RARE_PRESSING items. Managed by RecordShopSystem.
      */
-    RECORD_SHOP;
+    RECORD_SHOP,
+
+    // ── Issue #1471: Northfield Closing-Down Sale — Dave's Everything Must Go ──
+
+    /**
+     * CLOSING_DOWN_SHOP — Dave's Electronics &amp; Electrical. An 8×6×3 shopfront
+     * on the high street, perpetually "closing down" for three years. Always has
+     * a yellowed CLOSING_DOWN_SIGN_PROP A-frame in the window. Adjacent to
+     * PAVEMENT blocks. Managed by ClosingDownSaleSystem.
+     */
+    CLOSING_DOWN_SHOP;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -903,6 +913,7 @@ public enum LandmarkType {
             case WELCOME_SIGN:          return "Welcome to Northfield";
             case BALTI_HOUSE:           return "The Raj Mahal";
             case RECORD_SHOP:           return "Spin City Records";
+            case CLOSING_DOWN_SHOP:     return "Dave's Electronics & Electrical — FINAL WEEK";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

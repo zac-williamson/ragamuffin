@@ -4349,7 +4349,28 @@ public enum PropType {
      * before Clive spots them). Three to five units line the walls of the shop.
      * Destroyed by 4 punches; drops a VINYL_RECORD.
      */
-    RECORD_SHELF_PROP(0.80f, 1.60f, 0.40f, 4, Material.VINYL_RECORD);
+    RECORD_SHELF_PROP(0.80f, 1.60f, 0.40f, 4, Material.VINYL_RECORD),
+
+    // ── Issue #1471: Northfield Closing-Down Sale — Dave's Everything Must Go ──
+
+    /**
+     * CLOSING_DOWN_SIGN_PROP — the yellowed A-frame sign outside Dave's Electronics
+     * &amp; Electrical. Press E (during trading hours, player alone) to read the current
+     * phase text ("FINAL WEEK — EVERYTHING MUST GO — UP TO 70% OFF" etc.).
+     * Indestructible. Changes text every {@link ragamuffin.core.ClosingDownSaleSystem#PHASE_CYCLE_DAYS} days.
+     */
+    CLOSING_DOWN_SIGN_PROP(0.60f, 1.20f, 0.05f, Integer.MAX_VALUE, null),
+
+    /**
+     * STOCKROOM_CRATE_PROP — a battered cardboard packing crate in the back of
+     * Dave's shop. Hold E for {@link ragamuffin.core.ClosingDownSaleSystem#CRATE_LOOT_HOLD_SECONDS}
+     * seconds to loot during the heist window on GENUINELY_CLOSING_TOMORROW day.
+     * Contains {@link ragamuffin.core.ClosingDownSaleSystem#LIQUIDATION_LOOT_COUNT} knockoffs
+     * plus 1 guaranteed {@link Material#BRAND_NAME_TELLY}.
+     * Disappears after looting; reappears on the next GENUINELY_CLOSING_TOMORROW day.
+     * Indestructible while stocked; drops nothing.
+     */
+    STOCKROOM_CRATE_PROP(0.80f, 0.80f, 0.80f, Integer.MAX_VALUE, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

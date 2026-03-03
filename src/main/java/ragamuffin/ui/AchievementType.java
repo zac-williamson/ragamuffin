@@ -7347,6 +7347,49 @@ public enum AchievementType {
         "By the Book",
         "Reported the dodgy blessed water seller to Trading Standards with a clean record. Very civic-minded.",
         1
+    ),
+
+    // ── Issue #1471: Northfield Closing-Down Sale — Dave's Everything Must Go ──
+
+    /**
+     * HUMAN_SANDWICH_BOARD — complete 5 shill shifts for Dave without Gary
+     * (COUNCIL_ENFORCEMENT_OFFICER) catching you. You've got the gift of the gab.
+     */
+    HUMAN_SANDWICH_BOARD(
+        "Human Sandwich Board",
+        "Completed 5 shill shifts for Dave without Trading Standards catching you. You've got the gift of the gab.",
+        5
+    ),
+
+    /**
+     * TRADING_STANDARDS_HERO — report Dave's perpetual closing-down sale to
+     * Trading Standards after witnessing 3 phase transitions.
+     */
+    TRADING_STANDARDS_HERO(
+        "Trading Standards Hero",
+        "Reported Dave's perpetual closing-down sale. He was back open on Monday.",
+        1
+    ),
+
+    /**
+     * EVERYTHING_MUST_GO — loot Dave's stockroom on the GENUINELY_CLOSING_TOMORROW
+     * liquidation day. He would've wanted it this way.
+     */
+    EVERYTHING_MUST_GO(
+        "Everything Must Go",
+        "Looted Dave's stockroom on liquidation day. He would've wanted it this way.",
+        1
+    ),
+
+    /**
+     * NEVER_CLOSING_DOWN — witness all four phases of Dave's closing-down cycle
+     * (FINAL_WEEK → LAST_FEW_DAYS → GENUINELY_CLOSING_TOMORROW →
+     * REOPENED_UNDER_NEW_MANAGEMENT). You've outlasted the signs.
+     */
+    NEVER_CLOSING_DOWN(
+        "Never Closing Down",
+        "Witnessed all four phases of Dave's closing-down cycle. You've outlasted the signs.",
+        4
     );
 
     private final String name;
