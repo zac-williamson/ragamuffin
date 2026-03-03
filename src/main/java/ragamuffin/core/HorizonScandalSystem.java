@@ -353,7 +353,7 @@ public class HorizonScandalSystem {
      * @return true if the leaflet was present and the flag was set; false if the player lacks the leaflet
      */
     public boolean giveLeafletToMaureen(Inventory playerInventory) {
-        if (!playerInventory.contains(Material.CITIZENS_ADVICE_LEAFLET)) {
+        if (playerInventory.getItemCount(Material.CITIZENS_ADVICE_LEAFLET) <= 0) {
             return false;
         }
         horizonEvidenceRequested = true;
@@ -375,7 +375,7 @@ public class HorizonScandalSystem {
      * @return updated evidence strength
      */
     public EvidenceStrength deliverLogsToSandra(Inventory playerInventory) {
-        int logCount = playerInventory.getCount(Material.TRANSACTION_LOG);
+        int logCount = playerInventory.getItemCount(Material.TRANSACTION_LOG);
         if (logCount >= TRANSACTION_LOGS_REQUIRED) {
             tribunalEvidenceStrength = EvidenceStrength.STRONG;
         } else if (logCount > 0) {
@@ -434,12 +434,12 @@ public class HorizonScandalSystem {
             criminalRecord.record(CrimeType.POST_OFFICE_SAFE_ROBBERY);
         }
         if (notorietySystem != null) {
-            notorietySystem.addNotoriety(SAFE_ROBBERY_NOTORIETY);
+            notorietySystem.addNotoriety(SAFE_ROBBERY_NOTORIETY, achievementCallback);
         }
 
         // Unlock achievement
         if (achievementCallback != null) {
-            achievementCallback.onAchievement(AchievementType.HORIZON_OPPORTUNIST);
+            achievementCallback.award(AchievementType.HORIZON_OPPORTUNIST);
         }
 
         return coinAwarded;
@@ -454,7 +454,7 @@ public class HorizonScandalSystem {
      * @return true if logs were present and sold; false if inventory is empty of logs
      */
     public boolean sellLogsToAuditor(Inventory playerInventory) {
-        if (!playerInventory.contains(Material.TRANSACTION_LOG)) {
+        if (playerInventory.getItemCount(Material.TRANSACTION_LOG) <= 0) {
             return false;
         }
         playerInventory.removeItem(Material.TRANSACTION_LOG, 1);
@@ -482,7 +482,7 @@ public class HorizonScandalSystem {
 
         // Achievement
         if (achievementCallback != null) {
-            achievementCallback.onAchievement(AchievementType.SOLD_HER_OUT);
+            achievementCallback.award(AchievementType.SOLD_HER_OUT);
         }
 
         return true;
@@ -504,7 +504,7 @@ public class HorizonScandalSystem {
         if (bribeAmount < PETE_BRIBE_COST) {
             return false;
         }
-        if (playerInventory.getCount(Material.COIN) < PETE_BRIBE_COST) {
+        if (playerInventory.getItemCount(Material.COIN) < PETE_BRIBE_COST) {
             return false;
         }
         playerInventory.removeItem(Material.COIN, PETE_BRIBE_COST);
@@ -524,7 +524,7 @@ public class HorizonScandalSystem {
 
         // Achievement
         if (achievementCallback != null) {
-            achievementCallback.onAchievement(AchievementType.DODGY_AUDIT);
+            achievementCallback.award(AchievementType.DODGY_AUDIT);
         }
 
         return true;

@@ -1241,12 +1241,6 @@ public enum RumourType {
      * Spreads via PUBLIC, PENSIONER NPCs. */
     ROOF_FLAG_TAKEN,
 
-    /** "It kicked off in the park — English lads and the counter-protesters going at each other."
-     * Seeded by StGeorgesDaySystem when CROWD_SCUFFLE fires at 14:00.
-     * Triggers NoiseSystem level 8 + POLICE response in 30 seconds.
-     * Spreads via PUBLIC, PENSIONER, JOURNALIST NPCs. */
-    COMMUNITY_OUTRAGE,
-
     /** "Morris dancer got his stick nicked by some tourist-looking bloke. Absolute scenes."
      * Seeded by StGeorgesDaySystem when player steals MORRIS_STICK_PROP.
      * Triggers all 6 MORRIS_DANCER NPCs to pursue player.
@@ -1336,20 +1330,10 @@ public enum RumourType {
      * Spreads via PUBLIC, PENSIONER NPCs. Triggers Terry HOSTILE check. */
     RIVAL_CLEANER,
 
-    /** "Terry's gone mad. Some lad's been doing his round on the sly. There'll be ructions."
-     * Seeded by WindowCleanerSystem when Terry spots the player undercutting him within 12 blocks.
-     * Spreads via PUBLIC, PENSIONER NPCs. Notoriety +3 via RumourMention. */
-    TURF_WAR,
-
     /** "Someone was up Terry's ladder when he wasn't looking. Bold as brass."
      * Seeded by WindowCleanerSystem when player is seen on LADDER_PROP by a witness NPC.
      * Spreads via PUBLIC, PENSIONER NPCs. Triggers police call. */
     LADDER_INCIDENT,
-
-    /** "Terry was chatting to Dot about number twelve — apparently they've been at it again."
-     * Seeded by WindowCleanerSystem during payment exchanges within 4 blocks of player.
-     * Spreads via PUBLIC, PENSIONER NPCs. Notoriety < 25 requirement. */
-    NEIGHBOURHOOD_GOSSIP,
 
     // ── Issue #1402: Northfield Severn Trent Road Dig ─────────────────────────
 
