@@ -6692,6 +6692,68 @@ public enum AchievementType {
         "Civic Minded",
         "You phoned it in. The van got impounded. Kenny cried in the chippy. Worth it.",
         1
+    ),
+
+    // ── Issue #1412: Northfield Catalogue Man ─────────────────────────────────
+
+    /**
+     * BARRY_BANDIT — steal Barry's catalogue bag on 3 separate round days.
+     * Awarded by CatalogueManSystem when bagStolenDays reaches BARRY_BANDIT_THRESHOLD.
+     */
+    BARRY_BANDIT(
+        "Barry Bandit",
+        "Three separate days. Three separate bags. Barry's starting to think it's personal. It is.",
+        3
+    ),
+
+    /**
+     * DEBT_DODGER — successfully impersonate a debt collector 5 times during Barry's round.
+     * Awarded by CatalogueManSystem when debtCollectionSuccesses reaches DEBT_DODGER_THRESHOLD.
+     */
+    DEBT_DODGER(
+        "Debt Dodger",
+        "Five successful doorstep performances. You should be on the stage. Or in prison.",
+        5
+    ),
+
+    /**
+     * LOAN_SHARK_INFORMANT — tip off the Loan Shark 3 times using intel from Barry's debtors.
+     * Awarded by CatalogueManSystem when loanSharkTipOffs reaches LOAN_SHARK_INFORMANT_THRESHOLD.
+     */
+    LOAN_SHARK_INFORMANT(
+        "Loan Shark Informant",
+        "Three tip-offs. Big Mick is pleased. The debtors are not.",
+        3
+    ),
+
+    /**
+     * CIVIC_CRUSADER — report Barry to Trading Standards with a CATALOGUE_SAMPLE in hand.
+     * Awarded by CatalogueManSystem on a successful reportToTradingStandards() call.
+     */
+    CIVIC_CRUSADER(
+        "Civic Crusader",
+        "You reported him. Trading Standards came. Barry sulked. A victory for the consumer.",
+        1
+    ),
+
+    /**
+     * SILENT_PARTNER — blackmail Barry for the first time (first successful blackmailBarry() call).
+     * Awarded by CatalogueManSystem on the first BLACKMAIL_PAID result.
+     */
+    SILENT_PARTNER(
+        "Silent Partner",
+        "You know what he's doing. He knows you know. You both agreed on a figure. Lovely.",
+        1
+    ),
+
+    /**
+     * CATALOGUE_KING — sell from a rival knockoff catalogue on 5 separate round days.
+     * Awarded by CatalogueManSystem when rivalCatalogueSellDays reaches CATALOGUE_KING_THRESHOLD.
+     */
+    CATALOGUE_KING(
+        "Catalogue King",
+        "Five days flogging knockoffs. Barry's not even angry. He's impressed.",
+        5
     );
 
     private final String name;

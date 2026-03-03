@@ -1223,7 +1223,31 @@ public class CriminalRecord {
          * VEHICLE_BREAK_IN — Recorded when the player breaks into Kenny's ROOFER_VAN_PROP
          * using a CROWBAR (3-second hold). Penalty: Notoriety +6, WantedSystem +1 star.
          */
-        VEHICLE_BREAK_IN("Breaking into a vehicle (roofer's van)");
+        VEHICLE_BREAK_IN("Breaking into a vehicle (roofer's van)"),
+
+        // ── Issue #1412: Northfield Catalogue Man ─────────────────────────────
+
+        /**
+         * Recorded when the player steals Barry's catalogue bag (stealBag() SUCCESS path).
+         * Penalty: Notoriety +4, WantedSystem +1 star; BARRY_SUSPICIOUS rumour seeded.
+         * Three recorded days awards BARRY_BANDIT achievement.
+         */
+        CATALOGUE_THEFT("Catalogue bag theft (Barry's round)"),
+
+        /**
+         * Recorded on the second blackmailBarry() call (EXTORTION_TRIGGERED result).
+         * Penalty: WantedSystem +1 star, Notoriety +6.
+         * Escalates to CORRUPTION charge at MagistratesCourtSystem if a third attempt is made.
+         */
+        EXTORTION("Extortion (catalogue man blackmail)"),
+
+        /**
+         * Recorded when the player is caught running a rival catalogue round by Trading Standards
+         * during the monthly check (doRivalCatalogueSale catch path).
+         * Penalty: Notoriety +8, WantedSystem +1 star; COUNTERFEIT_FINE deducted from COIN.
+         * COUNTERFEIT_CAUGHT rumour seeded to nearby NPCs.
+         */
+        COUNTERFEIT_GOODS_SELLING("Selling counterfeit catalogue goods");
 
         private final String displayName;
 
