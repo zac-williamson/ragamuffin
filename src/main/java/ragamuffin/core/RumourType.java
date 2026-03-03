@@ -1554,5 +1554,29 @@ public enum RumourType {
      * — seeded by SalvationArmyCitadelSystem when Eileen catches the player in SALVATION_ARMY_UNIFORM
      * intercepting donations near DONATION_BOX_PROP (CHARITY_FRAUD crime).
      * Spreads via PUBLIC and SALVATION_ARMY_OFFICER NPCs. */
-    CAUGHT_IN_UNIFORM;
+    CAUGHT_IN_UNIFORM,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1449: Northfield Mobile Library — Keith's Van
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** "Keith's doing one of his amnesty weeks — no fines if you bring your books back now."
+     * — seeded by MobileLibrarySystem when the weekly overdue-fines amnesty event fires.
+     * Spreads via MOBILE_LIBRARIAN, LIBRARY_REGULAR, and PUBLIC NPCs. */
+    LIBRARY_AMNESTY,
+
+    /** "Enough people signed to save the mobile library — council backed down!"
+     * — seeded by MobileLibrarySystem when the petition reaches 20 signatures.
+     * Spreads via MOBILE_LIBRARIAN, LIBRARY_REGULAR, and PUBLIC NPCs. */
+    LIBRARY_SAVED,
+
+    /** "Someone nicked the Save Our Library petition board. Absolute state."
+     * — seeded by MobileLibrarySystem when the player steals the PETITION_BOARD_PROP.
+     * Spreads via PUBLIC and MOBILE_LIBRARIAN NPCs. */
+    PETITION_NICKED,
+
+    /** "Saw someone half-inch a book from the back of Keith's van. Bold as brass."
+     * — seeded by MobileLibrarySystem when the player is caught stealing the RARE_BOOK.
+     * Spreads via PUBLIC and LIBRARY_REGULAR NPCs. */
+    LIBRARY_THEFT_SPOTTED;
 }

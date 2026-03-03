@@ -4166,7 +4166,52 @@ public enum PropType {
      * Player can sleep in an unoccupied bed (+20 Warmth, +20 HP over 60 seconds).
      * Dims: 0.8 × 0.5 × 2.0; indestructible (hitsToBreak: 999); drops nothing.
      */
-    SHELTER_BED_PROP(0.8f, 0.5f, 2.0f, 999, null);
+    SHELTER_BED_PROP(0.8f, 0.5f, 2.0f, 999, null),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1449: Northfield Mobile Library — Keith's Van
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * MOBILE_LIBRARY_VAN_PROP — Keith's battered green Bedford TM van.
+     * Parks outside the community centre Wednesday 10:00–13:00 and Saturday 10:00–12:00.
+     * Interactable (E) to open MobileLibraryUI (requires LIBRARY_CARD after first visit).
+     * Dims: 2.4 × 2.0 × 5.5; indestructible (hitsToBreak: 999); drops nothing.
+     */
+    MOBILE_LIBRARY_VAN_PROP(2.4f, 2.0f, 5.5f, 999, null),
+
+    /**
+     * RARE_BOOK_SHELF_PROP — a small wooden shelf unit attached to the van's rear.
+     * Holds the rare book. Hold E for 3s when Keith is distracted by LIBRARY_REGULAR
+     * and there is no line-of-sight to steal it (yields RARE_BOOK, triggers LIBRARY_THEFT).
+     * Dims: 0.8 × 1.2 × 0.3; indestructible in normal play (hitsToBreak: 999); drops nothing.
+     */
+    RARE_BOOK_SHELF_PROP(0.8f, 1.2f, 0.3f, 999, null),
+
+    /**
+     * PETITION_BOARD_PROP — "Save Our Mobile Library!" clipboard petition board.
+     * Spawns from day 14 near the mobile library van. Sign with E (counts as 3 sigs
+     * if Notoriety &lt; 20). Steal by dealing 7 HARD hits: cuts service 5 days,
+     * Notoriety +3, Vibes −5, seeds PETITION_NICKED rumour.
+     * Dims: 0.5 × 1.4 × 0.1; 7 HARD hits to destroy; drops PETITION_BOARD material.
+     */
+    PETITION_BOARD_PROP(0.5f, 1.4f, 0.1f, 7, ragamuffin.building.Material.PETITION_BOARD),
+
+    /**
+     * COUNCIL_DEPOT_PROP — the council storage depot that holds the mobile library's
+     * overnight stock. Lockable; break in at night for free stock access (8 HARD hits
+     * or 4s lockpick). CCTV present inside — smash the camera (2 FRAGILE hits) to
+     * avoid immediate wanted stars. Keith reports the break-in at 08:00.
+     * Dims: 3.0 × 2.5 × 4.0; 8 HARD hits to break; drops nothing.
+     */
+    COUNCIL_DEPOT_PROP(3.0f, 2.5f, 4.0f, 8, null),
+
+    /**
+     * LIBRARY_REGULAR_SEAT_PROP — a fold-out chair beside the van where the
+     * LIBRARY_REGULAR NPC sits, chatting to Keith and creating a distraction.
+     * Dims: 0.6 × 0.9 × 0.6; 2 hits to destroy; drops nothing.
+     */
+    LIBRARY_REGULAR_SEAT_PROP(0.6f, 0.9f, 0.6f, 2, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

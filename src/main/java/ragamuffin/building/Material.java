@@ -6729,7 +6729,104 @@ public enum Material {
      *   <li>4 COIN value; auto-converts to COIN on pickup; not a persistent item.</li>
      * </ul>
      */
-    LOOKOUT_CUT("Lookout Cut");
+    LOOKOUT_CUT("Lookout Cut"),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1449: Northfield Mobile Library — Keith's Van
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * LIBRARY_CARD — "Northfield Mobile Library Card. Issued by Keith. Keep it safe."
+     * <ul>
+     *   <li>Given free by MOBILE_LIBRARIAN on first visit to the van.</li>
+     *   <li>Required to borrow books from the MobileLibraryUI.</li>
+     *   <li>Confiscated on LIBRARY_THEFT detection; restored after paying 5 COIN goodwill.</li>
+     * </ul>
+     */
+    LIBRARY_CARD("Library Card"),
+
+    /**
+     * RARE_BOOK — "A slim volume. Vellum cover, no price sticker. Almost certainly shouldn't be here."
+     * <ul>
+     *   <li>Stolen from RARE_BOOK_SHELF_PROP at van rear (3s hold-E while Keith distracted).</li>
+     *   <li>Fence value: 18 COIN pawn / 12 COIN fence.</li>
+     *   <li>Awards OVERDUE_FOREVER achievement.</li>
+     * </ul>
+     */
+    RARE_BOOK("Rare Book"),
+
+    /**
+     * SELF_HELP_PAPERBACK — "Believe in Yourself! (Second Edition). Slightly water-damaged."
+     * <ul>
+     *   <li>Borrowable from mobile library; must be returned within 7 in-game days.</li>
+     *   <li>Reading from inventory: Notoriety −1/day for 1 day.</li>
+     * </ul>
+     */
+    SELF_HELP_PAPERBACK("Self-Help Paperback"),
+
+    /**
+     * LOCAL_HISTORY_BOOK — "Northfield Through the Ages, Vol. 2. Foxed pages. Smells of a library."
+     * <ul>
+     *   <li>Borrowable from mobile library; must be returned within 7 in-game days.</li>
+     *   <li>Reading from inventory: reveals 2 random rumours from the RumourNetwork.</li>
+     * </ul>
+     */
+    LOCAL_HISTORY_BOOK("Local History Book"),
+
+    /**
+     * CRIME_FICTION — "The Long Arm. Dog-eared thriller. 'From the library of K. Butterworth'."
+     * <ul>
+     *   <li>Borrowable from mobile library; must be returned within 7 in-game days.</li>
+     *   <li>Reading from inventory: PICKPOCKET XP +1.</li>
+     * </ul>
+     */
+    CRIME_FICTION("Crime Fiction"),
+
+    /**
+     * JOB_SKILLS_GUIDE — "Get That Job! Interview tips inside. Spine cracked."
+     * <ul>
+     *   <li>Borrowable from mobile library; must be returned within 7 in-game days.</li>
+     *   <li>Reading from inventory: interview success +5% for 2 in-game days.</li>
+     * </ul>
+     */
+    JOB_SKILLS_GUIDE("Job Skills Guide"),
+
+    /**
+     * GARDENING_ENCYCLOPEDIA — "The Complete Garden (1987 edition). Heavy. Smells of potting compost."
+     * <ul>
+     *   <li>Borrowable from mobile library; must be returned within 7 in-game days.</li>
+     *   <li>Reading from inventory: allotment yield ×1.2 for 1 growth cycle.</li>
+     * </ul>
+     */
+    GARDENING_ENCYCLOPEDIA("Gardening Encyclopedia"),
+
+    /**
+     * COOKBOOK — "Cooking on a Budget. Well-thumbed. Gravy stain on page 47."
+     * <ul>
+     *   <li>Borrowable from mobile library; must be returned within 7 in-game days.</li>
+     *   <li>Reading from inventory: MUG_OF_TEA costs 1 fewer COIN for 1 in-game day.</li>
+     * </ul>
+     */
+    COOKBOOK("Cookbook"),
+
+    /**
+     * LIBRARY_VOUCHER — "One free book loan. Signed 'Keith'. Slightly crumpled."
+     * <ul>
+     *   <li>Given by MOBILE_LIBRARIAN when Save the Library petition reaches 20 signatures.</li>
+     *   <li>Redeemable for one free book loan, waiving any overdue fine.</li>
+     * </ul>
+     */
+    LIBRARY_VOUCHER("Library Voucher"),
+
+    /**
+     * PETITION_BOARD — "Save Our Mobile Library! Sign here."
+     * <ul>
+     *   <li>Appears from day 14 near the mobile library van.</li>
+     *   <li>Player can sign (E); counts as 3 signatures if Notoriety &lt; 20.</li>
+     *   <li>Steal the board (7 HARD hits): service cut 5 days, Notoriety +3, Vibes −5.</li>
+     * </ul>
+     */
+    PETITION_BOARD("Petition Board");
 
     private final String displayName;
 
@@ -8193,6 +8290,28 @@ public enum Material {
                                                     0.85f, 0.10f, 0.10f); // Red marked queen
             case LOOKOUT_CUT:             return cs(0.72f, 0.62f, 0.10f, // Folded notes
                                                     0.60f, 0.50f, 0.08f); // Darker crease
+
+            // Issue #1449: Northfield Mobile Library
+            case LIBRARY_CARD:            return cs(0.15f, 0.42f, 0.72f, // Blue card body
+                                                    0.88f, 0.92f, 0.88f); // White text area
+            case RARE_BOOK:               return cs(0.45f, 0.18f, 0.08f, // Dark vellum cover
+                                                    0.72f, 0.62f, 0.38f); // Gold spine lettering
+            case SELF_HELP_PAPERBACK:     return cs(0.92f, 0.75f, 0.28f, // Bright yellow cover
+                                                    0.88f, 0.92f, 0.88f); // White pages
+            case LOCAL_HISTORY_BOOK:      return cs(0.38f, 0.25f, 0.12f, // Brown hardback cover
+                                                    0.88f, 0.92f, 0.88f); // White pages
+            case CRIME_FICTION:           return cs(0.12f, 0.12f, 0.15f, // Dark thriller cover
+                                                    0.82f, 0.15f, 0.12f); // Red title text
+            case JOB_SKILLS_GUIDE:        return cs(0.15f, 0.55f, 0.28f, // Green cover
+                                                    0.88f, 0.92f, 0.88f); // White pages
+            case GARDENING_ENCYCLOPEDIA:  return cs(0.22f, 0.55f, 0.18f, // Green cover
+                                                    0.62f, 0.42f, 0.18f); // Brown spine
+            case COOKBOOK:                return cs(0.88f, 0.38f, 0.15f, // Orange cover
+                                                    0.88f, 0.92f, 0.88f); // White pages
+            case LIBRARY_VOUCHER:         return cs(0.88f, 0.85f, 0.72f, // Cream paper
+                                                    0.15f, 0.42f, 0.72f); // Blue stamp
+            case PETITION_BOARD:          return cs(0.72f, 0.55f, 0.30f, // Brown clipboard
+                                                    0.88f, 0.92f, 0.88f); // White paper
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -10601,6 +10720,28 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // deck of cards
             case LOOKOUT_CUT:
                 return IconShape.FLAT_PAPER;  // folded notes
+
+            // Issue #1449: Northfield Mobile Library
+            case LIBRARY_CARD:
+                return IconShape.FLAT_PAPER;  // laminated card
+            case RARE_BOOK:
+                return IconShape.BOX;         // slim hardback volume
+            case SELF_HELP_PAPERBACK:
+                return IconShape.FLAT_PAPER;  // paperback book
+            case LOCAL_HISTORY_BOOK:
+                return IconShape.FLAT_PAPER;  // hardback local history
+            case CRIME_FICTION:
+                return IconShape.FLAT_PAPER;  // dog-eared thriller
+            case JOB_SKILLS_GUIDE:
+                return IconShape.FLAT_PAPER;  // slim guide booklet
+            case GARDENING_ENCYCLOPEDIA:
+                return IconShape.BOX;         // heavy reference tome
+            case COOKBOOK:
+                return IconShape.FLAT_PAPER;  // paperback cookbook
+            case LIBRARY_VOUCHER:
+                return IconShape.FLAT_PAPER;  // paper voucher
+            case PETITION_BOARD:
+                return IconShape.FLAT_PAPER;  // clipboard petition
 
             default:
                 return IconShape.BOX;
