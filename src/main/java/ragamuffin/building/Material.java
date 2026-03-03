@@ -6977,7 +6977,52 @@ public enum Material {
      * Achievement: GOOSE_CHASE on first successful fake tip sale.
      * Tooltip: "Completely wrong location. Confidently written."
      */
-    FAKE_BIRDWATCHING_TIP("Fake Birdwatching Tip");
+    FAKE_BIRDWATCHING_TIP("Fake Birdwatching Tip"),
+
+    // ── Issue #1477: Northfield Warm Hub ──────────────────────────────────────
+
+    /**
+     * HUB_TEA — a free hot drink dispensed by Shirley at the warm hub.
+     * Obtained by pressing E on WARM_HUB_VOLUNTEER (WARM_HUB_TABLE_PROP) once per 120 seconds.
+     * Restores +25 warmth and +8 hunger. Can be used to stage a fake medical emergency
+     * on a WARM_HUB_VISITOR (hold E for 2s, 40% detection chance).
+     * Tooltip: "Free tea from Shirley. Tastes of powdered milk and kindness."
+     */
+    HUB_TEA("Hub Tea"),
+
+    /**
+     * HUB_BISCUIT — a rich tea biscuit from Shirley's tin at the warm hub.
+     * Player may take 1 free per visit. Taking 2+ triggers Shirley (Notoriety +1 each).
+     * Stealing the whole tin (4s unobserved hold) yields 3–6 biscuits + DONATIONS_TIN.
+     * Tooltip: "Rich tea. Shirley made you take it."
+     */
+    HUB_BISCUIT("Hub Biscuit"),
+
+    /**
+     * DONATIONS_TIN — the empty tin left after the biscuits are stolen, or yielded
+     * when the DONATIONS_TIN_PROP is robbed. Also produced when the biscuit tin is
+     * looted (3–6 HUB_BISCUIT items + 1 DONATIONS_TIN).
+     * Fenceable for 1 COIN. Tooltip: "Empty tin. Someone got there first."
+     */
+    DONATIONS_TIN("Donations Tin"),
+
+    /**
+     * FAKE_DONATIONS_FORM — crafted from BLANK_PRESCRIPTION_FORM + PEN.
+     * Shown to Shirley at the warm hub to trick her into handing over the contents of
+     * the DONATIONS_TIN_PROP (no crime recorded, Notoriety +3).
+     * Achievement: SHIRL_S_BEEN_HAD on first successful use.
+     * Tooltip: "Looks official. Shirley won't know the difference."
+     */
+    FAKE_DONATIONS_FORM("Fake Donations Form"),
+
+    /**
+     * HOMEMADE_CAKE_SLICE — a slice of homemade cake given by Shirley as a reward
+     * for escorting all lingering rough sleepers out of the warm hub within 90 seconds
+     * of closure. Restores +20 hunger and +10 warmth.
+     * Achievement: SHIRLEY_S_FAVOURITE on receipt.
+     * Tooltip: "Victoria sponge. Shirley says it's her mum's recipe."
+     */
+    HOMEMADE_CAKE_SLICE("Homemade Cake Slice");
 
     private final String displayName;
 
@@ -8493,6 +8538,17 @@ public enum Material {
                                                     0.95f, 0.92f, 0.82f); // Cream pages
             case FAKE_BIRDWATCHING_TIP:   return cs(0.85f, 0.85f, 0.75f, // Slightly off-white paper
                                                     0.65f, 0.12f, 0.12f); // Red marker scrawl
+
+            // Issue #1477: Northfield Warm Hub
+            case HUB_TEA:                 return cs(0.88f, 0.68f, 0.40f, // Milky tea brown
+                                                    0.92f, 0.92f, 0.90f); // White mug
+            case HUB_BISCUIT:             return c(0.92f, 0.82f, 0.65f);  // Pale biscuit beige
+            case DONATIONS_TIN:           return cs(0.55f, 0.62f, 0.68f, // Tin grey-blue
+                                                    0.30f, 0.30f, 0.32f); // Dark empty interior
+            case FAKE_DONATIONS_FORM:     return cs(0.95f, 0.95f, 0.90f, // White paper
+                                                    0.12f, 0.22f, 0.68f); // Blue official stamp
+            case HOMEMADE_CAKE_SLICE:     return cs(0.95f, 0.90f, 0.80f, // Cream sponge
+                                                    0.85f, 0.32f, 0.32f); // Pink jam layer
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -10923,6 +10979,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // paper voucher
             case PETITION_BOARD:
                 return IconShape.FLAT_PAPER;  // clipboard petition
+
+            // Issue #1477: Northfield Warm Hub
+            case HUB_TEA:
+                return IconShape.BOTTLE;      // mug of tea
+            case HUB_BISCUIT:
+                return IconShape.FOOD;        // rich tea biscuit
+            case DONATIONS_TIN:
+                return IconShape.CYLINDER;    // round tin
+            case FAKE_DONATIONS_FORM:
+                return IconShape.FLAT_PAPER;  // official-looking form
+            case HOMEMADE_CAKE_SLICE:
+                return IconShape.FOOD;        // slice of Victoria sponge
 
             default:
                 return IconShape.BOX;
