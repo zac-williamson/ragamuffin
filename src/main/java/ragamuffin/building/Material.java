@@ -6234,11 +6234,6 @@ public enum Material {
     BUCKET_AND_CHAMOIS("Bucket and Chamois"),
 
     /**
-     * SQUEEGEE — "Telescopic. Leaves no streaks. Terry's never without one."
-     * Dropped by Terry on hostile takedown. Used as melee prop (2 damage, no crime). */
-    SQUEEGEE("Squeegee"),
-
-    /**
      * TERRY_DEBT_NOTE — "Payment refused. Property: 14 Acacia Ave. Amount: 2 COIN. Date noted."
      * Given to player after reporting a defaulter to Terry. Redeemable for 1 COIN + gossip. */
     TERRY_DEBT_NOTE("Terry's Debt Note"),
@@ -6353,7 +6348,35 @@ public enum Material {
     /**
      * ROOF_SLATE_BAG — "Canvas bag of second-hand roofing slates. Heavy."
      * 15% chance in Kenny's van loot. Fenceable for 8 COIN. */
-    ROOF_SLATE_BAG("Roof Slate Bag");
+    ROOF_SLATE_BAG("Roof Slate Bag"),
+
+    // ── Issue #1408: Northfield Catalogue Man ─────────────────────────────────
+
+    /** Knockoff novelty from Barry's catalogue bag — trinkets (ornaments, keyrings, etc.). Fence value 2–3 COIN. */
+    CATALOGUE_TRINKET("Catalogue Trinket"),
+
+    /** Knockoff tool from Barry's catalogue bag — screwdrivers, tape measures, etc. Fence value 3–5 COIN. */
+    CATALOGUE_TOOL("Catalogue Tool"),
+
+    /** Knockoff textile from Barry's catalogue bag — tea towels, blankets, etc. Fence value 2–4 COIN. */
+    CATALOGUE_TEXTILE("Catalogue Textile"),
+
+    /** Receipt proving a household owes Barry money. Tip off the Loan Shark for 3 COIN finder's fee. */
+    CATALOGUE_RECEIPT("Catalogue Receipt"),
+
+    /**
+     * Counterfeit product sample from Barry's deliveries.
+     * Obtained after witnessing 5 undetected deliveries.
+     * Three paths: report to Trading Standards, blackmail Barry, or craft a KNOCKOFF_CATALOGUE.
+     */
+    CATALOGUE_SAMPLE("Catalogue Sample"),
+
+    /**
+     * Rival knockoff catalogue — crafted at the InternetCafe.
+     * Run a rival round: 35% accept rate, 4 COIN/sale.
+     * Monthly Trading Standards check (last Friday 14:00) has 20% catch chance.
+     */
+    KNOCKOFF_CATALOGUE("Knockoff Catalogue");
 
     private final String displayName;
 
