@@ -6236,6 +6236,62 @@ public enum AchievementType {
         "Blackout Bandit",
         "Took full advantage of the CCTV outage. Sharon tripped over the cable. Timing is everything.",
         1
+    ),
+
+    // ── Issue #1386: Northfield St George's Day ───────────────────────────────
+
+    /**
+     * NORTHERN_SPIRIT — join the Morris Dancers in the park on St George's Day (target=1).
+     */
+    NORTHERN_SPIRIT(
+        "Northern Spirit",
+        "Joined in with the Morris Dancers. Nobody asked you to, but nobody stopped you either.",
+        1
+    ),
+
+    /**
+     * STOLE_THE_STICK — steal a MORRIS_STICK_PROP from a dancer, causing all 6 to give chase (target=1).
+     */
+    STOLE_THE_STICK(
+        "Stole the Stick",
+        "Nicked a Morris stick and legged it through the park with six men in bells after you.",
+        1
+    ),
+
+    /**
+     * TOOK_THE_FLAG — climb the bar stool and take the St George flag from above the bar (target=1).
+     */
+    TOOK_THE_FLAG(
+        "Took the Flag",
+        "Liberated the St George Cross from above the Wetherspoons bar. Three-day ban. Worth it.",
+        1
+    ),
+
+    /**
+     * OFF_THE_ROOF — climb the drainpipe and take the roof flag (target=1).
+     */
+    OFF_THE_ROOF(
+        "Off the Roof",
+        "Scaled the drainpipe, disabled the CCTV, and walked off with the big flag. Legendary.",
+        1
+    ),
+
+    /**
+     * BEST_DRESSED_PATRIOT — win the Best England Shirt competition at 15:00 (target=1).
+     */
+    BEST_DRESSED_PATRIOT(
+        "Best Dressed Patriot",
+        "Won the Best England Shirt competition. Clean shirt, sober stance, national pride.",
+        1
+    ),
+
+    /**
+     * LOCK_IN_LEGEND — survive the Wetherspoons lock-in from midnight to 02:00 (target=1).
+     */
+    LOCK_IN_LEGEND(
+        "Lock-In Legend",
+        "Made it to 2am in a Wetherspoons lock-in while the police knocked on the door. Respect.",
+        1
     );
 
     private final String name;

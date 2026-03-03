@@ -2983,7 +2983,38 @@ public enum NPCType {
      * the road-closure application. Appears at 18:30 with a CLIPBOARD_PROP to issue
      * noise complaints and threaten to call the council.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
-    NEIGHBOURHOOD_WATCH(20f, 0f, 0f, false);
+    NEIGHBOURHOOD_WATCH(20f, 0f, 0f, false),
+
+    // ── Issue #1386: Northfield St George's Day ───────────────────────────────
+
+    /** MORRIS_DANCER — one of six traditional Morris Dancers who perform in the park
+     * 11:00–15:00 on St George's Day. Carries MORRIS_STICK_PROP. Pursues player
+     * if stick is stolen (becomes HOSTILE during pursuit).
+     * HP: 25f, attack: 4f, cooldown: 1.5f, hostile: false (true if stick stolen). */
+    MORRIS_DANCER(25f, 4f, 1.5f, false),
+
+    /** ENGLAND_FLAG_NPC — nationalist supporter carrying an England flag. Converges
+     * on the park from 14:00 on St George's Day. Within 5 blocks of a
+     * COUNTER_PROTEST_NPC triggers CROWD_SCUFFLE event.
+     * HP: 25f, attack: 5f, cooldown: 1.2f, hostile: false. */
+    ENGLAND_FLAG_NPC(25f, 5f, 1.2f, false),
+
+    /** COUNTER_PROTEST_NPC — counter-protest attendee. Converges from 14:00 on
+     * St George's Day. Within 5 blocks of ENGLAND_FLAG_NPC triggers CROWD_SCUFFLE.
+     * HP: 25f, attack: 5f, cooldown: 1.2f, hostile: false. */
+    COUNTER_PROTEST_NPC(25f, 5f, 1.2f, false),
+
+    /** TERRY_BARMAN — Terry, the Wetherspoons barman who runs the St George's Day
+     * lock-in. Sells DOOM_BAR_PINT during 11:00–02:00. Can be distracted to
+     * disable CCTV awareness during the flag heist.
+     * HP: 30f, attack: 0f, cooldown: 0f, hostile: false. */
+    TERRY_BARMAN(30f, 0f, 0f, false),
+
+    /** MIREK_FENCE — Mirek, the local fence who buys stolen St George's Day items.
+     * Buys ST_GEORGE_FLAG_PROP for 5 COIN, ROOF_FLAG_PROP for 12 COIN.
+     * Present all day on St George's Day.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    MIREK_FENCE(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

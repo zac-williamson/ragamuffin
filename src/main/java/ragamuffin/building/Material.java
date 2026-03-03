@@ -6058,7 +6058,48 @@ public enum Material {
     /**
      * HDMI Cable — "Found near the DVR. Suspiciously tangled."
      * Looted near Iceland DVR; connection to the CCTV Blackout incident. */
-    HDMI_CABLE("HDMI Cable");
+    HDMI_CABLE("HDMI Cable"),
+
+    // ── Issue #1386: Northfield St George's Day ───────────────────────────────
+
+    /**
+     * DOOM_BAR_PINT — "Proper English ale. Goes down dangerously easy."
+     * Sold by Terry at Wetherspoons during the St George's Day lock-in (23 April).
+     * 3 pints in one session → DRUNK_STATE. Price: 3 COIN per pint. */
+    DOOM_BAR_PINT("Doom Bar Pint"),
+
+    /**
+     * BANANA_SKIN — "A banana peel. Classic. Still funny, apparently."
+     * Used to sabotage Morris Dancers on St George's Day. Triggers NoiseSystem level 7.
+     * Can be found on the floor near the park on St George's Day. */
+    BANANA_SKIN("Banana Skin"),
+
+    /**
+     * ENGLAND_SHIRT_PROP — "Three lions on the shirt. Ketchup on the collar."
+     * Sold at PoundShop for 3 COIN. Keep condition ≥ 85 and stay sober to win
+     * the Best England Shirt competition at 15:00. */
+    ENGLAND_SHIRT_PROP("England Shirt"),
+
+    /**
+     * MORRIS_STICK_PROP — "A painted stick used in traditional Morris Dancing.
+     * If you've got one, you've almost certainly nicked it."
+     * Carried by MORRIS_DANCER NPCs (11:00–15:00 in the Park). Stealable;
+     * triggers all 6 dancers to pursue the player. */
+    MORRIS_STICK_PROP("Morris Stick"),
+
+    /**
+     * ST_GEORGE_FLAG_PROP — "England's finest. Hanging above the bar at Wetherspoons."
+     * Obtainable by climbing BAR_STOOL_PROP and pressing E on the flag.
+     * Results in ejection + 3-day ban + TOOK_THE_FLAG achievement.
+     * Fenceable to Mirek for 5 COIN. */
+    ST_GEORGE_FLAG_PROP("St George Flag"),
+
+    /**
+     * ROOF_FLAG_PROP — "Bigger flag. Harder to get. More suspicious to carry."
+     * Obtainable via DRAINPIPE_PROP in the back alley (3-second hold-E).
+     * Requires CCTV disabled. Fenceable to Mirek for 12 COIN.
+     * Awards OFF_THE_ROOF achievement. */
+    ROOF_FLAG_PROP("Roof Flag");
 
     private final String displayName;
 
@@ -9597,6 +9638,20 @@ public enum Material {
                 return IconShape.CYLINDER;    // rare vinyl disc
             case HDMI_CABLE:
                 return IconShape.TOOL;        // cable / lead shape
+
+            // Issue #1386: Northfield St George's Day
+            case DOOM_BAR_PINT:
+                return IconShape.CYLINDER;    // tall pint glass
+            case BANANA_SKIN:
+                return IconShape.FOOD;        // curved banana skin
+            case ENGLAND_SHIRT_PROP:
+                return IconShape.FLAT_PAPER;  // folded football shirt
+            case MORRIS_STICK_PROP:
+                return IconShape.TOOL;        // short wooden stick
+            case ST_GEORGE_FLAG_PROP:
+                return IconShape.FLAT_PAPER;  // folded flag
+            case ROOF_FLAG_PROP:
+                return IconShape.FLAT_PAPER;  // folded flag
 
             default:
                 return IconShape.BOX;
