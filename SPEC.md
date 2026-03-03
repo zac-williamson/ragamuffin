@@ -50226,3 +50226,172 @@ Trevor's dog Tyke (existing `DOG` NPC) escapes from a garden and runs into the p
 // Integration: NeighbourhoodSystem, NoiseSystem, WeatherSystem, WantedSystem,
 //   FactionSystem, RumourNetwork, NewspaperSystem, CampfireSystem, WheeliBinFireSystem,
 //   PetrolStationSystem, TimeSystem, AchievementSystem, CriminalRecord
+
+---
+
+## Issue #1383: Add Northfield Halloween — The Trick-or-Treaters, Dave's Egged Car & the Estate After Dark
+
+**Landmark**: No new landmark. The event plays out across `TERRACED_HOUSE`, `COUNCIL_FLATS`, and `PARK` landmarks. Uses the existing residential street grid.
+**System class**: `HalloweenSystem.java` in `ragamuffin.core`
+
+### Background
+
+31 October. One of Northfield's most reliable nights for low-level chaos. SCHOOL_KID NPCs tour the terrace in costume demanding sweets. Grumpy residents either hand over MINI_CHOCOLATE_BAR or get their door egged. Someone always takes it too far. Dave from No. 7 has already had his car egged three years running and this year he's bought a motion sensor from Argos. Brenda has put a pumpkin on her step. Karen has turned all her lights off and is pretending she's not in.
+
+The event runs from 17:00 to 22:00 on the annual Halloween day (`dayCount % 365 == 304` — day 304 of the in-game year, mapping to 31 October). Atmosphere-wise: lighting is dimmer (ambient light drops 30%), `LightingSystem` spawns orange candle-glow at any house where a `JACK_O_LANTERN_PROP` is placed, and the background soundscape adds occasional distant fireworks (FIREWORK_POP sound effect, same as `BonfireNightSystem`).
+
+### Mechanic 1 — Trick-or-Treat Route (press E at any `TERRACED_HOUSE` or `COUNCIL_FLATS` door prop)
+
+Up to 8 `SCHOOL_KID` NPCs are spawned at 17:00 in random Halloween costumes (cosmetically assigned from `HalloweenCostume` enum: WITCH, GHOST, VAMPIRE, ZOMBIE, SKELETON, DEVIL, PUMPKIN_HEAD, DRACULA). They walk door-to-door along the terrace calling at each occupied house.
+
+Each house has a `halloweenMoodScore` (0–10, randomised at event start):
+- **Score 7–10** ("Generous"): PENSIONER NPC opens door, hands out `MINI_CHOCOLATE_BAR` ×1–3. SCHOOL_KID NPC gains HAPPY state for 30s.
+- **Score 3–6** ("Reluctant"): hands out `CRISP_PACKET` ×1. SCHOOL_KID moves on.
+- **Score 0–2** ("Lights Off"): No answer. 60% chance SCHOOL_KID gives up; 40% chance egg the front door (NoiseSystem event level 8, `ANTI_SOCIAL_BEHAVIOUR` rumour seeded, −1 Neighbourhood VIBES).
+
+**Player as trick-or-treater**: Player can press E on any house door during the event window to ring the bell:
+- Holding a `TRICK_OR_TREAT_BAG` allows legitimate candy collection (same rules as SCHOOL_KID NPCs above).
+- No bag: Resident NPCs refuse ("You're a bit old for this, aren't you?").
+- Wearing a Halloween costume (see Mechanic 3): bonus — Generous houses give +1 extra MINI_CHOCOLATE_BAR.
+
+### Mechanic 2 — The Egging Hustle (requires `RAW_EGG` in inventory)
+
+Any `RAW_EGG` can be thrown at targets (press E to aim, left-click to throw — uses existing `PropBreaker` throw mechanic). Throwable targets and consequences:
+- **House door/window**: `EGGED_DOOR_PROP` decal spawned. NoiseSystem level 8. Resident NPC transitions to ANGRY. −1 Neighbourhood VIBES. 25% chance resident calls police (WantedSystem +1 if within LoS).
+- **Dave's car** (`PARKED_CAR` near No. 7): As above but if motion sensor is armed (`ARGOS_MOTION_SENSOR_PROP` within 3 blocks, activated at 17:30), sensor triggers: NoiseSystem level 15, WantedSystem +1, Dave spawns as ANGRY NPC and pursues player for 60 seconds. Tooltip on Dave: "He bought a motion sensor from Argos for this exact reason."
+- **SCHOOL_KID NPC**: SCHOOL_KID transitions to FLEEING. NoiseSystem level 5. Witnesses: Notoriety +3. PENSIONER NPC who sees it: "That's absolutely disgusting." 40% chance they call police.
+- **PENSIONER NPC**: PENSIONER transitions to PANIC. Notoriety +5. WantedSystem +1 immediately (assault).
+- **Gerald (NEIGHBOURHOOD_WATCH)**: Gerald records it on his `CLIPBOARD_PROP`. Notoriety +8, WantedSystem +1, `ANTI_SOCIAL_BEHAVIOUR` rumour seeded town-wide.
+
+`RAW_EGG` is sourced from:
+- `SUPERMARKET` or `TESCO_EXPRESS` (buy 6× for 1 COIN — "6 Pack of Eggs").
+- `SKIP_DIVING` (15% chance of finding a 6-pack).
+- Steal from `GREASY_SPOON_CAFE` kitchen prop (3× `RAW_EGG`, requires `CROWBAR`).
+
+### Mechanic 3 — Halloween Costumes (Disguise Integration)
+
+Four Halloween costumes are craftable from `CHARITY_SHOP` purchases or crafted:
+- `WITCH_COSTUME` — `POINTY_HAT` + `BLACK_CAPE` (buy at `CHARITY_SHOP` for 2 COIN each, 3 days before Halloween), OR find in `SKIP_DIVING` with 10% chance.
+- `GHOST_SHEET` — `WHITE_BEDSHEET` (craftable: 2× `CLOTH`).
+- `SKELETON_SUIT` — buy from `POUND_SHOP` for 3 COIN (only stocked 3 in-game days before Halloween — limited supply).
+- `PUMPKIN_HEAD_MASK` — craftable: 1× `CARVED_PUMPKIN` (carved from `RAW_PUMPKIN` using `KNIFE`).
+
+**Disguise mechanics** (via `DisguiseSystem`):
+- All four costumes grant `disguiseBonus = 20` (high — nobody recognises you).
+- However, wearing a Halloween costume at non-Halloween times (after day 304 event ends, or before 17:00) grants `disguiseBonus = 5` and causes NPC comments ("it's not Halloween, you div").
+- WantedSystem: Police NPCs don't recognise the player in costume unless Wanted ≥ 3 (too obvious).
+- CREW_TAG faction tattoo benefit is suppressed while in Halloween costume (disguise overrides completely).
+- `SKELETON_SUIT` grants a special bonus on Halloween night only: `SCHOOL_KID` NPCs treat the player as one of them and won't react to minor mischief (egging doors) within 10 blocks.
+
+### Mechanic 4 — The Pumpkin Economy
+
+`RAW_PUMPKIN` is a seasonal item stocked at:
+- `TESCO_EXPRESS` / `SUPERMARKET`: 2 COIN each (available from day 298–310).
+- `ALLOTMENTS`: Derek's plot has 2× `RAW_PUMPKIN` growing if player's plot has been maintained (available to harvest after day 295). Tooltip: "Fresh from the allotment. Derek's very proud of them."
+
+`RAW_PUMPKIN` → `CARVED_PUMPKIN` (use `KNIFE` in inventory, press E on pumpkin): 
+- Yields `PUMPKIN_HEAD_MASK` (wearable, disguise) + `PUMPKIN_INNARDS` (compost for allotment, +5% crop yield).
+- OR: Place `CARVED_PUMPKIN` as a prop (`JACK_O_LANTERN_PROP`) outside your squat/house — triggers orange ambient light glow, +1 Neighbourhood VIBES. Tooltip: "Northfield's finest gourd-work."
+- Smashing someone else's `JACK_O_LANTERN_PROP`: NoiseSystem level 5, −2 Neighbourhood VIBES, `ANTI_SOCIAL_BEHAVIOUR` rumour seeded. 30% chance SCHOOL_KID NPC laughs; 70% chance resident NPC comes outside angry.
+
+`JACK_O_LANTERN_PROP` can be stolen and sold to `PAWN_SHOP` for 1 COIN. Tooltip on stolen pumpkin: "Someone's Halloween is ruined. Worth 1 coin at Cash4Gold."
+
+### Mechanic 5 — Estate After Dark (22:00 transition)
+
+At 22:00 the formal event ends, but:
+- Any SCHOOL_KID NPCs still out are recalled home (despawn).
+- 2× `YOUTH` NPCs (drunk, from the Wetherspoons) remain on the streets until 00:00 wearing discarded costume elements (`POINTY_HAT`). They are disruptive: random NoiseSystem level 5–8 events every 5 minutes.
+- If `BonfireNightSystem` is active within 4 in-game days (day 300–304), these YOUTH NPCs carry `FIREWORK` items and may set them off (NoiseSystem level 20, fire hazard if near `WOOD` blocks — same spread rules as `WheeliBinFireSystem`).
+- `CHARITY_SHOP` and `POUND_SHOP` restock Halloween items the following day at reduced clearance prices (50% off — classic post-Halloween markdown). Tooltip: "Halloween clearance. All the skeleton suits nobody wanted."
+
+### System Integrations
+
+- `DisguiseSystem`: All four Halloween costumes use `getDisguiseBonus()` interface; `SKELETON_SUIT` has conditional bonus only on day 304 17:00–22:00.
+- `NeighbourhoodSystem`: JACK_O_LANTERN placed: +1 VIBES; door egged: −1; PENSIONER scared: −2; successful trick-or-treat route (all 8 houses visited): +3 VIBES.
+- `NoiseSystem`: egging = level 8; Dave's motion sensor = level 15; YOUTH firework = level 20; JACK_O_LANTERN smashed = level 5.
+- `WeatherSystem`: RAIN on Halloween reduces attendee count by 4 and causes costumes to look sad — `GHOST_SHEET` and `WITCH_COSTUME` gain "Soggy" suffix in inventory; DRIZZLE has no effect.
+- `WantedSystem`: egging witnessed = +1; egging PENSIONER = +1 immediately; Gerald egged = +1.
+- `RumourNetwork`: post-event seeds `LOCAL_EVENT` "That was a good Halloween wasn't it" (if VIBES net +); `ANTI_SOCIAL_BEHAVIOUR` "Someone was egging houses on the terrace again"; `LOCAL_SCANDAL` if Dave's car egged 3 nights running (tracked by `HalloweenSystem.daveCarEggings`).
+- `NewspaperSystem`: 3+ eggs thrown at houses → headline "Halloween Yobs Strike Again in Northfield — Brenda Disgusted"; Dave's car egged + sensor triggered → "Motion Sensor Foils Halloween Vandal — Dave Vindicated".
+- `BonfireNightSystem`: Shares FIREWORK_POP sound effect; YOUTH NPCs carrying fireworks on Halloween if BonfireNight is within 4 days.
+- `TimeSystem`: event triggers on `dayCount % 365 == 304`; ambient light dim at 17:00; YOUTH spawn at 22:00; all NPCs despawn at 00:00.
+- `LightingSystem`: JACK_O_LANTERN_PROP spawns orange point-light (radius 4 blocks, intensity 0.6).
+- `AllotmentSystem`: `PUMPKIN_INNARDS` compostable for +5% crop yield; allotment pumpkins harvestable from day 295.
+- `SkipDivingSystem`: `RAW_EGG` 6-pack (15% chance) and `WITCH_COSTUME` components (10% chance) in skip loot tables.
+- `AchievementSystem`: new achievements below.
+
+### New Materials (add to Material.java)
+- `RAW_EGG` — "A free-range egg. Or a weapon." Sourceable from supermarket (6 for 1 COIN), skip diving, greasy spoon raid.
+- `MINI_CHOCOLATE_BAR` — +5 hunger; tooltip: "A bite-size let-down from a generous neighbour."
+- `TRICK_OR_TREAT_BAG` — container item; holds up to 20 candy items; not fenceable.
+- `WITCH_COSTUME` — wearable; `disguiseBonus = 20`; craftable from POINTY_HAT + BLACK_CAPE.
+- `GHOST_SHEET` — wearable; `disguiseBonus = 20`; craftable from 2× CLOTH.
+- `SKELETON_SUIT` — wearable; `disguiseBonus = 20` + conditional bonus on Halloween night; bought at POUND_SHOP (3 COIN, limited stock).
+- `PUMPKIN_HEAD_MASK` — wearable; `disguiseBonus = 20`; crafted from `CARVED_PUMPKIN` + `KNIFE`.
+- `RAW_PUMPKIN` — seasonal; sourceable from TESCO_EXPRESS / SUPERMARKET / ALLOTMENTS day 298–310.
+- `CARVED_PUMPKIN` — intermediate; result of using KNIFE on RAW_PUMPKIN; becomes JACK_O_LANTERN_PROP when placed OR crafted into PUMPKIN_HEAD_MASK.
+- `PUMPKIN_INNARDS` — compost; allotment crop bonus +5% yield.
+- `POINTY_HAT` — costume component; buy at CHARITY_SHOP; wearable alone (partial disguise bonus 8).
+- `BLACK_CAPE` — costume component; buy at CHARITY_SHOP; wearable alone (partial disguise bonus 8).
+
+### New PropTypes (add to PropType.java)
+- `JACK_O_LANTERN_PROP` — orange-glowing pumpkin; placed from CARVED_PUMPKIN; stealable; emits LightingSystem point-light.
+- `EGGED_DOOR_PROP` — decal spawned on a door block when egged; despawns after 24 in-game hours. Cosmetic only.
+- `ARGOS_MOTION_SENSOR_PROP` — Dave's motion sensor; armed at 17:30; triggers NoiseSystem level 15 when a projectile (RAW_EGG) lands within 3 blocks.
+
+### New AchievementTypes (add to AchievementType.java)
+- `TRICK_OR_TREATER` — collect candy from 5 houses in one Halloween event (target=5). Name: "Fill Yer Boots". Desc: "Five doors knocked, five rewards. You're never too old for sweets."
+- `HALLOWEEN_VANDAL` — egg 5 houses/cars in a single Halloween night (target=5). Name: "Yob of the Year". Desc: "Five egged doors. Brenda is inconsolable. Northfield Gazette is interested."
+- `DAVE_NEMESIS` — trigger Dave's motion sensor by egging his car (target=1). Name: "Worth Every Penny". Desc: "Dave's motion sensor went off. Three years of preparation paid off. For Dave."
+- `COSTUME_CRIME` — commit any crime while wearing a Halloween costume (target=1). Name: "Method Acting". Desc: "You robbed someone dressed as a skeleton. Kev from Skin Deep approves."
+- `PUMPKIN_KING` — place 3 JACK_O_LANTERN_PROPs in one Halloween event (target=3). Name: "Pride of the Street". Desc: "Three carved pumpkins outside your squat. Derek is jealous. His are better."
+- `NIGHT_OWL` — still outside and wanted-free at 00:00 on Halloween night (target=1). Name: "The Estate After Dark". Desc: "You stayed out until midnight on Halloween. The YOUTH NPCs respect you. Slightly."
+
+### New RumourTypes (add to RumourType.java — verify if any exist already)
+- `ANTI_SOCIAL_BEHAVIOUR` — seeded on egging events. "Someone was lobbing eggs down the terrace last night. Animals."
+- `HALLOWEEN_CHAOS` — seeded when 3+ eggs thrown in one event. "Halloween was mental this year. Someone went proper mad with eggs."
+
+### Unit Tests
+- `testHalloweenTriggerDay`: call `isHalloweenDay(dayCount)` for days 303, 304, 305. Verify true only for 304.
+- `testHouseMonodeterministicWithSeed`: construct `HalloweenSystem(new Random(42))`. Verify `halloweenMoodScore` for house index 0 is in range 0–10. Verify same seed produces same score.
+- `testGenerousDoorGivesChocolate`: set house score to 8. Call `knockDoor(player, house)`. Verify `MINI_CHOCOLATE_BAR` added to player inventory (1–3 items). Verify no VIBES change.
+- `testLightsOffDoorEggsProbability`: set house score to 1. Run `knockDoor(player, house)` 100 times with varied seeds. Verify approximately 40 (37–43) trigger egging event (NoiseSystem level 8 emitted).
+- `testEggThrowAtDoor`: give player `RAW_EGG`. Call `throwEgg(player, targetHouse)`. Verify `EGGED_DOOR_PROP` spawned on door block. Verify NoiseSystem event level 8. Verify `ANTI_SOCIAL_BEHAVIOUR` rumour seeded. Verify −1 VIBES.
+- `testEggThrowDaveCarTriggersSensor`: place `ARGOS_MOTION_SENSOR_PROP` within 3 blocks of Dave's car. Arm sensor. Call `throwEgg(player, daveCar)`. Verify NoiseSystem level 15. Verify Dave NPC spawns in ANGRY state. Verify WantedSystem +1.
+- `testEggPensionerNotoriety`: call `throwEgg(player, pensionerNPC)`. Verify Notoriety +5. Verify WantedSystem +1. Verify PENSIONER transitions to PANIC.
+- `testCostumeDisguiseBonus`: give player `WITCH_COSTUME`. Equip it (time = Halloween night, 19:00). Verify `DisguiseSystem.getDisguiseBonus(player)` == 20.
+- `testCostumeDisguiseBonusOffSeason`: give player `WITCH_COSTUME`. Equip it (time = non-Halloween, day 200). Verify `DisguiseSystem.getDisguiseBonus(player)` == 5.
+- `testSkeletonSuitBonusConditional`: give player `SKELETON_SUIT`. Set time to Halloween 20:00. Verify `HalloweenSystem.isHalloweenBonusActive()` == true, `DisguiseSystem.getDisguiseBonus(player)` includes SKELETON_SUIT conditional bonus. Set time to day 200. Verify conditional bonus NOT active.
+- `testPumpkinCarveYieldsMask`: give player `RAW_PUMPKIN` and `KNIFE`. Call `carvePumpkin(player)`. Verify `CARVED_PUMPKIN` in inventory. Verify `PUMPKIN_INNARDS` in inventory. Verify `RAW_PUMPKIN` removed.
+- `testJackOLanternPlacementVibes`: record baseline VIBES. Place `JACK_O_LANTERN_PROP` (convert CARVED_PUMPKIN). Verify VIBES +1. Verify `LightingSystem` has registered an orange point-light at prop position (radius 4, intensity 0.6).
+- `testDaveCarEggingStreakRumour`: set `HalloweenSystem.daveCarEggings = 2`. Egg Dave's car. Verify `daveCarEggings == 3`. Verify `LOCAL_SCANDAL` rumour seeded with "three years running" text.
+- `testYouthFireworkRiskBonfireNearby`: set `dayCount = 304`. Set `BonfireNightSystem.isWithinWindow()` true (within 4 days). Advance to 22:00. Verify YOUTH NPC spawned with `FIREWORK` in inventory. Simulate YOUTH firework set off: verify NoiseSystem level 20.
+- `testClearancePricingAfterEvent`: advance to day 305. Verify `SKELETON_SUIT` price in POUND_SHOP == 1 COIN (50% off from 3 COIN). Verify `WITCH_COSTUME` components at CHARITY_SHOP == 1 COIN each.
+- `testRainReducesAttendees`: set weather to RAIN on day 304. Trigger event. Verify SCHOOL_KID NPC count ≤ 4 (normal baseline − 4).
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full trick-or-treat route yields candy and VIBES boost**: Set `dayCount = 304`. Advance time to 17:00. Give player `TRICK_OR_TREAT_BAG` and `SKELETON_SUIT` (equipped). Walk to first TERRACED_HOUSE door. Press E. Repeat for 5 houses (seed `HalloweenSystem` with Random(42) so houses 0–7 are deterministically assigned scores 3–9). Verify player receives at least 3 `MINI_CHOCOLATE_BAR` items across 5 doors. Verify `NeighbourhoodSystem.getVibes()` unchanged (no egging occurred). Advance to 22:01. Verify SCHOOL_KID NPCs despawned. Verify `TRICK_OR_TREATER` achievement unlocked.
+
+2. **Dave's motion sensor triggers on egging**: Set `dayCount = 304`. Advance time to 17:30 (sensor arms). Give player 3× `RAW_EGG`. Locate `ARGOS_MOTION_SENSOR_PROP` within 3 blocks of Dave's `PARKED_CAR`. Throw `RAW_EGG` at Dave's car. Verify `EGGED_DOOR_PROP` (or egged-car decal) spawned. Verify NoiseSystem emits event level 15. Verify Dave NPC (`PUBLIC` NPC tagged as Dave) transitions to ANGRY and pathfinds toward player. Verify `WantedSystem.getStars()` == 1. Verify `DAVE_NEMESIS` achievement unlocked.
+
+3. **Halloween costume grants disguise and enables crime**: Give player `WITCH_COSTUME`. Set time to day 304 19:00 (Halloween event active). Equip costume. Verify `DisguiseSystem.getDisguiseBonus(player)` == 20. Enter `TESCO_EXPRESS`. Steal item (shoplift mechanic). Verify player NOT identified (WantedSystem unchanged) due to disguise. Verify `COSTUME_CRIME` achievement unlocked. Now advance to day 305 (non-Halloween). Equip same costume. Verify `DisguiseSystem.getDisguiseBonus(player)` == 5. Verify NPC comments ("it's not Halloween, you div").
+
+4. **Newspaper headline after mass egging**: Set `dayCount = 304`. Give player 6× `RAW_EGG`. Throw eggs at 3 separate TERRACED_HOUSE doors (3 egging events). Verify `ANTI_SOCIAL_BEHAVIOUR` rumour seeded into `RumourNetwork` for each. Verify `HALLOWEEN_CHAOS` rumour seeded (3+ eggs threshold). Advance game time to next 18:00. Verify `NewspaperSystem` generates headline containing "Halloween Yobs Strike Again in Northfield". Verify `HALLOWEEN_VANDAL` achievement unlocked (5 eggs thrown across remaining eggs — set up player with 5+ total throws if needed).
+
+5. **JACK_O_LANTERN ambient light and neighbourhood vibes**: Give player `RAW_PUMPKIN` and `KNIFE`. Call carve interaction. Verify `CARVED_PUMPKIN` in inventory. Place `CARVED_PUMPKIN` as prop (converts to `JACK_O_LANTERN_PROP`). Verify `LightingSystem` registers orange point-light at prop world position. Verify `NeighbourhoodSystem.getVibes()` increased by 1. Now smash a neighbour's `JACK_O_LANTERN_PROP` (left-click to break). Verify NoiseSystem level 5. Verify Neighbourhood VIBES −2 (net from that interaction). Verify `ANTI_SOCIAL_BEHAVIOUR` rumour seeded.
+
+// ── Issue #1383: Add Northfield Halloween ─────────────────────────────────────────────────────────
+// New: HalloweenSystem.java in ragamuffin.core
+// New: HalloweenSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1383HalloweenIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: RAW_EGG, MINI_CHOCOLATE_BAR, TRICK_OR_TREAT_BAG, WITCH_COSTUME, GHOST_SHEET,
+//   SKELETON_SUIT, PUMPKIN_HEAD_MASK, RAW_PUMPKIN, CARVED_PUMPKIN, PUMPKIN_INNARDS,
+//   POINTY_HAT, BLACK_CAPE
+// New PropTypes: JACK_O_LANTERN_PROP, EGGED_DOOR_PROP, ARGOS_MOTION_SENSOR_PROP
+// New AchievementTypes: TRICK_OR_TREATER, HALLOWEEN_VANDAL, DAVE_NEMESIS,
+//   COSTUME_CRIME, PUMPKIN_KING, NIGHT_OWL
+// New RumourTypes: ANTI_SOCIAL_BEHAVIOUR, HALLOWEEN_CHAOS
+// Integration: DisguiseSystem, NeighbourhoodSystem, NoiseSystem, WeatherSystem, WantedSystem,
+//   RumourNetwork, NewspaperSystem, BonfireNightSystem, WheeliBinFireSystem, TimeSystem,
+//   LightingSystem, AllotmentSystem, SkipDivingSystem, AchievementSystem
