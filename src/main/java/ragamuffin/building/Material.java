@@ -7070,6 +7070,17 @@ public enum Material {
      */
     REWIRED_EXTENSION_LEAD("Rewired Extension Lead"),
 
+    /**
+     * NOTICE_OF_DEFICIENCY_PROP — an official council notice confirming the
+     * defibrillator cabinet was not maintained to statutory standard.
+     * Obtained from the DEFIBRILLATOR_CABINET_PROP after the copper cable has been
+     * removed (i.e., the cabinet is deficient). Present to Gary at Compensation Kings
+     * (ClaimsManagementSystem) during opening hours for a 12 COIN emotional-distress
+     * payout. Achievement: AMBULANCE_CHASER.
+     * Tooltip: "Council Notice of Deficiency. Gary's eyes lit up like a fruit machine."
+     */
+    NOTICE_OF_DEFICIENCY_PROP("Notice of Deficiency"),
+
     // ── Issue #1481: Northfield Driving Test Centre ───────────────────────────
 
     /**

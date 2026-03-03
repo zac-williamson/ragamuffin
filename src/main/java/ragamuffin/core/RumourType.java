@@ -1805,5 +1805,20 @@ public enum RumourType {
      * — seeded by MilkFloatSystem when the player completes the milk round job
      * (MILK_ROUND_HERO). Spreads via PUBLIC, PENSIONER, and SHOPKEEPER NPCs;
      * Notoriety −1 and Vibes +2. */
-    HARD_WORKER_RUMOUR;
+    HARD_WORKER_RUMOUR,
+
+    // ── Issue #1491: Northfield Annual Dog Show ───────────────────────────────
+
+    /** "Word is Clive took a bung to put Winston through — the judging was fixed.
+     * That Staffy shouldn't have won Best in Show."
+     * — seeded by DogShowSystem when the player successfully bribes Clive.
+     * Spreads via PUBLIC and DOG_OWNER NPCs; triggers BENT_JUDGE achievement. */
+    DOG_SHOW_FIXED,
+
+    /** "Someone from The Daily Ragamuffin is looking into last year's dog show.
+     * Clive's been dodgy for years — about time someone said something."
+     * — seeded by DogShowSystem when the player tips off the journalist after
+     * the bribery exposé path. Spreads via PUBLIC and JOURNALIST NPCs;
+     * costs Marchetti −15 reputation and unlocks WHISTLEBLOWER. */
+    DOG_SHOW_RIGGING;
 }
