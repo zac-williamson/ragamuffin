@@ -47831,3 +47831,130 @@ Using `Material.FORGED_ID` at the counter:
 //   NotorietySystem, CriminalRecord, RumourNetwork, NeighbourhoodSystem,
 //   NoiseSystem, WitnessSystem, TimeSystem, SoundSystem, StreetSkillSystem,
 //   CarDrivingSystem
+
+---
+
+## Issue #1357: Add Northfield Charity Fun Run — The 5K, the Sponsor Sheet Hustle & the Course-Cutter
+
+**Northfield Charity Fun Run** is a monthly Saturday-morning event (first Saturday of each month, 09:00–11:00) organised by the Northfield Community Centre in aid of St. Mary's Church roof fund. 80–120 participants (dynamically spawned `JOGGER` NPCs plus regulars) gather at the **start/finish arch** on the park's north edge and run a marked 5-kilometre loop around the town streets. The event is managed by `CharityFunRunSystem.java`.
+
+### Core Mechanics
+
+**Registration**
+- Player presses E on `FUN_RUN_REGISTRATION_DESK_PROP` (08:00–09:00 on event day) to register.
+- Cost: 2 COIN entry fee (goes into the prize pot). Player receives `RACE_NUMBER_BIB` item (wearable) + `SPONSOR_SHEET` item.
+- Registering grants access to the course start. Attempting to join the course without `RACE_NUMBER_BIB` causes the `FUN_RUN_MARSHAL` NPC to block the player and warn: *"Oi — you need a number, love."*
+- Achievement `COMMUNITY_RUNNER`: register and complete the race legitimately.
+
+**The Race**
+- Race starts at 09:00 sharp. `FUN_RUN_MARSHAL` NPC fires a starter's whistle (SoundSystem: `WHISTLE_BLAST`).
+- The course is a sequence of 8 `FUN_RUN_CHECKPOINT_PROP` waypoints around the town streets. Player must pass through all 8 checkpoints in order within the 2-hour event window.
+- Each checkpoint records arrival time. Final time displayed in HUD on crossing the finish arch (`FUN_RUN_ARCH_PROP`).
+- Finishing under 25 in-game minutes: 1st place → 10 COIN prize + `WINNERS_MEDAL` item + `COMMUNITY_RUNNER_ELITE` achievement. 2nd or 3rd: 5 COIN. Any finisher: NeighbourhoodSystem Vibes +3, StreetSkillSystem ATHLETICS XP +5.
+- NPCs cheer on the finish line (SoundSystem: `CROWD_CHEER`).
+
+**Sponsor Sheet Hustle**
+- Player carries `SPONSOR_SHEET`. Before the race (08:00–09:00) player can approach any NPC and press E to solicit a pledge.
+- Each NPC has a 60% chance to pledge 1–3 COIN (seeded by NPC type: PENSIONER 80% 2 COIN, CHUGGER refuses, POLICE_OFFICER 90% 1 COIN).
+- After completing the race, player presents sheet to `FUN_RUN_MARSHAL` to collect pledges. Maximum 10 pledges; max total 20 COIN.
+- **Fraud variant**: Player can present the sponsor sheet WITHOUT completing the race (having not crossed the finish line). Marshal checks bib timestamp. If player never finished: `CHARITY_FRAUD` crime recorded, Notoriety +8, sheet confiscated. If Notoriety < 5: marshal trusts them (no check), pays out pledges regardless — rewarding low-profile players.
+
+**Course Cutting (Cheating)**
+- Player can skip checkpoints by taking a shortcut. If the player reaches the finish arch with fewer than 8 checkpoint stamps on their bib, and any NPC witnessed them on the course (WitnessSystem check): `COURSE_CUTTING` rumour seeded, NeighbourhoodSystem Vibes −3, `SHAMELESS_SHORTCUT` achievement. If unwitnessed: no consequence — DQ only if another JOGGER NPC spots them skipping.
+
+**Marshal's Bum Bag Heist**
+- `FUN_RUN_MARSHAL` carries a `MARSHALS_BAG_PROP` containing the registration-fee pot (2 COIN × number of registrants, up to 40 COIN total).
+- Pickpocketing the marshal: `THEFT_FROM_PERSON` crime, +6 Notoriety, COIN transferred. Marshal's detection radius is 4 blocks (distracted during race).
+- Alternatively: player can volunteer as marshal assistant (press E on marshal before race, Notoriety < 10) — during the race, `FUN_RUN_MARSHAL` trusts the player and player gains access to the cash box directly. Embezzle up to 20 COIN; `CHARITY_FRAUD` + `EMBEZZLEMENT` crimes added.
+
+**Water Station**
+- 2× `FUN_RUN_WATER_STATION_PROP` on the course. Press E to take `WATER_CUP` (restores 5 Hunger, +2 Warmth). Player can also tip the station over (E while sneaking): disrupts the race (Vibes −2, NoiseSystem +5), Notoriety +3, `SABOTEUR` rumour seeded.
+
+**Rain Cancellation**
+- If `WeatherSystem` has `HEAVY_RAIN` on event day at 08:30, there is a 50% chance the event is cancelled. `FUN_RUN_MARSHAL` announces cancellation. Player receives refund of entry fee (2 COIN) if registered. Achievement `RAINED_OFF`: be registered for a cancelled fun run.
+
+**Dog Entry**
+- If player has `DogCompanionSystem` dog, they may enter the race with their dog (press E on marshal with dog present). Dog finishes 40% faster than player's pace, attracting PENSIONER NPC approval (+1 Vibes per pensioner within 6 blocks, capped 5). Achievement `WALKIES_WINNER`: finish with dog.
+
+### Integration
+
+- `TimeSystem` — event schedule (first Saturday each month, 09:00–11:00); rain-check at 08:30; checkpoint timestamps.
+- `WeatherSystem` — heavy rain has 50% chance of cancellation.
+- `NeighbourhoodSystem` — finishing +3 Vibes; course-cutting −3 Vibes; water station sabotage −2 Vibes.
+- `StreetSkillSystem` — ATHLETICS XP +5 on finish; GRAFTING XP +2 on legitimate sponsor collection.
+- `NotorietySystem` — sponsor fraud +8; marshal pickpocket +6; water sabotage +3.
+- `CriminalRecord` — `CHARITY_FRAUD`, `THEFT_FROM_PERSON`, `EMBEZZLEMENT`.
+- `WitnessSystem` — course-cutting witnessed by JOGGER NPC triggers rumour; pickpocket in crowd.
+- `RumourNetwork` — `COURSE_CUTTING` rumour (spreads via PENSIONER NPCs); `CHARITY_FRAUD` rumour after sponsor fraud.
+- `DogCompanionSystem` — dog participation in race.
+- `FenceSystem` — `WINNERS_MEDAL` fenceable for 3 COIN.
+- `SoundSystem` — `WHISTLE_BLAST` (race start); `CROWD_CHEER` (finish); `AMBIENT_CROWD` (during race).
+- `NoiseSystem` — water station tip: level 5; crowd: ambient level 8 during event.
+- `WantedSystem` — embezzlement: +1 star.
+- `NewspaperSystem` — race result headline ("Local lad takes Northfield 5K"); fraud headline if caught.
+
+### New Types Required
+
+- `NPCType.FUN_RUN_MARSHAL` — Janet, the community centre events coordinator; 20f HP, 0f attack; 4-block detection radius during race.
+- `NPCType.FUN_RUN_PARTICIPANT` — alias for dynamically spawned `JOGGER`; no new type needed.
+- `Material.RACE_NUMBER_BIB` — wearable item; required for race entry; consumed on finish.
+- `Material.SPONSOR_SHEET` — document item; holds pledge count; presented post-race for payout.
+- `Material.WINNERS_MEDAL` — trophy item; awarded for 1st place; fenceable 3 COIN.
+- `Material.WATER_CUP` — consumable; restores 5 Hunger, +2 Warmth; obtained at water stations.
+- `PropType.FUN_RUN_REGISTRATION_DESK_PROP` — Janet's desk; interaction registers player.
+- `PropType.FUN_RUN_ARCH_PROP` — start/finish arch on park north edge; triggers race start/finish logic.
+- `PropType.FUN_RUN_CHECKPOINT_PROP` — 8 instances around the course; records player passage.
+- `PropType.FUN_RUN_WATER_STATION_PROP` — 2 instances on course; tippable.
+- `RumourType.COURSE_CUTTING` — spreads via PENSIONER and PUBLIC NPCs; reduces Vibes.
+- `RumourType.CHARITY_FRAUD` — spreads after sponsor sheet fraud; increases Notoriety.
+- `CrimeType.CHARITY_FRAUD` — presenting sponsor sheet without completing race (if caught).
+- `CrimeType.EMBEZZLEMENT` — stealing from the registration fee pot as volunteer marshal.
+- `AchievementType.COMMUNITY_RUNNER` — complete the race legitimately (already exists or new).
+- `AchievementType.COMMUNITY_RUNNER_ELITE` — finish 1st place.
+- `AchievementType.SHAMELESS_SHORTCUT` — cut the course and get away with it.
+- `AchievementType.RAINED_OFF` — be registered for a cancelled fun run.
+- `AchievementType.WALKIES_WINNER` — finish the race with your dog.
+
+### New Java Files
+
+- `src/main/java/ragamuffin/core/CharityFunRunSystem.java`
+- `src/test/java/ragamuffin/core/CharityFunRunSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1357CharityFunRunIntegrationTest.java`
+
+### Unit Tests
+
+- `CharityFunRunSystem.isEventDay(dayOfMonth, dayOfWeek, hour)`: first Saturday 08:30 → true; second Saturday → false; first Sunday → false; first Saturday 11:01 → false.
+- `CharityFunRunSystem.registerPlayer(player, inventory)`: 2+ COIN → COIN deducted, `RACE_NUMBER_BIB` + `SPONSOR_SHEET` added, returns `RegistrationResult.SUCCESS`; 0 COIN → `RegistrationResult.INSUFFICIENT_FUNDS`.
+- `CharityFunRunSystem.solicitPledge(player, npc, random_seed_pledge)`: PENSIONER NPC with pledge seed → 2 COIN pledge recorded on SPONSOR_SHEET; CHUGGER NPC → returns `PledgeResult.REFUSED`.
+- `CharityFunRunSystem.collectPledges(player, inventory, hasFinished)`: hasFinished=true, Notoriety < 5 → all pledges paid out as COIN; hasFinished=false, Notoriety ≥ 5 → `CHARITY_FRAUD` recorded, Notoriety +8, sheet confiscated; hasFinished=false, Notoriety < 5 → pledges paid (trusted).
+- `CharityFunRunSystem.checkCourseCompletion(player, checkpointsVisited)`: all 8 → `CourseStatus.COMPLETE`; 5 → `CourseStatus.INCOMPLETE`.
+- `CharityFunRunSystem.checkRainCancellation(weather, random_seed_cancel)`: HEAVY_RAIN + cancel seed → returns `EventStatus.CANCELLED`; RAIN (not heavy) → `EventStatus.RUNNING`; HEAVY_RAIN + no-cancel seed → `EventStatus.RUNNING`.
+- `CharityFunRunSystem.pickpocketMarshal(player, inventory, notoriety)`: succeeds → COIN transferred from pot, `THEFT_FROM_PERSON` recorded, Notoriety +6; marshal within 4 blocks with detection roll → returns `PickpocketResult.CAUGHT`.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full legitimate race completion**: Set game time to first Saturday 08:30. Player has 5 COIN. Press E on `FUN_RUN_REGISTRATION_DESK_PROP`. Verify `RegistrationResult.SUCCESS`. Verify player COIN reduced by 2. Verify `RACE_NUMBER_BIB` and `SPONSOR_SHEET` in inventory. Solicit 3 PENSIONER NPCs (seed for pledge success). Advance time to 09:00. Verify `WHISTLE_BLAST` sound fired. Simulate player passing all 8 `FUN_RUN_CHECKPOINT_PROP` waypoints in order within 25 in-game minutes. Cross `FUN_RUN_ARCH_PROP`. Verify `CourseStatus.COMPLETE`. Verify NeighbourhoodSystem Vibes +3. Verify StreetSkillSystem ATHLETICS XP +5. Present `SPONSOR_SHEET` to marshal. Verify pledges paid out. Verify `COMMUNITY_RUNNER` achievement unlocked.
+
+2. **Sponsor fraud — caught (high notoriety)**: Set player Notoriety to 12. Register (2 COIN). Solicit 5 pledges. Do NOT complete the course (visit 0 checkpoints). Present `SPONSOR_SHEET` to marshal. Verify `collectPledges(..., hasFinished=false)` with Notoriety 12 → `CHARITY_FRAUD` in `CriminalRecord`. Verify Notoriety increased by 8. Verify `SPONSOR_SHEET` removed from inventory. Verify player COIN unchanged (no payout).
+
+3. **Course cutting — witnessed**: Register and start the race. Visit only checkpoints 1, 2, 3 (skip 4–8). Cross `FUN_RUN_ARCH_PROP`. Place a `JOGGER` NPC within 6 blocks of the skipped section (WitnessSystem detects). Verify `COURSE_CUTTING` rumour seeded in `RumourNetwork`. Verify NeighbourhoodSystem Vibes −3. Verify `SHAMELESS_SHORTCUT` achievement NOT awarded (witnessed).
+
+4. **Rain cancellation**: Set weather to `Weather.HEAVY_RAIN`. Set game time to first Saturday 08:28. Advance to 08:30. Seed Random so cancel occurs (50% roll). Call `checkRainCancellation(...)`. Verify `EventStatus.CANCELLED`. Verify player with `RACE_NUMBER_BIB` receives 2 COIN refund. Verify `FUN_RUN_MARSHAL` NPC state changes to `ANNOUNCING`. Verify `RAINED_OFF` achievement awarded to registered player.
+
+5. **Marshal pickpocket during race**: Register 5 participants (10 COIN in pot). Race in progress (09:15). Move player within 3 blocks of `FUN_RUN_MARSHAL`. Call `pickpocketMarshal(player, inventory, notoriety=3)` with seed that succeeds detection. Verify COIN transferred to player inventory (up to pot total). Verify `CriminalRecord` contains `THEFT_FROM_PERSON`. Verify `NotorietySystem` increased by 6.
+
+// ── Issue #1357: Add Northfield Charity Fun Run ───────────────────────────────────────
+// New: CharityFunRunSystem.java in ragamuffin.core
+// New: CharityFunRunSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1357CharityFunRunIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCType: FUN_RUN_MARSHAL (Janet)
+// New Materials: RACE_NUMBER_BIB, SPONSOR_SHEET, WINNERS_MEDAL, WATER_CUP
+// New PropTypes: FUN_RUN_REGISTRATION_DESK_PROP, FUN_RUN_ARCH_PROP,
+//               FUN_RUN_CHECKPOINT_PROP, FUN_RUN_WATER_STATION_PROP
+// New RumourTypes: COURSE_CUTTING, CHARITY_FRAUD
+// New CrimeTypes: CHARITY_FRAUD, EMBEZZLEMENT
+// New AchievementTypes: COMMUNITY_RUNNER, COMMUNITY_RUNNER_ELITE, SHAMELESS_SHORTCUT,
+//                       RAINED_OFF, WALKIES_WINNER
+// Integration: TimeSystem, WeatherSystem, NeighbourhoodSystem, StreetSkillSystem,
+//   NotorietySystem, CriminalRecord, WitnessSystem, RumourNetwork, DogCompanionSystem,
+//   FenceSystem, SoundSystem, NoiseSystem, WantedSystem, NewspaperSystem
