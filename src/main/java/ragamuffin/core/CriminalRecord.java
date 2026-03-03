@@ -1174,7 +1174,17 @@ public class CriminalRecord {
          * Recorded when the player steals MORRIS_STICK_PROP from a MORRIS_DANCER NPC.
          * Penalty: Notoriety +1, WantedSystem +1 star; all 6 dancers pursue.
          */
-        MORRIS_STICK_THEFT("Theft of a Morris dancing prop");
+        MORRIS_STICK_THEFT("Theft of a Morris dancing prop"),
+
+        // ── Issue #1390: Northfield Annual Conker Championship ────────────────
+
+        /**
+         * Recorded when organiser Derek catches the player competing with a
+         * HARDENED_CONKER during the Northfield Annual Conker Championship.
+         * ConkerSystem spot-check: 20% chance per tick. DisguiseSystem blocks check.
+         * Penalty: disqualification, Notoriety +2.
+         */
+        CHEATING_AT_CONKERS("Competing with a hardened/chemically-treated conker");
 
         private final String displayName;
 
