@@ -1782,5 +1782,28 @@ public enum RumourType {
      * — seeded by BowlsClubSystem when the player wins 3 consecutive Annual Tournaments
      * (THE_DYNASTY achievement). Spreads via PUBLIC, PENSIONER, and BARMAN NPCs;
      * increases Respect with all civilian factions by 5. */
-    BOWLS_DYNASTY;
+    BOWLS_DYNASTY,
+
+    // ── Issue #1485: Northfield Milk Float ────────────────────────────────────
+
+    /** "Someone nicked Dave's milk float off the round this morning.
+     * He had to ring work from a phone box. Absolute state."
+     * — seeded by MilkFloatSystem when the player steals and drives away the
+     * float. Spreads via PUBLIC, PENSIONER, and BARMAN NPCs;
+     * triggers WantedSystem +1 and police patrol at MILK_DEPOT. */
+    FLOAT_NICKED,
+
+    /** "Dave's depot got done over last night. Fridge was empty, office raided.
+     * No milk on the round this morning. People are furious."
+     * — seeded by MilkFloatSystem when the player completes the DEPOT_RAIDER
+     * break-in (office and fridge both looted). Spreads via PUBLIC and
+     * PENSIONER NPCs; Vibes −3 and police patrol at MILK_DEPOT next morning. */
+    FLOAT_LOOTED,
+
+    /** "That lad did Dave's full round this morning before Dave even got there.
+     * Every doorstep done by half six. Dave didn't know whether to laugh or cry."
+     * — seeded by MilkFloatSystem when the player completes the milk round job
+     * (MILK_ROUND_HERO). Spreads via PUBLIC, PENSIONER, and SHOPKEEPER NPCs;
+     * Notoriety −1 and Vibes +2. */
+    HARD_WORKER_RUMOUR;
 }

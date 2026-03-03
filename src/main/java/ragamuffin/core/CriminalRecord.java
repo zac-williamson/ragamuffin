@@ -1376,7 +1376,23 @@ public class CriminalRecord {
          * catches the player holding a STOLEN_BOWLS_SET on the green.
          * Penalty: Notoriety +6, banned from the green for 5 days.
          */
-        CHEATING_AT_BOWLS("Cheating at crown green bowls (weighted bowl / stolen set)");
+        CHEATING_AT_BOWLS("Cheating at crown green bowls (weighted bowl / stolen set)"),
+
+        // ── Issue #1485: Northfield Milk Float ────────────────────────────────
+
+        /**
+         * MILK_THEFT — recorded when the player steals a MILK_BOTTLE from a
+         * doorstep loot window, lifts a full MILK_CRATE_STOLEN from the float,
+         * or loots the walk-in fridge at the MILK_DEPOT.
+         * Penalty: Notoriety +1 per bottle if witnessed; +4 if full crate caught.
+         */
+        MILK_THEFT("Theft of milk (doorstep / float / depot)"),
+
+        /**
+         * VEHICLE_THEFT — recorded when the player boards and drives away the
+         * milk float from Dave's round. Notoriety +8, WantedSystem +1.
+         */
+        VEHICLE_THEFT("Vehicle theft (milk float)");
 
         private final String displayName;
 
