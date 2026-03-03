@@ -1538,5 +1538,21 @@ public enum RumourType {
      * — seeded by CommunitySpeedwatchSystem when SpeedCameraVanSystem and
      * CommunitySpeedwatchSystem are simultaneously active on the same road.
      * Spreads via PUBLIC and SPEEDING_DRIVER_NPC NPCs. */
-    DOUBLE_ENFORCEMENT;
+    DOUBLE_ENFORCEMENT,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1445: Northfield Salvation Army Citadel
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** "Someone nicked the collection box from outside the Salvation Army. Proper shameful."
+     * — seeded by SalvationArmyCitadelSystem when player steals the DONATION_BOX_PROP.
+     * Triggers Notoriety +8, WantedSystem +1, THEFT_FROM_PERSON in CriminalRecord.
+     * Spreads via PUBLIC and SALVATION_ARMY_OFFICER NPCs. */
+    COLLECTION_BOX_ROB,
+
+    /** "Someone was walking round in a Salvation Army uniform collecting money. Turns out they weren't."
+     * — seeded by SalvationArmyCitadelSystem when Eileen catches the player in SALVATION_ARMY_UNIFORM
+     * intercepting donations near DONATION_BOX_PROP (CHARITY_FRAUD crime).
+     * Spreads via PUBLIC and SALVATION_ARMY_OFFICER NPCs. */
+    CAUGHT_IN_UNIFORM;
 }
