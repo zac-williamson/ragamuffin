@@ -732,6 +732,76 @@ public class WorldGeneratorTest {
         }
     }
 
+    /**
+     * Issue #1463: Building interiors should have wall decoration props placed
+     * inside them after world generation.
+     */
+    @Test
+    public void testBuildingInteriorsHaveWallDecorations() {
+        generator.generateWorld(world);
+
+        // Collect all wall-decoration prop types added by issue #1463
+        java.util.Set<PropType> wallDecorTypes = java.util.EnumSet.of(
+            PropType.HEALTH_SAFETY_NOTICE,
+            PropType.FIRE_ESCAPE_PLAN,
+            PropType.PUB_SPORT_POSTER,
+            PropType.BEER_PUMP_SIGN,
+            PropType.ALPHABET_CHART,
+            PropType.WORLD_MAP,
+            PropType.MUGSHOT_BOARD,
+            PropType.SHIFT_ROTA,
+            PropType.HYMN_BOARD,
+            PropType.LIBRARY_RULES,
+            PropType.SWIM_TIMETABLE,
+            PropType.SAFETY_SIGN
+        );
+
+        java.util.Set<PropType> foundTypes = java.util.EnumSet.noneOf(PropType.class);
+        for (PropPosition prop : world.getPropPositions()) {
+            if (wallDecorTypes.contains(prop.getType())) {
+                foundTypes.add(prop.getType());
+            }
+        }
+
+        // Every wall-decoration type must appear at least once
+        java.util.Set<PropType> missing = java.util.EnumSet.copyOf(wallDecorTypes);
+        missing.removeAll(foundTypes);
+        assertTrue(missing.isEmpty(),
+            "Missing wall decoration props: " + missing);
+    }
+
+    /**
+     * Issue #1463: Wall decoration props should be placed at a plausible wall-height
+     * (y between 2.0 and 4.0) and not buried in the floor or floating above the ceiling.
+     */
+    @Test
+    public void testWallDecorationsAreAtWallHeight() {
+        generator.generateWorld(world);
+
+        java.util.Set<PropType> wallDecorTypes = java.util.EnumSet.of(
+            PropType.HEALTH_SAFETY_NOTICE,
+            PropType.FIRE_ESCAPE_PLAN,
+            PropType.PUB_SPORT_POSTER,
+            PropType.BEER_PUMP_SIGN,
+            PropType.ALPHABET_CHART,
+            PropType.WORLD_MAP,
+            PropType.MUGSHOT_BOARD,
+            PropType.SHIFT_ROTA,
+            PropType.HYMN_BOARD,
+            PropType.LIBRARY_RULES,
+            PropType.SWIM_TIMETABLE,
+            PropType.SAFETY_SIGN
+        );
+
+        for (PropPosition prop : world.getPropPositions()) {
+            if (wallDecorTypes.contains(prop.getType())) {
+                float y = prop.getWorldY();
+                assertTrue(y >= 2.0f && y <= 4.0f,
+                    prop.getType() + " should be at wall height (2–4), but was at y=" + y);
+            }
+        }
+    }
+
     private boolean landmarksOverlap(Landmark a, Landmark b) {
         Vector3 posA = a.getPosition();
         Vector3 posB = b.getPosition();
