@@ -897,5 +897,30 @@ public enum RumourType {
      * Seeded by EmploymentSystem when player completes a Charity Shop volunteer shift.
      * Spreads via PUBLIC and PENSIONER NPCs. Reduces NeighbourhoodWatch anger by 2
      * for 1 in-game day. Community Respect +2. */
-    COMMUNITY_SPIRIT;
+    COMMUNITY_SPIRIT,
+
+    // ── Issue #1335: Northfield Cycle Centre — Dave's Bikes ───────────────────
+
+    /** "Someone's been nicking bikes off the street — proper organised, they are."
+     * Seeded by CycleShopSystem when the player cuts a lock off a LOCKED_BIKE_PROP.
+     * Spreads via PUBLIC, STREET_LAD, and PENSIONER NPCs.
+     * NotorietySystem +5 if player is identified; police patrol frequency near
+     * BIKE_RACK_PROP landmarks +1 for 1 in-game day. */
+    BIKE_THEFT_RING,
+
+    /** "Heard the bloke at Dave's Bikes is flogging hot bikes out the back — don't
+     * ask questions, just bring cash."
+     * Seeded by CycleShopSystem when the player fences a STOLEN_BIKE through
+     * TravellerSiteSystem or buys a suspiciously cheap SECOND_HAND_BIKE.
+     * Spreads via STREET_LAD and BARMAN NPCs.
+     * Triggers BIKE_THEFT CriminalRecord entry if police hear it (NotorietySystem ≥ 30). */
+    STOLEN_BIKE_TRADE,
+
+    /** "Bloody hell — some lunatic on a delivery bike nearly took my head off on
+     * the high street. Doing about 40, no lights, pavement an' all."
+     * Seeded by CycleShopSystem when the player exceeds the speed cap (riding speed
+     * ×2.0 within 5 blocks of a PUBLIC or PENSIONER NPC) or rides on the pavement.
+     * Spreads via PUBLIC and PENSIONER NPCs.
+     * NotorietySystem +3; seeds a PCSO patrol near the offence location. */
+    RECKLESS_CYCLIST;
 }

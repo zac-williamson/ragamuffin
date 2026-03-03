@@ -5411,6 +5411,62 @@ public enum AchievementType {
         "On the Fiddle",
         "The oldest hustle in the book.",
         1
+    ),
+
+    // ── Issue #1335: Northfield Cycle Centre — Dave's Bikes ───────────────────
+
+    /**
+     * Fires when the player successfully cuts a lock off a LOCKED_BIKE_PROP
+     * using CROWBAR or ANGLE_GRINDER (completes the hold-action within the timer).
+     */
+    LOCK_CUTTER(
+        "Lock Cutter",
+        "Angle grinder go brrr.",
+        1
+    ),
+
+    /**
+     * Fires when the player successfully completes their first JustEat-style
+     * delivery run (order collected from KebabVan or Chippy, delivered within
+     * the time limit for a 4 COIN payout).
+     */
+    GIG_ECONOMY(
+        "Gig Economy",
+        "Delivery driver. Technically self-employed.",
+        1
+    ),
+
+    /**
+     * Fires when the player, mounted on a bike with a PCSO in active pursuit,
+     * increases distance from the PCSO to beyond LEG_IT_DISTANCE without
+     * dismounting — the PCSO gives up the chase.
+     */
+    BEAT_COPPER_ON_BIKE(
+        "Beat Copper on Bike",
+        "Two wheels faster than two legs.",
+        1
+    ),
+
+    /**
+     * Fires when the player is stopped by a PCSO after 22:00 while riding
+     * a bike without BIKE_LIGHT_FRONT and BIKE_LIGHT_REAR in their inventory
+     * and receives a CYCLING_OFFENCE record.
+     */
+    NO_LIGHTS(
+        "No Lights",
+        "You're a traffic hazard. Invisible, but a hazard.",
+        1
+    ),
+
+    /**
+     * Fires when the player rides a bike (has a bike material equipped and
+     * is_riding flag is true) and arrives at an active employer landmark
+     * while wearing BIKE_HELMET for the first time.
+     */
+    CYCLE_TO_WORK(
+        "Cycle to Work",
+        "Pedal power. Saving the planet one shift at a time.",
+        1
     );
 
     private final String name;

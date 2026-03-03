@@ -943,7 +943,28 @@ public class CriminalRecord {
          * on the player's vehicle.
          * Penalty: Notoriety +6, WantedSystem +1 star.
          */
-        PARKING_TICKET_FRAUD("Forged parking ticket fraud");
+        PARKING_TICKET_FRAUD("Forged parking ticket fraud"),
+
+        // ── Issue #1335: Northfield Cycle Centre — Dave's Bikes ──────────────
+
+        /**
+         * Recorded when the player is stopped by a PCSO (police community support
+         * officer) while cycling after 22:00 without BIKE_LIGHT_FRONT and
+         * BIKE_LIGHT_REAR in inventory, or while riding on the pavement within
+         * 10 blocks of a PUBLIC or PENSIONER NPC.
+         * Penalty: Notoriety +3; PCSO issues verbal warning (1st offence) or
+         * WantedSystem +1 star (2nd+ offence).
+         */
+        CYCLING_OFFENCE("Cycling offence (no lights / pavement riding)"),
+
+        /**
+         * Recorded when the player successfully cuts the lock off a LOCKED_BIKE_PROP
+         * on the street (using CROWBAR or ANGLE_GRINDER hold-action) and takes the
+         * resulting STOLEN_BIKE.
+         * Penalty: Notoriety +5; WantedSystem +1 star if witnessed by any NPC.
+         * Evidence: STOLEN_BIKE in inventory increases stop-and-search probability.
+         */
+        BIKE_THEFT("Bike theft");
 
         private final String displayName;
 

@@ -3311,7 +3311,41 @@ public enum PropType {
      * the employer. Player must press E on this every 2 in-game minutes
      * during a shift to log productivity. Missing 3 tasks = SKIVING warning.
      */
-    STOCK_CRATE_PROP(0.8f, 0.8f, 0.8f, 5, Material.CARDBOARD);
+    STOCK_CRATE_PROP(0.8f, 0.8f, 0.8f, 5, Material.CARDBOARD),
+
+    // ── Issue #1335: Northfield Cycle Centre — Dave's Bikes ───────────────────
+
+    /**
+     * BIKE_RACK_PROP — a freestanding Sheffield-style metal bike rack found
+     * outside the cycle shop, park entrance, and community centre. Player can
+     * press E to park and lock their bike (requires BIKE_LOCK in inventory).
+     * Indestructible; dropping a bike here makes it available as a
+     * LOCKED_BIKE_PROP for other NPCs and the player to interact with.
+     */
+    BIKE_RACK_PROP(1.2f, 1.0f, 0.5f, Integer.MAX_VALUE, null),
+
+    /**
+     * LOCKED_BIKE_PROP — a bicycle secured to a rack or railing with a lock.
+     * Three lock tiers determine hits to break:
+     * <ul>
+     *   <li>Basic lock: 3 hits (CROWBAR) / 1.5 s hold (ANGLE_GRINDER)</li>
+     *   <li>Standard lock: 5 hits (CROWBAR) / 3 s hold (ANGLE_GRINDER)</li>
+     *   <li>Heavy-duty lock: 8 hits (CROWBAR) / 5 s hold (ANGLE_GRINDER)</li>
+     * </ul>
+     * On successful unlock: drops STOLEN_BIKE, seeds BIKE_THEFT_RING rumour,
+     * records BIKE_THEFT in CriminalRecord, adds WantedSystem star if witnessed.
+     * Indestructible by normal means; only the lock can be cut.
+     */
+    LOCKED_BIKE_PROP(0.6f, 1.2f, 0.3f, Integer.MAX_VALUE, Material.STOLEN_BIKE),
+
+    /**
+     * JUST_EAT_DELIVERY_BOARD_PROP — a bright orange cork notice board outside
+     * Dave's Cycle Centre listing active delivery jobs from the KebabVan and
+     * Chippy. Press E to accept a delivery (requires DELIVERY_BAG in inventory).
+     * Shows job destination, food type, time limit, and payout tier.
+     * Indestructible.
+     */
+    JUST_EAT_DELIVERY_BOARD_PROP(0.6f, 0.9f, 0.1f, Integer.MAX_VALUE, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

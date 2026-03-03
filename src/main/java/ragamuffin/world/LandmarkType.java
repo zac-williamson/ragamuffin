@@ -748,7 +748,18 @@ public enum LandmarkType {
      * awareness, and pickpocket crowd detection (6+ NPCs window).
      * Managed by FairgroundSystem.java.
      */
-    TRAVELLING_FAIR;
+    TRAVELLING_FAIR,
+
+    // ── Issue #1335: Northfield Cycle Centre — Dave's Bikes ───────────────────
+
+    /**
+     * CYCLE_SHOP — Dave's Cycle Centre, a narrow storefront on the high street.
+     * Sells bikes, repair kits, locks, lights, helmets, and delivery bags.
+     * Houses the JUST_EAT_DELIVERY_BOARD_PROP for gig-economy delivery jobs.
+     * Managed by CycleShopSystem; owner NPC is CYCLE_SHOP_OWNER (Dave).
+     * Open 09:00–17:30 Mon–Sat.
+     */
+    CYCLE_SHOP;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -854,6 +865,7 @@ public enum LandmarkType {
             case PHONE_BOX_HIGH_STREET: return "BT Phone Box";
             case PHONE_BOX_ESTATE:      return "BT Phone Box (Out of Order)";
             case TRAVELLING_FAIR:       return "Northfield Travelling Fair";
+            case CYCLE_SHOP:            return "Dave's Cycle Centre";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }
