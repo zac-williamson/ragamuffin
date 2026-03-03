@@ -3714,7 +3714,44 @@ public enum PropType {
      * officer's staff to tally ballot papers on Count Night (22:30, day 90).
      * Interact during RECOUNT_DEMAND event to steal COUNT_SHEET. 1.8×0.9×0.6m; sturdy.
      */
-    VOTE_COUNT_TABLE_PROP(1.8f, 0.9f, 0.6f, 8, Material.COUNT_SHEET);
+    VOTE_COUNT_TABLE_PROP(1.8f, 0.9f, 0.6f, 8, Material.COUNT_SHEET),
+
+    // ── Issue #1381: Northfield Bank Holiday Street Party ─────────────────────
+
+    /**
+     * TRESTLE_TABLE_PROP — decorated trestle table loaded with party food (SAUSAGE_ROLL,
+     * CRISP_PACKET, WARM_LAGER). Knocked over by Tyke the dog if uncaught.
+     * 1.8×0.8×0.6m; sturdy.
+     */
+    TRESTLE_TABLE_PROP(1.8f, 0.8f, 0.6f, 8, null),
+
+    /**
+     * DISPOSABLE_BBQ_PROP — three-state prop: UNLIT (12:00–12:30), LIT (burning normally),
+     * OUT_OF_CONTROL (after petrol or random chance from 14:00). Interact to light/cook.
+     * 0.4×0.1×0.4m; fragile.
+     */
+    DISPOSABLE_BBQ_PROP(0.4f, 0.1f, 0.4f, 2, null),
+
+    /**
+     * RAFFLE_DRUM_PROP — Brenda's prize raffle drum, operated 18:00–18:10.
+     * Press E to buy a RAFFLE_TICKET or rig draw with STICKY_FINGERS tier 2.
+     * 0.5×0.5×0.5m; sturdy.
+     */
+    RAFFLE_DRUM_PROP(0.5f, 0.5f, 0.5f, 8, null),
+
+    /**
+     * PRIZE_BOX_PROP — the prize box containing raffle winnings. Stealable by
+     * the player; triggers THEFT + LOCAL_SCANDAL rumour.
+     * 0.5×0.4×0.4m; fragile.
+     */
+    PRIZE_BOX_PROP(0.5f, 0.4f, 0.4f, 3, null),
+
+    /**
+     * TARPAULIN_PROP — improvised overhead shelter spawned when weather is DRIZZLE.
+     * Provides basic rain cover over the trestle tables.
+     * 3.0×0.1×2.0m; fragile.
+     */
+    TARPAULIN_PROP(3.0f, 0.1f, 2.0f, 2, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

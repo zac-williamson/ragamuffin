@@ -5938,7 +5938,42 @@ public enum Material {
     CANDIDATE_MUG("Candidate Mug"),
 
     /** Broad-tipped permanent marker used to deface rival LEAFLET_PILE_PROP. */
-    PERMANENT_MARKER("Permanent Marker");
+    PERMANENT_MARKER("Permanent Marker"),
+
+    // ── Issue #1381: Northfield Bank Holiday Street Party ─────────────────────
+
+    /** Warm flat lager from Brenda's coolbox. +10 hunger, +5 energy, −5 inhibition.
+     * Lowers assault detection threshold by 1 tier for 5 in-game minutes.
+     * Tooltip: "It's flat. It's warm. It's British." */
+    WARM_LAGER("Warm Lager"),
+
+    /** Crisp packet from the trestle table — empty after eating.
+     * 20% food-poisoning chance. Tooltip: "Ready Salted. The safe choice." */
+    CRISP_PACKET("Crisp Packet"),
+
+    /** Raw sausage for the disposable BBQ; cookable for COOKED_SAUSAGE.
+     * Tooltip: "Pink in the middle is fine. Probably." */
+    RAW_SAUSAGE("Raw Sausage"),
+
+    /** Cooked sausage from the BBQ. +25 hunger.
+     * Tooltip: "Slightly charred. The British standard." */
+    COOKED_SAUSAGE("Cooked Sausage"),
+
+    /** Raffle prize — holiday food selection box. +30 hunger (eat individually). */
+    SELECTION_BOX("Selection Box"),
+
+    /** Raffle prize — novelty towel; wearable disguise modifier (−2 recognition for 1 in-game day). */
+    NOVELTY_TOWEL("Novelty Towel"),
+
+    /** Raffle prize — bottle of Lidl Merlot. Drinkable; fenceable for 3 COIN.
+     * Tooltip: "Lidl Merlot. It's a special occasion." */
+    BOTTLE_OF_WINE("Bottle of Wine"),
+
+    /** Raffle prize — toolkit; functions as SCREWDRIVER + SPANNER combined. */
+    TOOLKIT("Toolkit"),
+
+    /** Raffle rarest prize (5%). Tooltip: "Northfield's 2014 Bank Holiday. Someone still has it." */
+    COMMEMORATIVE_MUG("Commemorative Mug");
 
     private final String displayName;
 
@@ -7239,6 +7274,20 @@ public enum Material {
             case CASH_BRIBE_ENVELOPE:   return cs(0.60f, 0.45f, 0.25f,  // Brown envelope
                                                   0.85f, 0.70f, 0.10f); // Gold coin hint
 
+            // Issue #1381: Northfield Bank Holiday Street Party
+            case WARM_LAGER:        return c(0.88f, 0.78f, 0.30f); // Flat golden lager
+            case CRISP_PACKET:      return c(0.92f, 0.85f, 0.20f); // Yellow crisp packet
+            case RAW_SAUSAGE:       return c(0.90f, 0.60f, 0.55f); // Pink raw meat
+            case COOKED_SAUSAGE:    return c(0.65f, 0.35f, 0.12f); // Charred brown
+            case SELECTION_BOX:     return cs(0.90f, 0.10f, 0.10f, // Red box
+                                              0.95f, 0.75f, 0.10f); // Gold ribbon
+            case NOVELTY_TOWEL:     return cs(0.20f, 0.55f, 0.82f, // Blue towel
+                                              0.95f, 0.92f, 0.88f); // White stripe
+            case BOTTLE_OF_WINE:    return c(0.52f, 0.18f, 0.38f); // Dark Merlot red
+            case TOOLKIT:           return c(0.35f, 0.35f, 0.40f); // Steel grey
+            case COMMEMORATIVE_MUG: return cs(0.25f, 0.45f, 0.72f, // Council blue
+                                              0.92f, 0.88f, 0.72f); // Cream interior
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -7777,6 +7826,16 @@ public enum Material {
             case DWP_LETTER_PROP:
             case APPEAL_LETTER_PROP:
             case CASH_IN_HAND_LEDGER:
+            // Issue #1381: Northfield Bank Holiday Street Party — not block items
+            case WARM_LAGER:
+            case CRISP_PACKET:
+            case RAW_SAUSAGE:
+            case COOKED_SAUSAGE:
+            case SELECTION_BOX:
+            case NOVELTY_TOWEL:
+            case BOTTLE_OF_WINE:
+            case TOOLKIT:
+            case COMMEMORATIVE_MUG:
                 return false;
             default:
                 return true;
@@ -7967,6 +8026,16 @@ public enum Material {
             case TAX_DEMAND_LETTER:
             case CLEAN_BILL_OF_HEALTH:
             case CASH_BRIBE_ENVELOPE:
+            // Issue #1381: Northfield Bank Holiday Street Party — small items sit on surfaces
+            case WARM_LAGER:
+            case CRISP_PACKET:
+            case RAW_SAUSAGE:
+            case COOKED_SAUSAGE:
+            case SELECTION_BOX:
+            case NOVELTY_TOWEL:
+            case BOTTLE_OF_WINE:
+            case TOOLKIT:
+            case COMMEMORATIVE_MUG:
                 return true;
             default:
                 return false;
@@ -9320,6 +9389,26 @@ public enum Material {
                 return IconShape.BOX;         // folded counterfeit scarf
             case SANTA_BADGE:
                 return IconShape.FLAT_PAPER;  // clip-on "I'M SANTA" badge
+
+            // Issue #1381: Northfield Bank Holiday Street Party
+            case WARM_LAGER:
+                return IconShape.CYLINDER;    // can of lager
+            case CRISP_PACKET:
+                return IconShape.FOOD;        // flat snack packet
+            case RAW_SAUSAGE:
+                return IconShape.FOOD;        // raw pink sausage
+            case COOKED_SAUSAGE:
+                return IconShape.FOOD;        // charred sausage
+            case SELECTION_BOX:
+                return IconShape.BOX;         // holiday snack box
+            case NOVELTY_TOWEL:
+                return IconShape.BOX;         // folded towel
+            case BOTTLE_OF_WINE:
+                return IconShape.BOTTLE;      // wine bottle
+            case TOOLKIT:
+                return IconShape.BOX;         // compact tool set
+            case COMMEMORATIVE_MUG:
+                return IconShape.CYLINDER;    // ceramic mug
 
             default:
                 return IconShape.BOX;

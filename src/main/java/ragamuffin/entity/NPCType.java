@@ -2975,7 +2975,15 @@ public enum NPCType {
     /** COUNT_OBSERVER — generic town-hall attendee at Count Night from 22:30.
      * Witnesses ballot events and reacts to results announcement.
      * HP: 15f, attack: 0f, cooldown: 0f, hostile: false. */
-    COUNT_OBSERVER(15f, 0f, 0f, false);
+    COUNT_OBSERVER(15f, 0f, 0f, false),
+
+    // ── Issue #1381: Northfield Bank Holiday Street Party ─────────────────────
+
+    /** NEIGHBOURHOOD_WATCH — Gerald, the Neighbourhood Watch chairman who submitted
+     * the road-closure application. Appears at 18:30 with a CLIPBOARD_PROP to issue
+     * noise complaints and threaten to call the council.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    NEIGHBOURHOOD_WATCH(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
