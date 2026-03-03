@@ -51397,3 +51397,175 @@ Margaret's stall sells `JACKET_POTATO` (3 COIN, Hunger +50, Warmth +15) and `VIM
 //   NotorietySystem, RumourNetwork, NewspaperSystem, CriminalRecord, NeighbourhoodSystem,
 //   FenceSystem, BettingShopSystem, FactionSystem, WeatherSystem, DisguiseSystem,
 //   AchievementSystem, SoundSystem
+
+// ── Issue #1395: Add Northfield Primary School Sports Day ─────────────────────
+// St. Aidan's annual Sports Day — the Egg and Spoon Fix, Derek's Cone Heist & the Parents' Race Riot
+//
+// Overview:
+// St. Aidan's C.E. Primary School holds its annual Sports Day on the last Friday of June,
+// 09:30–15:30, on the school field (a grass area behind the school). Organised by Ms. Pearson
+// (HEADTEACHER_SECRETARY), run by Derek the caretaker (CARETAKER_NPC), and sabotaged by
+// competitive parents almost immediately. Six race events. Three criminal mechanics. One inevitable
+// disaster involving a camping gazebo, a wasps' nest, and Kevin's dad.
+//
+// Schedule:
+// - 09:00 — Derek sets up cone course, lays out sacks and spoons. RACE_COURSE_PROP spawned.
+// - 09:30 — Parents arrive (10–14 SCHOOL_MUM, 4–6 SCHOOL_DAD NPCs). Rumour seeding begins.
+// - 10:00 — Ms. Pearson opening speech. SoundSystem: tinny megaphone SFX.
+// - 10:15 — Race 1: Egg and Spoon (SCHOOL_KID NPCs, deterministic by seed + player action).
+// - 10:45 — Race 2: Sack Race.
+// - 11:15 — Race 3: Three-Legged Race (NPC pairs; Kevin's pair always trips).
+// - 11:45 — Refreshment stall opens (Dot the dinner lady: SQUASH_CARTON 1 COIN, BOURBONS 1 COIN).
+// - 13:00 — Race 4: 100m Sprint (SCHOOL_KID NPCs).
+// - 13:30 — Race 5: Relay Race (4 teams, 4 NPCs each).
+// - 14:30 — Race 6: PARENTS' RACE — player can enter; NPCs include Kevin's Dad
+//           (NPCType#KEVINS_DAD) who cheats blatantly.
+// - 15:00 — Prize-giving. ROSETTE_PROP awards. Kevin's Dad wins and gloats.
+// - 15:30 — Event ends. Props despawn. Parents drift to Wetherspoons.
+//
+// Mechanic 1 — Egg and Spoon Fix:
+// - Player can SWAP the hard-boiled egg on a SCHOOL_KID's spoon with a RAW_EGG from inventory.
+//   Hold E for 2s within 2 blocks of target while Ms. Pearson not watching.
+// - Swapped kid drops egg mid-race → race paused for 10s while Derek cleans up.
+// - Notoriety +3; PETTY_SABOTAGE CrimeType; RumourType.EGG_SWAP_DRAMA seeded.
+// - Achievement: EGG_SWAPPER — "You sabotaged a child's egg and spoon race. No regrets."
+//
+// Mechanic 2 — Derek's Cone Heist:
+// - 12 RACE_CONE_PROPs are placed on the course. Each cone is individual loot (press E).
+// - Each cone fenced for 1 COIN (FenceSystem). Stealing all 12 unlocks CONE_THIEF achievement.
+// - Derek notices if ≥4 cones missing: enters SUSPICIOUS state, pauses Race 4 to search.
+// - Notoriety +1 per cone stolen (capped at +6 total).
+// - If Derek catches the player: Wanted +1; cones returned; achievement revoked.
+//
+// Mechanic 3 — Parents' Race Sabotage:
+// - Kevin's Dad (NPCType#KEVINS_DAD) is a dedicated cheater: shoves NPCs at 3s mark, 
+//   cuts the inside of the corner, and claims a hamstring injury if losing.
+// - Player can: (a) trip Kevin's Dad (press E within 1 block during race → Wanted +1 but
+//   crowd applauds → Notoriety −2); (b) bribe Kevin's Dad to let them win (10 COIN →
+//   KEVINS_DAD enters BRIBED state, slows to walking pace); (c) just race and win legitimately
+//   (grants SPORTS_DAY_HERO achievement, adds 5 COIN prize).
+// - If player wins via bribe: SPORTS_DAY_FRAUD achievement instead; Kevin's Dad later
+//   complains to Ms. Pearson → CriminalRecord.FRAUD_AT_SPORTS_DAY.
+//
+// Mechanic 4 — Gazebo Wasps Incident (random event, 25% chance at 14:00):
+// - WASP_NEST_PROP discovered under the prize-giving gazebo. All NPCs within 10 blocks
+//   enter FLEEING state for 60s. Ms. Pearson calls it "a minor inconvenience."
+// - Player can: (a) throw a FIZZY_DRINK_CAN at nest → wasps disperse faster (3 NPCs still
+//   stung → Wanted +1 for reckless endangerment); (b) calmly walk away.
+// - RumourType.WASP_INCIDENT seeded. NewspaperSystem: "Sports Day Chaos as Wasps Attack
+//   Parents' Prize Giving."
+//
+// New Materials (add to Material.java):
+// - BOURBONS — "A tube of Bourbons from Dot's stall. 50p. Worth every penny." Heals 2 HP.
+// - SQUASH_CARTON — "Orange squash in a tiny carton. Straw pre-attached. Nostalgic." Heals 1 HP, cures THIRST.
+// - SPORTS_DAY_ROSETTE — "1st Place. St. Aidan's Sports Day [year]. Derek's handwriting."
+//   Fenceable 2 COIN or kept as trophy.
+// - FIZZY_DRINK_CAN — "Full, unopened. Could be thrown. Probably shouldn't be." Throwable prop.
+//   Already in Material.java as COLA_CAN? If not, add it.
+//
+// New PropTypes (add to PropType.java):
+// - RACE_COURSE_PROP — painted lines + cones defining the track. Non-lootable.
+// - RACE_CONE_PROP — individual orange traffic cone. Lootable. Fenceable.
+// - EGG_AND_SPOON_PROP — spoon + hard-boiled egg. Held by SCHOOL_KID during Race 1.
+// - SACK_PROP — hessian sack. Non-lootable prop on ground.
+// - PRIZE_TABLE_PROP — fold-out table with rosettes. Lootable (SPORTS_DAY_ROSETTE x3).
+// - WASP_NEST_PROP — under gazebo. Interactable only during wasp event.
+// - MEGAPHONE_PROP — Ms. Pearson's prop. Stealable (Notoriety +2, SoundSystem: megaphone
+//   squeal SFX).
+//
+// New NPCTypes (add to NPCType.java):
+// - KEVINS_DAD — Kevin's competitive father. Spawns only at Sports Day. Cheats at Parents'
+//   Race. Name: "Gary". Catchphrase: "It's not about winning, Kevin. Yes it is."
+//   If not bribed and not tripped, wins the Parents' Race 85% of the time (weighted by seed).
+//
+// New AchievementTypes (add to AchievementType.java):
+// - EGG_SWAPPER — "You sabotaged a child's egg and spoon race. No regrets."
+//   Trigger: swap egg on SCHOOL_KID during Race 1.
+// - CONE_THIEF — "All 12 cones. Every single one."
+//   Trigger: loot all 12 RACE_CONE_PROPs without Derek catching you.
+// - SPORTS_DAY_HERO — "You won the Parents' Race. Legitimately. Gary is livid."
+//   Trigger: win Parents' Race without bribe or trip.
+// - SPORTS_DAY_FRAUD — "You paid Gary to lose. He took the money and almost won anyway."
+//   Trigger: win Parents' Race via bribe (10 COIN to KEVINS_DAD).
+// - WASP_WHISPERER — "You walked calmly away from the wasps. Everyone else did not."
+//   Trigger: be the only NPC not fleeing during Wasp Incident (stay in place 30s).
+//
+// New RumourTypes (add to RumourType.java):
+// - EGG_SWAP_DRAMA — "Someone swapped Tyler's egg for a raw one at Sports Day. It went
+//   everywhere." Seeded on successful egg swap.
+// - GARY_CHEATED — "Gary cheated at the Parents' Race again. He elbowed Dave into the
+//   bunting." Seeded if KEVINS_DAD shoves 2+ NPCs.
+// - CONE_THIEF_SPOTTED — "Twelve cones went missing from Sports Day. Derek's furious."
+//   Seeded if ≥8 cones stolen.
+// - WASP_INCIDENT — "Sports Day got ruined by wasps. Six people stung. Dot got the worst
+//   of it." Seeded on Wasp event trigger.
+//
+// Integration:
+// - TimeSystem: trigger on LAST_FRIDAY_JUNE; open hours 09:30–15:30.
+// - PrimarySchoolSystem: shares SCHOOL_KID, DINNER_LADY (Dot), CARETAKER_NPC (Derek),
+//   HEADTEACHER_SECRETARY (Ms. Pearson) NPCs; field reuses school landmark.
+// - WeatherSystem: HEAVY_RAIN or THUNDERSTORM at 09:00 cancels Sports Day; DRIZZLE does
+//   not cancel but reduces parent turnout by 40%.
+// - FenceSystem: RACE_CONE_PROP (1 COIN each), SPORTS_DAY_ROSETTE (2 COIN), MEGAPHONE_PROP (4 COIN).
+// - WantedSystem: egg swap +0 (undetected) / +1 (caught); cone theft +0/+1; Parents' Race
+//   trip +1; fizzy can at wasps +1.
+// - NotorietySystem: egg swap +3; each cone +1 (cap +6); Kevin's Dad trip −2 (crowd approval);
+//   Wasp can throw +2.
+// - RumourNetwork: EGG_SWAP_DRAMA, GARY_CHEATED, CONE_THIEF_SPOTTED, WASP_INCIDENT.
+// - NewspaperSystem: next-day headline based on worst event (wasps > Gary scandal > egg drama).
+// - CriminalRecord: PETTY_SABOTAGE (egg swap), FRAUD_AT_SPORTS_DAY (bribe win).
+// - NeighbourhoodSystem: VIBES +2 if Sports Day completes without incident; VIBES −3 on Wasp event.
+// - IceCreamVanSystem: van arrives at 13:00 (same as Fete pattern).
+// - SoundSystem: MEGAPHONE_ANNOUNCE SFX at race starts; CROWD_CHEER on each race finish;
+//   WASP_BUZZ ambient SFX during wasp event.
+// - AchievementSystem: EGG_SWAPPER, CONE_THIEF, SPORTS_DAY_HERO, SPORTS_DAY_FRAUD, WASP_WHISPERER.
+//
+// Unit Tests (SportsDaySystemTest.java):
+// - testSportsDayScheduleOnLastFridayJune: verify isSportsDay() true on correct day, false adjacent.
+// - testWeatherCancellation: HEAVY_RAIN at 09:00 → isEventActive() false; DRIZZLE → active, parentCount reduced.
+// - testEggSwapUndetected: Ms. Pearson facing away, player within 2 blocks, hold E 2s → SCHOOL_KID
+//   egg = RAW_EGG, race paused, Notoriety +3, EGG_SWAP_DRAMA seeded.
+// - testEggSwapCaught: Ms. Pearson facing player → WantedSystem +1, achievement not awarded.
+// - testConeTheftAll12: loot 12 cones, Derek never triggers → CONE_THIEF achievement awarded.
+// - testConeTheftDerekCatchesFour: 4 cones looted → Derek SUSPICIOUS, Race 4 paused.
+// - testParentsRaceLegitWin: simulate race with player speed advantage, no cheat actions →
+//   SPORTS_DAY_HERO awarded, 5 COIN prize.
+// - testParentsRaceBribeWin: give player 10 COIN, call bribeKevinsDad() → KEVINS_DAD BRIBED,
+//   player wins, SPORTS_DAY_FRAUD awarded, CriminalRecord.FRAUD_AT_SPORTS_DAY added.
+// - testParentsRaceTripGary: call tripKevinsDad(player) → Wanted +1, Notoriety −2,
+//   GARY_CHEATED rumour seeded if Gary had already shoved ≥1 NPC.
+// - testWaspEventFiring: set waspRng to trigger at 14:00, verify all NPCs within 10 blocks FLEEING.
+// - testWaspCanThrow: give player FIZZY_DRINK_CAN, call throwAtNest(player), verify wasps clear
+//   faster, 3 NPC sting-states set, Wanted +1.
+// - testWaspWhispererAchievement: player stays stationary 30s during wasp event → WASP_WHISPERER.
+// - testRosetteLoot: interact with PRIZE_TABLE_PROP → 3 SPORTS_DAY_ROSETTE in inventory.
+// - testMegaphoneSteal: loot MEGAPHONE_PROP → Notoriety +2, SoundSystem MEGAPHONE_SQUEAL SFX.
+//
+// Integration Tests (Issue1395SportsDayIntegrationTest.java):
+// 1. Full Sports Day, no sabotage: trigger last Friday of June, advance through all 6 races.
+//    Verify each race fires in order. Verify prize-giving at 15:00. Verify SPORTS_DAY_HERO
+//    available (not auto-awarded without player entry). Verify VIBES +2 post-event.
+// 2. Egg swap during Race 1: player adjacent to Tyler. Swap egg. Verify race pauses 10s.
+//    Verify Notoriety +3. Verify EGG_SWAP_DRAMA seeded. Verify NewspaperSystem headline day+1.
+// 3. Full cone heist: loot all 12 cones before Race 4 starts. Verify Derek searches but doesn't
+//    catch player (player > 15 blocks away). Verify CONE_THIEF achievement. Verify all cones
+//    are fenceable at FenceSystem for 12 COIN total.
+// 4. Parents' Race bribe path: give player 11 COIN before race start. Bribe Gary (10 COIN).
+//    Simulate race. Verify player wins. Verify SPORTS_DAY_FRAUD awarded. Verify 5 COIN prize
+//    received net (+5 −10 = −5 COIN). Verify CriminalRecord.FRAUD_AT_SPORTS_DAY entry.
+// 5. Wasp incident + can throw: set waspRng seed to trigger. Advance to 14:00. Verify NPCs
+//    flee. Give player FIZZY_DRINK_CAN. Throw at nest. Verify 3 NPCs stung. Verify Wanted +1.
+//    Verify WASP_INCIDENT rumour seeded. Verify NewspaperSystem headline "Wasps Attack."
+//
+// New System File: SportsDaySystem.java in ragamuffin.core
+// New Test Files: SportsDaySystemTest.java in src/test/java/ragamuffin/core/
+//                 Issue1395SportsDayIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: BOURBONS, SQUASH_CARTON, SPORTS_DAY_ROSETTE, FIZZY_DRINK_CAN (if not exists)
+// New PropTypes: RACE_COURSE_PROP, RACE_CONE_PROP, EGG_AND_SPOON_PROP, SACK_PROP,
+//               PRIZE_TABLE_PROP, WASP_NEST_PROP, MEGAPHONE_PROP
+// New NPCTypes: KEVINS_DAD
+// New AchievementTypes: EGG_SWAPPER, CONE_THIEF, SPORTS_DAY_HERO, SPORTS_DAY_FRAUD, WASP_WHISPERER
+// New RumourTypes: EGG_SWAP_DRAMA, GARY_CHEATED, CONE_THIEF_SPOTTED, WASP_INCIDENT
+// Integration: TimeSystem, PrimarySchoolSystem, WeatherSystem, FenceSystem, WantedSystem,
+//   NotorietySystem, RumourNetwork, NewspaperSystem, CriminalRecord, NeighbourhoodSystem,
+//   IceCreamVanSystem, SoundSystem, AchievementSystem
