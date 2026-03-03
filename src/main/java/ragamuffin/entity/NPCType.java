@@ -3513,7 +3513,32 @@ public enum NPCType {
      * violation, calls PCSO on second). NPC catch rate reduced to 40% on prime
      * pegs taken by the player via early arrival.
      */
-    MATCH_ANGLER(20f, 0f, 0f, false);
+    MATCH_ANGLER(20f, 0f, 0f, false),
+
+    // ── Issue #1499: Northfield Model Railway Club ────────────────────────────
+
+    /**
+     * MODEL_RAILWAY_CHAIR — Derek Hodges, chairman of the Northfield Model Railway Club.
+     * Presides over the public open day layout (every 3rd Saturday, 10:00–16:00)
+     * and conducts the raffle draw at 15:30. Passive during LAYOUT_DERAILMENT_EVENT
+     * (faces the layout). Becomes hostile if diorama theft is witnessed.
+     */
+    MODEL_RAILWAY_CHAIR(25f, 0f, 0f, false),
+
+    /**
+     * RAFFLE_VOLUNTEER — Pauline, raffle ticket seller.
+     * Stationed at the door on open days. Sells RAFFLE_TICKET items (max 3 per player).
+     * Witnesses barrel tampering within BARREL_WITNESS_RANGE (4.0f blocks).
+     */
+    RAFFLE_VOLUNTEER(20f, 0f, 0f, false),
+
+    /**
+     * RAILWAY_MEMBER — a Northfield Model Railway Club member.
+     * 4–6 spawn on open days; gather around the layout during LAYOUT_DERAILMENT_EVENT.
+     * Witness diorama theft at WITNESS_RANGE_NORMAL (reduced to WITNESS_RANGE_DERAILMENT
+     * during derailment).
+     */
+    RAILWAY_MEMBER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

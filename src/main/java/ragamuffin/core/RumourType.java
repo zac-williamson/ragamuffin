@@ -1880,5 +1880,31 @@ public enum RumourType {
      * biggest haul Ron's seen in years. He was gutted to hand the trophy over."
      * — seeded by AnglingClubSystem when CANAL_CHAMPION is awarded to the player.
      * Spreads via MATCH_ANGLER and PUBLIC NPCs. Vibes +1. */
-    CANAL_CHAMPION;
+    CANAL_CHAMPION,
+
+    // ── Issue #1499: Northfield Model Railway Club ────────────────────────────
+
+    /** "Someone got caught fiddling the barrel at the Model Railway Club raffle.
+     * Derek threw them out. Three years he spent on that signal box."
+     * — seeded by ModelRailwaySystem when RAFFLE_FRAUD is witnessed.
+     * Spreads via RAILWAY_MEMBER and PUBLIC NPCs. Vibes −3. */
+    RAFFLE_CHEAT,
+
+    /** "The signal box diorama's gone from the model railway club.
+     * Derek's absolutely devastated. Took him three years, that."
+     * — seeded by ModelRailwaySystem when diorama theft is witnessed or discovered.
+     * Spreads via RAILWAY_MEMBER and PUBLIC NPCs. Vibes −2. */
+    DIORAMA_NICKED,
+
+    /** "Some lad brought Derek's signal box back. Derek shook his hand and gave
+     * him a life membership. Didn't ask any questions."
+     * — seeded by ModelRailwaySystem when DECENT_SORT is awarded (diorama returned).
+     * Spreads via RAILWAY_MEMBER and PUBLIC NPCs. Vibes +2. */
+    DIORAMA_RETURNED,
+
+    /** "Player won the signal box diorama at the model railway raffle.
+     * Derek looked sick as a dog."
+     * — seeded by ModelRailwaySystem on legitimate raffle win (LUCKY_DIP).
+     * Spreads on legitimate raffle win. Vibes +1. */
+    RAFFLE_WINNER;
 }
