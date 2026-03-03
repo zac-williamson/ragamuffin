@@ -56341,3 +56341,104 @@ On the last day of each `CLOSING_DOWN_PHASE` cycle (the "GENUINELY_CLOSING_TOMOR
 5. **Liquidation heist succeeds in sign-change window**: set phase to `GENUINELY_CLOSING_TOMORROW`; set time to 09:30; verify `isHeistWindowOpen(timeSystem)` == true; call `attemptLootStockroom(player, inventory, rng_dave_late, notorietySystem, wantedSystem, criminalRecord, rumourNetwork)`; verify `inventory.getItemCount(Material.KNOCKOFF_ELECTRONIC)` == `LIQUIDATION_LOOT_COUNT`; verify `inventory.hasItem(Material.BRAND_NAME_TELLY)` == true; verify `rumourNetwork` contains `RumourType.SHOP_BURGLARY`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == true.
 
 // `ClosingDownSaleSystem.java` must be created as the sole new source file. New `LandmarkType.CLOSING_DOWN_SHOP`, `NPCType.CLOSING_DOWN_DAVE`, `PropType.CLOSING_DOWN_SIGN_PROP`, `PropType.STOCKROOM_CRATE_PROP`, `Material.KNOCKOFF_ELECTRONIC`, and `Material.BRAND_NAME_TELLY` entries are required. New `AchievementType` entries required: `HUMAN_SANDWICH_BOARD`, `TRADING_STANDARDS_HERO`, `EVERYTHING_MUST_GO`, `NEVER_CLOSING_DOWN`. `CrimeType.THEFT`, `CrimeType.FRAUD`, `RumourType.SHOP_BURGLARY`, `RumourType.LOCAL_GOSSIP` already defined. New `CrimeType.MISLEADING_ADVERTISING` and `CrimeType.CAUTION` entries are required.
+
+---
+
+## Issue #1473: Add Northfield Community Litter Pick — Janet's Tidy Streets, the Quota Dodge & the Crack Pipe Incident
+
+Janet from number 42 runs Northfield Tidy Streets. Every second Saturday 09:00–11:00 she sets up a fold-out table outside the park gates, hands out litter picker sticks and black council bags, and tries to get forty years of accumulated civic shame off the pavements in two hours. The player can volunteer earnestly, barely try, pickpocket distracted volunteers, stuff the bag with contraband, or fly-tip a load of rubbish right where they've just cleaned.
+
+### Mechanic 1 — The Sign-Up
+
+- `NPCType.LITTER_PICK_COORDINATOR` (Janet) spawns at `PropType.LITTER_PICK_TENT_PROP` outside the park gates every second Saturday (even weeks), 09:00–11:00. Event active window: `EVENT_START_HOUR` = 9.0f, `EVENT_END_HOUR` = 11.0f, biweekly (week number % 2 == 0).
+- Press E on Janet before `SIGN_UP_DEADLINE_HOUR` = 9.25f (09:15) to receive `Material.LITTER_PICKER_STICK` and `Material.COUNCIL_RUBBISH_BAG`. Both items are returned or destroyed at event end.
+- If player arrives after sign-up deadline: Janet says "Sorry love, we've already started. Come back fortnight." Result: `SignUpResult.TOO_LATE`.
+- If player notoriety ≥ `NOTORIETY_REFUSAL_THRESHOLD` = 400: Janet says "I know who you are. Not today." Result: `SignUpResult.REFUSED_NOTORIETY`.
+- 3–5 `NPCType.VOLUNTEER_PICKER` NPCs spawn at event start and wander the park collecting litter.
+
+### Mechanic 2 — Litter Collection
+
+- `LITTER_TARGET` = 8 items. Litter props (`PropType.LITTER_PROP`) are scattered across the park area (10–18 items at event start, random in range [`LITTER_SPAWN_MIN`, `LITTER_SPAWN_MAX`] = [10, 18]).
+- Player presses E near a `LITTER_PROP` while holding `Material.LITTER_PICKER_STICK` to collect it. Each collection increments `playerPickedCount`. `Material.COUNCIL_RUBBISH_BAG` tracks count internally (not a stackable item).
+- If player does not have `LITTER_PICKER_STICK`: Janet calls out "You need the stick, love." No collection.
+- Volunteers also collect litter over time: each volunteer picks up 1 item every `VOLUNTEER_PICK_INTERVAL_SECONDS` = 45 real seconds (in-game time). Collected items are removed from the litter pool. If volunteers collect all litter before player reaches quota, event ends early (`EventEndReason.VOLUNTEERS_FINISHED`).
+- Returning bag to Janet with `playerPickedCount` ≥ `LITTER_TARGET`: Notoriety −`GOOD_CITIZEN_NOTORIETY_REDUCTION` = 5, `GOOD_CITIZEN_BUFF_DURATION_SECONDS` = 120 (NPCs slightly friendlier, police less suspicious). Achievement: `TIDY_STREETS` on first completion. Result: `HandInResult.QUOTA_MET`.
+- Returning bag with count < `LITTER_TARGET`: Janet says "Is that all? There's still crisp packets by the pond." Result: `HandInResult.QUOTA_NOT_MET` (no penalty, no reward).
+
+### Mechanic 3 — Volunteer Pickpocketing
+
+- While a `VOLUNTEER_PICKER` NPC is in the bending-down state (collecting a litter prop), pickpocket success chance = `DISTRACTED_PICKPOCKET_CHANCE` = 0.60f (60%).
+- On success: player receives 1–3 `Material.COIN`. On failure: volunteer stands up, looks at player, seeds `RumourType.PICKPOCKET_SPOTTED` rumour. Notoriety +`PICKPOCKET_CAUGHT_NOTORIETY` = 4.
+- Player can also steal a volunteer's `Material.COUNCIL_RUBBISH_BAG` (hold E for `BAG_STEAL_DURATION` = 3 seconds while volunteer is distracted). Stolen bag contributes up to 5 items toward player's litter quota. `BagStealResult.STOLEN` or `BagStealResult.NOT_DISTRACTED`.
+
+### Mechanic 4 — The Crack Pipe Incident
+
+- Player can place `Material.CRACK_PIPE` into their `COUNCIL_RUBBISH_BAG` (via inventory, press E on Janet to hand in).
+- On hand-in: Janet opens the bag, finds the crack pipe. She screams, drops the bag. Police called immediately (WantedSystem +2, `CrimeType.POSSESSION`). Notoriety +`CRACK_PIPE_NOTORIETY` = 12. Rumour: `RumourType.SCANDAL_RUMOUR`. Achievement: `JANET_S_MORNING` on first trigger. Event ends immediately.
+- Variant: player can plant crack pipe in a *volunteer's* bag (hold E on volunteer while unobserved, `PLANT_DURATION` = 4 seconds, `PLANT_DETECTION_CHANCE` = 0.35f). If undetected, volunteer hands in the bag → Janet's reaction plays on the volunteer, no crime recorded on player. Achievement: `FIT_UP`. If detected: Notoriety +8, WantedSystem +1, `CrimeType.HARASSMENT`.
+
+### Mechanic 5 — The Fly-Tip Sabotage
+
+- Player can carry `Material.BIN_BAG` (obtained from FlyTippingSystem or crafted: 3× NEWSPAPER → 1 BIN_BAG). Dropping a `BIN_BAG` within `FLY_TIP_RADIUS` = 15 blocks of Janet during the event increments the world litter count by `FLY_TIP_LITTER_SPAWN` = 4 items.
+- If `flyTipCount` ≥ `FLY_TIP_BEFORE_SUSPECTED` = 2: Janet clocks the player. She sends a volunteer to watch them. Player's future pickpocket and bag-steal attempts auto-fail while being watched.
+- If player uses FlyTippingSystem's designated fly-tip spot within park bounds during the event: `EnvironmentalHealthSystem` is notified (fine 5 COIN, Notoriety +3, `CrimeType.FLY_TIPPING`). Janet reports the player to an authority NPC if she witnesses it.
+- Achievement: `UNDOING_ALL_THE_GOOD` — fly-tip more litter than you collected in one event.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `EVENT_START_HOUR` | 9.0f |
+| `EVENT_END_HOUR` | 11.0f |
+| `SIGN_UP_DEADLINE_HOUR` | 9.25f |
+| `NOTORIETY_REFUSAL_THRESHOLD` | 400 |
+| `LITTER_TARGET` | 8 |
+| `LITTER_SPAWN_MIN` | 10 |
+| `LITTER_SPAWN_MAX` | 18 |
+| `VOLUNTEER_COUNT_MIN` | 3 |
+| `VOLUNTEER_COUNT_MAX` | 5 |
+| `VOLUNTEER_PICK_INTERVAL_SECONDS` | 45.0f |
+| `GOOD_CITIZEN_NOTORIETY_REDUCTION` | 5 |
+| `GOOD_CITIZEN_BUFF_DURATION_SECONDS` | 120.0f |
+| `DISTRACTED_PICKPOCKET_CHANCE` | 0.60f |
+| `PICKPOCKET_CAUGHT_NOTORIETY` | 4 |
+| `BAG_STEAL_DURATION` | 3.0f |
+| `STOLEN_BAG_QUOTA_CONTRIBUTION` | 5 |
+| `CRACK_PIPE_NOTORIETY` | 12 |
+| `PLANT_DURATION` | 4.0f |
+| `PLANT_DETECTION_CHANCE` | 0.35f |
+| `FLY_TIP_RADIUS` | 15.0f |
+| `FLY_TIP_LITTER_SPAWN` | 4 |
+| `FLY_TIP_BEFORE_SUSPECTED` | 2 |
+
+### New Entities Required
+
+- `NPCType.LITTER_PICK_COORDINATOR` — Janet (already defined as stub)
+- `NPCType.VOLUNTEER_PICKER` — community volunteer (already defined as stub)
+- `Material.LITTER_PICKER_STICK` — already defined as stub
+- `Material.COUNCIL_RUBBISH_BAG` — already defined as stub
+- `PropType.LITTER_PICK_TENT_PROP` — fold-out table/tent prop (2.0f × 1.2f × 1.0f, 3 hits, drops `Material.TARP`)
+- `PropType.LITTER_PROP` — piece of litter on ground (0.2f × 0.1f × 0.2f, 1 hit, drops nothing)
+- `RumourType.PICKPOCKET_SPOTTED` — already likely defined; add if missing
+- `RumourType.SCANDAL_RUMOUR` — Janet's crack pipe incident
+
+### New AchievementType Entries Required
+
+- `TIDY_STREETS` — "Collected 8 pieces of litter for Janet. You're a credit to the neighbourhood." Target 1.
+- `JANET_S_MORNING` — "Put a crack pipe in Janet's litter bag. She'll not be the same after this." Target 1.
+- `FIT_UP` — "Planted a crack pipe in a volunteer's bag. Not your finest hour." Target 1.
+- `UNDOING_ALL_THE_GOOD` — "Fly-tipped more rubbish than you collected at the community litter pick." Target 1.
+
+### Integration Tests
+
+1. **Signing up before deadline gives equipment**: create `LitterPickSystem`; set time to Saturday even week 09:10; call `signUp(player, inventory, timeSystem, notoriety=0)`; verify result == `SignUpResult.SIGNED_UP`; verify `inventory.getItemCount(Material.LITTER_PICKER_STICK)` == 1; verify `inventory.getItemCount(Material.COUNCIL_RUBBISH_BAG)` == 1.
+
+2. **Collecting 8 litter items returns Notoriety reduction**: sign up player; call `collectLitterItem(player, inventory)` 8 times; verify `playerPickedCount` == 8; call `handInBag(player, inventory, janetNpc, notorietySystem, cb)`; verify `notorietySystem.getNotoriety()` decreased by `GOOD_CITIZEN_NOTORIETY_REDUCTION`; verify result == `HandInResult.QUOTA_MET`.
+
+3. **Crack pipe in bag triggers scandal**: sign up player; add `Material.CRACK_PIPE` to player inventory; call `handInBagWithCrackPipe(player, inventory, janetNpc, wantedSystem, criminalRecord, notorietySystem, rumourNetwork, cb)`; verify `wantedSystem.getWantedStars()` >= 2; verify `criminalRecord.hasCrime(CrimeType.POSSESSION)` == true; verify `notorietySystem.getNotoriety()` increased by `CRACK_PIPE_NOTORIETY`; verify `isEventActive()` == false.
+
+4. **Pickpocketing distracted volunteer succeeds at 60%**: sign up player; spawn volunteer in bending-down state; seed RNG to return value < 0.60f; call `attemptPickpocket(player, inventory, volunteerNpc, random)`; verify result == `PickpocketResult.SUCCESS`; verify `inventory.getItemCount(Material.COIN)` >= 1.
+
+5. **Fly-tipping inside park triggers Environmental Health**: sign up player; call `dropBinBag(player, inventory, position_inside_park)` twice; verify `flyTipCount` == 2; verify `environmentalHealthSystem` received fine notification; verify volunteer assigned to watch player (`isBeingWatched()` == true); call `attemptPickpocket(...)` again; verify result == `PickpocketResult.WATCHED_AUTO_FAIL`.
+
+// `LitterPickSystem.java` must be created as the sole new source file. `NPCType.LITTER_PICK_COORDINATOR` and `NPCType.VOLUNTEER_PICKER` stubs already exist. `Material.LITTER_PICKER_STICK` and `Material.COUNCIL_RUBBISH_BAG` stubs already exist. New `PropType.LITTER_PICK_TENT_PROP` and `PropType.LITTER_PROP` entries are required. New `AchievementType` entries required: `TIDY_STREETS`, `JANET_S_MORNING`, `FIT_UP`, `UNDOING_ALL_THE_GOOD`. `CrimeType.POSSESSION`, `CrimeType.HARASSMENT`, `CrimeType.FLY_TIPPING` already defined. `RumourType.PICKPOCKET_SPOTTED` and `RumourType.SCANDAL_RUMOUR` must be added if not present.
