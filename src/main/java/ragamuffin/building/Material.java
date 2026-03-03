@@ -7119,7 +7119,66 @@ public enum Material {
      * Can be stuck on NPC cars (2-second E hold) as a prank.
      * Tooltip: "Learner plates. Surprisingly effective."
      */
-    L_PLATE_PROPS("L-Plate Props");
+    L_PLATE_PROPS("L-Plate Props"),
+
+    // ── Issue #1483: Northfield Crown Green Bowls Club ────────────────────────
+
+    /**
+     * BOWLS_SET — a regulation set of crown green bowls (two woods and a jack).
+     * Bought from Reg (BOWLS_CLUB_SECRETARY) for 5 COIN or borrowed for 1 COIN
+     * per session. Required to play any end on the green.
+     * Tooltip: "Two woods and a jack. Handle with respect — Reg is watching."
+     */
+    BOWLS_SET("Bowls Set"),
+
+    /**
+     * STOLEN_BOWLS_SET — a BOWLS_SET lifted from a BOWLS_CLUB_PLAYER's bag.
+     * 50% pickpocket success. Functions identically to BOWLS_SET for playing;
+     * if Reg inspects your bag while holding one: CrimeType.CHEATING_AT_BOWLS,
+     * Notoriety +4, banned from the green for 3 days.
+     * Tooltip: "Definitely not yours. The initials give it away."
+     */
+    STOLEN_BOWLS_SET("Stolen Bowls Set"),
+
+    /**
+     * JACK — the small white target ball used in crown green bowls.
+     * Can be stolen from the green and sold to the fence for 4 COIN, or ransomed
+     * back to Reg for 3 COIN + Respect. Stealing it seeds RumourType.MISSING_JACK.
+     * Tooltip: "It's just a ball. Worth more to Reg than you'd think."
+     */
+    JACK("Jack"),
+
+    /**
+     * CHAMPIONSHIP_JACK — a gold-painted jack used only during the Annual Tournament.
+     * Worth 12 COIN to the fence but cancels the tournament, triggers Notoriety +10
+     * and Vibes −5. Seeds RumourType.CHAMPIONSHIP_SABOTAGE.
+     * Tooltip: "Gold-painted. There'll be consequences."
+     */
+    CHAMPIONSHIP_JACK("Championship Jack"),
+
+    /**
+     * WEIGHTED_BOWL — a secretly weighted bowl from the pavilion sports cupboard.
+     * Swapping Arthur's bowl during the 30-second PCSO-distraction window constitutes
+     * CrimeType.CHEATING_AT_BOWLS. If caught: Notoriety +6, banned 5 days.
+     * Tooltip: "Heavier on one side. Reg would be furious."
+     */
+    WEIGHTED_BOWL("Weighted Bowl"),
+
+    /**
+     * BOWLS_TROPHY — awarded to the Annual Tournament winner (prize: 20 COIN + this).
+     * Win 3 consecutive tournaments to trigger THE_DYNASTY achievement and earn
+     * Reg's begrudging Vice-Secretary title.
+     * Tooltip: "Northfield Crown Green Bowls Club Annual Champion. Your name's on it."
+     */
+    BOWLS_TROPHY("Bowls Trophy"),
+
+    /**
+     * BOWLS_CLUB_MEMBERSHIP — a laminated membership card issued by Reg.
+     * Costs 3 COIN. Non-members who trespass on the green twice get the PCSO called.
+     * Required to enter Grudge Match spectator area or enter the Annual Tournament.
+     * Tooltip: "Member No. 47. Reg signed it himself."
+     */
+    BOWLS_CLUB_MEMBERSHIP("Bowls Club Membership");
 
     private final String displayName;
 

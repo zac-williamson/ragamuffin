@@ -4451,7 +4451,41 @@ public enum PropType {
      * Achievement: INSPECTOR_CALLED.
      * Collision: 0.90w × 2.20h × 0.90d. Health: 4 hits. Drops nothing.
      */
-    TEST_CENTRE_PHONE_BOX_PROP(0.90f, 2.20f, 0.90f, 4, null);
+    TEST_CENTRE_PHONE_BOX_PROP(0.90f, 2.20f, 0.90f, 4, null),
+
+    // ── Issue #1483: Northfield Crown Green Bowls Club ────────────────────────
+
+    /**
+     * BOWLS_GREEN_PROP — the fenced-off 20×20 GRASS crown green with a slight
+     * central crown raise. Surrounded by a privet hedge and a chipped white gate.
+     * Non-members who enter twice trigger a PCSO call. The jack and championship
+     * jack spawn on this prop during active games.
+     * Collision: 20.0w × 0.30h × 20.0d. Health: 50 hits. Drops nothing.
+     */
+    BOWLS_GREEN_PROP(20.0f, 0.30f, 20.0f, 50, null),
+
+    /**
+     * PAVILION_PROP — the small wooden pavilion at the edge of the crown green.
+     * Contains the sports cupboard (holds WEIGHTED_BOWL) and Reg's scoreboard.
+     * Press E on the door to enter; unlocked during club hours (Tue–Sun 10:00–17:00).
+     * Collision: 5.0w × 3.0h × 4.0d. Health: 12 hits. Drops WOOD.
+     */
+    PAVILION_PROP(5.0f, 3.0f, 4.0f, 12, Material.WOOD),
+
+    /**
+     * BOWLS_BAG_PROP — a canvas bowls bag left by a BOWLS_CLUB_PLAYER on the green
+     * during play. Press E to pickpocket (50% chance of yielding STOLEN_BOWLS_SET).
+     * Collision: 0.50w × 0.40h × 0.30d. Health: 2 hits. Drops nothing.
+     */
+    BOWLS_BAG_PROP(0.50f, 0.40f, 0.30f, 2, null),
+
+    /**
+     * BOWLS_TROPHY_CABINET_PROP — a glass display cabinet inside the pavilion showing
+     * past tournament winners. Smashing it (6 hits) does nothing useful but seeds
+     * BOWLS_GRUDGE_MATCH rumour and adds Notoriety +2.
+     * Collision: 1.20w × 1.80h × 0.40d. Health: 6 hits. Drops GLASS.
+     */
+    BOWLS_TROPHY_CABINET_PROP(1.20f, 1.80f, 0.40f, 6, Material.GLASS);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

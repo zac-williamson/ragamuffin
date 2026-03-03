@@ -7483,6 +7483,63 @@ public enum AchievementType {
         "Ambulance Chaser",
         "You claimed emotional distress over a defibrillator you looted. Gary said fair enough.",
         1
+    ),
+
+    // ── Issue #1483: Northfield Crown Green Bowls Club ────────────────────────
+
+    /**
+     * CARD_CARRYING_MEMBER — purchase a BOWLS_CLUB_MEMBERSHIP from Reg.
+     */
+    CARD_CARRYING_MEMBER(
+        "Card-Carrying Member",
+        "You joined the Crown Green Bowls Club. Reg looked you up and down but said nowt.",
+        1
+    ),
+
+    /**
+     * PARKS_DEPARTMENT_BOOKIE — place a wager on the Grudge Match with a BOWLS_SPECTATOR.
+     */
+    PARKS_DEPARTMENT_BOOKIE(
+        "Parks Department Bookie",
+        "You put money on a crown green bowls grudge match. Proper Saturday afternoon stuff.",
+        1
+    ),
+
+    /**
+     * LOADED_JACK — swap Arthur's bowl with a WEIGHTED_BOWL during the Grudge Match.
+     */
+    LOADED_JACK(
+        "Loaded Jack",
+        "You nobbled Arthur's bowls. Reg never found out. Arthur's been suspicious ever since.",
+        1
+    ),
+
+    /**
+     * FINDERS_KEEPERS — steal the JACK from the green and sell it to the fence or ransom it to Reg.
+     */
+    FINDERS_KEEPERS(
+        "Finders Keepers",
+        "You nicked the jack off the crown green. Reg put a notice up. You had a little chuckle.",
+        1
+    ),
+
+    /**
+     * NORTHFIELD_BOWLS_CHAMPION — win the Annual Tournament for the first time.
+     */
+    NORTHFIELD_BOWLS_CHAMPION(
+        "Northfield Bowls Champion",
+        "You won the Annual Crown Green Bowls Tournament. Reg handed you the trophy in silence.",
+        1
+    ),
+
+    /**
+     * THE_DYNASTY — win 3 consecutive Annual Tournaments.
+     * Progress target = 3 (tracked across sessions).
+     */
+    THE_DYNASTY(
+        "The Dynasty",
+        "Three years running. Reg made you Vice-Secretary. You could tell it hurt.",
+        3
     );
 
     private final String name;
