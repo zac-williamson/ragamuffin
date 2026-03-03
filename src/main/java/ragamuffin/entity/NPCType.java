@@ -3231,7 +3231,38 @@ public enum NPCType {
      * 8–12 spawned for the walk on day 10; despawn at 10:30.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    SPONSORED_WALKER(20f, 0f, 0f, false);
+    SPONSORED_WALKER(20f, 0f, 0f, false),
+
+    // ── Issue #1424: Northfield Doorstep Energy Tout ──────────────────────────
+
+    /**
+     * ENERGY_TOUT — Craig. Polo shirt, branded PowerSave UK tabard, clipboard, fake badge.
+     * Walks the terrace street every 4 in-game days, knocking doors and posing as a meter
+     * reader, scamming residents out of 8 COIN each.
+     * <ul>
+     *   <li>Non-hostile unless his clipboard is stolen; then turns HOSTILE briefly.</li>
+     *   <li>Carries {@link ragamuffin.building.Material#TOUT_CLIPBOARD} (pickpocketable at Stealth ≥ 1).</li>
+     *   <li>Can be reported via {@link ragamuffin.building.Material#CRAIG_WITNESS_STATEMENT}
+     *       to CitizensAdvice to shut him down.</li>
+     *   <li>His {@link ragamuffin.world.PropType#ENERGY_VAN_PROP} can be broken into for
+     *       {@link ragamuffin.building.Material#SMART_METER_KIT}.</li>
+     * </ul>
+     * HP: 25f, attack: 3f, cooldown: 2.0f, hostile: false.
+     */
+    ENERGY_TOUT(25f, 3f, 2.0f, false),
+
+    /**
+     * TOUT_ENFORCER — Dave. Craig's enforcer, sent when the player runs Craig's own round
+     * (3+ doorstep knocks with the stolen clipboard = {@code DOORSTEP_FRAUD} crime).
+     * <ul>
+     *   <li>Arrives 1 in-game day after the DOORSTEP_FRAUD crime is recorded.</li>
+     *   <li>Carries {@link ragamuffin.building.Material#BURNER_PHONE} (droppable on defeat,
+     *       fence value 9 COIN).</li>
+     *   <li>Hostile on spawn; pursues player for 90 seconds before despawning.</li>
+     * </ul>
+     * HP: 40f, attack: 8f, cooldown: 1.5f, hostile: true.
+     */
+    TOUT_ENFORCER(40f, 8f, 1.5f, true);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

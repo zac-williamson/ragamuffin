@@ -6459,7 +6459,98 @@ public enum Material {
      * Stack size 1. No fence value; tradeable to SPONSORED_WALKER NPCs for 1 COIN goodwill.
      * Obtained alongside COIN when grabbing the PRIZE_ENVELOPE_PROP.
      */
-    CHARITY_RAFFLE_TICKET("Charity Raffle Ticket");
+    CHARITY_RAFFLE_TICKET("Charity Raffle Ticket"),
+
+    // ── Issue #1424: Northfield Doorstep Energy Tout ─────────────────────────
+
+    /**
+     * TOUT_CLIPBOARD — Craig's PowerSave UK branded clipboard with resident meter-read list.
+     * "A clipboard with 'PowerSave UK — Meter Reading Division' printed on it. The badge looks
+     * fake. The uniform looks fake. The smile is definitely fake."
+     * <ul>
+     *   <li>Fence value: 12 COIN.</li>
+     *   <li>Can be used to run Craig's own round door-to-door (up to 6 addresses, 8 COIN each).</li>
+     *   <li>3+ doorstep knocks with this item records {@code DOORSTEP_FRAUD} crime.</li>
+     * </ul>
+     * Stack size 1. Obtained by pickpocketing {@link ragamuffin.entity.NPCType#ENERGY_TOUT}
+     * (Stealth ≥ 1) or assaulting him; or dropped when {@link ragamuffin.world.PropType#TOUT_CLIPBOARD_PROP}
+     * is destroyed.
+     */
+    TOUT_CLIPBOARD("Tout's Clipboard"),
+
+    /**
+     * SMART_METER_KIT — Boxed PowerSave UK smart meter installation kit.
+     * "Still in the shrink-wrap. 'Not for resale' sticker partially removed."
+     * <ul>
+     *   <li>Fence value: 18 COIN.</li>
+     *   <li>Install in squat for fake prestige (+5 neighbourhood vibe decoration score).</li>
+     *   <li>Trade to {@link ragamuffin.entity.NPCType#PIGEON_FANCIER} for 10 COIN + {@code FANCIER_FAVOUR} flag.</li>
+     * </ul>
+     * Stack size 1. Obtained by breaking into {@link ragamuffin.world.PropType#ENERGY_VAN_PROP}
+     * via the GLASS window (2 hits, NoiseSystem +25).
+     */
+    SMART_METER_KIT("Smart Meter Kit"),
+
+    /**
+     * CRAIG_WITNESS_STATEMENT — Handwritten account of Craig's door-to-door scam.
+     * "Three pages of careful notes. Names, times, addresses. The Citizens Advice woman
+     * looked at it and said 'oh, this is Craig again'."
+     * <ul>
+     *   <li>Crafted from {@code SCRAP_PAPER} + {@code BIRO_PEN} after tailing Craig for 3+ entries.</li>
+     *   <li>Deliver to CitizensAdvice to trigger Trading Standards shutdown of Craig.</li>
+     *   <li>Reward: residents get partial refunds, neighbourhood vibes +6, Notoriety −5.</li>
+     * </ul>
+     * Stack size 1.
+     */
+    CRAIG_WITNESS_STATEMENT("Craig's Witness Statement"),
+
+    /**
+     * BURNER_PHONE — Cheap unregistered Nokia-style handset.
+     * "Bought from a bloke called Dave. Probably belonged to another bloke called Dave."
+     * <ul>
+     *   <li>Fence value: 9 COIN.</li>
+     *   <li>Dropped by {@link ragamuffin.entity.NPCType#TOUT_ENFORCER} (Dave) on defeat.</li>
+     * </ul>
+     * Stack size 1.
+     */
+    BURNER_PHONE("Burner Phone"),
+
+    /**
+     * DAVE_DEBT_LIST — A scrawled list of names and addresses in Dave's handwriting.
+     * "Several crossed out. Several circled. 'Outstanding: £40' written next to your address."
+     * <ul>
+     *   <li>Fence value: 3 COIN.</li>
+     *   <li>Dropped by {@link ragamuffin.entity.NPCType#TOUT_ENFORCER} (Dave) on defeat alongside BURNER_PHONE.</li>
+     *   <li>Can be sold to the Loan Shark NPC for 6 COIN.</li>
+     * </ul>
+     * Stack size 1.
+     */
+    DAVE_DEBT_LIST("Dave's Debt List"),
+
+    /**
+     * REPLACEMENT_CLIPBOARD — Blank clipboard purchased from the pound shop.
+     * "Could be used for anything. Currently earmarked for door-to-door fraud."
+     * <ul>
+     *   <li>Craftable from WOOD + SCRAP_PAPER at workbench.</li>
+     *   <li>Functions identically to {@code TOUT_CLIPBOARD} for running the door-to-door round.</li>
+     *   <li>No fence value (too generic).</li>
+     * </ul>
+     * Stack size 1.
+     */
+    REPLACEMENT_CLIPBOARD("Replacement Clipboard"),
+
+    /**
+     * FANCIER_FAVOUR — A small handwritten IOU from the Pigeon Fancier.
+     * "'One favour owed — Reg' on a folded piece of paper torn from a Racing Post."
+     * <ul>
+     *   <li>Obtained by trading {@code SMART_METER_KIT} to {@link ragamuffin.entity.NPCType#PIGEON_FANCIER}
+     *       for 10 COIN + this item.</li>
+     *   <li>Sets the {@code FANCIER_FAVOUR} player flag — Reg will vouch for the player at the
+     *       pigeon racing club or provide a tip-off on an upcoming race.</li>
+     * </ul>
+     * Stack size 1.
+     */
+    FANCIER_FAVOUR("Fancier's Favour");
 
     private final String displayName;
 
@@ -7864,6 +7955,20 @@ public enum Material {
                                                     0.15f, 0.40f, 0.75f); // Blue lanyard stripe
             case USB_STICK:               return c(0.20f, 0.22f, 0.25f);  // Dark plastic
 
+            // Issue #1424: Northfield Doorstep Energy Tout
+            case TOUT_CLIPBOARD:          return cs(0.88f, 0.92f, 0.88f, // White clipboard
+                                                    0.05f, 0.45f, 0.15f); // PowerSave UK green brand
+            case SMART_METER_KIT:         return cs(0.20f, 0.22f, 0.25f, // Dark box
+                                                    0.05f, 0.45f, 0.15f); // Green PowerSave logo
+            case CRAIG_WITNESS_STATEMENT: return cs(0.92f, 0.92f, 0.88f, // White paper
+                                                    0.25f, 0.55f, 0.25f); // Green pen notes
+            case BURNER_PHONE:            return c(0.15f, 0.15f, 0.15f);  // Near-black cheap plastic
+            case DAVE_DEBT_LIST:          return cs(0.92f, 0.90f, 0.80f, // Yellowed paper
+                                                    0.10f, 0.10f, 0.10f); // Black biro scrawl
+            case REPLACEMENT_CLIPBOARD:   return c(0.78f, 0.65f, 0.40f);  // Bare wood clipboard
+            case FANCIER_FAVOUR:          return cs(0.88f, 0.82f, 0.62f, // Racing Post paper
+                                                    0.55f, 0.28f, 0.10f); // Brown ink handwriting
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -8469,6 +8574,15 @@ public enum Material {
             case STAMPS_BUNDLE:
             case IT_CONTRACTOR_ID_BADGE:
             case USB_STICK:
+                return false;
+            // Issue #1424: Northfield Doorstep Energy Tout — not block items
+            case TOUT_CLIPBOARD:
+            case SMART_METER_KIT:
+            case CRAIG_WITNESS_STATEMENT:
+            case BURNER_PHONE:
+            case DAVE_DEBT_LIST:
+            case REPLACEMENT_CLIPBOARD:
+            case FANCIER_FAVOUR:
                 return false;
             default:
                 return true;
@@ -10217,6 +10331,22 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // lanyard ID card
             case USB_STICK:
                 return IconShape.FLAT_PAPER;  // small USB drive
+
+            // Issue #1424: Northfield Doorstep Energy Tout
+            case TOUT_CLIPBOARD:
+                return IconShape.FLAT_PAPER;  // branded clipboard
+            case SMART_METER_KIT:
+                return IconShape.BOX;         // boxed kit
+            case CRAIG_WITNESS_STATEMENT:
+                return IconShape.FLAT_PAPER;  // handwritten statement
+            case BURNER_PHONE:
+                return IconShape.CARD;        // cheap handset
+            case DAVE_DEBT_LIST:
+                return IconShape.FLAT_PAPER;  // scrawled list
+            case REPLACEMENT_CLIPBOARD:
+                return IconShape.FLAT_PAPER;  // blank clipboard
+            case FANCIER_FAVOUR:
+                return IconShape.FLAT_PAPER;  // folded IOU note
 
             default:
                 return IconShape.BOX;

@@ -4029,7 +4029,46 @@ public enum PropType {
      * Contains 15–25 COIN + {@link ragamuffin.building.Material#CHARITY_RAFFLE_TICKET}.
      * Dims: 0.2 × 0.02 × 0.12. Indestructible (grabbed via E interact).
      */
-    PRIZE_ENVELOPE_PROP(0.2f, 0.02f, 0.12f, 99, null);
+    PRIZE_ENVELOPE_PROP(0.2f, 0.02f, 0.12f, 99, null),
+
+    // ── Issue #1424: Northfield Doorstep Energy Tout ──────────────────────────
+
+    /**
+     * TOUT_CLIPBOARD_PROP — Craig's PowerSave UK branded clipboard with resident contact list.
+     * Placed on Craig's person while he does his round; drops on the ground if he is
+     * knocked out or when the round ends.
+     * <ul>
+     *   <li>Pickpocket (Stealth ≥ 1) or assault Craig to steal.</li>
+     *   <li>Fence for 12 COIN, or use to run Craig's round door-to-door (up to 6 addresses).</li>
+     *   <li>3+ doorstep knocks records {@code DOORSTEP_FRAUD}; triggers Dave ({@link ragamuffin.entity.NPCType#TOUT_ENFORCER}) spawn.</li>
+     * </ul>
+     * Dims: 0.3 × 0.02 × 0.4; indestructible; drops {@link ragamuffin.building.Material#TOUT_CLIPBOARD}.
+     */
+    TOUT_CLIPBOARD_PROP(0.3f, 0.02f, 0.4f, 99, ragamuffin.building.Material.TOUT_CLIPBOARD),
+
+    /**
+     * SMART_METER_KIT_PROP — crate of PowerSave UK smart meter install equipment in Craig's van.
+     * Accessible by breaking the van's GLASS window (2 hits) with a NoiseSystem spike.
+     * <ul>
+     *   <li>Fence for 18 COIN, install in squat for fake prestige, or trade to
+     *       {@link ragamuffin.entity.NPCType#PIGEON_FANCIER} for 10 COIN + {@code FANCIER_FAVOUR} flag.</li>
+     *   <li>Stealing it records {@code VEHICLE_BREAK_IN} crime.</li>
+     * </ul>
+     * Dims: 0.6 × 0.5 × 0.6; 2 hits to break (window); drops {@link ragamuffin.building.Material#SMART_METER_KIT}.
+     */
+    SMART_METER_KIT_PROP(0.6f, 0.5f, 0.6f, 2, ragamuffin.building.Material.SMART_METER_KIT),
+
+    /**
+     * ENERGY_VAN_PROP — white PowerSave UK transit van, parked on the terrace street during Craig's round.
+     * Target of the Path C smart meter sabotage mechanic.
+     * <ul>
+     *   <li>Glass window takes 2 hits to smash; breaking it triggers a NoiseSystem spike (+25).</li>
+     *   <li>Contains {@link #SMART_METER_KIT_PROP} accessible after window is broken.</li>
+     *   <li>Parked only during Craig's active round; despawns when Craig's round ends or Craig is removed.</li>
+     * </ul>
+     * Dims: 2.0 × 1.8 × 4.5; 8 hits (body) / 2 hits (window); drops {@code SCRAP_METAL}.
+     */
+    ENERGY_VAN_PROP(2.0f, 1.8f, 4.5f, 8, ragamuffin.building.Material.SCRAP_METAL);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
