@@ -6573,7 +6573,39 @@ public enum Material {
      *   <li>Used by the EXTORTION ransom path in {@code WhatsAppGroupSystem.ransomCat()}.</li>
      * </ul>
      */
-    CAT_RANSOM_NOTE("Cat Ransom Note");
+    CAT_RANSOM_NOTE("Cat Ransom Note"),
+
+    // ── Issue #1428: Northfield Council CCTV Audit ───────────────────────────
+
+    /**
+     * CCTV_FOOTAGE — "VHS tape. Keith's handwriting on the label. Best destroyed."
+     * <ul>
+     *   <li>Generated as evidence when player commits a crime within range of a live CCTV camera.</li>
+     *   <li>Stack size 1. Fence value 4 COIN. Flagged stolen.</li>
+     *   <li>Destroy at CAMPFIRE_PROP or WHEELIE_BIN_FIRE_PROP to clear evidence retroactively.</li>
+     * </ul>
+     */
+    CCTV_FOOTAGE("CCTV Footage"),
+
+    /**
+     * DUMMY_CCTV_CAMERA — "A hollow plastic camera with a dead battery inside. Classic."
+     * <ul>
+     *   <li>Obtained by removing a dummy camera with SCREWDRIVER + REPAIR ≥ 1.</li>
+     *   <li>Stack size 1. Fence value 2 COIN.</li>
+     *   <li>Can be re-installed as a decoy to make nearby NPCs nervous/flee.</li>
+     * </ul>
+     */
+    DUMMY_CCTV_CAMERA("Dummy CCTV Camera"),
+
+    /**
+     * MEAL_DEAL_ITEM — "Sandwich, crisps, drink. The ultimate council bribe."
+     * <ul>
+     *   <li>Crafted: SANDWICH + CRISPS + FIZZY_DRINK.</li>
+     *   <li>Stack size 1. Not fenceable.</li>
+     *   <li>Used to bribe Keith (CCTV_OPERATOR) with 80% success for 15-minute camera blindspot.</li>
+     * </ul>
+     */
+    MEAL_DEAL_ITEM("Meal Deal");
 
     private final String displayName;
 
@@ -7997,6 +8029,14 @@ public enum Material {
                                                     0.25f, 0.20f, 0.15f); // Darker stripe
             case CAT_RANSOM_NOTE:         return cs(0.92f, 0.90f, 0.80f, // Cream paper
                                                     0.10f, 0.10f, 0.10f); // Black biro scrawl
+
+            // Issue #1428: Northfield Council CCTV Audit
+            case CCTV_FOOTAGE:            return cs(0.10f, 0.10f, 0.12f, // Black VHS body
+                                                    0.60f, 0.55f, 0.20f); // Keith's biro label
+            case DUMMY_CCTV_CAMERA:       return cs(0.20f, 0.20f, 0.22f, // Dark grey plastic
+                                                    0.80f, 0.10f, 0.10f); // Blinking red LED
+            case MEAL_DEAL_ITEM:          return cs(0.90f, 0.85f, 0.70f, // Sandwich wrapper
+                                                    0.20f, 0.55f, 0.25f); // Green crisps packet
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -10376,6 +10416,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // blank clipboard
             case FANCIER_FAVOUR:
                 return IconShape.FLAT_PAPER;  // folded IOU note
+
+            // Issue #1428: Northfield Council CCTV Audit
+            case CCTV_FOOTAGE:
+                return IconShape.BOX;         // VHS cassette
+            case DUMMY_CCTV_CAMERA:
+                return IconShape.BOX;         // hollow plastic camera unit
+            case MEAL_DEAL_ITEM:
+                return IconShape.BOX;         // bundled bag with sandwich, crisps, drink
 
             default:
                 return IconShape.BOX;
