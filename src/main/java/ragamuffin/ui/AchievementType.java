@@ -6536,6 +6536,53 @@ public enum AchievementType {
         "Bucket and Spade",
         "You nicked Terry's kit and did his round. The cheek of it is almost admirable.",
         1
+    ),
+
+    // ── Issue #1400: Northfield Residents' Parking Permit Racket ─────────────
+
+    /**
+     * SWEETENING_BARRY — successfully bribe Barry with BRIBE_HIGH (20 COIN).
+     */
+    SWEETENING_BARRY(
+        "Sweetening Barry",
+        "Twenty quid. Barry pocketed it without blinking. He's done this before.",
+        1
+    ),
+
+    /**
+     * NORTHFIELD_TICKET_TOUT — sell a PARKING_PERMIT to a DESPERATE_PARKER_NPC for 12 COIN.
+     */
+    NORTHFIELD_TICKET_TOUT(
+        "Northfield Ticket Tout",
+        "You bought it for four. Sold it for twelve. HMRC are circling.",
+        1
+    ),
+
+    /**
+     * FREE_RANGE_PARKING — park without a permit or clamp for a full in-game day (Barry on duty).
+     */
+    FREE_RANGE_PARKING(
+        "Free Range Parking",
+        "Barry patrolled all day and somehow missed you. Remarkable. Probably not repeatable.",
+        1
+    ),
+
+    /**
+     * CLAMP_ESCAPE_ARTIST — remove a WHEEL_CLAMP_PROP using WHEEL_CLAMP_KEY without being caught.
+     */
+    CLAMP_ESCAPE_ARTIST(
+        "Clamp Escape Artist",
+        "You had the key, you had the nerve, and Barry had his back turned. Perfect.",
+        1
+    ),
+
+    /**
+     * FORGER_IN_RESIDENCE — use a FORGED_PARKING_PERMIT that is not detected by Barry.
+     */
+    FORGER_IN_RESIDENCE(
+        "Forger in Residence",
+        "Comic Sans fooled the man. The bar for document security in Zone S is not high.",
+        1
     );
 
     private final String name;
