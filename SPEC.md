@@ -58756,3 +58756,140 @@ Every Saturday afternoon (14:00–18:00) in the back room of the community centr
 5. **Stealing rare set unwitnessed during 15:30 window awards MINIATURE_HEIST**: create system; give player `WARGAMES_MEMBERSHIP_CARD`; set time to Saturday 15:31 (window open); set `nearbyNpcs = []`; call `stealRareSet(player, inventory, miniatureCabinetProp, nearbyNpcs, timeSystem)`; verify result == `HeistResult.SUCCESS`; verify `inventory.contains(Material.RARE_MINIATURE_SET)` == true; verify `achievementCallback` received `AchievementType.MINIATURE_HEIST`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == false.
 
 // `WargamesSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Saturday session schedule, quarterly tournament days, 15:30 cabinet window), `StreetSkillSystem` (CRAFTING XP from painting), `WitnessSystem` (theft and pickpocket detection), `CriminalRecord` (existing `THEFT`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `WARGAMES_MATCH_WIN`, `TOURNAMENT_RIGGED_EXPOSED`, `MINIATURE_HEIST_RUMOUR`, `TOURNAMENT_SCANDAL_HEADLINE`, `FAIR_WIN_RUMOUR`), `NeighbourhoodSystem` (Vibes), `FenceSystem` (rare set 80 COIN, ledger 15 COIN, painted miniature 3 COIN), `PawnShopSystem` (painted miniature 2 COIN, trophy 5 COIN, rare set 20 COIN), `NewspaperSystem` (tournament scandal headline), `SquatFurnishingTracker` (rare set and trophy display), `AchievementSystem` (new `HOBBY_GENERAL`, `MINIATURE_MAESTRO`, `WARGAMES_CHAMPION`, `RESTORED_ORDER`, `MINIATURE_HEIST`, `SILENT_INFORMANT`). New NPCTypes: `WARGAMES_CHAIRMAN`, `WARGAMES_MEMBER`, `WARGAMES_RINGER`. New Materials: `WARGAMES_MEMBERSHIP_CARD`, `PAINTED_MINIATURE`, `RARE_MINIATURE_SET`, `TOURNAMENT_LEDGER`, `WARGAMES_TROPHY`. New PropTypes: `GAME_TABLE_PROP`, `PAINTING_TABLE_PROP`, `MINIATURE_CABINET_PROP`, `RARE_MINIATURE_SET_PROP`, `TOURNAMENT_BRACKET_PROP`. New RumourTypes: `WARGAMES_MATCH_WIN`, `TOURNAMENT_RIGGED_EXPOSED`, `MINIATURE_HEIST_RUMOUR`, `TOURNAMENT_SCANDAL_HEADLINE`, `FAIR_WIN_RUMOUR`. New AchievementTypes: `HOBBY_GENERAL`, `MINIATURE_MAESTRO`, `WARGAMES_CHAMPION`, `RESTORED_ORDER`, `MINIATURE_HEIST`, `SILENT_INFORMANT`.
+
+---
+
+## Issue #1511: Add Northfield Amateur Radio Club — Clive's Monday Shack, the Ofcom Licence Fiddle & the Vintage Transmitter Heist
+
+### Overview
+
+Every Monday evening (19:30–21:30) in the community centre's back annex, the Northfield Amateur Radio Club convenes. Club Secretary Clive Norris (`NPCType.RADIO_CLUB_SECRETARY`) has held the position for twenty-two years and runs meetings with the bureaucratic precision of a man who considers Ofcom licensing paperwork a leisure activity. Five members (`NPCType.RADIO_CLUB_MEMBER`) huddle around radios, exchange QSL cards, and argue about antenna polarisation. Clive's prized possession — and the club's only asset of any real value — is a 1964 Heathkit SB-101 valve transceiver (`VINTAGE_TRANSMITTER_PROP`) kept in a locked cabinet, allegedly worth 60 COIN to the right buyer. The club holds an annual "Field Day" contest (first Sunday of every month, 10:00–16:00) where members compete to make the most contacts; Clive has been quietly logging fictitious contacts on the club's score sheet for two years to inflate the club's regional ranking and pocket a small cash bursary from the national body. The player can join up, operate the radio, expose Clive's logbook fraud, or lift the transmitter entirely.
+
+### Schedule & Constants
+
+| Constant | Value |
+|---|---|
+| `MEETING_DAY_OF_WEEK` | 1 (Monday) |
+| `MEETING_START` | 19.5f |
+| `MEETING_END` | 21.5f |
+| `FIELD_DAY_OF_MONTH` | first Sunday (day 1 if Sunday, else next) |
+| `FIELD_DAY_START` | 10.0f |
+| `FIELD_DAY_END` | 16.0f |
+| `MEMBERSHIP_COST` | 2 |
+| `FIELD_DAY_PRIZE` | 15 |
+| `TRANSMITTER_FENCE_VALUE` | 60 |
+| `LOGBOOK_FENCE_VALUE` | 12 |
+| `LOGBOOK_JOURNALIST_VALUE` | 10 |
+| `FRAUD_NOTORIETY_EXPOSED` | 5 |
+| `WITNESS_RANGE` | 5.0f |
+| `MEMBER_COUNT` | 5 |
+| `RADIO_SKILL_XP` | 4 |
+| `LICENCE_BRIBE_COST` | 5 |
+| `PIRATE_BROADCAST_DURATION` | 5.0f |
+
+### Mechanic 1 — Monday Meetings
+
+- On Mondays 19:30–21:30, Clive and `MEMBER_COUNT` (5) `NPCType.RADIO_CLUB_MEMBER` NPCs gather in the community centre annex.
+- Press E on Clive to buy membership (`MEMBERSHIP_COST` = 2 COIN): player receives `RADIO_CLUB_MEMBERSHIP_CARD` material; grants access to the radio shack and transmitter cabinet during meetings.
+- Ejected if Notoriety ≥ 4: `EntryResult.EJECTED` (Clive: *"We hold an Ofcom licence, thank you. We don't need that sort of thing."*).
+- During a meeting, three activities are available:
+  - **Operate the club radio** (`CLUB_RADIO_PROP`): press E to make a contact; awards `RADIO_SKILL_XP` (4) CRAFTING XP via `StreetSkillSystem`; produces 1 `QSL_CARD` material (fenceable 1 COIN, pawn 0 COIN — Ken doesn't know what it is). Make 10 contacts → `DX_CHASER` achievement.
+  - **Inspect the logbook** (`LOGBOOK_PROP`): press E to examine; if player has `RADIO_CLUB_MEMBERSHIP_CARD` and at least 2 prior contacts, the logbook fraud becomes apparent — player now holds `LOGBOOK_EVIDENCE` flag (not an item; flag enables `exposefraud` path). Clive's desk; inspecting while Clive is watching makes him hostile.
+  - **Pickpocket Clive's keyring** (access to transmitter cabinet, 20% success): success grants `TRANSMITTER_CABINET_KEY` material; failure → Clive hostile + Notoriety +2. Key destroyed after use.
+
+### Mechanic 2 — The Field Day Contest
+
+- On the first Sunday of each in-game month, 10:00–16:00: the Field Day is held in the park (portable antennas set up at `FIELD_DAY_ANTENNA_PROP`).
+- Player can enter if they have `RADIO_CLUB_MEMBERSHIP_CARD` (free entry).
+- Contest: each participant makes simulated contacts over 6 hours. Base contacts per hour: 8. Player modifier: +2 per `RADIO_SKILL` level (via `StreetSkillSystem`).
+- Clive's logged total is fraudulently inflated by `FAKE_CONTACTS` = 24 (added silently before resolution).
+- If player holds `LOGBOOK_EVIDENCE` flag when Field Day ends: `exposeFraud(player, members)` fires — Clive's fake contacts removed; `RADIO_FRAUD_EXPOSED` rumour seeded; all `RADIO_CLUB_MEMBER` NPCs become `NPCState.IRRITATED` toward Clive; Clive hostile toward player; Notoriety +`FRAUD_NOTORIETY_EXPOSED` (5) on Clive; player automatically wins if their honest total exceeds remaining legitimate scores.
+- Field Day winner: +`FIELD_DAY_PRIZE` (15) COIN + `FIELD_DAY_CUP` material + `FIELD_DAY_CHAMPION` achievement + Vibes +2.
+- Winning after exposing fraud also awards `CLEAN_AIRWAVES` achievement.
+
+### Mechanic 3 — The Pirate Broadcast Hustle
+
+- At any time (not just meeting hours), the player can use `VINTAGE_TRANSMITTER_PROP` (if cabinet open/pickpocketed or during the 16:30–16:45 Field Day teardown window when Clive is distracted) to broadcast a pirate signal.
+- `piratebroadcast(player, inventory, transmitter, pirateRadioSystem, nearbyNpcs, timeSystem)`:
+  - Unwitnessed + `pirateRadioSystem` active: integrates with `PirateRadioSystem` — extends the pirate station's broadcast range for `PIRATE_BROADCAST_DURATION` (5) in-game minutes; awards 5 COIN from pirate station operator; seeds `PIRATE_AIRWAVES` rumour (Vibes +1 among youth NPCs, Notoriety +1 from Ofcom).
+  - Witnessed: `CrimeType.CRIMINAL_DAMAGE` + Notoriety +3 + `ILLEGAL_BROADCAST_RUMOUR` seeded; Clive calls police.
+  - `PIRATE_DJ` achievement: use the transmitter unwitnessed 3 times.
+
+### Mechanic 4 — The Vintage Transmitter Heist
+
+- `VINTAGE_TRANSMITTER_PROP` is in a locked cabinet in the annex.
+- Cabinet opened by `TRANSMITTER_CABINET_KEY` (pickpocketed), or LOCKPICK outside meeting hours, or during Field Day teardown window 16:30–16:45 (Clive distracted, cabinet briefly open to pack up).
+- Steal the transmitter (press E on open cabinet, no NPCs within `WITNESS_RANGE`):
+  - `VINTAGE_TRANSMITTER` material added to inventory.
+  - Sell to `FenceSystem` (60 COIN: `TRANSMITTER_FENCE_VALUE`); or `PawnShopSystem` (15 COIN — Ken says *"It's a bit niche, mate"*); or use in squat via `SquatFurnishingTracker` (+4 Vibes while displayed, enables pirate broadcast from squat).
+  - Witnessed: `CrimeType.THEFT` + Notoriety +5 + `TRANSMITTER_HEIST_RUMOUR` seeded; Clive calls police.
+  - Unwitnessed: `TRANSMITTER_HEIST` achievement.
+- Selling `LOGBOOK_EVIDENCE` (as a printed copy: `LOGBOOK_PRINTOUT` material obtained by pressing E on the club printer `CLUB_PRINTER_PROP` while holding `LOGBOOK_EVIDENCE` flag) to `NPCType.JOURNALIST` (`LOGBOOK_JOURNALIST_VALUE` = 10 COIN): `NewspaperSystem.setPendingHeadline()` "NORTHFIELD HAM RADIO BOSS FAKED HUNDREDS OF CONTACTS — OFCOM PROBE"; seeds `RADIO_SCANDAL_HEADLINE` rumour.
+- Selling `LOGBOOK_PRINTOUT` to `FenceSystem` (`LOGBOOK_FENCE_VALUE` = 12 COIN): `PAPER_TRAIL` achievement.
+- Getting a fake Ofcom amateur radio licence: bribe Clive (`LICENCE_BRIBE_COST` = 5 COIN) during a meeting to countersign a blank form; player receives `AMATEUR_RADIO_LICENCE` material — allows operating a radio legally (no Ofcom Notoriety) and serves as a useful identity document in `DisguiseSystem` (+1 disguise quality when worn with `HI_VIS_JACKET`).
+
+### New Entities Required
+
+**New NPCTypes:**
+- `RADIO_CLUB_SECRETARY` — Clive Norris; runs meetings; guards transmitter cabinet; falsifies logbook before Field Day; hostile after pickpocket failure or witnessed theft; calls police at Notoriety ≥ 3 witnessing theft.
+- `RADIO_CLUB_MEMBER` — five generic hobbyists; attend meetings and Field Day; spread rumours; become `NPCState.IRRITATED` at Clive if fraud exposed.
+
+**New Materials:**
+- `RADIO_CLUB_MEMBERSHIP_CARD` — entry to meetings and annex. Non-stackable.
+- `QSL_CARD` — produced by operating club radio. Fence value 1 COIN.
+- `TRANSMITTER_CABINET_KEY` — pickpocketed from Clive. Single-use. Non-stackable.
+- `VINTAGE_TRANSMITTER` — stolen from cabinet. Fence value 60 COIN; pawn 15 COIN; squat display.
+- `LOGBOOK_PRINTOUT` — printed from club printer after inspecting logbook. Sell to journalist (10 COIN) or fence (12 COIN).
+- `FIELD_DAY_CUP` — awarded to Field Day winner. Pawn value 4 COIN; squat display.
+- `AMATEUR_RADIO_LICENCE` — obtained by bribing Clive. Identity document; disguise quality +1 with hi-vis.
+
+**New PropTypes:**
+- `CLUB_RADIO_PROP` — club transceiver on bench; press E to make a contact; requires `RADIO_CLUB_MEMBERSHIP_CARD` or Notoriety +1.
+- `LOGBOOK_PROP` — Clive's contact logbook on his desk; press E to inspect (fraud detectable after 2+ contacts).
+- `TRANSMITTER_CABINET_PROP` — locked glass cabinet; LOCKPICK or `TRANSMITTER_CABINET_KEY` or Field Day teardown window to open.
+- `VINTAGE_TRANSMITTER_PROP` — the 1964 Heathkit inside cabinet; press E to use (pirate broadcast) or steal.
+- `FIELD_DAY_ANTENNA_PROP` — portable antenna erected in park on Field Day; press E to operate during contest.
+- `CLUB_PRINTER_PROP` — ancient dot-matrix printer on side table; press E while holding `LOGBOOK_EVIDENCE` flag to print `LOGBOOK_PRINTOUT`.
+
+**New RumourTypes:**
+- `RADIO_FRAUD_EXPOSED` — "Clive at the radio club has been faking contest contacts for years." Spreads via `RADIO_CLUB_MEMBER`, `PUBLIC`, `JOURNALIST`. Notoriety contribution +5 on Clive. Vibes +2.
+- `TRANSMITTER_HEIST_RUMOUR` — "Someone's nicked the radio club's vintage Heathkit." Spreads via `RADIO_CLUB_MEMBER`, `PUBLIC`. Notoriety contribution +5.
+- `PIRATE_AIRWAVES` — "Someone's been boosting the pirate radio signal from the community centre." Vibes +1 (youth), Notoriety +1 (Ofcom / authority NPCs).
+- `ILLEGAL_BROADCAST_RUMOUR` — "There's been an illegal broadcast on Clive's transmitter." Spreads via `RADIO_CLUB_MEMBER`. Notoriety +3.
+- `RADIO_SCANDAL_HEADLINE` — seeds newspaper if logbook printout sold to journalist.
+
+**New AchievementTypes:**
+- `DX_CHASER` — make 10 contacts at the club radio across any number of sessions.
+- `FIELD_DAY_CHAMPION` — win the monthly Field Day contest.
+- `CLEAN_AIRWAVES` — win Field Day after exposing Clive's logbook fraud.
+- `TRANSMITTER_HEIST` — steal the vintage Heathkit unwitnessed.
+- `PIRATE_DJ` — use the transmitter for a pirate broadcast unwitnessed 3 times.
+- `PAPER_TRAIL` — sell the logbook printout to the fence without exposing the fraud publicly.
+
+**Already defined — no new entries needed:**
+- `Material.LOCKPICK`, `Material.COIN`, `Material.HI_VIS_JACKET` — existing materials.
+- `CrimeType.THEFT`, `CrimeType.CRIMINAL_DAMAGE` — existing crime types.
+- `LandmarkType.COMMUNITY_CENTRE` — meeting and Field Day venue.
+- `NPCType.JOURNALIST` — pub; buys logbook printout tip.
+- `StreetSkillSystem.Skill.CRAFTING` — XP from radio contacts.
+- `FenceSystem` — vintage transmitter 60 COIN, logbook printout 12 COIN, QSL card 1 COIN.
+- `PawnShopSystem` — vintage transmitter 15 COIN, Field Day cup 4 COIN.
+- `NewspaperSystem` — radio scandal headline.
+- `PirateRadioSystem` — pirate broadcast integration.
+- `SquatFurnishingTracker` — transmitter and Field Day cup as squat display items.
+- `DisguiseSystem` — amateur radio licence as identity document.
+- `WitnessSystem`, `RumourNetwork`, `NeighbourhoodSystem`, `NotorietySystem`, `WantedSystem`, `ArrestSystem`, `AchievementSystem`.
+
+### Integration Tests
+
+1. **Joining the club issues RADIO_CLUB_MEMBERSHIP_CARD**: create `AmateurRadioClubSystem`; set time to Monday 20:00; call `joinClub(player, inventory, cliveNpc, coin=2, timeSystem)`; verify result == `JoinResult.JOINED`; verify `inventory.contains(Material.RADIO_CLUB_MEMBERSHIP_CARD)` == true; verify `inventory.getItemCount(Material.COIN)` decreased by `MEMBERSHIP_COST` (2).
+
+2. **Operating club radio awards CRAFTING XP and QSL_CARD**: create system; give player `RADIO_CLUB_MEMBERSHIP_CARD`; set time to Monday 20:00; call `makeContact(player, inventory, clubRadioProp, streetSkillSystem, timeSystem)`; verify `inventory.contains(Material.QSL_CARD)` == true; verify `streetSkillSystem.getXP(StreetSkillSystem.Skill.CRAFTING)` increased by `RADIO_SKILL_XP` (4); verify `amateurRadioSystem.getContactCount(player)` == 1.
+
+3. **Exposing logbook fraud before Field Day removes fake contacts and seeds RADIO_FRAUD_EXPOSED**: create system; give player `RADIO_CLUB_MEMBERSHIP_CARD`; set `logbookEvidenceFlag = true` (player has inspected logbook with 2+ contacts); set time to Field Day 16:00; call `exposeFraud(player, members=[m1,m2,m3,m4,m5], rumourNetwork, notorietySystem)`; verify `amateurRadioSystem.getCliveContactTotal()` == `amateurRadioSystem.getCliveHonestTotal()` (fake contacts removed); verify `rumourNetwork` received `RumourType.RADIO_FRAUD_EXPOSED`; verify all 5 members have state `NPCState.IRRITATED`; verify `notorietySystem.getNotorietyFor(cliveNpc)` increased by `FRAUD_NOTORIETY_EXPOSED` (5).
+
+4. **Winning Field Day awards prize, cup and FIELD_DAY_CHAMPION achievement**: create system; give player `RADIO_CLUB_MEMBERSHIP_CARD`; set time to first Sunday 10:00; seed rng so player score exceeds all NPCs' honest totals; call `resolveFieldDay(rng, achievementCallback, rumourNetwork, neighbourhoodSystem)`; verify `inventory.getItemCount(Material.COIN)` increased by `FIELD_DAY_PRIZE` (15); verify `inventory.contains(Material.FIELD_DAY_CUP)` == true; verify `achievementCallback` received `AchievementType.FIELD_DAY_CHAMPION`; verify `neighbourhoodSystem.getVibes()` increased by 2.
+
+5. **Stealing vintage transmitter unwitnessed during Field Day teardown awards TRANSMITTER_HEIST**: create system; give player `RADIO_CLUB_MEMBERSHIP_CARD`; set time to first Sunday 16:35 (teardown window open); set `nearbyNpcs = []`; call `stealTransmitter(player, inventory, transmitterCabinetProp, nearbyNpcs, timeSystem)`; verify result == `HeistResult.SUCCESS`; verify `inventory.contains(Material.VINTAGE_TRANSMITTER)` == true; verify `achievementCallback` received `AchievementType.TRANSMITTER_HEIST`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == false.
+
+// `AmateurRadioClubSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Monday meeting schedule, first-Sunday Field Day, 16:30–16:45 teardown window), `StreetSkillSystem` (CRAFTING XP from radio contacts), `WitnessSystem` (theft, pickpocket and illegal broadcast detection), `CriminalRecord` (existing `THEFT`, `CRIMINAL_DAMAGE`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `RADIO_FRAUD_EXPOSED`, `TRANSMITTER_HEIST_RUMOUR`, `PIRATE_AIRWAVES`, `ILLEGAL_BROADCAST_RUMOUR`, `RADIO_SCANDAL_HEADLINE`), `NeighbourhoodSystem` (Vibes), `FenceSystem` (transmitter 60 COIN, logbook printout 12 COIN, QSL card 1 COIN), `PawnShopSystem` (transmitter 15 COIN, Field Day cup 4 COIN), `NewspaperSystem` (radio scandal headline), `PirateRadioSystem` (pirate broadcast integration), `SquatFurnishingTracker` (transmitter and cup display), `DisguiseSystem` (amateur radio licence), `AchievementSystem` (new `DX_CHASER`, `FIELD_DAY_CHAMPION`, `CLEAN_AIRWAVES`, `TRANSMITTER_HEIST`, `PIRATE_DJ`, `PAPER_TRAIL`). New NPCTypes: `RADIO_CLUB_SECRETARY`, `RADIO_CLUB_MEMBER`. New Materials: `RADIO_CLUB_MEMBERSHIP_CARD`, `QSL_CARD`, `TRANSMITTER_CABINET_KEY`, `VINTAGE_TRANSMITTER`, `LOGBOOK_PRINTOUT`, `FIELD_DAY_CUP`, `AMATEUR_RADIO_LICENCE`. New PropTypes: `CLUB_RADIO_PROP`, `LOGBOOK_PROP`, `TRANSMITTER_CABINET_PROP`, `VINTAGE_TRANSMITTER_PROP`, `FIELD_DAY_ANTENNA_PROP`, `CLUB_PRINTER_PROP`. New RumourTypes: `RADIO_FRAUD_EXPOSED`, `TRANSMITTER_HEIST_RUMOUR`, `PIRATE_AIRWAVES`, `ILLEGAL_BROADCAST_RUMOUR`, `RADIO_SCANDAL_HEADLINE`. New AchievementTypes: `DX_CHASER`, `FIELD_DAY_CHAMPION`, `CLEAN_AIRWAVES`, `TRANSMITTER_HEIST`, `PIRATE_DJ`, `PAPER_TRAIL`.
