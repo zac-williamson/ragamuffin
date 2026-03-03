@@ -7241,6 +7241,27 @@ public enum AchievementType {
         1
     ),
 
+    /**
+     * PUB_HERO — Awarded when the community wins the Day 14 committee vote at 18:00
+     * (community tally exceeds developer tally). Seeds CROWN_ANCHOR_SAVED rumour.
+     */
+    PUB_HERO(
+        "Pub Hero",
+        "The Crown & Anchor is saved. Baz nearly cried. You get a free pint.",
+        1
+    ),
+
+    /**
+     * UNDERGROUND_PUBLICAN — Awarded after the player attends 3 underground lock-ins
+     * at the squatted Crown &amp; Anchor on Fri/Sat 22:00–02:00 without a police raid
+     * shutting them down.
+     */
+    UNDERGROUND_PUBLICAN(
+        "Underground Publican",
+        "Ran three illegal lock-ins at the squatted Crown & Anchor. Last of a dying breed.",
+        3
+    ),
+
     // ── Issue #1459: Northfield Church Hall Jumble Sale ───────────────────────
 
     /**

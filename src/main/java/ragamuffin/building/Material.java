@@ -7391,7 +7391,41 @@ public enum Material {
      * to lower the player's handicap. Fenceable for 4 COIN.
      * Tooltip: "Ted's handicap ledger. His handwriting is suspiciously neat."
      */
-    HANDICAP_LEDGER("Handicap Ledger");
+    HANDICAP_LEDGER("Handicap Ledger"),
+
+    // ── Issue #1503: Northfield Save Our Pub ──────────────────────────────────
+
+    /**
+     * PLANNING_PERMISSION_DOC — the council planning permission document for the
+     * Crown &amp; Anchor demolition. Stolen from the council offices (LOCKPICK or CROWBAR).
+     * Options: burn in BURNING_BIN/campfire within 120s (+10 community vote swing,
+     * seeds PUB_SAVED_TEMPORARILY); fence to rival developer for 15 COIN; return to
+     * Baz for free drinks for life (CROWN_ANCHOR_REGULAR_CARD).
+     * Tooltip: "Official council planning doc. Baz would love to see this go missing."
+     */
+    PLANNING_PERMISSION_DOC("Planning Permission Doc"),
+
+    /**
+     * BEER_BARREL — a full pub barrel, looted from the Crown &amp; Anchor cellar.
+     * Drops from BEER_BARREL_PROP (5 hits to break). Fenceable for 3 COIN.
+     * Tooltip: "Heavy. Sloshy. Definitely not yours."
+     */
+    BEER_BARREL("Beer Barrel"),
+
+    /**
+     * SPIRITS_BOTTLE — a bottle of spirits from the Crown &amp; Anchor bar optics.
+     * Drops from BAR_OPTICS_PROP (2 hits to break, fragile glass). Fenceable for 2 COIN.
+     * Consumable: restores 5 health, adds DRUNK_AND_DISORDERLY crime if consumed in public.
+     * Tooltip: "Spirits from the Crown & Anchor optics. Someone's going to miss these."
+     */
+    SPIRITS_BOTTLE("Spirits Bottle"),
+
+    /**
+     * CROWN_ANCHOR_REGULAR_CARD — a laminated card issued by Baz in gratitude for
+     * returning the PLANNING_PERMISSION_DOC. Grants free drinks at the Crown &amp; Anchor
+     * for life (if the pub is saved). Tooltip: "Baz's card. Free drinks, no questions."
+     */
+    CROWN_ANCHOR_REGULAR_CARD("Crown Anchor Regular Card");
 
     private final String displayName;
 
@@ -8950,6 +8984,16 @@ public enum Material {
                                                     0.82f, 0.72f, 0.62f); // Pale bent shaft
             case HANDICAP_LEDGER:         return cs(0.75f, 0.65f, 0.48f, // Buff ledger cover
                                                     0.30f, 0.22f, 0.12f); // Dark ink lines
+
+            // Issue #1503: Northfield Save Our Pub
+            case PLANNING_PERMISSION_DOC: return cs(0.88f, 0.84f, 0.72f, // Official cream paper
+                                                    0.12f, 0.22f, 0.55f); // Blue council stamp
+            case BEER_BARREL:             return cs(0.55f, 0.32f, 0.10f, // Dark oak barrel
+                                                    0.75f, 0.55f, 0.20f); // Brass hoop
+            case SPIRITS_BOTTLE:          return cs(0.22f, 0.48f, 0.30f, // Green glass bottle
+                                                    0.92f, 0.92f, 0.85f); // White label
+            case CROWN_ANCHOR_REGULAR_CARD: return cs(0.72f, 0.18f, 0.18f, // Deep pub red
+                                                    0.92f, 0.88f, 0.72f); // Cream card text
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -11424,6 +11468,16 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // bent flight vanes
             case HANDICAP_LEDGER:
                 return IconShape.BOX;         // hardback ledger book
+
+            // Issue #1503: Northfield Save Our Pub
+            case PLANNING_PERMISSION_DOC:
+                return IconShape.FLAT_PAPER;  // official council document
+            case BEER_BARREL:
+                return IconShape.CYLINDER;    // round pub barrel
+            case SPIRITS_BOTTLE:
+                return IconShape.BOTTLE;      // spirits bottle
+            case CROWN_ANCHOR_REGULAR_CARD:
+                return IconShape.FLAT_PAPER;  // laminated loyalty card
 
             default:
                 return IconShape.BOX;

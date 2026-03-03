@@ -1663,6 +1663,11 @@ public enum RumourType {
      * Spreads via PUBLIC and PENSIONER NPCs. */
     CROWN_ANCHOR_GONE,
 
+    /** "Baz got enough signatures. Twenty names on that board. Lenny's not happy."
+     * — seeded by SaveOurPubSystem when the petition reaches PETITION_TARGET = 20 signatures.
+     * Spreads via PUBLIC and PENSIONER NPCs. Vibes +2. */
+    PUB_PETITION_COMPLETE,
+
     // ── Issue #1459: Northfield Church Hall Jumble Sale ───────────────────────
 
     /** "Some pensioner elbowed me out the way at the jumble sale. Did me nut in."
