@@ -1391,5 +1391,41 @@ public enum RumourType {
     /** "That guttering job on Oak Avenue. Fell off within a week. Right cowboy outfit."
      * Seeded by DodgyRooferSystem when Kenny completes a 'repair' (no actual repair made).
      * Spreads via PENSIONER, PUBLIC NPCs. */
-    BOTCHED_JOB;
+    BOTCHED_JOB,
+
+    // ── Issue #1412: Northfield Catalogue Man ─────────────────────────────────
+
+    /** "Loan shark's been calling at doors — someone's been giving names to Big Mick."
+     * — seeded by CatalogueManSystem when the player successfully tips off the Loan Shark
+     *   (tipOffLoanShark) or impersonates a debt collector (attemptDebtCollection SUCCESS path).
+     * Spreads via PUBLIC and PENSIONER NPCs near the defaulting household.
+     * Causes DEBT_COLLECTOR NPC to follow the debtor for 24 in-game hours. */
+    DEBT_COLLECTOR,
+
+    /** "Someone's been eyeing up Barry's bag while he's round doing his rounds — looked well suspicious."
+     * — seeded by CatalogueManSystem when Barry spots the player near his bag (thief in range),
+     *   or when a bystander witnesses the bag being stolen.
+     * Spreads via PUBLIC and PENSIONER NPCs near the last known property stop.
+     * Raises Barry's wariness and increases BARRY_CLOSE detection range by +5 blocks for the session. */
+    BARRY_SUSPICIOUS,
+
+    /** "Someone's grassed up the catalogue man to Trading Standards — Barry's been told to knock it off."
+     * — seeded by CatalogueManSystem when the player calls reportToTradingStandards() successfully.
+     * Spreads via PUBLIC and PENSIONER NPCs in Barry's regular round territory.
+     * Barry despawns for 3 in-game days; CIVIC_CRUSADER achievement unlocked. */
+    BARRY_REPORTED,
+
+    /** "There's someone doing the rounds with a knockoff catalogue — not Barry's lot, someone else."
+     * — seeded by CatalogueManSystem when the player sells from a KNOCKOFF_CATALOGUE and a
+     *   witness NPC is within range.
+     * Spreads via PUBLIC and PENSIONER NPCs; adds +2 patrol awareness near CATALOGUE_MAN_TERRITORY.
+     * If the rumour reaches a TRADING_STANDARDS NPC, the 20% catch-rate check fires immediately. */
+    RIVAL_CATALOGUE,
+
+    /** "Trading Standards caught someone running a knock-off catalogue round — van turned up and everything."
+     * — seeded by CatalogueManSystem when the player is caught during the monthly Trading Standards
+     *   check (doRivalCatalogueSale catch path).
+     * Spreads via PUBLIC, PENSIONER, and MARKET_TRADER NPCs.
+     * Triggers COUNTERFEIT_GOODS_SELLING CriminalRecord entry and COUNTERFEIT_FINE deduction. */
+    COUNTERFEIT_CAUGHT;
 }
