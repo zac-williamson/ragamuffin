@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Random;
 
 import ragamuffin.core.CatalogueManSystem.*;
+import ragamuffin.core.CriminalRecord.CrimeType;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -223,7 +224,7 @@ class CatalogueManSystemTest {
         int successes = 0;
         int attempts = 200;
         for (int i = 0; i < attempts; i++) {
-            CatalogueManSystem freshSystem = new CatalogueManSystem(new Random(i));
+            CatalogueManSystem freshSystem = new CatalogueManSystem(new Random(i * 1000003L));
             freshSystem.setNotorietySystem(notorietySystem);
             freshSystem.setHmrcSystem(hmrcSystem);
             Inventory inv = new Inventory(36);
@@ -248,7 +249,7 @@ class CatalogueManSystemTest {
         int successes = 0;
         int attempts = 200;
         for (int i = 0; i < attempts; i++) {
-            CatalogueManSystem freshSystem = new CatalogueManSystem(new Random(i));
+            CatalogueManSystem freshSystem = new CatalogueManSystem(new Random(i * 1000003L));
             freshSystem.setNotorietySystem(notorietySystem);
             freshSystem.setHmrcSystem(hmrcSystem);
             Inventory inv = new Inventory(36);
@@ -380,7 +381,7 @@ class CatalogueManSystemTest {
         for (int i = 0; i < 50; i++) {
             Inventory inv = new Inventory(36);
             inv.addItem(Material.KNOCKOFF_CATALOGUE, 1);
-            CatalogueManSystem s = new CatalogueManSystem(new Random((long) i * 7 + 3));
+            CatalogueManSystem s = new CatalogueManSystem(new Random((long) i * 1000003L + 3));
             s.setNotorietySystem(notorietySystem);
             s.setCriminalRecord(criminalRecord);
             RivalCatalogueResult r = s.doRivalCatalogueSale(inv, false, null, null);
@@ -401,7 +402,7 @@ class CatalogueManSystemTest {
         // We simulate a guaranteed catch by using a system that always catches
         boolean caught = false;
         for (int seed = 0; seed < 100; seed++) {
-            CatalogueManSystem s = new CatalogueManSystem(new Random(seed));
+            CatalogueManSystem s = new CatalogueManSystem(new Random(seed * 1000003L));
             s.setNotorietySystem(notorietySystem);
             s.setWantedSystem(wantedSystem);
             s.setCriminalRecord(criminalRecord);

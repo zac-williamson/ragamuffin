@@ -272,14 +272,10 @@ class Issue1159NailSalonTest {
 
     @Test
     void nailPolishTheft_caught_appliesBanAndNotoriety() {
-        // Use a seeded RNG that guarantees catch (kim watching, 60% chance)
-        // Random(42L) first nextFloat() = 0.7288... but that's > 0.60 so won't catch
-        // Use a known seed that causes a catch with kimWatching=true
-        NailSalonSystem caughtSalon = new NailSalonSystem(new Random(1L));
-        // Random(1L) nextFloat() = 0.7308... also > 0.60
-        // Use Random(0L) nextFloat() = 0.7304... no...
-        // Let's just use a fixed seed that produces < 0.60: seed 3L → 0.2478 < 0.60 ✓
-        caughtSalon = new NailSalonSystem(new Random(3L));
+        // Use a deterministic RNG that returns below the catch threshold (0.60)
+        NailSalonSystem caughtSalon = new NailSalonSystem(new Random(3L) {
+            @Override public float nextFloat() { return 0.1f; }
+        });
 
         int notorietyBefore = notorietySystem.getNotoriety();
 

@@ -182,6 +182,11 @@ public class RumourNetwork {
      * Evicts oldest if the buffer is full. Also logs to the global rumour list.
      */
     public void addRumour(NPC npc, Rumour rumour) {
+        if (npc == null) {
+            // No NPC to attach the rumour to; just log it globally.
+            allRumoursLog.add(rumour);
+            return;
+        }
         List<Rumour> rumours = npc.getRumours();
         int max = (npc.getType() == NPCType.BARMAN) ? BARMAN_MAX_RUMOURS : NPC_MAX_RUMOURS;
         if (rumours.size() >= max) {

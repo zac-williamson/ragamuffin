@@ -389,9 +389,10 @@ class Issue1163NHSDentistTest {
 
     @Test
     void forgedLetter_caught_recordsFraud_andBans() {
-        // Use seed that guarantees catch when notoriety ≥ 30
-        // Random(3L) first nextFloat ≈ 0.248 < 0.25 → caught
-        NHSDentistSystem caughtDentist = new NHSDentistSystem(new Random(3L));
+        // Use a deterministic RNG that returns below the catch threshold
+        NHSDentistSystem caughtDentist = new NHSDentistSystem(new Random(3L) {
+            @Override public float nextFloat() { return 0.1f; }
+        });
         caughtDentist.registerNHS(10.0f, NHSDentistSystem.MONDAY, 0, inventory, false);
         inventory.addItem(Material.FORGED_WAITING_LIST_LETTER, 1);
 

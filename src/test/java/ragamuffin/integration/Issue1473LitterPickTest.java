@@ -191,7 +191,7 @@ class Issue1473LitterPickTest {
         assertTrue(wantedSystem.getWantedStars() >= LitterPickSystem.CRACK_PIPE_WANTED_STARS,
                 "WantedSystem should gain at least " + LitterPickSystem.CRACK_PIPE_WANTED_STARS + " stars");
 
-        assertTrue(criminalRecord.hasCrime(CriminalRecord.CrimeType.POSSESSION),
+        assertTrue(criminalRecord.getCount(CriminalRecord.CrimeType.POSSESSION) >= 1,
                 "CriminalRecord should contain POSSESSION after crack pipe incident");
 
         assertEquals(notorietyBefore + LitterPickSystem.CRACK_PIPE_NOTORIETY,

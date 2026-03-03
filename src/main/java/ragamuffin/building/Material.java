@@ -7246,12 +7246,6 @@ public enum Material {
      */
     KARATE_GI("Karate Gi"),
 
-    /**
-     * CLUB_MEMBERSHIP_CARD — issued by Gary (KARATE_INSTRUCTOR) when the player
-     * joins the karate club after paying 5 COIN and holding KARATE_GI. Required
-     * to challenge opponents to spar during the adult session.
-     */
-    CLUB_MEMBERSHIP_CARD("Club Membership Card"),
 
     /**
      * FORGED_GRADE_CERTIFICATE — a counterfeit belt-grading certificate crafted

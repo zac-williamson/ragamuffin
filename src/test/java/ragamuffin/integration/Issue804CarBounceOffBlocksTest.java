@@ -38,6 +38,12 @@ class Issue804CarBounceOffBlocksTest {
         carManager.clearCars(); // remove world-generated cars; use our own
         drivingSystem = new CarDrivingSystem(carManager);
         drivingSystem.setWorld(world);
+        // Place ground at y=0 so cars don't fall due to gravity
+        for (int x = -5; x <= 85; x++) {
+            for (int z = -5; z <= 65; z++) {
+                world.setBlock(x, 0, z, BlockType.BRICK);
+            }
+        }
         player = new Player(1000f, 1f, 1000f); // far away — won't interfere
     }
 

@@ -176,8 +176,10 @@ class Issue1309ArcadeSystemTest {
      */
     @Test
     void claw_firstAttemptWin_givesToyAndAchievement() {
-        // Seed 5L: first nextFloat() ≈ 0.060 which is < 0.15 (CLAW_SUCCESS_CHANCE)
-        ArcadeSystem arcadeWin = new ArcadeSystem(new Random(5L));
+        // Use a deterministic RNG that returns below the claw success threshold
+        ArcadeSystem arcadeWin = new ArcadeSystem(new Random(5L) {
+            @Override public float nextFloat() { return 0.05f; }
+        });
         arcadeWin.setAchievementSystem(achievements);
         arcadeWin.resetClawFirstAttempt();
 

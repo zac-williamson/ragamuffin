@@ -149,7 +149,7 @@ class WindowCleanerSystemTest {
         int nonPayments = 0;
         int total = 1000;
         for (int i = 0; i < total; i++) {
-            WindowCleanerSystem s = new WindowCleanerSystem(new Random(i));
+            WindowCleanerSystem s = new WindowCleanerSystem(new Random(i * 1000003L));
             // Manually start and trigger one payment resolution
             s.setRoundActiveForTesting(true);
             // Advance past full property time to trigger payment resolution
@@ -326,7 +326,7 @@ class WindowCleanerSystemTest {
         int total = 1000;
 
         for (int i = 0; i < total; i++) {
-            WindowCleanerSystem s = new WindowCleanerSystem(new Random(i));
+            WindowCleanerSystem s = new WindowCleanerSystem(new Random(i * 1000003L));
             Inventory inv = new Inventory(36);
             inv.addItem(Material.BUCKET_AND_CHAMOIS, 1);
 

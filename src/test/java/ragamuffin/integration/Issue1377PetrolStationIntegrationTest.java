@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.core.*;
+import ragamuffin.core.PetrolStationSystem.CabinetSmashResult;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCState;
 import ragamuffin.entity.NPCType;

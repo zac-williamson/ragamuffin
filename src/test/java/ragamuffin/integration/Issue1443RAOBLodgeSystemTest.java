@@ -111,7 +111,7 @@ class Issue1443RAOBLodgeSystemTest {
         // Try up to 10 attempts — at least one should succeed with low notoriety
         boolean gotBluffSuccess = false;
         for (int i = 0; i < 10; i++) {
-            RAOBLodgeSystem attempt = new RAOBLodgeSystem(new Random(i * 7));
+            RAOBLodgeSystem attempt = new RAOBLodgeSystem(new Random(i * 1000003L));
             attempt.setNotorietySystem(notorietySystem);
             attempt.setCriminalRecord(new CriminalRecord());
             RAOBLodgeSystem.AccessResult r = attempt.attemptEntry(

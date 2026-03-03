@@ -590,7 +590,8 @@ public class CatalogueManSystem {
         }
 
         float successChance = getDebtSuccessChance(playerNotoriety);
-        if (random.nextFloat() < successChance) {
+        float roll = random.nextFloat();
+        if (roll < successChance) {
             int reward = DEBT_MIN_REWARD + random.nextInt(DEBT_MAX_REWARD - DEBT_MIN_REWARD + 1);
             inventory.addItem(Material.COIN, reward);
             inventory.addItem(Material.CATALOGUE_RECEIPT, 1);

@@ -852,7 +852,7 @@ public class RAOBLodgeSystem {
 
     /** Seed a rumour into the network (null npcSource selects a random NPC). */
     private void seedRumour(NPC npcSource, RumourType type, String text) {
-        if (rumourNetwork == null) return;
+        if (rumourNetwork == null || npcSource == null) return;
         rumourNetwork.addRumour(npcSource, new Rumour(type, text));
     }
 

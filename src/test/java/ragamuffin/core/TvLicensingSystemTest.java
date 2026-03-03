@@ -489,9 +489,10 @@ class TvLicensingSystemTest {
         // The van detection has 25% chance. With some seed, it fires.
         // We test that with multiple calls eventually TV_LICENCE_EVASION fires
         // (or test the exact seed path).
-        // Use a seed where first nextFloat < 0.25
-        // Random(0): nextFloat() = 0.730... (too high), Random(4): 0.174... (< 0.25 → fires)
-        TvLicensingSystem sys = new TvLicensingSystem(new Random(4));
+        // Use a deterministic RNG that returns a value below the 0.25 detection threshold
+        TvLicensingSystem sys = new TvLicensingSystem(new Random(4) {
+            @Override public float nextFloat() { return 0.10f; }
+        });
         sys.setCriminalRecord(criminalRecord);
         sys.setWantedSystem(wantedSystem);
         sys.setNotorietySystem(notorietySystem);

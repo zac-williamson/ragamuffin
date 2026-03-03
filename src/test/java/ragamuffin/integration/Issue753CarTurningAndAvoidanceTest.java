@@ -39,6 +39,12 @@ class Issue753CarTurningAndAvoidanceTest {
         // Register world so block collision is active; then clear spawned cars
         carManager.spawnInitialCars(world);
         carManager.clearCars();
+        // Place ground at y=0 so cars don't fall due to gravity
+        for (int x = -5; x <= 25; x++) {
+            for (int z = 15; z <= 25; z++) {
+                world.setBlock(x, 0, z, BlockType.BRICK);
+            }
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

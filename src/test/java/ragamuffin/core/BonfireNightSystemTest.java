@@ -170,6 +170,7 @@ class BonfireNightSystemTest {
     @Test
     void update_guyPlaced_donationTickAddsCoin() {
         system.openEvent(false);
+        system.setBonfireSpawnedForTesting(true);
         system.setGuyPlacedForTesting(true);
 
         int before = inventory.getItemCount(Material.COIN);
@@ -184,6 +185,7 @@ class BonfireNightSystemTest {
     @Test
     void update_guyPlaced_pennyForTheGuyAchievementAwarded() {
         system.openEvent(false);
+        system.setBonfireSpawnedForTesting(true);
         system.setGuyPlacedForTesting(true);
 
         assertFalse(achievements.isUnlocked(AchievementType.PENNY_FOR_THE_GUY));
@@ -203,6 +205,7 @@ class BonfireNightSystemTest {
         });
         alwaysKick.setNotorietySystem(notorietySystem);
         alwaysKick.openEvent(false);
+        alwaysKick.setBonfireSpawnedForTesting(true);
         alwaysKick.setGuyPlacedForTesting(true);
 
         boolean[] partyPoooperFired = {false};
@@ -385,7 +388,7 @@ class BonfireNightSystemTest {
         system.openEvent(false);
         boolean offence = system.recordFireworkPoliceSighting(0f, 0f, 0f, null);
         assertFalse(offence);
-        assertEquals(0, criminalRecord.getOffenceCount(CriminalRecord.CrimeType.FIREWORK_OFFENCE));
+        assertEquals(0, criminalRecord.getCount(CriminalRecord.CrimeType.FIREWORK_OFFENCE));
     }
 
     @Test
@@ -395,7 +398,7 @@ class BonfireNightSystemTest {
         boolean offence = system.recordFireworkPoliceSighting(0f, 0f, 0f,
                 type -> achievements.unlock(type));
         assertTrue(offence);
-        assertTrue(criminalRecord.getOffenceCount(CriminalRecord.CrimeType.FIREWORK_OFFENCE) >= 1);
+        assertTrue(criminalRecord.getCount(CriminalRecord.CrimeType.FIREWORK_OFFENCE) >= 1);
     }
 
     // ── 10. PYRO_NIGHT achievement ────────────────────────────────────────────
@@ -486,6 +489,7 @@ class BonfireNightSystemTest {
     @Test
     void update_bangerPlanted_at2000_triggersCatastrophe() {
         system.openEvent(false);
+        system.setBonfireSpawnedForTesting(true);
         system.setBangerPlantedForTesting(true);
 
         NPC witness = new NPC(NPCType.PUBLIC, 0f, 0f, 0f);
@@ -494,7 +498,7 @@ class BonfireNightSystemTest {
 
         assertEquals(EventType.BANGER_CATASTROPHE, result);
         assertTrue(system.isBangerCatastropheFired());
-        assertTrue(criminalRecord.getOffenceCount(CriminalRecord.CrimeType.CRIMINAL_DAMAGE) >= 1);
+        assertTrue(criminalRecord.getCount(CriminalRecord.CrimeType.CRIMINAL_DAMAGE) >= 1);
         assertTrue(notorietySystem.getNotoriety()
                 >= BonfireNightSystem.BANGER_SABOTAGE_NOTORIETY);
         // Rumour seeded

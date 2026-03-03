@@ -373,8 +373,10 @@ class ChuggerSystemTest {
 
     @Test
     void fakeCollectionWithDisguisePaysOnAccept() {
-        // Seed 99: first nextFloat() ≈ 0.14 (< 0.60 → accept)
-        ChuggerSystem sys = new ChuggerSystem(new Random(99));
+        // Use a custom RNG that always returns a value below acceptance threshold
+        ChuggerSystem sys = new ChuggerSystem(new Random(99) {
+            @Override public float nextFloat() { return 0.1f; }
+        });
         sys.setAchievementSystem(achievements);
         sys.setNotorietySystem(notorietySystem);
         sys.setWantedSystem(wantedSystem);
@@ -459,8 +461,10 @@ class ChuggerSystemTest {
 
         // Simulate hitting the quota by manually calling attemptFakeCollection enough times
         // We need TRACY_QUOTA_TARGET (5) successful fake collections while hired.
-        // Use a seed that always accepts.
-        ChuggerSystem alwaysAccept = new ChuggerSystem(new Random(99));
+        // Use a custom RNG that always returns below acceptance threshold.
+        ChuggerSystem alwaysAccept = new ChuggerSystem(new Random(99) {
+            @Override public float nextFloat() { return 0.1f; }
+        });
         alwaysAccept.setAchievementSystem(achievements);
         alwaysAccept.setNotorietySystem(notorietySystem);
         alwaysAccept.setWantedSystem(wantedSystem);

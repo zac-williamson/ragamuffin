@@ -505,7 +505,7 @@ public class KarateSystem {
             if (wantedSystem != null) {
                 wantedSystem.addWantedStars(1, 0f, 0f, 0f, null);
             }
-            garyNpc.setState(NPCState.HOSTILE);
+            garyNpc.setState(NPCState.HOSTILE_TO_PLAYER);
         }
 
         return SellCertResult.SUCCESS;
@@ -549,7 +549,7 @@ public class KarateSystem {
         garyCedeBlackmail = true;
         garyPermanentlyHostile = true;
         if (garyNpc != null) {
-            garyNpc.setState(NPCState.HOSTILE);
+            garyNpc.setState(NPCState.HOSTILE_TO_PLAYER);
         }
         if (npcs != null && rumourNetwork != null && !npcs.isEmpty()) {
             NPC seeder = findNPC(npcs, NPCType.PUBLIC);
@@ -751,7 +751,7 @@ public class KarateSystem {
                         "Some lad smashed Derek at sparring on Wednesday. Gary was dead impressed."));
             }
             if (neighbourhoodSystem != null) {
-                neighbourhoodSystem.adjustVibes(2);
+                neighbourhoodSystem.addVibes(2);
             }
             if (cb != null) cb.award(AchievementType.NORTHFIELD_CHAMPION);
         } else if (roundsWon <= 1) {
@@ -764,7 +764,7 @@ public class KarateSystem {
                                 + "round. Gary had to stop it."));
             }
             if (neighbourhoodSystem != null) {
-                neighbourhoodSystem.adjustVibes(-1);
+                neighbourhoodSystem.addVibes(-1);
             }
         }
     }
@@ -782,7 +782,7 @@ public class KarateSystem {
     public void handleUnsanctionedAttack(NPC garyNpc, CriminalRecord criminalRecord) {
         criminalRecord.record(CriminalRecord.CrimeType.AFFRAY);
         if (garyNpc != null) {
-            garyNpc.setState(NPCState.HOSTILE);
+            garyNpc.setState(NPCState.HOSTILE_TO_PLAYER);
         }
     }
 
@@ -860,8 +860,8 @@ public class KarateSystem {
      */
     private boolean isWithinRange(Player player, NPC npc, float range) {
         if (player == null || npc == null) return false;
-        float dx = player.getX() - npc.getX();
-        float dz = player.getZ() - npc.getZ();
+        float dx = player.getPosition().x - npc.getPosition().x;
+        float dz = player.getPosition().z - npc.getPosition().z;
         return (dx * dx + dz * dz) <= (range * range);
     }
 }

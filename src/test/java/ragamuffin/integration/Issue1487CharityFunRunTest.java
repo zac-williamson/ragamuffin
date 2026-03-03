@@ -265,17 +265,17 @@ class Issue1487CharityFunRunTest {
         for (int i = 1; i < 21; i++) {
             ts2.update(240f);
         }
-        ts2.setTime(8.45f); // 08:27 — before rain check
-        // Let registration open (before rain check)
-        // We need a weather that is NOT rain at first call, then rain at second
+        ts2.setTime(8.5f); // 08:30 — registration opens
+        // First call with CLEAR weather: opens registration and passes rain check
         WeatherSystem clearWeather = new WeatherSystem();
         clearWeather.setWeather(Weather.CLEAR);
         rainSystem2.update(0f, ts2, npcs2, clearWeather, rn2, cb2);
         rainInventory.addItem(Material.COIN, 2);
-        rainSystem2.register(rainInventory); // register before rain check
+        rainSystem2.register(rainInventory); // register after registration opens
 
         // Now trigger rain cancellation
-        ts2.setTime(8.5f);
+        // Reset rain-checked flag so the rain check fires again
+        rainSystem2.resetRainCheckedForTesting();
         clearWeather.setWeather(Weather.RAIN);
         rainSystem2.update(0f, ts2, npcs2, clearWeather, rn2, cb2);
 

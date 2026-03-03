@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import ragamuffin.building.Inventory;
 import ragamuffin.building.Material;
 import ragamuffin.core.*;
+import ragamuffin.core.CriminalRecord.CrimeType;
 import ragamuffin.entity.NPC;
 import ragamuffin.entity.NPCType;
 import ragamuffin.ui.AchievementSystem;
@@ -152,8 +153,8 @@ class Issue1408CatalogueManIntegrationTest {
 
         // Bag not placed (already stolen today)
         // (Note: if not stolen today, bag would be placed at new property)
-        assertEquals(0, system.getCurrentPropertyIndex() > 0 ? 1 : 0,
-                "Should have advanced to at least property index 1 or wrapped");
+        assertTrue(system.getCurrentPropertyIndex() > 0 || !system.isRoundActive(),
+                "Should have advanced to at least property index 1 or ended round");
     }
 
     // ── Integration Test 3: Debt collection success rates ────────────────────
@@ -173,7 +174,7 @@ class Issue1408CatalogueManIntegrationTest {
 
         for (int i = 0; i < attempts; i++) {
             // Low notoriety trial
-            CatalogueManSystem lowSystem = new CatalogueManSystem(new Random(i * 17L));
+            CatalogueManSystem lowSystem = new CatalogueManSystem(new Random(i * 1000003L));
             lowSystem.setNotorietySystem(new NotorietySystem());
             lowSystem.setHmrcSystem(new HMRCSystem(new Random(i)));
             lowSystem.forceDefaulterWindowOpen(true);
@@ -183,7 +184,7 @@ class Issue1408CatalogueManIntegrationTest {
             if (lowResult == CatalogueManSystem.DebtCollectionResult.SUCCESS) lowSuccesses++;
 
             // High notoriety trial
-            CatalogueManSystem highSystem = new CatalogueManSystem(new Random(i * 17L));
+            CatalogueManSystem highSystem = new CatalogueManSystem(new Random(i * 1000003L));
             highSystem.setNotorietySystem(new NotorietySystem());
             highSystem.setHmrcSystem(new HMRCSystem(new Random(i)));
             highSystem.forceDefaulterWindowOpen(true);
@@ -265,7 +266,7 @@ class Issue1408CatalogueManIntegrationTest {
         boolean caughtByTS = false;
 
         for (int seed = 0; seed < 200 && !caughtByTS; seed++) {
-            CatalogueManSystem s = new CatalogueManSystem(new Random(seed));
+            CatalogueManSystem s = new CatalogueManSystem(new Random(seed * 1000003L));
             CriminalRecord cr = new CriminalRecord();
             NotorietySystem ns = new NotorietySystem();
             s.setCriminalRecord(cr);

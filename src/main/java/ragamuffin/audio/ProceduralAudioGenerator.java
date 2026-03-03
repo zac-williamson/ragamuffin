@@ -49,6 +49,9 @@ public class ProceduralAudioGenerator {
             case ICE_CREAM_JINGLE: return generateIceCreamJingle();
             case LIFT_CREAK:    return generateLiftCreak();
             case CROWD_CHEER:   return generateCrowdCheer();
+            case FIREWORK_BANG:  return generateFireworkBang();
+            case NYE_CROWD_CHEER: return generateNyeCrowdCheer();
+            case CAROL_SINGING: return generateCarolSinging();
             case AMBIENT_PARK:
             case AMBIENT_STREET:
             default:
@@ -574,6 +577,47 @@ public class ProceduralAudioGenerator {
             double n = noise();
             lpState = lowPass(n, lpState, 4000);
             samples[i] = clampToShort(lpState * env * 0.7);
+        }
+        return toWav(samples);
+    }
+
+    private byte[] generateFireworkBang() {
+        double dur = 0.4;
+        short[] samples = allocSamples(dur);
+        double lpState = 0;
+        for (int i = 0; i < samples.length; i++) {
+            double t = (double) i / SAMPLE_RATE;
+            double env = envelope(t, dur, 0.01, 0.05, 0.3, 0.2);
+            double n = noise();
+            lpState = lowPass(n, lpState, 5000);
+            double bass = sine(t * 80) * 0.4;
+            samples[i] = clampToShort((lpState * 0.6 + bass) * env);
+        }
+        return toWav(samples);
+    }
+
+    private byte[] generateNyeCrowdCheer() {
+        double dur = 1.5;
+        short[] samples = allocSamples(dur);
+        double lpState = 0;
+        for (int i = 0; i < samples.length; i++) {
+            double t = (double) i / SAMPLE_RATE;
+            double env = envelope(t, dur, 0.15, 0.3, 0.6, 0.4);
+            double n = noise();
+            lpState = lowPass(n, lpState, 3500);
+            samples[i] = clampToShort(lpState * env * 0.65);
+        }
+        return toWav(samples);
+    }
+
+    private byte[] generateCarolSinging() {
+        double dur = 2.0;
+        short[] samples = allocSamples(dur);
+        for (int i = 0; i < samples.length; i++) {
+            double t = (double) i / SAMPLE_RATE;
+            double env = envelope(t, dur, 0.3, 0.2, 0.7, 0.5);
+            double note = sine(t * 440) * 0.3 + sine(t * 554) * 0.25 + sine(t * 659) * 0.2;
+            samples[i] = clampToShort(note * env);
         }
         return toWav(samples);
     }

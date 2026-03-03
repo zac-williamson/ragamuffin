@@ -794,6 +794,11 @@ public class DodgyRooferSystem {
         if (open) this.invoiceWindowTimer = INVOICE_FRAUD_WINDOW_SECONDS;
     }
 
+    /** Testing hook: set round active without resetting state. */
+    public void setRoundActiveForTesting(boolean active) {
+        this.roundActive = active;
+    }
+
     /** Testing hook: force Kenny into the working phase. */
     public void setKennyWorkingForTesting(boolean working) {
         this.kennyWorking = working;

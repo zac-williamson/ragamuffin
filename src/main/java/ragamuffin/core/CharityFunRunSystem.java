@@ -875,6 +875,11 @@ public class CharityFunRunSystem {
         registrationOpen = false;
     }
 
+    /** Testing hook: reset rain-checked flag so rain check can fire again. */
+    public void resetRainCheckedForTesting() {
+        this.rainChecked = false;
+    }
+
     private void resetForNewCycle(List<NPC> npcs) {
         if (npcs != null) {
             npcs.removeAll(eventNpcs);

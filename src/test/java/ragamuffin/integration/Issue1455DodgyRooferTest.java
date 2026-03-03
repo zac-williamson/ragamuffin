@@ -76,7 +76,8 @@ class Issue1455DodgyRooferTest {
      */
     @Test
     void scenario1_kennyCompletePitch_kennySCAMRumourSeeded() {
-        // Force Kenny into working state (simulates accepted pitch)
+        // Force round active and Kenny into working state (simulates accepted pitch)
+        dodgyRoofer.setRoundActiveForTesting(true);
         dodgyRoofer.setKennyWorkingForTesting(true);
 
         // Advance time through full work duration to trigger rumour seeding

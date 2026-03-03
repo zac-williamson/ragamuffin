@@ -228,10 +228,11 @@ class Issue1489SponsoredWalkTest {
         assertNotEquals(SponsoredWalkSystem.WalkFinishResult.WALK_ABANDONED, finishResult,
                 "Walk was not abandoned");
 
-        // Verify pledge payout
+        // Verify pledge payout (includes PRIZE_ENVELOPE_COIN for first finisher)
         int coinAfter = walkInv.getItemCount(Material.COIN);
-        assertEquals(coinBefore + pledgedAmount, coinAfter,
-                "Pledge payout should be added to inventory");
+        assertEquals(coinBefore + pledgedAmount + SponsoredWalkSystem.PRIZE_ENVELOPE_COIN,
+                coinAfter,
+                "Pledge payout plus first-finisher prize should be added to inventory");
 
         // Verify WALK_HERO rumour seeded
         assertTrue(walkRumour.getAllRumourTypes().contains(RumourType.WALK_HERO),

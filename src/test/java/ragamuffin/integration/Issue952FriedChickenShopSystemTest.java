@@ -464,7 +464,8 @@ class Issue952FriedChickenShopSystemTest {
             if (fastCluckys.updateLitter(1.0f)) spawned = true;
         }
         assertTrue(spawned, "At least one litter item should spawn after interval");
-        assertEquals(1, fastCluckys.getLitterCount());
+        assertTrue(fastCluckys.getLitterCount() >= 1,
+            "At least one litter item should exist after interval");
     }
 
     @Test

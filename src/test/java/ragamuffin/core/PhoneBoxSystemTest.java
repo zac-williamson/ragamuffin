@@ -62,12 +62,10 @@ class PhoneBoxSystemTest {
      */
     @Test
     void isOccupied_belowThreshold_returnsTrue() {
-        // Seed 0 produces first float ~0.73 — above 0.20 → not occupied
-        // We need a seed that produces < 0.20 on first call
-        // Seed 1: first float from new Random(1) is ~0.7309... — above threshold
-        // Use brute-force: find a seed where first nextFloat() < 0.2
-        // Random(99) first float is ~0.169... — below threshold
-        PhoneBoxSystem system = new PhoneBoxSystem(new Random(99));
+        // Use a deterministic RNG that returns a value below the 0.20 occupancy threshold
+        PhoneBoxSystem system = new PhoneBoxSystem(new Random(99) {
+            @Override public float nextFloat() { return 0.10f; }
+        });
         // Verify with daytime hour
         assertTrue(system.isOccupied(12.0f));
     }

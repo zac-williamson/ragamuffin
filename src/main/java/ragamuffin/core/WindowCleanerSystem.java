@@ -472,8 +472,8 @@ public class WindowCleanerSystem {
         BattleBarMiniGame bar = BattleBarMiniGame.easy(random);
         int score = 0;
         for (int i = 0; i < MINI_GAME_STEPS; i++) {
-            // Simulate cursor moving to a reasonable position then pressing
-            bar.update(BattleBarMiniGame.ROUND_TIMEOUT_SECONDS * 0.5f);
+            // Simulate cursor moving to the centre of the bar then pressing
+            bar.update(BattleBarMiniGame.ROUND_TIMEOUT_SECONDS * 0.3f);
             if (bar.press()) {
                 score++;
             }
