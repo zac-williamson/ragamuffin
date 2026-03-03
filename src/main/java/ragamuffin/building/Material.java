@@ -7325,7 +7325,49 @@ public enum Material {
      * Can be stolen as part of the Keepnet Heist mechanic.
      * Tooltip: "A dented metal cashbox. Probably holds the match entry money."
      */
-    CASHBOX_PROP("Cashbox");
+    CASHBOX_PROP("Cashbox"),
+
+    // ── Issue #1499: Northfield Model Railway Club ────────────────────────────
+
+    /**
+     * SIGNAL_BOX_DIORAMA_PROP — Derek's hand-built signal box diorama; the star
+     * prize in the Model Railway Club raffle. Three years in the making.
+     * Fenceable for 20 COIN (DIORAMA_FENCE_VALUE), pawnable for 14 COIN
+     * (DIORAMA_PAWN_VALUE). Also dropped by PropType.SIGNAL_BOX_DIORAMA_PROP when
+     * picked up via E interaction (hitsToBreak = 0).
+     * Tooltip: "A detailed hand-built signal box diorama. Derek spent three years on this."
+     */
+    SIGNAL_BOX_DIORAMA_PROP("Signal Box Diorama"),
+
+    /**
+     * LOCO_MODEL_PROP — 2nd prize in the Model Railway Club raffle; a detailed
+     * locomotive model. Fenceable for 8 COIN, pawnable for 5 COIN.
+     * Tooltip: "A finely detailed locomotive model. OO gauge, of course."
+     */
+    LOCO_MODEL_PROP("Loco Model"),
+
+    /**
+     * TRACK_PACK_PROP — 3rd prize in the Model Railway Club raffle; a pack of
+     * model railway track sections. Fenceable for 3 COIN, pawnable for 2 COIN.
+     * Tooltip: "A pack of model railway track sections. Sealed."
+     */
+    TRACK_PACK_PROP("Track Pack"),
+
+    /**
+     * RAFFLE_CONSOLATION_VOUCHER — "Better luck next time" printed slip awarded
+     * to non-prize raffle draws. Worth 0 COIN.
+     * Tooltip: "Better luck next time. Thanks for supporting the club."
+     */
+    RAFFLE_CONSOLATION_VOUCHER("Consolation Voucher"),
+
+    /**
+     * CLUB_MEMBERSHIP_TOKEN — lifetime membership token issued by Derek when the
+     * stolen diorama is voluntarily returned (AchievementType.DECENT_SORT).
+     * Grants IS_MEMBER flag on player; prevents TRESPASS charge on Tuesday club
+     * nights. Worth 0 COIN but prevents future trespass charges.
+     * Tooltip: "Northfield Model Railway Club life membership. Derek's handwriting."
+     */
+    CLUB_MEMBERSHIP_TOKEN("Club Membership Token");
 
     private final String displayName;
 
@@ -8864,6 +8906,18 @@ public enum Material {
                                                     0.70f, 0.55f, 0.12f); // Darker brass base
             case CASHBOX_PROP:            return cs(0.42f, 0.42f, 0.45f, // Dented grey metal
                                                     0.25f, 0.25f, 0.28f); // Dark shadow
+
+            // Issue #1499: Northfield Model Railway Club
+            case SIGNAL_BOX_DIORAMA_PROP: return cs(0.68f, 0.42f, 0.18f, // Warm timber brown
+                                                    0.22f, 0.42f, 0.22f); // Green roof detail
+            case LOCO_MODEL_PROP:         return cs(0.18f, 0.18f, 0.20f, // Dark engine black
+                                                    0.72f, 0.20f, 0.12f); // Red buffer highlight
+            case TRACK_PACK_PROP:         return cs(0.40f, 0.40f, 0.42f, // Grey metal rail
+                                                    0.55f, 0.42f, 0.28f); // Brown sleeper
+            case RAFFLE_CONSOLATION_VOUCHER: return cs(0.92f, 0.92f, 0.88f, // White paper
+                                                    0.68f, 0.22f, 0.18f); // Red printed text
+            case CLUB_MEMBERSHIP_TOKEN:   return cs(0.10f, 0.25f, 0.55f, // Club navy blue
+                                                    0.92f, 0.92f, 0.88f); // White text area
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -11318,6 +11372,18 @@ public enum Material {
                 return IconShape.CYLINDER;    // brass trophy
             case CASHBOX_PROP:
                 return IconShape.BOX;         // metal cashbox
+
+            // Issue #1499: Northfield Model Railway Club
+            case SIGNAL_BOX_DIORAMA_PROP:
+                return IconShape.BOX;         // detailed diorama model
+            case LOCO_MODEL_PROP:
+                return IconShape.BOX;         // locomotive model
+            case TRACK_PACK_PROP:
+                return IconShape.FLAT_PAPER;  // sealed track pack
+            case RAFFLE_CONSOLATION_VOUCHER:
+                return IconShape.FLAT_PAPER;  // printed consolation slip
+            case CLUB_MEMBERSHIP_TOKEN:
+                return IconShape.FLAT_PAPER;  // laminated membership token
 
             default:
                 return IconShape.BOX;

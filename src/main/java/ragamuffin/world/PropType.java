@@ -4647,7 +4647,38 @@ public enum PropType {
      * for 8 COIN. Returnable to Ron for AchievementType.RETURNED_THE_TROPHY.
      * Collision: 0.20w × 0.35h × 0.20d. Health: 2 hits. Drops ANGLING_TROPHY_PROP material.
      */
-    ANGLING_TROPHY_PROP(0.20f, 0.35f, 0.20f, 2, Material.ANGLING_TROPHY_PROP);
+    ANGLING_TROPHY_PROP(0.20f, 0.35f, 0.20f, 2, Material.ANGLING_TROPHY_PROP),
+
+    // ── Issue #1499: Northfield Model Railway Club ────────────────────────────
+
+    /**
+     * RAFFLE_BARREL_PROP — a wooden tombola barrel on a stand near the Community
+     * Centre door. Press E to interact (buy tickets or swap barrel).
+     * Collision: 1.0w × 1.0h × 1.0d. Not breakable (hitsToBreak = 0).
+     */
+    RAFFLE_BARREL_PROP(1.0f, 1.0f, 1.0f, 0, null),
+
+    /**
+     * DISPLAY_TABLE_PROP — long trestle table holding Derek's model railway layout.
+     * Blocks access to the layout area. Not breakable.
+     * Collision: 3.0w × 0.8h × 1.0d.
+     */
+    DISPLAY_TABLE_PROP(3.0f, 0.8f, 1.0f, 0, null),
+
+    /**
+     * SIGNAL_BOX_DIORAMA_PROP — Derek's hand-built signal box diorama on the
+     * DISPLAY_TABLE_PROP. Press E to pick up (hitsToBreak = 0, not breakable —
+     * E interaction only). Drops Material.SIGNAL_BOX_DIORAMA_PROP.
+     * Collision: 0.8w × 0.6h × 0.5d.
+     */
+    SIGNAL_BOX_DIORAMA_PROP(0.8f, 0.6f, 0.5f, 0, Material.SIGNAL_BOX_DIORAMA_PROP),
+
+    /**
+     * LOCO_DISPLAY_PROP — a display case of model locomotives in the Community
+     * Centre hall. Decorative; press E to view. No item drop.
+     * Collision: 1.2w × 1.5h × 0.4d.
+     */
+    LOCO_DISPLAY_PROP(1.2f, 1.5f, 0.4f, 0, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
