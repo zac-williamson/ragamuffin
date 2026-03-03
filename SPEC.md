@@ -57553,3 +57553,153 @@ The `PLANNING_APPLICATION_DOCUMENT` can be:
 6. **Planning document exposé triggers Council Respect hit and rumour**: create system; give player `PLANNING_APPLICATION_DOCUMENT`; call `tipToNewspaper(player, inventory, newspaperSystem, factionSystem, rumourNetwork, allNpcs)`; verify `factionSystem.getReputation(Faction.COUNCIL)` decreased by 20; verify `rumourNetwork` contains a `BANDSTAND_UNDER_THREAT` rumour in at least one NPC's buffer; verify `achievementCallback` received `CIVIC_HERO`.
 
 // `AmateurPhotographySystem.java` must be created as the sole new source file. Integrates with `TimeSystem`, `WeatherSystem`, `NotorietySystem`, `WantedSystem`, `CriminalRecord` (new `PLANNING_DOCUMENT_THEFT`; existing `BRIBERY`, `PETTY_THEFT`), `RumourNetwork` (new `PHOTO_CLUB_RIGGED`, `BANDSTAND_UNDER_THREAT`), `NewspaperSystem` (exposé path), `FactionSystem` (Council and Street Lads), `NeighbourhoodSystem` (Vibes), `CommunityCentreSystem` (meeting location), `SkipDivingSystem` (camera in loot table), `NewsagentSystem` (camera sale + chemist development), and `AchievementSystem`. New NPCTypes: `PHOTO_CLUB_CHAIR`, `PHOTO_CLUB_MEMBER`. New PropTypes: `DARKROOM_DOOR_PROP`, `PHOTO_DEVELOPER_PROP`, `SUBMISSION_BOX_PROP`, `PROJECTOR_PROP`, `PLANNING_APPLICATION_FOLDER_PROP`. New RumourTypes: `PHOTO_CLUB_RIGGED`, `BANDSTAND_UNDER_THREAT`. New Materials: `DISPOSABLE_CAMERA`, `DEVELOPED_PHOTOGRAPH`, `PLANNING_APPLICATION_DOCUMENT`, `WINNERS_CERTIFICATE_PROP`, `DARKROOM_KEY`.
+
+---
+
+## Issue #1495: Add Northfield Detectorists Club — Keith's Weekend Dig, the Roman Hoard & the Portable Antiquities Dodge
+
+**Overview**: Every Sunday from 09:00–16:00, Keith Nuttall (`NPCType.DETECTORIST_CHAIR`) leads the Northfield Detectorists Club on a permitted dig at the `ALLOTMENT_FIELD_PROP` on the northern edge of town. Keith posts a `CLUB_NOTICE_PROP` at the Community Centre on Fridays listing the weekend's meet. Three to five club members (`NPCType.DETECTORIST`) arrive with their machines and work methodical grid rows, calling out finds to a shared `FINDS_TABLE_PROP`. The Portable Antiquities Scheme (PAS) representative — Janet (`NPCType.PAS_OFFICER`) — attends from 11:00–13:00 to record significant finds. The player can join legitimately, dig without permission (NFU trespass), sell finds through the `FenceSystem`, or trigger the Roman Hoard heist.
+
+### Schedule (repeats weekly)
+
+- **Sunday 08:00** — Keith posts the dig notice at the Community Centre.
+- **Sunday 09:00** — Club arrives at `ALLOTMENT_FIELD_PROP`; Keith sets up `FINDS_TABLE_PROP`.
+- **Sunday 09:00–16:00** — Active dig window.
+- **Sunday 11:00–13:00** — Janet (`NPCType.PAS_OFFICER`) present; significant finds must be declared within this window (or player risks `CrimeType.TREASURE_DODGING`).
+- **Sunday 14:00** — Keith announces the day's best find; `DETECTORIST` NPCs gather at `FINDS_TABLE_PROP`.
+- **Sunday 16:00** — Dig ends; all NPCs disperse.
+
+### Mechanic 1 — Joining & Digging (legitimate path)
+
+- Player needs a `METAL_DETECTOR` item (purchasable from `POUND_SHOP` for 8 COIN, or crafted: 2 IRON_ORE + 1 COPPER_WIRE at a workbench).
+- Approach Keith before 09:30 and press E to join. Free entry. Keith gives `DIG_PERMISSION_SLIP` (grants `hasPermission` flag for the day).
+- **Digging**: while holding `METAL_DETECTOR` and inside `ALLOTMENT_FIELD_PROP` bounds (a 40×40 block area), press E on any dirt/grass block to dig. Each dig costs 3 in-game minutes and yields a find drawn from the `FindsTable`.
+- **FindsTable** (seeded RNG, once-per-block):
+  - 50% — `BOTTLE_TOP` (worthless; tooltip: "Another one. Keith says it's character-building.")
+  - 25% — `OLD_COIN` (1 COIN fence value; tooltip: "Pre-decimal. Probably Victorian.")
+  - 12% — `IRON_BUCKLE` (2 COIN fence value; tooltip: "Could be medieval. Could be last Tuesday.")
+  - 8% — `MUSKET_BALL` (3 COIN; tooltip: "Civil War? Or Terry's airgun from number 43?")
+  - 4% — `SILVER_BROOCH` (8 COIN; tooltip: "Genuine medieval silver. Janet's eyes lit up.")
+  - 1% — `ROMAN_COIN` (triggers Roman Hoard event; see Mechanic 3)
+- Player may dig up to `MAX_DIGS_PER_SESSION` = 12 blocks per session.
+- Significant finds (`SILVER_BROOCH`, `ROMAN_COIN`) must be declared to Janet between 11:00–13:00 while she's present. Declaring: approach Janet with find, press E. Find is recorded; player keeps a receipt `PAS_RECEIPT` and retains the item. Achievement `HONEST_FINDER` awarded on first declaration.
+
+### Mechanic 2 — Digging Without Permission (trespass path)
+
+- Player may approach the dig field any time (even when the club isn't there) and dig without `DIG_PERMISSION_SLIP`.
+- No `hasPermission` flag: `CrimeType.FIELD_TRESPASS` recorded if any `DETECTORIST` or `ALLOTMENT_WARDEN` NPC within `TRESPASS_WITNESS_RANGE` = 12.0f blocks. Notoriety +3. WantedSystem +1.
+- Unwitnessed trespass: no crime; but `DETECTORIST` NPCs remember — after 3 unwitnessed sessions, Keith refuses to let the player join the club (`BANNED_FROM_CLUB` flag).
+- Out-of-hours dig (outside Sunday 09:00–16:00): `ALLOTMENT_WARDEN` NPC patrols at 07:00 and 17:00; detection range `WARDEN_PATROL_RANGE` = 20.0f. Detection triggers `CrimeType.FIELD_TRESPASS` + WantedSystem +1.
+- Finds table is identical whether or not the player has permission.
+
+### Mechanic 3 — The Roman Hoard
+
+- When the `ROMAN_COIN` find triggers (1% chance per dig, maximum once per session, seeded RNG):
+  - Player unearths a `ROMAN_COIN`. A system message appears: *"Your detector screams. You pull out a Roman coin — but it's just the top of something. There's more down there."*
+  - The `HOARD_LOCATION_PROP` spawns 2 blocks below the dig point (hidden; only visible if player uses CROWBAR or SHOVEL on the block above).
+  - `HOARD_LOCATION_PROP` contains: 3× `ROMAN_COIN` + 1× `ROMAN_BROOCH` + 12 COIN.
+  - `ROMAN_BROOCH` fenceable for 25 COIN. PAS declares it "Treasure" under the Treasure Act — if declared to Janet, player receives `TREASURE_REWARD` = 20 COIN from the council and `AchievementType.HOARD_FINDER`. The museum "acquires" the brooch; player keeps the coins.
+  - **The Dodge**: if player does NOT declare `ROMAN_BROOCH` to Janet and instead fences it before 13:00, `CrimeType.TREASURE_DODGING` is recorded (Notoriety +8). A `DETECTORIST` NPC may witness the fence transaction (10% chance Janet follows player at 500ms intervals 11:00–13:00); if witnessed: WantedSystem +2, `RumourType.TREASURE_DODGER` seeded (Vibes −3).
+  - If player declares but then later fences the PAS receipt: no crime (receipt is legitimate).
+
+### Mechanic 4 — Club Politics & The Chairman's Trophy Heist
+
+- Keith keeps the club's `DETECTORISTS_TROPHY_PROP` in a locked cabinet (`TROPHY_CABINET_PROP`) at his house (a residential building near the dig site). The trophy is worth 15 COIN at the fence.
+- **Heist window**: Sunday 09:00–16:00 (Keith is at the dig; house unguarded, but `NOSY_NEIGHBOUR` NPC watches from across the street within `NEIGHBOUR_WATCH_RANGE` = 15.0f blocks).
+- Break-in: `CROWBAR` (4 hits; loud; `NOSY_NEIGHBOUR` detection within `NEIGHBOUR_WATCH_RANGE`) or `LOCKPICK` (2 charges; silent).
+- Witnessed break-in: `CrimeType.BURGLARY` + Notoriety +8 + WantedSystem +2.
+- Unwitnessed: yields `DETECTORISTS_TROPHY_PROP` + optional `METAL_DETECTOR` (Keith's spare, saves 8 COIN). `AchievementType.TREASURE_HUNTER` awarded.
+- If player returns trophy to Keith voluntarily (press E on Keith with trophy in inventory): `RumourType.GOOD_SAMARITAN` seeded; NeighbourhoodSystem Vibes +3; Keith gives player free `DIG_PERMISSION_SLIP` for 4 future sessions.
+- **Club rivalry sub-event**: on day 2 of the fortnight (not Sunday), `NPCType.RIVAL_DETECTORIST` (Dave, from the Saltley branch) shows up at the field without permission and poaches finds. Player can:
+  - Report Dave to Keith (press E on Keith → "Keith, there's a bloke from Saltley on the field"): Keith confronts Dave; `RumourType.SALTLEY_POACHER` seeded; Keith trusts player (+1 dig permission per week bonus).
+  - Let Dave dig: he may uncover the Hoard before the player (5% chance per frame if `HOARD_LOCATION_PROP` spawned).
+  - Chase Dave off yourself (press E on Dave while holding any item with `isWeapon()`): `CrimeType.AFFRAY` if `DETECTORIST` NPC within 8 blocks; no crime if unwitnessed. `AchievementType.FIELD_ENFORCER`.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `MAX_DIGS_PER_SESSION` | 12 |
+| `DIG_MINUTES_PER_BLOCK` | 3 |
+| `TRESPASS_WITNESS_RANGE` | 12.0f |
+| `WARDEN_PATROL_RANGE` | 20.0f |
+| `NEIGHBOUR_WATCH_RANGE` | 15.0f |
+| `BANNED_TRESPASS_COUNT` | 3 |
+| `ROMAN_COIN_CHANCE` | 0.01f |
+| `HOARD_JANET_FOLLOW_CHANCE` | 0.10f |
+| `RIVAL_HOARD_CHANCE_PER_FRAME` | 0.05f |
+| `TREASURE_REWARD` | 20 |
+| `DIG_WINDOW_START_HOUR` | 9.0f |
+| `DIG_WINDOW_END_HOUR` | 16.0f |
+| `JANET_ARRIVE_HOUR` | 11.0f |
+| `JANET_DEPART_HOUR` | 13.0f |
+| `ANNOUNCEMENT_HOUR` | 14.0f |
+| `SILVER_BROOCH_FENCE_VALUE` | 8 |
+| `ROMAN_BROOCH_FENCE_VALUE` | 25 |
+| `DETECTORISTS_TROPHY_FENCE_VALUE` | 15 |
+| `METAL_DETECTOR_POUND_SHOP_PRICE` | 8 |
+| `TREASURE_DODGING_NOTORIETY` | 8 |
+| `RIVAL_DETECTORIST_DAY_OFFSET` | 2 |
+
+### Entities Required
+
+**New NPCTypes required:**
+- `NPCType.DETECTORIST_CHAIR` — Keith Nuttall, club chairman. Organises the dig, greets members, announces finds at 14:00. Gives `DIG_PERMISSION_SLIP` on E interaction before 09:30. Confronts trespassers.
+- `NPCType.DETECTORIST` — club members (3–5 spawned). Dig methodically, share finds at `FINDS_TABLE_PROP`, can witness trespass.
+- `NPCType.PAS_OFFICER` — Janet, Portable Antiquities Scheme representative. Present 11:00–13:00. Records significant finds. May follow player if hoard find not declared.
+- `NPCType.RIVAL_DETECTORIST` — Dave from Saltley, poacher. Appears on day 2 of fortnight. Hostile if confronted without a weapon.
+
+**New Materials required:**
+- `Material.METAL_DETECTOR` — tool item. Enables digging mechanic when held.
+- `Material.DIG_PERMISSION_SLIP` — day pass from Keith.
+- `Material.BOTTLE_TOP` — junk find; no value.
+- `Material.OLD_COIN` — minor find; 1 COIN fence value.
+- `Material.IRON_BUCKLE` — minor find; 2 COIN fence value.
+- `Material.MUSKET_BALL` — minor find; 3 COIN fence value.
+- `Material.SILVER_BROOCH` — significant find; 8 COIN fence value. Must be declared to Janet.
+- `Material.ROMAN_COIN` — rare find; triggers hoard. 2 COIN each fence value.
+- `Material.ROMAN_BROOCH` — hoard treasure; 25 COIN fence value. Triggers `TREASURE_DODGING` if fenced without declaration.
+- `Material.PAS_RECEIPT` — declaration record from Janet. No crime consequence if fenced.
+
+**New PropTypes required:**
+- `PropType.CLUB_NOTICE_PROP` — notice posted at Community Centre on Fridays.
+- `PropType.FINDS_TABLE_PROP` — table where club members log finds at 14:00.
+- `PropType.ALLOTMENT_FIELD_PROP` — 40×40 diggable area (already referenced in AllotmentSystem; reuse if present).
+- `PropType.HOARD_LOCATION_PROP` — buried prop 2 blocks under dig point; spawns on Roman Coin find.
+- `PropType.DETECTORISTS_TROPHY_PROP` — club trophy at Keith's house.
+
+**New RumourTypes required:**
+- `RumourType.TREASURE_DODGER` — "Someone found a Roman hoard and flogged it to a fence. Janet's fuming." Vibes −3.
+- `RumourType.SALTLEY_POACHER` — "Some bloke from Saltley's been poaching digs on the north field. Keith's doing his nut." Seeds among `DETECTORIST` NPCs.
+- `RumourType.GOOD_SAMARITAN` — "That lad returned Keith's trophy. Must be mad. Or scared." Vibes +3.
+
+**New CrimeTypes required (in CriminalRecord):**
+- `CrimeType.FIELD_TRESPASS` — entering a dig site without permission and being witnessed.
+- `CrimeType.TREASURE_DODGING` — failing to declare Treasure Act find to PAS officer.
+
+**Already defined — no new entries needed:**
+- `NPCType.ALLOTMENT_WARDEN` — already defined; reused for patrol duty.
+- `NPCType.NOSY_NEIGHBOUR` — already referenced in other systems; reused.
+- `AchievementType.HONEST_FINDER` — already defined; awarded on first PAS declaration.
+- `CrimeType.BURGLARY` — already defined.
+- `CrimeType.AFFRAY` — already defined.
+- `LandmarkType` — use existing `ALLOTMENT` or `PARK` for field location.
+
+**New AchievementTypes required:**
+- `AchievementType.HOARD_FINDER` — declare a Roman Brooch to Janet.
+- `AchievementType.TREASURE_HUNTER` — steal Keith's trophy unwitnessed.
+- `AchievementType.FIELD_ENFORCER` — chase off the Saltley poacher.
+
+### Integration Tests
+
+1. **Joining with METAL_DETECTOR and pressing E on Keith before 09:30 grants DIG_PERMISSION_SLIP**: create `DetectoristsSystem`; give player `Material.METAL_DETECTOR`; set time to 09:15 (Sunday); call `joinDig(player, inventory, keithNpc, timeSystem)`; verify `inventory.contains(Material.DIG_PERMISSION_SLIP)` == true; verify `detectoristsSystem.hasPermission()` == true.
+
+2. **Digging 12 times within field bounds yields finds from the FindsTable**: create system; grant permission; seed `rng` deterministically; call `dig(player, inventory, blockX, blockZ, rng)` × 12; verify total finds count == 12; verify at least one find is not `Material.BOTTLE_TOP` (seeded RNG ensures non-trivial spread over 12 digs); verify `detectoristsSystem.getDigsUsed()` == 12; verify 13th call returns `DigResult.SESSION_EXHAUSTED`.
+
+3. **Roman Coin find spawns HOARD_LOCATION_PROP and declaring to Janet awards HOARD_FINDER achievement**: create system; seed `rng` so first dig triggers `ROMAN_COIN_CHANCE` (nextFloat() < 0.01f); call `dig(player, inventory, 20, 20, rng)`; verify `inventory.contains(Material.ROMAN_COIN)` == true; verify `detectoristsSystem.isHoardSpawned()` == true; set time to 11:30 (Janet present); call `declareFind(player, inventory, Material.ROMAN_BROOCH, janetNpc, timeSystem)`; verify `inventory.contains(Material.PAS_RECEIPT)` == true; verify `achievementCallback` received `AchievementType.HOARD_FINDER`; verify `inventory.getItemCount(Material.COIN)` increased by `TREASURE_REWARD`.
+
+4. **Fencing ROMAN_BROOCH without declaring records TREASURE_DODGING and adds Notoriety**: create system; give player `Material.ROMAN_BROOCH`; set `detectoristsSystem.hoardSpawned = true`; set time to 12:00 (Janet present, declaration window open); call `fenceRomanBrooch(player, inventory, fenceSystem, timeSystem, criminalRecord, notorietySystem)`; verify `criminalRecord.hasCrime(CrimeType.TREASURE_DODGING)` == true; verify `notorietySystem.getNotoriety()` increased by `TREASURE_DODGING_NOTORIETY`.
+
+5. **Unwitnessed trespass three times sets BANNED_FROM_CLUB flag**: create system; ensure no NPCs within `TRESPASS_WITNESS_RANGE`; call `digWithoutPermission(player, inventory, nearbyNpcs=[], rng)` × `BANNED_TRESPASS_COUNT`; verify `detectoristsSystem.isBannedFromClub()` == true; then call `joinDig(player, inventory, keithNpc, timeSystem)`; verify result == `JoinResult.BANNED`.
+
+// `DetectoristsSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Sunday schedule, Janet window), `FenceSystem` (finds fence values, `TREASURE_DODGING` trigger), `CriminalRecord` (new `FIELD_TRESPASS`, `TREASURE_DODGING`; existing `BURGLARY`, `AFFRAY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `TREASURE_DODGER`, `SALTLEY_POACHER`, `GOOD_SAMARITAN`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `AllotmentSystem` (field bounds), `ScrapyardSystem` (no direct dependency, but `OLD_COIN`/`IRON_BUCKLE` are fenceable at scrapyard), and `AchievementSystem`. New NPCTypes: `DETECTORIST_CHAIR`, `DETECTORIST`, `PAS_OFFICER`, `RIVAL_DETECTORIST`. New Materials: `METAL_DETECTOR`, `DIG_PERMISSION_SLIP`, `BOTTLE_TOP`, `OLD_COIN`, `IRON_BUCKLE`, `MUSKET_BALL`, `SILVER_BROOCH`, `ROMAN_COIN`, `ROMAN_BROOCH`, `PAS_RECEIPT`. New PropTypes: `CLUB_NOTICE_PROP`, `FINDS_TABLE_PROP`, `HOARD_LOCATION_PROP`, `DETECTORISTS_TROPHY_PROP`. New RumourTypes: `TREASURE_DODGER`, `SALTLEY_POACHER`, `GOOD_SAMARITAN`. New CrimeTypes: `FIELD_TRESPASS`, `TREASURE_DODGING`. New AchievementTypes: `HOARD_FINDER`, `TREASURE_HUNTER`, `FIELD_ENFORCER`.
