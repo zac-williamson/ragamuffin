@@ -47573,3 +47573,133 @@ Using `Material.FORGED_ID` at the counter:
 4. **Forged ID loan approved — no bailiff on default**: Give player a `FORGED_ID` in inventory. Seed Random with value that produces fraud-pass (< 0.70). Call `takeLoan(20, inventory, day=1)` with forged ID active. Verify loan approved, `fraudulentLoan` flag is true. Advance to day 5. Call `update(day=5, ...)`. Verify no `BAILIFF_NPC` spawned. Verify no `DEBT_TROUBLE` rumour seeded. Verify `FORGED_ID` consumed from inventory.
 
 5. **Employment discount applies**: Wire `EmploymentSystem` with player employed (any job). Call `getAmountOwed(currentDay)` on a 20 COIN loan on day 2. Verify owed amount is `ceil(20 * 1.40)` = 28 COIN (50% interest reduced to 40% for employed). Verify Darren's dialogue includes "Proof of income gets you a better rate, mate."
+
+---
+
+## Issue #1353: Add Northfield Amateur Dramatics Society — The Curtain Rises on Blood Brothers, the Costume Heist & the Opening Night Disaster
+
+**Northfield Amateur Dramatics Society (NAODS)** holds rehearsals every Wednesday and Thursday evening 19:00–22:00 in the community centre main hall, with a fortnightly public production performed on the last Saturday of the month (19:30–22:00). The current production is *Blood Brothers* — performed with total sincerity and near-zero talent by a cast of 8–12 local regulars in rented costumes. The director is **Patricia** (`NPCType.DRAMA_DIRECTOR`): a retired drama teacher with a clipboard, an enormous sense of grievance, and a velvet headband. Patricia's nemesis is **Mario Franchetti** (`NPCType.NAODS_LEAD_ACTOR`), a Marchetti lieutenant who joined NAODS for social respectability and is NOT going to be denied the lead.
+
+### Core Mechanics
+
+**Joining the Cast**
+- Audition by pressing E on the `AUDITION_NOTICE_PROP` in the community centre lobby (Tues 10:00–17:00 beforehand).
+- Audition is a 3-button `BattleBarMiniGame` (speech delivery timing). Score 2+/3 → accepted as **Lead Understudy** (can go on stage; scripted dialogue options); score 1/3 → accepted as **Extra** (on-stage but no dialogue; smaller disguise benefit). Fail all 3 → "Not quite what we're looking for, love." (retry next fortnight).
+- Joining NAODS sets `NAODS_MEMBER` player flag; grants `REHEARSAL_SCHEDULE` item (useful as prop evidence for DisguiseSystem).
+
+**Rehearsal Nights (Wed/Thu 19:00–22:00)**
+- 8–12 NPCs present: `DRAMA_DIRECTOR` (Patricia), `NAODS_LEAD_ACTOR` (Mario), 2–4 `NAODS_MEMBER` NPCs, 2–4 `PUBLIC` NPCs filling out the cast.
+- Dense crowd = prime pickpocket opportunity: STEALTH ≥ 2 required to avoid detection; Patricia is `OBSERVANT` and spots pickpockets at 80% chance.
+- Player can **eavesdrop** on Mario by standing within 2 blocks during a 5-minute "script notes" break (21:15–21:20). Overheard dialogue seeds `MARCHETTI_SECRETS` rumour (crosses over with FactionSystem).
+- Leaving early (before 21:45): Patricia removes player from cast for next production.
+
+**The Stage Costume Disguise**
+- `STAGE_COSTUME` item is issued to cast members at first rehearsal. Also stored in locked `COSTUME_CUPBOARD_PROP` in the community centre changing room (LOCKPICK required).
+- Wearing `STAGE_COSTUME` while not in a rehearsal/production: police suspicion modifier −2 (player looks like a panto villain, not a criminal); but if a `POLICE` NPC recognises the player (Wanted ≥ 2), suspicion becomes +1 ("who wears that on the street at 2am").
+- Non-cast `STAGE_COSTUME` wearers have a 40% chance of being spotted as impostors by any `NAODS_MEMBER` NPC passing within 4 blocks — triggers `NAODS_CONFRONTATION` event (NPC demands return of costume; refusing: Notoriety +3, confrontation).
+
+**Opening Night (Last Saturday of Month, 19:30–22:00)**
+- 20 tickets at 2 COIN each sold from `TICKET_BOOTH_PROP` (Patricia manages; proceeds go to community fund).
+- **Ticket Touts**: Player can buy block of 5 tickets (10 COIN) and resell outside at 4 COIN each (8 COIN profit; spawns `COUNCIL_ENFORCEMENT_OFFICER` after 3 sold if Notoriety ≥ 3).
+- **Forged Ticket Hustle**: Craft `FORGED_TICKET` (PRINTER_PAPER + INK_BOTTLE) to sell fake seats; 30% chance the audience member checks with Patricia → FRAUD_MINOR crime, Notoriety +5.
+- **The Performance**: If player is in cast, press E at `STAGE_MARK_PROP` to deliver lines (BattleBarMiniGame, 3 chances). Hit 2+/3 → standing ovation line, Community Respect +2. Miss all → Patricia shoots player a look; StreetSkillSystem SOCIAL XP −1.
+
+**The Sabotage Plot**
+- Mario privately offers player 15 COIN to ruin the production (dialogue at end of any rehearsal, MARCHETTI Respect ≥ 20 required for approach). Three sabotage options:
+  1. **Cut the Power**: Use `CROWBAR` on `FUSE_BOX_PROP` in the community centre utility room (accessible with LOCKPICK or if player is NAODS_MEMBER). Plunges hall into darkness; production abandoned. NoiseSystem level 4; 30% POLICE response.
+  2. **Swap the Prop Gun**: Replace `PROP_GUN_PROP` in costume room with an `AIRGUN` item. During the production, the actor fires the airgun — no injury but mass panic, production collapses. WitnessSystem: 3 witnesses → CRIMINAL_DAMAGE.
+  3. **Steal the Cash Box**: `TICKET_CASH_BOX_PROP` holds 40 COIN (20 tickets × 2 COIN) and is accessible during the production when Patricia is on stage. LOCKPICK required; 8 seconds; if caught → THEFT crime, Wanted +1, NAODS_MEMBER ban.
+- Sabotage rewards: 15 COIN from Mario, Marchetti Respect +5. But: `NAODS_DRAMA_DISASTER` rumour seeded town-wide → NeighbourhoodSystem Vibes −4, community relations soured.
+
+**The Costume Heist**
+- `COSTUME_CUPBOARD_PROP` contains 3–5 `STAGE_COSTUME` items (value 3 COIN each at charity shop; 8 COIN each if sold to FenceSystem with `FANCY_DRESS` description).
+- Heist window: Tuesday afternoon (13:00–17:00) when Patricia is at the GP Surgery and the community centre is quiet.
+- LOCKPICK takes 5 seconds on `COSTUME_CUPBOARD_PROP`; noise level 3. Any `COMMUNITY_MEMBER` NPC within 6 blocks → 50% detection chance.
+- Achievement: `BEST_IN_SHOW` — steal 5 costumes without being caught.
+
+### Integration
+
+- `CommunityCentreSystem` — NAODS uses the main hall; rehearsals share schedule with NA Meetings (Wednesday clashes: NAODS gets priority every other week; NA displaced players get BISCUIT flavour event).
+- `DisguiseSystem` — `STAGE_COSTUME` disguise modifier (−2 suspicion, +1 if Wanted ≥ 2); `REHEARSAL_SCHEDULE` item as cover doc.
+- `FactionSystem` — MARCHETTI Respect ≥ 20 unlocks Mario's sabotage approach; sabotage success +5 Marchetti Respect; foiling sabotage (reporting to Patricia) +10 THE_COUNCIL Respect.
+- `NotorietySystem` — pickpocket at rehearsal caught +5; forged tickets caught +5; cash box theft +3.
+- `WantedSystem` — cash box theft +1; power cut with police response +1.
+- `CriminalRecord` — `COSTUME_THEFT`, `TICKET_FRAUD`, `PRODUCTION_SABOTAGE`.
+- `RumourNetwork` — `NAODS_DRAMA_DISASTER` (sabotage), `MARCHETTI_SECRETS` (eavesdrop), `NAODS_CASTING` (player joins cast).
+- `NeighbourhoodSystem` — sabotage −4 Vibes; standing ovation performance +2 Vibes; costume theft −2 Vibes.
+- `StreetSkillSystem` — SOCIAL XP +2 on successful lead performance; STEALTH XP +1 on undetected rehearsal pickpocket.
+- `BattleBarMiniGame` — used for audition and on-stage performance timing.
+- `SoundSystem` — `SoundEffect.APPLAUSE` on successful performance; `SoundEffect.BOOS` on missed lines.
+- `NewspaperSystem` — sabotage triggers headline: "OPENING NIGHT DISASTER FOR NORTHFIELD NAODS — BLOOD BROTHERS PERFORMANCE ABANDONED."
+- `TimeSystem` — rehearsal schedule Wed/Thu 19:00–22:00; production last Saturday of month 19:30–22:00; heist window Tue 13:00–17:00.
+- `WitnessSystem` — prop gun swap has 3-witness chain; cash box theft with costume witness triggers THEFT.
+
+### New Types Required
+
+- `NPCType.DRAMA_DIRECTOR` — Patricia, 50f HP, 0f attack, hostile only on confirmed theft/pickpocket. Has `OBSERVANT` trait (80% pickpocket detection).
+- `NPCType.NAODS_LEAD_ACTOR` — Mario Franchetti; shares stats with MARCHETTI_CREW members; passive during rehearsals but turns hostile if sabotage is foiled.
+- `NPCType.NAODS_MEMBER` — generic amateur actor; 20f HP, 0f attack, passive.
+- `Material.STAGE_COSTUME` — wearable disguise item; grants −2 police suspicion (conditional).
+- `Material.REHEARSAL_SCHEDULE` — document item; acts as cover for DisguiseSystem identity check.
+- `Material.FORGED_TICKET` — crafted from PRINTER_PAPER + INK_BOTTLE; sells for 4 COIN, 30% fraud catch.
+- `Material.PROP_GUN` — harmless prop; swappable with AIRGUN for sabotage.
+- `PropType.AUDITION_NOTICE_PROP` — interaction prop in community centre lobby.
+- `PropType.STAGE_MARK_PROP` — interaction prop on community centre stage floor.
+- `PropType.COSTUME_CUPBOARD_PROP` — lockpickable prop; contains STAGE_COSTUMEs.
+- `PropType.TICKET_BOOTH_PROP` — Patricia staffed; 20 tickets available on production night.
+- `PropType.TICKET_CASH_BOX_PROP` — lockpickable; holds 40 COIN on production night.
+- `PropType.PROP_GUN_PROP` — swappable prop in costume room.
+- `RumourType.NAODS_DRAMA_DISASTER` — seeded on production sabotage; spreads town-wide.
+- `RumourType.MARCHETTI_SECRETS` — seeded when player eavesdrops on Mario; faction intel.
+- `RumourType.NAODS_CASTING` — seeded when player joins cast; spreads via PUBLIC and PENSIONER NPCs.
+- `CrimeType.COSTUME_THEFT` — stealing from costume cupboard.
+- `CrimeType.TICKET_FRAUD` — selling forged tickets.
+- `CrimeType.PRODUCTION_SABOTAGE` — any deliberate sabotage action.
+- `AchievementType.BREAK_A_LEG` — complete an on-stage performance without missing a cue.
+- `AchievementType.BEST_IN_SHOW` — steal 5 costumes without being caught.
+- `AchievementType.STAGE_FRIGHT` — attend 3 rehearsals without ever performing.
+- `LandmarkType.NAODS_COMMUNITY_HALL` — shares LandmarkType.COMMUNITY_CENTRE; no new type needed.
+
+### New Java Files
+
+- `src/main/java/ragamuffin/core/AmateurDramaticsSystem.java`
+- `src/test/java/ragamuffin/core/AmateurDramaticsSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1353AmateurDramaticsIntegrationTest.java`
+
+### Unit Tests
+
+- `AmateurDramaticsSystem.isRehearsalNight(dayOfWeek, hour)`: Wednesday 19:00 → true; Wednesday 22:01 → false; Thursday 20:00 → true; Monday 20:00 → false.
+- `AmateurDramaticsSystem.isProductionNight(dayOfMonth, dayOfWeek, hour)`: last Saturday of month, 19:30 → true; first Saturday → false; any non-Saturday → false.
+- `AmateurDramaticsSystem.attemptAudition(player, battleBarScore)`: score 2 → NAODS_MEMBER flag set, REHEARSAL_SCHEDULE added; score 0 → flag NOT set, no item.
+- `AmateurDramaticsSystem.attemptPickpocket(player, npc, random_seed_fail)`: seed that causes failure → Patricia notified, Notoriety +5, player removed from cast; seed that succeeds → COIN transferred, no flag.
+- `AmateurDramaticsSystem.sabotageProduction(SabotageType.CUT_POWER, player, inventory, crowbar)`: crowbar present → fuse box destroyed, production cancelled, PRODUCTION_SABOTAGE criminal record added, Marchetti Respect +5; no crowbar → returns false.
+- `AmateurDramaticsSystem.stealCostumes(player, inventory, hasLockpick)`: lockpick present, Patricia absent → 3–5 STAGE_COSTUME items added, COSTUME_THEFT criminal record; no lockpick → returns false.
+- `AmateurDramaticsSystem.performOnStage(player, battleBarScore)`: score 2 → Community Respect +2, SOCIAL XP +2, APPLAUSE event fired; score 0 → BOOS event fired, SOCIAL XP −1.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Audition and join cast**: Set game time to Tuesday 14:00. Player interacts with `AUDITION_NOTICE_PROP`. Run `BattleBarMiniGame` with score 2. Call `attemptAudition()`. Verify `NAODS_MEMBER` flag is true on player. Verify `REHEARSAL_SCHEDULE` item in player inventory. Verify `NAODS_CASTING` rumour seeded in `RumourNetwork`.
+
+2. **Rehearsal pickpocket — Patricia detects**: Set game time to Wednesday 20:00 (rehearsal night). Player has `NAODS_MEMBER` flag. Spawn Patricia (`DRAMA_DIRECTOR`) and an `NAODS_MEMBER` NPC in community centre hall. Seed Random so detection occurs (> 0.2 pass threshold for OBSERVANT trait). Simulate player pickpocket attempt on `NAODS_MEMBER`. Verify Patricia's state changes to ALERT. Verify player Notoriety increased by 5. Verify `NAODS_MEMBER` flag removed from player (ejected from cast).
+
+3. **Sabotage: power cut — full flow**: Player has MARCHETTI Respect ≥ 20. Set game time to last Saturday 20:00 (production night). Player has `CROWBAR` in inventory. Call `sabotageProduction(SabotageType.CUT_POWER, ...)`. Verify `FUSE_BOX_PROP` is destroyed. Verify SoundSystem has no `APPLAUSE` event (production cancelled). Verify `CriminalRecord` contains `PRODUCTION_SABOTAGE`. Verify Marchetti faction Respect increased by 5. Verify `NAODS_DRAMA_DISASTER` rumour seeded. Verify `NeighbourhoodSystem` Vibes decreased by 4. Verify `NewspaperSystem` has headline about the disaster.
+
+4. **Costume heist — clean run**: Set game time to Tuesday 14:00 (heist window). Patricia is NOT in community centre (simulate GP Surgery visit). Player has `LOCKPICK` in inventory. Call `stealCostumes()`. Verify 3–5 `STAGE_COSTUME` items added to player inventory. Verify `CriminalRecord` contains `COSTUME_THEFT`. Verify `NoiseSystem` received noise event at level 3. Verify `BEST_IN_SHOW` achievement tracking incremented.
+
+5. **Full opening night performance**: Set game time to last Saturday 19:30. Player has `NAODS_MEMBER` flag and is cast as Lead Understudy. Simulate player pressing E at `STAGE_MARK_PROP`. Run `BattleBarMiniGame` with score 2+. Call `performOnStage()`. Verify `SoundSystem` fired `APPLAUSE` event. Verify Community Respect (NeighbourhoodSystem Vibes) increased by 2. Verify `StreetSkillSystem` SOCIAL XP increased by 2. Verify `BREAK_A_LEG` achievement unlocked.
+
+// ── Issue #1353: Add Northfield Amateur Dramatics Society ────────────────────────────
+// New: AmateurDramaticsSystem.java in ragamuffin.core
+// New: AmateurDramaticsSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1353AmateurDramaticsIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: DRAMA_DIRECTOR (Patricia), NAODS_LEAD_ACTOR (Mario), NAODS_MEMBER
+// New Materials: STAGE_COSTUME, REHEARSAL_SCHEDULE, FORGED_TICKET, PROP_GUN
+// New PropTypes: AUDITION_NOTICE_PROP, STAGE_MARK_PROP, COSTUME_CUPBOARD_PROP,
+//                TICKET_BOOTH_PROP, TICKET_CASH_BOX_PROP, PROP_GUN_PROP
+// New RumourTypes: NAODS_DRAMA_DISASTER, MARCHETTI_SECRETS, NAODS_CASTING
+// New CrimeTypes: COSTUME_THEFT, TICKET_FRAUD, PRODUCTION_SABOTAGE
+// New AchievementTypes: BREAK_A_LEG, BEST_IN_SHOW, STAGE_FRIGHT
+// Integration: CommunityCentreSystem, DisguiseSystem, FactionSystem, NotorietySystem,
+//              WantedSystem, CriminalRecord, RumourNetwork, NeighbourhoodSystem,
+//              StreetSkillSystem, BattleBarMiniGame, SoundSystem, NewspaperSystem,
+//              WitnessSystem, TimeSystem
