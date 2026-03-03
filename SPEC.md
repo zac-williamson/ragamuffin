@@ -58478,3 +58478,156 @@ The Crown & Anchor — a beloved but run-down Northfield boozer — has been ser
 5. **Community wins committee vote: CROWN_ANCHOR_SAVED rumour and PUB_HERO achievement**: create system; set `saveOurPubSystem.communityVotes` to 50; set `saveOurPubSystem.developerVotes` to 30; set `playerAssistedCampaign` to true (≥10 signatures collected); advance time to Day 14 18:00; call `resolveVote(timeSystem, achievementCallback, rumourNetwork)`; verify result == `VoteResult.COMMUNITY_WIN`; verify `rumourNetwork` received `RumourType.CROWN_ANCHOR_SAVED`; verify `achievementCallback` received `AchievementType.PUB_HERO`; verify `saveOurPubSystem.isPubSaved()` == true.
 
 // `SaveOurPubSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (14-day campaign, lock-in schedule, vote day), `WitnessSystem` (petition theft, planning doc theft, loot detection), `NoiseSystem` (lock-in noise triggers police raid), `ArrestSystem` (police raid during lock-in), `FenceSystem` (petition board, planning doc, pub loot), `PawnShopSystem` (barrel, spirits pawn values), `CriminalRecord` (new `ARSON`; existing `THEFT`, `BURGLARY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `PUB_PETITION_COMPLETE`; existing `PUB_PETITION_NICKED`, `UNDERGROUND_LOCK_IN`, `PUB_SAVED_TEMPORARILY`, `CROWN_ANCHOR_SAVED`, `CROWN_ANCHOR_GONE`), `NeighbourhoodSystem` (Vibes), `AchievementSystem` (new `PUB_HERO`, `UNDERGROUND_PUBLICAN`; existing `CROWN_ANCHOR_LAST_ORDERS`, `NIMBY`). New NPCType: `PROPERTY_DEVELOPER`. New Materials: `PLANNING_PERMISSION_DOC`, `BEER_BARREL`, `SPIRITS_BOTTLE`, `CROWN_ANCHOR_REGULAR_CARD`. New PropTypes: `PLANNING_PERMISSION_DOC_PROP`, `BACK_DOOR_PROP`, `BEER_BARREL_PROP`, `BAR_OPTICS_PROP`, `PUB_SIGN_PROP`, `CAMPAIGN_PLAQUE_PROP`. New RumourType: `PUB_PETITION_COMPLETE`. New CrimeType: `ARSON`. New AchievementTypes: `PUB_HERO`, `UNDERGROUND_PUBLICAN`.
+
+---
+
+## Issue #1507: Add Northfield Women's Institute — Dot's Monthly Meeting, the Annual Show & the Recipe Book Heist
+
+### Overview
+
+Every third Wednesday of the month (19:00–21:00), the Northfield branch of the Women's Institute meets at `LandmarkType.COMMUNITY_CENTRE`. Chairwoman Dot Higgins (`NPCType.WI_CHAIRWOMAN`) runs a tight ship: flower-arranging demos, craft workshops, and — the crown jewel — the **Annual WI Show** (held on day 21 of each in-game month, Saturday, 10:00–15:00). The show features judged competitions for jam, Victoria sponge, flower arrangement, and handicraft. Dot has been rigging the jam category for three years running; the other members know but say nothing. The player can: enter the show legitimately using crafted items; steal the coveted `WI_RECIPE_BOOK_PROP` (containing prize-winning recipes worth serious coin to rival WI branches or the local newspaper); or sabotage Dot's prize-winning jam entry before judging.
+
+### Schedule & Constants
+
+| Constant | Value |
+|---|---|
+| `MEETING_DAY_OF_WEEK` | 3 (Wednesday) |
+| `MEETING_WEEK_OF_MONTH` | 3rd Wednesday |
+| `MEETING_START` | 19.0f |
+| `MEETING_END` | 21.0f |
+| `SHOW_DAY_OF_MONTH` | 21 |
+| `SHOW_START` | 10.0f |
+| `SHOW_END` | 15.0f |
+| `JUDGING_HOUR` | 12.0f |
+| `ENTRY_COST` | 1 |
+| `SHOW_WINNER_PRIZE` | 8 |
+| `RECIPE_BOOK_FENCE_VALUE` | 15 |
+| `NEWSPAPER_TIP_VALUE` | 10 |
+| `JAM_SABOTAGE_NOTORIETY` | 5 |
+| `WITNESS_RANGE` | 5.0f |
+| `RECIPE_BOOK_NOTORIETY_THRESHOLD` | 3 |
+| `MEMBER_COUNT` | 6 |
+| `VOTES_TO_RIG` | 3 |
+
+### Mechanic 1 — Monthly Meeting
+
+- On the third Wednesday 19:00–21:00, Dot and `MEMBER_COUNT` (6) `NPCType.WI_MEMBER` NPCs gather inside the Community Centre.
+- Press E on Dot to join as associate member (costs 1 COIN: `ENTRY_COST`). On joining: player gets `WI_MEMBERSHIP_CARD` material; `WI_MEMBER_VIBES` Vibes bonus +2 in neighbourhood.
+- During the meeting, one of three activities rotates each month:
+  - `MeetingActivity.FLOWER_DEMO`: press E on `FLOWER_ARRANGEMENT_TABLE_PROP` to earn +5 CRAFTING XP via `StreetSkillSystem`.
+  - `MeetingActivity.JAM_WORKSHOP`: press E on `JAM_WORKSHOP_TABLE_PROP` to craft `JAM_JAR` from 1 COIN (supplies provided); receives +5 CRAFTING XP.
+  - `MeetingActivity.SPEAKER_NIGHT`: a guest `NPCType.WI_GUEST_SPEAKER` NPC delivers a talk; player can pickpocket the speaker (`PICKPOCKET_CHANCE` 30%) for 1–3 COIN without arousing suspicion (speaker is distracted).
+- Attending 3 meetings without committing any crime unlocks `WI_REGULAR` achievement.
+- Dot ejects high-notoriety players (Notoriety ≥ `RECIPE_BOOK_NOTORIETY_THRESHOLD`): `EntryResult.EJECTED`.
+
+### Mechanic 2 — The Annual Show
+
+- On day 21 of the month (Saturday) 10:00–15:00, the Community Centre hosts the Annual WI Show.
+- Four competition categories with entry tables (`JAM_ENTRY_TABLE_PROP`, `CAKE_ENTRY_TABLE_PROP`, `FLOWER_ENTRY_TABLE_PROP`, `HANDICRAFT_ENTRY_TABLE_PROP`).
+- Player can enter one item per category (costs `ENTRY_COST` COIN each). Valid entries:
+  - **Jam**: `JAM_JAR` (crafted at meeting or from allotment produce via `AllotmentSystem`)
+  - **Victoria Sponge**: `VICTORIA_SPONGE` material (crafted: 1 FLOUR + 1 EGG + 1 BUTTER — new materials)
+  - **Flower Arrangement**: `FLOWER_ARRANGEMENT` material (crafted: 3 LEAVES + 1 WOOD)
+  - **Handicraft**: `KNITTED_ITEM` material (crafted: 2 CARDBOARD + 1 COIN)
+- At `JUDGING_HOUR` (12:00), the judge NPC (`NPCType.WI_JUDGE`) evaluates each category. Score = base quality (1–5 from item freshness/crafting skill) + random ±1.
+- Dot has pre-placed her jam entry at quality 4 regardless. If not sabotaged, Dot wins jam.
+- Winner of each category: +`SHOW_WINNER_PRIZE` (8) COIN + `SHOW_RIBBON_PROP` dropped on table.
+- Overall best-in-show winner: +5 bonus COIN + `WI_CHAMPION` achievement + neighbourhood Vibes +3.
+- Entering all 4 categories: `WI_ENTHUSIAST` achievement.
+
+### Mechanic 3 — Dot's Rigged Jam & the Sabotage
+
+- Dot's `JAM_ENTRY_PROP` is placed on the jam table at 09:30 (30 min before show opens).
+- Player can sabotage Dot's jam entry unwitnessed (press E on Dot's jar, no NPCs within `WITNESS_RANGE`):
+  - `SabotageResult.SUCCESS`: Dot's effective jam score drops to 1; any competitor (including player's own entry) can now win.
+  - Seeds `WI_JAM_SCANDAL` rumour among all WI_MEMBER NPCs; Vibes +1 (community enjoys the drama).
+  - Witnessed sabotage: `SabotageResult.CAUGHT` — Notoriety +`JAM_SABOTAGE_NOTORIETY` (5) + `CrimeType.CRIMINAL_DAMAGE` logged + Dot permanently hostile.
+- Unwitnessed: no crime. The player can then enter their own `JAM_JAR` and win legitimately.
+- 3 unwitnessed sabotages across 3 separate shows: `JAM_CHEATER` achievement.
+
+### Mechanic 4 — The Recipe Book Heist
+
+- `WI_RECIPE_BOOK_PROP` sits on Dot's desk in the committee room (rear of Community Centre, requires LOCKPICK to enter outside meeting hours; free access during meeting if player has `WI_MEMBERSHIP_CARD`).
+- During the meeting, Dot leaves the committee room unattended for 3 in-game minutes at 20:00 (toilet break).
+- Steal the recipe book (press E, no NPCs within `WITNESS_RANGE`):
+  - Grants `WI_RECIPE_BOOK` material in inventory.
+  - Can sell to: `NPCType.JOURNALIST` (at pub, 10 COIN: `NEWSPAPER_TIP_VALUE`) — triggers `WI_SCANDAL_HEADLINE` in `NewspaperSystem`; rival WI branch via `FenceSystem` (15 COIN: `RECIPE_BOOK_FENCE_VALUE`); or keep and use to craft `VICTORIA_SPONGE` at +2 quality bonus.
+- Witnessed theft: `CrimeType.THEFT` + Notoriety +`RECIPE_BOOK_NOTORIETY_THRESHOLD` (3) + `WI_RECIPE_THEFT` rumour seeded; Dot calls police.
+- Unwitnessed: `RECIPE_THIEF` achievement on first successful heist.
+
+### Mechanic 5 — Post-Show Fallout
+
+- If Dot's rigging is exposed (WI_JAM_SCANDAL seeded AND another member wins the jam): `WI_REVOLT` event fires — all 6 WI_MEMBER NPCs become IRRITATED toward Dot; Dot loses chairwoman status; `WI_CHAIRWOMAN_OUSTED` rumour seeded; Vibes +2.
+- If player wins best-in-show AND has WI_MEMBERSHIP_CARD: Dot congratulates the player (if not yet hostile) and grants a `JAM_RECIPE_CARD` item (crafting bonus +1 to all future JAM_JAR).
+- Newspaper headline generated after every Annual Show via `NewspaperSystem.setPendingHeadline()`: winner's name + category.
+
+### New Entities Required
+
+**New NPCTypes:**
+- `WI_CHAIRWOMAN` — Dot Higgins; runs meetings; places jam entry at 09:30; has toilet break 20:00–20:03; hostile after caught sabotage/theft; calls police at Notoriety ≥ 3.
+- `WI_MEMBER` — six generic WI members; attend meetings and show; spread rumours; patrol show floor.
+- `WI_JUDGE` — the impartial judge; present 11:00–13:00 on show day; evaluates entries at 12:00.
+- `WI_GUEST_SPEAKER` — monthly speaker, appears only during SPEAKER_NIGHT meetings; pickpocketable.
+
+**New Materials:**
+- `WI_MEMBERSHIP_CARD` — allows entry to meetings and committee room during meeting hours. Non-stackable.
+- `VICTORIA_SPONGE` — crafted: 1 FLOUR + 1 EGG + 1 BUTTER. Show entry item; eat for +30 hunger. Pawn value: 2 COIN.
+- `FLOUR` — baking ingredient; purchasable from `CornerShopSystem` (1 COIN).
+- `EGG` — baking ingredient; purchasable from `CornerShopSystem` (1 COIN); also found at allotments.
+- `BUTTER` — baking ingredient; purchasable from `SupermarketSystem` (1 COIN).
+- `FLOWER_ARRANGEMENT` — crafted: 3 LEAVES + 1 WOOD. Show entry item. Fence value: 1 COIN.
+- `KNITTED_ITEM` — crafted: 2 CARDBOARD + 1 COIN. Show entry item. Pawn value: 1 COIN.
+- `WI_RECIPE_BOOK` — stolen from committee room. Sell to journalist (10 COIN) or rival WI fence (15 COIN); use at crafting bench for +2 Victoria Sponge quality.
+- `JAM_RECIPE_CARD` — reward from Dot after winning best-in-show. Permanent +1 JAM_JAR craft quality.
+- `SHOW_RIBBON` — dropped prop material after show judging; pawn value 1 COIN.
+
+**New PropTypes:**
+- `JAM_ENTRY_TABLE_PROP` — judging table for jam entries at Annual Show.
+- `CAKE_ENTRY_TABLE_PROP` — judging table for Victoria Sponge entries.
+- `FLOWER_ENTRY_TABLE_PROP` — judging table for flower arrangements.
+- `HANDICRAFT_ENTRY_TABLE_PROP` — judging table for knitted/craft items.
+- `JAM_WORKSHOP_TABLE_PROP` — craft table inside Community Centre, active during JAM_WORKSHOP meetings.
+- `FLOWER_ARRANGEMENT_TABLE_PROP` — demo table, active during FLOWER_DEMO meetings.
+- `WI_RECIPE_BOOK_PROP` — Dot's desk item in committee room; 2 hits to remove or press E to steal.
+- `SHOW_RIBBON_PROP` — decorative first-place ribbon placed after judging.
+
+**New RumourTypes:**
+- `WI_JAM_SCANDAL` — "Dot's jam was sabotaged at the WI show." Spreads via WI_MEMBER and PENSIONER NPCs. Vibes +1.
+- `WI_RECIPE_THEFT` — "Someone nicked the WI recipe book." Spreads via WI_CHAIRWOMAN and WI_MEMBER. Notoriety contribution +3.
+- `WI_CHAIRWOMAN_OUSTED` — "Dot's been voted out as WI Chairwoman after the jam scandal." Spreads broadly. Vibes +2.
+- `WI_SCANDAL_HEADLINE` — seeds newspaper front-page if recipe book sold to journalist.
+
+**New AchievementTypes:**
+- `WI_REGULAR` — attend 3 WI monthly meetings without committing a crime inside.
+- `WI_CHAMPION` — win best-in-show at the Annual WI Show.
+- `WI_ENTHUSIAST` — enter all 4 categories in the Annual Show.
+- `JAM_CHEATER` — sabotage Dot's jam entry unwitnessed in 3 separate Annual Shows.
+- `RECIPE_THIEF` — steal the WI recipe book unwitnessed.
+
+**Already defined — no new entries needed:**
+- `Material.JAM_JAR` — already exists; used as show entry and workshop output.
+- `Material.CARDBOARD`, `Material.WOOD`, `Material.LEAVES`, `Material.COIN`, `Material.LOCKPICK` — existing materials.
+- `CrimeType.THEFT` — witnessed recipe book theft.
+- `CrimeType.CRIMINAL_DAMAGE` — witnessed jam sabotage.
+- `LandmarkType.COMMUNITY_CENTRE` — meeting and show venue.
+- `NPCType.JOURNALIST` — at pub; buys recipe book tip.
+- `NPCType.PENSIONER` — spreads WI rumours.
+- `StreetSkillSystem.Skill.CRAFTING` — XP awarded at workshops.
+- `FenceSystem` — rival WI fence value for recipe book.
+- `PawnShopSystem` — Victoria Sponge, ribbon pawn values.
+- `NewspaperSystem` — show headline, scandal headline.
+- `WitnessSystem`, `NoiseSystem`, `RumourNetwork`, `NeighbourhoodSystem`, `NotorietySystem`, `WantedSystem`, `ArrestSystem`, `AchievementSystem`, `AllotmentSystem` (EGG source), `CornerShopSystem` (FLOUR/EGG stock), `SupermarketSystem` (BUTTER stock).
+
+### Integration Tests
+
+1. **Joining the WI on meeting night issues WI_MEMBERSHIP_CARD and Vibes bonus**: create `WISystem`; set time to third Wednesday 19:30; call `joinWI(player, inventory, dotNpc, coin=1, timeSystem)`; verify result == `JoinResult.JOINED`; verify `inventory.contains(Material.WI_MEMBERSHIP_CARD)` == true; verify `neighbourhoodSystem.getVibes()` increased by 2.
+
+2. **Entering the Annual Show and winning jam with sabotage**: create system; give player `JAM_JAR` and `WI_MEMBERSHIP_CARD` and 1 COIN; set time to show day 09:45; set `nearbyNpcs = []`; call `sabotageDotJam(player, dotJamProp, nearbyNpcs)`; verify result == `SabotageResult.SUCCESS`; verify `wiSystem.getDotJamScore()` == 1; call `enterCategory(player, inventory, Category.JAM, timeSystem)`; verify result == `EntryResult.ENTERED`; advance time to 12:00; call `resolveJudging(rng, timeSystem, achievementCallback, rumourNetwork)`; verify player wins jam category; verify `inventory.getItemCount(Material.COIN)` increased by `SHOW_WINNER_PRIZE` (8); verify `rumourNetwork` received `RumourType.WI_JAM_SCANDAL`.
+
+3. **Stealing WI recipe book unwitnessed during toilet break awards RECIPE_THIEF**: create system; give player `WI_MEMBERSHIP_CARD`; set time to meeting night 20:01 (toilet break active); set `nearbyNpcs = []`; call `stealRecipeBook(player, inventory, wiRecipeBookProp, nearbyNpcs, timeSystem)`; verify result == `HeistResult.SUCCESS`; verify `inventory.contains(Material.WI_RECIPE_BOOK)` == true; verify `achievementCallback` received `AchievementType.RECIPE_THIEF`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == false.
+
+4. **Selling recipe book to journalist triggers WI_SCANDAL_HEADLINE**: create system; give player `WI_RECIPE_BOOK`; call `sellToJournalist(player, inventory, journalistNpc, rumourNetwork, newspaperSystem)`; verify `inventory.contains(Material.WI_RECIPE_BOOK)` == false; verify `inventory.getItemCount(Material.COIN)` increased by `NEWSPAPER_TIP_VALUE` (10); verify `rumourNetwork` received `RumourType.WI_SCANDAL_HEADLINE`; verify `newspaperSystem.hasPendingHeadline()` == true.
+
+5. **Three unwitnessed jam sabotages across three shows award JAM_CHEATER**: create system; give player `WI_MEMBERSHIP_CARD`; call `sabotageDotJam(player, dotJamProp, nearbyNpcs=[])` on three separate show days (advance `TimeSystem` by 28 in-game days between calls); verify on third call `achievementCallback` received `AchievementType.JAM_CHEATER`; verify `wiSystem.getSabotageCount()` == 3.
+
+// `WISystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (monthly meeting schedule, annual show day 21, judging at 12:00, toilet break 20:00–20:03), `StreetSkillSystem` (CRAFTING XP at workshops), `WitnessSystem` (sabotage detection, recipe book theft), `CriminalRecord` (existing `THEFT`, `CRIMINAL_DAMAGE`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `WI_JAM_SCANDAL`, `WI_RECIPE_THEFT`, `WI_CHAIRWOMAN_OUSTED`, `WI_SCANDAL_HEADLINE`), `NeighbourhoodSystem` (Vibes), `FenceSystem` (recipe book rival WI value), `PawnShopSystem` (Victoria Sponge, ribbon, knitted item), `NewspaperSystem` (show winner headline, scandal headline), `AllotmentSystem` (EGG source), `CornerShopSystem` (FLOUR/EGG stock), `SupermarketSystem` (BUTTER stock), `AchievementSystem` (new `WI_REGULAR`, `WI_CHAMPION`, `WI_ENTHUSIAST`, `JAM_CHEATER`, `RECIPE_THIEF`). New NPCTypes: `WI_CHAIRWOMAN`, `WI_MEMBER`, `WI_JUDGE`, `WI_GUEST_SPEAKER`. New Materials: `WI_MEMBERSHIP_CARD`, `VICTORIA_SPONGE`, `FLOUR`, `EGG`, `BUTTER`, `FLOWER_ARRANGEMENT`, `KNITTED_ITEM`, `WI_RECIPE_BOOK`, `JAM_RECIPE_CARD`, `SHOW_RIBBON`. New PropTypes: `JAM_ENTRY_TABLE_PROP`, `CAKE_ENTRY_TABLE_PROP`, `FLOWER_ENTRY_TABLE_PROP`, `HANDICRAFT_ENTRY_TABLE_PROP`, `JAM_WORKSHOP_TABLE_PROP`, `FLOWER_ARRANGEMENT_TABLE_PROP`, `WI_RECIPE_BOOK_PROP`, `SHOW_RIBBON_PROP`. New RumourTypes: `WI_JAM_SCANDAL`, `WI_RECIPE_THEFT`, `WI_CHAIRWOMAN_OUSTED`, `WI_SCANDAL_HEADLINE`. New AchievementTypes: `WI_REGULAR`, `WI_CHAMPION`, `WI_ENTHUSIAST`, `JAM_CHEATER`, `RECIPE_THIEF`.
