@@ -52510,3 +52510,223 @@ The `VOLUNTEER_PICKER_NPC` NPCs are distracted and unaware — ideal marks:
 // Integration: TimeSystem, NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
 //   CouncilEnforcementSystem, NeighbourhoodWatchSystem, FenceSystem, ScrapyardSystem,
 //   WarmthSystem, AchievementSystem, RagAndBoneSystem, WeatherSystem
+
+## Issue #1406: Add Northfield Dodgy Roofer — Kenny's Cold-Call, the Guttering Scam & the Trading Standards Sting
+
+### Overview
+
+Kenny (`DODGY_ROOFER` NPC) drives a battered white Transit van (`ROOFER_VAN_PROP`) around
+Northfield's residential streets on weekdays between 09:00 and 16:00, cold-calling residents to
+inform them — quite wrongly — that he's "just been up the road doing a job" and has noticed their
+gutters are blocked, their felt is lifting, or their pointing is "coming away something terrible."
+He targets `PENSIONER` NPCs almost exclusively, who are home during the day and more likely to
+believe him. The scam is a Northfield institution. The police know about Kenny. Kenny knows they
+know. Nobody does anything about it.
+
+The player can work with Kenny, run their own rival cold-calling round, report him to Trading
+Standards (for a small notoriety wash), or rob his van while he's on someone's doorstep. Every
+choice has flavour.
+
+### Mechanic 1 — Kenny's Daily Round (Weekdays 09:00–16:00)
+
+Kenny spawns at `ROOFER_VAN_PROP` outside the industrial estate at 09:00 and follows a patrol
+route of 8 residential properties per day, spending `SECONDS_PER_PROPERTY` = 120 in-game seconds
+at each:
+
+- Knocks on the door (plays knock-knock SFX). If a `PENSIONER` NPC is home: conversation
+  begins. Kenny delivers one of 5 scripted scam pitches (randomly selected). `PITCH_ACCEPT_RATE`
+  = 35% — pensioner pays `SCAM_FEE` = 6 COIN. Reject (65%): Kenny moves on.
+- On accepted jobs, Kenny places a `LADDER_PROP` against the house wall, climbs it for
+  `WORK_SECONDS` = 45 seconds (plays hammering SFX), then collects payment. No actual repair
+  happens — the house `Condition` score is unchanged.
+- Non-payment (pensioner refuses after work): Kenny argument dialogue, `KENNY_ARGUMENT`
+  rumour seeded, NPC Anger +10.
+- If no `PENSIONER` NPC is home (not spawned), Kenny knocks, waits 10 seconds, mutters,
+  and moves on. No income.
+- Kenny earns 4–6 COIN per successful call (tracked internally). After 4+ successful calls,
+  he drives to the pub at 16:00 and buys a round (flavour only).
+
+### Mechanic 2 — Labourer Employment (Cash in Hand)
+
+Player can press E on Kenny (Notoriety < `EMPLOYMENT_MAX_NOTORIETY` = 30) to offer their
+services as a labourer:
+
+- Kenny hires the player for `LABOURER_WAGE` = 3 COIN per job (paid on completion).
+- Player must climb the `LADDER_PROP` (press E) and complete a `BattleBarMiniGame` (MEDIUM
+  difficulty, `MINI_GAME_STEPS` = 8). Score ≥ `MINI_GAME_PASS_SCORE` = 5 = clean job.
+- **Honest job**: mini-game passed → 3 COIN + `HOUSE_REPAIRED_DIALOGUE` from pensioner.
+  Notoriety unchanged. `HMRCSystem` tracks income (threshold `HMRC_DAILY_COIN_THRESHOLD` = 12
+  COIN/day).
+- **Botched job**: mini-game failed → 1 COIN (Kenny docks wages), pensioner complains,
+  `BOTCHED_JOB` rumour seeded. Achievement `COWBOY_BUILDER`.
+- Complete `GRAFTER_THRESHOLD` = 5 honest jobs → Achievement `GRAFTER`. Kenny upgrades
+  player wage to 4 COIN/job.
+- Complete `SENIOR_LAD_THRESHOLD` = 10 total jobs → Kenny trusts player with front-door key
+  while he drives to next job (enables Mechanic 4).
+
+### Mechanic 3 — Running Your Own Round (Rival Cold-Calling)
+
+Buy or steal a `BUCKET_OF_SEALANT` (2 COIN at corner shop, or steal from `ROOFER_VAN_PROP`)
+and `LATEX_GLOVES` (1 COIN at corner shop) to look credible. Approach any residential
+`PENSIONER` NPC and press E to cold-call:
+
+- `PITCH_ACCEPT_RATE_RIVAL` = 40% (slightly higher — the player is less threatening than Kenny).
+  Accepted: `BattleBarMiniGame` (EASY, 5 steps). Pass → 4 COIN, no complaint. Fail → 2 COIN,
+  `COWBOY_BUILDER` rumour seeded.
+- `PITCH_REFUSE_RATE` = 45%: pensioner shuts door. No consequence.
+- `PITCH_GRASS_RATE` = 15%: pensioner calls Kenny's Trading Standards contact (plot irony —
+  Kenny is himself a known fraudster but he grasses rivals). `RIVAL_ROOFER` rumour seeded.
+  WantedSystem +1, Notoriety +3.
+- **Kenny spots player cold-calling** within `KENNY_SPOT_RADIUS` = 15 blocks: Kenny goes
+  HOSTILE, confrontation dialogue ("That's my patch, mate"). Fight or flee. If player wins:
+  Kenny flees, respawns next day. If player loses: knocked down, wallet lightened by 3 COIN.
+  `TURF_DISPUTE` rumour seeded.
+- Complete `UNDERCUTTING_KENNY_THRESHOLD` = 6 cold-calls without Kenny spotting →
+  Achievement `UNDERCUTTING_KENNY`.
+
+### Mechanic 4 — Van Raid While Kenny's Busy
+
+When Kenny is on a doorstep or up a `LADDER_PROP` (BUSY state), his `ROOFER_VAN_PROP` is
+unattended for `WORK_SECONDS` seconds. Player can break into the van (press E while holding
+`CROWBAR`, 3-second hold):
+
+- Van interior contains `VAN_LOOT_TABLE`:
+  - `BUCKET_OF_SEALANT` × 1–2 (always present; fenceable for 3 COIN each)
+  - `SCAFFOLDING_SPANNER` (50% — improvised weapon, 6 hits, counts as SCRAP_METAL at fence)
+  - `INVOICE_PAD` (35% — enables the Mechanic 5 fraud route)
+  - `CASH_ENVELOPE` (20% — 8–14 COIN; Kenny's morning takings)
+  - `ROOF_SLATE_BAG` (15% — 3–5 ROOF_TILE materials; fenceable at Scrapyard)
+- Breaking in: `CrimeType.VEHICLE_BREAK_IN`, Notoriety +6 unwitnessed / +12 witnessed.
+  WantedSystem +1 star if witnessed.
+- Kenny returns from job, checks van every `RETURN_CHECK_INTERVAL` seconds. Catches player
+  in/near van: Kenny HOSTILE, `CAUGHT_ROBBING_KENNY` rumour seeded, Notoriety +4.
+- Achievement `TOOLS_DOWN` on first successful van raid.
+
+### Mechanic 5 — The Invoice Fraud (Requires INVOICE_PAD)
+
+With `INVOICE_PAD` in inventory, the player can forge post-work invoices:
+
+- Press E on any recently-worked house (within 30 minutes of a Kenny job) to leave an
+  `INVOICE_PROP` on the doorstep addressed to the resident.
+- `INVOICE_ACCEPT_RATE` = 30% — pensioner pays 8 COIN thinking it's a follow-up bill.
+  `COUNCIL_FRAUD` rumour seeded. `CrimeType.FRAUD` added to CriminalRecord. Notoriety +5.
+- `INVOICE_REJECT_RATE` = 70% — pensioner ignores it. No consequence.
+- Trading Standards Officer (`TRADING_STANDARDS_OFFICER` NPC) spawns after `FRAUD_THRESHOLD`
+  = 3 accepted invoices. Patrols the area for 2 in-game hours; if player is within 8 blocks
+  while holding `INVOICE_PAD`, arrest attempt. Achievement `SERIAL_FRAUDSTER` on 3 accepted.
+- Alternatively, player can report Kenny's original scam to Trading Standards (press E on
+  `TRADING_STANDARDS_OFFICE_PROP` at the council building, Notoriety < 25): Notoriety −3,
+  `KENNY_REPORTED` rumour seeded, Kenny disappears for 2 in-game days. Achievement
+  `PUBLIC_SPIRITED`.
+
+### Mechanic 6 — DVSA / Trading Standards Raid (Weekly)
+
+Every 7 in-game days at 11:00 on a Friday, a `TRADING_STANDARDS_OFFICER` NPC arrives in a
+small car at the industrial estate and checks `ROOFER_VAN_PROP` for unlicensed trader evidence:
+
+- If Kenny has accumulated ≥ 4 scam successes this week: Kenny fined, van impounded
+  (despawned) for 1 in-game day. `KENNY_FINED` rumour seeded.
+- Player can tip Kenny off (Notoriety < 20, press E on Kenny ≥ 10 minutes before 11:00):
+  Kenny drives van off-street and hides it. Kenny Respect +10. Achievement `TIP_OFF_KENNY`.
+- Player can tip Trading Standards about Kenny's location instead (press E on
+  `TRADING_STANDARDS_OFFICE_PROP`): Kenny arrested, van seized for 2 days. Notoriety −5.
+  Achievement `CIVIC_MINDED`. But `SNITCH` rumour also seeded — all gang NPCs become
+  slightly hostile (+aggression 5) for 24h.
+
+### New Materials (add to `Material.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `BUCKET_OF_SEALANT` | Grey plastic bucket; prop for cold-calling credibility; fenceable for 3 COIN |
+| `LATEX_GLOVES` | Disposable work gloves; required alongside BUCKET_OF_SEALANT for rival round |
+| `SCAFFOLDING_SPANNER` | Heavy spanner; improvised weapon (6 hits); counts as SCRAP_METAL at Fence for 4 COIN |
+| `INVOICE_PAD` | Printed invoice booklet; enables the invoice fraud route; consumed after 3 uses |
+| `CASH_ENVELOPE` | Unsealed white envelope with 8–14 COIN inside; Kenny's morning takings |
+| `ROOF_SLATE_BAG` | Bag of assorted slate/tile fragments; yields 3–5 ROOF_TILE; fenceable at Scrapyard |
+
+### New PropTypes (add to `PropType.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `ROOFER_VAN_PROP` | Kenny's battered white Transit; breakable with CROWBAR; spawns/despawns with Kenny's schedule |
+| `INVOICE_PROP` | Paper invoice left on a doorstep; disappears after 30 minutes or on interaction |
+| `TRADING_STANDARDS_OFFICE_PROP` | Council office door; press E to file complaint or receive tip-off reward |
+
+### New NPCTypes (add to `NPCType.java` if absent)
+
+| Constant | Stats | Notes |
+|----------|-------|-------|
+| `DODGY_ROOFER` | 25f, 6f, 2.0f, false | Kenny; weekday patrol; HOSTILE if rival caught; flees after losing fight |
+| `TRADING_STANDARDS_OFFICER` | 30f, 0f, 0f, false | Spawned on fraud threshold or weekly check; arrests on evidence; passive otherwise |
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Constant | Unlock Condition |
+|----------|-----------------|
+| `COWBOY_BUILDER` | Fail a repair mini-game while employed by Kenny or on rival round |
+| `GRAFTER` | Complete 5 honest jobs for Kenny |
+| `UNDERCUTTING_KENNY` | Complete 6 cold-calls without Kenny spotting you |
+| `TOOLS_DOWN` | Successfully raid Kenny's van while he's on a job |
+| `SERIAL_FRAUDSTER` | Get 3 invoices accepted by pensioners |
+| `PUBLIC_SPIRITED` | Report Kenny's scam to Trading Standards |
+| `TIP_OFF_KENNY` | Warn Kenny about a Trading Standards visit in time for him to hide the van |
+| `CIVIC_MINDED` | Report Kenny's location to Trading Standards during a weekly check |
+
+### New RumourTypes (add to `RumourType.java`)
+
+| Constant | Seeded When | Sample Text |
+|----------|-------------|-------------|
+| `KENNY_SCAM` | Kenny completes a successful scam call | "Some bloke's going door to door on Northfield Road saying he's done a job up the street. Watch yourself." |
+| `KENNY_ARGUMENT` | Kenny has a non-payment argument with a pensioner | "That roofer fella had a right go at Dot about her gutters. She never even asked him to look." |
+| `RIVAL_ROOFER` | Pensioner grasses on the player's rival round | "Someone else is doing the roofer scam now. There's two of them at it. Kenny's fuming." |
+| `TURF_DISPUTE` | Kenny confronts the player mid-cold-call | "That Kenny had a proper set-to with someone on the street. Said they were on his patch." |
+| `KENNY_REPORTED` | Player reports Kenny to Trading Standards | "Someone's grassed that roofer to Trading Standards. About time." |
+| `KENNY_FINED` | Kenny is fined/van impounded at weekly check | "Trading Standards had Kenny's van away. He was doing his nut outside the chippy." |
+| `SNITCH` | Player tips Trading Standards about Kenny during weekly check | "Someone's been talking to Trading Standards. Word gets round." |
+| `BOTCHED_JOB` | Player fails repair mini-game | "Some lad made an absolute mess of someone's guttering. Water everywhere." |
+
+### Unit Tests (`DodgyRooferSystemTest.java`)
+
+- `testKennyOnlySpawnsWeekdays`: verify `isKennyActive()` = false on Saturday and Sunday at 10:00; true on Monday–Friday 09:00–16:00.
+- `testKennyNotActiveBeforeNineAndAfterSixteen`: set time to weekday 08:59 verify false; 09:00 verify true; 16:00 verify false.
+- `testPitchAcceptRate`: simulate 1000 Kenny cold-calls (seeded rng); verify accept rate ≈35% ±4%.
+- `testRivalAcceptRate`: simulate 1000 rival cold-calls (seeded rng); verify accept rate ≈40% ±4%.
+- `testRivalGrassRate`: simulate 1000 rival cold-calls; verify grass rate ≈15% ±3%.
+- `testVanLootTableAlwaysHasSealant`: call `rollVanLoot(rng)` 100 times; verify every result contains at least 1 `BUCKET_OF_SEALANT`.
+- `testVanLootCashEnvelopeRate`: 1000 van raids; verify `CASH_ENVELOPE` appears ≈20% ±4%.
+- `testInvoiceAcceptRate`: simulate 1000 invoice attempts (seeded rng); verify accept rate ≈30% ±4%.
+- `testInvoicePadConsumedAfterThreeUses`: create `INVOICE_PAD`; use 3 times; verify item removed from inventory on 3rd use.
+- `testHMRCThresholdTriggeredAtTwelveCoins`: player earns 13 COIN in one day via honest jobs; verify HMRCSystem records threshold breach.
+- `testKennyHostileOnSpottingRival`: place Kenny at (10,0,10), player at (12,0,12) holding `BUCKET_OF_SEALANT`; call `update()`; verify Kenny state = HOSTILE.
+- `testKennyNotHostileBeyondSpotRadius`: place Kenny at (10,0,10), player at (40,0,40) holding `BUCKET_OF_SEALANT`; verify Kenny state ≠ HOSTILE.
+- `testTradingStandardsSpawnOnFraudThreshold`: submit 3 accepted invoices; verify `TRADING_STANDARDS_OFFICER` NPC spawned.
+- `testKennyVanHiddenOnTipOff`: call `tipOffKenny()` ≥ 10 minutes before 11:00 Friday; verify `ROOFER_VAN_PROP` despawned before check.
+- `testKennyFledAfterLostFight`: player wins fight against HOSTILE Kenny; verify Kenny state = FLEEING, respawn flag set for next day.
+
+### Integration Tests (`Issue1406DodgyRooferIntegrationTest.java`)
+
+1. **Kenny's daily round completes successfully**: advance to Monday 09:00. Verify `ROOFER_VAN_PROP` spawned and `DODGY_ROOFER` NPC present. Simulate Kenny reaching a residential property with a PENSIONER NPC. Simulate accept outcome (seeded rng). Verify `LADDER_PROP` placed against house. Verify Kenny income incremented by `SCAM_FEE`. Advance 120 seconds. Verify `LADDER_PROP` removed and Kenny has moved to next property. Advance to 16:00. Verify Kenny state = IDLE (round complete).
+
+2. **Player labourer honest job cycle**: advance to weekday 09:00. Player presses E on Kenny; verifies employment prompt. Player climbs `LADDER_PROP` (E), completes mini-game with passing score. Verify player receives `LABOURER_WAGE` COIN. Verify `HMRCSystem` income logged. Repeat 5 times. Verify `GRAFTER` achievement unlocked and wage upgraded to 4 COIN.
+
+3. **Rival cold-call grass chain**: player holds `BUCKET_OF_SEALANT` + `LATEX_GLOVES`. Approaches PENSIONER NPC. Presses E. Simulate grass outcome (seeded rng). Verify `RIVAL_ROOFER` rumour seeded in RumourNetwork. Verify WantedSystem star count incremented by 1. Verify Notoriety +3.
+
+4. **Van raid with Kenny on doorstep**: advance to weekday 10:00. Kenny is in BUSY state at a property. Player holds `CROWBAR`, presses E on `ROOFER_VAN_PROP` for 3 seconds. Verify `CrimeType.VEHICLE_BREAK_IN` in CriminalRecord. Verify van loot added to player inventory (at minimum 1 `BUCKET_OF_SEALANT`). Verify Notoriety +6 (no witness). Verify `TOOLS_DOWN` achievement unlocked on first raid.
+
+5. **Trading Standards weekly raid — van impound**: accumulate ≥ 4 Kenny scam successes. Advance to Friday 11:00. Verify `TRADING_STANDARDS_OFFICER` NPC spawns at industrial estate. Verify Kenny's van impounded (`ROOFER_VAN_PROP` despawned). Verify `KENNY_FINED` rumour seeded. Advance 1 in-game day. Verify `ROOFER_VAN_PROP` respawned.
+
+// ── Issue #1406: Add Northfield Dodgy Roofer ─────────────────────────────────────────────────
+// New System File: DodgyRooferSystem.java in ragamuffin.core
+// New Test Files: DodgyRooferSystemTest.java in src/test/java/ragamuffin/core/
+//                Issue1406DodgyRooferIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: BUCKET_OF_SEALANT, LATEX_GLOVES, SCAFFOLDING_SPANNER, INVOICE_PAD,
+//   CASH_ENVELOPE, ROOF_SLATE_BAG
+// New PropTypes: ROOFER_VAN_PROP, INVOICE_PROP, TRADING_STANDARDS_OFFICE_PROP
+// New NPCTypes: DODGY_ROOFER, TRADING_STANDARDS_OFFICER
+// New AchievementTypes: COWBOY_BUILDER, GRAFTER, UNDERCUTTING_KENNY, TOOLS_DOWN,
+//   SERIAL_FRAUDSTER, PUBLIC_SPIRITED, TIP_OFF_KENNY, CIVIC_MINDED
+// New RumourTypes: KENNY_SCAM, KENNY_ARGUMENT, RIVAL_ROOFER, TURF_DISPUTE,
+//   KENNY_REPORTED, KENNY_FINED, SNITCH, BOTCHED_JOB
+// Integration: BattleBarMiniGame, TimeSystem, NotorietySystem, WantedSystem, CriminalRecord,
+//   RumourNetwork, HMRCSystem, FenceSystem, ScrapyardSystem, NeighbourhoodWatchSystem,
+//   WindowCleanerSystem (LADDER_PROP reuse), AchievementSystem
