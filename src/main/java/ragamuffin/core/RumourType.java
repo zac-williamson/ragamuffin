@@ -1629,5 +1629,37 @@ public enum RumourType {
     /** "The health inspector's been round Skin Deep — reckon Kev's in trouble."
      * — seeded by TattooSystem during Health Inspector visit (dirty station found).
      * Spreads via PUBLIC and LOCAL_TRADER NPCs. */
-    HEALTH_SCARE;
+    HEALTH_SCARE,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1457: Northfield Save Our Pub — The Closed Crown & Anchor
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** "Someone nicked Baz's petition for the Crown &amp; Anchor. Bet it was that developer."
+     * — seeded by SaveOurPubSystem when the player steals Baz's PETITION_BOARD
+     *   and fences it to Lenny (PROPERTY_DEVELOPER).
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    PUB_PETITION_NICKED,
+
+    /** "There's a lock-in happening at the old Crown &amp; Anchor. Bring your own glass."
+     * — seeded by SaveOurPubSystem after the third underground lock-in is held
+     *   at the squatted pub (Fri/Sat 22:00–02:00).
+     * Spreads via YOUTH_GANG and PUBLIC NPCs. */
+    UNDERGROUND_LOCK_IN,
+
+    /** "The planning decision got delayed somehow. Baz reckons someone nicked the paperwork."
+     * — seeded by SaveOurPubSystem when the player destroys the PLANNING_PERMISSION
+     *   document in a BURNING_BIN or CAMPFIRE within 120 seconds of theft.
+     * Spreads via PUBLIC and LOCAL_TRADER NPCs. */
+    PUB_SAVED_TEMPORARILY,
+
+    /** "The Crown &amp; Anchor's staying! Council rejected the flats. Proper result."
+     * — seeded by SaveOurPubSystem on a Community Win at the committee vote.
+     * Spreads via all NPC types. */
+    CROWN_ANCHOR_SAVED,
+
+    /** "They've boarded up the Crown for good. Flats going in. It's a disgrace."
+     * — seeded by SaveOurPubSystem on a Developer Win at the committee vote.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    CROWN_ANCHOR_GONE;
 }
