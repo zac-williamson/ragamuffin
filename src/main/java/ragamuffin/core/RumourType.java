@@ -1131,5 +1131,29 @@ public enum RumourType {
      * Seeded by ChristmasMarketSystem when HEAVY_RAIN or THUNDERSTORM cancels
      * the market. Triggers NeighbourhoodSystem Vibes −2.
      * Spreads via PUBLIC and PENSIONER NPCs. */
-    XMAS_MARKET_CANCELLED;
+    XMAS_MARKET_CANCELLED,
+
+    // ── Issue #1373: Northfield Local Council Elections ───────────────────────
+
+    /** "They're out knocking on doors all week — leaflets, promises, the lot."
+     * Seeded by LocalElectionSystem during canvassing week (days 83–89).
+     * Spreads via PUBLIC, PENSIONER, and CANDIDATE_NPC NPCs. */
+    ELECTION_CANVASSING,
+
+    /** "Someone nicked the postal votes — absolute stitch-up."
+     * Seeded when player is caught committing postal vote fraud (detection 15%).
+     * Triggers NewspaperSystem headline. Spreads via PUBLIC NPCs. */
+    ELECTION_FRAUD,
+
+    /** "Can't believe [candidate] won — nobody saw that coming."
+     * Seeded by LocalElectionSystem after results announced (22:30, day 90).
+     * Triggers NeighbourhoodSystem Vibes ±2 based on faction alignment.
+     * Spreads via PUBLIC and COUNT_OBSERVER NPCs. */
+    ELECTION_UPSET,
+
+    /** "Things are going to change around here — you wait and see."
+     * Seeded day after results for 7-day post-election effect window.
+     * Triggers faction bonuses based on winning faction.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    ELECTION_AFTERMATH;
 }

@@ -1130,7 +1130,29 @@ public class CriminalRecord {
          * stolen goods at the Sunday car boot sale. Triggers Notoriety +10,
          * NewspaperSystem headline, and STOLEN_GOODS_MARKET rumour.
          */
-        TRADING_STANDARDS_BUST("Selling stolen goods at a car boot sale (Trading Standards bust)");
+        TRADING_STANDARDS_BUST("Selling stolen goods at a car boot sale (Trading Standards bust)"),
+
+        // ── Issue #1373: Northfield Local Council Elections ───────────────────
+
+        /**
+         * Recorded when the player fills in a POSTAL_VOTE_BUNDLE and the 15% detection
+         * check fires (5% with SLEIGHT_OF_HAND ≥ Journeyman). Penalty: Notoriety +15,
+         * WantedSystem +2 stars; ELECTION_FRAUD rumour seeded; candidate loses 20 votes.
+         */
+        ELECTORAL_FRAUD("Electoral fraud (postal vote fraud)"),
+
+        /**
+         * Recorded once per fraudulently completed ballot paper in a POSTAL_VOTE_BUNDLE.
+         * Each bundle yields 1–5 ballots. Stacks with ELECTORAL_FRAUD.
+         */
+        POSTAL_VOTE_FRAUDULENT("Fraudulent postal vote (individual ballot)"),
+
+        /**
+         * Recorded when the player stands within 3 blocks of POLLING_STATION_PROP while
+         * wearing ROSETTE_ITEM and is spotted by POLLING_OFFICER_NPC (Barry).
+         * Penalty: Notoriety +8; Barry calls police (WantedSystem +1 star).
+         */
+        BREACH_OF_POLLING_STATION_EXCLUSION("Breach of polling station exclusion zone");
 
         private final String displayName;
 
