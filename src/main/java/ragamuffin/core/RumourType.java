@@ -1290,5 +1290,32 @@ public enum RumourType {
     /** "Sports Day ruined by wasps. Six people stung. Dot got the worst of it."
      * Seeded by SportsDaySystem on wasp incident trigger.
      * Spreads via SCHOOL_MUM, PUBLIC, JOURNALIST NPCs. Triggers NewspaperSystem headline. */
-    WASP_INCIDENT;
+    WASP_INCIDENT,
+
+    // ── Issue #1398: Northfield Window Cleaner ────────────────────────────────
+
+    /** "Someone on this street hasn't paid Terry in three weeks. He's proper fuming."
+     * Seeded by WindowCleanerSystem when player reports a non-payment defaulter to Terry.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    NONPAYMENT_GOSSIP,
+
+    /** "There's someone doing windows round here. Not Terry — someone else. Cheaper, apparently."
+     * Seeded by WindowCleanerSystem when player attempts rival window cleaning.
+     * Spreads via PUBLIC, PENSIONER NPCs. Triggers Terry HOSTILE check. */
+    RIVAL_CLEANER,
+
+    /** "Terry's gone mad. Some lad's been doing his round on the sly. There'll be ructions."
+     * Seeded by WindowCleanerSystem when Terry spots the player undercutting him within 12 blocks.
+     * Spreads via PUBLIC, PENSIONER NPCs. Notoriety +3 via RumourMention. */
+    TURF_WAR,
+
+    /** "Someone was up Terry's ladder when he wasn't looking. Bold as brass."
+     * Seeded by WindowCleanerSystem when player is seen on LADDER_PROP by a witness NPC.
+     * Spreads via PUBLIC, PENSIONER NPCs. Triggers police call. */
+    LADDER_INCIDENT,
+
+    /** "Terry was chatting to Dot about number twelve — apparently they've been at it again."
+     * Seeded by WindowCleanerSystem during payment exchanges within 4 blocks of player.
+     * Spreads via PUBLIC, PENSIONER NPCs. Notoriety < 25 requirement. */
+    NEIGHBOURHOOD_GOSSIP;
 }

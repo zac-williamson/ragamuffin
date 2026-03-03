@@ -3055,7 +3055,15 @@ public enum NPCType {
     /** POSTAL_MANAGER — management representative who arrives at 17:00 on strike day 3.
      * Passive NPC; triggers strike resolution dialogue. No combat capability.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
-    POSTAL_MANAGER(20f, 0f, 0f, false);
+    POSTAL_MANAGER(20f, 0f, 0f, false),
+
+    // ── Issue #1398: Northfield Window Cleaner ────────────────────────────────
+
+    /** WINDOW_CLEANER — Terry, the window cleaner who does his residential round Mon–Fri 08:30–16:00.
+     * Follows a fixed 12-property route, spending 90 in-game seconds at each. Places LADDER_PROP
+     * against walls. Oblivious to player on ladder (facing wall). Becomes HOSTILE if player
+     * poaches his round. HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    WINDOW_CLEANER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

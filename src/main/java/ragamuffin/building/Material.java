@@ -6223,7 +6223,25 @@ public enum Material {
     /**
      * BOLT_CUTTER — "Heavy-duty. One snip and you're in. Single use."
      * Tool — bypasses locked doors/props in 1 use (vs. 3 CROWBAR uses). Fenceable. */
-    BOLT_CUTTER("Bolt Cutter");
+    BOLT_CUTTER("Bolt Cutter"),
+
+    // ── Issue #1398: Northfield Window Cleaner ────────────────────────────────
+
+    /**
+     * BUCKET_AND_CHAMOIS — "A yellow bucket, a squeegee, and more chamois than you need.
+     * Terry's livelihood in material form."
+     * Required to offer rival window cleaning. Buy from corner shop (8 COIN) or steal Terry's. */
+    BUCKET_AND_CHAMOIS("Bucket and Chamois"),
+
+    /**
+     * SQUEEGEE — "Telescopic. Leaves no streaks. Terry's never without one."
+     * Dropped by Terry on hostile takedown. Used as melee prop (2 damage, no crime). */
+    SQUEEGEE("Squeegee"),
+
+    /**
+     * TERRY_DEBT_NOTE — "Payment refused. Property: 14 Acacia Ave. Amount: 2 COIN. Date noted."
+     * Given to player after reporting a defaulter to Terry. Redeemable for 1 COIN + gossip. */
+    TERRY_DEBT_NOTE("Terry's Debt Note");
 
     private final String displayName;
 
@@ -9804,6 +9822,14 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // pin badge / flat disc
             case BOLT_CUTTER:
                 return IconShape.TOOL;        // heavy-duty cutting tool
+
+            // Issue #1398: Northfield Window Cleaner
+            case BUCKET_AND_CHAMOIS:
+                return IconShape.BOX;         // yellow bucket with chamois cloth
+            case SQUEEGEE:
+                return IconShape.TOOL;        // telescopic squeegee handle
+            case TERRY_DEBT_NOTE:
+                return IconShape.FLAT_PAPER;  // handwritten note
 
             default:
                 return IconShape.BOX;

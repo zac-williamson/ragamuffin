@@ -6489,6 +6489,53 @@ public enum AchievementType {
         "Entrepreneurial Spirit",
         "64 COIN. Cash in hand. HMRC are very interested in meeting you.",
         1
+    ),
+
+    // ── Issue #1398: Northfield Window Cleaner ────────────────────────────────
+
+    /**
+     * WINDOW_LAD — complete 8 or more houses during a single cash-in-hand shift with Terry.
+     */
+    WINDOW_LAD(
+        "Window Lad",
+        "Eight houses, a soapy arm, and Terry's grudging respect. Not bad for a morning's work.",
+        1
+    ),
+
+    /**
+     * UNDERCUTTING_TERRY — clean 5 rival houses without Terry spotting you.
+     */
+    UNDERCUTTING_TERRY(
+        "Undercutting Terry",
+        "Five houses, cash in hand, and Terry none the wiser. For now.",
+        1
+    ),
+
+    /**
+     * CURTAIN_TWITCHER — overhear 5 neighbourhood gossip rumours near Terry's payment exchanges.
+     */
+    CURTAIN_TWITCHER(
+        "Curtain Twitcher",
+        "You've stood outside five houses listening to Terry chat. That's either dedication or a problem.",
+        1
+    ),
+
+    /**
+     * UP_THE_LADDER — use Terry's LADDER_PROP to access an upstairs window for burglary.
+     */
+    UP_THE_LADDER(
+        "Up the Ladder",
+        "Terry left the ladder. You used it. Terry is still facing the wall.",
+        1
+    ),
+
+    /**
+     * BUCKET_AND_SPADE — steal Terry's BUCKET_AND_CHAMOIS and complete a rival round.
+     */
+    BUCKET_AND_SPADE(
+        "Bucket and Spade",
+        "You nicked Terry's kit and did his round. The cheek of it is almost admirable.",
+        1
     );
 
     private final String name;
