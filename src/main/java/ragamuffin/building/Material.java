@@ -89,6 +89,7 @@ public enum Material {
     PENNY("Penny"),
     HIGH_VIS_JACKET("High-Vis Jacket"),
     CROWBAR("Crowbar"),
+    ANGLE_GRINDER("Angle Grinder"),
     BALACLAVA("Balaclava"),
     BOLT_CUTTERS("Bolt Cutters"),
     DODGY_PASTY("Dodgy Pasty"),
@@ -5554,6 +5555,7 @@ public enum Material {
             // Fence stock items
             case HIGH_VIS_JACKET: return c(0.95f, 0.75f, 0.05f);  // Bright yellow
             case CROWBAR:         return c(0.25f, 0.25f, 0.30f);  // Dark steel
+            case ANGLE_GRINDER:   return c(0.70f, 0.10f, 0.10f);  // Red power tool body
             case BALACLAVA:       return c(0.10f, 0.10f, 0.10f);  // Black
             case BOLT_CUTTERS:    return cs(0.30f, 0.30f, 0.35f,  // Dark metal handles
                                             0.55f, 0.50f, 0.15f); // Orange grip
@@ -6671,6 +6673,7 @@ public enum Material {
             // Fence stock items
             case HIGH_VIS_JACKET:
             case CROWBAR:
+            case ANGLE_GRINDER:
             case BALACLAVA:
             case BOLT_CUTTERS:
             case DODGY_PASTY:
@@ -7372,6 +7375,7 @@ public enum Material {
             case HIGH_VIS_JACKET:
                 return IconShape.FLAT_PAPER; // vest-like shape
             case CROWBAR:
+            case ANGLE_GRINDER:
             case BOLT_CUTTERS:
                 return IconShape.TOOL;
             case BALACLAVA:
