@@ -5921,7 +5921,30 @@ public enum Material {
 
     /** Clip-on "I'M SANTA" badge pickpocketed from Terry in costume.
      * Unlocks MUGGED_FATHER_CHRISTMAS achievement. Tradeable novelty item. */
-    SANTA_BADGE("Santa Badge");
+    SANTA_BADGE("Santa Badge"),
+
+    // ── Issue #1373: Northfield Local Council Elections ───────────────────────
+
+    /** Campaign rosette worn by canvassers; equipping it near POLLING_STATION_PROP
+     * enables heckling mechanics on Polling Day. */
+    ROSETTE_ITEM("Campaign Rosette"),
+
+    /** Bundle of postal ballots intercepted from POSTMAN_NPC (08:00–11:00, days 83–89).
+     * Fill in 1–5 ballots at home for +5 votes per ballot to chosen candidate. */
+    POSTAL_VOTE_BUNDLE("Postal Vote Bundle"),
+
+    /** Single campaign leaflet dropped from LEAFLET_PILE_PROP or volunteered door-to-door.
+     * Sabotage rival piles using PERMANENT_MARKER. */
+    CAMPAIGN_LEAFLET("Campaign Leaflet"),
+
+    /** Stolen tally sheet from Count Night (22:30, day 90). Can be fenced for 8 COIN. */
+    COUNT_SHEET("Count Sheet"),
+
+    /** Novelty souvenir mug bearing a candidate's face. Tradeable keepsake. */
+    CANDIDATE_MUG("Candidate Mug"),
+
+    /** Broad-tipped permanent marker used to deface rival LEAFLET_PILE_PROP. */
+    PERMANENT_MARKER("Permanent Marker");
 
     private final String displayName;
 

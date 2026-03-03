@@ -6023,6 +6023,84 @@ public enum AchievementType {
         "Community Champion",
         "You grassed up Colin's dodgy scarf stall. Northfield thanks you.",
         1
+    ),
+
+    // ── Issue #1373: Northfield Local Council Elections ───────────────────────
+
+    /**
+     * FIRST_VOTER — awarded when the player casts their vote on Polling Day (day 90).
+     * Instant unlock.
+     */
+    FIRST_VOTER(
+        "First Voter",
+        "You actually voted. Your mum would be proud.",
+        1
+    ),
+
+    /**
+     * TACTICAL_VOTER — awarded when the player secretly pledges support to all three
+     * candidates during canvassing week (days 83–89).
+     * Instant unlock.
+     */
+    TACTICAL_VOTER(
+        "Tactical Voter",
+        "You backed Holt, Brannigan, and Patel. Hedge your bets, why don't you.",
+        1
+    ),
+
+    /**
+     * BALLOT_STUFFER — awarded when the player successfully fills in a postal vote
+     * bundle without being detected (15% detection risk, 5% with SLEIGHT_OF_HAND ≥ Journeyman).
+     * Instant unlock.
+     */
+    BALLOT_STUFFER(
+        "Ballot Stuffer",
+        "Five extra votes, no questions asked. Democracy is a beautiful thing.",
+        1
+    ),
+
+    /**
+     * STREET_SMART — awarded when the player grasses up the THUG attempting
+     * box-stuffing at Count Night to Barry (POLLING_OFFICER_NPC).
+     * Instant unlock.
+     */
+    STREET_SMART(
+        "Street Smart",
+        "You shopped the box-stuffer to Barry. Northfield owes you one.",
+        1
+    ),
+
+    /**
+     * HONEST_CITIZEN — awarded when the player exposes Steve Brannigan's counting
+     * errors during the recount (margin < 20 votes).
+     * Instant unlock.
+     */
+    HONEST_CITIZEN(
+        "Honest Citizen",
+        "You blew the whistle on Steve's dodgy arithmetic. Respect.",
+        1
+    ),
+
+    /**
+     * KINGMAKER — awarded when the player's chosen candidate wins the Northfield
+     * Ward election and the player contributed ≥ 10 net votes to that candidate.
+     * Instant unlock.
+     */
+    KINGMAKER(
+        "Kingmaker",
+        "Your candidate took the ward seat. The power behind the throne.",
+        1
+    ),
+
+    /**
+     * DEMOCRACY_DENIER — awarded when the player causes a candidate to lose ≥ 30
+     * votes through a combination of sabotage, fraud exposure, and heckling.
+     * Instant unlock.
+     */
+    DEMOCRACY_DENIER(
+        "Democracy Denier",
+        "You single-handedly tanked a candidate's campaign. Churchill is spinning.",
+        1
     );
 
     private final String name;

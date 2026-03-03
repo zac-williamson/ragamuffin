@@ -2954,7 +2954,31 @@ public enum NPCType {
      * during market hours 10:00–20:00.
      * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    XMAS_STALL_VENDOR(25f, 0f, 0f, false);
+    XMAS_STALL_VENDOR(25f, 0f, 0f, false),
+
+    // ── Issue #1373: Northfield Local Council Elections ───────────────────────
+
+    /** CANDIDATE_NPC — one of the three ward candidates (Patricia Holt, Steve Brannigan,
+     * Nikhil Patel). Stands at CANDIDATE_TABLE_PROP during canvassing week.
+     * Press E to pledge support or volunteer a leafleting shift.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    CANDIDATE_NPC(20f, 0f, 0f, false),
+
+    /** CANVASSER_NPC — campaign volunteer staffing LEAFLET_PILE_PROP for a candidate.
+     * Detects PERMANENT_MARKER sabotage (40% chance). Raises alarm if caught.
+     * HP: 15f, attack: 0f, cooldown: 0f, hostile: false. */
+    CANVASSER_NPC(15f, 0f, 0f, false),
+
+    /** POLLING_OFFICER_NPC — Barry, the returning officer's clerk stationed at
+     * POLLING_STATION_PROP on Polling Day. Enforces the 3-block exclusion zone
+     * and can be bribed for 10 COIN to look away for 1 in-game hour.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false. */
+    POLLING_OFFICER_NPC(20f, 0f, 0f, false),
+
+    /** COUNT_OBSERVER — generic town-hall attendee at Count Night from 22:30.
+     * Witnesses ballot events and reacts to results announcement.
+     * HP: 15f, attack: 0f, cooldown: 0f, hostile: false. */
+    COUNT_OBSERVER(15f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

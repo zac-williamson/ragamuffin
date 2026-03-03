@@ -3693,7 +3693,30 @@ public enum PropType {
      * accumulates 1 COIN per SCHOOL_KID visitor (max 20/day). Stealable when
      * Terry is distracted. 0.2×0.3×0.2m; fragile.
      */
-    GROTTO_TIN(0.2f, 0.3f, 0.2f, 2, Material.COIN);
+    GROTTO_TIN(0.2f, 0.3f, 0.2f, 2, Material.COIN),
+
+    // ── Issue #1373: Northfield Local Council Elections ───────────────────────
+
+    /**
+     * LEAFLET_PILE_PROP — stack of campaign leaflets outside shops/estates during
+     * canvassing week (days 83–89). Interact to collect CAMPAIGN_LEAFLET or (holding
+     * PERMANENT_MARKER) to sabotage rival piles. 0.4×0.2×0.3m; fragile.
+     */
+    LEAFLET_PILE_PROP(0.4f, 0.2f, 0.3f, 2, Material.CAMPAIGN_LEAFLET),
+
+    /**
+     * CANDIDATE_TABLE_PROP — folding table staffed by a CANDIDATE_NPC during
+     * canvassing week. Press E to pledge support or volunteer a leafleting shift.
+     * Decorated with CAMPAIGN_LEAFLET stacks and CANDIDATE_MUG. 1.2×0.8×0.6m; sturdy.
+     */
+    CANDIDATE_TABLE_PROP(1.2f, 0.8f, 0.6f, 8, null),
+
+    /**
+     * VOTE_COUNT_TABLE_PROP — trestle table at the town hall used by returning
+     * officer's staff to tally ballot papers on Count Night (22:30, day 90).
+     * Interact during RECOUNT_DEMAND event to steal COUNT_SHEET. 1.8×0.9×0.6m; sturdy.
+     */
+    VOTE_COUNT_TABLE_PROP(1.8f, 0.9f, 0.6f, 8, Material.COUNT_SHEET);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
