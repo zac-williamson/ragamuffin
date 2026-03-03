@@ -52323,3 +52323,190 @@ During working hours Steve and Phil take regular tea breaks at `WELFARE_CABIN_PR
 //   CriminalRecord, RumourNetwork, NeighbourhoodWatchSystem, HMRCSystem, FenceSystem,
 //   CouncilEnforcementSystem, DisguiseSystem, WarmthSystem, SoundSystem, AchievementSystem,
 //   ResidentsParkingSystem, TrafficWardenSystem
+
+## Issue #1404: Add Northfield Community Litter Pick — The Hi-Vis Cover, the Bush Stash Discovery & the Council Volunteer Power Trip
+
+### Overview
+
+Every second Saturday morning the Northfield Tidy Streets initiative runs a community litter pick
+organised by the council and stewarded by Janet (LITTER_PICK_COORDINATOR), a retired school
+admin officer who has discovered a vocation in community improvement and takes it very, very
+seriously. Eight to twelve PUBLIC/PENSIONER volunteers gather at the park gates at 09:00, armed
+with LITTER_PICKER_STICK and COUNCIL_RUBBISH_BAG, and fan out across the park, streets and
+verges for two hours. Participation looks legitimately wholesome — which is exactly why it is
+useful.
+
+### Mechanic 1 — The Litter Pick Event
+
+Triggers every second Saturday (Saturday where `weekNumber % 2 == 0`), 09:00–11:00. Outside
+this window the event does not run. When active:
+- Janet (`LITTER_PICK_COORDINATOR` NPC) stands at the `LITTER_PICK_TENT_PROP` outside the park
+  gates, handing out equipment (press E to receive `LITTER_PICKER_STICK` + `COUNCIL_RUBBISH_BAG`
+  at no cost). She gives a clipboard speech about "making Northfield the best it can be".
+- `VOLUNTEER_PICKER_NPC` (6–10 PUBLIC/PENSIONER NPCs) fan out across the park and high street,
+  walking slowly and bending to pick up `LITTER_PROP` items that spawn across the zone.
+- `LITTER_PROP` spawns: 20–30 items scattered across the event zone (park + adjacent pavements)
+  at event start. Each `VOLUNTEER_PICKER_NPC` removes one `LITTER_PROP` per 15 real-seconds.
+- Player can pick up `LITTER_PROP` items (press E while holding `LITTER_PICKER_STICK`) — each
+  collected item goes into `COUNCIL_RUBBISH_BAG` (capacity 10). Full bag: return to Janet's tent
+  and press E to empty it (Janet praises you, bag resets to empty).
+- Litter Quota: collect `QUOTA_AMOUNT` = 8 items before 11:00 and return the bag. Reward:
+  Notoriety −5, `GOOD_CITIZEN` buff (2 in-game hours, police suspicion −20%).
+- Event ends at 11:00. Janet gives a closing speech. Remaining `LITTER_PROP` items despawn.
+
+### Mechanic 2 — Notoriety Laundering
+
+The litter pick is a public notoriety-washing event:
+- Each `LITTER_PROP` collected reduces Notoriety by `NOTORIETY_PER_LITTER` = 0.5 (fractional,
+  tracked as float, applied as integer floor when reporting to NotorietySystem).
+- Maximum Notoriety reduction from litter picking: `MAX_NOTORIETY_WASH` = 10 per event.
+- Completing the quota and returning the bag seeds rumour `LITTER_PICK_HERO` in the
+  RumourNetwork (text: "Someone actually bothered with the litter pick. First time in years.").
+- If player Notoriety ≥ 40 when joining, Janet eyes them suspiciously — dialogue:
+  "We don't judge here. Just pick up the litter." (no mechanical penalty, flavour only).
+- `COUNCIL_ENFORCEMENT_OFFICER` Derek is present for the first 30 minutes, but he's so pleased
+  someone is tidying up he actively ignores minor crimes (Notoriety threshold for enforcement
+  raised to 60 during event). He leaves at 09:30.
+
+### Mechanic 3 — The Hidden Bush Stash Discovery
+
+Among the `LITTER_PROP` spawns, one random item in the park bushes is secretly a
+`HIDDEN_STASH_PROP`. The player cannot distinguish it visually from regular litter.
+On pressing E to pick it up with the `LITTER_PICKER_STICK`, the stash is revealed:
+- Contents drawn from `STASH_TABLE`:
+  - `TOBACCO_POUCH` (40% — someone dropped it fleeing police)
+  - `CRISPS` × 3 (25% — some kid's hiding spot)
+  - `COIN` × 3 (20% — dropped change)
+  - `CRACK_PIPE` (10% — triggering `CrimeType.DRUG_POSSESSION` if player is searched
+    while carrying it; fenceable at the Scrapyard for 2 COIN as "glass pipe")
+  - `BURNER_PHONE` (5% — fenceable for 6 COIN; holds one incriminating rumour that
+    gets seeded when sold to the fence)
+- Finding the stash seeds rumour `BUSH_STASH_FOUND` ("Someone found a right load of
+  stuff in the bushes up the park. Litter pick finds again.").
+- Achievement `SKIP_LEVEL_UP` on finding the stash (tooltip: "You came to tidy up and
+  found a whole situation.").
+
+### Mechanic 4 — Janet's Power Trip
+
+Janet (`LITTER_PICK_COORDINATOR`) runs the event with escalating officiousness:
+- Player arrives late (after 09:15): Janet refuses to issue equipment. Player can
+  find an abandoned `LITTER_PICKER_STICK` prop (10% chance, near the tent) to
+  participate anyway — counts for Notoriety wash but not the quota reward.
+- Janet patrols the event zone and issues a `WARNING_DIALOGUE` if she sees the player
+  within 5 blocks of a garden (triggers `TRESPASSING_CONCERN`). Two warnings =
+  Janet phones the council, Notoriety +2, player ejected from event.
+- If player empties the bag at Janet's tent with a `CRACK_PIPE` inside (picked from
+  bush stash and not removed first), Janet screams, calls police immediately. Player
+  has 10 seconds to leave the area. `CrimeType.DRUG_POSSESSION` + Notoriety +8.
+  Achievement `JANETS_WORST_DAY`.
+- If player talks to Janet while carrying stolen `GARDEN_ORNAMENT` items (from
+  RagAndBoneSystem), she immediately recognises them ("That's Mavis's gnome!"),
+  Notoriety +5, police alerted. Player can bribe Janet with `CHEWING_GUM` or
+  `CHOCOLATE_BAR` (50% success, flavour dialogue "...go on then") to avoid report.
+- Player completing the quota with Notoriety = 0 at event end: Janet nominates player
+  for `TIDY_STREETS_AWARD`, seeds rumour `LOCAL_HERO` (text: "That lad off the litter
+  pick is proper good. Helping out the community."). Achievement `LOCAL_HERO`.
+
+### Mechanic 5 — Volunteer NPC Mugging & Disruption
+
+The `VOLUNTEER_PICKER_NPC` NPCs are distracted and unaware — ideal marks:
+- Player can pickpocket `VOLUNTEER_PICKER_NPC` while they bend to pick up litter
+  (NPC in BENDING_STATE for 2 seconds): 60% success. Yields 1–3 COIN or
+  `CHEWING_GUM`. Pickpocketing in sight of Janet: `CrimeType.THEFT` + Notoriety +4,
+  ejected from event.
+- Player can steal a `VOLUNTEER_PICKER_NPC`'s `COUNCIL_RUBBISH_BAG` (hold E 1 second
+  on NPC): bag contains 0–5 already-collected `LITTER_PROP` items counting toward
+  player's quota. NPC runs to Janet to report theft; Janet ejects player if still present.
+- Player can "accidentally" drop litter (press E with `COUNCIL_RUBBISH_BAG` and select
+  DUMP_LITTER): empties bag contents back onto the floor as `LITTER_PROP` items,
+  undoing all collection. Achievement `COUNTER_PRODUCTIVE`. Notoriety +2 if witnessed
+  by any NPC.
+
+### New Materials (add to `Material.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `LITTER_PICKER_STICK` | Extending grabber tool; used to collect LITTER_PROP items during event; also usable as improvised weapon (4 hits, fragile) |
+| `COUNCIL_RUBBISH_BAG` | Orange refuse bag; holds up to 10 LITTER_PROP items; returned to Janet's tent to count quota |
+| `CRACK_PIPE` | Glass pipe; triggers DRUG_POSSESSION if found in bag or on player during search; fenceable at Scrapyard for 2 COIN |
+| `BURNER_PHONE` | Prepaid phone with incriminating call history; fenceable for 6 COIN; seeds one random criminal rumour when sold |
+
+### New PropTypes (add to `PropType.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `LITTER_PICK_TENT_PROP` | Council pop-up gazebo; equipment distribution point; Janet's anchor |
+| `LITTER_PROP` | Generic litter item (can/bottle/wrapper); collectable with LITTER_PICKER_STICK; reduces Notoriety on pickup |
+| `HIDDEN_STASH_PROP` | Visually identical to LITTER_PROP; reveals stash contents on pickup |
+
+### New NPCTypes (add to `NPCType.java` if absent)
+
+| Constant | Stats | Notes |
+|----------|-------|-------|
+| `LITTER_PICK_COORDINATOR` | 18f, 0f, 0f, false | Janet; issues equipment; enforces event rules; phones police on rule break |
+| `VOLUNTEER_PICKER` | 15f, 0f, 0f, false | PUBLIC/PENSIONER variant; distracted during event; pickpocketable |
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Constant | Unlock Condition |
+|----------|-----------------|
+| `LOCAL_HERO` | Complete quota with Notoriety = 0 at event end |
+| `SKIP_LEVEL_UP` | Find the HIDDEN_STASH_PROP during a litter pick event |
+| `JANETS_WORST_DAY` | Return bag to Janet containing a CRACK_PIPE |
+| `COUNTER_PRODUCTIVE` | Dump litter back on the ground during a litter pick event |
+| `LITTER_PICK_REGULAR` | Complete the litter pick quota on 3 separate event days |
+
+### New RumourTypes (add to `RumourType.java`)
+
+| Constant | Seeded When | Sample Text |
+|----------|-------------|-------------|
+| `LITTER_PICK_HERO` | Player completes quota and returns bag | "Someone actually bothered with the litter pick. First time in years." |
+| `BUSH_STASH_FOUND` | Player finds HIDDEN_STASH_PROP | "Someone found a right load of stuff in the bushes up the park. Litter pick finds again." |
+| `LOCAL_HERO` | Player completes quota with Notoriety = 0 | "That lad off the litter pick is proper good. Helping out the community." |
+| `JANET_INCIDENT` | Janet phones police during event | "Janet from the litter pick called the police on someone. Absolute state." |
+
+### Unit Tests (`LitterPickSystemTest.java`)
+
+- `testEventScheduleCorrectSaturdayOnly`: advance TimeSystem to odd Saturday (weekNumber=1); verify `isEventActive()` = false; advance to even Saturday 09:00 (weekNumber=2); verify `isEventActive()` = true.
+- `testEventNotActiveBeforeNineAndAfterEleven`: set time to even Saturday 08:59; verify false; set 09:00 verify true; set 11:00 verify false.
+- `testLitterSpawnCount`: call `spawnLitterProps(rng)`; verify returned list size between 20 and 30.
+- `testHiddenStashExactlyOnePerEvent`: call `spawnLitterProps(rng)` 100 times; verify exactly 1 `HIDDEN_STASH_PROP` in every result.
+- `testStashTableTobaccoPouchRate`: 1000 stash reveals (seeded rng); verify `TOBACCO_POUCH` rate ≈40% ±4%.
+- `testStashTableBurnerPhoneRate`: 1000 stash reveals; verify `BURNER_PHONE` rate ≈5% ±2%.
+- `testNotorietyWashPerItem`: pick 10 items; verify NotorietySystem total reduction = floor(10 × 0.5) = 5.
+- `testNotorietyWashCap`: pick 25 items (only first 20 × 0.5 = 10 count); verify total reduction capped at `MAX_NOTORIETY_WASH` = 10.
+- `testQuotaCompletionGrantsGoodCitizen`: player collects 8 items, returns bag to Janet; verify Notoriety −5 applied, `GOOD_CITIZEN` buff duration = 2 in-game hours.
+- `testLateArrivalRefusesEquipment`: set time to 09:20; player approaches Janet and presses E; verify equipment NOT issued, dialogue triggered.
+- `testTwoJanetWarningsEjectsPlayer`: trigger 2 trespassing warnings from Janet; verify player `isEjectedFromEvent()` = true, Notoriety +2.
+- `testCrackPipeInBagCalledPolice`: player collects HIDDEN_STASH containing CRACK_PIPE; returns bag to Janet without removing pipe; verify `CrimeType.DRUG_POSSESSION` in CriminalRecord, Notoriety +8, police alerted.
+- `testPickpocketSuccessRate`: 1000 pickpocket attempts (seeded rng); verify success ≈60% ±4%.
+- `testPickpocketInJanetSightEjectsAndFine`: pickpocket while Janet within 5 blocks; verify `CrimeType.THEFT` in CriminalRecord, Notoriety +4.
+- `testDumpLitterAchievementAndNotoriety`: player selects DUMP_LITTER from bag with witness present; verify `COUNTER_PRODUCTIVE` achievement, Notoriety +2.
+- `testGardenOrnamentJanetRecognition`: player carries `GARDEN_ORNAMENT` when talking to Janet; verify Notoriety +5, police alerted.
+- `testGardenOrnamentBribeSuccess`: carry `GARDEN_ORNAMENT`, talk to Janet, offer `CHOCOLATE_BAR`; with seeded rng forcing success (50%); verify no police alert, bribe item removed from inventory.
+
+### Integration Tests (`Issue1404LitterPickIntegrationTest.java`)
+
+1. **Full litter pick quota run**: advance time to even Saturday 09:00. Verify `LITTER_PICK_TENT_PROP` spawned and `LITTER_PICK_COORDINATOR` NPC present. Player presses E on Janet — receives `LITTER_PICKER_STICK` + `COUNCIL_RUBBISH_BAG`. Collect 8 `LITTER_PROP` items. Return to tent, press E. Verify `COUNCIL_RUBBISH_BAG` is empty, Notoriety reduced by at least 5 (quota reward + fractional litter bonuses), `GOOD_CITIZEN` buff active. Verify `LITTER_PICK_HERO` rumour seeded in RumourNetwork. Advance time to 11:00. Verify `LITTER_PROP` items despawned.
+
+2. **Hidden stash discovery flow**: advance to even Saturday 09:00. Obtain `LITTER_PICKER_STICK`. Walk around event zone pressing E on `LITTER_PROP` items. Verify exactly one press eventually reveals a `HIDDEN_STASH_PROP` (item from stash table added to player inventory). Verify `BUSH_STASH_FOUND` rumour seeded. Verify `SKIP_LEVEL_UP` achievement unlocked.
+
+3. **Crack pipe bag return triggers police**: player finds `HIDDEN_STASH_PROP` that yields `CRACK_PIPE` (seeded rng). Player does NOT remove `CRACK_PIPE` from bag. Player returns to Janet and presses E to empty bag. Verify Janet's alarm dialogue triggers. Verify police NPC spawned within 30 seconds. Verify `CrimeType.DRUG_POSSESSION` in CriminalRecord. Verify `JANETS_WORST_DAY` achievement unlocked.
+
+4. **Janet ejects late arrival + pickpocket chain**: advance to even Saturday 09:20. Player approaches Janet — verify equipment refused (late arrival). Player finds abandoned `LITTER_PICKER_STICK`. Player pickpockets `VOLUNTEER_PICKER_NPC` while within 5 blocks of Janet. Verify `CrimeType.THEFT` in CriminalRecord, Notoriety +4, `isEjectedFromEvent()` = true. Verify Janet seeds `JANET_INCIDENT` rumour.
+
+5. **Derek's event-time leniency**: advance to even Saturday 09:05. Verify `COUNCIL_ENFORCEMENT_OFFICER` Derek is present. Player commits a minor visible crime (drop item in road). Verify Derek does NOT respond (enforcement threshold raised to 60). Advance to 09:30. Verify Derek has left. Commit same crime again. Verify Derek would now respond (threshold restored to normal).
+
+// ── Issue #1404: Add Northfield Community Litter Pick ─────────────────────────────────────────
+// New System File: LitterPickSystem.java in ragamuffin.core
+// New Test Files: LitterPickSystemTest.java in src/test/java/ragamuffin/core/
+//                Issue1404LitterPickIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: LITTER_PICKER_STICK, COUNCIL_RUBBISH_BAG, CRACK_PIPE, BURNER_PHONE
+// New PropTypes: LITTER_PICK_TENT_PROP, LITTER_PROP, HIDDEN_STASH_PROP
+// New NPCTypes: LITTER_PICK_COORDINATOR, VOLUNTEER_PICKER
+// New AchievementTypes: LOCAL_HERO, SKIP_LEVEL_UP, JANETS_WORST_DAY, COUNTER_PRODUCTIVE,
+//   LITTER_PICK_REGULAR
+// New RumourTypes: LITTER_PICK_HERO, BUSH_STASH_FOUND, LOCAL_HERO, JANET_INCIDENT
+// Integration: TimeSystem, NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
+//   CouncilEnforcementSystem, NeighbourhoodWatchSystem, FenceSystem, ScrapyardSystem,
+//   WarmthSystem, AchievementSystem, RagAndBoneSystem, WeatherSystem
