@@ -51959,3 +51959,164 @@ Householders who chat with Terry seed random `NEIGHBOURHOOD_GOSSIP` rumours duri
 // Integration: BattleBarMiniGame, PropertySystem, TimeSystem, NotorietySystem, WantedSystem,
 //   CriminalRecord, RumourNetwork, NeighbourhoodSystem, NeighbourhoodWatchSystem, HMRCSystem,
 //   FenceSystem, EmploymentSystem, SoundSystem, AchievementSystem
+
+---
+
+## Issue #1400: Add Northfield Residents' Parking Permit Racket — The Zone Sign Fiddle, the Clamping Ambush & the Council Enforcement Bribe
+
+### Overview
+
+Northfield has a Residents' Parking Zone (RPZ) running weekdays 08:00–18:00 on three streets
+near the high street. Brenda at the council office issues legitimate permits (£4 in-game coin,
+valid 1 in-game week) but there's a two-day waiting list. Meanwhile, Barry the Traffic Warden
+(a new NPC variant) clamps unregistered cars and the player can hustle the whole system —
+forging permits, stealing clamps, bribing Barry, or vandalising RPZ signs to turn the
+enforcement zone into free-for-all parking chaos.
+
+### Mechanic 1 — Legitimate Permit
+
+Player visits the `COUNCIL_OFFICE` landmark (or kiosk prop) between 09:00–17:00 weekdays
+and presses E on `BRENDA_NPC` (COUNCIL_CLERK type). Pays `PERMIT_COST` = 4 COIN, receives
+`PARKING_PERMIT` item. Permit is valid for `PERMIT_VALIDITY_HOURS` = 168 in-game hours (1 week).
+Player can only hold one permit at a time. Permit expires silently; no UI warning (very council).
+
+### Mechanic 2 — Forged Permit
+
+Player with `STOLEN_PRINTER_INK` + `CARDBOARD` in inventory (or at `INTERNET_CAFE_PROP` for 1
+COIN per use) can craft a `FORGED_PARKING_PERMIT`. Forged permits:
+- Look identical to real ones in inventory.
+- 20% chance Barry spots the forgery when checking (on clamp patrol). If caught:
+  `CrimeType.DOCUMENT_FRAUD`, Notoriety +5, `FORGED_PERMIT` rumour seeded.
+- Forged permit is voided (removed) on detection.
+- Barry's check only triggers if player's car is parked in the RPZ.
+
+### Mechanic 3 — Barry's Clamp Patrol
+
+`TRAFFIC_WARDEN_BARRY` NPC (new variant of TRAFFIC_WARDEN type) patrols the three RPZ
+streets every in-game 20 minutes during enforcement hours. Cars without a valid/forged permit
+parked in the zone are clamped: `WHEEL_CLAMP_PROP` is placed, player must pay `CLAMP_RELEASE_FEE`
+= 10 COIN at the `COUNCIL_OFFICE_KIOSK` to retrieve the car.
+
+**Clamp-removal mini-game**: player crouches near `WHEEL_CLAMP_PROP` and holds E for 3 seconds
+(BattleBarMiniGame on MEDIUM). Success removes clamp silently, no charge. Failure: Barry is
+alerted from anywhere on his current street (radio call), arrives in 30 seconds. Getting caught
+mid-removal: `CrimeType.THEFT_OF_COUNCIL_PROPERTY`, Notoriety +6, Wanted +1.
+
+### Mechanic 4 — RPZ Sign Vandalism
+
+RPZ signs (`RPZ_SIGN_PROP`) can be vandalised with `SPRAY_CAN`:
+- Hold E for 2 seconds on the sign → sign changed to `DEFACED_RPZ_SIGN_PROP`.
+- Defaced sign means Barry cannot legally clamp cars on that street for `SIGN_DEFACED_DURATION`
+  = 3 in-game hours (Barry mutters, reports to council, but clamp action is suppressed).
+- Council `REPAIR_CREW_NPC` arrives after 3 hours to replace defaced sign.
+- Vandalism: Notoriety +3, `SIGN_VANDAL` rumour seeded. CCTV within 12 blocks records it.
+
+### Mechanic 5 — Barry Bribery
+
+Player can approach Barry mid-patrol and press E to offer a bribe:
+- `BRIBE_LOW` = 3 COIN: Barry refuses; Notoriety +2 (attempted bribery of council officer).
+- `BRIBE_MID` = 8 COIN: 50% accept (Barry looks the other way for 20 in-game minutes, ignores
+  player's car); 50% refuses and files a report: Notoriety +4, `BRIBERY_ATTEMPT` rumour seeded.
+- `BRIBE_HIGH` = 20 COIN: Barry always accepts; ignores player's car for full enforcement session
+  (until 18:00). Seeds `BENT_WARDEN` rumour. Achievement `SWEETENING_BARRY`.
+
+**Barry's Mood**: Barry's acceptance threshold drops if `RumourType.BENT_WARDEN` is already
+in circulation (he's been warned someone's grassing) — halves accept chance.
+
+### Mechanic 6 — Permit Scalping
+
+Player holding valid `PARKING_PERMIT` can sell it to `DESPERATE_PARKER_NPC` (PUBLIC NPC variant
+with `PARKING_NEED` flag active when their car is in danger of clamping) for up to
+`SCALP_MAX_PRICE` = 12 COIN. `HMRC` tracks cash income ≥ 30 COIN in one day. Achievement
+`NORTHFIELD_TICKET_TOUT` on first scalp above face value.
+
+### New Materials (add to `Material.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `PARKING_PERMIT` | Paper permit; grants RPZ parking; expires after 168 in-game hours |
+| `FORGED_PARKING_PERMIT` | Crafted forgery; 20% detection chance; voided on detection |
+| `WHEEL_CLAMP_KEY` | Council key; obtained by pickpocketing Barry (PickpocketSystem); releases clamp free |
+| `STOLEN_PRINTER_INK` | Crafting ingredient for forged permit; found in office buildings |
+
+### New PropTypes (add to `PropType.java` if absent)
+
+| Constant | Description |
+|----------|-------------|
+| `WHEEL_CLAMP_PROP` | Clamp on a parked car; removable by mini-game or key; blocks car use |
+| `RPZ_SIGN_PROP` | Residents' Parking Zone sign; can be vandalised with SPRAY_CAN |
+| `DEFACED_RPZ_SIGN_PROP` | Vandalised RPZ sign; suppresses Barry's clamping on this street |
+| `COUNCIL_OFFICE_KIOSK` | Counter where Brenda issues permits and clamp release fees are paid |
+
+### New NPCTypes (add to `NPCType.java` if absent)
+
+| Constant | Stats | Notes |
+|----------|-------|-------|
+| `TRAFFIC_WARDEN_BARRY` | 20f, 0f, 0f, false | Barry; patrols RPZ every 20 min; clamping behaviour; bribeable |
+| `COUNCIL_CLERK` | 18f, 0f, 0f, false | Brenda; static at kiosk; issues permits and clamp fees |
+| `REPAIR_CREW_NPC` | 18f, 0f, 0f, false | Arrives 3h after sign vandalism; replaces sign prop |
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Constant | Unlock Condition |
+|----------|-----------------|
+| `SWEETENING_BARRY` | Successfully bribe Barry with BRIBE_HIGH (20 COIN) |
+| `NORTHFIELD_TICKET_TOUT` | Scalp a parking permit above face value to a desperate parker |
+| `FREE_RANGE_PARKING` | Deface all three RPZ signs on the same day |
+| `CLAMP_ESCAPE_ARTIST` | Remove a wheel clamp via mini-game without being caught |
+| `FORGER_IN_RESIDENCE` | Use a forged permit 3 times without being detected |
+
+### New RumourTypes (add to `RumourType.java`)
+
+| Constant | Seeded When | Sample Text |
+|----------|-------------|-------------|
+| `FORGED_PERMIT` | Barry catches forged permit | "Someone's been printing fake parking permits. Barry's fuming." |
+| `BENT_WARDEN` | Barry accepts a BRIBE_HIGH | "Barry took a backhander. Not exactly surprising, but still." |
+| `BRIBERY_ATTEMPT` | Barry rejects bribe | "Someone tried to bribe the parking warden this morning. Didn't work." |
+| `SIGN_VANDAL` | Player defaces RPZ sign | "Someone's had the signs on Birchfield Road again. Council's going spare." |
+| `CLAMP_THEFT` | Player caught removing clamp | "Police on Church Road — someone tried to nick a wheel clamp." |
+
+### Unit Tests (`ResidentsParkingSystemTest.java`)
+
+- `testPermitIssuedAndExpiry`: issue permit at game-time 0; advance 167 in-game hours; verify still valid; advance 1 more hour; verify expired.
+- `testForgedPermitDetectionRate`: create 1000 Barry inspection rolls with seeded Random; verify ≈20% detected, within 3% tolerance.
+- `testBarryPatrolInterval`: advance system through two patrol cycles; verify car is clamped after 20 in-game minutes without a permit.
+- `testClampRemovalMiniGame`: place WHEEL_CLAMP_PROP; simulate BattleBarMiniGame success; verify clamp removed, no crime recorded.
+- `testClampRemovalFailure`: simulate BattleBarMiniGame failure; verify Barry alert triggered, 30-second arrival timer started.
+- `testBribeLowRefused`: attempt BRIBE_LOW (3 COIN); verify Barry rejects, Notoriety +2, coin NOT deducted.
+- `testBribeMidAcceptanceRate`: 1000 BRIBE_MID rolls with seeded Random; verify ≈50% accept, within 5% tolerance.
+- `testBribeHighAlwaysAccepted`: attempt BRIBE_HIGH (20 COIN); verify accepted 100%, coin deducted, `BENT_WARDEN` rumour seeded.
+- `testBribeHighReducedWhenRumourActive`: seed `BENT_WARDEN` rumour first; attempt BRIBE_MID; verify accept chance halved (≈25% in 1000 rolls).
+- `testSignVandalismSuppressesClamping`: deface RPZ sign; advance past Barry patrol time; verify no WHEEL_CLAMP_PROP placed; advance 3h; verify clamp resumes.
+- `testRepairCrewArrivesAfterVandalism`: deface sign at time T; advance T+3h; verify `REPAIR_CREW_NPC` spawned and sign replaced.
+- `testPermitScalpPriceAboveFace`: player scalps permit for 12 COIN; verify buyer NPC accepts, coin transferred, `NORTHFIELD_TICKET_TOUT` achievement queued.
+- `testHMRCTriggerOnScalping`: scalp 4 permits in one day (4×12 = 48 COIN); verify `HMRCSystem.recordCashIncome` called with 48.
+- `testWheelClampKeyReleasesClamp`: player pickpockets `WHEEL_CLAMP_KEY` from Barry; uses key on WHEEL_CLAMP_PROP; verify clamp removed, no crime recorded.
+- `testMultipleSignDeface`: deface all 3 RPZ signs on same day; verify `FREE_RANGE_PARKING` achievement unlocked.
+
+### Integration Tests (`Issue1400ResidentsParkingIntegrationTest.java`)
+
+1. **Permit workflow end-to-end**: advance game to Monday 09:30. Player visits `COUNCIL_OFFICE_KIOSK`. Pays 4 COIN to `COUNCIL_CLERK` Brenda. Verify `PARKING_PERMIT` in player inventory. Park player car in RPZ zone. Advance 20 in-game minutes. Verify Barry's patrol completes without clamping player's car. Advance 168 in-game hours. Verify permit expires. Advance another 20 minutes. Verify `WHEEL_CLAMP_PROP` appears on player's car.
+
+2. **Forged permit detection and crime record**: player crafts `FORGED_PARKING_PERMIT` using `STOLEN_PRINTER_INK` + `CARDBOARD`. Parks car in RPZ. Force Barry's detection roll to 'detect' (seed Random). Verify Barry confronts player, `FORGED_PARKING_PERMIT` removed from inventory, `CrimeType.DOCUMENT_FRAUD` in `CriminalRecord`, Notoriety increased by 5, `FORGED_PERMIT` rumour in `RumourNetwork`.
+
+3. **Clamp escape mini-game success path**: player's car gets clamped (no permit). Player crouches next to `WHEEL_CLAMP_PROP`, holds E. Simulate BattleBarMiniGame with MEDIUM difficulty score ≥ threshold (success). Verify clamp removed. Verify NO crime recorded. Verify `CLAMP_ESCAPE_ARTIST` achievement unlocked on first successful removal.
+
+4. **Barry bribery full flow**: player approaches Barry mid-patrol. Offers BRIBE_HIGH (20 COIN). Verify coin deducted from player. Verify Barry enters 'ignoring player' state until 18:00. Park car without permit. Advance through Barry's next patrol cycle. Verify car is NOT clamped. Verify `SWEETENING_BARRY` achievement unlocked. Verify `BENT_WARDEN` rumour seeded.
+
+5. **RPZ sign vandalism suppresses enforcement**: player uses `SPRAY_CAN` on `RPZ_SIGN_PROP` on Church Road. Verify prop replaced by `DEFACED_RPZ_SIGN_PROP`, Notoriety +3, `SIGN_VANDAL` rumour seeded. Advance through Barry's next patrol on Church Road. Verify no cars clamped on that street. Advance 3 in-game hours. Verify `REPAIR_CREW_NPC` spawns, `RPZ_SIGN_PROP` restored, `DEFACED_RPZ_SIGN_PROP` removed. Advance through Barry's subsequent patrol. Verify clamping resumes.
+
+// ── Issue #1400: Add Northfield Residents' Parking Permit Racket ─────────────
+// New System File: ResidentsParkingSystem.java in ragamuffin.core
+// New Test Files: ResidentsParkingSystemTest.java in src/test/java/ragamuffin/core/
+//                Issue1400ResidentsParkingIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: PARKING_PERMIT, FORGED_PARKING_PERMIT, WHEEL_CLAMP_KEY, STOLEN_PRINTER_INK
+// New PropTypes: WHEEL_CLAMP_PROP, RPZ_SIGN_PROP, DEFACED_RPZ_SIGN_PROP, COUNCIL_OFFICE_KIOSK
+// New NPCTypes: TRAFFIC_WARDEN_BARRY, COUNCIL_CLERK, REPAIR_CREW_NPC
+// New AchievementTypes: SWEETENING_BARRY, NORTHFIELD_TICKET_TOUT, FREE_RANGE_PARKING,
+//   CLAMP_ESCAPE_ARTIST, FORGER_IN_RESIDENCE
+// New RumourTypes: FORGED_PERMIT, BENT_WARDEN, BRIBERY_ATTEMPT, SIGN_VANDAL, CLAMP_THEFT
+// Integration: BattleBarMiniGame, CarDrivingSystem, TrafficWardenSystem, CouncilEnforcementSystem,
+//   PropertySystem, TimeSystem, NotorietySystem, WantedSystem, CriminalRecord, RumourNetwork,
+//   NeighbourhoodWatchSystem, HMRCSystem, FenceSystem, InternetCafeSystem, SoundSystem,
+//   AchievementSystem, CraftingSystem
