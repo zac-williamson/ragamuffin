@@ -5721,6 +5721,39 @@ public enum AchievementType {
         1
     ),
 
+    /**
+     * Awarded when the player attends four consecutive NAODS rehearsal sessions
+     * (Wednesday or Thursday evenings) without leaving early. Patricia is, briefly,
+     * impressed. Tracked by AmateurDramaticsSystem.
+     */
+    DRAMA_REGULAR(
+        "Drama Regular",
+        "Attended four consecutive NAODS rehearsal sessions without leaving early. Patricia is impressed.",
+        4
+    ),
+
+    /**
+     * Awarded when the player executes all three opening-night sabotage methods
+     * (prop gun swap, power cut, cash box theft) across three separate opening nights.
+     * Tracked by AmateurDramaticsSystem.
+     */
+    CURTAIN_CALL(
+        "Curtain Call",
+        "Sabotaged Blood Brothers three different ways across three opening nights. Method actor.",
+        3
+    ),
+
+    /**
+     * Awarded when the player attends three opening nights legitimately and scores
+     * ≥ 1 on the BattleBarMiniGame performance each time. A genuine patron of the arts.
+     * Tracked by AmateurDramaticsSystem.
+     */
+    FRONT_ROW_FRED(
+        "Front Row Fred",
+        "Attended three opening nights and gave a passable performance each time. A genuine patron of the arts.",
+        3
+    ),
+
     // ── Issue #1355: Northfield NHS Walk-In Centre ─────────────────────────────
 
     /**
