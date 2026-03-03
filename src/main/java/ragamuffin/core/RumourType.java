@@ -1086,5 +1086,21 @@ public enum RumourType {
     /** "Heard someone tipped off the taxman about a mate's dealings — that loan
      * shark's been busy." — seeded by HMRCSystem when LOAN_SHARK_CLERK tips off
      * HMRC below the 150 COIN threshold. Spreads via PUBLIC and LOAN_SHARK_CLERK. */
-    HMRC_TIPPED_OFF;
+    HMRC_TIPPED_OFF,
+
+    // ── Issue #1363: Northfield Sunday Car Boot Sale ───────────────────────────
+
+    /** "Word is someone's been flogging knocked-off gear down the car boot —
+     * Trading Standards were sniffing round on Sunday." — seeded by
+     * CarBootSaleSystem when TRADING_STANDARDS_STING event fires (3+ stolen
+     * items sold on player pitch). Triggers NeighbourhoodSystem Vibes −3.
+     * Spreads via PUBLIC, BOOT_SALE_PUNTER, and PENSIONER NPCs. */
+    STOLEN_GOODS_MARKET,
+
+    /** "Did you hear? Some pensioner got shoved out the way at the car boot —
+     * everyone was after the same box of VHS tapes at 6am." — seeded by
+     * CarBootSaleSystem during the EARLY_BIRD_RUSH event when a PENSIONER NPC
+     * is displaced. Triggers NeighbourhoodSystem Vibes −1.
+     * Spreads via PENSIONER and PUBLIC NPCs. */
+    PENSIONER_SHOVED;
 }

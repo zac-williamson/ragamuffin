@@ -5823,7 +5823,61 @@ public enum Material {
      * the volunteer shift. 40% chance per sort action. No crime risk; honest perk
      * of volunteering.
      */
-    JUMBLE_FIND("Jumble Find");
+    JUMBLE_FIND("Jumble Find"),
+
+    // ── Issue #1363: Northfield Sunday Car Boot Sale ───────────────────────────
+
+    /**
+     * VHS_TAPE — chunky black videocassette sold by BOOT_SALE_VENDOR at car boot
+     * sale. Base value 1 COIN. Can be traded at CharityShopSystem or PawnShopSystem.
+     * 5% gem-find bonus applies if BETAMAX_PLAYER is in inventory (curiosity premium).
+     * Tooltip: "VHS tape. Someone taped over Coronation Street with this."
+     */
+    VHS_TAPE("VHS Tape"),
+
+    /**
+     * CROCKERY_SET — mismatched plates and cups bundled in a carrier bag.
+     * Sold by BOOT_SALE_VENDOR. Base value 2 COIN. Breaks if dropped (fragile).
+     * Tooltip: "Six plates, four cups. None of them match."
+     */
+    CROCKERY_SET("Crockery Set"),
+
+    /**
+     * BOARD_GAME — battered board game with missing pieces. Sold by BOOT_SALE_VENDOR.
+     * Base value 1 COIN. Can be gifted to PENSIONER NPCs for +2 Neighbourhood Vibes.
+     * Tooltip: "Cluedo. One of the murder weapons is missing. Suspicious."
+     */
+    BOARD_GAME("Board Game"),
+
+    /**
+     * BETAMAX_PLAYER — obsolete video cassette player found in car boot stock.
+     * Sold by BOOT_SALE_VENDOR. Base value 3 COIN. 5% gem-find chance on purchase
+     * (player finds hidden cash inside unit). Tooltip: "Betamax. Ahead of its time.
+     * Behind everything else."
+     */
+    BETAMAX_PLAYER("Betamax Player"),
+
+    /**
+     * FONDUE_SET — 1970s cheese fondue set complete with long forks. Sold by
+     * BOOT_SALE_VENDOR. Base value 2 COIN. 5% gem-find chance (a COIN wedged
+     * in the base). Can be used as a melee weapon (+1 attack with cheese fork).
+     * Tooltip: "Retro dinner party kit. The forks are suspiciously sharp."
+     */
+    FONDUE_SET("Fondue Set"),
+
+    /**
+     * GARDEN_GNOME — ceramic garden gnome with chipped hat. Sold by BOOT_SALE_VENDOR.
+     * Base value 2 COIN. Can be placed as a PROP in the world (decoration).
+     * Throwing it deals 4 damage. Tooltip: "He's seen things you wouldn't believe."
+     */
+    GARDEN_GNOME("Garden Gnome"),
+
+    /**
+     * CASSETTE_PLAYER — portable cassette player with foam headphones. Sold by
+     * BOOT_SALE_VENDOR. Base value 2 COIN. Equipping it gives player a subtle
+     * speed +5% (motivational music effect). Tooltip: "Press play. It still works."
+     */
+    CASSETTE_PLAYER("Cassette Player");
 
     private final String displayName;
 
