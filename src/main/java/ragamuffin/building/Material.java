@@ -6174,7 +6174,29 @@ public enum Material {
     /**
      * GOLDEN_BOOT_PROP — "A spray-painted boot on a plinth. 'Top Scorer 1991.' No name. Dave won't say whose."
      * Lootable from TROPHY_CABINET_PROP. Fenceable: 30 COIN. Also pawnable: 18 COIN. */
-    GOLDEN_BOOT_PROP("Golden Boot");
+    GOLDEN_BOOT_PROP("Golden Boot"),
+
+    // ── Issue #1394: Northfield Primary School Sports Day ─────────────────────
+
+    /**
+     * BOURBONS — "Tube of Bourbons from Dot's stall. 50p. Worth every penny."
+     * Sold at refreshment stall for 1 COIN during Sports Day. Heals 2 HP. */
+    BOURBONS("Bourbons"),
+
+    /**
+     * SQUASH_CARTON — "Orange squash in tiny carton. Straw pre-attached. Nostalgic."
+     * Sold at refreshment stall for 1 COIN during Sports Day. Heals 1 HP; cures THIRST. */
+    SQUASH_CARTON("Squash Carton"),
+
+    /**
+     * SPORTS_DAY_ROSETTE — "1st Place. St. Aidan's Sports Day. Derek's handwriting."
+     * Lootable from PRIZE_TABLE_PROP (3× available). Fenceable: 2 COIN. Keepable as trophy. */
+    SPORTS_DAY_ROSETTE("Sports Day Rosette"),
+
+    /**
+     * FIZZY_DRINK_CAN — "Full, unopened. Could be thrown. Probably shouldn't be."
+     * Throwable item. Throwing at WASP_NEST_PROP disperses wasps faster (3 NPCs stung, Wanted +1). */
+    FIZZY_DRINK_CAN("Fizzy Drink Can");
 
     private final String displayName;
 

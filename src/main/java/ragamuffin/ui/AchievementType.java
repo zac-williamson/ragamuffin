@@ -6391,6 +6391,55 @@ public enum AchievementType {
         "Marchetti's Man",
         "A sealed envelope, a bent result, a 20% cut for the crew. Business as usual in Northfield.",
         1
+    ),
+
+    /**
+     * EGG_SWAPPER — swapped a child's hard-boiled egg for a raw one during the Egg and Spoon race.
+     * Egg exploded mid-race. Derek was not pleased.
+     */
+    EGG_SWAPPER(
+        "Egg Swapper",
+        "You swapped Tyler's egg for a raw one. It went everywhere. Race suspended. Derek furious.",
+        1
+    ),
+
+    /**
+     * CONE_THIEF — stole all 12 race cones from the Sports Day course without Derek catching you.
+     */
+    CONE_THIEF(
+        "Cone Thief",
+        "All twelve. Every single one. Derek counted them twice.",
+        1
+    ),
+
+    /**
+     * SPORTS_DAY_HERO — won the Parents' Race legitimately without bribing or tripping Gary.
+     * Gary is livid.
+     */
+    SPORTS_DAY_HERO(
+        "Sports Day Hero",
+        "Won the Parents' Race fair and square. Gary's appealing the result. Nobody's listening.",
+        1
+    ),
+
+    /**
+     * SPORTS_DAY_FRAUD — bribed KEVINS_DAD (Gary) 10 COIN to let you win the Parents' Race.
+     * He took the money and almost won anyway.
+     */
+    SPORTS_DAY_FRAUD(
+        "Sports Day Fraud",
+        "Paid Gary to lose. He took your money. He nearly won anyway. Fraud complaint filed with Ms. Pearson.",
+        1
+    ),
+
+    /**
+     * WASP_WHISPERER — remained calm during the wasp incident for 30+ seconds
+     * while every other NPC fled screaming.
+     */
+    WASP_WHISPERER(
+        "Wasp Whisperer",
+        "You stood perfectly still while everyone else ran screaming. The wasps respected that.",
+        1
     );
 
     private final String name;
