@@ -57832,3 +57832,147 @@ The `PLANNING_APPLICATION_DOCUMENT` can be:
 5. **Unwitnessed back-office break-in yields both trophies and DOJO_RAIDER achievement**: create system; give player `Material.LOCKPICK` with 2 charges; ensure no NPCs within `COMMUNITY_CENTRE_WITNESS_RANGE` and CCTV disabled (blank tape inserted); call `breakInToBackOffice(player, inventory, nearbyNpcs=[], cameraDisabled=true)`; verify `inventory.contains(Material.KARATE_TROPHY_PROP)` == true; verify `inventory.contains(Material.REGIONAL_CHAMPION_SHIELD_PROP)` == true; verify `achievementCallback` received `AchievementType.DOJO_RAIDER`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == false.
 
 // `KarateSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Wednesday session schedule, grading day), `CriminalRecord` (new `BLACKMAIL`; existing `FRAUD`, `BURGLARY`, `AFFRAY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `GRADING_SCAM`, `CLUB_SNITCH`, `KARATE_CHAMPION`, `GOT_BATTERED_AT_KARATE`, `HONOURABLE_THIEF`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (trophy fence values), `PawnShopSystem` (shield pawn value), `AchievementSystem`, and `HealingSystem` (spar damage). New Materials: `KARATE_GI`, `CLUB_MEMBERSHIP_CARD`, `FORGED_GRADE_CERTIFICATE`, `FREE_SESSION_TOKEN`. New PropTypes: `DOJO_MAT_PROP`, `BACK_OFFICE_DOOR_PROP`, `KARATE_TROPHY_PROP`, `REGIONAL_CHAMPION_SHIELD_PROP`. New RumourTypes: `GRADING_SCAM`, `CLUB_SNITCH`, `KARATE_CHAMPION`, `GOT_BATTERED_AT_KARATE`, `HONOURABLE_THIEF`. New CrimeType: `BLACKMAIL`. New AchievementTypes: `DOJO_RAIDER`, `NORTHFIELD_CHAMPION`, `HONOURABLE_THIEF`. Reused NPCTypes: `KARATE_INSTRUCTOR`, `KARATE_KID`, `PUBLIC`, `TRADING_STANDARDS_OFFICER`.
+
+---
+
+## Issue #1499: Add Northfield Angling Club — Ron's Sunday Match, the Dodgy Scales & the Keepnet Heist
+
+**Overview**: Every Sunday from 07:00–10:00, the Northfield Canal Angling Club runs its fortnightly competitive match along the canal towpath. Ron Birch (`NPCType.ANGLING_CLUB_CHAIR`) — club chairman, retired, suspicious of everyone — organises the pegs, collects the `MATCH_FEE`, and presides over the weigh-in at 10:00. Six to eight `NPCType.MATCH_ANGLER` NPCs set up fold-out chairs at numbered pegs (PEBBLE_PEG_PROP) along the bank, dangling weighted lines in silence. The player can join legitimately, fix the weigh-in, poach the match water, or steal the club's trophy from the back of Ron's van while everyone is fishing.
+
+### Schedule (fortnightly — every 14 in-game days starting day 7)
+
+- **Sunday 06:45** — Ron's battered Transit van parks at the canal towpath entrance. Ron sets out `PEBBLE_PEG_PROP` markers along 8 spots at 5-block intervals.
+- **Sunday 07:00** — Ron collects `MATCH_FEE_COIN` = 3 COIN from each angler (and player if registered). Issues `MATCH_DAY_CARD`.
+- **Sunday 07:00–10:00** — Match fishing window. Each `MATCH_ANGLER` NPC uses its own seeded fishing logic (slower than player; 1 fish per `NPC_FISH_INTERVAL_SECONDS` = 180s, ±60s jitter). NPCs ignore the player unless within `ANGLER_DISTURB_RANGE` = 3.0f blocks (they grumble: "Oi, you're walking on my peg line!").
+- **Sunday 10:00** — Match ends. All anglers reel in and carry their `KEEPNET_PROP` to Ron's folding table (`WEIGH_TABLE_PROP`). Ron weighs each catch in turn; announces weight via speech; posts result on `RESULTS_BOARD_PROP`.
+- **Sunday 10:15** — Trophy awarded to winner; Ron hands `ANGLING_TROPHY_PROP` to winner NPC. NPCs disperse to the pub (`LandmarkType.PUB`) by 10:30.
+
+### Mechanic 1 — Joining the Match (legitimate path)
+
+- Player presses E on Ron between 06:45 and 07:30.
+- Ron refuses if player Notoriety ≥ 40: "We don't want your sort here, son." (No refund.)
+- Match fee: `MATCH_FEE_COIN` = 3 COIN. Player receives `MATCH_DAY_CARD`.
+- Player must hold `FISHING_ROD` (already in `Material`) and be within 1.5 blocks of a `PEBBLE_PEG_PROP` that is unoccupied to begin fishing their peg.
+- Player uses existing `CanalSystem.castLine()` / `CanalSystem.reelIn()` mechanics but only `CANAL_FISH` counts towards match weight (not `SHOPPING_TROLLEY_GOLD`).
+- Each `CANAL_FISH` caught adds `FISH_WEIGHT_GRAMS` to match weight. Fish weight is seeded per fish: `rng.nextInt(FISH_MAX_WEIGHT_GRAMS - FISH_MIN_WEIGHT_GRAMS) + FISH_MIN_WEIGHT_GRAMS`.
+- Player fish are deposited into `KEEPNET_PROP` (spawned at their peg) automatically on reel-in during a match.
+- At weigh-in: player presents their keepnet to Ron (press E on `WEIGH_TABLE_PROP` while holding `MATCH_DAY_CARD`). Ron weighs and announces total.
+- Winning the match with the highest weight: 15 COIN prize + `ANGLING_TROPHY_PROP` (if legitimate); `AchievementType.CANAL_CHAMPION`.
+
+### Mechanic 2 — The Dodgy Scales
+
+- Ron's `WEIGH_TABLE_PROP` uses a `WEIGH_SCALES_PROP` that can be tampered with.
+- **Bait the scales**: Before the weigh-in (07:00–09:45), player can interact with `WEIGH_SCALES_PROP` (no NPCs within `TAMPER_WITNESS_RANGE` = 4.0f blocks) and apply `COIN` (2 COIN cost) to wedge the platform: adds `SCALES_BIAS_GRAMS` = 400 to every weight read.
+  - Outcome: Ron announces inflated weights for all anglers including player. Player wins if player's actual weight + 400g beats all NPC actual weights + 400g (net effect: only helps if player's catch is already near the top). Wait — to actually cheat: the bias is *only applied to the player's weigh-in* (Ron misreads the coin-stuck needle for the player's net only). So player's announced weight = actual + `SCALES_BIAS_GRAMS`.
+  - If Ron spots the coin post-match (20% chance on handling scales): `CrimeType.CHEATING_AT_ANGLING` recorded; Ron bans player for `BAN_DURATION_DAYS` = 14 in-game days; Notoriety +4; `RumourType.DODGY_ANGLER` seeded.
+- **Dead weight in keepnet**: Player can add `BRICK` (already in `Material`) or `SCRAP_METAL` to their keepnet before weigh-in. Each item adds `BRICK_WEIGHT_GRAMS` = 350g to the recorded weight. Ron has `INSPECT_KEEPNET_CHANCE` = 0.25f of inspecting the net before weighing: if he does, discovers the brick, bans player, records `CrimeType.CHEATING_AT_ANGLING`, Notoriety +5; `RumourType.DODGY_ANGLER`.
+
+### Mechanic 3 — Poaching the Match Water
+
+- If the player fishes from the canal during the match window **without** a `MATCH_DAY_CARD` and without being at a valid unoccupied peg:
+  - Any `MATCH_ANGLER` NPC within `POACH_WITNESS_RANGE` = 10.0f blocks observes and alerts Ron (becomes `NPCState.ALERT` → Ron approaches and issues verbal warning).
+  - First warning: Ron sends player away (no crime). Second violation within the same match: Ron calls PCSO. `CrimeType.MATCH_POACHING` recorded; Notoriety +2.
+  - If no anglers witness: fish counts toward player's informal tally but does not enter match.
+- **The Dawn Raid**: If the player arrives at the canal at 06:00–06:45 (before Ron sets out pegs) and fishes the prime spots (central 3 pegs), the fish from those spots are pre-depleted, giving NPCs on those pegs a `NPC_DEPLETED_PEG_MULTIPLIER` = 0.4f catch rate. Achievement: `AchievementType.EARLY_BIRD_POACHER`.
+
+### Mechanic 4 — The Keepnet Heist
+
+- Ron's `TRANSIT_VAN_PROP` is parked at the towpath entrance during the match. The boot holds the club's `ANGLING_TROPHY_PROP` and a `CASHBOX_PROP` containing the pooled match fees (3 COIN × number of entrants, typically 24–27 COIN).
+- Van boot: `TRANSIT_VAN_PROP` has a `VAN_BOOT_PROP` lockable with padlock (`SMASH_HITS_TO_OPEN` = 4 CROWBAR hits, loud; or `LOCKPICK` silent 3 charges).
+- During the match (07:00–10:00), Ron is at the `WEIGH_TABLE_PROP` and NPCs face the water. `ANGLER_AWARENESS_RANGE` = 6.0f. If player breaks into the van within this window:
+  - Unwitnessed (no NPC within 6 blocks): yields `ANGLING_TROPHY_PROP` (fenceable 12 COIN, pawnable 8 COIN) + `CASHBOX_PROP` cash (up to 27 COIN). Achievement: `AchievementType.KEEPNET_RAIDER`.
+  - Witnessed: `CrimeType.BURGLARY`; Notoriety +8; WantedSystem +2; Ron calls police immediately (abandons weigh-in).
+- Ron notices missing trophy at 10:00 weigh-in. Seeds `RumourType.VAN_THIEF` across canal-side NPCs.
+- Player can return the trophy to Ron (press E with trophy in inventory after 10:00): Ron gives `GRUDGING_THANKS_TOKEN` (1 COIN) and seeds `RumourType.REPENTANT_THIEF`; Vibes +2; achievement `AchievementType.RETURNED_THE_TROPHY`.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `MATCH_FEE_COIN` | 3 |
+| `MATCH_DURATION_HOURS` | 3.0f |
+| `MATCH_START_HOUR` | 7.0f |
+| `WEIGH_IN_HOUR` | 10.0f |
+| `MATCH_FORTNIGHT_INTERVAL` | 14 |
+| `MATCH_FIRST_DAY` | 7 |
+| `NPC_FISH_INTERVAL_SECONDS` | 180 |
+| `NPC_FISH_JITTER_SECONDS` | 60 |
+| `ANGLER_DISTURB_RANGE` | 3.0f |
+| `TAMPER_WITNESS_RANGE` | 4.0f |
+| `POACH_WITNESS_RANGE` | 10.0f |
+| `ANGLER_AWARENESS_RANGE` | 6.0f |
+| `FISH_MIN_WEIGHT_GRAMS` | 120 |
+| `FISH_MAX_WEIGHT_GRAMS` | 800 |
+| `SCALES_BIAS_GRAMS` | 400 |
+| `BRICK_WEIGHT_GRAMS` | 350 |
+| `INSPECT_KEEPNET_CHANCE` | 0.25f |
+| `SCALES_DETECT_CHANCE` | 0.20f |
+| `NPC_DEPLETED_PEG_MULTIPLIER` | 0.4f |
+| `BAN_DURATION_DAYS` | 14 |
+| `WIN_PRIZE_COIN` | 15 |
+| `ANGLING_TROPHY_FENCE_VALUE` | 12 |
+| `ANGLING_TROPHY_PAWN_VALUE` | 8 |
+| `SMASH_HITS_TO_OPEN` | 4 |
+
+### Entities Required
+
+**New NPCTypes required:**
+- `NPCType.ANGLING_CLUB_CHAIR` — Ron Birch, chairman. Organises pegs, collects fees, presides over weigh-in. Hostile if witnessing cheating or van break-in.
+- `NPCType.MATCH_ANGLER` — club members (6–8 spawned on match days). Sit at pegs, fish passively, carry keepnets to weigh-in at 10:00.
+
+**New Materials required:**
+- `Material.MATCH_DAY_CARD` — issued by Ron on paying `MATCH_FEE_COIN`. Required for legitimate weigh-in.
+- `Material.KEEPNET` — container prop-item assigned to player's peg. Holds caught fish during match. Auto-populated by `CanalSystem` during match window.
+- `Material.GRUDGING_THANKS_TOKEN` — given by Ron if trophy returned. Worth 1 COIN.
+
+**New PropTypes required:**
+- `PropType.PEBBLE_PEG_PROP` — numbered peg marker on the towpath. 8 placed at 5-block intervals before the match.
+- `PropType.WEIGH_TABLE_PROP` — Ron's folding table at 10:00. Player presses E to submit keepnet for weighing.
+- `PropType.WEIGH_SCALES_PROP` — scales on the weigh table. Tamperable with 2 COIN.
+- `PropType.RESULTS_BOARD_PROP` — chalkboard where Ron posts match results.
+- `PropType.TRANSIT_VAN_PROP` — Ron's Transit van at the entrance. Contains the trophy and cashbox.
+- `PropType.VAN_BOOT_PROP` — lockable boot of the van.
+- `PropType.KEEPNET_PROP` — keepnet container at player/NPC peg. Holds fish catch weight.
+- `PropType.ANGLING_TROPHY_PROP` — club trophy, fenceable for `ANGLING_TROPHY_FENCE_VALUE`.
+
+**New RumourTypes required:**
+- `RumourType.DODGY_ANGLER` — "Someone was caught stuffing bricks in their keepnet at the Sunday match. Ron went ballistic." Vibes −3. Seeds among `MATCH_ANGLER` and canal-side NPCs.
+- `RumourType.VAN_THIEF` — "Some scrote nicked the angling club trophy out of Ron's van while the match was on." Vibes −2. Seeds among canal-side NPCs.
+- `RumourType.REPENTANT_THIEF` — "Bloke brought the club trophy back to Ron after nicking it. Ron called him a daft sod and gave him a pound." Vibes +2.
+- `RumourType.CANAL_CHAMPION` — "Someone beat all the regulars at the Sunday match. Ron wasn't happy about it." Vibes +1.
+
+**New CrimeTypes required (in CriminalRecord):**
+- `CrimeType.CHEATING_AT_ANGLING` — tampering with scales or weighting keepnet.
+- `CrimeType.MATCH_POACHING` — fishing match water without a card, witnessed twice.
+
+**New AchievementTypes required:**
+- `AchievementType.CANAL_CHAMPION` — win the angling match legitimately (highest weight, no cheating flag).
+- `AchievementType.EARLY_BIRD_POACHER` — pre-deplete the prime pegs before Ron arrives.
+- `AchievementType.KEEPNET_RAIDER` — steal the trophy and cashbox from the van unwitnessed.
+- `AchievementType.RETURNED_THE_TROPHY` — return the stolen trophy to Ron.
+
+**Already defined — no new entries needed:**
+- `Material.FISHING_ROD` — already defined; required for match.
+- `Material.CANAL_FISH` — already defined; match currency.
+- `Material.BRICK` — already defined; used for dead-weight cheat.
+- `Material.SCRAP_METAL` — already defined; also usable as dead weight.
+- `Material.LOCKPICK` — already defined; used for van boot.
+- `Material.CROWBAR` — already defined; used for van boot smash.
+- `Material.COIN` — already defined; used for scales tamper and fee.
+- `LandmarkType.CANAL` — already defined; match is held here.
+- `CrimeType.BURGLARY` — already defined; used for witnessed van break-in.
+- `NPCType.PCSO` — already defined; called on second poaching violation.
+
+### Integration Tests
+
+1. **Registering with Ron before 07:30 and paying 3 COIN grants MATCH_DAY_CARD**: create `AnglingClubSystem`; give player 3 COIN and `Material.FISHING_ROD`; set time to Sunday 07:10 (day 7); call `registerForMatch(player, inventory, ronNpc, timeSystem)`; verify result == `RegisterResult.SUCCESS`; verify `inventory.contains(Material.MATCH_DAY_CARD)` == true; verify `inventory.getItemCount(Material.COIN)` == 0.
+
+2. **Catching 3 fish during the match window and weighing in wins against NPCs with 0 catch**: create system; register player; seed `rng` so `CanalSystem.castLine()` always yields `CANAL_FISH` with weight in [120,800]; call `catchFishForMatch(player, inventory, rng)` × 3; verify `anglingClubSystem.getPlayerMatchWeight()` == sum of 3 fish weights; advance time to 10:00; call `submitWeighIn(player, inventory, ronNpc)`; set all NPC weights to 0; verify `anglingClubSystem.getWinner()` == player; verify `inventory.getItemCount(Material.COIN)` increased by `WIN_PRIZE_COIN`; verify `achievementCallback` received `AchievementType.CANAL_CHAMPION`.
+
+3. **Adding BRICK to keepnet undetected inflates announced weight by BRICK_WEIGHT_GRAMS**: create system; register player; give player `Material.BRICK`; seed `rng` so `inspectKeepnet()` returns false (random > `INSPECT_KEEPNET_CHANCE`); call `addDeadWeightToKeepit(player, inventory, Material.BRICK)`; verify `anglingClubSystem.getPlayerMatchWeight()` increased by `BRICK_WEIGHT_GRAMS`; verify `criminalRecord.hasCrime(CrimeType.CHEATING_AT_ANGLING)` == false (not yet caught).
+
+4. **Ron inspecting keepnet and finding brick records CHEATING_AT_ANGLING and bans player**: create system; register player; add `Material.BRICK` to keepnet; seed `rng` so `inspectKeepnet()` returns true (random < `INSPECT_KEEPNET_CHANCE`); advance time to 10:00; call `submitWeighIn(player, inventory, ronNpc)`; verify `criminalRecord.hasCrime(CrimeType.CHEATING_AT_ANGLING)` == true; verify `anglingClubSystem.isBanned()` == true; verify `notorietySystem.getNotoriety()` increased by 5.
+
+5. **Unwitnessed van break-in during match window yields ANGLING_TROPHY and cash, awards KEEPNET_RAIDER**: create system; give player `Material.LOCKPICK` (3 charges); set time to Sunday 08:00 (match in progress); ensure no NPCs within `ANGLER_AWARENESS_RANGE`; call `breakIntoVan(player, inventory, nearbyNpcs=[], timeSystem)`; verify `inventory.contains(Material.ANGLING_TROPHY_PROP)` == true; verify `inventory.getItemCount(Material.COIN)` increased by at least 24; verify `achievementCallback` received `AchievementType.KEEPNET_RAIDER`; verify `criminalRecord.hasCrime(CrimeType.BURGLARY)` == false.
+
+// `AnglingClubSystem.java` must be created as the sole new source file. Integrates with `CanalSystem` (existing fishing mechanics, `CANAL_FISH`, `FISHING_ROD`, `FISHING_WATER_DISTANCE`), `TimeSystem` (fortnightly Sunday schedule), `CriminalRecord` (new `CHEATING_AT_ANGLING`, `MATCH_POACHING`; existing `BURGLARY`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `DODGY_ANGLER`, `VAN_THIEF`, `REPENTANT_THIEF`, `CANAL_CHAMPION`), `NeighbourhoodSystem` (Vibes), `WitnessSystem`, `FenceSystem` (`ANGLING_TROPHY_FENCE_VALUE`), `PawnShopSystem` (`ANGLING_TROPHY_PAWN_VALUE`), `AchievementSystem`, and `NoiseSystem` (van crowbar hits). New NPCTypes: `ANGLING_CLUB_CHAIR`, `MATCH_ANGLER`. New Materials: `MATCH_DAY_CARD`, `KEEPNET`, `GRUDGING_THANKS_TOKEN`. New PropTypes: `PEBBLE_PEG_PROP`, `WEIGH_TABLE_PROP`, `WEIGH_SCALES_PROP`, `RESULTS_BOARD_PROP`, `TRANSIT_VAN_PROP`, `VAN_BOOT_PROP`, `KEEPNET_PROP`, `ANGLING_TROPHY_PROP`. New RumourTypes: `DODGY_ANGLER`, `VAN_THIEF`, `REPENTANT_THIEF`, `CANAL_CHAMPION`. New CrimeTypes: `CHEATING_AT_ANGLING`, `MATCH_POACHING`. New AchievementTypes: `CANAL_CHAMPION`, `EARLY_BIRD_POACHER`, `KEEPNET_RAIDER`, `RETURNED_THE_TROPHY`.
