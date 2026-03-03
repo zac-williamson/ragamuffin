@@ -51040,3 +51040,186 @@ After prize ceremony (13:45), the `BEST_IN_SHOW_ROSETTE_PROP` sits on `JUDGES_TA
 // Integration: DogCompanionSystem, TimeSystem, WantedSystem, NotorietySystem, FactionSystem,
 //   NeighbourhoodSystem, RumourNetwork, NewspaperSystem, StreetSkillSystem, CriminalRecord,
 //   IceCreamVanSystem, WeatherSystem, AchievementSystem, CornerShopSystem, CharityShopSystem
+
+---
+
+## Issue #1393: Add Northfield Annual Conker Championship — The Vinegar Cheat, the String Snap & the Trophy Hustle
+
+**Landmark**: `PARK` (conker tree grove, north end, near the sad pond).
+
+**Trigger**: Day-of-year 280 (7 October), any weekday (`dayCount % 365 == 280`). Runs 13:00–17:00. HEAVY_RAIN or THUNDERSTORM cancels. DRIZZLE allowed (very British).
+
+**Goal**: Add the Northfield Annual Conker Championship to the park — a stubbornly traditional competition run by `ORGANISER_NPC` Derek, who takes it far too seriously. The player can collect conkers from the chestnut tree, harden them with vinegar (illegal under tournament rules), thread them onto string, and either win fairly, cheat their way to glory, or simply nick the engraved trophy. Four NPC competitors — Baz, Shelley, young Tyler (age 9), and newcomer Priya — each bring a conker with a hardness score. A suspicious judge, `ORGANISER_NPC` Derek, will disqualify hardened conkers if he inspects them. The WI stall (Margaret returns) sells jacket potatoes and Vimto.
+
+### ConkerSystem — Core Class
+
+New class `ConkerSystem` in `ragamuffin.core`:
+
+```
+ConkerSystem(TimeSystem, World, WantedSystem, NotorietySystem.AchievementCallback,
+             RumourNetwork, NewspaperSystem, StreetSkillSystem, Inventory playerInventory)
+void update(float delta, TimeSystem timeSystem, Player player)
+boolean isConkerDay(int dayCount)             // dayCount % 365 == 280
+boolean canEnterChampionship(Player player)   // has STRUNG_CONKER in inventory
+void collectConker(Player player)             // press E on CONKER_TREE_PROP; yields RAW_CONKER
+void hardenWithVinegar(Player player)         // combine RAW_CONKER + VINEGAR_BOTTLE → HARDENED_CONKER; illegal
+void stringConker(Player player)              // combine RAW_CONKER/HARDENED_CONKER + BALL_OF_STRING → STRUNG_CONKER
+void enterChampionship(Player player)
+ConkerResult playMatch(Player player, NPC opponent)  // one-on-one duel; returns WIN/LOSS/DRAW
+void runTournament()                          // called at 13:30; bracket of 5 (4 NPCs + player if entered)
+void awardTrophy(Player player)
+void stealTrophy(Player player)               // grab CONKER_TROPHY from TROPHY_TABLE_PROP; Notoriety +5
+```
+
+### Schedule
+
+- **12:30** — Props spawn in north park: `CONKER_TREE_PROP` (a chestnut tree — collectible conkers), `TOURNAMENT_TABLE_PROP` (Derek's admin desk), `TROPHY_TABLE_PROP` (the engraved trophy on display), `TOURNAMENT_BANNER_PROP`. Weather check.
+- **13:00** — Derek opens tournament. `ORGANISER_NPC` Derek arrives with clipboard. 4 `CONKER_COMPETITOR_NPC` (Baz, Shelley, Tyler, Priya) arrive. Player can collect and prepare conker from `CONKER_TREE_PROP`.
+- **13:00–13:25** — **Prep window**: Player can collect `RAW_CONKER`, optionally harden with `VINEGAR_BOTTLE` (yields `HARDENED_CONKER`, illegal), string it, and enter. Derek does a spot-check (20% chance per player inspection): if player conker is `HARDENED_CONKER`, instant disqualification + `CHEATING_AT_CONKERS` offence. Notoriety +2.
+- **13:30** — **Tournament starts**: Bracket-style, one-on-one duels. Each duel: each player/NPC swings their conker. Match outcome determined by `Random(dayCount + roundNumber)` weighted by conker hardness (`RAW_CONKER` = 1–60, `HARDENED_CONKER` = 45–95 before detection risk, NPC scores seeded from `Random(dayCount + 1)`).
+- **14:30** — **Final**: Last two competitors duel. Winner announced by Derek.
+- **15:00** — **Prize ceremony**: Winner receives `CONKER_TROPHY` (engraved, fenceable) + 25 COIN + `NORTHFIELD_CHAMPION_BADGE_PROP`. Derek reads a 3-sentence speech about the noble tradition of conkers. Margaret offers free Vimto to winner.
+- **15:30** — **Trophy theft window**: Derek takes a toilet break (15-minute window, 15:30–15:45). `TROPHY_TABLE_PROP` unattended. Player can grab `CONKER_TROPHY` with E: Notoriety +5, `CONKER_TROPHY_NICKED` rumour seeded.
+- **17:00** — Championship closes. Props despawn.
+
+### Mechanic 1 — Conker Preparation
+
+**Step 1 — Collect**: Press E on `CONKER_TREE_PROP` to pick up `RAW_CONKER` (up to 3 available per tree per day). NPCs Baz and Tyler will compete for them — Baz grabs one if player doesn't within 2 in-game minutes.
+
+**Step 2 — Optional: Harden**: Player can find `VINEGAR_BOTTLE` (always in stock at `CORNER_SHOP_SYSTEM` for 1 COIN). With `RAW_CONKER` + `VINEGAR_BOTTLE` in inventory, press E on `TOURNAMENT_TABLE_PROP` (or any flat surface): menu appears — "Soak in vinegar? (Illegal under tournament rules)". Result: `HARDENED_CONKER`. The item description reads: *"A suspiciously shiny conker. It smells faintly of chip shops."* Derek has a 20% chance per inspection to spot it.
+
+**Step 3 — String**: Combine `RAW_CONKER` or `HARDENED_CONKER` with `BALL_OF_STRING` (Corner Shop, 1 COIN): yields `STRUNG_CONKER`. This is the tournament-entry item.
+
+### Mechanic 2 — Tournament Duels
+
+Each duel is animated: the player faces the opponent NPC. Press E at the right moment (within a 0.5-second window) to swing. A `SWING_TIMING_METER` UI element appears (left-right bar, hit the green zone). Good timing: hardness score +10. Poor timing: hardness score −10. Miss entirely: forfeit that swing (3 swings per match). NPC opponents also have timing rolls (seeded `Random(dayCount + opponentIndex)`). First to break opponent's conker wins.
+
+Hardness scores:
+- `RAW_CONKER`: base 30 (range 20–60 with timing variance)
+- `HARDENED_CONKER`: base 70 (range 45–95 with timing variance)
+- NPC Baz: aggressive, base 55. Shelley: technical, base 50. Tyler (age 9): base 20 (easy win). Priya: base 65 (hardest NPC).
+
+### Mechanic 3 — Derek's Spot Check
+
+Between 13:00–13:25, Derek may inspect any competitor's conker. Player conker inspection: 20% chance per 30-second tick. If player has `HARDENED_CONKER`:
+- Derek: *"Oi. This smells like a chip shop. YOU'RE OUT."*
+- Player disqualified. `CHEATING_AT_CONKERS` offence added to CriminalRecord. Notoriety +2. `DEREK_KNOWS` flag set (Derek hostile for rest of day).
+- If `DISGUISE_SYSTEM` active (hat + glasses): Derek fails to identify player — disqualification blocked. Achievement `INCOGNITO_CONKER` unlocked.
+
+### Mechanic 4 — Trophy Heist
+
+After the ceremony, `CONKER_TROPHY` sits on `TROPHY_TABLE_PROP`. Derek visits Margaret's stall 15:30–15:45. Player can press E on trophy:
+- Notoriety +5. `CONKER_TROPHY_NICKED` rumour seeded.
+- `CONKER_TROPHY` is fenceable: FENCE NPC: 15 COIN. PawnShop: 9 COIN.
+- If won legitimately, `CONKER_TROPHY` is already in player inventory — cannot be stolen again.
+- Achievement `TOOK THE LOT` unlocked on heist.
+
+### Mechanic 5 — Young Tyler Sympathy Mechanic
+
+NPC Tyler (age 9) competes seriously. If player beats Tyler in a duel:
+- Tyler cries. `BYSTANDER_NPC` Margaret and Shelley react: *"Did you really have to?"* Player loses 1 Neighbourhood VIBES.
+- If player throws the match against Tyler (deliberately misses all 3 swings): `SPORTING_SPIRIT` rumour seeded. VIBES +2. Achievement `LET THE KID WIN` unlocked.
+- If Tyler wins the whole tournament: Derek is baffled. Tyler receives the trophy. `TYLER_WON_IT` rumour seeded. NewspaperSystem headline: "Local Lad Tyler (9) Stuns Northfield Conker Championship".
+
+### Mechanic 6 — WI Stall (Margaret Returns)
+
+Margaret's stall sells `JACKET_POTATO` (3 COIN, Hunger +50, Warmth +15) and `VIMTO_CAN` (1 COIN, Hunger +10). Stealing: Notoriety +3. Winner gets free `VIMTO_CAN` from Margaret.
+
+### System Integrations
+
+- `TimeSystem`: trigger `dayCount % 365 == 280`; schedule 12:30–17:00.
+- `WantedSystem`: cheating-caught +1 (if PCSO present); trophy theft +1.
+- `NotorietySystem`: cheating-caught +2; trophy theft +5; stall theft +3.
+- `StreetSkillSystem`: GRAFT XP +1 per tournament win; FENCE XP +1 on trophy fence.
+- `RumourNetwork`: `CONKER_TROPHY_NICKED`, `CHEATING_AT_CONKERS`, `TYLER_WON_IT`, `CONKER_CHAMPION` rumours.
+- `NewspaperSystem`: "Northfield Conker Champion" headline day+1 on player win; "Trophy Stolen at Conker Champs" if heist.
+- `CriminalRecord`: `CHEATING_AT_CONKERS` offence on caught; `PETTY_THEFT` on trophy/stall theft.
+- `NeighbourhoodSystem`: VIBES +2 on legitimate win; VIBES −1 on beating Tyler; VIBES −2 on cheating-caught.
+- `DisguiseSystem`: disguise blocks Derek's conker inspection.
+- `CornerShopSystem`: stocks `VINEGAR_BOTTLE` (1 COIN) and `BALL_OF_STRING` (1 COIN).
+- `WeatherSystem`: THUNDERSTORM / HEAVY_RAIN cancels event; DRIZZLE allowed.
+- `FenceSystem`: `CONKER_TROPHY` fenceable for 15 COIN.
+- `PawnShopSystem`: `CONKER_TROPHY` pawnable for 9 COIN.
+- `AchievementSystem`: achievements below.
+
+### New Materials (add to Material.java)
+
+- `RAW_CONKER` — "A fresh horse chestnut. Glossy. Potential. Possibly cheatable." Collectible.
+- `HARDENED_CONKER` — "Soaked in vinegar for 24 hours. Smells like a chip shop. Technically illegal." Result of vinegar treatment.
+- `STRUNG_CONKER` — "A conker on a string. Tournament-legal (possibly). Battle-ready." Entry item.
+- `VINEGAR_BOTTLE` — "Malt vinegar. Multi-use: chips, cheating at conkers." Buy: CORNER_SHOP (1 COIN).
+- `BALL_OF_STRING` — "Standard twine. Conker stringing. Tying things up. General string purposes." Buy: CORNER_SHOP (1 COIN).
+- `VIMTO_CAN` — "Purple. Slightly fizzy. Margaret's treat for the winner." Hunger +10.
+- `JACKET_POTATO` — "Fully loaded. Beans and cheese. Margaret's finest." Hunger +50, Warmth +15.
+- `CONKER_TROPHY` — "Engraved: 'Northfield Conker Champion.' Derek commissioned it in 1987. He's been defending it since." Fenceable: FENCE 15 COIN, PAWN 9 COIN.
+- `NORTHFIELD_CHAMPION_BADGE_PROP` — "A fabric badge. 'Conker Champion — Northfield.' Wear it with pride." Cosmetic.
+
+### New PropTypes (add to PropType.java)
+
+- `CONKER_TREE_PROP` — chestnut tree; yields up to 3 `RAW_CONKER` per day.
+- `TOURNAMENT_TABLE_PROP` — Derek's admin desk; also used as crafting surface for vinegar soak.
+- `TROPHY_TABLE_PROP` — unattended 15:30–15:45 (heist window).
+- `TOURNAMENT_BANNER_PROP` — "NORTHFIELD ANNUAL CONKER CHAMPIONSHIP — EST. 1987".
+
+### New NPCTypes (add to NPCType.java if absent)
+
+- `CONKER_COMPETITOR_NPC` — 4 competitors: Baz (aggressive), Shelley (technical), Tyler (child, base 20), Priya (hardest, base 65).
+- `CONKER_ORGANISER_NPC` — Derek; runs tournament, does spot-checks, gives speech.
+
+### New AchievementTypes (add to AchievementType.java)
+
+- `CONKER_CHAMPION` — win tournament legitimately (no vinegar). Name: "Conker Champion". Desc: "You beat four adults and possibly a child at conkers. Derek shook your hand. It meant a lot to him."
+- `VINEGAR_VICTORY` — win tournament using `HARDENED_CONKER` without being caught. Name: "Chemically Enhanced". Desc: "Malt vinegar, a steady hand, and zero shame. Northfield's most dubious champion."
+- `LET_THE_KID_WIN` — deliberately lose all 3 swings against Tyler. Name: "Let the Kid Win". Desc: "You could have destroyed him. You chose not to. Margaret saw. She approves."
+- `INCOGNITO_CONKER` — use disguise to pass Derek's spot-check while holding `HARDENED_CONKER`. Name: "Incognito Conker". Desc: "Derek looked straight at you and saw nothing. The hat and glasses work every time."
+- `TOOK_THE_LOT` — steal the trophy from the unattended table. Name: "Took the Lot". Desc: "Derek went for a wee. You took the trophy. You are a bad person. Derek cried."
+
+### New RumourTypes (add to RumourType.java)
+
+- `CONKER_CHAMPION` — "Someone won the Northfield conker championship this year. Apparently." Seeded on player win.
+- `CONKER_TROPHY_NICKED` — "They nicked the conker trophy at the championship. Derek was devastated. He bought a new display case." Seeded on heist.
+- `CHEATING_AT_CONKERS` — "Someone was caught cheating at conkers with vinegar. Derek went absolutely mental." Seeded on caught cheat.
+- `TYLER_WON_IT` — "Tyler, the nine-year-old, won the conker championship. Derek gave the trophy to a child. Nobody saw that coming." Seeded if Tyler wins.
+
+### Unit Tests (ConkerSystemTest.java)
+
+- `testConkerDayTrigger`: call `isConkerDay(279)`, `isConkerDay(280)`. Verify only 280 returns true.
+- `testCollectConkerFromTree`: place player adjacent to `CONKER_TREE_PROP`. Call `collectConker(player)`. Verify `RAW_CONKER` in inventory. Collect again × 2. Verify 3 total. Attempt 4th. Verify denied (tree depleted for day).
+- `testHardenConkerWithVinegar`: give player `RAW_CONKER` + `VINEGAR_BOTTLE`. Call `hardenWithVinegar(player)`. Verify `HARDENED_CONKER` in inventory. Verify `RAW_CONKER` and `VINEGAR_BOTTLE` removed.
+- `testStringConker`: give player `RAW_CONKER` + `BALL_OF_STRING`. Call `stringConker(player)`. Verify `STRUNG_CONKER` in inventory.
+- `testDerekSpotCheckCatches`: give player `HARDENED_CONKER`. Set `inspectionRandom` to always fire (100% chance). Call `derekInspects(player)`. Verify player disqualified. Verify `CHEATING_AT_CONKERS` CriminalRecord entry. Verify Notoriety +2.
+- `testDerekSpotCheckMissesDisguise`: set disguise active. Give player `HARDENED_CONKER`. Set inspection chance to 100%. Call `derekInspects(player)`. Verify player NOT disqualified. Verify `INCOGNITO_CONKER` achievement unlocked.
+- `testDuelWinWithHardenedConker`: player has `HARDENED_CONKER` (base 70). Opponent Tyler (base 20). Call `playMatch(player, tyler)`. Verify player wins.
+- `testDuelLoseAgainstPriya`: player has `RAW_CONKER` (base 30). Seed Priya with `Random(280 + 3)` = 65. Call `playMatch(player, priya)`. Verify player loses.
+- `testLetKidWin`: call `playMatch(player, tyler)` with player deliberately missing (pass `THROW_MATCH = true`). Verify Tyler wins. Verify VIBES +2. Verify `LET_THE_KID_WIN` achievement unlocked.
+- `testTrophyHeistWindow`: advance time to 15:35 (within 15:30–15:45). Verify `TROPHY_TABLE_PROP` unattended. Call `stealTrophy(player)`. Verify `CONKER_TROPHY` in inventory. Verify Notoriety +5. Verify `CONKER_TROPHY_NICKED` rumour seeded.
+- `testTrophyNotStealableOutsideWindow`: advance time to 15:00 (Derek present). Call `stealTrophy(player)`. Verify player does NOT receive trophy.
+- `testWeatherCancellation`: set weather to HEAVY_RAIN. Call `update(delta)` at 12:30. Verify `isShowActive()` = false. Verify no props spawned.
+- `testTylerWinsTournamentRumour`: seed all NPC scores with `Random(280 + 1)` — Tyler's score highest (force via mock). Call `runTournament()`. Verify `TYLER_WON_IT` rumour seeded. Verify NewspaperSystem flag set for "Tyler (9)" headline.
+
+### Integration Tests (Issue1393ConkerChampionshipIntegrationTest.java)
+
+1. **Legitimate win pipeline**: Set `dayCount = 280`. Buy `BALL_OF_STRING` from CornerShop (1 COIN). Press E on `CONKER_TREE_PROP`. Verify `RAW_CONKER` collected. Call `stringConker(player)`. Advance time to 13:00. Call `enterChampionship(player)`. Advance to 13:30. Seed NPC scores with `Random(281)` — Baz 55, Shelley 50, Tyler 20, Priya 65. Simulate tournament bracket. Verify player (base 30 RAW_CONKER, timing = average → score ~40) beats Tyler (20) and Shelley (50 — lose) OR player exits at Shelley but Tyler wins. Verify `CONKER_CHAMPION` achievement if player wins final. Verify NewspaperSystem headline contains "Conker Champion" next day.
+
+2. **Vinegar cheat undetected — win**: Set `dayCount = 280`. Buy `VINEGAR_BOTTLE` (1 COIN) and `BALL_OF_STRING` (1 COIN). Collect `RAW_CONKER`. Call `hardenWithVinegar(player)`, then `stringConker(player)`. Verify `STRUNG_CONKER` derived from `HARDENED_CONKER`. Set Derek inspection probability to 0% (mock). Advance to 13:30. Seed rivals with `Random(281)` — all ≤ 65. Player hardened base 70 → player wins. Verify `VINEGAR_VICTORY` achievement unlocked. Verify Notoriety unchanged (not caught).
+
+3. **Caught cheating by Derek**: Give player `HARDENED_CONKER`. Set Derek inspection probability to 100%. Advance to 13:15 (inspection window). Verify `derekInspects(player)` fires. Verify player disqualified. Verify Notoriety +2. Verify `CHEATING_AT_CONKERS` rumour seeded. Verify `DEREK_KNOWS` flag = true. Verify Derek NPC state = HOSTILE toward player.
+
+4. **Trophy heist and fence**: Do NOT enter competition. Advance time to 15:35. Locate `TROPHY_TABLE_PROP`. Press E. Verify `CONKER_TROPHY` in player inventory. Verify Notoriety +5. Verify `CONKER_TROPHY_NICKED` rumour seeded. Walk player to FENCE NPC. Press E. Verify player receives 15 COIN. Verify FENCE XP +1. Verify `TOOK_THE_LOT` achievement unlocked.
+
+5. **Tyler wins the championship**: Seed all NPC hardness scores with `Random(280 + 1)` — force Tyler score to 95 via mock override. Advance to 13:30. Call `runTournament()`. Verify Tyler wins. Verify `TYLER_WON_IT` rumour seeded. Verify NewspaperSystem headline contains "Tyler (9)". Verify Derek gives trophy to Tyler NPC. Verify player VIBES unchanged (player not involved).
+
+// ── Issue #1393: Add Northfield Annual Conker Championship ────────────────────────────────────
+// New: ConkerSystem.java in ragamuffin.core
+// New: ConkerSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1393ConkerChampionshipIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: RAW_CONKER, HARDENED_CONKER, STRUNG_CONKER, VINEGAR_BOTTLE, BALL_OF_STRING,
+//   VIMTO_CAN, JACKET_POTATO, CONKER_TROPHY, NORTHFIELD_CHAMPION_BADGE_PROP
+// New PropTypes: CONKER_TREE_PROP, TOURNAMENT_TABLE_PROP, TROPHY_TABLE_PROP, TOURNAMENT_BANNER_PROP
+// New NPCTypes: CONKER_COMPETITOR_NPC, CONKER_ORGANISER_NPC
+// New AchievementTypes: CONKER_CHAMPION, VINEGAR_VICTORY, LET_THE_KID_WIN,
+//   INCOGNITO_CONKER, TOOK_THE_LOT
+// New RumourTypes: CONKER_CHAMPION, CONKER_TROPHY_NICKED, CHEATING_AT_CONKERS, TYLER_WON_IT
+// Integration: TimeSystem, WantedSystem, NotorietySystem, StreetSkillSystem, RumourNetwork,
+//   NewspaperSystem, CriminalRecord, NeighbourhoodSystem, DisguiseSystem, CornerShopSystem,
+//   WeatherSystem, FenceSystem, PawnShopSystem, AchievementSystem
