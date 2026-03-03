@@ -47110,3 +47110,167 @@ public void update(float delta, TimeSystem timeSystem, List<NPC> worldNpcs)
 //              WetherspoonsSystem (post-meeting patron surge),
 //              StreetSkillSystem (STEALTH check for clipboard steal, pickpocket),
 //              AchievementSystem, TimeSystem, WantedSystem
+
+---
+
+## Issue #1345: Add Northfield BT Phone Box — The Scrawled Number, Anonymous Tip-Offs & the Marchetti Dead-Drop
+
+### Overview
+
+Two iconic red BT phone boxes exist in Northfield: one on the High Street (functional) and one on the estate (broken). Both are managed by a new `PhoneBoxSystem.java`. The High Street box is the hub for anonymous calls — grassing on rivals, making Marchetti dead-drop arrangements, and general mischief. The estate box is broken and repairable by the player using 3× `SCRAP_METAL`, rewarding community standing. A `PHONE_BOX_KEY` (rare drop from `UTILITY_WORKER` NPCs or the scrapyard) lets the player lock the coin slot, access the coin box, and repair broken boxes without materials.
+
+### High Street Box — Mechanics
+
+**Calling**
+- Press E on `PHONE_BOX_HIGH_STREET` to open a 4-option menu: [1] Anonymous Police Tip-Off, [2] Marchetti Dead-Drop, [3] Prank Call, [4] Emergency Services (999).
+- Each call costs 1 COIN (or consumes 1 `PHONE_CARD` item if held, no COIN deducted).
+- Box is occupied (uninteractable) if a `PUBLIC` NPC is using it (random 20% chance per visit, NPC uses for 60–180 in-game seconds).
+
+**Anonymous Police Tip-Off**
+- Player selects a known location (SCRAPYARD, NIGHTCLUB, BOOT_SALE, etc.) to tip off.
+- Seeds `POLICE_TIP_OFF` rumour. Spawns 2 POLICE NPCs at the location after a 5-in-game-minute delay.
+- +5 Notoriety (for being a known informant if not anonymous). If Notoriety Tier 3+ and a POLICE NPC witnesses the call, CrimeType `WASTING_POLICE_TIME` is considered — but the box is anonymous, so no arrest unless witnessed.
+- Rewards: `GRASS` achievement (or adds progress toward it). Can be used to eliminate a rival's operation.
+
+**Marchetti Dead-Drop Call**
+- Requires `SCRAWLED_NUMBER` in inventory AND Marchetti Respect ≥ 30.
+- Seeds `MARCHETTI_CONTACT` rumour. A `MARCHETTI_RUNNER` NPC spawns at the park bench within 10 in-game minutes and drops a package (`DEAD_DROP_PACKAGE`: random high-value item — SCRAP_METAL ×3, COIN ×15, or rare `STOLEN_WATCH`).
+- Collecting the package awards `DEAD_DROP` achievement.
+- If Marchetti Respect < 30: call fails with dialogue "Wrong number, pal."
+- If `SCRAWLED_NUMBER` not in inventory: menu option is greyed out.
+
+**Prank Call**
+- 3 prank targets: FIRE_STATION (spawns 1 fire engine NPC driving past, NoiseSystem spike), POLICE_STATION (police drive-by), PIZZA_DELIVERY (spawns a confused `DELIVERY_DRIVER` NPC wandering the high street for 5 minutes).
+- After 3 prank calls, `CrimeType.PHONE_BOX_VANDALISM` is replaced with `WASTING_POLICE_TIME` if police trace the pattern. WantedSystem +1 star.
+- No prank call achievement — but seeds humorous `LOCAL_EVENT` rumour.
+
+**Emergency 999 Call**
+- If player has active FIRE (WheeliBinFireSystem burning) or NPC in FALLEN state: spawns appropriate emergency NPC response at location within 3 in-game minutes.
+- Legitimate use: no Notoriety penalty.
+- Using 999 with no active emergency: seeds a `LOCAL_EVENT` rumour ("someone called 999 from the phone box again").
+
+**Coin Box Raid**
+- With `PHONE_BOX_KEY`, press E → "Empty coin box" action.
+- Yields 2–6 COIN (random). `CrimeType.PHONE_BOX_VANDALISM` added. Notoriety +1. WantedSystem +1.
+- Coin box resets after 1 in-game day. Council repairs cosmetic damage after 2 days.
+
+**Vandalising the Box**
+- 8 hits (using block-breaking mechanic) destroys the phone box prop, yields `SCRAP_METAL` ×1.
+- `CrimeType.PHONE_BOX_VANDALISM` added. Notoriety +1. WantedSystem +1.
+- `PHONE_BOX_HIGH_STREET` becomes non-functional (prop BROKEN state) until council repairs after 2 in-game days.
+
+### Estate Box — Repair Mechanic
+
+- `PHONE_BOX_ESTATE` starts in broken state (greyed-out prop, label "Out of Order").
+- Repair: stand adjacent, hold E for 5 seconds with 3× `SCRAP_METAL` in inventory (materials consumed).
+- Alternatively, use `PHONE_BOX_KEY` to repair without materials (single-use per repair).
+- On repair: awards `LAST_PHONE_STANDING` achievement, seeds `PHONE_BOX_REPAIR` rumour, adds +2 Neighbourhood Vibes.
+- Repaired estate box offers same 4-option call menu as High Street box.
+- NPC reaction: nearby PUBLIC and PENSIONER NPCs say "Oh good, they fixed it."
+
+### SCRAWLED_NUMBER Discovery
+
+- First time player presses E on `PHONE_BOX_HIGH_STREET`: `SCRAWLED_NUMBER` item added to inventory automatically (sticky note inside the box).
+- Alternatively, `PHONE_BOX_KEY` reveals it without needing to press E first.
+- `SCRAWLED_NUMBER` is a key item (not stackable, not droppable), used only for the Marchetti Dead-Drop Call.
+
+### PHONE_CARD Item
+
+- Found in skip-diving loot pool (5% chance) and charity shop rotating stock (2 COIN).
+- Consumed on use (one call per card). Acts as fare instead of 1 COIN.
+- Stacks to 5 in inventory.
+
+### NPC Usage
+
+- PUBLIC, PENSIONER, and COMMUTER NPCs autonomously use `PHONE_BOX_HIGH_STREET` during daytime (07:00–22:00), blocking player access for up to 3 minutes.
+- YOUTH_GANG NPCs may vandalise the box (5% chance per visit when no player/police nearby), triggering same PHONE_BOX_VANDALISM crime type.
+
+### Integration
+
+- `FactionSystem` — Marchetti dead-drop requires Respect ≥ 30; successful collection gives +5 Marchetti Respect.
+- `RumourNetwork` — seeds `POLICE_TIP_OFF`, `MARCHETTI_CONTACT`, `PHONE_BOX_REPAIR`.
+- `NotorietySystem` — coin box raid +1 Notoriety; vandalism +1; repeated prank calls escalate.
+- `WantedSystem` — vandalism +1 star; 3+ prank calls +1 star.
+- `CriminalRecord` — `PHONE_BOX_VANDALISM` on vandalism or coin box raid.
+- `NeighbourhoodSystem` — estate repair +2 Vibes.
+- `WheeliBinFireSystem` — 999 call triggers fire engine response.
+- `PoliceStationSystem` — anonymous tip-off spawns patrol; prank call trace adds WantedSystem flag.
+- `StreetSkillSystem` — STEALTH XP +1 per successful Marchetti dead-drop call (made without witness).
+- `AchievementSystem` — `DEAD_DROP`, `OFF_THE_BOOKS`, `LAST_PHONE_STANDING`.
+- `TimeSystem` — box occupancy by NPCs uses daytime schedule.
+
+---
+
+### New Materials (already defined — implement in logic only)
+
+| Material | Description |
+|----------|-------------|
+| `PHONE_BOX_KEY` | BT engineer master key; rare drop from UTILITY_WORKER or scrapyard |
+| `SCRAWLED_NUMBER` | Sticky note found inside the box; required for Marchetti dead-drop |
+| `PHONE_CARD` | Legacy BT phonecard; one free call per card |
+
+---
+
+### New RumourTypes (already defined — implement seeding logic only)
+
+| Type | Seeded when |
+|------|-------------|
+| `POLICE_TIP_OFF` | Player makes anonymous tip-off call |
+| `MARCHETTI_CONTACT` | Successful Marchetti dead-drop call made |
+| `PHONE_BOX_REPAIR` | Player repairs estate box |
+
+---
+
+### New AchievementTypes (already defined — implement unlock logic only)
+
+| Achievement | Condition |
+|-------------|-----------|
+| `DEAD_DROP` | Collect first Marchetti dead-drop delivery |
+| `OFF_THE_BOOKS` | Make 10 total calls from phone box (progress achievement) |
+| `LAST_PHONE_STANDING` | Repair the estate phone box |
+
+---
+
+### Unit Tests
+
+- `PhoneBoxSystem.isOccupied(rand)`: with `rand` seeded to produce < 0.2 → returns true; ≥ 0.2 → returns false.
+- `PhoneBoxSystem.makeCall(CallType.TIP_OFF, player, notoriety)`: seeds `POLICE_TIP_OFF` rumour; returns `CallResult.SUCCESS`; deducts 1 COIN from player.
+- `PhoneBoxSystem.makeCall(CallType.DEAD_DROP, player, factionSystem)`: Marchetti Respect < 30 → returns `CallResult.FACTION_LOCKED`; Respect ≥ 30 but no `SCRAWLED_NUMBER` → `CallResult.MISSING_ITEM`; Respect ≥ 30 + `SCRAWLED_NUMBER` → `CallResult.SUCCESS`, seeds `MARCHETTI_CONTACT`.
+- `PhoneBoxSystem.repairEstateBox(player, world)`: inventory has < 3 `SCRAP_METAL` → returns false; inventory has 3+ `SCRAP_METAL` → returns true, removes 3 `SCRAP_METAL`, sets box state FUNCTIONAL, seeds `PHONE_BOX_REPAIR` rumour.
+- `PhoneBoxSystem.raidCoinBox(player, world, rand)`: rand seeded to produce 4 COIN → player gains 4 COIN, `PHONE_BOX_VANDALISM` added to `CriminalRecord`, Notoriety +1, WantedSystem +1.
+- `PhoneBoxSystem.scrawledNumberDiscovery(player)`: first call on functional box → `SCRAWLED_NUMBER` added to inventory; subsequent calls → no duplicate added.
+- `PhoneBoxSystem.npcVandalise(npcType, rand)`: `YOUTH_GANG` NPC + rand < 0.05 → box set to BROKEN state; `PUBLIC` NPC → never vandalises.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Anonymous tip-off spawns police patrol**: Call `makeCall(CallType.TIP_OFF, player, rumourNetwork)` targeting SCRAPYARD. Verify `POLICE_TIP_OFF` rumour is seeded in `RumourNetwork`. Advance time 5 in-game minutes. Verify 2 POLICE NPCs have been spawned within 10 blocks of `SCRAPYARD` landmark. Verify player COIN decreased by 1 (call cost). Verify `OFF_THE_BOOKS` progress incremented by 1.
+
+2. **Marchetti dead-drop full flow**: Set Marchetti Respect to 35. Add `SCRAWLED_NUMBER` to player inventory. Call `makeCall(CallType.DEAD_DROP, player, factionSystem, rumourNetwork)`. Verify return is `CallResult.SUCCESS`. Verify `MARCHETTI_CONTACT` rumour seeded. Advance time 10 in-game minutes. Verify a `MARCHETTI_RUNNER` NPC has spawned at the park bench. Press E to collect package. Verify `DEAD_DROP` achievement awarded. Verify player inventory contains one of {`SCRAP_METAL` ×3, COIN ×15, `STOLEN_WATCH`}. Verify Marchetti Respect increased to 40.
+
+3. **Estate box repair restores function**: Set `PHONE_BOX_ESTATE` state to BROKEN. Add 3× `SCRAP_METAL` to player inventory. Call `repairEstateBox(player, world)`. Verify returns true. Verify player inventory has 0 `SCRAP_METAL`. Verify estate box state is FUNCTIONAL. Verify `PHONE_BOX_REPAIR` rumour seeded in `RumourNetwork`. Verify `LAST_PHONE_STANDING` achievement awarded. Verify `NeighbourhoodSystem` Vibes increased by 2.
+
+4. **Coin box raid yields coin and criminal record**: Give player `PHONE_BOX_KEY`. Call `raidCoinBox(player, world, new Random(7))`. Verify player gains between 2 and 6 COIN inclusive. Verify `CriminalRecord` contains `PHONE_BOX_VANDALISM`. Verify player Notoriety increased by 1. Verify `WantedSystem` star count increased by 1.
+
+5. **SCRAWLED_NUMBER discovered on first use**: Player has empty inventory. Press E on `PHONE_BOX_HIGH_STREET` (box is functional, not occupied). Verify `SCRAWLED_NUMBER` added to player inventory. Press E again and open call menu. Verify `SCRAWLED_NUMBER` count in inventory is still 1 (no duplicate added). Verify Marchetti dead-drop option is now available (not greyed out) if Marchetti Respect ≥ 30.
+
+---
+
+// ── Issue #1345: Add Northfield BT Phone Box ──────────────────────────────────────
+// New: PhoneBoxSystem.java in ragamuffin.core
+// New: PhoneBoxSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1345PhoneBoxIntegrationTest.java in src/test/java/ragamuffin/integration/
+// Existing Materials: PHONE_BOX_KEY, SCRAWLED_NUMBER, PHONE_CARD — already defined in Material.java
+// Existing RumourTypes: POLICE_TIP_OFF, MARCHETTI_CONTACT, PHONE_BOX_REPAIR — already in RumourType.java
+// Existing AchievementTypes: DEAD_DROP, OFF_THE_BOOKS, LAST_PHONE_STANDING — already in AchievementType.java
+// Existing CrimeType: PHONE_BOX_VANDALISM — already in CriminalRecord.java
+// Existing LandmarkTypes: PHONE_BOX_HIGH_STREET, PHONE_BOX_ESTATE — already in LandmarkType.java
+// Integration: FactionSystem (Marchetti Respect check + reward),
+//              RumourNetwork (POLICE_TIP_OFF, MARCHETTI_CONTACT, PHONE_BOX_REPAIR seeding),
+//              NotorietySystem (vandalism, coin box raid +1),
+//              WantedSystem (vandalism/raid +1 star, prank call escalation),
+//              CriminalRecord (PHONE_BOX_VANDALISM),
+//              NeighbourhoodSystem (estate repair +2 Vibes),
+//              WheeliBinFireSystem (999 call triggers fire engine),
+//              PoliceStationSystem (tip-off spawns patrol),
+//              StreetSkillSystem (STEALTH XP on unwitnessed dead-drop call),
+//              AchievementSystem, TimeSystem (NPC occupancy schedule), NPCManager
