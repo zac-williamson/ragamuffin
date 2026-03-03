@@ -888,6 +888,15 @@ public enum PropType {
      */
     LOAN_DESK_PROP(1.20f, 0.90f, 0.60f, 5, Material.SCRAP_METAL),
 
+    // ── Issue #1418: Northfield QuickFix Loans ───────────────────────────────
+
+    /**
+     * CASH_DRAWER_PROP — Darren's back-office cash drawer at QuickFix Loans.
+     * Hold E for 5 seconds with CROWBAR during Darren's lunch (12:30–13:00) to
+     * loot 30–50 COIN. Destroyed by 3 hits; yields SCRAP_METAL.
+     */
+    CASH_DRAWER_PROP(0.60f, 0.30f, 0.40f, 3, Material.SCRAP_METAL),
+
     // ── Issue #1026: Northfield Scrapyard ────────────────────────────────────
 
     /**

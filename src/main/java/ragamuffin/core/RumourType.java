@@ -1049,6 +1049,38 @@ public enum RumourType {
      * Spreads via BARMAN and PUBLIC NPCs. */
     LOAN_SHARK,
 
+    // ── Issue #1418: Northfield QuickFix Loans (PaydayLoanSystem) ────────────
+
+    /** "Someone round here's cleared their QuickFix debt — early, an' all.
+     * Got a coin back apparently."
+     * — seeded by PaydayLoanSystem on early repayment (within 1 in-game day).
+     * Spreads via BARMAN and PUBLIC NPCs. Reduces NeighbourhoodSystem anger −1. */
+    LOAN_REPAID_RUMOUR,
+
+    /** "Darren from QuickFix is doing his nut — someone's missed a payment.
+     * He's gone full hostile."
+     * — seeded by PaydayLoanSystem on Day 1 overdue.
+     * Spreads via PUBLIC and PENSIONER NPCs. Triggers Notoriety +2. */
+    LOAN_OVERDUE_RUMOUR,
+
+    /** "Someone slipped Terry the bailiff a tenner and sent him on his way.
+     * Brazen as anything."
+     * — seeded by PaydayLoanSystem when player bribes BAILIFF Terry (5 COIN).
+     * Spreads via PUBLIC and STREET_LAD NPCs. */
+    BRIBED_BAILIFF_RUMOUR,
+
+    /** "Someone legged it from the bailiff — barricaded the door and everything.
+     * Loan's apparently doubled now."
+     * — seeded by PaydayLoanSystem when player scarpers and barricades.
+     * Spreads via PUBLIC and PENSIONER NPCs. */
+    SCARPERED_BAILIFF_RUMOUR,
+
+    /** "The barman reckons there's a back office at QuickFix full of cash —
+     * Darren nips off for lunch at half twelve."
+     * — seeded by PaydayLoanSystem after 3 loans (barman intel).
+     * Spreads via BARMAN and STREET_LAD NPCs. */
+    BARMAN_RUMOUR_LOAN_OFFICE,
+
     // ── Issue #1353: Northfield Amateur Dramatics Society ─────────────────────
 
     /** "There was an absolute disaster at the drama do — power cut, prop gun mix-up,
