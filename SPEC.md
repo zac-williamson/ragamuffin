@@ -49896,3 +49896,182 @@ Three interference routes available before judging (21:00):
 // Integration: BattleBarMiniGame, KaraokeSystem, MCBattleSystem, NeighbourhoodSystem,
 //   NotorietySystem, FactionSystem, RumourNetwork, CriminalRecord, WantedSystem,
 //   WeatherSystem, NoiseSystem, FenceSystem, AchievementSystem, TimeSystem
+
+---
+
+## Issue #1379: Add Northfield BP Petrol Station — Raj's Kiosk, Fuel Theft & Wayne's Night Shift
+
+**Landmark**: `PETROL_STATION` (already in `LandmarkType.java`; already placed by `WorldGenerator`)
+**System class**: `PetrolStationSystem.java` in `ragamuffin.core`
+
+### Background
+
+The BP petrol station exists in the world and is referenced by stubs across the codebase
+(`RumourType` javadoc mentions "seeded by PetrolStationSystem"; `NPCType` defines
+`PETROL_STATION_ATTENDANT` and `PETROL_STATION_ASSISTANT`; `AchievementType` defines
+`FORECOURT_REGULAR`, `DRIVE_OFF`, and `PETROL_HEAD` achievements all tagged Issue #1047/1130;
+`PropType` defines `FUEL_PUMP_PROP`, `CCTV_CAMERA_PROP`, `MICROWAVE_PROP`,
+`CIGARETTE_CABINET_PROP`, `AIR_PUMP_PROP`, `SQUEEGEE_BUCKET_PROP`, `CASH_POUCH_PROP`).
+All of this scaffolding is dead without a system to drive it. This issue implements
+`PetrolStationSystem` to give the forecourt full interactive depth.
+
+### Overview
+
+The BP petrol station — the only 24-hour location in Northfield. Fluorescent-lit canopy
+over two pump islands, a grubby kiosk smelling of burnt coffee and hot pasties. Day
+shift: Raj (`PETROL_STATION_ATTENDANT`), helpful and gossipy. Night shift: Wayne
+(`PETROL_STATION_ASSISTANT`), a bored teenager who falls asleep between 01:00 and 03:00.
+
+### Mechanic 1 — Kiosk Purchases (press E at TILL_PROP)
+
+| Item | COIN | Notes |
+|------|------|-------|
+| `PETROL_CAN_FULL` | 3 | Requires empty `PETROL_CAN` in inventory; converts it in-place |
+| `ENERGY_DRINK` | 2 | +20 hunger, +15 energy (existing material) |
+| `MICROWAVE_PASTY` | 2 | +35 hunger; 30% food-poisoning chance after 21:00 |
+| `CHOCOLATE_BAR` | 2 | +15 hunger |
+| `CIGARETTE` | 1 | Existing material |
+| `SCRATCH_CARD` | 1 | 20% chance to yield 1–5 COIN; existing mechanic |
+| `NEWSPAPER` | 1 | Existing mechanic (NewspaperSystem) |
+
+Raj refuses service at `WantedSystem` tier ≥ 3 (calls police; 90-second response delay).
+Wayne refuses service only at tier ≥ 4 (he doesn't pay close enough attention).
+
+### Mechanic 2 — Fuel Pump (press E at FUEL_PUMP_PROP)
+
+Player must hold an empty `PETROL_CAN`. Prompt: "Fill up? (3 COIN)". Confirm → `PETROL_CAN`
+becomes `PETROL_CAN_FULL`; 3 COIN deducted. Second E-press without empty can: "You need
+an empty petrol can first."
+
+**Drive-off variant**: player can fill a `PETROL_CAN_FULL` and leave the forecourt
+without visiting the TILL_PROP. If the `CCTV_CAMERA_PROP` on the canopy pillar is active
+and has line-of-sight to the pump, this triggers:
+- `PETROL_THEFT` RumourType seeded ("Someone drove off from the BP without paying");
+- `CriminalRecord.CrimeType.THEFT` recorded;
+- `WantedSystem` tier +1;
+- Notoriety +4.
+If the camera has been destroyed (3 HARD hits to break), no detection occurs.
+Achievement: `DRIVE_OFF` (first successful undetected drive-off).
+
+### Mechanic 3 — Fuel Siphoning (criminal, night only)
+
+At night (21:00–06:00), player crouches (SHIFT) beside any parked `Car` entity on a
+nearby road block and presses E: 5-second hold mini-game (progress bar). Hold interrupted
+by movement or attack. On success:
+- `PETROL_CAN_FULL` added to inventory (free);
+- `CriminalRecord.CrimeType.VEHICLE_TAMPERING` recorded;
+- Notoriety +3.
+If `CCTV_CAMERA_PROP` has line-of-sight to the car being siphoned: `WantedSystem` tier +1.
+Wayne notices from kiosk window at 25% chance if siphoning within 6 blocks (night only).
+
+### Mechanic 4 — Till Robbery (hold CROWBAR + press E at TILL_PROP)
+
+- Raj/Wayne surrenders (COWERING state); player receives 8–18 COIN;
+- `WantedSystem` tier +2; `CriminalRecord.CrimeType.ARMED_ROBBERY`; Notoriety +15;
+- Police response in 3 in-game minutes.
+- If player enters kiosk at `WantedSystem` tier ≥ 2, Wayne silently presses `PANIC_BUTTON_PROP`
+  → 30-second armed police response (shorter than standard 3-minute timer).
+
+### Mechanic 5 — Cigarette Cabinet Smash (3 HARD hits)
+
+Smash `CIGARETTE_CABINET_PROP`: yields `CIGARETTE_CARTON` ×2–3.
+`CIGARETTE_CARTON`: fenced at `FenceSystem` for 6 COIN each (`RECEIVING_STOLEN_GOODS`).
+NoiseSystem event level 25; Raj/Wayne calls police immediately if present.
+
+### Mechanic 6 — Wayne's Night Shift (ambient + crime window)
+
+- Wayne scrolls phone (IDLE) most of the night; 25% slower to notice crimes than Raj.
+- At 23:00 Wayne microwaves a pasty (ambient cooking sound, 45 seconds; turns his back).
+- Wayne sleeps 01:00–03:00 (SLEEPING state; unresponsive to NoiseSystem events below level 15).
+  Any noise ≥ 15 wakes Wayne immediately → he calls police 60 seconds later.
+
+### System Integrations
+
+- `WheeliBinFireSystem`: `PETROL_CAN_FULL` + E on WHEELIE_BIN_PROP → instant fire, no ignition delay; fire burns 3× longer
+- `CarDrivingSystem`: `PETROL_CAN_FULL` repairs a stalled Car entity (ambient random stalls); helping seeds NeighbourhoodSystem VIBES +1
+- `CraftingSystem`: `PETROL_CAN_FULL` + `FLYER` (rag) → `MOLOTOV_COCKTAIL` (throwable; creates 2×2 FIRE blocks; NoiseSystem +30; Notoriety +20; `ARSON` CriminalRecord entry)
+- `WantedSystem`: till robbery +2; cabinet smash +1; siphoning (with CCTV) +1; drive-off (with CCTV) +1; panic button 30-second response
+- `FenceSystem`: `CIGARETTE_CARTON` 6 COIN; `PETROL_CAN_FULL` 2 COIN
+- `RumourNetwork`: till robbery → `COMMUNITY_OUTRAGE`; drive-off → `PETROL_THEFT` rumour; Wayne asleep → `LOCAL_EVENT` ("Wayne's asleep at the BP again")
+- `NewspaperSystem`: till robbery headline: "Northfield Petrol Station Robbed"; arson headline: "Forecourt Blaze: Northfield BP in Flames"
+- `NeighbourhoodSystem`: VIBES −2/robbery; −5/arson; +1 if kiosk purchases ≥ 5 (regular customer)
+- `WeatherSystem`: RAIN → up to 3 extra NPC customers shelter in kiosk; FROST → Raj seeds `LOCAL_EVENT` rumour "frozen nozzle again"
+- `TaxiSystem`: taxi drivers arrive to refuel at 06:30 and 22:00 (ambient Car entity arrivals)
+- `SkipDivingSystem`: kiosk dumpster (behind building) — 10% chance `ENERGY_DRINK` or `NEWSPAPER`
+- `TimeSystem`: kiosk 24 hours; Raj 07:00–19:00; Wayne 19:00–07:00; Wayne sleep 01:00–03:00
+
+### New Materials (add to Material.java)
+- `MICROWAVE_PASTY` — Tooltip: "It's a forecourt pasty. At 2am. You've made your choices."
+- `CHOCOLATE_BAR` — basic hunger item
+- `CIGARETTE_CARTON` — 10× cigarettes; stackable; fence target
+- `MOLOTOV_COCKTAIL` — throwable; right-click to throw; arc trajectory; creates fire on impact
+
+### New PropTypes (add to PropType.java — most are already defined; verify all exist)
+- `FUEL_PUMP_PROP`, `CCTV_CAMERA_PROP`, `MICROWAVE_PROP`, `CIGARETTE_CABINET_PROP`,
+  `AIR_PUMP_PROP`, `SQUEEGEE_BUCKET_PROP`, `CASH_POUCH_PROP`, `PANIC_BUTTON_PROP`
+
+### New AchievementTypes (verify these already exist in AchievementType.java; do NOT duplicate)
+- `FORECOURT_REGULAR` — buy from kiosk 10 times
+- `DRIVE_OFF` — steal fuel (pump without paying, undetected)
+- `PETROL_HEAD` — fill PETROL_CAN 5 times legitimately
+- `MICROWAVE_MILLIONAIRE` — buy a microwave pasty after 23:00
+
+### New RumourTypes (verify PETROL_THEFT and related entries already exist in RumourType.java)
+
+### Unit Tests
+- `testPetrolCanFillDeductsCoin`: Give player empty `PETROL_CAN` and 5 COIN. Call `fillPetrolCan(player, pump)`. Verify player has `PETROL_CAN_FULL` and 2 COIN. Call again without empty can. Verify "needs empty can" message returned and no COIN deducted.
+- `testFuelSiphonInterruptedBeforeFiveSeconds`: Start siphon. Advance 4.9 seconds. Interrupt (player moves). Verify no `PETROL_CAN_FULL` added and no CriminalRecord entry.
+- `testFuelSiphonSucceedsAtFiveSeconds`: Start siphon. Advance 5.0 seconds without interruption. Verify `PETROL_CAN_FULL` added, `VEHICLE_TAMPERING` in CriminalRecord, Notoriety +3.
+- `testCCTVDetectsDriveOff`: CCTV camera active, line-of-sight to pump. Fill can without paying. Verify `WantedSystem` tier +1 and `THEFT` in CriminalRecord.
+- `testDestroyedCCTVNoDriveOffDetection`: Break CCTV camera (3 HARD hits). Fill can without paying. Verify WantedSystem tier unchanged.
+- `testTillRobberyCOINRange`: Call `robbTill(player)` 1000 times with RNG seed variation. Verify all yielded COIN values in [8, 18] inclusive.
+- `testTillRobberyWantedAndRecord`: Rob till. Verify WantedSystem tier +2, `ARMED_ROBBERY` in CriminalRecord, Notoriety +15.
+- `testPanicButtonHighWanted`: Set `WantedSystem` tier to 2 before player enters kiosk. Verify `PANIC_BUTTON_PROP` pressed flag set; police response timer = 30 seconds (not 180).
+- `testCigaretteCabinetBreakThreeHits`: Hit `CIGARETTE_CABINET_PROP` twice. Verify not broken. Hit third time. Verify broken and `CIGARETTE_CARTON` ×2–3 dropped.
+- `testWayneSleepsAndWakesOnNoise`: Set time to 02:00. Wayne is SLEEPING. Trigger NoiseSystem event level 10. Verify Wayne stays SLEEPING. Trigger level 15. Verify Wayne transitions to IDLE.
+- `testRajRefusesServiceAtWantedTier3`: Set `WantedSystem` tier to 3 on player. Attempt kiosk purchase via Raj. Verify refused. Verify police call initiated (90-second timer).
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Petrol can fill deducts COIN and converts item**: Give player empty `PETROL_CAN` and 5 COIN.
+   Place player at `FUEL_PUMP_PROP` within 2 blocks. Press E. Verify confirmation prompt shown.
+   Confirm purchase. Verify `PETROL_CAN_FULL` in inventory (empty `PETROL_CAN` removed).
+   Verify player COIN = 2 (5 − 3). Press E again immediately. Verify "needs empty petrol can"
+   message and COIN unchanged.
+
+2. **Fuel siphoning at night: full success and criminal record**: Set time to 23:30. Place Car entity
+   4 blocks from player on road block, outside CCTV line-of-sight. Press E + hold for 5 in-game
+   seconds. Verify `PETROL_CAN_FULL` in inventory. Verify `VEHICLE_TAMPERING` in CriminalRecord.
+   Verify Notoriety increased by 3. Verify `WantedSystem` tier unchanged (no CCTV LoS).
+
+3. **Till robbery triggers wanted tier, armed response and rumour**: Give player a `CROWBAR`.
+   Place player at `TILL_PROP` with Raj present (time 10:00). Hold CROWBAR + press E. Verify
+   Raj enters COWERING state. Verify player receives 8–18 COIN. Verify `WantedSystem` tier +2
+   and `ARMED_ROBBERY` in CriminalRecord. Advance 3 in-game minutes. Verify at least one
+   `POLICE_OFFICER` NPC has patrolled within 10 blocks. Verify `COMMUNITY_OUTRAGE` rumour
+   seeded into `RumourNetwork`.
+
+4. **Wayne sleeps 01:00–03:00; low-noise crime undetected**: Set time to 02:00. Wayne is in SLEEPING
+   state at counter. Smash `CONFECTIONERY_SHELF_PROP` (NoiseSystem level 10). Verify Wayne remains
+   SLEEPING (no response). Generate NoiseSystem event level 15. Verify Wayne transitions to IDLE and
+   police call timer starts (60 seconds).
+
+5. **Drive-off with active CCTV is detected**: Fill `PETROL_CAN` at pump (player has empty can, 0 COIN).
+   Leave forecourt without visiting TILL_PROP. Verify CCTV camera has active line-of-sight to pump.
+   Verify `PETROL_THEFT` rumour seeded into `RumourNetwork`. Verify `THEFT` in CriminalRecord.
+   Verify `WantedSystem` tier +1. Verify Notoriety +4.
+
+// ── Issue #1379: Add Northfield BP Petrol Station ─────────────────────────────────────────────────
+// New: PetrolStationSystem.java in ragamuffin.core
+// New: PetrolStationSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1379PetrolStationIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: MICROWAVE_PASTY, CHOCOLATE_BAR, CIGARETTE_CARTON, MOLOTOV_COCKTAIL
+// PropTypes already defined: FUEL_PUMP_PROP, CCTV_CAMERA_PROP, MICROWAVE_PROP,
+//   CIGARETTE_CABINET_PROP, AIR_PUMP_PROP, SQUEEGEE_BUCKET_PROP, CASH_POUCH_PROP,
+//   PANIC_BUTTON_PROP — verify all exist in PropType.java
+// NPCTypes already defined: PETROL_STATION_ATTENDANT, PETROL_STATION_ASSISTANT
+// AchievementTypes already defined: FORECOURT_REGULAR, DRIVE_OFF, PETROL_HEAD — add MICROWAVE_MILLIONAIRE
+// RumourTypes already defined: PETROL_THEFT (frozen-nozzle variant seeded by frost)
+// Integration: WheeliBinFireSystem, CarDrivingSystem, CraftingSystem, WantedSystem,
+//   FenceSystem, RumourNetwork, NewspaperSystem, NeighbourhoodSystem, WeatherSystem,
+//   TaxiSystem, SkipDivingSystem, NoiseSystem, TimeSystem, AchievementSystem
