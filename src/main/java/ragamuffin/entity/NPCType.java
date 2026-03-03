@@ -3463,13 +3463,6 @@ public enum NPCType {
      */
     TEST_SLOT_SCALPER(25f, 0f, 0f, false),
 
-    /**
-     * LEARNER_DRIVER — nervous learners who congregate outside the test centre
-     * 08:30–09:00 and 15:00–16:00. Will buy CANCELLED_SLOT_VOUCHERs for 10 COIN.
-     * Press E to offer a slot; 3 sales in one day triggers SLOT_SHARK achievement.
-     */
-    LEARNER_DRIVER(20f, 0f, 0f, false),
-
     // ── Issue #1483: Northfield Crown Green Bowls Club ────────────────────────
 
     /**

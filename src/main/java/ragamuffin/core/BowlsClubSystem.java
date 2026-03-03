@@ -404,8 +404,8 @@ public class BowlsClubSystem {
                        List<NPC> allNpcs,
                        NotorietySystem.AchievementCallback achievementCallback) {
 
-        float hour = timeSystem.getHour();
-        int dayOfWeek = timeSystem.getDayOfWeek(); // 0=Mon … 6=Sun; 5=Sat
+        float hour = timeSystem.getTime();
+        int dayOfWeek = (timeSystem.getDayCount() + 4) % 7; // 0=Mon … 6=Sun; day 1 = Sat = 5
 
         // Tick PCSO distraction window
         if (pcsoDistractionWindowOpen) {
