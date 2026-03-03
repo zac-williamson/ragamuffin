@@ -58631,3 +58631,128 @@ Every third Wednesday of the month (19:00–21:00), the Northfield branch of the
 5. **Three unwitnessed jam sabotages across three shows award JAM_CHEATER**: create system; give player `WI_MEMBERSHIP_CARD`; call `sabotageDotJam(player, dotJamProp, nearbyNpcs=[])` on three separate show days (advance `TimeSystem` by 28 in-game days between calls); verify on third call `achievementCallback` received `AchievementType.JAM_CHEATER`; verify `wiSystem.getSabotageCount()` == 3.
 
 // `WISystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (monthly meeting schedule, annual show day 21, judging at 12:00, toilet break 20:00–20:03), `StreetSkillSystem` (CRAFTING XP at workshops), `WitnessSystem` (sabotage detection, recipe book theft), `CriminalRecord` (existing `THEFT`, `CRIMINAL_DAMAGE`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `WI_JAM_SCANDAL`, `WI_RECIPE_THEFT`, `WI_CHAIRWOMAN_OUSTED`, `WI_SCANDAL_HEADLINE`), `NeighbourhoodSystem` (Vibes), `FenceSystem` (recipe book rival WI value), `PawnShopSystem` (Victoria Sponge, ribbon, knitted item), `NewspaperSystem` (show winner headline, scandal headline), `AllotmentSystem` (EGG source), `CornerShopSystem` (FLOUR/EGG stock), `SupermarketSystem` (BUTTER stock), `AchievementSystem` (new `WI_REGULAR`, `WI_CHAMPION`, `WI_ENTHUSIAST`, `JAM_CHEATER`, `RECIPE_THIEF`). New NPCTypes: `WI_CHAIRWOMAN`, `WI_MEMBER`, `WI_JUDGE`, `WI_GUEST_SPEAKER`. New Materials: `WI_MEMBERSHIP_CARD`, `VICTORIA_SPONGE`, `FLOUR`, `EGG`, `BUTTER`, `FLOWER_ARRANGEMENT`, `KNITTED_ITEM`, `WI_RECIPE_BOOK`, `JAM_RECIPE_CARD`, `SHOW_RIBBON`. New PropTypes: `JAM_ENTRY_TABLE_PROP`, `CAKE_ENTRY_TABLE_PROP`, `FLOWER_ENTRY_TABLE_PROP`, `HANDICRAFT_ENTRY_TABLE_PROP`, `JAM_WORKSHOP_TABLE_PROP`, `FLOWER_ARRANGEMENT_TABLE_PROP`, `WI_RECIPE_BOOK_PROP`, `SHOW_RIBBON_PROP`. New RumourTypes: `WI_JAM_SCANDAL`, `WI_RECIPE_THEFT`, `WI_CHAIRWOMAN_OUSTED`, `WI_SCANDAL_HEADLINE`. New AchievementTypes: `WI_REGULAR`, `WI_CHAMPION`, `WI_ENTHUSIAST`, `JAM_CHEATER`, `RECIPE_THIEF`.
+
+---
+
+## Issue #1509: Add Northfield Wargames & Tabletop Society — Brian's Saturday Session, the Tournament Fiddle & the Rare Edition Heist
+
+### Overview
+
+Every Saturday afternoon (14:00–18:00) in the back room of the community centre, the Northfield Wargames & Tabletop Society meets. Chairman Brian Schofield (`NPCType.WARGAMES_CHAIRMAN`) runs the show with the slightly deranged authority of a man who has been re-fighting Waterloo for thirty years and insists on being addressed as "General". Six regular members (`NPCType.WARGAMES_MEMBER`) push painted miniatures around felt-covered tables, argue about historical accuracy, and drink tea from a cracked urn. Brian keeps a locked display cabinet (`MINIATURE_CABINET_PROP`) containing the society's crown jewel: a hand-painted, boxed first-edition Napoleonic Grande Armée set (`RARE_MINIATURE_SET_PROP`) rumoured to be worth 80 COIN. There's a quarterly tournament (day 14 of months 1, 4, 7, 10) with a modest prize pot. Brian has been quietly fiddling the tournament bracket for two years — always losing to his handpicked "ringers". The player can join the society, compete in the tournament, expose Brian's rigging by stealing the `TOURNAMENT_LEDGER` from his bag, or go straight for the rare miniature cabinet.
+
+### Schedule & Constants
+
+| Constant | Value |
+|---|---|
+| `SESSION_DAY_OF_WEEK` | 6 (Saturday) |
+| `SESSION_START` | 14.0f |
+| `SESSION_END` | 18.0f |
+| `TOURNAMENT_DAY_OF_MONTH` | 14 |
+| `TOURNAMENT_MONTHS` | 1, 4, 7, 10 |
+| `TOURNAMENT_START` | 14.0f |
+| `TOURNAMENT_END` | 18.0f |
+| `ENTRY_FEE` | 2 |
+| `TOURNAMENT_PRIZE` | 20 |
+| `MEMBERSHIP_COST` | 3 |
+| `RARE_SET_FENCE_VALUE` | 80 |
+| `LEDGER_FENCE_VALUE` | 15 |
+| `LEDGER_NEWSPAPER_VALUE` | 12 |
+| `RIG_NOTORIETY_EXPOSED` | 6 |
+| `WITNESS_RANGE` | 5.0f |
+| `MEMBER_COUNT` | 6 |
+| `MINIATURE_PAINTING_XP` | 5 |
+| `PAINTING_SESSION_DURATION` | 3.0f |
+| `RIGGED_WIN_CHANCE` | 0.2f |
+
+### Mechanic 1 — Weekly Sessions
+
+- On Saturdays 14:00–18:00, Brian and `MEMBER_COUNT` (6) `NPCType.WARGAMES_MEMBER` NPCs gather in the community centre back room.
+- Press E on Brian to buy membership (`MEMBERSHIP_COST` = 3 COIN): player receives `WARGAMES_MEMBERSHIP_CARD` material; grants access to back room cabinet and table areas during sessions.
+- Ejected if Notoriety ≥ 5: `EntryResult.EJECTED` (Brian: *"We run a respectable establishment."*).
+- During a session, three activities are available:
+  - **Play a game** (`GAME_TABLE_PROP`): press E to play against a `WARGAMES_MEMBER`. Win (50% base chance, +10% per `WARGAMES_SKILL` level) → `GAME_VICTORY` flag; seeds `WARGAMES_MATCH_WIN` rumour; Vibes +1. Lose → nothing. Win 5 games → `HOBBY_GENERAL` achievement.
+  - **Paint miniatures** (`PAINTING_TABLE_PROP`): press E to spend `PAINTING_SESSION_DURATION` in-game minutes; awards `MINIATURE_PAINTING_XP` (5) CRAFTING XP via `StreetSkillSystem` and produces 1 `PAINTED_MINIATURE` material. Sell to `PawnShopSystem` (2 COIN) or fence via `FenceSystem` (3 COIN). Paint 10 miniatures → `MINIATURE_MAESTRO` achievement.
+  - **Pickpocket Brian's bag** (`TOURNAMENT_LEDGER` item, 25% success): success grants `TOURNAMENT_LEDGER` material; failure → Brian becomes hostile + Notoriety +2.
+
+### Mechanic 2 — The Rigged Tournament
+
+- On `TOURNAMENT_DAY_OF_MONTH` (day 14) of months 1, 4, 7, 10: single-elimination tournament, 4 rounds, 8 players (Brian, 5 members, 2 ringers: `NPCType.WARGAMES_RINGER`).
+- Player can enter if they have `WARGAMES_MEMBERSHIP_CARD` and pays `ENTRY_FEE` (2 COIN).
+- Brian's bracket is rigged: the two ringers receive `RIGGED_WIN_CHANCE` (20%) against all non-Brian opponents instead of the fair 50%, ensuring Brian or a ringer always reaches the final. Player's win chance against a ringer is 50% fair; against Brian is 30% (Brian is genuinely good).
+- If `TOURNAMENT_LEDGER` is in player's inventory when the tournament starts: `exposeRig(player, ledger, members)` is called — Brian's bracket reverts to fair 50%; `TOURNAMENT_RIGGED_EXPOSED` rumour seeded; all WARGAMES_MEMBER NPCs become IRRITATED toward Brian; Brian becomes hostile toward player; Notoriety +`RIG_NOTORIETY_EXPOSED` (6) on Brian.
+- Tournament winner: +`TOURNAMENT_PRIZE` (20) COIN + `WARGAMES_TROPHY` material + `WARGAMES_CHAMPION` achievement + Vibes +3.
+- Winning while the rig is exposed: also seeds `FAIR_WIN_RUMOUR` and awards `RESTORED_ORDER` achievement.
+
+### Mechanic 3 — The Rare Edition Heist
+
+- `RARE_MINIATURE_SET_PROP` is locked inside `MINIATURE_CABINET_PROP` in the back room.
+- Cabinet requires LOCKPICK to open outside session hours. During a session with `WARGAMES_MEMBERSHIP_CARD`: cabinet is unlocked (Brian left it open to show off the set to a visitor) for a 5-minute window at 15:30 when Brian is at the game table.
+- Steal the set (press E on open cabinet, no NPCs within `WITNESS_RANGE`):
+  - `RARE_MINIATURE_SET` added to inventory.
+  - Can sell to `FenceSystem` (80 COIN: `RARE_SET_FENCE_VALUE`); `PawnShopSystem` (20 COIN — Ken raises an eyebrow); or keep as a display item in squat via `SquatFurnishingTracker` (+5 Vibes while displayed).
+  - Witnessed: `CrimeType.THEFT` + Notoriety +5 + `MINIATURE_HEIST_RUMOUR` seeded; Brian calls police.
+  - Unwitnessed: `MINIATURE_HEIST` achievement.
+- Selling `TOURNAMENT_LEDGER` to `NPCType.JOURNALIST` (pub, `LEDGER_NEWSPAPER_VALUE` = 12 COIN): `NewspaperSystem.setPendingHeadline()` "NORTHFIELD WARGAMES BOSS RIGGED TOURNAMENT FOR YEARS — EXCLUSIVE"; seeds `TOURNAMENT_SCANDAL_HEADLINE` rumour.
+- Selling `TOURNAMENT_LEDGER` to `FenceSystem` (fence value `LEDGER_FENCE_VALUE` = 15 COIN) without exposing the rig: `SILENT_INFORMANT` achievement.
+
+### New Entities Required
+
+**New NPCTypes:**
+- `WARGAMES_CHAIRMAN` — Brian Schofield; runs sessions; places rare set in cabinet before session; opens cabinet at 15:30; hostile after caught theft/pickpocket; calls police at Notoriety ≥ 3 witnessing theft.
+- `WARGAMES_MEMBER` — six generic hobbyists; attend sessions and tournament; spread rumours; become IRRITATED at Brian if rig exposed.
+- `WARGAMES_RINGER` — two ringers hired by Brian; appear only on tournament days; have artificially suppressed win rates under rig.
+
+**New Materials:**
+- `WARGAMES_MEMBERSHIP_CARD` — entry to sessions and back room. Non-stackable.
+- `PAINTED_MINIATURE` — produced at painting table. Pawn value 2 COIN; fence value 3 COIN.
+- `RARE_MINIATURE_SET` — stolen from cabinet. Fence value 80 COIN; pawn value 20 COIN; squat display item.
+- `TOURNAMENT_LEDGER` — Brian's rigging records. Sell to journalist (12 COIN) or fence (15 COIN); use in-session to expose the rig at tournament start.
+- `WARGAMES_TROPHY` — awarded to tournament winner. Pawn value 5 COIN; squat display.
+
+**New PropTypes:**
+- `GAME_TABLE_PROP` — table with painted battlefield; press E to play a game.
+- `PAINTING_TABLE_PROP` — hobby workbench; press E to paint miniatures; requires no tools.
+- `MINIATURE_CABINET_PROP` — locked glass cabinet; LOCKPICK or 15:30 session window to open.
+- `RARE_MINIATURE_SET_PROP` — the box set inside the cabinet; press E to steal.
+- `TOURNAMENT_BRACKET_PROP` — wall-mounted bracket display; updated each round; press E to view standings.
+
+**New RumourTypes:**
+- `WARGAMES_MATCH_WIN` — "Someone's been beating the regulars at the Saturday wargames." Spreads via WARGAMES_MEMBER, PUBLIC. Vibes +1.
+- `TOURNAMENT_RIGGED_EXPOSED` — "Brian's been rigging the wargames tournament for years. The ledger proves it." Spreads via WARGAMES_MEMBER, PUBLIC, JOURNALIST. Notoriety contribution +6 on Brian. Vibes +2.
+- `MINIATURE_HEIST_RUMOUR` — "Someone nicked the Northfield society's rare Napoleonic set." Spreads via WARGAMES_MEMBER, PUBLIC. Notoriety contribution +5.
+- `TOURNAMENT_SCANDAL_HEADLINE` — seeds newspaper if ledger sold to journalist.
+- `FAIR_WIN_RUMOUR` — "The wargames tournament was finally won fair and square after Brian's cheating was exposed." Vibes +3.
+
+**New AchievementTypes:**
+- `HOBBY_GENERAL` — win 5 games at the Saturday session.
+- `MINIATURE_MAESTRO` — paint 10 miniatures at the painting table.
+- `WARGAMES_CHAMPION` — win the quarterly tournament.
+- `RESTORED_ORDER` — win the tournament after exposing Brian's bracket rigging.
+- `MINIATURE_HEIST` — steal the rare Napoleonic set unwitnessed.
+- `SILENT_INFORMANT` — sell Brian's ledger to the fence without ever publicly exposing the rig.
+
+**Already defined — no new entries needed:**
+- `Material.LOCKPICK`, `Material.COIN` — existing materials.
+- `CrimeType.THEFT` — witnessed cabinet theft.
+- `LandmarkType.COMMUNITY_CENTRE` — session venue.
+- `NPCType.JOURNALIST` — pub; buys ledger tip.
+- `StreetSkillSystem.Skill.CRAFTING` — XP from painting.
+- `FenceSystem` — rare set and ledger fence values.
+- `PawnShopSystem` — painted miniature, trophy, rare set pawn values.
+- `NewspaperSystem` — tournament scandal headline.
+- `SquatFurnishingTracker` — rare set and trophy as squat display items.
+- `WitnessSystem`, `RumourNetwork`, `NeighbourhoodSystem`, `NotorietySystem`, `WantedSystem`, `ArrestSystem`, `AchievementSystem`.
+
+### Integration Tests
+
+1. **Joining the society issues WARGAMES_MEMBERSHIP_CARD**: create `WargamesSystem`; set time to Saturday 14:30; call `joinSociety(player, inventory, brianNpc, coin=3, timeSystem)`; verify result == `JoinResult.JOINED`; verify `inventory.contains(Material.WARGAMES_MEMBERSHIP_CARD)` == true; verify `inventory.getItemCount(Material.COIN)` decreased by `MEMBERSHIP_COST` (3).
+
+2. **Painting miniatures awards CRAFTING XP and PAINTED_MINIATURE**: create system; give player `WARGAMES_MEMBERSHIP_CARD`; set time to Saturday 15:00; call `paintMiniature(player, inventory, paintingTableProp, streetSkillSystem, timeSystem)`; advance time by `PAINTING_SESSION_DURATION` (3) minutes; verify `inventory.contains(Material.PAINTED_MINIATURE)` == true; verify `streetSkillSystem.getXP(StreetSkillSystem.Skill.CRAFTING)` increased by `MINIATURE_PAINTING_XP` (5).
+
+3. **Exposing the rig before tournament reverts to fair brackets and seeds TOURNAMENT_RIGGED_EXPOSED**: create system; give player `WARGAMES_MEMBERSHIP_CARD` and `TOURNAMENT_LEDGER`; set time to tournament day 14:00; call `enterTournament(player, inventory, timeSystem)`; call `exposeRig(player, inventory, members=[member1,member2,member3,member4,member5], rumourNetwork)`; verify `wargamesSystem.isRigActive()` == false; verify `rumourNetwork` received `RumourType.TOURNAMENT_RIGGED_EXPOSED`; verify all 5 members have state `NPCState.IRRITATED`; verify `notorietySystem.getNotorietyFor(brianNpc)` increased by `RIG_NOTORIETY_EXPOSED` (6).
+
+4. **Winning tournament awards prize, trophy and WARGAMES_CHAMPION achievement**: create system; give player `WARGAMES_MEMBERSHIP_CARD` and 2 COIN; set time to tournament day at 14:00; call `enterTournament(player, inventory, timeSystem)`; seed rng to guarantee player wins all 4 rounds (`RIGGED_WIN_CHANCE` reverted to 50% since ledger not held); call `resolveTournament(rng, achievementCallback, rumourNetwork)`; verify `inventory.getItemCount(Material.COIN)` increased by `TOURNAMENT_PRIZE` (20); verify `inventory.contains(Material.WARGAMES_TROPHY)` == true; verify `achievementCallback` received `AchievementType.WARGAMES_CHAMPION`; verify `neighbourhoodSystem.getVibes()` increased by 3.
+
+5. **Stealing rare set unwitnessed during 15:30 window awards MINIATURE_HEIST**: create system; give player `WARGAMES_MEMBERSHIP_CARD`; set time to Saturday 15:31 (window open); set `nearbyNpcs = []`; call `stealRareSet(player, inventory, miniatureCabinetProp, nearbyNpcs, timeSystem)`; verify result == `HeistResult.SUCCESS`; verify `inventory.contains(Material.RARE_MINIATURE_SET)` == true; verify `achievementCallback` received `AchievementType.MINIATURE_HEIST`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == false.
+
+// `WargamesSystem.java` must be created as the sole new source file. Integrates with `TimeSystem` (Saturday session schedule, quarterly tournament days, 15:30 cabinet window), `StreetSkillSystem` (CRAFTING XP from painting), `WitnessSystem` (theft and pickpocket detection), `CriminalRecord` (existing `THEFT`), `NotorietySystem`, `WantedSystem`, `RumourNetwork` (new `WARGAMES_MATCH_WIN`, `TOURNAMENT_RIGGED_EXPOSED`, `MINIATURE_HEIST_RUMOUR`, `TOURNAMENT_SCANDAL_HEADLINE`, `FAIR_WIN_RUMOUR`), `NeighbourhoodSystem` (Vibes), `FenceSystem` (rare set 80 COIN, ledger 15 COIN, painted miniature 3 COIN), `PawnShopSystem` (painted miniature 2 COIN, trophy 5 COIN, rare set 20 COIN), `NewspaperSystem` (tournament scandal headline), `SquatFurnishingTracker` (rare set and trophy display), `AchievementSystem` (new `HOBBY_GENERAL`, `MINIATURE_MAESTRO`, `WARGAMES_CHAMPION`, `RESTORED_ORDER`, `MINIATURE_HEIST`, `SILENT_INFORMANT`). New NPCTypes: `WARGAMES_CHAIRMAN`, `WARGAMES_MEMBER`, `WARGAMES_RINGER`. New Materials: `WARGAMES_MEMBERSHIP_CARD`, `PAINTED_MINIATURE`, `RARE_MINIATURE_SET`, `TOURNAMENT_LEDGER`, `WARGAMES_TROPHY`. New PropTypes: `GAME_TABLE_PROP`, `PAINTING_TABLE_PROP`, `MINIATURE_CABINET_PROP`, `RARE_MINIATURE_SET_PROP`, `TOURNAMENT_BRACKET_PROP`. New RumourTypes: `WARGAMES_MATCH_WIN`, `TOURNAMENT_RIGGED_EXPOSED`, `MINIATURE_HEIST_RUMOUR`, `TOURNAMENT_SCANDAL_HEADLINE`, `FAIR_WIN_RUMOUR`. New AchievementTypes: `HOBBY_GENERAL`, `MINIATURE_MAESTRO`, `WARGAMES_CHAMPION`, `RESTORED_ORDER`, `MINIATURE_HEIST`, `SILENT_INFORMANT`.
