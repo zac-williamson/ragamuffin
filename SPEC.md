@@ -54197,3 +54197,155 @@ All shops (CornerShopSystem, PoundShopSystem, IcelandSystem, SupermarketSystem, 
 4. Celebrity (Wayne Stubbs): pickpocketable for CELEBRITY_WALLET (Notoriety +8 if caught), autograph-signable, calls SECURITY_GUARD for Notoriety ≥ 3 players.
 5. Mulled wine economy: buy 2 COIN, unattended stall free-take after 18:00, stall takeover (TRADING ≥ 2 + MARKET_LICENCE).
 6. Crowd crush at 18:30 if 70+ NPCs: 2 NPCs go FALLEN, FireStationSystem call-out, police triple, Notoriety penalty −50% for 5 minutes.
+
+---
+
+## Issue #1436: Add Northfield Community Speedwatch — The Hi-Vis Vigilante, the Speed Gun Scam & the Road Rage Flashpoint
+
+### Overview
+
+Every Tuesday and Thursday morning, 08:00–09:30, a small gang of self-appointed traffic vigilantes sets up a Community Speedwatch session on Bristol Road South. Keith the chairman (NEIGHBOURHOOD_WATCH type) mans a calibrated speed gun on a tripod, flanked by two volunteer PENSIONER NPCs in hi-vis vests holding clipboards. They dutifully record every number plate doing more than 24 mph and send warning letters via the police community portal. Nobody asked them to do this. Nobody thanks them for it. But by God, Keith has a laminated ID badge and he *will* be respected.
+
+`CommunitySpeedwatchSystem.java` manages the full event lifecycle: volunteer spawn/despawn, speed detection against passing `Car` entities and `SPEEDING_DRIVER_NPC` NPCs, the warning-letter dispatch queue, player participation mechanics, and the inevitable road-rage confrontation.
+
+The system runs **Tuesday and Thursday** each week, **08:00–09:30**, weather permitting (RAIN suspends the session; Keith's speed gun is not rated for precipitation and he's not made of money).
+
+---
+
+### Mechanic 1 — The Session Setup & Volunteer Patrol
+
+At **07:50** on a qualifying day:
+- `NEIGHBOURHOOD_WATCH` NPC Keith spawns at `SPEEDWATCH_POSITION` (12 blocks north of the park entrance on the main road) carrying a `SPEED_GUN` item and placing `TRIPOD_SPEED_GUN_PROP` on the pavement.
+- Two `PENSIONER` NPCs (Brenda and Malcolm) spawn 2 blocks either side, each carrying a `SPEEDWATCH_CLIPBOARD` item. They wear `HI_VIS_VEST`.
+- A `SPEEDWATCH_SIGN_PROP` is placed on the road verge: "COMMUNITY SPEEDWATCH IN OPERATION. SLOW DOWN."
+
+At **08:00**, the session becomes active: `CommunitySpeedwatchSystem.isActive()` returns true.
+
+At **09:30**, Keith announces end of session (speech bubble: "Right. That's 23 vehicles recorded. Same time Thursday."). Props despawn. NPCs transition to `NPCState.WALKING` and disperse.
+
+**Weather cancellation**: `WeatherSystem.getCurrentWeather() == Weather.RAIN` at 07:50 → session cancelled. Keith appears at the site for 2 minutes, looks at the sky, mutters "Bloody typical," and leaves. Rumour `LOCAL_GRIPE` seeded: "Keith's speedwatch was cancelled again. He'll be unbearable at the pub quiz."
+
+---
+
+### Mechanic 2 — Speed Detection & Warning Letters
+
+During the active window (08:00–09:30), any `Car` entity or `SPEEDING_DRIVER_NPC` passing within **15 blocks** of `TRIPOD_SPEED_GUN_PROP` is evaluated:
+
+- Speed > `SPEED_LIMIT_BLOCKS_PER_SECOND` (= 8.0f): plate recorded in `detectedPlates` list. Speech bubble from Keith: "Got one! 34 in a 30. That's going in the log." Malcolm makes a note.
+- Speed ≤ limit: no action. Brenda: "He's alright, that one."
+
+At the **end of each session** (09:30), `dispatchWarningLetters()` is called:
+- For each plate in `detectedPlates`: a `WARNING_LETTER` item is added to the world's postal queue (PostOfficeSystem integration). The letter arrives at the registered address in 2 in-game days.
+- `detectedCount` incremented. After **50 total detections** across all sessions: `NewspaperSystem` generates headline: _"NORTHFIELD SPEEDWATCH TEAM CLOCKS 50TH OFFENDER — KEITH CALLS IT 'JUST THE BEGINNING'."_ Notoriety system unaffected (this is legitimate activity).
+
+**Player car detection**: if the player is driving a Car entity (CarDrivingSystem) past the detection zone above the speed limit:
+- Player receives a speech log entry: "Keith clocked you. Expect a letter."
+- 2 in-game days later, a `SPEEDWATCH_WARNING_LETTER` item appears in the player's squat/house mailbox (if PropertySystem has a player address) or on the ground outside the player's most recent indoor location. No fine, no wanted stars — it's just a strongly worded letter. But: receiving 3 letters triggers `NotorietySystem` community reputation −2 and Rumour `LOCAL_GOSSIP` seeded: "That lot at No. 22 drive like maniacs."
+
+---
+
+### Mechanic 3 — Player Joins the Speedwatch (Volunteer Role)
+
+The player can join Keith's team by:
+1. Equipping `HI_VIS_VEST` (already in inventory from corner shop etc.)
+2. Pressing **E** on Keith before 08:00 on a session day.
+
+Keith's response varies:
+- Notoriety ≤ 10: "Welcome aboard. Take this. Stand there. Don't talk to the drivers." → Player receives `SPEEDWATCH_CLIPBOARD` item. Player is added to the volunteer roster.
+- Notoriety 11–25: "I know who you are, son. But everyone deserves a chance." → Same as above, but Keith keeps a suspicious eye (volunteer behaviour checks stricter).
+- Notoriety > 25: "No. Absolutely not. We've got a reputation to maintain." → Rejected. Session carries on.
+
+**As a volunteer** during the session:
+- Each car/NPC passing the zone: press **E** with `SPEEDWATCH_CLIPBOARD` in hand within 5 seconds to record it → `volunteerRecordedCount` incremented.
+- Recording 5+ vehicles in one session earns **1 COIN reward** from Keith at 09:30 ("Petrol money. Don't spend it all at once.") and reputation effect: StreetReputation +2, NeighbourhoodSystem VIBES +1.
+- Achievement `SPEED_WATCHER`: complete a full session as a volunteer (present 08:00–09:30, record ≥ 5 vehicles).
+
+**Corrupt clipboard**: the player can use the `SPEEDWATCH_CLIPBOARD` *outside the session* to:
+- Record fake plates (press E on any parked `Car` prop): generates a `FAKE_SPEEDWATCH_LETTER` sent via PostOfficeSystem. Targeted NPC receives an undeserved warning letter → their `ANGRY` state is triggered if they have a known vehicle, and they file a complaint. 3 fake plates → `NEIGHBOURHOOD_WATCH` NPC Keith loses trust in player: ejected from all future sessions. Achievement `CLIPBOARD_ABUSE`: send 3 fake warning letters.
+
+---
+
+### Mechanic 4 — Road Rage Confrontation
+
+At a random point during the session (15% chance, max once per session), a `SPEEDING_DRIVER_NPC` fails to slow down and *stops the car*, exiting to confront Keith:
+
+- Driver NPC enters `NPCState.CONFRONTATIONAL`. Speech: "Who gave you the right to photograph my car, mate?"
+- Keith holds firm (NPCState.STANDING_GROUND). Speech: "I have a signed agreement with the local policing team, and you were doing 38."
+- The standoff lasts 30 in-game seconds. Outcome:
+  - 60% chance: Driver backs down ("Whatever, mate."), re-enters car, drives off. No crime. Keith: "Works every time."
+  - 25% chance: Driver shoves Keith (NPCState transition: Keith → `UPSET`, Driver → `FLEEING`). `NoiseSystem.addNoise(confrontationPos, 4.0f)`. Rumour `ANTI_SOCIAL_BEHAVIOUR` seeded.
+  - 15% chance: Driver grabs `SPEEDWATCH_CLIPBOARD` from Brenda (PETTY_THEFT, CrimeType). Police called (WantedSystem +1 for the driver NPC). If player is present and helps recover the clipboard (press E on the fleeing driver NPC within 10 blocks): player receives StreetReputation +3, Keith gives player a `SPEEDWATCH_LANYARD` item ("Honorary member. Don't abuse it.").
+
+**Player can instigate**: if the player drives through the zone at high speed (above limit) while Keith is active, stops, and presses **E** on Keith:
+- Option A: "Sorry, I'll slow down." → Keith nods, no action. Notoriety unchanged.
+- Option B: (Requires Notoriety ≥ 15): "You're a bloody menace, the lot of you." → Keith becomes `NPCState.UPSET`. If player continues (press E again): Keith calls NEIGHBOURHOOD_WATCH ally NPC Gerald, who phones police. WantedSystem +1. Achievement `SPEEDWATCH_NEMESIS`: achieve 3 confrontations with Keith across all sessions.
+
+---
+
+### Mechanic 5 — Speed Gun Theft
+
+The `TRIPOD_SPEED_GUN_PROP` can be stolen:
+- **Condition**: Keith is distracted (in the road rage confrontation sequence or on a phone call) AND no other volunteer NPC within 10 blocks.
+- **Method**: hold E on `TRIPOD_SPEED_GUN_PROP` for 4 seconds → pick up `SPEED_GUN` item. CrimeType `THEFT`, Notoriety +6.
+- **Consequence**: session immediately ends (Keith: "Somebody's nicked the gun! Right, I'm calling the police."). WantedSystem +1 star. All three volunteer NPCs enter `NPCState.ALARMED` and converge on the player's last known position.
+- **Fence value**: `SPEED_GUN` → 12 COIN (FenceSystem). Can also be sold directly to `SPEEDING_DRIVER_NPC` types met on the road for 8 COIN (they find this darkly amusing). Achievement `COMMUNITY_POLICING_ENDS_HERE`: steal the speed gun.
+- **Alternative use**: player can use `SPEED_GUN` item (press E while holding it) to measure speed of passing cars for 60 seconds, receiving speed readouts in speech log. No mechanical effect but unlocks flavour dialogue if shown to any `POLICE` NPC: "That's... actually calibrated. Where did you get this?"
+
+---
+
+### Integration Points
+
+- **`SpeedCameraVanSystem`**: both systems detect speeding independently. If Sharon (camera van) and Keith (speedwatch) are both active on the same road simultaneously, drivers slow to a crawl — `Car` entity speed capped at 5 blocks/s. Flavour: rumour `DOUBLE_ENFORCEMENT` seeded once per week this occurs: "The road's basically a car park on Tuesday mornings now."
+- **`NeighbourhoodWatchSystem`**: Keith is a `NEIGHBOURHOOD_WATCH` NPC; his `addAnger()` method triggered at +5 on any gun theft or road rage escalation.
+- **`CarDrivingSystem`**: player's vehicle speed checked against `SPEED_LIMIT_BLOCKS_PER_SECOND` in the detection zone.
+- **`PostOfficeSystem`**: `WARNING_LETTER` and `FAKE_SPEEDWATCH_LETTER` items dispatched through the postal queue with 2-day delivery.
+- **`WeatherSystem`**: RAIN cancels session at 07:50 check.
+- **`NoiseSystem`**: confrontation adds noise 4.0f; shove adds noise 5.0f.
+- **`RumourNetwork`**: `LOCAL_GRIPE` on cancellation; `LOCAL_GOSSIP` on third player speeding ticket; `ANTI_SOCIAL_BEHAVIOUR` on shove; `DOUBLE_ENFORCEMENT` when both systems active simultaneously.
+- **`NewspaperSystem`**: 50-detection milestone headline.
+- **`GraffitiSystem`**: `SPEEDWATCH_SIGN_PROP` can be graffiti'd (replaces sign text with player's tag; Notoriety +3, CrimeType CRIMINAL_DAMAGE). Keith re-erects the sign next session with a handwritten addition: "AND RESPECT COMMUNITY VOLUNTEERS."
+- **`FenceSystem`**: `SPEED_GUN` fences for 12 COIN.
+- **`CriminalRecord`**: `THEFT` for gun theft; `CRIMINAL_DAMAGE` for sign graffiti; `FRAUD` for fake warning letters.
+- **`PropertySystem`**: player's registered address used for `SPEEDWATCH_WARNING_LETTER` delivery.
+- **`StreetSkillSystem`**: `SPEEDWATCH_LANYARD` item: when worn, grants "Volunteer" title visible in StreetReputation display.
+
+---
+
+### New NPCType Entries Required
+
+None — reuses `NEIGHBOURHOOD_WATCH` (Keith), `PENSIONER` (Brenda, Malcolm), `SPEEDING_DRIVER_NPC`.
+
+### New PropType Entries Required
+
+- `TRIPOD_SPEED_GUN_PROP` — a speed gun on a tripod stand. 1×1×1.5 blocks. Hardness: 2 hits (aluminium frame). Breaks into `SCRAP_METAL`.
+- `SPEEDWATCH_SIGN_PROP` — a roadside A-board. 0.5×0.4×1.2 blocks. Hardness: 1 hit. Graffiti-able. Breaks into `WOOD`.
+
+### New Material Entries Required
+
+- `SPEED_GUN` — "A calibrated Stalker II speed gun. Technically police-grade. Keith bought his off eBay."
+- `SPEEDWATCH_CLIPBOARD` — "Laminated sheet, 3 columns: TIME, PLATE, SPEED. Keith's handwriting is surprisingly neat."
+- `SPEEDWATCH_WARNING_LETTER` — "A politely worded letter explaining that you were observed exceeding the speed limit. It is not a fine. It is, Keith notes, just as effective."
+- `SPEEDWATCH_LANYARD` — "Honorary Community Speedwatch Member. Keith laminated it himself. It says 'DO NOT DUPLICATE'."
+
+### New AchievementType Entries Required
+
+- `SPEED_WATCHER` — complete a full Community Speedwatch session as a volunteer (08:00–09:30, ≥5 vehicles recorded).
+- `SPEEDWATCH_NEMESIS` — achieve 3 confrontations with Keith across all sessions.
+- `CLIPBOARD_ABUSE` — send 3 fake speedwatch warning letters.
+- `COMMUNITY_POLICING_ENDS_HERE` — steal the speed gun from the tripod during an active session.
+
+### New RumourType Entries Required
+
+- `DOUBLE_ENFORCEMENT` — seeded when SpeedCameraVanSystem and CommunitySpeedwatchSystem are simultaneously active on the same road.
+
+### Integration Tests
+
+1. **Session spawns props and volunteers at 07:50**: advance time to Tuesday 07:50; call `CommunitySpeedwatchSystem.update(delta, timeSystem, world, npcManager, weatherSystem)`; verify `TRIPOD_SPEED_GUN_PROP` exists at `SPEEDWATCH_POSITION`, `SPEEDWATCH_SIGN_PROP` placed within 3 blocks, and Keith NPC spawned carrying `SPEED_GUN`.
+2. **Speeding car is detected and plate logged**: place a `SPEEDING_DRIVER_NPC` at 20 blocks north of `SPEEDWATCH_POSITION` moving south at 10 blocks/s (above limit); advance session to 08:05; verify `detectedPlates.size() == 1` and a `WARNING_LETTER` is in the PostOfficeSystem dispatch queue.
+3. **Player joins as volunteer and earns COIN reward**: equip player with `HI_VIS_VEST`; press E on Keith at 07:55; verify player gains `SPEEDWATCH_CLIPBOARD`; simulate 5 vehicle-recording E-presses during session; advance to 09:30; verify player inventory gained 1 COIN and StreetReputation increased by 2.
+4. **Rain cancels session**: set weather to `Weather.RAIN` at 07:50; call `CommunitySpeedwatchSystem.update(delta, timeSystem, world, npcManager, weatherSystem)`; verify `isActive()` returns false, no props spawned, `LOCAL_GRIPE` rumour in RumourNetwork.
+5. **Speed gun theft ends session and adds wanted star**: advance to 08:30 with Keith in confrontation state; hold E on `TRIPOD_SPEED_GUN_PROP` for 4 seconds; verify player inventory contains `SPEED_GUN`, `WantedSystem.getStars() == 1`, `CommunitySpeedwatchSystem.isActive()` returns false, and `COMMUNITY_POLICING_ENDS_HERE` achievement unlocked.
+6. **Fake clipboard letter triggers Keith ejection after 3 uses**: equip player with `SPEEDWATCH_CLIPBOARD` outside session hours; call `recordFakePlate(player, targetCarProp)` three times; verify `PostOfficeSystem` has 3 `FAKE_SPEEDWATCH_LETTER` items queued and `CommunitySpeedwatchSystem.isPlayerBannedFromSessions()` returns true.
+
+// All new enum entries (Material, PropType, AchievementType, RumourType) must be added.
+// CommunitySpeedwatchSystem.java must be created as the sole new source file.
