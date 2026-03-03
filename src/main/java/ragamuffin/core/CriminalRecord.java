@@ -1402,7 +1402,24 @@ public class CriminalRecord {
          * Requires evidence of 2+ grading fees collected. Gary pays once then
          * becomes permanently hostile. RumourType.CLUB_SNITCH seeded (Vibes −2).
          */
-        BLACKMAIL("Blackmail (karate club grading scam)");
+        BLACKMAIL("Blackmail (karate club grading scam)"),
+
+        // ── Issue #1497: Northfield Angling Club ─────────────────────────────
+
+        /**
+         * CHEATING_AT_ANGLING — recorded when Ron detects the player wedging the
+         * WEIGH_SCALES_PROP (20% detection chance) or stuffing the KEEPNET_PROP with
+         * non-fish items (25% detection chance). Results in 14-day ban and
+         * Notoriety +4 (scales) or +5 (stuffed net). RumourType.DODGY_ANGLER seeded.
+         */
+        CHEATING_AT_ANGLING("Cheating at angling (match weight tampering)"),
+
+        /**
+         * MATCH_POACHING — recorded when a PCSO is called after the player's second
+         * poaching violation (fishing match water without MATCH_DAY_CARD, witnessed
+         * by a MATCH_ANGLER within 10 blocks). First violation is a verbal warning.
+         */
+        MATCH_POACHING("Poaching (fishing match water without a match day card)");
 
         private final String displayName;
 

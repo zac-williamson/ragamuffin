@@ -3494,7 +3494,26 @@ public enum NPCType {
      * Annual Tournament. Accept 1–10 COIN wagers on the Grudge Match (1.5× payout).
      * Spread BOWLS_GRUDGE_MATCH rumours after the match concludes.
      */
-    BOWLS_SPECTATOR(20f, 0f, 0f, false);
+    BOWLS_SPECTATOR(20f, 0f, 0f, false),
+
+    // ── Issue #1497: Northfield Angling Club ──────────────────────────────────
+
+    /**
+     * ANGLING_CLUB_CHAIR — Ron Birch, chairman of the Northfield Angling Club.
+     * Runs the fortnightly Sunday match at LandmarkType.CANAL (07:00–10:00).
+     * Manages peg allocation, weighs catches at 10:00, and awards the trophy.
+     * Has a 20% chance of detecting dodgy scales post-match and 25% chance of
+     * inspecting stuffed keepnets. Passive outside match hours.
+     */
+    ANGLING_CLUB_CHAIR(25f, 0f, 0f, false),
+
+    /**
+     * MATCH_ANGLER — competitive angler taking a numbered peg during a Sunday
+     * match. Witnesses poaching within 10 blocks (issues verbal warning on first
+     * violation, calls PCSO on second). NPC catch rate reduced to 40% on prime
+     * pegs taken by the player via early arrival.
+     */
+    MATCH_ANGLER(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

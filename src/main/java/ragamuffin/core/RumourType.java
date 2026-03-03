@@ -1854,5 +1854,31 @@ public enum RumourType {
      * — seeded by KarateSystem when the player returns the stolen trophy to Gary
      * (AchievementType.HONOURABLE_THIEF). Spreads via PUBLIC and KARATE_KID NPCs.
      * Vibes +3. */
-    HONOURABLE_THIEF;
+    HONOURABLE_THIEF,
+
+    // ── Issue #1497: Northfield Angling Club ──────────────────────────────────
+
+    /** "Someone wedged the scales at the angling match. Ron weighed their catch
+     * and it was bang on 400g too heavy — absolute shambles."
+     * — seeded by AnglingClubSystem when CHEATING_AT_ANGLING is detected post-match.
+     * Spreads via MATCH_ANGLER and PUBLIC NPCs. Vibes −2. */
+    DODGY_ANGLER,
+
+    /** "Heard someone had it away with Ron's van — nicked the trophy and the
+     * match money right out the boot. Broad daylight too."
+     * — seeded by AnglingClubSystem when the van boot is raided (KEEPNET_RAIDER)
+     * or burglary is witnessed. Spreads via MATCH_ANGLER and PUBLIC NPCs. Vibes −3. */
+    VAN_THIEF,
+
+    /** "Apparently the lad who nicked Ron's trophy brought it back.
+     * Ron shook his hand, which is more than I'd have done."
+     * — seeded by AnglingClubSystem when RETURNED_THE_TROPHY is awarded.
+     * Spreads via MATCH_ANGLER and PUBLIC NPCs. Vibes +2. */
+    REPENTANT_THIEF,
+
+    /** "Someone absolutely smashed the angling match this Sunday —
+     * biggest haul Ron's seen in years. He was gutted to hand the trophy over."
+     * — seeded by AnglingClubSystem when CANAL_CHAMPION is awarded to the player.
+     * Spreads via MATCH_ANGLER and PUBLIC NPCs. Vibes +1. */
+    CANAL_CHAMPION;
 }

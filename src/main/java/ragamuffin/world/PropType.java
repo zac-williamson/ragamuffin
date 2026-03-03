@@ -4582,7 +4582,72 @@ public enum PropType {
      * displayed in the back office. Fenceable for 20 COIN or pawnable for 12 COIN.
      * Collision: 0.30w × 0.50h × 0.10d. Health: 2 hits. Drops REGIONAL_CHAMPION_SHIELD_PROP material.
      */
-    REGIONAL_CHAMPION_SHIELD_PROP(0.30f, 0.50f, 0.10f, 2, Material.REGIONAL_CHAMPION_SHIELD_PROP);
+    REGIONAL_CHAMPION_SHIELD_PROP(0.30f, 0.50f, 0.10f, 2, Material.REGIONAL_CHAMPION_SHIELD_PROP),
+
+    // ── Issue #1497: Northfield Angling Club ──────────────────────────────────
+
+    /**
+     * PEBBLE_PEG_PROP — a numbered peg marker placed along the towpath at the start of
+     * the Sunday match. Each angler occupies one peg; player takes a peg on registration.
+     * Collision: 0.10w × 0.30h × 0.10d. Health: 2 hits. No drop.
+     */
+    PEBBLE_PEG_PROP(0.10f, 0.30f, 0.10f, 2, null),
+
+    /**
+     * WEIGH_TABLE_PROP — the folding table Ron uses to weigh catches at 10:00.
+     * Present during the match (07:00–10:00). Interaction shows current standings.
+     * Collision: 1.50w × 0.80h × 0.60d. Health: 5 hits. Drops WOOD.
+     */
+    WEIGH_TABLE_PROP(1.50f, 0.80f, 0.60f, 5, Material.WOOD),
+
+    /**
+     * WEIGH_SCALES_PROP — the portable spring balance scales on the weigh table.
+     * Player can wedge with 2 COIN (TAMPER_WITNESS_RANGE = 4.0f) to add
+     * SCALES_BIAS_GRAMS = 400g to their announced catch weight.
+     * Collision: 0.30w × 0.25h × 0.30d. Health: 3 hits. Drops SCRAP_METAL.
+     */
+    WEIGH_SCALES_PROP(0.30f, 0.25f, 0.30f, 3, Material.SCRAP_METAL),
+
+    /**
+     * RESULTS_BOARD_PROP — a whiteboard posted after the weigh-in showing the
+     * final standings. Readable via E interaction. Collision: 0.80w × 1.20h × 0.10d.
+     * Health: 4 hits. Drops WOOD.
+     */
+    RESULTS_BOARD_PROP(0.80f, 1.20f, 0.10f, 4, Material.WOOD),
+
+    /**
+     * TRANSIT_VAN_PROP — Ron Birch's white Transit van parked near the canal
+     * during the Sunday match (07:00–10:00). Boot holds ANGLING_TROPHY_PROP
+     * and CASHBOX_PROP (24–27 COIN). Boot opened with LOCKPICK (silent) or
+     * 4 CROWBAR hits (loud). Collision: 2.20w × 1.80h × 4.50d. Health: 20 hits.
+     * Drops SCRAP_METAL.
+     */
+    TRANSIT_VAN_PROP(2.20f, 1.80f, 4.50f, 20, Material.SCRAP_METAL),
+
+    /**
+     * VAN_BOOT_PROP — the boot compartment of Ron's Transit van.
+     * Contains ANGLING_TROPHY_PROP and CASHBOX_PROP during the match.
+     * Opened silently with LOCKPICK or noisily with 4 CROWBAR hits.
+     * Collision: 1.80w × 0.80h × 0.60d. Health: 4 hits. No drop.
+     */
+    VAN_BOOT_PROP(1.80f, 0.80f, 0.60f, 4, null),
+
+    /**
+     * KEEPNET_PROP — mesh keepnet staked in the water at the player's peg.
+     * Caught CANAL_FISH are placed here automatically during the match.
+     * Fish weight is seeded 120–800g each. Can be stuffed with BRICK or SCRAP_METAL
+     * for extra weight (+350g each item). Collision: 0.40w × 0.20h × 0.80d. Health: 2 hits.
+     * Drops KEEPNET material.
+     */
+    KEEPNET_PROP(0.40f, 0.20f, 0.80f, 2, Material.KEEPNET),
+
+    /**
+     * ANGLING_TROPHY_PROP — the Sunday match trophy stored in the van boot.
+     * Awarded to the weigh-in winner at 10:00. Fenceable for 12 COIN, pawnable
+     * for 8 COIN. Returnable to Ron for AchievementType.RETURNED_THE_TROPHY.
+     * Collision: 0.20w × 0.35h × 0.20d. Health: 2 hits. Drops ANGLING_TROPHY_PROP material.
+     */
+    ANGLING_TROPHY_PROP(0.20f, 0.35f, 0.20f, 2, Material.ANGLING_TROPHY_PROP);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
