@@ -50,5 +50,8 @@ public enum SoundEffect {
 
     // Issue #1369: Northfield New Year's Eve
     FIREWORK_BANG,  // Firework rocket detonation at midnight on NYE
-    NYE_CROWD_CHEER  // Crowd cheering at midnight on NYE (distinct from football cheer)
+    NYE_CROWD_CHEER,  // Crowd cheering at midnight on NYE (distinct from football cheer)
+
+    // Issue #1371: Northfield Christmas Market
+    CAROL_SINGING  // Ambient carol singing from CAROL_SINGER NPCs at the CAROL_SONG_BOARD_PROP
 }
