@@ -6099,7 +6099,47 @@ public enum Material {
      * Obtainable via DRAINPIPE_PROP in the back alley (3-second hold-E).
      * Requires CCTV disabled. Fenceable to Mirek for 12 COIN.
      * Awards OFF_THE_ROOF achievement. */
-    ROOF_FLAG_PROP("Roof Flag");
+    ROOF_FLAG_PROP("Roof Flag"),
+
+    // ── Issue #1388: Northfield Dog Show ─────────────────────────────────────
+
+    /**
+     * DOG_BRUSH — "A slicker brush. Mostly used on the Staffy. Occasionally on the carpet."
+     * Buy from CORNER_SHOP for 2 COIN, or occasionally from CHARITY_SHOP.
+     * Required to set the GROOMED flag (+15 show score). Bond ≥ 10 required to use. */
+    DOG_BRUSH("Dog Brush"),
+
+    /**
+     * VICTORIA_SPONGE_SLICE — "Light, fluffy, Margaret's finest. Competition-grade jam."
+     * Sold at WI_STALL_PROP by WI_VOLUNTEER_NPC Margaret during the Dog Show.
+     * Price: 2 COIN. Hunger +35, Warmth +5. */
+    VICTORIA_SPONGE_SLICE("Victoria Sponge Slice"),
+
+    /**
+     * BEST_IN_SHOW_ROSETTE_PROP — "Red, white and royal blue. 'Best in Show — Northfield 20XX.' Clive signed it."
+     * Awarded to 1st place competitor, or stealable from JUDGES_TABLE_PROP during
+     * the 14:00–14:15 unattended window. Fenceable: FENCE 10 COIN, PAWN_SHOP 7 COIN. */
+    BEST_IN_SHOW_ROSETTE_PROP("Best in Show Rosette"),
+
+    /**
+     * RESERVE_ROSETTE_PROP — "Blue rosette. Almost the best. Close, but no Bonio."
+     * Awarded to 2nd place competitor. Fenceable: FENCE 5 COIN. */
+    RESERVE_ROSETTE_PROP("Reserve Rosette"),
+
+    /**
+     * THIRD_PLACE_ROSETTE_PROP — "Yellow rosette. Bronze of dog shows."
+     * Awarded to 3rd place competitor. Fenceable: FENCE 2 COIN. */
+    THIRD_PLACE_ROSETTE_PROP("Third Place Rosette"),
+
+    /**
+     * SHOW_SCHEDULE_FLYER — "Northfield Annual Dog Show. All breeds welcome. Clive judging. Bring a brush."
+     * Readable prop; no mechanical effect. Distributed around Northfield on show day. */
+    SHOW_SCHEDULE_FLYER("Show Schedule Flyer"),
+
+    /**
+     * CUP_OF_TEA — "Hot, strong, restorative. Margaret's best brew."
+     * Sold at WI_STALL_PROP for 1 COIN. Warmth +20. */
+    CUP_OF_TEA("Cup of Tea");
 
     private final String displayName;
 
@@ -9652,6 +9692,22 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // folded flag
             case ROOF_FLAG_PROP:
                 return IconShape.FLAT_PAPER;  // folded flag
+
+            // Issue #1388: Northfield Dog Show
+            case DOG_BRUSH:
+                return IconShape.TOOL;        // slicker brush
+            case VICTORIA_SPONGE_SLICE:
+                return IconShape.FOOD;        // slice of sponge cake
+            case BEST_IN_SHOW_ROSETTE_PROP:
+                return IconShape.FLAT_PAPER;  // large rosette
+            case RESERVE_ROSETTE_PROP:
+                return IconShape.FLAT_PAPER;  // medium rosette
+            case THIRD_PLACE_ROSETTE_PROP:
+                return IconShape.FLAT_PAPER;  // small rosette
+            case SHOW_SCHEDULE_FLYER:
+                return IconShape.FLAT_PAPER;  // A5 flyer
+            case CUP_OF_TEA:
+                return IconShape.CYLINDER;    // mug of tea
 
             default:
                 return IconShape.BOX;
