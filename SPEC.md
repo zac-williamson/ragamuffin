@@ -55546,3 +55546,135 @@ Kenny (`NPCType.DODGY_ROOFER`) drives his `ROOFER_VAN_PROP` on a fixed 8-stop ro
 5. **Player tip-off earns reward**: set time to Fri 10:45; give player interaction range to Kenny NPC; call `DodgyRooferSystem.tipOffKenny(player, inventory, kenny, timeSystem, achievementSystem)`; verify player inventory has 10 COIN more than before; verify `TIP_OFF_KENNY` achievement unlocked; advance to 11:00; verify Kenny's van is NOT at its usual Friday location (moved away).
 
 // `DodgyRooferSystem.java` must be created as the sole new source file. All supporting enums are already defined in NPCType, PropType, Material, RumourType, and AchievementType — no new enum entries required.
+
+---
+
+## Northfield Save Our Pub — The Closed Crown & Anchor, the Planning Objection Fight & the Rogue Developer Standoff
+
+**System**: `SaveOurPubSystem.java` (new file)
+
+The Crown & Anchor has been shuttered for 3 in-game months. Lenny Hargreaves (Property Developer, `NPCType.PROPERTY_DEVELOPER`) has submitted a planning application to convert it into 12 luxury flats. Local landlord-in-exile Baz (`NPCType.PUB_LANDLORD`) is leading the "Save Our Crown" campaign from his house nearby. The council planning committee meets every 14 in-game days to vote. The player can tilt the outcome — or exploit the chaos for personal gain.
+
+### Overview
+
+The `CLOSED_PUB` landmark (`LandmarkType.CLOSED_PUB`) represents the boarded-up Crown & Anchor on the high street. Inside are salvageable fixtures (pool table, optics, fruit machines), a cellar with residual stock, and a planning notice on the door. The system runs on a 14-day campaign arc that can end in three outcomes: **Community Win** (pub reopens as a co-op), **Developer Win** (converted to flats), or **Player Squat** (player claims it via `SquatSystem` during the chaos).
+
+### Mechanic 1 — The Planning Notice & Campaign Kickoff
+
+- At world start, `PLANNING_NOTICE_PROP` is placed on the Crown & Anchor door; the planning application is seeded into `NewspaperSystem` as a minor headline: "CROWN & ANCHOR TO BECOME LUXURY FLATS — RESIDENTS REACT".
+- Baz (`NPCType.PUB_LANDLORD`) stands outside the pub 09:00–17:00, rattling a petition clipboard. Press E on Baz to sign the petition (`PETITION_BOARD` item added to his count). Each signature: Community Respect +1 (`NeighbourhoodWatchSystem`), Notoriety −1 (cap at 0).
+- `CAMPAIGN_TARGET_SIGNATURES = 30` — if achieved before the committee meeting, Community Win is guaranteed (council votes to reject).
+- Baz will be hostile if the player has Notoriety ≥ 60 (known criminal, can't be seen associating).
+
+### Mechanic 2 — The Petition Sabotage
+
+- Player can steal Baz's clipboard (`PETITION_BOARD` item) with a 2s hold-E while Baz is distracted (during `RAIN` weather: Baz retreats inside pub porch for 60s with back turned).
+- Stolen clipboard fenced to Lenny (`NPCType.PROPERTY_DEVELOPER`) for 8 COIN: permanently removes 10 signatures, seeds `PUB_PETITION_NICKED` rumour.
+- If witnessed by any PUBLIC/PENSIONER NPC: Notoriety +8, `PETITION_THEFT` CrimeType. If Notoriety ≥ 50: WantedSystem +1.
+- Achievement: `SOLD_THE_LOCAL` (fence petition to developer).
+
+### Mechanic 3 — The Cellar Loot Raid
+
+- Crown & Anchor front door: BOARDED (8 hits with any block-breaking tool) or rear cellar hatch: lockpick 4s.
+- Inside: `POOL_TABLE_PROP` (breakable, drops `POOL_BALL` ×3, fence value 2 COIN each), `OPTICS_PROP` (drops `SPIRITS_BOTTLE` ×2, fence 4 COIN each), `FRUIT_MACHINE_PROP` (tamper with SCREWDRIVER: 30% yields `ARCADE_TOKEN` ×5, 70% yields nothing, damages machine).
+- `CELLAR_HATCH_PROP`: open with CROWBAR (3s) → `BARREL_PROP` (rolls freely, provides cover) + `SPIRITS_BOTTLE` ×3 + `REAL_ALE_KEG` (fence 12 COIN).
+- Any entry outside hours: `BREAKING_AND_ENTERING` CrimeType + Notoriety +5. If CCTV operational: +1 wanted star.
+- Achievement: `LAST_ORDERS` (loot 5 items from the Crown & Anchor in a single session).
+
+### Mechanic 4 — The Underground Lock-In
+
+- Player can squat the Crown & Anchor (via `SquatSystem`, requires condition ≤ 10 and 5 WOOD) and host underground lock-ins on Fri/Sat 22:00–02:00.
+- Lock-in mechanic: player places `SPIRITS_BOTTLE` items behind the bar; YOUTH_GANG and PUBLIC NPCs within 50 blocks are attracted (30% chance per NPC per 5 in-game minutes).
+- Each NPC that enters and stays ≥ 10 minutes: player earns 2 COIN and +1 towards `LOCK_IN_COUNT`.
+- `NoiseSystem` level 7; NeighbourhoodWatch anger +3/per lock-in; after 3 lock-ins: `UNDERGROUND_LOCK_IN` rumour seeded.
+- Lock-ins before the committee meeting: each lock-in adds +5 Community Respect (pub is seen as vital hub) but also +2 Notoriety (illegal operation).
+- Achievement: `LAST_LANDLORD` (host 3 lock-ins and community wins the vote).
+
+### Mechanic 5 — The Planning Document Theft
+
+- Lenny (`NPCType.PROPERTY_DEVELOPER`) carries `PLANNING_PERMISSION` documents on his person, Mon–Fri 09:00–17:00, while he walks a fixed circuit between his parked `DEVELOPER_VAN_PROP` and the `COUNCIL_OFFICE`.
+- Pickpocket PLANNING_PERMISSION from Lenny (PICKPOCKET skill ≥ Apprentice, 35% success): delays the planning committee vote by 7 in-game days (Lenny reapplies after).
+- Alternatively: steal PLANNING_PERMISSION from the `COUNCIL_OFFICE` desk during a distraction (office open 09:00–17:00, Mon–Fri). Secretary NPC can be distracted by placing `FIRE_ALARM_BOX_PROP` (craftable: WIRE + SCRAP_METAL) or bribing with 5 COIN. Theft: `DOCUMENT_THEFT` CrimeType + Notoriety +6.
+- Destroy the document (drop it in `BURNING_BIN` or `CAMPFIRE` within 120s of theft): vote delayed 7 days + `PUB_SAVED_TEMPORARILY` rumour.
+- Achievement: `RED_TAPE` (delay the vote by stealing and destroying planning documents).
+
+### Mechanic 6 — The Committee Vote
+
+- Every 14 in-game days at 14:00 on a Wednesday, the planning committee convenes at `COUNCIL_OFFICE`. The outcome is determined by:
+  - **Community signatures**: each signature over 20 contributes +3% to Community Win probability (base 40%).
+  - **Lock-ins held**: each lock-in contributes +5% to Community Win probability.
+  - **Developer bribe**: Lenny's bribe counter (hidden, increments +10% per day if documents not stolen) adds to Developer Win probability.
+  - Final roll: `rng.nextFloat() * 100 < communityScore` → Community Win, else Developer Win.
+- **Community Win**: pub reopens as a co-op after 3 in-game days; `CROWN_ANCHOR_SAVED` rumour; `NewspaperSystem` headline "NORTHFIELD RALLIES TO SAVE CROWN & ANCHOR — DEVELOPER DEFEATED"; `NeighbourhoodSystem` Vibes +10.
+- **Developer Win**: boarding replaced with construction hoarding; 3 in-game days later, flats open; `CROWN_ANCHOR_GONE` rumour; `NeighbourhoodSystem` Vibes −5; YOUTH_GANG temporarily hostile.
+- **Player Squat outcome**: if player has claimed the squat before the vote AND held ≥ 3 lock-ins: Community Win is forced (the active use of the space as community hub sways the committee). Achievement: `PEOPLE_S_PUB`.
+
+### Integration with Existing Systems
+
+- **`PropertySystem`**: Crown & Anchor starts at condition 2 (derelict); lock-ins improve condition +1/session; developer win sets condition 100 (luxury flats).
+- **`SquatSystem`**: standard squat claim mechanic applies; pub squat unlocks lock-in mechanic.
+- **`NeighbourhoodSystem`**: Vibes ±10 based on outcome; selling petition −15 Vibes.
+- **`NeighbourhoodWatchSystem`**: petition signing +1 Community Respect; lock-in +3 anger/session.
+- **`PubLockInSystem`**: `UNDERGROUND_LOCK_IN` rumour integrates with existing lock-in rumour network.
+- **`NewspaperSystem`**: opening headline; community/developer outcome headlines; lock-in bust headline (if WantedSystem +1 during event).
+- **`WantedSystem`**: CCTV-detected entry +1; petition theft witnessed +1; document theft witnessed +1.
+- **`NotorietySystem`**: signing petition −1; loot raid +5; petition theft witnessed +8; lock-in operation +2/session.
+- **`CriminalRecord`**: `BREAKING_AND_ENTERING` (cellar); `PETITION_THEFT` (clipboard theft); `DOCUMENT_THEFT` (planning document theft); `FRAUD` (if signatures forged — see below).
+- **`RumourNetwork`**: `PUB_PETITION_NICKED`, `UNDERGROUND_LOCK_IN`, `PUB_SAVED_TEMPORARILY`, `CROWN_ANCHOR_SAVED`, `CROWN_ANCHOR_GONE` (all new RumourType entries required).
+- **`FenceSystem`**: `REAL_ALE_KEG` fence value 12 COIN; `SPIRITS_BOTTLE` fence value 4 COIN; `POOL_BALL` fence value 2 COIN; `PLANNING_PERMISSION` fence value 5 COIN.
+- **`WeatherSystem`**: RAIN → Baz retreats (petition theft window); HEATWAVE → lock-in NPC attendance +20%; FROST → Lenny stays in van (harder to pickpocket).
+- **`DisguiseSystem`**: SUIT_JACKET disguise allows player to attend committee meeting and overhear the vote outcome (otherwise barred as public).
+- **`TimeSystem`**: 14-day campaign arc; committee at Wed 14:00; lock-ins Fri/Sat 22:00–02:00.
+
+### Constants Required
+
+- `CAMPAIGN_TARGET_SIGNATURES = 30` — petition signatures needed for guaranteed Community Win.
+- `CELLAR_BOARD_HITS = 8` — hits required to break through pub boarding.
+- `CELLAR_LOCKPICK_SECONDS = 4f` — hold-E duration for rear hatch lockpick.
+- `LOCK_IN_NPC_RADIUS = 50` — block radius within which NPCs are attracted to lock-in.
+- `LOCK_IN_COIN_PER_NPC = 2` — COIN earned per NPC who stays ≥ 10 minutes.
+- `LOCK_IN_COMMUNITY_BONUS = 5` — Community Respect gained per lock-in.
+- `LOCK_IN_NOTORIETY_COST = 2` — Notoriety gained per lock-in.
+- `COMMITTEE_INTERVAL_DAYS = 14` — days between committee votes.
+- `COMMITTEE_VOTE_HOUR = 14.0f` — in-game hour of committee vote (Wed).
+- `BASE_COMMUNITY_WIN_CHANCE = 40` — base % chance of community win before modifiers.
+- `SIGNATURE_WIN_BONUS = 3` — % added to community win chance per signature over 20.
+- `LOCK_IN_WIN_BONUS = 5` — % added to community win chance per lock-in held.
+- `LENNY_BRIBE_DAILY_BONUS = 10` — % added to developer win chance per day (if docs not stolen).
+- `PICKPOCKET_SUCCESS_CHANCE = 35` — % chance of successfully pickpocketing Lenny.
+- `PETITION_THEFT_HOLD_SECONDS = 2f` — hold-E duration to steal Baz's clipboard.
+- `FIRE_ALARM_DISTRACTION_SECONDS = 60f` — seconds secretary is distracted after alarm.
+- `SIGNATURE_REMOVAL_COUNT = 10` — signatures removed when petition fenced to Lenny.
+- `FRUIT_MACHINE_TAMPER_SUCCESS = 30` — % chance fruit machine yields tokens on tamper.
+- `LOCK_IN_MIN_NPC_STAY_SECONDS = 600f` — time NPC must stay to generate COIN (10 min).
+- `VAN_RAID_HOLD_SECONDS = 3f` — hold-E to access Lenny's developer van (for document theft option).
+
+### New RumourType Entries Required
+
+- `PUB_PETITION_NICKED` — "Someone nicked Baz's petition for the Crown & Anchor. Bet it was that developer."
+- `UNDERGROUND_LOCK_IN` — "There's a lock-in happening at the old Crown & Anchor. Bring your own glass."
+- `PUB_SAVED_TEMPORARILY` — "The planning decision got delayed somehow. Baz reckons someone nicked the paperwork."
+- `CROWN_ANCHOR_SAVED` — "The Crown & Anchor's staying! Council rejected the flats. Proper result."
+- `CROWN_ANCHOR_GONE` — "They've boarded up the Crown for good. Flats going in. It's a disgrace."
+
+### New AchievementType Entries Required
+
+- `SOLD_THE_LOCAL` — "Sold Baz's petition to the developer. You absolute traitor." Target 1.
+- `LAST_ORDERS` — "Looted five things from the Crown & Anchor. Cheers for the memories." Target 5.
+- `LAST_LANDLORD` — "Hosted three lock-ins at the squatted Crown & Anchor and saved the pub." Target 3.
+- `RED_TAPE` — "Stole and destroyed the planning documents. The developers are fuming." Target 1.
+- `PEOPLE_S_PUB` — "Your squat lock-ins convinced the council to save the Crown & Anchor." Target 1.
+
+### Integration Tests
+
+1. **Petition signing reduces Notoriety**: give player Notoriety 10; call `SaveOurPubSystem.signPetition(player, baz, notorietySystem, neighbourhoodWatchSystem)`; verify `notorietySystem.getNotoriety()` is 9; verify `neighbourhoodWatchSystem.getCommunityRespect()` increased by 1.
+
+2. **Stolen petition removes signatures**: seed `Random`; place PENSIONER NPC as witness (LOS = false); call `SaveOurPubSystem.stealPetition(player, inventory, baz, notorietySystem, criminalRecord, rumourNetwork)`; verify `inventory.contains(Material.PETITION_BOARD)`; verify `SaveOurPubSystem.getSignatureCount()` decreased by `SIGNATURE_REMOVAL_COUNT`; verify `RumourNetwork` contains `PUB_PETITION_NICKED`.
+
+3. **Lock-in attracts NPCs and earns COIN**: give player 2 `SPIRITS_BOTTLE`; set time to Fri 22:30; place 3 PUBLIC NPCs within `LOCK_IN_NPC_RADIUS`; call `SaveOurPubSystem.startLockIn(player, inventory, world, npcManager, noiseSystem, timeSystem)`; advance 10 in-game minutes; verify player COIN increased by `LOCK_IN_COIN_PER_NPC × attendees`; verify `NoiseSystem` level ≥ 7.
+
+4. **Community vote: 30 signatures forces community win**: call `SaveOurPubSystem.addSignatures(30)`; call `SaveOurPubSystem.resolveCommitteeVote(rng, timeSystem, newspaperSystem, neighbourhoodSystem, rumourNetwork)`; verify outcome is `VoteOutcome.COMMUNITY_WIN`; verify `RumourNetwork` contains `CROWN_ANCHOR_SAVED`; verify `NeighbourhoodSystem` vibes increased by 10.
+
+5. **Document theft delays vote**: give player `PLANNING_PERMISSION` item; advance time to within 120s of theft; call `SaveOurPubSystem.destroyPlanningDocument(player, inventory, timeSystem, rumourNetwork)`; verify `SaveOurPubSystem.getVoteDelayDays()` == 7; verify `RumourNetwork` contains `PUB_SAVED_TEMPORARILY`.
+
+// `SaveOurPubSystem.java` must be created as the sole new source file. New enum entries required: `RumourType` (5 entries), `AchievementType` (5 entries). Supporting types already defined: `NPCType.PROPERTY_DEVELOPER`, `NPCType.PUB_LANDLORD`, `Material.PLANNING_PERMISSION`, `Material.PETITION_BOARD`, `Material.SPIRITS_BOTTLE`, `Material.POOL_BALL`, `Material.REAL_ALE_KEG`, `PropType.PETITION_BOARD_PROP`, `PropType.FRUIT_MACHINE_PROP`, `LandmarkType.CLOSED_PUB`, `LandmarkType.COUNCIL_OFFICE`.
