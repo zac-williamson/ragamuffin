@@ -7025,6 +7025,51 @@ public enum AchievementType {
         "Nothing Is Open",
         "Discover that absolutely everything is shut on Easter Monday.",
         5
+    ),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1435: Northfield Community Speedwatch
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * SPEED_WATCHER — Complete a full Community Speedwatch session as a volunteer
+     * (present 08:00–09:30, record ≥5 vehicles).
+     * Awarded by CommunitySpeedwatchSystem at end of qualifying session.
+     */
+    SPEED_WATCHER(
+        "Speed Watcher",
+        "Complete a full Community Speedwatch session as a volunteer. Keith is genuinely touched.",
+        1
+    ),
+
+    /**
+     * SPEEDWATCH_NEMESIS — Achieve 3 confrontations with Keith across all sessions.
+     * Awarded by CommunitySpeedwatchSystem when confrontationCount reaches 3.
+     */
+    SPEEDWATCH_NEMESIS(
+        "Speedwatch Nemesis",
+        "Have three separate confrontations with Keith. He's started keeping notes.",
+        3
+    ),
+
+    /**
+     * CLIPBOARD_ABUSE — Send 3 fake speedwatch warning letters via the corrupt clipboard.
+     * Awarded by CommunitySpeedwatchSystem when fakePlateCount reaches 3.
+     */
+    CLIPBOARD_ABUSE(
+        "Clipboard Abuse",
+        "Send three fake speedwatch warning letters. Keith's going to be furious when he finds out.",
+        3
+    ),
+
+    /**
+     * COMMUNITY_POLICING_ENDS_HERE — Steal the speed gun from the tripod during an active session.
+     * Awarded by CommunitySpeedwatchSystem on successful TRIPOD_SPEED_GUN_PROP theft.
+     */
+    COMMUNITY_POLICING_ENDS_HERE(
+        "Community Policing Ends Here",
+        "Steal Keith's speed gun mid-session. He paid £180 for that on eBay.",
+        1
     );
 
     private final String name;
