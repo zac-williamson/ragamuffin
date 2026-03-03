@@ -3701,6 +3701,47 @@ public enum Material {
      */
     RACING_TIP("Racing Tip"),
 
+    // ── Issue #1349: Northfield RAOB Buffalo Lodge No. 1247 ───────────────────
+
+    /**
+     * Buffalo Membership Card — issued on completing the RAOBLodgeSystem initiation.
+     * Grants RAOB_MEMBER player flag; required for Lodge entry and secret handshake.
+     * Tooltip: "Northfield Buffaloes Lodge No. 1247. It smells of warm lager and ambition."
+     */
+    BUFFALO_MEMBERSHIP_CARD("Buffalo Membership Card"),
+
+    /**
+     * Buffalo Fez — the ceremonial crimson fez worn by Lodge members.
+     * DisguiseSystem: blends into Grand Ceremony without triggering LODGE_TRESPASS.
+     * Backfires if player Wanted ≥ 2 outside the Lodge (suspicion +1).
+     * Tooltip: "A small red fez with a gold tassel. Dignified, in its own way."
+     */
+    BUFFALO_FEZ("Buffalo Fez"),
+
+    /**
+     * Kompromat Ledger — Ron's handwritten ledger of Lodge members' indiscretions.
+     * Looted from LODGE_SAFE_PROP during the Lodge Safe Heist.
+     * Can be sold to CitizensAdviceSystem or PoliceStationSystem for 30 COIN +
+     * Notoriety −5 + newspaper headline.
+     * Tooltip: "Decades of secrets. Councillor Walsh features heavily."
+     */
+    KOMPROMAT_LEDGER("Kompromat Ledger"),
+
+    /**
+     * Buffalo Token — ceremonial coin used as Lodge currency and goodwill gifts.
+     * Two obtained from the LODGE_SAFE_PROP heist; also given by RAOB_PRIMO_REGENT
+     * during the secret handshake (+5 COIN goodwill value).
+     * Tooltip: "A brass Buffalo token. Redeemable for one pint of Worthington's."
+     */
+    BUFFALO_TOKEN("Buffalo Token"),
+
+    /**
+     * Ceremonial Cane — Ron's ornate walking cane, symbol of the Primo Regent office.
+     * Looted or gifted at PRIMO_REGENT achievement tier. Weapon: 1.3× melee damage.
+     * Tooltip: "Ebony shaft, silver buffalo head. Surprisingly heavy."
+     */
+    CEREMONIAL_CANE("Ceremonial Cane"),
+
     // ── Issue #1144: Northfield Probation Office ──────────────────────────────
 
     /**
@@ -6511,6 +6552,18 @@ public enum Material {
             case RACING_TIP:              return cs(0.92f, 0.88f, 0.72f,  // Cream slip
                                                     0.88f, 0.18f, 0.18f); // Red racing ink
 
+            // Issue #1349: Northfield RAOB Buffalo Lodge No. 1247
+            case BUFFALO_MEMBERSHIP_CARD: return cs(0.72f, 0.08f, 0.08f,  // Buffalo crimson card
+                                                    0.88f, 0.75f, 0.15f); // Gold lettering
+            case BUFFALO_FEZ:             return cs(0.72f, 0.08f, 0.08f,  // Crimson fez body
+                                                    0.88f, 0.75f, 0.15f); // Gold tassel
+            case KOMPROMAT_LEDGER:        return cs(0.12f, 0.12f, 0.18f,  // Black leatherette
+                                                    0.62f, 0.48f, 0.28f); // Aged page edges
+            case BUFFALO_TOKEN:           return cs(0.78f, 0.62f, 0.22f,  // Brass token
+                                                    0.55f, 0.42f, 0.10f); // Darker relief
+            case CEREMONIAL_CANE:         return cs(0.10f, 0.08f, 0.08f,  // Ebony shaft
+                                                    0.82f, 0.78f, 0.72f); // Silver buffalo head
+
             // Issue #1144: Northfield Probation Office
             case SIGN_ON_LETTER:          return cs(0.92f, 0.92f, 0.88f,  // White paper
                                                     0.18f, 0.38f, 0.72f); // Blue official stamp
@@ -7315,6 +7368,12 @@ public enum Material {
             case PLANNING_PERMISSION:
             case CASE_DISMISSED_FORM:
             case RACING_TIP:
+            // Issue #1349: Northfield RAOB Buffalo Lodge No. 1247 — not block items
+            case BUFFALO_MEMBERSHIP_CARD:
+            case BUFFALO_FEZ:
+            case KOMPROMAT_LEDGER:
+            case BUFFALO_TOKEN:
+            case CEREMONIAL_CANE:
             // Issue #1144: Northfield Probation Office — not block items
             case SIGN_ON_LETTER:
             case ELECTRONIC_TAG:
@@ -8343,6 +8402,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // court dismissal form
             case RACING_TIP:
                 return IconShape.FLAT_PAPER;  // small paper tip slip
+
+            // Issue #1349: Northfield RAOB Buffalo Lodge No. 1247
+            case BUFFALO_MEMBERSHIP_CARD:
+                return IconShape.CARD;        // crimson Lodge membership card
+            case BUFFALO_FEZ:
+                return IconShape.BOX;         // small fez hat
+            case KOMPROMAT_LEDGER:
+                return IconShape.BOX;         // black leatherette ledger
+            case BUFFALO_TOKEN:
+                return IconShape.CARD;        // brass token coin
+            case CEREMONIAL_CANE:
+                return IconShape.TOOL;        // ornate walking cane
 
             // Issue #1144: Northfield Probation Office
             case SIGN_ON_LETTER:

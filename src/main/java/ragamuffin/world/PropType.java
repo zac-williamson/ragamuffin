@@ -2090,6 +2090,35 @@ public enum PropType {
      */
     LODGE_SAFE_PROP(0.8f, 1.2f, 0.8f, 12, Material.SCRAP_METAL),
 
+    // ── Issue #1349: Northfield RAOB Buffalo Lodge No. 1247 ───────────────────
+
+    /**
+     * Buffalo Lodge Plaque — the brass plaque beside the Lodge entrance door.
+     * Press E to read Lodge history. Indestructible (health=99).
+     */
+    BUFFALO_LODGE_PLAQUE(0.4f, 0.3f, 0.05f, 99, Material.SCRAP_METAL),
+
+    /**
+     * Initiation Altar Prop — the ceremonial altar used for the RAOBLodgeSystem initiation.
+     * Press E (with sponsor trust + COIN) to begin BattleBarMiniGame initiation sequence.
+     * 6 hits to break; yields WOOD.
+     */
+    INITIATION_ALTAR_PROP(1.6f, 1.9f, 1.6f, 6, Material.WOOD),
+
+    /**
+     * Lodge Door Prop — the heavy oak entrance door to the Lodge.
+     * Opens for RAOB_MEMBER players; requires LODGE_DOORMAN approval otherwise.
+     * 10 hits to force open; yields WOOD.
+     */
+    LODGE_DOOR_PROP(1.0f, 2.4f, 0.12f, 10, Material.WOOD),
+
+    /**
+     * Ceremonial Candle Prop — a tall wax candle on a brass stand in the Lodge room.
+     * Decorative; can be knocked over by player action (noise level 2).
+     * 2 hits to break; yields nothing (WOOD stub).
+     */
+    CEREMONIAL_CANDLE_PROP(0.08f, 0.60f, 0.08f, 2, Material.WOOD),
+
     /**
      * Regalia Room Door Prop — the locked door to the Regalia Room.
      * Requires PRIMO membership tier to open legitimately, or 4 LOCKPICK attempts.

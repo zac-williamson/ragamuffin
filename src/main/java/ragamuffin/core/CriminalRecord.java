@@ -429,6 +429,14 @@ public class CriminalRecord {
          */
         LODGE_BRIBERY("Corruption / lodge bribery"),
 
+        // ── Issue #1349: Northfield RAOB Buffalo Lodge No. 1247 ──────────────
+
+        /**
+         * Recorded when the player completes the Lodge Safe Heist (KOMPROMAT_LEDGER stolen).
+         * Penalty: +5 Notoriety, WantedSystem +2 stars; LODGE_BURGLARY rumour seeded.
+         */
+        LODGE_BURGLARY("Burglary of Lodge safe (RAOB No. 1247)"),
+
         // ── Issue #1146: Mick's MOT & Tyre Centre ─────────────────────────────
 
         /**
