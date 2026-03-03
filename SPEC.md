@@ -53208,3 +53208,173 @@ Player can apply at the `POLICE_STATION_PROP` to become a licensed camera operat
 //   SPEED_ANGEL, CANDID_CAMERA, FLAT_TYRE_SHARON, SPEED_LIMIT_ABOLISHED,
 //   POACHER_TURNED_GAMEKEEPER (AchievementType);
 //   CAMERA_TAMPERING (CriminalRecord.CrimeType).
+
+---
+
+## Feature: Northfield QuickFix Loans — The 2000% APR Trap, the Debt Spiral & the Bailiff Run
+
+**New file**: `src/main/java/ragamuffin/core/PaydayLoanSystem.java`
+
+QuickFix Loans operates from the PAYDAY_LOAN_SHOP landmark on Northfield High Street.
+`LOAN_SHARK_CLERK` Darren (cheerful, tracksuit, gold chain) sits behind the counter Mon–Sat
+09:00–17:00, offering instant cash loans at ruinous interest. This system ties together the
+existing `CitizensAdviceSystem`, `BAILIFF` NPC, `LOAN_MANAGER` NPC, and `DEBT_ADVICE_LETTER`
+material into a coherent predatory-lending gameplay loop.
+
+### Mechanic 1 — Taking Out a Loan
+
+- Three loan tiers: **Small** (10 COIN), **Medium** (20 COIN), **Large** (40 COIN).
+- Base interest rate: **50%** (repay 15 / 30 / 60 COIN within `REPAYMENT_DAYS = 3` in-game days).
+- If the player is currently `EMPLOYED` (EmploymentSystem flag), rate drops to **40%** (repay 14 / 28 / 56 COIN).
+- Presenting a `DEBT_ADVICE_LETTER` (from CitizensAdviceSystem) before signing reduces interest by
+  the `CitizensAdviceSystem.INTEREST_REDUCTION = 0.20f` modifier (stacks with employment discount).
+- Marchetti Crew `FRIENDLY` respect doubles the maximum loan tier to 80 COIN (bespoke amount).
+- Player can only hold one active loan at a time. A `LOAN_AGREEMENT` item is added to inventory on signing.
+- Achievement: `FIRST_LOAN` (take out first loan).
+
+### Mechanic 2 — Repayment
+
+- Repayment counter visible in HUD when a loan is active (in-game days remaining).
+- Press E on Darren with COIN in inventory to repay. `LOAN_AGREEMENT` is removed.
+- **Early repayment** (within 1 in-game day): Darren gives 1 COIN cashback and seeds
+  `LOAN_REPAID_RUMOUR` ("Heard someone actually paid QuickFix back on time. Rarity.").
+- Achievement: `DEBT_FREE` (repay a loan before the deadline).
+
+### Mechanic 3 — Missing a Payment (Debt Spiral)
+
+- **Day 1 overdue**: Darren turns speech-bubble hostile ("Where's me money?"). Notoriety +2.
+  `LOAN_OVERDUE_RUMOUR` seeded.
+- **Day 2 overdue**: `BAILIFF` Terry spawns and pathfinds to the player's squat address.
+  Terry knocks (plays knock SFX); player has 30 real-seconds to respond.
+  - **Pay up** (E with enough COIN): loan cleared + 10% penalty fee. Terry leaves.
+  - **Bribe Terry** (E with 5 COIN): Terry pockets the bribe, reports a soft "not found", gives
+    player 1 more day. Seeds `BRIBED_BAILIFF_RUMOUR`.
+  - **Attack Terry**: Terry is tough (35f HP, 8f ATK); defeating him triggers WantedSystem +2,
+    `ASSAULT_OFFICER` crime. Achievement: `BOTTLED_THE_BAILIFF`.
+  - **Scarper** (hide inside, barricade door): Terry leaves after 2 in-game minutes; but loan
+    amount doubles (interest compounds). Seeds `SCARPERED_BAILIFF_RUMOUR`.
+- **Day 3 overdue**: `LOAN_DEFAULTED` crime recorded; WantedSystem +1; Notoriety +5; Darren
+  refuses all future service (permanent ban unless FAKE_ID used).
+  Achievement: `DEBT_SPIRAL`.
+
+### Mechanic 4 — The Back-Room Heist
+
+- After 3 loans (any repayment status), player learns from barman rumour
+  (`BARMAN_RUMOUR_LOAN_OFFICE`) that Darren keeps a float of 30–50 COIN in a
+  `CASH_DRAWER_PROP` behind the counter.
+- **Counter vault** (CROWBAR + hold E on `CASH_DRAWER_PROP` for `HEIST_HOLD_SECONDS = 5`
+  while Darren is on lunch 12:30–13:00): yields `HEIST_COIN_MIN = 30`–`HEIST_COIN_MAX = 50` COIN.
+  Darren not present: silent theft; Notoriety +8, `ROBBERY` crime.
+  Darren present: immediate WantedSystem +2, `ARMED_ROBBERY` crime.
+- **Torch the records**: use LIGHTER on `FILING_CABINET_PROP` — destroys Darren's loan ledger;
+  wipes the player's active loan from the system; Notoriety +10, `ARSON` crime; shop closed 1 day.
+  Achievement: `BURNING_DEBT`.
+- **Photography scam**: hold phone (STOLEN_PHONE) near `LOAN_AGREEMENT` prop to photograph
+  the interest terms; sell photo to `JOURNALIST` NPC (PhoneBoxSystem) for 15 COIN;
+  `NewspaperSystem` headline: "Northfield Loan Shark Exposed — 2000% APR Scandal".
+  Achievement: `LOAN_RANGER`.
+
+### Mechanic 5 — Identity Fraud Loan
+
+- Use `FAKE_ID` (crafted at squat WORKBENCH) when interacting with Darren: resets ban status
+  and allows a new loan under a false name.
+- Darren accepts 15% of the time he'll "recognise" the player even with FAKE_ID (check
+  `FAKE_ID_RECOGNITION_CHANCE = 0.15f`): WantedSystem +1, `IDENTITY_FRAUD` crime.
+- Achievement: `ANOTHER_IDENTITY` (successfully take a loan under a false identity).
+
+### Constants (all public static final)
+
+- `LOAN_SMALL = 10`, `LOAN_MEDIUM = 20`, `LOAN_LARGE = 40`, `LOAN_MARCHETTI_MAX = 80`
+- `BASE_INTEREST_RATE = 0.50f`, `EMPLOYED_INTEREST_RATE = 0.40f`
+- `REPAYMENT_DAYS = 3`
+- `EARLY_REPAYMENT_CASHBACK = 1`
+- `BRIBE_TERRY_COST = 5`
+- `OVERDUE_DAY1_NOTORIETY = 2`, `OVERDUE_DAY3_NOTORIETY = 5`
+- `HEIST_HOLD_SECONDS = 5.0f`, `HEIST_COIN_MIN = 30`, `HEIST_COIN_MAX = 50`
+- `HEIST_NOTORIETY = 8`, `ARSON_NOTORIETY = 10`
+- `LOAN_PHOTO_JOURNALIST_VALUE = 15`
+- `FAKE_ID_RECOGNITION_CHANCE = 0.15f`
+- `DARREN_LUNCH_START = 12.5f`, `DARREN_LUNCH_END = 13.0f`
+- `OPEN_HOUR = 9.0f`, `CLOSE_HOUR = 17.0f`
+
+### Integration
+
+- `CitizensAdviceSystem` — `DEBT_ADVICE_LETTER` consumption for interest reduction
+- `EmploymentSystem` — employed rate check
+- `FactionSystem` — Marchetti respect check for extended loan cap
+- `WantedSystem` — +1/+2 stars on default and bailiff assault
+- `CriminalRecord` — `LOAN_DEFAULTED`, `ROBBERY`, `ARMED_ROBBERY`, `ARSON`, `IDENTITY_FRAUD`
+- `NotorietySystem` — overdue and default penalties
+- `HMRCSystem` — logs loan income as untaxed earnings (loan amount, not interest)
+- `NewspaperSystem` — "2000% APR Scandal" headline after journalism scam
+- `PhoneBoxSystem` — journalist contact for photo sale
+- `RumourNetwork` — `LOAN_REPAID_RUMOUR`, `LOAN_OVERDUE_RUMOUR`, `BRIBED_BAILIFF_RUMOUR`,
+  `SCARPERED_BAILIFF_RUMOUR`, `BARMAN_RUMOUR_LOAN_OFFICE`
+- `SoundSystem` — bailiff knock SFX
+- `AchievementSystem` — `FIRST_LOAN`, `DEBT_FREE`, `BOTTLED_THE_BAILIFF`, `DEBT_SPIRAL`,
+  `BURNING_DEBT`, `LOAN_RANGER`, `ANOTHER_IDENTITY`
+
+### New NPCType entries required
+
+All already defined: `LOAN_SHARK_CLERK` (Darren), `LOAN_MANAGER` (Barry), `BAILIFF` (Terry).
+
+### New PropType entries required
+
+- `LOAN_DESK_PROP` — counter desk inside QuickFix Loans. Dims: 1.5 × 0.9 × 0.6.
+- `CASH_DRAWER_PROP` — cash drawer behind the counter. Holds 30–50 COIN. Dims: 0.4 × 0.2 × 0.3.
+- `FILING_CABINET_PROP` — grey metal cabinet with loan records. Dims: 0.5 × 1.3 × 0.6.
+  Burnable with LIGHTER.
+
+### New Material entries required
+
+- `LOAN_AGREEMENT` — "QuickFix Loans Agreement. Representative APR 2010%." Stack size 1. No fence value.
+- `LOAN_LEAFLET` — already defined (used by CitizensAdviceSystem).
+- `DEBT_ADVICE_LETTER` — already defined (used by CitizensAdviceSystem).
+
+### New RumourType entries required
+
+- `LOAN_REPAID_RUMOUR` — "Heard someone actually paid QuickFix back on time."
+- `LOAN_OVERDUE_RUMOUR` — "Darren from QuickFix is after someone. Heard him on the phone."
+- `BRIBED_BAILIFF_RUMOUR` — "Bailiff Terry's on the take — took a fiver and walked away."
+- `SCARPERED_BAILIFF_RUMOUR` — "Someone hid from the bailiff two days running. Legend."
+- `BARMAN_RUMOUR_LOAN_OFFICE` — "Darren keeps the daily float in an unlocked drawer. Just saying."
+
+### New AchievementType entries required
+
+- `FIRST_LOAN` — "Take out your first payday loan."
+- `DEBT_FREE` — "Repay a loan before the deadline."
+- `BOTTLED_THE_BAILIFF` — "Defeat Bailiff Terry in combat."
+- `DEBT_SPIRAL` — "Default on a QuickFix loan."
+- `BURNING_DEBT` — "Destroy the loan ledger."
+- `LOAN_RANGER` — "Expose QuickFix's interest rates to the press."
+- `ANOTHER_IDENTITY` — "Take a loan under a false identity."
+
+### New CriminalRecord.CrimeType entries required
+
+- `LOAN_DEFAULTED` — recorded on day 3 missed repayment.
+- `IDENTITY_FRAUD` — recorded on successful FAKE_ID loan.
+
+### Integration Tests
+
+1. **Loan issued and LOAN_AGREEMENT added to inventory**: call `takeLoan(player, SMALL)`; verify
+   `inventory.getItemCount(LOAN_AGREEMENT) == 1` and `inventory.getItemCount(COIN) == 10`.
+2. **Employment discount applied**: set player employed flag; call `takeLoan(player, MEDIUM)`;
+   verify repayment amount equals `Math.round(20 * (1 + EMPLOYED_INTEREST_RATE)) = 28`.
+3. **DEBT_ADVICE_LETTER reduces interest**: give player a `DEBT_ADVICE_LETTER`; call
+   `takeLoan(player, SMALL)` with letter; verify repayment is `Math.round(10 * (1 + 0.50f * 0.80f)) = 14`.
+4. **Bailiff spawns on day 2 overdue**: advance 2 in-game days past repayment deadline; call
+   `update()`; verify a `BAILIFF` NPC has been spawned and pathfinding toward squat position.
+5. **Back-room heist yields COIN during lunch**: advance time to 12:30; call
+   `attemptCashDrawerHeist(player, crowbar=true)`; verify player receives between `HEIST_COIN_MIN`
+   and `HEIST_COIN_MAX` COIN and `ROBBERY` crime is recorded.
+6. **FAKE_ID recognised at FAKE_ID_RECOGNITION_CHANCE**: seed RNG to force recognition; call
+   `takeLoanWithFakeId(player, SMALL)` after ban; verify `WantedSystem.getStars() >= 1` and
+   `IDENTITY_FRAUD` recorded in criminal record.
+
+// Enum additions required: `LOAN_AGREEMENT` (Material);
+//   `LOAN_DESK_PROP`, `CASH_DRAWER_PROP`, `FILING_CABINET_PROP` (PropType);
+//   `LOAN_REPAID_RUMOUR`, `LOAN_OVERDUE_RUMOUR`, `BRIBED_BAILIFF_RUMOUR`,
+//   `SCARPERED_BAILIFF_RUMOUR`, `BARMAN_RUMOUR_LOAN_OFFICE` (RumourType);
+//   `FIRST_LOAN`, `DEBT_FREE`, `BOTTLED_THE_BAILIFF`, `DEBT_SPIRAL`, `BURNING_DEBT`,
+//   `LOAN_RANGER`, `ANOTHER_IDENTITY` (AchievementType);
+//   `LOAN_DEFAULTED`, `IDENTITY_FRAUD` (CriminalRecord.CrimeType).
