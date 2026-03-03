@@ -870,6 +870,14 @@ public enum RumourType {
      * Tesco Car Park"). Triggers CRIMINAL_DAMAGE and FIRE_ENGINE response. */
     FIREWORK_PRANK,
 
+    /** "Some muppet nicked Darren's whole holdall — his full stock of fireworks,
+     * gone. He's out here with nothing to sell."
+     * Seeded by BonfireNightSystem when the player steals Darren's holdall
+     * (STEALTH ≥ 2). Spreads via STREET_LAD, BARMAN, and FIREWORK_DEALER_NPC.
+     * Darren enters HOSTILE state. FenceSystem stock gains ROCKET_FIREWORK ×3
+     * for 24 in-game hours. */
+    FIREWORK_THEFT,
+
     // ── Issue #1319: NatWest Cashpoint — The Dodgy ATM ───────────────────────
 
     /** "Word is there's a dodgy reader on the NatWest machine on the High Street —
