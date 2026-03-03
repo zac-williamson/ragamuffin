@@ -3361,7 +3361,21 @@ public enum NPCType {
      * TRADING_SCAM rumour, skips 3 Wednesdays).
      * HP: 55, attack: 0, cooldown: 0, not hostile.
      */
-    RECORD_COLLECTOR(55f, 0f, 0f, false);
+    RECORD_COLLECTOR(55f, 0f, 0f, false),
+
+    // ── Issue #1471: Northfield Closing-Down Sale — Dave's Everything Must Go ──
+
+    /**
+     * CLOSING_DOWN_DAVE — Dave, mid-50s, permanent look of weary optimism,
+     * always has a price gun in his breast pocket. Runs Dave's Electronics &amp;
+     * Electrical, a perpetual fake closing-down sale on the high street.
+     * Passive behind the counter; becomes HOSTILE if player is caught in the
+     * stockroom. Shares one free {@link ragamuffin.core.RumourType#LOCAL_GOSSIP}
+     * per conversation (always about his ongoing "liquidation").
+     * Refuses service to players with Notoriety &ge; 50 or carrying a POLICE_BADGE.
+     * HP: 50, attack: 0, cooldown: 0, not hostile by default.
+     */
+    CLOSING_DOWN_DAVE(50f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
