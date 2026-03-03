@@ -6935,7 +6935,49 @@ public enum Material {
      * liquidation delivery. Fence value: 20 COIN. Can be placed as a decorative
      * prop in a player-owned squat, raising Squat Comfort by 5.
      */
-    BRAND_NAME_TELLY("Brand Name Telly");
+    BRAND_NAME_TELLY("Brand Name Telly"),
+
+    // ── Issue #1475: Northfield Rare Bird Alert ───────────────────────────────
+
+    /**
+     * BINOCULARS — 8x zoom binoculars, purchased from CANAL_TWITCHER (Terry) for 8 COIN,
+     * or found in a SKIP_PROP during the parakeet event (15% chance).
+     * Required to confirm the parakeet sighting and offer guided tours.
+     * Tooltip: "8x zoom. Smells of a stranger's face."
+     */
+    BINOCULARS("Binoculars"),
+
+    /**
+     * BIRD_PHOTO — a photograph of the ring-necked parakeet taken at PARAKEET_TREE_PROP.
+     * Produced by holding E for 3 seconds with BINOCULARS at the tree.
+     * Sell to JOURNALIST for 12 COIN (triggers newspaper headline) or to Terry for 5 COIN
+     * + free BIRDWATCHING_TIP items thereafter. Achievement: NATURE_CORRESPONDENT on first sale.
+     * Tooltip: "Bright green, screaming. Perfect shot."
+     */
+    BIRD_PHOTO("Bird Photo"),
+
+    /**
+     * FAKE_BIRD_PHOTO — a photocopied forgery of a BIRD_PHOTO, made at the photocopier.
+     * 30% detection risk (CrimeType.FRAUD). Achievement: PRESS_FABRICATOR on first successful use.
+     * Tooltip: "Definitely a parakeet. Ignore the staple marks."
+     */
+    FAKE_BIRD_PHOTO("Fake Bird Photo"),
+
+    /**
+     * BIRD_GUIDE_BOOK — a small pocket bird-identification guide carried by TWITCHER NPCs.
+     * Dropped on pickpocket; fenceable for 3 COIN.
+     * Tooltip: "Collins Bird Guide, 2004 edition. Page 47 is stuck together."
+     */
+    BIRD_GUIDE_BOOK("Bird Guide Book"),
+
+    /**
+     * FAKE_BIRDWATCHING_TIP — a forged birdwatching note, crafted from BIRDWATCHING_TIP + MARKER_PEN.
+     * Sells for 3 COIN (same as real tip) but the deceived twitcher returns hostile after 60 seconds,
+     * shouting "That was completely wrong! I could've missed it!" Seeds DODGY_TIPSTER rumour.
+     * Achievement: GOOSE_CHASE on first successful fake tip sale.
+     * Tooltip: "Completely wrong location. Confidently written."
+     */
+    FAKE_BIRDWATCHING_TIP("Fake Birdwatching Tip");
 
     private final String displayName;
 
@@ -8439,6 +8481,18 @@ public enum Material {
                                                     0.88f, 0.15f, 0.12f); // Red "SALE" sticker
             case BRAND_NAME_TELLY:        return cs(0.12f, 0.12f, 0.15f, // Black TV body
                                                     0.55f, 0.78f, 0.92f); // Blue screen glow
+
+            // Issue #1475: Northfield Rare Bird Alert
+            case BINOCULARS:              return cs(0.22f, 0.22f, 0.25f, // Dark metal body
+                                                    0.55f, 0.78f, 0.92f); // Blue lens
+            case BIRD_PHOTO:              return cs(0.95f, 0.95f, 0.90f, // White photo paper
+                                                    0.28f, 0.68f, 0.18f); // Green parakeet
+            case FAKE_BIRD_PHOTO:         return cs(0.90f, 0.90f, 0.85f, // Slightly grey photocopy
+                                                    0.42f, 0.42f, 0.42f); // Grey smudge
+            case BIRD_GUIDE_BOOK:         return cs(0.20f, 0.48f, 0.20f, // Green cover
+                                                    0.95f, 0.92f, 0.82f); // Cream pages
+            case FAKE_BIRDWATCHING_TIP:   return cs(0.85f, 0.85f, 0.75f, // Slightly off-white paper
+                                                    0.65f, 0.12f, 0.12f); // Red marker scrawl
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
