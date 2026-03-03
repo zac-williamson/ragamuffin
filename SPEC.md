@@ -54781,3 +54781,131 @@ All referenced props (`LODGE_BAR_PROP`, `LODGE_ALTAR_PROP`, `LODGE_SAFE_PROP`, `
 
 // `RAOBLodgeSystem.java` must be created as the sole new source file.
 // All enum entries referenced above are already defined — no new enum values required.
+
+---
+
+## Issue #1445: Northfield Salvation Army Citadel — Major Eileen, the Brass Band & the Night Shelter
+
+### Overview
+
+The `SALVATION_ARMY_OFFICER` (Major Eileen Webb), `BRASS_BAND_MEMBER`, and `ROUGH_SLEEPER` NPC types are fully defined in `NPCType.java`, and supporting materials (`SALVATION_ARMY_UNIFORM`, `HYMN_BOOK`, `CUP_OF_TEA`) and props (`TEA_URN_PROP`, `DONATION_BOX_PROP`) exist — but no system class `SalvationArmyCitadelSystem.java` has ever been created. This issue implements it.
+
+The Salvation Army Citadel on Northfield High Street is a red-brick Victorian hall with a hand-painted sign. It runs a soup kitchen at lunchtime, a Saturday brass band march, and a night shelter for rough sleepers. Major Eileen is a steely but fair NPC who offers the player hot tea, moral judgement, and — at low Wanted tiers — a brief sanctuary from the police.
+
+---
+
+### Opening Hours & Access
+
+| Day         | Hours       | What Happens                                             |
+|-------------|-------------|----------------------------------------------------------|
+| Mon–Fri     | 09:00–17:00 | Office open; Eileen at her desk; DONATION_BOX_PROP active |
+| Daily       | 12:00–14:00 | Soup kitchen: `TEA_URN_PROP` active; ROUGH_SLEEPERs queue |
+| Saturday    | 10:00–11:30 | Brass band assembles and marches to the high-street junction |
+| Fri–Sat     | 20:00–08:00 | Night shelter open for ROUGH_SLEEPERs                   |
+
+---
+
+### Mechanic 1 — The Soup Kitchen (Daily 12:00–14:00)
+
+`TEA_URN_PROP` activates at 12:00. 3–5 `ROUGH_SLEEPER` NPCs path to the Citadel and queue.
+
+- Player can press E on `TEA_URN_PROP` to receive `CUP_OF_TEA` (+10 Hunger, +5 HP, Notoriety −1 if player Notoriety ≥ 5). Usable once per in-game day.
+- Player can press E on Eileen during soup kitchen hours to **volunteer**: advance the queue for 2 in-game minutes → `LOCALS` Faction Respect +2, seeds `COMMUNITY_WIN` rumour.
+- If player's Notoriety ≥ 40: Eileen refuses service ("I know who you are. Come back when you've sorted yourself out."). Seeds `PUBLIC_SHAMING` rumour.
+- Stealing from `DONATION_BOX_PROP` (8 hits or lockpick): 10–25 COIN, `THEFT_FROM_PERSON` CrimeType, Notoriety +8, WantedSystem +1. Seeds `COLLECTION_BOX_ROB` rumour. `COLLECTION_THIEF` achievement already defined in `AchievementType.java`.
+
+---
+
+### Mechanic 2 — The Brass Band March (Saturday 10:00–11:30)
+
+3 `BRASS_BAND_MEMBER` NPCs and Eileen assemble outside the Citadel at 10:00.
+
+- At 10:15, they march along the high-street path to the junction, playing `SoundEffect.BRASS_BAND_MARCH` (falls back to `AMBIENT_OUTDOOR`).
+- `ROUGH_SLEEPER` NPCs follow the march. Public NPCs pause to watch (15-second IDLE override).
+- Player can **join the march** by walking within 2 blocks of the band for 10+ consecutive seconds: `LOCALS` Faction Respect +3, `COMMUNITY_WIN` rumour seeded, `HYMN_BOOK` added to inventory.
+- Player can **steal a band member's instrument** (`BRASS_INSTRUMENT` — see new materials below) while they march: `THEFT_FROM_PERSON` CrimeType, Notoriety +5, WantedSystem +1. Eileen enters `FLEEING` state; march dissolves.
+- March returns to Citadel by 11:30.
+
+---
+
+### Mechanic 3 — The Night Shelter (Fri–Sat 20:00–08:00)
+
+`ROUGH_SLEEPER` NPCs path to Citadel at 20:00 and occupy `SHELTER_BED_PROP` slots (3 beds).
+
+- Player can access shelter if Warmth < 20% or Health < 30% and it is night: +20 Warmth, +20 HP restored over 60 seconds of standing near a `SHELTER_BED_PROP`.
+- If player is Wanted (WantedSystem ≥ 1), Eileen at door offers tea but denies bed access. Wanted ≥ 3: calls police immediately (90-second response).
+- Wanted Tier 1–2 + Notoriety < 30: Eileen lets player wait inside, reducing effective Wanted level visibility by 1 (police won't enter the Citadel to check unless Wanted ≥ 3). `SANCTUARY_SEEKER`-style mechanic.
+- `ROUGH_SLEEPER` NPCs at the shelter can be pickpocketed (15% success base; −20% if Eileen is within 5 blocks).
+
+---
+
+### Mechanic 4 — The Uniform Scam
+
+If player wears `SALVATION_ARMY_UNIFORM` (already in `Material.java`):
+- Looks like a Salvation Army officer to Public NPCs: `LOCALS` Faction Respect +2 per conversation, WantedSystem suspicion −1 tier visually (per `DisguiseSystem` rules).
+- 40% chance per minute of Eileen spotting the player (within 10 blocks): Eileen confronts player, demands uniform returned. Player can flee or submit.
+  - Submission: uniform removed, Notoriety +3, `CAUGHT_IN_UNIFORM` rumour seeded.
+  - Flee: Eileen calls police. WantedSystem +1.
+- Player wearing uniform near `DONATION_BOX_PROP` can intercept donations: 1–3 COIN per minute, up to 3 minutes. On detection (30% per minute): `CHARITY_FRAUD` CrimeType, Notoriety +8, WantedSystem +1.
+
+---
+
+### Integration with Existing Systems
+
+- **`WarmthSystem`**: night shelter restores +20 Warmth.
+- **`HealingSystem`**: TEA_URN_PROP and shelter bed restore HP.
+- **`DisguiseSystem`**: `SALVATION_ARMY_UNIFORM` as disguise tier.
+- **`WantedSystem`**: sanctuary mechanic; police not entering at Tier 1–2; Tier 3 triggers call.
+- **`NotorietySystem`**: soup kitchen −1 (if ≥ 5); volunteer +0; donation box theft +8; uniform scam +3–8.
+- **`FactionSystem`**: `LOCALS` Respect +2 volunteering; +3 joining march.
+- **`RumourNetwork`**: `COMMUNITY_WIN` on volunteering/march; `COLLECTION_BOX_ROB` on donation box theft; `PUBLIC_SHAMING` on Eileen refusal; `CAUGHT_IN_UNIFORM` on confrontation.
+- **`CriminalRecord`**: `THEFT_FROM_PERSON` on box theft/instrument theft; `CHARITY_FRAUD` on uniform scam donation intercept.
+- **`NoiseSystem`**: brass band march 3.5f (outdoor); shelter night ambient 0.5f.
+- **`WeatherSystem`**: HEAVY_RAIN/THUNDERSTORM cancels Saturday march (Eileen leads NPCs indoors); HEATWAVE: soup kitchen extends to 15:00 with lemonade variant.
+- **`NewspaperSystem`**: donation box robbery headline: "SALVATION ARMY COLLECTION BOX RAIDED IN NORTHFIELD. MAJOR EILEEN DESCRIBES PERPETRATOR AS 'DEEPLY UNCHRISTIAN'."
+- **`TimeSystem`**: soup kitchen 12:00–14:00 daily; march Saturday 10:00–11:30; shelter Fri–Sat 20:00–08:00.
+- **`AchievementSystem`**: `COLLECTION_THIEF` (already defined) on donation box theft.
+
+---
+
+### New Material Entries Required
+
+- `BRASS_INSTRUMENT` — "A battered euphonium. Still holds a tune. Still belongs to Derek." Stealable from `BRASS_BAND_MEMBER`; sellable to `FenceSystem` for 8 COIN or `CharityShopSystem` for 5 COIN.
+
+### New PropType Entries Required
+
+- `SHELTER_BED_PROP` — fold-out camp bed used in the night shelter. Dims: 1.0 × 0.4 × 2.0; non-breakable. No drop.
+
+### New NPCType Entries Required
+
+None — `SALVATION_ARMY_OFFICER`, `BRASS_BAND_MEMBER`, `ROUGH_SLEEPER` already defined.
+
+### New RumourType Entries Required
+
+- `COLLECTION_BOX_ROB` — "Someone robbed the Sally Army collection box. Even the lads on the estate thought that was a bit much."
+- `CAUGHT_IN_UNIFORM` — "Someone was walking round in a Salvation Army uniform cadging donations. Eileen went absolutely spare."
+
+### New AchievementType Entries Required
+
+None — `COLLECTION_THIEF` already defined. (Add `SOUP_KITCHEN_REGULAR` — "Had soup kitchen tea on five separate days. Eileen knows your order." Target 5.)
+
+---
+
+### Integration Tests
+
+1. **Soup kitchen activates at 12:00**: set time to 12:00 on a weekday; call `SalvationArmyCitadelSystem.update(delta, timeSystem, world, npcManager, warmthSystem, wantedSystem)`; verify `isKitchenActive()` returns true; verify ≥1 `ROUGH_SLEEPER` NPC is pathfinding toward the Citadel landmark; verify `TEA_URN_PROP` exists within 5 blocks of the Citadel centre.
+
+2. **Player receives tea once per day**: give player 0 COIN (no payment needed); press E on `TEA_URN_PROP` at 12:30; verify player HP increases by 10 and Hunger increases by 10; press E again same day; verify no further HP/Hunger change and a "come back tomorrow" dialogue line is returned.
+
+3. **Eileen refuses high-Notoriety player**: set player Notoriety to 45; press E on Eileen during kitchen hours (13:00); verify return value is `SoupKitchenResult.REFUSED_HIGH_NOTORIETY`; verify `PUBLIC_SHAMING` rumour exists in `RumourNetwork`.
+
+4. **Brass band march spawns and moves**: set day to Saturday (dayCount % 7 == 5), time 10:15; call update; verify ≥3 `BRASS_BAND_MEMBER` NPCs exist; verify their path target is the high-street junction landmark; verify `SalvationArmyCitadelSystem.isMarchActive()` returns true.
+
+5. **Donation box theft triggers crime and headline**: simulate 8 hits on `DONATION_BOX_PROP`; verify `CriminalRecord` contains `THEFT_FROM_PERSON`; verify `WantedSystem.getStars() >= 1`; verify `NewspaperSystem` has a headline containing "COLLECTION BOX RAIDED"; verify `COLLECTION_THIEF` achievement is unlocked.
+
+6. **Night shelter restores warmth**: set player Warmth to 15% and Wanted stars to 0; set time to 22:00 Friday; call update; simulate player standing within 2 blocks of `SHELTER_BED_PROP` for 60 seconds; verify player Warmth ≥ 35%.
+
+// `SalvationArmyCitadelSystem.java` must be created as the sole new source file.
+// `BRASS_INSTRUMENT` (Material) and `SHELTER_BED_PROP` (PropType) are new and must be added.
+// `COLLECTION_BOX_ROB` and `CAUGHT_IN_UNIFORM` (RumourType) are new and must be added.
+// `SOUP_KITCHEN_REGULAR` (AchievementType) is new and must be added.
