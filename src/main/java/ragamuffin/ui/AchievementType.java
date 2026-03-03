@@ -6938,6 +6938,39 @@ public enum AchievementType {
         "Took It Out on Pete",
         "Pete was just following orders. You made that his problem too.",
         1
+    ),
+
+    // ── Issue #1422: Northfield Charity Sponsored Walk ────────────────────────
+
+    /**
+     * WALKED_THE_WALK — Complete the Northfield Hospice Sponsored Walk and collect all pledges.
+     * Awarded by SponsoredWalkSystem when player completes all 20 waypoints and collects pledges
+     * from all 6 sponsors.
+     */
+    WALKED_THE_WALK(
+        "Walked the Walk",
+        "Complete the Northfield Hospice Sponsored Walk and collect all pledges.",
+        1
+    ),
+
+    /**
+     * CHARITY_MUGGER — Collect sponsored walk pledges without finishing the route.
+     * Awarded by SponsoredWalkSystem when player collects from 3+ sponsors with walkCompleted=false.
+     */
+    CHARITY_MUGGER(
+        "Charity Mugger",
+        "Collect sponsored walk pledges without finishing the route.",
+        1
+    ),
+
+    /**
+     * DODGED_BRENDA — Escape Brenda after committing charity fraud.
+     * Awarded by SponsoredWalkSystem when player evades Brenda's 60-second chase.
+     */
+    DODGED_BRENDA(
+        "Dodged Brenda",
+        "Escape Brenda after committing charity fraud.",
+        1
     );
 
     private final String name;

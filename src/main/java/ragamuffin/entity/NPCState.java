@@ -80,5 +80,8 @@ public enum NPCState {
     WATCHING_MATCH,     // NPC is watching the England match on the pub TV
     GROANING,           // NPC is groaning after an opposition goal
     AGITATED,           // NPC is agitated after TV sabotage (120s duration)
-    HOSTILE_TO_PLAYER   // NPC is hostile toward player (e.g. after German flag plant)
+    HOSTILE_TO_PLAYER,  // NPC is hostile toward player (e.g. after German flag plant)
+
+    // ── Issue #1422: Northfield Charity Sponsored Walk ────────────────────────
+    ANGRY               // NPC is angry at the player (e.g. Brenda after charity fraud detected)
 }

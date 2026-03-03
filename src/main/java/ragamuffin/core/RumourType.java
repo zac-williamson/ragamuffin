@@ -1513,5 +1513,22 @@ public enum RumourType {
      *   OR when player sells transaction logs to REGIONAL_AUDITOR and a witness NPC observes.
      * Spreads via PUBLIC and MARKET_TRADER NPCs.
      * Lowers community respect toward the player by 4 if seeded while player is within 10 blocks. */
-    DODGY_AUDIT;
+    DODGY_AUDIT,
+
+    // ── Issue #1422: Northfield Charity Sponsored Walk ────────────────────────
+
+    /** "Someone did Brenda from the Hospice Walk out of her pledges. Proper wrong that."
+     * — seeded by SponsoredWalkSystem when player escapes Brenda after committing charity fraud.
+     * Spreads via PUBLIC, PENSIONER, and COMMUNITY_CENTRE_CLERK NPCs. */
+    BRENDA_CONNED,
+
+    /** "Sponsored walk got abandoned — someone nicked all the cones."
+     * — seeded by SponsoredWalkSystem when 5+ ROUTE_CONE_PROP markers are removed and walk is abandoned.
+     * Spreads via PUBLIC and SPONSORED_WALKER NPCs. */
+    WALK_CANCELLED,
+
+    /** "Saw someone actually finish the whole sponsored walk. Fair play."
+     * — seeded by SponsoredWalkSystem when player completes all 20 waypoints and returns to Brenda.
+     * Spreads via PUBLIC and COMMUNITY_CENTRE_CLERK NPCs. */
+    WALK_HERO;
 }
