@@ -6139,7 +6139,42 @@ public enum Material {
     /**
      * CUP_OF_TEA — "Hot, strong, restorative. Margaret's best brew."
      * Sold at WI_STALL_PROP for 1 COIN. Warmth +20. */
-    CUP_OF_TEA("Cup of Tea");
+    CUP_OF_TEA("Cup of Tea"),
+
+    // ── Issue #1394: England Match Night ─────────────────────────────────────
+
+    /**
+     * ENGLAND_SHIRT — "Three lions. Polyester. Optimism sold separately."
+     * Wearable (chest slot). Sold at Newsagent for 8 COIN.
+     * Provides crowd-blend disguise during England match (Terry detection −90%). */
+    ENGLAND_SHIRT("England Shirt"),
+
+    /**
+     * MATCH_FIX_ITEM — "A sealed envelope. The less you know, the better. Marchetti sends his regards."
+     * Obtained from Marchetti Crew at Respect ≥ 60 for 50 COIN. Single-use.
+     * Forces ENGLAND_LOSS result when used before 20:00 on a match day. */
+    MATCH_FIX_ITEM("Match Fix Envelope"),
+
+    /**
+     * GERMAN_FLAG — "Black, red, gold. Bring it to a Wetherspoons on match night. See what happens."
+     * Craftable (2× FABRIC_SCRAP + RED_DYE) or found in Charity Shop.
+     * Planting on pub noticeboard triggers HOSTILE_TO_PLAYER state in all crowd for 30s. */
+    GERMAN_FLAG("German Flag"),
+
+    /**
+     * SIGNED_SHIRT — "Signed by someone. Authenticity certificate missing. Terry says it's genuine."
+     * Lootable from TROPHY_CABINET_PROP inside Wetherspoons. Fenceable: 25 COIN. */
+    SIGNED_SHIRT("Signed Shirt"),
+
+    /**
+     * FA_CUP_REPLICA — "A plastic FA Cup. Gold-painted. Terry won it at the fair in 1997. He insists it's real."
+     * Lootable from TROPHY_CABINET_PROP. Fenceable: 20 COIN. */
+    FA_CUP_REPLICA("FA Cup Replica"),
+
+    /**
+     * GOLDEN_BOOT_PROP — "A spray-painted boot on a plinth. 'Top Scorer 1991.' No name. Dave won't say whose."
+     * Lootable from TROPHY_CABINET_PROP. Fenceable: 30 COIN. Also pawnable: 18 COIN. */
+    GOLDEN_BOOT_PROP("Golden Boot");
 
     private final String displayName;
 

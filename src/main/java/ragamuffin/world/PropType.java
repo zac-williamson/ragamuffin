@@ -3833,7 +3833,23 @@ public enum PropType {
      * ROOF_FLAG_MOUNT_PROP — flag mount on the roof of Wetherspoons holding the ROOF_FLAG_PROP.
      * Press E to take the flag (CCTV must be disabled). 0.2×0.5×0.2m; sturdy.
      */
-    ROOF_FLAG_MOUNT_PROP(0.2f, 0.5f, 0.2f, 8, null);
+    ROOF_FLAG_MOUNT_PROP(0.2f, 0.5f, 0.2f, 8, null),
+
+    // ── Issue #1394: England Match Night ─────────────────────────────────────
+
+    /**
+     * PUB_TV_PROP — large wall-mounted screen inside Wetherspoons showing the England match.
+     * Sabotable via CROWBAR or CABLE item during Dave's blind spot (half-time 20:45–21:00).
+     * State: FUNCTIONAL / BROKEN. 1.8×1.2×0.15m; sturdy.
+     */
+    PUB_TV_PROP(1.8f, 1.2f, 0.15f, 10, null),
+
+    /**
+     * TROPHY_CABINET_PROP — locked glass cabinet inside Wetherspoons containing football
+     * memorabilia (SIGNED_SHIRT, FA_CUP_REPLICA, GOLDEN_BOOT_PROP). Smashable with
+     * GLASS_CUTTER (silent) or CROWBAR (loud, 30-block noise radius). 1.2×1.8×0.4m; glass.
+     */
+    TROPHY_CABINET_PROP(1.2f, 1.8f, 0.4f, 3, null);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

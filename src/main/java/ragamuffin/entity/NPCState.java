@@ -74,5 +74,11 @@ public enum NPCState {
     // Issue #1251: Northfield Street Chuggers
     PATROL,             // Chugger NPC patrolling their zone on the high street
     ACCOSTING,          // Chugger NPC approaching and pitching the player
-    DESPAWNING          // NPC is leaving the scene / end-of-shift despawn transition
+    DESPAWNING,         // NPC is leaving the scene / end-of-shift despawn transition
+
+    // ── Issue #1394: England Match Night ─────────────────────────────────────
+    WATCHING_MATCH,     // NPC is watching the England match on the pub TV
+    GROANING,           // NPC is groaning after an opposition goal
+    AGITATED,           // NPC is agitated after TV sabotage (120s duration)
+    HOSTILE_TO_PLAYER   // NPC is hostile toward player (e.g. after German flag plant)
 }

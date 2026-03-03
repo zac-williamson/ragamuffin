@@ -1184,7 +1184,30 @@ public class CriminalRecord {
          * ConkerSystem spot-check: 20% chance per tick. DisguiseSystem blocks check.
          * Penalty: disqualification, Notoriety +2.
          */
-        CHEATING_AT_CONKERS("Competing with a hardened/chemically-treated conker");
+        CHEATING_AT_CONKERS("Competing with a hardened/chemically-treated conker"),
+
+        // ── Issue #1394: England Match Night ─────────────────────────────────
+
+        /**
+         * Recorded when the player sabotages the PUB_TV_PROP at Wetherspoons
+         * during the England match screening. Dave witnesses on 50% chance.
+         * Penalty: Notoriety +10, WantedSystem +2 (if witnessed).
+         */
+        TV_SABOTAGE("Sabotage of licensed premises TV equipment"),
+
+        /**
+         * Recorded when the player steals items from the TROPHY_CABINET_PROP
+         * inside Wetherspoons during the England match.
+         * Penalty: Notoriety +3 per item (up to +8 for full heist), Wanted +1 per item.
+         */
+        TROPHY_THEFT("Theft from a licensed premises trophy cabinet"),
+
+        /**
+         * Recorded when the player uses a MATCH_FIX_ITEM to force the England
+         * match result. Requires Marchetti Crew Respect ≥ 60.
+         * Penalty: associated with MATCH_FIXING crime in CriminalRecord.
+         */
+        ENGLAND_MATCH_FIXING("Fixing of an England international match result");
 
         private final String displayName;
 

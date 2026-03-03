@@ -1237,5 +1237,38 @@ public enum RumourType {
     /** "Someone's nicked the conker trophy off the prize table. Right under Derek's nose."
      * Seeded by ConkerSystem when player takes CONKER_TROPHY from TROPHY_TABLE_PROP.
      * Triggers Notoriety +5. Spreads via PUBLIC, PENSIONER NPCs. */
-    CONKER_TROPHY_NICKED;
+    CONKER_TROPHY_NICKED,
+
+    // ── Issue #1394: England Match Night ─────────────────────────────────────
+
+    /** "England went through and half the town went mental. Dave's got a broken window."
+     * Seeded by EnglandMatchSystem on ENGLAND_WIN full-time.
+     * Spreads via PUBLIC, STREET_LAD NPCs. */
+    ENGLAND_WIN_RIOT,
+
+    /** "England lost again. The pub was in silence for twenty minutes. It were like a funeral."
+     * Seeded by EnglandMatchSystem on ENGLAND_LOSS full-time.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    ENGLAND_LOSS_DESPAIR,
+
+    /** "Someone cut the aerial cable at the Wetherspoons. Mid-match. On a penalty."
+     * Seeded by EnglandMatchSystem on successful TV sabotage.
+     * Spreads via PUBLIC NPCs (wide radius). */
+    TELLY_SABOTAGE,
+
+    /** "Someone brought a German flag into the Wetherspoons during the England match. Police got called."
+     * Highest propagation rumour in the game — every PUBLIC, PENSIONER, JOURNALIST,
+     * BARMAN NPC receives it within 5 in-game minutes.
+     * Seeded by EnglandMatchSystem on German flag plant. */
+    GERMAN_FLAG_OUTRAGE,
+
+    /** "Someone had the Wetherspoons trophy cabinet away. In the middle of the match. Terry's devastated."
+     * Seeded by EnglandMatchSystem on full trophy cabinet heist.
+     * Spreads via PUBLIC, PENSIONER NPCs. Triggers Notoriety +8. */
+    TROPHY_CABINET_NICKED,
+
+    /** "They were saying the Wetherspoons screening's off tonight — something about the satellite dish."
+     * Seeded by EnglandMatchSystem when THUNDERSTORM cancels the match day screening.
+     * Spreads via PUBLIC NPCs. */
+    MATCH_CANCELLED_RAIN;
 }
