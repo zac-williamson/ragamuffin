@@ -2910,7 +2910,25 @@ public enum NPCType {
      * crime, adds Notoriety +10, triggers NewspaperSystem headline. HP: 30f,
      * attack: 0f, cooldown: 0f, hostile: false.
      */
-    TRADING_STANDARDS_OFFICER(30f, 0f, 0f, false);
+    TRADING_STANDARDS_OFFICER(30f, 0f, 0f, false),
+
+    // ── Issue #1365: Northfield Bonfire Night ─────────────────────────────────
+
+    /**
+     * BONFIRE_WARDEN — Gary, the volunteer bonfire warden who patrols the park
+     * bonfire from 18:00 until 21:00. Detection radius is halved after 21:00
+     * when he gets distracted with his flask. Non-hostile unless provoked.
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    BONFIRE_WARDEN(25f, 0f, 0f, false),
+
+    /**
+     * EVENT_COMPERE — Keith, the official Tesco car park firework display
+     * compère. Announces the display, oversees the FIREWORK_MORTAR_PROP, and
+     * reacts angrily if the display is sabotaged. Non-hostile.
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    EVENT_COMPERE(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
