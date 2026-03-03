@@ -47366,3 +47366,110 @@ The two-minute silence (11:00:00–11:02:00 game time) is the centrepiece: all N
 //              NotorietySystem, WantedSystem, CriminalRecord, PawnShopSystem (WREATH fence),
 //              FactionSystem, RumourNetwork, WeatherSystem, SoundSystem, NoiseSystem,
 //              StreetEconomySystem, AchievementSystem, NewspaperSystem, NeighbourhoodSystem
+
+---
+
+## Issue #1349: Add Northfield RAOB Buffalo Lodge — The Initiation, the Secret Handshake & the Lodge Safe Heist
+
+### Overview
+
+The Royal Antediluvian Order of Buffaloes (RAOB) Lodge No. 1247 occupies a Victorian terraced building on the south side of Northfield high street, marked by a `BUFFALO_LODGE_PROP` plaque and the muffled sound of ceremonial piano from inside on meeting nights. The Lodge is led by **Primo Regent Ron** (`NPCType.RAOB_PRIMO_REGENT`) — a retired binman with a ceremonial fez, a very serious face, and a ledger that contains enough kompromat to end three council careers.
+
+The Lodge meets **Monday and Thursday evenings 19:00–22:30**. Outside meeting hours the building is locked (LODGE_DOOR_PROP, requires `BUFFALO_MEMBERSHIP_CARD` or LOCKPICK). The RAOB is referenced by the Remembrance Sunday ceremony (RAOB_LODGE_MEMBER NPCs attend), and is integrated with the FactionSystem as a hidden fourth civic faction above The Council.
+
+### Key Mechanics
+
+- **Joining the Lodge**: Player must have a SPONSOR (any RAOB_LODGE_MEMBER NPC; gain their trust via 3 favours — buy them a pint, return a lost LEDGER_PAGE item, help carry CEREMONIAL_CHAIR). Once sponsored, pay a `JOINING_FEE` of 10 COIN. Ron conducts the initiation ceremony: player presses E at `INITIATION_ALTAR_PROP` in correct sequence (prompted by the BattleBarMiniGame — 3 button presses timed to Ron's ritual cues). Success → `BUFFALO_MEMBERSHIP_CARD` item, `RAOB_MEMBER` player flag, StreetSkillSystem SOCIAL XP +5.
+- **Secret Handshake**: RAOB members (if `RAOB_MEMBER` flag) perform a 3-key sequence (E, E, hold E) when greeting RAOB_LODGE_MEMBER or RAOB_PRIMO_REGENT NPCs. Successful handshake: police suspicion −1 for the duration of the meeting night, +5 COIN "goodwill gift" from Ron, RAOB faction Respect +5. Failed sequence (wrong timing): NPC suspicious, Respect −3.
+- **The Ledger**: Ron's `KOMPROMAT_LEDGER` prop is locked in the `LODGE_SAFE_PROP` upstairs. Contains damning entries on Councillor Walsh, District Manager Phillips, and a MARCHETTI front company. Stealing it (LOCKPICK or CROWBAR on LODGE_SAFE_PROP during a meeting when everyone is downstairs) → `KOMPROMAT_LEDGER` item in inventory, RAOB Respect → 0, WANTED +2 stars, crime `LODGE_BURGLARY`. Selling it to CitizensAdviceSystem or PoliceStationSystem yields 30 COIN + NOTORIETY −5 + civil faction Respect +15.
+- **The Grand Ceremony (Monthly)**: On the first Thursday of each month, the Grand Ceremony runs 19:30–22:00. 6–10 RAOB_LODGE_MEMBER NPCs in ceremonial fezzes gather. A `CEREMONIAL_CANDLE_PROP` is lit. Ron recites the Oath (speech bubble). If player is a member, attending grants `LAPSED_MEMBER` → `ACTIVE_MEMBER` status and unlocks the back-bar gossip network (overhear FACTION_RUMOUR dialogue from Councillor Walsh). Non-members caught inside: TRESPASS crime, Notoriety +5, 2–4 RAOB_LODGE_MEMBERs become hostile.
+- **Lodge Safe Heist**: The LODGE_SAFE_PROP is accessible only during ceremonies (when all NPCs are in the downstairs ritual room). Player must: 1) distract Ron (use `PIGEON` item released near window — Ron runs to investigate, 30-second window); 2) lockpick/crowbar the safe (takes 8 seconds, noise level 5); 3) escape before ceremony ends. On success: KOMPROMAT_LEDGER + 15 COIN + 2 COIN items (Buffalo tokens) in safe.
+- **The Fez**: Wearing a `BUFFALO_FEZ` (obtained by completing initiation or pickpocketing Ron — 20% success rate) lets player blend in during ceremonies without triggering trespass. But: if Wanted level ≥ 2 and a POLICE NPC passes, the fez makes player MORE conspicuous (Wanted +1 — "wearing a fez at 2am is not inconspicuous").
+
+### New Types Required
+
+- `NPCType.RAOB_PRIMO_REGENT` — Ron; 30f HP, 4f damage; hostile only if safe breached or caught trespassing
+- `NPCType.RAOB_LODGE_MEMBER` — shared with RemembranceSundaySystem; passive civic NPC
+- `Material.BUFFALO_MEMBERSHIP_CARD` — key item; allows entry outside meeting hours
+- `Material.BUFFALO_FEZ` — wearable disguise item; blends into ceremony
+- `Material.KOMPROMAT_LEDGER` — quest item; fenceable for 30 COIN at CitizensAdvice/Police
+- `Material.BUFFALO_TOKEN` — 2 COIN value collectible found in safe (2 in each haul)
+- `Material.CEREMONIAL_CANE` — Ron's melee weapon; RAOB_PRIMO_REGENT equipped item
+- `PropType.BUFFALO_LODGE_PLAQUE` — exterior identification prop
+- `PropType.INITIATION_ALTAR_PROP` — interaction prop for joining ceremony
+- `PropType.LODGE_SAFE_PROP` — breakable/lockpickable safe prop
+- `PropType.LODGE_DOOR_PROP` — locked door; BUFFALO_MEMBERSHIP_CARD or LOCKPICK required
+- `PropType.CEREMONIAL_CANDLE_PROP` — ambient prop during Grand Ceremony
+- `RumourType.RAOB_INITIATION` — seeds when player joins Lodge
+- `RumourType.LODGE_BURGLARY` — seeds when safe is broken into
+- `RumourType.KOMPROMAT_REVEALED` — seeds when ledger delivered to police/CAB
+- `CrimeType.LODGE_BURGLARY` — breaking into lodge safe
+- `CrimeType.LODGE_TRESPASS` — entering lodge without membership during ceremony
+- `AchievementType.BUFFALO_SOLDIER` — complete Lodge initiation
+- `AchievementType.PRIMO_REGENT` — attend 5 Grand Ceremonies as an active member
+- `AchievementType.THE_LEDGER` — obtain and fence the Kompromat Ledger
+- `LandmarkType.RAOB_LODGE` — already referenced in LandmarkType enum
+
+### Integration
+
+- `RemembranceSundaySystem` — RAOB_LODGE_MEMBER NPCs attend the ceremony; Respect ≥ 40 unlocks Lodge Secretary conversation line about fallen brother
+- `FactionSystem` — RAOB as hidden faction; Respect affects civic bonus and Councillor Walsh's favour; MARCHETTI front company mention
+- `CitizensAdviceSystem` — accepts KOMPROMAT_LEDGER for 30 COIN + notoriety reduction
+- `PoliceStationSystem` — accepts KOMPROMAT_LEDGER for Wanted −1 + COIN
+- `DisguiseSystem` — `BUFFALO_FEZ` disguise modifier; `RAOB_MEMBER` flag gives −1 police suspicion on meeting nights
+- `NotorietySystem` — initiation +0; trespass +5; safe heist +8
+- `WantedSystem` — lodge burglary +2 stars; ledger delivered to police −1 star
+- `CriminalRecord` — `LODGE_BURGLARY`, `LODGE_TRESPASS`
+- `StreetSkillSystem` — SOCIAL XP +5 on initiation; STEALTH XP +2 on unwitnessed heist
+- `BattleBarMiniGame` — used for initiation ceremony timing sequence
+- `RumourNetwork` — `RAOB_INITIATION`, `LODGE_BURGLARY`, `KOMPROMAT_REVEALED`
+- `NeighbourhoodSystem` — Grand Ceremony attendance +2 Vibes; burglary −5 Vibes
+- `NoiseSystem` — safe cracking emits noise level 5 for 8 seconds
+- `NewspaperSystem` — if ledger reaches police: "LOCAL LODGE ROCKED BY SAFE THEFT SCANDAL"
+- `WetherspoonsSystem` — RAOB members present on meeting nights increase round-buying rate
+- `SoundSystem` — muffled ceremonial piano SoundEffect during meetings (heard from outside)
+- `TimeSystem` — meeting schedule (Mon/Thu 19:00–22:30); Grand Ceremony (first Thu of month)
+
+### New Java Files
+
+- `src/main/java/ragamuffin/core/RAOBLodgeSystem.java`
+- `src/test/java/ragamuffin/core/RAOBLodgeSystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1349RAOBLodgeIntegrationTest.java`
+
+### Unit Tests
+
+- `RAOBLodgeSystem.isMeetingNight(dayOfWeek, hour)`: Monday 19:01 → true; Monday 22:31 → false; Wednesday 20:00 → false; Thursday 19:00 → true.
+- `RAOBLodgeSystem.isGrandCeremonyNight(dayCount, dayOfWeek, hour)`: first Thursday of month, 19:30–22:00 → true; second Thursday → false; non-Thursday → false.
+- `RAOBLodgeSystem.attemptInitiation(player, inventory, battleBarScore)`: player sponsored, paid fee, score ≥ 2 → returns true, BUFFALO_MEMBERSHIP_CARD added, RAOB_MEMBER flag set, SOCIAL XP +5; score < 2 → returns false, player remains uninitiated.
+- `RAOBLodgeSystem.attemptSecretHandshake(player, npc, sequence)`: correct 3-key sequence during meeting → Respect +5, suspicion −1; wrong sequence → Respect −3; outside meeting → no effect.
+- `RAOBLodgeSystem.breakSafe(player, inventory, hasLockpick, noiseSystem)`: lockpick present, Ron distracted → returns true, KOMPROMAT_LEDGER + BUFFALO_TOKEN × 2 added, noise level 5 emitted, LODGE_BURGLARY criminal record; no lockpick → returns false.
+- `RAOBLodgeSystem.deliverLedger(player, inventory, target)`: inventory has KOMPROMAT_LEDGER, target is CitizensAdvice or Police → returns true, ledger removed, 30 COIN added, Notoriety −5, KOMPROMAT_REVEALED rumour seeded; wrong target → returns false.
+- `RAOBLodgeSystem.getFezDisguiseEffect(player, wantedStars)`: RAOB_MEMBER + wearing fez + meeting night → suspicion −1; Wanted ≥ 2 + fez outside lodge → suspicion +1.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Lodge initiation end-to-end**: Set game time to Monday 20:00 (meeting night). Spawn Ron (RAOB_PRIMO_REGENT) at INITIATION_ALTAR_PROP. Give player a sponsor NPC with 3 favours completed. Give player 10 COIN. Call `attemptInitiation()` with BattleBarMiniGame score ≥ 2. Verify player inventory contains BUFFALO_MEMBERSHIP_CARD. Verify `RAOB_MEMBER` flag is true on player. Verify RAOB faction Respect ≥ 5. Verify `RAOB_INITIATION` rumour seeded in RumourNetwork. Verify StreetSkillSystem SOCIAL XP increased by 5.
+
+2. **Non-member caught during ceremony triggers trespass**: Set game time to first Thursday of month, 20:00 (Grand Ceremony). Player does NOT have RAOB_MEMBER flag or BUFFALO_FEZ. Simulate player entering LODGE_DOOR_PROP area. Verify 2–4 RAOB_LODGE_MEMBER NPCs transition to AGGRESSIVE state. Verify `LODGE_TRESPASS` criminal record entry added. Verify Notoriety increased by 5. Verify NeighbourhoodSystem Vibes unchanged (trespass without burglary doesn't affect Vibes).
+
+3. **Lodge safe heist — full flow**: Set game time to Thursday 20:30 (during ceremony, NPCs downstairs). Distract Ron by releasing PIGEON near window (call `distractPrimo()`). Verify Ron changes to INVESTIGATING state for 30 seconds. Simulate player at LODGE_SAFE_PROP with LOCKPICK in inventory. Call `breakSafe()`. Verify KOMPROMAT_LEDGER added to player inventory. Verify 2 BUFFALO_TOKEN items added. Verify NoiseSystem received noise event at level 5. Verify `LODGE_BURGLARY` in CriminalRecord. Verify WantedSystem Wanted star count increased by 2.
+
+4. **Ledger delivered to Citizens Advice pays out**: Player inventory contains KOMPROMAT_LEDGER and 0 COIN. Call `deliverLedger(player, inventory, CitizensAdviceSystem)`. Verify player inventory contains 30 COIN. Verify KOMPROMAT_LEDGER removed from inventory. Verify `KOMPROMAT_REVEALED` rumour seeded. Verify Notoriety decreased by 5. Verify `THE_LEDGER` achievement unlocked.
+
+5. **Secret handshake grants meeting-night benefit**: Set game time to Monday 21:00 (meeting night). Player has RAOB_MEMBER flag. Encounter a RAOB_LODGE_MEMBER NPC. Perform correct 3-key handshake sequence (E, E, hold-E). Verify RAOB faction Respect increased by 5. Verify DisguiseSystem police suspicion modifier is ≤ −1 for remainder of the meeting night. Verify 5 COIN "goodwill gift" added to player inventory.
+
+// ── Issue #1349: Add Northfield RAOB Buffalo Lodge ──────────────────────────────────────
+// New: RAOBLodgeSystem.java in ragamuffin.core
+// New: RAOBLodgeSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1349RAOBLodgeIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: RAOB_PRIMO_REGENT (Ron); RAOB_LODGE_MEMBER already referenced in RemembranceSundaySystem
+// New Materials: BUFFALO_MEMBERSHIP_CARD, BUFFALO_FEZ, KOMPROMAT_LEDGER, BUFFALO_TOKEN, CEREMONIAL_CANE
+// New PropTypes: BUFFALO_LODGE_PLAQUE, INITIATION_ALTAR_PROP, LODGE_SAFE_PROP, LODGE_DOOR_PROP, CEREMONIAL_CANDLE_PROP
+// New RumourTypes: RAOB_INITIATION, LODGE_BURGLARY, KOMPROMAT_REVEALED
+// New CrimeTypes: LODGE_BURGLARY, LODGE_TRESPASS
+// New AchievementTypes: BUFFALO_SOLDIER, PRIMO_REGENT, THE_LEDGER
+// LandmarkType.RAOB_LODGE already defined; RAOB_LODGE_MEMBER already referenced
+// Integration: RemembranceSundaySystem, FactionSystem, CitizensAdviceSystem, PoliceStationSystem,
+//              DisguiseSystem, NotorietySystem, WantedSystem, CriminalRecord, StreetSkillSystem,
+//              BattleBarMiniGame, RumourNetwork, NeighbourhoodSystem, NoiseSystem,
+//              NewspaperSystem, WetherspoonsSystem, SoundSystem, TimeSystem
