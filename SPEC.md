@@ -57374,3 +57374,182 @@ Every year on day 15 (a Saturday in early summer), Northfield Park hosts its Ann
 5. **Witnessed heist logs THEFT and adds notoriety**: create system; set time to 13:45; place `DOG_OWNER` NPC within 6 blocks; call `heistTrophyCabinet(player, inventory)`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == true; verify `notorietySystem.getNotoriety()` increased by 6; verify `wantedSystem.getWantedLevel()` >= 1.
 
 // `DogShowSystem.java` must be created as the sole new source file. Integrates with `DogCompanionSystem` (dog presence, bond level, groom recency, trick list), `TimeSystem` (event scheduling, show day), `NotorietySystem`, `WantedSystem`, `CriminalRecord` (`BRIBERY`, `THEFT`), `RumourNetwork` (new `DOG_SHOW_FIXED` and `DOG_SHOW_RIGGING` rumours), `NewspaperSystem` (exposé path), `FenceSystem` (`DOG_SHOW_ROSETTE` fence value), `NeighbourhoodSystem` (Vibes on `DOG_SHOW_FIXED`), `WitnessSystem` (cabinet heist witness), and `AchievementSystem`. Two new `PropType` entries (`JUDGES_TABLE_PROP`, `SHOW_RING_BARRIER_PROP`) and two new `RumourType` entries (`DOG_SHOW_FIXED`, `DOG_SHOW_RIGGING`) must be added. All other entities are already defined.
+
+---
+
+## Issue #1493: Add Northfield Amateur Photography Club — Norman's Darkroom, the Wildlife Competition & the Planning Application Heist
+
+**Overview**: Norman Briggs (`NPCType.PHOTO_CLUB_CHAIR`) runs the Northfield Amateur Photography
+Club from the Community Centre every fortnight (day 12 of a 14-day cycle), 19:00–21:00. The club
+runs a monthly Wildlife Photo Competition judged at the meeting on day 12. The winning print always
+goes to Councillor Patel's nephew Derek — not because he's talented, but because Norman processes
+the planning application photographs for the council and Derek's submission conveniently "scores
+highest" every time. Norman's darkroom (a locked room in the Community Centre basement) contains a
+`PLANNING_APPLICATION_FOLDER_PROP` documenting the council's proposed demolition of the park
+bandstand to build a car park. The player can expose the rigged competition, steal the planning
+documents, or develop their own photograph and enter legitimately.
+
+### Schedule
+
+- Day 12 of 14-day cycle, 18:30 — Norman arrives at Community Centre; darkroom unlocks.
+- 19:00 — Club meeting begins; 4–6 `PHOTO_CLUB_MEMBER` NPCs gather around `PROJECTOR_PROP`.
+- 19:30 — Competition judging begins; Norman announces scores.
+- 20:00 — Winner announced (Derek by default). `FIRST_PRIZE_ENVELOPE_PROP` handed over.
+- 20:30–21:00 — Heist window: Norman steps out; darkroom briefly unguarded.
+- 21:00 — Meeting ends; NPCs disperse.
+
+### Mechanic 1 — Photography & Entry (before 19:00)
+
+The player needs a `DISPOSABLE_CAMERA` (purchasable from the newsagent for 4 COIN or findable
+in skip diving). Press `E` while facing any living animal NPC (`BIRD`, `DOG`, `CANAL_RAT`,
+`PIGEON_FANCIER`'s birds, etc.) or a scenic world prop (`TREE_TRUNK`, `CANAL_FISHING_SPOT_PROP`,
+`STATUE` prop in the park) within 4 blocks to photograph it. The camera has 3 charges.
+
+Once a photograph is taken, the player must develop it:
+
+- **Self-develop** (cheapest): bring the `DISPOSABLE_CAMERA` to the `PHOTO_DEVELOPER_PROP`
+  inside Norman's darkroom. Hold `E` for 5 seconds. Produces a `DEVELOPED_PHOTOGRAPH`.
+  Requires accessing the locked darkroom (see Heist below).
+- **Chemist development** (easier): bring camera to `NEWSAGENT` NPC during opening hours
+  (09:00–17:30); costs 2 COIN; takes 1 in-game hour; returns a `DEVELOPED_PHOTOGRAPH`.
+
+To enter the competition: approach Norman before 19:00 with a `DEVELOPED_PHOTOGRAPH` and press `E`.
+Entry is free. Norman takes the photograph and it enters judging.
+
+**Photo quality score** (0–100, determines judging result):
+- Subject type bonus: BIRD = +30, DOG = +25, CANAL_RAT = +20, scenic prop = +15.
+- Lighting bonus: taken between 07:00–09:00 (golden hour) = +20; 09:00–16:00 = +10; otherwise = 0.
+- Weather bonus: taken during DRIZZLE = +10 (atmospheric); THUNDERSTORM = −10 (blurry).
+- Development bonus: self-developed in darkroom = +10 (artisanal); chemist = 0.
+
+Derek's fixed score: **72**. Beat 72 → legitimate win.
+
+### Mechanic 2 — Judging (19:30–20:00)
+
+Norman scores each entry. The player's score is calculated per above. If player entered:
+- Player score > 72: player wins. `FIRST_PRIZE_ENVELOPE_PROP` contains 8 COIN +
+  `WINNERS_CERTIFICATE_PROP`. Achievement `CANDID_WINNER` awarded.
+- Player score 50–72: runner-up. `RUNNERS_UP_CERTIFICATE_PROP` granted. No cash.
+- Player score < 50: unplaced.
+
+If player did NOT enter (or entered after 19:00): Derek wins as normal.
+
+### Mechanic 3 — Competition Rigging (pre-judging)
+
+Before judging (before 19:30), the player can tamper with Derek's entry:
+- **Swap Derek's print**: if player has a `DEVELOPED_PHOTOGRAPH` (any quality), hold `E` for
+  3 seconds on the `SUBMISSION_BOX_PROP` (unguarded 18:30–19:00 before members arrive).
+  Derek's score drops to 0. Player's photo does not need to be officially entered for this.
+  CrimeType: none if unwitnessed. If any `PHOTO_CLUB_MEMBER` NPC is within 5 blocks:
+  `CrimeType.PETTY_THEFT` + Notoriety +4 + WantedLevel +1.
+  Achievement `DARKROOM_SABOTEUR` on unwitnessed success.
+
+- **Bribe Norman**: approach Norman 18:30–19:30 with 12 COIN. 50% success (seeded RNG).
+  Success: player score +25 (even without entering — Norman fabricates an entry for them).
+  Failure: Norman reports player to `COMMUNITY_CENTRE` management; CrimeType `BRIBERY` +
+  Notoriety +5 + WantedLevel +1 + `PHOTO_CLUB_RIGGED` rumour seeded.
+  Achievement `BENT_LENS` on successful win via bribe.
+
+### Mechanic 4 — Darkroom Break-In & Planning Application Heist
+
+Norman's darkroom door is locked with a padlock prop (`DARKROOM_DOOR_PROP`). To enter:
+- **Lockpick**: 1 `LOCKPICK` consumed; 8-second hold-E. Silent.
+- **Key theft**: Norman carries `DARKROOM_KEY` in his inventory. Pickpocket (F) during the
+  meeting (19:00–20:30) when Norman is distracted. 60% pickpocket success base.
+
+Inside the darkroom:
+- `PHOTO_DEVELOPER_PROP` — develops photographs (see above).
+- `PLANNING_APPLICATION_FOLDER_PROP` — contains the council's planning application for the
+  bandstand demolition. Press `E` to take it. Item: `PLANNING_APPLICATION_DOCUMENT`.
+  Unwitnessed: no crime. If Norman returns (after 20:30) and folder is missing:
+  `PLANNING_DOCUMENTS_STOLEN` rumour seeded; WantedLevel +1.
+
+**Heist window**: 20:30–21:00 (Norman steps out for tea). `PHOTO_CLUB_MEMBER` NPCs remain
+in the main hall but do not patrol the basement. Window is 30 in-game minutes.
+
+The `PLANNING_APPLICATION_DOCUMENT` can be:
+1. **Sold to the Fence** for 15 COIN — no further effect.
+2. **Tipped to the newspaper** via `NewspaperSystem.tipOffJournalist()` — headline: "Secret
+   Plans to Bulldoze Northfield Bandstand Exposed." Council Respect −20. Vibes +10 (community
+   rallies). `BANDSTAND_UNDER_THREAT` rumour seeded. Achievement `CIVIC_HERO` awarded.
+3. **Given to Street Lads faction lieutenant** — Street Lads Respect +15; they organise a
+   protest at the Community Centre next meeting day (6–8 `YOUTH` NPCs loiter outside).
+
+### Integrations
+
+- `DogCompanionSystem` — dog is a valid photo subject (+25 quality bonus).
+- `NotorietySystem` / `WantedSystem` — rigging attempts add notoriety/wanted stars.
+- `CriminalRecord` — `BRIBERY` on failed bribe; `PETTY_THEFT` on witnessed swap.
+- `NewspaperSystem` — planning application exposé path.
+- `FactionSystem` — Council Respect −20 on exposé; Street Lads Respect +15 on document handover.
+- `RumourNetwork` — `PHOTO_CLUB_RIGGED` rumour (Vibes −3); `BANDSTAND_UNDER_THREAT` rumour (Vibes +10 after exposé).
+- `WeatherSystem` — weather modifies photo quality score (see above).
+- `TimeSystem` — 14-day cycle; meeting schedule; heist window.
+- `NeighbourhoodSystem` — Vibes affected by rigging rumour and exposé.
+- `CommunityCentreSystem` — meeting is hosted in the Community Centre; NPC spawns use that landmark.
+- `SkipDivingSystem` — `DISPOSABLE_CAMERA` is in the skip diving loot table (weight 8).
+- `NewsagentSystem` — `DISPOSABLE_CAMERA` for sale; chemist development service.
+- `AchievementSystem` — four new achievements (below).
+
+### New Items
+
+- `DISPOSABLE_CAMERA` — tool; 3 charges; consumed on last use. Buyable or found in skips.
+- `DEVELOPED_PHOTOGRAPH` — single-use; quality score embedded; used in competition entry or submission swap.
+- `PLANNING_APPLICATION_DOCUMENT` — key item; sellable to fence or usable as evidence.
+- `WINNERS_CERTIFICATE_PROP` — cosmetic; displayable in squat. Tooltip: "First Prize. Norman looked gutted."
+- `DARKROOM_KEY` — tool; pickpocketed from Norman; opens `DARKROOM_DOOR_PROP`.
+
+### New NPCTypes
+
+- `PHOTO_CLUB_CHAIR` — Norman Briggs; club organiser; carries `DARKROOM_KEY`; patrols Community Centre during meeting.
+- `PHOTO_CLUB_MEMBER` — generic attendee; 4–6 per meeting; passive; gossip source.
+
+### New PropTypes
+
+- `DARKROOM_DOOR_PROP` — locked basement door; requires `LOCKPICK` or `DARKROOM_KEY`.
+- `PHOTO_DEVELOPER_PROP` — darkroom equipment; hold E for 5s to develop camera.
+- `SUBMISSION_BOX_PROP` — competition entry box; swappable pre-judging.
+- `PROJECTOR_PROP` — meeting centrepiece; cosmetic; flickers during judging.
+- `PLANNING_APPLICATION_FOLDER_PROP` — darkroom document; interactable.
+
+### New RumourTypes
+
+- `PHOTO_CLUB_RIGGED` — "Derek won the photo competition again. Norman's in the council's pocket." Vibes −3.
+- `BANDSTAND_UNDER_THREAT` — "The council want to knock down the bandstand for a car park. It's in the paper." Vibes +10.
+
+### New CrimeType
+
+- `CriminalRecord.CrimeType.PLANNING_DOCUMENT_THEFT` — stealing planning documents; +5 Notoriety.
+
+### Achievements
+
+- `CANDID_WINNER` — Win the photo competition legitimately (score > Derek's 72).
+- `DARKROOM_SABOTEUR` — Swap Derek's submission without being witnessed.
+- `BENT_LENS` — Win the competition via bribery.
+- `CIVIC_HERO` — Tip the planning application to the newspaper and trigger the exposé headline.
+
+### Unit Tests
+
+- Photo quality score formula produces correct values for each subject/lighting/weather/development combination.
+- Judging correctly awards first prize to player when player score > 72 and runner-up when 50–72.
+- Bribery attempt respects 50% probability; failure records `BRIBERY` and adds Notoriety +5.
+- Submission swap succeeds silently (no crime) when no NPC within 5 blocks; records `PETTY_THEFT` when witnessed.
+- Heist window correctly identified as 20:30–21:00 on day 12 of the 14-day cycle.
+- `PLANNING_APPLICATION_DOCUMENT` exposé correctly applies Council Respect −20 and seeds `BANDSTAND_UNDER_THREAT` rumour.
+- System resets cleanly at end of meeting (day state cleared for next cycle).
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Photographing a bird yields quality bonus for golden-hour timing**: create `AmateurPhotographySystem`; set `TimeSystem` to 08:00; create a `BIRD` NPC within 3 blocks of player; give player `DISPOSABLE_CAMERA`; call `takePhoto(player, camera, nearbyNpcs, timeSystem, weatherSystem)`; verify returned quality score includes BIRD subject bonus (+30) and golden-hour bonus (+20); verify camera charge count decremented by 1.
+
+2. **Chemist development costs 2 COIN and produces photograph after 1 in-game hour**: give player a used `DISPOSABLE_CAMERA` (1 charge used); give player 4 COIN; call `submitForChemistDevelopment(player, inventory, timeSystem)`; verify inventory reduced by 2 COIN; advance time by 1 in-game hour; call `collectChemistDevelopment(player, inventory)`; verify player has `DEVELOPED_PHOTOGRAPH` in inventory; verify camera is consumed.
+
+3. **Player wins competition legitimately when score exceeds 72**: create system; set day 12 of 14-day cycle, time 18:30; give player `DEVELOPED_PHOTOGRAPH` with quality score 85; call `enterCompetition(player, photograph)`; advance time to 19:30; call `runJudging(player, inventory, achievementCallback)`; verify player wins; verify inventory contains `WINNERS_CERTIFICATE_PROP`; verify inventory COIN increased by 8; verify `achievementCallback` received `CANDID_WINNER`; verify `PHOTO_CLUB_RIGGED` rumour NOT seeded (legitimate win).
+
+4. **Unwitnessed submission swap awards DARKROOM_SABOTEUR**: create system; set time 18:45 (no members present yet); give player `DEVELOPED_PHOTOGRAPH` (quality 10 — doesn't matter); call `swapDerekSubmission(player, photograph, nearbyNpcs=empty)`; verify Derek's score is 0 in subsequent judging; verify `criminalRecord.hasCrime(CrimeType.PETTY_THEFT)` == false; verify `achievementCallback` received `DARKROOM_SABOTEUR`.
+
+5. **Witnessed swap records PETTY_THEFT and adds notoriety**: create system; set time 18:45; place a `PHOTO_CLUB_MEMBER` NPC within 4 blocks; give player `DEVELOPED_PHOTOGRAPH`; call `swapDerekSubmission(player, photograph, nearbyNpcs=[memberNpc])`; verify `criminalRecord.hasCrime(CrimeType.PETTY_THEFT)` == true; verify `notorietySystem.getNotoriety()` increased by 4; verify `wantedSystem.getWantedLevel()` >= 1.
+
+6. **Planning document exposé triggers Council Respect hit and rumour**: create system; give player `PLANNING_APPLICATION_DOCUMENT`; call `tipToNewspaper(player, inventory, newspaperSystem, factionSystem, rumourNetwork, allNpcs)`; verify `factionSystem.getReputation(Faction.COUNCIL)` decreased by 20; verify `rumourNetwork` contains a `BANDSTAND_UNDER_THREAT` rumour in at least one NPC's buffer; verify `achievementCallback` received `CIVIC_HERO`.
+
+// `AmateurPhotographySystem.java` must be created as the sole new source file. Integrates with `TimeSystem`, `WeatherSystem`, `NotorietySystem`, `WantedSystem`, `CriminalRecord` (new `PLANNING_DOCUMENT_THEFT`; existing `BRIBERY`, `PETTY_THEFT`), `RumourNetwork` (new `PHOTO_CLUB_RIGGED`, `BANDSTAND_UNDER_THREAT`), `NewspaperSystem` (exposé path), `FactionSystem` (Council and Street Lads), `NeighbourhoodSystem` (Vibes), `CommunityCentreSystem` (meeting location), `SkipDivingSystem` (camera in loot table), `NewsagentSystem` (camera sale + chemist development), and `AchievementSystem`. New NPCTypes: `PHOTO_CLUB_CHAIR`, `PHOTO_CLUB_MEMBER`. New PropTypes: `DARKROOM_DOOR_PROP`, `PHOTO_DEVELOPER_PROP`, `SUBMISSION_BOX_PROP`, `PROJECTOR_PROP`, `PLANNING_APPLICATION_FOLDER_PROP`. New RumourTypes: `PHOTO_CLUB_RIGGED`, `BANDSTAND_UNDER_THREAT`. New Materials: `DISPOSABLE_CAMERA`, `DEVELOPED_PHOTOGRAPH`, `PLANNING_APPLICATION_DOCUMENT`, `WINNERS_CERTIFICATE_PROP`, `DARKROOM_KEY`.
