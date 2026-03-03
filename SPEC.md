@@ -45850,3 +45850,172 @@ All required enum entries (Materials, NPCTypes, PropTypes, LandmarkType entries,
 // Integration: TimeSystem, WantedSystem, CriminalRecord, NotorietySystem, NoiseSystem,
 //              StreetSkillSystem, CraftingSystem, ScrapyardSystem, PawnShopSystem,
 //              CitizensAdviceSystem, CarDrivingSystem, AchievementSystem, WitnessSystem
+
+---
+
+## Issue #1331: Add Northfield Area-Wide Power Cut — National Grid Failure, CCTV Blackout & the Looting Window
+
+### Overview
+
+A `PowerCutSystem` brings periodic, town-wide electricity failures to Northfield — a visceral survival event rooted in British working-class experience (cost-of-living crisis, ageing infrastructure). Once every 4–7 in-game days a random power cut strikes the entire area for 15–45 in-game minutes. All powered props go dark: CCTV cameras blind, shops close their registers, arcade machines die, the pub fruit machine goes cold. Indoors becomes genuinely dark — the player needs a `TORCH` or `CANDLE` to navigate. WantedSystem detection drops 50% (no cameras, no lit witnesses), opening a looting window that tempts the player toward opportunistic crime. NPCs mutter darkly on the street. The next morning the `NewspaperSystem` runs a headline. The player can also manually trigger a cut by destroying a `ELECTRICITY_SUBSTATION_PROP` with a crowbar — at the cost of a `CRIMINAL_DAMAGE` record and significant notoriety.
+
+### New Java File
+
+`src/main/java/ragamuffin/core/PowerCutSystem.java` in package `ragamuffin.core`
+
+### New Unit Test File
+
+`src/test/java/ragamuffin/core/PowerCutSystemTest.java`
+
+### New Integration Test File
+
+`src/test/java/ragamuffin/integration/Issue1331PowerCutIntegrationTest.java`
+
+---
+
+### Mechanic 1 — Scheduled Power Cut Events
+
+- `PowerCutSystem` maintains a `nextCutDay` counter, randomised each time to `currentDay + 4 + random.nextInt(4)` (i.e. 4–7 days between cuts).
+- When the cut fires: `isPowerOn = false`. Duration: `15 + random.nextInt(31)` in-game minutes.
+- A `POWER_RESTORED` event fires when the timer expires; `isPowerOn = true`.
+- `PowerCutSystem.update(float delta, TimeSystem)` is called each frame; it advances the cut timer.
+- All systems that check `PowerCutSystem.isPowerOn()` fall back to degraded behaviour (see Mechanic 2).
+
+### Mechanic 2 — Town-Wide Effect Propagation
+
+When `isPowerOn == false`:
+
+| Affected System | Degraded Behaviour |
+|---|---|
+| `WantedSystem` | Detection chance −50% (no CCTV, reduced witness visibility) |
+| `OffLicenceSystem` | CCTV disabled (as if broken). Shop closes register: no purchases. Imran/security remain but can't call police via terminal. |
+| `ArcadeSystem` | All machines inert. `isArcadeOpen()` returns false. |
+| `LaunderetteSystem` | Existing `POWER_CUT` event auto-fires; machines pause. |
+| `NightclubSystem` | Club goes dark; emergency lighting only. No entry fee charged. |
+| `CashpointSystem` | ATM offline; `CashpointSystem.isOnline()` returns false. |
+| `FruitMachine` | Machine inert; no plays accepted. |
+| `LightingSystem` | Ambient light level drops to `NIGHT_LEVEL` regardless of time of day. Indoor areas are `PITCH_BLACK` unless player carries TORCH or CANDLE. |
+| `IcelandSystem` | Freezer alarm blares (ambient sound); frozen goods degrade: after 30 in-game minutes of power cut, one `FROZEN_PIZZA` spoils per minute (removed from stock). |
+| `InternetCafeSystem` | All terminals offline; Asif/Hamza send everyone home. |
+
+### Mechanic 3 — Player Lighting: TORCH and CANDLE
+
+- New materials: `TORCH` and `CANDLE`.
+  - `TORCH`: crafted from `SCRAP_METAL` × 1 + `CLOTH` × 1. Lasts 20 in-game minutes of use. Provides a 5-block radius light halo (render: warm yellow point light attached to first-person arm).
+  - `CANDLE`: found in `SkipDivingSystem` loot table (weight 3) and sold at `CornerShopSystem` for 1 COIN. Lasts 10 in-game minutes. 3-block radius. Does NOT work outdoors in RAIN/STORM weather (extinguished).
+- When `isPowerOn == false` AND player is indoors without TORCH or CANDLE: render ambient drops to 0.05 (near-black). A `TooltipSystem` hint fires once: *"It's pitch black. You need a torch or candle."*
+- `CANDLE` placed on a surface (prop drop) provides ambient glow for other NPCs/players in the same room.
+
+### Mechanic 4 — Looting Window
+
+- During a power cut, shop NPCs (SHOPKEEPER, ICELAND_CHECKOUT, ICELAND_SECURITY, IMRAN) enter `NPCState.SHELTERING` — they retreat from their posts to a back-room position and stay there for the duration.
+- Player can interact with shop counters/shelves during a power cut:
+  - `OffLicenceSystem.shopliftDuringCut(Inventory)`: takes 1 random item from the off-licence stock. No CCTV. 5% base detection from Imran (if he stayed). Notoriety +1 per item taken. CriminalRecord: `THEFT`.
+  - `IcelandSystem.lootDuringCut(Inventory)`: takes 1 `FROZEN_PIZZA` or `CHICKEN_NUGGETS`. No Kevin detection possible. Notoriety +1.
+- Three `LOOTER` NPC instances spawn at random shop fronts within 60 seconds of cut start. They grab items and despawn after 2 in-game minutes. Sighting a LOOTER seeds `RumourType.LOOTING_INCIDENT` into `RumourNetwork`.
+- Achievement: `OPPORTUNIST` (first item taken during a power cut). `NIGHT_PROWLER` (5 items taken across all power cuts).
+
+### Mechanic 5 — Manual Substation Sabotage
+
+- `PropType.ELECTRICITY_SUBSTATION_PROP`: a green metal box (0.6×1.2×0.4 blocks), placed at the INDUSTRIAL_ESTATE and a second one near the COUNCIL_FLATS. Hardness: 8 hits (HARD). Requires `CROWBAR` tool to damage (bare hands/fists do 0 damage).
+- On destruction: `PowerCutSystem.triggerManualCut(duration=45)` fires immediately. `CriminalRecord.CrimeType.CRIMINAL_DAMAGE` recorded. Notoriety +8. `WantedSystem.addWantedStars(2)`. `NoiseSystem` event 4.0.
+- COUNCIL_ENGINEER NPC spawns after 5 in-game minutes to repair the substation (rebuilds prop, restores power). If player is nearby when engineer arrives: engineer calls police, WantedSystem +1 additional star.
+- Achievement: `GRID_BUSTER` (first manual cut). `BLACKOUT_BARON` (3 manual cuts).
+
+### Mechanic 6 — NPC Ambience & Newspaper
+
+- During a power cut, ambient NPC speech lines cycle every 60 in-game seconds (10 hardcoded lines):
+  - *"Not again. Third time this month."*
+  - *"Someone's done the substation over."*
+  - *"Can't see a bleedin' thing out here."*
+  - *"Kids, probably. Little sods."*
+  - *"My freezer's gonna defrost at this rate."*
+  - *"I bet it's that lot on the estate."*
+  - *"Got candles in? I've got candles in."*
+  - *"The pub'll be open — they've got a genny."*
+  - *"Council should sort this out. Absolute joke."*
+  - *"Ring the electric? Two-hour hold time, guaranteed."*
+- `NewspaperSystem` headline the following morning (always fires after a cut):
+  - Scheduled cut: *"Northfield Plunged into Darkness — Third Outage This Month"*
+  - Manual (substation destroyed): *"Vandals Destroy Substation — Police Appeal for Witnesses"*
+- `RumourType.POWER_CUT_RUMOUR` seeded by 2 NPCs within 5 in-game minutes of cut start.
+
+---
+
+### New Materials (add to `Material.java`)
+
+| Material | Description |
+|---|---|
+| `TORCH` | Crafted SCRAP_METAL + CLOTH. Lasts 20 in-game minutes. Light radius 5 blocks. |
+| `CANDLE` | Sold at corner shop (1 COIN). Found in skip. Lasts 10 min. Extinguished by rain. |
+
+### New Prop Type (add to `PropType.java`)
+
+| PropType | Dimensions | Hardness | Drop |
+|---|---|---|---|
+| `ELECTRICITY_SUBSTATION_PROP` | 0.6×1.2×0.4 | 8 (HARD), requires CROWBAR | `SCRAP_METAL` × 2 |
+
+### New NPC Type (add to `NPCType.java`)
+
+- `COUNCIL_ENGINEER` — spawns to repair substation after manual cut. Non-hostile until player lingers. Calls police on sustained proximity.
+- `LOOTER` — spawns at shop fronts during power cuts. Takes 1 item and despawns. Non-hostile unless attacked.
+
+### New Rumour Type (add to `RumourType.java`)
+
+- `POWER_CUT_RUMOUR` — seeded on cut start; increases ambient caution (+1 police patrol awareness for duration of cut).
+- `LOOTING_INCIDENT` — seeded when player or LOOTER NPC takes items; increases police patrol density.
+
+### New Achievement Types (add to `AchievementType.java`)
+
+| Achievement | Condition | Flavour Text |
+|---|---|---|
+| `OPPORTUNIST` | First item looted during a power cut | "You waited your whole life for the lights to go out." |
+| `NIGHT_PROWLER` | 5 items taken across all power cuts | "CCTV's for people with something to hide." |
+| `GRID_BUSTER` | First manual substation cut | "Blacked out the whole estate. Didn't even feel bad." |
+| `BLACKOUT_BARON` | 3 manual substation cuts | "They'll have to call it the Northfield Triangle." |
+| `PREPARED` | Own a TORCH or CANDLE when first power cut hits | "You were ready. Suspicious, that." |
+
+### New CriminalRecord.CrimeType (add to `CriminalRecord.java` if absent)
+
+- `SUBSTATION_VANDALISM` — records manual cut triggering.
+
+### Unit Tests
+
+- `PowerCutSystem.isPowerOn()`: true at start; false after `triggerManualCut()`; true after duration expires.
+- `PowerCutSystem.getNextScheduledCutDay()`: first cut day in range `[startDay+4, startDay+7]`.
+- `PowerCutSystem.update(delta, timeSystem)`: manual cut with duration 1 in-game minute; advance `update()` by 61 seconds; verify `isPowerOn()` == true (restored).
+- `PowerCutSystem.triggerManualCut(45)`: `isPowerOn()` false; `isManualCut()` true; duration == 45.
+- TORCH durability: `consumeTorchTime(20)` on a fresh TORCH → torch exhausted; `isTorchActive()` == false.
+- CANDLE extinguished in rain: `isCandleExtinguishedByWeather(Weather.RAIN)` == true; `isCandleExtinguishedByWeather(Weather.CLEAR)` == false.
+- Loot attempt during power cut: `OffLicenceSystem.shopliftDuringCut(inventory)` with `isPowerOn==false` and seeded random for no-detection: item added to inventory; `THEFT` CriminalRecord entry; Notoriety +1.
+- Loot attempt during power-on: `OffLicenceSystem.shopliftDuringCut(inventory)` with `isPowerOn==true`: returns `POWER_ON_NO_LOOT`.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Scheduled power cut fires and affects CCTV**: Advance `TimeSystem` to the `nextScheduledCutDay`. Trigger cut via `PowerCutSystem.update()`. Verify `isPowerOn()` == false. Verify `WantedSystem.getDetectionChanceMod()` returns a value 50% lower than baseline. Give player 1 COIN; shoplift from off-licence. Verify `WantedSystem.getWantedStars()` is lower than it would be with CCTV active (compare to a seeded control run with power on). Advance `TimeSystem` by 46 in-game minutes. Verify `isPowerOn()` == true (power restored). Verify CCTV detection returns to baseline.
+
+2. **Player needs light indoors during power cut**: Trigger power cut. Move player to interior of `ICELAND` building. Verify `LightingSystem.getAmbientLevel()` < 0.1. Verify TooltipSystem has fired *"It's pitch black. You need a torch or candle."* Give player CANDLE. Verify `LightingSystem.getAmbientLevel()` ≥ 0.3 (candle glow active). Advance 10 in-game minutes. Verify candle is consumed (removed from inventory) after duration expires.
+
+3. **Manual substation destruction triggers area blackout**: Give player CROWBAR. Player faces `ELECTRICITY_SUBSTATION_PROP`. Simulate 8 punch actions. Verify `ELECTRICITY_SUBSTATION_PROP` destroyed. Verify `PowerCutSystem.isPowerOn()` == false. Verify `CriminalRecord` contains `CRIMINAL_DAMAGE`. Verify `NotorietySystem.getNotoriety()` increased by 8. Verify `WantedSystem.getWantedStars()` increased by 2. Advance 5 in-game minutes. Verify `COUNCIL_ENGINEER` NPC spawned within 20 blocks of substation.
+
+4. **Looter NPCs spawn and seed rumour**: Trigger power cut. Advance `TimeSystem` by 70 in-game seconds. Verify at least 1 `LOOTER` NPC has spawned at a shop front within the town area. Verify `RumourNetwork` contains a rumour of type `LOOTING_INCIDENT` within 3 in-game minutes of cut start. Advance `TimeSystem` by 3 in-game minutes. Verify `LOOTER` NPC has despawned.
+
+5. **Newspaper headline after power cut**: Trigger scheduled power cut. Advance `TimeSystem` to allow cut to complete. Advance to the following in-game morning (06:00 next day). Verify `NewspaperSystem.getTodayHeadline()` contains `"Northfield Plunged into Darkness"`. Trigger a second cut via manual substation destruction. Advance to following morning. Verify headline contains `"Vandals Destroy Substation"`.
+
+---
+
+// ── Issue #1331: Add Northfield Area-Wide Power Cut — National Grid Failure, CCTV Blackout & the Looting Window ────
+// New: PowerCutSystem.java in ragamuffin.core
+// New: PowerCutSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1331PowerCutIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: TORCH, CANDLE — add to Material.java
+// New PropType: ELECTRICITY_SUBSTATION_PROP — add to PropType.java
+// New NPCTypes: COUNCIL_ENGINEER, LOOTER — add to NPCType.java
+// New RumourTypes: POWER_CUT_RUMOUR, LOOTING_INCIDENT — add to RumourType.java
+// New CrimeType: SUBSTATION_VANDALISM — add to CriminalRecord.java
+// New AchievementTypes: OPPORTUNIST, NIGHT_PROWLER, GRID_BUSTER, BLACKOUT_BARON, PREPARED — add to AchievementType.java
+// Integration: TimeSystem, WantedSystem, OffLicenceSystem, IcelandSystem, ArcadeSystem,
+//              LaunderetteSystem, NightclubSystem, CashpointSystem, FruitMachine,
+//              LightingSystem, InternetCafeSystem, CriminalRecord, NotorietySystem,
+//              NoiseSystem, RumourNetwork, NewspaperSystem, TooltipSystem,
+//              WeatherSystem, WarmthSystem, AchievementSystem, WitnessSystem
