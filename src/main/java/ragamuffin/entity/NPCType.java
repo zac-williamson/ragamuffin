@@ -3279,7 +3279,32 @@ public enum NPCType {
      * Wanders within 20 blocks of spawn. Interactable (E to pick up → {@code STRAY_CAT} Material).
      * HP: 5f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    LOST_CAT_NPC(5f, 0f, 0f, false);
+    LOST_CAT_NPC(5f, 0f, 0f, false),
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1433: Northfield Easter Weekend
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * BIKER_NPC — Charity motorbike parade participant.
+     * Parades along HIGH_STREET to park on Easter Sunday (day 93, 11:00–14:00).
+     * Becomes HOSTILE if charity bucket is stolen. HP: 80, attack: 6, cooldown: 1.5s.
+     */
+    BIKER_NPC(80f, 6f, 1.5f, false),
+
+    /**
+     * EASTER_BUNNY_NPC — Council volunteer in Easter Bunny costume.
+     * Present during egg hunt (day 92, 10:00–13:00). Pickpocketable for CHOCOLATE_EGG ×3.
+     * HP: 40, attack: 0, cooldown: 0, not hostile.
+     */
+    EASTER_BUNNY_NPC(40f, 0f, 0f, false),
+
+    /**
+     * EASTER_EGG_HUNT_WARDEN — Brenda (council volunteer). Manages the egg hunt.
+     * Hides 15 EASTER_EGG_PROPs in the park on day 92 before 10:00.
+     * HP: 50, attack: 0, cooldown: 0, not hostile.
+     */
+    EASTER_EGG_HUNT_WARDEN(50f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
