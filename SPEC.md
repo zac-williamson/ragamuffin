@@ -49291,3 +49291,210 @@ CAROL_SINGING,   // Looping ambient; plays during 17:00–19:00 carol window
 //   NotorietySystem, CriminalRecord, WantedSystem, RumourNetwork, NewspaperSystem,
 //   FactionSystem, StreetSkillSystem, AchievementSystem, WarmthSystem, SoundSystem,
 //   IcelandSystem
+
+---
+
+## Phase N: Northfield Local Council Elections — The Canvassing, the Postal Vote Fraud & the Count Night Hustle
+
+**Goal**: Add a bi-annual local council election event that runs over three distinct in-game days:
+Canvassing Week (7 days before polling), Polling Day, and Count Night. Three candidates contest
+the Northfield Ward seat: Councillor Patricia Holt (THE_COUNCIL faction — incumbent, expenses
+scandal brewing), Steve Brannigan (STREET_LADS faction — man-of-the-people, suspiciously vague
+on policy), and independent Nikhil Patel (MARCHETTI_CREW-adjacent, owns the off-licence). The
+player can back any candidate through volunteering, sabotage, and fraud — or just profit from the chaos.
+
+### New Java Files
+- `LocalElectionSystem.java` in `ragamuffin.core` — main system
+- `LocalElectionSystemTest.java` in `src/test/java/ragamuffin/core/`
+- `Issue1373LocalElectionIntegrationTest.java` in `src/test/java/ragamuffin/integration/`
+
+### Schedule (election occurs on day 90 of year — late spring)
+- **Days 83–89 (Canvassing Week)**: Candidates and canvassers appear on streets 09:00–20:00.
+  Leaflets dropped through doors. Player can volunteer for any candidate.
+- **Day 90 (Polling Day)**: `POLLING_STATION_PROP` at the community centre, 07:00–22:00.
+  Player can vote once, act as a teller, or attempt postal vote fraud.
+- **Day 90, 22:30 (Count Night)**: `VOTE_COUNT_TABLE_PROP` at town hall. Results announced at ~23:30.
+  Winning faction gains `COUNCIL_ELECTION_WIN` permanent bonus.
+
+### Mechanic 1 — Canvassing & Volunteering
+- Press E on `CANDIDATE_NPC` (Patricia, Steve, or Nikhil) to pledge support.
+- Volunteering: spend 2 in-game hours leafleting (stand near `LEAFLET_PILE_PROP`, press E).
+  Each leaflet round = 20 doors; chance 0.55f that recipient swings to your candidate.
+- Player can volunteer for **multiple** candidates (secretly backing all three — no one checks).
+- Each volunteer shift earns: 5 COIN cash-in-hand + GRAFTING XP +1.
+- Sabotage rival's leaflets: player holds `PERMANENT_MARKER` + interacts with rival's
+  `LEAFLET_PILE_PROP` = defaced leaflets; 40% detection chance by nearby `CANVASSER_NPC`.
+  Caught = Notoriety +5, CriminalRecord CRIMINAL_DAMAGE, rival candidate's support +10%
+  (sympathy bounce). Undetected = rival support −8%.
+
+### Mechanic 2 — Postal Vote Fraud
+- From day 83 onwards, player can steal a `POSTAL_VOTE_BUNDLE` from the postman
+  (`POSTMAN_NPC` route, 08:00–11:00 daily during canvass week).
+- Interact with bundle at home / squat to fill in 1–5 ballots for chosen candidate:
+  each adds `POSTAL_VOTE_FRAUDULENT` record; adds +5 votes to chosen candidate.
+- Detection risk: 15% per bundle intercepted — if caught, `ELECTORAL_FRAUD` added to
+  CriminalRecord, Notoriety +15, WantedSystem +2, chosen candidate loses 20 votes
+  (scandal), NewspaperSystem headline: "NORTHFIELD VOTER FRAUD SHOCK".
+- `SLEIGHT_OF_HAND` skill ≥ Journeyman reduces detection risk to 5%.
+
+### Mechanic 3 — Polling Day Heckling & Intimidation
+- Stand within 10 blocks of `POLLING_STATION_PROP` while wearing `ROSETTE_ITEM` (any colour).
+  NPCs approaching the station (up to 6 per hour) can be swayed: 40% swing to your candidate,
+  20% refuse to vote (spoiled ballot), 40% unaffected.
+- Standing too close (< 3 blocks) = `BREACH_OF_POLLING_STATION_EXCLUSION` added to
+  CriminalRecord; `POLLING_OFFICER_NPC` (Barry) calls police; Notoriety +8.
+- Player can bribe Barry: 10 COIN = Barry turns blind eye for 1 in-game hour.
+
+### Mechanic 4 — Count Night Chaos
+- Town hall opens at 22:30. Player can attend as a `COUNT_OBSERVER`.
+- Three observable events:
+  1. **Box-stuffing attempt**: MARCHETTI_CREW `THUG` NPC attempts to swap a ballot box
+     (00:10 random event). Player can grass to Barry (police called, Nikhil loses 30 votes,
+     STREET_SMART achievement) or help the swap (Nikhil gains 30 votes, Notoriety +10,
+     ELECTORAL_FRAUD record).
+  2. **Recount demand**: If margin < 20 votes, Steve demands a recount. Player can steal
+     `COUNT_SHEET_PROP` during the distraction (THEFT record, Notoriety +6, 8 COIN from
+     FenceSystem). Or expose Steve's tally errors (Notoriety −3, HONEST_CITIZEN achievement).
+  3. **Announcement & aftermath**: Winning candidate announced. NPC crowd reacts; if player's
+     faction won, pub erupts in celebration and Wetherspoons does a free pint round (+3 Vibes).
+     Losing candidates' factions lose 10 Respect toward player if player backed the winner openly.
+
+### Mechanic 5 — Post-Election Effects (7 days)
+- Winning faction gains permanent `COUNCIL_SEAT` bonus for 7 in-game days:
+  - THE_COUNCIL win → CouncilEnforcementSystem enforcement frequency ×1.5; PCSO spawns +2/day.
+  - STREET_LADS win → GangTerritorySystem territory bids cost −20%; park no-go zones lifted.
+  - Nikhil win → off-licence prices −15%; FenceSystem valuation +10% for all items; new rumour
+    seeds: `ELECTION_UPSET`.
+- `ELECTION_AFTERMATH` rumour seeded; NPCs discuss result for 7 days.
+
+### New Materials
+- `ROSETTE_ITEM` — wearable campaign rosette (red/blue/green variants). Sold by candidates' tables.
+- `POSTAL_VOTE_BUNDLE` — stolen bundle of postal ballots. Fence value: 3 COIN (not much demand).
+- `CAMPAIGN_LEAFLET` — single leaflet. Drop near `POLLING_STATION_PROP` for littering fine (2 COIN).
+- `COUNT_SHEET` — stolen tally sheet. FenceSystem value: 8 COIN (journalist pays premium).
+- `CANDIDATE_MUG` — souvenir mug from candidate's table. Warms player (Warmth +5) when used.
+
+### New PropTypes
+- `POLLING_STATION_PROP` — community centre entrance prop (Polling Day only, 07:00–22:00).
+- `LEAFLET_PILE_PROP` — candidate leaflet stack outside shops; interactable for volunteering.
+- `CANDIDATE_TABLE_PROP` — each candidate's street table (trestle + banner).
+- `VOTE_COUNT_TABLE_PROP` — town hall count night prop (22:30–01:00 on election day).
+- `BALLOT_BOX_PROP` — physical ballot box at polling station and count night.
+
+### New NPCTypes
+- `CANDIDATE_NPC` — one of three named candidates; patrols ward 09:00–20:00 during canvass week.
+  Gives speeches at `CANDIDATE_TABLE_PROP`. Non-hostile. HP: 20f, attack: 0f, cooldown: 0f.
+- `CANVASSER_NPC` — campaign volunteer; patrols streets with clipboard; detects leaflet sabotage.
+  HP: 15f, attack: 0f, cooldown: 0f, hostile: false.
+- `POLLING_OFFICER_NPC` — Barry; enforces 10-block exclusion zone around polling station.
+  HP: 20f, attack: 0f, cooldown: 0f, hostile: false (but calls police on breach).
+- `COUNT_OBSERVER` — generic count night attendee; 4–8 spawn at town hall.
+  HP: 15f, attack: 0f, cooldown: 0f, hostile: false.
+
+### New AchievementTypes
+- `FIRST_VOTER` — cast your vote on Polling Day (one-shot).
+- `TACTICAL_VOTER` — backed all three candidates during canvass week (one-shot).
+- `BALLOT_STUFFER` — successfully committed postal vote fraud undetected (one-shot).
+- `STREET_SMART` — exposed the box-stuffing attempt at Count Night (one-shot).
+- `HONEST_CITIZEN` — exposed Steve's recount errors (one-shot).
+- `KINGMAKER` — your chosen candidate won the election (one-shot).
+- `DEMOCRACY_DENIER` — caused a candidate to lose ≥30 votes through sabotage (one-shot).
+
+### New RumourTypes
+- `ELECTION_CANVASSING` — "They're out knocking on doors again — watch what you say."
+- `ELECTION_FRAUD` — "I heard someone nicked the postal votes off Dave the postman."
+- `ELECTION_UPSET` — "Can't believe [candidate] won. World's gone mad."
+- `ELECTION_AFTERMATH` — "Things are going to change round here now [faction]'s on the council."
+
+### Unit Tests
+- `testElectionActiveOnDay90`: Set dayOfYear = 90; verify `isPollingDay()` = true.
+- `testElectionInactiveOnDay89`: Set dayOfYear = 89; verify `isPollingDay()` = false.
+- `testCanvassingWeekDays83To89`: Set dayOfYear = 83; verify `isCanvassingWeek()` = true.
+  Set dayOfYear = 90; verify `isCanvassingWeek()` = false.
+- `testLeafletingSwingsProbability`: Seed rng(42); call `applyLeafletRound(STEVE)` 100 times;
+  verify Steve's vote count increased by 50–60 (within expected 55% swing rate ±10%).
+- `testPostalVoteFraudUndetected`: Force rng to < 0.85f (below detection threshold 0.15f);
+  call `attemptPostalFraud(PATRICIA, bundle)`; verify Patricia votes +5, no ELECTORAL_FRAUD
+  in CriminalRecord, Notoriety unchanged.
+- `testPostalVoteFraudCaught`: Force rng ≥ 0.85f; call `attemptPostalFraud(PATRICIA, bundle)`;
+  verify ELECTORAL_FRAUD in CriminalRecord, Notoriety +15, WantedSystem stars +2, Patricia votes −20.
+- `testSleightOfHandReducesFraudRisk`: Set SLEIGHT_OF_HAND skill = Journeyman; verify detection
+  threshold is 0.05f (not 0.15f).
+- `testLeafletSabotageDetected`: Force rng ≥ 0.60f (above undetected threshold 0.40f);
+  call `sabotageLeaflets(NIKHIL_PILE)` while canvasser within 8 blocks; verify Notoriety +5,
+  CRIMINAL_DAMAGE in CriminalRecord, Nikhil support +10.
+- `testLeafletSabotageUndetected`: No canvasser within 8 blocks; force rng < 0.40f;
+  verify Nikhil support −8, no CriminalRecord entry.
+- `testPlayerVoteRegistered`: Call `castVote(STEVE)` at 10:00 on day 90; verify vote counted,
+  `hasVoted` = true, FIRST_VOTER achievement unlocked.
+- `testDoubleVotingPrevented`: Call `castVote(STEVE)` twice; verify second call throws
+  `AlreadyVotedException` (or returns false), Steve vote count incremented only once.
+- `testPollingExclusionBreach`: Place `POLLING_OFFICER_NPC` at (5,0,5), player at (4,0,5)
+  (< 3 blocks from `POLLING_STATION_PROP` at (5,0,5) boundary); verify
+  `BREACH_OF_POLLING_STATION_EXCLUSION` in CriminalRecord, Notoriety +8.
+- `testBarryBribeSucceeds`: Call `bribePollingOfficer(10)` at 14:00; verify player loses 10 COIN,
+  `barryBribedUntil` = 15.0f (one in-game hour from now), no CriminalRecord entry.
+- `testBoxStuffingGrassToPolice`: Trigger box-stuffing event; player chooses `grassBoxSwap()`;
+  verify `THUG` NPC state = FLEEING, Nikhil votes −30, STREET_SMART achievement.
+- `testBoxStuffingHelped`: Player chooses `helpBoxSwap()`; verify Nikhil votes +30, Notoriety +10,
+  ELECTORAL_FRAUD in CriminalRecord.
+- `testWinnerEffectsCouncil`: Simulate Patricia winning; advance 1 day; verify
+  CouncilEnforcementSystem enforcement frequency = base × 1.5f.
+- `testWinnerEffectsStreetLads`: Steve wins; verify GangTerritorySystem bid cost reduced by 20%.
+- `testWinnerEffectsNikhil`: Nikhil wins; verify off-licence prices −15%;
+  `ELECTION_UPSET` rumour seeded in RumourNetwork.
+- `testKingmakerAchievement`: Player pledged support to STEVE; Steve wins; verify KINGMAKER
+  achievement unlocked.
+- `testTacticalVoterAchievement`: Pledge support to all three candidates (Patricia, Steve, Nikhil);
+  verify TACTICAL_VOTER achievement unlocked.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Canvassing week props and NPCs spawn**: Set TimeSystem to day 83, hour 09:00. Verify
+   3 `CANDIDATE_TABLE_PROP` entities spawned (one per candidate) within 30 blocks of the
+   community centre. Verify 3 `CANDIDATE_NPC` spawned, each associated with a different
+   candidate. Verify 2–4 `CANVASSER_NPC` patrolling streets. Verify `ELECTION_CANVASSING`
+   rumour in RumourNetwork. Advance to day 90, 08:01; verify `POLLING_STATION_PROP` spawned
+   at community centre. Advance to day 91, 00:00; verify all election props despawned.
+
+2. **Postal vote fraud complete flow**: Set day 84, hour 08:30. Verify `POSTMAN_NPC` on route.
+   Player intercepts postman; `POSTAL_VOTE_BUNDLE` added to inventory. Player goes to squat;
+   press E on bundle with PATRICIA selected; verify Patricia votes +5, `POSTAL_VOTE_FRAUDULENT`
+   record exists. Advance to day 91 (election result); if Patricia wins, verify no detection
+   occurred (no ELECTORAL_FRAUD in CriminalRecord). Force detection (rng ≥ 0.85f); verify
+   NewspaperSystem headline contains "FRAUD", WantedSystem stars = 2.
+
+3. **Polling Day full flow**: Set day 90, hour 10:00. Verify `POLLING_STATION_PROP` at community
+   centre. Player approaches (within 5 blocks) and presses E; verify vote dialogue presented.
+   Player selects STEVE; verify FIRST_VOTER achievement. Verify `hasVoted` = true. Player
+   attempts second press-E; verify dialogue "You've already voted, mate." Advance time to 22:01;
+   verify `POLLING_STATION_PROP` no longer interactable (closed).
+
+4. **Count Night complete — upset win**: Set day 90, hour 22:30. Advance 1 tick; verify
+   `VOTE_COUNT_TABLE_PROP` at town hall and 4–8 `COUNT_OBSERVER` NPCs present. Seed votes:
+   Patricia = 180, Steve = 175, Nikhil = 145. Box-stuffing event triggers at 23:10; player
+   grasses → `THUG` state = FLEEING, Nikhil loses 30 votes (total 115). Result announced at
+   23:30: Patricia wins (180 vs 175 vs 115). Verify THE_COUNCIL faction gains `COUNCIL_SEAT`
+   flag. Verify WetherspoonsSystem `celebrationMode` = true. Verify `ELECTION_AFTERMATH`
+   rumour seeded.
+
+5. **Post-election faction effects persist 7 days**: Set day 91 (day after election); Steve
+   won (STREET_LADS). Verify GangTerritorySystem territory bid cost = base × 0.80f. Verify
+   park no-go zone prop despawned. Advance to day 97 (7 days after election); verify bid cost
+   returns to base × 1.0f. Verify `COUNCIL_SEAT` flag removed from STREET_LADS faction.
+
+// ── Issue #1373: Add Northfield Local Council Elections ───────────────────────────────────────────
+// New: LocalElectionSystem.java in ragamuffin.core
+// New: LocalElectionSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1373LocalElectionIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: ROSETTE_ITEM, POSTAL_VOTE_BUNDLE, CAMPAIGN_LEAFLET, COUNT_SHEET, CANDIDATE_MUG
+// New PropTypes: POLLING_STATION_PROP, LEAFLET_PILE_PROP, CANDIDATE_TABLE_PROP,
+//   VOTE_COUNT_TABLE_PROP, BALLOT_BOX_PROP
+// New NPCTypes: CANDIDATE_NPC, CANVASSER_NPC, POLLING_OFFICER_NPC, COUNT_OBSERVER
+// New AchievementTypes: FIRST_VOTER, TACTICAL_VOTER, BALLOT_STUFFER, STREET_SMART,
+//   HONEST_CITIZEN, KINGMAKER, DEMOCRACY_DENIER
+// New RumourTypes: ELECTION_CANVASSING, ELECTION_FRAUD, ELECTION_UPSET, ELECTION_AFTERMATH
+// Integration: TimeSystem, FactionSystem, CouncilEnforcementSystem, GangTerritorySystem,
+//   NotorietySystem, CriminalRecord, WantedSystem, RumourNetwork, NewspaperSystem,
+//   WetherspoonsSystem, FenceSystem, OffLicenceSystem, StreetSkillSystem, AchievementSystem,
+//   DisguiseSystem, NeighbourhoodSystem
