@@ -47274,3 +47274,95 @@ Two iconic red BT phone boxes exist in Northfield: one on the High Street (funct
 //              PoliceStationSystem (tip-off spawns patrol),
 //              StreetSkillSystem (STEALTH XP on unwitnessed dead-drop call),
 //              AchievementSystem, TimeSystem (NPC occupancy schedule), NPCManager
+
+---
+
+## Issue #1347: Add Northfield Remembrance Sunday — The Two-Minute Silence, the Wreath Hustle & the Poppy Seller
+
+### Overview
+
+An annual civic event set at Northfield's war memorial (a `STATUE` prop in the park) on the second Sunday of November, 10:30–12:00. Led by Reverend Dave (VICAR), attended by the RAOB Lodge contingent and `VETERAN` NPCs in medals, and policed by a single POLICE NPC managing crowd barriers. A POPPY_SELLER NPC sells poppies outside the church from 09:00–12:00.
+
+The two-minute silence (11:00:00–11:02:00 game time) is the centrepiece: all NPCs freeze, ambient sound cuts out, and any player action (running, punching, placing blocks, talking) during the silence draws public outrage — Notoriety +5 and a chorus of "Have you no respect?!" speech bubbles from surrounding PUBLIC NPCs.
+
+### Key Mechanics
+
+- **Poppy Selling**: POPPY_SELLER NPC outside the church, 09:00–12:00. Buy a POPPY for 1 COIN → player receives POPPY item, `WEARING_POPPY` flag set. WEARING_POPPY reduces police suspicion by −1 Wanted star for the day and gives a +5 charm bonus in conversations (DisguiseSystem passive modifier). Refusal gives "Tight git" speech from seller.
+- **Two-Minute Silence**: 11:00–11:02. All NPC movement stops. Ambient noise drops to 0. Player movement input still accepted but flagged. Any player action (attack, run, block break, speech) → `SILENCE_BREACH` criminal record entry, Notoriety +5, Wanted +1, 3–6 PUBLIC NPCs emit "Disgusting!" speech, POLICE NPC moves toward player. VETERAN NPCs emit a single "Lest we forget" speech at 11:00.
+- **Wreath-Laying Ceremony**: 11:02. VICAR lays a `WREATH_PROP` at the STATUE base. VETERAN NPCs salute (NPCState.SALUTING). RAOB_LODGE_MEMBER NPCs stand in formation. Lasts 2 in-game minutes.
+- **Wreath Theft**: Player can steal the `WREATH_PROP` from the war memorial after 11:30 when crowd thins. Theft → `MEMORIAL_VANDALISM` criminal record, Notoriety +10, Wanted +2. Can be fenced at PawnShopSystem for 8–12 COIN (Sharon at Poundstretcher also refuses to sell you anything for a day).
+- **Poppy Mugging**: If player has Notoriety ≥ 40 and approaches POPPY_SELLER, a VETERAN NPC will warn the player to back off. Persisting within 3 blocks → VETERAN attacks (NPCType.VETERAN has 35f HP, 6f damage — they're old but they still know how to handle themselves).
+- **Post-Ceremony Pub Surge**: 12:00 — congregation disperses. VETERAN NPCs head to The Ragamuffin Arms pub. VICAR heads back to the church. 4–6 PENSIONER NPCs also appear in the pub. This is a good window to pickpocket distracted drinkers.
+- **Weather Effect**: RAIN or DRIZZLE does not cancel (British stubbornness). THUNDERSTORM causes early dispersal at 11:30. The ceremony happens regardless of weather — the VETERAN NPCs will have a `"It was worse at Goose Green"` speech line if thunderstorm.
+
+### New Types Required
+
+- `NPCType.VETERAN` — 35f HP, 6f damage, not initially hostile but defends POPPY_SELLER and war memorial
+- `NPCType.POPPY_SELLER` — passive, sells POPPY for 1 COIN
+- `NPCType.RAOB_LODGE_MEMBER` — passive civic NPC, part of RAOB Lodge contingent (also used by RAOBLodgeSystem)
+- `RumourType.REMEMBRANCE_CEREMONY` — seeds when ceremony begins
+- `RumourType.SILENCE_BREACH` — seeds if player breaches the two-minute silence
+- `CrimeType.MEMORIAL_VANDALISM` — stealing the wreath / defacing the memorial
+- `CrimeType.SILENCE_BREACH` — disrupting the two-minute silence
+- `AchievementType.LEST_WE_FORGET` — attend the full ceremony without breaching silence
+- `AchievementType.LAST_POST` — steal the wreath and successfully fence it
+
+### Integration
+
+- `ChurchSystem` — VICAR NPC coordinates between church and memorial; shares the `SUNDAY = 6` calendar logic
+- `RAOBLodgeSystem` — RAOB_LODGE_MEMBER NPCs attend as part of their civic duty (Respect ≥ 40 unlocks a conversation line from the Lodge Secretary about their fallen brother)
+- `DisguiseSystem` — `WEARING_POPPY` flag as passive modifier (−1 star suspicion, +5 charm)
+- `NotorietySystem` — silence breach (+5), wreath theft (+10)
+- `WantedSystem` — silence breach (+1 star), wreath theft (+2 stars)
+- `CriminalRecord` — `MEMORIAL_VANDALISM`, `SILENCE_BREACH`
+- `PawnShopSystem` — WREATH item fencing (8–12 COIN, no questions asked past Notoriety 40)
+- `FactionSystem` — VETERAN NPC alignment with STREET_LADS (old guard respect); RAOB with THE_COUNCIL faction
+- `RumourNetwork` — `REMEMBRANCE_CEREMONY` and `SILENCE_BREACH` rumours
+- `WeatherSystem` — rain doesn't cancel; thunderstorm triggers early dispersal + speech lines
+- `SoundSystem` — ambient audio cut during two-minute silence; bugle call SoundEffect at 11:00 and 11:02
+- `StreetEconomySystem` — POPPY as collectible item satisfying BORED need (wearing a poppy = you're civic-minded, sellers give +5 NPC trust)
+- `NoiseSystem` — silence breach raises noise level to 10 during 11:00–11:02 suppression window
+- `AchievementSystem` — `LEST_WE_FORGET`, `LAST_POST`
+- `NewspaperSystem` — if silence breach occurs, next day's headline: "Local yob disrupts Remembrance ceremony"
+- `NeighbourhoodSystem` — ceremony completion +3 Neighbourhood Vibes; wreath theft −5 Vibes
+
+### New Java Files
+
+- `src/main/java/ragamuffin/core/RemembranceSundaySystem.java`
+- `src/test/java/ragamuffin/core/RemembranceSundaySystemTest.java`
+- `src/test/java/ragamuffin/integration/Issue1347RemembranceSundayIntegrationTest.java`
+
+### Unit Tests
+
+- `RemembranceSundaySystem.isCeremonyDay(dayCount, dayOfWeek)`: second Sunday of November → true; other Sundays → false; non-Sunday → false.
+- `RemembranceSundaySystem.isSilenceActive(hour)`: 11.0 → true; 11.033 (11:02) → true; 11.034 → false; 10.99 → false.
+- `RemembranceSundaySystem.buyPoppy(player, inventory, coin)`: player has 1+ COIN → returns true, POPPY added, WEARING_POPPY flag set, coin decremented; 0 COIN → returns false, no item added.
+- `RemembranceSundaySystem.attemptSilenceBreach(player, notoriety, wantedSystem, rumourNetwork, rand)`: called during silence window → SILENCE_BREACH criminal record, Notoriety +5, Wanted +1, `SILENCE_BREACH` rumour seeded; called outside silence window → no effect.
+- `RemembranceSundaySystem.stealWreath(player, world, notoriety, wantedSystem)`: wreath present, no POLICE within 6 blocks → returns true, WREATH removed from world, MEMORIAL_VANDALISM recorded, Notoriety +10; POLICE within 6 blocks → returns false.
+- `RemembranceSundaySystem.spawnVeterans(npcManager, rand, seed)`: seeded random → deterministic count 2–4 VETERAN NPCs spawned near STATUE.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Full ceremony runs on correct day**: Set game day to second Sunday of November. Advance time to 09:30. Verify POPPY_SELLER NPC has spawned outside church. Advance to 10:30. Verify VICAR NPC is at STATUE position. Verify 2–4 VETERAN NPCs present. Verify 2–3 RAOB_LODGE_MEMBER NPCs present. Advance to 11:00. Verify all NPC velocity is zero (frozen). Verify `isSilenceActive()` returns true. Advance to 11:02. Verify `isSilenceActive()` returns false. Verify WREATH_PROP placed at STATUE base.
+
+2. **Silence breach triggers consequences**: Set game day to second Sunday of November. Advance to 11:01. Verify `isSilenceActive()` returns true. Simulate player breaking a block. Verify Notoriety increased by 5. Verify Wanted star count increased by 1. Verify `SILENCE_BREACH` entry in CriminalRecord. Verify `SILENCE_BREACH` rumour seeded in RumourNetwork. Verify at least 3 surrounding PUBLIC NPCs have `SILENCE_BREACH` speech bubble flag set.
+
+3. **Buying poppy gives disguise modifier**: Give player 2 COIN. Buy poppy from POPPY_SELLER. Verify player inventory contains POPPY. Verify `WEARING_POPPY` flag true on player. Verify DisguiseSystem `getSuspicionModifier(player)` returns a value ≤ −1 (suspicion reduction active). Verify charm bonus applies in NPC conversation (mock NPC negotiation returns +5 to base score when WEARING_POPPY).
+
+4. **Wreath theft and fence flow**: Advance time to 11:30 (wreath laid, crowd thinned). Verify WREATH_PROP present at STATUE. Simulate player stealing wreath (no POLICE in range). Verify WREATH removed from world. Verify player inventory contains WREATH. Verify MEMORIAL_VANDALISM in CriminalRecord. Verify Notoriety ≥ 10 above pre-theft baseline. Visit PawnShopSystem. Verify `fenceItem(WREATH)` returns a value between 8 and 12 COIN. Verify `LAST_POST` achievement unlocked.
+
+5. **Ceremony not triggered on wrong day**: Set game day to first Sunday of November (not the second Sunday). Advance to 10:30. Verify no VETERAN NPCs spawned. Verify no WREATH_PROP placed. Verify POPPY_SELLER not present. Confirm `isCeremonyDay()` returns false for this day.
+
+// ── Issue #1347: Add Northfield Remembrance Sunday ──────────────────────────────────
+// New: RemembranceSundaySystem.java in ragamuffin.core
+// New: RemembranceSundaySystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1347RemembranceSundayIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCTypes: VETERAN, POPPY_SELLER, RAOB_LODGE_MEMBER (shared with RAOBLodgeSystem)
+// New RumourTypes: REMEMBRANCE_CEREMONY, SILENCE_BREACH
+// New CrimeTypes: MEMORIAL_VANDALISM, SILENCE_BREACH
+// New AchievementTypes: LEST_WE_FORGET, LAST_POST
+// Existing Materials: POPPY — already defined in Material.java
+// Integration: ChurchSystem (VICAR NPC), RAOBLodgeSystem, DisguiseSystem (WEARING_POPPY flag),
+//              NotorietySystem, WantedSystem, CriminalRecord, PawnShopSystem (WREATH fence),
+//              FactionSystem, RumourNetwork, WeatherSystem, SoundSystem, NoiseSystem,
+//              StreetEconomySystem, AchievementSystem, NewspaperSystem, NeighbourhoodSystem
