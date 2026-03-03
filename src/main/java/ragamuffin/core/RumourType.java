@@ -1349,5 +1349,47 @@ public enum RumourType {
     /** "Lights on Church Road have been green both ways for an hour. It's carnage."
      * Seeded by SevTrentRoadDigSystem when traffic lights are sabotaged into chaos mode.
      * Spreads via PUBLIC, DRIVER, POLICE NPCs. */
-    LIGHTS_JAMMED;
+    LIGHTS_JAMMED,
+
+    // ── Issue #1406: Northfield Dodgy Roofer ──────────────────────────────────
+
+    /** "That roofer's been at it again — told old Mrs Patel her ridge tiles were shot. Seen him do it four times."
+     * Seeded by DodgyRooferSystem when Kenny successfully completes a scam pitch.
+     * Spreads via PENSIONER, PUBLIC NPCs. */
+    KENNY_SCAM,
+
+    /** "Kenny had a right go at some lad on the street. Something about undercutting his pitch."
+     * Seeded by DodgyRooferSystem when Kenny goes HOSTILE after spotting the player mid-pitch.
+     * Spreads via PUBLIC, PENSIONER NPCs. Notoriety +1. */
+    KENNY_ARGUMENT,
+
+    /** "Someone's been going round doing dodgy roofing work. Undercutting the bloke in the van."
+     * Seeded by DodgyRooferSystem when player completes a rival cold-call (any outcome).
+     * Spreads via PENSIONER, PUBLIC NPCs. */
+    RIVAL_ROOFER,
+
+    /** "Two roofers on the same street. One of them's going to kick off soon."
+     * Seeded by DodgyRooferSystem when rival cold-calling occurs within 20 blocks of Kenny.
+     * Spreads via PUBLIC NPCs. */
+    TURF_DISPUTE,
+
+    /** "Someone reported that van parked on Northfield Road to Trading Standards. About time."
+     * Seeded by DodgyRooferSystem when player reports Kenny (Mechanic 5).
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    KENNY_REPORTED,
+
+    /** "Trading Standards had Kenny's van away. He was doing his nut outside the chippy."
+     * Seeded by DodgyRooferSystem when van is impounded at Friday Trading Standards raid.
+     * Spreads via PUBLIC, PENSIONER, SHOPKEEPER NPCs. */
+    KENNY_FINED,
+
+    /** "Someone's been talking to Trading Standards. Word gets round."
+     * Seeded by DodgyRooferSystem when player tips off Trading Standards to get Kenny arrested (Mechanic 6).
+     * Spreads via gang NPCs — makes them temporarily hostile. */
+    SNITCH,
+
+    /** "That guttering job on Oak Avenue. Fell off within a week. Right cowboy outfit."
+     * Seeded by DodgyRooferSystem when Kenny completes a 'repair' (no actual repair made).
+     * Spreads via PENSIONER, PUBLIC NPCs. */
+    BOTCHED_JOB;
 }

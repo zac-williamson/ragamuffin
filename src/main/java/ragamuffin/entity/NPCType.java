@@ -3130,7 +3130,22 @@ public enum NPCType {
      * </ul>
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    VOLUNTEER_PICKER(20f, 0f, 0f, false);
+    VOLUNTEER_PICKER(20f, 0f, 0f, false),
+
+    // ── Issue #1406: Northfield Dodgy Roofer ──────────────────────────────────
+
+    /**
+     * DODGY_ROOFER — Kenny, the cold-calling roofer.
+     * <ul>
+     *   <li>Patrols 8 residential properties/day weekdays 09:00–16:00 in his ROOFER_VAN_PROP.</li>
+     *   <li>Pitches fabricated roof/guttering faults to PENSIONER NPCs (35% acceptance).</li>
+     *   <li>Places LADDER_PROP and 'works' for 45 seconds before collecting 6 COIN.</li>
+     *   <li>Goes HOSTILE if he spots the player within 15 blocks while mid-pitch.</li>
+     *   <li>Is BUSY (unattended van) while on a doorstep or up a ladder.</li>
+     * </ul>
+     * HP: 35f, attack: 6f, cooldown: 2.0f, hostile: false (until triggered).
+     */
+    DODGY_ROOFER(35f, 6f, 2.0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

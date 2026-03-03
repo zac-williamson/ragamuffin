@@ -6630,6 +6630,68 @@ public enum AchievementType {
         "Buried Treasure",
         "Under three weeks of Severn Trent spoil: mystery, coin, and the faint smell of drains.",
         1
+    ),
+
+    // ── Issue #1406: Northfield Dodgy Roofer ──────────────────────────────────
+
+    /**
+     * COWBOY_BUILDER — fail a repair mini-game while employed by Kenny (or on rival round).
+     * Awarded when BattleBarMiniGame fails, resulting in docked wage (1 COIN instead of 3).
+     */
+    COWBOY_BUILDER(
+        "Cowboy Builder",
+        "Docked to a quid. Honestly, it could have gone worse. The gutter fell off but no one was under it.",
+        1
+    ),
+
+    /**
+     * UNDERCUTTING_KENNY — complete 6 cold-calls without Kenny spotting you.
+     * Awarded when rivalCallsUndetected reaches UNDERCUTTING_KENNY_THRESHOLD.
+     */
+    UNDERCUTTING_KENNY(
+        "Undercutting Kenny",
+        "Six houses. Six pays. Kenny's still round the corner none the wiser. Lovely.",
+        1
+    ),
+
+    /**
+     * TOOLS_DOWN — successfully raid Kenny's van while he's on a job.
+     * Awarded on first successful ROOFER_VAN_PROP break-in.
+     */
+    TOOLS_DOWN(
+        "Tools Down",
+        "You had the crowbar. Kenny had his back turned. The van had quite a lot in it.",
+        1
+    ),
+
+    /**
+     * PUBLIC_SPIRITED — report Kenny's scam to Trading Standards (Notoriety < 25).
+     * Awards Notoriety −3 alongside the achievement.
+     */
+    PUBLIC_SPIRITED(
+        "Public Spirited",
+        "You reported the man. Feel good about that. He'll be back in a fortnight.",
+        1
+    ),
+
+    /**
+     * TIP_OFF_KENNY — warn Kenny about a Trading Standards visit at least 10 minutes early.
+     * Awarded when player triggers the tip-off dialogue with Kenny before Friday 10:50.
+     */
+    TIP_OFF_KENNY(
+        "Tip Off Kenny",
+        "You gave him the nod. He gave you a tenner and moved the van. Honour among scammers.",
+        1
+    ),
+
+    /**
+     * CIVIC_MINDED — report Kenny's location to Trading Standards during a weekly check.
+     * Also seeds SNITCH rumour — gang NPCs become temporarily hostile.
+     */
+    CIVIC_MINDED(
+        "Civic Minded",
+        "You phoned it in. The van got impounded. Kenny cried in the chippy. Worth it.",
+        1
     );
 
     private final String name;

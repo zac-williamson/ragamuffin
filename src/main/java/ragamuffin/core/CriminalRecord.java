@@ -1215,7 +1215,15 @@ public class CriminalRecord {
          * Recorded when the player climbs Terry's LADDER_PROP to enter an upstairs window.
          * Penalty: Notoriety +6, WantedSystem +1 star.
          */
-        LADDER_BURGLARY("Burglary via window cleaner's ladder");
+        LADDER_BURGLARY("Burglary via window cleaner's ladder"),
+
+        // ── Issue #1406: Northfield Dodgy Roofer ──────────────────────────────
+
+        /**
+         * VEHICLE_BREAK_IN — Recorded when the player breaks into Kenny's ROOFER_VAN_PROP
+         * using a CROWBAR (3-second hold). Penalty: Notoriety +6, WantedSystem +1 star.
+         */
+        VEHICLE_BREAK_IN("Breaking into a vehicle (roofer's van)");
 
         private final String displayName;
 
