@@ -815,7 +815,41 @@ public enum LandmarkType {
      * Keith (DRIVING_EXAMINER) as test examiner. Wayne (TEST_SLOT_SCALPER)
      * loiters outside. Managed by DrivingTestSystem.
      */
-    DRIVING_TEST_CENTRE;
+    DRIVING_TEST_CENTRE,
+
+    // ── Issue #1483: Northfield Crown Green Bowls Club ────────────────────────
+
+    /**
+     * BOWLS_CLUB — Reg's Green, the Northfield Crown Green Bowls Club at the edge
+     * of the park. A fenced-off 20×20 GRASS green with a crown raise, surrounded
+     * by a privet hedge and a chipped white gate. Features a small wooden PAVILION_PROP.
+     *
+     * <p>Open Tue–Sun 10:00–17:00. Reg (BOWLS_CLUB_SECRETARY) sells
+     * BOWLS_CLUB_MEMBERSHIP (3 COIN) and BOWLS_SET (5 COIN) or rents one per
+     * session (1 COIN). Non-members trespassing twice get the PCSO called.
+     *
+     * <p>Mechanics:
+     * <ul>
+     *   <li><b>Mechanic 1 — Getting On the Green</b>: purchase or borrow a bowls set;
+     *       or pickpocket a STOLEN_BOWLS_SET from a BOWLS_CLUB_PLAYER (50%).</li>
+     *   <li><b>Mechanic 2 — The Mini-Game</b>: {@code playEnd()} uses BattleBarMiniGame
+     *       (BIAS_CURVE_FACTOR = 0.3f). Green zone (≤1 block) = 2 pts; yellow (≤2) = 1 pt.
+     *       Full game = 8 ends. Difficulty tiers: BOWLS_NOVICE, BOWLS_CLUB_PLAYER, Reg.</li>
+     *   <li><b>Mechanic 3 — Grudge Match</b>: Every Saturday 14:00, Reg vs Arthur.
+     *       BOWLS_SPECTATOR NPCs accept 1–10 COIN wagers (1.5× payout). Nobble Arthur's
+     *       bowls with WEIGHTED_BOWL during a 30-second PCSO-distraction window.
+     *       If caught: CrimeType.CHEATING_AT_BOWLS, Notoriety +6, banned 5 days.</li>
+     *   <li><b>Mechanic 4 — The Jack Racket</b>: steal JACK → fence (4 COIN) or ransom
+     *       to Reg (3 COIN + Respect). CHAMPIONSHIP_JACK → fence (12 COIN) but cancels
+     *       tournament, Notoriety +10, Vibes −5.</li>
+     *   <li><b>Mechanic 5 — Annual Tournament</b>: every 14 in-game days at 14:00.
+     *       Entry 2 COIN, prize 20 COIN + BOWLS_TROPHY. Single-elimination 8-player bracket.
+     *       Win 3 consecutive tournaments: THE_DYNASTY achievement + Vice-Secretary title.</li>
+     * </ul>
+     *
+     * <p>Managed by BowlsClubSystem.
+     */
+    BOWLS_CLUB;
 
     /**
      * Returns the display name shown on the building's sign.
@@ -927,6 +961,7 @@ public enum LandmarkType {
             case RECORD_SHOP:           return "Spin City Records";
             case CLOSING_DOWN_SHOP:     return "Dave's Electronics & Electrical — FINAL WEEK";
             case DRIVING_TEST_CENTRE:   return "Northfield DVSA Driving Test Centre";
+            case BOWLS_CLUB:            return "Reg's Green — Northfield Crown Green Bowls Club";
             default:                    return null; // No sign for parks, houses, etc.
         }
     }

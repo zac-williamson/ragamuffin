@@ -1366,7 +1366,17 @@ public class CriminalRecord {
          * FRAUD — recorded when the player abandons a CPR training session mid-course,
          * triggering student refund demands. Each abandonment adds one count.
          */
-        DEFIB_CPR_FRAUD("Fraud (abandoned CPR training session, students demand refund)");
+        DEFIB_CPR_FRAUD("Fraud (abandoned CPR training session, students demand refund)"),
+
+        // ── Issue #1483: Northfield Crown Green Bowls Club ─────────────────────
+
+        /**
+         * CHEATING_AT_BOWLS — recorded when the player is caught swapping Arthur's
+         * bowl with a WEIGHTED_BOWL during the Saturday Grudge Match, or when Reg
+         * catches the player holding a STOLEN_BOWLS_SET on the green.
+         * Penalty: Notoriety +6, banned from the green for 5 days.
+         */
+        CHEATING_AT_BOWLS("Cheating at crown green bowls (weighted bowl / stolen set)");
 
         private final String displayName;
 

@@ -1752,5 +1752,35 @@ public enum RumourType {
      * — seeded by DrivingTestSystem when the player successfully sticks L_PLATE_PROPS
      * on a civilian NPC's car. Spreads via PUBLIC and BARMAN NPCs;
      * awards AchievementType.LEARNER_LEGS. */
-    L_PLATE_PRANK_RUMOUR;
+    L_PLATE_PRANK_RUMOUR,
+
+    // ── Issue #1483: Northfield Crown Green Bowls Club ────────────────────────
+
+    /** "Reg versus Arthur on Saturday — same as every year. Proper grudge match that.
+     * Word is there's a fiver on it at least."
+     * — seeded by BowlsClubSystem every Saturday at 13:30 ahead of the 14:00 match.
+     * Spreads via PUBLIC, PENSIONER, and BOWLS_SPECTATOR NPCs;
+     * draws a crowd to the green by 13:50. */
+    BOWLS_GRUDGE_MATCH,
+
+    /** "Someone's nicked the jack off the crown green. Reg is absolutely livid.
+     * No jack, no game — whole tournament's up in the air."
+     * — seeded by BowlsClubSystem when the player steals the JACK from the green.
+     * Spreads via PUBLIC, PENSIONER, and BARMAN NPCs;
+     * notoriety contribution +3 if player is seen near the green. */
+    MISSING_JACK,
+
+    /** "That tournament got cancelled — someone swapped the gold jack.
+     * Reg nearly had a heart attack. Absolute liberty."
+     * — seeded by BowlsClubSystem when the player steals or swaps the CHAMPIONSHIP_JACK.
+     * Spreads via PUBLIC, PENSIONER, BARMAN, and BOWLS_SPECTATOR NPCs;
+     * triggers Notoriety +10 and Vibes −5. */
+    CHAMPIONSHIP_SABOTAGE,
+
+    /** "Some lad's won the bowls tournament three years running.
+     * Reg called him Vice-Secretary. You could see it hurt."
+     * — seeded by BowlsClubSystem when the player wins 3 consecutive Annual Tournaments
+     * (THE_DYNASTY achievement). Spreads via PUBLIC, PENSIONER, and BARMAN NPCs;
+     * increases Respect with all civilian factions by 5. */
+    BOWLS_DYNASTY;
 }

@@ -3468,7 +3468,40 @@ public enum NPCType {
      * 08:30–09:00 and 15:00–16:00. Will buy CANCELLED_SLOT_VOUCHERs for 10 COIN.
      * Press E to offer a slot; 3 sales in one day triggers SLOT_SHARK achievement.
      */
-    LEARNER_DRIVER(20f, 0f, 0f, false);
+    LEARNER_DRIVER(20f, 0f, 0f, false),
+
+    // ── Issue #1483: Northfield Crown Green Bowls Club ────────────────────────
+
+    /**
+     * BOWLS_CLUB_SECRETARY — Reg, the secretary of the Crown Green Bowls Club.
+     * Sells BOWLS_CLUB_MEMBERSHIP (3 COIN) and BOWLS_SET (5 COIN) or rents one
+     * for 1 COIN per session. Organises the Annual Tournament every 14 in-game
+     * days and referees the Saturday Grudge Match (14:00). Hardest bowls opponent.
+     * Awards Vice-Secretary title after THE_DYNASTY achievement.
+     */
+    BOWLS_CLUB_SECRETARY(30f, 0f, 0f, false),
+
+    /**
+     * BOWLS_RIVAL — Arthur, Reg's nemesis. Competes in the Saturday Grudge Match
+     * every Saturday at 14:00. BOWLS_CLUB_PLAYER difficulty tier. Can be nobbled
+     * by swapping his bowl with a WEIGHTED_BOWL from the pavilion sports cupboard
+     * during a 30-second PCSO-distraction window.
+     */
+    BOWLS_RIVAL(25f, 0f, 0f, false),
+
+    /**
+     * BOWLS_CLUB_PLAYER — regular club members who play on the green during opening
+     * hours (Tue–Sun 10:00–17:00). Mid-tier bowls difficulty. Can be pickpocketed
+     * for a STOLEN_BOWLS_SET (50% success). Participates in the Annual Tournament.
+     */
+    BOWLS_CLUB_PLAYER(20f, 0f, 0f, false),
+
+    /**
+     * BOWLS_SPECTATOR — spectators who watch the Saturday Grudge Match and the
+     * Annual Tournament. Accept 1–10 COIN wagers on the Grudge Match (1.5× payout).
+     * Spread BOWLS_GRUDGE_MATCH rumours after the match concludes.
+     */
+    BOWLS_SPECTATOR(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
