@@ -48643,3 +48643,214 @@ FIREWORK_THEFT,
 //   FireStationSystem, NotorietySystem, WantedSystem, CriminalRecord, FenceSystem,
 //   PawnShopSystem, RumourNetwork, NewspaperSystem, StreetSkillSystem, TimeSystem,
 //   AchievementSystem
+
+---
+
+## Issue #1367: Add Northfield Speed Awareness Course — The Notice, the Passive-Aggressive Instructor & the Exam Cheat
+
+**Trigger**: When the player drives a car above `SPEED_LIMIT_MPH` (30 blocks/s equivalent)
+while a `SPEED_CAMERA_PROP` is within 20 blocks, or when `TrafficWardenSystem`'s Clive
+witnesses player driving at excessive speed (speed ≥ `CLIVE_SPEED_THRESHOLD`) within 15
+blocks, a `SPEEDING_NOTICE` material item is placed in the player's inventory
+(`CriminalRecord.CrimeType.SPEEDING` is NOT recorded yet — player has a choice).
+
+The player has **two in-game days** to respond:
+- **Option A — Accept the fine**: Pay `SPEEDING_FINE_COIN` (12 COIN) at the Post Office
+  counter. Notoriety +3. `SPEEDING` recorded in `CriminalRecord`. Done.
+- **Option B — Take the course**: Pay `COURSE_FEE_COIN` (6 COIN) at Denise's desk in
+  `CommunityCentreSystem`. No `CriminalRecord` entry. No Notoriety increase.
+  **Attend the next course session** (Saturday 09:00–13:00 at the Community Centre).
+- **Ignore it**: After 2 in-game days with SPEEDING_NOTICE still in inventory,
+  `COURT_SUMMONS` is auto-issued — Notoriety +8, `DRIVING_WITHOUT_DUE_CARE` in
+  `CriminalRecord`, fine rises to 25 COIN via `MagistratesCourtSystem`.
+
+### Key NPCs
+
+#### `SPEED_AWARENESS_INSTRUCTOR` — Phil
+- Spawns at Community Centre Room B on Saturday 08:45. Departs at 13:15.
+- Projects `SPEED_AWARENESS_BOARD_PROP` at the front of the room.
+- Delivers five 10-in-game-minute lecture segments; each segment is a multiple-choice
+  question (keys 1–4) on the screen: correct answers earn no reward but prevent Phil
+  from singling out the player ("I see someone at the back who isn't paying attention").
+- Becomes `SUSPICIOUS` if the player answers more than 2 questions incorrectly.
+- Catches nodding-off players (see below) unless distracted.
+
+#### `COURSE_ATTENDEE` NPCs (3–5)
+- Mix of `PUBLIC`, `PENSIONER`, and `DELIVERY_DRIVER` types — a cross-section of
+  Northfield's lead-footed residents.
+- Random flavour lines: "I only went 34 in a 30", "My missus made me come",
+  "Is there a biscuit break?"
+- One of them is always **Brian** (`PUBLIC`), who always falls asleep at minute 45.
+  Brian snoring creates a diversion — during Brian's snore window (minutes 45–60)
+  Phil's detection radius drops 50%.
+
+### Player Mechanics
+
+#### Attending the Course
+- Player must be within 10 blocks of `SPEED_AWARENESS_BOARD_PROP` between 09:00–13:00
+  on course day.
+- If player leaves the room for >3 in-game minutes, Phil marks them absent →
+  course completion fails; fine re-issued; Notoriety +3.
+- Answer all 5 questions (any answer counts) → `courseProgressSteps` incremented.
+- Complete all 5 steps → `courseComplete = true` → `SPEEDING_NOTICE` removed from
+  inventory → `SPEED_AWARE` achievement unlocked → Phil says "You're all free to go.
+  Drive safely. And I mean it this time."
+
+#### Nodding Off
+- If the player stands still for 4+ in-game minutes during a segment, there is a 35%
+  chance per minute of triggering the `NODDING_OFF` debuff:
+  screen darkens, movement slows 30%.
+- Phil catches a nodding player (unless Brian is snoring): Phil shouts player's name,
+  `NODDING_OFF` debuff cleared, but that segment marked `INATTENTIVE`.
+- Three `INATTENTIVE` segments: Phil ejects the player for "repeated lack of engagement"
+  → course fails; fine still owed; `KICKED_OUT_OF_AWARENESS_COURSE` achievement.
+
+#### Exam Cheat
+- During segment 5 (the final written assessment), the player can interact (E) with
+  the `COURSE_ATTENDEE` nearest to them to attempt to copy their answers.
+- Cheat success: 70% base. Reduced to 30% if Phil is `SUSPICIOUS`.
+- Successful cheat: answers auto-filled correctly; `CHEEKY_CHEATER` achievement.
+- Caught: Phil ejects player; course fails; `CHEATING_AT_AWARENESS_COURSE` recorded in
+  `CriminalRecord`; Notoriety +4.
+
+#### Course Day Disruption
+- The player can optionally trigger the fire alarm by interacting with the
+  `FIRE_ALARM_PROP` (one per room, requires 2 COIN bribe to reset or LOCKPICK).
+  Alarm triggers `FireStationSystem` response within 30 seconds; all NPCs evacuate
+  room; player leaves unnoticed.
+  - **If course was ≥ 60% complete** at alarm time: Denise reschedules to next Saturday
+    at no extra cost (pity re-sit). Achievement: `FIRE_ALARM_COWARD`.
+  - **If course was < 60% complete**: course counts as failed, fine re-issued.
+
+#### Speed Camera Placement in World
+- `SPEED_CAMERA_PROP` placed on main road segments by `WorldGenerator` (2–4 on the
+  high street, 1 near the school zone).
+- Active 24/7. Detection triggers only when the player is *driving a car* (i.e.,
+  `CarDrivingSystem.isInCar()` returns true) and speed exceeds `SPEED_LIMIT_THRESHOLD`.
+- One detection per car journey maximum (a SPEEDING_NOTICE cannot stack).
+
+### Events Table
+
+| Event | Trigger | Effect |
+|-------|---------|--------|
+| `SPEEDING_DETECTED` | Speed > threshold while SPEED_CAMERA_PROP within 20 blocks | `SPEEDING_NOTICE` in inventory; TimeSystem flag set |
+| `NOTICE_EXPIRED` | 2 in-game days pass with notice in inventory | `COURT_SUMMONS` issued; fine + Notoriety |
+| `COURSE_COMPLETE` | All 5 segments attended & answered | Notice cleared; `SPEED_AWARE` achievement |
+| `NODDING_OFF_CAUGHT` | Phil detects inattentive player | Segment marked `INATTENTIVE`; warning |
+| `THREE_INATTENTIVE` | 3 inattentive segments | Ejection; course failed |
+| `CHEAT_CAUGHT` | Phil catches copying attempt | Ejection; `CHEATING_AT_AWARENESS_COURSE`; Notoriety +4 |
+| `FIRE_ALARM_TRIGGERED` | Player activates `FIRE_ALARM_PROP` | Evacuation; conditional rescheduling or failure |
+| `BRIAN_SNORING` | 45+ minutes into session | Phil detection radius −50%; cheat window opens |
+
+### Integration
+
+- `CarDrivingSystem` — speed detection hook; `isInCar()` guard.
+- `TrafficWardenSystem` — Clive can also trigger detection at close range.
+- `CommunityCentreSystem` — course held in Room B on Saturday; Denise sells booking.
+- `PostOfficeSystem` — fine payment counter interaction.
+- `MagistratesCourtSystem` — COURT_SUMMONS escalation path.
+- `CriminalRecord` — `SPEEDING`, `DRIVING_WITHOUT_DUE_CARE`, `CHEATING_AT_AWARENESS_COURSE`.
+- `NotorietySystem` — various penalties (ignore: +8; fine: +3; caught cheating: +4).
+- `WantedSystem` — COURT_SUMMONS adds +1 wanted star.
+- `FireStationSystem` — fire alarm evacuation.
+- `StreetSkillSystem` — `DRIVING_XP` +2 on course completion; `STREET_SMARTS_XP` +1 on successful cheat.
+- `AchievementSystem` — `SPEED_AWARE`, `KICKED_OUT_OF_AWARENESS_COURSE`, `CHEEKY_CHEATER`,
+  `FIRE_ALARM_COWARD`, `BRIAN_NODDED_OFF` (present when Brian falls asleep).
+- `RumourNetwork` — `SPEED_CAMERA_CLOCKED` rumour seeded on first detection.
+- `NewspaperSystem` — no headline unless COURT_SUMMONS escalates.
+- `WeatherSystem` — course unaffected by weather (indoors); RAIN means higher attendance.
+- `TimeSystem` — notice 2-day expiry; course Saturday 09:00–13:00.
+
+### New Types Required
+
+**New Material** (add to `Material.java`):
+```
+SPEEDING_NOTICE("Speeding Notice"),       // Section 172 NIP from speed camera or Clive
+COURT_SUMMONS("Court Summons"),           // Auto-issued on 2-day notice expiry
+```
+
+**New PropType** (add to `PropType.java`):
+```
+SPEED_CAMERA_PROP(0.40f, 2.50f, 0.40f, 10, null),
+SPEED_AWARENESS_BOARD_PROP(2.0f, 1.5f, 0.1f, 3, null),
+```
+
+**New NPCType** (add to `NPCType.java`):
+```
+SPEED_AWARENESS_INSTRUCTOR(25f, 0f, 0f, false),  // Phil — passive-aggressive course facilitator
+```
+
+**New CrimeType** (add to `CriminalRecord.java`):
+```
+SPEEDING,
+DRIVING_WITHOUT_DUE_CARE,
+CHEATING_AT_AWARENESS_COURSE,
+```
+
+**New AchievementTypes** (add to `AchievementType.java`):
+```
+SPEED_AWARE,                       // Complete the speed awareness course
+KICKED_OUT_OF_AWARENESS_COURSE,    // Ejected by Phil for 3 inattentive segments
+CHEEKY_CHEATER,                    // Successfully copy answers from a course attendee
+FIRE_ALARM_COWARD,                 // Pull the fire alarm to escape the course
+BRIAN_NODDED_OFF,                  // Present when Brian falls asleep (minute 45+)
+```
+
+**New RumourType** (add to `RumourType.java`):
+```
+/** "Got done by that speed camera on the high street. Bloody thing."
+ * Seeded on first SPEEDING_DETECTED event. Spreads via PUBLIC, DRIVER. */
+SPEED_CAMERA_CLOCKED,
+```
+
+### New Java Files
+- `SpeedAwarenessCourseSystem.java` in `ragamuffin.core` — main system
+- `SpeedAwarenessCourseSystemTest.java` in `src/test/java/ragamuffin/core/`
+- `Issue1367SpeedAwarenessCourseIntegrationTest.java` in `src/test/java/ragamuffin/integration/`
+
+### Unit Tests
+- `testSpeedingDetectedAboveThreshold`: Set car speed > `SPEED_LIMIT_THRESHOLD` with `SPEED_CAMERA_PROP` within 20 blocks; verify `SPEEDING_NOTICE` in player inventory.
+- `testSpeedingNotDetectedBelowThreshold`: Set car speed ≤ threshold; verify no notice.
+- `testSpeedingNotDetectedOnFoot`: Player not in car; verify no detection even at high movement speed.
+- `testNoticeExpiresAfterTwoDays`: Place `SPEEDING_NOTICE` in inventory; advance 2 in-game days; verify `COURT_SUMMONS` issued, Notoriety +8.
+- `testFinePaymentClearsNotice`: Pay fine at PostOffice; verify `SPEEDING_NOTICE` removed, Notoriety +3, `SPEEDING` in CriminalRecord.
+- `testCourseBookingAccepted`: Pay 6 COIN to Denise; verify `courseBooked = true` and COIN deducted.
+- `testCourseBookingRefusedIfNotOwingNotice`: Player without notice; verify Denise refuses booking.
+- `testCourseCompleteOnAllSegments`: Simulate all 5 segments answered; verify `courseComplete = true` and notice cleared.
+- `testPlayerAbsenceFails`: Player leaves room >3 in-game minutes; verify course marked failed.
+- `testNoddingOffDebuff`: Player stationary 4+ minutes; force RNG to trigger `NODDING_OFF`; verify debuff applied.
+- `testPhilCatchesNoddingOffWhenNotDistracted`: Phil not distracted; nodding-off player; verify segment marked `INATTENTIVE`.
+- `testBrianSnoringReducesDetectionRadius`: Advance to minute 45; verify Phil detection radius = `PHIL_BASE_DETECTION * 0.5f`.
+- `testThreeInattentiveSegmentsEjectsPlayer`: Simulate 3 `INATTENTIVE` segments; verify ejection and course failure.
+- `testCheatSuccessful`: Set RNG to succeed; force segment 5; interact with nearest attendee; verify `CHEEKY_CHEATER` achievement.
+- `testCheatCaughtByPhilWhenSuspicious`: Set Phil `SUSPICIOUS = true`; cheat attempt fails; verify `CHEATING_AT_AWARENESS_COURSE` in CriminalRecord, Notoriety +4.
+- `testFireAlarmAtSixtyPctReschedules`: Trigger alarm at `courseProgressSteps = 3` (of 5); verify Denise reschedules with no extra cost; `FIRE_ALARM_COWARD` achievement.
+- `testFireAlarmBeforeSixtyPctFails`: Trigger alarm at `courseProgressSteps = 2`; verify course fails.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **End-to-end fine path**: Player drives car; set speed to `SPEED_LIMIT_THRESHOLD + 1`; place `SPEED_CAMERA_PROP` 10 blocks ahead. Verify `SPEEDING_NOTICE` in inventory within 1 game tick. Player walks to Post Office and pays 12 COIN. Verify `SPEEDING_NOTICE` removed. Verify `SPEEDING` in `CriminalRecord`. Verify Notoriety increased by 3. Verify `SPEED_CAMERA_CLOCKED` rumour seeded in `RumourNetwork`.
+
+2. **End-to-end course completion path**: Player receives `SPEEDING_NOTICE`. Books course with Denise (6 COIN). Advance to Saturday 09:00. Verify Phil (`SPEED_AWARENESS_INSTRUCTOR`) spawned within Room B. Verify `SPEED_AWARENESS_BOARD_PROP` present. Player stays within 10 blocks for all 5 segments (10 in-game minutes each). Answer each question (any key). Verify `courseComplete = true` at 13:00. Verify `SPEEDING_NOTICE` removed. Verify `SPEED_AWARE` achievement unlocked. Verify `SPEEDING` NOT in `CriminalRecord`.
+
+3. **Notice ignored — court summons escalation**: Player receives `SPEEDING_NOTICE`. Advance 2 full in-game days without payment or booking. Verify `COURT_SUMMONS` appears in inventory. Verify Notoriety increased by 8. Verify `DRIVING_WITHOUT_DUE_CARE` in `CriminalRecord`. Verify WantedSystem wanted stars increased by 1.
+
+4. **Brian snoring enables successful cheat**: Player books course. Advance to Saturday 09:00. Advance 45 in-game minutes. Verify Brian NPC (`PUBLIC` with name "Brian") is in `SLEEPING` state. Verify Phil's detection radius = `PHIL_BASE_DETECTION * 0.5f`. During segment 5, player interacts (E) with nearest `COURSE_ATTENDEE`. Force RNG cheat roll to succeed. Verify `CHEEKY_CHEATER` achievement. Verify course completes successfully (notice cleared).
+
+5. **Fire alarm rescue — rescheduling**: Player books course. Advances to Saturday 09:30 (30 minutes in; `courseProgressSteps = 1` of 5). Player interacts with `FIRE_ALARM_PROP`. Verify `FireStationSystem` response spawned. Verify all NPCs evacuate Room B. Verify `FIRE_ALARM_COWARD` achievement. Verify course not yet complete but `rescheduleGranted = true`. Verify Denise offers Saturday rescheduling at no additional cost. Advance to next Saturday; verify course can be re-entered from step 1.
+
+// ── Issue #1367: Add Northfield Speed Awareness Course ───────────────────────────────────────────
+// New: SpeedAwarenessCourseSystem.java in ragamuffin.core
+// New: SpeedAwarenessCourseSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1367SpeedAwarenessCourseIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New NPCType: SPEED_AWARENESS_INSTRUCTOR (Phil)
+// New Materials: SPEEDING_NOTICE, COURT_SUMMONS
+// New PropTypes: SPEED_CAMERA_PROP, SPEED_AWARENESS_BOARD_PROP
+// New CrimeTypes: SPEEDING, DRIVING_WITHOUT_DUE_CARE, CHEATING_AT_AWARENESS_COURSE
+// New AchievementTypes: SPEED_AWARE, KICKED_OUT_OF_AWARENESS_COURSE, CHEEKY_CHEATER,
+//   FIRE_ALARM_COWARD, BRIAN_NODDED_OFF
+// New RumourType: SPEED_CAMERA_CLOCKED
+// Integration: CarDrivingSystem, TrafficWardenSystem, CommunityCentreSystem,
+//   PostOfficeSystem, MagistratesCourtSystem, CriminalRecord, NotorietySystem,
+//   WantedSystem, FireStationSystem, StreetSkillSystem, AchievementSystem,
+//   RumourNetwork, TimeSystem, WeatherSystem
