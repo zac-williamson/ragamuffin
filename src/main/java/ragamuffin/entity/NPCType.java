@@ -2817,7 +2817,20 @@ public enum NPCType {
      * 8–12 members attend each rehearsal — prime pickpocket opportunity.
      * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    NAODS_MEMBER(20f, 0f, 0f, false);
+    NAODS_MEMBER(20f, 0f, 0f, false),
+
+    // ── Issue #1357: Northfield Charity Fun Run ────────────────────────────────
+
+    /**
+     * FUN_RUN_MARSHAL — Janet, the cheerful registration marshal at the Northfield
+     * Community Centre Charity Fun Run. Stationed at the START_FINISH_ARCH_PROP.
+     * Press E to register (2 COIN entry): receives RACE_NUMBER_BIB + SPONSOR_SHEET.
+     * Carries the registration pot (up to 40 COIN) in her bum bag — pickpocketing
+     * steals up to 40 COIN (THEFT_FROM_PERSON, Notoriety +5). Volunteer-as-assistant
+     * embezzlement path also available (press E while wearing HIGH_VIS_JACKET).
+     * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    FUN_RUN_MARSHAL(25f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
