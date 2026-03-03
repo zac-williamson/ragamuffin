@@ -54909,3 +54909,150 @@ None — `COLLECTION_THIEF` already defined. (Add `SOUP_KITCHEN_REGULAR` — "Ha
 // `BRASS_INSTRUMENT` (Material) and `SHELTER_BED_PROP` (PropType) are new and must be added.
 // `COLLECTION_BOX_ROB` and `CAUGHT_IN_UNIFORM` (RumourType) are new and must be added.
 // `SOUP_KITCHEN_REGULAR` (AchievementType) is new and must be added.
+
+---
+
+## Issue #1447: Northfield Street Hustler — Danny's Three-Card Monte, the Shills & the Vice Squad Raid
+
+### Overview
+
+Danny Doyle (`STREET_HUSTLER_NPC`) sets up a three-card monte game on a cardboard box near the Northfield Indoor Market on Friday and Saturday afternoons (14:00–19:30). Two `SHILL_NPC` players are planted in the crowd to appear to win, luring passing `PUBLIC` NPCs. A plainclothes `VICE_PCSO_NPC` circulates the area and can trigger a raid. The player can bet against Danny, act as a lookout for a cut, steal Danny's rigged deck to run their own game, or tip off the vice squad for a reward.
+
+No system class `StreetHustlerSystem.java` has ever been created. This issue implements it.
+
+---
+
+### Opening Hours & Location
+
+| Day           | Hours       | What Happens                                             |
+|---------------|-------------|----------------------------------------------------------|
+| Fri–Sat       | 14:00–19:30 | Danny sets up at INDOOR_MARKET landmark; shills active   |
+| Fri–Sat       | 14:30+      | PUBLIC NPCs accumulate; betting crowds form              |
+| Daily         | 02:00–05:00 | Danny counts takings at lock-up garage; rigged deck stored |
+
+---
+
+### Mechanic 1 — The Bet (Player vs Danny)
+
+- Press E on Danny during active hours to open bet dialogue.
+- Bet options: 2 COIN, 5 COIN, 10 COIN.
+- Three-card monte logic: 15% base win chance (house advantage). Win: payout 2× bet. Lose: Danny takes coins.
+- Shills (2× `SHILL_NPC`) visibly win 3 COIN rounds every 90 seconds to lure the crowd.
+- After 3 consecutive player losses: player can accuse Danny of cheating (E → "You're having a laugh") → Danny denies; Notoriety +0; seeds `HUSTLER_CONFRONTATION` rumour. 4th accusation: Danny's `SHILL_NPC` henchman steps in → brief HOSTILE event (pushes player, 3 damage), then Danny packs up for 30 in-game minutes.
+- Achievement: `MUGGED_OFF` on first loss; `AGAINST_THE_ODDS` on winning 3 consecutive bets.
+
+---
+
+### Mechanic 2 — The Lookout Deal
+
+- Press E on Danny when no PUBLIC NPCs within 8 blocks: Danny offers the player the lookout role.
+- Lookout: player must remain within 15 blocks of Danny's setup and watch for `VICE_PCSO_NPC` approaching within 12 blocks.
+- Warn Danny: press F (interaction key) → Danny folds within 3 seconds, avoiding the raid. Player receives `LOOKOUT_CUT` (4 COIN) per 10 in-game minutes on duty.
+- Fail to warn (PCSO reaches within 4 blocks while player is lookout): `VICE_PCSO_NPC` raids, Danny arrested, player receives `ACCOMPLICE_TO_FRAUD` CrimeType, WantedSystem +1, Notoriety +4.
+- Achievement: `EYES_PEELED` on first successful warning.
+
+---
+
+### Mechanic 3 — Steal Danny's Rigged Deck
+
+- `RIGGED_CARD_DECK` is either in Danny's inventory (pickpocketable: PICKPOCKET ≥ Apprentice, 25% success) or stored at `LOCK_UP_GARAGE_PROP` 02:00–05:00 (lockpick or 8 hits on padlock prop).
+- With `RIGGED_CARD_DECK` in inventory + Notoriety < 30: player can press E on any clear patch of pavement (at least 6 blocks from any building entrance) to deploy their own game using `MAKESHIFT_TABLE_PROP`.
+  - Attract up to 4 `PUBLIC` NPCs per 5 minutes; earn 2–6 COIN per attracted mark.
+  - `VICE_PCSO_NPC` patrol: 20% per in-game minute chance of appearing. If spotted within 10 blocks: `ILLEGAL_GAMBLING` CrimeType, WantedSystem +1, `MAKESHIFT_TABLE_PROP` confiscated, `RIGGED_CARD_DECK` removed.
+  - Danny's `SHILL_NPC` henchman appears within 5 minutes to "reclaim" the deck: brief HOSTILE event (8 damage if player doesn't flee); seeds `HUSTLER_FEUD` rumour.
+- Achievement: `DEALER_DEALER` on first successful own-game session earning ≥ 10 COIN.
+
+---
+
+### Mechanic 4 — Tip Off the Vice Squad
+
+- Player can visit `POLICE_STATION` during 08:00–17:00 Mon–Fri and speak to desk sergeant: pay 0 COIN but receive `VICE_INFORMANT_REWARD` (8 COIN) if Danny is subsequently arrested within the next 2 in-game days.
+- `VICE_PCSO_NPC` responds 30% faster during patrol after tip-off (patrol cooldown: 4 min → 1.5 min).
+- Once Danny is arrested: game is suspended until next Friday. Seeds `DANNY_NICKED` rumour.
+- Notoriety +3 if the tip is traced back (30% chance; `GRASS` CrimeType logged). Seeds `PLAYER_GRASSED` rumour.
+- Achievement: `COPPER'S_NAR` on first successful tip-off leading to arrest.
+
+---
+
+### Mechanic 5 — The Vice Raid
+
+- `VICE_PCSO_NPC` (Karen, plainclothes) patrols a 40-block circuit around the market 14:00–19:30 Fri–Sat.
+- On approach within 4 blocks of Danny's game with no lookout warning: raid triggered.
+  - Danny, both `SHILL_NPC`s arrested; all money in play confiscated.
+  - If player was betting: `ILLEGAL_GAMBLING` CrimeType, WantedSystem +1, any bet money lost.
+  - If player was only watching (not betting, not lookout): no crime recorded.
+- Karen can be bribed mid-approach (press E, 12 COIN): she walks away; seeds `VICE_BRIBED` rumour; Notoriety −1; WantedSystem unchanged. Only works once per session.
+- Disguise: `SUIT_JACKET` reduces Karen's suspicion radius by 30% (15 blocks → 10.5 blocks effective).
+
+---
+
+### Integration with Existing Systems
+
+- **`WantedSystem`**: raid arrest +1; lookout failure +1; running own game detected +1; grassed tip traced +0.
+- **`NotorietySystem`**: lookout failure +4; own game detected +5; grass traced +3; Karen bribed −1; mugged off first loss +1.
+- **`CriminalRecord`**: `ILLEGAL_GAMBLING` (betting in raid/own game detected); `ACCOMPLICE_TO_FRAUD` (lookout failure); `GRASS` (tip-off traced).
+- **`FactionSystem`**: `STREET_LADS` Respect +2 per lookout session; −5 if Danny nicked via player tip-off.
+- **`RumourNetwork`**: `HUSTLER_CONFRONTATION` (accusing Danny); `HUSTLER_FEUD` (stolen deck); `DANNY_NICKED` (raid/tip-off arrest); `PLAYER_GRASSED` (tip traced); `VICE_BRIBED` (bribe Karen).
+- **`StreetSkillSystem`**: PICKPOCKET XP +1 on successful deck steal; FENCE XP +1 on own-game session; INFLUENCE XP +1 per lookout session.
+- **`NoiseSystem`**: Danny's game 1.5f ambient crowd noise; raid triggers 0f (Karen moves quietly).
+- **`NewspaperSystem`**: Danny arrested headline: "MARKET CARD SHARP DANNY DOYLE NICKED — NORTHFIELD VICE SQUAD CLAIMS FOUR-FIGURE HAUL".
+- **`TimeSystem`**: game active Fri–Sat 14:00–19:30; Danny at lock-up 02:00–05:00.
+- **`DisguiseSystem`**: `SUIT_JACKET` reduces Karen's detection radius; wearing `TRACKSUIT` adds +10% chance Danny approaches player to offer lookout.
+- **`AchievementSystem`**: `MUGGED_OFF`, `AGAINST_THE_ODDS`, `EYES_PEELED`, `DEALER_DEALER`, `COPPER'S_NAR`.
+- **`NeighbourhoodSystem`**: Vibes −1 per day Danny's game is active; +2 if Danny arrested.
+
+---
+
+### New Material Entries Required
+
+- `RIGGED_CARD_DECK` — "A bent deck with a marked queen. Property of Danny Doyle. Do not touch." Pickpocketable from Danny or recoverable from lock-up. Fence value 3 COIN; used to deploy own game. Cannot be sold at `CharityShopSystem`.
+- `LOOKOUT_CUT` — "Folded notes, quickly counted. Don't ask where they came from." 4 COIN value; auto-converts to COIN on pickup; not a persistent item.
+
+### New PropType Entries Required
+
+- `MAKESHIFT_TABLE_PROP` — Danny's cardboard-box-on-a-milk-crate setup. Dims: 0.8 × 0.9 × 0.8; breakable (4 hits); drops `RIGGED_CARD_DECK` on break. Confiscated (despawned) on vice raid.
+
+### New NPCType Entries Required
+
+- `STREET_HUSTLER_NPC` — Danny Doyle. Stone-wash jacket, gold sovereign ring, deck of cards. Friendly-passive to player at Notoriety < 40; hostile to player if deck stolen. HP: 35f, attack: 5f, cooldown: 1.5f, hostile: false (true if deck stolen).
+- `SHILL_NPC` — Danny's planted accomplice (2 per session). Poses as a PUBLIC NPC betting visibly. Turns briefly HOSTILE (pushes 3 damage) if player accuses Danny 4+ times. HP: 25f, attack: 3f, cooldown: 2.0f, hostile: false.
+- `VICE_PCSO_NPC` — Karen, plainclothes vice officer. Looks like PUBLIC until within 4 blocks of game; then reveals badge. HP: 35f, attack: 6f, cooldown: 1.2f, hostile: false (arrests, doesn't attack unless resisted).
+
+### New RumourType Entries Required
+
+- `HUSTLER_CONFRONTATION` — "Someone had a right go at that card fella near the market. He wasn't having it."
+- `HUSTLER_FEUD` — "Someone nicked Danny's deck. He's absolutely fuming. Watch yourself."
+- `DANNY_NICKED` — "That card sharp near the market got done. Vice squad, apparently. Took ages."
+- `PLAYER_GRASSED` — "Word is someone grassed Danny up to the coppers. Proper snake move."
+- `VICE_BRIBED` — "I heard that plainclothes copper took a bung to look the other way. Scandal."
+
+### New AchievementType Entries Required
+
+- `MUGGED_OFF` — "Lost your first bet to Danny. Welcome to Northfield." Target 1.
+- `AGAINST_THE_ODDS` — "Won three bets in a row against a three-card monte dealer. Statistically baffling." Target 3.
+- `EYES_PEELED` — "Successfully warned Danny about the vice squad. Lookout work is honest work. Sort of." Target 1.
+- `DEALER_DEALER` — "Ran your own three-card monte and earned 10+ COIN in a single session." Target 1.
+- `COPPER_S_NAR` — "Tipped off the vice squad and got Danny nicked. The street lads won't forget." Target 1.
+
+---
+
+### Integration Tests
+
+1. **Danny's game activates Friday 14:00**: set day to Friday (dayCount % 7 == 4), time to 14:05; call `StreetHustlerSystem.update(delta, timeSystem, world, npcManager, ...)`; verify `isGameActive()` returns true; verify `STREET_HUSTLER_NPC` NPC exists at INDOOR_MARKET landmark; verify ≥ 2 `SHILL_NPC` NPCs exist within 8 blocks of Danny.
+
+2. **Player bet win/loss probabilities**: seed RNG with known value; simulate 100 bets of 2 COIN; verify win count is between 5 and 30 (roughly 15% ± variance); verify player COIN balance decreases on loss and increases by 4 on win.
+
+3. **Lookout warning prevents raid**: set player as lookout; advance time until `VICE_PCSO_NPC` is within 12 blocks of Danny; simulate player pressing F (warn action); verify Danny's `isPackedUp()` returns true within 3 game-seconds; verify no `ILLEGAL_GAMBLING` crime in `CriminalRecord`; verify player COIN increased by `LOOKOUT_CUT_AMOUNT`.
+
+4. **Rigged deck steal triggers Danny hostility and HUSTLER_FEUD rumour**: set player PICKPOCKET skill ≥ Apprentice; force RNG to success path; simulate pickpocket action on Danny; verify player inventory contains `RIGGED_CARD_DECK`; verify Danny NPC state is HOSTILE; verify `HUSTLER_FEUD` rumour exists in `RumourNetwork`.
+
+5. **Vice raid on unwarned game arrests Danny and applies crime**: set player as active bettor (2 COIN bet placed); advance `VICE_PCSO_NPC` to within 4 blocks; call update; verify Danny NPC is removed (arrested); verify `CriminalRecord` contains `ILLEGAL_GAMBLING`; verify `WantedSystem.getStars() >= 1`; verify `DANNY_NICKED` rumour exists in `RumourNetwork`.
+
+6. **Tip-off leads to faster vice patrol and reward**: player visits POLICE_STATION and calls `tipOffViceSquad()`; verify `isViceTipped()` returns true; verify vice patrol cooldown is `VICE_PATROL_COOLDOWN_TIPPED` (not `VICE_PATROL_COOLDOWN_NORMAL`); advance simulation until Danny is arrested; verify player receives `VICE_INFORMANT_REWARD_COIN` (8 COIN); verify `COPPER_S_NAR` achievement is unlocked.
+
+// `StreetHustlerSystem.java` must be created as the sole new source file.
+// `RIGGED_CARD_DECK` (Material) and `LOOKOUT_CUT` (Material) are new and must be added.
+// `MAKESHIFT_TABLE_PROP` (PropType) is new and must be added.
+// `STREET_HUSTLER_NPC`, `SHILL_NPC`, `VICE_PCSO_NPC` (NPCType) are new and must be added.
+// `HUSTLER_CONFRONTATION`, `HUSTLER_FEUD`, `DANNY_NICKED`, `PLAYER_GRASSED`, `VICE_BRIBED` (RumourType) are new and must be added.
+// `MUGGED_OFF`, `AGAINST_THE_ODDS`, `EYES_PEELED`, `DEALER_DEALER`, `COPPER_S_NAR` (AchievementType) are new and must be added.
