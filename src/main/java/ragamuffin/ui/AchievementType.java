@@ -6123,6 +6123,62 @@ public enum AchievementType {
         "Where Were You in 2014?",
         "You won a mug. It commemorates nothing important. You treasure it.",
         1
+    ),
+
+    // ── Issue #1381: Northfield Halloween ─────────────────────────────────────
+
+    /**
+     * TRICK_OR_TREATER — complete the full trick-or-treat route on Halloween night (target=1).
+     */
+    TRICK_OR_TREATER(
+        "Trick or Treat!",
+        "You completed the full trick-or-treat route. Bag full, dignity intact. Mostly.",
+        1
+    ),
+
+    /**
+     * HALLOWEEN_VANDAL — egg 5 houses, cars, or NPCs during Halloween (target=5).
+     */
+    HALLOWEEN_VANDAL(
+        "Egg-cellent Work",
+        "Five things covered in egg. Northfield's finest Halloween tradition.",
+        5
+    ),
+
+    /**
+     * DAVE_NEMESIS — trigger Dave's ARGOS_MOTION_SENSOR_PROP by egging his car (target=1).
+     */
+    DAVE_NEMESIS(
+        "Dave's Enemy",
+        "You egged Dave's car and set off his Argos motion sensor. He came out in his slippers.",
+        1
+    ),
+
+    /**
+     * COSTUME_CRIME — wear a Halloween costume while committing a crime (target=1).
+     */
+    COSTUME_CRIME(
+        "Method Acting",
+        "You committed a crime in full costume. The police description was... unhelpful.",
+        1
+    ),
+
+    /**
+     * PUMPKIN_KING — place 3 JACK_O_LANTERN_PROPs in one Halloween night (target=3).
+     */
+    PUMPKIN_KING(
+        "Pumpkin King",
+        "Three carved pumpkins placed. Northfield glows orange in your honour.",
+        3
+    ),
+
+    /**
+     * NIGHT_OWL — still on the estate after midnight on Halloween (target=1).
+     */
+    NIGHT_OWL(
+        "Night Owl",
+        "Still out after midnight on Halloween. The estate is yours. Almost.",
+        1
     );
 
     private final String name;

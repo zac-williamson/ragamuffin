@@ -1179,5 +1179,19 @@ public enum RumourType {
      * Seeded by StreetPartySystem when BBQ goes OUT_OF_CONTROL and spreads to 3+ blocks.
      * Triggers ARSON crime + Notoriety +10 + NeighbourhoodSystem VIBES −5.
      * Spreads via PUBLIC, PENSIONER NPCs. */
-    FIRE_HAZARD;
+    FIRE_HAZARD,
+
+    // ── Issue #1381: Northfield Halloween ─────────────────────────────────────
+
+    /** "Someone's been egging doors up and down the road. Absolute state of it."
+     * Seeded by HalloweenSystem when player eggs a house, car, or NPC.
+     * Triggers NeighbourhoodSystem VIBES −1 + Notoriety +2.
+     * Spreads via PUBLIC, PENSIONER NPCs. */
+    ANTI_SOCIAL_BEHAVIOUR,
+
+    /** "Halloween got completely out of hand out there — police were called three times."
+     * Seeded by HalloweenSystem when WantedSystem reaches 2+ stars during event.
+     * Triggers NeighbourhoodSystem VIBES −3 + NewspaperSystem headline.
+     * Spreads via PUBLIC, PENSIONER, NEIGHBOURHOOD_WATCH NPCs. */
+    HALLOWEEN_CHAOS;
 }

@@ -5973,7 +5973,49 @@ public enum Material {
     TOOLKIT("Toolkit"),
 
     /** Raffle rarest prize (5%). Tooltip: "Northfield's 2014 Bank Holiday. Someone still has it." */
-    COMMEMORATIVE_MUG("Commemorative Mug");
+    COMMEMORATIVE_MUG("Commemorative Mug"),
+
+    // ── Issue #1381: Northfield Halloween ─────────────────────────────────────
+
+    /** Throwable item — used to egg doors, cars, and NPCs during Halloween.
+     * Produces EGGED_DOOR_PROP decal and triggers NoiseSystem events. */
+    RAW_EGG("Raw Egg"),
+
+    /** Sweet — given by houses with high halloweenMoodScore during trick-or-treat. */
+    MINI_CHOCOLATE_BAR("Mini Chocolate Bar"),
+
+    /** Container — player uses this to participate in trick-or-treat route.
+     * Filled with MINI_CHOCOLATE_BAR and CRISP_PACKET items from houses. */
+    TRICK_OR_TREAT_BAG("Trick-or-Treat Bag"),
+
+    /** Wearable costume — grants disguiseBonus 20 on Halloween night, 5 off-season. */
+    WITCH_COSTUME("Witch Costume"),
+
+    /** Wearable costume — grants disguiseBonus 20 on Halloween night, 5 off-season. */
+    GHOST_SHEET("Ghost Sheet"),
+
+    /** Wearable costume — grants disguiseBonus 20 on Halloween night, 5 off-season.
+     * Conditional bonus suppresses SCHOOL_KID reactions. */
+    SKELETON_SUIT("Skeleton Suit"),
+
+    /** Wearable costume — grants disguiseBonus 20 on Halloween night, 5 off-season. */
+    PUMPKIN_HEAD_MASK("Pumpkin Head Mask"),
+
+    /** Seasonal produce — available at shops around Halloween.
+     * Carve with KNIFE to produce CARVED_PUMPKIN + PUMPKIN_INNARDS. */
+    RAW_PUMPKIN("Raw Pumpkin"),
+
+    /** Crafted item — carved RAW_PUMPKIN becomes a JACK_O_LANTERN_PROP when placed. */
+    CARVED_PUMPKIN("Carved Pumpkin"),
+
+    /** By-product of carving RAW_PUMPKIN. Can be used as allotment compost. */
+    PUMPKIN_INNARDS("Pumpkin Innards"),
+
+    /** Wearable costume accessory — part of the witch costume set. */
+    POINTY_HAT("Pointy Hat"),
+
+    /** Wearable costume accessory — part of the witch/vampire costume set. */
+    BLACK_CAPE("Black Cape");
 
     private final String displayName;
 
@@ -7288,6 +7330,21 @@ public enum Material {
             case COMMEMORATIVE_MUG: return cs(0.25f, 0.45f, 0.72f, // Council blue
                                               0.92f, 0.88f, 0.72f); // Cream interior
 
+            // Issue #1381: Northfield Halloween
+            case RAW_EGG:           return c(0.95f, 0.92f, 0.80f); // Off-white egg
+            case MINI_CHOCOLATE_BAR: return c(0.35f, 0.18f, 0.08f); // Dark chocolate
+            case TRICK_OR_TREAT_BAG: return c(1.00f, 0.55f, 0.00f); // Orange bag
+            case WITCH_COSTUME:     return c(0.10f, 0.08f, 0.12f); // Near black
+            case GHOST_SHEET:       return c(0.95f, 0.95f, 0.95f); // White sheet
+            case SKELETON_SUIT:     return cs(0.92f, 0.92f, 0.88f, // Bone white
+                                              0.12f, 0.12f, 0.12f); // Black details
+            case PUMPKIN_HEAD_MASK: return c(0.95f, 0.50f, 0.05f); // Jack-o-lantern orange
+            case RAW_PUMPKIN:       return c(1.00f, 0.50f, 0.05f); // Pumpkin orange
+            case CARVED_PUMPKIN:    return c(0.88f, 0.45f, 0.05f); // Darker carved pumpkin
+            case PUMPKIN_INNARDS:   return c(0.88f, 0.65f, 0.10f); // Orange-yellow pulp
+            case POINTY_HAT:        return c(0.10f, 0.08f, 0.12f); // Black witch hat
+            case BLACK_CAPE:        return c(0.08f, 0.08f, 0.10f); // Deep black cape
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -7836,6 +7893,19 @@ public enum Material {
             case BOTTLE_OF_WINE:
             case TOOLKIT:
             case COMMEMORATIVE_MUG:
+            // Issue #1381: Northfield Halloween — not block items
+            case RAW_EGG:
+            case MINI_CHOCOLATE_BAR:
+            case TRICK_OR_TREAT_BAG:
+            case WITCH_COSTUME:
+            case GHOST_SHEET:
+            case SKELETON_SUIT:
+            case PUMPKIN_HEAD_MASK:
+            case RAW_PUMPKIN:
+            case CARVED_PUMPKIN:
+            case PUMPKIN_INNARDS:
+            case POINTY_HAT:
+            case BLACK_CAPE:
                 return false;
             default:
                 return true;
@@ -8036,6 +8106,13 @@ public enum Material {
             case BOTTLE_OF_WINE:
             case TOOLKIT:
             case COMMEMORATIVE_MUG:
+            // Issue #1381: Northfield Halloween — small items sit on surfaces
+            case RAW_EGG:
+            case MINI_CHOCOLATE_BAR:
+            case TRICK_OR_TREAT_BAG:
+            case RAW_PUMPKIN:
+            case CARVED_PUMPKIN:
+            case PUMPKIN_INNARDS:
                 return true;
             default:
                 return false;
@@ -9409,6 +9486,32 @@ public enum Material {
                 return IconShape.BOX;         // compact tool set
             case COMMEMORATIVE_MUG:
                 return IconShape.CYLINDER;    // ceramic mug
+
+            // Issue #1381: Northfield Halloween
+            case RAW_EGG:
+                return IconShape.CYLINDER;    // small oval egg
+            case MINI_CHOCOLATE_BAR:
+                return IconShape.BOX;         // small chocolate bar
+            case TRICK_OR_TREAT_BAG:
+                return IconShape.BOX;         // orange bag
+            case WITCH_COSTUME:
+                return IconShape.FLAT_PAPER;  // folded costume
+            case GHOST_SHEET:
+                return IconShape.FLAT_PAPER;  // white sheet
+            case SKELETON_SUIT:
+                return IconShape.FLAT_PAPER;  // folded suit
+            case PUMPKIN_HEAD_MASK:
+                return IconShape.BOX;         // round mask
+            case RAW_PUMPKIN:
+                return IconShape.BOX;         // round pumpkin
+            case CARVED_PUMPKIN:
+                return IconShape.BOX;         // carved round pumpkin
+            case PUMPKIN_INNARDS:
+                return IconShape.FOOD;        // gooey innards
+            case POINTY_HAT:
+                return IconShape.BOX;         // pointed hat
+            case BLACK_CAPE:
+                return IconShape.FLAT_PAPER;  // folded cape
 
             default:
                 return IconShape.BOX;
