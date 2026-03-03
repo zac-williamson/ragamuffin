@@ -4338,7 +4338,18 @@ public enum PropType {
      * Area", "Forklift Operating") on a warehouse wall.
      * Purely decorative. Destroyed by 1 punch; yields nothing.
      */
-    SAFETY_SIGN(0.60f, 0.60f, 0.02f, 1, null);
+    SAFETY_SIGN(0.60f, 0.60f, 0.02f, 1, null),
+
+    // ── Issue #1469: Northfield Second-Hand Record Shop ───────────────────────
+
+    /**
+     * RECORD_SHELF_PROP — a wooden crate-and-shelf unit packed with vinyl records
+     * inside Spin City Records. Player can browse (E) to buy a VINYL_RECORD for 2 COIN,
+     * or hold E for 6 seconds to crate-dig (12% chance of RARE_PRESSING at standard price,
+     * before Clive spots them). Three to five units line the walls of the shop.
+     * Destroyed by 4 punches; drops a VINYL_RECORD.
+     */
+    RECORD_SHELF_PROP(0.80f, 1.60f, 0.40f, 4, Material.VINYL_RECORD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data

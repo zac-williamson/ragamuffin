@@ -6895,7 +6895,26 @@ public enum Material {
      * Can be used as evidence at the COUNCIL_OFFICE to trigger the Trading Standards sting.
      * Holding it as evidence earns a 5 COIN whistleblower reward.
      */
-    BLESSED_WATER_BOTTLE("Blessed Water Bottle");
+    BLESSED_WATER_BOTTLE("Blessed Water Bottle"),
+
+    // ── Issue #1469: Northfield Second-Hand Record Shop ───────────────────────
+
+    /**
+     * RARE_PRESSING — a genuine rare vinyl pressing from a RECORD_SHELF_PROP (12% crate-dig chance).
+     * Sell price: 6 COIN to Clive; 12 COIN to Trevor if it matches his genre.
+     * Broadcast on TRANSMITTER_PROP draws +6 LISTENER NPCs and grants Vibes +2 town-wide.
+     * Fence value: 4 COIN.
+     */
+    RARE_PRESSING("Rare Pressing"),
+
+    /**
+     * FAKE_RARE_LABEL — a forged rare-pressing label, crafted from PRINTER_PAPER + INK_BOTTLE
+     * at the InternetCafe. Apply to a standard VINYL_RECORD to pass it off as a RARE_PRESSING.
+     * Clive catches it 35% of the time (Notoriety +6, CrimeType.FRAUD, banned for the day).
+     * Trevor catches it 50% of the time (HOSTILE, TRADING_SCAM rumour, skips 3 Wednesdays).
+     * Successfully fool Clive 3 times → CLIVE_KNOWS_NOTHING achievement.
+     */
+    FAKE_RARE_LABEL("Fake Rare Label");
 
     private final String displayName;
 
@@ -8381,6 +8400,18 @@ public enum Material {
                                                     0.15f, 0.42f, 0.72f); // Blue stamp
             case PETITION_BOARD:          return cs(0.72f, 0.55f, 0.30f, // Brown clipboard
                                                     0.88f, 0.92f, 0.88f); // White paper
+
+            // Issue #1461: Northfield Street Preacher
+            case MEGAPHONE:               return cs(0.88f, 0.72f, 0.10f, // Yellow megaphone body
+                                                    0.48f, 0.48f, 0.52f); // Grey handle
+            case BLESSED_WATER_BOTTLE:    return cs(0.62f, 0.82f, 0.92f, // Light blue bottle
+                                                    0.88f, 0.92f, 0.88f); // White label
+
+            // Issue #1469: Northfield Second-Hand Record Shop
+            case RARE_PRESSING:           return cs(0.10f, 0.10f, 0.10f, // Black vinyl
+                                                    0.88f, 0.72f, 0.10f); // Gold label
+            case FAKE_RARE_LABEL:         return cs(0.88f, 0.72f, 0.10f, // Gold foil
+                                                    0.88f, 0.92f, 0.88f); // White paper backing
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
