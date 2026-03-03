@@ -5240,6 +5240,57 @@ public enum AchievementType {
         "Pyro Night",
         "Three fireworks launched and not a single arrest. Bonfire Night, Northfield style.",
         3
+    ),
+
+    // ── Issue #1319: NatWest Cashpoint — The Dodgy ATM ───────────────────────
+
+    /**
+     * Fires after the player successfully withdraws from the CASHPOINT_PROP on
+     * 7 different in-game days (resets daily at 00:00). Tracks unique calendar days.
+     */
+    CASHPOINT_REGULAR(
+        "Cashpoint Regular",
+        "Seven withdrawals on seven different days. You know this machine better than your own mum.",
+        7
+    ),
+
+    /**
+     * Fires on the player's first successful fraudulent withdrawal using
+     * STOLEN_PIN_NOTE + VICTIM_BANK_CARD between 22:00–05:00.
+     */
+    IDENTITY_THIEF(
+        "Identity Thief",
+        "You used someone else's card. At 3am. At a Northfield cashpoint. Peak.",
+        1
+    ),
+
+    /**
+     * Fires when the player collects 3 or more CLONED_CARD_DATA items in a single
+     * skimmer session (one CARD_SKIMMER_DEVICE attachment).
+     */
+    SKIMMER_KING(
+        "Skimmer King",
+        "Three cloned cards from one machine. Someone's very busy this evening.",
+        1
+    ),
+
+    /**
+     * Fires on the player's first successful forced entry into an out-of-service
+     * CASHPOINT_PROP (using CROWBAR or ANGLE_GRINDER).
+     */
+    CASH_AND_CARRY(
+        "Cash and Carry",
+        "You cracked open a cashpoint. Health and Safety would not approve.",
+        1
+    ),
+
+    /**
+     * Fires after the player completes 5 envelope-drop runs for Kenny (MONEY_MULE).
+     */
+    MONEY_MULE_RUNNER(
+        "Money Mule",
+        "Five envelope runs for Kenny. You didn't ask what was in them. Wise.",
+        5
     );
 
     private final String name;

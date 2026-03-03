@@ -5341,7 +5341,59 @@ public enum Material {
      * Looted from launderette dryers or charity shop rejects.
      * Fence value: 1 COIN.
      */
-    OLD_CLOTHES("Old Clothes");
+    OLD_CLOTHES("Old Clothes"),
+
+    // ── Issue #1319: NatWest Cashpoint — The Dodgy ATM ───────────────────────
+
+    /**
+     * STOLEN_PIN_NOTE — a scrap of paper jotted with a victim's PIN number,
+     * obtained by shoulder-surfing at the CASHPOINT_PROP.
+     * Combined with VICTIM_BANK_CARD enables fraudulent withdrawal (30–80 COIN)
+     * between 22:00–05:00. Fenceable at 5 COIN.
+     * Tooltip: "Four digits. Someone's whole financial life."
+     */
+    STOLEN_PIN_NOTE("Stolen PIN Note"),
+
+    /**
+     * VICTIM_BANK_CARD — the bank card of an NPC who was pickpocketed after
+     * successful shoulder-surfing at the cashpoint.
+     * Combined with STOLEN_PIN_NOTE enables fraudulent withdrawal (30–80 COIN)
+     * between 22:00–05:00. Single-use; destroyed after use.
+     * Tooltip: "Not yours. Obviously."
+     */
+    VICTIM_BANK_CARD("Victim Bank Card"),
+
+    /**
+     * CARD_SKIMMER_DEVICE — an illegal card skimmer sold by Kenny (MONEY_MULE)
+     * for 25 COIN on Fri/Sat 20:00–23:00.
+     * Player attaches it to CASHPOINT_PROP; each visiting NPC has 60% chance to
+     * yield CLONED_CARD_DATA. Active 2 in-game hours or until police within 3 blocks.
+     * Tooltip: "A neat little device. Criminally neat."
+     */
+    CARD_SKIMMER_DEVICE("Card Skimmer Device"),
+
+    /**
+     * CLONED_CARD_DATA — captured magnetic strip data from an NPC's card,
+     * harvested by the CARD_SKIMMER_DEVICE attached to CASHPOINT_PROP.
+     * Fenceable at 15 COIN each.
+     * Tooltip: "Data. Lots of it. None of it yours."
+     */
+    CLONED_CARD_DATA("Cloned Card Data"),
+
+    /**
+     * STUFFED_ENVELOPE — a thick envelope of cash given by Kenny (MONEY_MULE)
+     * for a money-mule run. Carry it 30 blocks south within 3 minutes for 15 COIN.
+     * Police stop while carrying triggers MONEY_LAUNDERING on CriminalRecord.
+     * Tooltip: "Heavy for an envelope. Don't open it."
+     */
+    STUFFED_ENVELOPE("Stuffed Envelope"),
+
+    /**
+     * ENGINEER_ACCESS_CARD — an engineer's access card found inside a cracked-open
+     * CASHPOINT_PROP (out-of-service machine). Fenceable at 20 COIN.
+     * Tooltip: "Someone important lost this. Lucky you found it."
+     */
+    ENGINEER_ACCESS_CARD("Engineer Access Card");
 
     private final String displayName;
 
@@ -8472,6 +8524,20 @@ public enum Material {
                 return IconShape.CYLINDER;    // long tube
             case OLD_CLOTHES:
                 return IconShape.BOX;         // bundled clothes
+
+            // Issue #1319: NatWest Cashpoint — The Dodgy ATM
+            case STOLEN_PIN_NOTE:
+                return IconShape.FLAT_PAPER;  // scrap of paper with PIN
+            case VICTIM_BANK_CARD:
+                return IconShape.FLAT_PAPER;  // plastic bank card
+            case CARD_SKIMMER_DEVICE:
+                return IconShape.BOX;         // small electronic device
+            case CLONED_CARD_DATA:
+                return IconShape.FLAT_PAPER;  // data printout
+            case STUFFED_ENVELOPE:
+                return IconShape.FLAT_PAPER;  // thick envelope
+            case ENGINEER_ACCESS_CARD:
+                return IconShape.FLAT_PAPER;  // laminated access card
 
             default:
                 return IconShape.BOX;
