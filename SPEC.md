@@ -57258,3 +57258,119 @@ Every year on day 10 (a Sunday), Brenda (`NPCType.WALK_ORGANISER`) sets up a 20-
 5. **Escaping Brenda after fraud awards DODGED_BRENDA**: create system; trigger fraud; set player position > `BRENDA_PURSUIT_RADIUS` blocks from Brenda; call `update(delta=61f, timeSystem)`; verify `achievementSystem` received `AchievementType.DODGED_BRENDA`; verify `rumourNetwork` contains `RumourType.BRENDA_CONNED`.
 
 // `SponsoredWalkSystem.java` must be created as the sole new source file. All `NPCType`, `Material`, `PropType`, `RumourType`, and `AchievementType` entries required are already defined — only `PropType.PRIZE_ENVELOPE_PROP` needs to be added. Integrates with `NotorietySystem`, `WantedSystem`, `CriminalRecord` (`CHARITY_FRAUD`, `THEFT_FROM_PERSON`), `RumourNetwork`, `NeighbourhoodSystem` (Vibes), `TimeSystem`, `WitnessSystem`, `WeatherSystem`, `FenceSystem`, and `AchievementSystem`.
+
+---
+
+## Issue #1491 — Northfield Annual Dog Show — Clive's Rosettes, the Pedigree Fraud & the Trophy Cabinet Heist
+
+Every year on day 15 (a Saturday in early summer), Northfield Park hosts its Annual Dog Show. Clive (`NPCType.JUDGE_NPC`) sets up the `JUDGES_TABLE_PROP` in the park's bandstand area at 09:00, surrounded by `SHOW_RING_BARRIER_PROP` fencing. `GROOMING_TABLE_PROP` stations are erected near the park entrance. Twelve dog-owning competitors (`NPCType.DOG_OWNER`) arrive with their animals (`NPCType.DOG`), including Winston — a prize Staffordshire Bull Terrier belonging to a Marchetti associate named Derek. A `DOG_SHOW_TROPHY_CABINET_PROP` is placed beside the judges' table displaying last year's rosettes. `SHOW_SCHEDULE_FLYER` leaflets are scattered on nearby park benches.
+
+`DogShowSystem` manages `LandmarkType.PARK` and the 09:00–14:00 event window on day 15, repeating every 28 days.
+
+### Mechanic 1 — Entry & Grooming (09:00–10:00)
+
+- Player must have an active dog companion (`DogCompanionSystem.hasActiveDog()` == true) to enter.
+- Entry: press E on Clive to pay `ENTRY_FEE` = 3 COIN and receive `Material.SHOW_SCHEDULE_FLYER` (confirms entry). Entry closes at 10:00.
+- Grooming score: dog's `groomRecency` (days since last groom at Pawfect Cuts) feeds into the judging score. Groomed within 1 in-game day = +30 grooming points. Groomed within 3 days = +15. Ungroomed = 0.
+- `Material.DOG_GROOMING_VOUCHER` (from `DogCompanionSystem` loyalty reward): redeeming it at the show counts as a fresh groom (+30 points) without visiting Pawfect Cuts.
+- Trick training: dog's known tricks (from `DogCompanionSystem`) each add +10 points to the performance score. Maximum 3 tricks counted (30 points max).
+
+### Mechanic 2 — Judging (10:30–12:00)
+
+- Clive walks the ring, scoring each dog across three categories:
+  - **Grooming** (0–30 points): based on `groomRecency`
+  - **Bond** (0–40 points): based on `DogCompanionSystem.getBondLevel()` (0–100 → mapped to 0–40)
+  - **Performance** (0–30 points): tricks demonstrated during judging (player presses E to perform each trick Clive asks for; correct trick = +10 pts, wrong trick = 0)
+- Player total: grooming + bond + performance. Maximum 100.
+- Rival dogs: Winston scores `WINSTON_BASE_SCORE` = 85 (fixed; Marchetti has pre-bribed Clive). Other `DOG_OWNER` NPCs score `rng.nextInt(40) + 30` (30–70).
+- If player score > 85: Clive announces player as winner (legitimate path). Player receives `Material.BEST_IN_SHOW_ROSETTE_PROP` + `Material.DOG_SHOW_ROSETTE` + 10 COIN prize. `AchievementType.LEGITIMATE_CHAMPION` awarded. `AchievementType.SHOW_DAY` awarded (also on any participation).
+- Runner-up (2nd place): `Material.RESERVE_ROSETTE_PROP` + 4 COIN.
+- 3rd place: `Material.THIRD_PLACE_ROSETTE_PROP` + 1 COIN.
+- Losing to Winston: Winston's `DOG_OWNER` NPC smugly collects the rosette. Seeds `RumourType.DOG_SHOW_FIXED` (Vibes −2).
+
+### Mechanic 3 — Bribing Clive (The Bent Judge)
+
+- Player can approach Clive between 10:00 and 10:30 (pre-judging window). Press E to "Have a quiet word" while holding `Material.COIN` ≥ `BRIBE_AMOUNT` = 15 COIN.
+- Success (60% base chance): Clive's modifier boosts player score by +20 (making it very likely to beat Winston). Clive pockets the coin. `CrimeType.BRIBERY` added to `CriminalRecord`. Notoriety +5. `AchievementType.BENT_JUDGE` awarded if player subsequently wins.
+- Failure (40%): Clive calls the `SHOW_STEWARD_NPC` (spawns as `NPCType.WATCH_MEMBER`) to eject the player. WantedSystem +1. `COIN` not taken.
+- If player wins after bribery AND a `JOURNALIST` NPC is present (5% chance of spawn at 10:00): `RumourType.DOG_SHOW_RIGGING` seeded. Marchetti reputation −15. `AchievementType.WHISTLEBLOWER` NOT awarded (that requires exposing via newspaper).
+- Newspaper expose: after winning via bribery, player can visit `NewspaperSystem` and file a story using `Material.DOG_SHOW_ROSETTE` as evidence. `NewspaperSystem.submitExposé(DOG_SHOW_RIGGING)` → front page headline → Marchetti reputation −15, Notoriety +5 (for grassing), `AchievementType.WHISTLEBLOWER` awarded.
+
+### Mechanic 4 — The Trophy Cabinet Heist
+
+- `DOG_SHOW_TROPHY_CABINET_PROP` placed beside judges' table at 09:00. Contains last year's `Material.DOG_SHOW_ROSETTE` (lootable).
+- Cabinet requires `LOCKPICK` (2 charges) or CROWBAR (4 hits, loud) to open.
+- Heist window: 13:30–14:00 (post-awards, when Clive has gone to the pub and only 2 `DOG_OWNER` NPCs remain). Outside window: `KENNEL_HAND` NPC (spawns from `NPCType.KENNEL_HAND`) watches the cabinet within `WATCH_RADIUS` = 8.0f blocks.
+- Lockpick heist (within window, no witnesses in 8 blocks): yields `DOG_SHOW_ROSETTE` + `AchievementType.SHOW_DAY` (if not already). Silent. No crime if unwitnessed.
+- Witnessed heist: `CrimeType.THEFT` recorded. Notoriety +6. WantedSystem +1 if `DOG_OWNER` within 6 blocks.
+- `DOG_SHOW_ROSETTE` fenceable at `FenceSystem` for 8 COIN. Tooltip: "Red ribbon. 'Best in Show — Northfield.' Clive signed it. Shame it's stolen."
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `ENTRY_FEE` | 3 |
+| `GROOMING_FRESH_BONUS` | 30 |
+| `GROOMING_RECENT_BONUS` | 15 |
+| `MAX_TRICK_BONUS` | 30 |
+| `BOND_MAX_SCORE` | 40 |
+| `WINSTON_BASE_SCORE` | 85 |
+| `BRIBE_AMOUNT` | 15 |
+| `BRIBE_SUCCESS_CHANCE` | 0.60f |
+| `BRIBE_SCORE_BONUS` | 20 |
+| `WATCH_RADIUS` | 8.0f |
+| `PRIZE_FIRST_COIN` | 10 |
+| `PRIZE_SECOND_COIN` | 4 |
+| `PRIZE_THIRD_COIN` | 1 |
+| `SHOW_INTERVAL_DAYS` | 28 |
+| `REGISTRATION_OPEN_HOUR` | 9.0f |
+| `REGISTRATION_CLOSE_HOUR` | 10.0f |
+| `JUDGING_START_HOUR` | 10.5f |
+| `JUDGING_END_HOUR` | 12.0f |
+| `HEIST_WINDOW_START` | 13.5f |
+| `EVENT_END_HOUR` | 14.0f |
+
+### Entities Required
+
+**Already defined — no new entries needed:**
+- `NPCType.JUDGE_NPC` — Clive. Already defined.
+- `NPCType.DOG_OWNER` — competing owners (12 spawned). Already defined.
+- `NPCType.DOG` — their dogs. Already defined.
+- `NPCType.KENNEL_HAND` — watches trophy cabinet. Already defined.
+- `NPCType.JOURNALIST` — optional witness (5% spawn). Already defined.
+- `NPCType.WATCH_MEMBER` — spawns as show steward if bribe fails. Already defined.
+- `Material.DOG_SHOW_ROSETTE` — lootable rosette (prize + cabinet loot). Already defined.
+- `Material.DOG_GROOMING_VOUCHER` — fast-track grooming at show. Already defined.
+- `Material.BEST_IN_SHOW_ROSETTE_PROP` — first-place winner prop. Already defined.
+- `Material.RESERVE_ROSETTE_PROP` — second-place prop. Already defined.
+- `Material.THIRD_PLACE_ROSETTE_PROP` — third-place prop. Already defined.
+- `Material.SHOW_SCHEDULE_FLYER` — entry confirmation. Already defined.
+- `PropType.DOG_SHOW_TROPHY_CABINET_PROP` — heist target. Already defined.
+- `PropType.GROOMING_TABLE_PROP` — grooming stations at park entrance. Already defined.
+- `AchievementType.SHOW_DAY` — attended/entered the show. Already defined.
+- `AchievementType.LEGITIMATE_CHAMPION` — won honestly (score > 85). Already defined.
+- `AchievementType.BENT_JUDGE` — won via bribery. Already defined.
+- `AchievementType.WHISTLEBLOWER` — exposed rigging via newspaper. Already defined.
+- `CrimeType.BRIBERY` — already defined in `CriminalRecord.java` (used elsewhere).
+- `CrimeType.THEFT` — already defined.
+- `LandmarkType.PARK` — already defined.
+
+**New entries required:**
+- `PropType.JUDGES_TABLE_PROP` — Clive's table in the bandstand area. Interactable for entry/bribe.
+- `PropType.SHOW_RING_BARRIER_PROP` — low rope barrier defining the show ring. Indestructible.
+- `RumourType.DOG_SHOW_FIXED` — "That dog show was fixed. Winston always wins. Clive's bent." Vibes −2. Seeded when Winston wins.
+- `RumourType.DOG_SHOW_RIGGING` — "Someone's been slipping Clive backhanders at the dog show. It's in The Daily Ragamuffin." Marchetti −15. Seeded on newspaper exposé.
+
+### Integration Tests
+
+1. **Entering the show requires active dog companion and 3 COIN**: create `DogShowSystem`; give player a dog companion via `DogCompanionSystem`; give player 3 COIN; set time to 09:30; call `enterShow(player, inventory, dogCompanionSystem)`; verify `inventory.contains(Material.SHOW_SCHEDULE_FLYER)` == true; verify `inventory.getItemCount(Material.COIN)` decreased by `ENTRY_FEE`; verify `dogShowSystem.isEntered()` == true. Without dog: verify `enterShow` returns `EntryResult.NO_DOG`.
+
+2. **Legitimate win awards rosette and prize money**: create system; enter player; set `dogCompanionSystem.groomRecency` = 0 (fresh, +30); set `dogCompanionSystem.getBondLevel()` = 100 (+40); seed 3 correct tricks performed during judging (+30); call `runJudging(player, inventory, rng_seeded_so_rivals_score_low)`; verify player total = 100; verify `inventory.contains(Material.BEST_IN_SHOW_ROSETTE_PROP)` == true; verify `inventory.getItemCount(Material.COIN)` increased by `PRIZE_FIRST_COIN`; verify `achievementSystem` received `LEGITIMATE_CHAMPION`; verify `achievementSystem` received `SHOW_DAY`.
+
+3. **Bribing Clive with seeded RNG success awards BENT_JUDGE after win**: create system; enter player; give player 15 COIN; seed `rng` to guarantee bribe succeeds (`rng.nextFloat()` < 0.60f); call `bribeJudge(player, inventory, rng)`; verify `inventory.getItemCount(Material.COIN)` decreased by `BRIBE_AMOUNT`; verify `criminalRecord.hasCrime(CrimeType.BRIBERY)` == true; verify `notorietySystem.getNotoriety()` increased by 5; then call `runJudging`; verify player wins; verify `achievementSystem` received `BENT_JUDGE`.
+
+4. **Trophy cabinet heist within window yields rosette silently**: create system; set time to 13:45 (heist window); ensure no NPC within `WATCH_RADIUS`; call `heistTrophyCabinet(player, inventory)`; verify `inventory.contains(Material.DOG_SHOW_ROSETTE)` == true; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == false (unwitnessed); verify `achievementSystem` received `SHOW_DAY` (if not already).
+
+5. **Witnessed heist logs THEFT and adds notoriety**: create system; set time to 13:45; place `DOG_OWNER` NPC within 6 blocks; call `heistTrophyCabinet(player, inventory)`; verify `criminalRecord.hasCrime(CrimeType.THEFT)` == true; verify `notorietySystem.getNotoriety()` increased by 6; verify `wantedSystem.getWantedLevel()` >= 1.
+
+// `DogShowSystem.java` must be created as the sole new source file. Integrates with `DogCompanionSystem` (dog presence, bond level, groom recency, trick list), `TimeSystem` (event scheduling, show day), `NotorietySystem`, `WantedSystem`, `CriminalRecord` (`BRIBERY`, `THEFT`), `RumourNetwork` (new `DOG_SHOW_FIXED` and `DOG_SHOW_RIGGING` rumours), `NewspaperSystem` (exposé path), `FenceSystem` (`DOG_SHOW_ROSETTE` fence value), `NeighbourhoodSystem` (Vibes on `DOG_SHOW_FIXED`), `WitnessSystem` (cabinet heist witness), and `AchievementSystem`. Two new `PropType` entries (`JUDGES_TABLE_PROP`, `SHOW_RING_BARRIER_PROP`) and two new `RumourType` entries (`DOG_SHOW_FIXED`, `DOG_SHOW_RIGGING`) must be added. All other entities are already defined.
