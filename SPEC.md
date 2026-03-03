@@ -46366,3 +46366,200 @@ Bikes exist as materials (`SECOND_HAND_BIKE`, `STOLEN_BIKE`, `KIDS_BIKE`, `OLD_B
 //              TravellerSiteSystem (STOLEN_BIKE sell), EmploymentSystem (CYCLE_TO_WORK achievement),
 //              DWPSystem (delivery income disclosure), RumourNetwork, NewspaperSystem,
 //              AchievementSystem, HealingSystem (collision damage), StreetSkillSystem
+
+---
+
+## Issue #1337: Add Northfield Police Station — The Nick, Desk Sergeant Geoff, Voluntary Surrender & the Evidence Locker Heist
+
+### Overview
+
+Every part of the criminal justice loop exists — `ArrestSystem`, `WantedSystem`, `CriminalRecord`, `MagistratesCourtSystem`, `ProbationSystem` — but there is no **physical police station** in the world. Adding `PoliceStationSystem.java` creates Northfield's "B Division" nick on the edge of the high street: a one-storey brick building with a public enquiry counter, custody suite, and evidence locker at the back. It gives the entire arrest and criminal record system a spatial anchor, opens up new criminal justice role-play (voluntary surrender, bailing out mates, bribery, evidence destruction) and creates one of the most audacious heist targets in the game.
+
+### New Java File
+
+`src/main/java/ragamuffin/core/PoliceStationSystem.java` in package `ragamuffin.core`
+
+### New Unit Test File
+
+`src/test/java/ragamuffin/core/PoliceStationSystemTest.java`
+
+### New Integration Test File
+
+`src/test/java/ragamuffin/integration/Issue1337PoliceStationIntegrationTest.java`
+
+---
+
+### Mechanic 1 — The Building
+
+- `LandmarkType.POLICE_STATION` — two-storey brick building, distinct blue lamp (`POLICE_LAMP_PROP`) above the door. Open to the public 24/7 at the front desk; custody suite and back offices locked.
+- **Front desk zone**: `ENQUIRY_COUNTER_PROP`. Interacting presses E to speak to Geoff (`NPCType.DESK_SERGEANT`).
+- **Back-office door**: `CUSTODY_DOOR_PROP`. Requires `POLICE_KEY_CARD` to open or 8 hits to break (CRIMINAL_DAMAGE + Notoriety +15).
+- **Evidence locker**: `EVIDENCE_LOCKER_PROP` in back room. Contains player's previously confiscated items (populated by `ArrestSystem`).
+- **Police garage**: `POLICE_GARAGE_PROP` — rear of building. Holds impounded vehicles from `TrafficWardenSystem` tow.
+
+### Mechanic 2 — Desk Sergeant Geoff
+
+- Geoff (`NPCType.DESK_SERGEANT`) is on duty 24/7, replaced by Constable Harris at night (00:00–08:00).
+- **Standard enquiries** (press E):
+  - *"Hand Yourself In"* — see Mechanic 3.
+  - *"Bail enquiry"* — check status of any outstanding bail (from `ArrestSystem`).
+  - *"Report a crime"* — player can report an NPC as a criminal; seeds `COMMUNITY_WIN` rumour; reduces NeighbourhoodWatch anger −2; 30% chance police investigate the NPC.
+  - *"Nothing, just browsing"* — Geoff replies with a tired British non-sequitur.
+- **Bribery** (Notoriety ≥ 20, `BRIBE_GEOFF_COST` = 15 COIN): 60% success removes one minor `CriminalRecord.CrimeType` entry from the record (PARKING_OFFENCE, CYCLING_OFFENCE, PUBLIC_ORDER). On failure: Notoriety +8, `BRIBERY_OF_OFFICER` crime recorded, and Geoff calls for backup (WantedSystem Tier 2).
+- **Intimidation** (StreetSkillSystem INTIMIDATION ≥ Journeyman): 40% chance forces Geoff to step away from desk for 90s, opening the back-office door.
+- Geoff is non-combat; fleeing the station while wanted escalates WantedSystem by one tier.
+
+### Mechanic 3 — Voluntary Surrender
+
+- Player presses E → *"Hand Yourself In"* with outstanding Wanted stars (WantedSystem Tier ≥ 1):
+  - Triggers ArrestSystem with `VOLUNTARY_SURRENDER = true`.
+  - Sentence at MagistratesCourtSystem reduced by one tier due to voluntary surrender.
+  - Notoriety reduced by `SURRENDER_NOTORIETY_REDUCTION` = 5.
+  - Achievement `CAME_IN_QUIETLY` on first voluntary surrender.
+- If WantedSystem Tier = 0 and no outstanding charges: Geoff says *"Nothing on you, son. On your way."*
+
+### Mechanic 4 — Evidence Locker Heist
+
+The evidence locker (`EVIDENCE_LOCKER_PROP`) stores items confiscated during any prior arrest (populated by `ArrestSystem.confiscateItems()`). This is the most audacious target in the game.
+
+**Route A — Front door (social):**
+1. Obtain `POLICE_KEY_CARD` (dropped by any `POLICE` NPC at 10% chance on knockout, or craftable via `FORGED_DOCUMENT` + `BLANK_PAPER` at GRAFTING ≥ Journeyman).
+2. Use key card on `CUSTODY_DOOR_PROP` during low-heat window (00:00–06:00, Geoff asleep).
+3. Open `EVIDENCE_LOCKER_PROP` (E): recover all confiscated items. If WitnessSystem detects entry: Notoriety +12, `EVIDENCE_TAMPERING` crime.
+
+**Route B — Back window (stealth):**
+1. Scale rear wall at night using `ROPE_AND_HOOK` (`ROPE` + `CROWBAR` craft).
+2. Break `BACK_WINDOW_PROP` (2 hits, Fragile; noise level 0.9).
+3. If no NPCs within `WINDOW_WITNESS_RADIUS` = 15 blocks: slip in undetected; same locker access.
+4. Each minute inside: 20% patrol check — if caught, Notoriety +15, `BREAKING_AND_ENTERING_POLICE_STATION` (new, highest-tier crime).
+
+**Route C — Distraction:**
+1. Pull the `FIRE_ALARM_PROP` in the public area.
+2. All officers evacuate for `FIRE_ALARM_EVACUATION_SECONDS` = 90 seconds.
+3. Locker is accessible for that window only.
+4. Pulling the alarm: Notoriety +3, `PUBLIC_ORDER` crime.
+
+**Evidence Locker Contents**: returns all items from `ArrestSystem.confiscatedItems` list for the player. If the player never been arrested, locker is empty.
+
+**Achievement `EVIDENCE_GONE`**: recover items from the evidence locker by any route.
+**Achievement `INSIDE_JOB`**: complete Route A without triggering any alert.
+
+### Mechanic 5 — Vehicle Recovery (Police Garage)
+
+- Cars impounded by `TrafficWardenSystem` tow appear in `POLICE_GARAGE_PROP` (rear lot).
+- Recovering a vehicle:
+  - **Legitimate**: pay `IMPOUND_RELEASE_COST` = 20 COIN at the enquiry counter + show `DRIVING_LICENCE`. Car returned to `CAR_PARK_PROP` near player's last park position.
+  - **Illegitimate**: break the garage padlock (8 hits, HARD material) at night. If unwitnessed: car recovered, Notoriety +4, `VEHICLE_RECOVERY_OFFENCE` crime. If witnessed: WantedSystem +2.
+- Achievement `GOT_ME_MOTOR_BACK`: recover car from impound by any method.
+
+### Mechanic 6 — Police Station as Safe Zone / Exploit
+
+- Player inside the public front area: pursuing `NPCState.CHASING_PLAYER` NPC gangs (non-police) will halt at the door and return to patrol. **Gang members do not enter the police station.**
+- Player can use this to lose rival gang members (FactionSystem, GangTerritorySystem).
+- However, if the player has Wanted Tier ≥ 2, Geoff will flag the visit and WantedSystem upgrades by 1 tier when the player leaves (Geoff radios ahead).
+- Achievement `HIDING_IN_PLAIN_SIGHT`: lose a gang pursuit by ducking into the station.
+
+### New Materials (add to `Material.java`)
+
+| Material | Description |
+|---|---|
+| `POLICE_KEY_CARD` | Opens `CUSTODY_DOOR_PROP`. Dropped by police NPCs or forged. Single use. |
+| `ROPE_AND_HOOK` | Craft: ROPE + CROWBAR. Allows scaling rear wall of police station. |
+| `DRIVING_LICENCE` | Required for legitimate vehicle recovery. Obtainable from DVLA or crafted as `FORGED_DOCUMENT`. |
+
+### New Prop Types (add to `PropType.java`)
+
+| PropType | Location | Interaction |
+|---|---|---|
+| `POLICE_LAMP_PROP` | Above police station door | Decorative; breaks into SCRAP_METAL (Notoriety +5) |
+| `ENQUIRY_COUNTER_PROP` | Police station front | E to speak with Desk Sergeant |
+| `CUSTODY_DOOR_PROP` | Police station rear | Key card or 8 hits to open |
+| `EVIDENCE_LOCKER_PROP` | Police station back room | E to recover confiscated items |
+| `POLICE_GARAGE_PROP` | Police station rear lot | Impounded vehicles; pay or break in |
+| `FIRE_ALARM_PROP` | Police station public area | E to pull; evacuates officers 90s |
+| `BACK_WINDOW_PROP` | Police station rear | 2 hits (Fragile) for stealth entry |
+
+### New NPC Types (add to `NPCType.java`)
+
+| NPCType | Role |
+|---|---|
+| `DESK_SERGEANT` | Geoff — front desk 24/7. Bribeable, intimidatable. |
+| `CUSTODY_SERGEANT` | Back-office officer. Attacks on sight if player in restricted zone without key card. |
+
+### New LandmarkType (add to `LandmarkType.java`)
+
+- `POLICE_STATION` — "Northfield B Division". Distinctive blue lamp. On edge of high street near the magistrates' court.
+
+### New CriminalRecord.CrimeType (add to `CriminalRecord.java`)
+
+| CrimeType | Tier | Description |
+|---|---|---|
+| `EVIDENCE_TAMPERING` | Serious | Accessing evidence locker when witnessed |
+| `BREAKING_AND_ENTERING_POLICE_STATION` | Indictable | Highest tier; near-certain custodial sentence |
+| `BRIBERY_OF_OFFICER` | Serious | Failed bribe attempt on Geoff |
+| `VEHICLE_RECOVERY_OFFENCE` | Minor | Taking impounded vehicle without payment |
+
+### New RumourType (add to `RumourType.java`)
+
+- `STATION_BREAK_IN` — seeded into barman when player triggers `EVIDENCE_TAMPERING` or `BREAKING_AND_ENTERING_POLICE_STATION`. Doubles police patrol density for 1 in-game day and increases WantedSystem tier-up thresholds by 20%.
+- `TURNED_YOURSELF_IN` — seeded on voluntary surrender. Reduces NeighbourhoodWatch anger −5 and StreetReputation +3.
+
+### New AchievementTypes (add to `AchievementType.java`)
+
+| Achievement | Condition | Flavour Text |
+|---|---|---|
+| `CAME_IN_QUIETLY` | First voluntary surrender | "Cooperating with authorities. For now." |
+| `EVIDENCE_GONE` | Recover items from evidence locker | "What evidence? I don't know what you're talking about." |
+| `INSIDE_JOB` | Complete Route A without alerting anyone | "You've got some front, son." |
+| `HIDING_IN_PLAIN_SIGHT` | Lose a gang pursuit by entering station | "Bold." |
+| `GOT_ME_MOTOR_BACK` | Recover impounded car | "They're not keeping that. That's my motor." |
+| `BENT_COPPER` | Successfully bribe Geoff | "Everyone's got their price." |
+
+### Unit Tests
+
+- `PoliceStationSystem.surrenderVoluntarily(player, wantedSystem, arrestSystem, criminalRecord)`: Tier ≥ 1 → `VOLUNTARY_SURRENDER` flag set, Notoriety −5, achievement `CAME_IN_QUIETLY` on first; Tier 0 → `NO_CHARGES_OUTSTANDING` returned.
+- `PoliceStationSystem.bribeGeoff(player, coin, random, criminalRecord, wantedSystem)`: coin < `BRIBE_GEOFF_COST` → `INSUFFICIENT_FUNDS`; seeded random = success → one minor crime removed; seeded random = failure → `BRIBERY_OF_OFFICER` added, Notoriety +8, WantedSystem +2.
+- `PoliceStationSystem.openEvidenceLocker(player, witnessSystem, criminalRecord, inventory)`: no prior arrests → locker empty, `LOCKER_EMPTY` result; prior confiscated items present + unwitnessed → items added to inventory; witnessed → `EVIDENCE_TAMPERING` crime, Notoriety +12.
+- `PoliceStationSystem.pullFireAlarm(player, notoriety, criminalRecord)`: officers evacuation flag set for 90s; Notoriety +3; `PUBLIC_ORDER` crime.
+- `PoliceStationSystem.payImpoundRelease(player, coin, inventory)`: coin ≥ `IMPOUND_RELEASE_COST` + has `DRIVING_LICENCE` → car returned, coin deducted; missing licence → `NO_LICENCE` result; insufficient coin → `INSUFFICIENT_FUNDS`.
+- `PoliceStationSystem.breakImpoundGarage(hits, witnessed, criminalRecord, wantedSystem)`: hits < 8 → `LOCK_HOLDS`; hits ≥ 8 + witnessed → WantedSystem +2; unwitnessed → `VEHICLE_RECOVERY_OFFENCE` + Notoriety +4.
+- `PoliceStationSystem.gangMemberBlockedAtDoor(npcState)`: `NPCState.CHASING_PLAYER` returns `BLOCKED_AT_DOOR`; `NPCState.WANDERING` returns `ALLOWED_ENTRY`.
+- `PoliceStationSystem.geoffWantedTierRadio(wantedTier)`: tier < 2 → no upgrade; tier ≥ 2 → tier incremented on player exit.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Voluntary surrender reduces sentence tier**: Give player WantedSystem Tier 2. Record `MagistratesCourtSystem` expected sentence tier for Tier-2 offence (e.g. FINE). Player presses E on `ENQUIRY_COUNTER_PROP` → selects "Hand Yourself In". Verify `WantedSystem.getTier()` becomes 0. Verify `ArrestSystem.lastSurrenderWasVoluntary()` == true. Verify when court date processed, sentence tier is one below baseline (CONDITIONAL_CAUTION instead of FINE). Verify player Notoriety reduced by 5.
+
+2. **Evidence locker heist — fire alarm route**: Give player prior arrest with 2 confiscated items (`CROWBAR`, `STOLEN_PHONE`). Set TimeSystem to 02:00. Player presses E on `FIRE_ALARM_PROP`. Verify all POLICE and CUSTODY_SERGEANT NPCs transition to `NPCState.EVACUATING`. Verify evacuation timer = 90 seconds. Player walks to `EVIDENCE_LOCKER_PROP`, presses E. Verify `CROWBAR` and `STOLEN_PHONE` added to player inventory. Verify `ArrestSystem.confiscatedItems()` now empty. Verify Notoriety +3 (alarm only, no witness for locker). Verify `STATION_BREAK_IN` rumour NOT seeded (unwitnessed locker access).
+
+3. **Bribe Geoff — success removes minor crime**: Player has `CYCLING_OFFENCE` in CriminalRecord. Player has 15+ COIN. Seed `Random(42)` so bribe succeeds. Player presses E on Geoff → selects bribe option. Verify `CYCLING_OFFENCE` removed from CriminalRecord. Verify 15 COIN deducted. Verify `BENT_COPPER` achievement unlocked. Seed `Random(99)` so bribe fails. Player attempts again (add new `CYCLING_OFFENCE` first). Verify `BRIBERY_OF_OFFICER` CrimeType added. Verify Notoriety +8. Verify WantedSystem tier incremented by 2.
+
+4. **Gang members halted at door**: Set player inside police station front area. Spawn 2 `GANG_MEMBER` NPCs (NPCState.CHASING_PLAYER) at 5 blocks outside the door. Simulate 60 frames. Verify both gang NPCs have NOT moved inside the building (their position remains outside the door threshold). Verify gang NPCs transition to `NPCState.WANDERING`. Verify player takes no damage.
+
+5. **Vehicle impound recovery — legitimate vs illegitimate**: Impound player's car via `TrafficWardenSystem.towVehicle()`. Verify car removed from world and tracked in `PoliceStationSystem.impoundedVehicles`. Give player 20 COIN and `DRIVING_LICENCE`. Player presses E on `ENQUIRY_COUNTER_PROP` → selects "Recover vehicle". Verify 20 COIN deducted. Verify car placed at `CAR_PARK_PROP` near station. Verify `GOT_ME_MOTOR_BACK` achievement. Now reset: impound car again. Give player 0 COIN. Player breaks `POLICE_GARAGE_PROP` padlock (8 hits, no NPCs within 15 blocks). Verify car recovered. Verify `VEHICLE_RECOVERY_OFFENCE` added to CriminalRecord. Verify Notoriety +4.
+
+---
+
+// ── Issue #1337: Add Northfield Police Station — The Nick, Desk Sergeant Geoff, Voluntary Surrender & the Evidence Locker Heist ────
+// New: PoliceStationSystem.java in ragamuffin.core
+// New: PoliceStationSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1337PoliceStationIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: POLICE_KEY_CARD, ROPE_AND_HOOK, DRIVING_LICENCE — add to Material.java
+// New PropTypes: POLICE_LAMP_PROP, ENQUIRY_COUNTER_PROP, CUSTODY_DOOR_PROP, EVIDENCE_LOCKER_PROP,
+//                POLICE_GARAGE_PROP, FIRE_ALARM_PROP, BACK_WINDOW_PROP — add to PropType.java
+// New NPCTypes: DESK_SERGEANT, CUSTODY_SERGEANT — add to NPCType.java
+// New LandmarkType: POLICE_STATION — add to LandmarkType.java
+// New CrimeTypes: EVIDENCE_TAMPERING, BREAKING_AND_ENTERING_POLICE_STATION, BRIBERY_OF_OFFICER,
+//                 VEHICLE_RECOVERY_OFFENCE — add to CriminalRecord.java
+// New RumourTypes: STATION_BREAK_IN, TURNED_YOURSELF_IN — add to RumourType.java
+// New AchievementTypes: CAME_IN_QUIETLY, EVIDENCE_GONE, INSIDE_JOB, HIDING_IN_PLAIN_SIGHT,
+//                       GOT_ME_MOTOR_BACK, BENT_COPPER — add to AchievementType.java
+// Integration: ArrestSystem (voluntary surrender flag, confiscatedItems, towVehicle),
+//              WantedSystem (tier checks, tier escalation on exit),
+//              MagistratesCourtSystem (sentence tier reduction for surrender),
+//              NotorietySystem, CriminalRecord, WitnessSystem,
+//              TrafficWardenSystem (impounded vehicles),
+//              FactionSystem / GangTerritorySystem (gang member door block),
+//              StreetSkillSystem (INTIMIDATION check on Geoff),
+//              RumourNetwork, NewspaperSystem,
+//              AchievementSystem, TimeSystem
