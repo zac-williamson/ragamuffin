@@ -7425,7 +7425,51 @@ public enum Material {
      * returning the PLANNING_PERMISSION_DOC. Grants free drinks at the Crown &amp; Anchor
      * for life (if the pub is saved). Tooltip: "Baz's card. Free drinks, no questions."
      */
-    CROWN_ANCHOR_REGULAR_CARD("Crown Anchor Regular Card");
+    CROWN_ANCHOR_REGULAR_CARD("Crown Anchor Regular Card"),
+
+    // ── Issue #1506: Northfield Wargames & Tabletop Society ───────────────────
+
+    /**
+     * WARGAMES_MEMBERSHIP_CARD — entry token for the Northfield Wargames &amp; Tabletop
+     * Society sessions. Costs MEMBERSHIP_COST (3 COIN) to obtain from Brian.
+     * Required to access the back room, join tournament, and legitimately open the
+     * miniature cabinet during the 15:30 session window. Non-stackable.
+     * Tooltip: "Chairman Brian's membership card. You're practically a 'General' now."
+     */
+    WARGAMES_MEMBERSHIP_CARD("Wargames Membership Card"),
+
+    /**
+     * PAINTED_MINIATURE — a hand-painted 28mm miniature produced at the painting
+     * table during a session. Requires 3 in-game minutes to complete.
+     * Fenceable for 3 COIN; Pawn Shop value 2 COIN.
+     * Win 5 painting sessions → MINIATURE_MAESTRO achievement.
+     */
+    PAINTED_MINIATURE("Painted Miniature"),
+
+    /**
+     * RARE_MINIATURE_SET — the society's crown jewel: a hand-painted, boxed
+     * first-edition Napoleonic Grande Armée set. Normally locked in the
+     * MINIATURE_CABINET_PROP. Fenceable for 80 COIN; Pawn Shop value 20 COIN.
+     * Tooltip: "First edition. Brian's pride. Now yours."
+     */
+    RARE_MINIATURE_SET("Rare Miniature Set"),
+
+    /**
+     * TOURNAMENT_LEDGER — Brian's private tournament-rigging records, stolen from
+     * his bag during a session (25% success). Proves the bracket was fixed.
+     * Sell to JOURNALIST for 12 COIN (triggers headline + TOURNAMENT_SCANDAL_HEADLINE
+     * rumour), or to the fence for 15 COIN (SILENT_INFORMANT achievement).
+     * Hold at tournament start to trigger exposeRig().
+     */
+    TOURNAMENT_LEDGER("Tournament Ledger"),
+
+    /**
+     * WARGAMES_TROPHY — awarded to the winner of the quarterly society tournament.
+     * Ornate metal cup engraved "Northfield Wargames Society Champion".
+     * Pawn Shop value 5 COIN. Displayable in squat as a trophy prop.
+     * Tooltip: "You beat a room full of middle-aged men at toy soldiers. Well done."
+     */
+    WARGAMES_TROPHY("Wargames Trophy");
 
     private final String displayName;
 
@@ -8994,6 +9038,18 @@ public enum Material {
                                                     0.92f, 0.92f, 0.85f); // White label
             case CROWN_ANCHOR_REGULAR_CARD: return cs(0.72f, 0.18f, 0.18f, // Deep pub red
                                                     0.92f, 0.88f, 0.72f); // Cream card text
+
+            // Issue #1506: Northfield Wargames & Tabletop Society
+            case WARGAMES_MEMBERSHIP_CARD:  return cs(0.18f, 0.38f, 0.60f, // Navy blue card
+                                                    0.92f, 0.88f, 0.72f); // Cream membership text
+            case PAINTED_MINIATURE:         return cs(0.45f, 0.28f, 0.18f, // Brown base
+                                                    0.65f, 0.18f, 0.18f); // Red uniform paint
+            case RARE_MINIATURE_SET:        return cs(0.65f, 0.52f, 0.22f, // Gold presentation box
+                                                    0.55f, 0.28f, 0.10f); // Deep mahogany trim
+            case TOURNAMENT_LEDGER:         return cs(0.22f, 0.35f, 0.18f, // Dark green cover
+                                                    0.88f, 0.85f, 0.72f); // Cream page edges
+            case WARGAMES_TROPHY:           return cs(0.82f, 0.70f, 0.25f, // Polished gold cup
+                                                    0.78f, 0.60f, 0.15f); // Darker gold base
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -11478,6 +11534,18 @@ public enum Material {
                 return IconShape.BOTTLE;      // spirits bottle
             case CROWN_ANCHOR_REGULAR_CARD:
                 return IconShape.FLAT_PAPER;  // laminated loyalty card
+
+            // Issue #1506: Northfield Wargames & Tabletop Society
+            case WARGAMES_MEMBERSHIP_CARD:
+                return IconShape.FLAT_PAPER;  // laminated membership card
+            case PAINTED_MINIATURE:
+                return IconShape.BOX;         // small painted figure on base
+            case RARE_MINIATURE_SET:
+                return IconShape.BOX;         // presentation box set
+            case TOURNAMENT_LEDGER:
+                return IconShape.BOX;         // hardback ledger
+            case WARGAMES_TROPHY:
+                return IconShape.CYLINDER;    // trophy cup
 
             default:
                 return IconShape.BOX;
