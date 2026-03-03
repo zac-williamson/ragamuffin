@@ -7279,7 +7279,53 @@ public enum Material {
      * also kept in the back office trophy cabinet. Fenceable for 20 COIN or
      * pawnable for 12 COIN.
      */
-    REGIONAL_CHAMPION_SHIELD_PROP("Regional Champion Shield");
+    REGIONAL_CHAMPION_SHIELD_PROP("Regional Champion Shield"),
+
+    // ── Issue #1497: Northfield Angling Club ──────────────────────────────────
+
+    /**
+     * MATCH_DAY_CARD — issued by Ron Birch (ANGLING_CLUB_CHAIR) on paying the
+     * 3 COIN entry fee for the Sunday match. Required to fish the match water
+     * without triggering a MATCH_POACHING warning. Expires at 10:00 on match day.
+     * Tooltip: "Northfield Angling Club — Sunday Match Card. Keep it on you, Ron checks."
+     */
+    MATCH_DAY_CARD("Match Day Card"),
+
+    /**
+     * KEEPNET — collects CANAL_FISH caught during the angling match.
+     * Fish placed in the keepnet contribute to the player's weigh-in total.
+     * Each fish is randomly seeded 120–800g by AnglingClubSystem.
+     * The keepnet can be stuffed with BRICK or SCRAP_METAL (+350g each) before
+     * the weigh-in, but Ron has a 25% chance of inspecting.
+     * Tooltip: "Green mesh keepnet. Goes in the water. Fish go in it. Simple as."
+     */
+    KEEPNET("Keepnet"),
+
+    /**
+     * GRUDGING_THANKS_TOKEN — given by Ron Birch when the player returns the
+     * ANGLING_TROPHY_PROP after stealing it. Unlocks AchievementType.RETURNED_THE_TROPHY
+     * and grants Vibes +2. No resale value.
+     * Tooltip: "A handwritten note from Ron. 'Cheers. Don't do it again.'"
+     */
+    GRUDGING_THANKS_TOKEN("Grudging Thanks Token"),
+
+    /**
+     * ANGLING_TROPHY_PROP — the Northfield Angling Club Sunday Match trophy.
+     * Awarded to the winner at 10:00 weigh-in (AchievementType.CANAL_CHAMPION).
+     * Also stored in Ron's TRANSIT_VAN_PROP during the match as spare.
+     * Fenceable for 12 COIN, pawnable for 8 COIN.
+     * Returnable to Ron for AchievementType.RETURNED_THE_TROPHY + Vibes +2.
+     * Tooltip: "A small brass trophy. 'Northfield Angling Club — Sunday Champion.'"
+     */
+    ANGLING_TROPHY_PROP("Angling Trophy"),
+
+    /**
+     * CASHBOX_PROP — Ron's entry-fee cashbox kept in the TRANSIT_VAN_PROP boot.
+     * Contains 24–27 COIN pooled from entry fees (varies with registrant count).
+     * Can be stolen as part of the Keepnet Heist mechanic.
+     * Tooltip: "A dented metal cashbox. Probably holds the match entry money."
+     */
+    CASHBOX_PROP("Cashbox");
 
     private final String displayName;
 
@@ -8806,6 +8852,18 @@ public enum Material {
                                                     0.12f, 0.22f, 0.68f); // Blue official stamp
             case HOMEMADE_CAKE_SLICE:     return cs(0.95f, 0.90f, 0.80f, // Cream sponge
                                                     0.85f, 0.32f, 0.32f); // Pink jam layer
+
+            // Issue #1497: Northfield Angling Club
+            case MATCH_DAY_CARD:          return cs(0.10f, 0.55f, 0.25f, // Club green card
+                                                    0.92f, 0.92f, 0.88f); // White text area
+            case KEEPNET:                 return cs(0.12f, 0.38f, 0.18f, // Dark green mesh
+                                                    0.05f, 0.22f, 0.10f); // Deeper net shadow
+            case GRUDGING_THANKS_TOKEN:   return cs(0.92f, 0.92f, 0.88f, // White paper note
+                                                    0.45f, 0.38f, 0.28f); // Brown biro scrawl
+            case ANGLING_TROPHY_PROP:     return cs(0.88f, 0.72f, 0.22f, // Brass trophy
+                                                    0.70f, 0.55f, 0.12f); // Darker brass base
+            case CASHBOX_PROP:            return cs(0.42f, 0.42f, 0.45f, // Dented grey metal
+                                                    0.25f, 0.25f, 0.28f); // Dark shadow
 
             default:             return c(0.5f, 0.5f, 0.5f);
         }
@@ -11248,6 +11306,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official-looking form
             case HOMEMADE_CAKE_SLICE:
                 return IconShape.FOOD;        // slice of Victoria sponge
+
+            // Issue #1497: Northfield Angling Club
+            case MATCH_DAY_CARD:
+                return IconShape.FLAT_PAPER;  // laminated match card
+            case KEEPNET:
+                return IconShape.BOX;         // mesh net bundle
+            case GRUDGING_THANKS_TOKEN:
+                return IconShape.FLAT_PAPER;  // handwritten note
+            case ANGLING_TROPHY_PROP:
+                return IconShape.CYLINDER;    // brass trophy
+            case CASHBOX_PROP:
+                return IconShape.BOX;         // metal cashbox
 
             default:
                 return IconShape.BOX;
