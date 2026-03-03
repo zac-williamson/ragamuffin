@@ -6754,6 +6754,59 @@ public enum AchievementType {
         "Catalogue King",
         "Five days flogging knockoffs. Barry's not even angry. He's impressed.",
         5
+    ),
+
+    // ── Issue #1416: Northfield Mobile Speed Camera Van ───────────────────────
+
+    /**
+     * SPEED_ANGEL — warn 5 drivers about the speed camera by tipping them off (E on CAR_NPC).
+     * Awarded by SpeedCameraVanSystem when tipOffCount reaches 5.
+     */
+    SPEED_ANGEL(
+        "Speed Angel",
+        "Five drivers warned. You're practically a community service.",
+        5
+    ),
+
+    /**
+     * CANDID_CAMERA — steal the speed camera SD card 3 times.
+     * Awarded by SpeedCameraVanSystem when sdCardSteals reaches 3.
+     */
+    CANDID_CAMERA(
+        "Candid Camera",
+        "Three SD cards. Sharon keeps losing them. Someone should have a word.",
+        3
+    ),
+
+    /**
+     * FLAT_TYRE_SHARON — slash the van's tyres with a CROWBAR (+6 Notoriety, WantedSystem +1).
+     * Awarded by SpeedCameraVanSystem on the first successful tyre slash.
+     */
+    FLAT_TYRE_SHARON(
+        "Flat Tyre, Sharon",
+        "The van isn't going anywhere. Neither is Sharon. She's on hold with the AA.",
+        1
+    ),
+
+    /**
+     * SPEED_LIMIT_ABOLISHED — burn the van with a LIGHTER when Sharon is absent.
+     * Awarded by SpeedCameraVanSystem on van arson (+20 Notoriety, WantedSystem +3).
+     */
+    SPEED_LIMIT_ABOLISHED(
+        "Speed Limit Abolished",
+        "You've made your feelings about road safety policy very clear.",
+        1
+    ),
+
+    /**
+     * POACHER_TURNED_GAMEKEEPER — obtain an Operator Licence from the police station and work
+     * beside Sharon legally, earning 1 COIN/hour.
+     * Awarded by SpeedCameraVanSystem on first legitimateOperatorShift completion.
+     */
+    POACHER_TURNED_GAMEKEEPER(
+        "Poacher Turned Gamekeeper",
+        "You've gone legit. Sharon seems quietly pleased. HMRC has been notified.",
+        1
     );
 
     private final String name;

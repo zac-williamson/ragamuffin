@@ -3145,7 +3145,35 @@ public enum NPCType {
      * </ul>
      * HP: 35f, attack: 6f, cooldown: 2.0f, hostile: false (until triggered).
      */
-    DODGY_ROOFER(35f, 6f, 2.0f, false);
+    DODGY_ROOFER(35f, 6f, 2.0f, false),
+
+    // ── Issue #1416: Northfield Mobile Speed Camera Van ───────────────────────
+
+    /**
+     * CAMERA_OPERATOR_NPC — Sharon, the mobile speed camera operator.
+     * <ul>
+     *   <li>Sits in {@link ragamuffin.world.PropType#SPEED_CAMERA_VAN_PROP} reading a tabloid.</li>
+     *   <li>Active weekdays 08:00–09:30 and 15:30–17:00 near the school.</li>
+     *   <li>Photographs cars exceeding {@code SpeedCameraVanSystem.SPEED_LIMIT_MPH} within
+     *       {@code SpeedCameraVanSystem.CAMERA_RANGE_BLOCKS} blocks.</li>
+     *   <li>Can be distracted via {@link ragamuffin.world.PropType#TABLOID_RACK_PROP} for 25 seconds.</li>
+     *   <li>Radios police (WantedSystem +1) after 5 player tip-offs.</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    CAMERA_OPERATOR_NPC(20f, 0f, 0f, false),
+
+    /**
+     * SPEEDING_DRIVER_NPC — a driver approaching or passing the speed camera location.
+     * <ul>
+     *   <li>Randomly exceeds {@code SpeedCameraVanSystem.SPEED_LIMIT_MPH} (30 mph).</li>
+     *   <li>Player can wave one down (E) for a {@code SpeedCameraVanSystem.TIP_OFF_COIN_REWARD} COIN tip-off.</li>
+     *   <li>Can be sold a stolen {@link ragamuffin.building.Material#SPEED_CAMERA_SD_CARD} for 15 COIN
+     *       + {@link ragamuffin.core.RumourType#GRATEFUL_DRIVER} rumour.</li>
+     * </ul>
+     * HP: 20f, attack: 0f, cooldown: 0f, hostile: false.
+     */
+    SPEEDING_DRIVER_NPC(20f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
