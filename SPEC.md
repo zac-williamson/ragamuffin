@@ -56834,3 +56834,114 @@ There's a bright green defibrillator cabinet bolted to the wall outside the comm
 5. **DVSA inspection invalidates bribed licence**: create system; bribe Keith (supply valid `BROWN_ENVELOPE`); verify `Material.DRIVING_LICENCE` in inventory; advance time by `DVSA_INSPECTION_INTERVAL_DAYS` days; trigger inspection via `triggerDVSAInspection(system)`; verify `Material.DRIVING_LICENCE` replaced with `Material.INVALID_LICENCE` in inventory; verify test centre `closedUntilDay` is set `TEST_CENTRE_CLOSE_DAYS` days ahead.
 
 // `DrivingTestSystem.java` must be created as the sole new source file. Integrates with `CarDrivingSystem` (licence reduces police-stop chance), `MOTSystem` (shared `BROWN_ENVELOPE` bribe mechanic), `InternetCafeSystem` (forged card crafting), `BattleBarMiniGame` (test route minigame), `CriminalRecord` (new `TOUT` crime type), `WantedSystem`, `NotorietySystem`, `RumourNetwork`, `DisguiseSystem` (examiner recognises disguised player at 25% chance), `HMRCSystem` (scalping income tracked), and `AchievementSystem`. `Material.BROWN_ENVELOPE`, `Material.BLANK_CARD`, `Material.INK_CARTRIDGE`, `Material.LAMINATOR_POUCH`, `Material.STOLEN_PASSPORT_PHOTO` already exist. `NPCType.POLICE` already exists. `LandmarkType.DRIVING_TEST_CENTRE` must be added to `LandmarkType.java`.
+
+---
+
+## Issue #1483: Add Northfield Crown Green Bowls Club — Reg's Green, the Grudge Match & the Bowl Racket
+
+At the edge of the park, behind a low privet hedge and a chipped white-painted gate, lies the Northfield Crown Green Bowls Club. A small pavilion (PAVILION_PROP) houses a kettle, a trophy cabinet, and Reg (BOWLS_CLUB_SECRETARY), who has run the place for forty years and does not welcome interlopers. The green itself is a 20×20 GRASS playing surface with a slight crown raise in the centre (two GRASS blocks at +1 height). Lawn bowls is the most aggressively passive sport in Britain, and in Northfield it doubles as a semi-organised gambling ring run by pensioners who should absolutely know better.
+
+### Mechanic 1 — Getting On the Green
+
+- `BowlsClubSystem` manages `LandmarkType.BOWLS_CLUB`, a fenced-off green in the park. Open daily 10:00–18:00 (summer hours; closes at 16:00 in FROST or RAIN weather).
+- Membership required: Press E on Reg (`NPCType.BOWLS_CLUB_SECRETARY`) → buy `Material.BOWLS_CLUB_MEMBERSHIP` for 3 COIN. Non-members who enter the green (`PropType.BOWLS_GREEN_PROP`) are warned once; on second trespass Reg calls PCSO. Achievement: `CARD_CARRYING_MEMBER`.
+- Equipment: `Material.BOWLS_SET` (4 biased bowls + 1 jack) costs 5 COIN from Reg, or can be borrowed for `BORROW_COST` = 1 COIN per session. Must hold `BOWLS_SET` to play. A `Material.STOLEN_BOWLS_SET` can be acquired by pickpocketing a `BOWLS_PLAYER` NPC (50% success chance due to distraction; Notoriety +3 if caught).
+
+### Mechanic 2 — The Mini-Game (Crown Green Bowls)
+
+- `playEnd(player, opponent, rng)` simulates one "end" of bowls: the player rolls 4 bowls toward the jack, then the opponent NPC rolls 4.
+- Bowl trajectory uses a timing-bar mechanic (`BattleBarMiniGame`, EASY difficulty for novice opponents, MEDIUM for club players, HARD for Reg). Green zone = closest to jack (2 pts), yellow = within `SCORING_RADIUS_YELLOW` = 2.0f blocks (1 pt), red = outside (0 pts). Bias factor: each bowl curves `BIAS_CURVE_FACTOR` = 0.3f blocks per end unless player accounts for it (hold left/right while pressing E to compensate).
+- A full game is `ENDS_PER_GAME` = 8 ends. Higher score wins.
+- Opponents: `BOWLS_NOVICE` NPC (random pensioner), `BOWLS_CLUB_PLAYER` NPC (medium), Reg (`BOWLS_CLUB_SECRETARY`, hardest — always compensates bias perfectly).
+
+### Mechanic 3 — The Grudge Match & Side Betting
+
+- Every Saturday 14:00 the Grudge Match is scheduled: Reg vs Arthur (`NPCType.BOWLS_RIVAL`) — a bitter inter-club rivalry seeded by `RumourType.BOWLS_GRUDGE_MATCH`. Player can spectate or participate (challenge Arthur to a wager).
+- Side bet with `NPCType.BOWLS_SPECTATOR` NPCs (2–4 pensioners loitering): offer 1–10 COIN bet on any active match. Notoriety +1 per bet placed (gambling in a public park). Winning side bet pays 1.5× stake. Achievement: `PARKS_DEPARTMENT_BOOKIE` on winning 3 side bets in one session.
+- Player can also nobble Arthur's bowls: sneak up to `PropType.BOWLS_BAG_PROP` while Arthur is distracted (PCSO patrol creates a 30-second window) → swap one of Arthur's bowls with `Material.WEIGHTED_BOWL` from `PropType.SPORTS_STORE_PROP` (inside pavilion, requires SCREWDRIVER pick or 6 crowbar hits). Weighted bowl causes Arthur's shots to veer `WEIGHTED_BOWL_BIAS` = 1.2f extra blocks. If detected by Reg: `CrimeType.CHEATING_AT_BOWLS` (real crime), Notoriety +6, banned for `BAN_DURATION_DAYS` = 5 in-game days. Achievement: `LOADED_JACK`.
+
+### Mechanic 4 — The Jack Racket
+
+- `Material.JACK` (the small white target ball) can be picked up from the green during play (press E while match is not in progress). Reg notices within `JACK_NOTICE_RADIUS` = 8 blocks if player holds it during club hours.
+- Sell to `FenceSystem` for `JACK_FENCE_VALUE` = 4 COIN; or ransom back to Reg: wait until match day, approach Reg and "find" the jack — reward `JACK_RETURN_REWARD` = 3 COIN + Respect. Achievement: `FINDERS_KEEPERS` on ransom. `RumourType.MISSING_JACK` seeded when jack goes missing (Vibes −2, Reg upset for 2 days).
+- The `CHAMPIONSHIP_JACK` (gold-painted): only spawns during the Annual Tournament (Day 14 at 14:00). Worth `CHAMPIONSHIP_JACK_FENCE_VALUE` = 12 COIN. Stealing it cancels the tournament, Notoriety +10, `RumourType.CHAMPIONSHIP_SABOTAGE` seeded, NeighbourhoodSystem Vibes −5.
+
+### Mechanic 5 — Annual Tournament
+
+- On Day 14 at 14:00, Reg announces the Northfield Crown Green Bowls Tournament (in-game day 14, repeating every 14 days). Entry fee: `TOURNAMENT_ENTRY_FEE` = 2 COIN. Up to 8 entrants: player + 7 `BOWLS_CLUB_PLAYER` NPCs.
+- Single-elimination bracket over 3 rounds, each round = 1 game (`ENDS_PER_GAME` ends). Winner receives `TOURNAMENT_PRIZE` = 20 COIN + `Material.BOWLS_TROPHY`. Achievement: `NORTHFIELD_BOWLS_CHAMPION`.
+- If player wins 3 consecutive tournaments: `RumourType.BOWLS_DYNASTY` seeded; Reg begrudgingly makes player `Vice-Secretary` (flavour title — no mechanical effect beyond dialogue change). Achievement: `THE_DYNASTY`.
+
+### Constants
+
+| Constant | Value |
+|---|---|
+| `BORROW_COST` | 1 |
+| `MEMBERSHIP_COST` | 3 |
+| `BOWLS_SET_PURCHASE_COST` | 5 |
+| `ENDS_PER_GAME` | 8 |
+| `SCORING_RADIUS_GREEN` | 1.0f |
+| `SCORING_RADIUS_YELLOW` | 2.0f |
+| `BIAS_CURVE_FACTOR` | 0.3f |
+| `WEIGHTED_BOWL_BIAS` | 1.2f |
+| `JACK_NOTICE_RADIUS` | 8.0f |
+| `JACK_FENCE_VALUE` | 4 |
+| `JACK_RETURN_REWARD` | 3 |
+| `CHAMPIONSHIP_JACK_FENCE_VALUE` | 12 |
+| `TOURNAMENT_ENTRY_FEE` | 2 |
+| `TOURNAMENT_PRIZE` | 20 |
+| `TOURNAMENT_INTERVAL_DAYS` | 14 |
+| `BAN_DURATION_DAYS` | 5 |
+| `SIDE_BET_PAYOUT_MULTIPLIER` | 1.5f |
+| `STOLEN_BOWLS_STEAL_CHANCE` | 0.50f |
+| `JACK_STEAL_NOTORIETY` | 3 |
+| `WEIGHTED_BOWL_NOTORIETY` | 6 |
+| `CHAMPIONSHIP_JACK_STEAL_NOTORIETY` | 10 |
+| `PCSO_DISTRACT_WINDOW_SECONDS` | 30.0f |
+| `SUMMER_CLOSE_HOUR` | 18.0f |
+| `POOR_WEATHER_CLOSE_HOUR` | 16.0f |
+
+### New Entities Required
+
+- `NPCType.BOWLS_CLUB_SECRETARY` — Reg. Runs the club. Sells membership and bowls set. Enforces rules. Hardest bowls opponent. Present 09:30–18:30 daily.
+- `NPCType.BOWLS_RIVAL` — Arthur. Reg's bitter rival. Competes in weekly Grudge Match. Cheatable via `WEIGHTED_BOWL`.
+- `NPCType.BOWLS_CLUB_PLAYER` — generic club members. 2–4 present during opening hours. Tournament opponents.
+- `NPCType.BOWLS_SPECTATOR` — pensioners watching matches. Bettable on. Present during Grudge Match and Tournament.
+- `Material.BOWLS_SET` — "Four biased bowls and a jack. You'll need to account for the curve." Sold by Reg. Required to play. Non-stackable.
+- `Material.STOLEN_BOWLS_SET` — "Someone else's initials are scratched on these." Functions identically to `BOWLS_SET`; Reg recognises them (60% chance dialogue triggers).
+- `Material.JACK` — "The small white target ball. Smaller than you'd think." Stealable from the green. Fence value 4 COIN or ransom 3 COIN.
+- `Material.CHAMPIONSHIP_JACK` — "Gold-painted. Reg painted it himself. It took him two hours." Only exists during Tournament. Fence value 12 COIN.
+- `Material.WEIGHTED_BOWL` — "Suspiciously heavy on one side. Craftable or found in sports store cupboard." Causes NPC shots to veer extra.
+- `Material.BOWLS_TROPHY` — "Northfield Crown Green Bowls Champion. Your name will be engraved. Probably." Non-stackable. Decoratable in squat.
+- `Material.BOWLS_CLUB_MEMBERSHIP` — "Northfield CGBC membership card. Valid until Reg decides otherwise." Non-stackable.
+- `PropType.BOWLS_GREEN_PROP` — the playing surface (20×20 GRASS with crown). Impassable to non-members during club hours.
+- `PropType.PAVILION_PROP` — the small clubhouse. Contains trophy cabinet, kettle, sports store cupboard.
+- `PropType.BOWLS_BAG_PROP` — Arthur's gear bag. Interactable to swap bowls.
+- `PropType.BOWLS_TROPHY_CABINET_PROP` — display in pavilion showing past champions. Decorative.
+- `RumourType.BOWLS_GRUDGE_MATCH` — "Reg and Arthur are playing their grudge match at the bowls club on Saturday." Spreads to 3 NPCs every Friday 17:00.
+- `RumourType.MISSING_JACK` — "Someone nicked the jack from the bowls club. Reg is furious." Vibes −2.
+- `RumourType.CHAMPIONSHIP_SABOTAGE` — "The bowls tournament was cancelled because someone nicked the championship jack." Vibes −5.
+- `RumourType.BOWLS_DYNASTY` — "That player has won the Northfield bowls tournament three times in a row. Reg is livid."
+
+### New AchievementType Entries Required
+
+- `CARD_CARRYING_MEMBER` — "Joined the Northfield Crown Green Bowls Club. Reg gave you a card and a suspicious look." Target 1.
+- `PARKS_DEPARTMENT_BOOKIE` — "Won 3 side bets at the bowls club in a single session. You've found your calling." Target 3.
+- `LOADED_JACK` — "Swapped Arthur's bowl with a weighted one and got away with it. Technically sporting fraud." Target 1.
+- `FINDERS_KEEPERS` — "Returned the missing jack to Reg for a cash reward. You absolutely didn't steal it." Target 1.
+- `NORTHFIELD_BOWLS_CHAMPION` — "Won the Northfield Crown Green Bowls Tournament. Reg said 'well played' through gritted teeth." Target 1.
+- `THE_DYNASTY` — "Won the bowls tournament three times in a row. You are the undisputed master of a sport most people ignore." Target 3.
+
+### Integration Tests
+
+1. **Joining the club issues membership and allows green access**: create `BowlsClubSystem`; set time to 11:00 (open); call `buyMembership(player, inventory, reg)`; verify `inventory.contains(Material.BOWLS_CLUB_MEMBERSHIP)` == true; verify `achievementSystem` received `CARD_CARRYING_MEMBER`; call `enterGreen(player)` → verify `EntryResult.ALLOWED`.
+
+2. **Non-member is warned then PCSO called**: create system; verify player has no `BOWLS_CLUB_MEMBERSHIP`; call `enterGreen(player)` → verify `EntryResult.WARNING`; call `enterGreen(player)` again → verify `EntryResult.PCSO_CALLED`; verify `wantedSystem.getWantedLevel()` >= 1.
+
+3. **Bowls end scoring works correctly**: create system; give player `BOWLS_SET` and `BOWLS_CLUB_MEMBERSHIP`; seed rng to guarantee all 4 player bowls land in green zone (within `SCORING_RADIUS_GREEN`); seed rng so all 4 NPC bowls land outside `SCORING_RADIUS_YELLOW`; call `playEnd(player, noviceNpc, rng)`; verify `EndResult.playerScore` == 8 (4 bowls × 2 pts); verify `EndResult.npcScore` == 0.
+
+4. **Weighted bowl sabotage triggers crime on detection**: give player `WEIGHTED_BOWL`; call `swapArthurBowl(player, inventory, arthurNpc, rng_detected)`; verify `criminalRecord.hasCrime(CrimeType.CHEATING_AT_BOWLS)` == true; verify `notorietySystem.getNotoriety()` increased by `WEIGHTED_BOWL_NOTORIETY`; verify `isBanned()` == true; verify `getBanRemainingDays()` == `BAN_DURATION_DAYS`.
+
+5. **Tournament champion receives prize and trophy**: create system; advance to Tournament day at 14:00; call `enterTournament(player, inventory)`; seed rng to guarantee player wins all 3 rounds; call `resolveTournament(rng)`; verify `inventory.getItemCount(Material.COIN)` increased by `TOURNAMENT_PRIZE`; verify `inventory.contains(Material.BOWLS_TROPHY)` == true; verify `achievementSystem` received `NORTHFIELD_BOWLS_CHAMPION`.
+
+// `BowlsClubSystem.java` must be created as the sole new source file. Integrates with `BattleBarMiniGame` (end timing mechanics), `FenceSystem` (jack/weighted bowl trade), `NotorietySystem`, `WantedSystem`, `CriminalRecord` (new `CHEATING_AT_BOWLS` crime type), `RumourNetwork`, `NeighbourhoodSystem`, `WeatherSystem` (closing hours), `TimeSystem`, `AchievementSystem`, and `SquatFurnishingTracker` (trophy placement). New `NPCType` entries: `BOWLS_CLUB_SECRETARY`, `BOWLS_RIVAL`, `BOWLS_CLUB_PLAYER`, `BOWLS_SPECTATOR`. New `Material` entries: `BOWLS_SET`, `STOLEN_BOWLS_SET`, `JACK`, `CHAMPIONSHIP_JACK`, `WEIGHTED_BOWL`, `BOWLS_TROPHY`, `BOWLS_CLUB_MEMBERSHIP`. New `PropType` entries: `BOWLS_GREEN_PROP`, `PAVILION_PROP`, `BOWLS_BAG_PROP`, `BOWLS_TROPHY_CABINET_PROP`. New `RumourType` entries: `BOWLS_GRUDGE_MATCH`, `MISSING_JACK`, `CHAMPIONSHIP_SABOTAGE`, `BOWLS_DYNASTY`. New `AchievementType` entries: `CARD_CARRYING_MEMBER`, `PARKS_DEPARTMENT_BOOKIE`, `LOADED_JACK`, `FINDERS_KEEPERS`, `NORTHFIELD_BOWLS_CHAMPION`, `THE_DYNASTY`. `LandmarkType.BOWLS_CLUB` must be added to `LandmarkType.java`. `CrimeType.CHEATING_AT_BOWLS` must be added to `CriminalRecord.java`. `NPCType.PCSO` already exists. `Material.SCREWDRIVER` already exists. `FenceSystem` already handles trade.
