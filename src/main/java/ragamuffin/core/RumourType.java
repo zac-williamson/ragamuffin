@@ -1820,5 +1820,39 @@ public enum RumourType {
      * — seeded by DogShowSystem when the player tips off the journalist after
      * the bribery exposé path. Spreads via PUBLIC and JOURNALIST NPCs;
      * costs Marchetti −15 reputation and unlocks WHISTLEBLOWER. */
-    DOG_SHOW_RIGGING;
+    DOG_SHOW_RIGGING,
+
+    // ── Issue #1495: Northfield Karate Club ───────────────────────────────────
+
+    /** "Gary at the karate club's been charging 8 quid a time for belts he gives
+     * out for nothing. Trading Standards have had a word."
+     * — seeded by KarateSystem when the player reports Gary to the
+     * TRADING_STANDARDS_OFFICER. Spreads among KARATE_KID/PUBLIC NPCs.
+     * Vibes 0 (neutral). */
+    GRADING_SCAM,
+
+    /** "Someone grassed Gary up over the grading fees. Or tried to blackmail him.
+     * Either way, he's not happy."
+     * — seeded by KarateSystem when the player blackmails Gary (CrimeType.BLACKMAIL).
+     * Spreads via PUBLIC NPCs. Vibes −2. */
+    CLUB_SNITCH,
+
+    /** "Some lad smashed Derek at sparring on Wednesday. Gary was dead impressed."
+     * — seeded by KarateSystem when the player wins all 3 spar rounds
+     * (AchievementType.NORTHFIELD_CHAMPION). Spreads via PUBLIC and KARATE_KID NPCs.
+     * Vibes +2. */
+    KARATE_CHAMPION,
+
+    /** "That muppet challenged Derek to a spar and got dropped in the first round.
+     * Gary had to stop it."
+     * — seeded by KarateSystem when the player loses 2+ spar rounds.
+     * Spreads via PUBLIC NPCs. Vibes −1. */
+    GOT_BATTERED_AT_KARATE,
+
+    /** "Someone broke into the dojo back room and then brought the trophy back.
+     * Gary gave them a free lesson."
+     * — seeded by KarateSystem when the player returns the stolen trophy to Gary
+     * (AchievementType.HONOURABLE_THIEF). Spreads via PUBLIC and KARATE_KID NPCs.
+     * Vibes +3. */
+    HONOURABLE_THIEF;
 }

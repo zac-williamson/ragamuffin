@@ -7234,7 +7234,52 @@ public enum Material {
      * Lists all 12 delivery addresses, making the milk round job easier to
      * complete optimally.
      */
-    FLOAT_MANIFEST("Float Manifest");
+    FLOAT_MANIFEST("Float Manifest"),
+
+    // ── Issue #1495: Northfield Karate Club ───────────────────────────────────
+
+    /**
+     * KARATE_GI — white karate training uniform. Required to join the
+     * Northfield Shotokan Karate Club. Purchasable from LEISURE_CENTRE (4 COIN)
+     * or charity shop (1 COIN, 40% chance ill-fitting). Without it, Gary refuses
+     * entry: "You can't train in jeans, son."
+     */
+    KARATE_GI("Karate Gi"),
+
+    /**
+     * CLUB_MEMBERSHIP_CARD — issued by Gary (KARATE_INSTRUCTOR) when the player
+     * joins the karate club after paying 5 COIN and holding KARATE_GI. Required
+     * to challenge opponents to spar during the adult session.
+     */
+    CLUB_MEMBERSHIP_CARD("Club Membership Card"),
+
+    /**
+     * FORGED_GRADE_CERTIFICATE — a counterfeit belt-grading certificate crafted
+     * from PRINTING_PRESS + BLANK_PAPER. Sellable to KARATE_KID NPCs for 6 COIN
+     * each (max 3 per grading day). CrimeType.FRAUD if sold; Gary witnesses within
+     * 10 blocks → WantedSystem +1 and Gary becomes HOSTILE.
+     */
+    FORGED_GRADE_CERTIFICATE("Forged Grade Certificate"),
+
+    /**
+     * FREE_SESSION_TOKEN — issued by Gary when the player voluntarily returns the
+     * stolen trophy (KARATE_TROPHY_PROP) to him. Waives the membership fee for
+     * one session.
+     */
+    FREE_SESSION_TOKEN("Free Session Token"),
+
+    /**
+     * KARATE_TROPHY_PROP — the club's competition trophy stored in the back office
+     * trophy cabinet. Fenceable for 10 COIN. Heist target during Wednesday session.
+     */
+    KARATE_TROPHY_PROP("Karate Trophy"),
+
+    /**
+     * REGIONAL_CHAMPION_SHIELD_PROP — the Northfield Regional Champion shield,
+     * also kept in the back office trophy cabinet. Fenceable for 20 COIN or
+     * pawnable for 12 COIN.
+     */
+    REGIONAL_CHAMPION_SHIELD_PROP("Regional Champion Shield");
 
     private final String displayName;
 

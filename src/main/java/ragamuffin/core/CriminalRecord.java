@@ -1392,7 +1392,17 @@ public class CriminalRecord {
          * VEHICLE_THEFT — recorded when the player boards and drives away the
          * milk float from Dave's round. Notoriety +8, WantedSystem +1.
          */
-        VEHICLE_THEFT("Vehicle theft (milk float)");
+        VEHICLE_THEFT("Vehicle theft (milk float)"),
+
+        // ── Issue #1495: Northfield Karate Club ──────────────────────────────
+
+        /**
+         * BLACKMAIL — recorded when the player threatens Gary (KARATE_INSTRUCTOR)
+         * with Trading Standards exposure unless he pays 10 COIN.
+         * Requires evidence of 2+ grading fees collected. Gary pays once then
+         * becomes permanently hostile. RumourType.CLUB_SNITCH seeded (Vibes −2).
+         */
+        BLACKMAIL("Blackmail (karate club grading scam)");
 
         private final String displayName;
 
