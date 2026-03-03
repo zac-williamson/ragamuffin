@@ -3375,7 +3375,28 @@ public enum NPCType {
      * Refuses service to players with Notoriety &ge; 50 or carrying a POLICE_BADGE.
      * HP: 50, attack: 0, cooldown: 0, not hostile by default.
      */
-    CLOSING_DOWN_DAVE(50f, 0f, 0f, false);
+    CLOSING_DOWN_DAVE(50f, 0f, 0f, false),
+
+    // ── Issue #1475: Northfield Rare Bird Alert ───────────────────────────────
+
+    /**
+     * TWITCHER — a visiting birdwatcher who descends on Northfield during the parakeet sighting event.
+     * Stationary while watching (WATCHING_STATE), slowly converges on PARAKEET_TREE_PROP.
+     * Carries 2–6 COIN + BIRD_GUIDE_BOOK. 65% pickpocket success while watching.
+     * Buys at most 1 BIRDWATCHING_TIP or FAKE_BIRDWATCHING_TIP per event.
+     * Returns hostile after receiving a FAKE_BIRDWATCHING_TIP (DECEIVED_TWITCHER_STATE after 60s).
+     * HP: 40, attack: 0, cooldown: 0, not hostile by default.
+     */
+    TWITCHER(40f, 0f, 0f, false),
+
+    /**
+     * CANAL_TWITCHER — Terry, the resident Northfield twitcher at the canal.
+     * Always present at the canal 06:00–10:00 every morning; binoculars in hand.
+     * Sells BINOCULARS for 8 COIN. Seeds the initial RARE_BIRD_SPOTTED rumour when triggered.
+     * Will buy a BIRD_PHOTO for 5 COIN and give BIRDWATCHING_TIP for free from that point forward.
+     * HP: 40, attack: 0, cooldown: 0, not hostile.
+     */
+    CANAL_TWITCHER(40f, 0f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
