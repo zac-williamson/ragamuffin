@@ -1604,5 +1604,30 @@ public enum RumourType {
      * — seeded by BaltiHouseSystem when queue-jump is detected at BALTI_HOUSE_HATCH_PROP
      *   during peak hours (18:00–20:00). Notoriety +1.
      * Spreads via PUBLIC NPCs near the hatch. */
-    QUEUE_JUMPER;
+    QUEUE_JUMPER,
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Issue #1453: Northfield Skin Deep Tattoos — Kev's Flash Sheets
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** "Health inspector shut Skin Deep Tattoos down — dirty station, apparently."
+     * — seeded by TattooSystem when Health Inspector finds dirty station.
+     * Triggers HEALTH_SCARE rumour; Kev closed 2 days; NewspaperSystem headline.
+     * Spreads via PUBLIC and LOCAL_TRADER NPCs. */
+    TATTOO_PARLOUR_BUST,
+
+    /** "Someone broke into Skin Deep last night — Kev's tattoo gun's gone."
+     * — seeded by TattooSystem when player steals TATTOO_GUN after-hours.
+     * Spreads via PUBLIC and LOCAL_TRADER NPCs. */
+    TATTOO_HEIST,
+
+    /** "Heard someone gave themselves a tattoo in a public toilet. Class."
+     * — seeded by TattooSystem when player performs DIY prison tattoo at MIRROR_PROP.
+     * Spreads via PUBLIC NPCs. */
+    PRISON_TATTOO_RUMOUR,
+
+    /** "The health inspector's been round Skin Deep — reckon Kev's in trouble."
+     * — seeded by TattooSystem during Health Inspector visit (dirty station found).
+     * Spreads via PUBLIC and LOCAL_TRADER NPCs. */
+    HEALTH_SCARE;
 }
