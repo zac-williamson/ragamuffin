@@ -3548,7 +3548,18 @@ public enum NPCType {
      * Can be bribed 8 COIN to lower the player's handicap by 16.
      * Caught during HANDICAP_FRAUD → permanently hostile.
      */
-    LEAGUE_SECRETARY(25f, 0f, 0f, false);
+    LEAGUE_SECRETARY(25f, 0f, 0f, false),
+
+    // ── Issue #1503: Northfield Save Our Pub ──────────────────────────────────
+
+    /**
+     * PROPERTY_DEVELOPER — Lenny Sharpe, the antagonist developer who issued the
+     * demolition notice on the Crown &amp; Anchor. Appears near the pub entrance from
+     * Day 1. Player can fence Baz's petition clipboard to Lenny (PUB_PETITION_NICKED),
+     * sell the stolen PLANNING_PERMISSION_DOC, or provoke him to boost community
+     * sympathy. Becomes hostile if attacked. Passive otherwise.
+     */
+    PROPERTY_DEVELOPER(30f, 5f, 0f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player
