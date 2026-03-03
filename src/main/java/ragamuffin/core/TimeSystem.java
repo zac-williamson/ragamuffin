@@ -263,4 +263,13 @@ public class TimeSystem {
             dayCount++;
         }
     }
+
+    /**
+     * Force-set the day count for testing purposes.
+     *
+     * @param day the day number to set (must be &ge; 1)
+     */
+    public void setDayForTesting(int day) {
+        this.dayCount = Math.max(1, day);
+    }
 }

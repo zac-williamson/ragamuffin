@@ -4534,7 +4534,24 @@ public enum PropType {
      * with 10–15 COIN. Press E to search (only accessible after break-in).
      * Collision: 1.5w × 0.85h × 0.80d. Health: 5 hits. Drops WOOD.
      */
-    DEPOT_OFFICE_DESK_PROP(1.5f, 0.85f, 0.80f, 5, Material.WOOD);
+    DEPOT_OFFICE_DESK_PROP(1.5f, 0.85f, 0.80f, 5, Material.WOOD),
+
+    // ── Issue #1491: Northfield Annual Dog Show ───────────────────────────────
+
+    /**
+     * JUDGES_TABLE_PROP — Clive's scoring table at the dog show ring.
+     * Press E to interact with Clive pre-judging (entry payment, bribery).
+     * Unattended during the 14:00–14:15 heist window.
+     * Collision: 1.60w × 0.80h × 0.70d. Health: 5 hits. Drops WOOD.
+     */
+    JUDGES_TABLE_PROP(1.60f, 0.80f, 0.70f, 5, Material.WOOD),
+
+    /**
+     * SHOW_RING_BARRIER_PROP — rope-and-post barrier marking the judging ring
+     * boundary in the park during the annual dog show.
+     * Collision: 0.10w × 1.00h × 0.10d. Health: 2 hits. Drops WOOD.
+     */
+    SHOW_RING_BARRIER_PROP(0.10f, 1.00f, 0.10f, 2, Material.WOOD);
 
     // ─────────────────────────────────────────────────────────────────────────
     // Issue #719: Collision and destructibility data
