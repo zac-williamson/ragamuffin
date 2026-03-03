@@ -3122,6 +3122,41 @@ public enum AchievementType {
         1
     ),
 
+    // ── Issue #1349: Northfield RAOB Buffalo Lodge No. 1247 ───────────────────
+
+    /**
+     * Awarded when the player successfully completes the RAOBLodgeSystem initiation
+     * end-to-end: 3 sponsor favours + 10 COIN + BattleBarMiniGame + BUFFALO_MEMBERSHIP_CARD issued.
+     */
+    BUFFALO_SOLDIER(
+        "Buffalo Soldier",
+        "Three favours, a tenner, and a timing test. You are now, officially, a Buffalo. " +
+            "Ron shook your hand in a very specific way.",
+        1
+    ),
+
+    /**
+     * Awarded when the player successfully executes the Lodge Safe Heist in full:
+     * pigeon distraction + lockpick + KOMPROMAT_LEDGER obtained + escape before ceremony ends.
+     */
+    THE_LEDGER(
+        "The Ledger",
+        "Decades of secrets. Councillor Walsh features heavily. " +
+            "You feel simultaneously powerful and deeply implicated.",
+        1
+    ),
+
+    /**
+     * Awarded when the player delivers the KOMPROMAT_LEDGER to CitizensAdviceSystem
+     * or PoliceStationSystem and triggers the newspaper headline.
+     */
+    PRIMO_REGENT(
+        "Primo Regent",
+        "You didn't join the Buffaloes. You destroyed them from the inside " +
+            "and sold their secrets to the Citizens Advice. Ron will never recover.",
+        1
+    ),
+
     // ── Issue #1146: Mick's MOT & Tyre Centre ────────────────────────────────
 
     /**

@@ -2763,7 +2763,19 @@ public enum NPCType {
      * Moves to The Ragamuffin Arms after 12:00 along with VETERANs.
      * HP: 25f, attack: 0f, cooldown: 0f, hostile: false.
      */
-    RAOB_LODGE_MEMBER(25f, 0f, 0f, false);
+    RAOB_LODGE_MEMBER(25f, 0f, 0f, false),
+
+    // ── Issue #1349: Northfield RAOB Buffalo Lodge No. 1247 ───────────────────
+
+    /**
+     * RAOB_PRIMO_REGENT — Ron, 61, Primo Regent of Northfield Buffaloes Lodge No. 1247.
+     * Leads Monday/Thursday evening sessions and the Grand Ceremony. Wears a ceremonial
+     * fez and carries the KOMPROMAT_LEDGER. Can be distracted by a PIGEON near the window
+     * to open the 30-second safe-heist window. Goes hostile if player is Wanted ≥ 2 and
+     * inside the Lodge.
+     * HP: 45f, attack: 6f, cooldown: 1.2f, hostile: false.
+     */
+    RAOB_PRIMO_REGENT(45f, 6f, 1.2f, false);
 
     private final float maxHealth;
     private final float attackDamage;   // Damage per hit to player

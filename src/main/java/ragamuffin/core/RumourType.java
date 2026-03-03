@@ -994,5 +994,31 @@ public enum RumourType {
      * attacks, or breaks a block during 11:00–11:02 on Remembrance Sunday).
      * Spreads via PUBLIC, PENSIONER, and VETERAN NPCs town-wide.
      * Triggers NewspaperSystem headline: 'Local yob disrupts Remembrance ceremony'. */
-    SILENCE_BREACH;
+    SILENCE_BREACH,
+
+    // ── Issue #1349: Northfield RAOB Buffalo Lodge No. 1247 ──────────────────
+
+    /** "Northfield Buffaloes are taking on new initiates — Monday and Thursday evenings,
+     * Lodge on the high street. Ron runs it. Three favours and a tenner gets you in."
+     * — seeded by RAOBLodgeSystem when sponsor trust is established.
+     * Spreads via PUBLIC, BARMAN, and RAOB_LODGE_MEMBER NPCs. */
+    RAOB_INITIATION,
+
+    /** "Someone turned over the Buffalo Lodge last night — safe emptied, the lot.
+     * Ron's not happy. Councillor Walsh is apparently livid."
+     * — seeded by RAOBLodgeSystem on LODGE_BURGLARY crime trigger.
+     * Triggers NewspaperSystem headline. Spreads via PUBLIC and PENSIONER NPCs. */
+    LODGE_BURGLARY,
+
+    /** "That ledger from the Lodge has turned up at the Citizens Advice. Half the
+     * council's in it. Councillor Walsh is threatening legal action."
+     * — seeded by RAOBLodgeSystem on KOMPROMAT_LEDGER delivery.
+     * Triggers newspaper headline + Notoriety −5 for the player. */
+    KOMPROMAT_REVEALED,
+
+    /** "Overheard at the Lodge: Councillor Walsh is backing the new leisure centre
+     * planning application. Apparently the Buffaloes have first refusal on the snooker room."
+     * — seeded during Grand Ceremony by RAOBLodgeSystem (active RAOB_MEMBER players overhear).
+     * Spreads slowly via RAOB_LODGE_MEMBER and COUNCILLOR_MEMBER NPCs. */
+    FACTION_RUMOUR;
 }
