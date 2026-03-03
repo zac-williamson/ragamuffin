@@ -1486,5 +1486,32 @@ public enum RumourType {
      * — seeded by SpeedCameraVanSystem when the player burns the van with a LIGHTER.
      * Spreads via ALL NPC types in a wide radius.
      * Triggers ARSON crime, newspaper headline, Notoriety +20, Wanted +3. */
-    VAN_FIRE_RUMOUR;
+    VAN_FIRE_RUMOUR,
+
+    // ── Issue #1420: Northfield Post Office Horizon Scandal ──────────────────
+
+    /** "Maureen from the Post Office has been accused of stealing. It's that bloody computer system again."
+     * — seeded by HorizonScandalSystem on day 14 when Derek Swann arrives and pins the shortfall letter.
+     * Seeded from Maureen and REGIONAL_AUDITOR NPC.
+     * Spreads via PUBLIC, PENSIONER, and POSTMAN NPCs throughout Northfield. */
+    HORIZON_SCANDAL,
+
+    /** "Maureen got convicted. They're saying she fiddled the books. Don't believe it myself."
+     * — seeded by HorizonScandalSystem when tribunal resolves to CONVICTED outcome.
+     * Maureen enters NPCState.GRIEVING; Post Office runs on temp clerk for 3 days.
+     * Spreads via PUBLIC, PENSIONER, and JOURNALIST NPCs. */
+    HORIZON_CONVICTION,
+
+    /** "Maureen got off! Post Office had it all wrong — it was the software."
+     * — seeded by HorizonScandalSystem when tribunal resolves to ACQUITTED outcome.
+     * Post Office re-opens; Maureen offers 10% stamp discount for 2 in-game days.
+     * Spreads via PUBLIC, PENSIONER, and JOURNALIST NPCs. */
+    HORIZON_CLEARED,
+
+    /** "Heard the IT bloke from the Post Office took a bung and changed his report."
+     * — seeded by HorizonScandalSystem when player bribes Pete (IT_CONTRACTOR) for 10 COIN
+     *   OR when player sells transaction logs to REGIONAL_AUDITOR and a witness NPC observes.
+     * Spreads via PUBLIC and MARKET_TRADER NPCs.
+     * Lowers community respect toward the player by 4 if seeded while player is within 10 blocks. */
+    DODGY_AUDIT;
 }

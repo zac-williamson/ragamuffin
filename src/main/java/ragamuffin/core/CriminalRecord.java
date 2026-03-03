@@ -1277,7 +1277,24 @@ public class CriminalRecord {
          * from QuickFix Loans. 15% chance Darren recognises the player, triggering
          * WantedSystem +1. Penalty: +5 Notoriety on detection.
          */
-        IDENTITY_FRAUD("Identity fraud (QuickFix Loans)");
+        IDENTITY_FRAUD("Identity fraud (QuickFix Loans)"),
+
+        // ── Issue #1420: Northfield Post Office Horizon Scandal ───────────────
+
+        /**
+         * AUDIT_OBSTRUCTION — recorded if the player assaults Pete (IT_CONTRACTOR NPC) or
+         * steals the SHORTFALL_LETTER_PROP from the counter before the day-17 tribunal.
+         * Penalty: Notoriety +5, WantedSystem +1.
+         * Consequence: tribunal adjudicator applies 10% conviction-probability bonus against player.
+         */
+        AUDIT_OBSTRUCTION("Obstruction of a Post Office audit"),
+
+        /**
+         * POST_OFFICE_SAFE_ROBBERY — recorded on successful safe crack during the Horizon audit
+         * window (12:30–14:00, days 14–17). Requires CROWBAR or LOCKPICK; 6 hits to open safe.
+         * Yields 25–50 COIN and STAMPS_BUNDLE. Penalty: Notoriety +10, WantedSystem +1.
+         */
+        POST_OFFICE_SAFE_ROBBERY("Robbery of Post Office safe during Horizon audit");
 
         private final String displayName;
 

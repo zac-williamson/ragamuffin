@@ -6400,7 +6400,45 @@ public enum Material {
      * Crafted from MARKER_PEN + CARDBOARD. Placed as HANDWRITTEN_WARNING_SIGN_PROP on the road.
      * Automatically warns approaching SPEEDING_DRIVER_NPCs for 10 in-game minutes.
      */
-    HANDWRITTEN_WARNING_SIGN("Handwritten Warning Sign");
+    HANDWRITTEN_WARNING_SIGN("Handwritten Warning Sign"),
+
+    // ── Issue #1420: Northfield Post Office Horizon Scandal ──────────────────
+
+    /**
+     * SHORTFALL_LETTER — the official Post Office Ltd demand notice served to Maureen on day 14.
+     * "Post Office Ltd demand notice. Horizon deficit: £340." Stack size 1. Not fenceable.
+     * Exists as both inventory item and as SHORTFALL_LETTER_PROP pinned to the counter.
+     */
+    SHORTFALL_LETTER("Shortfall Letter"),
+
+    /**
+     * TRANSACTION_LOG — Horizon terminal printout from the Post Office back-room filing cabinet.
+     * "Horizon terminal printout. Columns of numbers, none of which add up." Stack size 3.
+     * Fence value 4 COIN (to REGIONAL_AUDITOR only: 12 COIN).
+     * 3 units required for full tribunal evidence ({@code tribunalEvidenceStrength == STRONG}).
+     */
+    TRANSACTION_LOG("Transaction Log"),
+
+    /**
+     * STAMPS_BUNDLE — bundle of first-class stamps found in the Post Office safe.
+     * Obtained during the 90-second audit window safe crack (25–50 COIN + stamps bundle).
+     * Stack size 5. Fenceable at 2 COIN per unit; sellable at corner shop for 1 COIN each.
+     */
+    STAMPS_BUNDLE("Stamps Bundle"),
+
+    /**
+     * IT_CONTRACTOR_ID_BADGE — Pete's work lanyard ID badge. Pickpocketable from IT_CONTRACTOR NPC.
+     * "Pete's ID. Photo makes him look like he's confessing." Stack size 1. Fence value 6 COIN.
+     */
+    IT_CONTRACTOR_ID_BADGE("IT Contractor ID Badge"),
+
+    /**
+     * USB_STICK — USB drive from Pete's laptop bag. Pickpocketable from IT_CONTRACTOR NPC.
+     * "USB drive from Pete's laptop bag. Contains 4GB of Horizon audit logs and 2GB of
+     * questionable music." Stack size 1. Journalist trade value 18 COIN; also tradeable
+     * to Maureen (free) to strengthen her tribunal case.
+     */
+    USB_STICK("USB Stick");
 
     private final String displayName;
 
@@ -7795,6 +7833,16 @@ public enum Material {
             case HANDWRITTEN_WARNING_SIGN: return cs(0.75f, 0.62f, 0.38f, // Cardboard
                                                      0.05f, 0.05f, 0.05f); // Black marker text
 
+            // Issue #1420: Northfield Post Office Horizon Scandal
+            case SHORTFALL_LETTER:        return cs(0.95f, 0.90f, 0.70f, // Cream paper
+                                                    0.15f, 0.25f, 0.55f); // Blue Post Office heading
+            case TRANSACTION_LOG:         return cs(0.92f, 0.92f, 0.88f, // White paper
+                                                    0.25f, 0.25f, 0.25f); // Grey dot-matrix text
+            case STAMPS_BUNDLE:           return c(0.85f, 0.15f, 0.15f);  // Royal Mail red
+            case IT_CONTRACTOR_ID_BADGE:  return cs(0.85f, 0.88f, 0.92f, // White card
+                                                    0.15f, 0.40f, 0.75f); // Blue lanyard stripe
+            case USB_STICK:               return c(0.20f, 0.22f, 0.25f);  // Dark plastic
+
             default:             return c(0.5f, 0.5f, 0.5f);
         }
     }
@@ -8394,6 +8442,13 @@ public enum Material {
             case SPEEDING_FINE_NOTICE:
             case HANDWRITTEN_WARNING_SIGN:
                 return false;
+            // Issue #1420: Northfield Post Office Horizon Scandal — not block items
+            case SHORTFALL_LETTER:
+            case TRANSACTION_LOG:
+            case STAMPS_BUNDLE:
+            case IT_CONTRACTOR_ID_BADGE:
+            case USB_STICK:
+                return false;
             default:
                 return true;
         }
@@ -8604,6 +8659,12 @@ public enum Material {
             case SPEED_CAMERA_SD_CARD:
             case SPEEDING_FINE_NOTICE:
             case HANDWRITTEN_WARNING_SIGN:
+            // Issue #1420: Northfield Post Office Horizon Scandal — small items sit on surfaces
+            case SHORTFALL_LETTER:
+            case TRANSACTION_LOG:
+            case STAMPS_BUNDLE:
+            case IT_CONTRACTOR_ID_BADGE:
+            case USB_STICK:
                 return true;
             default:
                 return false;
@@ -10123,6 +10184,18 @@ public enum Material {
                 return IconShape.FLAT_PAPER;  // official notice document
             case HANDWRITTEN_WARNING_SIGN:
                 return IconShape.FLAT_PAPER;  // cardboard sign with marker text
+
+            // Issue #1420: Northfield Post Office Horizon Scandal
+            case SHORTFALL_LETTER:
+                return IconShape.FLAT_PAPER;  // A4 demand notice
+            case TRANSACTION_LOG:
+                return IconShape.FLAT_PAPER;  // dot-matrix printout
+            case STAMPS_BUNDLE:
+                return IconShape.BOX;         // bundle of first-class stamps
+            case IT_CONTRACTOR_ID_BADGE:
+                return IconShape.FLAT_PAPER;  // lanyard ID card
+            case USB_STICK:
+                return IconShape.FLAT_PAPER;  // small USB drive
 
             default:
                 return IconShape.BOX;
