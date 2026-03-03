@@ -49014,3 +49014,280 @@ CROWD_CHEER,
 // Integration: TimeSystem, PubLockInSystem, TaxiSystem, KebabVanSystem, WarmthSystem,
 //   WeatherSystem, NotorietySystem, CriminalRecord, RumourNetwork, ParticleSystem,
 //   SoundSystem, CornerShopSystem, EmploymentSystem, AchievementSystem
+
+---
+
+## Issue #1371: Add Northfield Christmas Market — The Pop-Up Stalls, the Carol Singers & the Counterfeit Goods Sting
+
+**Day-of-year**: 335–356 (December 1–22). Active period: 10:00–20:00 daily.
+
+### Overview
+
+Every December, Northfield High Street turns into a chaotic open-air Christmas market. Six wooden
+chalet stalls cluster around the war memorial: mulled wine, bratwurst, Christmas trinkets,
+a Santa's Grotto, a charity raffle table, and a dodgy bloke selling "genuine" designer scarves
+from a holdall. Carol singers block the pavement from 17:00. The crowds are thick, the wallets are
+loose, and Trading Standards only show up on Fridays.
+
+### Mechanic 1 — Market Stalls (10:00–20:00, days 335–356)
+
+Six `XMAS_MARKET_CHALET_PROP` stalls spawn along the High Street pavement north of the war
+memorial. Each stall sells one product:
+
+| Stall | Vendor NPC | Product | Price (COIN) |
+|-------|-----------|---------|--------------|
+| Mulled Wine | `XMAS_STALL_VENDOR` (Carol) | `MULLED_WINE` | 2 |
+| Bratwurst | `XMAS_STALL_VENDOR` (Dietmar) | `BRATWURST` | 2 |
+| Christmas Trinkets | `XMAS_STALL_VENDOR` (Linda) | `CHRISTMAS_TRINKET` | 1 |
+| Santa's Grotto | `SANTA_CLAUS` (Terry in disguise) | `CANDY_CANE` (free) | 0 |
+| Charity Raffle | `XMAS_STALL_VENDOR` (Margaret from FoodBank) | `RAFFLE_TICKET` | 1 |
+| Dodgy Scarves | `DODGY_TRADER` (Colin) | `FAKE_DESIGNER_SCARF` | 3 |
+
+- `MULLED_WINE`: Warmth +15, drunk level TIPSY. Also satisfies THIRSTY need.
+- `BRATWURST`: Heals +10 HP, satisfies HUNGRY need.
+- `CHRISTMAS_TRINKET`: Fence value 0 COIN (worthless); giving one to a PENSIONER NPC as gift:
+  Community Respect +2, seeds `CHRISTMAS_CHEER` rumour.
+- Santa's Grotto (`SANTA_GROTTO_PROP`): Children (`SCHOOL_KID`) queue. Player can sit on
+  Terry's lap (press E) for comedic dialogue + `CANDY_CANE` item (heals 2 HP, satisfies
+  HUNGRY). If player's Notoriety ≥ 40, Terry breaks character: "...I know who you are, mate."
+- `RAFFLE_TICKET`: Resolved at 19:30 each day. Jackpot (10% chance): `CHRISTMAS_HAMPER`
+  (contains BRATWURST ×2, MULLED_WINE ×1, CHOCOLATE_BAR ×2, COIN ×5).
+  Margaret double-checks tickets — forgery detected 80% of the time.
+- `FAKE_DESIGNER_SCARF`: Trading Standards (`TRADING_STANDARDS_OFFICER` NPC) arrives
+  Fri 14:00 and inspects Colin's stall. Player can tip off Trading Standards
+  (press E on the officer, 0 COIN) for `COMMUNITY_CHAMPION` rumour seed and Notoriety −2;
+  or warn Colin first (FENCE skill ≥ Apprentice) for 5 COIN bribe reward and
+  `MARKET_INSIDER` rumour. Colin selling to the player with Trading Standards within
+  8 blocks: `RECEIVING_STOLEN_GOODS` CriminalRecord + Notoriety +5.
+
+### Mechanic 2 — Carol Singers (17:00–19:00 daily)
+
+`CAROL_SINGER` NPCs (3–5) cluster at the war memorial with a `CAROL_SONG_BOARD_PROP`.
+They loop through 3 carols. Noise level: 0.5 (enough to cover a pickpocket).
+
+- **Crowd buffer**: 8–12 PUBLIC/PENSIONER NPCs gather to watch → pickpocket window with
+  `SLEIGHT_OF_HAND` skill modifier (base 30% success). Caught in crowd →
+  `THEFT_FROM_PERSON` CriminalRecord + Notoriety +5.
+- **Join the singers**: Press E within 3 blocks of `CAROL_SONG_BOARD_PROP`. Player hums along
+  for 2 in-game minutes → Community Respect +3, Notoriety −1, seeds `CHRISTMAS_CHEER` rumour.
+  If Notoriety ≥ 60, the crowd boos instead (Notoriety +2, `CAROL_CRASHER` achievement).
+- **Disruption**: Throwing a `FIREWORK` or `BANGER_FIREWORK` during carol singing →
+  singers flee, crowd scatters, `ANTISOCIAL_BEHAVIOUR` CriminalRecord, Notoriety +8,
+  WantedSystem +1. Seeds `NYE_CHAOS` rumour (crowd outrage).
+
+### Mechanic 3 — Santa's Grotto Heist
+
+Terry (`SANTA_CLAUS` NPC) keeps a `GROTTO_TIN` prop (coin collection box) under his chair,
+accumulating 1 COIN per `SCHOOL_KID` visitor (max 20 COIN/day, reset at 20:00).
+
+- Steal `GROTTO_TIN` while Terry is distracted (SCHOOL_KID queue ≥ 3): `PETTY_THEFT`
+  CriminalRecord + Notoriety +10; `CHRISTMAS_VILLAIN` achievement. Newspaper headline:
+  "SCROOGE STEALS FROM SANTA IN NORTHFIELD CHRISTMAS OUTRAGE."
+- Return the tin to Terry after stealing (within 30 in-game minutes, before 20:00):
+  crime NOT recorded; achievement `CHRISTMAS_REDEMPTION`; Notoriety −5.
+- Pickpocket Terry for `SANTA_BADGE` (novelty item, fence value 1 COIN):
+  Achievement `MUGGED FATHER CHRISTMAS`.
+
+### Mechanic 4 — Raffle Fix & Trading Standards Sting
+
+**Raffle fix**: Player can swap the `RAFFLE_TICKET_DRUM_PROP` contents while Margaret is
+distracted (another NPC interacts with her). Requires FENCE skill ≥ Journeyman. Rigged draw
+guarantees a `CHRISTMAS_HAMPER` win. Detection chance: 35% (Margaret double-checks draw).
+Caught: `FRAUD` CriminalRecord + Notoriety +8 + `CHARITY_CROOK` achievement.
+Uncaught: hamper + `RIGGED_IT` achievement.
+
+**Trading Standards Sting**: Friday only (14:00–16:00). A `TRADING_STANDARDS_OFFICER` NPC
+(Janet) arrives and inspects Colin's stall. If player tipped Janet off AND has a
+`FAKE_DESIGNER_SCARF` in inventory to present as evidence:
+- Colin is ejected (NPCState.FLEEING); stall despawns.
+- Player receives `COMMUNITY_CHAMPION` achievement + Notoriety −4.
+- Alternatively, player can pocket Colin's abandoned stock (1–3 `FAKE_DESIGNER_SCARF`)
+  for fencing at 2 COIN each: `OPPORTUNIST` achievement, Notoriety +3.
+
+### Mechanic 5 — Market Setup/Teardown & Weather Effects
+
+- `FROST` or `SNOW` (if `Weather.SNOW` defined, else `COLD_SNAP`): Carol Singer NPCs
+  wrap up (visible cosmetic) and crowd size −50%. Mulled wine demand doubles (price stays
+  fixed but vendors' `COIN` reserve depletes faster).
+- `HEAVY_RAIN` or `THUNDERSTORM`: market is cancelled for the day. Stalls remain as
+  props but vendors are absent. `XMAS_MARKET_CANCELLED` rumour seeded at 09:30.
+- Market teardown: at 20:00 stalls close but `XMAS_MARKET_CHALET_PROP` props remain.
+  Player can loot unattended stall (small leftover stock) after 20:05 with 25% crime-
+  detection chance (CCTV, not NPCs).
+
+### Integration
+
+- `TimeSystem` — active days 335–356, 10:00–20:00; carol singer window 17:00–19:00.
+- `WeatherSystem` — cancellation and demand modifiers.
+- `FoodBankSystem` — Margaret volunteers at raffle stall during market hours (absent from
+  Food Bank 10:00–20:00 on active market days).
+- `NeighbourhoodSystem` — market active: Neighbourhood Vibes +3/hr.
+- `NotorietySystem` / `CriminalRecord` — all crime hooks listed above.
+- `WantedSystem` — carol disruption + grotto heist each +1 star.
+- `RumourNetwork` — `CHRISTMAS_CHEER` (positive), `XMAS_MARKET_CANCELLED`, `NYE_CHAOS`
+  (used for carol disruption outrage), `LOCAL_SCANDAL` (grotto theft headline).
+- `NewspaperSystem` — grotto heist triggers front-page headline.
+- `FactionSystem` — MARCHETTI_CREW Respect ≥ 50: Colin tips player off about Trading
+  Standards raid 30 minutes early (exclusive dialogue).
+- `StreetSkillSystem` — SLEIGHT_OF_HAND applied to crowd pickpocket; FENCE for raffle/stall fix.
+- `AchievementSystem` — 7 new achievements.
+- `WarmthSystem` — market counts as outdoor; mulled wine gives +15 warmth; carol joining
+  gives +5 warmth (body heat of crowd).
+- `SoundSystem` — `SoundEffect.CAROL_SINGING` (looping, 0.5 noise) during singer window.
+- `IcelandSystem` — Debbie (Iceland) gossips about the market Christmas Club angle
+  with Margaret during market hours.
+
+### New Types Required
+
+**New Materials** (add to `Material.java`):
+```
+BRATWURST("Bratwurst"),                    // Hot sausage from Christmas market
+CHRISTMAS_TRINKET("Christmas Trinket"),    // Worthless bauble; gift to PENSIONER for rep
+CANDY_CANE("Candy Cane"),                  // From Santa's Grotto; heals 2 HP
+RAFFLE_TICKET("Raffle Ticket"),            // 1 COIN at charity stall; resolved 19:30
+CHRISTMAS_HAMPER("Christmas Hamper"),      // Raffle jackpot prize; multi-item container
+FAKE_DESIGNER_SCARF("Fake Designer Scarf"),// Colin's counterfeit goods; fence 2 COIN
+SANTA_BADGE("Santa Badge"),               // Pickpocketed from Terry; fence 1 COIN
+```
+
+**New PropTypes** (add to `PropType.java`):
+```
+XMAS_MARKET_CHALET_PROP(2.0f, 2.5f, 1.5f, 999, null),   // Wooden market stall chalet
+SANTA_GROTTO_PROP(3.0f, 2.5f, 3.0f, 999, null),          // Inflatable/wooden Santa's grotto
+CAROL_SONG_BOARD_PROP(0.5f, 1.5f, 0.1f, Integer.MAX_VALUE, null), // Song list board
+RAFFLE_TICKET_DRUM_PROP(0.6f, 0.8f, 0.6f, 50, Material.SCRAP_METAL), // Charity raffle drum
+GROTTO_TIN(0.2f, 0.15f, 0.2f, 10, Material.SCRAP_METAL), // Santa's coin collection tin
+```
+
+**New NPCType**:
+```
+SANTA_CLAUS(30f, 0f, 0f, false),           // Terry in costume; grotto NPC
+CAROL_SINGER(20f, 0f, 0f, false),          // Group singer NPC at war memorial
+XMAS_STALL_VENDOR(25f, 0f, 0f, false),     // Market stall vendor
+TRADING_STANDARDS_OFFICER(35f, 3f, 2.0f, true), // Janet; Friday inspection
+```
+
+**New AchievementTypes** (add to `AchievementType.java`):
+```
+CHRISTMAS_VILLAIN,      // Stole from Santa's grotto tin
+CHRISTMAS_REDEMPTION,   // Returned grotto tin within grace period
+MUGGED_FATHER_CHRISTMAS,// Pickpocketed Terry (SANTA_CLAUS)
+CAROL_CRASHER,          // Disrupted carol singing (high-notoriety boo)
+CHARITY_CROOK,          // Caught fixing the charity raffle
+RIGGED_IT,              // Won raffle via undetected fix
+COMMUNITY_CHAMPION,     // Tipped off Trading Standards with evidence
+```
+
+**New RumourType** (add to `RumourType.java`):
+```
+/** "The Christmas market's on — they've got a Santa and everything."
+ * Seeded at 10:00 on day 335. High initial spread. */
+CHRISTMAS_CHEER,
+/** "They've cancelled the market — rain again. Typical Northfield."
+ * Seeded at 09:30 when WeatherSystem causes market cancellation. */
+XMAS_MARKET_CANCELLED,
+```
+
+**New SoundEffect**:
+```
+CAROL_SINGING,   // Looping ambient; plays during 17:00–19:00 carol window
+```
+
+### New Java Files
+- `ChristmasMarketSystem.java` in `ragamuffin.core` — main system
+- `ChristmasMarketSystemTest.java` in `src/test/java/ragamuffin/core/`
+- `Issue1371ChristmasMarketIntegrationTest.java` in `src/test/java/ragamuffin/integration/`
+
+### Unit Tests
+- `testMarketActiveOnDay335`: Set dayOfYear = 335, hour = 12.0; verify `isMarketActive()` = true.
+- `testMarketInactiveAfterDay356`: Set dayOfYear = 357; verify `isMarketActive()` = false.
+- `testMarketCancelledByHeavyRain`: Set weather = HEAVY_RAIN, hour = 09:30; verify
+  `isMarketCancelledToday()` = true, `XMAS_MARKET_CANCELLED` rumour seeded.
+- `testMulledWinePurchase`: Player buys MULLED_WINE from Carol; verify COIN −2, MULLED_WINE
+  added to inventory, warmth +15.
+- `testBratwurstPurchase`: Player buys BRATWURST; verify COIN −2, HP +10.
+- `testGrottoDialogueNormalPlayer`: Player Notoriety < 40; press E on SANTA_GROTTO_PROP;
+  verify CANDY_CANE awarded, Terry gives jolly dialogue.
+- `testGrottoDialogueHighNotoriety`: Player Notoriety ≥ 40; press E on SANTA_GROTTO_PROP;
+  verify Terry says "I know who you are, mate."
+- `testGrottoTinAccumulates`: 10 SCHOOL_KID visitors; verify `grottoTinCoins` = 10.
+- `testStealGrottoTin`: Terry not distracted (queue < 3); verify `stealGrottoTin()` returns
+  FAIL_NOT_DISTRACTED. Set queue ≥ 3; verify steal succeeds, COIN added, CriminalRecord
+  records PETTY_THEFT, Notoriety +10.
+- `testReturnGrottoTinClears Crime`: Steal tin; return to Terry within 30 in-game minutes;
+  verify PETTY_THEFT NOT in CriminalRecord, Notoriety −5, `CHRISTMAS_REDEMPTION` achievement.
+- `testCarolPickpocketSuccess`: Force RNG to succeed; PENSIONER NPC in crowd; verify COIN
+  stolen, `THEFT_FROM_PERSON` NOT in CriminalRecord (undetected).
+- `testCarolPickpocketCaught`: Force RNG to fail; verify `THEFT_FROM_PERSON` in CriminalRecord,
+  Notoriety +5.
+- `testJoinCarolSingers`: Player within 3 blocks; press E; verify Community Respect +3,
+  Notoriety −1, `CHRISTMAS_CHEER` rumour seeded.
+- `testRaffleTicketJackpot`: Buy RAFFLE_TICKET; force RNG jackpot (< 0.10f); advance to 19:30;
+  verify `CHRISTMAS_HAMPER` in inventory.
+- `testRaffleFixSuccess`: FENCE skill ≥ Journeyman; swap drum while Margaret distracted; force
+  RNG detection fail; verify CHRISTMAS_HAMPER awarded + `RIGGED_IT` achievement.
+- `testRaffleFixCaught`: Force RNG detection success (≥ 0.65f); verify `FRAUD` in
+  CriminalRecord, Notoriety +8, `CHARITY_CROOK` achievement.
+- `testTradingStandardsTipOff`: Friday, hour = 14:30; player presses E on Janet with
+  FAKE_DESIGNER_SCARF in inventory; verify Colin ejected, `COMMUNITY_CHAMPION` achievement,
+  Notoriety −4.
+- `testColinScarfNearJanet`: Colin sells FAKE_DESIGNER_SCARF to player while Janet within
+  8 blocks; verify `RECEIVING_STOLEN_GOODS` in CriminalRecord, Notoriety +5.
+- `testFoodBankMargaretAbsent`: Day 335, hour = 12:00; verify Margaret not at FoodBank;
+  verify Margaret present at market raffle stall.
+- `testNeighbourhoodVibesBoost`: Market active; advance 1 in-game hour; verify
+  NeighbourhoodSystem vibes increased by 3.
+- `testCarolDisruptionByFirework`: Player throws BANGER_FIREWORK during carol window;
+  verify NPCState of CAROL_SINGER NPCs = FLEEING, `ANTISOCIAL_BEHAVIOUR` in CriminalRecord,
+  Notoriety +8, WantedSystem +1.
+
+### Integration Tests — implement these exact scenarios:
+
+1. **Market opens on day 335**: Set TimeSystem to day 335, hour 09:59. Advance 1 game tick.
+   Verify 6 `XMAS_MARKET_CHALET_PROP` entities spawned within 30 blocks of the war memorial.
+   Verify `SANTA_GROTTO_PROP` present. Verify 6 vendor NPCs (mix of XMAS_STALL_VENDOR,
+   SANTA_CLAUS) spawned. Verify `CHRISTMAS_CHEER` rumour in RumourNetwork. Advance to hour
+   20:01; verify stalls show CLOSED state (no vendor activity, props remain).
+
+2. **Grotto heist and headline**: Set day 336, hour 14:00. Spawn 4 SCHOOL_KID NPCs queuing
+   at SANTA_GROTTO_PROP. Trigger `stealGrottoTin()`. Verify COIN in player inventory increased
+   by `grottoTinCoins`. Verify `PETTY_THEFT` in CriminalRecord. Verify `CHRISTMAS_VILLAIN`
+   achievement unlocked. Verify NewspaperSystem newspaper headline contains "SANTA". Verify
+   WantedSystem wanted stars increased by 1.
+
+3. **Carol singing pickpocket flow**: Advance to day 340, hour 17:30. Verify 3–5 CAROL_SINGER
+   NPCs at `CAROL_SONG_BOARD_PROP`. Verify 8+ PUBLIC/PENSIONER NPCs in crowd (within 15
+   blocks). Force `SLEIGHT_OF_HAND` roll to succeed. Call `pickpocketCrowd()`. Verify COIN
+   added to player. Verify `THEFT_FROM_PERSON` NOT in CriminalRecord. Verify SoundEffect
+   `CAROL_SINGING` active.
+
+4. **Trading Standards sting — complete flow**: Set day 342 (Friday). Buy `FAKE_DESIGNER_SCARF`
+   from Colin (price 3 COIN). Advance to 14:00. Verify `TRADING_STANDARDS_OFFICER` NPC (Janet)
+   spawned. Walk player to Janet. Press E with FAKE_DESIGNER_SCARF in inventory. Verify Colin
+   NPC state = FLEEING. Verify `XMAS_MARKET_CHALET_PROP` for Colin despawned. Verify
+   `COMMUNITY_CHAMPION` achievement. Verify Notoriety decreased by 4. Verify player can pick up
+   1–3 `FAKE_DESIGNER_SCARF` from abandoned stall area.
+
+5. **Market cancellation on heavy rain**: Set day 345, hour 09:30. Set WeatherSystem to
+   HEAVY_RAIN. Trigger market daily setup check. Verify no vendor NPCs spawn. Verify
+   `XMAS_MARKET_CANCELLED` rumour in RumourNetwork. Verify `isMarketCancelledToday()` = true.
+   Change weather to CLEAR. Advance to day 346, 09:30. Verify market setup proceeds normally
+   (6 props + 6 vendors spawn).
+
+// ── Issue #1371: Add Northfield Christmas Market ─────────────────────────────────────────────────
+// New: ChristmasMarketSystem.java in ragamuffin.core
+// New: ChristmasMarketSystemTest.java in src/test/java/ragamuffin/core/
+// New: Issue1371ChristmasMarketIntegrationTest.java in src/test/java/ragamuffin/integration/
+// New Materials: BRATWURST, CHRISTMAS_TRINKET, CANDY_CANE, RAFFLE_TICKET, CHRISTMAS_HAMPER,
+//   FAKE_DESIGNER_SCARF, SANTA_BADGE
+// New PropTypes: XMAS_MARKET_CHALET_PROP, SANTA_GROTTO_PROP, CAROL_SONG_BOARD_PROP,
+//   RAFFLE_TICKET_DRUM_PROP, GROTTO_TIN
+// New NPCTypes: SANTA_CLAUS, CAROL_SINGER, XMAS_STALL_VENDOR, TRADING_STANDARDS_OFFICER
+// New AchievementTypes: CHRISTMAS_VILLAIN, CHRISTMAS_REDEMPTION, MUGGED_FATHER_CHRISTMAS,
+//   CAROL_CRASHER, CHARITY_CROOK, RIGGED_IT, COMMUNITY_CHAMPION
+// New RumourTypes: CHRISTMAS_CHEER, XMAS_MARKET_CANCELLED
+// New SoundEffect: CAROL_SINGING
+// Integration: TimeSystem, WeatherSystem, FoodBankSystem, NeighbourhoodSystem,
+//   NotorietySystem, CriminalRecord, WantedSystem, RumourNetwork, NewspaperSystem,
+//   FactionSystem, StreetSkillSystem, AchievementSystem, WarmthSystem, SoundSystem,
+//   IcelandSystem
