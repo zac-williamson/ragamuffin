@@ -438,17 +438,68 @@ class CatalogueManSystemTest {
         system.update(0.1f, 12.0f, 1, 0f, 0f, 0f, 0, null, null);
         system.stealBag(inventory, 10.0f, null, cb);
 
-        // bagStolenDays should now trigger BARRY_BANDIT check
-        // Since setBagStolenDays(2) and stealing increments, check award
-        // (The stealBag logic checks threshold; we need bagStolenDays >= 3)
-        // Force by directly setting and checking:
-        system.setBagStolenDays(3);
-        // Award check happens in stealBag; trigger via another steal
-        system.setBagPlaced(true);
-        system.stealBag(inventory, 10.0f, null, cb);
-
         assertTrue(awarded.contains(AchievementType.BARRY_BANDIT),
                 "BARRY_BANDIT should be awarded after 3 bag-stolen days");
+    }
+
+    @Test
+    void testBagStolenDaysIncrementedOnFirstDailySteal() {
+        // Start a round so bag is placed
+        system.update(0.1f, 12.0f, 1, 0f, 0f, 0f, 0, null, null);
+        // Steal once
+        BagTheftResult result = system.stealBag(inventory, 10.0f, null, cb);
+        assertEquals(BagTheftResult.STOLEN, result, "First steal should succeed");
+        assertEquals(1, system.getBagStolenDays(),
+                "bagStolenDays should be 1 after first daily steal");
+    }
+
+    @Test
+    void testBagStolenDaysNotIncrementedOnSecondStealSameDay() {
+        // Start a round so bag is placed
+        system.update(0.1f, 12.0f, 1, 0f, 0f, 0f, 0, null, null);
+        // First steal
+        system.stealBag(inventory, 10.0f, null, cb);
+        assertEquals(1, system.getBagStolenDays(), "After first steal, days should be 1");
+
+        // Re-place the bag (simulate bag being placed again same day) and steal again
+        system.setBagPlaced(true);
+        system.stealBag(inventory, 10.0f, null, cb);
+        assertEquals(1, system.getBagStolenDays(),
+                "bagStolenDays should NOT increment on second steal same day");
+    }
+
+    @Test
+    void testBarryBanditAwardedAfterThreeSeparateDays() {
+        // Day 1 (Monday)
+        system.update(0.1f, 12.0f, 1, 0f, 0f, 0f, 0, null, null);
+        system.stealBag(inventory, 10.0f, null, cb);
+        assertEquals(1, system.getBagStolenDays(), "After day 1 steal, days=1");
+        assertFalse(awarded.contains(AchievementType.BARRY_BANDIT), "No award yet after day 1");
+
+        // Day 2 (Wednesday) — create fresh round by simulating new day
+        system = new CatalogueManSystem(new Random(42L));
+        system.setNotorietySystem(notorietySystem);
+        system.setWantedSystem(wantedSystem);
+        system.setCriminalRecord(criminalRecord);
+        system.setRumourNetwork(rumourNetwork);
+        system.setBagStolenDays(1); // carry over day 1 count
+        system.update(0.1f, 12.0f, 3, 0f, 0f, 0f, 0, null, null);
+        system.stealBag(inventory, 10.0f, null, cb);
+        assertEquals(2, system.getBagStolenDays(), "After day 2 steal, days=2");
+        assertFalse(awarded.contains(AchievementType.BARRY_BANDIT), "No award yet after day 2");
+
+        // Day 3 (Friday) — create fresh round by simulating new day
+        system = new CatalogueManSystem(new Random(42L));
+        system.setNotorietySystem(notorietySystem);
+        system.setWantedSystem(wantedSystem);
+        system.setCriminalRecord(criminalRecord);
+        system.setRumourNetwork(rumourNetwork);
+        system.setBagStolenDays(2); // carry over day 2 count
+        system.update(0.1f, 12.0f, 5, 0f, 0f, 0f, 0, null, null);
+        system.stealBag(inventory, 10.0f, null, cb);
+        assertEquals(3, system.getBagStolenDays(), "After day 3 steal, days=3");
+        assertTrue(awarded.contains(AchievementType.BARRY_BANDIT),
+                "BARRY_BANDIT should be awarded after 3 separate days of stealing (no setBagStolenDays shortcut)");
     }
 
     @Test

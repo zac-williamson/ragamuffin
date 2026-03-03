@@ -521,7 +521,6 @@ public class CatalogueManSystem {
 
         // Successful theft
         bagPlaced = false;
-        bagStolenToday = true;
 
         // Award 1–3 random catalogue items
         int itemCount = 1 + random.nextInt(3);
@@ -552,10 +551,11 @@ public class CatalogueManSystem {
                             "Someone's been nicking stuff out of the catalogue bloke's bag on his round."));
         }
 
-        // Track bag-steal days for BARRY_BANDIT
+        // Track bag-steal days for BARRY_BANDIT (check BEFORE flagging today)
         if (!bagStolenToday) {
             bagStolenDays++;
         }
+        bagStolenToday = true;
 
         checkBarryBandit(cb);
         return BagTheftResult.STOLEN;

@@ -767,7 +767,7 @@ public class EnglandMatchSystem {
 
         // Check Marchetti Crew Respect
         if (factionSystem != null) {
-            int respect = factionSystem.getRespect(FactionSystem.Faction.MARCHETTI_CREW);
+            int respect = factionSystem.getRespect(Faction.MARCHETTI_CREW);
             if (respect < MARCHETTI_RESPECT_REQUIRED) return false;
         }
 
